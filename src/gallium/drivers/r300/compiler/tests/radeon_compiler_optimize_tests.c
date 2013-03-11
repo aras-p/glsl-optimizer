@@ -30,30 +30,42 @@
 #include "rc_test_helpers.h"
 #include "unit_test.h"
 
+static unsigned test_rc_optimize(
+	struct test_result * result,
+	struct radeon_compiler * c,
+	const char * filename)
+{
+	struct rc_test_file test_file;
+
+	test_begin(result);
+
+	if (!load_program(c, &test_file, filename)) {
+		fprintf(stderr, "Failed to load program\n");
+		return 0;
+	}
+
+	rc_optimize(c, NULL);
+	return 1;
+}
+
 static void test_runner_rc_optimize(struct test_result * result)
 {
+	unsigned pass = 1;
 	struct radeon_compiler c;
 	struct rc_instruction *inst;
 	struct rc_instruction *inst_list[3];
 	unsigned inst_count = 0;
 	float const0[4] = {2.0f, 0.0f, 0.0f, 0.0f};
-	unsigned pass = 1;
 
-	test_begin(result);
 	init_compiler(&c, RC_FRAGMENT_PROGRAM, 1, 0);
 
 	rc_constants_add_immediate_vec4(&c.Program.Constants, const0);
 
-	add_instruction(&c, "RCP temp[0].x, const[1].x___;");
-	add_instruction(&c, "RCP temp[0].y, const[1]._y__;");
-	add_instruction(&c, "MUL temp[1].xy, const[0].xx__, temp[0].xy__;");
-	add_instruction(&c, "MOV output[0].xy, temp[1].xy;" );
-
-	rc_optimize(&c, NULL);
+	test_rc_optimize(result, &c, "omod_two_writers.test");
 
 	for(inst = c.Program.Instructions.Next;
-					inst != &c.Program.Instructions;
-					inst = inst->Next, inst_count++) {
+				inst != &c.Program.Instructions;
+				inst = inst->Next, inst_count++) {
 		inst_list[inst_count] = inst;
 	}
 
@@ -62,6 +74,7 @@ static void test_runner_rc_optimize(struct test_result * result)
 			inst_list[2]->U.I.Opcode != RC_OPCODE_MOV) {
 		pass = 0;
 	}
+
 	test_check(result, pass);
 }
 
