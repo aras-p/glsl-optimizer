@@ -981,6 +981,22 @@ vec4_visitor::dump_instruction(vec4_instruction *inst)
       case UNIFORM:
          printf("u%d", inst->src[i].reg);
          break;
+      case IMM:
+         switch (inst->src[i].type) {
+         case BRW_REGISTER_TYPE_F:
+            printf("%fF", inst->src[i].imm.f);
+            break;
+         case BRW_REGISTER_TYPE_D:
+            printf("%dD", inst->src[i].imm.i);
+            break;
+         case BRW_REGISTER_TYPE_UD:
+            printf("%uU", inst->src[i].imm.u);
+            break;
+         default:
+            printf("???");
+            break;
+         }
+         break;
       case BAD_FILE:
          printf("(null)");
          break;
