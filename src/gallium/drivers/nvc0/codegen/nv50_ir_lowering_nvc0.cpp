@@ -596,6 +596,7 @@ private:
    bool handleTXQ(TexInstruction *);
    bool handleManualTXD(TexInstruction *);
    bool handleATOM(Instruction *);
+   bool handleCasExch(Instruction *, bool needCctl);
    void handleSurfaceOpNVE4(TexInstruction *);
 
    void checkPredicate(Instruction *);
@@ -853,6 +854,38 @@ NVC0LoweringPass::handleATOM(Instruction *atom)
    if (ptr)
       base = bld.mkOp2v(OP_ADD, TYPE_U32, base, base, ptr);
    atom->setIndirect(0, 0, base);
+
+   return true;
+}
+
+bool
+NVC0LoweringPass::handleCasExch(Instruction *cas, bool needCctl)
+{
+   if (cas->subOp != NV50_IR_SUBOP_ATOM_CAS &&
+       cas->subOp != NV50_IR_SUBOP_ATOM_EXCH)
+      return false;
+   bld.setPosition(cas, true);
+
+   if (needCctl) {
+      Instruction *cctl = bld.mkOp1(OP_CCTL, TYPE_NONE, NULL, cas->getSrc(0));
+      cctl->setIndirect(0, 0, cas->getIndirect(0, 0));
+      cctl->fixed = 1;
+      cctl->subOp = NV50_IR_SUBOP_CCTL_IV;
+      if (cas->isPredicated())
+         cctl->setPredicate(cas->cc, cas->getPredicate());
+   }
+
+   if (cas->defExists(0) && cas->subOp == NV50_IR_SUBOP_ATOM_CAS) {
+      // CAS is crazy. It's 2nd source is a double reg, and the 3rd source
+      // should be set to the high part of the double reg or bad things will
+      // happen elsewhere in the universe.
+      // Also, it sometimes returns the new value instead of the old one
+      // under mysterious circumstances.
+      Value *dreg = bld.getSSA(8);
+      bld.setPosition(cas, false);
+      bld.mkOp2(OP_MERGE, TYPE_U64, dreg, cas->getSrc(1), cas->getSrc(2));
+      cas->setSrc(1, dreg);
+   }
 
    return true;
 }
@@ -1185,6 +1218,7 @@ NVC0LoweringPass::handleSurfaceOpNVE4(TexInstruction *su)
    }
 
    if (su->op == OP_SUREDB || su->op == OP_SUREDP) {
+      // FIXME: for out of bounds access, destination value will be undefined !
       Value *pred = su->getSrc(2);
       CondCode cc = CC_NOT_P;
       if (su->getPredicate()) {
@@ -1208,6 +1242,7 @@ NVC0LoweringPass::handleSurfaceOpNVE4(TexInstruction *su)
       red->setIndirect(0, 0, su->getSrc(0));
       red->setPredicate(cc, pred);
       delete_Instruction(bld.getProgram(), su);
+      handleCasExch(red, true);
    } else {
       su->sType = (su->tex.target == TEX_TARGET_BUFFER) ? TYPE_U32 : TYPE_U8;
    }
@@ -1477,7 +1512,11 @@ NVC0LoweringPass::visit(Instruction *i)
       }
       break;
    case OP_ATOM:
+   {
+      const bool cctl = i->src(0).getFile() == FILE_MEMORY_GLOBAL;
       handleATOM(i);
+      handleCasExch(i, cctl);
+   }
       break;
    case OP_SULDB:
    case OP_SULDP:

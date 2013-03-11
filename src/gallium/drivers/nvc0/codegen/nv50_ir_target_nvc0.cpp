@@ -287,7 +287,9 @@ TargetNVC0::insnCanLoad(const Instruction *i, int s,
 
    // immediate 0 can be represented by GPR $r63/$r255
    if (sf == FILE_IMMEDIATE && ld->getSrc(0)->reg.data.u64 == 0)
-      return (!i->asTex() && i->op != OP_EXPORT && i->op != OP_STORE);
+      return (!i->isPseudo() &&
+              !i->asTex() &&
+              i->op != OP_EXPORT && i->op != OP_STORE);
 
    if (s >= opInfo[i->op].srcNr)
       return false;
