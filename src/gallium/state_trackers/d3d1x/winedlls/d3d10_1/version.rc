@@ -1,3 +1,0 @@
-#define FILENAME "d3d10"
-#define NAME "D3D10"
-#include "../version.rc.h"

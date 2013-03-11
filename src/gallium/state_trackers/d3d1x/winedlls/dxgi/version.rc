@@ -1,3 +1,0 @@
-#define FILENAME "dxgi"
-#define NAME "DXGI"
-#include "../version.rc.h"

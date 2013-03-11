@@ -290,7 +290,7 @@ Queries
 ^^^^^^^
 
 Queries gather some statistic from the 3D pipeline over one or more
-draws.  Queries may be nested, though only d3d1x currently exercises this.
+draws.  Queries may be nested, though not all state trackers exercise this.
 
 Queries can be created with ``create_query`` and deleted with
 ``destroy_query``. To start a query, use ``begin_query``, and when finished,

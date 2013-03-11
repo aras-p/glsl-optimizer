@@ -590,13 +590,6 @@ AC_ARG_ENABLE([xa],
         [enable build of the XA X Acceleration API @<:@default=no@:>@])],
     [enable_xa="$enableval"],
     [enable_xa=no])
-dnl Broken, unmaintained. Don't want to see bug reports about it without patches.
-enable_d3d1x=no
-dnl AC_ARG_ENABLE([d3d1x],
-dnl     [AS_HELP_STRING([--enable-d3d1x],
-dnl         [enable support for Direct3D 10 & 11 low-level API @<:@default=no@:>@])],
-dnl     [enable_d3d1x="$enableval"],
-dnl     [enable_d3d1x=no])
 AC_ARG_ENABLE([gbm],
    [AS_HELP_STRING([--enable-gbm],
          [enable gbm library @<:@default=auto@:>@])],
@@ -678,7 +671,6 @@ if test "x$enable_opengl" = xno -a \
         "x$enable_openvg" = xno -a \
         "x$enable_xorg" = xno -a \
         "x$enable_xa" = xno -a \
-        "x$enable_d3d1x" = xno -a \
         "x$enable_xvmc" = xno -a \
         "x$enable_vdpau" = xno -a \
         "x$enable_opencl" = xno; then
@@ -1355,19 +1347,6 @@ if test "x$enable_openvg" = xyes; then
     AC_SUBST([VG_PC_LIB_PRIV])
 fi
 AM_CONDITIONAL(HAVE_OPENVG, test "x$enable_openvg" = xyes)
-
-dnl
-dnl D3D1X configuration
-dnl
-
-if test "x$enable_d3d1x" = xyes; then
-    if test "x$with_gallium_drivers" = x; then
-        AC_MSG_ERROR([cannot enable D3D1X without Gallium])
-    fi
-
-    GALLIUM_STATE_TRACKERS_DIRS="d3d1x $GALLIUM_STATE_TRACKERS_DIRS"
-    HAVE_ST_D3D1X=yes
-fi
 
 dnl
 dnl Gallium G3DVL configuration
