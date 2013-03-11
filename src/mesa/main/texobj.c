@@ -548,10 +548,11 @@ _mesa_test_texobj_completeness( const struct gl_context *ctx,
 
    ASSERT(maxLevels > 0);
 
-   t->_MaxLevel =
-      baseLevel + baseImage->MaxNumLevels - 1; /* 'p' in the GL spec */
-   t->_MaxLevel = MIN2(t->_MaxLevel, t->MaxLevel);
-   t->_MaxLevel = MIN2(t->_MaxLevel, maxLevels - 1); /* 'q' in the GL spec */
+   t->_MaxLevel = MIN3(t->MaxLevel,
+                       /* 'p' in the GL spec */
+                       baseLevel + baseImage->MaxNumLevels - 1,
+                       /* 'q' in the GL spec */
+                       maxLevels - 1);
 
    /* Compute _MaxLambda = q - p in the spec used during mipmapping */
    t->_MaxLambda = (GLfloat) (t->_MaxLevel - baseLevel);
