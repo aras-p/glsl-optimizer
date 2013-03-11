@@ -472,6 +472,7 @@ struct nvc0_blitctx
    enum pipe_texture_target target;
    struct {
       struct pipe_framebuffer_state fb;
+      struct nvc0_rasterizer_stateobj *rast;
       struct nvc0_program *vp;
       struct nvc0_program *tcp;
       struct nvc0_program *tep;
@@ -483,6 +484,7 @@ struct nvc0_blitctx
       struct nv50_tsc_entry *sampler[2];
       uint32_t dirty;
    } saved;
+   struct nvc0_rasterizer_stateobj rast;
 };
 
 static void
@@ -701,11 +703,15 @@ nvc0_blitctx_pre_blit(struct nvc0_blitctx *ctx)
    ctx->saved.fb.cbufs[0] = nvc0->framebuffer.cbufs[0];
    ctx->saved.fb.zsbuf = nvc0->framebuffer.zsbuf;
 
+   ctx->saved.rast = nvc0->rast;
+
    ctx->saved.vp = nvc0->vertprog;
    ctx->saved.tcp = nvc0->tctlprog;
    ctx->saved.tep = nvc0->tevlprog;
    ctx->saved.gp = nvc0->gmtyprog;
    ctx->saved.fp = nvc0->fragprog;
+
+   nvc0->rast = &ctx->rast;
 
    nvc0->vertprog = &blitter->vp;
    nvc0->tctlprog = NULL;
@@ -759,6 +765,8 @@ nvc0_blitctx_post_blit(struct nvc0_blitctx *blit)
    nvc0->framebuffer.nr_cbufs = blit->saved.fb.nr_cbufs;
    nvc0->framebuffer.cbufs[0] = blit->saved.fb.cbufs[0];
    nvc0->framebuffer.zsbuf = blit->saved.fb.zsbuf;
+
+   nvc0->rast = blit->saved.rast;
 
    nvc0->vertprog = blit->saved.vp;
    nvc0->tctlprog = blit->saved.tcp;
@@ -1181,6 +1189,8 @@ nvc0_blitctx_create(struct nvc0_context *nvc0)
    }
 
    nvc0->blit->nvc0 = nvc0;
+
+   nvc0->blit->rast.pipe.gl_rasterization_rules = 1;
 
    return TRUE;
 }

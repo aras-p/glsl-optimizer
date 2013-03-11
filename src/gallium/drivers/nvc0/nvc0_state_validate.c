@@ -451,10 +451,14 @@ nvc0_validate_derived_1(struct nvc0_context *nvc0)
    struct nouveau_pushbuf *push = nvc0->base.pushbuf;
    boolean rasterizer_discard;
 
-   rasterizer_discard = (!nvc0->fragprog || !nvc0->fragprog->hdr[18]) &&
-      !nvc0->zsa->pipe.depth.enabled && !nvc0->zsa->pipe.stencil[0].enabled;
-   rasterizer_discard = rasterizer_discard ||
-      nvc0->rast->pipe.rasterizer_discard;
+   if (nvc0->rast && nvc0->rast->pipe.rasterizer_discard) {
+      rasterizer_discard = TRUE;
+   } else {
+      boolean zs = nvc0->zsa &&
+         (nvc0->zsa->pipe.depth.enabled || nvc0->zsa->pipe.stencil[0].enabled);
+      rasterizer_discard = !zs &&
+         (!nvc0->fragprog || !nvc0->fragprog->hdr[18]);
+   }
 
    if (rasterizer_discard != nvc0->state.rasterizer_discard) {
       nvc0->state.rasterizer_discard = rasterizer_discard;
