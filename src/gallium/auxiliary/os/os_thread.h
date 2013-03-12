@@ -105,9 +105,6 @@ typedef pthread_mutex_t pipe_mutex;
  */
 typedef pthread_cond_t pipe_condvar;
 
-#define pipe_static_condvar(mutex) \
-   static pipe_condvar mutex = PTHREAD_COND_INITIALIZER
-
 #define pipe_condvar_init(cond)	\
    pthread_cond_init(&(cond), NULL)
 
@@ -187,9 +184,6 @@ typedef CRITICAL_SECTION pipe_mutex;
  */
 typedef CONDITION_VARIABLE pipe_condvar;
 
-#define pipe_static_condvar(cond) \
-   /*static*/ pipe_condvar cond = CONDITION_VARIABLE_INIT
-
 #define pipe_condvar_init(cond) \
    InitializeConditionVariable(&(cond))
 
@@ -212,9 +206,6 @@ typedef CONDITION_VARIABLE pipe_condvar;
  * for potential pitfalls in implementation.
  */
 typedef DWORD pipe_condvar;
-
-#define pipe_static_condvar(cond) \
-   /*static*/ pipe_condvar cond = 1
 
 #define pipe_condvar_init(cond) \
    (void) (cond = 1)
@@ -283,9 +274,6 @@ typedef unsigned pipe_mutex;
    (void) mutex
 
 typedef int64_t pipe_condvar;
-
-#define pipe_static_condvar(condvar) \
-   static pipe_condvar condvar = 1000
 
 #define pipe_condvar_init(condvar) \
    (void) (condvar = 1000)
