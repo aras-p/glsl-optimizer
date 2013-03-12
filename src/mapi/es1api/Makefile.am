@@ -28,6 +28,8 @@ AM_CPPFLAGS = \
 
 AM_CFLAGS = $(VISIBILITY_CFLAGS)
 
+TESTS = ABI-check
+
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = glesv1_cm.pc
 
