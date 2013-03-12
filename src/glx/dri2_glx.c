@@ -1051,10 +1051,15 @@ static const struct glx_context_vtable dri2_context_vtable = {
 };
 
 static void
-dri2BindExtensions(struct dri2_screen *psc, const __DRIextension **extensions,
+dri2BindExtensions(struct dri2_screen *psc, struct glx_display * priv,
                    const char *driverName)
 {
+   const struct dri2_display *const pdp = (struct dri2_display *)
+      priv->dri2Display;
+   const __DRIextension **extensions;
    int i;
+
+   extensions = psc->core->getExtensions(psc->driScreen);
 
    __glXEnableDirectExtension(&psc->base, "GLX_SGI_video_sync");
    __glXEnableDirectExtension(&psc->base, "GLX_SGI_swap_control");
@@ -1066,10 +1071,15 @@ dri2BindExtensions(struct dri2_screen *psc, const __DRIextension **extensions,
     * currently unconditionally enabled. This completely breaks
     * systems running on drivers which don't support that extension.
     * There's no way to test for its presence on this side, so instead
-    * of disabling it uncondtionally, just disable it for drivers
-    * which are known to not support it.
+    * of disabling it unconditionally, just disable it for drivers
+    * which are known to not support it, or for DDX drivers supporting
+    * only an older (pre-ScheduleSwap) version of DRI2.
+    *
+    * This is a hack which is required until:
+    * http://lists.x.org/archives/xorg-devel/2013-February/035449.html
+    * is merged and updated xserver makes it's way into distros:
     */
-   if (strcmp(driverName, "vmwgfx") != 0) {
+   if (pdp->swapAvailable && strcmp(driverName, "vmwgfx") != 0) {
       __glXEnableDirectExtension(&psc->base, "GLX_INTEL_swap_event");
    }
 
@@ -1212,8 +1222,7 @@ dri2CreateScreen(int screen, struct glx_display * priv)
       goto handle_error;
    }
 
-   extensions = psc->core->getExtensions(psc->driScreen);
-   dri2BindExtensions(psc, extensions, driverName);
+   dri2BindExtensions(psc, priv, driverName);
 
    configs = driConvertConfigs(psc->core, psc->base.configs, driver_configs);
    visuals = driConvertConfigs(psc->core, psc->base.visuals, driver_configs);
