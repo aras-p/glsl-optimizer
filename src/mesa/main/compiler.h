@@ -48,6 +48,8 @@
 #include <float.h>
 #include <stdarg.h>
 
+#include "c99_compat.h" /* inline, __func__, etc. */
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -111,30 +113,7 @@ extern "C" {
 
 
 
-/**
- * Function inlining
- */
-#ifndef inline
-#  ifdef __cplusplus
-     /* C++ supports inline keyword */
-#  elif defined(__GNUC__)
-#    define inline __inline__
-#  elif defined(_MSC_VER)
-#    define inline __inline
-#  elif defined(__ICL)
-#    define inline __inline
-#  elif defined(__INTEL_COMPILER)
-     /* Intel compiler supports inline keyword */
-#  elif defined(__WATCOMC__) && (__WATCOMC__ >= 1100)
-#    define inline __inline
-#  elif defined(__SUNPRO_C) && defined(__C99FEATURES__)
-     /* C99 supports inline keyword */
-#  elif (__STDC_VERSION__ >= 199901L)
-     /* C99 supports inline keyword */
-#  else
-#    define inline
-#  endif
-#endif
+/* XXX: Use standard `inline` keyword instead */
 #ifndef INLINE
 #  define INLINE inline
 #endif
@@ -177,35 +156,10 @@ extern "C" {
 #  endif
 #endif
 
-/**
- * The __FUNCTION__ gcc variable is generally only used for debugging.
- * If we're not using gcc, define __FUNCTION__ as a cpp symbol here.
- * Don't define it if using a newer Windows compiler.
- */
+/* XXX: Use standard `__func__` instead */
 #ifndef __FUNCTION__
-# if !defined(__GNUC__) && !defined(__xlC__) &&	\
-      (!defined(_MSC_VER) || _MSC_VER < 1300)
-#  if (__STDC_VERSION__ >= 199901L) /* C99 */ || \
-    (defined(__SUNPRO_C) && defined(__C99FEATURES__))
-#   define __FUNCTION__ __func__
-#  else
-#   define __FUNCTION__ "<unknown>"
-#  endif
-# endif
+#  define __FUNCTION__ __func__
 #endif
-#ifndef __func__
-#  if (__STDC_VERSION__ >= 199901L) || \
-      (defined(__SUNPRO_C) && defined(__C99FEATURES__))
-       /* __func__ is part of C99 */
-#  elif defined(_MSC_VER)
-#    if _MSC_VER >= 1300
-#      define __func__ __FUNCTION__
-#    else
-#      define __func__ "<unknown>"
-#    endif
-#  endif
-#endif
-
 
 /**
  * Either define MESA_BIG_ENDIAN or MESA_LITTLE_ENDIAN, and CPU_TO_LE32.

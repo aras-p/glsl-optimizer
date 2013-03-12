@@ -29,6 +29,8 @@
 #define P_COMPILER_H
 
 
+#include "c99_compat.h" /* inline, __func__, etc. */
+
 #include "p_config.h"
 
 #include <stdlib.h>
@@ -90,28 +92,7 @@ typedef unsigned char boolean;
 #endif
 #endif
 
-/* Function inlining */
-#ifndef inline
-#  ifdef __cplusplus
-     /* C++ supports inline keyword */
-#  elif defined(__GNUC__)
-#    define inline __inline__
-#  elif defined(_MSC_VER)
-#    define inline __inline
-#  elif defined(__ICL)
-#    define inline __inline
-#  elif defined(__INTEL_COMPILER)
-     /* Intel compiler supports inline keyword */
-#  elif defined(__WATCOMC__) && (__WATCOMC__ >= 1100)
-#    define inline __inline
-#  elif defined(__SUNPRO_C) && defined(__C99FEATURES__)
-     /* C99 supports inline keyword */
-#  elif (__STDC_VERSION__ >= 199901L)
-     /* C99 supports inline keyword */
-#  else
-#    define inline
-#  endif
-#endif
+/* XXX: Use standard `inline` keyword instead */
 #ifndef INLINE
 #  define INLINE inline
 #endif
@@ -124,26 +105,6 @@ typedef unsigned char boolean;
 #    define ALWAYS_INLINE __forceinline
 #  else
 #    define ALWAYS_INLINE INLINE
-#  endif
-#endif
-
-/*
- * Define the C99 restrict keyword.
- *
- * See also:
- * - http://cellperformance.beyond3d.com/articles/2006/05/demystifying-the-restrict-keyword.html
- */
-#ifndef restrict
-#  if (__STDC_VERSION__ >= 199901L)
-     /* C99 */
-#  elif defined(__SUNPRO_C) && defined(__C99FEATURES__)
-     /* C99 */
-#  elif defined(__GNUC__)
-#    define restrict __restrict__
-#  elif defined(_MSC_VER)
-#    define restrict __restrict
-#  else
-#    define restrict /* */
 #  endif
 #endif
 
@@ -160,35 +121,10 @@ typedef unsigned char boolean;
 #endif
 
 
-/* The __FUNCTION__ gcc variable is generally only used for debugging.
- * If we're not using gcc, define __FUNCTION__ as a cpp symbol here.
- */
+/* XXX: Use standard `__func__` instead */
 #ifndef __FUNCTION__
-# if !defined(__GNUC__)
-#  if (__STDC_VERSION__ >= 199901L) /* C99 */ || \
-    (defined(__SUNPRO_C) && defined(__C99FEATURES__))
-#   define __FUNCTION__ __func__
-#  else
-#   define __FUNCTION__ "<unknown>"
-#  endif
-# endif
-# if defined(_MSC_VER) && _MSC_VER < 1300
-#  define __FUNCTION__ "<unknown>"
-# endif
+#  define __FUNCTION__ __func__
 #endif
-#ifndef __func__
-#  if (__STDC_VERSION__ >= 199901L) || \
-      (defined(__SUNPRO_C) && defined(__C99FEATURES__))
-       /* __func__ is part of C99 */
-#  elif defined(_MSC_VER)
-#    if _MSC_VER >= 1300
-#      define __func__ __FUNCTION__
-#    else
-#      define __func__ "<unknown>"
-#    endif
-#  endif
-#endif
-
 
 
 /* This should match linux gcc cdecl semantics everywhere, so that we
