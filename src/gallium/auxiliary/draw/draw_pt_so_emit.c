@@ -27,6 +27,7 @@
 
 #include "draw/draw_private.h"
 #include "draw/draw_vs.h"
+#include "draw/draw_gs.h"
 #include "draw/draw_context.h"
 #include "draw/draw_vbuf.h"
 #include "draw/draw_vertex.h"
@@ -51,13 +52,37 @@ struct pt_so_emit {
    unsigned generated_primitives;
 };
 
+static const struct pipe_stream_output_info *
+draw_so_info(const struct draw_context *draw)
+{
+   const struct pipe_stream_output_info *state = NULL;
+
+   if (draw->gs.geometry_shader) {
+      state = &draw->gs.geometry_shader->state.stream_output;
+   } else {
+      state = &draw->vs.vertex_shader->state.stream_output;
+   }
+
+   return state;
+}
+
+static INLINE boolean
+draw_has_so(const struct draw_context *draw)
+{
+   const struct pipe_stream_output_info *state = draw_so_info(draw);
+
+   if (state && state->num_outputs > 0)
+      return TRUE;
+
+   return FALSE;
+}
 
 void draw_pt_so_emit_prepare(struct pt_so_emit *emit, boolean use_pre_clip_pos)
 {
    struct draw_context *draw = emit->draw;
 
    emit->use_pre_clip_pos = use_pre_clip_pos;
-   emit->has_so = (draw->vs.vertex_shader->state.stream_output.num_outputs > 0);
+   emit->has_so = draw_has_so(draw);
    if (use_pre_clip_pos)
       emit->pos_idx = draw_current_shader_position_output(draw);
 
@@ -92,8 +117,7 @@ static void so_emit_prim(struct pt_so_emit *so,
    struct draw_context *draw = so->draw;
    const float (*input_ptr)[4];
    const float (*pcp_ptr)[4] = NULL;
-   const struct pipe_stream_output_info *state =
-      &draw->vs.vertex_shader->state.stream_output;
+   const struct pipe_stream_output_info *state = draw_so_info(draw);
    float *buffer;
    int buffer_total_bytes[PIPE_MAX_SO_BUFFERS];
 
@@ -125,9 +149,8 @@ static void so_emit_prim(struct pt_so_emit *so,
    for (i = 0; i < num_vertices; ++i) {
       const float (*input)[4];
       const float (*pre_clip_pos)[4];
-      unsigned total_written_compos = 0;
       int ob;
-      /*debug_printf("%d) vertex index = %d (prim idx = %d)\n", i, indices[i], prim_idx);*/
+
       input = (const float (*)[4])(
          (const char *)input_ptr + (indices[i] * input_vertex_stride));
 
@@ -145,11 +168,11 @@ static void so_emit_prim(struct pt_so_emit *so,
          buffer = (float *)((char *)draw->so.targets[ob]->mapping +
                             draw->so.targets[ob]->target.buffer_offset +
                             draw->so.targets[ob]->internal_offset) + state->output[slot].dst_offset;
+         
          if (idx == so->pos_idx && pcp_ptr)
-            memcpy(buffer, &pre_clip_pos[start_comp], num_comps * sizeof(float));
+            memcpy(buffer, &pre_clip_pos[idx][start_comp], num_comps * sizeof(float));
          else
             memcpy(buffer, &input[idx][start_comp], num_comps * sizeof(float));
-         total_written_compos += num_comps;
       }
       for (ob = 0; ob < draw->so.num_targets; ++ob)
          draw->so.targets[ob]->internal_offset += state->stride[ob] * sizeof(float);
