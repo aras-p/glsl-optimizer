@@ -181,6 +181,35 @@ brw_hiz_op_params::brw_hiz_op_params(struct intel_mipmap_tree *mt,
    this->hiz_op = op;
 
    depth.set(mt, level, layer);
+
+   /* Align the rectangle primitive to 8x4 pixels.
+    *
+    * During fast depth clears, the emitted rectangle primitive  must be
+    * aligned to 8x4 pixels.  From the Ivybridge PRM, Vol 2 Part 1 Section
+    * 11.5.3.1 Depth Buffer Clear (and the matching section in the Sandybridge
+    * PRM):
+    *     If Number of Multisamples is NUMSAMPLES_1, the rectangle must be
+    *     aligned to an 8x4 pixel block relative to the upper left corner
+    *     of the depth buffer [...]
+    *
+    * For hiz resolves, the rectangle must also be 8x4 aligned. Item
+    * WaHizAmbiguate8x4Aligned from the Haswell workarounds page and the
+    * Ivybridge simulator require the alignment.
+    *
+    * To be safe, let's just align the rect for all hiz operations and all
+    * hardware generations.
+    *
+    * However, for some miptree slices of a Z24 texture, emitting an 8x4
+    * aligned rectangle that covers the slice may clobber adjacent slices if
+    * we strictly adhered to the texture alignments specified in the PRM.  The
+    * Ivybridge PRM, Section "Alignment Unit Size", states that
+    * SURFACE_STATE.Surface_Horizontal_Alignment should be 4 for Z24 surfaces,
+    * not 8. But commit 1f112cc increased the alignment from 4 to 8, which
+    * prevents the clobbering.
+    */
+   depth.width = ALIGN(depth.width, 8);
+   depth.height = ALIGN(depth.height, 4);
+
    x1 = depth.width;
    y1 = depth.height;
 
