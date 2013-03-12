@@ -30,6 +30,37 @@
 
 
 /*
+ * MSVC hacks.
+ */
+#if defined(_MSC_VER)
+   /*
+    * Visual Studio 2012 will complain if we define the `inline` keyword, but
+    * actually it only supports the keyword on C++.
+    *
+    * We could skip this check by defining _ALLOW_KEYWORD_MACROS, but there is
+    * probably value in checking this for other keywords.  So simply include
+    * the checking before we define it below.
+    */
+#  if _MSC_VER >= 1700
+#    include <xkeycheck.h>
+#  endif
+
+   /*
+    * XXX: MSVC has a `__restrict` keyword, but it also has a
+    * `__declspec(restrict)` modifier, so it is impossible to define a
+    * `restrict` macro without interfering with the latter.  Furthermore the
+    * MSVC standard library uses __declspec(restrict) under the _CRTRESTRICT
+    * macro.  For now resolve this issue by redefining _CRTRESTRICT, but going
+    * forward we should probably should stop using restrict, especially
+    * considering that our code does not obbey strict aliasing rules any way.
+    */
+#  include <crtdefs.h>
+#  undef _CRTRESTRICT
+#  define _CRTRESTRICT
+#endif
+
+
+/*
  * C99 inline keyword
  */
 #ifndef inline
@@ -99,6 +130,17 @@
 #  else
 #    define __func__ "<unknown>"
 #  endif
+#endif
+
+
+/* Simple test case for debugging */
+#if 0
+static inline const char *
+test_c99_compat_h(const void * restrict a,
+                  const void * restrict b)
+{
+   return __func__;
+}
 #endif
 
 
