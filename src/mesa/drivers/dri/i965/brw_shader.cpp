@@ -378,3 +378,113 @@ brw_texture_offset(ir_constant *offset)
    }
    return offset_bits;
 }
+
+const char *
+brw_instruction_name(enum opcode op)
+{
+   char *fallback;
+
+   if (op < ARRAY_SIZE(opcode_descs) && opcode_descs[op].name)
+      return opcode_descs[op].name;
+
+   switch (op) {
+   case FS_OPCODE_FB_WRITE:
+      return "fb_write";
+
+   case SHADER_OPCODE_RCP:
+      return "rcp";
+   case SHADER_OPCODE_RSQ:
+      return "rsq";
+   case SHADER_OPCODE_SQRT:
+      return "sqrt";
+   case SHADER_OPCODE_EXP2:
+      return "exp2";
+   case SHADER_OPCODE_LOG2:
+      return "log2";
+   case SHADER_OPCODE_POW:
+      return "pow";
+   case SHADER_OPCODE_INT_QUOTIENT:
+      return "int_quot";
+   case SHADER_OPCODE_INT_REMAINDER:
+      return "int_rem";
+   case SHADER_OPCODE_SIN:
+      return "sin";
+   case SHADER_OPCODE_COS:
+      return "cos";
+
+   case SHADER_OPCODE_TEX:
+      return "tex";
+   case SHADER_OPCODE_TXD:
+      return "txd";
+   case SHADER_OPCODE_TXF:
+      return "txf";
+   case SHADER_OPCODE_TXL:
+      return "txl";
+   case SHADER_OPCODE_TXS:
+      return "txs";
+   case FS_OPCODE_TXB:
+      return "txb";
+   case SHADER_OPCODE_TXF_MS:
+      return "txf_ms";
+
+   case FS_OPCODE_DDX:
+      return "ddx";
+   case FS_OPCODE_DDY:
+      return "ddy";
+
+   case FS_OPCODE_PIXEL_X:
+      return "pixel_x";
+   case FS_OPCODE_PIXEL_Y:
+      return "pixel_y";
+
+   case FS_OPCODE_CINTERP:
+      return "cinterp";
+   case FS_OPCODE_LINTERP:
+      return "linterp";
+
+   case FS_OPCODE_SPILL:
+      return "spill";
+   case FS_OPCODE_UNSPILL:
+      return "unspill";
+
+   case FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD:
+      return "uniform_pull_const";
+   case FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD_GEN7:
+      return "uniform_pull_const_gen7";
+   case FS_OPCODE_VARYING_PULL_CONSTANT_LOAD:
+      return "varying_pull_const";
+   case FS_OPCODE_VARYING_PULL_CONSTANT_LOAD_GEN7:
+      return "varying_pull_const_gen7";
+
+   case FS_OPCODE_MOV_DISPATCH_TO_FLAGS:
+      return "mov_dispatch_to_flags";
+   case FS_OPCODE_DISCARD_JUMP:
+      return "discard_jump";
+
+   case FS_OPCODE_SET_SIMD4X2_OFFSET:
+      return "set_simd4x2_offset";
+
+   case FS_OPCODE_PACK_HALF_2x16_SPLIT:
+      return "pack_half_2x16_split";
+   case FS_OPCODE_UNPACK_HALF_2x16_SPLIT_X:
+      return "unpack_half_2x16_split_x";
+   case FS_OPCODE_UNPACK_HALF_2x16_SPLIT_Y:
+      return "unpack_half_2x16_split_y";
+
+   case VS_OPCODE_URB_WRITE:
+      return "urb_write";
+   case VS_OPCODE_SCRATCH_READ:
+      return "scratch_read";
+   case VS_OPCODE_SCRATCH_WRITE:
+      return "scratch_write";
+   case VS_OPCODE_PULL_CONSTANT_LOAD:
+      return "pull_constant_load";
+
+   default:
+      /* Yes, this leaks.  It's in debug code, it should never occur, and if
+       * it does, you should just add the case to the list above.
+       */
+      asprintf(&fallback, "op%d", op);
+      return fallback;
+   }
+}

@@ -972,12 +972,7 @@ vec4_visitor::split_virtual_grfs()
 void
 vec4_visitor::dump_instruction(vec4_instruction *inst)
 {
-   if (inst->opcode < ARRAY_SIZE(opcode_descs) &&
-       opcode_descs[inst->opcode].name) {
-      printf("%s ", opcode_descs[inst->opcode].name);
-   } else {
-      printf("op%d ", inst->opcode);
-   }
+   printf("%s ", brw_instruction_name(inst->opcode));
 
    switch (inst->dst.file) {
    case GRF:
