@@ -330,6 +330,9 @@ st_new_renderbuffer_fb(enum pipe_format format, int samples, boolean sw)
       /* accum buffer */
       strb->Base.InternalFormat = GL_RGBA16_SNORM;
       break;
+   case PIPE_FORMAT_R16G16B16A16_UNORM:
+      strb->Base.InternalFormat = GL_RGBA16;
+      break;
    case PIPE_FORMAT_R8_UNORM:
       strb->Base.InternalFormat = GL_R8;
       break;
