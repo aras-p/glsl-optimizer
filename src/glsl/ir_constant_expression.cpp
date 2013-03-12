@@ -1388,6 +1388,31 @@ ir_expression::constant_expression_value(struct hash_table *variable_context)
       break;
    }
 
+   case ir_triop_vector_insert: {
+      const unsigned idx = op[2]->value.u[0];
+
+      memcpy(&data, &op[0]->value, sizeof(data));
+
+      switch (this->type->base_type) {
+      case GLSL_TYPE_INT:
+	 data.i[idx] = op[1]->value.i[0];
+	 break;
+      case GLSL_TYPE_UINT:
+	 data.u[idx] = op[1]->value.u[0];
+	 break;
+      case GLSL_TYPE_FLOAT:
+	 data.f[idx] = op[1]->value.f[0];
+	 break;
+      case GLSL_TYPE_BOOL:
+	 data.b[idx] = op[1]->value.b[0];
+	 break;
+      default:
+	 assert(!"Should not get here.");
+	 break;
+      }
+      break;
+   }
+
    case ir_quadop_bitfield_insert: {
       int offset = op[2]->value.i[0];
       int bits = op[3]->value.i[0];

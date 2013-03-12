@@ -518,6 +518,7 @@ static const char *const operator_strs[] = {
    "lrp",
    "bfi",
    "bitfield_extract",
+   "vector_insert",
    "bitfield_insert",
    "vector",
 };

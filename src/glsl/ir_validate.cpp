@@ -511,6 +511,15 @@ ir_validate::visit_leave(ir_expression *ir)
       assert(ir->operands[2]->type == glsl_type::int_type);
       break;
 
+   case ir_triop_vector_insert:
+      assert(ir->operands[0]->type->is_vector());
+      assert(ir->operands[1]->type->is_scalar());
+      assert(ir->operands[0]->type->base_type == ir->operands[1]->type->base_type);
+      assert(ir->operands[2]->type->is_scalar()
+             && ir->operands[2]->type->is_integer());
+      assert(ir->type == ir->operands[0]->type);
+      break;
+
    case ir_quadop_bitfield_insert:
       assert(ir->operands[0]->type == ir->type);
       assert(ir->operands[1]->type == ir->type);

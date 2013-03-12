@@ -1162,9 +1162,18 @@ enum ir_expression_operation {
    ir_triop_bitfield_extract,
 
    /**
+    * Generate a value with one field of a vector changed
+    *
+    * operand0 is the vector
+    * operand1 is the value to write into the vector result
+    * operand2 is the index in operand0 to be modified
+    */
+   ir_triop_vector_insert,
+
+   /**
     * A sentinel marking the last of the ternary operations.
     */
-   ir_last_triop = ir_triop_bitfield_extract,
+   ir_last_triop = ir_triop_vector_insert,
 
    ir_quadop_bitfield_insert,
 
