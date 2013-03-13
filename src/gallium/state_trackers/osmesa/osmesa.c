@@ -352,8 +352,8 @@ osmesa_st_framebuffer_validate(struct st_framebuffer_iface *stfbi,
    templat.flags = 0;
 
    for (i = 0; i < count; i++) {
-      enum pipe_format format;
-      unsigned bind;
+      enum pipe_format format = PIPE_FORMAT_NONE;
+      unsigned bind = 0;
 
       /*
        * At this time, we really only need to handle the front-left color
@@ -371,6 +371,10 @@ osmesa_st_framebuffer_validate(struct st_framebuffer_iface *stfbi,
       else if (statts[i] == ST_ATTACHMENT_ACCUM) {
          format = osbuffer->visual.accum_format;
          bind = PIPE_BIND_RENDER_TARGET;
+      }
+      else {
+         debug_warning("Unexpected attachment type in "
+                       "osmesa_st_framebuffer_validate()");
       }
 
       templat.format = format;
