@@ -91,7 +91,6 @@ i965_FILES = \
 	brw_vec4_visitor.cpp \
 	brw_vec4_vp.cpp \
 	brw_vs.c \
-	brw_vs_constval.c \
 	brw_vs_state.c \
 	brw_vs_surface_state.c \
 	brw_vtbl.c \

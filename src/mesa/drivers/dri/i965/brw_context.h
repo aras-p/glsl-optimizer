@@ -1002,11 +1002,6 @@ struct brw_context
    struct {
       struct brw_wm_prog_data *prog_data;
 
-      /** Input sizes, calculated from active vertex program.
-       * One bit per fragment program input attribute.
-       */
-      GLbitfield64 input_size_masks[4];
-
       /** offsets in the batch to sampler default colors (texture border color)
        */
       uint32_t sdc_offset[BRW_MAX_TEX_UNIT];
