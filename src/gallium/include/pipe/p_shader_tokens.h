@@ -119,7 +119,8 @@ struct tgsi_declaration
    unsigned Interpolate : 1;  /**< any interpolation info? */
    unsigned Invariant   : 1;  /**< invariant optimization? */
    unsigned Local       : 1;  /**< optimize as subroutine local variable? */
-   unsigned Padding     : 7;
+   unsigned Array       : 1;  /**< extra array info? */
+   unsigned Padding     : 6;
 };
 
 struct tgsi_declaration_range
@@ -183,6 +184,11 @@ struct tgsi_declaration_sampler_view {
    unsigned ReturnTypeY : 6; /**< one of enum pipe_type */
    unsigned ReturnTypeZ : 6; /**< one of enum pipe_type */
    unsigned ReturnTypeW : 6; /**< one of enum pipe_type */
+};
+
+struct tgsi_declaration_array {
+   unsigned ArrayID : 10;
+   unsigned Padding : 22;
 };
 
 /*

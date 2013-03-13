@@ -129,6 +129,10 @@ tgsi_parse_token(
          next_token(ctx, &decl->SamplerView);
       }
 
+      if( decl->Declaration.Array ) {
+         next_token(ctx, &decl->Array);
+      }
+
       break;
    }
 

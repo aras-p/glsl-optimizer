@@ -1114,6 +1114,28 @@ static boolean parse_declaration( struct translate_ctx *ctx )
 
    cur = ctx->cur;
    eat_opt_white( &cur );
+   if (*cur == ',') {
+      cur2 = cur;
+      cur2++;
+      eat_opt_white( &cur2 );
+      if (str_match_nocase_whole( &cur2, "ARRAY(" )) {
+         int arrayid;
+         eat_opt_white( &cur2 );
+         if (!parse_int( &cur2, &arrayid )) {
+            report_error( ctx, "Expected `,'" );
+            return FALSE;
+         }
+         eat_opt_white( &cur2 );
+         if (*cur2 != ')') {
+            report_error( ctx, "Expected `,'" );
+            return FALSE;
+         }
+         decl.Declaration.Array = 1;
+         decl.Array.ArrayID = arrayid;
+         cur = cur2;
+      }
+   }
+
    if (*cur == ',' && !is_vs_input) {
       uint i, j;
 

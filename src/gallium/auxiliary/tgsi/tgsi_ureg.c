@@ -50,6 +50,7 @@ union tgsi_any_token {
    struct tgsi_declaration_interp decl_interp;
    struct tgsi_declaration_semantic decl_semantic;
    struct tgsi_declaration_sampler_view decl_sampler_view;
+   struct tgsi_declaration_array array;
    struct tgsi_immediate imm;
    union  tgsi_immediate_data imm_data;
    struct tgsi_instruction insn;
@@ -78,6 +79,7 @@ struct ureg_tokens {
 #define UREG_MAX_IMMEDIATE 256
 #define UREG_MAX_ADDR 2
 #define UREG_MAX_PRED 1
+#define UREG_MAX_ARRAY_TEMPS 256
 
 struct const_decl {
    struct {
@@ -155,6 +157,9 @@ struct ureg_program
    struct util_bitmask *local_temps;
    struct util_bitmask *decl_temps;
    unsigned nr_temps;
+
+   unsigned array_temps[UREG_MAX_ARRAY_TEMPS];
+   unsigned nr_array_temps;
 
    struct const_decl const_decls;
    struct const_decl const_decls2D[PIPE_MAX_CONSTANT_BUFFERS];
@@ -584,10 +589,16 @@ struct ureg_dst ureg_DECL_array_temporary( struct ureg_program *ureg,
    if (local)
       util_bitmask_set(ureg->local_temps, i);
 
+   /* Always start a new declaration at the start */
    util_bitmask_set(ureg->decl_temps, i);
 
    ureg->nr_temps += size;
+
+   /* and also at the end of the array */
    util_bitmask_set(ureg->decl_temps, ureg->nr_temps);
+
+   if (ureg->nr_array_temps < UREG_MAX_ARRAY_TEMPS)
+      ureg->array_temps[ureg->nr_array_temps++] = i;
 
    return dst;
 }
@@ -1284,9 +1295,11 @@ emit_decl_fs(struct ureg_program *ureg,
 static void
 emit_decl_temps( struct ureg_program *ureg,
                  unsigned first, unsigned last,
-                 boolean local )
+                 boolean local,
+                 unsigned arrayid )
 {
-   union tgsi_any_token *out = get_tokens( ureg, DOMAIN_DECL, 2 );
+   union tgsi_any_token *out = get_tokens( ureg, DOMAIN_DECL,
+                                           arrayid ? 3 : 2 );
 
    out[0].value = 0;
    out[0].decl.Type = TGSI_TOKEN_TYPE_DECLARATION;
@@ -1298,6 +1311,12 @@ emit_decl_temps( struct ureg_program *ureg,
    out[1].value = 0;
    out[1].decl_range.First = first;
    out[1].decl_range.Last = last;
+
+   if (arrayid) {
+      out[0].decl.Array = 1;
+      out[2].value = 0;
+      out[2].array.ArrayID = arrayid;
+   }
 }
 
 static void emit_decl_range( struct ureg_program *ureg,
@@ -1555,6 +1574,7 @@ static void emit_decls( struct ureg_program *ureg )
    }
 
    if (ureg->nr_temps) {
+      unsigned array = 0;
       for (i = 0; i < ureg->nr_temps;) {
          boolean local = util_bitmask_get(ureg->local_temps, i);
          unsigned first = i;
@@ -1562,7 +1582,10 @@ static void emit_decls( struct ureg_program *ureg )
          if (i == UTIL_BITMASK_INVALID_INDEX)
             i = ureg->nr_temps;
 
-         emit_decl_temps( ureg, first, i - 1, local );
+         if (array < ureg->nr_array_temps && ureg->array_temps[array] == first)
+            emit_decl_temps( ureg, first, i - 1, local, ++array );
+         else
+            emit_decl_temps( ureg, first, i - 1, local, 0 );
       }
    }
 

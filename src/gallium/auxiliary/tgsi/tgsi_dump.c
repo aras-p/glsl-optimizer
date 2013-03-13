@@ -272,6 +272,12 @@ iter_declaration(
       ctx,
       decl->Declaration.UsageMask );
 
+   if (decl->Declaration.Array) {
+      TXT( ", ARRAY(" );
+      SID(decl->Array.ArrayID);
+      CHR(')');
+   }
+
    if (decl->Declaration.Local)
       TXT( ", LOCAL" );
 
