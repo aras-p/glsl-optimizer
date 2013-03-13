@@ -294,7 +294,8 @@ public:
 					   fs_reg reg);
 
    exec_list VARYING_PULL_CONSTANT_LOAD(fs_reg dst, fs_reg surf_index,
-                                        fs_reg offset);
+                                        fs_reg varying_offset,
+                                        uint32_t const_offset);
 
    bool run();
    void setup_payload_gen4();

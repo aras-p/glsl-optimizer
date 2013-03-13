@@ -650,9 +650,8 @@ fs_visitor::visit(ir_expression *ir)
          emit(SHR(base_offset, op[1], fs_reg(2)));
 
          for (int i = 0; i < ir->type->vector_elements; i++) {
-            fs_reg offset = fs_reg(this, glsl_type::int_type);
-            emit(ADD(offset, base_offset, fs_reg(i)));
-            emit(VARYING_PULL_CONSTANT_LOAD(result, surf_index, offset));
+            emit(VARYING_PULL_CONSTANT_LOAD(result, surf_index,
+                                            base_offset, i));
 
             if (ir->type->base_type == GLSL_TYPE_BOOL)
                emit(CMP(result, result, fs_reg(0), BRW_CONDITIONAL_NZ));

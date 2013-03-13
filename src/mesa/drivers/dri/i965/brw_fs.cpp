@@ -229,10 +229,14 @@ fs_visitor::CMP(fs_reg dst, fs_reg src0, fs_reg src1, uint32_t condition)
 
 exec_list
 fs_visitor::VARYING_PULL_CONSTANT_LOAD(fs_reg dst, fs_reg surf_index,
-                                       fs_reg offset)
+                                       fs_reg varying_offset,
+                                       uint32_t const_offset)
 {
    exec_list instructions;
    fs_inst *inst;
+
+   fs_reg offset = fs_reg(this, glsl_type::uint_type);
+   instructions.push_tail(ADD(offset, varying_offset, fs_reg(const_offset)));
 
    if (intel->gen >= 7) {
       inst = new(mem_ctx) fs_inst(FS_OPCODE_VARYING_PULL_CONSTANT_LOAD_GEN7,
@@ -1620,15 +1624,13 @@ fs_visitor::move_uniform_array_access_to_pull_constants()
          base_ir = inst->ir;
          current_annotation = inst->annotation;
 
-         fs_reg offset = fs_reg(this, glsl_type::int_type);
-         inst->insert_before(ADD(offset, *inst->src[i].reladdr,
-                                 fs_reg(pull_constant_loc[uniform] +
-                                        inst->src[i].reg_offset)));
-
          fs_reg surf_index = fs_reg((unsigned)SURF_INDEX_FRAG_CONST_BUFFER);
          fs_reg temp = fs_reg(this, glsl_type::float_type);
          exec_list list = VARYING_PULL_CONSTANT_LOAD(temp,
-                                                     surf_index, offset);
+                                                     surf_index,
+                                                     *inst->src[i].reladdr,
+                                                     pull_constant_loc[uniform] +
+                                                     inst->src[i].reg_offset);
          inst->insert_before(&list);
 
          inst->src[i].file = temp.file;
