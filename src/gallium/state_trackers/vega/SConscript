@@ -12,7 +12,6 @@ env.Append(CPPPATH = [
     Dir('.'),
 ])
 env.Append(CPPDEFINES = [
-    'PACKAGE_VERSION=',
     'KHRONOS_DLL_EXPORTS',
 ])
 

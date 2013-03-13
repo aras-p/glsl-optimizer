@@ -21,11 +21,6 @@ env.Append(CPPPATH = [
 enabled_apis = []
 enabled_apis += ['GL']
 
-env.Append(CPPDEFINES = [
-    ('PACKAGE_VERSION', '\\"9.2-devel\\"'),
-    ('PACKAGE_BUGREPORT', '\\"https://bugs.freedesktop.org/enter_bug.cgi?product=Mesa\\"'),
-])
-
 if env['platform'] == 'windows':
     env.Append(CPPDEFINES = [
         '_GDI32_', # prevent gl* being declared __declspec(dllimport) in MS headers
