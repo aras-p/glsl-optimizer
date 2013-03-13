@@ -1375,7 +1375,7 @@ glXImportContextEXT(Display *dpy, GLXContextID contextID)
    struct glx_config *mode;
    uint32_t fbconfigID = 0;
    uint32_t visualID = 0;
-   uint32_t screen;
+   uint32_t screen = 0;
    Bool got_screen = False;
 
    /* The GLX_EXT_import_context spec says:
