@@ -157,7 +157,6 @@ lp_scene_begin_rasterization(struct lp_scene *scene)
    for (i = 0; i < scene->fb.nr_cbufs; i++) {
       struct pipe_surface *cbuf = scene->fb.cbufs[i];
       if (llvmpipe_resource_is_texture(cbuf->texture)) {
-         assert(cbuf->u.tex.first_layer == cbuf->u.tex.last_layer);
          scene->cbufs[i].stride = llvmpipe_resource_stride(cbuf->texture,
                                                            cbuf->u.tex.level);
 
@@ -178,7 +177,6 @@ lp_scene_begin_rasterization(struct lp_scene *scene)
 
    if (fb->zsbuf) {
       struct pipe_surface *zsbuf = scene->fb.zsbuf;
-      assert(zsbuf->u.tex.first_layer == zsbuf->u.tex.last_layer);
       scene->zsbuf.stride = llvmpipe_resource_stride(zsbuf->texture, zsbuf->u.tex.level);
       scene->zsbuf.blocksize = 
          util_format_get_blocksize(zsbuf->texture->format);
