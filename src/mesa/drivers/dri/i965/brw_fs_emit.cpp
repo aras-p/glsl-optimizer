@@ -734,28 +734,29 @@ fs_generator::generate_varying_pull_constant_load_gen7(fs_inst *inst,
 	  index.type == BRW_REGISTER_TYPE_UD);
    uint32_t surf_index = index.dw1.ud;
 
-   uint32_t msg_control, rlen, mlen;
+   uint32_t simd_mode, rlen, mlen;
    if (dispatch_width == 16) {
-      msg_control = BRW_DATAPORT_DWORD_SCATTERED_BLOCK_16DWORDS;
-      mlen = rlen = 2;
+      mlen = 2;
+      rlen = 8;
+      simd_mode = BRW_SAMPLER_SIMD_MODE_SIMD16;
    } else {
-      msg_control = BRW_DATAPORT_DWORD_SCATTERED_BLOCK_8DWORDS;
-      mlen = rlen = 1;
+      mlen = 1;
+      rlen = 4;
+      simd_mode = BRW_SAMPLER_SIMD_MODE_SIMD8;
    }
 
    struct brw_instruction *send = brw_next_insn(p, BRW_OPCODE_SEND);
    brw_set_dest(p, send, dst);
    brw_set_src0(p, send, offset);
-   if (intel->gen < 6)
-      send->header.destreg__conditionalmod = inst->base_mrf;
-   brw_set_dp_read_message(p, send,
+   brw_set_sampler_message(p, send,
                            surf_index,
-                           msg_control,
-                           GEN7_DATAPORT_DC_DWORD_SCATTERED_READ,
-                           BRW_DATAPORT_READ_TARGET_DATA_CACHE,
+                           0, /* LD message ignores sampler unit */
+                           GEN5_SAMPLER_MESSAGE_SAMPLE_LD,
+                           rlen,
                            mlen,
-                           inst->header_present,
-                           rlen);
+                           false, /* no header */
+                           simd_mode,
+                           0);
 }
 
 /**

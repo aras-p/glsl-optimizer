@@ -235,14 +235,33 @@ fs_visitor::VARYING_PULL_CONSTANT_LOAD(fs_reg dst, fs_reg surf_index,
    exec_list instructions;
    fs_inst *inst;
 
-   fs_reg offset = fs_reg(this, glsl_type::uint_type);
-   instructions.push_tail(ADD(offset, varying_offset, fs_reg(const_offset)));
-
    if (intel->gen >= 7) {
+      /* We have our constant surface use a pitch of 4 bytes, so our index can
+       * be any component of a vector, and then we load 4 contiguous
+       * components starting from that.
+       *
+       * We break down the const_offset to a portion added to the variable
+       * offset and a portion done using reg_offset, which means that if you
+       * have GLSL using something like "uniform vec4 a[20]; gl_FragColor =
+       * a[i]", we'll temporarily generate 4 vec4 loads from offset i * 4, and
+       * CSE can later notice that those loads are all the same and eliminate
+       * the redundant ones.
+       */
+      fs_reg vec4_offset = fs_reg(this, glsl_type::int_type);
+      instructions.push_tail(ADD(vec4_offset,
+                                 varying_offset, const_offset & ~3));
+
+      fs_reg vec4_result = fs_reg(GRF, virtual_grf_alloc(4), dst.type);
       inst = new(mem_ctx) fs_inst(FS_OPCODE_VARYING_PULL_CONSTANT_LOAD_GEN7,
-                                  dst, surf_index, offset);
+                                  vec4_result, surf_index, vec4_offset);
       instructions.push_tail(inst);
+
+      vec4_result.reg_offset += const_offset & 3;
+      instructions.push_tail(MOV(dst, vec4_result));
    } else {
+      fs_reg offset = fs_reg(this, glsl_type::uint_type);
+      instructions.push_tail(ADD(offset, varying_offset, fs_reg(const_offset)));
+
       int base_mrf = 13;
       bool header_present = true;
 
@@ -313,7 +332,7 @@ fs_inst::equals(fs_inst *inst)
 int
 fs_inst::regs_written()
 {
-   if (is_tex())
+   if (is_tex() || opcode == FS_OPCODE_VARYING_PULL_CONSTANT_LOAD_GEN7)
       return 4;
 
    /* The SINCOS and INT_DIV_QUOTIENT_AND_REMAINDER math functions return 2,
