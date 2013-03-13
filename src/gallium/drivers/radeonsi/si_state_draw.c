@@ -430,7 +430,7 @@ static void si_vertex_buffer_update(struct r600_context *rctx)
 	unsigned i, count;
 	uint64_t va;
 
-	si_pm4_inval_vertex_cache(pm4);
+	si_pm4_inval_texture_cache(pm4);
 
 	/* bind vertex buffer once */
 	count = rctx->vertex_elements->count;

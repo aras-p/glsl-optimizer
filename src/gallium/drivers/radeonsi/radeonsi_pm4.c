@@ -139,12 +139,6 @@ void si_pm4_inval_texture_cache(struct si_pm4_state *state)
 	state->cp_coher_cntl |= S_0085F0_TC_ACTION_ENA(1);
 }
 
-void si_pm4_inval_vertex_cache(struct si_pm4_state *state)
-{
-        /* Some GPUs don't have the vertex cache and must use the texture cache instead. */
-	state->cp_coher_cntl |= S_0085F0_TC_ACTION_ENA(1);
-}
-
 void si_pm4_inval_fb_cache(struct si_pm4_state *state, unsigned nr_cbufs)
 {
 	state->cp_coher_cntl |= S_0085F0_CB_ACTION_ENA(1);
