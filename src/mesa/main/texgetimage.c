@@ -518,6 +518,7 @@ get_tex_rgba(struct gl_context *ctx, GLuint dimensions,
    if (type_needs_clamping(type)) {
       /* the returned image type can't have negative values */
       if (dataType == GL_FLOAT ||
+          dataType == GL_HALF_FLOAT ||
           dataType == GL_SIGNED_NORMALIZED ||
           format == GL_LUMINANCE ||
           format == GL_LUMINANCE_ALPHA) {
