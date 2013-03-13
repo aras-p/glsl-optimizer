@@ -1039,31 +1039,24 @@ fs_visitor::emit_general_interpolation(ir_variable *ir)
 		* attribute, as well as making brw_vs_constval.c
 		* handle varyings other than gl_TexCoord.
 		*/
-	       if (location >= VARYING_SLOT_TEX0 &&
-		   location <= VARYING_SLOT_TEX7 &&
-		   k == 3 && !(c->key.proj_attrib_mask
-                               & BITFIELD64_BIT(location))) {
-		  emit(BRW_OPCODE_MOV, attr, fs_reg(1.0f));
-	       } else {
-		  struct brw_reg interp = interp_reg(location, k);
-                  emit_linterp(attr, fs_reg(interp), interpolation_mode,
-                               ir->centroid);
-                  if (brw->needs_unlit_centroid_workaround && ir->centroid) {
-                     /* Get the pixel/sample mask into f0 so that we know
-                      * which pixels are lit.  Then, for each channel that is
-                      * unlit, replace the centroid data with non-centroid
-                      * data.
-                      */
-                     emit(FS_OPCODE_MOV_DISPATCH_TO_FLAGS, attr);
-                     fs_inst *inst = emit_linterp(attr, fs_reg(interp),
-                                                  interpolation_mode, false);
-                     inst->predicate = BRW_PREDICATE_NORMAL;
-                     inst->predicate_inverse = true;
-                  }
-		  if (intel->gen < 6) {
-		     emit(BRW_OPCODE_MUL, attr, attr, this->pixel_w);
-		  }
-	       }
+               struct brw_reg interp = interp_reg(location, k);
+               emit_linterp(attr, fs_reg(interp), interpolation_mode,
+                            ir->centroid);
+               if (brw->needs_unlit_centroid_workaround && ir->centroid) {
+                  /* Get the pixel/sample mask into f0 so that we know
+                   * which pixels are lit.  Then, for each channel that is
+                   * unlit, replace the centroid data with non-centroid
+                   * data.
+                   */
+                  emit(FS_OPCODE_MOV_DISPATCH_TO_FLAGS, attr);
+                  fs_inst *inst = emit_linterp(attr, fs_reg(interp),
+                                               interpolation_mode, false);
+                  inst->predicate = BRW_PREDICATE_NORMAL;
+                  inst->predicate_inverse = true;
+               }
+               if (intel->gen < 6) {
+                  emit(BRW_OPCODE_MUL, attr, attr, this->pixel_w);
+               }
 	       attr.reg_offset++;
 	    }
 
