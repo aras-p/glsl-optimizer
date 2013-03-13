@@ -170,12 +170,18 @@ sp_tile_cache_set_surface(struct softpipe_tile_cache *tc,
    tc->surface = ps;
 
    if (ps) {
-      tc->transfer_map = pipe_transfer_map(pipe, ps->texture,
-                                           ps->u.tex.level, ps->u.tex.first_layer,
-                                           PIPE_TRANSFER_READ_WRITE |
-                                           PIPE_TRANSFER_UNSYNCHRONIZED,
-                                           0, 0, ps->width, ps->height,
-                                           &tc->transfer);
+      if (ps->texture->target != PIPE_BUFFER) {
+         tc->transfer_map = pipe_transfer_map(pipe, ps->texture,
+                                              ps->u.tex.level, ps->u.tex.first_layer,
+                                              PIPE_TRANSFER_READ_WRITE |
+                                              PIPE_TRANSFER_UNSYNCHRONIZED,
+                                              0, 0, ps->width, ps->height,
+                                              &tc->transfer);
+      }
+      else {
+         /* can't render to buffers */
+         assert(0);
+      }
 
       tc->depth_stencil = util_format_is_depth_or_stencil(ps->format);
    }
