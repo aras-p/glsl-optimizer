@@ -247,7 +247,7 @@ intel_miptree_create_layout(struct intel_context *intel,
    mt->physical_depth0 = depth0;
 
    if (!for_region &&
-       _mesa_is_depthstencil_format(_mesa_get_format_base_format(format)) &&
+       _mesa_get_format_base_format(format) == GL_DEPTH_STENCIL &&
        (intel->must_use_separate_stencil ||
 	(intel->has_separate_stencil &&
 	 intel->vtbl.is_hiz_depth_format(intel, format)))) {
