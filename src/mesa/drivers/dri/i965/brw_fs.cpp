@@ -2972,24 +2972,12 @@ brw_fs_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
       key.iz_lookup |= IZ_DEPTH_WRITE_ENABLE_BIT;
    }
 
-   if (prog->Name != 0)
-      key.proj_attrib_mask = ~(GLbitfield64) 0;
-   else {
-      /* Bit VARYING_BIT_POS of key.proj_attrib_mask is never used, so to
-       * avoid unnecessary recompiles, always set it to 1.
-       */
-      key.proj_attrib_mask |= VARYING_BIT_POS;
-   }
-
    if (intel->gen < 6)
       key.input_slots_valid |= BITFIELD64_BIT(VARYING_SLOT_POS);
 
    for (int i = 0; i < VARYING_SLOT_MAX; i++) {
       if (!(fp->Base.InputsRead & BITFIELD64_BIT(i)))
 	 continue;
-
-      if (prog->Name == 0)
-         key.proj_attrib_mask |= BITFIELD64_BIT(i);
 
       if (intel->gen < 6) {
          if (_mesa_varying_slot_in_fs((gl_varying_slot) i))

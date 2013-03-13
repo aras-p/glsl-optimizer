@@ -285,8 +285,6 @@ brw_wm_debug_recompile(struct brw_context *brw,
                       old_key->clamp_fragment_color, key->clamp_fragment_color);
    found |= key_debug(intel, "line smoothing",
                       old_key->line_aa, key->line_aa);
-   found |= key_debug(intel, "proj_attrib_mask",
-                      old_key->proj_attrib_mask, key->proj_attrib_mask);
    found |= key_debug(intel, "renderbuffer height",
                       old_key->drawable_height, key->drawable_height);
    found |= key_debug(intel, "input slots valid",
@@ -422,19 +420,6 @@ static void brw_wm_populate_key( struct brw_context *brw,
 
    if (intel->gen < 6)
       key->stats_wm = brw->intel.stats_wm;
-
-   /* BRW_NEW_WM_INPUT_DIMENSIONS */
-   /* Only set this for fixed function.  The optimization it enables isn't
-    * useful for programs using shaders.
-    */
-   if (ctx->Shader.CurrentFragmentProgram)
-      key->proj_attrib_mask = ~(GLbitfield64) 0;
-   else {
-      /* Bit VARYING_BIT_POS of key.proj_attrib_mask is never used, so to
-       * avoid unnecessary recompiles, always set it to 1.
-       */
-      key->proj_attrib_mask = brw->wm.input_size_masks[4-1] | VARYING_BIT_POS;
-   }
 
    /* _NEW_LIGHT */
    key->flat_shade = (ctx->Light.ShadeModel == GL_FLAT);
