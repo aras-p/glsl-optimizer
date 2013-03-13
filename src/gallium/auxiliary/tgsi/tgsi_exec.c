@@ -2371,50 +2371,42 @@ exec_sample_d(struct tgsi_exec_machine *mach,
    /* always fetch all 3 offsets, overkill but keeps code simple */
    fetch_texel_offsets(mach, inst, offsets);
 
+   FETCH(&r[0], 0, TGSI_CHAN_X);
+
    switch (mach->SamplerViews[resource_unit].Resource) {
    case TGSI_TEXTURE_1D:
-      FETCH(&r[0], 0, TGSI_CHAN_X);
+   case TGSI_TEXTURE_1D_ARRAY:
+      /* only 1D array actually needs Y */
+      FETCH(&r[1], 0, TGSI_CHAN_Y);
 
       fetch_assign_deriv_channel(mach, inst, 3, TGSI_CHAN_X, derivs[0]);
 
       fetch_texel(mach->Sampler, resource_unit, sampler_unit,
-                  &r[0], &ZeroVec, &ZeroVec, &ZeroVec, &ZeroVec,   /* S, T, P, C, LOD */
+                  &r[0], &r[1], &ZeroVec, &ZeroVec, &ZeroVec,   /* S, T, P, C, LOD */
                   derivs, offsets, tgsi_sampler_derivs_explicit,
                   &r[0], &r[1], &r[2], &r[3]);           /* R, G, B, A */
       break;
 
    case TGSI_TEXTURE_2D:
    case TGSI_TEXTURE_RECT:
-      FETCH(&r[0], 0, TGSI_CHAN_X);
+   case TGSI_TEXTURE_2D_ARRAY:
+      /* only 2D array actually needs Z */
       FETCH(&r[1], 0, TGSI_CHAN_Y);
+      FETCH(&r[2], 0, TGSI_CHAN_Z);
 
       fetch_assign_deriv_channel(mach, inst, 3, TGSI_CHAN_X, derivs[0]);
       fetch_assign_deriv_channel(mach, inst, 3, TGSI_CHAN_Y, derivs[1]);
 
       fetch_texel(mach->Sampler, resource_unit, sampler_unit,
-                  &r[0], &r[1], &ZeroVec, &ZeroVec, &ZeroVec,   /* inputs */
+                  &r[0], &r[1], &r[2], &ZeroVec, &ZeroVec,   /* inputs */
                   derivs, offsets, tgsi_sampler_derivs_explicit,
                   &r[0], &r[1], &r[2], &r[3]);     /* outputs */
       break;
 
    case TGSI_TEXTURE_3D:
    case TGSI_TEXTURE_CUBE:
-      FETCH(&r[0], 0, TGSI_CHAN_X);
-      FETCH(&r[1], 0, TGSI_CHAN_Y);
-      FETCH(&r[2], 0, TGSI_CHAN_Z);
-
-      fetch_assign_deriv_channel(mach, inst, 3, TGSI_CHAN_X, derivs[0]);
-      fetch_assign_deriv_channel(mach, inst, 3, TGSI_CHAN_Y, derivs[1]);
-      fetch_assign_deriv_channel(mach, inst, 3, TGSI_CHAN_Z, derivs[2]);
-
-      fetch_texel(mach->Sampler, resource_unit, sampler_unit,
-                  &r[0], &r[1], &r[2], &ZeroVec, &ZeroVec,
-                  derivs, offsets, tgsi_sampler_derivs_explicit,
-                  &r[0], &r[1], &r[2], &r[3]);
-      break;
-
    case TGSI_TEXTURE_CUBE_ARRAY:
-      FETCH(&r[0], 0, TGSI_CHAN_X);
+      /* only cube array actually needs W */
       FETCH(&r[1], 0, TGSI_CHAN_Y);
       FETCH(&r[2], 0, TGSI_CHAN_Z);
       FETCH(&r[3], 0, TGSI_CHAN_W);
