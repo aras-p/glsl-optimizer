@@ -253,7 +253,6 @@ fs_visitor::VARYING_PULL_CONSTANT_LOAD(fs_reg dst, fs_reg surf_index,
       } else {
          instructions.push_tail(MUL(mrf, offset, fs_reg(4)));
       }
-      inst = MOV(mrf, offset);
       inst = new(mem_ctx) fs_inst(FS_OPCODE_VARYING_PULL_CONSTANT_LOAD,
                                   dst, surf_index);
       inst->header_present = header_present;
