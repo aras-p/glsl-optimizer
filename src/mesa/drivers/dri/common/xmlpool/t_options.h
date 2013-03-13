@@ -47,7 +47,10 @@
  * predefined option sections and options with multi-lingual descriptions
  */
 
-/** \brief Debugging options */
+
+/**
+ * \brief Debugging options
+ */
 #define DRI_CONF_SECTION_DEBUG \
 DRI_CONF_SECTION_BEGIN \
 	DRI_CONF_DESC(en,gettext("Debugging"))
@@ -62,8 +65,36 @@ DRI_CONF_OPT_BEGIN(performance_boxes,bool,def) \
         DRI_CONF_DESC(en,gettext("Show performance boxes")) \
 DRI_CONF_OPT_END
 
+#define DRI_CONF_ALWAYS_FLUSH_BATCH(def) \
+DRI_CONF_OPT_BEGIN(always_flush_batch,bool,def) \
+        DRI_CONF_DESC(en,gettext("Enable flushing batchbuffer after each draw call")) \
+DRI_CONF_OPT_END
 
-/** \brief Texture-related options */
+#define DRI_CONF_ALWAYS_FLUSH_CACHE(def) \
+DRI_CONF_OPT_BEGIN(always_flush_cache,bool,def) \
+        DRI_CONF_DESC(en,gettext("Enable flushing GPU caches with each draw call")) \
+DRI_CONF_OPT_END
+
+#define DRI_CONF_FORCE_GLSL_EXTENSIONS_WARN(def) \
+DRI_CONF_OPT_BEGIN(force_glsl_extensions_warn,bool,def) \
+        DRI_CONF_DESC(en,gettext("Force GLSL extension default behavior to 'warn'")) \
+DRI_CONF_OPT_END
+
+#define DRI_CONF_DISABLE_BLEND_FUNC_EXTENDED(def) \
+DRI_CONF_OPT_BEGIN(disable_blend_func_extended,bool,def) \
+        DRI_CONF_DESC(en,gettext("Disable dual source blending")) \
+DRI_CONF_OPT_END
+
+#define DRI_CONF_DISABLE_GLSL_LINE_CONTINUATIONS(def) \
+DRI_CONF_OPT_BEGIN(disable_glsl_line_continuations,bool,def) \
+        DRI_CONF_DESC(en,gettext("Disable backslash-based line continuations in GLSL source")) \
+DRI_CONF_OPT_END
+
+
+
+/**
+ * \brief Image quality-related options
+ */
 #define DRI_CONF_SECTION_QUALITY \
 DRI_CONF_SECTION_BEGIN \
 	DRI_CONF_DESC(en,gettext("Image Quality"))
@@ -139,7 +170,41 @@ DRI_CONF_OPT_BEGIN(float_depth,bool,def) \
         DRI_CONF_DESC(en,gettext("Floating point depth buffer")) \
 DRI_CONF_OPT_END
 
-/** \brief Performance-related options */
+#define DRI_CONF_PP_CELSHADE(def) \
+DRI_CONF_OPT_BEGIN_V(pp_celshade,enum,def,"0:1") \
+        DRI_CONF_DESC(en,gettext("A post-processing filter to cel-shade the output")) \
+DRI_CONF_OPT_END
+
+#define DRI_CONF_PP_NORED(def) \
+DRI_CONF_OPT_BEGIN_V(pp_nored,enum,def,"0:1") \
+        DRI_CONF_DESC(en,gettext("A post-processing filter to remove the red channel")) \
+DRI_CONF_OPT_END
+
+#define DRI_CONF_PP_NOGREEN(def) \
+DRI_CONF_OPT_BEGIN_V(pp_nogreen,enum,def,"0:1") \
+        DRI_CONF_DESC(en,gettext("A post-processing filter to remove the green channel")) \
+DRI_CONF_OPT_END
+
+#define DRI_CONF_PP_NOBLUE(def) \
+DRI_CONF_OPT_BEGIN_V(pp_noblue,enum,def,"0:1") \
+        DRI_CONF_DESC(en,gettext("A post-processing filter to remove the blue channel")) \
+DRI_CONF_OPT_END
+
+#define DRI_CONF_PP_JIMENEZMLAA(def,min,max) \
+DRI_CONF_OPT_BEGIN_V(pp_jimenezmlaa,int,def, # min ":" # max ) \
+        DRI_CONF_DESC(en,gettext("Morphological anti-aliasing based on Jimenez\\\' MLAA. 0 to disable, 8 for default quality")) \
+DRI_CONF_OPT_END
+
+#define DRI_CONF_PP_JIMENEZMLAA_COLOR(def,min,max) \
+DRI_CONF_OPT_BEGIN_V(pp_jimenezmlaa_color,int,def, # min ":" # max ) \
+        DRI_CONF_DESC(en,gettext("Morphological anti-aliasing based on Jimenez\\\' MLAA. 0 to disable, 8 for default quality. Color version, usable with 2d GL apps")) \
+DRI_CONF_OPT_END
+
+
+
+/**
+ * \brief Performance-related options
+ */
 #define DRI_CONF_SECTION_PERFORMANCE \
 DRI_CONF_SECTION_BEGIN \
         DRI_CONF_DESC(en,gettext("Performance"))
@@ -191,36 +256,6 @@ DRI_CONF_OPT_BEGIN(hyperz,bool,def) \
         DRI_CONF_DESC(en,gettext("Use HyperZ to boost performance")) \
 DRI_CONF_OPT_END
 
-#define DRI_CONF_PP_CELSHADE(def) \
-DRI_CONF_OPT_BEGIN_V(pp_celshade,enum,def,"0:1") \
-        DRI_CONF_DESC(en,gettext("A post-processing filter to cel-shade the output")) \
-DRI_CONF_OPT_END
-
-#define DRI_CONF_PP_NORED(def) \
-DRI_CONF_OPT_BEGIN_V(pp_nored,enum,def,"0:1") \
-        DRI_CONF_DESC(en,gettext("A post-processing filter to remove the red channel")) \
-DRI_CONF_OPT_END
-
-#define DRI_CONF_PP_NOGREEN(def) \
-DRI_CONF_OPT_BEGIN_V(pp_nogreen,enum,def,"0:1") \
-        DRI_CONF_DESC(en,gettext("A post-processing filter to remove the green channel")) \
-DRI_CONF_OPT_END
-
-#define DRI_CONF_PP_NOBLUE(def) \
-DRI_CONF_OPT_BEGIN_V(pp_noblue,enum,def,"0:1") \
-        DRI_CONF_DESC(en,gettext("A post-processing filter to remove the blue channel")) \
-DRI_CONF_OPT_END
-
-#define DRI_CONF_PP_JIMENEZMLAA(def,min,max) \
-DRI_CONF_OPT_BEGIN_V(pp_jimenezmlaa,int,def, # min ":" # max ) \
-        DRI_CONF_DESC(en,gettext("Morphological anti-aliasing based on Jimenez\\\' MLAA. 0 to disable, 8 for default quality")) \
-DRI_CONF_OPT_END
-
-#define DRI_CONF_PP_JIMENEZMLAA_COLOR(def,min,max) \
-DRI_CONF_OPT_BEGIN_V(pp_jimenezmlaa_color,int,def, # min ":" # max ) \
-        DRI_CONF_DESC(en,gettext("Morphological anti-aliasing based on Jimenez\\\' MLAA. 0 to disable, 8 for default quality. Color version, usable with 2d GL apps")) \
-DRI_CONF_OPT_END
-
 #define DRI_CONF_MAX_TEXTURE_UNITS(def,min,max) \
 DRI_CONF_OPT_BEGIN_V(texture_units,int,def, # min ":" # max ) \
         DRI_CONF_DESC(en,gettext("Number of texture units used")) \
@@ -252,8 +287,12 @@ DRI_CONF_OPT_BEGIN_V(texture_heaps,enum,def,"0:2") \
 	DRI_CONF_DESC_END \
 DRI_CONF_OPT_END
 
-/* Options for features that are not done in hardware by the driver (like GL_ARB_vertex_program
-   On cards where there is no documentation (r200) or on rasterization-only hardware). */
+
+
+/**
+ * \brief Software-fallback options.  To allow using features (like
+ * GL_ARB_vertex_program) on GPUs that don't otherwise support the feature.
+ */
 #define DRI_CONF_SECTION_SOFTWARE \
 DRI_CONF_SECTION_BEGIN \
         DRI_CONF_DESC(en,gettext("Features that are not hardware-accelerated"))
@@ -261,29 +300,4 @@ DRI_CONF_SECTION_BEGIN \
 #define DRI_CONF_ARB_VERTEX_PROGRAM(def) \
 DRI_CONF_OPT_BEGIN(arb_vertex_program,bool,def) \
         DRI_CONF_DESC(en,gettext("Enable extension GL_ARB_vertex_program")) \
-DRI_CONF_OPT_END
-
-#define DRI_CONF_ALWAYS_FLUSH_BATCH(def) \
-DRI_CONF_OPT_BEGIN(always_flush_batch,bool,def) \
-        DRI_CONF_DESC(en,gettext("Enable flushing batchbuffer after each draw call")) \
-DRI_CONF_OPT_END
-
-#define DRI_CONF_ALWAYS_FLUSH_CACHE(def) \
-DRI_CONF_OPT_BEGIN(always_flush_cache,bool,def) \
-        DRI_CONF_DESC(en,gettext("Enable flushing GPU caches with each draw call")) \
-DRI_CONF_OPT_END
-
-#define DRI_CONF_FORCE_GLSL_EXTENSIONS_WARN(def) \
-DRI_CONF_OPT_BEGIN(force_glsl_extensions_warn,bool,def) \
-        DRI_CONF_DESC(en,gettext("Force GLSL extension default behavior to 'warn'")) \
-DRI_CONF_OPT_END
-
-#define DRI_CONF_DISABLE_BLEND_FUNC_EXTENDED(def) \
-DRI_CONF_OPT_BEGIN(disable_blend_func_extended,bool,def) \
-        DRI_CONF_DESC(en,gettext("Disable dual source blending")) \
-DRI_CONF_OPT_END
-
-#define DRI_CONF_DISABLE_GLSL_LINE_CONTINUATIONS(def) \
-DRI_CONF_OPT_BEGIN(disable_glsl_line_continuations,bool,def) \
-        DRI_CONF_DESC(en,gettext("Disable backslash-based line continuations in GLSL source")) \
 DRI_CONF_OPT_END
