@@ -19,6 +19,7 @@
 #  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 AM_CPPFLAGS = \
+	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/src/mesa/main \
 	$(API_DEFINES) $(DEFINES) $(INCLUDE_DIRS)
 
