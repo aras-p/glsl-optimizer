@@ -137,6 +137,7 @@ void si_pm4_inval_shader_cache(struct si_pm4_state *state)
 void si_pm4_inval_texture_cache(struct si_pm4_state *state)
 {
 	state->cp_coher_cntl |= S_0085F0_TC_ACTION_ENA(1);
+	state->cp_coher_cntl |= S_0085F0_TCL1_ACTION_ENA(1);
 }
 
 void si_pm4_inval_fb_cache(struct si_pm4_state *state, unsigned nr_cbufs)
