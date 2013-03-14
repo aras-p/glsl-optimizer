@@ -1772,7 +1772,7 @@ radeon_llvm_check() {
                       configure flag])
     fi
     AC_MSG_WARN([Please ensure you use the latest llvm tree from git://people.freedesktop.org/~tstellar/llvm master before submitting a bug])
-    LLVM_COMPONENTS="${LLVM_COMPONENTS} r600"
+    LLVM_COMPONENTS="${LLVM_COMPONENTS} r600 bitreader"
 }
 
 dnl Gallium drivers
