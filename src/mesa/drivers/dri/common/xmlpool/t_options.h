@@ -301,3 +301,17 @@ DRI_CONF_SECTION_BEGIN \
 DRI_CONF_OPT_BEGIN(arb_vertex_program,bool,def) \
         DRI_CONF_DESC(en,gettext("Enable extension GL_ARB_vertex_program")) \
 DRI_CONF_OPT_END
+
+
+
+/**
+ * \brief Miscellaneous configuration options
+ */
+#define DRI_CONF_SECTION_MISCELLANEOUS \
+DRI_CONF_SECTION_BEGIN \
+        DRI_CONF_DESC(en,gettext("Miscellaneous"))
+
+#define DRI_CONF_ALWAYS_HAVE_DEPTH_BUFFER(def) \
+DRI_CONF_OPT_BEGIN(always_have_depth_buffer, bool, def) \
+        DRI_CONF_DESC(en,gettext("Create all visuals with a depth buffer")) \
+DRI_CONF_OPT_END
