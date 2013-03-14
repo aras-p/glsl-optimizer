@@ -37,12 +37,10 @@
     * Visual Studio 2012 will complain if we define the `inline` keyword, but
     * actually it only supports the keyword on C++.
     *
-    * We could skip this check by defining _ALLOW_KEYWORD_MACROS, but there is
-    * probably value in checking this for other keywords.  So simply include
-    * the checking before we define it below.
+    * To avoid this the _ALLOW_KEYWORD_MACROS must be set.
     */
-#  if _MSC_VER >= 1700
-#    include <xkeycheck.h>
+#  if (_MSC_VER >= 1700) && !defined(_ALLOW_KEYWORD_MACROS)
+#    define _ALLOW_KEYWORD_MACROS
 #  endif
 
    /*

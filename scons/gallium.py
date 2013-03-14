@@ -289,6 +289,7 @@ def generate(env):
                 '_CRT_SECURE_NO_DEPRECATE',
                 '_SCL_SECURE_NO_WARNINGS',
                 '_SCL_SECURE_NO_DEPRECATE',
+                '_ALLOW_KEYWORD_MACROS',
             ]
         if env['build'] in ('debug', 'checked'):
             cppdefines += ['_DEBUG']
