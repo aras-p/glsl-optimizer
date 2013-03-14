@@ -189,18 +189,17 @@ create_jit_context_type(struct gallivm_state *gallivm,
 {
    LLVMTargetDataRef target = gallivm->target;
    LLVMTypeRef float_type = LLVMFloatTypeInContext(gallivm->context);
-   LLVMTypeRef elem_types[6];
+   LLVMTypeRef elem_types[5];
    LLVMTypeRef context_type;
 
    elem_types[0] = LLVMArrayType(LLVMPointerType(float_type, 0), /* vs_constants */
                                  LP_MAX_TGSI_CONST_BUFFERS);
-   elem_types[1] = elem_types[0]; /* gs_constants */
-   elem_types[2] = LLVMPointerType(LLVMArrayType(LLVMArrayType(float_type, 4),
+   elem_types[1] = LLVMPointerType(LLVMArrayType(LLVMArrayType(float_type, 4),
                                                  DRAW_TOTAL_CLIP_PLANES), 0);
-   elem_types[3] = LLVMPointerType(float_type, 0); /* viewport */
-   elem_types[4] = LLVMArrayType(texture_type,
+   elem_types[2] = LLVMPointerType(float_type, 0); /* viewport */
+   elem_types[3] = LLVMArrayType(texture_type,
                                  PIPE_MAX_SHADER_SAMPLER_VIEWS); /* textures */
-   elem_types[5] = LLVMArrayType(sampler_type,
+   elem_types[4] = LLVMArrayType(sampler_type,
                                  PIPE_MAX_SAMPLERS); /* samplers */
    context_type = LLVMStructTypeInContext(gallivm->context, elem_types,
                                           Elements(elem_types), 0);
@@ -212,12 +211,10 @@ create_jit_context_type(struct gallivm_state *gallivm,
 
    LP_CHECK_MEMBER_OFFSET(struct draw_jit_context, vs_constants,
                           target, context_type, 0);
-   LP_CHECK_MEMBER_OFFSET(struct draw_jit_context, gs_constants,
-                          target, context_type, 1);
    LP_CHECK_MEMBER_OFFSET(struct draw_jit_context, planes,
-                          target, context_type, 2);
+                          target, context_type, 1);
    LP_CHECK_MEMBER_OFFSET(struct draw_jit_context, viewport,
-                          target, context_type, 3);
+                          target, context_type, 2);
    LP_CHECK_MEMBER_OFFSET(struct draw_jit_context, textures,
                           target, context_type,
                           DRAW_JIT_CTX_TEXTURES);

@@ -200,10 +200,6 @@ llvm_middle_end_bind_parameters(struct draw_pt_middle_end *middle)
       fpme->llvm->jit_context.vs_constants[i] = draw->pt.user.vs_constants[i];
    }
 
-   for (i = 0; i < Elements(fpme->llvm->jit_context.gs_constants); ++i) {
-      fpme->llvm->jit_context.gs_constants[i] = draw->pt.user.gs_constants[i];
-   }
-
    fpme->llvm->jit_context.planes =
       (float (*)[DRAW_TOTAL_CLIP_PLANES][4]) draw->pt.user.planes[0];
 

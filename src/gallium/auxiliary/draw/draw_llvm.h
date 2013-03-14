@@ -106,9 +106,6 @@ enum {
    DRAW_JIT_VERTEX_DATA
 };
 
-#define DRAW_JIT_CTX_TEXTURES 4
-#define DRAW_JIT_CTX_SAMPLERS 5
-
 /**
  * This structure is passed directly to the generated vertex shader.
  *
@@ -123,7 +120,6 @@ enum {
 struct draw_jit_context
 {
    const float *vs_constants[LP_MAX_TGSI_CONST_BUFFERS];
-   const float *gs_constants[LP_MAX_TGSI_CONST_BUFFERS];
    float (*planes) [DRAW_TOTAL_CLIP_PLANES][4];
    float *viewport;
 
@@ -135,17 +131,14 @@ struct draw_jit_context
 #define draw_jit_context_vs_constants(_gallivm, _ptr) \
    lp_build_struct_get_ptr(_gallivm, _ptr, 0, "vs_constants")
 
-#define draw_jit_context_gs_constants(_gallivm, _ptr) \
-   lp_build_struct_get_ptr(_gallivm, _ptr, 1, "gs_constants")
-
 #define draw_jit_context_planes(_gallivm, _ptr) \
-   lp_build_struct_get(_gallivm, _ptr, 2, "planes")
+   lp_build_struct_get(_gallivm, _ptr, 1, "planes")
 
 #define draw_jit_context_viewport(_gallivm, _ptr) \
-   lp_build_struct_get(_gallivm, _ptr, 3, "viewport")
+   lp_build_struct_get(_gallivm, _ptr, 2, "viewport")
 
-#define DRAW_JIT_CTX_TEXTURES 4
-#define DRAW_JIT_CTX_SAMPLERS 5
+#define DRAW_JIT_CTX_TEXTURES 3
+#define DRAW_JIT_CTX_SAMPLERS 4
 
 #define draw_jit_context_textures(_gallivm, _ptr) \
    lp_build_struct_get_ptr(_gallivm, _ptr, DRAW_JIT_CTX_TEXTURES, "textures")
