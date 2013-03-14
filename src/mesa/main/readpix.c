@@ -41,6 +41,73 @@
 
 
 /**
+ * Return true if the conversion L=R+G+B is needed.
+ */
+static GLboolean
+need_rgb_to_luminance_conversion(gl_format texFormat, GLenum format)
+{
+   GLenum baseTexFormat = _mesa_get_format_base_format(texFormat);
+
+   return (baseTexFormat == GL_RG ||
+           baseTexFormat == GL_RGB ||
+           baseTexFormat == GL_RGBA) &&
+          (format == GL_LUMINANCE || format == GL_LUMINANCE_ALPHA);
+}
+
+
+/**
+ * Return transfer op flags for this ReadPixels operation.
+ */
+static GLbitfield
+get_readpixels_transfer_ops(const struct gl_context *ctx, gl_format texFormat,
+                            GLenum format, GLenum type, GLboolean uses_blit)
+{
+   GLbitfield transferOps = ctx->_ImageTransferState;
+
+   if (format == GL_DEPTH_COMPONENT ||
+       format == GL_DEPTH_STENCIL ||
+       format == GL_STENCIL_INDEX) {
+      return 0;
+   }
+
+   /* Pixel transfer ops (scale, bias, table lookup) do not apply
+    * to integer formats.
+    */
+   if (_mesa_is_enum_format_integer(format)) {
+      return 0;
+   }
+
+   if (uses_blit) {
+      /* For blit-based ReadPixels packing, the clamping is done automatically
+       * unless the type is float. */
+      if (ctx->Color._ClampReadColor == GL_TRUE &&
+          (type == GL_FLOAT || type == GL_HALF_FLOAT)) {
+         transferOps |= IMAGE_CLAMP_BIT;
+      }
+   }
+   else {
+      /* For CPU-based ReadPixels packing, the clamping must always be done
+       * for non-float types, */
+      if (ctx->Color._ClampReadColor == GL_TRUE ||
+          (type != GL_FLOAT && type != GL_HALF_FLOAT)) {
+         transferOps |= IMAGE_CLAMP_BIT;
+      }
+   }
+
+   /* If the format is unsigned normalized, we can ignore clamping
+    * because the values are already in the range [0,1] so it won't
+    * have any effect anyway.
+    */
+   if (_mesa_get_format_datatype(texFormat) == GL_UNSIGNED_NORMALIZED &&
+       !need_rgb_to_luminance_conversion(texFormat, format)) {
+      transferOps &= ~IMAGE_CLAMP_BIT;
+   }
+
+   return transferOps;
+}
+
+
+/**
  * Tries to implement glReadPixels() of GL_DEPTH_COMPONENT using memcpy of the
  * mapping.
  */
@@ -221,8 +288,7 @@ fast_read_rgba_pixels_memcpy( struct gl_context *ctx,
 			      GLsizei width, GLsizei height,
 			      GLenum format, GLenum type,
 			      GLvoid *pixels,
-			      const struct gl_pixelstore_attrib *packing,
-			      GLbitfield transferOps )
+			      const struct gl_pixelstore_attrib *packing)
 {
    struct gl_renderbuffer *rb = ctx->ReadBuffer->_ColorReadBuffer;
    GLubyte *dst, *map;
@@ -244,16 +310,6 @@ fast_read_rgba_pixels_memcpy( struct gl_context *ctx,
    }
    else if (!_mesa_format_matches_format_and_type(rb->Format, format, type,
                                                   ctx->Pack.SwapBytes))
-      return GL_FALSE;
-
-   /* If the format is unsigned normalized then we can ignore clamping
-    * because the values are already in the range [0,1] so it won't
-    * have any effect anyway.
-    */
-   if (_mesa_get_format_datatype(rb->Format) == GL_UNSIGNED_NORMALIZED)
-      transferOps &= ~IMAGE_CLAMP_BIT;
-
-   if (transferOps)
       return GL_FALSE;
 
    dstStride = _mesa_image_row_stride(packing, width, format, type);
@@ -379,22 +435,20 @@ read_rgba_pixels( struct gl_context *ctx,
                   GLenum format, GLenum type, GLvoid *pixels,
                   const struct gl_pixelstore_attrib *packing )
 {
-   GLbitfield transferOps = ctx->_ImageTransferState;
+   GLbitfield transferOps;
    struct gl_framebuffer *fb = ctx->ReadBuffer;
    struct gl_renderbuffer *rb = fb->_ColorReadBuffer;
 
    if (!rb)
       return;
 
-   if ((ctx->Color._ClampReadColor == GL_TRUE || type != GL_FLOAT) &&
-       !_mesa_is_enum_format_integer(format)) {
-      transferOps |= IMAGE_CLAMP_BIT;
-   }
+   transferOps = get_readpixels_transfer_ops(ctx, rb->Format, format, type,
+                                             GL_FALSE);
 
    /* Try the optimized paths first. */
-   if (fast_read_rgba_pixels_memcpy(ctx, x, y, width, height,
-                                    format, type, pixels, packing,
-                                    transferOps)) {
+   if (!transferOps &&
+       fast_read_rgba_pixels_memcpy(ctx, x, y, width, height,
+                                    format, type, pixels, packing)) {
       return;
    }
 
