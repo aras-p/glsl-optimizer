@@ -138,7 +138,6 @@ brwCreateContext(int api,
                           mesaVis, driContextPriv,
 			  sharedContextPrivate, &functions,
 			  error)) {
-      printf("%s: failed to init intel context\n", __FUNCTION__);
       ralloc_free(brw);
       return false;
    }
