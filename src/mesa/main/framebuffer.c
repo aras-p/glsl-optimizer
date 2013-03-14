@@ -923,10 +923,10 @@ _mesa_get_color_read_type(struct gl_context *ctx)
  * Returns the read renderbuffer for the specified format.
  */
 struct gl_renderbuffer *
-_mesa_get_read_renderbuffer_for_format(struct gl_context *ctx,
+_mesa_get_read_renderbuffer_for_format(const struct gl_context *ctx,
                                        GLenum format)
 {
-   struct gl_framebuffer *rfb = ctx->ReadBuffer;
+   const struct gl_framebuffer *rfb = ctx->ReadBuffer;
 
    if (_mesa_is_color_format(format)) {
       return rfb->Attachment[rfb->_ColorReadBufferIndex].Renderbuffer;

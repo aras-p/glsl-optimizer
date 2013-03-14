@@ -98,7 +98,7 @@ extern GLenum
 _mesa_get_color_read_format(struct gl_context *ctx);
 
 extern struct gl_renderbuffer *
-_mesa_get_read_renderbuffer_for_format(struct gl_context *ctx,
+_mesa_get_read_renderbuffer_for_format(const struct gl_context *ctx,
                                        GLenum format);
 
 extern void
