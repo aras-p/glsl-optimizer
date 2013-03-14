@@ -58,6 +58,18 @@ draw_gs_get_input_index(int semantic, int index,
    return -1;
 }
 
+/**
+ * We execute geometry shaders in the SOA mode, so ideally we want to
+ * flush when the number of currently fetched primitives is equal to
+ * the number of elements in the SOA vector. This ensures that the
+ * throughput is optimized for the given vector instrunction set.
+ */
+static INLINE boolean
+draw_gs_should_flush(struct draw_geometry_shader *shader)
+{
+   return (shader->fetched_prim_count == 4);
+}
+
 /*#define DEBUG_OUTPUTS 1*/
 static void
 tgsi_fetch_gs_outputs(struct draw_geometry_shader *shader,
@@ -197,13 +209,14 @@ static unsigned tgsi_gs_run(struct draw_geometry_shader *shader,
       machine->Temps[TGSI_EXEC_TEMP_PRIMITIVE_I].xyzw[TGSI_EXEC_TEMP_PRIMITIVE_C].u[0];
 }
 
-static void gs_flush(struct draw_geometry_shader *shader,
-                     unsigned input_primitives)
+static void gs_flush(struct draw_geometry_shader *shader)
 {
    unsigned out_prim_count;
 
+   unsigned input_primitives = shader->fetched_prim_count;
+
    debug_assert(input_primitives > 0 &&
-                input_primitives < 4);
+                input_primitives <= 4);
 
    out_prim_count = shader->run(shader, input_primitives);
 #if 0
@@ -213,6 +226,7 @@ static void gs_flush(struct draw_geometry_shader *shader,
 #endif
    shader->fetch_outputs(shader, out_prim_count,
                          &shader->tmp_output);
+   shader->fetched_prim_count = 0;
 }
 
 static void gs_point(struct draw_geometry_shader *shader,
@@ -222,10 +236,12 @@ static void gs_point(struct draw_geometry_shader *shader,
 
    indices[0] = idx;
 
-   shader->fetch_inputs(shader, indices, 1, 0);
+   shader->fetch_inputs(shader, indices, 1,
+                        shader->fetched_prim_count);
    ++shader->in_prim_idx;
+   ++shader->fetched_prim_count;
 
-   gs_flush(shader, 1);
+   gs_flush(shader);
 }
 
 static void gs_line(struct draw_geometry_shader *shader,
@@ -236,10 +252,12 @@ static void gs_line(struct draw_geometry_shader *shader,
    indices[0] = i0;
    indices[1] = i1;
 
-   shader->fetch_inputs(shader, indices, 2, 0);
+   shader->fetch_inputs(shader, indices, 2,
+                        shader->fetched_prim_count);
    ++shader->in_prim_idx;
+   ++shader->fetched_prim_count;
 
-   gs_flush(shader, 1);
+   gs_flush(shader);
 }
 
 static void gs_line_adj(struct draw_geometry_shader *shader,
@@ -252,10 +270,12 @@ static void gs_line_adj(struct draw_geometry_shader *shader,
    indices[2] = i2;
    indices[3] = i3;
 
-   shader->fetch_inputs(shader, indices, 4, 0);
+   shader->fetch_inputs(shader, indices, 4,
+                        shader->fetched_prim_count);
    ++shader->in_prim_idx;
+   ++shader->fetched_prim_count;
 
-   gs_flush(shader, 1);
+   gs_flush(shader);
 }
 
 static void gs_tri(struct draw_geometry_shader *shader,
@@ -267,10 +287,12 @@ static void gs_tri(struct draw_geometry_shader *shader,
    indices[1] = i1;
    indices[2] = i2;
 
-   shader->fetch_inputs(shader, indices, 3, 0);
+   shader->fetch_inputs(shader, indices, 3,
+                        shader->fetched_prim_count);
    ++shader->in_prim_idx;
+   ++shader->fetched_prim_count;
 
-   gs_flush(shader, 1);
+   gs_flush(shader);
 }
 
 static void gs_tri_adj(struct draw_geometry_shader *shader,
@@ -286,10 +308,12 @@ static void gs_tri_adj(struct draw_geometry_shader *shader,
    indices[4] = i4;
    indices[5] = i5;
 
-   shader->fetch_inputs(shader, indices, 6, 0);
+   shader->fetch_inputs(shader, indices, 6,
+                        shader->fetched_prim_count);
    ++shader->in_prim_idx;
+   ++shader->fetched_prim_count;
 
-   gs_flush(shader, 1);
+   gs_flush(shader);
 }
 
 #define FUNC         gs_run
@@ -354,6 +378,7 @@ int draw_geometry_shader_run(struct draw_geometry_shader *shader,
    shader->vertex_size = vertex_size;
    shader->tmp_output = (float (*)[4])output_verts->verts->data;
    shader->in_prim_idx = 0;
+   shader->fetched_prim_count = 0;
    shader->input_vertex_stride = input_stride;
    shader->input = input;
    shader->input_info = input_info;
@@ -368,6 +393,15 @@ int draw_geometry_shader_run(struct draw_geometry_shader *shader,
    else
       gs_run_elts(shader, input_prim, input_verts,
                   output_prims, output_verts);
+
+   /* Flush the remaining primitives. Will happen if
+    * num_input_primitives % 4 != 0
+    */
+   if (shader->fetched_prim_count > 0) {
+      gs_flush(shader);
+   }
+
+   debug_assert(shader->fetched_prim_count == 0);
 
    /* Update prim_info:
     */

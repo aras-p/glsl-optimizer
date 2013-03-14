@@ -63,6 +63,7 @@ struct draw_geometry_shader {
 
    unsigned in_prim_idx;
    unsigned input_vertex_stride;
+   unsigned fetched_prim_count;
    const float (*input)[4];
    const struct tgsi_shader_info *input_info;
 
