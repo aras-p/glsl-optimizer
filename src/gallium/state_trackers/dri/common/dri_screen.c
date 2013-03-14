@@ -38,6 +38,7 @@
 #include "pipe/p_screen.h"
 #include "pipe/p_format.h"
 #include "state_tracker/st_gl_api.h" /* for st_gl_api_create */
+#include "state_tracker/drm_driver.h"
 
 #include "util/u_debug.h"
 
@@ -67,11 +68,14 @@ PUBLIC const char __driConfigOptions[] =
          DRI_CONF_FORCE_GLSL_EXTENSIONS_WARN(false)
       DRI_CONF_SECTION_END
 
+      DRI_CONF_SECTION_MISCELLANEOUS
+         DRI_CONF_ALWAYS_HAVE_DEPTH_BUFFER(false)
+      DRI_CONF_SECTION_END
    DRI_CONF_END;
 
 #define false 0
 
-static const uint __driNConfigOptions = 10;
+static const uint __driNConfigOptions = 11;
 
 static const __DRIconfig **
 dri_fill_in_modes(struct dri_screen *screen)
@@ -100,10 +104,16 @@ dri_fill_in_modes(struct dri_screen *screen)
       GLX_NONE, GLX_SWAP_UNDEFINED_OML, GLX_SWAP_COPY_OML
    };
 
-   depth_bits_array[0] = 0;
-   stencil_bits_array[0] = 0;
-   depth_buffer_factor = 1;
-
+   if (driQueryOptionb(&screen->optionCache, "always_have_depth_buffer")) {
+      /* all visuals will have a depth buffer */
+      depth_buffer_factor = 0;
+   }
+   else {
+      depth_bits_array[0] = 0;
+      stencil_bits_array[0] = 0;
+      depth_buffer_factor = 1;
+   }
+ 
    msaa_samples_max = (screen->st_api->feature_mask & ST_API_FEATURE_MS_VISUALS_MASK)
       ? MSAA_VISUAL_MAX_SAMPLES : 1;
 
@@ -397,8 +407,13 @@ dri_init_screen_helper(struct dri_screen *screen,
    else
       screen->target = PIPE_TEXTURE_RECT;
 
-   driParseOptionInfo(&screen->optionCache,
+   driParseOptionInfo(&screen->optionCacheDefaults,
                       __driConfigOptions, __driNConfigOptions);
+
+   driParseConfigFiles(&screen->optionCache,
+		       &screen->optionCacheDefaults,
+                       screen->sPriv->myNum,
+                       driver_descriptor.name);
 
    return dri_fill_in_modes(screen);
 }

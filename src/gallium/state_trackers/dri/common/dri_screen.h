@@ -57,9 +57,10 @@ struct dri_screen
    boolean throttling_enabled;
    int default_throttle_frames;
 
-   /**
-    * Configuration cache with default values for all contexts
-    */
+   /** Configuration cache with default values for all contexts */
+   driOptionCache optionCacheDefaults;
+
+   /** The screen's effective configuration options */
    driOptionCache optionCache;
 
    /* drm */

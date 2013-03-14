@@ -114,7 +114,8 @@ dri_create_context(gl_api api, const struct gl_config * visual,
    ctx->sPriv = sPriv;
 
    driParseConfigFiles(&ctx->optionCache,
-		       &screen->optionCache, sPriv->myNum, driver_descriptor.name);
+		       &screen->optionCacheDefaults,
+                       sPriv->myNum, driver_descriptor.name);
 
    dri_fill_st_options(&attribs.options, &ctx->optionCache);
    dri_fill_st_visual(&attribs.visual, screen, visual);
@@ -174,7 +175,7 @@ dri_destroy_context(__DRIcontext * cPriv)
 
    /* note: we are freeing values and nothing more because
     * driParseConfigFiles allocated values only - the rest
-    * is owned by screen optionCache.
+    * is owned by screen optionCacheDefaults.
     */
    free(ctx->optionCache.values);
 
