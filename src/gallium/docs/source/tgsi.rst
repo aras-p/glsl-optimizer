@@ -1833,6 +1833,24 @@ If Interpolate flag is set to 1, a Declaration Interpolate token follows.
 
 If file is TGSI_FILE_RESOURCE, a Declaration Resource token follows.
 
+If Array flag is set to 1, a Declaration Array token follows.
+
+Array Declaration
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Declarations can optional have an ArrayID attribute which can be referred by
+indirect addressing operands. An ArrayID of zero is reserved and treaded as
+if no ArrayID is specified.
+
+If an indirect addressing operand refers to a specific declaration by using
+an ArrayID only the registers in this declaration are guaranteed to be
+accessed, accessing any register outside this declaration results in undefined
+behavior. Note that for compatibility the effective index is zero-based and
+not relative to the specified declaration
+
+If no ArrayID is specified with an indirect addressing operand the whole
+register file might be accessed by this operand. This is strongly discouraged
+and will prevent packing of scalar/vec2 arrays and effective alias analysis.
 
 Declaration Semantic
 ^^^^^^^^^^^^^^^^^^^^^^^^
