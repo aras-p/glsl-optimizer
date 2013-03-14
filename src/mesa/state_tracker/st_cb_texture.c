@@ -68,7 +68,7 @@
 #define DBG if (0) printf
 
 
-static enum pipe_texture_target
+enum pipe_texture_target
 gl_target_to_pipe(GLenum target)
 {
    switch (target) {
@@ -542,8 +542,8 @@ prep_teximage(struct gl_context *ctx, struct gl_texture_image *texImage,
  * Return a writemask for the gallium blit. The parameters can be base
  * formats or "format" from glDrawPixels/glTexImage/glGetTexImage.
  */
-static unsigned
-get_blit_mask(GLenum srcFormat, GLenum dstFormat)
+unsigned
+st_get_blit_mask(GLenum srcFormat, GLenum dstFormat)
 {
    switch (dstFormat) {
    case GL_DEPTH_STENCIL:
@@ -769,7 +769,7 @@ st_TexSubImage(struct gl_context *ctx, GLuint dims,
    blit.src.box.width = blit.dst.box.width = width;
    blit.src.box.height = blit.dst.box.height = height;
    blit.src.box.depth = blit.dst.box.depth = depth;
-   blit.mask = get_blit_mask(format, texImage->_BaseFormat);
+   blit.mask = st_get_blit_mask(format, texImage->_BaseFormat);
    blit.filter = PIPE_TEX_FILTER_NEAREST;
    blit.scissor_enable = FALSE;
 
@@ -996,7 +996,7 @@ st_GetTexImage(struct gl_context * ctx,
    blit.src.box.width = blit.dst.box.width = width;
    blit.src.box.height = blit.dst.box.height = height;
    blit.src.box.depth = blit.dst.box.depth = depth;
-   blit.mask = get_blit_mask(texImage->_BaseFormat, format);
+   blit.mask = st_get_blit_mask(texImage->_BaseFormat, format);
    blit.filter = PIPE_TEX_FILTER_NEAREST;
    blit.scissor_enable = FALSE;
 
@@ -1370,7 +1370,7 @@ st_CopyTexSubImage(struct gl_context *ctx, GLuint dims,
    blit.dst.box.width = width;
    blit.dst.box.height = height;
    blit.dst.box.depth = 1;
-   blit.mask = get_blit_mask(rb->_BaseFormat, texImage->_BaseFormat);
+   blit.mask = st_get_blit_mask(rb->_BaseFormat, texImage->_BaseFormat);
    blit.filter = PIPE_TEX_FILTER_NEAREST;
 
    /* 1D array textures need special treatment.
