@@ -73,7 +73,7 @@ struct softpipe_tex_cached_tile
    } data;
 };
 
-#define NUM_ENTRIES 50
+#define NUM_ENTRIES 4
 
 struct softpipe_tex_tile_cache
 {
