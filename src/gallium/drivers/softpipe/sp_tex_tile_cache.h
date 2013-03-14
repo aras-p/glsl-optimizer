@@ -73,7 +73,7 @@ struct softpipe_tex_cached_tile
    } data;
 };
 
-#define NUM_ENTRIES 4
+#define NUM_TEX_TILE_ENTRIES 4
 
 struct softpipe_tex_tile_cache
 {
@@ -84,7 +84,7 @@ struct softpipe_tex_tile_cache
    struct pipe_resource *texture;  /**< if caching a texture */
    unsigned timestamp;
 
-   struct softpipe_tex_cached_tile entries[NUM_ENTRIES];
+   struct softpipe_tex_cached_tile entries[NUM_TEX_TILE_ENTRIES];
 
    struct pipe_transfer *tex_trans;
    void *tex_trans_map;
