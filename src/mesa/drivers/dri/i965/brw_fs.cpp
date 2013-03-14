@@ -2478,10 +2478,13 @@ fs_visitor::lower_uniform_pull_constant_loads()
          continue;
 
       if (intel->gen >= 7) {
+         /* The offset arg before was a vec4-aligned byte offset.  We need to
+          * turn it into a dword offset.
+          */
          fs_reg const_offset_reg = inst->src[1];
          assert(const_offset_reg.file == IMM &&
                 const_offset_reg.type == BRW_REGISTER_TYPE_UD);
-         const_offset_reg.imm.u /= 16;
+         const_offset_reg.imm.u /= 4;
          fs_reg payload = fs_reg(this, glsl_type::uint_type);
 
          /* This is actually going to be a MOV, but since only the first dword

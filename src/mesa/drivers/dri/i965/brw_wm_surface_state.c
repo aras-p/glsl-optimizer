@@ -913,15 +913,16 @@ brw_update_texture_surface(struct gl_context *ctx,
  * Create the constant buffer surface.  Vertex/fragment shader constants will be
  * read from this buffer with Data Port Read instructions/messages.
  */
-void
+static void
 brw_create_constant_surface(struct brw_context *brw,
 			    drm_intel_bo *bo,
 			    uint32_t offset,
 			    uint32_t size,
-			    uint32_t *out_offset)
+			    uint32_t *out_offset,
+                            bool dword_pitch)
 {
    struct intel_context *intel = &brw->intel;
-   uint32_t stride = 16;
+   uint32_t stride = dword_pitch ? 4 : 16;
    uint32_t elements = ALIGN(size, stride) / stride;
    const GLint w = elements - 1;
    uint32_t *surf;
@@ -1090,7 +1091,8 @@ brw_upload_wm_pull_constants(struct brw_context *brw)
    drm_intel_gem_bo_unmap_gtt(brw->wm.const_bo);
 
    intel->vtbl.create_constant_surface(brw, brw->wm.const_bo, 0, size,
-				       &brw->wm.surf_offset[surf_index]);
+				       &brw->wm.surf_offset[surf_index],
+                                       true);
 
    brw->state.dirty.brw |= BRW_NEW_SURFACES;
 }
@@ -1443,7 +1445,8 @@ brw_upload_ubo_surfaces(struct brw_context *brw,
        */
       intel->vtbl.create_constant_surface(brw, bo, binding->Offset,
 					  bo->size - binding->Offset,
-					  &surf_offsets[i]);
+					  &surf_offsets[i],
+                                          shader->Type == GL_FRAGMENT_SHADER);
    }
 
    if (shader->NumUniformBlocks)

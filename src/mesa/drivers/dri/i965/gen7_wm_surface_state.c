@@ -384,10 +384,11 @@ gen7_create_constant_surface(struct brw_context *brw,
 			     drm_intel_bo *bo,
 			     uint32_t offset,
 			     uint32_t size,
-			     uint32_t *out_offset)
+			     uint32_t *out_offset,
+                             bool dword_pitch)
 {
    struct intel_context *intel = &brw->intel;
-   uint32_t stride = 16;
+   uint32_t stride = dword_pitch ? 4 : 16;
    uint32_t elements = ALIGN(size, stride) / stride;
    const GLint w = elements - 1;
 

@@ -203,13 +203,14 @@ struct intel_context
 				      drm_intel_bo *bo,
 				      uint32_t offset,
 				      uint32_t size,
-				      uint32_t *out_offset);
+				      uint32_t *out_offset,
+                                      bool dword_pitch);
       /** \} */
    } vtbl;
 
    GLbitfield Fallback;  /**< mask of INTEL_FALLBACK_x bits */
    GLuint NewGLState;
-
+ 
    dri_bufmgr *bufmgr;
    unsigned int maxBatchSize;
 

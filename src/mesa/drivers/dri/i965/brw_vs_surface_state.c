@@ -91,7 +91,7 @@ brw_upload_vs_pull_constants(struct brw_context *brw)
 
    const int surf = SURF_INDEX_VERT_CONST_BUFFER;
    intel->vtbl.create_constant_surface(brw, brw->vs.const_bo, 0, size,
-				       &brw->vs.surf_offset[surf]);
+				       &brw->vs.surf_offset[surf], false);
 
    brw->state.dirty.brw |= BRW_NEW_VS_CONSTBUF;
 }
