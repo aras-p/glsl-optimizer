@@ -608,6 +608,10 @@ st_TexSubImage(struct gl_context *ctx, GLuint dims,
    unsigned bind;
    GLubyte *map;
 
+   if (!st->prefer_blit_based_texture_transfer) {
+      goto fallback;
+   }
+
    if (!dst) {
       goto fallback;
    }
@@ -859,6 +863,10 @@ st_GetTexImage(struct gl_context * ctx,
    struct pipe_transfer *tex_xfer;
    ubyte *map = NULL;
    boolean done = FALSE;
+
+   if (!st->prefer_blit_based_texture_transfer) {
+      goto fallback;
+   }
 
    if (!stImage->pt) {
       goto fallback;

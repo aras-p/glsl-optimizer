@@ -145,6 +145,10 @@ The integer capabilities:
   TEXCOORD semantic.
   Also, TGSI_SEMANTIC_PCOORD becomes available, which labels a fragment shader
   input that will always be replaced with sprite coordinates.
+* ``PIPE_CAP_PREFER_BLIT_BASED_TEXTURE_TRANSFER``: Whether it is preferable
+  to use a blit to implement a texture transfer which needs format conversions
+  and swizzling in state trackers. Generally, all hardware drivers with
+  dedicated memory should return 1 and all software rasterizers should return 0.
 
 
 .. _pipe_capf:

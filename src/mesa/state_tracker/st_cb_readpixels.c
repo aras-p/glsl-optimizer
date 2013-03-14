@@ -83,6 +83,10 @@ st_readpixels(struct gl_context *ctx, GLint x, GLint y,
    st_validate_state(st);
    st_flush_bitmap_cache(st);
 
+   if (!st->prefer_blit_based_texture_transfer) {
+      goto fallback;
+   }
+
    /* This must be done after state validation. */
    src = strb->texture;
 

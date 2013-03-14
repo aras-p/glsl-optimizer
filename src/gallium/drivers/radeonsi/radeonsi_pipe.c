@@ -329,6 +329,7 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_USER_CONSTANT_BUFFERS:
 	case PIPE_CAP_START_INSTANCE:
 	case PIPE_CAP_NPOT_TEXTURES:
+        case PIPE_CAP_PREFER_BLIT_BASED_TEXTURE_TRANSFER:
 		return 1;
 	case PIPE_CAP_TGSI_TEXCOORD:
 		return 0;

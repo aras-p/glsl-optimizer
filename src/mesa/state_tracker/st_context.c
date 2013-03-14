@@ -182,6 +182,8 @@ st_create_context_priv( struct gl_context *ctx, struct pipe_context *pipe,
    st->has_stencil_export =
       screen->get_param(screen, PIPE_CAP_SHADER_STENCIL_EXPORT);
    st->has_shader_model3 = screen->get_param(screen, PIPE_CAP_SM3);
+   st->prefer_blit_based_texture_transfer = screen->get_param(screen,
+                              PIPE_CAP_PREFER_BLIT_BASED_TEXTURE_TRANSFER);
 
    st->needs_texcoord_semantic =
       screen->get_param(screen, PIPE_CAP_TGSI_TEXCOORD);

@@ -564,6 +564,7 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_START_INSTANCE:
 	case PIPE_CAP_MAX_DUAL_SOURCE_RENDER_TARGETS:
 	case PIPE_CAP_TEXTURE_BUFFER_OBJECTS:
+        case PIPE_CAP_PREFER_BLIT_BASED_TEXTURE_TRANSFER:
 		return 1;
 	case PIPE_CAP_TGSI_TEXCOORD:
 		return 0;

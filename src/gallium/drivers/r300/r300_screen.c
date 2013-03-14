@@ -106,6 +106,7 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
         case PIPE_CAP_USER_INDEX_BUFFERS:
         case PIPE_CAP_USER_CONSTANT_BUFFERS:
         case PIPE_CAP_DEPTH_CLIP_DISABLE: /* XXX implemented, but breaks Regnum Online */
+        case PIPE_CAP_PREFER_BLIT_BASED_TEXTURE_TRANSFER:
             return 1;
 
         case PIPE_CAP_MIN_MAP_BUFFER_ALIGNMENT:
