@@ -474,6 +474,32 @@ _mesa_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
 
 
 /**
+ * Return true if the framebuffer has a combined depth/stencil
+ * renderbuffer attached.
+ */
+GLboolean
+_mesa_has_depthstencil_combined(const struct gl_framebuffer *fb)
+{
+   const struct gl_renderbuffer_attachment *depth =
+         &fb->Attachment[BUFFER_DEPTH];
+   const struct gl_renderbuffer_attachment *stencil =
+         &fb->Attachment[BUFFER_STENCIL];
+
+   if (depth->Type == stencil->Type) {
+      if (depth->Type == GL_RENDERBUFFER_EXT &&
+          depth->Renderbuffer == stencil->Renderbuffer)
+         return GL_TRUE;
+
+      if (depth->Type == GL_TEXTURE &&
+          depth->Texture == stencil->Texture)
+         return GL_TRUE;
+   }
+
+   return GL_FALSE;
+}
+
+
+/**
  * For debug only.
  */
 static void

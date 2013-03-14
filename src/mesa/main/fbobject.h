@@ -113,6 +113,9 @@ _mesa_framebuffer_renderbuffer(struct gl_context *ctx,
 extern void
 _mesa_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb);
 
+extern GLboolean
+_mesa_has_depthstencil_combined(const struct gl_framebuffer *fb);
+
 extern void
 _mesa_test_framebuffer_completeness(struct gl_context *ctx,
                                     struct gl_framebuffer *fb);
