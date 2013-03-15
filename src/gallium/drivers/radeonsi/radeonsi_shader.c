@@ -36,6 +36,7 @@
 #include "gallivm/lp_bld_arit.h"
 #include "radeon_llvm.h"
 #include "radeon_llvm_emit.h"
+#include "util/u_memory.h"
 #include "tgsi/tgsi_info.h"
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_scan.h"
@@ -60,9 +61,8 @@ struct si_shader_context
 	struct si_shader_key key;
 	unsigned type; /* TGSI_PROCESSOR_* specifies the type of shader. */
 	LLVMValueRef const_md;
-/*	struct list_head inputs; */
-/*	unsigned * input_mappings *//* From TGSI to SI hw */
-/*	struct tgsi_shader_info info;*/
+	LLVMValueRef const_resource;
+	LLVMValueRef *constants;
 };
 
 static struct si_shader_context * si_shader_context(
@@ -352,9 +352,11 @@ static LLVMValueRef fetch_constant(
 {
 	struct si_shader_context *si_shader_ctx = si_shader_context(bld_base);
 	struct lp_build_context * base = &bld_base->base;
+	const struct tgsi_ind_register *ireg = &reg->Indirect;
+	unsigned idx;
 
-	LLVMValueRef ptr;
 	LLVMValueRef args[2];
+	LLVMValueRef addr;
 	LLVMValueRef result;
 
 	if (swizzle == LP_CHAN_ALL) {
@@ -366,18 +368,16 @@ static LLVMValueRef fetch_constant(
 		return lp_build_gather_values(bld_base->base.gallivm, values, 4);
 	}
 
-	/* Load the resource descriptor */
-	ptr = LLVMGetParam(si_shader_ctx->radeon_bld.main_fn, SI_PARAM_CONST);
-	args[0] = build_indexed_load(si_shader_ctx, ptr, bld_base->uint_bld.zero);
+	idx = reg->Register.Index * 4 + swizzle;
+	if (!reg->Register.Indirect)
+		return bitcast(bld_base, type, si_shader_ctx->constants[idx]);
 
-	args[1] = lp_build_const_int32(base->gallivm, (reg->Register.Index * 4 + swizzle) * 4);
-	if (reg->Register.Indirect) {
-		const struct tgsi_ind_register *ireg = &reg->Indirect;
-		LLVMValueRef addr = si_shader_ctx->radeon_bld.soa.addr[ireg->Index][ireg->Swizzle];
-		LLVMValueRef idx = LLVMBuildLoad(base->gallivm->builder, addr, "load addr reg");
-		idx = lp_build_mul_imm(&bld_base->uint_bld, idx, 16);
-		args[1] = lp_build_add(&bld_base->uint_bld, idx, args[1]);
-	}
+	args[0] = si_shader_ctx->const_resource;
+	args[1] = lp_build_const_int32(base->gallivm, idx * 4);
+	addr = si_shader_ctx->radeon_bld.soa.addr[ireg->Index][ireg->Swizzle];
+	addr = LLVMBuildLoad(base->gallivm->builder, addr, "load addr reg");
+	addr = lp_build_mul_imm(&bld_base->uint_bld, addr, 16);
+	args[1] = lp_build_add(&bld_base->uint_bld, addr, args[1]);
 
 	result = build_intrinsic(base->gallivm->builder, "llvm.SI.load.const", base->elem_type,
                                  args, 2, LLVMReadNoneAttribute | LLVMNoUnwindAttribute);
@@ -978,6 +978,37 @@ static void create_function(struct si_shader_context *si_shader_ctx)
 	}
 }
 
+static void preload_constants(struct si_shader_context *si_shader_ctx)
+{
+	struct lp_build_tgsi_context * bld_base = &si_shader_ctx->radeon_bld.soa.bld_base;
+	struct gallivm_state * gallivm = bld_base->base.gallivm;
+	const struct tgsi_shader_info * info = bld_base->info;
+
+	unsigned i, num_const = info->file_max[TGSI_FILE_CONSTANT] + 1;
+
+	LLVMValueRef ptr;
+
+	if (num_const == 0)
+		return;
+
+	/* Allocate space for the constant values */
+	si_shader_ctx->constants = CALLOC(num_const * 4, sizeof(LLVMValueRef));
+
+	/* Load the resource descriptor */
+	ptr = LLVMGetParam(si_shader_ctx->radeon_bld.main_fn, SI_PARAM_CONST);
+	si_shader_ctx->const_resource = build_indexed_load(si_shader_ctx, ptr, bld_base->uint_bld.zero);
+
+	/* Load the constants, we rely on the code sinking to do the rest */
+	for (i = 0; i < num_const * 4; ++i) {
+		LLVMValueRef args[2] = {
+			si_shader_ctx->const_resource,
+			lp_build_const_int32(gallivm, i * 4)
+		};
+		si_shader_ctx->constants[i] = build_intrinsic(gallivm->builder, "llvm.SI.load.const",
+			bld_base->base.elem_type, args, 2, LLVMReadNoneAttribute | LLVMNoUnwindAttribute);
+	}
+}
+
 int si_pipe_shader_create(
 	struct pipe_context *ctx,
 	struct si_pipe_shader *shader,
@@ -1026,6 +1057,7 @@ int si_pipe_shader_create(
 
 	create_meta_data(&si_shader_ctx);
 	create_function(&si_shader_ctx);
+	preload_constants(&si_shader_ctx);
 
 	shader->shader.nr_cbufs = rctx->framebuffer.nr_cbufs;
 
@@ -1037,6 +1069,7 @@ int si_pipe_shader_create(
 
 	if (!lp_build_tgsi_llvm(bld_base, sel->tokens)) {
 		fprintf(stderr, "Failed to translate shader from TGSI to LLVM\n");
+		FREE(si_shader_ctx.constants);
 		return -EINVAL;
 	}
 
@@ -1068,6 +1101,7 @@ int si_pipe_shader_create(
 	shader->bo = si_resource_create_custom(ctx->screen, PIPE_USAGE_IMMUTABLE,
 					       inst_byte_count - 12);
 	if (shader->bo == NULL) {
+		FREE(si_shader_ctx.constants);
 		return -ENOMEM;
 	}
 
@@ -1081,6 +1115,7 @@ int si_pipe_shader_create(
 	}
 	rctx->ws->buffer_unmap(shader->bo->cs_buf);
 
+	FREE(si_shader_ctx.constants);
 	free(inst_bytes);
 
 	return 0;
