@@ -175,6 +175,16 @@ get_texobj(struct gl_context *ctx, GLenum target, GLboolean get)
          return texUnit->CurrentTex[TEXTURE_CUBE_ARRAY_INDEX];
       }
       break;
+   case GL_TEXTURE_2D_MULTISAMPLE:
+      if (ctx->Extensions.ARB_texture_storage_multisample) {
+         return texUnit->CurrentTex[TEXTURE_2D_MULTISAMPLE_INDEX];
+      }
+      break;
+   case GL_TEXTURE_2D_MULTISAMPLE_ARRAY:
+      if (ctx->Extensions.ARB_texture_storage_multisample) {
+         return texUnit->CurrentTex[TEXTURE_2D_MULTISAMPLE_ARRAY_INDEX];
+      }
+      break;
    default:
       ;
    }
@@ -250,6 +260,20 @@ incomplete(struct gl_context *ctx, struct gl_texture_object *texObj)
 }
 
 
+static GLboolean
+target_allows_setting_sampler_parameters(GLenum target)
+{
+   switch (target) {
+   case GL_TEXTURE_2D_MULTISAMPLE:
+   case GL_TEXTURE_2D_MULTISAMPLE_ARRAY:
+      return GL_FALSE;
+
+   default:
+      return GL_TRUE;
+   }
+}
+
+
 /**
  * Set an integer-valued texture parameter
  * \return GL_TRUE if legal AND the value changed, GL_FALSE otherwise
@@ -261,6 +285,9 @@ set_tex_parameteri(struct gl_context *ctx,
 {
    switch (pname) {
    case GL_TEXTURE_MIN_FILTER:
+      if (!target_allows_setting_sampler_parameters(texObj->Target))
+         goto invalid_operation;
+
       if (texObj->Sampler.MinFilter == params[0])
          return GL_FALSE;
       switch (params[0]) {
@@ -286,6 +313,9 @@ set_tex_parameteri(struct gl_context *ctx,
       return GL_FALSE;
 
    case GL_TEXTURE_MAG_FILTER:
+      if (!target_allows_setting_sampler_parameters(texObj->Target))
+         goto invalid_operation;
+
       if (texObj->Sampler.MagFilter == params[0])
          return GL_FALSE;
       switch (params[0]) {
@@ -300,6 +330,9 @@ set_tex_parameteri(struct gl_context *ctx,
       return GL_FALSE;
 
    case GL_TEXTURE_WRAP_S:
+      if (!target_allows_setting_sampler_parameters(texObj->Target))
+         goto invalid_operation;
+
       if (texObj->Sampler.WrapS == params[0])
          return GL_FALSE;
       if (validate_texture_wrap_mode(ctx, texObj->Target, params[0])) {
@@ -310,6 +343,9 @@ set_tex_parameteri(struct gl_context *ctx,
       return GL_FALSE;
 
    case GL_TEXTURE_WRAP_T:
+      if (!target_allows_setting_sampler_parameters(texObj->Target))
+         goto invalid_operation;
+
       if (texObj->Sampler.WrapT == params[0])
          return GL_FALSE;
       if (validate_texture_wrap_mode(ctx, texObj->Target, params[0])) {
@@ -320,6 +356,9 @@ set_tex_parameteri(struct gl_context *ctx,
       return GL_FALSE;
 
    case GL_TEXTURE_WRAP_R:
+      if (!target_allows_setting_sampler_parameters(texObj->Target))
+         goto invalid_operation;
+
       if (texObj->Sampler.WrapR == params[0])
          return GL_FALSE;
       if (validate_texture_wrap_mode(ctx, texObj->Target, params[0])) {
@@ -335,6 +374,11 @@ set_tex_parameteri(struct gl_context *ctx,
 
       if (texObj->BaseLevel == params[0])
          return GL_FALSE;
+
+      if ((texObj->Target == GL_TEXTURE_2D_MULTISAMPLE ||
+           texObj->Target == GL_TEXTURE_2D_MULTISAMPLE_ARRAY) && params[0] != 0)
+         goto invalid_operation;
+
       if (params[0] < 0 ||
           (texObj->Target == GL_TEXTURE_RECTANGLE_ARB && params[0] != 0)) {
          _mesa_error(ctx, GL_INVALID_VALUE,
@@ -348,6 +392,7 @@ set_tex_parameteri(struct gl_context *ctx,
    case GL_TEXTURE_MAX_LEVEL:
       if (texObj->MaxLevel == params[0])
          return GL_FALSE;
+
       if (params[0] < 0 || texObj->Target == GL_TEXTURE_RECTANGLE_ARB) {
          _mesa_error(ctx, GL_INVALID_VALUE,
                      "glTexParameter(param=%d)", params[0]);
@@ -373,6 +418,10 @@ set_tex_parameteri(struct gl_context *ctx,
    case GL_TEXTURE_COMPARE_MODE_ARB:
       if ((_mesa_is_desktop_gl(ctx) && ctx->Extensions.ARB_shadow)
           || _mesa_is_gles3(ctx)) {
+
+         if (!target_allows_setting_sampler_parameters(texObj->Target))
+            goto invalid_operation;
+
          if (texObj->Sampler.CompareMode == params[0])
             return GL_FALSE;
          if (params[0] == GL_NONE ||
@@ -388,6 +437,10 @@ set_tex_parameteri(struct gl_context *ctx,
    case GL_TEXTURE_COMPARE_FUNC_ARB:
       if ((_mesa_is_desktop_gl(ctx) && ctx->Extensions.ARB_shadow)
           || _mesa_is_gles3(ctx)) {
+
+         if (!target_allows_setting_sampler_parameters(texObj->Target))
+            goto invalid_operation;
+
          if (texObj->Sampler.CompareFunc == params[0])
             return GL_FALSE;
          switch (params[0]) {
@@ -489,7 +542,11 @@ set_tex_parameteri(struct gl_context *ctx,
    case GL_TEXTURE_SRGB_DECODE_EXT:
       if (_mesa_is_desktop_gl(ctx)
           && ctx->Extensions.EXT_texture_sRGB_decode) {
-	 GLenum decode = params[0];
+         GLenum decode = params[0];
+
+         if (!target_allows_setting_sampler_parameters(texObj->Target))
+            goto invalid_operation;
+
 	 if (decode == GL_DECODE_EXT || decode == GL_SKIP_DECODE_EXT) {
 	    if (texObj->Sampler.sRGBDecode != decode) {
 	       flush(ctx);
@@ -504,6 +561,10 @@ set_tex_parameteri(struct gl_context *ctx,
       if (_mesa_is_desktop_gl(ctx)
           && ctx->Extensions.AMD_seamless_cubemap_per_texture) {
          GLenum param = params[0];
+
+         if (!target_allows_setting_sampler_parameters(texObj->Target))
+            goto invalid_operation;
+
          if (param != GL_TRUE && param != GL_FALSE) {
             goto invalid_param;
          }
@@ -528,6 +589,11 @@ invalid_param:
    _mesa_error(ctx, GL_INVALID_ENUM, "glTexParameter(param=%s)",
                _mesa_lookup_enum_by_nr(params[0]));
    return GL_FALSE;
+
+invalid_operation:
+   _mesa_error(ctx, GL_INVALID_OPERATION, "glTexParameter(pname=%s)",
+               _mesa_lookup_enum_by_nr(pname));
+   return GL_FALSE;
 }
 
 
@@ -545,6 +611,9 @@ set_tex_parameterf(struct gl_context *ctx,
       if (!_mesa_is_desktop_gl(ctx) && !_mesa_is_gles3(ctx))
          goto invalid_pname;
 
+      if (!target_allows_setting_sampler_parameters(texObj->Target))
+         goto invalid_operation;
+
       if (texObj->Sampler.MinLod == params[0])
          return GL_FALSE;
       flush(ctx);
@@ -554,6 +623,9 @@ set_tex_parameterf(struct gl_context *ctx,
    case GL_TEXTURE_MAX_LOD:
       if (!_mesa_is_desktop_gl(ctx) && !_mesa_is_gles3(ctx))
          goto invalid_pname;
+
+      if (!target_allows_setting_sampler_parameters(texObj->Target))
+         goto invalid_operation;
 
       if (texObj->Sampler.MaxLod == params[0])
          return GL_FALSE;
@@ -571,6 +643,9 @@ set_tex_parameterf(struct gl_context *ctx,
 
    case GL_TEXTURE_MAX_ANISOTROPY_EXT:
       if (ctx->Extensions.EXT_texture_filter_anisotropic) {
+         if (!target_allows_setting_sampler_parameters(texObj->Target))
+            goto invalid_operation;
+
          if (texObj->Sampler.MaxAnisotropy == params[0])
             return GL_FALSE;
          if (params[0] < 1.0) {
@@ -598,6 +673,9 @@ set_tex_parameterf(struct gl_context *ctx,
       if (ctx->API != API_OPENGL_COMPAT)
          goto invalid_pname;
 
+      if (!target_allows_setting_sampler_parameters(texObj->Target))
+         goto invalid_operation;
+
       if (texObj->Sampler.LodBias != params[0]) {
 	 flush(ctx);
 	 texObj->Sampler.LodBias = params[0];
@@ -608,6 +686,9 @@ set_tex_parameterf(struct gl_context *ctx,
    case GL_TEXTURE_BORDER_COLOR:
       if (!_mesa_is_desktop_gl(ctx))
          goto invalid_pname;
+
+      if (!target_allows_setting_sampler_parameters(texObj->Target))
+         goto invalid_operation;
 
       flush(ctx);
       /* ARB_texture_float disables clamping */
@@ -631,6 +712,11 @@ set_tex_parameterf(struct gl_context *ctx,
 
 invalid_pname:
    _mesa_error(ctx, GL_INVALID_ENUM, "glTexParameter(pname=%s)",
+               _mesa_lookup_enum_by_nr(pname));
+   return GL_FALSE;
+
+invalid_operation:
+   _mesa_error(ctx, GL_INVALID_OPERATION, "glTexParameter(pname=%s)",
                _mesa_lookup_enum_by_nr(pname));
    return GL_FALSE;
 }
