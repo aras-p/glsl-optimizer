@@ -3528,7 +3528,7 @@ static void evergreen_dma_copy_tile(struct r600_context *rctx,
 	struct r600_texture *rdst = (struct r600_texture*)dst;
 	unsigned array_mode, lbpp, pitch_tile_max, slice_tile_max, size;
 	unsigned ncopy, height, cheight, detile, i, x, y, z, src_mode, dst_mode;
-	unsigned sub_cmd, bank_h, bank_w, mt_aspect, nbanks, tile_split;
+	unsigned sub_cmd, bank_h, bank_w, mt_aspect, nbanks, tile_split, non_disp_tiling = 0;
 	uint64_t base, addr;
 
 	/* make sure that the dma ring is only one active */
@@ -3540,6 +3540,10 @@ static void evergreen_dma_copy_tile(struct r600_context *rctx,
 	src_mode = src_mode == RADEON_SURF_MODE_LINEAR_ALIGNED ? RADEON_SURF_MODE_LINEAR : src_mode;
 	dst_mode = dst_mode == RADEON_SURF_MODE_LINEAR_ALIGNED ? RADEON_SURF_MODE_LINEAR : dst_mode;
 	assert(dst_mode != src_mode);
+
+	/* non_disp_tiling bit needs to be set for depth, stencil, and fmask surfaces */
+	if (util_format_has_depth(util_format_description(src->format)))
+		non_disp_tiling = 1;
 
 	y = 0;
 	sub_cmd = 0x8;
@@ -3620,7 +3624,7 @@ static void evergreen_dma_copy_tile(struct r600_context *rctx,
 		cs->buf[cs->cdw++] = (pitch_tile_max << 0) | ((height - 1) << 16);
 		cs->buf[cs->cdw++] = (slice_tile_max << 0);
 		cs->buf[cs->cdw++] = (x << 0) | (z << 18);
-		cs->buf[cs->cdw++] = (y << 0) | (tile_split << 21) | (nbanks << 25);
+		cs->buf[cs->cdw++] = (y << 0) | (tile_split << 21) | (nbanks << 25) | (non_disp_tiling << 28);
 		cs->buf[cs->cdw++] = addr & 0xfffffffc;
 		cs->buf[cs->cdw++] = (addr >> 32UL) & 0xff;
 		copy_height -= cheight;
