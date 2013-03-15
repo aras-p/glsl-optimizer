@@ -3674,6 +3674,17 @@ boolean evergreen_dma_blit(struct pipe_context *ctx,
 		return FALSE;
 	}
 
+	/* 128 bpp surfaces require non_disp_tiling for both
+	 * tiled and linear buffers on cayman.  However, async
+	 * DMA only supports it on the tiled side.  As such
+	 * the tile order is backwards after a L2T/T2L packet.
+	 */
+	if ((rctx->chip_class == CAYMAN) &&
+	    (src_mode != dst_mode) &&
+	    (util_format_get_blocksize(src->format) >= 16)) {
+		return FALSE;
+	}
+
 	if (src_mode == dst_mode) {
 		uint64_t dst_offset, src_offset;
 		/* simple dma blit would do NOTE code here assume :
