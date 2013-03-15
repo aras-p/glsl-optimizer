@@ -16,6 +16,7 @@ LIBGLCPP_GENERATED_FILES = \
 # libglsl
 
 LIBGLSL_FILES = \
+	$(GLSL_SRCDIR)/ast_array_index.cpp \
 	$(GLSL_SRCDIR)/ast_expr.cpp \
 	$(GLSL_SRCDIR)/ast_function.cpp \
 	$(GLSL_SRCDIR)/ast_to_hir.cpp \
