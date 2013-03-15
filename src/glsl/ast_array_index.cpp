@@ -43,17 +43,13 @@ _mesa_ast_array_index_to_hir(void *mem_ctx,
       _mesa_glsl_error(& idx_loc, state,
 		       "cannot dereference non-array / non-matrix / "
 		       "non-vector");
-      error_emitted = true;
+      result->type = glsl_type::error_type;
    }
 
    if (!idx->type->is_integer()) {
-      _mesa_glsl_error(& idx_loc, state,
-		       "array index must be integer type");
-      error_emitted = true;
+      _mesa_glsl_error(& idx_loc, state, "array index must be integer type");
    } else if (!idx->type->is_scalar()) {
-      _mesa_glsl_error(& idx_loc, state,
-		       "array index must be scalar");
-      error_emitted = true;
+      _mesa_glsl_error(& idx_loc, state, "array index must be scalar");
    }
 
    /* If the array index is a constant expression and the array has a
@@ -101,11 +97,9 @@ _mesa_ast_array_index_to_hir(void *mem_ctx,
       if (bound > 0) {
 	 _mesa_glsl_error(& loc, state, "%s index must be < %u",
 			  type_name, bound);
-	 error_emitted = true;
       } else if (idx < 0) {
 	 _mesa_glsl_error(& loc, state, "%s index must be >= 0",
 			  type_name);
-	 error_emitted = true;
       }
 
       if (array->type->is_array()) {
@@ -122,8 +116,7 @@ _mesa_ast_array_index_to_hir(void *mem_ctx,
 	    /* Check whether this access will, as a side effect, implicitly
 	     * cause the size of a built-in array to be too large.
 	     */
-	    if (check_builtin_array_max_size(v->name, idx+1, loc, state))
-	       error_emitted = true;
+	    check_builtin_array_max_size(v->name, idx+1, loc, state);
 	 }
       }
    } else if (array->type->array_size() == 0) {
@@ -183,12 +176,8 @@ _mesa_ast_array_index_to_hir(void *mem_ctx,
 			  "sampler arrays indexed with non-constant "
 			  "expressions is forbidden in GLSL 1.30 and "
 			  "later");
-	 error_emitted = true;
       }
    }
-
-   if (error_emitted)
-      result->type = glsl_type::error_type;
 
    return result;
 }
