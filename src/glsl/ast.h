@@ -858,8 +858,7 @@ extern ir_rvalue *
 _mesa_ast_array_index_to_hir(void *mem_ctx,
 			     struct _mesa_glsl_parse_state *state,
 			     ir_rvalue *array, ir_rvalue *idx,
-			     YYLTYPE &loc, YYLTYPE &idx_loc,
-			     bool error_emitted);
+			     YYLTYPE &loc, YYLTYPE &idx_loc);
 
 void
 emit_function(_mesa_glsl_parse_state *state, ir_function *f);

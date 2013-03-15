@@ -1514,10 +1514,8 @@ ast_expression::hir(exec_list *instructions,
       op[0] = subexpressions[0]->hir(instructions, state);
       op[1] = subexpressions[1]->hir(instructions, state);
 
-      error_emitted = op[0]->type->is_error() || op[1]->type->is_error();
-
       result = _mesa_ast_array_index_to_hir(ctx, state, op[0], op[1],
-					    loc, index_loc, error_emitted);
+					    loc, index_loc);
 
       if (result->type->is_error())
 	 error_emitted = true;

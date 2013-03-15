@@ -29,15 +29,12 @@ ir_rvalue *
 _mesa_ast_array_index_to_hir(void *mem_ctx,
 			     struct _mesa_glsl_parse_state *state,
 			     ir_rvalue *array, ir_rvalue *idx,
-			     YYLTYPE &loc, YYLTYPE &idx_loc,
-			     bool error_emitted)
+			     YYLTYPE &loc, YYLTYPE &idx_loc)
 {
    ir_rvalue *result = new(mem_ctx) ir_dereference_array(array, idx);
 
-   if (error_emitted)
-      return result;
-
-   if (!array->type->is_array()
+   if (!array->type->is_error()
+       && !array->type->is_array()
        && !array->type->is_matrix()
        && !array->type->is_vector()) {
       _mesa_glsl_error(& idx_loc, state,
@@ -46,10 +43,12 @@ _mesa_ast_array_index_to_hir(void *mem_ctx,
       result->type = glsl_type::error_type;
    }
 
-   if (!idx->type->is_integer()) {
-      _mesa_glsl_error(& idx_loc, state, "array index must be integer type");
-   } else if (!idx->type->is_scalar()) {
-      _mesa_glsl_error(& idx_loc, state, "array index must be scalar");
+   if (!idx->type->is_error()) {
+      if (!idx->type->is_integer()) {
+	 _mesa_glsl_error(& idx_loc, state, "array index must be integer type");
+      } else if (!idx->type->is_scalar()) {
+	 _mesa_glsl_error(& idx_loc, state, "array index must be scalar");
+      }
    }
 
    /* If the array index is a constant expression and the array has a
