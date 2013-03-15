@@ -118,19 +118,18 @@ _mesa_ast_array_index_to_hir(void *mem_ctx,
 	    check_builtin_array_max_size(v->name, idx+1, loc, state);
 	 }
       }
-   } else if (array->type->array_size() == 0) {
-      _mesa_glsl_error(&loc, state, "unsized array index must be constant");
-   } else if (array->type->is_array()
-	      && array->type->fields.array->is_interface()) {
-      /* Page 46 in section 4.3.7 of the OpenGL ES 3.00 spec says:
-       *
-       *     "All indexes used to index a uniform block array must be
-       *     constant integral expressions."
-       */
-      _mesa_glsl_error(&loc, state,
-		       "uniform block array index must be constant");
-   } else {
-      if (array->type->is_array()) {
+   } else if (array->type->is_array()) {
+      if (array->type->array_size() == 0) {
+	 _mesa_glsl_error(&loc, state, "unsized array index must be constant");
+      } else if (array->type->fields.array->is_interface()) {
+	 /* Page 46 in section 4.3.7 of the OpenGL ES 3.00 spec says:
+	  *
+	  *     "All indexes used to index a uniform block array must be
+	  *     constant integral expressions."
+	  */
+	 _mesa_glsl_error(&loc, state,
+			  "uniform block array index must be constant");
+      } else {
 	 /* whole_variable_referenced can return NULL if the array is a
 	  * member of a structure.  In this case it is safe to not update
 	  * the max_array_access field because it is never used for fields
@@ -140,41 +139,39 @@ _mesa_ast_array_index_to_hir(void *mem_ctx,
 	 if (v != NULL)
 	    v->max_array_access = array->type->array_size() - 1;
       }
-   }
 
-   /* From page 23 (29 of the PDF) of the GLSL 1.30 spec:
-    *
-    *    "Samplers aggregated into arrays within a shader (using square
-    *    brackets [ ]) can only be indexed with integral constant
-    *    expressions [...]."
-    *
-    * This restriction was added in GLSL 1.30.  Shaders using earlier version
-    * of the language should not be rejected by the compiler front-end for
-    * using this construct.  This allows useful things such as using a loop
-    * counter as the index to an array of samplers.  If the loop in unrolled,
-    * the code should compile correctly.  Instead, emit a warning.
-    */
-   if (array->type->is_array() &&
-       array->type->element_type()->is_sampler() &&
-       const_index == NULL) {
-
-      if (!state->is_version(130, 100)) {
-	 if (state->es_shader) {
-	    _mesa_glsl_warning(&loc, state,
-			       "sampler arrays indexed with non-constant "
-			       "expressions is optional in %s",
-			       state->get_version_string());
+      /* From page 23 (29 of the PDF) of the GLSL 1.30 spec:
+       *
+       *    "Samplers aggregated into arrays within a shader (using square
+       *    brackets [ ]) can only be indexed with integral constant
+       *    expressions [...]."
+       *
+       * This restriction was added in GLSL 1.30.  Shaders using earlier
+       * version of the language should not be rejected by the compiler
+       * front-end for using this construct.  This allows useful things such
+       * as using a loop counter as the index to an array of samplers.  If the
+       * loop in unrolled, the code should compile correctly.  Instead, emit a
+       * warning.
+       */
+      if (array->type->element_type()->is_sampler()) {
+	 if (!state->is_version(130, 100)) {
+	    if (state->es_shader) {
+	       _mesa_glsl_warning(&loc, state,
+				  "sampler arrays indexed with non-constant "
+				  "expressions is optional in %s",
+				  state->get_version_string());
+	    } else {
+	       _mesa_glsl_warning(&loc, state,
+				  "sampler arrays indexed with non-constant "
+				  "expressions will be forbidden in GLSL 1.30 "
+				  "and later");
+	    }
 	 } else {
-	    _mesa_glsl_warning(&loc, state,
-			       "sampler arrays indexed with non-constant "
-			       "expressions will be forbidden in GLSL 1.30 and "
-			       "later");
+	    _mesa_glsl_error(&loc, state,
+			     "sampler arrays indexed with non-constant "
+			     "expressions is forbidden in GLSL 1.30 and "
+			     "later");
 	 }
-      } else {
-	 _mesa_glsl_error(&loc, state,
-			  "sampler arrays indexed with non-constant "
-			  "expressions is forbidden in GLSL 1.30 and "
-			  "later");
       }
    }
 
