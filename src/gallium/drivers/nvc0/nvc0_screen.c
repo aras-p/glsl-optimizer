@@ -221,9 +221,17 @@ nvc0_screen_get_shader_param(struct pipe_screen *pscreen, unsigned shader,
    case PIPE_SHADER_CAP_MAX_INPUTS:
       if (shader == PIPE_SHADER_VERTEX)
          return 32;
+      /* NOTE: These only count our slots for GENERIC varyings.
+       * The address space may be larger, but the actual hard limit seems to be
+       * less than what the address space layout permits, so don't add TEXCOORD,
+       * COLOR, etc. here.
+       */
       if (shader == PIPE_SHADER_FRAGMENT)
-         return (0x200 + 0x20 + 0x80) / 16; /* generic + colors + TexCoords */
-      return (0x200 + 0x40 + 0x80) / 16; /* without 0x60 for per-patch inputs */
+         return 0x1f0 / 16;
+      /* Actually this counts CLIPVERTEX, which occupies the last generic slot,
+       * and excludes 0x60 per-patch inputs.
+       */
+      return 0x200 / 16;
    case PIPE_SHADER_CAP_MAX_CONSTS:
       return 65536 / 16;
    case PIPE_SHADER_CAP_MAX_CONST_BUFFERS:

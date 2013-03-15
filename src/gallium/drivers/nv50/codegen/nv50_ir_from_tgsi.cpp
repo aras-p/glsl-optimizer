@@ -1009,7 +1009,9 @@ bool Source::scanInstruction(const struct tgsi_full_instruction *inst)
          else
             info->out[dst.getIndex(0)].mask |= dst.getMask();
 
-         if (info->out[dst.getIndex(0)].sn == TGSI_SEMANTIC_PSIZE)
+         if (info->out[dst.getIndex(0)].sn == TGSI_SEMANTIC_PSIZE ||
+             info->out[dst.getIndex(0)].sn == TGSI_SEMANTIC_PRIMID ||
+             info->out[dst.getIndex(0)].sn == TGSI_SEMANTIC_FOG)
             info->out[dst.getIndex(0)].mask &= 1;
 
          if (isEdgeFlagPassthrough(insn))
@@ -1040,14 +1042,25 @@ bool Source::scanInstruction(const struct tgsi_full_instruction *inst)
          for (unsigned i = 0; i < info->numInputs; ++i)
             info->in[i].mask = 0xf;
       } else {
+         const int i = src.getIndex(0);
          for (unsigned c = 0; c < 4; ++c) {
             if (!(mask & (1 << c)))
                continue;
             int k = src.getSwizzle(c);
-            int i = src.getIndex(0);
-            if (info->in[i].sn != TGSI_SEMANTIC_FOG || k == TGSI_SWIZZLE_X)
-               if (k <= TGSI_SWIZZLE_W)
-                  info->in[i].mask |= 1 << k;
+            if (k <= TGSI_SWIZZLE_W)
+               info->in[i].mask |= 1 << k;
+         }
+         switch (info->in[i].sn) {
+         case TGSI_SEMANTIC_PSIZE:
+         case TGSI_SEMANTIC_PRIMID:
+         case TGSI_SEMANTIC_FOG:
+            info->in[i].mask &= 0x1;
+            break;
+         case TGSI_SEMANTIC_PCOORD:
+            info->in[i].mask &= 0x3;
+            break;
+         default:
+            break;
          }
       }
    }
