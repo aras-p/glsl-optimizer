@@ -52,6 +52,7 @@
  */
 
 
+#include "pipe/p_screen.h"
 #include "pipe/p_context.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
@@ -73,6 +74,9 @@ struct widepoint_stage {
    /** for automatic texcoord generation/replacement */
    uint num_texcoord_gen;
    uint texcoord_gen_slot[PIPE_MAX_SHADER_OUTPUTS];
+
+   /* TGSI_SEMANTIC to which sprite_coord_enable applies */
+   unsigned sprite_coord_semantic;
 
    int psize_slot;
 };
@@ -233,28 +237,29 @@ widepoint_first_point(struct draw_stage *stage,
 
       wide->num_texcoord_gen = 0;
 
-      /* Loop over fragment shader inputs looking for generic inputs
+      /* Loop over fragment shader inputs looking for the PCOORD input or inputs
        * for which bit 'k' in sprite_coord_enable is set.
        */
       for (i = 0; i < fs->info.num_inputs; i++) {
-         if (fs->info.input_semantic_name[i] == TGSI_SEMANTIC_GENERIC) {
-            const int generic_index = fs->info.input_semantic_index[i];
-            /* Note that sprite_coord enable is a bitfield of
-             * PIPE_MAX_SHADER_OUTPUTS bits.
-             */
-            if (generic_index < PIPE_MAX_SHADER_OUTPUTS &&
-                (rast->sprite_coord_enable & (1 << generic_index))) {
-               /* OK, this generic attribute needs to be replaced with a
-                * texcoord (see above).
-                */
-               int slot = draw_alloc_extra_vertex_attrib(draw,
-                                                         TGSI_SEMANTIC_GENERIC,
-                                                         generic_index);
+         int slot;
+         const unsigned sn = fs->info.input_semantic_name[i];
+         const unsigned si = fs->info.input_semantic_index[i];
 
-               /* add this slot to the texcoord-gen list */
-               wide->texcoord_gen_slot[wide->num_texcoord_gen++] = slot;
-            }
+         if (sn == wide->sprite_coord_semantic) {
+            /* Note that sprite_coord_enable is a bitfield of 32 bits. */
+            if (si >= 32 || !(rast->sprite_coord_enable & (1 << si)))
+               continue;
+         } else if (sn != TGSI_SEMANTIC_PCOORD) {
+            continue;
          }
+
+         /* OK, this generic attribute needs to be replaced with a
+          * sprite coord (see above).
+          */
+         slot = draw_alloc_extra_vertex_attrib(draw, sn, si);
+
+         /* add this slot to the texcoord-gen list */
+         wide->texcoord_gen_slot[wide->num_texcoord_gen++] = slot;
       }
    }
 
@@ -325,6 +330,11 @@ struct draw_stage *draw_wide_point_stage( struct draw_context *draw )
 
    if (!draw_alloc_temp_verts( &wide->stage, 4 ))
       goto fail;
+
+   wide->sprite_coord_semantic =
+      draw->pipe->screen->get_param(draw->pipe->screen, PIPE_CAP_TGSI_TEXCOORD)
+      ?
+      TGSI_SEMANTIC_TEXCOORD : TGSI_SEMANTIC_GENERIC;
 
    return &wide->stage;
 

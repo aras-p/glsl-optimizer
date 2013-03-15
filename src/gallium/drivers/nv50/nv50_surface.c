@@ -494,7 +494,7 @@ nv50_blitter_make_vp(struct nv50_blitter *blit)
    blit->vp.out[1].hw = 2;
    blit->vp.out[1].mask = 0x7;
    blit->vp.out[1].sn = TGSI_SEMANTIC_GENERIC;
-   blit->vp.out[1].si = 8;
+   blit->vp.out[1].si = 0;
    blit->vp.vp.attrs[0] = 0x73;
    blit->vp.vp.psiz = 0x40;
    blit->vp.vp.edgeflag = 0x40;
@@ -536,9 +536,8 @@ nv50_blitter_make_fp(struct pipe_context *pipe,
       return NULL;
 
    out = ureg_DECL_output(ureg, TGSI_SEMANTIC_COLOR, 0);
-   /* NOTE: use GENERIC[8] so we don't use the TEXCOORD slots on nvc0 */
    tc = ureg_DECL_fs_input(
-      ureg, TGSI_SEMANTIC_GENERIC, 8, TGSI_INTERPOLATE_LINEAR);
+      ureg, TGSI_SEMANTIC_GENERIC, 0, TGSI_INTERPOLATE_LINEAR);
 
    data = ureg_DECL_temporary(ureg);
 

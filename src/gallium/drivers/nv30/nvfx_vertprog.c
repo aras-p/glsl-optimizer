@@ -819,6 +819,7 @@ nvfx_vertprog_parse_decl_output(struct nv30_context *nv30, struct nvfx_vpc *vpc,
 {
    unsigned num_texcoords = nv30->is_nv4x ? 10 : 8;
    unsigned idx = fdec->Range.First;
+   unsigned semantic_index = fdec->Semantic.Index;
    int hw = 0, i;
 
    switch (fdec->Semantic.Name) {
@@ -860,8 +861,12 @@ nvfx_vertprog_parse_decl_output(struct nv30_context *nv30, struct nvfx_vpc *vpc,
       hw = NVFX_VP(INST_DEST_PSZ);
       break;
    case TGSI_SEMANTIC_GENERIC:
+      /* this is really an identifier for VP/FP linkage */
+      semantic_index += 8;
+      /* fall through */
+   case TGSI_SEMANTIC_TEXCOORD:
       for (i = 0; i < num_texcoords; i++) {
-         if (vpc->vp->texcoord[i] == fdec->Semantic.Index) {
+         if (vpc->vp->texcoord[i] == semantic_index) {
             hw = NVFX_VP(INST_DEST_TC(i));
             break;
          }

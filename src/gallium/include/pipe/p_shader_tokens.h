@@ -162,7 +162,9 @@ struct tgsi_declaration_interp
 #define TGSI_SEMANTIC_BLOCK_ID   16 /**< id of the current block */
 #define TGSI_SEMANTIC_BLOCK_SIZE 17 /**< block size in threads */
 #define TGSI_SEMANTIC_THREAD_ID  18 /**< block-relative id of the current thread */
-#define TGSI_SEMANTIC_COUNT      19 /**< number of semantic values */
+#define TGSI_SEMANTIC_TEXCOORD   19 /**< texture or sprite coordinates */
+#define TGSI_SEMANTIC_PCOORD     20 /**< point sprite coordinate */
+#define TGSI_SEMANTIC_COUNT      21 /**< number of semantic values */
 
 struct tgsi_declaration_semantic
 {

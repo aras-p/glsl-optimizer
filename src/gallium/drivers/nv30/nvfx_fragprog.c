@@ -927,15 +927,17 @@ nvfx_fragprog_parse_decl_input(struct nv30_context *nvfx, struct nvfx_fpc *fpc,
    case TGSI_SEMANTIC_FACE:
       hw = NV40_FP_OP_INPUT_SRC_FACING;
       break;
-   case TGSI_SEMANTIC_GENERIC:
-      if (fdec->Semantic.Index >= 8)
-         return TRUE;
-
+   case TGSI_SEMANTIC_TEXCOORD:
+      assert(fdec->Semantic.Index < 8);
       fpc->fp->texcoord[fdec->Semantic.Index] = fdec->Semantic.Index;
       fpc->fp->texcoords |= (1 << fdec->Semantic.Index);
       fpc->fp->vp_or |= (0x00004000 << fdec->Semantic.Index);
       hw = NVFX_FP_OP_INPUT_SRC_TC(fdec->Semantic.Index);
       break;
+   case TGSI_SEMANTIC_GENERIC:
+   case TGSI_SEMANTIC_PCOORD:
+      /* will be assigned to remaining TC slots later */
+      return TRUE;
    default:
       assert(0);
       return FALSE;
@@ -955,22 +957,24 @@ nvfx_fragprog_assign_generic(struct nv30_context *nvfx, struct nvfx_fpc *fpc,
 
    switch (fdec->Semantic.Name) {
    case TGSI_SEMANTIC_GENERIC:
-      if (fdec->Semantic.Index >= 8) {
-         for (hw = 0; hw < num_texcoords; hw++) {
-            if (fpc->fp->texcoord[hw] == 0xffff) {
-               fpc->fp->texcoord[hw] = fdec->Semantic.Index;
-               if (hw <= 7) {
-                  fpc->fp->texcoords |= (0x1 << hw);
-                  fpc->fp->vp_or |= (0x00004000 << hw);
-               } else {
-                  fpc->fp->vp_or |= (0x00001000 << (hw - 8));
-               }
-               if (fdec->Semantic.Index == 9)
-                  fpc->fp->point_sprite_control |= (0x00000100 << hw);
-               hw = NVFX_FP_OP_INPUT_SRC_TC(hw);
-               fpc->r_input[idx] = nvfx_reg(NVFXSR_INPUT, hw);
-               return TRUE;
+   case TGSI_SEMANTIC_PCOORD:
+      for (hw = 0; hw < num_texcoords; hw++) {
+         if (fpc->fp->texcoord[hw] == 0xffff) {
+            if (hw <= 7) {
+               fpc->fp->texcoords |= (0x1 << hw);
+               fpc->fp->vp_or |= (0x00004000 << hw);
+            } else {
+               fpc->fp->vp_or |= (0x00001000 << (hw - 8));
             }
+            if (fdec->Semantic.Name == TGSI_SEMANTIC_PCOORD) {
+               fpc->fp->texcoord[hw] = 0xfffe;
+               fpc->fp->point_sprite_control |= (0x00000100 << hw);
+            } else {
+               fpc->fp->texcoord[hw] = fdec->Semantic.Index + 8;
+            }
+            hw = NVFX_FP_OP_INPUT_SRC_TC(hw);
+            fpc->r_input[idx] = nvfx_reg(NVFXSR_INPUT, hw);
+            return TRUE;
          }
          return FALSE;
       }

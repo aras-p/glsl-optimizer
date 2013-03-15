@@ -145,7 +145,7 @@ struct pipe_rasterizer_state
    unsigned line_stipple_factor:8;  /**< [1..256] actually */
    unsigned line_stipple_pattern:16;
 
-   unsigned sprite_coord_enable; /* bitfield referring to 32 GENERIC inputs */
+   uint32_t sprite_coord_enable; /* referring to 32 TEXCOORD/GENERIC inputs */
 
    float line_width;
    float point_size;           /**< used when no per-vertex size */

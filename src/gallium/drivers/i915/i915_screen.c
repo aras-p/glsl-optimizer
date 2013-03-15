@@ -184,6 +184,8 @@ i915_get_param(struct pipe_screen *screen, enum pipe_cap cap)
    case PIPE_CAP_USER_INDEX_BUFFERS:
    case PIPE_CAP_USER_CONSTANT_BUFFERS:
       return 1;
+   case PIPE_CAP_TGSI_TEXCOORD:
+      return 0;
 
    /* Unsupported features (boolean caps). */
    case PIPE_CAP_MAX_TEXTURE_ARRAY_LAYERS:

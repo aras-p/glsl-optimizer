@@ -177,6 +177,7 @@ void
 st_prepare_vertex_program(struct gl_context *ctx,
                             struct st_vertex_program *stvp)
 {
+   struct st_context *st = st_context(ctx);
    GLuint attr;
 
    stvp->num_inputs = 0;
@@ -267,7 +268,8 @@ st_prepare_vertex_program(struct gl_context *ctx,
          case VARYING_SLOT_TEX5:
          case VARYING_SLOT_TEX6:
          case VARYING_SLOT_TEX7:
-            stvp->output_semantic_name[slot] = TGSI_SEMANTIC_GENERIC;
+            stvp->output_semantic_name[slot] = st->needs_texcoord_semantic ?
+               TGSI_SEMANTIC_TEXCOORD : TGSI_SEMANTIC_GENERIC;
             stvp->output_semantic_index[slot] = attr - VARYING_SLOT_TEX0;
             break;
 
@@ -275,10 +277,8 @@ st_prepare_vertex_program(struct gl_context *ctx,
          default:
             assert(attr < VARYING_SLOT_MAX);
             stvp->output_semantic_name[slot] = TGSI_SEMANTIC_GENERIC;
-            stvp->output_semantic_index[slot] = (VARYING_SLOT_VAR0 - 
-                                                VARYING_SLOT_TEX0 +
-                                                attr - 
-                                                VARYING_SLOT_VAR0);
+            stvp->output_semantic_index[slot] = st->needs_texcoord_semantic ?
+               (attr - VARYING_SLOT_VAR0) : (attr - VARYING_SLOT_TEX0);
             break;
          }
       }
@@ -585,11 +585,18 @@ st_translate_fragment_program(struct st_context *st,
              * fragment shader plus fixed-function hardware (such as
              * BFC).
              *
-             * There is no requirement that semantic indexes start at
-             * zero or be restricted to a particular range -- nobody
-             * should be building tables based on semantic index.
+             * However, some drivers may need us to identify the PNTC and TEXi
+             * varyings if, for example, their capability to replace them with
+             * sprite coordinates is limited.
              */
          case VARYING_SLOT_PNTC:
+            if (st->needs_texcoord_semantic) {
+               input_semantic_name[slot] = TGSI_SEMANTIC_PCOORD;
+               input_semantic_index[slot] = 0;
+               interpMode[slot] = TGSI_INTERPOLATE_LINEAR;
+               break;
+            }
+            /* fall through */
          case VARYING_SLOT_TEX0:
          case VARYING_SLOT_TEX1:
          case VARYING_SLOT_TEX2:
@@ -598,13 +605,29 @@ st_translate_fragment_program(struct st_context *st,
          case VARYING_SLOT_TEX5:
          case VARYING_SLOT_TEX6:
          case VARYING_SLOT_TEX7:
+            if (st->needs_texcoord_semantic) {
+               input_semantic_name[slot] = TGSI_SEMANTIC_TEXCOORD;
+               input_semantic_index[slot] = attr - VARYING_SLOT_TEX0;
+               interpMode[slot] =
+                  st_translate_interp(stfp->Base.InterpQualifier[attr], FALSE);
+               break;
+            }
+            /* fall through */
          case VARYING_SLOT_VAR0:
          default:
-            /* Actually, let's try and zero-base this just for
-             * readability of the generated TGSI.
+            /* Semantic indices should be zero-based because drivers may choose
+             * to assign a fixed slot determined by that index.
+             * This is useful because ARB_separate_shader_objects uses location
+             * qualifiers for linkage, and if the semantic index corresponds to
+             * these locations, linkage passes in the driver become unecessary.
+             *
+             * If needs_texcoord_semantic is true, no semantic indices will be
+             * consumed for the TEXi varyings, and we can base the locations of
+             * the user varyings on VAR0.  Otherwise, we use TEX0 as base index.
              */
             assert(attr >= VARYING_SLOT_TEX0);
-            input_semantic_index[slot] = (attr - VARYING_SLOT_TEX0);
+            input_semantic_index[slot] = st->needs_texcoord_semantic ?
+               (attr - VARYING_SLOT_VAR0) : (attr - VARYING_SLOT_TEX0);
             input_semantic_name[slot] = TGSI_SEMANTIC_GENERIC;
             if (attr == VARYING_SLOT_PNTC)
                interpMode[slot] = TGSI_INTERPOLATE_LINEAR;

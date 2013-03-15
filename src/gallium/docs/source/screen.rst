@@ -137,6 +137,14 @@ The integer capabilities:
 * ``PIPE_CAP_TEXTURE_BUFFER_OFFSET_ALIGNMENT``: Describes the required
   alignment for pipe_sampler_view::u.buf.first_element, in bytes.
   If a driver does not support first/last_element, it should return 0.
+* ``PIPE_CAP_TGSI_TEXCOORD``: This CAP describes a hw limitation.
+  If true, the hardware cannot replace arbitrary shader inputs with sprite
+  coordinates and hence the inputs that are desired to be replaceable must
+  be declared with TGSI_SEMANTIC_TEXCOORD instead of TGSI_SEMANTIC_GENERIC.
+  The rasterizer's sprite_coord_enable state therefore also applies to the
+  TEXCOORD semantic.
+  Also, TGSI_SEMANTIC_PCOORD becomes available, which labels a fragment shader
+  input that will always be replaced with sprite coordinates.
 
 
 .. _pipe_capf:

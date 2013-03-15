@@ -159,12 +159,17 @@ Points
 
 sprite_coord_enable
 ^^^^^^^^^^^^^^^^^^^
+The effect of this state depends on PIPE_CAP_TGSI_TEXCOORD !
 
 Controls automatic texture coordinate generation for rendering sprite points.
 
+If PIPE_CAP_TGSI_TEXCOORD is false:
 When bit k in the sprite_coord_enable bitfield is set, then generic
 input k to the fragment shader will get an automatically computed
 texture coordinate.
+
+If PIPE_CAP_TGSI_TEXCOORD is true:
+The bitfield refers to inputs with TEXCOORD semantic instead of generic inputs.
 
 The texture coordinate will be of the form (s, t, 0, 1) where s varies
 from 0 to 1 from left to right while t varies from 0 to 1 according to

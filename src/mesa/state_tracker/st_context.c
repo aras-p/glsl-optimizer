@@ -183,6 +183,9 @@ st_create_context_priv( struct gl_context *ctx, struct pipe_context *pipe,
       screen->get_param(screen, PIPE_CAP_SHADER_STENCIL_EXPORT);
    st->has_shader_model3 = screen->get_param(screen, PIPE_CAP_SM3);
 
+   st->needs_texcoord_semantic =
+      screen->get_param(screen, PIPE_CAP_TGSI_TEXCOORD);
+
    /* GL limits and extensions */
    st_init_limits(st);
    st_init_extensions(st);

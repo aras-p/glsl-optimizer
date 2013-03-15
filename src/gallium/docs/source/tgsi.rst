@@ -1949,6 +1949,35 @@ When using this semantic, be sure to set the appropriate state in the
 :ref:`rasterizer` first.
 
 
+TGSI_SEMANTIC_TEXCOORD
+""""""""""""""""""""""
+
+Only available if PIPE_CAP_TGSI_TEXCOORD is exposed !
+
+Vertex shader outputs and fragment shader inputs may be labeled with
+this semantic to make them replaceable by sprite coordinates via the
+sprite_coord_enable state in the :ref:`rasterizer`.
+The semantic index permitted with this semantic is limited to <= 7.
+
+If the driver does not support TEXCOORD, sprite coordinate replacement
+applies to inputs with the GENERIC semantic instead.
+
+The intended use case for this semantic is gl_TexCoord.
+
+
+TGSI_SEMANTIC_PCOORD
+""""""""""""""""""""
+
+Only available if PIPE_CAP_TGSI_TEXCOORD is exposed !
+
+Fragment shader inputs may be labeled with TGSI_SEMANTIC_PCOORD to indicate
+that the register contains sprite coordinates in the form (x, y, 0, 1), if
+the current primitive is a point and point sprites are enabled. Otherwise,
+the contents of the register are undefined.
+
+The intended use case for this semantic is gl_PointCoord.
+
+
 TGSI_SEMANTIC_GENERIC
 """""""""""""""""""""
 

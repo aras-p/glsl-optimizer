@@ -150,6 +150,8 @@ svga_get_param(struct pipe_screen *screen, enum pipe_cap param)
       return 1;
    case PIPE_CAP_POINT_SPRITE:
       return 1;
+   case PIPE_CAP_TGSI_TEXCOORD:
+      return 0;
    case PIPE_CAP_MAX_RENDER_TARGETS:
       if(!sws->get_cap(sws, SVGA3D_DEVCAP_MAX_RENDER_TARGETS, &result))
          return 1;

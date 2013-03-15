@@ -172,6 +172,8 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
         case PIPE_CAP_VERTEX_BUFFER_STRIDE_4BYTE_ALIGNED_ONLY:
         case PIPE_CAP_VERTEX_ELEMENT_SRC_OFFSET_4BYTE_ALIGNED_ONLY:
             return r300screen->caps.has_tcl;
+	case PIPE_CAP_TGSI_TEXCOORD:
+            return 0;
 
         /* Texturing. */
         case PIPE_CAP_MAX_COMBINED_SAMPLERS:

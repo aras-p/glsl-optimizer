@@ -305,6 +305,7 @@ iter_declaration(
       TXT( ", " );
       ENM( decl->Semantic.Name, tgsi_semantic_names );
       if (decl->Semantic.Index != 0 ||
+          decl->Semantic.Name == TGSI_SEMANTIC_TEXCOORD ||
           decl->Semantic.Name == TGSI_SEMANTIC_GENERIC) {
          CHR( '[' );
          UID( decl->Semantic.Index );
