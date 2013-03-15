@@ -2082,6 +2082,12 @@ fs_visitor::compute_to_mrf()
 	       break;
 	    }
 
+            /* Things returning more than one register would need us to
+             * understand coalescing out more than one MOV at a time.
+             */
+            if (scan_inst->regs_written() > 1)
+               break;
+
 	    /* SEND instructions can't have MRF as a destination. */
 	    if (scan_inst->mlen)
 	       break;
