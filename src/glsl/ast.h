@@ -864,7 +864,7 @@ _mesa_ast_array_index_to_hir(void *mem_ctx,
 void
 emit_function(_mesa_glsl_parse_state *state, ir_function *f);
 
-extern bool
+extern void
 check_builtin_array_max_size(const char *name, unsigned size,
                              YYLTYPE loc, struct _mesa_glsl_parse_state *state);
 

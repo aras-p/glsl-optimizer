@@ -904,7 +904,7 @@ get_scalar_boolean_operand(exec_list *instructions,
  * If name refers to a builtin array whose maximum allowed size is less than
  * size, report an error and return true.  Otherwise return false.
  */
-bool
+void
 check_builtin_array_max_size(const char *name, unsigned size,
                              YYLTYPE loc, struct _mesa_glsl_parse_state *state)
 {
@@ -918,7 +918,6 @@ check_builtin_array_max_size(const char *name, unsigned size,
       _mesa_glsl_error(&loc, state, "`gl_TexCoord' array size cannot "
                        "be larger than gl_MaxTextureCoords (%u)\n",
                        state->Const.MaxTextureCoords);
-      return true;
    } else if (strcmp("gl_ClipDistance", name) == 0
               && size > state->Const.MaxClipPlanes) {
       /* From section 7.1 (Vertex Shader Special Variables) of the
@@ -933,9 +932,7 @@ check_builtin_array_max_size(const char *name, unsigned size,
       _mesa_glsl_error(&loc, state, "`gl_ClipDistance' array size cannot "
                        "be larger than gl_MaxClipDistances (%u)\n",
                        state->Const.MaxClipPlanes);
-      return true;
    }
-   return false;
 }
 
 /**
