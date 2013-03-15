@@ -58,7 +58,7 @@ _mesa_ast_array_index_to_hir(void *mem_ctx,
     * declared size.
     */
    ir_constant *const const_index = idx->constant_expression_value();
-   if (const_index != NULL) {
+   if (const_index != NULL && idx->type->is_integer()) {
       const int idx = const_index->value.i[0];
       const char *type_name = "error";
       unsigned bound = 0;
@@ -118,7 +118,7 @@ _mesa_ast_array_index_to_hir(void *mem_ctx,
 	    check_builtin_array_max_size(v->name, idx+1, loc, state);
 	 }
       }
-   } else if (array->type->is_array()) {
+   } else if (const_index == NULL && array->type->is_array()) {
       if (array->type->array_size() == 0) {
 	 _mesa_glsl_error(&loc, state, "unsized array index must be constant");
       } else if (array->type->fields.array->is_interface()) {
