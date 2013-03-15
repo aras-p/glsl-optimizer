@@ -476,6 +476,8 @@ const glsl_type *glsl_type::get_scalar_type() const
       return int_type;
    case GLSL_TYPE_FLOAT:
       return float_type;
+   case GLSL_TYPE_BOOL:
+      return bool_type;
    default:
       /* Handle everything else */
       return type;
