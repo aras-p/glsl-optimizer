@@ -60,16 +60,8 @@ _mesa_ast_array_index_to_hir(void *mem_ctx,
    ir_constant *const const_index = idx->constant_expression_value();
    if (const_index != NULL) {
       const int idx = const_index->value.i[0];
-      const char *type_name;
+      const char *type_name = "error";
       unsigned bound = 0;
-
-      if (array->type->is_matrix()) {
-	 type_name = "matrix";
-      } else if (array->type->is_vector()) {
-	 type_name = "vector";
-      } else {
-	 type_name = "array";
-      }
 
       /* From page 24 (page 30 of the PDF) of the GLSL 1.50 spec:
        *
@@ -81,15 +73,22 @@ _mesa_ast_array_index_to_hir(void *mem_ctx,
        */
       if (array->type->is_matrix()) {
 	 if (array->type->row_type()->vector_elements <= idx) {
+	    type_name = "matrix";
 	    bound = array->type->row_type()->vector_elements;
 	 }
       } else if (array->type->is_vector()) {
 	 if (array->type->vector_elements <= idx) {
+	    type_name = "vector";
 	    bound = array->type->vector_elements;
 	 }
       } else {
+	 /* glsl_type::array_size() returns 0 for non-array types.  This means
+	  * that we don't need to verify that the type is an array before
+	  * doing the bounds checking.
+	  */
 	 if ((array->type->array_size() > 0)
 	     && (array->type->array_size() <= idx)) {
+	    type_name = "array";
 	    bound = array->type->array_size();
 	 }
       }
