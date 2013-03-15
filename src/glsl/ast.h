@@ -857,4 +857,8 @@ _mesa_ast_field_selection_to_hir(const ast_expression *expr,
 void
 emit_function(_mesa_glsl_parse_state *state, ir_function *f);
 
+extern bool
+check_builtin_array_max_size(const char *name, unsigned size,
+                             YYLTYPE loc, struct _mesa_glsl_parse_state *state);
+
 #endif /* AST_H */

@@ -904,7 +904,7 @@ get_scalar_boolean_operand(exec_list *instructions,
  * If name refers to a builtin array whose maximum allowed size is less than
  * size, report an error and return true.  Otherwise return false.
  */
-static bool
+bool
 check_builtin_array_max_size(const char *name, unsigned size,
                              YYLTYPE loc, struct _mesa_glsl_parse_state *state)
 {
