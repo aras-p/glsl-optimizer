@@ -151,7 +151,7 @@ ARB_shader_storage_buffer_object                     not started
 ARB_stencil_texturing                                not started
 ARB_texture_buffer_range                             DONE (nv50, nvc0)
 ARB_texture_query_levels                             not started
-ARB_texture_storage_multisample                      not started
+ARB_texture_storage_multisample                      DONE (i965)
 ARB_texture_view                                     not started
 ARB_vertex_attrib_binding                            not started
 
