@@ -24,6 +24,7 @@
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/src/mapi \
+	-I$(top_builddir)/src/mapi \
 	-I$(top_srcdir)/src/mesa/ \
 	$(DEFINES) \
 	$(API_DEFINES)
