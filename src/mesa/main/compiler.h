@@ -307,8 +307,9 @@ static INLINE GLuint CPU_TO_LE32(GLuint x)
  * USE_IEEE: Determine if we're using IEEE floating point
  */
 #if defined(__i386__) || defined(__386__) || defined(__sparc__) || \
-    defined(__s390x__) || defined(__powerpc__) || \
+    defined(__s390__) || defined(__s390x__) || defined(__powerpc__) || \
     defined(__x86_64__) || \
+    defined(__m68k__) || \
     defined(ia64) || defined(__ia64__) || \
     defined(__hppa__) || defined(hpux) || \
     defined(__mips) || defined(_MIPS_ARCH) || \
