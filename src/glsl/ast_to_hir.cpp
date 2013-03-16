@@ -672,6 +672,30 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
    void *ctx = state;
    bool error_emitted = (lhs->type->is_error() || rhs->type->is_error());
 
+   /* If the assignment LHS comes back as an ir_binop_vector_extract
+    * expression, move it to the RHS as an ir_triop_vector_insert.
+    */
+   if (lhs->ir_type == ir_type_expression) {
+      ir_expression *const expr = lhs->as_expression();
+
+      if (unlikely(expr->operation == ir_binop_vector_extract)) {
+         ir_rvalue *new_rhs =
+            validate_assignment(state, lhs->type, rhs, is_initializer);
+
+         if (new_rhs == NULL) {
+            _mesa_glsl_error(& lhs_loc, state, "type mismatch");
+            return lhs;
+         } else {
+            rhs = new(ctx) ir_expression(ir_triop_vector_insert,
+                                         expr->operands[0]->type,
+                                         expr->operands[0],
+                                         new_rhs,
+                                         expr->operands[1]);
+            lhs = expr->operands[0]->clone(ctx, NULL);
+         }
+      }
+   }
+
    ir_variable *lhs_var = lhs->variable_referenced();
    if (lhs_var)
       lhs_var->assigned = true;
