@@ -73,6 +73,7 @@ static void lp_exec_mask_init(struct lp_exec_mask *mask, struct lp_build_context
 
    mask->bld = bld;
    mask->has_mask = FALSE;
+   mask->ret_in_main = FALSE;
    mask->cond_stack_size = 0;
    mask->loop_stack_size = 0;
    mask->call_stack_size = 0;
@@ -108,7 +109,7 @@ static void lp_exec_mask_update(struct lp_exec_mask *mask)
    } else
       mask->exec_mask = mask->cond_mask;
 
-   if (mask->call_stack_size) {
+   if (mask->call_stack_size || mask->ret_in_main) {
       mask->exec_mask = LLVMBuildAnd(builder,
                                      mask->exec_mask,
                                      mask->ret_mask,
@@ -117,7 +118,8 @@ static void lp_exec_mask_update(struct lp_exec_mask *mask)
 
    mask->has_mask = (mask->cond_stack_size > 0 ||
                      mask->loop_stack_size > 0 ||
-                     mask->call_stack_size > 0);
+                     mask->call_stack_size > 0 ||
+                     mask->ret_in_main);
 }
 
 static void lp_exec_mask_cond_push(struct lp_exec_mask *mask,
@@ -348,11 +350,23 @@ static void lp_exec_mask_ret(struct lp_exec_mask *mask, int *pc)
    LLVMBuilderRef builder = mask->bld->gallivm->builder;
    LLVMValueRef exec_mask;
 
-   if (mask->call_stack_size == 0) {
+   if (mask->cond_stack_size == 0 &&
+       mask->loop_stack_size == 0 &&
+       mask->call_stack_size == 0) {
       /* returning from main() */
       *pc = -1;
       return;
    }
+
+   if (mask->call_stack_size == 0) {
+      /*
+       * This requires special handling since we need to ensure
+       * we don't drop the mask even if we have no call stack
+       * (e.g. after a ret in a if clause after the endif)
+       */
+      mask->ret_in_main = TRUE;
+   }
+
    exec_mask = LLVMBuildNot(builder,
                             mask->exec_mask,
                             "ret");

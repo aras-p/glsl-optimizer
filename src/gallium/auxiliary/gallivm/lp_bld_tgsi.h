@@ -243,6 +243,7 @@ struct lp_exec_mask {
    struct lp_build_context *bld;
 
    boolean has_mask;
+   boolean ret_in_main;
 
    LLVMTypeRef int_vec_type;
 
