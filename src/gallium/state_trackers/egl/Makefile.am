@@ -27,7 +27,7 @@ include $(top_srcdir)/src/gallium/Automake.inc
 AM_CFLAGS = $(GALLIUM_CFLAGS)
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/egl/main \
-	-I$(top_srcdir)/src/egl/wayland/wayland-drm/ \
+	-I$(top_builddir)/src/egl/wayland/wayland-drm/ \
 	-I$(top_srcdir)/include
 
 noinst_LTLIBRARIES = libegl.la
