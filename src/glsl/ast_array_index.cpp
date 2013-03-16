@@ -31,8 +31,6 @@ _mesa_ast_array_index_to_hir(void *mem_ctx,
 			     ir_rvalue *array, ir_rvalue *idx,
 			     YYLTYPE &loc, YYLTYPE &idx_loc)
 {
-   ir_rvalue *result = new(mem_ctx) ir_dereference_array(array, idx);
-
    if (!array->type->is_error()
        && !array->type->is_array()
        && !array->type->is_matrix()
@@ -40,7 +38,6 @@ _mesa_ast_array_index_to_hir(void *mem_ctx,
       _mesa_glsl_error(& idx_loc, state,
 		       "cannot dereference non-array / non-matrix / "
 		       "non-vector");
-      result->type = glsl_type::error_type;
    }
 
    if (!idx->type->is_error()) {
@@ -174,5 +171,20 @@ _mesa_ast_array_index_to_hir(void *mem_ctx,
       }
    }
 
-   return result;
+   /* After performing all of the error checking, generate the IR for the
+    * expression.
+    */
+   if (array->type->is_array()
+       || array->type->is_matrix()) {
+      return new(mem_ctx) ir_dereference_array(array, idx);
+   } else if (array->type->is_vector()) {
+      return new(mem_ctx) ir_expression(ir_binop_vector_extract, array, idx);
+   } else if (array->type->is_error()) {
+      return array;
+   } else {
+      ir_rvalue *result = new(mem_ctx) ir_dereference_array(array, idx);
+      result->type = glsl_type::error_type;
+
+      return result;
+   }
 }
