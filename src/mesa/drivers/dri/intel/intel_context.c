@@ -490,6 +490,7 @@ static const struct dri_debug_control debug_control[] = {
    { "aub",   DEBUG_AUB },
    { "shader_time", DEBUG_SHADER_TIME },
    { "no16",  DEBUG_NO16 },
+   { "blorp", DEBUG_BLORP },
    { NULL,    0 }
 };
 

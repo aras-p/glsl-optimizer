@@ -834,6 +834,12 @@ brw_blorp_blit_program::compile(struct brw_context *brw,
     * terminate the thread.
     */
    render_target_write();
+
+   if (unlikely(INTEL_DEBUG & DEBUG_BLORP)) {
+      printf("Native code for BLORP blit:\n");
+      brw_dump_compile(&func, stdout, 0, func.next_insn_offset);
+      printf("\n");
+   }
    return brw_get_program(&func, program_size);
 }
 
