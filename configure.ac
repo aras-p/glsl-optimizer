@@ -452,6 +452,9 @@ if test "x$enable_asm" = xyes; then
         linux* | *freebsd* | dragonfly* | *netbsd*)
             test "x$enable_64bit" = xyes && asm_arch=x86_64 || asm_arch=x86
             ;;
+        gnu*)
+            asm_arch=x86
+            ;;
         esac
         ;;
     x86_64)
