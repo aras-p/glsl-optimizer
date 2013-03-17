@@ -2402,7 +2402,7 @@ void
 vec4_visitor::emit_psiz_and_flags(struct brw_reg reg)
 {
    if (intel->gen < 6 &&
-       ((c->prog_data.outputs_written & BITFIELD64_BIT(VARYING_SLOT_PSIZ)) ||
+       ((c->prog_data.vue_map.slots_valid & VARYING_BIT_PSIZ) ||
         c->key.userclip_active || brw->has_negative_rhw_bug)) {
       dst_reg header1 = dst_reg(this, glsl_type::uvec4_type);
       dst_reg header1_w = header1;
@@ -2411,7 +2411,7 @@ vec4_visitor::emit_psiz_and_flags(struct brw_reg reg)
 
       emit(MOV(header1, 0u));
 
-      if (c->prog_data.outputs_written & BITFIELD64_BIT(VARYING_SLOT_PSIZ)) {
+      if (c->prog_data.vue_map.slots_valid & VARYING_BIT_PSIZ) {
 	 src_reg psiz = src_reg(output_reg[VARYING_SLOT_PSIZ]);
 
 	 current_annotation = "Point size";
@@ -2456,7 +2456,7 @@ vec4_visitor::emit_psiz_and_flags(struct brw_reg reg)
       emit(MOV(retype(reg, BRW_REGISTER_TYPE_UD), 0u));
    } else {
       emit(MOV(retype(reg, BRW_REGISTER_TYPE_D), src_reg(0)));
-      if (c->prog_data.outputs_written & BITFIELD64_BIT(VARYING_SLOT_PSIZ)) {
+      if (c->prog_data.vue_map.slots_valid & VARYING_BIT_PSIZ) {
          emit(MOV(brw_writemask(reg, WRITEMASK_W),
                   src_reg(output_reg[VARYING_SLOT_PSIZ])));
       }
@@ -2487,8 +2487,7 @@ vec4_visitor::emit_clip_distances(struct brw_reg reg, int offset)
     * if the user wrote to it; otherwise we use gl_Position.
     */
    gl_varying_slot clip_vertex = VARYING_SLOT_CLIP_VERTEX;
-   if (!(c->prog_data.outputs_written
-         & BITFIELD64_BIT(VARYING_SLOT_CLIP_VERTEX))) {
+   if (!(c->prog_data.vue_map.slots_valid & VARYING_BIT_CLIP_VERTEX)) {
       clip_vertex = VARYING_SLOT_POS;
    }
 

@@ -481,7 +481,7 @@ static void brw_wm_populate_key( struct brw_context *brw,
 
    /* CACHE_NEW_VS_PROG */
    if (intel->gen < 6)
-      key->vp_outputs_written = brw->vs.prog_data->outputs_written;
+      key->vp_outputs_written = brw->vs.prog_data->vue_map.slots_valid;
 
    /* The unique fragment program ID */
    key->program_string_id = fp->id;

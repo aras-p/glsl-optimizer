@@ -146,7 +146,7 @@ brw_upload_clip_prog(struct brw_context *brw)
    /* BRW_NEW_REDUCED_PRIMITIVE */
    key.primitive = brw->intel.reduced_primitive;
    /* CACHE_NEW_VS_PROG (also part of VUE map) */
-   key.attrs = brw->vs.prog_data->outputs_written;
+   key.attrs = brw->vs.prog_data->vue_map.slots_valid;
    /* _NEW_LIGHT */
    key.do_flat_shading = (ctx->Light.ShadeModel == GL_FLAT);
    key.pv_first = (ctx->Light.ProvokingVertex == GL_FIRST_VERTEX_CONVENTION);

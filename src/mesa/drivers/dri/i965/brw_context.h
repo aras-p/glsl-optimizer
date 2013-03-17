@@ -355,6 +355,13 @@ typedef enum
  */
 struct brw_vue_map {
    /**
+    * Bitfield representing all varying slots that are (a) stored in this VUE
+    * map, and (b) actually written by the shader.  Does not include any of
+    * the additional varying slots defined in brw_varying_slot.
+    */
+   GLbitfield64 slots_valid;
+
+   /**
     * Map from gl_varying_slot value to VUE slot.  For gl_varying_slots that are
     * not stored in a slot (because they are not written, or because
     * additional processing is applied before storing them in the VUE), the
@@ -438,7 +445,6 @@ struct brw_vs_prog_data {
    GLuint curb_read_length;
    GLuint urb_read_length;
    GLuint total_grf;
-   GLbitfield64 outputs_written;
    GLuint nr_params;       /**< number of float params/constants */
    GLuint nr_pull_params; /**< number of dwords referenced by pull_param[] */
    GLuint total_scratch;

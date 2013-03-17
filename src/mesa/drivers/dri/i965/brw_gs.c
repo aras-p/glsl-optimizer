@@ -167,7 +167,7 @@ static void populate_key( struct brw_context *brw,
    memset(key, 0, sizeof(*key));
 
    /* CACHE_NEW_VS_PROG (part of VUE map) */
-   key->attrs = brw->vs.prog_data->outputs_written;
+   key->attrs = brw->vs.prog_data->vue_map.slots_valid;
 
    /* BRW_NEW_PRIMITIVE */
    key->primitive = brw->primitive;
