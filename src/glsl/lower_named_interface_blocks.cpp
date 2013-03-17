@@ -106,22 +106,51 @@ flatten_named_interface_blocks_declarations::run(exec_list *instructions)
       if (var->mode == ir_var_uniform)
          continue;
 
-      const glsl_type *const t = var->type;
+      const glsl_type * iface_t = var->type;
+      const glsl_type * array_t = NULL;
       exec_node *insert_pos = var;
-      char *iface_field_name;
-      for (unsigned i = 0; i < t->length; i++) {
-         iface_field_name = ralloc_asprintf(mem_ctx, "%s.%s", t->name,
-                                            t->fields.structure[i].name);
+
+      if (iface_t->is_array()) {
+         array_t = iface_t;
+         iface_t = array_t->fields.array;
+      }
+
+      assert (iface_t->is_interface());
+
+      for (unsigned i = 0; i < iface_t->length; i++) {
+         const char * field_name = iface_t->fields.structure[i].name;
+         char *iface_field_name =
+            ralloc_asprintf(mem_ctx, "%s.%s",
+                            iface_t->name, field_name);
 
          ir_variable *found_var =
             (ir_variable *) hash_table_find(interface_namespace,
                                             iface_field_name);
          if (!found_var) {
-            ir_variable *new_var =
-               new(mem_ctx) ir_variable(t->fields.structure[i].type,
-                                        ralloc_strdup(mem_ctx, t->fields.structure[i].name),
-                                        (ir_variable_mode) var->mode);
-            new_var->interface_type = t;
+            ir_variable *new_var;
+            if (array_t == NULL) {
+               char *var_name =
+                  ralloc_strdup(mem_ctx, iface_t->fields.structure[i].name);
+               new_var =
+                  new(mem_ctx) ir_variable(iface_t->fields.structure[i].type,
+                                           var_name,
+                                           (ir_variable_mode) var->mode);
+            } else {
+               const glsl_type *new_array_type =
+                  glsl_type::get_array_instance(
+                     iface_t->fields.structure[i].type,
+                     array_t->length);
+               char *var_name =
+                  ralloc_asprintf(mem_ctx, "%s[%d]",
+                                  iface_t->fields.structure[i].name,
+                                  array_t->length);
+               new_var =
+                  new(mem_ctx) ir_variable(new_array_type,
+                                           var_name,
+                                           (ir_variable_mode) var->mode);
+            }
+
+            new_var->interface_type = iface_t;
             hash_table_insert(interface_namespace, new_var,
                               iface_field_name);
             insert_pos->insert_after(new_var);
@@ -184,9 +213,19 @@ flatten_named_interface_blocks_declarations::handle_rvalue(ir_rvalue **rvalue)
          (ir_variable *) hash_table_find(interface_namespace,
                                          iface_field_name);
       assert(found_var);
+
       ir_dereference_variable *deref_var =
          new(mem_ctx) ir_dereference_variable(found_var);
-      *rvalue = deref_var;
+
+      ir_dereference_array *deref_array =
+         ir->record->as_dereference_array();
+      if (deref_array != NULL) {
+         *rvalue =
+            new(mem_ctx) ir_dereference_array(deref_var,
+                                              deref_array->array_index);
+      } else {
+         *rvalue = deref_var;
+      }
    }
 }
 
