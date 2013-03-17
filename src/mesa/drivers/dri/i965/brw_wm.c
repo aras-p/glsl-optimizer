@@ -479,9 +479,9 @@ static void brw_wm_populate_key( struct brw_context *brw,
   /* _NEW_MULTISAMPLE */
    key->sample_alpha_to_coverage = ctx->Multisample.SampleAlphaToCoverage;
 
-   /* CACHE_NEW_VS_PROG */
+   /* BRW_NEW_VUE_MAP_GEOM_OUT */
    if (intel->gen < 6)
-      key->vp_outputs_written = brw->vs.prog_data->vue_map.slots_valid;
+      key->vp_outputs_written = brw->vue_map_geom_out.slots_valid;
 
    /* The unique fragment program ID */
    key->program_string_id = fp->id;
@@ -524,8 +524,8 @@ const struct brw_tracked_state brw_wm_prog = {
 		_NEW_MULTISAMPLE),
       .brw   = (BRW_NEW_FRAGMENT_PROGRAM |
 		BRW_NEW_WM_INPUT_DIMENSIONS |
-		BRW_NEW_REDUCED_PRIMITIVE),
-      .cache = CACHE_NEW_VS_PROG,
+		BRW_NEW_REDUCED_PRIMITIVE |
+                BRW_NEW_VUE_MAP_GEOM_OUT)
    },
    .emit = brw_upload_wm_prog
 };

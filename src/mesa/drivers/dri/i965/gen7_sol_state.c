@@ -107,7 +107,7 @@ upload_3dstate_so_buffers(struct brw_context *brw)
  */
 static void
 upload_3dstate_so_decl_list(struct brw_context *brw,
-			    struct brw_vue_map *vue_map)
+			    const struct brw_vue_map *vue_map)
 {
    struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &intel->ctx;
@@ -183,7 +183,7 @@ upload_3dstate_so_decl_list(struct brw_context *brw,
 
 static void
 upload_3dstate_streamout(struct brw_context *brw, bool active,
-			 struct brw_vue_map *vue_map)
+			 const struct brw_vue_map *vue_map)
 {
    struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &intel->ctx;
@@ -241,8 +241,8 @@ upload_sol_state(struct brw_context *brw)
 
    if (active) {
       upload_3dstate_so_buffers(brw);
-      /* CACHE_NEW_VS_PROG */
-      upload_3dstate_so_decl_list(brw, &brw->vs.prog_data->vue_map);
+      /* BRW_NEW_VUE_MAP_GEOM_OUT */
+      upload_3dstate_so_decl_list(brw, &brw->vue_map_geom_out);
 
       intel->batch.needs_sol_reset = true;
    }
@@ -252,7 +252,7 @@ upload_sol_state(struct brw_context *brw)
     * MMIO register updates (current performed by the kernel at each batch
     * emit).
     */
-   upload_3dstate_streamout(brw, active, &brw->vs.prog_data->vue_map);
+   upload_3dstate_streamout(brw, active, &brw->vue_map_geom_out);
 }
 
 const struct brw_tracked_state gen7_sol_state = {
@@ -261,8 +261,8 @@ const struct brw_tracked_state gen7_sol_state = {
 		_NEW_LIGHT |
 		_NEW_TRANSFORM_FEEDBACK),
       .brw   = (BRW_NEW_BATCH |
-		BRW_NEW_VERTEX_PROGRAM),
-      .cache = CACHE_NEW_VS_PROG,
+		BRW_NEW_VERTEX_PROGRAM |
+                BRW_NEW_VUE_MAP_GEOM_OUT)
    },
    .emit = upload_sol_state,
 };

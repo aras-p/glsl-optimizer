@@ -69,7 +69,7 @@ static void compile_clip_prog( struct brw_context *brw,
    c.func.single_program_flow = 1;
 
    c.key = *key;
-   c.vue_map = brw->vs.prog_data->vue_map;
+   c.vue_map = brw->vue_map_geom_out;
 
    /* nr_regs is the number of registers filled by reading data from the VUE.
     * This program accesses the entire VUE, so nr_regs needs to be the size of
@@ -145,8 +145,8 @@ brw_upload_clip_prog(struct brw_context *brw)
     */
    /* BRW_NEW_REDUCED_PRIMITIVE */
    key.primitive = brw->intel.reduced_primitive;
-   /* CACHE_NEW_VS_PROG (also part of VUE map) */
-   key.attrs = brw->vs.prog_data->vue_map.slots_valid;
+   /* BRW_NEW_VUE_MAP_GEOM_OUT */
+   key.attrs = brw->vue_map_geom_out.slots_valid;
    /* _NEW_LIGHT */
    key.do_flat_shading = (ctx->Light.ShadeModel == GL_FLAT);
    key.pv_first = (ctx->Light.ProvokingVertex == GL_FIRST_VERTEX_CONVENTION);
@@ -258,8 +258,7 @@ const struct brw_tracked_state brw_clip_prog = {
 		_NEW_TRANSFORM |
 		_NEW_POLYGON | 
 		_NEW_BUFFERS),
-      .brw   = (BRW_NEW_REDUCED_PRIMITIVE),
-      .cache = CACHE_NEW_VS_PROG
+      .brw   = (BRW_NEW_REDUCED_PRIMITIVE | BRW_NEW_VUE_MAP_GEOM_OUT)
    },
    .emit = brw_upload_clip_prog
 };

@@ -100,9 +100,9 @@ upload_sbe_state(struct brw_context *brw)
        */
       assert(input_index < 16 || attr == input_index);
 
-      /* CACHE_NEW_VS_PROG | _NEW_LIGHT | _NEW_PROGRAM */
+      /* BRW_NEW_VUE_MAP_GEOM_OUT | _NEW_LIGHT | _NEW_PROGRAM */
       attr_overrides[input_index++] =
-         get_attr_override(&brw->vs.prog_data->vue_map,
+         get_attr_override(&brw->vue_map_geom_out,
 			   urb_entry_read_offset, attr,
                            ctx->VertexProgram._TwoSideEnabled,
                            &max_source_attr);
@@ -149,8 +149,8 @@ const struct brw_tracked_state gen7_sbe_state = {
 		_NEW_POINT |
 		_NEW_PROGRAM),
       .brw   = (BRW_NEW_CONTEXT |
-		BRW_NEW_FRAGMENT_PROGRAM),
-      .cache = CACHE_NEW_VS_PROG
+		BRW_NEW_FRAGMENT_PROGRAM |
+                BRW_NEW_VUE_MAP_GEOM_OUT)
    },
    .emit = upload_sbe_state,
 };
