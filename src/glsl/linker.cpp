@@ -1067,13 +1067,11 @@ link_intrastage_shaders(void *mem_ctx,
 
    free(linking_shaders);
 
-#ifdef DEBUG
    /* At this point linked should contain all of the linked IR, so
     * validate it to make sure nothing went wrong.
     */
    if (linked)
       validate_ir_tree(linked->ir);
-#endif
 
    /* Make a pass over all variable declarations to ensure that arrays with
     * unspecified sizes have a size specified.  The size is inferred from the

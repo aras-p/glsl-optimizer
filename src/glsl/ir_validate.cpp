@@ -701,6 +701,11 @@ check_node_type(ir_instruction *ir, void *data)
 void
 validate_ir_tree(exec_list *instructions)
 {
+   /* We shouldn't have any reason to validate IR in a release build,
+    * and it's half composed of assert()s anyway which wouldn't do
+    * anything.
+    */
+#ifdef DEBUG
    ir_validate v;
 
    v.run(instructions);
@@ -710,4 +715,5 @@ validate_ir_tree(exec_list *instructions)
 
       visit_tree(ir, check_node_type, NULL);
    }
+#endif
 }
