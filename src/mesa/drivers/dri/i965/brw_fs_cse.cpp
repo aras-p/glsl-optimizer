@@ -69,6 +69,7 @@ is_expression(const fs_inst *const inst)
    case BRW_OPCODE_LRP:
    case FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD:
    case FS_OPCODE_VARYING_PULL_CONSTANT_LOAD_GEN7:
+   case FS_OPCODE_VARYING_PULL_CONSTANT_LOAD:
    case FS_OPCODE_CINTERP:
    case FS_OPCODE_LINTERP:
       return true;

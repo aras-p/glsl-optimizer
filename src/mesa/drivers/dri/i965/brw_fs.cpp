@@ -238,56 +238,52 @@ fs_visitor::VARYING_PULL_CONSTANT_LOAD(fs_reg dst, fs_reg surf_index,
    exec_list instructions;
    fs_inst *inst;
 
-   if (intel->gen >= 7) {
-      /* We have our constant surface use a pitch of 4 bytes, so our index can
-       * be any component of a vector, and then we load 4 contiguous
-       * components starting from that.
-       *
-       * We break down the const_offset to a portion added to the variable
-       * offset and a portion done using reg_offset, which means that if you
-       * have GLSL using something like "uniform vec4 a[20]; gl_FragColor =
-       * a[i]", we'll temporarily generate 4 vec4 loads from offset i * 4, and
-       * CSE can later notice that those loads are all the same and eliminate
-       * the redundant ones.
+   /* We have our constant surface use a pitch of 4 bytes, so our index can
+    * be any component of a vector, and then we load 4 contiguous
+    * components starting from that.
+    *
+    * We break down the const_offset to a portion added to the variable
+    * offset and a portion done using reg_offset, which means that if you
+    * have GLSL using something like "uniform vec4 a[20]; gl_FragColor =
+    * a[i]", we'll temporarily generate 4 vec4 loads from offset i * 4, and
+    * CSE can later notice that those loads are all the same and eliminate
+    * the redundant ones.
+    */
+   fs_reg vec4_offset = fs_reg(this, glsl_type::int_type);
+   instructions.push_tail(ADD(vec4_offset,
+                              varying_offset, const_offset & ~3));
+
+   int scale = 1;
+   if (intel->gen == 4 && dispatch_width == 8) {
+      /* Pre-gen5, we can either use a SIMD8 message that requires (header,
+       * u, v, r) as parameters, or we can just use the SIMD16 message
+       * consisting of (header, u).  We choose the second, at the cost of a
+       * longer return length.
        */
-      fs_reg vec4_offset = fs_reg(this, glsl_type::int_type);
-      instructions.push_tail(ADD(vec4_offset,
-                                 varying_offset, const_offset & ~3));
-
-      fs_reg vec4_result = fs_reg(GRF, virtual_grf_alloc(4), dst.type);
-      inst = new(mem_ctx) fs_inst(FS_OPCODE_VARYING_PULL_CONSTANT_LOAD_GEN7,
-                                  vec4_result, surf_index, vec4_offset);
-      inst->regs_written = 4;
-      instructions.push_tail(inst);
-
-      vec4_result.reg_offset += const_offset & 3;
-      instructions.push_tail(MOV(dst, vec4_result));
-   } else {
-      fs_reg offset = fs_reg(this, glsl_type::uint_type);
-      instructions.push_tail(ADD(offset, varying_offset, fs_reg(const_offset)));
-
-      int base_mrf = 13;
-      bool header_present = true;
-
-      fs_reg mrf = fs_reg(MRF, base_mrf + header_present);
-      mrf.type = BRW_REGISTER_TYPE_D;
-
-      /* On gen6+ we want the dword offset passed in, but on gen4/5 we need a
-       * dword-aligned byte offset.
-       */
-      if (intel->gen == 6) {
-         instructions.push_tail(MOV(mrf, offset));
-      } else {
-         instructions.push_tail(MUL(mrf, offset, fs_reg(4)));
-      }
-      inst = new(mem_ctx) fs_inst(FS_OPCODE_VARYING_PULL_CONSTANT_LOAD,
-                                  dst, surf_index);
-      inst->header_present = header_present;
-      inst->base_mrf = base_mrf;
-      inst->mlen = header_present + dispatch_width / 8;
-
-      instructions.push_tail(inst);
+      scale = 2;
    }
+
+   enum opcode op;
+   if (intel->gen >= 7)
+      op = FS_OPCODE_VARYING_PULL_CONSTANT_LOAD_GEN7;
+   else
+      op = FS_OPCODE_VARYING_PULL_CONSTANT_LOAD;
+   fs_reg vec4_result = fs_reg(GRF, virtual_grf_alloc(4 * scale), dst.type);
+   inst = new(mem_ctx) fs_inst(op, vec4_result, surf_index, vec4_offset);
+   inst->regs_written = 4 * scale;
+   instructions.push_tail(inst);
+
+   if (intel->gen < 7) {
+      inst->base_mrf = 13;
+      inst->header_present = true;
+      if (intel->gen == 4)
+         inst->mlen = 3;
+      else
+         inst->mlen = 1 + dispatch_width / 8;
+   }
+
+   vec4_result.reg_offset += (const_offset & 3) * scale;
+   instructions.push_tail(MOV(dst, vec4_result));
 
    return instructions;
 }
@@ -754,7 +750,7 @@ fs_visitor::implied_mrf_writes(fs_inst *inst)
    case FS_OPCODE_UNSPILL:
       return 1;
    case FS_OPCODE_VARYING_PULL_CONSTANT_LOAD:
-      return inst->header_present;
+      return inst->mlen;
    case FS_OPCODE_SPILL:
       return 2;
    default:
