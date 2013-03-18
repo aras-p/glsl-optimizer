@@ -261,7 +261,7 @@ fs_visitor::try_emit_saturate(ir_expression *ir)
     * src, generate a saturated MOV
     */
    fs_inst *modify = get_instruction_generating_reg(pre_inst, last_inst, src);
-   if (!modify || modify->regs_written() != 1) {
+   if (!modify || modify->regs_written != 1) {
       this->result = fs_reg(this, ir->type);
       fs_inst *inst = emit(MOV(this->result, src));
       inst->saturate = true;
@@ -746,7 +746,7 @@ fs_visitor::try_rewrite_rhs_to_dst(ir_assignment *ir,
    /* If last_rhs_inst wrote a different number of components than our LHS,
     * we can't safely rewrite it.
     */
-   if (virtual_grf_sizes[dst.reg] != modify->regs_written())
+   if (virtual_grf_sizes[dst.reg] != modify->regs_written)
       return false;
 
    /* Success!  Rewrite the instruction. */
@@ -948,6 +948,7 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    inst->base_mrf = base_mrf;
    inst->mlen = mlen;
    inst->header_present = true;
+   inst->regs_written = simd16 ? 8 : 4;
 
    if (simd16) {
       for (int i = 0; i < 4; i++) {
@@ -1089,6 +1090,7 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    inst->base_mrf = base_mrf;
    inst->mlen = mlen;
    inst->header_present = header_present;
+   inst->regs_written = 4;
 
    if (mlen > 11) {
       fail("Message length >11 disallowed by hardware\n");
@@ -1244,6 +1246,7 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    inst->base_mrf = base_mrf;
    inst->mlen = mlen;
    inst->header_present = header_present;
+   inst->regs_written = 4;
 
    if (mlen > 11) {
       fail("Message length >11 disallowed by hardware\n");

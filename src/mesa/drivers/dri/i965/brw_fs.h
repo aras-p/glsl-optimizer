@@ -174,7 +174,6 @@ public:
            fs_reg src0, fs_reg src1,fs_reg src2);
 
    bool equals(fs_inst *inst);
-   int regs_written();
    bool overwrites_reg(const fs_reg &reg);
    bool is_tex();
    bool is_math();
@@ -192,6 +191,7 @@ public:
    uint8_t flag_subreg;
 
    int mlen; /**< SEND message length */
+   int regs_written; /**< Number of vgrfs written by a SEND message, or 1 */
    int base_mrf; /**< First MRF in the SEND message, if mlen is nonzero. */
    uint32_t texture_offset; /**< Texture offset bitfield */
    int sampler;

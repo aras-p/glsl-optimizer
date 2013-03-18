@@ -130,7 +130,7 @@ fs_visitor::opt_cse_local(bblock_t *block, exec_list *aeb)
 	     */
 	    bool no_existing_temp = entry->tmp.file == BAD_FILE;
 	    if (no_existing_temp) {
-               int written = entry->generator->regs_written();
+               int written = entry->generator->regs_written;
 
                fs_reg orig_dst = entry->generator->dst;
                fs_reg tmp = fs_reg(GRF, virtual_grf_alloc(written),
@@ -150,8 +150,8 @@ fs_visitor::opt_cse_local(bblock_t *block, exec_list *aeb)
 	    }
 
 	    /* dest <- temp */
-            int written = inst->regs_written();
-            assert(written == entry->generator->regs_written());
+            int written = inst->regs_written;
+            assert(written == entry->generator->regs_written);
             assert(inst->dst.type == entry->tmp.type);
             fs_reg dst = inst->dst;
             fs_reg tmp = entry->tmp;

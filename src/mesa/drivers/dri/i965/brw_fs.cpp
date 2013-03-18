@@ -60,6 +60,9 @@ fs_inst::init()
    this->src[0] = reg_undef;
    this->src[1] = reg_undef;
    this->src[2] = reg_undef;
+
+   /* This will be the case for almost all instructions. */
+   this->regs_written = 1;
 }
 
 fs_inst::fs_inst()
@@ -254,6 +257,7 @@ fs_visitor::VARYING_PULL_CONSTANT_LOAD(fs_reg dst, fs_reg surf_index,
       fs_reg vec4_result = fs_reg(GRF, virtual_grf_alloc(4), dst.type);
       inst = new(mem_ctx) fs_inst(FS_OPCODE_VARYING_PULL_CONSTANT_LOAD_GEN7,
                                   vec4_result, surf_index, vec4_offset);
+      inst->regs_written = 4;
       instructions.push_tail(inst);
 
       vec4_result.reg_offset += const_offset & 3;
@@ -329,26 +333,13 @@ fs_inst::equals(fs_inst *inst)
            offset == inst->offset);
 }
 
-int
-fs_inst::regs_written()
-{
-   if (is_tex() || opcode == FS_OPCODE_VARYING_PULL_CONSTANT_LOAD_GEN7)
-      return 4;
-
-   /* The SINCOS and INT_DIV_QUOTIENT_AND_REMAINDER math functions return 2,
-    * but we don't currently use them...nor do we have an opcode for them.
-    */
-
-   return 1;
-}
-
 bool
 fs_inst::overwrites_reg(const fs_reg &reg)
 {
    return (reg.file == dst.file &&
            reg.reg == dst.reg &&
            reg.reg_offset >= dst.reg_offset  &&
-           reg.reg_offset < dst.reg_offset + regs_written());
+           reg.reg_offset < dst.reg_offset + regs_written);
 }
 
 bool
@@ -1376,7 +1367,7 @@ fs_visitor::split_virtual_grfs()
       /* If there's a SEND message that requires contiguous destination
        * registers, no splitting is allowed.
        */
-      if (inst->regs_written() > 1) {
+      if (inst->regs_written > 1) {
 	 split_grf[inst->dst.reg] = false;
       }
 
@@ -2104,7 +2095,7 @@ fs_visitor::compute_to_mrf()
             /* Things returning more than one register would need us to
              * understand coalescing out more than one MOV at a time.
              */
-            if (scan_inst->regs_written() > 1)
+            if (scan_inst->regs_written > 1)
                break;
 
 	    /* SEND instructions can't have MRF as a destination. */
@@ -2321,7 +2312,7 @@ void
 fs_visitor::insert_gen4_pre_send_dependency_workarounds(fs_inst *inst)
 {
    int reg_size = dispatch_width / 8;
-   int write_len = inst->regs_written() * reg_size;
+   int write_len = inst->regs_written * reg_size;
    int first_write_grf = inst->dst.reg;
    bool needs_dep[BRW_MAX_MRF];
    assert(write_len < (int)sizeof(needs_dep) - 1);
@@ -2361,7 +2352,7 @@ fs_visitor::insert_gen4_pre_send_dependency_workarounds(fs_inst *inst)
        * dependency has more latency than a MOV.
        */
       if (scan_inst->dst.file == GRF) {
-         for (int i = 0; i < scan_inst->regs_written(); i++) {
+         for (int i = 0; i < scan_inst->regs_written; i++) {
             int reg = scan_inst->dst.reg + i * reg_size;
 
             if (reg >= first_write_grf &&
@@ -2400,7 +2391,7 @@ fs_visitor::insert_gen4_pre_send_dependency_workarounds(fs_inst *inst)
 void
 fs_visitor::insert_gen4_post_send_dependency_workarounds(fs_inst *inst)
 {
-   int write_len = inst->regs_written() * dispatch_width / 8;
+   int write_len = inst->regs_written * dispatch_width / 8;
    int first_write_grf = inst->dst.reg;
    bool needs_dep[BRW_MAX_MRF];
    assert(write_len < (int)sizeof(needs_dep) - 1);
