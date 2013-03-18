@@ -1812,6 +1812,7 @@ if test "x$with_gallium_drivers" != x; then
 
             if test "x$enable_dri" = xyes; then
                 GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS dri-swrast"
+                HAVE_COMMON_DRI=yes
             fi
             if test "x$enable_vdpau" = xyes; then
                 GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS vdpau-softpipe"
