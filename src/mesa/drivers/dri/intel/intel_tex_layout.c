@@ -77,7 +77,15 @@ intel_horizontal_texture_alignment_unit(struct intel_context *intel,
    if (format == MESA_FORMAT_S8)
       return 8;
 
-   if (intel->gen >= 7 && format == MESA_FORMAT_Z16)
+   /* The depth alignment requirements in the table above are for rendering to
+    * depth miplevels using the LOD control fields.  We don't use LOD control
+    * fields, and instead use page offsets plus intra-tile x/y offsets, which
+    * require that the low 3 bits are zero.  To reduce the number of x/y
+    * offset workaround blits we do, align the X to 8, which depth texturing
+    * can handle (sadly, it can't handle 8 in the Y direction).
+    */
+   if (intel->gen >= 7 &&
+       _mesa_get_format_base_format(format) == GL_DEPTH_COMPONENT)
       return 8;
 
    return 4;
