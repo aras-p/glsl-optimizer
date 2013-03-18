@@ -916,11 +916,10 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate,
        * this weirdness around to the expected layout.
        */
       orig_dst = dst;
-      const glsl_type *vec_type =
-	 glsl_type::get_instance(ir->type->base_type, 4, 1);
-      dst = fs_reg(this, glsl_type::get_array_instance(vec_type, 2));
-      dst.type = intel->is_g4x ? brw_type_for_base_type(ir->type)
-			       : BRW_REGISTER_TYPE_F;
+      dst = fs_reg(GRF, virtual_grf_alloc(8),
+                   (intel->is_g4x ?
+                    brw_type_for_base_type(ir->type) :
+                    BRW_REGISTER_TYPE_F));
    }
 
    fs_inst *inst = NULL;
