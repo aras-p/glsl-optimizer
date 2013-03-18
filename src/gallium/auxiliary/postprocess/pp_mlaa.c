@@ -99,8 +99,8 @@ pp_jimenezmlaa_run(struct pp_queue_t *ppq, struct pipe_resource *in,
       dimensions[1] = p->framebuffer.height;
    }
 
-   pipe_set_constant_buffer(p->pipe, PIPE_SHADER_VERTEX, 0, constbuf);
-   pipe_set_constant_buffer(p->pipe, PIPE_SHADER_FRAGMENT, 0, constbuf);
+   cso_set_constant_buffer_resource(p->cso, PIPE_SHADER_VERTEX, 0, constbuf);
+   cso_set_constant_buffer_resource(p->cso, PIPE_SHADER_FRAGMENT, 0, constbuf);
 
    mstencil.stencil[0].enabled = 1;
    mstencil.stencil[0].valuemask = mstencil.stencil[0].writemask = ~0;

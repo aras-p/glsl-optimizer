@@ -82,6 +82,8 @@ pp_run(struct pp_queue_t *ppq, struct pipe_resource *in,
    cso_save_vertex_shader(cso);
    cso_save_viewport(cso);
    cso_save_aux_vertex_buffer_slot(cso);
+   cso_save_constant_buffer_slot0(cso, PIPE_SHADER_VERTEX);
+   cso_save_constant_buffer_slot0(cso, PIPE_SHADER_FRAGMENT);
    cso_save_render_condition(cso);
 
    /* set default state */
@@ -141,6 +143,8 @@ pp_run(struct pp_queue_t *ppq, struct pipe_resource *in,
    cso_restore_vertex_shader(cso);
    cso_restore_viewport(cso);
    cso_restore_aux_vertex_buffer_slot(cso);
+   cso_restore_constant_buffer_slot0(cso, PIPE_SHADER_VERTEX);
+   cso_restore_constant_buffer_slot0(cso, PIPE_SHADER_FRAGMENT);
    cso_restore_render_condition(cso);
 
    pipe_resource_reference(&ppq->depth, NULL);
