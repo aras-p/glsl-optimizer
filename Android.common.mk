@@ -35,6 +35,8 @@ LOCAL_C_INCLUDES += \
 
 # define ANDROID_VERSION (e.g., 4.0.x => 0x0400)
 LOCAL_CFLAGS += \
+	-DPACKAGE_VERSION=\"9.2-devel\" \
+	-DPACKAGE_BUGREPORT=\"https://bugs.freedesktop.org/enter_bug.cgi?product=Mesa\" \
 	-DANDROID_VERSION=0x0$(MESA_ANDROID_MAJOR_VERSION)0$(MESA_ANDROID_MINOR_VERSION)
 
 LOCAL_CFLAGS += \
