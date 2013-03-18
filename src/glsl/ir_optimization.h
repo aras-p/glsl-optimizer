@@ -109,6 +109,7 @@ void lower_ubo_reference(struct gl_shader *shader, exec_list *instructions);
 void lower_packed_varyings(void *mem_ctx, unsigned location_base,
                            unsigned locations_used, ir_variable_mode mode,
                            gl_shader *shader);
+bool lower_vector_insert(exec_list *instructions, bool lower_nonconstant_index);
 bool optimize_redundant_jumps(exec_list *instructions);
 bool optimize_split_arrays(exec_list *instructions, bool linked);
 

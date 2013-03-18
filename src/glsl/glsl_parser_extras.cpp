@@ -1243,6 +1243,7 @@ do_common_optimization(exec_list *ir, bool linked,
    progress = do_algebraic(ir) || progress;
    progress = do_lower_jumps(ir) || progress;
    progress = do_vec_index_to_swizzle(ir) || progress;
+   progress = lower_vector_insert(ir, false) || progress;
    progress = do_swizzle_swizzle(ir) || progress;
    progress = do_noop_swizzle(ir) || progress;
 
