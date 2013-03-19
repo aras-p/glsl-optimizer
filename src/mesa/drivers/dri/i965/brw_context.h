@@ -1123,7 +1123,8 @@ struct brw_context
 
    struct {
       drm_intel_bo *bo;
-      struct gl_shader_program **programs;
+      struct gl_shader_program **shader_programs;
+      struct gl_program **programs;
       enum shader_time_shader_type *types;
       uint64_t *cumulative;
       int num_entries;
@@ -1187,6 +1188,10 @@ int brw_get_scratch_size(int size);
 void brw_get_scratch_bo(struct intel_context *intel,
 			drm_intel_bo **scratch_bo, int size);
 void brw_init_shader_time(struct brw_context *brw);
+int brw_get_shader_time_index(struct brw_context *brw,
+                              struct gl_shader_program *shader_prog,
+                              struct gl_program *prog,
+                              enum shader_time_shader_type type);
 void brw_collect_and_report_shader_time(struct brw_context *brw);
 void brw_destroy_shader_time(struct brw_context *brw);
 

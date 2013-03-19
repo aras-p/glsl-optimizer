@@ -230,7 +230,9 @@ brw_init_shader_time(struct brw_context *brw)
    brw->shader_time.bo = drm_intel_bo_alloc(intel->bufmgr, "shader time",
                                             max_entries * SHADER_TIME_STRIDE,
                                             4096);
-   brw->shader_time.programs = rzalloc_array(brw, struct gl_shader_program *,
+   brw->shader_time.shader_programs = rzalloc_array(brw, struct gl_shader_program *,
+                                                    max_entries);
+   brw->shader_time.programs = rzalloc_array(brw, struct gl_program *,
                                              max_entries);
    brw->shader_time.types = rzalloc_array(brw, enum shader_time_shader_type,
                                           max_entries);
@@ -369,8 +371,8 @@ brw_report_shader_time(struct brw_context *brw)
          continue;
 
       int shader_num = -1;
-      if (brw->shader_time.programs[i]) {
-         shader_num = brw->shader_time.programs[i]->Name;
+      if (brw->shader_time.shader_programs[i]) {
+         shader_num = brw->shader_time.shader_programs[i]->Name;
       }
 
       switch (brw->shader_time.types[i]) {
@@ -429,6 +431,36 @@ brw_collect_and_report_shader_time(struct brw_context *brw)
       brw_report_shader_time(brw);
       brw->shader_time.report_time = get_time();
    }
+}
+
+/**
+ * Chooses an index in the shader_time buffer and sets up tracking information
+ * for our printouts.
+ *
+ * Note that this holds on to references to the underlying programs, which may
+ * change their lifetimes compared to normal operation.
+ */
+int
+brw_get_shader_time_index(struct brw_context *brw,
+                          struct gl_shader_program *shader_prog,
+                          struct gl_program *prog,
+                          enum shader_time_shader_type type)
+{
+   struct gl_context *ctx = &brw->intel.ctx;
+
+   int shader_time_index = brw->shader_time.num_entries++;
+   assert(shader_time_index < brw->shader_time.max_entries);
+   brw->shader_time.types[shader_time_index] = type;
+
+   _mesa_reference_shader_program(ctx,
+                                  &brw->shader_time.shader_programs[shader_time_index],
+                                  shader_prog);
+
+   _mesa_reference_program(ctx,
+                           &brw->shader_time.programs[shader_time_index],
+                           prog);
+
+   return shader_time_index;
 }
 
 void

@@ -424,7 +424,7 @@ public:
    void dump_instructions();
    void dump_instruction(fs_inst *inst);
 
-   const struct gl_fragment_program *fp;
+   struct gl_fragment_program *fp;
    struct brw_wm_compile *c;
    unsigned int sanity_param_count;
 

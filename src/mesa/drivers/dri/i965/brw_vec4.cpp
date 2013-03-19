@@ -1225,17 +1225,8 @@ void
 vec4_visitor::emit_shader_time_write(enum shader_time_shader_type type,
                                      src_reg value)
 {
-   /* Choose an index in the buffer and set up tracking information for our
-    * printouts.
-    */
-   int shader_time_index = brw->shader_time.num_entries++;
-   assert(shader_time_index <= brw->shader_time.max_entries);
-   brw->shader_time.types[shader_time_index] = type;
-   if (prog) {
-      _mesa_reference_shader_program(ctx,
-                                     &brw->shader_time.programs[shader_time_index],
-                                     prog);
-   }
+   int shader_time_index = brw_get_shader_time_index(brw, prog, &vp->Base,
+                                                     type);
 
    int base_mrf = 6;
 
