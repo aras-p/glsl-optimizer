@@ -404,6 +404,11 @@ static void si_update_derived_state(struct r600_context *rctx)
 	}
 
 	if (si_pm4_state_changed(rctx, ps) || si_pm4_state_changed(rctx, vs)) {
+		/* XXX: Emitting the PS state even when only the VS changed
+		 * fixes random failures with piglit glsl-max-varyings.
+		 * Not sure why...
+		 */
+		rctx->emitted.named.ps = NULL;
 		si_update_spi_map(rctx);
 	}
 }
