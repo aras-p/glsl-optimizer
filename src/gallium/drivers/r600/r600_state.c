@@ -2623,7 +2623,8 @@ void r600_init_atom_start_cs(struct r600_context *rctx)
 	r600_store_value(cb, 0); /* R_0286E0_SPI_FOG_FUNC_SCALE */
 	r600_store_value(cb, 0); /* R_0286E4_SPI_FOG_FUNC_BIAS */
 
-	r600_store_context_reg_seq(cb, R_028D2C_DB_SRESULTS_COMPARE_STATE1, 2);
+	r600_store_context_reg_seq(cb, R_028D28_DB_SRESULTS_COMPARE_STATE0, 3);
+	r600_store_value(cb, 0); /* R_028D28_DB_SRESULTS_COMPARE_STATE0 */
 	r600_store_value(cb, 0); /* R_028D2C_DB_SRESULTS_COMPARE_STATE1 */
 	r600_store_value(cb, 0); /* R_028D30_DB_PRELOAD_CONTROL */
 

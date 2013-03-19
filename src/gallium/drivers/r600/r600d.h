@@ -2318,6 +2318,7 @@
 #define R_02880C_DB_SHADER_CONTROL                   0x02880C
 #define R_028D0C_DB_RENDER_CONTROL                   0x028D0C
 #define R_028D10_DB_RENDER_OVERRIDE                  0x028D10
+#define R_028D28_DB_SRESULTS_COMPARE_STATE0          0x028D28
 #define R_028D2C_DB_SRESULTS_COMPARE_STATE1          0x028D2C
 #define R_028D30_DB_PRELOAD_CONTROL                  0x028D30
 #define R_028D44_DB_ALPHA_TO_MASK                    0x028D44
