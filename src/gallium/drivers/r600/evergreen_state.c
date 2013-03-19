@@ -2782,7 +2782,6 @@ static void cayman_init_atom_start_cs(struct r600_context *rctx)
 	r600_store_value(cb, 0); /* R_0286E4_SPI_PS_IN_CONTROL_2 */
 	r600_store_value(cb, 0); /* R_0286E8_SPI_COMPUTE_INPUT_CNTL */
 	r600_store_context_reg(cb, R_028B54_VGT_SHADER_STAGES_EN, 0);
-	r600_store_context_reg(cb, R_028838_SQ_DYN_GPR_RESOURCE_LIMIT_1, 0);
 
 	eg_store_loop_const(cb, R_03A200_SQ_LOOP_CONST_0, 0x01000FFF);
 	eg_store_loop_const(cb, R_03A200_SQ_LOOP_CONST_0 + (32 * 4), 0x01000FFF);
