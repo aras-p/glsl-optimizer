@@ -292,6 +292,14 @@ glsl_type::generate_140_types(glsl_symbol_table *symtab)
 
 
 void
+glsl_type::generate_150_types(glsl_symbol_table *symtab)
+{
+   generate_140_types(symtab);
+   generate_ARB_texture_multisample_types(symtab, false);
+}
+
+
+void
 glsl_type::generate_ARB_texture_rectangle_types(glsl_symbol_table *symtab,
 						bool warn)
 {
@@ -385,8 +393,10 @@ _mesa_glsl_initialize_types(struct _mesa_glsl_parse_state *state)
          glsl_type::generate_130_types(state->symbols, true, skip_1d);
          break;
       case 140:
-      case 150:
          glsl_type::generate_140_types(state->symbols);
+         break;
+      case 150:
+         glsl_type::generate_150_types(state->symbols);
          break;
       default:
          assert(!"Unexpected language version");
