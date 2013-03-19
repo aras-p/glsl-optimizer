@@ -1303,9 +1303,6 @@ vec4_visitor::run()
    if (c->key.userclip_active && !c->key.uses_clip_distance)
       setup_uniform_clipplane_values();
 
-   if (INTEL_DEBUG & DEBUG_SHADER_TIME)
-      emit_shader_time_end();
-
    emit_urb_writes();
 
    /* Before any optimization, push array accesses out to scratch
