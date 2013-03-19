@@ -226,7 +226,7 @@ vmw_ioctl_command(struct vmw_winsys_screen *vws, int32_t cid,
        ret = drmCommandWrite(vws->ioctl.drm_fd, DRM_VMW_EXECBUF, &arg, sizeof(arg));
    } while(ret == -ERESTART);
    if (ret) {
-      debug_printf("%s error %s.\n", __FUNCTION__, strerror(-ret));
+      vmw_error("%s error %s.\n", __FUNCTION__, strerror(-ret));
    }
 
    if (rep.error) {
@@ -275,7 +275,7 @@ vmw_ioctl_region_create(struct vmw_winsys_screen *vws, uint32_t size)
    } while (ret == -ERESTART);
 
    if (ret) {
-      debug_printf("IOCTL failed %d: %s\n", ret, strerror(-ret));
+      vmw_error("IOCTL failed %d: %s\n", ret, strerror(-ret));
       goto out_err1;
    }
 
@@ -336,7 +336,7 @@ vmw_ioctl_region_map(struct vmw_region *region)
       map = os_mmap(NULL, region->size, PROT_READ | PROT_WRITE, MAP_SHARED,
 		 region->drm_fd, region->map_handle);
       if (map == MAP_FAILED) {
-	 debug_printf("%s: Map failed.\n", __FUNCTION__);
+	 vmw_error("%s: Map failed.\n", __FUNCTION__);
 	 return NULL;
       }
 
@@ -369,7 +369,7 @@ vmw_ioctl_fence_unref(struct vmw_winsys_screen *vws,
    ret = drmCommandWrite(vws->ioctl.drm_fd, DRM_VMW_FENCE_UNREF,
 			 &arg, sizeof(arg));
    if (ret != 0)
-      debug_printf("%s Failed\n", __FUNCTION__);
+      vmw_error("%s Failed\n", __FUNCTION__);
 }
 
 static INLINE uint32_t
@@ -430,7 +430,7 @@ vmw_ioctl_fence_finish(struct vmw_winsys_screen *vws,
 			     &arg, sizeof(arg));
 
    if (ret != 0)
-      debug_printf("%s Failed\n", __FUNCTION__);
+      vmw_error("%s Failed\n", __FUNCTION__);
    
    return 0;
 }
@@ -451,7 +451,7 @@ vmw_ioctl_init(struct vmw_winsys_screen *vws)
    ret = drmCommandWriteRead(vws->ioctl.drm_fd, DRM_VMW_GET_PARAM,
 			     &gp_arg, sizeof(gp_arg));
    if (ret || gp_arg.value == 0) {
-      debug_printf("No 3D enabled (%i, %s).\n", ret, strerror(-ret));
+      vmw_error("No 3D enabled (%i, %s).\n", ret, strerror(-ret));
       goto out_no_3d;
    }
 
@@ -460,8 +460,8 @@ vmw_ioctl_init(struct vmw_winsys_screen *vws)
    ret = drmCommandWriteRead(vws->ioctl.drm_fd, DRM_VMW_GET_PARAM,
 			     &gp_arg, sizeof(gp_arg));
    if (ret) {
-      debug_printf("Failed to get fifo hw version"
-		   " (%i, %s).\n", ret, strerror(-ret));
+      vmw_error("Failed to get fifo hw version (%i, %s).\n",
+                ret, strerror(-ret));
       goto out_no_3d;
    }
    vws->ioctl.hwversion = gp_arg.value;

@@ -28,8 +28,9 @@
 #include "util/u_inlines.h"
 #include "util/u_memory.h"
 #include "util/u_format.h"
-#include "vmw_screen.h"
 
+#include "vmw_context.h"
+#include "vmw_screen.h"
 #include "vmw_surface.h"
 #include "svga_drm_public.h"
 
@@ -70,13 +71,12 @@ vmw_dri1_check_version(const struct dri1_api_version *cur,
    if (cur->major == required->major && cur->minor >= required->minor)
       return TRUE;
 
-   fprintf(stderr, "%s version failure.\n", component);
-   fprintf(stderr, "%s version is %d.%d.%d and this driver can only work\n"
-	   "with versions %d.%d.x through %d.x.x.\n",
-	   component,
-	   cur->major,
-	   cur->minor,
-	   cur->patch_level, required->major, required->minor, compat->major);
+   vmw_error("%s version failure.\n", component);
+   vmw_error("%s version is %d.%d.%d and this driver can only work\n"
+             "with versions %d.%d.x through %d.x.x.\n",
+             component,
+             cur->major, cur->minor, cur->patch_level,
+             required->major, required->minor, compat->major);
    return FALSE;
 }
 
@@ -175,24 +175,24 @@ vmw_drm_surface_from_handle(struct svga_winsys_screen *sws,
 			      &arg, sizeof(arg));
 
     if (ret) {
-	fprintf(stderr, "Failed referencing shared surface. SID %d.\n"
-		"Error %d (%s).\n",
-		whandle->handle, ret, strerror(-ret));
+        vmw_error("Failed referencing shared surface. SID %d.\n"
+                  "Error %d (%s).\n",
+                  whandle->handle, ret, strerror(-ret));
 	return NULL;
     }
 
     if (rep->mip_levels[0] != 1) {
-	fprintf(stderr, "Incorrect number of mipmap levels on shared surface."
-		" SID %d, levels %d\n",
-		whandle->handle, rep->mip_levels[0]);
+        vmw_error("Incorrect number of mipmap levels on shared surface."
+                  " SID %d, levels %d\n",
+                  whandle->handle, rep->mip_levels[0]);
 	goto out_mip;
     }
 
     for (i=1; i < DRM_VMW_MAX_SURFACE_FACES; ++i) {
 	if (rep->mip_levels[i] != 0) {
-	    fprintf(stderr, "Incorrect number of faces levels on shared surface."
-		    " SID %d, face %d present.\n",
-		    whandle->handle, i);
+            vmw_error("Incorrect number of faces levels on shared surface."
+                      " SID %d, face %d present.\n",
+                      whandle->handle, i);
 	    goto out_mip;
 	}
    }

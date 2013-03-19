@@ -31,6 +31,7 @@
 #ifndef VMW_CONTEXT_H_
 #define VMW_CONTEXT_H_
 
+#include <stdio.h>
 #include "pipe/p_compiler.h"
 
 struct svga_winsys_screen;
@@ -38,6 +39,8 @@ struct svga_winsys_context;
 struct pipe_context;
 struct pipe_screen;
 
+
+/** Set to 1 to get extra debug info/output */
 #define VMW_DEBUG 0
 
 #if VMW_DEBUG
@@ -47,6 +50,13 @@ struct pipe_screen;
 #define VMW_FUNC
 #define vmw_printf(...)
 #endif
+
+
+/**
+ * Called when an error/failure is encountered.
+ * We want these messages reported for all build types.
+ */
+#define vmw_error(...)  fprintf(stderr, "VMware: " __VA_ARGS__)
 
 
 struct svga_winsys_context *
