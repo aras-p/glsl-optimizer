@@ -47,7 +47,7 @@ initialize_context(struct gl_context *ctx, gl_api api)
    /* The standalone compiler needs to claim support for almost
     * everything in order to compile the built-in functions.
     */
-   ctx->Const.GLSLVersion = 140;
+   ctx->Const.GLSLVersion = 150;
    ctx->Extensions.ARB_ES3_compatibility = true;
 
    ctx->Const.MaxClipPlanes = 8;
