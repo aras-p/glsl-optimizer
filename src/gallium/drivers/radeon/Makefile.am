@@ -27,5 +27,6 @@ libllvmradeon@VERSION@_la_SOURCES = \
 	$(C_FILES)
 
 libllvmradeon@VERSION@_la_LIBADD = \
+	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
 	$(CLOCK_LIB) \
 	$(LLVM_LIBS)
