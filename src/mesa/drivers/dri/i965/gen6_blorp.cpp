@@ -278,17 +278,18 @@ gen6_blorp_emit_blend_state(struct brw_context *brw,
    blend->blend1.post_blend_clamp_enable = 1;
    blend->blend1.clamp_range = BRW_RENDERTARGET_CLAMPRANGE_FORMAT;
 
-   blend->blend1.write_disable_r = false;
-   blend->blend1.write_disable_g = false;
-   blend->blend1.write_disable_b = false;
-   blend->blend1.write_disable_a = false;
+   blend->blend1.write_disable_r = params->color_write_disable[0];
+   blend->blend1.write_disable_g = params->color_write_disable[1];
+   blend->blend1.write_disable_b = params->color_write_disable[2];
+   blend->blend1.write_disable_a = params->color_write_disable[3];
 
    /* When blitting from an XRGB source to a ARGB destination, we need to
     * interpret the missing channel as 1.0.  Blending can do that for us:
     * we simply use the RGB values from the fragment shader ("source RGB"),
     * but smash the alpha channel to 1.
     */
-   if (_mesa_get_format_bits(params->dst.mt->format, GL_ALPHA_BITS) > 0 &&
+   if (params->src.mt &&
+       _mesa_get_format_bits(params->dst.mt->format, GL_ALPHA_BITS) > 0 &&
        _mesa_get_format_bits(params->src.mt->format, GL_ALPHA_BITS) == 0) {
       blend->blend0.blend_enable = 1;
       blend->blend0.ia_blend_enable = 1;
@@ -1058,16 +1059,18 @@ gen6_blorp_exec(struct intel_context *intel,
                                      depthstencil_offset, cc_state_offset);
    if (params->use_wm_prog) {
       uint32_t wm_surf_offset_renderbuffer;
-      uint32_t wm_surf_offset_texture;
+      uint32_t wm_surf_offset_texture = 0;
       uint32_t sampler_offset;
       wm_push_const_offset = gen6_blorp_emit_wm_constants(brw, params);
       wm_surf_offset_renderbuffer =
          gen6_blorp_emit_surface_state(brw, params, &params->dst,
                                        I915_GEM_DOMAIN_RENDER,
                                        I915_GEM_DOMAIN_RENDER);
-      wm_surf_offset_texture =
-         gen6_blorp_emit_surface_state(brw, params, &params->src,
-                                       I915_GEM_DOMAIN_SAMPLER, 0);
+      if (params->src.mt) {
+         wm_surf_offset_texture =
+            gen6_blorp_emit_surface_state(brw, params, &params->src,
+                                          I915_GEM_DOMAIN_SAMPLER, 0);
+      }
       wm_bind_bo_offset =
          gen6_blorp_emit_binding_table(brw, params,
                                        wm_surf_offset_renderbuffer,

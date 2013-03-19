@@ -611,6 +611,7 @@ enum brw_cache_id {
    BRW_CC_UNIT,
    BRW_WM_PROG,
    BRW_BLORP_BLIT_PROG,
+   BRW_BLORP_CLEAR_PROG,
    BRW_SAMPLER,
    BRW_WM_UNIT,
    BRW_SF_PROG,

@@ -148,6 +148,10 @@ brw_blorp_params::brw_blorp_params()
      num_samples(0),
      use_wm_prog(false)
 {
+   color_write_disable[0] = false;
+   color_write_disable[1] = false;
+   color_write_disable[2] = false;
+   color_write_disable[3] = false;
 }
 
 extern "C" {

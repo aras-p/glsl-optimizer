@@ -765,17 +765,19 @@ gen7_blorp_exec(struct intel_context *intel,
                                                 depthstencil_offset);
    if (params->use_wm_prog) {
       uint32_t wm_surf_offset_renderbuffer;
-      uint32_t wm_surf_offset_texture;
+      uint32_t wm_surf_offset_texture = 0;
       wm_push_const_offset = gen6_blorp_emit_wm_constants(brw, params);
       wm_surf_offset_renderbuffer =
          gen7_blorp_emit_surface_state(brw, params, &params->dst,
                                        I915_GEM_DOMAIN_RENDER,
                                        I915_GEM_DOMAIN_RENDER,
                                        true /* is_render_target */);
-      wm_surf_offset_texture =
-         gen7_blorp_emit_surface_state(brw, params, &params->src,
-                                       I915_GEM_DOMAIN_SAMPLER, 0,
-                                       false /* is_render_target */);
+      if (params->src.mt) {
+         wm_surf_offset_texture =
+            gen7_blorp_emit_surface_state(brw, params, &params->src,
+                                          I915_GEM_DOMAIN_SAMPLER, 0,
+                                          false /* is_render_target */);
+      }
       wm_bind_bo_offset =
          gen6_blorp_emit_binding_table(brw, params,
                                        wm_surf_offset_renderbuffer,
