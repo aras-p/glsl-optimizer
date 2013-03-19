@@ -773,6 +773,15 @@ dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp)
    if (!dri2_create_screen(disp))
       goto cleanup_driver;
 
+   /* The server shouldn't advertise WL_DRM_CAPABILITY_PRIME if the driver
+    * doesn't have createImageFromFds, since we're using the same driver on
+    * both sides.  We don't want crash if that happens anyway, so fall back to
+    * gem names if we don't have prime support. */
+
+   if (dri2_dpy->image->base.version < 7 ||
+       dri2_dpy->image->createImageFromFds == NULL)
+      dri2_dpy->capabilities &= WL_DRM_CAPABILITY_PRIME;
+
    types = EGL_WINDOW_BIT;
    for (i = 0; dri2_dpy->driver_configs[i]; i++) {
       config = dri2_dpy->driver_configs[i];

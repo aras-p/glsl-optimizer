@@ -320,7 +320,7 @@ static struct dri2_extension_match dri2_driver_extensions[] = {
 static struct dri2_extension_match dri2_core_extensions[] = {
    { __DRI2_FLUSH, 1, offsetof(struct dri2_egl_display, flush) },
    { __DRI_TEX_BUFFER, 2, offsetof(struct dri2_egl_display, tex_buffer) },
-   { __DRI_IMAGE, 7, offsetof(struct dri2_egl_display, image) },
+   { __DRI_IMAGE, 1, offsetof(struct dri2_egl_display, image) },
    { NULL, 0, 0 }
 };
 
@@ -1573,7 +1573,9 @@ dri2_bind_wayland_display_wl(_EGLDriver *drv, _EGLDisplay *disp,
       (int(*)(void *, uint32_t)) dri2_dpy->authenticate;
 
    ret = drmGetCap(dri2_dpy->fd, DRM_CAP_PRIME, &cap);
-   if (ret == 0 && cap == (DRM_PRIME_CAP_IMPORT | DRM_PRIME_CAP_EXPORT))
+   if (ret == 0 && cap == (DRM_PRIME_CAP_IMPORT | DRM_PRIME_CAP_EXPORT) &&
+       dri2_dpy->image->base.version >= 7 &&
+       dri2_dpy->image->createImageFromFds != NULL)
       flags |= WAYLAND_DRM_PRIME;
 
    dri2_dpy->wl_server_drm =
