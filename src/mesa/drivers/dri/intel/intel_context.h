@@ -285,6 +285,7 @@ struct intel_context
    bool no_rast;
    bool always_flush_batch;
    bool always_flush_cache;
+   bool disable_throttling;
 
    /* State for intelvb.c and inteltris.c.
     */

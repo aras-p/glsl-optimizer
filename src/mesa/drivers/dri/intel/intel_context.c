@@ -440,7 +440,8 @@ intel_prepare_render(struct intel_context *intel)
     * so we just us the first batch we emitted after the last swap.
     */
    if (intel->need_throttle && intel->first_post_swapbuffers_batch) {
-      drm_intel_bo_wait_rendering(intel->first_post_swapbuffers_batch);
+      if (!intel->disable_throttling)
+         drm_intel_bo_wait_rendering(intel->first_post_swapbuffers_batch);
       drm_intel_bo_unreference(intel->first_post_swapbuffers_batch);
       intel->first_post_swapbuffers_batch = NULL;
       intel->need_throttle = false;
@@ -839,6 +840,11 @@ intelInitContext(struct intel_context *intel,
    if (driQueryOptionb(&intel->optionCache, "always_flush_cache")) {
       fprintf(stderr, "flushing GPU caches before/after each draw call\n");
       intel->always_flush_cache = 1;
+   }
+
+   if (driQueryOptionb(&intel->optionCache, "disable_throttling")) {
+      fprintf(stderr, "disabling flush throttling\n");
+      intel->disable_throttling = 1;
    }
 
    return true;
