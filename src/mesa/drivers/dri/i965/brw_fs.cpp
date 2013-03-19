@@ -2784,9 +2784,6 @@ fs_visitor::run()
       if (failed)
 	 return false;
 
-      if (INTEL_DEBUG & DEBUG_SHADER_TIME)
-         emit_shader_time_end();
-
       emit_fb_writes();
 
       split_virtual_grfs();

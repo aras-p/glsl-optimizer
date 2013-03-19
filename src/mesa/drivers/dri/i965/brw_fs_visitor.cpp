@@ -2263,6 +2263,9 @@ fs_visitor::emit_fb_writes()
 	 inst->saturate = c->key.clamp_fragment_color;
       }
 
+      if (INTEL_DEBUG & DEBUG_SHADER_TIME)
+         emit_shader_time_end();
+
       fs_inst *inst = emit(FS_OPCODE_FB_WRITE);
       inst->target = 0;
       inst->base_mrf = base_mrf;
@@ -2297,6 +2300,14 @@ fs_visitor::emit_fb_writes()
       for (unsigned i = 0; i < this->output_components[target]; i++)
          emit_color_write(target, i, write_color_mrf);
 
+      bool eot = false;
+      if (target == c->key.nr_color_regions - 1) {
+         eot = true;
+
+         if (INTEL_DEBUG & DEBUG_SHADER_TIME)
+            emit_shader_time_end();
+      }
+
       fs_inst *inst = emit(FS_OPCODE_FB_WRITE);
       inst->target = target;
       inst->base_mrf = base_mrf;
@@ -2304,8 +2315,7 @@ fs_visitor::emit_fb_writes()
          inst->mlen = nr - base_mrf - reg_width;
       else
          inst->mlen = nr - base_mrf;
-      if (target == c->key.nr_color_regions - 1)
-	 inst->eot = true;
+      inst->eot = eot;
       inst->header_present = header_present;
    }
 
@@ -2315,6 +2325,9 @@ fs_visitor::emit_fb_writes()
        * alpha-testing, alpha-to-coverage, and so on.
        */
       emit_color_write(0, 3, color_mrf);
+
+      if (INTEL_DEBUG & DEBUG_SHADER_TIME)
+         emit_shader_time_end();
 
       fs_inst *inst = emit(FS_OPCODE_FB_WRITE);
       inst->base_mrf = base_mrf;
