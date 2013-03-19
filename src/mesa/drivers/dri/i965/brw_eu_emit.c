@@ -2436,7 +2436,7 @@ brw_svb_write(struct brw_compile *p,
  * messages.
  */
 void brw_shader_time_add(struct brw_compile *p,
-                         int base_mrf,
+                         struct brw_reg payload,
                          uint32_t surf_index)
 {
    struct intel_context *intel = &p->brw->intel;
@@ -2453,8 +2453,8 @@ void brw_shader_time_add(struct brw_compile *p,
     */
    brw_set_dest(p, send, brw_vec1_reg(BRW_ARCHITECTURE_REGISTER_FILE,
                                       BRW_ARF_NULL, 0));
-   brw_set_src0(p, send, brw_vec1_reg(BRW_MESSAGE_REGISTER_FILE,
-                                      base_mrf, 0));
+   brw_set_src0(p, send, brw_vec1_reg(payload.file,
+                                      payload.nr, 0));
 
    uint32_t sfid, msg_type;
    if (intel->is_haswell) {

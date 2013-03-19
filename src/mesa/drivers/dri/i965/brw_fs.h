@@ -559,6 +559,11 @@ private:
                                         struct brw_reg dst,
                                         struct brw_reg src);
 
+   void generate_shader_time_add(fs_inst *inst,
+                                 struct brw_reg payload,
+                                 struct brw_reg offset,
+                                 struct brw_reg value);
+
    void patch_discard_jumps_to_fb_writes();
 
    struct brw_context *brw;

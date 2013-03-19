@@ -972,6 +972,41 @@ fs_generator::generate_unpack_half_2x16_split(fs_inst *inst,
 }
 
 void
+fs_generator::generate_shader_time_add(fs_inst *inst,
+                                       struct brw_reg payload,
+                                       struct brw_reg offset,
+                                       struct brw_reg value)
+{
+   assert(intel->gen >= 7);
+   brw_push_insn_state(p);
+   brw_set_mask_control(p, true);
+
+   assert(payload.file == BRW_GENERAL_REGISTER_FILE);
+   struct brw_reg payload_offset = retype(brw_vec1_grf(payload.nr, 0),
+                                          offset.type);
+   struct brw_reg payload_value = retype(brw_vec1_grf(payload.nr + 1, 0),
+                                         value.type);
+
+   assert(offset.file == BRW_IMMEDIATE_VALUE);
+   if (value.file == BRW_GENERAL_REGISTER_FILE) {
+      value.width = BRW_WIDTH_1;
+      value.hstride = BRW_HORIZONTAL_STRIDE_0;
+      value.vstride = BRW_VERTICAL_STRIDE_0;
+   } else {
+      assert(value.file == BRW_IMMEDIATE_VALUE);
+   }
+
+   /* Trying to deal with setup of the params from the IR is crazy in the FS8
+    * case, and we don't really care about squeezing every bit of performance
+    * out of this path, so we just emit the MOVs from here.
+    */
+   brw_MOV(p, payload_offset, offset);
+   brw_MOV(p, payload_value, value);
+   brw_shader_time_add(p, payload, SURF_INDEX_WM_SHADER_TIME);
+   brw_pop_insn_state(p);
+}
+
+void
 fs_generator::generate_code(exec_list *instructions)
 {
    int last_native_insn_offset = p->next_insn_offset;
@@ -1291,7 +1326,7 @@ fs_generator::generate_code(exec_list *instructions)
          break;
 
       case SHADER_OPCODE_SHADER_TIME_ADD:
-         brw_shader_time_add(p, inst->base_mrf, SURF_INDEX_WM_SHADER_TIME);
+         generate_shader_time_add(inst, src[0], src[1], src[2]);
          break;
 
       case FS_OPCODE_SET_SIMD4X2_OFFSET:

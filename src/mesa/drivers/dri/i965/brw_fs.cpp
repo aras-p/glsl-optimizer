@@ -377,6 +377,7 @@ bool
 fs_inst::is_send_from_grf()
 {
    return (opcode == FS_OPCODE_VARYING_PULL_CONSTANT_LOAD_GEN7 ||
+           opcode == SHADER_OPCODE_SHADER_TIME_ADD ||
            (opcode == FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD &&
             src[1].file == GRF));
 }
@@ -607,19 +608,16 @@ fs_visitor::emit_shader_time_write(enum shader_time_shader_type type,
 {
    int shader_time_index = brw_get_shader_time_index(brw, prog, &fp->Base,
                                                      type);
-   int base_mrf = 6;
+   fs_reg offset = fs_reg(shader_time_index * SHADER_TIME_STRIDE);
 
-   fs_reg offset_mrf = fs_reg(MRF, base_mrf);
-   offset_mrf.type = BRW_REGISTER_TYPE_UD;
-   emit(MOV(offset_mrf, fs_reg(shader_time_index * SHADER_TIME_STRIDE)));
+   fs_reg payload;
+   if (dispatch_width == 8)
+      payload = fs_reg(this, glsl_type::uvec2_type);
+   else
+      payload = fs_reg(this, glsl_type::uint_type);
 
-   fs_reg time_mrf = fs_reg(MRF, base_mrf + 1);
-   time_mrf.type = BRW_REGISTER_TYPE_UD;
-   emit(MOV(time_mrf, value));
-
-   fs_inst *inst = emit(fs_inst(SHADER_OPCODE_SHADER_TIME_ADD));
-   inst->base_mrf = base_mrf;
-   inst->mlen = 2;
+   emit(fs_inst(SHADER_OPCODE_SHADER_TIME_ADD,
+                fs_reg(), payload, offset, value));
 }
 
 void
@@ -735,8 +733,6 @@ fs_visitor::implied_mrf_writes(fs_inst *inst)
    case SHADER_OPCODE_TXL:
    case SHADER_OPCODE_TXS:
       return 1;
-   case SHADER_OPCODE_SHADER_TIME_ADD:
-      return 0;
    case FS_OPCODE_FB_WRITE:
       return 2;
    case FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD:
@@ -1358,6 +1354,13 @@ fs_visitor::split_virtual_grfs()
        */
       if (inst->regs_written() > 1) {
 	 split_grf[inst->dst.reg] = false;
+      }
+
+      /* If we're sending from a GRF, don't split it, on the assumption that
+       * the send is reading the whole thing.
+       */
+      if (inst->is_send_from_grf()) {
+         split_grf[inst->src[0].reg] = false;
       }
    }
 
