@@ -109,6 +109,7 @@ tgsi_default_declaration( void )
    declaration.Semantic = 0;
    declaration.Invariant = 0;
    declaration.Local = 0;
+   declaration.Array = 0;
    declaration.Padding = 0;
 
    return declaration;
@@ -327,6 +328,17 @@ tgsi_build_declaration_sampler_view(unsigned texture,
 }
 
 
+static struct tgsi_declaration_array
+tgsi_default_declaration_array( void )
+{
+   struct tgsi_declaration_array a;
+
+   a.ArrayID = 0;
+   a.Padding = 0;
+
+   return a;
+}
+
 struct tgsi_full_declaration
 tgsi_default_full_declaration( void )
 {
@@ -338,6 +350,7 @@ tgsi_default_full_declaration( void )
    full_declaration.Interp = tgsi_default_declaration_interp();
    full_declaration.Resource = tgsi_default_declaration_resource();
    full_declaration.SamplerView = tgsi_default_declaration_sampler_view();
+   full_declaration.Array = tgsi_default_declaration_array();
 
    return full_declaration;
 }
