@@ -59,7 +59,6 @@ struct si_shader_context
 	struct si_pipe_shader *shader;
 	struct si_shader_key key;
 	unsigned type; /* TGSI_PROCESSOR_* specifies the type of shader. */
-	unsigned ninput_emitted;
 /*	struct list_head inputs; */
 /*	unsigned * input_mappings *//* From TGSI to SI hw */
 /*	struct tgsi_shader_info info;*/
@@ -259,14 +258,6 @@ static void declare_input_fs(
 	default:
 		fprintf(stderr, "Warning: Unhandled interpolation mode.\n");
 		return;
-	}
-
-	if (!si_shader_ctx->ninput_emitted++) {
-		/* Enable whole quad mode */
-		lp_build_intrinsic(gallivm->builder,
-				   "llvm.SI.wqm",
-				   LLVMVoidTypeInContext(gallivm->context),
-				   NULL, 0);
 	}
 
 	intr_name = interp_param ? "llvm.SI.fs.interp" : "llvm.SI.fs.constant";
