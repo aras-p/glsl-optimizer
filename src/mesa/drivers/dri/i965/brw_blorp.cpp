@@ -30,6 +30,8 @@
 
 brw_blorp_mip_info::brw_blorp_mip_info()
    : mt(NULL),
+     level(0),
+     layer(0),
      width(0),
      height(0),
      x_offset(0),
@@ -50,6 +52,8 @@ brw_blorp_mip_info::set(struct intel_mipmap_tree *mt,
    intel_miptree_check_level_layer(mt, level, layer);
 
    this->mt = mt;
+   this->level = level;
+   this->layer = layer;
    this->width = mt->level[level].width;
    this->height = mt->level[level].height;
 

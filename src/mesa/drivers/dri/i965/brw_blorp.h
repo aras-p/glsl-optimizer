@@ -69,6 +69,17 @@ public:
    struct intel_mipmap_tree *mt;
 
    /**
+    * The miplevel to use.
+    */
+   uint32_t level;
+
+   /**
+    * The 2D layer within the miplevel. Combined, level and layer define the
+    * 2D miptree slice to use.
+    */
+   uint32_t layer;
+
+   /**
     * Width of the miplevel to be used.  For surfaces using
     * INTEL_MSAA_LAYOUT_IMS, this is measured in samples, not pixels.
     */
