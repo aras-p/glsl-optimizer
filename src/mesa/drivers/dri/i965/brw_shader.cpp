@@ -24,8 +24,8 @@
 extern "C" {
 #include "main/macros.h"
 #include "brw_context.h"
-#include "brw_vs.h"
 }
+#include "brw_vs.h"
 #include "brw_fs.h"
 #include "glsl/ir_optimization.h"
 #include "glsl/glsl_parser_extras.h"
