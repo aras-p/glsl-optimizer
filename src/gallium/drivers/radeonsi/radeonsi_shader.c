@@ -145,8 +145,9 @@ static void declare_input_vs(
 	args[0] = t_list;
 	args[1] = attribute_offset;
 	args[2] = buffer_index_reg;
-	input = lp_build_intrinsic(base->gallivm->builder,
-		"llvm.SI.vs.load.input", vec4_type, args, 3);
+	input = build_intrinsic(base->gallivm->builder,
+		"llvm.SI.vs.load.input", vec4_type, args, 3,
+		LLVMReadNoneAttribute | LLVMNoUnwindAttribute);
 
 	/* Break up the vec4 into individual components */
 	for (chan = 0; chan < 4; chan++) {
@@ -294,12 +295,12 @@ static void declare_input_fs(
 			args[1] = attr_number;
 			front = build_intrinsic(base->gallivm->builder, intr_name,
 						input_type, args, args[3] ? 4 : 3,
-						LLVMReadOnlyAttribute | LLVMNoUnwindAttribute);
+						LLVMReadNoneAttribute | LLVMNoUnwindAttribute);
 
 			args[1] = back_attr_number;
 			back = build_intrinsic(base->gallivm->builder, intr_name,
 					       input_type, args, args[3] ? 4 : 3,
-					       LLVMReadOnlyAttribute | LLVMNoUnwindAttribute);
+					       LLVMReadNoneAttribute | LLVMNoUnwindAttribute);
 
 			si_shader_ctx->radeon_bld.inputs[soa_index] =
 				LLVMBuildSelect(gallivm->builder,
@@ -322,7 +323,7 @@ static void declare_input_fs(
 			si_shader_ctx->radeon_bld.inputs[soa_index] =
 				build_intrinsic(base->gallivm->builder, intr_name,
 						input_type, args, args[3] ? 4 : 3,
-						LLVMReadOnlyAttribute | LLVMNoUnwindAttribute);
+						LLVMReadNoneAttribute | LLVMNoUnwindAttribute);
 		}
 	}
 }
@@ -379,7 +380,7 @@ static LLVMValueRef fetch_constant(
 	}
 
 	result = build_intrinsic(base->gallivm->builder, "llvm.SI.load.const", base->elem_type,
-                                 args, 2, LLVMReadOnlyAttribute | LLVMNoUnwindAttribute);
+                                 args, 2, LLVMReadNoneAttribute | LLVMNoUnwindAttribute);
 
 	return bitcast(bld_base, type, result);
 }
@@ -892,9 +893,10 @@ static void build_tex_intrinsic(const struct lp_build_tgsi_action * action,
 	sprintf(intr_name, "%sv%ui32", action->intr_name,
 		LLVMGetVectorSize(LLVMTypeOf(emit_data->args[1])));
 
-	emit_data->output[emit_data->chan] = lp_build_intrinsic(
+	emit_data->output[emit_data->chan] = build_intrinsic(
 		base->gallivm->builder, intr_name, emit_data->dst_type,
-		emit_data->args, emit_data->arg_count);
+		emit_data->args, emit_data->arg_count,
+		LLVMReadNoneAttribute | LLVMNoUnwindAttribute);
 }
 
 static const struct lp_build_tgsi_action tex_action = {
