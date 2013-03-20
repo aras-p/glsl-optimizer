@@ -1128,6 +1128,7 @@ static INLINE VGubyte normalize_coords(struct path_iter_data *pd,
    default:
       abort();
       assert(!"Unknown segment!");
+      return 0;
    }
 }
 
