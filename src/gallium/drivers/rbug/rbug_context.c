@@ -60,7 +60,7 @@ rbug_draw_block_locked(struct rbug_context *rb_pipe, int flag)
       rb_pipe->draw_blocked |= flag;
    } else if ((rb_pipe->draw_rule.blocker & flag) &&
               (rb_pipe->draw_blocker & RBUG_BLOCK_RULE)) {
-      int k;
+      unsigned k;
       boolean block = FALSE;
       unsigned sh;
 

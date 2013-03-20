@@ -321,7 +321,7 @@ rbug_context_info(struct rbug_rbug *tr_rbug, struct rbug_header *header, uint32_
    struct rbug_context *rb_context = NULL;
    rbug_texture_t cbufs[PIPE_MAX_COLOR_BUFS];
    rbug_texture_t texs[PIPE_MAX_SAMPLERS];
-   int i;
+   unsigned i;
 
    pipe_mutex_lock(rb_screen->list_mutex);
    rb_context = rbug_get_context_locked(rb_screen, info->context);
