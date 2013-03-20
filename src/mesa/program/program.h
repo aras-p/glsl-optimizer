@@ -44,6 +44,10 @@
 #include "main/mtypes.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern struct gl_program _mesa_DummyProgram;
 
 
@@ -255,5 +259,9 @@ gl_geometry_program_const(const struct gl_program *prog)
    return (const struct gl_geometry_program *) prog;
 }
 
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
 
 #endif /* PROGRAM_H */
