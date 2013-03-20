@@ -260,8 +260,8 @@ pp_init_fbos(struct pp_queue_t *ppq, unsigned int w,
    p->framebuffer.width = w;
    p->framebuffer.height = h;
 
-   p->viewport.scale[0] = p->viewport.translate[0] = (float) w / 2.0;
-   p->viewport.scale[1] = p->viewport.translate[1] = (float) h / 2.0;
+   p->viewport.scale[0] = p->viewport.translate[0] = (float) w / 2.0f;
+   p->viewport.scale[1] = p->viewport.translate[1] = (float) h / 2.0f;
    p->viewport.scale[3] = 1.0f;
    p->viewport.translate[3] = 0.0f;
 

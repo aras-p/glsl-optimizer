@@ -91,8 +91,8 @@ pp_jimenezmlaa_run(struct pp_queue_t *ppq, struct pipe_resource *in,
    /* Init the pixel size constant */
    if (dimensions[0] != p->framebuffer.width ||
        dimensions[1] != p->framebuffer.height) {
-      constants[0] = 1.0 / p->framebuffer.width;
-      constants[1] = 1.0 / p->framebuffer.height;
+      constants[0] = 1.0f / p->framebuffer.width;
+      constants[1] = 1.0f / p->framebuffer.height;
 
       up_consts(p->pipe);
       dimensions[0] = p->framebuffer.width;
