@@ -3118,6 +3118,7 @@ setup_texture_coords(GLenum faceTarget,
                      GLint slice,
                      GLint width,
                      GLint height,
+                     GLint depth,
                      GLfloat coords0[3],
                      GLfloat coords1[3],
                      GLfloat coords2[3],
@@ -3134,8 +3135,11 @@ setup_texture_coords(GLenum faceTarget,
    case GL_TEXTURE_2D:
    case GL_TEXTURE_3D:
    case GL_TEXTURE_2D_ARRAY:
-      if (faceTarget == GL_TEXTURE_3D)
-         r = 1.0F / slice;
+      if (faceTarget == GL_TEXTURE_3D) {
+         assert(slice < depth);
+         assert(depth >= 1);
+         r = (slice + 0.5f) / depth;
+      }
       else if (faceTarget == GL_TEXTURE_2D_ARRAY)
          r = slice;
       else
@@ -3574,7 +3578,7 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
    /* Setup texture coordinates */
    setup_texture_coords(faceTarget,
                         slice,
-                        0, 0, /* width, height never used here */
+                        0, 0, 1, /* width, height never used here */
                         verts[0].tex,
                         verts[1].tex,
                         verts[2].tex,
@@ -3840,6 +3844,7 @@ decompress_texture_image(struct gl_context *ctx,
    struct gl_texture_object *texObj = texImage->TexObject;
    const GLint width = texImage->Width;
    const GLint height = texImage->Height;
+   const GLint depth = texImage->Height;
    const GLenum target = texObj->Target;
    GLenum faceTarget;
    struct vertex {
@@ -3935,7 +3940,7 @@ decompress_texture_image(struct gl_context *ctx,
       _mesa_BindSampler(ctx->Texture.CurrentUnit, decompress->Sampler);
    }
 
-   setup_texture_coords(faceTarget, slice, width, height,
+   setup_texture_coords(faceTarget, slice, width, height, depth,
                         verts[0].tex,
                         verts[1].tex,
                         verts[2].tex,
