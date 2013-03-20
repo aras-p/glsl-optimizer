@@ -23,6 +23,7 @@
 
 #include "brw_vec4.h"
 #include "brw_cfg.h"
+#include "brw_vs.h"
 
 extern "C" {
 #include "main/macros.h"

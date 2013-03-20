@@ -29,6 +29,7 @@
 
 #include "brw_context.h"
 #include "brw_vec4.h"
+#include "brw_vs.h"
 extern "C" {
 #include "program/prog_parameter.h"
 #include "program/prog_print.h"

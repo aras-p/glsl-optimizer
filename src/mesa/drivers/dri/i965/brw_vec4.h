@@ -30,12 +30,15 @@
 #include "program/hash_table.h"
 
 extern "C" {
-#include "brw_vs.h"
 #include "brw_context.h"
 #include "brw_eu.h"
 };
 
 #include "glsl/ir.h"
+
+struct brw_vec4_compile;
+struct brw_vs_compile;
+struct brw_vec4_prog_key;
 
 namespace brw {
 
