@@ -66,7 +66,7 @@ softpipe_set_so_targets(struct pipe_context *pipe,
                         unsigned append_bitmask)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
-   int i;
+   unsigned i;
 
    for (i = 0; i < num_targets; i++) {
       pipe_so_target_reference((struct pipe_stream_output_target **)&softpipe->so_targets[i], targets[i]);

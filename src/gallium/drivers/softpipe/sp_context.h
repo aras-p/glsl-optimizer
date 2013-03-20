@@ -87,7 +87,7 @@ struct softpipe_context {
    struct pipe_index_buffer index_buffer;
 
    struct draw_so_target *so_targets[PIPE_MAX_SO_BUFFERS];
-   int num_so_targets;
+   unsigned num_so_targets;
    
    struct pipe_query_data_so_statistics so_stats;
    unsigned num_primitives_generated;
