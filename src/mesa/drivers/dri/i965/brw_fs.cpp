@@ -2341,6 +2341,7 @@ fs_visitor::insert_gen4_pre_send_dependency_workarounds(fs_inst *inst)
                inst->insert_before(DEP_RESOLVE_MOV(first_write_grf + i));
             }
          }
+         return;
       }
 
       bool scan_inst_16wide = (dispatch_width > 8 &&
@@ -2410,6 +2411,7 @@ fs_visitor::insert_gen4_post_send_dependency_workarounds(fs_inst *inst)
             if (needs_dep[i])
                scan_inst->insert_before(DEP_RESOLVE_MOV(first_write_grf + i));
          }
+         return;
       }
 
       /* Clear the flag for registers that actually got read (as expected). */
