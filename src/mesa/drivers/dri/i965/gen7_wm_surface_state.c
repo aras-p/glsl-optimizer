@@ -383,11 +383,13 @@ static void
 gen7_create_constant_surface(struct brw_context *brw,
 			     drm_intel_bo *bo,
 			     uint32_t offset,
-			     int width,
+			     uint32_t size,
 			     uint32_t *out_offset)
 {
    struct intel_context *intel = &brw->intel;
-   const GLint w = width - 1;
+   uint32_t stride = 16;
+   uint32_t elements = ALIGN(size, stride) / stride;
+   const GLint w = elements - 1;
 
    uint32_t *surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE,
                                     8 * 4, 32, out_offset);
@@ -403,7 +405,7 @@ gen7_create_constant_surface(struct brw_context *brw,
    surf[2] = SET_FIELD(w & 0x7f, GEN7_SURFACE_WIDTH) |
              SET_FIELD((w >> 7) & 0x1fff, GEN7_SURFACE_HEIGHT);
    surf[3] = SET_FIELD((w >> 20) & 0x7f, BRW_SURFACE_DEPTH) |
-             (16 - 1); /* stride between samples */
+             (stride - 1);
 
    if (intel->is_haswell) {
       surf[7] = SET_FIELD(HSW_SCS_RED,   GEN7_SURFACE_SCS_R) |

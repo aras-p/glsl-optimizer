@@ -917,11 +917,13 @@ void
 brw_create_constant_surface(struct brw_context *brw,
 			    drm_intel_bo *bo,
 			    uint32_t offset,
-			    int width,
+			    uint32_t size,
 			    uint32_t *out_offset)
 {
    struct intel_context *intel = &brw->intel;
-   const GLint w = width - 1;
+   uint32_t stride = 16;
+   uint32_t elements = ALIGN(size, stride) / stride;
+   const GLint w = elements - 1;
    uint32_t *surf;
 
    surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE,
@@ -940,7 +942,7 @@ brw_create_constant_surface(struct brw_context *brw,
 	      ((w >> 7) & 0x1fff) << BRW_SURFACE_HEIGHT_SHIFT);
 
    surf[3] = (((w >> 20) & 0x7f) << BRW_SURFACE_DEPTH_SHIFT |
-	      (16 - 1) << BRW_SURFACE_PITCH_SHIFT); /* ignored */
+	      (stride - 1) << BRW_SURFACE_PITCH_SHIFT);
 
    surf[4] = 0;
    surf[5] = 0;
@@ -1087,8 +1089,7 @@ brw_upload_wm_pull_constants(struct brw_context *brw)
    }
    drm_intel_gem_bo_unmap_gtt(brw->wm.const_bo);
 
-   intel->vtbl.create_constant_surface(brw, brw->wm.const_bo, 0,
-				       ALIGN(brw->wm.prog_data->nr_pull_params, 4) / 4,
+   intel->vtbl.create_constant_surface(brw, brw->wm.const_bo, 0, size,
 				       &brw->wm.surf_offset[surf_index]);
 
    brw->state.dirty.brw |= BRW_NEW_SURFACES;
@@ -1440,11 +1441,8 @@ brw_upload_ubo_surfaces(struct brw_context *brw,
        * glBindBufferRange case is undefined, we can just bind the whole buffer
        * glBindBufferBase wants and be a correct implementation.
        */
-      int size = bo->size - binding->Offset;
-      size = ALIGN(size, 16) / 16; /* The interface takes a number of vec4s */
-
       intel->vtbl.create_constant_surface(brw, bo, binding->Offset,
-					  size,
+					  bo->size - binding->Offset,
 					  &surf_offsets[i]);
    }
 

@@ -202,7 +202,7 @@ struct intel_context
       void (*create_constant_surface)(struct brw_context *brw,
 				      drm_intel_bo *bo,
 				      uint32_t offset,
-				      int width,
+				      uint32_t size,
 				      uint32_t *out_offset);
       /** \} */
    } vtbl;
