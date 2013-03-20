@@ -97,7 +97,7 @@ fs_visitor::opt_cse_local(bblock_t *block, exec_list *aeb)
 	inst = (fs_inst *) inst->next) {
 
       /* Skip some cases. */
-      if (is_expression(inst) && !inst->predicate && inst->mlen == 0 &&
+      if (is_expression(inst) && !inst->predicate &&
           !inst->force_uncompressed && !inst->force_sechalf &&
           !inst->conditional_mod)
       {
