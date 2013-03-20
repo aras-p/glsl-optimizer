@@ -3571,7 +3571,7 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
    else
       assert(!genMipmapSave);
 
-  /* Setup texture coordinates */
+   /* Setup texture coordinates */
    setup_texture_coords(faceTarget,
                         slice,
                         0, 0, /* width, height never used here */
