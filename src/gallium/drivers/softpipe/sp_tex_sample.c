@@ -478,7 +478,7 @@ static INLINE void
 wrap_array_layer(float coord, unsigned size, int *layer)
 {
    int c = util_ifloor(coord + 0.5F);
-   *layer = CLAMP(c, 0, size - 1);
+   *layer = CLAMP(c, 0, (int) size - 1);
 }
 
 
@@ -1944,7 +1944,7 @@ img_filter_2d_ewa(struct sp_sampler_view *sp_sview,
 
    // ??? Won't the image filters blow up if level is negative?
    unsigned level0 = level > 0 ? level : 0;
-   float scaling = 1.0 / (1 << level0);
+   float scaling = 1.0f / (1 << level0);
    int width = u_minify(texture->width0, level0);
    int height = u_minify(texture->height0, level0);
 
@@ -1959,15 +1959,15 @@ img_filter_2d_ewa(struct sp_sampler_view *sp_sview,
    float A = vx*vx+vy*vy+1;
    float B = -2*(ux*vx+uy*vy);
    float C = ux*ux+uy*uy+1;
-   float F = A*C-B*B/4.0;
+   float F = A*C-B*B/4.0f;
 
    /* check if it is an ellipse */
    /* ASSERT(F > 0.0); */
 
    /* Compute the ellipse's (u,v) bounding box in texture space */
-   float d = -B*B+4.0*C*A;
-   float box_u = 2.0 / d * sqrt(d*C*F); /* box_u -> half of bbox with   */
-   float box_v = 2.0 / d * sqrt(A*d*F); /* box_v -> half of bbox height */
+   float d = -B*B+4.0f*C*A;
+   float box_u = 2.0f / d * sqrt(d*C*F); /* box_u -> half of bbox with   */
+   float box_v = 2.0f / d * sqrt(A*d*F); /* box_v -> half of bbox height */
 
    float rgba_temp[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE];
    float s_buffer[TGSI_QUAD_SIZE];
