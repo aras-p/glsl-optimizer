@@ -1264,7 +1264,7 @@ fs_visitor::calculate_urb_setup()
          if (i == VARYING_SLOT_PSIZ)
             continue;
 
-	 if (c->key.vp_outputs_written & BITFIELD64_BIT(i)) {
+	 if (c->key.input_slots_valid & BITFIELD64_BIT(i)) {
 	    /* The back color slot is skipped when the front color is
 	     * also written to.  In addition, some slots can be
 	     * written in the vertex shader and not read in the
@@ -2995,7 +2995,7 @@ brw_fs_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
    }
 
    if (intel->gen < 6)
-      key.vp_outputs_written |= BITFIELD64_BIT(VARYING_SLOT_POS);
+      key.input_slots_valid |= BITFIELD64_BIT(VARYING_SLOT_POS);
 
    for (int i = 0; i < VARYING_SLOT_MAX; i++) {
       if (!(fp->Base.InputsRead & BITFIELD64_BIT(i)))
@@ -3006,7 +3006,7 @@ brw_fs_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
 
       if (intel->gen < 6) {
          if (_mesa_varying_slot_in_fs((gl_varying_slot) i))
-            key.vp_outputs_written |= BITFIELD64_BIT(i);
+            key.input_slots_valid |= BITFIELD64_BIT(i);
       }
    }
 

@@ -70,7 +70,7 @@ struct brw_wm_prog_key {
    GLbitfield64 proj_attrib_mask; /**< one bit per fragment program attribute */
 
    GLushort drawable_height;
-   GLbitfield64 vp_outputs_written;
+   GLbitfield64 input_slots_valid;
    GLuint program_string_id:32;
 
    struct brw_sampler_prog_key_data tex;

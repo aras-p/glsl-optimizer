@@ -289,8 +289,8 @@ brw_wm_debug_recompile(struct brw_context *brw,
                       old_key->proj_attrib_mask, key->proj_attrib_mask);
    found |= key_debug(intel, "renderbuffer height",
                       old_key->drawable_height, key->drawable_height);
-   found |= key_debug(intel, "vertex shader outputs",
-                      old_key->vp_outputs_written, key->vp_outputs_written);
+   found |= key_debug(intel, "input slots valid",
+                      old_key->input_slots_valid, key->input_slots_valid);
 
    found |= brw_debug_recompile_sampler_key(intel, &old_key->tex, &key->tex);
 
@@ -481,7 +481,7 @@ static void brw_wm_populate_key( struct brw_context *brw,
 
    /* BRW_NEW_VUE_MAP_GEOM_OUT */
    if (intel->gen < 6)
-      key->vp_outputs_written = brw->vue_map_geom_out.slots_valid;
+      key->input_slots_valid = brw->vue_map_geom_out.slots_valid;
 
    /* The unique fragment program ID */
    key->program_string_id = fp->id;
