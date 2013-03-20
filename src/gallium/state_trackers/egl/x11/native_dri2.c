@@ -861,7 +861,7 @@ dri2_display_bind_wayland_display(struct native_display *ndpy,
 
    dri2dpy->wl_server_drm = wayland_drm_init(wl_dpy,
          x11_screen_get_device_name(dri2dpy->xscr),
-         &wl_drm_callbacks, ndpy);
+         &wl_drm_callbacks, ndpy, 0);
 
    if (!dri2dpy->wl_server_drm)
       return FALSE;

@@ -13,7 +13,7 @@
 #include "native_wayland_drm_bufmgr_helper.h"
 
 void
-egl_g3d_wl_drm_helper_reference_buffer(void *user_data, uint32_t name,
+egl_g3d_wl_drm_helper_reference_buffer(void *user_data, uint32_t name, int fd,
                                        struct wl_drm_buffer *buffer)
 {
    struct native_display *ndpy = user_data;
