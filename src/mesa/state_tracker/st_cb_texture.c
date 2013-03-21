@@ -868,7 +868,7 @@ st_GetTexImage(struct gl_context * ctx,
       goto fallback;
    }
 
-   if (!stImage->pt) {
+   if (!stImage->pt || !src) {
       goto fallback;
    }
 
