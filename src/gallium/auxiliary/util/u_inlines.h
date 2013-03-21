@@ -517,7 +517,7 @@ util_query_clear_result(union pipe_query_result *result, unsigned type)
       memset(&result->pipeline_statistics, 0, sizeof(result->pipeline_statistics));
       break;
    default:
-      assert(0);
+      memset(result, 0, sizeof(*result));
    }
 }
 

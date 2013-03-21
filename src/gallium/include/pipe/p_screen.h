@@ -206,6 +206,17 @@ struct pipe_screen {
                             struct pipe_fence_handle *fence,
                             uint64_t timeout );
 
+   /**
+    * Returns a driver-specific query.
+    *
+    * If \p info is NULL, the number of available queries is returned.
+    * Otherwise, the driver query at the specified \p index is returned
+    * in \p info. The function returns non-zero on success.
+    */
+   int (*get_driver_query_info)(struct pipe_screen *screen,
+                                unsigned index,
+                                struct pipe_driver_query_info *info);
+
 };
 
 

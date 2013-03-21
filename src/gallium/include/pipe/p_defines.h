@@ -397,6 +397,10 @@ enum pipe_flush_flags {
 #define PIPE_QUERY_PIPELINE_STATISTICS  10
 #define PIPE_QUERY_TYPES                11
 
+/* start of driver queries,
+ * see pipe_screen::get_driver_query_info */
+#define PIPE_QUERY_DRIVER_SPECIFIC     256
+
 
 /**
  * Conditional rendering modes
@@ -647,6 +651,14 @@ union pipe_color_union
    float f[4];
    int i[4];
    unsigned int ui[4];
+};
+
+struct pipe_driver_query_info
+{
+   const char *name;
+   unsigned query_type; /* PIPE_QUERY_DRIVER_SPECIFIC + i */
+   uint64_t max_value; /* max value that can be returned */
+   boolean uses_byte_units; /* whether the result is in bytes */
 };
 
 #ifdef __cplusplus
