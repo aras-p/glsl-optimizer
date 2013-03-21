@@ -72,17 +72,6 @@ static void llvm_load_system_value(
 			LLVMReadNoneAttribute);
 }
 
-static LLVMValueRef llvm_fetch_system_value(
-		struct lp_build_tgsi_context * bld_base,
-		const struct tgsi_full_src_register *reg,
-		enum tgsi_opcode_type type,
-		unsigned swizzle)
-{
-	struct radeon_llvm_context * ctx = radeon_llvm_context(bld_base);
-	LLVMValueRef cval = ctx->system_values[reg->Register.Index];
-	return bitcast(bld_base, type, cval);
-}
-
 static LLVMValueRef
 llvm_load_input_helper(
 	struct radeon_llvm_context * ctx,
@@ -530,7 +519,6 @@ LLVMModuleRef r600_tgsi_llvm(
 	bld_base->info = &shader_info;
 	bld_base->userdata = ctx;
 	bld_base->emit_fetch_funcs[TGSI_FILE_CONSTANT] = llvm_fetch_const;
-	bld_base->emit_fetch_funcs[TGSI_FILE_SYSTEM_VALUE] = llvm_fetch_system_value;
 	bld_base->emit_prologue = llvm_emit_prologue;
 	bld_base->emit_epilogue = llvm_emit_epilogue;
 	ctx->userdata = ctx;

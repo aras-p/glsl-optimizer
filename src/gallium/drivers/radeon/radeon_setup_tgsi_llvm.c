@@ -200,6 +200,17 @@ emit_fetch(
 	return bitcast(bld_base, type, result);
 }
 
+static LLVMValueRef fetch_system_value(
+	struct lp_build_tgsi_context * bld_base,
+	const struct tgsi_full_src_register *reg,
+	enum tgsi_opcode_type type,
+	unsigned swizzle)
+{
+	struct radeon_llvm_context * ctx = radeon_llvm_context(bld_base);
+	LLVMValueRef cval = ctx->system_values[reg->Register.Index];
+	return bitcast(bld_base, type, cval);
+}
+
 static void emit_declaration(
 	struct lp_build_tgsi_context * bld_base,
 	const struct tgsi_full_declaration *decl)
@@ -1153,6 +1164,7 @@ void radeon_llvm_context_init(struct radeon_llvm_context * ctx)
 	bld_base->emit_fetch_funcs[TGSI_FILE_INPUT] = emit_fetch;
 	bld_base->emit_fetch_funcs[TGSI_FILE_TEMPORARY] = emit_fetch;
 	bld_base->emit_fetch_funcs[TGSI_FILE_OUTPUT] = emit_fetch;
+	bld_base->emit_fetch_funcs[TGSI_FILE_SYSTEM_VALUE] = fetch_system_value;
 
 	/* Allocate outputs */
 	ctx->soa.outputs = ctx->outputs;
