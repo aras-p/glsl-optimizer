@@ -252,6 +252,12 @@ enum brw_urb_write_flags {
    BRW_URB_WRITE_COMPLETE = 0x8,
 
    /**
+    * Indicates that an additional offset (which may be different for the two
+    * vec4 slots) is stored in the message header (gen == 7).
+    */
+   BRW_URB_WRITE_PER_SLOT_OFFSET = 0x10,
+
+   /**
     * Convenient combination of flags: end the thread while simultaneously
     * marking the given URB entry as complete.
     */

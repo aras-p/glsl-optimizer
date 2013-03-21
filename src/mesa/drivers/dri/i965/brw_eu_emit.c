@@ -531,8 +531,8 @@ static void brw_set_urb_message( struct brw_compile *p,
       insn->bits3.urb_gen7.offset = offset;
       assert(swizzle_control != BRW_URB_SWIZZLE_TRANSPOSE);
       insn->bits3.urb_gen7.swizzle_control = swizzle_control;
-      /* per_slot_offset = 0 makes it ignore offsets in message header */
-      insn->bits3.urb_gen7.per_slot_offset = 0;
+      insn->bits3.urb_gen7.per_slot_offset =
+         flags & BRW_URB_WRITE_PER_SLOT_OFFSET ? 1 : 0;
       insn->bits3.urb_gen7.complete = flags & BRW_URB_WRITE_COMPLETE ? 1 : 0;
    } else if (brw->gen >= 5) {
       insn->bits3.urb_gen5.opcode = 0;	/* URB_WRITE */
