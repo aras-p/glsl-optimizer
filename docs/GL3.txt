@@ -133,7 +133,7 @@ GL 4.3:
 
 GLSL 4.3                                             not started
 ARB_arrays_of_arrays                                 not started
-ARB_ES3_compatibility                                not started
+ARB_ES3_compatibility                                DONE (i965)
 ARB_clear_buffer_object                              not started
 ARB_compute_shader                                   started (gallium)
 ARB_copy_image                                       not started
