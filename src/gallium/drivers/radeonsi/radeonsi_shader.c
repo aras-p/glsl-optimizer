@@ -141,7 +141,7 @@ static void declare_input_vs(
 
 	/* Load the buffer index, which is always stored in VGPR0
 	 * for Vertex Shaders */
-	buffer_index_reg = LLVMGetParam(si_shader_ctx->radeon_bld.main_fn, SI_PARAM_VERTEX_INDEX);
+	buffer_index_reg = LLVMGetParam(si_shader_ctx->radeon_bld.main_fn, SI_PARAM_VERTEX_ID);
 
 	vec4_type = LLVMVectorType(base->elem_type, 4);
 	args[0] = t_list;
@@ -344,6 +344,30 @@ static void declare_input(
 	} else {
 		fprintf(stderr, "Warning: Unsupported shader type,\n");
 	}
+}
+
+static void declare_system_value(
+	struct radeon_llvm_context * radeon_bld,
+	unsigned index,
+	const struct tgsi_full_declaration *decl)
+{
+	LLVMValueRef value = 0;
+
+	switch (decl->Semantic.Name) {
+	case TGSI_SEMANTIC_INSTANCEID:
+		value = LLVMGetParam(radeon_bld->main_fn, SI_PARAM_INSTANCE_ID);
+		break;
+
+	case TGSI_SEMANTIC_VERTEXID:
+		value = LLVMGetParam(radeon_bld->main_fn, SI_PARAM_VERTEX_ID);
+		break;
+
+	default:
+		assert(!"unknown system value");
+		return;
+	}
+
+	radeon_bld->system_values[index] = value;
 }
 
 static LLVMValueRef fetch_constant(
@@ -939,8 +963,11 @@ static void create_function(struct si_shader_context *si_shader_ctx)
 
 	if (si_shader_ctx->type == TGSI_PROCESSOR_VERTEX) {
 		params[SI_PARAM_VERTEX_BUFFER] = params[SI_PARAM_SAMPLER];
-		params[SI_PARAM_VERTEX_INDEX] = i32;
-		radeon_llvm_create_func(&si_shader_ctx->radeon_bld, params, 5);
+		params[SI_PARAM_VERTEX_ID] = i32;
+		params[SI_PARAM_DUMMY_0] = i32;
+		params[SI_PARAM_DUMMY_1] = i32;
+		params[SI_PARAM_INSTANCE_ID] = i32;
+		radeon_llvm_create_func(&si_shader_ctx->radeon_bld, params, 8);
 
 	} else {
 		params[SI_PARAM_PRIM_MASK] = i32;
@@ -1064,6 +1091,7 @@ int si_pipe_shader_create(
 
 	tgsi_scan_shader(sel->tokens, &shader_info);
 	shader->shader.uses_kill = shader_info.uses_kill;
+	shader->shader.uses_instanceid = shader_info.uses_instanceid;
 	bld_base->info = &shader_info;
 	bld_base->emit_fetch_funcs[TGSI_FILE_CONSTANT] = fetch_constant;
 	bld_base->emit_epilogue = si_llvm_emit_epilogue;
@@ -1074,6 +1102,7 @@ int si_pipe_shader_create(
 	bld_base->op_actions[TGSI_OPCODE_TXP] = tex_action;
 
 	si_shader_ctx.radeon_bld.load_input = declare_input;
+	si_shader_ctx.radeon_bld.load_system_value = declare_system_value;
 	si_shader_ctx.tokens = sel->tokens;
 	tgsi_parse_init(&si_shader_ctx.parse, si_shader_ctx.tokens);
 	si_shader_ctx.shader = shader;

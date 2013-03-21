@@ -42,7 +42,7 @@ static void si_pipe_shader_vs(struct pipe_context *ctx, struct si_pipe_shader *s
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct si_pm4_state *pm4;
 	unsigned num_sgprs, num_user_sgprs;
-	unsigned nparams, i;
+	unsigned nparams, i, vgpr_comp_cnt;
 	uint64_t va;
 
 	si_pm4_delete_state(rctx, vs, shader->pm4);
@@ -83,9 +83,12 @@ static void si_pipe_shader_vs(struct pipe_context *ctx, struct si_pipe_shader *s
 	num_sgprs += 2;
 	assert(num_sgprs <= 104);
 
+	vgpr_comp_cnt = shader->shader.uses_instanceid ? 3 : 0;
+
 	si_pm4_set_reg(pm4, R_00B128_SPI_SHADER_PGM_RSRC1_VS,
 		       S_00B128_VGPRS((shader->num_vgprs - 1) / 4) |
-		       S_00B128_SGPRS((num_sgprs - 1) / 8));
+		       S_00B128_SGPRS((num_sgprs - 1) / 8) |
+		       S_00B128_VGPR_COMP_CNT(vgpr_comp_cnt));
 	si_pm4_set_reg(pm4, R_00B12C_SPI_SHADER_PGM_RSRC2_VS,
 		       S_00B12C_USER_SGPR(num_user_sgprs));
 

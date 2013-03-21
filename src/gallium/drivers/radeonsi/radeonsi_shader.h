@@ -44,7 +44,10 @@
 
 /* VS only parameters */
 #define SI_PARAM_VERTEX_BUFFER	3
-#define SI_PARAM_VERTEX_INDEX	4
+#define SI_PARAM_VERTEX_ID	4
+#define SI_PARAM_DUMMY_0	5
+#define SI_PARAM_DUMMY_1	6
+#define SI_PARAM_INSTANCE_ID	7
 
 /* PS only parameters */
 #define SI_PARAM_PRIM_MASK		3
@@ -101,6 +104,7 @@ struct si_shader {
 
 	unsigned		ninterp;
 	bool			uses_kill;
+	bool			uses_instanceid;
 	bool			fs_write_all;
 	unsigned		nr_cbufs;
 };

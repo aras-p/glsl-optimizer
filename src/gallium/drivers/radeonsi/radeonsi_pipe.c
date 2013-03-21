@@ -330,6 +330,7 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_START_INSTANCE:
 	case PIPE_CAP_NPOT_TEXTURES:
         case PIPE_CAP_PREFER_BLIT_BASED_TEXTURE_TRANSFER:
+	case PIPE_CAP_TGSI_INSTANCEID:
 		return 1;
 	case PIPE_CAP_TGSI_TEXCOORD:
 		return 0;
@@ -344,7 +345,6 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 		return debug_get_bool_option("R600_GLSL130", FALSE) ? 130 : 120;
 
 	/* Unsupported features. */
-	case PIPE_CAP_TGSI_INSTANCEID:
 	case PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT:
 	case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
 	case PIPE_CAP_SCALED_RESOLVE:
