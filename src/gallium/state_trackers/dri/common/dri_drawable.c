@@ -443,6 +443,10 @@ dri_flush(__DRIcontext *cPriv,
       }
 
       dri_postprocessing(ctx, drawable, ST_ATTACHMENT_BACK_LEFT);
+
+      if (ctx->hud) {
+         hud_draw(ctx->hud, drawable->textures[ST_ATTACHMENT_BACK_LEFT]);
+      }
    }
 
    flush_flags = 0;

@@ -35,6 +35,7 @@
 #include "dri_util.h"
 #include "pipe/p_compiler.h"
 #include "postprocess/filters.h"
+#include "hud/hud_context.h"
 
 struct pipe_context;
 struct pipe_fence;
@@ -59,6 +60,7 @@ struct dri_context
    struct st_context_iface *st;
    struct pp_queue_t *pp;
    unsigned int pp_enabled[PP_FILTERS];
+   struct hud_context *hud;
 };
 
 static INLINE struct dri_context *
