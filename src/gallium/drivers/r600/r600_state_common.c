@@ -1517,6 +1517,7 @@ static void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info 
 	}
 
 	pipe_resource_reference(&ib.buffer, NULL);
+	rctx->num_draw_calls++;
 }
 
 void r600_draw_rectangle(struct blitter_context *blitter,

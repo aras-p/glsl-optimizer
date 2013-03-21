@@ -41,6 +41,13 @@ static struct r600_resource *r600_new_query_buffer(struct r600_context *ctx, uns
 {
 	unsigned j, i, num_results, buf_size = 4096;
 	uint32_t *results;
+
+	/* Non-GPU queries. */
+	switch (type) {
+	case R600_QUERY_DRAW_CALLS:
+		return NULL;
+	}
+
 	/* Queries are normally read by the CPU after
 	 * being written by the gpu, hence staging is probably a good
 	 * usage pattern.
@@ -270,8 +277,8 @@ static void r600_emit_query_predication(struct r600_context *ctx, struct r600_qu
 static struct pipe_query *r600_create_query(struct pipe_context *ctx, unsigned query_type)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-
 	struct r600_query *query;
+	bool skip_allocation = false;
 
 	query = CALLOC_STRUCT(r600_query);
 	if (query == NULL)
@@ -301,16 +308,22 @@ static struct pipe_query *r600_create_query(struct pipe_context *ctx, unsigned q
 		query->result_size = 32;
 		query->num_cs_dw = 6;
 		break;
+	/* Non-GPU queries. */
+	case R600_QUERY_DRAW_CALLS:
+		skip_allocation = true;
+		break;
 	default:
 		assert(0);
 		FREE(query);
 		return NULL;
 	}
 
-	query->buffer.buf = r600_new_query_buffer(rctx, query_type);
-	if (!query->buffer.buf) {
-		FREE(query);
-		return NULL;
+	if (!skip_allocation) {
+		query->buffer.buf = r600_new_query_buffer(rctx, query_type);
+		if (!query->buffer.buf) {
+			FREE(query);
+			return NULL;
+		}
 	}
 	return (struct pipe_query*)query;
 }
@@ -343,6 +356,13 @@ static void r600_begin_query(struct pipe_context *ctx, struct pipe_query *query)
 		return;
 	}
 
+	/* Non-GPU queries. */
+	switch (rquery->type) {
+	case R600_QUERY_DRAW_CALLS:
+		rquery->begin_result = rctx->num_draw_calls;
+		return;
+	}
+
 	/* Discard the old query buffers. */
 	while (prev) {
 		struct r600_query_buffer *qbuf = prev;
@@ -372,6 +392,13 @@ static void r600_end_query(struct pipe_context *ctx, struct pipe_query *query)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_query *rquery = (struct r600_query *)query;
+
+	/* Non-GPU queries. */
+	switch (rquery->type) {
+	case R600_QUERY_DRAW_CALLS:
+		rquery->end_result = rctx->num_draw_calls;
+		return;
+	}
 
 	r600_emit_query_end(rctx, rquery);
 
@@ -406,6 +433,13 @@ static boolean r600_get_query_buffer_result(struct r600_context *ctx,
 {
 	unsigned results_base = 0;
 	char *map;
+
+	/* Non-GPU queries. */
+	switch (query->type) {
+	case R600_QUERY_DRAW_CALLS:
+		result->u64 = query->end_result - query->begin_result;
+		return TRUE;
+	}
 
 	map = r600_buffer_mmap_sync_with_rings(ctx, qbuf->buf,
 						PIPE_TRANSFER_READ |

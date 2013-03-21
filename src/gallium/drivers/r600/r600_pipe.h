@@ -75,6 +75,8 @@
 #define R600_CONTEXT_PS_PARTIAL_FLUSH		(1 << 6)
 #define R600_CONTEXT_FLUSH_AND_INV_DB_META      (1 << 7)
 
+#define R600_QUERY_DRAW_CALLS		(PIPE_QUERY_DRIVER_SPECIFIC + 0)
+
 struct r600_context;
 struct r600_bytecode;
 struct r600_shader_key;
@@ -476,6 +478,9 @@ struct r600_query {
 	unsigned				num_cs_dw;
 	/* linked list of queries */
 	struct list_head			list;
+	/* for custom non-GPU queries */
+	uint64_t begin_result;
+	uint64_t end_result;
 };
 
 struct r600_so_target {
@@ -621,6 +626,7 @@ struct r600_context {
 	unsigned			num_cs_dw_nontimer_queries_suspend;
 	/* If queries have been suspended. */
 	bool				nontimer_queries_suspended;
+	unsigned			num_draw_calls;
 
 	/* Render condition. */
 	struct pipe_query		*current_render_cond;

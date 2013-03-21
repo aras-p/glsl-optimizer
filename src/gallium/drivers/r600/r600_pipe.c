@@ -1077,6 +1077,24 @@ static uint64_t r600_get_timestamp(struct pipe_screen *screen)
 			rscreen->info.r600_clock_crystal_freq;
 }
 
+static int r600_get_driver_query_info(struct pipe_screen *screen,
+				      unsigned index,
+				      struct pipe_driver_query_info *info)
+{
+	struct pipe_driver_query_info list[] = {
+		{"draw-calls", R600_QUERY_DRAW_CALLS, 0},
+	};
+
+	if (!info)
+		return Elements(list);
+
+	if (index >= Elements(list))
+		return 0;
+
+	*info = list[index];
+	return 1;
+}
+
 struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 {
 	struct r600_screen *rscreen = CALLOC_STRUCT(r600_screen);
@@ -1183,6 +1201,7 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 	rscreen->screen.fence_reference = r600_fence_reference;
 	rscreen->screen.fence_signalled = r600_fence_signalled;
 	rscreen->screen.fence_finish = r600_fence_finish;
+	rscreen->screen.get_driver_query_info = r600_get_driver_query_info;
 	r600_init_screen_resource_functions(&rscreen->screen);
 
 	util_format_s3tc_init();
