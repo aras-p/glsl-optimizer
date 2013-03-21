@@ -799,6 +799,15 @@ enum opcode {
    VS_OPCODE_PULL_CONSTANT_LOAD,
    VS_OPCODE_PULL_CONSTANT_LOAD_GEN7,
    VS_OPCODE_UNPACK_FLAGS_SIMD4X2,
+
+   /**
+    * Write geometry shader output data to the URB.
+    *
+    * Unlike VS_OPCODE_URB_WRITE, this opcode doesn't do an implied move from
+    * R0 to the first MRF.  This allows the geometry shader to override the
+    * "Slot {0,1} Offset" fields in the message header.
+    */
+   GS_OPCODE_URB_WRITE,
 };
 
 #define BRW_PREDICATE_NONE             0

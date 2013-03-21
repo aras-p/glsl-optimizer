@@ -485,7 +485,7 @@ brw_instruction_name(enum opcode op)
       return "placeholder_halt";
 
    case VS_OPCODE_URB_WRITE:
-      return "urb_write";
+      return "vs_urb_write";
    case VS_OPCODE_SCRATCH_READ:
       return "scratch_read";
    case VS_OPCODE_SCRATCH_WRITE:
@@ -496,6 +496,9 @@ brw_instruction_name(enum opcode op)
       return "pull_constant_load_gen7";
    case VS_OPCODE_UNPACK_FLAGS_SIMD4X2:
       return "unpack_flags_simd4x2";
+
+   case GS_OPCODE_URB_WRITE:
+      return "gs_urb_write";
 
    default:
       /* Yes, this leaks.  It's in debug code, it should never occur, and if
