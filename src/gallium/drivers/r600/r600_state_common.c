@@ -926,7 +926,7 @@ static void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint
 	/* Note that the state tracker can unbind constant buffers by
 	 * passing NULL here.
 	 */
-	if (unlikely(!input)) {
+	if (unlikely(!input || (!input->buffer && !input->user_buffer))) {
 		state->enabled_mask &= ~(1 << index);
 		state->dirty_mask &= ~(1 << index);
 		pipe_resource_reference(&state->cb[index].buffer, NULL);
