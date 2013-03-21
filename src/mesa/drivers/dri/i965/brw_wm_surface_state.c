@@ -125,6 +125,13 @@ struct surface_format_info {
  * color - Color Processing
  *
  * See page 88 of the Sandybridge PRM VOL4_Part1 PDF.
+ *
+ * As of Ivybridge, the columns are no longer in that table and the
+ * information can be found spread across:
+ *
+ * - VOL2_Part1 section 2.5.11 Format Conversion (vertex fetch).
+ * - VOL4_Part1 section 2.12.2.1.2 Sampler Output Channel Mapping.
+ * - VOL4_Part1 section 3.9.11 Render Target Write.
  */
 const struct surface_format_info surface_formats[] = {
 /* smpl filt shad CK  RT  AB  VB  SO  color */
@@ -137,6 +144,8 @@ const struct surface_format_info surface_formats[] = {
    SF( Y, 50,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_R32G32B32X32_FLOAT)
    SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, BRW_SURFACEFORMAT_R32G32B32A32_SSCALED)
    SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, BRW_SURFACEFORMAT_R32G32B32A32_USCALED)
+   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_R32G32B32A32_SFIXED)
+   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_R64G64_PASSTHRU)
    SF( Y, 50,  x,  x,  x,  x,  Y,  Y,  x, BRW_SURFACEFORMAT_R32G32B32_FLOAT)
    SF( Y,  x,  x,  x,  x,  x,  Y,  Y,  x, BRW_SURFACEFORMAT_R32G32B32_SINT)
    SF( Y,  x,  x,  x,  x,  x,  Y,  Y,  x, BRW_SURFACEFORMAT_R32G32B32_UINT)
@@ -144,6 +153,7 @@ const struct surface_format_info surface_formats[] = {
    SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, BRW_SURFACEFORMAT_R32G32B32_SNORM)
    SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, BRW_SURFACEFORMAT_R32G32B32_SSCALED)
    SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, BRW_SURFACEFORMAT_R32G32B32_USCALED)
+   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_R32G32B32_SFIXED)
    SF( Y,  Y,  x,  x,  Y, 45,  Y,  x, 60, BRW_SURFACEFORMAT_R16G16B16A16_UNORM)
    SF( Y,  Y,  x,  x,  Y, 60,  Y,  x,  x, BRW_SURFACEFORMAT_R16G16B16A16_SNORM)
    SF( Y,  x,  x,  x,  Y,  x,  Y,  x,  x, BRW_SURFACEFORMAT_R16G16B16A16_SINT)
@@ -167,6 +177,8 @@ const struct surface_format_info surface_formats[] = {
    SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, BRW_SURFACEFORMAT_R16G16B16A16_USCALED)
    SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, BRW_SURFACEFORMAT_R32G32_SSCALED)
    SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, BRW_SURFACEFORMAT_R32G32_USCALED)
+   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_R32G32_SFIXED)
+   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_R64_PASSTHRU)
    SF( Y,  Y,  x,  Y,  Y,  Y,  Y,  x, 60, BRW_SURFACEFORMAT_B8G8R8A8_UNORM)
    SF( Y,  Y,  x,  x,  Y,  Y,  x,  x,  x, BRW_SURFACEFORMAT_B8G8R8A8_UNORM_SRGB)
 /* smpl filt shad CK  RT  AB  VB  SO  color */
@@ -231,6 +243,8 @@ const struct surface_format_info surface_formats[] = {
    SF( Y,  x,  x,  x,  Y,  x,  Y,  x,  x, BRW_SURFACEFORMAT_R16_SINT)
    SF( Y,  x,  x,  x,  Y,  x,  Y,  x,  x, BRW_SURFACEFORMAT_R16_UINT)
    SF( Y,  Y,  x,  x,  Y,  Y,  Y,  x,  x, BRW_SURFACEFORMAT_R16_FLOAT)
+   SF(50, 50,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_A8P8_UNORM_PALETTE0)
+   SF(50, 50,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_A8P8_UNORM_PALETTE1)
    SF( Y,  Y,  Y,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_I16_UNORM)
    SF( Y,  Y,  Y,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_L16_UNORM)
    SF( Y,  Y,  Y,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_A16_UNORM)
@@ -247,6 +261,12 @@ const struct surface_format_info surface_formats[] = {
 /* smpl filt shad CK  RT  AB  VB  SO  color */
    SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, BRW_SURFACEFORMAT_R16_SSCALED)
    SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, BRW_SURFACEFORMAT_R16_USCALED)
+   SF(50, 50,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_P8A8_UNORM_PALETTE0)
+   SF(50, 50,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_P8A8_UNORM_PALETTE1)
+   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_A1B5G5R5_UNORM)
+   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_A4B4G4R4_UNORM)
+   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_L8A8_UINT)
+   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_L8A8_SINT)
    SF( Y,  Y,  x, 45,  Y,  Y,  Y,  x,  x, BRW_SURFACEFORMAT_R8_UNORM)
    SF( Y,  Y,  x,  x,  Y, 60,  Y,  x,  x, BRW_SURFACEFORMAT_R8_SNORM)
    SF( Y,  x,  x,  x,  Y,  x,  Y,  x,  x, BRW_SURFACEFORMAT_R8_SINT)
@@ -258,11 +278,22 @@ const struct surface_format_info surface_formats[] = {
    SF( Y,  Y,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_A4P4_UNORM)
    SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, BRW_SURFACEFORMAT_R8_SSCALED)
    SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, BRW_SURFACEFORMAT_R8_USCALED)
+   SF(45, 45,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_P8_UNORM_PALETTE0)
    SF(45, 45,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_L8_UNORM_SRGB)
+   SF(45, 45,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_P8_UNORM_PALETTE1)
+   SF(45, 45,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_P4A4_UNORM_PALETTE1)
+   SF(45, 45,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_A4P4_UNORM_PALETTE1)
+   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_Y8_SNORM)
+   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_L8_UINT)
+   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_L8_SINT)
+   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_I8_UINT)
+   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_I8_SINT)
    SF(45, 45,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_DXT1_RGB_SRGB)
    SF( Y,  Y,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_R1_UINT)
    SF( Y,  Y,  x,  Y,  Y,  x,  x,  x, 60, BRW_SURFACEFORMAT_YCRCB_NORMAL)
    SF( Y,  Y,  x,  Y,  Y,  x,  x,  x, 60, BRW_SURFACEFORMAT_YCRCB_SWAPUVY)
+   SF(45, 45,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_P2_UNORM_PALETTE0)
+   SF(45, 45,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_P2_UNORM_PALETTE1)
    SF( Y,  Y,  x,  Y,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_BC1_UNORM)
    SF( Y,  Y,  x,  Y,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_BC2_UNORM)
    SF( Y,  Y,  x,  Y,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_BC3_UNORM)
@@ -285,10 +316,44 @@ const struct surface_format_info surface_formats[] = {
    SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, BRW_SURFACEFORMAT_R64G64B64_FLOAT)
    SF( Y,  Y,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_BC4_SNORM)
    SF( Y,  Y,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_BC5_SNORM)
+   SF(50, 50,  x,  x,  x,  x, 60,  x,  x, BRW_SURFACEFORMAT_R16G16B16_FLOAT)
    SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, BRW_SURFACEFORMAT_R16G16B16_UNORM)
    SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, BRW_SURFACEFORMAT_R16G16B16_SNORM)
    SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, BRW_SURFACEFORMAT_R16G16B16_SSCALED)
    SF( x,  x,  x,  x,  x,  x,  Y,  x,  x, BRW_SURFACEFORMAT_R16G16B16_USCALED)
+   SF(70, 70,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_BC6H_SF16)
+   SF(70, 70,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_BC7_UNORM)
+   SF(70, 70,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_BC7_UNORM_SRGB)
+   SF(70, 70,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_BC6H_UF16)
+   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_PLANAR_420_8)
+   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_R8G8B8_UNORM_SRGB)
+   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_ETC1_RGB8)
+   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_ETC2_RGB8)
+   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_EAC_R11)
+   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_EAC_RG11)
+   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_EAC_SIGNED_R11)
+   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_EAC_SIGNED_RG11)
+   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_ETC2_SRGB8)
+   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_R16G16B16_UINT)
+   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_R16G16B16_SINT)
+   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_R32_SFIXED)
+   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_R10G10B10A2_SNORM)
+   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_R10G10B10A2_USCALED)
+   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_R10G10B10A2_SSCALED)
+   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_R10G10B10A2_SINT)
+   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_B10G10R10A2_SNORM)
+   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_B10G10R10A2_USCALED)
+   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_B10G10R10A2_SSCALED)
+   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_B10G10R10A2_UINT)
+   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_B10G10R10A2_SINT)
+   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_R64G64B64A64_PASSTHRU)
+   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_R64G64B64_PASSTHRU)
+   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_ETC2_RGB8_PTA)
+   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_ETC2_SRGB8_PTA)
+   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_ETC2_EAC_RGBA8)
+   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_ETC2_EAC_SRGB8_A8)
+   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_R8G8B8_UINT)
+   SF( x,  x,  x,  x,  x,  x,  x,  x,  x, BRW_SURFACEFORMAT_R8G8B8_SINT)
 };
 #undef x
 #undef Y
