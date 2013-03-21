@@ -351,11 +351,15 @@ static void declare_system_value(
 	unsigned index,
 	const struct tgsi_full_declaration *decl)
 {
+	struct gallivm_state * gallivm = radeon_bld->soa.bld_base.base.gallivm;
+
 	LLVMValueRef value = 0;
 
 	switch (decl->Semantic.Name) {
 	case TGSI_SEMANTIC_INSTANCEID:
 		value = LLVMGetParam(radeon_bld->main_fn, SI_PARAM_INSTANCE_ID);
+		value = LLVMBuildAdd(gallivm->builder, value,
+			LLVMGetParam(radeon_bld->main_fn, SI_PARAM_START_INSTANCE), "");
 		break;
 
 	case TGSI_SEMANTIC_VERTEXID:
@@ -963,11 +967,12 @@ static void create_function(struct si_shader_context *si_shader_ctx)
 
 	if (si_shader_ctx->type == TGSI_PROCESSOR_VERTEX) {
 		params[SI_PARAM_VERTEX_BUFFER] = params[SI_PARAM_SAMPLER];
+		params[SI_PARAM_START_INSTANCE] = i32;
 		params[SI_PARAM_VERTEX_ID] = i32;
 		params[SI_PARAM_DUMMY_0] = i32;
 		params[SI_PARAM_DUMMY_1] = i32;
 		params[SI_PARAM_INSTANCE_ID] = i32;
-		radeon_llvm_create_func(&si_shader_ctx->radeon_bld, params, 8);
+		radeon_llvm_create_func(&si_shader_ctx->radeon_bld, params, 9);
 
 	} else {
 		params[SI_PARAM_PRIM_MASK] = i32;
@@ -993,6 +998,12 @@ static void create_function(struct si_shader_context *si_shader_ctx)
 	radeon_llvm_shader_type(si_shader_ctx->radeon_bld.main_fn, si_shader_ctx->type);
 	for (i = SI_PARAM_CONST; i <= SI_PARAM_VERTEX_BUFFER; ++i) {
 		LLVMValueRef P = LLVMGetParam(si_shader_ctx->radeon_bld.main_fn, i);
+		LLVMAddAttribute(P, LLVMInRegAttribute);
+	}
+
+	if (si_shader_ctx->type == TGSI_PROCESSOR_VERTEX) {
+		LLVMValueRef P = LLVMGetParam(si_shader_ctx->radeon_bld.main_fn,
+					      SI_PARAM_START_INSTANCE);
 		LLVMAddAttribute(P, LLVMInRegAttribute);
 	}
 }

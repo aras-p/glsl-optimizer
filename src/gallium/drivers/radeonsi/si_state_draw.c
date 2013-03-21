@@ -279,10 +279,8 @@ static bool si_update_draw_info_state(struct r600_context *rctx,
 		       info->indexed ? info->index_bias : info->start);
 	si_pm4_set_reg(pm4, R_02840C_VGT_MULTI_PRIM_IB_RESET_INDX, info->restart_index);
 	si_pm4_set_reg(pm4, R_028A94_VGT_MULTI_PRIM_IB_RESET_EN, info->primitive_restart);
-#if 0
-	si_pm4_set_reg(pm4, R_03CFF0_SQ_VTX_BASE_VTX_LOC, 0);
-	si_pm4_set_reg(pm4, R_03CFF4_SQ_VTX_START_INST_LOC, info->start_instance);
-#endif
+	si_pm4_set_reg(pm4, R_00B130_SPI_SHADER_USER_DATA_VS_0 + SI_SGPR_START_INSTANCE * 4,
+		       info->start_instance);
 
         if (prim == V_008958_DI_PT_LINELIST)
                 ls_mask = 1;
