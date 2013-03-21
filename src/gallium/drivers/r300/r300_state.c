@@ -2056,7 +2056,7 @@ static void r300_set_constant_buffer(struct pipe_context *pipe,
     struct r300_constant_buffer *cbuf;
     uint32_t *mapped;
 
-    if (!cb)
+    if (!cb || (!cb->buffer && !cb->user_buffer))
         return;
 
     switch (shader) {
