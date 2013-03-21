@@ -146,9 +146,6 @@ typedef enum
  * VERT_ATTRIB_TEX
  *   include the classic texture coordinate attributes.
  *   Is a subset of VERT_ATTRIB_FF.
- * VERT_ATTRIB_GENERIC_NV
- *   include the NV shader attributes.
- *   Is a subset of VERT_ATTRIB_FF.
  * VERT_ATTRIB_GENERIC
  *   include the OpenGL 2.0+ GLSL generic shader attributes.
  *   These alias the generic GL_ARB_vertex_shader attributes.
@@ -158,9 +155,6 @@ typedef enum
 
 #define VERT_ATTRIB_TEX(i)          (VERT_ATTRIB_TEX0 + (i))
 #define VERT_ATTRIB_TEX_MAX         MAX_TEXTURE_COORD_UNITS
-
-#define VERT_ATTRIB_GENERIC_NV(i)   (VERT_ATTRIB_POS + (i))
-#define VERT_ATTRIB_GENERIC_NV_MAX  MAX_VERTEX_GENERIC_ATTRIBS
 
 #define VERT_ATTRIB_GENERIC(i)      (VERT_ATTRIB_GENERIC0 + (i))
 #define VERT_ATTRIB_GENERIC_MAX     MAX_VERTEX_GENERIC_ATTRIBS
@@ -197,10 +191,6 @@ typedef enum
 #define VERT_BIT_TEX(i)          VERT_BIT(VERT_ATTRIB_TEX(i))
 #define VERT_BIT_TEX_ALL         \
    BITFIELD64_RANGE(VERT_ATTRIB_TEX(0), VERT_ATTRIB_TEX_MAX)
-
-#define VERT_BIT_GENERIC_NV(i)   VERT_BIT(VERT_ATTRIB_GENERIC_NV(i))
-#define VERT_BIT_GENERIC_NV_ALL  \
-   BITFIELD64_RANGE(VERT_ATTRIB_GENERIC_NV(0), VERT_ATTRIB_GENERIC_NV_MAX)
 
 #define VERT_BIT_GENERIC(i)      VERT_BIT(VERT_ATTRIB_GENERIC(i))
 #define VERT_BIT_GENERIC_ALL     \
