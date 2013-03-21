@@ -4164,7 +4164,7 @@ ast_interface_block::hir(exec_list *instructions,
                                         packing,
                                         this->block_name);
 
-   if (!state->symbols->add_type(block_type->name, block_type)) {
+   if (!state->symbols->add_interface(block_type->name, block_type, ir_var_uniform)) {
       YYLTYPE loc = this->get_location();
       _mesa_glsl_error(&loc, state, "Uniform block name `%s' already taken in "
                        "the current scope.\n", this->block_name);
