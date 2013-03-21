@@ -90,7 +90,7 @@ struct vbo_context {
 
 static inline struct vbo_context *vbo_context(struct gl_context *ctx) 
 {
-   return (struct vbo_context *)(ctx->swtnl_im);
+   return ctx->vbo_context;
 }
 
 

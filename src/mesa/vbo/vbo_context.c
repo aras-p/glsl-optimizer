@@ -152,7 +152,7 @@ GLboolean _vbo_CreateContext( struct gl_context *ctx )
 {
    struct vbo_context *vbo = CALLOC_STRUCT(vbo_context);
 
-   ctx->swtnl_im = (void *)vbo;
+   ctx->vbo_context = vbo;
 
    /* Initialize the arrayelt helper
     */
@@ -224,7 +224,7 @@ void _vbo_DestroyContext( struct gl_context *ctx )
       if (ctx->API == API_OPENGL_COMPAT)
          vbo_save_destroy(ctx);
       free(vbo);
-      ctx->swtnl_im = NULL;
+      ctx->vbo_context = NULL;
    }
 }
 

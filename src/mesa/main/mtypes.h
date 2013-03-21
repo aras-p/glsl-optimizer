@@ -80,6 +80,7 @@ struct prog_instruction;
 struct gl_program_parameter_list;
 struct set;
 struct set_entry;
+struct vbo_context;
 /*@}*/
 
 
@@ -3669,7 +3670,7 @@ struct gl_context
    void *swrast_context;
    void *swsetup_context;
    void *swtnl_context;
-   void *swtnl_im;
+   struct vbo_context *vbo_context;
    struct st_context *st;
    void *aelt_context;
    /*@}*/
