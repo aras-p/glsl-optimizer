@@ -2491,7 +2491,7 @@ static void si_set_constant_buffer(struct pipe_context *ctx, uint shader, uint i
 	/* Note that the state tracker can unbind constant buffers by
 	 * passing NULL here.
 	 */
-	if (cb == NULL)
+	if (cb == NULL || (!cb->buffer && !cb->user_buffer))
 		return;
 
 	pm4 = CALLOC_STRUCT(si_pm4_state);
