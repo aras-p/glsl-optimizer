@@ -37,6 +37,11 @@ C_SOURCES := \
 	draw/draw_vs.c \
 	draw/draw_vs_exec.c \
 	draw/draw_vs_variant.c \
+	hud/font.c \
+	hud/hud_context.c \
+	hud/hud_cpu.c \
+	hud/hud_fps.c \
+        hud/hud_driver_query.c \
 	os/os_misc.c \
 	os/os_time.c \
 	pipebuffer/pb_buffer_fenced.c \
