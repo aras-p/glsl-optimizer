@@ -41,8 +41,6 @@ nvc0_mt_choose_storage_type(struct nv50_miptree *mt, boolean compressed)
 
    uint32_t tile_flags;
 
-   compressed = FALSE; /* not yet supported */
-
    if (unlikely(mt->base.base.bind & PIPE_BIND_CURSOR))
       return 0;
    if (unlikely(mt->base.base.flags & NOUVEAU_RESOURCE_FLAG_LINEAR))
@@ -247,6 +245,7 @@ nvc0_miptree_create(struct pipe_screen *pscreen,
    struct nouveau_device *dev = nouveau_screen(pscreen)->device;
    struct nv50_miptree *mt = CALLOC_STRUCT(nv50_miptree);
    struct pipe_resource *pt = &mt->base.base;
+   boolean compressed = dev->drm_version >= 0x01000101;
    int ret;
    union nouveau_bo_config bo_config;
    uint32_t bo_flags;
@@ -259,7 +258,7 @@ nvc0_miptree_create(struct pipe_screen *pscreen,
    pipe_reference_init(&pt->reference, 1);
    pt->screen = pscreen;
 
-   bo_config.nvc0.memtype = nvc0_mt_choose_storage_type(mt, TRUE);
+   bo_config.nvc0.memtype = nvc0_mt_choose_storage_type(mt, compressed);
 
    if (!nvc0_miptree_init_ms_mode(mt)) {
       FREE(mt);
