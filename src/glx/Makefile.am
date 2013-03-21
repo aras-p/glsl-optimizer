@@ -39,6 +39,7 @@ AM_CFLAGS = \
 	-I$(top_srcdir)/src/mapi/glapi \
 	-I$(top_builddir)/src/mapi \
 	-I$(top_builddir)/src/mapi/glapi \
+	$(VISIBILITY_CFLAGS) \
 	$(SHARED_GLAPI_CFLAGS) \
 	$(EXTRA_DEFINES_XF86VIDMODE) \
 	-D_REENTRANT \
