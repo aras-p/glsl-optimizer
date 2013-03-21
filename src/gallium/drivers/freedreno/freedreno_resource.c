@@ -30,6 +30,7 @@
 #include "util/u_inlines.h"
 #include "util/u_transfer.h"
 #include "util/u_string.h"
+#include "util/u_surface.h"
 
 #include "freedreno_resource.h"
 #include "freedreno_screen.h"
@@ -219,10 +220,54 @@ fd_resource_copy_region(struct pipe_context *pctx,
  * Scaling, format conversion, up- and downsampling (resolve) are allowed.
  */
 static void
-fd_blit(struct pipe_context *pctx, const struct pipe_blit_info *info)
+fd_blit(struct pipe_context *pctx, const struct pipe_blit_info *blit_info)
 {
-	DBG("TODO: ");
-	// TODO
+	struct fd_context *ctx = fd_context(pctx);
+	struct pipe_blit_info info = *blit_info;
+
+	if (info.src.resource->nr_samples > 1 &&
+			info.dst.resource->nr_samples <= 1 &&
+			!util_format_is_depth_or_stencil(info.src.resource->format) &&
+			!util_format_is_pure_integer(info.src.resource->format)) {
+		DBG("color resolve unimplemented");
+		return;
+	}
+
+	if (util_try_blit_via_copy_region(pctx, &info)) {
+		return; /* done */
+	}
+
+	if (info.mask & PIPE_MASK_S) {
+		DBG("cannot blit stencil, skipping");
+		info.mask &= ~PIPE_MASK_S;
+	}
+
+	if (!util_blitter_is_blit_supported(ctx->blitter, &info)) {
+		DBG("blit unsupported %s -> %s",
+				util_format_short_name(info.src.resource->format),
+				util_format_short_name(info.dst.resource->format));
+		return;
+	}
+
+	util_blitter_save_vertex_buffer_slot(ctx->blitter, ctx->vertexbuf.vb);
+	util_blitter_save_vertex_elements(ctx->blitter, ctx->vtx);
+	util_blitter_save_vertex_shader(ctx->blitter, ctx->prog.vp);
+	util_blitter_save_rasterizer(ctx->blitter, ctx->rasterizer);
+	util_blitter_save_viewport(ctx->blitter, &ctx->viewport);
+	util_blitter_save_scissor(ctx->blitter, &ctx->scissor);
+	util_blitter_save_fragment_shader(ctx->blitter, ctx->prog.fp);
+	util_blitter_save_blend(ctx->blitter, ctx->blend);
+	util_blitter_save_depth_stencil_alpha(ctx->blitter, ctx->zsa);
+	util_blitter_save_stencil_ref(ctx->blitter, &ctx->stencil_ref);
+	util_blitter_save_sample_mask(ctx->blitter, ctx->sample_mask);
+	util_blitter_save_framebuffer(ctx->blitter, &ctx->framebuffer.base);
+	util_blitter_save_fragment_sampler_states(ctx->blitter,
+			ctx->fragtex.num_samplers,
+			(void **)ctx->fragtex.samplers);
+	util_blitter_save_fragment_sampler_views(ctx->blitter,
+			ctx->fragtex.num_textures, ctx->fragtex.textures);
+
+	util_blitter_blit(ctx->blitter, &info);
 }
 
 void
