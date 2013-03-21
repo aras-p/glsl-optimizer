@@ -1958,7 +1958,49 @@ basic_interface_block:
 	                "an instance name are not allowed");
 	   }
 
-	   block->layout.flags.i |= $1.flags.i;
+	   unsigned interface_type_mask;
+	   struct ast_type_qualifier temp_type_qualifier;
+
+       /* Get a bitmask containing only the in/out/uniform flags, allowing us
+        * to ignore other irrelevant flags like interpolation qualifiers.
+        */
+	   temp_type_qualifier.flags.i = 0;
+	   temp_type_qualifier.flags.q.uniform = true;
+	   temp_type_qualifier.flags.q.in = true;
+	   temp_type_qualifier.flags.q.out = true;
+	   interface_type_mask = temp_type_qualifier.flags.i;
+
+       /* Get the block's interface qualifier.  The interface_qualifier
+        * production rule guarantees that only one bit will be set (and
+        * it will be in/out/uniform).
+        */
+       unsigned block_interface_qualifier = $1.flags.i;
+
+	   block->layout.flags.i |= block_interface_qualifier;
+
+	   foreach_list_typed (ast_declarator_list, member, link, &block->declarations) {
+	      ast_type_qualifier& qualifier = member->type->qualifier;
+	      if ((qualifier.flags.i & interface_type_mask) == 0) {
+             /* GLSLangSpec.1.50.11, 4.3.7 (Interface Blocks):
+              * "If no optional qualifier is used in a member declaration, the
+              *  qualifier of the variable is just in, out, or uniform as declared
+              *  by interface-qualifier."
+              */
+	         qualifier.flags.i |= block_interface_qualifier;
+	      } else if ((qualifier.flags.i & interface_type_mask) !=
+	                 block_interface_qualifier) {
+	         /* GLSLangSpec.1.50.11, 4.3.7 (Interface Blocks):
+              * "If optional qualifiers are used, they can include interpolation
+              *  and storage qualifiers and they must declare an input, output,
+              *  or uniform variable consistent with the interface qualifier of
+              *  the block."
+	          */
+	         _mesa_glsl_error(& @1, state,
+	                          "uniform/in/out qualifier on "
+	                          "interface block member does not match "
+	                          "the interface block\n");
+	      }
+	   }
 
 	   $$ = block;
 	}
