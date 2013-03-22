@@ -575,6 +575,9 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_CONSTANT_BUFFER_OFFSET_ALIGNMENT:
 		return 256;
 
+	case PIPE_CAP_TEXTURE_BUFFER_OFFSET_ALIGNMENT:
+		return 1;
+
 	case PIPE_CAP_GLSL_FEATURE_LEVEL:
 		return 140;
 
@@ -601,7 +604,6 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_FRAGMENT_COLOR_CLAMPED:
 	case PIPE_CAP_VERTEX_COLOR_CLAMPED:
 	case PIPE_CAP_USER_VERTEX_BUFFERS:
-	case PIPE_CAP_TEXTURE_BUFFER_OFFSET_ALIGNMENT:
 	case PIPE_CAP_QUERY_PIPELINE_STATISTICS:
 		return 0;
 

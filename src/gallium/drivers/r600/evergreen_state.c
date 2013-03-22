@@ -1047,6 +1047,8 @@ texture_buffer_sampler_view(struct r600_pipe_sampler_view *view,
 	unsigned swizzle_res;
 	unsigned char swizzle[4];
 	const struct util_format_description *desc;
+	unsigned offset = view->base.u.buf.first_element * stride;
+	unsigned size = (view->base.u.buf.last_element - view->base.u.buf.first_element + 1) * stride;
 
 	swizzle[0] = view->base.swizzle_r;
 	swizzle[1] = view->base.swizzle_g;
@@ -1061,12 +1063,12 @@ texture_buffer_sampler_view(struct r600_pipe_sampler_view *view,
 
 	swizzle_res = r600_get_swizzle_combined(desc->swizzle, swizzle, TRUE);
 
-	va = r600_resource_va(ctx->screen, view->base.texture);
+	va = r600_resource_va(ctx->screen, view->base.texture) + offset;
 	view->tex_resource = &tmp->resource;
 
 	view->skip_mip_address_reloc = true;
 	view->tex_resource_words[0] = va;
-	view->tex_resource_words[1] = width0 - 1;
+	view->tex_resource_words[1] = size - 1;
 	view->tex_resource_words[2] = S_030008_BASE_ADDRESS_HI(va >> 32UL) |
 		S_030008_STRIDE(stride) |
 		S_030008_DATA_FORMAT(format) |

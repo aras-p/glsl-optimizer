@@ -1027,17 +1027,19 @@ texture_buffer_sampler_view(struct r600_pipe_sampler_view *view,
 	uint64_t va;
 	int stride = util_format_get_blocksize(view->base.format);
 	unsigned format, num_format, format_comp, endian;
+	unsigned offset = view->base.u.buf.first_element * stride;
+	unsigned size = (view->base.u.buf.last_element - view->base.u.buf.first_element + 1) * stride;
 
 	r600_vertex_data_type(view->base.format,
 			      &format, &num_format, &format_comp,
 			      &endian);
 
-	va = r600_resource_va(ctx->screen, view->base.texture);
+	va = r600_resource_va(ctx->screen, view->base.texture) + offset;
 	view->tex_resource = &tmp->resource;
 
 	view->skip_mip_address_reloc = true;
 	view->tex_resource_words[0] = va;
-	view->tex_resource_words[1] = width0 - 1;
+	view->tex_resource_words[1] = size - 1;
 	view->tex_resource_words[2] = S_038008_BASE_ADDRESS_HI(va >> 32UL) |
 		S_038008_STRIDE(stride) |
 		S_038008_DATA_FORMAT(format) |
