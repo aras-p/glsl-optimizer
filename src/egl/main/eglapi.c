@@ -1344,6 +1344,11 @@ eglCreateImageKHR(EGLDisplay dpy, EGLContext ctx, EGLenum target,
       RETURN_EGL_EVAL(disp, EGL_NO_IMAGE_KHR);
    if (!context && ctx != EGL_NO_CONTEXT)
       RETURN_EGL_ERROR(disp, EGL_BAD_CONTEXT, EGL_NO_IMAGE_KHR);
+   /* "If <target> is EGL_LINUX_DMA_BUF_EXT, <dpy> must be a valid display,
+    *  <ctx> must be EGL_NO_CONTEXT..."
+    */
+   if (ctx != EGL_NO_CONTEXT && target == EGL_LINUX_DMA_BUF_EXT)
+      RETURN_EGL_ERROR(disp, EGL_BAD_PARAMETER, EGL_NO_IMAGE_KHR);
 
    img = drv->API.CreateImageKHR(drv,
          disp, context, target, buffer, attr_list);

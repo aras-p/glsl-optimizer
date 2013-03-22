@@ -34,6 +34,11 @@
 #include "egltypedefs.h"
 #include "egldisplay.h"
 
+struct _egl_image_attrib_int
+{
+   EGLint Value;
+   EGLBoolean IsPresent;
+};
 
 struct _egl_image_attribs
 {
@@ -53,6 +58,16 @@ struct _egl_image_attribs
 
    /* EGL_WL_bind_wayland_display */
    EGLint PlaneWL;
+
+   /* EGL_EXT_image_dma_buf_import */
+   struct _egl_image_attrib_int DMABufFourCC;
+   struct _egl_image_attrib_int DMABufPlaneFds[3];
+   struct _egl_image_attrib_int DMABufPlaneOffsets[3];
+   struct _egl_image_attrib_int DMABufPlanePitches[3];
+   struct _egl_image_attrib_int DMABufYuvColorSpaceHint;
+   struct _egl_image_attrib_int DMABufSampleRangeHint;
+   struct _egl_image_attrib_int DMABufChromaHorizontalSiting;
+   struct _egl_image_attrib_int DMABufChromaVerticalSiting;
 };
 
 /**
