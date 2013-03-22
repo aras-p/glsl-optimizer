@@ -45,6 +45,8 @@ static struct r600_resource *r600_new_query_buffer(struct r600_context *ctx, uns
 	/* Non-GPU queries. */
 	switch (type) {
 	case R600_QUERY_DRAW_CALLS:
+	case R600_QUERY_REQUESTED_VRAM:
+	case R600_QUERY_REQUESTED_GTT:
 		return NULL;
 	}
 
@@ -310,6 +312,8 @@ static struct pipe_query *r600_create_query(struct pipe_context *ctx, unsigned q
 		break;
 	/* Non-GPU queries. */
 	case R600_QUERY_DRAW_CALLS:
+	case R600_QUERY_REQUESTED_VRAM:
+	case R600_QUERY_REQUESTED_GTT:
 		skip_allocation = true;
 		break;
 	default:
@@ -361,6 +365,10 @@ static void r600_begin_query(struct pipe_context *ctx, struct pipe_query *query)
 	case R600_QUERY_DRAW_CALLS:
 		rquery->begin_result = rctx->num_draw_calls;
 		return;
+	case R600_QUERY_REQUESTED_VRAM:
+	case R600_QUERY_REQUESTED_GTT:
+		rquery->begin_result = 0;
+		return;
 	}
 
 	/* Discard the old query buffers. */
@@ -397,6 +405,12 @@ static void r600_end_query(struct pipe_context *ctx, struct pipe_query *query)
 	switch (rquery->type) {
 	case R600_QUERY_DRAW_CALLS:
 		rquery->end_result = rctx->num_draw_calls;
+		return;
+	case R600_QUERY_REQUESTED_VRAM:
+		rquery->end_result = rctx->ws->query_value(rctx->ws, RADEON_REQUESTED_VRAM_MEMORY);
+		return;
+	case R600_QUERY_REQUESTED_GTT:
+		rquery->end_result = rctx->ws->query_value(rctx->ws, RADEON_REQUESTED_GTT_MEMORY);
 		return;
 	}
 
@@ -437,6 +451,8 @@ static boolean r600_get_query_buffer_result(struct r600_context *ctx,
 	/* Non-GPU queries. */
 	switch (query->type) {
 	case R600_QUERY_DRAW_CALLS:
+	case R600_QUERY_REQUESTED_VRAM:
+	case R600_QUERY_REQUESTED_GTT:
 		result->u64 = query->end_result - query->begin_result;
 		return TRUE;
 	}

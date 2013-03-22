@@ -1081,8 +1081,11 @@ static int r600_get_driver_query_info(struct pipe_screen *screen,
 				      unsigned index,
 				      struct pipe_driver_query_info *info)
 {
+	struct r600_screen *rscreen = (struct r600_screen*)screen;
 	struct pipe_driver_query_info list[] = {
 		{"draw-calls", R600_QUERY_DRAW_CALLS, 0},
+		{"requested-VRAM", R600_QUERY_REQUESTED_VRAM, rscreen->info.vram_size, TRUE},
+		{"requested-GTT", R600_QUERY_REQUESTED_GTT, rscreen->info.gart_size, TRUE},
 	};
 
 	if (!info)

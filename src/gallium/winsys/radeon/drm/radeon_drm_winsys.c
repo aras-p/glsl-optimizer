@@ -483,6 +483,20 @@ static uint64_t radeon_query_timestamp(struct radeon_winsys *rws)
     return ts;
 }
 
+static uint64_t radeon_query_value(struct radeon_winsys *rws,
+                                   enum radeon_value_id value)
+{
+    struct radeon_drm_winsys *ws = (struct radeon_drm_winsys*)rws;
+
+    switch (value) {
+    case RADEON_REQUESTED_VRAM_MEMORY:
+        return ws->allocated_vram;
+    case RADEON_REQUESTED_GTT_MEMORY:
+        return ws->allocated_gtt;
+    }
+    return 0;
+}
+
 static unsigned hash_fd(void *key)
 {
     return pointer_to_intptr(key);
@@ -606,6 +620,7 @@ struct radeon_winsys *radeon_drm_winsys_create(int fd)
     ws->base.surface_init = radeon_drm_winsys_surface_init;
     ws->base.surface_best = radeon_drm_winsys_surface_best;
     ws->base.query_timestamp = radeon_query_timestamp;
+    ws->base.query_value = radeon_query_value;
 
     radeon_bomgr_init_functions(ws);
     radeon_drm_cs_init_functions(ws);

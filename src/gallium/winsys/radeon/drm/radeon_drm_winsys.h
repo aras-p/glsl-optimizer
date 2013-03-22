@@ -46,6 +46,8 @@ struct radeon_drm_winsys {
 
     int fd; /* DRM file descriptor */
     int num_cs; /* The number of command streams created. */
+    uint64_t allocated_vram;
+    uint64_t allocated_gtt;
 
     enum radeon_generation gen;
     struct radeon_info info;

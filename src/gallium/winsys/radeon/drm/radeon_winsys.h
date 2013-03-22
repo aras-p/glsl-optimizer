@@ -145,6 +145,11 @@ enum ring_type {
     RING_LAST,
 };
 
+enum radeon_value_id {
+   RADEON_REQUESTED_VRAM_MEMORY,
+   RADEON_REQUESTED_GTT_MEMORY,
+};
+
 struct winsys_handle;
 struct radeon_winsys_cs_handle;
 
@@ -483,6 +488,9 @@ struct radeon_winsys {
      * \param ws        The winsys this function is called from.
      */
     uint64_t (*query_timestamp)(struct radeon_winsys *ws);
+
+    uint64_t (*query_value)(struct radeon_winsys *ws,
+                            enum radeon_value_id value);
 };
 
 #endif
