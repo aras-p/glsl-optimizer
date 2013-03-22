@@ -972,6 +972,17 @@ lp_mem_type_from_format_desc(const struct util_format_description *format_desc,
    unsigned i;
    unsigned chan;
 
+   if (format_desc->format == PIPE_FORMAT_R11G11B10_FLOAT) {
+      /* just make this a 32bit uint */
+      type->floating = false;
+      type->fixed = false;
+      type->sign = false;
+      type->norm = false;
+      type->width = 32;
+      type->length = 1;
+      return;
+   }
+
    for (i = 0; i < 4; i++)
       if (format_desc->channel[i].type != UTIL_FORMAT_TYPE_VOID)
          break;
@@ -1008,6 +1019,17 @@ lp_blend_type_from_format_desc(const struct util_format_description *format_desc
 {
    unsigned i;
    unsigned chan;
+
+   if (format_desc->format == PIPE_FORMAT_R11G11B10_FLOAT) {
+      /* always use ordinary floats for blending */
+      type->floating = true;
+      type->fixed = false;
+      type->sign = true;
+      type->norm = false;
+      type->width = 32;
+      type->length = 4;
+      return;
+   }
 
    for (i = 0; i < 4; i++)
       if (format_desc->channel[i].type != UTIL_FORMAT_TYPE_VOID)
@@ -1122,6 +1144,48 @@ convert_to_blend_type(struct gallivm_state *gallivm,
    unsigned pixels = 16 / num_srcs;
    bool is_arith;
 
+   /*
+    * full custom path for packed floats - none of the later functions would do
+    * anything useful, and given the lp_type representation they can't be fixed.
+    */
+   if (src_fmt->format == PIPE_FORMAT_R11G11B10_FLOAT) {
+      LLVMValueRef tmpsrc[4];
+      /*
+       * This is pretty suboptimal for this case blending in SoA would be much
+       * better, since conversion gets us SoA values so need to convert back.
+       */
+      assert(src_type.width == 32);
+      assert(dst_type.floating);
+      assert(dst_type.width = 32);
+      assert(dst_type.length % 4 == 0);
+      for (i = 0; i < 4; i++) {
+         tmpsrc[i] = src[i];
+      }
+      for (i = 0; i < num_srcs / 4; i++) {
+         LLVMValueRef tmpsoa[4];
+         LLVMValueRef tmps = tmpsrc[i];
+         if (num_srcs == 8) {
+            LLVMValueRef shuffles[8];
+            unsigned j;
+            /* fetch was 4 values but need 8-wide output values */
+            tmps = lp_build_concat(gallivm, &tmpsrc[i * 2], src_type, 2);
+            /*
+             * for 8-wide aos transpose would give us wrong order not matching
+             * incoming converted fs values and mask. ARGH.
+             */
+            for (j = 0; j < 4; j++) {
+               shuffles[j] = lp_build_const_int32(gallivm, j * 2);
+               shuffles[j + 4] = lp_build_const_int32(gallivm, j * 2 + 1);
+            }
+            tmps = LLVMBuildShuffleVector(builder, tmps, tmps,
+                                          LLVMConstVector(shuffles, 8), "");
+         }
+         lp_build_r11g11b10_to_float(gallivm, tmps, tmpsoa);
+         lp_build_transpose_aos(gallivm, dst_type, tmpsoa, &src[i * 4]);
+      }
+      return;
+   }
+
    lp_mem_type_from_format_desc(src_fmt, &mem_type);
    lp_blend_type_from_format_desc(src_fmt, &blend_type);
 
@@ -1224,6 +1288,47 @@ convert_from_blend_type(struct gallivm_state *gallivm,
    LLVMBuilderRef builder = gallivm->builder;
    unsigned pixels = 16 / num_srcs;
    bool is_arith;
+
+   /*
+    * full custom path for packed floats - none of the later functions would do
+    * anything useful, and given the lp_type representation they can't be fixed.
+    */
+   if (src_fmt->format == PIPE_FORMAT_R11G11B10_FLOAT) {
+      /*
+       * This is pretty suboptimal for this case blending in SoA would be much
+       * better - we need to transpose the AoS values back to SoA values for
+       * conversion/packing.
+       */
+      assert(src_type.floating);
+      assert(src_type.width = 32);
+      assert(src_type.length % 4 == 0);
+      assert(dst_type.width == 32);
+      for (i = 0; i < num_srcs / 4; i++) {
+         LLVMValueRef tmpsoa[4], tmpdst;
+         lp_build_transpose_aos(gallivm, src_type, &src[i * 4], tmpsoa);
+         tmpdst = lp_build_float_to_r11g11b10(gallivm, tmpsoa);
+         if (num_srcs == 8) {
+            LLVMValueRef tmpaos, shuffles[8];
+            unsigned j;
+            /*
+             * for 8-wide aos transpose has given us wrong order not matching
+             * output order. HMPF. Also need to split the output values manually.
+             */
+            for (j = 0; j < 4; j++) {
+               shuffles[j * 2] = lp_build_const_int32(gallivm, j);
+               shuffles[j * 2 + 1] = lp_build_const_int32(gallivm, j + 4);
+            }
+            tmpaos = LLVMBuildShuffleVector(builder, tmpdst, tmpdst,
+                                            LLVMConstVector(shuffles, 8), "");
+            src[i * 2] = lp_build_extract_range(gallivm, tmpaos, 0, 4);
+            src[i * 2 + 1] = lp_build_extract_range(gallivm, tmpaos, 4, 4);
+         }
+         else {
+            src[i] = tmpdst;
+         }
+      }
+      return;
+   }
 
    lp_mem_type_from_format_desc(src_fmt, &mem_type);
    lp_blend_type_from_format_desc(src_fmt, &blend_type);
@@ -1532,6 +1637,17 @@ generate_unswizzled_blend(struct gallivm_state *gallivm,
       }
    }
 
+   if (out_format == PIPE_FORMAT_R11G11B10_FLOAT) {
+      /* the code above can't work for layout_other */
+      dst_channels = 4; /* HACK: this is fake 4 really but need it due to transpose stuff later */
+      has_alpha = true;
+      swizzle[0] = 0;
+      swizzle[1] = 1;
+      swizzle[2] = 2;
+      swizzle[3] = 3;
+      pad_inline = true; /* HACK: prevent rgbxrgbx->rgbrgbxx conversion later */
+   }
+
    /* If 3 channels then pad to include alpha for 4 element transpose */
    if (dst_channels == 3 && !has_alpha) {
       for (i = 0; i < TGSI_NUM_CHANNELS; i++) {
@@ -1755,6 +1871,16 @@ generate_unswizzled_blend(struct gallivm_state *gallivm,
    }
 
    dst_type.length *= 16 / dst_count;
+
+   if (out_format == PIPE_FORMAT_R11G11B10_FLOAT) {
+      /*
+       * we need multiple values at once for the conversion, so can as well
+       * load them vectorized here too instead of concatenating later.
+       * (Still need concatenation later for 8-wide vectors).
+       */
+      dst_count = block_height;
+      dst_type.length = block_width;
+   }
 
    load_unswizzled_block(gallivm, color_ptr, stride, block_width, block_height,
                          dst, dst_type, dst_count, dst_alignment);

@@ -62,6 +62,15 @@ lp_build_float_to_half(struct gallivm_state *gallivm,
                        LLVMValueRef src);
 
 LLVMValueRef
+lp_build_float_to_r11g11b10(struct gallivm_state *gallivm,
+                            LLVMValueRef *src);
+
+void
+lp_build_r11g11b10_to_float(struct gallivm_state *gallivm,
+                            LLVMValueRef src,
+                            LLVMValueRef *dst);
+
+LLVMValueRef
 lp_build_clamped_float_to_unsigned_norm(struct gallivm_state *gallivm,
                                         struct lp_type src_type,
                                         unsigned dst_width,
