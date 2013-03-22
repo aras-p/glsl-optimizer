@@ -150,6 +150,7 @@ enum brw_state_id {
    BRW_STATE_VS_CONSTBUF,
    BRW_STATE_PROGRAM_CACHE,
    BRW_STATE_STATE_BASE_ADDRESS,
+   BRW_STATE_VUE_MAP_VS,
    BRW_STATE_VUE_MAP_GEOM_OUT,
    BRW_STATE_TRANSFORM_FEEDBACK,
    BRW_STATE_RASTERIZER_DISCARD,
@@ -185,6 +186,7 @@ enum brw_state_id {
 #define BRW_NEW_VS_CONSTBUF            (1 << BRW_STATE_VS_CONSTBUF)
 #define BRW_NEW_PROGRAM_CACHE		(1 << BRW_STATE_PROGRAM_CACHE)
 #define BRW_NEW_STATE_BASE_ADDRESS	(1 << BRW_STATE_STATE_BASE_ADDRESS)
+#define BRW_NEW_VUE_MAP_VS		(1 << BRW_STATE_VUE_MAP_VS)
 #define BRW_NEW_VUE_MAP_GEOM_OUT	(1 << BRW_STATE_VUE_MAP_GEOM_OUT)
 #define BRW_NEW_TRANSFORM_FEEDBACK	(1 << BRW_STATE_TRANSFORM_FEEDBACK)
 #define BRW_NEW_RASTERIZER_DISCARD	(1 << BRW_STATE_RASTERIZER_DISCARD)
@@ -1101,6 +1103,13 @@ struct brw_context
       GLfloat *next_buf;
       GLuint last_bufsz;
    } curbe;
+
+   /**
+    * Layout of vertex data exiting the vertex shader.
+    *
+    * BRW_NEW_VUE_MAP_VS is flagged when this VUE map changes.
+    */
+   struct brw_vue_map vue_map_vs;
 
    /**
     * Layout of vertex data exiting the geometry portion of the pipleine.
