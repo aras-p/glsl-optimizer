@@ -77,7 +77,8 @@ $(intermediates)/xmlpool/options.h: PRIVATE_SCRIPT := $(LOCAL_PATH)/xmlpool/gen_
 $(intermediates)/xmlpool/options.h: PRIVATE_LOCALEDIR := $(intermediates)/xmlpool
 $(intermediates)/xmlpool/options.h: PRIVATE_TEMPLATE_HEADER := $(LOCAL_PATH)/xmlpool/t_options.h
 $(intermediates)/xmlpool/options.h: PRIVATE_MO_FILES := $(MESA_DRI_OPTIONS_LANGS:%=$(intermediates)/xmlpool/%/LC_MESSAGES/options.mo)
-$(intermediates)/xmlpool/options.h: $(PRIVATE_SCRIPT) $(PRIVATE_TEMPLATE_HEADER) $(PRIVATE_MO_FILES)
+.SECONDEXPANSION:
+$(intermediates)/xmlpool/options.h: $$(PRIVATE_SCRIPT) $$(PRIVATE_TEMPLATE_HEADER) $$(PRIVATE_MO_FILES)
 	mkdir -p $(dir $@)
 	mkdir -p $(PRIVATE_LOCALEDIR)
 	$(MESA_PYTHON2) $(PRIVATE_SCRIPT) $(PRIVATE_TEMPLATE_HEADER) \
