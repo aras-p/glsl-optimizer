@@ -492,19 +492,19 @@ nvc0_blitter_make_vp(struct nvc0_blitter *blit)
 {
    static const uint32_t code_nvc0[] =
    {
-      0xfff01c66, 0x06000080, /* vfetch b128 { $r0 $r1 $r2 $r3 } a[0x80] */
-      0xfff11c26, 0x06000090, /* vfetch b96 { $r4 $r5 $r6 } a[0x90]*/
-      0x03f01c66, 0x0a7e0070, /* export b128 o[0x70] { $r0 $r1 $r2 $r3 } */
-      0x13f01c26, 0x0a7e0080, /* export b96 o[0x80] { $r4 $r5 $r6 } */
+      0xfff11c26, 0x06000080, /* vfetch b64 $r4:$r5 a[0x80] */
+      0xfff01c46, 0x06000090, /* vfetch b96 $r0:$r1:$r2 a[0x90] */
+      0x13f01c26, 0x0a7e0070, /* export b64 o[0x70] $r4:$r5 */
+      0x03f01c46, 0x0a7e0080, /* export b96 o[0x80] $r0:$r1:$r2 */
       0x00001de7, 0x80000000, /* exit */
    };
    static const uint32_t code_nve4[] =
    {
       0x00000007, 0x20000000, /* sched */
-      0xfff01c66, 0x06000080, /* vfetch b128 { $r0 $r1 $r2 $r3 } a[0x80] */
-      0xfff11c46, 0x06000090, /* vfetch b96 { $r4 $r5 $r6 } a[0x90]*/
-      0x03f01c66, 0x0a7e0070, /* export b128 o[0x70] { $r0 $r1 $r2 $r3 } */
-      0x13f01c46, 0x0a7e0080, /* export b96 o[0x80] { $r4 $r5 $r6 } */
+      0xfff11c26, 0x06000080, /* vfetch b64 $r4:$r5 a[0x80] */
+      0xfff01c46, 0x06000090, /* vfetch b96 $r0:$r1:$r2 a[0x90] */
+      0x13f01c26, 0x0a7e0070, /* export b64 o[0x70] $r4:$r5 */
+      0x03f01c46, 0x0a7e0080, /* export b96 o[0x80] $r0:$r1:$r2 */
       0x00001de7, 0x80000000, /* exit */
    };
 
@@ -517,13 +517,13 @@ nvc0_blitter_make_vp(struct nvc0_blitter *blit)
       blit->vp.code = (uint32_t *)code_nvc0; /* const_cast */
       blit->vp.code_size = sizeof(code_nvc0);
    }
-   blit->vp.num_gprs = 7;
+   blit->vp.num_gprs = 6;
    blit->vp.vp.edgeflag = PIPE_MAX_ATTRIBS;
 
    blit->vp.hdr[0]  = 0x00020461; /* vertprog magic */
    blit->vp.hdr[4]  = 0x000ff000; /* no outputs read */
-   blit->vp.hdr[6]  = 0x0000003f; /* a[0x80], a[0x90] */
-   blit->vp.hdr[13] = 0x0003f000; /* o[0x70], o[0x80] */
+   blit->vp.hdr[6]  = 0x00000073; /* a[0x80].xy, a[0x90].xyz */
+   blit->vp.hdr[13] = 0x00073000; /* o[0x70].xy, o[0x80].xyz */
 }
 
 static void
@@ -828,7 +828,7 @@ nvc0_blit_3d(struct nvc0_context *nvc0, const struct pipe_blit_info *info)
    nvc0_blit_select_fp(blit, info);
    nvc0_blitctx_pre_blit(blit);
 
-   nvc0_blit_set_dst(blit, dst, info->dst.level,  0, info->dst.format);
+   nvc0_blit_set_dst(blit, dst, info->dst.level, -1, info->dst.format);
    nvc0_blit_set_src(blit, src, info->src.level, -1, info->src.format,
                      blit->filter);
 
@@ -933,11 +933,14 @@ nvc0_blit_3d(struct nvc0_context *nvc0, const struct pipe_blit_info *info)
    if (info->dst.box.z + info->dst.box.depth - 1)
       IMMED_NVC0(push, NVC0_3D(LAYER), 0);
 
-   /* re-enable normally constant state */
-
-   IMMED_NVC0(push, NVC0_3D(VIEWPORT_TRANSFORM_EN), 1);
-
    nvc0_blitctx_post_blit(blit);
+
+   /* restore viewport */
+
+   BEGIN_NVC0(push, NVC0_3D(VIEWPORT_HORIZ(0)), 2);
+   PUSH_DATA (push, nvc0->framebuffer.width << 16);
+   PUSH_DATA (push, nvc0->framebuffer.height << 16);
+   IMMED_NVC0(push, NVC0_3D(VIEWPORT_TRANSFORM_EN), 1);
 }
 
 static void
@@ -1114,10 +1117,17 @@ nvc0_blit(struct pipe_context *pipe, const struct pipe_blit_info *info)
       debug_printf("blit: cannot filter array or cube textures in z direction");
    }
 
-   if (!eng3d && info->dst.format != info->src.format)
+   if (!eng3d && info->dst.format != info->src.format) {
       if (!nvc0_2d_format_faithful(info->dst.format) ||
           !nvc0_2d_format_faithful(info->src.format))
          eng3d = TRUE;
+      /* For some retarded reason, if dst is R8/16_UNORM, the 2d engine doesn't
+       * like to do any format conversion (DATA_ERROR 0x34 on trigger).
+       */
+      if (info->dst.format == PIPE_FORMAT_R8_UNORM ||
+          info->dst.format == PIPE_FORMAT_R16_UNORM)
+         eng3d = TRUE;
+   }
 
    if (info->src.resource->nr_samples == 8 &&
        info->dst.resource->nr_samples <= 1)
