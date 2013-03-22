@@ -480,6 +480,7 @@ public:
 
 protected:
    void emit_vertex();
+   void lower_attributes_to_hw_regs(const int *attribute_map);
    virtual dst_reg *make_reg_for_system_value(ir_variable *ir) = 0;
    virtual int setup_attributes(int payload_reg) = 0;
    virtual void emit_prolog() = 0;

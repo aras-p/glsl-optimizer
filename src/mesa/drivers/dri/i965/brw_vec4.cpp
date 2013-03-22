@@ -1184,29 +1184,13 @@ vec4_visitor::dump_instructions()
    }
 }
 
-int
-vec4_vs_visitor::setup_attributes(int payload_reg)
+/**
+ * Replace each register of type ATTR in this->instructions with a reference
+ * to a fixed HW register.
+ */
+void
+vec4_visitor::lower_attributes_to_hw_regs(const int *attribute_map)
 {
-   int nr_attributes;
-   int attribute_map[VERT_ATTRIB_MAX + 1];
-
-   nr_attributes = 0;
-   for (int i = 0; i < VERT_ATTRIB_MAX; i++) {
-      if (vs_prog_data->inputs_read & BITFIELD64_BIT(i)) {
-	 attribute_map[i] = payload_reg + nr_attributes;
-	 nr_attributes++;
-      }
-   }
-
-   /* VertexID is stored by the VF as the last vertex element, but we
-    * don't represent it with a flag in inputs_read, so we call it
-    * VERT_ATTRIB_MAX.
-    */
-   if (vs_prog_data->uses_vertexid) {
-      attribute_map[VERT_ATTRIB_MAX] = payload_reg + nr_attributes;
-      nr_attributes++;
-   }
-
    foreach_list(node, &this->instructions) {
       vec4_instruction *inst = (vec4_instruction *)node;
 
@@ -1240,6 +1224,32 @@ vec4_vs_visitor::setup_attributes(int payload_reg)
 	 inst->src[i].fixed_hw_reg = reg;
       }
    }
+}
+
+int
+vec4_vs_visitor::setup_attributes(int payload_reg)
+{
+   int nr_attributes;
+   int attribute_map[VERT_ATTRIB_MAX + 1];
+
+   nr_attributes = 0;
+   for (int i = 0; i < VERT_ATTRIB_MAX; i++) {
+      if (vs_prog_data->inputs_read & BITFIELD64_BIT(i)) {
+	 attribute_map[i] = payload_reg + nr_attributes;
+	 nr_attributes++;
+      }
+   }
+
+   /* VertexID is stored by the VF as the last vertex element, but we
+    * don't represent it with a flag in inputs_read, so we call it
+    * VERT_ATTRIB_MAX.
+    */
+   if (vs_prog_data->uses_vertexid) {
+      attribute_map[VERT_ATTRIB_MAX] = payload_reg + nr_attributes;
+      nr_attributes++;
+   }
+
+   lower_attributes_to_hw_regs(attribute_map);
 
    /* The BSpec says we always have to read at least one thing from
     * the VF, and it appears that the hardware wedges otherwise.
