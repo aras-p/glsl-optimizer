@@ -52,8 +52,7 @@ static void compute_tri_direction( struct brw_clip_compile *c )
    struct brw_compile *p = &c->func;
    struct brw_reg e = c->reg.tmp0;
    struct brw_reg f = c->reg.tmp1;
-   GLuint hpos_offset = brw_vert_result_to_offset(&c->vue_map,
-                                                  VARYING_SLOT_POS);
+   GLuint hpos_offset = brw_varying_to_offset(&c->vue_map, VARYING_SLOT_POS);
    struct brw_reg v0 = byte_offset(c->reg.vertex[0], hpos_offset);
    struct brw_reg v1 = byte_offset(c->reg.vertex[1], hpos_offset);
    struct brw_reg v2 = byte_offset(c->reg.vertex[2], hpos_offset);
@@ -130,10 +129,10 @@ static void copy_bfc( struct brw_clip_compile *c )
 
    /* Do we have any colors to copy? 
     */
-   if (!(brw_clip_have_vert_result(c, VARYING_SLOT_COL0) &&
-         brw_clip_have_vert_result(c, VARYING_SLOT_BFC0)) &&
-       !(brw_clip_have_vert_result(c, VARYING_SLOT_COL1) &&
-         brw_clip_have_vert_result(c, VARYING_SLOT_BFC1)))
+   if (!(brw_clip_have_varying(c, VARYING_SLOT_COL0) &&
+         brw_clip_have_varying(c, VARYING_SLOT_BFC0)) &&
+       !(brw_clip_have_varying(c, VARYING_SLOT_COL1) &&
+         brw_clip_have_varying(c, VARYING_SLOT_BFC1)))
       return;
 
    /* In some wierd degnerate cases we can end up testing the
@@ -156,25 +155,25 @@ static void copy_bfc( struct brw_clip_compile *c )
       GLuint i;
 
       for (i = 0; i < 3; i++) {
-	 if (brw_clip_have_vert_result(c, VARYING_SLOT_COL0) &&
-             brw_clip_have_vert_result(c, VARYING_SLOT_BFC0))
+	 if (brw_clip_have_varying(c, VARYING_SLOT_COL0) &&
+             brw_clip_have_varying(c, VARYING_SLOT_BFC0))
 	    brw_MOV(p, 
 		    byte_offset(c->reg.vertex[i],
-                                brw_vert_result_to_offset(&c->vue_map,
-                                                          VARYING_SLOT_COL0)),
+                                brw_varying_to_offset(&c->vue_map,
+                                                      VARYING_SLOT_COL0)),
 		    byte_offset(c->reg.vertex[i],
-                                brw_vert_result_to_offset(&c->vue_map,
-                                                          VARYING_SLOT_BFC0)));
+                                brw_varying_to_offset(&c->vue_map,
+                                                      VARYING_SLOT_BFC0)));
 
-	 if (brw_clip_have_vert_result(c, VARYING_SLOT_COL1) &&
-             brw_clip_have_vert_result(c, VARYING_SLOT_BFC1))
+	 if (brw_clip_have_varying(c, VARYING_SLOT_COL1) &&
+             brw_clip_have_varying(c, VARYING_SLOT_BFC1))
 	    brw_MOV(p, 
 		    byte_offset(c->reg.vertex[i],
-                                brw_vert_result_to_offset(&c->vue_map,
-                                                          VARYING_SLOT_COL1)),
+                                brw_varying_to_offset(&c->vue_map,
+                                                      VARYING_SLOT_COL1)),
 		    byte_offset(c->reg.vertex[i],
-                                brw_vert_result_to_offset(&c->vue_map,
-                                                          VARYING_SLOT_BFC1)));
+                                brw_varying_to_offset(&c->vue_map,
+                                                      VARYING_SLOT_BFC1)));
       }
    }
    brw_ENDIF(p);
@@ -234,16 +233,16 @@ static void merge_edgeflags( struct brw_clip_compile *c )
       brw_set_conditionalmod(p, BRW_CONDITIONAL_EQ);
       brw_AND(p, vec1(brw_null_reg()), get_element_ud(c->reg.R0, 2), brw_imm_ud(1<<8));
       brw_MOV(p, byte_offset(c->reg.vertex[0],
-                             brw_vert_result_to_offset(&c->vue_map,
-                                                       VARYING_SLOT_EDGE)),
+                             brw_varying_to_offset(&c->vue_map,
+                                                   VARYING_SLOT_EDGE)),
               brw_imm_f(0));
       brw_set_predicate_control(p, BRW_PREDICATE_NONE);
 
       brw_set_conditionalmod(p, BRW_CONDITIONAL_EQ);
       brw_AND(p, vec1(brw_null_reg()), get_element_ud(c->reg.R0, 2), brw_imm_ud(1<<9));
       brw_MOV(p, byte_offset(c->reg.vertex[2],
-                             brw_vert_result_to_offset(&c->vue_map,
-                                                       VARYING_SLOT_EDGE)),
+                             brw_varying_to_offset(&c->vue_map,
+                                                   VARYING_SLOT_EDGE)),
               brw_imm_f(0));
       brw_set_predicate_control(p, BRW_PREDICATE_NONE);
    }
@@ -256,8 +255,8 @@ static void apply_one_offset( struct brw_clip_compile *c,
 			  struct brw_indirect vert )
 {
    struct brw_compile *p = &c->func;
-   GLuint ndc_offset = brw_vert_result_to_offset(&c->vue_map,
-                                                 BRW_VARYING_SLOT_NDC);
+   GLuint ndc_offset = brw_varying_to_offset(&c->vue_map,
+                                             BRW_VARYING_SLOT_NDC);
    struct brw_reg z = deref_1f(vert, ndc_offset +
 			       2 * type_sz(BRW_REGISTER_TYPE_F));
 
@@ -315,8 +314,8 @@ static void emit_lines(struct brw_clip_compile *c,
       /* draw edge if edgeflag != 0 */
       brw_CMP(p, 
 	      vec1(brw_null_reg()), BRW_CONDITIONAL_NZ, 
-	      deref_1f(v0, brw_vert_result_to_offset(&c->vue_map,
-                                                     VARYING_SLOT_EDGE)),
+	      deref_1f(v0, brw_varying_to_offset(&c->vue_map,
+                                                 VARYING_SLOT_EDGE)),
 	      brw_imm_f(0));
       brw_IF(p, BRW_EXECUTE_1);
       {
@@ -357,8 +356,8 @@ static void emit_points(struct brw_clip_compile *c,
        */
       brw_CMP(p, 
 	      vec1(brw_null_reg()), BRW_CONDITIONAL_NZ, 
-	      deref_1f(v0, brw_vert_result_to_offset(&c->vue_map,
-                                                     VARYING_SLOT_EDGE)),
+	      deref_1f(v0, brw_varying_to_offset(&c->vue_map,
+                                                 VARYING_SLOT_EDGE)),
 	      brw_imm_f(0));
       brw_IF(p, BRW_EXECUTE_1);
       {
@@ -473,7 +472,7 @@ void brw_emit_unfilled_clip( struct brw_clip_compile *c )
    brw_clip_tri_init_vertices(c);
    brw_clip_init_ff_sync(c);
 
-   assert(brw_clip_have_vert_result(c, VARYING_SLOT_EDGE));
+   assert(brw_clip_have_varying(c, VARYING_SLOT_EDGE));
 
    if (c->key.fill_ccw == CLIP_CULL &&
        c->key.fill_cw == CLIP_CULL) {

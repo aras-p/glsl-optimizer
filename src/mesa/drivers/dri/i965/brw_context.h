@@ -331,10 +331,11 @@ typedef enum
    BRW_VARYING_SLOT_NDC = VARYING_SLOT_MAX,
    BRW_VARYING_SLOT_POS_DUPLICATE,
    BRW_VARYING_SLOT_PAD,
-   /*
-    * It's actually not a vert_result but just a _mark_ to let sf aware that
-    * he need do something special to handle gl_PointCoord builtin variable
-    * correctly. see compile_sf_prog() for more info.
+   /**
+    * Technically this is not a varying but just a placeholder that
+    * compile_sf_prog() inserts into its VUE map to cause the gl_PointCoord
+    * builtin variable to be compiled correctly. see compile_sf_prog() for
+    * more info.
     */
    BRW_VARYING_SLOT_PNTC,
    BRW_VARYING_SLOT_MAX
@@ -359,7 +360,7 @@ struct brw_vue_map {
     * additional processing is applied before storing them in the VUE), the
     * value is -1.
     */
-   int vert_result_to_slot[BRW_VARYING_SLOT_MAX];
+   int varying_to_slot[BRW_VARYING_SLOT_MAX];
 
    /**
     * Map from VUE slot to gl_varying_slot value.  For slots that do not
@@ -367,10 +368,10 @@ struct brw_vue_map {
     * brw_varying_slot.
     *
     * For slots that are not in use, the value is BRW_VARYING_SLOT_MAX (this
-    * simplifies code that uses the value stored in slot_to_vert_result to
+    * simplifies code that uses the value stored in slot_to_varying to
     * create a bit mask).
     */
-   int slot_to_vert_result[BRW_VARYING_SLOT_MAX];
+   int slot_to_varying[BRW_VARYING_SLOT_MAX];
 
    /**
     * Total number of VUE slots in use
@@ -390,10 +391,10 @@ static inline GLuint brw_vue_slot_to_offset(GLuint slot)
  * Convert a vertex output (brw_varying_slot) into a byte offset within the
  * VUE.
  */
-static inline GLuint brw_vert_result_to_offset(struct brw_vue_map *vue_map,
-                                               GLuint vert_result)
+static inline GLuint brw_varying_to_offset(struct brw_vue_map *vue_map,
+                                           GLuint varying)
 {
-   return brw_vue_slot_to_offset(vue_map->vert_result_to_slot[vert_result]);
+   return brw_vue_slot_to_offset(vue_map->varying_to_slot[varying]);
 }
 
 

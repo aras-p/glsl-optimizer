@@ -130,12 +130,12 @@ upload_3dstate_so_decl_list(struct brw_context *brw,
    for (i = 0; i < linked_xfb_info->NumOutputs; i++) {
       int buffer = linked_xfb_info->Outputs[i].OutputBuffer;
       uint16_t decl = 0;
-      int vert_result = linked_xfb_info->Outputs[i].OutputRegister;
+      int varying = linked_xfb_info->Outputs[i].OutputRegister;
       unsigned component_mask =
          (1 << linked_xfb_info->Outputs[i].NumComponents) - 1;
 
       /* gl_PointSize is stored in VARYING_SLOT_PSIZ.w. */
-      if (vert_result == VARYING_SLOT_PSIZ) {
+      if (varying == VARYING_SLOT_PSIZ) {
          assert(linked_xfb_info->Outputs[i].NumComponents == 1);
          component_mask <<= 3;
       } else {
@@ -145,7 +145,7 @@ upload_3dstate_so_decl_list(struct brw_context *brw,
       buffer_mask |= 1 << buffer;
 
       decl |= buffer << SO_DECL_OUTPUT_BUFFER_SLOT_SHIFT;
-      decl |= vue_map->vert_result_to_slot[vert_result] <<
+      decl |= vue_map->varying_to_slot[varying] <<
 	 SO_DECL_REGISTER_INDEX_SHIFT;
       decl |= component_mask << SO_DECL_COMPONENT_MASK_SHIFT;
 

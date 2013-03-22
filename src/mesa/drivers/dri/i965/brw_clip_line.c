@@ -133,8 +133,7 @@ static void clip_and_emit_line( struct brw_clip_compile *c )
    struct brw_indirect newvtx1   = brw_indirect(3, 0);
    struct brw_indirect plane_ptr = brw_indirect(4, 0);
    struct brw_reg v1_null_ud = retype(vec1(brw_null_reg()), BRW_REGISTER_TYPE_UD);
-   GLuint hpos_offset = brw_vert_result_to_offset(&c->vue_map,
-                                                  VARYING_SLOT_POS);
+   GLuint hpos_offset = brw_varying_to_offset(&c->vue_map, VARYING_SLOT_POS);
 
    brw_MOV(p, get_addr_reg(vtx0),      brw_address(c->reg.vertex[0]));
    brw_MOV(p, get_addr_reg(vtx1),      brw_address(c->reg.vertex[1]));

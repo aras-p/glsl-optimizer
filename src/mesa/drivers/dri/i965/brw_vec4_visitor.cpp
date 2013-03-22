@@ -2501,31 +2501,31 @@ vec4_visitor::emit_clip_distances(struct brw_reg reg, int offset)
 }
 
 void
-vec4_visitor::emit_generic_urb_slot(dst_reg reg, int vert_result)
+vec4_visitor::emit_generic_urb_slot(dst_reg reg, int varying)
 {
-   assert (vert_result < VARYING_SLOT_MAX);
-   reg.type = output_reg[vert_result].type;
-   current_annotation = output_reg_annotation[vert_result];
+   assert (varying < VARYING_SLOT_MAX);
+   reg.type = output_reg[varying].type;
+   current_annotation = output_reg_annotation[varying];
    /* Copy the register, saturating if necessary */
    vec4_instruction *inst = emit(MOV(reg,
-                                     src_reg(output_reg[vert_result])));
-   if ((vert_result == VARYING_SLOT_COL0 ||
-        vert_result == VARYING_SLOT_COL1 ||
-        vert_result == VARYING_SLOT_BFC0 ||
-        vert_result == VARYING_SLOT_BFC1) &&
+                                     src_reg(output_reg[varying])));
+   if ((varying == VARYING_SLOT_COL0 ||
+        varying == VARYING_SLOT_COL1 ||
+        varying == VARYING_SLOT_BFC0 ||
+        varying == VARYING_SLOT_BFC1) &&
        c->key.clamp_vertex_color) {
       inst->saturate = true;
    }
 }
 
 void
-vec4_visitor::emit_urb_slot(int mrf, int vert_result)
+vec4_visitor::emit_urb_slot(int mrf, int varying)
 {
    struct brw_reg hw_reg = brw_message_reg(mrf);
    dst_reg reg = dst_reg(MRF, mrf);
    reg.type = BRW_REGISTER_TYPE_F;
 
-   switch (vert_result) {
+   switch (varying) {
    case VARYING_SLOT_PSIZ:
       /* PSIZ is always in slot 0, and is coupled with other flags. */
       current_annotation = "indices, point width, clip flags";
@@ -2543,10 +2543,10 @@ vec4_visitor::emit_urb_slot(int mrf, int vert_result)
    case VARYING_SLOT_CLIP_DIST0:
    case VARYING_SLOT_CLIP_DIST1:
       if (this->c->key.uses_clip_distance) {
-         emit_generic_urb_slot(reg, vert_result);
+         emit_generic_urb_slot(reg, varying);
       } else {
          current_annotation = "user clip distances";
-         emit_clip_distances(hw_reg, (vert_result - VARYING_SLOT_CLIP_DIST0) * 4);
+         emit_clip_distances(hw_reg, (varying - VARYING_SLOT_CLIP_DIST0) * 4);
       }
       break;
    case VARYING_SLOT_EDGE:
@@ -2564,7 +2564,7 @@ vec4_visitor::emit_urb_slot(int mrf, int vert_result)
       /* No need to write to this slot */
       break;
    default:
-      emit_generic_urb_slot(reg, vert_result);
+      emit_generic_urb_slot(reg, varying);
       break;
    }
 }
@@ -2628,7 +2628,7 @@ vec4_visitor::emit_urb_writes()
    /* Set up the VUE data for the first URB write */
    int slot;
    for (slot = 0; slot < c->prog_data.vue_map.num_slots; ++slot) {
-      emit_urb_slot(mrf++, c->prog_data.vue_map.slot_to_vert_result[slot]);
+      emit_urb_slot(mrf++, c->prog_data.vue_map.slot_to_varying[slot]);
 
       /* If this was max_usable_mrf, we can't fit anything more into this URB
        * WRITE.
@@ -2652,7 +2652,7 @@ vec4_visitor::emit_urb_writes()
       for (; slot < c->prog_data.vue_map.num_slots; ++slot) {
 	 assert(mrf < max_usable_mrf);
 
-         emit_urb_slot(mrf++, c->prog_data.vue_map.slot_to_vert_result[slot]);
+         emit_urb_slot(mrf++, c->prog_data.vue_map.slot_to_varying[slot]);
       }
 
       current_annotation = "URB write";

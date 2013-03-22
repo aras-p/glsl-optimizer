@@ -73,8 +73,8 @@ static void compile_sf_prog( struct brw_context *brw,
        * it manually to let SF shader generate the needed interpolation
        * coefficient for FS shader.
        */
-      c.vue_map.vert_result_to_slot[BRW_VARYING_SLOT_PNTC] = c.vue_map.num_slots;
-      c.vue_map.slot_to_vert_result[c.vue_map.num_slots++] = BRW_VARYING_SLOT_PNTC;
+      c.vue_map.varying_to_slot[BRW_VARYING_SLOT_PNTC] = c.vue_map.num_slots;
+      c.vue_map.slot_to_varying[c.vue_map.num_slots++] = BRW_VARYING_SLOT_PNTC;
    }
    c.urb_entry_read_offset = brw_sf_compute_urb_entry_read_offset(intel);
    c.nr_attr_regs = (c.vue_map.num_slots + 1)/2 - c.urb_entry_read_offset;

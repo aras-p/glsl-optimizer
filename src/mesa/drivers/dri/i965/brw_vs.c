@@ -41,13 +41,13 @@
 #include "glsl/ralloc.h"
 
 static inline void assign_vue_slot(struct brw_vue_map *vue_map,
-                                   int vert_result)
+                                   int varying)
 {
-   /* Make sure this vert_result hasn't been assigned a slot already */
-   assert (vue_map->vert_result_to_slot[vert_result] == -1);
+   /* Make sure this varying hasn't been assigned a slot already */
+   assert (vue_map->varying_to_slot[varying] == -1);
 
-   vue_map->vert_result_to_slot[vert_result] = vue_map->num_slots;
-   vue_map->slot_to_vert_result[vue_map->num_slots++] = vert_result;
+   vue_map->varying_to_slot[varying] = vue_map->num_slots;
+   vue_map->slot_to_varying[vue_map->num_slots++] = varying;
 }
 
 /**
@@ -67,8 +67,8 @@ brw_compute_vue_map(struct brw_context *brw, struct brw_vs_compile *c)
 
    vue_map->num_slots = 0;
    for (i = 0; i < BRW_VARYING_SLOT_MAX; ++i) {
-      vue_map->vert_result_to_slot[i] = -1;
-      vue_map->slot_to_vert_result[i] = BRW_VARYING_SLOT_MAX;
+      vue_map->varying_to_slot[i] = -1;
+      vue_map->slot_to_varying[i] = BRW_VARYING_SLOT_MAX;
    }
 
    /* VUE header: format depends on chip generation and whether clipping is
@@ -95,7 +95,7 @@ brw_compute_vue_map(struct brw_context *brw, struct brw_vs_compile *c)
        * dword 24-27 is the first vertex data we fill.
        *
        * Note: future pipeline stages expect 4D space position to be
-       * contiguous with the other vert_results, so we make dword 24-27 a
+       * contiguous with the other varyings, so we make dword 24-27 a
        * duplicate copy of the 4D space position.
        */
       assign_vue_slot(vue_map, VARYING_SLOT_PSIZ);
@@ -153,7 +153,7 @@ brw_compute_vue_map(struct brw_context *brw, struct brw_vs_compile *c)
       if (intel->gen < 6 && i == VARYING_SLOT_CLIP_VERTEX)
          continue;
       if ((outputs_written & BITFIELD64_BIT(i)) &&
-          vue_map->vert_result_to_slot[i] == -1) {
+          vue_map->varying_to_slot[i] == -1) {
          assign_vue_slot(vue_map, i);
       }
    }

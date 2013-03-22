@@ -116,12 +116,12 @@ struct brw_clip_compile {
 #define ATTR_SIZE  (4*4)
 
 /**
- * True if the given vert_result is one of the outputs of the vertex shader.
+ * True if the given varying is one of the outputs of the vertex shader.
  */
-static inline bool brw_clip_have_vert_result(struct brw_clip_compile *c,
-                                             GLuint vert_result)
+static inline bool brw_clip_have_varying(struct brw_clip_compile *c,
+                                         GLuint varying)
 {
-   return (c->key.attrs & BITFIELD64_BIT(vert_result)) ? 1 : 0;
+   return (c->key.attrs & BITFIELD64_BIT(varying)) ? 1 : 0;
 }
 
 /* Points are only culled, so no need for a clip routine, however it
