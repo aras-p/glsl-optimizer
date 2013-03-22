@@ -488,6 +488,7 @@ protected:
    virtual void emit_thread_end() = 0;
    virtual void emit_urb_write_header(int mrf) = 0;
    virtual vec4_instruction *emit_urb_write_opcode(bool complete) = 0;
+   virtual int compute_array_stride(ir_dereference_array *ir);
 };
 
 class vec4_vs_visitor : public vec4_visitor

@@ -1692,12 +1692,23 @@ vec4_visitor::visit(ir_dereference_variable *ir)
       this->result.swizzle = swizzle_for_size(type->vector_elements);
 }
 
+
+int
+vec4_visitor::compute_array_stride(ir_dereference_array *ir)
+{
+   /* Under normal circumstances array elements are stored consecutively, so
+    * the stride is equal to the size of the array element.
+    */
+   return type_size(ir->type);
+}
+
+
 void
 vec4_visitor::visit(ir_dereference_array *ir)
 {
    ir_constant *constant_index;
    src_reg src;
-   int element_size = type_size(ir->type);
+   int array_stride = compute_array_stride(ir);
 
    constant_index = ir->array_index->constant_expression_value();
 
@@ -1705,7 +1716,7 @@ vec4_visitor::visit(ir_dereference_array *ir)
    src = this->result;
 
    if (constant_index) {
-      src.reg_offset += constant_index->value.i[0] * element_size;
+      src.reg_offset += constant_index->value.i[0] * array_stride;
    } else {
       /* Variable index array dereference.  It eats the "vec4" of the
        * base of the array and an index that offsets the Mesa register
@@ -1715,12 +1726,12 @@ vec4_visitor::visit(ir_dereference_array *ir)
 
       src_reg index_reg;
 
-      if (element_size == 1) {
+      if (array_stride == 1) {
 	 index_reg = this->result;
       } else {
 	 index_reg = src_reg(this, glsl_type::int_type);
 
-	 emit(MUL(dst_reg(index_reg), this->result, src_reg(element_size)));
+	 emit(MUL(dst_reg(index_reg), this->result, src_reg(array_stride)));
       }
 
       if (src.reladdr) {
