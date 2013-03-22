@@ -369,7 +369,7 @@ struct brw_vue_map {
     * additional processing is applied before storing them in the VUE), the
     * value is -1.
     */
-   int varying_to_slot[BRW_VARYING_SLOT_COUNT];
+   signed char varying_to_slot[BRW_VARYING_SLOT_COUNT];
 
    /**
     * Map from VUE slot to gl_varying_slot value.  For slots that do not
@@ -380,7 +380,7 @@ struct brw_vue_map {
     * simplifies code that uses the value stored in slot_to_varying to
     * create a bit mask).
     */
-   int slot_to_varying[BRW_VARYING_SLOT_COUNT];
+   signed char slot_to_varying[BRW_VARYING_SLOT_COUNT];
 
    /**
     * Total number of VUE slots in use
