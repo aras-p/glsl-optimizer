@@ -113,6 +113,8 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
    struct brw_context *brw = brw_context(ctx);
    struct intel_context *intel = &brw->intel;
    unsigned int stage;
+   static const char *target_strings[]
+      = { "vertex", "fragment", "geometry" };
 
    for (stage = 0; stage < ARRAY_SIZE(shProg->_LinkedShaders); stage++) {
       struct brw_shader *shader =
@@ -256,12 +258,26 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
       _mesa_reference_program(ctx, &prog, NULL);
 
       if (ctx->Shader.Flags & GLSL_DUMP) {
-         static const char *target_strings[]
-            = { "vertex", "fragment", "geometry" };
          printf("\n");
          printf("GLSL IR for linked %s program %d:\n", target_strings[stage],
                 shProg->Name);
          _mesa_print_ir(shader->base.ir, NULL);
+         printf("\n");
+      }
+   }
+
+   if (ctx->Shader.Flags & GLSL_DUMP) {
+      for (unsigned i = 0; i < shProg->NumShaders; i++) {
+         const struct gl_shader *sh = shProg->Shaders[i];
+         if (!sh)
+            continue;
+
+         printf("GLSL %s shader %d source for linked program %d:\n",
+                target_strings[_mesa_shader_type_to_index(sh->Type)],
+                i,
+                shProg->Name);
+         printf("%s", sh->Source);
+         printf("\n");
       }
    }
 
