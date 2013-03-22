@@ -1541,67 +1541,16 @@ boolean si_is_format_supported(struct pipe_screen *screen,
 	return retval == usage;
 }
 
-static unsigned si_tile_mode_index(struct r600_resource_texture *rtex, unsigned level)
+static unsigned si_tile_mode_index(struct r600_resource_texture *rtex, unsigned level, bool stencil)
 {
-	if (util_format_is_depth_or_stencil(rtex->real_format)) {
-		if (rtex->surface.level[level].mode == RADEON_SURF_MODE_1D) {
-			return 4;
-		} else if (rtex->surface.level[level].mode == RADEON_SURF_MODE_2D) {
-			switch (rtex->real_format) {
-			case PIPE_FORMAT_Z16_UNORM:
-				return 5;
-			case PIPE_FORMAT_S8_UINT_Z24_UNORM:
-			case PIPE_FORMAT_X8Z24_UNORM:
-			case PIPE_FORMAT_Z24X8_UNORM:
-			case PIPE_FORMAT_Z24_UNORM_S8_UINT:
-			case PIPE_FORMAT_Z32_FLOAT:
-			case PIPE_FORMAT_Z32_FLOAT_S8X24_UINT:
-				return 6;
-			default:
-				return 7;
-			}
-		}
-	}
+	unsigned tile_mode_index = 0;
 
-	switch (rtex->surface.level[level].mode) {
-	default:
-		assert(!"Invalid surface mode");
-		/* Fall through */
-	case RADEON_SURF_MODE_LINEAR_ALIGNED:
-		return 8;
-	case RADEON_SURF_MODE_1D:
-		if (rtex->surface.flags & RADEON_SURF_SCANOUT)
-			return 9;
-		else
-			return 13;
-	case RADEON_SURF_MODE_2D:
-		if (rtex->surface.flags & RADEON_SURF_SCANOUT) {
-			switch (util_format_get_blocksize(rtex->real_format)) {
-			case 1:
-				return 10;
-			case 2:
-				return 11;
-			default:
-				assert(!"Invalid block size");
-				/* Fall through */
-			case 4:
-				return 12;
-			}
-		} else {
-			switch (util_format_get_blocksize(rtex->real_format)) {
-			case 1:
-				return 14;
-			case 2:
-				return 15;
-			case 4:
-				return 16;
-			case 8:
-				return 17;
-			default:
-				return 13;
-			}
-		}
+	if (stencil) {
+		tile_mode_index = rtex->surface.stencil_tiling_index[level];
+	} else {
+		tile_mode_index = rtex->surface.tiling_index[level];
 	}
+	return tile_mode_index;
 }
 
 /*
@@ -1638,7 +1587,7 @@ static void si_cb(struct r600_context *rctx, struct si_pm4_state *pm4,
 		slice = slice - 1;
 	}
 
-	tile_mode_index = si_tile_mode_index(rtex, level);
+	tile_mode_index = si_tile_mode_index(rtex, level, false);
 
 	desc = util_format_description(surf->base.format);
 	for (i = 0; i < 4; i++) {
@@ -1780,15 +1729,9 @@ static void si_db(struct r600_context *rctx, struct si_pm4_state *pm4,
 	else
 		s_info = S_028044_FORMAT(V_028044_STENCIL_INVALID);
 
-	tile_mode_index = si_tile_mode_index(rtex, level);
-	if (tile_mode_index < 4 || tile_mode_index > 7) {
-		R600_ERR("Invalid DB tiling mode %d!\n",
-				 rtex->surface.level[level].mode);
-		si_pm4_set_reg(pm4, R_028040_DB_Z_INFO, S_028040_FORMAT(V_028040_Z_INVALID));
-		si_pm4_set_reg(pm4, R_028044_DB_STENCIL_INFO, S_028044_FORMAT(V_028044_STENCIL_INVALID));
-		return;
-	}
+	tile_mode_index = si_tile_mode_index(rtex, level, false);
 	z_info |= S_028040_TILE_MODE_INDEX(tile_mode_index);
+	tile_mode_index = si_tile_mode_index(rtex, level, true);
 	s_info |= S_028044_TILE_MODE_INDEX(tile_mode_index);
 
 	si_pm4_set_reg(pm4, R_028008_DB_DEPTH_VIEW,
@@ -2231,7 +2174,7 @@ static struct pipe_sampler_view *si_create_sampler_view(struct pipe_context *ctx
 			  S_008F1C_DST_SEL_W(si_map_swizzle(swizzle[3])) |
 			  S_008F1C_BASE_LEVEL(state->u.tex.first_level) |
 			  S_008F1C_LAST_LEVEL(state->u.tex.last_level) |
-			  S_008F1C_TILING_INDEX(si_tile_mode_index(tmp, 0)) |
+			  S_008F1C_TILING_INDEX(si_tile_mode_index(tmp, 0, false)) |
 			  S_008F1C_POW2_PAD(texture->last_level > 0) |
 			  S_008F1C_TYPE(si_tex_dim(texture->target)));
 	view->state[4] = (S_008F20_DEPTH(depth - 1) | S_008F20_PITCH(pitch - 1));

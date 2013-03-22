@@ -47,7 +47,6 @@ static void r600_copy_to_staging_texture(struct pipe_context *ctx, struct r600_t
 				&transfer->box);
 }
 
-
 /* Copy from a transfer's staging texture to a full GPU one. */
 static void r600_copy_from_staging_texture(struct pipe_context *ctx, struct r600_transfer *rtransfer)
 {
@@ -152,12 +151,12 @@ static int r600_init_surface(struct r600_screen *rscreen,
 
 	if (!is_flushed_depth && is_depth) {
 		surface->flags |= RADEON_SURF_ZBUFFER;
-
 		if (is_stencil) {
 			surface->flags |= RADEON_SURF_SBUFFER |
 				RADEON_SURF_HAS_SBUFFER_MIPTREE;
 		}
 	}
+	surface->flags |= RADEON_SURF_HAS_TILE_MODE_INDEX;
 	return 0;
 }
 
@@ -530,7 +529,11 @@ struct pipe_resource *si_texture_create(struct pipe_screen *screen,
 
 	if (!(templ->flags & R600_RESOURCE_FLAG_TRANSFER) &&
 	    !(templ->bind & PIPE_BIND_SCANOUT)) {
-		array_mode = V_009910_ARRAY_1D_TILED_THIN1;
+		if (util_format_is_compressed(templ->format)) {
+			array_mode = V_009910_ARRAY_1D_TILED_THIN1;
+		} else {
+			array_mode = V_009910_ARRAY_2D_TILED_THIN1;
+		}
 	}
 
 	r = r600_init_surface(rscreen, &surface, templ, array_mode,
@@ -620,6 +623,8 @@ struct pipe_resource *si_texture_from_handle(struct pipe_screen *screen,
 	if (r) {
 		return NULL;
 	}
+	/* always set the scanout flags */
+	surface.flags |= RADEON_SURF_SCANOUT;
 	return (struct pipe_resource *)r600_texture_create_object(screen, templ, array_mode,
 								  stride, 0, buf, FALSE, &surface);
 }
