@@ -177,6 +177,7 @@ static const struct brw_tracked_state *gen6_atoms[] =
 static const struct brw_tracked_state *gen7_atoms[] =
 {
    &brw_vs_prog,
+   &brw_gs_prog,
    &brw_wm_prog,
 
    /* Command packets: */

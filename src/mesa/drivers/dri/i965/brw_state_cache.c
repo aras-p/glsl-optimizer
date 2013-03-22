@@ -50,6 +50,7 @@
 #include "brw_vs.h"
 #include "brw_wm.h"
 #include "brw_vs.h"
+#include "brw_vec4_gs.h"
 
 #define FILE_DEBUG_FLAG DEBUG_STATE
 
@@ -341,8 +342,10 @@ brw_init_caches(struct brw_context *brw)
 				  4096, 64);
 
    cache->aux_compare[BRW_VS_PROG] = brw_vs_prog_data_compare;
+   cache->aux_compare[BRW_GS_PROG] = brw_gs_prog_data_compare;
    cache->aux_compare[BRW_WM_PROG] = brw_wm_prog_data_compare;
    cache->aux_free[BRW_VS_PROG] = brw_vs_prog_data_free;
+   cache->aux_free[BRW_GS_PROG] = brw_gs_prog_data_free;
    cache->aux_free[BRW_WM_PROG] = brw_wm_prog_data_free;
 }
 

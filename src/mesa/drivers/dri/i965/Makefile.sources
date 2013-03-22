@@ -88,6 +88,7 @@ i965_FILES = \
 	brw_vec4.cpp \
 	brw_vec4_copy_propagation.cpp \
 	brw_vec4_emit.cpp \
+	brw_vec4_gs.c \
 	brw_vec4_gs_visitor.cpp \
 	brw_vec4_live_variables.cpp \
 	brw_vec4_reg_allocate.cpp \

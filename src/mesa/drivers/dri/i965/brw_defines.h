@@ -1283,6 +1283,11 @@ enum brw_message_target {
 # define GEN7_URB_ENTRY_SIZE_SHIFT                      16
 # define GEN7_URB_STARTING_ADDRESS_SHIFT                25
 
+/* "GS URB Entry Allocation Size" is a U9-1 field, so the maximum gs_size
+ * is 2^9, or 512.  It's counted in multiples of 64 bytes.
+ */
+#define GEN7_MAX_GS_URB_ENTRY_SIZE_BYTES		(512*64)
+
 #define _3DSTATE_PUSH_CONSTANT_ALLOC_VS         0x7912 /* GEN7+ */
 #define _3DSTATE_PUSH_CONSTANT_ALLOC_GS         0x7915 /* GEN7+ */
 #define _3DSTATE_PUSH_CONSTANT_ALLOC_PS         0x7916 /* GEN7+ */
@@ -1347,6 +1352,11 @@ enum brw_message_target {
 
 # define BRW_GS_EDGE_INDICATOR_0			(1 << 8)
 # define BRW_GS_EDGE_INDICATOR_1			(1 << 9)
+
+/* 3DSTATE_GS "Output Vertex Size" has an effective maximum of 62.  It's
+ * counted in multiples of 16 bytes.
+ */
+#define GEN7_MAX_GS_OUTPUT_VERTEX_SIZE_BYTES		(62*16)
 
 #define _3DSTATE_HS                             0x781B /* GEN7+ */
 #define _3DSTATE_TE                             0x781C /* GEN7+ */

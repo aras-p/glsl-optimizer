@@ -256,4 +256,36 @@ vec4_gs_visitor::visit(ir_end_primitive *)
 }
 
 
+extern "C" const unsigned *
+brw_gs_emit(struct brw_context *brw,
+            struct gl_shader_program *prog,
+            struct brw_gs_compile *c,
+            void *mem_ctx,
+            unsigned *final_assembly_size)
+{
+   struct brw_shader *shader =
+      (brw_shader *) prog->_LinkedShaders[MESA_SHADER_GEOMETRY];
+
+   if (unlikely(INTEL_DEBUG & DEBUG_GS)) {
+      printf("GLSL IR for native geometry shader %d:\n", prog->Name);
+      _mesa_print_ir(shader->ir, NULL);
+      printf("\n\n");
+   }
+
+   vec4_gs_visitor v(brw, c, prog, shader, mem_ctx);
+   if (!v.run()) {
+      prog->LinkStatus = false;
+      ralloc_strcat(&prog->InfoLog, v.fail_msg);
+      return NULL;
+   }
+
+   vec4_generator g(brw, prog, &c->gp->program.Base, &c->prog_data.base,
+                    mem_ctx, INTEL_DEBUG & DEBUG_GS);
+   const unsigned *generated =
+      g.generate_assembly(&v.instructions, final_assembly_size);
+
+   return generated;
+}
+
+
 } /* namespace brw */

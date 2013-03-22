@@ -53,6 +53,19 @@ struct brw_gs_compile
    struct brw_geometry_program *gp;
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+const unsigned *brw_gs_emit(struct brw_context *brw,
+                            struct gl_shader_program *prog,
+                            struct brw_gs_compile *c,
+                            void *mem_ctx,
+                            unsigned *final_assembly_size);
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
 
 #ifdef __cplusplus
 namespace brw {

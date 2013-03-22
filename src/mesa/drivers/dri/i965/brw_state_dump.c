@@ -501,6 +501,9 @@ dump_prog_cache(struct brw_context *brw)
 	 case BRW_FF_GS_PROG:
 	    name = "Fixed-function GS kernel";
 	    break;
+         case BRW_GS_PROG:
+            name = "GS kernel";
+            break;
 	 case BRW_CLIP_PROG:
 	    name = "CLIP kernel";
 	    break;
