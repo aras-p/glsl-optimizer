@@ -1870,30 +1870,36 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
  */
 
 /* Compute the key for the hw shader variant */
-static INLINE struct si_shader_key si_shader_selector_key(struct pipe_context *ctx,
-							  struct si_pipe_shader_selector *sel)
+static INLINE void si_shader_selector_key(struct pipe_context *ctx,
+					  struct si_pipe_shader_selector *sel,
+					  union si_shader_key *key)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct si_shader_key key;
-	memset(&key, 0, sizeof(key));
+	memset(key, 0, sizeof(*key));
 
-	if (sel->type == PIPE_SHADER_FRAGMENT) {
+	if (sel->type == PIPE_SHADER_VERTEX) {
+		unsigned i;
+		if (!rctx->vertex_elements)
+			return;
+
+		for (i = 0; i < rctx->vertex_elements->count; ++i)
+			key->vs.instance_divisors[i] = rctx->vertex_elements->elements[i].instance_divisor;
+
+	} else if (sel->type == PIPE_SHADER_FRAGMENT) {
 		if (sel->fs_write_all)
-			key.nr_cbufs = rctx->framebuffer.nr_cbufs;
-		key.export_16bpc = rctx->export_16bpc;
+			key->ps.nr_cbufs = rctx->framebuffer.nr_cbufs;
+		key->ps.export_16bpc = rctx->export_16bpc;
 		if (rctx->queued.named.rasterizer) {
-			key.color_two_side = rctx->queued.named.rasterizer->two_side;
-			key.flatshade = rctx->queued.named.rasterizer->flatshade;
+			key->ps.color_two_side = rctx->queued.named.rasterizer->two_side;
+			key->ps.flatshade = rctx->queued.named.rasterizer->flatshade;
 		}
 		if (rctx->queued.named.dsa) {
-			key.alpha_func = rctx->queued.named.dsa->alpha_func;
-			key.alpha_ref = rctx->queued.named.dsa->alpha_ref;
+			key->ps.alpha_func = rctx->queued.named.dsa->alpha_func;
+			key->ps.alpha_ref = rctx->queued.named.dsa->alpha_ref;
 		} else {
-			key.alpha_func = PIPE_FUNC_ALWAYS;
+			key->ps.alpha_func = PIPE_FUNC_ALWAYS;
 		}
 	}
-
-	return key;
 }
 
 /* Select the hw shader variant depending on the current state.
@@ -1902,11 +1908,11 @@ int si_shader_select(struct pipe_context *ctx,
 		     struct si_pipe_shader_selector *sel,
 		     unsigned *dirty)
 {
-	struct si_shader_key key;
+	union si_shader_key key;
 	struct si_pipe_shader * shader = NULL;
 	int r;
 
-	key = si_shader_selector_key(ctx, sel);
+	si_shader_selector_key(ctx, sel, &key);
 
 	/* Check if we don't need to change anything.
 	 * This path is also used for most shaders that don't need multiple
@@ -1934,8 +1940,9 @@ int si_shader_select(struct pipe_context *ctx,
 	if (unlikely(!shader)) {
 		shader = CALLOC(1, sizeof(struct si_pipe_shader));
 		shader->selector = sel;
+		shader->key = key;
 
-		r = si_pipe_shader_create(ctx, shader, key);
+		r = si_pipe_shader_create(ctx, shader);
 		if (unlikely(r)) {
 			R600_ERR("Failed to build shader variant (type=%u) %d\n",
 				 sel->type, r);
@@ -1951,10 +1958,9 @@ int si_shader_select(struct pipe_context *ctx,
 		    sel->num_shaders == 0 &&
 		    shader->shader.fs_write_all) {
 			sel->fs_write_all = 1;
-			key = si_shader_selector_key(ctx, sel);
+			si_shader_selector_key(ctx, sel, &shader->key);
 		}
 
-		shader->key = key;
 		sel->num_shaders++;
 	}
 

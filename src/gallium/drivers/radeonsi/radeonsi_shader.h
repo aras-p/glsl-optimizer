@@ -111,13 +111,18 @@ struct si_shader {
 	unsigned		nr_cbufs;
 };
 
-struct si_shader_key {
-	unsigned		export_16bpc:8;
-	unsigned		nr_cbufs:4;
-	unsigned		color_two_side:1;
-	unsigned		alpha_func:3;
-	unsigned		flatshade:1;
-	float			alpha_ref;
+union si_shader_key {
+	struct {
+		unsigned	export_16bpc:8;
+		unsigned	nr_cbufs:4;
+		unsigned	color_two_side:1;
+		unsigned	alpha_func:3;
+		unsigned	flatshade:1;
+		float		alpha_ref;
+	} ps;
+	struct {
+		unsigned	instance_divisors[PIPE_MAX_ATTRIBS];
+	} vs;
 };
 
 struct si_pipe_shader {
@@ -132,12 +137,11 @@ struct si_pipe_shader {
 	unsigned			spi_shader_col_format;
 	unsigned			sprite_coord_enable;
 	unsigned			so_strides[4];
-	struct si_shader_key		key;
+	union si_shader_key		key;
 };
 
 /* radeonsi_shader.c */
-int si_pipe_shader_create(struct pipe_context *ctx, struct si_pipe_shader *shader,
-			  struct si_shader_key key);
+int si_pipe_shader_create(struct pipe_context *ctx, struct si_pipe_shader *shader);
 void si_pipe_shader_destroy(struct pipe_context *ctx, struct si_pipe_shader *shader);
 
 #endif

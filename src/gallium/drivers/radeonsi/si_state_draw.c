@@ -145,7 +145,7 @@ static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *s
 		if (shader->shader.output[i].name == TGSI_SEMANTIC_STENCIL)
 			db_shader_control |= S_02880C_STENCIL_TEST_VAL_EXPORT_ENABLE(1);
 	}
-	if (shader->shader.uses_kill || shader->key.alpha_func != PIPE_FUNC_ALWAYS)
+	if (shader->shader.uses_kill || shader->key.ps.alpha_func != PIPE_FUNC_ALWAYS)
 		db_shader_control |= S_02880C_KILL_ENABLE(1);
 
 	exports_ps = 0;
@@ -329,7 +329,7 @@ bcolor:
 
 		if (ps->input[i].interpolate == TGSI_INTERPOLATE_CONSTANT ||
 		    (ps->input[i].interpolate == TGSI_INTERPOLATE_COLOR &&
-		     rctx->ps_shader->current->key.flatshade)) {
+		     rctx->ps_shader->current->key.ps.flatshade)) {
 			tmp |= S_028644_FLAT_SHADE(1);
 		}
 
@@ -356,7 +356,7 @@ bcolor:
 			       tmp);
 
 		if (name == TGSI_SEMANTIC_COLOR &&
-		    rctx->ps_shader->current->key.color_two_side) {
+		    rctx->ps_shader->current->key.ps.color_two_side) {
 			name = TGSI_SEMANTIC_BCOLOR;
 			param_offset++;
 			goto bcolor;
@@ -369,7 +369,7 @@ bcolor:
 static void si_update_derived_state(struct r600_context *rctx)
 {
 	struct pipe_context * ctx = (struct pipe_context*)rctx;
-	unsigned ps_dirty = 0;
+	unsigned vs_dirty = 0, ps_dirty = 0;
 
 	if (!rctx->blitter->running) {
 		/* Flush depth textures which need to be flushed. */
@@ -381,11 +381,19 @@ static void si_update_derived_state(struct r600_context *rctx)
 		}
 	}
 
-	si_shader_select(ctx, rctx->ps_shader, &ps_dirty);
+	si_shader_select(ctx, rctx->vs_shader, &vs_dirty);
 
 	if (!rctx->vs_shader->current->pm4) {
 		si_pipe_shader_vs(ctx, rctx->vs_shader->current);
+		vs_dirty = 0;
 	}
+
+	if (vs_dirty) {
+		si_pm4_bind_state(rctx, vs, rctx->vs_shader->current->pm4);
+	}
+
+
+	si_shader_select(ctx, rctx->ps_shader, &ps_dirty);
 
 	if (!rctx->ps_shader->current->pm4) {
 		si_pipe_shader_ps(ctx, rctx->ps_shader->current);
