@@ -400,6 +400,9 @@ static inline GLuint brw_varying_to_offset(struct brw_vue_map *vue_map,
    return brw_vue_slot_to_offset(vue_map->varying_to_slot[varying]);
 }
 
+void brw_compute_vue_map(struct brw_context *brw, struct brw_vue_map *vue_map,
+                         GLbitfield64 slots_valid, bool userclip_active);
+
 
 struct brw_sf_prog_data {
    GLuint urb_read_length;
