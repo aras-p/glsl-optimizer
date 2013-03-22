@@ -131,6 +131,7 @@ struct brw_wm_prog_data;
 enum brw_state_id {
    BRW_STATE_URB_FENCE,
    BRW_STATE_FRAGMENT_PROGRAM,
+   BRW_STATE_GEOMETRY_PROGRAM,
    BRW_STATE_VERTEX_PROGRAM,
    BRW_STATE_CURBE_OFFSETS,
    BRW_STATE_REDUCED_PRIMITIVE,
@@ -160,6 +161,7 @@ enum brw_state_id {
 
 #define BRW_NEW_URB_FENCE               (1 << BRW_STATE_URB_FENCE)
 #define BRW_NEW_FRAGMENT_PROGRAM        (1 << BRW_STATE_FRAGMENT_PROGRAM)
+#define BRW_NEW_GEOMETRY_PROGRAM        (1 << BRW_STATE_GEOMETRY_PROGRAM)
 #define BRW_NEW_VERTEX_PROGRAM          (1 << BRW_STATE_VERTEX_PROGRAM)
 #define BRW_NEW_CURBE_OFFSETS           (1 << BRW_STATE_CURBE_OFFSETS)
 #define BRW_NEW_REDUCED_PRIMITIVE       (1 << BRW_STATE_REDUCED_PRIMITIVE)
@@ -996,6 +998,7 @@ struct brw_context
    /* Active vertex program: 
     */
    const struct gl_vertex_program *vertex_program;
+   const struct gl_geometry_program *geometry_program;
    const struct gl_fragment_program *fragment_program;
 
    /* hw-dependent 3DSTATE_VF_STATISTICS opcode */

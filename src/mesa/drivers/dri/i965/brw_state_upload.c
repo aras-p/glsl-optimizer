@@ -469,6 +469,11 @@ void brw_upload_state(struct brw_context *brw)
       brw->state.dirty.brw |= BRW_NEW_FRAGMENT_PROGRAM;
    }
 
+   if (brw->geometry_program != ctx->GeometryProgram._Current) {
+      brw->geometry_program = ctx->GeometryProgram._Current;
+      brw->state.dirty.brw |= BRW_NEW_GEOMETRY_PROGRAM;
+   }
+
    if (brw->vertex_program != ctx->VertexProgram._Current) {
       brw->vertex_program = ctx->VertexProgram._Current;
       brw->state.dirty.brw |= BRW_NEW_VERTEX_PROGRAM;
