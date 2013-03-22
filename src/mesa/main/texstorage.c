@@ -202,20 +202,9 @@ clear_texture_fields(struct gl_context *ctx,
 }
 
 
-/**
- * Do error checking for calls to glTexStorage1/2/3D().
- * If an error is found, record it with _mesa_error(), unless the target
- * is a proxy texture.
- * \return GL_TRUE if any error, GL_FALSE otherwise.
- */
-static GLboolean
-tex_storage_error_check(struct gl_context *ctx, GLuint dims, GLenum target,
-                        GLsizei levels, GLenum internalformat,
-                        GLsizei width, GLsizei height, GLsizei depth)
+GLboolean
+_mesa_is_legal_tex_storage_format(struct gl_context *ctx, GLenum internalformat)
 {
-   struct gl_texture_object *texObj;
-   GLboolean legalFormat;
-
    /* check internal format - note that only sized formats are allowed */
    switch (internalformat) {
    case GL_ALPHA:
@@ -250,13 +239,27 @@ tex_storage_error_check(struct gl_context *ctx, GLuint dims, GLenum target,
    case GL_LUMINANCE_INTEGER_EXT:
    case GL_LUMINANCE_ALPHA_INTEGER_EXT:
       /* these unsized formats are illegal */
-      legalFormat = GL_FALSE;
-      break;
+      return GL_FALSE;
    default:
-      legalFormat = _mesa_base_tex_format(ctx, internalformat) > 0;
+      return _mesa_base_tex_format(ctx, internalformat) > 0;
    }
+}
 
-   if (!legalFormat) {
+
+/**
+ * Do error checking for calls to glTexStorage1/2/3D().
+ * If an error is found, record it with _mesa_error(), unless the target
+ * is a proxy texture.
+ * \return GL_TRUE if any error, GL_FALSE otherwise.
+ */
+static GLboolean
+tex_storage_error_check(struct gl_context *ctx, GLuint dims, GLenum target,
+                        GLsizei levels, GLenum internalformat,
+                        GLsizei width, GLsizei height, GLsizei depth)
+{
+   struct gl_texture_object *texObj;
+
+   if (!_mesa_is_legal_tex_storage_format(ctx, internalformat)) {
       _mesa_error(ctx, GL_INVALID_ENUM,
                   "glTexStorage%uD(internalformat = %s)", dims,
                   _mesa_lookup_enum_by_nr(internalformat));

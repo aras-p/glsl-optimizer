@@ -57,5 +57,8 @@ _mesa_TextureStorage3DEXT(GLuint texture, GLenum target, GLsizei levels,
                           GLenum internalformat,
                           GLsizei width, GLsizei height, GLsizei depth);
 
+extern GLboolean
+_mesa_is_legal_tex_storage_format(struct gl_context *ctx, GLenum internalformat);
+
 
 #endif /* TEXSTORAGE_H */
