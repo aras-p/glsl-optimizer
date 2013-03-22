@@ -2605,14 +2605,38 @@ align_interleaved_urb_mlen(struct brw_context *brw, int mlen)
    return mlen;
 }
 
+void
+vec4_vs_visitor::emit_urb_write_header(int mrf)
+{
+   /* No need to do anything for VS; an implied write to this MRF will be
+    * performed by VS_OPCODE_URB_WRITE.
+    */
+   (void) mrf;
+}
+
+vec4_instruction *
+vec4_vs_visitor::emit_urb_write_opcode(bool complete)
+{
+   /* For VS, the URB writes end the thread. */
+   if (complete) {
+      if (INTEL_DEBUG & DEBUG_SHADER_TIME)
+         emit_shader_time_end();
+   }
+
+   vec4_instruction *inst = emit(VS_OPCODE_URB_WRITE);
+   inst->eot = complete;
+
+   return inst;
+}
+
 /**
- * Generates the VUE payload plus the 1 or 2 URB write instructions to
- * complete the VS thread.
+ * Generates the VUE payload plus the necessary URB write instructions to
+ * output it.
  *
  * The VUE layout is documented in Volume 2a.
  */
 void
-vec4_vs_visitor::emit_thread_end()
+vec4_visitor::emit_vertex()
 {
    /* MRF 0 is reserved for the debugger, so start with message header
     * in MRF 1.
@@ -2631,10 +2655,10 @@ vec4_vs_visitor::emit_thread_end()
     */
    assert ((max_usable_mrf - base_mrf) % 2 == 0);
 
-   /* First mrf is the g0-based message header containing URB handles and such,
-    * which is implied in VS_OPCODE_URB_WRITE.
+   /* First mrf is the g0-based message header containing URB handles and
+    * such.
     */
-   mrf++;
+   emit_urb_write_header(mrf++);
 
    if (intel->gen < 6) {
       emit_ndc_computation();
@@ -2654,19 +2678,14 @@ vec4_vs_visitor::emit_thread_end()
       }
    }
 
-   bool eot = slot >= prog_data->vue_map.num_slots;
-   if (eot) {
-      if (INTEL_DEBUG & DEBUG_SHADER_TIME)
-         emit_shader_time_end();
-   }
+   bool complete = slot >= prog_data->vue_map.num_slots;
    current_annotation = "URB write";
-   vec4_instruction *inst = emit(VS_OPCODE_URB_WRITE);
+   vec4_instruction *inst = emit_urb_write_opcode(complete);
    inst->base_mrf = base_mrf;
    inst->mlen = align_interleaved_urb_mlen(brw, mrf - base_mrf);
-   inst->eot = eot;
 
    /* Optional second URB write */
-   if (!inst->eot) {
+   if (!complete) {
       mrf = base_mrf + 1;
 
       for (; slot < prog_data->vue_map.num_slots; ++slot) {
@@ -2675,14 +2694,10 @@ vec4_vs_visitor::emit_thread_end()
          emit_urb_slot(mrf++, prog_data->vue_map.slot_to_varying[slot]);
       }
 
-      if (INTEL_DEBUG & DEBUG_SHADER_TIME)
-         emit_shader_time_end();
-
       current_annotation = "URB write";
-      inst = emit(VS_OPCODE_URB_WRITE);
+      inst = emit_urb_write_opcode(true /* complete */);
       inst->base_mrf = base_mrf;
       inst->mlen = align_interleaved_urb_mlen(brw, mrf - base_mrf);
-      inst->eot = true;
       /* URB destination offset.  In the previous write, we got MRFs
        * 2-13 minus the one header MRF, so 12 regs.  URB offset is in
        * URB row increments, and each of our MRFs is half of one of
@@ -2690,6 +2705,16 @@ vec4_vs_visitor::emit_thread_end()
        */
       inst->offset = (max_usable_mrf - base_mrf) / 2;
    }
+}
+
+void
+vec4_vs_visitor::emit_thread_end()
+{
+   /* For VS, we always end the thread by emitting a single vertex.
+    * emit_urb_write_opcode() will take care of setting the eot flag on the
+    * SEND instruction.
+    */
+   emit_vertex();
 }
 
 src_reg

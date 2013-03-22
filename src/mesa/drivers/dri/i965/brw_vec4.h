@@ -479,11 +479,14 @@ public:
    void dump_instructions();
 
 protected:
+   void emit_vertex();
    virtual dst_reg *make_reg_for_system_value(ir_variable *ir) = 0;
    virtual int setup_attributes(int payload_reg) = 0;
    virtual void emit_prolog() = 0;
    virtual void emit_program_code() = 0;
    virtual void emit_thread_end() = 0;
+   virtual void emit_urb_write_header(int mrf) = 0;
+   virtual vec4_instruction *emit_urb_write_opcode(bool complete) = 0;
 };
 
 class vec4_vs_visitor : public vec4_visitor
@@ -502,6 +505,8 @@ protected:
    virtual void emit_prolog();
    virtual void emit_program_code();
    virtual void emit_thread_end();
+   virtual void emit_urb_write_header(int mrf);
+   virtual vec4_instruction *emit_urb_write_opcode(bool complete);
 
 private:
    void setup_vp_regs();
