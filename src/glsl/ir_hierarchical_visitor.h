@@ -36,6 +36,7 @@ enum ir_visitor_status {
 };
 
 
+#ifdef __cplusplus
 /**
  * Base class of hierarchical visitors of IR instruction trees
  *
@@ -181,5 +182,6 @@ void visit_tree(ir_instruction *ir,
 
 ir_visitor_status visit_list_elements(ir_hierarchical_visitor *v, exec_list *l,
                                       bool statement_list = true);
+#endif /* __cplusplus */
 
 #endif /* IR_HIERARCHICAL_VISITOR_H */

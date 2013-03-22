@@ -26,6 +26,7 @@
 #ifndef IR_VISITOR_H
 #define IR_VISITOR_H
 
+#ifdef __cplusplus
 /**
  * Abstract base class of visitors of IR instruction trees
  */
@@ -81,5 +82,6 @@ public:
    virtual void visit(class ir_constant *) {}
    virtual void visit(class ir_call *) {}
 };
+#endif /* __cplusplus */
 
 #endif /* IR_VISITOR_H */
