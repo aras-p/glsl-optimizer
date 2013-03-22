@@ -1172,6 +1172,11 @@ struct brw_context
    } vs;
 
    struct {
+      struct brw_stage_state base;
+      struct brw_gs_prog_data *prog_data;
+   } gs;
+
+   struct {
       struct brw_ff_gs_prog_data *prog_data;
 
       bool prog_active;
