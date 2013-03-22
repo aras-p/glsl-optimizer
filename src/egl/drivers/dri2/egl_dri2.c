@@ -34,6 +34,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <xf86drm.h>
+#include <drm_fourcc.h>
 #include <GL/gl.h>
 #include <GL/internal/dri_interface.h>
 #include <sys/types.h>
@@ -506,6 +507,10 @@ dri2_setup_screen(_EGLDisplay *disp)
           dri2_dpy->image->createImageFromTexture) {
          disp->Extensions.KHR_gl_texture_2D_image = EGL_TRUE;
          disp->Extensions.KHR_gl_texture_cubemap_image = EGL_TRUE;
+      }
+      if (dri2_dpy->image->base.version >= 8 &&
+          dri2_dpy->image->createImageFromDmaBufs) {
+         disp->Extensions.EXT_image_dma_buf_import = EGL_TRUE;
       }
    }
 }
@@ -1340,6 +1345,261 @@ dri2_create_image_khr_texture(_EGLDisplay *disp, _EGLContext *ctx,
    return &dri2_img->base;
 }
 
+static EGLBoolean
+dri2_check_dma_buf_attribs(const _EGLImageAttribs *attrs)
+{
+   unsigned i;
+
+   /**
+     * The spec says:
+     *
+     * "Required attributes and their values are as follows:
+     *
+     *  * EGL_WIDTH & EGL_HEIGHT: The logical dimensions of the buffer in pixels
+     *
+     *  * EGL_LINUX_DRM_FOURCC_EXT: The pixel format of the buffer, as specified
+     *    by drm_fourcc.h and used as the pixel_format parameter of the
+     *    drm_mode_fb_cmd2 ioctl."
+     *
+     * and
+     *
+     * "* If <target> is EGL_LINUX_DMA_BUF_EXT, and the list of attributes is
+     *    incomplete, EGL_BAD_PARAMETER is generated."
+     */
+   if (attrs->Width <= 0 || attrs->Height <= 0 ||
+       !attrs->DMABufFourCC.IsPresent) {
+      _eglError(EGL_BAD_PARAMETER, "attribute(s) missing");
+      return EGL_FALSE;
+   }
+
+   /**
+    * Also:
+    *
+    * "If <target> is EGL_LINUX_DMA_BUF_EXT and one or more of the values
+    *  specified for a plane's pitch or offset isn't supported by EGL,
+    *  EGL_BAD_ACCESS is generated."
+    */
+   for (i = 0; i < ARRAY_SIZE(attrs->DMABufPlanePitches); ++i) {
+      if (attrs->DMABufPlanePitches[i].IsPresent &&
+          attrs->DMABufPlanePitches[i].Value <= 0) {
+         _eglError(EGL_BAD_ACCESS, "invalid pitch");
+         return EGL_FALSE;
+      }
+   }
+
+   return EGL_TRUE;
+}
+
+/* Returns the total number of file descriptors. Zero indicates an error. */
+static unsigned
+dri2_check_dma_buf_format(const _EGLImageAttribs *attrs)
+{
+   unsigned i, plane_n;
+
+   switch (attrs->DMABufFourCC.Value) {
+   case DRM_FORMAT_RGB332:
+   case DRM_FORMAT_BGR233:
+   case DRM_FORMAT_XRGB4444:
+   case DRM_FORMAT_XBGR4444:
+   case DRM_FORMAT_RGBX4444:
+   case DRM_FORMAT_BGRX4444:
+   case DRM_FORMAT_ARGB4444:
+   case DRM_FORMAT_ABGR4444:
+   case DRM_FORMAT_RGBA4444:
+   case DRM_FORMAT_BGRA4444:
+   case DRM_FORMAT_XRGB1555:
+   case DRM_FORMAT_XBGR1555:
+   case DRM_FORMAT_RGBX5551:
+   case DRM_FORMAT_BGRX5551:
+   case DRM_FORMAT_ARGB1555:
+   case DRM_FORMAT_ABGR1555:
+   case DRM_FORMAT_RGBA5551:
+   case DRM_FORMAT_BGRA5551:
+   case DRM_FORMAT_RGB565:
+   case DRM_FORMAT_BGR565:
+   case DRM_FORMAT_RGB888:
+   case DRM_FORMAT_BGR888:
+   case DRM_FORMAT_XRGB8888:
+   case DRM_FORMAT_XBGR8888:
+   case DRM_FORMAT_RGBX8888:
+   case DRM_FORMAT_BGRX8888:
+   case DRM_FORMAT_ARGB8888:
+   case DRM_FORMAT_ABGR8888:
+   case DRM_FORMAT_RGBA8888:
+   case DRM_FORMAT_BGRA8888:
+   case DRM_FORMAT_XRGB2101010:
+   case DRM_FORMAT_XBGR2101010:
+   case DRM_FORMAT_RGBX1010102:
+   case DRM_FORMAT_BGRX1010102:
+   case DRM_FORMAT_ARGB2101010:
+   case DRM_FORMAT_ABGR2101010:
+   case DRM_FORMAT_RGBA1010102:
+   case DRM_FORMAT_BGRA1010102:
+   case DRM_FORMAT_YUYV:
+   case DRM_FORMAT_YVYU:
+   case DRM_FORMAT_UYVY:
+   case DRM_FORMAT_VYUY:
+      plane_n = 1;
+      break;
+   case DRM_FORMAT_NV12:
+   case DRM_FORMAT_NV21:
+   case DRM_FORMAT_NV16:
+   case DRM_FORMAT_NV61:
+      plane_n = 2;
+      break;
+   case DRM_FORMAT_YUV410:
+   case DRM_FORMAT_YVU410:
+   case DRM_FORMAT_YUV411:
+   case DRM_FORMAT_YVU411:
+   case DRM_FORMAT_YUV420:
+   case DRM_FORMAT_YVU420:
+   case DRM_FORMAT_YUV422:
+   case DRM_FORMAT_YVU422:
+   case DRM_FORMAT_YUV444:
+   case DRM_FORMAT_YVU444:
+      plane_n = 3;
+      break;
+   default:
+      _eglError(EGL_BAD_ATTRIBUTE, "invalid format");
+      return 0;
+   }
+
+   /**
+     * The spec says:
+     *
+     * "* If <target> is EGL_LINUX_DMA_BUF_EXT, and the list of attributes is
+     *    incomplete, EGL_BAD_PARAMETER is generated."
+     */
+   for (i = 0; i < plane_n; ++i) {
+      if (!attrs->DMABufPlaneFds[i].IsPresent ||
+          !attrs->DMABufPlaneOffsets[i].IsPresent ||
+          !attrs->DMABufPlanePitches[i].IsPresent) {
+         _eglError(EGL_BAD_PARAMETER, "plane attribute(s) missing");
+         return 0;
+      }
+   }
+
+   /**
+    * The spec also says:
+    *
+    * "If <target> is EGL_LINUX_DMA_BUF_EXT, and the EGL_LINUX_DRM_FOURCC_EXT
+    *  attribute indicates a single-plane format, EGL_BAD_ATTRIBUTE is
+    *  generated if any of the EGL_DMA_BUF_PLANE1_* or EGL_DMA_BUF_PLANE2_*
+    *  attributes are specified."
+    */
+   for (i = plane_n; i < 3; ++i) {
+      if (attrs->DMABufPlaneFds[i].IsPresent ||
+          attrs->DMABufPlaneOffsets[i].IsPresent ||
+          attrs->DMABufPlanePitches[i].IsPresent) {
+         _eglError(EGL_BAD_ATTRIBUTE, "too many plane attributes");
+         return 0;
+      }
+   }
+
+   return plane_n;
+}
+
+/**
+ * The spec says:
+ *
+ * "If eglCreateImageKHR is successful for a EGL_LINUX_DMA_BUF_EXT target,
+ *  the EGL takes ownership of the file descriptor and is responsible for
+ *  closing it, which it may do at any time while the EGLDisplay is
+ *  initialized."
+ */
+static void
+dri2_take_dma_buf_ownership(const int *fds, unsigned num_fds)
+{
+   int already_closed[num_fds];
+   unsigned num_closed = 0;
+   unsigned i, j;
+
+   for (i = 0; i < num_fds; ++i) {
+      /**
+       * The same file descriptor can be referenced multiple times in case more
+       * than one plane is found in the same buffer, just with a different
+       * offset.
+       */
+      for (j = 0; j < num_closed; ++j) {
+         if (already_closed[j] == fds[i])
+            break;
+      }
+
+      if (j == num_closed) {
+         close(fds[i]);
+         already_closed[num_closed++] = fds[i];
+      }
+   }
+}
+
+static _EGLImage *
+dri2_create_image_dma_buf(_EGLDisplay *disp, _EGLContext *ctx,
+			  EGLClientBuffer buffer, const EGLint *attr_list)
+{
+   struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
+   _EGLImage *res;
+   EGLint err;
+   _EGLImageAttribs attrs;
+   __DRIimage *dri_image;
+   unsigned num_fds;
+   unsigned i;
+   int fds[3];
+   int pitches[3];
+   int offsets[3];
+   unsigned error;
+
+   /**
+    * The spec says:
+    *
+    * ""* If <target> is EGL_LINUX_DMA_BUF_EXT and <buffer> is not NULL, the
+    *     error EGL_BAD_PARAMETER is generated."
+    */
+   if (buffer != NULL) {
+      _eglError(EGL_BAD_PARAMETER, "buffer not NULL");
+      return NULL;
+   }
+
+   err = _eglParseImageAttribList(&attrs, disp, attr_list);
+   if (err != EGL_SUCCESS) {
+      _eglError(err, "bad attribute");
+      return NULL;
+   }
+
+   if (!dri2_check_dma_buf_attribs(&attrs))
+      return NULL;
+
+   num_fds = dri2_check_dma_buf_format(&attrs);
+   if (!num_fds)
+      return NULL;
+
+   for (i = 0; i < num_fds; ++i) {
+      fds[i] = attrs.DMABufPlaneFds[i].Value;
+      pitches[i] = attrs.DMABufPlanePitches[i].Value;
+      offsets[i] = attrs.DMABufPlaneOffsets[i].Value;
+   }
+
+   dri_image =
+      dri2_dpy->image->createImageFromDmaBufs(dri2_dpy->dri_screen,
+         attrs.Width, attrs.Height, attrs.DMABufFourCC.Value,
+         fds, num_fds, pitches, offsets,
+         attrs.DMABufYuvColorSpaceHint.Value,
+         attrs.DMABufSampleRangeHint.Value,
+         attrs.DMABufChromaHorizontalSiting.Value,
+         attrs.DMABufChromaVerticalSiting.Value,
+         &error,
+         NULL);
+   dri2_create_image_khr_texture_error(error);
+
+   if (!dri_image)
+      return EGL_NO_IMAGE_KHR;
+
+   res = dri2_create_image(disp, dri_image);
+   if (res)
+      dri2_take_dma_buf_ownership(fds, num_fds);
+
+   return res;
+}
+
 _EGLImage *
 dri2_create_image_khr(_EGLDriver *drv, _EGLDisplay *disp,
 		      _EGLContext *ctx, EGLenum target,
@@ -1364,6 +1624,8 @@ dri2_create_image_khr(_EGLDriver *drv, _EGLDisplay *disp,
    case EGL_WAYLAND_BUFFER_WL:
       return dri2_create_image_wayland_wl_buffer(disp, ctx, buffer, attr_list);
 #endif
+   case EGL_LINUX_DMA_BUF_EXT:
+      return dri2_create_image_dma_buf(disp, ctx, buffer, attr_list);
    default:
       _eglError(EGL_BAD_PARAMETER, "dri2_create_image_khr");
       return EGL_NO_IMAGE_KHR;
