@@ -48,6 +48,7 @@
 #include "glsl_symbol_table.h"
 #include "ir_rvalue_visitor.h"
 #include "ir.h"
+#include "program/prog_instruction.h" /* For WRITEMASK_* */
 
 class lower_clip_distance_visitor : public ir_rvalue_visitor {
 public:
@@ -64,6 +65,8 @@ public:
    virtual ir_visitor_status visit_leave(ir_call *);
 
    virtual void handle_rvalue(ir_rvalue **rvalue);
+
+   void fix_lhs(ir_assignment *);
 
    bool progress;
 
@@ -199,12 +202,45 @@ lower_clip_distance_visitor::handle_rvalue(ir_rvalue **rv)
       ir_rvalue *swizzle_index;
       this->create_indices(array_deref->array_index, array_index, swizzle_index);
       void *mem_ctx = ralloc_parent(array_deref);
-      array_deref->array = new(mem_ctx) ir_dereference_array(
-         this->new_clip_distance_var, array_index);
-      array_deref->array_index = swizzle_index;
+
+      ir_dereference_array *const ClipDistanceMESA_deref =
+         new(mem_ctx) ir_dereference_array(this->new_clip_distance_var,
+                                           array_index);
+
+      ir_expression *const expr =
+         new(mem_ctx) ir_expression(ir_binop_vector_extract,
+                                    ClipDistanceMESA_deref,
+                                    swizzle_index);
+
+      *rv = expr;
    }
 }
 
+void
+lower_clip_distance_visitor::fix_lhs(ir_assignment *ir)
+{
+   if (ir->lhs->ir_type == ir_type_expression) {
+      void *mem_ctx = ralloc_parent(ir);
+      ir_expression *const expr = (ir_expression *) ir->lhs;
+
+      /* The expression must be of the form:
+       *
+       *     (vector_extract gl_ClipDistanceMESA[i], j).
+       */
+      assert(expr->operation == ir_binop_vector_extract);
+      assert(expr->operands[0]->ir_type == ir_type_dereference_array);
+      assert(expr->operands[0]->type == glsl_type::vec4_type);
+
+      ir_dereference *const new_lhs = (ir_dereference *) expr->operands[0];
+      ir->rhs = new(mem_ctx) ir_expression(ir_triop_vector_insert,
+					   glsl_type::vec4_type,
+					   new_lhs->clone(mem_ctx, NULL),
+					   ir->rhs,
+					   expr->operands[1]);
+      ir->set_lhs(new_lhs);
+      ir->write_mask = WRITEMASK_XYZW;
+   }
+}
 
 /**
  * Replace any assignment having gl_ClipDistance (undereferenced) as its LHS
@@ -234,12 +270,24 @@ lower_clip_distance_visitor::visit_leave(ir_assignment *ir)
       for (int i = 0; i < array_size; ++i) {
          ir_dereference_array *new_lhs = new(ctx) ir_dereference_array(
             ir->lhs->clone(ctx, NULL), new(ctx) ir_constant(i));
-         this->handle_rvalue((ir_rvalue **) &new_lhs);
          ir_dereference_array *new_rhs = new(ctx) ir_dereference_array(
             ir->rhs->clone(ctx, NULL), new(ctx) ir_constant(i));
          this->handle_rvalue((ir_rvalue **) &new_rhs);
-         this->base_ir->insert_before(
-            new(ctx) ir_assignment(new_lhs, new_rhs));
+
+         /* Handle the LHS after creating the new assignment.  This must
+          * happen in this order because handle_rvalue may replace the old LHS
+          * with an ir_expression of ir_binop_vector_extract.  Since this is
+          * not a valide l-value, this will cause an assertion in the
+          * ir_assignment constructor to fail.
+          *
+          * If this occurs, replace the mangled LHS with a dereference of the
+          * vector, and replace the RHS with an ir_triop_vector_insert.
+          */
+         ir_assignment *const assign = new(ctx) ir_assignment(new_lhs, new_rhs);
+         this->handle_rvalue((ir_rvalue **) &assign->lhs);
+         this->fix_lhs(assign);
+
+         this->base_ir->insert_before(assign);
       }
       ir->remove();
 
@@ -249,8 +297,14 @@ lower_clip_distance_visitor::visit_leave(ir_assignment *ir)
    /* Handle the LHS as if it were an r-value.  Normally
     * rvalue_visit(ir_assignment *) only visits the RHS, but we need to lower
     * expressions in the LHS as well.
+    *
+    * This may cause the LHS to get replaced with an ir_expression of
+    * ir_binop_vector_extract.  If this occurs, replace it with a dereference
+    * of the vector, and replace the RHS with an ir_triop_vector_insert.
     */
    handle_rvalue((ir_rvalue **)&ir->lhs);
+   this->fix_lhs(ir);
+
    return rvalue_visit(ir);
 }
 
