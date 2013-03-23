@@ -216,7 +216,8 @@ public:
                 struct brw_vec4_prog_data *prog_data,
 		struct gl_shader_program *shader_prog,
 		struct brw_shader *shader,
-		void *mem_ctx);
+		void *mem_ctx,
+                bool debug_flag);
    ~vec4_visitor();
 
    dst_reg dst_null_f()
@@ -489,6 +490,8 @@ protected:
    virtual void emit_urb_write_header(int mrf) = 0;
    virtual vec4_instruction *emit_urb_write_opcode(bool complete) = 0;
    virtual int compute_array_stride(ir_dereference_array *ir);
+
+   const bool debug_flag;
 };
 
 class vec4_vs_visitor : public vec4_visitor
@@ -532,7 +535,8 @@ public:
    vec4_generator(struct brw_context *brw,
                   struct gl_shader_program *shader_prog,
                   struct gl_program *prog,
-                  void *mem_ctx);
+                  void *mem_ctx,
+                  bool debug_flag);
    ~vec4_generator();
 
    const unsigned *generate_assembly(exec_list *insts, unsigned *asm_size);
@@ -596,6 +600,7 @@ private:
    const struct gl_program *prog;
 
    void *mem_ctx;
+   const bool debug_flag;
 };
 
 } /* namespace brw */

@@ -48,7 +48,8 @@ class register_coalesce_vec4_visitor : public vec4_visitor
 public:
    register_coalesce_vec4_visitor(struct brw_context *brw,
                                   struct gl_shader_program *shader_prog)
-      : vec4_visitor(brw, NULL, NULL, NULL, NULL, shader_prog, NULL, NULL)
+      : vec4_visitor(brw, NULL, NULL, NULL, NULL, shader_prog, NULL, NULL,
+                     false)
    {
    }
 

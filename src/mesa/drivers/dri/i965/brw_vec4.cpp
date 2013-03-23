@@ -1549,7 +1549,8 @@ brw_vs_emit(struct brw_context *brw,
       return NULL;
    }
 
-   vec4_generator g(brw, prog, &c->vp->program.Base, mem_ctx);
+   vec4_generator g(brw, prog, &c->vp->program.Base, mem_ctx,
+                    INTEL_DEBUG & DEBUG_VS);
    const unsigned *generated =g.generate_assembly(&v.instructions,
                                                   final_assembly_size);
 

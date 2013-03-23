@@ -3037,7 +3037,9 @@ vec4_visitor::vec4_visitor(struct brw_context *brw,
                            struct brw_vec4_prog_data *prog_data,
 			   struct gl_shader_program *shader_prog,
 			   struct brw_shader *shader,
-			   void *mem_ctx)
+			   void *mem_ctx,
+                           bool debug_flag)
+   : debug_flag(debug_flag)
 {
    this->brw = brw;
    this->intel = &brw->intel;
@@ -3089,7 +3091,7 @@ vec4_vs_visitor::vec4_vs_visitor(struct brw_context *brw,
                                  void *mem_ctx)
    : vec4_visitor(brw, &vs_compile->base, &vs_compile->vp->program.Base,
                   &vs_compile->key.base, &vs_prog_data->base, prog, shader,
-                  mem_ctx),
+                  mem_ctx, INTEL_DEBUG & DEBUG_VS),
      vs_compile(vs_compile),
      vs_prog_data(vs_prog_data)
 {
@@ -3114,7 +3116,7 @@ vec4_visitor::fail(const char *format, ...)
 
    this->fail_msg = msg;
 
-   if (INTEL_DEBUG & DEBUG_VS) {
+   if (debug_flag) {
       fprintf(stderr, "%s",  msg);
    }
 }

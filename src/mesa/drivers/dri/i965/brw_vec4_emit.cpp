@@ -135,8 +135,10 @@ vec4_instruction::get_src(int i)
 vec4_generator::vec4_generator(struct brw_context *brw,
                                struct gl_shader_program *shader_prog,
                                struct gl_program *prog,
-                               void *mem_ctx)
-   : brw(brw), shader_prog(shader_prog), prog(prog), mem_ctx(mem_ctx)
+                               void *mem_ctx,
+                               bool debug_flag)
+   : brw(brw), shader_prog(shader_prog), prog(prog), mem_ctx(mem_ctx),
+     debug_flag(debug_flag)
 {
    intel = &brw->intel;
 
@@ -705,7 +707,7 @@ vec4_generator::generate_code(exec_list *instructions)
    const char *last_annotation_string = NULL;
    const void *last_annotation_ir = NULL;
 
-   if (unlikely(INTEL_DEBUG & DEBUG_VS)) {
+   if (unlikely(debug_flag)) {
       if (shader) {
          printf("Native code for vertex shader %d:\n", shader_prog->Name);
       } else {
@@ -717,7 +719,7 @@ vec4_generator::generate_code(exec_list *instructions)
       vec4_instruction *inst = (vec4_instruction *)node;
       struct brw_reg src[3], dst;
 
-      if (unlikely(INTEL_DEBUG & DEBUG_VS)) {
+      if (unlikely(debug_flag)) {
 	 if (last_annotation_ir != inst->ir) {
 	    last_annotation_ir = inst->ir;
 	    if (last_annotation_ir) {
@@ -893,7 +895,7 @@ vec4_generator::generate_code(exec_list *instructions)
             last->header.dependency_control |= BRW_DEPENDENCY_NOTCHECKED;
       }
 
-      if (unlikely(INTEL_DEBUG & DEBUG_VS)) {
+      if (unlikely(debug_flag)) {
 	 brw_dump_compile(p, stdout,
 			  last_native_insn_offset, p->next_insn_offset);
       }
@@ -901,7 +903,7 @@ vec4_generator::generate_code(exec_list *instructions)
       last_native_insn_offset = p->next_insn_offset;
    }
 
-   if (unlikely(INTEL_DEBUG & DEBUG_VS)) {
+   if (unlikely(debug_flag)) {
       printf("\n");
    }
 
@@ -912,7 +914,7 @@ vec4_generator::generate_code(exec_list *instructions)
     * which is often something we want to debug.  So this is here in
     * case you're doing that.
     */
-   if (0 && unlikely(INTEL_DEBUG & DEBUG_VS)) {
+   if (0 && unlikely(debug_flag)) {
       brw_dump_compile(p, stdout, 0, p->next_insn_offset);
    }
 }
