@@ -443,6 +443,38 @@ vec4_generator::generate_gs_thread_end(vec4_instruction *inst)
 }
 
 void
+vec4_generator::generate_gs_set_write_offset(struct brw_reg dst,
+                                             struct brw_reg src0,
+                                             struct brw_reg src1)
+{
+   /* From p22 of volume 4 part 2 of the Ivy Bridge PRM (2.4.3.1 Message
+    * Header: M0.3):
+    *
+    *     Slot 0 Offset. This field, after adding to the Global Offset field
+    *     in the message descriptor, specifies the offset (in 256-bit units)
+    *     from the start of the URB entry, as referenced by URB Handle 0, at
+    *     which the data will be accessed.
+    *
+    * Similar text describes DWORD M0.4, which is slot 1 offset.
+    *
+    * Therefore, we want to multiply DWORDs 0 and 4 of src0 (the x components
+    * of the register for geometry shader invocations 0 and 1) by the
+    * immediate value in src1, and store the result in DWORDs 3 and 4 of dst.
+    *
+    * We can do this with the following EU instruction:
+    *
+    *     mul(2) dst.3<1>UD src0<8;2,4>UD src1   { Align1 WE_all }
+    */
+   brw_push_insn_state(p);
+   brw_set_access_mode(p, BRW_ALIGN_1);
+   brw_set_mask_control(p, BRW_MASK_DISABLE);
+   brw_MUL(p, suboffset(stride(dst, 2, 2, 1), 3), stride(src0, 8, 2, 4),
+           src1);
+   brw_set_access_mode(p, BRW_ALIGN_16);
+   brw_pop_insn_state(p);
+}
+
+void
 vec4_generator::generate_oword_dual_block_offsets(struct brw_reg m1,
                                                   struct brw_reg index)
 {
@@ -916,6 +948,10 @@ vec4_generator::generate_vec4_instruction(vec4_instruction *instruction,
 
    case GS_OPCODE_THREAD_END:
       generate_gs_thread_end(inst);
+      break;
+
+   case GS_OPCODE_SET_WRITE_OFFSET:
+      generate_gs_set_write_offset(dst, src[0], src[1]);
       break;
 
    case SHADER_OPCODE_SHADER_TIME_ADD:

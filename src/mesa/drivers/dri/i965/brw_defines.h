@@ -817,6 +817,22 @@ enum opcode {
     * for Slot {0,1}" fields in the message header.
     */
    GS_OPCODE_THREAD_END,
+
+   /**
+    * Set the "Slot {0,1} Offset" fields of a URB_WRITE message header.
+    *
+    * - dst is the MRF containing the message header.
+    *
+    * - src0.x indicates which portion of the URB should be written to (e.g. a
+    *   vertex number)
+    *
+    * - src1 is an immediate multiplier which will be applied to src0
+    *   (e.g. the size of a single vertex in the URB).
+    *
+    * Note: the hardware will apply this offset *in addition to* the offset in
+    * vec4_instruction::offset.
+    */
+   GS_OPCODE_SET_WRITE_OFFSET,
 };
 
 #define BRW_PREDICATE_NONE             0
