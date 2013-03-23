@@ -356,18 +356,14 @@ lower_ubo_reference_visitor::emit_ubo_loads(ir_dereference *deref,
       unsigned matrix_stride = 16;
 
       for (unsigned i = 0; i < deref->type->vector_elements; i++) {
-	 ir_rvalue *chan = new(mem_ctx) ir_constant((int)i);
-	 ir_dereference *deref_chan =
-	    new(mem_ctx) ir_dereference_array(deref->clone(mem_ctx, NULL),
-					      chan);
-
 	 ir_rvalue *chan_offset =
 	    add(base_offset,
 		new(mem_ctx) ir_constant(deref_offset + i * matrix_stride));
 
-	 base_ir->insert_before(assign(deref_chan,
+	 base_ir->insert_before(assign(deref->clone(mem_ctx, NULL),
 				       ubo_load(glsl_type::float_type,
-						chan_offset)));
+						chan_offset),
+				       (1U << i)));
       }
    }
 }
