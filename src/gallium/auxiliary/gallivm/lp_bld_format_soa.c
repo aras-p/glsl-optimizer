@@ -310,9 +310,10 @@ lp_build_rgba8_to_fi32_soa(struct gallivm_state *gallivm,
  * \param type  the desired return type for 'rgba'.  The vector length
  *              is the number of texels to fetch
  *
- * \param base_ptr  points to start of the texture image block.  For non-
- *                  compressed formats, this simply points to the texel.
- *                  For compressed formats, it points to the start of the
+ * \param base_ptr  points to the base of the texture mip tree.
+ * \param offset    offset to start of the texture image block.  For non-
+ *                  compressed formats, this simply is an offset to the texel.
+ *                  For compressed formats, it is an offset to the start of the
  *                  compressed data block.
  *
  * \param i, j  the sub-block pixel coordinates.  For non-compressed formats
@@ -365,6 +366,29 @@ lp_build_fetch_rgba_soa(struct gallivm_state *gallivm,
                                format_desc,
                                type,
                                packed, rgba_out);
+      return;
+   }
+
+   if (format_desc->format == PIPE_FORMAT_R11G11B10_FLOAT ||
+       format_desc->format == PIPE_FORMAT_R9G9B9E5_FLOAT) {
+      /*
+       * similar conceptually to above but requiring special
+       * AoS packed -> SoA float conversion code.
+       */
+      LLVMValueRef packed;
+
+      assert(type.floating);
+      assert(type.width == 32);
+
+      packed = lp_build_gather(gallivm, type.length,
+                               format_desc->block.bits,
+                               type.width, base_ptr, offset);
+      if (format_desc->format == PIPE_FORMAT_R11G11B10_FLOAT) {
+         lp_build_r11g11b10_to_float(gallivm, packed, rgba_out);
+      }
+      else {
+         lp_build_rgb9e5_to_float(gallivm, packed, rgba_out);
+      }
       return;
    }
 

@@ -397,6 +397,92 @@ lp_build_r11g11b10_to_float(struct gallivm_state *gallivm,
 }
 
 
+static LLVMValueRef
+lp_build_rgb9_to_float_helper(struct gallivm_state *gallivm,
+                              struct lp_type f32_type,
+                              LLVMValueRef src,
+                              LLVMValueRef scale,
+                              unsigned mantissa_start)
+{
+   LLVMValueRef shift, mask;
+
+   struct lp_type i32_type = lp_type_int_vec(32, 32 * f32_type.length);
+   struct lp_build_context i32_bld, f32_bld;
+
+   lp_build_context_init(&i32_bld, gallivm, i32_type);
+   lp_build_context_init(&f32_bld, gallivm, f32_type);
+
+   /*
+    * This is much easier as other weirdo float formats, since
+    * there's no sign, no Inf/NaN, and there's nothing special
+    * required for normals/denormals neither (as without the implied one
+    * for the mantissa for other formats, everything looks like a denormal).
+    * So just do (float)comp_bits * scale
+    */
+   shift = lp_build_const_int_vec(gallivm, i32_type, mantissa_start);
+   mask = lp_build_const_int_vec(gallivm, i32_type, 0x1ff);
+   src = lp_build_shr(&i32_bld, src, shift);
+   src = lp_build_and(&i32_bld, src, mask);
+   src = lp_build_int_to_float(&f32_bld, src);
+   return lp_build_mul(&f32_bld, src, scale);
+}
+
+
+/**
+ * Convert shared exponent format (rgb9e5) value(s) to rgba float SoA values.
+ *
+ * @param src   packed AoS rgb9e5 values (as (vector) int32)
+ * @param dst   pointer to the SoA result values
+ */
+void
+lp_build_rgb9e5_to_float(struct gallivm_state *gallivm,
+                         LLVMValueRef src,
+                         LLVMValueRef *dst)
+{
+   LLVMBuilderRef builder = gallivm->builder;
+   LLVMTypeRef src_type = LLVMTypeOf(src);
+   LLVMValueRef shift, scale, bias, exp;
+   unsigned src_length = LLVMGetTypeKind(src_type) == LLVMVectorTypeKind ?
+                            LLVMGetVectorSize(src_type) : 1;
+   struct lp_type i32_type = lp_type_int_vec(32, 32 * src_length);
+   struct lp_type u32_type = lp_type_uint_vec(32, 32 * src_length);
+   struct lp_type f32_type = lp_type_float_vec(32, 32 * src_length);
+   struct lp_build_context i32_bld, u32_bld, f32_bld;
+
+   lp_build_context_init(&i32_bld, gallivm, i32_type);
+   lp_build_context_init(&u32_bld, gallivm, u32_type);
+   lp_build_context_init(&f32_bld, gallivm, f32_type);
+
+   /* extract exponent */
+   shift = lp_build_const_int_vec(gallivm, i32_type, 27);
+   /* this shift needs to be unsigned otherwise need mask */
+   exp = lp_build_shr(&u32_bld, src, shift);
+
+   /*
+    * scale factor is 2 ^ (exp - bias)
+    * (and additionally corrected here for the mantissa bits)
+    * not using shift because
+    * a) don't have vector shift in a lot of cases
+    * b) shift direction changes hence need 2 shifts + conditional
+    *    (or rotate instruction which is even more rare (for instance XOP))
+    * so use whacky float 2 ^ function instead manipulating exponent
+    * (saves us the float conversion at the end too)
+    */
+   bias = lp_build_const_int_vec(gallivm, i32_type, 127 - (15 + 9));
+   scale = lp_build_add(&i32_bld, exp, bias);
+   shift = lp_build_const_int_vec(gallivm, i32_type, 23);
+   scale = lp_build_shl(&i32_bld, scale, shift);
+   scale = LLVMBuildBitCast(builder, scale, f32_bld.vec_type, "");
+
+   dst[0] = lp_build_rgb9_to_float_helper(gallivm, f32_type, src, scale, 0);
+   dst[1] = lp_build_rgb9_to_float_helper(gallivm, f32_type, src, scale, 9);
+   dst[2] = lp_build_rgb9_to_float_helper(gallivm, f32_type, src, scale, 18);
+
+   /* Just set alpha to one */
+   dst[3] = f32_bld.one;
+}
+
+
 /**
  * Converts int16 half-float to float32
  * Note this can be performed in 1 instruction if vcvtph2ps exists (sse5 i think?)
