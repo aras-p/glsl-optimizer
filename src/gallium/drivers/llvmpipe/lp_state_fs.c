@@ -1156,7 +1156,7 @@ convert_to_blend_type(struct gallivm_state *gallivm,
        */
       assert(src_type.width == 32);
       assert(dst_type.floating);
-      assert(dst_type.width = 32);
+      assert(dst_type.width == 32);
       assert(dst_type.length % 4 == 0);
       for (i = 0; i < 4; i++) {
          tmpsrc[i] = src[i];
@@ -1300,7 +1300,7 @@ convert_from_blend_type(struct gallivm_state *gallivm,
        * conversion/packing.
        */
       assert(src_type.floating);
-      assert(src_type.width = 32);
+      assert(src_type.width == 32);
       assert(src_type.length % 4 == 0);
       assert(dst_type.width == 32);
       for (i = 0; i < num_srcs / 4; i++) {
