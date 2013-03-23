@@ -299,8 +299,8 @@ public:
    /* Regs for vertex results.  Generated at ir_variable visiting time
     * for the ir->location's used.
     */
-   dst_reg output_reg[BRW_VARYING_SLOT_MAX];
-   const char *output_reg_annotation[BRW_VARYING_SLOT_MAX];
+   dst_reg output_reg[BRW_VARYING_SLOT_COUNT];
+   const char *output_reg_annotation[BRW_VARYING_SLOT_COUNT];
    int uniform_size[MAX_UNIFORMS];
    int uniform_vector_size[MAX_UNIFORMS];
    int uniforms;

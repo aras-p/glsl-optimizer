@@ -66,9 +66,9 @@ brw_compute_vue_map(struct brw_context *brw, struct brw_vs_compile *c)
    int i;
 
    vue_map->num_slots = 0;
-   for (i = 0; i < BRW_VARYING_SLOT_MAX; ++i) {
+   for (i = 0; i < BRW_VARYING_SLOT_COUNT; ++i) {
       vue_map->varying_to_slot[i] = -1;
-      vue_map->slot_to_varying[i] = BRW_VARYING_SLOT_MAX;
+      vue_map->slot_to_varying[i] = BRW_VARYING_SLOT_COUNT;
    }
 
    /* VUE header: format depends on chip generation and whether clipping is

@@ -338,7 +338,7 @@ typedef enum
     * more info.
     */
    BRW_VARYING_SLOT_PNTC,
-   BRW_VARYING_SLOT_MAX
+   BRW_VARYING_SLOT_COUNT
 } brw_varying_slot;
 
 
@@ -360,18 +360,18 @@ struct brw_vue_map {
     * additional processing is applied before storing them in the VUE), the
     * value is -1.
     */
-   int varying_to_slot[BRW_VARYING_SLOT_MAX];
+   int varying_to_slot[BRW_VARYING_SLOT_COUNT];
 
    /**
     * Map from VUE slot to gl_varying_slot value.  For slots that do not
     * directly correspond to a gl_varying_slot, the value comes from
     * brw_varying_slot.
     *
-    * For slots that are not in use, the value is BRW_VARYING_SLOT_MAX (this
+    * For slots that are not in use, the value is BRW_VARYING_SLOT_COUNT (this
     * simplifies code that uses the value stored in slot_to_varying to
     * create a bit mask).
     */
-   int slot_to_varying[BRW_VARYING_SLOT_MAX];
+   int slot_to_varying[BRW_VARYING_SLOT_COUNT];
 
    /**
     * Total number of VUE slots in use

@@ -358,7 +358,7 @@ calculate_masks(struct brw_sf_compile *c,
 
    /* Maybe only processs one attribute on the final round:
     */
-   if (vert_reg_to_varying(c, reg, 1) != BRW_VARYING_SLOT_MAX) {
+   if (vert_reg_to_varying(c, reg, 1) != BRW_VARYING_SLOT_COUNT) {
       *pc |= 0xf0;
 
       if (persp_mask & BITFIELD64_BIT(vert_reg_to_varying(c, reg, 1)))
