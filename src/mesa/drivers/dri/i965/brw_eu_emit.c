@@ -2184,6 +2184,7 @@ void brw_urb_WRITE(struct brw_compile *p,
       /* Enable Channel Masks in the URB_WRITE_HWORD message header */
       brw_push_insn_state(p);
       brw_set_access_mode(p, BRW_ALIGN_1);
+      brw_set_mask_control(p, BRW_MASK_DISABLE);
       brw_OR(p, retype(brw_vec1_reg(BRW_MESSAGE_REGISTER_FILE, msg_reg_nr, 5),
 		       BRW_REGISTER_TYPE_UD),
 	        retype(brw_vec1_grf(0, 5), BRW_REGISTER_TYPE_UD),
