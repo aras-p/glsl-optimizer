@@ -808,6 +808,15 @@ enum opcode {
     * "Slot {0,1} Offset" fields in the message header.
     */
    GS_OPCODE_URB_WRITE,
+
+   /**
+    * Terminate the geometry shader thread by doing an empty URB write.
+    *
+    * This opcode doesn't do an implied move from R0 to the first MRF.  This
+    * allows the geometry shader to override the "GS Number of Output Vertices
+    * for Slot {0,1}" fields in the message header.
+    */
+   GS_OPCODE_THREAD_END,
 };
 
 #define BRW_PREDICATE_NONE             0

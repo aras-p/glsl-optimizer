@@ -629,6 +629,7 @@ private:
 
    void generate_vs_urb_write(vec4_instruction *inst);
    void generate_gs_urb_write(vec4_instruction *inst);
+   void generate_gs_thread_end(vec4_instruction *inst);
    void generate_oword_dual_block_offsets(struct brw_reg m1,
 					  struct brw_reg index);
    void generate_scratch_write(vec4_instruction *inst,

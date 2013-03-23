@@ -499,6 +499,8 @@ brw_instruction_name(enum opcode op)
 
    case GS_OPCODE_URB_WRITE:
       return "gs_urb_write";
+   case GS_OPCODE_THREAD_END:
+      return "gs_thread_end";
 
    default:
       /* Yes, this leaks.  It's in debug code, it should never occur, and if

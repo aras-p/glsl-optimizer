@@ -428,6 +428,21 @@ vec4_generator::generate_gs_urb_write(vec4_instruction *inst)
 }
 
 void
+vec4_generator::generate_gs_thread_end(vec4_instruction *inst)
+{
+   struct brw_reg src = brw_message_reg(inst->base_mrf);
+   brw_urb_WRITE(p,
+                 brw_null_reg(), /* dest */
+                 inst->base_mrf, /* starting mrf reg nr */
+                 src,
+                 BRW_URB_WRITE_EOT,
+                 1,              /* message len */
+                 0,              /* response len */
+                 0,              /* urb destination offset */
+                 BRW_URB_SWIZZLE_INTERLEAVE);
+}
+
+void
 vec4_generator::generate_oword_dual_block_offsets(struct brw_reg m1,
                                                   struct brw_reg index)
 {
@@ -897,6 +912,10 @@ vec4_generator::generate_vec4_instruction(vec4_instruction *instruction,
 
    case GS_OPCODE_URB_WRITE:
       generate_gs_urb_write(inst);
+      break;
+
+   case GS_OPCODE_THREAD_END:
+      generate_gs_thread_end(inst);
       break;
 
    case SHADER_OPCODE_SHADER_TIME_ADD:
