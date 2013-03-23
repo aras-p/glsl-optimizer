@@ -69,6 +69,8 @@ public:
    virtual ir_visitor_status visit_leave(ir_expression *ir);
    virtual ir_visitor_status visit_leave(ir_swizzle *ir);
 
+   virtual ir_visitor_status visit_enter(class ir_dereference_array *);
+
    virtual ir_visitor_status visit_enter(ir_assignment *ir);
    virtual ir_visitor_status visit_enter(ir_call *ir);
 
@@ -97,6 +99,33 @@ ir_validate::visit(ir_dereference_variable *ir)
    }
 
    this->validate_ir(ir, this->data);
+
+   return visit_continue;
+}
+
+ir_visitor_status
+ir_validate::visit_enter(class ir_dereference_array *ir)
+{
+   if (!ir->array->type->is_array() && !ir->array->type->is_matrix()) {
+      printf("ir_dereference_array @ %p does not specify an array or a "
+             "matrix\n",
+             (void *) ir);
+      ir->print();
+      printf("\n");
+      abort();
+   }
+
+   if (!ir->array_index->type->is_scalar()) {
+      printf("ir_dereference_array @ %p does not have scalar index: %s\n",
+             (void *) ir, ir->array_index->type->name);
+      abort();
+   }
+
+   if (!ir->array_index->type->is_integer()) {
+      printf("ir_dereference_array @ %p does not have integer index: %s\n",
+             (void *) ir, ir->array_index->type->name);
+      abort();
+   }
 
    return visit_continue;
 }
