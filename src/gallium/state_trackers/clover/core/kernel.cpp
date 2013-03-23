@@ -222,6 +222,9 @@ _cl_kernel::global_argument::set(size_t size, const void *value) {
       throw error(CL_INVALID_ARG_SIZE);
 
    obj = dynamic_cast<clover::buffer *>(*(cl_mem *)value);
+   if (!obj)
+      throw error(CL_INVALID_MEM_OBJECT);
+
    __set = true;
 }
 
@@ -286,6 +289,9 @@ _cl_kernel::constant_argument::set(size_t size, const void *value) {
       throw error(CL_INVALID_ARG_SIZE);
 
    obj = dynamic_cast<clover::buffer *>(*(cl_mem *)value);
+   if (!obj)
+      throw error(CL_INVALID_MEM_OBJECT);
+
    __set = true;
 }
 
@@ -316,6 +322,9 @@ _cl_kernel::image_rd_argument::set(size_t size, const void *value) {
       throw error(CL_INVALID_ARG_SIZE);
 
    obj = dynamic_cast<clover::image *>(*(cl_mem *)value);
+   if (!obj)
+      throw error(CL_INVALID_MEM_OBJECT);
+
    __set = true;
 }
 
@@ -346,6 +355,9 @@ _cl_kernel::image_wr_argument::set(size_t size, const void *value) {
       throw error(CL_INVALID_ARG_SIZE);
 
    obj = dynamic_cast<clover::image *>(*(cl_mem *)value);
+   if (!obj)
+      throw error(CL_INVALID_MEM_OBJECT);
+
    __set = true;
 }
 
