@@ -475,6 +475,33 @@ vec4_generator::generate_gs_set_write_offset(struct brw_reg dst,
 }
 
 void
+vec4_generator::generate_gs_set_vertex_count(struct brw_reg dst,
+                                             struct brw_reg src)
+{
+   brw_push_insn_state(p);
+   brw_set_access_mode(p, BRW_ALIGN_1);
+   brw_set_mask_control(p, BRW_MASK_DISABLE);
+
+   /* If we think of the src and dst registers as composed of 8 DWORDs each,
+    * we want to pick up the contents of DWORDs 0 and 4 from src, truncate
+    * them to WORDs, and then pack them into DWORD 2 of dst.
+    *
+    * It's easier to get the EU to do this if we think of the src and dst
+    * registers as composed of 16 WORDS each; then, we want to pick up the
+    * contents of WORDs 0 and 8 from src, and pack them into WORDs 4 and 5 of
+    * dst.
+    *
+    * We can do that by the following EU instruction:
+    *
+    *     mov (2) dst.4<1>:uw src<8;1,0>:uw   { Align1, Q1, NoMask }
+    */
+   brw_MOV(p, suboffset(stride(retype(dst, BRW_REGISTER_TYPE_UW), 2, 2, 1), 4),
+           stride(retype(src, BRW_REGISTER_TYPE_UW), 8, 1, 0));
+   brw_set_access_mode(p, BRW_ALIGN_16);
+   brw_pop_insn_state(p);
+}
+
+void
 vec4_generator::generate_oword_dual_block_offsets(struct brw_reg m1,
                                                   struct brw_reg index)
 {
@@ -952,6 +979,10 @@ vec4_generator::generate_vec4_instruction(vec4_instruction *instruction,
 
    case GS_OPCODE_SET_WRITE_OFFSET:
       generate_gs_set_write_offset(dst, src[0], src[1]);
+      break;
+
+   case GS_OPCODE_SET_VERTEX_COUNT:
+      generate_gs_set_vertex_count(dst, src[0]);
       break;
 
    case SHADER_OPCODE_SHADER_TIME_ADD:

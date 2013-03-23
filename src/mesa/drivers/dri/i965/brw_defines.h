@@ -833,6 +833,16 @@ enum opcode {
     * vec4_instruction::offset.
     */
    GS_OPCODE_SET_WRITE_OFFSET,
+
+   /**
+    * Set the "GS Number of Output Vertices for Slot {0,1}" fields of a
+    * URB_WRITE message header.
+    *
+    * - dst is the MRF containing the message header.
+    *
+    * - src0.x is the vertex count.  The upper 16 bits will be ignored.
+    */
+   GS_OPCODE_SET_VERTEX_COUNT,
 };
 
 #define BRW_PREDICATE_NONE             0
