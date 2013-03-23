@@ -210,6 +210,11 @@ _mesa_ActiveProgramEXT(GLuint program);
 extern GLuint GLAPIENTRY
 _mesa_CreateShaderProgramEXT(GLenum type, const GLchar *string);
 
+extern void
+_mesa_copy_linked_program_data(gl_shader_type type,
+                               const struct gl_shader_program *src,
+                               struct gl_program *dst);
+
 
 #ifdef __cplusplus
 }

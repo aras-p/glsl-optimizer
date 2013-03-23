@@ -29,6 +29,7 @@ extern "C" {
 #include "brw_fs.h"
 #include "glsl/ir_optimization.h"
 #include "glsl/glsl_parser_extras.h"
+#include "main/shaderapi.h"
 
 struct gl_shader *
 brw_new_shader(struct gl_context *ctx, GLuint name, GLuint type)
@@ -127,10 +128,7 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
 	return false;
       prog->Parameters = _mesa_new_parameter_list();
 
-      if (stage == 0) {
-	 struct gl_vertex_program *vp = (struct gl_vertex_program *) prog;
-	 vp->UsesClipDistance = shProg->Vert.UsesClipDistance;
-      }
+      _mesa_copy_linked_program_data((gl_shader_type) stage, shProg, prog);
 
       void *mem_ctx = ralloc_context(NULL);
       bool progress;

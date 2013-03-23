@@ -3087,10 +3087,7 @@ _mesa_ir_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
       linked_prog = get_mesa_program(ctx, prog, prog->_LinkedShaders[i]);
 
       if (linked_prog) {
-	 if (i == MESA_SHADER_VERTEX) {
-            ((struct gl_vertex_program *)linked_prog)->UsesClipDistance
-               = prog->Vert.UsesClipDistance;
-	 }
+         _mesa_copy_linked_program_data((gl_shader_type) i, prog, linked_prog);
 
 	 _mesa_reference_program(ctx, &prog->_LinkedShaders[i]->Program,
 				 linked_prog);
