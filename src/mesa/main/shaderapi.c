@@ -1859,6 +1859,14 @@ _mesa_copy_linked_program_data(gl_shader_type type,
       dst_vp->UsesClipDistance = src->Vert.UsesClipDistance;
    }
       break;
+   case MESA_SHADER_GEOMETRY: {
+      struct gl_geometry_program *dst_gp = (struct gl_geometry_program *) dst;
+      dst_gp->VerticesIn = src->Geom.VerticesIn;
+      dst_gp->VerticesOut = src->Geom.VerticesOut;
+      dst_gp->InputType = src->Geom.InputType;
+      dst_gp->OutputType = src->Geom.OutputType;
+   }
+      break;
    default:
       break;
    }

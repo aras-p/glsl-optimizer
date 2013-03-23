@@ -2320,7 +2320,10 @@ struct gl_shader_program
    /** Post-link gl_FragDepth layout for ARB_conservative_depth. */
    enum gl_frag_depth_layout FragDepthLayout;
 
-   /** Geometry shader state - copied into gl_geometry_program at link time */
+   /**
+    * Geometry shader state - copied into gl_geometry_program by
+    * _mesa_copy_linked_program_data().
+    */
    struct {
       GLint VerticesIn;
       GLint VerticesOut;
