@@ -202,13 +202,13 @@ brwCreateContext(int api,
    if (intel->gen == 6) {
       ctx->Const.MaxSamples = 4;
       ctx->Const.MaxColorTextureSamples = 4;
-      ctx->Const.MaxDepthTextureSamples = 1;
+      ctx->Const.MaxDepthTextureSamples = 4;
       ctx->Const.MaxIntegerSamples = 4;
    }
    else if (intel->gen >= 7) {
       ctx->Const.MaxSamples = 8;
       ctx->Const.MaxColorTextureSamples = 8;
-      ctx->Const.MaxDepthTextureSamples = 1;
+      ctx->Const.MaxDepthTextureSamples = 8;
       ctx->Const.MaxIntegerSamples = 8;
    }
 
