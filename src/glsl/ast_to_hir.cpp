@@ -4054,7 +4054,11 @@ ast_process_structure_or_interface_block(exec_list *instructions,
 	 fields[i].name = decl->identifier;
 
          if (qual->flags.q.row_major || qual->flags.q.column_major) {
-            if (!field_type->is_matrix() && !field_type->is_record()) {
+            if (!qual->flags.q.uniform) {
+               _mesa_glsl_error(&loc, state,
+                                "row_major and column_major can only be "
+                                "applied to uniform interface blocks.");
+            } else if (!field_type->is_matrix() && !field_type->is_record()) {
                _mesa_glsl_error(&loc, state,
                                 "uniform block layout qualifiers row_major and "
                                 "column_major can only be applied to matrix and "
