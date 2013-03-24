@@ -122,4 +122,22 @@ lp_build_fetch_subsampled_rgba_aos(struct gallivm_state *gallivm,
                                    LLVMValueRef i,
                                    LLVMValueRef j);
 
+/*
+ * special float formats
+ */
+
+LLVMValueRef
+lp_build_float_to_r11g11b10(struct gallivm_state *gallivm,
+                            LLVMValueRef *src);
+
+void
+lp_build_r11g11b10_to_float(struct gallivm_state *gallivm,
+                            LLVMValueRef src,
+                            LLVMValueRef *dst);
+
+void
+lp_build_rgb9e5_to_float(struct gallivm_state *gallivm,
+                         LLVMValueRef src,
+                         LLVMValueRef *dst);
+
 #endif /* !LP_BLD_FORMAT_H */
