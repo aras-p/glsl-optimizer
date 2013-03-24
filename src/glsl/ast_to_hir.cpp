@@ -4063,6 +4063,12 @@ ast_process_structure_or_interface_block(exec_list *instructions,
                validate_matrix_layout_for_type(state, &loc, field_type);
          }
 
+         if (qual->flags.q.uniform && qual->has_interpolation()) {
+            _mesa_glsl_error(&loc, state,
+                             "interpolation qualifiers cannot be used "
+                             "with uniform interface blocks");
+         }
+
          if (field_type->is_matrix() ||
              (field_type->is_array() && field_type->fields.array->is_matrix())) {
             fields[i].row_major = block_row_major;
