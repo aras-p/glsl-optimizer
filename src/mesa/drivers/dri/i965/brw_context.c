@@ -176,6 +176,7 @@ brw_initialize_context_constants(struct brw_context *brw)
       ctx->Const.MaxColorTextureSamples = 8;
       ctx->Const.MaxDepthTextureSamples = 8;
       ctx->Const.MaxIntegerSamples = 8;
+      ctx->Const.MaxProgramTextureGatherComponents = 4;
    }
 
    ctx->Const.MinLineWidth = 1.0;
