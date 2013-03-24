@@ -831,7 +831,7 @@ ir_constant::get_float_component(unsigned i) const
    case GLSL_TYPE_UINT:  return (float) this->value.u[i];
    case GLSL_TYPE_INT:   return (float) this->value.i[i];
    case GLSL_TYPE_FLOAT: return this->value.f[i];
-   case GLSL_TYPE_BOOL:  return this->value.b[i] ? 1.0 : 0.0;
+   case GLSL_TYPE_BOOL:  return this->value.b[i] ? 1.0f : 0.0f;
    default:              assert(!"Should not get here."); break;
    }
 
@@ -1544,7 +1544,7 @@ ir_swizzle::variable_referenced() const
 ir_variable::ir_variable(const struct glsl_type *type, const char *name,
 			 ir_variable_mode mode, glsl_precision precision)
    : max_array_access(0), read_only(false), centroid(false), invariant(false),
-     mode(mode), precision(precision), interpolation(INTERP_QUALIFIER_NONE)
+     mode(mode), interpolation(INTERP_QUALIFIER_NONE), precision(precision)
 {
    this->ir_type = ir_type_variable;
    this->type = type;
