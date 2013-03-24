@@ -1009,7 +1009,9 @@ glsl_to_tgsi_visitor::get_temp(const glsl_type *type)
    src.reladdr = NULL;
    src.negate = 0;
 
-   if (type->is_array() || type->is_matrix()) {
+   if (!options->EmitNoIndirectTemp &&
+       (type->is_array() || type->is_matrix())) {
+
       src.file = PROGRAM_ARRAY;
       src.index = next_array << 16 | 0x8000;
       array_sizes[next_array] = type_size(type);
