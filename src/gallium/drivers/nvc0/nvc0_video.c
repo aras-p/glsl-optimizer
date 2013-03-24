@@ -356,19 +356,19 @@ nvc0_create_decoder(struct pipe_context *context,
          goto fw_fail;
       }
       r = read(fd, dec->fw_bo->map, 0x4000);
+      close(fd);
+
       if (r < 0) {
          fprintf(stderr, "reading firmware file %s failed: %m\n", path);
          goto fw_fail;
       }
 
       if (r == 0x4000) {
-         close(fd);
          fprintf(stderr, "firmware file %s too large!\n", path);
          goto fw_fail;
       }
 
       if (r & 0xff) {
-         close(fd);
          fprintf(stderr, "firmware file %s wrong size!\n", path);
          goto fw_fail;
       }
