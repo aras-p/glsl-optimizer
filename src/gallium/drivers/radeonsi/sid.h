@@ -77,6 +77,20 @@
 #define PKT3_DRAW_INDEX_IMMD                   0x2E
 #define PKT3_NUM_INSTANCES                     0x2F
 #define PKT3_STRMOUT_BUFFER_UPDATE             0x34
+#define PKT3_WRITE_DATA                        0x37
+#define     PKT3_WRITE_DATA_DST_SEL(x)             ((x) << 8)
+#define     PKT3_WRITE_DATA_DST_SEL_REG            0
+#define     PKT3_WRITE_DATA_DST_SEL_MEM_SYNC       1
+#define     PKT3_WRITE_DATA_DST_SEL_TC_OR_L2       2
+#define     PKT3_WRITE_DATA_DST_SEL_GDS            3
+#define     PKT3_WRITE_DATA_DST_SEL_RESERVED_4     4
+#define     PKT3_WRITE_DATA_DST_SEL_MEM_ASYNC      5
+#define     PKT3_WR_ONE_ADDR                       (1 << 16)
+#define PKT3_WRITE_DATA_WR_CONFIRM                 (1 << 20)
+#define PKT3_WRITE_DATA_ENGINE_SEL(x)              ((x) << 30)
+#define PKT3_WRITE_DATA_ENGINE_SEL_ME              0
+#define PKT3_WRITE_DATA_ENGINE_SEL_PFP             1
+#define PKT3_WRITE_DATA_ENGINE_SEL_CE              2
 #define PKT3_MEM_SEMAPHORE                     0x39
 #define PKT3_MPEG_INDEX                        0x3A
 #define PKT3_WAIT_REG_MEM                      0x3C

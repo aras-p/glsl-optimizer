@@ -199,6 +199,12 @@ unsigned si_pm4_dirty_dw(struct r600_context *rctx)
 			continue;
 
 		count += state->ndw;
+#if R600_TRACE_CS
+		/* for tracing each states */
+		if (rctx->screen->trace_bo) {
+			count += R600_TRACE_CS_DWORDS;
+		}
+#endif
 	}
 
 	return count;
@@ -219,6 +225,12 @@ void si_pm4_emit(struct r600_context *rctx, struct si_pm4_state *state)
 	}
 
 	cs->cdw += state->ndw;
+
+#if R600_TRACE_CS
+	if (rctx->screen->trace_bo) {
+		r600_trace_emit(rctx);
+	}
+#endif
 }
 
 void si_pm4_emit_dirty(struct r600_context *rctx)

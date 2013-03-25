@@ -142,6 +142,12 @@ void si_need_cs_space(struct r600_context *ctx, unsigned num_dw,
 	/* Save 16 dwords for the fence mechanism. */
 	num_dw += 16;
 
+#if R600_TRACE_CS
+	if (ctx->screen->trace_bo) {
+		num_dw += R600_TRACE_CS_DWORDS;
+	}
+#endif
+
 	/* Flush if there's not enough space. */
 	if (num_dw > RADEON_MAX_CMDBUF_DWORDS) {
 		radeonsi_flush(&ctx->context, NULL, RADEON_FLUSH_ASYNC);
@@ -206,8 +212,40 @@ void si_context_flush(struct r600_context *ctx, unsigned flags)
 	/* force to keep tiling flags */
 	flags |= RADEON_FLUSH_KEEP_TILING_FLAGS;
 
+#if R600_TRACE_CS
+	if (ctx->screen->trace_bo) {
+		struct r600_screen *rscreen = ctx->screen;
+		unsigned i;
+
+		for (i = 0; i < cs->cdw; i++) {
+			fprintf(stderr, "[%4d] [%5d] 0x%08x\n", rscreen->cs_count, i, cs->buf[i]);
+		}
+		rscreen->cs_count++;
+	}
+#endif
+
 	/* Flush the CS. */
 	ctx->ws->cs_flush(ctx->cs, flags);
+
+#if R600_TRACE_CS
+	if (ctx->screen->trace_bo) {
+		struct r600_screen *rscreen = ctx->screen;
+		unsigned i;
+
+		for (i = 0; i < 10; i++) {
+			usleep(5);
+			if (!ctx->ws->buffer_is_busy(rscreen->trace_bo->buf, RADEON_USAGE_READWRITE)) {
+				break;
+			}
+		}
+		if (i == 10) {
+			fprintf(stderr, "timeout on cs lockup likely happen at cs %d dw %d\n",
+				rscreen->trace_ptr[1], rscreen->trace_ptr[0]);
+		} else {
+			fprintf(stderr, "cs %d executed in %dms\n", rscreen->trace_ptr[1], i * 5);
+		}
+	}
+#endif
 
 	ctx->pm4_dirty_cdwords = 0;
 	ctx->flags = 0;
@@ -665,3 +703,23 @@ void r600_context_draw_opaque_count(struct r600_context *ctx, struct r600_so_tar
 	cs->buf[cs->cdw++] = r600_context_bo_reloc(ctx, t->filled_size, RADEON_USAGE_READ);
 
 }
+
+#if R600_TRACE_CS
+void r600_trace_emit(struct r600_context *rctx)
+{
+	struct r600_screen *rscreen = rctx->screen;
+	struct radeon_winsys_cs *cs = rctx->cs;
+	uint64_t va;
+
+	va = r600_resource_va(&rscreen->screen, (void*)rscreen->trace_bo);
+	r600_context_bo_reloc(rctx, rscreen->trace_bo, RADEON_USAGE_READWRITE);
+	cs->buf[cs->cdw++] = PKT3(PKT3_WRITE_DATA, 4, 0);
+	cs->buf[cs->cdw++] = PKT3_WRITE_DATA_DST_SEL(PKT3_WRITE_DATA_DST_SEL_MEM_SYNC) |
+				PKT3_WRITE_DATA_WR_CONFIRM |
+				PKT3_WRITE_DATA_ENGINE_SEL(PKT3_WRITE_DATA_ENGINE_SEL_ME);
+	cs->buf[cs->cdw++] = va & 0xFFFFFFFFUL;
+	cs->buf[cs->cdw++] = (va >> 32UL) & 0xFFFFFFFFUL;
+	cs->buf[cs->cdw++] = cs->cdw;
+	cs->buf[cs->cdw++] = rscreen->cs_count;
+}
+#endif

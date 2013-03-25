@@ -579,6 +579,12 @@ void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 	si_pm4_emit_dirty(rctx);
 	rctx->pm4_dirty_cdwords = 0;
 
+#if R600_TRACE_CS
+	if (rctx->screen->trace_bo) {
+		r600_trace_emit(rctx);
+	}
+#endif
+
 #if 0
 	/* Enable stream out if needed. */
 	if (rctx->streamout_start) {
@@ -586,7 +592,6 @@ void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 		rctx->streamout_start = FALSE;
 	}
 #endif
-
 
 	rctx->flags |= R600_CONTEXT_DST_CACHES_DIRTY;
 

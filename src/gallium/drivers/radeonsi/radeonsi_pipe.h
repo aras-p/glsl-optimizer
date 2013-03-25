@@ -47,6 +47,9 @@
 #define R600_BIG_ENDIAN 0
 #endif
 
+#define R600_TRACE_CS 0
+#define R600_TRACE_CS_DWORDS		6
+
 struct r600_pipe_fences {
 	struct si_resource		*bo;
 	unsigned			*data;
@@ -67,6 +70,11 @@ struct r600_screen {
 	struct r600_tiling_info		tiling_info;
 	struct util_slab_mempool	pool_buffers;
 	struct r600_pipe_fences		fences;
+#if R600_TRACE_CS
+	struct si_resource		*trace_bo;
+	uint32_t			*trace_ptr;
+	unsigned			cs_count;
+#endif
 };
 
 struct si_pipe_sampler_view {
@@ -225,6 +233,10 @@ void si_init_surface_functions(struct r600_context *r600);
 void r600_translate_index_buffer(struct r600_context *r600,
 				 struct pipe_index_buffer *ib,
 				 unsigned count);
+
+#if R600_TRACE_CS
+void r600_trace_emit(struct r600_context *rctx);
+#endif
 
 /*
  * common helpers
