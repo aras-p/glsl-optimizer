@@ -1537,15 +1537,16 @@ renderbuffer_storage(GLenum target, GLenum internalFormat,
       /* NumSamples == 0 indicates non-multisampling */
       samples = 0;
    }
-
-   /* check the sample count;
-    * note: driver may choose to use more samples than what's requested
-    */
-   sample_count_error = _mesa_check_sample_count(ctx, target,
-         internalFormat, samples);
-   if (sample_count_error != GL_NO_ERROR) {
-      _mesa_error(ctx, sample_count_error, "%s(samples)", func);
-      return;
+   else {
+      /* check the sample count;
+       * note: driver may choose to use more samples than what's requested
+       */
+      sample_count_error = _mesa_check_sample_count(ctx, target,
+            internalFormat, samples);
+      if (sample_count_error != GL_NO_ERROR) {
+         _mesa_error(ctx, sample_count_error, "%s(samples)", func);
+         return;
+      }
    }
 
    rb = ctx->CurrentRenderbuffer;
