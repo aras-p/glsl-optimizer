@@ -3191,7 +3191,7 @@ glsl_to_tgsi_visitor::simplify_cmp(void)
          prevWriteMask = tempWrites[inst->dst.index];
          tempWrites[inst->dst.index] |= inst->dst.writemask;
       } else
-         break;
+         continue;
 
       /* For a CMP to be considered a conditional write, the destination
        * register and source register two must be the same. */
