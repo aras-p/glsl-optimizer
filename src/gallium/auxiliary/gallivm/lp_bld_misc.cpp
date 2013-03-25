@@ -40,6 +40,14 @@
 #define __STDC_CONSTANT_MACROS
 #endif
 
+// Undef these vars just to silence warnings
+#undef PACKAGE_BUGREPORT
+#undef PACKAGE_NAME
+#undef PACKAGE_STRING
+#undef PACKAGE_TARNAME
+#undef PACKAGE_VERSION
+
+
 #include <stddef.h>
 
 #include <llvm-c/Core.h>
