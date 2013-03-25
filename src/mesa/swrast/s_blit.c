@@ -110,8 +110,8 @@ blit_nearest(struct gl_context *ctx,
              GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
              GLbitfield buffer)
 {
-   struct gl_renderbuffer *readRb, *drawRb;
-   struct gl_renderbuffer_attachment *readAtt, *drawAtt;
+   struct gl_renderbuffer *readRb, *drawRb = NULL;
+   struct gl_renderbuffer_attachment *readAtt = NULL, *drawAtt = NULL;
    struct gl_framebuffer *readFb = ctx->ReadBuffer;
    struct gl_framebuffer *drawFb = ctx->DrawBuffer;
    GLuint numDrawBuffers = 0;
@@ -135,12 +135,12 @@ blit_nearest(struct gl_context *ctx,
       UNPACK_Z_FLOAT,
       UNPACK_Z_INT,
       UNPACK_S,
-   } mode;
+   } mode = DIRECT;
    GLubyte *srcMap, *dstMap;
    GLint srcRowStride, dstRowStride;
    GLint dstRow;
 
-   GLint pixelSize;
+   GLint pixelSize = 0;
    GLvoid *srcBuffer, *dstBuffer;
    GLint prevY = -1;
 
