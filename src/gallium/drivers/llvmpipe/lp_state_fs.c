@@ -1219,7 +1219,7 @@ convert_to_blend_type(struct gallivm_state *gallivm,
 
    for (i = 0; i < num_srcs; ++i) {
       LLVMValueRef chans[4];
-      LLVMValueRef res;
+      LLVMValueRef res = NULL;
       unsigned sa = 0;
 
       dst[i] = LLVMBuildZExt(builder, src[i], lp_build_vec_type(gallivm, src_type), "");
@@ -1368,7 +1368,7 @@ convert_from_blend_type(struct gallivm_state *gallivm,
 
    for (i = 0; i < num_srcs; ++i) {
       LLVMValueRef chans[4];
-      LLVMValueRef res;
+      LLVMValueRef res = NULL;
       unsigned sa = 0;
 
       dst[i] = LLVMBuildBitCast(builder, src[i], lp_build_vec_type(gallivm, src_type), "");
