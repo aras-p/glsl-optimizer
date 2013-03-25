@@ -489,29 +489,33 @@ static unsigned r600_tex_from_byte_stream(struct r600_shader_ctx *ctx,
 {
 	struct r600_bytecode_tex tex;
 
-	tex.op = r600_isa_fetch_by_opcode(ctx->bc->isa, bytes[bytes_read++]);
-	tex.resource_id = bytes[bytes_read++];
-	tex.src_gpr = bytes[bytes_read++];
-	tex.src_rel = bytes[bytes_read++];
-	tex.dst_gpr = bytes[bytes_read++];
-	tex.dst_rel = bytes[bytes_read++];
-	tex.dst_sel_x = bytes[bytes_read++];
-	tex.dst_sel_y = bytes[bytes_read++];
-	tex.dst_sel_z = bytes[bytes_read++];
-	tex.dst_sel_w = bytes[bytes_read++];
-	tex.lod_bias = bytes[bytes_read++];
-	tex.coord_type_x = bytes[bytes_read++];
-	tex.coord_type_y = bytes[bytes_read++];
-	tex.coord_type_z = bytes[bytes_read++];
-	tex.coord_type_w = bytes[bytes_read++];
-	tex.offset_x = bytes[bytes_read++];
-	tex.offset_y = bytes[bytes_read++];
-	tex.offset_z = bytes[bytes_read++];
-	tex.sampler_id = bytes[bytes_read++];
-	tex.src_sel_x = bytes[bytes_read++];
-	tex.src_sel_y = bytes[bytes_read++];
-	tex.src_sel_z = bytes[bytes_read++];
-	tex.src_sel_w = bytes[bytes_read++];
+	uint32_t word0 = i32_from_byte_stream(bytes, &bytes_read);
+	uint32_t word1 = i32_from_byte_stream(bytes, &bytes_read);
+	uint32_t word2 = i32_from_byte_stream(bytes, &bytes_read);
+
+	tex.op = r600_isa_fetch_by_opcode(ctx->bc->isa, G_SQ_TEX_WORD0_TEX_INST(word0));
+	tex.resource_id = G_SQ_TEX_WORD0_RESOURCE_ID(word0);
+	tex.src_gpr = G_SQ_TEX_WORD0_SRC_GPR(word0);
+	tex.src_rel = G_SQ_TEX_WORD0_SRC_REL(word0);
+	tex.dst_gpr = G_SQ_TEX_WORD1_DST_GPR(word1);
+	tex.dst_rel = G_SQ_TEX_WORD1_DST_REL(word1);
+	tex.dst_sel_x = G_SQ_TEX_WORD1_DST_SEL_X(word1);
+	tex.dst_sel_y = G_SQ_TEX_WORD1_DST_SEL_Y(word1);
+	tex.dst_sel_z = G_SQ_TEX_WORD1_DST_SEL_Z(word1);
+	tex.dst_sel_w = G_SQ_TEX_WORD1_DST_SEL_W(word1);
+	tex.lod_bias = G_SQ_TEX_WORD1_LOD_BIAS(word1);
+	tex.coord_type_x = G_SQ_TEX_WORD1_COORD_TYPE_X(word1);
+	tex.coord_type_y = G_SQ_TEX_WORD1_COORD_TYPE_Y(word1);
+	tex.coord_type_z = G_SQ_TEX_WORD1_COORD_TYPE_Z(word1);
+	tex.coord_type_w = G_SQ_TEX_WORD1_COORD_TYPE_W(word1);
+	tex.offset_x = G_SQ_TEX_WORD2_OFFSET_X(word2);
+	tex.offset_y = G_SQ_TEX_WORD2_OFFSET_Y(word2);
+	tex.offset_z = G_SQ_TEX_WORD2_OFFSET_Z(word2);
+	tex.sampler_id = G_SQ_TEX_WORD2_SAMPLER_ID(word2);
+	tex.src_sel_x = G_SQ_TEX_WORD2_SRC_SEL_X(word2);
+	tex.src_sel_y = G_SQ_TEX_WORD2_SRC_SEL_Y(word2);
+	tex.src_sel_z = G_SQ_TEX_WORD2_SRC_SEL_Z(word2);
+	tex.src_sel_w = G_SQ_TEX_WORD2_SRC_SEL_W(word2);
 
 	tex.inst_mod = 0;
 
