@@ -1,0 +1,83 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <title>Application Issues</title>
+  <link rel="stylesheet" type="text/css" href="mesa.css">
+</head>
+<body>
+
+<div class="header">
+  <h1>The Mesa 3D Graphics Library</h1>
+</div>
+
+<iframe src="contents.html"></iframe>
+<div class="content">
+
+<h1>Application Issues</h1>
+
+<p>
+This page documents known issues with some OpenGL applications.
+</p>
+
+
+<h2>Topogun</h2>
+
+<p>
+<a href="http://www.topogun.com/">Topogun</a> for Linux (version 2, at least)
+creates a GLX visual without requesting a depth buffer.
+This causes bad rendering if the OpenGL driver happens to choose a visual
+without a depth buffer.
+</p>
+
+<p>
+Mesa 9.1.2 and later (will) support a DRI configuration option to work around
+this issue.
+Using the <a href="http://dri.freedesktop.org/wiki/DriConf">driconf</a> tool,
+set the "Create all visuals with a depth buffer" option before running Topogun.
+Then, all GLX visuals will be created with a depth buffer.
+</p>
+
+
+<h2>Old OpenGL games</h2>
+
+<p>
+Some old OpenGL games (approx. ten years or older) may crash during
+start-up because of an extension string buffer-overflow problem.
+</p>
+
+<p>
+The problem is a modern OpenGL driver will return a very long string
+for the glGetString(GL_EXTENSIONS) query and if the application
+naively copies the string into a fixed-size buffer it can overflow the
+buffer and crash the application.
+</p>
+
+<p>
+The work-around is to set the MESA_EXTENSION_MAX_YEAR environment variable
+to the approximate release year of the game.
+This will cause the glGetString(GL_EXTENSIONS) query to only report extensions
+older than the given year.
+</p>
+
+<p>
+For example, if the game was released in 2001, do
+<pre>
+export MESA_EXTENSION_MAX_YEAR=2001
+</pre>
+before running the game.
+</p>
+
+
+
+<h2>Viewperf</h2>
+
+<p>
+See the <a href="viewperf.html">Viewperf issues</a> page for a detailed list
+of Viewperf issues.
+</p>
+
+
+</div>
+</body>
+</html>
