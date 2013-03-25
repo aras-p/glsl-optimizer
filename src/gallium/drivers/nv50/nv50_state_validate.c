@@ -9,6 +9,7 @@ nv50_validate_fb(struct nv50_context *nv50)
    struct pipe_framebuffer_state *fb = &nv50->framebuffer;
    unsigned i;
    unsigned ms_mode = NV50_3D_MULTISAMPLE_MODE_MS1;
+   uint32_t array_size = 0xffff, array_mode = 0;
 
    nouveau_bufctx_reset(nv50->bufctx_3d, NV50_BIND_FB);
 
@@ -23,6 +24,13 @@ nv50_validate_fb(struct nv50_context *nv50)
       struct nv50_surface *sf = nv50_surface(fb->cbufs[i]);
       struct nouveau_bo *bo = mt->base.bo;
 
+      array_size = MIN2(array_size, sf->depth);
+      if (mt->layout_3d)
+         array_mode = NV50_3D_RT_ARRAY_MODE_MODE_3D; /* 1 << 16 */
+
+      /* can't mix 3D with ARRAY or have RTs of different depth/array_size */
+      assert(mt->layout_3d || !array_mode || array_size == 1);
+
       BEGIN_NV04(push, NV50_3D(RT_ADDRESS_HIGH(i)), 5);
       PUSH_DATAh(push, bo->offset + sf->offset);
       PUSH_DATA (push, bo->offset + sf->offset);
@@ -34,7 +42,7 @@ nv50_validate_fb(struct nv50_context *nv50)
          PUSH_DATA (push, sf->width);
          PUSH_DATA (push, sf->height);
          BEGIN_NV04(push, NV50_3D(RT_ARRAY_MODE), 1);
-         PUSH_DATA (push, sf->depth);
+         PUSH_DATA (push, array_mode | array_size);
       } else {
          PUSH_DATA (push, 0);
          PUSH_DATA (push, 0);
@@ -63,7 +71,7 @@ nv50_validate_fb(struct nv50_context *nv50)
       struct nv50_miptree *mt = nv50_miptree(fb->zsbuf->texture);
       struct nv50_surface *sf = nv50_surface(fb->zsbuf);
       struct nouveau_bo *bo = mt->base.bo;
-      int unk = mt->base.base.target == PIPE_TEXTURE_2D;
+      int unk = mt->base.base.target == PIPE_TEXTURE_3D || sf->depth == 1;
 
       BEGIN_NV04(push, NV50_3D(ZETA_ADDRESS_HIGH), 5);
       PUSH_DATAh(push, bo->offset + sf->offset);
