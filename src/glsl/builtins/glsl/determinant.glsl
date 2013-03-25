@@ -22,6 +22,10 @@
  */
 
 #version 120
+
+// Forward declaration because builtins don't know about other builtins.
+float dot(vec4, vec4);
+
 float determinant(mat2 m)
 {
    return m[0].x * m[1].y - m[1].x * m[0].y;
@@ -63,8 +67,5 @@ float determinant(mat4 m)
    adj_0.z = + (m[1].x * SubFactor01 - m[1].y * SubFactor03 + m[1].w * SubFactor05);
    adj_0.w = - (m[1].x * SubFactor02 - m[1].y * SubFactor04 + m[1].z * SubFactor05);
 
-   return (+ m[0].x * adj_0.x
-           + m[0].y * adj_0.y
-           + m[0].z * adj_0.z
-           + m[0].w * adj_0.w);
+   return dot(m[0], adj_0);
 }
