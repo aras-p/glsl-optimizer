@@ -940,7 +940,7 @@ struct __DRIdri2ExtensionRec {
  * extensions.
  */
 #define __DRI_IMAGE "DRI_IMAGE"
-#define __DRI_IMAGE_VERSION 7
+#define __DRI_IMAGE_VERSION 8
 
 /**
  * These formats correspond to the similarly named MESA_FORMAT_*
@@ -1026,6 +1026,25 @@ struct __DRIdri2ExtensionRec {
 #define __DRI_IMAGE_ATTRIB_FD           0x2007 /* available in versions
                                                 * 7+. Each query will return a
                                                 * new fd. */
+
+enum __DRIYUVColorSpace {
+   __DRI_YUV_COLOR_SPACE_UNDEFINED = 0,
+   __DRI_YUV_COLOR_SPACE_ITU_REC601 = 0x327F,
+   __DRI_YUV_COLOR_SPACE_ITU_REC709 = 0x3280,
+   __DRI_YUV_COLOR_SPACE_ITU_REC2020 = 0x3281
+};
+
+enum __DRISampleRange {
+   __DRI_YUV_RANGE_UNDEFINED = 0,
+   __DRI_YUV_FULL_RANGE = 0x3282,
+   __DRI_YUV_NARROW_RANGE = 0x3283
+};
+
+enum __DRIChromaSiting {
+   __DRI_YUV_CHROMA_SITING_UNDEFINED = 0,
+   __DRI_YUV_CHROMA_SITING_0 = 0x3284,
+   __DRI_YUV_CHROMA_SITING_0_5 = 0x3285
+};
 
 /**
  * \name Reasons that __DRIimageExtensionRec::createImageFromTexture might fail
@@ -1132,6 +1151,24 @@ struct __DRIimageExtensionRec {
                                      int *fds, int num_fds,
                                      int *strides, int *offsets,
                                      void *loaderPrivate);
+
+   /**
+    * Like createImageFromFds, but takes additional attributes.
+    *
+    * For EGL_EXT_image_dma_buf_import.
+    *
+    * \since 8
+    */
+   __DRIimage *(*createImageFromDmaBufs)(__DRIscreen *screen,
+                                         int width, int height, int fourcc,
+                                         int *fds, int num_fds,
+                                         int *strides, int *offsets,
+                                         enum __DRIYUVColorSpace color_space,
+                                         enum __DRISampleRange sample_range,
+                                         enum __DRIChromaSiting horiz_siting,
+                                         enum __DRIChromaSiting vert_siting,
+                                         unsigned *error,
+                                         void *loaderPrivate);
 };
 
 

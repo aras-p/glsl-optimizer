@@ -40,6 +40,7 @@
 
 #include "main/mtypes.h"
 #include "intel_bufmgr.h"
+#include <GL/internal/dri_interface.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -148,6 +149,12 @@ struct __DRIimageRec {
    GLuint tile_x;
    GLuint tile_y;
    bool has_depthstencil;
+
+   /* Provided by EGL_EXT_image_dma_buf_import */
+   enum __DRIYUVColorSpace yuv_color_space;
+   enum __DRISampleRange sample_range;
+   enum __DRIChromaSiting horizontal_siting;
+   enum __DRIChromaSiting vertical_siting;
 
    void *data;
 };

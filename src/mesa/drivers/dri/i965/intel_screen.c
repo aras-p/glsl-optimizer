@@ -684,6 +684,49 @@ intel_create_image_from_fds(__DRIscreen *screen,
    return image;
 }
 
+static __DRIimage *
+intel_create_image_from_dma_bufs(__DRIscreen *screen,
+                                 int width, int height, int fourcc,
+                                 int *fds, int num_fds,
+                                 int *strides, int *offsets,
+                                 enum __DRIYUVColorSpace yuv_color_space,
+                                 enum __DRISampleRange sample_range,
+                                 enum __DRIChromaSiting horizontal_siting,
+                                 enum __DRIChromaSiting vertical_siting,
+                                 unsigned *error,
+                                 void *loaderPrivate)
+{
+   __DRIimage *image;
+   struct intel_image_format *f = intel_image_format_lookup(fourcc);
+
+   /* For now only packed formats that have native sampling are supported. */
+   if (!f || f->nplanes != 1) {
+      *error = __DRI_IMAGE_ERROR_BAD_MATCH;
+      return NULL;
+   }
+
+   image = intel_create_image_from_fds(screen, width, height, fourcc, fds,
+                                       num_fds, strides, offsets,
+                                       loaderPrivate);
+
+   /*
+    * Invalid parameters and any inconsistencies between are assumed to be
+    * checked by the caller. Therefore besides unsupported formats one can fail
+    * only in allocation.
+    */
+   if (!image) {
+      *error = __DRI_IMAGE_ERROR_BAD_ALLOC;
+      return NULL;
+   }
+
+   image->yuv_color_space = yuv_color_space;
+   image->sample_range = sample_range;
+   image->horizontal_siting = horizontal_siting;
+   image->vertical_siting = vertical_siting;
+
+   *error = __DRI_IMAGE_ERROR_SUCCESS;
+   return image;
+}
 
 static __DRIimage *
 intel_from_planar(__DRIimage *parent, int plane, void *loaderPrivate)
@@ -744,7 +787,7 @@ intel_from_planar(__DRIimage *parent, int plane, void *loaderPrivate)
 }
 
 static struct __DRIimageExtensionRec intelImageExtension = {
-    .base = { __DRI_IMAGE, 7 },
+    .base = { __DRI_IMAGE, 8 },
 
     .createImageFromName                = intel_create_image_from_name,
     .createImageFromRenderbuffer        = intel_create_image_from_renderbuffer,
@@ -756,7 +799,8 @@ static struct __DRIimageExtensionRec intelImageExtension = {
     .createImageFromNames               = intel_create_image_from_names,
     .fromPlanar                         = intel_from_planar,
     .createImageFromTexture             = intel_create_image_from_texture,
-    .createImageFromFds                 = intel_create_image_from_fds
+    .createImageFromFds                 = intel_create_image_from_fds,
+    .createImageFromDmaBufs             = intel_create_image_from_dma_bufs
 };
 
 static const __DRIextension *intelScreenExtensions[] = {
