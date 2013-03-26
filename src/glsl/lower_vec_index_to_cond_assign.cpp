@@ -58,6 +58,8 @@ public:
                                                ir_rvalue *orig_index,
                                                const glsl_type *type);
 
+   ir_rvalue *convert_vector_extract_to_cond_assign(ir_rvalue *ir);
+
    virtual ir_visitor_status visit_enter(ir_expression *);
    virtual ir_visitor_status visit_enter(ir_swizzle *);
    virtual ir_visitor_status visit_leave(ir_assignment *);
@@ -159,6 +161,20 @@ ir_vec_index_to_cond_assign_visitor::convert_vec_index_to_cond_assign(ir_rvalue 
                                            ir->type);
 }
 
+ir_rvalue *
+ir_vec_index_to_cond_assign_visitor::convert_vector_extract_to_cond_assign(ir_rvalue *ir)
+{
+   ir_expression *const expr = ir->as_expression();
+
+   if (expr == NULL || expr->operation != ir_binop_vector_extract)
+      return ir;
+
+   return convert_vec_index_to_cond_assign(ralloc_parent(ir),
+                                           expr->operands[0],
+                                           expr->operands[1],
+                                           ir->type);
+}
+
 ir_visitor_status
 ir_vec_index_to_cond_assign_visitor::visit_enter(ir_expression *ir)
 {
@@ -166,6 +182,7 @@ ir_vec_index_to_cond_assign_visitor::visit_enter(ir_expression *ir)
 
    for (i = 0; i < ir->get_num_operands(); i++) {
       ir->operands[i] = convert_vec_index_to_cond_assign(ir->operands[i]);
+      ir->operands[i] = convert_vector_extract_to_cond_assign(ir->operands[i]);
    }
 
    return visit_continue;
@@ -179,6 +196,7 @@ ir_vec_index_to_cond_assign_visitor::visit_enter(ir_swizzle *ir)
     * using swizzling of scalars for vector construction.
     */
    ir->val = convert_vec_index_to_cond_assign(ir->val);
+   ir->val = convert_vector_extract_to_cond_assign(ir->val);
 
    return visit_continue;
 }
@@ -192,8 +210,12 @@ ir_vec_index_to_cond_assign_visitor::visit_leave(ir_assignment *ir)
    unsigned i;
 
    ir->rhs = convert_vec_index_to_cond_assign(ir->rhs);
-   if (ir->condition)
+   ir->rhs = convert_vector_extract_to_cond_assign(ir->rhs);
+
+   if (ir->condition) {
       ir->condition = convert_vec_index_to_cond_assign(ir->condition);
+      ir->condition = convert_vector_extract_to_cond_assign(ir->condition);
+   }
 
    /* Last, handle the LHS */
    ir_dereference_array *orig_deref = ir->lhs->as_dereference_array();
@@ -283,6 +305,12 @@ ir_vec_index_to_cond_assign_visitor::visit_enter(ir_call *ir)
 
       if (new_param != param) {
 	 param->replace_with(new_param);
+      } else {
+         new_param = convert_vector_extract_to_cond_assign(param);
+
+         if (new_param != param) {
+            param->replace_with(new_param);
+         }
       }
    }
 
@@ -294,6 +322,7 @@ ir_vec_index_to_cond_assign_visitor::visit_enter(ir_return *ir)
 {
    if (ir->value) {
       ir->value = convert_vec_index_to_cond_assign(ir->value);
+      ir->value = convert_vector_extract_to_cond_assign(ir->value);
    }
 
    return visit_continue;
@@ -303,6 +332,7 @@ ir_visitor_status
 ir_vec_index_to_cond_assign_visitor::visit_enter(ir_if *ir)
 {
    ir->condition = convert_vec_index_to_cond_assign(ir->condition);
+   ir->condition = convert_vector_extract_to_cond_assign(ir->condition);
 
    return visit_continue;
 }
