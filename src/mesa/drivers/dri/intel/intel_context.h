@@ -206,6 +206,22 @@ struct intel_context
 				      uint32_t *out_offset,
                                       bool dword_pitch);
       /** \} */
+
+      /**
+       * Send the appropriate state packets to configure depth, stencil, and
+       * HiZ buffers (i965+ only)
+       */
+      void (*emit_depth_stencil_hiz)(struct brw_context *brw,
+                                     struct intel_mipmap_tree *depth_mt,
+                                     uint32_t depth_offset,
+                                     uint32_t depthbuffer_format,
+                                     uint32_t depth_surface_type,
+                                     struct intel_mipmap_tree *stencil_mt,
+                                     struct intel_mipmap_tree *hiz_mt,
+                                     bool separate_stencil,
+                                     uint32_t width, uint32_t height,
+                                     uint32_t tile_x, uint32_t tile_y);
+
    } vtbl;
 
    GLbitfield Fallback;  /**< mask of INTEL_FALLBACK_x bits */
