@@ -795,10 +795,6 @@ static void tex_fetch_args(
 	unsigned count = 0;
 	unsigned chan;
 
-	/* WriteMask */
-	/* XXX: should be optimized using emit_data->inst->Dst[0].Register.WriteMask*/
-	emit_data->args[0] = lp_build_const_int32(bld_base->base.gallivm, 0xf);
-
 	/* Fetch and project texture coordinates */
 	coords[3] = lp_build_emit_fetch(bld_base, emit_data->inst, 0, TGSI_CHAN_W);
 	for (chan = 0; chan < 3; chan++ ) {
@@ -904,20 +900,19 @@ static void tex_fetch_args(
 	while (count < util_next_power_of_two(count))
 		address[count++] = LLVMGetUndef(LLVMInt32TypeInContext(gallivm->context));
 
-	emit_data->args[1] = lp_build_gather_values(gallivm, address, count);
+	emit_data->args[0] = lp_build_gather_values(gallivm, address, count);
 
 	/* Resource */
-	emit_data->args[2] = si_shader_ctx->resources[emit_data->inst->Src[1].Register.Index];
+	emit_data->args[1] = si_shader_ctx->resources[emit_data->inst->Src[1].Register.Index];
 
 	/* Sampler */
-	emit_data->args[3] = si_shader_ctx->samplers[emit_data->inst->Src[1].Register.Index];
+	emit_data->args[2] = si_shader_ctx->samplers[emit_data->inst->Src[1].Register.Index];
 
 	/* Dimensions */
-	emit_data->args[4] = lp_build_const_int32(bld_base->base.gallivm, target);
+	emit_data->args[3] = lp_build_const_int32(bld_base->base.gallivm, target);
 
-	emit_data->arg_count = 5;
-	/* XXX: To optimize, we could use a float or v2f32, if the last bits of
-	 * the writemask are clear */
+	emit_data->arg_count = 4;
+
 	emit_data->dst_type = LLVMVectorType(
 			LLVMFloatTypeInContext(bld_base->base.gallivm->context),
 			4);
@@ -931,7 +926,7 @@ static void build_tex_intrinsic(const struct lp_build_tgsi_action * action,
 	char intr_name[23];
 
 	sprintf(intr_name, "%sv%ui32", action->intr_name,
-		LLVMGetVectorSize(LLVMTypeOf(emit_data->args[1])));
+		LLVMGetVectorSize(LLVMTypeOf(emit_data->args[0])));
 
 	emit_data->output[emit_data->chan] = build_intrinsic(
 		base->gallivm->builder, intr_name, emit_data->dst_type,
