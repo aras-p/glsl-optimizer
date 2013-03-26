@@ -506,9 +506,8 @@ int draw_geometry_shader_run(struct draw_geometry_shader *shader,
    output_verts->stride = output_verts->vertex_size;
    output_verts->verts =
       (struct vertex_header *)MALLOC(output_verts->vertex_size *
-                                     num_in_primitives *
+                                     max_out_prims *
                                      shader->max_output_vertices);
-
 
 #if 0
    debug_printf("%s count = %d (in prims # = %d)\n",
