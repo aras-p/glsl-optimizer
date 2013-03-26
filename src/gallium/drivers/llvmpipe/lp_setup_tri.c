@@ -865,6 +865,166 @@ rotate_fixed_position_12( struct fixed_position* position )
 }
 
 
+typedef void (*triangle_func_t)(struct lp_setup_context *setup,
+                                const float (*v0)[4],
+                                const float (*v1)[4],
+                                const float (*v2)[4]);
+
+
+/**
+ * Subdivide this triangle by bisecting edge (v0, v1).
+ * \param pv  the provoking vertex (must = v0 or v1 or v2)
+ */
+static void
+subdiv_tri(struct lp_setup_context *setup,
+           const float (*v0)[4],
+           const float (*v1)[4],
+           const float (*v2)[4],
+           const float (*pv)[4],
+           triangle_func_t tri)
+{
+   unsigned n = setup->fs.current.variant->shader->info.base.num_inputs + 1;
+   const struct lp_shader_input *inputs =
+      setup->fs.current.variant->shader->inputs;
+   float vmid[PIPE_MAX_ATTRIBS][4];
+   const float (*vm)[4] = (const float (*)[4]) vmid;
+   unsigned i;
+   float w0, w1, wm;
+   boolean flatshade = setup->fs.current.variant->key.flatshade;
+
+   /* find position midpoint (attrib[0] = position) */
+   vmid[0][0] = 0.5f * (v1[0][0] + v0[0][0]);
+   vmid[0][1] = 0.5f * (v1[0][1] + v0[0][1]);
+   vmid[0][2] = 0.5f * (v1[0][2] + v0[0][2]);
+   vmid[0][3] = 0.5f * (v1[0][3] + v0[0][3]);
+
+   w0 = v0[0][3];
+   w1 = v1[0][3];
+   wm = vmid[0][3];
+
+   /* interpolate other attributes */
+   for (i = 1; i < n; i++) {
+      if ((inputs[i - 1].interp == LP_INTERP_COLOR && flatshade) ||
+          inputs[i - 1].interp == LP_INTERP_CONSTANT) {
+         /* copy the provoking vertex's attribute */
+         vmid[i][0] = pv[i][0];
+         vmid[i][1] = pv[i][1];
+         vmid[i][2] = pv[i][2];
+         vmid[i][3] = pv[i][3];
+      }
+      else {
+         /* interpolate with perspective correction (for linear too) */
+         vmid[i][0] = 0.5f * (v1[i][0] * w1 + v0[i][0] * w0) / wm;
+         vmid[i][1] = 0.5f * (v1[i][1] * w1 + v0[i][1] * w0) / wm;
+         vmid[i][2] = 0.5f * (v1[i][2] * w1 + v0[i][2] * w0) / wm;
+         vmid[i][3] = 0.5f * (v1[i][3] * w1 + v0[i][3] * w0) / wm;
+      }
+   }
+
+   /* handling flat shading and first vs. last provoking vertex is a
+    * little tricky...
+    */
+   if (pv == v0) {
+      if (setup->flatshade_first) {
+         /* first vertex must be v0 or vm */
+         tri(setup, v0, vm, v2);
+         tri(setup, vm, v1, v2);
+      }
+      else {
+         /* last vertex must be v0 or vm */
+         tri(setup, vm, v2, v0);
+         tri(setup, v1, v2, vm);
+      }
+   }
+   else if (pv == v1) {
+      if (setup->flatshade_first) {
+         tri(setup, vm, v2, v0);
+         tri(setup, v1, v2, vm);
+      }
+      else {
+         tri(setup, v2, v0, vm);
+         tri(setup, v2, vm, v1);
+      }
+   }
+   else {
+      if (setup->flatshade_first) {
+         tri(setup, v2, v0, vm);
+         tri(setup, v2, vm, v1);
+      }
+      else {
+         tri(setup, v0, vm, v2);
+         tri(setup, vm, v1, v2);
+      }
+   }
+}
+
+
+/**
+ * Check the lengths of the edges of the triangle.  If any edge is too
+ * long, subdivide the longest edge and draw two sub-triangles.
+ * Note: this may be called recursively.
+ * \return TRUE if triangle was subdivided, FALSE otherwise
+ */
+static boolean
+check_subdivide_triangle(struct lp_setup_context *setup,
+                         const float (*v0)[4],
+                         const float (*v1)[4],
+                         const float (*v2)[4],
+                         triangle_func_t tri)
+{
+   const float maxLen = 2048.0f;  /* longest permissible edge, in pixels */
+   float dx10, dy10, len10;
+   float dx21, dy21, len21;
+   float dx02, dy02, len02;
+   const float (*pv)[4] = setup->flatshade_first ? v0 : v2;
+
+   /* compute lengths of triangle edges, squared */
+   dx10 = v1[0][0] - v0[0][0];
+   dy10 = v1[0][1] - v0[0][1];
+   len10 = dx10 * dx10 + dy10 * dy10;
+
+   dx21 = v2[0][0] - v1[0][0];
+   dy21 = v2[0][1] - v1[0][1];
+   len21 = dx21 * dx21 + dy21 * dy21;
+
+   dx02 = v0[0][0] - v2[0][0];
+   dy02 = v0[0][1] - v2[0][1];
+   len02 = dx02 * dx02 + dy02 * dy02;
+
+   /* Look for longest the edge that's longer than maxLen.  If we find
+    * such an edge, split the triangle using the midpoint of that edge.
+    * Note: it's important to split the longest edge, not just any edge
+    * that's longer than maxLen.  Otherwise, we can get into a degenerate
+    * situation and recurse indefinitely.
+    */
+   if (len10 > maxLen * maxLen &&
+       len10 >= len21 &&
+       len10 >= len02) {
+      /* subdivide v0, v1 edge */
+      subdiv_tri(setup, v0, v1, v2, pv, tri);
+      return TRUE;
+   }
+
+   if (len21 > maxLen * maxLen &&
+       len21 >= len10 &&
+       len21 >= len02) {       
+      /* subdivide v1, v2 edge */
+      subdiv_tri(setup, v1, v2, v0, pv, tri);
+      return TRUE;
+   }
+
+   if (len02 > maxLen * maxLen &&
+       len02 >= len21 &&
+       len02 >= len10) {       
+      /* subdivide v2, v0 edge */
+      subdiv_tri(setup, v2, v0, v1, pv, tri);
+      return TRUE;
+   }
+
+   return FALSE;
+}
+
+
 /**
  * Draw triangle if it's CW, cull otherwise.
  */
@@ -874,6 +1034,11 @@ static void triangle_cw( struct lp_setup_context *setup,
 			 const float (*v2)[4] )
 {
    struct fixed_position position;
+
+   if (setup->subdivide_large_triangles &&
+       check_subdivide_triangle(setup, v0, v1, v2, triangle_cw))
+      return;
+
    calc_fixed_position(setup, &position, v0, v1, v2);
 
    if (position.area < 0) {
@@ -894,6 +1059,11 @@ static void triangle_ccw( struct lp_setup_context *setup,
                           const float (*v2)[4])
 {
    struct fixed_position position;
+
+   if (setup->subdivide_large_triangles &&
+       check_subdivide_triangle(setup, v0, v1, v2, triangle_ccw))
+      return;
+
    calc_fixed_position(setup, &position, v0, v1, v2);
 
    if (position.area > 0)
@@ -909,6 +1079,11 @@ static void triangle_both( struct lp_setup_context *setup,
 			   const float (*v2)[4] )
 {
    struct fixed_position position;
+
+   if (setup->subdivide_large_triangles &&
+       check_subdivide_triangle(setup, v0, v1, v2, triangle_both))
+      return;
+
    calc_fixed_position(setup, &position, v0, v1, v2);
 
    if (0) {

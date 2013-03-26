@@ -1010,6 +1010,16 @@ try_update_scene_state( struct lp_setup_context *setup )
          u_rect_possible_intersection(&setup->scissor,
                                       &setup->draw_region);
       }
+      /* If the framebuffer is large we have to think about fixed-point
+       * integer overflow.  For 2K by 2K images, coordinates need 15 bits
+       * (2^11 + 4 subpixel bits).  The product of two such numbers would
+       * use 30 bits.  Any larger and we could overflow a 32-bit int.
+       *
+       * To cope with this problem we check if triangles are large and
+       * subdivide them if needed.
+       */
+      setup->subdivide_large_triangles = (setup->fb.width > 2048 &&
+                                          setup->fb.height > 2048);
    }
                                       
    setup->dirty = 0;
