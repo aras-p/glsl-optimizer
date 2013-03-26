@@ -716,12 +716,12 @@ store_aos(struct gallivm_state *gallivm,
    indices[1] = index;
    indices[2] = lp_build_const_int32(gallivm, 0);
 
+   data_ptr = LLVMBuildGEP(builder, data_ptr, indices, 3, "");
+   data_ptr = LLVMBuildPointerCast(builder, data_ptr, data_ptr_type, "");
+
 #if DEBUG_STORE
    lp_build_printf(gallivm, "    ---- %p storing attribute %d (io = %p)\n", data_ptr, index, io_ptr);
 #endif
-
-   data_ptr = LLVMBuildGEP(builder, data_ptr, indices, 3, "");
-   data_ptr = LLVMBuildPointerCast(builder, data_ptr, data_ptr_type, "");
 
    /* Unaligned store due to the vertex header */
    lp_set_store_alignment(LLVMBuildStore(builder, value, data_ptr), sizeof(float));
@@ -826,7 +826,7 @@ store_aos_array(struct gallivm_state *gallivm,
          val = adjust_mask(gallivm, val);
          LLVMBuildStore(builder, val, id_ptr);
 #if DEBUG_STORE
-         lp_build_printf(gallivm, "io = %p, index %d\n, clipmask = %x\n",
+         lp_build_printf(gallivm, "io = %p, index %d, clipmask = %x\n",
                          io_ptrs[i], inds[i], val);
 #endif
       }
@@ -1290,9 +1290,6 @@ draw_gs_llvm_end_primitive(struct lp_build_tgsi_context * bld_base,
       LLVMValueRef num_vertices =
          LLVMBuildExtractElement(builder, verts_per_prim_vec, ind, "");
 
-      /*lp_build_printf(gallivm, "XXXX emitting vertices, %d\n\n",
-                        num_vertices);*/
-      
       store_ptr = LLVMBuildGEP(builder, prim_lengts_ptr, &prims_emitted, 1, "");
       store_ptr = LLVMBuildLoad(builder, store_ptr, "");
       store_ptr = LLVMBuildGEP(builder, store_ptr, &ind, 1, "");
@@ -1318,7 +1315,7 @@ draw_gs_llvm_epilogue(struct lp_build_tgsi_context * bld_base,
    
    emitted_verts_ptr = LLVMBuildGEP(builder, emitted_verts_ptr, &zero, 0, "");
    emitted_prims_ptr = LLVMBuildGEP(builder, emitted_prims_ptr, &zero, 0, "");
-   
+
    LLVMBuildStore(builder, total_emitted_vertices_vec, emitted_verts_ptr);
    LLVMBuildStore(builder, emitted_prims_vec, emitted_prims_ptr);
 }
