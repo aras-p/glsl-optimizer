@@ -106,7 +106,7 @@ void r600_bytecode_init(struct r600_bytecode *bc,
 	bc->msaa_texture_mode = msaa_texture_mode;
 }
 
-static int r600_bytecode_add_cf(struct r600_bytecode *bc)
+int r600_bytecode_add_cf(struct r600_bytecode *bc)
 {
 	struct r600_bytecode_cf *cf = r600_bytecode_cf();
 

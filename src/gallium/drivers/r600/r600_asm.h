@@ -227,6 +227,7 @@ int r600_bytecode_add_tex(struct r600_bytecode *bc,
 int r600_bytecode_add_output(struct r600_bytecode *bc,
 		const struct r600_bytecode_output *output);
 int r600_bytecode_build(struct r600_bytecode *bc);
+int r600_bytecode_add_cf(struct r600_bytecode *bc);
 int r600_bytecode_add_cfinst(struct r600_bytecode *bc,
 		unsigned op);
 int r600_bytecode_add_alu_type(struct r600_bytecode *bc,

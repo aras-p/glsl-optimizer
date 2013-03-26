@@ -626,6 +626,20 @@ static void r600_bytecode_from_byte_stream(struct r600_shader_ctx *ctx,
             bytes_read = r600_export_from_byte_stream(ctx, bytes,
                                 bytes_read);
             break;
+		case 6: {
+			int32_t word0 = i32_from_byte_stream(bytes, &bytes_read);
+			int32_t word1 = i32_from_byte_stream(bytes, &bytes_read);
+
+			r600_bytecode_add_cf(ctx->bc);
+			ctx->bc->cf_last->op = r600_isa_cf_by_opcode(ctx->bc->isa, 8/* CF_ALU*/, 1);
+			ctx->bc->cf_last->kcache[0].bank = G_SQ_CF_ALU_WORD0_KCACHE_BANK0(word0);
+			ctx->bc->cf_last->kcache[0].addr = G_SQ_CF_ALU_WORD1_KCACHE_ADDR0(word1);
+			ctx->bc->cf_last->kcache[0].mode = G_SQ_CF_ALU_WORD0_KCACHE_MODE0(word0);
+			ctx->bc->cf_last->kcache[1].bank = G_SQ_CF_ALU_WORD0_KCACHE_BANK1(word0);
+			ctx->bc->cf_last->kcache[1].addr = G_SQ_CF_ALU_WORD1_KCACHE_ADDR1(word1);
+			ctx->bc->cf_last->kcache[1].mode = G_SQ_CF_ALU_WORD1_KCACHE_MODE1(word1);
+			break;
+      }
 		default:
 			/* XXX: Error here */
 			break;
