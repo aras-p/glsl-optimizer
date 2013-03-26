@@ -41,7 +41,6 @@
 #include <llvm/ADT/Triple.h>
 #include <llvm/Support/FormattedStream.h>
 #include <llvm/Support/Host.h>
-#include <llvm/Support/IRReader.h>
 #include <llvm/Support/SourceMgr.h>
 #include <llvm/Support/TargetRegistry.h>
 #include <llvm/Support/TargetSelect.h>
