@@ -32,6 +32,8 @@ sometimes be useful for debugging end-user issues.
 <li>LIBGL_ALWAYS_INDIRECT - forces an indirect rendering context/connection.
 <li>LIBGL_ALWAYS_SOFTWARE - if set, always use software rendering
 <li>LIBGL_NO_DRAWARRAYS - if set do not use DrawArrays GLX protocol (for debugging)
+<li>LIBGL_SHOW_FPS - print framerate to stdout based on the number of glXSwapBuffers
+    calls per second.
 </ul>
 
 
@@ -144,6 +146,9 @@ Mesa EGL supports different sets of environment variables.  See the
 <h2>Gallium environment variables</h2>
 
 <ul>
+<li>GALLIUM_HUD - draws various information on the screen, like framerate,
+    cpu load, driver statistics, performance counters, etc.
+    Set GALLIUM_HUD=help and run e.g. glxgears for more info.
 <li>GALLIUM_LOG_FILE - specifies a file for logging all errors, warnings, etc.
     rather than stderr.
 <li>GALLIUM_PRINT_OPTIONS - if non-zero, print all the Gallium environment
