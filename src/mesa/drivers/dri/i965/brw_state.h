@@ -112,6 +112,7 @@ extern const struct brw_tracked_state gen7_cc_viewport_state_pointer;
 extern const struct brw_tracked_state gen7_clip_state;
 extern const struct brw_tracked_state gen7_disable_stages;
 extern const struct brw_tracked_state gen7_ps_state;
+extern const struct brw_tracked_state gen7_push_constant_space;
 extern const struct brw_tracked_state gen7_sbe_state;
 extern const struct brw_tracked_state gen7_sf_clip_viewport;
 extern const struct brw_tracked_state gen7_sf_state;
@@ -219,9 +220,6 @@ void gen7_init_vtable_sampler_functions(struct brw_context *brw);
 uint32_t
 get_attr_override(const struct brw_vue_map *vue_map, int urb_entry_read_offset,
                   int fs_attr, bool two_side_color, uint32_t *max_source_attr);
-
-/* gen7_urb.c */
-void gen7_allocate_push_constants(struct brw_context *brw);
 
 #ifdef __cplusplus
 }

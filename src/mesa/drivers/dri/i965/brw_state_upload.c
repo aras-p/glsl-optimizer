@@ -188,6 +188,7 @@ static const struct brw_tracked_state *gen7_atoms[] =
    &gen7_cc_viewport_state_pointer, /* must do after brw_cc_vp */
    &gen7_sf_clip_viewport,
 
+   &gen7_push_constant_space,
    &gen7_urb,
    &gen6_blend_state,		/* must do before cc unit */
    &gen6_color_calc_state,	/* must do before cc unit */
@@ -251,10 +252,6 @@ brw_upload_initial_gpu_state(struct brw_context *brw)
       return;
 
    brw_upload_invariant_state(brw);
-
-   if (brw->gen >= 7) {
-      gen7_allocate_push_constants(brw);
-   }
 }
 
 void brw_init_state( struct brw_context *brw )

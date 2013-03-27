@@ -1508,7 +1508,8 @@ gen6_get_sample_position(struct gl_context *ctx,
 
 /* gen7_urb.c */
 void
-gen7_allocate_push_constants(struct brw_context *brw);
+gen7_emit_push_constant_state(struct brw_context *brw, unsigned vs_size,
+                              unsigned gs_size, unsigned fs_size);
 
 void
 gen7_emit_urb_state(struct brw_context *brw,
