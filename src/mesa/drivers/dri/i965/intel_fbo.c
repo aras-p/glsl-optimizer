@@ -261,6 +261,13 @@ intel_image_target_renderbuffer_storage(struct gl_context *ctx,
    if (image == NULL)
       return;
 
+   if (image->planar_format && image->planar_format->nplanes > 1) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+            "glEGLImageTargetRenderbufferStorage(planar buffers are not "
+               "supported as render targets.");
+      return;
+   }
+
    /* __DRIimage is opaque to the core so it has to be checked here */
    switch (image->format) {
    case MESA_FORMAT_RGBA8888_REV:
