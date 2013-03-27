@@ -2190,6 +2190,7 @@ emit_vertex(
          LLVMBuildAdd(builder, bld->emitted_vertices_vec, masked_ones, "");
       bld->total_emitted_vertices_vec =
          LLVMBuildAdd(builder, bld->total_emitted_vertices_vec, masked_ones, "");
+      bld->pending_end_primitive = TRUE;
    }
 }
 
@@ -2212,6 +2213,7 @@ end_primitive(
       bld->emitted_prims_vec =
          LLVMBuildAdd(builder, bld->emitted_prims_vec, masked_ones, "");
       bld->emitted_vertices_vec = bld_base->uint_bld.zero;
+      bld->pending_end_primitive = FALSE;
    }
 }
 
@@ -2504,6 +2506,12 @@ static void emit_epilogue(struct lp_build_tgsi_context * bld_base)
    /* If we have indirect addressing in outputs we need to copy our alloca array
     * to the outputs slots specified by the caller */
    if (bld->gs_iface) {
+      /* flush the accumulated vertices as a primitive */
+      if (bld->pending_end_primitive) {
+         end_primitive(NULL, bld_base, NULL);
+         bld->pending_end_primitive = FALSE;
+      }
+
       bld->gs_iface->gs_epilogue(&bld->bld_base,
                                 bld->total_emitted_vertices_vec,
                                 bld->emitted_prims_vec,
@@ -2607,6 +2615,7 @@ lp_build_tgsi_soa(struct gallivm_state *gallivm,
       /* inputs are always indirect with gs */
       bld.indirect_files |= (1 << TGSI_FILE_INPUT);
       bld.gs_iface = gs_iface;
+      bld.pending_end_primitive = FALSE;
       bld.bld_base.emit_fetch_funcs[TGSI_FILE_INPUT] = emit_fetch_gs_input;
       bld.bld_base.op_actions[TGSI_OPCODE_EMIT].emit = emit_vertex;
       bld.bld_base.op_actions[TGSI_OPCODE_ENDPRIM].emit = end_primitive;

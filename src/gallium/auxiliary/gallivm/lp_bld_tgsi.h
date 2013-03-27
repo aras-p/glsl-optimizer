@@ -392,6 +392,12 @@ struct lp_build_tgsi_soa_context
    LLVMValueRef emitted_prims_vec;
    LLVMValueRef total_emitted_vertices_vec;
    LLVMValueRef emitted_vertices_vec;
+   /* if a shader doesn't have ENDPRIM instruction but it has
+    * a number of EMIT instructions it means the END instruction
+    * implicitly invokes ENDPRIM. handle this via a flag here
+    * in the future maybe we can enforce TGSI to always have
+    * an explicit ENDPRIM */
+   boolean pending_end_primitive;
 
    LLVMValueRef consts_ptr;
    const LLVMValueRef *pos;
