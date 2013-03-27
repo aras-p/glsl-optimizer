@@ -213,6 +213,23 @@ static void lp_exec_break(struct lp_exec_mask *mask)
    lp_exec_mask_update(mask);
 }
 
+static void lp_exec_break_condition(struct lp_exec_mask *mask,
+                                    LLVMValueRef cond)
+{
+   LLVMBuilderRef builder = mask->bld->gallivm->builder;
+   LLVMValueRef exec_mask = LLVMBuildNot(builder,
+                                         mask->exec_mask,
+                                         "break");
+
+   exec_mask = LLVMBuildAnd(builder, exec_mask, cond, "");
+
+   mask->break_mask = LLVMBuildAnd(builder,
+                                   mask->break_mask,
+                                   exec_mask, "break_full");
+
+   lp_exec_mask_update(mask);
+}
+
 static void lp_exec_continue(struct lp_exec_mask *mask)
 {
    LLVMBuilderRef builder = mask->bld->gallivm->builder;
@@ -2252,6 +2269,21 @@ brk_emit(
 }
 
 static void
+breakc_emit(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   LLVMValueRef tmp;
+   struct lp_build_tgsi_soa_context * bld = lp_soa_context(bld_base);
+
+   tmp = lp_build_cmp(&bld_base->base, PIPE_FUNC_NOTEQUAL,
+                      emit_data->args[0], bld->bld_base.base.zero);
+
+   lp_exec_break_condition(&bld->exec_mask, tmp);
+}
+
+static void
 if_emit(
    const struct lp_build_tgsi_action * action,
    struct lp_build_tgsi_context * bld_base,
@@ -2580,6 +2612,7 @@ lp_build_tgsi_soa(struct gallivm_state *gallivm,
    bld.bld_base.op_actions[TGSI_OPCODE_BGNLOOP].emit = bgnloop_emit;
    bld.bld_base.op_actions[TGSI_OPCODE_BGNSUB].emit = bgnsub_emit;
    bld.bld_base.op_actions[TGSI_OPCODE_BRK].emit = brk_emit;
+   bld.bld_base.op_actions[TGSI_OPCODE_BREAKC].emit = breakc_emit;
    bld.bld_base.op_actions[TGSI_OPCODE_CAL].emit = cal_emit;
    bld.bld_base.op_actions[TGSI_OPCODE_CONT].emit = cont_emit;
    bld.bld_base.op_actions[TGSI_OPCODE_DDX].emit = ddx_emit;
