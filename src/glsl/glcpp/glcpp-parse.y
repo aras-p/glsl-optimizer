@@ -1239,6 +1239,9 @@ glcpp_parser_create (const struct gl_extensions *extensions, int api)
 
 	      if (extensions->ARB_gpu_shader5)
 	         add_builtin_define(parser, "GL_ARB_gpu_shader5", 1);
+
+	      if (extensions->AMD_vertex_shader_layer)
+	         add_builtin_define(parser, "GL_AMD_vertex_shader_layer", 1);
 	   }
 	}
 

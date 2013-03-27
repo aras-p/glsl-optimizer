@@ -39,6 +39,12 @@ generate_ARB_draw_instanced_variables(exec_list *,
                                       struct _mesa_glsl_parse_state *,
                                       bool, _mesa_glsl_parser_targets);
 
+static void
+generate_AMD_vertex_shader_layer_variables(exec_list *instructions,
+                                           struct _mesa_glsl_parse_state *state,
+                                           bool warn,
+                                           _mesa_glsl_parser_targets target);
+
 struct builtin_variable {
    enum ir_variable_mode mode;
    int slot;
@@ -818,6 +824,8 @@ generate_130_vs_variables(exec_list *instructions,
 		"gl_ClipDistance", clip_distance_array_type, ir_var_shader_out,
                 VARYING_SLOT_CLIP_DIST0);
 
+   generate_AMD_vertex_shader_layer_variables(instructions, state, false,
+                                              vertex_shader);
 }
 
 
@@ -1020,6 +1028,29 @@ generate_ARB_draw_instanced_variables(exec_list *instructions,
    }
 }
 
+static void
+generate_AMD_vertex_shader_layer_variables(exec_list *instructions,
+                                           struct _mesa_glsl_parse_state *state,
+                                           bool warn,
+                                           _mesa_glsl_parser_targets target)
+{
+   /* gl_Layer is only available in the vertex shader for the
+    * AMD_vertex_shader_layer extension. It will also be available in the
+    * geometry shader when GLSL 1.50 is supported.
+    */
+   if (target != vertex_shader)
+      return;
+
+   if (state->AMD_vertex_shader_layer_enable) {
+      ir_variable *inst =
+         add_variable(instructions, state->symbols,
+                      "gl_Layer", glsl_type::int_type,
+                      ir_var_shader_out, VARYING_SLOT_LAYER);
+
+      if (warn)
+         inst->warn_extension = "GL_AMD_vertex_shader_layer";
+   }
+}
 
 static void
 generate_ARB_shader_stencil_export_variables(exec_list *instructions,
