@@ -352,6 +352,10 @@ nvc0_screen_destroy(struct pipe_screen *pscreen)
 
    if (screen->blitter)
       nvc0_blitter_destroy(screen);
+   if (screen->pm.prog) {
+      screen->pm.prog->code = NULL; /* hardcoded, don't FREE */
+      nvc0_program_destroy(NULL, screen->pm.prog);
+   }
 
    nouveau_bo_ref(NULL, &screen->text);
    nouveau_bo_ref(NULL, &screen->uniform_bo);
@@ -581,6 +585,7 @@ nvc0_screen_create(struct nouveau_device *dev)
    pscreen->get_param = nvc0_screen_get_param;
    pscreen->get_shader_param = nvc0_screen_get_shader_param;
    pscreen->get_paramf = nvc0_screen_get_paramf;
+   pscreen->get_driver_query_info = nvc0_screen_get_driver_query_info;
 
    nvc0_screen_init_resource_functions(pscreen);
 
@@ -785,6 +790,7 @@ nvc0_screen_create(struct nouveau_device *dev)
          value = (16 << 8) | 4;
    }
    screen->mp_count = value >> 8;
+   screen->mp_count_compute = screen->mp_count;
 
    nvc0_screen_resize_tls_area(screen, 128 * 16, 0, 0x200);
 

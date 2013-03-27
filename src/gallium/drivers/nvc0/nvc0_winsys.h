@@ -65,6 +65,8 @@ PUSH_REFN(struct nouveau_pushbuf *push, struct nouveau_bo *bo, uint32_t flags)
 #define SUBC_COPY(m) 4, (m)
 #define NVE4_COPY(m) SUBC_COPY(NVE4_COPY_##n)
 
+#define SUBC_SW(m) 7, (m)
+
 static INLINE uint32_t
 NVC0_FIFO_PKHDR_SQ(int subc, int mthd, unsigned size)
 {

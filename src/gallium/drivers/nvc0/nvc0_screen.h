@@ -39,6 +39,7 @@ struct nvc0_screen {
    struct nouveau_bo *poly_cache;
 
    uint16_t mp_count;
+   uint16_t mp_count_compute; /* magic reg can make compute use fewer MPs */
 
    struct nouveau_heap *text_heap;
    struct nouveau_heap *lib_code; /* allocated from text_heap */
@@ -62,6 +63,13 @@ struct nvc0_screen {
       uint32_t *map;
    } fence;
 
+   struct {
+      struct nvc0_program *prog; /* compute state object to read MP counters */
+      struct pipe_query *mp_counter[8]; /* counter to query allocation */
+      uint8_t num_mp_pm_active[2];
+      boolean mp_counters_enabled;
+   } pm;
+
    struct nouveau_mman *mm_VRAM_fe0;
 
    struct nouveau_object *eng3d; /* sqrt(1/2)|kepler> + sqrt(1/2)|fermi> */
@@ -75,6 +83,69 @@ nvc0_screen(struct pipe_screen *screen)
 {
    return (struct nvc0_screen *)screen;
 }
+
+
+/* Performance counter queries:
+ */
+#define NVE4_PM_QUERY_COUNT  32
+#define NVE4_PM_QUERY(i)    (PIPE_QUERY_DRIVER_SPECIFIC + (i))
+#define NVE4_PM_QUERY_MAX    NVE4_PM_QUERY(NVE4_PM_QUERY_COUNT - 1)
+/* MP (NOTE: these are also used to index a table, so put them first) */
+#define NVE4_PM_QUERY_PROF_TRIGGER_0            0
+#define NVE4_PM_QUERY_PROF_TRIGGER_1            1
+#define NVE4_PM_QUERY_PROF_TRIGGER_2            2
+#define NVE4_PM_QUERY_PROF_TRIGGER_3            3
+#define NVE4_PM_QUERY_PROF_TRIGGER_4            4
+#define NVE4_PM_QUERY_PROF_TRIGGER_5            5
+#define NVE4_PM_QUERY_PROF_TRIGGER_6            6
+#define NVE4_PM_QUERY_PROF_TRIGGER_7            7
+#define NVE4_PM_QUERY_LAUNCHED_WARPS            8
+#define NVE4_PM_QUERY_LAUNCHED_THREADS          9
+#define NVE4_PM_QUERY_LAUNCHED_CTA              10
+#define NVE4_PM_QUERY_INST_ISSUED1              11
+#define NVE4_PM_QUERY_INST_ISSUED2              12
+#define NVE4_PM_QUERY_INST_EXECUTED             13
+#define NVE4_PM_QUERY_LD_LOCAL                  14
+#define NVE4_PM_QUERY_ST_LOCAL                  15
+#define NVE4_PM_QUERY_LD_SHARED                 16
+#define NVE4_PM_QUERY_ST_SHARED                 17
+#define NVE4_PM_QUERY_L1_LOCAL_LOAD_HIT         18
+#define NVE4_PM_QUERY_L1_LOCAL_LOAD_MISS        19
+#define NVE4_PM_QUERY_L1_LOCAL_STORE_HIT        20
+#define NVE4_PM_QUERY_L1_LOCAL_STORE_MISS       21
+#define NVE4_PM_QUERY_GLD_REQUEST               22
+#define NVE4_PM_QUERY_GST_REQUEST               23
+#define NVE4_PM_QUERY_L1_GLOBAL_LOAD_HIT        24
+#define NVE4_PM_QUERY_L1_GLOBAL_LOAD_MISS       25
+#define NVE4_PM_QUERY_GLD_TRANSACTIONS_UNCACHED 26
+#define NVE4_PM_QUERY_GST_TRANSACTIONS          27
+#define NVE4_PM_QUERY_BRANCH                    28
+#define NVE4_PM_QUERY_BRANCH_DIVERGENT          29
+#define NVE4_PM_QUERY_ACTIVE_WARPS              30
+#define NVE4_PM_QUERY_ACTIVE_CYCLES             31
+/* Engines (PCOUNTER) */
+/*
+#define NVE4_PM_QUERY_GR_IDLE                   50
+#define NVE4_PM_QUERY_BSP_IDLE                  51
+#define NVE4_PM_QUERY_VP_IDLE                   52
+#define NVE4_PM_QUERY_PPP_IDLE                  53
+#define NVE4_PM_QUERY_CE0_IDLE                  54
+#define NVE4_PM_QUERY_CE1_IDLE                  55
+#define NVE4_PM_QUERY_CE2_IDLE                  56
+*/
+/* L2 queries (PCOUNTER) */
+/*
+#define NVE4_PM_QUERY_L2_SUBP_WRITE_L1_SECTOR_QUERIES 57
+...
+*/
+/* TEX queries (PCOUNTER) */
+/*
+#define NVE4_PM_QUERY_TEX0_CACHE_SECTOR_QUERIES 58
+...
+*/
+
+int nvc0_screen_get_driver_query_info(struct pipe_screen *, unsigned,
+                                      struct pipe_driver_query_info *);
 
 boolean nvc0_blitter_create(struct nvc0_screen *);
 void nvc0_blitter_destroy(struct nvc0_screen *);

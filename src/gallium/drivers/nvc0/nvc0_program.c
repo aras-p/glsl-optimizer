@@ -777,8 +777,8 @@ nvc0_program_destroy(struct nvc0_context *nvc0, struct nvc0_program *prog)
 
    if (prog->mem)
       nouveau_heap_free(&prog->mem);
-
-   FREE(prog->code);
+   if (prog->code)
+      FREE(prog->code); /* may be 0 for hardcoded shaders */
    FREE(prog->immd_data);
    FREE(prog->relocs);
    if (prog->type == PIPE_SHADER_COMPUTE && prog->cp.syms)
@@ -807,5 +807,5 @@ nvc0_program_symbol_offset(const struct nvc0_program *prog, uint32_t label)
    for (i = 0; i < prog->cp.num_syms; ++i)
       if (syms[i].label == label)
          return prog->code_base + base + syms[i].offset;
-   return ~0;
+   return prog->code_base; /* no symbols or symbol not found */
 }

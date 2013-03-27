@@ -27,7 +27,9 @@
 
 #include "nv50/codegen/nv50_ir_driver.h"
 
+#ifdef DEBUG
 static void nve4_compute_dump_launch_desc(const struct nve4_cp_launch_desc *);
+#endif
 
 
 int
@@ -477,7 +479,10 @@ nve4_launch_grid(struct pipe_context *pipe,
       goto out;
 
    nve4_compute_setup_launch_desc(nvc0, desc, label, block_layout, grid_layout);
-   nve4_compute_dump_launch_desc(desc);
+#ifdef DEBUG
+   if (debug_get_num_option("NV50_PROG_DEBUG", 0))
+      nve4_compute_dump_launch_desc(desc);
+#endif
 
    nve4_compute_upload_input(nvc0, input, block_layout, grid_layout);
 
@@ -589,6 +594,7 @@ static const char *nve4_cache_split_name(unsigned value)
    }
 }
 
+#ifdef DEBUG
 static void
 nve4_compute_dump_launch_desc(const struct nve4_cp_launch_desc *desc)
 {
@@ -635,7 +641,9 @@ nve4_compute_dump_launch_desc(const struct nve4_cp_launch_desc *desc)
                    i, address, size, valid ? "" : "  (invalid)");
    }
 }
+#endif
 
+#ifdef NOUVEAU_NVE4_MP_TRAP_HANDLER
 static void
 nve4_compute_trap_info(struct nvc0_context *nvc0)
 {
@@ -667,3 +675,4 @@ nve4_compute_trap_info(struct nvc0_context *nvc0)
    }
    info->lock = 0;
 }
+#endif

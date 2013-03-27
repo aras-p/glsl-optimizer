@@ -84,7 +84,8 @@
 #define NVC0_BIND_CP_GLOBAL      49
 #define NVC0_BIND_CP_DESC        50
 #define NVC0_BIND_CP_SCREEN      51
-#define NVC0_BIND_CP_COUNT       52
+#define NVC0_BIND_CP_QUERY       52
+#define NVC0_BIND_CP_COUNT       53
 
 /* bufctx for other operations */
 #define NVC0_BIND_2D            0
