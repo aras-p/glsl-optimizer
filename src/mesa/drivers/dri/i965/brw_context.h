@@ -1511,8 +1511,10 @@ void
 gen7_allocate_push_constants(struct brw_context *brw);
 
 void
-gen7_emit_urb_state(struct brw_context *brw, GLuint nr_vs_entries,
-                    GLuint vs_size, GLuint vs_start);
+gen7_emit_urb_state(struct brw_context *brw,
+                    unsigned nr_vs_entries, unsigned vs_size,
+                    unsigned vs_start, unsigned nr_gs_entries,
+                    unsigned gs_size, unsigned gs_start);
 
 
 
