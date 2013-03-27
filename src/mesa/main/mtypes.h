@@ -231,7 +231,7 @@ typedef enum
    VARYING_SLOT_CLIP_DIST0,
    VARYING_SLOT_CLIP_DIST1,
    VARYING_SLOT_PRIMITIVE_ID, /* Does not appear in VS */
-   VARYING_SLOT_LAYER, /* Appears only as GS output */
+   VARYING_SLOT_LAYER, /* Appears as VS or GS output */
    VARYING_SLOT_FACE, /* FS only */
    VARYING_SLOT_PNTC, /* FS only */
    VARYING_SLOT_VAR0, /* First generic varying slot */
@@ -3055,6 +3055,7 @@ struct gl_extensions
    GLboolean OES_standard_derivatives;
    /* vendor extensions */
    GLboolean AMD_seamless_cubemap_per_texture;
+   GLboolean AMD_vertex_shader_layer;
    GLboolean APPLE_object_purgeable;
    GLboolean ATI_envmap_bumpmap;
    GLboolean ATI_texture_compression_3dc;
