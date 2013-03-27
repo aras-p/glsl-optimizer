@@ -54,7 +54,7 @@
 
 #define FILE_DEBUG_FLAG DEBUG_PRIMS
 
-static GLuint prim_to_hw_prim[GL_POLYGON+1] = {
+const GLuint prim_to_hw_prim[GL_POLYGON+1] = {
    _3DPRIM_POINTLIST,
    _3DPRIM_LINELIST,
    _3DPRIM_LINELOOP,
