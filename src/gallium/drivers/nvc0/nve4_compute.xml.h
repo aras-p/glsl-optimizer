@@ -8,10 +8,10 @@ http://0x04.net/cgit/index.cgi/rules-ng-ng
 git clone git://0x04.net/rules-ng-ng
 
 The rules-ng-ng source files this header was generated from are:
-- nve4_compute.xml (   6352 bytes, from 2013-03-10 14:59:45)
+- nve4_compute.xml (  11117 bytes, from 2013-03-27 19:22:20)
 - copyright.xml    (   6452 bytes, from 2011-08-11 18:25:12)
-- nvchipsets.xml   (   3870 bytes, from 2013-03-08 12:41:50)
-- nv_object.xml    (  13238 bytes, from 2013-02-07 16:35:34)
+- nvchipsets.xml   (   3954 bytes, from 2013-03-26 01:26:43)
+- nv_object.xml    (  13792 bytes, from 2013-03-26 01:26:43)
 - nv_defs.xml      (   4437 bytes, from 2011-08-11 18:25:12)
 - nv50_defs.xml    (   7783 bytes, from 2013-03-08 12:42:29)
 
@@ -110,15 +110,15 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define NVE4_COMPUTE_LAUNCH					0x000002bc
 
-#define NVE4_COMPUTE_TEMP_SIZE(i0)			       (0x000002e4 + 0xc*(i0))
-#define NVE4_COMPUTE_TEMP_SIZE__ESIZE				0x0000000c
-#define NVE4_COMPUTE_TEMP_SIZE__LEN				0x00000002
+#define NVE4_COMPUTE_MP_TEMP_SIZE(i0)			       (0x000002e4 + 0xc*(i0))
+#define NVE4_COMPUTE_MP_TEMP_SIZE__ESIZE			0x0000000c
+#define NVE4_COMPUTE_MP_TEMP_SIZE__LEN				0x00000002
 
-#define NVE4_COMPUTE_TEMP_SIZE_HIGH(i0)			       (0x000002e4 + 0xc*(i0))
+#define NVE4_COMPUTE_MP_TEMP_SIZE_HIGH(i0)		       (0x000002e4 + 0xc*(i0))
 
-#define NVE4_COMPUTE_TEMP_SIZE_LOW(i0)			       (0x000002e8 + 0xc*(i0))
+#define NVE4_COMPUTE_MP_TEMP_SIZE_LOW(i0)		       (0x000002e8 + 0xc*(i0))
 
-#define NVE4_COMPUTE_TEMP_SIZE_MASK(i0)			       (0x000002ec + 0xc*(i0))
+#define NVE4_COMPUTE_MP_TEMP_SIZE_MASK(i0)		       (0x000002ec + 0xc*(i0))
 
 #define NVE4_COMPUTE_UNK0310					0x00000310
 
@@ -200,6 +200,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define NVE4_COMPUTE_UNK260c					0x0000260c
 
 #define NVE4_COMPUTE_LAUNCH_DESC__SIZE				0x00000100
+#define NVE4_COMPUTE_LAUNCH_DESC_6				0x00000018
+#define NVE4_COMPUTE_LAUNCH_DESC_6_NOTIFY__MASK			0x00000c00
+#define NVE4_COMPUTE_LAUNCH_DESC_6_NOTIFY__SHIFT		10
+
 #define NVE4_COMPUTE_LAUNCH_DESC_PROG_START			0x00000020
 
 #define NVE4_COMPUTE_LAUNCH_DESC_12				0x00000030

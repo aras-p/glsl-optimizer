@@ -38,7 +38,7 @@ struct nvc0_screen {
    struct nouveau_bo *txc; /* TIC (offset 0) and TSC (65536) */
    struct nouveau_bo *poly_cache;
 
-   uint64_t tls_size;
+   uint16_t mp_count;
 
    struct nouveau_heap *text_heap;
    struct nouveau_heap *lib_code; /* allocated from text_heap */
@@ -85,6 +85,9 @@ int nvc0_screen_tic_alloc(struct nvc0_screen *, void *);
 int nvc0_screen_tsc_alloc(struct nvc0_screen *, void *);
 
 int nve4_screen_compute_setup(struct nvc0_screen *, struct nouveau_pushbuf *);
+
+boolean nvc0_screen_resize_tls_area(struct nvc0_screen *, uint32_t lpos,
+                                    uint32_t lneg, uint32_t cstack);
 
 static INLINE void
 nvc0_resource_fence(struct nv04_resource *res, uint32_t flags)

@@ -32,6 +32,10 @@
 
 #include "nvc0_graph_macros.h"
 
+#ifndef NOUVEAU_GETPARAM_GRAPH_UNITS
+# define NOUVEAU_GETPARAM_GRAPH_UNITS 13
+#endif
+
 static boolean
 nvc0_screen_is_format_supported(struct pipe_screen *pscreen,
                                 enum pipe_format format,
@@ -494,6 +498,35 @@ nvc0_screen_init_compute(struct nvc0_screen *screen)
    }
 }
 
+boolean
+nvc0_screen_resize_tls_area(struct nvc0_screen *screen,
+                            uint32_t lpos, uint32_t lneg, uint32_t cstack)
+{
+   struct nouveau_bo *bo = NULL;
+   int ret;
+   uint64_t size = (lpos + lneg) * 32 + cstack;
+
+   if (size >= (1 << 20)) {
+      NOUVEAU_ERR("requested TLS size too large: 0x%"PRIx64"\n", size);
+      return FALSE;
+   }
+
+   size *= (screen->base.device->chipset >= 0xe0) ? 64 : 48; /* max warps */
+   size *= screen->mp_count;
+
+   size = align(size, 1 << 17);
+
+   ret = nouveau_bo_new(screen->base.device, NOUVEAU_BO_VRAM, 1 << 17, size,
+                        NULL, &bo);
+   if (ret) {
+      NOUVEAU_ERR("failed to allocate TLS area, size: 0x%"PRIx64"\n", size);
+      return FALSE;
+   }
+   nouveau_bo_ref(NULL, &screen->tls);
+   screen->tls = bo;
+   return TRUE;
+}
+
 #define FAIL_SCREEN_INIT(str, err)                    \
    do {                                               \
       NOUVEAU_ERR(str, err);                          \
@@ -508,6 +541,7 @@ nvc0_screen_create(struct nouveau_device *dev)
    struct pipe_screen *pscreen;
    struct nouveau_object *chan;
    struct nouveau_pushbuf *push;
+   uint64_t value;
    uint32_t obj_class;
    int ret;
    unsigned i;
@@ -733,18 +767,21 @@ nvc0_screen_create(struct nouveau_device *dev)
    PUSH_DATAh(push, screen->uniform_bo->offset + (5 << 16) + (6 << 9));
    PUSH_DATA (push, screen->uniform_bo->offset + (5 << 16) + (6 << 9));
 
-   /* max MPs * max warps per MP (TODO: ask kernel) */
-   if (screen->eng3d->oclass >= NVE4_3D_CLASS)
-      screen->tls_size = 8 * 64 * 32;
-   else
-      screen->tls_size = 16 * 48 * 32;
-   screen->tls_size *= NVC0_CAP_MAX_PROGRAM_TEMPS * 16;
-   screen->tls_size = align(screen->tls_size, 1 << 17);
+   if (dev->drm_version >= 0x01000101) {
+      ret = nouveau_getparam(dev, NOUVEAU_GETPARAM_GRAPH_UNITS, &value);
+      if (ret) {
+         NOUVEAU_ERR("NOUVEAU_GETPARAM_GRAPH_UNITS failed.\n");
+         goto fail;
+      }
+   } else {
+      if (dev->chipset >= 0xe0 && dev->chipset < 0xf0)
+         value = (8 << 8) | 4;
+      else
+         value = (16 << 8) | 4;
+   }
+   screen->mp_count = value >> 8;
 
-   ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 1 << 17,
-                        screen->tls_size, NULL, &screen->tls);
-   if (ret)
-      goto fail;
+   nvc0_screen_resize_tls_area(screen, 128 * 16, 0, 0x200);
 
    BEGIN_NVC0(push, NVC0_3D(CODE_ADDRESS_HIGH), 2);
    PUSH_DATAh(push, screen->text->offset);
@@ -752,8 +789,8 @@ nvc0_screen_create(struct nouveau_device *dev)
    BEGIN_NVC0(push, NVC0_3D(TEMP_ADDRESS_HIGH), 4);
    PUSH_DATAh(push, screen->tls->offset);
    PUSH_DATA (push, screen->tls->offset);
-   PUSH_DATA (push, screen->tls_size >> 32);
-   PUSH_DATA (push, screen->tls_size);
+   PUSH_DATA (push, screen->tls->size >> 32);
+   PUSH_DATA (push, screen->tls->size);
    BEGIN_NVC0(push, NVC0_3D(WARP_TEMP_ALLOC), 1);
    PUSH_DATA (push, 0);
    BEGIN_NVC0(push, NVC0_3D(LOCAL_BASE), 1);
