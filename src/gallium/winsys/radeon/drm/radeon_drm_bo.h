@@ -79,4 +79,6 @@ void radeon_bo_reference(struct radeon_bo **dst, struct radeon_bo *src)
     pb_reference((struct pb_buffer**)dst, (struct pb_buffer*)src);
 }
 
+void *radeon_bo_do_map(struct radeon_bo *bo);
+
 #endif

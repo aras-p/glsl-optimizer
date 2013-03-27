@@ -1,4 +1,5 @@
 C_SOURCES := \
 	radeon_drm_bo.c \
 	radeon_drm_cs.c \
+	radeon_drm_cs_dump.c \
 	radeon_drm_winsys.c

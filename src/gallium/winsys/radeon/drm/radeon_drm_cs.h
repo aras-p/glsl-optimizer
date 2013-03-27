@@ -30,6 +30,8 @@
 #include "radeon_drm_bo.h"
 #include <radeon_drm.h>
 
+#define RADEON_CS_DUMP_ON_LOCKUP    0
+
 struct radeon_cs_context {
     uint32_t                    buf[RADEON_MAX_CMDBUF_DWORDS];
 
@@ -120,5 +122,9 @@ radeon_bo_is_referenced_by_any_cs(struct radeon_bo *bo)
 void radeon_drm_cs_sync_flush(struct radeon_winsys_cs *rcs);
 void radeon_drm_cs_init_functions(struct radeon_drm_winsys *ws);
 void radeon_drm_cs_emit_ioctl_oneshot(struct radeon_cs_context *csc);
+
+#if RADEON_CS_DUMP_ON_LOCKUP
+void radeon_dump_cs_on_lockup(struct radeon_cs_context *csc);
+#endif
 
 #endif

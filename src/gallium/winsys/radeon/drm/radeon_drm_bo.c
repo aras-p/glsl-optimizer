@@ -396,14 +396,54 @@ static void radeon_bo_destroy(struct pb_buffer *_buf)
     FREE(bo);
 }
 
+void *radeon_bo_do_map(struct radeon_bo *bo)
+{
+    struct drm_radeon_gem_mmap args = {0};
+    void *ptr;
+
+    /* Return the pointer if it's already mapped. */
+    if (bo->ptr)
+        return bo->ptr;
+
+    /* Map the buffer. */
+    pipe_mutex_lock(bo->map_mutex);
+    /* Return the pointer if it's already mapped (in case of a race). */
+    if (bo->ptr) {
+        pipe_mutex_unlock(bo->map_mutex);
+        return bo->ptr;
+    }
+    args.handle = bo->handle;
+    args.offset = 0;
+    args.size = (uint64_t)bo->base.size;
+    if (drmCommandWriteRead(bo->rws->fd,
+                            DRM_RADEON_GEM_MMAP,
+                            &args,
+                            sizeof(args))) {
+        pipe_mutex_unlock(bo->map_mutex);
+        fprintf(stderr, "radeon: gem_mmap failed: %p 0x%08X\n",
+                bo, bo->handle);
+        return NULL;
+    }
+
+    ptr = os_mmap(0, args.size, PROT_READ|PROT_WRITE, MAP_SHARED,
+               bo->rws->fd, args.addr_ptr);
+    if (ptr == MAP_FAILED) {
+        pipe_mutex_unlock(bo->map_mutex);
+        fprintf(stderr, "radeon: mmap failed, errno: %i\n", errno);
+        return NULL;
+    }
+    bo->ptr = ptr;
+    pipe_mutex_unlock(bo->map_mutex);
+
+    return bo->ptr;
+}
+
 static void *radeon_bo_map(struct radeon_winsys_cs_handle *buf,
                            struct radeon_winsys_cs *rcs,
                            enum pipe_transfer_usage usage)
 {
     struct radeon_bo *bo = (struct radeon_bo*)buf;
     struct radeon_drm_cs *cs = (struct radeon_drm_cs*)rcs;
-    struct drm_radeon_gem_mmap args = {0};
-    void *ptr;
 
     /* If it's not unsynchronized bo_map, flush CS if needed and then wait. */
     if (!(usage & PIPE_TRANSFER_UNSYNCHRONIZED)) {
@@ -466,41 +506,7 @@ static void *radeon_bo_map(struct radeon_winsys_cs_handle *buf,
         }
     }
 
-    /* Return the pointer if it's already mapped. */
-    if (bo->ptr)
-        return bo->ptr;
-
-    /* Map the buffer. */
-    pipe_mutex_lock(bo->map_mutex);
-    /* Return the pointer if it's already mapped (in case of a race). */
-    if (bo->ptr) {
-        pipe_mutex_unlock(bo->map_mutex);
-        return bo->ptr;
-    }
-    args.handle = bo->handle;
-    args.offset = 0;
-    args.size = (uint64_t)bo->base.size;
-    if (drmCommandWriteRead(bo->rws->fd,
-                            DRM_RADEON_GEM_MMAP,
-                            &args,
-                            sizeof(args))) {
-        pipe_mutex_unlock(bo->map_mutex);
-        fprintf(stderr, "radeon: gem_mmap failed: %p 0x%08X\n",
-                bo, bo->handle);
-        return NULL;
-    }
-
-    ptr = os_mmap(0, args.size, PROT_READ|PROT_WRITE, MAP_SHARED,
-               bo->rws->fd, args.addr_ptr);
-    if (ptr == MAP_FAILED) {
-        pipe_mutex_unlock(bo->map_mutex);
-        fprintf(stderr, "radeon: mmap failed, errno: %i\n", errno);
-        return NULL;
-    }
-    bo->ptr = ptr;
-    pipe_mutex_unlock(bo->map_mutex);
-
-    return bo->ptr;
+    return radeon_bo_do_map(bo);
 }
 
 static void radeon_bo_unmap(struct radeon_winsys_cs_handle *_buf)

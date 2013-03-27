@@ -428,6 +428,10 @@ void radeon_drm_cs_emit_ioctl_oneshot(struct radeon_cs_context *csc)
         }
     }
 
+#if RADEON_CS_DUMP_ON_LOCKUP
+    radeon_dump_cs_on_lockup(csc);
+#endif
+
     for (i = 0; i < csc->crelocs; i++)
         p_atomic_dec(&csc->relocs_bo[i]->num_active_ioctls);
 
