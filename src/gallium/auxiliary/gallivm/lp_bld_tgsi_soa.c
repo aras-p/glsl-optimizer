@@ -805,11 +805,9 @@ emit_fetch_gs_input(
    struct lp_build_tgsi_soa_context * bld = lp_soa_context(bld_base);
    struct gallivm_state *gallivm = bld->bld_base.base.gallivm;
    LLVMBuilderRef builder = gallivm->builder;
-   //struct lp_build_context *uint_bld = &bld_base->uint_bld;
    LLVMValueRef attrib_index = NULL;
    LLVMValueRef vertex_index = NULL;
    LLVMValueRef swizzle_index = lp_build_const_int32(gallivm, swizzle);
-   LLVMValueRef indices[3];
    LLVMValueRef res;
 
    if (reg->Register.Indirect) {
@@ -830,12 +828,10 @@ emit_fetch_gs_input(
       vertex_index = lp_build_const_int32(gallivm, reg->Dimension.Index);
    }
 
-   indices[0] = vertex_index;
-   indices[1] = attrib_index;
-   indices[2] = swizzle_index;
 
-   res = LLVMBuildGEP(builder, bld->gs_iface->input, indices, 3, "");
-   res = LLVMBuildLoad(builder, res, "");
+   res = bld->gs_iface->fetch_input(bld->gs_iface, bld_base,
+                                    vertex_index, attrib_index,
+                                    swizzle_index);
 
    assert(res);
 
@@ -2200,9 +2196,9 @@ emit_vertex(
    if (bld->gs_iface->emit_vertex) {
       LLVMValueRef masked_ones = mask_to_one_vec(bld_base);
       gather_outputs(bld);
-      bld->gs_iface->emit_vertex(&bld->bld_base, bld->outputs,
-                                bld->total_emitted_vertices_vec,
-                                bld->gs_iface->user_data);
+      bld->gs_iface->emit_vertex(bld->gs_iface, &bld->bld_base,
+                                 bld->outputs,
+                                 bld->total_emitted_vertices_vec);
       bld->emitted_vertices_vec =
          LLVMBuildAdd(builder, bld->emitted_vertices_vec, masked_ones, "");
       bld->total_emitted_vertices_vec =
@@ -2223,10 +2219,9 @@ end_primitive(
 
    if (bld->gs_iface->end_primitive) {
       LLVMValueRef masked_ones = mask_to_one_vec(bld_base);
-      bld->gs_iface->end_primitive(&bld->bld_base,
-                                  bld->emitted_vertices_vec,
-                                  bld->emitted_prims_vec,
-                                  bld->gs_iface->user_data);
+      bld->gs_iface->end_primitive(bld->gs_iface, &bld->bld_base,
+                                   bld->emitted_vertices_vec,
+                                   bld->emitted_prims_vec);
       bld->emitted_prims_vec =
          LLVMBuildAdd(builder, bld->emitted_prims_vec, masked_ones, "");
       bld->emitted_vertices_vec = bld_base->uint_bld.zero;
@@ -2544,10 +2539,10 @@ static void emit_epilogue(struct lp_build_tgsi_context * bld_base)
          bld->pending_end_primitive = FALSE;
       }
 
-      bld->gs_iface->gs_epilogue(&bld->bld_base,
-                                bld->total_emitted_vertices_vec,
-                                bld->emitted_prims_vec,
-                                bld->gs_iface->user_data);
+      bld->gs_iface->gs_epilogue(bld->gs_iface,
+                                 &bld->bld_base,
+                                 bld->total_emitted_vertices_vec,
+                                 bld->emitted_prims_vec);
    } else {
       gather_outputs(bld);
    }

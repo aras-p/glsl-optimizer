@@ -365,20 +365,23 @@ struct lp_build_tgsi_context
 
 struct lp_build_tgsi_gs_iface
 {
-   LLVMValueRef input;
-   void (*emit_vertex)(struct lp_build_tgsi_context * bld_base,
+   LLVMValueRef (*fetch_input)(const struct lp_build_tgsi_gs_iface *gs_iface,
+                               struct lp_build_tgsi_context * bld_base,
+                               LLVMValueRef vertex_index,
+                               LLVMValueRef attrib_index,
+                               LLVMValueRef swizzle_index);
+   void (*emit_vertex)(const struct lp_build_tgsi_gs_iface *gs_iface,
+                       struct lp_build_tgsi_context * bld_base,
                        LLVMValueRef (*outputs)[4],
-                       LLVMValueRef emitted_vertices_vec,
-                       void *user_data);
-   void (*end_primitive)(struct lp_build_tgsi_context * bld_base,
+                       LLVMValueRef emitted_vertices_vec);
+   void (*end_primitive)(const struct lp_build_tgsi_gs_iface *gs_iface,
+                         struct lp_build_tgsi_context * bld_base,
                          LLVMValueRef verts_per_prim_vec,
-                         LLVMValueRef emitted_prims_vec,
-                         void *user_data);
-   void (*gs_epilogue)(struct lp_build_tgsi_context * bld_base,
+                         LLVMValueRef emitted_prims_vec);
+   void (*gs_epilogue)(const struct lp_build_tgsi_gs_iface *gs_iface,
+                       struct lp_build_tgsi_context * bld_base,
                        LLVMValueRef total_emitted_vertices_vec,
-                       LLVMValueRef emitted_prims_vec,
-                       void *user_data);
-   void *user_data;
+                       LLVMValueRef emitted_prims_vec);
 };
 
 struct lp_build_tgsi_soa_context
