@@ -186,41 +186,55 @@ struct draw_gs_jit_context
    float (*planes) [DRAW_TOTAL_CLIP_PLANES][4];
    float *viewport;
 
+   /* There two need to be exactly at DRAW_JIT_CTX_TEXTURES and
+    * DRAW_JIT_CTX_SAMPLERS positions in the struct */
+   struct draw_jit_texture textures[PIPE_MAX_SHADER_SAMPLER_VIEWS];
+   struct draw_jit_sampler samplers[PIPE_MAX_SAMPLERS];
+   
    int **prim_lengths;
    int *emitted_vertices;
    int *emitted_prims;
-
-   struct draw_jit_texture textures[PIPE_MAX_SHADER_SAMPLER_VIEWS];
-   struct draw_jit_sampler samplers[PIPE_MAX_SAMPLERS];
 };
 
+enum {
+   DRAW_GS_JIT_CTX_CONSTANTS = 0,
+   DRAW_GS_JIT_CTX_PLANES = 1,
+   DRAW_GS_JIT_CTX_VIEWPORT = 2,
+   /* Textures and samples are reserved for DRAW_JIT_CTX_TEXTURES
+    * and DRAW_JIT_CTX_SAMPLERS, because they both need
+    * to be at exactly the same locations as they are in the
+    * VS ctx structure for sampling to work. */
+   DRAW_GS_JIT_CTX_TEXTURES = DRAW_JIT_CTX_TEXTURES,
+   DRAW_GS_JIT_CTX_SAMPLERS = DRAW_JIT_CTX_SAMPLERS,
+   DRAW_GS_JIT_CTX_PRIM_LENGTHS = 5,
+   DRAW_GS_JIT_CTX_EMITTED_VERTICES = 6,
+   DRAW_GS_JIT_CTX_EMITTED_PRIMS = 7,
+   DRAW_GS_JIT_CTX_NUM_FIELDS = 8
+};
 
 #define draw_gs_jit_context_constants(_gallivm, _ptr) \
-   lp_build_struct_get_ptr(_gallivm, _ptr, 0, "constants")
+   lp_build_struct_get_ptr(_gallivm, _ptr, DRAW_GS_JIT_CTX_CONSTANTS, "constants")
 
 #define draw_gs_jit_context_planes(_gallivm, _ptr) \
-   lp_build_struct_get(_gallivm, _ptr, 1, "planes")
+   lp_build_struct_get(_gallivm, _ptr, DRAW_GS_JIT_CTX_PLANES, "planes")
 
 #define draw_gs_jit_context_viewport(_gallivm, _ptr) \
-   lp_build_struct_get(_gallivm, _ptr, 2, "viewport")
-
-#define draw_gs_jit_prim_lengths(_gallivm, _ptr) \
-   lp_build_struct_get(_gallivm, _ptr, 3, "prim_lengths")
-
-#define draw_gs_jit_emitted_vertices(_gallivm, _ptr) \
-   lp_build_struct_get(_gallivm, _ptr, 4, "emitted_vertices")
-
-#define draw_gs_jit_emitted_prims(_gallivm, _ptr) \
-   lp_build_struct_get(_gallivm, _ptr, 5, "emitted_prims")
-
-#define DRAW_GS_JIT_CTX_TEXTURES 6
-#define DRAW_GS_JIT_CTX_SAMPLERS 7
+   lp_build_struct_get(_gallivm, _ptr, DRAW_GS_JIT_CTX_VIEWPORT, "viewport")
 
 #define draw_gs_jit_context_textures(_gallivm, _ptr) \
    lp_build_struct_get_ptr(_gallivm, _ptr, DRAW_GS_JIT_CTX_TEXTURES, "textures")
 
 #define draw_gs_jit_context_samplers(_gallivm, _ptr) \
    lp_build_struct_get_ptr(_gallivm, _ptr, DRAW_GS_JIT_CTX_SAMPLERS, "samplers")
+
+#define draw_gs_jit_prim_lengths(_gallivm, _ptr) \
+   lp_build_struct_get(_gallivm, _ptr, DRAW_GS_JIT_CTX_PRIM_LENGTHS, "prim_lengths")
+
+#define draw_gs_jit_emitted_vertices(_gallivm, _ptr) \
+   lp_build_struct_get(_gallivm, _ptr, DRAW_GS_JIT_CTX_EMITTED_VERTICES, "emitted_vertices")
+
+#define draw_gs_jit_emitted_prims(_gallivm, _ptr) \
+   lp_build_struct_get(_gallivm, _ptr, DRAW_GS_JIT_CTX_EMITTED_PRIMS, "emitted_prims")
 
 
 
@@ -478,7 +492,7 @@ draw_llvm_sampler_soa_create(const struct draw_sampler_static_state *static_stat
                              LLVMValueRef context_ptr);
 
 void
-draw_llvm_set_sampler_state(struct draw_context *draw);
+draw_llvm_set_sampler_state(struct draw_context *draw, unsigned shader_stage);
 
 void
 draw_llvm_set_mapped_texture(struct draw_context *draw,

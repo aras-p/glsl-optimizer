@@ -241,7 +241,7 @@ create_gs_jit_context_type(struct gallivm_state *gallivm,
    LLVMTargetDataRef target = gallivm->target;
    LLVMTypeRef float_type = LLVMFloatTypeInContext(gallivm->context);
    LLVMTypeRef int_type = LLVMInt32TypeInContext(gallivm->context);
-   LLVMTypeRef elem_types[8];
+   LLVMTypeRef elem_types[DRAW_GS_JIT_CTX_NUM_FIELDS];
    LLVMTypeRef context_type;
 
    elem_types[0] = LLVMArrayType(LLVMPointerType(float_type, 0), /* constants */
@@ -249,17 +249,17 @@ create_gs_jit_context_type(struct gallivm_state *gallivm,
    elem_types[1] = LLVMPointerType(LLVMArrayType(LLVMArrayType(float_type, 4),
                                                  DRAW_TOTAL_CLIP_PLANES), 0);
    elem_types[2] = LLVMPointerType(float_type, 0); /* viewport */
-   
-   elem_types[3] = LLVMPointerType(LLVMPointerType(int_type, 0), 0);
-   elem_types[4] = LLVMPointerType(LLVMVectorType(int_type,
-                                                  vector_length), 0);
-   elem_types[5] = LLVMPointerType(LLVMVectorType(int_type,
-                                                  vector_length), 0);
 
-   elem_types[6] = LLVMArrayType(texture_type,
+   elem_types[3] = LLVMArrayType(texture_type,
                                  PIPE_MAX_SHADER_SAMPLER_VIEWS); /* textures */
-   elem_types[7] = LLVMArrayType(sampler_type,
+   elem_types[4] = LLVMArrayType(sampler_type,
                                  PIPE_MAX_SAMPLERS); /* samplers */
+   
+   elem_types[5] = LLVMPointerType(LLVMPointerType(int_type, 0), 0);
+   elem_types[6] = LLVMPointerType(LLVMVectorType(int_type,
+                                                  vector_length), 0);
+   elem_types[7] = LLVMPointerType(LLVMVectorType(int_type,
+                                                  vector_length), 0);
 
    context_type = LLVMStructTypeInContext(gallivm->context, elem_types,
                                           Elements(elem_types), 0);
@@ -270,23 +270,26 @@ create_gs_jit_context_type(struct gallivm_state *gallivm,
 #endif
 
    LP_CHECK_MEMBER_OFFSET(struct draw_gs_jit_context, constants,
-                          target, context_type, 0);
+                          target, context_type, DRAW_GS_JIT_CTX_CONSTANTS);
    LP_CHECK_MEMBER_OFFSET(struct draw_gs_jit_context, planes,
-                          target, context_type, 1);
+                          target, context_type, DRAW_GS_JIT_CTX_PLANES);
    LP_CHECK_MEMBER_OFFSET(struct draw_gs_jit_context, viewport,
-                          target, context_type, 2);
-   LP_CHECK_MEMBER_OFFSET(struct draw_gs_jit_context, prim_lengths,
-                          target, context_type, 3);
-   LP_CHECK_MEMBER_OFFSET(struct draw_gs_jit_context, emitted_vertices,
-                          target, context_type, 4);
-   LP_CHECK_MEMBER_OFFSET(struct draw_gs_jit_context, emitted_prims,
-                          target, context_type, 5);
+                          target, context_type, DRAW_GS_JIT_CTX_VIEWPORT);
    LP_CHECK_MEMBER_OFFSET(struct draw_gs_jit_context, textures,
                           target, context_type,
                           DRAW_GS_JIT_CTX_TEXTURES);
    LP_CHECK_MEMBER_OFFSET(struct draw_gs_jit_context, samplers,
                           target, context_type,
                           DRAW_GS_JIT_CTX_SAMPLERS);
+   LP_CHECK_MEMBER_OFFSET(struct draw_gs_jit_context, prim_lengths,
+                          target, context_type,
+                          DRAW_GS_JIT_CTX_PRIM_LENGTHS);
+   LP_CHECK_MEMBER_OFFSET(struct draw_gs_jit_context, emitted_vertices,
+                          target, context_type,
+                          DRAW_GS_JIT_CTX_EMITTED_VERTICES);
+   LP_CHECK_MEMBER_OFFSET(struct draw_gs_jit_context, emitted_prims,
+                          target, context_type,
+                          DRAW_GS_JIT_CTX_EMITTED_PRIMS);
    LP_CHECK_STRUCT_SIZE(struct draw_gs_jit_context,
                         target, context_type);
 
@@ -1721,33 +1724,36 @@ draw_llvm_set_mapped_texture(struct draw_context *draw,
 
 
 void
-draw_llvm_set_sampler_state(struct draw_context *draw)
+draw_llvm_set_sampler_state(struct draw_context *draw, 
+                            unsigned shader_type)
 {
    unsigned i;
 
-   for (i = 0; i < draw->num_samplers[PIPE_SHADER_VERTEX]; i++) {
-      struct draw_jit_sampler *jit_sam = &draw->llvm->jit_context.samplers[i];
+   if (shader_type == PIPE_SHADER_VERTEX) {
+      for (i = 0; i < draw->num_samplers[PIPE_SHADER_VERTEX]; i++) {
+         struct draw_jit_sampler *jit_sam = &draw->llvm->jit_context.samplers[i];
 
-      if (draw->samplers[i]) {
-         const struct pipe_sampler_state *s
-            = draw->samplers[PIPE_SHADER_VERTEX][i];
-         jit_sam->min_lod = s->min_lod;
-         jit_sam->max_lod = s->max_lod;
-         jit_sam->lod_bias = s->lod_bias;
-         COPY_4V(jit_sam->border_color, s->border_color.f);
+         if (draw->samplers[i]) {
+            const struct pipe_sampler_state *s
+               = draw->samplers[PIPE_SHADER_VERTEX][i];
+            jit_sam->min_lod = s->min_lod;
+            jit_sam->max_lod = s->max_lod;
+            jit_sam->lod_bias = s->lod_bias;
+            COPY_4V(jit_sam->border_color, s->border_color.f);
+         }
       }
-   }
+   } else if (shader_type == PIPE_SHADER_GEOMETRY) {
+      for (i = 0; i < draw->num_samplers[PIPE_SHADER_GEOMETRY]; i++) {
+         struct draw_jit_sampler *jit_sam = &draw->llvm->gs_jit_context.samplers[i];
 
-   for (i = 0; i < draw->num_samplers[PIPE_SHADER_GEOMETRY]; i++) {
-      struct draw_jit_sampler *jit_sam = &draw->llvm->gs_jit_context.samplers[i];
-
-      if (draw->samplers[i]) {
-         const struct pipe_sampler_state *s
-            = draw->samplers[PIPE_SHADER_GEOMETRY][i];
-         jit_sam->min_lod = s->min_lod;
-         jit_sam->max_lod = s->max_lod;
-         jit_sam->lod_bias = s->lod_bias;
-         COPY_4V(jit_sam->border_color, s->border_color.f);
+         if (draw->samplers[i]) {
+            const struct pipe_sampler_state *s
+               = draw->samplers[PIPE_SHADER_GEOMETRY][i];
+            jit_sam->min_lod = s->min_lod;
+            jit_sam->max_lod = s->max_lod;
+            jit_sam->lod_bias = s->lod_bias;
+            COPY_4V(jit_sam->border_color, s->border_color.f);
+         }
       }
    }
 }
@@ -1950,6 +1956,8 @@ draw_gs_llvm_generate(struct draw_llvm *llvm,
                      sampler,
                      &llvm->draw->gs.geometry_shader->info,
                      &gs_iface);
+
+   sampler->destroy(sampler);
 
    lp_build_mask_end(&mask);
 

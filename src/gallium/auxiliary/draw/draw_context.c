@@ -792,8 +792,8 @@ draw_set_samplers(struct draw_context *draw,
    draw->num_samplers[shader_stage] = num;
 
 #ifdef HAVE_LLVM
-   if (draw->llvm && shader_stage == PIPE_SHADER_VERTEX)
-      draw_llvm_set_sampler_state(draw);
+   if (draw->llvm)
+      draw_llvm_set_sampler_state(draw, shader_stage);
 #endif
 }
 

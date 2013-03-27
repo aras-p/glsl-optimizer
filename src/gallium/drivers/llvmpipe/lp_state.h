@@ -141,4 +141,12 @@ void
 llvmpipe_cleanup_vertex_sampling(struct llvmpipe_context *ctx);
 
 
+void
+llvmpipe_prepare_geometry_sampling(struct llvmpipe_context *ctx,
+                                   unsigned num,
+                                   struct pipe_sampler_view **views);
+void
+llvmpipe_cleanup_geometry_sampling(struct llvmpipe_context *ctx);
+
+
 #endif

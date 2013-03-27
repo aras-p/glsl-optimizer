@@ -98,6 +98,9 @@ llvmpipe_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
    llvmpipe_prepare_vertex_sampling(lp,
                                     lp->num_sampler_views[PIPE_SHADER_VERTEX],
                                     lp->sampler_views[PIPE_SHADER_VERTEX]);
+   llvmpipe_prepare_geometry_sampling(lp,
+                                      lp->num_sampler_views[PIPE_SHADER_GEOMETRY],
+                                      lp->sampler_views[PIPE_SHADER_GEOMETRY]);
 
    /* draw! */
    draw_vbo(draw, info);
@@ -114,6 +117,7 @@ llvmpipe_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
    draw_set_mapped_so_targets(draw, 0, NULL);
 
    llvmpipe_cleanup_vertex_sampling(lp);
+   llvmpipe_cleanup_geometry_sampling(lp);
 
    /*
     * TODO: Flush only when a user vertex/index buffer is present

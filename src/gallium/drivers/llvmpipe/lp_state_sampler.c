@@ -250,14 +250,15 @@ llvmpipe_delete_sampler_state(struct pipe_context *pipe,
 }
 
 
-/**
- * Called during state validation when LP_NEW_SAMPLER_VIEW is set.
- */
-void
-llvmpipe_prepare_vertex_sampling(struct llvmpipe_context *lp,
-                                 unsigned num,
-                                 struct pipe_sampler_view **views)
+static void
+prepare_shader_sampling(
+   struct llvmpipe_context *lp,
+   unsigned num,
+   struct pipe_sampler_view **views,
+   unsigned shader_type,
+   struct pipe_resource *mapped_tex[PIPE_MAX_SHADER_SAMPLER_VIEWS])
 {
+
    unsigned i;
    uint32_t row_stride[PIPE_MAX_TEXTURE_LEVELS];
    uint32_t img_stride[PIPE_MAX_TEXTURE_LEVELS];
@@ -282,7 +283,7 @@ llvmpipe_prepare_vertex_sampling(struct llvmpipe_context *lp,
          /* We're referencing the texture's internal data, so save a
           * reference to it.
           */
-         pipe_resource_reference(&lp->mapped_vs_tex[i], tex);
+         pipe_resource_reference(&mapped_tex[i], tex);
 
          if (!lp_tex->dt) {
             /* regular texture - setup array of mipmap level offsets */
@@ -357,7 +358,7 @@ llvmpipe_prepare_vertex_sampling(struct llvmpipe_context *lp,
             assert(addr);
          }
          draw_set_mapped_texture(lp->draw,
-                                 PIPE_SHADER_VERTEX,
+                                 shader_type,
                                  i,
                                  width0, tex->height0, num_layers,
                                  first_level, last_level,
@@ -366,6 +367,19 @@ llvmpipe_prepare_vertex_sampling(struct llvmpipe_context *lp,
       }
    }
 }
+                        
+
+/**
+ * Called during state validation when LP_NEW_SAMPLER_VIEW is set.
+ */
+void
+llvmpipe_prepare_vertex_sampling(struct llvmpipe_context *lp,
+                                 unsigned num,
+                                 struct pipe_sampler_view **views)
+{
+   prepare_shader_sampling(lp, num, views, PIPE_SHADER_VERTEX,
+                           lp->mapped_vs_tex);
+}
 
 void
 llvmpipe_cleanup_vertex_sampling(struct llvmpipe_context *ctx)
@@ -373,6 +387,28 @@ llvmpipe_cleanup_vertex_sampling(struct llvmpipe_context *ctx)
    unsigned i;
    for (i = 0; i < Elements(ctx->mapped_vs_tex); i++) {
       pipe_resource_reference(&ctx->mapped_vs_tex[i], NULL);
+   }
+}
+
+
+/**
+ * Called during state validation when LP_NEW_SAMPLER_VIEW is set.
+ */
+void
+llvmpipe_prepare_geometry_sampling(struct llvmpipe_context *lp,
+                                   unsigned num,
+                                   struct pipe_sampler_view **views)
+{
+   prepare_shader_sampling(lp, num, views, PIPE_SHADER_GEOMETRY,
+                           lp->mapped_gs_tex);
+}
+
+void
+llvmpipe_cleanup_geometry_sampling(struct llvmpipe_context *ctx)
+{
+   unsigned i;
+   for (i = 0; i < Elements(ctx->mapped_gs_tex); i++) {
+      pipe_resource_reference(&ctx->mapped_gs_tex[i], NULL);
    }
 }
 

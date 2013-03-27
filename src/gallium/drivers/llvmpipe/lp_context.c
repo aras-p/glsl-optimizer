@@ -81,6 +81,10 @@ static void llvmpipe_destroy( struct pipe_context *pipe )
       pipe_sampler_view_reference(&llvmpipe->sampler_views[PIPE_SHADER_VERTEX][i], NULL);
    }
 
+   for (i = 0; i < Elements(llvmpipe->sampler_views[0]); i++) {
+      pipe_sampler_view_reference(&llvmpipe->sampler_views[PIPE_SHADER_GEOMETRY][i], NULL);
+   }
+
    for (i = 0; i < Elements(llvmpipe->constants); i++) {
       for (j = 0; j < Elements(llvmpipe->constants[i]); j++) {
          pipe_resource_reference(&llvmpipe->constants[i][j].buffer, NULL);
