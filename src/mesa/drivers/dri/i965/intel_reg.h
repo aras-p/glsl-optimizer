@@ -126,3 +126,7 @@
 #define BCS_SWCTRL                      0x22200
 # define BCS_SWCTRL_SRC_Y               (1 << 0)
 # define BCS_SWCTRL_DST_Y               (1 << 1)
+
+#define OACONTROL                       0x2360
+# define OACONTROL_COUNTER_SELECT_SHIFT  2
+# define OACONTROL_ENABLE_COUNTERS       (1 << 0)
