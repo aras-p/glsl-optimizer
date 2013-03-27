@@ -29,39 +29,6 @@
 static void
 disable_stages(struct brw_context *brw)
 {
-   assert(!brw->ff_gs.prog_active);
-
-   /* Disable the Geometry Shader (GS) Unit */
-   BEGIN_BATCH(7);
-   OUT_BATCH(_3DSTATE_CONSTANT_GS << 16 | (7 - 2));
-   OUT_BATCH(0);
-   OUT_BATCH(0);
-   OUT_BATCH(0);
-   OUT_BATCH(0);
-   OUT_BATCH(0);
-   OUT_BATCH(0);
-   ADVANCE_BATCH();
-
-   BEGIN_BATCH(7);
-   OUT_BATCH(_3DSTATE_GS << 16 | (7 - 2));
-   OUT_BATCH(0); /* prog_bo */
-   OUT_BATCH((0 << GEN6_GS_SAMPLER_COUNT_SHIFT) |
-	     (0 << GEN6_GS_BINDING_TABLE_ENTRY_COUNT_SHIFT));
-   OUT_BATCH(0); /* scratch space base offset */
-   OUT_BATCH((1 << GEN6_GS_DISPATCH_START_GRF_SHIFT) |
-	     (0 << GEN6_GS_URB_READ_LENGTH_SHIFT) |
-	     GEN7_GS_INCLUDE_VERTEX_HANDLES |
-	     (0 << GEN6_GS_URB_ENTRY_READ_OFFSET_SHIFT));
-   OUT_BATCH((0 << GEN6_GS_MAX_THREADS_SHIFT) |
-	     GEN6_GS_STATISTICS_ENABLE);
-   OUT_BATCH(0);
-   ADVANCE_BATCH();
-
-   BEGIN_BATCH(2);
-   OUT_BATCH(_3DSTATE_BINDING_TABLE_POINTERS_GS << 16 | (2 - 2));
-   OUT_BATCH(0);
-   ADVANCE_BATCH();
-
    /* Disable the HS Unit */
    BEGIN_BATCH(7);
    OUT_BATCH(_3DSTATE_CONSTANT_HS << 16 | (7 - 2));
