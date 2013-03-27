@@ -285,6 +285,7 @@ intelInitExtensions(struct gl_context *ctx)
    if (brw->gen >= 7) {
       ctx->Extensions.ARB_texture_gather = true;
       ctx->Extensions.ARB_conservative_depth = true;
+      ctx->Extensions.AMD_vertex_shader_layer = true;
       if (can_do_pipelined_register_writes(brw)) {
          ctx->Extensions.ARB_transform_feedback2 = true;
          ctx->Extensions.ARB_transform_feedback3 = true;
