@@ -227,11 +227,6 @@ intel_bufferobj_subdata(struct gl_context * ctx,
 	 drm_intel_bo_unreference(temp_bo);
       }
    } else {
-      if (unlikely(intel->perf_debug)) {
-         if (drm_intel_bo_busy(intel_obj->buffer)) {
-            perf_debug("Stalling on the GPU in glBufferSubData().\n");
-         }
-      }
       drm_intel_bo_subdata(intel_obj->buffer, offset, size, data);
    }
 }
