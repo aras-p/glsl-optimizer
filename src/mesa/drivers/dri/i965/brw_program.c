@@ -280,15 +280,7 @@ static void
 print_shader_time_line(const char *stage, const char *name,
                        int shader_num, uint64_t time, uint64_t total)
 {
-   int namelen = printf("%s ", stage);
-
-   while (namelen++ < 6)
-      printf(" ");
-
-   namelen += printf("%s ", name);
-
-   while (namelen++ < 13)
-      printf(" ");
+   printf("%-6s%-6s", stage, name);
 
    if (shader_num != -1)
       printf("%4d: ", shader_num);
@@ -429,9 +421,9 @@ brw_report_shader_time(struct brw_context *brw)
    }
 
    printf("\n");
-   print_shader_time_line("total vs", "", -1, total_by_type[ST_VS], total);
-   print_shader_time_line("total fs8", "", -1, total_by_type[ST_FS8], total);
-   print_shader_time_line("total fs16", "", -1, total_by_type[ST_FS16], total);
+   print_shader_time_line("total", "vs", -1, total_by_type[ST_VS], total);
+   print_shader_time_line("total", "fs8", -1, total_by_type[ST_FS8], total);
+   print_shader_time_line("total", "fs16", -1, total_by_type[ST_FS16], total);
 }
 
 static void
