@@ -629,6 +629,7 @@ void st_init_extensions(struct st_context *st)
       ctx->Const.PrimitiveRestartInSoftware = GL_TRUE;
    }
 
+   /* ARB_color_buffer_float. */
    if (screen->get_param(screen, PIPE_CAP_VERTEX_COLOR_UNCLAMPED)) {
       ctx->Extensions.ARB_color_buffer_float = GL_TRUE;
 
@@ -638,6 +639,16 @@ void st_init_extensions(struct st_context *st)
 
       if (!screen->get_param(screen, PIPE_CAP_FRAGMENT_COLOR_CLAMPED)) {
          st->clamp_frag_color_in_shader = TRUE;
+      }
+
+      /* For drivers which cannot do color clamping, it's better to just
+       * disable ARB_color_buffer_float in the core profile, because
+       * the clamping is deprecated there anyway. */
+      if (ctx->API == API_OPENGL_CORE &&
+          (st->clamp_frag_color_in_shader || st->clamp_vert_color_in_shader)) {
+         st->clamp_vert_color_in_shader = GL_FALSE;
+         st->clamp_frag_color_in_shader = GL_FALSE;
+         ctx->Extensions.ARB_color_buffer_float = GL_FALSE;
       }
    }
 
