@@ -1202,7 +1202,8 @@ _mesa_init_lighting( struct gl_context *ctx )
                                                NULL );
 
    ctx->Light.ColorMaterialEnabled = GL_FALSE;
-   ctx->Light.ClampVertexColor = GL_TRUE;
+   ctx->Light.ClampVertexColor = ctx->API == API_OPENGL_COMPAT;
+   ctx->Light._ClampVertexColor = ctx->API == API_OPENGL_COMPAT;
 
    /* Miscellaneous */
    ctx->Light._NeedEyeCoords = GL_FALSE;

@@ -986,7 +986,9 @@ _mesa_PopAttrib(void)
                _mesa_set_enable(ctx, GL_INDEX_LOGIC_OP,
                                 color->IndexLogicOpEnabled);
                _mesa_set_enable(ctx, GL_DITHER, color->DitherFlag);
-               _mesa_ClampColor(GL_CLAMP_FRAGMENT_COLOR_ARB, color->ClampFragmentColor);
+               if (ctx->Extensions.ARB_color_buffer_float)
+                  _mesa_ClampColor(GL_CLAMP_FRAGMENT_COLOR_ARB,
+                                   color->ClampFragmentColor);
                _mesa_ClampColor(GL_CLAMP_READ_COLOR_ARB, color->ClampReadColor);
 
                /* GL_ARB_framebuffer_sRGB / GL_EXT_framebuffer_sRGB */
@@ -1114,7 +1116,10 @@ _mesa_PopAttrib(void)
                /* materials */
                memcpy(&ctx->Light.Material, &light->Material,
                       sizeof(struct gl_material));
-               _mesa_ClampColor(GL_CLAMP_VERTEX_COLOR_ARB, light->ClampVertexColor);
+               if (ctx->Extensions.ARB_color_buffer_float) {
+                  _mesa_ClampColor(GL_CLAMP_VERTEX_COLOR_ARB,
+                                   light->ClampVertexColor);
+               }
             }
             break;
          case GL_LINE_BIT:

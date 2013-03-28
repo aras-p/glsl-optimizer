@@ -757,7 +757,8 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
        * it's for the pixel path (ClampFragmentColor is GL_TRUE),
        * regardless of the internal implementation of the metaops.
        */
-      if (ctx->Color.ClampFragmentColor != GL_TRUE)
+      if (ctx->Color.ClampFragmentColor != GL_TRUE &&
+          ctx->Extensions.ARB_color_buffer_float)
 	 _mesa_ClampColor(GL_CLAMP_FRAGMENT_COLOR, GL_FALSE);
    }
 
@@ -767,7 +768,8 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
       /* Generally in here we never want vertex color clamping --
        * result clamping is only dependent on fragment clamping.
        */
-      _mesa_ClampColor(GL_CLAMP_VERTEX_COLOR, GL_FALSE);
+      if (ctx->Extensions.ARB_color_buffer_float)
+         _mesa_ClampColor(GL_CLAMP_VERTEX_COLOR, GL_FALSE);
    }
 
    if (state & MESA_META_CONDITIONAL_RENDER) {
@@ -1091,11 +1093,13 @@ _mesa_meta_end(struct gl_context *ctx)
       _mesa_DepthRange(save->DepthNear, save->DepthFar);
    }
 
-   if (state & MESA_META_CLAMP_FRAGMENT_COLOR) {
+   if (state & MESA_META_CLAMP_FRAGMENT_COLOR &&
+       ctx->Extensions.ARB_color_buffer_float) {
       _mesa_ClampColor(GL_CLAMP_FRAGMENT_COLOR, save->ClampFragmentColor);
    }
 
-   if (state & MESA_META_CLAMP_VERTEX_COLOR) {
+   if (state & MESA_META_CLAMP_VERTEX_COLOR &&
+       ctx->Extensions.ARB_color_buffer_float) {
       _mesa_ClampColor(GL_CLAMP_VERTEX_COLOR, save->ClampVertexColor);
    }
 
@@ -2044,7 +2048,8 @@ _mesa_meta_Clear(struct gl_context *ctx, GLbitfield buffers)
       /* leave colormask, glDrawBuffer state as-is */
 
       /* Clears never have the color clamped. */
-      _mesa_ClampColor(GL_CLAMP_FRAGMENT_COLOR, GL_FALSE);
+      if (ctx->Extensions.ARB_color_buffer_float)
+         _mesa_ClampColor(GL_CLAMP_FRAGMENT_COLOR, GL_FALSE);
    }
    else {
       ASSERT(metaSave & MESA_META_COLOR_MASK);
@@ -2295,7 +2300,8 @@ _mesa_meta_glsl_Clear(struct gl_context *ctx, GLbitfield buffers)
       /* leave colormask, glDrawBuffer state as-is */
 
       /* Clears never have the color clamped. */
-      _mesa_ClampColor(GL_CLAMP_FRAGMENT_COLOR, GL_FALSE);
+      if (ctx->Extensions.ARB_color_buffer_float)
+         _mesa_ClampColor(GL_CLAMP_FRAGMENT_COLOR, GL_FALSE);
    }
    else {
       ASSERT(metaSave & MESA_META_COLOR_MASK);

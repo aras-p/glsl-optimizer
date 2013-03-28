@@ -765,11 +765,19 @@ _mesa_ClampColor(GLenum target, GLenum clamp)
 
    switch (target) {
    case GL_CLAMP_VERTEX_COLOR_ARB:
+      if (ctx->API == API_OPENGL_CORE &&
+          !ctx->Extensions.ARB_color_buffer_float) {
+         goto invalid_enum;
+      }
       FLUSH_VERTICES(ctx, _NEW_LIGHT);
       ctx->Light.ClampVertexColor = clamp;
       _mesa_update_clamp_vertex_color(ctx);
       break;
    case GL_CLAMP_FRAGMENT_COLOR_ARB:
+      if (ctx->API == API_OPENGL_CORE &&
+          !ctx->Extensions.ARB_color_buffer_float) {
+         goto invalid_enum;
+      }
       FLUSH_VERTICES(ctx, _NEW_FRAG_CLAMP);
       ctx->Color.ClampFragmentColor = clamp;
       _mesa_update_clamp_fragment_color(ctx);
@@ -779,9 +787,13 @@ _mesa_ClampColor(GLenum target, GLenum clamp)
       ctx->Color.ClampReadColor = clamp;
       break;
    default:
-      _mesa_error(ctx, GL_INVALID_ENUM, "glClampColorARB(target)");
-      return;
+      goto invalid_enum;
    }
+   return;
+
+invalid_enum:
+   _mesa_error(ctx, GL_INVALID_ENUM, "glClampColor(%s)",
+               _mesa_lookup_enum_by_nr(target));
 }
 
 static GLboolean
@@ -892,7 +904,8 @@ void _mesa_init_color( struct gl_context * ctx )
       ctx->Color.DrawBuffer[0] = GL_FRONT;
    }
 
-   ctx->Color.ClampFragmentColor = GL_FIXED_ONLY_ARB;
+   ctx->Color.ClampFragmentColor = ctx->API == API_OPENGL_COMPAT ?
+                                   GL_FIXED_ONLY_ARB : GL_FALSE;
    ctx->Color._ClampFragmentColor = GL_FALSE;
    ctx->Color.ClampReadColor = GL_FIXED_ONLY_ARB;
 

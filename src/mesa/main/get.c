@@ -359,6 +359,13 @@ EXTRA_EXT(ARB_texture_buffer_range);
 EXTRA_EXT(ARB_texture_multisample);
 
 static const int
+extra_ARB_color_buffer_float_or_glcore[] = {
+   EXT(ARB_color_buffer_float),
+   EXTRA_API_GL_CORE,
+   EXTRA_END
+};
+
+static const int
 extra_NV_primitive_restart[] = {
    EXT(NV_primitive_restart),
    EXTRA_END
@@ -869,7 +876,7 @@ find_custom_value(struct gl_context *ctx, const struct value_desc *d, union valu
  * \param func name of calling glGet*v() function for error reporting
  * \param d the struct value_desc that has the extra constraints
  *
- * \return GL_FALSE if one of the constraints was not satisfied,
+ * \return GL_FALSE if all of the constraints were not satisfied,
  *     otherwise GL_TRUE.
  */
 static GLboolean

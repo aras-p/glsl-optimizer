@@ -96,7 +96,7 @@ descriptor=[
 # GL_ARB_color_buffer_float
   [ "CLAMP_VERTEX_COLOR", "CONTEXT_ENUM(Light.ClampVertexColor), extra_ARB_color_buffer_float" ],
   [ "CLAMP_FRAGMENT_COLOR", "CONTEXT_ENUM(Color.ClampFragmentColor), extra_ARB_color_buffer_float" ],
-  [ "CLAMP_READ_COLOR", "CONTEXT_ENUM(Color.ClampReadColor), extra_ARB_color_buffer_float" ],
+  [ "CLAMP_READ_COLOR", "CONTEXT_ENUM(Color.ClampReadColor), extra_ARB_color_buffer_float_or_glcore" ],
 
 # GL_ARB_copy_buffer
   [ "COPY_READ_BUFFER", "LOC_CUSTOM, TYPE_INT, 0, NO_EXTRA" ],
