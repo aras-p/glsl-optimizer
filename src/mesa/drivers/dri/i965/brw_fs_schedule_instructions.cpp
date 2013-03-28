@@ -36,7 +36,7 @@
  *
  * The basic model of the list scheduler is to take a basic block,
  * compute a DAG of the dependencies (RAW ordering with latency, WAW
- * ordering, WAR ordering), and make a list of the DAG heads.
+ * ordering with latency, WAR ordering), and make a list of the DAG heads.
  * Heuristically pick a DAG head, then put all the children that are
  * now DAG heads into the list of things to schedule.
  *
