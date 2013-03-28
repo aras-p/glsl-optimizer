@@ -500,17 +500,11 @@ _mesa_realloc( void *oldBuffer, size_t oldSize, size_t newSize );
 #ifndef FFS_DEFINED
 #define FFS_DEFINED 1
 #ifdef __GNUC__
-
-#if defined(__MINGW32__) || defined(__CYGWIN__) || defined(ANDROID) || defined(__APPLE__)
 #define ffs __builtin_ffs
 #define ffsll __builtin_ffsll
-#endif
-
 #else
-
 extern int ffs(int i);
 extern int ffsll(long long int i);
-
 #endif /*__ GNUC__ */
 #endif /* FFS_DEFINED */
 
