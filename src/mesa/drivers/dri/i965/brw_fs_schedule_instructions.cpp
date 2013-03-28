@@ -67,7 +67,10 @@ public:
       this->parent_count = 0;
       this->unblocked_time = 0;
 
-      if (intel->gen >= 7)
+      /* We can't measure Gen6 timings directly but expect them to be much
+       * closer to Gen7 than Gen4.
+       */
+      if (intel->gen >= 6)
          set_latency_gen7(intel->is_haswell);
       else
          set_latency_gen4();
