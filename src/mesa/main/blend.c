@@ -863,7 +863,7 @@ void _mesa_init_color( struct gl_context * ctx )
    }
 
    ctx->Color.ClampFragmentColor = GL_FIXED_ONLY_ARB;
-   ctx->Color._ClampFragmentColor = GL_TRUE;
+   ctx->Color._ClampFragmentColor = GL_FALSE;
    ctx->Color.ClampReadColor = GL_FIXED_ONLY_ARB;
 
    if (ctx->API == API_OPENGLES2) {

@@ -314,7 +314,17 @@ update_multisample(struct gl_context *ctx)
 static void
 update_clamp_fragment_color(struct gl_context *ctx)
 {
-   ctx->Color._ClampFragmentColor = _mesa_get_clamp_fragment_color(ctx);
+   struct gl_framebuffer *fb = ctx->DrawBuffer;
+
+   /* Don't clamp if:
+    * - there is no colorbuffer
+    * - all colorbuffers are unsigned normalized, so clamping has no effect
+    * - there is an integer colorbuffer
+    */
+   if (!fb || !fb->_HasSNormOrFloatColorBuffer || fb->_IntegerColor)
+      ctx->Color._ClampFragmentColor = GL_FALSE;
+   else
+      ctx->Color._ClampFragmentColor = _mesa_get_clamp_fragment_color(ctx);
 }
 
 

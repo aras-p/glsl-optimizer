@@ -227,8 +227,7 @@ static void update_raster_state( struct st_context *st )
 
    /* _NEW_FRAG_CLAMP */
    raster->clamp_fragment_color = !st->clamp_frag_color_in_shader &&
-                                  ctx->Color._ClampFragmentColor &&
-                                  !ctx->DrawBuffer->_IntegerColor;
+                                  ctx->Color._ClampFragmentColor;
    raster->gl_rasterization_rules = 1;
 
    /* _NEW_RASTERIZER_DISCARD */

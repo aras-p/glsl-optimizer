@@ -2662,6 +2662,7 @@ struct gl_framebuffer
 
    /* ARB_color_buffer_float */
    GLboolean _AllColorBuffersFixedPoint; /* no integer, no float */
+   GLboolean _HasSNormOrFloatColorBuffer;
 
    /** Array of all renderbuffer attachments, indexed by BUFFER_* tokens. */
    struct gl_renderbuffer_attachment Attachment[BUFFER_COUNT];

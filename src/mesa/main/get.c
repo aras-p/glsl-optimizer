@@ -24,6 +24,7 @@
 
 #include "glheader.h"
 #include "context.h"
+#include "blend.h"
 #include "enable.h"
 #include "enums.h"
 #include "extensions.h"
@@ -767,13 +768,13 @@ find_custom_value(struct gl_context *ctx, const struct value_desc *d, union valu
       break;
 
    case GL_FOG_COLOR:
-      if(ctx->Color._ClampFragmentColor)
+      if (_mesa_get_clamp_fragment_color(ctx))
          COPY_4FV(v->value_float_4, ctx->Fog.Color);
       else
          COPY_4FV(v->value_float_4, ctx->Fog.ColorUnclamped);
       break;
    case GL_COLOR_CLEAR_VALUE:
-      if(ctx->Color._ClampFragmentColor) {
+      if (_mesa_get_clamp_fragment_color(ctx)) {
          v->value_float_4[0] = CLAMP(ctx->Color.ClearColor.f[0], 0.0F, 1.0F);
          v->value_float_4[1] = CLAMP(ctx->Color.ClearColor.f[1], 0.0F, 1.0F);
          v->value_float_4[2] = CLAMP(ctx->Color.ClearColor.f[2], 0.0F, 1.0F);
@@ -782,13 +783,13 @@ find_custom_value(struct gl_context *ctx, const struct value_desc *d, union valu
          COPY_4FV(v->value_float_4, ctx->Color.ClearColor.f);
       break;
    case GL_BLEND_COLOR_EXT:
-      if(ctx->Color._ClampFragmentColor)
+      if (_mesa_get_clamp_fragment_color(ctx))
          COPY_4FV(v->value_float_4, ctx->Color.BlendColor);
       else
          COPY_4FV(v->value_float_4, ctx->Color.BlendColorUnclamped);
       break;
    case GL_ALPHA_TEST_REF:
-      if(ctx->Color._ClampFragmentColor)
+      if (_mesa_get_clamp_fragment_color(ctx))
          v->value_float = ctx->Color.AlphaRef;
       else
          v->value_float = ctx->Color.AlphaRefUnclamped;

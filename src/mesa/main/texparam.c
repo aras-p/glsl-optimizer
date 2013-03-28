@@ -31,6 +31,7 @@
 
 #include <stdbool.h>
 #include "main/glheader.h"
+#include "main/blend.h"
 #include "main/colormac.h"
 #include "main/context.h"
 #include "main/enums.h"
@@ -1415,7 +1416,7 @@ _mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params )
 
          if (ctx->NewState & (_NEW_BUFFERS | _NEW_FRAG_CLAMP))
             _mesa_update_state_locked(ctx);
-         if (ctx->Color._ClampFragmentColor) {
+         if (_mesa_get_clamp_fragment_color(ctx)) {
             params[0] = CLAMP(obj->Sampler.BorderColor.f[0], 0.0F, 1.0F);
             params[1] = CLAMP(obj->Sampler.BorderColor.f[1], 0.0F, 1.0F);
             params[2] = CLAMP(obj->Sampler.BorderColor.f[2], 0.0F, 1.0F);
