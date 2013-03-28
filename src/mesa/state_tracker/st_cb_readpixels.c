@@ -133,7 +133,6 @@ st_readpixels(struct gl_context *ctx, GLint x, GLint y,
        !screen->is_format_supported(screen, src_format, src->target,
                                     src->nr_samples,
                                     PIPE_BIND_SAMPLER_VIEW)) {
-      printf("fallback: src format unsupported %s\n", util_format_short_name(src_format));
       goto fallback;
    }
 
@@ -147,8 +146,6 @@ st_readpixels(struct gl_context *ctx, GLint x, GLint y,
    dst_format = st_choose_matching_format(screen, bind, format, type,
                                           pack->SwapBytes);
    if (dst_format == PIPE_FORMAT_NONE) {
-      printf("fallback: no matching format for %s, %s\n",
-             _mesa_lookup_enum_by_nr(format), _mesa_lookup_enum_by_nr(type));
       goto fallback;
    }
 
