@@ -132,7 +132,9 @@ void draw_geometry_shader_prepare(struct draw_geometry_shader *shader,
 int draw_gs_max_output_vertices(struct draw_geometry_shader *shader,
                                 unsigned pipe_prim);
 
+#ifdef HAVE_LLVM
 void draw_gs_set_current_variant(struct draw_geometry_shader *shader,
                                  struct draw_gs_llvm_variant *variant);
+#endif
 
 #endif

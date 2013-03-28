@@ -681,13 +681,16 @@ draw_create_geometry_shader(struct draw_context *draw,
    gs->max_output_vertices = 32;
    gs->max_out_prims = 0;
 
+#ifdef HAVE_LLVM
    if (draw_get_option_use_llvm()) {
       /* TODO: change the input array to handle the following
          vector length, instead of the currently hardcoded
          TGSI_NUM_CHANNELS
       gs->vector_length = lp_native_vector_width / 32;*/
       gs->vector_length = TGSI_NUM_CHANNELS;
-   } else {
+   } else
+#endif
+   {
       gs->vector_length = TGSI_NUM_CHANNELS;
    }
 
@@ -799,8 +802,10 @@ void draw_delete_geometry_shader(struct draw_context *draw,
 }
 
 
+#ifdef HAVE_LLVM
 void draw_gs_set_current_variant(struct draw_geometry_shader *shader,
                                  struct draw_gs_llvm_variant *variant)
 {
    shader->current_variant = variant;
 }
+#endif
