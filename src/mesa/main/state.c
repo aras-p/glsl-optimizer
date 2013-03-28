@@ -309,36 +309,6 @@ update_multisample(struct gl_context *ctx)
 
 
 /**
- * Update the ctx->Color._ClampFragmentColor field
- */
-static void
-update_clamp_fragment_color(struct gl_context *ctx)
-{
-   struct gl_framebuffer *fb = ctx->DrawBuffer;
-
-   /* Don't clamp if:
-    * - there is no colorbuffer
-    * - all colorbuffers are unsigned normalized, so clamping has no effect
-    * - there is an integer colorbuffer
-    */
-   if (!fb || !fb->_HasSNormOrFloatColorBuffer || fb->_IntegerColor)
-      ctx->Color._ClampFragmentColor = GL_FALSE;
-   else
-      ctx->Color._ClampFragmentColor = _mesa_get_clamp_fragment_color(ctx);
-}
-
-
-/**
- * Update the ctx->Color._ClampVertexColor field
- */
-static void
-update_clamp_vertex_color(struct gl_context *ctx)
-{
-   ctx->Light._ClampVertexColor = _mesa_get_clamp_vertex_color(ctx);
-}
-
-
-/**
  * Update the ctx->VertexProgram._TwoSideEnabled flag.
  */
 static void
@@ -497,9 +467,6 @@ _mesa_update_state_locked( struct gl_context *ctx )
    if (new_state & (_NEW_LIGHT | _NEW_PROGRAM))
       update_twoside( ctx );
 
-   if (new_state & (_NEW_LIGHT | _NEW_BUFFERS))
-      update_clamp_vertex_color(ctx);
-
    if (new_state & (_NEW_STENCIL | _NEW_BUFFERS))
       _mesa_update_stencil( ctx );
 
@@ -514,9 +481,6 @@ _mesa_update_state_locked( struct gl_context *ctx )
 
    if (new_state & (_NEW_MULTISAMPLE | _NEW_BUFFERS))
       update_multisample( ctx );
-
-   if(new_state & (_NEW_FRAG_CLAMP | _NEW_BUFFERS))
-      update_clamp_fragment_color(ctx);
 
 #if 0
    if (new_state & (_NEW_POINT | _NEW_LINE | _NEW_POLYGON | _NEW_LIGHT

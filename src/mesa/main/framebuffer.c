@@ -32,6 +32,7 @@
 
 #include "glheader.h"
 #include "imports.h"
+#include "blend.h"
 #include "buffers.h"
 #include "context.h"
 #include "enums.h"
@@ -742,6 +743,9 @@ _mesa_update_framebuffer(struct gl_context *ctx)
    update_framebuffer(ctx, drawFb);
    if (readFb != drawFb)
       update_framebuffer(ctx, readFb);
+
+   _mesa_update_clamp_vertex_color(ctx);
+   _mesa_update_clamp_fragment_color(ctx);
 }
 
 

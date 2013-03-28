@@ -108,6 +108,12 @@ _mesa_get_clamp_vertex_color(const struct gl_context *ctx);
 extern GLboolean
 _mesa_get_clamp_read_color(const struct gl_context *ctx);
 
+extern void
+_mesa_update_clamp_fragment_color(struct gl_context *ctx);
+
+extern void
+_mesa_update_clamp_vertex_color(struct gl_context *ctx);
+
 extern void  
 _mesa_init_color( struct gl_context * ctx );
 
