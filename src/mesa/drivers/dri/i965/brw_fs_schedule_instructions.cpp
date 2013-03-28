@@ -772,10 +772,10 @@ instruction_scheduler::schedule_instructions(fs_inst *next_block_header)
 	 }
       }
 
-      /* Shared resource: the mathbox.  There's one per EU (on later
-       * generations, it's even more limited pre-gen6), so if we send
-       * something off to it then the next math isn't going to make
-       * progress until the first is done.
+      /* Shared resource: the mathbox.  There's one mathbox per EU on Gen6+
+       * but it's more limited pre-gen6, so if we send something off to it then
+       * the next math instruction isn't going to make progress until the first
+       * is done.
        */
       if (chosen->inst->is_math()) {
 	 foreach_list(node, &instructions) {
