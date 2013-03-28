@@ -247,8 +247,8 @@ llvm_fetch_gs_input(struct draw_geometry_shader *shader,
                         shader->info.input_semantic_index[slot],
                         shader->input_info);
 #if DEBUG_INPUTS
-            debug_printf("\tSlot = %d, vs_slot = %d, idx = %d:\n",
-                         slot, vs_slot, idx);
+            debug_printf("\tSlot = %d, vs_slot = %d, i = %d:\n",
+                         slot, vs_slot, i);
 #endif
 #if 0
             assert(!util_is_inf_or_nan(input[vs_slot][0]));
@@ -302,7 +302,7 @@ llvm_fetch_gs_outputs(struct draw_geometry_shader *shader,
       if (current_verts != shader->max_output_vertices) {
          memcpy(output_ptr + (vertex_count + current_verts) * shader->vertex_size,
                 output_ptr + (vertex_count + shader->max_output_vertices) * shader->vertex_size,
-                shader->vertex_size * (total_verts - vertex_count - current_verts));
+                shader->vertex_size * (total_verts - vertex_count));
       }
       vertex_count += current_verts;
    }
@@ -384,7 +384,8 @@ static void gs_point(struct draw_geometry_shader *shader,
    ++shader->in_prim_idx;
    ++shader->fetched_prim_count;
 
-   gs_flush(shader);
+   if (draw_gs_should_flush(shader))
+      gs_flush(shader);
 }
 
 static void gs_line(struct draw_geometry_shader *shader,
@@ -399,8 +400,9 @@ static void gs_line(struct draw_geometry_shader *shader,
                         shader->fetched_prim_count);
    ++shader->in_prim_idx;
    ++shader->fetched_prim_count;
-
-   gs_flush(shader);
+   
+   if (draw_gs_should_flush(shader))   
+      gs_flush(shader);
 }
 
 static void gs_line_adj(struct draw_geometry_shader *shader,
@@ -418,7 +420,8 @@ static void gs_line_adj(struct draw_geometry_shader *shader,
    ++shader->in_prim_idx;
    ++shader->fetched_prim_count;
 
-   gs_flush(shader);
+   if (draw_gs_should_flush(shader))
+      gs_flush(shader);
 }
 
 static void gs_tri(struct draw_geometry_shader *shader,
@@ -435,7 +438,8 @@ static void gs_tri(struct draw_geometry_shader *shader,
    ++shader->in_prim_idx;
    ++shader->fetched_prim_count;
 
-   gs_flush(shader);
+   if (draw_gs_should_flush(shader))
+      gs_flush(shader);
 }
 
 static void gs_tri_adj(struct draw_geometry_shader *shader,
@@ -456,7 +460,8 @@ static void gs_tri_adj(struct draw_geometry_shader *shader,
    ++shader->in_prim_idx;
    ++shader->fetched_prim_count;
 
-   gs_flush(shader);
+   if (draw_gs_should_flush(shader))
+      gs_flush(shader);
 }
 
 #define FUNC         gs_run
@@ -691,7 +696,7 @@ draw_create_geometry_shader(struct draw_context *draw,
    } else
 #endif
    {
-      gs->vector_length = TGSI_NUM_CHANNELS;
+      gs->vector_length = 1;
    }
 
    for (i = 0; i < gs->info.num_properties; ++i) {
