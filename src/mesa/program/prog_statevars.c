@@ -871,6 +871,9 @@ append_token(char *dst, gl_state_index k)
    case STATE_CURRENT_ATTRIB:
       append(dst, "current");
       break;
+   case STATE_CURRENT_ATTRIB_MAYBE_VP_CLAMPED:
+      append(dst, "currentAttribMaybeVPClamped");
+      break;
    case STATE_NORMAL_SCALE:
       append(dst, "normalScale");
       break;
