@@ -673,7 +673,6 @@ struct gl_colorbuffer_attrib
    GLenum ClampFragmentColor; /**< GL_TRUE, GL_FALSE or GL_FIXED_ONLY_ARB */
    GLboolean _ClampFragmentColor; /** < with GL_FIXED_ONLY_ARB resolved */
    GLenum ClampReadColor;     /**< GL_TRUE, GL_FALSE or GL_FIXED_ONLY_ARB */
-   GLboolean _ClampReadColor;     /** < with GL_FIXED_ONLY_ARB resolved */
 
    GLboolean sRGBEnabled;	/**< Framebuffer sRGB blending/updating requested */
 };
@@ -2660,6 +2659,9 @@ struct gl_framebuffer
 
    /** Integer color values */
    GLboolean _IntegerColor;
+
+   /* ARB_color_buffer_float */
+   GLboolean _AllColorBuffersFixedPoint; /* no integer, no float */
 
    /** Array of all renderbuffer attachments, indexed by BUFFER_* tokens. */
    struct gl_renderbuffer_attachment Attachment[BUFFER_COUNT];

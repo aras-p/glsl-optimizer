@@ -782,7 +782,37 @@ _mesa_ClampColor(GLenum target, GLenum clamp)
    }
 }
 
+static GLboolean
+get_clamp_color(const struct gl_framebuffer *fb, GLenum clamp)
+{
+   if (clamp == GL_TRUE || clamp == GL_FALSE)
+      return clamp;
 
+   ASSERT(clamp == GL_FIXED_ONLY);
+   if (!fb)
+      return GL_TRUE;
+
+   return fb->_AllColorBuffersFixedPoint;
+}
+
+GLboolean
+_mesa_get_clamp_fragment_color(const struct gl_context *ctx)
+{
+   return get_clamp_color(ctx->DrawBuffer,
+                                ctx->Color.ClampFragmentColor);
+}
+
+GLboolean
+_mesa_get_clamp_vertex_color(const struct gl_context *ctx)
+{
+   return get_clamp_color(ctx->DrawBuffer, ctx->Light.ClampVertexColor);
+}
+
+GLboolean
+_mesa_get_clamp_read_color(const struct gl_context *ctx)
+{
+   return get_clamp_color(ctx->ReadBuffer, ctx->Color.ClampReadColor);
+}
 
 
 /**********************************************************************/
@@ -835,7 +865,6 @@ void _mesa_init_color( struct gl_context * ctx )
    ctx->Color.ClampFragmentColor = GL_FIXED_ONLY_ARB;
    ctx->Color._ClampFragmentColor = GL_TRUE;
    ctx->Color.ClampReadColor = GL_FIXED_ONLY_ARB;
-   ctx->Color._ClampReadColor = GL_TRUE;
 
    if (ctx->API == API_OPENGLES2) {
       /* GLES 3 behaves as though GL_FRAMEBUFFER_SRGB is always enabled. */

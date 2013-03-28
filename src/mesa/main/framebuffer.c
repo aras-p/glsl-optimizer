@@ -154,6 +154,7 @@ _mesa_initialize_window_framebuffer(struct gl_framebuffer *fb,
 
    fb->Delete = _mesa_destroy_framebuffer;
    fb->_Status = GL_FRAMEBUFFER_COMPLETE_EXT;
+   fb->_AllColorBuffersFixedPoint = !visual->floatMode;
 
    compute_depth_max(fb);
 }

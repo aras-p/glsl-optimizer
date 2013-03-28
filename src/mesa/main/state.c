@@ -51,6 +51,7 @@
 #include "texobj.h"
 #include "texstate.h"
 #include "varray.h"
+#include "blend.h"
 
 
 static void
@@ -313,11 +314,7 @@ update_multisample(struct gl_context *ctx)
 static void
 update_clamp_fragment_color(struct gl_context *ctx)
 {
-   if (ctx->Color.ClampFragmentColor == GL_FIXED_ONLY_ARB)
-      ctx->Color._ClampFragmentColor =
-         !ctx->DrawBuffer || !ctx->DrawBuffer->Visual.floatMode;
-   else
-      ctx->Color._ClampFragmentColor = ctx->Color.ClampFragmentColor;
+   ctx->Color._ClampFragmentColor = _mesa_get_clamp_fragment_color(ctx);
 }
 
 
@@ -327,26 +324,9 @@ update_clamp_fragment_color(struct gl_context *ctx)
 static void
 update_clamp_vertex_color(struct gl_context *ctx)
 {
-   if (ctx->Light.ClampVertexColor == GL_FIXED_ONLY_ARB)
-      ctx->Light._ClampVertexColor =
-         !ctx->DrawBuffer || !ctx->DrawBuffer->Visual.floatMode;
-   else
-      ctx->Light._ClampVertexColor = ctx->Light.ClampVertexColor;
+   ctx->Light._ClampVertexColor = _mesa_get_clamp_vertex_color(ctx);
 }
 
-
-/**
- * Update the ctx->Color._ClampReadColor field
- */
-static void
-update_clamp_read_color(struct gl_context *ctx)
-{
-   if (ctx->Color.ClampReadColor == GL_FIXED_ONLY_ARB)
-      ctx->Color._ClampReadColor =
-         !ctx->ReadBuffer || !ctx->ReadBuffer->Visual.floatMode;
-   else
-      ctx->Color._ClampReadColor = ctx->Color.ClampReadColor;
-}
 
 /**
  * Update the ctx->VertexProgram._TwoSideEnabled flag.
@@ -524,9 +504,6 @@ _mesa_update_state_locked( struct gl_context *ctx )
 
    if (new_state & (_NEW_MULTISAMPLE | _NEW_BUFFERS))
       update_multisample( ctx );
-
-   if (new_state & (_NEW_COLOR | _NEW_BUFFERS))
-      update_clamp_read_color(ctx);
 
    if(new_state & (_NEW_FRAG_CLAMP | _NEW_BUFFERS))
       update_clamp_fragment_color(ctx);

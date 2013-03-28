@@ -99,6 +99,14 @@ _mesa_ColorMaski( GLuint buf, GLboolean red, GLboolean green,
 extern void GLAPIENTRY
 _mesa_ClampColor(GLenum target, GLenum clamp);
 
+extern GLboolean
+_mesa_get_clamp_fragment_color(const struct gl_context *ctx);
+
+extern GLboolean
+_mesa_get_clamp_vertex_color(const struct gl_context *ctx);
+
+extern GLboolean
+_mesa_get_clamp_read_color(const struct gl_context *ctx);
 
 extern void  
 _mesa_init_color( struct gl_context * ctx );

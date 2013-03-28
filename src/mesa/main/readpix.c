@@ -24,6 +24,7 @@
 
 #include "glheader.h"
 #include "imports.h"
+#include "blend.h"
 #include "bufferobj.h"
 #include "context.h"
 #include "enums.h"
@@ -80,7 +81,7 @@ get_readpixels_transfer_ops(const struct gl_context *ctx, gl_format texFormat,
    if (uses_blit) {
       /* For blit-based ReadPixels packing, the clamping is done automatically
        * unless the type is float. */
-      if (ctx->Color._ClampReadColor == GL_TRUE &&
+      if (_mesa_get_clamp_read_color(ctx) &&
           (type == GL_FLOAT || type == GL_HALF_FLOAT)) {
          transferOps |= IMAGE_CLAMP_BIT;
       }
@@ -88,7 +89,7 @@ get_readpixels_transfer_ops(const struct gl_context *ctx, gl_format texFormat,
    else {
       /* For CPU-based ReadPixels packing, the clamping must always be done
        * for non-float types, */
-      if (ctx->Color._ClampReadColor == GL_TRUE ||
+      if (_mesa_get_clamp_read_color(ctx) ||
           (type != GL_FLOAT && type != GL_HALF_FLOAT)) {
          transferOps |= IMAGE_CLAMP_BIT;
       }
