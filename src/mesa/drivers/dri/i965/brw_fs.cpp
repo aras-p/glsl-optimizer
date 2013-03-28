@@ -2768,6 +2768,8 @@ fs_visitor::run()
       if (failed)
 	 return false;
 
+      emit(FS_OPCODE_PLACEHOLDER_HALT);
+
       emit_fb_writes();
 
       split_virtual_grfs();

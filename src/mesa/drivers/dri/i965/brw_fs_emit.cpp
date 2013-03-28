@@ -102,12 +102,6 @@ fs_generator::generate_fb_write(fs_inst *inst)
    struct brw_reg implied_header;
    uint32_t msg_control;
 
-   /* Note that the jumps emitted to this point mean that the g0 ->
-    * base_mrf setup must be inside of this function, so that we jump
-    * to a point containing it.
-    */
-   patch_discard_jumps_to_fb_writes();
-
    /* Header is 2 regs, g0 and g1 are the contents. g0 will be implied
     * move, here's g1.
     */
@@ -1344,6 +1338,13 @@ fs_generator::generate_code(exec_list *instructions)
       case FS_OPCODE_UNPACK_HALF_2x16_SPLIT_X:
       case FS_OPCODE_UNPACK_HALF_2x16_SPLIT_Y:
          generate_unpack_half_2x16_split(inst, dst, src[0]);
+         break;
+
+      case FS_OPCODE_PLACEHOLDER_HALT:
+         /* This is the place where the final HALT needs to be inserted if
+          * we've emitted any discards.  If not, this will emit no code.
+          */
+         patch_discard_jumps_to_fb_writes();
          break;
 
       default:

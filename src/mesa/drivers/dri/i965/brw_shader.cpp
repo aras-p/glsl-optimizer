@@ -471,6 +471,9 @@ brw_instruction_name(enum opcode op)
    case FS_OPCODE_UNPACK_HALF_2x16_SPLIT_Y:
       return "unpack_half_2x16_split_y";
 
+   case FS_OPCODE_PLACEHOLDER_HALT:
+      return "placeholder_halt";
+
    case VS_OPCODE_URB_WRITE:
       return "urb_write";
    case VS_OPCODE_SCRATCH_READ:

@@ -512,6 +512,9 @@ instruction_scheduler::calculate_deps()
       schedule_node *n = (schedule_node *)node;
       fs_inst *inst = n->inst;
 
+      if (inst->opcode == FS_OPCODE_PLACEHOLDER_HALT)
+         add_barrier_deps(n);
+
       /* read-after-write deps. */
       for (int i = 0; i < 3; i++) {
 	 if (inst->src[i].file == GRF) {
