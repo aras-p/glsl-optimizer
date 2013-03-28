@@ -54,7 +54,7 @@ subpixel_snap(float a)
 static INLINE float
 fixed_to_float(int a)
 {
-   return a * (1.0 / FIXED_ONE);
+   return a * (1.0f / FIXED_ONE);
 }
 
 
