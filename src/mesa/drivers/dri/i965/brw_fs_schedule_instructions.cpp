@@ -129,15 +129,29 @@ schedule_node::set_latency_gen7(bool is_haswell)
 {
    switch (inst->opcode) {
    case BRW_OPCODE_MAD:
-      /* 3 cycles (this is said to be 4 cycles sometimes depending on the
-       * register numbers in the sources):
+      /* 2 cycles
+       *  (since the last two src operands are in different register banks):
+       * mad(8) g4<1>F g2.2<4,1,1>F.x  g2<4,1,1>F.x g3.1<4,1,1>F.x { align16 WE_normal 1Q };
+       *
+       * 3 cycles on IVB, 4 on HSW
+       *  (since the last two src operands are in the same register bank):
        * mad(8) g4<1>F g2.2<4,1,1>F.x  g2<4,1,1>F.x g2.1<4,1,1>F.x { align16 WE_normal 1Q };
        *
-       * 20 cycles:
+       * 18 cycles on IVB, 16 on HSW
+       *  (since the last two src operands are in different register banks):
+       * mad(8) g4<1>F g2.2<4,1,1>F.x  g2<4,1,1>F.x g3.1<4,1,1>F.x { align16 WE_normal 1Q };
+       * mov(8) null   g4<4,5,1>F                     { align16 WE_normal 1Q };
+       *
+       * 20 cycles on IVB, 18 on HSW
+       *  (since the last two src operands are in the same register bank):
        * mad(8) g4<1>F g2.2<4,1,1>F.x  g2<4,1,1>F.x g2.1<4,1,1>F.x { align16 WE_normal 1Q };
        * mov(8) null   g4<4,4,1>F                     { align16 WE_normal 1Q };
        */
-      latency = is_haswell ? 16 : 17;
+
+      /* Our register allocator doesn't know about register banks, so use the
+       * higher latency.
+       */
+      latency = is_haswell ? 16 : 18;
       break;
 
    case BRW_OPCODE_LRP:
