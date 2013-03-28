@@ -140,6 +140,32 @@ schedule_node::set_latency_gen7(bool is_haswell)
       latency = is_haswell ? 16 : 17;
       break;
 
+   case BRW_OPCODE_LRP:
+      /* 2 cycles
+       *  (since the last two src operands are in different register banks):
+       * lrp(8) g4<1>F g2.2<4,1,1>F.x  g2<4,1,1>F.x g3.1<4,1,1>F.x { align16 WE_normal 1Q };
+       *
+       * 3 cycles on IVB, 4 on HSW
+       *  (since the last two src operands are in the same register bank):
+       * lrp(8) g4<1>F g2.2<4,1,1>F.x  g2<4,1,1>F.x g2.1<4,1,1>F.x { align16 WE_normal 1Q };
+       *
+       * 16 cycles on IVB, 14 on HSW
+       *  (since the last two src operands are in different register banks):
+       * lrp(8) g4<1>F g2.2<4,1,1>F.x  g2<4,1,1>F.x g3.1<4,1,1>F.x { align16 WE_normal 1Q };
+       * mov(8) null   g4<4,4,1>F                     { align16 WE_normal 1Q };
+       *
+       * 16 cycles
+       *  (since the last two src operands are in the same register bank):
+       * lrp(8) g4<1>F g2.2<4,1,1>F.x  g2<4,1,1>F.x g2.1<4,1,1>F.x { align16 WE_normal 1Q };
+       * mov(8) null   g4<4,4,1>F                     { align16 WE_normal 1Q };
+       */
+
+      /* Our register allocator doesn't know about register banks, so use the
+       * higher latency.
+       */
+      latency = 14;
+      break;
+
    case SHADER_OPCODE_RCP:
    case SHADER_OPCODE_RSQ:
    case SHADER_OPCODE_SQRT:
