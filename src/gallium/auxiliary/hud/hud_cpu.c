@@ -32,6 +32,7 @@
 #include "os/os_time.h"
 #include "util/u_memory.h"
 #include <stdio.h>
+#include <inttypes.h>
 
 static boolean
 get_cpu_stats(unsigned cpu_index, uint64_t *busy_time, uint64_t *total_time)
@@ -55,8 +56,9 @@ get_cpu_stats(unsigned cpu_index, uint64_t *busy_time, uint64_t *total_time)
          int i, num;
 
          num = sscanf(line,
-                      "%s %llu %llu %llu %llu %llu %llu %llu %llu %llu "
-                      "%llu %llu %llu",
+                      "%s %"PRIu64" %"PRIu64" %"PRIu64" %"PRIu64" %"PRIu64
+                      " %"PRIu64" %"PRIu64" %"PRIu64" %"PRIu64" %"PRIu64
+                      " %"PRIu64" %"PRIu64"",
                       cpuname, &v[0], &v[1], &v[2], &v[3], &v[4], &v[5],
                       &v[6], &v[7], &v[8], &v[9], &v[10], &v[11]);
          if (num < 5) {

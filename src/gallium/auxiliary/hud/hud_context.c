@@ -90,6 +90,10 @@ struct hud_context {
       unsigned max_num_vertices;
       unsigned num_vertices;
    } text, bg, whitelines;
+
+   struct {
+      boolean query_pipeline_statistics;
+   } cap;
 };
 
 
@@ -719,15 +723,45 @@ hud_parse_env_var(struct hud_context *hud, const char *env)
       else if (sscanf(name, "cpu%u%s", &i, s) == 1) {
          hud_cpu_graph_install(pane, i);
       }
-      else if (strcmp(name, "pixels-rendered") == 0 &&
+      else if (strcmp(name, "samples-passed") == 0 &&
                has_occlusion_query(hud->pipe->screen)) {
-         hud_pipe_query_install(pane, hud->pipe, "pixels-rendered",
-                            PIPE_QUERY_OCCLUSION_COUNTER, 0, FALSE);
+         hud_pipe_query_install(pane, hud->pipe, "samples-passed",
+                                PIPE_QUERY_OCCLUSION_COUNTER, 0, 0, FALSE);
       }
       else if (strcmp(name, "primitives-generated") == 0 &&
                has_streamout(hud->pipe->screen)) {
          hud_pipe_query_install(pane, hud->pipe, "primitives-generated",
-                            PIPE_QUERY_PRIMITIVES_GENERATED, 0, FALSE);
+                                PIPE_QUERY_PRIMITIVES_GENERATED, 0, 0, FALSE);
+      }
+      else if (strncmp(name, "pipeline-statistics-", 20) == 0) {
+         if (hud->cap.query_pipeline_statistics) {
+            static const char *pipeline_statistics_names[] =
+            {
+               "ia-vertices",
+               "ia-primitives",
+               "vs-invocations",
+               "gs-invocations",
+               "gs-primitives",
+               "clipper-invocations",
+               "clipper-primitives-generated",
+               "ps-invocations",
+               "hs-invocations",
+               "ds-invocations",
+               "cs-invocations"
+            };
+            for (i = 0; i < Elements(pipeline_statistics_names); ++i)
+               if (strcmp(&name[20], pipeline_statistics_names[i]) == 0)
+                  break;
+            if (i < Elements(pipeline_statistics_names))
+               hud_pipe_query_install(pane, hud->pipe, &name[20],
+                                      PIPE_QUERY_PIPELINE_STATISTICS, i,
+                                      0, FALSE);
+            else
+               fprintf(stderr, "gallium_hud: invalid pipeline-statistics-*\n");
+         } else {
+            fprintf(stderr, "gallium_hud: PIPE_QUERY_PIPELINE_STATISTICS "
+                    "not supported by the driver\n");
+         }
       }
       else {
          if (!hud_driver_query_install(pane, hud->pipe, name)){
@@ -989,6 +1023,9 @@ hud_create(struct pipe_context *pipe, struct cso_context *cso)
    hud->constbuf.user_buffer = &hud->constants;
 
    LIST_INITHEAD(&hud->pane_list);
+
+   hud->cap.query_pipeline_statistics =
+      pipe->screen->get_param(pipe->screen, PIPE_CAP_QUERY_PIPELINE_STATISTICS);
 
    hud_parse_env_var(hud, env);
    return hud;

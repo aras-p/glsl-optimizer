@@ -42,6 +42,7 @@
 struct query_info {
    struct pipe_context *pipe;
    unsigned query_type;
+   unsigned result_index; /* unit depends on query_type */
 
    /* Ring of queries. If a query is busy, we use another slot. */
    struct pipe_query *query[NUM_QUERIES];
@@ -67,10 +68,10 @@ query_new_value(struct hud_graph *gr)
       while (1) {
          struct pipe_query *query = info->query[info->tail];
          union pipe_query_result result;
-         result.u64 = 0;
+         uint64_t *res64 = (uint64_t *)&result;
 
          if (pipe->get_query_result(pipe, query, FALSE, &result)) {
-            info->results_cumulative += result.u64;
+            info->results_cumulative += res64[info->result_index];
             info->num_results++;
 
             if (info->tail == info->head)
@@ -146,6 +147,7 @@ free_query_info(void *ptr)
 void
 hud_pipe_query_install(struct hud_pane *pane, struct pipe_context *pipe,
                        const char *name, unsigned query_type,
+                       unsigned result_index,
                        uint64_t max_value, boolean uses_byte_units)
 {
    struct hud_graph *gr;
@@ -168,6 +170,7 @@ hud_pipe_query_install(struct hud_pane *pane, struct pipe_context *pipe,
    info = gr->query_data;
    info->pipe = pipe;
    info->query_type = query_type;
+   info->result_index = result_index;
 
    hud_pane_add_graph(pane, gr);
    if (pane->max_value < max_value)
@@ -201,7 +204,7 @@ hud_driver_query_install(struct hud_pane *pane, struct pipe_context *pipe,
    if (!found)
       return FALSE;
 
-   hud_pipe_query_install(pane, pipe, query.name, query.query_type,
+   hud_pipe_query_install(pane, pipe, query.name, query.query_type, 0,
                       query.max_value, query.uses_byte_units);
    return TRUE;
 }
