@@ -1398,7 +1398,7 @@ ir_dereference_array::constant_referenced(struct hash_table *variable_context,
       return;
    }
 
-   const glsl_type *vt = substore->type;
+   const glsl_type *vt = array->type;
    if (vt->is_array()) {
       store = substore->get_array_element(index);
       offset = 0;
