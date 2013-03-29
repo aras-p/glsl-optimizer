@@ -129,12 +129,15 @@ nvc0_query_create(struct pipe_context *pipe, unsigned type)
       q->is64bit = TRUE;
       space = 64;
       break;
+   case PIPE_QUERY_PRIMITIVES_GENERATED:
+   case PIPE_QUERY_PRIMITIVES_EMITTED:
+      q->is64bit = TRUE;
+      space = 32;
+      break;
    case PIPE_QUERY_TIME_ELAPSED:
    case PIPE_QUERY_TIMESTAMP:
    case PIPE_QUERY_TIMESTAMP_DISJOINT:
    case PIPE_QUERY_GPU_FINISHED:
-   case PIPE_QUERY_PRIMITIVES_GENERATED:
-   case PIPE_QUERY_PRIMITIVES_EMITTED:
       space = 32;
       break;
    case NVC0_QUERY_TFB_BUFFER_OFFSET:
@@ -234,7 +237,7 @@ nvc0_query_begin(struct pipe_context *pipe, struct pipe_query *pq)
       }
       break;
    case PIPE_QUERY_PRIMITIVES_GENERATED:
-      nvc0_query_get(push, q, 0x10, 0x06805002 | (q->index << 5));
+      nvc0_query_get(push, q, 0x10, 0x09005002 | (q->index << 5));
       break;
    case PIPE_QUERY_PRIMITIVES_EMITTED:
       nvc0_query_get(push, q, 0x10, 0x05805002 | (q->index << 5));
@@ -295,7 +298,7 @@ nvc0_query_end(struct pipe_context *pipe, struct pipe_query *pq)
       }
       break;
    case PIPE_QUERY_PRIMITIVES_GENERATED:
-      nvc0_query_get(push, q, 0, 0x06805002 | (q->index << 5));
+      nvc0_query_get(push, q, 0, 0x09005002 | (q->index << 5));
       break;
    case PIPE_QUERY_PRIMITIVES_EMITTED:
       nvc0_query_get(push, q, 0, 0x05805002 | (q->index << 5));
