@@ -60,6 +60,7 @@ struct draw_so_target {
    struct pipe_stream_output_target target;
    void *mapping;
    int internal_offset;
+   int emitted_vertices;
 };
 
 struct draw_context *draw_create( struct pipe_context *pipe );

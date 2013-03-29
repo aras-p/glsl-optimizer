@@ -451,6 +451,28 @@ draw_arrays_instanced(struct draw_context *draw,
    draw_vbo(draw, &info);
 }
 
+/**
+ * Resolve true values within pipe_draw_info.
+ * If we're rendering from transform feedback/stream output
+ * buffers both the count and max_index need to be computed
+ * from the attached stream output target. 
+ */
+static void
+resolve_draw_info(const struct pipe_draw_info *raw_info,
+                  struct pipe_draw_info *info)
+{
+   memcpy(info, raw_info, sizeof(struct pipe_draw_info));
+
+   if (raw_info->count_from_stream_output) {
+      struct draw_so_target *target =
+         (struct draw_so_target *)info->count_from_stream_output;
+      info->count = target->emitted_vertices;
+
+      /* Stream output draw can not be indexed */
+      debug_assert(!info->indexed);
+      info->max_index = info->count - 1;
+   }
+}
 
 /**
  * Draw vertex arrays.
@@ -465,9 +487,16 @@ draw_vbo(struct draw_context *draw,
    unsigned instance;
    unsigned index_limit;
    unsigned count;
+   struct pipe_draw_info resolved_info;
+
+   resolve_draw_info(info, &resolved_info);
+   info = &resolved_info;
+
    assert(info->instance_count > 0);
    if (info->indexed)
       assert(draw->pt.user.elts);
+   
+   count = info->count;
 
    draw->pt.user.eltBias = info->index_bias;
    draw->pt.user.min_index = info->min_index;
@@ -517,12 +546,6 @@ draw_vbo(struct draw_context *draw,
    }
 
    draw->pt.max_index = index_limit - 1;
-
-   count = info->count;
-   if (count == 0) {
-      if (info->count_from_stream_output)
-         count = draw->pt.max_index + 1;
-   }
 
    /*
     * TODO: We could use draw->pt.max_index to further narrow

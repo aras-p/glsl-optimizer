@@ -174,8 +174,10 @@ static void so_emit_prim(struct pt_so_emit *so,
          else
             memcpy(buffer, &input[idx][start_comp], num_comps * sizeof(float));
       }
-      for (ob = 0; ob < draw->so.num_targets; ++ob)
+      for (ob = 0; ob < draw->so.num_targets; ++ob) {
          draw->so.targets[ob]->internal_offset += state->stride[ob] * sizeof(float);
+         draw->so.targets[ob]->emitted_vertices += 1;
+      }
    }
    so->emitted_vertices += num_vertices;
    ++so->emitted_primitives;
