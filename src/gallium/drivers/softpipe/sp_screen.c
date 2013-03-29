@@ -86,6 +86,8 @@ softpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
       return 1;
    case PIPE_CAP_QUERY_TIME_ELAPSED:
       return 1;
+   case PIPE_CAP_QUERY_PIPELINE_STATISTICS:
+      return 0;
    case PIPE_CAP_TEXTURE_MIRROR_CLAMP:
       return 1;
    case PIPE_CAP_TEXTURE_SHADOW_MAP:

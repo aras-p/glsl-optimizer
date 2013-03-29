@@ -149,6 +149,8 @@ The integer capabilities:
   to use a blit to implement a texture transfer which needs format conversions
   and swizzling in state trackers. Generally, all hardware drivers with
   dedicated memory should return 1 and all software rasterizers should return 0.
+* ``PIPE_CAP_QUERY_PIPELINE_STATISTICS``: Whether PIPE_QUERY_PIPELINE_STATISTICS
+  is supported.
 
 
 .. _pipe_capf:

@@ -135,6 +135,7 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 
         /* Unsupported features. */
         case PIPE_CAP_QUERY_TIME_ELAPSED:
+        case PIPE_CAP_QUERY_PIPELINE_STATISTICS:
         case PIPE_CAP_MAX_DUAL_SOURCE_RENDER_TARGETS:
         case PIPE_CAP_INDEP_BLEND_ENABLE:
         case PIPE_CAP_INDEP_BLEND_FUNC:
