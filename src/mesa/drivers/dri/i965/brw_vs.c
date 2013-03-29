@@ -63,6 +63,13 @@ brw_compute_vue_map(struct brw_context *brw, struct brw_vs_compile *c,
 {
    const struct intel_context *intel = &brw->intel;
    struct brw_vue_map *vue_map = &c->prog_data.vue_map;
+
+   /* Prior to Gen6, don't assign a slot for VARYING_SLOT_CLIP_VERTEX, since
+    * it is unsupported.
+    */
+   if (intel->gen < 6)
+      slots_valid &= ~VARYING_BIT_CLIP_VERTEX;
+
    vue_map->slots_valid = slots_valid;
    int i;
 
@@ -152,15 +159,12 @@ brw_compute_vue_map(struct brw_context *brw, struct brw_vs_compile *c,
     * assign them contiguously.  Don't reassign outputs that already have a
     * slot.
     *
-    * Also, prior to Gen6, don't assign a slot for VARYING_SLOT_CLIP_VERTEX,
-    * since it is unsupported.  In Gen6 and above, VARYING_SLOT_CLIP_VERTEX may
-    * be needed for transform feedback; since we don't want to have to
-    * recompute the VUE map (and everything that depends on it) when transform
-    * feedback is enabled or disabled, just go ahead and assign a slot for it.
+    * We generally don't need to assign a slot for VARYING_SLOT_CLIP_VERTEX,
+    * since it's encoded as the clip distances by emit_clip_distances().
+    * However, it may be output by transform feedback, and we'd rather not
+    * recompute state when TF changes, so we just always include it.
     */
    for (int i = 0; i < VARYING_SLOT_MAX; ++i) {
-      if (intel->gen < 6 && i == VARYING_SLOT_CLIP_VERTEX)
-         continue;
       if ((slots_valid & BITFIELD64_BIT(i)) &&
           vue_map->varying_to_slot[i] == -1) {
          assign_vue_slot(vue_map, i);
