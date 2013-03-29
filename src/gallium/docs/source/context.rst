@@ -335,15 +335,17 @@ The result is a 64-bit integer specifying the timer resolution in Hz,
 followed by a boolean value indicating whether the timer has incremented.
 
 ``PIPE_QUERY_PRIMITIVES_GENERATED`` returns a 64-bit integer indicating
-the number of primitives processed by the pipeline.
+the number of primitives processed by the pipeline (regardless of whether
+stream output is active or not).
 
 ``PIPE_QUERY_PRIMITIVES_EMITTED`` returns a 64-bit integer indicating
 the number of primitives written to stream output buffers.
 
 ``PIPE_QUERY_SO_STATISTICS`` returns 2 64-bit integers corresponding to
-the results of
+the result of
 ``PIPE_QUERY_PRIMITIVES_EMITTED`` and
-``PIPE_QUERY_PRIMITIVES_GENERATED``, in this order.
+the number of primitives that would have been written to stream output buffers
+if they had infinite space available (primitives_storage_needed), in this order.
 
 ``PIPE_QUERY_SO_OVERFLOW_PREDICATE`` returns a boolean value indicating
 whether the stream output targets have overflowed as a result of the
