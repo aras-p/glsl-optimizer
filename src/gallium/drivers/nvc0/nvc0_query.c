@@ -46,6 +46,7 @@ struct nvc0_query {
    boolean is64bit;
    uint8_t rotate;
    int nesting; /* only used for occlusion queries */
+   struct nouveau_fence *fence;
    struct nouveau_mm_allocation *mm;
 };
 
@@ -98,6 +99,7 @@ static void
 nvc0_query_destroy(struct pipe_context *pipe, struct pipe_query *pq)
 {
    nvc0_query_allocate(nvc0_context(pipe), nvc0_query(pq), 0);
+   nouveau_fence_ref(NULL, &nvc0_query(pq)->fence);
    FREE(nvc0_query(pq));
 }
 
@@ -337,13 +339,15 @@ nvc0_query_end(struct pipe_context *pipe, struct pipe_query *pq)
          nve4_mp_pm_query_end(nvc0, q);
       break;
    }
+   if (q->is64bit)
+      nouveau_fence_ref(nvc0->screen->base.fence.current, &q->fence);
 }
 
 static INLINE void
 nvc0_query_update(struct nouveau_client *cli, struct nvc0_query *q)
 {
    if (q->is64bit) {
-      if (!nouveau_bo_map(q->bo, NOUVEAU_BO_RD | NOUVEAU_BO_NOBLOCK, cli))
+      if (nouveau_fence_signalled(q->fence))
          q->state = NVC0_QUERY_STATE_READY;
    } else {
       if (q->data[0] == q->sequence)
