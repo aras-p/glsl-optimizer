@@ -160,6 +160,8 @@ nvc0_validate_fb(struct nvc0_context *nvc0)
 
     if (serialize)
        IMMED_NVC0(push, NVC0_3D(SERIALIZE), 0);
+
+    NOUVEAU_DRV_STAT(&nvc0->screen->base, gpu_serialize_count, serialize);
 }
 
 static void

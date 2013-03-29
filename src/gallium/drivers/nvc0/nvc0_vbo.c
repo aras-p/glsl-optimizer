@@ -254,6 +254,8 @@ nvc0_update_user_vbufs(struct nvc0_context *nvc0)
                                            base, size, &bo);
          if (bo)
             BCTX_REFN_bo(nvc0->bufctx_3d, VTX_TMP, bo_flags, bo);
+
+         NOUVEAU_DRV_STAT(&nvc0->screen->base, user_buffer_upload_bytes, size);
       }
 
       BEGIN_1IC0(push, NVC0_3D(MACRO_VERTEX_ARRAY_SELECT), 5);
@@ -294,6 +296,8 @@ nvc0_update_user_vbufs_shared(struct nvc0_context *nvc0)
       PUSH_DATA (push, address + base + size - 1);
       PUSH_DATAh(push, address);
       PUSH_DATA (push, address);
+
+      NOUVEAU_DRV_STAT(&nvc0->screen->base, user_buffer_upload_bytes, size);
    }
 
    mask = nvc0->state.constant_elts;
@@ -555,6 +559,8 @@ nvc0_draw_vbo_kick_notify(struct nouveau_pushbuf *push)
    struct nvc0_screen *screen = push->user_priv;
 
    nouveau_fence_update(&screen->base, TRUE);
+
+   NOUVEAU_DRV_STAT(&screen->base, pushbuf_count, 1);
 }
 
 static void
@@ -584,6 +590,7 @@ nvc0_draw_arrays(struct nvc0_context *nvc0,
 
       prim |= NVC0_3D_VERTEX_BEGIN_GL_INSTANCE_NEXT;
    }
+   NOUVEAU_DRV_STAT(&nvc0->screen->base, draw_calls_array, 1);
 }
 
 static void
@@ -746,6 +753,7 @@ nvc0_draw_elements(struct nvc0_context *nvc0, boolean shorten,
          prim |= NVC0_3D_VERTEX_BEGIN_GL_INSTANCE_NEXT;
       }
    }
+   NOUVEAU_DRV_STAT(&nvc0->screen->base, draw_calls_indexed, 1);
 }
 
 static void
@@ -764,6 +772,8 @@ nvc0_draw_stream_output(struct nvc0_context *nvc0,
       IMMED_NVC0(push, NVC0_3D(SERIALIZE), 0);
       nvc0_query_fifo_wait(push, so->pq);
       IMMED_NVC0(push, NVC0_3D(VERTEX_ARRAY_FLUSH), 0);
+
+      NOUVEAU_DRV_STAT(&nvc0->screen->base, gpu_serialize_count, 1);
    }
 
    while (num_instances--) {

@@ -205,8 +205,10 @@ nvc0_resource_copy_region(struct pipe_context *pipe,
    if (dst->target == PIPE_BUFFER && src->target == PIPE_BUFFER) {
       util_resource_copy_region(pipe, dst, dst_level, dstx, dsty, dstz,
                                 src, src_level, src_box);
+      NOUVEAU_DRV_STAT(&nvc0->screen->base, buf_copy_bytes, src_box->width);
       return;
    }
+   NOUVEAU_DRV_STAT(&nvc0->screen->base, tex_copy_count, 1);
 
    /* 0 and 1 are equal, only supporting 0/1, 2, 4 and 8 */
    assert((src->nr_samples | 1) == (dst->nr_samples | 1));
@@ -1149,6 +1151,8 @@ nvc0_blit(struct pipe_context *pipe, const struct pipe_blit_info *info)
       nvc0_blit_eng2d(nvc0, info);
    else
       nvc0_blit_3d(nvc0, info);
+
+   NOUVEAU_DRV_STAT(&nvc0->screen->base, tex_blit_count, 1);
 }
 
 boolean

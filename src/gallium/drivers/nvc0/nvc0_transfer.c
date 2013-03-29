@@ -447,7 +447,10 @@ nvc0_miptree_transfer_unmap(struct pipe_context *pctx,
             tx->rect[0].base += mt->layer_stride;
          tx->rect[1].base += tx->nblocksy * tx->base.stride;
       }
+      NOUVEAU_DRV_STAT(&nvc0->screen->base, tex_transfers_wr, 1);
    }
+   if (tx->base.usage & PIPE_TRANSFER_READ)
+      NOUVEAU_DRV_STAT(&nvc0->screen->base, tex_transfers_rd, 1);
 
    nouveau_bo_ref(NULL, &tx->rect[1].bo);
    pipe_resource_reference(&transfer->resource, NULL);
@@ -463,6 +466,9 @@ nvc0_cb_push(struct nouveau_context *nv,
 {
    struct nouveau_bufctx *bctx = nvc0_context(&nv->pipe)->bufctx;
    struct nouveau_pushbuf *push = nv->pushbuf;
+
+   NOUVEAU_DRV_STAT(nv->screen, constbuf_upload_count, 1);
+   NOUVEAU_DRV_STAT(nv->screen, constbuf_upload_bytes, words * 4);
 
    assert(!(offset & 3));
    size = align(size, 0x100);

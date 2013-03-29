@@ -46,8 +46,11 @@ struct nvc0_query {
    boolean is64bit;
    uint8_t rotate;
    int nesting; /* only used for occlusion queries */
+   union {
+      struct nouveau_mm_allocation *mm;
+      uint64_t value;
+   } u;
    struct nouveau_fence *fence;
-   struct nouveau_mm_allocation *mm;
 };
 
 #define NVC0_QUERY_ALLOC_SPACE 256
@@ -71,16 +74,16 @@ nvc0_query_allocate(struct nvc0_context *nvc0, struct nvc0_query *q, int size)
 
    if (q->bo) {
       nouveau_bo_ref(NULL, &q->bo);
-      if (q->mm) {
+      if (q->u.mm) {
          if (q->state == NVC0_QUERY_STATE_READY)
-            nouveau_mm_free(q->mm);
+            nouveau_mm_free(q->u.mm);
          else
             nouveau_fence_work(screen->base.fence.current,
-                               nouveau_mm_free_work, q->mm);
+                               nouveau_mm_free_work, q->u.mm);
       }
    }
    if (size) {
-      q->mm = nouveau_mm_allocate(screen->base.mm_GART, size, &q->bo, &q->base);
+      q->u.mm = nouveau_mm_allocate(screen->base.mm_GART, size, &q->bo, &q->base);
       if (!q->bo)
          return FALSE;
       q->offset = q->base;
@@ -144,10 +147,18 @@ nvc0_query_create(struct pipe_context *pipe, unsigned type)
       space = 16;
       break;
    default:
+#ifdef NOUVEAU_ENABLE_DRIVER_STATISTICS
+      if (type >= NVC0_QUERY_DRV_STAT(0) && type <= NVC0_QUERY_DRV_STAT_LAST) {
+         space = 0;
+         q->is64bit = true;
+         q->index = type - NVC0_QUERY_DRV_STAT(0);
+         break;
+      } else
+#endif
       if (nvc0->screen->base.class_3d >= NVE4_3D_CLASS &&
           nvc0->screen->base.device->drm_version >= 0x01000101) {
          if (type >= NVE4_PM_QUERY(0) &&
-             type <= NVE4_PM_QUERY_MAX) {
+             type <= NVE4_PM_QUERY_LAST) {
             /* 8 counters per MP + clock */
             space = 12 * nvc0->screen->mp_count * sizeof(uint32_t);
             break;
@@ -266,8 +277,18 @@ nvc0_query_begin(struct pipe_context *pipe, struct pipe_query *pq)
       nvc0_query_get(push, q, 0xc0 + 0x90, 0x0e809002); /* TEP, LAUNCHES */
       break;
    default:
-      if (q->type >= NVE4_PM_QUERY(0) && q->type <= NVE4_PM_QUERY_MAX)
+#ifdef NOUVEAU_ENABLE_DRIVER_STATISTICS
+      if (q->type >= NVC0_QUERY_DRV_STAT(0) &&
+          q->type <= NVC0_QUERY_DRV_STAT_LAST) {
+         if (q->index >= 5)
+            q->u.value = nvc0->screen->base.stats.v[q->index];
+         else
+            q->u.value = 0;
+      } else
+#endif
+      if (q->type >= NVE4_PM_QUERY(0) && q->type <= NVE4_PM_QUERY_LAST) {
          nve4_mp_pm_query_begin(nvc0, q);
+      }
       break;
    }
    q->state = NVC0_QUERY_STATE_ACTIVE;
@@ -338,7 +359,14 @@ nvc0_query_end(struct pipe_context *pipe, struct pipe_query *pq)
       nvc0_query_get(push, q, 0x00, 0x0d005002 | (q->index << 5));
       break;
    default:
-      if (q->type >= NVE4_PM_QUERY(0) && q->type <= NVE4_PM_QUERY_MAX)
+#ifdef NOUVEAU_ENABLE_DRIVER_STATISTICS
+      if (q->type >= NVC0_QUERY_DRV_STAT(0) &&
+          q->type <= NVC0_QUERY_DRV_STAT_LAST) {
+         q->u.value = nvc0->screen->base.stats.v[q->index] - q->u.value;
+         return;
+      } else
+#endif
+      if (q->type >= NVE4_PM_QUERY(0) && q->type <= NVE4_PM_QUERY_LAST)
          nve4_mp_pm_query_end(nvc0, q);
       break;
    }
@@ -370,8 +398,16 @@ nvc0_query_result(struct pipe_context *pipe, struct pipe_query *pq,
    uint64_t *data64 = (uint64_t *)q->data;
    unsigned i;
 
-   if (q->type >= NVE4_PM_QUERY(0) && q->type <= NVE4_PM_QUERY_MAX)
+#ifdef NOUVEAU_ENABLE_DRIVER_STATISTICS
+   if (q->type >= NVC0_QUERY_DRV_STAT(0) &&
+       q->type <= NVC0_QUERY_DRV_STAT_LAST) {
+      res64[0] = q->u.value;
+      return TRUE;
+   } else
+#endif
+   if (q->type >= NVE4_PM_QUERY(0) && q->type <= NVE4_PM_QUERY_LAST) {
       return nve4_mp_pm_query_result(nvc0, q, result, wait);
+   }
 
    if (q->state != NVC0_QUERY_STATE_READY)
       nvc0_query_update(nvc0->screen->base.client, q);
@@ -387,6 +423,7 @@ nvc0_query_result(struct pipe_context *pipe, struct pipe_query *pq,
       }
       if (nouveau_bo_wait(q->bo, NOUVEAU_BO_RD, nvc0->screen->base.client))
          return FALSE;
+      NOUVEAU_DRV_STAT(&nvc0->screen->base, query_sync_count, 1);
    }
    q->state = NVC0_QUERY_STATE_READY;
 
@@ -537,12 +574,54 @@ nvc0_so_target_save_offset(struct pipe_context *pipe,
       *serialize = FALSE;
       PUSH_SPACE(nvc0_context(pipe)->base.pushbuf, 1);
       IMMED_NVC0(nvc0_context(pipe)->base.pushbuf, NVC0_3D(SERIALIZE), 0);
+
+      NOUVEAU_DRV_STAT(nouveau_screen(pipe->screen), gpu_serialize_count, 1);
    }
 
    nvc0_query(targ->pq)->index = index;
 
    nvc0_query_end(pipe, targ->pq);
 }
+
+
+/* === DRIVER STATISTICS === */
+
+#ifdef NOUVEAU_ENABLE_DRIVER_STATISTICS
+
+static const char *nvc0_drv_stat_names[] =
+{
+   "drv-tex_obj_current_count",
+   "drv-tex_obj_current_bytes",
+   "drv-buf_obj_current_count",
+   "drv-buf_obj_current_bytes_vid",
+   "drv-buf_obj_current_bytes_sys",
+   "drv-tex_transfers_rd",
+   "drv-tex_transfers_wr",
+   "drv-tex_copy_count",
+   "drv-tex_blit_count",
+   "drv-tex_cache_flush_count",
+   "drv-buf_transfers_rd",
+   "drv-buf_transfers_wr",
+   "drv-buf_read_bytes_staging_vid",
+   "drv-buf_write_bytes_direct",
+   "drv-buf_write_bytes_staging_vid",
+   "drv-buf_write_bytes_staging_sys",
+   "drv-buf_copy_bytes",
+   "drv-buf_non_kernel_fence_sync_count",
+   "drv-any_non_kernel_fence_sync_count",
+   "drv-query_sync_count",
+   "drv-gpu_serialize_count",
+   "drv-draw_calls_array",
+   "drv-draw_calls_indexed",
+   "drv-draw_calls_fallback_count",
+   "drv-user_buffer_upload_bytes",
+   "drv-constbuf_upload_count",
+   "drv-constbuf_upload_bytes",
+   "drv-pushbuf_count",
+   "drv-resource_validate_count"
+};
+
+#endif /* NOUVEAU_ENABLE_DRIVER_STATISTICS */
 
 
 /* === PERFORMANCE MONITORING COUNTERS === */
@@ -885,23 +964,32 @@ nvc0_screen_get_driver_query_info(struct pipe_screen *pscreen,
                                   struct pipe_driver_query_info *info)
 {
    struct nvc0_screen *screen = nvc0_screen(pscreen);
+   int count = 0;
+
+   count += NVC0_QUERY_DRV_STAT_COUNT;
 
    if (screen->base.class_3d >= NVE4_3D_CLASS) {
-      unsigned count = 0;
       if (screen->base.device->drm_version >= 0x01000101)
-         count = NVE4_PM_QUERY_COUNT;
-      if (!info)
-         return count;
-      if (id < count) {
-         info->name = nve4_pm_query_names[id];
-         info->query_type = NVE4_PM_QUERY(id);
-         info->max_value = ~0ULL;
-         info->uses_byte_units = FALSE;
-         return 1;
-      }
-   } else {
-      if (!info)
-         return 0;
+         count += NVE4_PM_QUERY_COUNT;
+   }
+   if (!info)
+      return count;
+
+#ifdef NOUVEAU_ENABLE_DRIVER_STATISTICS
+   if (id < NVC0_QUERY_DRV_STAT_COUNT) {
+      info->name = nvc0_drv_stat_names[id];
+      info->query_type = NVC0_QUERY_DRV_STAT(id);
+      info->max_value = ~0ULL;
+      info->uses_byte_units = !!strstr(info->name, "bytes");
+      return 1;
+   } else
+#endif
+   if (id < count) {
+      info->name = nve4_pm_query_names[id - NVC0_QUERY_DRV_STAT_COUNT];
+      info->query_type = NVE4_PM_QUERY(id - NVC0_QUERY_DRV_STAT_COUNT);
+      info->max_value = ~0ULL;
+      info->uses_byte_units = FALSE;
+      return 1;
    }
    /* user asked for info about non-existing query */
    info->name = "this_is_not_the_query_you_are_looking_for";

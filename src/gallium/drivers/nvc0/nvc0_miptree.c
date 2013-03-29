@@ -294,6 +294,10 @@ nvc0_miptree_create(struct pipe_screen *pscreen,
    }
    mt->base.address = mt->base.bo->offset;
 
+   NOUVEAU_DRV_STAT(nouveau_screen(pscreen), tex_obj_current_count, 1);
+   NOUVEAU_DRV_STAT(nouveau_screen(pscreen), tex_obj_current_bytes,
+                    mt->total_size);
+
    return pt;
 }
 

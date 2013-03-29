@@ -535,6 +535,8 @@ nvc0_push_vbo(struct nvc0_context *nvc0, const struct pipe_draw_info *info)
       nouveau_resource_unmap(nv04_resource(nvc0->idxbuf.buffer));
    for (i = 0; i < nvc0->num_vtxbufs; ++i)
       nouveau_resource_unmap(nv04_resource(nvc0->vtxbuf[i].buffer));
+
+   NOUVEAU_DRV_STAT(&nvc0->screen->base, draw_calls_fallback_count, 1);
 }
 
 static INLINE void

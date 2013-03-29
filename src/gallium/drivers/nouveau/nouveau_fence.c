@@ -205,6 +205,8 @@ nouveau_fence_wait(struct nouveau_fence *fence)
 
       if (fence->state == NOUVEAU_FENCE_STATE_SIGNALLED)
          return TRUE;
+      if (!spins)
+         NOUVEAU_DRV_STAT(screen, any_non_kernel_fence_sync_count, 1);
       spins++;
 #ifdef PIPE_OS_UNIX
       if (!(spins % 8)) /* donate a few cycles */

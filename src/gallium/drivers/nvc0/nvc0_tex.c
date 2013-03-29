@@ -265,6 +265,7 @@ nvc0_validate_tic(struct nvc0_context *nvc0, int s)
       if (res->status & NOUVEAU_BUFFER_STATUS_GPU_WRITING) {
          BEGIN_NVC0(push, NVC0_3D(TEX_CACHE_CTL), 1);
          PUSH_DATA (push, (tic->id << 4) | 1);
+         NOUVEAU_DRV_STAT(&nvc0->screen->base, tex_cache_flush_count, 1);
       }
       nvc0->screen->tic.lock[tic->id / 32] |= 1 << (tic->id % 32);
 

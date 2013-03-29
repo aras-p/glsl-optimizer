@@ -147,6 +147,10 @@ nv50_miptree_destroy(struct pipe_screen *pscreen, struct pipe_resource *pt)
    nouveau_fence_ref(NULL, &mt->base.fence);
    nouveau_fence_ref(NULL, &mt->base.fence_wr);
 
+   NOUVEAU_DRV_STAT(nouveau_screen(pscreen), tex_obj_current_count, -1);
+   NOUVEAU_DRV_STAT(nouveau_screen(pscreen), tex_obj_current_bytes,
+                    -(uint64_t)mt->total_size);
+
    FREE(mt);
 }
 
