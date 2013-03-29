@@ -28,6 +28,7 @@
 #include "main/accum.h"
 #include "main/arrayobj.h"
 #include "main/context.h"
+#include "main/formatquery.h"
 #include "main/framebuffer.h"
 #include "main/mipmap.h"
 #include "main/queryobj.h"
@@ -90,7 +91,7 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
 
    /* Texture functions */
    driver->ChooseTextureFormat = _mesa_choose_tex_format;
-   driver->QuerySamplesForFormat = NULL;
+   driver->QuerySamplesForFormat = _mesa_query_samples_for_format;
    driver->TexImage = _mesa_store_teximage;
    driver->TexSubImage = _mesa_store_texsubimage;
    driver->GetTexImage = _mesa_meta_GetTexImage;

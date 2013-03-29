@@ -28,6 +28,10 @@
 #include "compiler.h"
 #include "glheader.h"
 
+size_t
+_mesa_query_samples_for_format(struct gl_context *ctx, GLenum target,
+                               GLenum internalFormat, int samples[16]);
+
 extern void GLAPIENTRY
 _mesa_GetInternalformativ(GLenum target, GLenum internalformat,
                           GLenum pname, GLsizei bufSize, GLint *params);

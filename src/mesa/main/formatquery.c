@@ -30,6 +30,21 @@
 #include "fbobject.h"
 #include "formatquery.h"
 
+/* default implementation of QuerySamplesForFormat driverfunc, for
+ * non-multisample-capable drivers. */
+size_t
+_mesa_query_samples_for_format(struct gl_context *ctx, GLenum target,
+                               GLenum internalFormat, int samples[16])
+{
+   (void) target;
+   (void) internalFormat;
+   (void) ctx;
+
+   samples[0] = 1;
+   return 1;
+}
+
+
 void GLAPIENTRY
 _mesa_GetInternalformativ(GLenum target, GLenum internalformat, GLenum pname,
                           GLsizei bufSize, GLint *params)
