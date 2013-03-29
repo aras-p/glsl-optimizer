@@ -95,6 +95,7 @@ struct draw_geometry_shader {
    int **llvm_prim_lengths;
    int *llvm_emitted_primitives;
    int *llvm_emitted_vertices;
+   int *llvm_prim_ids;
 #endif
 
    void (*fetch_inputs)(struct draw_geometry_shader *shader,

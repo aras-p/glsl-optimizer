@@ -186,6 +186,8 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                   }
                   else if (fulldecl->Semantic.Name == TGSI_SEMANTIC_VERTEXID) {
                      info->uses_vertexid = TRUE;
+                  } else if (fulldecl->Semantic.Name == TGSI_SEMANTIC_PRIMID) {
+                     info->uses_primid = TRUE;
                   }
                }
                else if (file == TGSI_FILE_OUTPUT) {

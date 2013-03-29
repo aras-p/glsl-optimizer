@@ -71,6 +71,7 @@ struct tgsi_shader_info
    boolean uses_kill;  /**< KIL or KILP instruction used? */
    boolean uses_instanceid;
    boolean uses_vertexid;
+   boolean uses_primid;
    boolean origin_lower_left;
    boolean pixel_center_integer;
    boolean color0_writes_all_cbufs;

@@ -155,6 +155,7 @@ struct lp_tgsi_info
 struct lp_bld_tgsi_system_values {
    LLVMValueRef instance_id;
    LLVMValueRef vertex_id;
+   LLVMValueRef prim_id;
 };
 
 

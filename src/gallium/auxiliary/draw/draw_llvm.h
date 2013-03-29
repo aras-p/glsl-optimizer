@@ -265,7 +265,8 @@ typedef int
                     float inputs[6][PIPE_MAX_SHADER_INPUTS][TGSI_NUM_CHANNELS][TGSI_NUM_CHANNELS],
                     struct vertex_header *output,
                     unsigned num_prims,
-                    unsigned instance_id);
+                    unsigned instance_id,
+                    int *prim_ids);
 
 struct draw_llvm_variant_key
 {

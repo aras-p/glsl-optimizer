@@ -1891,10 +1891,11 @@ draw_gs_llvm_generate(struct draw_llvm *llvm,
    struct gallivm_state *gallivm = variant->gallivm;
    LLVMContextRef context = gallivm->context;
    LLVMTypeRef int32_type = LLVMInt32TypeInContext(context);
-   LLVMTypeRef arg_types[5];
+   LLVMTypeRef arg_types[6];
    LLVMTypeRef func_type;
    LLVMValueRef variant_func;
    LLVMValueRef context_ptr;
+   LLVMValueRef prim_id_ptr;
    LLVMBasicBlockRef block;
    LLVMBuilderRef builder;
    LLVMValueRef io_ptr, input_array, num_prims, mask_val;
@@ -1908,6 +1909,8 @@ draw_gs_llvm_generate(struct draw_llvm *llvm,
    LLVMValueRef consts_ptr;
    LLVMValueRef outputs[PIPE_MAX_SHADER_OUTPUTS][TGSI_NUM_CHANNELS];
    struct lp_build_mask_context mask;
+   const struct tgsi_shader_info *gs_info = &variant->shader->base.info;
+   unsigned vector_length = variant->shader->base.vector_length;
 
    memset(&system_values, 0, sizeof(system_values));
 
@@ -1918,6 +1921,8 @@ draw_gs_llvm_generate(struct draw_llvm *llvm,
    arg_types[2] = variant->vertex_header_ptr_type;     /* vertex_header */
    arg_types[3] = int32_type;                          /* num_prims */
    arg_types[4] = int32_type;                          /* instance_id */
+   arg_types[5] = LLVMPointerType(
+      LLVMVectorType(int32_type, vector_length), 0);   /* prim_id_ptr */
 
    func_type = LLVMFunctionType(int32_type, arg_types, Elements(arg_types), 0);
 
@@ -1937,12 +1942,14 @@ draw_gs_llvm_generate(struct draw_llvm *llvm,
    io_ptr                    = LLVMGetParam(variant_func, 2);
    num_prims                 = LLVMGetParam(variant_func, 3);
    system_values.instance_id = LLVMGetParam(variant_func, 4);
+   prim_id_ptr               = LLVMGetParam(variant_func, 5);
 
    lp_build_name(context_ptr, "context");
    lp_build_name(input_array, "input");
    lp_build_name(io_ptr, "io");
    lp_build_name(io_ptr, "num_prims");
    lp_build_name(system_values.instance_id, "instance_id");
+   lp_build_name(prim_id_ptr, "prim_id_ptr");
 
    variant->context_ptr = context_ptr;
    variant->io_ptr = io_ptr;
@@ -1970,7 +1977,7 @@ draw_gs_llvm_generate(struct draw_llvm *llvm,
    gs_type.sign = TRUE;     /* values are signed */
    gs_type.norm = FALSE;    /* values are not limited to [0,1] or [-1,1] */
    gs_type.width = 32;      /* 32-bit float */
-   gs_type.length = variant->shader->base.vector_length;
+   gs_type.length = vector_length;
 
    consts_ptr = draw_gs_jit_context_constants(variant->gallivm, context_ptr);
 
@@ -1980,6 +1987,10 @@ draw_gs_llvm_generate(struct draw_llvm *llvm,
 
    mask_val = generate_mask_value(variant, gs_type);
    lp_build_mask_begin(&mask, gallivm, gs_type, mask_val);
+
+   if (gs_info->uses_primid) {
+      system_values.prim_id = LLVMBuildLoad(builder, prim_id_ptr, "prim_id");;
+   }
 
    lp_build_tgsi_soa(variant->gallivm,
                      tokens,

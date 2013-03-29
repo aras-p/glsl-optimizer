@@ -225,6 +225,9 @@ llvm_fetch_gs_input(struct draw_geometry_shader *shader,
    const float (*input_ptr)[4];
    float (*input_data)[6][PIPE_MAX_SHADER_INPUTS][TGSI_NUM_CHANNELS][TGSI_NUM_CHANNELS] = &shader->gs_input->data;
 
+   shader->llvm_prim_ids[shader->fetched_prim_count] =
+      shader->in_prim_idx;
+
    input_ptr = shader->input;
 
    for (i = 0; i < num_vertices; ++i) {
@@ -237,10 +240,7 @@ llvm_fetch_gs_input(struct draw_geometry_shader *shader,
          (const char *)input_ptr + (indices[i] * input_vertex_stride));
       for (slot = 0, vs_slot = 0; slot < shader->info.num_inputs; ++slot) {
          if (shader->info.input_semantic_name[slot] == TGSI_SEMANTIC_PRIMID) {
-            (*input_data)[i][slot][0][prim_idx] = (float)shader->in_prim_idx;
-            (*input_data)[i][slot][1][prim_idx] = (float)shader->in_prim_idx;
-            (*input_data)[i][slot][2][prim_idx] = (float)shader->in_prim_idx;
-            (*input_data)[i][slot][3][prim_idx] = (float)shader->in_prim_idx;
+            /* skip. we handle system values through gallivm */
          } else {
             vs_slot = draw_gs_get_input_index(
                         shader->info.input_semantic_name[slot],
@@ -343,7 +343,8 @@ llvm_gs_run(struct draw_geometry_shader *shader,
       shader->jit_context, shader->gs_input->data,
       (struct vertex_header*)input,
       input_primitives,
-      shader->draw->instance_id);
+      shader->draw->instance_id,
+      shader->llvm_prim_ids);
 
    return ret;
 }
@@ -728,6 +729,7 @@ draw_create_geometry_shader(struct draw_context *draw,
 
       gs->llvm_emitted_primitives = align_malloc(vector_size, vector_size);
       gs->llvm_emitted_vertices = align_malloc(vector_size, vector_size);
+      gs->llvm_prim_ids = align_malloc(vector_size, vector_size);
 
       gs->fetch_outputs = llvm_fetch_gs_outputs;
       gs->fetch_inputs = llvm_fetch_gs_input;
@@ -796,6 +798,7 @@ void draw_delete_geometry_shader(struct draw_context *draw,
       }
       align_free(dgs->llvm_emitted_primitives);
       align_free(dgs->llvm_emitted_vertices);
+      align_free(dgs->llvm_prim_ids);
 
       align_free(dgs->gs_input);
    }
