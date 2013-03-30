@@ -203,7 +203,7 @@ create_jit_context_type(struct gallivm_state *gallivm,
 {
    LLVMTargetDataRef target = gallivm->target;
    LLVMTypeRef float_type = LLVMFloatTypeInContext(gallivm->context);
-   LLVMTypeRef elem_types[5];
+   LLVMTypeRef elem_types[DRAW_JIT_CTX_NUM_FIELDS];
    LLVMTypeRef context_type;
 
    elem_types[0] = LLVMArrayType(LLVMPointerType(float_type, 0), /* vs_constants */
@@ -224,11 +224,11 @@ create_jit_context_type(struct gallivm_state *gallivm,
 #endif
 
    LP_CHECK_MEMBER_OFFSET(struct draw_jit_context, vs_constants,
-                          target, context_type, 0);
+                          target, context_type, DRAW_JIT_CTX_CONSTANTS);
    LP_CHECK_MEMBER_OFFSET(struct draw_jit_context, planes,
-                          target, context_type, 1);
+                          target, context_type, DRAW_JIT_CTX_PLANES);
    LP_CHECK_MEMBER_OFFSET(struct draw_jit_context, viewport,
-                          target, context_type, 2);
+                          target, context_type, DRAW_JIT_CTX_VIEWPORT);
    LP_CHECK_MEMBER_OFFSET(struct draw_jit_context, textures,
                           target, context_type,
                           DRAW_JIT_CTX_TEXTURES);
