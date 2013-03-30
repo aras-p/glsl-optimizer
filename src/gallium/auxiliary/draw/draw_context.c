@@ -735,13 +735,6 @@ draw_set_mapped_so_targets(struct draw_context *draw,
 }
 
 void
-draw_set_mapped_so_buffers(struct draw_context *draw,
-                           void *buffers[PIPE_MAX_SO_BUFFERS],
-                           unsigned num_buffers)
-{
-}
-
-void
 draw_set_so_state(struct draw_context *draw,
                   struct pipe_stream_output_info *state)
 {

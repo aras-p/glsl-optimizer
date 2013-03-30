@@ -222,11 +222,6 @@ draw_set_mapped_constant_buffer(struct draw_context *draw,
                                 unsigned size);
 
 void
-draw_set_mapped_so_buffers(struct draw_context *draw,
-                           void *buffers[PIPE_MAX_SO_BUFFERS],
-                           unsigned num_buffers);
-
-void
 draw_set_mapped_so_targets(struct draw_context *draw,
                            int num_targets,
                            struct draw_so_target *targets[PIPE_MAX_SO_BUFFERS]);
