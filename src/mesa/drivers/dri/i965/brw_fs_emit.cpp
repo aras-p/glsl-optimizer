@@ -332,6 +332,29 @@ fs_generator::generate_math_gen4(fs_inst *inst,
 }
 
 void
+fs_generator::generate_math_g45(fs_inst *inst,
+                                struct brw_reg dst,
+                                struct brw_reg src)
+{
+   if (inst->opcode == SHADER_OPCODE_POW ||
+       inst->opcode == SHADER_OPCODE_INT_QUOTIENT ||
+       inst->opcode == SHADER_OPCODE_INT_REMAINDER) {
+      generate_math_gen4(inst, dst, src);
+      return;
+   }
+
+   int op = brw_math_function(inst->opcode);
+
+   assert(inst->mlen >= 1);
+
+   brw_math(p, dst,
+            op,
+            inst->base_mrf, src,
+            BRW_MATH_DATA_VECTOR,
+            BRW_MATH_PRECISION_FULL);
+}
+
+void
 fs_generator::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
 {
    int msg_type = -1;
@@ -1307,6 +1330,8 @@ fs_generator::generate_code(exec_list *instructions)
 	    generate_math1_gen7(inst, dst, src[0]);
 	 } else if (intel->gen == 6) {
 	    generate_math1_gen6(inst, dst, src[0]);
+	 } else if (intel->gen == 5 || intel->is_g4x) {
+	    generate_math_g45(inst, dst, src[0]);
 	 } else {
 	    generate_math_gen4(inst, dst, src[0]);
 	 }
