@@ -209,7 +209,9 @@ st_DrawTex(struct gl_context *ctx, GLfloat x, GLfloat y, GLfloat z,
             SET_ATTRIB(2, attr, s1, t1, 0.0f, 1.0f);  /* upper right */
             SET_ATTRIB(3, attr, s0, t1, 0.0f, 1.0f);  /* upper left */
 
-            semantic_names[attr] = TGSI_SEMANTIC_GENERIC;
+            semantic_names[attr] = st->needs_texcoord_semantic ?
+               TGSI_SEMANTIC_TEXCOORD : TGSI_SEMANTIC_GENERIC;
+            /* XXX: should this use semantic index i instead of 0 ? */
             semantic_indexes[attr] = 0;
 
             attr++;

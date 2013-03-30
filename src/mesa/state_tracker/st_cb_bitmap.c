@@ -766,6 +766,7 @@ st_Bitmap(struct gl_context *ctx, GLint x, GLint y,
       /* create pass-through vertex shader now */
       const uint semantic_names[] = { TGSI_SEMANTIC_POSITION,
                                       TGSI_SEMANTIC_COLOR,
+        st->needs_texcoord_semantic ? TGSI_SEMANTIC_TEXCOORD :
                                       TGSI_SEMANTIC_GENERIC };
       const uint semantic_indexes[] = { 0, 0, 0 };
       st->bitmap.vs = util_make_vertex_passthrough_shader(st->pipe, 3,

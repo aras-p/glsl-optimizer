@@ -294,6 +294,9 @@ static void *
 make_passthrough_vertex_shader(struct st_context *st, 
                                GLboolean passColor)
 {
+   const unsigned texcoord_semantic = st->needs_texcoord_semantic ?
+      TGSI_SEMANTIC_TEXCOORD : TGSI_SEMANTIC_GENERIC;
+
    if (!st->drawpix.vert_shaders[passColor]) {
       struct ureg_program *ureg = ureg_create( TGSI_PROCESSOR_VERTEX );
 
@@ -307,7 +310,7 @@ make_passthrough_vertex_shader(struct st_context *st,
       
       /* MOV result.texcoord0, vertex.attr[1]; */
       ureg_MOV(ureg, 
-               ureg_DECL_output( ureg, TGSI_SEMANTIC_GENERIC, 0 ),
+               ureg_DECL_output( ureg, texcoord_semantic, 0 ),
                ureg_DECL_vs_input( ureg, 1 ));
       
       if (passColor) {
