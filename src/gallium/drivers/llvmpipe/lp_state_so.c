@@ -70,6 +70,12 @@ llvmpipe_set_so_targets(struct pipe_context *pipe,
    int i;
    for (i = 0; i < num_targets; i++) {
       pipe_so_target_reference((struct pipe_stream_output_target **)&llvmpipe->so_targets[i], targets[i]);
+      /* if we're not appending then lets reset the internal
+         data of our so target */
+      if (!(append_bitmask & (1 << i)) && llvmpipe->so_targets[i]) {
+         llvmpipe->so_targets[i]->internal_offset = 0;
+         llvmpipe->so_targets[i]->emitted_vertices = 0;
+      }
    }
 
    for (; i < llvmpipe->num_so_targets; i++) {
