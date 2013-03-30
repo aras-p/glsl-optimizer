@@ -53,15 +53,18 @@ llvmpipe_create_gs_state(struct pipe_context *pipe,
    if (0)
       tgsi_dump(templ->tokens, 0);
 
-   /* copy shader tokens, the ones passed in will go away.
-    */
-   state->shader.tokens = tgsi_dup_tokens(templ->tokens);
-   if (state->shader.tokens == NULL)
-      goto fail;
+   /* copy stream output info */
+   state->shader = *templ;
+   if (templ->tokens) {
+      /* copy shader tokens, the ones passed in will go away. */
+      state->shader.tokens = tgsi_dup_tokens(templ->tokens);
+      if (state->shader.tokens == NULL)
+         goto fail;
 
-   state->draw_data = draw_create_geometry_shader(llvmpipe->draw, templ);
-   if (state->draw_data == NULL)
-      goto fail;
+      state->draw_data = draw_create_geometry_shader(llvmpipe->draw, templ);
+      if (state->draw_data == NULL)
+         goto fail;
+   }
 
    return state;
 

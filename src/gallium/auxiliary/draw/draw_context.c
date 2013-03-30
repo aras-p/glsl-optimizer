@@ -735,15 +735,6 @@ draw_set_mapped_so_targets(struct draw_context *draw,
 }
 
 void
-draw_set_so_state(struct draw_context *draw,
-                  struct pipe_stream_output_info *state)
-{
-   memcpy(&draw->so.state,
-          state,
-          sizeof(struct pipe_stream_output_info));
-}
-
-void
 draw_set_sampler_views(struct draw_context *draw,
                        unsigned shader_stage,
                        struct pipe_sampler_view **views,

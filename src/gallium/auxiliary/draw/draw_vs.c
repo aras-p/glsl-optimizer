@@ -245,3 +245,16 @@ draw_vs_get_emit( struct draw_context *draw,
    
    return draw->vs.emit;
 }
+
+void
+draw_vs_attach_so(struct draw_vertex_shader *dvs,
+                  const struct pipe_stream_output_info *info)
+{
+   dvs->state.stream_output = *info;
+}
+
+void
+draw_vs_reset_so(struct draw_vertex_shader *dvs)
+{
+   memset(&dvs->state.stream_output, 0, sizeof(dvs->state.stream_output));
+}

@@ -101,6 +101,13 @@ llvmpipe_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
    llvmpipe_prepare_geometry_sampling(lp,
                                       lp->num_sampler_views[PIPE_SHADER_GEOMETRY],
                                       lp->sampler_views[PIPE_SHADER_GEOMETRY]);
+   if (lp->gs && !lp->gs->shader.tokens) {
+      /* we have an empty geometry shader with stream output, so
+         attach the stream output info to the current vertex shader */
+      if (lp->vs) {
+         draw_vs_attach_so(lp->vs->draw_data, &lp->gs->shader.stream_output);
+      }
+   }
 
    /* draw! */
    draw_vbo(draw, info);
@@ -116,6 +123,14 @@ llvmpipe_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
    }
    draw_set_mapped_so_targets(draw, 0, NULL);
 
+   if (lp->gs && !lp->gs->shader.tokens) {
+      /* we have attached stream output to the vs for rendering,
+         now lets reset it */
+      if (lp->vs) {
+         draw_vs_reset_so(lp->vs->draw_data);
+      }
+   }
+   
    llvmpipe_cleanup_vertex_sampling(lp);
    llvmpipe_cleanup_geometry_sampling(lp);
 

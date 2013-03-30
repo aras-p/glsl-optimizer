@@ -171,6 +171,9 @@ void draw_bind_vertex_shader(struct draw_context *draw,
                              struct draw_vertex_shader *dvs);
 void draw_delete_vertex_shader(struct draw_context *draw,
                                struct draw_vertex_shader *dvs);
+void draw_vs_attach_so(struct draw_vertex_shader *dvs,
+                       const struct pipe_stream_output_info *info);
+void draw_vs_reset_so(struct draw_vertex_shader *dvs);
 
 
 /*
@@ -225,10 +228,6 @@ void
 draw_set_mapped_so_targets(struct draw_context *draw,
                            int num_targets,
                            struct draw_so_target *targets[PIPE_MAX_SO_BUFFERS]);
-
-void
-draw_set_so_state(struct draw_context *draw,
-                  struct pipe_stream_output_info *state);
 
 
 /***********************************************************************

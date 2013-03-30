@@ -279,7 +279,6 @@ struct draw_context
 
    /** Stream output (vertex feedback) state */
    struct {
-      struct pipe_stream_output_info state;
       struct draw_so_target *targets[PIPE_MAX_SO_BUFFERS];
       uint num_targets;
    } so;
