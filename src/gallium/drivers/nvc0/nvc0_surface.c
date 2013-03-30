@@ -36,29 +36,32 @@
 
 #include "nv50/nv50_defs.xml.h"
 #include "nv50/nv50_texture.xml.h"
+
+/* these are used in nv50_blit.h */
+#define NV50_ENG2D_SUPPORTED_FORMATS 0xff9ccfe1cce3ccc9ULL
+#define NV50_ENG2D_NOCONVERT_FORMATS 0x009cc02000000000ULL
+#define NV50_ENG2D_LUMINANCE_FORMATS 0x001cc02000000000ULL
+#define NV50_ENG2D_INTENSITY_FORMATS 0x0080000000000000ULL
+#define NV50_ENG2D_OPERATION_FORMATS 0x060001c000638000ULL
+
+#define NOUVEAU_DRIVER 0xc0
 #include "nv50/nv50_blit.h"
 
-#define NVC0_ENG2D_SUPPORTED_FORMATS 0xff9ccfe1cce3ccc9ULL
-
-/* return TRUE for formats that can be converted among each other by NVC0_2D */
-static INLINE boolean
-nvc0_2d_format_faithful(enum pipe_format format)
-{
-   uint8_t id = nvc0_format_table[format].rt;
-
-   return (id >= 0xc0) && (NVC0_ENG2D_SUPPORTED_FORMATS & (1ULL << (id - 0xc0)));
-}
-
 static INLINE uint8_t
-nvc0_2d_format(enum pipe_format format)
+nvc0_2d_format(enum pipe_format format, boolean dst, boolean dst_src_equal)
 {
    uint8_t id = nvc0_format_table[format].rt;
+
+   /* A8_UNORM is treated as I8_UNORM as far as the 2D engine is concerned. */
+   if (!dst && unlikely(format == PIPE_FORMAT_I8_UNORM) && !dst_src_equal)
+      return NV50_SURFACE_FORMAT_A8_UNORM;
 
    /* Hardware values for color formats range from 0xc0 to 0xff,
     * but the 2D engine doesn't support all of them.
     */
-   if (nvc0_2d_format_faithful(format))
+   if (nv50_2d_format_supported(format))
       return id;
+   assert(dst_src_equal);
 
    switch (util_format_get_blocksize(format)) {
    case 1:
@@ -72,6 +75,7 @@ nvc0_2d_format(enum pipe_format format)
    case 16:
       return NV50_SURFACE_FORMAT_RGBA32_FLOAT;
    default:
+      assert(0);
       return 0;
    }
 }
@@ -79,7 +83,7 @@ nvc0_2d_format(enum pipe_format format)
 static int
 nvc0_2d_texture_set(struct nouveau_pushbuf *push, boolean dst,
                     struct nv50_miptree *mt, unsigned level, unsigned layer,
-                    enum pipe_format pformat)
+                    enum pipe_format pformat, boolean dst_src_pformat_equal)
 {
    struct nouveau_bo *bo = mt->base.bo;
    uint32_t width, height, depth;
@@ -87,7 +91,7 @@ nvc0_2d_texture_set(struct nouveau_pushbuf *push, boolean dst,
    uint32_t mthd = dst ? NVC0_2D_DST_FORMAT : NVC0_2D_SRC_FORMAT;
    uint32_t offset = mt->level[level].offset;
 
-   format = nvc0_2d_format(pformat);
+   format = nvc0_2d_format(pformat, dst, dst_src_pformat_equal);
    if (!format) {
       NOUVEAU_ERR("invalid/unsupported surface format: %s\n",
                   util_format_name(pformat));
@@ -157,15 +161,16 @@ nvc0_2d_texture_do_copy(struct nouveau_pushbuf *push,
    const enum pipe_format dfmt = dst->base.base.format;
    const enum pipe_format sfmt = src->base.base.format;
    int ret;
+   boolean eqfmt = dfmt == sfmt;
 
    if (!PUSH_SPACE(push, 2 * 16 + 32))
       return PIPE_ERROR;
 
-   ret = nvc0_2d_texture_set(push, TRUE, dst, dst_level, dz, dfmt);
+   ret = nvc0_2d_texture_set(push, TRUE, dst, dst_level, dz, dfmt, eqfmt);
    if (ret)
       return ret;
 
-   ret = nvc0_2d_texture_set(push, FALSE, src, src_level, sz, sfmt);
+   ret = nvc0_2d_texture_set(push, FALSE, src, src_level, sz, sfmt, eqfmt);
    if (ret)
       return ret;
 
@@ -245,8 +250,8 @@ nvc0_resource_copy_region(struct pipe_context *pipe,
       return;
    }
 
-   assert(nvc0_2d_format_faithful(src->format));
-   assert(nvc0_2d_format_faithful(dst->format));
+   assert(nv50_2d_dst_format_faithful(dst->format));
+   assert(nv50_2d_src_format_faithful(src->format));
 
    BCTX_REFN(nvc0->bufctx, 2D, nv04_resource(src), RD);
    BCTX_REFN(nvc0->bufctx, 2D, nv04_resource(dst), WR);
@@ -963,7 +968,8 @@ nvc0_blit_eng2d(struct nvc0_context *nvc0, const struct pipe_blit_info *info)
    int64_t du_dx, dv_dy;
    int i;
    uint32_t mode;
-   const uint32_t mask = nv50_blit_eng2d_get_mask(info);
+   uint32_t mask = nv50_blit_eng2d_get_mask(info);
+   boolean b;
 
    mode = nv50_blit_get_filter(info) ?
       NVC0_2D_BLIT_CONTROL_FILTER_BILINEAR :
@@ -974,8 +980,9 @@ nvc0_blit_eng2d(struct nvc0_context *nvc0, const struct pipe_blit_info *info)
    du_dx = ((int64_t)info->src.box.width << 32) / info->dst.box.width;
    dv_dy = ((int64_t)info->src.box.height << 32) / info->dst.box.height;
 
-   nvc0_2d_texture_set(push, 1, dst, info->dst.level, dz, info->dst.format);
-   nvc0_2d_texture_set(push, 0, src, info->src.level, sz, info->src.format);
+   b = info->dst.format == info->src.format;
+   nvc0_2d_texture_set(push, 1, dst, info->dst.level, dz, info->dst.format, b);
+   nvc0_2d_texture_set(push, 0, src, info->src.level, sz, info->src.format, b);
 
    if (info->scissor_enable) {
       BEGIN_NVC0(push, NVC0_2D(CLIP_X), 5);
@@ -996,6 +1003,25 @@ nvc0_blit_eng2d(struct nvc0_context *nvc0, const struct pipe_blit_info *info)
       PUSH_DATA (push, 0xffffffff);
       PUSH_DATA (push, 0xffffffff);
       IMMED_NVC0(push, NVC0_2D(OPERATION), NVC0_2D_OPERATION_ROP);
+   } else
+   if (info->src.format != info->dst.format) {
+      if (info->src.format == PIPE_FORMAT_R8_UNORM ||
+          info->src.format == PIPE_FORMAT_R8_SNORM ||
+          info->src.format == PIPE_FORMAT_R16_UNORM ||
+          info->src.format == PIPE_FORMAT_R16_SNORM ||
+          info->src.format == PIPE_FORMAT_R16_FLOAT ||
+          info->src.format == PIPE_FORMAT_R32_FLOAT) {
+         mask = 0xffff0000; /* also makes condition for OPERATION reset true */
+         BEGIN_NVC0(push, NVC0_2D(BETA4), 2);
+         PUSH_DATA (push, mask);
+         PUSH_DATA (push, NVC0_2D_OPERATION_SRCCOPY_PREMULT);
+      } else
+      if (info->src.format == PIPE_FORMAT_A8_UNORM) {
+         mask = 0xff000000;
+         BEGIN_NVC0(push, NVC0_2D(BETA4), 2);
+         PUSH_DATA (push, mask);
+         PUSH_DATA (push, NVC0_2D_OPERATION_SRCCOPY_PREMULT);
+      }
    }
 
    if (src->ms_x > dst->ms_x || src->ms_y > dst->ms_y) {
@@ -1122,14 +1148,21 @@ nvc0_blit(struct pipe_context *pipe, const struct pipe_blit_info *info)
    }
 
    if (!eng3d && info->dst.format != info->src.format) {
-      if (!nvc0_2d_format_faithful(info->dst.format) ||
-          !nvc0_2d_format_faithful(info->src.format))
+      if (!nv50_2d_dst_format_faithful(info->dst.format)) {
          eng3d = TRUE;
-      /* For some retarded reason, if dst is R8/16_UNORM, the 2d engine doesn't
-       * like to do any format conversion (DATA_ERROR 0x34 on trigger).
-       */
-      if (info->dst.format == PIPE_FORMAT_R8_UNORM ||
-          info->dst.format == PIPE_FORMAT_R16_UNORM)
+      } else
+      if (!nv50_2d_src_format_faithful(info->src.format)) {
+         if (!util_format_is_luminance(info->src.format)) {
+            if (util_format_is_intensity(info->src.format))
+               eng3d = info->src.format != PIPE_FORMAT_I8_UNORM;
+            else
+            if (!nv50_2d_dst_format_ops_supported(info->dst.format))
+               eng3d = TRUE;
+            else
+               eng3d = !nv50_2d_format_supported(info->src.format);
+         }
+      } else
+      if (util_format_is_luminance_alpha(info->src.format))
          eng3d = TRUE;
    }
 
