@@ -592,6 +592,7 @@ static void r600_bytecode_from_byte_stream(struct r600_shader_ctx *ctx,
 				unsigned char * bytes,	unsigned num_bytes)
 {
 	unsigned bytes_read = 0;
+	ctx->bc->nstack = bytes[bytes_read++];
 	unsigned i, byte;
 	while (bytes_read < num_bytes) {
 		char inst_type = bytes[bytes_read++];
