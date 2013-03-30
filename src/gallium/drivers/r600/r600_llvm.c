@@ -179,6 +179,7 @@ static void llvm_load_input(
 static void llvm_emit_prologue(struct lp_build_tgsi_context * bld_base)
 {
 	struct radeon_llvm_context * ctx = radeon_llvm_context(bld_base);
+	radeon_llvm_shader_type(ctx->main_fn, ctx->type);
 
 }
 
