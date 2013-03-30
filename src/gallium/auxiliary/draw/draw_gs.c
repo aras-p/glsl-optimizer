@@ -160,8 +160,6 @@ static void tgsi_fetch_gs_input(struct draw_geometry_shader *shader,
 #if DEBUG_INPUTS
             debug_printf("\tSlot = %d, vs_slot = %d, idx = %d:\n",
                          slot, vs_slot, idx);
-#endif
-#if 1
             assert(!util_is_inf_or_nan(input[vs_slot][0]));
             assert(!util_is_inf_or_nan(input[vs_slot][1]));
             assert(!util_is_inf_or_nan(input[vs_slot][2]));
@@ -249,8 +247,6 @@ llvm_fetch_gs_input(struct draw_geometry_shader *shader,
 #if DEBUG_INPUTS
             debug_printf("\tSlot = %d, vs_slot = %d, i = %d:\n",
                          slot, vs_slot, i);
-#endif
-#if 0
             assert(!util_is_inf_or_nan(input[vs_slot][0]));
             assert(!util_is_inf_or_nan(input[vs_slot][1]));
             assert(!util_is_inf_or_nan(input[vs_slot][2]));
