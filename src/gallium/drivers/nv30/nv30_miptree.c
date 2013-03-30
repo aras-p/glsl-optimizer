@@ -130,8 +130,9 @@ nv30_resource_copy_region(struct pipe_context *pipe,
    struct nv30_rect src, dst;
 
    if (dstres->target == PIPE_BUFFER && srcres->target == PIPE_BUFFER) {
-      util_resource_copy_region(pipe, dstres, dst_level, dstx, dsty, dstz,
-                                      srcres, src_level, src_box);
+      nouveau_copy_buffer(&nv30->base,
+                          nv04_resource(dstres), dstx,
+                          nv04_resource(srcres), src_box->x, src_box->width);
       return;
    }
 

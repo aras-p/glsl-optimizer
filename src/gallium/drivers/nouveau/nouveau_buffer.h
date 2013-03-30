@@ -49,9 +49,10 @@ struct nv04_resource {
 void
 nouveau_buffer_release_gpu_storage(struct nv04_resource *);
 
-boolean
-nouveau_buffer_download(struct nouveau_context *, struct nv04_resource *,
-                        unsigned start, unsigned size);
+void
+nouveau_copy_buffer(struct nouveau_context *,
+                    struct nv04_resource *dst, unsigned dst_pos,
+                    struct nv04_resource *src, unsigned src_pos, unsigned size);
 
 boolean
 nouveau_buffer_migrate(struct nouveau_context *,

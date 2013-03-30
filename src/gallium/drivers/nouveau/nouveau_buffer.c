@@ -2,6 +2,7 @@
 #include "util/u_inlines.h"
 #include "util/u_memory.h"
 #include "util/u_math.h"
+#include "util/u_surface.h"
 
 #include "nouveau_screen.h"
 #include "nouveau_context.h"
@@ -457,6 +458,39 @@ nouveau_buffer_transfer_unmap(struct pipe_context *pipe,
 
    nouveau_buffer_transfer_del(nv, tx);
    FREE(tx);
+}
+
+
+void
+nouveau_copy_buffer(struct nouveau_context *nv,
+                    struct nv04_resource *dst, unsigned dstx,
+                    struct nv04_resource *src, unsigned srcx, unsigned size)
+{
+   assert(dst->base.target == PIPE_BUFFER && src->base.target == PIPE_BUFFER);
+
+   if (likely(dst->domain) && likely(src->domain)) {
+      nv->copy_data(nv,
+                    dst->bo, dst->offset + dstx, dst->domain,
+                    src->bo, src->offset + srcx, src->domain, size);
+
+      dst->status |= NOUVEAU_BUFFER_STATUS_GPU_WRITING;
+      nouveau_fence_ref(nv->screen->fence.current, &dst->fence);
+      nouveau_fence_ref(nv->screen->fence.current, &dst->fence_wr);
+
+      src->status |= NOUVEAU_BUFFER_STATUS_GPU_READING;
+      nouveau_fence_ref(nv->screen->fence.current, &src->fence);
+   } else {
+      struct pipe_box src_box;
+      src_box.x = srcx;
+      src_box.y = 0;
+      src_box.z = 0;
+      src_box.width = size;
+      src_box.height = 1;
+      src_box.depth = 1;
+      util_resource_copy_region(&nv->pipe,
+                                &dst->base, 0, dstx, 0, 0,
+                                &src->base, 0, &src_box);
+   }
 }
 
 

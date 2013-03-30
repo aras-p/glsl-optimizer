@@ -201,10 +201,10 @@ nvc0_resource_copy_region(struct pipe_context *pipe,
    boolean m2mf;
    unsigned dst_layer = dstz, src_layer = src_box->z;
 
-   /* Fallback for buffers. */
    if (dst->target == PIPE_BUFFER && src->target == PIPE_BUFFER) {
-      util_resource_copy_region(pipe, dst, dst_level, dstx, dsty, dstz,
-                                src, src_level, src_box);
+      nouveau_copy_buffer(&nvc0->base,
+                          nv04_resource(dst), dstx,
+                          nv04_resource(src), src_box->x, src_box->width);
       NOUVEAU_DRV_STAT(&nvc0->screen->base, buf_copy_bytes, src_box->width);
       return;
    }
