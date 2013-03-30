@@ -25,5 +25,11 @@
         <application name="Savage 2" executable="savage2.bin">
             <option name="disable_glsl_line_continuations" value="true" />
         </application>
+        <application name="Topogun (32-bit)" executable="topogun32">
+            <option name="always_have_depth_buffer" value="true" />
+        </application>
+        <application name="Topogun (64-bit)" executable="topogun64">
+            <option name="always_have_depth_buffer" value="true" />
+        </application>
     </device>
 </driconf>
