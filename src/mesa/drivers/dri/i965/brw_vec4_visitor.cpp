@@ -2146,6 +2146,19 @@ vec4_visitor::visit(ir_texture *ir)
    int sampler =
       _mesa_get_sampler_uniform_value(ir->sampler, shader_prog, prog);
 
+   /* When tg4 is used with the degenerate ZERO/ONE swizzles, don't bother
+    * emitting anything other than setting up the constant result.
+    */
+   if (ir->op == ir_tg4) {
+      int swiz = GET_SWZ(key->tex.swizzles[sampler], 0);
+      if (swiz == SWIZZLE_ZERO || swiz == SWIZZLE_ONE) {
+         dst_reg result(this, ir->type);
+         this->result = src_reg(result);
+         emit(MOV(result, src_reg(swiz == SWIZZLE_ONE ? 1.0f : 0.0f)));
+         return;
+      }
+   }
+
    /* Should be lowered by do_lower_texture_projection */
    assert(!ir->projector);
 
@@ -2195,6 +2208,7 @@ vec4_visitor::visit(ir_texture *ir)
       break;
    case ir_txb:
    case ir_lod:
+   case ir_tg4:
       break;
    }
 
@@ -2216,18 +2230,23 @@ vec4_visitor::visit(ir_texture *ir)
    case ir_txs:
       inst = new(mem_ctx) vec4_instruction(this, SHADER_OPCODE_TXS);
       break;
+   case ir_tg4:
+      inst = new(mem_ctx) vec4_instruction(this, SHADER_OPCODE_TG4);
+      break;
    case ir_txb:
       assert(!"TXB is not valid for vertex shaders.");
       break;
    case ir_lod:
       assert(!"LOD is not valid for vertex shaders.");
       break;
+   default:
+      assert(!"Unrecognized tex op");
    }
 
    bool use_texture_offset = ir->offset != NULL && ir->op != ir_txf;
 
    /* Texel offsets go in the message header; Gen4 also requires headers. */
-   inst->header_present = use_texture_offset || brw->gen < 5;
+   inst->header_present = use_texture_offset || brw->gen < 5 || ir->op == ir_tg4;
    inst->base_mrf = 2;
    inst->mlen = inst->header_present + 1; /* always at least one */
    inst->sampler = sampler;
@@ -2237,6 +2256,10 @@ vec4_visitor::visit(ir_texture *ir)
 
    if (use_texture_offset)
       inst->texture_offset = brw_texture_offset(ir->offset->as_constant());
+
+   /* Stuff the channel select bits in the top of the texture offset */
+   if (ir->op == ir_tg4)
+      inst->texture_offset |= gather_channel(ir, sampler)<<16;
 
    /* MRF for the first parameter */
    int param_base = inst->base_mrf + inst->header_present;
@@ -2362,6 +2385,24 @@ vec4_visitor::visit(ir_texture *ir)
    swizzle_result(ir, src_reg(inst->dst), sampler);
 }
 
+/**
+ * Set up the gather channel based on the swizzle, for gather4.
+ */
+uint32_t
+vec4_visitor::gather_channel(ir_texture *ir, int sampler)
+{
+   int swiz = GET_SWZ(key->tex.swizzles[sampler], 0 /* red */);
+   switch (swiz) {
+      case SWIZZLE_X: return 0;
+      case SWIZZLE_Y: return 1;
+      case SWIZZLE_Z: return 2;
+      case SWIZZLE_W: return 3;
+      default:
+         assert(!"Not reached"); /* zero, one swizzles handled already */
+         return 0;
+   }
+}
+
 void
 vec4_visitor::swizzle_result(ir_texture *ir, src_reg orig_val, int sampler)
 {
@@ -2371,10 +2412,11 @@ vec4_visitor::swizzle_result(ir_texture *ir, src_reg orig_val, int sampler)
    dst_reg swizzled_result(this->result);
 
    if (ir->op == ir_txs || ir->type == glsl_type::float_type
-			|| s == SWIZZLE_NOOP) {
+			|| s == SWIZZLE_NOOP || ir->op == ir_tg4) {
       emit(MOV(swizzled_result, orig_val));
       return;
    }
+
 
    int zero_mask = 0, one_mask = 0, copy_mask = 0;
    int swizzle[4] = {0};
