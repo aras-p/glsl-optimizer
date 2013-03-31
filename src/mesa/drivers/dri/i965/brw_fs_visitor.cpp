@@ -1468,7 +1468,7 @@ fs_visitor::swizzle_result(ir_texture *ir, fs_reg orig_val, int sampler)
 {
    this->result = orig_val;
 
-   if (ir->op == ir_txs)
+   if (ir->op == ir_txs || ir->op == ir_lod)
       return;
 
    if (ir->type == glsl_type::float_type) {
