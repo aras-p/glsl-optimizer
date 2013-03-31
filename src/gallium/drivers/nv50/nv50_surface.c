@@ -976,6 +976,8 @@ nv50_blit_3d(struct nv50_context *nv50, const struct pipe_blit_info *info)
 
    BEGIN_NV04(push, NV50_3D(VIEWPORT_TRANSFORM_EN), 1);
    PUSH_DATA (push, 0);
+   BEGIN_NV04(push, NV50_3D(VIEW_VOLUME_CLIP_CTRL), 1);
+   PUSH_DATA (push, 0x1);
 
    /* Draw a large triangle in screen coordinates covering the whole
     * render target, with scissors defining the destination region.

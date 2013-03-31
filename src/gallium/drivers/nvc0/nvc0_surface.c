@@ -869,6 +869,8 @@ nvc0_blit_3d(struct nvc0_context *nvc0, const struct pipe_blit_info *info)
       z += 0.5f * dz;
 
    IMMED_NVC0(push, NVC0_3D(VIEWPORT_TRANSFORM_EN), 0);
+   IMMED_NVC0(push, NVC0_3D(VIEW_VOLUME_CLIP_CTRL), 0x2 |
+              NVC0_3D_VIEW_VOLUME_CLIP_CTRL_DEPTH_RANGE_0_1);
    BEGIN_NVC0(push, NVC0_3D(VIEWPORT_HORIZ(0)), 2);
    PUSH_DATA (push, nvc0->framebuffer.width << 16);
    PUSH_DATA (push, nvc0->framebuffer.height << 16);
