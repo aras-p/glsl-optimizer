@@ -213,6 +213,7 @@ public:
    void visit(ir_emit_vertex *);
    void visit(ir_end_primitive *);
 
+   uint32_t gather_channel(ir_texture *ir, int sampler);
    void swizzle_result(ir_texture *ir, fs_reg orig_val, int sampler);
 
    bool can_do_source_mods(fs_inst *inst);
