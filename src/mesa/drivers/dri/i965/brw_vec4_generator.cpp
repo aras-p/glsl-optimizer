@@ -308,6 +308,9 @@ vec4_generator::generate_tex(vec4_instruction *inst,
       case SHADER_OPCODE_TXS:
 	 msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_RESINFO;
 	 break;
+      case SHADER_OPCODE_TG4:
+         msg_type = GEN7_SAMPLER_MESSAGE_SAMPLE_GATHER4;
+         break;
       default:
 	 assert(!"should not get here: invalid VS texture opcode");
 	 break;
@@ -361,7 +364,7 @@ vec4_generator::generate_tex(vec4_instruction *inst,
       brw_MOV(p,
 	      retype(brw_vec1_reg(BRW_MESSAGE_REGISTER_FILE, inst->base_mrf, 2),
 		     BRW_REGISTER_TYPE_UD),
-	      brw_imm_uw(inst->texture_offset));
+	      brw_imm_ud(inst->texture_offset));
       brw_pop_insn_state(p);
    } else if (inst->header_present) {
       /* Set up an implied move from g0 to the MRF. */
@@ -1040,6 +1043,7 @@ vec4_generator::generate_vec4_instruction(vec4_instruction *instruction,
    case SHADER_OPCODE_TXF_MS:
    case SHADER_OPCODE_TXL:
    case SHADER_OPCODE_TXS:
+   case SHADER_OPCODE_TG4:
       generate_tex(inst, dst, src[0]);
       break;
 
