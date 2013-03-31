@@ -10,7 +10,7 @@
    <function name="TexStorage2DMultisample" offset="assign">
       <param name="target" type="GLenum"/>
       <param name="samples" type="GLsizei"/>
-      <param name="internalformat" type="GLint"/>
+      <param name="internalformat" type="GLenum"/>
       <param name="width" type="GLsizei"/>
       <param name="height" type="GLsizei"/>
       <param name="fixedsamplelocations" type="GLboolean"/>
@@ -19,7 +19,7 @@
    <function name="TexStorage3DMultisample" offset="assign">
       <param name="target" type="GLenum"/>
       <param name="samples" type="GLsizei"/>
-      <param name="internalformat" type="GLint"/>
+      <param name="internalformat" type="GLenum"/>
       <param name="width" type="GLsizei"/>
       <param name="height" type="GLsizei"/>
       <param name="depth" type="GLsizei"/>
