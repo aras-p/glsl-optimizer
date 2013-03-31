@@ -37,6 +37,7 @@
 struct cache_item
 {
    GLuint hash;
+   unsigned keysize;
    void *key;
    struct gl_program *program;
    struct cache_item *next;
@@ -174,7 +175,8 @@ struct gl_program *
 _mesa_search_program_cache(struct gl_program_cache *cache,
                            const void *key, GLuint keysize)
 {
-   if (cache->last && 
+   if (cache->last &&
+       cache->last->keysize == keysize &&
        memcmp(cache->last->key, key, keysize) == 0) {
       return cache->last->program;
    }
@@ -183,7 +185,10 @@ _mesa_search_program_cache(struct gl_program_cache *cache,
       struct cache_item *c;
 
       for (c = cache->items[hash % cache->size]; c; c = c->next) {
-         if (c->hash == hash && memcmp(c->key, key, keysize) == 0) {
+         if (c->hash == hash &&
+             c->keysize == keysize &&
+             memcmp(c->key, key, keysize) == 0) {
+
             cache->last = c;
             return c->program;
          }
@@ -207,6 +212,7 @@ _mesa_program_cache_insert(struct gl_context *ctx,
 
    c->key = malloc(keysize);
    memcpy(c->key, key, keysize);
+   c->keysize = keysize;
 
    c->program = program;  /* no refcount change */
 
@@ -235,6 +241,7 @@ _mesa_shader_cache_insert(struct gl_context *ctx,
 
    c->key = malloc(keysize);
    memcpy(c->key, key, keysize);
+   c->keysize = keysize;
 
    c->program = (struct gl_program *)program;  /* no refcount change */
 
