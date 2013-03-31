@@ -101,9 +101,11 @@ nvc0_mt_choose_storage_type(struct nv50_miptree *mt, boolean compressed)
          }
          break;
       case 32:
-         if (compressed) {
+         if (compressed && ms) {
             switch (ms) {
+               /* This one makes things blurry:
             case 0: tile_flags = 0xdb; break;
+               */
             case 1: tile_flags = 0xdd; break;
             case 2: tile_flags = 0xdf; break;
             case 3: tile_flags = 0xe4; break;
