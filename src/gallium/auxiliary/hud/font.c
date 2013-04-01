@@ -377,17 +377,26 @@ util_font_create_fixed_8x13(struct pipe_context *pipe,
    struct pipe_resource tex_templ, *tex;
    struct pipe_transfer *transfer = NULL;
    char *map;
+   enum pipe_format tex_format;
    int i;
 
-   if (!screen->is_format_supported(screen, PIPE_FORMAT_I8_UNORM,
-                                    PIPE_TEXTURE_RECT, 0,
-                                    PIPE_BIND_SAMPLER_VIEW)) {
+   if (screen->is_format_supported(screen, PIPE_FORMAT_I8_UNORM,
+                                   PIPE_TEXTURE_RECT, 0,
+                                   PIPE_BIND_SAMPLER_VIEW)) {
+      tex_format = PIPE_FORMAT_I8_UNORM;
+   }
+   else if (screen->is_format_supported(screen, PIPE_FORMAT_L8_UNORM,
+                                   PIPE_TEXTURE_RECT, 0,
+                                   PIPE_BIND_SAMPLER_VIEW)) {
+      tex_format = PIPE_FORMAT_L8_UNORM;
+   }
+   else {
       return FALSE;
    }
 
    memset(&tex_templ, 0, sizeof(tex_templ));
    tex_templ.target = PIPE_TEXTURE_RECT;
-   tex_templ.format = PIPE_FORMAT_I8_UNORM;
+   tex_templ.format = tex_format;
    tex_templ.width0 = 128;
    tex_templ.height0 = 256;
    tex_templ.depth0 = 1;
