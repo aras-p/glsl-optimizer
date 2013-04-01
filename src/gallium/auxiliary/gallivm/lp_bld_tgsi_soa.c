@@ -1875,7 +1875,7 @@ lp_emit_declaration_soa(
          break;
 
       case TGSI_FILE_ADDRESS:
-	 /* ADDR registers are the only allocated with an integer LLVM IR type,
+	 /* ADDR registers are only allocated with an integer LLVM IR type,
 	  * as they are guaranteed to always have integers.
 	  * XXX: Not sure if this exception is worthwhile (or the whole idea of
 	  * an ADDR register for that matter).
