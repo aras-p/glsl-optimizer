@@ -51,6 +51,9 @@ struct svga_query {
    struct svga_winsys_buffer *hwbuf;
    volatile SVGA3dQueryResult *queryResult;
    struct pipe_fence_handle *fence;
+
+   /** For non-GPU SVGA_QUERY_x queries */
+   uint64_t begin_count, end_count;
 };
 
 /***********************************************************************
@@ -106,6 +109,9 @@ static struct pipe_query *svga_create_query( struct pipe_context *pipe,
        */
       sws->buffer_unmap(sws, sq->hwbuf);
       break;
+   case SVGA_QUERY_DRAW_CALLS:
+   case SVGA_QUERY_FALLBACKS:
+      break;
    default:
       assert(!"unexpected query type in svga_create_query()");
    }
@@ -135,6 +141,10 @@ static void svga_destroy_query(struct pipe_context *pipe,
    case PIPE_QUERY_OCCLUSION_COUNTER:
       sws->buffer_destroy(sws, sq->hwbuf);
       sws->fence_reference(sws, &sq->fence, NULL);
+      break;
+   case SVGA_QUERY_DRAW_CALLS:
+   case SVGA_QUERY_FALLBACKS:
+      /* nothing */
       break;
    default:
       assert(!"svga: unexpected query type in svga_destroy_query()");
@@ -187,6 +197,12 @@ static void svga_begin_query(struct pipe_context *pipe,
 
       svga->sq = sq;
       break;
+   case SVGA_QUERY_DRAW_CALLS:
+      sq->begin_count = svga->num_draw_calls;
+      break;
+   case SVGA_QUERY_FALLBACKS:
+      sq->begin_count = svga->num_fallbacks;
+      break;
    default:
       assert(!"unexpected query type in svga_begin_query()");
    }
@@ -223,6 +239,12 @@ static void svga_end_query(struct pipe_context *pipe,
       svga_context_flush(svga, NULL);
 
       svga->sq = NULL;
+      break;
+   case SVGA_QUERY_DRAW_CALLS:
+      sq->end_count = svga->num_draw_calls;
+      break;
+   case SVGA_QUERY_FALLBACKS:
+      sq->end_count = svga->num_fallbacks;
       break;
    default:
       assert(!"unexpected query type in svga_end_query()");
@@ -276,6 +298,11 @@ static boolean svga_get_query_result(struct pipe_context *pipe,
              state == SVGA3D_QUERYSTATE_FAILED);
 
       *result = (uint64_t)sq->queryResult->result32;
+      break;
+   case SVGA_QUERY_DRAW_CALLS:
+      /* fall-through */
+   case SVGA_QUERY_FALLBACKS:
+      vresult->u64 = sq->end_count - sq->begin_count;
       break;
    default:
       assert(!"unexpected query type in svga_get_query_result");

@@ -330,6 +330,8 @@ svga_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
    enum pipe_error ret = 0;
    boolean needed_swtnl;
 
+   svga->num_draw_calls++;  /* for SVGA_QUERY_DRAW_CALLS */
+
    if (!u_trim_pipe_prim( info->mode, &count ))
       return;
 
@@ -358,6 +360,7 @@ svga_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
 #endif
 
    if (svga->state.sw.need_swtnl) {
+      svga->num_fallbacks++;  /* for SVGA_QUERY_FALLBACKS */
       if (!needed_swtnl) {
          /*
           * We're switching from HW to SW TNL.  SW TNL will require mapping all

@@ -42,6 +42,11 @@
 #include "svga3d_shaderdefs.h"
 
 
+/** Non-GPU queries for gallium HUD */
+#define SVGA_QUERY_DRAW_CALLS   (PIPE_QUERY_DRIVER_SPECIFIC + 0)
+#define SVGA_QUERY_FALLBACKS    (PIPE_QUERY_DRIVER_SPECIFIC + 1)
+
+
 struct draw_vertex_shader;
 struct draw_fragment_shader;
 struct svga_shader_result;
@@ -370,6 +375,10 @@ struct svga_context
 
    /** List of buffers with queued transfers */
    struct list_head dirty_buffers;
+
+   /** performance / info queries */
+   uint64_t num_draw_calls;  /**< SVGA_QUERY_DRAW_CALLS */
+   uint64_t num_fallbacks;   /**< SVGA_QUERY_FALLBACKS */
 };
 
 /* A flag for each state_tracker state object:
