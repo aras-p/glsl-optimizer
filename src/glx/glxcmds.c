@@ -912,8 +912,10 @@ init_fbconfig_for_chooser(struct glx_config * config,
 /* Test that all bits from a are contained in b */
 #define MATCH_MASK(param)			\
   do {						\
-    if ((a->param & ~b->param) != 0)		\
+    if ( ((int) a-> param != (int) GLX_DONT_CARE)	\
+         && ((a->param & ~b->param) != 0) ) {   \
       return False;				\
+    }                                           \
   } while (0);
 
 /**
