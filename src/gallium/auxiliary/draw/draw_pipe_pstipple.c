@@ -419,7 +419,7 @@ pstip_update_texture(struct pstip_stage *pstip)
    }
 
    /* unmap */
-   pipe->transfer_unmap(pipe, transfer);
+   pipe_transfer_unmap(pipe, transfer);
 }
 
 
