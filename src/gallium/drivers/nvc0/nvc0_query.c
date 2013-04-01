@@ -701,7 +701,14 @@ static const char *nve4_pm_query_names[] =
    "branch",
    "divergent_branch",
    "active_warps",
-   "active_cycles"
+   "active_cycles",
+   /* metrics, i.e. functions of the MP counters */
+   "metric-ipc",                   /* inst_executed, clock */
+   "metric-ipac",                  /* inst_executed, active_cycles */
+   "metric-ipec",                  /* inst_executed, (bool)inst_executed */
+   "metric-achieved_occupancy",    /* active_warps, active_cycles */
+   "metric-sm_efficiency",         /* active_cycles, clock */
+   "metric-inst_replay_overhead"   /* inst_issued, inst_executed */
 };
 
 /* For simplicity, we will allocate as many group slots as we allocate counter
@@ -715,59 +722,94 @@ struct nve4_mp_counter_cfg
    uint32_t func    : 16; /* mask or 4-bit logic op (depending on mode) */
    uint32_t mode    : 4;  /* LOGOP,B6,LOGOP_B6(_PULSE) */
    uint32_t pad     : 3;
-   uint32_t sig_dom : 1;  /* if 0, MP_PM_A, if 1, MP_PM_B */
+   uint32_t sig_dom : 1;  /* if 0, MP_PM_A (per warp-sched), if 1, MP_PM_B */
    uint32_t sig_sel : 8;  /* signal group */
    uint32_t src_sel : 32; /* signal selection for up to 5 sources */
 };
+
+#define NVE4_COUNTER_OPn_SUM            0
+#define NVE4_COUNTER_OPn_OR             1
+#define NVE4_COUNTER_OPn_AND            2
+#define NVE4_COUNTER_OP2_REL_SUM_MM     3 /* (sum(ctr0) - sum(ctr1)) / sum(ctr0) */
+#define NVE4_COUNTER_OP2_DIV_SUM_M0     4 /* sum(ctr0) / ctr1 of MP[0]) */
+#define NVE4_COUNTER_OP2_AVG_DIV_MM     5 /* avg(ctr0 / ctr1) */
+#define NVE4_COUNTER_OP2_AVG_DIV_M0     6 /* avg(ctr0) / ctr1 of MP[0]) */
 
 struct nve4_mp_pm_query_cfg
 {
    struct nve4_mp_counter_cfg ctr[4];
    uint8_t num_counters;
-   uint8_t op; /* PIPE_LOGICOP_CLEAR(for ADD),OR,AND */
+   uint8_t op;
+   uint8_t norm[2]; /* normalization num,denom */
 };
 
-#define _Q1A(n, f, m, g, s) [NVE4_PM_QUERY_##n] = { { { f, NVE4_COMPUTE_MP_PM_FUNC_MODE_##m, 0, 0, NVE4_COMPUTE_MP_PM_A_SIGSEL_##g, s }, {}, {}, {} }, 1, PIPE_LOGICOP_CLEAR }
-#define _Q1B(n, f, m, g, s) [NVE4_PM_QUERY_##n] = { { { f, NVE4_COMPUTE_MP_PM_FUNC_MODE_##m, 0, 1, NVE4_COMPUTE_MP_PM_B_SIGSEL_##g, s }, {}, {}, {} }, 1, PIPE_LOGICOP_CLEAR }
+#define _Q1A(n, f, m, g, s, nu, dn) [NVE4_PM_QUERY_##n] = { { { f, NVE4_COMPUTE_MP_PM_FUNC_MODE_##m, 0, 0, NVE4_COMPUTE_MP_PM_A_SIGSEL_##g, s }, {}, {}, {} }, 1, NVE4_COUNTER_OPn_SUM, { nu, dn } }
+#define _Q1B(n, f, m, g, s, nu, dn) [NVE4_PM_QUERY_##n] = { { { f, NVE4_COMPUTE_MP_PM_FUNC_MODE_##m, 0, 1, NVE4_COMPUTE_MP_PM_B_SIGSEL_##g, s }, {}, {}, {} }, 1, NVE4_COUNTER_OPn_SUM, { nu, dn } }
+#define _M2A(n, f0, m0, g0, s0, f1, m1, g1, s1, o, nu, dn) [NVE4_PM_QUERY_METRIC_##n] = { { \
+   { f0, NVE4_COMPUTE_MP_PM_FUNC_MODE_##m0, 0, 0, NVE4_COMPUTE_MP_PM_A_SIGSEL_##g0, s0 }, \
+   { f1, NVE4_COMPUTE_MP_PM_FUNC_MODE_##m1, 0, 0, NVE4_COMPUTE_MP_PM_A_SIGSEL_##g1, s1 }, \
+   {}, {}, }, 2, NVE4_COUNTER_OP2_##o, { nu, dn } }
+#define _M2B(n, f0, m0, g0, s0, f1, m1, g1, s1, o, nu, dn) [NVE4_PM_QUERY_METRIC_##n] = { { \
+   { f0, NVE4_COMPUTE_MP_PM_FUNC_MODE_##m0, 0, 1, NVE4_COMPUTE_MP_PM_B_SIGSEL_##g0, s0 }, \
+   { f1, NVE4_COMPUTE_MP_PM_FUNC_MODE_##m1, 0, 1, NVE4_COMPUTE_MP_PM_B_SIGSEL_##g1, s1 }, \
+   {}, {}, }, 2, NVE4_COUNTER_OP2_##o, { nu, dn } }
+#define _M2AB(n, f0, m0, g0, s0, f1, m1, g1, s1, o, nu, dn) [NVE4_PM_QUERY_METRIC_##n] = { { \
+   { f0, NVE4_COMPUTE_MP_PM_FUNC_MODE_##m0, 0, 0, NVE4_COMPUTE_MP_PM_A_SIGSEL_##g0, s0 }, \
+   { f1, NVE4_COMPUTE_MP_PM_FUNC_MODE_##m1, 0, 1, NVE4_COMPUTE_MP_PM_B_SIGSEL_##g1, s1 }, \
+   {}, {}, }, 2, NVE4_COUNTER_OP2_##o, { nu, dn } }
 
+/* NOTES:
+ * active_warps: bit 0 alternates btw 0 and 1 for odd nr of warps
+ * inst_executed etc.: we only count a single warp scheduler
+ * metric-ipXc: we simply multiply by 4 to account for the 4 warp schedulers;
+ *  this is inaccurate !
+ */
 static const struct nve4_mp_pm_query_cfg nve4_mp_pm_queries[] =
 {
-   _Q1A(PROF_TRIGGER_0, 0x0001, B6, USER, 0x00000000),
-   _Q1A(PROF_TRIGGER_1, 0x0001, B6, USER, 0x00000004),
-   _Q1A(PROF_TRIGGER_2, 0x0001, B6, USER, 0x00000008),
-   _Q1A(PROF_TRIGGER_3, 0x0001, B6, USER, 0x0000000c),
-   _Q1A(PROF_TRIGGER_4, 0x0001, B6, USER, 0x00000010),
-   _Q1A(PROF_TRIGGER_5, 0x0001, B6, USER, 0x00000014),
-   _Q1A(PROF_TRIGGER_6, 0x0001, B6, USER, 0x00000018),
-   _Q1A(PROF_TRIGGER_7, 0x0001, B6, USER, 0x0000001c),
-   _Q1A(LAUNCHED_WARPS,    0x0001, B6, LAUNCH, 0x00000004),
-   _Q1A(LAUNCHED_THREADS,  0x003f, B6, LAUNCH, 0x398a4188),
-   _Q1B(LAUNCHED_CTA,      0x0001, B6, WARP, 0x0000001c),
-   _Q1A(INST_ISSUED1,  0x0001, B6, ISSUE, 0x00000004),
-   _Q1A(INST_ISSUED2,  0x0001, B6, ISSUE, 0x00000008),
-   _Q1A(INST_EXECUTED, 0x0003, B6, EXEC,  0x00000398),
-   _Q1A(LD_SHARED,   0x0001, B6, LDST, 0x00000000),
-   _Q1A(ST_SHARED,   0x0001, B6, LDST, 0x00000004),
-   _Q1A(LD_LOCAL,    0x0001, B6, LDST, 0x00000008),
-   _Q1A(ST_LOCAL,    0x0001, B6, LDST, 0x0000000c),
-   _Q1A(GLD_REQUEST, 0x0001, B6, LDST, 0x00000010),
-   _Q1A(GST_REQUEST, 0x0001, B6, LDST, 0x00000014),
-   _Q1B(L1_LOCAL_LOAD_HIT,   0x0001, B6, L1, 0x00000000),
-   _Q1B(L1_LOCAL_LOAD_MISS,  0x0001, B6, L1, 0x00000004),
-   _Q1B(L1_LOCAL_STORE_HIT,  0x0001, B6, L1, 0x00000008),
-   _Q1B(L1_LOCAL_STORE_MISS, 0x0001, B6, L1, 0x0000000c),
-   _Q1B(L1_GLOBAL_LOAD_HIT,  0x0001, B6, L1, 0x00000010),
-   _Q1B(L1_GLOBAL_LOAD_MISS, 0x0001, B6, L1, 0x00000014),
-   _Q1B(GLD_TRANSACTIONS_UNCACHED, 0x0001, B6, MEM, 0x00000000),
-   _Q1B(GST_TRANSACTIONS,          0x0001, B6, MEM, 0x00000004),
-   _Q1A(BRANCH,           0x0001, B6, BRANCH, 0x0000000c),
-   _Q1A(BRANCH_DIVERGENT, 0x0001, B6, BRANCH, 0x00000010),
-   _Q1B(ACTIVE_WARPS,  0x003f, B6, WARP, 0x398a4188),
-   _Q1B(ACTIVE_CYCLES, 0x0001, B6, WARP, 0x00000004)
+   _Q1A(PROF_TRIGGER_0, 0x0001, B6, USER, 0x00000000, 1, 1),
+   _Q1A(PROF_TRIGGER_1, 0x0001, B6, USER, 0x00000004, 1, 1),
+   _Q1A(PROF_TRIGGER_2, 0x0001, B6, USER, 0x00000008, 1, 1),
+   _Q1A(PROF_TRIGGER_3, 0x0001, B6, USER, 0x0000000c, 1, 1),
+   _Q1A(PROF_TRIGGER_4, 0x0001, B6, USER, 0x00000010, 1, 1),
+   _Q1A(PROF_TRIGGER_5, 0x0001, B6, USER, 0x00000014, 1, 1),
+   _Q1A(PROF_TRIGGER_6, 0x0001, B6, USER, 0x00000018, 1, 1),
+   _Q1A(PROF_TRIGGER_7, 0x0001, B6, USER, 0x0000001c, 1, 1),
+   _Q1A(LAUNCHED_WARPS,    0x0001, B6, LAUNCH, 0x00000004, 1, 1),
+   _Q1A(LAUNCHED_THREADS,  0x003f, B6, LAUNCH, 0x398a4188, 1, 1),
+   _Q1B(LAUNCHED_CTA,      0x0001, B6, WARP, 0x0000001c, 1, 1),
+   _Q1A(INST_ISSUED1,  0x0001, B6, ISSUE, 0x00000004, 1, 1),
+   _Q1A(INST_ISSUED2,  0x0001, B6, ISSUE, 0x00000008, 1, 1),
+   _Q1A(INST_EXECUTED, 0x0003, B6, EXEC,  0x00000398, 1, 1),
+   _Q1A(LD_SHARED,   0x0001, B6, LDST, 0x00000000, 1, 1),
+   _Q1A(ST_SHARED,   0x0001, B6, LDST, 0x00000004, 1, 1),
+   _Q1A(LD_LOCAL,    0x0001, B6, LDST, 0x00000008, 1, 1),
+   _Q1A(ST_LOCAL,    0x0001, B6, LDST, 0x0000000c, 1, 1),
+   _Q1A(GLD_REQUEST, 0x0001, B6, LDST, 0x00000010, 1, 1),
+   _Q1A(GST_REQUEST, 0x0001, B6, LDST, 0x00000014, 1, 1),
+   _Q1B(L1_LOCAL_LOAD_HIT,   0x0001, B6, L1, 0x00000000, 1, 1),
+   _Q1B(L1_LOCAL_LOAD_MISS,  0x0001, B6, L1, 0x00000004, 1, 1),
+   _Q1B(L1_LOCAL_STORE_HIT,  0x0001, B6, L1, 0x00000008, 1, 1),
+   _Q1B(L1_LOCAL_STORE_MISS, 0x0001, B6, L1, 0x0000000c, 1, 1),
+   _Q1B(L1_GLOBAL_LOAD_HIT,  0x0001, B6, L1, 0x00000010, 1, 1),
+   _Q1B(L1_GLOBAL_LOAD_MISS, 0x0001, B6, L1, 0x00000014, 1, 1),
+   _Q1B(GLD_TRANSACTIONS_UNCACHED, 0x0001, B6, MEM, 0x00000000, 1, 1),
+   _Q1B(GST_TRANSACTIONS,          0x0001, B6, MEM, 0x00000004, 1, 1),
+   _Q1A(BRANCH,           0x0001, B6, BRANCH, 0x0000000c, 1, 1),
+   _Q1A(BRANCH_DIVERGENT, 0x0001, B6, BRANCH, 0x00000010, 1, 1),
+   _Q1B(ACTIVE_WARPS,  0x003f, B6, WARP, 0x31483104, 2, 1),
+   _Q1B(ACTIVE_CYCLES, 0x0001, B6, WARP, 0x00000000, 1, 1),
+   _M2AB(IPC, 0x3, B6, EXEC, 0x398, 0xffff, LOGOP, WARP, 0x0, DIV_SUM_M0, 40, 1),
+   _M2AB(IPAC, 0x3, B6, EXEC, 0x398, 0x1, B6, WARP, 0x0, AVG_DIV_MM, 40, 1),
+   _M2A(IPEC, 0x3, B6, EXEC, 0x398, 0xe, LOGOP, EXEC, 0x398, AVG_DIV_MM, 40, 1),
+   _M2A(INST_REPLAY_OHEAD, 0x3, B6, ISSUE, 0x104, 0x3, B6, EXEC, 0x398, REL_SUM_MM, 100, 1),
+   _M2B(MP_OCCUPANCY, 0x3f, B6, WARP, 0x31483104, 0x01, B6, WARP, 0x0, AVG_DIV_MM, 200, 64),
+   _M2B(MP_EFFICIENCY, 0x01, B6, WARP, 0x0, 0xffff, LOGOP, WARP, 0x0, AVG_DIV_M0, 100, 1),
 };
 
 #undef _Q1A
 #undef _Q1B
+#undef _M2A
+#undef _M2B
 
 void
 nve4_mp_pm_query_begin(struct nvc0_context *nvc0, struct nvc0_query *q)
@@ -908,18 +950,30 @@ nve4_mp_pm_query_end(struct nvc0_context *nvc0, struct nvc0_query *q)
    }
 }
 
+/* Metric calculations:
+ * sum(x) ... sum of x over all MPs
+ * avg(x) ... average of x over all MPs
+ *
+ * IPC              : sum(inst_executed) / clock
+ * INST_REPLAY_OHEAD: (sum(inst_issued) - sum(inst_executed)) / sum(inst_issued)
+ * MP_OCCUPANCY     : avg((active_warps / 64) / active_cycles)
+ * MP_EFFICIENCY    : avg(active_cycles / clock)
+ *
+ * NOTE: Interpretation of IPC requires knowledge of MP count.
+ */
 static boolean
 nve4_mp_pm_query_result(struct nvc0_context *nvc0, struct nvc0_query *q,
                         void *result, boolean wait)
 {
-   uint32_t count[4];
+   uint32_t count[32][4];
    uint64_t value = 0;
+   unsigned mp_count = MIN2(nvc0->screen->mp_count_compute, 32);
    unsigned p, c;
    const struct nve4_mp_pm_query_cfg *cfg;
 
    cfg = &nve4_mp_pm_queries[q->type - PIPE_QUERY_DRIVER_SPECIFIC];
 
-   for (p = 0; p < nvc0->screen->mp_count_compute; ++p) {
+   for (p = 0; p < mp_count; ++p) {
       uint64_t clock;
       const unsigned b = p * 12;
 
@@ -935,25 +989,67 @@ nve4_mp_pm_query_result(struct nvc0_context *nvc0, struct nvc0_query *q,
          if (nouveau_bo_wait(q->bo, NOUVEAU_BO_RD, nvc0->base.client))
             return FALSE;
       }
-
       for (c = 0; c < cfg->num_counters; ++c)
-         count[c] = q->data[b + q->ctr[c]];
-      for (; c < 4; ++c)
-         count[c] = 0;
+         count[p][c] = q->data[b + q->ctr[c]];
+   }
 
-      switch (cfg->op) {
-      case PIPE_LOGICOP_AND:
-         value &= count[0] & count[1] & count[2] & count[3];
-         break;
-      case PIPE_LOGICOP_OR:
-         value |= count[0] | count[1] | count[2] | count[3];
-         break;
-      case PIPE_LOGICOP_CLEAR: /* abused as ADD */
-      default:
-         value += count[0] + count[1] + count[2] + count[3];
-         break;
+   if (cfg->op == NVE4_COUNTER_OPn_SUM) {
+      for (c = 0; c < cfg->num_counters; ++c)
+         for (p = 0; p < mp_count; ++p)
+            value += count[p][c];
+      value = (value * cfg->norm[0]) / cfg->norm[1];
+   } else
+   if (cfg->op == NVE4_COUNTER_OPn_OR) {
+      uint32_t v = 0;
+      for (c = 0; c < cfg->num_counters; ++c)
+         for (p = 0; p < mp_count; ++p)
+            v |= count[p][c];
+      value = (v * cfg->norm[0]) / cfg->norm[1];
+   } else
+   if (cfg->op == NVE4_COUNTER_OPn_AND) {
+      uint32_t v = ~0;
+      for (c = 0; c < cfg->num_counters; ++c)
+         for (p = 0; p < mp_count; ++p)
+            v &= count[p][c];
+      value = (v * cfg->norm[0]) / cfg->norm[1];
+   } else
+   if (cfg->op == NVE4_COUNTER_OP2_REL_SUM_MM) {
+      uint64_t v[2] = { 0, 0 };
+      for (p = 0; p < mp_count; ++p) {
+         v[0] += count[p][0];
+         v[1] += count[p][1];
+      }
+      if (v[0])
+         value = ((v[0] - v[1]) * cfg->norm[0]) / (v[0] * cfg->norm[1]);
+   } else
+   if (cfg->op == NVE4_COUNTER_OP2_DIV_SUM_M0) {
+      for (p = 0; p < mp_count; ++p)
+         value += count[p][0];
+      if (count[0][1])
+         value = (value * cfg->norm[0]) / (count[0][1] * cfg->norm[1]);
+      else
+         value = 0;
+   } else
+   if (cfg->op == NVE4_COUNTER_OP2_AVG_DIV_MM) {
+      unsigned mp_used = 0;
+      for (p = 0; p < mp_count; ++p, mp_used += !!count[p][0])
+         if (count[p][1])
+            value += (count[p][0] * cfg->norm[0]) / count[p][1];
+      if (mp_used)
+         value /= mp_used * cfg->norm[1];
+   } else
+   if (cfg->op == NVE4_COUNTER_OP2_AVG_DIV_M0) {
+      unsigned mp_used = 0;
+      for (p = 0; p < mp_count; ++p, mp_used += !!count[p][0])
+         value += count[p][0];
+      if (count[0][1] && mp_used) {
+         value *= cfg->norm[0];
+         value /= count[0][1] * mp_used * cfg->norm[1];
+      } else {
+         value = 0;
       }
    }
+
    *(uint64_t *)result = value;
    return TRUE;
 }
@@ -987,7 +1083,8 @@ nvc0_screen_get_driver_query_info(struct pipe_screen *pscreen,
    if (id < count) {
       info->name = nve4_pm_query_names[id - NVC0_QUERY_DRV_STAT_COUNT];
       info->query_type = NVE4_PM_QUERY(id - NVC0_QUERY_DRV_STAT_COUNT);
-      info->max_value = ~0ULL;
+      info->max_value = (id < NVE4_PM_QUERY_METRIC_MP_OCCUPANCY) ?
+         ~0ULL : 100;
       info->uses_byte_units = FALSE;
       return 1;
    }

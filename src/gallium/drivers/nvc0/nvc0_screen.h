@@ -87,7 +87,7 @@ nvc0_screen(struct pipe_screen *screen)
 
 /* Performance counter queries:
  */
-#define NVE4_PM_QUERY_COUNT  32
+#define NVE4_PM_QUERY_COUNT  38
 #define NVE4_PM_QUERY(i)    (PIPE_QUERY_DRIVER_SPECIFIC + (i))
 #define NVE4_PM_QUERY_LAST   NVE4_PM_QUERY(NVE4_PM_QUERY_COUNT - 1)
 #define NVE4_PM_QUERY_PROF_TRIGGER_0            0
@@ -122,7 +122,12 @@ nvc0_screen(struct pipe_screen *screen)
 #define NVE4_PM_QUERY_BRANCH_DIVERGENT          29
 #define NVE4_PM_QUERY_ACTIVE_WARPS              30
 #define NVE4_PM_QUERY_ACTIVE_CYCLES             31
-/* Engines (PCOUNTER) */
+#define NVE4_PM_QUERY_METRIC_IPC                32
+#define NVE4_PM_QUERY_METRIC_IPAC               33
+#define NVE4_PM_QUERY_METRIC_IPEC               34
+#define NVE4_PM_QUERY_METRIC_MP_OCCUPANCY       35
+#define NVE4_PM_QUERY_METRIC_MP_EFFICIENCY      36
+#define NVE4_PM_QUERY_METRIC_INST_REPLAY_OHEAD  37
 /*
 #define NVE4_PM_QUERY_GR_IDLE                   50
 #define NVE4_PM_QUERY_BSP_IDLE                  51
