@@ -518,9 +518,11 @@ get_programiv(struct gl_context *ctx, GLuint program, GLenum pname, GLint *param
       GLint max_len = 0;
 
       for (i = 0; i < shProg->NumUserUniformStorage; i++) {
-	 /* Add one for the terminating NUL character.
+	 /* Add one for the terminating NUL character for a non-array, and
+	  * 4 for the "[0]" and the NUL for an array.
 	  */
-	 const GLint len = strlen(shProg->UniformStorage[i].name) + 1;
+	 const GLint len = strlen(shProg->UniformStorage[i].name) + 1 +
+	     ((shProg->UniformStorage[i].array_elements != 0) ? 3 : 0);
 
 	 if (len > max_len)
 	    max_len = len;
