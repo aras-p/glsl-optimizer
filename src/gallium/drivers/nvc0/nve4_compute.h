@@ -68,10 +68,6 @@ struct nve4_cp_launch_desc
    u32 unk48[16];
 };
 
-#define NVE4_COMPUTE_UPLOAD_EXEC_UNKVAL_DATA 0x41
-#define NVE4_COMPUTE_UPLOAD_EXEC_UNKVAL_DESC 0x11
-#define NVE4_COMPUTE_UPLOAD_UNK0184_UNKVAL   0x1
-
 static INLINE void
 nve4_cp_launch_desc_init_default(struct nve4_cp_launch_desc *desc)
 {
