@@ -476,6 +476,9 @@ hud_draw(struct hud_context *hud, struct pipe_resource *tex)
       hud_pane_accumulate_vertices(hud, pane);
    }
 
+   /* unmap the uploader's vertex buffer before drawing */
+   u_upload_flush(hud->uploader);
+
    /* draw accumulated vertices for background quads */
    cso_set_fragment_shader_handle(hud->cso, hud->fs_color);
 
