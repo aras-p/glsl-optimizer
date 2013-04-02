@@ -429,6 +429,18 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 			r600_change_format(dst, dst_level, &orig_info[1],
 					   PIPE_FORMAT_R8G8B8A8_UNORM);
 			break;
+		case 8:
+			r600_change_format(src, src_level, &orig_info[0],
+					   PIPE_FORMAT_R16G16B16A16_UINT);
+			r600_change_format(dst, dst_level, &orig_info[1],
+					   PIPE_FORMAT_R16G16B16A16_UINT);
+			break;
+		case 16:
+			r600_change_format(src, src_level, &orig_info[0],
+					   PIPE_FORMAT_R32G32B32A32_UINT);
+			r600_change_format(dst, dst_level, &orig_info[1],
+					   PIPE_FORMAT_R32G32B32A32_UINT);
+			break;
 		default:
 			fprintf(stderr, "Unhandled format %s with blocksize %u\n",
 				util_format_short_name(src->format), blocksize);
