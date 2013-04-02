@@ -158,9 +158,6 @@ nvc0_miptree_init_ms_mode(struct nv50_miptree *mt)
    return TRUE;
 }
 
-boolean
-nv50_miptree_init_layout_linear(struct nv50_miptree *);
-
 static void
 nvc0_miptree_init_layout_video(struct nv50_miptree *mt)
 {
@@ -260,6 +257,21 @@ nvc0_miptree_create(struct pipe_screen *pscreen,
    pipe_reference_init(&pt->reference, 1);
    pt->screen = pscreen;
 
+   if (pt->usage == PIPE_USAGE_STAGING) {
+      switch (pt->target) {
+      case PIPE_TEXTURE_1D:
+      case PIPE_TEXTURE_2D:
+      case PIPE_TEXTURE_RECT:
+         if (pt->last_level == 0 &&
+             !util_format_is_depth_or_stencil(pt->format) &&
+             pt->nr_samples <= 1)
+            pt->flags |= NOUVEAU_RESOURCE_FLAG_LINEAR;
+         break;
+      default:
+         break;
+      }
+   }
+
    bo_config.nvc0.memtype = nvc0_mt_choose_storage_type(mt, compressed);
 
    if (!nvc0_miptree_init_ms_mode(mt)) {
@@ -273,13 +285,16 @@ nvc0_miptree_create(struct pipe_screen *pscreen,
    if (likely(bo_config.nvc0.memtype)) {
       nvc0_miptree_init_layout_tiled(mt);
    } else
-   if (!nv50_miptree_init_layout_linear(mt)) {
+   if (!nv50_miptree_init_layout_linear(mt, 128)) {
       FREE(mt);
       return NULL;
    }
    bo_config.nvc0.tile_mode = mt->level[0].tile_mode;
 
-   mt->base.domain = NOUVEAU_BO_VRAM;
+   if (!bo_config.nvc0.memtype && pt->usage == PIPE_USAGE_STAGING)
+      mt->base.domain = NOUVEAU_BO_GART;
+   else
+      mt->base.domain = NOUVEAU_BO_VRAM;
 
    bo_flags = mt->base.domain | NOUVEAU_BO_NOSNOOP;
 

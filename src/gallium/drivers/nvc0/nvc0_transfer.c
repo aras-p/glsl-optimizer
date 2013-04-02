@@ -328,6 +328,30 @@ nve4_m2mf_copy_linear(struct nouveau_context *nv,
    nouveau_bufctx_reset(bctx, 0);
 }
 
+
+static INLINE boolean
+nvc0_mt_transfer_can_map_directly(struct nv50_miptree *mt)
+{
+   if (mt->base.domain == NOUVEAU_BO_VRAM)
+      return FALSE;
+   if (mt->base.base.usage != PIPE_USAGE_STAGING)
+      return FALSE;
+   return !nouveau_bo_memtype(mt->base.bo);
+}
+
+static INLINE boolean
+nvc0_mt_sync(struct nvc0_context *nvc0, struct nv50_miptree *mt, unsigned usage)
+{
+   if (!mt->base.mm) {
+      uint32_t access = (usage & PIPE_TRANSFER_WRITE) ?
+         NOUVEAU_BO_WR : NOUVEAU_BO_RD;
+      return !nouveau_bo_wait(mt->base.bo, access, nvc0->base.client);
+   }
+   if (usage & PIPE_TRANSFER_WRITE)
+      return !mt->base.fence || nouveau_fence_wait(mt->base.fence);
+   return !mt->base.fence_wr || nouveau_fence_wait(mt->base.fence_wr);
+}
+
 void *
 nvc0_miptree_transfer_map(struct pipe_context *pctx,
                           struct pipe_resource *res,
@@ -344,6 +368,16 @@ nvc0_miptree_transfer_map(struct pipe_context *pctx,
    int ret;
    unsigned flags = 0;
 
+   if (nvc0_mt_transfer_can_map_directly(mt)) {
+      ret = !nvc0_mt_sync(nvc0, mt, usage);
+      if (!ret)
+         ret = nouveau_bo_map(mt->base.bo, 0, NULL);
+      if (ret &&
+          (usage & PIPE_TRANSFER_MAP_DIRECTLY))
+         return NULL;
+      if (!ret)
+         usage |= PIPE_TRANSFER_MAP_DIRECTLY;
+   } else
    if (usage & PIPE_TRANSFER_MAP_DIRECTLY)
       return NULL;
 
@@ -368,6 +402,12 @@ nvc0_miptree_transfer_map(struct pipe_context *pctx,
 
    tx->base.stride = tx->nblocksx * util_format_get_blocksize(res->format);
    tx->base.layer_stride = tx->nblocksy * tx->base.stride;
+
+   if (usage & PIPE_TRANSFER_MAP_DIRECTLY) {
+      tx->base.stride = align(tx->base.stride, 128);
+      *ptransfer = &tx->base;
+      return mt->base.bo->map + mt->base.offset;
+   }
 
    nv50_m2mf_rect_setup(&tx->rect[0], res, level, box->x, box->y, box->z);
 
@@ -436,6 +476,13 @@ nvc0_miptree_transfer_unmap(struct pipe_context *pctx,
    struct nvc0_transfer *tx = (struct nvc0_transfer *)transfer;
    struct nv50_miptree *mt = nv50_miptree(tx->base.resource);
    unsigned i;
+
+   if (tx->base.usage & PIPE_TRANSFER_MAP_DIRECTLY) {
+      pipe_resource_reference(&transfer->resource, NULL);
+
+      FREE(tx);
+      return;
+   }
 
    if (tx->base.usage & PIPE_TRANSFER_WRITE) {
       for (i = 0; i < tx->nlayers; ++i) {

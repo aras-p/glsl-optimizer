@@ -629,6 +629,8 @@ nvc0_screen_create(struct nouveau_device *dev)
 
    BEGIN_NVC0(push, SUBC_2D(NV01_SUBCHAN_OBJECT), 1);
    PUSH_DATA (push, screen->eng2d->oclass);
+   BEGIN_NVC0(push, NVC0_2D(SINGLE_GPC), 1);
+   PUSH_DATA (push, 0);
    BEGIN_NVC0(push, NVC0_2D(OPERATION), 1);
    PUSH_DATA (push, NVC0_2D_OPERATION_SRCCOPY);
    BEGIN_NVC0(push, NVC0_2D(CLIP_ENABLE), 1);

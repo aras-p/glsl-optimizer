@@ -213,7 +213,7 @@ nv50_miptree_init_ms_mode(struct nv50_miptree *mt)
 }
 
 boolean
-nv50_miptree_init_layout_linear(struct nv50_miptree *mt)
+nv50_miptree_init_layout_linear(struct nv50_miptree *mt, unsigned pitch_align)
 {
    struct pipe_resource *pt = &mt->base.base;
    const unsigned blocksize = util_format_get_blocksize(pt->format);
@@ -227,7 +227,7 @@ nv50_miptree_init_layout_linear(struct nv50_miptree *mt)
    if (mt->ms_x | mt->ms_y)
       return FALSE;
 
-   mt->level[0].pitch = align(pt->width0 * blocksize, 64);
+   mt->level[0].pitch = align(pt->width0 * blocksize, pitch_align);
 
    /* Account for very generous prefetch (allocate size as if tiled). */
    h = MAX2(h, 8);
@@ -314,7 +314,7 @@ nv50_miptree_create(struct pipe_screen *pscreen,
    if (bo_config.nv50.memtype != 0) {
       nv50_miptree_init_layout_tiled(mt);
    } else
-   if (!nv50_miptree_init_layout_linear(mt)) {
+   if (!nv50_miptree_init_layout_linear(mt, 64)) {
       FREE(mt);
       return NULL;
    }

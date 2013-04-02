@@ -1108,7 +1108,8 @@ nvc0_blit_eng2d(struct nvc0_context *nvc0, const struct pipe_blit_info *info)
          PUSH_DATA (push, srcy >> 32);
       }
    }
-   nvc0_bufctx_fence(nvc0, nvc0->bufctx, FALSE);
+   nvc0_resource_validate(&dst->base, NOUVEAU_BO_WR);
+   nvc0_resource_validate(&src->base, NOUVEAU_BO_RD);
 
    nouveau_bufctx_reset(nvc0->bufctx, NVC0_BIND_2D);
 

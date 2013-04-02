@@ -67,7 +67,7 @@ nv50_miptree(struct pipe_resource *pt)
 /* Internal functions:
  */
 boolean
-nv50_miptree_init_layout_linear(struct nv50_miptree *mt);
+nv50_miptree_init_layout_linear(struct nv50_miptree *mt, unsigned pitch_align);
 
 struct pipe_resource *
 nv50_miptree_create(struct pipe_screen *pscreen,
