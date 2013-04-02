@@ -170,9 +170,8 @@ st_context_validate(struct st_context *st,
 
 /**
  * Validate a framebuffer to make sure up-to-date pipe_textures are used.
- * The context we need to pass in is s dummy context needed only to be
- * able to get a pipe context to create pipe surfaces, and to have a
- * context to call _mesa_resize_framebuffer():
+ * The context is only used for creating pipe surfaces and for calling
+ * _mesa_resize_framebuffer().
  * (That should probably be rethought, since those surfaces become
  * drawable state, not context state, and can be freed by another pipe
  * context).
