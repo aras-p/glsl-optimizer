@@ -468,6 +468,15 @@ lp_build_init(void)
       util_cpu_caps.has_avx = 0;
    }
 
+   if (!HAVE_AVX) {
+      /*
+       * note these instructions are VEX-only, so can only emit if we use
+       * avx (don't want to base it on has_avx & has_f16c later as that would
+       * omit it unnecessarily on amd cpus, see above).
+       */
+      util_cpu_caps.has_f16c = 0;
+   }
+
 #ifdef PIPE_ARCH_PPC_64
    /* Set the NJ bit in VSCR to 0 so denormalized values are handled as
     * specified by IEEE standard (PowerISA 2.06 - Section 6.3). This garantees
@@ -495,6 +504,7 @@ lp_build_init(void)
    util_cpu_caps.has_ssse3 = 0;
    util_cpu_caps.has_sse4_1 = 0;
    util_cpu_caps.has_avx = 0;
+   util_cpu_caps.has_f16c = 0;
 #endif
 }
 

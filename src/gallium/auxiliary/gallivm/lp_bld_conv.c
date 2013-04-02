@@ -175,9 +175,24 @@ lp_build_half_to_float(struct gallivm_state *gallivm,
    struct lp_type f32_type = lp_type_float_vec(32, 32 * src_length);
    struct lp_type i32_type = lp_type_int_vec(32, 32 * src_length);
    LLVMTypeRef int_vec_type = lp_build_vec_type(gallivm, i32_type);
+   LLVMValueRef h;
+
+   if (util_cpu_caps.has_f16c && HAVE_LLVM >= 0x0301 &&
+       (src_length == 4 || src_length == 8)) {
+      const char *intrinsic = NULL;
+      if (src_length == 4) {
+         src = lp_build_pad_vector(gallivm, src, 8);
+         intrinsic = "llvm.x86.vcvtph2ps.128";
+      }
+      else {
+         intrinsic = "llvm.x86.vcvtph2ps.256";
+      }
+      return lp_build_intrinsic_unary(builder, intrinsic,
+                                      lp_build_vec_type(gallivm, f32_type), src);
+   }
 
    /* Convert int16 vector to int32 vector by zero ext (might generate bad code) */
-   LLVMValueRef h             = LLVMBuildZExt(builder, src, int_vec_type, "");
+   h = LLVMBuildZExt(builder, src, int_vec_type, "");
    return lp_build_smallfloat_to_float(gallivm, f32_type, h, 10, 5, 0, true);
 }
 
@@ -204,9 +219,31 @@ lp_build_float_to_half(struct gallivm_state *gallivm,
    struct lp_type i16_type = lp_type_int_vec(16, 16 * length);
    LLVMValueRef result;
 
-   result = lp_build_float_to_smallfloat(gallivm, i32_type, src, 10, 5, 0, true);
-   /* Convert int32 vector to int16 vector by trunc (might generate bad code) */
-   result = LLVMBuildTrunc(builder, result, lp_build_vec_type(gallivm, i16_type), "");
+   if (util_cpu_caps.has_f16c && HAVE_LLVM >= 0x0301 &&
+       (length == 4 || length == 8)) {
+      struct lp_type i168_type = lp_type_int_vec(16, 16 * 8);
+      unsigned mode = 3; /* same as LP_BUILD_ROUND_TRUNCATE */
+      LLVMTypeRef i32t = LLVMInt32TypeInContext(gallivm->context);
+      const char *intrinsic = NULL;
+      if (length == 4) {
+         intrinsic = "llvm.x86.vcvtps2ph.128";
+      }
+      else {
+         intrinsic = "llvm.x86.vcvtps2ph.256";
+      }
+      result = lp_build_intrinsic_binary(builder, intrinsic,
+                                         lp_build_vec_type(gallivm, i168_type),
+                                         src, LLVMConstInt(i32t, mode, 0));
+      if (length == 4) {
+         result = lp_build_extract_range(gallivm, result, 0, 4);
+      }
+   }
+
+   else {
+      result = lp_build_float_to_smallfloat(gallivm, i32_type, src, 10, 5, 0, true);
+      /* Convert int32 vector to int16 vector by trunc (might generate bad code) */
+      result = LLVMBuildTrunc(builder, result, lp_build_vec_type(gallivm, i16_type), "");
+   }
 
    /*
     * Debugging code.
