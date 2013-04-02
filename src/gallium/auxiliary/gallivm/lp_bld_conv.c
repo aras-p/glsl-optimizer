@@ -176,7 +176,7 @@ lp_build_half_to_float(struct gallivm_state *gallivm,
    struct lp_type i32_type = lp_type_int_vec(32, 32 * src_length);
    LLVMTypeRef int_vec_type = lp_build_vec_type(gallivm, i32_type);
 
-   /* Convert int16 vector to int32 vector by zero ext */
+   /* Convert int16 vector to int32 vector by zero ext (might generate bad code) */
    LLVMValueRef h             = LLVMBuildZExt(builder, src, int_vec_type, "");
    return lp_build_smallfloat_to_float(gallivm, f32_type, h, 10, 5, 0, true);
 }
@@ -184,16 +184,13 @@ lp_build_half_to_float(struct gallivm_state *gallivm,
 
 /**
  * Converts float32 to int16 half-float
- * Note this can be performed in 1 instruction if vcvtps2ph exists (sse5 i think?)
+ * Note this can be performed in 1 instruction if vcvtps2ph exists (f16c/cvt16)
  * [llvm.x86.vcvtps2ph / _mm_cvtps_ph]
  *
  * @param src           value to convert
  *
- * ref http://fgiesen.wordpress.com/2012/03/28/half-to-float-done-quic/
- * ref https://gist.github.com/2156668
- *
- * XXX: This is an approximation. It is faster but certain NaNs are converted to
- * infinity, and rounding is not correct.
+ * Convert float32 to half floats, preserving Infs and NaNs,
+ * with rounding towards zero (trunc).
  */
 LLVMValueRef
 lp_build_float_to_half(struct gallivm_state *gallivm,
@@ -203,60 +200,13 @@ lp_build_float_to_half(struct gallivm_state *gallivm,
    LLVMTypeRef f32_vec_type = LLVMTypeOf(src);
    unsigned length = LLVMGetTypeKind(f32_vec_type) == LLVMVectorTypeKind
                    ? LLVMGetVectorSize(f32_vec_type) : 1;
-   struct lp_type f32_type = lp_type_float_vec(32, 32 * length);
-   struct lp_type u32_type = lp_type_uint_vec(32, 32 * length);
+   struct lp_type i32_type = lp_type_int_vec(32, 32 * length);
    struct lp_type i16_type = lp_type_int_vec(16, 16 * length);
-   LLVMTypeRef u32_vec_type = lp_build_vec_type(gallivm, u32_type);
-   LLVMTypeRef i16_vec_type = lp_build_vec_type(gallivm, i16_type);
-   struct lp_build_context f32_bld;
-   struct lp_build_context u32_bld;
    LLVMValueRef result;
 
-   lp_build_context_init(&f32_bld, gallivm, f32_type);
-   lp_build_context_init(&u32_bld, gallivm, u32_type);
-
-   {
-      /* Constants */
-      LLVMValueRef u32_f32inf    = lp_build_const_int_vec(gallivm, u32_type, 0xff << 23);
-      LLVMValueRef u32_expinf    = lp_build_const_int_vec(gallivm, u32_type, 0xe0 << 23);
-      LLVMValueRef f32_f16max    = lp_build_const_vec(gallivm, f32_type, 65536.0); // 0x8f << 23
-      LLVMValueRef f32_magic     = lp_build_const_vec(gallivm, f32_type, 1.92592994e-34); // 0x0f << 23
-
-      /* Cast from float32 to int32 */
-      LLVMValueRef f             = LLVMBuildBitCast(builder, src, u32_vec_type, "");
-
-      /* Remove sign */
-      LLVMValueRef srcabs         = lp_build_abs(&f32_bld, src);
-      LLVMValueRef fabs           = LLVMBuildBitCast(builder, srcabs, u32_vec_type, "");
-
-      /* Magic conversion */
-      LLVMValueRef clamped       = lp_build_min(&f32_bld, f32_f16max, srcabs);
-      LLVMValueRef scaled        = LLVMBuildBitCast(builder,
-                                                    LLVMBuildFMul(builder,
-                                                                  clamped,
-                                                                  f32_magic,
-                                                                  ""),
-                                                    u32_vec_type,
-                                                    "");
-      /* Make sure Inf/NaN and unormalised survive */
-      LLVMValueRef infnancase    = LLVMBuildXor(builder, u32_expinf, fabs, "");
-      LLVMValueRef b_notnormal   = lp_build_compare(gallivm, f32_type, PIPE_FUNC_GEQUAL,
-                                                    srcabs,
-                                                    LLVMBuildBitCast(builder, u32_f32inf, f32_vec_type, ""));
-
-      /* Merge normal / unnormal case */
-      LLVMValueRef merged        = lp_build_select(&u32_bld, b_notnormal, infnancase, scaled);
-      LLVMValueRef shifted       = lp_build_shr_imm(&u32_bld, merged, 13);
-
-      /* Sign bit */
-      LLVMValueRef justsign      = LLVMBuildXor(builder, f, fabs, "");
-      LLVMValueRef signshifted   = lp_build_shr_imm(&u32_bld, justsign, 16);
-
-      /* Combine result */
-      result                     = LLVMBuildOr(builder, shifted, signshifted, "");
-   }
-
-   result = LLVMBuildTrunc(builder, result, i16_vec_type, "");
+   result = lp_build_float_to_smallfloat(gallivm, i32_type, src, 10, 5, 0, true);
+   /* Convert int32 vector to int16 vector by trunc (might generate bad code) */
+   result = LLVMBuildTrunc(builder, result, lp_build_vec_type(gallivm, i16_type), "");
 
    /*
     * Debugging code.

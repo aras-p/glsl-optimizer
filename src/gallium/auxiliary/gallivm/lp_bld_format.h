@@ -127,6 +127,15 @@ lp_build_fetch_subsampled_rgba_aos(struct gallivm_state *gallivm,
  */
 
 LLVMValueRef
+lp_build_float_to_smallfloat(struct gallivm_state *gallivm,
+                             struct lp_type i32_type,
+                             LLVMValueRef src,
+                             unsigned mantissa_bits,
+                             unsigned exponent_bits,
+                             unsigned mantissa_start,
+                             boolean has_sign);
+
+LLVMValueRef
 lp_build_smallfloat_to_float(struct gallivm_state *gallivm,
                              struct lp_type f32_type,
                              LLVMValueRef src,
