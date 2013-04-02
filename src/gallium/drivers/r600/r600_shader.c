@@ -399,12 +399,7 @@ static unsigned r600_alu_from_byte_stream(struct r600_shader_ctx *ctx,
 		return bytes_read;
 	}
 
-	if (alu.execute_mask) {
-		alu.pred_sel = 0;
-		r600_bytecode_add_alu_type(ctx->bc, &alu, CF_OP_ALU_PUSH_BEFORE);
-	} else {
-		r600_bytecode_add_alu(ctx->bc, &alu);
-	}
+	r600_bytecode_add_alu_type(ctx->bc, &alu, ctx->bc->cf_last->op);
 
 	/* XXX: Handle other KILL instructions */
 	if (alu_op->flags & AF_KILL) {
@@ -632,7 +627,7 @@ static void r600_bytecode_from_byte_stream(struct r600_shader_ctx *ctx,
 			int32_t word1 = i32_from_byte_stream(bytes, &bytes_read);
 
 			r600_bytecode_add_cf(ctx->bc);
-			ctx->bc->cf_last->op = r600_isa_cf_by_opcode(ctx->bc->isa, 8/* CF_ALU*/, 1);
+			ctx->bc->cf_last->op = r600_isa_cf_by_opcode(ctx->bc->isa, G_SQ_CF_ALU_WORD1_CF_INST(word1), 1);
 			ctx->bc->cf_last->kcache[0].bank = G_SQ_CF_ALU_WORD0_KCACHE_BANK0(word0);
 			ctx->bc->cf_last->kcache[0].addr = G_SQ_CF_ALU_WORD1_KCACHE_ADDR0(word1);
 			ctx->bc->cf_last->kcache[0].mode = G_SQ_CF_ALU_WORD0_KCACHE_MODE0(word0);
