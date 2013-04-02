@@ -74,11 +74,7 @@ gen6_upload_depth_stencil_state(struct brw_context *brw)
 	 ds->ds1.bf_stencil_test_mask = ctx->Stencil.ValueMask[back];
       }
 
-      /* Not really sure about this:
-       */
-      if (ctx->Stencil.WriteMask[0] ||
-	  (ctx->Stencil._TestTwoSide && ctx->Stencil.WriteMask[back]))
-	 ds->ds0.stencil_write_enable = 1;
+      ds->ds0.stencil_write_enable = ctx->Stencil._WriteEnabled;
    }
 
    /* _NEW_DEPTH */
