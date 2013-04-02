@@ -586,7 +586,7 @@ int
 ra_get_best_spill_node(struct ra_graph *g)
 {
    unsigned int best_node = -1;
-   unsigned int best_benefit = 0.0;
+   float best_benefit = 0.0;
    unsigned int n;
 
    for (n = 0; n < g->count; n++) {
