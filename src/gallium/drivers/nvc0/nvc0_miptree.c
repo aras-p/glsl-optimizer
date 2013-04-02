@@ -82,7 +82,7 @@ nvc0_mt_choose_storage_type(struct nv50_miptree *mt, boolean compressed)
       switch (util_format_get_blocksizebits(mt->base.base.format)) {
       case 128:
          if (compressed)
-            tile_flags = 0xf4 + ms;
+            tile_flags = 0xf4 + ms * 2;
          else
             tile_flags = 0xfe;
          break;
