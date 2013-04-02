@@ -5838,7 +5838,7 @@ static int tgsi_umad(struct r600_shader_ctx *ctx)
 {
 	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;
 	struct r600_bytecode_alu alu;
-	int i, j, r;
+	int i, j, k, r;
 	int lasti = tgsi_last_instruction(inst->Dst[0].Register.WriteMask);
 
 	/* src0 * src1 */
@@ -5846,21 +5846,40 @@ static int tgsi_umad(struct r600_shader_ctx *ctx)
 		if (!(inst->Dst[0].Register.WriteMask & (1 << i)))
 			continue;
 
-		memset(&alu, 0, sizeof(struct r600_bytecode_alu));
+		if (ctx->bc->chip_class == CAYMAN) {
+			for (j = 0 ; j < 4; j++) {
+				memset(&alu, 0, sizeof(struct r600_bytecode_alu));
 
-		alu.dst.chan = i;
-		alu.dst.sel = ctx->temp_reg;
-		alu.dst.write = 1;
+				alu.op = ALU_OP2_MULLO_UINT;
+				for (k = 0; k < inst->Instruction.NumSrcRegs; k++) {
+					r600_bytecode_src(&alu.src[k], &ctx->src[k], i);
+				}
+				tgsi_dst(ctx, &inst->Dst[0], j, &alu.dst);
+				alu.dst.sel = ctx->temp_reg;
+				alu.dst.write = (j == i);
+				if (j == 3)
+					alu.last = 1;
+				r = r600_bytecode_add_alu(ctx->bc, &alu);
+				if (r)
+					return r;
+			}
+		} else {
+			memset(&alu, 0, sizeof(struct r600_bytecode_alu));
 
-		alu.op = ALU_OP2_MULLO_UINT;
-		for (j = 0; j < 2; j++) {
-		        r600_bytecode_src(&alu.src[j], &ctx->src[j], i);
+			alu.dst.chan = i;
+			alu.dst.sel = ctx->temp_reg;
+			alu.dst.write = 1;
+
+			alu.op = ALU_OP2_MULLO_UINT;
+			for (j = 0; j < 2; j++) {
+				r600_bytecode_src(&alu.src[j], &ctx->src[j], i);
+			}
+
+			alu.last = 1;
+			r = r600_bytecode_add_alu(ctx->bc, &alu);
+			if (r)
+				return r;
 		}
-
-		alu.last = 1;
-		r = r600_bytecode_add_alu(ctx->bc, &alu);
-		if (r)
-			return r;
 	}
 
 
