@@ -50,7 +50,7 @@ gen7_emit_depth_stencil_hiz(struct brw_context *brw,
    OUT_BATCH((depth_mt ? depth_mt->region->pitch - 1 : 0) |
              (depthbuffer_format << 18) |
              ((hiz_mt ? 1 : 0) << 22) |
-             ((stencil_mt != NULL && ctx->Stencil.WriteMask != 0) << 27) |
+             ((stencil_mt != NULL && ctx->Stencil._WriteEnabled) << 27) |
              ((ctx->Depth.Mask != 0) << 28) |
              (depth_surface_type << 29));
 
