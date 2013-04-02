@@ -1015,6 +1015,7 @@ struct gl_stencil_attrib
    GLboolean TestTwoSide;	/**< GL_EXT_stencil_two_side */
    GLubyte ActiveFace;		/**< GL_EXT_stencil_two_side (0 or 2) */
    GLboolean _Enabled;          /**< Enabled and stencil buffer present */
+   GLboolean _WriteEnabled;     /**< _Enabled and non-zero writemasks */
    GLboolean _TestTwoSide;
    GLubyte _BackFace;           /**< Current back stencil state (1 or 2) */
    GLenum Function[3];		/**< Stencil function */

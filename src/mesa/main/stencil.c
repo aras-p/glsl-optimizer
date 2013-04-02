@@ -551,6 +551,11 @@ _mesa_update_stencil(struct gl_context *ctx)
 	ctx->Stencil.Ref[0] != ctx->Stencil.Ref[face] ||
 	ctx->Stencil.ValueMask[0] != ctx->Stencil.ValueMask[face] ||
 	ctx->Stencil.WriteMask[0] != ctx->Stencil.WriteMask[face]);
+
+   ctx->Stencil._WriteEnabled =
+      ctx->Stencil._Enabled &&
+      (ctx->Stencil.WriteMask[0] != 0 ||
+       (ctx->Stencil._TestTwoSide && ctx->Stencil.WriteMask[face] != 0));
 }
 
 
