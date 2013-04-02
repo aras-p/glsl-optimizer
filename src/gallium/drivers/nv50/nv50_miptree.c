@@ -217,6 +217,7 @@ nv50_miptree_init_layout_linear(struct nv50_miptree *mt)
 {
    struct pipe_resource *pt = &mt->base.base;
    const unsigned blocksize = util_format_get_blocksize(pt->format);
+   unsigned h = pt->height0;
 
    if (util_format_is_depth_or_stencil(pt->format))
       return FALSE;
@@ -228,7 +229,11 @@ nv50_miptree_init_layout_linear(struct nv50_miptree *mt)
 
    mt->level[0].pitch = align(pt->width0 * blocksize, 64);
 
-   mt->total_size = mt->level[0].pitch * pt->height0;
+   /* Account for very generous prefetch (allocate size as if tiled). */
+   h = MAX2(h, 8);
+   h = util_next_power_of_two(h);
+
+   mt->total_size = mt->level[0].pitch * h;
 
    return TRUE;
 }
