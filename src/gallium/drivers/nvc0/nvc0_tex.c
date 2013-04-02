@@ -61,7 +61,7 @@ nvc0_create_sampler_view(struct pipe_context *pipe,
 {
    uint32_t flags = 0;
 
-   if (res->target == PIPE_TEXTURE_RECT)
+   if (res->target == PIPE_TEXTURE_RECT || res->target == PIPE_BUFFER)
       flags |= NV50_TEXVIEW_SCALED_COORDS;
 
    return nvc0_create_texture_view(pipe, res, templ, flags, res->target);
@@ -122,9 +122,13 @@ nvc0_create_texture_view(struct pipe_context *pipe,
    if (desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB)
       tic[2] |= NV50_TIC_2_COLORSPACE_SRGB;
 
+   if (!(flags & NV50_TEXVIEW_SCALED_COORDS))
+      tic[2] |= NV50_TIC_2_NORMALIZED_COORDS;
+
    /* check for linear storage type */
    if (unlikely(!nouveau_bo_memtype(nv04_resource(texture)->bo))) {
       if (texture->target == PIPE_BUFFER) {
+         assert(!(tic[2] & NV50_TIC_2_NORMALIZED_COORDS));
          address +=
             view->pipe.u.buf.first_element * desc->block.bits / 8;
          tic[2] |= NV50_TIC_2_LINEAR | NV50_TIC_2_TARGET_BUFFER;
@@ -135,8 +139,6 @@ nvc0_create_texture_view(struct pipe_context *pipe,
       } else {
          /* must be 2D texture without mip maps */
          tic[2] |= NV50_TIC_2_LINEAR | NV50_TIC_2_TARGET_RECT;
-         if (texture->target != PIPE_TEXTURE_RECT)
-            tic[2] |= NV50_TIC_2_NORMALIZED_COORDS;
          tic[3] = mt->level[0].pitch;
          tic[4] = mt->base.base.width0;
          tic[5] = (1 << 16) | mt->base.base.height0;
@@ -147,9 +149,6 @@ nvc0_create_texture_view(struct pipe_context *pipe,
       tic[2] |= address >> 32;
       return &view->pipe;
    }
-
-   if (!(flags & NV50_TEXVIEW_SCALED_COORDS))
-      tic[2] |= NV50_TIC_2_NORMALIZED_COORDS;
 
    tic[2] |=
       ((mt->level[0].tile_mode & 0x0f0) << (22 - 4)) |
