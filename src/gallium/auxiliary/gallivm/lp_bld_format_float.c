@@ -266,7 +266,7 @@ lp_build_smallfloat_to_float(struct gallivm_state *gallivm,
       LLVMValueRef signmask = lp_build_const_int_vec(gallivm, i32_type, 0x80000000);
       shift = lp_build_const_int_vec(gallivm, i32_type, 8 - exponent_bits);
       sign = lp_build_shl(&i32_bld, src, shift);
-      sign = lp_build_and(&i32_bld, signmask, src);
+      sign = lp_build_and(&i32_bld, signmask, sign);
       res = lp_build_or(&i32_bld, res, sign);
    }
 
