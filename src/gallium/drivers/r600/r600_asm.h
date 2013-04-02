@@ -173,16 +173,25 @@ struct r600_cf_stack_entry {
 };
 
 #define SQ_MAX_CALL_DEPTH 0x00000020
-struct r600_cf_callstack {
-	unsigned			fc_sp_before_entry;
-	int				sub_desc_index;
-	int				current;
-	int				max;
-};
 
 #define AR_HANDLE_NORMAL 0
 #define AR_HANDLE_RV6XX 1 /* except RV670 */
 
+struct r600_stack_info {
+	/* current level of non-WQM PUSH operations
+	 * (PUSH, PUSH_ELSE, ALU_PUSH_BEFORE) */
+	int push;
+	/* current level of WQM PUSH operations
+	 * (PUSH, PUSH_ELSE, PUSH_WQM) */
+	int push_wqm;
+	/* current loop level */
+	int loop;
+
+	/* required depth */
+	int max_entries;
+	/* subentries per entry */
+	int entry_size;
+};
 
 struct r600_bytecode {
 	enum chip_class			chip_class;
@@ -199,8 +208,7 @@ struct r600_bytecode {
 	uint32_t			*bytecode;
 	uint32_t			fc_sp;
 	struct r600_cf_stack_entry	fc_stack[32];
-	unsigned			call_sp;
-	struct r600_cf_callstack	callstack[SQ_MAX_CALL_DEPTH];
+	struct r600_stack_info		stack;
 	unsigned	ar_loaded;
 	unsigned	ar_reg;
 	unsigned	ar_chan;

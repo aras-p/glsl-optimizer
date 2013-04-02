@@ -245,7 +245,7 @@ struct r600_shader_tgsi_instruction {
 
 static struct r600_shader_tgsi_instruction r600_shader_tgsi_instruction[], eg_shader_tgsi_instruction[], cm_shader_tgsi_instruction[];
 static int tgsi_helper_tempx_replicate(struct r600_shader_ctx *ctx);
-static inline void callstack_check_depth(struct r600_shader_ctx *ctx, unsigned reason, unsigned check_max_only);
+static inline void callstack_push(struct r600_shader_ctx *ctx, unsigned reason);
 static void fc_pushlevel(struct r600_shader_ctx *ctx, int type);
 static int tgsi_else(struct r600_shader_ctx *ctx);
 static int tgsi_endif(struct r600_shader_ctx *ctx);
@@ -419,7 +419,7 @@ static void llvm_if(struct r600_shader_ctx *ctx)
 {
 	r600_bytecode_add_cfinst(ctx->bc, CF_OP_JUMP);
 	fc_pushlevel(ctx, FC_IF);
-	callstack_check_depth(ctx, FC_PUSH_VPM, 0);
+	callstack_push(ctx, FC_PUSH_VPM);
 }
 
 static void r600_break_from_byte_stream(struct r600_shader_ctx *ctx)
@@ -5551,63 +5551,107 @@ static int pops(struct r600_shader_ctx *ctx, int pops)
 	return 0;
 }
 
-static inline void callstack_decrease_current(struct r600_shader_ctx *ctx, unsigned reason)
+static inline void callstack_update_max_depth(struct r600_shader_ctx *ctx,
+                                              unsigned reason)
+{
+	struct r600_stack_info *stack = &ctx->bc->stack;
+	unsigned elements, entries;
+
+	unsigned entry_size = stack->entry_size;
+
+	elements = (stack->loop + stack->push_wqm ) * entry_size;
+	elements += stack->push;
+
+	switch (ctx->bc->chip_class) {
+	case R600:
+	case R700:
+		/* pre-r8xx: if any non-WQM PUSH instruction is invoked, 2 elements on
+		 * the stack must be reserved to hold the current active/continue
+		 * masks */
+		if (reason == FC_PUSH_VPM) {
+			elements += 2;
+		}
+		break;
+
+	case CAYMAN:
+		/* r9xx: any stack operation on empty stack consumes 2 additional
+		 * elements */
+		elements += 2;
+
+		/* fallthrough */
+		/* FIXME: do the two elements added above cover the cases for the
+		 * r8xx+ below? */
+
+	case EVERGREEN:
+		/* r8xx+: 2 extra elements are not always required, but one extra
+		 * element must be added for each of the following cases:
+		 * 1. There is an ALU_ELSE_AFTER instruction at the point of greatest
+		 *    stack usage.
+		 *    (Currently we don't use ALU_ELSE_AFTER.)
+		 * 2. There are LOOP/WQM frames on the stack when any flavor of non-WQM
+		 *    PUSH instruction executed.
+		 *
+		 *    NOTE: it seems we also need to reserve additional element in some
+		 *    other cases, e.g. when we have 4 levels of PUSH_VPM in the shader,
+		 *    then STACK_SIZE should be 2 instead of 1 */
+		if (reason == FC_PUSH_VPM) {
+			elements += 1;
+		}
+		break;
+
+	default:
+		assert(0);
+		break;
+	}
+
+	/* NOTE: it seems STACK_SIZE is interpreted by hw as if entry_size is 4
+	 * for all chips, so we use 4 in the final formula, not the real entry_size
+	 * for the chip */
+	entry_size = 4;
+
+	entries = (elements + (entry_size - 1)) / entry_size;
+
+	if (entries > stack->max_entries)
+		stack->max_entries = entries;
+}
+
+static inline void callstack_pop(struct r600_shader_ctx *ctx, unsigned reason)
 {
 	switch(reason) {
 	case FC_PUSH_VPM:
-		ctx->bc->callstack[ctx->bc->call_sp].current--;
+		--ctx->bc->stack.push;
+		assert(ctx->bc->stack.push >= 0);
 		break;
 	case FC_PUSH_WQM:
-	case FC_LOOP:
-		ctx->bc->callstack[ctx->bc->call_sp].current -= 4;
+		--ctx->bc->stack.push_wqm;
+		assert(ctx->bc->stack.push_wqm >= 0);
 		break;
-	case FC_REP:
-		/* TOODO : for 16 vp asic should -= 2; */
-		ctx->bc->callstack[ctx->bc->call_sp].current --;
+	case FC_LOOP:
+		--ctx->bc->stack.loop;
+		assert(ctx->bc->stack.loop >= 0);
+		break;
+	default:
+		assert(0);
 		break;
 	}
 }
 
-static inline void callstack_check_depth(struct r600_shader_ctx *ctx, unsigned reason, unsigned check_max_only)
+static inline void callstack_push(struct r600_shader_ctx *ctx, unsigned reason)
 {
-	if (check_max_only) {
-		int diff;
-		switch (reason) {
-		case FC_PUSH_VPM:
-			diff = 1;
-			break;
-		case FC_PUSH_WQM:
-			diff = 4;
-			break;
-		default:
-			assert(0);
-			diff = 0;
-		}
-		if ((ctx->bc->callstack[ctx->bc->call_sp].current + diff) >
-		    ctx->bc->callstack[ctx->bc->call_sp].max) {
-			ctx->bc->callstack[ctx->bc->call_sp].max =
-				ctx->bc->callstack[ctx->bc->call_sp].current + diff;
-		}
-		return;
-	}
 	switch (reason) {
 	case FC_PUSH_VPM:
-		ctx->bc->callstack[ctx->bc->call_sp].current++;
+		++ctx->bc->stack.push;
 		break;
 	case FC_PUSH_WQM:
+		++ctx->bc->stack.push_wqm;
 	case FC_LOOP:
-		ctx->bc->callstack[ctx->bc->call_sp].current += 4;
+		++ctx->bc->stack.loop;
 		break;
-	case FC_REP:
-		ctx->bc->callstack[ctx->bc->call_sp].current++;
-		break;
+	default:
+		assert(0);
 	}
 
-	if ((ctx->bc->callstack[ctx->bc->call_sp].current) >
-	    ctx->bc->callstack[ctx->bc->call_sp].max) {
-		ctx->bc->callstack[ctx->bc->call_sp].max =
-			ctx->bc->callstack[ctx->bc->call_sp].current;
-	}
+	callstack_update_max_depth(ctx, reason);
 }
 
 static void fc_set_mid(struct r600_shader_ctx *ctx, int fc_sp)
@@ -5694,7 +5738,7 @@ static int tgsi_if(struct r600_shader_ctx *ctx)
 
 	fc_pushlevel(ctx, FC_IF);
 
-	callstack_check_depth(ctx, FC_PUSH_VPM, 0);
+	callstack_push(ctx, FC_PUSH_VPM);
 	return 0;
 }
 
@@ -5724,7 +5768,7 @@ static int tgsi_endif(struct r600_shader_ctx *ctx)
 	}
 	fc_poplevel(ctx);
 
-	callstack_decrease_current(ctx, FC_PUSH_VPM);
+	callstack_pop(ctx, FC_PUSH_VPM);
 	return 0;
 }
 
@@ -5737,7 +5781,7 @@ static int tgsi_bgnloop(struct r600_shader_ctx *ctx)
 	fc_pushlevel(ctx, FC_LOOP);
 
 	/* check stack depth */
-	callstack_check_depth(ctx, FC_LOOP, 0);
+	callstack_push(ctx, FC_LOOP);
 	return 0;
 }
 
@@ -5766,7 +5810,7 @@ static int tgsi_endloop(struct r600_shader_ctx *ctx)
 	}
 	/* XXX add LOOPRET support */
 	fc_poplevel(ctx);
-	callstack_decrease_current(ctx, FC_LOOP);
+	callstack_pop(ctx, FC_LOOP);
 	return 0;
 }
 
@@ -5789,7 +5833,6 @@ static int tgsi_loop_brk_cont(struct r600_shader_ctx *ctx)
 
 	fc_set_mid(ctx, fscp);
 
-	callstack_check_depth(ctx, FC_PUSH_VPM, 1);
 	return 0;
 }
 
