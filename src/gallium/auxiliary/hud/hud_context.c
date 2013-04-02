@@ -59,7 +59,7 @@ struct hud_context {
    /* states */
    struct pipe_blend_state alpha_blend;
    struct pipe_depth_stencil_alpha_state dsa;
-   void *fs_color, *fs_texture;
+   void *fs_color, *fs_text;
    struct pipe_rasterizer_state rasterizer;
    void *vs;
    struct pipe_vertex_element velems[2];
@@ -522,7 +522,7 @@ hud_draw(struct hud_context *hud, struct pipe_resource *tex)
    if (hud->text.num_vertices) {
       cso_set_vertex_buffers(cso, cso_get_aux_vertex_buffer_slot(cso), 1,
                              &hud->text.vbuf);
-      cso_set_fragment_shader_handle(hud->cso, hud->fs_texture);
+      cso_set_fragment_shader_handle(hud->cso, hud->fs_text);
       cso_draw_arrays(cso, PIPE_PRIM_QUADS, 0, hud->text.num_vertices);
    }
    pipe_resource_reference(&hud->text.vbuf.buffer, NULL);
@@ -893,9 +893,33 @@ hud_create(struct pipe_context *pipe, struct cso_context *cso)
                                                TGSI_SEMANTIC_COLOR,
                                                TGSI_INTERPOLATE_CONSTANT);
 
-   hud->fs_texture =
-         util_make_fragment_tex_shader(pipe, TGSI_TEXTURE_RECT,
-                                       TGSI_INTERPOLATE_PERSPECTIVE);
+   {
+      /* Read a texture and do .xxxx swizzling. */
+      static const char *fragment_shader_text = {
+         "FRAG\n"
+         "DCL IN[0], GENERIC[0], LINEAR\n"
+         "DCL SAMP[0]\n"
+         "DCL OUT[0], COLOR[0]\n"
+         "DCL TEMP[0]\n"
+
+         "TEX TEMP[0], IN[0], SAMP[0], RECT\n"
+         "MOV OUT[0], TEMP[0].xxxx\n"
+         "END\n"
+      };
+
+      struct tgsi_token tokens[1000];
+      struct pipe_shader_state state = {tokens};
+
+      if (!tgsi_text_translate(fragment_shader_text, tokens, Elements(tokens))) {
+         assert(0);
+         pipe_resource_reference(&hud->font.texture, NULL);
+         u_upload_destroy(hud->uploader);
+         FREE(hud);
+         return NULL;
+      }
+
+      hud->fs_text = pipe->create_fs_state(pipe, &state);
+   }
 
    /* rasterizer */
    hud->rasterizer.gl_rasterization_rules = 1;
@@ -987,7 +1011,7 @@ hud_destroy(struct hud_context *hud)
    }
 
    pipe->delete_fs_state(pipe, hud->fs_color);
-   pipe->delete_fs_state(pipe, hud->fs_texture);
+   pipe->delete_fs_state(pipe, hud->fs_text);
    pipe->delete_vs_state(pipe, hud->vs);
    pipe_sampler_view_reference(&hud->font_sampler_view, NULL);
    pipe_resource_reference(&hud->font.texture, NULL);
