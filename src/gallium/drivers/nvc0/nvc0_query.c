@@ -159,8 +159,33 @@ nvc0_query_create(struct pipe_context *pipe, unsigned type)
           nvc0->screen->base.device->drm_version >= 0x01000101) {
          if (type >= NVE4_PM_QUERY(0) &&
              type <= NVE4_PM_QUERY_LAST) {
-            /* 8 counters per MP + clock */
-            space = 12 * nvc0->screen->mp_count * sizeof(uint32_t);
+            /* for each MP:
+             * [00] = WS0.C0
+             * [04] = WS0.C1
+             * [08] = WS0.C2
+             * [0c] = WS0.C3
+             * [10] = WS0.C0
+             * [14] = WS1.C1
+             * [18] = WS1.C2
+             * [1c] = WS1.C3
+             * [20] = WS1.C0
+             * [24] = WS2.C1
+             * [28] = WS2.C2
+             * [2c] = WS2.C3
+             * [30] = WS3.C0
+             * [34] = WS3.C1
+             * [38] = WS3.C2
+             * [3c] = WS3.C3
+             * [40] = MP.C4
+             * [44] = MP.C5
+             * [48] = MP.C6
+             * [4c] = MP.C7
+             * [50] = WS0.sequence
+             * [54] = WS1.sequence
+             * [58] = WS2.sequence
+             * [5c] = WS3.sequence
+             */
+            space = (4 * 4 + 4 + 4) * nvc0->screen->mp_count * sizeof(uint32_t);
             break;
          }
       }
@@ -634,36 +659,82 @@ static const char *nvc0_drv_stat_names[] =
  */
 static const uint64_t nve4_read_mp_pm_counters_code[] =
 {
-   0x2042004270420047ULL, /* sched */
-   0x2800400000001de4ULL, /* mov b32 $r0 c0[0] (04) */
-   0x2c0000000c009c04ULL, /* mov b32 $r2 $physid (20) */
-   0x2800400010005de4ULL, /* mov b32 $r1 c0[4] (04) */
-   0x2c0000008400dc04ULL, /* mov b32 $r3 $tidx (27) */
-   0x7000c01050209c03ULL, /* ext u32 $r2 $r2 0x0414 (04) */
-   0x2c00000010011c04ULL, /* mov b32 $r4 $pm0 (20) */
-   0x190e0000fc33dc03ULL, /* set $p1 eq u32 $r3 0 (04) */
-   0x2280428042804277ULL, /* sched */
-   0x2c00000014015c04ULL, /* mov b32 $r5 $pm1 (27) */
-   0x10000000c0209c02ULL, /* mul $r2 u32 $r2 u32 48 (04) */
-   0x2c00000018019c04ULL, /* mov b32 $r6 $pm2 (28) */
-   0x4801000008001c03ULL, /* add b32 ($r0 $c) $r0 $r2 (04) */
-   0x2c0000001c01dc04ULL, /* mov b32 $r7 $pm3 (28) */
-   0x0800000000105c42ULL, /* add b32 $r1 $r1 0 $c (04) */
-   0x2c00000140009c04ULL, /* mov b32 $r2 $clock (28) */
-   0x2042804200420047ULL, /* sched */
-   0x94000000000107c5ULL, /* $p1 st b128 wt g[$r0d] $r4q (04) */
-   0x2c00000020011c04ULL, /* mov b32 $r4 $pm4 (20) */
-   0x2c00000024015c04ULL, /* mov b32 $r5 $pm5 (04) */
-   0x2c00000028019c04ULL, /* mov b32 $r6 $pm6 (20) */
-   0x2c0000002c01dc04ULL, /* mov b32 $r7 $pm7 (04) */
-   0x2c0000014400dc04ULL, /* mov b32 $r3 $clockhi (28) */
-   0x94000000400107c5ULL, /* $p1 st b128 wt g[$r0d+16] $r4q (04) */
-   0x200002e042804207ULL, /* sched */
-   0x2800400020011de4ULL, /* mov b32 $r4 c0[8] (20) */
-   0x2c0000000c015c04ULL, /* mov b32 $r5 $physid (04) */
-   0x94000000800087a5ULL, /* $p1 st b64 wt g[$r0d+32] $r2d (28) */
-   0x94000000a00107a5ULL, /* $p1 st b64 wt g[$r0d+40] $r4d (04) */
-   0x8000000000001de7ULL  /* exit (2e) */
+   /* sched 0x20 0x20 0x20 0x20 0x20 0x20 0x20
+    * mov b32 $r8 $tidx
+    * mov b32 $r12 $physid
+    * mov b32 $r0 $pm0
+    * mov b32 $r1 $pm1
+    * mov b32 $r2 $pm2
+    * mov b32 $r3 $pm3
+    * mov b32 $r4 $pm4
+    * sched 0x20 0x20 0x23 0x04 0x20 0x04 0x2b
+    * mov b32 $r5 $pm5
+    * mov b32 $r6 $pm6
+    * mov b32 $r7 $pm7
+    * set $p0 0x1 eq u32 $r8 0x0
+    * mov b32 $r10 c0[0x0]
+    * ext u32 $r8 $r12 0x414
+    * mov b32 $r11 c0[0x4]
+    * sched 0x04 0x2e 0x04 0x20 0x20 0x28 0x04
+    * ext u32 $r9 $r12 0x208
+    * (not $p0) exit
+    * set $p1 0x1 eq u32 $r9 0x0
+    * mul $r8 u32 $r8 u32 96
+    * mul $r12 u32 $r9 u32 16
+    * mul $r13 u32 $r9 u32 4
+    * add b32 $r9 $r8 $r13
+    * sched 0x28 0x04 0x2c 0x04 0x2c 0x04 0x2c
+    * add b32 $r8 $r8 $r12
+    * mov b32 $r12 $r10
+    * add b32 $r10 $c $r10 $r8
+    * mov b32 $r13 $r11
+    * add b32 $r11 $r11 0x0 $c
+    * add b32 $r12 $c $r12 $r9
+    * st b128 wt g[$r10d] $r0q
+    * sched 0x4 0x2c 0x20 0x04 0x2e 0x00 0x00
+    * mov b32 $r0 c0[0x8]
+    * add b32 $r13 $r13 0x0 $c
+    * $p1 st b128 wt g[$r12d+0x40] $r4q
+    * st b32 wt g[$r12d+0x50] $r0
+    * exit */
+   0x2202020202020207ULL,
+   0x2c00000084021c04ULL,
+   0x2c0000000c031c04ULL,
+   0x2c00000010001c04ULL,
+   0x2c00000014005c04ULL,
+   0x2c00000018009c04ULL,
+   0x2c0000001c00dc04ULL,
+   0x2c00000020011c04ULL,
+   0x22b0420042320207ULL,
+   0x2c00000024015c04ULL,
+   0x2c00000028019c04ULL,
+   0x2c0000002c01dc04ULL,
+   0x190e0000fc81dc03ULL,
+   0x2800400000029de4ULL,
+   0x7000c01050c21c03ULL,
+   0x280040001002dde4ULL,
+   0x204282020042e047ULL,
+   0x7000c00820c25c03ULL,
+   0x80000000000021e7ULL,
+   0x190e0000fc93dc03ULL,
+   0x1000000180821c02ULL,
+   0x1000000040931c02ULL,
+   0x1000000010935c02ULL,
+   0x4800000034825c03ULL,
+   0x22c042c042c04287ULL,
+   0x4800000030821c03ULL,
+   0x2800000028031de4ULL,
+   0x4801000020a29c03ULL,
+   0x280000002c035de4ULL,
+   0x0800000000b2dc42ULL,
+   0x4801000024c31c03ULL,
+   0x9400000000a01fc5ULL,
+   0x200002e04202c047ULL,
+   0x2800400020001de4ULL,
+   0x0800000000d35c42ULL,
+   0x9400000100c107c5ULL,
+   0x9400000140c01f85ULL,
+   0x8000000000001de7ULL
 };
 
 /* NOTE: intentionally using the same names as NV */
@@ -702,6 +773,7 @@ static const char *nve4_pm_query_names[] =
    "divergent_branch",
    "active_warps",
    "active_cycles",
+   "inst_issued",
    /* metrics, i.e. functions of the MP counters */
    "metric-ipc",                   /* inst_executed, clock */
    "metric-ipac",                  /* inst_executed, active_cycles */
@@ -779,6 +851,7 @@ static const struct nve4_mp_pm_query_cfg nve4_mp_pm_queries[] =
    _Q1B(LAUNCHED_CTA,      0x0001, B6, WARP, 0x0000001c, 1, 1),
    _Q1A(INST_ISSUED1,  0x0001, B6, ISSUE, 0x00000004, 1, 1),
    _Q1A(INST_ISSUED2,  0x0001, B6, ISSUE, 0x00000008, 1, 1),
+   _Q1A(INST_ISSUED,   0x0003, B6, ISSUE, 0x00000104, 1, 1),
    _Q1A(INST_EXECUTED, 0x0003, B6, EXEC,  0x00000398, 1, 1),
    _Q1A(LD_SHARED,   0x0001, B6, LDST, 0x00000000, 1, 1),
    _Q1A(ST_SHARED,   0x0001, B6, LDST, 0x00000004, 1, 1),
@@ -798,9 +871,9 @@ static const struct nve4_mp_pm_query_cfg nve4_mp_pm_queries[] =
    _Q1A(BRANCH_DIVERGENT, 0x0001, B6, BRANCH, 0x00000010, 1, 1),
    _Q1B(ACTIVE_WARPS,  0x003f, B6, WARP, 0x31483104, 2, 1),
    _Q1B(ACTIVE_CYCLES, 0x0001, B6, WARP, 0x00000000, 1, 1),
-   _M2AB(IPC, 0x3, B6, EXEC, 0x398, 0xffff, LOGOP, WARP, 0x0, DIV_SUM_M0, 40, 1),
-   _M2AB(IPAC, 0x3, B6, EXEC, 0x398, 0x1, B6, WARP, 0x0, AVG_DIV_MM, 40, 1),
-   _M2A(IPEC, 0x3, B6, EXEC, 0x398, 0xe, LOGOP, EXEC, 0x398, AVG_DIV_MM, 40, 1),
+   _M2AB(IPC, 0x3, B6, EXEC, 0x398, 0xffff, LOGOP, WARP, 0x0, DIV_SUM_M0, 10, 1),
+   _M2AB(IPAC, 0x3, B6, EXEC, 0x398, 0x1, B6, WARP, 0x0, AVG_DIV_MM, 10, 1),
+   _M2A(IPEC, 0x3, B6, EXEC, 0x398, 0xe, LOGOP, EXEC, 0x398, AVG_DIV_MM, 10, 1),
    _M2A(INST_REPLAY_OHEAD, 0x3, B6, ISSUE, 0x104, 0x3, B6, EXEC, 0x398, REL_SUM_MM, 100, 1),
    _M2B(MP_OCCUPANCY, 0x3f, B6, WARP, 0x31483104, 0x01, B6, WARP, 0x0, AVG_DIV_MM, 200, 64),
    _M2B(MP_EFFICIENCY, 0x01, B6, WARP, 0x0, 0xffff, LOGOP, WARP, 0x0, AVG_DIV_M0, 100, 1),
@@ -889,7 +962,7 @@ nve4_mp_pm_query_end(struct nvc0_context *nvc0, struct nvc0_query *q)
    struct nouveau_pushbuf *push = nvc0->base.pushbuf;
    uint32_t mask;
    uint32_t input[3];
-   const uint block[3] = { 32, 1, 1 };
+   const uint block[3] = { 32, 4, 1 };
    const uint grid[3] = { screen->mp_count, 1, 1 };
    unsigned c;
    const struct nve4_mp_pm_query_cfg *cfg;
@@ -900,7 +973,7 @@ nve4_mp_pm_query_end(struct nvc0_context *nvc0, struct nvc0_query *q)
       struct nvc0_program *prog = CALLOC_STRUCT(nvc0_program);
       prog->type = PIPE_SHADER_COMPUTE;
       prog->translated = TRUE;
-      prog->num_gprs = 8;
+      prog->num_gprs = 14;
       prog->code = (uint32_t *)nve4_read_mp_pm_counters_code;
       prog->code_size = sizeof(nve4_read_mp_pm_counters_code);
       prog->parm_size = 12;
@@ -922,6 +995,9 @@ nve4_mp_pm_query_end(struct nvc0_context *nvc0, struct nvc0_query *q)
 
    BCTX_REFN_bo(nvc0->bufctx_cp, CP_QUERY, NOUVEAU_BO_GART | NOUVEAU_BO_WR,
                 q->bo);
+
+   PUSH_SPACE(push, 1);
+   IMMED_NVC0(push, SUBC_COMPUTE(NV50_GRAPH_SERIALIZE), 0);
 
    pipe->bind_compute_state(pipe, screen->pm.prog);
    input[0] = (q->bo->offset + q->base);
@@ -968,29 +1044,29 @@ nve4_mp_pm_query_result(struct nvc0_context *nvc0, struct nvc0_query *q,
    uint32_t count[32][4];
    uint64_t value = 0;
    unsigned mp_count = MIN2(nvc0->screen->mp_count_compute, 32);
-   unsigned p, c;
+   unsigned p, c, d;
    const struct nve4_mp_pm_query_cfg *cfg;
 
    cfg = &nve4_mp_pm_queries[q->type - PIPE_QUERY_DRIVER_SPECIFIC];
 
    for (p = 0; p < mp_count; ++p) {
-      uint64_t clock;
-      const unsigned b = p * 12;
+      const unsigned b = (0x60 / 4) * p;
 
-      clock = *(uint64_t *)&q->data[b + 8];
-      (void)clock; /* might be interesting one day */
-
-      if (q->data[b + 10] != q->sequence) {
-         /* WARNING: This will spin forever if you loop with wait == FALSE and
-          * the push buffer hasn't been flushed !
-          */
-         if (!wait)
-            return FALSE;
-         if (nouveau_bo_wait(q->bo, NOUVEAU_BO_RD, nvc0->base.client))
-            return FALSE;
+      for (c = 0; c < cfg->num_counters; ++c) {
+         count[p][c] = 0;
+         for (d = 0; d < ((q->ctr[c] & ~3) ? 1 : 4); ++d) {
+            if (q->data[b + 20 + d] != q->sequence) {
+               if (!wait)
+                  return FALSE;
+               if (nouveau_bo_wait(q->bo, NOUVEAU_BO_RD, nvc0->base.client))
+                  return FALSE;
+            }
+            if (q->ctr[c] & ~0x3)
+               count[p][c] = q->data[b + 16 + (q->ctr[c] & 3)];
+            else
+               count[p][c] += q->data[b + d * 4 + q->ctr[c]];
+         }
       }
-      for (c = 0; c < cfg->num_counters; ++c)
-         count[p][c] = q->data[b + q->ctr[c]];
    }
 
    if (cfg->op == NVE4_COUNTER_OPn_SUM) {
