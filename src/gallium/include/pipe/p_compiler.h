@@ -255,7 +255,7 @@ void _ReadWriteBarrier(void);
  */
 #define STATIC_ASSERT(COND) \
    do { \
-      typedef int static_assertion_failed[(!!(COND))*2-1]; \
+      (void) sizeof(char [1 - 2*!(COND)]); \
    } while (0)
 
 
