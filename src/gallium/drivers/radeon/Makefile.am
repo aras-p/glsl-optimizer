@@ -27,7 +27,6 @@ endif
 
 libllvmradeon@VERSION@_la_CXXFLAGS = \
 	$(GALLIUM_CFLAGS) \
-	$(filter-out -DDEBUG, $(LLVM_CXXFLAGS)) \
 	$(DEFINES)
 
 libllvmradeon@VERSION@_la_CFLAGS = \
@@ -35,7 +34,6 @@ libllvmradeon@VERSION@_la_CFLAGS = \
 	$(LLVM_CFLAGS)
 
 libllvmradeon@VERSION@_la_SOURCES = \
-	$(LLVM_CPP_FILES) \
 	$(LLVM_C_FILES)
 
 libllvmradeon@VERSION@_la_LIBADD = \
