@@ -893,12 +893,12 @@ static int select_twoside_color(struct r600_shader_ctx *ctx, int front, int back
 static int tgsi_declaration(struct r600_shader_ctx *ctx)
 {
 	struct tgsi_full_declaration *d = &ctx->parse.FullToken.FullDeclaration;
-	unsigned i;
-	int r;
+	int r, i, j, count = d->Range.Last - d->Range.First + 1;
 
 	switch (d->Declaration.File) {
 	case TGSI_FILE_INPUT:
-		i = ctx->shader->ninput++;
+		i = ctx->shader->ninput;
+		ctx->shader->ninput += count;
 		ctx->shader->input[i].name = d->Semantic.Name;
 		ctx->shader->input[i].sid = d->Semantic.Index;
 		ctx->shader->input[i].interpolate = d->Interp.Interpolate;
@@ -921,6 +921,10 @@ static int tgsi_declaration(struct r600_shader_ctx *ctx)
 				if ((r = evergreen_interp_input(ctx, i)))
 					return r;
 			}
+		}
+		for (j = 1; j < count; ++j) {
+			ctx->shader->input[i + j] = ctx->shader->input[i];
+			ctx->shader->input[i + j].gpr += j;
 		}
 		break;
 	case TGSI_FILE_OUTPUT:
