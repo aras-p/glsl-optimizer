@@ -226,7 +226,6 @@ lp_build_rho(struct lp_build_sample_context *bld,
    LLVMValueRef int_size, float_size;
    LLVMValueRef rho;
    LLVMValueRef first_level, first_level_vec;
-   LLVMValueRef abs_ddx_ddy[2];
    unsigned length = coord_bld->type.length;
    unsigned num_quads = length / 4;
    unsigned i;
@@ -279,32 +278,28 @@ lp_build_rho(struct lp_build_sample_context *bld,
          ddx_ddy[0] = lp_build_packed_ddx_ddy_onecoord(coord_bld, s);
       }
       else if (dims >= 2) {
-         ddx_ddy[0] = lp_build_packed_ddx_ddy_twocoord(coord_bld,
-                                                       s, t);
+         ddx_ddy[0] = lp_build_packed_ddx_ddy_twocoord(coord_bld, s, t);
          if (dims > 2) {
             ddx_ddy[1] = lp_build_packed_ddx_ddy_onecoord(coord_bld, r);
          }
       }
 
-      abs_ddx_ddy[0] = lp_build_abs(coord_bld, ddx_ddy[0]);
+      ddx_ddy[0] = lp_build_abs(coord_bld, ddx_ddy[0]);
       if (dims > 2) {
-         abs_ddx_ddy[1] = lp_build_abs(coord_bld, ddx_ddy[1]);
-      }
-      else {
-         abs_ddx_ddy[1] = NULL;
+         ddx_ddy[1] = lp_build_abs(coord_bld, ddx_ddy[1]);
       }
 
-      if (dims == 1) {
-         static const unsigned char swizzle1[] = {
+      if (dims < 2) {
+         static const unsigned char swizzle1[] = { /* no-op swizzle */
             0, LP_BLD_SWIZZLE_DONTCARE,
             LP_BLD_SWIZZLE_DONTCARE, LP_BLD_SWIZZLE_DONTCARE
          };
          static const unsigned char swizzle2[] = {
-            1, LP_BLD_SWIZZLE_DONTCARE,
+            2, LP_BLD_SWIZZLE_DONTCARE,
             LP_BLD_SWIZZLE_DONTCARE, LP_BLD_SWIZZLE_DONTCARE
          };
-         rho_xvec = lp_build_swizzle_aos(coord_bld, abs_ddx_ddy[0], swizzle1);
-         rho_yvec = lp_build_swizzle_aos(coord_bld, abs_ddx_ddy[0], swizzle2);
+         rho_xvec = lp_build_swizzle_aos(coord_bld, ddx_ddy[0], swizzle1);
+         rho_yvec = lp_build_swizzle_aos(coord_bld, ddx_ddy[0], swizzle2);
       }
       else if (dims == 2) {
          static const unsigned char swizzle1[] = {
@@ -315,8 +310,8 @@ lp_build_rho(struct lp_build_sample_context *bld,
             1, 3,
             LP_BLD_SWIZZLE_DONTCARE, LP_BLD_SWIZZLE_DONTCARE
          };
-         rho_xvec = lp_build_swizzle_aos(coord_bld, abs_ddx_ddy[0], swizzle1);
-         rho_yvec = lp_build_swizzle_aos(coord_bld, abs_ddx_ddy[0], swizzle2);
+         rho_xvec = lp_build_swizzle_aos(coord_bld, ddx_ddy[0], swizzle1);
+         rho_yvec = lp_build_swizzle_aos(coord_bld, ddx_ddy[0], swizzle2);
       }
       else {
          LLVMValueRef shuffles1[LP_MAX_VECTOR_LENGTH];
@@ -329,12 +324,12 @@ lp_build_rho(struct lp_build_sample_context *bld,
             shuffles1[4*i + 3] = i32undef;
             shuffles2[4*i + 0] = lp_build_const_int32(gallivm, 4*i + 1);
             shuffles2[4*i + 1] = lp_build_const_int32(gallivm, 4*i + 3);
-            shuffles2[4*i + 2] = lp_build_const_int32(gallivm, length + 4*i + 1);
+            shuffles2[4*i + 2] = lp_build_const_int32(gallivm, length + 4*i + 2);
             shuffles2[4*i + 3] = i32undef;
          }
-         rho_xvec = LLVMBuildShuffleVector(builder, abs_ddx_ddy[0], abs_ddx_ddy[1],
+         rho_xvec = LLVMBuildShuffleVector(builder, ddx_ddy[0], ddx_ddy[1],
                                            LLVMConstVector(shuffles1, length), "");
-         rho_yvec = LLVMBuildShuffleVector(builder, abs_ddx_ddy[0], abs_ddx_ddy[1],
+         rho_yvec = LLVMBuildShuffleVector(builder, ddx_ddy[0], ddx_ddy[1],
                                            LLVMConstVector(shuffles2, length), "");
       }
 
