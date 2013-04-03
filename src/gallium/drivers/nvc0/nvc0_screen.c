@@ -51,16 +51,6 @@ nvc0_screen_is_format_supported(struct pipe_screen *pscreen,
    if (!util_format_is_supported(format, bindings))
       return FALSE;
 
-   switch (format) {
-   case PIPE_FORMAT_R8G8B8A8_UNORM:
-   case PIPE_FORMAT_R8G8B8X8_UNORM:
-      /* HACK: GL requires equal formats for MS resolve and window is BGRA */
-      if (bindings & PIPE_BIND_RENDER_TARGET)
-         return FALSE;
-   default:
-      break;
-   }
-
    if ((bindings & PIPE_BIND_SAMPLER_VIEW) && (target != PIPE_BUFFER))
       if (util_format_get_blocksizebits(format) == 3 * 32)
          return FALSE;
