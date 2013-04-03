@@ -38,6 +38,7 @@
 #include "util/u_memory.h"
 #include "util/u_atomic.h"
 #include "state_tracker/st_api.h"
+#include "hud/hud_context.h"
 
 #include "stw_icd.h"
 #include "stw_device.h"
@@ -217,6 +218,10 @@ stw_create_context_attribs(
 
    ctx->st->st_manager_private = (void *) ctx;
 
+   if (ctx->st->cso_context) {
+      ctx->hud = hud_create(ctx->st->pipe, ctx->st->cso_context);
+   }
+
    pipe_mutex_lock( stw_dev->ctx_mutex );
    ctx->dhglrc = handle_table_add(stw_dev->ctx_table, ctx);
    pipe_mutex_unlock( stw_dev->ctx_mutex );
@@ -226,6 +231,9 @@ stw_create_context_attribs(
    return ctx->dhglrc;
 
 no_hglrc:
+   if (ctx->hud) {
+      hud_destroy(ctx->hud);
+   }
    ctx->st->destroy(ctx->st);
 no_st_ctx:
    FREE(ctx);
@@ -254,6 +262,10 @@ DrvDeleteContext(
       /* Unbind current if deleting current context. */
       if (curctx == ctx)
          stw_dev->stapi->make_current(stw_dev->stapi, NULL, NULL, NULL);
+
+      if (ctx->hud) {
+         hud_destroy(ctx->hud);
+      }
 
       ctx->st->destroy(ctx->st);
       FREE(ctx);

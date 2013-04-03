@@ -46,4 +46,8 @@ stw_st_destroy_framebuffer_locked(struct st_framebuffer_iface *stfb);
 boolean
 stw_st_swap_framebuffer_locked(HDC hdc, struct st_framebuffer_iface *stfb);
 
+struct pipe_resource *
+stw_get_framebuffer_resource(struct st_framebuffer_iface *stfb,
+                             enum st_attachment_type att);
+
 #endif /* STW_ST_H */

@@ -263,6 +263,19 @@ stw_st_swap_framebuffer_locked(HDC hdc, struct st_framebuffer_iface *stfb)
    return stw_st_framebuffer_present_locked(hdc, &stwfb->base, front);
 }
 
+
+/**
+ * Return the pipe_resource that correspond to given buffer.
+ */
+struct pipe_resource *
+stw_get_framebuffer_resource(struct st_framebuffer_iface *stfb,
+                             enum st_attachment_type att)
+{
+   struct stw_st_framebuffer *stwfb = stw_st_framebuffer(stfb);
+   return stwfb->textures[att];
+}
+
+
 /**
  * Create an st_api of the state tracker.
  */
