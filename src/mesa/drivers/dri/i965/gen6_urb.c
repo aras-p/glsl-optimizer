@@ -54,7 +54,7 @@ gen6_upload_urb( struct brw_context *brw )
    int total_urb_size = brw->urb.size * 1024; /* in bytes */
 
    /* CACHE_NEW_VS_PROG */
-   brw->urb.vs_size = MAX2(brw->vs.prog_data->urb_entry_size, 1);
+   unsigned vs_size = MAX2(brw->vs.prog_data->urb_entry_size, 1);
 
    /* We use the same VUE layout for VS outputs and GS outputs (as it's what
     * the SF and Clipper expect), so we can simply make the GS URB entry size
@@ -62,14 +62,14 @@ gen6_upload_urb( struct brw_context *brw )
     * where we have few vertex attributes and a lot of varyings, since the VS
     * size is determined by the larger of the two.  For now, it's safe.
     */
-   brw->urb.gs_size = brw->urb.vs_size;
+   unsigned gs_size = vs_size;
 
    /* Calculate how many entries fit in each stage's section of the URB */
    if (brw->gs.prog_active) {
-      nr_vs_entries = (total_urb_size/2) / (brw->urb.vs_size * 128);
-      nr_gs_entries = (total_urb_size/2) / (brw->urb.gs_size * 128);
+      nr_vs_entries = (total_urb_size/2) / (vs_size * 128);
+      nr_gs_entries = (total_urb_size/2) / (gs_size * 128);
    } else {
-      nr_vs_entries = total_urb_size / (brw->urb.vs_size * 128);
+      nr_vs_entries = total_urb_size / (vs_size * 128);
       nr_gs_entries = 0;
    }
 
@@ -87,14 +87,14 @@ gen6_upload_urb( struct brw_context *brw )
    assert(brw->urb.nr_vs_entries >= 24);
    assert(brw->urb.nr_vs_entries % 4 == 0);
    assert(brw->urb.nr_gs_entries % 4 == 0);
-   assert(brw->urb.vs_size < 5);
-   assert(brw->urb.gs_size < 5);
+   assert(vs_size < 5);
+   assert(gs_size < 5);
 
    BEGIN_BATCH(3);
    OUT_BATCH(_3DSTATE_URB << 16 | (3 - 2));
-   OUT_BATCH(((brw->urb.vs_size - 1) << GEN6_URB_VS_SIZE_SHIFT) |
+   OUT_BATCH(((vs_size - 1) << GEN6_URB_VS_SIZE_SHIFT) |
 	     ((brw->urb.nr_vs_entries) << GEN6_URB_VS_ENTRIES_SHIFT));
-   OUT_BATCH(((brw->urb.gs_size - 1) << GEN6_URB_GS_SIZE_SHIFT) |
+   OUT_BATCH(((gs_size - 1) << GEN6_URB_GS_SIZE_SHIFT) |
 	     ((brw->urb.nr_gs_entries) << GEN6_URB_GS_ENTRIES_SHIFT));
    ADVANCE_BATCH();
 

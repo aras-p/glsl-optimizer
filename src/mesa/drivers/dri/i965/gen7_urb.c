@@ -82,9 +82,9 @@ gen7_upload_urb(struct brw_context *brw)
    int handle_region_size = (brw->urb.size - 16) * 1024; /* bytes */
 
    /* CACHE_NEW_VS_PROG */
-   brw->urb.vs_size = MAX2(brw->vs.prog_data->urb_entry_size, 1);
+   unsigned vs_size = MAX2(brw->vs.prog_data->urb_entry_size, 1);
 
-   int nr_vs_entries = handle_region_size / (brw->urb.vs_size * 64);
+   int nr_vs_entries = handle_region_size / (vs_size * 64);
    if (nr_vs_entries > brw->urb.max_vs_entries)
       nr_vs_entries = brw->urb.max_vs_entries;
 
@@ -100,8 +100,7 @@ gen7_upload_urb(struct brw_context *brw)
    assert(!brw->gs.prog_active);
 
    gen7_emit_vs_workaround_flush(intel);
-   gen7_emit_urb_state(brw, brw->urb.nr_vs_entries, brw->urb.vs_size,
-                       brw->urb.vs_start);
+   gen7_emit_urb_state(brw, brw->urb.nr_vs_entries, vs_size, brw->urb.vs_start);
 }
 
 void
