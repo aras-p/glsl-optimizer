@@ -48,6 +48,8 @@ DHGLRC stw_create_context_attribs( HDC hdc, INT iLayerPlane, DHGLRC hShareContex
 
 DHGLRC stw_get_current_context( void );
 
+struct stw_context *stw_current_context(void);
+
 HDC stw_get_current_dc( void );
 
 BOOL stw_make_current( HDC hdc, DHGLRC dhglrc );

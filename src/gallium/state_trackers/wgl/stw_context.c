@@ -48,7 +48,7 @@
 #include "stw_tls.h"
 
 
-static INLINE struct stw_context *
+struct stw_context *
 stw_current_context(void)
 {
    struct st_context_iface *st;
