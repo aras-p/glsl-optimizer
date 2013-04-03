@@ -75,6 +75,8 @@ struct svga_texture
     * to this texture and never destroy this handle directly.
     */
    struct svga_winsys_surface *handle;
+
+   unsigned size;  /**< Approximate size in bytes */
 };
 
 

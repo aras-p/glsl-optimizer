@@ -45,6 +45,7 @@
 /** Non-GPU queries for gallium HUD */
 #define SVGA_QUERY_DRAW_CALLS   (PIPE_QUERY_DRIVER_SPECIFIC + 0)
 #define SVGA_QUERY_FALLBACKS    (PIPE_QUERY_DRIVER_SPECIFIC + 1)
+#define SVGA_QUERY_MEMORY_USED  (PIPE_QUERY_DRIVER_SPECIFIC + 2)
 
 
 struct draw_vertex_shader;

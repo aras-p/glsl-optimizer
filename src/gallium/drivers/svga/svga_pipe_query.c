@@ -111,6 +111,7 @@ static struct pipe_query *svga_create_query( struct pipe_context *pipe,
       break;
    case SVGA_QUERY_DRAW_CALLS:
    case SVGA_QUERY_FALLBACKS:
+   case SVGA_QUERY_MEMORY_USED:
       break;
    default:
       assert(!"unexpected query type in svga_create_query()");
@@ -144,6 +145,7 @@ static void svga_destroy_query(struct pipe_context *pipe,
       break;
    case SVGA_QUERY_DRAW_CALLS:
    case SVGA_QUERY_FALLBACKS:
+   case SVGA_QUERY_MEMORY_USED:
       /* nothing */
       break;
    default:
@@ -203,6 +205,9 @@ static void svga_begin_query(struct pipe_context *pipe,
    case SVGA_QUERY_FALLBACKS:
       sq->begin_count = svga->num_fallbacks;
       break;
+   case SVGA_QUERY_MEMORY_USED:
+      /* nothing */
+      break;
    default:
       assert(!"unexpected query type in svga_begin_query()");
    }
@@ -245,6 +250,9 @@ static void svga_end_query(struct pipe_context *pipe,
       break;
    case SVGA_QUERY_FALLBACKS:
       sq->end_count = svga->num_fallbacks;
+      break;
+   case SVGA_QUERY_MEMORY_USED:
+      /* nothing */
       break;
    default:
       assert(!"unexpected query type in svga_end_query()");
@@ -303,6 +311,9 @@ static boolean svga_get_query_result(struct pipe_context *pipe,
       /* fall-through */
    case SVGA_QUERY_FALLBACKS:
       vresult->u64 = sq->end_count - sq->begin_count;
+      break;
+   case SVGA_QUERY_MEMORY_USED:
+      vresult->u64 = svgascreen->total_resource_bytes;
       break;
    default:
       assert(!"unexpected query type in svga_get_query_result");

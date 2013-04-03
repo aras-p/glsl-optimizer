@@ -499,7 +499,8 @@ svga_get_driver_query_info(struct pipe_screen *screen,
 {
    static const struct pipe_driver_query_info queries[] = {
       {"draw-calls", SVGA_QUERY_DRAW_CALLS, 0, FALSE},
-      {"fallbacks", SVGA_QUERY_FALLBACKS, 0, FALSE}
+      {"fallbacks", SVGA_QUERY_FALLBACKS, 0, FALSE},
+      {"memory-used", SVGA_QUERY_MEMORY_USED, 0, TRUE}
    };
 
    if (!info)

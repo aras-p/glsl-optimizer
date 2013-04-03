@@ -73,6 +73,9 @@ struct svga_screen
    } depth;
 
    struct svga_host_surface_cache cache;
+
+   /** Memory used by all resources (buffers and surfaces) */
+   uint64_t total_resource_bytes;
 };
 
 #ifndef DEBUG

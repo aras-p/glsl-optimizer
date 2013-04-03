@@ -177,6 +177,8 @@ struct svga_buffer
     * a context. It is only valid if the dma.pending is set above.
     */
    struct list_head head;
+
+   unsigned size;  /**< Approximate size in bytes */
 };
 
 

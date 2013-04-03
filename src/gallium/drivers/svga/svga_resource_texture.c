@@ -32,6 +32,7 @@
 #include "util/u_format.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
+#include "util/u_resource.h"
 
 #include "svga_format.h"
 #include "svga_screen.h"
@@ -228,6 +229,8 @@ svga_texture_destroy(struct pipe_screen *screen,
    */
    SVGA_DBG(DEBUG_DMA, "unref sid %p (texture)\n", tex->handle);
    svga_screen_surface_destroy(ss, &tex->key, &tex->handle);
+
+   ss->total_resource_bytes -= tex->size;
 
    FREE(tex);
 }
@@ -469,6 +472,9 @@ svga_texture_create(struct pipe_screen *screen,
 
    debug_reference(&tex->b.b.reference,
                    (debug_reference_descriptor)debug_describe_resource, 0);
+
+   tex->size = util_resource_size(template);
+   svgascreen->total_resource_bytes += tex->size;
 
    return &tex->b.b;
 

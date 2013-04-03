@@ -31,6 +31,7 @@
 #include "os/os_thread.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
+#include "util/u_resource.h"
 
 #include "svga_context.h"
 #include "svga_screen.h"
@@ -297,6 +298,8 @@ svga_buffer_destroy( struct pipe_screen *screen,
    if(sbuf->swbuf && !sbuf->user)
       align_free(sbuf->swbuf);
    
+   ss->total_resource_bytes -= sbuf->size;
+
    FREE(sbuf);
 }
 
@@ -341,6 +344,9 @@ svga_buffer_create(struct pipe_screen *screen,
       
    debug_reference(&sbuf->b.b.reference,
                    (debug_reference_descriptor)debug_describe_resource, 0);
+
+   sbuf->size = util_resource_size(template);
+   ss->total_resource_bytes += sbuf->size;
 
    return &sbuf->b.b; 
 
