@@ -885,6 +885,18 @@ unsigned r600_tex_mipfilter(unsigned filter);
 unsigned r600_tex_compare(unsigned compare);
 bool sampler_state_needs_border_color(const struct pipe_sampler_state *state);
 
+/* r600_uvd.c */
+struct pipe_video_decoder *r600_uvd_create_decoder(struct pipe_context *context,
+                                                   enum pipe_video_profile profile,
+                                                   enum pipe_video_entrypoint entrypoint,
+                                                   enum pipe_video_chroma_format chroma_format,
+                                                   unsigned width, unsigned height,
+						   unsigned max_references, bool expect_chunked_decode);
+
+struct pipe_video_buffer *r600_video_buffer_create(struct pipe_context *pipe,
+						   const struct pipe_video_buffer *tmpl);
+
+
 /*
  * Helpers for building command buffers
  */

@@ -13,4 +13,5 @@ C_SOURCES := \
 	si_state.c \
 	si_state_streamout.c \
 	si_state_draw.c \
-	si_commands.c
+	si_commands.c \
+	radeonsi_uvd.c

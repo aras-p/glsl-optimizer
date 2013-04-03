@@ -43,6 +43,8 @@
 #include "vl/vl_video_buffer.h"
 #include "os/os_time.h"
 #include "pipebuffer/pb_buffer.h"
+#include "radeonsi_pipe.h"
+#include "radeon/radeon_uvd.h"
 #include "r600.h"
 #include "sid.h"
 #include "r600_resource.h"
@@ -219,8 +221,13 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	si_init_surface_functions(rctx);
 	si_init_compute_functions(rctx);
 
-	rctx->context.create_video_decoder = vl_create_decoder;
-	rctx->context.create_video_buffer = vl_video_buffer_create;
+	if (rscreen->info.has_uvd) {
+		rctx->context.create_video_decoder = radeonsi_uvd_create_decoder;
+		rctx->context.create_video_buffer = radeonsi_video_buffer_create;
+	} else {
+		rctx->context.create_video_decoder = vl_create_decoder;
+		rctx->context.create_video_buffer = vl_video_buffer_create;
+	}
 
 	switch (rctx->chip_class) {
 	case TAHITI:
@@ -784,15 +791,21 @@ struct pipe_screen *radeonsi_screen_create(struct radeon_winsys *ws)
 	rscreen->screen.get_param = r600_get_param;
 	rscreen->screen.get_shader_param = r600_get_shader_param;
 	rscreen->screen.get_paramf = r600_get_paramf;
-	rscreen->screen.get_video_param = r600_get_video_param;
 	rscreen->screen.get_compute_param = r600_get_compute_param;
 	rscreen->screen.is_format_supported = si_is_format_supported;
-	rscreen->screen.is_video_format_supported = vl_video_buffer_is_format_supported;
 	rscreen->screen.context_create = r600_create_context;
 	rscreen->screen.fence_reference = r600_fence_reference;
 	rscreen->screen.fence_signalled = r600_fence_signalled;
 	rscreen->screen.fence_finish = r600_fence_finish;
 	r600_init_screen_resource_functions(&rscreen->screen);
+
+	if (rscreen->info.has_uvd) {
+		rscreen->screen.get_video_param = ruvd_get_video_param;
+		rscreen->screen.is_video_format_supported = ruvd_is_format_supported;
+	} else {
+		rscreen->screen.get_video_param = r600_get_video_param;
+		rscreen->screen.is_video_format_supported = vl_video_buffer_is_format_supported;
+	}
 
 	util_format_s3tc_init();
 

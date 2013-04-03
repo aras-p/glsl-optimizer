@@ -17,6 +17,7 @@ C_SOURCES = \
 	r600_state_common.c \
 	evergreen_compute.c \
 	evergreen_compute_internal.c \
-	compute_memory_pool.c
+	compute_memory_pool.c \
+	r600_uvd.c
 
 LLVM_C_SOURCES = r600_llvm.c

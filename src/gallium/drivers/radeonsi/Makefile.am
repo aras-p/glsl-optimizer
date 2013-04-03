@@ -33,4 +33,6 @@ AM_CPPFLAGS = \
 AM_CFLAGS = $(LLVM_CFLAGS)
 
 libradeonsi_la_SOURCES = $(C_SOURCES)
-libradeonsi_la_LIBADD = ../radeon/libllvmradeon@VERSION@.la
+libradeonsi_la_LIBADD = \
+	../radeon/libradeon.la \
+	../radeon/libllvmradeon@VERSION@.la

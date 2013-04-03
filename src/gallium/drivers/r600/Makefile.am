@@ -13,12 +13,14 @@ AM_CFLAGS = \
 libr600_la_SOURCES = \
 	$(C_SOURCES)
 
+libr600_la_LIBADD = ../radeon/libradeon.la
+
 if R600_NEED_RADEON_GALLIUM
 
 libr600_la_SOURCES += \
 	$(LLVM_C_SOURCES)
 
-libr600_la_LIBADD = ../radeon/libllvmradeon@VERSION@.la
+libr600_la_LIBADD += ../radeon/libllvmradeon@VERSION@.la
 
 AM_CFLAGS += \
 	$(LLVM_CFLAGS) \

@@ -37,6 +37,7 @@
 #include "util/u_math.h"
 #include "vl/vl_decoder.h"
 #include "vl/vl_video_buffer.h"
+#include "radeon/radeon_uvd.h"
 #include "os/os_time.h"
 
 static const struct debug_named_value debug_options[] = {
@@ -379,8 +380,13 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	r600_init_context_resource_functions(rctx);
 	r600_init_surface_functions(rctx);
 
-	rctx->context.create_video_decoder = vl_create_decoder;
-	rctx->context.create_video_buffer = vl_video_buffer_create;
+	if (rscreen->info.has_uvd) {
+		rctx->context.create_video_decoder = r600_uvd_create_decoder;
+		rctx->context.create_video_buffer = r600_video_buffer_create;
+	} else {
+		rctx->context.create_video_decoder = vl_create_decoder;
+		rctx->context.create_video_buffer = vl_video_buffer_create;
+	}
 
 	r600_init_common_state_functions(rctx);
 
@@ -1257,7 +1263,6 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 	rscreen->screen.get_param = r600_get_param;
 	rscreen->screen.get_shader_param = r600_get_shader_param;
 	rscreen->screen.get_paramf = r600_get_paramf;
-	rscreen->screen.get_video_param = r600_get_video_param;
 	rscreen->screen.get_compute_param = r600_get_compute_param;
 	rscreen->screen.get_timestamp = r600_get_timestamp;
 
@@ -1268,12 +1273,20 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 		rscreen->screen.is_format_supported = r600_is_format_supported;
 		rscreen->dma_blit = &r600_dma_blit;
 	}
-	rscreen->screen.is_video_format_supported = vl_video_buffer_is_format_supported;
 	rscreen->screen.context_create = r600_create_context;
 	rscreen->screen.fence_reference = r600_fence_reference;
 	rscreen->screen.fence_signalled = r600_fence_signalled;
 	rscreen->screen.fence_finish = r600_fence_finish;
 	rscreen->screen.get_driver_query_info = r600_get_driver_query_info;
+
+	if (rscreen->info.has_uvd) {
+		rscreen->screen.get_video_param = ruvd_get_video_param;
+		rscreen->screen.is_video_format_supported = ruvd_is_format_supported;
+	} else {
+		rscreen->screen.get_video_param = r600_get_video_param;
+		rscreen->screen.is_video_format_supported = vl_video_buffer_is_format_supported;
+	}
+
 	r600_init_screen_resource_functions(&rscreen->screen);
 
 	util_format_s3tc_init();

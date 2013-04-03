@@ -56,9 +56,17 @@ endif
 
 ################################################################################
 
-if NEED_RADEON_GALLIUM
+if HAVE_GALLIUM_R600
 
 SUBDIRS += radeon
+
+else
+
+if HAVE_GALLIUM_RADEONSI
+
+SUBDIRS += radeon
+
+endif
 
 endif
 
