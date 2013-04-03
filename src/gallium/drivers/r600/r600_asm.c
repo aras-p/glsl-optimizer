@@ -1557,7 +1557,8 @@ int r600_bytecode_build(struct r600_bytecode *bc)
 	unsigned addr;
 	int i, r;
 
-	bc->nstack = bc->stack.max_entries;
+	if (!bc->nstack) // If not 0, Stack_size already provided by llvm
+		bc->nstack = bc->stack.max_entries;
 
 	if (bc->type == TGSI_PROCESSOR_VERTEX && !bc->nstack) {
 		bc->nstack = 1;
