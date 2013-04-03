@@ -370,6 +370,7 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
                       LLVMValueRef s,
                       LLVMValueRef t,
                       LLVMValueRef r,
+                      LLVMValueRef cube_rho,
                       const struct lp_derivatives *derivs,
                       LLVMValueRef lod_bias, /* optional */
                       LLVMValueRef explicit_lod, /* optional */
@@ -434,7 +435,8 @@ lp_build_cube_lookup(struct lp_build_sample_context *bld,
                      LLVMValueRef r,
                      LLVMValueRef *face,
                      LLVMValueRef *face_s,
-                     LLVMValueRef *face_t);
+                     LLVMValueRef *face_t,
+                     LLVMValueRef *rho);
 
 
 void
