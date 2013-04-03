@@ -511,6 +511,9 @@ static unsigned r600_tex_from_byte_stream(struct r600_shader_ctx *ctx,
 	tex.src_sel_y = G_SQ_TEX_WORD2_SRC_SEL_Y(word2);
 	tex.src_sel_z = G_SQ_TEX_WORD2_SRC_SEL_Z(word2);
 	tex.src_sel_w = G_SQ_TEX_WORD2_SRC_SEL_W(word2);
+	tex.offset_x <<= 1;
+	tex.offset_y <<= 1;
+	tex.offset_z <<= 1;
 
 	tex.inst_mod = 0;
 
