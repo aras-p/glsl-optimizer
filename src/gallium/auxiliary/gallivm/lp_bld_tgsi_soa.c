@@ -1277,8 +1277,7 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
    LLVMValueRef offsets[3] = { NULL };
    struct lp_derivatives derivs;
    struct lp_derivatives *deriv_ptr = NULL;
-   unsigned num_coords;
-   unsigned dims;
+   unsigned num_coords, num_derivs, num_offsets;
    unsigned i;
 
    if (!bld->sampler) {
@@ -1292,37 +1291,52 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
    switch (inst->Texture.Texture) {
    case TGSI_TEXTURE_1D:
       num_coords = 1;
-      dims = 1;
+      num_offsets = 1;
+      num_derivs = 1;
       break;
    case TGSI_TEXTURE_1D_ARRAY:
       num_coords = 2;
-      dims = 1;
+      num_offsets = 1;
+      num_derivs = 1;
       break;
    case TGSI_TEXTURE_2D:
    case TGSI_TEXTURE_RECT:
       num_coords = 2;
-      dims = 2;
+      num_offsets = 2;
+      num_derivs = 2;
       break;
    case TGSI_TEXTURE_SHADOW1D:
    case TGSI_TEXTURE_SHADOW1D_ARRAY:
       num_coords = 3;
-      dims = 1;
+      num_offsets = 1;
+      num_derivs = 1;
       break;
    case TGSI_TEXTURE_SHADOW2D:
    case TGSI_TEXTURE_SHADOWRECT:
    case TGSI_TEXTURE_2D_ARRAY:
+      num_coords = 3;
+      num_offsets = 2;
+      num_derivs = 2;
+      break;
    case TGSI_TEXTURE_CUBE:
       num_coords = 3;
-      dims = 2;
+      num_offsets = 2;
+      num_derivs = 3;
       break;
    case TGSI_TEXTURE_3D:
       num_coords = 3;
-      dims = 3;
+      num_offsets = 3;
+      num_derivs = 3;
       break;
    case TGSI_TEXTURE_SHADOW2D_ARRAY:
+      num_coords = 4;
+      num_offsets = 2;
+      num_derivs = 2;
+      break;
    case TGSI_TEXTURE_SHADOWCUBE:
       num_coords = 4;
-      dims = 2;
+      num_offsets = 2;
+      num_derivs = 3;
       break;
    default:
       assert(0);
@@ -1362,20 +1376,20 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
 
    if (modifier == LP_BLD_TEX_MODIFIER_EXPLICIT_DERIV) {
       unsigned dim;
-      for (dim = 0; dim < dims; ++dim) {
+      for (dim = 0; dim < num_derivs; ++dim) {
          derivs.ddx[dim] = lp_build_emit_fetch( &bld->bld_base, inst, 1, dim );
          derivs.ddy[dim] = lp_build_emit_fetch( &bld->bld_base, inst, 2, dim );
       }
       deriv_ptr = &derivs;
       unit = inst->Src[3].Register.Index;
-   }  else {
+   } else {
       unit = inst->Src[1].Register.Index;
    }
 
    /* some advanced gather instructions (txgo) would require 4 offsets */
    if (inst->Texture.NumOffsets == 1) {
       unsigned dim;
-      for (dim = 0; dim < dims; dim++) {
+      for (dim = 0; dim < num_offsets; dim++) {
          offsets[dim] = lp_build_emit_fetch_texoffset(&bld->bld_base, inst, 0, dim );
       }
    }
@@ -1406,7 +1420,7 @@ emit_sample(struct lp_build_tgsi_soa_context *bld,
    LLVMValueRef offsets[3] = { NULL };
    struct lp_derivatives derivs;
    struct lp_derivatives *deriv_ptr = NULL;
-   unsigned num_coords, dims;
+   unsigned num_coords, num_offsets, num_derivs;
    unsigned i;
 
    if (!bld->sampler) {
@@ -1432,29 +1446,39 @@ emit_sample(struct lp_build_tgsi_soa_context *bld,
    switch (bld->sv[texture_unit].Resource) {
    case TGSI_TEXTURE_1D:
       num_coords = 1;
-      dims = 1;
+      num_offsets = 1;
+      num_derivs = 1;
       break;
    case TGSI_TEXTURE_1D_ARRAY:
       num_coords = 2;
-      dims = 1;
+      num_offsets = 1;
+      num_derivs = 1;
       break;
    case TGSI_TEXTURE_2D:
    case TGSI_TEXTURE_RECT:
       num_coords = 2;
-      dims = 2;
+      num_offsets = 2;
+      num_derivs = 2;
       break;
    case TGSI_TEXTURE_2D_ARRAY:
+      num_coords = 3;
+      num_offsets = 2;
+      num_derivs = 2;
+      break;
    case TGSI_TEXTURE_CUBE:
       num_coords = 3;
-      dims = 2;
+      num_offsets = 2;
+      num_derivs = 3;
       break;
    case TGSI_TEXTURE_3D:
       num_coords = 3;
-      dims = 3;
+      num_offsets = 3;
+      num_derivs = 3;
       break;
    case TGSI_TEXTURE_CUBE_ARRAY:
       num_coords = 4;
-      dims = 3;
+      num_offsets = 2;
+      num_derivs = 3;
       break;
    default:
       assert(0);
@@ -1505,7 +1529,7 @@ emit_sample(struct lp_build_tgsi_soa_context *bld,
 
    if (modifier == LP_BLD_TEX_MODIFIER_EXPLICIT_DERIV) {
       unsigned dim;
-      for (dim = 0; dim < dims; ++dim) {
+      for (dim = 0; dim < num_derivs; ++dim) {
          derivs.ddx[dim] = lp_build_emit_fetch( &bld->bld_base, inst, 3, dim );
          derivs.ddy[dim] = lp_build_emit_fetch( &bld->bld_base, inst, 4, dim );
       }
@@ -1515,7 +1539,7 @@ emit_sample(struct lp_build_tgsi_soa_context *bld,
    /* some advanced gather instructions (txgo) would require 4 offsets */
    if (inst->Texture.NumOffsets == 1) {
       unsigned dim;
-      for (dim = 0; dim < dims; dim++) {
+      for (dim = 0; dim < num_offsets; dim++) {
          offsets[dim] = lp_build_emit_fetch_texoffset(&bld->bld_base, inst, 0, dim );
       }
    }

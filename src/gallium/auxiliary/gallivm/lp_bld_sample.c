@@ -1287,6 +1287,7 @@ lp_build_cube_lookup(struct lp_build_sample_context *bld,
                      LLVMValueRef s,
                      LLVMValueRef t,
                      LLVMValueRef r,
+                     const struct lp_derivatives *derivs, /* optional */
                      LLVMValueRef *face,
                      LLVMValueRef *face_s,
                      LLVMValueRef *face_t,
@@ -1296,7 +1297,6 @@ lp_build_cube_lookup(struct lp_build_sample_context *bld,
    LLVMBuilderRef builder = bld->gallivm->builder;
    struct gallivm_state *gallivm = bld->gallivm;
    LLVMValueRef si, ti, ri;
-   boolean implicit_derivs = TRUE;
    boolean need_derivs = TRUE;
 
    if (1 || coord_bld->type.length > 4) {
@@ -1334,9 +1334,9 @@ lp_build_cube_lookup(struct lp_build_sample_context *bld,
       assert(PIPE_TEX_FACE_NEG_Z == PIPE_TEX_FACE_POS_Z + 1);
 
       /*
-       * TODO do this only when needed, and implement explicit derivs (trivial).
+       * TODO do this only when needed.
        */
-      if (need_derivs && implicit_derivs) {
+      if (need_derivs && !derivs) {
          LLVMValueRef ddx_ddy[2], tmp[2];
          /*
           * This isn't quite the same as the "ordinary" path since
@@ -1374,9 +1374,16 @@ lp_build_cube_lookup(struct lp_build_sample_context *bld,
          dmax[2] = lp_build_max(coord_bld, tmp[0], tmp[1]);
       }
       else if (need_derivs) {
-         /* dmax[0] = lp_build_max(coord_bld, derivs->ddx[0], derivs->ddy[0]);
-         dmax[1] = lp_build_max(coord_bld, derivs->ddx[1], derivs->ddy[1]);
-         dmax[2] = lp_build_max(coord_bld, derivs->ddx[2], derivs->ddy[2]); */
+         LLVMValueRef abs_ddx[3], abs_ddy[3];
+         abs_ddx[0] = lp_build_abs(coord_bld, derivs->ddx[0]);
+         abs_ddx[1] = lp_build_abs(coord_bld, derivs->ddx[1]);
+         abs_ddx[2] = lp_build_abs(coord_bld, derivs->ddx[2]);
+         abs_ddy[0] = lp_build_abs(coord_bld, derivs->ddy[0]);
+         abs_ddy[1] = lp_build_abs(coord_bld, derivs->ddy[1]);
+         abs_ddy[2] = lp_build_abs(coord_bld, derivs->ddy[2]);
+         dmax[0] = lp_build_max(coord_bld, abs_ddx[0], abs_ddy[0]);
+         dmax[1] = lp_build_max(coord_bld, abs_ddx[1], abs_ddy[1]);
+         dmax[2] = lp_build_max(coord_bld, abs_ddx[2], abs_ddy[2]);
       }
 
       si = LLVMBuildBitCast(builder, s, lp_build_vec_type(gallivm, intctype), "");

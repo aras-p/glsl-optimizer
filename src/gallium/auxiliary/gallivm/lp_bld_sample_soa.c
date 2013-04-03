@@ -1102,7 +1102,7 @@ lp_build_sample_common(struct lp_build_sample_context *bld,
     */
    if (target == PIPE_TEXTURE_CUBE) {
       LLVMValueRef face, face_s, face_t;
-      lp_build_cube_lookup(bld, *s, *t, *r, &face, &face_s, &face_t, &cube_rho);
+      lp_build_cube_lookup(bld, *s, *t, *r, derivs, &face, &face_s, &face_t, &cube_rho);
       *s = face_s; /* vec */
       *t = face_t; /* vec */
       /* use 'r' to indicate cube face */

@@ -433,6 +433,7 @@ lp_build_cube_lookup(struct lp_build_sample_context *bld,
                      LLVMValueRef s,
                      LLVMValueRef t,
                      LLVMValueRef r,
+                     const struct lp_derivatives *derivs, /* optional */
                      LLVMValueRef *face,
                      LLVMValueRef *face_s,
                      LLVMValueRef *face_t,
