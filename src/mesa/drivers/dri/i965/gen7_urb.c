@@ -78,8 +78,9 @@ static void
 gen7_upload_urb(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
+   const int push_size_kB = 16;
    /* Total space for entries is URB size - 16kB for push constants */
-   int handle_region_size = (brw->urb.size - 16) * 1024; /* bytes */
+   int handle_region_size = (brw->urb.size - push_size_kB) * 1024; /* bytes */
 
    /* CACHE_NEW_VS_PROG */
    unsigned vs_size = MAX2(brw->vs.prog_data->urb_entry_size, 1);
@@ -92,7 +93,7 @@ gen7_upload_urb(struct brw_context *brw)
    brw->urb.nr_vs_entries = ROUND_DOWN_TO(nr_vs_entries, 8);
 
    /* URB Starting Addresses are specified in multiples of 8kB. */
-   brw->urb.vs_start = 2; /* skip over push constants */
+   brw->urb.vs_start = push_size_kB / 8; /* skip over push constants */
 
    assert(brw->urb.nr_vs_entries % 8 == 0);
    assert(brw->urb.nr_gs_entries % 8 == 0);
