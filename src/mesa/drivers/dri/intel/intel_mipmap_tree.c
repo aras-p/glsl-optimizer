@@ -354,6 +354,18 @@ intel_miptree_create(struct intel_context *intel,
    etc_format = (format != tex_format) ? tex_format : MESA_FORMAT_NONE;
    base_format = _mesa_get_format_base_format(format);
 
+   mt = intel_miptree_create_layout(intel, target, format,
+				      first_level, last_level, width0,
+				      height0, depth0,
+				      false, num_samples);
+   /*
+    * pitch == 0 || height == 0  indicates the null texture
+    */
+   if (!mt || !mt->total_width || !mt->total_height) {
+      intel_miptree_release(&mt);
+      return NULL;
+   }
+
    if (num_samples > 1) {
       /* From p82 of the Sandy Bridge PRM, dw3[1] of SURFACE_STATE ("Tiled
        * Surface"):
@@ -377,20 +389,15 @@ intel_miptree_create(struct intel_context *intel,
 	 tiling = I915_TILING_Y;
       else if (force_y_tiling) {
          tiling = I915_TILING_Y;
-      } else if (width0 >= 64)
-	 tiling = I915_TILING_X;
-   }
-
-   mt = intel_miptree_create_layout(intel, target, format,
-				      first_level, last_level, width0,
-				      height0, depth0,
-				      false, num_samples);
-   /*
-    * pitch == 0 || height == 0  indicates the null texture
-    */
-   if (!mt || !mt->total_width || !mt->total_height) {
-      intel_miptree_release(&mt);
-      return NULL;
+      } else if (width0 >= 64) {
+         if (ALIGN(mt->total_width * mt->cpp, 512) < 32768) {
+            tiling = I915_TILING_X;
+         } else {
+            perf_debug("%dx%d miptree too large to blit, "
+                       "falling back to untiled",
+                       mt->total_width, mt->total_height);
+         }
+      }
    }
 
    total_width = mt->total_width;
