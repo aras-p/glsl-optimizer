@@ -76,6 +76,7 @@ struct debug_memory_header
 #endif
 
    unsigned magic;
+   unsigned tag;
 };
 
 struct debug_memory_footer
@@ -140,6 +141,7 @@ debug_malloc(const char *file, unsigned line, const char *function,
    hdr->function = function;
    hdr->size = size;
    hdr->magic = DEBUG_MEMORY_MAGIC;
+   hdr->tag = 0;
 #if DEBUG_FREED_MEMORY
    hdr->freed = FALSE;
 #endif
@@ -263,6 +265,7 @@ debug_realloc(const char *file, unsigned line, const char *function,
    new_hdr->function = old_hdr->function;
    new_hdr->size = new_size;
    new_hdr->magic = DEBUG_MEMORY_MAGIC;
+   new_hdr->tag = 0;
 #if DEBUG_FREED_MEMORY
    new_hdr->freed = FALSE;
 #endif
@@ -345,6 +348,58 @@ debug_memory_end(unsigned long start_no)
       debug_printf("No memory leaks detected.\n");
    }
 }
+
+
+/**
+ * Put a tag (arbitrary integer) on a memory block.
+ * Can be useful for debugging.
+ */
+void
+debug_memory_tag(void *ptr, unsigned tag)
+{
+   struct debug_memory_header *hdr;
+   
+   if (!ptr)
+      return;
+   
+   hdr = header_from_data(ptr);
+   if (hdr->magic != DEBUG_MEMORY_MAGIC) {
+      debug_printf("%s corrupted memory at %p\n", __FUNCTION__, ptr);
+      debug_assert(0);
+   }
+
+   hdr->tag = tag;
+}
+
+
+/**
+ * Check the given block of memory for validity/corruption.
+ */
+void
+debug_memory_check_block(void *ptr)
+{
+   struct debug_memory_header *hdr;
+   struct debug_memory_footer *ftr;
+   
+   if (!ptr)
+      return;
+   
+   hdr = header_from_data(ptr);
+   ftr = footer_from_header(hdr);
+
+   if (hdr->magic != DEBUG_MEMORY_MAGIC) {
+      debug_printf("%s:%u:%s: bad or corrupted memory %p\n",
+                   hdr->file, hdr->line, hdr->function, ptr);
+      debug_assert(0);
+   }
+
+   if (ftr->magic != DEBUG_MEMORY_MAGIC) {
+      debug_printf("%s:%u:%s: buffer overflow %p\n",
+                   hdr->file, hdr->line, hdr->function, ptr);
+      debug_assert(0);
+   }
+}
+
 
 
 /**
