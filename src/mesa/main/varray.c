@@ -103,51 +103,32 @@ type_to_bit(const struct gl_context *ctx, GLenum type)
 
 
 /**
- * Do error checking and update state for glVertex/Color/TexCoord/...Pointer
- * functions.
+ * Does error checking and updates the format in an attrib array.
  *
- * \param func  name of calling function used for error reporting
- * \param attrib  the attribute array index to update
- * \param legalTypes  bitmask of *_BIT above indicating legal datatypes
- * \param sizeMin  min allowable size value
- * \param sizeMax  max allowable size value (may also be BGRA_OR_4)
- * \param size  components per element (1, 2, 3 or 4)
- * \param type  datatype of each component (GL_FLOAT, GL_INT, etc)
- * \param stride  stride between elements, in elements
- * \param normalized  are integer types converted to floats in [-1, 1]?
- * \param integer  integer-valued values (will not be normalized to [-1,1])
- * \param ptr  the address (or offset inside VBO) of the array data
+ * Called by update_array().
+ *
+ * \param func        Name of calling function used for error reporting
+ * \param attrib      The index of the attribute array
+ * \param legalTypes  Bitmask of *_BIT above indicating legal datatypes
+ * \param sizeMin     Min allowable size value
+ * \param sizeMax     Max allowable size value (may also be BGRA_OR_4)
+ * \param size        Components per element (1, 2, 3 or 4)
+ * \param type        Datatype of each component (GL_FLOAT, GL_INT, etc)
+ * \param normalized  Whether integer types are converted to floats in [-1, 1]
+ * \param integer     Integer-valued values (will not be normalized to [-1, 1])
  */
-static void
-update_array(struct gl_context *ctx,
-             const char *func,
-             GLuint attrib, GLbitfield legalTypesMask,
-             GLint sizeMin, GLint sizeMax,
-             GLint size, GLenum type, GLsizei stride,
-             GLboolean normalized, GLboolean integer,
-             const GLvoid *ptr)
+static bool
+update_array_format(struct gl_context *ctx,
+                    const char *func,
+                    GLuint attrib, GLbitfield legalTypesMask,
+                    GLint sizeMin, GLint sizeMax,
+                    GLint size, GLenum type,
+                    GLboolean normalized, GLboolean integer)
 {
    struct gl_client_array *array;
    GLbitfield typeBit;
-   GLsizei elementSize;
+   GLuint elementSize;
    GLenum format = GL_RGBA;
-
-   /* Page 407 (page 423 of the PDF) of the OpenGL 3.0 spec says:
-    *
-    *     "Client vertex arrays - all vertex array attribute pointers must
-    *     refer to buffer objects (section 2.9.2). The default vertex array
-    *     object (the name zero) is also deprecated. Calling
-    *     VertexAttribPointer when no buffer object or no vertex array object
-    *     is bound will generate an INVALID_OPERATION error..."
-    *
-    * The check for VBOs is handled below.
-    */
-   if (ctx->API == API_OPENGL_CORE
-       && (ctx->Array.ArrayObj == ctx->Array.DefaultArrayObj)) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "%s(no array object bound)",
-                  func);
-      return;
-   }
 
    if (_mesa_is_gles(ctx)) {
       legalTypesMask &= ~(FIXED_GL_BIT | DOUBLE_BIT);
@@ -186,7 +167,7 @@ update_array(struct gl_context *ctx,
    if (typeBit == 0x0 || (typeBit & legalTypesMask) == 0x0) {
       _mesa_error(ctx, GL_INVALID_ENUM, "%s(type = %s)",
                   func, _mesa_lookup_enum_by_nr(type));
-      return;
+      return false;
    }
 
    /* Do size parameter checking.
@@ -206,26 +187,26 @@ update_array(struct gl_context *ctx,
        *    ...
        *    • size is BGRA and normalized is FALSE;"
        */
-      GLboolean bgra_error = GL_FALSE;
+      bool bgra_error = false;
 
       if (ctx->Extensions.ARB_vertex_type_2_10_10_10_rev) {
          if (type != GL_UNSIGNED_INT_2_10_10_10_REV &&
              type != GL_INT_2_10_10_10_REV &&
              type != GL_UNSIGNED_BYTE)
-            bgra_error = GL_TRUE;
+            bgra_error = true;
       } else if (type != GL_UNSIGNED_BYTE)
-         bgra_error = GL_TRUE;
+         bgra_error = true;
 
       if (bgra_error) {
          _mesa_error(ctx, GL_INVALID_OPERATION, "%s(size=GL_BGRA and type=%s)",
                      func, _mesa_lookup_enum_by_nr(type));
-         return;
+         return false;
       }
 
       if (!normalized) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "%s(size=GL_BGRA and normalized=GL_FALSE)", func);
-         return;
+         return false;
       }
 
       format = GL_BGRA;
@@ -233,17 +214,81 @@ update_array(struct gl_context *ctx,
    }
    else if (size < sizeMin || size > sizeMax || size > 4) {
       _mesa_error(ctx, GL_INVALID_VALUE, "%s(size=%d)", func, size);
-      return;
+      return false;
    }
 
    if (ctx->Extensions.ARB_vertex_type_2_10_10_10_rev &&
        (type == GL_UNSIGNED_INT_2_10_10_10_REV ||
         type == GL_INT_2_10_10_10_REV) && size != 4) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "%s(size=%d)", func, size);
-      return;
+      return false;
    }
 
    ASSERT(size <= 4);
+
+   elementSize = _mesa_bytes_per_vertex_attrib(size, type);
+   assert(elementSize != -1);
+
+   array = &ctx->Array.ArrayObj->VertexAttrib[attrib];
+   array->Size = size;
+   array->Type = type;
+   array->Format = format;
+   array->Normalized = normalized;
+   array->Integer = integer;
+   array->_ElementSize = elementSize;
+
+   return true;
+}
+
+
+/**
+ * Do error checking and update state for glVertex/Color/TexCoord/...Pointer
+ * functions.
+ *
+ * \param func  name of calling function used for error reporting
+ * \param attrib  the attribute array index to update
+ * \param legalTypes  bitmask of *_BIT above indicating legal datatypes
+ * \param sizeMin  min allowable size value
+ * \param sizeMax  max allowable size value (may also be BGRA_OR_4)
+ * \param size  components per element (1, 2, 3 or 4)
+ * \param type  datatype of each component (GL_FLOAT, GL_INT, etc)
+ * \param stride  stride between elements, in elements
+ * \param normalized  are integer types converted to floats in [-1, 1]?
+ * \param integer  integer-valued values (will not be normalized to [-1,1])
+ * \param ptr  the address (or offset inside VBO) of the array data
+ */
+static void
+update_array(struct gl_context *ctx,
+             const char *func,
+             GLuint attrib, GLbitfield legalTypesMask,
+             GLint sizeMin, GLint sizeMax,
+             GLint size, GLenum type, GLsizei stride,
+             GLboolean normalized, GLboolean integer,
+             const GLvoid *ptr)
+{
+   struct gl_client_array *array;
+
+   /* Page 407 (page 423 of the PDF) of the OpenGL 3.0 spec says:
+    *
+    *     "Client vertex arrays - all vertex array attribute pointers must
+    *     refer to buffer objects (section 2.9.2). The default vertex array
+    *     object (the name zero) is also deprecated. Calling
+    *     VertexAttribPointer when no buffer object or no vertex array object
+    *     is bound will generate an INVALID_OPERATION error..."
+    *
+    * The check for VBOs is handled below.
+    */
+   if (ctx->API == API_OPENGL_CORE
+       && (ctx->Array.ArrayObj == ctx->Array.DefaultArrayObj)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "%s(no array object bound)",
+                  func);
+      return;
+   }
+
+   if (!update_array_format(ctx, func, attrib, legalTypesMask, sizeMin, sizeMax,
+                            size, type, normalized, integer)) {
+      return;
+   }
 
    if (stride < 0) {
       _mesa_error( ctx, GL_INVALID_VALUE, "%s(stride=%d)", func, stride );
@@ -268,19 +313,10 @@ update_array(struct gl_context *ctx,
       return;
    }
 
-   elementSize = _mesa_bytes_per_vertex_attrib(size, type);
-   assert(elementSize != -1);
-
    array = &ctx->Array.ArrayObj->VertexAttrib[attrib];
-   array->Size = size;
-   array->Type = type;
-   array->Format = format;
    array->Stride = stride;
-   array->StrideB = stride ? stride : elementSize;
-   array->Normalized = normalized;
-   array->Integer = integer;
+   array->StrideB = stride ? stride : array->_ElementSize;
    array->Ptr = (const GLubyte *) ptr;
-   array->_ElementSize = elementSize;
 
    _mesa_reference_buffer_object(ctx, &array->BufferObj,
                                  ctx->Array.ArrayBufferObj);
