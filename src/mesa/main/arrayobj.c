@@ -81,8 +81,8 @@ unbind_array_object_vbos(struct gl_context *ctx, struct gl_array_object *obj)
 {
    GLuint i;
 
-   for (i = 0; i < Elements(obj->VertexAttrib); i++)
-      _mesa_reference_buffer_object(ctx, &obj->VertexAttrib[i].BufferObj, NULL);
+   for (i = 0; i < Elements(obj->_VertexAttrib); i++)
+      _mesa_reference_buffer_object(ctx, &obj->_VertexAttrib[i].BufferObj, NULL);
 }
 
 
@@ -215,31 +215,31 @@ _mesa_initialize_array_object( struct gl_context *ctx,
    obj->RefCount = 1;
 
    /* Init the individual arrays */
-   for (i = 0; i < Elements(obj->VertexAttrib); i++) {
+   for (i = 0; i < Elements(obj->_VertexAttrib); i++) {
       switch (i) {
       case VERT_ATTRIB_WEIGHT:
-         init_array(ctx, &obj->VertexAttrib[VERT_ATTRIB_WEIGHT], 1, GL_FLOAT);
+         init_array(ctx, &obj->_VertexAttrib[VERT_ATTRIB_WEIGHT], 1, GL_FLOAT);
          break;
       case VERT_ATTRIB_NORMAL:
-         init_array(ctx, &obj->VertexAttrib[VERT_ATTRIB_NORMAL], 3, GL_FLOAT);
+         init_array(ctx, &obj->_VertexAttrib[VERT_ATTRIB_NORMAL], 3, GL_FLOAT);
          break;
       case VERT_ATTRIB_COLOR1:
-         init_array(ctx, &obj->VertexAttrib[VERT_ATTRIB_COLOR1], 3, GL_FLOAT);
+         init_array(ctx, &obj->_VertexAttrib[VERT_ATTRIB_COLOR1], 3, GL_FLOAT);
          break;
       case VERT_ATTRIB_FOG:
-         init_array(ctx, &obj->VertexAttrib[VERT_ATTRIB_FOG], 1, GL_FLOAT);
+         init_array(ctx, &obj->_VertexAttrib[VERT_ATTRIB_FOG], 1, GL_FLOAT);
          break;
       case VERT_ATTRIB_COLOR_INDEX:
-         init_array(ctx, &obj->VertexAttrib[VERT_ATTRIB_COLOR_INDEX], 1, GL_FLOAT);
+         init_array(ctx, &obj->_VertexAttrib[VERT_ATTRIB_COLOR_INDEX], 1, GL_FLOAT);
          break;
       case VERT_ATTRIB_EDGEFLAG:
-         init_array(ctx, &obj->VertexAttrib[VERT_ATTRIB_EDGEFLAG], 1, GL_BOOL);
+         init_array(ctx, &obj->_VertexAttrib[VERT_ATTRIB_EDGEFLAG], 1, GL_BOOL);
          break;
       case VERT_ATTRIB_POINT_SIZE:
-         init_array(ctx, &obj->VertexAttrib[VERT_ATTRIB_POINT_SIZE], 1, GL_FLOAT);
+         init_array(ctx, &obj->_VertexAttrib[VERT_ATTRIB_POINT_SIZE], 1, GL_FLOAT);
          break;
       default:
-         init_array(ctx, &obj->VertexAttrib[i], 4, GL_FLOAT);
+         init_array(ctx, &obj->_VertexAttrib[i], 4, GL_FLOAT);
          break;
       }
    }
@@ -279,7 +279,7 @@ remove_array_object( struct gl_context *ctx, struct gl_array_object *obj )
 
 /**
  * Helper for _mesa_update_array_object_max_element().
- * \return  min(arrayObj->VertexAttrib[*]._MaxElement).
+ * \return  min(arrayObj->_VertexAttrib[*]._MaxElement).
  */
 static GLuint
 compute_max_element(struct gl_array_object *arrayObj, GLbitfield64 enabled)
@@ -291,7 +291,7 @@ compute_max_element(struct gl_array_object *arrayObj, GLbitfield64 enabled)
       GLint attrib = ffsll(enabled) - 1;
       enabled ^= BITFIELD64_BIT(attrib);
       
-      client_array = &arrayObj->VertexAttrib[attrib];
+      client_array = &arrayObj->_VertexAttrib[attrib];
       assert(client_array->Enabled);
       _mesa_update_array_max_element(client_array);
       min = MIN2(min, client_array->_MaxElement);

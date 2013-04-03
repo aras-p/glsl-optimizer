@@ -318,8 +318,8 @@ check_draw_elements_data(struct gl_context *ctx, GLsizei count, GLenum elemType,
       }
 
       /* check element j of each enabled array */
-      for (k = 0; k < Elements(arrayObj->VertexAttrib); k++) {
-         check_array_data(ctx, &arrayObj->VertexAttrib[k], k, j);
+      for (k = 0; k < Elements(arrayObj->_VertexAttrib); k++) {
+         check_array_data(ctx, &arrayObj->_VertexAttrib[k], k, j);
       }
    }
 
@@ -327,8 +327,8 @@ check_draw_elements_data(struct gl_context *ctx, GLsizei count, GLenum elemType,
       ctx->Driver.UnmapBuffer(ctx, ctx->Array.ArrayObj->ElementArrayBufferObj);
    }
 
-   for (k = 0; k < Elements(arrayObj->VertexAttrib); k++) {
-      unmap_array_buffer(ctx, &arrayObj->VertexAttrib[k]);
+   for (k = 0; k < Elements(arrayObj->_VertexAttrib); k++) {
+      unmap_array_buffer(ctx, &arrayObj->_VertexAttrib[k]);
    }
 }
 
@@ -368,7 +368,7 @@ print_draw_arrays(struct gl_context *ctx,
 	     exec->array.inputs[i]->Size,
 	     stride,
 	     /*exec->array.inputs[i]->Enabled,*/
-	     arrayObj->VertexAttrib[VERT_ATTRIB_FF(i)].Enabled,
+	     arrayObj->_VertexAttrib[VERT_ATTRIB_FF(i)].Enabled,
 	     exec->array.inputs[i]->Ptr,
 	     bufName);
 
@@ -405,7 +405,7 @@ recalculate_input_bindings(struct gl_context *ctx)
 {
    struct vbo_context *vbo = vbo_context(ctx);
    struct vbo_exec_context *exec = &vbo->exec;
-   struct gl_client_array *vertexAttrib = ctx->Array.ArrayObj->VertexAttrib;
+   struct gl_client_array *vertexAttrib = ctx->Array.ArrayObj->_VertexAttrib;
    const struct gl_client_array **inputs = &exec->array.inputs[0];
    GLbitfield64 const_inputs = 0x0;
    GLuint i;

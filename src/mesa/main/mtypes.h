@@ -1508,7 +1508,7 @@ struct gl_array_object
    GLboolean EverBound;
 
    /** Vertex attribute arrays */
-   struct gl_client_array VertexAttrib[VERT_ATTRIB_MAX];
+   struct gl_client_array _VertexAttrib[VERT_ATTRIB_MAX];
 
    /** Mask of VERT_BIT_* values indicating which arrays are enabled */
    GLbitfield64 _Enabled;

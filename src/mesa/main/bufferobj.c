@@ -862,8 +862,8 @@ _mesa_DeleteBuffers(GLsizei n, const GLuint *ids)
          }
 
          /* unbind any vertex pointers bound to this buffer */
-         for (j = 0; j < Elements(arrayObj->VertexAttrib); j++) {
-            unbind(ctx, &arrayObj->VertexAttrib[j].BufferObj, bufObj);
+         for (j = 0; j < Elements(arrayObj->_VertexAttrib); j++) {
+            unbind(ctx, &arrayObj->_VertexAttrib[j].BufferObj, bufObj);
          }
 
          if (ctx->Array.ArrayBufferObj == bufObj) {
