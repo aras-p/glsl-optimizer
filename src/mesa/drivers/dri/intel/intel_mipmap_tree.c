@@ -1347,9 +1347,30 @@ intel_miptree_unmap_blit(struct intel_context *intel,
 			 unsigned int level,
 			 unsigned int slice)
 {
-   assert(!(map->mode & GL_MAP_WRITE_BIT));
-
+   struct gl_context *ctx = &intel->ctx;
    drm_intel_bo_unmap(map->bo);
+
+   if (map->mode & GL_MAP_WRITE_BIT) {
+      unsigned int image_x, image_y;
+      int x = map->x;
+      int y = map->y;
+      intel_miptree_get_image_offset(mt, level, slice, &image_x, &image_y);
+      x += image_x;
+      y += image_y;
+
+      bool ok = intelEmitCopyBlit(intel,
+                                  mt->region->cpp,
+                                  map->stride, map->bo,
+                                  0, I915_TILING_NONE,
+                                  mt->region->pitch, mt->region->bo,
+                                  mt->offset, mt->region->tiling,
+                                  0, 0,
+                                  x, y,
+                                  map->w, map->h,
+                                  GL_COPY);
+      WARN_ONCE(!ok, "Failed to blit from linear temporary mapping");
+   }
+
    drm_intel_bo_unreference(map->bo);
 }
 
