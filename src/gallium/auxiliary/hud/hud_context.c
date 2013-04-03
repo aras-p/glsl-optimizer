@@ -621,7 +621,7 @@ hud_pane_add_graph(struct hud_pane *pane, struct hud_graph *gr)
    }
 
    assert(pane->num_graphs < Elements(colors));
-   gr->vertices = malloc(pane->max_num_vertices * sizeof(float) * 2);
+   gr->vertices = MALLOC(pane->max_num_vertices * sizeof(float) * 2);
    gr->color[0] = colors[pane->num_graphs][0];
    gr->color[1] = colors[pane->num_graphs][1];
    gr->color[2] = colors[pane->num_graphs][2];
