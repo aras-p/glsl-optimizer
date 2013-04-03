@@ -23,43 +23,12 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#ifndef U_RESOURCE_H
+#define U_RESOURCE_H
 
-#include "pipe/p_defines.h"
-#include "pipe/p_state.h"
-#include "util/u_format.h"
-#include "util/u_math.h"
-#include "util/u_resource.h"
+struct pipe_resource;
 
-
-/**
- * Return the size of the resource in bytes.
- */
 unsigned
-util_resource_size(const struct pipe_resource *res)
-{
-   unsigned width = res->width0;
-   unsigned height = res->height0;
-   unsigned depth = res->depth0;
-   unsigned size = 0;
-   unsigned level;
+util_resource_size(const struct pipe_resource *res);
 
-   for (level = 0; level <= res->last_level; level++) {
-      unsigned slices;
-
-      if (res->target == PIPE_TEXTURE_CUBE)
-         slices = 6;
-      else if (res->target == PIPE_TEXTURE_3D)
-         slices = depth;
-      else
-         slices = res->array_size;
-
-      size += (util_format_get_nblocksy(res->format, height) *
-               util_format_get_stride(res->format, width) * slices);
-
-      width  = u_minify(width, 1);
-      height = u_minify(height, 1);
-      depth = u_minify(depth, 1);
-   }
-
-   return size;
-}
+#endif
