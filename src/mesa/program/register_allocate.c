@@ -355,7 +355,7 @@ ra_alloc_interference_graph(struct ra_regs *regs, unsigned int count)
    g->stack = rzalloc_array(g, unsigned int, count);
 
    for (i = 0; i < count; i++) {
-      int bitset_count = ALIGN(count, BITSET_WORDBITS) / BITSET_WORDBITS;
+      int bitset_count = BITSET_WORDS(count);
       g->nodes[i].adjacency = rzalloc_array(g, BITSET_WORD, bitset_count);
 
       g->nodes[i].adjacency_list_size = 4;

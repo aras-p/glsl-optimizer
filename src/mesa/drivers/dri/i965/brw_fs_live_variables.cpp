@@ -142,8 +142,7 @@ fs_live_variables::fs_live_variables(fs_visitor *v, cfg_t *cfg)
    num_vars = v->virtual_grf_count;
    bd = rzalloc_array(mem_ctx, struct block_data, cfg->num_blocks);
 
-   bitset_words = (ALIGN(v->virtual_grf_count, BITSET_WORDBITS) /
-                   BITSET_WORDBITS);
+   bitset_words = BITSET_WORDS(v->virtual_grf_count);
    for (int i = 0; i < cfg->num_blocks; i++) {
       bd[i].def = rzalloc_array(mem_ctx, BITSET_WORD, bitset_words);
       bd[i].use = rzalloc_array(mem_ctx, BITSET_WORD, bitset_words);

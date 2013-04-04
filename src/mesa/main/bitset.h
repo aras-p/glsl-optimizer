@@ -42,8 +42,8 @@
 
 /* bitset declarations
  */
-#define BITSET_DECLARE(name, size) \
-   BITSET_WORD name[((size) + BITSET_WORDBITS - 1) / BITSET_WORDBITS]
+#define BITSET_WORDS(bits) (ALIGN(bits, BITSET_WORDBITS) / BITSET_WORDBITS)
+#define BITSET_DECLARE(name, bits) BITSET_WORD name[BITSET_WORDS(bits)]
 
 /* bitset operations
  */

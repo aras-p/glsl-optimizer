@@ -104,7 +104,7 @@ fs_copy_prop_dataflow::fs_copy_prop_dataflow(void *mem_ctx, cfg_t *cfg,
 
    acp = rzalloc_array(mem_ctx, struct acp_entry *, num_acp);
 
-   bitset_words = ALIGN(num_acp, BITSET_WORDBITS) / BITSET_WORDBITS;
+   bitset_words = BITSET_WORDS(num_acp);
 
    int next_acp = 0;
    for (int b = 0; b < cfg->num_blocks; b++) {
