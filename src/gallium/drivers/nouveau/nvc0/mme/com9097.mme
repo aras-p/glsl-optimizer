@@ -223,3 +223,78 @@ locn_0a_ts:
 locn_0f_ts:
    exit maddr 0xbb
    send $r6
+
+/* NVC0_3D_MACRO_DRAW_ELEMENTS_INDIRECT
+ *
+ * NOTE: Saves and restores VB_ELEMENT,INSTANCE_BASE.
+ *
+ * arg     = mode
+ * parm[0] = count
+ * parm[1] = instance_count
+ * parm[2] = start
+ * parm[3] = index_bias
+ * parm[4] = start_instance
+ */
+.section #mme9097_draw_elts_indirect
+   parm $r3 /* count */
+   parm $r2 /* instance_count */
+   parm $r4 maddr 0x5f7 /* INDEX_BATCH_FIRST, start */
+   parm $r4 send $r4 /* index_bias, send start */
+   braz $r2 #dei_end
+   parm $r5 /* start_instance */
+   read $r6 0x50d /* VB_ELEMENT_BASE */
+   read $r7 0x50e /* VB_INSTANCE_BASE */
+   maddr 0x150d /* VB_ELEMENT,INSTANCE_BASE */
+   send $r4
+   send $r5
+   mov $r4 0x1
+dei_again:
+   maddr 0x586 /* VERTEX_BEGIN_GL */
+   send $r1 /* mode */
+   maddr 0x5f8 /* INDEX_BATCH_COUNT */
+   send $r3 /* count */
+   mov $r2 (sub $r2 $r4)
+   maddrsend 0x585 /* VERTEX_END_GL */
+   branz $r2 #dei_again
+   mov $r1 (extrinsrt $r1 $r4 0 1 26) /* set INSTANCE_NEXT */
+   maddr 0x150d /* VB_ELEMENT,INSTANCE_BASE */
+   exit send $r6
+   send $r7
+dei_end:
+   exit
+   nop
+
+/* NVC0_3D_MACRO_DRAW_ARRAYS_INDIRECT:
+ *
+ * NOTE: Saves and restores VB_INSTANCE_BASE.
+ *
+ * arg     = mode
+ * parm[0] = count
+ * parm[1] = instance_count
+ * parm[2] = start
+ * parm[3] = start_instance
+ */
+.section #mme9097_draw_arrays_indirect
+   parm $r2 /* count */
+   parm $r3 /* instance_count */
+   parm $r4 maddr 0x35d /* VERTEX_BUFFER_FIRST, start */
+   parm $r4 send $r4 /* start_instance */
+   braz $r3 #dai_end
+   read $r6 0x50e /* VB_INSTANCE_BASE */
+   maddr 0x50e /* VB_INSTANCE_BASE */
+   mov $r5 0x1
+   send $r4
+dai_again:
+   maddr 0x586 /* VERTEX_BEGIN_GL */
+   send $r1 /* mode */
+   maddr 0x35e /* VERTEX_BUFFER_COUNT */
+   send $r2
+   mov $r3 (sub $r3 $r5)
+   maddrsend 0x585 /* VERTEX_END_GL */
+   branz $r3 #dai_again
+   mov $r1 (extrinsrt $r1 $r5 0 1 26) /* set INSTANCE_NEXT */
+   exit maddr 0x50e /* VB_INSTANCE_BASE to restore */
+   send $r6
+dai_end:
+   exit
+   nop

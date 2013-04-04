@@ -98,7 +98,7 @@ GL 4.0:
 
   GLSL 4.0                                             not started
   GL_ARB_draw_buffers_blend                            DONE (i965, nv50, nvc0, r600, radeonsi, softpipe)
-  GL_ARB_draw_indirect                                 DONE (i965)
+  GL_ARB_draw_indirect                                 DONE (i965, nvc0)
   GL_ARB_gpu_shader5                                   started
   - 'precise' qualifier                                DONE
   - Dynamically uniform sampler array indices          started (Chris)
@@ -165,7 +165,7 @@ GL 4.3:
   GL_ARB_framebuffer_no_attachments                    not started
   GL_ARB_internalformat_query2                         not started
   GL_ARB_invalidate_subdata                            DONE (all drivers)
-  GL_ARB_multi_draw_indirect                           DONE (i965)
+  GL_ARB_multi_draw_indirect                           DONE (i965, nvc0)
   GL_ARB_program_interface_query                       not started
   GL_ARB_robust_buffer_access_behavior                 not started
   GL_ARB_shader_image_size                             not started

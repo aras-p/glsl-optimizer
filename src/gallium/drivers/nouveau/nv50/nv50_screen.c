@@ -437,6 +437,8 @@ nv50_screen_init_hwctx(struct nv50_screen *screen)
    PUSH_DATA (push, NV50_3D_MULTISAMPLE_MODE_MS1);
    BEGIN_NV04(push, NV50_3D(MULTISAMPLE_CTRL), 1);
    PUSH_DATA (push, 0);
+   BEGIN_NV04(push, NV50_3D(PRIM_RESTART_WITH_DRAW_ARRAYS), 1);
+   PUSH_DATA (push, 1);
    BEGIN_NV04(push, NV50_3D(LINE_LAST_PIXEL), 1);
    PUSH_DATA (push, 0);
    BEGIN_NV04(push, NV50_3D(BLEND_SEPARATE_ALPHA), 1);
