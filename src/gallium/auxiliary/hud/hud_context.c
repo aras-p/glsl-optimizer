@@ -703,12 +703,27 @@ hud_parse_env_var(struct hud_context *hud, const char *env)
    struct hud_pane *pane = NULL;
    unsigned x = 10, y = 10;
    unsigned width = 251, height = 100;
+   unsigned period = 500 * 1000;  /* default period (1/2 second) */
+   const char *period_env;
+
+   /*
+    * The GALLIUM_HUD_PERIOD env var sets the graph update rate.
+    * The env var is in seconds (a float).
+    * Zero means update after every frame.
+    */
+   period_env = getenv("GALLIUM_HUD_PERIOD");
+   if (period_env) {
+      float p = atof(period_env);
+      if (p >= 0.0) {
+         period = (unsigned) (p * 1000 * 1000);
+      }
+   }
 
    while ((num = parse_string(env, name)) != 0) {
       env += num;
 
       if (!pane) {
-         pane = hud_pane_create(x, y, x + width, y + height, 40000, 10);
+         pane = hud_pane_create(x, y, x + width, y + height, period, 10);
          if (!pane)
             return;
       }
