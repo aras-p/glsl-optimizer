@@ -1110,25 +1110,45 @@ int si_compile_llvm(struct r600_context *rctx, struct si_pipe_shader *shader,
 		}
 	}
 
-	shader->num_sgprs = util_le32_to_cpu(*(uint32_t*)binary.code);
-	shader->num_vgprs = util_le32_to_cpu(*(uint32_t*)(binary.code + 4));
-	shader->spi_ps_input_ena = util_le32_to_cpu(*(uint32_t*)(binary.code + 8));
+	/* XXX: We may be able to emit some of these values directly rather than
+	 * extracting fields to be emitted later.
+	 */
+	for (i = 0; i < binary.config_size; i+= 8) {
+		unsigned reg = util_le32_to_cpu(*(uint32_t*)(binary.config + i));
+		unsigned value = util_le32_to_cpu(*(uint32_t*)(binary.config + i + 4));
+		switch (reg) {
+		case R_00B028_SPI_SHADER_PGM_RSRC1_PS:
+		case R_00B128_SPI_SHADER_PGM_RSRC1_VS:
+		case R_00B228_SPI_SHADER_PGM_RSRC1_GS:
+		case R_00B848_COMPUTE_PGM_RSRC1:
+			shader->num_sgprs = (G_00B028_SGPRS(value) + 1) * 8;
+			shader->num_vgprs = (G_00B028_VGPRS(value) + 1) * 4;
+			break;
+		case R_0286CC_SPI_PS_INPUT_ENA:
+			shader->spi_ps_input_ena = value;
+			break;
+		default:
+			fprintf(stderr, "Warning: Compiler emitted unknown "
+				"config register: 0x%x\n", reg);
+			break;
+		}
+	}
 
 	/* copy new shader */
 	si_resource_reference(&shader->bo, NULL);
 	shader->bo = si_resource_create_custom(rctx->context.screen, PIPE_USAGE_IMMUTABLE,
-					       binary.code_size - 12);
+					       binary.code_size);
 	if (shader->bo == NULL) {
 		return -ENOMEM;
 	}
 
 	ptr = (uint32_t*)rctx->ws->buffer_map(shader->bo->cs_buf, rctx->cs, PIPE_TRANSFER_WRITE);
 	if (0 /*R600_BIG_ENDIAN*/) {
-		for (i = 0; i < (binary.code_size - 12) / 4; ++i) {
-			ptr[i] = util_bswap32(*(uint32_t*)(binary.code+12 + i*4));
+		for (i = 0; i < binary.code_size / 4; ++i) {
+			ptr[i] = util_bswap32(*(uint32_t*)(binary.code + i*4));
 		}
 	} else {
-		memcpy(ptr, binary.code + 12, binary.code_size - 12);
+		memcpy(ptr, binary.code, binary.code_size);
 	}
 	rctx->ws->buffer_unmap(shader->bo->cs_buf);
 
