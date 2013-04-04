@@ -217,15 +217,14 @@ static void lp_exec_break_condition(struct lp_exec_mask *mask,
                                     LLVMValueRef cond)
 {
    LLVMBuilderRef builder = mask->bld->gallivm->builder;
-   LLVMValueRef exec_mask = LLVMBuildNot(builder,
+   LLVMValueRef cond_mask = LLVMBuildAnd(builder,
                                          mask->exec_mask,
-                                         "break");
-
-   exec_mask = LLVMBuildAnd(builder, exec_mask, cond, "");
+                                         cond, "cond_mask");
+   cond_mask = LLVMBuildNot(builder, cond, "break_cond");
 
    mask->break_mask = LLVMBuildAnd(builder,
                                    mask->break_mask,
-                                   exec_mask, "break_full");
+                                   cond_mask, "breakc_full");
 
    lp_exec_mask_update(mask);
 }
@@ -287,14 +286,14 @@ static void lp_exec_endloop(struct gallivm_state *gallivm,
       builder,
       LLVMIntNE,
       LLVMBuildBitCast(builder, mask->exec_mask, reg_type, ""),
-      LLVMConstNull(reg_type), "");
+      LLVMConstNull(reg_type), "i1cond");
 
    /* i2cond = (looplimiter > 0) */
    i2cond = LLVMBuildICmp(
       builder,
       LLVMIntSGT,
       limiter,
-      LLVMConstNull(int_type), "");
+      LLVMConstNull(int_type), "i2cond");
 
    /* if( i1cond && i2cond ) */
    icond = LLVMBuildAnd(builder, i1cond, i2cond, "");
@@ -2298,13 +2297,16 @@ breakc_emit(
    struct lp_build_tgsi_context * bld_base,
    struct lp_build_emit_data * emit_data)
 {
-   LLVMValueRef tmp;
    struct lp_build_tgsi_soa_context * bld = lp_soa_context(bld_base);
+   LLVMBuilderRef builder = bld_base->base.gallivm->builder;
+   struct lp_build_context *uint_bld = &bld_base->uint_bld;
+   LLVMValueRef unsigned_cond = 
+      LLVMBuildBitCast(builder, emit_data->args[0], uint_bld->vec_type, "");
+   LLVMValueRef cond = lp_build_cmp(uint_bld, PIPE_FUNC_NOTEQUAL,
+                                    unsigned_cond,
+                                    uint_bld->zero);
 
-   tmp = lp_build_cmp(&bld_base->base, PIPE_FUNC_NOTEQUAL,
-                      emit_data->args[0], bld->bld_base.base.zero);
-
-   lp_exec_break_condition(&bld->exec_mask, tmp);
+   lp_exec_break_condition(&bld->exec_mask, cond);
 }
 
 static void
