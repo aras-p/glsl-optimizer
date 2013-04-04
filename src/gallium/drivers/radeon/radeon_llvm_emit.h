@@ -29,6 +29,14 @@
 
 #include <llvm-c/Core.h>
 
+struct radeon_llvm_binary {
+	unsigned char *code;
+	unsigned code_size;
+	unsigned char *config;
+	unsigned config_size;
+};
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -42,8 +50,7 @@ unsigned radeon_llvm_bitcode_compile(
 
 unsigned  radeon_llvm_compile(
 	LLVMModuleRef M,
-	unsigned char ** bytes,
-	unsigned * byte_count,
+	struct radeon_llvm_binary *binary,
 	const char * gpu_family,
 	unsigned dump);
 

@@ -557,9 +557,13 @@ unsigned r600_llvm_compile(
 	enum radeon_family family,
 	unsigned dump)
 {
+	unsigned r;
+	struct radeon_llvm_binary binary;
 	const char * gpu_family = r600_llvm_gpu_string(family);
-	return radeon_llvm_compile(mod, inst_bytes, inst_byte_count,
-							gpu_family, dump);
+	r = radeon_llvm_compile(mod, &binary, gpu_family, dump);
+	*inst_bytes = binary.code;
+	*inst_byte_count = binary.code_size;
+	return r;
 }
 
 #endif

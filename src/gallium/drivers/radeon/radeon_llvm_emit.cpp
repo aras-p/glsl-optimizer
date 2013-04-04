@@ -96,9 +96,8 @@ radeon_llvm_shader_type(LLVMValueRef F, unsigned type)
  * caller's responsibility to free it.
  */
 extern "C" unsigned
-radeon_llvm_compile(LLVMModuleRef M, unsigned char ** bytes,
-                 unsigned * byte_count, const char * gpu_family,
-                 unsigned dump) {
+radeon_llvm_compile(LLVMModuleRef M, struct radeon_llvm_binary *binary,
+                 const char * gpu_family, unsigned dump) {
 
    Triple AMDGPUTriple(sys::getDefaultTargetTriple());
 
@@ -155,9 +154,10 @@ radeon_llvm_compile(LLVMModuleRef M, unsigned char ** bytes,
    out.flush();
    std::string &data = oStream.str();
 
-   *bytes = (unsigned char*)malloc(data.length() * sizeof(unsigned char));
-   memcpy(*bytes, data.c_str(), data.length() * sizeof(unsigned char));
-   *byte_count = data.length();
+
+   binary->code = (unsigned char*)malloc(data.length() * sizeof(unsigned char));
+   memcpy(binary->code, data.c_str(), data.length() * sizeof(unsigned char));
+   binary->code_size = data.length();
 
    return 0;
 }

@@ -1091,50 +1091,49 @@ static void preload_samplers(struct si_shader_context *si_shader_ctx)
 int si_compile_llvm(struct r600_context *rctx, struct si_pipe_shader *shader,
 							LLVMModuleRef mod)
 {
-	unsigned char *inst_bytes;
-	unsigned inst_byte_count;
 	unsigned i;
 	uint32_t *ptr;
 	bool dump;
+	struct radeon_llvm_binary binary;
 
 	dump = debug_get_bool_option("RADEON_DUMP_SHADERS", FALSE);
 
-	radeon_llvm_compile(mod, &inst_bytes, &inst_byte_count,
-			r600_get_llvm_processor_name(rctx->screen->family),
-			dump);
-
+	memset(&binary, 0, sizeof(binary));
+	radeon_llvm_compile(mod, &binary,
+		r600_get_llvm_processor_name(rctx->screen->family), dump);
 	if (dump) {
 		fprintf(stderr, "SI CODE:\n");
-		for (i = 0; i < inst_byte_count; i+=4 ) {
-			fprintf(stderr, "%02x%02x%02x%02x\n", inst_bytes[i + 3],
-				inst_bytes[i + 2], inst_bytes[i + 1],
-				inst_bytes[i]);
+		for (i = 0; i < binary.code_size; i+=4 ) {
+			fprintf(stderr, "%02x%02x%02x%02x\n", binary.code[i + 3],
+				binary.code[i + 2], binary.code[i + 1],
+				binary.code[i]);
 		}
 	}
 
-	shader->num_sgprs = util_le32_to_cpu(*(uint32_t*)inst_bytes);
-	shader->num_vgprs = util_le32_to_cpu(*(uint32_t*)(inst_bytes + 4));
-	shader->spi_ps_input_ena = util_le32_to_cpu(*(uint32_t*)(inst_bytes + 8));
+	shader->num_sgprs = util_le32_to_cpu(*(uint32_t*)binary.code);
+	shader->num_vgprs = util_le32_to_cpu(*(uint32_t*)(binary.code + 4));
+	shader->spi_ps_input_ena = util_le32_to_cpu(*(uint32_t*)(binary.code + 8));
 
 	/* copy new shader */
 	si_resource_reference(&shader->bo, NULL);
 	shader->bo = si_resource_create_custom(rctx->context.screen, PIPE_USAGE_IMMUTABLE,
-					       inst_byte_count - 12);
+					       binary.code_size - 12);
 	if (shader->bo == NULL) {
 		return -ENOMEM;
 	}
 
 	ptr = (uint32_t*)rctx->ws->buffer_map(shader->bo->cs_buf, rctx->cs, PIPE_TRANSFER_WRITE);
 	if (0 /*R600_BIG_ENDIAN*/) {
-		for (i = 0; i < (inst_byte_count-12)/4; ++i) {
-			ptr[i] = util_bswap32(*(uint32_t*)(inst_bytes+12 + i*4));
+		for (i = 0; i < (binary.code_size - 12) / 4; ++i) {
+			ptr[i] = util_bswap32(*(uint32_t*)(binary.code+12 + i*4));
 		}
 	} else {
-		memcpy(ptr, inst_bytes + 12, inst_byte_count - 12);
+		memcpy(ptr, binary.code + 12, binary.code_size - 12);
 	}
 	rctx->ws->buffer_unmap(shader->bo->cs_buf);
 
-	free(inst_bytes);
+	free(binary.code);
+	free(binary.config);
 
 	return 0;
 }
