@@ -265,6 +265,7 @@ static const char *SemanticStr[SV_LAST + 1] =
    "CLOCK",
    "LBASE",
    "SBASE",
+   "VERTEX_STRIDE",
    "?",
    "(INVALID)"
 };

@@ -366,6 +366,7 @@ enum SVSemantic
    SV_CLOCK,
    SV_LBASE,
    SV_SBASE,
+   SV_VERTEX_STRIDE,
    SV_UNDEFINED,
    SV_LAST
 };

@@ -87,6 +87,7 @@ private:
    void emitLOAD(const Instruction *);
    void emitSTORE(const Instruction *);
    void emitMOV(const Instruction *);
+   void emitRDSV(const Instruction *);
    void emitNOP();
    void emitINTERP(const Instruction *);
    void emitPFETCH(const Instruction *);
@@ -772,6 +773,29 @@ CodeEmitterNV50::emitMOV(const Instruction *i)
    }
 }
 
+static inline uint8_t getSRegEncoding(const ValueRef &ref)
+{
+   switch (SDATA(ref).sv.sv) {
+   case SV_PHYSID:        return 0;
+   case SV_CLOCK:         return 1;
+   case SV_VERTEX_STRIDE: return 3;
+// case SV_PM_COUNTER:    return 4 + SDATA(ref).sv.index;
+   case SV_SAMPLE_INDEX:  return 8;
+   default:
+      assert(!"no sreg for system value");
+      return 0;
+   }
+}
+
+void
+CodeEmitterNV50::emitRDSV(const Instruction *i)
+{
+   code[0] = 0x00000001;
+   code[1] = 0x60000000 | (getSRegEncoding(i->src(0)) << 14);
+   defId(i->def(0), 2);
+   emitFlagsRd(i);
+}
+
 void
 CodeEmitterNV50::emitNOP()
 {
@@ -794,15 +818,40 @@ CodeEmitterNV50::emitQUADOP(const Instruction *i, uint8_t lane, uint8_t quOp)
       srcId(i->src(0), 32 + 14);
 }
 
+/* NOTE: This returns the base address of a vertex inside the primitive.
+ * src0 is an immediate, the index (not offset) of the vertex
+ * inside the primitive. XXX: signed or unsigned ?
+ * src1 (may be NULL) should use whatever units the hardware requires
+ * (on nv50 this is bytes, so, relative index * 4; signed 16 bit value).
+ */
 void
 CodeEmitterNV50::emitPFETCH(const Instruction *i)
 {
-   code[0] = 0x11800001;
-   code[1] = 0x04200000 | (0xf << 14);
+   const uint32_t prim = i->src(0).get()->reg.data.u32;
+   assert(prim <= 127);
 
-   defId(i->def(0), 2);
-   srcAddr8(i->src(0), 9);
-   setAReg16(i, 0);
+   if (i->def(0).getFile() == FILE_ADDRESS) {
+      // shl $aX a[] 0
+      code[0] = 0x00000001 | ((DDATA(i->def(0)).id + 1) << 2);
+      code[1] = 0xc0200000;
+      code[0] |= prim << 9;
+      assert(!i->srcExists(1));
+   } else
+   if (i->srcExists(1)) {
+      // ld b32 $rX a[$aX+base]
+      code[0] = 0x00000001;
+      code[1] = 0x04200000 | (0xf << 14);
+      defId(i->def(0), 2);
+      code[0] |= prim << 9;
+      setARegBits(SDATA(i->src(1)).id + 1);
+   } else {
+      // mov b32 $rX a[]
+      code[0] = 0x10000001;
+      code[1] = 0x04200000 | (0xf << 14);
+      defId(i->def(0), 2);
+      code[0] |= prim << 9;
+   }
+   emitFlagsRd(i);
 }
 
 void
@@ -1625,6 +1674,9 @@ CodeEmitterNV50::emitInstruction(Instruction *insn)
       break;
    case OP_PFETCH:
       emitPFETCH(insn);
+      break;
+   case OP_RDSV:
+      emitRDSV(insn);
       break;
    case OP_LINTERP:
    case OP_PINTERP:
