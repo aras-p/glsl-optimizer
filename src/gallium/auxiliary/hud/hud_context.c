@@ -1018,6 +1018,12 @@ hud_create(struct pipe_context *pipe, struct cso_context *cso)
    hud->font_sampler_view = pipe->create_sampler_view(pipe, hud->font.texture,
                                                       &view_templ);
 
+   /* sampler state (for font drawing) */
+   hud->font_sampler_state.wrap_s = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
+   hud->font_sampler_state.wrap_t = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
+   hud->font_sampler_state.wrap_r = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
+   hud->font_sampler_state.normalized_coords = 0;
+
    /* constants */
    hud->constbuf.buffer_size = sizeof(hud->constants);
    hud->constbuf.user_buffer = &hud->constants;
