@@ -64,6 +64,8 @@
 #include "util/u_atomic.h"
 #include "util/u_inlines.h"
 
+#include "hud/hud_context.h"
+
 #include "xm_public.h"
 #include <GL/glx.h>
 
@@ -910,6 +912,8 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list,
 
    c->st->st_manager_private = (void *) c;
 
+   c->hud = hud_create(c->st->pipe, c->st->cso_context);
+
    return c;
 
 fail:
@@ -925,6 +929,10 @@ fail:
 PUBLIC
 void XMesaDestroyContext( XMesaContext c )
 {
+   if (c->hud) {
+      hud_destroy(c->hud);
+   }
+
    c->st->destroy(c->st);
 
    /* FIXME: We should destroy the screen here, but if we do so, surfaces may 
@@ -1223,6 +1231,13 @@ PUBLIC
 void XMesaSwapBuffers( XMesaBuffer b )
 {
    XMesaContext xmctx = XMesaGetCurrentContext();
+
+   /* Need to draw HUD before flushing */
+   if (xmctx && xmctx->hud) {
+      struct pipe_resource *back =
+         xmesa_get_framebuffer_resource(b->stfb, ST_ATTACHMENT_BACK_LEFT);
+      hud_draw(xmctx->hud, back);
+   }
 
    if (xmctx && xmctx->xm_buffer == b) {
       xmctx->st->flush( xmctx->st, ST_FLUSH_FRONT, NULL);

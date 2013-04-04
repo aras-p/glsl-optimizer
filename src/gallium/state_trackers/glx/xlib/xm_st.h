@@ -40,6 +40,10 @@ xmesa_create_st_framebuffer(XMesaDisplay xmdpy, XMesaBuffer b);
 void
 xmesa_destroy_st_framebuffer(struct st_framebuffer_iface *stfbi);
 
+struct pipe_resource *
+xmesa_get_framebuffer_resource(struct st_framebuffer_iface *stfbi,
+                               enum st_attachment_type att);
+
 void
 xmesa_swap_st_framebuffer(struct st_framebuffer_iface *stfbi);
 

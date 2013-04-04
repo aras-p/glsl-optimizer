@@ -317,6 +317,18 @@ xmesa_destroy_st_framebuffer(struct st_framebuffer_iface *stfbi)
    free(stfbi);
 }
 
+/**
+ * Return the pipe_surface which corresponds to the given
+ * framebuffer attachment.
+ */
+struct pipe_resource *
+xmesa_get_framebuffer_resource(struct st_framebuffer_iface *stfbi,
+                               enum st_attachment_type att)
+{
+   struct xmesa_st_framebuffer *xstfb = xmesa_st_framebuffer(stfbi);
+   return xstfb->textures[att];
+}
+
 void
 xmesa_swap_st_framebuffer(struct st_framebuffer_iface *stfbi)
 {

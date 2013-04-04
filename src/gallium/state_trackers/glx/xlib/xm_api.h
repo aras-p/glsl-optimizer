@@ -67,6 +67,8 @@ and create a window, you must do the following to use the X/Mesa interface:
 # include <X11/Xlibint.h>
 # include <X11/Xutil.h>
 
+struct hud_context;
+
 typedef struct xmesa_display *XMesaDisplay;
 typedef struct xmesa_buffer *XMesaBuffer;
 typedef struct xmesa_context *XMesaContext;
@@ -305,6 +307,7 @@ struct xmesa_context {
    XMesaVisual xm_visual;	/** pixel format info */
    XMesaBuffer xm_buffer;	/** current drawbuffer */
    XMesaBuffer xm_read_buffer;  /** current readbuffer */
+   struct hud_context *hud;
 };
 
 
