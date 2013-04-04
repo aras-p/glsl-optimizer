@@ -1740,6 +1740,30 @@ find_value_indexed(const char *func, GLenum pname, GLuint index, union value *v)
          goto invalid_value;
       v->value_int64 = ctx->AtomicBufferBindings[index].Size;
       return TYPE_INT64;
+
+   case GL_VERTEX_BINDING_DIVISOR:
+      if (!_mesa_is_desktop_gl(ctx) || !ctx->Extensions.ARB_instanced_arrays)
+          goto invalid_enum;
+      if (index >= ctx->Const.VertexProgram.MaxAttribs)
+          goto invalid_value;
+      v->value_int = ctx->Array.ArrayObj->VertexBinding[VERT_ATTRIB_GENERIC(index)].InstanceDivisor;
+      return TYPE_INT;
+
+   case GL_VERTEX_BINDING_OFFSET:
+      if (!_mesa_is_desktop_gl(ctx))
+          goto invalid_enum;
+      if (index >= ctx->Const.VertexProgram.MaxAttribs)
+          goto invalid_value;
+      v->value_int = ctx->Array.ArrayObj->VertexBinding[VERT_ATTRIB_GENERIC(index)].Offset;
+      return TYPE_INT;
+
+   case GL_VERTEX_BINDING_STRIDE:
+      if (!_mesa_is_desktop_gl(ctx))
+          goto invalid_enum;
+      if (index >= ctx->Const.VertexProgram.MaxAttribs)
+          goto invalid_value;
+      v->value_int = ctx->Array.ArrayObj->VertexBinding[VERT_ATTRIB_GENERIC(index)].Stride;
+      return TYPE_INT;
    }
 
  invalid_enum:

@@ -747,6 +747,16 @@ get_vertex_array_attrib(struct gl_context *ctx, GLuint index, GLenum pname,
          return arrayObj->VertexBinding[array->VertexBinding].InstanceDivisor;
       }
       goto error;
+   case GL_VERTEX_ATTRIB_BINDING:
+      if (_mesa_is_desktop_gl(ctx)) {
+         return array->VertexBinding - VERT_ATTRIB_GENERIC0;
+      }
+      goto error;
+   case GL_VERTEX_ATTRIB_RELATIVE_OFFSET:
+      if (_mesa_is_desktop_gl(ctx)) {
+         return array->RelativeOffset;
+      }
+      goto error;
    default:
       ; /* fall-through */
    }

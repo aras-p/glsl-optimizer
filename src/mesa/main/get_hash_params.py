@@ -737,6 +737,10 @@ descriptor=[
   [ "MAX_GEOMETRY_ATOMIC_COUNTERS", "CONTEXT_INT(Const.GeometryProgram.MaxAtomicCounters), extra_ARB_shader_atomic_counters_and_geometry_shader" ],
   [ "MAX_COMBINED_ATOMIC_COUNTER_BUFFERS", "CONTEXT_INT(Const.MaxCombinedAtomicBuffers), extra_ARB_shader_atomic_counters" ],
   [ "MAX_COMBINED_ATOMIC_COUNTERS", "CONTEXT_INT(Const.MaxCombinedAtomicCounters), extra_ARB_shader_atomic_counters" ],
+
+# GL_ARB_vertex_attrib_binding
+  [ "MAX_VERTEX_ATTRIB_RELATIVE_OFFSET", "CONTEXT_ENUM(Const.MaxVertexAttribRelativeOffset), NO_EXTRA" ],
+  [ "MAX_VERTEX_ATTRIB_BINDINGS", "CONTEXT_ENUM(Const.MaxVertexAttribBindings), NO_EXTRA" ],
 ]},
 
 # Enums restricted to OpenGL Core profile
