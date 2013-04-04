@@ -200,7 +200,14 @@ dst_reg::dst_reg(src_reg reg)
    this->reg = reg.reg;
    this->reg_offset = reg.reg_offset;
    this->type = reg.type;
-   this->writemask = WRITEMASK_XYZW;
+   /* How should we do writemasking when converting from a src_reg?  It seems
+    * pretty obvious that for src.xxxx the caller wants to write to src.x, but
+    * what about for src.wx?  Just special-case src.xxxx for now.
+    */
+   if (reg.swizzle == BRW_SWIZZLE_XXXX)
+      this->writemask = WRITEMASK_X;
+   else
+      this->writemask = WRITEMASK_XYZW;
    this->reladdr = reg.reladdr;
    this->fixed_hw_reg = reg.fixed_hw_reg;
 }
