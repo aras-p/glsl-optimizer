@@ -1403,12 +1403,17 @@ lp_build_cube_lookup(struct lp_build_sample_context *bld,
       signr = LLVMBuildAnd(builder, ri, signmask, "");
 
       /*
-       * major face determination: select x if x >= y else select y
-       * select previous result if y >= max(x,y) else select z
+       * major face determination: select x if x > y else select y
+       * select z if z >= max(x,y) else select previous result
+       * if some axis are the same we chose z over y, y over x - the
+       * dx10 spec seems to ask for it while OpenGL doesn't care (if we
+       * wouldn't care could save a select or two if using different
+       * compares and doing at_g_as_ar last since tnewx and tnewz are the
+       * same).
        */
-      as_ge_at = lp_build_cmp(coord_bld, PIPE_FUNC_GEQUAL, as, at);
+      as_ge_at = lp_build_cmp(coord_bld, PIPE_FUNC_GREATER, as, at);
       maxasat = lp_build_max(coord_bld, as, at);
-      ar_ge_as_at = lp_build_cmp(coord_bld, PIPE_FUNC_GEQUAL, maxasat, ar);
+      ar_ge_as_at = lp_build_cmp(coord_bld, PIPE_FUNC_GEQUAL, ar, maxasat);
 
       /*
        * compute all possible new s/t coords
@@ -1449,13 +1454,13 @@ lp_build_cube_lookup(struct lp_build_sample_context *bld,
          dmaxtnew = lp_build_select(coord_bld, as_ge_at, dmax[1], dmax[2]);
       }
 
-      *face_s = lp_build_select(cint_bld, ar_ge_as_at, *face_s, snewz);
-      *face_t = lp_build_select(cint_bld, ar_ge_as_at, *face_t, tnewz);
-      ma = lp_build_select(coord_bld, ar_ge_as_at, ma, r);
-      *face = lp_build_select(cint_bld, ar_ge_as_at, *face, facez);
+      *face_s = lp_build_select(cint_bld, ar_ge_as_at, snewz, *face_s);
+      *face_t = lp_build_select(cint_bld, ar_ge_as_at, tnewz, *face_t);
+      ma = lp_build_select(coord_bld, ar_ge_as_at, r, ma);
+      *face = lp_build_select(cint_bld, ar_ge_as_at, facez, *face);
       if (need_derivs) {
-         dmaxsnew = lp_build_select(coord_bld, ar_ge_as_at, dmaxsnew, dmax[0]);
-         dmaxtnew = lp_build_select(coord_bld, ar_ge_as_at, dmaxtnew, dmax[1]);
+         dmaxsnew = lp_build_select(coord_bld, ar_ge_as_at, dmax[0], dmaxsnew);
+         dmaxtnew = lp_build_select(coord_bld, ar_ge_as_at, dmax[1], dmaxtnew);
       }
 
       *face_s = LLVMBuildBitCast(builder, *face_s,
