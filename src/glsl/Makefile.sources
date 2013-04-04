@@ -80,6 +80,7 @@ LIBGLSL_FILES = \
 	$(GLSL_SRCDIR)/opt_dead_code.cpp \
 	$(GLSL_SRCDIR)/opt_dead_code_local.cpp \
 	$(GLSL_SRCDIR)/opt_dead_functions.cpp \
+	$(GLSL_SRCDIR)/opt_flatten_nested_if_blocks.cpp \
 	$(GLSL_SRCDIR)/opt_function_inlining.cpp \
 	$(GLSL_SRCDIR)/opt_if_simplification.cpp \
 	$(GLSL_SRCDIR)/opt_noop_swizzle.cpp \

@@ -1218,6 +1218,7 @@ do_common_optimization(exec_list *ir, bool linked,
       progress = do_structure_splitting(ir) || progress;
    }
    progress = do_if_simplification(ir) || progress;
+   progress = opt_flatten_nested_if_blocks(ir) || progress;
    progress = do_copy_propagation(ir) || progress;
    progress = do_copy_propagation_elements(ir) || progress;
    if (linked)
