@@ -32,7 +32,11 @@
 
 struct stw_tls_data
 {
+   DWORD dwThreadId;
+
    HHOOK hCallWndProcHook;
+
+   struct stw_tls_data *next;
 };
 
 boolean
