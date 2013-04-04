@@ -2880,10 +2880,20 @@ vec4_visitor::emit_pull_constant_load(vec4_instruction *inst,
    src_reg offset = get_pull_constant_offset(inst, orig_src.reladdr, reg_offset);
    vec4_instruction *load;
 
-   load = new(mem_ctx) vec4_instruction(this, VS_OPCODE_PULL_CONSTANT_LOAD,
-					temp, index, offset);
-   load->base_mrf = 14;
-   load->mlen = 1;
+   if (intel->gen >= 7) {
+      dst_reg grf_offset = dst_reg(this, glsl_type::int_type);
+      grf_offset.type = offset.type;
+      emit_before(inst, MOV(grf_offset, offset));
+
+      load = new(mem_ctx) vec4_instruction(this,
+                                           VS_OPCODE_PULL_CONSTANT_LOAD_GEN7,
+                                           temp, index, src_reg(grf_offset));
+   } else {
+      load = new(mem_ctx) vec4_instruction(this, VS_OPCODE_PULL_CONSTANT_LOAD,
+                                           temp, index, offset);
+      load->base_mrf = 14;
+      load->mlen = 1;
+   }
    emit_before(inst, load);
 }
 

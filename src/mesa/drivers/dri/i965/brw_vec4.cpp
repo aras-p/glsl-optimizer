@@ -230,7 +230,13 @@ vec4_instruction::is_math()
 bool
 vec4_instruction::is_send_from_grf()
 {
-   return opcode == SHADER_OPCODE_SHADER_TIME_ADD;
+   switch (opcode) {
+   case SHADER_OPCODE_SHADER_TIME_ADD:
+   case VS_OPCODE_PULL_CONSTANT_LOAD_GEN7:
+      return true;
+   default:
+      return false;
+   }
 }
 
 bool

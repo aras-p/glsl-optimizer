@@ -558,26 +558,10 @@ vec4_generator::generate_pull_constant_load(vec4_instruction *inst,
                                             struct brw_reg index,
                                             struct brw_reg offset)
 {
+   assert(intel->gen <= 7);
    assert(index.file == BRW_IMMEDIATE_VALUE &&
 	  index.type == BRW_REGISTER_TYPE_UD);
    uint32_t surf_index = index.dw1.ud;
-
-   if (intel->gen == 7) {
-      gen6_resolve_implied_move(p, &offset, inst->base_mrf);
-      brw_instruction *insn = brw_next_insn(p, BRW_OPCODE_SEND);
-      brw_set_dest(p, insn, dst);
-      brw_set_src0(p, insn, offset);
-      brw_set_sampler_message(p, insn,
-                              surf_index,
-                              0, /* LD message ignores sampler unit */
-                              GEN5_SAMPLER_MESSAGE_SAMPLE_LD,
-                              1, /* rlen */
-                              1, /* mlen */
-                              false, /* no header */
-                              BRW_SAMPLER_SIMD_MODE_SIMD4X2,
-                              0);
-      return;
-   }
 
    struct brw_reg header = brw_vec8_grf(0, 0);
 
@@ -611,6 +595,29 @@ vec4_generator::generate_pull_constant_load(vec4_instruction *inst,
 			   2, /* mlen */
                            true, /* header_present */
 			   1 /* rlen */);
+}
+
+void
+vec4_generator::generate_pull_constant_load_gen7(vec4_instruction *inst,
+                                                 struct brw_reg dst,
+                                                 struct brw_reg surf_index,
+                                                 struct brw_reg offset)
+{
+   assert(surf_index.file == BRW_IMMEDIATE_VALUE &&
+	  surf_index.type == BRW_REGISTER_TYPE_UD);
+
+   brw_instruction *insn = brw_next_insn(p, BRW_OPCODE_SEND);
+   brw_set_dest(p, insn, dst);
+   brw_set_src0(p, insn, offset);
+   brw_set_sampler_message(p, insn,
+                           surf_index.dw1.ud,
+                           0, /* LD message ignores sampler unit */
+                           GEN5_SAMPLER_MESSAGE_SAMPLE_LD,
+                           1, /* rlen */
+                           1, /* mlen */
+                           false, /* no header */
+                           BRW_SAMPLER_SIMD_MODE_SIMD4X2,
+                           0);
 }
 
 void
@@ -671,6 +678,10 @@ vec4_generator::generate_vs_instruction(vec4_instruction *instruction,
 
    case VS_OPCODE_PULL_CONSTANT_LOAD:
       generate_pull_constant_load(inst, dst, src[0], src[1]);
+      break;
+
+   case VS_OPCODE_PULL_CONSTANT_LOAD_GEN7:
+      generate_pull_constant_load_gen7(inst, dst, src[0], src[1]);
       break;
 
    case SHADER_OPCODE_SHADER_TIME_ADD:
