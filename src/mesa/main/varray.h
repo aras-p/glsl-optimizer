@@ -51,8 +51,10 @@ _mesa_update_array_max_element(struct gl_client_array *array)
       GLsizeiptrARB bufSize = (GLsizeiptrARB) array->BufferObj->Size;
 
       if (offset < bufSize) {
-	 array->_MaxElement = (bufSize - offset + array->StrideB
-                               - array->_ElementSize) / array->StrideB;
+         const GLuint stride = array->StrideB ?
+                                 array->StrideB : array->_ElementSize;
+         array->_MaxElement = (bufSize - offset + stride
+                                  - array->_ElementSize) / stride;
       }
       else {
 	 array->_MaxElement = 0;
