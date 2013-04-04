@@ -1781,6 +1781,8 @@ radeon_llvm_check() {
     fi
     LLVM_COMPONENTS="${LLVM_COMPONENTS} r600 bitreader"
     NEED_RADEON_LLVM=yes
+    AC_CHECK_LIB([elf], [elf_memory], [ELF_LIB=-lelf],
+                                 [AC_MSG_ERROR([radeonsi and r600g require libelf when using LLVM])])
 }
 
 dnl Gallium drivers
@@ -1999,6 +2001,7 @@ AM_CONDITIONAL(HAVE_MESA_LLVM, test x$MESA_LLVM = x1)
 AM_CONDITIONAL(LLVM_NEEDS_FNORTTI, test $LLVM_VERSION_INT -ge 302)
 
 AC_SUBST([GALLIUM_MAKE_DIRS])
+AC_SUBST([ELF_LIB])
 
 AM_CONDITIONAL(NEED_LIBPROGRAM, test "x$with_gallium_drivers" != x -o \
                                      "x$enable_xlib_glx" = xyes -o \

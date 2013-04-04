@@ -52,6 +52,8 @@
 #include <iostream>
 #include <stdlib.h>
 #include <stdio.h>
+#include <libelf.h>
+#include <gelf.h>
 
 using namespace llvm;
 
@@ -154,10 +156,38 @@ radeon_llvm_compile(LLVMModuleRef M, struct radeon_llvm_binary *binary,
    out.flush();
    std::string &data = oStream.str();
 
+   char *elf_buffer;
 
-   binary->code = (unsigned char*)malloc(data.length() * sizeof(unsigned char));
-   memcpy(binary->code, data.c_str(), data.length() * sizeof(unsigned char));
-   binary->code_size = data.length();
+   elf_buffer = (char*)malloc(data.length());
+   memcpy(elf_buffer, data.c_str(), data.length());
+
+   Elf *elf = elf_memory(elf_buffer, data.length());
+   Elf_Scn *section = NULL;
+   size_t section_str_index;
+
+   elf_getshdrstrndx(elf, &section_str_index);
+
+   while ((section = elf_nextscn(elf, section))) {
+      const char *name;
+      Elf_Data *section_data = NULL;
+      GElf_Shdr section_header;
+      if (gelf_getshdr(section, &section_header) != &section_header) {
+         fprintf(stderr, "Failed to read ELF section header\n");
+         return 1;
+      }
+      name = elf_strptr(elf, section_str_index, section_header.sh_name);
+      if (!strcmp(name, ".text")) {
+         section_data = elf_getdata(section, section_data);
+         binary->code_size = section_data->d_size;
+         binary->code = (unsigned char*)malloc(binary->code_size * sizeof(unsigned char));
+         memcpy(binary->code, section_data->d_buf, binary->code_size);
+      } else if (!strcmp(name, ".AMDGPU.config")) {
+         section_data = elf_getdata(section, section_data);
+         binary->config_size = section_data->d_size;
+         binary->config = (unsigned char*)malloc(binary->config_size * sizeof(unsigned char));
+         memcpy(binary->config, section_data->d_buf, binary->config_size);
+      }
+   }
 
    return 0;
 }

@@ -41,6 +41,7 @@ libllvmradeon@VERSION@_la_SOURCES = \
 libllvmradeon@VERSION@_la_LIBADD = \
 	$(LIBGALLIUM_LIBS) \
 	$(CLOCK_LIB) \
-	$(LLVM_LIBS)
+	$(LLVM_LIBS) \
+	$(ELF_LIB)
 
 endif
