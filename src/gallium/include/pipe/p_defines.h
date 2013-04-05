@@ -350,6 +350,7 @@ enum pipe_flush_flags {
 #define PIPE_BIND_GLOBAL               (1 << 18) /* set_global_binding */
 #define PIPE_BIND_SHADER_RESOURCE      (1 << 19) /* set_shader_resources */
 #define PIPE_BIND_COMPUTE_RESOURCE     (1 << 20) /* set_compute_resources */
+#define PIPE_BIND_COMMAND_ARGS_BUFFER  (1 << 21) /* pipe_draw_info.indirect */
 
 /* The first two flags above were previously part of the amorphous
  * TEXTURE_USAGE, most of which are now descriptions of the ways a
