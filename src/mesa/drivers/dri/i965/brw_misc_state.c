@@ -271,6 +271,8 @@ brw_depthbuffer_format(struct brw_context *brw)
  */
 void
 brw_get_depthstencil_tile_masks(struct intel_mipmap_tree *depth_mt,
+                                uint32_t depth_level,
+                                uint32_t depth_layer,
                                 struct intel_mipmap_tree *stencil_mt,
                                 uint32_t *out_tile_mask_x,
                                 uint32_t *out_tile_mask_y)
@@ -367,7 +369,10 @@ brw_workaround_depthstencil_alignment(struct brw_context *brw,
    }
 
    uint32_t tile_mask_x, tile_mask_y;
-   brw_get_depthstencil_tile_masks(depth_mt, stencil_mt,
+   brw_get_depthstencil_tile_masks(depth_mt,
+                                   depth_mt ? depth_irb->mt_level : 0,
+                                   depth_mt ? depth_irb->mt_layer : 0,
+                                   stencil_mt,
                                    &tile_mask_x, &tile_mask_y);
 
    if (depth_irb) {

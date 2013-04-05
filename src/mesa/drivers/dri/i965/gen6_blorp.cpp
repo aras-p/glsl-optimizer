@@ -829,7 +829,10 @@ gen6_blorp_emit_depth_stencil_config(struct brw_context *brw,
    uint32_t draw_y = params->depth.y_offset;
    uint32_t tile_mask_x, tile_mask_y;
 
-   brw_get_depthstencil_tile_masks(params->depth.mt, NULL,
+   brw_get_depthstencil_tile_masks(params->depth.mt,
+                                   params->depth.level,
+                                   params->depth.layer,
+                                   NULL,
                                    &tile_mask_x, &tile_mask_y);
 
    /* 3DSTATE_DEPTH_BUFFER */

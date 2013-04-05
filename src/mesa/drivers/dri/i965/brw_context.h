@@ -1127,6 +1127,8 @@ bool brwCreateContext(int api,
  * brw_misc_state.c
  */
 void brw_get_depthstencil_tile_masks(struct intel_mipmap_tree *depth_mt,
+                                     uint32_t depth_level,
+                                     uint32_t depth_layer,
                                      struct intel_mipmap_tree *stencil_mt,
                                      uint32_t *out_tile_mask_x,
                                      uint32_t *out_tile_mask_y);
