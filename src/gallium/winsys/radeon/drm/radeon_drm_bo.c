@@ -33,6 +33,7 @@
 #include "util/u_double_list.h"
 #include "os/os_thread.h"
 #include "os/os_mman.h"
+#include "os/os_time.h"
 
 #include "state_tracker/drm_driver.h"
 
@@ -478,6 +479,8 @@ static void *radeon_bo_map(struct radeon_winsys_cs_handle *buf,
                 }
             }
         } else {
+            uint64_t time = os_time_get_nano();
+
             if (!(usage & PIPE_TRANSFER_WRITE)) {
                 /* Mapping for read.
                  *
@@ -503,6 +506,8 @@ static void *radeon_bo_map(struct radeon_winsys_cs_handle *buf,
 
                 radeon_bo_wait((struct pb_buffer*)bo, RADEON_USAGE_READWRITE);
             }
+
+            bo->mgr->rws->buffer_wait_time += os_time_get_nano() - time;
         }
     }
 

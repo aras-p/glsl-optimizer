@@ -147,8 +147,9 @@ enum ring_type {
 };
 
 enum radeon_value_id {
-   RADEON_REQUESTED_VRAM_MEMORY,
-   RADEON_REQUESTED_GTT_MEMORY,
+    RADEON_REQUESTED_VRAM_MEMORY,
+    RADEON_REQUESTED_GTT_MEMORY,
+    RADEON_BUFFER_WAIT_TIME_NS
 };
 
 struct winsys_handle;

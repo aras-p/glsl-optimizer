@@ -1161,6 +1161,7 @@ static int r600_get_driver_query_info(struct pipe_screen *screen,
 		{"draw-calls", R600_QUERY_DRAW_CALLS, 0},
 		{"requested-VRAM", R600_QUERY_REQUESTED_VRAM, rscreen->info.vram_size, TRUE},
 		{"requested-GTT", R600_QUERY_REQUESTED_GTT, rscreen->info.gart_size, TRUE},
+		{"buffer-wait-time", R600_QUERY_BUFFER_WAIT_TIME, 0, FALSE}
 	};
 
 	if (!info)

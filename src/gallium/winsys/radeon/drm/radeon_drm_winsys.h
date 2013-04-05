@@ -48,6 +48,7 @@ struct radeon_drm_winsys {
     int num_cs; /* The number of command streams created. */
     uint64_t allocated_vram;
     uint64_t allocated_gtt;
+    uint64_t buffer_wait_time; /* time spent in buffer_wait in ns */
 
     enum radeon_generation gen;
     struct radeon_info info;
