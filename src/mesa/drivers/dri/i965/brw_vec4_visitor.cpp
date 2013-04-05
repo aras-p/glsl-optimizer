@@ -2120,7 +2120,7 @@ vec4_visitor::visit(ir_texture *ir)
       shadow_comparitor = this->result;
    }
 
-   const glsl_type *lod_type, *sample_index_type;
+   const glsl_type *lod_type = NULL, *sample_index_type = NULL;
    src_reg lod, dPdx, dPdy, sample_index;
    switch (ir->op) {
    case ir_tex:
