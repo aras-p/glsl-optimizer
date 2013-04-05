@@ -136,6 +136,14 @@ static void gen6_set_prim(struct brw_context *brw,
 }
 
 
+/**
+ * The hardware is capable of removing dangling vertices on its own; however,
+ * prior to Gen6, we sometimes convert quads into trifans (and quad strips
+ * into tristrips), since pre-Gen6 hardware requires a GS to render quads.
+ * This function manually trims dangling vertices from a draw call involving
+ * quads so that those dangling vertices won't get drawn when we convert to
+ * trifans/tristrips.
+ */
 static GLuint trim(GLenum prim, GLuint length)
 {
    if (prim == GL_QUAD_STRIP)
@@ -171,7 +179,11 @@ static void brw_emit_prim(struct brw_context *brw,
       start_vertex_location += brw->vb.start_vertex_bias;
    }
 
-   verts_per_instance = trim(prim->mode, prim->count);
+   /* We only need to trim the primitive count on pre-Gen6. */
+   if (intel->gen < 6)
+      verts_per_instance = trim(prim->mode, prim->count);
+   else
+      verts_per_instance = prim->count;
 
    /* If nothing to emit, just return. */
    if (verts_per_instance == 0)
@@ -228,7 +240,7 @@ static void gen7_emit_prim(struct brw_context *brw,
       start_vertex_location += brw->vb.start_vertex_bias;
    }
 
-   verts_per_instance = trim(prim->mode, prim->count);
+   verts_per_instance = prim->count;
 
    /* If nothing to emit, just return. */
    if (verts_per_instance == 0)
