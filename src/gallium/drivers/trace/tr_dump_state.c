@@ -718,6 +718,9 @@ void trace_dump_draw_info(const struct pipe_draw_info *state)
 
    trace_dump_member(ptr, state, count_from_stream_output);
 
+   trace_dump_member(ptr, state, indirect);
+   trace_dump_member(uint, state, indirect_offset);
+
    trace_dump_struct_end();
 }
 

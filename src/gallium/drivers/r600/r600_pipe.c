@@ -317,6 +317,7 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_TEXTURE_QUERY_LOD:
 	case PIPE_CAP_SAMPLE_SHADING:
 	case PIPE_CAP_TEXTURE_GATHER_OFFSETS:
+	case PIPE_CAP_DRAW_INDIRECT:
 		return 0;
 
 	/* Stream output. */

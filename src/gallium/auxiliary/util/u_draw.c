@@ -27,6 +27,7 @@
 
 
 #include "util/u_debug.h"
+#include "util/u_inlines.h"
 #include "util/u_math.h"
 #include "util/u_format.h"
 #include "util/u_draw.h"
@@ -122,4 +123,46 @@ util_draw_max_index(
    }
 
    return max_index + 1;
+}
+
+
+/* This extracts the draw arguments from the info_in->indirect resource,
+ * puts them into a new instance of pipe_draw_info, and calls draw_vbo on it.
+ */
+void
+util_draw_indirect(struct pipe_context *pipe,
+                   const struct pipe_draw_info *info_in)
+{
+   struct pipe_draw_info info;
+   struct pipe_transfer *transfer;
+   uint32_t *params;
+   const unsigned num_params = info_in->indexed ? 5 : 4;
+
+   assert(info_in->indirect);
+   assert(!info_in->count_from_stream_output);
+
+   memcpy(&info, info_in, sizeof(info));
+
+   params = (uint32_t *)
+      pipe_buffer_map_range(pipe,
+                            info_in->indirect,
+                            info_in->indirect_offset,
+                            num_params * sizeof(uint32_t),
+                            PIPE_TRANSFER_READ,
+                            &transfer);
+   if (!transfer) {
+      debug_printf("%s: failed to map indirect buffer\n", __FUNCTION__);
+      return;
+   }
+
+   info.count = params[0];
+   info.instance_count = params[1];
+   info.start = params[2];
+   info.index_bias = info_in->indexed ? params[3] : 0;
+   info.start_instance = info_in->indexed ? params[4] : params[3];
+   info.indirect = NULL;
+
+   pipe_buffer_unmap(pipe, transfer);
+
+   pipe->draw_vbo(pipe, &info);
 }

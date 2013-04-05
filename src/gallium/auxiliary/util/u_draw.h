@@ -142,6 +142,14 @@ util_draw_range_elements(struct pipe_context *pipe,
 }
 
 
+/* This converts an indirect draw into a direct draw by mapping the indirect
+ * buffer, extracting its arguments, and calling pipe->draw_vbo.
+ */
+void
+util_draw_indirect(struct pipe_context *pipe,
+                   const struct pipe_draw_info *info);
+
+
 unsigned
 util_draw_max_index(
       const struct pipe_vertex_buffer *vertex_buffers,

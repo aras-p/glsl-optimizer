@@ -570,6 +570,28 @@ struct pipe_draw_info
     * be set via set_vertex_buffers manually.
     */
    struct pipe_stream_output_target *count_from_stream_output;
+
+   /* Indirect parameters resource: If not NULL, most values are taken
+    * from this buffer instead, which is laid out as follows:
+    *
+    * if indexed is TRUE:
+    *  struct {
+    *     uint32_t count;
+    *     uint32_t instance_count;
+    *     uint32_t start;
+    *     int32_t index_bias;
+    *     uint32_t start_instance;
+    *  };
+    * otherwise:
+    *  struct {
+    *     uint32_t count;
+    *     uint32_t instance_count;
+    *     uint32_t start;
+    *     uint32_t start_instance;
+    *  };
+    */
+   struct pipe_resource *indirect;
+   unsigned indirect_offset; /**< must be 4 byte aligned */
 };
 
 

@@ -33,6 +33,7 @@
 
 #include "pipe/p_defines.h"
 #include "pipe/p_context.h"
+#include "util/u_draw.h"
 #include "util/u_prim.h"
 
 #include "lp_context.h"
@@ -59,6 +60,11 @@ llvmpipe_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
 
    if (!llvmpipe_check_render_cond(lp))
       return;
+
+   if (info->indirect) {
+      util_draw_indirect(pipe, info);
+      return;
+   }
 
    if (lp->dirty)
       llvmpipe_update_derived( lp );

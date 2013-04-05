@@ -34,6 +34,7 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_context.h"
 #include "util/u_inlines.h"
+#include "util/u_draw.h"
 #include "util/u_prim.h"
 
 #include "sp_context.h"
@@ -66,6 +67,11 @@ softpipe_draw_vbo(struct pipe_context *pipe,
 
    if (!softpipe_check_render_cond(sp))
       return;
+
+   if (info->indirect) {
+      util_draw_indirect(pipe, info);
+      return;
+   }
 
    sp->reduced_api_prim = u_reduced_prim(info->mode);
 

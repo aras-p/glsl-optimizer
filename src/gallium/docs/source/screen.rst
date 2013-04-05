@@ -208,6 +208,9 @@ The integer capabilities:
 * ``PIPE_CAP_MAX_VERTEX_STREAMS``: The maximum number of vertex streams
   supported by the geometry shader. If stream-out is supported, this should be
   at least 1. If stream-out is not supported, this should be 0.
+* ``PIPE_CAP_DRAW_INDIRECT``: Whether the driver supports taking draw arguments
+  { count, instance_count, start, index_bias } from a PIPE_BUFFER resource.
+  See pipe_draw_info.
 
 
 .. _pipe_capf:

@@ -232,6 +232,7 @@ i915_get_param(struct pipe_screen *screen, enum pipe_cap cap)
    case PIPE_CAP_VERTEX_ELEMENT_SRC_OFFSET_4BYTE_ALIGNED_ONLY:
    case PIPE_CAP_TGSI_VS_LAYER:
    case PIPE_CAP_BUFFER_MAP_PERSISTENT_COHERENT:
+   case PIPE_CAP_DRAW_INDIRECT:
       return 0;
 
    case PIPE_CAP_MIN_MAP_BUFFER_ALIGNMENT:
