@@ -415,7 +415,8 @@ void _tnl_vbo_draw_prims(struct gl_context *ctx,
 			 GLboolean index_bounds_valid,
 			 GLuint min_index,
 			 GLuint max_index,
-			 struct gl_transform_feedback_object *tfb_vertcount)
+			 struct gl_transform_feedback_object *tfb_vertcount,
+			 struct gl_buffer_object *indirect)
 {
    const struct gl_client_array **arrays = ctx->Array._DrawArrays;
 

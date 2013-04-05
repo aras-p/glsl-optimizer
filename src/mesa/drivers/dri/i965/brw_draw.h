@@ -41,7 +41,8 @@ void brw_draw_prims( struct gl_context *ctx,
 		     GLboolean index_bounds_valid,
 		     GLuint min_index,
 		     GLuint max_index,
-		     struct gl_transform_feedback_object *unused_tfb_object);
+		     struct gl_transform_feedback_object *unused_tfb_object,
+		     struct gl_buffer_object *indirect );
 
 void brw_draw_init( struct brw_context *brw );
 void brw_draw_destroy( struct brw_context *brw );

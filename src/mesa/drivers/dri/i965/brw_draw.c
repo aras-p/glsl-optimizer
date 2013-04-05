@@ -463,7 +463,8 @@ void brw_draw_prims( struct gl_context *ctx,
 		     GLboolean index_bounds_valid,
 		     GLuint min_index,
 		     GLuint max_index,
-		     struct gl_transform_feedback_object *unused_tfb_object)
+		     struct gl_transform_feedback_object *unused_tfb_object,
+		     struct gl_buffer_object *indirect )
 {
    struct brw_context *brw = brw_context(ctx);
    const struct gl_client_array **arrays = ctx->Array._DrawArrays;

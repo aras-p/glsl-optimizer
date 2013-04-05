@@ -583,7 +583,7 @@ vbo_handle_primitive_restart(struct gl_context *ctx,
    } else {
       /* Call driver directly for draw_prims */
       vbo->draw_prims(ctx, prim, nr_prims, ib,
-                      index_bounds_valid, min_index, max_index, NULL);
+                      index_bounds_valid, min_index, max_index, NULL, NULL);
    }
 }
 
@@ -648,7 +648,7 @@ vbo_draw_arrays(struct gl_context *ctx, GLenum mode, GLint start,
          /* draw one or two prims */
          check_buffers_are_unmapped(exec->array.inputs);
          vbo->draw_prims(ctx, prim, primCount, NULL,
-                         GL_TRUE, start, start + count - 1, NULL);
+                         GL_TRUE, start, start + count - 1, NULL, NULL);
       }
    }
    else {
@@ -659,7 +659,7 @@ vbo_draw_arrays(struct gl_context *ctx, GLenum mode, GLint start,
       check_buffers_are_unmapped(exec->array.inputs);
       vbo->draw_prims(ctx, prim, 1, NULL,
                       GL_TRUE, start, start + count - 1,
-                      NULL);
+                      NULL, NULL);
    }
 
    if (MESA_DEBUG_FLAGS & DEBUG_ALWAYS_FLUSH) {
@@ -1490,7 +1490,7 @@ vbo_draw_transform_feedback(struct gl_context *ctx, GLenum mode,
 
    check_buffers_are_unmapped(exec->array.inputs);
    vbo->draw_prims(ctx, prim, 1, NULL,
-                   GL_TRUE, 0, 0, obj);
+                   GL_TRUE, 0, 0, obj, NULL);
 
    if (MESA_DEBUG_FLAGS & DEBUG_ALWAYS_FLUSH) {
       _mesa_flush(ctx);

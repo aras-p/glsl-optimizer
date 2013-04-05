@@ -254,7 +254,7 @@ st_RasterPos(struct gl_context *ctx, const GLfloat v[4])
     * st_feedback_draw_vbo doesn't check for that flag. */
    ctx->Array._DrawArrays = rs->arrays;
    st_feedback_draw_vbo(ctx, &rs->prim, 1, NULL, GL_TRUE, 0, 1,
-                        NULL);
+                        NULL, NULL);
    ctx->Array._DrawArrays = saved_arrays;
 
    /* restore draw's rasterization stage depending on rendermode */

@@ -94,7 +94,7 @@ static void flush_vertex( struct split_context *split )
 	       !split->ib,
 	       split->min_index,
 	       split->max_index,
-	       NULL);
+	       NULL, NULL);
 
    ctx->Array._DrawArrays = saved_arrays;
    ctx->NewDriverState |= ctx->DriverFlags.NewArray;
