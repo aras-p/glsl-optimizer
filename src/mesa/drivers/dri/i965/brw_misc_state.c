@@ -530,7 +530,6 @@ brw_workaround_depthstencil_alignment(struct brw_context *brw,
    brw->depthstencil.hiz_offset = 0;
    brw->depthstencil.depth_mt = NULL;
    brw->depthstencil.stencil_mt = NULL;
-   brw->depthstencil.hiz_mt = NULL;
    if (depth_irb) {
       depth_mt = depth_irb->mt;
       brw->depthstencil.depth_mt = depth_mt;
@@ -540,7 +539,6 @@ brw_workaround_depthstencil_alignment(struct brw_context *brw,
                                          depth_irb->draw_y & ~tile_mask_y,
                                          false);
       if (intel_renderbuffer_has_hiz(depth_irb)) {
-         brw->depthstencil.hiz_mt = depth_mt->hiz_mt;
          brw->depthstencil.hiz_offset =
             intel_region_get_aligned_offset(depth_mt->region,
                                             depth_irb->draw_x & ~tile_mask_x,

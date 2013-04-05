@@ -1083,7 +1083,6 @@ struct brw_context
    struct {
       struct intel_mipmap_tree *depth_mt;
       struct intel_mipmap_tree *stencil_mt;
-      struct intel_mipmap_tree *hiz_mt;
 
       /* Inter-tile (page-aligned) byte offsets. */
       uint32_t depth_offset, hiz_offset, stencil_offset;
