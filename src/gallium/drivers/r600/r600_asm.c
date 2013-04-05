@@ -524,7 +524,7 @@ static int check_and_set_bank_swizzle(struct r600_bytecode *bc,
 		} else
 			r = 0;
 
-		if (!r && slots[4] && max_slots == 5) {
+		if (!r && max_slots == 5 && slots[4]) {
 			r = check_scalar(bc, slots[4], &bs, bank_swizzle[4]);
 		}
 		if (!r) {
