@@ -583,7 +583,7 @@ util_copy_constant_buffer(struct pipe_constant_buffer *dst,
 }
 
 static INLINE unsigned
-util_max_layer(struct pipe_resource *r, unsigned level)
+util_max_layer(const struct pipe_resource *r, unsigned level)
 {
    switch (r->target) {
    case PIPE_TEXTURE_CUBE:
