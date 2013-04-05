@@ -59,6 +59,8 @@ public:
    ~fs_live_variables();
 
    void setup_def_use();
+   void setup_one_read(bblock_t *block, fs_inst *inst, int ip, fs_reg reg);
+   void setup_one_write(bblock_t *block, fs_inst *inst, int ip, fs_reg reg);
    void compute_live_variables();
 
    fs_visitor *v;

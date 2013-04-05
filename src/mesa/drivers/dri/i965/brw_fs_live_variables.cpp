@@ -50,6 +50,35 @@ using namespace brw;
  * 14.1 (p444).
  */
 
+void
+fs_live_variables::setup_one_read(bblock_t *block, fs_inst *inst,
+                                  int ip, fs_reg reg)
+{
+   int var = var_from_vgrf[reg.reg] + reg.reg_offset;
+
+   /* The use[] bitset marks when the block makes use of a variable (VGRF
+    * channel) without having completely defined that variable within the
+    * block.
+    */
+   if (!BITSET_TEST(bd[block->block_num].def, var))
+      BITSET_SET(bd[block->block_num].use, var);
+}
+
+void
+fs_live_variables::setup_one_write(bblock_t *block, fs_inst *inst,
+                                   int ip, fs_reg reg)
+{
+   int var = var_from_vgrf[reg.reg] + reg.reg_offset;
+
+   /* The def[] bitset marks when an initialization in a block completely
+    * screens off previous updates of that variable (VGRF channel).
+    */
+   if (inst->dst.file == GRF && !inst->is_partial_write()) {
+      if (!BITSET_TEST(bd[block->block_num].use, var))
+         BITSET_SET(bd[block->block_num].def, var);
+   }
+}
+
 /**
  * Sets up the use[] and def[] bitsets.
  *
@@ -77,7 +106,9 @@ fs_live_variables::setup_def_use()
 
 	 /* Set use[] for this instruction */
 	 for (unsigned int i = 0; i < 3; i++) {
-	    if (inst->src[i].file != GRF)
+            fs_reg reg = inst->src[i];
+
+            if (reg.file != GRF)
                continue;
 
             int regs_read = 1;
@@ -85,26 +116,20 @@ fs_live_variables::setup_def_use()
              * so just assume "all of them."
              */
             if (inst->is_send_from_grf())
-               regs_read = v->virtual_grf_sizes[inst->src[i].reg];
+               regs_read = v->virtual_grf_sizes[reg.reg];
 
-            for (int j = 0; j < regs_read; j++) {
-               int var = var_from_vgrf[inst->src[i].reg] +
-                         inst->src[i].reg_offset + j;
-
-               if (!BITSET_TEST(bd[b].def, var))
-                  BITSET_SET(bd[b].use, var);
+            for (int i = 0; i < regs_read; i++) {
+               setup_one_read(block, inst, ip, reg);
+               reg.reg_offset++;
             }
 	 }
 
-	 /* Check for unconditional writes to whole registers. These
-	  * are the things that screen off preceding definitions of a
-	  * variable, and thus qualify for being in def[].
-	  */
-	 if (inst->dst.file == GRF && !inst->is_partial_write()) {
-            int var = var_from_vgrf[inst->dst.reg] + inst->dst.reg_offset;
+         /* Set def[] for this instruction */
+         if (inst->dst.file == GRF) {
+            fs_reg reg = inst->dst;
             for (int j = 0; j < inst->regs_written; j++) {
-               if (!BITSET_TEST(bd[b].use, var + j))
-                  BITSET_SET(bd[b].def, var + j);
+               setup_one_write(block, inst, ip, reg);
+               reg.reg_offset++;
             }
 	 }
 
