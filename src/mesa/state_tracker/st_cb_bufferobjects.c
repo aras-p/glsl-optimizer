@@ -225,6 +225,9 @@ st_bufferobj_data(struct gl_context *ctx,
    case GL_UNIFORM_BUFFER:
       bind = PIPE_BIND_CONSTANT_BUFFER;
       break;
+   case GL_DRAW_INDIRECT_BUFFER:
+      bind = PIPE_BIND_COMMAND_ARGS_BUFFER;
+      break;
    default:
       bind = 0;
    }

@@ -432,6 +432,7 @@ void st_init_extensions(struct st_context *st)
       { o(ARB_texture_multisample),          PIPE_CAP_TEXTURE_MULTISAMPLE              },
       { o(ARB_texture_query_lod),            PIPE_CAP_TEXTURE_QUERY_LOD                },
       { o(ARB_sample_shading),               PIPE_CAP_SAMPLE_SHADING                   },
+      { o(ARB_draw_indirect),                PIPE_CAP_DRAW_INDIRECT                    }
    };
 
    /* Required: render target and sampler support */
