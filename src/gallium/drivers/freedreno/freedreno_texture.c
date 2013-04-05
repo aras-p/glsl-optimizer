@@ -87,13 +87,13 @@ fd_sampler_state_create(struct pipe_context *pctx,
 
 	/* SQ_TEX0_PITCH() must be OR'd in later when we know the bound texture: */
 	so->tex0 =
-		SQ_TEX0_CLAMP_X(tex_clamp(cso->wrap_s)) |
-		SQ_TEX0_CLAMP_Y(tex_clamp(cso->wrap_t)) |
-		SQ_TEX0_CLAMP_Z(tex_clamp(cso->wrap_r));
+		A2XX_SQ_TEX_0_CLAMP_X(tex_clamp(cso->wrap_s)) |
+		A2XX_SQ_TEX_0_CLAMP_Y(tex_clamp(cso->wrap_t)) |
+		A2XX_SQ_TEX_0_CLAMP_Z(tex_clamp(cso->wrap_r));
 
 	so->tex3 =
-		SQ_TEX3_XY_MAG_FILTER(tex_filter(cso->mag_img_filter)) |
-		SQ_TEX3_XY_MIN_FILTER(tex_filter(cso->min_img_filter));
+		A2XX_SQ_TEX_3_XY_MAG_FILTER(tex_filter(cso->mag_img_filter)) |
+		A2XX_SQ_TEX_3_XY_MIN_FILTER(tex_filter(cso->min_img_filter));
 
 	so->tex4 = 0x00000000; /* ??? */
 	so->tex5 = 0x00000200; /* ??? */
@@ -126,10 +126,10 @@ fd_sampler_view_create(struct pipe_context *pctx, struct pipe_resource *prsc,
 	so->tex_resource =  rsc;
 	so->fmt = fd_pipe2surface(cso->format);
 
-	so->tex0 = SQ_TEX0_PITCH(rsc->pitch);
+	so->tex0 = A2XX_SQ_TEX_0_PITCH(rsc->pitch);
 	so->tex2 =
-		SQ_TEX2_HEIGHT(prsc->height0) |
-		SQ_TEX2_WIDTH(prsc->width0);
+		A2XX_SQ_TEX_2_HEIGHT(prsc->height0 - 1) |
+		A2XX_SQ_TEX_2_WIDTH(prsc->width0 - 1);
 	so->tex3 = fd_tex_swiz(cso->format, cso->swizzle_r, cso->swizzle_g,
 			cso->swizzle_b, cso->swizzle_a);
 

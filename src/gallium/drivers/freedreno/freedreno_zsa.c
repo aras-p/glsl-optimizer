@@ -35,7 +35,7 @@
 #include "freedreno_context.h"
 #include "freedreno_util.h"
 
-static enum rb_stencil_op
+static enum adreno_stencil_op
 stencil_op(unsigned op)
 {
 	switch (op) {
@@ -74,48 +74,48 @@ fd_zsa_state_create(struct pipe_context *pctx,
 	so->base = *cso;
 
 	so->rb_depthcontrol |=
-		RB_DEPTHCONTROL_ZFUNC(cso->depth.func); /* maps 1:1 */
+		A2XX_RB_DEPTHCONTROL_ZFUNC(cso->depth.func); /* maps 1:1 */
 
 	if (cso->depth.enabled)
-		so->rb_depthcontrol |= RB_DEPTHCONTROL_Z_ENABLE;
+		so->rb_depthcontrol |= A2XX_RB_DEPTHCONTROL_Z_ENABLE;
 	if (cso->depth.writemask)
-		so->rb_depthcontrol |= RB_DEPTHCONTROL_Z_WRITE_ENABLE;
+		so->rb_depthcontrol |= A2XX_RB_DEPTHCONTROL_Z_WRITE_ENABLE;
 
 	if (cso->stencil[0].enabled) {
 		const struct pipe_stencil_state *s = &cso->stencil[0];
 
 		so->rb_depthcontrol |=
-			RB_DEPTHCONTROL_STENCIL_ENABLE |
-			RB_DEPTHCONTROL_STENCILFUNC(s->func) | /* maps 1:1 */
-			RB_DEPTHCONTROL_STENCILFAIL(stencil_op(s->fail_op)) |
-			RB_DEPTHCONTROL_STENCILZPASS(stencil_op(s->zpass_op)) |
-			RB_DEPTHCONTROL_STENCILZFAIL(stencil_op(s->zfail_op));
+			A2XX_RB_DEPTHCONTROL_STENCIL_ENABLE |
+			A2XX_RB_DEPTHCONTROL_STENCILFUNC(s->func) | /* maps 1:1 */
+			A2XX_RB_DEPTHCONTROL_STENCILFAIL(stencil_op(s->fail_op)) |
+			A2XX_RB_DEPTHCONTROL_STENCILZPASS(stencil_op(s->zpass_op)) |
+			A2XX_RB_DEPTHCONTROL_STENCILZFAIL(stencil_op(s->zfail_op));
 		so->rb_stencilrefmask |=
 			0xff000000 | /* ??? */
-			RB_STENCILREFMASK_STENCILWRITEMASK(s->writemask) |
-			RB_STENCILREFMASK_STENCILMASK(s->valuemask);
+			A2XX_RB_STENCILREFMASK_STENCILWRITEMASK(s->writemask) |
+			A2XX_RB_STENCILREFMASK_STENCILMASK(s->valuemask);
 
 		if (cso->stencil[1].enabled) {
 			const struct pipe_stencil_state *bs = &cso->stencil[1];
 
 			so->rb_depthcontrol |=
-				RB_DEPTHCONTROL_BACKFACE_ENABLE |
-				RB_DEPTHCONTROL_STENCILFUNC_BF(bs->func) | /* maps 1:1 */
-				RB_DEPTHCONTROL_STENCILFAIL_BF(stencil_op(bs->fail_op)) |
-				RB_DEPTHCONTROL_STENCILZPASS_BF(stencil_op(bs->zpass_op)) |
-				RB_DEPTHCONTROL_STENCILZFAIL_BF(stencil_op(bs->zfail_op));
+				A2XX_RB_DEPTHCONTROL_BACKFACE_ENABLE |
+				A2XX_RB_DEPTHCONTROL_STENCILFUNC_BF(bs->func) | /* maps 1:1 */
+				A2XX_RB_DEPTHCONTROL_STENCILFAIL_BF(stencil_op(bs->fail_op)) |
+				A2XX_RB_DEPTHCONTROL_STENCILZPASS_BF(stencil_op(bs->zpass_op)) |
+				A2XX_RB_DEPTHCONTROL_STENCILZFAIL_BF(stencil_op(bs->zfail_op));
 			so->rb_stencilrefmask_bf |=
 				0xff000000 | /* ??? */
-				RB_STENCILREFMASK_STENCILWRITEMASK(bs->writemask) |
-				RB_STENCILREFMASK_STENCILMASK(bs->valuemask);
+				A2XX_RB_STENCILREFMASK_STENCILWRITEMASK(bs->writemask) |
+				A2XX_RB_STENCILREFMASK_STENCILMASK(bs->valuemask);
 		}
 	}
 
 	if (cso->alpha.enabled) {
 		so->rb_colorcontrol =
-			RB_COLORCONTROL_ALPHA_FUNC(cso->alpha.func) |
-			RB_COLORCONTROL_ALPHA_TEST_ENABLE;
-		so->rb_alpha_ref = f2d(cso->alpha.ref_value);
+			A2XX_RB_COLORCONTROL_ALPHA_FUNC(cso->alpha.func) |
+			A2XX_RB_COLORCONTROL_ALPHA_TEST_ENABLE;
+		so->rb_alpha_ref = fui(cso->alpha.ref_value);
 	}
 
 	return so;

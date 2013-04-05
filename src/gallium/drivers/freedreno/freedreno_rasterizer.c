@@ -36,16 +36,16 @@
 #include "freedreno_util.h"
 
 
-static enum pa_su_sc_draw
+static enum adreno_pa_su_sc_draw
 polygon_mode(unsigned mode)
 {
 	switch (mode) {
 	case PIPE_POLYGON_MODE_POINT:
-		return DRAW_POINTS;
+		return PC_DRAW_POINTS;
 	case PIPE_POLYGON_MODE_LINE:
-		return DRAW_LINES;
+		return PC_DRAW_LINES;
 	case PIPE_POLYGON_MODE_FILL:
-		return DRAW_TRIANGLES;
+		return PC_DRAW_TRIANGLES;
 	default:
 		DBG("invalid polygon mode: %u", mode);
 		return 0;
@@ -75,55 +75,55 @@ fd_rasterizer_state_create(struct pipe_context *pctx,
 	so->base = *cso;
 
 	so->pa_sc_line_stipple = cso->line_stipple_enable ?
-		PA_SC_LINE_STIPPLE_LINE_PATTERN(cso->line_stipple_pattern) |
-		PA_SC_LINE_STIPPLE_REPEAT_COUNT(cso->line_stipple_factor) : 0;
+		A2XX_PA_SC_LINE_STIPPLE_LINE_PATTERN(cso->line_stipple_pattern) |
+		A2XX_PA_SC_LINE_STIPPLE_REPEAT_COUNT(cso->line_stipple_factor) : 0;
 
 	so->pa_cl_clip_cntl = 0; // TODO
 
 	so->pa_su_vtx_cntl =
-		PA_SU_VTX_CNTL_PIX_CENTER(cso->gl_rasterization_rules ? PIXCENTER_OGL : PIXCENTER_D3D) |
-		PA_SU_VTX_CNTL_QUANT_MODE(ONE_SIXTEENTH);
+		A2XX_PA_SU_VTX_CNTL_PIX_CENTER(cso->gl_rasterization_rules ? PIXCENTER_OGL : PIXCENTER_D3D) |
+		A2XX_PA_SU_VTX_CNTL_QUANT_MODE(ONE_SIXTEENTH);
 
 	so->pa_su_point_size =
-		PA_SU_POINT_SIZE_HEIGHT(cso->point_size/2) |
-		PA_SU_POINT_SIZE_WIDTH(cso->point_size/2);
+		A2XX_PA_SU_POINT_SIZE_HEIGHT(cso->point_size/2) |
+		A2XX_PA_SU_POINT_SIZE_WIDTH(cso->point_size/2);
 
 	so->pa_su_point_minmax =
-		PA_SU_POINT_MINMAX_MIN_SIZE(psize_min/2) |
-		PA_SU_POINT_MINMAX_MAX_SIZE(psize_max/2);
+		A2XX_PA_SU_POINT_MINMAX_MIN(psize_min/2) |
+		A2XX_PA_SU_POINT_MINMAX_MAX(psize_max/2);
 
 	so->pa_su_line_cntl =
-		PA_SU_LINE_CNTL_WIDTH(cso->line_width/2);
+		A2XX_PA_SU_LINE_CNTL_WIDTH(cso->line_width/2);
 
 	so->pa_su_sc_mode_cntl =
-		PA_SU_SC_MODE_CNTL_VTX_WINDOW_OFFSET_ENABLE |
-		PA_SU_SC_MODE_CNTL_POLYMODE_FRONT_PTYPE(polygon_mode(cso->fill_front)) |
-		PA_SU_SC_MODE_CNTL_POLYMODE_BACK_PTYPE(polygon_mode(cso->fill_back));
+		A2XX_PA_SU_SC_MODE_CNTL_VTX_WINDOW_OFFSET_ENABLE |
+		A2XX_PA_SU_SC_MODE_CNTL_FRONT_PTYPE(polygon_mode(cso->fill_front)) |
+		A2XX_PA_SU_SC_MODE_CNTL_BACK_PTYPE(polygon_mode(cso->fill_back));
 
 	if (cso->cull_face & PIPE_FACE_FRONT)
-		so->pa_su_sc_mode_cntl |= PA_SU_SC_MODE_CNTL_CULL_FRONT;
+		so->pa_su_sc_mode_cntl |= A2XX_PA_SU_SC_MODE_CNTL_CULL_FRONT;
 	if (cso->cull_face & PIPE_FACE_BACK)
-		so->pa_su_sc_mode_cntl |= PA_SU_SC_MODE_CNTL_CULL_BACK;
+		so->pa_su_sc_mode_cntl |= A2XX_PA_SU_SC_MODE_CNTL_CULL_BACK;
 	if (!cso->flatshade_first)
-		so->pa_su_sc_mode_cntl |= PA_SU_SC_MODE_CNTL_PROVOKING_VTX_LAST;
+		so->pa_su_sc_mode_cntl |= A2XX_PA_SU_SC_MODE_CNTL_PROVOKING_VTX_LAST;
 	if (!cso->front_ccw)
-		so->pa_su_sc_mode_cntl |= PA_SU_SC_MODE_CNTL_FACE;
+		so->pa_su_sc_mode_cntl |= A2XX_PA_SU_SC_MODE_CNTL_FACE;
 	if (cso->line_stipple_enable)
-		so->pa_su_sc_mode_cntl |= PA_SU_SC_MODE_CNTL_LINE_STIPPLE_ENABLE;
+		so->pa_su_sc_mode_cntl |= A2XX_PA_SU_SC_MODE_CNTL_LINE_STIPPLE_ENABLE;
 	if (cso->multisample)
-		so->pa_su_sc_mode_cntl |= PA_SU_SC_MODE_CNTL_MSAA_ENABLE;
+		so->pa_su_sc_mode_cntl |= A2XX_PA_SU_SC_MODE_CNTL_MSAA_ENABLE;
 
 	if (cso->fill_front != PIPE_POLYGON_MODE_FILL ||
 			cso->fill_back != PIPE_POLYGON_MODE_FILL)
-		so->pa_su_sc_mode_cntl |= PA_SU_SC_MODE_CNTL_POLYMODE(POLY_DUALMODE);
+		so->pa_su_sc_mode_cntl |= A2XX_PA_SU_SC_MODE_CNTL_POLYMODE(POLY_DUALMODE);
 	else
-		so->pa_su_sc_mode_cntl |= PA_SU_SC_MODE_CNTL_POLYMODE(POLY_DISABLED);
+		so->pa_su_sc_mode_cntl |= A2XX_PA_SU_SC_MODE_CNTL_POLYMODE(POLY_DISABLED);
 
 	if (cso->offset_tri)
 		so->pa_su_sc_mode_cntl |=
-			PA_SU_SC_MODE_CNTL_POLY_OFFSET_FRONT_ENABLE |
-			PA_SU_SC_MODE_CNTL_POLY_OFFSET_BACK_ENABLE |
-			PA_SU_SC_MODE_CNTL_POLY_OFFSET_PARA_ENABLE;
+			A2XX_PA_SU_SC_MODE_CNTL_POLY_OFFSET_FRONT_ENABLE |
+			A2XX_PA_SU_SC_MODE_CNTL_POLY_OFFSET_BACK_ENABLE |
+			A2XX_PA_SU_SC_MODE_CNTL_POLY_OFFSET_PARA_ENABLE;
 
 	return so;
 }

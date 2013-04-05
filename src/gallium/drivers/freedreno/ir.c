@@ -29,7 +29,7 @@
 #include <assert.h>
 
 #include "freedreno_util.h"
-#include "instr.h"
+#include "instr-a2xx.h"
 
 #define DEBUG_MSG(f, ...)  do { if (0) DBG(f, ##__VA_ARGS__); } while (0)
 #define WARN_MSG(f, ...)   DBG("WARN:  "f, ##__VA_ARGS__)

@@ -21,12 +21,15 @@
  * SOFTWARE.
  */
 
-#ifndef INSTR_H_
-#define INSTR_H_
-
-#include "freedreno_a2xx_reg.h"
+#ifndef INSTR_A2XX_H_
+#define INSTR_A2XX_H_
 
 #define PACKED __attribute__((__packed__))
+
+#include "util/u_math.h"
+#include "adreno_common.xml.h"
+#include "a2xx.xml.h"
+
 
 /*
  * ALU instructions:
@@ -301,7 +304,7 @@ typedef enum {
 	SAMPLE_CENTER = 1,
 } instr_sample_loc_t;
 
-typedef enum sq_surfaceformat instr_surf_fmt_t;
+typedef enum a2xx_sq_surfaceformat instr_surf_fmt_t;
 
 typedef struct PACKED {
 	/* dword0: */

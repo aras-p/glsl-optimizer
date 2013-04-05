@@ -48,13 +48,12 @@ void fd_zsa_init(struct pipe_context *pctx);
 
 static inline bool fd_depth_enabled(struct fd_zsa_stateobj *zsa)
 {
-	return !!(zsa->rb_depthcontrol & RB_DEPTHCONTROL_Z_ENABLE);
+	return zsa->base.depth.enabled;
 }
 
 static inline bool fd_stencil_enabled(struct fd_zsa_stateobj *zsa)
 {
-	//RB_DEPTHCONTROL_STENCIL_ENABLE
-	return !!(zsa->rb_depthcontrol & RB_DEPTHCONTROL_STENCIL_ENABLE);
+	return zsa->base.stencil[0].enabled;
 }
 
 #endif /* FREEDRENO_ZSA_H_ */

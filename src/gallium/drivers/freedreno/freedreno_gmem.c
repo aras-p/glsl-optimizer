@@ -78,23 +78,24 @@ emit_gmem2mem_surf(struct fd_ringbuffer *ring, uint32_t swap, uint32_t base,
 	struct fd_resource *rsc = fd_resource(psurf->texture);
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
-	OUT_RING(ring, CP_REG(REG_RB_COLOR_INFO));
-	OUT_RING(ring, RB_COLOR_INFO_COLOR_SWAP(swap) |
-			RB_COLOR_INFO_COLOR_BASE(base / 1024) |
-			RB_COLOR_INFO_COLOR_FORMAT(fd_pipe2color(psurf->format)));
+	OUT_RING(ring, CP_REG(REG_A2XX_RB_COLOR_INFO));
+	OUT_RING(ring, A2XX_RB_COLOR_INFO_SWAP(swap) |
+			A2XX_RB_COLOR_INFO_BASE(base / 1024) |
+			A2XX_RB_COLOR_INFO_FORMAT(fd_pipe2color(psurf->format)));
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 5);
-	OUT_RING(ring, CP_REG(REG_RB_COPY_CONTROL));
+	OUT_RING(ring, CP_REG(REG_A2XX_RB_COPY_CONTROL));
 	OUT_RING(ring, 0x00000000);             /* RB_COPY_CONTROL */
 	OUT_RELOC(ring, rsc->bo, 0, 0);         /* RB_COPY_DEST_BASE */
 	OUT_RING(ring, rsc->pitch >> 5);        /* RB_COPY_DEST_PITCH */
-	OUT_RING(ring, RB_COPY_DEST_INFO_FORMAT(fd_pipe2color(psurf->format)) |
-			RB_COPY_DEST_INFO_LINEAR |      /* RB_COPY_DEST_INFO */
-			RB_COPY_DEST_INFO_SWAP(swap) |
-			RB_COPY_DEST_INFO_WRITE_RED |
-			RB_COPY_DEST_INFO_WRITE_GREEN |
-			RB_COPY_DEST_INFO_WRITE_BLUE |
-			RB_COPY_DEST_INFO_WRITE_ALPHA);
+	OUT_RING(ring,                          /* RB_COPY_DEST_INFO */
+			A2XX_RB_COPY_DEST_INFO_FORMAT(fd_pipe2color(psurf->format)) |
+			A2XX_RB_COPY_DEST_INFO_LINEAR |
+			A2XX_RB_COPY_DEST_INFO_SWAP(swap) |
+			A2XX_RB_COPY_DEST_INFO_WRITE_RED |
+			A2XX_RB_COPY_DEST_INFO_WRITE_GREEN |
+			A2XX_RB_COPY_DEST_INFO_WRITE_BLUE |
+			A2XX_RB_COPY_DEST_INFO_WRITE_ALPHA);
 
 	OUT_PKT3(ring, CP_WAIT_FOR_IDLE, 1);
 	OUT_RING(ring, 0x0000000);
@@ -117,53 +118,54 @@ emit_gmem2mem(struct fd_context *ctx, struct fd_ringbuffer *ring,
 		}, 1);
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
-	OUT_RING(ring, CP_REG(REG_VGT_INDX_OFFSET));
+	OUT_RING(ring, CP_REG(REG_A2XX_VGT_INDX_OFFSET));
 	OUT_RING(ring, 0);
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
-	OUT_RING(ring, CP_REG(REG_VGT_VERTEX_REUSE_BLOCK_CNTL));
+	OUT_RING(ring, CP_REG(REG_A2XX_VGT_VERTEX_REUSE_BLOCK_CNTL));
 	OUT_RING(ring, 0x0000028f);
 
 	fd_program_emit(ring, &ctx->solid_prog);
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
-	OUT_RING(ring, CP_REG(REG_PA_SC_AA_MASK));
+	OUT_RING(ring, CP_REG(REG_A2XX_PA_SC_AA_MASK));
 	OUT_RING(ring, 0x0000ffff);
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
-	OUT_RING(ring, CP_REG(REG_RB_DEPTHCONTROL));
-	OUT_RING(ring, RB_DEPTHCONTROL_EARLY_Z_ENABLE);
+	OUT_RING(ring, CP_REG(REG_A2XX_RB_DEPTHCONTROL));
+	OUT_RING(ring, A2XX_RB_DEPTHCONTROL_EARLY_Z_ENABLE);
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
-	OUT_RING(ring, CP_REG(REG_PA_SU_SC_MODE_CNTL));
-	OUT_RING(ring, PA_SU_SC_MODE_CNTL_PROVOKING_VTX_LAST |  /* PA_SU_SC_MODE_CNTL */
-			PA_SU_SC_MODE_CNTL_POLYMODE_FRONT_PTYPE(DRAW_TRIANGLES) |
-			PA_SU_SC_MODE_CNTL_POLYMODE_BACK_PTYPE(DRAW_TRIANGLES));
+	OUT_RING(ring, CP_REG(REG_A2XX_PA_SU_SC_MODE_CNTL));
+	OUT_RING(ring, A2XX_PA_SU_SC_MODE_CNTL_PROVOKING_VTX_LAST |  /* PA_SU_SC_MODE_CNTL */
+			A2XX_PA_SU_SC_MODE_CNTL_FRONT_PTYPE(PC_DRAW_TRIANGLES) |
+			A2XX_PA_SU_SC_MODE_CNTL_BACK_PTYPE(PC_DRAW_TRIANGLES));
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 3);
-	OUT_RING(ring, CP_REG(REG_PA_SC_WINDOW_SCISSOR_TL));
+	OUT_RING(ring, CP_REG(REG_A2XX_PA_SC_WINDOW_SCISSOR_TL));
 	OUT_RING(ring, xy2d(0, 0));                       /* PA_SC_WINDOW_SCISSOR_TL */
 	OUT_RING(ring, xy2d(pfb->width, pfb->height));    /* PA_SC_WINDOW_SCISSOR_BR */
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
-	OUT_RING(ring, CP_REG(REG_PA_CL_VTE_CNTL));
-	OUT_RING(ring, PA_CL_VTE_CNTL_VTX_W0_FMT |
-			PA_CL_VTE_CNTL_VPORT_X_SCALE_ENA |
-			PA_CL_VTE_CNTL_VPORT_X_OFFSET_ENA |
-			PA_CL_VTE_CNTL_VPORT_Y_SCALE_ENA |
-			PA_CL_VTE_CNTL_VPORT_Y_OFFSET_ENA);
+	OUT_RING(ring, CP_REG(REG_A2XX_PA_CL_VTE_CNTL));
+	OUT_RING(ring, A2XX_PA_CL_VTE_CNTL_VTX_W0_FMT |
+			A2XX_PA_CL_VTE_CNTL_VPORT_X_SCALE_ENA |
+			A2XX_PA_CL_VTE_CNTL_VPORT_X_OFFSET_ENA |
+			A2XX_PA_CL_VTE_CNTL_VPORT_Y_SCALE_ENA |
+			A2XX_PA_CL_VTE_CNTL_VPORT_Y_OFFSET_ENA);
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
-	OUT_RING(ring, CP_REG(REG_PA_CL_CLIP_CNTL));
+	OUT_RING(ring, CP_REG(REG_A2XX_PA_CL_CLIP_CNTL));
 	OUT_RING(ring, 0x00000000);
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
-	OUT_RING(ring, CP_REG(REG_RB_MODECONTROL));
-	OUT_RING(ring, RB_MODECONTROL_EDRAM_MODE(EDRAM_COPY));
+	OUT_RING(ring, CP_REG(REG_A2XX_RB_MODECONTROL));
+	OUT_RING(ring, A2XX_RB_MODECONTROL_EDRAM_MODE(EDRAM_COPY));
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
-	OUT_RING(ring, CP_REG(REG_RB_COPY_DEST_OFFSET));
-	OUT_RING(ring, RB_COPY_DEST_OFFSET_X(xoff) | RB_COPY_DEST_OFFSET_Y(yoff));
+	OUT_RING(ring, CP_REG(REG_A2XX_RB_COPY_DEST_OFFSET));
+	OUT_RING(ring, A2XX_RB_COPY_DEST_OFFSET_X(xoff) |
+			A2XX_RB_COPY_DEST_OFFSET_Y(yoff));
 
 	if (ctx->resolve & (FD_BUFFER_DEPTH | FD_BUFFER_STENCIL))
 		emit_gmem2mem_surf(ring, 0, bin_w * bin_h, pfb->zsbuf);
@@ -172,8 +174,8 @@ emit_gmem2mem(struct fd_context *ctx, struct fd_ringbuffer *ring,
 		emit_gmem2mem_surf(ring, 1, 0, pfb->cbufs[0]);
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
-	OUT_RING(ring, CP_REG(REG_RB_MODECONTROL));
-	OUT_RING(ring, RB_MODECONTROL_EDRAM_MODE(COLOR_DEPTH));
+	OUT_RING(ring, CP_REG(REG_A2XX_RB_MODECONTROL));
+	OUT_RING(ring, A2XX_RB_MODECONTROL_EDRAM_MODE(COLOR_DEPTH));
 }
 
 /* transfer from system memory to gmem */
@@ -186,10 +188,10 @@ emit_mem2gmem_surf(struct fd_ringbuffer *ring, uint32_t swap, uint32_t base,
 	uint32_t swiz;
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
-	OUT_RING(ring, CP_REG(REG_RB_COLOR_INFO));
-	OUT_RING(ring, RB_COLOR_INFO_COLOR_SWAP(swap) |
-			RB_COLOR_INFO_COLOR_BASE(base / 1024) |
-			RB_COLOR_INFO_COLOR_FORMAT(fd_pipe2color(psurf->format)));
+	OUT_RING(ring, CP_REG(REG_A2XX_RB_COLOR_INFO));
+	OUT_RING(ring, A2XX_RB_COLOR_INFO_SWAP(swap) |
+			A2XX_RB_COLOR_INFO_BASE(base) |
+			A2XX_RB_COLOR_INFO_FORMAT(fd_pipe2color(psurf->format)));
 
 	swiz = fd_tex_swiz(psurf->format, PIPE_SWIZZLE_RED, PIPE_SWIZZLE_GREEN,
 			PIPE_SWIZZLE_BLUE, PIPE_SWIZZLE_ALPHA);
@@ -197,18 +199,18 @@ emit_mem2gmem_surf(struct fd_ringbuffer *ring, uint32_t swap, uint32_t base,
 	/* emit fb as a texture: */
 	OUT_PKT3(ring, CP_SET_CONSTANT, 7);
 	OUT_RING(ring, 0x00010000);
-	OUT_RING(ring, SQ_TEX0_CLAMP_X(SQ_TEX_WRAP) |
-			SQ_TEX0_CLAMP_Y(SQ_TEX_WRAP) |
-			SQ_TEX0_CLAMP_Z(SQ_TEX_WRAP) |
-			SQ_TEX0_PITCH(rsc->pitch));
+	OUT_RING(ring, A2XX_SQ_TEX_0_CLAMP_X(SQ_TEX_WRAP) |
+			A2XX_SQ_TEX_0_CLAMP_Y(SQ_TEX_WRAP) |
+			A2XX_SQ_TEX_0_CLAMP_Z(SQ_TEX_WRAP) |
+			A2XX_SQ_TEX_0_PITCH(rsc->pitch));
 	OUT_RELOC(ring, rsc->bo, 0,
 			fd_pipe2surface(psurf->format) | 0x800);
-	OUT_RING(ring, SQ_TEX2_WIDTH(psurf->width) |
-			SQ_TEX2_HEIGHT(psurf->height));
+	OUT_RING(ring, A2XX_SQ_TEX_2_WIDTH(psurf->width - 1) |
+			A2XX_SQ_TEX_2_HEIGHT(psurf->height - 1));
 	OUT_RING(ring, 0x01000000 | // XXX
 			swiz |
-			SQ_TEX3_XY_MAG_FILTER(SQ_TEX_FILTER_POINT) |
-			SQ_TEX3_XY_MIN_FILTER(SQ_TEX_FILTER_POINT));
+			A2XX_SQ_TEX_3_XY_MAG_FILTER(SQ_TEX_FILTER_POINT) |
+			A2XX_SQ_TEX_3_XY_MIN_FILTER(SQ_TEX_FILTER_POINT));
 	OUT_RING(ring, 0x00000000);
 	OUT_RING(ring, 0x00000200);
 
@@ -238,83 +240,83 @@ emit_mem2gmem(struct fd_context *ctx, struct fd_ringbuffer *ring,
 	y1 = ((float)yoff + bin_h) / ((float)pfb->height);
 	OUT_PKT3(ring, CP_MEM_WRITE, 9);
 	OUT_RELOC(ring, fd_resource(ctx->solid_vertexbuf)->bo, 0x60, 0);
-	OUT_RING(ring, f2d(x0));
-	OUT_RING(ring, f2d(y0));
-	OUT_RING(ring, f2d(x1));
-	OUT_RING(ring, f2d(y0));
-	OUT_RING(ring, f2d(x0));
-	OUT_RING(ring, f2d(y1));
-	OUT_RING(ring, f2d(x1));
-	OUT_RING(ring, f2d(y1));
+	OUT_RING(ring, fui(x0));
+	OUT_RING(ring, fui(y0));
+	OUT_RING(ring, fui(x1));
+	OUT_RING(ring, fui(y0));
+	OUT_RING(ring, fui(x0));
+	OUT_RING(ring, fui(y1));
+	OUT_RING(ring, fui(x1));
+	OUT_RING(ring, fui(y1));
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
-	OUT_RING(ring, CP_REG(REG_VGT_INDX_OFFSET));
+	OUT_RING(ring, CP_REG(REG_A2XX_VGT_INDX_OFFSET));
 	OUT_RING(ring, 0);
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
-	OUT_RING(ring, CP_REG(REG_VGT_VERTEX_REUSE_BLOCK_CNTL));
+	OUT_RING(ring, CP_REG(REG_A2XX_VGT_VERTEX_REUSE_BLOCK_CNTL));
 	OUT_RING(ring, 0x0000003b);
 
 	fd_program_emit(ring, &ctx->blit_prog);
 
-	OUT_PKT0(ring, REG_TC_CNTL_STATUS, 1);
-	OUT_RING(ring, TC_CNTL_STATUS_L2_INVALIDATE);
+	OUT_PKT0(ring, REG_A2XX_TC_CNTL_STATUS, 1);
+	OUT_RING(ring, A2XX_TC_CNTL_STATUS_L2_INVALIDATE);
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
-	OUT_RING(ring, CP_REG(REG_RB_DEPTHCONTROL));
-	OUT_RING(ring, RB_DEPTHCONTROL_EARLY_Z_ENABLE);
+	OUT_RING(ring, CP_REG(REG_A2XX_RB_DEPTHCONTROL));
+	OUT_RING(ring, A2XX_RB_DEPTHCONTROL_EARLY_Z_ENABLE);
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
-	OUT_RING(ring, CP_REG(REG_PA_SU_SC_MODE_CNTL));
-	OUT_RING(ring, PA_SU_SC_MODE_CNTL_PROVOKING_VTX_LAST |
-			PA_SU_SC_MODE_CNTL_POLYMODE_FRONT_PTYPE(DRAW_TRIANGLES) |
-			PA_SU_SC_MODE_CNTL_POLYMODE_BACK_PTYPE(DRAW_TRIANGLES));
+	OUT_RING(ring, CP_REG(REG_A2XX_PA_SU_SC_MODE_CNTL));
+	OUT_RING(ring, A2XX_PA_SU_SC_MODE_CNTL_PROVOKING_VTX_LAST |
+			A2XX_PA_SU_SC_MODE_CNTL_FRONT_PTYPE(PC_DRAW_TRIANGLES) |
+			A2XX_PA_SU_SC_MODE_CNTL_BACK_PTYPE(PC_DRAW_TRIANGLES));
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
-	OUT_RING(ring, CP_REG(REG_PA_SC_AA_MASK));
+	OUT_RING(ring, CP_REG(REG_A2XX_PA_SC_AA_MASK));
 	OUT_RING(ring, 0x0000ffff);
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
-	OUT_RING(ring, CP_REG(REG_RB_COLORCONTROL));
-	OUT_RING(ring, RB_COLORCONTROL_ALPHA_FUNC(PIPE_FUNC_ALWAYS) |
-			RB_COLORCONTROL_BLEND_DISABLE |
-			RB_COLORCONTROL_ROP_CODE(12) |
-			RB_COLORCONTROL_DITHER_MODE(DITHER_DISABLE) |
-			RB_COLORCONTROL_DITHER_TYPE(DITHER_PIXEL));
+	OUT_RING(ring, CP_REG(REG_A2XX_RB_COLORCONTROL));
+	OUT_RING(ring, A2XX_RB_COLORCONTROL_ALPHA_FUNC(PIPE_FUNC_ALWAYS) |
+			A2XX_RB_COLORCONTROL_BLEND_DISABLE |
+			A2XX_RB_COLORCONTROL_ROP_CODE(12) |
+			A2XX_RB_COLORCONTROL_DITHER_MODE(DITHER_DISABLE) |
+			A2XX_RB_COLORCONTROL_DITHER_TYPE(DITHER_PIXEL));
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
-	OUT_RING(ring, CP_REG(REG_RB_BLEND_CONTROL));
-	OUT_RING(ring, RB_BLENDCONTROL_COLOR_SRCBLEND(RB_BLEND_ONE) |
-			RB_BLENDCONTROL_COLOR_COMB_FCN(COMB_DST_PLUS_SRC) |
-			RB_BLENDCONTROL_COLOR_DESTBLEND(RB_BLEND_ZERO) |
-			RB_BLENDCONTROL_ALPHA_SRCBLEND(RB_BLEND_ONE) |
-			RB_BLENDCONTROL_ALPHA_COMB_FCN(COMB_DST_PLUS_SRC) |
-			RB_BLENDCONTROL_ALPHA_DESTBLEND(RB_BLEND_ZERO));
+	OUT_RING(ring, CP_REG(REG_A2XX_RB_BLEND_CONTROL));
+	OUT_RING(ring, A2XX_RB_BLEND_CONTROL_COLOR_SRCBLEND(FACTOR_ONE) |
+			A2XX_RB_BLEND_CONTROL_COLOR_COMB_FCN(BLEND_DST_PLUS_SRC) |
+			A2XX_RB_BLEND_CONTROL_COLOR_DESTBLEND(FACTOR_ZERO) |
+			A2XX_RB_BLEND_CONTROL_ALPHA_SRCBLEND(FACTOR_ONE) |
+			A2XX_RB_BLEND_CONTROL_ALPHA_COMB_FCN(BLEND_DST_PLUS_SRC) |
+			A2XX_RB_BLEND_CONTROL_ALPHA_DESTBLEND(FACTOR_ZERO));
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 3);
-	OUT_RING(ring, CP_REG(REG_PA_SC_WINDOW_SCISSOR_TL));
-	OUT_RING(ring, PA_SC_WINDOW_OFFSET_DISABLE |
+	OUT_RING(ring, CP_REG(REG_A2XX_PA_SC_WINDOW_SCISSOR_TL));
+	OUT_RING(ring, A2XX_PA_SC_WINDOW_OFFSET_DISABLE |
 			xy2d(0,0));                     /* PA_SC_WINDOW_SCISSOR_TL */
 	OUT_RING(ring, xy2d(bin_w, bin_h));     /* PA_SC_WINDOW_SCISSOR_BR */
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 5);
-	OUT_RING(ring, CP_REG(REG_PA_CL_VPORT_XSCALE));
-	OUT_RING(ring, f2d((float)bin_w/2.0));  /* PA_CL_VPORT_XSCALE */
-	OUT_RING(ring, f2d((float)bin_w/2.0));  /* PA_CL_VPORT_XOFFSET */
-	OUT_RING(ring, f2d(-(float)bin_h/2.0)); /* PA_CL_VPORT_YSCALE */
-	OUT_RING(ring, f2d((float)bin_h/2.0));  /* PA_CL_VPORT_YOFFSET */
+	OUT_RING(ring, CP_REG(REG_A2XX_PA_CL_VPORT_XSCALE));
+	OUT_RING(ring, fui((float)bin_w/2.0));  /* PA_CL_VPORT_XSCALE */
+	OUT_RING(ring, fui((float)bin_w/2.0));  /* PA_CL_VPORT_XOFFSET */
+	OUT_RING(ring, fui(-(float)bin_h/2.0)); /* PA_CL_VPORT_YSCALE */
+	OUT_RING(ring, fui((float)bin_h/2.0));  /* PA_CL_VPORT_YOFFSET */
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
-	OUT_RING(ring, CP_REG(REG_PA_CL_VTE_CNTL));
-	OUT_RING(ring, PA_CL_VTE_CNTL_VTX_XY_FMT |
-			PA_CL_VTE_CNTL_VTX_Z_FMT |       // XXX check this???
-			PA_CL_VTE_CNTL_VPORT_X_SCALE_ENA |
-			PA_CL_VTE_CNTL_VPORT_X_OFFSET_ENA |
-			PA_CL_VTE_CNTL_VPORT_Y_SCALE_ENA |
-			PA_CL_VTE_CNTL_VPORT_Y_OFFSET_ENA);
+	OUT_RING(ring, CP_REG(REG_A2XX_PA_CL_VTE_CNTL));
+	OUT_RING(ring, A2XX_PA_CL_VTE_CNTL_VTX_XY_FMT |
+			A2XX_PA_CL_VTE_CNTL_VTX_Z_FMT |       // XXX check this???
+			A2XX_PA_CL_VTE_CNTL_VPORT_X_SCALE_ENA |
+			A2XX_PA_CL_VTE_CNTL_VPORT_X_OFFSET_ENA |
+			A2XX_PA_CL_VTE_CNTL_VPORT_Y_SCALE_ENA |
+			A2XX_PA_CL_VTE_CNTL_VPORT_Y_OFFSET_ENA);
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
-	OUT_RING(ring, CP_REG(REG_PA_CL_CLIP_CNTL));
+	OUT_RING(ring, CP_REG(REG_A2XX_PA_CL_CLIP_CNTL));
 	OUT_RING(ring, 0x00000000);
 
 	if (ctx->restore & (FD_BUFFER_DEPTH | FD_BUFFER_STENCIL))
@@ -395,17 +397,11 @@ fd_gmem_render_tiles(struct pipe_context *pctx)
 	struct pipe_framebuffer_state *pfb = &ctx->framebuffer;
 	struct fd_gmem_stateobj *gmem = &ctx->gmem;
 	struct fd_ringbuffer *ring = ctx->ring;
-	enum rb_colorformatx colorformatx = fd_pipe2color(pfb->cbufs[0]->format);
+	enum a2xx_colorformatx colorformatx = fd_pipe2color(pfb->cbufs[0]->format);
 	uint32_t i, timestamp, yoff = 0;
-	uint32_t base, reg;
+	uint32_t reg;
 
 	calculate_tiles(ctx);
-
-	/* this should be true because bin_w/bin_h should be multiples of 32: */
-	assert(((gmem->bin_w * gmem->bin_h) % 1024) == 0);
-
-	/* depth/stencil starts after color buffer in GMEM: */
-	base = (gmem->bin_w * gmem->bin_h) / 1024;
 
 	DBG("rendering %dx%d tiles (%s/%s)", gmem->nbins_x, gmem->nbins_y,
 			util_format_name(pfb->cbufs[0]->format),
@@ -419,13 +415,13 @@ fd_gmem_render_tiles(struct pipe_context *pctx)
 	 * needs to be emitted for each tile:
 	 */
 	OUT_PKT3(ring, CP_SET_CONSTANT, 4);
-	OUT_RING(ring, CP_REG(REG_RB_SURFACE_INFO));
+	OUT_RING(ring, CP_REG(REG_A2XX_RB_SURFACE_INFO));
 	OUT_RING(ring, gmem->bin_w);                 /* RB_SURFACE_INFO */
-	OUT_RING(ring, RB_COLOR_INFO_COLOR_SWAP(1) | /* RB_COLOR_INFO */
-			RB_COLOR_INFO_COLOR_FORMAT(colorformatx));
-	reg = RB_DEPTH_INFO_DEPTH_BASE(ALIGN(base, 4));
+	OUT_RING(ring, A2XX_RB_COLOR_INFO_SWAP(1) | /* RB_COLOR_INFO */
+			A2XX_RB_COLOR_INFO_FORMAT(colorformatx));
+	reg = A2XX_RB_DEPTH_INFO_DEPTH_BASE(ALIGN(gmem->bin_w * gmem->bin_h, 4));
 	if (pfb->zsbuf)
-		reg |= RB_DEPTH_INFO_DEPTH_FORMAT(fd_pipe2depth(pfb->zsbuf->format));
+		reg |= A2XX_RB_DEPTH_INFO_DEPTH_FORMAT(fd_pipe2depth(pfb->zsbuf->format));
 	OUT_RING(ring, reg);                         /* RB_DEPTH_INFO */
 
 	yoff= gmem->miny;
@@ -445,17 +441,9 @@ fd_gmem_render_tiles(struct pipe_context *pctx)
 			DBG("bin_h=%d, yoff=%d, bin_w=%d, xoff=%d",
 					bh, yoff, bw, xoff);
 
-			if ((i == 0) && (j == 0)) {
-				uint32_t reg;
-
-
-			} else {
-
-			}
-
 			/* setup screen scissor for current tile (same for mem2gmem): */
 			OUT_PKT3(ring, CP_SET_CONSTANT, 3);
-			OUT_RING(ring, CP_REG(REG_PA_SC_SCREEN_SCISSOR_TL));
+			OUT_RING(ring, CP_REG(REG_A2XX_PA_SC_SCREEN_SCISSOR_TL));
 			OUT_RING(ring, xy2d(0,0));           /* PA_SC_SCREEN_SCISSOR_TL */
 			OUT_RING(ring, xy2d(bw, bh));        /* PA_SC_SCREEN_SCISSOR_BR */
 
@@ -463,23 +451,23 @@ fd_gmem_render_tiles(struct pipe_context *pctx)
 				emit_mem2gmem(ctx, ring, xoff, yoff, bw, bh);
 
 			OUT_PKT3(ring, CP_SET_CONSTANT, 2);
-			OUT_RING(ring, CP_REG(REG_RB_COLOR_INFO));
-			OUT_RING(ring, RB_COLOR_INFO_COLOR_SWAP(1) | /* RB_COLOR_INFO */
-					RB_COLOR_INFO_COLOR_FORMAT(colorformatx));
+			OUT_RING(ring, CP_REG(REG_A2XX_RB_COLOR_INFO));
+			OUT_RING(ring, A2XX_RB_COLOR_INFO_SWAP(1) | /* RB_COLOR_INFO */
+					A2XX_RB_COLOR_INFO_FORMAT(colorformatx));
 
 			/* setup window scissor and offset for current tile (different
 			 * from mem2gmem):
 			 */
 			OUT_PKT3(ring, CP_SET_CONSTANT, 2);
-			OUT_RING(ring, CP_REG(REG_PA_SC_WINDOW_OFFSET));
-			OUT_RING(ring, PA_SC_WINDOW_OFFSET_X(-xoff) |
-					PA_SC_WINDOW_OFFSET_Y(-yoff));/* PA_SC_WINDOW_OFFSET */
+			OUT_RING(ring, CP_REG(REG_A2XX_PA_SC_WINDOW_OFFSET));
+			OUT_RING(ring, A2XX_PA_SC_WINDOW_OFFSET_X(-xoff) |
+					A2XX_PA_SC_WINDOW_OFFSET_Y(-yoff));/* PA_SC_WINDOW_OFFSET */
 
 			/* emit IB to drawcmds: */
 			OUT_IB  (ring, ctx->draw_start, ctx->draw_end);
 
 			OUT_PKT3(ring, CP_SET_CONSTANT, 2);
-			OUT_RING(ring, CP_REG(REG_PA_SC_WINDOW_OFFSET));
+			OUT_RING(ring, CP_REG(REG_A2XX_PA_SC_WINDOW_OFFSET));
 			OUT_RING(ring, 0x00000000);          /* PA_SC_WINDOW_OFFSET */
 
 			/* emit gmem2mem to transfer tile back to system memory: */

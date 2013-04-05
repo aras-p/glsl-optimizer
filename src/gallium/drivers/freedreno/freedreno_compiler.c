@@ -40,7 +40,7 @@
 #include "freedreno_compiler.h"
 #include "freedreno_util.h"
 
-#include "instr.h"
+#include "instr-a2xx.h"
 #include "ir.h"
 
 struct fd_compile_context {
@@ -875,10 +875,10 @@ translate_sge_slt(struct fd_compile_context *ctx,
 	 * in assembler/disassembler and what ir.c expects
 	 * is: MULADDv Rdst = Rsrc2 + Rsrc0 * Rscr1
 	 */
-	get_immediate(ctx, &tmp_const, f2d(c0));
+	get_immediate(ctx, &tmp_const, fui(c0));
 	add_src_reg(ctx, instr, &tmp_const);
 	add_src_reg(ctx, instr, &tmp_src);
-	get_immediate(ctx, &tmp_const, f2d(c1));
+	get_immediate(ctx, &tmp_const, fui(c1));
 	add_src_reg(ctx, instr, &tmp_const);
 }
 
@@ -896,7 +896,7 @@ translate_lrp(struct fd_compile_context *ctx,
 	get_internal_temp(ctx, &inst->Dst[0].Register, &tmp_dst1, &tmp_src1);
 	get_internal_temp(ctx, NULL, &tmp_dst2, &tmp_src2);
 
-	get_immediate(ctx, &tmp_const, f2d(1.0));
+	get_immediate(ctx, &tmp_const, fui(1.0));
 
 	/* tmp1 = (a * b) */
 	instr = ir_instr_create_alu(next_exec_cf(ctx), MULv, ~0);
@@ -957,10 +957,10 @@ translate_trig(struct fd_compile_context *ctx,
 	 */
 	instr = ir_instr_create_alu(next_exec_cf(ctx), MULADDv, ~0);
 	add_dst_reg(ctx, instr, &tmp_dst);
-	get_immediate(ctx, &tmp_const, f2d(0.5));
+	get_immediate(ctx, &tmp_const, fui(0.5));
 	add_src_reg(ctx, instr, &tmp_const);
 	add_src_reg(ctx, instr, &inst->Src[0].Register);
-	get_immediate(ctx, &tmp_const, f2d(0.159155));
+	get_immediate(ctx, &tmp_const, fui(0.159155));
 	add_src_reg(ctx, instr, &tmp_const);
 
 	instr = ir_instr_create_alu(next_exec_cf(ctx), FRACv, ~0);
@@ -970,10 +970,10 @@ translate_trig(struct fd_compile_context *ctx,
 
 	instr = ir_instr_create_alu(next_exec_cf(ctx), MULADDv, ~0);
 	add_dst_reg(ctx, instr, &tmp_dst);
-	get_immediate(ctx, &tmp_const, f2d(-3.141593));
+	get_immediate(ctx, &tmp_const, fui(-3.141593));
 	add_src_reg(ctx, instr, &tmp_const);
 	add_src_reg(ctx, instr, &tmp_src);
-	get_immediate(ctx, &tmp_const, f2d(6.283185));
+	get_immediate(ctx, &tmp_const, fui(6.283185));
 	add_src_reg(ctx, instr, &tmp_const);
 
 	instr = ir_instr_create_alu(next_exec_cf(ctx), ~0, op);

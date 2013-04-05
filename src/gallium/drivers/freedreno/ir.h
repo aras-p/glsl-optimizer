@@ -27,7 +27,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "instr.h"
+#include "instr-a2xx.h"
 
 /* low level intermediate representation of an adreno shader program */
 
@@ -76,7 +76,7 @@ struct ir_instruction {
 			unsigned const_idx;
 			/* maybe vertex fetch specific: */
 			unsigned const_idx_sel;
-			enum sq_surfaceformat fmt;
+			enum a2xx_sq_surfaceformat fmt;
 			bool is_signed : 1;
 			bool is_normalized : 1;
 			uint32_t stride;
@@ -219,7 +219,7 @@ ir_instr_create_alu(struct ir_cf *cf, instr_vector_opc_t vop, instr_scalar_opc_t
 }
 static inline struct ir_instruction *
 ir_instr_create_vtx_fetch(struct ir_cf *cf, int ci, int cis,
-		enum sq_surfaceformat fmt, bool is_signed, int stride)
+		enum a2xx_sq_surfaceformat fmt, bool is_signed, int stride)
 {
 	struct ir_instruction *instr = instr = ir_instr_create(cf, IR_FETCH);
 	instr->fetch.opc = VTX_FETCH;

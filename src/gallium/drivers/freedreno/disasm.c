@@ -31,7 +31,7 @@
 #include <string.h>
 
 #include "disasm.h"
-#include "instr.h"
+#include "instr-a2xx.h"
 
 static const char *levels[] = {
 		"\t",

@@ -366,7 +366,7 @@ fd_state_emit(struct pipe_context *pctx, uint32_t dirty)
 
 	if (dirty & FD_DIRTY_SAMPLE_MASK) {
 		OUT_PKT3(ring, CP_SET_CONSTANT, 2);
-		OUT_RING(ring, CP_REG(REG_PA_SC_AA_MASK));
+		OUT_RING(ring, CP_REG(REG_A2XX_PA_SC_AA_MASK));
 		OUT_RING(ring, ctx->sample_mask);
 	}
 
@@ -374,44 +374,44 @@ fd_state_emit(struct pipe_context *pctx, uint32_t dirty)
 		struct pipe_stencil_ref *sr = &ctx->stencil_ref;
 
 		OUT_PKT3(ring, CP_SET_CONSTANT, 2);
-		OUT_RING(ring, CP_REG(REG_RB_DEPTHCONTROL));
+		OUT_RING(ring, CP_REG(REG_A2XX_RB_DEPTHCONTROL));
 		OUT_RING(ring, ctx->zsa->rb_depthcontrol);
 
 		OUT_PKT3(ring, CP_SET_CONSTANT, 4);
-		OUT_RING(ring, CP_REG(REG_RB_STENCILREFMASK_BF));
+		OUT_RING(ring, CP_REG(REG_A2XX_RB_STENCILREFMASK_BF));
 		OUT_RING(ring, ctx->zsa->rb_stencilrefmask_bf |
-				RB_STENCILREFMASK_STENCILREF(sr->ref_value[1]));
+				A2XX_RB_STENCILREFMASK_STENCILREF(sr->ref_value[1]));
 		OUT_RING(ring, ctx->zsa->rb_stencilrefmask |
-				RB_STENCILREFMASK_STENCILREF(sr->ref_value[0]));
+				A2XX_RB_STENCILREFMASK_STENCILREF(sr->ref_value[0]));
 		OUT_RING(ring, ctx->zsa->rb_alpha_ref);
 	}
 
 	if (dirty & (FD_DIRTY_RASTERIZER | FD_DIRTY_FRAMEBUFFER)) {
 		OUT_PKT3(ring, CP_SET_CONSTANT, 3);
-		OUT_RING(ring, CP_REG(REG_PA_CL_CLIP_CNTL));
+		OUT_RING(ring, CP_REG(REG_A2XX_PA_CL_CLIP_CNTL));
 		OUT_RING(ring, ctx->rasterizer->pa_cl_clip_cntl);
 		OUT_RING(ring, ctx->rasterizer->pa_su_sc_mode_cntl |
-				PA_SU_SC_MODE_CNTL_VTX_WINDOW_OFFSET_ENABLE);
+				A2XX_PA_SU_SC_MODE_CNTL_VTX_WINDOW_OFFSET_ENABLE);
 
 		OUT_PKT3(ring, CP_SET_CONSTANT, 5);
-		OUT_RING(ring, CP_REG(REG_PA_SU_POINT_SIZE));
+		OUT_RING(ring, CP_REG(REG_A2XX_PA_SU_POINT_SIZE));
 		OUT_RING(ring, ctx->rasterizer->pa_su_point_size);
 		OUT_RING(ring, ctx->rasterizer->pa_su_point_minmax);
 		OUT_RING(ring, ctx->rasterizer->pa_su_line_cntl);
 		OUT_RING(ring, ctx->rasterizer->pa_sc_line_stipple);
 
 		OUT_PKT3(ring, CP_SET_CONSTANT, 6);
-		OUT_RING(ring, CP_REG(REG_PA_SU_VTX_CNTL));
+		OUT_RING(ring, CP_REG(REG_A2XX_PA_SU_VTX_CNTL));
 		OUT_RING(ring, ctx->rasterizer->pa_su_vtx_cntl);
-		OUT_RING(ring, f2d(1.0));                /* PA_CL_GB_VERT_CLIP_ADJ */
-		OUT_RING(ring, f2d(1.0));                /* PA_CL_GB_VERT_DISC_ADJ */
-		OUT_RING(ring, f2d(1.0));                /* PA_CL_GB_HORZ_CLIP_ADJ */
-		OUT_RING(ring, f2d(1.0));                /* PA_CL_GB_HORZ_DISC_ADJ */
+		OUT_RING(ring, fui(1.0));                /* PA_CL_GB_VERT_CLIP_ADJ */
+		OUT_RING(ring, fui(1.0));                /* PA_CL_GB_VERT_DISC_ADJ */
+		OUT_RING(ring, fui(1.0));                /* PA_CL_GB_HORZ_CLIP_ADJ */
+		OUT_RING(ring, fui(1.0));                /* PA_CL_GB_HORZ_DISC_ADJ */
 	}
 
 	if (dirty & FD_DIRTY_SCISSOR) {
 		OUT_PKT3(ring, CP_SET_CONSTANT, 3);
-		OUT_RING(ring, CP_REG(REG_PA_SC_WINDOW_SCISSOR_TL));
+		OUT_RING(ring, CP_REG(REG_A2XX_PA_SC_WINDOW_SCISSOR_TL));
 		OUT_RING(ring, xy2d(ctx->scissor.minx,   /* PA_SC_WINDOW_SCISSOR_TL */
 				ctx->scissor.miny));
 		OUT_RING(ring, xy2d(ctx->scissor.maxx,   /* PA_SC_WINDOW_SCISSOR_BR */
@@ -425,23 +425,23 @@ fd_state_emit(struct pipe_context *pctx, uint32_t dirty)
 
 	if (dirty & FD_DIRTY_VIEWPORT) {
 		OUT_PKT3(ring, CP_SET_CONSTANT, 7);
-		OUT_RING(ring, CP_REG(REG_PA_CL_VPORT_XSCALE));
-		OUT_RING(ring, f2d(ctx->viewport.scale[0]));       /* PA_CL_VPORT_XSCALE */
-		OUT_RING(ring, f2d(ctx->viewport.translate[0]));   /* PA_CL_VPORT_XOFFSET */
-		OUT_RING(ring, f2d(ctx->viewport.scale[1]));       /* PA_CL_VPORT_YSCALE */
-		OUT_RING(ring, f2d(ctx->viewport.translate[1]));   /* PA_CL_VPORT_YOFFSET */
-		OUT_RING(ring, f2d(ctx->viewport.scale[2]));       /* PA_CL_VPORT_ZSCALE */
-		OUT_RING(ring, f2d(ctx->viewport.translate[2]));   /* PA_CL_VPORT_ZOFFSET */
+		OUT_RING(ring, CP_REG(REG_A2XX_PA_CL_VPORT_XSCALE));
+		OUT_RING(ring, fui(ctx->viewport.scale[0]));       /* PA_CL_VPORT_XSCALE */
+		OUT_RING(ring, fui(ctx->viewport.translate[0]));   /* PA_CL_VPORT_XOFFSET */
+		OUT_RING(ring, fui(ctx->viewport.scale[1]));       /* PA_CL_VPORT_YSCALE */
+		OUT_RING(ring, fui(ctx->viewport.translate[1]));   /* PA_CL_VPORT_YOFFSET */
+		OUT_RING(ring, fui(ctx->viewport.scale[2]));       /* PA_CL_VPORT_ZSCALE */
+		OUT_RING(ring, fui(ctx->viewport.translate[2]));   /* PA_CL_VPORT_ZOFFSET */
 
 		OUT_PKT3(ring, CP_SET_CONSTANT, 2);
-		OUT_RING(ring, CP_REG(REG_PA_CL_VTE_CNTL));
-		OUT_RING(ring, PA_CL_VTE_CNTL_VTX_W0_FMT |
-				PA_CL_VTE_CNTL_VPORT_X_SCALE_ENA |
-				PA_CL_VTE_CNTL_VPORT_X_OFFSET_ENA |
-				PA_CL_VTE_CNTL_VPORT_Y_SCALE_ENA |
-				PA_CL_VTE_CNTL_VPORT_Y_OFFSET_ENA |
-				PA_CL_VTE_CNTL_VPORT_Z_SCALE_ENA |
-				PA_CL_VTE_CNTL_VPORT_Z_OFFSET_ENA);
+		OUT_RING(ring, CP_REG(REG_A2XX_PA_CL_VTE_CNTL));
+		OUT_RING(ring, A2XX_PA_CL_VTE_CNTL_VTX_W0_FMT |
+				A2XX_PA_CL_VTE_CNTL_VPORT_X_SCALE_ENA |
+				A2XX_PA_CL_VTE_CNTL_VPORT_X_OFFSET_ENA |
+				A2XX_PA_CL_VTE_CNTL_VPORT_Y_SCALE_ENA |
+				A2XX_PA_CL_VTE_CNTL_VPORT_Y_OFFSET_ENA |
+				A2XX_PA_CL_VTE_CNTL_VPORT_Z_SCALE_ENA |
+				A2XX_PA_CL_VTE_CNTL_VPORT_Z_OFFSET_ENA);
 	}
 
 	if (dirty & (FD_DIRTY_PROG | FD_DIRTY_VTX | FD_DIRTY_VERTTEX | FD_DIRTY_FRAGTEX)) {
@@ -460,17 +460,17 @@ fd_state_emit(struct pipe_context *pctx, uint32_t dirty)
 
 	if (dirty & (FD_DIRTY_BLEND | FD_DIRTY_ZSA)) {
 		OUT_PKT3(ring, CP_SET_CONSTANT, 2);
-		OUT_RING(ring, CP_REG(REG_RB_COLORCONTROL));
+		OUT_RING(ring, CP_REG(REG_A2XX_RB_COLORCONTROL));
 		OUT_RING(ring, ctx->zsa->rb_colorcontrol | ctx->blend->rb_colorcontrol);
 	}
 
 	if (dirty & FD_DIRTY_BLEND) {
 		OUT_PKT3(ring, CP_SET_CONSTANT, 2);
-		OUT_RING(ring, CP_REG(REG_RB_BLEND_CONTROL));
+		OUT_RING(ring, CP_REG(REG_A2XX_RB_BLEND_CONTROL));
 		OUT_RING(ring, ctx->blend->rb_blendcontrol);
 
 		OUT_PKT3(ring, CP_SET_CONSTANT, 2);
-		OUT_RING(ring, CP_REG(REG_RB_COLOR_MASK));
+		OUT_RING(ring, CP_REG(REG_A2XX_RB_COLOR_MASK));
 		OUT_RING(ring, ctx->blend->rb_colormask);
 	}
 
@@ -488,78 +488,78 @@ fd_state_emit_setup(struct pipe_context *pctx)
 	struct fd_context *ctx = fd_context(pctx);
 	struct fd_ringbuffer *ring = ctx->ring;
 
-	OUT_PKT0(ring, REG_TP0_CHICKEN, 1);
+	OUT_PKT0(ring, REG_A2XX_TP0_CHICKEN, 1);
 	OUT_RING(ring, 0x00000002);
 
 	OUT_PKT3(ring, CP_INVALIDATE_STATE, 1);
 	OUT_RING(ring, 0x00007fff);
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
-	OUT_RING(ring, CP_REG(REG_SQ_VS_CONST));
-	OUT_RING(ring, SQ_VS_CONST_BASE(VS_CONST_BASE) |
-			SQ_VS_CONST_SIZE(0x100));
+	OUT_RING(ring, CP_REG(REG_A2XX_SQ_VS_CONST));
+	OUT_RING(ring, A2XX_SQ_VS_CONST_BASE(VS_CONST_BASE) |
+			A2XX_SQ_VS_CONST_SIZE(0x100));
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
-	OUT_RING(ring, CP_REG(REG_SQ_PS_CONST));
-	OUT_RING(ring, SQ_PS_CONST_BASE(PS_CONST_BASE) |
-			SQ_PS_CONST_SIZE(0xe0));
+	OUT_RING(ring, CP_REG(REG_A2XX_SQ_PS_CONST));
+	OUT_RING(ring, A2XX_SQ_PS_CONST_BASE(PS_CONST_BASE) |
+			A2XX_SQ_PS_CONST_SIZE(0xe0));
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 3);
-	OUT_RING(ring, CP_REG(REG_VGT_MAX_VTX_INDX));
+	OUT_RING(ring, CP_REG(REG_A2XX_VGT_MAX_VTX_INDX));
 	OUT_RING(ring, 0xffffffff);        /* VGT_MAX_VTX_INDX */
 	OUT_RING(ring, 0x00000000);        /* VGT_MIN_VTX_INDX */
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
-	OUT_RING(ring, CP_REG(REG_VGT_INDX_OFFSET));
+	OUT_RING(ring, CP_REG(REG_A2XX_VGT_INDX_OFFSET));
 	OUT_RING(ring, 0x00000000);
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
-	OUT_RING(ring, CP_REG(REG_VGT_VERTEX_REUSE_BLOCK_CNTL));
+	OUT_RING(ring, CP_REG(REG_A2XX_VGT_VERTEX_REUSE_BLOCK_CNTL));
 	OUT_RING(ring, 0x0000003b);
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
-	OUT_RING(ring, CP_REG(REG_SQ_CONTEXT_MISC));
-	OUT_RING(ring, SQ_CONTEXT_MISC_SC_SAMPLE_CNTL(CENTERS_ONLY));
+	OUT_RING(ring, CP_REG(REG_A2XX_SQ_CONTEXT_MISC));
+	OUT_RING(ring, A2XX_SQ_CONTEXT_MISC_SC_SAMPLE_CNTL(CENTERS_ONLY));
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
-	OUT_RING(ring, CP_REG(REG_SQ_INTERPOLATOR_CNTL));
+	OUT_RING(ring, CP_REG(REG_A2XX_SQ_INTERPOLATOR_CNTL));
 	OUT_RING(ring, 0xffffffff);
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
-	OUT_RING(ring, CP_REG(REG_PA_SC_AA_CONFIG));
+	OUT_RING(ring, CP_REG(REG_A2XX_PA_SC_AA_CONFIG));
 	OUT_RING(ring, 0x00000000);
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
-	OUT_RING(ring, CP_REG(REG_PA_SC_LINE_CNTL));
+	OUT_RING(ring, CP_REG(REG_A2XX_PA_SC_LINE_CNTL));
 	OUT_RING(ring, 0x00000000);
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
-	OUT_RING(ring, CP_REG(REG_PA_SC_WINDOW_OFFSET));
+	OUT_RING(ring, CP_REG(REG_A2XX_PA_SC_WINDOW_OFFSET));
 	OUT_RING(ring, 0x00000000);
 
 	// XXX we change this dynamically for draw/clear.. vs gmem<->mem..
 	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
-	OUT_RING(ring, CP_REG(REG_RB_MODECONTROL));
-	OUT_RING(ring, RB_MODECONTROL_EDRAM_MODE(COLOR_DEPTH));
+	OUT_RING(ring, CP_REG(REG_A2XX_RB_MODECONTROL));
+	OUT_RING(ring, A2XX_RB_MODECONTROL_EDRAM_MODE(COLOR_DEPTH));
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
-	OUT_RING(ring, CP_REG(REG_RB_SAMPLE_POS));
+	OUT_RING(ring, CP_REG(REG_A2XX_RB_SAMPLE_POS));
 	OUT_RING(ring, 0x88888888);
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
-	OUT_RING(ring, CP_REG(REG_RB_COLOR_DEST_MASK));
+	OUT_RING(ring, CP_REG(REG_A2XX_RB_COLOR_DEST_MASK));
 	OUT_RING(ring, 0xffffffff);
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
-	OUT_RING(ring, CP_REG(REG_RB_COPY_DEST_INFO));
-	OUT_RING(ring, RB_COPY_DEST_INFO_FORMAT(COLORX_4_4_4_4) |
-			RB_COPY_DEST_INFO_WRITE_RED |
-			RB_COPY_DEST_INFO_WRITE_GREEN |
-			RB_COPY_DEST_INFO_WRITE_BLUE |
-			RB_COPY_DEST_INFO_WRITE_ALPHA);
+	OUT_RING(ring, CP_REG(REG_A2XX_RB_COPY_DEST_INFO));
+	OUT_RING(ring, A2XX_RB_COPY_DEST_INFO_FORMAT(COLORX_4_4_4_4) |
+			A2XX_RB_COPY_DEST_INFO_WRITE_RED |
+			A2XX_RB_COPY_DEST_INFO_WRITE_GREEN |
+			A2XX_RB_COPY_DEST_INFO_WRITE_BLUE |
+			A2XX_RB_COPY_DEST_INFO_WRITE_ALPHA);
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 3);
-	OUT_RING(ring, CP_REG(REG_SQ_WRAPPING_0));
+	OUT_RING(ring, CP_REG(REG_A2XX_SQ_WRAPPING_0));
 	OUT_RING(ring, 0x00000000);        /* SQ_WRAPPING_0 */
 	OUT_RING(ring, 0x00000000);        /* SQ_WRAPPING_1 */
 
@@ -572,7 +572,7 @@ fd_state_emit_setup(struct pipe_context *pctx)
 	OUT_RING(ring, 0x5f601000);
 	OUT_RING(ring, 0x00000001);
 
-	OUT_PKT0(ring, REG_SQ_INST_STORE_MANAGMENT, 1);
+	OUT_PKT0(ring, REG_A2XX_SQ_INST_STORE_MANAGMENT, 1);
 	OUT_RING(ring, 0x00000180);
 
 	OUT_PKT3(ring, CP_INVALIDATE_STATE, 1);
@@ -598,14 +598,14 @@ fd_state_emit_setup(struct pipe_context *pctx)
 	OUT_RING(ring, 0x3e800000);
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
-	OUT_RING(ring, CP_REG(REG_RB_COLOR_MASK));
-	OUT_RING(ring, RB_COLOR_MASK_WRITE_RED |
-			RB_COLOR_MASK_WRITE_GREEN |
-			RB_COLOR_MASK_WRITE_BLUE |
-			RB_COLOR_MASK_WRITE_ALPHA);
+	OUT_RING(ring, CP_REG(REG_A2XX_RB_COLOR_MASK));
+	OUT_RING(ring, A2XX_RB_COLOR_MASK_WRITE_RED |
+			A2XX_RB_COLOR_MASK_WRITE_GREEN |
+			A2XX_RB_COLOR_MASK_WRITE_BLUE |
+			A2XX_RB_COLOR_MASK_WRITE_ALPHA);
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 5);
-	OUT_RING(ring, CP_REG(REG_RB_BLEND_RED));
+	OUT_RING(ring, CP_REG(REG_A2XX_RB_BLEND_RED));
 	OUT_RING(ring, 0x00000000);        /* RB_BLEND_RED */
 	OUT_RING(ring, 0x00000000);        /* RB_BLEND_GREEN */
 	OUT_RING(ring, 0x00000000);        /* RB_BLEND_BLUE */

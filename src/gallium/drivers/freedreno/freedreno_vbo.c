@@ -198,15 +198,15 @@ fd_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
 	emit_vertexbufs(ctx, info->count);
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
-	OUT_RING(ring, CP_REG(REG_VGT_INDX_OFFSET));
+	OUT_RING(ring, CP_REG(REG_A2XX_VGT_INDX_OFFSET));
 	OUT_RING(ring, info->start);
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
-	OUT_RING(ring, CP_REG(REG_VGT_VERTEX_REUSE_BLOCK_CNTL));
+	OUT_RING(ring, CP_REG(REG_A2XX_VGT_VERTEX_REUSE_BLOCK_CNTL));
 	OUT_RING(ring, 0x0000003b);
 
-	OUT_PKT0(ring, REG_TC_CNTL_STATUS, 1);
-	OUT_RING(ring, TC_CNTL_STATUS_L2_INVALIDATE);
+	OUT_PKT0(ring, REG_A2XX_TC_CNTL_STATUS, 1);
+	OUT_RING(ring, A2XX_TC_CNTL_STATUS_L2_INVALIDATE);
 
 	OUT_PKT3(ring, CP_WAIT_FOR_IDLE, 1);
 	OUT_RING(ring, 0x0000000);
@@ -222,7 +222,7 @@ fd_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
 	}
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
-	OUT_RING(ring, CP_REG(REG_2010));
+	OUT_RING(ring, CP_REG(REG_A2XX_UNKNOWN_2010));
 	OUT_RING(ring, 0x00000000);
 
 	emit_cacheflush(ring);

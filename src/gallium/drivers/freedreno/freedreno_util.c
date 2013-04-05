@@ -31,7 +31,7 @@
 
 #include "freedreno_util.h"
 
-enum sq_surfaceformat
+enum a2xx_sq_surfaceformat
 fd_pipe2surface(enum pipe_format format)
 {
 	switch (format) {
@@ -194,7 +194,7 @@ fd_pipe2surface(enum pipe_format format)
 	}
 }
 
-enum rb_colorformatx
+enum a2xx_colorformatx
 fd_pipe2color(enum pipe_format format)
 {
 	switch (format) {
@@ -289,7 +289,7 @@ fd_pipe2color(enum pipe_format format)
 	}
 }
 
-enum rb_depth_format
+enum a2xx_rb_depth_format
 fd_pipe2depth(enum pipe_format format)
 {
 	switch (format) {
@@ -344,8 +344,8 @@ fd_tex_swiz(enum pipe_format format, unsigned swizzle_r, unsigned swizzle_g,
 			PIPE_SWIZZLE_ONE, PIPE_SWIZZLE_ONE,
 	};
 
-	return SQ_TEX3_SWIZ_X(tex_swiz(swiz[desc->swizzle[0]])) |
-			SQ_TEX3_SWIZ_Y(tex_swiz(swiz[desc->swizzle[1]])) |
-			SQ_TEX3_SWIZ_Z(tex_swiz(swiz[desc->swizzle[2]])) |
-			SQ_TEX3_SWIZ_W(tex_swiz(swiz[desc->swizzle[3]]));
+	return A2XX_SQ_TEX_3_SWIZ_X(tex_swiz(swiz[desc->swizzle[0]])) |
+			A2XX_SQ_TEX_3_SWIZ_Y(tex_swiz(swiz[desc->swizzle[1]])) |
+			A2XX_SQ_TEX_3_SWIZ_Z(tex_swiz(swiz[desc->swizzle[2]])) |
+			A2XX_SQ_TEX_3_SWIZ_W(tex_swiz(swiz[desc->swizzle[3]]));
 }

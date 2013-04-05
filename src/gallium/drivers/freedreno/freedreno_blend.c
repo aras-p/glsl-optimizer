@@ -34,41 +34,41 @@
 #include "freedreno_context.h"
 #include "freedreno_util.h"
 
-static enum rb_blend_op
+static enum adreno_rb_blend_factor
 blend_factor(unsigned factor)
 {
 	switch (factor) {
 	case PIPE_BLENDFACTOR_ONE:
-		return RB_BLEND_ONE;
+		return FACTOR_ONE;
 	case PIPE_BLENDFACTOR_SRC_COLOR:
-		return RB_BLEND_SRC_COLOR;
+		return FACTOR_SRC_COLOR;
 	case PIPE_BLENDFACTOR_SRC_ALPHA:
-		return RB_BLEND_SRC_ALPHA;
+		return FACTOR_SRC_ALPHA;
 	case PIPE_BLENDFACTOR_DST_ALPHA:
-		return RB_BLEND_DST_ALPHA;
+		return FACTOR_DST_ALPHA;
 	case PIPE_BLENDFACTOR_DST_COLOR:
-		return RB_BLEND_DST_COLOR;
+		return FACTOR_DST_COLOR;
 	case PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE:
-		return RB_BLEND_SRC_ALPHA_SATURATE;
+		return FACTOR_SRC_ALPHA_SATURATE;
 	case PIPE_BLENDFACTOR_CONST_COLOR:
-		return RB_BLEND_CONSTANT_COLOR;
+		return FACTOR_CONSTANT_COLOR;
 	case PIPE_BLENDFACTOR_CONST_ALPHA:
-		return RB_BLEND_CONSTANT_ALPHA;
+		return FACTOR_CONSTANT_ALPHA;
 	case PIPE_BLENDFACTOR_ZERO:
 	case 0:
-		return RB_BLEND_ZERO;
+		return FACTOR_ZERO;
 	case PIPE_BLENDFACTOR_INV_SRC_COLOR:
-		return RB_BLEND_ONE_MINUS_SRC_COLOR;
+		return FACTOR_ONE_MINUS_SRC_COLOR;
 	case PIPE_BLENDFACTOR_INV_SRC_ALPHA:
-		return RB_BLEND_ONE_MINUS_SRC_ALPHA;
+		return FACTOR_ONE_MINUS_SRC_ALPHA;
 	case PIPE_BLENDFACTOR_INV_DST_ALPHA:
-		return RB_BLEND_ONE_MINUS_DST_ALPHA;
+		return FACTOR_ONE_MINUS_DST_ALPHA;
 	case PIPE_BLENDFACTOR_INV_DST_COLOR:
-		return RB_BLEND_ONE_MINUS_DST_COLOR;
+		return FACTOR_ONE_MINUS_DST_COLOR;
 	case PIPE_BLENDFACTOR_INV_CONST_COLOR:
-		return RB_BLEND_ONE_MINUS_CONSTANT_COLOR;
+		return FACTOR_ONE_MINUS_CONSTANT_COLOR;
 	case PIPE_BLENDFACTOR_INV_CONST_ALPHA:
-		return RB_BLEND_ONE_MINUS_CONSTANT_ALPHA;
+		return FACTOR_ONE_MINUS_CONSTANT_ALPHA;
 	case PIPE_BLENDFACTOR_INV_SRC1_COLOR:
 	case PIPE_BLENDFACTOR_INV_SRC1_ALPHA:
 	case PIPE_BLENDFACTOR_SRC1_COLOR:
@@ -80,20 +80,20 @@ blend_factor(unsigned factor)
 	}
 }
 
-static enum rb_comb_func
+static enum adreno_rb_blend_opcode
 blend_func(unsigned func)
 {
 	switch (func) {
 	case PIPE_BLEND_ADD:
-		return COMB_DST_PLUS_SRC;
+		return BLEND_DST_PLUS_SRC;
 	case PIPE_BLEND_MIN:
-		return COMB_MIN_DST_SRC;
+		return BLEND_MIN_DST_SRC;
 	case PIPE_BLEND_MAX:
-		return COMB_MAX_DST_SRC;
+		return BLEND_MAX_DST_SRC;
 	case PIPE_BLEND_SUBTRACT:
-		return COMB_SRC_MINUS_DST;
+		return BLEND_SRC_MINUS_DST;
 	case PIPE_BLEND_REVERSE_SUBTRACT:
-		return COMB_DST_MINUS_SRC;
+		return BLEND_DST_MINUS_SRC;
 	default:
 		DBG("invalid blend func: %x", func);
 		return 0;
@@ -123,30 +123,30 @@ fd_blend_state_create(struct pipe_context *pctx,
 
 	so->base = *cso;
 
-	so->rb_colorcontrol = RB_COLORCONTROL_ROP_CODE(12);
+	so->rb_colorcontrol = A2XX_RB_COLORCONTROL_ROP_CODE(12);
 
 	so->rb_blendcontrol =
-		RB_BLENDCONTROL_COLOR_SRCBLEND(blend_factor(rt->rgb_src_factor)) |
-		RB_BLENDCONTROL_COLOR_COMB_FCN(blend_func(rt->rgb_func)) |
-		RB_BLENDCONTROL_COLOR_DESTBLEND(blend_factor(rt->rgb_dst_factor)) |
-		RB_BLENDCONTROL_ALPHA_SRCBLEND(blend_factor(rt->alpha_src_factor)) |
-		RB_BLENDCONTROL_ALPHA_COMB_FCN(blend_func(rt->alpha_func)) |
-		RB_BLENDCONTROL_ALPHA_DESTBLEND(blend_factor(rt->alpha_dst_factor));
+		A2XX_RB_BLEND_CONTROL_COLOR_SRCBLEND(blend_factor(rt->rgb_src_factor)) |
+		A2XX_RB_BLEND_CONTROL_COLOR_COMB_FCN(blend_func(rt->rgb_func)) |
+		A2XX_RB_BLEND_CONTROL_COLOR_DESTBLEND(blend_factor(rt->rgb_dst_factor)) |
+		A2XX_RB_BLEND_CONTROL_ALPHA_SRCBLEND(blend_factor(rt->alpha_src_factor)) |
+		A2XX_RB_BLEND_CONTROL_ALPHA_COMB_FCN(blend_func(rt->alpha_func)) |
+		A2XX_RB_BLEND_CONTROL_ALPHA_DESTBLEND(blend_factor(rt->alpha_dst_factor));
 
 	if (rt->colormask & PIPE_MASK_R)
-		so->rb_colormask |= RB_COLOR_MASK_WRITE_RED;
+		so->rb_colormask |= A2XX_RB_COLOR_MASK_WRITE_RED;
 	if (rt->colormask & PIPE_MASK_G)
-		so->rb_colormask |= RB_COLOR_MASK_WRITE_GREEN;
+		so->rb_colormask |= A2XX_RB_COLOR_MASK_WRITE_GREEN;
 	if (rt->colormask & PIPE_MASK_B)
-		so->rb_colormask |= RB_COLOR_MASK_WRITE_BLUE;
+		so->rb_colormask |= A2XX_RB_COLOR_MASK_WRITE_BLUE;
 	if (rt->colormask & PIPE_MASK_A)
-		so->rb_colormask |= RB_COLOR_MASK_WRITE_ALPHA;
+		so->rb_colormask |= A2XX_RB_COLOR_MASK_WRITE_ALPHA;
 
 	if (!rt->blend_enable)
-		so->rb_colorcontrol |= RB_COLORCONTROL_BLEND_DISABLE;
+		so->rb_colorcontrol |= A2XX_RB_COLORCONTROL_BLEND_DISABLE;
 
 	if (cso->dither)
-		so->rb_colorcontrol |= RB_COLORCONTROL_DITHER_MODE(DITHER_ALWAYS);
+		so->rb_colorcontrol |= A2XX_RB_COLORCONTROL_DITHER_MODE(DITHER_ALWAYS);
 
 	return so;
 }
