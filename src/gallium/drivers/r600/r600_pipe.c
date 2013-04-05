@@ -44,6 +44,7 @@ static const struct debug_named_value debug_options[] = {
 	/* logging */
 	{ "texdepth", DBG_TEX_DEPTH, "Print texture depth info" },
 	{ "compute", DBG_COMPUTE, "Print compute info" },
+	{ "vm", DBG_VM, "Print virtual addresses when creating resources" },
 
 	/* shaders */
 	{ "fs", DBG_FS, "Print fetch shaders" },

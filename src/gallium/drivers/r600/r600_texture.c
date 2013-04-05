@@ -510,6 +510,14 @@ r600_texture_create_object(struct pipe_screen *screen,
 		rscreen->ws->buffer_unmap(resource->cs_buf);
 	}
 
+	if (rscreen->debug_flags & DBG_VM) {
+		fprintf(stderr, "VM start=0x%llX  end=0x%llX | Texture %ix%ix%i, %i levels, %i samples, %s\n",
+			r600_resource_va(screen, &rtex->resource.b.b),
+			r600_resource_va(screen, &rtex->resource.b.b) + rtex->resource.buf->size,
+			base->width0, base->height0, util_max_layer(base, 0)+1, base->last_level+1,
+			base->nr_samples ? base->nr_samples : 1, util_format_short_name(base->format));
+	}
+
 	if (rscreen->debug_flags & DBG_TEX_DEPTH && rtex->is_depth && rtex->non_disp_tiling) {
 		printf("Texture: npix_x=%u, npix_y=%u, npix_z=%u, blk_w=%u, "
 		       "blk_h=%u, blk_d=%u, array_size=%u, last_level=%u, "

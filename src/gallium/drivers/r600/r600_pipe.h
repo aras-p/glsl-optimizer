@@ -245,6 +245,7 @@ typedef boolean (*r600g_dma_blit_t)(struct pipe_context *ctx,
 /* logging */
 #define DBG_TEX_DEPTH		(1 << 0)
 #define DBG_COMPUTE		(1 << 1)
+#define DBG_VM                  (1 << 2)
 /* shaders */
 #define DBG_FS			(1 << 8)
 #define DBG_VS			(1 << 9)

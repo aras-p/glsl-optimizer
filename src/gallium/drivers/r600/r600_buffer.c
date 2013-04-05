@@ -279,6 +279,13 @@ bool r600_init_resource(struct r600_screen *rscreen,
 	res->cs_buf = rscreen->ws->buffer_get_cs_handle(res->buf);
 	res->domains = domains;
 	util_range_set_empty(&res->valid_buffer_range);
+
+	if (rscreen->debug_flags & DBG_VM && res->b.b.target == PIPE_BUFFER) {
+		fprintf(stderr, "VM start=0x%llX  end=0x%llX | Buffer %u bytes\n",
+			r600_resource_va(&rscreen->screen, &res->b.b),
+			r600_resource_va(&rscreen->screen, &res->b.b) + res->buf->size,
+			res->buf->size);
+	}
 	return true;
 }
 
