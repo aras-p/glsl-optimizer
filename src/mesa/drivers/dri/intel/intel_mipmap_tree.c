@@ -29,6 +29,7 @@
 #include <GL/internal/dri_interface.h>
 
 #include "intel_batchbuffer.h"
+#include "intel_chipset.h"
 #include "intel_context.h"
 #include "intel_mipmap_tree.h"
 #include "intel_regions.h"
@@ -985,6 +986,53 @@ intel_miptree_alloc_mcs(struct intel_context *intel,
    return mt->mcs_mt;
 }
 
+/**
+ * Helper for intel_miptree_alloc_hiz() that sets
+ * \c mt->level[level].slice[layer].has_hiz. Return true if and only if
+ * \c has_hiz was set.
+ */
+static bool
+intel_miptree_slice_enable_hiz(struct intel_context *intel,
+                               struct intel_mipmap_tree *mt,
+                               uint32_t level,
+                               uint32_t layer)
+{
+   assert(mt->hiz_mt);
+
+   if (intel->is_haswell) {
+      /* Disable HiZ for some slices to work around a hardware bug.
+       *
+       * Haswell hardware fails to respect
+       * 3DSTATE_DEPTH_BUFFER.Depth_Coordinate_Offset_X/Y when during HiZ
+       * ambiguate operations.  The failure is inconsistent and affected by
+       * other GPU contexts. Running a heavy GPU workload in a separate
+       * process causes the failure rate to drop to nearly 0.
+       *
+       * To workaround the bug, we enable HiZ only when we can guarantee that
+       * the Depth Coordinate Offset fields will be set to 0. The function
+       * brw_get_depthstencil_tile_masks() is used to calculate the fields,
+       * and the function is sometimes called in such a way that the presence
+       * of an attached stencil buffer changes the fuction's return value.
+       *
+       * The largest tile size considered by brw_get_depthstencil_tile_masks()
+       * is that of the stencil buffer. Therefore, if this hiz slice's
+       * corresponding depth slice has an offset that is aligned to the
+       * stencil buffer tile size, 64x64 pixels, then
+       * 3DSTATE_DEPTH_BUFFER.Depth_Coordinate_Offset_X/Y is set to 0.
+       */
+      uint32_t depth_x_offset = mt->level[level].slice[layer].x_offset;
+      uint32_t depth_y_offset = mt->level[level].slice[layer].y_offset;
+      if ((depth_x_offset & 63) || (depth_y_offset & 63)) {
+         return false;
+      }
+   }
+
+   mt->level[level].slice[layer].has_hiz = true;
+   return true;
+}
+
+
+
 bool
 intel_miptree_alloc_hiz(struct intel_context *intel,
 			struct intel_mipmap_tree *mt,
@@ -1010,7 +1058,8 @@ intel_miptree_alloc_hiz(struct intel_context *intel,
    struct intel_resolve_map *head = &mt->hiz_map;
    for (int level = mt->first_level; level <= mt->last_level; ++level) {
       for (int layer = 0; layer < mt->level[level].depth; ++layer) {
-         mt->level[level].slice[layer].has_hiz = true;
+         if (!intel_miptree_slice_enable_hiz(intel, mt, level, layer))
+            continue;
 
 	 head->next = malloc(sizeof(*head->next));
 	 head->next->prev = head;
