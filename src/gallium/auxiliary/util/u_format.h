@@ -447,6 +447,7 @@ util_format_is_compressed(enum pipe_format format)
    switch (desc->layout) {
    case UTIL_FORMAT_LAYOUT_S3TC:
    case UTIL_FORMAT_LAYOUT_RGTC:
+   case UTIL_FORMAT_LAYOUT_ETC:
       /* XXX add other formats in the future */
       return TRUE;
    default:
