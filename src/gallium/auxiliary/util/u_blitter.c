@@ -1135,18 +1135,17 @@ static boolean is_blit_generic_supported(struct blitter_context *blitter,
 
    if (dst) {
       unsigned bind;
-      boolean is_stencil;
       const struct util_format_description *desc =
             util_format_description(dst_format);
-
-      is_stencil = util_format_has_stencil(desc);
+      boolean dst_has_stencil = util_format_has_stencil(desc);
 
       /* Stencil export must be supported for stencil copy. */
-      if ((mask & PIPE_MASK_S) && is_stencil && !ctx->has_stencil_export) {
+      if ((mask & PIPE_MASK_S) && dst_has_stencil &&
+          !ctx->has_stencil_export) {
          return FALSE;
       }
 
-      if (is_stencil || util_format_has_depth(desc))
+      if (dst_has_stencil || util_format_has_depth(desc))
          bind = PIPE_BIND_DEPTH_STENCIL;
       else
          bind = PIPE_BIND_RENDER_TARGET;
@@ -1168,15 +1167,18 @@ static boolean is_blit_generic_supported(struct blitter_context *blitter,
       }
 
       /* Check stencil sampler support for stencil copy. */
-      if (util_format_has_stencil(util_format_description(src_format))) {
-         enum pipe_format stencil_format =
+      if (mask & PIPE_MASK_S) {
+         if (util_format_has_stencil(util_format_description(src_format))) {
+            enum pipe_format stencil_format =
                util_format_stencil_only(src_format);
-         assert(stencil_format != PIPE_FORMAT_NONE);
+            assert(stencil_format != PIPE_FORMAT_NONE);
 
-         if (stencil_format != src_format &&
-             !screen->is_format_supported(screen, stencil_format, src->target,
-                                 src->nr_samples, PIPE_BIND_SAMPLER_VIEW)) {
-            return FALSE;
+            if (stencil_format != src_format &&
+                !screen->is_format_supported(screen, stencil_format,
+                                             src->target, src->nr_samples,
+                                             PIPE_BIND_SAMPLER_VIEW)) {
+               return FALSE;
+            }
          }
       }
    }
