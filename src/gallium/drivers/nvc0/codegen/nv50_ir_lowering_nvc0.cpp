@@ -728,11 +728,29 @@ NVC0LoweringPass::handleTEX(TexInstruction *i)
    if (i->tex.useOffsets) {
       uint32_t value = 0;
       int n, c;
-      int s = i->srcCount(0xff);
+      int s = i->srcCount(0xff, true);
+      if (i->srcExists(s)) // move potential predicate out of the way
+         i->moveSources(s, 1);
       for (n = 0; n < i->tex.useOffsets; ++n)
          for (c = 0; c < 3; ++c)
             value |= (i->tex.offset[n][c] & 0xf) << (n * 12 + c * 4);
       i->setSrc(s, bld.loadImm(NULL, value));
+   }
+
+   if (prog->getTarget()->getChipset() >= NVISA_GK104_CHIPSET) {
+      //
+      // If TEX requires more than 4 sources, the 2nd register tuple must be
+      // aligned to 4, even if it consists of just a single 4-byte register.
+      //
+      // XXX HACK: We insert 0 sources to avoid the 5 or 6 regs case.
+      //
+      int s = i->srcCount(0xff, true);
+      if (s > 4 && s < 7) {
+         if (i->srcExists(s)) // move potential predicate out of the way
+            i->moveSources(s, 7 - s);
+         while (s < 7)
+            i->setSrc(s++, bld.loadImm(NULL, 0));
+      }
    }
 
    return true;
