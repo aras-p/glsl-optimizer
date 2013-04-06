@@ -1494,7 +1494,11 @@ static int r600_bytecode_cf_build(struct r600_bytecode *bc, struct r600_bytecode
 	const struct cf_op_info *cfop = r600_isa_cf(cf->op);
 	unsigned opcode = r600_isa_cf_opcode(bc->isa->hw_class, cf->op);
 
-	if (cfop->flags & CF_ALU) {
+
+	if (cf->op == CF_NATIVE) {
+		bc->bytecode[id++] = cf->isa[0];
+		bc->bytecode[id++] = cf->isa[1];
+	} else if (cfop->flags & CF_ALU) {
 		bc->bytecode[id++] = S_SQ_CF_ALU_WORD0_ADDR(cf->addr >> 1) |
 			S_SQ_CF_ALU_WORD0_KCACHE_MODE0(cf->kcache[0].mode) |
 			S_SQ_CF_ALU_WORD0_KCACHE_BANK0(cf->kcache[0].bank) |
