@@ -262,7 +262,6 @@ static void gen7_emit_prim(struct brw_context *brw,
 static void brw_merge_inputs( struct brw_context *brw,
 		       const struct gl_client_array *arrays[])
 {
-   struct brw_vertex_info old = brw->vb.info;
    GLuint i;
 
    for (i = 0; i < brw->vb.nr_buffers; i++) {
@@ -282,10 +281,6 @@ static void brw_merge_inputs( struct brw_context *brw,
 	 brw->vb.info.sizes[i/16] |= (brw->vb.inputs[i].glarray->Size - 1) <<
 	    ((i%16) * 2);
    }
-
-   /* Raise statechanges if input sizes have changed. */
-   if (memcmp(brw->vb.info.sizes, old.sizes, sizeof(old.sizes)) != 0)
-      brw->state.dirty.brw |= BRW_NEW_INPUT_DIMENSIONS;
 }
 
 /*
