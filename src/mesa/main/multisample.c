@@ -30,6 +30,7 @@
 #include "main/mtypes.h"
 #include "main/fbobject.h"
 #include "main/glformats.h"
+#include "main/state.h"
 
 
 /**
@@ -72,6 +73,10 @@ void GLAPIENTRY
 _mesa_GetMultisamplefv(GLenum pname, GLuint index, GLfloat * val)
 {
    GET_CURRENT_CONTEXT(ctx);
+
+   if (ctx->NewState & _NEW_BUFFERS) {
+      _mesa_update_state(ctx);
+   }
 
    switch (pname) {
    case GL_SAMPLE_POSITION: {
