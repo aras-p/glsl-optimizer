@@ -835,6 +835,7 @@ tgsi_default_ind_register( void )
    struct tgsi_ind_register ind_register;
 
    ind_register.File = TGSI_FILE_NULL;
+   ind_register.Index = 0;
    ind_register.Swizzle = TGSI_SWIZZLE_X;
    ind_register.ArrayID = 0;
 
