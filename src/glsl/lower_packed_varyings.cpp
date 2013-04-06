@@ -178,6 +178,14 @@ lower_packed_varyings_visitor::run(exec_list *instructions)
           !this->needs_lowering(var))
          continue;
 
+      /* This lowering pass is only capable of packing floats and ints
+       * together when their interpolation mode is "flat".  Therefore, to be
+       * safe, caller should ensure that integral varyings always use flat
+       * interpolation, even when this is not required by GLSL.
+       */
+      assert(var->interpolation == INTERP_QUALIFIER_FLAT ||
+             !var->type->contains_integer());
+
       /* Change the old varying into an ordinary global. */
       var->mode = ir_var_auto;
 
