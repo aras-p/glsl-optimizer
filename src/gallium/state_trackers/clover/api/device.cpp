@@ -21,11 +21,10 @@
 //
 
 #include "api/util.hpp"
+#include "core/platform.hpp"
 #include "core/device.hpp"
 
 using namespace clover;
-
-static device_registry registry;
 
 PUBLIC cl_int
 clGetDeviceIDs(cl_platform_id platform, cl_device_type device_type,
@@ -33,17 +32,14 @@ clGetDeviceIDs(cl_platform_id platform, cl_device_type device_type,
                cl_uint *num_devices) {
    std::vector<cl_device_id> devs;
 
-   if (platform != NULL)
-      return CL_INVALID_PLATFORM;
-
    if ((!num_entries && devices) ||
        (!num_devices && !devices))
       return CL_INVALID_VALUE;
 
    // Collect matching devices
-   for (device &dev : registry) {
+   for (device &dev : *platform) {
       if (((device_type & CL_DEVICE_TYPE_DEFAULT) &&
-           &dev == &registry.front()) ||
+           &dev == &platform->front()) ||
           (device_type & dev.type()))
          devs.push_back(&dev);
    }
@@ -223,13 +219,15 @@ clGetDeviceInfo(cl_device_id dev, cl_device_info param,
       return string_property(buf, size, size_ret, "FULL_PROFILE");
 
    case CL_DEVICE_VERSION:
-      return string_property(buf, size, size_ret, "OpenCL 1.1 MESA " PACKAGE_VERSION);
+      return string_property(buf, size, size_ret,
+                             "OpenCL 1.1 MESA " PACKAGE_VERSION);
 
    case CL_DEVICE_EXTENSIONS:
       return string_property(buf, size, size_ret, "");
 
    case CL_DEVICE_PLATFORM:
-      return scalar_property<cl_platform_id>(buf, size, size_ret, NULL);
+      return scalar_property<cl_platform_id>(buf, size, size_ret,
+                                             &dev->platform);
 
    case CL_DEVICE_HOST_UNIFIED_MEMORY:
       return scalar_property<cl_bool>(buf, size, size_ret, CL_TRUE);

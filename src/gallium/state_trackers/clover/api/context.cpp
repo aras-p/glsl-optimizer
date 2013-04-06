@@ -41,8 +41,7 @@ clCreateContext(const cl_context_properties *props, cl_uint num_devs,
       throw error(CL_INVALID_DEVICE);
 
    for (auto p : mprops) {
-      if (!(p.first == CL_CONTEXT_PLATFORM &&
-            (cl_platform_id)p.second == NULL))
+      if (p.first != CL_CONTEXT_PLATFORM)
          throw error(CL_INVALID_PROPERTY);
    }
 
@@ -61,17 +60,25 @@ clCreateContextFromType(const cl_context_properties *props,
                         cl_device_type type,
                         void (CL_CALLBACK *pfn_notify)(
                            const char *, const void *, size_t, void *),
-                        void *user_data, cl_int *errcode_ret) {
+                        void *user_data, cl_int *errcode_ret) try {
+   cl_platform_id platform;
+   cl_uint num_platforms;
    cl_device_id dev;
    cl_int ret;
 
-   ret = clGetDeviceIDs(0, type, 1, &dev, 0);
-   if (ret) {
-      ret_error(errcode_ret, ret);
-      return NULL;
-   }
+   ret = clGetPlatformIDs(1, &platform, &num_platforms);
+   if (ret || !num_platforms)
+      throw error(CL_INVALID_PLATFORM);
+
+   ret = clGetDeviceIDs(platform, type, 1, &dev, 0);
+   if (ret)
+      throw error(CL_DEVICE_NOT_FOUND);
 
    return clCreateContext(props, 1, &dev, pfn_notify, user_data, errcode_ret);
+
+} catch(error &e) {
+   ret_error(errcode_ret, e);
+   return NULL;
 }
 
 PUBLIC cl_int

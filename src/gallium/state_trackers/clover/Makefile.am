@@ -50,6 +50,8 @@ libclover_la_SOURCES = \
 	core/format.cpp \
 	core/memory.hpp \
 	core/memory.cpp \
+	core/platform.hpp \
+	core/platform.cpp \
 	core/resource.hpp \
 	core/resource.cpp \
 	core/sampler.hpp \

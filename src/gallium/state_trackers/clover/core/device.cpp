@@ -38,15 +38,18 @@ namespace {
    }
 }
 
-_cl_device_id::_cl_device_id(pipe_loader_device *ldev) : ldev(ldev) {
+_cl_device_id::_cl_device_id(clover::platform &platform,
+                             pipe_loader_device *ldev) :
+   platform(platform), ldev(ldev) {
    pipe = pipe_loader_create_screen(ldev, PIPE_SEARCH_DIR);
    if (!pipe || !pipe->get_param(pipe, PIPE_CAP_COMPUTE))
       throw error(CL_INVALID_DEVICE);
 }
 
-_cl_device_id::_cl_device_id(_cl_device_id &&dev) : pipe(dev.pipe), ldev(dev.ldev) {
-   dev.ldev = NULL;
+_cl_device_id::_cl_device_id(_cl_device_id &&dev) :
+   platform(dev.platform), pipe(dev.pipe), ldev(dev.ldev) {
    dev.pipe = NULL;
+   dev.ldev = NULL;
 }
 
 _cl_device_id::~_cl_device_id() {
@@ -54,6 +57,16 @@ _cl_device_id::~_cl_device_id() {
       pipe->destroy(pipe);
    if (ldev)
       pipe_loader_release(&ldev, 1);
+}
+
+_cl_device_id &
+_cl_device_id::operator=(_cl_device_id dev) {
+   assert(&platform == &dev.platform);
+
+   std::swap(pipe, dev.pipe);
+   std::swap(ldev, dev.ldev);
+
+   return *this;
 }
 
 cl_device_type
@@ -178,17 +191,4 @@ _cl_device_id::ir_target() const {
    std::vector<char> target = get_compute_param<char>(pipe,
                                                     PIPE_COMPUTE_CAP_IR_TARGET);
    return { target.data() };
-}
-
-device_registry::device_registry() {
-   int n = pipe_loader_probe(NULL, 0);
-   std::vector<pipe_loader_device *> ldevs(n);
-
-   pipe_loader_probe(&ldevs.front(), n);
-
-   for (pipe_loader_device *ldev : ldevs) {
-      try {
-         devs.emplace_back(ldev);
-      } catch (error &) {}
-   }
 }

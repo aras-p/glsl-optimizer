@@ -32,16 +32,19 @@
 
 namespace clover {
    typedef struct _cl_device_id device;
+   typedef struct _cl_platform_id platform;
    class root_resource;
    class hard_event;
 }
 
 struct _cl_device_id {
 public:
-   _cl_device_id(pipe_loader_device *ldev);
+   _cl_device_id(clover::platform &platform, pipe_loader_device *ldev);
    _cl_device_id(_cl_device_id &&dev);
    _cl_device_id(const _cl_device_id &dev) = delete;
    ~_cl_device_id();
+
+   _cl_device_id &operator=(_cl_device_id dev);
 
    cl_device_type type() const;
    cl_uint vendor_id() const;
@@ -70,41 +73,11 @@ public:
    friend std::set<cl_image_format>
    clover::supported_formats(cl_context, cl_mem_object_type);
 
+   clover::platform &platform;
+
 private:
    pipe_screen *pipe;
    pipe_loader_device *ldev;
 };
-
-namespace clover {
-   ///
-   /// Container of all the compute devices that are available in the
-   /// system.
-   ///
-   class device_registry {
-   public:
-      typedef std::vector<device>::iterator iterator;
-
-      device_registry();
-
-      iterator begin() {
-         return devs.begin();
-      }
-
-      iterator end() {
-         return devs.end();
-      }
-
-      device &front() {
-         return devs.front();
-      }
-
-      device &back() {
-         return devs.back();
-      }
-
-   protected:
-      std::vector<device> devs;
-   };
-}
 
 #endif
