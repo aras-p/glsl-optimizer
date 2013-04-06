@@ -824,6 +824,8 @@ public:
       int isArray() const { return descTable[target].array ? 1 : 0; }
       int isCube() const { return descTable[target].cube ? 1 : 0; }
       int isShadow() const { return descTable[target].shadow ? 1 : 0; }
+      int isMS() const {
+        return target == TEX_TARGET_2D_MS || target == TEX_TARGET_2D_MS_ARRAY; }
 
       Target& operator=(TexTarget targ)
       {

@@ -102,6 +102,7 @@ nvc0_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_SEAMLESS_CUBE_MAP:
    case PIPE_CAP_CUBE_MAP_ARRAY:
    case PIPE_CAP_TEXTURE_BUFFER_OBJECTS:
+   case PIPE_CAP_TEXTURE_MULTISAMPLE:
       return 1;
    case PIPE_CAP_SEAMLESS_CUBE_MAP_PER_TEXTURE:
       return (class_3d >= NVE4_3D_CLASS) ? 1 : 0;
@@ -170,7 +171,6 @@ nvc0_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_VERTEX_BUFFER_OFFSET_4BYTE_ALIGNED_ONLY:
    case PIPE_CAP_VERTEX_BUFFER_STRIDE_4BYTE_ALIGNED_ONLY:
    case PIPE_CAP_VERTEX_ELEMENT_SRC_OFFSET_4BYTE_ALIGNED_ONLY:
-   case PIPE_CAP_TEXTURE_MULTISAMPLE:
       return 0;
    case PIPE_CAP_COMPUTE:
       return (class_3d >= NVE4_3D_CLASS) ? 1 : 0;

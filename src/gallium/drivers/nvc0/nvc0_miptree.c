@@ -197,6 +197,8 @@ nvc0_miptree_init_layout_tiled(struct nv50_miptree *mt)
     */
    d = mt->layout_3d ? pt->depth0 : 1;
 
+   assert(!mt->ms_mode || !pt->last_level);
+
    for (l = 0; l <= pt->last_level; ++l) {
       struct nv50_miptree_level *lvl = &mt->level[l];
       unsigned tsx, tsy, tsz;

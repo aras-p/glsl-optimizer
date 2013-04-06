@@ -62,6 +62,7 @@ nv50_miptree(struct pipe_resource *pt)
 
 #define NV50_TEXVIEW_SCALED_COORDS     (1 << 0)
 #define NV50_TEXVIEW_FILTER_MSAA8      (1 << 1)
+#define NV50_TEXVIEW_ACCESS_RESOLVE    (1 << 2)
 
 
 /* Internal functions:

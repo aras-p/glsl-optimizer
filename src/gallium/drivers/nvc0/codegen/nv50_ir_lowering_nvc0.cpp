@@ -662,6 +662,7 @@ NVC0LoweringPass::handleTEX(TexInstruction *i)
 {
    const int dim = i->tex.target.getDim() + i->tex.target.isCube();
    const int arg = i->tex.target.getArgCount();
+   const int lyr = arg - (i->tex.target.isMS() ? 2 : 1);
 
    if (prog->getTarget()->getChipset() >= NVISA_GK104_CHIPSET) {
       if (i->tex.rIndirectSrc >= 0 || i->tex.sIndirectSrc >= 0) {
@@ -683,7 +684,7 @@ NVC0LoweringPass::handleTEX(TexInstruction *i)
       }
       if (i->tex.target.isArray()) {
          LValue *layer = new_LValue(func, FILE_GPR);
-         Value *src = i->getSrc(arg - 1);
+         Value *src = i->getSrc(lyr);
          const int sat = (i->op == OP_TXF) ? 1 : 0;
          DataType sTy = (i->op == OP_TXF) ? TYPE_U32 : TYPE_F32;
          bld.mkCvt(OP_CVT, TYPE_U16, layer, sTy, src)->saturate = sat;
@@ -696,7 +697,7 @@ NVC0LoweringPass::handleTEX(TexInstruction *i)
    if (dim != arg || i->tex.rIndirectSrc >= 0 || i->tex.sIndirectSrc >= 0) {
       LValue *src = new_LValue(func, FILE_GPR); // 0xttxsaaaa
 
-      Value *arrayIndex = i->tex.target.isArray() ? i->getSrc(arg - 1) : NULL;
+      Value *arrayIndex = i->tex.target.isArray() ? i->getSrc(lyr) : NULL;
       for (int s = dim; s >= 1; --s)
          i->setSrc(s, i->getSrc(s - 1));
       i->setSrc(0, arrayIndex);

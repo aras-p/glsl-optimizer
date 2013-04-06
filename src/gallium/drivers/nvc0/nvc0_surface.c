@@ -636,6 +636,7 @@ nvc0_blit_set_src(struct nvc0_blitctx *ctx,
    }
 
    flags = res->last_level ? 0 : NV50_TEXVIEW_SCALED_COORDS;
+   flags |= NV50_TEXVIEW_ACCESS_RESOLVE;
    if (filter && res->nr_samples == 8)
       flags |= NV50_TEXVIEW_FILTER_MSAA8;
 

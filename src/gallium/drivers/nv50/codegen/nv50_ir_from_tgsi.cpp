@@ -358,11 +358,13 @@ static nv50_ir::TexTarget translateTexture(uint tex)
    switch (tex) {
    NV50_IR_TEX_TARG_CASE(1D, 1D);
    NV50_IR_TEX_TARG_CASE(2D, 2D);
+   NV50_IR_TEX_TARG_CASE(2D_MSAA, 2D_MS);
    NV50_IR_TEX_TARG_CASE(3D, 3D);
    NV50_IR_TEX_TARG_CASE(CUBE, CUBE);
    NV50_IR_TEX_TARG_CASE(RECT, RECT);
    NV50_IR_TEX_TARG_CASE(1D_ARRAY, 1D_ARRAY);
    NV50_IR_TEX_TARG_CASE(2D_ARRAY, 2D_ARRAY);
+   NV50_IR_TEX_TARG_CASE(2D_ARRAY_MSAA, 2D_MS_ARRAY);
    NV50_IR_TEX_TARG_CASE(CUBE_ARRAY, CUBE_ARRAY);
    NV50_IR_TEX_TARG_CASE(SHADOW1D, 1D_SHADOW);
    NV50_IR_TEX_TARG_CASE(SHADOW2D, 2D_SHADOW);
@@ -581,6 +583,8 @@ static nv50_ir::operation translateOpcode(uint opcode)
    NV50_IR_OPCODE_CASE(SAMPLE_C_LZ, TEX);
    NV50_IR_OPCODE_CASE(SAMPLE_D, TXD);
    NV50_IR_OPCODE_CASE(SAMPLE_L, TXL);
+   NV50_IR_OPCODE_CASE(SAMPLE_I, TXF);
+   NV50_IR_OPCODE_CASE(SAMPLE_I_MS, TXF);
    NV50_IR_OPCODE_CASE(GATHER4, TXG);
    NV50_IR_OPCODE_CASE(SVIEWINFO, TXQ);
 
@@ -1134,7 +1138,7 @@ private:
    // R,S,L,C,Dx,Dy encode TGSI sources for respective values (0xSf for auto)
    void setTexRS(TexInstruction *, unsigned int& s, int R, int S);
    void handleTEX(Value *dst0[4], int R, int S, int L, int C, int Dx, int Dy);
-   void handleTXF(Value *dst0[4], int R);
+   void handleTXF(Value *dst0[4], int R, int L_M);
    void handleTXQ(Value *dst0[4], enum TexQuery);
    void handleLIT(Value *dst0[4]);
    void handleUserClipPlanes();
@@ -1689,15 +1693,19 @@ Converter::handleTEX(Value *dst[4], int R, int S, int L, int C, int Dx, int Dy)
    bb->insertTail(texi);
 }
 
-// 1st source: xyz = coordinates, w = lod
+// 1st source: xyz = coordinates, w = lod/sample
 // 2nd source: offset
 void
-Converter::handleTXF(Value *dst[4], int R)
+Converter::handleTXF(Value *dst[4], int R, int L_M)
 {
    TexInstruction *texi = new_TexInstruction(func, tgsi.getOP());
+   int ms;
    unsigned int c, d, s;
 
    texi->tex.target = tgsi.getTexture(code, R);
+
+   ms = texi->tex.target.isMS() ? 1 : 0;
+   texi->tex.levelZero = ms; /* MS textures don't have mip-maps */
 
    for (c = 0, d = 0; c < 4; ++c) {
       if (dst[c]) {
@@ -1705,9 +1713,9 @@ Converter::handleTXF(Value *dst[4], int R)
          texi->tex.mask |= 1 << c;
       }
    }
-   for (c = 0; c < texi->tex.target.getArgCount(); ++c)
+   for (c = 0; c < (texi->tex.target.getArgCount() - ms); ++c)
       texi->setSrc(c, fetchSrc(0, c));
-   texi->setSrc(c++, fetchSrc(0, 3)); // lod
+   texi->setSrc(c++, fetchSrc(L_M >> 4, L_M & 3)); // lod or ms
 
    setTexRS(texi, c, R, -1);
 
@@ -2392,7 +2400,13 @@ Converter::handleInstruction(const struct tgsi_full_instruction *insn)
       handleTEX(dst0, 1, 2, 0x30, 0x30, 0x30, 0x40);
       break;
    case TGSI_OPCODE_TXF:
-      handleTXF(dst0, 1);
+      handleTXF(dst0, 1, 0x03);
+      break;
+   case TGSI_OPCODE_SAMPLE_I:
+      handleTXF(dst0, 1, 0x03);
+      break;
+   case TGSI_OPCODE_SAMPLE_I_MS:
+      handleTXF(dst0, 1, 0x20);
       break;
    case TGSI_OPCODE_TXQ:
    case TGSI_OPCODE_SVIEWINFO:
