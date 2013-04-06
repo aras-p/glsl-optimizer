@@ -60,8 +60,6 @@ struct intel_screen
    bool hw_has_separate_stencil;
    bool hw_must_use_separate_stencil;
 
-   bool kernel_has_gen7_sol_reset;
-
    bool hw_has_llc;
    bool hw_has_swizzling;
 

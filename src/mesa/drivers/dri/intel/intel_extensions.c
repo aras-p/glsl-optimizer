@@ -91,12 +91,9 @@ intelInitExtensions(struct gl_context *ctx)
       ctx->Const.GLSLVersion = 120;
    _mesa_override_glsl_version(ctx);
 
-   if (intel->gen == 6 ||
-       (intel->gen == 7 && intel->intelScreen->kernel_has_gen7_sol_reset))
-      ctx->Extensions.EXT_transform_feedback = true;
-
    if (intel->gen >= 6) {
       ctx->Extensions.EXT_framebuffer_multisample = true;
+      ctx->Extensions.EXT_transform_feedback = true;
       ctx->Extensions.ARB_blend_func_extended = !driQueryOptionb(&intel->optionCache, "disable_blend_func_extended");
       ctx->Extensions.ARB_draw_buffers_blend = true;
       ctx->Extensions.ARB_ES3_compatibility = true;
