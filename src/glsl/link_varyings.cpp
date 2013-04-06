@@ -656,6 +656,10 @@ varying_matches::~varying_matches()
  * If \c producer_var has already been paired up with a consumer_var, or
  * producer_var is part of fixed pipeline functionality (and hence already has
  * a location assigned), this function has no effect.
+ *
+ * Note: as a side effect this function may change the interpolation type of
+ * \c producer_var, but only when the change couldn't possibly affect
+ * rendering.
  */
 void
 varying_matches::record(ir_variable *producer_var, ir_variable *consumer_var)
@@ -666,6 +670,21 @@ varying_matches::record(ir_variable *producer_var, ir_variable *consumer_var)
        * previous match.
        */
       return;
+   }
+
+   if (consumer_var == NULL) {
+      /* Since there is no consumer_var, the interpolation type of this
+       * varying cannot possibly affect rendering.  Also, since the GL spec
+       * only requires integer varyings to be "flat" when they are fragment
+       * shader inputs, it is possible that this variable is non-flat and is
+       * (or contains) an integer.
+       *
+       * lower_packed_varyings requires all integer varyings to flat,
+       * regardless of where they appear.  We can trivially satisfy that
+       * requirement by changing the interpolation type to flat here.
+       */
+      producer_var->centroid = false;
+      producer_var->interpolation = INTERP_QUALIFIER_FLAT;
    }
 
    if (this->num_matches == this->matches_capacity) {
