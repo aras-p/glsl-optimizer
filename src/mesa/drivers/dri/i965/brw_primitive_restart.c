@@ -36,18 +36,12 @@
 
 /**
  * Check if the hardware's cut index support can handle the primitive
- * restart index value.
+ * restart index value (pre-Haswell only).
  */
 static bool
 can_cut_index_handle_restart_index(struct gl_context *ctx,
                                    const struct _mesa_index_buffer *ib)
 {
-   struct intel_context *intel = intel_context(ctx);
-
-   /* Haswell supports an arbitrary cut index. */
-   if (intel->is_haswell)
-      return true;
-
    bool cut_index_will_work;
 
    switch (ib->type) {
@@ -78,6 +72,7 @@ can_cut_index_handle_prims(struct gl_context *ctx,
                            GLuint nr_prims,
                            const struct _mesa_index_buffer *ib)
 {
+   struct intel_context *intel = intel_context(ctx);
    struct brw_context *brw = brw_context(ctx);
 
    if (brw->sol.counting_primitives_generated ||
@@ -89,6 +84,10 @@ can_cut_index_handle_prims(struct gl_context *ctx,
        */
       return false;
    }
+
+   /* Otherwise Haswell can do it all. */
+   if (intel->is_haswell)
+      return true;
 
    if (!can_cut_index_handle_restart_index(ctx, ib)) {
       /* The primitive restart index can't be handled, so take
