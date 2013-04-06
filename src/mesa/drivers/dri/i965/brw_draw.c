@@ -270,16 +270,10 @@ static void brw_merge_inputs( struct brw_context *brw,
    }
    brw->vb.nr_buffers = 0;
 
-   memset(&brw->vb.info, 0, sizeof(brw->vb.info));
-
    for (i = 0; i < VERT_ATTRIB_MAX; i++) {
       brw->vb.inputs[i].buffer = -1;
       brw->vb.inputs[i].glarray = arrays[i];
       brw->vb.inputs[i].attrib = (gl_vert_attrib) i;
-
-      if (arrays[i]->StrideB != 0)
-	 brw->vb.info.sizes[i/16] |= (brw->vb.inputs[i].glarray->Size - 1) <<
-	    ((i%16) * 2);
    }
 }
 

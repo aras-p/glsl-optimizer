@@ -731,12 +731,6 @@ struct brw_vertex_element {
    unsigned int offset;
 };
 
-
-
-struct brw_vertex_info {
-   GLuint sizes[ATTRIB_BIT_DWORDS * 2]; /* sizes:2[VERT_ATTRIB_MAX] */
-};
-
 struct brw_query_object {
    struct gl_query_object Base;
 
@@ -791,7 +785,6 @@ struct brw_context
       /* Summary of size and varying of active arrays, so we can check
        * for changes to this state:
        */
-      struct brw_vertex_info info;
       unsigned int min_index, max_index;
 
       /* Offset from start of vertex buffer so we can avoid redefining
