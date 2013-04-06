@@ -8,7 +8,7 @@ descriptor=[
   [ "COLOR_WRITEMASK", "LOC_CUSTOM, TYPE_INT_4, 0, NO_EXTRA" ],
   [ "CULL_FACE", "CONTEXT_BOOL(Polygon.CullFlag), NO_EXTRA" ],
   [ "CULL_FACE_MODE", "CONTEXT_ENUM(Polygon.CullFaceMode), NO_EXTRA" ],
-  [ "DEPTH_BITS", "BUFFER_INT(Visual.depthBits), NO_EXTRA" ],
+  [ "DEPTH_BITS", "BUFFER_INT(Visual.depthBits), extra_new_buffers" ],
   [ "DEPTH_CLEAR_VALUE", "CONTEXT_FIELD(Depth.Clear, TYPE_DOUBLEN), NO_EXTRA" ],
   [ "DEPTH_FUNC", "CONTEXT_ENUM(Depth.Func), NO_EXTRA" ],
   [ "DEPTH_RANGE", "CONTEXT_FIELD(Viewport.Near, TYPE_FLOATN_2), NO_EXTRA" ],
@@ -31,7 +31,7 @@ descriptor=[
   [ "RED_BITS", "BUFFER_INT(Visual.redBits), extra_new_buffers" ],
   [ "SCISSOR_BOX", "LOC_CUSTOM, TYPE_INT_4, 0, NO_EXTRA" ],
   [ "SCISSOR_TEST", "CONTEXT_BOOL(Scissor.Enabled), NO_EXTRA" ],
-  [ "STENCIL_BITS", "BUFFER_INT(Visual.stencilBits), NO_EXTRA" ],
+  [ "STENCIL_BITS", "BUFFER_INT(Visual.stencilBits), extra_new_buffers" ],
   [ "STENCIL_CLEAR_VALUE", "CONTEXT_INT(Stencil.Clear), NO_EXTRA" ],
   [ "STENCIL_FAIL", "LOC_CUSTOM, TYPE_ENUM, NO_OFFSET, NO_EXTRA" ],
   [ "STENCIL_FUNC", "LOC_CUSTOM, TYPE_ENUM, NO_OFFSET, NO_EXTRA" ],
@@ -80,8 +80,8 @@ descriptor=[
   [ "SAMPLE_COVERAGE_ARB", "CONTEXT_BOOL(Multisample.SampleCoverage), NO_EXTRA" ],
   [ "SAMPLE_COVERAGE_VALUE_ARB", "CONTEXT_FLOAT(Multisample.SampleCoverageValue), NO_EXTRA" ],
   [ "SAMPLE_COVERAGE_INVERT_ARB", "CONTEXT_BOOL(Multisample.SampleCoverageInvert), NO_EXTRA" ],
-  [ "SAMPLE_BUFFERS_ARB", "BUFFER_INT(Visual.sampleBuffers), NO_EXTRA" ],
-  [ "SAMPLES_ARB", "BUFFER_INT(Visual.samples), NO_EXTRA" ],
+  [ "SAMPLE_BUFFERS_ARB", "BUFFER_INT(Visual.sampleBuffers), extra_new_buffers" ],
+  [ "SAMPLES_ARB", "BUFFER_INT(Visual.samples), extra_new_buffers" ],
 
 # GL_SGIS_generate_mipmap
   [ "GENERATE_MIPMAP_HINT_SGIS", "CONTEXT_ENUM(Hint.GenerateMipmap), NO_EXTRA" ],
@@ -630,7 +630,7 @@ descriptor=[
   [ "TEXTURE_CUBE_MAP_SEAMLESS", "CONTEXT_BOOL(Texture.CubeMapSeamless), extra_ARB_seamless_cube_map" ],
 
 # GL_EXT_texture_integer
-  [ "RGBA_INTEGER_MODE_EXT", "BUFFER_BOOL(_IntegerColor), extra_EXT_texture_integer" ],
+  [ "RGBA_INTEGER_MODE_EXT", "BUFFER_BOOL(_IntegerColor), extra_EXT_texture_integer_and_new_buffers" ],
 
 # GL_ARB_transform_feedback3
   [ "MAX_TRANSFORM_FEEDBACK_BUFFERS", "CONTEXT_INT(Const.MaxTransformFeedbackBuffers), extra_ARB_transform_feedback3" ],
@@ -645,7 +645,7 @@ descriptor=[
   [ "MAX_VERTEX_VARYING_COMPONENTS_ARB", "CONTEXT_INT(Const.MaxVertexVaryingComponents), extra_ARB_geometry_shader4" ],
 
 # GL_ARB_color_buffer_float
-  [ "RGBA_FLOAT_MODE_ARB", "BUFFER_FIELD(Visual.floatMode, TYPE_BOOLEAN), 0" ],
+  [ "RGBA_FLOAT_MODE_ARB", "BUFFER_FIELD(Visual.floatMode, TYPE_BOOLEAN), extra_core_ARB_color_buffer_float_and_new_buffers" ],
 
 # GL_EXT_gpu_shader4 / GLSL 1.30
   [ "MIN_PROGRAM_TEXEL_OFFSET", "CONTEXT_INT(Const.MinProgramTexelOffset), extra_GLSL_130" ],
@@ -676,7 +676,7 @@ descriptor=[
 
 # GL3.0 / GL_EXT_framebuffer_sRGB
   [ "FRAMEBUFFER_SRGB_EXT", "CONTEXT_BOOL(Color.sRGBEnabled), extra_EXT_framebuffer_sRGB" ],
-  [ "FRAMEBUFFER_SRGB_CAPABLE_EXT", "BUFFER_INT(Visual.sRGBCapable), extra_EXT_framebuffer_sRGB" ],
+  [ "FRAMEBUFFER_SRGB_CAPABLE_EXT", "BUFFER_INT(Visual.sRGBCapable), extra_EXT_framebuffer_sRGB_and_new_buffers" ],
 
 # GL 3.1
 # NOTE: different enum values for GL_PRIMITIVE_RESTART_NV
