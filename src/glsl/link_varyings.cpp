@@ -541,7 +541,7 @@ store_tfeedback_info(struct gl_context *ctx, struct gl_shader_program *prog,
 class varying_matches
 {
 public:
-   varying_matches(bool disable_varying_packing);
+   varying_matches(bool disable_varying_packing, bool consumer_is_fs);
    ~varying_matches();
    void record(ir_variable *producer_var, ir_variable *consumer_var);
    unsigned assign_locations();
@@ -621,11 +621,15 @@ private:
     * it was allocated.
     */
    unsigned matches_capacity;
+
+   const bool consumer_is_fs;
 };
 
 
-varying_matches::varying_matches(bool disable_varying_packing)
-   : disable_varying_packing(disable_varying_packing)
+varying_matches::varying_matches(bool disable_varying_packing,
+                                 bool consumer_is_fs)
+   : disable_varying_packing(disable_varying_packing),
+     consumer_is_fs(consumer_is_fs)
 {
    /* Note: this initial capacity is rather arbitrarily chosen to be large
     * enough for many cases without wasting an unreasonable amount of space.
@@ -672,12 +676,12 @@ varying_matches::record(ir_variable *producer_var, ir_variable *consumer_var)
       return;
    }
 
-   if (consumer_var == NULL) {
-      /* Since there is no consumer_var, the interpolation type of this
-       * varying cannot possibly affect rendering.  Also, since the GL spec
-       * only requires integer varyings to be "flat" when they are fragment
-       * shader inputs, it is possible that this variable is non-flat and is
-       * (or contains) an integer.
+   if (consumer_var == NULL || !consumer_is_fs) {
+      /* Since this varying is not being consumed by the fragment shader, its
+       * interpolation type varying cannot possibly affect rendering.  Also,
+       * since the GL spec only requires integer varyings to be "flat" when
+       * they are fragment shader inputs, it is possible that this variable is
+       * non-flat and is (or contains) an integer.
        *
        * lower_packed_varyings requires all integer varyings to flat,
        * regardless of where they appear.  We can trivially satisfy that
@@ -685,6 +689,11 @@ varying_matches::record(ir_variable *producer_var, ir_variable *consumer_var)
        */
       producer_var->centroid = false;
       producer_var->interpolation = INTERP_QUALIFIER_FLAT;
+
+      if (consumer_var) {
+         consumer_var->centroid = false;
+         consumer_var->interpolation = INTERP_QUALIFIER_FLAT;
+      }
    }
 
    if (this->num_matches == this->matches_capacity) {
@@ -979,7 +988,8 @@ assign_varying_locations(struct gl_context *ctx,
 {
    const unsigned producer_base = VARYING_SLOT_VAR0;
    const unsigned consumer_base = VARYING_SLOT_VAR0;
-   varying_matches matches(ctx->Const.DisableVaryingPacking);
+   varying_matches matches(ctx->Const.DisableVaryingPacking,
+                           consumer && consumer->Type == GL_FRAGMENT_SHADER);
    hash_table *tfeedback_candidates
       = hash_table_ctor(0, hash_table_string_hash, hash_table_string_compare);
    hash_table *consumer_inputs
