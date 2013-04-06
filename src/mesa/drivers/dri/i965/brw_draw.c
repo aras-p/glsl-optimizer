@@ -171,11 +171,15 @@ static void brw_emit_prim(struct brw_context *brw,
    start_vertex_location = prim->start;
    base_vertex_location = prim->basevertex;
    if (prim->indexed) {
-      vertex_access_type = GEN4_3DPRIM_VERTEXBUFFER_ACCESS_RANDOM;
+      vertex_access_type = brw->gen >= 7 ?
+         GEN7_3DPRIM_VERTEXBUFFER_ACCESS_RANDOM :
+         GEN4_3DPRIM_VERTEXBUFFER_ACCESS_RANDOM;
       start_vertex_location += brw->ib.start_vertex_offset;
       base_vertex_location += brw->vb.start_vertex_bias;
    } else {
-      vertex_access_type = GEN4_3DPRIM_VERTEXBUFFER_ACCESS_SEQUENTIAL;
+      vertex_access_type = brw->gen >= 7 ?
+         GEN7_3DPRIM_VERTEXBUFFER_ACCESS_SEQUENTIAL :
+         GEN4_3DPRIM_VERTEXBUFFER_ACCESS_SEQUENTIAL;
       start_vertex_location += brw->vb.start_vertex_bias;
    }
 
@@ -198,71 +202,25 @@ static void brw_emit_prim(struct brw_context *brw,
       intel_batchbuffer_emit_mi_flush(brw);
    }
 
-   BEGIN_BATCH(6);
-   OUT_BATCH(CMD_3D_PRIM << 16 | (6 - 2) |
-	     hw_prim << GEN4_3DPRIM_TOPOLOGY_TYPE_SHIFT |
-	     vertex_access_type);
-   OUT_BATCH(verts_per_instance);
-   OUT_BATCH(start_vertex_location);
-   OUT_BATCH(prim->num_instances);
-   OUT_BATCH(prim->base_instance);
-   OUT_BATCH(base_vertex_location);
-   ADVANCE_BATCH();
-
-   brw->batch.need_workaround_flush = true;
-
-   if (brw->always_flush_cache) {
-      intel_batchbuffer_emit_mi_flush(brw);
-   }
-}
-
-static void gen7_emit_prim(struct brw_context *brw,
-			   const struct _mesa_prim *prim,
-			   uint32_t hw_prim)
-{
-   int verts_per_instance;
-   int vertex_access_type;
-   int start_vertex_location;
-   int base_vertex_location;
-
-   DBG("PRIM: %s %d %d\n", _mesa_lookup_enum_by_nr(prim->mode),
-       prim->start, prim->count);
-
-   start_vertex_location = prim->start;
-   base_vertex_location = prim->basevertex;
-   if (prim->indexed) {
-      vertex_access_type = GEN7_3DPRIM_VERTEXBUFFER_ACCESS_RANDOM;
-      start_vertex_location += brw->ib.start_vertex_offset;
-      base_vertex_location += brw->vb.start_vertex_bias;
+   if (brw->gen >= 7) {
+      BEGIN_BATCH(7);
+      OUT_BATCH(CMD_3D_PRIM << 16 | (7 - 2));
+      OUT_BATCH(hw_prim | vertex_access_type);
    } else {
-      vertex_access_type = GEN7_3DPRIM_VERTEXBUFFER_ACCESS_SEQUENTIAL;
-      start_vertex_location += brw->vb.start_vertex_bias;
+      BEGIN_BATCH(6);
+      OUT_BATCH(CMD_3D_PRIM << 16 | (6 - 2) |
+                hw_prim << GEN4_3DPRIM_TOPOLOGY_TYPE_SHIFT |
+                vertex_access_type);
    }
-
-   verts_per_instance = prim->count;
-
-   /* If nothing to emit, just return. */
-   if (verts_per_instance == 0)
-      return;
-
-   /* If we're set to always flush, do it before and after the primitive emit.
-    * We want to catch both missed flushes that hurt instruction/state cache
-    * and missed flushes of the render cache as it heads to other parts of
-    * the besides the draw code.
-    */
-   if (brw->always_flush_cache) {
-      intel_batchbuffer_emit_mi_flush(brw);
-   }
-
-   BEGIN_BATCH(7);
-   OUT_BATCH(CMD_3D_PRIM << 16 | (7 - 2));
-   OUT_BATCH(hw_prim | vertex_access_type);
    OUT_BATCH(verts_per_instance);
    OUT_BATCH(start_vertex_location);
    OUT_BATCH(prim->num_instances);
    OUT_BATCH(prim->base_instance);
    OUT_BATCH(base_vertex_location);
    ADVANCE_BATCH();
+
+   /* Only used on Sandybridge; harmless to set elsewhere. */
+   brw->batch.need_workaround_flush = true;
 
    if (brw->always_flush_cache) {
       intel_batchbuffer_emit_mi_flush(brw);
@@ -456,10 +414,7 @@ retry:
 	 brw_upload_state(brw);
       }
 
-      if (brw->gen >= 7)
-	 gen7_emit_prim(brw, &prim[i], brw->primitive);
-      else
-	 brw_emit_prim(brw, &prim[i], brw->primitive);
+      brw_emit_prim(brw, &prim[i], brw->primitive);
 
       brw->no_batch_wrap = false;
 
