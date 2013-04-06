@@ -517,8 +517,6 @@ static void brw_prepare_vertices(struct brw_context *brw)
       brw->vb.start_vertex_bias = -delta;
       delta = 0;
    }
-   if (delta && !brw->intel.intelScreen->relaxed_relocations)
-      min_index = delta = 0;
 
    /* Handle any arrays to be uploaded. */
    if (nr_uploads > 1) {

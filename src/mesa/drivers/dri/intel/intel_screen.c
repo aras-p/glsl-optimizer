@@ -1008,9 +1008,10 @@ intel_init_bufmgr(struct intel_screen *intelScreen)
 
    drm_intel_bufmgr_gem_enable_fenced_relocs(intelScreen->bufmgr);
 
-   intelScreen->relaxed_relocations = 0;
-   intelScreen->relaxed_relocations |=
-      intel_get_boolean(spriv, I915_PARAM_HAS_RELAXED_DELTA) << 0;
+   if (!intel_get_boolean(spriv, I915_PARAM_HAS_RELAXED_DELTA)) {
+      fprintf(stderr, "[%s: %u] Kernel 2.6.39 required.\n", __func__, __LINE__);
+      return false;
+   }
 
    return true;
 }
