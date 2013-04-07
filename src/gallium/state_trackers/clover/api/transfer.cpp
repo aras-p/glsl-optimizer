@@ -414,7 +414,7 @@ clEnqueueCopyBufferToImage(cl_command_queue q, cl_mem src_obj, cl_mem dst_obj,
                            const size_t *dst_origin, const size_t *region,
                            cl_uint num_deps, const cl_event *deps,
                            cl_event *ev) try {
-   image *dst_img = dynamic_cast<image *>(src_obj);
+   image *dst_img = dynamic_cast<image *>(dst_obj);
 
    validate_base(q, num_deps, deps);
    validate_obj(q, src_obj);
