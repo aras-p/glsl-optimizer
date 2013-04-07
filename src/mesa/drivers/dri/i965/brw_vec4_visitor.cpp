@@ -2664,10 +2664,8 @@ vec4_visitor::emit_urb_writes()
          emit_urb_slot(mrf++, c->prog_data.vue_map.slot_to_varying[slot]);
       }
 
-      if (eot) {
-         if (INTEL_DEBUG & DEBUG_SHADER_TIME)
-            emit_shader_time_end();
-      }
+      if (INTEL_DEBUG & DEBUG_SHADER_TIME)
+         emit_shader_time_end();
 
       current_annotation = "URB write";
       inst = emit(VS_OPCODE_URB_WRITE);
