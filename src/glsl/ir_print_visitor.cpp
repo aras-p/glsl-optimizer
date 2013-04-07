@@ -24,6 +24,7 @@
 #include "ir_print_visitor.h"
 #include "glsl_types.h"
 #include "glsl_parser_extras.h"
+#include "main/macros.h"
 #include "program/hash_table.h"
 
 static void print_type(const glsl_type *t);
@@ -149,7 +150,8 @@ void ir_print_visitor::visit(ir_variable *ir)
    const char *const mode[] = { "", "uniform ", "shader_in ", "shader_out ",
                                 "in ", "out ", "inout ",
 			        "const_in ", "sys ", "temporary " };
-   const char *const interp[] = { "", "flat", "noperspective" };
+   const char *const interp[] = { "", "smooth", "flat", "noperspective" };
+   STATIC_ASSERT(ARRAY_SIZE(interp) == INTERP_QUALIFIER_COUNT);
 
    printf("(%s%s%s%s) ",
 	  cent, inv, mode[ir->mode], interp[ir->interpolation]);
