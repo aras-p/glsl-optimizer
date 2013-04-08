@@ -142,6 +142,7 @@ enum chip_class {
 enum ring_type {
     RING_GFX = 0,
     RING_DMA,
+    RING_UVD,
     RING_LAST,
 };
 
@@ -169,6 +170,8 @@ struct radeon_info {
     uint32_t                    drm_major; /* version */
     uint32_t                    drm_minor;
     uint32_t                    drm_patchlevel;
+
+    boolean                     has_uvd;
 
     uint32_t                    r300_num_gb_pipes;
     uint32_t                    r300_num_z_pipes;

@@ -90,6 +90,14 @@
 #define RADEON_INFO_TIMESTAMP 0x11
 #endif
 
+#ifndef RADEON_INFO_RING_WORKING
+#define RADEON_INFO_RING_WORKING 0x15
+#endif
+
+#ifndef RADEON_CS_RING_UVD
+#define RADEON_CS_RING_UVD	3
+#endif
+
 static struct util_hash_table *fd_tab = NULL;
 
 /* Enable/disable feature access for one command stream.
@@ -321,6 +329,15 @@ static boolean do_winsys_init(struct radeon_drm_winsys *ws)
     ws->info.r600_has_dma = FALSE;
     if (ws->info.chip_class >= R700 && ws->info.drm_minor >= 27) {
         ws->info.r600_has_dma = TRUE;
+    }
+
+    /* Check for UVD */
+    ws->info.has_uvd = FALSE;
+    if (ws->info.drm_minor >= 32) {
+	uint32_t value = RADEON_CS_RING_UVD;
+        if (radeon_get_drm_value(ws->fd, RADEON_INFO_RING_WORKING,
+                                 "UVD Ring working", &value))
+            ws->info.has_uvd = value;
     }
 
     /* Get GEM info. */
