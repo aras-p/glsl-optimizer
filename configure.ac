@@ -1766,19 +1766,15 @@ gallium_require_drm_loader() {
 
 radeon_llvm_check() {
     LLVM_REQUIRED_VERSION_MAJOR="3"
-    LLVM_REQUIRED_VERSION_MINOR="2"
+    LLVM_REQUIRED_VERSION_MINOR="3"
     if test "$LLVM_VERSION_INT" -lt "${LLVM_REQUIRED_VERSION_MAJOR}0${LLVM_REQUIRED_VERSION_MINOR}"; then
-        AC_MSG_ERROR([LLVM $LLVM_REQUIRED_VERSION_MAJOR.$LLVM_REQUIRED_VERSION_MINOR or newer with R600 target enabled is required.
-                     To use the r600/radeonsi LLVM backend, you need to fetch the LLVM source from:
-                     git://people.freedesktop.org/~tstellar/llvm master
-                     and build with --enable-experimental-targets=R600])
+        AC_MSG_ERROR([LLVM $LLVM_REQUIRED_VERSION_MAJOR.$LLVM_REQUIRED_VERSION_MINOR or newer is required for r600g and radeonsi.])
     fi
     if test true && $LLVM_CONFIG --targets-built | grep -qv '\<R600\>' ; then
         AC_MSG_ERROR([LLVM R600 Target not enabled.  You can enable it when building the LLVM
                       sources with the --enable-experimental-targets=R600
                       configure flag])
     fi
-    AC_MSG_WARN([Please ensure you use the latest llvm tree from git://people.freedesktop.org/~tstellar/llvm master before submitting a bug])
     LLVM_COMPONENTS="${LLVM_COMPONENTS} r600 bitreader"
 }
 
