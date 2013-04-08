@@ -159,6 +159,7 @@ brw_begin_transform_feedback(struct gl_context *ctx, GLenum mode,
 			     struct gl_transform_feedback_object *obj)
 {
    struct brw_context *brw = brw_context(ctx);
+   struct intel_context *intel = &brw->intel;
    const struct gl_shader_program *vs_prog =
       ctx->Shader.CurrentVertexProgram;
    const struct gl_transform_feedback_info *linked_xfb_info =
@@ -180,6 +181,14 @@ brw_begin_transform_feedback(struct gl_context *ctx, GLenum mode,
    brw->sol.svbi_0_starting_index = 0;
    brw->sol.svbi_0_max_index = max_index;
    brw->sol.offset_0_batch_start = 0;
+
+   if (intel->gen >= 7) {
+      /* Ask the kernel to reset the SO offsets for any previous transform
+       * feedback, so we start at the start of the user's buffer. (note: these
+       * are not the query counters)
+       */
+      intel->batch.needs_sol_reset = true;
+   }
 }
 
 void
