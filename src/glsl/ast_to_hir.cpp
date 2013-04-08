@@ -3985,8 +3985,14 @@ ast_process_structure_or_interface_block(exec_list *instructions,
           *      blocks. All other types, arrays, and structures
           *      allowed for uniforms are allowed within a uniform
           *      block."
+          *
+          * It should be impossible for decl_type to be NULL here.  Cases that
+          * might naturally lead to decl_type being NULL, especially for the
+          * is_interface case, will have resulted in compilation having
+          * already halted due to a syntax error.
           */
-         const struct glsl_type *field_type = decl_type;
+         const struct glsl_type *field_type =
+            decl_type != NULL ? decl_type : glsl_type::error_type;
 
          if (is_interface && field_type->contains_sampler()) {
             YYLTYPE loc = decl_list->get_location();
@@ -4009,8 +4015,7 @@ ast_process_structure_or_interface_block(exec_list *instructions,
 	    field_type = process_array_type(&loc, decl_type, decl->array_size,
 					    state);
 	 }
-	 fields[i].type = (field_type != NULL)
-	    ? field_type : glsl_type::error_type;
+         fields[i].type = field_type;
 	 fields[i].name = decl->identifier;
 
          if (qual->flags.q.row_major || qual->flags.q.column_major) {
