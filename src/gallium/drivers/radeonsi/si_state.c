@@ -30,6 +30,7 @@
 #include "util/u_helpers.h"
 #include "util/u_math.h"
 #include "util/u_pack_color.h"
+#include "util/u_format_s3tc.h"
 #include "tgsi/tgsi_parse.h"
 #include "radeonsi_pipe.h"
 #include "radeonsi_shader.h"
@@ -1164,6 +1165,8 @@ static uint32_t si_translate_texformat(struct pipe_screen *screen,
 				       const struct util_format_description *desc,
 				       int first_non_void)
 {
+	struct r600_screen *rscreen = (struct r600_screen*)screen;
+	bool enable_s3tc = rscreen->info.drm_minor >= 31;
 	boolean uniform = TRUE;
 	int i;
 
@@ -1205,7 +1208,51 @@ static uint32_t si_translate_texformat(struct pipe_screen *screen,
 		break;
 	}
 
-	/* TODO compressed formats */
+	if (desc->layout == UTIL_FORMAT_LAYOUT_RGTC) {
+		if (!enable_s3tc)
+			goto out_unknown;
+
+		switch (format) {
+		case PIPE_FORMAT_RGTC1_SNORM:
+		case PIPE_FORMAT_LATC1_SNORM:
+		case PIPE_FORMAT_RGTC1_UNORM:
+		case PIPE_FORMAT_LATC1_UNORM:
+			return V_008F14_IMG_DATA_FORMAT_BC4;
+		case PIPE_FORMAT_RGTC2_SNORM:
+		case PIPE_FORMAT_LATC2_SNORM:
+		case PIPE_FORMAT_RGTC2_UNORM:
+		case PIPE_FORMAT_LATC2_UNORM:
+			return V_008F14_IMG_DATA_FORMAT_BC5;
+		default:
+			goto out_unknown;
+		}
+	}
+
+	if (desc->layout == UTIL_FORMAT_LAYOUT_S3TC) {
+
+		if (!enable_s3tc)
+			goto out_unknown;
+
+		if (!util_format_s3tc_enabled) {
+			goto out_unknown;
+		}
+
+		switch (format) {
+		case PIPE_FORMAT_DXT1_RGB:
+		case PIPE_FORMAT_DXT1_RGBA:
+		case PIPE_FORMAT_DXT1_SRGB:
+		case PIPE_FORMAT_DXT1_SRGBA:
+			return V_008F14_IMG_DATA_FORMAT_BC1;
+		case PIPE_FORMAT_DXT3_RGBA:
+		case PIPE_FORMAT_DXT3_SRGBA:
+			return V_008F14_IMG_DATA_FORMAT_BC2;
+		case PIPE_FORMAT_DXT5_RGBA:
+		case PIPE_FORMAT_DXT5_SRGBA:
+			return V_008F14_IMG_DATA_FORMAT_BC3;
+		default:
+			goto out_unknown;
+		}
+	}
 
 	if (format == PIPE_FORMAT_R9G9B9E5_FLOAT) {
 		return V_008F14_IMG_DATA_FORMAT_5_9_9_9;
@@ -2109,7 +2156,27 @@ static struct pipe_sampler_view *si_create_sampler_view(struct pipe_context *ctx
 		break;
 	default:
 		if (first_non_void < 0) {
-			num_format = V_008F14_IMG_NUM_FORMAT_FLOAT;
+			if (util_format_is_compressed(pipe_format)) {
+				switch (pipe_format) {
+				case PIPE_FORMAT_DXT1_SRGB:
+				case PIPE_FORMAT_DXT1_SRGBA:
+				case PIPE_FORMAT_DXT3_SRGBA:
+				case PIPE_FORMAT_DXT5_SRGBA:
+					num_format = V_008F14_IMG_NUM_FORMAT_SRGB;
+					break;
+				case PIPE_FORMAT_RGTC1_SNORM:
+				case PIPE_FORMAT_LATC1_SNORM:
+				case PIPE_FORMAT_RGTC2_SNORM:
+				case PIPE_FORMAT_LATC2_SNORM:
+					num_format = V_008F14_IMG_NUM_FORMAT_SNORM;
+					break;
+				default:
+					num_format = V_008F14_IMG_NUM_FORMAT_UNORM;
+					break;
+				}
+			} else {
+				num_format = V_008F14_IMG_NUM_FORMAT_FLOAT;
+			}
 		} else if (desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB) {
 			num_format = V_008F14_IMG_NUM_FORMAT_SRGB;
 		} else {

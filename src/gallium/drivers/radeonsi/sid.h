@@ -3440,6 +3440,13 @@
 #define     V_008F14_IMG_DATA_FORMAT_GB_GR                          0x20
 #define     V_008F14_IMG_DATA_FORMAT_BG_RG                          0x21
 #define     V_008F14_IMG_DATA_FORMAT_5_9_9_9                        0x22
+#define     V_008F14_IMG_DATA_FORMAT_BC1                            0x23
+#define     V_008F14_IMG_DATA_FORMAT_BC2                            0x24
+#define     V_008F14_IMG_DATA_FORMAT_BC3                            0x25
+#define     V_008F14_IMG_DATA_FORMAT_BC4                            0x26
+#define     V_008F14_IMG_DATA_FORMAT_BC5                            0x27
+#define     V_008F14_IMG_DATA_FORMAT_BC6                            0x28
+#define     V_008F14_IMG_DATA_FORMAT_BC7                            0x29
 #define     V_008F14_IMG_DATA_FORMAT_RESERVED_42                    0x2A
 #define     V_008F14_IMG_DATA_FORMAT_RESERVED_43                    0x2B
 #define     V_008F14_IMG_DATA_FORMAT_FMASK8_S2_F1                   0x2C
