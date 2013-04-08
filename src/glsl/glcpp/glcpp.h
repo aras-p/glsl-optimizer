@@ -50,7 +50,9 @@ typedef struct token_list token_list_t;
 
 typedef union YYSTYPE
 {
-	int ival;
+	// Could be int, but results in some bugs with parsing of #version directives
+	// in Apple LLVM Compiler 4.2 when building for 32 bit.
+	intmax_t ival;
 	char *str;
 	string_list_t *string_list;
 	token_t *token;
