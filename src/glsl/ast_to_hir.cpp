@@ -1678,6 +1678,9 @@ process_array_type(YYLTYPE *loc, const glsl_type *base, ast_node *array_size,
 {
    unsigned length = 0;
 
+   if (base == NULL)
+      return glsl_type::error_type;
+
    /* From page 19 (page 25) of the GLSL 1.20 spec:
     *
     *     "Only one-dimensional arrays may be declared."
@@ -1730,7 +1733,8 @@ process_array_type(YYLTYPE *loc, const glsl_type *base, ast_node *array_size,
 		       "allowed in GLSL ES 1.00.");
    }
 
-   return glsl_type::get_array_instance(base, length);
+   const glsl_type *array_type = glsl_type::get_array_instance(base, length);
+   return array_type != NULL ? array_type : glsl_type::error_type;
 }
 
 
