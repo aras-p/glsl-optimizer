@@ -35,9 +35,9 @@ gen7_emit_depth_stencil_hiz(struct brw_context *brw,
                             uint32_t depth_offset, uint32_t depthbuffer_format,
                             uint32_t depth_surface_type,
                             struct intel_mipmap_tree *stencil_mt,
-                            struct intel_mipmap_tree *hiz_mt,
-                            bool separate_stencil, uint32_t width,
-                            uint32_t height, uint32_t tile_x, uint32_t tile_y)
+                            bool hiz, bool separate_stencil,
+                            uint32_t width, uint32_t height,
+                            uint32_t tile_x, uint32_t tile_y)
 {
    struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &intel->ctx;
@@ -49,7 +49,7 @@ gen7_emit_depth_stencil_hiz(struct brw_context *brw,
    OUT_BATCH(GEN7_3DSTATE_DEPTH_BUFFER << 16 | (7 - 2));
    OUT_BATCH((depth_mt ? depth_mt->region->pitch - 1 : 0) |
              (depthbuffer_format << 18) |
-             ((hiz_mt ? 1 : 0) << 22) |
+             ((hiz ? 1 : 0) << 22) |
              ((stencil_mt != NULL && ctx->Stencil._WriteEnabled) << 27) |
              ((ctx->Depth.Mask != 0) << 28) |
              (depth_surface_type << 29));
@@ -69,13 +69,14 @@ gen7_emit_depth_stencil_hiz(struct brw_context *brw,
    OUT_BATCH(0);
    ADVANCE_BATCH();
 
-   if (hiz_mt == NULL) {
+   if (!hiz) {
       BEGIN_BATCH(3);
       OUT_BATCH(GEN7_3DSTATE_HIER_DEPTH_BUFFER << 16 | (3 - 2));
       OUT_BATCH(0);
       OUT_BATCH(0);
       ADVANCE_BATCH();
    } else {
+      struct intel_mipmap_tree *hiz_mt = depth_mt->hiz_mt;
       BEGIN_BATCH(3);
       OUT_BATCH(GEN7_3DSTATE_HIER_DEPTH_BUFFER << 16 | (3 - 2));
       OUT_BATCH(hiz_mt->region->pitch - 1);

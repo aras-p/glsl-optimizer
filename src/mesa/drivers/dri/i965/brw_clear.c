@@ -114,7 +114,7 @@ brw_fast_clear_depth(struct gl_context *ctx)
    if (intel->gen < 6)
       return false;
 
-   if (!mt->hiz_mt)
+   if (!intel_renderbuffer_has_hiz(depth_irb))
       return false;
 
    /* We only handle full buffer clears -- otherwise you'd have to track whether

@@ -283,10 +283,9 @@ brw_get_depthstencil_tile_masks(struct intel_mipmap_tree *depth_mt,
       intel_region_get_tile_masks(depth_mt->region,
                                   &tile_mask_x, &tile_mask_y, false);
 
-      struct intel_mipmap_tree *hiz_mt = depth_mt->hiz_mt;
-      if (hiz_mt) {
+      if (intel_miptree_slice_has_hiz(depth_mt, depth_level, depth_layer)) {
          uint32_t hiz_tile_mask_x, hiz_tile_mask_y;
-         intel_region_get_tile_masks(hiz_mt->region,
+         intel_region_get_tile_masks(depth_mt->hiz_mt->region,
                                      &hiz_tile_mask_x, &hiz_tile_mask_y, false);
 
          /* Each HiZ row represents 2 rows of pixels */
@@ -540,7 +539,7 @@ brw_workaround_depthstencil_alignment(struct brw_context *brw,
                                          depth_irb->draw_x & ~tile_mask_x,
                                          depth_irb->draw_y & ~tile_mask_y,
                                          false);
-      if (depth_mt->hiz_mt) {
+      if (intel_renderbuffer_has_hiz(depth_irb)) {
          brw->depthstencil.hiz_mt = depth_mt->hiz_mt;
          brw->depthstencil.hiz_offset =
             intel_region_get_aligned_offset(depth_mt->region,
@@ -577,9 +576,9 @@ brw_emit_depthbuffer(struct brw_context *brw)
    struct intel_renderbuffer *stencil_irb = intel_get_renderbuffer(fb, BUFFER_STENCIL);
    struct intel_mipmap_tree *depth_mt = brw->depthstencil.depth_mt;
    struct intel_mipmap_tree *stencil_mt = brw->depthstencil.stencil_mt;
-   struct intel_mipmap_tree *hiz_mt = brw->depthstencil.hiz_mt;
    uint32_t tile_x = brw->depthstencil.tile_x;
    uint32_t tile_y = brw->depthstencil.tile_y;
+   bool hiz = depth_irb && intel_renderbuffer_has_hiz(depth_irb);
    bool separate_stencil = false;
    uint32_t depth_surface_type = BRW_SURFACE_NULL;
    uint32_t depthbuffer_format = BRW_DEPTHFORMAT_D32_FLOAT;
@@ -612,15 +611,15 @@ brw_emit_depthbuffer(struct brw_context *brw)
        * set to the same value. Gens after 7 implicitly always set
        * Separate_Stencil_Enable; software cannot disable it.
        */
-      if ((intel->gen < 7 && depth_mt->hiz_mt) || intel->gen >= 7) {
+      if ((intel->gen < 7 && hiz) || intel->gen >= 7) {
          assert(!_mesa_is_format_packed_depth_stencil(depth_mt->format));
       }
 
       /* Prior to Gen7, if using separate stencil, hiz must be enabled. */
-      assert(intel->gen >= 7 || !separate_stencil || hiz_mt);
+      assert(intel->gen >= 7 || !separate_stencil || hiz);
 
       assert(intel->gen < 6 || region->tiling == I915_TILING_Y);
-      assert(!hiz_mt || region->tiling == I915_TILING_Y);
+      assert(!hiz || region->tiling == I915_TILING_Y);
 
       depthbuffer_format = brw_depthbuffer_format(brw);
       depth_surface_type = BRW_SURFACE_2D;
@@ -648,7 +647,7 @@ brw_emit_depthbuffer(struct brw_context *brw)
 
    intel->vtbl.emit_depth_stencil_hiz(brw, depth_mt, depth_offset,
                                       depthbuffer_format, depth_surface_type,
-                                      stencil_mt, hiz_mt, separate_stencil,
+                                      stencil_mt, hiz, separate_stencil,
                                       width, height, tile_x, tile_y);
 }
 
@@ -658,9 +657,9 @@ brw_emit_depth_stencil_hiz(struct brw_context *brw,
                            uint32_t depth_offset, uint32_t depthbuffer_format,
                            uint32_t depth_surface_type,
                            struct intel_mipmap_tree *stencil_mt,
-                           struct intel_mipmap_tree *hiz_mt,
-                           bool separate_stencil, uint32_t width,
-                           uint32_t height, uint32_t tile_x, uint32_t tile_y)
+                           bool hiz, bool separate_stencil,
+                           uint32_t width, uint32_t height,
+                           uint32_t tile_x, uint32_t tile_y)
 {
    struct intel_context *intel = &brw->intel;
 
@@ -673,7 +672,7 @@ brw_emit_depth_stencil_hiz(struct brw_context *brw,
     *     [DevGT]: This field must be set to the same value (enabled or
     *     disabled) as Hierarchical Depth Buffer Enable
     */
-   bool enable_hiz_ss = hiz_mt || separate_stencil;
+   bool enable_hiz_ss = hiz || separate_stencil;
 
 
    /* 3DSTATE_DEPTH_BUFFER, 3DSTATE_STENCIL_BUFFER are both
@@ -725,7 +724,7 @@ brw_emit_depth_stencil_hiz(struct brw_context *brw,
 
    ADVANCE_BATCH();
 
-   if (hiz_mt || separate_stencil) {
+   if (hiz || separate_stencil) {
       /*
        * In the 3DSTATE_DEPTH_BUFFER batch emitted above, the 'separate
        * stencil enable' and 'hiz enable' bits were set. Therefore we must
@@ -735,7 +734,8 @@ brw_emit_depth_stencil_hiz(struct brw_context *brw,
        */
 
       /* Emit hiz buffer. */
-      if (hiz_mt) {
+      if (hiz) {
+         struct intel_mipmap_tree *hiz_mt = depth_mt->hiz_mt;
 	 BEGIN_BATCH(3);
 	 OUT_BATCH((_3DSTATE_HIER_DEPTH_BUFFER << 16) | (3 - 2));
 	 OUT_BATCH(hiz_mt->region->pitch - 1);
@@ -784,7 +784,7 @@ brw_emit_depth_stencil_hiz(struct brw_context *brw,
     *     3DSTATE_CLEAR_PARAMS packet must follow the DEPTH_BUFFER_STATE packet
     *     when HiZ is enabled and the DEPTH_BUFFER_STATE changes.
     */
-   if (intel->gen >= 6 || hiz_mt) {
+   if (intel->gen >= 6 || hiz) {
       if (intel->gen == 6)
 	 intel_emit_post_sync_nonzero_flush(intel);
 

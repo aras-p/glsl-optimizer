@@ -1043,9 +1043,7 @@ intel_miptree_slice_set_needs_hiz_resolve(struct intel_mipmap_tree *mt,
 					  uint32_t level,
 					  uint32_t layer)
 {
-   intel_miptree_check_level_layer(mt, level, layer);
-
-   if (!mt->hiz_mt)
+   if (!intel_miptree_slice_has_hiz(mt, level, layer))
       return;
 
    intel_resolve_map_set(&mt->hiz_map,
@@ -1058,9 +1056,7 @@ intel_miptree_slice_set_needs_depth_resolve(struct intel_mipmap_tree *mt,
                                             uint32_t level,
                                             uint32_t layer)
 {
-   intel_miptree_check_level_layer(mt, level, layer);
-
-   if (!mt->hiz_mt)
+   if (!intel_miptree_slice_has_hiz(mt, level, layer))
       return;
 
    intel_resolve_map_set(&mt->hiz_map,
