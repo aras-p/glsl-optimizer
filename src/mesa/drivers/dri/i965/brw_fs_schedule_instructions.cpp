@@ -834,6 +834,11 @@ instruction_scheduler::schedule_instructions(fs_inst *next_block_header)
       }
    }
 
+   if (unlikely(INTEL_DEBUG & DEBUG_WM) && post_reg_alloc) {
+      printf("fs%d estimated execution time: %d cycles\n",
+             v->dispatch_width, time);
+   }
+
    assert(instructions_to_schedule == 0);
 }
 
