@@ -1,0 +1,6 @@
+#extension GL_ARB_shader_texture_lod : require
+uniform sampler2D tex;
+varying vec2 uv;
+void main() {
+	gl_FragColor = texture2DGradARB(tex,uv,dFdx(uv),dFdy(uv));
+}

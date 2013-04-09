@@ -1,0 +1,11 @@
+#extension GL_EXT_shader_texture_lod : enable
+#extension GL_OES_standard_derivatives : enable
+varying vec2 uv;
+uniform sampler2D tex;
+void main ()
+{
+  lowp vec4 tmpvar_1;
+  tmpvar_1 = texture2D (tex, uv);
+  gl_FragColor = tmpvar_1;
+}
+
