@@ -1162,6 +1162,8 @@ dri2_initialize_x11_dri2(_EGLDriver *drv, _EGLDisplay *disp)
    if (!dri2_create_screen(disp))
       goto cleanup_fd;
 
+   dri2_setup_swap_interval(dri2_dpy);
+
    if (dri2_dpy->conn) {
       if (!dri2_add_configs_for_visuals(dri2_dpy, disp))
 	 goto cleanup_configs;
@@ -1180,8 +1182,6 @@ dri2_initialize_x11_dri2(_EGLDriver *drv, _EGLDisplay *disp)
    /* we're supporting EGL 1.4 */
    disp->VersionMajor = 1;
    disp->VersionMinor = 4;
-
-   dri2_setup_swap_interval(dri2_dpy);
 
    return EGL_TRUE;
 
