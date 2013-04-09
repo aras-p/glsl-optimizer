@@ -42,7 +42,7 @@ public:
    struct intel_context *intel;
    struct gl_context *ctx;
    struct brw_shader *shader;
-   struct gl_shader_program *prog;
+   struct gl_shader_program *shader_prog;
 
    /** ralloc context for temporary data used during compile */
    void *mem_ctx;

@@ -1361,7 +1361,8 @@ fs_visitor::visit(ir_texture *ir)
 {
    fs_inst *inst = NULL;
 
-   int sampler = _mesa_get_sampler_uniform_value(ir->sampler, prog, &fp->Base);
+   int sampler =
+      _mesa_get_sampler_uniform_value(ir->sampler, shader_prog, &fp->Base);
    /* FINISHME: We're failing to recompile our programs when the sampler is
     * updated.  This only matters for the texture rectangle scale parameters
     * (pre-gen6, or gen6+ with GL_CLAMP).
@@ -2371,7 +2372,7 @@ fs_visitor::resolve_bool_comparison(ir_rvalue *rvalue, fs_reg *reg)
 
 fs_visitor::fs_visitor(struct brw_context *brw,
                        struct brw_wm_compile *c,
-                       struct gl_shader_program *prog,
+                       struct gl_shader_program *shader_prog,
                        struct gl_fragment_program *fp,
                        unsigned dispatch_width)
    : dispatch_width(dispatch_width)
@@ -2379,12 +2380,13 @@ fs_visitor::fs_visitor(struct brw_context *brw,
    this->c = c;
    this->brw = brw;
    this->fp = fp;
-   this->prog = prog;
+   this->shader_prog = shader_prog;
    this->intel = &brw->intel;
    this->ctx = &intel->ctx;
    this->mem_ctx = ralloc_context(NULL);
-   if (prog)
-      shader = (struct brw_shader *) prog->_LinkedShaders[MESA_SHADER_FRAGMENT];
+   if (shader_prog)
+      shader = (struct brw_shader *)
+         shader_prog->_LinkedShaders[MESA_SHADER_FRAGMENT];
    else
       shader = NULL;
    this->failed = false;

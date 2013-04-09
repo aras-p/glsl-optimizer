@@ -1376,8 +1376,8 @@ void
 vec4_visitor::emit_shader_time_write(enum shader_time_shader_type type,
                                      src_reg value)
 {
-   int shader_time_index = brw_get_shader_time_index(brw, prog, &vp->Base,
-                                                     type);
+   int shader_time_index =
+      brw_get_shader_time_index(brw, shader_prog, &vp->Base, type);
 
    dst_reg dst =
       dst_reg(this, glsl_type::get_array_instance(glsl_type::vec4_type, 2));

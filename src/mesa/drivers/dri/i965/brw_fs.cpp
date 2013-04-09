@@ -616,8 +616,8 @@ void
 fs_visitor::emit_shader_time_write(enum shader_time_shader_type type,
                                    fs_reg value)
 {
-   int shader_time_index = brw_get_shader_time_index(brw, prog, &fp->Base,
-                                                     type);
+   int shader_time_index =
+      brw_get_shader_time_index(brw, shader_prog, &fp->Base, type);
    fs_reg offset = fs_reg(shader_time_index * SHADER_TIME_STRIDE);
 
    fs_reg payload;
@@ -852,8 +852,8 @@ fs_visitor::setup_uniform_values(ir_variable *ir)
     * with our name, or the prefix of a component that starts with our name.
     */
    unsigned params_before = c->prog_data.nr_params;
-   for (unsigned u = 0; u < prog->NumUserUniformStorage; u++) {
-      struct gl_uniform_storage *storage = &prog->UniformStorage[u];
+   for (unsigned u = 0; u < shader_prog->NumUserUniformStorage; u++) {
+      struct gl_uniform_storage *storage = &shader_prog->UniformStorage[u];
 
       if (strncmp(ir->name, storage->name, namelen) != 0 ||
           (storage->name[namelen] != 0 &&

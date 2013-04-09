@@ -586,8 +586,8 @@ vec4_visitor::setup_uniform_values(ir_variable *ir)
     * order we'd walk the type, so walk the list of storage and find anything
     * with our name, or the prefix of a component that starts with our name.
     */
-   for (unsigned u = 0; u < prog->NumUserUniformStorage; u++) {
-      struct gl_uniform_storage *storage = &prog->UniformStorage[u];
+   for (unsigned u = 0; u < shader_prog->NumUserUniformStorage; u++) {
+      struct gl_uniform_storage *storage = &shader_prog->UniformStorage[u];
 
       if (strncmp(ir->name, storage->name, namelen) != 0 ||
           (storage->name[namelen] != 0 &&
@@ -2077,7 +2077,8 @@ vec4_visitor::visit(ir_call *ir)
 void
 vec4_visitor::visit(ir_texture *ir)
 {
-   int sampler = _mesa_get_sampler_uniform_value(ir->sampler, prog, &vp->Base);
+   int sampler =
+      _mesa_get_sampler_uniform_value(ir->sampler, shader_prog, &vp->Base);
 
    /* Should be lowered by do_lower_texture_projection */
    assert(!ir->projector);
@@ -2984,7 +2985,7 @@ vec4_visitor::resolve_ud_negate(src_reg *reg)
 
 vec4_visitor::vec4_visitor(struct brw_context *brw,
 			   struct brw_vs_compile *c,
-			   struct gl_shader_program *prog,
+			   struct gl_shader_program *shader_prog,
 			   struct brw_shader *shader,
 			   void *mem_ctx)
 {
@@ -2992,7 +2993,7 @@ vec4_visitor::vec4_visitor(struct brw_context *brw,
    this->brw = brw;
    this->intel = &brw->intel;
    this->ctx = &intel->ctx;
-   this->prog = prog;
+   this->shader_prog = shader_prog;
    this->shader = shader;
 
    this->mem_ctx = mem_ctx;
