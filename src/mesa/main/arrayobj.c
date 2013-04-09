@@ -72,7 +72,7 @@ _mesa_lookup_arrayobj(struct gl_context *ctx, GLuint id)
 
 
 /**
- * For all the vertex arrays in the array object, unbind any pointers
+ * For all the vertex binding points in the array object, unbind any pointers
  * to any buffer objects (VBOs).
  * This is done just prior to array object destruction.
  */
@@ -80,6 +80,9 @@ static void
 unbind_array_object_vbos(struct gl_context *ctx, struct gl_array_object *obj)
 {
    GLuint i;
+
+   for (i = 0; i < Elements(obj->VertexBinding); i++)
+      _mesa_reference_buffer_object(ctx, &obj->VertexBinding[i].BufferObj, NULL);
 
    for (i = 0; i < Elements(obj->_VertexAttrib); i++)
       _mesa_reference_buffer_object(ctx, &obj->_VertexAttrib[i].BufferObj, NULL);
@@ -181,20 +184,30 @@ _mesa_reference_array_object_(struct gl_context *ctx,
 
 static void
 init_array(struct gl_context *ctx,
-           struct gl_client_array *array, GLint size, GLint type)
+           struct gl_array_object *obj, GLuint index, GLint size, GLint type)
 {
+   struct gl_vertex_attrib_array *array = &obj->VertexAttrib[index];
+   struct gl_vertex_buffer_binding *binding = &obj->VertexBinding[index];
+
    array->Size = size;
    array->Type = type;
    array->Format = GL_RGBA; /* only significant for GL_EXT_vertex_array_bgra */
    array->Stride = 0;
-   array->StrideB = 0;
    array->Ptr = NULL;
+   array->RelativeOffset = 0;
    array->Enabled = GL_FALSE;
    array->Normalized = GL_FALSE;
    array->Integer = GL_FALSE;
    array->_ElementSize = size * _mesa_sizeof_type(type);
+   array->VertexBinding = index;
+
+   binding->Offset = 0;
+   binding->Stride = array->_ElementSize;
+   binding->BufferObj = NULL;
+   binding->_BoundArrays = BITFIELD64_BIT(index);
+
    /* Vertex array buffers */
-   _mesa_reference_buffer_object(ctx, &array->BufferObj,
+   _mesa_reference_buffer_object(ctx, &binding->BufferObj,
                                  ctx->Shared->NullBufferObj);
 }
 
@@ -218,28 +231,28 @@ _mesa_initialize_array_object( struct gl_context *ctx,
    for (i = 0; i < Elements(obj->_VertexAttrib); i++) {
       switch (i) {
       case VERT_ATTRIB_WEIGHT:
-         init_array(ctx, &obj->_VertexAttrib[VERT_ATTRIB_WEIGHT], 1, GL_FLOAT);
+         init_array(ctx, obj, VERT_ATTRIB_WEIGHT, 1, GL_FLOAT);
          break;
       case VERT_ATTRIB_NORMAL:
-         init_array(ctx, &obj->_VertexAttrib[VERT_ATTRIB_NORMAL], 3, GL_FLOAT);
+         init_array(ctx, obj, VERT_ATTRIB_NORMAL, 3, GL_FLOAT);
          break;
       case VERT_ATTRIB_COLOR1:
-         init_array(ctx, &obj->_VertexAttrib[VERT_ATTRIB_COLOR1], 3, GL_FLOAT);
+         init_array(ctx, obj, VERT_ATTRIB_COLOR1, 3, GL_FLOAT);
          break;
       case VERT_ATTRIB_FOG:
-         init_array(ctx, &obj->_VertexAttrib[VERT_ATTRIB_FOG], 1, GL_FLOAT);
+         init_array(ctx, obj, VERT_ATTRIB_FOG, 1, GL_FLOAT);
          break;
       case VERT_ATTRIB_COLOR_INDEX:
-         init_array(ctx, &obj->_VertexAttrib[VERT_ATTRIB_COLOR_INDEX], 1, GL_FLOAT);
+         init_array(ctx, obj, VERT_ATTRIB_COLOR_INDEX, 1, GL_FLOAT);
          break;
       case VERT_ATTRIB_EDGEFLAG:
-         init_array(ctx, &obj->_VertexAttrib[VERT_ATTRIB_EDGEFLAG], 1, GL_BOOL);
+         init_array(ctx, obj, VERT_ATTRIB_EDGEFLAG, 1, GL_BOOL);
          break;
       case VERT_ATTRIB_POINT_SIZE:
-         init_array(ctx, &obj->_VertexAttrib[VERT_ATTRIB_POINT_SIZE], 1, GL_FLOAT);
+         init_array(ctx, obj, VERT_ATTRIB_POINT_SIZE, 1, GL_FLOAT);
          break;
       default:
-         init_array(ctx, &obj->_VertexAttrib[i], 4, GL_FLOAT);
+         init_array(ctx, obj, i, 4, GL_FLOAT);
          break;
       }
    }
@@ -319,6 +332,32 @@ _mesa_update_array_object_max_element(struct gl_context *ctx,
 
    /* _MaxElement is one past the last legal array element */
    arrayObj->_MaxElement = compute_max_element(arrayObj, enabled);
+}
+
+
+/**
+ * Updates the derived gl_client_arrays when a gl_vertex_attrib_array
+ * or a gl_vertex_buffer_binding has changed.
+ */
+void
+_mesa_update_array_object_client_arrays(struct gl_context *ctx, struct gl_array_object *arrayObj)
+{
+   GLbitfield64 arrays = arrayObj->NewArrays;
+
+   while (arrays) {
+      struct gl_client_array *client_array;
+      struct gl_vertex_attrib_array *attrib_array;
+      struct gl_vertex_buffer_binding *buffer_binding;
+
+      GLint attrib = ffsll(arrays) - 1;
+      arrays ^= BITFIELD64_BIT(attrib);
+
+      attrib_array = &arrayObj->VertexAttrib[attrib];
+      buffer_binding = &arrayObj->VertexBinding[attrib_array->VertexBinding];
+      client_array = &arrayObj->_VertexAttrib[attrib];
+
+      _mesa_update_client_array(ctx, client_array, attrib_array, buffer_binding);
+   }
 }
 
 

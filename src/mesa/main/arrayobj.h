@@ -78,6 +78,11 @@ extern void
 _mesa_update_array_object_max_element(struct gl_context *ctx,
                                       struct gl_array_object *arrayObj);
 
+extern void
+_mesa_update_array_object_client_arrays(struct gl_context *ctx,
+                                        struct gl_array_object *arrayObj);
+
+
 /** Returns the bitmask of all enabled arrays in fixed function mode.
  *
  *  In fixed function mode only the traditional fixed function arrays

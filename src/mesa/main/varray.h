@@ -29,6 +29,7 @@
 
 
 #include "glheader.h"
+#include "bufferobj.h"
 
 struct gl_client_array;
 struct gl_context;
@@ -63,6 +64,44 @@ _mesa_update_array_max_element(struct gl_client_array *array)
    }
 }
 
+
+/**
+ * Returns a pointer to the vertex attribute data in a client array,
+ * or the offset into the vertex buffer for an array that resides in
+ * a vertex buffer.
+ */
+static inline const GLubyte *
+_mesa_vertex_attrib_address(struct gl_vertex_attrib_array *array,
+                            struct gl_vertex_buffer_binding *binding)
+{
+   return (binding->BufferObj->Name == 0 ?
+           array->Ptr :
+           (const GLubyte *)(binding->Offset + array->RelativeOffset));
+}
+
+/**
+ * Sets the fields in a gl_client_array to values derived from a
+ * gl_vertex_attrib_array and a gl_vertex_buffer_binding.
+ */
+static inline void
+_mesa_update_client_array(struct gl_context *ctx,
+                          struct gl_client_array *dst,
+                          struct gl_vertex_attrib_array *src,
+                          struct gl_vertex_buffer_binding *binding)
+{
+   dst->Size = src->Size;
+   dst->Type = src->Type;
+   dst->Format = src->Format;
+   dst->Stride = src->Stride;
+   dst->StrideB = binding->Stride;
+   dst->Ptr = _mesa_vertex_attrib_address(src, binding);
+   dst->Enabled = src->Enabled;
+   dst->Normalized = src->Normalized;
+   dst->Integer = src->Integer;
+   dst->InstanceDivisor = binding->InstanceDivisor;
+   dst->_ElementSize = src->_ElementSize;
+   _mesa_reference_buffer_object(ctx, &dst->BufferObj, binding->BufferObj);
+}
 
 extern void GLAPIENTRY
 _mesa_VertexPointer(GLint size, GLenum type, GLsizei stride,
@@ -278,6 +317,15 @@ _mesa_copy_client_array(struct gl_context *ctx,
                         struct gl_client_array *dst,
                         struct gl_client_array *src);
 
+extern void
+_mesa_copy_vertex_attrib_array(struct gl_context *ctx,
+                               struct gl_vertex_attrib_array *dst,
+                               const struct gl_vertex_attrib_array *src);
+
+extern void
+_mesa_copy_vertex_buffer_binding(struct gl_context *ctx,
+                                 struct gl_vertex_buffer_binding *dst,
+                                 const struct gl_vertex_buffer_binding *src);
 
 extern void
 _mesa_print_arrays(struct gl_context *ctx);

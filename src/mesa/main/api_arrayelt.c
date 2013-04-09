@@ -35,6 +35,7 @@
  */
 
 #include "glheader.h"
+#include "arrayobj.h"
 #include "api_arrayelt.h"
 #include "bufferobj.h"
 #include "context.h"
@@ -1484,6 +1485,12 @@ _ae_update_state(struct gl_context *ctx)
    struct gl_array_object *arrayObj = ctx->Array.ArrayObj;
 
    actx->nr_vbos = 0;
+
+   if (arrayObj->NewArrays) {
+      /* update the derived client arrays */
+      _mesa_update_array_object_client_arrays(ctx, arrayObj);
+      arrayObj->NewArrays = 0;
+   }
 
    /* conventional vertex arrays */
    if (arrayObj->_VertexAttrib[VERT_ATTRIB_COLOR_INDEX].Enabled) {
