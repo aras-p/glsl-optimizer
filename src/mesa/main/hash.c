@@ -114,9 +114,9 @@ _mesa_NewHashTable(void)
 {
    struct _mesa_HashTable *table = CALLOC_STRUCT(_mesa_HashTable);
 
-   table->ht = _mesa_hash_table_create(NULL, uint_key_compare);
-   _mesa_hash_table_set_deleted_key(table->ht, uint_key(DELETED_KEY_VALUE));
    if (table) {
+      table->ht = _mesa_hash_table_create(NULL, uint_key_compare);
+      _mesa_hash_table_set_deleted_key(table->ht, uint_key(DELETED_KEY_VALUE));
       _glthread_INIT_MUTEX(table->Mutex);
       _glthread_INIT_MUTEX(table->WalkMutex);
    }
