@@ -383,6 +383,7 @@ vlVdpOutputSurfacePutBitsIndexed(VdpOutputSurface surface,
    vl_compositor_set_palette_layer(cstate, compositor, 0, sv_idx, sv_tbl, NULL, NULL, false);
    vl_compositor_set_layer_dst_area(cstate, 0, RectToPipe(destination_rect, &dst_rect));
    vl_compositor_render(cstate, compositor, vlsurface->surface, NULL);
+   vl_compositor_reset_dirty_area(&vlsurface->dirty_area);
 
    pipe_sampler_view_reference(&sv_idx, NULL);
    pipe_sampler_view_reference(&sv_tbl, NULL);
@@ -489,6 +490,7 @@ vlVdpOutputSurfacePutBitsYCbCr(VdpOutputSurface surface,
    vl_compositor_set_buffer_layer(cstate, compositor, 0, vbuffer, NULL, NULL, VL_COMPOSITOR_WEAVE);
    vl_compositor_set_layer_dst_area(cstate, 0, RectToPipe(destination_rect, &dst_rect));
    vl_compositor_render(cstate, compositor, vlsurface->surface, NULL);
+   vl_compositor_reset_dirty_area(&vlsurface->dirty_area);
 
    vbuffer->destroy(vbuffer);
    pipe_mutex_unlock(vlsurface->device->mutex);
@@ -659,6 +661,7 @@ vlVdpOutputSurfaceRenderOutputSurface(VdpOutputSurface destination_surface,
                                 ColorsToPipe(colors, flags, vlcolors));
    vl_compositor_set_layer_dst_area(cstate, 0, RectToPipe(destination_rect, &dst_rect));
    vl_compositor_render(cstate, compositor, dst_vlsurface->surface, NULL);
+   vl_compositor_reset_dirty_area(&dst_vlsurface->dirty_area);
 
    context->delete_blend_state(context, blend);
    pipe_mutex_unlock(dst_vlsurface->device->mutex);
@@ -718,6 +721,7 @@ vlVdpOutputSurfaceRenderBitmapSurface(VdpOutputSurface destination_surface,
                                 ColorsToPipe(colors, flags, vlcolors));
    vl_compositor_set_layer_dst_area(cstate, 0, RectToPipe(destination_rect, &dst_rect));
    vl_compositor_render(cstate, compositor, dst_vlsurface->surface, NULL);
+   vl_compositor_reset_dirty_area(&dst_vlsurface->dirty_area);
 
    context->delete_blend_state(context, blend);
    pipe_mutex_unlock(dst_vlsurface->device->mutex);
