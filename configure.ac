@@ -1644,8 +1644,12 @@ if test "x$enable_gallium_llvm" = xyes; then
         if $LLVM_CONFIG --components | grep -q '\<mcjit\>'; then
             LLVM_COMPONENTS="${LLVM_COMPONENTS} mcjit"
         fi
-        if $LLVM_CONFIG --components | grep -q '\<oprofilejit\>'; then
-            LLVM_COMPONENTS="${LLVM_COMPONENTS} oprofilejit"
+
+        if test "x$enable_debug" = xyes; then
+            # Debug builds require OProfileJIT if LLVM was built with support for it
+            if $LLVM_CONFIG --components | grep -q '\<oprofilejit\>'; then
+                LLVM_COMPONENTS="${LLVM_COMPONENTS} oprofilejit"
+            fi
         fi
 
         if test "x$enable_opencl" = xyes; then
