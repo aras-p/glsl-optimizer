@@ -524,7 +524,7 @@ class vec4_generator
 public:
    vec4_generator(struct brw_context *brw,
                   struct brw_vs_compile *c,
-                  struct gl_shader_program *prog,
+                  struct gl_shader_program *shader_prog,
                   void *mem_ctx);
    ~vec4_generator();
 
@@ -585,7 +585,7 @@ private:
    struct brw_compile *p;
    struct brw_vs_compile *c;
 
-   struct gl_shader_program *prog;
+   struct gl_shader_program *shader_prog;
    struct gl_shader *shader;
    const struct gl_vertex_program *vp;
 
