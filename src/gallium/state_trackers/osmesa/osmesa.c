@@ -80,6 +80,8 @@ struct osmesa_buffer
    struct pipe_resource *textures[ST_ATTACHMENT_COUNT];
 
    void *map;
+
+   struct osmesa_buffer *next;  /**< next in linked list */
 };
 
 
@@ -98,6 +100,16 @@ struct osmesa_context
                           /*< FALSE -> Y increases downward */
 };
 
+
+/**
+ * Linked list of all osmesa_buffers.
+ * We can re-use an osmesa_buffer from one OSMesaMakeCurrent() call to
+ * the next unless the color/depth/stencil/accum formats change.
+ * We have to do this to be compatible with the original OSMesa implementation
+ * because some apps call OSMesaMakeCurrent() several times during rendering
+ * a frame.
+ */
+static struct osmesa_buffer *BufferList = NULL;
 
 
 /**
@@ -400,6 +412,9 @@ osmesa_create_st_framebuffer(void)
 }
 
 
+/**
+ * Create new buffer and add to linked list.
+ */
 static struct osmesa_buffer *
 osmesa_create_buffer(enum pipe_format color_format,
                      enum pipe_format ds_format,
@@ -414,8 +429,35 @@ osmesa_create_buffer(enum pipe_format color_format,
 
       osmesa_init_st_visual(&osbuffer->visual, color_format,
                             ds_format, accum_format);
+
+      /* insert into linked list */
+      osbuffer->next = BufferList;
+      BufferList = osbuffer;
    }
+
    return osbuffer;
+}
+
+
+/**
+ * Search linked list for a buffer with matching pixel formats.
+ */
+static struct osmesa_buffer *
+osmesa_find_buffer(enum pipe_format color_format,
+                   enum pipe_format ds_format,
+                   enum pipe_format accum_format)
+{
+   struct osmesa_buffer *b;
+
+   /* Check if we already have a suitable buffer for the given formats */
+   for (b = BufferList; b; b = b->next) {
+      if (b->visual.color_format == color_format &&
+          b->visual.depth_stencil_format == ds_format &&
+          b->visual.accum_format == accum_format) {
+         return b;
+      }
+   }
+   return NULL;
 }
 
 
@@ -581,18 +623,23 @@ OSMesaMakeCurrent(OSMesaContext osmesa, void *buffer, GLenum type,
       return GL_FALSE;
    }
 
-   osbuffer = osmesa_create_buffer(color_format,
-                                   osmesa->depth_stencil_format,
-                                   osmesa->accum_format);
+   /* See if we already have a buffer that uses these pixel formats */
+   osbuffer = osmesa_find_buffer(color_format,
+                                 osmesa->depth_stencil_format,
+                                 osmesa->accum_format);
+   if (!osbuffer) {
+      /* Existing buffer found, create new buffer */
+      osbuffer = osmesa_create_buffer(color_format,
+                                      osmesa->depth_stencil_format,
+                                      osmesa->accum_format);
+   }
 
    osbuffer->width = width;
    osbuffer->height = height;
    osbuffer->map = buffer;
 
-   if (osmesa->current_buffer) {
-      /* free old buffer */
-      osmesa_destroy_buffer(osmesa->current_buffer);
-   }
+   /* XXX unused for now */
+   (void) osmesa_destroy_buffer;
 
    osmesa->current_buffer = osbuffer;
    osmesa->type = type;
