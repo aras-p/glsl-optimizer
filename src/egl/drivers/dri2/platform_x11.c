@@ -284,14 +284,15 @@ dri2_create_window_surface(_EGLDriver *drv, _EGLDisplay *disp,
 
    surf = dri2_create_surface(drv, disp, EGL_WINDOW_BIT, conf,
                               window, attrib_list);
+   if (surf != NULL) {
+      /* When we first create the DRI2 drawable, its swap interval on the
+       * server side is 1.
+       */
+      surf->SwapInterval = 1;
 
-   /* When we first create the DRI2 drawable, its swap interval on the server
-    * side is 1.
-    */
-   surf->SwapInterval = 1;
-
-   /* Override that with a driconf-set value. */
-   drv->API.SwapInterval(drv, disp, surf, dri2_dpy->default_swap_interval);
+      /* Override that with a driconf-set value. */
+      drv->API.SwapInterval(drv, disp, surf, dri2_dpy->default_swap_interval);
+   }
 
    return surf;
 }
