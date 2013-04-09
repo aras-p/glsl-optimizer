@@ -676,12 +676,11 @@ varying_matches::record(ir_variable *producer_var, ir_variable *consumer_var)
       return;
    }
 
-   if (consumer_var == NULL || !consumer_is_fs) {
+   if ((consumer_var == NULL && producer_var->type->contains_integer()) ||
+       !consumer_is_fs) {
       /* Since this varying is not being consumed by the fragment shader, its
        * interpolation type varying cannot possibly affect rendering.  Also,
-       * since the GL spec only requires integer varyings to be "flat" when
-       * they are fragment shader inputs, it is possible that this variable is
-       * non-flat and is (or contains) an integer.
+       * this variable is non-flat and is (or contains) an integer.
        *
        * lower_packed_varyings requires all integer varyings to flat,
        * regardless of where they appear.  We can trivially satisfy that
