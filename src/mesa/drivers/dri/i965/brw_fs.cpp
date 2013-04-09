@@ -1064,7 +1064,7 @@ fs_visitor::emit_general_interpolation(ir_variable *ir)
                    * unlit, replace the centroid data with non-centroid
                    * data.
                    */
-                  emit(FS_OPCODE_MOV_DISPATCH_TO_FLAGS, attr);
+                  emit(FS_OPCODE_MOV_DISPATCH_TO_FLAGS);
                   fs_inst *inst = emit_linterp(attr, fs_reg(interp),
                                                interpolation_mode, false);
                   inst->predicate = BRW_PREDICATE_NORMAL;
