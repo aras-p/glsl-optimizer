@@ -316,9 +316,6 @@ intel_miptree_choose_tiling(struct intel_context *intel,
       return I915_TILING_NONE;
    }
 
-   if (!intel->use_texture_tiling)
-      return I915_TILING_NONE;
-
    if (force_y_tiling)
       return I915_TILING_Y;
 

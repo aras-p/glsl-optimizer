@@ -811,8 +811,6 @@ intelInitContext(struct intel_context *intel,
 
    intel_fbo_init(intel);
 
-   intel->use_texture_tiling = driQueryOptionb(&intel->optionCache,
-					       "texture_tiling");
    intel->use_early_z = driQueryOptionb(&intel->optionCache, "early_z");
 
    if (!driQueryOptionb(&intel->optionCache, "hiz")) {
