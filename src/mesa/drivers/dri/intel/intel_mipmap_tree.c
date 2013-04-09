@@ -297,6 +297,63 @@ intel_miptree_create_layout(struct intel_context *intel,
    return mt;
 }
 
+/**
+ * \brief Helper function for intel_miptree_create().
+ */
+static uint32_t
+intel_miptree_choose_tiling(struct intel_context *intel,
+                            gl_format format,
+                            uint32_t width0,
+                            uint32_t num_samples,
+                            bool force_y_tiling,
+                            struct intel_mipmap_tree *mt)
+{
+
+   if (format == MESA_FORMAT_S8) {
+      /* The stencil buffer is W tiled. However, we request from the kernel a
+       * non-tiled buffer because the GTT is incapable of W fencing.
+       */
+      return I915_TILING_NONE;
+   }
+
+   if (!intel->use_texture_tiling || _mesa_is_format_compressed(format))
+      return I915_TILING_NONE;
+
+   if (force_y_tiling)
+      return I915_TILING_Y;
+
+   if (num_samples > 1) {
+      /* From p82 of the Sandy Bridge PRM, dw3[1] of SURFACE_STATE ("Tiled
+       * Surface"):
+       *
+       *   [DevSNB+]: For multi-sample render targets, this field must be
+       *   1. MSRTs can only be tiled.
+       *
+       * Our usual reason for preferring X tiling (fast blits using the
+       * blitting engine) doesn't apply to MSAA, since we'll generally be
+       * downsampling or upsampling when blitting between the MSAA buffer
+       * and another buffer, and the blitting engine doesn't support that.
+       * So use Y tiling, since it makes better use of the cache.
+       */
+      return I915_TILING_Y;
+   }
+
+   GLenum base_format = _mesa_get_format_base_format(format);
+   if (intel->gen >= 4 &&
+       (base_format == GL_DEPTH_COMPONENT ||
+        base_format == GL_DEPTH_STENCIL_EXT))
+      return I915_TILING_Y;
+
+   if (width0 >= 64) {
+      if (ALIGN(mt->total_width * mt->cpp, 512) < 32768)
+         return I915_TILING_X;
+
+      perf_debug("%dx%d miptree too large to blit, falling back to untiled",
+                 mt->total_width, mt->total_height);
+   }
+
+   return I915_TILING_NONE;
+}
 
 struct intel_mipmap_tree *
 intel_miptree_create(struct intel_context *intel,
@@ -312,8 +369,6 @@ intel_miptree_create(struct intel_context *intel,
                      bool force_y_tiling)
 {
    struct intel_mipmap_tree *mt;
-   uint32_t tiling = I915_TILING_NONE;
-   GLenum base_format;
    gl_format tex_format = format;
    gl_format etc_format = MESA_FORMAT_NONE;
    GLuint total_width, total_height;
@@ -352,7 +407,6 @@ intel_miptree_create(struct intel_context *intel,
    }
 
    etc_format = (format != tex_format) ? tex_format : MESA_FORMAT_NONE;
-   base_format = _mesa_get_format_base_format(format);
 
    mt = intel_miptree_create_layout(intel, target, format,
 				      first_level, last_level, width0,
@@ -366,53 +420,18 @@ intel_miptree_create(struct intel_context *intel,
       return NULL;
    }
 
-   if (num_samples > 1) {
-      /* From p82 of the Sandy Bridge PRM, dw3[1] of SURFACE_STATE ("Tiled
-       * Surface"):
-       *
-       *   [DevSNB+]: For multi-sample render targets, this field must be
-       *   1. MSRTs can only be tiled.
-       *
-       * Our usual reason for preferring X tiling (fast blits using the
-       * blitting engine) doesn't apply to MSAA, since we'll generally be
-       * downsampling or upsampling when blitting between the MSAA buffer
-       * and another buffer, and the blitting engine doesn't support that.
-       * So use Y tiling, since it makes better use of the cache.
-       */
-      force_y_tiling = true;
-   }
-
-   if (intel->use_texture_tiling && !_mesa_is_format_compressed(format)) {
-      if (intel->gen >= 4 &&
-	  (base_format == GL_DEPTH_COMPONENT ||
-	   base_format == GL_DEPTH_STENCIL_EXT))
-	 tiling = I915_TILING_Y;
-      else if (force_y_tiling) {
-         tiling = I915_TILING_Y;
-      } else if (width0 >= 64) {
-         if (ALIGN(mt->total_width * mt->cpp, 512) < 32768) {
-            tiling = I915_TILING_X;
-         } else {
-            perf_debug("%dx%d miptree too large to blit, "
-                       "falling back to untiled",
-                       mt->total_width, mt->total_height);
-         }
-      }
-   }
-
    total_width = mt->total_width;
    total_height = mt->total_height;
 
    if (format == MESA_FORMAT_S8) {
-      /* The stencil buffer is W tiled. However, we request from the kernel a
-       * non-tiled buffer because the GTT is incapable of W fencing.  So round
-       * up the width and height to match the size of W tiles (64x64).
-       */
-      tiling = I915_TILING_NONE;
+      /* Align to size of W tile, 64x64. */
       total_width = ALIGN(total_width, 64);
       total_height = ALIGN(total_height, 64);
    }
 
+   uint32_t tiling = intel_miptree_choose_tiling(intel, format, width0,
+                                                 num_samples, force_y_tiling,
+                                                 mt);
    mt->etc_format = etc_format;
    mt->region = intel_region_alloc(intel->intelScreen,
 				   tiling,
