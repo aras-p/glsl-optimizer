@@ -676,16 +676,18 @@ ir_reader::read_expression(s_expression *expr)
 {
    s_expression *s_type;
    s_symbol *s_op;
-   s_expression *s_arg[3];
+   s_expression *s_arg[4] = {NULL};
 
    s_pattern pat[] = { "expression", s_type, s_op, s_arg[0] };
    if (!PARTIAL_MATCH(expr, pat)) {
       ir_read_error(expr, "expected (expression <type> <operator> "
-			  "<operand> [<operand>])");
+			  "<operand> [<operand>] [<operand>] [<operand>])");
       return NULL;
    }
    s_arg[1] = (s_expression *) s_arg[0]->next; // may be tail sentinel
    s_arg[2] = (s_expression *) s_arg[1]->next; // may be tail sentinel or NULL
+   if (s_arg[2])
+      s_arg[3] = (s_expression *) s_arg[2]->next; // may be tail sentinel or NULL
 
    const glsl_type *type = read_type(s_type);
    if (type == NULL)
@@ -709,7 +711,7 @@ ir_reader::read_expression(s_expression *expr)
       return NULL;
    }
 
-   ir_rvalue *arg[3] = {NULL, NULL, NULL};
+   ir_rvalue *arg[4] = {NULL};
    for (int i = 0; i < num_operands; i++) {
       arg[i] = read_rvalue(s_arg[i]);
       if (arg[i] == NULL) {
@@ -718,7 +720,7 @@ ir_reader::read_expression(s_expression *expr)
       }
    }
 
-   return new(mem_ctx) ir_expression(op, type, arg[0], arg[1], arg[2]);
+   return new(mem_ctx) ir_expression(op, type, arg[0], arg[1], arg[2], arg[3]);
 }
 
 ir_swizzle *
