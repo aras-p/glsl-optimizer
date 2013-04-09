@@ -273,7 +273,8 @@ enum ir_variable_mode {
    ir_var_function_inout,
    ir_var_const_in,	/**< "in" param that must be a constant expression */
    ir_var_system_value, /**< Ex: front-face, instance-id, etc. */
-   ir_var_temporary	/**< Temporary variable generated during compilation. */
+   ir_var_temporary,	/**< Temporary variable generated during compilation. */
+   ir_var_mode_count	/**< Number of variable modes */
 };
 
 /**

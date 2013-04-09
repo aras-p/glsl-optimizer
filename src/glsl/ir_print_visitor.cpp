@@ -150,6 +150,7 @@ void ir_print_visitor::visit(ir_variable *ir)
    const char *const mode[] = { "", "uniform ", "shader_in ", "shader_out ",
                                 "in ", "out ", "inout ",
 			        "const_in ", "sys ", "temporary " };
+   STATIC_ASSERT(ARRAY_SIZE(mode) == ir_var_mode_count);
    const char *const interp[] = { "", "smooth", "flat", "noperspective" };
    STATIC_ASSERT(ARRAY_SIZE(interp) == INTERP_QUALIFIER_COUNT);
 
