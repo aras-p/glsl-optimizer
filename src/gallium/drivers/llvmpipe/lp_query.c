@@ -137,6 +137,13 @@ llvmpipe_get_query_result(struct pipe_context *pipe,
    case PIPE_QUERY_PRIMITIVES_EMITTED:
       *result = pq->num_primitives_written;
       break;
+   case PIPE_QUERY_SO_STATISTICS: {
+      struct pipe_query_data_so_statistics *stats =
+         (struct pipe_query_data_so_statistics *)vresult;
+      stats->num_primitives_written = pq->num_primitives_written;
+      stats->primitives_storage_needed = pq->num_primitives_generated;
+   }
+      break;
    default:
       assert(0);
       break;
@@ -174,6 +181,13 @@ llvmpipe_begin_query(struct pipe_context *pipe, struct pipe_query *q)
       llvmpipe->num_primitives_generated = 0;
    }
 
+   if (pq->type == PIPE_QUERY_SO_STATISTICS) {
+      pq->num_primitives_written = 0;
+      llvmpipe->so_stats.num_primitives_written = 0;
+      pq->num_primitives_generated = 0;
+      llvmpipe->num_primitives_generated = 0;
+   }
+
    if (pq->type == PIPE_QUERY_OCCLUSION_COUNTER) {
       llvmpipe->active_occlusion_query = TRUE;
       llvmpipe->dirty |= LP_NEW_OCCLUSION_QUERY;
@@ -194,6 +208,11 @@ llvmpipe_end_query(struct pipe_context *pipe, struct pipe_query *q)
    }
 
    if (pq->type == PIPE_QUERY_PRIMITIVES_GENERATED) {
+      pq->num_primitives_generated = llvmpipe->num_primitives_generated;
+   }
+
+   if (pq->type == PIPE_QUERY_SO_STATISTICS) {
+      pq->num_primitives_written = llvmpipe->so_stats.num_primitives_written;
       pq->num_primitives_generated = llvmpipe->num_primitives_generated;
    }
 
