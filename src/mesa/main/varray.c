@@ -1231,6 +1231,49 @@ _mesa_primitive_restart_index(const struct gl_context *ctx, GLenum ib_type)
 
 
 /**
+ * GL_ARB_vertex_attrib_binding
+ */
+void GLAPIENTRY
+_mesa_BindVertexBuffer(GLuint bindingIndex, GLuint buffer, GLintptr offset,
+                       GLsizei stride)
+{
+}
+
+
+void GLAPIENTRY
+_mesa_VertexAttribFormat(GLuint attribIndex, GLint size, GLenum type,
+                         GLboolean normalized, GLuint relativeOffset)
+{
+}
+
+
+void GLAPIENTRY
+_mesa_VertexAttribIFormat(GLuint attribIndex, GLint size, GLenum type,
+                          GLuint relativeOffset)
+{
+}
+
+
+void GLAPIENTRY
+_mesa_VertexAttribLFormat(GLuint attribIndex, GLint size, GLenum type,
+                          GLuint relativeOffset)
+{
+}
+
+
+void GLAPIENTRY
+_mesa_VertexAttribBinding(GLuint attribIndex, GLuint bindingIndex)
+{
+}
+
+
+void GLAPIENTRY
+_mesa_VertexBindingDivisor(GLuint bindingIndex, GLuint divisor)
+{
+}
+
+
+/**
  * Copy one client vertex array to another.
  */
 void

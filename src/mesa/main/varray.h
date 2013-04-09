@@ -250,6 +250,29 @@ _mesa_VertexAttribDivisor(GLuint index, GLuint divisor);
 extern unsigned
 _mesa_primitive_restart_index(const struct gl_context *ctx, GLenum ib_type);
 
+extern void GLAPIENTRY
+_mesa_BindVertexBuffer(GLuint bindingIndex, GLuint buffer, GLintptr offset,
+                       GLsizei stride);
+
+extern void GLAPIENTRY
+_mesa_VertexAttribFormat(GLuint attribIndex, GLint size, GLenum type,
+                         GLboolean normalized, GLuint relativeOffset);
+
+extern void GLAPIENTRY
+_mesa_VertexAttribIFormat(GLuint attribIndex, GLint size, GLenum type,
+                          GLuint relativeOffset);
+
+extern void GLAPIENTRY
+_mesa_VertexAttribLFormat(GLuint attribIndex, GLint size, GLenum type,
+                          GLuint relativeOffset);
+
+extern void GLAPIENTRY
+_mesa_VertexAttribBinding(GLuint attribIndex, GLuint bindingIndex);
+
+extern void GLAPIENTRY
+_mesa_VertexBindingDivisor(GLuint bindingIndex, GLuint divisor);
+
+
 extern void
 _mesa_copy_client_array(struct gl_context *ctx,
                         struct gl_client_array *dst,

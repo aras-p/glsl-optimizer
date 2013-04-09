@@ -8458,7 +8458,11 @@
 
 </category>
 
-<!-- ARB extensions #120...#126 -->
+<!-- ARB extensions #120...#124 -->
+
+<xi:include href="ARB_vertex_attrib_binding.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+
+<!-- ARB extension #126 -->
 
 <xi:include href="ARB_ES3_compatibility.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 

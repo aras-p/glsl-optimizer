@@ -1,0 +1,58 @@
+<?xml version="1.0"?>
+<!DOCTYPE OpenGLAPI SYSTEM "gl_API.dtd">
+
+<!-- Note: no GLX protocol info yet. -->
+
+<OpenGLAPI>
+
+<category name="GL_ARB_vertex_attrib_binding" number="125">
+
+    <function name="BindVertexBuffer" offset="assign">
+        <param name="bindingindex" type="GLuint"/>
+        <param name="buffer" type="GLuint"/>
+        <param name="offset" type="GLintptr"/>
+        <param name="stride" type="GLsizei"/>
+    </function>
+
+    <function name="VertexAttribFormat" offset="assign">
+        <param name="attribindex" type="GLuint"/>
+        <param name="size" type="GLint"/>
+        <param name="type" type="GLenum"/>
+        <param name="normalized" type="GLboolean"/>
+        <param name="relativeoffset" type="GLuint"/>
+    </function>
+
+    <function name="VertexAttribIFormat" offset="assign">
+        <param name="attribindex" type="GLuint"/>
+        <param name="size" type="GLint"/>
+        <param name="type" type="GLenum"/>
+        <param name="relativeoffset" type="GLuint"/>
+    </function>
+
+    <function name="VertexAttribLFormat" offset="assign">
+        <param name="attribindex" type="GLuint"/>
+        <param name="size" type="GLint"/>
+        <param name="type" type="GLenum"/>
+        <param name="relativeoffset" type="GLuint"/>
+    </function>
+
+    <function name="VertexAttribBinding" offset="assign">
+        <param name="attribindex" type="GLuint"/>
+        <param name="bindingindex" type="GLuint"/>
+    </function>
+
+    <function name="VertexBindingDivisor" offset="assign">
+        <param name="attribindex" type="GLuint"/>
+        <param name="divisor" type="GLuint"/>
+    </function>
+
+    <enum name="VERTEX_ATTRIB_BINDING" value="0x82D4"/>
+    <enum name="VERTEX_ATTRIB_RELATIVE_OFFSET" value="0x82D5"/>
+    <enum name="VERTEX_BINDING_DIVISOR" value="0x82D6"/>
+    <enum name="VERTEX_BINDING_OFFSET" value="0x82D7"/>
+    <enum name="VERTEX_BINDING_STRIDE" value="0x82D8"/>
+    <enum name="MAX_VERTEX_ATTRIB_RELATIVE_OFFSET" value="0x82D9"/>
+    <enum name="MAX_VERTEX_ATTRIB_BINDINGS" value="0x82DA"/>
+
+</category>
+</OpenGLAPI>

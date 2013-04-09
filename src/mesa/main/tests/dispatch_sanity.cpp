@@ -854,12 +854,12 @@ const struct function gl_core_functions_possible[] = {
 // { "glDispatchComputeIndirect", 43, -1 },             // XXX: Add to xml
 // { "glCopyImageSubData", 43, -1 },                    // XXX: Add to xml
 // { "glTextureView", 43, -1 },                         // XXX: Add to xml
-// { "glBindVertexBuffer", 43, -1 },                    // XXX: Add to xml
-// { "glVertexAttribFormat", 43, -1 },                  // XXX: Add to xml
-// { "glVertexAttribIFormat", 43, -1 },                 // XXX: Add to xml
-// { "glVertexAttribLFormat", 43, -1 },                 // XXX: Add to xml
-// { "glVertexAttribBinding", 43, -1 },                 // XXX: Add to xml
-// { "glVertexBindingDivisor", 43, -1 },                // XXX: Add to xml
+   { "glBindVertexBuffer", 43, -1 },
+   { "glVertexAttribFormat", 43, -1 },
+   { "glVertexAttribIFormat", 43, -1 },
+   { "glVertexAttribLFormat", 43, -1 },
+   { "glVertexAttribBinding", 43, -1 },
+   { "glVertexBindingDivisor", 43, -1 },
 // { "glVertexArrayBindVertexBufferEXT", 43, -1 },      // XXX: Add to xml
 // { "glVertexArrayVertexAttribFormatEXT", 43, -1 },    // XXX: Add to xml
 // { "glVertexArrayVertexAttribIFormatEXT", 43, -1 },   // XXX: Add to xml
