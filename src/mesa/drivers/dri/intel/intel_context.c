@@ -708,6 +708,23 @@ intelInitContext(struct intel_context *intel,
    else
       intel->maxBatchSize = BATCH_SZ;
 
+   /* Estimate the size of the mappable aperture into the GTT.  There's an
+    * ioctl to get the whole GTT size, but not one to get the mappable subset.
+    * It turns out it's basically always 256MB, though some ancient hardware
+    * was smaller.
+    */
+   uint32_t gtt_size = 256 * 1024 * 1024;
+   if (intel->gen == 2)
+      gtt_size = 128 * 1024 * 1024;
+
+   /* We don't want to map two objects such that a memcpy between them would
+    * just fault one mapping in and then the other over and over forever.  So
+    * we would need to divide the GTT size by 2.  Additionally, some GTT is
+    * taken up by things like the framebuffer and the ringbuffer and such, so
+    * be more conservative.
+    */
+   intel->max_gtt_map_object_size = gtt_size / 4;
+
    intel->bufmgr = intelScreen->bufmgr;
 
    bo_reuse_mode = driQueryOptioni(&intel->optionCache, "bo_reuse");

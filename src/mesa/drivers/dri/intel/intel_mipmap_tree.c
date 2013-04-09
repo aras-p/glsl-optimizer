@@ -1785,23 +1785,6 @@ intel_miptree_map_singlesample(struct intel_context *intel,
 {
    struct intel_miptree_map *map;
 
-   /* Estimate the size of the mappable aperture into the GTT.  There's an
-    * ioctl to get the whole GTT size, but not one to get the mappable subset.
-    * It turns out it's basically always 256MB, though some ancient hardware
-    * was smaller.
-    */
-   uint32_t gtt_size = 256 * 1024 * 1024;
-   if (intel->gen == 2)
-      gtt_size = 128 * 1024 * 1024;
-
-   /* We don't want to map two objects such that a memcpy between them would
-    * just fault one mapping in and then the other over and over forever.  So
-    * we would need to divide the GTT size by 2.  Additionally, some GTT is
-    * taken up by things like the framebuffer and the ringbuffer and such, so
-    * be more conservative.
-    */
-   uint32_t max_gtt_map_object_size = gtt_size / 4;
-
    assert(mt->num_samples <= 1);
 
    map = intel_miptree_attach_map(mt, level, slice, x, y, w, h, mode);
@@ -1849,7 +1832,7 @@ intel_miptree_map_singlesample(struct intel_context *intel,
             mt->region->pitch < 32768) {
       intel_miptree_map_blit(intel, mt, map, level, slice);
    } else if (mt->region->tiling != I915_TILING_NONE &&
-              mt->region->bo->size >= max_gtt_map_object_size) {
+              mt->region->bo->size >= intel->max_gtt_map_object_size) {
       assert(mt->region->pitch < 32768);
       intel_miptree_map_blit(intel, mt, map, level, slice);
    } else {
