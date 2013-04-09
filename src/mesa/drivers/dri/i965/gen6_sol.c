@@ -147,7 +147,7 @@ gen6_update_sol_indices(struct brw_context *brw)
 const struct brw_tracked_state gen6_sol_indices = {
    .dirty = {
       .mesa = 0,
-      .brw = (BRW_NEW_BATCH |
+      .brw = (BRW_NEW_CONTEXT |
               BRW_NEW_SOL_INDICES),
       .cache = 0
    },
