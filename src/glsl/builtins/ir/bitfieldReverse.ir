@@ -1,0 +1,41 @@
+((function bitfieldReverse
+   (signature int
+     (parameters
+       (declare (in) int value))
+     ((return (expression int bitfield_reverse (var_ref value)))))
+
+   (signature ivec2
+     (parameters
+       (declare (in) ivec2 value))
+     ((return (expression ivec2 bitfield_reverse (var_ref value)))))
+
+   (signature ivec3
+     (parameters
+       (declare (in) ivec3 value))
+     ((return (expression ivec3 bitfield_reverse (var_ref value)))))
+
+   (signature ivec4
+     (parameters
+       (declare (in) ivec4 value))
+     ((return (expression ivec4 bitfield_reverse (var_ref value)))))
+
+   (signature uint
+     (parameters
+       (declare (in) uint value))
+     ((return (expression uint bitfield_reverse (var_ref value)))))
+
+   (signature uvec2
+     (parameters
+       (declare (in) uvec2 value))
+     ((return (expression uvec2 bitfield_reverse (var_ref value)))))
+
+   (signature uvec3
+     (parameters
+       (declare (in) uvec3 value))
+     ((return (expression uvec3 bitfield_reverse (var_ref value)))))
+
+   (signature uvec4
+     (parameters
+       (declare (in) uvec4 value))
+     ((return (expression uvec4 bitfield_reverse (var_ref value)))))
+))
