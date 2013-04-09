@@ -1084,6 +1084,15 @@ emit_store_chan(
       break;
    }
 
+   /* If the destination is untyped then the source can be anything,
+    * but LLVM won't like if the types don't match so lets cast
+    * to the correct destination type as expected by LLVM. */
+   if (dtype == TGSI_TYPE_UNTYPED &&
+       !lp_check_vec_type(bld_store->type, LLVMTypeOf(value))) {
+      value = LLVMBuildBitCast(builder, value, bld_store->vec_type,
+                               "src_casted");
+   }
+
    switch( inst->Instruction.Saturate ) {
    case TGSI_SAT_NONE:
       break;

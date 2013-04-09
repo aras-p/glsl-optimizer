@@ -327,6 +327,7 @@ tgsi_opcode_infer_dst_type( uint opcode )
 {
    switch (opcode) {
    case TGSI_OPCODE_MOV:
+   case TGSI_OPCODE_UCMP:
       return TGSI_TYPE_UNTYPED;
    case TGSI_OPCODE_F2U:
    case TGSI_OPCODE_AND:
