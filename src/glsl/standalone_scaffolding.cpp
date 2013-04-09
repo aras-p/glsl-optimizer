@@ -104,6 +104,7 @@ void initialize_context_to_defaults(struct gl_context *ctx, gl_api api)
    ctx->Extensions.ARB_texture_cube_map_array = true;
    ctx->Extensions.ARB_texture_multisample = true;
    ctx->Extensions.ARB_texture_query_lod = true;
+   ctx->Extensions.ARB_gpu_shader5 = true;
 
    ctx->Const.GLSLVersion = 120;
 

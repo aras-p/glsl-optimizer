@@ -2970,6 +2970,7 @@ struct gl_extensions
    GLboolean ARB_framebuffer_object;
    GLboolean ARB_explicit_attrib_location;
    GLboolean ARB_geometry_shader4;
+   GLboolean ARB_gpu_shader5;
    GLboolean ARB_half_float_pixel;
    GLboolean ARB_half_float_vertex;
    GLboolean ARB_instanced_arrays;

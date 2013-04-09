@@ -192,6 +192,7 @@ read_builtins(GLenum target, const char *protos, const char **functions, unsigne
    st->ARB_shading_language_packing_enable = true;
    st->ARB_texture_multisample_enable = true;
    st->ARB_texture_query_lod_enable = true;
+   st->ARB_gpu_shader5_enable = true;
    _mesa_glsl_initialize_types(st);
 
    sh->ir = new(sh) exec_list;

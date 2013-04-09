@@ -284,6 +284,8 @@ struct _mesa_glsl_parse_state {
    bool ARB_texture_multisample_warn;
    bool ARB_texture_query_lod_enable;
    bool ARB_texture_query_lod_warn;
+   bool ARB_gpu_shader5_enable;
+   bool ARB_gpu_shader5_warn;
    /*@}*/
 
    /** Extensions supported by the OpenGL implementation. */
