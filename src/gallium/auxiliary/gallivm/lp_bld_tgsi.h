@@ -393,9 +393,9 @@ struct lp_build_tgsi_soa_context
    struct lp_build_context elem_bld;
 
    const struct lp_build_tgsi_gs_iface *gs_iface;
-   LLVMValueRef emitted_prims_vec;
-   LLVMValueRef total_emitted_vertices_vec;
-   LLVMValueRef emitted_vertices_vec;
+   LLVMValueRef emitted_prims_vec_ptr;
+   LLVMValueRef total_emitted_vertices_vec_ptr;
+   LLVMValueRef emitted_vertices_vec_ptr;
    /* if a shader doesn't have ENDPRIM instruction but it has
     * a number of EMIT instructions it means the END instruction
     * implicitly invokes ENDPRIM. handle this via a flag here
