@@ -346,7 +346,7 @@ intel_miptree_choose_tiling(struct intel_context *intel,
 
    if (width0 >= 64) {
       if (ALIGN(mt->total_width * mt->cpp, 512) < 32768)
-         return I915_TILING_X;
+         return intel->gen >= 6 ? I915_TILING_Y : I915_TILING_X;
 
       perf_debug("%dx%d miptree too large to blit, falling back to untiled",
                  mt->total_width, mt->total_height);
