@@ -329,6 +329,7 @@ public:
    bool register_coalesce_2();
    bool compute_to_mrf();
    bool dead_code_eliminate();
+   bool dead_code_eliminate_local();
    bool remove_dead_constants();
    bool remove_duplicate_mrf_writes();
    bool virtual_grf_interferes(int a, int b);

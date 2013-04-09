@@ -32,6 +32,7 @@ extern "C" {
 
 #include <sys/types.h>
 
+#include "main/hash_table.h"
 #include "main/macros.h"
 #include "main/shaderobj.h"
 #include "main/uniforms.h"
@@ -1823,6 +1824,164 @@ fs_visitor::dead_code_eliminate()
    return progress;
 }
 
+struct dead_code_hash_key
+{
+   int vgrf;
+   int reg_offset;
+};
+
+static bool
+dead_code_hash_compare(const void *a, const void *b)
+{
+   return memcmp(a, b, sizeof(struct dead_code_hash_key)) == 0;
+}
+
+static void
+clear_dead_code_hash(struct hash_table *ht)
+{
+   struct hash_entry *entry;
+
+   hash_table_foreach(ht, entry) {
+      _mesa_hash_table_remove(ht, entry);
+   }
+}
+
+static void
+insert_dead_code_hash(struct hash_table *ht,
+                      int vgrf, int reg_offset, fs_inst *inst)
+{
+   /* We don't bother freeing keys, because they'll be GCed with the ht. */
+   struct dead_code_hash_key *key = ralloc(ht, struct dead_code_hash_key);
+
+   key->vgrf = vgrf;
+   key->reg_offset = reg_offset;
+
+   _mesa_hash_table_insert(ht, _mesa_hash_data(key, sizeof(*key)), key, inst);
+}
+
+static struct hash_entry *
+get_dead_code_hash_entry(struct hash_table *ht, int vgrf, int reg_offset)
+{
+   struct dead_code_hash_key key;
+
+   key.vgrf = vgrf;
+   key.reg_offset = reg_offset;
+
+   return _mesa_hash_table_search(ht, _mesa_hash_data(&key, sizeof(key)), &key);
+}
+
+static void
+remove_dead_code_hash(struct hash_table *ht,
+                      int vgrf, int reg_offset)
+{
+   struct hash_entry *entry = get_dead_code_hash_entry(ht, vgrf, reg_offset);
+   if (!entry)
+      return;
+
+   _mesa_hash_table_remove(ht, entry);
+}
+
+/**
+ * Walks basic blocks, removing any regs that are written but not read before
+ * being redefined.
+ *
+ * The dead_code_eliminate() function implements a global dead code
+ * elimination, but it only handles the removing the last write to a register
+ * if it's never read.  This one can handle intermediate writes, but only
+ * within a basic block.
+ */
+bool
+fs_visitor::dead_code_eliminate_local()
+{
+   struct hash_table *ht;
+   bool progress = false;
+
+   ht = _mesa_hash_table_create(mem_ctx, dead_code_hash_compare);
+
+   foreach_list_safe(node, &this->instructions) {
+      fs_inst *inst = (fs_inst *)node;
+
+      /* At a basic block, empty the HT since we don't understand dataflow
+       * here.
+       */
+      if (inst->is_control_flow()) {
+         clear_dead_code_hash(ht);
+         continue;
+      }
+
+      /* Clear the HT of any instructions that got read. */
+      for (int i = 0; i < 3; i++) {
+         fs_reg src = inst->src[i];
+         if (src.file != GRF)
+            continue;
+
+         int read = 1;
+         if (inst->is_send_from_grf())
+            read = virtual_grf_sizes[src.reg] - src.reg_offset;
+
+         for (int reg_offset = src.reg_offset;
+              reg_offset < src.reg_offset + read;
+              reg_offset++) {
+            remove_dead_code_hash(ht, src.reg, reg_offset);
+         }
+      }
+
+      /* Add any update of a GRF to the HT, removing a previous write if it
+       * wasn't read.
+       */
+      if (inst->dst.file == GRF) {
+         if (inst->regs_written > 1) {
+            /* We don't know how to trim channels from an instruction's
+             * writes, so we can't incrementally remove unread channels from
+             * it.  Just remove whatever it overwrites from the table
+             */
+            for (int i = 0; i < inst->regs_written; i++) {
+               remove_dead_code_hash(ht,
+                                     inst->dst.reg,
+                                     inst->dst.reg_offset + i);
+            }
+         } else {
+            struct hash_entry *entry =
+               get_dead_code_hash_entry(ht, inst->dst.reg,
+                                        inst->dst.reg_offset);
+
+            if (inst->is_partial_write()) {
+               /* For a partial write, we can't remove any previous dead code
+                * candidate, since we're just modifying their result, but we can
+                * be dead code eliminiated ourselves.
+                */
+               if (entry) {
+                  entry->data = inst;
+               } else {
+                  insert_dead_code_hash(ht, inst->dst.reg, inst->dst.reg_offset,
+                                        inst);
+               }
+            } else {
+               if (entry) {
+                  /* We're completely updating a channel, and there was a
+                   * previous write to the channel that wasn't read.  Kill it!
+                   */
+                  fs_inst *inst = (fs_inst *)entry->data;
+                  inst->remove();
+                  progress = true;
+                  _mesa_hash_table_remove(ht, entry);
+               }
+
+               insert_dead_code_hash(ht, inst->dst.reg, inst->dst.reg_offset,
+                                     inst);
+            }
+         }
+      }
+   }
+
+   _mesa_hash_table_destroy(ht, NULL);
+
+   if (progress)
+      live_intervals_valid = false;
+
+   return progress;
+}
+
 /**
  * Implements a second type of register coalescing: This one checks if
  * the two regs involved in a raw move don't interfere, in which case
@@ -2806,6 +2965,7 @@ fs_visitor::run()
 	 progress = opt_cse() || progress;
 	 progress = opt_copy_propagate() || progress;
 	 progress = dead_code_eliminate() || progress;
+	 progress = dead_code_eliminate_local() || progress;
 	 progress = register_coalesce() || progress;
 	 progress = register_coalesce_2() || progress;
 	 progress = compute_to_mrf() || progress;
