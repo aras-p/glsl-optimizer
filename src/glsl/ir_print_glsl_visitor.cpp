@@ -623,6 +623,8 @@ void ir_print_glsl_visitor::visit(ir_texture *ir)
 		ralloc_asprintf_append (&buffer, "Proj");
 	if (ir->op == ir_txl)
 		ralloc_asprintf_append (&buffer, "Lod");
+	if (ir->op == ir_txd)
+		ralloc_asprintf_append (&buffer, "Grad");
 	
 	if (state->es_shader)
 	{
@@ -631,6 +633,14 @@ void ir_print_glsl_visitor::visit(ir_texture *ir)
 		{
 			ralloc_asprintf_append (&buffer, "EXT");
 		}
+	}
+	
+	if(ir->op == ir_txd)
+	{
+		if(state->es_shader && state->EXT_shader_texture_lod_enable)
+			ralloc_asprintf_append (&buffer, "EXT");
+		else if(!state->es_shader && state->ARB_shader_texture_lod_enable)
+			ralloc_asprintf_append (&buffer, "ARB");
 	}
 	
 	ralloc_asprintf_append (&buffer, " (");
@@ -654,6 +664,15 @@ void ir_print_glsl_visitor::visit(ir_texture *ir)
 	{
 		ralloc_asprintf_append (&buffer, ", ");
 		ir->lod_info.lod->accept(this);
+	}
+	
+	// grad
+	if (ir->op == ir_txd)
+	{
+		ralloc_asprintf_append (&buffer, ", ");
+		ir->lod_info.grad.dPdx->accept(this);
+		ralloc_asprintf_append (&buffer, ", ");
+		ir->lod_info.grad.dPdy->accept(this);
 	}
 	
 	/*

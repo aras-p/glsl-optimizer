@@ -3,6 +3,6 @@ varying vec2 uv;
 uniform sampler2D tex;
 void main ()
 {
-  gl_FragColor = texture2D (tex, uv);
+  gl_FragColor = texture2DGradARB (tex, uv, dFdx(uv), dFdy(uv));
 }
 

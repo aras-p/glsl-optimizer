@@ -5,7 +5,7 @@ uniform sampler2D tex;
 void main ()
 {
   lowp vec4 tmpvar_1;
-  tmpvar_1 = texture2D (tex, uv);
+  tmpvar_1 = texture2DGradEXT (tex, uv, dFdx(uv), dFdy(uv));
   gl_FragColor = tmpvar_1;
 }
 

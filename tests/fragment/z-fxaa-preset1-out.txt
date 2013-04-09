@@ -171,12 +171,12 @@ void main ()
       };
       if (!(doneN_5)) {
         vec4 tmpvar_57;
-        tmpvar_57 = texture2D (_MainTex, posN_10);
+        tmpvar_57 = texture2DGradARB (_MainTex, posN_10, offNP_8, offNP_8);
         lumaEndN_7 = ((tmpvar_57.y * 1.96321) + tmpvar_57.x);
       };
       if (!(doneP_4)) {
         vec4 tmpvar_58;
-        tmpvar_58 = texture2D (_MainTex, posP_9);
+        tmpvar_58 = texture2DGradARB (_MainTex, posP_9, offNP_8, offNP_8);
         lumaEndP_6 = ((tmpvar_58.y * 1.96321) + tmpvar_58.x);
       };
       bool tmpvar_59;
