@@ -38,6 +38,7 @@
  * - LOG_TO_LOG2
  * - MOD_TO_FRACT
  * - LRP_TO_ARITH
+ * - BITFIELD_INSERT_TO_BFM_BFI
  *
  * SUB_TO_ADD_NEG:
  * ---------------
@@ -84,6 +85,15 @@
  * LRP_TO_ARITH:
  * -------------
  * Converts ir_triop_lrp to (op0 * (1.0f - op2)) + (op1 * op2).
+ *
+ * BITFIELD_INSERT_TO_BFM_BFI:
+ * ---------------------------
+ * Breaks ir_quadop_bitfield_insert into ir_binop_bfm (bitfield mask) and
+ * ir_triop_bfi (bitfield insert).
+ *
+ * Many GPUs implement the bitfieldInsert() built-in from ARB_gpu_shader_5
+ * with a pair of instructions.
+ *
  */
 
 #include "main/core.h" /* for M_LOG2E */
@@ -114,6 +124,7 @@ private:
    void pow_to_exp2(ir_expression *);
    void log_to_log2(ir_expression *);
    void lrp_to_arith(ir_expression *);
+   void bitfield_insert_to_bfm_bfi(ir_expression *);
 };
 
 /**
@@ -298,6 +309,29 @@ lower_instructions_visitor::lrp_to_arith(ir_expression *ir)
    this->progress = true;
 }
 
+void
+lower_instructions_visitor::bitfield_insert_to_bfm_bfi(ir_expression *ir)
+{
+   /* Translates
+    *    ir_quadop_bitfield_insert base insert offset bits
+    * into
+    *    ir_triop_bfi (ir_binop_bfm bits offset) insert base
+    */
+
+   ir_rvalue *base_expr = ir->operands[0];
+
+   ir->operation = ir_triop_bfi;
+   ir->operands[0] = new(ir) ir_expression(ir_binop_bfm,
+                                           ir->type->get_base_type(),
+                                           ir->operands[3],
+                                           ir->operands[2]);
+   /* ir->operands[1] is still the value to insert. */
+   ir->operands[2] = base_expr;
+   ir->operands[3] = NULL;
+
+   this->progress = true;
+}
+
 ir_visitor_status
 lower_instructions_visitor::visit_leave(ir_expression *ir)
 {
@@ -337,6 +371,11 @@ lower_instructions_visitor::visit_leave(ir_expression *ir)
    case ir_triop_lrp:
       if (lowering(LRP_TO_ARITH))
 	 lrp_to_arith(ir);
+      break;
+
+   case ir_quadop_bitfield_insert:
+      if (lowering(BITFIELD_INSERT_TO_BFM_BFI))
+         bitfield_insert_to_bfm_bfi(ir);
       break;
 
    default:

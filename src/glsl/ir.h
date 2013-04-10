@@ -1119,6 +1119,15 @@ enum ir_expression_operation {
    /*@}*/
 
    /**
+    * \name First half of a lowered bitfieldInsert() operation.
+    *
+    * \see lower_instructions::bitfield_insert_to_bfm_bfi
+    */
+   /*@{*/
+   ir_binop_bfm,
+   /*@}*/
+
+   /**
     * Load a value the size of a given GLSL type from a uniform block.
     *
     * operand0 is the ir_constant uniform block index in the linked shader.
@@ -1132,6 +1141,15 @@ enum ir_expression_operation {
    ir_last_binop = ir_binop_ubo_load,
 
    ir_triop_lrp,
+
+   /**
+    * \name Second half of a lowered bitfieldInsert() operation.
+    *
+    * \see lower_instructions::bitfield_insert_to_bfm_bfi
+    */
+   /*@{*/
+   ir_triop_bfi,
+   /*@}*/
 
    ir_triop_bitfield_extract,
 
