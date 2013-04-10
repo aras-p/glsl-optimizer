@@ -226,7 +226,13 @@ union value {
  * extensions or specific gl versions) or actions (flush current, new
  * buffers) that we need to do before looking up an enum.  We need to
  * declare them all up front so we can refer to them in the value_desc
- * structs below. */
+ * structs below.
+ *
+ * Each EXTRA_ will be executed.  For EXTRA_* enums of extensions and API
+ * versions, listing multiple ones in an array means an error will be thrown
+ * only if none of them are available.  If you need to check for "AND"
+ * behavior, you would need to make a custom EXTRA_ enum.
+ */
 
 static const int extra_new_buffers[] = {
    EXTRA_NEW_BUFFERS,
