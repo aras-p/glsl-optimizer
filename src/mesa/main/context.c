@@ -1080,6 +1080,7 @@ _mesa_initialize_context(struct gl_context *ctx,
    return GL_TRUE;
 
 fail:
+   _mesa_reference_shared_state(ctx, &ctx->Shared, NULL);
    free(ctx->BeginEnd);
    free(ctx->Exec);
    free(ctx->Save);
