@@ -352,7 +352,11 @@ intel_miptree_choose_tiling(struct intel_context *intel,
       return I915_TILING_NONE;
    }
 
-   return intel->gen >= 6 ? I915_TILING_Y : I915_TILING_X;
+   /* Pre-gen6 doesn't have BLORP to handle Y-tiling, so use X-tiling. */
+   if (intel->gen < 6)
+      return I915_TILING_X;
+
+   return I915_TILING_Y | I915_TILING_X;
 }
 
 struct intel_mipmap_tree *
@@ -432,13 +436,33 @@ intel_miptree_create(struct intel_context *intel,
    uint32_t tiling = intel_miptree_choose_tiling(intel, format, width0,
                                                  num_samples, force_y_tiling,
                                                  mt);
+   bool y_or_x = tiling == (I915_TILING_Y | I915_TILING_X);
+
    mt->etc_format = etc_format;
    mt->region = intel_region_alloc(intel->intelScreen,
-				   tiling,
+				   y_or_x ? I915_TILING_Y : tiling,
 				   mt->cpp,
 				   total_width,
 				   total_height,
 				   expect_accelerated_upload);
+
+   /* If the region is too large to fit in the aperture, we need to use the
+    * BLT engine to support it.  The BLT paths can't currently handle Y-tiling,
+    * so we need to fall back to X.
+    */
+   if (y_or_x && mt->region->bo->size >= intel->max_gtt_map_object_size) {
+      perf_debug("%dx%d miptree larger than aperture; falling back to X-tiled\n",
+                 mt->total_width, mt->total_height);
+      intel_region_release(&mt->region);
+
+      mt->region = intel_region_alloc(intel->intelScreen,
+                                      I915_TILING_X,
+                                      mt->cpp,
+                                      total_width,
+                                      total_height,
+                                      expect_accelerated_upload);
+   }
+
    mt->offset = 0;
 
    if (!mt->region) {
