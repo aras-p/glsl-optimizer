@@ -1623,10 +1623,10 @@ dri2_query_wayland_buffer_wl(_EGLDriver *drv, _EGLDisplay *disp,
       return EGL_TRUE;
    case EGL_WIDTH:
       *value = buffer->buffer.width;
-      break;
+      return EGL_TRUE;
    case EGL_HEIGHT:
       *value = buffer->buffer.height;
-      break;
+      return EGL_TRUE;
    }
 
    return EGL_FALSE;
