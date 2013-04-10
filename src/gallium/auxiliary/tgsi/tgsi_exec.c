@@ -4422,14 +4422,25 @@ tgsi_exec_machine_run( struct tgsi_exec_machine *mach )
 {
    uint i;
    int pc = 0;
+   uint default_mask = 0xf;
 
-   mach->CondMask = 0xf;
-   mach->LoopMask = 0xf;
-   mach->ContMask = 0xf;
-   mach->FuncMask = 0xf;
-   mach->ExecMask = 0xf;
+   mach->Temps[TEMP_KILMASK_I].xyzw[TEMP_KILMASK_C].u[0] = 0;
+   mach->Temps[TEMP_OUTPUT_I].xyzw[TEMP_OUTPUT_C].u[0] = 0;
 
-   mach->Switch.mask = 0xf;
+   if( mach->Processor == TGSI_PROCESSOR_GEOMETRY ) {
+      mach->Temps[TEMP_PRIMITIVE_I].xyzw[TEMP_PRIMITIVE_C].u[0] = 0;
+      mach->Primitives[0] = 0;
+      /* GS runs on a single primitive for now */
+      default_mask = 0x1;
+   }
+
+   mach->CondMask = default_mask;
+   mach->LoopMask = default_mask;
+   mach->ContMask = default_mask;
+   mach->FuncMask = default_mask;
+   mach->ExecMask = default_mask;
+
+   mach->Switch.mask = default_mask;
 
    assert(mach->CondStackTop == 0);
    assert(mach->LoopStackTop == 0);
@@ -4438,13 +4449,6 @@ tgsi_exec_machine_run( struct tgsi_exec_machine *mach )
    assert(mach->BreakStackTop == 0);
    assert(mach->CallStackTop == 0);
 
-   mach->Temps[TEMP_KILMASK_I].xyzw[TEMP_KILMASK_C].u[0] = 0;
-   mach->Temps[TEMP_OUTPUT_I].xyzw[TEMP_OUTPUT_C].u[0] = 0;
-
-   if( mach->Processor == TGSI_PROCESSOR_GEOMETRY ) {
-      mach->Temps[TEMP_PRIMITIVE_I].xyzw[TEMP_PRIMITIVE_C].u[0] = 0;
-      mach->Primitives[0] = 0;
-   }
 
    /* execute declarations (interpolants) */
    for (i = 0; i < mach->NumDeclarations; i++) {
