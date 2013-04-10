@@ -132,8 +132,7 @@ struct glsl_type {
    /**
     * Name of the data type
     *
-    * This may be \c NULL for anonymous structures, for arrays, or for
-    * function types.
+    * Will never be \c NULL.
     */
    const char *name;
 

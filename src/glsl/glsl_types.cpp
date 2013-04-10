@@ -57,6 +57,7 @@ glsl_type::glsl_type(GLenum gl_type,
    length(0)
 {
    init_ralloc_type_ctx();
+   assert(name != NULL);
    this->name = ralloc_strdup(this->mem_ctx, name);
    /* Neither dimension is zero or both dimensions are zero.
     */
@@ -75,6 +76,7 @@ glsl_type::glsl_type(GLenum gl_type,
    length(0)
 {
    init_ralloc_type_ctx();
+   assert(name != NULL);
    this->name = ralloc_strdup(this->mem_ctx, name);
    memset(& fields, 0, sizeof(fields));
 }
@@ -91,6 +93,7 @@ glsl_type::glsl_type(const glsl_struct_field *fields, unsigned num_fields,
    unsigned int i;
 
    init_ralloc_type_ctx();
+   assert(name != NULL);
    this->name = ralloc_strdup(this->mem_ctx, name);
    this->fields.structure = ralloc_array(this->mem_ctx,
 					 glsl_struct_field, length);
@@ -114,6 +117,7 @@ glsl_type::glsl_type(const glsl_struct_field *fields, unsigned num_fields,
    unsigned int i;
 
    init_ralloc_type_ctx();
+   assert(name != NULL);
    this->name = ralloc_strdup(this->mem_ctx, name);
    this->fields.structure = ralloc_array(this->mem_ctx,
 					 glsl_struct_field, length);
