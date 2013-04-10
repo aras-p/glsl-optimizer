@@ -908,50 +908,43 @@ check_extra(struct gl_context *ctx, const char *func, const struct value_desc *d
    for (e = d->extra; *e != EXTRA_END; e++)
       switch (*e) {
       case EXTRA_VERSION_30:
-	 if (version >= 30) {
-	    api_check = GL_TRUE;
-	    api_found = GL_TRUE;
-	 }
+         api_check = GL_TRUE;
+         if (version >= 30)
+            api_found = GL_TRUE;
 	 break;
       case EXTRA_VERSION_31:
-	 if (version >= 31) {
-	    api_check = GL_TRUE;
-	    api_found = GL_TRUE;
-	 }
+         api_check = GL_TRUE;
+         if (version >= 31)
+            api_found = GL_TRUE;
 	 break;
       case EXTRA_VERSION_32:
-	 if (version >= 32) {
-	    api_check = GL_TRUE;
-	    api_found = GL_TRUE;
-	 }
+         api_check = GL_TRUE;
+         if (version >= 32)
+            api_found = GL_TRUE;
 	 break;
       case EXTRA_NEW_FRAG_CLAMP:
          if (ctx->NewState & (_NEW_BUFFERS | _NEW_FRAG_CLAMP))
             _mesa_update_state(ctx);
          break;
       case EXTRA_API_ES2:
-	 if (ctx->API == API_OPENGLES2) {
-	    api_check = GL_TRUE;
-	    api_found = GL_TRUE;
-	 }
+         api_check = GL_TRUE;
+         if (ctx->API == API_OPENGLES2)
+            api_found = GL_TRUE;
 	 break;
       case EXTRA_API_ES3:
-	 if (_mesa_is_gles3(ctx)) {
-	    api_check = GL_TRUE;
-	    api_found = GL_TRUE;
-	 }
+         api_check = GL_TRUE;
+         if (_mesa_is_gles3(ctx))
+            api_found = GL_TRUE;
 	 break;
       case EXTRA_API_GL:
-	 if (_mesa_is_desktop_gl(ctx)) {
-	    api_check = GL_TRUE;
-	    api_found = GL_TRUE;
-	 }
+         api_check = GL_TRUE;
+         if (_mesa_is_desktop_gl(ctx))
+            api_found = GL_TRUE;
 	 break;
       case EXTRA_API_GL_CORE:
-	 if (ctx->API == API_OPENGL_CORE) {
-	    api_check = GL_TRUE;
-	    api_found = GL_TRUE;
-	 }
+         api_check = GL_TRUE;
+         if (ctx->API == API_OPENGL_CORE)
+            api_found = GL_TRUE;
 	 break;
       case EXTRA_NEW_BUFFERS:
 	 if (ctx->NewState & _NEW_BUFFERS)
@@ -982,10 +975,9 @@ check_extra(struct gl_context *ctx, const char *func, const struct value_desc *d
 	 }
 	 break;
       case EXTRA_GLSL_130:
-	 if (ctx->Const.GLSLVersion >= 130) {
-	    api_check = GL_TRUE;
-	    api_found = GL_TRUE;
-	 }
+         api_check = GL_TRUE;
+         if (ctx->Const.GLSLVersion >= 130)
+            api_found = GL_TRUE;
 	 break;
       case EXTRA_END:
 	 break;
