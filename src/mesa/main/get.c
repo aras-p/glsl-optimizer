@@ -901,29 +901,28 @@ static GLboolean
 check_extra(struct gl_context *ctx, const char *func, const struct value_desc *d)
 {
    const GLuint version = ctx->Version;
-   int total, enabled;
+   GLboolean api_check = GL_FALSE;
+   GLboolean api_found = GL_FALSE;
    const int *e;
 
-   total = 0;
-   enabled = 0;
    for (e = d->extra; *e != EXTRA_END; e++)
       switch (*e) {
       case EXTRA_VERSION_30:
 	 if (version >= 30) {
-	    total++;
-	    enabled++;
+	    api_check = GL_TRUE;
+	    api_found = GL_TRUE;
 	 }
 	 break;
       case EXTRA_VERSION_31:
 	 if (version >= 31) {
-	    total++;
-	    enabled++;
+	    api_check = GL_TRUE;
+	    api_found = GL_TRUE;
 	 }
 	 break;
       case EXTRA_VERSION_32:
 	 if (version >= 32) {
-	    total++;
-	    enabled++;
+	    api_check = GL_TRUE;
+	    api_found = GL_TRUE;
 	 }
 	 break;
       case EXTRA_NEW_FRAG_CLAMP:
@@ -932,26 +931,26 @@ check_extra(struct gl_context *ctx, const char *func, const struct value_desc *d
          break;
       case EXTRA_API_ES2:
 	 if (ctx->API == API_OPENGLES2) {
-	    total++;
-	    enabled++;
+	    api_check = GL_TRUE;
+	    api_found = GL_TRUE;
 	 }
 	 break;
       case EXTRA_API_ES3:
 	 if (_mesa_is_gles3(ctx)) {
-	    total++;
-	    enabled++;
+	    api_check = GL_TRUE;
+	    api_found = GL_TRUE;
 	 }
 	 break;
       case EXTRA_API_GL:
 	 if (_mesa_is_desktop_gl(ctx)) {
-	    total++;
-	    enabled++;
+	    api_check = GL_TRUE;
+	    api_found = GL_TRUE;
 	 }
 	 break;
       case EXTRA_API_GL_CORE:
 	 if (ctx->API == API_OPENGL_CORE) {
-	    total++;
-	    enabled++;
+	    api_check = GL_TRUE;
+	    api_found = GL_TRUE;
 	 }
 	 break;
       case EXTRA_NEW_BUFFERS:
@@ -984,20 +983,20 @@ check_extra(struct gl_context *ctx, const char *func, const struct value_desc *d
 	 break;
       case EXTRA_GLSL_130:
 	 if (ctx->Const.GLSLVersion >= 130) {
-	    total++;
-	    enabled++;
+	    api_check = GL_TRUE;
+	    api_found = GL_TRUE;
 	 }
 	 break;
       case EXTRA_END:
 	 break;
       default: /* *e is a offset into the extension struct */
-	 total++;
+	 api_check = GL_TRUE;
 	 if (*(GLboolean *) ((char *) &ctx->Extensions + *e))
-	    enabled++;
+	    api_found = GL_TRUE;
 	 break;
       }
 
-   if (total > 0 && enabled == 0) {
+   if (api_check && !api_found) {
       _mesa_error(ctx, GL_INVALID_ENUM, "%s(pname=%s)", func,
                   _mesa_lookup_enum_by_nr(d->pname));
       return GL_FALSE;
