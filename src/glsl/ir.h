@@ -1033,6 +1033,16 @@ enum ir_expression_operation {
    ir_unop_unpack_half_2x16_split_y,
    /*@}*/
 
+   /**
+    * \name Bit operations, part of ARB_gpu_shader5.
+    */
+   /*@{*/
+   ir_unop_bitfield_reverse,
+   ir_unop_bit_count,
+   ir_unop_find_msb,
+   ir_unop_find_lsb,
+   /*@}*/
+
    ir_unop_noise,
 
    /**
@@ -1123,12 +1133,21 @@ enum ir_expression_operation {
 
    ir_triop_lrp,
 
+   ir_triop_bitfield_extract,
+
    /**
     * A sentinel marking the last of the ternary operations.
     */
-   ir_last_triop = ir_triop_lrp,
+   ir_last_triop = ir_triop_bitfield_extract,
+
+   ir_quadop_bitfield_insert,
 
    ir_quadop_vector,
+
+   /**
+    * A sentinel marking the last of the ternary operations.
+    */
+   ir_last_quadop = ir_quadop_vector,
 
    /**
     * A sentinel marking the last of all operations.

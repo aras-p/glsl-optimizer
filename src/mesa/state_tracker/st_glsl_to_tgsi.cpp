@@ -1969,6 +1969,12 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
    case ir_unop_unpack_snorm_4x8:
    case ir_unop_unpack_unorm_4x8:
    case ir_binop_pack_half_2x16_split:
+   case ir_unop_bitfield_reverse:
+   case ir_unop_bit_count:
+   case ir_unop_find_msb:
+   case ir_unop_find_lsb:
+   case ir_triop_bitfield_extract:
+   case ir_quadop_bitfield_insert:
    case ir_quadop_vector:
       /* This operation is not supported, or should have already been handled.
        */

@@ -1444,6 +1444,10 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
    case ir_unop_unpack_half_2x16_split_x:
    case ir_unop_unpack_half_2x16_split_y:
    case ir_binop_pack_half_2x16_split:
+   case ir_unop_bitfield_reverse:
+   case ir_unop_bit_count:
+   case ir_unop_find_msb:
+   case ir_unop_find_lsb:
       assert(!"not supported");
       break;
    case ir_binop_min:
@@ -1483,6 +1487,11 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
        * OPCODE_LRP operands are (a, y, x) to match ARB_fragment_program.
        */
       emit(ir, OPCODE_LRP, result_dst, op[2], op[1], op[0]);
+      break;
+
+   case ir_triop_bitfield_extract:
+   case ir_quadop_bitfield_insert:
+      assert(!"not supported");
       break;
 
    case ir_quadop_vector:

@@ -419,7 +419,7 @@ ir_expression::get_num_operands(ir_expression_operation op)
    if (op <= ir_last_triop)
       return 3;
 
-   if (op == ir_quadop_vector)
+   if (op <= ir_last_quadop)
       return 4;
 
    assert(false);
@@ -477,6 +477,10 @@ static const char *const operator_strs[] = {
    "unpackHalf2x16",
    "unpackHalf2x16_split_x",
    "unpackHalf2x16_split_y",
+   "bitfield_reverse",
+   "bit_count",
+   "find_msb",
+   "find_lsb",
    "noise",
    "+",
    "-",
@@ -506,6 +510,8 @@ static const char *const operator_strs[] = {
    "packHalf2x16_split",
    "ubo_load",
    "lrp",
+   "bitfield_extract",
+   "bitfield_insert",
    "vector",
 };
 
