@@ -521,7 +521,7 @@ fs_visitor::visit(ir_expression *ir)
       break;
 
    case ir_unop_b2i:
-      inst = emit(AND(this->result, op[0], fs_reg(1)));
+      emit(AND(this->result, op[0], fs_reg(1)));
       break;
    case ir_unop_b2f:
       temp = fs_reg(this, glsl_type::int_type);
@@ -541,14 +541,14 @@ fs_visitor::visit(ir_expression *ir)
       break;
    case ir_unop_ceil:
       op[0].negate = !op[0].negate;
-      inst = emit(RNDD(this->result, op[0]));
+      emit(RNDD(this->result, op[0]));
       this->result.negate = true;
       break;
    case ir_unop_floor:
-      inst = emit(RNDD(this->result, op[0]));
+      emit(RNDD(this->result, op[0]));
       break;
    case ir_unop_fract:
-      inst = emit(FRC(this->result, op[0]));
+      emit(FRC(this->result, op[0]));
       break;
    case ir_unop_round_even:
       emit(RNDE(this->result, op[0]));
@@ -585,27 +585,27 @@ fs_visitor::visit(ir_expression *ir)
       break;
 
    case ir_unop_bit_not:
-      inst = emit(NOT(this->result, op[0]));
+      emit(NOT(this->result, op[0]));
       break;
    case ir_binop_bit_and:
-      inst = emit(AND(this->result, op[0], op[1]));
+      emit(AND(this->result, op[0], op[1]));
       break;
    case ir_binop_bit_xor:
-      inst = emit(XOR(this->result, op[0], op[1]));
+      emit(XOR(this->result, op[0], op[1]));
       break;
    case ir_binop_bit_or:
-      inst = emit(OR(this->result, op[0], op[1]));
+      emit(OR(this->result, op[0], op[1]));
       break;
 
    case ir_binop_lshift:
-      inst = emit(SHL(this->result, op[0], op[1]));
+      emit(SHL(this->result, op[0], op[1]));
       break;
 
    case ir_binop_rshift:
       if (ir->type->base_type == GLSL_TYPE_INT)
-	 inst = emit(ASR(this->result, op[0], op[1]));
+	 emit(ASR(this->result, op[0], op[1]));
       else
-	 inst = emit(SHR(this->result, op[0], op[1]));
+	 emit(SHR(this->result, op[0], op[1]));
       break;
    case ir_binop_pack_half_2x16_split:
       emit(FS_OPCODE_PACK_HALF_2x16_SPLIT, this->result, op[0], op[1]);
