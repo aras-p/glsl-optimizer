@@ -730,7 +730,8 @@ hud_parse_env_var(struct hud_context *hud, const char *env)
             return;
       }
 
-      /* add a graph */
+      /* Add a graph. */
+      /* IF YOU CHANGE THIS, UPDATE print_help! */
       if (strcmp(name, "fps") == 0) {
          hud_fps_graph_install(pane);
       }
@@ -881,9 +882,23 @@ print_help(struct pipe_screen *screen)
       printf("    cpu%i\n", i);
 
    if (has_occlusion_query(screen))
-      puts("    pixels-rendered");
+      puts("    samples-passed");
    if (has_streamout(screen))
       puts("    primitives-generated");
+
+   if (has_pipeline_stats_query(screen)) {
+      puts("    ia-vertices");
+      puts("    ia-primitives");
+      puts("    vs-invocations");
+      puts("    gs-invocations");
+      puts("    gs-primitives");
+      puts("    clipper-invocations");
+      puts("    clipper-primitives-generated");
+      puts("    ps-invocations");
+      puts("    hs-invocations");
+      puts("    ds-invocations");
+      puts("    cs-invocations");
+   }
 
    if (screen->get_driver_query_info){
       struct pipe_driver_query_info info;
