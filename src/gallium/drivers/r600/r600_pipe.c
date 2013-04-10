@@ -1149,7 +1149,7 @@ static uint64_t r600_get_timestamp(struct pipe_screen *screen)
 {
 	struct r600_screen *rscreen = (struct r600_screen*)screen;
 
-	return 1000000 * rscreen->ws->query_timestamp(rscreen->ws) /
+	return 1000000 * rscreen->ws->query_value(rscreen->ws, RADEON_TIMESTAMP) /
 			rscreen->info.r600_clock_crystal_freq;
 }
 

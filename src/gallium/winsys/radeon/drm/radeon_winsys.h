@@ -149,7 +149,8 @@ enum ring_type {
 enum radeon_value_id {
     RADEON_REQUESTED_VRAM_MEMORY,
     RADEON_REQUESTED_GTT_MEMORY,
-    RADEON_BUFFER_WAIT_TIME_NS
+    RADEON_BUFFER_WAIT_TIME_NS,
+    RADEON_TIMESTAMP
 };
 
 struct winsys_handle;
@@ -485,13 +486,6 @@ struct radeon_winsys {
      */
     int (*surface_best)(struct radeon_winsys *ws,
                         struct radeon_surface *surf);
-
-    /**
-     * Return the current timestamp (gpu clock) on r600 and later GPUs.
-     *
-     * \param ws        The winsys this function is called from.
-     */
-    uint64_t (*query_timestamp)(struct radeon_winsys *ws);
 
     uint64_t (*query_value)(struct radeon_winsys *ws,
                             enum radeon_value_id value);

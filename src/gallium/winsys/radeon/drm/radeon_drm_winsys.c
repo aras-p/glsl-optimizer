@@ -484,26 +484,11 @@ static int radeon_drm_winsys_surface_best(struct radeon_winsys *rws,
     return radeon_surface_best(ws->surf_man, surf);
 }
 
-static uint64_t radeon_query_timestamp(struct radeon_winsys *rws)
-{
-    struct radeon_drm_winsys *ws = (struct radeon_drm_winsys*)rws;
-    uint64_t ts = 0;
-
-    if (ws->info.drm_minor < 20 ||
-        ws->gen < DRV_R600) {
-        assert(0);
-        return 0;
-    }
-
-    radeon_get_drm_value(ws->fd, RADEON_INFO_TIMESTAMP, "timestamp",
-                         (uint32_t*)&ts);
-    return ts;
-}
-
 static uint64_t radeon_query_value(struct radeon_winsys *rws,
                                    enum radeon_value_id value)
 {
     struct radeon_drm_winsys *ws = (struct radeon_drm_winsys*)rws;
+    uint64_t ts = 0;
 
     switch (value) {
     case RADEON_REQUESTED_VRAM_MEMORY:
@@ -512,6 +497,15 @@ static uint64_t radeon_query_value(struct radeon_winsys *rws,
         return ws->allocated_gtt;
     case RADEON_BUFFER_WAIT_TIME_NS:
         return ws->buffer_wait_time;
+    case RADEON_TIMESTAMP:
+        if (ws->info.drm_minor < 20 || ws->gen < DRV_R600) {
+            assert(0);
+            return 0;
+        }
+
+        radeon_get_drm_value(ws->fd, RADEON_INFO_TIMESTAMP, "timestamp",
+                             (uint32_t*)&ts);
+        return ts;
     }
     return 0;
 }
@@ -638,7 +632,6 @@ struct radeon_winsys *radeon_drm_winsys_create(int fd)
     ws->base.cs_request_feature = radeon_cs_request_feature;
     ws->base.surface_init = radeon_drm_winsys_surface_init;
     ws->base.surface_best = radeon_drm_winsys_surface_best;
-    ws->base.query_timestamp = radeon_query_timestamp;
     ws->base.query_value = radeon_query_value;
 
     radeon_bomgr_init_functions(ws);
