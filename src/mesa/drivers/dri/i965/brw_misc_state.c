@@ -947,9 +947,20 @@ static void upload_line_stipple(struct brw_context *brw)
    BEGIN_BATCH(3);
    OUT_BATCH(_3DSTATE_LINE_STIPPLE_PATTERN << 16 | (3 - 2));
    OUT_BATCH(ctx->Line.StipplePattern);
-   tmp = 1.0 / (GLfloat) ctx->Line.StippleFactor;
-   tmpi = tmp * (1<<13);
-   OUT_BATCH(tmpi << 16 | ctx->Line.StippleFactor);
+
+   if (intel->gen >= 7) {
+      /* in U1.16 */
+      tmp = 1.0 / (GLfloat) ctx->Line.StippleFactor;
+      tmpi = tmp * (1<<16);
+      OUT_BATCH(tmpi << 15 | ctx->Line.StippleFactor);
+   }
+   else {
+      /* in U1.13 */
+      tmp = 1.0 / (GLfloat) ctx->Line.StippleFactor;
+      tmpi = tmp * (1<<13);
+      OUT_BATCH(tmpi << 16 | ctx->Line.StippleFactor);
+   }
+
    CACHED_BATCH();
 }
 
