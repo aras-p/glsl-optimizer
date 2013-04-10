@@ -423,8 +423,7 @@ static const int extra_core_ARB_color_buffer_float_and_new_buffers[] = {
  * remaining combinations. To look up the enums valid in a given API
  * we will use a hash table specific to that API. These tables are in
  * turn generated at build time and included through get_hash.h.
- * The different sections are guarded by #if FEATURE_GL etc to make
- * sure we only compile in the enums we may need. */
+ */
 
 #include "get_hash.h"
 
