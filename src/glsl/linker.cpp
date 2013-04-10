@@ -1904,7 +1904,8 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
           */
          if (!assign_varying_locations(ctx, mem_ctx, prog,
                                        sh, NULL,
-                                       num_tfeedback_decls, tfeedback_decls))
+                                       num_tfeedback_decls, tfeedback_decls,
+                                       0))
             goto done;
       }
 
@@ -1939,10 +1940,12 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
 
       gl_shader *const sh_i = prog->_LinkedShaders[i];
       gl_shader *const sh_next = prog->_LinkedShaders[next];
+      unsigned gs_input_vertices =
+         next == MESA_SHADER_GEOMETRY ? prog->Geom.VerticesIn : 0;
 
       if (!assign_varying_locations(ctx, mem_ctx, prog, sh_i, sh_next,
                 next == MESA_SHADER_FRAGMENT ? num_tfeedback_decls : 0,
-                tfeedback_decls))
+                tfeedback_decls, gs_input_vertices))
          goto done;
 
       do_dead_builtin_varyings(ctx, sh_i->ir, sh_next->ir,

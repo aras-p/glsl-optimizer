@@ -74,6 +74,74 @@
  * This lowering pass also handles varyings whose type is a struct or an array
  * of struct.  Structs are packed in order and with no gaps, so there may be a
  * performance penalty due to structure elements being double-parked.
+ *
+ * Lowering of geometry shader inputs is slightly more complex, since geometry
+ * inputs are always arrays, so we need to lower arrays to arrays.  For
+ * example, the following input:
+ *
+ *   in struct Foo {
+ *     float f;
+ *     vec3 v;
+ *     vec2 a[2];
+ *   } arr[3];         // location=4, location_frac=0
+ *
+ * Would get lowered like this if it occurred in a fragment shader:
+ *
+ *   struct Foo {
+ *     float f;
+ *     vec3 v;
+ *     vec2 a[2];
+ *   } arr[3];
+ *   in vec4 packed4;  // location=4, location_frac=0
+ *   in vec4 packed5;  // location=5, location_frac=0
+ *   in vec4 packed6;  // location=6, location_frac=0
+ *   in vec4 packed7;  // location=7, location_frac=0
+ *   in vec4 packed8;  // location=8, location_frac=0
+ *   in vec4 packed9;  // location=9, location_frac=0
+ *
+ *   main()
+ *   {
+ *     arr[0].f = packed4.x;
+ *     arr[0].v = packed4.yzw;
+ *     arr[0].a[0] = packed5.xy;
+ *     arr[0].a[1] = packed5.zw;
+ *     arr[1].f = packed6.x;
+ *     arr[1].v = packed6.yzw;
+ *     arr[1].a[0] = packed7.xy;
+ *     arr[1].a[1] = packed7.zw;
+ *     arr[2].f = packed8.x;
+ *     arr[2].v = packed8.yzw;
+ *     arr[2].a[0] = packed9.xy;
+ *     arr[2].a[1] = packed9.zw;
+ *     ...
+ *   }
+ *
+ * But it would get lowered like this if it occurred in a geometry shader:
+ *
+ *   struct Foo {
+ *     float f;
+ *     vec3 v;
+ *     vec2 a[2];
+ *   } arr[3];
+ *   in vec4 packed4[3];  // location=4, location_frac=0
+ *   in vec4 packed5[3];  // location=5, location_frac=0
+ *
+ *   main()
+ *   {
+ *     arr[0].f = packed4[0].x;
+ *     arr[0].v = packed4[0].yzw;
+ *     arr[0].a[0] = packed5[0].xy;
+ *     arr[0].a[1] = packed5[0].zw;
+ *     arr[1].f = packed4[1].x;
+ *     arr[1].v = packed4[1].yzw;
+ *     arr[1].a[0] = packed5[1].xy;
+ *     arr[1].a[1] = packed5[1].zw;
+ *     arr[2].f = packed4[2].x;
+ *     arr[2].v = packed4[2].yzw;
+ *     arr[2].a[0] = packed5[2].xy;
+ *     arr[2].a[1] = packed5[2].zw;
+ *     ...
+ *   }
  */
 
 #include "glsl_symbol_table.h"
@@ -93,6 +161,7 @@ public:
    lower_packed_varyings_visitor(void *mem_ctx, unsigned location_base,
                                  unsigned locations_used,
                                  ir_variable_mode mode,
+                                 unsigned gs_input_vertices,
                                  exec_list *main_instructions);
 
    void run(exec_list *instructions);
@@ -101,13 +170,16 @@ private:
    ir_assignment *bitwise_assign_pack(ir_rvalue *lhs, ir_rvalue *rhs);
    ir_assignment *bitwise_assign_unpack(ir_rvalue *lhs, ir_rvalue *rhs);
    unsigned lower_rvalue(ir_rvalue *rvalue, unsigned fine_location,
-                         ir_variable *unpacked_var, const char *name);
+                         ir_variable *unpacked_var, const char *name,
+                         bool gs_input_toplevel, unsigned vertex_index);
    unsigned lower_arraylike(ir_rvalue *rvalue, unsigned array_size,
                             unsigned fine_location,
-                            ir_variable *unpacked_var, const char *name);
-   ir_variable *get_packed_varying(unsigned location,
-                                   ir_variable *unpacked_var,
-                                   const char *name);
+                            ir_variable *unpacked_var, const char *name,
+                            bool gs_input_toplevel, unsigned vertex_index);
+   ir_dereference *get_packed_varying_deref(unsigned location,
+                                            ir_variable *unpacked_var,
+                                            const char *name,
+                                            unsigned vertex_index);
    bool needs_lowering(ir_variable *var);
 
    /**
@@ -145,6 +217,12 @@ private:
    const ir_variable_mode mode;
 
    /**
+    * If we are currently lowering geometry shader inputs, the number of input
+    * vertices the geometry shader accepts.  Otherwise zero.
+    */
+   const unsigned gs_input_vertices;
+
+   /**
     * List of instructions corresponding to the main() function.  This is
     * where we add instructions to pack or unpack the varyings.
     */
@@ -153,7 +231,8 @@ private:
 
 lower_packed_varyings_visitor::lower_packed_varyings_visitor(
       void *mem_ctx, unsigned location_base, unsigned locations_used,
-      ir_variable_mode mode, exec_list *main_instructions)
+      ir_variable_mode mode, unsigned gs_input_vertices,
+      exec_list *main_instructions)
    : mem_ctx(mem_ctx),
      location_base(location_base),
      locations_used(locations_used),
@@ -161,6 +240,7 @@ lower_packed_varyings_visitor::lower_packed_varyings_visitor(
                      rzalloc_array_size(mem_ctx, sizeof(*packed_varyings),
                                         locations_used)),
      mode(mode),
+     gs_input_vertices(gs_input_vertices),
      main_instructions(main_instructions)
 {
 }
@@ -195,7 +275,7 @@ lower_packed_varyings_visitor::run(exec_list *instructions)
 
       /* Recursively pack or unpack it. */
       this->lower_rvalue(deref, var->location * 4 + var->location_frac, var,
-                         var->name);
+                         var->name, this->gs_input_vertices != 0, 0);
    }
 }
 
@@ -277,6 +357,15 @@ lower_packed_varyings_visitor::bitwise_assign_unpack(ir_rvalue *lhs,
  * in multiples of a float, rather than multiples of a vec4 as is used
  * elsewhere in Mesa.
  *
+ * \param gs_input_toplevel should be set to true if we are lowering geometry
+ * shader inputs, and we are currently lowering the whole input variable
+ * (i.e. we are lowering the array whose index selects the vertex).
+ *
+ * \param vertex_index: if we are lowering geometry shader inputs, and the
+ * level of the array that we are currently lowering is *not* the top level,
+ * then this indicates which vertex we are currently lowering.  Otherwise it
+ * is ignored.
+ *
  * \return the location where the next constituent vector (after this one)
  * should be packed.
  */
@@ -284,8 +373,15 @@ unsigned
 lower_packed_varyings_visitor::lower_rvalue(ir_rvalue *rvalue,
                                             unsigned fine_location,
                                             ir_variable *unpacked_var,
-                                            const char *name)
+                                            const char *name,
+                                            bool gs_input_toplevel,
+                                            unsigned vertex_index)
 {
+   /* When gs_input_toplevel is set, we should be looking at a geometry shader
+    * input array.
+    */
+   assert(!gs_input_toplevel || rvalue->type->is_array());
+
    if (rvalue->type->is_record()) {
       for (unsigned i = 0; i < rvalue->type->length; i++) {
          if (i != 0)
@@ -296,7 +392,8 @@ lower_packed_varyings_visitor::lower_rvalue(ir_rvalue *rvalue,
          char *deref_name
             = ralloc_asprintf(this->mem_ctx, "%s.%s", name, field_name);
          fine_location = this->lower_rvalue(dereference_record, fine_location,
-                                            unpacked_var, deref_name);
+                                            unpacked_var, deref_name, false,
+                                            vertex_index);
       }
       return fine_location;
    } else if (rvalue->type->is_array()) {
@@ -304,13 +401,15 @@ lower_packed_varyings_visitor::lower_rvalue(ir_rvalue *rvalue,
        * sequence.
        */
       return this->lower_arraylike(rvalue, rvalue->type->array_size(),
-                                   fine_location, unpacked_var, name);
+                                   fine_location, unpacked_var, name,
+                                   gs_input_toplevel, vertex_index);
    } else if (rvalue->type->is_matrix()) {
       /* Matrices are packed/unpacked by considering each column vector in
        * sequence.
        */
       return this->lower_arraylike(rvalue, rvalue->type->matrix_columns,
-                                   fine_location, unpacked_var, name);
+                                   fine_location, unpacked_var, name,
+                                   false, vertex_index);
    } else if (rvalue->type->vector_elements + fine_location % 4 > 4) {
       /* This vector is going to be "double parked" across two varying slots,
        * so handle it as two separate assignments.
@@ -340,9 +439,10 @@ lower_packed_varyings_visitor::lower_rvalue(ir_rvalue *rvalue,
       char *right_name
          = ralloc_asprintf(this->mem_ctx, "%s.%s", name, right_swizzle_name);
       fine_location = this->lower_rvalue(left_swizzle, fine_location,
-                                         unpacked_var, left_name);
+                                         unpacked_var, left_name, false,
+                                         vertex_index);
       return this->lower_rvalue(right_swizzle, fine_location, unpacked_var,
-                                right_name);
+                                right_name, false, vertex_index);
    } else {
       /* No special handling is necessary; pack the rvalue into the
        * varying.
@@ -353,9 +453,9 @@ lower_packed_varyings_visitor::lower_rvalue(ir_rvalue *rvalue,
       unsigned location_frac = fine_location % 4;
       for (unsigned i = 0; i < components; ++i)
          swizzle_values[i] = i + location_frac;
-      ir_dereference_variable *packed_deref = new(this->mem_ctx)
-         ir_dereference_variable(this->get_packed_varying(location,
-                                                          unpacked_var, name));
+      ir_dereference *packed_deref =
+         this->get_packed_varying_deref(location, unpacked_var, name,
+                                        vertex_index);
       ir_swizzle *swizzle = new(this->mem_ctx)
          ir_swizzle(packed_deref, swizzle_values, components);
       if (this->mode == ir_var_shader_out) {
@@ -376,13 +476,24 @@ lower_packed_varyings_visitor::lower_rvalue(ir_rvalue *rvalue,
  * constituent elements, accessing each one using an ir_dereference_array.
  * This takes care of both arrays and matrices, since ir_dereference_array
  * treats a matrix like an array of its column vectors.
+ *
+ * \param gs_input_toplevel should be set to true if we are lowering geometry
+ * shader inputs, and we are currently lowering the whole input variable
+ * (i.e. we are lowering the array whose index selects the vertex).
+ *
+ * \param vertex_index: if we are lowering geometry shader inputs, and the
+ * level of the array that we are currently lowering is *not* the top level,
+ * then this indicates which vertex we are currently lowering.  Otherwise it
+ * is ignored.
  */
 unsigned
 lower_packed_varyings_visitor::lower_arraylike(ir_rvalue *rvalue,
                                                unsigned array_size,
                                                unsigned fine_location,
                                                ir_variable *unpacked_var,
-                                               const char *name)
+                                               const char *name,
+                                               bool gs_input_toplevel,
+                                               unsigned vertex_index)
 {
    for (unsigned i = 0; i < array_size; i++) {
       if (i != 0)
@@ -392,8 +503,20 @@ lower_packed_varyings_visitor::lower_arraylike(ir_rvalue *rvalue,
          ir_dereference_array(rvalue, constant);
       char *subscripted_name
          = ralloc_asprintf(this->mem_ctx, "%s[%d]", name, i);
-      fine_location = this->lower_rvalue(dereference_array, fine_location,
-                                         unpacked_var, subscripted_name);
+      if (gs_input_toplevel) {
+         /* Geometry shader inputs are a special case.  Instead of storing
+          * each element of the array at a different location, all elements
+          * are at the same location, but with a different vertex index.
+          */
+         (void) this->lower_rvalue(dereference_array, fine_location,
+                                   unpacked_var, subscripted_name,
+                                   false, i);
+      } else {
+         fine_location =
+            this->lower_rvalue(dereference_array, fine_location,
+                               unpacked_var, subscripted_name,
+                               false, vertex_index);
+      }
    }
    return fine_location;
 }
@@ -406,11 +529,14 @@ lower_packed_varyings_visitor::lower_arraylike(ir_rvalue *rvalue,
  * The newly created varying inherits its interpolation parameters from \c
  * unpacked_var.  Its base type is ivec4 if we are lowering a flat varying,
  * vec4 otherwise.
+ *
+ * \param vertex_index: if we are lowering geometry shader inputs, then this
+ * indicates which vertex we are currently lowering.  Otherwise it is ignored.
  */
-ir_variable *
-lower_packed_varyings_visitor::get_packed_varying(unsigned location,
-                                                  ir_variable *unpacked_var,
-                                                  const char *name)
+ir_dereference *
+lower_packed_varyings_visitor::get_packed_varying_deref(
+      unsigned location, ir_variable *unpacked_var, const char *name,
+      unsigned vertex_index)
 {
    unsigned slot = location - this->location_base;
    assert(slot < locations_used);
@@ -421,18 +547,44 @@ lower_packed_varyings_visitor::get_packed_varying(unsigned location,
          packed_type = glsl_type::ivec4_type;
       else
          packed_type = glsl_type::vec4_type;
+      if (this->gs_input_vertices != 0) {
+         packed_type =
+            glsl_type::get_array_instance(packed_type,
+                                          this->gs_input_vertices);
+      }
       ir_variable *packed_var = new(this->mem_ctx)
          ir_variable(packed_type, packed_name, this->mode);
+      if (this->gs_input_vertices != 0) {
+         /* Prevent update_array_sizes() from messing with the size of the
+          * array.
+          */
+         packed_var->max_array_access = this->gs_input_vertices - 1;
+      }
       packed_var->centroid = unpacked_var->centroid;
       packed_var->interpolation = unpacked_var->interpolation;
       packed_var->location = location;
       unpacked_var->insert_before(packed_var);
       this->packed_varyings[slot] = packed_var;
    } else {
-      ralloc_asprintf_append((char **) &this->packed_varyings[slot]->name,
-                             ",%s", name);
+      /* For geometry shader inputs, only update the packed variable name the
+       * first time we visit each component.
+       */
+      if (this->gs_input_vertices == 0 || vertex_index == 0) {
+         ralloc_asprintf_append((char **) &this->packed_varyings[slot]->name,
+                                ",%s", name);
+      }
    }
-   return this->packed_varyings[slot];
+
+   ir_dereference *deref = new(this->mem_ctx)
+      ir_dereference_variable(this->packed_varyings[slot]);
+   if (this->gs_input_vertices != 0) {
+      /* When lowering GS inputs, the packed variable is an array, so we need
+       * to dereference it using vertex_index.
+       */
+      ir_constant *constant = new(this->mem_ctx) ir_constant(vertex_index);
+      deref = new(this->mem_ctx) ir_dereference_array(deref, constant);
+   }
+   return deref;
 }
 
 bool
@@ -440,6 +592,10 @@ lower_packed_varyings_visitor::needs_lowering(ir_variable *var)
 {
    /* Things composed of vec4's don't need lowering.  Everything else does. */
    const glsl_type *type = var->type;
+   if (this->gs_input_vertices != 0) {
+      assert(type->is_array());
+      type = type->element_type();
+   }
    if (type->is_array())
       type = type->fields.array;
    if (type->vector_elements == 4)
@@ -450,7 +606,7 @@ lower_packed_varyings_visitor::needs_lowering(ir_variable *var)
 void
 lower_packed_varyings(void *mem_ctx, unsigned location_base,
                       unsigned locations_used, ir_variable_mode mode,
-                      gl_shader *shader)
+                      unsigned gs_input_vertices, gl_shader *shader)
 {
    exec_list *instructions = shader->ir;
    ir_function *main_func = shader->symbols->get_function("main");
@@ -460,6 +616,6 @@ lower_packed_varyings(void *mem_ctx, unsigned location_base,
    exec_list *main_instructions = &main_func_sig->body;
    lower_packed_varyings_visitor visitor(mem_ctx, location_base,
                                          locations_used, mode,
-                                         main_instructions);
+                                         gs_input_vertices, main_instructions);
    visitor.run(instructions);
 }

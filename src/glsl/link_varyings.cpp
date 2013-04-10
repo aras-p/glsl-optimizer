@@ -982,6 +982,9 @@ private:
  *        each of these objects that matches one of the outputs of the
  *        producer.
  *
+ * \param gs_input_vertices: if \c consumer is a geometry shader, this is the
+ *        number of input vertices it accepts.  Otherwise zero.
+ *
  * When num_tfeedback_decls is nonzero, it is permissible for the consumer to
  * be NULL.  In this case, varying locations are assigned solely based on the
  * requirements of transform feedback.
@@ -992,7 +995,8 @@ assign_varying_locations(struct gl_context *ctx,
 			 struct gl_shader_program *prog,
 			 gl_shader *producer, gl_shader *consumer,
                          unsigned num_tfeedback_decls,
-                         tfeedback_decl *tfeedback_decls)
+                         tfeedback_decl *tfeedback_decls,
+                         unsigned gs_input_vertices)
 {
    const unsigned producer_base = VARYING_SLOT_VAR0;
    const unsigned consumer_base = VARYING_SLOT_VAR0;
@@ -1113,10 +1117,10 @@ assign_varying_locations(struct gl_context *ctx,
       assert(!ctx->Extensions.EXT_transform_feedback);
    } else {
       lower_packed_varyings(mem_ctx, producer_base, slots_used,
-                            ir_var_shader_out, producer);
+                            ir_var_shader_out, 0, producer);
       if (consumer) {
          lower_packed_varyings(mem_ctx, consumer_base, slots_used,
-                               ir_var_shader_in, consumer);
+                               ir_var_shader_in, gs_input_vertices, consumer);
       }
    }
 
