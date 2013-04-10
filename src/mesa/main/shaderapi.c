@@ -1453,8 +1453,10 @@ _mesa_ValidateProgram(GLhandleARB program)
    validate_program(ctx, program);
 }
 
-#ifdef FEATURE_ES2
 
+/**
+ * For OpenGL ES 2.0, GL_ARB_ES2_compatibility
+ */
 void GLAPIENTRY
 _mesa_GetShaderPrecisionFormat(GLenum shadertype, GLenum precisiontype,
                                GLint* range, GLint* precision)
@@ -1507,6 +1509,9 @@ _mesa_GetShaderPrecisionFormat(GLenum shadertype, GLenum precisiontype,
 }
 
 
+/**
+ * For OpenGL ES 2.0, GL_ARB_ES2_compatibility
+ */
 void GLAPIENTRY
 _mesa_ReleaseShaderCompiler(void)
 {
@@ -1514,6 +1519,9 @@ _mesa_ReleaseShaderCompiler(void)
 }
 
 
+/**
+ * For OpenGL ES 2.0, GL_ARB_ES2_compatibility
+ */
 void GLAPIENTRY
 _mesa_ShaderBinary(GLint n, const GLuint* shaders, GLenum binaryformat,
                    const void* binary, GLint length)
@@ -1527,7 +1535,6 @@ _mesa_ShaderBinary(GLint n, const GLuint* shaders, GLenum binaryformat,
    _mesa_error(ctx, GL_INVALID_OPERATION, __FUNCTION__);
 }
 
-#endif /* FEATURE_ES2 */
 
 void GLAPIENTRY
 _mesa_GetProgramBinary(GLuint program, GLsizei bufSize, GLsizei *length,
