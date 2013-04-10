@@ -3445,10 +3445,10 @@ micro_udiv(union tgsi_exec_channel *dst,
            const union tgsi_exec_channel *src0,
            const union tgsi_exec_channel *src1)
 {
-   dst->u[0] = src0->u[0] / src1->u[0];
-   dst->u[1] = src0->u[1] / src1->u[1];
-   dst->u[2] = src0->u[2] / src1->u[2];
-   dst->u[3] = src0->u[3] / src1->u[3];
+   dst->u[0] = src1->u[0] ? src0->u[0] / src1->u[0] : ~0u;
+   dst->u[1] = src1->u[1] ? src0->u[1] / src1->u[1] : ~0u;
+   dst->u[2] = src1->u[2] ? src0->u[2] / src1->u[2] : ~0u;
+   dst->u[3] = src1->u[3] ? src0->u[3] / src1->u[3] : ~0u;
 }
 
 static void
@@ -3490,10 +3490,10 @@ micro_umod(union tgsi_exec_channel *dst,
            const union tgsi_exec_channel *src0,
            const union tgsi_exec_channel *src1)
 {
-   dst->u[0] = src0->u[0] % src1->u[0];
-   dst->u[1] = src0->u[1] % src1->u[1];
-   dst->u[2] = src0->u[2] % src1->u[2];
-   dst->u[3] = src0->u[3] % src1->u[3];
+   dst->u[0] = src1->u[0] ? src0->u[0] % src1->u[0] : ~0u;
+   dst->u[1] = src1->u[1] ? src0->u[1] % src1->u[1] : ~0u;
+   dst->u[2] = src1->u[2] ? src0->u[2] % src1->u[2] : ~0u;
+   dst->u[3] = src1->u[3] ? src0->u[3] % src1->u[3] : ~0u;
 }
 
 static void
