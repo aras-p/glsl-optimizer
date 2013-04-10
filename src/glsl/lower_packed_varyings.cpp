@@ -604,6 +604,51 @@ lower_packed_varyings_visitor::needs_lowering(ir_variable *var)
    return true;
 }
 
+
+/**
+ * Visitor that splices varying packing code before every use of EmitVertex()
+ * in a geometry shader.
+ */
+class lower_packed_varyings_gs_splicer : public ir_hierarchical_visitor
+{
+public:
+   explicit lower_packed_varyings_gs_splicer(void *mem_ctx,
+                                             const exec_list *instructions);
+
+   virtual ir_visitor_status visit(ir_emit_vertex *ev);
+
+private:
+   /**
+    * Memory context used to allocate new instructions for the shader.
+    */
+   void * const mem_ctx;
+
+   /**
+    * Instructions that should be spliced into place before each EmitVertex()
+    * call.
+    */
+   const exec_list *instructions;
+};
+
+
+lower_packed_varyings_gs_splicer::lower_packed_varyings_gs_splicer(
+      void *mem_ctx, const exec_list *instructions)
+   : mem_ctx(mem_ctx), instructions(instructions)
+{
+}
+
+
+ir_visitor_status
+lower_packed_varyings_gs_splicer::visit(ir_emit_vertex *ev)
+{
+   foreach_list(node, this->instructions) {
+      ir_instruction *ir = (ir_instruction *) node;
+      ev->insert_before(ir->clone(this->mem_ctx, NULL));
+   }
+   return visit_continue;
+}
+
+
 void
 lower_packed_varyings(void *mem_ctx, unsigned location_base,
                       unsigned locations_used, ir_variable_mode mode,
@@ -620,8 +665,18 @@ lower_packed_varyings(void *mem_ctx, unsigned location_base,
                                          gs_input_vertices, &new_instructions);
    visitor.run(instructions);
    if (mode == ir_var_shader_out) {
-      /* Shader outputs need to be lowered at the end of main() */
-      main_func_sig->body.append_list(&new_instructions);
+      if (shader->Type == GL_GEOMETRY_SHADER) {
+         /* For geometry shaders, outputs need to be lowered before each call
+          * to EmitVertex()
+          */
+         lower_packed_varyings_gs_splicer splicer(mem_ctx, &new_instructions);
+         splicer.run(instructions);
+      } else {
+         /* For other shader types, outputs need to be lowered at the end of
+          * main()
+          */
+         main_func_sig->body.append_list(&new_instructions);
+      }
    } else {
       /* Shader inputs need to be lowered at the beginning of main() */
       main_func_sig->body.head->insert_before(&new_instructions);
