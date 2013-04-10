@@ -43,6 +43,10 @@ const struct opcode_desc opcode_descs[128] = {
     [BRW_OPCODE_LZD] = { .name = "lzd", .nsrc = 1, .ndst = 1 },
     [BRW_OPCODE_F32TO16] = { .name = "f32to16", .nsrc = 1, .ndst = 1 },
     [BRW_OPCODE_F16TO32] = { .name = "f16to32", .nsrc = 1, .ndst = 1 },
+    [BRW_OPCODE_BFREV] = { .name = "bfrev", .nsrc = 1, .ndst = 1},
+    [BRW_OPCODE_FBH] = { .name = "fbh", .nsrc = 1, .ndst = 1},
+    [BRW_OPCODE_FBL] = { .name = "fbl", .nsrc = 1, .ndst = 1},
+    [BRW_OPCODE_CBIT] = { .name = "cbit", .nsrc = 1, .ndst = 1},
 
     [BRW_OPCODE_MUL] = { .name = "mul", .nsrc = 2, .ndst = 1 },
     [BRW_OPCODE_MAC] = { .name = "mac", .nsrc = 2, .ndst = 1 },
@@ -70,6 +74,9 @@ const struct opcode_desc opcode_descs[128] = {
     [BRW_OPCODE_ASR] = { .name = "asr", .nsrc = 2, .ndst = 1 },
     [BRW_OPCODE_CMP] = { .name = "cmp", .nsrc = 2, .ndst = 1 },
     [BRW_OPCODE_CMPN] = { .name = "cmpn", .nsrc = 2, .ndst = 1 },
+    [BRW_OPCODE_BFE] = { .name = "bfe", .nsrc = 3, .ndst = 1},
+    [BRW_OPCODE_BFI1] = { .name = "bfe1", .nsrc = 2, .ndst = 1},
+    [BRW_OPCODE_BFI2] = { .name = "bfe2", .nsrc = 3, .ndst = 1},
 
     [BRW_OPCODE_SEND] = { .name = "send", .nsrc = 1, .ndst = 1 },
     [BRW_OPCODE_SENDC] = { .name = "sendc", .nsrc = 1, .ndst = 1 },
