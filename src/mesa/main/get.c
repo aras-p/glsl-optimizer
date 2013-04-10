@@ -141,6 +141,7 @@ enum value_extra {
    EXTRA_VALID_CLIP_DISTANCE,
    EXTRA_FLUSH_CURRENT,
    EXTRA_GLSL_130,
+   EXTRA_EXT_UBO_GS4,
 };
 
 #define NO_EXTRA NULL
@@ -312,8 +313,7 @@ static const int extra_ARB_transform_feedback2_api_es3[] = {
 };
 
 static const int extra_ARB_uniform_buffer_object_and_geometry_shader[] = {
-   EXT(ARB_uniform_buffer_object),
-   EXT(ARB_geometry_shader4),
+   EXTRA_EXT_UBO_GS4,
    EXTRA_END
 };
 
@@ -985,6 +985,11 @@ check_extra(struct gl_context *ctx, const char *func, const struct value_desc *d
          if (ctx->Const.GLSLVersion >= 130)
             api_found = GL_TRUE;
 	 break;
+      case EXTRA_EXT_UBO_GS4:
+         api_check = GL_TRUE;
+         api_found = (ctx->Extensions.ARB_uniform_buffer_object &&
+                      ctx->Extensions.ARB_geometry_shader4);
+         break;
       case EXTRA_END:
 	 break;
       default: /* *e is a offset into the extension struct */
