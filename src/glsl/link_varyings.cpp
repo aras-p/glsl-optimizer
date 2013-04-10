@@ -68,6 +68,10 @@ cross_validate_outputs_to_inputs(struct gl_shader_program *prog,
    /* Find all shader inputs in the "consumer" stage.  Any variables that have
     * matching outputs already in the symbol table must have the same type and
     * qualifiers.
+    *
+    * Exception: if the consumer is the geometry shader, then the inputs
+    * should be arrays and the type of the array element should match the type
+    * of the corresponding producer output.
     */
    foreach_list(node, consumer->ir) {
       ir_variable *const input = ((ir_instruction *) node)->as_variable();
@@ -79,7 +83,12 @@ cross_validate_outputs_to_inputs(struct gl_shader_program *prog,
       if (output != NULL) {
 	 /* Check that the types match between stages.
 	  */
-	 if (input->type != output->type) {
+         const glsl_type *type_to_match = input->type;
+         if (consumer->Type == GL_GEOMETRY_SHADER) {
+            assert(type_to_match->is_array()); /* Enforced by ast_to_hir */
+            type_to_match = type_to_match->element_type();
+         }
+	 if (type_to_match != output->type) {
 	    /* There is a bit of a special case for gl_TexCoord.  This
 	     * built-in is unsized by default.  Applications that variable
 	     * access it must redeclare it with a size.  There is some
