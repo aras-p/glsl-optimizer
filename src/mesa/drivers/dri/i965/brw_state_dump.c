@@ -184,8 +184,8 @@ static void dump_surface_state(struct brw_context *brw, uint32_t offset)
 	     get_965_surface_format(GET_FIELD(surf[0], BRW_SURFACE_FORMAT)));
    batch_out(brw, name, offset, 1, "offset\n");
    batch_out(brw, name, offset, 2, "%dx%d size, %d mips\n",
-	     GET_FIELD(surf[2], GEN7_SURFACE_WIDTH) + 1,
-	     GET_FIELD(surf[2], GEN7_SURFACE_HEIGHT) + 1,
+	     GET_FIELD(surf[2], BRW_SURFACE_WIDTH) + 1,
+	     GET_FIELD(surf[2], BRW_SURFACE_HEIGHT) + 1,
 	     GET_FIELD(surf[2], BRW_SURFACE_LOD));
    batch_out(brw, name, offset, 3, "pitch %d, %s tiled\n",
 	     GET_FIELD(surf[3], BRW_SURFACE_PITCH) + 1,
@@ -208,8 +208,8 @@ static void dump_gen7_surface_state(struct brw_context *brw, uint32_t offset)
              get_965_surface_format(GET_FIELD(surf[0], BRW_SURFACE_FORMAT)));
    batch_out(brw, name, offset, 1, "offset\n");
    batch_out(brw, name, offset, 2, "%dx%d size, %d mips\n",
-             GET_FIELD(surf[2], BRW_SURFACE_WIDTH) + 1,
-             GET_FIELD(surf[2], BRW_SURFACE_HEIGHT) + 1,
+             GET_FIELD(surf[2], GEN7_SURFACE_WIDTH) + 1,
+             GET_FIELD(surf[2], GEN7_SURFACE_HEIGHT) + 1,
              surf[5] & INTEL_MASK(3, 0));
    batch_out(brw, name, offset, 3, "pitch %d, %stiled\n",
 	     (surf[3] & INTEL_MASK(17, 0)) + 1,
