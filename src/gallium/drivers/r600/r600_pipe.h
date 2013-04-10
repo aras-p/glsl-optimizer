@@ -623,6 +623,7 @@ struct r600_context {
 	/* Queries. */
 	/* The list of active queries. Only one query of each type can be active. */
 	int				num_occlusion_queries;
+	int				num_pipelinestat_queries;
 	/* Keep track of non-timer queries, because they should be suspended
 	 * during context flushing.
 	 * The timer queries (TIME_ELAPSED) shouldn't be suspended. */
