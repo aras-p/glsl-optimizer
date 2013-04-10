@@ -269,9 +269,11 @@ gen7_update_buffer_texture_surface(struct gl_context *ctx,
 
       int texel_size = _mesa_get_format_bytes(format);
       int w = intel_obj->Base.Size / texel_size;
+
+      /* note that these differ from GEN6 */
       surf[2] = SET_FIELD(w & 0x7f, GEN7_SURFACE_WIDTH) | /* bits 6:0 of size */
-                SET_FIELD((w >> 7) & 0x1fff, GEN7_SURFACE_HEIGHT); /* 19:7 */
-      surf[3] = SET_FIELD((w >> 20) & 0x7f, BRW_SURFACE_DEPTH) | /* bits 26:20 */
+                SET_FIELD((w >> 7) & 0x3fff, GEN7_SURFACE_HEIGHT); /* 20:7 */
+      surf[3] = SET_FIELD((w >> 21) & 0x3f, BRW_SURFACE_DEPTH) | /* bits 26:21 */
                 (texel_size - 1);
    }
 
@@ -403,9 +405,10 @@ gen7_create_constant_surface(struct brw_context *brw,
    assert(bo);
    surf[1] = bo->offset + offset; /* reloc */
 
+   /* note that these differ from GEN6 */
    surf[2] = SET_FIELD(w & 0x7f, GEN7_SURFACE_WIDTH) |
-             SET_FIELD((w >> 7) & 0x1fff, GEN7_SURFACE_HEIGHT);
-   surf[3] = SET_FIELD((w >> 20) & 0x7f, BRW_SURFACE_DEPTH) |
+             SET_FIELD((w >> 7) & 0x3fff, GEN7_SURFACE_HEIGHT);
+   surf[3] = SET_FIELD((w >> 21) & 0x3f, BRW_SURFACE_DEPTH) |
              (stride - 1);
 
    if (intel->is_haswell) {
@@ -446,9 +449,10 @@ gen7_create_shader_time_surface(struct brw_context *brw, uint32_t *out_offset)
 
    surf[1] = brw->shader_time.bo->offset; /* reloc */
 
+   /* note that these differ from GEN6 */
    surf[2] = SET_FIELD(w & 0x7f, GEN7_SURFACE_WIDTH) |
-             SET_FIELD((w >> 7) & 0x1fff, GEN7_SURFACE_HEIGHT);
-   surf[3] = SET_FIELD((w >> 20) & 0x7f, BRW_SURFACE_DEPTH);
+             SET_FIELD((w >> 7) & 0x3fff, GEN7_SURFACE_HEIGHT);
+   surf[3] = SET_FIELD((w >> 21) & 0x3f, BRW_SURFACE_DEPTH);
 
    /* Unlike texture or renderbuffer surfaces, we only do untyped operations
     * on the shader_time surface, so there's no need to set HSW channel
