@@ -162,7 +162,7 @@ public:
                                  unsigned locations_used,
                                  ir_variable_mode mode,
                                  unsigned gs_input_vertices,
-                                 exec_list *main_instructions);
+                                 exec_list *out_instructions);
 
    void run(exec_list *instructions);
 
@@ -223,16 +223,17 @@ private:
    const unsigned gs_input_vertices;
 
    /**
-    * List of instructions corresponding to the main() function.  This is
-    * where we add instructions to pack or unpack the varyings.
+    * Exec list into which the visitor should insert the packing instructions.
+    * Caller provides this list; it should insert the instructions into the
+    * appropriate place in the shader once the visitor has finished running.
     */
-   exec_list *main_instructions;
+   exec_list *out_instructions;
 };
 
 lower_packed_varyings_visitor::lower_packed_varyings_visitor(
       void *mem_ctx, unsigned location_base, unsigned locations_used,
       ir_variable_mode mode, unsigned gs_input_vertices,
-      exec_list *main_instructions)
+      exec_list *out_instructions)
    : mem_ctx(mem_ctx),
      location_base(location_base),
      locations_used(locations_used),
@@ -241,7 +242,7 @@ lower_packed_varyings_visitor::lower_packed_varyings_visitor(
                                         locations_used)),
      mode(mode),
      gs_input_vertices(gs_input_vertices),
-     main_instructions(main_instructions)
+     out_instructions(out_instructions)
 {
 }
 
@@ -461,11 +462,11 @@ lower_packed_varyings_visitor::lower_rvalue(ir_rvalue *rvalue,
       if (this->mode == ir_var_shader_out) {
          ir_assignment *assignment
             = this->bitwise_assign_pack(swizzle, rvalue);
-         this->main_instructions->push_tail(assignment);
+         this->out_instructions->push_tail(assignment);
       } else {
          ir_assignment *assignment
             = this->bitwise_assign_unpack(rvalue, swizzle);
-         this->main_instructions->push_head(assignment);
+         this->out_instructions->push_tail(assignment);
       }
       return fine_location + components;
    }
@@ -613,9 +614,16 @@ lower_packed_varyings(void *mem_ctx, unsigned location_base,
    exec_list void_parameters;
    ir_function_signature *main_func_sig
       = main_func->matching_signature(&void_parameters);
-   exec_list *main_instructions = &main_func_sig->body;
+   exec_list new_instructions;
    lower_packed_varyings_visitor visitor(mem_ctx, location_base,
                                          locations_used, mode,
-                                         gs_input_vertices, main_instructions);
+                                         gs_input_vertices, &new_instructions);
    visitor.run(instructions);
+   if (mode == ir_var_shader_out) {
+      /* Shader outputs need to be lowered at the end of main() */
+      main_func_sig->body.append_list(&new_instructions);
+   } else {
+      /* Shader inputs need to be lowered at the beginning of main() */
+      main_func_sig->body.head->insert_before(&new_instructions);
+   }
 }
