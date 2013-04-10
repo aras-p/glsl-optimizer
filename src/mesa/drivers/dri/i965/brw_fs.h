@@ -276,6 +276,13 @@ public:
                 uint32_t condition);
    fs_inst *LRP(fs_reg dst, fs_reg a, fs_reg y, fs_reg x);
    fs_inst *DEP_RESOLVE_MOV(int grf);
+   fs_inst *BFREV(fs_reg dst, fs_reg value);
+   fs_inst *BFE(fs_reg dst, fs_reg bits, fs_reg offset, fs_reg value);
+   fs_inst *BFI1(fs_reg dst, fs_reg bits, fs_reg offset);
+   fs_inst *BFI2(fs_reg dst, fs_reg bfi1_dst, fs_reg insert, fs_reg base);
+   fs_inst *FBH(fs_reg dst, fs_reg value);
+   fs_inst *FBL(fs_reg dst, fs_reg value);
+   fs_inst *CBIT(fs_reg dst, fs_reg value);
 
    int type_size(const struct glsl_type *type);
    fs_inst *get_instruction_generating_reg(fs_inst *start,
