@@ -30,7 +30,6 @@
 
 
 #include "main/compiler.h"
-#include "main/mfeatures.h"
 
 struct dd_function_table;
 struct gl_transform_feedback_object;

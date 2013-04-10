@@ -35,7 +35,6 @@
 #include "main/bufferobj.h"
 #include "main/format_pack.h"
 #include "main/macros.h"
-#include "main/mfeatures.h"
 #include "main/mtypes.h"
 #include "main/pack.h"
 #include "main/pbo.h"

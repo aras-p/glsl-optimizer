@@ -36,7 +36,6 @@
 
 #include "main/bufferobj.h"
 #include "main/context.h"
-#include "main/mfeatures.h"
 #include "main/transformfeedback.h"
 
 #include "st_cb_bufferobjects.h"

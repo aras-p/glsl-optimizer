@@ -25,7 +25,6 @@
  * 
  **************************************************************************/
 
-#include "main/mfeatures.h"
 #include "main/bufferobj.h"
 #include "main/enums.h"
 #include "main/fbobject.h"

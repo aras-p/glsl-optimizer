@@ -29,7 +29,6 @@
 #include "main/imports.h"
 #include "main/context.h"
 #include "main/macros.h"
-#include "main/mfeatures.h"
 #include "main/version.h"
 
 #include "pipe/p_context.h"
