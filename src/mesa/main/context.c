@@ -1181,6 +1181,7 @@ _mesa_free_context_data( struct gl_context *ctx )
    _mesa_reference_buffer_object(ctx, &ctx->Array.ArrayBufferObj, NULL);
 
    /* free dispatch tables */
+   free(ctx->BeginEnd);
    free(ctx->Exec);
    free(ctx->Save);
 
