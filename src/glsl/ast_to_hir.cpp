@@ -2816,7 +2816,20 @@ ast_declarator_list::hir(exec_list *instructions,
                                       "cannot have array type")) {
 	       error_emitted = true;
 	    }
-	 }
+	 } else if (state->target == geometry_shader) {
+            /* From section 4.3.4 (Inputs) of the GLSL 1.50 spec:
+             *
+             *     Geometry shader input variables get the per-vertex values
+             *     written out by vertex shader output variables of the same
+             *     names. Since a geometry shader operates on a set of
+             *     vertices, each input varying variable (or input block, see
+             *     interface blocks below) needs to be declared as an array.
+             */
+            if (!var->type->is_array()) {
+               _mesa_glsl_error(&loc, state,
+                                "geometry shader inputs must be arrays");
+            }
+         }
       }
 
       /* Integer fragment inputs must be qualified with 'flat'.  In GLSL ES,
