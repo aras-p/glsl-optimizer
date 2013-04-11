@@ -4504,7 +4504,7 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 	 * Then fetch the texel with src.
 	 */
 	if (read_compressed_msaa) {
-		unsigned sample_chan = inst->Texture.Texture == TGSI_TEXTURE_2D_MSAA ? 3 : 4;
+		unsigned sample_chan = 3;
 		unsigned temp = r600_get_temp(ctx);
 		assert(src_loaded);
 
@@ -4535,7 +4535,7 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 		if (ctx->bc->chip_class == CAYMAN) {
 			for (i = 0 ; i < 4; i++) {
 				memset(&alu, 0, sizeof(struct r600_bytecode_alu));
-				alu.op = ctx->inst_info->op;
+				alu.op = ALU_OP2_MULLO_INT;
 				alu.src[0].sel = src_gpr;
 				alu.src[0].chan = sample_chan;
 				alu.src[1].sel = V_SQ_ALU_SRC_LITERAL;
