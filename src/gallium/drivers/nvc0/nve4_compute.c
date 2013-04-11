@@ -583,6 +583,7 @@ nve4_compute_validate_textures(struct nvc0_context *nvc0)
 }
 
 
+#ifdef DEBUG
 static const char *nve4_cache_split_name(unsigned value)
 {
    switch (value) {
@@ -594,7 +595,6 @@ static const char *nve4_cache_split_name(unsigned value)
    }
 }
 
-#ifdef DEBUG
 static void
 nve4_compute_dump_launch_desc(const struct nve4_cp_launch_desc *desc)
 {
