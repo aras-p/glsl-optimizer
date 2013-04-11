@@ -599,8 +599,6 @@ brw_emit_depthbuffer(struct brw_context *brw)
    }
 
    if (depth_irb) {
-      struct intel_region *region = depth_mt->region;
-
       /* When 3DSTATE_DEPTH_BUFFER.Separate_Stencil_Enable is set, then
        * 3DSTATE_DEPTH_BUFFER.Surface_Format is not permitted to be a packed
        * depthstencil format.
@@ -616,8 +614,8 @@ brw_emit_depthbuffer(struct brw_context *brw)
       /* Prior to Gen7, if using separate stencil, hiz must be enabled. */
       assert(intel->gen >= 7 || !separate_stencil || hiz);
 
-      assert(intel->gen < 6 || region->tiling == I915_TILING_Y);
-      assert(!hiz || region->tiling == I915_TILING_Y);
+      assert(intel->gen < 6 || depth_mt->region->tiling == I915_TILING_Y);
+      assert(!hiz || depth_mt->region->tiling == I915_TILING_Y);
 
       depthbuffer_format = brw_depthbuffer_format(brw);
       depth_surface_type = BRW_SURFACE_2D;
