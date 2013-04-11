@@ -75,6 +75,7 @@ txs_type(const glsl_type *type)
       break;
    default:
       assert(!"Should not get here: invalid sampler dimensionality");
+      dims = 2;
    }
 
    if (type->sampler_array)
