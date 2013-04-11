@@ -61,18 +61,24 @@ clCreateContextFromType(const cl_context_properties *d_props,
                         void *user_data, cl_int *r_errcode) try {
    cl_platform_id d_platform;
    cl_uint num_platforms;
-   cl_device_id d_dev;
    cl_int ret;
+   std::vector<cl_device_id> devs;
+   cl_uint num_devices;
 
    ret = clGetPlatformIDs(1, &d_platform, &num_platforms);
    if (ret || !num_platforms)
       throw error(CL_INVALID_PLATFORM);
 
-   ret = clGetDeviceIDs(d_platform, type, 1, &d_dev, 0);
+   ret = clGetDeviceIDs(d_platform, type, 0, NULL, &num_devices);
+   if (ret)
+      throw error(CL_DEVICE_NOT_FOUND);
+   devs.resize(num_devices);
+   ret = clGetDeviceIDs(d_platform, type, num_devices, devs.data(), 0);
    if (ret)
       throw error(CL_DEVICE_NOT_FOUND);
 
-   return clCreateContext(d_props, 1, &d_dev, pfn_notify, user_data, r_errcode);
+   return clCreateContext(d_props, num_devices, devs.data(), pfn_notify,
+                          user_data, r_errcode);
 
 } catch (error &e) {
    ret_error(r_errcode, e);
