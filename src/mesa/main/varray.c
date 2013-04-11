@@ -1351,9 +1351,10 @@ void GLAPIENTRY
 _mesa_BindVertexBuffer(GLuint bindingIndex, GLuint buffer, GLintptr offset,
                        GLsizei stride)
 {
+   GET_CURRENT_CONTEXT(ctx);
+   const struct gl_array_object *arrayObj = ctx->Array.ArrayObj;
    struct gl_buffer_object *vbo;
 
-   GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    /* The ARB_vertex_attrib_binding spec says:
@@ -1398,7 +1399,9 @@ _mesa_BindVertexBuffer(GLuint bindingIndex, GLuint buffer, GLintptr offset,
       return;
    }
 
-   if (buffer != 0) {
+   if (buffer == arrayObj->VertexBinding[VERT_ATTRIB_GENERIC(bindingIndex)].BufferObj->Name) {
+      vbo = arrayObj->VertexBinding[VERT_ATTRIB_GENERIC(bindingIndex)].BufferObj;
+   } else if (buffer != 0) {
       vbo = _mesa_lookup_bufferobj(ctx, buffer);
 
       /* From the GL_ARB_vertex_attrib_array spec:
