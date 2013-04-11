@@ -51,7 +51,7 @@ nve4_screen_compute_setup(struct nvc0_screen *screen,
       break;
    default:
       NOUVEAU_ERR("unsupported chipset: NV%02x\n", dev->chipset);
-      break;
+      return -1;
    }
 
    ret = nouveau_object_new(chan, 0xbeef00c0, obj_class, NULL, 0,
