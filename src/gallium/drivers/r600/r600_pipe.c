@@ -333,9 +333,6 @@ static void r600_destroy_context(struct pipe_context *context)
 	if (rctx->custom_blend_decompress) {
 		rctx->context.delete_blend_state(&rctx->context, rctx->custom_blend_decompress);
 	}
-	if (rctx->custom_blend_fmask_decompress) {
-		rctx->context.delete_blend_state(&rctx->context, rctx->custom_blend_fmask_decompress);
-	}
 	util_unreference_framebuffer_state(&rctx->framebuffer.state);
 
 	if (rctx->blitter) {
@@ -430,7 +427,6 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 		rctx->custom_dsa_flush = evergreen_create_db_flush_dsa(rctx);
 		rctx->custom_blend_resolve = evergreen_create_resolve_blend(rctx);
 		rctx->custom_blend_decompress = evergreen_create_decompress_blend(rctx);
-		rctx->custom_blend_fmask_decompress = evergreen_create_fmask_decompress_blend(rctx);
 		rctx->has_vertex_cache = !(rctx->family == CHIP_CEDAR ||
 					   rctx->family == CHIP_PALM ||
 					   rctx->family == CHIP_SUMO ||
@@ -591,7 +587,9 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_TEXTURE_BUFFER_OBJECTS:
         case PIPE_CAP_PREFER_BLIT_BASED_TEXTURE_TRANSFER:
 	case PIPE_CAP_QUERY_PIPELINE_STATISTICS:
+	case PIPE_CAP_TEXTURE_MULTISAMPLE:
 		return 1;
+
 	case PIPE_CAP_TGSI_TEXCOORD:
 		return 0;
 
@@ -609,9 +607,6 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 
 	case PIPE_CAP_GLSL_FEATURE_LEVEL:
 		return 140;
-
-	case PIPE_CAP_TEXTURE_MULTISAMPLE:
-		return rscreen->msaa_texture_support != MSAA_TEXTURE_SAMPLE_ZERO;
 
 	/* Supported except the original R600. */
 	case PIPE_CAP_INDEP_BLEND_ENABLE:
@@ -1261,22 +1256,19 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 	case R600:
 	case R700:
 		rscreen->has_msaa = rscreen->info.drm_minor >= 22;
-		rscreen->msaa_texture_support = MSAA_TEXTURE_DECOMPRESSED;
+		rscreen->has_compressed_msaa_texturing = false;
 		break;
 	case EVERGREEN:
 		rscreen->has_msaa = rscreen->info.drm_minor >= 19;
-		rscreen->msaa_texture_support =
-			rscreen->info.drm_minor >= 24 ? MSAA_TEXTURE_COMPRESSED :
-							MSAA_TEXTURE_DECOMPRESSED;
+		rscreen->has_compressed_msaa_texturing = rscreen->info.drm_minor >= 24;
 		break;
 	case CAYMAN:
 		rscreen->has_msaa = rscreen->info.drm_minor >= 19;
-		rscreen->msaa_texture_support = MSAA_TEXTURE_COMPRESSED;
+		rscreen->has_compressed_msaa_texturing = true;
 		break;
 	default:
 		rscreen->has_msaa = FALSE;
-		rscreen->msaa_texture_support = 0;
-		break;
+		rscreen->has_compressed_msaa_texturing = false;
 	}
 
 	rscreen->has_cp_dma = rscreen->info.drm_minor >= 27 &&

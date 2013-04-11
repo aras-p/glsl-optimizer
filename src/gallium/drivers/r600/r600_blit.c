@@ -290,24 +290,9 @@ static void r600_blit_decompress_color(struct pipe_context *ctx,
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	unsigned layer, level, checked_last_layer, max_layer;
-	void *blend_decompress;
 
 	if (!rtex->dirty_level_mask)
 		return;
-
-	switch (rctx->screen->msaa_texture_support) {
-	case MSAA_TEXTURE_DECOMPRESSED:
-		blend_decompress = rctx->custom_blend_decompress;
-		break;
-	case MSAA_TEXTURE_COMPRESSED:
-		blend_decompress = rctx->custom_blend_fmask_decompress;
-		break;
-	case MSAA_TEXTURE_SAMPLE_ZERO:
-	default:
-		/* Nothing to do. */
-		rtex->dirty_level_mask = 0;
-		return;
-	}
 
 	for (level = first_level; level <= last_level; level++) {
 		if (!(rtex->dirty_level_mask & (1 << level)))
@@ -328,7 +313,7 @@ static void r600_blit_decompress_color(struct pipe_context *ctx,
 			cbsurf = ctx->create_surface(ctx, &rtex->resource.b.b, &surf_tmpl);
 
 			r600_blitter_begin(ctx, R600_DECOMPRESS);
-			util_blitter_custom_color(rctx->blitter, cbsurf, blend_decompress);
+			util_blitter_custom_color(rctx->blitter, cbsurf, rctx->custom_blend_decompress);
 			r600_blitter_end(ctx);
 
 			pipe_surface_reference(&cbsurf, NULL);
@@ -578,7 +563,6 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 	struct pipe_sampler_view src_templ, *src_view;
 	unsigned dst_width, dst_height, src_width0, src_height0, src_widthFL, src_heightFL;
 	struct pipe_box sbox, dstbox;
-	bool copy_all_samples;
 
 	/* Handle buffers first. */
 	if (dst->target == PIPE_BUFFER && src->target == PIPE_BUFFER) {
@@ -690,8 +674,6 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 							   src_widthFL, src_heightFL);
 	}
 
-	copy_all_samples = rctx->screen->msaa_texture_support != MSAA_TEXTURE_SAMPLE_ZERO;
-
         u_box_3d(dstx, dsty, dstz, abs(src_box->width), abs(src_box->height),
                  abs(src_box->depth), &dstbox);
 
@@ -700,7 +682,7 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 	util_blitter_blit_generic(rctx->blitter, dst_view, &dstbox,
 				  src_view, src_box, src_width0, src_height0,
 				  PIPE_MASK_RGBAZS, PIPE_TEX_FILTER_NEAREST, NULL,
-				  copy_all_samples);
+				  TRUE);
 	r600_blitter_end(ctx);
 
 	pipe_surface_reference(&dst_view, NULL);

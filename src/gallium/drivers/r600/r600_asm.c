@@ -126,7 +126,7 @@ static unsigned stack_entry_size(enum radeon_family chip) {
 void r600_bytecode_init(struct r600_bytecode *bc,
 			enum chip_class chip_class,
 			enum radeon_family family,
-			enum r600_msaa_texture_mode msaa_texture_mode)
+			bool has_compressed_msaa_texturing)
 {
 	static unsigned next_shader_id = 0;
 
@@ -143,7 +143,7 @@ void r600_bytecode_init(struct r600_bytecode *bc,
 
 	LIST_INITHEAD(&bc->cf);
 	bc->chip_class = chip_class;
-	bc->msaa_texture_mode = msaa_texture_mode;
+	bc->has_compressed_msaa_texturing = has_compressed_msaa_texturing;
 	bc->stack.entry_size = stack_entry_size(family);
 }
 
@@ -2287,7 +2287,7 @@ void *r600_create_vertex_fetch_shader(struct pipe_context *ctx,
 
 	memset(&bc, 0, sizeof(bc));
 	r600_bytecode_init(&bc, rctx->chip_class, rctx->family,
-			   rctx->screen->msaa_texture_support);
+			   rctx->screen->has_compressed_msaa_texturing);
 
 	bc.isa = rctx->isa;
 

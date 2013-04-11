@@ -962,7 +962,7 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 	ctx.native_integers = true;
 
 	r600_bytecode_init(ctx.bc, rscreen->chip_class, rscreen->family,
-			   rscreen->msaa_texture_support);
+			   rscreen->has_compressed_msaa_texturing);
 	ctx.tokens = tokens;
 	tgsi_scan_shader(tokens, &ctx.info);
 	shader->indirect_files = ctx.info.indirect_files;
@@ -3794,10 +3794,11 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 	unsigned src_gpr;
 	int r, i, j;
 	int opcode;
-	bool read_compressed_msaa = ctx->bc->msaa_texture_mode == MSAA_TEXTURE_COMPRESSED &&
+	bool read_compressed_msaa = ctx->bc->has_compressed_msaa_texturing &&
 				    inst->Instruction.Opcode == TGSI_OPCODE_TXF &&
 				    (inst->Texture.Texture == TGSI_TEXTURE_2D_MSAA ||
 				     inst->Texture.Texture == TGSI_TEXTURE_2D_ARRAY_MSAA);
+
 	/* Texture fetch instructions can only use gprs as source.
 	 * Also they cannot negate the source or take the absolute value */
 	const boolean src_requires_loading = (inst->Instruction.Opcode != TGSI_OPCODE_TXQ_LZ &&

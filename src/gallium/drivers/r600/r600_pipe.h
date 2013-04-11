@@ -216,22 +216,6 @@ struct r600_pipe_fences {
 	pipe_mutex			mutex;
 };
 
-enum r600_msaa_texture_mode {
-	/* If the hw can fetch the first sample only (no decompression available).
-	 * This means MSAA texturing is not fully implemented. */
-	MSAA_TEXTURE_SAMPLE_ZERO,
-
-	/* If the hw can fetch decompressed MSAA textures.
-	 * Supported families: R600, R700, Evergreen.
-	 * Cayman cannot use this, because it cannot do the decompression. */
-	MSAA_TEXTURE_DECOMPRESSED,
-
-	/* If the hw can fetch compressed MSAA textures, which means shaders can
-	 * read resolved FMASK. This yields the best performance.
-	 * Supported families: Evergreen, Cayman. */
-	MSAA_TEXTURE_COMPRESSED
-};
-
 typedef boolean (*r600g_dma_blit_t)(struct pipe_context *ctx,
 				struct pipe_resource *dst,
 				unsigned dst_level,
@@ -282,7 +266,7 @@ struct r600_screen {
 	bool				has_streamout;
 	bool				has_msaa;
 	bool				has_cp_dma;
-	enum r600_msaa_texture_mode	msaa_texture_support;
+	bool				has_compressed_msaa_texturing;
 	struct r600_tiling_info		tiling_info;
 	struct r600_pipe_fences		fences;
 
@@ -561,7 +545,6 @@ struct r600_context {
 	void				*custom_dsa_flush;
 	void				*custom_blend_resolve;
 	void				*custom_blend_decompress;
-	void				*custom_blend_fmask_decompress;
 	/* With rasterizer discard, there doesn't have to be a pixel shader.
 	 * In that case, we bind this one: */
 	void				*dummy_pixel_shader;
@@ -713,7 +696,6 @@ void evergreen_update_vs_state(struct pipe_context *ctx, struct r600_pipe_shader
 void *evergreen_create_db_flush_dsa(struct r600_context *rctx);
 void *evergreen_create_resolve_blend(struct r600_context *rctx);
 void *evergreen_create_decompress_blend(struct r600_context *rctx);
-void *evergreen_create_fmask_decompress_blend(struct r600_context *rctx);
 boolean evergreen_is_format_supported(struct pipe_screen *screen,
 				      enum pipe_format format,
 				      enum pipe_texture_target target,
