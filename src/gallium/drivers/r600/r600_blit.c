@@ -300,11 +300,7 @@ static void r600_blit_decompress_color(struct pipe_context *ctx,
 		blend_decompress = rctx->custom_blend_decompress;
 		break;
 	case MSAA_TEXTURE_COMPRESSED:
-		/* XXX the 2x and 4x cases are broken. */
-		if (rtex->resource.b.b.nr_samples == 8)
-			blend_decompress = rctx->custom_blend_fmask_decompress;
-		else
-			blend_decompress = rctx->custom_blend_decompress;
+		blend_decompress = rctx->custom_blend_fmask_decompress;
 		break;
 	case MSAA_TEXTURE_SAMPLE_ZERO:
 	default:

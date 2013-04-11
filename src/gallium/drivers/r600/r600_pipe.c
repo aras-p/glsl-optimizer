@@ -1271,8 +1271,7 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 		break;
 	case CAYMAN:
 		rscreen->has_msaa = rscreen->info.drm_minor >= 19;
-		/* We should be able to read compressed MSAA textures, but it doesn't work. */
-		rscreen->msaa_texture_support = MSAA_TEXTURE_SAMPLE_ZERO;
+		rscreen->msaa_texture_support = MSAA_TEXTURE_COMPRESSED;
 		break;
 	default:
 		rscreen->has_msaa = FALSE;

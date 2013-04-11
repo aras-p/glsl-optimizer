@@ -84,7 +84,9 @@ struct r600_texture {
 	/* FMASK and CMASK can only be used with MSAA textures for now.
 	 * MSAA textures cannot have mipmaps. */
 	unsigned			fmask_offset, fmask_size, fmask_bank_height;
-	unsigned			cmask_offset, cmask_size, cmask_slice_tile_max;
+	unsigned			fmask_slice_tile_max;
+	unsigned			cmask_offset, cmask_size;
+	unsigned			cmask_slice_tile_max;
 
 	struct r600_resource		*htile;
 	/* use htile only for first level */
@@ -97,6 +99,7 @@ struct r600_fmask_info {
 	unsigned size;
 	unsigned alignment;
 	unsigned bank_height;
+	unsigned slice_tile_max;
 };
 
 struct r600_cmask_info {

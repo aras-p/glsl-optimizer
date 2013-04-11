@@ -1404,7 +1404,7 @@ static void r600_init_color_surface(struct r600_context *rctx,
 		if (rtex->fmask_size) {
 			color_info |= S_0280A0_TILE_MODE(V_0280A0_FRAG_ENABLE);
 			surf->cb_color_fmask = rtex->fmask_offset >> 8;
-			surf->cb_color_mask |= S_028100_FMASK_TILE_MAX(slice);
+			surf->cb_color_mask |= S_028100_FMASK_TILE_MAX(rtex->fmask_slice_tile_max);
 		} else { /* cmask only */
 			color_info |= S_0280A0_TILE_MODE(V_0280A0_CLEAR_ENABLE);
 		}
@@ -1455,7 +1455,7 @@ static void r600_init_color_surface(struct r600_context *rctx,
 		surf->cb_color_cmask = 0;
 		surf->cb_color_fmask = 0;
 		surf->cb_color_mask = S_028100_CMASK_BLOCK_MAX(cmask.slice_tile_max) |
-				      S_028100_FMASK_TILE_MAX(slice);
+				      S_028100_FMASK_TILE_MAX(fmask.slice_tile_max);
 	}
 
 	surf->cb_color_info = color_info;

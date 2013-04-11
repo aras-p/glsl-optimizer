@@ -284,50 +284,51 @@ void r600_texture_get_fmask_info(struct r600_screen *rscreen,
 				 unsigned nr_samples,
 				 struct r600_fmask_info *out)
 {
-	/* FMASK is allocated pretty much like an ordinary texture.
-	 * Here we use bpe in the units of bits, not bytes. */
+	/* FMASK is allocated like an ordinary texture. */
 	struct radeon_surface fmask = rtex->surface;
+
+	memset(out, 0, sizeof(*out));
+
+	fmask.bo_alignment = 0;
+	fmask.bo_size = 0;
+	fmask.nsamples = 1;
+	fmask.flags |= RADEON_SURF_FMASK;
 
 	switch (nr_samples) {
 	case 2:
-		/* This should be 8,1, but we should set nsamples > 1
-		 * for the allocator to treat it as a multisample surface.
-		 * Let's set 4,2 then. */
 	case 4:
-		fmask.bpe = 4;
-		fmask.nsamples = 2;
+		fmask.bpe = 1;
+		fmask.bankh = 4;
 		break;
 	case 8:
-		fmask.bpe = 8;
-		fmask.nsamples = 4;
-		break;
-	case 16:
-		fmask.bpe = 16;
-		fmask.nsamples = 4;
+		fmask.bpe = 4;
 		break;
 	default:
 		R600_ERR("Invalid sample count for FMASK allocation.\n");
 		return;
 	}
 
-	/* R600-R700 errata? Anyway, this fixes colorbuffer corruption. */
+	/* Overallocate FMASK on R600-R700 to fix colorbuffer corruption.
+	 * This can be fixed by writing a separate FMASK allocator specifically
+	 * for R600-R700 asics. */
 	if (rscreen->chip_class <= R700) {
 		fmask.bpe *= 2;
-	}
-
-	if (rscreen->chip_class >= EVERGREEN) {
-		fmask.bankh = nr_samples <= 4 ? 4 : 1;
 	}
 
 	if (rscreen->ws->surface_init(rscreen->ws, &fmask)) {
 		R600_ERR("Got error in surface_init while allocating FMASK.\n");
 		return;
 	}
+
 	assert(fmask.level[0].mode == RADEON_SURF_MODE_2D);
+
+	out->slice_tile_max = (fmask.level[0].nblk_x * fmask.level[0].nblk_y) / 64;
+	if (out->slice_tile_max)
+		out->slice_tile_max -= 1;
 
 	out->bank_height = fmask.bankh;
 	out->alignment = MAX2(256, fmask.bo_alignment);
-	out->size = (fmask.bo_size + 7) / 8;
+	out->size = fmask.bo_size;
 }
 
 static void r600_texture_allocate_fmask(struct r600_screen *rscreen,
@@ -339,6 +340,7 @@ static void r600_texture_allocate_fmask(struct r600_screen *rscreen,
 				    rtex->resource.b.b.nr_samples, &fmask);
 
 	rtex->fmask_bank_height = fmask.bank_height;
+	rtex->fmask_slice_tile_max = fmask.slice_tile_max;
 	rtex->fmask_offset = align(rtex->size, fmask.alignment);
 	rtex->fmask_size = fmask.size;
 	rtex->size = rtex->fmask_offset + rtex->fmask_size;
