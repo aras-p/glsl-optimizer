@@ -2841,7 +2841,6 @@ fs_visitor::get_instruction_generating_reg(fs_inst *start,
 void
 fs_visitor::setup_payload_gen6()
 {
-   struct intel_context *intel = &brw->intel;
    bool uses_depth =
       (fp->Base.InputsRead & (1 << VARYING_SLOT_POS)) != 0;
    unsigned barycentric_interp_modes = c->prog_data.barycentric_interp_modes;
