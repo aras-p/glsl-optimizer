@@ -892,6 +892,7 @@ fs_visitor::setup_uniform_values(ir_variable *ir)
    /* Make sure we actually initialized the right amount of stuff here. */
    assert(params_before + ir->type->component_slots() ==
           c->prog_data.nr_params);
+   (void)params_before;
 }
 
 
