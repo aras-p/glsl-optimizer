@@ -1,0 +1,13 @@
+struct shadow_map_t {
+  mat4 transform;
+};
+attribute vec3 _in_position;
+uniform shadow_map_t ShadowMaps[1];
+void main ()
+{
+  vec4 tmpvar_1;
+  tmpvar_1.w = 1.0;
+  tmpvar_1.xyz = _in_position;
+  gl_Position = (ShadowMaps[0].transform * tmpvar_1);
+}
+
