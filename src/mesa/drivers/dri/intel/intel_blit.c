@@ -480,6 +480,7 @@ intel_emit_linear_blit(struct intel_context *intel,
 		       unsigned int src_offset,
 		       unsigned int size)
 {
+   struct gl_context *ctx = &intel->ctx;
    GLuint pitch, height;
    bool ok;
 
@@ -496,7 +497,8 @@ intel_emit_linear_blit(struct intel_context *intel,
 			  0, 0, /* dst x/y */
 			  pitch, height, /* w, h */
 			  GL_COPY);
-   assert(ok);
+   if (!ok)
+      _mesa_problem(ctx, "Failed to linear blit %dx%d\n", pitch, height);
 
    src_offset += pitch * height;
    dst_offset += pitch * height;
@@ -511,7 +513,8 @@ intel_emit_linear_blit(struct intel_context *intel,
 			     0, 0, /* dst x/y */
 			     size, 1, /* w, h */
 			     GL_COPY);
-      assert(ok);
+      if (!ok)
+         _mesa_problem(ctx, "Failed to linear blit %dx%d\n", size, 1);
    }
 }
 
