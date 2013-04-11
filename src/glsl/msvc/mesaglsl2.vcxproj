@@ -1,0 +1,341 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{B475A403-9D9B-410D-8A93-BA49FC4DD811}</ProjectGuid>
+    <RootNamespace>mesaglsl2</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">build/$(ProjectName)\$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">build/$(ProjectName)\$(Configuration)\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">build/$(ProjectName)/$(Platform)/$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">build/$(ProjectName)/$(Platform)/$(Configuration)\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">build/$(Platform)\$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">build/$(Platform)\$(Configuration)\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">build/$(ProjectName)/$(Platform)/$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">build/$(ProjectName)/$(Platform)/$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>../../talloc;../../../include;../../mesa;../../mapi;../../../include/c99;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;__STDC_VERSION__=199901L;__STDC__;strdup=_strdup;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>false</MinimalRebuild>
+      <ExceptionHandling>
+      </ExceptionHandling>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <DisableSpecificWarnings>4996;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <ForcedIncludeFiles>%(ForcedIncludeFiles)</ForcedIncludeFiles>
+    </ClCompile>
+    <Lib>
+      <OutputFile>$(OutDir)$(ProjectName)-win32.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>../../talloc;../../../include;../../mesa;../../mapi;../../../include/c99;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;__STDC_VERSION__=199901L;__STDC__;strdup=_strdup;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>false</MinimalRebuild>
+      <ExceptionHandling>
+      </ExceptionHandling>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <DisableSpecificWarnings>4996;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <ForcedIncludeFiles>%(ForcedIncludeFiles)</ForcedIncludeFiles>
+    </ClCompile>
+    <Lib>
+      <OutputFile>$(OutDir)$(ProjectName)-x64.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <AdditionalIncludeDirectories>../../talloc;../../../include;../../mesa;../../mapi;../../../include/c99;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;__STDC_VERSION__=199901L;__STDC__;strdup=_strdup;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ExceptionHandling>
+      </ExceptionHandling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>OldStyle</DebugInformationFormat>
+      <DisableSpecificWarnings>4996;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <ForcedIncludeFiles>%(ForcedIncludeFiles)</ForcedIncludeFiles>
+    </ClCompile>
+    <Lib>
+      <OutputFile>$(OutDir)$(ProjectName)-win32.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <AdditionalIncludeDirectories>../../talloc;../../../include;../../mesa;../../mapi;../../../include/c99;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;__STDC_VERSION__=199901L;__STDC__;strdup=_strdup;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ExceptionHandling>
+      </ExceptionHandling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>OldStyle</DebugInformationFormat>
+      <DisableSpecificWarnings>4996;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <ForcedIncludeFiles>%(ForcedIncludeFiles)</ForcedIncludeFiles>
+    </ClCompile>
+    <Lib>
+      <OutputFile>$(OutDir)$(ProjectName)-x64.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="..\ast.h" />
+    <ClInclude Include="..\builtin_types.h" />
+    <ClInclude Include="..\builtin_variables.h" />
+    <ClInclude Include="..\glsl_optimizer.h" />
+    <ClInclude Include="..\glsl_parser.h" />
+    <ClInclude Include="..\glsl_parser_extras.h" />
+    <ClInclude Include="..\glsl_symbol_table.h" />
+    <ClInclude Include="..\glsl_types.h" />
+    <ClInclude Include="..\ir.h" />
+    <ClInclude Include="..\ir_basic_block.h" />
+    <ClInclude Include="..\ir_expression_flattening.h" />
+    <ClInclude Include="..\ir_function_inlining.h" />
+    <ClInclude Include="..\ir_hierarchical_visitor.h" />
+    <ClInclude Include="..\ir_optimization.h" />
+    <ClInclude Include="..\ir_print_glsl_visitor.h" />
+    <ClInclude Include="..\ir_print_visitor.h" />
+    <ClInclude Include="..\ir_reader.h" />
+    <ClInclude Include="..\ir_rvalue_visitor.h" />
+    <ClInclude Include="..\ir_unused_structs.h" />
+    <ClInclude Include="..\ir_variable_refcount.h" />
+    <ClInclude Include="..\ir_visitor.h" />
+    <ClInclude Include="..\linker.h" />
+    <ClInclude Include="..\list.h" />
+    <ClInclude Include="..\loop_analysis.h" />
+    <ClInclude Include="..\program.h" />
+    <ClInclude Include="..\ralloc.h" />
+    <ClInclude Include="..\s_expression.h" />
+    <ClInclude Include="..\standalone_scaffolding.h" />
+    <ClInclude Include="..\strtod.h" />
+    <ClInclude Include="..\glcpp\glcpp-parse.h" />
+    <ClInclude Include="..\glcpp\glcpp.h" />
+    <ClInclude Include="..\..\mesa\program\hash_table.h" />
+    <ClInclude Include="..\..\mesa\program\prog_instruction.h" />
+    <ClInclude Include="..\..\mesa\program\prog_parameter.h" />
+    <ClInclude Include="..\..\mesa\program\prog_statevars.h" />
+    <ClInclude Include="..\..\mesa\program\symbol_table.h" />
+    <ClInclude Include="..\..\mesa\main\compiler.h" />
+    <ClInclude Include="..\..\mesa\main\config.h" />
+    <ClInclude Include="..\..\mesa\main\context.h" />
+    <ClInclude Include="..\..\mesa\main\core.h" />
+    <ClInclude Include="..\..\mesa\main\dd.h" />
+    <ClInclude Include="..\..\mesa\main\glheader.h" />
+    <ClInclude Include="..\..\mesa\main\glminimal.h" />
+    <ClInclude Include="..\..\mesa\main\imports.h" />
+    <ClInclude Include="..\..\mesa\main\macros.h" />
+    <ClInclude Include="..\..\mesa\main\mtypes.h" />
+    <ClInclude Include="..\..\mesa\main\shaderobj.h" />
+    <ClInclude Include="..\..\mesa\main\simple_list.h" />
+    <ClInclude Include="msvccompat.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\ast_expr.cpp" />
+    <ClCompile Include="..\ast_function.cpp" />
+    <ClCompile Include="..\ast_to_hir.cpp" />
+    <ClCompile Include="..\ast_type.cpp" />
+    <ClCompile Include="..\builtin_function.cpp" />
+    <ClCompile Include="..\builtin_variables.cpp" />
+    <ClCompile Include="..\glsl_lexer.cpp" />
+    <ClCompile Include="..\glsl_optimizer.cpp" />
+    <ClCompile Include="..\glsl_parser.cpp" />
+    <ClCompile Include="..\glsl_parser_extras.cpp" />
+    <ClCompile Include="..\glsl_symbol_table.cpp" />
+    <ClCompile Include="..\glsl_types.cpp" />
+    <ClCompile Include="..\hir_field_selection.cpp" />
+    <ClCompile Include="..\ir.cpp" />
+    <ClCompile Include="..\ir_basic_block.cpp" />
+    <ClCompile Include="..\ir_clone.cpp" />
+    <ClCompile Include="..\ir_constant_expression.cpp" />
+    <ClCompile Include="..\ir_expression_flattening.cpp" />
+    <ClCompile Include="..\ir_function.cpp" />
+    <ClCompile Include="..\ir_function_can_inline.cpp" />
+    <ClCompile Include="..\ir_function_detect_recursion.cpp" />
+    <ClCompile Include="..\ir_hierarchical_visitor.cpp" />
+    <ClCompile Include="..\ir_hv_accept.cpp" />
+    <ClCompile Include="..\ir_import_prototypes.cpp" />
+    <ClCompile Include="..\ir_print_glsl_visitor.cpp" />
+    <ClCompile Include="..\ir_print_visitor.cpp" />
+    <ClCompile Include="..\ir_reader.cpp" />
+    <ClCompile Include="..\ir_rvalue_visitor.cpp" />
+    <ClCompile Include="..\ir_unused_structs.cpp" />
+    <ClCompile Include="..\ir_validate.cpp" />
+    <ClCompile Include="..\ir_variable_refcount.cpp" />
+    <ClCompile Include="..\link_functions.cpp" />
+    <ClCompile Include="..\link_uniform_initializers.cpp" />
+    <ClCompile Include="..\link_uniforms.cpp" />
+    <ClCompile Include="..\linker.cpp" />
+    <ClCompile Include="..\loop_analysis.cpp" />
+    <ClCompile Include="..\loop_controls.cpp" />
+    <ClCompile Include="..\loop_unroll.cpp" />
+    <ClCompile Include="..\lower_clip_distance.cpp" />
+    <ClCompile Include="..\lower_discard.cpp" />
+    <ClCompile Include="..\lower_discard_flow.cpp" />
+    <ClCompile Include="..\lower_if_to_cond_assign.cpp" />
+    <ClCompile Include="..\lower_instructions.cpp" />
+    <ClCompile Include="..\lower_jumps.cpp" />
+    <ClCompile Include="..\lower_mat_op_to_vec.cpp" />
+    <ClCompile Include="..\lower_noise.cpp" />
+    <ClCompile Include="..\lower_variable_index_to_cond_assign.cpp" />
+    <ClCompile Include="..\lower_vec_index_to_cond_assign.cpp" />
+    <ClCompile Include="..\lower_vec_index_to_swizzle.cpp" />
+    <ClCompile Include="..\lower_vector.cpp" />
+    <ClCompile Include="..\main.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\opt_algebraic.cpp" />
+    <ClCompile Include="..\opt_array_splitting.cpp" />
+    <ClCompile Include="..\opt_constant_folding.cpp" />
+    <ClCompile Include="..\opt_constant_propagation.cpp" />
+    <ClCompile Include="..\opt_constant_variable.cpp" />
+    <ClCompile Include="..\opt_copy_propagation.cpp" />
+    <ClCompile Include="..\opt_copy_propagation_elements.cpp" />
+    <ClCompile Include="..\opt_dead_code.cpp" />
+    <ClCompile Include="..\opt_dead_code_local.cpp" />
+    <ClCompile Include="..\opt_dead_functions.cpp" />
+    <ClCompile Include="..\opt_function_inlining.cpp" />
+    <ClCompile Include="..\opt_if_simplification.cpp" />
+    <ClCompile Include="..\opt_noop_swizzle.cpp" />
+    <ClCompile Include="..\opt_redundant_jumps.cpp" />
+    <ClCompile Include="..\opt_structure_splitting.cpp" />
+    <ClCompile Include="..\opt_swizzle_swizzle.cpp" />
+    <ClCompile Include="..\opt_tree_grafting.cpp" />
+    <ClCompile Include="..\ralloc.c" />
+    <ClCompile Include="..\s_expression.cpp" />
+    <ClCompile Include="..\standalone_scaffolding.cpp" />
+    <ClCompile Include="..\strtod.c" />
+    <ClCompile Include="..\glcpp\glcpp-lex.c" />
+    <ClCompile Include="..\glcpp\glcpp-parse.c" />
+    <ClCompile Include="..\glcpp\glcpp.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\glcpp\pp.c" />
+    <ClCompile Include="..\..\mesa\program\hash_table.c" />
+    <ClCompile Include="..\..\mesa\program\symbol_table.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuildStep Include="..\glsl_lexer.lpp">
+      <FileType>Document</FileType>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </CustomBuildStep>
+    <CustomBuildStep Include="..\glsl_parser.ypp">
+      <FileType>Document</FileType>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </CustomBuildStep>
+    <CustomBuildStep Include="..\glcpp\glcpp-lex.l">
+      <FileType>Document</FileType>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </CustomBuildStep>
+    <CustomBuildStep Include="..\glcpp\glcpp-parse.y">
+      <FileType>Document</FileType>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </CustomBuildStep>
+    <None Include="..\..\..\README.md" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

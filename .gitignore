@@ -2,6 +2,8 @@
 *.dll
 *.exe
 *.ilk
+*.sdf
+*.opensdf
 *.la
 *.lo
 *.o
