@@ -47,7 +47,8 @@ query_fps(struct hud_graph *gr)
 
    if (info->last_time) {
       if (info->last_time + gr->pane->period <= now) {
-         double fps = info->frames * 1000000 / (double)(now - info->last_time);
+         double fps = (uint64_t)info->frames * 1000000 /
+                      (double)(now - info->last_time);
          info->frames = 0;
          info->last_time = now;
 
