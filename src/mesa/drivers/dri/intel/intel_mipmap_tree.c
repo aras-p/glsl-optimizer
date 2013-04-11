@@ -976,7 +976,7 @@ intel_miptree_alloc_mcs(struct intel_context *intel,
       break;
    default:
       assert(!"Unrecognized sample count in intel_miptree_alloc_mcs");
-      break;
+      return false;
    };
 
    /* From the Ivy Bridge PRM, Vol4 Part1 p76, "MCS Base Address":
