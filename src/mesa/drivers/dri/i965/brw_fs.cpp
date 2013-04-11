@@ -1998,7 +1998,7 @@ fs_visitor::register_coalesce_2()
       fs_inst *inst = (fs_inst *)node;
 
       if (inst->opcode != BRW_OPCODE_MOV ||
-	  inst->predicate ||
+	  inst->is_partial_write() ||
 	  inst->saturate ||
 	  inst->src[0].file != GRF ||
 	  inst->src[0].negate ||
@@ -2099,7 +2099,7 @@ fs_visitor::register_coalesce()
 	 continue;
 
       if (inst->opcode != BRW_OPCODE_MOV ||
-	  inst->predicate ||
+	  inst->is_partial_write() ||
 	  inst->saturate ||
 	  inst->dst.file != GRF || (inst->src[0].file != GRF &&
 				    inst->src[0].file != UNIFORM)||
@@ -2201,7 +2201,7 @@ fs_visitor::compute_to_mrf()
       next_ip++;
 
       if (inst->opcode != BRW_OPCODE_MOV ||
-	  inst->predicate ||
+	  inst->is_partial_write() ||
 	  inst->dst.file != MRF || inst->src[0].file != GRF ||
 	  inst->dst.type != inst->src[0].type ||
 	  inst->src[0].abs || inst->src[0].negate || inst->src[0].smear != -1)
@@ -2408,7 +2408,7 @@ fs_visitor::remove_duplicate_mrf_writes()
       if (inst->opcode == BRW_OPCODE_MOV &&
 	  inst->dst.file == MRF &&
 	  inst->src[0].file == GRF &&
-	  !inst->predicate) {
+	  !inst->is_partial_write()) {
 	 last_mrf_move[inst->dst.reg] = inst;
       }
    }
