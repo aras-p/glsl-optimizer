@@ -128,6 +128,7 @@ struct brw_vs_prog_key;
 struct brw_vec4_prog_key;
 struct brw_wm_prog_key;
 struct brw_wm_prog_data;
+struct brw_perf_bo_layout;
 
 enum brw_state_id {
    BRW_STATE_URB_FENCE,
@@ -1313,6 +1314,16 @@ struct brw_context
       bool begin_emitted;
    } query;
 
+   struct {
+      /* A map describing which counters are stored at a particular 32-bit
+       * offset in the buffer object.
+       */
+      const struct brw_perf_bo_layout *bo_layout;
+
+      /* Number of 32-bit entries in the buffer object. */
+      int entries_in_bo;
+   } perfmon;
+
    int num_atoms;
    const struct brw_tracked_state **atoms;
 
@@ -1484,6 +1495,9 @@ void brw_upload_ubo_surfaces(struct brw_context *brw,
 bool brw_is_hiz_depth_format(struct brw_context *ctx, gl_format format);
 bool brw_render_target_supported(struct brw_context *brw,
                                  struct gl_renderbuffer *rb);
+
+/* brw_performance_monitor.c */
+void brw_init_performance_monitors(struct brw_context *brw);
 
 /* gen6_sol.c */
 void

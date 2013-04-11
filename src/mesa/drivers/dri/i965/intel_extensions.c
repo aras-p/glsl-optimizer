@@ -160,6 +160,9 @@ intelInitExtensions(struct gl_context *ctx)
       ctx->Extensions.EXT_shader_integer_mix = ctx->Const.GLSLVersion >= 130;
    }
 
+   if (brw->gen == 5)
+      ctx->Extensions.AMD_performance_monitor = true;
+
    if (ctx->API == API_OPENGL_CORE)
       ctx->Extensions.ARB_base_instance = true;
    if (ctx->API != API_OPENGL_CORE)

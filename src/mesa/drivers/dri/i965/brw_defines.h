@@ -1817,6 +1817,13 @@ enum brw_wm_barycentric_interp_mode {
 
 #define CMD_MI_FLUSH                  0x0200
 
+#define GEN5_MI_REPORT_PERF_COUNT ((0x26 << 23) | (3 - 2))
+/* DW0 */
+# define GEN5_MI_COUNTER_SET_0      (0 << 6)
+# define GEN5_MI_COUNTER_SET_1      (1 << 6)
+/* DW1 */
+# define MI_COUNTER_ADDRESS_GTT     (1 << 0)
+/* DW2: a user-defined report ID (written to the buffer but can be anything) */
 
 /* Bitfields for the URB_WRITE message, DW2 of message header: */
 #define URB_WRITE_PRIM_END		0x1
