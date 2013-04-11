@@ -179,8 +179,6 @@ i830_render_start(struct intel_context *intel)
        v2 != i830->state.Ctx[I830_CTXREG_VF2] ||
        mcsb1 != i830->state.Ctx[I830_CTXREG_MCSB1] ||
        index_bitset != i830->last_index_bitset) {
-      int k;
-
       I830_STATECHANGE(i830, I830_UPLOAD_CTX);
 
       /* Must do this *after* statechange, so as not to affect
@@ -199,8 +197,7 @@ i830_render_start(struct intel_context *intel)
       i830->state.Ctx[I830_CTXREG_MCSB1] = mcsb1;
       i830->last_index_bitset = index_bitset;
 
-      k = i830_check_vertex_size(intel, intel->vertex_size);
-      assert(k);
+      assert(i830_check_vertex_size(intel, intel->vertex_size));
    }
 }
 
