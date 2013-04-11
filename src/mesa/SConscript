@@ -97,6 +97,7 @@ main_sources = [
     'main/objectlabel.c',
     'main/pack.c',
     'main/pbo.c',
+    'main/performance_monitor.c',
     'main/pixel.c',
     'main/pixelstore.c',
     'main/pixeltransfer.c',

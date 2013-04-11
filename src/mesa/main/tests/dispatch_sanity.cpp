@@ -908,6 +908,19 @@ const struct function gl_core_functions_possible[] = {
    { "glObjectLabel", 11, -1 },
    { "glObjectPtrLabel", 11, -1 },
 
+   /* GL_AMD_performance_monitor */
+   { "glGetPerfMonitorGroupsAMD", 11, -1 },
+   { "glGetPerfMonitorCountersAMD", 11, -1 },
+   { "glGetPerfMonitorGroupStringAMD", 11, -1 },
+   { "glGetPerfMonitorCounterStringAMD", 11, -1 },
+   { "glGetPerfMonitorCounterInfoAMD", 11, -1 },
+   { "glGenPerfMonitorsAMD", 11, -1 },
+   { "glDeletePerfMonitorsAMD", 11, -1 },
+   { "glSelectPerfMonitorCountersAMD", 11, -1 },
+   { "glBeginPerfMonitorAMD", 11, -1 },
+   { "glEndPerfMonitorAMD", 11, -1 },
+   { "glGetPerfMonitorCounterDataAMD", 11, -1 },
+
    { NULL, 0, -1 }
 };
 

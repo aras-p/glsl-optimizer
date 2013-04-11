@@ -291,6 +291,7 @@ static const struct extension extension_table[] = {
    { "GL_3DFX_texture_compression_FXT1",           o(TDFX_texture_compression_FXT1),           GL,             1999 },
    { "GL_AMD_conservative_depth",                  o(ARB_conservative_depth),                  GL,             2009 },
    { "GL_AMD_draw_buffers_blend",                  o(ARB_draw_buffers_blend),                  GL,             2009 },
+   { "GL_AMD_performance_monitor",                 o(AMD_performance_monitor),                 GL,             2007 },
    { "GL_AMD_seamless_cubemap_per_texture",        o(AMD_seamless_cubemap_per_texture),        GL,             2009 },
    { "GL_AMD_shader_stencil_export",               o(ARB_shader_stencil_export),               GL,             2009 },
    { "GL_AMD_vertex_shader_layer",                 o(AMD_vertex_shader_layer),                 GL,             2012 },

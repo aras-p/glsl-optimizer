@@ -105,6 +105,7 @@
 #include "macros.h"
 #include "matrix.h"
 #include "multisample.h"
+#include "performance_monitor.h"
 #include "pixel.h"
 #include "pixelstore.h"
 #include "points.h"
@@ -764,6 +765,7 @@ init_attrib_groups(struct gl_context *ctx)
    _mesa_init_lighting( ctx );
    _mesa_init_matrix( ctx );
    _mesa_init_multisample( ctx );
+   _mesa_init_performance_monitors( ctx );
    _mesa_init_pixel( ctx );
    _mesa_init_pixelstore( ctx );
    _mesa_init_point( ctx );

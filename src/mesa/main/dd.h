@@ -645,6 +645,30 @@ struct dd_function_table {
    void (*WaitQuery)(struct gl_context *ctx, struct gl_query_object *q);
    /*@}*/
 
+   /**
+    * \name Performance monitors
+    */
+   /*@{*/
+   struct gl_perf_monitor_object * (*NewPerfMonitor)(struct gl_context *ctx);
+   void (*DeletePerfMonitor)(struct gl_context *ctx,
+                             struct gl_perf_monitor_object *m);
+   GLboolean (*BeginPerfMonitor)(struct gl_context *ctx,
+                                 struct gl_perf_monitor_object *m);
+
+   /** Stop an active performance monitor, discarding results. */
+   void (*ResetPerfMonitor)(struct gl_context *ctx,
+                            struct gl_perf_monitor_object *m);
+   void (*EndPerfMonitor)(struct gl_context *ctx,
+                          struct gl_perf_monitor_object *m);
+   GLboolean (*IsPerfMonitorResultAvailable)(struct gl_context *ctx,
+                                             struct gl_perf_monitor_object *m);
+   void (*GetPerfMonitorResult)(struct gl_context *ctx,
+                                struct gl_perf_monitor_object *m,
+                                GLsizei dataSize,
+                                GLuint *data,
+                                GLint *bytesWritten);
+   /*@}*/
+
 
    /**
     * \name Vertex Array objects

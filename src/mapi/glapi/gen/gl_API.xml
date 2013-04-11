@@ -12890,6 +12890,8 @@
     <enum name="FRAMEBUFFER_SRGB_CAPABLE_EXT"      value="0x8DBA"/>
 </category>
 
+<xi:include href="AMD_performance_monitor.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+
 <category name="GL_APPLE_texture_range" number="367">
     <enum name="TEXTURE_STORAGE_HINT_APPLE" count="1" value="0x85BC">
         <size name="TexParameteriv"/>
