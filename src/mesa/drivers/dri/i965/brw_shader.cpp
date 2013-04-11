@@ -152,6 +152,9 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
        */
       brw_lower_packing_builtins(brw, (gl_shader_type) stage, shader->ir);
       do_mat_op_to_vec(shader->ir);
+      const int bitfield_insert = intel->gen >= 7
+                                  ? BITFIELD_INSERT_TO_BFM_BFI
+                                  : 0;
       const int lrp_to_arith = intel->gen < 6 ? LRP_TO_ARITH : 0;
       lower_instructions(shader->ir,
 			 MOD_TO_FRACT |
@@ -159,6 +162,7 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
 			 SUB_TO_ADD_NEG |
 			 EXP_TO_EXP2 |
 			 LOG_TO_LOG2 |
+                         bitfield_insert |
                          lrp_to_arith);
 
       /* Pre-gen6 HW can only nest if-statements 16 deep.  Beyond this,
