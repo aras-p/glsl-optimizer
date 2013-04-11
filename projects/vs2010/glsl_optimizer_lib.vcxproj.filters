@@ -159,13 +159,12 @@
     <ClInclude Include="..\..\src\mesa\main\mtypes.h">
       <Filter>src\mesa\main</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\mesa\main\shaderobj.h">
-      <Filter>src\mesa\main</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\mesa\main\simple_list.h">
       <Filter>src\mesa\main</Filter>
     </ClInclude>
-    <ClInclude Include="msvccompat.h" />
+    <ClInclude Include="..\..\src\glsl\ir_uniform.h">
+      <Filter>src\glsl</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\glsl\ast_expr.cpp">

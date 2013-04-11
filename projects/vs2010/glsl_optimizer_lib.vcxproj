@@ -182,6 +182,7 @@
     <ClInclude Include="..\..\src\glsl\ir_print_visitor.h" />
     <ClInclude Include="..\..\src\glsl\ir_reader.h" />
     <ClInclude Include="..\..\src\glsl\ir_rvalue_visitor.h" />
+    <ClInclude Include="..\..\src\glsl\ir_uniform.h" />
     <ClInclude Include="..\..\src\glsl\ir_unused_structs.h" />
     <ClInclude Include="..\..\src\glsl\ir_variable_refcount.h" />
     <ClInclude Include="..\..\src\glsl\ir_visitor.h" />
@@ -210,7 +211,6 @@
     <ClInclude Include="..\..\src\mesa\main\imports.h" />
     <ClInclude Include="..\..\src\mesa\main\macros.h" />
     <ClInclude Include="..\..\src\mesa\main\mtypes.h" />
-    <ClInclude Include="..\..\src\mesa\main\shaderobj.h" />
     <ClInclude Include="..\..\src\mesa\main\simple_list.h" />
   </ItemGroup>
   <ItemGroup>
