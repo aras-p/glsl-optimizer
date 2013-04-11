@@ -213,6 +213,8 @@ static bool ReadStringFromFile (const char* pathName, std::string& output)
 		output.clear();
 		return false;
 	}
+
+	replace_string(output, "\r\n", "\n", 0);
 	return true;
 }
 

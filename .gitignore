@@ -44,6 +44,8 @@ Makefile.in
 .libs/
 /Makefile
 
+ipch
+
 *.pbxuser
 *.perspectivev3
 *.mode1v3
