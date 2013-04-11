@@ -1565,7 +1565,7 @@ CodeEmitterNV50::emitATOM(const Instruction *i)
    case NV50_IR_SUBOP_ATOM_EXCH: subOp = 0x1; break;
    default:
       assert(!"invalid subop");
-      break;
+      return;
    }
    code[0] = 0xd0000001;
    code[1] = 0xe0c00000 | (subOp << 2);
