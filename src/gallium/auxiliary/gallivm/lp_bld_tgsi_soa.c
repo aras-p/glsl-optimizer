@@ -65,6 +65,7 @@
 #include "lp_bld_sample.h"
 #include "lp_bld_struct.h"
 
+#define DUMP_GS_EMITS 0
 
 static void lp_exec_mask_init(struct lp_exec_mask *mask, struct lp_build_context *bld)
 {
@@ -2278,27 +2279,25 @@ emit_vertex(
       increment_vec_ptr_by_mask(bld_base, bld->total_emitted_vertices_vec_ptr,
                                 masked_ones);
 #if DUMP_GS_EMITS
-      lp_build_print_value(bld->bld_base.base.gallivm, " +++ emit vertex masked ones = ",
+      lp_build_print_value(bld->bld_base.base.gallivm,
+                           " +++ emit vertex masked ones = ",
                            masked_ones);
-      lp_build_print_value(bld->bld_base.base.gallivm, " +++ emit vertex emitted = ",
+      lp_build_print_value(bld->bld_base.base.gallivm,
+                           " +++ emit vertex emitted = ",
                            total_emitted_vertices_vec);
 #endif
-      bld->pending_end_primitive = TRUE;
    }
 }
 
 
 static void
-end_primitive(
-   const struct lp_build_tgsi_action * action,
-   struct lp_build_tgsi_context * bld_base,
-   struct lp_build_emit_data * emit_data)
+end_primitive_masked(struct lp_build_tgsi_context * bld_base,
+                     LLVMValueRef masked_ones)
 {
    struct lp_build_tgsi_soa_context * bld = lp_soa_context(bld_base);
    LLVMBuilderRef builder = bld->bld_base.base.gallivm->builder;
 
    if (bld->gs_iface->end_primitive) {
-      LLVMValueRef masked_ones = mask_to_one_vec(bld_base);
       LLVMValueRef emitted_vertices_vec =
          LLVMBuildLoad(builder, bld->emitted_vertices_vec_ptr, "");
       LLVMValueRef emitted_prims_vec =
@@ -2309,23 +2308,55 @@ end_primitive(
                                    emitted_prims_vec);
 
 #if DUMP_GS_EMITS
-      lp_build_print_value(bld->bld_base.base.gallivm, " +++ end prim masked ones = ",
+      lp_build_print_value(bld->bld_base.base.gallivm,
+                           " +++ end prim masked ones = ",
                            masked_ones);
-      lp_build_print_value(bld->bld_base.base.gallivm, " +++ end prim emitted verts1 = ",
+      lp_build_print_value(bld->bld_base.base.gallivm,
+                           " +++ end prim emitted verts1 = ",
                            emitted_vertices_vec);
-      lp_build_print_value(bld->bld_base.base.gallivm, " +++ end prim emitted prims1 = ",
-                           LLVMBuildLoad(builder, bld->emitted_prims_vec_ptr, ""));
+      lp_build_print_value(bld->bld_base.base.gallivm,
+                           " +++ end prim emitted prims1 = ",
+                           LLVMBuildLoad(builder,
+                                         bld->emitted_prims_vec_ptr, ""));
 #endif
       increment_vec_ptr_by_mask(bld_base, bld->emitted_prims_vec_ptr,
                                 masked_ones);
       clear_uint_vec_ptr_from_mask(bld_base, bld->emitted_vertices_vec_ptr,
                                    masked_ones);
 #if DUMP_GS_EMITS
-      lp_build_print_value(bld->bld_base.base.gallivm, " +++ end prim emitted verts2 = ",
-                           LLVMBuildLoad(builder, bld->emitted_vertices_vec_ptr, ""));
+      lp_build_print_value(bld->bld_base.base.gallivm,
+                           " +++ end prim emitted verts2 = ",
+                           LLVMBuildLoad(builder,
+                                         bld->emitted_vertices_vec_ptr, ""));
 #endif
+   }
 
-      bld->pending_end_primitive = FALSE;
+}
+
+static void
+end_primitive(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   struct lp_build_tgsi_soa_context * bld = lp_soa_context(bld_base);
+
+   if (bld->gs_iface->end_primitive) {
+      LLVMBuilderRef builder = bld_base->base.gallivm->builder;
+      LLVMValueRef masked_ones = mask_to_one_vec(bld_base);
+      struct lp_build_context *uint_bld = &bld_base->uint_bld;
+      LLVMValueRef emitted_verts = LLVMBuildLoad(
+         builder, bld->emitted_vertices_vec_ptr, "");
+      LLVMValueRef emitted_mask = lp_build_cmp(uint_bld, PIPE_FUNC_NOTEQUAL,
+                                               emitted_verts,
+                                               uint_bld->zero);
+      /* We need to combine the current execution mask with the mask
+         telling us which, if any, execution slots actually have
+         unemitted primitives, this way we make sure that end_primitives
+         executes only on the paths that have unflushed vertices */
+      masked_ones = LLVMBuildAnd(builder, masked_ones, emitted_mask, "");
+      
+      end_primitive_masked(bld_base, masked_ones);
    }
 }
 
@@ -2670,11 +2701,10 @@ static void emit_epilogue(struct lp_build_tgsi_context * bld_base)
    if (bld->gs_iface) {
       LLVMValueRef total_emitted_vertices_vec;
       LLVMValueRef emitted_prims_vec;
-      /* flush the accumulated vertices as a primitive */
-      if (bld->pending_end_primitive) {
-         end_primitive(NULL, bld_base, NULL);
-         bld->pending_end_primitive = FALSE;
-      }
+      /* implicit end_primitives, needed in case there are any unflushed
+         vertices in the cache */
+      end_primitive(NULL, bld_base, NULL);
+      
       total_emitted_vertices_vec =
          LLVMBuildLoad(builder, bld->total_emitted_vertices_vec_ptr, "");
       emitted_prims_vec =
@@ -2785,7 +2815,6 @@ lp_build_tgsi_soa(struct gallivm_state *gallivm,
       /* inputs are always indirect with gs */
       bld.indirect_files |= (1 << TGSI_FILE_INPUT);
       bld.gs_iface = gs_iface;
-      bld.pending_end_primitive = FALSE;
       bld.bld_base.emit_fetch_funcs[TGSI_FILE_INPUT] = emit_fetch_gs_input;
       bld.bld_base.op_actions[TGSI_OPCODE_EMIT].emit = emit_vertex;
       bld.bld_base.op_actions[TGSI_OPCODE_ENDPRIM].emit = end_primitive;
