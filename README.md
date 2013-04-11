@@ -24,7 +24,7 @@ Usage
 -----
 
 Visual Studio 2010 (Windows, x86/x64) and Xcode 4.5+ (Mac, i386) project files for a static
-library are provided in `src/glsl/msvc/mesaglsl2.vcproj` and `src/glsl/xcode/mesaglsl2`
+library are provided in `projects/vs2010/glsl_optimizer.sln` and `src/glsl/xcode/mesaglsl2`
 respectively.
 
 For Linux you can use cmake. Just type "cmake . && make" in the root directory.

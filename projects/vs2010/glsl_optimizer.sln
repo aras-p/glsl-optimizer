@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mesaglsl2", "mesaglsl2.vcxproj", "{B475A403-9D9B-410D-8A93-BA49FC4DD811}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "glsl_optimizer_lib", "glsl_optimizer_lib.vcxproj", "{B475A403-9D9B-410D-8A93-BA49FC4DD811}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "glsl_optimizer_tests", "..\..\..\tests\glsl_optimizer_tests.vcxproj", "{BB382242-6EBB-445F-989C-B9BA61D17965}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "glsl_optimizer_tests", "glsl_optimizer_tests.vcxproj", "{BB382242-6EBB-445F-989C-B9BA61D17965}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
