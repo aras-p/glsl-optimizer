@@ -510,7 +510,6 @@ intel_miptree_create_for_dri2_buffer(struct intel_context *intel,
 {
    struct intel_mipmap_tree *singlesample_mt = NULL;
    struct intel_mipmap_tree *multisample_mt = NULL;
-   GLenum base_format = _mesa_get_format_base_format(format);
 
    /* Only the front and back buffers, which are color buffers, are shared
     * through DRI2.
@@ -518,7 +517,8 @@ intel_miptree_create_for_dri2_buffer(struct intel_context *intel,
    assert(dri_attachment == __DRI_BUFFER_BACK_LEFT ||
           dri_attachment == __DRI_BUFFER_FRONT_LEFT ||
           dri_attachment == __DRI_BUFFER_FAKE_FRONT_LEFT);
-   assert(base_format == GL_RGB || base_format == GL_RGBA);
+   assert(_mesa_get_format_base_format(format) == GL_RGB ||
+          _mesa_get_format_base_format(format) == GL_RGBA);
 
    singlesample_mt = intel_miptree_create_for_region(intel, GL_TEXTURE_2D,
                                                      format, region);
