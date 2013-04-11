@@ -1548,6 +1548,10 @@ brw_vs_emit(struct brw_context *brw,
          prog->LinkStatus = false;
          ralloc_strcat(&prog->InfoLog, v.fail_msg);
       }
+
+      _mesa_problem(NULL, "Failed to compile vertex shader: %s\n",
+                    v.fail_msg);
+
       return NULL;
    }
 
