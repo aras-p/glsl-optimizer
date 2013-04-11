@@ -2885,7 +2885,7 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c,
       shader = (brw_shader *) prog->_LinkedShaders[MESA_SHADER_FRAGMENT];
 
    if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
-      if (shader) {
+      if (prog) {
          printf("GLSL IR for native fragment shader %d:\n", prog->Name);
          _mesa_print_ir(shader->ir, NULL);
          printf("\n\n");
@@ -2900,11 +2900,13 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c,
     */
    fs_visitor v(brw, c, prog, fp, 8);
    if (!v.run()) {
-      prog->LinkStatus = false;
-      ralloc_strcat(&prog->InfoLog, v.fail_msg);
+      if (prog) {
+         prog->LinkStatus = false;
+         ralloc_strcat(&prog->InfoLog, v.fail_msg);
+      }
 
       _mesa_problem(NULL, "Failed to compile fragment shader: %s\n",
-		    v.fail_msg);
+                    v.fail_msg);
 
       return NULL;
    }

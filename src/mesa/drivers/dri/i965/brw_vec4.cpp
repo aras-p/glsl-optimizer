@@ -1531,7 +1531,7 @@ brw_vs_emit(struct brw_context *brw,
       shader = (brw_shader *) prog->_LinkedShaders[MESA_SHADER_VERTEX];
 
    if (unlikely(INTEL_DEBUG & DEBUG_VS)) {
-      if (shader) {
+      if (prog) {
          printf("GLSL IR for native vertex shader %d:\n", prog->Name);
          _mesa_print_ir(shader->ir, NULL);
          printf("\n\n");
@@ -1544,8 +1544,10 @@ brw_vs_emit(struct brw_context *brw,
 
    vec4_vs_visitor v(brw, c, prog_data, prog, shader, mem_ctx);
    if (!v.run()) {
-      prog->LinkStatus = false;
-      ralloc_strcat(&prog->InfoLog, v.fail_msg);
+      if (prog) {
+         prog->LinkStatus = false;
+         ralloc_strcat(&prog->InfoLog, v.fail_msg);
+      }
       return NULL;
    }
 
