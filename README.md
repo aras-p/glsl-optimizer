@@ -23,7 +23,7 @@ GLSL Optimizer is licensed according to the terms of the MIT license.
 Usage
 -----
 
-Visual Studio 2010 (Windows, x86) and Xcode 4.5+ (Mac, i386) project files for a static
+Visual Studio 2010 (Windows, x86/x64) and Xcode 4.5+ (Mac, i386) project files for a static
 library are provided in `src/glsl/msvc/mesaglsl2.vcproj` and `src/glsl/xcode/mesaglsl2`
 respectively.
 
@@ -43,6 +43,22 @@ Interface for the library is `src/glsl/glsl_optimizer.h`. General usage is:
 		glslopt_shader_delete (shader);
 	}
 	glslopt_cleanup (ctx);
+
+
+Tests
+-----
+
+There's a testing suite for catching regressions, see `tests` folder. In VS, build
+and run `glsl_optimizer_tests` project; in Xcode use `tests/glsl-optimizer-tests`
+project. The test executable requires path to the `tests` folder as an argument.
+
+Each test comes as three text files; input, expected IR dump and expected optimized
+GLSL dump.
+
+If you're making changes to the project and want pull requests accepted easier, I'd
+appreciate if there would be no test suite regressions. If you are implementing a
+feature, it would be cool to add tests to cover it as well!
+
 
 Notes
 -----
