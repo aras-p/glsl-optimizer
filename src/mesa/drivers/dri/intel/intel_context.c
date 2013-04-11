@@ -1056,7 +1056,6 @@ intel_query_dri2_buffers(struct intel_context *intel,
    struct gl_framebuffer *fb = drawable->driverPrivate;
    int i = 0;
    unsigned attachments[8];
-   const int max_attachments = ARRAY_SIZE(attachments) / 2;
 
    struct intel_renderbuffer *front_rb;
    struct intel_renderbuffer *back_rb;
@@ -1077,7 +1076,7 @@ intel_query_dri2_buffers(struct intel_context *intel,
       attachments[i++] = intel_bits_per_pixel(back_rb);
    }
 
-   assert(i <= 2 * max_attachments);
+   assert(i <= ARRAY_SIZE(attachments));
 
    *buffers = screen->dri2.loader->getBuffersWithFormat(drawable,
 							&drawable->w,
