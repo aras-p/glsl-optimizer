@@ -469,8 +469,10 @@ nve4_launch_grid(struct pipe_context *pipe,
    int ret;
 
    desc = nve4_compute_alloc_launch_desc(&nvc0->base, &desc_bo, &desc_gpuaddr);
-   if (!desc)
+   if (!desc) {
+      ret = -1;
       goto out;
+   }
    BCTX_REFN_bo(nvc0->bufctx_cp, CP_DESC, NOUVEAU_BO_GART | NOUVEAU_BO_RD,
                 desc_bo);
 
