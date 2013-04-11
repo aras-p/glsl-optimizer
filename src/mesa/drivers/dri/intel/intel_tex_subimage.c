@@ -146,7 +146,7 @@ intel_blit_texsubimage(struct gl_context * ctx,
    drm_intel_bo_unreference(temp_bo);
    _mesa_unmap_teximage_pbo(ctx, packing);
 
-   return true;
+   return ret;
 }
 
 /**
