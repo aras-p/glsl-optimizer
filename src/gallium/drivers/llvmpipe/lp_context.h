@@ -94,6 +94,9 @@ struct llvmpipe_context {
    struct pipe_query_data_so_statistics so_stats;
    unsigned num_primitives_generated;
 
+   struct pipe_query_data_pipeline_statistics pipeline_statistics;
+   unsigned active_statistics_queries;
+
    unsigned dirty; /**< Mask of LP_NEW_x flags */
 
    unsigned active_occlusion_query;

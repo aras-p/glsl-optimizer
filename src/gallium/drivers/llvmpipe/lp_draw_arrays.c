@@ -108,6 +108,8 @@ llvmpipe_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
          draw_vs_attach_so(lp->vs->draw_data, &lp->gs->shader.stream_output);
       }
    }
+   draw_collect_pipeline_statistics(draw,
+                                    lp->active_statistics_queries > 0);
 
    /* draw! */
    draw_vbo(draw, info);

@@ -842,3 +842,19 @@ draw_get_shader_param(unsigned shader, enum pipe_shader_cap param)
    return draw_get_shader_param_no_llvm(shader, param);
 }
 
+/**
+ * Enables or disables collection of statistics.
+ *
+ * Draw module is capable of generating statistics for the vertex
+ * processing pipeline. Collection of that data isn't free and so
+ * it's disabled by default. The users of the module can enable
+ * (or disable) this functionality through this function.
+ * The actual data will be emitted through the VBUF interface,
+ * the 'pipeline_statistics' callback to be exact.
+ */
+void
+draw_collect_pipeline_statistics(struct draw_context *draw,
+                                 boolean enable)
+{
+   draw->collect_statistics = enable;
+}

@@ -73,6 +73,11 @@ shade_quad(struct quad_stage *qs, struct quad_header *quad)
    struct softpipe_context *softpipe = qs->softpipe;
    struct tgsi_exec_machine *machine = softpipe->fs_machine;
 
+   if (softpipe->active_statistics_queries) {
+      softpipe->pipeline_statistics.ps_invocations +=
+         util_bitcount(quad->inout.mask);         
+   }
+
    /* run shader */
    machine->flatshade_color = softpipe->rasterizer->flatshade ? TRUE : FALSE;
    return softpipe->fs_variant->run( softpipe->fs_variant, machine, quad );

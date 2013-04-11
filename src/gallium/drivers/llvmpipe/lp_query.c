@@ -144,6 +144,12 @@ llvmpipe_get_query_result(struct pipe_context *pipe,
       stats->primitives_storage_needed = pq->num_primitives_generated;
    }
       break;
+   case PIPE_QUERY_PIPELINE_STATISTICS: {
+      struct pipe_query_data_pipeline_statistics *stats =
+         (struct pipe_query_data_pipeline_statistics *)vresult;
+      *stats = pq->stats;
+   }
+      break;
    default:
       assert(0);
       break;
@@ -188,6 +194,16 @@ llvmpipe_begin_query(struct pipe_context *pipe, struct pipe_query *q)
       llvmpipe->num_primitives_generated = 0;
    }
 
+   if (pq->type == PIPE_QUERY_PIPELINE_STATISTICS) {
+      /* reset our cache */
+      if (llvmpipe->active_statistics_queries == 0) {
+         memset(&llvmpipe->pipeline_statistics, 0,
+                sizeof(llvmpipe->pipeline_statistics));
+      }
+      memcpy(&pq->stats, &llvmpipe->pipeline_statistics, sizeof(pq->stats));
+      llvmpipe->active_statistics_queries++;
+   }
+
    if (pq->type == PIPE_QUERY_OCCLUSION_COUNTER) {
       llvmpipe->active_occlusion_query = TRUE;
       llvmpipe->dirty |= LP_NEW_OCCLUSION_QUERY;
@@ -214,6 +230,27 @@ llvmpipe_end_query(struct pipe_context *pipe, struct pipe_query *q)
    if (pq->type == PIPE_QUERY_SO_STATISTICS) {
       pq->num_primitives_written = llvmpipe->so_stats.num_primitives_written;
       pq->num_primitives_generated = llvmpipe->num_primitives_generated;
+   }
+
+   if (pq->type == PIPE_QUERY_PIPELINE_STATISTICS) {
+      pq->stats.ia_vertices =
+         llvmpipe->pipeline_statistics.ia_vertices - pq->stats.ia_vertices;
+      pq->stats.ia_primitives =
+         llvmpipe->pipeline_statistics.ia_primitives - pq->stats.ia_primitives;
+      pq->stats.vs_invocations =
+         llvmpipe->pipeline_statistics.vs_invocations - pq->stats.vs_invocations;
+      pq->stats.gs_invocations =
+         llvmpipe->pipeline_statistics.gs_invocations - pq->stats.gs_invocations;
+      pq->stats.gs_primitives =
+         llvmpipe->pipeline_statistics.gs_primitives - pq->stats.gs_primitives;
+      pq->stats.c_invocations =
+         llvmpipe->pipeline_statistics.c_invocations - pq->stats.c_invocations;
+      pq->stats.c_primitives =
+         llvmpipe->pipeline_statistics.c_primitives - pq->stats.c_primitives;
+      pq->stats.ps_invocations =
+         llvmpipe->pipeline_statistics.ps_invocations - pq->stats.ps_invocations;
+
+      llvmpipe->active_statistics_queries--;
    }
 
    if (pq->type == PIPE_QUERY_OCCLUSION_COUNTER) {

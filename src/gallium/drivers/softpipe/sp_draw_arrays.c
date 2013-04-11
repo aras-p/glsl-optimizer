@@ -105,6 +105,9 @@ softpipe_draw_vbo(struct pipe_context *pipe,
    draw_set_mapped_so_targets(draw, sp->num_so_targets,
                               sp->so_targets);
 
+   draw_collect_pipeline_statistics(draw,
+                                    sp->active_statistics_queries > 0);
+
    /* draw! */
    draw_vbo(draw, info);
 

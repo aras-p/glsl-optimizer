@@ -43,6 +43,7 @@
 struct pipe_rasterizer_state;
 struct draw_context;
 struct vertex_info;
+struct pipe_query_data_pipeline_statistics;
 
 
 /**
@@ -126,6 +127,13 @@ struct vbuf_render {
                                    unsigned primitive_count,
                                    unsigned vertices_count,
                                    unsigned primitive_generated );
+
+   /**
+    * Called after all relevant statistics have been accumulated.
+    */
+   void (*pipeline_statistics)(
+      struct vbuf_render *vbufr,
+      const struct pipe_query_data_pipeline_statistics *stats );
 };
 
 

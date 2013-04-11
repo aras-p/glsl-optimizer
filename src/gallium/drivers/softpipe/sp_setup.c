@@ -857,6 +857,10 @@ sp_setup_tri(struct setup_context *setup,
 
    flush_spans( setup );
 
+   if (setup->softpipe->active_statistics_queries) {
+      setup->softpipe->pipeline_statistics.c_primitives++;
+   }
+
 #if DEBUG_FRAGS
    printf("Tri: %u frags emitted, %u written\n",
           setup->numFragsEmitted,

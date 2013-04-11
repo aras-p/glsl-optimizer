@@ -92,6 +92,9 @@ struct softpipe_context {
    struct pipe_query_data_so_statistics so_stats;
    unsigned num_primitives_generated;
 
+   struct pipe_query_data_pipeline_statistics pipeline_statistics;
+   unsigned active_statistics_queries;
+
    unsigned num_samplers[PIPE_SHADER_TYPES];
    unsigned num_sampler_views[PIPE_SHADER_TYPES];
 

@@ -353,6 +353,10 @@ static void gs_flush(struct draw_geometry_shader *shader)
 
    unsigned input_primitives = shader->fetched_prim_count;
 
+   if (shader->draw->collect_statistics) {
+      shader->draw->statistics.gs_invocations += input_primitives;
+   }
+
    debug_assert(input_primitives > 0 &&
                 input_primitives <= 4);
 
@@ -493,11 +497,14 @@ int draw_geometry_shader_run(struct draw_geometry_shader *shader,
       input_prim->count;
    unsigned num_in_primitives =
       align(
-         MAX2(u_gs_prims_for_vertices(input_prim->prim, num_input_verts),
-              u_gs_prims_for_vertices(shader->input_primitive, num_input_verts)),
+         MAX2(u_decomposed_prims_for_vertices(input_prim->prim,
+                                              num_input_verts),
+              u_decomposed_prims_for_vertices(shader->input_primitive,
+                                              num_input_verts)),
          shader->vector_length);
-   unsigned max_out_prims = u_gs_prims_for_vertices(shader->output_primitive,
-                                                    shader->max_output_vertices)
+   unsigned max_out_prims =
+      u_decomposed_prims_for_vertices(shader->output_primitive,
+                                      shader->max_output_vertices)
       * num_in_primitives;
 
    //Assume at least one primitive
@@ -592,6 +599,15 @@ int draw_geometry_shader_run(struct draw_geometry_shader *shader,
    output_prims->primitive_lengths = shader->primitive_lengths;
    output_prims->primitive_count = shader->emitted_primitives;
    output_verts->count = shader->emitted_vertices;
+
+   if (shader->draw->collect_statistics) {
+      unsigned i;
+      for (i = 0; i < shader->emitted_primitives; ++i) {
+         shader->draw->statistics.gs_primitives +=
+            u_decomposed_prims_for_vertices(shader->output_primitive,
+                                            shader->primitive_lengths[i]);
+      }
+   }
 
 #if 0
    debug_printf("GS finished, prims = %d, verts = %d\n",

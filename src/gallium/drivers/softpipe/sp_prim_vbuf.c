@@ -600,6 +600,28 @@ sp_vbuf_so_info(struct vbuf_render *vbr, uint primitives, uint vertices,
    softpipe->num_primitives_generated += prim_generated;
 }
 
+static void
+sp_vbuf_pipeline_statistics(
+   struct vbuf_render *vbr, 
+   const struct pipe_query_data_pipeline_statistics *stats)
+{
+   struct softpipe_vbuf_render *cvbr = softpipe_vbuf_render(vbr);
+   struct softpipe_context *softpipe = cvbr->softpipe;
+
+   softpipe->pipeline_statistics.ia_vertices +=
+      stats->ia_vertices;
+   softpipe->pipeline_statistics.ia_primitives +=
+      stats->ia_primitives;
+   softpipe->pipeline_statistics.vs_invocations +=
+      stats->vs_invocations;
+   softpipe->pipeline_statistics.gs_invocations +=
+      stats->gs_invocations;
+   softpipe->pipeline_statistics.gs_primitives +=
+      stats->gs_primitives;
+   softpipe->pipeline_statistics.c_invocations +=
+      stats->c_invocations;
+}
+
 
 static void
 sp_vbuf_destroy(struct vbuf_render *vbr)
@@ -634,6 +656,7 @@ sp_create_vbuf_backend(struct softpipe_context *sp)
    cvbr->base.draw_arrays = sp_vbuf_draw_arrays;
    cvbr->base.release_vertices = sp_vbuf_release_vertices;
    cvbr->base.set_stream_output_info = sp_vbuf_so_info;
+   cvbr->base.pipeline_statistics = sp_vbuf_pipeline_statistics;
    cvbr->base.destroy = sp_vbuf_destroy;
 
    cvbr->softpipe = sp;

@@ -27,6 +27,7 @@
 
 #include "util/u_math.h"
 #include "util/u_memory.h"
+#include "util/u_prim.h"
 #include "draw/draw_context.h"
 #include "draw/draw_gs.h"
 #include "draw/draw_vbuf.h"
@@ -332,6 +333,12 @@ llvm_pipeline_generic( struct draw_pt_middle_end *middle,
    if (!llvm_vert_info.verts) {
       assert(0);
       return;
+   }
+   if (draw->collect_statistics) {
+      draw->statistics.ia_vertices += fetch_info->count;
+      draw->statistics.ia_primitives +=
+         u_decomposed_prims_for_vertices(prim_info->prim, fetch_info->count);
+      draw->statistics.vs_invocations += fetch_info->count;
    }
 
    if (fetch_info->linear)

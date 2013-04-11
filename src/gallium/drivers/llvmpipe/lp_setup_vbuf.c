@@ -547,6 +547,28 @@ lp_setup_so_info(struct vbuf_render *vbr, uint primitives, uint vertices,
    lp->num_primitives_generated += prim_generated;
 }
 
+static void
+lp_setup_pipeline_statistics(
+   struct vbuf_render *vbr,
+   const struct pipe_query_data_pipeline_statistics *stats)
+{
+   struct lp_setup_context *setup = lp_setup_context(vbr);
+   struct llvmpipe_context *llvmpipe = llvmpipe_context(setup->pipe);
+
+   llvmpipe->pipeline_statistics.ia_vertices +=
+      stats->ia_vertices;
+   llvmpipe->pipeline_statistics.ia_primitives +=
+      stats->ia_primitives;
+   llvmpipe->pipeline_statistics.vs_invocations +=
+      stats->vs_invocations;
+   llvmpipe->pipeline_statistics.gs_invocations +=
+      stats->gs_invocations;
+   llvmpipe->pipeline_statistics.gs_primitives +=
+      stats->gs_primitives;
+   llvmpipe->pipeline_statistics.c_invocations +=
+      stats->c_invocations;
+}
+
 /**
  * Create the post-transform vertex handler for the given context.
  */
@@ -566,4 +588,5 @@ lp_setup_init_vbuf(struct lp_setup_context *setup)
    setup->base.release_vertices = lp_setup_release_vertices;
    setup->base.destroy = lp_setup_vbuf_destroy;
    setup->base.set_stream_output_info = lp_setup_so_info;
+   setup->base.pipeline_statistics = lp_setup_pipeline_statistics;
 }

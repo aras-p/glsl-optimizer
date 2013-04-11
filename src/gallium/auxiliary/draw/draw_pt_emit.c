@@ -33,6 +33,7 @@
 #include "draw/draw_pt.h"
 #include "translate/translate.h"
 #include "translate/translate_cache.h"
+#include "util/u_prim.h"
 
 struct pt_emit {
    struct draw_context *draw;
@@ -179,6 +180,12 @@ draw_pt_emit(struct pt_emit *emit,
         i < prim_info->primitive_count;
         start += prim_info->primitive_lengths[i], i++)
    {
+      if (draw->collect_statistics) {
+         draw->statistics.c_invocations +=
+            u_decomposed_prims_for_vertices(prim_info->prim,
+                                            prim_info->primitive_lengths[i]);
+      }
+         
       render->draw_elements(render,
                             elts + start,
                             prim_info->primitive_lengths[i]);
@@ -252,11 +259,17 @@ draw_pt_emit_linear(struct pt_emit *emit,
         i < prim_info->primitive_count;
         start += prim_info->primitive_lengths[i], i++)
    {
+      if (draw->collect_statistics) {
+         draw->statistics.c_invocations +=
+            u_decomposed_prims_for_vertices(prim_info->prim,
+                                            prim_info->primitive_lengths[i]);
+      }
+
       render->draw_arrays(render,
                           start,
                           prim_info->primitive_lengths[i]);
    }
-
+   
    render->release_vertices(render);
 
    return;

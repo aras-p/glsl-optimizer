@@ -165,12 +165,14 @@ u_vertices_per_prim(int primitive)
 /**
  * Returns the number of decomposed primitives for the given
  * vertex count.
- * Geometry shader is invoked once for each triangle in
+ * Parts of the pipline are invoked once for each triangle in
  * triangle strip, triangle fans and triangles and once
- * for each line in line strip, line loop, lines.
+ * for each line in line strip, line loop, lines. Also 
+ * statistics depend on knowing the exact number of decomposed
+ * primitives for a set of vertices.
  */
 static INLINE unsigned
-u_gs_prims_for_vertices(int primitive, int vertices)
+u_decomposed_prims_for_vertices(int primitive, int vertices)
 {
    switch(primitive) {
    case PIPE_PRIM_POINTS:
@@ -180,31 +182,34 @@ u_gs_prims_for_vertices(int primitive, int vertices)
    case PIPE_PRIM_LINE_LOOP:
       return vertices;
    case PIPE_PRIM_LINE_STRIP:
-      return vertices - 1;
+      return (vertices > 1) ? vertices - 1 : 0;
    case PIPE_PRIM_TRIANGLES:
       return vertices /  3;
    case PIPE_PRIM_TRIANGLE_STRIP:
-      return vertices - 2;
+      return (vertices > 2) ? vertices - 2 : 0;
    case PIPE_PRIM_TRIANGLE_FAN:
-      return vertices - 2;
+      return (vertices > 2) ? vertices - 2 : 0;
    case PIPE_PRIM_LINES_ADJACENCY:
       return vertices / 2;
    case PIPE_PRIM_LINE_STRIP_ADJACENCY:
-      return vertices - 1;
+      return (vertices > 1) ? vertices - 1 : 0;
    case PIPE_PRIM_TRIANGLES_ADJACENCY:
       return vertices / 3;
    case PIPE_PRIM_TRIANGLE_STRIP_ADJACENCY:
-      return vertices - 2;
-
-   /* following primitives should never be used
-    * with geometry shaders abd their size is
-    * undefined */
-   case PIPE_PRIM_POLYGON:
+      return (vertices > 2) ? vertices - 2 : 0;
    case PIPE_PRIM_QUADS:
+      return vertices / 4;
    case PIPE_PRIM_QUAD_STRIP:
+      return (vertices > 4) ? (vertices - 2) / 2 : 0;
+   /* Polygons can't be decomposed
+    * because the number of their vertices isn't known so
+    * for them and whatever else we don't recognize just
+    * return 1 if the number of vertices is greater than
+    * 3 and zero otherwise */
+   case PIPE_PRIM_POLYGON:
    default:
-      debug_printf("Unrecognized geometry shader primitive");
-      return 3;
+      debug_printf("Invalid decomposition primitive!\n");
+      return (vertices > 3) ? 1 : 0;
    }
 }
 

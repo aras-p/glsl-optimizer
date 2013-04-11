@@ -264,6 +264,13 @@ void draw_set_driver_clipping( struct draw_context *draw,
 void draw_set_force_passthrough( struct draw_context *draw, 
                                  boolean enable );
 
+
+/*******************************************************************************
+ * Draw statistics
+ */
+void draw_collect_pipeline_statistics(struct draw_context *draw,
+                                      boolean enable);
+
 /*******************************************************************************
  * Draw pipeline 
  */

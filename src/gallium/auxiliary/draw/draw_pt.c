@@ -34,6 +34,7 @@
 #include "draw/draw_gs.h"
 #include "draw/draw_private.h"
 #include "draw/draw_pt.h"
+#include "draw/draw_vbuf.h"
 #include "draw/draw_vs.h"
 #include "tgsi/tgsi_dump.h"
 #include "util/u_math.h"
@@ -545,6 +546,11 @@ draw_vbo(struct draw_context *draw,
       return;
    }
 
+   /* If we're collecting stats then make sure we start from scratch */
+   if (draw->collect_statistics) {
+      memset(&draw->statistics, 0, sizeof(draw->statistics));
+   }
+
    draw->pt.max_index = index_limit - 1;
 
    /*
@@ -561,5 +567,10 @@ draw_vbo(struct draw_context *draw,
       else {
          draw_pt_arrays(draw, info->mode, info->start, count);
       }
+   }
+
+   /* If requested emit the pipeline statistics for this run */
+   if (draw->collect_statistics) {
+      draw->render->pipeline_statistics(draw->render, &draw->statistics);
    }
 }

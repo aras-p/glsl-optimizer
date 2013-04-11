@@ -312,6 +312,9 @@ struct draw_context
    const struct pipe_sampler_state *samplers[PIPE_SHADER_TYPES][PIPE_MAX_SAMPLERS];
    unsigned num_samplers[PIPE_SHADER_TYPES];
 
+   struct pipe_query_data_pipeline_statistics statistics;
+   boolean collect_statistics;
+
    void *driver_private;
 };
 

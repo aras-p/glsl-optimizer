@@ -477,6 +477,7 @@ lp_rast_begin_query(struct lp_rasterizer_task *task,
    case PIPE_QUERY_PRIMITIVES_GENERATED:
    case PIPE_QUERY_PRIMITIVES_EMITTED:
    case PIPE_QUERY_SO_STATISTICS:
+   case PIPE_QUERY_PIPELINE_STATISTICS:
       break;
    default:
       assert(0);
@@ -509,6 +510,7 @@ lp_rast_end_query(struct lp_rasterizer_task *task,
    case PIPE_QUERY_PRIMITIVES_GENERATED:
    case PIPE_QUERY_PRIMITIVES_EMITTED:
    case PIPE_QUERY_SO_STATISTICS:
+   case PIPE_QUERY_PIPELINE_STATISTICS:
       break;
    default:
       assert(0);

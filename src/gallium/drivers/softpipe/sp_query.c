@@ -43,6 +43,8 @@ struct softpipe_query {
    uint64_t end;
    struct pipe_query_data_so_statistics so;
    unsigned num_primitives_generated;
+
+   struct pipe_query_data_pipeline_statistics stats;
 };
 
 
@@ -61,7 +63,8 @@ softpipe_create_query(struct pipe_context *pipe,
           type == PIPE_QUERY_TIME_ELAPSED ||
           type == PIPE_QUERY_SO_STATISTICS ||
           type == PIPE_QUERY_PRIMITIVES_EMITTED ||
-          type == PIPE_QUERY_PRIMITIVES_GENERATED ||
+          type == PIPE_QUERY_PRIMITIVES_GENERATED || 
+          type == PIPE_QUERY_PIPELINE_STATISTICS ||
           type == PIPE_QUERY_GPU_FINISHED ||
           type == PIPE_QUERY_TIMESTAMP ||
           type == PIPE_QUERY_TIMESTAMP_DISJOINT);
@@ -106,6 +109,16 @@ softpipe_begin_query(struct pipe_context *pipe, struct pipe_query *q)
    case PIPE_QUERY_TIMESTAMP:
    case PIPE_QUERY_GPU_FINISHED:
       break;
+   case PIPE_QUERY_PIPELINE_STATISTICS:
+      /* reset our cache */
+      if (softpipe->active_statistics_queries == 0) {
+         memset(&softpipe->pipeline_statistics, 0,
+                sizeof(softpipe->pipeline_statistics));
+      }
+      memcpy(&sq->stats, &softpipe->pipeline_statistics,
+             sizeof(sq->stats));
+      softpipe->active_statistics_queries++;
+      break;
    default:
       assert(0);
       break;
@@ -145,6 +158,26 @@ softpipe_end_query(struct pipe_context *pipe, struct pipe_query *q)
       break;
    case PIPE_QUERY_GPU_FINISHED:
       break;
+   case PIPE_QUERY_PIPELINE_STATISTICS:
+      sq->stats.ia_vertices =
+         softpipe->pipeline_statistics.ia_vertices - sq->stats.ia_vertices;
+      sq->stats.ia_primitives =
+         softpipe->pipeline_statistics.ia_primitives - sq->stats.ia_primitives;
+      sq->stats.vs_invocations =
+         softpipe->pipeline_statistics.vs_invocations - sq->stats.vs_invocations;
+      sq->stats.gs_invocations =
+         softpipe->pipeline_statistics.gs_invocations - sq->stats.gs_invocations;
+      sq->stats.gs_primitives =
+         softpipe->pipeline_statistics.gs_primitives - sq->stats.gs_primitives;
+      sq->stats.c_invocations =
+         softpipe->pipeline_statistics.c_invocations - sq->stats.c_invocations;
+      sq->stats.c_primitives =
+         softpipe->pipeline_statistics.c_primitives - sq->stats.c_primitives;
+      sq->stats.ps_invocations =
+         softpipe->pipeline_statistics.ps_invocations - sq->stats.ps_invocations;
+
+      softpipe->active_statistics_queries--;
+      break;
    default:
       assert(0);
       break;
@@ -166,6 +199,10 @@ softpipe_get_query_result(struct pipe_context *pipe,
    case PIPE_QUERY_SO_STATISTICS:
       memcpy(vresult, &sq->so,
              sizeof(struct pipe_query_data_so_statistics));
+      break;
+   case PIPE_QUERY_PIPELINE_STATISTICS:
+      memcpy(vresult, &sq->stats,
+             sizeof(struct pipe_query_data_pipeline_statistics));;
       break;
    case PIPE_QUERY_GPU_FINISHED:
       *result = TRUE;
