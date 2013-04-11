@@ -711,13 +711,18 @@ static void i915_set_fragment_sampler_views(struct pipe_context *pipe,
        !memcmp(i915->fragment_sampler_views, views, num * sizeof(struct pipe_sampler_view *)))
       return;
 
-   for (i = 0; i < num; i++)
+   for (i = 0; i < num; i++) {
+      /* Note: we're using pipe_sampler_view_release() here to work around
+       * a possible crash when the old view belongs to another context that
+       * was already destroyed.
+       */
+      pipe_sampler_view_release(pipe, &i915->fragment_sampler_views[i]);
       pipe_sampler_view_reference(&i915->fragment_sampler_views[i],
                                   views[i]);
+   }
 
    for (i = num; i < i915->num_fragment_sampler_views; i++)
-      pipe_sampler_view_reference(&i915->fragment_sampler_views[i],
-                                  NULL);
+      pipe_sampler_view_release(pipe, &i915->fragment_sampler_views[i]);
 
    i915->num_fragment_sampler_views = num;
 
