@@ -211,8 +211,9 @@ intel_bufferobj_subdata(struct gl_context * ctx,
 	 intel_bufferobj_alloc_buffer(intel, intel_obj);
 	 drm_intel_bo_subdata(intel_obj->buffer, 0, size, data);
       } else {
-         perf_debug("Using a blit copy to avoid stalling on glBufferSubData() "
-                    "to a busy buffer object.\n");
+         perf_debug("Using a blit copy to avoid stalling on %ldb "
+                    "glBufferSubData() to a busy buffer object.\n",
+                    (long)size);
 	 drm_intel_bo *temp_bo =
 	    drm_intel_bo_alloc(intel->bufmgr, "subdata temp", size, 64);
 
