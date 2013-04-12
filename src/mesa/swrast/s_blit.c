@@ -564,22 +564,10 @@ blit_linear(struct gl_context *ctx,
     * Keep two adjacent src rows around for bilinear sampling.
     */
    srcBuffer0 = malloc(pixelSize * srcWidth);
-   if (!srcBuffer0) {
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBlitFrameBufferEXT");
-      return;
-   }
    srcBuffer1 = malloc(pixelSize * srcWidth);
-   if (!srcBuffer1) {
-      free(srcBuffer0);
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBlitFrameBufferEXT");
-      return;
-   }
    dstBuffer = malloc(pixelSize * dstWidth);
-   if (!dstBuffer) {
-      free(srcBuffer0);
-      free(srcBuffer1);
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBlitFrameBufferEXT");
-      return;
+   if (!srcBuffer0 || !srcBuffer1 || !dstBuffer) {
+      goto fail_no_memory;
    }
 
    for (i = 0; i < drawFb->_NumColorDrawBuffers; i++) {
@@ -610,11 +598,7 @@ blit_linear(struct gl_context *ctx,
                                      GL_MAP_READ_BIT | GL_MAP_WRITE_BIT,
                                      &srcMap, &srcRowStride);
          if (!srcMap) {
-            free(srcBuffer0);
-            free(srcBuffer1);
-            free(dstBuffer);
-            _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBlitFramebuffer");
-            return;
+            goto fail_no_memory;
          }
 
          dstMap = srcMap;
@@ -629,22 +613,14 @@ blit_linear(struct gl_context *ctx,
                                      0, 0, readRb->Width, readRb->Height,
                                      GL_MAP_READ_BIT, &srcMap, &srcRowStride);
          if (!srcMap) {
-            free(srcBuffer0);
-            free(srcBuffer1);
-            free(dstBuffer);
-            _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBlitFramebuffer");
-            return;
+            goto fail_no_memory;
          }
          ctx->Driver.MapRenderbuffer(ctx, drawRb,
                                      0, 0, drawRb->Width, drawRb->Height,
                                      GL_MAP_WRITE_BIT, &dstMap, &dstRowStride);
          if (!dstMap) {
             ctx->Driver.UnmapRenderbuffer(ctx, readRb);
-            free(srcBuffer0);
-            free(srcBuffer1);
-            free(dstBuffer);
-            _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBlitFramebuffer");
-            return;
+            goto fail_no_memory;
          }
       }
 
@@ -743,6 +719,12 @@ blit_linear(struct gl_context *ctx,
          ctx->Driver.UnmapRenderbuffer(ctx, drawRb);
       }
    }
+
+fail_no_memory:
+   free(srcBuffer0);
+   free(srcBuffer1);
+   free(dstBuffer);
+   _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBlitFramebuffer");
 }
 
 
