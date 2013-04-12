@@ -87,6 +87,7 @@ struct st_context
    boolean prefer_blit_based_texture_transfer;
 
    boolean needs_texcoord_semantic;
+   boolean apply_texture_swizzle_to_border_color;
 
    /* On old libGL's for linux we need to invalidate the drawables
     * on glViewpport calls, this is set via a option.

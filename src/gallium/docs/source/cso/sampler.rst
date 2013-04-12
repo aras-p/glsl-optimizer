@@ -101,7 +101,9 @@ max_lod
 border_color
     Color union used for texel coordinates that are outside the [0,width-1],
     [0, height-1] or [0, depth-1] ranges. Interpreted according to sampler
-    view format.
+    view format, unless the driver reports
+    PIPE_CAP_TEXTURE_BORDER_COLOR_QUIRK, in which case special care has to be
+    taken (see description of the cap).
 max_anisotropy
     Maximum anistropy ratio to use when sampling from textures.  For example,
     if max_anistropy=4, a region of up to 1 by 4 texels will be sampled.

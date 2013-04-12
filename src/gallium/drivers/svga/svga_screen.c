@@ -166,6 +166,8 @@ svga_get_param(struct pipe_screen *screen, enum pipe_cap param)
       return 1;
    case PIPE_CAP_TEXTURE_SWIZZLE:
       return 1;
+   case PIPE_CAP_TEXTURE_BORDER_COLOR_QUIRK:
+      return 0;
    case PIPE_CAP_USER_VERTEX_BUFFERS:
    case PIPE_CAP_USER_INDEX_BUFFERS:
       return 0;

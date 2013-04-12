@@ -632,6 +632,40 @@ void util_format_compose_swizzles(const unsigned char swz1[4],
    }
 }
 
+void util_format_apply_color_swizzle(union pipe_color_union *dst,
+                                     const union pipe_color_union *src,
+                                     const unsigned char swz[4],
+                                     const boolean is_integer)
+{
+   unsigned c;
+
+   if (is_integer) {
+      for (c = 0; c < 4; ++c) {
+         switch (swz[c]) {
+         case PIPE_SWIZZLE_RED:   dst->ui[c] = src->ui[0]; break;
+         case PIPE_SWIZZLE_GREEN: dst->ui[c] = src->ui[1]; break;
+         case PIPE_SWIZZLE_BLUE:  dst->ui[c] = src->ui[2]; break;
+         case PIPE_SWIZZLE_ALPHA: dst->ui[c] = src->ui[3]; break;
+         default:
+            dst->ui[c] = (swz[c] == PIPE_SWIZZLE_ONE) ? 1 : 0;
+            break;
+         }
+      }
+   } else {
+      for (c = 0; c < 4; ++c) {
+         switch (swz[c]) {
+         case PIPE_SWIZZLE_RED:   dst->f[c] = src->f[0]; break;
+         case PIPE_SWIZZLE_GREEN: dst->f[c] = src->f[1]; break;
+         case PIPE_SWIZZLE_BLUE:  dst->f[c] = src->f[2]; break;
+         case PIPE_SWIZZLE_ALPHA: dst->f[c] = src->f[3]; break;
+         default:
+            dst->f[c] = (swz[c] == PIPE_SWIZZLE_ONE) ? 1.0f : 0.0f;
+            break;
+         }
+      }
+   }
+}
+
 void util_format_swizzle_4f(float *dst, const float *src,
                             const unsigned char swz[4])
 {

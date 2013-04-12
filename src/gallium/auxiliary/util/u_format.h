@@ -33,6 +33,9 @@
 #include "pipe/p_format.h"
 #include "util/u_debug.h"
 
+union pipe_color_union;
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -1116,6 +1119,15 @@ util_format_translate(enum pipe_format dst_format,
 void util_format_compose_swizzles(const unsigned char swz1[4],
                                   const unsigned char swz2[4],
                                   unsigned char dst[4]);
+
+/* Apply the swizzle provided in \param swz (which is one of PIPE_SWIZZLE_x)
+ * to \param src and store the result in \param dst.
+ * \param is_integer determines the value written for PIPE_SWIZZLE_ONE.
+ */
+void util_format_apply_color_swizzle(union pipe_color_union *dst,
+                                     const union pipe_color_union *src,
+                                     const unsigned char swz[4],
+                                     const boolean is_integer);
 
 void util_format_swizzle_4f(float *dst, const float *src,
                             const unsigned char swz[4]);

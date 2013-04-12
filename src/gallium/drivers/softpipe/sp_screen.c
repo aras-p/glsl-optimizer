@@ -94,6 +94,8 @@ softpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
       return 1;
    case PIPE_CAP_TEXTURE_SWIZZLE:
       return 1;
+   case PIPE_CAP_TEXTURE_BORDER_COLOR_QUIRK:
+      return 0;
    case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
       return SP_MAX_TEXTURE_2D_LEVELS;
    case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:

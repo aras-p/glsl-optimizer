@@ -48,6 +48,8 @@
 
 #include "cso_cache/cso_context.h"
 
+#include "util/u_format.h"
+
 
 /**
  * Convert GLenum texcoord wrap tokens to pipe tokens.
@@ -172,8 +174,10 @@ convert_sampler(struct st_context *st,
        msamp->BorderColor.ui[1] ||
        msamp->BorderColor.ui[2] ||
        msamp->BorderColor.ui[3]) {
+      struct st_texture_object *stobj = st_texture_object(texobj);
       struct gl_texture_image *teximg;
       GLboolean is_integer = GL_FALSE;
+      union pipe_color_union border_color;
 
       teximg = texobj->Image[0][texobj->BaseLevel];
 
@@ -181,9 +185,26 @@ convert_sampler(struct st_context *st,
          is_integer = _mesa_is_enum_format_integer(teximg->InternalFormat);
       }
 
-      st_translate_color(&msamp->BorderColor,
-                         &sampler->border_color,
-                         teximg ? teximg->_BaseFormat : GL_RGBA, is_integer);
+      if (st->apply_texture_swizzle_to_border_color && stobj->sampler_view) {
+         const unsigned char swz[4] =
+         {
+            stobj->sampler_view->swizzle_r,
+            stobj->sampler_view->swizzle_g,
+            stobj->sampler_view->swizzle_b,
+            stobj->sampler_view->swizzle_a,
+         };
+
+         st_translate_color(&msamp->BorderColor,
+                            &border_color,
+                            teximg ? teximg->_BaseFormat : GL_RGBA, is_integer);
+
+         util_format_apply_color_swizzle(&sampler->border_color,
+                                         &border_color, swz, is_integer);
+      } else {
+         st_translate_color(&msamp->BorderColor,
+                            &sampler->border_color,
+                            teximg ? teximg->_BaseFormat : GL_RGBA, is_integer);
+      }
    }
 
    sampler->max_anisotropy = (msamp->MaxAnisotropy == 1.0 ?

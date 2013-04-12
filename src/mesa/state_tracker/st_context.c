@@ -188,6 +188,10 @@ st_create_context_priv( struct gl_context *ctx, struct pipe_context *pipe,
 
    st->needs_texcoord_semantic =
       screen->get_param(screen, PIPE_CAP_TGSI_TEXCOORD);
+   st->apply_texture_swizzle_to_border_color =
+      !!(screen->get_param(screen, PIPE_CAP_TEXTURE_BORDER_COLOR_QUIRK) &
+         (PIPE_QUIRK_TEXTURE_BORDER_COLOR_SWIZZLE_NV50 |
+          PIPE_QUIRK_TEXTURE_BORDER_COLOR_SWIZZLE_R600));
 
    /* GL limits and extensions */
    st_init_limits(st);
