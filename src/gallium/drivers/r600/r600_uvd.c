@@ -76,6 +76,8 @@ struct pipe_video_buffer *r600_video_buffer_create(struct pipe_context *pipe,
 	template.height = align(tmpl->height / depth, VL_MACROBLOCK_HEIGHT);
 
 	vl_vide_buffer_template(&templ, &template, resource_formats[0], depth, PIPE_USAGE_STATIC, 0);
+	if (ctx->chip_class < EVERGREEN)
+		templ.flags = R600_RESOURCE_FLAG_TRANSFER;
 	resources[0] = (struct r600_texture *)
 		pipe->screen->resource_create(pipe->screen, &templ);
 	if (!resources[0])
@@ -83,6 +85,8 @@ struct pipe_video_buffer *r600_video_buffer_create(struct pipe_context *pipe,
 
 	if (resource_formats[1] != PIPE_FORMAT_NONE) {
 		vl_vide_buffer_template(&templ, &template, resource_formats[1], depth, PIPE_USAGE_STATIC, 1);
+		if (ctx->chip_class < EVERGREEN)
+			templ.flags = R600_RESOURCE_FLAG_TRANSFER;
 		resources[1] = (struct r600_texture *)
 			pipe->screen->resource_create(pipe->screen, &templ);
 		if (!resources[1])
@@ -91,6 +95,8 @@ struct pipe_video_buffer *r600_video_buffer_create(struct pipe_context *pipe,
 
 	if (resource_formats[2] != PIPE_FORMAT_NONE) {
 		vl_vide_buffer_template(&templ, &template, resource_formats[2], depth, PIPE_USAGE_STATIC, 2);
+		if (ctx->chip_class < EVERGREEN)
+			templ.flags = R600_RESOURCE_FLAG_TRANSFER;
 		resources[2] = (struct r600_texture *)
 			pipe->screen->resource_create(pipe->screen, &templ);
 		if (!resources[2])
@@ -103,11 +109,6 @@ struct pipe_video_buffer *r600_video_buffer_create(struct pipe_context *pipe,
 
 		pbs[i] = &resources[i]->resource.buf;
 		surfaces[i] = &resources[i]->surface;
-
-		if (ctx->chip_class < EVERGREEN) {
-			resources[i]->array_mode[0] = V_038000_ARRAY_LINEAR_ALIGNED;
-			resources[i]->surface.level[0].mode = RADEON_SURF_MODE_LINEAR_ALIGNED;
-		}
 	}
 
 	ruvd_join_surfaces(ctx->ws, templ.bind, pbs, surfaces);
