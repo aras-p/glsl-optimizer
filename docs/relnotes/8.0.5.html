@@ -1,0 +1,264 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <title>Mesa Release Notes</title>
+  <link rel="stylesheet" type="text/css" href="../mesa.css">
+</head>
+<body>
+
+<div class="header">
+  <h1>The Mesa 3D Graphics Library</h1>
+</div>
+
+<iframe src="../contents.html"></iframe>
+<div class="content">
+
+<h1>Mesa 8.0.5 Release Notes / October 24, 2012</h1>
+
+<p>
+Mesa 8.0.5 is a bug fix release which fixes bugs found since the 8.0.4 release.
+</p>
+<p>
+Mesa 8.0.5 implements the OpenGL 3.0 API, but the version reported by
+glGetString(GL_VERSION) depends on the particular driver being used.
+Some drivers don't support all the features required in OpenGL 3.0.
+</p>
+<p>
+See the <a href="../install.html">Compiling/Installing page</a> for prerequisites
+for DRI hardware acceleration.
+</p>
+
+
+<h2>MD5 checksums</h2>
+<pre>
+cda5d101f43b8784fa60bdeaca4056f2  MesaLib-8.0.5.tar.gz
+01305591073a76b65267f69f27d635a3  MesaLib-8.0.5.tar.bz2
+97f11c00cac8fb98aa0131990086dc8e  MesaLib-8.0.5.zip
+</pre>
+
+<h2>New features</h2>
+<p>None.</p>
+
+<h2>Bug fixes</h2>
+
+<p>This list is likely incomplete.</p>
+
+<ul>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=44912">Bug 44912</a> - [bisected] WebGL conformance/textures/texture-mips tests fails</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=46644">Bug 46644</a> - Sandybridge Mobile: ARBfp TXP with coords from fragment.color doesn't apply W divide</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=46784">Bug 46784</a> - MAD using multiply written register fails</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=47375">Bug 47375</a> - Blender crash on startup after upgrade to mesa 8.0.1</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=48120">Bug 48120</a> - GL_EXT_texture_sRGB_decode still broken</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=48628">Bug 48628</a> - [bisected ILK]Oglc fogexp(basic.allCases) regressed</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=49772">Bug 49772</a> - [SNB]Oglc depth-stencil(basic.read.ds) regressed</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=52129">Bug 52129</a> - [Bisected ILK]Piglit spec_ARB_shader_texture_lod_execution_glsl-fs-shadow2DGradARB-01  regressed</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=52382">Bug 52382</a> - [ivb gt1] Severe image corruption and GPU Hang, too many PS threads</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=52563">Bug 52563</a> - build failure - struct radeon_renderbuffer has no member named Base</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=53311">Bug 53311</a> - [Bisected IVB]Oglc transform_feedback(advanced.transformFeedback.points) Invalid argument</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=53314">Bug 53314</a> - [llvmpipe] src/gallium/drivers/llvmpipe/lp_texture.c:920:llvmpipe_get_texture_tile_layout: Assertion `x &lt; lpr-&gt;tiles_per_row[level]' failed.</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=53316">Bug 53316</a> - [llvmpipe] src/gallium/drivers/llvmpipe/lp_texture.c:601:llvmpipe_get_transfer: Assertion `resource' failed.</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=53317">Bug 53317</a> - [llvmpipe] SIGSEGV src/gallium/auxiliary/gallivm/lp_bld_sample.c:99</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=53318">Bug 53318</a> - [softpipe] sp_state_shader.c:194:softpipe_delete_fs_state: Assertion `var != softpipe-&gt;fs_variant' failed.</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=53319">Bug 53319</a> - [softpipe] sp_texture.c:322:softpipe_get_transfer: Assertion `level &lt;= resource-&gt;last_level' failed.</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=53618">Bug 53618</a> - [Bisected i915]Piglit glx_GLX_ARB_create_context_NULL_attribute_list Aborted</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=53972">Bug 53972</a> - Black Mirror III: too dark</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=54183">Bug 54183</a> - [Bisected ILK regression]many piglit/oglc/ogles2 cases Segmentation fault</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=54193">Bug 54193</a> - output_components uninitialized in fs_visitor::emit_fb_writes()</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=54301">Bug 54301</a> - [Bisected ILK regression]Piglit glx_GLX_ARB_create_context_forward-compatible_flag_with_3.0 Segmentation fault</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=56211">Bug 56211</a> - src/mesa/state_tracker/st_cb_texture.c:1123:copy_image_data_to_texture: Assertion `u_minify(stImage-&gt;pt-&gt;height0, src_level) == stImage-&gt;base.Height' failed.</li>
+
+<!-- <li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=">Bug </a> - </li> -->
+
+</ul>
+
+
+<h2>Changes</h2>
+<p>The full set of changes can be viewed by using the following GIT command:</p>
+
+<pre>
+  git log mesa-8.0.4..mesa-8.0.5
+</pre>
+
+<p>Alex Deucher (3):</p>
+<ul>
+  <li>r600g: 8.0.x support for Trinity</li>
+  <li>r600g: add new Sumo, Palm, BTC pci ids</li>
+  <li>r600g: add additional evergreen pci ids</li>
+</ul>
+
+<p>Andreas Boll (4):</p>
+<ul>
+  <li>docs/relnotes-8.0.4: fix html markup</li>
+  <li>mesa: fix html in shortlog_mesa.sh script</li>
+  <li>mesa: add get-pick-list.sh script into bin/</li>
+  <li>mesa: Bump version number to 8.0.5</li>
+</ul>
+
+<p>Brian Paul (18):</p>
+<ul>
+  <li>mesa: use _mesa_is_user_fbo() and _mesa_is_winsys_fbo() functions</li>
+  <li>intel: use _mesa_is_winsys/user_fbo() helpers</li>
+  <li>st/egl: fix uninitialized pointer bug</li>
+  <li>mesa: added Ian's shortlog_mesa.sh script in bin/</li>
+  <li>mesa: loosen small matrix determinant check</li>
+  <li>xlib: add X error handler around XGetImage() call</li>
+  <li>radeon: set swrast_renderbuffer::ColorType field when mapping renderbuffers</li>
+  <li>svga: fix invalid memory reference in needs_to_create_zero()</li>
+  <li>meta: fix glDrawPixels fallback test, stencil drawing</li>
+  <li>radeon: fix Base/base typo</li>
+  <li>st/mesa: fix glCopyTexSubImage crash</li>
+  <li>gallivm: fix crash in lp_sampler_static_state()</li>
+  <li>st/mesa: fix renderbuffer validation bug</li>
+  <li>softpipe: fix softpipe_delete_fs_state() failed assertion</li>
+  <li>mesa: raise GL_INVALID_OPERATION in glGenerateMipmap for missing base image</li>
+  <li>st/mesa: s/CALLOC/calloc/ to fix allocation bug</li>
+  <li>mesa: do internal format error checking for glTexStorage()</li>
+  <li>mesa: fix incorrect error for glCompressedSubTexImage</li>
+</ul>
+
+<p>Chad Versace (3):</p>
+<ul>
+  <li>mesa: Don't advertise GLES extensions in GL contexts</li>
+  <li>i830: Fix stack corruption</li>
+  <li>swrast: Fix implicit declaration warnings</li>
+</ul>
+
+<p>Chris Forbes (1):</p>
+<ul>
+  <li>mesa: fix dropped &amp;&amp; in glGetStringi()</li>
+</ul>
+
+<p>Christoph Bumiller (1):</p>
+<ul>
+  <li>st/mesa: call update_renderbuffer_surface for sRGB renderbuffers, too</li>
+</ul>
+
+<p>Eric Anholt (9):</p>
+<ul>
+  <li>i965/gen7: Reduce GT1 WM thread count according to updated BSpec.</li>
+  <li>i965/fs: Invalidate live intervals in passes that remove an instruction.</li>
+  <li>i965: Fix bug in the old FS backend's projtex() calculation.</li>
+  <li>i965: Add support for GL_SKIP_DECODE_EXT on other SRGB formats.</li>
+  <li>i965/vs: Convert EdgeFlagPointer values appropriately for the VS on gen4.</li>
+  <li>i965: Fix accumulator_contains() test to also reject swizzles of the dst.</li>
+  <li>mesa: Fix glPopAttrib() behavior on GL_FRAMEBUFFER_SRGB.</li>
+  <li>mesa: In conditional rendering fallback, check the query status.</li>
+  <li>i965: Drop the confusing saturate argument to math instruction setup.</li>
+</ul>
+
+<p>Ian Romanick (8):</p>
+<ul>
+  <li>docs: Add 8.0.4 release md5sums</li>
+  <li>Revert "i965: Avoid unnecessary recompiles for shaders that don't use dFdy()."</li>
+  <li>i965: Fix regression in depth texture rendering on pre-SNB</li>
+  <li>dri2: Fix bug in attribute handling for non-desktop OpenGL contexts</li>
+  <li>mesa: Generate an error when glCopyTexImage border is invalid</li>
+  <li>mesa/es: Validate glTexImage border in Mesa code rather than the ES wrapper</li>
+  <li>mesa: Allow glGetTexParameter of GL_TEXTURE_SRGB_DECODE_EXT</li>
+  <li>dri_util: Use calloc to allocate __DRIcontext</li>
+</ul>
+
+<p>Jonas Maebe (1):</p>
+<ul>
+  <li>darwin: do not create double-buffered offscreen pixel formats</li>
+</ul>
+
+<p>Jordan Justen (1):</p>
+<ul>
+  <li>intel: move error on create context to proper path</li>
+</ul>
+
+<p>José Fonseca (1):</p>
+<ul>
+  <li>mesa: disable MSVC global optimization in pack.c</li>
+</ul>
+
+<p>Kenneth Graunke (8):</p>
+<ul>
+  <li>mesa: Use GLdouble for depthMax in final unpack conversions.</li>
+  <li>i965/fs: Initialize output_components[] by filling it with zeros.</li>
+  <li>mesa: Prevent repeated glDeleteShader() from blowing away our refcounts.</li>
+  <li>i965: Support MESA_FORMAT_SIGNED_RGBA_16.</li>
+  <li>glsl: Fix #pragma invariant(all) language version check.</li>
+  <li>i965/vs: Don't clobber sampler message MRFs with subexpressions.</li>
+  <li>intel: Move finish_batch() call before MI_BATCH_BUFFER_END and padding.</li>
+  <li>i965/fs: Don't use brw-&gt;fragment_program in calculate_urb_setup().</li>
+</ul>
+
+<p>Maarten Lankhorst (1):</p>
+<ul>
+  <li>winsys/radeon: Remove unnecessary pipe_thread_destroy in radeon_drm_cs_destroy</li>
+</ul>
+
+<p>Marek Olšák (6):</p>
+<ul>
+  <li>mesa: remove assertions that do not allow compressed 2D_ARRAY textures</li>
+  <li>r300g: fix colormask with non-BGRA formats</li>
+  <li>r600g: fix RSQ of negative value on Cayman</li>
+  <li>r600g: fix EXP on Cayman</li>
+  <li>r600g: fix instance divisor on Cayman</li>
+  <li>gallium/u_blit: set dst format from pipe_resource, not pipe_surface</li>
+</ul>
+
+<p>Michel Dänzer (2):</p>
+<ul>
+  <li>st/mesa: Fix source miptree level for copying data to finalized miptree.</li>
+  <li>st/mesa: Fix assertions for copying texture image to finalized miptree.</li>
+</ul>
+
+<p>Niels Ole Salscheider (1):</p>
+<ul>
+  <li>st/mesa: index can be negative in the PROGRAM_CONSTANT case</li>
+</ul>
+
+<p>Paul Berry (5):</p>
+<ul>
+  <li>i965: Compute dFdy() correctly for FBOs.</li>
+  <li>mesa: Add UsesDFdy to struct gl_fragment_program.</li>
+  <li>i965: Avoid unnecessary recompiles for shaders that don't use dFdy().</li>
+  <li>i965/Gen6: Work around GPU hangs due to misaligned depth coordinate offsets.</li>
+  <li>i965/Gen7: Work around GPU hangs due to misaligned depth coordinate offsets.</li>
+</ul>
+
+<p>Stéphane Marchesin (1):</p>
+<ul>
+  <li>glsl/linker: Avoid buffer over-run in parcel_out_uniform_storage::visit_field</li>
+</ul>
+
+<p>Tapani Pälli (2):</p>
+<ul>
+  <li>xmlconfig: use __progname when building for Android</li>
+  <li>android: do not expose single buffered eglconfigs</li>
+</ul>
+
+<p>Vadim Girlin (1):</p>
+<ul>
+  <li>winsys/radeon: fix relocs caching</li>
+</ul>
+
+</div>
+</body>
+</html>

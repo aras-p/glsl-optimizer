@@ -1,0 +1,235 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <title>Mesa Release Notes</title>
+  <link rel="stylesheet" type="text/css" href="../mesa.css">
+</head>
+<body>
+
+<div class="header">
+  <h1>The Mesa 3D Graphics Library</h1>
+</div>
+
+<iframe src="../contents.html"></iframe>
+<div class="content">
+
+<h1>Mesa 9.1.1 Release Notes / March 19th, 2013</h1>
+
+<p>
+Mesa 9.1.1 is a bug fix release which fixes bugs found since the 9.1 release.
+</p>
+<p>
+Mesa 9.1 implements the OpenGL 3.1 API, but the version reported by
+glGetString(GL_VERSION) or glGetIntegerv(GL_MAJOR_VERSION) /
+glGetIntegerv(GL_MINOR_VERSION) depends on the particular driver being used.
+Some drivers don't support all the features required in OpenGL 3.1.  OpenGL
+3.1 is <strong>only</strong> available if requested at context creation
+because GL_ARB_compatibility is not supported.
+</p>
+
+<h2>MD5 checksums</h2>
+<pre>
+6508d9882d8dce7106717f365632700c  MesaLib-9.1.1.tar.gz
+6ea2bdc3b7ecfb4257b39814b4182580  MesaLib-9.1.1.tar.bz2
+3434c0eb47849a08c53cd32833d10d13  MesaLib-9.1.1.zip
+</pre>
+
+<h2>New features</h2>
+<p>None.</p>
+
+<h2>Bug fixes</h2>
+
+<p>This list is likely incomplete.</p>
+
+<ul>
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=30232">Bug 30232</a> - [GM45] mesa demos spriteblast render incorrectly</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=32429">Bug 32429</a> - [gles2] Ironlake: gl_PointCoord takes no effect for point sprites</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=38086">Bug 38086</a> - Mesa 7.11-devel implementation error: Unexpected program target in destroy_program_variants_cb()</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=57121">Bug 57121</a> - [snb] corrupted GLSL built-in function results when using Uniform Buffer contents as arguments</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=58042">Bug 58042</a> - [bisected] Garbled UI in Team Fortress 2 and Counter-Strike: Source</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=58960">Bug 58960</a> - Texture flicker with fragment shader</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=59495">Bug 59495</a> - [i965 Bisected]Oglc fbblit(advanced.blitFb-3d-cube.mirror.both) fails</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=59783">Bug 59783</a> - [IVB bisected] 3DMMES2.0 Taiji performance reduced by ~13% with gnome-session enable compositing</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=60121">Bug 60121</a> - build - libvdpau_softpipe fails at runtime.</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=60143">Bug 60143</a> - gbm_dri_bo_create fails to initialize bo-&gt;base.base.format</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=60802">Bug 60802</a> - Corruption with DMA ring on cayman</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=60848">Bug 60848</a> - [bisected] r600g: add htile support cause gpu lockup in Dishonored wine.</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=60938">Bug 60938</a> - [softpipe] piglit interpolation-noperspective-gl_BackColor-flat-fixed regression</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=61012">Bug 61012</a> - alloc_layout_array tx * ty assertion failure when making pbuffer current</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=61026">Bug 61026</a> - Segfault in glBitmap when called with PBO source</li>
+
+<!-- <li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=">Bug </a> - </li> -->
+</ul>
+
+
+<h2>Changes</h2>
+<p>The full set of changes can be viewed by using the following GIT command:</p>
+
+<pre>
+  git log mesa-9.1..mesa-9.1.1
+</pre>
+
+
+<p>Adam Sampson (1):</p>
+<ul>
+  <li>autotools: oprofilejit should be included in the list of LLVM components required</li>
+</ul>
+
+<p>Alex Deucher (2):</p>
+<ul>
+  <li>r600g: add Richland APU pci ids</li>
+  <li>r600g: Use blitter rather than DMA for 128bpp on cayman (v3)</li>
+</ul>
+
+<p>Andreas Boll (2):</p>
+<ul>
+  <li>docs: Add 9.1 release md5sums</li>
+  <li>docs: add news item for 9.1 release</li>
+</ul>
+
+<p>Anuj Phogat (1):</p>
+<ul>
+  <li>meta: Allocate texture before initializing texture coordinates</li>
+</ul>
+
+<p>Brian Paul (11):</p>
+<ul>
+  <li>docs: remove stray 'date' text</li>
+  <li>docs: insert links to the 9.0.3 release</li>
+  <li>draw: fix non-perspective interpolation in interp()</li>
+  <li>st/mesa: implement glBitmap unpacking from a PBO, for the cache path</li>
+  <li>st/xlib: initialize the drawable size in create_xmesa_buffer()</li>
+  <li>st/mesa: fix trimming of GL_QUAD_STRIP</li>
+  <li>st/mesa: check for dummy programs in destroy_program_variants()</li>
+  <li>st/mesa: fix polygon offset state translation logic</li>
+  <li>draw: fix broken polygon offset stage</li>
+  <li>llvmpipe: add missing checks for polygon offset point/line modes</li>
+  <li>svga: always link with C++</li>
+</ul>
+
+<p>Daniel van Vugt (1):</p>
+<ul>
+  <li>gbm: Remember to init format on gbm_dri_bo_create.</li>
+</ul>
+
+<p>Eric Anholt (7):</p>
+<ul>
+  <li>i965/fs: Do a general SEND dependency workaround for the original 965.</li>
+  <li>i965/fs: Fix copy propagation with smearing.</li>
+  <li>i965/fs: Delay setup of uniform loads until after pre-regalloc scheduling.</li>
+  <li>i965/fs: Only do CSE when the dst types match.</li>
+  <li>i965/fs: Fix broken math on values loaded from uniform buffers on gen6.</li>
+  <li>mesa: Fix setup of ctx-&gt;Point.PointSprite for GLES2.</li>
+  <li>i965: Fix the W value of deprecated pointcoords on pre-gen6.</li>
+</ul>
+
+<p>Frank Henigman (1):</p>
+<ul>
+  <li>i965: Link i965_dri.so with C++ linker.</li>
+</ul>
+
+<p>Ian Romanick (3):</p>
+<ul>
+  <li>mesa: Add previously picked commit to .cherry-ignore</li>
+  <li>mesa: Modify candidate search string</li>
+  <li>egl: Allow 24-bit visuals for 32-bit RGBA8888 configs</li>
+</ul>
+
+<p>Jakub Bogusz (1):</p>
+<ul>
+  <li>vdpau-softpipe: Build correct source file - vl_winsys_xsp.c</li>
+</ul>
+
+<p>Jerome Glisse (1):</p>
+<ul>
+  <li>r600g: workaround hyperz lockup on evergreen</li>
+</ul>
+
+<p>John Kåre Alsaker (1):</p>
+<ul>
+  <li>llvmpipe: Fix creation of shared and scanout textures.</li>
+</ul>
+
+<p>Jordan Justen (1):</p>
+<ul>
+  <li>attrib: push/pop FRAGMENT_PROGRAM_ARB state</li>
+</ul>
+
+<p>José Fonseca (3):</p>
+<ul>
+  <li>scons: Allows choosing VS 10 or 11.</li>
+  <li>scons: Define _ALLOW_KEYWORD_MACROS on MSVC builds.</li>
+  <li>scons: Warn when using MSVS versions prior to 2012.</li>
+</ul>
+
+<p>Keith Kriewall (1):</p>
+<ul>
+  <li>scons: Fix Windows build with LLVM 3.2</li>
+</ul>
+
+<p>Kenneth Graunke (1):</p>
+<ul>
+  <li>i965: Fix Crystal Well PCI IDs.</li>
+</ul>
+
+<p>Marek Olšák (5):</p>
+<ul>
+  <li>r600g: use async DMA with a non-zero src offset</li>
+  <li>r600g: flush and invalidate htile cache when appropriate</li>
+  <li>gallium/util: add helper code for 1D integer range</li>
+  <li>r600g: always map uninitialized buffer range as unsynchronized</li>
+  <li>r600g: pad the DMA CS to a multiple of 8 dwords</li>
+</ul>
+
+<p>Martin Andersson (1):</p>
+<ul>
+  <li>winsys/radeon: Only add bo to hash table when creating flink</li>
+</ul>
+
+<p>Matt Turner (1):</p>
+<ul>
+  <li>mesa: Allow ETC2/EAC formats with ARB_ES3_compatibility.</li>
+</ul>
+
+<p>Michel Dänzer (3):</p>
+<ul>
+  <li>radeonsi: Fix up and enable flat shading.</li>
+  <li>r600g/Cayman: Fix blending using destination alpha factor but non-alpha dest</li>
+  <li>radeonsi: Fix off-by-one for maximum vertex element index in some cases</li>
+</ul>
+
+<p>Tapani Pälli (2):</p>
+<ul>
+  <li>mesa: add missing case in _mesa_GetTexParameterfv()</li>
+  <li>mesa/es: NULL check in EGLImageTargetTexture2DOES</li>
+</ul>
+
+<p>Vadim Girlin (1):</p>
+<ul>
+  <li>r600g: fix check_and_set_bank_swizzle for cayman</li>
+</ul>
+
+<p>Vincent Lejeune (2):</p>
+<ul>
+  <li>r600g/llvm: Add support for UBO</li>
+  <li>r600g: Check comp_mask before merging export instructions</li>
+</ul>
+
+</div>
+</body>
+</html>
