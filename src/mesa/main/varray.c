@@ -196,6 +196,16 @@ update_array(struct gl_context *ctx,
    if (ctx->Extensions.EXT_vertex_array_bgra &&
        sizeMax == BGRA_OR_4 &&
        size == GL_BGRA) {
+      /* Page 298 of the PDF of the OpenGL 4.3 (Core Profile) spec says:
+       *
+       * "An INVALID_OPERATION error is generated under any of the following
+       *  conditions:
+       *    ...
+       *    • size is BGRA and type is not UNSIGNED_BYTE, INT_2_10_10_10_REV
+       *      or UNSIGNED_INT_2_10_10_10_REV;
+       *    ...
+       *    • size is BGRA and normalized is FALSE;"
+       */
       GLboolean bgra_error = GL_FALSE;
 
       if (ctx->Extensions.ARB_vertex_type_2_10_10_10_rev) {
@@ -207,9 +217,17 @@ update_array(struct gl_context *ctx,
          bgra_error = GL_TRUE;
 
       if (bgra_error) {
-         _mesa_error(ctx, GL_INVALID_VALUE, "%s(GL_BGRA/GLubyte)", func);
+         _mesa_error(ctx, GL_INVALID_OPERATION, "%s(size=GL_BGRA and type=%s)",
+                     func, _mesa_lookup_enum_by_nr(type));
          return;
       }
+
+      if (!normalized) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "%s(size=GL_BGRA and normalized=GL_FALSE)", func);
+         return;
+      }
+
       format = GL_BGRA;
       size = 4;
    }
