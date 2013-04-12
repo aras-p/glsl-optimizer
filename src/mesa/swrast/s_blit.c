@@ -710,15 +710,16 @@ blit_linear(struct gl_context *ctx,
          }
       }
 
-      free(srcBuffer0);
-      free(srcBuffer1);
-      free(dstBuffer);
-
       ctx->Driver.UnmapRenderbuffer(ctx, readRb);
       if (drawRb != readRb) {
          ctx->Driver.UnmapRenderbuffer(ctx, drawRb);
       }
    }
+
+   free(srcBuffer0);
+   free(srcBuffer1);
+   free(dstBuffer);
+   return;
 
 fail_no_memory:
    free(srcBuffer0);
