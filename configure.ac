@@ -1318,10 +1318,10 @@ dnl
 dnl Gallium G3DVL configuration
 dnl
 AC_ARG_ENABLE([gallium-g3dvl],
-    [AS_HELP_STRING([--enable-gallium-g3dvl],
-        [build gallium g3dvl @<:@default=disabled@:>@])],
+    [AS_HELP_STRING([--disable-gallium-g3dvl],
+        [build gallium g3dvl @<:@default=enabled@:>@])],
     [enable_gallium_g3dvl="$enableval"],
-    [enable_gallium_g3dvl=no])
+    [enable_gallium_g3dvl=yes])
 if test "x$enable_gallium_g3dvl" = xyes; then
     if test "x$with_gallium_drivers" = x; then
         AC_MSG_ERROR([cannot enable G3DVL without Gallium])
