@@ -79,4 +79,9 @@ Pulling Mesa upstream:
     # inspect files, git rm unneeded ones, fix conflicts etc.
     # git commit
     
+Rebuilding flex/bison parsers:
+
+* When .y/.l files are changed, the parsers are *not* rebuilt automatically,
+* Run ./generateParsers.sh to do that. You'll need bison & flex (on Mac, do "Install Command Line Tools" from Xcode)
+* I use bison 2.3 and flex 2.5.35 (in OS X 10.8)
 
