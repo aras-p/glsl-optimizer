@@ -66,3 +66,17 @@ Notes
 * GLSL versions 1.10 and 1.20 are supported. 1.10 is the default, use #version 120 to specify 
 1.20.
 * GLSL ES version 1.00 is supported.
+
+
+Dev Notes
+---------
+
+Pulling Mesa upstream:
+
+    git fetch upstream master
+    git merge
+    sh removeDeletedByUs.sh
+    # inspect files, git rm unneeded ones, fix conflicts etc.
+    # git commit
+    
+
