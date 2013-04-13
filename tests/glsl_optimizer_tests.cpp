@@ -39,6 +39,8 @@ static PFNGLGETOBJECTPARAMETERIVARBPROC glGetObjectParameterivARB;
 #include <OpenGL/OpenGL.h>
 #include <AGL/agl.h>
 #include <dirent.h>
+static AGLPixelFormat s_GLPixelFormat;
+static AGLContext s_GLContext;
 #endif
 
 #else // GOT_GFX
@@ -98,9 +100,9 @@ static bool InitializeOpenGL ()
 	attributes[i++]=AGL_NO_RECOVERY;
 	attributes[i++]=AGL_NONE;
 	
-	AGLPixelFormat pixelFormat = aglChoosePixelFormat(NULL,0,attributes);
-	AGLContext agl = aglCreateContext(pixelFormat, NULL);
-	aglSetCurrentContext (agl);
+	s_GLPixelFormat = aglChoosePixelFormat(NULL,0,attributes);
+	s_GLContext = aglCreateContext(s_GLPixelFormat, NULL);
+	aglSetCurrentContext (s_GLContext);
 
 #endif
 
@@ -122,6 +124,20 @@ static bool InitializeOpenGL ()
 
 #endif
 	return hasGLSL;
+}
+
+static void CleanupGL()
+{
+#if GOT_GFX
+	#ifdef __APPLE__
+	if (s_GLContext)
+	{
+		aglSetCurrentContext(NULL);
+		aglDestroyContext(s_GLContext);
+		aglDestroyPixelFormat(s_GLPixelFormat);
+	}
+	#endif // #ifdef __APPLE__
+#endif // #if GOT_GFX
 }
 
 static void replace_string (std::string& target, const std::string& search, const std::string& replace, size_t startPos)
@@ -451,6 +467,7 @@ int main (int argc, const char** argv)
 
 	for (int i = 0; i < 2; ++i)
 		glslopt_cleanup (ctx[i]);
+	CleanupGL();
 
 	return errors ? 1 : 0;
 }
