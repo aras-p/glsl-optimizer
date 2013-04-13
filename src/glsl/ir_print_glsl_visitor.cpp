@@ -280,12 +280,13 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
 {
    const char *const cent = (ir->centroid) ? "centroid " : "";
    const char *const inv = (ir->invariant) ? "invariant " : "";
-   const char *const mode[3][8] = 
+   const char *const mode[3][ir_var_mode_count] = 
    {
-	{ "", "uniform ", "in ",        "out ",     "inout ", "", "", "" },
-	{ "", "uniform ", "attribute ", "varying ", "inout ", "", "", "" },
-	{ "", "uniform ", "varying ",   "out ",     "inout ", "", "", "" },
+	{ "", "uniform ", "in ",        "out ",     "in ", "out ", "inout ", "", "", "" },
+	{ "", "uniform ", "attribute ", "varying ", "in ", "out ", "inout ", "", "", "" },
+	{ "", "uniform ", "varying ",   "out ",     "in ", "out ", "inout ", "", "", "" },
    };
+	
    const char *const interp[] = { "", "smooth ", "flat ", "noperspective " };
 	
 	int decormode = this->mode;
@@ -468,6 +469,18 @@ static const char *const operator_glsl_strs[] = {
 	"cos", // reduced
 	"dFdx",
 	"dFdy",
+	"packSnorm2x16",
+	"packSnorm4x8",
+	"packUnorm2x16",
+	"packUnorm4x8",
+	"packHalf2x16",
+	"unpackSnorm2x16",
+	"unpackSnorm4x8",
+	"unpackUnorm2x16",
+	"unpackUnorm4x8",
+	"unpackHalf2x16",
+	"unpackHalf2x16_splitX_TODO",
+	"unpackHalf2x16_splitY_TODO",
 	"noise",
 	"+",
 	"-",
@@ -494,6 +507,7 @@ static const char *const operator_glsl_strs[] = {
 	"min",
 	"max",
 	"pow",
+	"packHalf2x16_split_TODO",
 	"uboloadTODO",
 	"clamp",
 	"mix",
@@ -594,12 +608,11 @@ void ir_print_glsl_visitor::visit(ir_expression *ir)
 
 // [glsl_sampler_dim]
 static const char* tex_sampler_dim_name[] = {
-	"1D", "2D", "3D", "Cube", "Rect", "Buf",
+	"1D", "2D", "3D", "Cube", "Rect", "Buf", "External",
 };
 static int tex_sampler_dim_size[] = {
-	1, 2, 3, 3, 2, 2,
+	1, 2, 3, 3, 2, 2, 2,
 };
-
 
 void ir_print_glsl_visitor::visit(ir_texture *ir)
 {
