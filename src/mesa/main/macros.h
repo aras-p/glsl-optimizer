@@ -656,6 +656,12 @@ INTERP_4F(GLfloat t, GLfloat dst[4], const GLfloat out[4], const GLfloat in[4])
 #define MIN3( A, B, C ) ((A) < (B) ? MIN2(A, C) : MIN2(B, C))
 #define MAX3( A, B, C ) ((A) > (B) ? MAX2(A, C) : MAX2(B, C))
 
+static inline unsigned
+minify(unsigned value, unsigned levels)
+{
+    return MAX2(1, value >> levels);
+}
+
 /**
  * Align a value up to an alignment value
  *

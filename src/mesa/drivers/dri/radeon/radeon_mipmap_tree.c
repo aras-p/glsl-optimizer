@@ -147,15 +147,6 @@ static void compute_tex_image_offset(radeonContextPtr rmesa, radeon_mipmap_tree 
 			lvl->rowstride, lvl->width, height, lvl->faces[face].offset);
 }
 
-static GLuint minify(GLuint size, GLuint levels)
-{
-	size = size >> levels;
-	if (size < 1)
-		size = 1;
-	return size;
-}
-
-
 static void calculate_miptree_layout(radeonContextPtr rmesa, radeon_mipmap_tree *mt)
 {
 	GLuint curOffset, i, face, level;

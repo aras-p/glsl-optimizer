@@ -411,8 +411,8 @@ relayout_texture(struct gl_context *ctx, struct gl_texture_object *t)
 			};
 
 			offset += size;
-			width = MAX2(1, width / 2);
-			height = MAX2(1, height / 2);
+			width = minify(width, 1);
+			height = minify(height, 1);
 		}
 
 		/* Get new storage. */

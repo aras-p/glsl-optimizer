@@ -170,11 +170,11 @@ void i945_miptree_layout_2d(struct intel_mipmap_tree *mt)
        GLuint mip1_width;
 
        if (mt->compressed) {
-           mip1_width = ALIGN(minify(mt->physical_width0), mt->align_w)
-               + ALIGN(minify(minify(mt->physical_width0)), mt->align_w);
+          mip1_width = ALIGN(minify(mt->physical_width0, 1), mt->align_w) +
+             ALIGN(minify(mt->physical_width0, 2), mt->align_w);
        } else {
-           mip1_width = ALIGN(minify(mt->physical_width0), mt->align_w)
-               + minify(minify(mt->physical_width0));
+          mip1_width = ALIGN(minify(mt->physical_width0, 1), mt->align_w) +
+             minify(mt->physical_width0, 2);
        }
 
        if (mip1_width > mt->total_width) {
@@ -208,7 +208,7 @@ void i945_miptree_layout_2d(struct intel_mipmap_tree *mt)
 	 y += img_height;
       }
 
-      width  = minify(width);
-      height = minify(height);
+      width  = minify(width, 1);
+      height = minify(height, 1);
    }
 }

@@ -172,9 +172,9 @@ i915_miptree_layout_3d(struct intel_mipmap_tree * mt)
 
       stack_height += MAX2(2, height);
 
-      width = minify(width);
-      height = minify(height);
-      depth = minify(depth);
+      width = minify(width, 1);
+      height = minify(height, 1);
+      depth = minify(depth, 1);
    }
 
    /* Fixup depth image_offsets: */
@@ -186,7 +186,7 @@ i915_miptree_layout_3d(struct intel_mipmap_tree * mt)
 					0, i * stack_height);
       }
 
-      depth = minify(depth);
+      depth = minify(depth, 1);
    }
 
    /* Multiply slice size by texture depth for total size.  It's
@@ -219,8 +219,8 @@ i915_miptree_layout_2d(struct intel_mipmap_tree * mt)
 
       mt->total_height += img_height;
 
-      width = minify(width);
-      height = minify(height);
+      width = minify(width, 1);
+      height = minify(height, 1);
    }
 }
 
@@ -447,9 +447,9 @@ i945_miptree_layout_3d(struct intel_mipmap_tree * mt)
 	 pack_y_pitch >>= 1;
       }
 
-      width = minify(width);
-      height = minify(height);
-      depth = minify(depth);
+      width = minify(width, 1);
+      height = minify(height, 1);
+      depth = minify(depth, 1);
    }
 }
 

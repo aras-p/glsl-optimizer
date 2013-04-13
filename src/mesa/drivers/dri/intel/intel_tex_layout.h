@@ -32,12 +32,6 @@
 
 #include "main/macros.h"
 
-
-static INLINE GLuint minify( GLuint d )
-{
-   return MAX2(1, d>>1);
-}
-
 extern void i945_miptree_layout_2d(struct intel_mipmap_tree *mt);
 
 void

@@ -48,7 +48,7 @@ brw_miptree_layout_texture_array(struct intel_context *intel,
    int h0, h1, q;
 
    h0 = ALIGN(mt->physical_height0, mt->align_h);
-   h1 = ALIGN(minify(mt->physical_height0), mt->align_h);
+   h1 = ALIGN(minify(mt->physical_height0, 1), mt->align_h);
    if (mt->array_spacing_lod0)
       qpitch = h0;
    else
@@ -131,10 +131,10 @@ brw_miptree_layout(struct intel_context *intel, struct intel_mipmap_tree *mt)
 
 
 	 mt->total_height += y;
-	 width  = minify(width);
-	 height = minify(height);
+	 width  = minify(width, 1);
+	 height = minify(height, 1);
 	 if (mt->target == GL_TEXTURE_3D)
-	    depth = minify(depth);
+	    depth = minify(depth, 1);
 
 	 if (mt->compressed) {
 	    pack_y_pitch = (height + 3) / 4;
