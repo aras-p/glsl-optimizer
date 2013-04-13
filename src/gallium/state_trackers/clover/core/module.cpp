@@ -94,6 +94,7 @@ namespace {
       template<typename S, typename QT>
       static void
       proc(S &s, QT &x) {
+         __proc(s, x.id);
          __proc(s, x.type);
          __proc(s, x.size);
          __proc(s, x.data);
@@ -117,6 +118,7 @@ namespace {
       template<typename S, typename QT>
       static void
       proc(S &s, QT &x) {
+         __proc(s, x.name);
          __proc(s, x.section);
          __proc(s, x.offset);
          __proc(s, x.args);
