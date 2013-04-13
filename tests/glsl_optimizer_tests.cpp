@@ -168,6 +168,9 @@ static bool CheckGLSL (bool vertex, bool gles, const std::string& testName, cons
 		replace_string (src, "#extension GL_OES_standard_derivatives : require", "", 0);
 		replace_string (src, "#extension GL_EXT_shadow_samplers : require", "", 0);
 		replace_string (src, "#extension GL_EXT_frag_depth : require", "", 0);
+		replace_string (src, "#extension GL_OES_standard_derivatives : enable", "", 0);
+		replace_string (src, "#extension GL_EXT_shadow_samplers : enable", "", 0);
+		replace_string (src, "#extension GL_EXT_frag_depth : enable", "", 0);
 		replace_string (src, "precision ", "// precision ", 0);
 	}
 	const char* sourcePtr = src.c_str();
