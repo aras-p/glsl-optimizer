@@ -987,7 +987,7 @@ assign_varying_locations(struct gl_context *ctx,
 {
    const unsigned producer_base = VARYING_SLOT_VAR0;
    const unsigned consumer_base = VARYING_SLOT_VAR0;
-   varying_matches matches(ctx->Const.DisableVaryingPacking,
+   varying_matches matches(!!ctx->Const.DisableVaryingPacking,
                            consumer && consumer->Type == GL_FRAGMENT_SHADER);
    hash_table *tfeedback_candidates
       = hash_table_ctor(0, hash_table_string_hash, hash_table_string_compare);

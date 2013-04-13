@@ -85,8 +85,8 @@ private:
          v->IndexName = v->Name;
       }
 
-      unsigned alignment = type->std140_base_alignment(v->RowMajor);
-      unsigned size = type->std140_size(v->RowMajor);
+      unsigned alignment = type->std140_base_alignment(!!v->RowMajor);
+      unsigned size = type->std140_size(!!v->RowMajor);
 
       this->offset = glsl_align(this->offset, alignment);
       v->Offset = this->offset;

@@ -372,7 +372,7 @@ validate_vertex_shader_executable(struct gl_shader_program *prog,
     * GLSL ES 3.00 is similar to GLSL 1.40--failing to write to gl_Position is
     * not an error.
     */
-   if (prog->Version < (prog->IsES ? 300 : 140)) {
+   if (prog->Version < (prog->IsES ? 300U : 140U)) {
       find_assignment_visitor find("gl_Position");
       find.run(shader->ir);
       if (!find.variable_found()) {
@@ -1629,7 +1629,7 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
       min_version = MIN2(min_version, prog->Shaders[i]->Version);
       max_version = MAX2(max_version, prog->Shaders[i]->Version);
 
-      if (prog->Shaders[i]->IsES != is_es_prog) {
+      if ((!!prog->Shaders[i]->IsES) != is_es_prog) {
 	 linker_error(prog, "all shaders must use same shading "
 		      "language version\n");
 	 goto done;
@@ -1742,7 +1742,7 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
     *
     * This rule also applies to GLSL ES 3.00.
     */
-   if (max_version >= (is_es_prog ? 300 : 130)) {
+   if (max_version >= (is_es_prog ? 300U : 130U)) {
       struct gl_shader *sh = prog->_LinkedShaders[MESA_SHADER_FRAGMENT];
       if (sh) {
 	 lower_discard_flow(sh->ir);

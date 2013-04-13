@@ -71,12 +71,12 @@ _mesa_ast_array_index_to_hir(void *mem_ctx,
        *    negative constant expression."
        */
       if (array->type->is_matrix()) {
-	 if (array->type->row_type()->vector_elements <= idx) {
+	 if (array->type->row_type()->vector_elements <= (unsigned)idx) {
 	    type_name = "matrix";
 	    bound = array->type->row_type()->vector_elements;
 	 }
       } else if (array->type->is_vector()) {
-	 if (array->type->vector_elements <= idx) {
+	 if (array->type->vector_elements <= (unsigned)idx) {
 	    type_name = "vector";
 	    bound = array->type->vector_elements;
 	 }

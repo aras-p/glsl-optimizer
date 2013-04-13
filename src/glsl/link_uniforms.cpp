@@ -320,7 +320,7 @@ public:
             const struct gl_uniform_buffer_variable *const ubo_var =
                &block->Uniforms[var->location];
 
-            ubo_row_major = ubo_var->RowMajor;
+            ubo_row_major = !!ubo_var->RowMajor;
             ubo_byte_offset = ubo_var->Offset;
          }
 
