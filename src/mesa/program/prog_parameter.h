@@ -40,18 +40,6 @@ extern "C" {
 
 
 /**
- * Program parameter flags
- */
-/*@{*/
-#define PROG_PARAM_BIT_CENTROID   0x1  /**< for varying vars (GLSL 1.20) */
-#define PROG_PARAM_BIT_INVARIANT  0x2  /**< for varying vars (GLSL 1.20) */
-#define PROG_PARAM_BIT_FLAT       0x4  /**< for varying vars (GLSL 1.30) */
-#define PROG_PARAM_BIT_LINEAR     0x8  /**< for varying vars (GLSL 1.30) */
-#define PROG_PARAM_BIT_CYL_WRAP  0x10  /**< XXX gallium debug */
-/*@}*/
-
-
-/**
  * Actual data for constant values of parameters.
  */
 typedef union gl_constant_value
@@ -61,8 +49,6 @@ typedef union gl_constant_value
    GLint i;
    GLuint u;
 } gl_constant_value;
-
-
 
 
 #ifdef __cplusplus

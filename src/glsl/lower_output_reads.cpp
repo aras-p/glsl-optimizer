@@ -41,7 +41,7 @@ class output_read_remover : public ir_hierarchical_visitor {
 protected:
    /**
     * A hash table mapping from the original ir_variable shader outputs
-    * (ir_var_out mode) to the new temporaries to be used instead.
+    * (ir_var_shader_out mode) to the new temporaries to be used instead.
     */
    hash_table *replacements;
 
@@ -86,7 +86,7 @@ output_read_remover::~output_read_remover()
 ir_visitor_status
 output_read_remover::visit(ir_dereference_variable *ir)
 {
-   if (ir->var->mode != ir_var_out)
+   if (ir->var->mode != ir_var_shader_out)
       return visit_continue;
 
    ir_variable *temp = (ir_variable *) hash_table_find(replacements, ir->var);
@@ -97,6 +97,7 @@ output_read_remover::visit(ir_dereference_variable *ir)
       temp = new(var_ctx) ir_variable(ir->var->type, ir->var->name,
                                       ir_var_temporary, (glsl_precision)ir->var->precision);
       hash_table_insert(replacements, temp, ir->var);
+      ir->var->insert_after(temp);
    }
 
    /* Update the dereference to use the temporary */

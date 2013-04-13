@@ -127,7 +127,8 @@ ir_constant_folding_visitor::visit_enter(ir_call *ir)
       ir_rvalue *param_rval = (ir_rvalue *)iter.get();
       ir_variable *sig_param = (ir_variable *)sig_iter.get();
 
-      if (sig_param->mode == ir_var_in || sig_param->mode == ir_var_const_in) {
+      if (sig_param->mode == ir_var_function_in
+          || sig_param->mode == ir_var_const_in) {
 	 ir_rvalue *new_param = param_rval;
 
 	 handle_rvalue(&new_param);

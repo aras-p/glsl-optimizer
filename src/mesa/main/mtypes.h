@@ -50,6 +50,10 @@ extern "C" {
 /*@{*/
 struct gl_context;
 struct gl_uniform_storage;
+struct prog_instruction;
+struct gl_program_parameter_list;
+struct set;
+struct set_entry;
 /*@}*/
 
 
@@ -115,9 +119,6 @@ typedef enum
  * VERT_ATTRIB_TEX
  *   include the classic texture coordinate attributes.
  *   Is a subset of VERT_ATTRIB_FF.
- * VERT_ATTRIB_GENERIC_NV
- *   include the NV shader attributes.
- *   Is a subset of VERT_ATTRIB_FF.
  * VERT_ATTRIB_GENERIC
  *   include the OpenGL 2.0+ GLSL generic shader attributes.
  *   These alias the generic GL_ARB_vertex_shader attributes.
@@ -128,43 +129,76 @@ typedef enum
 #define VERT_ATTRIB_TEX(i)          (VERT_ATTRIB_TEX0 + (i))
 #define VERT_ATTRIB_TEX_MAX         MAX_TEXTURE_COORD_UNITS
 
-#define VERT_ATTRIB_GENERIC_NV(i)   (VERT_ATTRIB_POS + (i))
-#define VERT_ATTRIB_GENERIC_NV_MAX  MAX_VERTEX_GENERIC_ATTRIBS
-
 #define VERT_ATTRIB_GENERIC(i)      (VERT_ATTRIB_GENERIC0 + (i))
 #define VERT_ATTRIB_GENERIC_MAX     MAX_VERTEX_GENERIC_ATTRIBS
 
 
 
+
 /**
- * Indexes for vertex program result attributes.  Note that
- * _mesa_vert_result_to_frag_attrib() and _mesa_frag_attrib_to_vert_result() make
- * assumptions about the layout of this enum.
+ * Indexes for vertex shader outputs, geometry shader inputs/outputs, and
+ * fragment shader inputs.
+ *
+ * Note that some of these values are not available to all pipeline stages.
+ *
+ * When this enum is updated, the following code must be updated too:
+ * - vertResults (in prog_print.c's arb_output_attrib_string())
+ * - fragAttribs (in prog_print.c's arb_input_attrib_string())
+ * - _mesa_varying_slot_in_fs()
  */
 typedef enum
 {
-   VERT_RESULT_HPOS = 0,
-   VERT_RESULT_COL0 = 1,
-   VERT_RESULT_COL1 = 2,
-   VERT_RESULT_FOGC = 3,
-   VERT_RESULT_TEX0 = 4,
-   VERT_RESULT_TEX1 = 5,
-   VERT_RESULT_TEX2 = 6,
-   VERT_RESULT_TEX3 = 7,
-   VERT_RESULT_TEX4 = 8,
-   VERT_RESULT_TEX5 = 9,
-   VERT_RESULT_TEX6 = 10,
-   VERT_RESULT_TEX7 = 11,
-   VERT_RESULT_PSIZ = 12,
-   VERT_RESULT_BFC0 = 13,
-   VERT_RESULT_BFC1 = 14,
-   VERT_RESULT_EDGE = 15,
-   VERT_RESULT_CLIP_VERTEX = 16,
-   VERT_RESULT_CLIP_DIST0 = 17,
-   VERT_RESULT_CLIP_DIST1 = 18,
-   VERT_RESULT_VAR0 = 19,  /**< shader varying */
-   VERT_RESULT_MAX = (VERT_RESULT_VAR0 + MAX_VARYING)
-} gl_vert_result;
+   VARYING_SLOT_POS,
+   VARYING_SLOT_COL0, /* COL0 and COL1 must be contiguous */
+   VARYING_SLOT_COL1,
+   VARYING_SLOT_FOGC,
+   VARYING_SLOT_TEX0, /* TEX0-TEX7 must be contiguous */
+   VARYING_SLOT_TEX1,
+   VARYING_SLOT_TEX2,
+   VARYING_SLOT_TEX3,
+   VARYING_SLOT_TEX4,
+   VARYING_SLOT_TEX5,
+   VARYING_SLOT_TEX6,
+   VARYING_SLOT_TEX7,
+   VARYING_SLOT_PSIZ, /* Does not appear in FS */
+   VARYING_SLOT_BFC0, /* Does not appear in FS */
+   VARYING_SLOT_BFC1, /* Does not appear in FS */
+   VARYING_SLOT_EDGE, /* Does not appear in FS */
+   VARYING_SLOT_CLIP_VERTEX, /* Does not appear in FS */
+   VARYING_SLOT_CLIP_DIST0,
+   VARYING_SLOT_CLIP_DIST1,
+   VARYING_SLOT_PRIMITIVE_ID, /* Does not appear in VS */
+   VARYING_SLOT_LAYER, /* Appears only as GS output */
+   VARYING_SLOT_FACE, /* FS only */
+   VARYING_SLOT_PNTC, /* FS only */
+   VARYING_SLOT_VAR0, /* First generic varying slot */
+   VARYING_SLOT_MAX = VARYING_SLOT_VAR0 + MAX_VARYING
+} gl_varying_slot;
+
+
+
+/*********************************************/
+
+/**
+ * Fragment program results
+ */
+typedef enum
+{
+   FRAG_RESULT_DEPTH = 0,
+   FRAG_RESULT_STENCIL = 1,
+   /* If a single color should be written to all render targets, this
+    * register is written.  No FRAG_RESULT_DATAn will be written.
+    */
+   FRAG_RESULT_COLOR = 2,
+
+   /* FRAG_RESULT_DATAn are the per-render-target (GLSL gl_FragData[n]
+    * or ARB_fragment_program fragment.color[n]) color results.  If
+    * any are written, FRAG_RESULT_COLOR will not be written.
+    */
+   FRAG_RESULT_DATA0 = 3,
+   FRAG_RESULT_MAX = (FRAG_RESULT_DATA0 + MAX_DRAW_BUFFERS)
+} gl_frag_result;
+
 
 
 /*********************************************/
@@ -174,17 +208,6 @@ typedef enum
  */
 typedef enum
 {
-   GEOM_ATTRIB_POSITION = 0,
-   GEOM_ATTRIB_COLOR0 = 1,
-   GEOM_ATTRIB_COLOR1 = 2,
-   GEOM_ATTRIB_SECONDARY_COLOR0 = 3,
-   GEOM_ATTRIB_SECONDARY_COLOR1 = 4,
-   GEOM_ATTRIB_FOG_FRAG_COORD = 5,
-   GEOM_ATTRIB_POINT_SIZE = 6,
-   GEOM_ATTRIB_CLIP_VERTEX = 7,
-   GEOM_ATTRIB_PRIMITIVE_ID = 8,
-   GEOM_ATTRIB_TEX_COORD = 9,
-
    GEOM_ATTRIB_VAR0 = 16,
    GEOM_ATTRIB_MAX = (GEOM_ATTRIB_VAR0 + MAX_VARYING)
 } gl_geom_attrib;
@@ -246,73 +269,6 @@ typedef enum
    FRAG_ATTRIB_VAR0 = 16,  /**< shader varying */
    FRAG_ATTRIB_MAX = (FRAG_ATTRIB_VAR0 + MAX_VARYING)
 } gl_frag_attrib;
-
-
-/**
- * Convert from a gl_vert_result value to the corresponding gl_frag_attrib.
- *
- * VERT_RESULT_HPOS is converted to FRAG_ATTRIB_WPOS.
- *
- * gl_vert_result values which have no corresponding gl_frag_attrib
- * (VERT_RESULT_PSIZ, VERT_RESULT_BFC0, VERT_RESULT_BFC1, and
- * VERT_RESULT_EDGE) are converted to a value of -1.
- */
-static inline int
-_mesa_vert_result_to_frag_attrib(gl_vert_result vert_result)
-{
-   if (vert_result >= VERT_RESULT_CLIP_DIST0)
-      return vert_result - VERT_RESULT_CLIP_DIST0 + FRAG_ATTRIB_CLIP_DIST0;
-   else if (vert_result <= VERT_RESULT_TEX7)
-      return vert_result;
-   else
-      return -1;
-}
-
-
-/**
- * Convert from a gl_frag_attrib value to the corresponding gl_vert_result.
- *
- * FRAG_ATTRIB_WPOS is converted to VERT_RESULT_HPOS.
- *
- * gl_frag_attrib values which have no corresponding gl_vert_result
- * (FRAG_ATTRIB_FACE and FRAG_ATTRIB_PNTC) are converted to a value of -1.
- */
-static inline int
-_mesa_frag_attrib_to_vert_result(gl_frag_attrib frag_attrib)
-{
-   if (frag_attrib <= FRAG_ATTRIB_TEX7)
-      return frag_attrib;
-   else if (frag_attrib >= FRAG_ATTRIB_CLIP_DIST0)
-      return frag_attrib - FRAG_ATTRIB_CLIP_DIST0 + VERT_RESULT_CLIP_DIST0;
-   else
-      return -1;
-}
-
-
-/**
- * Fragment program results
- */
-typedef enum
-{
-   FRAG_RESULT_DEPTH = 0,
-   FRAG_RESULT_STENCIL = 1,
-   /* If a single color should be written to all render targets, this
-    * register is written.  No FRAG_RESULT_DATAn will be written.
-    */
-   FRAG_RESULT_COLOR = 2,
-
-   /* FRAG_RESULT_DATAn are the per-render-target (GLSL gl_FragData[n]
-    * or ARB_fragment_program fragment.color[n]) color results.  If
-    * any are written, FRAG_RESULT_COLOR will not be written.
-    */
-   FRAG_RESULT_DATA0 = 3,
-   FRAG_RESULT_MAX = (FRAG_RESULT_DATA0 + MAX_DRAW_BUFFERS)
-} gl_frag_result;
-
-
-
-struct gl_config;
-	
 
 
 /**
@@ -396,15 +352,13 @@ struct gl_transform_feedback_info
 
 
 
-
-
 /**
  * Names of the various vertex/fragment program register files, etc.
  *
  * NOTE: first four tokens must fit into 2 bits (see t_vb_arbprogram.c)
  * All values should fit in a 4-bit field.
  *
- * NOTE: PROGRAM_ENV_PARAM, PROGRAM_STATE_VAR, PROGRAM_NAMED_PARAM,
+ * NOTE: PROGRAM_ENV_PARAM, PROGRAM_STATE_VAR,
  * PROGRAM_CONSTANT, and PROGRAM_UNIFORM can all be considered to
  * be "uniform" variables since they can only be set outside glBegin/End.
  * They're also all stored in the same Parameters array.
@@ -412,13 +366,12 @@ struct gl_transform_feedback_info
 typedef enum
 {
    PROGRAM_TEMPORARY,   /**< machine->Temporary[] */
+   PROGRAM_ARRAY,       /**< Arrays & Matrixes */
    PROGRAM_INPUT,       /**< machine->Inputs[] */
    PROGRAM_OUTPUT,      /**< machine->Outputs[] */
-   PROGRAM_VARYING,     /**< machine->Inputs[]/Outputs[] */
    PROGRAM_LOCAL_PARAM, /**< gl_program->LocalParams[] */
    PROGRAM_ENV_PARAM,   /**< gl_program->Parameters[] */
    PROGRAM_STATE_VAR,   /**< gl_program->Parameters[] */
-   PROGRAM_NAMED_PARAM, /**< gl_program->Parameters[] */
    PROGRAM_CONSTANT,    /**< gl_program->Parameters[] */
    PROGRAM_UNIFORM,     /**< gl_program->Parameters[] */
    PROGRAM_WRITE_ONLY,  /**< A dummy, write-only register */
@@ -455,7 +408,8 @@ enum glsl_interp_qualifier
    INTERP_QUALIFIER_NONE = 0,
    INTERP_QUALIFIER_SMOOTH,
    INTERP_QUALIFIER_FLAT,
-   INTERP_QUALIFIER_NOPERSPECTIVE
+   INTERP_QUALIFIER_NOPERSPECTIVE,
+   INTERP_QUALIFIER_COUNT /**< Number of interpolation qualifiers */
 };
 
 
@@ -485,9 +439,8 @@ struct gl_program
    GLuint Id;
    GLubyte *String;  /**< Null-terminated program text */
    GLint RefCount;
-   GLenum Target;    /**< GL_VERTEX/FRAGMENT_PROGRAM_ARB, GL_FRAGMENT_PROGRAM_NV */
+   GLenum Target;    /**< GL_VERTEX/FRAGMENT_PROGRAM_ARB */
    GLenum Format;    /**< String encoding format */
-   GLboolean Resident;
 
    /** Numbered local parameters */
    GLfloat LocalParams[MAX_PROGRAM_LOCAL_PARAMS][4];
@@ -525,29 +478,6 @@ struct gl_program
 };
 
 
-/** Vertex program object */
-struct gl_vertex_program
-{
-   struct gl_program Base;   /**< base class */
-   GLboolean IsNVProgram;    /**< is this a GL_NV_vertex_program program? */
-   GLboolean IsPositionInvariant;
-   GLboolean UsesClipDistance;
-};
-
-
-/** Geometry program object */
-struct gl_geometry_program
-{
-   struct gl_program Base;   /**< base class */
-
-   GLint VerticesOut;
-   GLenum InputType;  /**< GL_POINTS, GL_LINES, GL_LINES_ADJACENCY_ARB,
-                           GL_TRIANGLES, or GL_TRIANGLES_ADJACENCY_ARB */
-   GLenum OutputType; /**< GL_POINTS, GL_LINE_STRIP or GL_TRIANGLE_STRIP */
-};
-
-
-
 
 /** Set by #pragma directives */
 struct gl_sl_pragmas
@@ -576,6 +506,7 @@ struct gl_shader
    struct gl_sl_pragmas Pragmas;
 
    unsigned Version;       /**< GLSL version used for linking */
+   GLboolean IsES;         /**< True if this shader uses GLSL ES */
 
    /**
     * \name Sampler tracking
@@ -628,10 +559,28 @@ typedef enum
 struct gl_uniform_buffer_variable
 {
    char *Name;
+
+   /**
+    * Name of the uniform as seen by glGetUniformIndices.
+    *
+    * glGetUniformIndices requires that the block instance index \b not be
+    * present in the name of queried uniforms.
+    *
+    * \note
+    * \c gl_uniform_buffer_variable::IndexName and
+    * \c gl_uniform_buffer_variable::Name may point to identical storage.
+    */
+   char *IndexName;
+
    const struct glsl_type *Type;
-   unsigned int Buffer;
    unsigned int Offset;
    GLboolean RowMajor;
+};
+
+enum gl_uniform_block_packing {
+   ubo_packing_std140,
+   ubo_packing_shared,
+   ubo_packing_packed
 };
 
 struct gl_uniform_block
@@ -655,6 +604,14 @@ struct gl_uniform_block
     * (GL_UNIFORM_BLOCK_DATA_SIZE).
     */
    GLuint UniformBufferSize;
+
+   /**
+    * Layout specified in the shader
+    *
+    * This isn't accessible through the API, but it is used while
+    * cross-validating uniform blocks.
+    */
+   enum gl_uniform_block_packing _Packing;
 };
 
 /**
@@ -667,6 +624,11 @@ struct gl_shader_program
    GLuint Name;  /**< aka handle or ID */
    GLint RefCount;  /**< Reference count */
    GLboolean DeletePending;
+
+   /**
+    * Is the application intending to glGetProgramBinary this program?
+    */
+   GLboolean BinaryRetreivableHint;
 
    /**
     * Flags that the linker should not reject the program if it lacks
@@ -778,6 +740,7 @@ struct gl_shader_program
    char *InfoLog;
 
    unsigned Version;       /**< GLSL version used for linking */
+   GLboolean IsES;         /**< True if this program uses GLSL ES */
 
    /**
     * Per-stage shaders resulting from the first stage of linking.
@@ -808,7 +771,6 @@ struct gl_shader_compiler_options
 {
    /** Driver-selectable options: */
    GLboolean EmitCondCodes;             /**< Use condition codes? */
-   GLboolean EmitNVTempInitialization;  /**< 0-fill NV temp registers */
    GLboolean EmitNoLoops;
    GLboolean EmitNoFunctions;
    GLboolean EmitNoCont;                  /**< Emit CONT opcode? */
@@ -832,7 +794,6 @@ struct gl_shader_compiler_options
 
    struct gl_sl_pragmas DefaultPragmas; /**< Default #pragma settings */
 };
-
 
 
 
@@ -878,12 +839,12 @@ struct gl_program_constants
  */
 struct gl_constants
 {
-   GLint MaxTextureMbytes;      /**< Max memory per image, in MB */
-   GLint MaxTextureLevels;      /**< Max mipmap levels. */ 
-   GLint Max3DTextureLevels;    /**< Max mipmap levels for 3D textures */
-   GLint MaxCubeTextureLevels;  /**< Max mipmap levels for cube textures */
-   GLint MaxArrayTextureLayers; /**< Max layers in array textures */
-   GLint MaxTextureRectSize;    /**< Max rectangle texture size, in pixes */
+   GLuint MaxTextureMbytes;      /**< Max memory per image, in MB */
+   GLuint MaxTextureLevels;      /**< Max mipmap levels. */ 
+   GLuint Max3DTextureLevels;    /**< Max mipmap levels for 3D textures */
+   GLuint MaxCubeTextureLevels;  /**< Max mipmap levels for cube textures */
+   GLuint MaxArrayTextureLayers; /**< Max layers in array textures */
+   GLuint MaxTextureRectSize;    /**< Max rectangle texture size, in pixes */
    GLuint MaxTextureCoordUnits;
    GLuint MaxTextureImageUnits;
    GLuint MaxVertexTextureImageUnits;
@@ -893,6 +854,8 @@ struct gl_constants
    GLfloat MaxTextureMaxAnisotropy;  /**< GL_EXT_texture_filter_anisotropic */
    GLfloat MaxTextureLodBias;        /**< GL_EXT_texture_lod_bias */
    GLuint MaxTextureBufferSize;      /**< GL_ARB_texture_buffer_object */
+
+   GLuint TextureBufferOffsetAlignment; /**< GL_ARB_texture_buffer_range */
 
    GLuint MaxArrayLockSize;
 
@@ -1029,6 +992,31 @@ struct gl_constants
     * Force software support for primitive restart in the VBO module.
     */
    GLboolean PrimitiveRestartInSoftware;
+
+   /** GL_ARB_map_buffer_alignment */
+   GLuint MinMapBufferAlignment;
+
+   /**
+    * Disable varying packing.  This is out of spec, but potentially useful
+    * for older platforms that supports a limited number of texture
+    * indirections--on these platforms, unpacking the varyings in the fragment
+    * shader increases the number of texture indirections by 1, which might
+    * make some shaders not executable at all.
+    *
+    * Drivers that support transform feedback must set this value to GL_FALSE.
+    */
+   GLboolean DisableVaryingPacking;
+
+   /**
+    * Disable interpretation of line continuations (lines ending with a
+    * backslash character ('\') in GLSL source.
+    */
+   GLboolean DisableGLSLLineContinuations;
+
+   /** GL_ARB_texture_multisample */
+   GLint MaxColorTextureSamples;
+   GLint MaxDepthTextureSamples;
+   GLint MaxIntegerSamples;
 };
 
 
@@ -1043,11 +1031,11 @@ struct gl_extensions
    GLboolean dummy_false; /* Set false by _mesa_init_extensions(). */
    GLboolean ANGLE_texture_compression_dxt;
    GLboolean ARB_ES2_compatibility;
+   GLboolean ARB_ES3_compatibility;
    GLboolean ARB_base_instance;
    GLboolean ARB_blend_func_extended;
    GLboolean ARB_color_buffer_float;
    GLboolean ARB_conservative_depth;
-   GLboolean ARB_copy_buffer;
    GLboolean ARB_depth_buffer_float;
    GLboolean ARB_depth_clamp;
    GLboolean ARB_depth_texture;
@@ -1064,6 +1052,8 @@ struct gl_extensions
    GLboolean ARB_half_float_pixel;
    GLboolean ARB_half_float_vertex;
    GLboolean ARB_instanced_arrays;
+   GLboolean ARB_internalformat_query;
+   GLboolean ARB_map_buffer_alignment;
    GLboolean ARB_map_buffer_range;
    GLboolean ARB_occlusion_query;
    GLboolean ARB_occlusion_query2;
@@ -1074,40 +1064,42 @@ struct gl_extensions
    GLboolean ARB_shader_stencil_export;
    GLboolean ARB_shader_texture_lod;
    GLboolean ARB_shading_language_100;
+   GLboolean ARB_shading_language_packing;
    GLboolean ARB_shadow;
    GLboolean ARB_sync;
    GLboolean ARB_texture_border_clamp;
    GLboolean ARB_texture_buffer_object;
+   GLboolean ARB_texture_buffer_object_rgb32;
+   GLboolean ARB_texture_buffer_range;
    GLboolean ARB_texture_compression_rgtc;
    GLboolean ARB_texture_cube_map;
+   GLboolean ARB_texture_cube_map_array;
    GLboolean ARB_texture_env_combine;
    GLboolean ARB_texture_env_crossbar;
    GLboolean ARB_texture_env_dot3;
    GLboolean ARB_texture_float;
    GLboolean ARB_texture_multisample;
    GLboolean ARB_texture_non_power_of_two;
+   GLboolean ARB_texture_query_lod;
    GLboolean ARB_texture_rg;
    GLboolean ARB_texture_rgb10_a2ui;
    GLboolean ARB_texture_storage;
+   GLboolean ARB_texture_storage_multisample;
    GLboolean ARB_timer_query;
    GLboolean ARB_transform_feedback2;
    GLboolean ARB_transform_feedback3;
    GLboolean ARB_transform_feedback_instanced;
-   GLboolean ARB_transpose_matrix;
    GLboolean ARB_uniform_buffer_object;
    GLboolean ARB_vertex_program;
    GLboolean ARB_vertex_shader;
    GLboolean ARB_vertex_type_2_10_10_10_rev;
-   GLboolean ARB_window_pos;
    GLboolean EXT_blend_color;
    GLboolean EXT_blend_equation_separate;
    GLboolean EXT_blend_func_separate;
    GLboolean EXT_blend_minmax;
    GLboolean EXT_clip_volume_hint;
-   GLboolean EXT_compiled_vertex_array;
    GLboolean EXT_depth_bounds_test;
    GLboolean EXT_draw_buffers2;
-   GLboolean EXT_draw_range_elements;
    GLboolean EXT_fog_coord;
    GLboolean EXT_framebuffer_blit;
    GLboolean EXT_framebuffer_multisample;
@@ -1117,15 +1109,12 @@ struct gl_extensions
    GLboolean EXT_gpu_shader4;
    GLboolean EXT_packed_depth_stencil;
    GLboolean EXT_packed_float;
-   GLboolean EXT_packed_pixels;
    GLboolean EXT_pixel_buffer_object;
    GLboolean EXT_point_parameters;
    GLboolean EXT_provoking_vertex;
-   GLboolean EXT_rescale_normal;
    GLboolean EXT_shadow_funcs;
    GLboolean EXT_secondary_color;
    GLboolean EXT_separate_shader_objects;
-   GLboolean EXT_separate_specular_color;
    GLboolean EXT_stencil_two_side;
    GLboolean EXT_texture3D;
    GLboolean EXT_texture_array;
@@ -1148,7 +1137,6 @@ struct gl_extensions
    GLboolean EXT_frag_depth;
    /* vendor extensions */
    GLboolean AMD_seamless_cubemap_per_texture;
-   GLboolean APPLE_packed_pixels;
    GLboolean APPLE_object_purgeable;
    GLboolean ATI_envmap_bumpmap;
    GLboolean ATI_texture_compression_3dc;
@@ -1156,8 +1144,6 @@ struct gl_extensions
    GLboolean ATI_texture_env_combine3;
    GLboolean ATI_fragment_shader;
    GLboolean ATI_separate_stencil;
-   GLboolean IBM_rasterpos_clip;
-   GLboolean IBM_multimode_draw_arrays;
    GLboolean MESA_pack_invert;
    GLboolean MESA_resize_buffers;
    GLboolean MESA_ycbcr_texture;
@@ -1165,23 +1151,16 @@ struct gl_extensions
    GLboolean NV_blend_square;
    GLboolean NV_conditional_render;
    GLboolean NV_fog_distance;
-   GLboolean NV_fragment_program;
    GLboolean NV_fragment_program_option;
-   GLboolean NV_light_max_exponent;
    GLboolean NV_point_sprite;
    GLboolean NV_primitive_restart;
-   GLboolean NV_read_buffer;
    GLboolean NV_texture_barrier;
-   GLboolean NV_texgen_reflection;
    GLboolean NV_texture_env_combine4;
    GLboolean NV_texture_rectangle;
-   GLboolean NV_vertex_program;
-   GLboolean NV_vertex_program1_1;
-   GLboolean SGIS_texture_lod;
    GLboolean TDFX_texture_compression_FXT1;
-   GLboolean S3_s3tc;
    GLboolean OES_EGL_image;
    GLboolean OES_draw_texture;
+   GLboolean OES_depth_texture_cube_map;
    GLboolean OES_EGL_image_external;
    GLboolean OES_compressed_ETC1_RGB8_texture;
    GLboolean extension_sentinel;
@@ -1200,22 +1179,37 @@ struct gl_extensions
 
 
 
+/** @{
+ *
+ * These are a mapping of the GL_ARB_debug_output enums to small enums
+ * suitable for use as an array index.
+ */
 
+enum mesa_debug_type {
+   MESA_DEBUG_TYPE_ERROR,
+   MESA_DEBUG_TYPE_DEPRECATED,
+   MESA_DEBUG_TYPE_UNDEFINED,
+   MESA_DEBUG_TYPE_PORTABILITY,
+   MESA_DEBUG_TYPE_PERFORMANCE,
+   MESA_DEBUG_TYPE_OTHER,
+   MESA_DEBUG_TYPE_COUNT,
+};
 
-typedef enum {
-   SHADER_ERROR_UNKNOWN,
-   SHADER_ERROR_COUNT
-} gl_shader_error;
-	
+/** @} */
+
 /**
  * Enum for the OpenGL APIs we know about and may support.
+ *
+ * NOTE: This must match the api_enum table in
+ * src/mesa/main/get_hash_generator.py
  */
 typedef enum
 {
-   API_OPENGL,      /* legacy / compatibility contexts */
+   API_OPENGL_COMPAT,      /* legacy / compatibility contexts */
    API_OPENGLES,
    API_OPENGLES2,
    API_OPENGL_CORE,
+   API_OPENGL_LAST = API_OPENGL_CORE,
 } gl_api;
 
 

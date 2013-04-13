@@ -78,17 +78,17 @@ parameter_lists_match(const exec_list *list_a, const exec_list *list_b)
 	 return PARAMETER_LIST_NO_MATCH;
 
       case ir_var_const_in:
-      case ir_var_in:
+      case ir_var_function_in:
 	 if (!actual->type->can_implicitly_convert_to(param->type))
 	    return PARAMETER_LIST_NO_MATCH;
 	 break;
 
-      case ir_var_out:
+      case ir_var_function_out:
 	 if (!param->type->can_implicitly_convert_to(actual->type))
 	    return PARAMETER_LIST_NO_MATCH;
 	 break;
 
-      case ir_var_inout:
+      case ir_var_function_inout:
 	 /* Since there are no bi-directional automatic conversions (e.g.,
 	  * there is int -> float but no float -> int), inout parameters must
 	  * be exact matches.

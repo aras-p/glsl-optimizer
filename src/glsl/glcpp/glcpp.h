@@ -27,6 +27,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "main/mtypes.h"
+
 #include "../ralloc.h"
 
 #include "program/hash_table.h"
@@ -184,6 +186,7 @@ struct glcpp_parser {
 	int new_line_number;
 	bool has_new_source_number;
 	int new_source_number;
+	bool is_gles;
 };
 
 struct gl_extensions;
@@ -199,7 +202,7 @@ glcpp_parser_destroy (glcpp_parser_t *parser);
 
 int
 glcpp_preprocess(void *ralloc_ctx, const char **shader, char **info_log,
-	   const struct gl_extensions *extensions, int api);
+	   const struct gl_extensions *extensions, struct gl_context *g_ctx);
 
 /* Functions for writing to the info log */
 

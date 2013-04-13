@@ -120,7 +120,7 @@ ir_visitor_status
 ir_validate::visit_leave(ir_loop *ir)
 {
    if (ir->counter != NULL) {
-      if ((ir->from == NULL) || (ir->from == NULL) || (ir->increment == NULL)) {
+      if ((ir->from == NULL) || (ir->to == NULL) || (ir->increment == NULL)) {
 	 printf("ir_loop has invalid loop controls:\n"
 		"    counter:   %p\n"
 		"    from:      %p\n"
@@ -136,7 +136,7 @@ ir_validate::visit_leave(ir_loop *ir)
 	 abort();
       }
    } else {
-      if ((ir->from != NULL) || (ir->from != NULL) || (ir->increment != NULL)) {
+      if ((ir->from != NULL) || (ir->to != NULL) || (ir->increment != NULL)) {
 	 printf("ir_loop has invalid loop controls:\n"
 		"    counter:   %p\n"
 		"    from:      %p\n"
@@ -333,6 +333,38 @@ ir_validate::visit_leave(ir_expression *ir)
       assert(ir->operands[0]->type == ir->type);
       break;
 
+   case ir_unop_pack_snorm_2x16:
+   case ir_unop_pack_unorm_2x16:
+   case ir_unop_pack_half_2x16:
+      assert(ir->type == glsl_type::uint_type);
+      assert(ir->operands[0]->type == glsl_type::vec2_type);
+      break;
+
+   case ir_unop_pack_snorm_4x8:
+   case ir_unop_pack_unorm_4x8:
+      assert(ir->type == glsl_type::uint_type);
+      assert(ir->operands[0]->type == glsl_type::vec4_type);
+      break;
+
+   case ir_unop_unpack_snorm_2x16:
+   case ir_unop_unpack_unorm_2x16:
+   case ir_unop_unpack_half_2x16:
+      assert(ir->type == glsl_type::vec2_type);
+      assert(ir->operands[0]->type == glsl_type::uint_type);
+      break;
+
+   case ir_unop_unpack_snorm_4x8:
+   case ir_unop_unpack_unorm_4x8:
+      assert(ir->type == glsl_type::vec4_type);
+      assert(ir->operands[0]->type == glsl_type::uint_type);
+      break;
+
+   case ir_unop_unpack_half_2x16_split_x:
+   case ir_unop_unpack_half_2x16_split_y:
+      assert(ir->type == glsl_type::float_type);
+      assert(ir->operands[0]->type == glsl_type::uint_type);
+      break;
+
    case ir_unop_noise:
       /* XXX what can we assert here? */
       break;
@@ -427,11 +459,23 @@ ir_validate::visit_leave(ir_expression *ir)
       assert(ir->operands[0]->type == ir->operands[1]->type);
       break;
 
+   case ir_binop_pack_half_2x16_split:
+      assert(ir->type == glsl_type::uint_type);
+      assert(ir->operands[0]->type == glsl_type::float_type);
+      assert(ir->operands[1]->type == glsl_type::float_type);
+      break;
+
    case ir_binop_ubo_load:
       assert(ir->operands[0]->as_constant());
       assert(ir->operands[0]->type == glsl_type::uint_type);
 
       assert(ir->operands[1]->type == glsl_type::uint_type);
+      break;
+
+   case ir_triop_lrp:
+      assert(ir->operands[0]->type->base_type == GLSL_TYPE_FLOAT);
+      assert(ir->operands[0]->type == ir->operands[1]->type);
+      assert(ir->operands[2]->type == ir->operands[0]->type || ir->operands[2]->type == glsl_type::float_type);
       break;
 
    case ir_quadop_vector:
@@ -609,8 +653,8 @@ ir_validate::visit_enter(ir_call *ir)
          printf("ir_call parameter type mismatch:\n");
          goto dump_ir;
       }
-      if (formal_param->mode == ir_var_out
-          || formal_param->mode == ir_var_inout) {
+      if (formal_param->mode == ir_var_function_out
+          || formal_param->mode == ir_var_function_inout) {
          if (!actual_param->is_lvalue()) {
             printf("ir_call out/inout parameters must be lvalues:\n");
             goto dump_ir;
@@ -661,6 +705,11 @@ check_node_type(ir_instruction *ir, void *data)
 void
 validate_ir_tree(exec_list *instructions)
 {
+   /* We shouldn't have any reason to validate IR in a release build,
+    * and it's half composed of assert()s anyway which wouldn't do
+    * anything.
+    */
+#ifdef DEBUG
    ir_validate v;
 
    v.run(instructions);
@@ -670,4 +719,5 @@ validate_ir_tree(exec_list *instructions)
 
       visit_tree(ir, check_node_type, NULL);
    }
+#endif
 }

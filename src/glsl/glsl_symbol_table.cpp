@@ -41,9 +41,9 @@ public:
       ralloc_free(entry);
    }
 
-   symbol_table_entry(ir_variable *v)                     : v(v), f(0), t(0) {}
-   symbol_table_entry(ir_function *f)                     : v(0), f(f), t(0) {}
-   symbol_table_entry(const glsl_type *t)                 : v(0), f(0), t(t) {}
+   symbol_table_entry(ir_variable *v)               : v(v), f(0), t(0) {}
+   symbol_table_entry(ir_function *f)               : v(0), f(f), t(0) {}
+   symbol_table_entry(const glsl_type *t)           : v(0), f(0), t(t) {}
 
    ir_variable *v;
    ir_function *f;
@@ -52,7 +52,7 @@ public:
 
 glsl_symbol_table::glsl_symbol_table()
 {
-   this->language_version = 120;
+   this->separate_function_namespace = false;
    this->table = _mesa_symbol_table_ctor();
    this->mem_ctx = ralloc_context(NULL);
 }
@@ -80,7 +80,7 @@ bool glsl_symbol_table::name_declared_this_scope(const char *name)
 
 bool glsl_symbol_table::add_variable(ir_variable *v)
 {
-   if (this->language_version == 110) {
+   if (this->separate_function_namespace) {
       /* In 1.10, functions and variables have separate namespaces. */
       symbol_table_entry *existing = get_entry(v->name);
       if (name_declared_this_scope(v->name)) {
@@ -120,7 +120,7 @@ bool glsl_symbol_table::add_type(const char *name, const glsl_type *t)
 
 bool glsl_symbol_table::add_function(ir_function *f)
 {
-   if (this->language_version == 110 && name_declared_this_scope(f->name)) {
+   if (this->separate_function_namespace && name_declared_this_scope(f->name)) {
       /* In 1.10, functions and variables have separate namespaces. */
       symbol_table_entry *existing = get_entry(f->name);
       if ((existing->f == NULL) && (existing->t == NULL)) {

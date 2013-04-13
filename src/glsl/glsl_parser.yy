@@ -84,6 +84,7 @@ static void yyerror(YYLTYPE *loc, _mesa_glsl_parse_state *st, const char *msg)
    ast_case_label_list *case_label_list;
    ast_case_statement *case_statement;
    ast_case_statement_list *case_statement_list;
+   ast_uniform_block *uniform_block;
 
    struct {
       ast_node *cond;
@@ -106,15 +107,20 @@ static void yyerror(YYLTYPE *loc, _mesa_glsl_parse_state *st, const char *msg)
 %token MAT4X2 MAT4X3 MAT4X4
 %token SAMPLER1D SAMPLER2D SAMPLER3D SAMPLERCUBE SAMPLER1DSHADOW SAMPLER2DSHADOW
 %token SAMPLERCUBESHADOW SAMPLER1DARRAY SAMPLER2DARRAY SAMPLER1DARRAYSHADOW
-%token SAMPLER2DARRAYSHADOW ISAMPLER1D ISAMPLER2D ISAMPLER3D ISAMPLERCUBE
-%token ISAMPLER1DARRAY ISAMPLER2DARRAY USAMPLER1D USAMPLER2D USAMPLER3D
-%token USAMPLERCUBE USAMPLER1DARRAY USAMPLER2DARRAY
+%token SAMPLER2DARRAYSHADOW SAMPLERCUBEARRAY SAMPLERCUBEARRAYSHADOW
+%token ISAMPLER1D ISAMPLER2D ISAMPLER3D ISAMPLERCUBE
+%token ISAMPLER1DARRAY ISAMPLER2DARRAY ISAMPLERCUBEARRAY
+%token USAMPLER1D USAMPLER2D USAMPLER3D USAMPLERCUBE USAMPLER1DARRAY
+%token USAMPLER2DARRAY USAMPLERCUBEARRAY
 %token SAMPLER2DRECT ISAMPLER2DRECT USAMPLER2DRECT SAMPLER2DRECTSHADOW
 %token SAMPLERBUFFER ISAMPLERBUFFER USAMPLERBUFFER
+%token SAMPLER2DMS ISAMPLER2DMS USAMPLER2DMS
+%token SAMPLER2DMSARRAY ISAMPLER2DMSARRAY USAMPLER2DMSARRAY
 %token SAMPLEREXTERNALOES
 %token STRUCT VOID_TOK WHILE
 %token <identifier> IDENTIFIER TYPE_IDENTIFIER NEW_IDENTIFIER
 %type <identifier> any_identifier
+%type <uniform_block> instance_name_opt
 %token <real> FLOATCONSTANT
 %token <n> INTCONSTANT UINTCONSTANT BOOLCONSTANT
 %token <identifier> FIELD_SELECTION
@@ -140,6 +146,8 @@ static void yyerror(YYLTYPE *loc, _mesa_glsl_parse_state *st, const char *msg)
 %token HVEC2 HVEC3 HVEC4 DVEC2 DVEC3 DVEC4 FVEC2 FVEC3 FVEC4
 %token SAMPLER3DRECT
 %token SIZEOF CAST NAMESPACE USING
+%token COHERENT RESTRICT READONLY WRITEONLY RESOURCE ATOMIC_UINT PATCH SAMPLE
+%token SUBROUTINE
 
 %token ERROR_TOK
 
@@ -221,6 +229,7 @@ static void yyerror(YYLTYPE *loc, _mesa_glsl_parse_state *st, const char *msg)
 %type <node> declaration_statement
 %type <node> jump_statement
 %type <node> uniform_block
+%type <uniform_block> basic_uniform_block
 %type <struct_specifier> struct_specifier
 %type <declarator_list> struct_declaration_list
 %type <declarator_list> struct_declaration
@@ -241,6 +250,7 @@ static void yyerror(YYLTYPE *loc, _mesa_glsl_parse_state *st, const char *msg)
 %type <node> conditionopt
 %type <node> for_init_statement
 %type <for_rest_statement> for_rest_statement
+%type <n> integer_constant
 %%
 
 translation_unit: 
@@ -260,54 +270,12 @@ version_statement:
 	/* blank - no #version specified: defaults are already set */
 	| VERSION_TOK INTCONSTANT EOL
 	{
-	   bool supported = false;
-
-	   switch ($2) {
-	   case 100:
-	      state->es_shader = true;
-	      supported = state->ctx->API == API_OPENGLES2 ||
-		          state->ctx->Extensions.ARB_ES2_compatibility;
-	      break;
-	   case 110:
-	   case 120:
-	      /* FINISHME: Once the OpenGL 3.0 'forward compatible' context or
-	       * the OpenGL 3.2 Core context is supported, this logic will need
-	       * change.  Older versions of GLSL are no longer supported
-	       * outside the compatibility contexts of 3.x.
-	       */
-	   case 130:
-	   case 140:
-	   case 150:
-	   case 330:
-	   case 400:
-	   case 410:
-	   case 420:
-	      supported = _mesa_is_desktop_gl(state->ctx) &&
-			  ((unsigned) $2) <= state->ctx->Const.GLSLVersion;
-	      break;
-	   default:
-	      supported = false;
-	      break;
-	   }
-
-	   state->language_version = $2;
-	   state->version_string =
-	      ralloc_asprintf(state, "GLSL%s %d.%02d",
-			      state->es_shader ? " ES" : "",
-			      state->language_version / 100,
-			      state->language_version % 100);
-
-	   if (!supported) {
-	      _mesa_glsl_error(& @2, state, "%s is not supported. "
-			       "Supported versions are: %s\n",
-			       state->version_string,
-			       state->supported_version_string);
-	   }
-
-	   if (state->language_version >= 140) {
-	      state->ARB_uniform_buffer_object_enable = true;
-	   }
+           state->process_version_directive(&@2, $2, NULL);
 	}
+        | VERSION_TOK INTCONSTANT any_identifier EOL
+        {
+           state->process_version_directive(&@2, $2, $3);
+        }
 	;
 
 pragma_statement:
@@ -317,10 +285,11 @@ pragma_statement:
 	| PRAGMA_OPTIMIZE_OFF EOL
 	| PRAGMA_INVARIANT_ALL EOL
 	{
-	   if (state->language_version == 110) {
+	   if (!state->is_version(120, 100)) {
 	      _mesa_glsl_warning(& @1, state,
-				 "pragma `invariant(all)' not supported in %s",
-				 state->version_string);
+				 "pragma `invariant(all)' not supported in %s "
+                                 "(GLSL ES 1.00 or GLSL 1.20 required).",
+				 state->get_version_string());
 	   } else {
 	      state->all_invariant = true;
 	   }
@@ -1125,6 +1094,11 @@ layout_qualifier_id_list:
 	}
 	;
 
+integer_constant:
+	INTCONSTANT { $$ = $1; }
+	| UINTCONSTANT { $$ = $1; }
+	;
+
 layout_qualifier_id:
 	any_identifier
 	{
@@ -1179,6 +1153,8 @@ layout_qualifier_id:
 	         $$.flags.q.shared = 1;
 	      } else if (strcmp($1, "column_major") == 0) {
 	         $$.flags.q.column_major = 1;
+	      } else if (strcmp($1, "row_major") == 0) {
+	         $$.flags.q.row_major = 1;
 	      }
 
 	      if ($$.flags.i && state->ARB_uniform_buffer_object_warn) {
@@ -1194,7 +1170,7 @@ layout_qualifier_id:
 	      YYERROR;
 	   }
 	}
-	| any_identifier '=' INTCONSTANT
+	| any_identifier '=' integer_constant
 	{
 	   memset(& $$, 0, sizeof($$));
 
@@ -1472,6 +1448,8 @@ basic_type_specifier_nonarray:
 	| SAMPLER1DARRAYSHADOW	{ $$ = "sampler1DArrayShadow"; }
 	| SAMPLER2DARRAYSHADOW	{ $$ = "sampler2DArrayShadow"; }
 	| SAMPLERBUFFER		{ $$ = "samplerBuffer"; }
+	| SAMPLERCUBEARRAY	{ $$ = "samplerCubeArray"; }
+	| SAMPLERCUBEARRAYSHADOW { $$ = "samplerCubeArrayShadow"; }
 	| ISAMPLER1D		{ $$ = "isampler1D"; }
 	| ISAMPLER2D		{ $$ = "isampler2D"; }
 	| ISAMPLER2DRECT	{ $$ = "isampler2DRect"; }
@@ -1480,6 +1458,7 @@ basic_type_specifier_nonarray:
 	| ISAMPLER1DARRAY	{ $$ = "isampler1DArray"; }
 	| ISAMPLER2DARRAY	{ $$ = "isampler2DArray"; }
 	| ISAMPLERBUFFER	{ $$ = "isamplerBuffer"; }
+	| ISAMPLERCUBEARRAY	{ $$ = "isamplerCubeArray"; }
 	| USAMPLER1D		{ $$ = "usampler1D"; }
 	| USAMPLER2D		{ $$ = "usampler2D"; }
 	| USAMPLER2DRECT	{ $$ = "usampler2DRect"; }
@@ -1488,36 +1467,28 @@ basic_type_specifier_nonarray:
 	| USAMPLER1DARRAY	{ $$ = "usampler1DArray"; }
 	| USAMPLER2DARRAY	{ $$ = "usampler2DArray"; }
 	| USAMPLERBUFFER	{ $$ = "usamplerBuffer"; }
+	| USAMPLERCUBEARRAY	{ $$ = "usamplerCubeArray"; }
+	| SAMPLER2DMS		{ $$ = "sampler2DMS"; }
+	| ISAMPLER2DMS		{ $$ = "isampler2DMS"; }
+	| USAMPLER2DMS		{ $$ = "usampler2DMS"; }
+	| SAMPLER2DMSARRAY	{ $$ = "sampler2DMSArray"; }
+	| ISAMPLER2DMSARRAY	{ $$ = "isampler2DMSArray"; }
+	| USAMPLER2DMSARRAY	{ $$ = "usampler2DMSArray"; }
 	;
 
 precision_qualifier:
 	HIGHP	  {
-		     if (!state->es_shader && state->language_version < 130)
-			_mesa_glsl_error(& @1, state,
-				         "precision qualifier forbidden "
-					 "in %s (1.30 or later "
-					 "required)\n",
-					 state->version_string);
+                     state->check_precision_qualifiers_allowed(&@1);
 
 		     $$ = ast_precision_high;
 		  }
 	| MEDIUMP {
-		     if (!state->es_shader && state->language_version < 130)
-			_mesa_glsl_error(& @1, state,
-					 "precision qualifier forbidden "
-					 "in %s (1.30 or later "
-					 "required)\n",
-					 state->version_string);
+                     state->check_precision_qualifiers_allowed(&@1);
 
 		     $$ = ast_precision_medium;
 		  }
 	| LOWP	  {
-		     if (!state->es_shader && state->language_version < 130)
-			_mesa_glsl_error(& @1, state,
-					 "precision qualifier forbidden "
-					 "in %s (1.30 or later "
-					 "required)\n",
-					 state->version_string);
+                     state->check_precision_qualifiers_allowed(&@1);
 
 		     $$ = ast_precision_low;
 		  }
@@ -1586,7 +1557,6 @@ struct_declarator:
 	   void *ctx = state;
 	   $$ = new(ctx) ast_declaration($1, false, NULL, NULL);
 	   $$->set_location(yylloc);
-	   state->symbols->add_variable(new(state) ir_variable(NULL, $1, ir_var_auto, glsl_precision_undefined));
 	}
 	| any_identifier '[' constant_expression ']'
 	{
@@ -1929,31 +1899,27 @@ function_definition:
 
 /* layout_qualifieropt is packed into this rule */
 uniform_block:
-	UNIFORM NEW_IDENTIFIER '{' member_list '}' ';'
+	basic_uniform_block
 	{
-	   void *ctx = state;
-	   $$ = new(ctx) ast_uniform_block(*state->default_uniform_qualifier,
-					   $2, $4);
-
-	   if (!state->ARB_uniform_buffer_object_enable) {
-	      _mesa_glsl_error(& @1, state,
-			       "#version 140 / GL_ARB_uniform_buffer_object "
-			       "required for defining uniform blocks\n");
-	   } else if (state->ARB_uniform_buffer_object_warn) {
-	      _mesa_glsl_warning(& @1, state,
-				 "#version 140 / GL_ARB_uniform_buffer_object "
-				 "required for defining uniform blocks\n");
-	   }
+	   $$ = $1;
 	}
-	| layout_qualifier UNIFORM NEW_IDENTIFIER '{' member_list '}' ';'
+	| layout_qualifier basic_uniform_block
 	{
-	   void *ctx = state;
-
-	   ast_type_qualifier qual = *state->default_uniform_qualifier;
-	   if (!qual.merge_qualifier(& @1, state, $1)) {
+	   ast_uniform_block *block = $2;
+	   if (!block->layout.merge_qualifier(& @1, state, $1)) {
 	      YYERROR;
 	   }
-	   $$ = new(ctx) ast_uniform_block(qual, $3, $5);
+	   $$ = block;
+	}
+	;
+
+basic_uniform_block:
+	UNIFORM NEW_IDENTIFIER '{' member_list '}' instance_name_opt ';'
+	{
+	   ast_uniform_block *const block = $6;
+
+	   block->block_name = $2;
+	   block->declarations.push_degenerate_list_at_head(& $4->link);
 
 	   if (!state->ARB_uniform_buffer_object_enable) {
 	      _mesa_glsl_error(& @1, state,
@@ -1964,6 +1930,49 @@ uniform_block:
 				 "#version 140 / GL_ARB_uniform_buffer_object "
 				 "required for defining uniform blocks\n");
 	   }
+
+	   /* Since block arrays require names, and both features are added in
+	    * the same language versions, we don't have to explicitly
+	    * version-check both things.
+	    */
+	   if (block->instance_name != NULL
+	       && !(state->language_version == 300 && state->es_shader)) {
+	      _mesa_glsl_error(& @1, state,
+			       "#version 300 es required for using uniform "
+			       "blocks with an instance name\n");
+	   }
+
+	   $$ = block;
+	}
+	;
+
+instance_name_opt:
+	/* empty */
+	{
+	   $$ = new(state) ast_uniform_block(*state->default_uniform_qualifier,
+					     NULL,
+					     NULL);
+	}
+	| NEW_IDENTIFIER
+	{
+	   $$ = new(state) ast_uniform_block(*state->default_uniform_qualifier,
+					     $1,
+					     NULL);
+	}
+	| NEW_IDENTIFIER '[' constant_expression ']'
+	{
+	   $$ = new(state) ast_uniform_block(*state->default_uniform_qualifier,
+					     $1,
+					     $3);
+	}
+	| NEW_IDENTIFIER '[' ']'
+	{
+	   _mesa_glsl_error(& @1, state,
+			    "instance block arrays must be explicitly sized\n");
+
+	   $$ = new(state) ast_uniform_block(*state->default_uniform_qualifier,
+					     $1,
+					     NULL);
 	}
 	;
 

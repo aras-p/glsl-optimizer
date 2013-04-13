@@ -123,6 +123,7 @@ public:
    virtual class ir_dereference *       as_dereference()      { return NULL; }
    virtual class ir_dereference_array *	as_dereference_array() { return NULL; }
    virtual class ir_dereference_variable *as_dereference_variable() { return NULL; }
+   virtual class ir_dereference_record *as_dereference_record() { return NULL; }
    virtual class ir_expression *        as_expression()       { return NULL; }
    virtual class ir_rvalue *            as_rvalue()           { return NULL; }
    virtual class ir_loop *              as_loop()             { return NULL; }
@@ -273,12 +274,15 @@ protected:
 enum ir_variable_mode {
    ir_var_auto = 0,     /**< Function local variables and globals. */
    ir_var_uniform,      /**< Variable declared as a uniform. */
-   ir_var_in,
-   ir_var_out,
-   ir_var_inout,
+   ir_var_shader_in,
+   ir_var_shader_out,
+   ir_var_function_in,
+   ir_var_function_out,
+   ir_var_function_inout,
    ir_var_const_in,	/**< "in" param that must be a constant expression */
    ir_var_system_value, /**< Ex: front-face, instance-id, etc. */
-   ir_var_temporary	/**< Temporary variable generated during compilation. */
+   ir_var_temporary,	/**< Temporary variable generated during compilation. */
+   ir_var_mode_count	/**< Number of variable modes */
 };
 
 /**
@@ -357,6 +361,41 @@ public:
    glsl_interp_qualifier determine_interpolation_mode(bool flat_shade);
 
    /**
+    * Determine whether or not a variable is part of a uniform block.
+    */
+   inline bool is_in_uniform_block() const
+   {
+      return this->mode == ir_var_uniform && this->interface_type != NULL;
+   }
+
+   /**
+    * Determine whether or not a variable is the declaration of an interface
+    * block
+    *
+    * For the first declaration below, there will be an \c ir_variable named
+    * "instance" whose type and whose instance_type will be the same
+    *  \cglsl_type.  For the second declaration, there will be an \c ir_variable
+    * named "f" whose type is float and whose instance_type is B2.
+    *
+    * "instance" is an interface instance variable, but "f" is not.
+    *
+    * uniform B1 {
+    *     float f;
+    * } instance;
+    *
+    * uniform B2 {
+    *     float f;
+    * };
+    */
+   inline bool is_interface_instance() const
+   {
+      const glsl_type *const t = this->type;
+
+      return (t == this->interface_type)
+         || (t->is_array() && t->fields.array == this->interface_type);
+    }
+
+   /**
     * Declared type of the variable
     */
    const struct glsl_type *type;
@@ -410,7 +449,7 @@ public:
     *
     * \sa ir_variable_mode
     */
-   unsigned mode:3;
+   unsigned mode:4;
 
    /**
     * Interpolation mode for shader inputs / outputs
@@ -448,6 +487,24 @@ public:
    unsigned has_initializer:1;
 
    /**
+    * Is this variable a generic output or input that has not yet been matched
+    * up to a variable in another stage of the pipeline?
+    *
+    * This is used by the linker as scratch storage while assigning locations
+    * to generic inputs and outputs.
+    */
+   unsigned is_unmatched_generic_inout:1;
+
+   /**
+    * If non-zero, then this variable may be packed along with other variables
+    * into a single varying slot, so this offset should be applied when
+    * accessing components.  For example, an offset of 1 means that the x
+    * component of this variable is actually stored in component y of the
+    * location specified by \c location.
+    */
+   unsigned location_frac:2;
+
+   /**
     * \brief Layout qualifier for gl_FragDepth.
     *
     * This is not equal to \c ir_depth_layout_none if and only if this
@@ -461,8 +518,8 @@ public:
     * The precise meaning of this field depends on the nature of the variable.
     *
     *   - Vertex shader input: one of the values from \c gl_vert_attrib.
-    *   - Vertex shader output: one of the values from \c gl_vert_result.
-    *   - Fragment shader input: one of the values from \c gl_frag_attrib.
+    *   - Vertex shader output: one of the values from \c gl_varying_slot.
+    *   - Fragment shader input: one of the values from \c gl_varying_slot.
     *   - Fragment shader output: one of the values from \c gl_frag_result.
     *   - Uniforms: Per-stage uniform slot number for default uniform block.
     *   - Uniforms: Index within the uniform block definition for UBO members.
@@ -472,16 +529,6 @@ public:
     * slot has not been assigned, the value will be -1.
     */
    int location;
-
-   /**
-    * Uniform block number for uniforms.
-    *
-    * This index is into the shader's list of uniform blocks, not the
-    * linked program's merged list.
-    *
-    * If the variable is not in a uniform block, the value will be -1.
-    */
-   int uniform_block;
 
    /**
     * output index for dual source blending.
@@ -523,6 +570,14 @@ public:
     * objects.
     */
    ir_constant *constant_initializer;
+
+   /**
+    * For variables that are in an interface block or are an instance of an
+    * interface block, this is the \c GLSL_TYPE_INTERFACE type for that block.
+    *
+    * \sa ir_variable::location
+    */
+   const glsl_type *interface_type;
 };
 
 
@@ -901,7 +956,7 @@ public:
    unsigned write_mask:4;
 };
 
-/* Update ir_expression::num_operands() and operator_strs when
+/* Update ir_expression::get_num_operands() and operator_strs when
  * updating this list.
  */
 enum ir_expression_operation {
@@ -961,6 +1016,32 @@ enum ir_expression_operation {
    /*@{*/
    ir_unop_dFdx,
    ir_unop_dFdy,
+   /*@}*/
+
+   /**
+    * \name Floating point pack and unpack operations.
+    */
+   /*@{*/
+   ir_unop_pack_snorm_2x16,
+   ir_unop_pack_snorm_4x8,
+   ir_unop_pack_unorm_2x16,
+   ir_unop_pack_unorm_4x8,
+   ir_unop_pack_half_2x16,
+   ir_unop_unpack_snorm_2x16,
+   ir_unop_unpack_snorm_4x8,
+   ir_unop_unpack_unorm_2x16,
+   ir_unop_unpack_unorm_4x8,
+   ir_unop_unpack_half_2x16,
+   /*@}*/
+
+   /**
+    * \name Lowered floating point unpacking operations.
+    *
+    * \see lower_packing_builtins_visitor::split_unpack_half_2x16
+    */
+   /*@{*/
+   ir_unop_unpack_half_2x16_split_x,
+   ir_unop_unpack_half_2x16_split_y,
    /*@}*/
 
    ir_unop_noise,
@@ -1030,6 +1111,15 @@ enum ir_expression_operation {
    ir_binop_pow,
 
    /**
+    * \name Lowered floating point packing operations.
+    *
+    * \see lower_packing_builtins_visitor::split_pack_half_2x16
+    */
+   /*@{*/
+   ir_binop_pack_half_2x16_split,
+   /*@}*/
+
+   /**
     * Load a value the size of a given GLSL type from a uniform block.
     *
     * operand0 is the ir_constant uniform block index in the linked shader.
@@ -1042,10 +1132,14 @@ enum ir_expression_operation {
     */
    ir_last_binop = ir_binop_ubo_load,
 
-   ir_ternop_clamp,
-   ir_ternop_mix,
-   ir_last_ternop = ir_ternop_mix,
-	
+   ir_triop_clamp,
+   ir_triop_lrp,
+
+   /**
+    * A sentinel marking the last of the ternary operations.
+    */
+   ir_last_triop = ir_triop_lrp,
+
    ir_quadop_vector,
 
    /**
@@ -1056,30 +1150,19 @@ enum ir_expression_operation {
 
 class ir_expression : public ir_rvalue {
 public:
+   ir_expression(int op, const struct glsl_type *type,
+                 ir_rvalue *op0, ir_rvalue *op1 = NULL,
+                 ir_rvalue *op2 = NULL, ir_rvalue *op3 = NULL);
+
    /**
     * Constructor for unary operation expressions
     */
-   ir_expression(int op, const struct glsl_type *type, ir_rvalue *);
    ir_expression(int op, ir_rvalue *);
 
    /**
     * Constructor for binary operation expressions
     */
-   ir_expression(int op, const struct glsl_type *type,
-		 ir_rvalue *, ir_rvalue *);
    ir_expression(int op, ir_rvalue *op0, ir_rvalue *op1);
-	
-   /**
-	* Constructor for ternary operation expressions
-    */
-   ir_expression(int op, const struct glsl_type *type,
-         ir_rvalue *op0, ir_rvalue *op1, ir_rvalue *op2);
-	
-   /**
-    * Constructor for quad operator expressions
-    */
-   ir_expression(int op, const struct glsl_type *type,
-		 ir_rvalue *, ir_rvalue *, ir_rvalue *, ir_rvalue *);
 
    virtual ir_expression *as_expression()
    {
@@ -1356,7 +1439,9 @@ enum ir_texture_opcode {
    ir_txl,		/**< Texture look-up with explicit LOD */
    ir_txd,		/**< Texture look-up with partial derivatvies */
    ir_txf,		/**< Texel fetch with explicit LOD */
-   ir_txs		/**< Texture size */
+   ir_txf_ms,           /**< Multisample texture fetch */
+   ir_txs,		/**< Texture size */
+   ir_lod		/**< Texture lod query */
 };
 
 
@@ -1368,20 +1453,25 @@ enum ir_texture_opcode {
  * appear as:
  *
  *                                    Texel offset (0 or an expression)
- *                                    |
- *                                    v
- * (tex <type> <sampler> <coordinate> 0)
- * (txb <type> <sampler> <coordinate> 0 <bias>)
- * (txl <type> <sampler> <coordinate> 0 <lod>)
- * (txd <type> <sampler> <coordinate> 0 (dPdx dPdy))
- * (txf <type> <sampler> <coordinate> 0 <lod>)
+ *                                    | Projection divisor
+ *                                    | |  Shadow comparitor
+ *                                    | |  |
+ *                                    v v  v
+ * (tex <type> <sampler> <coordinate> 0 1 ( ))
+ * (txb <type> <sampler> <coordinate> 0 1 ( ) <bias>)
+ * (txl <type> <sampler> <coordinate> 0 1 ( ) <lod>)
+ * (txd <type> <sampler> <coordinate> 0 1 ( ) (dPdx dPdy))
+ * (txf <type> <sampler> <coordinate> 0       <lod>)
+ * (txf_ms
+ *      <type> <sampler> <coordinate>         <sample_index>)
  * (txs <type> <sampler> <lod>)
+ * (lod <type> <sampler> <coordinate>)
  */
 class ir_texture : public ir_rvalue {
 public:
    ir_texture(enum ir_texture_opcode op)
-      : ir_rvalue(glsl_precision_low), op(op), coordinate(NULL),
-        offset(NULL)
+      : ir_rvalue(glsl_precision_low), op(op), sampler(NULL), coordinate(NULL), projector(NULL),
+        shadow_comparitor(NULL), offset(NULL)
    {
       this->ir_type = ir_type_texture;
    }
@@ -1418,12 +1508,30 @@ public:
    /** Texture coordinate to sample */
    ir_rvalue *coordinate;
 
+   /**
+    * Value used for projective divide.
+    *
+    * If there is no projective divide (the common case), this will be
+    * \c NULL.  Optimization passes should check for this to point to a constant
+    * of 1.0 and replace that with \c NULL.
+    */
+   ir_rvalue *projector;
+
+   /**
+    * Coordinate used for comparison on shadow look-ups.
+    *
+    * If there is no shadow comparison, this will be \c NULL.  For the
+    * \c ir_txf opcode, this *must* be \c NULL.
+    */
+   ir_rvalue *shadow_comparitor;
+
    /** Texel offset. */
    ir_rvalue *offset;
 
    union {
       ir_rvalue *lod;		/**< Floating point LOD */
       ir_rvalue *bias;		/**< Floating point LOD bias */
+      ir_rvalue *sample_index;  /**< MSAA sample index */
       struct {
 	 ir_rvalue *dPdx;	/**< Partial derivative of coordinate wrt X */
 	 ir_rvalue *dPdy;	/**< Partial derivative of coordinate wrt Y */
@@ -1649,6 +1757,11 @@ public:
 					struct hash_table *) const;
 
    virtual ir_constant *constant_expression_value(struct hash_table *variable_context = NULL);
+
+   virtual ir_dereference_record *as_dereference_record()
+   {
+      return this;
+   }
 
    /**
     * Get the variable that is ultimately referenced by an r-value

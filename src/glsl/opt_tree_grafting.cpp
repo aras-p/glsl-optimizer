@@ -226,7 +226,8 @@ ir_tree_grafting_visitor::visit_enter(ir_call *ir)
       ir_rvalue *ir = (ir_rvalue *)iter.get();
       ir_rvalue *new_ir = ir;
 
-      if (sig_param->mode != ir_var_in && sig_param->mode != ir_var_const_in) {
+      if (sig_param->mode != ir_var_function_in
+          && sig_param->mode != ir_var_const_in) {
 	 if (check_graft(ir, sig_param) == visit_stop)
 	    return visit_stop;
 	 continue;
@@ -286,6 +287,7 @@ ir_tree_grafting_visitor::visit_enter(ir_texture *ir)
 
    switch (ir->op) {
    case ir_tex:
+   case ir_lod:
       break;
    case ir_txb:
       if (do_graft(&ir->lod_info.bias))
@@ -296,6 +298,10 @@ ir_tree_grafting_visitor::visit_enter(ir_texture *ir)
    case ir_txs:
       if (do_graft(&ir->lod_info.lod))
 	 return visit_stop;
+      break;
+   case ir_txf_ms:
+      if (do_graft(&ir->lod_info.sample_index))
+         return visit_stop;
       break;
    case ir_txd:
       if (do_graft(&ir->lod_info.grad.dPdx) ||
@@ -363,8 +369,9 @@ tree_grafting_basic_block(ir_instruction *bb_first,
       if (!lhs_var)
 	 continue;
 
-      if (lhs_var->mode == ir_var_out ||
-	  lhs_var->mode == ir_var_inout)
+      if (lhs_var->mode == ir_var_function_out ||
+	  lhs_var->mode == ir_var_function_inout ||
+          lhs_var->mode == ir_var_shader_out)
 	 continue;
 
       ir_variable_refcount_entry *entry = info->refs->get_variable_entry(lhs_var);

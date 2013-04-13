@@ -191,12 +191,13 @@ verify_parameter_modes(_mesa_glsl_parse_state *state,
       }
 
       /* Verify that 'out' and 'inout' actual parameters are lvalues. */
-      if (formal->mode == ir_var_out || formal->mode == ir_var_inout) {
+      if (formal->mode == ir_var_function_out
+          || formal->mode == ir_var_function_inout) {
 	 const char *mode = NULL;
 	 switch (formal->mode) {
-	 case ir_var_out:   mode = "out";   break;
-	 case ir_var_inout: mode = "inout"; break;
-	 default:           assert(false);  break;
+	 case ir_var_function_out:   mode = "out";   break;
+	 case ir_var_function_inout: mode = "inout"; break;
+	 default:                    assert(false);  break;
 	 }
 
 	 /* This AST-based check catches errors like f(i++).  The IR-based
@@ -242,7 +243,7 @@ verify_parameter_modes(_mesa_glsl_parse_state *state,
  */
 static ir_rvalue *
 generate_call(exec_list *instructions, ir_function_signature *sig,
-	      YYLTYPE *loc, exec_list *actual_parameters,
+	      exec_list *actual_parameters,
 	      ir_call **call_ir,
 	      struct _mesa_glsl_parse_state *state)
 {
@@ -269,13 +270,13 @@ generate_call(exec_list *instructions, ir_function_signature *sig,
       if (formal->type->is_numeric() || formal->type->is_boolean()) {
 	 switch (formal->mode) {
 	 case ir_var_const_in:
-	 case ir_var_in: {
+	 case ir_var_function_in: {
 	    ir_rvalue *converted
 	       = convert_component(actual, formal->type);
 	    actual->replace_with(converted);
 	    break;
 	 }
-	 case ir_var_out:
+	 case ir_var_function_out:
 	    if (actual->type != formal->type) {
 	       /* To convert an out parameter, we need to create a
 		* temporary variable to hold the value before conversion,
@@ -313,7 +314,7 @@ generate_call(exec_list *instructions, ir_function_signature *sig,
 	       actual->replace_with(deref_tmp_2);
 	    }
 	    break;
-	 case ir_var_inout:
+	 case ir_var_function_inout:
 	    /* Inout parameters should never require conversion, since that
 	     * would require an implicit conversion to exist both to and
 	     * from the formal parameter type, and there are no
@@ -334,9 +335,10 @@ generate_call(exec_list *instructions, ir_function_signature *sig,
    /* If the function call is a constant expression, don't generate any
     * instructions; just generate an ir_constant.
     *
-    * Function calls were first allowed to be constant expressions in GLSL 1.20.
+    * Function calls were first allowed to be constant expressions in GLSL
+    * 1.20 and GLSL ES 3.00.
     */
-   if (state->language_version >= 120) {
+   if (state->is_version(120, 300)) {
       ir_constant *value = sig->constant_expression_value(actual_parameters, NULL);
       if (value != NULL) {
 	 return value;
@@ -383,7 +385,8 @@ match_function_by_name(const char *name,
       goto done; /* no match */
 
    /* Is the function hidden by a variable (impossible in 1.10)? */
-   if (state->language_version != 110 && state->symbols->get_variable(name))
+   if (!state->symbols->separate_function_namespace
+       && state->symbols->get_variable(name))
       goto done; /* no match */
 
    if (f != NULL) {
@@ -1303,9 +1306,8 @@ ast_function_expression::hir(exec_list *instructions,
       }
 
       if (constructor_type->is_array()) {
-	 if (state->language_version <= 110) {
-	    _mesa_glsl_error(& loc, state,
-			     "array constructors forbidden in GLSL 1.10");
+         if (!state->check_version(120, 300, &loc,
+                                   "array constructors forbidden")) {
 	    return ir_rvalue::error_value(ctx);
 	 }
 
@@ -1428,11 +1430,11 @@ ast_function_expression::hir(exec_list *instructions,
        *    "It is an error to construct matrices from other matrices. This
        *    is reserved for future use."
        */
-      if (state->language_version == 110 && matrix_parameters > 0
-	  && constructor_type->is_matrix()) {
-	 _mesa_glsl_error(& loc, state, "cannot construct `%s' from a "
-			  "matrix in GLSL 1.10",
-			  constructor_type->name);
+      if (matrix_parameters > 0
+          && constructor_type->is_matrix()
+          && !state->check_version(120, 100, &loc,
+                                   "cannot construct `%s' from a matrix",
+                                   constructor_type->name)) {
 	 return ir_rvalue::error_value(ctx);
       }
 
@@ -1561,7 +1563,7 @@ ast_function_expression::hir(exec_list *instructions,
 	 /* an error has already been emitted */
 	 value = ir_rvalue::error_value(ctx);
       } else {
-	 value = generate_call(instructions, sig, &loc, &actual_parameters,
+	 value = generate_call(instructions, sig, &actual_parameters,
 			       &call, state);
       }
 

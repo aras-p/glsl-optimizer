@@ -47,7 +47,8 @@ initialize_context(struct gl_context *ctx, gl_api api)
    /* The standalone compiler needs to claim support for almost
     * everything in order to compile the built-in functions.
     */
-   ctx->Const.GLSLVersion = 140;
+   ctx->Const.GLSLVersion = 150;
+   ctx->Extensions.ARB_ES3_compatibility = true;
 
    ctx->Const.MaxClipPlanes = 8;
    ctx->Const.MaxDrawBuffers = 2;
@@ -145,7 +146,7 @@ compile_shader(struct gl_context *ctx, struct gl_shader *shader)
 
    const char *source = shader->Source;
    state->error = glcpp_preprocess(state, &source, &state->info_log,
-			     state->extensions, ctx->API) != 0;
+			     state->extensions, ctx) != 0;
 
    if (!state->error) {
       _mesa_glsl_lexer_ctor(state, source);
@@ -190,6 +191,7 @@ compile_shader(struct gl_context *ctx, struct gl_shader *shader)
    shader->symbols = state->symbols;
    shader->CompileStatus = !state->error;
    shader->Version = state->language_version;
+   shader->IsES = state->es_shader;
    memcpy(shader->builtins_to_link, state->builtins_to_link,
 	  sizeof(shader->builtins_to_link[0]) * state->num_builtins_to_link);
    shader->num_builtins_to_link = state->num_builtins_to_link;
@@ -223,7 +225,7 @@ main(int argc, char **argv)
    if (argc <= optind)
       usage_fail(argv[0]);
 
-   initialize_context(ctx, (glsl_es) ? API_OPENGLES2 : API_OPENGL);
+   initialize_context(ctx, (glsl_es) ? API_OPENGLES2 : API_OPENGL_COMPAT);
 
    struct gl_shader_program *whole_program;
 

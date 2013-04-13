@@ -1,0 +1,6 @@
+((function unpackHalf2x16
+   (signature vec2
+     (parameters
+       (declare (in) uint arg0))
+     ((return (expression vec2 unpackHalf2x16 (var_ref arg0)))))
+))

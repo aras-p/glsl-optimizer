@@ -36,10 +36,6 @@ ir_rvalue::clone(void *mem_ctx, struct hash_table *ht) const
 
 /**
  * Duplicate an IR variable
- *
- * \note
- * This will probably be made \c virtual and moved to the base class
- * eventually.
  */
 ir_variable *
 ir_variable::clone(void *mem_ctx, struct hash_table *ht) const
@@ -54,7 +50,6 @@ ir_variable::clone(void *mem_ctx, struct hash_table *ht) const
    var->interpolation = this->interpolation;
    var->location = this->location;
    var->index = this->index;
-   var->uniform_block = this->uniform_block;
    var->warn_extension = this->warn_extension;
    var->origin_upper_left = this->origin_upper_left;
    var->pixel_center_integer = this->pixel_center_integer;
@@ -80,6 +75,8 @@ ir_variable::clone(void *mem_ctx, struct hash_table *ht) const
    if (this->constant_initializer)
       var->constant_initializer =
 	 this->constant_initializer->clone(mem_ctx, ht);
+
+   var->interface_type = this->interface_type;
 
    if (ht) {
       hash_table_insert(ht, var, (void *)const_cast<ir_variable *>(this));
@@ -255,6 +252,7 @@ ir_texture::clone(void *mem_ctx, struct hash_table *ht) const
 
    switch (this->op) {
    case ir_tex:
+   case ir_lod:
       break;
    case ir_txb:
       new_tex->lod_info.bias = this->lod_info.bias->clone(mem_ctx, ht);
@@ -263,6 +261,9 @@ ir_texture::clone(void *mem_ctx, struct hash_table *ht) const
    case ir_txf:
    case ir_txs:
       new_tex->lod_info.lod = this->lod_info.lod->clone(mem_ctx, ht);
+      break;
+   case ir_txf_ms:
+      new_tex->lod_info.sample_index = this->lod_info.sample_index->clone(mem_ctx, ht);
       break;
    case ir_txd:
       new_tex->lod_info.grad.dPdx = this->lod_info.grad.dPdx->clone(mem_ctx, ht);
@@ -388,10 +389,15 @@ ir_constant::clone(void *mem_ctx, struct hash_table *ht) const
       return c;
    }
 
-   default:
+   case GLSL_TYPE_SAMPLER:
+   case GLSL_TYPE_VOID:
+   case GLSL_TYPE_ERROR:
+   case GLSL_TYPE_INTERFACE:
       assert(!"Should not get here.");
-      return NULL;
+      break;
    }
+
+   return NULL;
 }
 
 

@@ -36,7 +36,7 @@ gl_shader *
 read_builtins(GLenum target, const char *protos, const char **functions, unsigned count)
 {
    struct gl_context fakeCtx;
-   fakeCtx.API = API_OPENGL;
+   fakeCtx.API = API_OPENGL_COMPAT;
    fakeCtx.Const.GLSLVersion = 140;
    fakeCtx.Extensions.ARB_ES2_compatibility = true;
    fakeCtx.Const.ForceGLSLExtensionsWarn = false;

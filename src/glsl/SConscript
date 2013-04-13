@@ -46,7 +46,7 @@ glsl_sources = [
 source_lists = env.ParseSourceList('Makefile.sources')
 
 # add non-generated sources
-for l in ('LIBGLCPP_FILES', 'LIBGLSL_FILES', 'LIBGLSL_CXX_FILES'):
+for l in ('LIBGLCPP_FILES', 'LIBGLSL_FILES'):
     glsl_sources += source_lists[l]
 
 if env['msvc']:
@@ -57,21 +57,27 @@ if env['crosscompile'] and not env['embedded']:
     Import('builtin_glsl_function')
 else:
     # Copy these files to avoid generation object files into src/mesa/program
+    env.Prepend(CPPPATH = ['#src/mesa/main'])
+    env.Command('hash_table.c', '#src/mesa/main/hash_table.c', Copy('$TARGET', '$SOURCE'))
+    env.Command('imports.c', '#src/mesa/main/imports.c', Copy('$TARGET', '$SOURCE'))
+    # Copy these files to avoid generation object files into src/mesa/program
     env.Prepend(CPPPATH = ['#src/mesa/program'])
-    env.Command('hash_table.c', '#src/mesa/program/hash_table.c', Copy('$TARGET', '$SOURCE'))
+    env.Command('prog_hash_table.c', '#src/mesa/program/prog_hash_table.c', Copy('$TARGET', '$SOURCE'))
     env.Command('symbol_table.c', '#src/mesa/program/symbol_table.c', Copy('$TARGET', '$SOURCE'))
 
     compiler_objs = env.StaticObject(source_lists['GLSL_COMPILER_CXX_FILES'])
 
     mesa_objs = env.StaticObject([
         'hash_table.c',
+        'imports.c',
+        'prog_hash_table.c',
         'symbol_table.c',
     ])
 
     compiler_objs += mesa_objs
 
     builtin_compiler = env.Program(
-        target = 'builtin_compiler',
+        target = 'builtin_compiler/builtin_compiler',
         source = compiler_objs + glsl_sources + \
             source_lists['BUILTIN_COMPILER_CXX_FILES'],
     )

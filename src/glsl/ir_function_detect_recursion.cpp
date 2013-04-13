@@ -173,6 +173,7 @@ public:
    has_recursion_visitor()
       : current(NULL)
    {
+      progress = false;
       this->mem_ctx = ralloc_context(NULL);
       this->function_hash = hash_table_ctor(0, hash_table_pointer_hash,
 					    hash_table_pointer_compare);

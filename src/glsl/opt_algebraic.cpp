@@ -192,13 +192,12 @@ ir_algebraic_visitor::swizzle_if_required(ir_expression *expr,
 ir_rvalue *
 ir_algebraic_visitor::handle_expression(ir_expression *ir)
 {
-   ir_constant *op_const[2] = {NULL, NULL};
-   ir_expression *op_expr[2] = {NULL, NULL};
+   ir_constant *op_const[3] = {NULL, NULL, NULL};
+   ir_expression *op_expr[3] = {NULL, NULL, NULL};
    ir_expression *temp;
    unsigned int i;
 
-   if (ir->get_num_operands() > 2)
-      return ir;
+   assert(ir->get_num_operands() <= 3);
    for (i = 0; i < ir->get_num_operands(); i++) {
       if (ir->operands[i]->type->is_matrix())
 	 return ir;
@@ -432,6 +431,17 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
 	 return swizzle_if_required(ir, temp);
       }
 
+      break;
+
+   case ir_triop_lrp:
+      /* Operands are (x, y, a). */
+      if (is_vec_zero(op_const[2])) {
+         this->progress = true;
+         return swizzle_if_required(ir, ir->operands[0]);
+      } else if (is_vec_one(op_const[2])) {
+         this->progress = true;
+         return swizzle_if_required(ir, ir->operands[1]);
+      }
       break;
 
    default:

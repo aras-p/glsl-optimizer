@@ -33,3 +33,7 @@ linker_error(gl_shader_program *prog, const char *fmt, ...)
 extern void
 linker_warning(gl_shader_program *prog, const char *fmt, ...)
    PRINTFLIKE(2, 3);
+
+extern long
+parse_program_resource_name(const GLchar *name,
+                            const GLchar **out_base_name_end);

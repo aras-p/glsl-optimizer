@@ -187,7 +187,7 @@
 #define MAX_PROGRAM_CALL_DEPTH         8
 #define MAX_PROGRAM_TEMPS              256
 #define MAX_PROGRAM_ADDRESS_REGS       2
-#define MAX_VARYING                    16    /**< number of float[4] vectors */
+#define MAX_VARYING                    32    /**< number of float[4] vectors */
 #define MAX_SAMPLERS                   MAX_TEXTURE_IMAGE_UNITS
 #define MAX_PROGRAM_INPUTS             32
 #define MAX_PROGRAM_OUTPUTS            64
@@ -202,15 +202,6 @@
 /** For GL_ARB_fragment_program */
 /*@{*/
 #define MAX_FRAGMENT_PROGRAM_ADDRESS_REGS 0
-/*@}*/
-
-/** For GL_NV_vertex_program */
-/*@{*/
-#define MAX_NV_VERTEX_PROGRAM_INSTRUCTIONS 128
-#define MAX_NV_VERTEX_PROGRAM_TEMPS         12
-#define MAX_NV_VERTEX_PROGRAM_PARAMS        96
-#define MAX_NV_VERTEX_PROGRAM_INPUTS        16
-#define MAX_NV_VERTEX_PROGRAM_OUTPUTS       15
 /*@}*/
 
 /** For GL_NV_fragment_program */

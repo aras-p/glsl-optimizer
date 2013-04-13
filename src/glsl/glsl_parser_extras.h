@@ -56,6 +56,19 @@ struct glsl_switch_state {
    bool is_switch_innermost; // if switch stmt is closest to break, ...
 };
 
+const char *
+glsl_compute_version_string(void *mem_ctx, bool is_es, unsigned version);
+
+typedef struct YYLTYPE {
+   int first_line;
+   int first_column;
+   int last_line;
+   int last_column;
+   unsigned source;
+} YYLTYPE;
+# define YYLTYPE_IS_DECLARED 1
+# define YYLTYPE_IS_TRIVIAL 1
+
 struct _mesa_glsl_parse_state {
    _mesa_glsl_parse_state(struct gl_context *_ctx, GLenum target,
 			  void *mem_ctx);
@@ -77,6 +90,55 @@ struct _mesa_glsl_parse_state {
       ralloc_free(mem);
    }
 
+   /**
+    * Generate a string representing the GLSL version currently being compiled
+    * (useful for error messages).
+    */
+   const char *get_version_string()
+   {
+      return glsl_compute_version_string(this, this->es_shader,
+                                         this->language_version);
+   }
+
+   /**
+    * Determine whether the current GLSL version is sufficiently high to
+    * support a certain feature.
+    *
+    * \param required_glsl_version is the desktop GLSL version that is
+    * required to support the feature, or 0 if no version of desktop GLSL
+    * supports the feature.
+    *
+    * \param required_glsl_es_version is the GLSL ES version that is required
+    * to support the feature, or 0 if no version of GLSL ES suports the
+    * feature.
+    */
+   bool is_version(unsigned required_glsl_version,
+                   unsigned required_glsl_es_version)
+   {
+      unsigned required_version = this->es_shader ?
+         required_glsl_es_version : required_glsl_version;
+      return required_version != 0
+         && this->language_version >= required_version;
+   }
+
+   bool check_version(unsigned required_glsl_version,
+                      unsigned required_glsl_es_version,
+                      YYLTYPE *locp, const char *fmt, ...) PRINTFLIKE(5, 6);
+
+   bool check_precision_qualifiers_allowed(YYLTYPE *locp)
+   {
+      return check_version(130, 100, locp,
+                           "precision qualifiers are forbidden");
+   }
+
+   bool check_bitwise_operations_allowed(YYLTYPE *locp)
+   {
+      return check_version(130, 300, locp, "bit-wise operations are forbidden");
+   }
+
+   void process_version_directive(YYLTYPE *locp, int version,
+                                  const char *ident);
+
    struct gl_context *const ctx;
    void *scanner;
    exec_list translation_unit;
@@ -86,9 +148,14 @@ struct _mesa_glsl_parse_state {
    unsigned uniform_block_array_size;
    struct gl_uniform_block *uniform_blocks;
 
+   unsigned num_supported_versions;
+   struct {
+      unsigned ver;
+      bool es;
+   } supported_versions[12];
+
    bool es_shader;
    unsigned language_version;
-   const char *version_string;
    enum _mesa_glsl_parser_targets target;
 
    /**
@@ -129,6 +196,10 @@ struct _mesa_glsl_parse_state {
 
       /* ARB_draw_buffers */
       unsigned MaxDrawBuffers;
+
+      /* 3.00 ES */
+      int MinProgramTexelOffset;
+      int MaxProgramTexelOffset;
    } Const;
 
    /**
@@ -211,6 +282,14 @@ struct _mesa_glsl_parse_state {
    bool ARB_uniform_buffer_object_warn;
    bool OES_standard_derivatives_enable;
    bool OES_standard_derivatives_warn;
+   bool ARB_texture_cube_map_array_enable;
+   bool ARB_texture_cube_map_array_warn;
+   bool ARB_shading_language_packing_enable;
+   bool ARB_shading_language_packing_warn;
+   bool ARB_texture_multisample_enable;
+   bool ARB_texture_multisample_warn;
+   bool ARB_texture_query_lod_enable;
+   bool ARB_texture_query_lod_warn;
    /*@}*/
 
    /** Extensions supported by the OpenGL implementation. */
@@ -220,16 +299,6 @@ struct _mesa_glsl_parse_state {
    struct gl_shader *builtins_to_link[16];
    unsigned num_builtins_to_link;
 };
-
-typedef struct YYLTYPE {
-   int first_line;
-   int first_column;
-   int last_line;
-   int last_column;
-   unsigned source;
-} YYLTYPE;
-# define YYLTYPE_IS_DECLARED 1
-# define YYLTYPE_IS_TRIVIAL 1
 
 # define YYLLOC_DEFAULT(Current, Rhs, N)			\
 do {								\
@@ -303,7 +372,7 @@ extern "C" {
 #endif
 
 extern int glcpp_preprocess(void *ctx, const char **shader, char **info_log,
-                      const struct gl_extensions *extensions, int api);
+                      const struct gl_extensions *extensions, struct gl_context *gl_ctx);
 
 extern void _mesa_destroy_shader_compiler(void);
 extern void _mesa_destroy_shader_compiler_caches(void);

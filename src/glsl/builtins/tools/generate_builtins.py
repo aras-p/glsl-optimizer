@@ -173,20 +173,25 @@ gl_shader *
 read_builtins(GLenum target, const char *protos, const char **functions, unsigned count)
 {
    struct gl_context fakeCtx;
-   fakeCtx.API = API_OPENGL;
-   fakeCtx.Const.GLSLVersion = 140;
+   fakeCtx.API = API_OPENGL_COMPAT;
+   fakeCtx.Const.GLSLVersion = 150;
    fakeCtx.Extensions.ARB_ES2_compatibility = true;
+   fakeCtx.Extensions.ARB_ES3_compatibility = true;
    fakeCtx.Const.ForceGLSLExtensionsWarn = false;
    gl_shader *sh = _mesa_new_shader(NULL, 0, target);
    struct _mesa_glsl_parse_state *st =
       new(sh) _mesa_glsl_parse_state(&fakeCtx, target, sh);
 
-   st->language_version = 140;
-   st->symbols->language_version = 140;
+   st->language_version = 150;
+   st->symbols->separate_function_namespace = false;
    st->ARB_texture_rectangle_enable = true;
    st->EXT_texture_array_enable = true;
    st->OES_EGL_image_external_enable = true;
    st->ARB_shader_bit_encoding_enable = true;
+   st->ARB_texture_cube_map_array_enable = true;
+   st->ARB_shading_language_packing_enable = true;
+   st->ARB_texture_multisample_enable = true;
+   st->ARB_texture_query_lod_enable = true;
    _mesa_glsl_initialize_types(st);
 
    sh->ir = new(sh) exec_list;
@@ -277,8 +282,12 @@ _mesa_glsl_initialize_functions(struct _mesa_glsl_parse_state *state)
             check = ''
 
         version = re.sub(r'_(glsl|vert|frag)$', '', profile)
-        if version.isdigit():
+        if version[0].isdigit():
+            is_es = version.endswith('es')
+            if is_es:
+                version = version[:-2]
             check += 'state->language_version == ' + version
+            check += ' && {0}state->es_shader'.format('' if is_es else '!')
         else: # an extension name
             check += 'state->' + version + '_enable'
 

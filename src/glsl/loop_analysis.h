@@ -249,7 +249,7 @@ private:
 
    void *mem_ctx;
 
-   friend class loop_analysis;
+   friend loop_state *analyze_loop_variables(exec_list *instructions);
 };
 
 #endif /* LOOP_ANALYSIS_H */

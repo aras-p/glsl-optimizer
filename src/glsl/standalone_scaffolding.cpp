@@ -34,6 +34,24 @@
 #include "ralloc.h"
 
 void
+_mesa_warning(struct gl_context *ctx, const char *fmt, ...)
+{
+    va_list vargs;
+    (void) ctx;
+
+    va_start(vargs, fmt);
+
+    /* This output is not thread-safe, but that's good enough for the
+     * standalone compiler.
+     */
+    fprintf(stderr, "Mesa warning: ");
+    vfprintf(stderr, fmt, vargs);
+    fprintf(stderr, "\n");
+
+    va_end(vargs);
+}
+
+void
 _mesa_reference_shader(struct gl_context *ctx, struct gl_shader **ptr,
                        struct gl_shader *sh)
 {
@@ -42,7 +60,7 @@ _mesa_reference_shader(struct gl_context *ctx, struct gl_shader **ptr,
 }
 
 void
-_mesa_shader_debug(struct gl_context *, GLenum, GLuint,
+_mesa_shader_debug(struct gl_context *, GLenum, GLuint *id,
                    const char *, int)
 {
 }
@@ -73,6 +91,7 @@ void initialize_context_to_defaults(struct gl_context *ctx, gl_api api)
    ctx->Extensions.dummy_false = false;
    ctx->Extensions.dummy_true = true;
    ctx->Extensions.ARB_ES2_compatibility = true;
+   ctx->Extensions.ARB_ES3_compatibility = false;
    ctx->Extensions.ARB_draw_instanced = true;
    ctx->Extensions.ARB_fragment_coord_conventions = true;
    ctx->Extensions.EXT_texture_array = true;
@@ -80,6 +99,11 @@ void initialize_context_to_defaults(struct gl_context *ctx, gl_api api)
    ctx->Extensions.EXT_texture3D = true;
    ctx->Extensions.OES_EGL_image_external = true;
    ctx->Extensions.ARB_shader_bit_encoding = true;
+   ctx->Extensions.ARB_shading_language_packing = true;
+   ctx->Extensions.OES_standard_derivatives = true;
+   ctx->Extensions.ARB_texture_cube_map_array = true;
+   ctx->Extensions.ARB_texture_multisample = true;
+   ctx->Extensions.ARB_texture_query_lod = true;
 
    ctx->Const.GLSLVersion = 120;
 

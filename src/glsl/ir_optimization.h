@@ -36,6 +36,32 @@
 #define LOG_TO_LOG2        0x10
 #define MOD_TO_FRACT       0x20
 #define INT_DIV_TO_MUL_RCP 0x40
+#define LRP_TO_ARITH       0x80
+
+/**
+ * \see class lower_packing_builtins_visitor
+ */
+enum lower_packing_builtins_op {
+   LOWER_PACK_UNPACK_NONE               = 0x0000,
+
+   LOWER_PACK_SNORM_2x16                = 0x0001,
+   LOWER_UNPACK_SNORM_2x16              = 0x0002,
+
+   LOWER_PACK_UNORM_2x16                = 0x0004,
+   LOWER_UNPACK_UNORM_2x16              = 0x0008,
+
+   LOWER_PACK_HALF_2x16                 = 0x0010,
+   LOWER_UNPACK_HALF_2x16               = 0x0020,
+
+   LOWER_PACK_HALF_2x16_TO_SPLIT        = 0x0040,
+   LOWER_UNPACK_HALF_2x16_TO_SPLIT      = 0x0080,
+
+   LOWER_PACK_SNORM_4x8                 = 0x0100,
+   LOWER_UNPACK_SNORM_4x8               = 0x0200,
+
+   LOWER_PACK_UNORM_4x8                 = 0x0400,
+   LOWER_UNPACK_UNORM_4x8               = 0x0800,
+};
 
 bool do_common_optimization(exec_list *ir, bool linked,
 			    bool uniform_locations_assigned,
@@ -55,6 +81,7 @@ bool do_dead_functions(exec_list *instructions);
 bool do_function_inlining(exec_list *instructions);
 bool do_lower_jumps(exec_list *instructions, bool pull_out_jumps = true, bool lower_sub_return = true, bool lower_main_return = false, bool lower_continue = false, bool lower_break = false);
 bool do_if_simplification(exec_list *instructions);
+bool opt_flatten_nested_if_blocks(exec_list *instructions);
 bool do_discard_simplification(exec_list *instructions);
 bool lower_if_to_cond_assign(exec_list *instructions, unsigned max_depth = 0);
 bool do_mat_op_to_vec(exec_list *instructions);
@@ -71,9 +98,13 @@ bool lower_noise(exec_list *instructions);
 bool lower_variable_index_to_cond_assign(exec_list *instructions,
     bool lower_input, bool lower_output, bool lower_temp, bool lower_uniform);
 bool lower_quadop_vector(exec_list *instructions, bool dont_lower_swz);
-bool lower_clip_distance(exec_list *instructions);
+bool lower_clip_distance(gl_shader *shader);
 void lower_output_reads(exec_list *instructions);
+bool lower_packing_builtins(exec_list *instructions, int op_mask);
 void lower_ubo_reference(struct gl_shader *shader, exec_list *instructions);
+void lower_packed_varyings(void *mem_ctx, unsigned location_base,
+                           unsigned locations_used, ir_variable_mode mode,
+                           gl_shader *shader);
 bool optimize_redundant_jumps(exec_list *instructions);
 bool optimize_split_arrays(exec_list *instructions, bool linked);
 
