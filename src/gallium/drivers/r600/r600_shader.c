@@ -1461,7 +1461,7 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 		mod = r600_tgsi_llvm(&radeon_llvm_ctx, tokens);
 
 		if (r600_llvm_compile(mod, &inst_bytes, &inst_byte_count,
-				      rscreen->family, dump)) {
+				      rscreen->family, &ctx.bc->ngpr, dump)) {
 			FREE(inst_bytes);
 			radeon_llvm_dispose(&radeon_llvm_ctx);
 			use_llvm = 0;
