@@ -127,31 +127,6 @@ intel_alloc_texture_image_buffer(struct gl_context *ctx,
    return true;
 }
 
-/**
- * Called via ctx->Driver.AllocTextureStorage()
- * Just have to allocate memory for the texture images.
- */
-static GLboolean
-intel_alloc_texture_storage(struct gl_context *ctx,
-                            struct gl_texture_object *texObj,
-                            GLsizei levels, GLsizei width,
-                            GLsizei height, GLsizei depth)
-{
-   const int numFaces = _mesa_num_tex_faces(texObj->Target);
-   int face;
-   int level;
-
-   for (face = 0; face < numFaces; face++) {
-      for (level = 0; level < levels; level++) {
-         struct gl_texture_image *const texImage = texObj->Image[face][level];
-         if (!intel_alloc_texture_image_buffer(ctx, texImage))
-            return false;
-      }
-   }
-
-   return true;
-}
-
 static void
 intel_free_texture_image_buffer(struct gl_context * ctx,
 				struct gl_texture_image *texImage)
@@ -231,7 +206,6 @@ intelInitTextureFuncs(struct dd_function_table *functions)
    functions->DeleteTexture = intelDeleteTextureObject;
    functions->AllocTextureImageBuffer = intel_alloc_texture_image_buffer;
    functions->FreeTextureImageBuffer = intel_free_texture_image_buffer;
-   functions->AllocTextureStorage = intel_alloc_texture_storage;
    functions->MapTextureImage = intel_map_texture_image;
    functions->UnmapTextureImage = intel_unmap_texture_image;
 }

@@ -322,30 +322,3 @@ _swrast_unmap_textures(struct gl_context *ctx)
       enabledUnits &= ~(1 << unit);
    }
 }
-
-
-/**
- * Called via ctx->Driver.AllocTextureStorage()
- * Just have to allocate memory for the texture images.
- */
-GLboolean
-_swrast_AllocTextureStorage(struct gl_context *ctx,
-                            struct gl_texture_object *texObj,
-                            GLsizei levels, GLsizei width,
-                            GLsizei height, GLsizei depth)
-{
-   const GLint numFaces = (texObj->Target == GL_TEXTURE_CUBE_MAP) ? 6 : 1;
-   GLint face, level;
-
-   for (face = 0; face < numFaces; face++) {
-      for (level = 0; level < levels; level++) {
-         struct gl_texture_image *texImage = texObj->Image[face][level];
-         if (!_swrast_alloc_texture_image_buffer(ctx, texImage)) {
-            return GL_FALSE;
-         }
-      }
-   }
-
-   return GL_TRUE;
-}
-

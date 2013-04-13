@@ -272,14 +272,6 @@ _swrast_finish_render_texture(struct gl_context *ctx,
                               struct gl_renderbuffer_attachment *att);
 
 
-
-extern GLboolean
-_swrast_AllocTextureStorage(struct gl_context *ctx,
-                            struct gl_texture_object *texObj,
-                            GLsizei levels, GLsizei width,
-                            GLsizei height, GLsizei depth);
-
-
 /**
  * The driver interface for the software rasterizer.
  * XXX this may go away.

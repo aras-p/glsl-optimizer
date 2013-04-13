@@ -244,6 +244,36 @@ _mesa_is_legal_tex_storage_format(struct gl_context *ctx, GLenum internalformat)
    }
 }
 
+/**
+ * Default ctx->Driver.AllocTextureStorage() handler.
+ *
+ * The driver can override this with a more specific implementation if it
+ * desires, but this can be used to get the texture images allocated using the
+ * usual texture image handling code.  The immutability of
+ * GL_ARB_texture_storage texture layouts is handled by texObj->Immutable
+ * checks at glTexImage* time.
+ */
+GLboolean
+_mesa_alloc_texture_storage(struct gl_context *ctx,
+                            struct gl_texture_object *texObj,
+                            GLsizei levels, GLsizei width,
+                            GLsizei height, GLsizei depth)
+{
+   const int numFaces = _mesa_num_tex_faces(texObj->Target);
+   int face;
+   int level;
+
+   for (face = 0; face < numFaces; face++) {
+      for (level = 0; level < levels; level++) {
+         struct gl_texture_image *const texImage = texObj->Image[face][level];
+         if (!ctx->Driver.AllocTextureImageBuffer(ctx, texImage))
+            return GL_FALSE;
+      }
+   }
+
+   return GL_TRUE;
+}
+
 
 /**
  * Do error checking for calls to glTexStorage1/2/3D().
