@@ -20,8 +20,6 @@ void main ()
   tmpvar_6 = (gl_LightModel.ambient * tmpvar_5);
   c_2.w = tmpvar_6.w;
   c_2.xyz = (tmpvar_6.xyz * 2.0);
-  vec4 tmpvar_7;
-  tmpvar_7 = ((textureCube (_Cube, (tmpvar_1 - (2.0 * (dot (wn_3, tmpvar_1) * wn_3)))) * _ReflectColor) * tmpvar_5.w);
-  gl_FragData[0] = (c_2 + tmpvar_7);
+  gl_FragData[0] = (c_2 + ((textureCube (_Cube, (tmpvar_1 - (2.0 * (dot (wn_3, tmpvar_1) * wn_3)))) * _ReflectColor) * tmpvar_5.w));
 }
 
