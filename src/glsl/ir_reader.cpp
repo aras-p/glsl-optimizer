@@ -908,6 +908,8 @@ ir_reader::read_texture(s_expression *expr)
    s_expression *s_sampler = NULL;
    s_expression *s_coord = NULL;
    s_expression *s_offset = NULL;
+   s_expression *s_proj = NULL;
+   s_list *s_shadow = NULL;
    s_expression *s_lod = NULL;
    s_expression *s_sample_index = NULL;
 

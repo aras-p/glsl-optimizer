@@ -169,7 +169,7 @@ ir_constant_variable_visitor::visit_enter(ir_function_signature *ir)
    /* Mark any in parameters as assigned to */
    foreach_iter(exec_list_iterator, iter, ir->parameters) {
       ir_variable *var = (ir_variable *)iter.get();
-      if (var->mode == ir_var_in || var->mode == ir_var_const_in || var->mode == ir_var_inout) {
+      if (var->mode == ir_var_function_in || var->mode == ir_var_const_in || var->mode == ir_var_function_inout) {
          struct assignment_entry *entry;
          entry = get_assignment_entry(var, &this->list);
          entry->assignment_count++;

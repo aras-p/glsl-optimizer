@@ -434,9 +434,6 @@ ir_expression::get_num_operands(ir_expression_operation op)
    if (op <= ir_last_binop)
       return 2;
 	
-   if (op <= ir_last_ternop)
-      return 3;
-
    if (op <= ir_last_triop)
       return 3;
 

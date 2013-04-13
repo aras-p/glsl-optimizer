@@ -422,7 +422,7 @@ lower_packed_varyings_visitor::get_packed_varying(unsigned location,
       else
          packed_type = glsl_type::vec4_type;
       ir_variable *packed_var = new(this->mem_ctx)
-         ir_variable(packed_type, packed_name, this->mode);
+         ir_variable(packed_type, packed_name, this->mode, (glsl_precision)unpacked_var->precision);
       packed_var->centroid = unpacked_var->centroid;
       packed_var->interpolation = unpacked_var->interpolation;
       packed_var->location = location;

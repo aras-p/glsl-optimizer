@@ -97,7 +97,7 @@ ir_vec_index_to_cond_assign_visitor::convert_vec_index_to_cond_assign(ir_rvalue 
 
    /* Store the value inside a temp, thus avoiding matrixes duplication */
    value = new(base_ir) ir_variable(orig_deref->array->type, "vec_value_tmp",
-				    ir_var_temporary);
+				    ir_var_temporary, precision_from_ir(orig_deref->array));
    list.push_tail(value);
    deref_value = new(base_ir) ir_dereference_variable(value);
    value_assign = new(base_ir) ir_assignment(deref_value, orig_deref->array);

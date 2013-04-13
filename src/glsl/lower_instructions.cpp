@@ -284,7 +284,7 @@ lower_instructions_visitor::lrp_to_arith(ir_expression *ir)
 
    /* Save op2 */
    ir_variable *temp = new(ir) ir_variable(ir->operands[2]->type, "lrp_factor",
-					   ir_var_temporary);
+					   ir_var_temporary, precision_from_ir(ir->operands[2]));
    this->base_ir->insert_before(temp);
    this->base_ir->insert_before(assign(temp, ir->operands[2]));
 

@@ -97,7 +97,7 @@ static const builtin_variable builtin_110_deprecated_fs_variables[] = {
 };
 
 static const builtin_variable builtin_110_deprecated_vs_variables[] = {
-   { ir_var_shader_in,  VERT_ATTRIB_POS,         "vec4",  "gl_Vertex" },
+   { ir_var_shader_in,  VERT_ATTRIB_POS,         "vec4",  "gl_Vertex", glsl_precision_high },
    { ir_var_shader_in,  VERT_ATTRIB_NORMAL,      "vec3",  "gl_Normal", glsl_precision_medium },
    { ir_var_shader_in,  VERT_ATTRIB_COLOR0,      "vec4",  "gl_Color", glsl_precision_medium },
    { ir_var_shader_in,  VERT_ATTRIB_COLOR1,      "vec4",  "gl_SecondaryColor", glsl_precision_medium },
@@ -721,12 +721,12 @@ generate_300ES_vs_variables(exec_list *instructions,
 {
    for (unsigned i = 0; i < Elements(builtin_core_vs_variables); i++) {
       add_builtin_variable(instructions, state->symbols,
-			   & builtin_core_vs_variables[i]);
+			   & builtin_core_vs_variables[i], state->es_shader);
    }
 
    for (unsigned i = 0; i < Elements(builtin_300ES_vs_variables); i++) {
       add_builtin_variable(instructions, state->symbols,
-			   & builtin_300ES_vs_variables[i]);
+			   & builtin_300ES_vs_variables[i], state->es_shader);
    }
 
    generate_300ES_uniforms(instructions, state);
@@ -893,7 +893,7 @@ generate_100ES_fs_variables(exec_list *instructions,
    }
 	
 	if (state->EXT_frag_depth_enable) {
-		const builtin_variable fragDepthEXT = { ir_var_out, FRAG_RESULT_DEPTH, "float", "gl_FragDepthEXT", glsl_precision_high };
+		const builtin_variable fragDepthEXT = { ir_var_shader_out, FRAG_RESULT_DEPTH, "float", "gl_FragDepthEXT", glsl_precision_high };
 		add_builtin_variable(instructions, state->symbols, &fragDepthEXT, state->es_shader);
 	}
 
@@ -913,7 +913,7 @@ generate_300ES_fs_variables(exec_list *instructions,
 
    for (unsigned i = 0; i < Elements(builtin_300ES_fs_variables); i++) {
       add_builtin_variable(instructions, state->symbols,
-			   & builtin_300ES_fs_variables[i]);
+			   & builtin_300ES_fs_variables[i], state->es_shader);
    }
 
    generate_300ES_uniforms(instructions, state);
