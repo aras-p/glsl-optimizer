@@ -1899,7 +1899,7 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 		}
 	}
 	/* add program end */
-	if (ctx.bc->chip_class == CAYMAN)
+	if (!use_llvm && ctx.bc->chip_class == CAYMAN)
 		cm_bytecode_add_cf_end(ctx.bc);
 
 	/* check GPR limit - we have 124 = 128 - 4
