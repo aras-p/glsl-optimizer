@@ -908,15 +908,13 @@ ir_reader::read_texture(s_expression *expr)
    s_expression *s_sampler = NULL;
    s_expression *s_coord = NULL;
    s_expression *s_offset = NULL;
-   s_expression *s_proj = NULL;
-   s_list *s_shadow = NULL;
    s_expression *s_lod = NULL;
    s_expression *s_sample_index = NULL;
 
    ir_texture_opcode op = ir_tex; /* silence warning */
 
    s_pattern tex_pattern[] =
-      { "tex", s_type, s_sampler, s_coord, s_offset, s_proj, s_shadow };
+      { "tex", s_type, s_sampler, s_coord, s_offset };
    s_pattern lod_pattern[] =
       { "lod", s_type, s_sampler, s_coord };
    s_pattern txf_pattern[] =
@@ -941,12 +939,11 @@ ir_reader::read_texture(s_expression *expr)
    } else if (MATCH(expr, other_pattern)) {
       op = ir_texture::get_opcode(tag->value());
       if (op == -1)
-	 return NULL;
+    return NULL;
    } else {
       ir_read_error(NULL, "unexpected texture pattern %s", tag->value());
       return NULL;
    }
-
    ir_texture *tex = new(mem_ctx) ir_texture(op);
 
    // Read return type
@@ -985,31 +982,6 @@ ir_reader::read_texture(s_expression *expr)
                return NULL;
             }
          }
-      }
-   }
-
-   if (op != ir_txf && op != ir_txf_ms && op != ir_txs && op != ir_lod) {
-      s_int *proj_as_int = SX_AS_INT(s_proj);
-      if (proj_as_int && proj_as_int->value() == 1) {
-	 tex->projector = NULL;
-      } else {
-	 tex->projector = read_rvalue(s_proj);
-	 if (tex->projector == NULL) {
-	    ir_read_error(NULL, "when reading projective divide in (%s ..)",
-	                  tex->opcode_string());
-	    return NULL;
-	 }
-      }
-
-      if (s_shadow->subexpressions.is_empty()) {
-	 tex->shadow_comparitor = NULL;
-      } else {
-	 tex->shadow_comparitor = read_rvalue(s_shadow);
-	 if (tex->shadow_comparitor == NULL) {
-	    ir_read_error(NULL, "when reading shadow comparitor in (%s ..)",
-			  tex->opcode_string());
-	    return NULL;
-	 }
       }
    }
 
