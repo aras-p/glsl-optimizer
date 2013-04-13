@@ -72,7 +72,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>../../src/mesa;../../include/c99;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../src/mesa;../../include/c99;../../include;../../src/glsl;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;__STDC_VERSION__=199901L;__STDC__;strdup=_strdup;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <ExceptionHandling>
@@ -97,7 +97,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>../../src/mesa;../../include/c99;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../src/mesa;../../include/c99;../../include;../../src/glsl;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;__STDC_VERSION__=199901L;__STDC__;strdup=_strdup;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <ExceptionHandling>
@@ -120,7 +120,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>../../src/mesa;../../include/c99;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../src/mesa;../../include/c99;../../include;../../src/glsl;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;__STDC_VERSION__=199901L;__STDC__;strdup=_strdup;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ExceptionHandling>
       </ExceptionHandling>
@@ -145,7 +145,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>../../src/mesa;../../include/c99;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../src/mesa;../../include/c99;../../include;../../src/glsl;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;__STDC_VERSION__=199901L;__STDC__;strdup=_strdup;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ExceptionHandling>
       </ExceptionHandling>
@@ -174,6 +174,7 @@
     <ClInclude Include="..\..\src\glsl\glsl_types.h" />
     <ClInclude Include="..\..\src\glsl\ir.h" />
     <ClInclude Include="..\..\src\glsl\ir_basic_block.h" />
+    <ClInclude Include="..\..\src\glsl\ir_builder.h" />
     <ClInclude Include="..\..\src\glsl\ir_expression_flattening.h" />
     <ClInclude Include="..\..\src\glsl\ir_function_inlining.h" />
     <ClInclude Include="..\..\src\glsl\ir_hierarchical_visitor.h" />
@@ -187,6 +188,8 @@
     <ClInclude Include="..\..\src\glsl\ir_variable_refcount.h" />
     <ClInclude Include="..\..\src\glsl\ir_visitor.h" />
     <ClInclude Include="..\..\src\glsl\linker.h" />
+    <ClInclude Include="..\..\src\glsl\link_uniform_block_active_visitor.h" />
+    <ClInclude Include="..\..\src\glsl\link_varyings.h" />
     <ClInclude Include="..\..\src\glsl\list.h" />
     <ClInclude Include="..\..\src\glsl\loop_analysis.h" />
     <ClInclude Include="..\..\src\glsl\program.h" />
@@ -196,6 +199,8 @@
     <ClInclude Include="..\..\src\glsl\strtod.h" />
     <ClInclude Include="..\..\src\glsl\glcpp\glcpp-parse.h" />
     <ClInclude Include="..\..\src\glsl\glcpp\glcpp.h" />
+    <ClInclude Include="..\..\src\mesa\main\hash_table.h" />
+    <ClInclude Include="..\..\src\mesa\main\set.h" />
     <ClInclude Include="..\..\src\mesa\program\hash_table.h" />
     <ClInclude Include="..\..\src\mesa\program\prog_instruction.h" />
     <ClInclude Include="..\..\src\mesa\program\prog_parameter.h" />
@@ -214,6 +219,7 @@
     <ClInclude Include="..\..\src\mesa\main\simple_list.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\src\glsl\ast_array_index.cpp" />
     <ClCompile Include="..\..\src\glsl\ast_expr.cpp" />
     <ClCompile Include="..\..\src\glsl\ast_function.cpp" />
     <ClCompile Include="..\..\src\glsl\ast_to_hir.cpp" />
@@ -229,6 +235,7 @@
     <ClCompile Include="..\..\src\glsl\hir_field_selection.cpp" />
     <ClCompile Include="..\..\src\glsl\ir.cpp" />
     <ClCompile Include="..\..\src\glsl\ir_basic_block.cpp" />
+    <ClCompile Include="..\..\src\glsl\ir_builder.cpp" />
     <ClCompile Include="..\..\src\glsl\ir_clone.cpp" />
     <ClCompile Include="..\..\src\glsl\ir_constant_expression.cpp" />
     <ClCompile Include="..\..\src\glsl\ir_expression_flattening.cpp" />
@@ -246,9 +253,12 @@
     <ClCompile Include="..\..\src\glsl\ir_validate.cpp" />
     <ClCompile Include="..\..\src\glsl\ir_variable_refcount.cpp" />
     <ClCompile Include="..\..\src\glsl\link_functions.cpp" />
+    <ClCompile Include="..\..\src\glsl\link_uniform_blocks.cpp" />
+    <ClCompile Include="..\..\src\glsl\link_uniform_block_active_visitor.cpp" />
     <ClCompile Include="..\..\src\glsl\link_uniform_initializers.cpp" />
     <ClCompile Include="..\..\src\glsl\link_uniforms.cpp" />
     <ClCompile Include="..\..\src\glsl\linker.cpp" />
+    <ClCompile Include="..\..\src\glsl\link_varyings.cpp" />
     <ClCompile Include="..\..\src\glsl\loop_analysis.cpp" />
     <ClCompile Include="..\..\src\glsl\loop_controls.cpp" />
     <ClCompile Include="..\..\src\glsl\loop_unroll.cpp" />
@@ -260,6 +270,8 @@
     <ClCompile Include="..\..\src\glsl\lower_jumps.cpp" />
     <ClCompile Include="..\..\src\glsl\lower_mat_op_to_vec.cpp" />
     <ClCompile Include="..\..\src\glsl\lower_noise.cpp" />
+    <ClCompile Include="..\..\src\glsl\lower_packed_varyings.cpp" />
+    <ClCompile Include="..\..\src\glsl\lower_packing_builtins.cpp" />
     <ClCompile Include="..\..\src\glsl\lower_variable_index_to_cond_assign.cpp" />
     <ClCompile Include="..\..\src\glsl\lower_vec_index_to_cond_assign.cpp" />
     <ClCompile Include="..\..\src\glsl\lower_vec_index_to_swizzle.cpp" />
@@ -280,6 +292,7 @@
     <ClCompile Include="..\..\src\glsl\opt_dead_code.cpp" />
     <ClCompile Include="..\..\src\glsl\opt_dead_code_local.cpp" />
     <ClCompile Include="..\..\src\glsl\opt_dead_functions.cpp" />
+    <ClCompile Include="..\..\src\glsl\opt_flatten_nested_if_blocks.cpp" />
     <ClCompile Include="..\..\src\glsl\opt_function_inlining.cpp" />
     <ClCompile Include="..\..\src\glsl\opt_if_simplification.cpp" />
     <ClCompile Include="..\..\src\glsl\opt_noop_swizzle.cpp" />
@@ -300,7 +313,10 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\..\src\glsl\glcpp\pp.c" />
-    <ClCompile Include="..\..\src\mesa\program\hash_table.c" />
+    <ClCompile Include="..\..\src\mesa\main\hash_table.c" />
+    <ClCompile Include="..\..\src\mesa\main\imports.c" />
+    <ClCompile Include="..\..\src\mesa\main\set.c" />
+    <ClCompile Include="..\..\src\mesa\program\prog_hash_table.c" />
     <ClCompile Include="..\..\src\mesa\program\symbol_table.c" />
   </ItemGroup>
   <ItemGroup>

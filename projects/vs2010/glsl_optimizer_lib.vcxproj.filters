@@ -114,9 +114,6 @@
     <ClInclude Include="..\..\src\glsl\glcpp\glcpp.h">
       <Filter>src\glsl\glcpp</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\mesa\program\hash_table.h">
-      <Filter>src\mesa\program</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\mesa\program\prog_instruction.h">
       <Filter>src\mesa\program</Filter>
     </ClInclude>
@@ -163,6 +160,24 @@
       <Filter>src\mesa\main</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\glsl\ir_uniform.h">
+      <Filter>src\glsl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\mesa\main\hash_table.h">
+      <Filter>src\mesa\main</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\mesa\main\set.h">
+      <Filter>src\mesa\main</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\mesa\program\hash_table.h">
+      <Filter>src\mesa\program</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\glsl\link_uniform_block_active_visitor.h">
+      <Filter>src\glsl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\glsl\link_varyings.h">
+      <Filter>src\glsl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\glsl\ir_builder.h">
       <Filter>src\glsl</Filter>
     </ClInclude>
   </ItemGroup>
@@ -395,11 +410,44 @@
     <ClCompile Include="..\..\src\glsl\glcpp\pp.c">
       <Filter>src\glsl\glcpp</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\mesa\program\hash_table.c">
-      <Filter>src\mesa\program</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\mesa\program\symbol_table.c">
       <Filter>src\mesa\program</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\mesa\main\hash_table.c">
+      <Filter>src\mesa\main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\mesa\main\imports.c">
+      <Filter>src\mesa\main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\mesa\main\set.c">
+      <Filter>src\mesa\main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\mesa\program\prog_hash_table.c">
+      <Filter>src\mesa\program</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\glsl\ast_array_index.cpp">
+      <Filter>src\glsl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\glsl\link_uniform_block_active_visitor.cpp">
+      <Filter>src\glsl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\glsl\link_uniform_blocks.cpp">
+      <Filter>src\glsl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\glsl\link_varyings.cpp">
+      <Filter>src\glsl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\glsl\opt_flatten_nested_if_blocks.cpp">
+      <Filter>src\glsl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\glsl\ir_builder.cpp">
+      <Filter>src\glsl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\glsl\lower_packed_varyings.cpp">
+      <Filter>src\glsl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\glsl\lower_packing_builtins.cpp">
+      <Filter>src\glsl</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
