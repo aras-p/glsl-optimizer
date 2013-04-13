@@ -6047,7 +6047,8 @@ static struct r600_shader_tgsi_instruction r600_shader_tgsi_instruction[] = {
 	{111,			0, ALU_OP0_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_NRM4,	0, ALU_OP0_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_CALLNZ,	0, ALU_OP0_NOP, tgsi_unsupported},
-	{TGSI_OPCODE_IFC,	0, ALU_OP0_NOP, tgsi_unsupported},
+	/* gap */
+	{114,			0, ALU_OP0_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_BREAKC,	0, ALU_OP0_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_KIL,	0, ALU_OP2_KILLGT, tgsi_kill},  /* conditional kill */
 	{TGSI_OPCODE_END,	0, ALU_OP0_NOP, tgsi_end},  /* aka HALT */
@@ -6240,7 +6241,8 @@ static struct r600_shader_tgsi_instruction eg_shader_tgsi_instruction[] = {
 	{111,			0, ALU_OP0_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_NRM4,	0, ALU_OP0_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_CALLNZ,	0, ALU_OP0_NOP, tgsi_unsupported},
-	{TGSI_OPCODE_IFC,	0, ALU_OP0_NOP, tgsi_unsupported},
+	/* gap */
+	{114,			0, ALU_OP0_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_BREAKC,	0, ALU_OP0_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_KIL,	0, ALU_OP2_KILLGT, tgsi_kill},  /* conditional kill */
 	{TGSI_OPCODE_END,	0, ALU_OP0_NOP, tgsi_end},  /* aka HALT */
@@ -6433,7 +6435,8 @@ static struct r600_shader_tgsi_instruction cm_shader_tgsi_instruction[] = {
 	{111,			0, ALU_OP0_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_NRM4,	0, ALU_OP0_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_CALLNZ,	0, ALU_OP0_NOP, tgsi_unsupported},
-	{TGSI_OPCODE_IFC,	0, ALU_OP0_NOP, tgsi_unsupported},
+	/* gap */
+	{114,			0, ALU_OP0_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_BREAKC,	0, ALU_OP0_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_KIL,	0, ALU_OP2_KILLGT, tgsi_kill},  /* conditional kill */
 	{TGSI_OPCODE_END,	0, ALU_OP0_NOP, tgsi_end},  /* aka HALT */

@@ -1198,11 +1198,6 @@ XXX wait what
   TBD
 
 
-.. opcode:: IFC - If
-
-  TBD
-
-
 .. opcode:: BREAKC - Break Conditional
 
   TBD

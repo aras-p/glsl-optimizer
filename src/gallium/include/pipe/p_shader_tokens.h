@@ -367,7 +367,7 @@ struct tgsi_property_data {
                                 /* gap */
 #define TGSI_OPCODE_NRM4                112
 #define TGSI_OPCODE_CALLNZ              113
-#define TGSI_OPCODE_IFC                 114
+                                /* gap */
 #define TGSI_OPCODE_BREAKC              115
 #define TGSI_OPCODE_KIL                 116  /* conditional kill */
 #define TGSI_OPCODE_END                 117  /* aka HALT */

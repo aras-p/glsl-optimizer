@@ -151,7 +151,7 @@ static const struct tgsi_opcode_info opcode_info[TGSI_OPCODE_LAST] =
    { 0, 0, 0, 0, 0, 0, NONE, "", 111 },     /* removed */
    { 1, 1, 0, 0, 0, 0, REPL, "NRM4", TGSI_OPCODE_NRM4 },
    { 0, 1, 0, 0, 0, 0, NONE, "CALLNZ", TGSI_OPCODE_CALLNZ },
-   { 0, 1, 0, 0, 0, 0, NONE, "IFC", TGSI_OPCODE_IFC },
+   { 0, 1, 0, 0, 0, 0, NONE, "", 114 },     /* removed */
    { 0, 1, 0, 0, 0, 0, NONE, "BREAKC", TGSI_OPCODE_BREAKC },
    { 0, 1, 0, 0, 0, 0, NONE, "KIL", TGSI_OPCODE_KIL },
    { 0, 0, 0, 0, 0, 0, NONE, "END", TGSI_OPCODE_END },

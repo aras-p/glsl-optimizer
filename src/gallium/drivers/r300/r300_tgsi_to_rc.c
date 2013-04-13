@@ -135,7 +135,6 @@ static unsigned translate_opcode(unsigned opcode)
                                         /* gap */
      /* case TGSI_OPCODE_NRM4: return RC_OPCODE_NRM4; */
      /* case TGSI_OPCODE_CALLNZ: return RC_OPCODE_CALLNZ; */
-     /* case TGSI_OPCODE_IFC: return RC_OPCODE_IFC; */
      /* case TGSI_OPCODE_BREAKC: return RC_OPCODE_BREAKC; */
         case TGSI_OPCODE_KIL: return RC_OPCODE_KIL;
     }
