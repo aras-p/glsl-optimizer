@@ -24,6 +24,7 @@
 #include "util/u_helpers.h"
 #include "util/u_inlines.h"
 #include "util/u_transfer.h"
+#include "util/u_format_srgb.h"
 
 #include "tgsi/tgsi_parse.h"
 
@@ -456,7 +457,7 @@ void *
 nv50_sampler_state_create(struct pipe_context *pipe,
                           const struct pipe_sampler_state *cso)
 {
-   struct nv50_tsc_entry *so = CALLOC_STRUCT(nv50_tsc_entry);
+   struct nv50_tsc_entry *so = MALLOC_STRUCT(nv50_tsc_entry);
    float f[2];
 
    so->id = -1;
@@ -466,20 +467,13 @@ nv50_sampler_state_create(struct pipe_context *pipe,
                  (nv50_tsc_wrap_mode(cso->wrap_t) << 3) |
                  (nv50_tsc_wrap_mode(cso->wrap_r) << 6));
 
-   if (nouveau_screen(pipe->screen)->class_3d >= NVE4_3D_CLASS) {
-      if (cso->seamless_cube_map)
-         so->tsc[1] |= NVE4_TSC_1_CUBE_SEAMLESS;
-      if (!cso->normalized_coords)
-         so->tsc[1] |= NVE4_TSC_1_FORCE_NONNORMALIZED_COORDS;
-   }
-
    switch (cso->mag_img_filter) {
    case PIPE_TEX_FILTER_LINEAR:
-      so->tsc[1] |= NV50_TSC_1_MAGF_LINEAR;
+      so->tsc[1] = NV50_TSC_1_MAGF_LINEAR;
       break;
    case PIPE_TEX_FILTER_NEAREST:
    default:
-      so->tsc[1] |= NV50_TSC_1_MAGF_NEAREST;
+      so->tsc[1] = NV50_TSC_1_MAGF_NEAREST;
       break;
    }
 
@@ -504,6 +498,13 @@ nv50_sampler_state_create(struct pipe_context *pipe,
    default:
       so->tsc[1] |= NV50_TSC_1_MIPF_NONE;
       break;
+   }
+
+   if (nouveau_screen(pipe->screen)->class_3d >= NVE4_3D_CLASS) {
+      if (cso->seamless_cube_map)
+         so->tsc[1] |= NVE4_TSC_1_CUBE_SEAMLESS;
+      if (!cso->normalized_coords)
+         so->tsc[1] |= NVE4_TSC_1_FORCE_NONNORMALIZED_COORDS;
    }
 
    if (cso->max_anisotropy >= 16)
@@ -532,8 +533,15 @@ nv50_sampler_state_create(struct pipe_context *pipe,
 
    f[0] = CLAMP(cso->min_lod, 0.0f, 15.0f);
    f[1] = CLAMP(cso->max_lod, 0.0f, 15.0f);
-   so->tsc[2] |=
+   so->tsc[2] =
       (((int)(f[1] * 256.0f) & 0xfff) << 12) | ((int)(f[0] * 256.0f) & 0xfff);
+
+   so->tsc[2] |=
+      util_format_linear_float_to_srgb_8unorm(cso->border_color.f[0]) << 24;
+   so->tsc[3] =
+      util_format_linear_float_to_srgb_8unorm(cso->border_color.f[1]) << 12;
+   so->tsc[3] |=
+      util_format_linear_float_to_srgb_8unorm(cso->border_color.f[2]) << 20;
 
    so->tsc[4] = fui(cso->border_color.f[0]);
    so->tsc[5] = fui(cso->border_color.f[1]);
