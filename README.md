@@ -24,7 +24,7 @@ Usage
 -----
 
 Visual Studio 2010 (Windows, x86/x64) and Xcode 4.5+ (Mac, i386) project files for a static
-library are provided in `projects/vs2010/glsl_optimizer.sln` and `src/glsl/xcode/mesaglsl2`
+library are provided in `projects/vs2010/glsl_optimizer.sln` and `projects/xcode4/glsl_optimizer_lib`
 respectively.
 
 For Linux you can use cmake. Just type "cmake . && make" in the root directory.
@@ -49,7 +49,7 @@ Tests
 -----
 
 There's a testing suite for catching regressions, see `tests` folder. In VS, build
-and run `glsl_optimizer_tests` project; in Xcode use `tests/glsl-optimizer-tests`
+and run `glsl_optimizer_tests` project; in Xcode use `projects/xcode4/glsl_optimizer_tests`
 project. The test executable requires path to the `tests` folder as an argument.
 
 Each test comes as three text files; input, expected IR dump and expected optimized
