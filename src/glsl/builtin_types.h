@@ -84,9 +84,9 @@ const glsl_type *const glsl_type::mat4_type = & builtin_core_types[14];
 /*@{*/
 
 static const struct glsl_struct_field gl_DepthRangeParameters_fields[] = {
-   { glsl_type::float_type, "near" },
-   { glsl_type::float_type, "far" },
-   { glsl_type::float_type, "diff" },
+   { glsl_type::float_type, "near", glsl_precision_high },
+   { glsl_type::float_type, "far" , glsl_precision_high },
+   { glsl_type::float_type, "diff", glsl_precision_high },
 };
 
 const glsl_type glsl_type::builtin_structure_types[] = {
@@ -101,58 +101,58 @@ const glsl_type glsl_type::builtin_structure_types[] = {
 /*@{*/
 
 static const struct glsl_struct_field gl_PointParameters_fields[] = {
-   { glsl_type::float_type, "size" },
-   { glsl_type::float_type, "sizeMin" },
-   { glsl_type::float_type, "sizeMax" },
-   { glsl_type::float_type, "fadeThresholdSize" },
-   { glsl_type::float_type, "distanceConstantAttenuation" },
-   { glsl_type::float_type, "distanceLinearAttenuation" },
-   { glsl_type::float_type, "distanceQuadraticAttenuation" },
+   { glsl_type::float_type, "size", glsl_precision_undefined },
+   { glsl_type::float_type, "sizeMin", glsl_precision_undefined },
+   { glsl_type::float_type, "sizeMax", glsl_precision_undefined },
+   { glsl_type::float_type, "fadeThresholdSize", glsl_precision_undefined },
+   { glsl_type::float_type, "distanceConstantAttenuation", glsl_precision_undefined },
+   { glsl_type::float_type, "distanceLinearAttenuation", glsl_precision_undefined },
+   { glsl_type::float_type, "distanceQuadraticAttenuation", glsl_precision_undefined },
 };
 
 static const struct glsl_struct_field gl_MaterialParameters_fields[] = {
-   { glsl_type::vec4_type, "emission" },
-   { glsl_type::vec4_type, "ambient" },
-   { glsl_type::vec4_type, "diffuse" },
-   { glsl_type::vec4_type, "specular" },
-   { glsl_type::float_type, "shininess" },
+   { glsl_type::vec4_type, "emission", glsl_precision_low },
+   { glsl_type::vec4_type, "ambient", glsl_precision_low },
+   { glsl_type::vec4_type, "diffuse", glsl_precision_low },
+   { glsl_type::vec4_type, "specular", glsl_precision_low },
+   { glsl_type::float_type, "shininess", glsl_precision_undefined },
 };
 
 static const struct glsl_struct_field gl_LightSourceParameters_fields[] = {
-   { glsl_type::vec4_type, "ambient" },
-   { glsl_type::vec4_type, "diffuse" },
-   { glsl_type::vec4_type, "specular" },
-   { glsl_type::vec4_type, "position" },
-   { glsl_type::vec4_type, "halfVector" },
-   { glsl_type::vec3_type, "spotDirection" },
-   { glsl_type::float_type, "spotExponent" },
-   { glsl_type::float_type, "spotCutoff" },
-   { glsl_type::float_type, "spotCosCutoff" },
-   { glsl_type::float_type, "constantAttenuation" },
-   { glsl_type::float_type, "linearAttenuation" },
-   { glsl_type::float_type, "quadraticAttenuation" },
+   { glsl_type::vec4_type, "ambient", glsl_precision_low },
+   { glsl_type::vec4_type, "diffuse", glsl_precision_low },
+   { glsl_type::vec4_type, "specular", glsl_precision_low },
+   { glsl_type::vec4_type, "position", glsl_precision_undefined },
+   { glsl_type::vec4_type, "halfVector", glsl_precision_undefined },
+   { glsl_type::vec3_type, "spotDirection", glsl_precision_undefined },
+   { glsl_type::float_type, "spotExponent", glsl_precision_undefined },
+   { glsl_type::float_type, "spotCutoff", glsl_precision_undefined },
+   { glsl_type::float_type, "spotCosCutoff", glsl_precision_undefined },
+   { glsl_type::float_type, "constantAttenuation", glsl_precision_undefined },
+   { glsl_type::float_type, "linearAttenuation", glsl_precision_undefined },
+   { glsl_type::float_type, "quadraticAttenuation", glsl_precision_undefined },
 };
 
 static const struct glsl_struct_field gl_LightModelParameters_fields[] = {
-   { glsl_type::vec4_type, "ambient" },
+   { glsl_type::vec4_type, "ambient", glsl_precision_low },
 };
 
 static const struct glsl_struct_field gl_LightModelProducts_fields[] = {
-   { glsl_type::vec4_type, "sceneColor" },
+   { glsl_type::vec4_type, "sceneColor", glsl_precision_low },
 };
 
 static const struct glsl_struct_field gl_LightProducts_fields[] = {
-   { glsl_type::vec4_type, "ambient" },
-   { glsl_type::vec4_type, "diffuse" },
-   { glsl_type::vec4_type, "specular" },
+   { glsl_type::vec4_type, "ambient", glsl_precision_low },
+   { glsl_type::vec4_type, "diffuse", glsl_precision_low },
+   { glsl_type::vec4_type, "specular", glsl_precision_low },
 };
 
 static const struct glsl_struct_field gl_FogParameters_fields[] = {
-   { glsl_type::vec4_type, "color" },
-   { glsl_type::float_type, "density" },
-   { glsl_type::float_type, "start" },
-   { glsl_type::float_type, "end" },
-   { glsl_type::float_type, "scale" },
+   { glsl_type::vec4_type, "color", glsl_precision_low },
+   { glsl_type::float_type, "density", glsl_precision_undefined },
+   { glsl_type::float_type, "start", glsl_precision_undefined },
+   { glsl_type::float_type, "end", glsl_precision_undefined },
+   { glsl_type::float_type, "scale", glsl_precision_undefined },
 };
 
 const glsl_type glsl_type::builtin_110_deprecated_structure_types[] = {
