@@ -209,23 +209,6 @@ ir_assignment::ir_assignment(ir_rvalue *lhs, ir_rvalue *rhs,
 }
 
 ir_expression::ir_expression(int op, const struct glsl_type *type,
-                 ir_rvalue *op0, ir_rvalue *op1, ir_rvalue *op2)
-: ir_rvalue(higher_precision(op0,op1))
-{
-   assert(
-      ((op1 == NULL) && (get_num_operands(ir_expression_operation(op)) == 1)) ||
-      ((op2 == NULL) && (get_num_operands(ir_expression_operation(op)) == 2)) ||
-      (get_num_operands(ir_expression_operation(op)) == 3));
-   this->ir_type = ir_type_expression;
-   this->type = type;
-   this->operation = ir_expression_operation(op);
-   this->operands[0] = op0;
-   this->operands[1] = op1;
-   this->operands[2] = op2;
-   this->operands[3] = NULL;
-}
-
-ir_expression::ir_expression(int op, const struct glsl_type *type,
 			     ir_rvalue *op0, ir_rvalue *op1,
 			     ir_rvalue *op2, ir_rvalue *op3)
 : ir_rvalue(higher_precision(higher_precision(op0,op1), higher_precision(op2,op3)))

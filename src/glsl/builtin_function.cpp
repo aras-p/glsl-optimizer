@@ -45,7 +45,6 @@ read_builtins(GLenum target, const char *protos, const char **functions, unsigne
       new(sh) _mesa_glsl_parse_state(&fakeCtx, target, sh);
 
    st->language_version = 140;
-   st->symbols->language_version = 140;
    st->ARB_texture_rectangle_enable = true;
    st->EXT_texture_array_enable = true;
    st->OES_EGL_image_external_enable = true;

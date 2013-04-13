@@ -27,6 +27,7 @@
 #include "glsl_symbol_table.h"
 #include "glsl_parser_extras.h"
 #include "glsl_types.h"
+#include "main/glminimal.h"
 #include "builtin_types.h"
 extern "C" {
 #include "program/hash_table.h"
@@ -341,7 +342,8 @@ glsl_type::generate_OES_texture_3D_types(glsl_symbol_table *symtab, bool warn)
 void
 glsl_type::generate_EXT_shadow_samplers_types(glsl_symbol_table *symtab, bool warn)
 {
-   add_types_to_symbol_table(symtab, &builtin_110_types[2], 1, warn);
+   bool skip_1d = false;
+   add_types_to_symbol_table(symtab, &builtin_110_types[2], 1, warn, skip_1d);
 }
 
 

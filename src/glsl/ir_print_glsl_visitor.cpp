@@ -130,7 +130,7 @@ _mesa_print_ir_glsl(exec_list *instructions,
 		char* buffer, PrintGlslMode mode)
 {
 	if (state) {
-		if (state->version_string)
+		if (state->had_version_string)
 			ralloc_asprintf_append (&buffer, "#version %i\n", state->language_version);
 		if (state->ARB_shader_texture_lod_enable)
 			ralloc_strcat (&buffer, "#extension GL_ARB_shader_texture_lod : enable\n");
@@ -209,9 +209,9 @@ void ir_print_glsl_visitor::print_var_name (ir_variable* v)
     if (id)
     {
         if (v->mode == ir_var_temporary)
-            ralloc_asprintf_append (&buffer, "tmpvar_%d", id);
+            ralloc_asprintf_append (&buffer, "tmpvar_%d", (int)id);
         else
-            ralloc_asprintf_append (&buffer, "%s_%d", v->name, id);
+            ralloc_asprintf_append (&buffer, "%s_%d", v->name, (int)id);
     }
 	else
 	{
@@ -321,7 +321,12 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
    print_var_name (ir);
    buffer = print_type_post(buffer, ir->type, false);
 	
-	if (ir->constant_value && ir->mode != ir_var_in && ir->mode != ir_var_out && ir->mode != ir_var_inout)
+	if (ir->constant_value &&
+		ir->mode != ir_var_shader_in &&
+		ir->mode != ir_var_shader_out &&
+		ir->mode != ir_var_function_in &&
+		ir->mode != ir_var_function_out &&
+		ir->mode != ir_var_function_inout)
 	{
 		ralloc_asprintf_append (&buffer, " = ");
 		visit (ir->constant_value);

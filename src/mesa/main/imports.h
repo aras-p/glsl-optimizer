@@ -536,6 +536,13 @@ _mesa_fls(unsigned int n)
 extern int
 _mesa_round_to_even(float val);
 
+extern GLhalfARB
+_mesa_float_to_half(float f);
+
+extern float
+_mesa_half_to_float(GLhalfARB h);
+
+
 extern void *
 _mesa_bsearch( const void *key, const void *base, size_t nmemb, size_t size, 
                int (*compar)(const void *, const void *) );

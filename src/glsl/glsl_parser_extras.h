@@ -156,6 +156,7 @@ struct _mesa_glsl_parse_state {
 
    bool es_shader;
    unsigned language_version;
+   bool had_version_string;
    enum _mesa_glsl_parser_targets target;
 
    /**

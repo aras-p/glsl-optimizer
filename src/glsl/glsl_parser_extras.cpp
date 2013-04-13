@@ -76,6 +76,7 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
    /* Set default language version and extensions */
    this->language_version = 110;
    this->es_shader = false;
+   this->had_version_string = false;
    this->ARB_texture_rectangle_enable = true;
 
    /* OpenGL ES 2.0 has different defaults from desktop GL. */
@@ -245,6 +246,7 @@ _mesa_glsl_parse_state::process_version_directive(YYLTYPE *locp, int version,
    }
 
    this->language_version = version;
+   this->had_version_string = true;
 
    bool supported = false;
    for (unsigned i = 0; i < this->num_supported_versions; i++) {

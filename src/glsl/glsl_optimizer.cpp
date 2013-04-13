@@ -61,7 +61,7 @@ initialize_mesa_context(struct gl_context *ctx, gl_api api)
 struct glslopt_ctx {
 	glslopt_ctx (bool openglES) {
 		mem_ctx = ralloc_context (NULL);
-		initialize_mesa_context (&mesa_ctx, openglES ? API_OPENGLES2 : API_OPENGL);
+		initialize_mesa_context (&mesa_ctx, openglES ? API_OPENGLES2 : API_OPENGL_COMPAT);
 	}
 	~glslopt_ctx() {
 		ralloc_free (mem_ctx);
@@ -334,7 +334,7 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 
 	if (!(options & kGlslOptionSkipPreprocessor))
 	{
-		state->error = !!glcpp_preprocess (state, &shaderSource, &state->info_log, state->extensions, ctx->mesa_ctx.API);
+		state->error = !!glcpp_preprocess (state, &shaderSource, &state->info_log, state->extensions, &ctx->mesa_ctx);
 		if (state->error)
 		{
 			shader->status = !state->error;

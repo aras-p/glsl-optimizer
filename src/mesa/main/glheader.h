@@ -124,6 +124,7 @@ extern "C" {
 
 typedef int GLfixed;
 typedef int GLclampx;
+typedef unsigned short GLhalfARB;
 
 
 #ifndef GL_OES_EGL_image
