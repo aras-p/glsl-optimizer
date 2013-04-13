@@ -3048,16 +3048,33 @@ _mesa_meta_check_generate_mipmap_fallback(struct gl_context *ctx, GLenum target,
    GLenum status;
 
    /* check for fallbacks */
-   if (!ctx->Extensions.EXT_framebuffer_object ||
-       target == GL_TEXTURE_3D ||
+   if (!ctx->Extensions.EXT_framebuffer_object) {
+      _mesa_perf_debug(ctx, MESA_DEBUG_SEVERITY_HIGH,
+                       "glGenerateMipmap() without FBOs\n");
+      return GL_TRUE;
+   }
+
+   if (target == GL_TEXTURE_3D ||
        target == GL_TEXTURE_1D_ARRAY ||
        target == GL_TEXTURE_2D_ARRAY) {
+      _mesa_perf_debug(ctx, MESA_DEBUG_SEVERITY_HIGH,
+                       "glGenerateMipmap() to %s target\n",
+                       _mesa_lookup_enum_by_nr(target));
       return GL_TRUE;
    }
 
    srcLevel = texObj->BaseLevel;
    baseImage = _mesa_select_tex_image(ctx, texObj, target, srcLevel);
-   if (!baseImage || _mesa_is_format_compressed(baseImage->TexFormat)) {
+   if (!baseImage) {
+      _mesa_perf_debug(ctx, MESA_DEBUG_SEVERITY_HIGH,
+                       "glGenerateMipmap() couldn't find base teximage\n");
+      return GL_TRUE;
+   }
+
+   if (_mesa_is_format_compressed(baseImage->TexFormat)) {
+      _mesa_perf_debug(ctx, MESA_DEBUG_SEVERITY_HIGH,
+                       "glGenerateMipmap() with %s format\n",
+                       _mesa_get_format_name(baseImage->TexFormat));
       return GL_TRUE;
    }
 
@@ -3067,6 +3084,9 @@ _mesa_meta_check_generate_mipmap_fallback(struct gl_context *ctx, GLenum target,
        * texture sample conversion.  So we won't be able to generate the
        * right colors when rendering.  Need to use a fallback.
        */
+      _mesa_perf_debug(ctx, MESA_DEBUG_SEVERITY_HIGH,
+                       "glGenerateMipmap() of sRGB texture without "
+                       "sRGB decode\n");
       return GL_TRUE;
    }
 
@@ -3103,6 +3123,8 @@ _mesa_meta_check_generate_mipmap_fallback(struct gl_context *ctx, GLenum target,
    _mesa_BindFramebuffer(GL_FRAMEBUFFER_EXT, fboSave);
 
    if (status != GL_FRAMEBUFFER_COMPLETE_EXT) {
+      _mesa_perf_debug(ctx, MESA_DEBUG_SEVERITY_HIGH,
+                       "glGenerateMipmap() got incomplete FBO\n");
       return GL_TRUE;
    }
 

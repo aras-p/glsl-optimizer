@@ -73,6 +73,16 @@ _mesa_gl_debug(struct gl_context *ctx,
                enum mesa_debug_severity severity,
                const char *fmtString, ...) PRINTFLIKE(5, 6);
 
+#define _mesa_perf_debug(ctx, sev, ...) do {                              \
+   static GLuint msg_id = 0;                                              \
+   if (unlikely(ctx->Const.ContextFlags & GL_CONTEXT_FLAG_DEBUG_BIT)) {   \
+      _mesa_gl_debug(ctx, &msg_id,                                        \
+                     MESA_DEBUG_TYPE_PERFORMANCE,                         \
+                     sev,                                                 \
+                     __VA_ARGS__);                                        \
+   }                                                                      \
+} while (0)
+
 extern void
 _mesa_shader_debug(struct gl_context *ctx, GLenum type, GLuint *id,
                    const char *msg, int len);
