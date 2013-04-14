@@ -150,6 +150,7 @@ enum brw_state_id {
    BRW_STATE_STATE_BASE_ADDRESS,
    BRW_STATE_SOL_INDICES,
    BRW_STATE_VUE_MAP_GEOM_OUT,
+   BRW_STATE_TRANSFORM_FEEDBACK,
 };
 
 #define BRW_NEW_URB_FENCE               (1 << BRW_STATE_URB_FENCE)
@@ -178,6 +179,7 @@ enum brw_state_id {
 #define BRW_NEW_STATE_BASE_ADDRESS	(1 << BRW_STATE_STATE_BASE_ADDRESS)
 #define BRW_NEW_SOL_INDICES		(1 << BRW_STATE_SOL_INDICES)
 #define BRW_NEW_VUE_MAP_GEOM_OUT	(1 << BRW_STATE_VUE_MAP_GEOM_OUT)
+#define BRW_NEW_TRANSFORM_FEEDBACK	(1 << BRW_STATE_TRANSFORM_FEEDBACK)
 
 struct brw_state_flags {
    /** State update flags signalled by mesa internals */

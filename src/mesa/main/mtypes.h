@@ -3148,7 +3148,7 @@ struct gl_matrix_stack
 #define _NEW_PROGRAM_CONSTANTS (1 << 27)
 #define _NEW_BUFFER_OBJECT     (1 << 28)
 #define _NEW_FRAG_CLAMP        (1 << 29)
-#define _NEW_TRANSFORM_FEEDBACK (1 << 30) /**< gl_context::TransformFeedback */
+/* gap, re-use for core Mesa state only; use ctx->DriverFlags otherwise */
 #define _NEW_VARYING_VP_INPUTS (1 << 31) /**< gl_context::varying_vp_inputs */
 #define _NEW_ALL ~0
 
@@ -3333,7 +3333,11 @@ typedef enum
  */
 struct gl_driver_flags
 {
-   GLbitfield NewArray;             /**< Vertex array state */
+   /** gl_context::Array::_DrawArrays (vertex array state) */
+   GLbitfield NewArray;
+
+   /** gl_context::TransformFeedback::CurrentObject */
+   GLbitfield NewTransformFeedback;
 };
 
 struct gl_uniform_buffer_binding

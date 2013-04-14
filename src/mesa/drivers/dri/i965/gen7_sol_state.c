@@ -45,7 +45,7 @@ upload_3dstate_so_buffers(struct brw_context *brw)
       ctx->Shader.CurrentVertexProgram;
    const struct gl_transform_feedback_info *linked_xfb_info =
       &vs_prog->LinkedTransformFeedback;
-   /* _NEW_TRANSFORM_FEEDBACK */
+   /* BRW_NEW_TRANSFORM_FEEDBACK */
    struct gl_transform_feedback_object *xfb_obj =
       ctx->TransformFeedback.CurrentObject;
    int i;
@@ -116,7 +116,7 @@ upload_3dstate_so_decl_list(struct brw_context *brw,
    /* BRW_NEW_VERTEX_PROGRAM */
    const struct gl_shader_program *vs_prog =
       ctx->Shader.CurrentVertexProgram;
-   /* _NEW_TRANSFORM_FEEDBACK */
+   /* BRW_NEW_TRANSFORM_FEEDBACK */
    const struct gl_transform_feedback_info *linked_xfb_info =
       &vs_prog->LinkedTransformFeedback;
    int i;
@@ -189,7 +189,7 @@ upload_3dstate_streamout(struct brw_context *brw, bool active,
 {
    struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &intel->ctx;
-   /* _NEW_TRANSFORM_FEEDBACK */
+   /* BRW_NEW_TRANSFORM_FEEDBACK */
    struct gl_transform_feedback_object *xfb_obj =
       ctx->TransformFeedback.CurrentObject;
    uint32_t dw1 = 0, dw2 = 0;
@@ -238,7 +238,7 @@ upload_sol_state(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &intel->ctx;
-   /* _NEW_TRANSFORM_FEEDBACK */
+   /* BRW_NEW_TRANSFORM_FEEDBACK */
    bool active = _mesa_is_xfb_active_and_unpaused(ctx);
 
    if (active) {
@@ -264,11 +264,11 @@ upload_sol_state(struct brw_context *brw)
 const struct brw_tracked_state gen7_sol_state = {
    .dirty = {
       .mesa  = (_NEW_RASTERIZER_DISCARD |
-		_NEW_LIGHT |
-		_NEW_TRANSFORM_FEEDBACK),
+		_NEW_LIGHT),
       .brw   = (BRW_NEW_BATCH |
 		BRW_NEW_VERTEX_PROGRAM |
-                BRW_NEW_VUE_MAP_GEOM_OUT)
+                BRW_NEW_VUE_MAP_GEOM_OUT |
+                BRW_NEW_TRANSFORM_FEEDBACK)
    },
    .emit = upload_sol_state,
 };

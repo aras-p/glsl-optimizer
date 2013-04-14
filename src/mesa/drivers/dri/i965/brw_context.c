@@ -153,6 +153,8 @@ brwCreateContext(int api,
    if (tnl)
       tnl->Driver.RunPipeline = _tnl_run_pipeline;
 
+   ctx->DriverFlags.NewTransformFeedback = BRW_NEW_TRANSFORM_FEEDBACK;
+
    ctx->Const.MaxDualSourceDrawBuffers = 1;
    ctx->Const.MaxDrawBuffers = BRW_MAX_DRAW_BUFFERS;
    ctx->Const.MaxTextureImageUnits = BRW_MAX_TEX_UNIT;

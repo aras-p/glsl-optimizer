@@ -186,7 +186,7 @@ static void populate_key( struct brw_context *brw,
       key->need_gs_prog = false;
    } else if (intel->gen == 6) {
       /* On Gen6, GS is used for transform feedback. */
-      /* _NEW_TRANSFORM_FEEDBACK */
+      /* BRW_NEW_TRANSFORM_FEEDBACK */
       if (_mesa_is_xfb_active_and_unpaused(ctx)) {
          const struct gl_shader_program *shaderprog =
             ctx->Shader.CurrentVertexProgram;
@@ -258,9 +258,9 @@ brw_upload_gs_prog(struct brw_context *brw)
 const struct brw_tracked_state brw_gs_prog = {
    .dirty = {
       .mesa  = (_NEW_LIGHT |
-                _NEW_TRANSFORM_FEEDBACK |
                 _NEW_RASTERIZER_DISCARD),
-      .brw   = BRW_NEW_PRIMITIVE,
+      .brw   = (BRW_NEW_PRIMITIVE |
+                BRW_NEW_TRANSFORM_FEEDBACK),
       .cache = CACHE_NEW_VS_PROG
    },
    .emit = brw_upload_gs_prog

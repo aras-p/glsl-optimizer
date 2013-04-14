@@ -345,7 +345,6 @@ static struct dirty_bit_map mesa_bits[] = {
    DEFINE_BIT(_NEW_PROGRAM_CONSTANTS),
    DEFINE_BIT(_NEW_BUFFER_OBJECT),
    DEFINE_BIT(_NEW_FRAG_CLAMP),
-   DEFINE_BIT(_NEW_TRANSFORM_FEEDBACK),
    DEFINE_BIT(_NEW_VARYING_VP_INPUTS),
    {0, 0, 0}
 };
@@ -372,6 +371,7 @@ static struct dirty_bit_map brw_bits[] = {
    DEFINE_BIT(BRW_NEW_STATE_BASE_ADDRESS),
    DEFINE_BIT(BRW_NEW_SOL_INDICES),
    DEFINE_BIT(BRW_NEW_VUE_MAP_GEOM_OUT),
+   DEFINE_BIT(BRW_NEW_TRANSFORM_FEEDBACK),
    {0, 0, 0}
 };
 
@@ -439,6 +439,9 @@ void brw_upload_state(struct brw_context *brw)
 
    state->mesa |= brw->intel.NewGLState;
    brw->intel.NewGLState = 0;
+
+   state->brw |= ctx->NewDriverState;
+   ctx->NewDriverState = 0;
 
    if (brw->emit_state_always) {
       state->mesa |= ~0;

@@ -37,7 +37,7 @@ static void
 gen6_update_sol_surfaces(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->intel.ctx;
-   /* _NEW_TRANSFORM_FEEDBACK */
+   /* BRW_NEW_TRANSFORM_FEEDBACK */
    struct gl_transform_feedback_object *xfb_obj =
       ctx->TransformFeedback.CurrentObject;
    /* BRW_NEW_VERTEX_PROGRAM */
@@ -69,9 +69,10 @@ gen6_update_sol_surfaces(struct brw_context *brw)
 
 const struct brw_tracked_state gen6_sol_surface = {
    .dirty = {
-      .mesa = _NEW_TRANSFORM_FEEDBACK,
+      .mesa = 0,
       .brw = (BRW_NEW_BATCH |
-              BRW_NEW_VERTEX_PROGRAM),
+              BRW_NEW_VERTEX_PROGRAM |
+              BRW_NEW_TRANSFORM_FEEDBACK),
       .cache = 0
    },
    .emit = gen6_update_sol_surfaces,
