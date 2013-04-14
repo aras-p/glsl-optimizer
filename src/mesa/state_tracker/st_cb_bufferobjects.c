@@ -182,6 +182,20 @@ st_bufferobj_data(struct gl_context *ctx,
    struct st_buffer_object *st_obj = st_buffer_object(obj);
    unsigned bind, pipe_usage;
 
+   if (st_obj->Base.Size == size && st_obj->Base.Usage == usage && data) {
+      /* Just discard the old contents and write new data.
+       * This should be the same as creating a new buffer, but we avoid
+       * a lot of validation in Mesa.
+       */
+      struct pipe_box box;
+
+      u_box_1d(0, size, &box);
+      pipe->transfer_inline_write(pipe, st_obj->buffer, 0,
+                                  PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE,
+                                  &box, data, 0, 0);
+      return GL_TRUE;
+   }
+
    st_obj->Base.Size = size;
    st_obj->Base.Usage = usage;
    
