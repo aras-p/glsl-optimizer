@@ -127,7 +127,6 @@ _mesa_free_instructions(struct prog_instruction *inst, GLuint count)
 {
    GLuint i;
    for (i = 0; i < count; i++) {
-      free(inst[i].Data);
       free((char *)inst[i].Comment);
    }
    free(inst);
@@ -153,7 +152,6 @@ static const struct instruction_info InstInfo[MAX_OPCODE] = {
    { OPCODE_NOP,    "NOP",     0, 0 },
    { OPCODE_ABS,    "ABS",     1, 1 },
    { OPCODE_ADD,    "ADD",     2, 1 },
-   { OPCODE_AND,    "AND",     2, 1 },
    { OPCODE_ARL,    "ARL",     1, 1 },
    { OPCODE_BGNLOOP,"BGNLOOP", 0, 0 },
    { OPCODE_BGNSUB, "BGNSUB",  0, 0 },
@@ -165,7 +163,6 @@ static const struct instruction_info InstInfo[MAX_OPCODE] = {
    { OPCODE_DDX,    "DDX",     1, 1 },
    { OPCODE_DDY,    "DDY",     1, 1 },
    { OPCODE_DP2,    "DP2",     2, 1 },
-   { OPCODE_DP2A,   "DP2A",    3, 1 },
    { OPCODE_DP3,    "DP3",     2, 1 },
    { OPCODE_DP4,    "DP4",     2, 1 },
    { OPCODE_DPH,    "DPH",     2, 1 },
@@ -195,16 +192,11 @@ static const struct instruction_info InstInfo[MAX_OPCODE] = {
    { OPCODE_NOISE2, "NOISE2",  1, 1 },
    { OPCODE_NOISE3, "NOISE3",  1, 1 },
    { OPCODE_NOISE4, "NOISE4",  1, 1 },
-   { OPCODE_NOT,    "NOT",     1, 1 },
-   { OPCODE_NRM3,   "NRM3",    1, 1 },
-   { OPCODE_NRM4,   "NRM4",    1, 1 },
-   { OPCODE_OR,     "OR",      2, 1 },
    { OPCODE_PK2H,   "PK2H",    1, 1 },
    { OPCODE_PK2US,  "PK2US",   1, 1 },
    { OPCODE_PK4B,   "PK4B",    1, 1 },
    { OPCODE_PK4UB,  "PK4UB",   1, 1 },
    { OPCODE_POW,    "POW",     2, 1 },
-   { OPCODE_PRINT,  "PRINT",   1, 0 },
    { OPCODE_RCP,    "RCP",     1, 1 },
    { OPCODE_RET,    "RET",     0, 0 },
    { OPCODE_RFL,    "RFL",     1, 1 },
@@ -234,7 +226,6 @@ static const struct instruction_info InstInfo[MAX_OPCODE] = {
    { OPCODE_UP4B,   "UP4B",    1, 1 },
    { OPCODE_UP4UB,  "UP4UB",   1, 1 },
    { OPCODE_X2D,    "X2D",     3, 1 },
-   { OPCODE_XOR,    "XOR",     2, 1 },
    { OPCODE_XPD,    "XPD",     2, 1 }
 };
 

@@ -556,8 +556,6 @@ translate_opcode( unsigned op )
       return TGSI_OPCODE_DDY;
    case OPCODE_DP2:
       return TGSI_OPCODE_DP2;
-   case OPCODE_DP2A:
-      return TGSI_OPCODE_DP2A;
    case OPCODE_DP3:
       return TGSI_OPCODE_DP3;
    case OPCODE_DP4:
@@ -610,10 +608,6 @@ translate_opcode( unsigned op )
       return TGSI_OPCODE_MUL;
    case OPCODE_NOP:
       return TGSI_OPCODE_NOP;
-   case OPCODE_NRM3:
-      return TGSI_OPCODE_NRM;
-   case OPCODE_NRM4:
-      return TGSI_OPCODE_NRM4;
    case OPCODE_POW:
       return TGSI_OPCODE_POW;
    case OPCODE_RCP:

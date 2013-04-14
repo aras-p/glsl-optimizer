@@ -204,10 +204,6 @@ _mesa_constant_fold(struct gl_program *prog)
 	    get_value(prog, &inst->SrcReg[0], a);
 	    get_value(prog, &inst->SrcReg[1], b);
 
-	    /* It seems like a loop could be used here, but we cleverly put
-	     * DP2A between DP2 and DP3.  Subtracting DP2 (or similar) from
-	     * the opcode results in various failures of the loop control.
-	     */
 	    result = (a[0] * b[0]) + (a[1] * b[1]);
 
 	    if (inst->Opcode >= OPCODE_DP3)
