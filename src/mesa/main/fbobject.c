@@ -2724,7 +2724,7 @@ _mesa_GenerateMipmap(GLenum target)
 
    GET_CURRENT_CONTEXT(ctx);
 
-   FLUSH_VERTICES(ctx, _NEW_BUFFERS);
+   FLUSH_VERTICES(ctx, 0);
 
    switch (target) {
    case GL_TEXTURE_1D:
@@ -2908,7 +2908,7 @@ _mesa_BlitFramebuffer(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
    const struct gl_framebuffer *readFb, *drawFb;
    GET_CURRENT_CONTEXT(ctx);
 
-   FLUSH_VERTICES(ctx, _NEW_BUFFERS);
+   FLUSH_VERTICES(ctx, 0);
 
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx,
