@@ -3151,12 +3151,6 @@ struct gl_matrix_stack
 /* gap, re-use for core Mesa state only; use ctx->DriverFlags otherwise */
 #define _NEW_VARYING_VP_INPUTS (1 << 31) /**< gl_context::varying_vp_inputs */
 #define _NEW_ALL ~0
-
-/**
- * We use _NEW_TRANSFORM for GL_RASTERIZER_DISCARD.  This #define is for
- * clarity.
- */
-#define _NEW_RASTERIZER_DISCARD _NEW_TRANSFORM
 /*@}*/
 
 
@@ -3338,6 +3332,9 @@ struct gl_driver_flags
 
    /** gl_context::TransformFeedback::CurrentObject */
    GLbitfield NewTransformFeedback;
+
+   /** gl_context::RasterDiscard */
+   GLbitfield NewRasterizerDiscard;
 };
 
 struct gl_uniform_buffer_binding

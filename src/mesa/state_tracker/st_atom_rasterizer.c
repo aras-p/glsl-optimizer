@@ -233,7 +233,7 @@ static void update_raster_state( struct st_context *st )
    if (st_fb_orientation(ctx->DrawBuffer) == Y_0_TOP)
       raster->bottom_edge_rule = 1;
 
-   /* _NEW_RASTERIZER_DISCARD */
+   /* ST_NEW_RASTERIZER */
    raster->rasterizer_discard = ctx->RasterDiscard;
 
    /* _NEW_TRANSFORM */
@@ -255,9 +255,9 @@ const struct st_tracked_state st_update_rasterizer = {
        _NEW_PROGRAM |
        _NEW_SCISSOR |
        _NEW_FRAG_CLAMP |
-       _NEW_RASTERIZER_DISCARD |
        _NEW_TRANSFORM),      /* mesa state dependencies*/
-      ST_NEW_VERTEX_PROGRAM,  /* state tracker dependencies */
+      (ST_NEW_VERTEX_PROGRAM |
+       ST_NEW_RASTERIZER),  /* state tracker dependencies */
    },
    update_raster_state     /* update function */
 };

@@ -215,7 +215,7 @@ static void populate_key( struct brw_context *brw,
          }
       }
       /* On Gen6, GS is also used for rasterizer discard. */
-      /* _NEW_RASTERIZER_DISCARD */
+      /* BRW_NEW_RASTERIZER_DISCARD */
       if (ctx->RasterDiscard) {
          key->need_gs_prog = true;
          key->rasterizer_discard = true;
@@ -257,10 +257,10 @@ brw_upload_gs_prog(struct brw_context *brw)
 
 const struct brw_tracked_state brw_gs_prog = {
    .dirty = {
-      .mesa  = (_NEW_LIGHT |
-                _NEW_RASTERIZER_DISCARD),
+      .mesa  = (_NEW_LIGHT),
       .brw   = (BRW_NEW_PRIMITIVE |
-                BRW_NEW_TRANSFORM_FEEDBACK),
+                BRW_NEW_TRANSFORM_FEEDBACK |
+                BRW_NEW_RASTERIZER_DISCARD),
       .cache = CACHE_NEW_VS_PROG
    },
    .emit = brw_upload_gs_prog

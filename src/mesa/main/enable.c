@@ -956,7 +956,8 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
             goto invalid_enum_error;
 	 CHECK_EXTENSION(EXT_transform_feedback, cap);
          if (ctx->RasterDiscard != state) {
-            FLUSH_VERTICES(ctx, _NEW_RASTERIZER_DISCARD);
+            FLUSH_VERTICES(ctx, 0);
+            ctx->NewDriverState |= ctx->DriverFlags.NewRasterizerDiscard;
             ctx->RasterDiscard = state;
          }
          break;

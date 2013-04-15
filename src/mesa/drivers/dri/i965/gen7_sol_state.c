@@ -195,7 +195,7 @@ upload_3dstate_streamout(struct brw_context *brw, bool active,
    uint32_t dw1 = 0, dw2 = 0;
    int i;
 
-   /* _NEW_RASTERIZER_DISCARD */
+   /* BRW_NEW_RASTERIZER_DISCARD */
    if (ctx->RasterDiscard)
       dw1 |= SO_RENDERING_DISABLE;
 
@@ -263,12 +263,12 @@ upload_sol_state(struct brw_context *brw)
 
 const struct brw_tracked_state gen7_sol_state = {
    .dirty = {
-      .mesa  = (_NEW_RASTERIZER_DISCARD |
-		_NEW_LIGHT),
+      .mesa  = (_NEW_LIGHT),
       .brw   = (BRW_NEW_BATCH |
 		BRW_NEW_VERTEX_PROGRAM |
                 BRW_NEW_VUE_MAP_GEOM_OUT |
-                BRW_NEW_TRANSFORM_FEEDBACK)
+                BRW_NEW_TRANSFORM_FEEDBACK |
+                BRW_NEW_RASTERIZER_DISCARD)
    },
    .emit = upload_sol_state,
 };
