@@ -188,6 +188,12 @@ blit_nearest(struct gl_context *ctx,
       return;
    }
 
+   /* allocate the src/dst row buffers */
+   srcBuffer = malloc(MAX_PIXEL_BYTES * srcWidth);
+   dstBuffer = malloc(MAX_PIXEL_BYTES * dstWidth);
+   if (!srcBuffer || !dstBuffer)
+      goto fail_no_memory;
+
    /* Blit to all the draw buffers */
    for (i = 0; i < numDrawBuffers; i++) {
       if (buffer == GL_COLOR_BUFFER_BIT) {
@@ -229,7 +235,7 @@ blit_nearest(struct gl_context *ctx,
       default:
          _mesa_problem(ctx, "unexpected pixel size (%d) in blit_nearest",
                        pixelSize);
-         return;
+         goto fail;
       }
 
       if ((readRb == drawRb) ||
@@ -248,8 +254,7 @@ blit_nearest(struct gl_context *ctx,
                                      GL_MAP_READ_BIT | GL_MAP_WRITE_BIT,
                                      &map, &rowStride);
          if (!map) {
-            _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBlitFramebuffer");
-            return;
+            goto fail_no_memory;
          }
 
          srcMap = map + srcYpos * rowStride + srcXpos * formatSize;
@@ -276,8 +281,7 @@ blit_nearest(struct gl_context *ctx,
                                      srcWidth, srcHeight,
                                      GL_MAP_READ_BIT, &srcMap, &srcRowStride);
          if (!srcMap) {
-            _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBlitFramebuffer");
-            return;
+            goto fail_no_memory;
          }
          ctx->Driver.MapRenderbuffer(ctx, drawRb,
                                      dstXpos, dstYpos,
@@ -285,22 +289,8 @@ blit_nearest(struct gl_context *ctx,
                                      GL_MAP_WRITE_BIT, &dstMap, &dstRowStride);
          if (!dstMap) {
             ctx->Driver.UnmapRenderbuffer(ctx, readRb);
-            _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBlitFramebuffer");
-            return;
+            goto fail_no_memory;
          }
-      }
-
-      /* allocate the src/dst row buffers */
-      srcBuffer = malloc(pixelSize * srcWidth);
-      if (!srcBuffer) {
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBlitFrameBufferEXT");
-         return;
-      }
-      dstBuffer = malloc(pixelSize * dstWidth);
-      if (!dstBuffer) {
-         free(srcBuffer);
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBlitFrameBufferEXT");
-         return;
       }
 
       for (dstRow = 0; dstRow < dstHeight; dstRow++) {
@@ -369,14 +359,21 @@ blit_nearest(struct gl_context *ctx,
          }
       }
 
-      free(srcBuffer);
-      free(dstBuffer);
-
       ctx->Driver.UnmapRenderbuffer(ctx, readRb);
       if (drawRb != readRb) {
          ctx->Driver.UnmapRenderbuffer(ctx, drawRb);
       }
    }
+
+fail:
+   free(srcBuffer);
+   free(dstBuffer);
+   return;
+
+fail_no_memory:
+   free(srcBuffer);
+   free(dstBuffer);
+   _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBlitFrameBuffer");
 }
 
 
