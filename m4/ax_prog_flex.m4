@@ -53,7 +53,7 @@ AC_DEFUN([AX_PROG_FLEX], [
   AC_REQUIRE([AC_PROG_EGREP])
 
   AC_CACHE_CHECK([if flex is the lexer generator],[ax_cv_prog_flex],[
-    AS_IF([$LEX --version 2>/dev/null | $EGREP -q '^flex '],
+    AS_IF([$LEX --version 2>/dev/null | $EGREP -q '^\<flex\>'],
       [ax_cv_prog_flex=yes], [ax_cv_prog_flex=no])
   ])
   AS_IF([test "$ax_cv_prog_flex" = "yes"],
