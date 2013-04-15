@@ -783,7 +783,6 @@ _mesa_ClampColor(GLenum target, GLenum clamp)
       _mesa_update_clamp_fragment_color(ctx);
       break;
    case GL_CLAMP_READ_COLOR_ARB:
-      FLUSH_VERTICES(ctx, _NEW_COLOR);
       ctx->Color.ClampReadColor = clamp;
       break;
    default:
