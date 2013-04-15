@@ -75,7 +75,7 @@ _mesa_new_query_object(struct gl_context *ctx, GLuint id)
 static void
 _mesa_begin_query(struct gl_context *ctx, struct gl_query_object *q)
 {
-   /* no-op */
+   ctx->NewState |= _NEW_DEPTH; /* for swrast */
 }
 
 
@@ -86,6 +86,7 @@ _mesa_begin_query(struct gl_context *ctx, struct gl_query_object *q)
 static void
 _mesa_end_query(struct gl_context *ctx, struct gl_query_object *q)
 {
+   ctx->NewState |= _NEW_DEPTH; /* for swrast */
    q->Ready = GL_TRUE;
 }
 
@@ -314,7 +315,7 @@ _mesa_BeginQueryIndexed(GLenum target, GLuint index, GLuint id)
    if (!query_error_check_index(ctx, target, index))
       return;
 
-   FLUSH_VERTICES(ctx, _NEW_DEPTH);
+   FLUSH_VERTICES(ctx, 0);
 
    bindpt = get_query_binding_point(ctx, target);
    if (!bindpt) {
@@ -391,7 +392,7 @@ _mesa_EndQueryIndexed(GLenum target, GLuint index)
    if (!query_error_check_index(ctx, target, index))
       return;
 
-   FLUSH_VERTICES(ctx, _NEW_DEPTH);
+   FLUSH_VERTICES(ctx, 0);
 
    bindpt = get_query_binding_point(ctx, target);
    if (!bindpt) {

@@ -230,7 +230,7 @@ static void upload_cc_unit(struct brw_context *brw)
 const struct brw_tracked_state brw_cc_unit = {
    .dirty = {
       .mesa = _NEW_STENCIL | _NEW_COLOR | _NEW_DEPTH,
-      .brw = BRW_NEW_BATCH,
+      .brw = BRW_NEW_BATCH | BRW_NEW_STATS_WM,
       .cache = CACHE_NEW_CC_VP
    },
    .emit = upload_cc_unit,

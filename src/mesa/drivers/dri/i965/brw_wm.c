@@ -509,7 +509,8 @@ const struct brw_tracked_state brw_wm_prog = {
 		_NEW_MULTISAMPLE),
       .brw   = (BRW_NEW_FRAGMENT_PROGRAM |
 		BRW_NEW_REDUCED_PRIMITIVE |
-                BRW_NEW_VUE_MAP_GEOM_OUT)
+                BRW_NEW_VUE_MAP_GEOM_OUT |
+                BRW_NEW_STATS_WM)
    },
    .emit = brw_upload_wm_prog
 };

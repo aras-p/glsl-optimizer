@@ -203,7 +203,7 @@ brw_upload_wm_unit(struct brw_context *brw)
    /* _NEW_LINE */
    wm->wm5.line_stipple = ctx->Line.StippleFlag;
 
-   /* _NEW_DEPTH */
+   /* BRW_NEW_STATS_WM */
    if (unlikely(INTEL_DEBUG & DEBUG_STATS) || intel->stats_wm)
       wm->wm4.stats_enable = 1;
 
@@ -237,13 +237,13 @@ const struct brw_tracked_state brw_wm_unit = {
 	       _NEW_POLYGONSTIPPLE | 
 	       _NEW_LINE | 
 	       _NEW_COLOR |
-	       _NEW_DEPTH |
 	       _NEW_BUFFERS),
 
       .brw = (BRW_NEW_BATCH |
 	      BRW_NEW_PROGRAM_CACHE |
 	      BRW_NEW_FRAGMENT_PROGRAM |
-	      BRW_NEW_CURBE_OFFSETS),
+	      BRW_NEW_CURBE_OFFSETS |
+              BRW_NEW_STATS_WM),
 
       .cache = (CACHE_NEW_WM_PROG |
 		CACHE_NEW_SAMPLER)
