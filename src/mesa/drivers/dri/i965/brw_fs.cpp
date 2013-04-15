@@ -3153,7 +3153,7 @@ brw_fs_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
       }
    }
 
-   key.clamp_fragment_color = true;
+   key.clamp_fragment_color = ctx->API == API_OPENGL_COMPAT;
 
    for (int i = 0; i < MAX_SAMPLERS; i++) {
       if (fp->Base.ShadowSamplers & (1 << i)) {

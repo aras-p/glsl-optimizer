@@ -564,7 +564,7 @@ brw_vs_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
    memset(&key, 0, sizeof(key));
 
    key.base.program_string_id = bvp->id;
-   key.base.clamp_vertex_color = true;
+   key.base.clamp_vertex_color = ctx->API == API_OPENGL_COMPAT;
 
    for (int i = 0; i < MAX_SAMPLERS; i++) {
       if (vp->Base.ShadowSamplers & (1 << i)) {
