@@ -109,10 +109,6 @@ _mesa_ClearStencil( GLint s )
 {
    GET_CURRENT_CONTEXT(ctx);
 
-   if (ctx->Stencil.Clear == (GLuint) s)
-      return;
-
-   FLUSH_VERTICES(ctx, _NEW_STENCIL);
    ctx->Stencil.Clear = (GLuint) s;
 }
 
@@ -390,7 +386,6 @@ _mesa_ActiveStencilFaceEXT(GLenum face)
    }
 
    if (face == GL_FRONT || face == GL_BACK) {
-      FLUSH_VERTICES(ctx, _NEW_STENCIL);
       ctx->Stencil.ActiveFace = (face == GL_FRONT) ? 0 : 2;
    }
    else {
