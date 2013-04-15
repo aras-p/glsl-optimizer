@@ -46,13 +46,7 @@ _mesa_ClearDepth( GLclampd depth )
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glClearDepth(%f)\n", depth);
 
-   depth = CLAMP( depth, 0.0, 1.0 );
-
-   if (ctx->Depth.Clear == depth)
-      return;
-
-   FLUSH_VERTICES(ctx, _NEW_DEPTH);
-   ctx->Depth.Clear = depth;
+   ctx->Depth.Clear = CLAMP( depth, 0.0, 1.0 );
 }
 
 
