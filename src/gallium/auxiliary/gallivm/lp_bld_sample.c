@@ -934,7 +934,7 @@ lp_build_get_level_stride_vec(struct lp_build_sample_context *bld,
       stride = bld->int_coord_bld.undef;
       for (i = 0; i < bld->num_lods; i++) {
          LLVMValueRef indexi = lp_build_const_int32(bld->gallivm, i);
-         LLVMValueRef indexo = lp_build_const_int32(bld->gallivm, i);
+         LLVMValueRef indexo = lp_build_const_int32(bld->gallivm, 4 * i);
          indexes[1] = LLVMBuildExtractElement(builder, level, indexi, "");
          stride1 = LLVMBuildGEP(builder, stride_array, indexes, 2, "");
          stride1 = LLVMBuildLoad(builder, stride1, "");
