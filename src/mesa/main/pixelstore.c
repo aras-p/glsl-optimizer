@@ -47,7 +47,6 @@ _mesa_PixelStorei( GLenum pname, GLint param )
             goto invalid_enum_error;
 	 if (param == (GLint)ctx->Pack.SwapBytes)
 	    return;
-	 FLUSH_VERTICES(ctx, _NEW_PACKUNPACK);
          ctx->Pack.SwapBytes = param ? GL_TRUE : GL_FALSE;
 	 break;
       case GL_PACK_LSB_FIRST:
@@ -55,7 +54,6 @@ _mesa_PixelStorei( GLenum pname, GLint param )
             goto invalid_enum_error;
 	 if (param == (GLint)ctx->Pack.LsbFirst)
 	    return;
-	 FLUSH_VERTICES(ctx, _NEW_PACKUNPACK);
          ctx->Pack.LsbFirst = param ? GL_TRUE : GL_FALSE;
 	 break;
       case GL_PACK_ROW_LENGTH:
@@ -67,7 +65,6 @@ _mesa_PixelStorei( GLenum pname, GLint param )
 	 }
 	 if (ctx->Pack.RowLength == param)
 	    return;
-	 FLUSH_VERTICES(ctx, _NEW_PACKUNPACK);
 	 ctx->Pack.RowLength = param;
 	 break;
       case GL_PACK_IMAGE_HEIGHT:
@@ -79,7 +76,6 @@ _mesa_PixelStorei( GLenum pname, GLint param )
 	 }
 	 if (ctx->Pack.ImageHeight == param)
 	    return;
-	 FLUSH_VERTICES(ctx, _NEW_PACKUNPACK);
 	 ctx->Pack.ImageHeight = param;
          break;
       case GL_PACK_SKIP_PIXELS:
@@ -91,7 +87,6 @@ _mesa_PixelStorei( GLenum pname, GLint param )
 	 }
 	 if (ctx->Pack.SkipPixels == param)
 	    return;
-	 FLUSH_VERTICES(ctx, _NEW_PACKUNPACK);
 	 ctx->Pack.SkipPixels = param;
 	 break;
       case GL_PACK_SKIP_ROWS:
@@ -103,7 +98,6 @@ _mesa_PixelStorei( GLenum pname, GLint param )
 	 }
 	 if (ctx->Pack.SkipRows == param)
 	    return;
-	 FLUSH_VERTICES(ctx, _NEW_PACKUNPACK);
 	 ctx->Pack.SkipRows = param;
 	 break;
       case GL_PACK_SKIP_IMAGES:
@@ -115,7 +109,6 @@ _mesa_PixelStorei( GLenum pname, GLint param )
 	 }
 	 if (ctx->Pack.SkipImages == param)
 	    return;
-	 FLUSH_VERTICES(ctx, _NEW_PACKUNPACK);
 	 ctx->Pack.SkipImages = param;
 	 break;
       case GL_PACK_ALIGNMENT:
@@ -125,7 +118,6 @@ _mesa_PixelStorei( GLenum pname, GLint param )
 	 }
 	 if (ctx->Pack.Alignment == param)
 	    return;
-	 FLUSH_VERTICES(ctx, _NEW_PACKUNPACK);
 	 ctx->Pack.Alignment = param;
 	 break;
       case GL_PACK_INVERT_MESA:
@@ -137,7 +129,6 @@ _mesa_PixelStorei( GLenum pname, GLint param )
          }
          if (ctx->Pack.Invert == param)
             return;
-         FLUSH_VERTICES(ctx, _NEW_PACKUNPACK);
          ctx->Pack.Invert = param;
          break;
 
@@ -148,7 +139,6 @@ _mesa_PixelStorei( GLenum pname, GLint param )
 	    return;
 	 if ((GLint)ctx->Unpack.SwapBytes == param)
 	    return;
-	 FLUSH_VERTICES(ctx, _NEW_PACKUNPACK);
 	 ctx->Unpack.SwapBytes = param ? GL_TRUE : GL_FALSE;
          break;
       case GL_UNPACK_LSB_FIRST:
@@ -158,7 +148,6 @@ _mesa_PixelStorei( GLenum pname, GLint param )
 	    return;
 	 if ((GLint)ctx->Unpack.LsbFirst == param)
 	    return;
-	 FLUSH_VERTICES(ctx, _NEW_PACKUNPACK);
 	 ctx->Unpack.LsbFirst = param ? GL_TRUE : GL_FALSE;
 	 break;
       case GL_UNPACK_ROW_LENGTH:
@@ -170,7 +159,6 @@ _mesa_PixelStorei( GLenum pname, GLint param )
 	 }
 	 if (ctx->Unpack.RowLength == param)
 	    return;
-	 FLUSH_VERTICES(ctx, _NEW_PACKUNPACK);
 	 ctx->Unpack.RowLength = param;
 	 break;
       case GL_UNPACK_IMAGE_HEIGHT:
@@ -183,7 +171,6 @@ _mesa_PixelStorei( GLenum pname, GLint param )
 	 if (ctx->Unpack.ImageHeight == param)
 	    return;
 
-	 FLUSH_VERTICES(ctx, _NEW_PACKUNPACK);
 	 ctx->Unpack.ImageHeight = param;
          break;
       case GL_UNPACK_SKIP_PIXELS:
@@ -195,7 +182,6 @@ _mesa_PixelStorei( GLenum pname, GLint param )
 	 }
 	 if (ctx->Unpack.SkipPixels == param)
 	    return;
-	 FLUSH_VERTICES(ctx, _NEW_PACKUNPACK);
 	 ctx->Unpack.SkipPixels = param;
 	 break;
       case GL_UNPACK_SKIP_ROWS:
@@ -207,7 +193,6 @@ _mesa_PixelStorei( GLenum pname, GLint param )
 	 }
 	 if (ctx->Unpack.SkipRows == param)
 	    return;
-	 FLUSH_VERTICES(ctx, _NEW_PACKUNPACK);
 	 ctx->Unpack.SkipRows = param;
 	 break;
       case GL_UNPACK_SKIP_IMAGES:
@@ -219,7 +204,6 @@ _mesa_PixelStorei( GLenum pname, GLint param )
 	 }
 	 if (ctx->Unpack.SkipImages == param)
 	    return;
-	 FLUSH_VERTICES(ctx, _NEW_PACKUNPACK);
 	 ctx->Unpack.SkipImages = param;
 	 break;
       case GL_UNPACK_ALIGNMENT:
@@ -229,7 +213,6 @@ _mesa_PixelStorei( GLenum pname, GLint param )
 	 }
 	 if (ctx->Unpack.Alignment == param)
 	    return;
-	 FLUSH_VERTICES(ctx, _NEW_PACKUNPACK);
 	 ctx->Unpack.Alignment = param;
 	 break;
       default:

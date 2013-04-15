@@ -160,11 +160,7 @@ void st_validate_state( struct st_context *st )
 
    check_attrib_edgeflag(st);
 
-   /* The bitmap cache is immune to pixel unpack changes.
-    * Note that GLUT makes several calls to glPixelStore for each
-    * bitmap char it draws so this is an important check.
-    */
-   if (state->mesa & ~_NEW_PACKUNPACK)
+   if (state->mesa)
       st_flush_bitmap_cache(st);
 
    check_program_state( st );

@@ -1577,7 +1577,6 @@ _mesa_PopClientAttrib(void)
                copy_pixelstore(ctx, &ctx->Pack, store);
                _mesa_reference_buffer_object(ctx, &store->BufferObj, NULL);
             }
-	    ctx->NewState |= _NEW_PACKUNPACK;
             break;
          case GL_CLIENT_UNPACK_BIT:
             {
@@ -1586,7 +1585,6 @@ _mesa_PopClientAttrib(void)
                copy_pixelstore(ctx, &ctx->Unpack, store);
                _mesa_reference_buffer_object(ctx, &store->BufferObj, NULL);
             }
-	    ctx->NewState |= _NEW_PACKUNPACK;
             break;
          case GL_CLIENT_VERTEX_ARRAY_BIT: {
 	    struct gl_array_attrib * attr =
