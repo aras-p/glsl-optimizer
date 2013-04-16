@@ -34,6 +34,7 @@
 #include "ilo_query.h"
 #include "ilo_resource.h"
 #include "ilo_screen.h"
+#include "ilo_shader.h"
 #include "ilo_state.h"
 #include "ilo_video.h"
 #include "ilo_context.h"
@@ -99,6 +100,8 @@ ilo_context_destroy(struct pipe_context *pipe)
    if (ilo->last_cp_bo)
       ilo->last_cp_bo->unreference(ilo->last_cp_bo);
 
+   if (ilo->shader_cache)
+      ilo_shader_cache_destroy(ilo->shader_cache);
    if (ilo->cp)
       ilo_cp_destroy(ilo->cp);
 
@@ -170,7 +173,9 @@ ilo_context_create(struct pipe_screen *screen, void *priv)
    }
 
    ilo->cp = ilo_cp_create(ilo->winsys, is->has_llc);
-   if (!ilo->cp) {
+   ilo->shader_cache = ilo_shader_cache_create(ilo->winsys);
+
+   if (!ilo->cp || !ilo->shader_cache) {
       ilo_context_destroy(&ilo->base);
       return NULL;
    }
@@ -181,6 +186,8 @@ ilo_context_create(struct pipe_screen *screen, void *priv)
          ilo_context_pre_cp_flush, (void *) ilo);
    ilo_cp_set_hook(ilo->cp, ILO_CP_HOOK_POST_FLUSH,
          ilo_context_post_cp_flush, (void *) ilo);
+
+   ilo->dirty = ILO_DIRTY_ALL;
 
    ilo->base.screen = screen;
    ilo->base.priv = priv;

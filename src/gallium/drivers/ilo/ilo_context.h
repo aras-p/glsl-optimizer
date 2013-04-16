@@ -60,6 +60,11 @@ struct ilo_cp;
 struct ilo_screen;
 struct ilo_shader_state;
 
+struct ilo_vertex_element {
+   struct pipe_vertex_element elements[PIPE_MAX_ATTRIBS];
+   unsigned num_elements;
+};
+
 struct ilo_context {
    struct pipe_context base;
 
@@ -80,10 +85,32 @@ struct ilo_context {
    struct ilo_cp *cp;
    struct intel_bo *last_cp_bo;
 
-   struct pipe_rasterizer_state *rasterizer;
-   struct ilo_shader_state *vs;
+   struct ilo_shader_cache *shader_cache;
 
+   uint32_t dirty;
+
+   struct pipe_blend_state *blend;
+   struct pipe_rasterizer_state *rasterizer;
+   struct pipe_depth_stencil_alpha_state *depth_stencil_alpha;
+   struct ilo_shader_state *fs;
+   struct ilo_shader_state *vs;
+   struct ilo_shader_state *gs;
+   struct ilo_vertex_element *vertex_elements;
+
+   struct pipe_blend_color blend_color;
+   struct pipe_stencil_ref stencil_ref;
+   unsigned sample_mask;
+   struct pipe_clip_state clip;
    struct pipe_framebuffer_state framebuffer;
+   struct pipe_poly_stipple poly_stipple;
+   struct pipe_scissor_state scissor;
+   struct pipe_viewport_state viewport;
+   struct pipe_index_buffer index_buffer;
+
+   struct {
+      struct pipe_vertex_buffer buffers[PIPE_MAX_ATTRIBS];
+      unsigned num_buffers;
+   } vertex_buffers;
 
    struct {
       struct pipe_sampler_state *samplers[ILO_MAX_SAMPLERS];
@@ -95,6 +122,50 @@ struct ilo_context {
       unsigned num_views;
    } sampler_views[PIPE_SHADER_TYPES];
 
+   struct {
+      struct pipe_constant_buffer buffers[ILO_MAX_CONST_BUFFERS];
+      unsigned num_buffers;
+   } constant_buffers[PIPE_SHADER_TYPES];
+
+   struct {
+      struct pipe_stream_output_target *targets[ILO_MAX_SO_BUFFERS];
+      unsigned num_targets;
+      unsigned append_bitmask;
+   } stream_output_targets;
+
+   struct {
+      struct pipe_surface *surfaces[PIPE_MAX_SHADER_RESOURCES];
+      unsigned num_surfaces;
+   } shader_resources;
+
+   struct ilo_shader_state *compute;
+
+   struct {
+      struct pipe_surface *surfaces[PIPE_MAX_SHADER_RESOURCES];
+      unsigned num_surfaces;
+   } compute_resources;
+
+   struct {
+      /*
+       * XXX These should not be treated as real resources (and there could be
+       * thousands of them).  They should be treated as regions in GLOBAL
+       * resource, which is the only real resource.
+       *
+       * That is, a resource here should instead be
+       *
+       *   struct ilo_global_region {
+       *     struct pipe_resource base;
+       *     int offset;
+       *     int size;
+       *   };
+       *
+       * and it describes the region [offset, offset + size) in GLOBAL
+       * resource.
+       */
+      struct pipe_resource *resources[PIPE_MAX_SHADER_RESOURCES];
+      uint32_t *handles[PIPE_MAX_SHADER_RESOURCES];
+      unsigned num_resources;
+   } global_binding;
 };
 
 static inline struct ilo_context *
