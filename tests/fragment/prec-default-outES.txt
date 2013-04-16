@@ -1,9 +1,9 @@
+precision lowp int;
+precision highp float;
 struct MyStruct {
   float f;
   int i;
 };
-precision lowp int;
-precision highp float;
 uniform int im;
 uniform int il2;
 uniform int il1;

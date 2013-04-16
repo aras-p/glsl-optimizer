@@ -2942,11 +2942,12 @@ ast_declarator_list::hir(exec_list *instructions,
 	  * but otherwise we run into trouble if a function is prototyped, a
 	  * global var is decled, then the function is defined with usage of
 	  * the global var.  See glslparsertest's CorrectModule.frag.
-	  * However, do not insert declarations before default precision statements.
+	  * However, do not insert declarations before default precision statements
+	  * or type declarations.
 	  */
-	 exec_node* before_node = instructions->head;
-	 while (before_node && ((ir_instruction*)before_node)->ir_type == ir_type_precision)
-	    before_node = before_node->next;
+	 ir_instruction* before_node = (ir_instruction*)instructions->head;
+	 while (before_node && (before_node->ir_type == ir_type_precision || before_node->ir_type == ir_type_typedecl))
+	    before_node = (ir_instruction*)before_node->next;
 	 if (before_node)
 	    before_node->insert_before(var);
 	 else
@@ -4132,6 +4133,21 @@ ast_struct_specifier::hir(exec_list *instructions,
 	 s[state->num_user_structures] = t;
 	 state->user_structures = s;
 	 state->num_user_structures++;
+	 ir_typedecl_statement* stmt = new(state) ir_typedecl_statement(t);
+		  
+		/* Push the struct declarations to the top.
+		 * However, do not insert declarations before default precision
+		 * statements or other declarations
+		 */
+		ir_instruction* before_node = (ir_instruction*)instructions->head;
+		while (before_node &&
+			   (before_node->ir_type == ir_type_precision ||
+				before_node->ir_type == ir_type_typedecl))
+			before_node = (ir_instruction*)before_node->next;
+		if (before_node)
+			before_node->insert_before(stmt);
+		else
+			instructions->push_head(stmt);
       }
    }
 

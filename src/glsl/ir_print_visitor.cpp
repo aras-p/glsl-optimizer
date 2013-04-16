@@ -528,3 +528,8 @@ ir_print_visitor::visit(ir_precision_statement *ir)
 {
 	printf("%s", ir->precision_statement);
 }
+
+void
+ir_print_visitor::visit(ir_typedecl_statement *ir)
+{
+}

@@ -26,6 +26,40 @@
 #include "ir_unused_structs.h"
 #include "glsl_types.h"
 
+
+class ir_struct_usage_visitor : public ir_hierarchical_visitor {
+public:
+	ir_struct_usage_visitor();
+	~ir_struct_usage_visitor(void);
+	
+	virtual ir_visitor_status visit(ir_dereference_variable *);
+	
+	bool has_struct_entry(const glsl_type *t) const;
+	
+	exec_list struct_list;
+	void *mem_ctx;
+};
+
+class ir_decl_removal_visitor : public ir_hierarchical_visitor {
+public:
+	ir_decl_removal_visitor(ir_struct_usage_visitor* used_structs)
+	: used_structs(used_structs)
+	{
+	}
+	
+	virtual ir_visitor_status visit(ir_typedecl_statement* ir)
+	{
+		if (!used_structs->has_struct_entry(ir->type_decl))
+		{
+			ir->remove();
+		}
+		return visit_continue;
+	}
+	
+	ir_struct_usage_visitor* used_structs;
+};
+
+
 struct struct_entry : public exec_node
 {
 	struct_entry(const glsl_type *type_) : type(type_) { }
@@ -92,4 +126,15 @@ ir_struct_usage_visitor::ir_struct_usage_visitor()
 ir_struct_usage_visitor::~ir_struct_usage_visitor(void)
 {
 	ralloc_free(mem_ctx);
+}
+
+
+
+void do_remove_unused_typedecls(exec_list* instructions)
+{
+	ir_struct_usage_visitor v;
+	v.run (instructions);
+	
+	ir_decl_removal_visitor v2(&v);
+	v2.run (instructions);
 }

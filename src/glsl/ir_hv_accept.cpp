@@ -409,3 +409,9 @@ ir_precision_statement::accept(ir_hierarchical_visitor *v)
 {
    return v->visit(this);
 }
+
+ir_visitor_status
+ir_typedecl_statement::accept(ir_hierarchical_visitor *v)
+{
+   return v->visit(this);
+}

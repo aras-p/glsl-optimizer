@@ -114,6 +114,7 @@ public:
 	virtual void visit(ir_loop *);
 	virtual void visit(ir_loop_jump *);
 	virtual void visit(ir_precision_statement *);
+	virtual void visit(ir_typedecl_statement *);
 	
 	int indentation;
 	char* buffer;
@@ -129,6 +130,7 @@ _mesa_print_ir_glsl(exec_list *instructions,
 	    struct _mesa_glsl_parse_state *state,
 		char* buffer, PrintGlslMode mode)
 {
+	// print version & extensions
 	if (state) {
 		if (state->had_version_string)
 			ralloc_asprintf_append (&buffer, "#version %i\n", state->language_version);
@@ -143,32 +145,9 @@ _mesa_print_ir_glsl(exec_list *instructions,
 		if (state->EXT_frag_depth_enable)
 			ralloc_strcat (&buffer, "#extension GL_EXT_frag_depth : enable\n");
 	}
-   if (state) {
-	   ir_struct_usage_visitor v;
-	   v.run (instructions);
-
-      for (unsigned i = 0; i < state->num_user_structures; i++) {
-	 const glsl_type *const s = state->user_structures[i];
-
-	 if (!v.has_struct_entry(s))
-		 continue;
-
-	 ralloc_asprintf_append (&buffer, "struct %s {\n",
-		s->name);
-
-	 for (unsigned j = 0; j < s->length; j++) {
-	    ralloc_asprintf_append (&buffer, "  ");
-		if (state->es_shader)
-			ralloc_asprintf_append (&buffer, "%s", get_precision_string(s->fields.structure[j].precision));
-	    buffer = print_type(buffer, s->fields.structure[j].type, false);
-	    ralloc_asprintf_append (&buffer, " %s", s->fields.structure[j].name);
-        buffer = print_type_post(buffer, s->fields.structure[j].type, false);
-        ralloc_asprintf_append (&buffer, ";\n");
-	 }
-
-	 ralloc_asprintf_append (&buffer, "};\n");
-      }
-   }
+	
+	// remove unused struct declarations
+	do_remove_unused_typedecls(instructions);
 	
 	global_print_tracker gtracker;
 
@@ -1151,4 +1130,22 @@ void
 ir_print_glsl_visitor::visit(ir_precision_statement *ir)
 {
 	ralloc_asprintf_append (&buffer, "%s", ir->precision_statement);
+}
+
+void
+ir_print_glsl_visitor::visit(ir_typedecl_statement *ir)
+{
+	const glsl_type *const s = ir->type_decl;
+	ralloc_asprintf_append (&buffer, "struct %s {\n", s->name);
+
+	for (unsigned j = 0; j < s->length; j++) {
+		ralloc_asprintf_append (&buffer, "  ");
+		if (state->es_shader)
+			ralloc_asprintf_append (&buffer, "%s", get_precision_string(s->fields.structure[j].precision));
+		buffer = print_type(buffer, s->fields.structure[j].type, false);
+		ralloc_asprintf_append (&buffer, " %s", s->fields.structure[j].name);
+		buffer = print_type_post(buffer, s->fields.structure[j].type, false);
+		ralloc_asprintf_append (&buffer, ";\n");
+	}
+	ralloc_asprintf_append (&buffer, "}");
 }

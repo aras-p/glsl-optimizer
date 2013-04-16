@@ -407,6 +407,12 @@ ir_precision_statement::clone(void *mem_ctx, struct hash_table *ht) const
    return new(mem_ctx) ir_precision_statement(this->precision_statement);
 }
 
+ir_typedecl_statement *
+ir_typedecl_statement::clone(void *mem_ctx, struct hash_table *ht) const
+{
+	return new(mem_ctx) ir_typedecl_statement(this->type_decl);
+}
+
 
 
 class fixup_ir_call_visitor : public ir_hierarchical_visitor {

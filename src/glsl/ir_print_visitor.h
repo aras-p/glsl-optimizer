@@ -73,6 +73,7 @@ public:
    virtual void visit(ir_loop *);
    virtual void visit(ir_loop_jump *);
    virtual void visit(ir_precision_statement *);
+   virtual void visit(ir_typedecl_statement *);
    /*@}*/
 
 private:

@@ -81,6 +81,7 @@ enum ir_node_type {
    ir_type_swizzle,
    ir_type_texture,
    ir_type_precision,
+   ir_type_typedecl,
    ir_type_max /**< maximum ir_type enum number, for validation */
 };
 
@@ -1930,6 +1931,27 @@ public:
     * Precision statement
     */
    const char *precision_statement;
+};
+
+
+class ir_typedecl_statement : public ir_instruction {
+public:
+	ir_typedecl_statement(const glsl_type* type_decl)
+	{
+		this->ir_type = ir_type_typedecl;
+		this->type_decl = type_decl;
+	}
+	
+	virtual ir_typedecl_statement *clone(void *mem_ctx, struct hash_table *) const;
+	
+	virtual void accept(ir_visitor *v)
+	{
+		v->visit(this);
+	}
+	
+	virtual ir_visitor_status accept(ir_hierarchical_visitor *);
+	
+	const glsl_type* type_decl;
 };
 
 
