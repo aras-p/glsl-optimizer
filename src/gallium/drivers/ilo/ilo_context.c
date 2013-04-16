@@ -43,11 +43,19 @@
 static void
 ilo_context_new_cp_batch(struct ilo_cp *cp, void *data)
 {
+   struct ilo_context *ilo = ilo_context(data);
+
+   if (cp->ring == ILO_CP_RING_RENDER)
+      ilo_3d_new_cp_batch(ilo->hw3d);
 }
 
 static void
 ilo_context_pre_cp_flush(struct ilo_cp *cp, void *data)
 {
+   struct ilo_context *ilo = ilo_context(data);
+
+   if (cp->ring == ILO_CP_RING_RENDER)
+      ilo_3d_pre_cp_flush(ilo->hw3d);
 }
 
 static void
@@ -61,6 +69,9 @@ ilo_context_post_cp_flush(struct ilo_cp *cp, void *data)
    /* remember the just flushed bo, on which fences could wait */
    ilo->last_cp_bo = cp->bo;
    ilo->last_cp_bo->reference(ilo->last_cp_bo);
+
+   if (cp->ring == ILO_CP_RING_RENDER)
+      ilo_3d_post_cp_flush(ilo->hw3d);
 }
 
 static void
@@ -103,6 +114,8 @@ ilo_context_destroy(struct pipe_context *pipe)
 
    if (ilo->blitter)
       util_blitter_destroy(ilo->blitter);
+   if (ilo->hw3d)
+      ilo_3d_destroy(ilo->hw3d);
    if (ilo->shader_cache)
       ilo_shader_cache_destroy(ilo->shader_cache);
    if (ilo->cp)
@@ -177,8 +190,10 @@ ilo_context_create(struct pipe_screen *screen, void *priv)
 
    ilo->cp = ilo_cp_create(ilo->winsys, is->has_llc);
    ilo->shader_cache = ilo_shader_cache_create(ilo->winsys);
+   if (ilo->cp)
+      ilo->hw3d = ilo_3d_create(ilo->cp, ilo->gen, ilo->gt);
 
-   if (!ilo->cp || !ilo->shader_cache) {
+   if (!ilo->cp || !ilo->shader_cache || !ilo->hw3d) {
       ilo_context_destroy(&ilo->base);
       return NULL;
    }

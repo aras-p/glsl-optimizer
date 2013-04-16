@@ -57,6 +57,7 @@
 struct blitter_context;
 struct intel_winsys;
 struct intel_bo;
+struct ilo_3d;
 struct ilo_cp;
 struct ilo_screen;
 struct ilo_shader_state;
@@ -87,6 +88,7 @@ struct ilo_context {
    struct intel_bo *last_cp_bo;
 
    struct ilo_shader_cache *shader_cache;
+   struct ilo_3d *hw3d;
    struct blitter_context *blitter;
 
    uint32_t dirty;

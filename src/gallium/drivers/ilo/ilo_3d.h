@@ -30,7 +30,42 @@
 
 #include "ilo_common.h"
 
+struct ilo_3d_pipeline;
 struct ilo_context;
+struct ilo_cp;
+struct ilo_query;
+
+/**
+ * 3D context.
+ */
+struct ilo_3d {
+   struct ilo_cp *cp;
+
+   bool new_batch;
+   uint32_t shader_cache_seqno;
+
+   struct {
+      struct pipe_query *query;
+      unsigned mode;
+   } render_condition;
+
+   struct ilo_3d_pipeline *pipeline;
+};
+
+struct ilo_3d *
+ilo_3d_create(struct ilo_cp *cp, int gen, int gt);
+
+void
+ilo_3d_destroy(struct ilo_3d *hw3d);
+
+void
+ilo_3d_new_cp_batch(struct ilo_3d *hw3d);
+
+void
+ilo_3d_pre_cp_flush(struct ilo_3d *hw3d);
+
+void
+ilo_3d_post_cp_flush(struct ilo_3d *hw3d);
 
 void
 ilo_init_3d_functions(struct ilo_context *ilo);
