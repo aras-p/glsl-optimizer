@@ -55,6 +55,8 @@
 #define ILO_WM_TEXTURE_SURFACE(i)  (ILO_MAX_DRAW_BUFFERS + ILO_MAX_CONST_BUFFERS  + i)
 
 struct intel_winsys;
+struct intel_bo;
+struct ilo_cp;
 struct ilo_screen;
 
 struct ilo_context {
@@ -73,6 +75,9 @@ struct ilo_context {
       int max_vs_entries;
       int max_gs_entries;
    } urb;
+
+   struct ilo_cp *cp;
+   struct intel_bo *last_cp_bo;
 };
 
 static inline struct ilo_context *

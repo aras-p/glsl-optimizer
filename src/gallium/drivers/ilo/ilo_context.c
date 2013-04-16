@@ -29,6 +29,7 @@
 
 #include "ilo_3d.h"
 #include "ilo_blit.h"
+#include "ilo_cp.h"
 #include "ilo_gpgpu.h"
 #include "ilo_query.h"
 #include "ilo_resource.h"
@@ -38,9 +39,68 @@
 #include "ilo_context.h"
 
 static void
+ilo_context_new_cp_batch(struct ilo_cp *cp, void *data)
+{
+}
+
+static void
+ilo_context_pre_cp_flush(struct ilo_cp *cp, void *data)
+{
+}
+
+static void
+ilo_context_post_cp_flush(struct ilo_cp *cp, void *data)
+{
+   struct ilo_context *ilo = ilo_context(data);
+
+   if (ilo->last_cp_bo)
+      ilo->last_cp_bo->unreference(ilo->last_cp_bo);
+
+   /* remember the just flushed bo, on which fences could wait */
+   ilo->last_cp_bo = cp->bo;
+   ilo->last_cp_bo->reference(ilo->last_cp_bo);
+}
+
+static void
+ilo_flush(struct pipe_context *pipe,
+          struct pipe_fence_handle **f,
+          enum pipe_flush_flags flags)
+{
+   struct ilo_context *ilo = ilo_context(pipe);
+
+   if (f) {
+      struct ilo_fence *fence;
+
+      fence = CALLOC_STRUCT(ilo_fence);
+      if (fence) {
+         pipe_reference_init(&fence->reference, 1);
+
+         /* reference the batch bo that we want to wait on */
+         if (ilo_cp_empty(ilo->cp))
+            fence->bo = ilo->last_cp_bo;
+         else
+            fence->bo = ilo->cp->bo;
+
+         if (fence->bo)
+            fence->bo->reference(fence->bo);
+      }
+
+      *f = (struct pipe_fence_handle *) fence;
+   }
+
+   ilo_cp_flush(ilo->cp);
+}
+
+static void
 ilo_context_destroy(struct pipe_context *pipe)
 {
    struct ilo_context *ilo = ilo_context(pipe);
+
+   if (ilo->last_cp_bo)
+      ilo->last_cp_bo->unreference(ilo->last_cp_bo);
+
+   if (ilo->cp)
+      ilo_cp_destroy(ilo->cp);
 
    FREE(ilo);
 }
@@ -109,11 +169,24 @@ ilo_context_create(struct pipe_screen *screen, void *priv)
       }
    }
 
+   ilo->cp = ilo_cp_create(ilo->winsys, is->has_llc);
+   if (!ilo->cp) {
+      ilo_context_destroy(&ilo->base);
+      return NULL;
+   }
+
+   ilo_cp_set_hook(ilo->cp, ILO_CP_HOOK_NEW_BATCH,
+         ilo_context_new_cp_batch, (void *) ilo);
+   ilo_cp_set_hook(ilo->cp, ILO_CP_HOOK_PRE_FLUSH,
+         ilo_context_pre_cp_flush, (void *) ilo);
+   ilo_cp_set_hook(ilo->cp, ILO_CP_HOOK_POST_FLUSH,
+         ilo_context_post_cp_flush, (void *) ilo);
+
    ilo->base.screen = screen;
    ilo->base.priv = priv;
 
    ilo->base.destroy = ilo_context_destroy;
-   ilo->base.flush = NULL;
+   ilo->base.flush = ilo_flush;
 
    ilo_init_3d_functions(ilo);
    ilo_init_query_functions(ilo);
