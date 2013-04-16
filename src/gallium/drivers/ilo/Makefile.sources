@@ -5,6 +5,7 @@ C_SOURCES := \
 	ilo_cp.c \
 	ilo_format.c \
 	ilo_gpe_gen6.c \
+	ilo_gpe_gen7.c \
 	ilo_gpgpu.c \
 	ilo_query.c \
 	ilo_resource.c \
