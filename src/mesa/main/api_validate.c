@@ -330,26 +330,43 @@ _mesa_valid_prim_mode(struct gl_context *ctx, GLenum mode, const char *name)
    if (_mesa_is_xfb_active_and_unpaused(ctx)) {
       GLboolean pass = GL_TRUE;
 
-      switch (mode) {
-      case GL_POINTS:
-         pass = ctx->TransformFeedback.Mode == GL_POINTS;
-	 break;
-      case GL_LINES:
-      case GL_LINE_STRIP:
-      case GL_LINE_LOOP:
-         pass = ctx->TransformFeedback.Mode == GL_LINES;
-	 break;
-      default:
-         pass = ctx->TransformFeedback.Mode == GL_TRIANGLES;
-	 break;
+      if(ctx->Shader.CurrentGeometryProgram) {
+         switch (ctx->Shader.CurrentGeometryProgram->Geom.OutputType) {
+         case GL_POINTS:
+            pass = ctx->TransformFeedback.Mode == GL_POINTS;
+            break;
+         case GL_LINE_STRIP:
+            pass = ctx->TransformFeedback.Mode == GL_LINES;
+            break;
+         case GL_TRIANGLE_STRIP:
+            pass = ctx->TransformFeedback.Mode == GL_TRIANGLES;
+            break;
+         default:
+            pass = GL_FALSE;
+         }
+      }
+      else {
+         switch (mode) {
+         case GL_POINTS:
+            pass = ctx->TransformFeedback.Mode == GL_POINTS;
+            break;
+         case GL_LINES:
+         case GL_LINE_STRIP:
+         case GL_LINE_LOOP:
+            pass = ctx->TransformFeedback.Mode == GL_LINES;
+            break;
+         default:
+            pass = ctx->TransformFeedback.Mode == GL_TRIANGLES;
+            break;
+         }
       }
       if (!pass) {
-	 _mesa_error(ctx, GL_INVALID_OPERATION,
-		     "%s(mode=%s vs transform feedback %s)",
-		     name,
-		     _mesa_lookup_prim_by_nr(mode),
-		     _mesa_lookup_prim_by_nr(ctx->TransformFeedback.Mode));
-	 return GL_FALSE;
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+	                 "%s(mode=%s vs transform feedback %s)",
+	                 name,
+	                 _mesa_lookup_prim_by_nr(mode),
+	                 _mesa_lookup_prim_by_nr(ctx->TransformFeedback.Mode));
+         return GL_FALSE;
       }
    }
 
