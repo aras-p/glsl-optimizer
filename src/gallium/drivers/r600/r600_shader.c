@@ -5490,7 +5490,7 @@ static int tgsi_opdst(struct r600_shader_ctx *ctx)
 	return 0;
 }
 
-static int emit_logic_pred(struct r600_shader_ctx *ctx, int opcode)
+static int emit_logic_pred(struct r600_shader_ctx *ctx, int opcode, int alu_type)
 {
 	struct r600_bytecode_alu alu;
 	int r;
@@ -5510,7 +5510,7 @@ static int emit_logic_pred(struct r600_shader_ctx *ctx, int opcode)
 
 	alu.last = 1;
 
-	r = r600_bytecode_add_alu_type(ctx->bc, &alu, CF_OP_ALU_PUSH_BEFORE);
+	r = r600_bytecode_add_alu_type(ctx->bc, &alu, alu_type);
 	if (r)
 		return r;
 	return 0;
@@ -5730,7 +5730,19 @@ static void break_loop_on_flag(struct r600_shader_ctx *ctx, unsigned fc_sp)
 
 static int tgsi_if(struct r600_shader_ctx *ctx)
 {
-	emit_logic_pred(ctx, ALU_OP2_PRED_SETNE_INT);
+	int alu_type = CF_OP_ALU_PUSH_BEFORE;
+
+	/* There is a hardware bug on Cayman where a BREAK/CONTINUE followed by
+	 * LOOP_STARTxxx for nested loops may put the branch stack into a state
+	 * such that ALU_PUSH_BEFORE doesn't work as expected. Workaround this
+	 * by replacing the ALU_PUSH_BEFORE with a PUSH + ALU */
+	if (ctx->bc->chip_class == CAYMAN && ctx->bc->stack.loop > 1) {
+		r600_bytecode_add_cfinst(ctx->bc, CF_OP_PUSH);
+		ctx->bc->cf_last->cf_addr = ctx->bc->cf_last->id + 2;
+		alu_type = CF_OP_ALU;
+	}
+
+	emit_logic_pred(ctx, ALU_OP2_PRED_SETNE_INT, alu_type);
 
 	r600_bytecode_add_cfinst(ctx->bc, CF_OP_JUMP);
 
