@@ -32,6 +32,7 @@
 #include "ilo_cp.h"
 #include "ilo_state.h"
 #include "ilo_3d_pipeline_gen6.h"
+#include "ilo_3d_pipeline_gen7.h"
 #include "ilo_3d_pipeline.h"
 
 /* in U0.4 */
@@ -78,6 +79,9 @@ ilo_3d_pipeline_create(struct ilo_cp *cp, int gen, int gt)
    switch (p->gen) {
    case ILO_GEN(6):
       ilo_3d_pipeline_init_gen6(p);
+      break;
+   case ILO_GEN(7):
+      ilo_3d_pipeline_init_gen7(p);
       break;
    default:
       assert(!"unsupported GEN");

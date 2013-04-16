@@ -535,7 +535,7 @@ dump_3d_state(struct ilo_3d_pipeline *p)
 
    if (brw.intel.gen >= 7) {
       dump_cc_viewport_state(&brw, p->state.CC_VIEWPORT);
-      dump_sf_clip_viewport_state(&brw, p->state.SF_VIEWPORT);
+      dump_sf_clip_viewport_state(&brw, p->state.SF_CLIP_VIEWPORT);
    }
    else {
       dump_clip_viewport_state(&brw, p->state.CLIP_VIEWPORT);

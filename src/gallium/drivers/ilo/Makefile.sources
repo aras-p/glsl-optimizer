@@ -3,6 +3,7 @@ C_SOURCES := \
 	ilo_3d_pipeline.c \
 	ilo_3d_pipeline_dump.c \
 	ilo_3d_pipeline_gen6.c \
+	ilo_3d_pipeline_gen7.c \
 	ilo_blit.c \
 	ilo_context.c \
 	ilo_cp.c \

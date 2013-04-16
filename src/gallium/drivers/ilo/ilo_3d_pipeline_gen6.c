@@ -762,8 +762,18 @@ gen6_pipeline_state_viewports(struct ilo_3d_pipeline *p,
                               const struct ilo_context *ilo,
                               struct gen6_pipeline_session *session)
 {
+   /* SF_CLIP_VIEWPORT and CC_VIEWPORT */
+   if (p->gen >= ILO_GEN(7) && DIRTY(VIEWPORT)) {
+      p->state.SF_CLIP_VIEWPORT = p->gen7_SF_CLIP_VIEWPORT(&p->gpe,
+            &ilo->viewport, 1, p->cp);
+
+      p->state.CC_VIEWPORT = p->gen6_CC_VIEWPORT(&p->gpe,
+            &ilo->viewport, 1, p->cp);
+
+      session->viewport_state_changed = true;
+   }
    /* SF_VIEWPORT, CLIP_VIEWPORT, and CC_VIEWPORT */
-   if (DIRTY(VIEWPORT)) {
+   else if (DIRTY(VIEWPORT)) {
       p->state.CLIP_VIEWPORT = p->gen6_CLIP_VIEWPORT(&p->gpe,
             &ilo->viewport, 1, p->cp);
 
