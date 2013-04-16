@@ -1197,6 +1197,11 @@ vec4_visitor::lower_attributes_to_hw_regs(const int *attribute_map)
       if (inst->dst.file == ATTR) {
 	 int grf = attribute_map[inst->dst.reg + inst->dst.reg_offset];
 
+         /* All attributes used in the shader need to have been assigned a
+          * hardware register by the caller
+          */
+         assert(grf != 0);
+
 	 struct brw_reg reg = brw_vec8_grf(grf, 0);
 	 reg.type = inst->dst.type;
 	 reg.dw1.bits.writemask = inst->dst.writemask;
@@ -1210,6 +1215,11 @@ vec4_visitor::lower_attributes_to_hw_regs(const int *attribute_map)
 	    continue;
 
 	 int grf = attribute_map[inst->src[i].reg + inst->src[i].reg_offset];
+
+         /* All attributes used in the shader need to have been assigned a
+          * hardware register by the caller
+          */
+         assert(grf != 0);
 
 	 struct brw_reg reg = brw_vec8_grf(grf, 0);
 	 reg.dw1.bits.swizzle = inst->src[i].swizzle;
@@ -1230,6 +1240,7 @@ vec4_vs_visitor::setup_attributes(int payload_reg)
 {
    int nr_attributes;
    int attribute_map[VERT_ATTRIB_MAX + 1];
+   memset(attribute_map, 0, sizeof(attribute_map));
 
    nr_attributes = 0;
    for (int i = 0; i < VERT_ATTRIB_MAX; i++) {
