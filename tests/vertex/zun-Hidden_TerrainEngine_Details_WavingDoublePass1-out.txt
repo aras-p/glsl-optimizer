@@ -32,7 +32,7 @@ void main ()
   waveMove_3.x = dot (tmpvar_11, vec4(0.024, 0.04, -0.12, 0.096));
   waveMove_3.z = dot (tmpvar_11, vec4(0.006, 0.02, -0.02, 0.1));
   vertex_1.xz = (gl_Vertex.xz - (waveMove_3.xz * _WaveAndDistance.z));
-  outColor_2.xyz = ((gl_Color.xyz * mix (vec3(0.5, 0.5, 0.5), _WavingTint.xyz, vec3((dot (tmpvar_10, normalize(vec4(1.0, 1.0, 0.4, 0.2))) * 0.7)))) * 2.0);
+  outColor_2.xyz = ((gl_Color.xyz * mix (vec3(0.5, 0.5, 0.5), _WavingTint.xyz, vec3((dot (tmpvar_10, vec4(0.6742, 0.6742, 0.26968, 0.13484)) * 0.7)))) * 2.0);
   outColor_2.w = 1.0;
   vec4 tmpvar_12;
   tmpvar_12 = (gl_ModelViewProjectionMatrix * vertex_1);

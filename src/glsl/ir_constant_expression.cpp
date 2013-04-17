@@ -569,6 +569,26 @@ ir_expression::constant_expression_value(struct hash_table *variable_context)
       }
       break;
 
+	case ir_unop_normalize:
+	{
+		assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
+		float mag2 = 0.0f;
+		for (unsigned c = 0; c < op[0]->type->components(); c++) {
+			mag2 += op[0]->value.f[c] * op[0]->value.f[c];
+		}
+		if ( mag2!=0.0f ) {
+			float mag = sqrtf(mag2);
+			for (unsigned c = 0; c < op[0]->type->components(); c++) {
+				data.f[c] = op[0]->value.f[c] / mag;
+			}
+		} else {
+			for (unsigned c = 0; c < op[0]->type->components(); c++) {
+				data.f[c] = op[0]->value.f[c]>=0.0f ? INFINITY : -INFINITY;
+			}
+		}
+	}
+	break;      
+
    case ir_unop_fract:
       for (unsigned c = 0; c < op[0]->type->components(); c++) {
 	 switch (this->type->base_type) {

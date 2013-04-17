@@ -49,7 +49,7 @@ void main ()
   waveMove_7.x = dot (tmpvar_15, vec4(0.024, 0.04, -0.12, 0.096));
   waveMove_7.z = dot (tmpvar_15, vec4(0.006, 0.02, -0.02, 0.1));
   vertex_5.xz = (pos_1.xz - (waveMove_7.xz * _WaveAndDistance.z));
-  outColor_6.xyz = ((gl_Color.xyz * mix (vec3(0.5, 0.5, 0.5), _WavingTint.xyz, vec3((dot (tmpvar_14, normalize(vec4(1.0, 1.0, 0.4, 0.2))) * 0.7)))) * 2.0);
+  outColor_6.xyz = ((gl_Color.xyz * mix (vec3(0.5, 0.5, 0.5), _WavingTint.xyz, vec3((dot (tmpvar_14, vec4(0.6742, 0.6742, 0.26968, 0.13484)) * 0.7)))) * 2.0);
   outColor_6.w = 1.0;
   vec4 tmpvar_16;
   tmpvar_16 = (gl_ModelViewProjectionMatrix * vertex_5);
