@@ -341,16 +341,11 @@ if env['gles']:
 
     enabled_apis += ['ES1', 'ES2']
 
-env.Append(CPPDEFINES = ["FEATURE_%s=1" % api for api in enabled_apis])
-
-get_hash_gen_opts = ' '.join(["-a %s" % api for api in enabled_apis])
-
 get_hash_header = env.CodeGenerate(
       target = 'main/get_hash.h',
       script = 'main/get_hash_generator.py',
       source = GLAPI + 'gen/gl_and_es_API.xml',
-      command = python_cmd + ' $SCRIPT ' + get_hash_gen_opts +
-                ' -f $SOURCE > $TARGET'
+      command = python_cmd + ' $SCRIPT ' + ' -f $SOURCE > $TARGET'
 )
 
 #

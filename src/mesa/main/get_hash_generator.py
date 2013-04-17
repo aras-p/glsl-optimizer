@@ -179,54 +179,34 @@ def generate_hash_tables(enum_list, enabled_apis, param_descriptors):
 
    return params, merge_tables(sorted_tables)
 
-def opt_to_apis(feature):
-   _map = {"ES1": "GLES", "ES2": "GLES2", "GL": "GL"}
-   if feature not in _map:
-      return None
-
-   apis = set([_map[feature]])
-   if "GL" in apis:
-      apis.add("GL_CORE")
-   if "GLES2" in apis:
-      apis.add("GLES3")
-
-   return apis
 
 def show_usage():
    sys.stderr.write(
 """Usage: %s [OPTIONS]
   -f <file>          specify GL API XML file
-  -a [GL|ES1|ES2]    specify APIs to generate hash tables for
 """ % (program))
    exit(1)
 
 if __name__ == '__main__':
    try:
-      (opts, args) = getopt.getopt(sys.argv[1:], "f:a:")
+      (opts, args) = getopt.getopt(sys.argv[1:], "f:")
    except Exception,e:
       show_usage()
 
    if len(args) != 0:
       show_usage()
 
-   enabled_apis = set([])
    api_desc_file = ""
 
    for opt_name, opt_val in opts:
       if opt_name == "-f":
          api_desc_file = opt_val
-      if opt_name == "-a":
-         apis = opt_to_apis(opt_val.upper())
-         if not apis:
-            die("invalid API %s\n" % opt_val)
-
-         enabled_apis |= apis
 
    if not api_desc_file:
       die("missing descriptor file (-f)\n")
 
-   if len(enabled_apis) == 0:
-      die("need at least a single enabled API\n")
+   # generate the code for all APIs
+   enabled_apis = set(["GLES", "GLES2", "GLES3", "GL", "GL_CORE"])
 
    try:
       api_desc = gl_XML.parse_GL_API(api_desc_file)
