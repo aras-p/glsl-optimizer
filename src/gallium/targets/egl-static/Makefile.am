@@ -101,7 +101,7 @@ endif
 if HAVE_OPENGL
 AM_CPPFLAGS += \
 	-I$(top_srcdir)/src/mesa \
-	$(API_DEFINES)
+	-DFEATURE_GL=1
 
 egl_gallium_la_LIBADD += \
 	$(top_builddir)/src/mesa/libmesagallium.la
@@ -130,6 +130,16 @@ st_GL_la_LIBADD = \
 	$(PTHREAD_LIBS) \
 	-lm
 endif
+endif
+
+if HAVE_OPENGL_ES1
+AM_CPPFLAGS += \
+	-DFEATURE_ES1=1
+endif
+
+if HAVE_OPENGL_ES2
+AM_CPPFLAGS += \
+	-DFEATURE_ES2=1
 endif
 
 if HAVE_OPENVG
