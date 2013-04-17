@@ -130,38 +130,38 @@ need to ask, don't even try it.
 
 <h1>Profiling</h1>
 
-To profile llvmpipe you should pass the options
-
+<p>
+To profile llvmpipe you should build as
+</p>
 <pre>
   scons build=profile &lt;same-as-before&gt;
 </pre>
 
+<p>
 This will ensure that frame pointers are used both in C and JIT functions, and
 that no tail call optimizations are done by gcc.
+</p>
 
-To better profile JIT code you'll need to build LLVM with oprofile integration.
+<h2>Linux perf integration</h2>
 
-<pre>
-  ./configure \
-      --prefix=$install_dir \
-      --enable-optimized \
-      --disable-profiling \
-      --enable-targets=host-only \
-      --with-oprofile
-
-  make -C "$build_dir"
-  make -C "$build_dir" install
-
-  find "$install_dir/lib" -iname '*.a' -print0 | xargs -0 strip --strip-debug
-</pre>
-
-The you should define
+<p>
+On Linux, it is possible to have symbol resolution of JIT code with <a href="http://perf.wiki.kernel.org/">Linux perf</a>:
+</p>
 
 <pre>
-  export LLVM=/path/to/llvm-2.6-profile
+	perf record -g /my/application
+	perf report
 </pre>
 
-and rebuild.
+<p>
+When run inside Linux perf, llvmpipe will create a /tmp/perf-XXXXX.map file with
+symbol address table.  It also dumps assembly code to /tmp/perf-XXXXX.map.asm,
+which can be used by the bin/perf-annotate-jit script to produce disassembly of
+the generated code annotated with the samples.
+</p>
+
+<p>You can obtain a call graph via
+<a href="http://code.google.com/p/jrfonseca/wiki/Gprof2Dot#linux_perf">Gprof2Dot</a>.</p>
 
 
 <h1>Unit testing</h1>

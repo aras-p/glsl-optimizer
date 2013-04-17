@@ -273,10 +273,6 @@ init_gallivm_engine(struct gallivm_state *gallivm)
          LLVMDisposeMessage(error);
          goto fail;
       }
-
-#if defined(DEBUG) || defined(PROFILE)
-      lp_register_oprofile_jit_event_listener(gallivm->engine);
-#endif
    }
 
    LLVMAddModuleProvider(gallivm->engine, gallivm->provider);//new
@@ -635,6 +631,7 @@ gallivm_compile_module(struct gallivm_state *gallivm)
 }
 
 
+
 func_pointer
 gallivm_jit_function(struct gallivm_state *gallivm,
                      LLVMValueRef func)
@@ -650,8 +647,12 @@ gallivm_jit_function(struct gallivm_state *gallivm,
    jit_func = pointer_to_func(code);
 
    if (gallivm_debug & GALLIVM_DEBUG_ASM) {
-      lp_disassemble(code);
+      lp_disassemble(func, code);
    }
+
+#if defined(PROFILE)
+   lp_profile(func, code);
+#endif
 
    /* Free the function body to save memory */
    lp_func_delete_body(func);

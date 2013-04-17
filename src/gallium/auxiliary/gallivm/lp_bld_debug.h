@@ -83,7 +83,11 @@ lp_check_alignment(const void *ptr, unsigned alignment);
 
 
 void
-lp_disassemble(const void* func);
+lp_disassemble(LLVMValueRef func, const void *code);
+
+
+void
+lp_profile(LLVMValueRef func, const void *code);
 
 
 #ifdef __cplusplus

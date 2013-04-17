@@ -41,9 +41,6 @@ extern "C" {
 
 
 extern void
-lp_register_oprofile_jit_event_listener(LLVMExecutionEngineRef EE);
-
-extern void
 lp_set_target_options(void);
 
 
