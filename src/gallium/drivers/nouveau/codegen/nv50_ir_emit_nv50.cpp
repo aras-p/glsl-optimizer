@@ -493,7 +493,12 @@ CodeEmitterNV50::emitForm_MAD(const Instruction *i)
    setSrc(i, 1, 1);
    setSrc(i, 2, 2);
 
-   setAReg16(i, 1);
+   if (i->getIndirect(0, 0)) {
+      assert(!i->getIndirect(1, 0));
+      setAReg16(i, 0);
+   } else {
+      setAReg16(i, 1);
+   }
 }
 
 // like default form, but 2nd source in slot 2, and no 3rd source
@@ -512,7 +517,12 @@ CodeEmitterNV50::emitForm_ADD(const Instruction *i)
    setSrc(i, 0, 0);
    setSrc(i, 1, 2);
 
-   setAReg16(i, 1);
+   if (i->getIndirect(0, 0)) {
+      assert(!i->getIndirect(1, 0));
+      setAReg16(i, 0);
+   } else {
+      setAReg16(i, 1);
+   }
 }
 
 // default short form (rr, ar, rc, gr)
@@ -602,8 +612,11 @@ CodeEmitterNV50::emitLOAD(const Instruction *i)
 
    switch (sf) {
    case FILE_SHADER_INPUT:
-      // use 'mov' where we can
-      code[0] = i->src(0).isIndirect(0) ? 0x00000001 : 0x10000001;
+      if (progType == Program::TYPE_GEOMETRY)
+         code[0] = 0x11800001;
+      else
+         // use 'mov' where we can
+         code[0] = i->src(0).isIndirect(0) ? 0x00000001 : 0x10000001;
       code[1] = 0x00200000 | (i->lanes << 14);
       if (typeSizeof(i->dType) == 4)
          code[1] |= 0x04000000;
@@ -1405,8 +1418,8 @@ CodeEmitterNV50::emitShift(const Instruction *i)
 void
 CodeEmitterNV50::emitOUT(const Instruction *i)
 {
-   code[0] = (i->op == OP_EMIT) ? 0xf0000200 : 0xf0000400;
-   code[1] = 0xc0000001;
+   code[0] = (i->op == OP_EMIT) ? 0xf0000201 : 0xf0000401;
+   code[1] = 0xc0000000;
 
    emitFlagsRd(i);
 }

@@ -195,6 +195,8 @@ nv50_gmtyprog_validate(struct nv50_context *nv50)
    struct nv50_program *gp = nv50->gmtyprog;
 
    if (gp) {
+      if (!nv50_program_validate(nv50, gp))
+         return;
       BEGIN_NV04(push, NV50_3D(GP_REG_ALLOC_TEMP), 1);
       PUSH_DATA (push, gp->max_gpr);
       BEGIN_NV04(push, NV50_3D(GP_REG_ALLOC_RESULT), 1);
