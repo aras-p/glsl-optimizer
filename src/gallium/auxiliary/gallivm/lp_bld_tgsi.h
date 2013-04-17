@@ -396,6 +396,7 @@ struct lp_build_tgsi_soa_context
    LLVMValueRef emitted_prims_vec_ptr;
    LLVMValueRef total_emitted_vertices_vec_ptr;
    LLVMValueRef emitted_vertices_vec_ptr;
+   LLVMValueRef max_output_vertices_vec;
 
    LLVMValueRef consts_ptr;
    const LLVMValueRef *pos;

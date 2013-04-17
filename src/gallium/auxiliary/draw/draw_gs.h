@@ -68,6 +68,7 @@ struct draw_geometry_shader {
    unsigned position_output;
 
    unsigned max_output_vertices;
+   unsigned primitive_boundary;
    unsigned input_primitive;
    unsigned output_primitive;
 

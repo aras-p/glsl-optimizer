@@ -828,7 +828,6 @@ emit_fetch_gs_input(
       vertex_index = lp_build_const_int32(gallivm, reg->Dimension.Index);
    }
 
-
    res = bld->gs_iface->fetch_input(bld->gs_iface, bld_base,
                                     vertex_index, attrib_index,
                                     swizzle_index);
@@ -2257,6 +2256,20 @@ clear_uint_vec_ptr_from_mask(struct lp_build_tgsi_context * bld_base,
    LLVMBuildStore(builder, current_vec, ptr);
 }
 
+static LLVMValueRef
+clamp_mask_to_max_output_vertices(struct lp_build_tgsi_soa_context * bld,
+                                  LLVMValueRef current_mask_vec,
+                                  LLVMValueRef total_emitted_vertices_vec)
+{
+   LLVMBuilderRef builder = bld->bld_base.base.gallivm->builder;
+   struct lp_build_context *uint_bld = &bld->bld_base.uint_bld;
+   LLVMValueRef max_mask = lp_build_cmp(uint_bld, PIPE_FUNC_LESS,
+                                        total_emitted_vertices_vec,
+                                        bld->max_output_vertices_vec);
+
+   return LLVMBuildAnd(builder, current_mask_vec, max_mask, "");
+}
+
 static void
 emit_vertex(
    const struct lp_build_tgsi_action * action,
@@ -2270,6 +2283,8 @@ emit_vertex(
       LLVMValueRef masked_ones = mask_to_one_vec(bld_base);
       LLVMValueRef total_emitted_vertices_vec =
          LLVMBuildLoad(builder, bld->total_emitted_vertices_vec_ptr, "");
+      masked_ones = clamp_mask_to_max_output_vertices(bld, masked_ones,
+                                                      total_emitted_vertices_vec);
       gather_outputs(bld);
       bld->gs_iface->emit_vertex(bld->gs_iface, &bld->bld_base,
                                  bld->outputs,
@@ -2812,12 +2827,29 @@ lp_build_tgsi_soa(struct gallivm_state *gallivm,
    bld.bld_base.op_actions[TGSI_OPCODE_SVIEWINFO].emit = sviewinfo_emit;
 
    if (gs_iface) {
+      /* There's no specific value for this because it should always
+       * be set, but apps using ext_geometry_shader4 quite often
+       * were forgetting so we're using MAX_VERTEX_VARYING from
+       * that spec even though we could debug_assert if it's not
+       * set, but that's a lot uglier. */
+      uint max_output_vertices = 32;
+      uint i = 0;
       /* inputs are always indirect with gs */
       bld.indirect_files |= (1 << TGSI_FILE_INPUT);
       bld.gs_iface = gs_iface;
       bld.bld_base.emit_fetch_funcs[TGSI_FILE_INPUT] = emit_fetch_gs_input;
       bld.bld_base.op_actions[TGSI_OPCODE_EMIT].emit = emit_vertex;
       bld.bld_base.op_actions[TGSI_OPCODE_ENDPRIM].emit = end_primitive;
+
+      for (i = 0; i < info->num_properties; ++i) {
+         if (info->properties[i].name ==
+             TGSI_PROPERTY_GS_MAX_OUTPUT_VERTICES) {
+            max_output_vertices = info->properties[i].data[0];
+         }
+      }
+      bld.max_output_vertices_vec =
+         lp_build_const_int_vec(gallivm, bld.bld_base.uint_bld.type,
+                                max_output_vertices);
    }
 
    lp_exec_mask_init(&bld.exec_mask, &bld.bld_base.base);

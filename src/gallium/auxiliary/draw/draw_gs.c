@@ -280,6 +280,7 @@ llvm_fetch_gs_outputs(struct draw_geometry_shader *shader,
    int max_prims_per_invocation = 0;
    char *output_ptr = (char*)shader->gs_output;
    int i, j, prim_idx;
+   unsigned next_prim_boundary = shader->primitive_boundary;
 
    for (i = 0; i < shader->vector_length; ++i) {
       int prims = shader->llvm_emitted_primitives[i];
@@ -290,18 +291,41 @@ llvm_fetch_gs_outputs(struct draw_geometry_shader *shader,
       total_verts += shader->llvm_emitted_vertices[i];
    }
 
-
    output_ptr += shader->emitted_vertices * shader->vertex_size;
    for (i = 0; i < shader->vector_length - 1; ++i) {
       int current_verts = shader->llvm_emitted_vertices[i];
-
-      if (current_verts != shader->max_output_vertices) {
-         memcpy(output_ptr + (vertex_count + current_verts) * shader->vertex_size,
-                output_ptr + (vertex_count + shader->max_output_vertices) * shader->vertex_size,
-                shader->vertex_size * (total_verts - vertex_count));
+      int next_verts = shader->llvm_emitted_vertices[i + 1];
+#if 0
+      int j; 
+      for (j = 0; j < current_verts; ++j) {
+         struct vertex_header *vh = (struct vertex_header *)
+            (output_ptr + shader->vertex_size * (i * next_prim_boundary + j));
+         debug_printf("--- %d) [%f, %f, %f, %f]\n", j + vertex_count,
+                      vh->data[0][0], vh->data[0][1], vh->data[0][2], vh->data[0][3]);
+         
+      }
+#endif
+      debug_assert(current_verts <= shader->max_output_vertices);
+      debug_assert(next_verts <= shader->max_output_vertices);
+      if (next_verts) {
+         memmove(output_ptr + (vertex_count + current_verts) * shader->vertex_size,
+                 output_ptr + ((i + 1) * next_prim_boundary) * shader->vertex_size,
+                 shader->vertex_size * next_verts);
       }
       vertex_count += current_verts;
    }
+
+#if 0
+   {
+      int i;
+      for (i = 0; i < total_verts; ++i) {
+         struct vertex_header *vh = (struct vertex_header *)(output_ptr + shader->vertex_size * i);
+         debug_printf("%d) [%f, %f, %f, %f]\n", i,
+                      vh->data[0][0], vh->data[0][1], vh->data[0][2], vh->data[0][3]);
+         
+      }
+   }
+#endif
 
    prim_idx = 0;
    for (i = 0; i < shader->vector_length; ++i) {
@@ -513,10 +537,12 @@ int draw_geometry_shader_run(struct draw_geometry_shader *shader,
 
    output_verts->vertex_size = vertex_size;
    output_verts->stride = output_verts->vertex_size;
+   /* we allocate exactly one extra vertex per primitive to allow the GS to emit
+    * overflown vertices into some area where they won't harm anyone */
    output_verts->verts =
       (struct vertex_header *)MALLOC(output_verts->vertex_size *
                                      max_out_prims *
-                                     shader->max_output_vertices);
+                                     shader->primitive_boundary);
 
 #if 0
    debug_printf("%s count = %d (in prims # = %d)\n",
@@ -724,6 +750,16 @@ draw_create_geometry_shader(struct draw_context *draw,
                TGSI_PROPERTY_GS_MAX_OUTPUT_VERTICES)
          gs->max_output_vertices = gs->info.properties[i].data[0];
    }
+   /* Primitive boundary is bigger than max_output_vertices by one, because
+    * the specification says that the geometry shader should exit if the 
+    * number of emitted vertices is bigger or equal to max_output_vertices and
+    * we can't do that because we're running in the SoA mode, which means that
+    * our storing routines will keep getting called on channels that have
+    * overflown.
+    * So we need some scratch area where we can keep writing the overflown 
+    * vertices without overwriting anything important or crashing.
+    */
+   gs->primitive_boundary = gs->max_output_vertices + 1;
 
    for (i = 0; i < gs->info.num_outputs; i++) {
       if (gs->info.output_semantic_name[i] == TGSI_SEMANTIC_POSITION &&

@@ -1287,8 +1287,8 @@ draw_gs_llvm_emit_vertex(const struct lp_build_tgsi_gs_iface *gs_base,
    LLVMValueRef clipmask = lp_build_const_int_vec(gallivm,
                                                   lp_int_type(gs_type), 0);
    LLVMValueRef indices[LP_MAX_VECTOR_LENGTH];
-   LLVMValueRef max_output_vertices =
-      lp_build_const_int32(gallivm, variant->shader->base.max_output_vertices);
+   LLVMValueRef next_prim_offset =
+      lp_build_const_int32(gallivm, variant->shader->base.primitive_boundary);
    LLVMValueRef io = variant->io_ptr;
    unsigned i;
    const struct tgsi_shader_info *gs_info = &variant->shader->base.info;
@@ -1297,7 +1297,7 @@ draw_gs_llvm_emit_vertex(const struct lp_build_tgsi_gs_iface *gs_base,
       LLVMValueRef ind = lp_build_const_int32(gallivm, i);
       LLVMValueRef currently_emitted =
          LLVMBuildExtractElement(builder, emitted_vertices_vec, ind, "");
-      indices[i] = LLVMBuildMul(builder, ind, max_output_vertices, "");
+      indices[i] = LLVMBuildMul(builder, ind, next_prim_offset, "");
       indices[i] = LLVMBuildAdd(builder, indices[i], currently_emitted, "");
    }
 
