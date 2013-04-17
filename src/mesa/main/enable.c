@@ -623,7 +623,6 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
             return;
          FLUSH_VERTICES(ctx, _NEW_POLYGON);
          ctx->Polygon.SmoothFlag = state;
-         ctx->_TriangleCaps ^= DD_TRI_SMOOTH;
          break;
       case GL_POLYGON_STIPPLE:
          if (ctx->API != API_OPENGL_COMPAT)
