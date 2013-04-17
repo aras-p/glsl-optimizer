@@ -327,15 +327,6 @@ update_tricaps(struct gl_context *ctx, GLbitfield new_state)
    ctx->_TriangleCaps = 0;
 
    /*
-    * Polygons
-    */
-   if (1/*new_state & _NEW_POLYGON*/) {
-      if (ctx->Polygon.FrontMode != GL_FILL
-          || ctx->Polygon.BackMode != GL_FILL)
-         ctx->_TriangleCaps |= DD_TRI_UNFILLED;
-   }
-
-   /*
     * Lighting and shading
     */
    if (ctx->Light.Enabled && ctx->Light.Model.TwoSide)

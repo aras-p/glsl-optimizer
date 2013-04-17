@@ -273,6 +273,8 @@ void radeonChooseVertexState( struct gl_context *ctx )
    TNLcontext *tnl = TNL_CONTEXT(ctx);
 
    GLuint se_coord_fmt = rmesa->hw.set.cmd[SET_SE_COORDFMT];
+   GLboolean unfilled = (ctx->Polygon.FrontMode != GL_FILL ||
+                         ctx->Polygon.BackMode != GL_FILL);
    
    se_coord_fmt &= ~(RADEON_VTX_XY_PRE_MULT_1_OVER_W0 |
 		     RADEON_VTX_Z_PRE_MULT_1_OVER_W0 |
@@ -292,7 +294,8 @@ void radeonChooseVertexState( struct gl_context *ctx )
    if ((0 == (tnl->render_inputs_bitset & 
         (BITFIELD64_RANGE(_TNL_ATTRIB_TEX0, _TNL_NUM_TEX)
          | BITFIELD64_BIT(_TNL_ATTRIB_COLOR1))))
-        || (ctx->_TriangleCaps & (DD_TRI_LIGHT_TWOSIDE|DD_TRI_UNFILLED))) {
+       || (ctx->_TriangleCaps & DD_TRI_LIGHT_TWOSIDE)
+       || unfilled) {
       rmesa->swtcl.needproj = GL_TRUE;
       se_coord_fmt |= (RADEON_VTX_XY_PRE_MULT_1_OVER_W0 |
 		      RADEON_VTX_Z_PRE_MULT_1_OVER_W0);
@@ -694,12 +697,14 @@ void radeonChooseRenderState( struct gl_context *ctx )
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
    GLuint index = 0;
    GLuint flags = ctx->_TriangleCaps;
+   GLboolean unfilled = (ctx->Polygon.FrontMode != GL_FILL ||
+                         ctx->Polygon.BackMode != GL_FILL);
 
    if (!rmesa->radeon.TclFallback || rmesa->radeon.Fallback) 
       return;
 
    if (flags & DD_TRI_LIGHT_TWOSIDE) index |= RADEON_TWOSIDE_BIT;
-   if (flags & DD_TRI_UNFILLED)      index |= RADEON_UNFILLED_BIT;
+   if (unfilled)                     index |= RADEON_UNFILLED_BIT;
 
    if (index != rmesa->radeon.swtcl.RenderIndex) {
       tnl->Driver.Render.Points = rast_tab[index].points;
@@ -741,8 +746,11 @@ static void radeonRasterPrimitive( struct gl_context *ctx, GLuint hwprim )
 static void radeonRenderPrimitive( struct gl_context *ctx, GLenum prim )
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
+   GLboolean unfilled = (ctx->Polygon.FrontMode != GL_FILL ||
+                         ctx->Polygon.BackMode != GL_FILL);
+
    rmesa->radeon.swtcl.render_primitive = prim;
-   if (prim < GL_TRIANGLES || !(ctx->_TriangleCaps & DD_TRI_UNFILLED)) 
+   if (prim < GL_TRIANGLES || !unfilled) 
       radeonRasterPrimitive( ctx, reduced_hw_prim[prim] );
 }
 

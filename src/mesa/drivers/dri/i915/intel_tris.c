@@ -943,7 +943,7 @@ intelFastRenderClippedPoly(struct gl_context * ctx, const GLuint * elts, GLuint 
 /**********************************************************************/
 
 
-
+#define DD_TRI_UNFILLED (1 << 2)
 #define DD_TRI_STIPPLE  (1 << 4)
 #define DD_TRI_OFFSET   (1 << 5)
 #define DD_LINE_STIPPLE (1 << 7)
@@ -958,6 +958,8 @@ intelChooseRenderState(struct gl_context * ctx)
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct intel_context *intel = intel_context(ctx);
    GLuint flags = ctx->_TriangleCaps |
+      ((ctx->Polygon.FrontMode != GL_FILL ||
+        ctx->Polygon.BackMode != GL_FILL) ? DD_TRI_UNFILLED : 0) |
       (ctx->Polygon.StippleFlag ? DD_TRI_STIPPLE : 0) |
       ((ctx->Polygon.OffsetPoint ||
         ctx->Polygon.OffsetLine ||

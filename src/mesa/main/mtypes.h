@@ -3168,7 +3168,6 @@ struct gl_matrix_stack
  */
 /*@{*/
 #define DD_TRI_LIGHT_TWOSIDE        (1 << 1)
-#define DD_TRI_UNFILLED             (1 << 2)
 /*@}*/
 
 

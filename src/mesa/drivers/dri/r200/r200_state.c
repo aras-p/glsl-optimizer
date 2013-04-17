@@ -731,12 +731,13 @@ static void r200PolygonOffset( struct gl_context *ctx,
 static void r200PolygonMode( struct gl_context *ctx, GLenum face, GLenum mode )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
-   GLboolean flag = (ctx->_TriangleCaps & DD_TRI_UNFILLED) != 0;
+   GLboolean unfilled = (ctx->Polygon.FrontMode != GL_FILL ||
+                         ctx->Polygon.BackMode != GL_FILL);
 
    /* Can't generally do unfilled via tcl, but some good special
     * cases work.
     */
-   TCL_FALLBACK( ctx, R200_TCL_FALLBACK_UNFILLED, flag);
+   TCL_FALLBACK( ctx, R200_TCL_FALLBACK_UNFILLED, unfilled);
    if (rmesa->radeon.TclFallback) {
       r200ChooseRenderState( ctx );
       r200ChooseVertexState( ctx );
