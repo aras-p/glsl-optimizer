@@ -353,14 +353,6 @@ update_tricaps(struct gl_context *ctx, GLbitfield new_state)
    }
 
    /*
-    * Lines
-    */
-   if (1/*new_state & _NEW_LINE*/) {
-      if (ctx->Line.StippleFlag)
-         ctx->_TriangleCaps |= DD_LINE_STIPPLE;
-   }
-
-   /*
     * Polygons
     */
    if (1/*new_state & _NEW_POLYGON*/) {

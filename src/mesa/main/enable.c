@@ -439,7 +439,6 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
             return;
          FLUSH_VERTICES(ctx, _NEW_LINE);
          ctx->Line.StippleFlag = state;
-         ctx->_TriangleCaps ^= DD_LINE_STIPPLE;
          break;
       case GL_INDEX_LOGIC_OP:
          if (ctx->API != API_OPENGL_COMPAT)

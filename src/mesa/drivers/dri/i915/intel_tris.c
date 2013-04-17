@@ -944,6 +944,7 @@ intelFastRenderClippedPoly(struct gl_context * ctx, const GLuint * elts, GLuint 
 
 
 
+#define DD_LINE_STIPPLE (1 << 7)
 
 #define ANY_FALLBACK_FLAGS (DD_LINE_STIPPLE | DD_TRI_STIPPLE | DD_POINT_ATTEN)
 #define ANY_RASTER_FLAGS (DD_TRI_LIGHT_TWOSIDE | DD_TRI_OFFSET | DD_TRI_UNFILLED)
@@ -953,7 +954,8 @@ intelChooseRenderState(struct gl_context * ctx)
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct intel_context *intel = intel_context(ctx);
-   GLuint flags = ctx->_TriangleCaps;
+   GLuint flags = ctx->_TriangleCaps |
+      (ctx->Line.StippleFlag ? DD_LINE_STIPPLE : 0);
    const struct gl_fragment_program *fprog = ctx->FragmentProgram._Current;
    bool have_wpos = (fprog && (fprog->Base.InputsRead & VARYING_BIT_POS));
    GLuint index = 0;
