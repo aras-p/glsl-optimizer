@@ -788,6 +788,9 @@ void draw_bind_geometry_shader(struct draw_context *draw,
 void draw_delete_geometry_shader(struct draw_context *draw,
                                  struct draw_geometry_shader *dgs)
 {
+   if (!dgs) {
+      return;
+   }
 #ifdef HAVE_LLVM
    if (draw_get_option_use_llvm()) {
       struct llvm_geometry_shader *shader = llvm_geometry_shader(dgs);
