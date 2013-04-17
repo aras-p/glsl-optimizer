@@ -25,7 +25,6 @@
 #define QUERYMATRIX_H
 
 
-#include "mfeatures.h"
 #include "mtypes.h"
 
 

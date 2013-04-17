@@ -29,7 +29,6 @@
 #include "hash.h"
 #include "imports.h"
 #include "queryobj.h"
-#include "mfeatures.h"
 #include "mtypes.h"
 #include "main/dispatch.h"
 

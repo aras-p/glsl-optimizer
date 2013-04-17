@@ -35,7 +35,6 @@
 #include "context.h"
 #include "extensions.h"
 #include "macros.h"
-#include "mfeatures.h"
 #include "mtypes.h"
 
 enum {

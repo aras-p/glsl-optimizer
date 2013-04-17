@@ -34,7 +34,6 @@
 #include "colormac.h"
 #include "image.h"
 #include "macros.h"
-#include "mfeatures.h"
 #include "mipmap.h"
 #include "texcompress.h"
 #include "texcompress_fxt1.h"

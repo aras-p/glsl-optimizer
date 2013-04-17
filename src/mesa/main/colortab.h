@@ -29,7 +29,6 @@
 
 #include "compiler.h"
 #include "glheader.h"
-#include "mfeatures.h"
 
 struct _glapi_table;
 

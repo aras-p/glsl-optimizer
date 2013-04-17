@@ -32,7 +32,6 @@
 #include "context.h"
 #include "feedback.h"
 #include "macros.h"
-#include "mfeatures.h"
 #include "mtypes.h"
 #include "rastpos.h"
 #include "state.h"

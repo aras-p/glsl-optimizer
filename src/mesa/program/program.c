@@ -32,7 +32,6 @@
 #include "main/glheader.h"
 #include "main/context.h"
 #include "main/hash.h"
-#include "main/mfeatures.h"
 #include "program.h"
 #include "prog_cache.h"
 #include "prog_parameter.h"

@@ -27,7 +27,6 @@
 
 #include "compiler.h"
 #include "glheader.h"
-#include "mfeatures.h"
 #include "texstore.h"
 #include "texcompress.h"
 

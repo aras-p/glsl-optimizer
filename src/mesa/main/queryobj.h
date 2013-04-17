@@ -27,7 +27,6 @@
 #define QUERYOBJ_H
 
 
-#include "main/mfeatures.h"
 #include "main/mtypes.h"
 #include "main/hash.h"
 

@@ -38,7 +38,6 @@
  */
 
 #include <stdbool.h>
-#include "mfeatures.h"
 #include "texcompress.h"
 #include "texcompress_etc.h"
 #include "texstore.h"

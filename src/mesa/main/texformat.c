@@ -35,7 +35,6 @@
 
 #include "context.h"
 #include "enums.h"
-#include "mfeatures.h"
 #include "mtypes.h"
 #include "texcompress.h"
 #include "texformat.h"

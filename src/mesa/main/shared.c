@@ -28,7 +28,6 @@
  */
 
 #include "imports.h"
-#include "mfeatures.h"
 #include "mtypes.h"
 #include "hash.h"
 #include "hash_table.h"

@@ -34,7 +34,6 @@
 #include "main/dispatch.h"
 #include "main/dlist.h"
 #include "main/eval.h"
-#include "main/mfeatures.h"
 #include "vbo/vbo_noop.h"
 
 static void GLAPIENTRY

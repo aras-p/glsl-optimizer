@@ -42,7 +42,6 @@
 #include "glformats.h"
 #include "hash.h"
 #include "macros.h"
-#include "mfeatures.h"
 #include "multisample.h"
 #include "mtypes.h"
 #include "renderbuffer.h"

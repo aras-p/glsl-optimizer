@@ -39,10 +39,6 @@
  * modified to expect dispatch functions for the new extension functions.
  */
 
-extern "C" {
-#include "main/mfeatures.h"
-}
-
 #include <gtest/gtest.h>
 
 extern "C" {

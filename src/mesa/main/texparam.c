@@ -38,7 +38,6 @@
 #include "main/formats.h"
 #include "main/glformats.h"
 #include "main/macros.h"
-#include "main/mfeatures.h"
 #include "main/mtypes.h"
 #include "main/state.h"
 #include "main/texcompress.h"

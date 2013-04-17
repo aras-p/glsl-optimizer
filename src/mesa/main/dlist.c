@@ -37,7 +37,6 @@
 #include "api_validate.h"
 #include "atifragshader.h"
 #include "config.h"
-#include "mfeatures.h"
 #include "bufferobj.h"
 #include "arrayobj.h"
 #include "context.h"

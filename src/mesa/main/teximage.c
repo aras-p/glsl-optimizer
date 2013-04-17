@@ -39,7 +39,6 @@
 #include "image.h"
 #include "imports.h"
 #include "macros.h"
-#include "mfeatures.h"
 #include "multisample.h"
 #include "state.h"
 #include "texcompress.h"

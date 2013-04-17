@@ -31,7 +31,6 @@
 #include "feedback.h"
 #include "framebuffer.h"
 #include "image.h"
-#include "mfeatures.h"
 #include "pbo.h"
 #include "state.h"
 #include "dispatch.h"

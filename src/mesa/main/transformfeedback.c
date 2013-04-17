@@ -35,7 +35,6 @@
 #include "context.h"
 #include "hash.h"
 #include "macros.h"
-#include "mfeatures.h"
 #include "mtypes.h"
 #include "transformfeedback.h"
 #include "shaderapi.h"

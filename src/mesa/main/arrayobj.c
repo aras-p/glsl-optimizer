@@ -44,7 +44,6 @@
 #include "image.h"
 #include "imports.h"
 #include "context.h"
-#include "mfeatures.h"
 #include "bufferobj.h"
 #include "arrayobj.h"
 #include "macros.h"

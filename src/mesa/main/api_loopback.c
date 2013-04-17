@@ -36,7 +36,6 @@
 #include "glapi/glapi.h"
 #include "glapi/glthread.h"
 #include "main/dispatch.h"
-#include "mfeatures.h"
 #include "main/context.h"
 
 /* KW: A set of functions to convert unusual Color/Normal/Vertex/etc

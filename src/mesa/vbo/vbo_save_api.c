@@ -74,7 +74,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/enums.h"
 #include "main/eval.h"
 #include "main/macros.h"
-#include "main/mfeatures.h"
 #include "main/api_validate.h"
 #include "main/api_arrayelt.h"
 #include "main/vtxfmt.h"

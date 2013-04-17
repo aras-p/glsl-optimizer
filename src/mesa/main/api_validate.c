@@ -28,7 +28,6 @@
 #include "bufferobj.h"
 #include "context.h"
 #include "imports.h"
-#include "mfeatures.h"
 #include "mtypes.h"
 #include "enums.h"
 #include "vbo/vbo.h"

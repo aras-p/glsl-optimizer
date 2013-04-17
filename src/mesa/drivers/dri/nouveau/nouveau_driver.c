@@ -24,7 +24,6 @@
  *
  */
 
-#include "main/mfeatures.h"
 #include "main/mtypes.h"
 #include "main/fbobject.h"
 

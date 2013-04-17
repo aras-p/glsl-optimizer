@@ -30,7 +30,6 @@
 #include "main/bufferobj.h"
 #include "main/context.h"
 #include "main/imports.h"
-#include "main/mfeatures.h"
 #include "main/mtypes.h"
 #include "main/macros.h"
 #include "main/light.h"

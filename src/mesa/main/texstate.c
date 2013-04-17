@@ -29,7 +29,6 @@
  */
 
 #include "glheader.h"
-#include "mfeatures.h"
 #include "bufferobj.h"
 #include "colormac.h"
 #include "colortab.h"

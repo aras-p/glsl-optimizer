@@ -38,7 +38,6 @@
 #define ACCUM_H
 
 #include "main/glheader.h"
-#include "main/mfeatures.h"
 
 struct _glapi_table;
 struct gl_context;

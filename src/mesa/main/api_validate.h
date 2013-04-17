@@ -29,7 +29,6 @@
 
 
 #include "glheader.h"
-#include "mfeatures.h"
 
 struct gl_buffer_object;
 struct gl_context;

@@ -28,7 +28,6 @@
 #define API_ARRAYELT_H
 
 
-#include "main/mfeatures.h"
 #include "main/mtypes.h"
 
 #define _MESA_INIT_ARRAYELT_VTXFMT(vfmt, impl)     \

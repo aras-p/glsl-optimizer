@@ -26,7 +26,6 @@
 
 
 #include "glheader.h"
-#include "mfeatures.h"
 
 
 extern void GLAPIENTRY

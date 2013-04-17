@@ -33,7 +33,6 @@
 
 
 #include "compiler.h"
-#include "mfeatures.h"
 
 struct _glapi_table;
 struct gl_context;

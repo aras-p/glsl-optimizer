@@ -28,14 +28,12 @@
 #define API_LOOPBACK_H
 
 #include "main/compiler.h"
-#include "main/mfeatures.h"
 #include "main/glheader.h" // ?
 #include "main/macros.h" // ?
 #include "main/mtypes.h" // ?
 #include "glapi/glapi.h" // ?
 #include "glapi/glthread.h" // ?
 #include "main/dispatch.h" // ?
-#include "main/mfeatures.h" // ?
 #include "main/context.h" // ?
 
 struct _glapi_table;

@@ -1,7 +1,6 @@
 
 #include "main/glheader.h"
 #include "main/macros.h"
-#include "main/mfeatures.h"
 #include "main/mtypes.h"
 #include "main/enums.h"
 #include "main/bufferobj.h"

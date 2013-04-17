@@ -28,7 +28,6 @@
 #include "main/imports.h"
 #include "main/image.h"
 #include "main/macros.h"
-#include "main/mfeatures.h"
 
 #include "vbo/vbo.h"
 

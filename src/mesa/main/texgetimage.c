@@ -37,7 +37,6 @@
 #include "format_unpack.h"
 #include "glformats.h"
 #include "image.h"
-#include "mfeatures.h"
 #include "mtypes.h"
 #include "pack.h"
 #include "pbo.h"

@@ -32,7 +32,6 @@
 #define RADEON_TEXTURE_H
 
 #include "main/formats.h"
-#include "main/mfeatures.h"
 
 extern gl_format _radeon_texformat_rgba8888;
 extern gl_format _radeon_texformat_argb8888;

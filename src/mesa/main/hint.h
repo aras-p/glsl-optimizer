@@ -37,7 +37,6 @@
 #define HINT_H
 
 #include "glheader.h"
-#include "mfeatures.h"
 
 struct gl_context;
 

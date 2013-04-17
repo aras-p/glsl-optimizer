@@ -34,7 +34,6 @@
 #include "enums.h"
 #include "imports.h"
 #include "macros.h"
-#include "mfeatures.h"
 #include "teximage.h"
 #include "texobj.h"
 #include "texstorage.h"

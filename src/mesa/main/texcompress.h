@@ -27,7 +27,6 @@
 
 #include "formats.h"
 #include "glheader.h"
-#include "mfeatures.h"
 
 struct gl_context;
 

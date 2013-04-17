@@ -34,7 +34,6 @@
 #define _VTXFMT_H_
 
 #include "compiler.h"
-#include "mfeatures.h"
 #include "mtypes.h"
 
 extern void _mesa_install_exec_vtxfmt( struct gl_context *ctx, const GLvertexformat *vfmt );

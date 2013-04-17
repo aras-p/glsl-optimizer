@@ -28,7 +28,6 @@
 #include <stdbool.h>
 #include "compiler.h"
 #include "glheader.h"
-#include "mfeatures.h"
 #include "mtypes.h"
 
 struct _glapi_table;

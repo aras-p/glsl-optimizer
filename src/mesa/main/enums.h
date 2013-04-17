@@ -36,7 +36,6 @@
 #ifndef _ENUMS_H_
 #define _ENUMS_H_
 
-#include "mfeatures.h"
 
 extern const char *_mesa_lookup_enum_by_nr( int nr );
 

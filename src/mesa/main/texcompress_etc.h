@@ -26,7 +26,6 @@
 
 #include <inttypes.h>
 #include "glheader.h"
-#include "mfeatures.h"
 #include "texcompress.h"
 #include "texstore.h"
 

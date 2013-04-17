@@ -37,7 +37,6 @@
 #define _DEBUG_H
 
 #include "glheader.h"
-#include "mfeatures.h"
 
 struct gl_context;
 struct gl_texture_image;

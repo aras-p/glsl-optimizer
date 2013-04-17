@@ -25,7 +25,6 @@
 #include "context.h"
 #include "glformats.h"
 #include "macros.h"
-#include "mfeatures.h"
 #include "enums.h"
 #include "fbobject.h"
 #include "formatquery.h"

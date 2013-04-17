@@ -43,7 +43,6 @@
 #include "lines.h"
 #include "macros.h"
 #include "matrix.h"
-#include "mfeatures.h"
 #include "multisample.h"
 #include "points.h"
 #include "polygon.h"
