@@ -54,16 +54,6 @@
 #include "blend.h"
 
 
-static void
-update_separate_specular(struct gl_context *ctx)
-{
-   if (_mesa_need_secondary_color(ctx))
-      ctx->_TriangleCaps |= DD_SEPARATE_SPECULAR;
-   else
-      ctx->_TriangleCaps &= ~DD_SEPARATE_SPECULAR;
-}
-
-
 /**
  * Update the following fields:
  *   ctx->VertexProgram._Enabled
@@ -392,8 +382,6 @@ update_tricaps(struct gl_context *ctx, GLbitfield new_state)
     */
    if (ctx->Light.Enabled && ctx->Light.Model.TwoSide)
       ctx->_TriangleCaps |= DD_TRI_LIGHT_TWOSIDE;
-   if (_mesa_need_secondary_color(ctx))
-      ctx->_TriangleCaps |= DD_SEPARATE_SPECULAR;
 }
 #endif
 
@@ -470,9 +458,6 @@ _mesa_update_state_locked( struct gl_context *ctx )
 
    if (new_state & _NEW_PIXEL)
       _mesa_update_pixel( ctx, new_state );
-
-   if (new_state & _MESA_NEW_SEPARATE_SPECULAR)
-      update_separate_specular( ctx );
 
    if (new_state & (_NEW_BUFFERS | _NEW_VIEWPORT))
       update_viewport_matrix(ctx);

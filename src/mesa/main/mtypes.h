@@ -3167,7 +3167,6 @@ struct gl_matrix_stack
  * Set in the __struct gl_contextRec::_TriangleCaps bitfield.
  */
 /*@{*/
-#define DD_SEPARATE_SPECULAR        (1 << 0)
 #define DD_TRI_LIGHT_TWOSIDE        (1 << 1)
 #define DD_TRI_UNFILLED             (1 << 2)
 #define DD_TRI_SMOOTH               (1 << 3)

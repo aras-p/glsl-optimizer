@@ -38,6 +38,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/enums.h"
 #include "main/colormac.h"
 #include "main/light.h"
+#include "main/state.h"
 
 #include "vbo/vbo.h"
 #include "tnl/tnl.h"
@@ -402,7 +403,7 @@ static GLboolean r200_run_tcl_render( struct gl_context *ctx,
          FIXME: OTOH, we're missing the case where a ATI_fragment_shader accesses
          the secondary color (if lighting is disabled). The chip seems
          misconfigured for that though elsewhere (tcl output, might lock up) */
-      if (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR) {
+      if (_mesa_need_secondary_color(ctx)) {
 	 map_rev_fixed[5] = VERT_ATTRIB_COLOR1;
       }
 

@@ -37,6 +37,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/mtypes.h"
 #include "main/light.h"
 #include "main/enums.h"
+#include "main/state.h"
 
 #include "vbo/vbo.h"
 #include "tnl/tnl.h"
@@ -376,7 +377,7 @@ static GLboolean radeon_run_tcl_render( struct gl_context *ctx,
       inputs |= VERT_BIT_NORMAL;
    }
 
-   if (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR) {
+   if (_mesa_need_secondary_color(ctx)) {
       inputs |= VERT_BIT_COLOR1;
    }
 

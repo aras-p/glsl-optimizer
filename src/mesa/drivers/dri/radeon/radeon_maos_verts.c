@@ -35,6 +35,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/glheader.h"
 #include "main/imports.h"
 #include "main/mtypes.h"
+#include "main/state.h"
 
 #include "vbo/vbo.h"
 #include "math/m_translate.h"
@@ -63,7 +64,7 @@ static struct {
 #define DO_RGBA (IND & RADEON_CP_VC_FRMT_PKCOLOR)
 #define DO_SPEC_OR_FOG (IND & RADEON_CP_VC_FRMT_PKSPEC)
 #define DO_SPEC ((IND & RADEON_CP_VC_FRMT_PKSPEC) && \
-		 (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR))
+		 _mesa_need_secondary_color(ctx))
 #define DO_FOG  ((IND & RADEON_CP_VC_FRMT_PKSPEC) && ctx->Fog.Enabled && \
 		 (ctx->Fog.FogCoordinateSource == GL_FOG_COORD))
 #define DO_TEX0 (IND & RADEON_CP_VC_FRMT_ST0)
