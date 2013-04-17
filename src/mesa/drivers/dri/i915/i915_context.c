@@ -262,6 +262,7 @@ i915CreateContext(int api,
    fs_options->EmitNoIndirectTemp = true;
 
    ctx->Const.MaxDrawBuffers = 1;
+   ctx->Const.QueryCounterBits.SamplesPassed = 0;
 
    _tnl_init_vertices(ctx, ctx->Const.MaxArrayLockSize + 12,
                       36 * sizeof(GLfloat));

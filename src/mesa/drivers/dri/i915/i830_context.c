@@ -113,6 +113,7 @@ i830CreateContext(int api,
    ctx->Const.MaxTextureMaxAnisotropy = 2.0;
 
    ctx->Const.MaxDrawBuffers = 1;
+   ctx->Const.QueryCounterBits.SamplesPassed = 0;
 
    _tnl_init_vertices(ctx, ctx->Const.MaxArrayLockSize + 12,
                       18 * sizeof(GLfloat));
