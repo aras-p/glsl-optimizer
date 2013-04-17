@@ -1095,6 +1095,26 @@ lp_build_lerp_2d(struct lp_build_context *bld,
 }
 
 
+LLVMValueRef
+lp_build_lerp_3d(struct lp_build_context *bld,
+                 LLVMValueRef x,
+                 LLVMValueRef y,
+                 LLVMValueRef z,
+                 LLVMValueRef v000,
+                 LLVMValueRef v001,
+                 LLVMValueRef v010,
+                 LLVMValueRef v011,
+                 LLVMValueRef v100,
+                 LLVMValueRef v101,
+                 LLVMValueRef v110,
+                 LLVMValueRef v111)
+{
+   LLVMValueRef v0 = lp_build_lerp_2d(bld, x, y, v000, v001, v010, v011);
+   LLVMValueRef v1 = lp_build_lerp_2d(bld, x, y, v100, v101, v110, v111);
+   return lp_build_lerp(bld, z, v0, v1);
+}
+
+
 /**
  * Generate min(a, b)
  * Do checks for special cases.

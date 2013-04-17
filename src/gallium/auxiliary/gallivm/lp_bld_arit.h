@@ -106,6 +106,21 @@ lp_build_lerp_2d(struct lp_build_context *bld,
                  LLVMValueRef v11);
 
 LLVMValueRef
+lp_build_lerp_3d(struct lp_build_context *bld,
+                 LLVMValueRef x,
+                 LLVMValueRef y,
+                 LLVMValueRef z,
+                 LLVMValueRef v000,
+                 LLVMValueRef v001,
+                 LLVMValueRef v010,
+                 LLVMValueRef v011,
+                 LLVMValueRef v100,
+                 LLVMValueRef v101,
+                 LLVMValueRef v110,
+                 LLVMValueRef v111);
+
+
+LLVMValueRef
 lp_build_min(struct lp_build_context *bld,
              LLVMValueRef a,
              LLVMValueRef b);
