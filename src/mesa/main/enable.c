@@ -632,7 +632,6 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
             return;
          FLUSH_VERTICES(ctx, _NEW_POLYGON);
          ctx->Polygon.StippleFlag = state;
-         ctx->_TriangleCaps ^= DD_TRI_STIPPLE;
          break;
       case GL_POLYGON_OFFSET_POINT:
          if (!_mesa_is_desktop_gl(ctx))

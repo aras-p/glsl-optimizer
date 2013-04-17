@@ -332,8 +332,6 @@ update_tricaps(struct gl_context *ctx, GLbitfield new_state)
    if (1/*new_state & _NEW_POLYGON*/) {
       if (ctx->Polygon.SmoothFlag)
          ctx->_TriangleCaps |= DD_TRI_SMOOTH;
-      if (ctx->Polygon.StippleFlag)
-         ctx->_TriangleCaps |= DD_TRI_STIPPLE;
       if (ctx->Polygon.FrontMode != GL_FILL
           || ctx->Polygon.BackMode != GL_FILL)
          ctx->_TriangleCaps |= DD_TRI_UNFILLED;
