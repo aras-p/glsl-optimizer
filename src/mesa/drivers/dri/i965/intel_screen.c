@@ -679,6 +679,8 @@ intel_create_image_from_fds(__DRIscreen *screen,
       image->strides[index] = strides[index];
    }
 
+   intel_setup_image_from_dimensions(image);
+
    return image;
 }
 
