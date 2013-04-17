@@ -343,14 +343,6 @@ update_tricaps(struct gl_context *ctx, GLbitfield new_state)
    ctx->_TriangleCaps = 0;
 
    /*
-    * Points
-    */
-   if (1/*new_state & _NEW_POINT*/) {
-      if (ctx->Point._Attenuated)
-         ctx->_TriangleCaps |= DD_POINT_ATTEN;
-   }
-
-   /*
     * Polygons
     */
    if (1/*new_state & _NEW_POLYGON*/) {
