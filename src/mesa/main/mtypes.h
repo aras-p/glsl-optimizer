@@ -3171,7 +3171,6 @@ struct gl_matrix_stack
 #define DD_TRI_UNFILLED             (1 << 2)
 #define DD_TRI_SMOOTH               (1 << 3)
 #define DD_TRI_STIPPLE              (1 << 4)
-#define DD_TRI_OFFSET               (1 << 5)
 /*@}*/
 
 

@@ -314,22 +314,6 @@ update_twoside(struct gl_context *ctx)
 }
 
 
-/*
- * Check polygon state and set DD_TRI_OFFSET
- * in ctx->_TriangleCaps if needed.
- */
-static void
-update_polygon(struct gl_context *ctx)
-{
-   ctx->_TriangleCaps &= ~DD_TRI_OFFSET;
-
-   if (   ctx->Polygon.OffsetPoint
-       || ctx->Polygon.OffsetLine
-       || ctx->Polygon.OffsetFill)
-      ctx->_TriangleCaps |= DD_TRI_OFFSET;
-}
-
-
 /**
  * Update the ctx->_TriangleCaps bitfield.
  * XXX that bitfield should really go away someday!
@@ -353,10 +337,6 @@ update_tricaps(struct gl_context *ctx, GLbitfield new_state)
       if (ctx->Polygon.FrontMode != GL_FILL
           || ctx->Polygon.BackMode != GL_FILL)
          ctx->_TriangleCaps |= DD_TRI_UNFILLED;
-      if (ctx->Polygon.OffsetPoint ||
-          ctx->Polygon.OffsetLine ||
-          ctx->Polygon.OffsetFill)
-         ctx->_TriangleCaps |= DD_TRI_OFFSET;
    }
 
    /*
@@ -425,9 +405,6 @@ _mesa_update_state_locked( struct gl_context *ctx )
 
    if (new_state & (_NEW_SCISSOR | _NEW_BUFFERS | _NEW_VIEWPORT))
       _mesa_update_draw_buffer_bounds( ctx );
-
-   if (new_state & _NEW_POLYGON)
-      update_polygon( ctx );
 
    if (new_state & _NEW_LIGHT)
       _mesa_update_lighting( ctx );
