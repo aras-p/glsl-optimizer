@@ -97,12 +97,6 @@ class PrintRemapTable(gl_XML.gl_print_base):
  * can SET_FuncName, are used to get and set the dispatch pointer for the
  * named function in the specified dispatch table.
  */
-
-/* GLXEXT is defined when building the GLX extension in the xserver.
- */
-#if !defined(GLXEXT)
-#include "main/mfeatures.h"
-#endif
 """
         return
 
