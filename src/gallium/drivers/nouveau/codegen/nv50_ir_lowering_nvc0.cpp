@@ -1548,6 +1548,13 @@ NVC0LoweringPass::visit(Instruction *i)
          if (prog->getType() == Program::TYPE_COMPUTE) {
             i->getSrc(0)->reg.file = FILE_MEMORY_CONST;
             i->getSrc(0)->reg.fileIndex = 0;
+         } else
+         if (prog->getType() == Program::TYPE_GEOMETRY &&
+             i->src(0).isIndirect(0)) {
+            // XXX: this assumes vec4 units
+            Value *ptr = bld.mkOp2v(OP_SHL, TYPE_U32, bld.getSSA(),
+                                    i->getIndirect(0, 0), bld.mkImm(4));
+            i->setIndirect(0, 0, ptr);
          } else {
             i->op = OP_VFETCH;
             assert(prog->getType() != Program::TYPE_FRAGMENT); // INTERP
