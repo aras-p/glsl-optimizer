@@ -389,6 +389,7 @@ analyse_instruction(struct analysis_context *ctx,
 
    switch (inst->Instruction.Opcode) {
    case TGSI_OPCODE_IF:
+   case TGSI_OPCODE_UIF:
    case TGSI_OPCODE_ELSE:
    case TGSI_OPCODE_ENDIF:
    case TGSI_OPCODE_BGNLOOP:

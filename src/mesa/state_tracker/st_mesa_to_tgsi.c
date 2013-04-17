@@ -665,6 +665,7 @@ translate_opcode( unsigned op )
 
 static void
 compile_instruction(
+   struct gl_context *ctx,
    struct st_translate *t,
    const struct prog_instruction *inst,
    boolean clamp_dst_color_output)
@@ -697,10 +698,17 @@ compile_instruction(
    case OPCODE_CAL:
    case OPCODE_ELSE:
    case OPCODE_ENDLOOP:
-   case OPCODE_IF:
       debug_assert(num_dst == 0);
       ureg_label_insn( ureg,
                        translate_opcode( inst->Opcode ),
+                       src, num_src,
+                       get_label( t, inst->BranchTarget ));
+      return;
+
+   case OPCODE_IF:
+      debug_assert(num_dst == 0);
+      ureg_label_insn( ureg,
+                       ctx->Const.NativeIntegers ? TGSI_OPCODE_UIF : TGSI_OPCODE_IF,
                        src, num_src,
                        get_label( t, inst->BranchTarget ));
       return;
@@ -1229,7 +1237,7 @@ st_translate_mesa_program(
     */
    for (i = 0; i < program->NumInstructions; i++) {
       set_insn_start( t, ureg_get_instruction_number( ureg ));
-      compile_instruction( t, &program->Instructions[i], clamp_color );
+      compile_instruction( ctx, t, &program->Instructions[i], clamp_color );
    }
 
    /* Fix up all emitted labels:

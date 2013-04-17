@@ -589,6 +589,7 @@ iter_instruction(
 
    switch (inst->Instruction.Opcode) {
    case TGSI_OPCODE_IF:
+   case TGSI_OPCODE_UIF:
    case TGSI_OPCODE_ELSE:
    case TGSI_OPCODE_BGNLOOP:
    case TGSI_OPCODE_ENDLOOP:
@@ -600,6 +601,7 @@ iter_instruction(
 
    /* update indentation */
    if (inst->Instruction.Opcode == TGSI_OPCODE_IF ||
+       inst->Instruction.Opcode == TGSI_OPCODE_UIF ||
        inst->Instruction.Opcode == TGSI_OPCODE_ELSE ||
        inst->Instruction.Opcode == TGSI_OPCODE_BGNLOOP) {
       ctx->indentation += indent_spaces;

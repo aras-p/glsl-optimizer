@@ -2978,12 +2978,15 @@ glsl_to_tgsi_visitor::visit(ir_discard *ir)
 void
 glsl_to_tgsi_visitor::visit(ir_if *ir)
 {
+   unsigned if_opcode;
    glsl_to_tgsi_instruction *if_inst;
 
    ir->condition->accept(this);
    assert(this->result.file != PROGRAM_UNDEFINED);
 
-   if_inst = emit(ir->condition, TGSI_OPCODE_IF, undef_dst, this->result);
+   if_opcode = native_integers ? TGSI_OPCODE_UIF : TGSI_OPCODE_IF;
+
+   if_inst = emit(ir->condition, if_opcode, undef_dst, this->result);
 
    this->instructions.push_tail(if_inst);
 
@@ -3462,6 +3465,7 @@ glsl_to_tgsi_visitor::copy_propagate(void)
          break;
 
       case TGSI_OPCODE_IF:
+      case TGSI_OPCODE_UIF:
          ++level;
          break;
 
@@ -3664,6 +3668,7 @@ glsl_to_tgsi_visitor::eliminate_dead_code_advanced(void)
          break;
 
       case TGSI_OPCODE_IF:
+      case TGSI_OPCODE_UIF:
          ++level;
          /* fallthrough to default case to mark the condition as read */
       
@@ -4389,6 +4394,7 @@ compile_tgsi_instruction(struct st_translate *t,
    case TGSI_OPCODE_ELSE:
    case TGSI_OPCODE_ENDLOOP:
    case TGSI_OPCODE_IF:
+   case TGSI_OPCODE_UIF:
       assert(num_dst == 0);
       ureg_label_insn(ureg,
                       inst->op,

@@ -515,19 +515,15 @@ static void endloop_emit(
 	ctx->loop_depth--;
 }
 
-static void if_emit(
+static void if_cond_emit(
 	const struct lp_build_tgsi_action * action,
 	struct lp_build_tgsi_context * bld_base,
-	struct lp_build_emit_data * emit_data)
+	struct lp_build_emit_data * emit_data,
+	LLVMValueRef cond)
 {
 	struct radeon_llvm_context * ctx = radeon_llvm_context(bld_base);
 	struct gallivm_state * gallivm = bld_base->base.gallivm;
-	LLVMValueRef cond;
 	LLVMBasicBlockRef if_block, else_block, endif_block;
-
-	cond = LLVMBuildICmp(gallivm->builder, LLVMIntNE,
-	        bitcast(bld_base, TGSI_TYPE_UNSIGNED, emit_data->args[0]),
-			bld_base->int_bld.zero, "");
 
 	endif_block = LLVMAppendBasicBlockInContext(gallivm->context,
 						ctx->main_fn, "ENDIF");
@@ -543,6 +539,36 @@ static void if_emit(
 	ctx->branch[ctx->branch_depth - 1].if_block = if_block;
 	ctx->branch[ctx->branch_depth - 1].else_block = else_block;
 	ctx->branch[ctx->branch_depth - 1].has_else = 0;
+}
+
+static void if_emit(
+	const struct lp_build_tgsi_action * action,
+	struct lp_build_tgsi_context * bld_base,
+	struct lp_build_emit_data * emit_data)
+{
+	struct gallivm_state * gallivm = bld_base->base.gallivm;
+	LLVMValueRef cond;
+
+	cond = LLVMBuildFCmp(gallivm->builder, LLVMRealUNE,
+			emit_data->args[0],
+			bld_base->base.zero, "");
+
+	if_cond_emit(action, bld_base, emit_data, cond);
+}
+
+static void uif_emit(
+	const struct lp_build_tgsi_action * action,
+	struct lp_build_tgsi_context * bld_base,
+	struct lp_build_emit_data * emit_data)
+{
+	struct gallivm_state * gallivm = bld_base->base.gallivm;
+	LLVMValueRef cond;
+
+	cond = LLVMBuildICmp(gallivm->builder, LLVMIntNE,
+	        bitcast(bld_base, TGSI_TYPE_UNSIGNED, emit_data->args[0]),
+			bld_base->int_bld.zero, "");
+
+	if_cond_emit(action, bld_base, emit_data, cond);
 }
 
 static void kil_emit(
@@ -1209,6 +1235,7 @@ void radeon_llvm_context_init(struct radeon_llvm_context * ctx)
 	bld_base->op_actions[TGSI_OPCODE_IABS].intr_name = "llvm.AMDIL.abs.";
 	bld_base->op_actions[TGSI_OPCODE_IDIV].emit = emit_idiv;
 	bld_base->op_actions[TGSI_OPCODE_IF].emit = if_emit;
+	bld_base->op_actions[TGSI_OPCODE_UIF].emit = uif_emit;
 	bld_base->op_actions[TGSI_OPCODE_IMAX].emit = build_tgsi_intrinsic_nomem;
 	bld_base->op_actions[TGSI_OPCODE_IMAX].intr_name = "llvm.AMDGPU.imax";
 	bld_base->op_actions[TGSI_OPCODE_IMIN].emit = build_tgsi_intrinsic_nomem;

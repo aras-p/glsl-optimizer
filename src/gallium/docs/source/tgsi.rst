@@ -864,19 +864,32 @@ This instruction replicates its result.
   TBD
 
 
-.. opcode:: IF - If
+.. opcode:: IF - Float If
 
-  TBD
+  Start an IF ... ELSE .. ENDIF block.  Condition evaluates to true if
+
+    src0.x != 0.0
+
+  where src0.x is interpreted as a floating point register.
+
+
+.. opcode:: UIF - Bitwise If
+
+  Start an UIF ... ELSE .. ENDIF block. Condition evaluates to true if
+
+    src0.x != 0
+
+  where src0.x is interpreted as an integer register.
 
 
 .. opcode:: ELSE - Else
 
-  TBD
+  Starts an else block, after an IF or UIF statement.
 
 
 .. opcode:: ENDIF - End If
 
-  TBD
+  Ends an IF or UIF block.
 
 
 .. opcode:: PUSHA - Push Address Register On Stack

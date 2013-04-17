@@ -242,6 +242,7 @@ unsigned int Instruction::srcMask(unsigned int s) const
    case TGSI_OPCODE_SCS:
       return 0x1;
    case TGSI_OPCODE_IF:
+   case TGSI_OPCODE_UIF:
       return 0x1;
    case TGSI_OPCODE_LIT:
       return 0xb;
@@ -385,6 +386,7 @@ static nv50_ir::TexTarget translateTexture(uint tex)
 nv50_ir::DataType Instruction::inferSrcType() const
 {
    switch (getOpcode()) {
+   case TGSI_OPCODE_UIF:
    case TGSI_OPCODE_AND:
    case TGSI_OPCODE_OR:
    case TGSI_OPCODE_XOR:
@@ -2430,6 +2432,7 @@ Converter::handleInstruction(const struct tgsi_full_instruction *insn)
       mkOp1(op, TYPE_U32, NULL, src0)->fixed = 1;
       break;
    case TGSI_OPCODE_IF:
+   case TGSI_OPCODE_UIF:
    {
       BasicBlock *ifBB = new BasicBlock(func);
 
@@ -2437,7 +2440,7 @@ Converter::handleInstruction(const struct tgsi_full_instruction *insn)
       condBBs.push(bb);
       joinBBs.push(bb);
 
-      mkFlow(OP_BRA, NULL, CC_NOT_P, fetchSrc(0, 0));
+      mkFlow(OP_BRA, NULL, CC_NOT_P, fetchSrc(0, 0))->setType(srcTy);
 
       setPosition(ifBB, true);
    }

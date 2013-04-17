@@ -1732,6 +1732,7 @@ near_end_of_shader(struct lp_build_tgsi_soa_context *bld,
 	  opcode == TGSI_OPCODE_CAL ||
 	  opcode == TGSI_OPCODE_CALLNZ ||
 	  opcode == TGSI_OPCODE_IF ||
+          opcode == TGSI_OPCODE_UIF ||
 	  opcode == TGSI_OPCODE_BGNLOOP ||
 	  opcode == TGSI_OPCODE_SWITCH)
 	 return FALSE;
@@ -2395,6 +2396,21 @@ if_emit(
 }
 
 static void
+uif_emit(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   LLVMValueRef tmp;
+   struct lp_build_tgsi_soa_context * bld = lp_soa_context(bld_base);
+   struct lp_build_context *uint_bld = &bld_base->uint_bld;
+
+   tmp = lp_build_cmp(uint_bld, PIPE_FUNC_NOTEQUAL,
+                      emit_data->args[0], uint_bld->zero);
+   lp_exec_mask_cond_push(&bld->exec_mask, tmp);
+}
+
+static void
 bgnloop_emit(
    const struct lp_build_tgsi_action * action,
    struct lp_build_tgsi_context * bld_base,
@@ -2742,6 +2758,7 @@ lp_build_tgsi_soa(struct gallivm_state *gallivm,
    bld.bld_base.op_actions[TGSI_OPCODE_ENDLOOP].emit = endloop_emit;
    bld.bld_base.op_actions[TGSI_OPCODE_ENDSUB].emit = endsub_emit;
    bld.bld_base.op_actions[TGSI_OPCODE_IF].emit = if_emit;
+   bld.bld_base.op_actions[TGSI_OPCODE_UIF].emit = uif_emit;
    bld.bld_base.op_actions[TGSI_OPCODE_KIL].emit = kil_emit;
    bld.bld_base.op_actions[TGSI_OPCODE_KILP].emit = kilp_emit;
    bld.bld_base.op_actions[TGSI_OPCODE_NRM].emit = nrm_emit;

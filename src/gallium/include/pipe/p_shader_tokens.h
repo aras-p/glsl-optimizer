@@ -335,7 +335,7 @@ struct tgsi_property_data {
 #define TGSI_OPCODE_TXL                 72
 #define TGSI_OPCODE_BRK                 73
 #define TGSI_OPCODE_IF                  74
-                                /* gap */
+#define TGSI_OPCODE_UIF                 75
 #define TGSI_OPCODE_ELSE                77
 #define TGSI_OPCODE_ENDIF               78
                                 /* gap */

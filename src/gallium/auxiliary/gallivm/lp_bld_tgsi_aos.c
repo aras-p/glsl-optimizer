@@ -837,6 +837,7 @@ lp_emit_instruction_aos(
       return FALSE;
 
    case TGSI_OPCODE_IF:
+   case TGSI_OPCODE_UIF:
       return FALSE;
 
    case TGSI_OPCODE_BGNLOOP:

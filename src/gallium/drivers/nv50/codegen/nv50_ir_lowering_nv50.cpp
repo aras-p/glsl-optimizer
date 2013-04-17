@@ -1011,7 +1011,7 @@ NV50LoweringPreSSA::checkPredicate(Instruction *insn)
       return;
    cdst = bld.getSSA(1, FILE_FLAGS);
 
-   bld.mkCmp(OP_SET, CC_NEU, TYPE_U32, cdst, bld.loadImm(NULL, 0), pred);
+   bld.mkCmp(OP_SET, CC_NEU, insn->dType, cdst, bld.loadImm(NULL, 0), pred);
 
    insn->setPredicate(insn->cc, cdst);
 }

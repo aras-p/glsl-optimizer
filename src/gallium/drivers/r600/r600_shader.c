@@ -5728,7 +5728,7 @@ static void break_loop_on_flag(struct r600_shader_ctx *ctx, unsigned fc_sp)
 }
 #endif
 
-static int tgsi_if(struct r600_shader_ctx *ctx)
+static int emit_if(struct r600_shader_ctx *ctx, int opcode)
 {
 	int alu_type = CF_OP_ALU_PUSH_BEFORE;
 
@@ -5742,7 +5742,7 @@ static int tgsi_if(struct r600_shader_ctx *ctx)
 		alu_type = CF_OP_ALU;
 	}
 
-	emit_logic_pred(ctx, ALU_OP2_PRED_SETNE_INT, alu_type);
+	emit_logic_pred(ctx, opcode, alu_type);
 
 	r600_bytecode_add_cfinst(ctx->bc, CF_OP_JUMP);
 
@@ -5750,6 +5750,16 @@ static int tgsi_if(struct r600_shader_ctx *ctx)
 
 	callstack_push(ctx, FC_PUSH_VPM);
 	return 0;
+}
+
+static int tgsi_if(struct r600_shader_ctx *ctx)
+{
+	return emit_if(ctx, ALU_OP2_PRED_SETNE);
+}
+
+static int tgsi_uif(struct r600_shader_ctx *ctx)
+{
+	return emit_if(ctx, ALU_OP2_PRED_SETNE_INT);
 }
 
 static int tgsi_else(struct r600_shader_ctx *ctx)
@@ -6003,8 +6013,7 @@ static struct r600_shader_tgsi_instruction r600_shader_tgsi_instruction[] = {
 	{TGSI_OPCODE_TXL,	0, FETCH_OP_SAMPLE_L, tgsi_tex},
 	{TGSI_OPCODE_BRK,	0, CF_OP_LOOP_BREAK, tgsi_loop_brk_cont},
 	{TGSI_OPCODE_IF,	0, ALU_OP0_NOP, tgsi_if},
-	/* gap */
-	{75,			0, ALU_OP0_NOP, tgsi_unsupported},
+	{TGSI_OPCODE_UIF,	0, ALU_OP0_NOP, tgsi_uif},
 	{76,			0, ALU_OP0_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_ELSE,	0, ALU_OP0_NOP, tgsi_else},
 	{TGSI_OPCODE_ENDIF,	0, ALU_OP0_NOP, tgsi_endif},
@@ -6197,8 +6206,7 @@ static struct r600_shader_tgsi_instruction eg_shader_tgsi_instruction[] = {
 	{TGSI_OPCODE_TXL,	0, FETCH_OP_SAMPLE_L, tgsi_tex},
 	{TGSI_OPCODE_BRK,	0, CF_OP_LOOP_BREAK, tgsi_loop_brk_cont},
 	{TGSI_OPCODE_IF,	0, ALU_OP0_NOP, tgsi_if},
-	/* gap */
-	{75,			0, ALU_OP0_NOP, tgsi_unsupported},
+	{TGSI_OPCODE_UIF,	0, ALU_OP0_NOP, tgsi_uif},
 	{76,			0, ALU_OP0_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_ELSE,	0, ALU_OP0_NOP, tgsi_else},
 	{TGSI_OPCODE_ENDIF,	0, ALU_OP0_NOP, tgsi_endif},
@@ -6391,8 +6399,7 @@ static struct r600_shader_tgsi_instruction cm_shader_tgsi_instruction[] = {
 	{TGSI_OPCODE_TXL,	0, FETCH_OP_SAMPLE_L, tgsi_tex},
 	{TGSI_OPCODE_BRK,	0, CF_OP_LOOP_BREAK, tgsi_loop_brk_cont},
 	{TGSI_OPCODE_IF,	0, ALU_OP0_NOP, tgsi_if},
-	/* gap */
-	{75,			0, ALU_OP0_NOP, tgsi_unsupported},
+	{TGSI_OPCODE_UIF,	0, ALU_OP0_NOP, tgsi_uif},
 	{76,			0, ALU_OP0_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_ELSE,	0, ALU_OP0_NOP, tgsi_else},
 	{TGSI_OPCODE_ENDIF,	0, ALU_OP0_NOP, tgsi_endif},

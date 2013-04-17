@@ -1490,7 +1490,7 @@ NVC0LoweringPass::checkPredicate(Instruction *insn)
    // CAUTION: don't use pdst->getInsn, the definition might not be unique,
    //  delay turning PSET(FSET(x,y),0) into PSET(x,y) to a later pass
 
-   bld.mkCmp(OP_SET, CC_NEU, TYPE_U32, pdst, bld.mkImm(0), pred);
+   bld.mkCmp(OP_SET, CC_NEU, insn->dType, pdst, bld.mkImm(0), pred);
 
    insn->setPredicate(insn->cc, pdst);
 }
