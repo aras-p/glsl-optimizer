@@ -257,7 +257,7 @@ void r200ChooseVertexState( struct gl_context *ctx )
     * bigger one.
     */
    if ((0 == (tnl->render_inputs_bitset & BITFIELD64_RANGE(_TNL_ATTRIB_TEX0, _TNL_NUM_TEX)))
-       || (ctx->_TriangleCaps & DD_TRI_LIGHT_TWOSIDE)
+       || twosided
        || unfilled) {
       rmesa->swtcl.needproj = GL_TRUE;
       vte |= R200_VTX_XY_FMT | R200_VTX_Z_FMT;
