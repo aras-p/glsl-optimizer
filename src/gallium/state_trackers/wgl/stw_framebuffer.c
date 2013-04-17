@@ -140,6 +140,8 @@ stw_framebuffer_get_size( struct stw_framebuffer *fb )
    width  = client_rect.right  - client_rect.left;
    height = client_rect.bottom - client_rect.top;
 
+   fb->minimized = width == 0 || height == 0;
+
    if (width <= 0 || height <= 0) {
       /*
        * When the window is minimized GetClientRect will return zeros.  Simply
@@ -530,15 +532,17 @@ DrvPresentBuffers(HDC hdc, PGLPRESENTBUFFERSDATA data)
       }
    }
 
-   if(fb->shared_surface) {
-      stw_dev->stw_winsys->compose(screen,
-                                   res,
-                                   fb->shared_surface,
-                                   &fb->client_rect,
-                                   data->PresentHistoryToken);
-   }
-   else {
-      stw_dev->stw_winsys->present( screen, res, hdc );
+   if (!fb->minimized) {
+      if (fb->shared_surface) {
+         stw_dev->stw_winsys->compose(screen,
+                                      res,
+                                      fb->shared_surface,
+                                      &fb->client_rect,
+                                      data->PresentHistoryToken);
+      }
+      else {
+         stw_dev->stw_winsys->present( screen, res, hdc );
+      }
    }
 
    stw_framebuffer_update(fb);

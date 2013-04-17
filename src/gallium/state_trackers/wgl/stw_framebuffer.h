@@ -79,6 +79,8 @@ struct stw_framebuffer
    /* FIXME: Make this work for multiple contexts bound to the same framebuffer */
    boolean must_resize;
 
+   boolean minimized;  /**< Is the window currently minimized? */
+
    unsigned width;
    unsigned height;
    
