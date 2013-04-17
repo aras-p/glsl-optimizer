@@ -147,17 +147,6 @@ class PrintRemapTable(gl_XML.gl_print_base):
         for f, index in abi_functions:
             print '#define _gloffset_%s %d' % (f.name, f.offset)
 
-        print ''
-        print '#if !FEATURE_remap_table'
-        print ''
-
-        for f, index in functions:
-            print '#define _gloffset_%s %d' % (f.name, f.offset)
-
-        print ''
-        print '#else /* !FEATURE_remap_table */'
-        print ''
-
         if self.es:
             remap_table = "esLocalRemapTable"
 
@@ -179,8 +168,6 @@ class PrintRemapTable(gl_XML.gl_print_base):
         for f, index in functions:
             print '#define _gloffset_%s %s[%s_remap_index]' % (f.name, remap_table, f.name)
 
-        print ''
-        print '#endif /* !FEATURE_remap_table */'
         print ''
 
         for f, index in abi_functions + functions:
@@ -209,12 +196,10 @@ class PrintRemapTable(gl_XML.gl_print_base):
                         print '#define SET_%s(disp, fn) SET_%s(disp, fn)' % (name, f.name)
             print ''
 
-            print '#if FEATURE_remap_table'
             for f in alias_functions:
                 for name in f.entry_points:
                     if name != f.name:
                         print '#define %s_remap_index %s_remap_index' % (name, f.name)
-            print '#endif /* FEATURE_remap_table */'
             print ''
 
         return
