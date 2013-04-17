@@ -275,6 +275,7 @@ void radeonChooseVertexState( struct gl_context *ctx )
    GLuint se_coord_fmt = rmesa->hw.set.cmd[SET_SE_COORDFMT];
    GLboolean unfilled = (ctx->Polygon.FrontMode != GL_FILL ||
                          ctx->Polygon.BackMode != GL_FILL);
+   GLboolean twosided = ctx->Light.Enabled && ctx->Light.Model.TwoSide;
    
    se_coord_fmt &= ~(RADEON_VTX_XY_PRE_MULT_1_OVER_W0 |
 		     RADEON_VTX_Z_PRE_MULT_1_OVER_W0 |
@@ -294,7 +295,7 @@ void radeonChooseVertexState( struct gl_context *ctx )
    if ((0 == (tnl->render_inputs_bitset & 
         (BITFIELD64_RANGE(_TNL_ATTRIB_TEX0, _TNL_NUM_TEX)
          | BITFIELD64_BIT(_TNL_ATTRIB_COLOR1))))
-       || (ctx->_TriangleCaps & DD_TRI_LIGHT_TWOSIDE)
+       || twosided
        || unfilled) {
       rmesa->swtcl.needproj = GL_TRUE;
       se_coord_fmt |= (RADEON_VTX_XY_PRE_MULT_1_OVER_W0 |
@@ -696,15 +697,17 @@ void radeonChooseRenderState( struct gl_context *ctx )
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
    GLuint index = 0;
-   GLuint flags = ctx->_TriangleCaps;
    GLboolean unfilled = (ctx->Polygon.FrontMode != GL_FILL ||
                          ctx->Polygon.BackMode != GL_FILL);
+   GLboolean twosided = ctx->Light.Enabled && ctx->Light.Model.TwoSide;
 
    if (!rmesa->radeon.TclFallback || rmesa->radeon.Fallback) 
       return;
 
-   if (flags & DD_TRI_LIGHT_TWOSIDE) index |= RADEON_TWOSIDE_BIT;
-   if (unfilled)                     index |= RADEON_UNFILLED_BIT;
+   if (twosided)
+      index |= RADEON_TWOSIDE_BIT;
+   if (unfilled)
+      index |= RADEON_UNFILLED_BIT;
 
    if (index != rmesa->radeon.swtcl.RenderIndex) {
       tnl->Driver.Render.Points = rast_tab[index].points;

@@ -315,27 +315,6 @@ update_twoside(struct gl_context *ctx)
 
 
 /**
- * Update the ctx->_TriangleCaps bitfield.
- * XXX that bitfield should really go away someday!
- * This function must be called after other update_*() functions since
- * there are dependencies on some other derived values.
- */
-#if 0
-static void
-update_tricaps(struct gl_context *ctx, GLbitfield new_state)
-{
-   ctx->_TriangleCaps = 0;
-
-   /*
-    * Lighting and shading
-    */
-   if (ctx->Light.Enabled && ctx->Light.Model.TwoSide)
-      ctx->_TriangleCaps |= DD_TRI_LIGHT_TWOSIDE;
-}
-#endif
-
-
-/**
  * Compute derived GL state.
  * If __struct gl_contextRec::NewState is non-zero then this function \b must
  * be called before rendering anything.
@@ -410,12 +389,6 @@ _mesa_update_state_locked( struct gl_context *ctx )
 
    if (new_state & (_NEW_MULTISAMPLE | _NEW_BUFFERS))
       update_multisample( ctx );
-
-#if 0
-   if (new_state & (_NEW_POINT | _NEW_LINE | _NEW_POLYGON | _NEW_LIGHT
-                    | _NEW_STENCIL | _MESA_NEW_SEPARATE_SPECULAR))
-      update_tricaps( ctx, new_state );
-#endif
 
    /* ctx->_NeedEyeCoords is now up to date.
     *

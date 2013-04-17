@@ -96,18 +96,6 @@ _mesa_print_state( const char *msg, GLuint state )
 
 
 
-void
-_mesa_print_tri_caps( const char *name, GLuint flags )
-{
-   _mesa_debug(NULL,
-	   "%s: (0x%x) %s\n",
-	   name,
-	   flags,
-	   (flags & DD_TRI_LIGHT_TWOSIDE)   ? "tri-light-twoside, " : ""
-      );
-}
-
-
 /**
  * Print information about this Mesa version and build options.
  */

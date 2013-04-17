@@ -419,10 +419,6 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
             return;
          FLUSH_VERTICES(ctx, _NEW_LIGHT);
          ctx->Light.Enabled = state;
-         if (ctx->Light.Enabled && ctx->Light.Model.TwoSide)
-            ctx->_TriangleCaps |= DD_TRI_LIGHT_TWOSIDE;
-         else
-            ctx->_TriangleCaps &= ~DD_TRI_LIGHT_TWOSIDE;
          break;
       case GL_LINE_SMOOTH:
          if (!_mesa_is_desktop_gl(ctx) && ctx->API != API_OPENGLES)

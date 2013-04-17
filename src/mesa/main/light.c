@@ -474,10 +474,6 @@ _mesa_LightModelfv( GLenum pname, const GLfloat *params )
 	    return;
 	 FLUSH_VERTICES(ctx, _NEW_LIGHT);
 	 ctx->Light.Model.TwoSide = newbool;
-         if (ctx->Light.Enabled && ctx->Light.Model.TwoSide)
-            ctx->_TriangleCaps |= DD_TRI_LIGHT_TWOSIDE;
-         else
-            ctx->_TriangleCaps &= ~DD_TRI_LIGHT_TWOSIDE;
          break;
       case GL_LIGHT_MODEL_COLOR_CONTROL:
          if (ctx->API != API_OPENGL_COMPAT)

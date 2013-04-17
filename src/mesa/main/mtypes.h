@@ -3162,16 +3162,6 @@ struct gl_matrix_stack
 
 
 /**
- * \name A bunch of flags that we think might be useful to drivers.
- * 
- * Set in the __struct gl_contextRec::_TriangleCaps bitfield.
- */
-/*@{*/
-#define DD_TRI_LIGHT_TWOSIDE        (1 << 1)
-/*@}*/
-
-
-/**
  * Composite state flags
  */
 /*@{*/
