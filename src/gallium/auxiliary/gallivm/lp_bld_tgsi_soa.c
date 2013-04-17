@@ -829,6 +829,7 @@ emit_fetch_gs_input(
    }
 
    res = bld->gs_iface->fetch_input(bld->gs_iface, bld_base,
+                                    reg->Dimension.Indirect,
                                     vertex_index, attrib_index,
                                     swizzle_index);
 

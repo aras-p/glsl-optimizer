@@ -1253,6 +1253,7 @@ clipmask_booli32(struct gallivm_state *gallivm,
 static LLVMValueRef
 draw_gs_llvm_fetch_input(const struct lp_build_tgsi_gs_iface *gs_iface,
                          struct lp_build_tgsi_context * bld_base,
+                         boolean is_indirect,
                          LLVMValueRef vertex_index,
                          LLVMValueRef attrib_index,
                          LLVMValueRef swizzle_index)
@@ -1262,13 +1263,34 @@ draw_gs_llvm_fetch_input(const struct lp_build_tgsi_gs_iface *gs_iface,
    LLVMBuilderRef builder = gallivm->builder;
    LLVMValueRef indices[3];
    LLVMValueRef res;
+   struct lp_type type = bld_base->base.type;
 
-   indices[0] = vertex_index;
-   indices[1] = attrib_index;
-   indices[2] = swizzle_index;
-   
-   res = LLVMBuildGEP(builder, gs->input, indices, 3, "");
-   res = LLVMBuildLoad(builder, res, "");
+   if (is_indirect) {
+      int i;
+      res = bld_base->base.zero;
+      for (i = 0; i < type.length; ++i) {
+         LLVMValueRef idx = lp_build_const_int32(gallivm, i);
+         LLVMValueRef vert_chan_index = LLVMBuildExtractElement(builder,
+                                                                vertex_index, idx, "");
+         LLVMValueRef channel_vec, value;
+         indices[0] = vert_chan_index;
+         indices[1] = attrib_index;
+         indices[2] = swizzle_index;
+         
+         channel_vec = LLVMBuildGEP(builder, gs->input, indices, 3, "");
+         channel_vec = LLVMBuildLoad(builder, channel_vec, "");
+         value = LLVMBuildExtractElement(builder, channel_vec, idx, "");
+
+         res = LLVMBuildInsertElement(builder, res, value, idx, "");
+      }
+   } else {
+      indices[0] = vertex_index;
+      indices[1] = attrib_index;
+      indices[2] = swizzle_index;
+
+      res = LLVMBuildGEP(builder, gs->input, indices, 3, "");
+      res = LLVMBuildLoad(builder, res, "");
+   }
 
    return res;
 }

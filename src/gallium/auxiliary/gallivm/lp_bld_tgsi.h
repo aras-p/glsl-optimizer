@@ -368,6 +368,7 @@ struct lp_build_tgsi_gs_iface
 {
    LLVMValueRef (*fetch_input)(const struct lp_build_tgsi_gs_iface *gs_iface,
                                struct lp_build_tgsi_context * bld_base,
+                               boolean is_indirect,
                                LLVMValueRef vertex_index,
                                LLVMValueRef attrib_index,
                                LLVMValueRef swizzle_index);
