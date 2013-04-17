@@ -98,6 +98,10 @@ softpipe_begin_query(struct pipe_context *pipe, struct pipe_query *q)
       break;
    case PIPE_QUERY_SO_STATISTICS:
       sq->so.primitives_storage_needed = 0;
+      sq->num_primitives_generated = 0;
+      softpipe->num_primitives_generated = 0;
+      sq->so.num_primitives_written = 0;
+      softpipe->so_stats.num_primitives_written = 0;
    case PIPE_QUERY_PRIMITIVES_EMITTED:
       sq->so.num_primitives_written = 0;
       softpipe->so_stats.num_primitives_written = 0;
@@ -147,8 +151,11 @@ softpipe_end_query(struct pipe_context *pipe, struct pipe_query *q)
       sq->end = os_time_get_nano();
       break;
    case PIPE_QUERY_SO_STATISTICS:
-      sq->so.primitives_storage_needed =
-         softpipe->so_stats.primitives_storage_needed;
+      sq->num_primitives_generated =
+         softpipe->num_primitives_generated;
+      sq->so.num_primitives_written =
+         softpipe->so_stats.num_primitives_written;
+      break;
    case PIPE_QUERY_PRIMITIVES_EMITTED:
       sq->so.num_primitives_written =
          softpipe->so_stats.num_primitives_written;
@@ -196,9 +203,12 @@ softpipe_get_query_result(struct pipe_context *pipe,
    uint64_t *result = (uint64_t*)vresult;
 
    switch (sq->type) {
-   case PIPE_QUERY_SO_STATISTICS:
-      memcpy(vresult, &sq->so,
-             sizeof(struct pipe_query_data_so_statistics));
+   case PIPE_QUERY_SO_STATISTICS: {
+      struct pipe_query_data_so_statistics *stats =
+         (struct pipe_query_data_so_statistics *)vresult;
+      stats->num_primitives_written = sq->so.num_primitives_written;
+      stats->primitives_storage_needed = sq->num_primitives_generated;
+   }
       break;
    case PIPE_QUERY_PIPELINE_STATISTICS:
       memcpy(vresult, &sq->stats,
