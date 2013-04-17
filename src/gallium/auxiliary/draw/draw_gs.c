@@ -643,13 +643,14 @@ draw_create_geometry_shader(struct draw_context *draw,
                             const struct pipe_shader_state *state)
 {
 #ifdef HAVE_LLVM
+   boolean use_llvm = draw_get_option_use_llvm();
    struct llvm_geometry_shader *llvm_gs;
 #endif
    struct draw_geometry_shader *gs;
    unsigned i;
 
 #ifdef HAVE_LLVM
-   if (draw_get_option_use_llvm()) {
+   if (use_llvm) {
       llvm_gs = CALLOC_STRUCT(llvm_geometry_shader);
 
       if (llvm_gs == NULL)
@@ -684,7 +685,7 @@ draw_create_geometry_shader(struct draw_context *draw,
    gs->max_out_prims = 0;
 
 #ifdef HAVE_LLVM
-   if (draw_get_option_use_llvm()) {
+   if (use_llvm) {
       /* TODO: change the input array to handle the following
          vector length, instead of the currently hardcoded
          TGSI_NUM_CHANNELS
@@ -717,7 +718,7 @@ draw_create_geometry_shader(struct draw_context *draw,
    gs->machine = draw->gs.tgsi.machine;
 
 #ifdef HAVE_LLVM
-   if (draw_get_option_use_llvm()) {
+   if (use_llvm) {
       int vector_size = gs->vector_length * sizeof(float);
       gs->gs_input = align_malloc(sizeof(struct draw_gs_inputs), 16);
       memset(gs->gs_input, 0, sizeof(struct draw_gs_inputs));

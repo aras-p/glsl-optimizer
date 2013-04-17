@@ -1742,6 +1742,9 @@ draw_llvm_set_mapped_texture(struct draw_context *draw,
       assert(sview_idx < Elements(draw->llvm->gs_jit_context.textures));
 
       jit_tex = &draw->llvm->gs_jit_context.textures[sview_idx];
+   } else {
+      assert(0);
+      return;
    }
 
    jit_tex->width = width;
