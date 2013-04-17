@@ -2597,6 +2597,10 @@ vec4_visitor::emit_psiz_and_flags(struct brw_reg reg)
          emit(MOV(brw_writemask(reg, WRITEMASK_W),
                   src_reg(output_reg[VARYING_SLOT_PSIZ])));
       }
+      if (prog_data->vue_map.slots_valid & VARYING_BIT_LAYER) {
+         emit(MOV(retype(brw_writemask(reg, WRITEMASK_Y), BRW_REGISTER_TYPE_D),
+                  src_reg(output_reg[VARYING_SLOT_LAYER])));
+      }
    }
 }
 
