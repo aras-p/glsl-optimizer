@@ -958,7 +958,7 @@ intelChooseRenderState(struct gl_context * ctx)
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct intel_context *intel = intel_context(ctx);
-   GLuint flags = ctx->_TriangleCaps |
+   GLuint flags =
       ((ctx->Light.Enabled &&
         ctx->Light.Model.TwoSide) ? DD_TRI_LIGHT_TWOSIDE : 0) |
       ((ctx->Polygon.FrontMode != GL_FILL ||
@@ -1159,6 +1159,8 @@ static void
 intelRenderPrimitive(struct gl_context * ctx, GLenum prim)
 {
    struct intel_context *intel = intel_context(ctx);
+   GLboolean unfilled = (ctx->Polygon.FrontMode != GL_FILL ||
+                         ctx->Polygon.BackMode != GL_FILL);
 
    if (0)
       fprintf(stderr, "%s %s\n", __FUNCTION__, _mesa_lookup_enum_by_nr(prim));
@@ -1172,8 +1174,7 @@ intelRenderPrimitive(struct gl_context * ctx, GLenum prim)
     * primitive will always be reset by lower level functions in that case,
     * potentially pingponging the state:
     */
-   if (reduced_prim[prim] == GL_TRIANGLES &&
-       (ctx->_TriangleCaps & DD_TRI_UNFILLED))
+   if (reduced_prim[prim] == GL_TRIANGLES && unfilled)
       return;
 
    /* Set some primitive-dependent state and Start? a new primitive.
