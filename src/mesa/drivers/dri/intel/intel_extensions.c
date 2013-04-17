@@ -174,12 +174,8 @@ intelInitExtensions(struct gl_context *ctx)
       ctx->Extensions.ATI_separate_stencil = true;
       ctx->Extensions.ATI_texture_env_combine3 = true;
       ctx->Extensions.NV_texture_env_combine4 = true;
-
-      if (driQueryOptionb(&intel->optionCache, "fragment_shader"))
-	 ctx->Extensions.ARB_fragment_shader = true;
-
-      if (driQueryOptionb(&intel->optionCache, "stub_occlusion_query"))
-	 ctx->Extensions.ARB_occlusion_query = true;
+      ctx->Extensions.ARB_fragment_shader = true;
+      ctx->Extensions.ARB_occlusion_query = true;
    }
 
    if (intel->ctx.Mesa_DXTn
