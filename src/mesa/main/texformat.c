@@ -820,3 +820,17 @@ _mesa_choose_tex_format(struct gl_context *ctx, GLenum target,
                  _mesa_lookup_enum_by_nr(internalFormat));
    return MESA_FORMAT_NONE;
 }
+
+GLboolean
+_mesa_tex_target_is_array(GLenum target)
+{
+   switch (target) {
+   case GL_TEXTURE_1D_ARRAY_EXT:
+   case GL_TEXTURE_2D_ARRAY_EXT:
+   case GL_TEXTURE_2D_MULTISAMPLE_ARRAY:
+   case GL_TEXTURE_CUBE_MAP_ARRAY:
+      return GL_TRUE;
+   default:
+      return GL_FALSE;
+   }
+}
