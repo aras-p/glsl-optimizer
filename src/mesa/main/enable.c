@@ -431,7 +431,6 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
             return;
          FLUSH_VERTICES(ctx, _NEW_LINE);
          ctx->Line.SmoothFlag = state;
-         ctx->_TriangleCaps ^= DD_LINE_SMOOTH;
          break;
       case GL_LINE_STIPPLE:
          if (ctx->API != API_OPENGL_COMPAT)
