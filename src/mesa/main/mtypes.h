@@ -3172,7 +3172,6 @@ struct gl_matrix_stack
 #define DD_TRI_SMOOTH               (1 << 3)
 #define DD_TRI_STIPPLE              (1 << 4)
 #define DD_TRI_OFFSET               (1 << 5)
-#define DD_POINT_SMOOTH             (1 << 8)
 #define DD_POINT_ATTEN              (1 << 9)
 /*@}*/
 

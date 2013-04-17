@@ -346,8 +346,6 @@ update_tricaps(struct gl_context *ctx, GLbitfield new_state)
     * Points
     */
    if (1/*new_state & _NEW_POINT*/) {
-      if (ctx->Point.SmoothFlag)
-         ctx->_TriangleCaps |= DD_POINT_SMOOTH;
       if (ctx->Point._Attenuated)
          ctx->_TriangleCaps |= DD_POINT_ATTEN;
    }

@@ -615,7 +615,6 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
             return;
          FLUSH_VERTICES(ctx, _NEW_POINT);
          ctx->Point.SmoothFlag = state;
-         ctx->_TriangleCaps ^= DD_POINT_SMOOTH;
          break;
       case GL_POLYGON_SMOOTH:
          if (!_mesa_is_desktop_gl(ctx))
