@@ -777,6 +777,17 @@ enum opcode {
 #define BRW_REGISTER_TYPE_V   6	/* packed int vector, immediates only, uword dest only */
 #define BRW_REGISTER_TYPE_F   7
 
+/* SNB adds 3-src instructions (MAD and LRP) that only operate on floats, so
+ * the types were implied. IVB adds BFE and BFI2 that operate on doublewords
+ * and unsigned doublewords, so a new field is also available in the da3src
+ * struct (part of struct brw_instruction.bits1 in brw_structs.h) to select
+ * dst and shared-src types. The values are different from BRW_REGISTER_TYPE_*.
+ */
+#define BRW_3SRC_TYPE_F  0
+#define BRW_3SRC_TYPE_D  1
+#define BRW_3SRC_TYPE_UD 2
+#define BRW_3SRC_TYPE_DF 3
+
 #define BRW_ARF_NULL                  0x00
 #define BRW_ARF_ADDRESS               0x10
 #define BRW_ARF_ACCUMULATOR           0x20
