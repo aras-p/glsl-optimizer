@@ -788,6 +788,7 @@ static struct brw_instruction *brw_alu3(struct brw_compile *p,
 					struct brw_reg src1,
 					struct brw_reg src2)
 {
+   struct intel_context *intel = &p->brw->intel;
    struct brw_instruction *insn = next_insn(p, opcode);
 
    gen7_convert_mrf_to_grf(p, &dest);
@@ -798,7 +799,9 @@ static struct brw_instruction *brw_alu3(struct brw_compile *p,
 	  dest.file == BRW_MESSAGE_REGISTER_FILE);
    assert(dest.nr < 128);
    assert(dest.address_mode == BRW_ADDRESS_DIRECT);
-   assert(dest.type == BRW_REGISTER_TYPE_F);
+   assert(dest.type == BRW_REGISTER_TYPE_F ||
+          dest.type == BRW_REGISTER_TYPE_D ||
+          dest.type == BRW_REGISTER_TYPE_UD);
    insn->bits1.da3src.dest_reg_file = (dest.file == BRW_MESSAGE_REGISTER_FILE);
    insn->bits1.da3src.dest_reg_nr = dest.nr;
    insn->bits1.da3src.dest_subreg_nr = dest.subnr / 16;
@@ -808,7 +811,9 @@ static struct brw_instruction *brw_alu3(struct brw_compile *p,
    assert(src0.file == BRW_GENERAL_REGISTER_FILE);
    assert(src0.address_mode == BRW_ADDRESS_DIRECT);
    assert(src0.nr < 128);
-   assert(src0.type == BRW_REGISTER_TYPE_F);
+   assert(src0.type == BRW_REGISTER_TYPE_F ||
+          src0.type == BRW_REGISTER_TYPE_D ||
+          src0.type == BRW_REGISTER_TYPE_UD);
    insn->bits2.da3src.src0_swizzle = src0.dw1.bits.swizzle;
    insn->bits2.da3src.src0_subreg_nr = get_3src_subreg_nr(src0);
    insn->bits2.da3src.src0_reg_nr = src0.nr;
@@ -819,7 +824,9 @@ static struct brw_instruction *brw_alu3(struct brw_compile *p,
    assert(src1.file == BRW_GENERAL_REGISTER_FILE);
    assert(src1.address_mode == BRW_ADDRESS_DIRECT);
    assert(src1.nr < 128);
-   assert(src1.type == BRW_REGISTER_TYPE_F);
+   assert(src1.type == BRW_REGISTER_TYPE_F ||
+          src0.type == BRW_REGISTER_TYPE_D ||
+          src0.type == BRW_REGISTER_TYPE_UD);
    insn->bits2.da3src.src1_swizzle = src1.dw1.bits.swizzle;
    insn->bits2.da3src.src1_subreg_nr_low = get_3src_subreg_nr(src1) & 0x3;
    insn->bits3.da3src.src1_subreg_nr_high = get_3src_subreg_nr(src1) >> 2;
@@ -831,13 +838,38 @@ static struct brw_instruction *brw_alu3(struct brw_compile *p,
    assert(src2.file == BRW_GENERAL_REGISTER_FILE);
    assert(src2.address_mode == BRW_ADDRESS_DIRECT);
    assert(src2.nr < 128);
-   assert(src2.type == BRW_REGISTER_TYPE_F);
+   assert(src2.type == BRW_REGISTER_TYPE_F ||
+          src0.type == BRW_REGISTER_TYPE_D ||
+          src0.type == BRW_REGISTER_TYPE_UD);
    insn->bits3.da3src.src2_swizzle = src2.dw1.bits.swizzle;
    insn->bits3.da3src.src2_subreg_nr = get_3src_subreg_nr(src2);
    insn->bits3.da3src.src2_rep_ctrl = src2.vstride == BRW_VERTICAL_STRIDE_0;
    insn->bits3.da3src.src2_reg_nr = src2.nr;
    insn->bits1.da3src.src2_abs = src2.abs;
    insn->bits1.da3src.src2_negate = src2.negate;
+
+   if (intel->gen >= 7) {
+      /* For MAD and LRP, all incoming src types are float, but for BFE and
+       * BFI2, the three source types might not all be the same. src2, the
+       * primary argument, should match the type of the destination.
+       */
+      assert(dest.type == src2.type);
+
+      switch (dest.type) {
+      case BRW_REGISTER_TYPE_F:
+         insn->bits1.da3src.src_type = BRW_3SRC_TYPE_F;
+         insn->bits1.da3src.dst_type = BRW_3SRC_TYPE_F;
+         break;
+      case BRW_REGISTER_TYPE_D:
+         insn->bits1.da3src.src_type = BRW_3SRC_TYPE_D;
+         insn->bits1.da3src.dst_type = BRW_3SRC_TYPE_D;
+         break;
+      case BRW_REGISTER_TYPE_UD:
+         insn->bits1.da3src.src_type = BRW_3SRC_TYPE_UD;
+         insn->bits1.da3src.dst_type = BRW_3SRC_TYPE_UD;
+         break;
+      }
+   }
 
    return insn;
 }
