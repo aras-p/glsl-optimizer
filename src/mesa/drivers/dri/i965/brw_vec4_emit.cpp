@@ -842,6 +842,35 @@ vec4_generator::generate_code(exec_list *instructions)
          brw_LRP(p, dst, src[0], src[1], src[2]);
          break;
 
+      case BRW_OPCODE_BFREV:
+         /* BFREV only supports UD type for src and dst. */
+         brw_BFREV(p, retype(dst, BRW_REGISTER_TYPE_UD),
+                      retype(src[0], BRW_REGISTER_TYPE_UD));
+         break;
+      case BRW_OPCODE_FBH:
+         /* FBH only supports UD type for dst. */
+         brw_FBH(p, retype(dst, BRW_REGISTER_TYPE_UD), src[0]);
+         break;
+      case BRW_OPCODE_FBL:
+         /* FBL only supports UD type for dst. */
+         brw_FBL(p, retype(dst, BRW_REGISTER_TYPE_UD), src[0]);
+         break;
+      case BRW_OPCODE_CBIT:
+         /* CBIT only supports UD type for dst. */
+         brw_CBIT(p, retype(dst, BRW_REGISTER_TYPE_UD), src[0]);
+         break;
+
+      case BRW_OPCODE_BFE:
+         brw_BFE(p, dst, src[0], src[1], src[2]);
+         break;
+
+      case BRW_OPCODE_BFI1:
+         brw_BFI1(p, dst, src[0], src[1]);
+         break;
+      case BRW_OPCODE_BFI2:
+         brw_BFI2(p, dst, src[0], src[1], src[2]);
+         break;
+
       case BRW_OPCODE_IF:
 	 if (inst->src[0].file != BAD_FILE) {
 	    /* The instruction has an embedded compare (only allowed on gen6) */

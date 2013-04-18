@@ -375,6 +375,13 @@ public:
    vec4_instruction *SCRATCH_READ(dst_reg dst, src_reg index);
    vec4_instruction *SCRATCH_WRITE(dst_reg dst, src_reg src, src_reg index);
    vec4_instruction *LRP(dst_reg dst, src_reg a, src_reg y, src_reg x);
+   vec4_instruction *BFREV(dst_reg dst, src_reg value);
+   vec4_instruction *BFE(dst_reg dst, src_reg bits, src_reg offset, src_reg value);
+   vec4_instruction *BFI1(dst_reg dst, src_reg bits, src_reg offset);
+   vec4_instruction *BFI2(dst_reg dst, src_reg bfi1_dst, src_reg insert, src_reg base);
+   vec4_instruction *FBH(dst_reg dst, src_reg value);
+   vec4_instruction *FBL(dst_reg dst, src_reg value);
+   vec4_instruction *CBIT(dst_reg dst, src_reg value);
 
    int implied_mrf_writes(vec4_instruction *inst);
 

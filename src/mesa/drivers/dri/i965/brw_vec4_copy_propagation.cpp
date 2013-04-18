@@ -215,7 +215,10 @@ vec4_visitor::try_copy_propagation(struct intel_context *intel,
    if (has_source_modifiers && !can_do_source_mods(inst))
       return false;
 
-   if (inst->opcode == BRW_OPCODE_LRP && value.file == UNIFORM)
+   bool is_3src_inst = (inst->opcode == BRW_OPCODE_LRP ||
+                        inst->opcode == BRW_OPCODE_BFE ||
+                        inst->opcode == BRW_OPCODE_BFI2);
+   if (is_3src_inst && value.file == UNIFORM)
       return false;
 
    /* We can't copy-propagate a UD negation into a condmod
