@@ -155,11 +155,6 @@ extern struct _glapi_table *
 _mesa_get_dispatch(struct gl_context *ctx);
 
 
-void
-_mesa_set_mvp_with_dp4( struct gl_context *ctx,
-                        GLboolean flag );
-
-
 extern GLboolean
 _mesa_valid_to_render(struct gl_context *ctx, const char *where);
 

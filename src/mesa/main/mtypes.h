@@ -2433,6 +2433,12 @@ struct gl_shader_compiler_options
    GLuint MaxIfDepth;               /**< Maximum nested IF blocks */
    GLuint MaxUnrollIterations;
 
+   /**
+    * Prefer DP4 instructions (rather than MUL/MAD) for matrix * vector
+    * operations, such as position transformation.
+    */
+   GLboolean PreferDP4;
+
    struct gl_sl_pragmas DefaultPragmas; /**< Default #pragma settings */
 };
 
@@ -3573,12 +3579,6 @@ struct gl_context
    GLboolean Mesa_DXTn;
 
    GLboolean TextureFormatSupported[MESA_FORMAT_COUNT];
-
-   /** 
-    * Use dp4 (rather than mul/mad) instructions for position
-    * transformation?
-    */
-   GLboolean mvp_with_dp4;
 
    GLboolean RasterDiscard;  /**< GL_RASTERIZER_DISCARD */
 

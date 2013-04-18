@@ -314,7 +314,7 @@ r100CreateContext( gl_api api,
    ctx->Const.MaxColorAttachments = 1;
    ctx->Const.MaxRenderbufferSize = 2048;
 
-   _mesa_set_mvp_with_dp4( ctx, GL_TRUE );
+   ctx->ShaderCompilerOptions[MESA_SHADER_VERTEX].PreferDP4 = true;
 
    /* Install the customized pipeline:
     */

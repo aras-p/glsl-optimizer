@@ -351,7 +351,7 @@ GLboolean r200CreateContext( gl_api api,
    ctx->Const.MaxDrawBuffers = 1;
    ctx->Const.MaxColorAttachments = 1;
 
-   _mesa_set_mvp_with_dp4( ctx, GL_TRUE );
+   ctx->ShaderCompilerOptions[MESA_SHADER_VERTEX].PreferDP4 = GL_TRUE;
 
    /* Install the customized pipeline:
     */

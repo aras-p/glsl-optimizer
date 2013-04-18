@@ -1674,7 +1674,7 @@ _mesa_get_fixed_func_vertex_program(struct gl_context *ctx)
          return NULL;
 
       create_new_program( &key, prog,
-                          ctx->mvp_with_dp4,
+                          ctx->ShaderCompilerOptions[MESA_SHADER_VERTEX].PreferDP4,
                           ctx->Const.VertexProgram.MaxTemps );
 
 #if 0
