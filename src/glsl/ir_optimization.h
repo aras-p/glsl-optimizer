@@ -66,7 +66,8 @@ enum lower_packing_builtins_op {
 
 bool do_common_optimization(exec_list *ir, bool linked,
 			    bool uniform_locations_assigned,
-			    unsigned max_unroll_iterations);
+			    unsigned max_unroll_iterations,
+                            const struct gl_shader_compiler_options *options);
 
 bool do_algebraic(exec_list *instructions);
 bool do_constant_folding(exec_list *instructions);

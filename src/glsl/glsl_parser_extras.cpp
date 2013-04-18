@@ -1203,11 +1203,13 @@ ast_struct_specifier::ast_struct_specifier(const char *identifier,
  * \param max_unroll_iterations       Maximum number of loop iterations to be
  *                                    unrolled.  Setting to 0 disables loop
  *                                    unrolling.
+ * \param options                     The driver's preferred shader options.
  */
 bool
 do_common_optimization(exec_list *ir, bool linked,
 		       bool uniform_locations_assigned,
-		       unsigned max_unroll_iterations)
+		       unsigned max_unroll_iterations,
+                       const struct gl_shader_compiler_options *options)
 {
    GLboolean progress = GL_FALSE;
 

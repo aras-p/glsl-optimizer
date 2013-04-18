@@ -174,9 +174,11 @@ compile_shader(struct gl_context *ctx, struct gl_shader *shader)
 
    /* Optimization passes */
    if (!state->error && !shader->ir->is_empty()) {
+      const struct gl_shader_compiler_options *opts =
+         &ctx->ShaderCompilerOptions[_mesa_shader_type_to_index(shader->Type)];
       bool progress;
       do {
-	 progress = do_common_optimization(shader->ir, false, false, 32);
+	 progress = do_common_optimization(shader->ir, false, false, 32, opts);
       } while (progress);
 
       validate_ir_tree(shader->ir);
