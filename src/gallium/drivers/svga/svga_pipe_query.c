@@ -42,6 +42,7 @@ struct pipe_query {
    int dummy;
 };
 
+
 struct svga_query {
    struct pipe_query base;
    unsigned type;                  /**< PIPE_QUERY_x or SVGA_QUERY_x */
@@ -56,23 +57,24 @@ struct svga_query {
    uint64_t begin_count, end_count;
 };
 
-/***********************************************************************
- * Inline conversion functions.  These are better-typed than the
- * macros used previously:
- */
+
+/** cast wrapper */
 static INLINE struct svga_query *
 svga_query( struct pipe_query *q )
 {
    return (struct svga_query *)q;
 }
 
-static boolean svga_get_query_result(struct pipe_context *pipe, 
-                                     struct pipe_query *q,
-                                     boolean wait,
-                                     union pipe_query_result *result);
 
-static struct pipe_query *svga_create_query( struct pipe_context *pipe,
-                                             unsigned query_type )
+static boolean
+svga_get_query_result(struct pipe_context *pipe,
+                      struct pipe_query *q,
+                      boolean wait,
+                      union pipe_query_result *result);
+
+
+static struct pipe_query *
+svga_create_query( struct pipe_context *pipe, unsigned query_type )
 {
    struct svga_context *svga = svga_context( pipe );
    struct svga_screen *svgascreen = svga_screen(pipe->screen);
@@ -129,8 +131,9 @@ no_sq:
    return NULL;
 }
 
-static void svga_destroy_query(struct pipe_context *pipe,
-                               struct pipe_query *q)
+
+static void
+svga_destroy_query(struct pipe_context *pipe, struct pipe_query *q)
 {
    struct svga_screen *svgascreen = svga_screen(pipe->screen);
    struct svga_winsys_screen *sws = svgascreen->sws;
@@ -155,8 +158,9 @@ static void svga_destroy_query(struct pipe_context *pipe,
    FREE(sq);
 }
 
-static void svga_begin_query(struct pipe_context *pipe, 
-                             struct pipe_query *q)
+
+static void
+svga_begin_query(struct pipe_context *pipe, struct pipe_query *q)
 {
    struct svga_screen *svgascreen = svga_screen(pipe->screen);
    struct svga_winsys_screen *sws = svgascreen->sws;
@@ -165,22 +169,22 @@ static void svga_begin_query(struct pipe_context *pipe,
    enum pipe_error ret;
 
    SVGA_DBG(DEBUG_QUERY, "%s\n", __FUNCTION__);
-   
+
    /* Need to flush out buffered drawing commands so that they don't
     * get counted in the query results.
     */
    svga_hwtnl_flush_retry(svga);
-   
+
    switch (sq->type) {
    case PIPE_QUERY_OCCLUSION_COUNTER:
       assert(!svga->sq);
       if (sq->queryResult->state == SVGA3D_QUERYSTATE_PENDING) {
-         /* The application doesn't care for the pending query result. We cannot
-          * let go the existing buffer and just get a new one because its storage
-          * may be reused for other purposes and clobbered by the host when it
-          * determines the query result. So the only option here is to wait for
-          * the existing query's result -- not a big deal, given that no sane
-          * application would do this.
+         /* The application doesn't care for the pending query result.
+          * We cannot let go of the existing buffer and just get a new one
+          * because its storage may be reused for other purposes and clobbered
+          * by the host when it determines the query result.  So the only
+          * option here is to wait for the existing query's result -- not a
+          * big deal, given that no sane application would do this.
           */
          uint64_t result;
          svga_get_query_result(pipe, q, TRUE, (void*)&result);
@@ -213,8 +217,9 @@ static void svga_begin_query(struct pipe_context *pipe,
    }
 }
 
-static void svga_end_query(struct pipe_context *pipe, 
-                           struct pipe_query *q)
+
+static void
+svga_end_query(struct pipe_context *pipe, struct pipe_query *q)
 {
    struct svga_context *svga = svga_context( pipe );
    struct svga_query *sq = svga_query( q );
@@ -223,7 +228,7 @@ static void svga_end_query(struct pipe_context *pipe,
    SVGA_DBG(DEBUG_QUERY, "%s\n", __FUNCTION__);
 
    svga_hwtnl_flush_retry(svga);
-   
+
    switch (sq->type) {
    case PIPE_QUERY_OCCLUSION_COUNTER:
       assert(svga->sq == sq);
@@ -238,9 +243,10 @@ static void svga_end_query(struct pipe_context *pipe,
          assert(ret == PIPE_OK);
       }
 
-      /* TODO: Delay flushing. We don't really need to flush here, just ensure 
-       * that there is one flush before svga_get_query_result attempts to get the
-       * result */
+      /* TODO: Delay flushing. We don't really need to flush here, just ensure
+       * that there is one flush before svga_get_query_result attempts to get
+       * the result.
+       */
       svga_context_flush(svga, NULL);
 
       svga->sq = NULL;
@@ -259,25 +265,27 @@ static void svga_end_query(struct pipe_context *pipe,
    }
 }
 
-static boolean svga_get_query_result(struct pipe_context *pipe, 
-                                     struct pipe_query *q,
-                                     boolean wait,
-                                     union pipe_query_result *vresult)
+
+static boolean
+svga_get_query_result(struct pipe_context *pipe,
+                      struct pipe_query *q,
+                      boolean wait,
+                      union pipe_query_result *vresult)
 {
    struct svga_context *svga = svga_context( pipe );
    struct svga_screen *svgascreen = svga_screen( pipe->screen );
    struct svga_winsys_screen *sws = svgascreen->sws;
    struct svga_query *sq = svga_query( q );
    SVGA3dQueryState state;
-   uint64_t *result = (uint64_t*)vresult;
-   
+   uint64_t *result = (uint64_t *) vresult;
+
    SVGA_DBG(DEBUG_QUERY, "%s wait: %d\n", __FUNCTION__);
 
    switch (sq->type) {
    case PIPE_QUERY_OCCLUSION_COUNTER:
-      /* The query status won't be updated by the host unless 
-       * SVGA_3D_CMD_WAIT_FOR_QUERY is emitted. Unfortunately this will cause a 
-       * synchronous wait on the host.
+      /* The query status won't be updated by the host unless
+       * SVGA_3D_CMD_WAIT_FOR_QUERY is emitted. Unfortunately this will cause
+       * a synchronous wait on the host.
        */
       if (!sq->fence) {
          enum pipe_error ret;
@@ -302,10 +310,10 @@ static boolean svga_get_query_result(struct pipe_context *pipe,
          state = sq->queryResult->state;
       }
 
-      assert(state == SVGA3D_QUERYSTATE_SUCCEEDED || 
+      assert(state == SVGA3D_QUERYSTATE_SUCCEEDED ||
              state == SVGA3D_QUERYSTATE_FAILED);
 
-      *result = (uint64_t)sq->queryResult->result32;
+      *result = (uint64_t) sq->queryResult->result32;
       break;
    case SVGA_QUERY_DRAW_CALLS:
       /* fall-through */
@@ -325,8 +333,8 @@ static boolean svga_get_query_result(struct pipe_context *pipe,
 }
 
 
-
-void svga_init_query_functions( struct svga_context *svga )
+void
+svga_init_query_functions(struct svga_context *svga)
 {
    svga->pipe.create_query = svga_create_query;
    svga->pipe.destroy_query = svga_destroy_query;
