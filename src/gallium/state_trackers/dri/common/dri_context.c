@@ -54,6 +54,8 @@ static void dri_fill_st_options(struct st_config_options *options,
 {
    options->force_glsl_extensions_warn =
       driQueryOptionb(optionCache, "force_glsl_extensions_warn");
+   options->disable_glsl_line_continuations =
+      driQueryOptionb(optionCache, "disable_glsl_line_continuations");
 }
 
 GLboolean

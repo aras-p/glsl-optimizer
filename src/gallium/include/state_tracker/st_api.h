@@ -240,6 +240,7 @@ struct st_visual
 struct st_config_options
 {
 	boolean force_glsl_extensions_warn;
+	boolean disable_glsl_line_continuations;
 };
 
 /**
