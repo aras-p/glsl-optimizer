@@ -397,7 +397,9 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
    ctx->Extensions.ARB_texture_env_combine = GL_TRUE;
    ctx->Extensions.ARB_texture_env_crossbar = GL_TRUE;
    ctx->Extensions.ARB_texture_env_dot3 = GL_TRUE;
-   /*ctx->Extensions.ARB_texture_float = GL_TRUE;*/
+#ifdef TEXTURE_FLOAT_ENABLED
+   ctx->Extensions.ARB_texture_float = GL_TRUE;
+#endif
    ctx->Extensions.ARB_texture_non_power_of_two = GL_TRUE;
    ctx->Extensions.ARB_texture_rg = GL_TRUE;
    ctx->Extensions.ARB_texture_compression_rgtc = GL_TRUE;
