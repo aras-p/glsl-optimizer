@@ -581,9 +581,9 @@ intel_render_texture(struct gl_context * ctx,
        return;
    }
 
-   DBG("Begin render %s texture tex=%u w=%d h=%d refcount=%d\n",
+   DBG("Begin render %s texture tex=%u w=%d h=%d d=%d refcount=%d\n",
        _mesa_get_format_name(image->TexFormat),
-       att->Texture->Name, image->Width, image->Height,
+       att->Texture->Name, image->Width, image->Height, image->Depth,
        rb->RefCount);
 
    /* update drawing region, etc */
