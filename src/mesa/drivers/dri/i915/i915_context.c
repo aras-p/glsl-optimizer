@@ -104,6 +104,8 @@ intel_init_texture_formats(struct gl_context *ctx)
    if (intel_screen->deviceID != PCI_CHIP_I830_M &&
        intel_screen->deviceID != PCI_CHIP_845_G)
       ctx->TextureFormatSupported[MESA_FORMAT_XRGB8888] = true;
+   if (intel->gen == 3)
+      ctx->TextureFormatSupported[MESA_FORMAT_SARGB8] = true;
    ctx->TextureFormatSupported[MESA_FORMAT_ARGB4444] = true;
    ctx->TextureFormatSupported[MESA_FORMAT_ARGB1555] = true;
    ctx->TextureFormatSupported[MESA_FORMAT_RGB565] = true;

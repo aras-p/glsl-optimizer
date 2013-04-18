@@ -56,6 +56,7 @@ translate_texture_format(gl_format mesa_format, GLenum DepthMode)
       return MAPSURF_16BIT | MT_16BIT_ARGB1555;
    case MESA_FORMAT_ARGB4444:
       return MAPSURF_16BIT | MT_16BIT_ARGB4444;
+   case MESA_FORMAT_SARGB8:
    case MESA_FORMAT_ARGB8888:
       return MAPSURF_32BIT | MT_32BIT_ARGB8888;
    case MESA_FORMAT_XRGB8888:
@@ -78,10 +79,14 @@ translate_texture_format(gl_format mesa_format, GLenum DepthMode)
           return (MAPSURF_16BIT | MT_16BIT_L16);
    case MESA_FORMAT_RGBA_DXT1:
    case MESA_FORMAT_RGB_DXT1:
+   case MESA_FORMAT_SRGB_DXT1:
+   case MESA_FORMAT_SRGBA_DXT1:
       return (MAPSURF_COMPRESSED | MT_COMPRESS_DXT1);
    case MESA_FORMAT_RGBA_DXT3:
+   case MESA_FORMAT_SRGBA_DXT3:
       return (MAPSURF_COMPRESSED | MT_COMPRESS_DXT2_3);
    case MESA_FORMAT_RGBA_DXT5:
+   case MESA_FORMAT_SRGBA_DXT5:
       return (MAPSURF_COMPRESSED | MT_COMPRESS_DXT4_5);
    case MESA_FORMAT_S8_Z24:
    case MESA_FORMAT_X8_Z24:
@@ -352,6 +357,12 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
       state[I915_TEXREG_SS3] |= (U_FIXED(CLAMP(minlod, 0.0, 11.0), 4) <<
 				 SS3_MIN_LOD_SHIFT);
 
+   }
+
+   if (sampler->sRGBDecode == GL_DECODE_EXT &&
+       (_mesa_get_srgb_format_linear(firstImage->TexFormat) !=
+        firstImage->TexFormat)) {
+      state[I915_TEXREG_SS2] |= SS2_REVERSE_GAMMA_ENABLE;
    }
 
    /* convert border color from float to ubyte */

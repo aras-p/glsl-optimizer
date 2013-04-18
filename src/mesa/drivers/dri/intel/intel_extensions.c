@@ -152,8 +152,6 @@ intelInitExtensions(struct gl_context *ctx)
       ctx->Extensions.EXT_texture_array = true;
       ctx->Extensions.EXT_texture_integer = true;
       ctx->Extensions.EXT_texture_snorm = true;
-      ctx->Extensions.EXT_texture_sRGB = true;
-      ctx->Extensions.EXT_texture_sRGB_decode = true;
       ctx->Extensions.EXT_texture_swizzle = true;
       ctx->Extensions.EXT_vertex_array_bgra = true;
       ctx->Extensions.ATI_envmap_bumpmap = true;
@@ -169,6 +167,8 @@ intelInitExtensions(struct gl_context *ctx)
       ctx->Extensions.ARB_fragment_program = true;
       ctx->Extensions.ARB_shadow = true;
       ctx->Extensions.ARB_texture_non_power_of_two = true;
+      ctx->Extensions.EXT_texture_sRGB = true;
+      ctx->Extensions.EXT_texture_sRGB_decode = true;
       ctx->Extensions.EXT_shadow_funcs = true;
       ctx->Extensions.EXT_stencil_two_side = true;
       ctx->Extensions.ATI_separate_stencil = true;
