@@ -283,9 +283,15 @@ attribs_update_simple(struct lp_build_interp_soa_context *bld,
             case LP_INTERP_LINEAR:
                if (attrib == 0 && chan == 0) {
                   dadx = coeff_bld->one;
+                  if (bld->pos_offset) {
+                     a = lp_build_const_vec(gallivm, coeff_bld->type, bld->pos_offset);
+                  }
                }
                else if (attrib == 0 && chan == 1) {
                   dady = coeff_bld->one;
+                  if (bld->pos_offset) {
+                     a = lp_build_const_vec(gallivm, coeff_bld->type, bld->pos_offset);
+                  }
                }
                else {
                   dadx = lp_build_extract_broadcast(gallivm, setup_bld->type,
@@ -454,12 +460,20 @@ coeffs_init(struct lp_build_interp_soa_context *bld,
             LLVMValueRef chan_index = lp_build_const_int32(gallivm, chan);
 
             if (attrib == 0 && chan == 0) {
-               a = lp_build_broadcast_scalar(coeff_bld, bld->x);
+               a = bld->x;
+               if (bld->pos_offset) {
+                  a = LLVMBuildFAdd(builder, a, lp_build_const_float(gallivm, bld->pos_offset), "");
+               }
+               a = lp_build_broadcast_scalar(coeff_bld, a);
                dadx = coeff_bld->one;
                dady = coeff_bld->zero;
             }
             else if (attrib == 0 && chan == 1) {
-               a = lp_build_broadcast_scalar(coeff_bld, bld->y);
+               a = bld->y;
+               if (bld->pos_offset) {
+                  a = LLVMBuildFAdd(builder, a, lp_build_const_float(gallivm, bld->pos_offset), "");
+               }
+               a = lp_build_broadcast_scalar(coeff_bld, a);
                dady = coeff_bld->one;
                dadx = coeff_bld->zero;
             }
@@ -667,6 +681,7 @@ lp_build_interp_soa_init(struct lp_build_interp_soa_context *bld,
                          struct gallivm_state *gallivm,
                          unsigned num_inputs,
                          const struct lp_shader_input *inputs,
+                         boolean pixel_center_integer,
                          LLVMBuilderRef builder,
                          struct lp_type type,
                          LLVMValueRef a0_ptr,
@@ -721,6 +736,12 @@ lp_build_interp_soa_init(struct lp_build_interp_soa_context *bld,
       for (chan = 0; chan < TGSI_NUM_CHANNELS; ++chan) {
          bld->attribs[attrib][chan] = bld->coeff_bld.undef;
       }
+   }
+
+   if (pixel_center_integer) {
+      bld->pos_offset = 0.0;
+   } else {
+      bld->pos_offset = 0.5;
    }
 
    pos_init(bld, x0, y0);
