@@ -1224,6 +1224,10 @@ do_common_optimization(exec_list *ir, bool linked,
    progress = opt_flatten_nested_if_blocks(ir) || progress;
    progress = do_copy_propagation(ir) || progress;
    progress = do_copy_propagation_elements(ir) || progress;
+
+   if (options->PreferDP4 && !linked)
+      progress = opt_flip_matrices(ir) || progress;
+
    if (linked)
       progress = do_dead_code(ir, uniform_locations_assigned) || progress;
    else
