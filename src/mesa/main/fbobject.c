@@ -351,7 +351,8 @@ _mesa_set_texture_attachment(struct gl_context *ctx,
                              struct gl_framebuffer *fb,
                              struct gl_renderbuffer_attachment *att,
                              struct gl_texture_object *texObj,
-                             GLenum texTarget, GLuint level, GLuint zoffset)
+                             GLenum texTarget, GLuint level, GLuint zoffset,
+                             GLboolean layered)
 {
    if (att->Texture == texObj) {
       /* re-attaching same texture */
@@ -373,6 +374,7 @@ _mesa_set_texture_attachment(struct gl_context *ctx,
    att->TextureLevel = level;
    att->CubeMapFace = _mesa_tex_target_to_face(texTarget);
    att->Zoffset = zoffset;
+   att->Layered = layered;
    att->Complete = GL_FALSE;
 
    if (_mesa_get_attachment_teximage(att)) {
@@ -2103,7 +2105,7 @@ reuse_framebuffer_texture_attachment(struct gl_framebuffer *fb,
 static void
 framebuffer_texture(struct gl_context *ctx, const char *caller, GLenum target, 
                     GLenum attachment, GLenum textarget, GLuint texture,
-                    GLint level, GLint zoffset)
+                    GLint level, GLint zoffset, GLboolean layered)
 {
    struct gl_renderbuffer_attachment *att;
    struct gl_texture_object *texObj = NULL;
@@ -2230,7 +2232,7 @@ framebuffer_texture(struct gl_context *ctx, const char *caller, GLenum target,
 	                                      BUFFER_DEPTH);
       } else {
 	 _mesa_set_texture_attachment(ctx, fb, att, texObj, textarget,
-				      level, zoffset);
+	                              level, zoffset, layered);
 	 if (attachment == GL_DEPTH_STENCIL_ATTACHMENT) {
 	    /* Above we created a new renderbuffer and attached it to the
 	     * depth attachment point. Now attach it to the stencil attachment
@@ -2296,7 +2298,7 @@ _mesa_FramebufferTexture1D(GLenum target, GLenum attachment,
    }
 
    framebuffer_texture(ctx, "1D", target, attachment, textarget, texture,
-                       level, 0);
+                       level, 0, GL_FALSE);
 }
 
 
@@ -2347,7 +2349,7 @@ _mesa_FramebufferTexture2D(GLenum target, GLenum attachment,
    }
 
    framebuffer_texture(ctx, "2D", target, attachment, textarget, texture,
-                       level, 0);
+                       level, 0, GL_FALSE);
 }
 
 
@@ -2365,7 +2367,7 @@ _mesa_FramebufferTexture3D(GLenum target, GLenum attachment,
    }
 
    framebuffer_texture(ctx, "3D", target, attachment, textarget, texture,
-                       level, zoffset);
+                       level, zoffset, GL_FALSE);
 }
 
 
@@ -2376,7 +2378,7 @@ _mesa_FramebufferTextureLayer(GLenum target, GLenum attachment,
    GET_CURRENT_CONTEXT(ctx);
 
    framebuffer_texture(ctx, "Layer", target, attachment, 0, texture,
-                       level, layer);
+                       level, layer, GL_FALSE);
 }
 
 

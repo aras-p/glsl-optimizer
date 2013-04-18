@@ -2610,6 +2610,7 @@ struct gl_renderbuffer_attachment
    GLuint CubeMapFace;  /**< 0 .. 5, for cube map textures. */
    GLuint Zoffset;      /**< Slice for 3D textures,  or layer for both 1D
                          * and 2D array textures */
+   GLboolean Layered;
 };
 
 

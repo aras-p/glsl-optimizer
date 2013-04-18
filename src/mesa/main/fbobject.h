@@ -99,7 +99,8 @@ _mesa_set_texture_attachment(struct gl_context *ctx,
                              struct gl_framebuffer *fb,
                              struct gl_renderbuffer_attachment *att,
                              struct gl_texture_object *texObj,
-                             GLenum texTarget, GLuint level, GLuint zoffset);
+                             GLenum texTarget, GLuint level, GLuint zoffset,
+                             GLboolean layered);
 
 extern void
 _mesa_set_renderbuffer_attachment(struct gl_context *ctx,
