@@ -190,13 +190,13 @@ u_decomposed_prims_for_vertices(int primitive, int vertices)
    case PIPE_PRIM_TRIANGLE_FAN:
       return (vertices > 2) ? vertices - 2 : 0;
    case PIPE_PRIM_LINES_ADJACENCY:
-      return vertices / 2;
+      return vertices / 4;
    case PIPE_PRIM_LINE_STRIP_ADJACENCY:
-      return (vertices > 1) ? vertices - 1 : 0;
+      return (vertices > 3) ? vertices - 3 : 0;
    case PIPE_PRIM_TRIANGLES_ADJACENCY:
-      return vertices / 3;
+      return vertices / 6;
    case PIPE_PRIM_TRIANGLE_STRIP_ADJACENCY:
-      return (vertices > 2) ? vertices - 2 : 0;
+      return (vertices > 5) ? 1 + (vertices - 6)/2 : 0;
    case PIPE_PRIM_QUADS:
       return vertices / 4;
    case PIPE_PRIM_QUAD_STRIP:
