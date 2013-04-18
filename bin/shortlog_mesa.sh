@@ -2,6 +2,12 @@
 
 # This script is used to generate the list of changes that
 # appears in the release notes files, with HTML formatting.
+#
+# Usage examples:
+#
+# $ bin/shortlog_mesa.sh mesa-9.0.2..mesa-9.0.3
+# $ bin/shortlog_mesa.sh mesa-9.0.2..mesa-9.0.3 > changes
+# $ bin/shortlog_mesa.sh mesa-9.0.2..mesa-9.0.3 | tee changes
 
 
 typeset -i in_log=0

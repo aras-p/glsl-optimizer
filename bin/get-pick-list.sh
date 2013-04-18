@@ -1,6 +1,12 @@
 #!/bin/sh
 
 # Script for generating a list of candidates for cherry-picking to a stable branch
+#
+# Usage examples:
+#
+# $ bin/get-pick-list.sh
+# $ bin/get-pick-list.sh > picklist
+# $ bin/get-pick-list.sh | tee picklist
 
 # Grep for commits with "cherry picked from commit" in the commit message.
 git log --reverse --grep="cherry picked from commit" origin/master..HEAD |\
