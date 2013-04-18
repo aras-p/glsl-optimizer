@@ -2683,6 +2683,8 @@ struct gl_framebuffer
    struct gl_renderbuffer *_ColorDrawBuffers[MAX_DRAW_BUFFERS];
    struct gl_renderbuffer *_ColorReadBuffer;
 
+   GLboolean Layered;
+
    /** Delete this framebuffer */
    void (*Delete)(struct gl_framebuffer *fb);
 };

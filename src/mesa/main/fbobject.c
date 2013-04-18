@@ -777,6 +777,8 @@ _mesa_test_framebuffer_completeness(struct gl_context *ctx,
    GLint fixedSampleLocations = -1;
    GLint i;
    GLuint j;
+   bool layer_count_valid = false;
+   GLuint layer_count = 0, att_layer_count;
 
    assert(_mesa_is_user_fbo(fb));
 
@@ -949,7 +951,25 @@ _mesa_test_framebuffer_completeness(struct gl_context *ctx,
          fbo_incomplete("unsupported renderbuffer format", i);
          return;
       }
+
+      /* Check that layered rendering is consistent. */
+      att_layer_count = att->Layered ? att->Renderbuffer->Depth : 0;
+      if (!layer_count_valid) {
+         layer_count = att_layer_count;
+         layer_count_valid = true;
+      } else if (layer_count != att_layer_count) {
+         if (layer_count == 0 || att_layer_count == 0) {
+            fb->_Status = GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS;
+            fbo_incomplete("framebuffer attachment layer mode is inconsistent", i);
+         } else {
+            fb->_Status = GL_FRAMEBUFFER_INCOMPLETE_LAYER_COUNT_ARB;
+            fbo_incomplete("framebuffer attachment layer count is inconsistent", i);
+         }
+         return;
+      }
    }
+
+   fb->Layered = layer_count > 0;
 
    if (_mesa_is_desktop_gl(ctx) && !ctx->Extensions.ARB_ES2_compatibility) {
       /* Check that all DrawBuffers are present */
