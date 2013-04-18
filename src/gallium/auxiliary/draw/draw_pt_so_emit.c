@@ -43,7 +43,7 @@ struct pt_so_emit {
 
    unsigned input_vertex_stride;
    const float (*inputs)[4];
-   const float (*pre_clip_pos)[4];
+   const float *pre_clip_pos;
    boolean has_so;
    boolean use_pre_clip_pos;
    int pos_idx;
@@ -116,7 +116,7 @@ static void so_emit_prim(struct pt_so_emit *so,
    unsigned input_vertex_stride = so->input_vertex_stride;
    struct draw_context *draw = so->draw;
    const float (*input_ptr)[4];
-   const float (*pcp_ptr)[4] = NULL;
+   const float *pcp_ptr = NULL;
    const struct pipe_stream_output_info *state = draw_so_info(draw);
    float *buffer;
    int buffer_total_bytes[PIPE_MAX_SO_BUFFERS];
@@ -148,14 +148,14 @@ static void so_emit_prim(struct pt_so_emit *so,
 
    for (i = 0; i < num_vertices; ++i) {
       const float (*input)[4];
-      const float (*pre_clip_pos)[4] = NULL;
+      const float *pre_clip_pos = NULL;
       int ob;
 
       input = (const float (*)[4])(
          (const char *)input_ptr + (indices[i] * input_vertex_stride));
 
       if (pcp_ptr)
-         pre_clip_pos = (const float (*)[4])(
+         pre_clip_pos = (const float *)(
          (const char *)pcp_ptr + (indices[i] * input_vertex_stride));
 
       for (slot = 0; slot < state->num_outputs; ++slot) {
@@ -170,7 +170,7 @@ static void so_emit_prim(struct pt_so_emit *so,
                             draw->so.targets[ob]->internal_offset) + state->output[slot].dst_offset;
          
          if (idx == so->pos_idx && pcp_ptr)
-            memcpy(buffer, &pre_clip_pos[idx][start_comp], num_comps * sizeof(float));
+            memcpy(buffer, &pre_clip_pos[start_comp], num_comps * sizeof(float));
          else
             memcpy(buffer, &input[idx][start_comp], num_comps * sizeof(float));
       }
@@ -244,7 +244,7 @@ void draw_pt_so_emit( struct pt_so_emit *emit,
    emit->generated_primitives = 0;
    emit->input_vertex_stride = input_verts->stride;
    if (emit->use_pre_clip_pos)
-     emit->pre_clip_pos = (const float (*)[4])input_verts->verts->pre_clip_pos;
+      emit->pre_clip_pos = input_verts->verts->pre_clip_pos;
 
    emit->inputs = (const float (*)[4])input_verts->verts->data;
 
