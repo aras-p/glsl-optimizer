@@ -2403,6 +2403,22 @@ _mesa_FramebufferTextureLayer(GLenum target, GLenum attachment,
 
 
 void GLAPIENTRY
+_mesa_FramebufferTexture(GLenum target, GLenum attachment,
+                         GLuint texture, GLint level)
+{
+   GET_CURRENT_CONTEXT(ctx);
+
+   if (ctx->Version >= 32 || ctx->Extensions.ARB_geometry_shader4) {
+      framebuffer_texture(ctx, "Layer", target, attachment, 0, texture,
+                          level, 0, GL_TRUE);
+   } else {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "unsupported function (glFramebufferTexture) called");
+   }
+}
+
+
+void GLAPIENTRY
 _mesa_FramebufferRenderbuffer(GLenum target, GLenum attachment,
                                  GLenum renderbufferTarget,
                                  GLuint renderbuffer)

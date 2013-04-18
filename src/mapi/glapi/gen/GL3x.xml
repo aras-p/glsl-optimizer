@@ -607,7 +607,7 @@
     <param name="params" type="GLint64 *"/>
   </function>
 
-  <function name="FramebufferTexture" offset="assign" exec="skip">
+  <function name="FramebufferTexture" offset="assign">
     <param name="target" type="GLenum"/>
     <param name="attachment" type="GLenum"/>
     <param name="texture" type="GLuint"/>
