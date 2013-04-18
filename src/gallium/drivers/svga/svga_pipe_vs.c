@@ -38,15 +38,17 @@
 #include "svga_debug.h"
 
 
-static const struct tgsi_token *substitute_vs( 
-   unsigned shader_id,
-   const struct tgsi_token *old_tokens )
+/**
+ * Substitute a debug shader.
+ */
+static const struct tgsi_token *
+substitute_vs(unsigned shader_id, const struct tgsi_token *old_tokens)
 {
 #if 0
    if (shader_id == 12) {
    static struct tgsi_token tokens[300];
 
-   const char *text = 
+   const char *text =
       "VERT\n"
       "DCL IN[0]\n"
       "DCL IN[1]\n"
@@ -75,9 +77,9 @@ static const struct tgsi_token *substitute_vs(
       "  MOV OUT[0], TEMP[4]\n"
       "  END\n";
 
-   if (!tgsi_text_translate( text,
+   if (!tgsi_text_translate(text,
                              tokens,
-                             Elements(tokens) ))
+                             Elements(tokens)))
    {
       assert(0);
       return NULL;
@@ -90,10 +92,6 @@ static const struct tgsi_token *substitute_vs(
    return old_tokens;
 }
 
-
-/***********************************************************************
- * Vertex shaders 
- */
 
 static void *
 svga_create_vs_state(struct pipe_context *pipe,
@@ -108,7 +106,6 @@ svga_create_vs_state(struct pipe_context *pipe,
     */
    vs->base.tokens = tgsi_dup_tokens(substitute_vs(svga->debug.shader_id,
                                                    templ->tokens));
-
 
    /* Collect basic info that we'll need later:
     */
@@ -134,7 +131,9 @@ svga_create_vs_state(struct pipe_context *pipe,
    return vs;
 }
 
-static void svga_bind_vs_state(struct pipe_context *pipe, void *shader)
+
+static void
+svga_bind_vs_state(struct pipe_context *pipe, void *shader)
 {
    struct svga_vertex_shader *vs = (struct svga_vertex_shader *)shader;
    struct svga_context *svga = svga_context(pipe);
@@ -144,40 +143,38 @@ static void svga_bind_vs_state(struct pipe_context *pipe, void *shader)
 }
 
 
-static void svga_delete_vs_state(struct pipe_context *pipe, void *shader)
+static void
+svga_delete_vs_state(struct pipe_context *pipe, void *shader)
 {
    struct svga_context *svga = svga_context(pipe);
    struct svga_vertex_shader *vs = (struct svga_vertex_shader *)shader;
    struct svga_shader_result *result, *tmp;
    enum pipe_error ret;
 
-   svga_hwtnl_flush_retry( svga );
+   svga_hwtnl_flush_retry(svga);
 
    draw_delete_vertex_shader(svga->swtnl.draw, vs->draw_shader);
-   
-   for (result = vs->base.results; result; result = tmp ) {
+
+   for (result = vs->base.results; result; result = tmp) {
       tmp = result->next;
 
-      ret = SVGA3D_DestroyShader(svga->swc, 
-                                 result->id,
-                                 SVGA3D_SHADERTYPE_VS );
-      if(ret != PIPE_OK) {
+      ret = SVGA3D_DestroyShader(svga->swc, result->id, SVGA3D_SHADERTYPE_VS);
+      if (ret != PIPE_OK) {
          svga_context_flush(svga, NULL);
-         ret = SVGA3D_DestroyShader(svga->swc, 
-                                    result->id,
-                                    SVGA3D_SHADERTYPE_VS );
+         ret = SVGA3D_DestroyShader(svga->swc, result->id,
+                                    SVGA3D_SHADERTYPE_VS);
          assert(ret == PIPE_OK);
       }
 
-      util_bitmask_clear( svga->vs_bm, result->id );
+      util_bitmask_clear(svga->vs_bm, result->id);
 
-      svga_destroy_shader_result( result );
+      svga_destroy_shader_result(result);
 
       /*
        * Remove stale references to this result to ensure a new result on the
        * same address will be detected as a change.
        */
-      if(result == svga->state.hw_draw.vs)
+      if (result == svga->state.hw_draw.vs)
          svga->state.hw_draw.vs = NULL;
    }
 
@@ -186,7 +183,8 @@ static void svga_delete_vs_state(struct pipe_context *pipe, void *shader)
 }
 
 
-void svga_init_vs_functions( struct svga_context *svga )
+void
+svga_init_vs_functions(struct svga_context *svga)
 {
    svga->pipe.create_vs_state = svga_create_vs_state;
    svga->pipe.bind_vs_state = svga_bind_vs_state;

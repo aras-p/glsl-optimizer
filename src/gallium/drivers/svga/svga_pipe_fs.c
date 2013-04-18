@@ -37,10 +37,6 @@
 #include "svga_debug.h"
 
 
-/***********************************************************************
- * Fragment shaders 
- */
-
 static void *
 svga_create_fs_state(struct pipe_context *pipe,
                      const struct pipe_shader_state *templ)
@@ -59,7 +55,7 @@ svga_create_fs_state(struct pipe_context *pipe,
    tgsi_scan_shader(fs->base.tokens, &fs->base.info);
 
    fs->base.id = svga->debug.shader_id++;
-   
+
    fs->generic_inputs = svga_get_generic_inputs_mask(&fs->base.info);
 
    svga_remap_generics(fs->generic_inputs, fs->generic_remap_table);
@@ -75,6 +71,7 @@ svga_create_fs_state(struct pipe_context *pipe,
    return fs;
 }
 
+
 static void
 svga_bind_fs_state(struct pipe_context *pipe, void *shader)
 {
@@ -85,41 +82,39 @@ svga_bind_fs_state(struct pipe_context *pipe, void *shader)
    svga->dirty |= SVGA_NEW_FS;
 }
 
-static
-void svga_delete_fs_state(struct pipe_context *pipe, void *shader)
+
+static void
+svga_delete_fs_state(struct pipe_context *pipe, void *shader)
 {
    struct svga_context *svga = svga_context(pipe);
    struct svga_fragment_shader *fs = (struct svga_fragment_shader *) shader;
    struct svga_shader_result *result, *tmp;
    enum pipe_error ret;
 
-   svga_hwtnl_flush_retry( svga );
+   svga_hwtnl_flush_retry(svga);
 
    draw_delete_fragment_shader(svga->swtnl.draw, fs->draw_shader);
 
-   for (result = fs->base.results; result; result = tmp ) {
+   for (result = fs->base.results; result; result = tmp) {
       tmp = result->next;
 
-      ret = SVGA3D_DestroyShader(svga->swc, 
-                                 result->id,
-                                 SVGA3D_SHADERTYPE_PS );
-      if(ret != PIPE_OK) {
+      ret = SVGA3D_DestroyShader(svga->swc, result->id, SVGA3D_SHADERTYPE_PS);
+      if (ret != PIPE_OK) {
          svga_context_flush(svga, NULL);
-         ret = SVGA3D_DestroyShader(svga->swc, 
-                                    result->id,
-                                    SVGA3D_SHADERTYPE_PS );
+         ret = SVGA3D_DestroyShader(svga->swc, result->id,
+                                    SVGA3D_SHADERTYPE_PS);
          assert(ret == PIPE_OK);
       }
 
-      util_bitmask_clear( svga->fs_bm, result->id );
+      util_bitmask_clear(svga->fs_bm, result->id);
 
-      svga_destroy_shader_result( result );
+      svga_destroy_shader_result(result);
 
       /*
        * Remove stale references to this result to ensure a new result on the
        * same address will be detected as a change.
        */
-      if(result == svga->state.hw_draw.fs)
+      if (result == svga->state.hw_draw.fs)
          svga->state.hw_draw.fs = NULL;
    }
 
@@ -128,10 +123,10 @@ void svga_delete_fs_state(struct pipe_context *pipe, void *shader)
 }
 
 
-void svga_init_fs_functions( struct svga_context *svga )
+void
+svga_init_fs_functions(struct svga_context *svga)
 {
    svga->pipe.create_fs_state = svga_create_fs_state;
    svga->pipe.bind_fs_state = svga_bind_fs_state;
    svga->pipe.delete_fs_state = svga_delete_fs_state;
 }
-
