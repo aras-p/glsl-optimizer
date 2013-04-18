@@ -1102,7 +1102,13 @@ lp_build_sample_common(struct lp_build_sample_context *bld,
     */
    if (target == PIPE_TEXTURE_CUBE) {
       LLVMValueRef face, face_s, face_t;
-      lp_build_cube_lookup(bld, *s, *t, *r, derivs, &face, &face_s, &face_t, &cube_rho);
+      boolean need_derivs;
+      need_derivs = ((min_filter != mag_filter ||
+                      mip_filter != PIPE_TEX_MIPFILTER_NONE) &&
+                      !bld->static_sampler_state->min_max_lod_equal &&
+                      !explicit_lod);
+      lp_build_cube_lookup(bld, *s, *t, *r, derivs, &face, &face_s, &face_t,
+                           &cube_rho, need_derivs);
       *s = face_s; /* vec */
       *t = face_t; /* vec */
       /* use 'r' to indicate cube face */

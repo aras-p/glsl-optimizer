@@ -437,7 +437,8 @@ lp_build_cube_lookup(struct lp_build_sample_context *bld,
                      LLVMValueRef *face,
                      LLVMValueRef *face_s,
                      LLVMValueRef *face_t,
-                     LLVMValueRef *rho);
+                     LLVMValueRef *rho,
+                     boolean need_derivs);
 
 
 void

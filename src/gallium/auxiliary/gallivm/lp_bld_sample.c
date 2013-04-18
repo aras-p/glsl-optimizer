@@ -245,16 +245,17 @@ lp_build_rho(struct lp_build_sample_context *bld,
       LLVMValueRef cubesize;
       LLVMValueRef index0 = lp_build_const_int32(gallivm, 0);
       /*
-       * If we have derivs too then we have per-pixel cube_rho - doesn't matter
-       * though until we do per-pixel lod.
        * Cube map code did already everything except size mul and per-quad extraction.
        */
+      rho = lp_build_pack_aos_scalars(bld->gallivm, coord_bld->type,
+                                      perquadf_bld->type, cube_rho, 0);
+      if (gallivm_debug & GALLIVM_DEBUG_NO_RHO_APPROX) {
+         rho = lp_build_sqrt(perquadf_bld, rho);
+      }
       /* Could optimize this for single quad just skip the broadcast */
       cubesize = lp_build_extract_broadcast(gallivm, bld->float_size_in_type,
-                                            coord_bld->type, float_size, index0);
-      rho_vec = lp_build_mul(coord_bld, cubesize, cube_rho);
-      rho = lp_build_pack_aos_scalars(bld->gallivm, coord_bld->type,
-                                      perquadf_bld->type, rho_vec, 0);
+                                            perquadf_bld->type, float_size, index0);
+      rho = lp_build_mul(perquadf_bld, cubesize, rho);
    }
    else if (derivs && !(bld->static_texture_state->target == PIPE_TEXTURE_CUBE)) {
       LLVMValueRef ddmax[3], ddx[3], ddy[3];
@@ -1356,25 +1357,31 @@ lp_build_cube_lookup(struct lp_build_sample_context *bld,
                      LLVMValueRef *face,
                      LLVMValueRef *face_s,
                      LLVMValueRef *face_t,
-                     LLVMValueRef *rho)
+                     LLVMValueRef *rho,
+                     boolean need_derivs)
 {
    struct lp_build_context *coord_bld = &bld->coord_bld;
    LLVMBuilderRef builder = bld->gallivm->builder;
    struct gallivm_state *gallivm = bld->gallivm;
    LLVMValueRef si, ti, ri;
-   boolean need_derivs = TRUE;
 
    if (1 || coord_bld->type.length > 4) {
       /*
        * Do per-pixel face selection. We cannot however (as we used to do)
        * simply calculate the derivs afterwards (which is very bogus for
-       * explicit derivs anyway) because the values would be "random" when
-       * not all pixels lie on the same face. Hence just transform the derivs
-       * (or rather only the dmax values), which works both for implicit and
-       * explicit derivatives and doesn't add much math (except need to
-       * calculate derivs for 3 instead of 2 coords and have a couple more selects
-       * but cuts some minor math elsewhere). The derivs don't need mirroring,
-       * just selection, since noone cares about the sign.
+       * explicit derivs btw) because the values would be "random" when
+       * not all pixels lie on the same face. So what we do here is just
+       * calculate the derivatives after scaling the coords by the absolute
+       * value of the inverse major axis, and essentially do rho calculation
+       * steps as if it were a 3d texture. This is perfect if all pixels hit
+       * the same face, but not so great at edges, I believe the max error
+       * should be sqrt(2) with no_rho_approx or 2 otherwise (essentially measuring
+       * the 3d distance between 2 points on the cube instead of measuring up/down
+       * the edge). Still this is possibly a win over just selecting the same face
+       * for all pixels. Unfortunately, something like that doesn't work for
+       * explicit derivatives.
+       * TODO: handle explicit derivatives by transforming them alongside coords
+       * somehow.
        */
       struct lp_build_context *cint_bld = &bld->int_coord_bld;
       struct lp_type intctype = cint_bld->type;
@@ -1392,68 +1399,10 @@ lp_build_cube_lookup(struct lp_build_sample_context *bld,
       LLVMValueRef facex = lp_build_const_int_vec(gallivm, intctype, PIPE_TEX_FACE_POS_X);
       LLVMValueRef facey = lp_build_const_int_vec(gallivm, intctype, PIPE_TEX_FACE_POS_Y);
       LLVMValueRef facez = lp_build_const_int_vec(gallivm, intctype, PIPE_TEX_FACE_POS_Z);
-      LLVMValueRef dmax[3], dmaxsnew, dmaxtnew;
 
       assert(PIPE_TEX_FACE_NEG_X == PIPE_TEX_FACE_POS_X + 1);
       assert(PIPE_TEX_FACE_NEG_Y == PIPE_TEX_FACE_POS_Y + 1);
       assert(PIPE_TEX_FACE_NEG_Z == PIPE_TEX_FACE_POS_Z + 1);
-
-      /*
-       * TODO do this only when needed.
-       */
-      if (need_derivs && !derivs) {
-         LLVMValueRef ddx_ddy[2], tmp[2];
-         /*
-          * This isn't quite the same as the "ordinary" path since
-          * we need to extract the ds/dt/dr values before further processing.
-          */
-         static const unsigned char swizzle11[] = { /* no-op swizzle */
-            0, LP_BLD_SWIZZLE_DONTCARE,
-            LP_BLD_SWIZZLE_DONTCARE, LP_BLD_SWIZZLE_DONTCARE
-         };
-         static const unsigned char swizzle12[] = {
-            2, LP_BLD_SWIZZLE_DONTCARE,
-            LP_BLD_SWIZZLE_DONTCARE, LP_BLD_SWIZZLE_DONTCARE
-         };
-         static const unsigned char swizzle21[] = { /* no-op swizzle */
-            0, LP_BLD_SWIZZLE_DONTCARE,
-            2, LP_BLD_SWIZZLE_DONTCARE
-         };
-         static const unsigned char swizzle22[] = {
-            1, LP_BLD_SWIZZLE_DONTCARE,
-            3, LP_BLD_SWIZZLE_DONTCARE
-         };
-
-         ddx_ddy[0] = lp_build_packed_ddx_ddy_twocoord(coord_bld, s, t);
-         ddx_ddy[1] = lp_build_packed_ddx_ddy_onecoord(coord_bld, r);
-         ddx_ddy[0] = lp_build_abs(coord_bld, ddx_ddy[0]);
-         ddx_ddy[1] = lp_build_abs(coord_bld, ddx_ddy[1]);
-
-         tmp[0] = lp_build_swizzle_aos(coord_bld, ddx_ddy[0], swizzle21);
-         tmp[1] = lp_build_swizzle_aos(coord_bld, ddx_ddy[0], swizzle22);
-         dmax[0] = lp_build_max(coord_bld, tmp[0], tmp[1]);
-         dmax[1] = lp_build_swizzle_aos(coord_bld, dmax[0], swizzle12);
-
-         tmp[0] = lp_build_swizzle_aos(coord_bld, ddx_ddy[1], swizzle11);
-         tmp[1] = lp_build_swizzle_aos(coord_bld, ddx_ddy[1], swizzle12);
-         dmax[2] = lp_build_max(coord_bld, tmp[0], tmp[1]);
-      }
-      else if (need_derivs) {
-         LLVMValueRef abs_ddx[3], abs_ddy[3];
-         abs_ddx[0] = lp_build_abs(coord_bld, derivs->ddx[0]);
-         abs_ddx[1] = lp_build_abs(coord_bld, derivs->ddx[1]);
-         abs_ddx[2] = lp_build_abs(coord_bld, derivs->ddx[2]);
-         abs_ddy[0] = lp_build_abs(coord_bld, derivs->ddy[0]);
-         abs_ddy[1] = lp_build_abs(coord_bld, derivs->ddy[1]);
-         abs_ddy[2] = lp_build_abs(coord_bld, derivs->ddy[2]);
-         dmax[0] = lp_build_max(coord_bld, abs_ddx[0], abs_ddy[0]);
-         dmax[1] = lp_build_max(coord_bld, abs_ddx[1], abs_ddy[1]);
-         dmax[2] = lp_build_max(coord_bld, abs_ddx[2], abs_ddy[2]);
-      }
-
-      si = LLVMBuildBitCast(builder, s, lp_build_vec_type(gallivm, intctype), "");
-      ti = LLVMBuildBitCast(builder, t, lp_build_vec_type(gallivm, intctype), "");
-      ri = LLVMBuildBitCast(builder, r, lp_build_vec_type(gallivm, intctype), "");
 
       /*
        * get absolute value (for x/y/z face selection) and sign bit
@@ -1463,9 +1412,6 @@ lp_build_cube_lookup(struct lp_build_sample_context *bld,
       as = lp_build_abs(&bld->coord_bld, s);
       at = lp_build_abs(&bld->coord_bld, t);
       ar = lp_build_abs(&bld->coord_bld, r);
-      signs = LLVMBuildAnd(builder, si, signmask, "");
-      signt = LLVMBuildAnd(builder, ti, signmask, "");
-      signr = LLVMBuildAnd(builder, ri, signmask, "");
 
       /*
        * major face determination: select x if x > y else select y
@@ -1479,6 +1425,83 @@ lp_build_cube_lookup(struct lp_build_sample_context *bld,
       as_ge_at = lp_build_cmp(coord_bld, PIPE_FUNC_GREATER, as, at);
       maxasat = lp_build_max(coord_bld, as, at);
       ar_ge_as_at = lp_build_cmp(coord_bld, PIPE_FUNC_GEQUAL, ar, maxasat);
+
+      if (need_derivs) {
+         LLVMValueRef ddx_ddy[2], tmp[2], rho_vec;
+         static const unsigned char swizzle0[] = { /* no-op swizzle */
+            0, LP_BLD_SWIZZLE_DONTCARE,
+            LP_BLD_SWIZZLE_DONTCARE, LP_BLD_SWIZZLE_DONTCARE
+         };
+         static const unsigned char swizzle1[] = {
+            1, LP_BLD_SWIZZLE_DONTCARE,
+            LP_BLD_SWIZZLE_DONTCARE, LP_BLD_SWIZZLE_DONTCARE
+         };
+         static const unsigned char swizzle01[] = { /* no-op swizzle */
+            0, 1,
+            LP_BLD_SWIZZLE_DONTCARE, LP_BLD_SWIZZLE_DONTCARE
+         };
+         static const unsigned char swizzle23[] = {
+            2, 3,
+            LP_BLD_SWIZZLE_DONTCARE, LP_BLD_SWIZZLE_DONTCARE
+         };
+         static const unsigned char swizzle02[] = {
+            0, 2,
+            LP_BLD_SWIZZLE_DONTCARE, LP_BLD_SWIZZLE_DONTCARE
+         };
+
+         /*
+          * scale the s/t/r coords pre-select/mirror so we can calculate
+          * "reasonable" derivs.
+          */
+         ma = lp_build_select(coord_bld, as_ge_at, s, t);
+         ma = lp_build_select(coord_bld, ar_ge_as_at, r, ma);
+         ima = lp_build_cube_imapos(coord_bld, ma);
+         s = lp_build_mul(coord_bld, s, ima);
+         t = lp_build_mul(coord_bld, t, ima);
+         r = lp_build_mul(coord_bld, r, ima);
+
+         /*
+          * This isn't quite the same as the "ordinary" (3d deriv) path since we
+          * know the texture is square which simplifies things (we can omit the
+          * size mul which happens very early completely here and do it at the
+          * very end).
+          */
+         ddx_ddy[0] = lp_build_packed_ddx_ddy_twocoord(coord_bld, s, t);
+         ddx_ddy[1] = lp_build_packed_ddx_ddy_onecoord(coord_bld, r);
+
+         if (gallivm_debug & GALLIVM_DEBUG_NO_RHO_APPROX) {
+            ddx_ddy[0] = lp_build_mul(coord_bld, ddx_ddy[0], ddx_ddy[0]);
+            ddx_ddy[1] = lp_build_mul(coord_bld, ddx_ddy[1], ddx_ddy[1]);
+         }
+         else {
+            ddx_ddy[0] = lp_build_abs(coord_bld, ddx_ddy[0]);
+            ddx_ddy[1] = lp_build_abs(coord_bld, ddx_ddy[1]);
+         }
+
+         tmp[0] = lp_build_swizzle_aos(coord_bld, ddx_ddy[0], swizzle01);
+         tmp[1] = lp_build_swizzle_aos(coord_bld, ddx_ddy[0], swizzle23);
+         tmp[2] = lp_build_swizzle_aos(coord_bld, ddx_ddy[1], swizzle02);
+
+         if (gallivm_debug & GALLIVM_DEBUG_NO_RHO_APPROX) {
+            rho_vec = lp_build_add(coord_bld, tmp[0], tmp[1]);
+            rho_vec = lp_build_add(coord_bld, rho_vec, tmp[2]);
+         }
+         else {
+            rho_vec = lp_build_max(coord_bld, tmp[0], tmp[1]);
+            rho_vec = lp_build_max(coord_bld, rho_vec, tmp[2]);
+         }
+
+         tmp[0] = lp_build_swizzle_aos(coord_bld, rho_vec, swizzle0);
+         tmp[1] = lp_build_swizzle_aos(coord_bld, rho_vec, swizzle1);
+         *rho = lp_build_max(coord_bld, tmp[0], tmp[1]);
+      }
+
+      si = LLVMBuildBitCast(builder, s, lp_build_vec_type(gallivm, intctype), "");
+      ti = LLVMBuildBitCast(builder, t, lp_build_vec_type(gallivm, intctype), "");
+      ri = LLVMBuildBitCast(builder, r, lp_build_vec_type(gallivm, intctype), "");
+      signs = LLVMBuildAnd(builder, si, signmask, "");
+      signt = LLVMBuildAnd(builder, ti, signmask, "");
+      signr = LLVMBuildAnd(builder, ri, signmask, "");
 
       /*
        * compute all possible new s/t coords
@@ -1510,23 +1533,19 @@ lp_build_cube_lookup(struct lp_build_sample_context *bld,
        */
 
       /* select/mirror */
+      if (!need_derivs) {
+         ma = lp_build_select(coord_bld, as_ge_at, s, t);
+      }
       *face_s = lp_build_select(cint_bld, as_ge_at, snewx, snewy);
       *face_t = lp_build_select(cint_bld, as_ge_at, tnewx, tnewy);
-      ma = lp_build_select(coord_bld, as_ge_at, s, t);
       *face = lp_build_select(cint_bld, as_ge_at, facex, facey);
-      if (need_derivs) {
-         dmaxsnew = lp_build_select(coord_bld, as_ge_at, dmax[2], dmax[0]);
-         dmaxtnew = lp_build_select(coord_bld, as_ge_at, dmax[1], dmax[2]);
-      }
 
+      if (!need_derivs) {
+         ma = lp_build_select(coord_bld, ar_ge_as_at, r, ma);
+      }
       *face_s = lp_build_select(cint_bld, ar_ge_as_at, snewz, *face_s);
       *face_t = lp_build_select(cint_bld, ar_ge_as_at, tnewz, *face_t);
-      ma = lp_build_select(coord_bld, ar_ge_as_at, r, ma);
       *face = lp_build_select(cint_bld, ar_ge_as_at, facez, *face);
-      if (need_derivs) {
-         dmaxsnew = lp_build_select(coord_bld, ar_ge_as_at, dmax[0], dmaxsnew);
-         dmaxtnew = lp_build_select(coord_bld, ar_ge_as_at, dmax[1], dmaxtnew);
-      }
 
       *face_s = LLVMBuildBitCast(builder, *face_s,
                                lp_build_vec_type(gallivm, coord_bld->type), "");
@@ -1542,26 +1561,15 @@ lp_build_cube_lookup(struct lp_build_sample_context *bld,
       signma = LLVMBuildLShr(builder, mai, signshift, "");
       *face = LLVMBuildOr(builder, *face, signma, "face");
 
-      ima = lp_build_cube_imapos(coord_bld, ma);
-
       /* project coords */
-      *face_s = lp_build_mul(coord_bld, *face_s, ima);
-      *face_s = lp_build_add(coord_bld, *face_s, posHalf);
-      *face_t = lp_build_mul(coord_bld, *face_t, ima);
-      *face_t = lp_build_add(coord_bld, *face_t, posHalf);
-
-      /* project derivs */
-      if (need_derivs) {
-         /*
-          * we do some optimization here, since we know it's square
-          * we can do the max before projection (and before size mul,
-          * which the so-called "rho" is missing here).
-          * For explicit derivs this is fully per-pixel vector, for implicit
-          * derivs only the first value per quad contains useful values.
-          */
-         *rho = lp_build_max(coord_bld, dmaxsnew, dmaxtnew);
-         *rho = lp_build_mul(coord_bld, *rho, ima);
+      if (!need_derivs) {
+         ima = lp_build_cube_imapos(coord_bld, ma);
+         *face_s = lp_build_mul(coord_bld, *face_s, ima);
+         *face_t = lp_build_mul(coord_bld, *face_t, ima);
       }
+
+      *face_s = lp_build_add(coord_bld, *face_s, posHalf);
+      *face_t = lp_build_add(coord_bld, *face_t, posHalf);
    }
 
    else {
