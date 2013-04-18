@@ -2980,6 +2980,20 @@ compatible_resolve_formats(const struct gl_renderbuffer *readRb,
    return GL_FALSE;
 }
 
+static GLboolean
+is_valid_blit_filter(const struct gl_context *ctx, GLenum filter)
+{
+   switch (filter) {
+   case GL_NEAREST:
+   case GL_LINEAR:
+      return true;
+   case GL_SCALED_RESOLVE_FASTEST_EXT:
+   case GL_SCALED_RESOLVE_NICEST_EXT:
+      return ctx->Extensions.EXT_framebuffer_multisample_blit_scaled;
+   default:
+      return false;
+   }
+}
 
 /**
  * Blit rectangular region, optionally from one framebuffer to another.
@@ -3029,8 +3043,17 @@ _mesa_BlitFramebuffer(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
       return;
    }
 
-   if (filter != GL_NEAREST && filter != GL_LINEAR) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glBlitFramebufferEXT(filter)");
+   if (!is_valid_blit_filter(ctx, filter)) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glBlitFramebufferEXT(%s)",
+                  _mesa_lookup_enum_by_nr(filter));
+      return;
+   }
+
+   if ((filter == GL_SCALED_RESOLVE_FASTEST_EXT ||
+        filter == GL_SCALED_RESOLVE_NICEST_EXT) &&
+        (readFb->Visual.samples == 0 || drawFb->Visual.samples > 0)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glBlitFramebufferEXT(%s)",
+                  _mesa_lookup_enum_by_nr(filter));
       return;
    }
 
@@ -3102,10 +3125,10 @@ _mesa_BlitFramebuffer(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
                }
             }
          }
-         if (filter == GL_LINEAR) {
-            /* 3.1 spec, page 199:
+         if (filter != GL_NEAREST) {
+            /* From EXT_framebuffer_multisample_blit_scaled specification:
              * "Calling BlitFramebuffer will result in an INVALID_OPERATION error
-             * if filter is LINEAR and read buffer contains integer data."
+             * if filter is not NEAREST and read buffer contains integer data."
              */
             GLenum type = _mesa_get_format_datatype(colorReadRb->Format);
             if (type == GL_INT || type == GL_UNSIGNED_INT) {
@@ -3263,7 +3286,8 @@ _mesa_BlitFramebuffer(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
       }
 
       /* extra checks for multisample copies... */
-      if (readFb->Visual.samples > 0 || drawFb->Visual.samples > 0) {
+      if ((readFb->Visual.samples > 0 || drawFb->Visual.samples > 0) &&
+          (filter == GL_NEAREST || filter == GL_LINEAR)) {
          /* src and dest region sizes must be the same */
          if (abs(srcX1 - srcX0) != abs(dstX1 - dstX0) ||
              abs(srcY1 - srcY0) != abs(dstY1 - dstY0)) {

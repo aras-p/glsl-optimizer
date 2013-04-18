@@ -184,6 +184,7 @@ static const struct extension extension_table[] = {
    { "GL_EXT_fog_coord",                           o(EXT_fog_coord),                           GLL,            1999 },
    { "GL_EXT_framebuffer_blit",                    o(EXT_framebuffer_blit),                    GL,             2005 },
    { "GL_EXT_framebuffer_multisample",             o(EXT_framebuffer_multisample),             GL,             2005 },
+   { "GL_EXT_framebuffer_multisample_blit_scaled", o(EXT_framebuffer_multisample_blit_scaled), GL,             2011 },
    { "GL_EXT_framebuffer_object",                  o(EXT_framebuffer_object),                  GL,             2000 },
    { "GL_EXT_framebuffer_sRGB",                    o(EXT_framebuffer_sRGB),                    GL,             1998 },
    { "GL_EXT_gpu_program_parameters",              o(EXT_gpu_program_parameters),              GLL,            2006 },
