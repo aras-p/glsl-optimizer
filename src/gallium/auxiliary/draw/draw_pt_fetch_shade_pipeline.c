@@ -31,6 +31,7 @@
 #include "draw/draw_context.h"
 #include "draw/draw_vbuf.h"
 #include "draw/draw_vertex.h"
+#include "draw/draw_prim_assembler.h"
 #include "draw/draw_pt.h"
 #include "draw/draw_vs.h"
 #include "draw/draw_gs.h"
@@ -69,7 +70,8 @@ static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
    unsigned i;
    unsigned instance_id_index = ~0;
 
-   unsigned gs_out_prim = (gs ? gs->output_primitive : prim);
+   const unsigned gs_out_prim = (gs ? gs->output_primitive :
+                                 u_assembled_primitive(prim));
 
    /* Add one to num_outputs because the pipeline occasionally tags on
     * an additional texcoord, eg for AA lines.
@@ -217,7 +219,7 @@ static void draw_vertex_shader_run(struct draw_vertex_shader *vshader,
 
 static void fetch_pipeline_generic( struct draw_pt_middle_end *middle,
                                     const struct draw_fetch_info *fetch_info,
-                                    const struct draw_prim_info *prim_info )
+                                    const struct draw_prim_info *in_prim_info )
 {
    struct fetch_pipeline_middle_end *fpme = (struct fetch_pipeline_middle_end *)middle;
    struct draw_context *draw = fpme->draw;
@@ -228,6 +230,10 @@ static void fetch_pipeline_generic( struct draw_pt_middle_end *middle,
    struct draw_vertex_info vs_vert_info;
    struct draw_vertex_info gs_vert_info;
    struct draw_vertex_info *vert_info;
+   struct draw_prim_info ia_prim_info;
+   struct draw_vertex_info ia_vert_info;
+   const struct draw_prim_info *prim_info = in_prim_info;
+   boolean free_prim_info = FALSE;
    unsigned opt = fpme->opt;
 
    fetched_vert_info.count = fetch_info->count;
@@ -283,6 +289,18 @@ static void fetch_pipeline_generic( struct draw_pt_middle_end *middle,
       FREE(vert_info->verts);
       vert_info = &gs_vert_info;
       prim_info = &gs_prim_info;
+   } else {
+      if (draw_prim_assembler_is_required(draw, prim_info, vert_info)) {
+         draw_prim_assembler_run(draw, prim_info, vert_info,
+                                 &ia_prim_info, &ia_vert_info);
+
+         if (ia_vert_info.count) {
+            FREE(vert_info->verts);
+            vert_info = &ia_vert_info;
+            prim_info = &ia_prim_info;
+            free_prim_info = TRUE;
+         }
+      }
    }
 
 
@@ -314,6 +332,9 @@ static void fetch_pipeline_generic( struct draw_pt_middle_end *middle,
       }
    }
    FREE(vert_info->verts);
+   if (free_prim_info) {
+      FREE(prim_info->primitive_lengths);
+   }
 }
 
 static void fetch_pipeline_run( struct draw_pt_middle_end *middle,

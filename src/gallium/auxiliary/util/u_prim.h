@@ -213,6 +213,27 @@ u_decomposed_prims_for_vertices(int primitive, int vertices)
    }
 }
 
+static INLINE unsigned
+u_assembled_primitive(unsigned prim)
+{
+   switch (prim) {
+   case PIPE_PRIM_LINES_ADJACENCY:
+      return PIPE_PRIM_LINES;
+   case PIPE_PRIM_LINE_STRIP_ADJACENCY:
+      return PIPE_PRIM_LINES;
+   case PIPE_PRIM_TRIANGLES_ADJACENCY:
+      return PIPE_PRIM_TRIANGLES;
+   case PIPE_PRIM_TRIANGLE_STRIP_ADJACENCY:
+      return PIPE_PRIM_TRIANGLES;
+   default:
+      return prim;
+   }
+
+   return prim;
+}
+      
+      
+
 const char *u_prim_name( unsigned pipe_prim );
 
 #endif
