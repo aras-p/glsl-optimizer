@@ -2742,7 +2742,6 @@ lp_build_tgsi_soa(struct gallivm_state *gallivm,
                   struct lp_build_mask_context *mask,
                   LLVMValueRef consts_ptr,
                   const struct lp_bld_tgsi_system_values *system_values,
-                  const LLVMValueRef *pos,
                   const LLVMValueRef (*inputs)[TGSI_NUM_CHANNELS],
                   LLVMValueRef (*outputs)[TGSI_NUM_CHANNELS],
                   struct lp_build_sampler_soa *sampler,
@@ -2766,7 +2765,6 @@ lp_build_tgsi_soa(struct gallivm_state *gallivm,
    lp_build_context_init(&bld.bld_base.int_bld, gallivm, lp_int_type(type));
    lp_build_context_init(&bld.elem_bld, gallivm, lp_elem_type(type));
    bld.mask = mask;
-   bld.pos = pos;
    bld.inputs = inputs;
    bld.outputs = outputs;
    bld.consts_ptr = consts_ptr;
