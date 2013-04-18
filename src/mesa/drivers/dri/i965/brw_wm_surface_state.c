@@ -31,6 +31,7 @@
                    
 
 #include "main/context.h"
+#include "main/blend.h"
 #include "main/mtypes.h"
 #include "main/samplerobj.h"
 #include "program/prog_parameter.h"
@@ -1229,7 +1230,8 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
    uint32_t *surf;
    uint32_t tile_x, tile_y;
    uint32_t format = 0;
-   gl_format rb_format = intel_rb_format(irb);
+   /* _NEW_BUFFERS */
+   gl_format rb_format = _mesa_get_render_format(ctx, intel_rb_format(irb));
 
    if (irb->tex_image && !brw->has_surface_tile_offset) {
       intel_renderbuffer_tile_offsets(irb, &tile_x, &tile_y);
@@ -1251,25 +1253,10 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
    surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE,
 			  6 * 4, 32, &brw->wm.surf_offset[unit]);
 
-   switch (rb_format) {
-   case MESA_FORMAT_SARGB8:
-      /* _NEW_BUFFERS
-       *
-       * Without GL_EXT_framebuffer_sRGB we shouldn't bind sRGB surfaces to the
-       * blend/update as sRGB.
-       */
-      if (ctx->Color.sRGBEnabled)
-	 format = brw_format_for_mesa_format(rb_format);
-      else
-	 format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
-      break;
-   default:
-      format = brw->render_target_format[rb_format];
-      if (unlikely(!brw->format_supported_as_render_target[rb_format])) {
-	 _mesa_problem(ctx, "%s: renderbuffer format %s unsupported\n",
-		       __FUNCTION__, _mesa_get_format_name(rb_format));
-      }
-      break;
+   format = brw->render_target_format[rb_format];
+   if (unlikely(!brw->format_supported_as_render_target[rb_format])) {
+      _mesa_problem(ctx, "%s: renderbuffer format %s unsupported\n",
+                    __FUNCTION__, _mesa_get_format_name(rb_format));
    }
 
    surf[0] = (BRW_SURFACE_2D << BRW_SURFACE_TYPE_SHIFT |
