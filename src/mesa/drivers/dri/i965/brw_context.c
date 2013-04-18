@@ -232,6 +232,8 @@ brwCreateContext(int api,
       ctx->ShaderCompilerOptions[i].LowerClipDistance = true;
    }
 
+   ctx->ShaderCompilerOptions[MESA_SHADER_VERTEX].PreferDP4 = true;
+
    ctx->Const.VertexProgram.MaxNativeInstructions = (16 * 1024);
    ctx->Const.VertexProgram.MaxAluInstructions = 0;
    ctx->Const.VertexProgram.MaxTexInstructions = 0;
