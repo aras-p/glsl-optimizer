@@ -1536,13 +1536,13 @@ error_check_subtexture_dimensions(struct gl_context *ctx,
    }
 
    /* check xoffset and width */
-   if (xoffset < -destImage->Border) {
+   if (xoffset < - (GLint) destImage->Border) {
       _mesa_error(ctx, GL_INVALID_VALUE, "%s%dD(xoffset)",
                   function, dims);
       return GL_TRUE;
    }
 
-   if (xoffset + subWidth > destImage->Width) {
+   if (xoffset + subWidth > (GLint) destImage->Width) {
       _mesa_error(ctx, GL_INVALID_VALUE, "%s%dD(xoffset+width)",
                   function, dims);
       return GL_TRUE;
@@ -1556,7 +1556,7 @@ error_check_subtexture_dimensions(struct gl_context *ctx,
                      function, dims);
          return GL_TRUE;
       }
-      if (yoffset + subHeight > destImage->Height) {
+      if (yoffset + subHeight > (GLint) destImage->Height) {
          _mesa_error(ctx, GL_INVALID_VALUE, "%s%dD(yoffset+height)",
                      function, dims);
          return GL_TRUE;
@@ -1595,13 +1595,13 @@ error_check_subtexture_dimensions(struct gl_context *ctx,
       }
 
       /* size must be multiple of bw by bh or equal to whole texture size */
-      if ((subWidth % bw != 0) && subWidth != destImage->Width) {
+      if ((subWidth % bw != 0) && subWidth != (GLint) destImage->Width) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "%s%dD(width = %d)", function, dims, subWidth);
          return GL_TRUE;
       }
 
-      if ((subHeight % bh != 0) && subHeight != destImage->Height) {
+      if ((subHeight % bh != 0) && subHeight != (GLint) destImage->Height) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "%s%dD(height = %d)", function, dims, subHeight);
          return GL_TRUE;
