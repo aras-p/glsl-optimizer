@@ -494,6 +494,8 @@ intel_renderbuffer_update_wrapper(struct intel_context *intel,
    struct intel_mipmap_tree *mt = intel_image->mt;
    int level = image->Level;
 
+   rb->Depth = image->Depth;
+
    rb->AllocStorage = intel_nop_alloc_storage;
 
    intel_miptree_check_level_layer(mt, level, layer);
