@@ -257,31 +257,59 @@ lp_build_rho(struct lp_build_sample_context *bld,
                                       perquadf_bld->type, rho_vec, 0);
    }
    else if (derivs && !(bld->static_texture_state->target == PIPE_TEXTURE_CUBE)) {
-      LLVMValueRef ddmax[3];
+      LLVMValueRef ddmax[3], ddx[3], ddy[3];
       for (i = 0; i < dims; i++) {
-         LLVMValueRef ddx, ddy;
          LLVMValueRef floatdim;
          LLVMValueRef indexi = lp_build_const_int32(gallivm, i);
-         ddx = lp_build_abs(coord_bld, derivs->ddx[i]);
-         ddy = lp_build_abs(coord_bld, derivs->ddy[i]);
-         ddmax[i] = lp_build_max(coord_bld, ddx, ddy);
+
          floatdim = lp_build_extract_broadcast(gallivm, bld->float_size_in_type,
                                                coord_bld->type, float_size, indexi);
-         ddmax[i] = lp_build_mul(coord_bld, floatdim, ddmax[i]);
-      }
-      rho_vec = ddmax[0];
-      if (dims > 1) {
-         rho_vec = lp_build_max(coord_bld, rho_vec, ddmax[1]);
-         if (dims > 2) {
-            rho_vec = lp_build_max(coord_bld, rho_vec, ddmax[2]);
+
+         if ((gallivm_debug & GALLIVM_DEBUG_NO_RHO_APPROX) && (dims > 1)) {
+            ddx[i] = lp_build_mul(coord_bld, floatdim, derivs->ddx[i]);
+            ddy[i] = lp_build_mul(coord_bld, floatdim, derivs->ddy[i]);
+            ddx[i] = lp_build_mul(coord_bld, ddx[i], ddx[i]);
+            ddy[i] = lp_build_mul(coord_bld, ddy[i], ddy[i]);
+         }
+         else {
+            LLVMValueRef tmpx, tmpy;
+            tmpx = lp_build_abs(coord_bld, derivs->ddx[i]);
+            tmpy = lp_build_abs(coord_bld, derivs->ddy[i]);
+            ddmax[i] = lp_build_max(coord_bld, tmpx, tmpy);
+            ddmax[i] = lp_build_mul(coord_bld, floatdim, ddmax[i]);
          }
       }
-      /*
-       * rho_vec now still contains per-pixel rho, convert to scalar per quad
-       * since we can't handle per-pixel rho/lod from now on (TODO).
-       */
-      rho = lp_build_pack_aos_scalars(bld->gallivm, coord_bld->type,
-                                      perquadf_bld->type, rho_vec, 0);
+      if ((gallivm_debug & GALLIVM_DEBUG_NO_RHO_APPROX) && (dims > 1)) {
+         rho_xvec = lp_build_add(coord_bld, ddx[0], ddx[1]);
+         rho_yvec = lp_build_add(coord_bld, ddy[0], ddy[1]);
+         if (dims > 2) {
+            rho_xvec = lp_build_add(coord_bld, rho_xvec, ddx[2]);
+            rho_yvec = lp_build_add(coord_bld, rho_yvec, ddy[2]);
+         }
+         rho_vec = lp_build_max(coord_bld, rho_xvec, rho_yvec);
+         rho = lp_build_pack_aos_scalars(bld->gallivm, coord_bld->type,
+                                         perquadf_bld->type, rho_vec, 0);
+         /*
+          * note that as long as we don't care about per-pixel lod could reduce math
+          * more (at some shuffle cost), but for now only do sqrt after packing.
+          */
+         rho = lp_build_sqrt(perquadf_bld, rho);
+      }
+      else {
+         rho_vec = ddmax[0];
+         if (dims > 1) {
+            rho_vec = lp_build_max(coord_bld, rho_vec, ddmax[1]);
+            if (dims > 2) {
+               rho_vec = lp_build_max(coord_bld, rho_vec, ddmax[2]);
+            }
+         }
+         /*
+          * rho_vec now still contains per-pixel rho, convert to scalar per quad
+          * since we can't handle per-pixel rho/lod from now on (TODO).
+          */
+         rho = lp_build_pack_aos_scalars(bld->gallivm, coord_bld->type,
+                                         perquadf_bld->type, rho_vec, 0);
+      }
    }
    else {
       /*
@@ -289,6 +317,19 @@ lp_build_rho(struct lp_build_sample_context *bld,
        * (the shuffle code makes it look worse than it is).
        * Still, might not be ideal for all cases.
        */
+      static const unsigned char swizzle0[] = { /* no-op swizzle */
+         0, LP_BLD_SWIZZLE_DONTCARE,
+         LP_BLD_SWIZZLE_DONTCARE, LP_BLD_SWIZZLE_DONTCARE
+      };
+      static const unsigned char swizzle1[] = {
+         1, LP_BLD_SWIZZLE_DONTCARE,
+         LP_BLD_SWIZZLE_DONTCARE, LP_BLD_SWIZZLE_DONTCARE
+      };
+      static const unsigned char swizzle2[] = {
+         2, LP_BLD_SWIZZLE_DONTCARE,
+         LP_BLD_SWIZZLE_DONTCARE, LP_BLD_SWIZZLE_DONTCARE
+      };
+
       if (dims < 2) {
          ddx_ddy[0] = lp_build_packed_ddx_ddy_onecoord(coord_bld, s);
       }
@@ -299,127 +340,151 @@ lp_build_rho(struct lp_build_sample_context *bld,
          }
       }
 
-      ddx_ddy[0] = lp_build_abs(coord_bld, ddx_ddy[0]);
-      if (dims > 2) {
-         ddx_ddy[1] = lp_build_abs(coord_bld, ddx_ddy[1]);
-      }
+      if ((gallivm_debug & GALLIVM_DEBUG_NO_RHO_APPROX) && (dims > 1)) {
+         static const unsigned char swizzle01[] = { /* no-op swizzle */
+            0, 1,
+            LP_BLD_SWIZZLE_DONTCARE, LP_BLD_SWIZZLE_DONTCARE
+         };
+         static const unsigned char swizzle23[] = {
+            2, 3,
+            LP_BLD_SWIZZLE_DONTCARE, LP_BLD_SWIZZLE_DONTCARE
+         };
+         LLVMValueRef ddx_ddys, ddx_ddyt, floatdim, shuffles[LP_MAX_VECTOR_LENGTH / 4];
 
-      if (dims < 2) {
-         static const unsigned char swizzle1[] = { /* no-op swizzle */
-            0, LP_BLD_SWIZZLE_DONTCARE,
-            LP_BLD_SWIZZLE_DONTCARE, LP_BLD_SWIZZLE_DONTCARE
-         };
-         static const unsigned char swizzle2[] = {
-            2, LP_BLD_SWIZZLE_DONTCARE,
-            LP_BLD_SWIZZLE_DONTCARE, LP_BLD_SWIZZLE_DONTCARE
-         };
-         rho_xvec = lp_build_swizzle_aos(coord_bld, ddx_ddy[0], swizzle1);
-         rho_yvec = lp_build_swizzle_aos(coord_bld, ddx_ddy[0], swizzle2);
-      }
-      else if (dims == 2) {
-         static const unsigned char swizzle1[] = {
-            0, 2,
-            LP_BLD_SWIZZLE_DONTCARE, LP_BLD_SWIZZLE_DONTCARE
-         };
-         static const unsigned char swizzle2[] = {
-            1, 3,
-            LP_BLD_SWIZZLE_DONTCARE, LP_BLD_SWIZZLE_DONTCARE
-         };
-         rho_xvec = lp_build_swizzle_aos(coord_bld, ddx_ddy[0], swizzle1);
-         rho_yvec = lp_build_swizzle_aos(coord_bld, ddx_ddy[0], swizzle2);
+         for (i = 0; i < num_quads; i++) {
+            shuffles[i*4+0] = shuffles[i*4+1] = index0;
+            shuffles[i*4+2] = shuffles[i*4+3] = index1;
+         }
+         floatdim = LLVMBuildShuffleVector(builder, float_size, float_size,
+                                           LLVMConstVector(shuffles, length), "");
+         ddx_ddy[0] = lp_build_mul(coord_bld, ddx_ddy[0], floatdim);
+         ddx_ddy[0] = lp_build_mul(coord_bld, ddx_ddy[0], ddx_ddy[0]);
+         ddx_ddys = lp_build_swizzle_aos(coord_bld, ddx_ddy[0], swizzle01);
+         ddx_ddyt = lp_build_swizzle_aos(coord_bld, ddx_ddy[0], swizzle23);
+         rho_vec = lp_build_add(coord_bld, ddx_ddys, ddx_ddyt);
+
+         if (dims > 2) {
+            static const unsigned char swizzle02[] = {
+               0, 2,
+               LP_BLD_SWIZZLE_DONTCARE, LP_BLD_SWIZZLE_DONTCARE
+            };
+            floatdim = lp_build_extract_broadcast(gallivm, bld->float_size_in_type,
+                                                  coord_bld->type, float_size, index2);
+            ddx_ddy[1] = lp_build_mul(coord_bld, ddx_ddy[1], floatdim);
+            ddx_ddy[1] = lp_build_mul(coord_bld, ddx_ddy[1], ddx_ddy[1]);
+            ddx_ddy[1] = lp_build_swizzle_aos(coord_bld, ddx_ddy[1], swizzle02);
+            rho_vec = lp_build_add(coord_bld, rho_vec, ddx_ddy[1]);
+         }
+         rho_xvec = lp_build_swizzle_aos(coord_bld, rho_vec, swizzle0);
+         rho_yvec = lp_build_swizzle_aos(coord_bld, rho_vec, swizzle1);
+         rho_vec = lp_build_max(coord_bld, rho_xvec, rho_yvec);
+
+         rho = lp_build_pack_aos_scalars(bld->gallivm, coord_bld->type,
+                                         perquadf_bld->type, rho_vec, 0);
+         rho = lp_build_sqrt(perquadf_bld, rho);
       }
       else {
-         LLVMValueRef shuffles1[LP_MAX_VECTOR_LENGTH];
-         LLVMValueRef shuffles2[LP_MAX_VECTOR_LENGTH];
-         assert(dims == 3);
-         for (i = 0; i < num_quads; i++) {
-            shuffles1[4*i + 0] = lp_build_const_int32(gallivm, 4*i);
-            shuffles1[4*i + 1] = lp_build_const_int32(gallivm, 4*i + 2);
-            shuffles1[4*i + 2] = lp_build_const_int32(gallivm, length + 4*i);
-            shuffles1[4*i + 3] = i32undef;
-            shuffles2[4*i + 0] = lp_build_const_int32(gallivm, 4*i + 1);
-            shuffles2[4*i + 1] = lp_build_const_int32(gallivm, 4*i + 3);
-            shuffles2[4*i + 2] = lp_build_const_int32(gallivm, length + 4*i + 2);
-            shuffles2[4*i + 3] = i32undef;
+         ddx_ddy[0] = lp_build_abs(coord_bld, ddx_ddy[0]);
+         if (dims > 2) {
+            ddx_ddy[1] = lp_build_abs(coord_bld, ddx_ddy[1]);
          }
-         rho_xvec = LLVMBuildShuffleVector(builder, ddx_ddy[0], ddx_ddy[1],
-                                           LLVMConstVector(shuffles1, length), "");
-         rho_yvec = LLVMBuildShuffleVector(builder, ddx_ddy[0], ddx_ddy[1],
-                                           LLVMConstVector(shuffles2, length), "");
-      }
 
-      rho_vec = lp_build_max(coord_bld, rho_xvec, rho_yvec);
-
-      if (bld->coord_type.length > 4) {
-         /* expand size to each quad */
-         if (dims > 1) {
-            /* could use some broadcast_vector helper for this? */
-            int num_quads = bld->coord_type.length / 4;
-            LLVMValueRef src[LP_MAX_VECTOR_LENGTH/4];
+         if (dims < 2) {
+            rho_xvec = lp_build_swizzle_aos(coord_bld, ddx_ddy[0], swizzle0);
+            rho_yvec = lp_build_swizzle_aos(coord_bld, ddx_ddy[0], swizzle1);
+         }
+         else if (dims == 2) {
+            static const unsigned char swizzle02[] = {
+               0, 2,
+               LP_BLD_SWIZZLE_DONTCARE, LP_BLD_SWIZZLE_DONTCARE
+            };
+            static const unsigned char swizzle13[] = {
+               1, 3,
+               LP_BLD_SWIZZLE_DONTCARE, LP_BLD_SWIZZLE_DONTCARE
+            };
+            rho_xvec = lp_build_swizzle_aos(coord_bld, ddx_ddy[0], swizzle02);
+            rho_yvec = lp_build_swizzle_aos(coord_bld, ddx_ddy[0], swizzle13);
+         }
+         else {
+            LLVMValueRef shuffles1[LP_MAX_VECTOR_LENGTH];
+            LLVMValueRef shuffles2[LP_MAX_VECTOR_LENGTH];
+            assert(dims == 3);
             for (i = 0; i < num_quads; i++) {
-               src[i] = float_size;
+               shuffles1[4*i + 0] = lp_build_const_int32(gallivm, 4*i);
+               shuffles1[4*i + 1] = lp_build_const_int32(gallivm, 4*i + 2);
+               shuffles1[4*i + 2] = lp_build_const_int32(gallivm, length + 4*i);
+               shuffles1[4*i + 3] = i32undef;
+               shuffles2[4*i + 0] = lp_build_const_int32(gallivm, 4*i + 1);
+               shuffles2[4*i + 1] = lp_build_const_int32(gallivm, 4*i + 3);
+               shuffles2[4*i + 2] = lp_build_const_int32(gallivm, length + 4*i + 2);
+               shuffles2[4*i + 3] = i32undef;
             }
-            float_size = lp_build_concat(bld->gallivm, src, float_size_bld->type, num_quads);
+            rho_xvec = LLVMBuildShuffleVector(builder, ddx_ddy[0], ddx_ddy[1],
+                                              LLVMConstVector(shuffles1, length), "");
+            rho_yvec = LLVMBuildShuffleVector(builder, ddx_ddy[0], ddx_ddy[1],
+                                              LLVMConstVector(shuffles2, length), "");
          }
-         else {
-            float_size = lp_build_broadcast_scalar(coord_bld, float_size);
-         }
-         rho_vec = lp_build_mul(coord_bld, rho_vec, float_size);
 
-         if (dims <= 1) {
-            rho = rho_vec;
-         }
-         else {
-            if (dims >= 2) {
-               static const unsigned char swizzle1[] = {
-                  0, LP_BLD_SWIZZLE_DONTCARE,
-                  LP_BLD_SWIZZLE_DONTCARE, LP_BLD_SWIZZLE_DONTCARE
-               };
-               static const unsigned char swizzle2[] = {
-                  1, LP_BLD_SWIZZLE_DONTCARE,
-                  LP_BLD_SWIZZLE_DONTCARE, LP_BLD_SWIZZLE_DONTCARE
-               };
-               LLVMValueRef rho_s, rho_t, rho_r;
+         rho_vec = lp_build_max(coord_bld, rho_xvec, rho_yvec);
 
-               rho_s = lp_build_swizzle_aos(coord_bld, rho_vec, swizzle1);
-               rho_t = lp_build_swizzle_aos(coord_bld, rho_vec, swizzle2);
+         if (bld->coord_type.length > 4) {
+            /* expand size to each quad */
+            if (dims > 1) {
+               /* could use some broadcast_vector helper for this? */
+               LLVMValueRef src[LP_MAX_VECTOR_LENGTH/4];
+               for (i = 0; i < num_quads; i++) {
+                  src[i] = float_size;
+               }
+               float_size = lp_build_concat(bld->gallivm, src, float_size_bld->type, num_quads);
+            }
+            else {
+               float_size = lp_build_broadcast_scalar(coord_bld, float_size);
+            }
+            rho_vec = lp_build_mul(coord_bld, rho_vec, float_size);
 
-               rho = lp_build_max(coord_bld, rho_s, rho_t);
+            if (dims <= 1) {
+               rho = rho_vec;
+            }
+            else {
+               if (dims >= 2) {
+                  LLVMValueRef rho_s, rho_t, rho_r;
 
-               if (dims >= 3) {
-                  static const unsigned char swizzle3[] = {
-                     2, LP_BLD_SWIZZLE_DONTCARE,
-                     LP_BLD_SWIZZLE_DONTCARE, LP_BLD_SWIZZLE_DONTCARE
-                  };
-                  rho_r = lp_build_swizzle_aos(coord_bld, rho_vec, swizzle3);
-                  rho = lp_build_max(coord_bld, rho, rho_r);
+                  rho_s = lp_build_swizzle_aos(coord_bld, rho_vec, swizzle0);
+                  rho_t = lp_build_swizzle_aos(coord_bld, rho_vec, swizzle1);
+
+                  rho = lp_build_max(coord_bld, rho_s, rho_t);
+
+                  if (dims >= 3) {
+                     rho_r = lp_build_swizzle_aos(coord_bld, rho_vec, swizzle2);
+                     rho = lp_build_max(coord_bld, rho, rho_r);
+                  }
                }
             }
-         }
-         rho = lp_build_pack_aos_scalars(bld->gallivm, coord_bld->type,
-                                         perquadf_bld->type, rho, 0);
-      }
-      else {
-         if (dims <= 1) {
-            rho_vec = LLVMBuildExtractElement(builder, rho_vec, index0, "");
-         }
-         rho_vec = lp_build_mul(float_size_bld, rho_vec, float_size);
-
-         if (dims <= 1) {
-            rho = rho_vec;
+            rho = lp_build_pack_aos_scalars(bld->gallivm, coord_bld->type,
+                                            perquadf_bld->type, rho, 0);
          }
          else {
-            if (dims >= 2) {
-               LLVMValueRef rho_s, rho_t, rho_r;
+            if (dims <= 1) {
+               rho_vec = LLVMBuildExtractElement(builder, rho_vec, index0, "");
+            }
+            rho_vec = lp_build_mul(float_size_bld, rho_vec, float_size);
 
-               rho_s = LLVMBuildExtractElement(builder, rho_vec, index0, "");
-               rho_t = LLVMBuildExtractElement(builder, rho_vec, index1, "");
+            if (dims <= 1) {
+               rho = rho_vec;
+            }
+            else {
+               if (dims >= 2) {
+                  LLVMValueRef rho_s, rho_t, rho_r;
 
-               rho = lp_build_max(float_bld, rho_s, rho_t);
+                  rho_s = LLVMBuildExtractElement(builder, rho_vec, index0, "");
+                  rho_t = LLVMBuildExtractElement(builder, rho_vec, index1, "");
 
-               if (dims >= 3) {
-                  rho_r = LLVMBuildExtractElement(builder, rho_vec, index2, "");
-                  rho = lp_build_max(float_bld, rho, rho_r);
+                  rho = lp_build_max(float_bld, rho_s, rho_t);
+
+                  if (dims >= 3) {
+                     rho_r = LLVMBuildExtractElement(builder, rho_vec, index2, "");
+                     rho = lp_build_max(float_bld, rho, rho_r);
+                  }
                }
             }
          }

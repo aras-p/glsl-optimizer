@@ -79,6 +79,7 @@ static const struct debug_named_value lp_bld_debug_flags[] = {
    { "nopt",   GALLIVM_DEBUG_NO_OPT, NULL },
    { "perf",   GALLIVM_DEBUG_PERF, NULL },
    { "no_brilinear", GALLIVM_DEBUG_NO_BRILINEAR, NULL },
+   { "no_rho_approx", GALLIVM_DEBUG_NO_RHO_APPROX, NULL },
    { "gc",     GALLIVM_DEBUG_GC, NULL },
    DEBUG_NAMED_VALUE_END
 };
