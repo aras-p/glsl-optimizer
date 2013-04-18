@@ -53,6 +53,7 @@ _mesa_init_renderbuffer(struct gl_renderbuffer *rb, GLuint name)
 
    rb->Width = 0;
    rb->Height = 0;
+   rb->Depth = 0;
    rb->InternalFormat = GL_RGBA;
    rb->Format = MESA_FORMAT_NONE;
 }

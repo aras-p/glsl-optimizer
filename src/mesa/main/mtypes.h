@@ -2566,6 +2566,7 @@ struct gl_renderbuffer
    GLuint Name;
    GLint RefCount;
    GLuint Width, Height;
+   GLuint Depth;
    GLboolean Purgeable;  /**< Is the buffer purgeable under memory pressure? */
    GLboolean AttachedAnytime; /**< TRUE if it was attached to a framebuffer */
    GLubyte NumSamples;
