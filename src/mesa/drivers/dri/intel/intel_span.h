@@ -36,6 +36,4 @@ extern void intelInitSpanFuncs(struct gl_context * ctx);
 extern void intelSpanRenderFinish(struct gl_context * ctx);
 extern void intelSpanRenderStart(struct gl_context * ctx);
 
-intptr_t intel_offset_S8(uint32_t stride, uint32_t x, uint32_t y, bool swizzled);
-
 #endif

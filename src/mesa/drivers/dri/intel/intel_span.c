@@ -49,62 +49,6 @@
 #include "swrast/s_renderbuffer.h"
 
 /**
- * \brief Get pointer offset into stencil buffer.
- *
- * The stencil buffer is W tiled. Since the GTT is incapable of W fencing, we
- * must decode the tile's layout in software.
- *
- * See
- *   - PRM, 2011 Sandy Bridge, Volume 1, Part 2, Section 4.5.2.1 W-Major Tile
- *     Format.
- *   - PRM, 2011 Sandy Bridge, Volume 1, Part 2, Section 4.5.3 Tiling Algorithm
- *
- * Even though the returned offset is always positive, the return type is
- * signed due to
- *    commit e8b1c6d6f55f5be3bef25084fdd8b6127517e137
- *    mesa: Fix return type of  _mesa_get_format_bytes() (#37351)
- */
-intptr_t
-intel_offset_S8(uint32_t stride, uint32_t x, uint32_t y, bool swizzled)
-{
-   uint32_t tile_size = 4096;
-   uint32_t tile_width = 64;
-   uint32_t tile_height = 64;
-   uint32_t row_size = 64 * stride;
-
-   uint32_t tile_x = x / tile_width;
-   uint32_t tile_y = y / tile_height;
-
-   /* The byte's address relative to the tile's base addres. */
-   uint32_t byte_x = x % tile_width;
-   uint32_t byte_y = y % tile_height;
-
-   uintptr_t u = tile_y * row_size
-               + tile_x * tile_size
-               + 512 * (byte_x / 8)
-               +  64 * (byte_y / 8)
-               +  32 * ((byte_y / 4) % 2)
-               +  16 * ((byte_x / 4) % 2)
-               +   8 * ((byte_y / 2) % 2)
-               +   4 * ((byte_x / 2) % 2)
-               +   2 * (byte_y % 2)
-               +   1 * (byte_x % 2);
-
-   if (swizzled) {
-      /* adjust for bit6 swizzling */
-      if (((byte_x / 8) % 2) == 1) {
-	 if (((byte_y / 8) % 2) == 0) {
-	    u += 64;
-	 } else {
-	    u -= 64;
-	 }
-      }
-   }
-
-   return u;
-}
-
-/**
  * Prepare for software rendering.  Map current read/draw framebuffers'
  * renderbuffers and all currently bound texture objects.
  */
