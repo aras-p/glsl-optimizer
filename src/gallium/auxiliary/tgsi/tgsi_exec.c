@@ -3239,6 +3239,7 @@ exec_case(struct tgsi_exec_machine *mach,
    UPDATE_EXEC_MASK(mach);
 }
 
+/* FIXME: this will only work if default is last */
 static void
 exec_default(struct tgsi_exec_machine *mach)
 {
@@ -4200,7 +4201,7 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_BREAKC:
-      FETCH(&r[0], 0, TGSI_CHAN_X);
+      IFETCH(&r[0], 0, TGSI_CHAN_X);
       /* update CondMask */
       if (r[0].u[0] && (mach->ExecMask & 0x1)) {
          mach->LoopMask &= ~0x1;

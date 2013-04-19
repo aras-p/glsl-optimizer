@@ -221,7 +221,7 @@ static void lp_exec_break_condition(struct lp_exec_mask *mask,
    LLVMValueRef cond_mask = LLVMBuildAnd(builder,
                                          mask->exec_mask,
                                          cond, "cond_mask");
-   cond_mask = LLVMBuildNot(builder, cond, "break_cond");
+   cond_mask = LLVMBuildNot(builder, cond_mask, "break_cond");
 
    mask->break_mask = LLVMBuildAnd(builder,
                                    mask->break_mask,
