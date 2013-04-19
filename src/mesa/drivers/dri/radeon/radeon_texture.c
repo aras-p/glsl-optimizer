@@ -120,6 +120,9 @@ radeonAllocTextureImageBuffer(struct gl_context *ctx,
 	}
 	assert(!image->base.ImageOffsets);
 	image->base.ImageOffsets = malloc(slices * sizeof(GLuint));
+
+	_swrast_init_texture_image(timage);
+
 	teximage_assign_miptree(rmesa, texobj, timage);
 				
 	return GL_TRUE;
