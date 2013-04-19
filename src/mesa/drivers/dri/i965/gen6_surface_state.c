@@ -26,6 +26,7 @@
 #include "main/blend.h"
 #include "main/mtypes.h"
 #include "main/samplerobj.h"
+#include "main/texformat.h"
 #include "program/prog_parameter.h"
 
 #include "intel_mipmap_tree.h"
@@ -54,29 +55,16 @@ gen6_update_renderbuffer_surface(struct brw_context *brw,
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
    struct intel_mipmap_tree *mt = irb->mt;
    uint32_t *surf;
-   uint32_t tile_x, tile_y;
    uint32_t format = 0;
    /* _NEW_BUFFERS */
    mesa_format rb_format = _mesa_get_render_format(ctx, intel_rb_format(irb));
+   uint32_t surftype;
+   int depth = MAX2(irb->layer_count, 1);
+   const GLenum gl_target =
+      rb->TexImage ? rb->TexImage->TexObject->Target : GL_TEXTURE_2D;
+
    uint32_t surf_index =
       brw->wm.prog_data->binding_table.render_target_start + unit;
-
-   assert(!layered);
-
-   if (rb->TexImage && !brw->has_surface_tile_offset) {
-      intel_renderbuffer_get_tile_offsets(irb, &tile_x, &tile_y);
-
-      if (tile_x != 0 || tile_y != 0) {
-	 /* Original gen4 hardware couldn't draw to a non-tile-aligned
-	  * destination in a miptree unless you actually setup your renderbuffer
-	  * as a miptree and used the fragile lod/array_index/etc. controls to
-	  * select the image.  So, instead, we just make a new single-level
-	  * miptree and render into that.
-	  */
-	 intel_renderbuffer_move_to_temp(brw, irb, false);
-	 mt = irb->mt;
-      }
-   }
 
    intel_miptree_used_for_rendering(irb->mt);
 
@@ -89,30 +77,41 @@ gen6_update_renderbuffer_surface(struct brw_context *brw,
                     __FUNCTION__, _mesa_get_format_name(rb_format));
    }
 
-   surf[0] = (BRW_SURFACE_2D << BRW_SURFACE_TYPE_SHIFT |
-	      format << BRW_SURFACE_FORMAT_SHIFT);
+   switch (gl_target) {
+   case GL_TEXTURE_CUBE_MAP_ARRAY:
+   case GL_TEXTURE_CUBE_MAP:
+      surftype = BRW_SURFACE_2D;
+      depth *= 6;
+      break;
+   case GL_TEXTURE_3D:
+      depth = MAX2(irb->mt->logical_depth0, 1);
+      /* fallthrough */
+   default:
+      surftype = translate_tex_target(gl_target);
+      break;
+   }
+
+   const int min_array_element = layered ? 0 : irb->mt_layer;
+
+   surf[0] = SET_FIELD(surftype, BRW_SURFACE_TYPE) |
+             SET_FIELD(format, BRW_SURFACE_FORMAT);
 
    /* reloc */
-   surf[1] = (intel_renderbuffer_get_tile_offsets(irb, &tile_x, &tile_y) +
-	      mt->bo->offset64);
+   surf[1] = mt->bo->offset64;
 
-   surf[2] = ((rb->Width - 1) << BRW_SURFACE_WIDTH_SHIFT |
-	      (rb->Height - 1) << BRW_SURFACE_HEIGHT_SHIFT);
+   surf[2] = SET_FIELD(mt->logical_width0 - 1, BRW_SURFACE_WIDTH) |
+             SET_FIELD(mt->logical_height0 - 1, BRW_SURFACE_HEIGHT) |
+             SET_FIELD(irb->mt_level - irb->mt->first_level, BRW_SURFACE_LOD);
 
-   surf[3] = (brw_get_surface_tiling_bits(mt->tiling) |
-	      (mt->pitch - 1) << BRW_SURFACE_PITCH_SHIFT);
+   surf[3] = brw_get_surface_tiling_bits(mt->tiling) |
+             SET_FIELD(depth - 1, BRW_SURFACE_DEPTH) |
+             SET_FIELD(mt->pitch - 1, BRW_SURFACE_PITCH);
 
-   surf[4] = brw_get_surface_num_multisamples(mt->num_samples);
+   surf[4] = brw_get_surface_num_multisamples(mt->num_samples) |
+             SET_FIELD(min_array_element, BRW_SURFACE_MIN_ARRAY_ELEMENT) |
+             SET_FIELD(depth - 1, BRW_SURFACE_RENDER_TARGET_VIEW_EXTENT);
 
-   assert(brw->has_surface_tile_offset || (tile_x == 0 && tile_y == 0));
-   /* Note that the low bits of these fields are missing, so
-    * there's the possibility of getting in trouble.
-    */
-   assert(tile_x % 4 == 0);
-   assert(tile_y % 2 == 0);
-   surf[5] = ((tile_x / 4) << BRW_SURFACE_X_OFFSET_SHIFT |
-	      (tile_y / 2) << BRW_SURFACE_Y_OFFSET_SHIFT |
-	      (mt->align_h == 4 ? BRW_SURFACE_VERTICAL_ALIGN_ENABLE : 0));
+   surf[5] = (mt->align_h == 4 ? BRW_SURFACE_VERTICAL_ALIGN_ENABLE : 0);
 
    drm_intel_bo_emit_reloc(brw->batch.bo,
 			   brw->wm.base.surf_offset[surf_index] + 4,
