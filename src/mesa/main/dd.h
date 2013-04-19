@@ -355,7 +355,9 @@ struct dd_function_table {
     * \param mode  bitmask of GL_MAP_READ_BIT, GL_MAP_WRITE_BIT and
     *              GL_MAP_INVALIDATE_RANGE_BIT (if writing)
     * \param mapOut  returns start of mapping of region of interest
-    * \param rowStrideOut  returns row stride (in bytes)
+    * \param rowStrideOut returns row stride (in bytes).  In the case of a
+    * compressed texture, this is the byte stride between one row of blocks
+    * and another.
     */
    void (*MapTextureImage)(struct gl_context *ctx,
 			   struct gl_texture_image *texImage,
