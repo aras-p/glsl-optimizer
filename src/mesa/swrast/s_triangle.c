@@ -1079,7 +1079,8 @@ _swrast_choose_triangle( struct gl_context *ctx )
              && texObj2D->_Swizzle == SWIZZLE_NOOP
              && swImg->_IsPowerOfTwo
              && texImg->Border == 0
-             && texImg->Width == swImg->RowStride
+             && (_mesa_format_row_stride(format, texImg->Width) ==
+                 swImg->RowStride)
              && (format == MESA_FORMAT_RGB888 || format == MESA_FORMAT_RGBA8888)
              && minFilter == magFilter
              && ctx->Light.Model.ColorControl == GL_SINGLE_COLOR

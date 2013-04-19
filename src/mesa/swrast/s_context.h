@@ -138,8 +138,16 @@ struct swrast_texture_image
    /** used for mipmap LOD computation */
    GLfloat WidthScale, HeightScale, DepthScale;
 
-   /** These fields only valid when texture memory is mapped */
-   GLint RowStride;		/**< Padded width in units of texels */
+   /**
+    * Byte stride between rows in ImageSlices.
+    *
+    * For compressed textures, this is the byte stride between one row of
+    * blocks and the next row of blocks.
+    *
+    * Only valid while one of the ImageSlices is mapped, and must be the same
+    * between all slices.
+    */
+   GLint RowStride;
    void **ImageSlices;          /**< if 3D texture: array [Depth] of offsets to
                                      each 2D slice in 'Data', in texels */
    GLubyte *Map;		/**< Pointer to mapped image memory */

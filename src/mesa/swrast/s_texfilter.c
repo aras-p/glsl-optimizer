@@ -1505,7 +1505,9 @@ sample_lambda_2d(struct gl_context *ctx,
 
    const GLboolean repeatNoBorderPOT = (samp->WrapS == GL_REPEAT)
       && (samp->WrapT == GL_REPEAT)
-      && (tImg->Border == 0 && (tImg->Width == swImg->RowStride))
+      && (tImg->Border == 0)
+      && (_mesa_format_row_stride(tImg->TexFormat, tImg->Width) ==
+          swImg->RowStride)
       && swImg->_IsPowerOfTwo;
 
    ASSERT(lambda != NULL);

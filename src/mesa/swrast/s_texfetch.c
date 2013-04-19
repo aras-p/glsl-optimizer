@@ -98,8 +98,16 @@ static void
 fetch_compressed(const struct swrast_texture_image *swImage,
                  GLint i, GLint j, GLint k, GLfloat *texel)
 {
+   /* The FetchCompressedTexel function takes an integer pixel rowstride,
+    * while the image's rowstride is bytes per row of blocks.
+    */
+   GLuint bw, bh;
+   GLuint texelBytes = _mesa_get_format_bytes(swImage->Base.TexFormat);
+   _mesa_get_format_block_size(swImage->Base.TexFormat, &bw, &bh);
+   assert(swImage->RowStride * bw % texelBytes == 0);
+
    swImage->FetchCompressedTexel(swImage->ImageSlices[k],
-                                 swImage->RowStride,
+                                 swImage->RowStride * bw / texelBytes,
                                  i, j, texel);
 }
 

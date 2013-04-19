@@ -104,7 +104,8 @@ _swrast_alloc_texture_image_buffer(struct gl_context *ctx,
       return GL_FALSE;
 
    /* RowStride and ImageSlices[] describe how to address texels in 'Data' */
-   swImg->RowStride = texImage->Width;
+   swImg->RowStride = _mesa_format_row_stride(texImage->TexFormat,
+                                              texImage->Width);
 
    for (i = 0; i < slices; i++) {
       swImg->ImageSlices[i] = swImg->Buffer + bytesPerSlice * i;
