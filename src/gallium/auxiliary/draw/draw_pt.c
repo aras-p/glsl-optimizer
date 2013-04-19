@@ -561,6 +561,8 @@ draw_vbo(struct draw_context *draw,
    for (instance = 0; instance < info->instance_count; instance++) {
       draw->instance_id = instance + info->start_instance;
 
+      draw_new_instance(draw);
+
       if (info->primitive_restart) {
          draw_pt_arrays_restart(draw, info);
       }

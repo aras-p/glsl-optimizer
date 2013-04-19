@@ -560,7 +560,6 @@ int draw_geometry_shader_run(struct draw_geometry_shader *shader,
    shader->emitted_primitives = 0;
    shader->vertex_size = vertex_size;
    shader->tmp_output = (float (*)[4])output_verts->verts->data;
-   shader->in_prim_idx = 0;
    shader->fetched_prim_count = 0;
    shader->input_vertex_stride = input_stride;
    shader->input = input;
@@ -869,3 +868,16 @@ void draw_gs_set_current_variant(struct draw_geometry_shader *shader,
    shader->current_variant = variant;
 }
 #endif
+
+/*
+ * Called at the very begin of the draw call with a new instance
+ * Used to reset state that should persist between primitive restart.
+ */
+void
+draw_geometry_shader_new_instance(struct draw_geometry_shader *gs)
+{
+   if (!gs)
+      return;
+
+   gs->in_prim_idx = 0;
+}

@@ -156,6 +156,19 @@ boolean draw_init(struct draw_context *draw)
    return TRUE;
 }
 
+/*
+ * Called whenever we're starting to draw a new instance.
+ * Some internal structures don't want to have to reset internal
+ * members on each invocation (because their state might have to persist
+ * between multiple primitive restart rendering call) but might have to 
+ * for each new instance. 
+ * This is particularly the case for primitive id's in geometry shader.
+ */
+void draw_new_instance(struct draw_context *draw)
+{
+   draw_geometry_shader_new_instance(draw->gs.geometry_shader);
+}
+
 
 void draw_destroy( struct draw_context *draw )
 {

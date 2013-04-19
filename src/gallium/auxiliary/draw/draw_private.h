@@ -355,6 +355,7 @@ struct draw_prim_info {
  * Draw common initialization code
  */
 boolean draw_init(struct draw_context *draw);
+void draw_new_instance(struct draw_context *draw);
 
 /*******************************************************************************
  * Vertex shader code:

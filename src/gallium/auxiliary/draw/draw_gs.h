@@ -114,6 +114,8 @@ struct draw_geometry_shader {
                    unsigned input_primitives);
 };
 
+void draw_geometry_shader_new_instance(struct draw_geometry_shader *gs);
+
 /*
  * Returns the number of vertices emitted.
  * The vertex shader can emit any number of vertices as long as it's
