@@ -123,12 +123,7 @@ intel_map_renderbuffer(struct gl_context *ctx,
       return;
    }
 
-   /* We sometimes get called with this by our intel_span.c usage. */
-   if (!irb->mt) {
-      *out_map = NULL;
-      *out_stride = 0;
-      return;
-   }
+   intel_prepare_render(intel);
 
    /* For a window-system renderbuffer, we need to flip the mapping we receive
     * upside-down.  So we need to ask for a rectangle on flipped vertically, and
