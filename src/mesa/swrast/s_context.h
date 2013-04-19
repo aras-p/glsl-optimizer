@@ -156,7 +156,6 @@ struct swrast_texture_image
     * initialized to point within Buffer.
     */
    void **ImageSlices;
-   GLubyte *Map;		/**< Pointer to mapped image memory */
 
    /** Malloc'd texture memory */
    GLubyte *Buffer;
