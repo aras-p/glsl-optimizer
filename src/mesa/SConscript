@@ -31,7 +31,6 @@ if env['platform'] == 'windows':
         env.Append(CPPDEFINES = ['_GLAPI_NO_EXPORTS'])
 else:
     env.Append(CPPDEFINES = [
-        'IN_DRI_DRIVER', # enable the remap table (for DRI drivers)
         ('HAVE_DLOPEN', '1'),
     ])
 
