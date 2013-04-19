@@ -46,8 +46,6 @@ void copy_rows(void* dst, GLuint dststride, const void* src, GLuint srcstride,
 struct gl_texture_image *radeonNewTextureImage(struct gl_context *ctx);
 void radeonFreeTextureImageBuffer(struct gl_context *ctx, struct gl_texture_image *timage);
 
-void radeon_teximage_map(radeon_texture_image *image, GLboolean write_enable);
-void radeon_teximage_unmap(radeon_texture_image *image);
 int radeon_validate_texture_miptree(struct gl_context * ctx,
 				    struct gl_sampler_object *samp,
 				    struct gl_texture_object *texObj);

@@ -154,56 +154,6 @@ void radeonFreeTextureImageBuffer(struct gl_context *ctx, struct gl_texture_imag
 	image->base.ImageOffsets = NULL;
 }
 
-/* Set Data pointer and additional data for mapped texture image */
-static void teximage_set_map_data(radeon_texture_image *image)
-{
-	radeon_mipmap_level *lvl;
-
-	if (!image->mt) {
-		radeon_warning("%s(%p) Trying to set map data without miptree.\n",
-				__func__, image);
-
-		return;
-	}
-
-	lvl = &image->mt->levels[image->base.Base.Level];
-
-	image->base.Map = image->mt->bo->ptr + lvl->faces[image->base.Base.Face].offset;
-	image->base.RowStride = lvl->rowstride / _mesa_get_format_bytes(image->base.Base.TexFormat);
-}
-
-
-/**
- * Map a single texture image for glTexImage and friends.
- */
-void radeon_teximage_map(radeon_texture_image *image, GLboolean write_enable)
-{
-	radeon_print(RADEON_TEXTURE, RADEON_VERBOSE,
-			"%s(img %p), write_enable %s.\n",
-			__func__, image,
-			write_enable ? "true": "false");
-	if (image->mt) {
-		assert(!image->base.Map);
-
-		radeon_bo_map(image->mt->bo, write_enable);
-		teximage_set_map_data(image);
-	}
-}
-
-
-void radeon_teximage_unmap(radeon_texture_image *image)
-{
-	radeon_print(RADEON_TEXTURE, RADEON_VERBOSE,
-			"%s(img %p)\n",
-			__func__, image);
-	if (image->mt) {
-		assert(image->base.Map);
-
-		image->base.Map = 0;
-		radeon_bo_unmap(image->mt->bo);
-	}
-}
-
 /**
  * Map texture memory/buffer into user space.
  * Note: the region of interest parameters are ignored here.
