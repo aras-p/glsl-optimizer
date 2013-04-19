@@ -47,7 +47,6 @@
 #include "intel_fbo.h"
 #include "intel_mipmap_tree.h"
 #include "intel_regions.h"
-#include "intel_span.h"
 #include "intel_tex.h"
 #include "intel_tex_obj.h"
 
@@ -147,8 +146,6 @@ brwCreateContext(int api,
    brw_init_surface_formats(brw);
 
    /* Initialize swrast, tnl driver tables: */
-   intelInitSpanFuncs(ctx);
-
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    if (tnl)
       tnl->Driver.RunPipeline = _tnl_run_pipeline;

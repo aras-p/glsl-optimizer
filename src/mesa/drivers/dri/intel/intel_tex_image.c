@@ -21,7 +21,6 @@
 #include "intel_tex.h"
 #include "intel_blit.h"
 #include "intel_fbo.h"
-#include "intel_span.h"
 
 #ifndef I915
 #include "brw_context.h"

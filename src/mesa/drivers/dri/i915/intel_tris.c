@@ -52,7 +52,6 @@
 #include "intel_batchbuffer.h"
 #include "intel_buffers.h"
 #include "intel_reg.h"
-#include "intel_span.h"
 #include "i830_context.h"
 #include "i830_reg.h"
 #include "i915_context.h"
@@ -808,9 +807,9 @@ intel_fallback_tri(struct intel_context *intel,
    _swsetup_Translate(ctx, v0, &v[0]);
    _swsetup_Translate(ctx, v1, &v[1]);
    _swsetup_Translate(ctx, v2, &v[2]);
-   intelSpanRenderStart(ctx);
+   _swrast_render_start(ctx);
    _swrast_Triangle(ctx, &v[0], &v[1], &v[2]);
-   intelSpanRenderFinish(ctx);
+   _swrast_render_finish(ctx);
 }
 
 
@@ -828,9 +827,9 @@ intel_fallback_line(struct intel_context *intel,
 
    _swsetup_Translate(ctx, v0, &v[0]);
    _swsetup_Translate(ctx, v1, &v[1]);
-   intelSpanRenderStart(ctx);
+   _swrast_render_start(ctx);
    _swrast_Line(ctx, &v[0], &v[1]);
-   intelSpanRenderFinish(ctx);
+   _swrast_render_finish(ctx);
 }
 
 static void
@@ -846,9 +845,9 @@ intel_fallback_point(struct intel_context *intel,
    INTEL_FIREVERTICES(intel);
 
    _swsetup_Translate(ctx, v0, &v[0]);
-   intelSpanRenderStart(ctx);
+   _swrast_render_start(ctx);
    _swrast_Point(ctx, &v[0]);
-   intelSpanRenderFinish(ctx);
+   _swrast_render_finish(ctx);
 }
 
 

@@ -34,7 +34,6 @@
 #include "intel_mipmap_tree.h"
 #include "intel_regions.h"
 #include "intel_resolve_map.h"
-#include "intel_span.h"
 #include "intel_tex_layout.h"
 #include "intel_tex.h"
 #include "intel_blit.h"

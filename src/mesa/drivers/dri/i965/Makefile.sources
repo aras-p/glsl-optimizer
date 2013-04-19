@@ -14,7 +14,6 @@ i965_FILES = \
 	intel_regions.c \
 	intel_resolve_map.c \
 	intel_screen.c \
-	intel_span.c \
 	intel_pixel.c \
 	intel_pixel_bitmap.c \
 	intel_pixel_copy.c \

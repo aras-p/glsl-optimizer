@@ -48,7 +48,6 @@
 #include "intel_mipmap_tree.h"
 #include "intel_regions.h"
 #include "intel_tex.h"
-#include "intel_span.h"
 #ifndef I915
 #include "brw_context.h"
 #endif

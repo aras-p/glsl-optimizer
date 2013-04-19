@@ -44,8 +44,6 @@
 #include "i915_reg.h"
 #include "i915_program.h"
 
-#include "intel_span.h"
-
 /***************************************
  * Mesa's Driver Functions
  ***************************************/
@@ -183,7 +181,6 @@ i915CreateContext(int api,
    _math_matrix_ctr(&intel->ViewportMatrix);
 
    /* Initialize swrast, tnl driver tables: */
-   intelInitSpanFuncs(ctx);
    intelInitTriFuncs(ctx);
 
    /* Install the customized pipeline: */

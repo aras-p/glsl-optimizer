@@ -34,7 +34,6 @@
 #include "tnl/t_vertex.h"
 #include "tnl/t_context.h"
 #include "tnl/t_pipeline.h"
-#include "intel_span.h"
 #include "intel_tris.h"
 #include "../glsl/ralloc.h"
 
@@ -87,7 +86,6 @@ i830CreateContext(int api,
    _math_matrix_ctr(&intel->ViewportMatrix);
 
    /* Initialize swrast, tnl driver tables: */
-   intelInitSpanFuncs(ctx);
    intelInitTriFuncs(ctx);
 
    /* Install the customized pipeline: */
