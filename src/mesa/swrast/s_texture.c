@@ -59,6 +59,14 @@ _swrast_delete_texture_image(struct gl_context *ctx,
    _mesa_delete_texture_image(ctx, texImage);
 }
 
+static unsigned int
+texture_slices(struct gl_texture_image *texImage)
+{
+   if (texImage->TexObject->Target == GL_TEXTURE_1D_ARRAY)
+      return texImage->Height;
+   else
+      return texImage->Depth;
+}
 
 /**
  * Called via ctx->Driver.AllocTextureImageBuffer()
@@ -84,11 +92,11 @@ _swrast_alloc_texture_image_buffer(struct gl_context *ctx,
     * We allocate the array for 1D/2D textures too in order to avoid special-
     * case code in the texstore routines.
     */
-   swImg->ImageOffsets = malloc(texImage->Depth * sizeof(GLuint));
+   swImg->ImageOffsets = malloc(texture_slices(texImage) * sizeof(GLuint));
    if (!swImg->ImageOffsets)
       return GL_FALSE;
 
-   for (i = 0; i < texImage->Depth; i++) {
+   for (i = 0; i < texture_slices(texImage); i++) {
       swImg->ImageOffsets[i] = i * texImage->Width * texImage->Height;
    }
 
@@ -210,20 +218,20 @@ _swrast_map_teximage(struct gl_context *ctx,
       
    map = swImage->Buffer;
 
+   assert(slice < texture_slices(texImage));
+
    if (texImage->TexObject->Target == GL_TEXTURE_3D ||
        texImage->TexObject->Target == GL_TEXTURE_2D_ARRAY) {
       GLuint sliceSize = _mesa_format_image_size(texImage->TexFormat,
                                                  texImage->Width,
                                                  texImage->Height,
                                                  1);
-      assert(slice < texImage->Depth);
       map += slice * sliceSize;
    } else if (texImage->TexObject->Target == GL_TEXTURE_1D_ARRAY) {
       GLuint sliceSize = _mesa_format_image_size(texImage->TexFormat,
                                                  texImage->Width,
                                                  1,
                                                  1);
-      assert(slice < texImage->Height);
       map += slice * sliceSize;
    }
 
