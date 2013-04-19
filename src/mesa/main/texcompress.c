@@ -588,7 +588,7 @@ _mesa_decompress_image(gl_format format, GLuint width, GLuint height,
 
    for (j = 0; j < height; j++) {
       for (i = 0; i < width; i++) {
-         fetch(src, NULL, stride, i, j, 0, dest);
+         fetch(src, stride, i, j, dest);
          dest += 4;
       }
    }

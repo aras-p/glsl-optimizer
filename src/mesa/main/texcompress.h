@@ -51,9 +51,8 @@ _mesa_compressed_image_address(GLint col, GLint row, GLint img,
 
 /** A function to fetch one texel from a compressed texture */
 typedef void (*compressed_fetch_func)(const GLubyte *map,
-                                      const GLuint imageOffsets[],
                                       GLint rowStride,
-                                      GLint i, GLint j, GLint k,
+                                      GLint i, GLint j,
                                       GLfloat *texel);
 
 extern compressed_fetch_func

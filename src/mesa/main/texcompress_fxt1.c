@@ -1616,8 +1616,8 @@ fxt1_decode_1 (const void *texture, GLint stride, /* in pixels */
 
 
 static void
-fetch_rgb_fxt1(const GLubyte *map, const GLuint imageOffsets[],
-               GLint rowStride, GLint i, GLint j, GLint k, GLfloat *texel)
+fetch_rgb_fxt1(const GLubyte *map,
+               GLint rowStride, GLint i, GLint j, GLfloat *texel)
 {
    GLubyte rgba[4];
    fxt1_decode_1(map, rowStride, i, j, rgba);
@@ -1629,8 +1629,8 @@ fetch_rgb_fxt1(const GLubyte *map, const GLuint imageOffsets[],
 
 
 static void
-fetch_rgba_fxt1(const GLubyte *map, const GLuint imageOffsets[],
-                GLint rowStride, GLint i, GLint j, GLint k, GLfloat *texel)
+fetch_rgba_fxt1(const GLubyte *map,
+                GLint rowStride, GLint i, GLint j, GLfloat *texel)
 {
    GLubyte rgba[4];
    fxt1_decode_1(map, rowStride, i, j, rgba);

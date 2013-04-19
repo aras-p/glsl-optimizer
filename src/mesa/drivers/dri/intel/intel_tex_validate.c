@@ -163,33 +163,18 @@ intel_tex_map_image_for_swrast(struct intel_context *intel,
    for (int i = 0; i < mt->level[level].depth; i++)
       intel_miptree_slice_resolve_depth(intel, mt, level, i);
 
-   if (mt->target == GL_TEXTURE_3D ||
-       mt->target == GL_TEXTURE_2D_ARRAY ||
-       mt->target == GL_TEXTURE_1D_ARRAY) {
-      int i;
+   void *map = intel_miptree_map_raw(intel, mt);
 
-      /* ImageOffsets[] is only used for swrast's fetch_texel_3d, so we can't
-       * share code with the normal path.
-       */
-      for (i = 0; i < mt->level[level].depth; i++) {
-	 intel_miptree_get_image_offset(mt, level, i, &x, &y);
-	 intel_image->base.ImageOffsets[i] = x + y * (mt->region->pitch /
-                                                      mt->region->cpp);
-      }
-
-      DBG("%s \n", __FUNCTION__);
-
-      intel_image->base.Map = intel_miptree_map_raw(intel, mt);
-   } else {
-      assert(intel_image->base.Base.Depth == 1);
-      intel_miptree_get_image_offset(mt, level, face, &x, &y);
-
-      DBG("%s: (%d,%d) -> (%d, %d)/%d\n",
-	  __FUNCTION__, face, level, x, y, mt->region->pitch);
-
-      intel_image->base.Map = intel_miptree_map_raw(intel, mt) +
-	 x * mt->cpp + y * mt->region->pitch;
+   for (int i = 0; i < mt->level[level].depth; i++) {
+      intel_miptree_get_image_offset(mt, level, i, &x, &y);
+      intel_image->base.ImageSlices[i] = (map +
+                                          y * mt->region->pitch +
+                                          x * mt->cpp);
+      DBG("%s: (%d,%d,%d) -> (%d, %d)/%d\n",
+	  __FUNCTION__, face, level, i, x, y, mt->region->pitch);
    }
+
+   intel_image->base.Map = intel_image->base.ImageSlices[0];
 
    assert(mt->region->pitch % mt->region->cpp == 0);
    intel_image->base.RowStride = mt->region->pitch / mt->region->cpp;

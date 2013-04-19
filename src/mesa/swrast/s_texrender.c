@@ -88,18 +88,8 @@ update_wrapper(struct gl_context *ctx, struct gl_renderbuffer_attachment *att)
 
    /* Want to store linear values, not sRGB */
    rb->Format = _mesa_get_srgb_format_linear(format);
- 
-   /* Set the gl_renderbuffer::Buffer field so that mapping the buffer
-    * succeeds.
-     */
-   if (att->Texture->Target == GL_TEXTURE_3D ||
-       att->Texture->Target == GL_TEXTURE_2D_ARRAY_EXT) {
-      srb->Buffer = swImage->Buffer +
-         swImage->ImageOffsets[zOffset] * _mesa_get_format_bytes(format);
-   }
-   else {
-      srb->Buffer = swImage->Buffer;
-   }
+
+   srb->Buffer = swImage->ImageSlices[zOffset];
 }
 
 

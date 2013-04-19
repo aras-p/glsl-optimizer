@@ -638,7 +638,6 @@ radeon_swrast_map_image(radeonContextPtr rmesa,
 	radeon_mipmap_tree *mt;
 	GLuint texel_size;
 	radeon_mipmap_level *lvl;
-	int rs;
 
 	if (!image || !image->mt)
 		return;
@@ -650,18 +649,16 @@ radeon_swrast_map_image(radeonContextPtr rmesa,
 
 	lvl = &image->mt->levels[level];
 
-	rs = lvl->rowstride / texel_size;
-
 	radeon_bo_map(mt->bo, 1);
 	
 	image->base.Map = mt->bo->ptr + lvl->faces[face].offset;
-	if (mt->target == GL_TEXTURE_3D) {
-		int i;
 
-		for (i = 0; i < mt->levels[level].depth; i++)
-			image->base.ImageOffsets[i] = rs * lvl->height * i;
+	for (int i = 0; i < mt->levels[level].depth; i++) {
+		image->base.ImageSlices[i] =
+			image->base.Map + (lvl->rowstride * lvl->height * i);
 	}
-	image->base.RowStride = rs;
+
+	image->base.RowStride = lvl->rowstride / texel_size;
 }
 
 static void

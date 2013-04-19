@@ -140,7 +140,7 @@ struct swrast_texture_image
 
    /** These fields only valid when texture memory is mapped */
    GLint RowStride;		/**< Padded width in units of texels */
-   GLuint *ImageOffsets;        /**< if 3D texture: array [Depth] of offsets to
+   void **ImageSlices;          /**< if 3D texture: array [Depth] of offsets to
                                      each 2D slice in 'Data', in texels */
    GLubyte *Map;		/**< Pointer to mapped image memory */
 

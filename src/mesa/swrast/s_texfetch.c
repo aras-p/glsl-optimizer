@@ -98,10 +98,9 @@ static void
 fetch_compressed(const struct swrast_texture_image *swImage,
                  GLint i, GLint j, GLint k, GLfloat *texel)
 {
-   swImage->FetchCompressedTexel(swImage->Map,
-                                 swImage->ImageOffsets,
+   swImage->FetchCompressedTexel(swImage->ImageSlices[k],
                                  swImage->RowStride,
-                                 i, j, k, texel);
+                                 i, j, texel);
 }
 
 
