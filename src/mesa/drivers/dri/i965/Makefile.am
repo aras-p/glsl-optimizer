@@ -36,9 +36,18 @@ AM_CFLAGS = \
 	-I$(top_srcdir)/src/gtest/include \
 	-I$(top_builddir)/src/mesa/drivers/dri/common \
 	$(DEFINES) \
-	$(API_DEFINES) \
 	$(VISIBILITY_CFLAGS) \
 	$(INTEL_CFLAGS)
+
+if HAVE_OPENGL_ES1
+AM_CFLAGS += \
+	-DFEATURE_ES1=1
+endif
+
+if HAVE_OPENGL_ES2
+AM_CFLAGS += \
+	-DFEATURE_ES2=1
+endif
 
 AM_CXXFLAGS = $(AM_CFLAGS)
 
