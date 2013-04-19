@@ -218,7 +218,7 @@ extern GLboolean
 _swrast_alloc_texture_image_buffer(struct gl_context *ctx,
                                    struct gl_texture_image *texImage);
 
-extern void
+extern GLboolean
 _swrast_init_texture_image(struct gl_texture_image *texImage);
 
 extern void

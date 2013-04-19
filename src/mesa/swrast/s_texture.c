@@ -92,6 +92,9 @@ _swrast_alloc_texture_image_buffer(struct gl_context *ctx,
                                           texImage->Height, texImage->Depth);
    GLuint i;
 
+   if (!_swrast_init_texture_image(texImage))
+      return GL_FALSE;
+
    assert(!swImg->Buffer);
    swImg->Buffer = _mesa_align_malloc(bytes, 512);
    if (!swImg->Buffer)
@@ -100,19 +103,9 @@ _swrast_alloc_texture_image_buffer(struct gl_context *ctx,
    /* RowStride and ImageOffsets[] describe how to address texels in 'Data' */
    swImg->RowStride = texImage->Width;
 
-   /* Allocate the ImageOffsets array and initialize to typical values.
-    * We allocate the array for 1D/2D textures too in order to avoid special-
-    * case code in the texstore routines.
-    */
-   swImg->ImageOffsets = malloc(texture_slices(texImage) * sizeof(GLuint));
-   if (!swImg->ImageOffsets)
-      return GL_FALSE;
-
    for (i = 0; i < texture_slices(texImage); i++) {
       swImg->ImageOffsets[i] = i * texImage->Width * texImage->Height;
    }
-
-   _swrast_init_texture_image(texImage);
 
    return GL_TRUE;
 }
@@ -121,11 +114,11 @@ _swrast_alloc_texture_image_buffer(struct gl_context *ctx,
 /**
  * Code that overrides ctx->Driver.AllocTextureImageBuffer may use this to
  * initialize the fields of swrast_texture_image without allocating the image
- * buffer or initializing ImageOffsets or RowStride.
+ * buffer or initializing RowStride or the contents of ImageOffsets.
  *
  * Returns GL_TRUE on success, GL_FALSE on memory allocation failure.
  */
-void
+GLboolean
 _swrast_init_texture_image(struct gl_texture_image *texImage)
 {
    struct swrast_texture_image *swImg = swrast_texture_image(texImage);
@@ -149,6 +142,13 @@ _swrast_init_texture_image(struct gl_texture_image *texImage)
       swImg->HeightScale = (GLfloat) texImage->Height;
       swImg->DepthScale = (GLfloat) texImage->Depth;
    }
+
+   assert(!swImg->ImageOffsets);
+   swImg->ImageOffsets = malloc(texture_slices(texImage) * sizeof(GLuint));
+   if (!swImg->ImageOffsets)
+      return GL_FALSE;
+
+   return GL_TRUE;
 }
 
 

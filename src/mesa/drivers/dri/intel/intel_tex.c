@@ -64,7 +64,6 @@ intel_alloc_texture_image_buffer(struct gl_context *ctx,
    struct intel_texture_image *intel_image = intel_texture_image(image);
    struct gl_texture_object *texobj = image->TexObject;
    struct intel_texture_object *intel_texobj = intel_texture_object(texobj);
-   GLuint slices;
 
    assert(image->Border == 0);
 
@@ -81,23 +80,8 @@ intel_alloc_texture_image_buffer(struct gl_context *ctx,
     */
    ctx->Driver.FreeTextureImageBuffer(ctx, image);
 
-   /* Allocate the swrast_texture_image::ImageOffsets array now */
-   switch (texobj->Target) {
-   case GL_TEXTURE_3D:
-   case GL_TEXTURE_2D_ARRAY:
-   case GL_TEXTURE_2D_MULTISAMPLE_ARRAY:
-      slices = image->Depth;
-      break;
-   case GL_TEXTURE_1D_ARRAY:
-      slices = image->Height;
-      break;
-   default:
-      slices = 1;
-   }
-   assert(!intel_image->base.ImageOffsets);
-   intel_image->base.ImageOffsets = malloc(slices * sizeof(GLuint));
-
-   _swrast_init_texture_image(image);
+   if (!_swrast_init_texture_image(image))
+      return false;
 
    if (intel_texobj->mt &&
        intel_miptree_match_image(intel_texobj->mt, image)) {

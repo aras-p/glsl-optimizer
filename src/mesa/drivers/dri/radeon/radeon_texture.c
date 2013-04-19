@@ -105,23 +105,12 @@ radeonAllocTextureImageBuffer(struct gl_context *ctx,
 			      struct gl_texture_image *timage)
 {
 	radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
-	radeon_texture_image *image = get_radeon_texture_image(timage);
 	struct gl_texture_object *texobj = timage->TexObject;
-	int slices;
 
 	ctx->Driver.FreeTextureImageBuffer(ctx, timage);
 
-	switch (texobj->Target) {
-	case GL_TEXTURE_3D:
-		slices = timage->Depth;
-		break;
-	default:
-		slices = 1;
-	}
-	assert(!image->base.ImageOffsets);
-	image->base.ImageOffsets = malloc(slices * sizeof(GLuint));
-
-	_swrast_init_texture_image(timage);
+	if (!_swrast_init_texture_image(timage))
+		return GL_FALSE;
 
 	teximage_assign_miptree(rmesa, texobj, timage);
 				
