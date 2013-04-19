@@ -68,6 +68,18 @@ texture_slices(struct gl_texture_image *texImage)
       return texImage->Depth;
 }
 
+unsigned int
+_swrast_teximage_slice_height(struct gl_texture_image *texImage)
+{
+   /* For 1D array textures, the slices are all 1 pixel high, and Height is
+    * the number of slices.
+    */
+   if (texImage->TexObject->Target == GL_TEXTURE_1D_ARRAY)
+      return 1;
+   else
+      return texImage->Height;
+}
+
 /**
  * Called via ctx->Driver.AllocTextureImageBuffer()
  */
@@ -219,18 +231,10 @@ _swrast_map_teximage(struct gl_context *ctx,
    map = swImage->Buffer;
 
    assert(slice < texture_slices(texImage));
-
-   if (texImage->TexObject->Target == GL_TEXTURE_3D ||
-       texImage->TexObject->Target == GL_TEXTURE_2D_ARRAY) {
+   if (slice != 0) {
       GLuint sliceSize = _mesa_format_image_size(texImage->TexFormat,
                                                  texImage->Width,
-                                                 texImage->Height,
-                                                 1);
-      map += slice * sliceSize;
-   } else if (texImage->TexObject->Target == GL_TEXTURE_1D_ARRAY) {
-      GLuint sliceSize = _mesa_format_image_size(texImage->TexFormat,
-                                                 texImage->Width,
-                                                 1,
+                                                 _swrast_teximage_slice_height(texImage),
                                                  1);
       map += slice * sliceSize;
    }

@@ -380,6 +380,9 @@ _swrast_map_textures(struct gl_context *ctx);
 extern void
 _swrast_unmap_textures(struct gl_context *ctx);
 
+extern unsigned int
+_swrast_teximage_slice_height(struct gl_texture_image *texImage);
+
 extern void
 _swrast_map_texture(struct gl_context *ctx, struct gl_texture_object *texObj);
 
