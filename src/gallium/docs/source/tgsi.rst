@@ -861,7 +861,18 @@ This instruction replicates its result.
 
 .. opcode:: BRK - Break
 
-  TBD
+  Unconditionally moves the point of execution to the instruction after the
+  next endloop or endswitch. The instruction must appear within a loop/endloop
+  or switch/endswitch.
+
+
+.. opcode:: BREAKC - Break Conditional
+
+  Conditionally moves the point of execution to the instruction after the
+  next endloop or endswitch. The instruction must appear within a loop/endloop
+  or switch/endswitch.
+  Condition evaluates to true if src0.x != 0 where src0.x is interpreted
+  as an integer register.
 
 
 .. opcode:: IF - Float If
@@ -890,6 +901,45 @@ This instruction replicates its result.
 .. opcode:: ENDIF - End If
 
   Ends an IF or UIF block.
+
+
+.. opcode:: SWITCH - Switch
+
+   Starts a C-style switch expression. The switch consists of one or multiple
+   CASE statements, and at most one DEFAULT statement. Execution of a statement
+   ends when a BRK is hit, but just like in C falling through to other cases
+   without a break is allowed. Similarly, DEFAULT label is allowed anywhere not
+   just as last statement, and fallthrough is allowed into/from it.
+   CASE src arguments are evaluated at bit level against the SWITCH src argument.
+
+   Example:
+   SWITCH src[0].x
+   CASE src[0].x
+   (some instructions here)
+   (optional BRK here)
+   DEFAULT
+   (some instructions here)
+   (optional BRK here)
+   CASE src[0].x
+   (some instructions here)
+   (optional BRK here)
+   ENDSWITCH
+
+
+.. opcode:: CASE - Switch case
+
+   This represents a switch case label. The src arg must be an integer immediate.
+
+
+.. opcode:: DEFAULT - Switch default
+
+   This represents the default case in the switch, which is taken if no other
+   case matches.
+
+
+.. opcode:: ENDSWITCH - End of switch
+
+   Ends a switch expression.
 
 
 .. opcode:: PUSHA - Push Address Register On Stack
@@ -1207,11 +1257,6 @@ ps_2_x
 XXX wait what
 
 .. opcode:: CALLNZ - Subroutine Call If Not Zero
-
-  TBD
-
-
-.. opcode:: BREAKC - Break Conditional
 
   TBD
 
