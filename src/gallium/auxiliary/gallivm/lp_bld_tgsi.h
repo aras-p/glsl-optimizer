@@ -241,6 +241,12 @@ lp_build_tgsi_aos(struct gallivm_state *gallivm,
                   const struct tgsi_shader_info *info);
 
 
+enum lp_exec_mask_break_type {
+   LP_EXEC_MASK_BREAK_TYPE_LOOP,
+   LP_EXEC_MASK_BREAK_TYPE_SWITCH
+};
+
+
 struct lp_exec_mask {
    struct lp_build_context *bld;
 
@@ -252,6 +258,24 @@ struct lp_exec_mask {
    LLVMValueRef cond_stack[LP_MAX_TGSI_NESTING];
    int cond_stack_size;
    LLVMValueRef cond_mask;
+
+   /* keep track if break belongs to switch or loop */
+   enum lp_exec_mask_break_type break_type_stack[LP_MAX_TGSI_NESTING];
+   enum lp_exec_mask_break_type break_type;
+
+   struct {
+      LLVMValueRef switch_val;
+      LLVMValueRef switch_mask;
+      LLVMValueRef switch_mask_default;
+      boolean switch_in_default;
+      unsigned switch_pc;
+   } switch_stack[LP_MAX_TGSI_NESTING];
+   int switch_stack_size;
+   LLVMValueRef switch_val;
+   LLVMValueRef switch_mask;         /* current switch exec mask */
+   LLVMValueRef switch_mask_default; /* reverse of switch mask used for default */
+   boolean switch_in_default;        /* if switch exec is currently in default */
+   unsigned switch_pc;               /* when used points to default or endswitch-1 */
 
    LLVMBasicBlockRef loop_block;
    LLVMValueRef cont_mask;

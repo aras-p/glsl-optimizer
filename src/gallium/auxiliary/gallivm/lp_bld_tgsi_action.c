@@ -865,6 +865,8 @@ lp_set_default_actions(struct lp_build_tgsi_context * bld_base)
    bld_base->op_actions[TGSI_OPCODE_XPD] = xpd_action;
 
    bld_base->op_actions[TGSI_OPCODE_BREAKC].fetch_args = scalar_unary_fetch_args;
+   bld_base->op_actions[TGSI_OPCODE_SWITCH].fetch_args = scalar_unary_fetch_args;
+   bld_base->op_actions[TGSI_OPCODE_CASE].fetch_args = scalar_unary_fetch_args;
    bld_base->op_actions[TGSI_OPCODE_COS].fetch_args = scalar_unary_fetch_args;
    bld_base->op_actions[TGSI_OPCODE_EX2].fetch_args = scalar_unary_fetch_args;
    bld_base->op_actions[TGSI_OPCODE_IF].fetch_args = scalar_unary_fetch_args;
