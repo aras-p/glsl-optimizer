@@ -127,20 +127,13 @@ void radeonFreeTextureImageBuffer(struct gl_context *ctx, struct gl_texture_imag
 
 	if (image->mt) {
 		radeon_miptree_unreference(&image->mt);
-	} else {
-		_swrast_free_texture_image_buffer(ctx, timage);
 	}
 	if (image->bo) {
 		radeon_bo_unref(image->bo);
 		image->bo = NULL;
 	}
-	if (image->base.Buffer) {
-		_mesa_align_free(image->base.Buffer);
-		image->base.Buffer = NULL;
-	}
 
-	free(image->base.ImageOffsets);
-	image->base.ImageOffsets = NULL;
+        _swrast_free_texture_image_buffer(ctx, timage);
 }
 
 /**

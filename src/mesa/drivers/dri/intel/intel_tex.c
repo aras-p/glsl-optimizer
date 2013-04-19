@@ -121,13 +121,7 @@ intel_free_texture_image_buffer(struct gl_context * ctx,
 
    intel_miptree_release(&intelImage->mt);
 
-   if (intelImage->base.Buffer) {
-      _mesa_align_free(intelImage->base.Buffer);
-      intelImage->base.Buffer = NULL;
-   }
-
-   free(intelImage->base.ImageOffsets);
-   intelImage->base.ImageOffsets = NULL;
+   _swrast_free_texture_image_buffer(ctx, texImage);
 }
 
 /**
