@@ -2851,7 +2851,7 @@ lp_build_tgsi_soa(struct gallivm_state *gallivm,
                                 max_output_vertices);
    }
 
-   lp_exec_mask_init(&bld.exec_mask, &bld.bld_base.base);
+   lp_exec_mask_init(&bld.exec_mask, &bld.bld_base.int_bld);
 
    bld.system_values = *system_values;
 
