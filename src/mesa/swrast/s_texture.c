@@ -266,12 +266,42 @@ _swrast_map_texture(struct gl_context *ctx, struct gl_texture_object *texObj)
    for (face = 0; face < faces; face++) {
       for (level = texObj->BaseLevel; level < MAX_TEXTURE_LEVELS; level++) {
          struct gl_texture_image *texImage = texObj->Image[face][level];
-         if (texImage) {
-            struct swrast_texture_image *swImage =
-               swrast_texture_image(texImage);
+         struct swrast_texture_image *swImage = swrast_texture_image(texImage);
+         unsigned int i;
 
-            /* XXX we'll eventually call _swrast_map_teximage() here */
-            swImage->Map = swImage->Buffer;
+         if (!texImage)
+            continue;
+
+         /* In the case of a swrast-allocated texture buffer, the ImageSlices
+          * and RowStride are always available.
+          */
+         if (swImage->Buffer) {
+            assert(swImage->ImageSlices[0] == swImage->Buffer);
+            continue;
+         }
+
+         for (i = 0; i < texture_slices(texImage); i++) {
+            GLubyte *map;
+            GLint rowStride;
+
+            if (swImage->ImageSlices[i])
+               continue;
+
+            ctx->Driver.MapTextureImage(ctx, texImage, i,
+                                        0, 0,
+                                        texImage->Width, texImage->Height,
+                                        GL_MAP_READ_BIT | GL_MAP_WRITE_BIT,
+                                        &map, &rowStride);
+
+            swImage->ImageSlices[i] = map;
+            /* A swrast-using driver has to return the same rowstride for
+             * every slice of the same texture, since we don't track them
+             * separately.
+             */
+            if (i == 0)
+               swImage->RowStride = rowStride;
+            else
+               assert(swImage->RowStride == rowStride);
          }
       }
    }
@@ -287,12 +317,20 @@ _swrast_unmap_texture(struct gl_context *ctx, struct gl_texture_object *texObj)
    for (face = 0; face < faces; face++) {
       for (level = texObj->BaseLevel; level < MAX_TEXTURE_LEVELS; level++) {
          struct gl_texture_image *texImage = texObj->Image[face][level];
-         if (texImage) {
-            struct swrast_texture_image *swImage
-               = swrast_texture_image(texImage);
+         struct swrast_texture_image *swImage = swrast_texture_image(texImage);
+         unsigned int i;
 
-            /* XXX we'll eventually call _swrast_unmap_teximage() here */
-            swImage->Map = NULL;
+         if (!texImage)
+            continue;
+
+         if (swImage->Buffer)
+            return;
+
+         for (i = 0; i < texture_slices(texImage); i++) {
+            if (swImage->ImageSlices[i]) {
+               ctx->Driver.UnmapTextureImage(ctx, texImage, i);
+               swImage->ImageSlices[i] = NULL;
+            }
          }
       }
    }

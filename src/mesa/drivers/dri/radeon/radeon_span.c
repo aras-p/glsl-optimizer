@@ -119,18 +119,11 @@ radeon_unmap_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
 static void radeonSpanRenderStart(struct gl_context * ctx)
 {
 	radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
-	int i;
 
 	radeon_firevertices(rmesa);
 
-	for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
-		if (ctx->Texture.Unit[i]._ReallyEnabled) {
-			radeon_validate_texture_miptree(ctx, _mesa_get_samplerobj(ctx, i),
-							ctx->Texture.Unit[i]._Current);
-			radeon_swrast_map_texture_images(ctx, ctx->Texture.Unit[i]._Current);
-		}
-	}
-	
+	_swrast_map_textures(ctx);
+
 	radeon_map_framebuffer(ctx, ctx->DrawBuffer);
 	if (ctx->ReadBuffer != ctx->DrawBuffer)
 		radeon_map_framebuffer(ctx, ctx->ReadBuffer);
@@ -138,13 +131,8 @@ static void radeonSpanRenderStart(struct gl_context * ctx)
 
 static void radeonSpanRenderFinish(struct gl_context * ctx)
 {
-	int i;
-
 	_swrast_flush(ctx);
-
-	for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++)
-		if (ctx->Texture.Unit[i]._ReallyEnabled)
-			radeon_swrast_unmap_texture_images(ctx, ctx->Texture.Unit[i]._Current);
+	_swrast_unmap_textures(ctx);
 
 	radeon_unmap_framebuffer(ctx, ctx->DrawBuffer);
 	if (ctx->ReadBuffer != ctx->DrawBuffer)

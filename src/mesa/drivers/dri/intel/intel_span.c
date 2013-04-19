@@ -105,31 +105,8 @@ intel_offset_S8(uint32_t stride, uint32_t x, uint32_t y, bool swizzled)
 }
 
 /**
- * Map the regions needed by intelSpanRenderStart().
- */
-static void
-intel_span_map_buffers(struct intel_context *intel)
-{
-   struct gl_context *ctx = &intel->ctx;
-   struct intel_texture_object *tex_obj;
-
-   for (int i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
-      if (!ctx->Texture.Unit[i]._ReallyEnabled)
-	 continue;
-      tex_obj = intel_texture_object(ctx->Texture.Unit[i]._Current);
-      intel_finalize_mipmap_tree(intel, i);
-      intel_tex_map_images(intel, tex_obj,
-			   GL_MAP_READ_BIT | GL_MAP_WRITE_BIT);
-   }
-
-   _swrast_map_renderbuffers(ctx);
-}
-
-/**
  * Prepare for software rendering.  Map current read/draw framebuffers'
- * renderbuffes and all currently bound texture objects.
- *
- * Old note: Moved locking out to get reasonable span performance.
+ * renderbuffers and all currently bound texture objects.
  */
 void
 intelSpanRenderStart(struct gl_context * ctx)
@@ -139,7 +116,9 @@ intelSpanRenderStart(struct gl_context * ctx)
    intel_flush(ctx);
    intel_prepare_render(intel);
    intel_flush(ctx);
-   intel_span_map_buffers(intel);
+
+   _swrast_map_textures(ctx);
+   _swrast_map_renderbuffers(ctx);
 }
 
 /**
@@ -149,18 +128,8 @@ intelSpanRenderStart(struct gl_context * ctx)
 void
 intelSpanRenderFinish(struct gl_context * ctx)
 {
-   struct intel_context *intel = intel_context(ctx);
-   GLuint i;
-
    _swrast_flush(ctx);
-
-   for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
-      if (ctx->Texture.Unit[i]._ReallyEnabled) {
-         struct gl_texture_object *texObj = ctx->Texture.Unit[i]._Current;
-         intel_tex_unmap_images(intel, intel_texture_object(texObj));
-      }
-   }
-
+   _swrast_unmap_textures(ctx);
    _swrast_unmap_renderbuffers(ctx);
 }
 
@@ -172,44 +141,5 @@ intelInitSpanFuncs(struct gl_context * ctx)
    if (swdd) {
       swdd->SpanRenderStart = intelSpanRenderStart;
       swdd->SpanRenderFinish = intelSpanRenderFinish;
-   }
-}
-
-void
-intel_map_vertex_shader_textures(struct gl_context *ctx)
-{
-   struct intel_context *intel = intel_context(ctx);
-   int i;
-
-   if (ctx->VertexProgram._Current == NULL)
-      return;
-
-   for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
-      if (ctx->Texture.Unit[i]._ReallyEnabled &&
-	  ctx->VertexProgram._Current->Base.TexturesUsed[i] != 0) {
-         struct gl_texture_object *texObj = ctx->Texture.Unit[i]._Current;
-
-         intel_tex_map_images(intel, intel_texture_object(texObj),
-                              GL_MAP_READ_BIT | GL_MAP_WRITE_BIT);
-      }
-   }
-}
-
-void
-intel_unmap_vertex_shader_textures(struct gl_context *ctx)
-{
-   struct intel_context *intel = intel_context(ctx);
-   int i;
-
-   if (ctx->VertexProgram._Current == NULL)
-      return;
-
-   for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
-      if (ctx->Texture.Unit[i]._ReallyEnabled &&
-	  ctx->VertexProgram._Current->Base.TexturesUsed[i] != 0) {
-         struct gl_texture_object *texObj = ctx->Texture.Unit[i]._Current;
-
-         intel_tex_unmap_images(intel, intel_texture_object(texObj));
-      }
    }
 }

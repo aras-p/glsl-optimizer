@@ -431,27 +431,6 @@ static void migrate_image_to_miptree(radeon_mipmap_tree *mt,
 		radeon_bo_unmap(image->mt->bo);
 
 		radeon_miptree_unreference(&image->mt);
-	} else if (image->base.Map) {
-		/* This condition should be removed, it's here to workaround
-		 * a segfault when mapping textures during software fallbacks.
-		 */
-		radeon_print(RADEON_FALLBACKS, RADEON_IMPORTANT,
-				"%s Trying to map texture in software fallback.\n",
-				__func__);
-		const uint32_t srcrowstride = _mesa_format_row_stride(image->base.Base.TexFormat, image->base.Base.Width);
-		uint32_t rows = image->base.Base.Height * image->base.Base.Depth;
-
-		if (_mesa_is_format_compressed(image->base.Base.TexFormat)) {
-			uint32_t blockWidth, blockHeight;
-			_mesa_get_format_block_size(image->base.Base.TexFormat, &blockWidth, &blockHeight);
-			rows = (rows + blockHeight - 1) / blockHeight;
-		}
-
-		copy_rows(dest, dstlvl->rowstride, image->base.Map, srcrowstride,
-				  rows, srcrowstride);
-
-		_mesa_align_free(image->base.Map);
-		image->base.Map = 0;
 	}
 
 	radeon_bo_unmap(mt->bo);

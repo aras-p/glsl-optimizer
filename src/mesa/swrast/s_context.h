@@ -148,8 +148,14 @@ struct swrast_texture_image
     * between all slices.
     */
    GLint RowStride;
-   void **ImageSlices;          /**< if 3D texture: array [Depth] of offsets to
-                                     each 2D slice in 'Data', in texels */
+   /**
+    * When a texture image is mapped for swrast, this array contains pointers
+    * to the beginning of each slice.
+    *
+    * For swrast-allocated textures, these pointers will always stay
+    * initialized to point within Buffer.
+    */
+   void **ImageSlices;
    GLubyte *Map;		/**< Pointer to mapped image memory */
 
    /** Malloc'd texture memory */
