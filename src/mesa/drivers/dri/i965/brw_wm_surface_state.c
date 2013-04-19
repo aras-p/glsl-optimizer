@@ -1315,6 +1315,7 @@ brw_update_null_renderbuffer_surface(struct brw_context *brw, unsigned int unit)
 static void
 brw_update_renderbuffer_surface(struct brw_context *brw,
 				struct gl_renderbuffer *rb,
+				bool layered,
 				unsigned int unit)
 {
    struct intel_context *intel = &brw->intel;
@@ -1327,6 +1328,8 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
    uint32_t format = 0;
    /* _NEW_BUFFERS */
    gl_format rb_format = _mesa_get_render_format(ctx, intel_rb_format(irb));
+
+   assert(!layered);
 
    if (rb->TexImage && !brw->has_surface_tile_offset) {
       intel_renderbuffer_get_tile_offsets(irb, &tile_x, &tile_y);
@@ -1424,7 +1427,8 @@ brw_update_renderbuffer_surfaces(struct brw_context *brw)
    if (ctx->DrawBuffer->_NumColorDrawBuffers >= 1) {
       for (i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers; i++) {
 	 if (intel_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[i])) {
-	    intel->vtbl.update_renderbuffer_surface(brw, ctx->DrawBuffer->_ColorDrawBuffers[i], i);
+	    intel->vtbl.update_renderbuffer_surface(brw, ctx->DrawBuffer->_ColorDrawBuffers[i],
+	                                            ctx->DrawBuffer->Layered, i);
 	 } else {
 	    intel->vtbl.update_null_renderbuffer_surface(brw, i);
 	 }

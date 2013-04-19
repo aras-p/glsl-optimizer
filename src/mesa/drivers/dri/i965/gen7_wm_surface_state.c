@@ -523,6 +523,7 @@ gen7_update_null_renderbuffer_surface(struct brw_context *brw, unsigned unit)
 static void
 gen7_update_renderbuffer_surface(struct brw_context *brw,
 				 struct gl_renderbuffer *rb,
+				 bool layered,
 				 unsigned int unit)
 {
    struct intel_context *intel = &brw->intel;
@@ -533,6 +534,8 @@ gen7_update_renderbuffer_surface(struct brw_context *brw,
    uint32_t format;
    /* _NEW_BUFFERS */
    gl_format rb_format = _mesa_get_render_format(ctx, intel_rb_format(irb));
+
+   assert(!layered);
 
    uint32_t *surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE,
                                     8 * 4, 32, &brw->wm.surf_offset[unit]);

@@ -196,6 +196,7 @@ struct intel_context
                                      unsigned surf_index);
       void (*update_renderbuffer_surface)(struct brw_context *brw,
 					  struct gl_renderbuffer *rb,
+					  bool layered,
 					  unsigned unit);
       void (*update_null_renderbuffer_surface)(struct brw_context *brw,
 					       unsigned unit);
