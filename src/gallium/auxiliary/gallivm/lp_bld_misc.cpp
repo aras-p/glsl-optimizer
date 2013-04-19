@@ -276,6 +276,9 @@ lp_build_create_jit_compiler_for_module(LLVMExecutionEngineRef *OutJIT,
        * add set this attribute.
        */
       MAttrs.push_back("+avx");
+      if (util_cpu_caps.has_f16c) {
+         MAttrs.push_back("+f16c");
+      }
       builder.setMAttrs(MAttrs);
    }
    builder.setJITMemoryManager(JITMemoryManager::CreateDefaultMemManager());
