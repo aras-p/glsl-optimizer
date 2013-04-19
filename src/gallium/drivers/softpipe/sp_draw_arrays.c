@@ -105,6 +105,13 @@ softpipe_draw_vbo(struct pipe_context *pipe,
    draw_set_mapped_so_targets(draw, sp->num_so_targets,
                               sp->so_targets);
 
+   if (sp->gs && !sp->gs->shader.tokens) {
+      /* we have an empty geometry shader with stream output, so
+         attach the stream output info to the current vertex shader */
+      if (sp->vs) {
+         draw_vs_attach_so(sp->vs->draw_data, &sp->gs->shader.stream_output);
+      }
+   }
    draw_collect_pipeline_statistics(draw,
                                     sp->active_statistics_queries > 0);
 

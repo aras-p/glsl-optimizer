@@ -275,21 +275,25 @@ softpipe_create_gs_state(struct pipe_context *pipe,
    if (state == NULL )
       goto fail;
 
-   /* debug */
-   if (softpipe->dump_gs)
-      tgsi_dump(templ->tokens, 0);
+   state->shader = *templ;
 
-   /* copy shader tokens, the ones passed in will go away.
-    */
-   state->shader.tokens = tgsi_dup_tokens(templ->tokens);
-   if (state->shader.tokens == NULL)
-      goto fail;
+   if (templ->tokens) {
+      /* debug */
+      if (softpipe->dump_gs)
+         tgsi_dump(templ->tokens, 0);
 
-   state->draw_data = draw_create_geometry_shader(softpipe->draw, templ);
-   if (state->draw_data == NULL)
-      goto fail;
+      /* copy shader tokens, the ones passed in will go away.
+       */
+      state->shader.tokens = tgsi_dup_tokens(templ->tokens);
+      if (state->shader.tokens == NULL)
+         goto fail;
 
-   state->max_sampler = state->draw_data->info.file_max[TGSI_FILE_SAMPLER];
+      state->draw_data = draw_create_geometry_shader(softpipe->draw, templ);
+      if (state->draw_data == NULL)
+         goto fail;
+
+      state->max_sampler = state->draw_data->info.file_max[TGSI_FILE_SAMPLER];
+   }
 
    return state;
 
