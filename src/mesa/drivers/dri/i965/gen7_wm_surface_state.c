@@ -23,6 +23,7 @@
 #include "main/mtypes.h"
 #include "main/blend.h"
 #include "main/samplerobj.h"
+#include "main/texformat.h"
 #include "program/prog_parameter.h"
 
 #include "intel_mipmap_tree.h"
@@ -530,12 +531,15 @@ gen7_update_renderbuffer_surface(struct brw_context *brw,
    struct gl_context *ctx = &intel->ctx;
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
    struct intel_region *region = irb->mt->region;
-   uint32_t tile_x, tile_y;
    uint32_t format;
    /* _NEW_BUFFERS */
    gl_format rb_format = _mesa_get_render_format(ctx, intel_rb_format(irb));
-
-   assert(!layered);
+   uint32_t surftype;
+   bool is_array = false;
+   int depth = MAX2(rb->Depth, 1);
+   int min_array_element;
+   GLenum gl_target = rb->TexImage ?
+                         rb->TexImage->TexObject->Target : GL_TEXTURE_2D;
 
    uint32_t *surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE,
                                     8 * 4, 32, &brw->wm.surf_offset[unit]);
@@ -551,7 +555,28 @@ gen7_update_renderbuffer_surface(struct brw_context *brw,
                     __FUNCTION__, _mesa_get_format_name(rb_format));
    }
 
-   surf[0] = BRW_SURFACE_2D << BRW_SURFACE_TYPE_SHIFT |
+   switch (gl_target) {
+   case GL_TEXTURE_CUBE_MAP_ARRAY:
+   case GL_TEXTURE_CUBE_MAP:
+      surftype = BRW_SURFACE_2D;
+      is_array = true;
+      depth *= 6;
+      break;
+   default:
+      surftype = translate_tex_target(gl_target);
+      is_array = _mesa_tex_target_is_array(gl_target);
+      break;
+   }
+
+   if (layered) {
+      min_array_element = 0;
+   } else if (irb->mt->num_samples > 1) {
+      min_array_element = irb->mt_layer / irb->mt->num_samples;
+   } else {
+      min_array_element = irb->mt_layer;
+   }
+
+   surf[0] = surftype << BRW_SURFACE_TYPE_SHIFT |
              format << BRW_SURFACE_FORMAT_SHIFT |
              (irb->mt->array_spacing_lod0 ? GEN7_SURFACE_ARYSPC_LOD0
                                           : GEN7_SURFACE_ARYSPC_FULL) |
@@ -562,24 +587,25 @@ gen7_update_renderbuffer_surface(struct brw_context *brw,
    if (irb->mt->align_w == 8)
       surf[0] |= GEN7_SURFACE_HALIGN_8;
 
-   /* reloc */
-   surf[1] = intel_renderbuffer_get_tile_offsets(irb, &tile_x, &tile_y) +
-             region->bo->offset; /* reloc */
+   if (is_array) {
+      surf[0] |= GEN7_SURFACE_IS_ARRAY;
+   }
+
+   surf[1] = region->bo->offset;
 
    assert(brw->has_surface_tile_offset);
-   /* Note that the low bits of these fields are missing, so
-    * there's the possibility of getting in trouble.
-    */
-   assert(tile_x % 4 == 0);
-   assert(tile_y % 2 == 0);
-   surf[5] = SET_FIELD(tile_x / 4, BRW_SURFACE_X_OFFSET) |
-             SET_FIELD(tile_y / 2, BRW_SURFACE_Y_OFFSET);
 
-   surf[2] = SET_FIELD(rb->Width - 1, GEN7_SURFACE_WIDTH) |
-             SET_FIELD(rb->Height - 1, GEN7_SURFACE_HEIGHT);
-   surf[3] = region->pitch - 1;
+   surf[5] = irb->mt_level;
 
-   surf[4] = gen7_surface_msaa_bits(irb->mt->num_samples, irb->mt->msaa_layout);
+   surf[2] = SET_FIELD(irb->mt->logical_width0 - 1, GEN7_SURFACE_WIDTH) |
+             SET_FIELD(irb->mt->logical_height0 - 1, GEN7_SURFACE_HEIGHT);
+
+   surf[3] = ((depth - 1) << BRW_SURFACE_DEPTH_SHIFT) |
+             (region->pitch - 1);
+
+   surf[4] = gen7_surface_msaa_bits(irb->mt->num_samples, irb->mt->msaa_layout) |
+             min_array_element << GEN7_SURFACE_MIN_ARRAY_ELEMENT_SHIFT |
+             (depth - 1) << GEN7_SURFACE_RENDER_TARGET_VIEW_EXTENT_SHIFT;
 
    if (irb->mt->msaa_layout == INTEL_MSAA_LAYOUT_CMS) {
       gen7_set_surface_mcs_info(brw, surf, brw->wm.surf_offset[unit],
