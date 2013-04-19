@@ -21,6 +21,7 @@ unsigned r600_llvm_compile(
 	unsigned * inst_byte_count,
 	enum radeon_family family,
 	unsigned *ngpr,
+	unsigned *stack_size,
 	unsigned dump);
 
 #endif /* defined R600_USE_LLVM || defined HAVE_OPENCL */

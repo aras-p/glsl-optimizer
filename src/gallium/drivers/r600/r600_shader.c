@@ -591,7 +591,6 @@ static void r600_bytecode_from_byte_stream(struct r600_shader_ctx *ctx,
 				unsigned char * bytes,	unsigned num_bytes)
 {
 	unsigned bytes_read = 0;
-	ctx->bc->nstack = bytes[bytes_read++];
 	unsigned i, byte;
 	while (bytes_read < num_bytes) {
 		char inst_type = bytes[bytes_read++];
@@ -1462,7 +1461,7 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 		mod = r600_tgsi_llvm(&radeon_llvm_ctx, tokens);
 
 		if (r600_llvm_compile(mod, &inst_bytes, &inst_byte_count,
-				      rscreen->family, &ctx.bc->ngpr, dump)) {
+				      rscreen->family, &ctx.bc->ngpr, &ctx.bc->nstack, dump)) {
 			FREE(inst_bytes);
 			radeon_llvm_dispose(&radeon_llvm_ctx);
 			use_llvm = 0;
