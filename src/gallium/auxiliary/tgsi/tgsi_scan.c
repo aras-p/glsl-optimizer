@@ -36,6 +36,7 @@
 
 #include "util/u_debug.h"
 #include "util/u_math.h"
+#include "util/u_prim.h"
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_util.h"
 #include "tgsi/tgsi_scan.h"
@@ -260,6 +261,22 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
          break;
       case TGSI_PROPERTY_FS_COLOR0_WRITES_ALL_CBUFS:
          info->color0_writes_all_cbufs = info->properties[i].data[0];
+         break;
+      case TGSI_PROPERTY_GS_INPUT_PRIM:
+         /* The dimensions of the IN decleration in geometry shader have
+          * to be deduced from the type of the input primitive.
+          */
+         if (procType == TGSI_PROCESSOR_GEOMETRY) {
+            unsigned input_primitive = info->properties[i].data[0];
+            int num_verts = u_vertices_per_prim(input_primitive);
+            unsigned j;
+            info->file_count[TGSI_FILE_INPUT] = num_verts;
+            info->file_max[TGSI_FILE_INPUT] =
+               MAX2(info->file_max[TGSI_FILE_INPUT], num_verts - 1);
+            for (j = 0; j < num_verts; ++j) {
+               info->file_mask[TGSI_FILE_INPUT] |= (1 << j);
+            }
+         }
          break;
       default:
          ;
