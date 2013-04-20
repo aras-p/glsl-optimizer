@@ -29,11 +29,9 @@
 
 #include "instr-a2xx.h"
 
-/* low level intermediate representation of an adreno shader program */
+/* low level intermediate representation of an adreno a2xx shader program */
 
 struct ir_shader;
-
-struct ir_shader * fd_asm_parse(const char *src);
 
 struct ir_shader_info {
 	uint16_t sizedwords;
@@ -111,41 +109,6 @@ struct ir_cf {
 	};
 };
 
-/* somewhat arbitrary limits.. */
-#define MAX_ATTRIBUTES 32
-#define MAX_CONSTS     32
-#define MAX_SAMPLERS   32
-#define MAX_UNIFORMS   32
-#define MAX_VARYINGS   32
-
-struct ir_attribute {
-	const char *name;
-	int rstart;         /* first register */
-	int num;            /* number of registers */
-};
-
-struct ir_const {
-	float val[4];
-	int cstart;         /* first const register */
-};
-
-struct ir_sampler {
-	const char *name;
-	int idx;
-};
-
-struct ir_uniform {
-	const char *name;
-	int cstart;         /* first const register */
-	int num;            /* number of const registers */
-};
-
-struct ir_varying {
-	const char *name;
-	int rstart;         /* first register */
-	int num;            /* number of registers */
-};
-
 struct ir_shader {
 	unsigned cfs_count;
 	struct ir_cf *cfs[0x56];
@@ -153,40 +116,12 @@ struct ir_shader {
 	unsigned heap_idx;
 
 	enum ir_pred pred;  /* pred inherited by newly created instrs */
-
-	/* @ headers: */
-	uint32_t attributes_count;
-	struct ir_attribute *attributes[MAX_ATTRIBUTES];
-
-	uint32_t consts_count;
-	struct ir_const *consts[MAX_CONSTS];
-
-	uint32_t samplers_count;
-	struct ir_sampler *samplers[MAX_SAMPLERS];
-
-	uint32_t uniforms_count;
-	struct ir_uniform *uniforms[MAX_UNIFORMS];
-
-	uint32_t varyings_count;
-	struct ir_varying *varyings[MAX_VARYINGS];
-
 };
 
 struct ir_shader * ir_shader_create(void);
 void ir_shader_destroy(struct ir_shader *shader);
 void * ir_shader_assemble(struct ir_shader *shader,
 		struct ir_shader_info *info);
-
-struct ir_attribute * ir_attribute_create(struct ir_shader *shader,
-		int rstart, int num, const char *name);
-struct ir_const * ir_const_create(struct ir_shader *shader,
-		int cstart, float v0, float v1, float v2, float v3);
-struct ir_sampler * ir_sampler_create(struct ir_shader *shader,
-		int idx, const char *name);
-struct ir_uniform * ir_uniform_create(struct ir_shader *shader,
-		int cstart, int num, const char *name);
-struct ir_varying * ir_varying_create(struct ir_shader *shader,
-		int rstart, int num, const char *name);
 
 struct ir_cf * ir_cf_create(struct ir_shader *shader, instr_cf_opc_t cf_type);
 
