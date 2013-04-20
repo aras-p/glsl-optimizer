@@ -361,15 +361,17 @@ llvmpipe_is_format_supported( struct pipe_screen *_screen,
          return FALSE;
    }
 
+   /* TODO: Support Z32_FLOAT_S8X24_UINT. See lp_bld_depth.c. */
+   if (format_desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS &&
+       format_desc->block.bits > 32) {
+      return FALSE;
+   }
+
    if (bind & PIPE_BIND_DEPTH_STENCIL) {
       if (format_desc->layout != UTIL_FORMAT_LAYOUT_PLAIN)
          return FALSE;
 
       if (format_desc->colorspace != UTIL_FORMAT_COLORSPACE_ZS)
-         return FALSE;
-
-      /* TODO: Support Z32_FLOAT_S8X24_UINT. See lp_bld_depth.c. */
-      if (format_desc->block.bits > 32)
          return FALSE;
 
       /* TODO: Support stencil-only formats */
