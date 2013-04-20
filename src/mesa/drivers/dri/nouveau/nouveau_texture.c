@@ -136,7 +136,7 @@ nouveau_map_texture_image(struct gl_context *ctx,
 			*stride = s->pitch;
 		}
 	} else {
-		*map = nti->base.Map +
+		*map = nti->base.Buffer +
 			get_format_blocksy(s->format, y) * s->pitch +
 			get_format_blocksx(s->format, x) * s->cpp;
 		*stride = s->pitch;
@@ -158,8 +158,6 @@ nouveau_unmap_texture_image(struct gl_context *ctx, struct gl_texture_image *ti,
 		nouveau_surface_ref(NULL, st);
 
 	}
-
-	nti->base.Map = NULL;
 }
 
 static gl_format
