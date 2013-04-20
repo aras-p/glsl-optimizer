@@ -80,75 +80,6 @@ nouveau_teximage_free(struct gl_context *ctx, struct gl_texture_image *ti)
 }
 
 static void
-nouveau_teximage_map(struct gl_context *ctx, struct gl_texture_image *ti,
-		     int access, int x, int y, int w, int h)
-{
-	struct nouveau_teximage *nti = to_nouveau_teximage(ti);
-	struct nouveau_surface *s = &nti->surface;
-	struct nouveau_surface *st = &nti->transfer.surface;
-	struct nouveau_client *client = context_client(ctx);
-
-	if (s->bo) {
-		if (!(access & GL_MAP_READ_BIT) &&
-		    nouveau_pushbuf_refd(context_push(ctx), s->bo)) {
-			unsigned size;
-			/*
-			 * Heuristic: use a bounce buffer to pipeline
-			 * teximage transfers.
-			 */
-			st->layout = LINEAR;
-			st->format = s->format;
-			st->cpp = s->cpp;
-			st->width = w;
-			st->height = h;
-			st->pitch = s->pitch;
-			nti->transfer.x = x;
-			nti->transfer.y = y;
-
-			size = get_format_blocksy(st->format, h) * st->pitch;
-			nti->base.Map = nouveau_get_scratch(ctx, size,
-						       &st->bo, &st->offset);
-
-		} else {
-			int ret, flags = 0;
-
-			if (access & GL_MAP_READ_BIT)
-				flags |= NOUVEAU_BO_RD;
-			if (access & GL_MAP_WRITE_BIT)
-				flags |= NOUVEAU_BO_WR;
-
-			if (!s->bo->map) {
-				ret = nouveau_bo_map(s->bo, flags, client);
-				assert(!ret);
-			}
-
-			nti->base.Map = s->bo->map +
-				get_format_blocksy(s->format, y) * s->pitch +
-				get_format_blocksx(s->format, x) * s->cpp;
-
-		}
-	}
-}
-
-static void
-nouveau_teximage_unmap(struct gl_context *ctx, struct gl_texture_image *ti)
-{
-	struct nouveau_teximage *nti = to_nouveau_teximage(ti);
-	struct nouveau_surface *s = &nti->surface;
-	struct nouveau_surface *st = &nti->transfer.surface;
-
-	if (st->bo) {
-		context_drv(ctx)->surface_copy(ctx, s, st, nti->transfer.x,
-					       nti->transfer.y, 0, 0,
-					       st->width, st->height);
-		nouveau_surface_ref(NULL, st);
-
-	}
-	nti->base.Map = NULL;
-}
-
-
-static void
 nouveau_map_texture_image(struct gl_context *ctx,
 			  struct gl_texture_image *ti,
 			  GLuint slice,
@@ -509,19 +440,24 @@ nouveau_teximage(struct gl_context *ctx, GLint dims,
 			pixels, packing, "glTexImage");
 
 	if (pixels) {
+		GLubyte *map;
+		int row_stride;
+
 		/* Store the pixel data. */
-		nouveau_teximage_map(ctx, ti, GL_MAP_WRITE_BIT,
-				     0, 0, ti->Width, ti->Height);
+		nouveau_map_texture_image(ctx, ti, 0,
+					  0, 0, ti->Width, ti->Height,
+					  GL_MAP_WRITE_BIT,
+					  &map, &row_stride);
 
 		ret = _mesa_texstore(ctx, dims, ti->_BaseFormat,
 				     ti->TexFormat,
-				     s->pitch,
-                                     &nti->base.Map,
+				     row_stride,
+				     &map,
 				     ti->Width, ti->Height, depth,
 				     format, type, pixels, packing);
 		assert(ret);
 
-		nouveau_teximage_unmap(ctx, ti);
+		nouveau_unmap_texture_image(ctx, ti, 0);
 		_mesa_unmap_teximage_pbo(ctx, packing);
 
 		if (!validate_teximage(ctx, t, level, 0, 0, 0,
@@ -570,8 +506,6 @@ nouveau_texsubimage(struct gl_context *ctx, GLint dims,
 		    const struct gl_pixelstore_attrib *packing,
 		    GLboolean compressed)
 {
-	struct nouveau_surface *s = &to_nouveau_teximage(ti)->surface;
-	struct nouveau_teximage *nti = to_nouveau_teximage(ti);
 	int ret;
 
 	if (compressed)
@@ -584,17 +518,20 @@ nouveau_texsubimage(struct gl_context *ctx, GLint dims,
 				pixels, packing, "glTexSubImage");
 
 	if (pixels) {
-		nouveau_teximage_map(ctx, ti, GL_MAP_WRITE_BIT,
-				     xoffset, yoffset, width, height);
+		GLubyte *map;
+		int row_stride;
+
+		nouveau_map_texture_image(ctx, ti, 0,
+					  xoffset, yoffset, width, height,
+					  GL_MAP_WRITE_BIT, &map, &row_stride);
 
 		ret = _mesa_texstore(ctx, dims, ti->_BaseFormat, ti->TexFormat,
-                                     s->pitch,
-				     &nti->base.Map,
+				     row_stride, &map,
                                      width, height, depth,
 				     format, type, pixels, packing);
 		assert(ret);
 
-		nouveau_teximage_unmap(ctx, ti);
+		nouveau_unmap_texture_image(ctx, ti, 0);
 		_mesa_unmap_teximage_pbo(ctx, packing);
 	}
 
