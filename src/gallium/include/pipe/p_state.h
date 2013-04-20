@@ -134,6 +134,12 @@ struct pipe_rasterizer_state
    unsigned depth_clip:1;
 
    /**
+    * When true clip space in the z axis goes from [0..1] (D3D).  When false
+    * [-1, 1] (GL).
+    */
+   unsigned clip_halfz:1;
+
+   /**
     * Enable bits for clipping half-spaces.
     * This applies to both user clip planes and shader clip distances.
     * Note that if the bound shader exports any clip distances, these

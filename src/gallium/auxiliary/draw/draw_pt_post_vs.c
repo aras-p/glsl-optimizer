@@ -127,14 +127,14 @@ void draw_pt_post_vs_prepare( struct pt_post_vs *pvs,
                               boolean clip_user,
                               boolean guard_band,
 			      boolean bypass_viewport,
-			      boolean opengl,
+                              boolean clip_halfz,
 			      boolean need_edgeflags )
 {
    pvs->flags = 0;
 
    /* This combination not currently tested/in use:
     */
-   if (opengl)
+   if (!clip_halfz)
       guard_band = FALSE;
 
    if (clip_xy && !guard_band) {
@@ -152,14 +152,14 @@ void draw_pt_post_vs_prepare( struct pt_post_vs *pvs,
       ASSIGN_4V( pvs->draw->plane[3],  0,  0.5,  0, 1 );
    }
 
-   if (clip_z && opengl) {
-      pvs->flags |= DO_CLIP_FULL_Z;
-      ASSIGN_4V( pvs->draw->plane[4],  0,  0,  1, 1 );
-   }
-
-   if (clip_z && !opengl) {
-      pvs->flags |= DO_CLIP_HALF_Z;
-      ASSIGN_4V( pvs->draw->plane[4],  0,  0,  1, 0 );
+   if (clip_z) {
+      if (clip_halfz) {
+         pvs->flags |= DO_CLIP_HALF_Z;
+         ASSIGN_4V( pvs->draw->plane[4],  0,  0,  1, 0 );
+      } else {
+         pvs->flags |= DO_CLIP_FULL_Z;
+         ASSIGN_4V( pvs->draw->plane[4],  0,  0,  1, 1 );
+      }
    }
 
    if (clip_user)

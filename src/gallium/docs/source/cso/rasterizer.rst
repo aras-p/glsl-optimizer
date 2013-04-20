@@ -242,6 +242,10 @@ gl_rasterization_rules
     Whether the rasterizer should use (0.5, 0.5) pixel centers. When not set,
     the rasterizer will use (0, 0) for pixel centers.
 
+clip_halfz
+    When true clip space in the z axis goes from [0..1] (D3D).  When false
+    [-1, 1] (GL)
+
 depth_clip
     When false, the near and far depth clipping planes of the view volume are
     disabled and the depth value will be clamped at the per-pixel level, after

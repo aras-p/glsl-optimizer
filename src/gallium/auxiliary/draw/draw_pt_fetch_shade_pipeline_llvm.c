@@ -158,17 +158,14 @@ llvm_middle_end_prepare( struct draw_pt_middle_end *middle,
    fpme->vertex_size = sizeof(struct vertex_header) + nr * 4 * sizeof(float);
 
 
-   /* XXX: it's not really gl rasterization rules we care about here,
-    * but gl vs dx9 clip spaces.
-    */
    draw_pt_post_vs_prepare( fpme->post_vs,
 			    draw->clip_xy,
 			    draw->clip_z,
 			    draw->clip_user,
                             draw->guard_band_xy,
-			    draw->identity_viewport,
-			    (boolean)draw->rasterizer->gl_rasterization_rules,
-			    (draw->vs.edgeflag_output ? TRUE : FALSE) );
+                            draw->identity_viewport,
+                            draw->rasterizer->clip_halfz,
+                            (draw->vs.edgeflag_output ? TRUE : FALSE) );
 
    draw_pt_so_emit_prepare( fpme->so_emit, gs == NULL );
 

@@ -233,7 +233,7 @@ void draw_pt_post_vs_prepare( struct pt_post_vs *pvs,
 			      boolean clip_user,
                               boolean guard_band,
 			      boolean bypass_viewport,
-			      boolean opengl,
+                              boolean clip_halfz,
 			      boolean need_edgeflags );
 
 struct pt_post_vs *draw_pt_post_vs_create( struct draw_context *draw );

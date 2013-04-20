@@ -712,6 +712,7 @@ draw_get_rasterizer_no_cull( struct draw_context *draw,
       rast.flatshade = flatshade;
       rast.front_ccw = 1;
       rast.gl_rasterization_rules = draw->rasterizer->gl_rasterization_rules;
+      rast.clip_halfz = draw->rasterizer->clip_halfz;
 
       draw->rasterizer_no_cull[scissor][flatshade] =
          pipe->create_rasterizer_state(pipe, &rast);
