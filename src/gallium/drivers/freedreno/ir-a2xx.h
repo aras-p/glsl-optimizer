@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef IR_H_
-#define IR_H_
+#ifndef IR2_H_
+#define IR2_H_
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -31,42 +31,42 @@
 
 /* low level intermediate representation of an adreno a2xx shader program */
 
-struct ir_shader;
+struct ir2_shader;
 
-struct ir_shader_info {
+struct ir2_shader_info {
 	uint16_t sizedwords;
 	int8_t   max_reg;   /* highest GPR # used by shader */
 	uint8_t  max_input_reg;
 	uint64_t regs_written;
 };
 
-struct ir_register {
+struct ir2_register {
 	enum {
-		IR_REG_CONST  = 0x1,
-		IR_REG_EXPORT = 0x2,
-		IR_REG_NEGATE = 0x4,
-		IR_REG_ABS    = 0x8,
+		IR2_REG_CONST  = 0x1,
+		IR2_REG_EXPORT = 0x2,
+		IR2_REG_NEGATE = 0x4,
+		IR2_REG_ABS    = 0x8,
 	} flags;
 	int num;
 	char *swizzle;
 };
 
-enum ir_pred {
-	IR_PRED_NONE = 0,
-	IR_PRED_EQ = 1,
-	IR_PRED_NE = 2,
+enum ir2_pred {
+	IR2_PRED_NONE = 0,
+	IR2_PRED_EQ = 1,
+	IR2_PRED_NE = 2,
 };
 
-struct ir_instruction {
-	struct ir_shader *shader;
+struct ir2_instruction {
+	struct ir2_shader *shader;
 	enum {
-		IR_FETCH,
-		IR_ALU,
+		IR2_FETCH,
+		IR2_ALU,
 	} instr_type;
-	enum ir_pred pred;
+	enum ir2_pred pred;
 	int sync;
 	unsigned regs_count;
-	struct ir_register *regs[5];
+	struct ir2_register *regs[5];
 	union {
 		/* FETCH specific: */
 		struct {
@@ -90,15 +90,15 @@ struct ir_instruction {
 	};
 };
 
-struct ir_cf {
-	struct ir_shader *shader;
+struct ir2_cf {
+	struct ir2_shader *shader;
 	instr_cf_opc_t cf_type;
 
 	union {
 		/* EXEC/EXEC_END specific: */
 		struct {
 			unsigned instrs_count;
-			struct ir_instruction *instrs[6];
+			struct ir2_instruction *instrs[6];
 			uint32_t addr, cnt, sequence;
 		} exec;
 		/* ALLOC specific: */
@@ -109,54 +109,54 @@ struct ir_cf {
 	};
 };
 
-struct ir_shader {
+struct ir2_shader {
 	unsigned cfs_count;
-	struct ir_cf *cfs[0x56];
+	struct ir2_cf *cfs[0x56];
 	uint32_t heap[100 * 4096];
 	unsigned heap_idx;
 
-	enum ir_pred pred;  /* pred inherited by newly created instrs */
+	enum ir2_pred pred;  /* pred inherited by newly created instrs */
 };
 
-struct ir_shader * ir_shader_create(void);
-void ir_shader_destroy(struct ir_shader *shader);
-void * ir_shader_assemble(struct ir_shader *shader,
-		struct ir_shader_info *info);
+struct ir2_shader * ir2_shader_create(void);
+void ir2_shader_destroy(struct ir2_shader *shader);
+void * ir2_shader_assemble(struct ir2_shader *shader,
+		struct ir2_shader_info *info);
 
-struct ir_cf * ir_cf_create(struct ir_shader *shader, instr_cf_opc_t cf_type);
+struct ir2_cf * ir2_cf_create(struct ir2_shader *shader, instr_cf_opc_t cf_type);
 
-struct ir_instruction * ir_instr_create(struct ir_cf *cf, int instr_type);
+struct ir2_instruction * ir2_instr_create(struct ir2_cf *cf, int instr_type);
 
-struct ir_register * ir_reg_create(struct ir_instruction *instr,
+struct ir2_register * ir2_reg_create(struct ir2_instruction *instr,
 		int num, const char *swizzle, int flags);
 
 /* some helper fxns: */
 
-static inline struct ir_cf *
-ir_cf_create_alloc(struct ir_shader *shader, instr_alloc_type_t type, int size)
+static inline struct ir2_cf *
+ir2_cf_create_alloc(struct ir2_shader *shader, instr_alloc_type_t type, int size)
 {
-	struct ir_cf *cf = ir_cf_create(shader, ALLOC);
+	struct ir2_cf *cf = ir2_cf_create(shader, ALLOC);
 	if (!cf)
 		return cf;
 	cf->alloc.type = type;
 	cf->alloc.size = size;
 	return cf;
 }
-static inline struct ir_instruction *
-ir_instr_create_alu(struct ir_cf *cf, instr_vector_opc_t vop, instr_scalar_opc_t sop)
+static inline struct ir2_instruction *
+ir2_instr_create_alu(struct ir2_cf *cf, instr_vector_opc_t vop, instr_scalar_opc_t sop)
 {
-	struct ir_instruction *instr = ir_instr_create(cf, IR_ALU);
+	struct ir2_instruction *instr = ir2_instr_create(cf, IR2_ALU);
 	if (!instr)
 		return instr;
 	instr->alu.vector_opc = vop;
 	instr->alu.scalar_opc = sop;
 	return instr;
 }
-static inline struct ir_instruction *
-ir_instr_create_vtx_fetch(struct ir_cf *cf, int ci, int cis,
+static inline struct ir2_instruction *
+ir2_instr_create_vtx_fetch(struct ir2_cf *cf, int ci, int cis,
 		enum a2xx_sq_surfaceformat fmt, bool is_signed, int stride)
 {
-	struct ir_instruction *instr = instr = ir_instr_create(cf, IR_FETCH);
+	struct ir2_instruction *instr = instr = ir2_instr_create(cf, IR2_FETCH);
 	instr->fetch.opc = VTX_FETCH;
 	instr->fetch.const_idx = ci;
 	instr->fetch.const_idx_sel = cis;
@@ -165,14 +165,14 @@ ir_instr_create_vtx_fetch(struct ir_cf *cf, int ci, int cis,
 	instr->fetch.stride = stride;
 	return instr;
 }
-static inline struct ir_instruction *
-ir_instr_create_tex_fetch(struct ir_cf *cf, int ci)
+static inline struct ir2_instruction *
+ir2_instr_create_tex_fetch(struct ir2_cf *cf, int ci)
 {
-	struct ir_instruction *instr = instr = ir_instr_create(cf, IR_FETCH);
+	struct ir2_instruction *instr = instr = ir2_instr_create(cf, IR2_FETCH);
 	instr->fetch.opc = TEX_FETCH;
 	instr->fetch.const_idx = ci;
 	return instr;
 }
 
 
-#endif /* IR_H_ */
+#endif /* IR2_H_ */

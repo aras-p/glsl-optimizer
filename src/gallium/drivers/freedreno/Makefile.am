@@ -27,6 +27,6 @@ libfreedreno_la_SOURCES = \
 	freedreno_screen.c \
 	freedreno_gmem.c \
 	freedreno_compiler.c \
-	ir.c \
+	ir-a2xx.c \
 	disasm.c
 

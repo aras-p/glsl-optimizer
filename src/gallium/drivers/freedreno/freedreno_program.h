@@ -33,7 +33,7 @@
 
 #include "freedreno_context.h"
 
-#include "ir.h"
+#include "ir-a2xx.h"
 #include "disasm.h"
 
 struct fd_shader_stateobj {
@@ -47,14 +47,14 @@ struct fd_shader_stateobj {
 	 * and if one changes, we potentially need to recompile in order to
 	 * get varying linkages correct:
 	 */
-	struct ir_shader_info info;
-	struct ir_shader *ir;
+	struct ir2_shader_info info;
+	struct ir2_shader *ir;
 
 	/* for vertex shaders, the fetch instructions which need to be
 	 * patched up before assembly:
 	 */
 	unsigned num_vfetch_instrs;
-	struct ir_instruction *vfetch_instrs[64];
+	struct ir2_instruction *vfetch_instrs[64];
 
 	/* for all shaders, any tex fetch instructions which need to be
 	 * patched before assembly:
@@ -62,7 +62,7 @@ struct fd_shader_stateobj {
 	unsigned num_tfetch_instrs;
 	struct {
 		unsigned samp_id;
-		struct ir_instruction *instr;
+		struct ir2_instruction *instr;
 	} tfetch_instrs[64];
 
 	unsigned first_immediate;     /* const reg # of first immediate */

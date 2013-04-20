@@ -53,7 +53,7 @@ create_shader(enum shader_t type)
 static void
 delete_shader(struct fd_shader_stateobj *so)
 {
-	ir_shader_destroy(so->ir);
+	ir2_shader_destroy(so->ir);
 	FREE(so->tokens);
 	FREE(so);
 }
@@ -62,7 +62,7 @@ static struct fd_shader_stateobj *
 assemble(struct fd_shader_stateobj *so)
 {
 	free(so->bin);
-	so->bin = ir_shader_assemble(so->ir, &so->info);
+	so->bin = ir2_shader_assemble(so->ir, &so->info);
 	if (!so->bin)
 		goto fail;
 
@@ -187,7 +187,7 @@ patch_vtx_fetches(struct fd_context *ctx, struct fd_shader_stateobj *so,
 
 	/* update vtx fetch instructions: */
 	for (i = 0; i < so->num_vfetch_instrs; i++) {
-		struct ir_instruction *instr = so->vfetch_instrs[i];
+		struct ir2_instruction *instr = so->vfetch_instrs[i];
 		struct pipe_vertex_element *elem = &vtx->pipe[i];
 		struct pipe_vertex_buffer *vb =
 				&ctx->vertexbuf.vb[elem->vertex_buffer_index];
@@ -241,7 +241,7 @@ patch_tex_fetches(struct fd_context *ctx, struct fd_shader_stateobj *so,
 
 	/* update tex fetch instructions: */
 	for (i = 0; i < so->num_tfetch_instrs; i++) {
-		struct ir_instruction *instr = so->tfetch_instrs[i].instr;
+		struct ir2_instruction *instr = so->tfetch_instrs[i].instr;
 		unsigned samp_id = so->tfetch_instrs[i].samp_id;
 		unsigned const_idx = fd_get_const_idx(ctx, tex, samp_id);
 
@@ -289,8 +289,8 @@ void
 fd_program_emit(struct fd_ringbuffer *ring,
 		struct fd_program_stateobj *prog)
 {
-	struct ir_shader_info *vsi = &prog->vp->info;
-	struct ir_shader_info *fsi = &prog->fp->info;
+	struct ir2_shader_info *vsi = &prog->vp->info;
+	struct ir2_shader_info *fsi = &prog->fp->info;
 	uint8_t vs_gprs, fs_gprs, vs_export;
 
 	emit(ring, prog->vp);
@@ -322,28 +322,28 @@ static struct fd_shader_stateobj *
 create_blit_fp(void)
 {
 	struct fd_shader_stateobj *so = create_shader(SHADER_FRAGMENT);
-	struct ir_cf *cf;
-	struct ir_instruction *instr;
+	struct ir2_cf *cf;
+	struct ir2_instruction *instr;
 
 	if (!so)
 		return NULL;
 
-	so->ir = ir_shader_create();
+	so->ir = ir2_shader_create();
 
-	cf = ir_cf_create(so->ir, EXEC);
+	cf = ir2_cf_create(so->ir, EXEC);
 
-	instr = ir_instr_create_tex_fetch(cf, 0);
-	ir_reg_create(instr, 0, "xyzw", 0);
-	ir_reg_create(instr, 0, "xyx", 0);
+	instr = ir2_instr_create_tex_fetch(cf, 0);
+	ir2_reg_create(instr, 0, "xyzw", 0);
+	ir2_reg_create(instr, 0, "xyx", 0);
 	instr->sync = true;
 
-	cf = ir_cf_create_alloc(so->ir, SQ_PARAMETER_PIXEL, 0);
-	cf = ir_cf_create(so->ir, EXEC_END);
+	cf = ir2_cf_create_alloc(so->ir, SQ_PARAMETER_PIXEL, 0);
+	cf = ir2_cf_create(so->ir, EXEC_END);
 
-	instr = ir_instr_create_alu(cf, MAXv, ~0);
-	ir_reg_create(instr, 0, NULL, IR_REG_EXPORT);
-	ir_reg_create(instr, 0, NULL, 0);
-	ir_reg_create(instr, 0, NULL, 0);
+	instr = ir2_instr_create_alu(cf, MAXv, ~0);
+	ir2_reg_create(instr, 0, NULL, IR2_REG_EXPORT);
+	ir2_reg_create(instr, 0, NULL, 0);
+	ir2_reg_create(instr, 0, NULL, 0);
 
 	return assemble(so);
 }
@@ -364,41 +364,41 @@ static struct fd_shader_stateobj *
 create_blit_vp(void)
 {
 	struct fd_shader_stateobj *so = create_shader(SHADER_VERTEX);
-	struct ir_cf *cf;
-	struct ir_instruction *instr;
+	struct ir2_cf *cf;
+	struct ir2_instruction *instr;
 
 	if (!so)
 		return NULL;
 
-	so->ir = ir_shader_create();
+	so->ir = ir2_shader_create();
 
-	cf = ir_cf_create(so->ir, EXEC);
+	cf = ir2_cf_create(so->ir, EXEC);
 
-	instr = ir_instr_create_vtx_fetch(cf, 26, 1, FMT_32_32_FLOAT, false, 8);
+	instr = ir2_instr_create_vtx_fetch(cf, 26, 1, FMT_32_32_FLOAT, false, 8);
 	instr->fetch.is_normalized = true;
-	ir_reg_create(instr, 1, "xy01", 0);
-	ir_reg_create(instr, 0, "x", 0);
+	ir2_reg_create(instr, 1, "xy01", 0);
+	ir2_reg_create(instr, 0, "x", 0);
 
-	instr = ir_instr_create_vtx_fetch(cf, 26, 0, FMT_32_32_32_FLOAT, false, 12);
+	instr = ir2_instr_create_vtx_fetch(cf, 26, 0, FMT_32_32_32_FLOAT, false, 12);
 	instr->fetch.is_normalized = true;
-	ir_reg_create(instr, 2, "xyz1", 0);
-	ir_reg_create(instr, 0, "x", 0);
+	ir2_reg_create(instr, 2, "xyz1", 0);
+	ir2_reg_create(instr, 0, "x", 0);
 
-	cf = ir_cf_create_alloc(so->ir, SQ_POSITION, 0);
-	cf = ir_cf_create(so->ir, EXEC);
+	cf = ir2_cf_create_alloc(so->ir, SQ_POSITION, 0);
+	cf = ir2_cf_create(so->ir, EXEC);
 
-	instr = ir_instr_create_alu(cf, MAXv, ~0);
-	ir_reg_create(instr, 62, NULL, IR_REG_EXPORT);
-	ir_reg_create(instr, 2, NULL, 0);
-	ir_reg_create(instr, 2, NULL, 0);
+	instr = ir2_instr_create_alu(cf, MAXv, ~0);
+	ir2_reg_create(instr, 62, NULL, IR2_REG_EXPORT);
+	ir2_reg_create(instr, 2, NULL, 0);
+	ir2_reg_create(instr, 2, NULL, 0);
 
-	cf = ir_cf_create_alloc(so->ir, SQ_PARAMETER_PIXEL, 0);
-	cf = ir_cf_create(so->ir, EXEC_END);
+	cf = ir2_cf_create_alloc(so->ir, SQ_PARAMETER_PIXEL, 0);
+	cf = ir2_cf_create(so->ir, EXEC_END);
 
-	instr = ir_instr_create_alu(cf, MAXv, ~0);
-	ir_reg_create(instr, 0, NULL, IR_REG_EXPORT);
-	ir_reg_create(instr, 1, NULL, 0);
-	ir_reg_create(instr, 1, NULL, 0);
+	instr = ir2_instr_create_alu(cf, MAXv, ~0);
+	ir2_reg_create(instr, 0, NULL, IR2_REG_EXPORT);
+	ir2_reg_create(instr, 1, NULL, 0);
+	ir2_reg_create(instr, 1, NULL, 0);
 
 
 	return assemble(so);
@@ -414,21 +414,21 @@ static struct fd_shader_stateobj *
 create_solid_fp(void)
 {
 	struct fd_shader_stateobj *so = create_shader(SHADER_FRAGMENT);
-	struct ir_cf *cf;
-	struct ir_instruction *instr;
+	struct ir2_cf *cf;
+	struct ir2_instruction *instr;
 
 	if (!so)
 		return NULL;
 
-	so->ir = ir_shader_create();
+	so->ir = ir2_shader_create();
 
-	cf = ir_cf_create_alloc(so->ir, SQ_PARAMETER_PIXEL, 0);
-	cf = ir_cf_create(so->ir, EXEC_END);
+	cf = ir2_cf_create_alloc(so->ir, SQ_PARAMETER_PIXEL, 0);
+	cf = ir2_cf_create(so->ir, EXEC_END);
 
-	instr = ir_instr_create_alu(cf, MAXv, ~0);
-	ir_reg_create(instr, 0, NULL, IR_REG_EXPORT);
-	ir_reg_create(instr, 0, NULL, IR_REG_CONST);
-	ir_reg_create(instr, 0, NULL, IR_REG_CONST);
+	instr = ir2_instr_create_alu(cf, MAXv, ~0);
+	ir2_reg_create(instr, 0, NULL, IR2_REG_EXPORT);
+	ir2_reg_create(instr, 0, NULL, IR2_REG_CONST);
+	ir2_reg_create(instr, 0, NULL, IR2_REG_CONST);
 
 	return assemble(so);
 }
@@ -447,30 +447,30 @@ static struct fd_shader_stateobj *
 create_solid_vp(void)
 {
 	struct fd_shader_stateobj *so = create_shader(SHADER_VERTEX);
-	struct ir_cf *cf;
-	struct ir_instruction *instr;
+	struct ir2_cf *cf;
+	struct ir2_instruction *instr;
 
 	if (!so)
 		return NULL;
 
-	so->ir = ir_shader_create();
+	so->ir = ir2_shader_create();
 
-	cf = ir_cf_create(so->ir, EXEC);
+	cf = ir2_cf_create(so->ir, EXEC);
 
-	instr = ir_instr_create_vtx_fetch(cf, 26, 0, FMT_32_32_32_FLOAT, false, 12);
-	ir_reg_create(instr, 1, "xyz1", 0);
-	ir_reg_create(instr, 0, "x", 0);
+	instr = ir2_instr_create_vtx_fetch(cf, 26, 0, FMT_32_32_32_FLOAT, false, 12);
+	ir2_reg_create(instr, 1, "xyz1", 0);
+	ir2_reg_create(instr, 0, "x", 0);
 
-	cf = ir_cf_create_alloc(so->ir, SQ_POSITION, 0);
-	cf = ir_cf_create(so->ir, EXEC);
+	cf = ir2_cf_create_alloc(so->ir, SQ_POSITION, 0);
+	cf = ir2_cf_create(so->ir, EXEC);
 
-	instr = ir_instr_create_alu(cf, MAXv, ~0);
-	ir_reg_create(instr, 62, NULL, IR_REG_EXPORT);
-	ir_reg_create(instr, 1, NULL, 0);
-	ir_reg_create(instr, 1, NULL, 0);
+	instr = ir2_instr_create_alu(cf, MAXv, ~0);
+	ir2_reg_create(instr, 62, NULL, IR2_REG_EXPORT);
+	ir2_reg_create(instr, 1, NULL, 0);
+	ir2_reg_create(instr, 1, NULL, 0);
 
-	cf = ir_cf_create_alloc(so->ir, SQ_PARAMETER_PIXEL, 0);
-	cf = ir_cf_create(so->ir, EXEC_END);
+	cf = ir2_cf_create_alloc(so->ir, SQ_PARAMETER_PIXEL, 0);
+	cf = ir2_cf_create(so->ir, EXEC_END);
 
 	return assemble(so);
 }
