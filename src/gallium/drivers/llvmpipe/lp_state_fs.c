@@ -2478,12 +2478,18 @@ make_variant_key(struct llvmpipe_context *lp,
    memset(key, 0, shader->variant_key_size);
 
    if (lp->framebuffer.zsbuf) {
-      if (lp->depth_stencil->depth.enabled) {
-         key->zsbuf_format = lp->framebuffer.zsbuf->format;
+      enum pipe_format zsbuf_format = lp->framebuffer.zsbuf->format;
+      const struct util_format_description *zsbuf_desc =
+         util_format_description(zsbuf_format);
+
+      if (lp->depth_stencil->depth.enabled &&
+          util_format_has_depth(zsbuf_desc)) {
+         key->zsbuf_format = zsbuf_format;
          memcpy(&key->depth, &lp->depth_stencil->depth, sizeof key->depth);
       }
-      if (lp->depth_stencil->stencil[0].enabled) {
-         key->zsbuf_format = lp->framebuffer.zsbuf->format;
+      if (lp->depth_stencil->stencil[0].enabled &&
+          util_format_has_stencil(zsbuf_desc)) {
+         key->zsbuf_format = zsbuf_format;
          memcpy(&key->stencil, &lp->depth_stencil->stencil, sizeof key->stencil);
       }
    }
