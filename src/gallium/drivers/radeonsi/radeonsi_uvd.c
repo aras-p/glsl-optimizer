@@ -76,6 +76,8 @@ struct pipe_video_buffer *radeonsi_video_buffer_create(struct pipe_context *pipe
 	template.height = align(tmpl->height / depth, VL_MACROBLOCK_HEIGHT);
 
 	vl_vide_buffer_template(&templ, &template, resource_formats[0], depth, PIPE_USAGE_STATIC, 0);
+	/* TODO: Setting the transfer flag is only a workaround till we get tiling working */
+	templ.flags = R600_RESOURCE_FLAG_TRANSFER;
 	resources[0] = (struct r600_resource_texture *)
 		pipe->screen->resource_create(pipe->screen, &templ);
 	if (!resources[0])
@@ -83,6 +85,7 @@ struct pipe_video_buffer *radeonsi_video_buffer_create(struct pipe_context *pipe
 
 	if (resource_formats[1] != PIPE_FORMAT_NONE) {
 		vl_vide_buffer_template(&templ, &template, resource_formats[1], depth, PIPE_USAGE_STATIC, 1);
+		templ.flags = R600_RESOURCE_FLAG_TRANSFER;
 		resources[1] = (struct r600_resource_texture *)
 			pipe->screen->resource_create(pipe->screen, &templ);
 		if (!resources[1])
@@ -91,6 +94,7 @@ struct pipe_video_buffer *radeonsi_video_buffer_create(struct pipe_context *pipe
 
 	if (resource_formats[2] != PIPE_FORMAT_NONE) {
 		vl_vide_buffer_template(&templ, &template, resource_formats[2], depth, PIPE_USAGE_STATIC, 2);
+		templ.flags = R600_RESOURCE_FLAG_TRANSFER;
 		resources[2] = (struct r600_resource_texture *)
 			pipe->screen->resource_create(pipe->screen, &templ);
 		if (!resources[2])
@@ -114,9 +118,6 @@ struct pipe_video_buffer *radeonsi_video_buffer_create(struct pipe_context *pipe
 		/* recreate the CS handle */
 		resources[i]->resource.cs_buf = ctx->ws->buffer_get_cs_handle(
 			resources[i]->resource.buf);
-
-		/* TODO: tiling used to work with UVD on SI */
-		resources[i]->surface.level[0].mode = RADEON_SURF_MODE_LINEAR_ALIGNED;
 	}
 
 	template.height *= depth;
