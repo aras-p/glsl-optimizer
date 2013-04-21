@@ -186,6 +186,8 @@ add_blend_test(struct gallivm_state *gallivm,
 
    LLVMBuildRetVoid(builder);;
 
+   gallivm_verify_function(gallivm, func);
+
    return func;
 }
 
