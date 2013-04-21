@@ -146,9 +146,9 @@ lp_build_blend(struct lp_build_context *bld,
       if (lp_build_blend_factor_complementary(factor_src, factor_dst)) {
          if (func == PIPE_BLEND_ADD) {
             if (factor_src < factor_dst) {
-               return lp_build_lerp(bld, src_factor, dst, src);
+               return lp_build_lerp(bld, src_factor, dst, src, 0);
             } else {
-               return lp_build_lerp(bld, dst_factor, src, dst);
+               return lp_build_lerp(bld, dst_factor, src, dst, 0);
             }
          } else if(bld->type.floating && func == PIPE_BLEND_SUBTRACT) {
             result = lp_build_add(bld, src, dst);

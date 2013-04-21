@@ -496,8 +496,7 @@ lp_build_sample_fetch_image_nearest(struct lp_build_sample_context *bld,
                                     LLVMValueRef offset,
                                     LLVMValueRef x_subcoord,
                                     LLVMValueRef y_subcoord,
-                                    LLVMValueRef *colors_lo,
-                                    LLVMValueRef *colors_hi)
+                                    LLVMValueRef *colors)
 {
    /*
     * Fetch the pixels as 4 x 32bit (rgba order might differ):
@@ -517,10 +516,9 @@ lp_build_sample_fetch_image_nearest(struct lp_build_sample_context *bld,
     */
    LLVMBuilderRef builder = bld->gallivm->builder;
    LLVMValueRef rgba8;
-   struct lp_build_context h16, u8n;
+   struct lp_build_context u8n;
    LLVMTypeRef u8n_vec_type;
 
-   lp_build_context_init(&h16, bld->gallivm, lp_type_ufixed(16, bld->vector_width));
    lp_build_context_init(&u8n, bld->gallivm, lp_type_unorm(8, bld->vector_width));
    u8n_vec_type = lp_build_vec_type(bld->gallivm, u8n.type);
 
@@ -546,10 +544,7 @@ lp_build_sample_fetch_image_nearest(struct lp_build_sample_context *bld,
                                       y_subcoord);
    }
 
-   /* Expand one 4*rgba8 to two 2*rgba16 */
-   lp_build_unpack2(bld->gallivm, u8n.type, h16.type,
-                    rgba8,
-                    colors_lo, colors_hi);
+   *colors = rgba8;
 }
 
 
@@ -569,8 +564,7 @@ lp_build_sample_image_nearest(struct lp_build_sample_context *bld,
                               LLVMValueRef t,
                               LLVMValueRef r,
                               const LLVMValueRef *offsets,
-                              LLVMValueRef *colors_lo,
-                              LLVMValueRef *colors_hi)
+                              LLVMValueRef *colors)
 {
    const unsigned dims = bld->dims;
    LLVMBuilderRef builder = bld->gallivm->builder;
@@ -694,7 +688,7 @@ lp_build_sample_image_nearest(struct lp_build_sample_context *bld,
 
    lp_build_sample_fetch_image_nearest(bld, data_ptr, offset,
                                        x_subcoord, y_subcoord,
-                                       colors_lo, colors_hi);
+                                       colors);
 }
 
 
@@ -716,8 +710,7 @@ lp_build_sample_image_nearest_afloat(struct lp_build_sample_context *bld,
                                      LLVMValueRef t,
                                      LLVMValueRef r,
                                      const LLVMValueRef *offsets,
-                                     LLVMValueRef *colors_lo,
-                                     LLVMValueRef *colors_hi)
+                                     LLVMValueRef *colors)
    {
    const unsigned dims = bld->dims;
    LLVMValueRef width_vec, height_vec, depth_vec;
@@ -787,7 +780,7 @@ lp_build_sample_image_nearest_afloat(struct lp_build_sample_context *bld,
 
    lp_build_sample_fetch_image_nearest(bld, data_ptr, offset,
                                        x_subcoord, y_subcoord,
-                                       colors_lo, colors_hi);
+                                       colors);
 }
 
 
@@ -804,29 +797,21 @@ lp_build_sample_fetch_image_linear(struct lp_build_sample_context *bld,
                                    LLVMValueRef s_fpart,
                                    LLVMValueRef t_fpart,
                                    LLVMValueRef r_fpart,
-                                   LLVMValueRef *colors_lo,
-                                   LLVMValueRef *colors_hi)
+                                   LLVMValueRef *colors)
 {
    const unsigned dims = bld->dims;
    LLVMBuilderRef builder = bld->gallivm->builder;
-   struct lp_build_context h16, u8n;
-   LLVMTypeRef h16_vec_type, u8n_vec_type;
+   struct lp_build_context u8n;
+   LLVMTypeRef u8n_vec_type;
    LLVMTypeRef elem_type = LLVMInt32TypeInContext(bld->gallivm->context);
-   LLVMValueRef shuffles_lo[LP_MAX_VECTOR_LENGTH];
-   LLVMValueRef shuffles_hi[LP_MAX_VECTOR_LENGTH];
-   LLVMValueRef shuffle_lo, shuffle_hi;
-   LLVMValueRef s_fpart_lo, s_fpart_hi;
-   LLVMValueRef t_fpart_lo = NULL, t_fpart_hi = NULL;
-   LLVMValueRef r_fpart_lo = NULL, r_fpart_hi = NULL;
-   LLVMValueRef neighbors_lo[2][2][2]; /* [z][y][x] */
-   LLVMValueRef neighbors_hi[2][2][2]; /* [z][y][x] */
-   LLVMValueRef packed_lo, packed_hi;
+   LLVMValueRef shuffles[LP_MAX_VECTOR_LENGTH];
+   LLVMValueRef shuffle;
+   LLVMValueRef neighbors[2][2][2]; /* [z][y][x] */
+   LLVMValueRef packed;
    unsigned i, j, k;
    unsigned numj, numk;
 
-   lp_build_context_init(&h16, bld->gallivm, lp_type_ufixed(16, bld->vector_width));
    lp_build_context_init(&u8n, bld->gallivm, lp_type_unorm(8, bld->vector_width));
-   h16_vec_type = lp_build_vec_type(bld->gallivm, h16.type);
    u8n_vec_type = lp_build_vec_type(bld->gallivm, u8n.type);
 
    /*
@@ -834,59 +819,45 @@ lp_build_sample_fetch_image_linear(struct lp_build_sample_context *bld,
     *
     *   s_fpart = {s0, s1, s2, s3}
     *
-    * into 8 x i16
+    * where each value is between 0 and 0xff,
     *
-    *   s_fpart = {00, s0, 00, s1, 00, s2, 00, s3}
+    * into one 16 x i20
     *
-    * into two 8 x i16
-    *
-    *   s_fpart_lo = {s0, s0, s0, s0, s1, s1, s1, s1}
-    *   s_fpart_hi = {s2, s2, s2, s2, s3, s3, s3, s3}
+    *   s_fpart = {s0, s0, s0, s0, s1, s1, s1, s1, s2, s2, s2, s2, s3, s3, s3, s3}
     *
     * and likewise for t_fpart. There is no risk of loosing precision here
     * since the fractional parts only use the lower 8bits.
     */
-   s_fpart = LLVMBuildBitCast(builder, s_fpart, h16_vec_type, "");
+   s_fpart = LLVMBuildBitCast(builder, s_fpart, u8n_vec_type, "");
    if (dims >= 2)
-      t_fpart = LLVMBuildBitCast(builder, t_fpart, h16_vec_type, "");
+      t_fpart = LLVMBuildBitCast(builder, t_fpart, u8n_vec_type, "");
    if (dims >= 3)
-      r_fpart = LLVMBuildBitCast(builder, r_fpart, h16_vec_type, "");
+      r_fpart = LLVMBuildBitCast(builder, r_fpart, u8n_vec_type, "");
 
-   for (j = 0; j < h16.type.length; j += 4) {
+   for (j = 0; j < u8n.type.length; j += 4) {
 #ifdef PIPE_ARCH_LITTLE_ENDIAN
       unsigned subindex = 0;
 #else
-      unsigned subindex = 1;
+      unsigned subindex = 3;
 #endif
       LLVMValueRef index;
 
-      index = LLVMConstInt(elem_type, j/2 + subindex, 0);
+      index = LLVMConstInt(elem_type, j + subindex, 0);
       for (i = 0; i < 4; ++i)
-         shuffles_lo[j + i] = index;
-
-      index = LLVMConstInt(elem_type, h16.type.length/2 + j/2 + subindex, 0);
-      for (i = 0; i < 4; ++i)
-         shuffles_hi[j + i] = index;
+         shuffles[j + i] = index;
    }
 
-   shuffle_lo = LLVMConstVector(shuffles_lo, h16.type.length);
-   shuffle_hi = LLVMConstVector(shuffles_hi, h16.type.length);
+   shuffle = LLVMConstVector(shuffles, u8n.type.length);
 
-   s_fpart_lo = LLVMBuildShuffleVector(builder, s_fpart, h16.undef,
-                                       shuffle_lo, "");
-   s_fpart_hi = LLVMBuildShuffleVector(builder, s_fpart, h16.undef,
-                                       shuffle_hi, "");
+   s_fpart = LLVMBuildShuffleVector(builder, s_fpart, u8n.undef,
+                                    shuffle, "");
    if (dims >= 2) {
-      t_fpart_lo = LLVMBuildShuffleVector(builder, t_fpart, h16.undef,
-                                          shuffle_lo, "");
-      t_fpart_hi = LLVMBuildShuffleVector(builder, t_fpart, h16.undef,
-                                          shuffle_hi, "");
+      t_fpart = LLVMBuildShuffleVector(builder, t_fpart, u8n.undef,
+                                       shuffle, "");
    }
    if (dims >= 3) {
-      r_fpart_lo = LLVMBuildShuffleVector(builder, r_fpart, h16.undef,
-                                          shuffle_lo, "");
-      r_fpart_hi = LLVMBuildShuffleVector(builder, r_fpart, h16.undef,
-                                          shuffle_hi, "");
+      r_fpart = LLVMBuildShuffleVector(builder, r_fpart, u8n.undef,
+                                       shuffle, "");
    }
 
    /*
@@ -935,10 +906,7 @@ lp_build_sample_fetch_image_linear(struct lp_build_sample_context *bld,
                                                y_subcoord[j]);
             }
 
-            /* Expand one 4*rgba8 to two 2*rgba16 */
-            lp_build_unpack2(bld->gallivm, u8n.type, h16.type,
-                             rgba8,
-                             &neighbors_lo[k][j][i], &neighbors_hi[k][j][i]);
+            neighbors[k][j][i] = rgba8;
          }
       }
    }
@@ -948,84 +916,55 @@ lp_build_sample_fetch_image_linear(struct lp_build_sample_context *bld,
     */
    if (bld->static_sampler_state->force_nearest_s) {
       /* special case 1-D lerp */
-      packed_lo = lp_build_lerp(&h16,
-                                t_fpart_lo,
-                                neighbors_lo[0][0][0],
-                                neighbors_lo[0][0][1]);
-
-      packed_hi = lp_build_lerp(&h16,
-                                t_fpart_hi,
-                                neighbors_hi[0][1][0],
-                                neighbors_hi[0][1][0]);
+      packed = lp_build_lerp(&u8n,
+                             t_fpart,
+                             neighbors[0][0][0],
+                             neighbors[0][0][1],
+                             LP_BLD_LERP_PRESCALED_WEIGHTS);
    }
    else if (bld->static_sampler_state->force_nearest_t) {
       /* special case 1-D lerp */
-      packed_lo = lp_build_lerp(&h16,
-                                s_fpart_lo,
-                                neighbors_lo[0][0][0],
-                                neighbors_lo[0][0][1]);
-
-      packed_hi = lp_build_lerp(&h16,
-                                s_fpart_hi,
-                                neighbors_hi[0][0][0],
-                                neighbors_hi[0][0][1]);
+      packed = lp_build_lerp(&u8n,
+                             s_fpart,
+                             neighbors[0][0][0],
+                             neighbors[0][0][1],
+                             LP_BLD_LERP_PRESCALED_WEIGHTS);
    }
    else {
       /* general 1/2/3-D lerping */
       if (dims == 1) {
-         packed_lo = lp_build_lerp(&h16,
-                                   s_fpart_lo,
-                                   neighbors_lo[0][0][0],
-                                   neighbors_lo[0][0][1]);
-
-         packed_hi = lp_build_lerp(&h16,
-                                   s_fpart_hi,
-                                   neighbors_hi[0][0][0],
-                                   neighbors_hi[0][0][1]);
+         packed = lp_build_lerp(&u8n,
+                                s_fpart,
+                                neighbors[0][0][0],
+                                neighbors[0][0][1],
+                                LP_BLD_LERP_PRESCALED_WEIGHTS);
       } else if (dims == 2) {
          /* 2-D lerp */
-         packed_lo = lp_build_lerp_2d(&h16,
-                                      s_fpart_lo, t_fpart_lo,
-                                      neighbors_lo[0][0][0],
-                                      neighbors_lo[0][0][1],
-                                      neighbors_lo[0][1][0],
-                                      neighbors_lo[0][1][1]);
-
-         packed_hi = lp_build_lerp_2d(&h16,
-                                      s_fpart_hi, t_fpart_hi,
-                                      neighbors_hi[0][0][0],
-                                      neighbors_hi[0][0][1],
-                                      neighbors_hi[0][1][0],
-                                      neighbors_hi[0][1][1]);
+         packed = lp_build_lerp_2d(&u8n,
+                                   s_fpart, t_fpart,
+                                   neighbors[0][0][0],
+                                   neighbors[0][0][1],
+                                   neighbors[0][1][0],
+                                   neighbors[0][1][1],
+                                   LP_BLD_LERP_PRESCALED_WEIGHTS);
       } else {
          /* 3-D lerp */
          assert(dims == 3);
-         packed_lo = lp_build_lerp_3d(&h16,
-                                      s_fpart_lo, t_fpart_lo, r_fpart_lo,
-                                      neighbors_lo[0][0][0],
-                                      neighbors_lo[0][0][1],
-                                      neighbors_lo[0][1][0],
-                                      neighbors_lo[0][1][1],
-                                      neighbors_lo[1][0][0],
-                                      neighbors_lo[1][0][1],
-                                      neighbors_lo[1][1][0],
-                                      neighbors_lo[1][1][1]);
-
-         packed_hi = lp_build_lerp_3d(&h16,
-                                      s_fpart_hi, t_fpart_hi, r_fpart_hi,
-                                      neighbors_hi[0][0][0],
-                                      neighbors_hi[0][0][1],
-                                      neighbors_hi[0][1][0],
-                                      neighbors_hi[0][1][1],
-                                      neighbors_hi[1][0][0],
-                                      neighbors_hi[1][0][1],
-                                      neighbors_hi[1][1][0],
-                                      neighbors_hi[1][1][1]);
+         packed = lp_build_lerp_3d(&u8n,
+                                   s_fpart, t_fpart, r_fpart,
+                                   neighbors[0][0][0],
+                                   neighbors[0][0][1],
+                                   neighbors[0][1][0],
+                                   neighbors[0][1][1],
+                                   neighbors[1][0][0],
+                                   neighbors[1][0][1],
+                                   neighbors[1][1][0],
+                                   neighbors[1][1][1],
+                                   LP_BLD_LERP_PRESCALED_WEIGHTS);
       }
    }
 
-   *colors_lo = packed_lo;
-   *colors_hi = packed_hi;
+   *colors = packed;
 }
 
 /**
@@ -1043,8 +982,7 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
                              LLVMValueRef t,
                              LLVMValueRef r,
                              const LLVMValueRef *offsets,
-                             LLVMValueRef *colors_lo,
-                             LLVMValueRef *colors_hi)
+                             LLVMValueRef *colors)
 {
    const unsigned dims = bld->dims;
    LLVMBuilderRef builder = bld->gallivm->builder;
@@ -1223,7 +1161,7 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
    lp_build_sample_fetch_image_linear(bld, data_ptr, offset,
                                       x_subcoord, y_subcoord,
                                       s_fpart, t_fpart, r_fpart,
-                                      colors_lo, colors_hi);
+                                      colors);
 }
 
 
@@ -1244,8 +1182,7 @@ lp_build_sample_image_linear_afloat(struct lp_build_sample_context *bld,
                                     LLVMValueRef t,
                                     LLVMValueRef r,
                                     const LLVMValueRef *offsets,
-                                    LLVMValueRef *colors_lo,
-                                    LLVMValueRef *colors_hi)
+                                    LLVMValueRef *colors)
 {
    const unsigned dims = bld->dims;
    LLVMValueRef width_vec, height_vec, depth_vec;
@@ -1395,7 +1332,7 @@ lp_build_sample_image_linear_afloat(struct lp_build_sample_context *bld,
    lp_build_sample_fetch_image_linear(bld, data_ptr, offset,
                                       x_subcoord, y_subcoord,
                                       s_fpart, t_fpart, r_fpart,
-                                      colors_lo, colors_hi);
+                                      colors);
 }
 
 
@@ -1416,8 +1353,7 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
                        LLVMValueRef ilevel0,
                        LLVMValueRef ilevel1,
                        LLVMValueRef lod_fpart,
-                       LLVMValueRef colors_lo_var,
-                       LLVMValueRef colors_hi_var)
+                       LLVMValueRef colors_var)
 {
    LLVMBuilderRef builder = bld->gallivm->builder;
    LLVMValueRef size0;
@@ -1430,8 +1366,8 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
    LLVMValueRef data_ptr1;
    LLVMValueRef mipoff0 = NULL;
    LLVMValueRef mipoff1 = NULL;
-   LLVMValueRef colors0_lo, colors0_hi;
-   LLVMValueRef colors1_lo, colors1_hi;
+   LLVMValueRef colors0;
+   LLVMValueRef colors1;
 
    /* sample the first mipmap level */
    lp_build_mipmap_level_sizes(bld, ilevel0,
@@ -1452,7 +1388,7 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
                                               size0,
                                               row_stride0_vec, img_stride0_vec,
                                               data_ptr0, mipoff0, s, t, r, offsets,
-                                              &colors0_lo, &colors0_hi);
+                                              &colors0);
       }
       else {
          assert(img_filter == PIPE_TEX_FILTER_LINEAR);
@@ -1460,7 +1396,7 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
                                              size0,
                                              row_stride0_vec, img_stride0_vec,
                                              data_ptr0, mipoff0, s, t, r, offsets,
-                                             &colors0_lo, &colors0_hi);
+                                             &colors0);
       }
    }
    else {
@@ -1469,7 +1405,7 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
                                        size0,
                                        row_stride0_vec, img_stride0_vec,
                                        data_ptr0, mipoff0, s, t, r, offsets,
-                                       &colors0_lo, &colors0_hi);
+                                       &colors0);
       }
       else {
          assert(img_filter == PIPE_TEX_FILTER_LINEAR);
@@ -1477,13 +1413,12 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
                                       size0,
                                       row_stride0_vec, img_stride0_vec,
                                       data_ptr0, mipoff0, s, t, r, offsets,
-                                      &colors0_lo, &colors0_hi);
+                                      &colors0);
       }
    }
 
    /* Store the first level's colors in the output variables */
-   LLVMBuildStore(builder, colors0_lo, colors_lo_var);
-   LLVMBuildStore(builder, colors0_hi, colors_hi_var);
+   LLVMBuildStore(builder, colors0, colors_var);
 
    if (mip_filter == PIPE_TEX_MIPFILTER_LINEAR) {
       LLVMValueRef h16vec_scale = lp_build_const_vec(bld->gallivm,
@@ -1522,9 +1457,9 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
 
       lp_build_if(&if_ctx, bld->gallivm, need_lerp);
       {
-         struct lp_build_context h16_bld;
+         struct lp_build_context u8n_bld;
 
-         lp_build_context_init(&h16_bld, bld->gallivm, lp_type_ufixed(16, bld->vector_width));
+         lp_build_context_init(&u8n_bld, bld->gallivm, lp_type_unorm(8, bld->vector_width));
 
          /* sample the second mipmap level */
          lp_build_mipmap_level_sizes(bld, ilevel1,
@@ -1547,14 +1482,14 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
                                                     size1,
                                                     row_stride1_vec, img_stride1_vec,
                                                     data_ptr1, mipoff1, s, t, r, offsets,
-                                                    &colors1_lo, &colors1_hi);
+                                                    &colors1);
             }
             else {
                lp_build_sample_image_linear_afloat(bld,
                                                    size1,
                                                    row_stride1_vec, img_stride1_vec,
                                                    data_ptr1, mipoff1, s, t, r, offsets,
-                                                   &colors1_lo, &colors1_hi);
+                                                   &colors1);
             }
          }
          else {
@@ -1563,73 +1498,55 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
                                              size1,
                                              row_stride1_vec, img_stride1_vec,
                                              data_ptr1, mipoff1, s, t, r, offsets,
-                                             &colors1_lo, &colors1_hi);
+                                             &colors1);
             }
             else {
                lp_build_sample_image_linear(bld,
                                             size1,
                                             row_stride1_vec, img_stride1_vec,
                                             data_ptr1, mipoff1, s, t, r, offsets,
-                                            &colors1_lo, &colors1_hi);
+                                            &colors1);
             }
          }
 
          /* interpolate samples from the two mipmap levels */
 
          if (num_quads == 1) {
-            lod_fpart = LLVMBuildTrunc(builder, lod_fpart, h16_bld.elem_type, "");
-            lod_fpart = lp_build_broadcast_scalar(&h16_bld, lod_fpart);
+            lod_fpart = LLVMBuildTrunc(builder, lod_fpart, u8n_bld.elem_type, "");
+            lod_fpart = lp_build_broadcast_scalar(&u8n_bld, lod_fpart);
 
 #if HAVE_LLVM == 0x208
-            /* This is a work-around for a bug in LLVM 2.8.
+            /* This was a work-around for a bug in LLVM 2.8.
              * Evidently, something goes wrong in the construction of the
              * lod_fpart short[8] vector.  Adding this no-effect shuffle seems
              * to force the vector to be properly constructed.
              * Tested with mesa-demos/src/tests/mipmap_limits.c (press t, f).
              */
-            {
-               LLVMValueRef shuffles[8], shuffle;
-               assert(h16_bld.type.length <= Elements(shuffles));
-               for (i = 0; i < h16_bld.type.length; i++)
-                  shuffles[i] = lp_build_const_int32(bld->gallivm, 2 * (i & 1));
-               shuffle = LLVMConstVector(shuffles, h16_bld.type.length);
-               lod_fpart = LLVMBuildShuffleVector(builder,
-                                                  lod_fpart, lod_fpart,
-                                                  shuffle, "");
-            }
+#error Unsupported
 #endif
-
-            colors0_lo = lp_build_lerp(&h16_bld, lod_fpart,
-                                       colors0_lo, colors1_lo);
-            colors0_hi = lp_build_lerp(&h16_bld, lod_fpart,
-                                       colors0_hi, colors1_hi);
          }
          else {
-            LLVMValueRef lod_parts[LP_MAX_VECTOR_LENGTH/16];
-            struct lp_type perquadi16_type = bld->perquadi_bld.type;
-            perquadi16_type.width /= 2;
-            perquadi16_type.length *= 2;
-            lod_fpart = LLVMBuildBitCast(builder, lod_fpart,
-                                         lp_build_vec_type(bld->gallivm,
-                                                           perquadi16_type), "");
-            /* XXX this only works for exactly 2 quads. More quads need shuffle */
-            assert(num_quads == 2);
-            for (i = 0; i < num_quads; i++) {
-               LLVMValueRef indexi2 = lp_build_const_int32(bld->gallivm, i*2);
-               lod_parts[i] = lp_build_extract_broadcast(bld->gallivm,
-                                                         perquadi16_type,
-                                                         h16_bld.type,
-                                                         lod_fpart,
-                                                         indexi2);
+            const unsigned num_chans_per_quad = 4 * 4;
+            LLVMTypeRef tmp_vec_type = LLVMVectorType(u8n_bld.elem_type, bld->perquadi_bld.type.length);
+            LLVMValueRef shuffle[LP_MAX_VECTOR_LENGTH];
+
+            /* Take the LSB of lod_fpart */
+            lod_fpart = LLVMBuildTrunc(builder, lod_fpart, tmp_vec_type, "");
+
+            /* Broadcast each lod weight into their respective channels */
+            assert(u8n_bld.type.length == num_quads * num_chans_per_quad);
+            for (i = 0; i < u8n_bld.type.length; ++i) {
+               shuffle[i] = lp_build_const_int32(bld->gallivm, i / num_chans_per_quad);
             }
-            colors0_lo = lp_build_lerp(&h16_bld, lod_parts[0],
-                                       colors0_lo, colors1_lo);
-            colors0_hi = lp_build_lerp(&h16_bld, lod_parts[1],
-                                       colors0_hi, colors1_hi);
+            lod_fpart = LLVMBuildShuffleVector(builder, lod_fpart, LLVMGetUndef(tmp_vec_type),
+                                               LLVMConstVector(shuffle, u8n_bld.type.length), "");
          }
 
-         LLVMBuildStore(builder, colors0_lo, colors_lo_var);
-         LLVMBuildStore(builder, colors0_hi, colors_hi_var);
+         colors0 = lp_build_lerp(&u8n_bld, lod_fpart,
+                                 colors0, colors1,
+                                 LP_BLD_LERP_PRESCALED_WEIGHTS);
+
+         LLVMBuildStore(builder, colors0, colors_var);
       }
       lp_build_endif(&if_ctx);
    }
@@ -1661,9 +1578,9 @@ lp_build_sample_aos(struct lp_build_sample_context *bld,
    const unsigned min_filter = bld->static_sampler_state->min_img_filter;
    const unsigned mag_filter = bld->static_sampler_state->mag_img_filter;
    const unsigned dims = bld->dims;
-   LLVMValueRef packed, packed_lo, packed_hi;
+   LLVMValueRef packed_var, packed;
    LLVMValueRef unswizzled[4];
-   struct lp_build_context h16_bld;
+   struct lp_build_context u8n_bld;
 
    /* we only support the common/simple wrap modes at this time */
    assert(lp_is_simple_wrap_mode(bld->static_sampler_state->wrap_s));
@@ -1673,15 +1590,14 @@ lp_build_sample_aos(struct lp_build_sample_context *bld,
       assert(lp_is_simple_wrap_mode(bld->static_sampler_state->wrap_r));
 
 
-   /* make 16-bit fixed-pt builder context */
-   lp_build_context_init(&h16_bld, bld->gallivm, lp_type_ufixed(16, bld->vector_width));
+   /* make 8-bit unorm builder context */
+   lp_build_context_init(&u8n_bld, bld->gallivm, lp_type_unorm(8, bld->vector_width));
 
    /*
     * Get/interpolate texture colors.
     */
 
-   packed_lo = lp_build_alloca(bld->gallivm, h16_bld.vec_type, "packed_lo");
-   packed_hi = lp_build_alloca(bld->gallivm, h16_bld.vec_type, "packed_hi");
+   packed_var = lp_build_alloca(bld->gallivm, u8n_bld.vec_type, "packed_var");
 
    if (min_filter == mag_filter) {
       /* no need to distinguish between minification and magnification */
@@ -1689,7 +1605,7 @@ lp_build_sample_aos(struct lp_build_sample_context *bld,
                              min_filter, mip_filter,
                              s, t, r, offsets,
                              ilevel0, ilevel1, lod_fpart,
-                             packed_lo, packed_hi);
+                             packed_var);
    }
    else {
       /* Emit conditional to choose min image filter or mag image filter
@@ -1722,7 +1638,7 @@ lp_build_sample_aos(struct lp_build_sample_context *bld,
                                 min_filter, mip_filter,
                                 s, t, r, offsets,
                                 ilevel0, ilevel1, lod_fpart,
-                                packed_lo, packed_hi);
+                                packed_var);
       }
       lp_build_else(&if_ctx);
       {
@@ -1731,19 +1647,12 @@ lp_build_sample_aos(struct lp_build_sample_context *bld,
                                 mag_filter, PIPE_TEX_MIPFILTER_NONE,
                                 s, t, r, offsets,
                                 ilevel0, NULL, NULL,
-                                packed_lo, packed_hi);
+                                packed_var);
       }
       lp_build_endif(&if_ctx);
    }
 
-   /*
-    * combine the values stored in 'packed_lo' and 'packed_hi' variables
-    * into 'packed'
-    */
-   packed = lp_build_pack2(bld->gallivm,
-                           h16_bld.type, lp_type_unorm(8, bld->vector_width),
-                           LLVMBuildLoad(builder, packed_lo, ""),
-                           LLVMBuildLoad(builder, packed_hi, ""));
+   packed = LLVMBuildLoad(builder, packed_var, "");
 
    /*
     * Convert to SoA and swizzle.

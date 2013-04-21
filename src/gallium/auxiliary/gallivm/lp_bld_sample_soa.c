@@ -822,7 +822,8 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
       for (chan = 0; chan < 4; chan++) {
          colors_out[chan] = lp_build_lerp(&bld->texel_bld, s_fpart,
                                           neighbors[0][0][chan],
-                                          neighbors[0][1][chan]);
+                                          neighbors[0][1][chan],
+                                          0);
       }
    }
    else {
@@ -848,7 +849,8 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
                                           neighbors[0][0][chan],
                                           neighbors[0][1][chan],
                                           neighbors[1][0][chan],
-                                          neighbors[1][1][chan]);
+                                          neighbors[1][1][chan],
+                                          0);
       }
 
       if (dims == 3) {
@@ -884,14 +886,16 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
                                              neighbors1[0][0][chan],
                                              neighbors1[0][1][chan],
                                              neighbors1[1][0][chan],
-                                             neighbors1[1][1][chan]);
+                                             neighbors1[1][1][chan],
+                                             0);
          }
 
          /* Linearly interpolate the two samples from the two 3D slices */
          for (chan = 0; chan < 4; chan++) {
             colors_out[chan] = lp_build_lerp(&bld->texel_bld,
                                              r_fpart,
-                                             colors0[chan], colors1[chan]);
+                                             colors0[chan], colors1[chan],
+                                             0);
          }
       }
       else {
@@ -1038,7 +1042,8 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
 
          for (chan = 0; chan < 4; chan++) {
             colors0[chan] = lp_build_lerp(&bld->texel_bld, lod_fpart,
-                                          colors0[chan], colors1[chan]);
+                                          colors0[chan], colors1[chan],
+                                          0);
             LLVMBuildStore(builder, colors0[chan], colors_out[chan]);
          }
       }

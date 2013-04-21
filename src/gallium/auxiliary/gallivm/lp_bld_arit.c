@@ -974,7 +974,7 @@ lp_build_lerp_simple(struct lp_build_context *bld,
                      LLVMValueRef x,
                      LLVMValueRef v0,
                      LLVMValueRef v1,
-                     bool normalized)
+                     unsigned flags)
 {
    unsigned half_width = bld->type.width/2;
    LLVMBuilderRef builder = bld->gallivm->builder;
@@ -987,14 +987,17 @@ lp_build_lerp_simple(struct lp_build_context *bld,
 
    delta = lp_build_sub(bld, v1, v0);
 
-   if (normalized) {
+   if (flags & LP_BLD_LERP_WIDE_NORMALIZED) {
       if (!bld->type.sign) {
-         /*
-          * Scale x from [0, 2**n - 1] to [0, 2**n] by adding the
-          * most-significant-bit to the lowest-significant-bit, so that
-          * later we can just divide by 2**n instead of 2**n - 1.
-          */
-         x = lp_build_add(bld, x, lp_build_shr_imm(bld, x, half_width - 1));
+         if (!(flags & LP_BLD_LERP_PRESCALED_WEIGHTS)) {
+            /*
+             * Scale x from [0, 2**n - 1] to [0, 2**n] by adding the
+             * most-significant-bit to the lowest-significant-bit, so that
+             * later we can just divide by 2**n instead of 2**n - 1.
+             */
+
+            x = lp_build_add(bld, x, lp_build_shr_imm(bld, x, half_width - 1));
+         }
 
          /* (x * delta) >> n */
          res = lp_build_mul(bld, x, delta);
@@ -1005,15 +1008,18 @@ lp_build_lerp_simple(struct lp_build_context *bld,
           * use the 2**n - 1 divison approximation in lp_build_mul_norm
           * instead.
           */
+         assert(!(flags & LP_BLD_LERP_PRESCALED_WEIGHTS));
          res = lp_build_mul_norm(bld->gallivm, bld->type, x, delta);
       }
    } else {
+      assert(!(flags & LP_BLD_LERP_PRESCALED_WEIGHTS));
       res = lp_build_mul(bld, x, delta);
    }
 
    res = lp_build_add(bld, v0, res);
 
-   if ((normalized && !bld->type.sign) || bld->type.fixed) {
+   if (((flags & LP_BLD_LERP_WIDE_NORMALIZED) && !bld->type.sign) ||
+       bld->type.fixed) {
       /* We need to mask out the high order bits when lerping 8bit normalized colors stored on 16bits */
       /* XXX: This step is necessary for lerping 8bit colors stored on 16bits,
        * but it will be wrong for true fixed point use cases. Basically we need
@@ -1033,7 +1039,8 @@ LLVMValueRef
 lp_build_lerp(struct lp_build_context *bld,
               LLVMValueRef x,
               LLVMValueRef v0,
-              LLVMValueRef v1)
+              LLVMValueRef v1,
+              unsigned flags)
 {
    const struct lp_type type = bld->type;
    LLVMValueRef res;
@@ -1041,6 +1048,8 @@ lp_build_lerp(struct lp_build_context *bld,
    assert(lp_check_value(type, x));
    assert(lp_check_value(type, v0));
    assert(lp_check_value(type, v1));
+
+   assert(!(flags & LP_BLD_LERP_WIDE_NORMALIZED));
 
    if (type.norm) {
       struct lp_type wide_type;
@@ -1068,18 +1077,25 @@ lp_build_lerp(struct lp_build_context *bld,
        * Lerp both halves.
        */
 
-      resl = lp_build_lerp_simple(&wide_bld, xl, v0l, v1l, TRUE);
-      resh = lp_build_lerp_simple(&wide_bld, xh, v0h, v1h, TRUE);
+      flags |= LP_BLD_LERP_WIDE_NORMALIZED;
+
+      resl = lp_build_lerp_simple(&wide_bld, xl, v0l, v1l, flags);
+      resh = lp_build_lerp_simple(&wide_bld, xh, v0h, v1h, flags);
 
       res = lp_build_pack2(bld->gallivm, wide_type, type, resl, resh);
    } else {
-      res = lp_build_lerp_simple(bld, x, v0, v1, FALSE);
+      res = lp_build_lerp_simple(bld, x, v0, v1, flags);
    }
 
    return res;
 }
 
 
+/**
+ * Bilinear interpolation.
+ *
+ * Values indices are in v_{yx}.
+ */
 LLVMValueRef
 lp_build_lerp_2d(struct lp_build_context *bld,
                  LLVMValueRef x,
@@ -1087,11 +1103,12 @@ lp_build_lerp_2d(struct lp_build_context *bld,
                  LLVMValueRef v00,
                  LLVMValueRef v01,
                  LLVMValueRef v10,
-                 LLVMValueRef v11)
+                 LLVMValueRef v11,
+                 unsigned flags)
 {
-   LLVMValueRef v0 = lp_build_lerp(bld, x, v00, v01);
-   LLVMValueRef v1 = lp_build_lerp(bld, x, v10, v11);
-   return lp_build_lerp(bld, y, v0, v1);
+   LLVMValueRef v0 = lp_build_lerp(bld, x, v00, v01, flags);
+   LLVMValueRef v1 = lp_build_lerp(bld, x, v10, v11, flags);
+   return lp_build_lerp(bld, y, v0, v1, flags);
 }
 
 
@@ -1107,11 +1124,12 @@ lp_build_lerp_3d(struct lp_build_context *bld,
                  LLVMValueRef v100,
                  LLVMValueRef v101,
                  LLVMValueRef v110,
-                 LLVMValueRef v111)
+                 LLVMValueRef v111,
+                 unsigned flags)
 {
-   LLVMValueRef v0 = lp_build_lerp_2d(bld, x, y, v000, v001, v010, v011);
-   LLVMValueRef v1 = lp_build_lerp_2d(bld, x, y, v100, v101, v110, v111);
-   return lp_build_lerp(bld, z, v0, v1);
+   LLVMValueRef v0 = lp_build_lerp_2d(bld, x, y, v000, v001, v010, v011, flags);
+   LLVMValueRef v1 = lp_build_lerp_2d(bld, x, y, v100, v101, v110, v111, flags);
+   return lp_build_lerp(bld, z, v0, v1, flags);
 }
 
 
