@@ -83,6 +83,12 @@ vec4_visitor::emit(enum opcode opcode, dst_reg dst, src_reg src0)
 }
 
 vec4_instruction *
+vec4_visitor::emit(enum opcode opcode, dst_reg dst)
+{
+   return emit(new(mem_ctx) vec4_instruction(this, opcode, dst));
+}
+
+vec4_instruction *
 vec4_visitor::emit(enum opcode opcode)
 {
    return emit(new(mem_ctx) vec4_instruction(this, opcode, dst_reg()));

@@ -394,6 +394,8 @@ public:
 
    vec4_instruction *emit(enum opcode opcode);
 
+   vec4_instruction *emit(enum opcode opcode, dst_reg dst);
+
    vec4_instruction *emit(enum opcode opcode, dst_reg dst, src_reg src0);
 
    vec4_instruction *emit(enum opcode opcode, dst_reg dst,
