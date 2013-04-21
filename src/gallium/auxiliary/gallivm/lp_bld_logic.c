@@ -458,10 +458,22 @@ lp_build_select(struct lp_build_context *bld,
       mask = LLVMBuildTrunc(builder, mask, LLVMInt1TypeInContext(lc), "");
       res = LLVMBuildSelect(builder, mask, a, b, "");
    }
-   else if (HAVE_LLVM >= 0x301) {
+   else if (0) {
       /* Generate a vector select.
        *
-       * Only supported on LLVM 3.1 onwards
+       * XXX: Using vector selects would avoid emitting intrinsics, but they aren't
+       * properly supported yet.
+       *
+       * LLVM 3.1 supports it, but it yields buggy code (e.g. lp_blend_test).
+       *
+       * LLVM 3.0 includes experimental support provided the -promote-elements
+       * options is passed to LLVM's command line (e.g., via
+       * llvm::cl::ParseCommandLineOptions), but resulting code quality is much
+       * worse, probably because some optimization passes don't know how to
+       * handle vector selects.
+       *
+       * See also:
+       * - http://lists.cs.uiuc.edu/pipermail/llvmdev/2011-October/043659.html
        */
 
       /* Convert the mask to a vector of booleans.
