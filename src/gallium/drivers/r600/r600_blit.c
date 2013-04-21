@@ -522,6 +522,37 @@ void r600_copy_buffer(struct pipe_context *ctx, struct pipe_resource *dst, unsig
 	}
 }
 
+static void r600_clear_buffer(struct pipe_context *ctx, struct pipe_resource *dst,
+			      unsigned offset, unsigned size, unsigned char value)
+{
+	struct r600_context *rctx = (struct r600_context*)ctx;
+
+	if (rctx->screen->has_streamout && offset % 4 == 0 && size % 4 == 0) {
+		union pipe_color_union clear_value;
+		uint32_t v = value;
+
+		clear_value.ui[0] = v | (v << 8) | (v << 16) | (v << 24);
+
+		r600_blitter_begin(ctx, R600_DISABLE_RENDER_COND);
+		util_blitter_clear_buffer(rctx->blitter, dst, offset, size,
+					  1, &clear_value);
+		r600_blitter_end(ctx);
+	} else {
+		char *map = r600_buffer_mmap_sync_with_rings(rctx, r600_resource(dst),
+							     PIPE_TRANSFER_WRITE);
+		memset(map + offset, value, size);
+	}
+}
+
+void r600_screen_clear_buffer(struct r600_screen *rscreen, struct pipe_resource *dst,
+			      unsigned offset, unsigned size, unsigned char value)
+{
+	pipe_mutex_lock(rscreen->aux_context_lock);
+	r600_clear_buffer(rscreen->aux_context, dst, offset, size, value);
+	rscreen->aux_context->flush(rscreen->aux_context, NULL, 0);
+	pipe_mutex_unlock(rscreen->aux_context_lock);
+}
+
 static bool util_format_is_subsampled_2x1_32bpp(enum pipe_format format)
 {
 	const struct util_format_description *desc = util_format_description(format);

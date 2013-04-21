@@ -290,6 +290,11 @@ struct r600_screen {
 	unsigned			cs_count;
 #endif
 	r600g_dma_blit_t		dma_blit;
+
+	/* Auxiliary context. Mainly used to initialize resources.
+	 * It must be locked prior to using and flushed before unlocking. */
+	struct pipe_context		*aux_context;
+	pipe_mutex			aux_context_lock;
 };
 
 struct r600_pipe_sampler_view {
@@ -721,6 +726,8 @@ void evergreen_update_db_shader_control(struct r600_context * rctx);
 /* r600_blit.c */
 void r600_copy_buffer(struct pipe_context *ctx, struct pipe_resource *dst, unsigned dstx,
 		      struct pipe_resource *src, const struct pipe_box *src_box);
+void r600_screen_clear_buffer(struct r600_screen *rscreen, struct pipe_resource *dst,
+			      unsigned offset, unsigned size, unsigned char value);
 void r600_init_blit_functions(struct r600_context *rctx);
 void r600_blit_decompress_depth(struct pipe_context *ctx,
 		struct r600_texture *texture,

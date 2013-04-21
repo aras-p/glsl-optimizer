@@ -480,10 +480,7 @@ r600_texture_create_object(struct pipe_screen *screen,
 			 */
 			R600_ERR("r600: failed to create bo for htile buffers\n");
 		} else {
-			void *ptr;
-			ptr = rscreen->ws->buffer_map(rtex->htile->cs_buf, NULL, PIPE_TRANSFER_WRITE);
-			memset(ptr, 0x0, htile_size);
-			rscreen->ws->buffer_unmap(rtex->htile->cs_buf);
+			r600_screen_clear_buffer(rscreen, &rtex->htile->b.b, 0, htile_size, 0);
 		}
 	}
 
@@ -505,9 +502,8 @@ r600_texture_create_object(struct pipe_screen *screen,
 
 	if (rtex->cmask_size) {
 		/* Initialize the cmask to 0xCC (= compressed state). */
-		char *ptr = rscreen->ws->buffer_map(resource->cs_buf, NULL, PIPE_TRANSFER_WRITE);
-		memset(ptr + rtex->cmask_offset, 0xCC, rtex->cmask_size);
-		rscreen->ws->buffer_unmap(resource->cs_buf);
+		r600_screen_clear_buffer(rscreen, &rtex->resource.b.b,
+					 rtex->cmask_offset, rtex->cmask_size, 0xCC);
 	}
 
 	if (rscreen->debug_flags & DBG_VM) {
