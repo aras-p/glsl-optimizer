@@ -393,7 +393,8 @@ ir_expression::constant_expression_value(struct hash_table *variable_context)
    if (op[1] != NULL)
       assert(op[0]->type->base_type == op[1]->type->base_type ||
 	     this->operation == ir_binop_lshift ||
-	     this->operation == ir_binop_rshift);
+             this->operation == ir_binop_rshift ||
+             this->operation == ir_triop_bitfield_extract);
 
    bool op0_scalar = op[0]->type->is_scalar();
    bool op1_scalar = op[1] != NULL && op[1]->type->is_scalar();
@@ -1248,6 +1249,102 @@ ir_expression::constant_expression_value(struct hash_table *variable_context)
       }
       break;
 
+   case ir_unop_bitfield_reverse:
+      /* http://graphics.stanford.edu/~seander/bithacks.html#BitReverseObvious */
+      for (unsigned c = 0; c < components; c++) {
+         unsigned int v = op[0]->value.u[c]; // input bits to be reversed
+         unsigned int r = v; // r will be reversed bits of v; first get LSB of v
+         int s = sizeof(v) * CHAR_BIT - 1; // extra shift needed at end
+
+         for (v >>= 1; v; v >>= 1) {
+            r <<= 1;
+            r |= v & 1;
+            s--;
+         }
+         r <<= s; // shift when v's highest bits are zero
+
+         data.u[c] = r;
+      }
+      break;
+
+   case ir_unop_bit_count:
+      for (unsigned c = 0; c < components; c++) {
+         unsigned count = 0;
+         unsigned v = op[0]->value.u[c];
+
+         for (; v; count++) {
+            v &= v - 1;
+         }
+         data.u[c] = count;
+      }
+      break;
+
+   case ir_unop_find_msb:
+      for (unsigned c = 0; c < components; c++) {
+         int v = op[0]->value.i[c];
+
+         if (v == 0 || (op[0]->type->base_type == GLSL_TYPE_INT && v == -1))
+            data.i[c] = -1;
+         else {
+            int count = 0;
+            int top_bit = op[0]->type->base_type == GLSL_TYPE_UINT
+                          ? 0 : v & (1 << 31);
+
+            while (((v & (1 << 31)) == top_bit) && count != 32) {
+               count++;
+               v <<= 1;
+            }
+
+            data.i[c] = 31 - count;
+         }
+      }
+      break;
+
+   case ir_unop_find_lsb:
+      for (unsigned c = 0; c < components; c++) {
+         if (op[0]->value.i[c] == 0)
+            data.i[c] = -1;
+         else {
+            unsigned pos = 0;
+            unsigned v = op[0]->value.u[c];
+
+            for (; !(v & 1); v >>= 1) {
+               pos++;
+            }
+            data.u[c] = pos;
+         }
+      }
+      break;
+
+   case ir_triop_bitfield_extract: {
+      int offset = op[1]->value.i[0];
+      int bits = op[2]->value.i[0];
+
+      for (unsigned c = 0; c < components; c++) {
+         if (bits == 0)
+            data.u[c] = 0;
+         else if (offset < 0 || bits < 0)
+            data.u[c] = 0; /* Undefined, per spec. */
+         else if (offset + bits > 32)
+            data.u[c] = 0; /* Undefined, per spec. */
+         else {
+            if (op[0]->type->base_type == GLSL_TYPE_INT) {
+               /* int so that the right shift will sign-extend. */
+               int value = op[0]->value.i[c];
+               value <<= 32 - bits - offset;
+               value >>= 32 - bits;
+               data.i[c] = value;
+            } else {
+               unsigned value = op[0]->value.u[c];
+               value <<= 32 - bits - offset;
+               value >>= 32 - bits;
+               data.u[c] = value;
+            }
+         }
+      }
+      break;
+   }
+
    case ir_triop_lrp: {
       assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
       assert(op[1]->type->base_type == GLSL_TYPE_FLOAT);
@@ -1257,6 +1354,33 @@ ir_expression::constant_expression_value(struct hash_table *variable_context)
       for (unsigned c = 0, c2 = 0; c < components; c2 += c2_inc, c++) {
          data.f[c] = op[0]->value.f[c] * (1.0f - op[2]->value.f[c2]) +
                      (op[1]->value.f[c] * op[2]->value.f[c2]);
+      }
+      break;
+   }
+
+   case ir_quadop_bitfield_insert: {
+      int offset = op[2]->value.i[0];
+      int bits = op[3]->value.i[0];
+
+      for (unsigned c = 0; c < components; c++) {
+         if (bits == 0)
+            data.u[c] = op[0]->value.u[c];
+         else if (offset < 0 || bits < 0)
+            data.u[c] = 0; /* Undefined, per spec. */
+         else if (offset + bits > 32)
+            data.u[c] = 0; /* Undefined, per spec. */
+         else {
+            unsigned insert_mask = ((1 << bits) - 1) << offset;
+
+            unsigned insert = op[1]->value.u[c];
+            insert <<= offset;
+            insert &= insert_mask;
+
+            unsigned base = op[0]->value.u[c];
+            base &= ~insert_mask;
+
+            data.u[c] = base | insert;
+         }
       }
       break;
    }
