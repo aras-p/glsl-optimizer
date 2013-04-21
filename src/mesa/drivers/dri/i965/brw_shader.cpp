@@ -507,6 +507,10 @@ brw_instruction_name(enum opcode op)
       return "set_vertex_count";
    case GS_OPCODE_SET_DWORD_2_IMMED:
       return "set_dword_2_immed";
+   case GS_OPCODE_PREPARE_CHANNEL_MASKS:
+      return "prepare_channel_masks";
+   case GS_OPCODE_SET_CHANNEL_MASKS:
+      return "set_channel_masks";
 
    default:
       /* Yes, this leaks.  It's in debug code, it should never occur, and if

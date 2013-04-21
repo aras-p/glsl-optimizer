@@ -516,6 +516,86 @@ vec4_generator::generate_gs_set_dword_2_immed(struct brw_reg dst,
 }
 
 void
+vec4_generator::generate_gs_prepare_channel_masks(struct brw_reg dst)
+{
+   /* We want to left shift just DWORD 4 (the x component belonging to the
+    * second geometry shader invocation) by 4 bits.  So generate the
+    * instruction:
+    *
+    *     shl(1) dst.4<1>UD dst.4<0,1,0>UD 4UD { align1 WE_all }
+    */
+   dst = suboffset(vec1(dst), 4);
+   brw_push_insn_state(p);
+   brw_set_access_mode(p, BRW_ALIGN_1);
+   brw_set_mask_control(p, BRW_MASK_DISABLE);
+   brw_SHL(p, dst, dst, brw_imm_ud(4));
+   brw_pop_insn_state(p);
+}
+
+void
+vec4_generator::generate_gs_set_channel_masks(struct brw_reg dst,
+                                              struct brw_reg src)
+{
+   /* From p21 of volume 4 part 2 of the Ivy Bridge PRM (2.4.3.1 Message
+    * Header: M0.5):
+    *
+    *     15 Vertex 1 DATA [3] / Vertex 0 DATA[7] Channel Mask
+    *
+    *        When Swizzle Control = URB_INTERLEAVED this bit controls Vertex 1
+    *        DATA[3], when Swizzle Control = URB_NOSWIZZLE this bit controls
+    *        Vertex 0 DATA[7].  This bit is ANDed with the corresponding
+    *        channel enable to determine the final channel enable.  For the
+    *        URB_READ_OWORD & URB_READ_HWORD messages, when final channel
+    *        enable is 1 it indicates that Vertex 1 DATA [3] will be included
+    *        in the writeback message.  For the URB_WRITE_OWORD &
+    *        URB_WRITE_HWORD messages, when final channel enable is 1 it
+    *        indicates that Vertex 1 DATA [3] will be written to the surface.
+    *
+    *        0: Vertex 1 DATA [3] / Vertex 0 DATA[7] channel not included
+    *        1: Vertex DATA [3] / Vertex 0 DATA[7] channel included
+    *
+    *     14 Vertex 1 DATA [2] Channel Mask
+    *     13 Vertex 1 DATA [1] Channel Mask
+    *     12 Vertex 1 DATA [0] Channel Mask
+    *     11 Vertex 0 DATA [3] Channel Mask
+    *     10 Vertex 0 DATA [2] Channel Mask
+    *      9 Vertex 0 DATA [1] Channel Mask
+    *      8 Vertex 0 DATA [0] Channel Mask
+    *
+    * (This is from a section of the PRM that is agnostic to the particular
+    * type of shader being executed, so "Vertex 0" and "Vertex 1" refer to
+    * geometry shader invocations 0 and 1, respectively).  Since we have the
+    * enable flags for geometry shader invocation 0 in bits 3:0 of DWORD 0,
+    * and the enable flags for geometry shader invocation 1 in bits 7:0 of
+    * DWORD 4, we just need to OR them together and store the result in bits
+    * 15:8 of DWORD 5.
+    *
+    * It's easier to get the EU to do this if we think of the src and dst
+    * registers as composed of 32 bytes each; then, we want to pick up the
+    * contents of bytes 0 and 16 from src, OR them together, and store them in
+    * byte 21.
+    *
+    * We can do that by the following EU instruction:
+    *
+    *     or(1) dst.21<1>UB src<0,1,0>UB src.16<0,1,0>UB { align1 WE_all }
+    *
+    * Note: this relies on the source register having zeros in (a) bits 7:4 of
+    * DWORD 0 and (b) bits 3:0 of DWORD 4.  We can rely on (b) because the
+    * source register was prepared by GS_OPCODE_PREPARE_CHANNEL_MASKS (which
+    * shifts DWORD 4 left by 4 bits), and we can rely on (a) because prior to
+    * the execution of GS_OPCODE_PREPARE_CHANNEL_MASKS, DWORDs 0 and 4 need to
+    * contain valid channel mask values (which are in the range 0x0-0xf).
+    */
+   dst = retype(dst, BRW_REGISTER_TYPE_UB);
+   src = retype(src, BRW_REGISTER_TYPE_UB);
+   brw_push_insn_state(p);
+   brw_set_access_mode(p, BRW_ALIGN_1);
+   brw_set_mask_control(p, BRW_MASK_DISABLE);
+   brw_OR(p, suboffset(vec1(dst), 21), vec1(src), suboffset(vec1(src), 16));
+   brw_pop_insn_state(p);
+}
+
+void
 vec4_generator::generate_oword_dual_block_offsets(struct brw_reg m1,
                                                   struct brw_reg index)
 {
@@ -1001,6 +1081,14 @@ vec4_generator::generate_vec4_instruction(vec4_instruction *instruction,
 
    case GS_OPCODE_SET_DWORD_2_IMMED:
       generate_gs_set_dword_2_immed(dst, src[0]);
+      break;
+
+   case GS_OPCODE_PREPARE_CHANNEL_MASKS:
+      generate_gs_prepare_channel_masks(dst);
+      break;
+
+   case GS_OPCODE_SET_CHANNEL_MASKS:
+      generate_gs_set_channel_masks(dst, src[0]);
       break;
 
    case SHADER_OPCODE_SHADER_TIME_ADD:
