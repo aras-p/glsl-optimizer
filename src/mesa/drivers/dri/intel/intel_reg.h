@@ -291,6 +291,8 @@
 #define SO_NUM_PRIMS_WRITTEN2_IVB	0x5210
 #define SO_NUM_PRIMS_WRITTEN3_IVB	0x5218
 
+#define GEN7_SO_WRITE_OFFSET(n)         (0x5280 + (n) * 4)
+
 #define TIMESTAMP                       0x2358
 
 #define BCS_SWCTRL                      0x22200
