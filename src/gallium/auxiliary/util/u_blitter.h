@@ -276,7 +276,7 @@ void util_blitter_default_src_texture(struct pipe_sampler_view *src_templ,
 
 /**
  * Copy data from one buffer to another using the Stream Output functionality.
- * Some alignment is required, otherwise software fallback is used.
+ * 4-byte alignment is required, otherwise software fallback is used.
  */
 void util_blitter_copy_buffer(struct blitter_context *blitter,
                               struct pipe_resource *dst,
@@ -284,6 +284,22 @@ void util_blitter_copy_buffer(struct blitter_context *blitter,
                               struct pipe_resource *src,
                               unsigned srcx,
                               unsigned size);
+
+/**
+ * Clear the contents of a buffer using the Stream Output functionality.
+ * 4-byte alignment is required.
+ *
+ * "num_channels" can be 1, 2, 3, or 4, and specifies if the clear value is
+ * R, RG, RGB, or RGBA.
+ *
+ * For each element, only "num_channels" components of "clear_value" are
+ * copied to the buffer, then the offset is incremented by num_channels*4.
+ */
+void util_blitter_clear_buffer(struct blitter_context *blitter,
+                               struct pipe_resource *dst,
+                               unsigned offset, unsigned size,
+                               unsigned num_channels,
+                               const union pipe_color_union *clear_value);
 
 /**
  * Clear a region of a (color) surface to a constant value.
