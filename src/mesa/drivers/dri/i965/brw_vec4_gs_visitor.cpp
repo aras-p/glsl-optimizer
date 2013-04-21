@@ -135,6 +135,23 @@ vec4_gs_visitor::emit_prolog()
    vec4_instruction *inst = emit(MOV(dst_reg(this->vertex_count), 0u));
    inst->force_writemask_all = true;
 
+   if (c->control_data_header_size_bits > 0) {
+      /* Create a virtual register to hold the current set of control data
+       * bits.
+       */
+      this->control_data_bits = src_reg(this, glsl_type::uint_type);
+
+      /* If we're outputting more than 32 control data bits, then EmitVertex()
+       * will set control_data_bits to 0 after emitting the first vertex.
+       * Otherwise, we need to initialize it to 0 here.
+       */
+      if (c->control_data_header_size_bits <= 32) {
+         this->current_annotation = "initialize control data bits";
+         inst = emit(MOV(dst_reg(this->control_data_bits), 0u));
+         inst->force_writemask_all = true;
+      }
+   }
+
    this->current_annotation = NULL;
 }
 
@@ -150,6 +167,16 @@ vec4_gs_visitor::emit_program_code()
 void
 vec4_gs_visitor::emit_thread_end()
 {
+   if (c->control_data_header_size_bits > 0) {
+      /* During shader execution, we only ever call emit_control_data_bits()
+       * just prior to outputting a vertex.  Therefore, the control data bits
+       * corresponding to the most recently output vertex still need to be
+       * emitted.
+       */
+      current_annotation = "thread end: emit control data bits";
+      emit_control_data_bits();
+   }
+
    /* MRF 0 is reserved for the debugger, so start with message header
     * in MRF 1.
     */
@@ -224,6 +251,124 @@ vec4_gs_visitor::compute_array_stride(ir_dereference_array *ir)
 }
 
 
+/**
+ * Write out a batch of 32 control data bits from the control_data_bits
+ * register to the URB.
+ *
+ * The current value of the vertex_count register determines which DWORD in
+ * the URB receives the control data bits.  The control_data_bits register is
+ * assumed to contain the correct data for the vertex that was most recently
+ * output, and all previous vertices that share the same DWORD.
+ *
+ * This function takes care of ensuring that if no vertices have been output
+ * yet, no control bits are emitted.
+ */
+void
+vec4_gs_visitor::emit_control_data_bits()
+{
+   assert(c->control_data_bits_per_vertex != 0);
+
+   /* Since the URB_WRITE_OWORD message operates with 128-bit (vec4 sized)
+    * granularity, we need to use two tricks to ensure that the batch of 32
+    * control data bits is written to the appropriate DWORD in the URB.  To
+    * select which vec4 we are writing to, we use the "slot {0,1} offset"
+    * fields of the message header.  To select which DWORD in the vec4 we are
+    * writing to, we use the channel mask fields of the message header.  To
+    * avoid penalizing geometry shaders that emit a small number of vertices
+    * with extra bookkeeping, we only do each of these tricks when
+    * c->prog_data.control_data_header_size_bits is large enough to make it
+    * necessary.
+    *
+    * Note: this means that if we're outputting just a single DWORD of control
+    * data bits, we'll actually replicate it four times since we won't do any
+    * channel masking.  But that's not a problem since in this case the
+    * hardware only pays attention to the first DWORD.
+    */
+   enum brw_urb_write_flags urb_write_flags = BRW_URB_WRITE_OWORD;
+   if (c->control_data_header_size_bits > 32)
+      urb_write_flags = urb_write_flags | BRW_URB_WRITE_USE_CHANNEL_MASKS;
+   if (c->control_data_header_size_bits > 128)
+      urb_write_flags = urb_write_flags | BRW_URB_WRITE_PER_SLOT_OFFSET;
+
+   /* If vertex_count is 0, then no control data bits have been accumulated
+    * yet, so we should do nothing.
+    */
+   emit(CMP(dst_null_d(), this->vertex_count, 0u, BRW_CONDITIONAL_NEQ));
+   emit(IF(BRW_PREDICATE_NORMAL));
+   {
+      /* If we are using either channel masks or a per-slot offset, then we
+       * need to figure out which DWORD we are trying to write to, using the
+       * formula:
+       *
+       *     dword_index = (vertex_count - 1) * bits_per_vertex / 32
+       *
+       * Since bits_per_vertex is a power of two, and is known at compile
+       * time, this can be optimized to:
+       *
+       *     dword_index = (vertex_count - 1) >> (6 - log2(bits_per_vertex))
+       */
+      src_reg dword_index(this, glsl_type::uint_type);
+      if (urb_write_flags) {
+         src_reg prev_count(this, glsl_type::uint_type);
+         emit(ADD(dst_reg(prev_count), this->vertex_count, 0xffffffffu));
+         unsigned log2_bits_per_vertex =
+            _mesa_fls(c->control_data_bits_per_vertex);
+         emit(SHR(dst_reg(dword_index), prev_count,
+                  (uint32_t) (6 - log2_bits_per_vertex)));
+      }
+
+      /* Start building the URB write message.  The first MRF gets a copy of
+       * R0.
+       */
+      int base_mrf = 1;
+      dst_reg mrf_reg(MRF, base_mrf);
+      src_reg r0(retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UD));
+      vec4_instruction *inst = emit(MOV(mrf_reg, r0));
+      inst->force_writemask_all = true;
+
+      if (urb_write_flags & BRW_URB_WRITE_PER_SLOT_OFFSET) {
+         /* Set the per-slot offset to dword_index / 4, to that we'll write to
+          * the appropriate OWORD within the control data header.
+          */
+         src_reg per_slot_offset(this, glsl_type::uint_type);
+         emit(SHR(dst_reg(per_slot_offset), dword_index, 2u));
+         emit(GS_OPCODE_SET_WRITE_OFFSET, mrf_reg, per_slot_offset, 1u);
+      }
+
+      if (urb_write_flags & BRW_URB_WRITE_USE_CHANNEL_MASKS) {
+         /* Set the channel masks to 1 << (dword_index % 4), so that we'll
+          * write to the appropriate DWORD within the OWORD.  We need to do
+          * this computation with force_writemask_all, otherwise garbage data
+          * from invocation 0 might clobber the mask for invocation 1 when
+          * GS_OPCODE_PREPARE_CHANNEL_MASKS tries to OR the two masks
+          * together.
+          */
+         src_reg channel(this, glsl_type::uint_type);
+         inst = emit(AND(dst_reg(channel), dword_index, 3u));
+         inst->force_writemask_all = true;
+         src_reg one(this, glsl_type::uint_type);
+         inst = emit(MOV(dst_reg(one), 1u));
+         inst->force_writemask_all = true;
+         src_reg channel_mask(this, glsl_type::uint_type);
+         inst = emit(SHL(dst_reg(channel_mask), one, channel));
+         inst->force_writemask_all = true;
+         emit(GS_OPCODE_PREPARE_CHANNEL_MASKS, dst_reg(channel_mask));
+         emit(GS_OPCODE_SET_CHANNEL_MASKS, mrf_reg, channel_mask);
+      }
+
+      /* Store the control data bits in the message payload and send it. */
+      dst_reg mrf_reg2(MRF, base_mrf + 1);
+      inst = emit(MOV(mrf_reg2, this->control_data_bits));
+      inst->force_writemask_all = true;
+      inst = emit(GS_OPCODE_URB_WRITE);
+      inst->urb_write_flags = urb_write_flags;
+      inst->base_mrf = base_mrf;
+      inst->mlen = 2;
+   }
+   emit(BRW_OPCODE_ENDIF);
+}
+
+
 void
 vec4_gs_visitor::visit(ir_emit_vertex *)
 {
@@ -238,6 +383,54 @@ vec4_gs_visitor::visit(ir_emit_vertex *)
             src_reg(num_output_vertices), BRW_CONDITIONAL_L));
    emit(IF(BRW_PREDICATE_NORMAL));
    {
+      /* If we're outputting 32 control data bits or less, then we can wait
+       * until the shader is over to output them all.  Otherwise we need to
+       * output them as we go.  Now is the time to do it, since we're about to
+       * output the vertex_count'th vertex, so it's guaranteed that the
+       * control data bits associated with the (vertex_count - 1)th vertex are
+       * correct.
+       */
+      if (c->control_data_header_size_bits > 32) {
+         this->current_annotation = "emit vertex: emit control data bits";
+         /* Only emit control data bits if we've finished accumulating a batch
+          * of 32 bits.  This is the case when:
+          *
+          *     (vertex_count * bits_per_vertex) % 32 == 0
+          *
+          * (in other words, when the last 5 bits of vertex_count *
+          * bits_per_vertex are 0).  Assuming bits_per_vertex == 2^n for some
+          * integer n (which is always the case, since bits_per_vertex is
+          * always 1 or 2), this is equivalent to requiring that the last 5-n
+          * bits of vertex_count are 0:
+          *
+          *     vertex_count & (2^(5-n) - 1) == 0
+          *
+          * 2^(5-n) == 2^5 / 2^n == 32 / bits_per_vertex, so this is
+          * equivalent to:
+          *
+          *     vertex_count & (32 / bits_per_vertex - 1) == 0
+          */
+         vec4_instruction *inst =
+            emit(AND(dst_null_d(), this->vertex_count,
+                     (uint32_t) (32 / c->control_data_bits_per_vertex - 1)));
+         inst->conditional_mod = BRW_CONDITIONAL_Z;
+         emit(IF(BRW_PREDICATE_NORMAL));
+         {
+            emit_control_data_bits();
+
+            /* Reset control_data_bits to 0 so we can start accumulating a new
+             * batch.
+             *
+             * Note: in the case where vertex_count == 0, this neutralizes the
+             * effect of any call to EndPrimitive() that the shader may have
+             * made before outputting its first vertex.
+             */
+            inst = emit(MOV(dst_reg(this->control_data_bits), 0u));
+            inst->force_writemask_all = true;
+         }
+         emit(BRW_OPCODE_ENDIF);
+      }
+
       this->current_annotation = "emit vertex: vertex data";
       emit_vertex();
 
@@ -253,7 +446,52 @@ vec4_gs_visitor::visit(ir_emit_vertex *)
 void
 vec4_gs_visitor::visit(ir_end_primitive *)
 {
-   assert(!"Not implemented yet");
+   /* We can only do EndPrimitive() functionality when the control data
+    * consists of cut bits.  Fortunately, the only time it isn't is when the
+    * output type is points, in which case EndPrimitive() is a no-op.
+    */
+   if (c->prog_data.control_data_format !=
+       GEN7_GS_CONTROL_DATA_FORMAT_GSCTL_CUT) {
+      return;
+   }
+
+   /* Cut bits use one bit per vertex. */
+   assert(c->control_data_bits_per_vertex == 1);
+
+   /* Cut bit n should be set to 1 if EndPrimitive() was called after emitting
+    * vertex n, 0 otherwise.  So all we need to do here is mark bit
+    * (vertex_count - 1) % 32 in the cut_bits register to indicate that
+    * EndPrimitive() was called after emitting vertex (vertex_count - 1);
+    * vec4_gs_visitor::emit_control_data_bits() will take care of the rest.
+    *
+    * Note that if EndPrimitve() is called before emitting any vertices, this
+    * will cause us to set bit 31 of the control_data_bits register to 1.
+    * That's fine because:
+    *
+    * - If max_vertices < 32, then vertex number 31 (zero-based) will never be
+    *   output, so the hardware will ignore cut bit 31.
+    *
+    * - If max_vertices == 32, then vertex number 31 is guaranteed to be the
+    *   last vertex, so setting cut bit 31 has no effect (since the primitive
+    *   is automatically ended when the GS terminates).
+    *
+    * - If max_vertices > 32, then the ir_emit_vertex visitor will reset the
+    *   control_data_bits register to 0 when the first vertex is emitted.
+    */
+
+   /* control_data_bits |= 1 << ((vertex_count - 1) % 32) */
+   src_reg one(this, glsl_type::uint_type);
+   emit(MOV(dst_reg(one), 1u));
+   src_reg prev_count(this, glsl_type::uint_type);
+   emit(ADD(dst_reg(prev_count), this->vertex_count, 0xffffffffu));
+   src_reg mask(this, glsl_type::uint_type);
+   /* Note: we're relying on the fact that the GEN SHL instruction only pays
+    * attention to the lower 5 bits of its second source argument, so on this
+    * architecture, 1 << (vertex_count - 1) is equivalent to 1 <<
+    * ((vertex_count - 1) % 32).
+    */
+   emit(SHL(dst_reg(mask), one, prev_count));
+   emit(OR(dst_reg(this->control_data_bits), this->control_data_bits, mask));
 }
 
 
