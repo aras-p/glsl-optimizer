@@ -461,6 +461,19 @@ static int print_opcode (FILE *file, int id)
     return 0;
 }
 
+static int three_source_type_to_reg_type(int three_source_type)
+{
+   switch (three_source_type) {
+   case BRW_3SRC_TYPE_F:
+      return BRW_REGISTER_TYPE_F;
+   case BRW_3SRC_TYPE_D:
+      return BRW_REGISTER_TYPE_D;
+   case BRW_3SRC_TYPE_UD:
+      return BRW_REGISTER_TYPE_UD;
+   }
+   return -1;
+}
+
 static int reg (FILE *file, GLuint _reg_file, GLuint _reg_nr)
 {
     int	err = 0;
@@ -587,7 +600,9 @@ static int dest_3src (FILE *file, struct brw_instruction *inst)
        format (file, ".%d", inst->bits1.da3src.dest_subreg_nr);
     string (file, "<1>");
     err |= control (file, "writemask", writemask, inst->bits1.da3src.dest_writemask, NULL);
-    err |= control (file, "dest reg encoding", reg_encoding, BRW_REGISTER_TYPE_F, NULL);
+    err |= control (file, "dest reg encoding", reg_encoding,
+                    three_source_type_to_reg_type(inst->bits1.da3src.dst_type),
+                    NULL);
 
     return 0;
 }
@@ -726,7 +741,8 @@ static int src0_3src (FILE *file, struct brw_instruction *inst)
 	format (file, ".%d", inst->bits2.da3src.src0_subreg_nr);
     string (file, "<4,1,1>");
     err |= control (file, "src da16 reg type", reg_encoding,
-		    BRW_REGISTER_TYPE_F, NULL);
+                    three_source_type_to_reg_type(inst->bits1.da3src.src_type),
+                    NULL);
     /*
      * Three kinds of swizzle display:
      *  identity - nothing printed
@@ -778,7 +794,8 @@ static int src1_3src (FILE *file, struct brw_instruction *inst)
 	format (file, ".%d", src1_subreg_nr);
     string (file, "<4,1,1>");
     err |= control (file, "src da16 reg type", reg_encoding,
-		    BRW_REGISTER_TYPE_F, NULL);
+                    three_source_type_to_reg_type(inst->bits1.da3src.src_type),
+                    NULL);
     /*
      * Three kinds of swizzle display:
      *  identity - nothing printed
@@ -829,7 +846,8 @@ static int src2_3src (FILE *file, struct brw_instruction *inst)
 	format (file, ".%d", inst->bits3.da3src.src2_subreg_nr);
     string (file, "<4,1,1>");
     err |= control (file, "src da16 reg type", reg_encoding,
-		    BRW_REGISTER_TYPE_F, NULL);
+                    three_source_type_to_reg_type(inst->bits1.da3src.src_type),
+                    NULL);
     /*
      * Three kinds of swizzle display:
      *  identity - nothing printed
