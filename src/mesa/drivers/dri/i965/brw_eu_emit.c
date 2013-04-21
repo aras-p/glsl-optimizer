@@ -1677,8 +1677,11 @@ void brw_CMP(struct brw_compile *p,
    /* Item WaCMPInstNullDstForcesThreadSwitch in the Haswell Bspec workarounds
     * page says:
     *    "Any CMP instruction with a null destination must use a {switch}."
+    *
+    * It also applies to other Gen7 platforms (IVB, BYT) even though it isn't
+    * mentioned on their work-arounds pages.
     */
-   if (intel->is_haswell) {
+   if (intel->gen == 7) {
       if (dest.file == BRW_ARCHITECTURE_REGISTER_FILE &&
           dest.nr == BRW_ARF_NULL) {
          insn->header.thread_control = BRW_THREAD_SWITCH;
