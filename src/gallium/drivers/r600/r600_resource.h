@@ -41,7 +41,7 @@ struct r600_resource {
 	struct radeon_winsys_cs_handle	*cs_buf;
 
 	/* Resource state. */
-	unsigned			domains;
+	enum radeon_bo_domain		domains;
 
 	/* The buffer range which is initialized (with a write transfer,
 	 * streamout, DMA, or as a random access target). The rest of
