@@ -606,28 +606,13 @@ intel_render_texture(struct gl_context * ctx,
       /* Fallback on drawing to a texture that doesn't have a miptree
        * (has a border, width/height 0, etc.)
        */
-      _mesa_reference_renderbuffer(&att->Renderbuffer, NULL);
       _swrast_render_texture(ctx, fb, att);
       return;
    }
-   else if (!irb) {
-      intel_miptree_check_level_layer(mt, att->TextureLevel, layer);
 
-      irb = (struct intel_renderbuffer *)intel_new_renderbuffer(ctx, ~0);
-
-      if (irb) {
-         /* bind the wrapper to the attachment point */
-         _mesa_reference_renderbuffer(&att->Renderbuffer, &irb->Base.Base);
-      }
-      else {
-         /* fallback to software rendering */
-         _swrast_render_texture(ctx, fb, att);
-         return;
-      }
-   }
+   intel_miptree_check_level_layer(mt, att->TextureLevel, layer);
 
    if (!intel_renderbuffer_update_wrapper(intel, irb, image, layer)) {
-       _mesa_reference_renderbuffer(&att->Renderbuffer, NULL);
        _swrast_render_texture(ctx, fb, att);
        return;
    }

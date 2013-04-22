@@ -22,37 +22,6 @@ delete_texture_wrapper(struct gl_context *ctx, struct gl_renderbuffer *rb)
    free(rb);
 }
 
-
-/**
- * This function creates a renderbuffer object which wraps a texture image.
- * The new renderbuffer is plugged into the given attachment point.
- * This allows rendering into the texture as if it were a renderbuffer.
- */
-static void
-wrap_texture(struct gl_context *ctx, struct gl_renderbuffer_attachment *att)
-{
-   struct gl_renderbuffer *rb;
-   const GLuint name = 0;
-
-   ASSERT(att->Type == GL_TEXTURE);
-   ASSERT(att->Renderbuffer == NULL);
-
-   rb = ctx->Driver.NewRenderbuffer(ctx, name);
-   if (!rb) {
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "wrap_texture");
-      return;
-   }
-
-   /* init base gl_renderbuffer fields */
-   _mesa_init_renderbuffer(rb, name);
-   /* plug in our texture_renderbuffer-specific functions */
-   rb->Delete = delete_texture_wrapper;
-   rb->AllocStorage = NULL; /* illegal! */
-
-   /* update attachment point */
-   _mesa_reference_renderbuffer(&att->Renderbuffer, rb);
-}
-
 /**
  * Update the renderbuffer wrapper for rendering to a texture.
  * For example, update the width, height of the RB based on the texture size,
@@ -116,11 +85,12 @@ _swrast_render_texture(struct gl_context *ctx,
                        struct gl_framebuffer *fb,
                        struct gl_renderbuffer_attachment *att)
 {
+   struct gl_renderbuffer *rb = att->Renderbuffer;
    (void) fb;
 
-   if (!att->Renderbuffer) {
-      wrap_texture(ctx, att);
-   }
+   /* plug in our texture_renderbuffer-specific functions */
+   rb->Delete = delete_texture_wrapper;
+
    update_wrapper(ctx, att);
 }
 

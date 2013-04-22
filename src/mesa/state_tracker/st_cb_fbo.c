@@ -390,8 +390,8 @@ st_render_texture(struct gl_context *ctx,
 {
    struct st_context *st = st_context(ctx);
    struct pipe_context *pipe = st->pipe;
-   struct st_renderbuffer *strb;
-   struct gl_renderbuffer *rb;
+   struct gl_renderbuffer *rb = att->Renderbuffer;
+   struct st_renderbuffer *strb = st_renderbuffer(rb);
    struct pipe_resource *pt;
    struct st_texture_object *stObj;
    const struct gl_texture_image *texImage;
@@ -405,24 +405,6 @@ st_render_texture(struct gl_context *ctx,
 
    /* get pointer to texture image we're rendeing to */
    texImage = _mesa_get_attachment_teximage(att);
-
-   /* create new renderbuffer which wraps the texture image.
-    * Use the texture's name as the renderbuffer's name so that we have
-    * something that's non-zero (to determine vertical orientation) and
-    * possibly helpful for debugging.
-    */
-   rb = st_new_renderbuffer(ctx, att->Texture->Name);
-   if (!rb) {
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glFramebufferTexture()");
-      return;
-   }
-
-   _mesa_reference_renderbuffer(&att->Renderbuffer, rb);
-   assert(rb->RefCount == 1);
-   rb->AllocStorage = NULL; /* should not get called */
-   strb = st_renderbuffer(rb);
-
-   assert(strb->Base.RefCount > 0);
 
    /* get the texture for the texture object */
    stObj = st_texture_object(att->Texture);

@@ -107,6 +107,11 @@ _mesa_set_renderbuffer_attachment(struct gl_context *ctx,
                                   struct gl_renderbuffer_attachment *att,
                                   struct gl_renderbuffer *rb);
 
+void
+_mesa_update_texture_renderbuffer(struct gl_context *ctx,
+                                  struct gl_framebuffer *fb,
+                                  struct gl_renderbuffer_attachment *att);
+
 extern void
 _mesa_framebuffer_renderbuffer(struct gl_context *ctx,
                                struct gl_framebuffer *fb,

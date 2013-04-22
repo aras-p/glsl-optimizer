@@ -835,25 +835,11 @@ radeon_render_texture(struct gl_context * ctx,
    if (!radeon_image->mt) {
       /* Fallback on drawing to a texture without a miptree.
        */
-      _mesa_reference_renderbuffer(&att->Renderbuffer, NULL);
       _swrast_render_texture(ctx, fb, att);
       return;
    }
-   else if (!rrb) {
-      rrb = radeon_wrap_texture(ctx, newImage);
-      if (rrb) {
-         /* bind the wrapper to the attachment point */
-         _mesa_reference_renderbuffer(&att->Renderbuffer, &rrb->base.Base);
-      }
-      else {
-         /* fallback to software rendering */
-         _swrast_render_texture(ctx, fb, att);
-         return;
-      }
-   }
 
    if (!radeon_update_wrapper(ctx, rrb, newImage)) {
-       _mesa_reference_renderbuffer(&att->Renderbuffer, NULL);
        _swrast_render_texture(ctx, fb, att);
        return;
    }

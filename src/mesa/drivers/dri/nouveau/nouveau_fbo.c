@@ -270,16 +270,6 @@ nouveau_render_texture(struct gl_context *ctx, struct gl_framebuffer *fb,
 	struct gl_texture_image *ti =
 		att->Texture->Image[att->CubeMapFace][att->TextureLevel];
 
-	/* Allocate a renderbuffer object for the texture if we
-	 * haven't already done so. */
-	if (!rb) {
-		rb = nouveau_renderbuffer_new(ctx, ~0);
-		assert(rb);
-
-		rb->AllocStorage = NULL;
-		_mesa_reference_renderbuffer(&att->Renderbuffer, rb);
-	}
-
 	/* Update the renderbuffer fields from the texture. */
 	set_renderbuffer_format(rb, get_tex_format(ti));
 	rb->Width = ti->Width;
