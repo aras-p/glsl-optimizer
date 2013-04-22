@@ -99,8 +99,6 @@ pipe_loader_create_screen(struct pipe_loader_device *dev,
 void
 pipe_loader_release(struct pipe_loader_device **devs, int ndev);
 
-#ifdef HAVE_PIPE_LOADER_SW
-
 /**
  * Get a list of known software devices.
  *
@@ -110,8 +108,6 @@ pipe_loader_release(struct pipe_loader_device **devs, int ndev);
  */
 int
 pipe_loader_sw_probe(struct pipe_loader_device **devs, int ndev);
-
-#endif
 
 #ifdef HAVE_PIPE_LOADER_DRM
 
