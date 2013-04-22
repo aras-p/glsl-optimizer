@@ -131,6 +131,7 @@ public:
    virtual class ir_swizzle *           as_swizzle()          { return NULL; }
    virtual class ir_constant *          as_constant()         { return NULL; }
    virtual class ir_discard *           as_discard()          { return NULL; }
+   virtual class ir_jump *              as_jump()             { return NULL; }
    /*@}*/
 
 protected:
@@ -1297,6 +1298,12 @@ protected:
    ir_jump()
    {
       ir_type = ir_type_unset;
+   }
+
+public:
+   virtual ir_jump *as_jump()
+   {
+      return this;
    }
 };
 
