@@ -81,6 +81,68 @@ writable images will consume TEX slots, VTX slots too because of linear indexing
 
 */
 
+struct r600_resource* r600_compute_buffer_alloc_vram(
+       struct r600_screen *screen,
+       unsigned size)
+{
+	struct pipe_resource * buffer = NULL;
+	assert(size);
+
+	buffer = pipe_buffer_create(
+		(struct pipe_screen*) screen,
+		PIPE_BIND_CUSTOM,
+		PIPE_USAGE_IMMUTABLE,
+		size);
+
+	return (struct r600_resource *)buffer;
+}
+
+
+static void evergreen_set_rat(
+	struct r600_pipe_compute *pipe,
+	int id,
+	struct r600_resource* bo,
+	int start,
+	int size)
+{
+	struct pipe_surface rat_templ;
+	struct r600_surface *surf = NULL;
+	struct r600_context *rctx = NULL;
+
+	assert(id < 12);
+	assert((size & 3) == 0);
+	assert((start & 0xFF) == 0);
+
+	rctx = pipe->ctx;
+
+	COMPUTE_DBG(rctx->screen, "bind rat: %i \n", id);
+
+	/* Create the RAT surface */
+	memset(&rat_templ, 0, sizeof(rat_templ));
+	rat_templ.format = PIPE_FORMAT_R32_UINT;
+	rat_templ.u.tex.level = 0;
+	rat_templ.u.tex.first_layer = 0;
+	rat_templ.u.tex.last_layer = 0;
+
+	/* Add the RAT the list of color buffers */
+	pipe->ctx->framebuffer.state.cbufs[id] = pipe->ctx->context.create_surface(
+		(struct pipe_context *)pipe->ctx,
+		(struct pipe_resource *)bo, &rat_templ);
+
+	/* Update the number of color buffers */
+	pipe->ctx->framebuffer.state.nr_cbufs =
+		MAX2(id + 1, pipe->ctx->framebuffer.state.nr_cbufs);
+
+	/* Update the cb_target_mask
+	 * XXX: I think this is a potential spot for bugs once we start doing
+	 * GL interop.  cb_target_mask may be modified in the 3D sections
+	 * of this driver. */
+	pipe->ctx->compute_cb_target_mask |= (0xf << (id * 4));
+
+	surf = (struct r600_surface*)pipe->ctx->framebuffer.state.cbufs[id];
+	evergreen_init_color_surface_rat(rctx, surf);
+}
+
 static void evergreen_cs_set_vertex_buffer(
 	struct r600_context * rctx,
 	unsigned vb_index,
@@ -148,9 +210,6 @@ void *evergreen_create_compute_state(
 #endif
 
 	shader->ctx = (struct r600_context*)ctx;
-	shader->resources = (struct evergreen_compute_resource*)
-			CALLOC(sizeof(struct evergreen_compute_resource),
-			get_compute_resource_num());
 	shader->local_size = cso->req_local_mem; ///TODO: assert it
 	shader->private_size = cso->req_private_mem;
 	shader->input_size = cso->req_input_mem;
@@ -172,7 +231,6 @@ void evergreen_delete_compute_state(struct pipe_context *ctx, void* state)
 {
 	struct r600_pipe_compute *shader = (struct r600_pipe_compute *)state;
 
-	free(shader->resources);
 	free(shader);
 }
 
@@ -326,8 +384,6 @@ static void compute_emit_cs(struct r600_context *ctx, const uint *block_layout,
 	struct radeon_winsys_cs *cs = ctx->rings.gfx.cs;
 	unsigned flush_flags = 0;
 	int i;
-	struct evergreen_compute_resource *resources =
-					ctx->cs_shader_state.shader->resources;
 
 	/* make sure that the gfx ring is only one active */
 	if (ctx->rings.dma.cs) {
@@ -386,38 +442,6 @@ static void compute_emit_cs(struct r600_context *ctx, const uint *block_layout,
 
 	/* Emit compute shader state */
 	r600_emit_atom(ctx, &ctx->cs_shader_state.atom);
-
-	for (i = 0; i < get_compute_resource_num(); i++) {
-		if (resources[i].enabled) {
-			int j;
-			COMPUTE_DBG(ctx->screen, "resnum: %i, cdw: %i\n", i, cs->cdw);
-
-			for (j = 0; j < resources[i].cs_end; j++) {
-				if (resources[i].do_reloc[j]) {
-					assert(resources[i].bo);
-					evergreen_emit_ctx_reloc(ctx,
-						resources[i].bo,
-						resources[i].usage);
-				}
-
-				cs->buf[cs->cdw++] = resources[i].cs[j];
-			}
-
-			if (resources[i].bo) {
-				evergreen_emit_ctx_reloc(ctx,
-					resources[i].bo,
-					resources[i].usage);
-
-				///special case for textures
-				if (resources[i].do_reloc
-					[resources[i].cs_end] == 2) {
-					evergreen_emit_ctx_reloc(ctx,
-						resources[i].bo,
-						resources[i].usage);
-				}
-			}
-		}
-	}
 
 	/* Emit dispatch state and dispatch packet */
 	evergreen_emit_direct_dispatch(ctx, block_layout, grid_layout);
@@ -543,16 +567,16 @@ static void evergreen_set_cs_sampler_view(struct pipe_context *ctx_,
 		unsigned start_slot, unsigned count,
 		struct pipe_sampler_view **views)
 {
-	struct r600_context *ctx = (struct r600_context *)ctx_;
 	struct r600_pipe_sampler_view **resource =
 		(struct r600_pipe_sampler_view **)views;
 
 	for (int i = 0; i < count; i++)	{
 		if (resource[i]) {
 			assert(i+1 < 12);
+			/* XXX: Implement */
+			assert(!"Compute samplers not implemented.");
 			///FETCH0 = VTX0 (param buffer),
 			//FETCH1 = VTX1 (global buffer pool), FETCH2... = TEX
-			evergreen_set_tex_resource(ctx->cs_shader_state.shader, resource[i], i+2);
 		}
 	}
 }
@@ -563,14 +587,13 @@ static void evergreen_bind_compute_sampler_states(
 	unsigned num_samplers,
 	void **samplers_)
 {
-	struct r600_context *ctx = (struct r600_context *)ctx_;
 	struct compute_sampler_state ** samplers =
 		(struct compute_sampler_state **)samplers_;
 
 	for (int i = 0; i < num_samplers; i++) {
 		if (samplers[i]) {
-			evergreen_set_sampler_resource(
-				ctx->cs_shader_state.shader, samplers[i], i);
+			/* XXX: Implement */
+			assert(!"Compute samplers not implemented.");
 		}
 	}
 }
