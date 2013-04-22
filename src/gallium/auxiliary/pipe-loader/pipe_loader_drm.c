@@ -35,7 +35,7 @@
 #include <libudev.h>
 #include <xf86drm.h>
 
-#ifdef PIPE_LOADER_HAVE_XCB
+#ifdef HAVE_PIPE_LOADER_XCB
 
 #include <xcb/dri2.h>
 
@@ -133,7 +133,7 @@ static struct pipe_loader_ops pipe_loader_drm_ops;
 static void
 pipe_loader_drm_x_auth(int fd)
 {
-#if PIPE_LOADER_HAVE_XCB
+#if HAVE_PIPE_LOADER_XCB
    /* Try authenticate with the X server to give us access to devices that X
     * is running on. */
    xcb_connection_t *xcb_conn;
