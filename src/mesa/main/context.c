@@ -923,7 +923,6 @@ create_beginend_table(const struct gl_context *ctx)
    COPY_DISPATCH(MapBuffer);
    COPY_DISPATCH(UnmapBuffer);
    COPY_DISPATCH(MapBufferRange);
-   COPY_DISPATCH(MapBufferRange);
    COPY_DISPATCH(ObjectPurgeableAPPLE);
    COPY_DISPATCH(ObjectUnpurgeableAPPLE);
 
