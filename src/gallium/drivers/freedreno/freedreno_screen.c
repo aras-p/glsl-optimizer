@@ -111,8 +111,15 @@ fd_screen_fence_finish(struct pipe_screen *screen,
 static void
 fd_screen_destroy(struct pipe_screen *pscreen)
 {
-	// TODO
-	DBG("TODO");
+	struct fd_screen *screen = fd_screen(pscreen);
+
+	if (screen->pipe)
+		fd_pipe_del(screen->pipe);
+
+	if (screen->dev)
+		fd_device_del(screen->dev);
+
+	free(screen);
 }
 
 /*
@@ -445,20 +452,29 @@ fd_screen_create(struct fd_device *dev)
 	if (!screen)
 		return NULL;
 
-	DBG("");
+	pscreen = &screen->base;
 
 	screen->dev = dev;
 
 	// maybe this should be in context?
 	screen->pipe = fd_pipe_new(screen->dev, FD_PIPE_3D);
+	if (!screen->pipe) {
+		DBG("could not create 3d pipe");
+		goto fail;
+	}
 
-	fd_pipe_get_param(screen->pipe, FD_GMEM_SIZE, &val);
+	if (fd_pipe_get_param(screen->pipe, FD_GMEM_SIZE, &val)) {
+		DBG("could not get GMEM size");
+		goto fail;
+	}
 	screen->gmemsize_bytes = val;
 
-	fd_pipe_get_param(screen->pipe, FD_DEVICE_ID, &val);
+	if (fd_pipe_get_param(screen->pipe, FD_DEVICE_ID, &val)) {
+		DBG("could not get device-id");
+		goto fail;
+	}
 	screen->device_id = val;
 
-	pscreen = &screen->base;
 
 	pscreen->destroy = fd_screen_destroy;
 	pscreen->get_param = fd_screen_get_param;
@@ -481,4 +497,8 @@ fd_screen_create(struct fd_device *dev)
 	util_format_s3tc_init();
 
 	return pscreen;
+
+fail:
+	fd_screen_destroy(pscreen);
+	return NULL;
 }
