@@ -77,7 +77,7 @@ void call_for_basic_blocks(exec_list *instructions,
 	 callback(leader, ir, data);
 	 leader = NULL;
 	 call_for_basic_blocks(&ir_loop->body_instructions, callback, data);
-      } else if (ir->as_return() || ir->as_call()) {
+      } else if (ir->as_jump() || ir->as_call()) {
 	 callback(leader, ir, data);
 	 leader = NULL;
       } else if ((ir_function = ir->as_function())) {
