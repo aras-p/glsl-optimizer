@@ -569,7 +569,7 @@ static void lp_exec_default(struct lp_exec_mask *mask,
 }
 
 
-/* stores val into an address pointed to by dst.
+/* stores val into an address pointed to by dst_ptr.
  * mask->exec_mask is used to figure out which bits of val
  * should be stored into the address
  * (0 means don't store this bit, 1 means do store).
@@ -578,9 +578,13 @@ static void lp_exec_mask_store(struct lp_exec_mask *mask,
                                struct lp_build_context *bld_store,
                                LLVMValueRef pred,
                                LLVMValueRef val,
-                               LLVMValueRef dst)
+                               LLVMValueRef dst_ptr)
 {
    LLVMBuilderRef builder = mask->bld->gallivm->builder;
+
+   assert(lp_check_value(bld_store->type, val));
+   assert(LLVMGetTypeKind(LLVMTypeOf(dst_ptr)) == LLVMPointerTypeKind);
+   assert(LLVMGetElementType(LLVMTypeOf(dst_ptr)) == LLVMTypeOf(val));
 
    /* Mix the predicate and execution mask */
    if (mask->has_mask) {
@@ -592,16 +596,13 @@ static void lp_exec_mask_store(struct lp_exec_mask *mask,
    }
 
    if (pred) {
-      LLVMValueRef real_val, dst_val;
+      LLVMValueRef res, dst;
 
-      dst_val = LLVMBuildLoad(builder, dst, "");
-      real_val = lp_build_select(bld_store,
-                                 pred,
-                                 val, dst_val);
-
-      LLVMBuildStore(builder, real_val, dst);
+      dst = LLVMBuildLoad(builder, dst_ptr, "");
+      res = lp_build_select(bld_store, pred, val, dst);
+      LLVMBuildStore(builder, res, dst_ptr);
    } else
-      LLVMBuildStore(builder, val, dst);
+      LLVMBuildStore(builder, val, dst_ptr);
 }
 
 static void lp_exec_mask_call(struct lp_exec_mask *mask,
@@ -1312,54 +1313,38 @@ emit_store_chan(
    LLVMValueRef value)
 {
    struct lp_build_tgsi_soa_context * bld = lp_soa_context(bld_base);
-   struct gallivm_state *gallivm = bld->bld_base.base.gallivm;
+   struct gallivm_state *gallivm = bld_base->base.gallivm;
    LLVMBuilderRef builder = gallivm->builder;
    const struct tgsi_full_dst_register *reg = &inst->Dst[index];
+   struct lp_build_context *float_bld = &bld_base->base;
+   struct lp_build_context *int_bld = &bld_base->int_bld;
    struct lp_build_context *uint_bld = &bld_base->uint_bld;
    LLVMValueRef indirect_index = NULL;
-   struct lp_build_context *bld_store;
    enum tgsi_opcode_type dtype = tgsi_opcode_infer_dst_type(inst->Instruction.Opcode);
 
-   switch (dtype) {
-   default:
-   case TGSI_TYPE_FLOAT:
-   case TGSI_TYPE_UNTYPED:
-      bld_store = &bld_base->base;
-      break;
-   case TGSI_TYPE_UNSIGNED:
-      bld_store = &bld_base->uint_bld;
-      break;
-   case TGSI_TYPE_SIGNED:
-      bld_store = &bld_base->int_bld;
-      break;
-   case TGSI_TYPE_DOUBLE:
-   case TGSI_TYPE_VOID:
-      assert(0);
-      bld_store = NULL;
-      break;
-   }
-
-   /* If the destination is untyped then the source can be anything,
-    * but LLVM won't like if the types don't match so lets cast
-    * to the correct destination type as expected by LLVM. */
-   if (dtype == TGSI_TYPE_UNTYPED &&
-       !lp_check_vec_type(bld_store->type, LLVMTypeOf(value))) {
-      value = LLVMBuildBitCast(builder, value, bld_store->vec_type,
-                               "src_casted");
-   }
-
+   /*
+    * Apply saturation.
+    *
+    * It is always assumed to be float.
+    */
    switch( inst->Instruction.Saturate ) {
    case TGSI_SAT_NONE:
       break;
 
    case TGSI_SAT_ZERO_ONE:
-      value = lp_build_max(&bld->bld_base.base, value, bld->bld_base.base.zero);
-      value = lp_build_min(&bld->bld_base.base, value, bld->bld_base.base.one);
+      assert(dtype == TGSI_TYPE_FLOAT ||
+             dtype == TGSI_TYPE_UNTYPED);
+      value = LLVMBuildBitCast(builder, value, float_bld->vec_type, "");
+      value = lp_build_max(float_bld, value, float_bld->zero);
+      value = lp_build_min(float_bld, value, float_bld->one);
       break;
 
    case TGSI_SAT_MINUS_PLUS_ONE:
-      value = lp_build_max(&bld->bld_base.base, value, lp_build_const_vec(bld->bld_base.base.gallivm, bld->bld_base.base.type, -1.0));
-      value = lp_build_min(&bld->bld_base.base, value, bld->bld_base.base.one);
+      assert(dtype == TGSI_TYPE_FLOAT ||
+             dtype == TGSI_TYPE_UNTYPED);
+      value = LLVMBuildBitCast(builder, value, float_bld->vec_type, "");
+      value = lp_build_max(float_bld, value, lp_build_const_vec(gallivm, float_bld->type, -1.0));
+      value = lp_build_min(float_bld, value, float_bld->one);
       break;
 
    default:
@@ -1373,16 +1358,19 @@ emit_store_chan(
                                           &reg->Indirect);
    } else {
       assert(reg->Register.Index <=
-                             bld->bld_base.info->file_max[reg->Register.File]);
+                             bld_base->info->file_max[reg->Register.File]);
    }
 
    switch( reg->Register.File ) {
    case TGSI_FILE_OUTPUT:
+      /* Outputs are always stored as floats */
+      value = LLVMBuildBitCast(builder, value, float_bld->vec_type, "");
+
       if (reg->Register.Indirect) {
          LLVMValueRef chan_vec =
             lp_build_const_int_vec(gallivm, uint_bld->type, chan_index);
          LLVMValueRef length_vec =
-            lp_build_const_int_vec(gallivm, uint_bld->type, bld->bld_base.base.type.length);
+            lp_build_const_int_vec(gallivm, uint_bld->type, float_bld->type.length);
          LLVMValueRef index_vec;  /* indexes into the temp registers */
          LLVMValueRef outputs_array;
          LLVMValueRef pixel_offsets;
@@ -1391,7 +1379,7 @@ emit_store_chan(
 
          /* build pixel offset vector: {0, 1, 2, 3, ...} */
          pixel_offsets = uint_bld->undef;
-         for (i = 0; i < bld->bld_base.base.type.length; i++) {
+         for (i = 0; i < float_bld->type.length; i++) {
             LLVMValueRef ii = lp_build_const_int32(gallivm, i);
             pixel_offsets = LLVMBuildInsertElement(builder, pixel_offsets,
                                                    ii, ii, "");
@@ -1415,17 +1403,20 @@ emit_store_chan(
       else {
          LLVMValueRef out_ptr = lp_get_output_ptr(bld, reg->Register.Index,
                                                   chan_index);
-         lp_exec_mask_store(&bld->exec_mask, bld_store, pred, value, out_ptr);
+         lp_exec_mask_store(&bld->exec_mask, float_bld, pred, value, out_ptr);
       }
       break;
 
    case TGSI_FILE_TEMPORARY:
+      /* Temporaries are always stored as floats */
+      value = LLVMBuildBitCast(builder, value, float_bld->vec_type, "");
+
       if (reg->Register.Indirect) {
          LLVMValueRef chan_vec =
             lp_build_const_int_vec(gallivm, uint_bld->type, chan_index);
          LLVMValueRef length_vec =
             lp_build_const_int_vec(gallivm, uint_bld->type,
-                                   bld->bld_base.base.type.length);
+                                   float_bld->type.length);
          LLVMValueRef index_vec;  /* indexes into the temp registers */
          LLVMValueRef temps_array;
          LLVMValueRef pixel_offsets;
@@ -1434,7 +1425,7 @@ emit_store_chan(
 
          /* build pixel offset vector: {0, 1, 2, 3, ...} */
          pixel_offsets = uint_bld->undef; 
-         for (i = 0; i < bld->bld_base.base.type.length; i++) {
+         for (i = 0; i < float_bld->type.length; i++) {
             LLVMValueRef ii = lp_build_const_int32(gallivm, i);
             pixel_offsets = LLVMBuildInsertElement(builder, pixel_offsets,
                                                    ii, ii, "");
@@ -1457,48 +1448,32 @@ emit_store_chan(
       }
       else {
          LLVMValueRef temp_ptr;
-
-         switch (dtype) {
-         case TGSI_TYPE_UNSIGNED:
-         case TGSI_TYPE_SIGNED: {
-            LLVMTypeRef itype = bld_base->int_bld.vec_type;
-            LLVMTypeRef ivtype = LLVMPointerType(itype, 0);
-            LLVMValueRef tint_ptr = lp_get_temp_ptr_soa(bld, reg->Register.Index,
-                                                        chan_index);
-            LLVMValueRef temp_value_ptr;
-
-            temp_ptr = LLVMBuildBitCast(builder, tint_ptr, ivtype, "");
-            temp_value_ptr = LLVMBuildBitCast(builder, value, itype, "");
-            value = temp_value_ptr;
-            break;
-         }
-         default:
-         case TGSI_TYPE_FLOAT:
-         case TGSI_TYPE_UNTYPED:
-            temp_ptr = lp_get_temp_ptr_soa(bld, reg->Register.Index,
-                                           chan_index);
-            break;
-         }
-
-         lp_exec_mask_store(&bld->exec_mask, bld_store, pred, value, temp_ptr);
+         temp_ptr = lp_get_temp_ptr_soa(bld, reg->Register.Index,
+                                        chan_index);
+         lp_exec_mask_store(&bld->exec_mask, float_bld, pred, value, temp_ptr);
       }
       break;
 
    case TGSI_FILE_ADDRESS:
       assert(dtype == TGSI_TYPE_SIGNED);
-      assert(LLVMTypeOf(value) == bld_base->base.int_vec_type);
-      lp_exec_mask_store(&bld->exec_mask, bld_store, pred, value,
+      assert(LLVMTypeOf(value) == int_bld->vec_type);
+      value = LLVMBuildBitCast(builder, value, int_bld->vec_type, "");
+      lp_exec_mask_store(&bld->exec_mask, int_bld, pred, value,
                          bld->addr[reg->Register.Index][chan_index]);
       break;
 
    case TGSI_FILE_PREDICATE:
-      lp_exec_mask_store(&bld->exec_mask, bld_store, pred, value,
+      assert(LLVMTypeOf(value) == float_bld->vec_type);
+      value = LLVMBuildBitCast(builder, value, float_bld->vec_type, "");
+      lp_exec_mask_store(&bld->exec_mask, float_bld, pred, value,
                          bld->preds[reg->Register.Index][chan_index]);
       break;
 
    default:
       assert( 0 );
    }
+
+   (void)dtype;
 }
 
 static void
