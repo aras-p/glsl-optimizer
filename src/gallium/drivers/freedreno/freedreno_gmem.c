@@ -69,13 +69,25 @@
  * resolve.
  */
 
+static uint32_t fmt2swap(enum pipe_format format)
+{
+	switch (format) {
+	case PIPE_FORMAT_B8G8R8A8_UNORM:
+	/* TODO probably some more.. */
+		return 1;
+	default:
+		return 0;
+	}
+}
+
 /* transfer from gmem to system memory (ie. normal RAM) */
 
 static void
-emit_gmem2mem_surf(struct fd_ringbuffer *ring, uint32_t swap, uint32_t base,
+emit_gmem2mem_surf(struct fd_ringbuffer *ring, uint32_t base,
 		struct pipe_surface *psurf)
 {
 	struct fd_resource *rsc = fd_resource(psurf->texture);
+	uint32_t swap = fmt2swap(psurf->format);
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
 	OUT_RING(ring, CP_REG(REG_A2XX_RB_COLOR_INFO));
@@ -168,10 +180,10 @@ emit_gmem2mem(struct fd_context *ctx, struct fd_ringbuffer *ring,
 			A2XX_RB_COPY_DEST_OFFSET_Y(yoff));
 
 	if (ctx->resolve & (FD_BUFFER_DEPTH | FD_BUFFER_STENCIL))
-		emit_gmem2mem_surf(ring, 0, bin_w * bin_h, pfb->zsbuf);
+		emit_gmem2mem_surf(ring, bin_w * bin_h, pfb->zsbuf);
 
 	if (ctx->resolve & FD_BUFFER_COLOR)
-		emit_gmem2mem_surf(ring, 1, 0, pfb->cbufs[0]);
+		emit_gmem2mem_surf(ring, 0, pfb->cbufs[0]);
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
 	OUT_RING(ring, CP_REG(REG_A2XX_RB_MODECONTROL));
@@ -181,7 +193,7 @@ emit_gmem2mem(struct fd_context *ctx, struct fd_ringbuffer *ring,
 /* transfer from system memory to gmem */
 
 static void
-emit_mem2gmem_surf(struct fd_ringbuffer *ring, uint32_t swap, uint32_t base,
+emit_mem2gmem_surf(struct fd_ringbuffer *ring, uint32_t base,
 		struct pipe_surface *psurf)
 {
 	struct fd_resource *rsc = fd_resource(psurf->texture);
@@ -189,7 +201,7 @@ emit_mem2gmem_surf(struct fd_ringbuffer *ring, uint32_t swap, uint32_t base,
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
 	OUT_RING(ring, CP_REG(REG_A2XX_RB_COLOR_INFO));
-	OUT_RING(ring, A2XX_RB_COLOR_INFO_SWAP(swap) |
+	OUT_RING(ring, A2XX_RB_COLOR_INFO_SWAP(fmt2swap(psurf->format)) |
 			A2XX_RB_COLOR_INFO_BASE(base) |
 			A2XX_RB_COLOR_INFO_FORMAT(fd_pipe2color(psurf->format)));
 
@@ -320,10 +332,10 @@ emit_mem2gmem(struct fd_context *ctx, struct fd_ringbuffer *ring,
 	OUT_RING(ring, 0x00000000);
 
 	if (ctx->restore & (FD_BUFFER_DEPTH | FD_BUFFER_STENCIL))
-		emit_mem2gmem_surf(ring, 0, bin_w * bin_h, pfb->zsbuf);
+		emit_mem2gmem_surf(ring, bin_w * bin_h, pfb->zsbuf);
 
 	if (ctx->restore & FD_BUFFER_COLOR)
-		emit_mem2gmem_surf(ring, 1, 0, pfb->cbufs[0]);
+		emit_mem2gmem_surf(ring, 0, pfb->cbufs[0]);
 
 	/* TODO blob driver seems to toss in a CACHE_FLUSH after each DRAW_INDX.. */
 }
