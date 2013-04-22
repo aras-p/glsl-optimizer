@@ -489,12 +489,6 @@ intel_renderbuffer_update_wrapper(struct intel_context *intel,
    struct intel_mipmap_tree *mt = intel_image->mt;
    int level = image->Level;
 
-   rb->Format = image->TexFormat;
-   rb->InternalFormat = image->InternalFormat;
-   rb->_BaseFormat = image->_BaseFormat;
-   rb->NumSamples = mt->num_samples;
-   rb->Width = image->Width2;
-   rb->Height = image->Height2;
    rb->Delete = intel_delete_renderbuffer;
    rb->AllocStorage = intel_nop_alloc_storage;
 

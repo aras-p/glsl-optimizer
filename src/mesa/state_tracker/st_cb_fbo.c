@@ -414,11 +414,6 @@ st_render_texture(struct gl_context *ctx,
    strb->rtt_level = att->TextureLevel;
    strb->rtt_face = att->CubeMapFace;
    strb->rtt_slice = att->Zoffset;
-   rb->NumSamples = texImage->NumSamples;
-   rb->Width = texImage->Width2;
-   rb->Height = texImage->Height2;
-   rb->_BaseFormat = texImage->_BaseFormat;
-   rb->InternalFormat = texImage->InternalFormat;
 
    pipe_resource_reference( &strb->texture, pt );
 

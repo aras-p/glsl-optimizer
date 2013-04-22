@@ -380,6 +380,13 @@ _mesa_update_texture_renderbuffer(struct gl_context *ctx,
       rb->AllocStorage = NULL;
    }
 
+   rb->_BaseFormat = texImage->_BaseFormat;
+   rb->Format = texImage->TexFormat;
+   rb->InternalFormat = texImage->InternalFormat;
+   rb->Width = texImage->Width2;
+   rb->Height = texImage->Height2;
+   rb->NumSamples = texImage->NumSamples;
+
    ctx->Driver.RenderTexture(ctx, fb, att);
 }
 

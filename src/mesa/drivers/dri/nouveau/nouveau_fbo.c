@@ -247,21 +247,6 @@ nouveau_framebuffer_renderbuffer(struct gl_context *ctx, struct gl_framebuffer *
 	context_dirty(ctx, FRAMEBUFFER);
 }
 
-static GLenum
-get_tex_format(struct gl_texture_image *ti)
-{
-	switch (ti->TexFormat) {
-	case MESA_FORMAT_ARGB8888:
-		return GL_RGBA8;
-	case MESA_FORMAT_XRGB8888:
-		return GL_RGB8;
-	case MESA_FORMAT_RGB565:
-		return GL_RGB5;
-	default:
-		return GL_NONE;
-	}
-}
-
 static void
 nouveau_render_texture(struct gl_context *ctx, struct gl_framebuffer *fb,
 		       struct gl_renderbuffer_attachment *att)
@@ -271,9 +256,6 @@ nouveau_render_texture(struct gl_context *ctx, struct gl_framebuffer *fb,
 		att->Texture->Image[att->CubeMapFace][att->TextureLevel];
 
 	/* Update the renderbuffer fields from the texture. */
-	set_renderbuffer_format(rb, get_tex_format(ti));
-	rb->Width = ti->Width;
-	rb->Height = ti->Height;
 	nouveau_surface_ref(&to_nouveau_teximage(ti)->surface,
 			    &to_nouveau_renderbuffer(rb)->surface);
 

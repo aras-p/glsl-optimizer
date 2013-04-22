@@ -50,11 +50,6 @@ update_wrapper(struct gl_context *ctx, struct gl_renderbuffer_attachment *att)
       zOffset = att->Zoffset;
    }
 
-   rb->Width = swImage->Base.Width;
-   rb->Height = swImage->Base.Height;
-   rb->InternalFormat = swImage->Base.InternalFormat;
-   rb->_BaseFormat = _mesa_get_format_base_format(format);
-
    /* Want to store linear values, not sRGB */
    rb->Format = _mesa_get_srgb_format_linear(format);
 
