@@ -21,7 +21,6 @@ i915_FILES = \
 	intel_tex_subimage.c \
 	intel_tex_copy.c \
 	intel_tex_validate.c \
-	intel_tex_format.c \
 	intel_tex.c \
 	intel_pixel.c \
 	intel_pixel_bitmap.c \

@@ -74,8 +74,6 @@ bool
 intel_tex_image_s8z24_create_renderbuffers(struct intel_context *intel,
 					   struct intel_texture_image *image);
 
-int intel_compressed_num_bytes(GLuint mesaFormat);
-
 bool intel_copy_texsubimage(struct intel_context *intel,
                             struct intel_texture_image *intelImage,
                             GLint dstx, GLint dsty,

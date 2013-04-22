@@ -24,7 +24,6 @@ i965_FILES = \
 	intel_syncobj.c \
 	intel_tex.c \
 	intel_tex_copy.c \
-	intel_tex_format.c \
 	intel_tex_image.c \
 	intel_tex_layout.c \
 	intel_tex_subimage.c \

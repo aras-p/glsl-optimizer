@@ -142,15 +142,11 @@ intel_miptree_create_layout(struct intel_context *intel,
                             GLuint num_samples)
 {
    struct intel_mipmap_tree *mt = calloc(sizeof(*mt), 1);
-   int compress_byte = 0;
 
    DBG("%s target %s format %s level %d..%d <-- %p\n", __FUNCTION__,
        _mesa_lookup_enum_by_nr(target),
        _mesa_get_format_name(format),
        first_level, last_level, mt);
-
-   if (_mesa_is_format_compressed(format))
-      compress_byte = intel_compressed_num_bytes(format);
 
    mt->target = target_to_target(target);
    mt->format = format;
@@ -159,9 +155,17 @@ intel_miptree_create_layout(struct intel_context *intel,
    mt->logical_width0 = width0;
    mt->logical_height0 = height0;
    mt->logical_depth0 = depth0;
-   mt->cpp = compress_byte ? compress_byte : _mesa_get_format_bytes(mt->format);
+
+   /* The cpp is bytes per (1, blockheight)-sized block for compressed
+    * textures.  This is why you'll see divides by blockheight all over
+    */
+   unsigned bw, bh;
+   _mesa_get_format_block_size(format, &bw, &bh);
+   assert(_mesa_get_format_bytes(mt->format) % bw == 0);
+   mt->cpp = _mesa_get_format_bytes(mt->format) / bw;
+
    mt->num_samples = num_samples;
-   mt->compressed = compress_byte ? 1 : 0;
+   mt->compressed = _mesa_is_format_compressed(format);
    mt->msaa_layout = INTEL_MSAA_LAYOUT_NONE;
    mt->refcount = 1; 
 
