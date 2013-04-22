@@ -7,6 +7,7 @@ libOpenCL_la_LDFLAGS = \
 	-version-number 1:0
 
 libOpenCL_la_LIBADD = \
+	$(top_builddir)/src/gallium/auxiliary/pipe-loader/libpipe_loader.la \
 	$(top_builddir)/src/gallium/winsys/sw/null/libws_null.la \
 	$(top_builddir)/src/gallium/state_trackers/clover/libclover.la \
 	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
