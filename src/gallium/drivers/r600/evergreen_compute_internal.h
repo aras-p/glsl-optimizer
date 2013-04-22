@@ -113,7 +113,7 @@ void evergreen_set_loop_const(struct r600_pipe_compute *pipe, int id, int count,
 void evergreen_set_tmp_ring(struct r600_pipe_compute *pipe, struct r600_resource* bo, int offset, int size, int se);
 void evergreen_set_tex_resource(struct r600_pipe_compute *pipe, struct r600_pipe_sampler_view* view, int id);
 void evergreen_set_sampler_resource(struct r600_pipe_compute *pipe, struct compute_sampler_state *sampler, int id);
-void evergreen_set_const_cache(struct r600_pipe_compute *pipe, int cache_id, struct r600_resource* cbo, int size, int offset);
+void evergreen_set_const_cache(struct r600_pipe_compute *pipe, int cache_id, struct r600_resource* cbo, int size);
 
 struct r600_resource* r600_compute_buffer_alloc_vram(struct r600_screen *screen, unsigned size);
 

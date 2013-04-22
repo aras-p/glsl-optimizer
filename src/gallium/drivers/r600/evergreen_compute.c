@@ -102,6 +102,22 @@ static void evergreen_cs_set_vertex_buffer(
 	state->atom.dirty = true;
 }
 
+static void evergreen_cs_set_constant_buffer(
+	struct r600_context * rctx,
+	unsigned cb_index,
+	unsigned offset,
+	unsigned size,
+	struct pipe_resource * buffer)
+{
+	struct pipe_constant_buffer cb;
+	cb.buffer_size = size;
+	cb.buffer_offset = offset;
+	cb.buffer = buffer;
+	cb.user_buffer = NULL;
+
+	rctx->context.set_constant_buffer(&rctx->context, PIPE_SHADER_COMPUTE, cb_index, &cb);
+}
+
 static const struct u_resource_vtbl r600_global_buffer_vtbl =
 {
 	u_default_resource_get_handle, /* get_handle */
@@ -189,7 +205,10 @@ void evergreen_compute_upload_input(
 	struct r600_context *ctx = (struct r600_context *)ctx_;
 	struct r600_pipe_compute *shader = ctx->cs_shader_state.shader;
 	int i;
-	unsigned kernel_parameters_offset_bytes = 36;
+	/* We need to reserve 9 dwords (36 bytes) for implicit kernel
+	 * parameters.
+	 */
+	unsigned input_size = shader->input_size + 36;
 	uint32_t * num_work_groups_start;
 	uint32_t * global_size_start;
 	uint32_t * local_size_start;
@@ -200,12 +219,9 @@ void evergreen_compute_upload_input(
 	}
 
 	if (!shader->kernel_param) {
-		unsigned buffer_size = shader->input_size;
-
 		/* Add space for the grid dimensions */
-		buffer_size += kernel_parameters_offset_bytes;
 		shader->kernel_param = r600_compute_buffer_alloc_vram(
-						ctx->screen, buffer_size);
+						ctx->screen, input_size);
 	}
 
 	num_work_groups_start = r600_buffer_mmap_sync_with_rings(ctx, shader->kernel_param, PIPE_TRANSFER_WRITE);
@@ -227,20 +243,16 @@ void evergreen_compute_upload_input(
 	/* Copy the kernel inputs */
 	memcpy(kernel_parameters_start, input, shader->input_size);
 
-	for (i = 0; i < (kernel_parameters_offset_bytes / 4) +
-					(shader->input_size / 4); i++) {
+	for (i = 0; i < (input_size / 4); i++) {
 		COMPUTE_DBG(ctx->screen, "input %i : %i\n", i,
 			((unsigned*)num_work_groups_start)[i]);
 	}
 
 	ctx->ws->buffer_unmap(shader->kernel_param->cs_buf);
 
-	///ID=0 is reserved for the parameters
-	evergreen_cs_set_vertex_buffer(ctx, 0, 0,
+	/* ID=0 is reserved for the parameters */
+	evergreen_cs_set_constant_buffer(ctx, 0, 0, input_size,
 			(struct pipe_resource*)shader->kernel_param);
-	///ID=0 is reserved for parameters
-	evergreen_set_const_cache(shader, 0, shader->kernel_param,
-						shader->input_size, 0);
 }
 
 static void evergreen_emit_direct_dispatch(
@@ -368,6 +380,9 @@ static void compute_emit_cs(struct r600_context *ctx, const uint *block_layout,
 	/* Emit vertex buffer state */
 	ctx->cs_vertex_buffer_state.atom.num_dw = 12 * util_bitcount(ctx->cs_vertex_buffer_state.dirty_mask);
 	r600_emit_atom(ctx, &ctx->cs_vertex_buffer_state.atom);
+
+	/* Emit constant buffer state */
+	r600_emit_atom(ctx, &ctx->constbuf_state[PIPE_SHADER_COMPUTE].atom);
 
 	/* Emit compute shader state */
 	r600_emit_atom(ctx, &ctx->cs_shader_state.atom);
@@ -783,10 +798,9 @@ void evergreen_init_compute_state_functions(struct r600_context *ctx)
 	ctx->context.set_global_binding = evergreen_set_global_binding;
 	ctx->context.launch_grid = evergreen_launch_grid;
 
-	/* We always use at least two vertex buffers for compute, one for
-         * parameters and one for global memory */
+	/* We always use at least one vertex buffer for parameters (id = 1)*/
 	ctx->cs_vertex_buffer_state.enabled_mask =
-	ctx->cs_vertex_buffer_state.dirty_mask = 1 | 2;
+	ctx->cs_vertex_buffer_state.dirty_mask = 0x2;
 }
 
 
