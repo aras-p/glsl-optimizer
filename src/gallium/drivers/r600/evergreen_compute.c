@@ -314,7 +314,6 @@ static void compute_emit_cs(struct r600_context *ctx, const uint *block_layout,
 	struct radeon_winsys_cs *cs = ctx->rings.gfx.cs;
 	unsigned flush_flags = 0;
 	int i;
-	struct r600_resource *onebo = NULL;
 	struct evergreen_compute_resource *resources =
 					ctx->cs_shader_state.shader->resources;
 
@@ -390,7 +389,6 @@ static void compute_emit_cs(struct r600_context *ctx, const uint *block_layout,
 			}
 
 			if (resources[i].bo) {
-				onebo = resources[i].bo;
 				evergreen_emit_ctx_reloc(ctx,
 					resources[i].bo,
 					resources[i].usage);
@@ -431,10 +429,6 @@ static void compute_emit_cs(struct r600_context *ctx, const uint *block_layout,
 	ctx->flags = 0;
 
 	COMPUTE_DBG(ctx->screen, "shader started\n");
-
-	ctx->ws->buffer_wait(onebo->buf, 0);
-
-	COMPUTE_DBG(ctx->screen, "...\n");
 }
 
 
