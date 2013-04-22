@@ -493,17 +493,8 @@ intel_renderbuffer_update_wrapper(struct intel_context *intel,
    rb->InternalFormat = image->InternalFormat;
    rb->_BaseFormat = image->_BaseFormat;
    rb->NumSamples = mt->num_samples;
-
-   if (mt->msaa_layout != INTEL_MSAA_LAYOUT_NONE) {
-      assert(level == 0);
-      rb->Width = mt->logical_width0;
-      rb->Height = mt->logical_height0;
-   }
-   else {
-      rb->Width = mt->level[level].width;
-      rb->Height = mt->level[level].height;
-   }
-
+   rb->Width = image->Width2;
+   rb->Height = image->Height2;
    rb->Delete = intel_delete_renderbuffer;
    rb->AllocStorage = intel_nop_alloc_storage;
 
