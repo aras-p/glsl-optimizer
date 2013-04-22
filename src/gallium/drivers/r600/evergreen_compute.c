@@ -203,7 +203,7 @@ void evergreen_compute_upload_input(
 		unsigned buffer_size = shader->input_size;
 
 		/* Add space for the grid dimensions */
-		buffer_size += kernel_parameters_offset_bytes * sizeof(uint);
+		buffer_size += kernel_parameters_offset_bytes;
 		shader->kernel_param = r600_compute_buffer_alloc_vram(
 						ctx->screen, buffer_size);
 	}
