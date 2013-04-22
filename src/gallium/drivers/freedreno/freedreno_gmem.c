@@ -370,22 +370,22 @@ calculate_tiles(struct fd_context *ctx)
 		max_width = 256;
 //	}
 
-	bin_w = ALIGN(width, 32);
-	bin_h = ALIGN(height, 32);
+	bin_w = align(width, 32);
+	bin_h = align(height, 32);
 
 	/* first, find a bin width that satisfies the maximum width
 	 * restrictions:
 	 */
 	while (bin_w > max_width) {
 		nbins_x++;
-		bin_w = ALIGN(width / nbins_x, 32);
+		bin_w = align(width / nbins_x, 32);
 	}
 
 	/* then find a bin height that satisfies the memory constraints:
 	 */
 	while ((bin_w * bin_h * cpp) > gmem_size) {
 		nbins_y++;
-		bin_h = ALIGN(height / nbins_y, 32);
+		bin_h = align(height / nbins_y, 32);
 	}
 
 	DBG("using %d bins of size %dx%d", nbins_x*nbins_y, bin_w, bin_h);
@@ -431,7 +431,7 @@ fd_gmem_render_tiles(struct pipe_context *pctx)
 	OUT_RING(ring, gmem->bin_w);                 /* RB_SURFACE_INFO */
 	OUT_RING(ring, A2XX_RB_COLOR_INFO_SWAP(1) | /* RB_COLOR_INFO */
 			A2XX_RB_COLOR_INFO_FORMAT(colorformatx));
-	reg = A2XX_RB_DEPTH_INFO_DEPTH_BASE(ALIGN(gmem->bin_w * gmem->bin_h, 4));
+	reg = A2XX_RB_DEPTH_INFO_DEPTH_BASE(align(gmem->bin_w * gmem->bin_h, 4));
 	if (pfb->zsbuf)
 		reg |= A2XX_RB_DEPTH_INFO_DEPTH_FORMAT(fd_pipe2depth(pfb->zsbuf->format));
 	OUT_RING(ring, reg);                         /* RB_DEPTH_INFO */
@@ -442,13 +442,13 @@ fd_gmem_render_tiles(struct pipe_context *pctx)
 		uint32_t bh = gmem->bin_h;
 
 		/* clip bin height: */
-		bh = min(bh, gmem->height - yoff);
+		bh = MIN2(bh, gmem->height - yoff);
 
 		for (j = 0; j < gmem->nbins_x; j++) {
 			uint32_t bw = gmem->bin_w;
 
 			/* clip bin width: */
-			bw = min(bw, gmem->width - xoff);
+			bw = MIN2(bw, gmem->width - xoff);
 
 			DBG("bin_h=%d, yoff=%d, bin_w=%d, xoff=%d",
 					bh, yoff, bw, xoff);

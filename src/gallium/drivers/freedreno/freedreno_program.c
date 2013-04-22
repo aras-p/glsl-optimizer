@@ -298,7 +298,7 @@ fd_program_emit(struct fd_ringbuffer *ring,
 
 	vs_gprs = (vsi->max_reg < 0) ? 0x80 : vsi->max_reg;
 	fs_gprs = (fsi->max_reg < 0) ? 0x80 : fsi->max_reg;
-	vs_export = max(1, prog->num_exports) - 1;
+	vs_export = MAX2(1, prog->num_exports) - 1;
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
 	OUT_RING(ring, CP_REG(REG_A2XX_SQ_PROGRAM_CNTL));

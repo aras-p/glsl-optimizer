@@ -238,10 +238,10 @@ emit_constants(struct fd_ringbuffer *ring, uint32_t base,
 	while (enabled_mask) {
 		unsigned index = ffs(enabled_mask) - 1;
 		struct pipe_constant_buffer *cb = &constbuf->cb[index];
-		unsigned size = ALIGN(cb->buffer_size, 4) / 4; /* size in dwords */
+		unsigned size = align(cb->buffer_size, 4) / 4; /* size in dwords */
 
 		// I expect that size should be a multiple of vec4's:
-		assert(size == ALIGN(size, 4));
+		assert(size == align(size, 4));
 
 		/* hmm, sometimes we still seem to end up with consts bound,
 		 * even if shader isn't using them, which ends up overwriting
@@ -417,10 +417,10 @@ fd_state_emit(struct pipe_context *pctx, uint32_t dirty)
 		OUT_RING(ring, xy2d(ctx->scissor.maxx,   /* PA_SC_WINDOW_SCISSOR_BR */
 				ctx->scissor.maxy));
 
-		ctx->max_scissor.minx = min(ctx->max_scissor.minx, ctx->scissor.minx);
-		ctx->max_scissor.miny = min(ctx->max_scissor.miny, ctx->scissor.miny);
-		ctx->max_scissor.maxx = max(ctx->max_scissor.maxx, ctx->scissor.maxx);
-		ctx->max_scissor.maxy = max(ctx->max_scissor.maxy, ctx->scissor.maxy);
+		ctx->max_scissor.minx = MIN2(ctx->max_scissor.minx, ctx->scissor.minx);
+		ctx->max_scissor.miny = MIN2(ctx->max_scissor.miny, ctx->scissor.miny);
+		ctx->max_scissor.maxx = MAX2(ctx->max_scissor.maxx, ctx->scissor.maxx);
+		ctx->max_scissor.maxy = MAX2(ctx->max_scissor.maxy, ctx->scissor.maxy);
 	}
 
 	if (dirty & FD_DIRTY_VIEWPORT) {

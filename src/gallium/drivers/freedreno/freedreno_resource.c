@@ -151,7 +151,7 @@ fd_resource_create(struct pipe_screen *pscreen,
 	prsc->screen = pscreen;
 
 	rsc->base.vtbl = &fd_resource_vtbl;
-	rsc->pitch = ALIGN(tmpl->width0, 32);
+	rsc->pitch = align(tmpl->width0, 32);
 	rsc->cpp = util_format_get_blocksize(tmpl->format);
 
 	size = rsc->pitch * tmpl->height0 * rsc->cpp;
@@ -193,7 +193,7 @@ fd_resource_from_handle(struct pipe_screen *pscreen,
 	rsc->bo = fd_screen_bo_from_handle(pscreen, handle, &rsc->pitch);
 
 	rsc->base.vtbl = &fd_resource_vtbl;
-	rsc->pitch = ALIGN(tmpl->width0, 32);
+	rsc->pitch = align(tmpl->width0, 32);
 
 	return prsc;
 }

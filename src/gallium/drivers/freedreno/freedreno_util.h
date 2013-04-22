@@ -57,12 +57,7 @@ extern int fd_mesa_debug;
 			debug_printf("%s:%d: "fmt "\n", \
 				__FUNCTION__, __LINE__, ##__VA_ARGS__); } while (0)
 
-#define ALIGN(v,a) (((v) + (a) - 1) & ~((a) - 1))
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
-
-
-#define min(a, b) (((a) < (b)) ? (a) : (b))
-#define max(a, b) (((a) > (b)) ? (a) : (b))
 
 
 #define CP_REG(reg) ((0x4 << 16) | ((unsigned int)((reg) - (0x2000))))

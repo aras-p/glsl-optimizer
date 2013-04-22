@@ -55,7 +55,7 @@ static uint32_t reg_alu_src_swiz(struct ir2_register *reg);
 static void * ir2_alloc(struct ir2_shader *shader, int sz)
 {
 	void *ptr = &shader->heap[shader->heap_idx];
-	shader->heap_idx += ALIGN(sz, 4);
+	shader->heap_idx += align(sz, 4);
 	return ptr;
 }
 
@@ -136,7 +136,7 @@ void * ir2_shader_assemble(struct ir2_shader *shader, struct ir2_shader_info *in
 	info->regs_written  = 0;
 
 	/* we need an even # of CF's.. insert a NOP if needed */
-	if (shader->cfs_count != ALIGN(shader->cfs_count, 2))
+	if (shader->cfs_count != align(shader->cfs_count, 2))
 		ir2_cf_create(shader, NOP);
 
 	/* first pass, resolve sizes and addresses: */
@@ -505,7 +505,7 @@ static void reg_update_stats(struct ir2_register *reg,
 		struct ir2_shader_info *info, bool dest)
 {
 	if (!(reg->flags & (IR2_REG_CONST|IR2_REG_EXPORT))) {
-		info->max_reg = max(info->max_reg, reg->num);
+		info->max_reg = MAX2(info->max_reg, reg->num);
 
 		if (dest) {
 			info->regs_written |= (1 << reg->num);
@@ -514,7 +514,7 @@ static void reg_update_stats(struct ir2_register *reg,
 			 * input register that the thread scheduler (presumably?)
 			 * needs to know about:
 			 */
-			info->max_input_reg = max(info->max_input_reg, reg->num);
+			info->max_input_reg = MAX2(info->max_input_reg, reg->num);
 		}
 	}
 }
