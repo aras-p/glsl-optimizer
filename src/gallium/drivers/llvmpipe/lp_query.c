@@ -139,6 +139,9 @@ llvmpipe_get_query_result(struct pipe_context *pipe,
    case PIPE_QUERY_PRIMITIVES_EMITTED:
       *result = pq->num_primitives_written;
       break;
+   case PIPE_QUERY_SO_OVERFLOW_PREDICATE:
+      *result = pq->so_has_overflown;
+      break;
    case PIPE_QUERY_SO_STATISTICS: {
       struct pipe_query_data_so_statistics *stats =
          (struct pipe_query_data_so_statistics *)vresult;
@@ -196,6 +199,10 @@ llvmpipe_begin_query(struct pipe_context *pipe, struct pipe_query *q)
       llvmpipe->num_primitives_generated = 0;
    }
 
+   if (pq->type == PIPE_QUERY_SO_OVERFLOW_PREDICATE) {
+      pq->so_has_overflown = FALSE;
+   }
+
    if (pq->type == PIPE_QUERY_PIPELINE_STATISTICS) {
       /* reset our cache */
       if (llvmpipe->active_statistics_queries == 0) {
@@ -232,6 +239,11 @@ llvmpipe_end_query(struct pipe_context *pipe, struct pipe_query *q)
    if (pq->type == PIPE_QUERY_SO_STATISTICS) {
       pq->num_primitives_written = llvmpipe->so_stats.num_primitives_written;
       pq->num_primitives_generated = llvmpipe->num_primitives_generated;
+   }
+
+   if (pq->type == PIPE_QUERY_SO_OVERFLOW_PREDICATE) {
+      pq->so_has_overflown = (llvmpipe->num_primitives_generated >
+                              llvmpipe->so_stats.num_primitives_written);
    }
 
    if (pq->type == PIPE_QUERY_PIPELINE_STATISTICS) {
