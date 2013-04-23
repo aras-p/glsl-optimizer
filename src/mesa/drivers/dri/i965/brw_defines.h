@@ -1034,9 +1034,9 @@ enum brw_message_target {
 #define BRW_MATH_FUNCTION_EXP                              3
 #define BRW_MATH_FUNCTION_SQRT                             4
 #define BRW_MATH_FUNCTION_RSQ                              5
-#define BRW_MATH_FUNCTION_SIN                              6 /* was 7 */
-#define BRW_MATH_FUNCTION_COS                              7 /* was 8 */
-#define BRW_MATH_FUNCTION_SINCOS                           8 /* was 6 */
+#define BRW_MATH_FUNCTION_SIN                              6
+#define BRW_MATH_FUNCTION_COS                              7
+#define BRW_MATH_FUNCTION_SINCOS                           8 /* gen4, gen5 */
 #define BRW_MATH_FUNCTION_FDIV                             9 /* gen6+ */
 #define BRW_MATH_FUNCTION_POW                              10
 #define BRW_MATH_FUNCTION_INT_DIV_QUOTIENT_AND_REMAINDER   11
