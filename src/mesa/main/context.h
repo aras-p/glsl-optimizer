@@ -201,6 +201,17 @@ _mesa_inside_begin_end(const struct gl_context *ctx)
 
 
 /**
+ * Are we currently between glBegin and glEnd in a display list?
+ */
+static inline GLboolean
+_mesa_inside_dlist_begin_end(const struct gl_context *ctx)
+{
+   return ctx->Driver.CurrentSavePrimitive != PRIM_OUTSIDE_BEGIN_END;
+}
+
+
+
+/**
  * \name Macros for flushing buffered rendering commands before state changes,
  * checking if inside glBegin/glEnd, etc.
  */

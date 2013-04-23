@@ -3777,7 +3777,7 @@ save_ShadeModel(GLenum mode)
 
    /* Only save the value if we know the statechange will take effect:
     */
-   if (ctx->Driver.CurrentSavePrimitive == PRIM_OUTSIDE_BEGIN_END)
+   if (!_mesa_inside_dlist_begin_end(ctx))
       ctx->ListState.Current.ShadeModel = mode;
 
    n = alloc_instruction(ctx, OPCODE_SHADE_MODEL, 1);
@@ -5657,7 +5657,7 @@ save_Begin(GLenum mode)
        */
       ctx->Driver.CurrentSavePrimitive = PRIM_INSIDE_UNKNOWN_PRIM;
    }
-   else if (ctx->Driver.CurrentSavePrimitive == PRIM_OUTSIDE_BEGIN_END) {
+   else if (!_mesa_inside_dlist_begin_end(ctx)) {
       ctx->Driver.CurrentSavePrimitive = mode;
    }
    else {
