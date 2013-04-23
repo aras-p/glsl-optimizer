@@ -232,6 +232,36 @@ glClear is called so clearing the depth buffer would be a no-op anyway.
 </p>
 
 
+<h2>Proe-05 test 6</h2>
+
+<p>
+This test draws an engine model with a two-pass algorithm.
+The first pass is drawn with polygon stipple enabled.
+The second pass is drawn without polygon stipple but with blending
+and GL_DEPTH_FUNC=GL_LEQUAL.
+If either of the two passes happen to use a software fallback of some
+sort, the Z values of fragments may be different between the two passes.
+This leads to incorrect rendering.
+</p>
+
+<p>
+For example, the VMware SVGA gallium driver uses a special semi-fallback path
+for drawing with polygon stipple.
+Since the two passes are rendered with different vertex transformation
+implementations, the rendering doesn't appear as expected.
+Setting the SVGA_FORCE_SWTNL environment variable to 1 will force the
+driver to use the software vertex path all the time and clears up this issue.
+</p>
+
+<p>
+According to the OpenGL invariance rules, there's no guarantee that
+the pixels produced by these two rendering states will match.
+To achieve invariance, both passes should enable polygon stipple and
+blending with appropriate patterns/modes to ensure the same fragments
+are produced in both passes.
+</p>
+
+
 </div>
 </body>
 </html>
