@@ -33,7 +33,8 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/mapi \
 	-I$(top_builddir)/src/mesa/drivers/dri/common \
 	-DGALLIUM_RBUG \
-	-DGALLIUM_TRACE
+	-DGALLIUM_TRACE \
+	-DGALLIUM_NOOP
 
 dridir = $(DRI_DRIVER_INSTALL_DIR)
 dri_LTLIBRARIES = kgsl_dri.la
@@ -55,6 +56,7 @@ kgsl_dri_la_LIBADD = \
 	$(top_builddir)/src/gallium/drivers/freedreno/libfreedreno.la \
 	$(top_builddir)/src/gallium/drivers/trace/libtrace.la \
 	$(top_builddir)/src/gallium/drivers/rbug/librbug.la \
+	$(top_builddir)/src/gallium/drivers/noop/libnoop.la \
 	$(GALLIUM_DRI_LIB_DEPS) \
 	$(LIBDRM_LIBS) \
 	$(FREEDRENO_LIBS)
