@@ -129,20 +129,25 @@ static void so_emit_prim(struct pt_so_emit *so,
 
    for (i = 0; i < draw->so.num_targets; i++) {
       struct draw_so_target *target = draw->so.targets[i];
-      buffer_total_bytes[i] = target->internal_offset;
+      buffer_total_bytes[i] = target->internal_offset + target->target.buffer_offset;
    }
 
    /* check have we space to emit prim first - if not don't do anything */
    for (i = 0; i < num_vertices; ++i) {
+      unsigned ob;
       for (slot = 0; slot < state->num_outputs; ++slot) {
          unsigned num_comps = state->output[slot].num_components;
          int ob = state->output[slot].output_buffer;
+         unsigned dst_offset = state->output[slot].dst_offset * sizeof(float);
+         unsigned write_size = num_comps * sizeof(float);
 
-         if ((buffer_total_bytes[ob] + num_comps * sizeof(float)) >
+         if ((buffer_total_bytes[ob] + write_size + dst_offset) >
              draw->so.targets[ob]->target.buffer_size) {
             return;
          }
-         buffer_total_bytes[ob] += num_comps * sizeof(float);
+      }
+      for (ob = 0; ob < draw->so.num_targets; ++ob) {
+         buffer_total_bytes[ob] += state->stride[ob] * sizeof(float);
       }
    }
 
