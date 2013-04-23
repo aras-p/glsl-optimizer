@@ -501,6 +501,7 @@ vbo_bind_arrays(struct gl_context *ctx)
 
    if (exec->array.recalculate_inputs) {
       recalculate_input_bindings(ctx);
+      exec->array.recalculate_inputs = GL_FALSE;
 
       /* Again... because we may have changed the bitmask of per-vertex varying
        * attributes.  If we regenerate the fixed-function vertex program now
@@ -508,10 +509,13 @@ vbo_bind_arrays(struct gl_context *ctx)
        * need in the shader.
        */
       if (ctx->NewState) {
+         /* Setting "validating" to TRUE prevents _mesa_update_state from
+          * invalidating what we just did.
+          */
+         exec->validating = GL_TRUE;
          _mesa_update_state(ctx);
+         exec->validating = GL_FALSE;
       }
-
-      exec->array.recalculate_inputs = GL_FALSE;
    }
 }
 
