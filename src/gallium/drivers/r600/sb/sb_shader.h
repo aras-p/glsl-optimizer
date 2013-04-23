@@ -192,13 +192,13 @@ public:
 	coalescer(shader &sh) : sh(sh), edges(), chunks(), constraints() {}
 	~coalescer();
 
-	void run();
+	int run();
 
 	void add_edge(value *a, value *b, unsigned cost);
 	void build_chunks();
 	void build_constraint_queue();
 	void build_chunk_queue();
-	void color_constraints();
+	int color_constraints();
 	void color_chunks();
 
 	ra_constraint* create_constraint(constraint_kind kind);
@@ -223,7 +223,7 @@ private:
 	void unify_chunks(ra_edge *e);
 	bool chunks_interference(ra_chunk *c1, ra_chunk *c2);
 
-	void color_reg_constraint(ra_constraint *c);
+	int color_reg_constraint(ra_constraint *c);
 	void color_phi_constraint(ra_constraint *c);
 
 

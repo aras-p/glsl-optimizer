@@ -40,10 +40,7 @@ namespace r600_sb {
 using std::cerr;
 
 int ra_coalesce::run() {
-
-	sh.coal.run();
-
-	return 0;
+	return sh.coal.run();
 }
 
 void coalescer::add_edge(value* a, value* b, unsigned cost) {
@@ -417,7 +414,9 @@ coalescer::~coalescer() {
 	}
 }
 
-void coalescer::run() {
+int coalescer::run() {
+	int r;
+
 	RA_DUMP( dump_edges(); );
 
 	build_chunks();
@@ -426,10 +425,13 @@ void coalescer::run() {
 	build_constraint_queue();
 	RA_DUMP( dump_constraint_queue(); );
 
-	color_constraints();
+	if ((r = color_constraints()))
+		return r;
 
 	build_chunk_queue();
 	color_chunks();
+
+	return 0;
 }
 
 void coalescer::color_phi_constraint(ra_constraint* c) {
@@ -457,7 +459,7 @@ ra_chunk* coalescer::detach_value(value *v) {
 
 }
 
-void coalescer::color_reg_constraint(ra_constraint *c) {
+int coalescer::color_reg_constraint(ra_constraint *c) {
 	unsigned k, cnt = c->values.size();
 	vvec & cv = c->values;
 
@@ -558,6 +560,11 @@ void coalescer::color_reg_constraint(ra_constraint *c) {
 
 		} while (std::next_permutation(swz, swz + 4));
 
+		if (!done && pass) {
+			cerr << "sb: ra_coalesce - out of registers\n";
+			return -1;
+		}
+
 		if (pass == 0 && done)
 			break;
 
@@ -585,9 +592,13 @@ void coalescer::color_reg_constraint(ra_constraint *c) {
 		color_chunk(cc, color);
 		cc->fix();
 	}
+
+	return 0;
 }
 
-void coalescer::color_constraints() {
+int coalescer::color_constraints() {
+	int r;
+
 	for (constraint_queue::iterator I = constraints.begin(),
 			E = constraints.end(); I != E; ++I) {
 
@@ -598,11 +609,13 @@ void coalescer::color_constraints() {
 			dump_constraint(c);
 		);
 
-		if (c->kind == CK_SAME_REG)
-			color_reg_constraint(c);
-		else if (c->kind == CK_PHI)
+		if (c->kind == CK_SAME_REG) {
+			if ((r = color_reg_constraint(c)))
+				return r;
+		} else if (c->kind == CK_PHI)
 			color_phi_constraint(c);
 	}
+	return 0;
 }
 
 } // namespace r600_sb
