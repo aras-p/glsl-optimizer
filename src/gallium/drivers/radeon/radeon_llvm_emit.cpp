@@ -159,6 +159,10 @@ radeon_llvm_compile(LLVMModuleRef M, struct radeon_llvm_binary *binary,
 
    char *elf_buffer;
 
+   /* One of the libelf implementations (http://www.mr511.de/software/english.htm)
+    * requires calling elf_version() before elf_memory().
+    */
+   elf_version(EV_CURRENT);
    elf_buffer = (char*)malloc(data.length());
    memcpy(elf_buffer, data.c_str(), data.length());
 
