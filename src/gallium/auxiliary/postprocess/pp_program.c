@@ -87,7 +87,8 @@ pp_init_prog(struct pp_queue_t *ppq, struct pipe_context *pipe,
       PIPE_BLENDFACTOR_INV_SRC_ALPHA;
 
    p->rasterizer.cull_face = PIPE_FACE_NONE;
-   p->rasterizer.gl_rasterization_rules = 1;
+   p->rasterizer.half_pixel_center = 1;
+   p->rasterizer.bottom_edge_rule = 1;
    p->rasterizer.depth_clip = 1;
 
    p->sampler.wrap_s = p->sampler.wrap_t = p->sampler.wrap_r =

@@ -460,7 +460,7 @@ static void *si_create_rs_state(struct pipe_context *ctx,
 
 	si_pm4_set_reg(pm4, R_028BDC_PA_SC_LINE_CNTL, 0x00000400);
 	si_pm4_set_reg(pm4, R_028BE4_PA_SU_VTX_CNTL,
-			S_028BE4_PIX_CENTER(state->gl_rasterization_rules));
+			S_028BE4_PIX_CENTER(state->half_pixel_center));
 	si_pm4_set_reg(pm4, R_028BE8_PA_CL_GB_VERT_CLIP_ADJ, 0x3F800000);
 	si_pm4_set_reg(pm4, R_028BEC_PA_CL_GB_VERT_DISC_ADJ, 0x3F800000);
 	si_pm4_set_reg(pm4, R_028BF0_PA_CL_GB_HORZ_CLIP_ADJ, 0x3F800000);

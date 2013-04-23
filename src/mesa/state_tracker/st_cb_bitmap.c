@@ -825,7 +825,8 @@ st_init_bitmap(struct st_context *st)
 
    /* init baseline rasterizer state once */
    memset(&st->bitmap.rasterizer, 0, sizeof(st->bitmap.rasterizer));
-   st->bitmap.rasterizer.gl_rasterization_rules = 1;
+   st->bitmap.rasterizer.half_pixel_center = 1;
+   st->bitmap.rasterizer.bottom_edge_rule = 1;
    st->bitmap.rasterizer.depth_clip = 1;
 
    /* find a usable texture format */

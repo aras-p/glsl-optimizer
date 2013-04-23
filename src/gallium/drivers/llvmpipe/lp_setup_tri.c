@@ -365,7 +365,7 @@ do_triangle_ccw(struct lp_setup_context *setup,
       dcdx_zero_mask = _mm_cmpeq_epi32(dcdx, zero);
       dcdy_neg_mask = _mm_srai_epi32(dcdy, 31);
 
-      top_left_flag = _mm_set1_epi32((setup->pixel_offset == 0) ? ~0 : 0);
+      top_left_flag = _mm_set1_epi32((setup->bottom_edge_rule == 0) ? ~0 : 0);
 
       c_inc_mask = _mm_or_si128(dcdx_neg_mask,
                                 _mm_and_si128(dcdx_zero_mask,
@@ -417,25 +417,14 @@ do_triangle_ccw(struct lp_setup_context *setup,
           */
          plane[i].c = plane[i].dcdx * position->x[i] - plane[i].dcdy * position->y[i];
 
-         /* correct for top-left vs. bottom-left fill convention.  
-          *
-          * note that we're overloading gl_rasterization_rules to mean
-          * both (0.5,0.5) pixel centers *and* bottom-left filling
-          * convention.
-          *
-          * GL actually has a top-left filling convention, but GL's
-          * notion of "top" differs from gallium's...
-          *
-          * Also, sometimes (in FBO cases) GL will render upside down
-          * to its usual method, in which case it will probably want
-          * to use the opposite, top-left convention.
+         /* correct for top-left vs. bottom-left fill convention.
           */         
          if (plane[i].dcdx < 0) {
             /* both fill conventions want this - adjust for left edges */
             plane[i].c++;            
          }
          else if (plane[i].dcdx == 0) {
-            if (setup->pixel_offset == 0) {
+            if (setup->bottom_edge_rule == 0){
                /* correct for top-left fill convention:
                 */
                if (plane[i].dcdy > 0) plane[i].c++;

@@ -491,14 +491,16 @@ lp_setup_set_triangle_state( struct lp_setup_context *setup,
                              unsigned cull_mode,
                              boolean ccw_is_frontface,
                              boolean scissor,
-                             boolean gl_rasterization_rules)
+                             boolean half_pixel_center,
+                             boolean bottom_edge_rule)
 {
    LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
 
    setup->ccw_is_frontface = ccw_is_frontface;
    setup->cullmode = cull_mode;
    setup->triangle = first_triangle;
-   setup->pixel_offset = gl_rasterization_rules ? 0.5f : 0.0f;
+   setup->pixel_offset = half_pixel_center ? 0.5f : 0.0f;
+   setup->bottom_edge_rule = bottom_edge_rule;
 
    if (setup->scissor_test != scissor) {
       setup->dirty |= LP_SETUP_NEW_SCISSOR;

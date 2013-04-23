@@ -239,7 +239,8 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
    /* rasterizer state */
    memset(&rs_state, 0, sizeof(rs_state));
    rs_state.cull_face = PIPE_FACE_NONE;
-   rs_state.gl_rasterization_rules = 1;
+   rs_state.half_pixel_center = 1;
+   rs_state.bottom_edge_rule = 1;
    rs_state.flatshade = 1;
    rs_state.depth_clip = 1;
    ctx->rs_state = pipe->create_rasterizer_state(pipe, &rs_state);

@@ -621,17 +621,6 @@ try_setup_line( struct lp_setup_context *setup,
 
       
       /* correct for top-left vs. bottom-left fill convention.  
-       *
-       * note that we're overloading gl_rasterization_rules to mean
-       * both (0.5,0.5) pixel centers *and* bottom-left filling
-       * convention.
-       *
-       * GL actually has a top-left filling convention, but GL's
-       * notion of "top" differs from gallium's...
-       *
-       * Also, sometimes (in FBO cases) GL will render upside down
-       * to its usual method, in which case it will probably want
-       * to use the opposite, top-left convention.
        */         
       if (plane[i].dcdx < 0) {
          /* both fill conventions want this - adjust for left edges */

@@ -305,7 +305,7 @@ emit_viewport( struct svga_context *svga,
     * screen-space coordinates slightly relative to D3D which is
     * what hardware implements natively.
     */
-   if (svga->curr.rast->templ.gl_rasterization_rules) {
+   if (svga->curr.rast->templ.half_pixel_center) {
       float adjust_x = 0.0;
       float adjust_y = 0.0;
 

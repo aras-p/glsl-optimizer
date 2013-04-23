@@ -1175,7 +1175,8 @@ struct renderer * renderer_create(struct vg_context *owner)
    /* GL rasterization rules */
    raster = &renderer->g3d.rasterizer;
    memset(raster, 0, sizeof(*raster));
-   raster->gl_rasterization_rules = 1;
+   raster->half_pixel_center = 1;
+   raster->bottom_edge_rule = 1;
    raster->depth_clip = 1;
    cso_set_rasterizer(renderer->cso, raster);
 

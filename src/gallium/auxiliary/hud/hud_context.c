@@ -990,7 +990,8 @@ hud_create(struct pipe_context *pipe, struct cso_context *cso)
    }
 
    /* rasterizer */
-   hud->rasterizer.gl_rasterization_rules = 1;
+   hud->rasterizer.half_pixel_center = 1;
+   hud->rasterizer.bottom_edge_rule = 1;
    hud->rasterizer.depth_clip = 1;
    hud->rasterizer.line_width = 1;
    hud->rasterizer.line_last_pixel = 1;

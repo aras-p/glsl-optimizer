@@ -724,7 +724,8 @@ draw_get_rasterizer_no_cull( struct draw_context *draw,
       rast.scissor = scissor;
       rast.flatshade = flatshade;
       rast.front_ccw = 1;
-      rast.gl_rasterization_rules = draw->rasterizer->gl_rasterization_rules;
+      rast.half_pixel_center = draw->rasterizer->half_pixel_center;
+      rast.bottom_edge_rule = draw->rasterizer->bottom_edge_rule;
       rast.clip_halfz = draw->rasterizer->clip_halfz;
 
       draw->rasterizer_no_cull[scissor][flatshade] =

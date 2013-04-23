@@ -807,7 +807,7 @@ lp_make_setup_variant_key(struct llvmpipe_context *lp,
    
    key->num_inputs = fs->info.base.num_inputs;
    key->flatshade_first = lp->rasterizer->flatshade_first;
-   key->pixel_center_half = lp->rasterizer->gl_rasterization_rules;
+   key->pixel_center_half = lp->rasterizer->half_pixel_center;
    key->twoside = lp->rasterizer->light_twoside;
    key->size = Offset(struct lp_setup_variant_key,
 		      inputs[key->num_inputs]);

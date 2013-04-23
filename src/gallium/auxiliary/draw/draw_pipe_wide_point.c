@@ -207,7 +207,7 @@ widepoint_first_point(struct draw_stage *stage,
    wide->xbias = 0.0;
    wide->ybias = 0.0;
 
-   if (rast->gl_rasterization_rules) {
+   if (rast->half_pixel_center) {
       wide->xbias = 0.125;
       wide->ybias = -0.125;
    }

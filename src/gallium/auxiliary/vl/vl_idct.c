@@ -516,7 +516,8 @@ init_state(struct vl_idct *idct)
 
    memset(&rs_state, 0, sizeof(rs_state));
    rs_state.point_size = 1;
-   rs_state.gl_rasterization_rules = true;
+   rs_state.half_pixel_center = true;
+   rs_state.bottom_edge_rule = true;
    rs_state.depth_clip = 1;
    idct->rs_state = idct->pipe->create_rasterizer_state(idct->pipe, &rs_state);
    if (!idct->rs_state)

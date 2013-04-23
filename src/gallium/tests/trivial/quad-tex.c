@@ -197,7 +197,8 @@ static void init_prog(struct program *p)
 	/* rasterizer */
 	memset(&p->rasterizer, 0, sizeof(p->rasterizer));
 	p->rasterizer.cull_face = PIPE_FACE_NONE;
-	p->rasterizer.gl_rasterization_rules = 1;
+	p->rasterizer.half_pixel_center = 1;
+	p->rasterizer.bottom_edge_rule = 1;
 	p->rasterizer.depth_clip = 1;
 
 	/* sampler */

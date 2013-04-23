@@ -1241,7 +1241,7 @@ nvc0_blitctx_create(struct nvc0_context *nvc0)
 
    nvc0->blit->nvc0 = nvc0;
 
-   nvc0->blit->rast.pipe.gl_rasterization_rules = 1;
+   nvc0->blit->rast.pipe.half_pixel_center = 1;
 
    return TRUE;
 }

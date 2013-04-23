@@ -159,9 +159,9 @@ llvm_middle_end_prepare( struct draw_pt_middle_end *middle,
 
 
    draw_pt_post_vs_prepare( fpme->post_vs,
-			    draw->clip_xy,
-			    draw->clip_z,
-			    draw->clip_user,
+                            draw->clip_xy,
+                            draw->clip_z,
+                            draw->clip_user,
                             draw->guard_band_xy,
                             draw->identity_viewport,
                             draw->rasterizer->clip_halfz,

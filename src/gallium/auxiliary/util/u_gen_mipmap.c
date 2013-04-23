@@ -1271,7 +1271,8 @@ util_create_gen_mipmap(struct pipe_context *pipe,
    /* rasterizer */
    memset(&ctx->rasterizer, 0, sizeof(ctx->rasterizer));
    ctx->rasterizer.cull_face = PIPE_FACE_NONE;
-   ctx->rasterizer.gl_rasterization_rules = 1;
+   ctx->rasterizer.half_pixel_center = 1;
+   ctx->rasterizer.bottom_edge_rule = 1;
    ctx->rasterizer.depth_clip = 1;
 
    /* sampler state */

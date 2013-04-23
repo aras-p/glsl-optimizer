@@ -81,7 +81,7 @@ fd_rasterizer_state_create(struct pipe_context *pctx,
 	so->pa_cl_clip_cntl = 0; // TODO
 
 	so->pa_su_vtx_cntl =
-		A2XX_PA_SU_VTX_CNTL_PIX_CENTER(cso->gl_rasterization_rules ? PIXCENTER_OGL : PIXCENTER_D3D) |
+		A2XX_PA_SU_VTX_CNTL_PIX_CENTER(cso->half_pixel_center ? PIXCENTER_OGL : PIXCENTER_D3D) |
 		A2XX_PA_SU_VTX_CNTL_QUANT_MODE(ONE_SIXTEENTH);
 
 	so->pa_su_point_size =

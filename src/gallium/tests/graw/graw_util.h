@@ -173,7 +173,8 @@ graw_util_default_state(struct graw_info *info, boolean depth_test)
       void *handle;
       memset(&rasterizer, 0, sizeof rasterizer);
       rasterizer.cull_face = PIPE_FACE_NONE;
-      rasterizer.gl_rasterization_rules = 1;
+      rasterizer.half_pixel_center = 1;
+      rasterizer.bottom_edge_rule = 1;
       handle = info->ctx->create_rasterizer_state(info->ctx, &rasterizer);
       info->ctx->bind_rasterizer_state(info->ctx, handle);
    }

@@ -67,7 +67,8 @@ st_init_clear(struct st_context *st)
 {
    memset(&st->clear, 0, sizeof(st->clear));
 
-   st->clear.raster.gl_rasterization_rules = 1;
+   st->clear.raster.half_pixel_center = 1;
+   st->clear.raster.bottom_edge_rule = 1;
    st->clear.raster.depth_clip = 1;
 }
 

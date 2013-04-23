@@ -228,7 +228,10 @@ static void update_raster_state( struct st_context *st )
    /* _NEW_FRAG_CLAMP */
    raster->clamp_fragment_color = !st->clamp_frag_color_in_shader &&
                                   ctx->Color._ClampFragmentColor;
-   raster->gl_rasterization_rules = 1;
+
+   raster->half_pixel_center = 1;
+   if (st_fb_orientation(ctx->DrawBuffer) == Y_0_TOP)
+      raster->bottom_edge_rule = 1;
 
    /* _NEW_RASTERIZER_DISCARD */
    raster->rasterizer_discard = ctx->RasterDiscard;

@@ -77,7 +77,8 @@ lp_setup_set_triangle_state( struct lp_setup_context *setup,
                              unsigned cullmode,
                              boolean front_is_ccw,
                              boolean scissor,
-                             boolean gl_rasterization_rules );
+                             boolean half_pixel_center,
+                             boolean bottom_edge_rule);
 
 void 
 lp_setup_set_line_state( struct lp_setup_context *setup,

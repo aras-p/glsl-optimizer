@@ -107,18 +107,8 @@ struct pipe_rasterizer_state
     */
    unsigned flatshade_first:1;
 
-   /**
-    * When true, triangle rasterization uses (0.5, 0.5) pixel centers
-    * for determining pixel ownership.
-    *
-    * When false, triangle rasterization uses (0,0) pixel centers for
-    * determining pixel ownership.
-    *
-    * Triangle rasterization always uses a 'top,left' rule for pixel
-    * ownership, this just alters which point we consider the pixel
-    * center for that test.
-    */
-   unsigned gl_rasterization_rules:1;
+   unsigned half_pixel_center:1;
+   unsigned bottom_edge_rule:1;
 
    /**
     * When true, rasterization is disabled and no pixels are written.

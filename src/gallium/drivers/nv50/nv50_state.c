@@ -57,7 +57,7 @@
  *  ! pipe_rasterizer_state.flatshade_first also applies to QUADS
  *    (There's a GL query for that, forcing an exception is just ridiculous.)
  *
- *  ! pipe_rasterizer_state.gl_rasterization_rules is ignored - pixel centers
+ *  ! pipe_rasterizer_state.half_pixel_center is ignored - pixel centers
  *     are always at half integer coordinates and the top-left rule applies
  *    (There does not seem to be a hardware switch for this.)
  *

@@ -254,7 +254,8 @@ vl_median_filter_init(struct vl_median_filter *filter, struct pipe_context *pipe
    filter->pipe = pipe;
 
    memset(&rs_state, 0, sizeof(rs_state));
-   rs_state.gl_rasterization_rules = true;
+   rs_state.half_pixel_center = true;
+   rs_state.bottom_edge_rule = true;
    rs_state.depth_clip = 1;
    filter->rs_state = pipe->create_rasterizer_state(pipe, &rs_state);
    if (!filter->rs_state)

@@ -78,7 +78,7 @@ svga_create_rasterizer_state(struct pipe_context *pipe,
    /* point_size_per_vertex  - ? */
    /* sprite_coord_mode      - ??? */
    /* flatshade_first        - handled by index translation */
-   /* gl_rasterization_rules - XXX - viewport code */
+   /* half_pixel_center      - XXX - viewport code */
    /* line_width             - draw module */
    /* fill_cw, fill_ccw      - draw module or index translation */
 

@@ -428,7 +428,8 @@ init_pipe_state(struct vl_mc *r)
    rs_state.sprite_coord_mode = PIPE_SPRITE_COORD_UPPER_LEFT;
    rs_state.point_quad_rasterization = true;
    rs_state.point_size = VL_BLOCK_WIDTH;
-   rs_state.gl_rasterization_rules = true;
+   rs_state.half_pixel_center = true;
+   rs_state.bottom_edge_rule = true;
    rs_state.depth_clip = 1;
    r->rs_state = r->pipe->create_rasterizer_state(r->pipe, &rs_state);
    if (!r->rs_state)
