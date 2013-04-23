@@ -128,19 +128,6 @@ brw_fast_clear_depth(struct gl_context *ctx)
       return false;
    }
 
-   /* The rendered area has to be 8x4 samples, not resolved pixels, so we look
-    * at the miptree slice dimensions instead of renderbuffer size.
-    */
-   if (mt->level[depth_irb->mt_level].width % 8 != 0 ||
-       mt->level[depth_irb->mt_level].height % 4 != 0) {
-      perf_debug("Failed to fast clear depth due to width/height %d,%d not "
-                 "being aligned to 8,4.  Possible 5%% performance win if "
-                 "avoided\n",
-                 mt->level[depth_irb->mt_level].width,
-                 mt->level[depth_irb->mt_level].height);
-      return false;
-   }
-
    uint32_t depth_clear_value;
    switch (mt->format) {
    case MESA_FORMAT_Z32_FLOAT_X24S8:
