@@ -996,18 +996,19 @@ generate_viewport(struct draw_llvm_variant *variant,
    int i;
    struct gallivm_state *gallivm = variant->gallivm;
    struct lp_type f32_type = vs_type;
+   const unsigned pos = draw_current_shader_position_output(variant->llvm->draw);
    LLVMTypeRef vs_type_llvm = lp_build_vec_type(gallivm, vs_type);
-   LLVMValueRef out3 = LLVMBuildLoad(builder, outputs[0][3], ""); /*w0 w1 .. wn*/
+   LLVMValueRef out3 = LLVMBuildLoad(builder, outputs[pos][3], ""); /*w0 w1 .. wn*/
    LLVMValueRef const1 = lp_build_const_vec(gallivm, f32_type, 1.0);       /*1.0 1.0 1.0 1.0*/
    LLVMValueRef vp_ptr = draw_jit_context_viewport(gallivm, context_ptr);
 
    /* for 1/w convention*/
    out3 = LLVMBuildFDiv(builder, const1, out3, "");
-   LLVMBuildStore(builder, out3, outputs[0][3]);
+   LLVMBuildStore(builder, out3, outputs[pos][3]);
 
    /* Viewport Mapping */
    for (i=0; i<3; i++) {
-      LLVMValueRef out = LLVMBuildLoad(builder, outputs[0][i], ""); /*x0 x1 .. xn*/
+      LLVMValueRef out = LLVMBuildLoad(builder, outputs[pos][i], ""); /*x0 x1 .. xn*/
       LLVMValueRef scale;
       LLVMValueRef trans;
       LLVMValueRef scale_i;
@@ -1033,7 +1034,7 @@ generate_viewport(struct draw_llvm_variant *variant,
       out = LLVMBuildFAdd(builder, out, trans, "");
 
       /* store transformed outputs */
-      LLVMBuildStore(builder, out, outputs[0][i]);
+      LLVMBuildStore(builder, out, outputs[pos][i]);
    }
 
 }
