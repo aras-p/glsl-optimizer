@@ -47,6 +47,7 @@
 #include <llvm/Support/Threading.h>
 #include <llvm/Target/TargetMachine.h>
 #include <llvm/Transforms/Scalar.h>
+#include <llvm/Wrap.h>
 #include <llvm-c/Target.h>
 
 #include <iostream>
