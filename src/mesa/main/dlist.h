@@ -71,8 +71,6 @@ extern GLint _mesa_dlist_alloc_opcode( struct gl_context *ctx, GLuint sz,
 
 extern void _mesa_delete_list(struct gl_context *ctx, struct gl_display_list *dlist);
 
-extern void _mesa_save_vtxfmt_init( GLvertexformat *vfmt );
-
 extern void _mesa_initialize_save_table(const struct gl_context *);
 
 extern void _mesa_install_dlist_vtxfmt(struct _glapi_table *disp,

@@ -9547,8 +9547,8 @@ mesa_print_display_list(GLuint list)
 /*****                      Initialization                        *****/
 /**********************************************************************/
 
-void
-_mesa_save_vtxfmt_init(GLvertexformat * vfmt)
+static void
+save_vtxfmt_init(GLvertexformat * vfmt)
 {
    _MESA_INIT_ARRAYELT_VTXFMT(vfmt, _ae_);
 
@@ -9673,7 +9673,7 @@ _mesa_init_display_list(struct gl_context *ctx)
    /* Display List group */
    ctx->List.ListBase = 0;
 
-   _mesa_save_vtxfmt_init(&ctx->ListState.ListVtxfmt);
+   save_vtxfmt_init(&ctx->ListState.ListVtxfmt);
 }
 
 
