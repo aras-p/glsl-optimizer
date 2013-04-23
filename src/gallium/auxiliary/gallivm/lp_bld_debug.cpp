@@ -56,6 +56,10 @@
 #include <llvm/MC/MCRegisterInfo.h>
 #endif /* HAVE_LLVM >= 0x0301 */
 
+#if HAVE_LLVM >= 0x0303
+#include <llvm/ADT/OwningPtr.h>
+#endif
+
 #include "util/u_math.h"
 #include "util/u_debug.h"
 
