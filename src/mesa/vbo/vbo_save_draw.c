@@ -268,7 +268,7 @@ vbo_save_playback_vertex_list(struct gl_context *ctx, void *data)
 
    if (node->prim_count > 0) {
 
-      if (ctx->Driver.CurrentExecPrimitive != PRIM_OUTSIDE_BEGIN_END &&
+      if (_mesa_inside_begin_end(ctx) &&
 	  node->prim[0].begin) {
 
 	 /* Degenerate case: list is called inside begin/end pair and

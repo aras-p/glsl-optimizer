@@ -190,6 +190,17 @@ _mesa_Flush( void );
 
 
 /**
+ * Are we currently between glBegin and glEnd?
+ * During execution, not display list compilation.
+ */
+static inline GLboolean
+_mesa_inside_begin_end(const struct gl_context *ctx)
+{
+   return ctx->Driver.CurrentExecPrimitive != PRIM_OUTSIDE_BEGIN_END;
+}
+
+
+/**
  * \name Macros for flushing buffered rendering commands before state changes,
  * checking if inside glBegin/glEnd, etc.
  */
@@ -242,7 +253,7 @@ do {								\
  */
 #define ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, retval)		\
 do {									\
-   if (ctx->Driver.CurrentExecPrimitive != PRIM_OUTSIDE_BEGIN_END) {	\
+   if (_mesa_inside_begin_end(ctx)) {					\
       _mesa_error(ctx, GL_INVALID_OPERATION, "Inside glBegin/glEnd");	\
       return retval;							\
    }									\
@@ -256,7 +267,7 @@ do {									\
  */
 #define ASSERT_OUTSIDE_BEGIN_END(ctx)					\
 do {									\
-   if (ctx->Driver.CurrentExecPrimitive != PRIM_OUTSIDE_BEGIN_END) {	\
+   if (_mesa_inside_begin_end(ctx)) {					\
       _mesa_error(ctx, GL_INVALID_OPERATION, "Inside glBegin/glEnd");	\
       return;								\
    }									\

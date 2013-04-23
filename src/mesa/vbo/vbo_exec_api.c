@@ -74,7 +74,7 @@ static void vbo_exec_wrap_buffers( struct vbo_exec_context *exec )
       GLuint last_begin = exec->vtx.prim[exec->vtx.prim_count-1].begin;
       GLuint last_count;
 
-      if (exec->ctx->Driver.CurrentExecPrimitive != PRIM_OUTSIDE_BEGIN_END) {
+      if (_mesa_inside_begin_end(exec->ctx)) {
 	 GLint i = exec->vtx.prim_count - 1;
 	 assert(i >= 0);
 	 exec->vtx.prim[i].count = (exec->vtx.vert_count - 
@@ -96,7 +96,7 @@ static void vbo_exec_wrap_buffers( struct vbo_exec_context *exec )
        */
       assert(exec->vtx.prim_count == 0);
 
-      if (exec->ctx->Driver.CurrentExecPrimitive != PRIM_OUTSIDE_BEGIN_END) {
+      if (_mesa_inside_begin_end(exec->ctx)) {
 	 exec->vtx.prim[0].mode = exec->ctx->Driver.CurrentExecPrimitive;
 	 exec->vtx.prim[0].start = 0;
 	 exec->vtx.prim[0].count = 0;
@@ -269,7 +269,7 @@ vbo_exec_wrap_upgrade_vertex(struct vbo_exec_context *exec,
    /* Heuristic: Attempt to isolate attributes received outside
     * begin/end so that they don't bloat the vertices.
     */
-   if (ctx->Driver.CurrentExecPrimitive == PRIM_OUTSIDE_BEGIN_END &&
+   if (!_mesa_inside_begin_end(ctx) &&
        !oldSize && lastcount > 8 && exec->vtx.vertex_size) {
       vbo_exec_copy_to_current( exec );
       reset_attrfv( exec );
@@ -789,7 +789,7 @@ static void GLAPIENTRY vbo_exec_Begin( GLenum mode )
    struct vbo_exec_context *exec = &vbo_context(ctx)->exec;
    int i;
 
-   if (ctx->Driver.CurrentExecPrimitive != PRIM_OUTSIDE_BEGIN_END) {
+   if (_mesa_inside_begin_end(ctx)) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glBegin");
       return;
    }
@@ -852,7 +852,7 @@ static void GLAPIENTRY vbo_exec_End( void )
    GET_CURRENT_CONTEXT( ctx ); 
    struct vbo_exec_context *exec = &vbo_context(ctx)->exec;
 
-   if (ctx->Driver.CurrentExecPrimitive == PRIM_OUTSIDE_BEGIN_END) {
+   if (!_mesa_inside_begin_end(ctx)) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glEnd");
       return;
    }
@@ -1242,7 +1242,7 @@ void vbo_exec_FlushVertices( struct gl_context *ctx, GLuint flags )
    assert(exec->flush_call_depth == 1);
 #endif
 
-   if (ctx->Driver.CurrentExecPrimitive != PRIM_OUTSIDE_BEGIN_END) {
+   if (_mesa_inside_begin_end(ctx)) {
       /* We've had glBegin but not glEnd! */
 #ifdef DEBUG
       exec->flush_call_depth--;
