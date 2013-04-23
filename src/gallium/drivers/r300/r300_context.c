@@ -379,7 +379,7 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
                      sizeof(struct pipe_transfer), 64,
                      UTIL_SLAB_SINGLETHREADED);
 
-    r300->cs = rws->cs_create(rws, RING_GFX);
+    r300->cs = rws->cs_create(rws, RING_GFX, NULL);
     if (r300->cs == NULL)
         goto fail;
 

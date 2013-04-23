@@ -34,18 +34,18 @@
 #include "radeon_drm_cs.h"
 #include "radeon_drm_bo.h"
 
-#if RADEON_CS_DUMP_ON_LOCKUP
-static bool dumped = false;
+#define RADEON_CS_DUMP_AFTER_MS_TIMEOUT         500
 
-void radeon_dump_cs_on_lockup(struct radeon_cs_context *csc)
+void radeon_dump_cs_on_lockup(struct radeon_drm_cs *cs, struct radeon_cs_context *csc)
 {
     struct drm_radeon_gem_busy args;
     FILE *dump;
     unsigned i, lockup;
     uint32_t *ptr;
+    char fname[32];
 
     /* only dump the first cs to cause a lockup */
-    if (!csc->crelocs || dumped) {
+    if (!csc->crelocs) {
         /* can not determine if there was a lockup if no bo were use by
          * the cs and most likely in such case no lockup occurs
          */
@@ -54,19 +54,27 @@ void radeon_dump_cs_on_lockup(struct radeon_cs_context *csc)
 
     memset(&args, 0, sizeof(args));
     args.handle = csc->relocs_bo[0]->handle;
-    for (i = 0; i < 10; i++) {
-        usleep(5);
+    for (i = 0; i < RADEON_CS_DUMP_AFTER_MS_TIMEOUT; i++) {
+        usleep(1);
         lockup = drmCommandWriteRead(csc->fd, DRM_RADEON_GEM_BUSY, &args, sizeof(args));
         if (!lockup) {
             break;
         }
     }
-    if (!lockup || i < 10) {
+    if (!lockup || i < RADEON_CS_DUMP_AFTER_MS_TIMEOUT) {
+        return;
+    }
+
+    ptr = radeon_bo_do_map(cs->trace_buf);
+    fprintf(stderr, "timeout on cs lockup likely happen at cs 0x%08x dw 0x%08x\n", ptr[1], ptr[0]);
+
+    if (csc->cs_trace_id != ptr[1]) {
         return;
     }
 
     /* ok we are most likely facing a lockup write the standalone replay file */
-    dump = fopen("radeon_lockup.c", "w");
+    snprintf(fname, sizeof(fname), "rlockup_0x%08x.c", csc->cs_trace_id);
+    dump = fopen(fname, "w");
     if (dump == NULL) {
         return;
     }
@@ -74,8 +82,9 @@ void radeon_dump_cs_on_lockup(struct radeon_cs_context *csc)
     fprintf(dump, " * in same directory. You can find radeon_ctx.h in mesa tree :\n");
     fprintf(dump, " * mesa/src/gallium/winsys/radeon/tools/radeon_ctx.h\n");
     fprintf(dump, " * Build with :\n");
-    fprintf(dump, " * gcc -O0 -g radeon_lockup.c -ldrm -o radeon_lockup -I/usr/include/libdrm\n");
+    fprintf(dump, " * gcc -O0 -g %s -ldrm -o rlockup_0x%08x -I/usr/include/libdrm\n", fname, csc->cs_trace_id);
     fprintf(dump, " */\n");
+    fprintf(dump, " /* timeout on cs lockup likely happen at cs 0x%08x dw 0x%08x*/\n", ptr[1], ptr[0]);
     fprintf(dump, "#include <stdio.h>\n");
     fprintf(dump, "#include <stdint.h>\n");
     fprintf(dump, "#include \"radeon_ctx.h\"\n");
@@ -107,6 +116,7 @@ void radeon_dump_cs_on_lockup(struct radeon_cs_context *csc)
     }
     fprintf(dump, "};\n\n");
 
+    fprintf(dump, "/* cs %d dw */\n", csc->chunks[0].length_dw);
     fprintf(dump, "static uint32_t cs[] = {\n");
     ptr = csc->buf;
     for (i = 0; i < csc->chunks[0].length_dw; i++) {
@@ -147,6 +157,4 @@ void radeon_dump_cs_on_lockup(struct radeon_cs_context *csc)
     fprintf(dump, "    bo_wait(&ctx, bo[0]);\n");
     fprintf(dump, "}\n");
     fclose(dump);
-    dumped = true;
 }
-#endif

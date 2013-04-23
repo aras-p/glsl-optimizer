@@ -225,7 +225,7 @@ void si_context_flush(struct r600_context *ctx, unsigned flags)
 #endif
 
 	/* Flush the CS. */
-	ctx->ws->cs_flush(ctx->cs, flags);
+	ctx->ws->cs_flush(ctx->cs, flags, 0);
 
 #if R600_TRACE_CS
 	if (ctx->screen->trace_bo) {

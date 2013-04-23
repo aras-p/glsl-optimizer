@@ -37,8 +37,6 @@
 
 #define R600_NUM_ATOMS 41
 
-#define R600_TRACE_CS 0
-
 /* the number of CS dwords for flushing and drawing */
 #define R600_MAX_FLUSH_CS_DWORDS	16
 #define R600_MAX_DRAW_CS_DWORDS		34
@@ -245,7 +243,8 @@ typedef boolean (*r600g_dma_blit_t)(struct pipe_context *ctx,
 /* logging */
 #define DBG_TEX_DEPTH		(1 << 0)
 #define DBG_COMPUTE		(1 << 1)
-#define DBG_VM                  (1 << 2)
+#define DBG_VM			(1 << 2)
+#define DBG_TRACE_CS		(1 << 3)
 /* shaders */
 #define DBG_FS			(1 << 8)
 #define DBG_VS			(1 << 9)
@@ -284,11 +283,9 @@ struct r600_screen {
 	 * XXX: Not sure if this is the best place for global_pool.  Also,
 	 * it's not thread safe, so it won't work with multiple contexts. */
 	struct compute_memory_pool *global_pool;
-#if R600_TRACE_CS
 	struct r600_resource		*trace_bo;
 	uint32_t			*trace_ptr;
 	unsigned			cs_count;
-#endif
 	r600g_dma_blit_t		dma_blit;
 
 	/* Auxiliary context. Mainly used to initialize resources.
@@ -654,19 +651,15 @@ static INLINE void r600_emit_command_buffer(struct radeon_winsys_cs *cs,
 	cs->cdw += cb->num_dw;
 }
 
-#if R600_TRACE_CS
 void r600_trace_emit(struct r600_context *rctx);
-#endif
 
 static INLINE void r600_emit_atom(struct r600_context *rctx, struct r600_atom *atom)
 {
 	atom->emit(rctx, atom);
 	atom->dirty = false;
-#if R600_TRACE_CS
 	if (rctx->screen->trace_bo) {
 		r600_trace_emit(rctx);
 	}
-#endif
 }
 
 static INLINE void r600_set_cso_state(struct r600_cso_state *state, void *cso)

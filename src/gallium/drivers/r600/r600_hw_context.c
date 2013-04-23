@@ -137,21 +137,17 @@ void r600_need_cs_space(struct r600_context *ctx, unsigned num_dw,
 		for (i = 0; i < R600_NUM_ATOMS; i++) {
 			if (ctx->atoms[i] && ctx->atoms[i]->dirty) {
 				num_dw += ctx->atoms[i]->num_dw;
-#if R600_TRACE_CS
 				if (ctx->screen->trace_bo) {
 					num_dw += R600_TRACE_CS_DWORDS;
 				}
-#endif
 			}
 		}
 
 		/* The upper-bound of how much space a draw command would take. */
 		num_dw += R600_MAX_FLUSH_CS_DWORDS + R600_MAX_DRAW_CS_DWORDS;
-#if R600_TRACE_CS
 		if (ctx->screen->trace_bo) {
 			num_dw += R600_TRACE_CS_DWORDS;
 		}
-#endif
 	}
 
 	/* Count in queries_suspend. */
@@ -339,37 +335,7 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 	}
 
 	/* Flush the CS. */
-#if R600_TRACE_CS
-	if (ctx->screen->trace_bo) {
-		struct r600_screen *rscreen = ctx->screen;
-		unsigned i;
-
-		for (i = 0; i < cs->cdw; i++) {
-			fprintf(stderr, "[%4d] [%5d] 0x%08x\n", rscreen->cs_count, i, cs->buf[i]);
-		}
-		rscreen->cs_count++;
-	}
-#endif
-	ctx->ws->cs_flush(ctx->rings.gfx.cs, flags);
-#if R600_TRACE_CS
-	if (ctx->screen->trace_bo) {
-		struct r600_screen *rscreen = ctx->screen;
-		unsigned i;
-
-		for (i = 0; i < 10; i++) {
-			usleep(5);
-			if (!ctx->ws->buffer_is_busy(rscreen->trace_bo->buf, RADEON_USAGE_READWRITE)) {
-				break;
-			}
-		}
-		if (i == 10) {
-			fprintf(stderr, "timeout on cs lockup likely happen at cs %d dw %d\n",
-				rscreen->trace_ptr[1], rscreen->trace_ptr[0]);
-		} else {
-			fprintf(stderr, "cs %d executed in %dms\n", rscreen->trace_ptr[1], i * 5);
-		}
-	}
-#endif
+	ctx->ws->cs_flush(ctx->rings.gfx.cs, flags, ctx->screen->cs_count++);
 }
 
 void r600_begin_new_cs(struct r600_context *ctx)

@@ -1488,11 +1488,9 @@ static void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info 
 					(info.count_from_stream_output ? S_0287F0_USE_OPAQUE(1) : 0);
 	}
 
-#if R600_TRACE_CS
 	if (rctx->screen->trace_bo) {
 		r600_trace_emit(rctx);
 	}
-#endif
 
 	/* Set the depth buffer as dirty. */
 	if (rctx->framebuffer.state.zsbuf) {
@@ -1764,7 +1762,6 @@ void r600_init_common_state_functions(struct r600_context *rctx)
 	rctx->context.draw_vbo = r600_draw_vbo;
 }
 
-#if R600_TRACE_CS
 void r600_trace_emit(struct r600_context *rctx)
 {
 	struct r600_screen *rscreen = rctx->screen;
@@ -1782,4 +1779,3 @@ void r600_trace_emit(struct r600_context *rctx)
 	r600_write_value(cs, PKT3(PKT3_NOP, 0, 0));
 	r600_write_value(cs, reloc);
 }
-#endif

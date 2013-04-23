@@ -45,6 +45,7 @@ static const struct debug_named_value debug_options[] = {
 	{ "texdepth", DBG_TEX_DEPTH, "Print texture depth info" },
 	{ "compute", DBG_COMPUTE, "Print compute info" },
 	{ "vm", DBG_VM, "Print virtual addresses when creating resources" },
+	{ "trace_cs", DBG_TRACE_CS, "Trace cs and write rlockup_<csid>.c file with faulty cs" },
 
 	/* shaders */
 	{ "fs", DBG_FS, "Print fetch shaders" },
@@ -212,7 +213,7 @@ static void r600_flush_dma_ring(void *ctx, unsigned flags)
 	}
 
 	rctx->rings.dma.flushing = true;
-	rctx->ws->cs_flush(cs, flags);
+	rctx->ws->cs_flush(cs, flags, 0);
 	rctx->rings.dma.flushing = false;
 }
 
@@ -430,14 +431,18 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 		goto fail;
 	}
 
-	rctx->rings.gfx.cs = rctx->ws->cs_create(rctx->ws, RING_GFX);
+	if (rscreen->trace_bo) {
+		rctx->rings.gfx.cs = rctx->ws->cs_create(rctx->ws, RING_GFX, rscreen->trace_bo->cs_buf);
+	} else {
+		rctx->rings.gfx.cs = rctx->ws->cs_create(rctx->ws, RING_GFX, NULL);
+	}
 	rctx->rings.gfx.flush = r600_flush_gfx_ring;
 	rctx->ws->cs_set_flush_callback(rctx->rings.gfx.cs, r600_flush_from_winsys, rctx);
 	rctx->rings.gfx.flushing = false;
 
 	rctx->rings.dma.cs = NULL;
 	if (rscreen->info.r600_has_dma && !(rscreen->debug_flags & DBG_NO_ASYNC_DMA)) {
-		rctx->rings.dma.cs = rctx->ws->cs_create(rctx->ws, RING_DMA);
+		rctx->rings.dma.cs = rctx->ws->cs_create(rctx->ws, RING_DMA, NULL);
 		rctx->rings.dma.flush = r600_flush_dma_ring;
 		rctx->ws->cs_set_flush_callback(rctx->rings.dma.cs, r600_flush_dma_from_winsys, rctx);
 		rctx->rings.dma.flushing = false;
@@ -958,12 +963,10 @@ static void r600_destroy_screen(struct pipe_screen* pscreen)
 		rscreen->ws->buffer_unmap(rscreen->fences.bo->cs_buf);
 		pipe_resource_reference((struct pipe_resource**)&rscreen->fences.bo, NULL);
 	}
-#if R600_TRACE_CS
 	if (rscreen->trace_bo) {
 		rscreen->ws->buffer_unmap(rscreen->trace_bo->cs_buf);
 		pipe_resource_reference((struct pipe_resource**)&rscreen->trace_bo, NULL);
 	}
-#endif
 	pipe_mutex_destroy(rscreen->fences.mutex);
 
 	rscreen->ws->destroy(rscreen->ws);
@@ -1308,9 +1311,8 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 
 	rscreen->global_pool = compute_memory_pool_new(rscreen);
 
-#if R600_TRACE_CS
 	rscreen->cs_count = 0;
-	if (rscreen->info.drm_minor >= 28) {
+	if (rscreen->info.drm_minor >= 28 && (rscreen->debug_flags & DBG_TRACE_CS)) {
 		rscreen->trace_bo = (struct r600_resource*)pipe_buffer_create(&rscreen->screen,
 										PIPE_BIND_CUSTOM,
 										PIPE_USAGE_STAGING,
@@ -1320,7 +1322,6 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 									PIPE_TRANSFER_UNSYNCHRONIZED);
 		}
 	}
-#endif
 
 	/* Create the auxiliary context. */
 	pipe_mutex_init(rscreen->aux_context_lock);

@@ -368,8 +368,12 @@ struct radeon_winsys {
      * Create a command stream.
      *
      * \param ws        The winsys this function is called from.
+     * \param ring_type The ring type (GFX, DMA, UVD)
+     * \param trace_buf Trace buffer when tracing is enabled
      */
-    struct radeon_winsys_cs *(*cs_create)(struct radeon_winsys *ws, enum ring_type ring_type);
+    struct radeon_winsys_cs *(*cs_create)(struct radeon_winsys *ws,
+                                          enum ring_type ring_type,
+                                          struct radeon_winsys_cs_handle *trace_buf);
 
     /**
      * Destroy a command stream.
@@ -425,10 +429,11 @@ struct radeon_winsys {
     /**
      * Flush a command stream.
      *
-     * \param cs        A command stream to flush.
-     * \param flags,    RADEON_FLUSH_ASYNC or 0.
+     * \param cs          A command stream to flush.
+     * \param flags,      RADEON_FLUSH_ASYNC or 0.
+     * \param cs_trace_id A unique identifiant for the cs
      */
-    void (*cs_flush)(struct radeon_winsys_cs *cs, unsigned flags);
+    void (*cs_flush)(struct radeon_winsys_cs *cs, unsigned flags, uint32_t cs_trace_id);
 
     /**
      * Set a flush callback which is called from winsys when flush is

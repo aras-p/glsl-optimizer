@@ -109,7 +109,7 @@ static void flush(struct ruvd_decoder *dec)
 	while(dec->cs->cdw % 16)
 		pm4[dec->cs->cdw++] = RUVD_PKT2();
 
-	dec->ws->cs_flush(dec->cs, 0);
+	dec->ws->cs_flush(dec->cs, 0, 0);
 }
 
 /* add a new set register command to the IB */
@@ -859,7 +859,7 @@ struct pipe_video_decoder *ruvd_create_decoder(struct pipe_context *context,
 	dec->set_dtb = set_dtb;
 	dec->stream_handle = alloc_stream_handle();
 	dec->ws = ws;
-	dec->cs = ws->cs_create(ws, RING_UVD);
+	dec->cs = ws->cs_create(ws, RING_UVD, NULL);
 	if (!dec->cs) {
 		RUVD_ERR("Can't get command submission context.\n");
 		goto error;

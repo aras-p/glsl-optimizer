@@ -30,8 +30,6 @@
 #include "radeon_drm_bo.h"
 #include <radeon_drm.h>
 
-#define RADEON_CS_DUMP_ON_LOCKUP    0
-
 struct radeon_cs_context {
     uint32_t                    buf[RADEON_MAX_CMDBUF_DWORDS];
 
@@ -40,6 +38,8 @@ struct radeon_cs_context {
     struct drm_radeon_cs_chunk  chunks[3];
     uint64_t                    chunk_array[3];
     uint32_t                    flags[2];
+
+    uint32_t                    cs_trace_id;
 
     /* Relocs. */
     unsigned                    nrelocs;
@@ -78,6 +78,7 @@ struct radeon_drm_cs {
 
     int flush_started;
     pipe_semaphore flush_completed;
+    struct radeon_bo                    *trace_buf;
 };
 
 int radeon_get_reloc(struct radeon_cs_context *csc, struct radeon_bo *bo);
@@ -121,10 +122,8 @@ radeon_bo_is_referenced_by_any_cs(struct radeon_bo *bo)
 
 void radeon_drm_cs_sync_flush(struct radeon_winsys_cs *rcs);
 void radeon_drm_cs_init_functions(struct radeon_drm_winsys *ws);
-void radeon_drm_cs_emit_ioctl_oneshot(struct radeon_cs_context *csc);
+void radeon_drm_cs_emit_ioctl_oneshot(struct radeon_drm_cs *cs, struct radeon_cs_context *csc);
 
-#if RADEON_CS_DUMP_ON_LOCKUP
-void radeon_dump_cs_on_lockup(struct radeon_cs_context *csc);
-#endif
+void radeon_dump_cs_on_lockup(struct radeon_drm_cs *cs, struct radeon_cs_context *csc);
 
 #endif

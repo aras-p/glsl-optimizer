@@ -463,7 +463,7 @@ static void compute_emit_cs(struct r600_context *ctx, const uint *block_layout,
 		flush_flags |= RADEON_FLUSH_KEEP_TILING_FLAGS;
 	}
 
-	ctx->ws->cs_flush(ctx->rings.gfx.cs, flush_flags);
+	ctx->ws->cs_flush(ctx->rings.gfx.cs, flush_flags, ctx->screen->cs_count++);
 
 	ctx->flags = 0;
 

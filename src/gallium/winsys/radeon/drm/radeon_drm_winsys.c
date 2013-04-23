@@ -551,7 +551,7 @@ next:
         pipe_mutex_unlock(ws->cs_stack_lock);
 
         if (cs) {
-            radeon_drm_cs_emit_ioctl_oneshot(cs->cst);
+            radeon_drm_cs_emit_ioctl_oneshot(cs, cs->cst);
 
             pipe_mutex_lock(ws->cs_stack_lock);
             for (i = 1; i < p_atomic_read(&ws->ncs); i++) {
