@@ -707,6 +707,18 @@ intel_finish_render_texture(struct gl_context * ctx,
    intel_batchbuffer_emit_mi_flush(intel);
 }
 
+#define fbo_incomplete(fb, ...) do {                                          \
+      static GLuint msg_id = 0;                                               \
+      if (unlikely(ctx->Const.ContextFlags & GL_CONTEXT_FLAG_DEBUG_BIT)) {    \
+         _mesa_gl_debug(ctx, &msg_id,                                         \
+                        MESA_DEBUG_TYPE_OTHER,                                \
+                        MESA_DEBUG_SEVERITY_MEDIUM,                           \
+                        __VA_ARGS__);                                         \
+      }                                                                       \
+      DBG(__VA_ARGS__);                                                       \
+      fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED;                               \
+   } while (0)
+
 /**
  * Do additional "completeness" testing of a framebuffer object.
  */
@@ -741,22 +753,23 @@ intel_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
 	  */
 	 if (depthRb->mt_level != stencilRb->mt_level ||
 	     depthRb->mt_layer != stencilRb->mt_layer) {
-	    DBG("depth image level/layer %d/%d != stencil image %d/%d\n",
-		depthRb->mt_level,
-		depthRb->mt_layer,
-		stencilRb->mt_level,
-		stencilRb->mt_layer);
-	    fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
+	    fbo_incomplete(fb,
+                           "FBO incomplete: depth image level/layer %d/%d != "
+                           "stencil image %d/%d\n",
+                           depthRb->mt_level,
+                           depthRb->mt_layer,
+                           stencilRb->mt_level,
+                           stencilRb->mt_layer);
 	 }
       } else {
 	 if (!intel->has_separate_stencil) {
-	    DBG("separate stencil unsupported\n");
-	    fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
+	    fbo_incomplete(fb, "FBO incomplete: separate stencil "
+                           "unsupported\n");
 	 }
 	 if (stencil_mt->format != MESA_FORMAT_S8) {
-	    DBG("separate stencil is %s instead of S8\n",
-		_mesa_get_format_name(stencil_mt->format));
-	    fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
+	    fbo_incomplete(fb, "FBO incomplete: separate stencil is %s "
+                           "instead of S8\n",
+                           _mesa_get_format_name(stencil_mt->format));
 	 }
 	 if (intel->gen < 7 && !intel_renderbuffer_has_hiz(depthRb)) {
 	    /* Before Gen7, separate depth and stencil buffers can be used
@@ -765,8 +778,8 @@ intel_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
 	     *     [DevSNB]: This field must be set to the same value (enabled
 	     *     or disabled) as Hierarchical Depth Buffer Enable.
 	     */
-	    DBG("separate stencil without HiZ\n");
-	    fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED;
+	    fbo_incomplete(fb, "FBO incomplete: separate stencil "
+                           "without HiZ\n");
 	 }
       }
    }
@@ -784,8 +797,8 @@ intel_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
        */
       rb = fb->Attachment[i].Renderbuffer;
       if (rb == NULL) {
-	 DBG("attachment without renderbuffer\n");
-	 fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
+	 fbo_incomplete(fb, "FBO incomplete: attachment without "
+                        "renderbuffer\n");
 	 continue;
       }
 
@@ -794,23 +807,22 @@ intel_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
 	    _mesa_get_attachment_teximage_const(&fb->Attachment[i]);
 
 	 if (img->Border) {
-	    DBG("texture with border\n");
-	    fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
+	    fbo_incomplete(fb, "FBO incomplete: texture with border\n");
 	    continue;
 	 }
       }
 
       irb = intel_renderbuffer(rb);
       if (irb == NULL) {
-	 DBG("software rendering renderbuffer\n");
-	 fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
+	 fbo_incomplete(fb, "FBO incomplete: software rendering "
+                        "renderbuffer\n");
 	 continue;
       }
 
       if (!intel->vtbl.render_target_supported(intel, rb)) {
-	 DBG("Unsupported HW texture/renderbuffer format attached: %s\n",
-	     _mesa_get_format_name(intel_rb_format(irb)));
-	 fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
+	 fbo_incomplete(fb, "FBO incomplete: Unsupported HW "
+                        "texture/renderbuffer format attached: %s\n",
+                        _mesa_get_format_name(intel_rb_format(irb)));
       }
    }
 }
