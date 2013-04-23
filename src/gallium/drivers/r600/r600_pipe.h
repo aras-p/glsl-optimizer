@@ -35,7 +35,7 @@
 #include "r600_public.h"
 #include "r600_resource.h"
 
-#define R600_NUM_ATOMS 40
+#define R600_NUM_ATOMS 41
 
 #define R600_TRACE_CS 0
 
@@ -1120,6 +1120,15 @@ static INLINE void r600_write_compute_context_reg(struct radeon_winsys_cs *cs, u
 	r600_write_value(cs, value);
 }
 
+static INLINE void r600_write_context_reg_flag(struct radeon_winsys_cs *cs, unsigned reg, unsigned value, unsigned flag)
+{
+	if (flag & RADEON_CP_PACKET3_COMPUTE_MODE) {
+		r600_write_compute_context_reg(cs, reg, value);
+	} else {
+		r600_write_context_reg(cs, reg, value);
+	}
+
+}
 static INLINE void r600_write_ctl_const(struct radeon_winsys_cs *cs, unsigned reg, unsigned value)
 {
 	r600_write_ctl_const_seq(cs, reg, 1);

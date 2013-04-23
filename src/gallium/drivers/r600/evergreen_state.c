@@ -2473,7 +2473,8 @@ static void evergreen_emit_constant_buffers(struct r600_context *rctx,
 					    struct r600_constbuf_state *state,
 					    unsigned buffer_id_base,
 					    unsigned reg_alu_constbuf_size,
-					    unsigned reg_alu_const_cache)
+					    unsigned reg_alu_const_cache,
+					    unsigned pkt_flags)
 {
 	struct radeon_winsys_cs *cs = rctx->rings.gfx.cs;
 	uint32_t dirty_mask = state->dirty_mask;
@@ -2491,14 +2492,15 @@ static void evergreen_emit_constant_buffers(struct r600_context *rctx,
 		va = r600_resource_va(&rctx->screen->screen, &rbuffer->b.b);
 		va += cb->buffer_offset;
 
-		r600_write_context_reg(cs, reg_alu_constbuf_size + buffer_index * 4,
-				       ALIGN_DIVUP(cb->buffer_size >> 4, 16));
-		r600_write_context_reg(cs, reg_alu_const_cache + buffer_index * 4, va >> 8);
+		r600_write_context_reg_flag(cs, reg_alu_constbuf_size + buffer_index * 4,
+				       ALIGN_DIVUP(cb->buffer_size >> 4, 16), pkt_flags);
+		r600_write_context_reg_flag(cs, reg_alu_const_cache + buffer_index * 4, va >> 8,
+						pkt_flags);
 
-		r600_write_value(cs, PKT3(PKT3_NOP, 0, 0));
+		r600_write_value(cs, PKT3(PKT3_NOP, 0, 0) | pkt_flags);
 		r600_write_value(cs, r600_context_bo_reloc(rctx, &rctx->rings.gfx, rbuffer, RADEON_USAGE_READ));
 
-		r600_write_value(cs, PKT3(PKT3_SET_RESOURCE, 8, 0));
+		r600_write_value(cs, PKT3(PKT3_SET_RESOURCE, 8, 0) | pkt_flags);
 		r600_write_value(cs, (buffer_id_base + buffer_index) * 8);
 		r600_write_value(cs, va); /* RESOURCEi_WORD0 */
 		r600_write_value(cs, rbuffer->buf->size - cb->buffer_offset - 1); /* RESOURCEi_WORD1 */
@@ -2516,7 +2518,7 @@ static void evergreen_emit_constant_buffers(struct r600_context *rctx,
 		r600_write_value(cs, 0); /* RESOURCEi_WORD6 */
 		r600_write_value(cs, 0xc0000000); /* RESOURCEi_WORD7 */
 
-		r600_write_value(cs, PKT3(PKT3_NOP, 0, 0));
+		r600_write_value(cs, PKT3(PKT3_NOP, 0, 0) | pkt_flags);
 		r600_write_value(cs, r600_context_bo_reloc(rctx, &rctx->rings.gfx, rbuffer, RADEON_USAGE_READ));
 
 		dirty_mask &= ~(1 << buffer_index);
@@ -2528,21 +2530,32 @@ static void evergreen_emit_vs_constant_buffers(struct r600_context *rctx, struct
 {
 	evergreen_emit_constant_buffers(rctx, &rctx->constbuf_state[PIPE_SHADER_VERTEX], 176,
 					R_028180_ALU_CONST_BUFFER_SIZE_VS_0,
-					R_028980_ALU_CONST_CACHE_VS_0);
+					R_028980_ALU_CONST_CACHE_VS_0,
+					0 /* PKT3 flags */);
 }
 
 static void evergreen_emit_gs_constant_buffers(struct r600_context *rctx, struct r600_atom *atom)
 {
 	evergreen_emit_constant_buffers(rctx, &rctx->constbuf_state[PIPE_SHADER_GEOMETRY], 336,
 					R_0281C0_ALU_CONST_BUFFER_SIZE_GS_0,
-					R_0289C0_ALU_CONST_CACHE_GS_0);
+					R_0289C0_ALU_CONST_CACHE_GS_0,
+					0 /* PKT3 flags */);
 }
 
 static void evergreen_emit_ps_constant_buffers(struct r600_context *rctx, struct r600_atom *atom)
 {
 	evergreen_emit_constant_buffers(rctx, &rctx->constbuf_state[PIPE_SHADER_FRAGMENT], 0,
 				       R_028140_ALU_CONST_BUFFER_SIZE_PS_0,
-				       R_028940_ALU_CONST_CACHE_PS_0);
+				       R_028940_ALU_CONST_CACHE_PS_0,
+				       0 /* PKT3 flags */);
+}
+
+static void evergreen_emit_cs_constant_buffers(struct r600_context *rctx, struct r600_atom *atom)
+{
+	evergreen_emit_constant_buffers(rctx, &rctx->constbuf_state[PIPE_SHADER_COMPUTE], 816,
+					R_028FC0_ALU_CONST_BUFFER_SIZE_LS_0,
+					R_028F40_ALU_CONST_CACHE_LS_0,
+					RADEON_CP_PACKET3_COMPUTE_MODE);
 }
 
 static void evergreen_emit_sampler_views(struct r600_context *rctx,
@@ -3802,6 +3815,7 @@ void evergreen_init_state_functions(struct r600_context *rctx)
 	r600_init_atom(rctx, &rctx->constbuf_state[PIPE_SHADER_VERTEX].atom, id++, evergreen_emit_vs_constant_buffers, 0);
 	r600_init_atom(rctx, &rctx->constbuf_state[PIPE_SHADER_GEOMETRY].atom, id++, evergreen_emit_gs_constant_buffers, 0);
 	r600_init_atom(rctx, &rctx->constbuf_state[PIPE_SHADER_FRAGMENT].atom, id++, evergreen_emit_ps_constant_buffers, 0);
+	r600_init_atom(rctx, &rctx->constbuf_state[PIPE_SHADER_COMPUTE].atom, id++, evergreen_emit_cs_constant_buffers, 0);
 	/* shader program */
 	r600_init_atom(rctx, &rctx->cs_shader_state.atom, id++, evergreen_emit_cs_shader, 0);
 	/* sampler */
