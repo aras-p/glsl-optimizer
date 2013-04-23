@@ -83,14 +83,14 @@ gen6_get_sample_position(struct gl_context *ctx,
       break;
    case 4: {
       uint8_t val = (uint8_t)(sample_positions_4x[0] >> (8*index));
-      result[0] = (val & 0xf) / 16.0f;
-      result[1] = ((val >> 4) & 0xf) / 16.0f;
+      result[0] = ((val >> 4) & 0xf) / 16.0f;
+      result[1] = (val & 0xf) / 16.0f;
       break;
    }
    case 8: {
       uint8_t val = (uint8_t)(sample_positions_8x[index>>2] >> (8*(index & 3)));
-      result[0] = (val & 0xf) / 16.0f;
-      result[1] = ((val >> 4) & 0xf) / 16.0f;
+      result[0] = ((val >> 4) & 0xf) / 16.0f;
+      result[1] = (val & 0xf) / 16.0f;
       break;
    }
    default:
