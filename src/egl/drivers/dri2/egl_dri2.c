@@ -221,6 +221,9 @@ dri2_add_config(_EGLDisplay *disp, const __DRIconfig *dri_config, int id,
    base.RenderableType = disp->ClientAPIs;
    base.Conformant = disp->ClientAPIs;
 
+   base.MinSwapInterval = dri2_dpy->min_swap_interval;
+   base.MaxSwapInterval = dri2_dpy->max_swap_interval;
+
    if (!_eglValidateConfig(&base, EGL_FALSE)) {
       _eglLog(_EGL_DEBUG, "DRI2: failed to validate config %d", id);
       return NULL;
@@ -268,9 +271,6 @@ dri2_add_config(_EGLDisplay *disp, const __DRIconfig *dri_config, int id,
 
    if (double_buffer) {
       surface_type &= ~EGL_PIXMAP_BIT;
-
-      conf->base.MinSwapInterval = dri2_dpy->min_swap_interval;
-      conf->base.MaxSwapInterval = dri2_dpy->max_swap_interval;
    }
 
    conf->base.SurfaceType |= surface_type;
