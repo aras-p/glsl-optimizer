@@ -478,6 +478,7 @@ public:
 	static unsigned dump_stat;
 
 	static unsigned dry_run;
+	static unsigned no_fallback;
 
 	static unsigned dskip_start;
 	static unsigned dskip_end;

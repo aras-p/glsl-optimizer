@@ -65,6 +65,7 @@ sb_context *r600_sb_context_create(struct r600_context *rctx) {
 	sb_context::dump_pass = df & DBG_SB_DUMP;
 	sb_context::dump_stat = df & DBG_SB_STAT;
 	sb_context::dry_run = df & DBG_SB_DRY_RUN;
+	sb_context::no_fallback = df & DBG_SB_NO_FALLBACK;
 
 	sb_context::dskip_start = debug_get_num_option("R600_SB_DSKIP_START", 0);
 	sb_context::dskip_end = debug_get_num_option("R600_SB_DSKIP_END", 0);
@@ -96,6 +97,15 @@ int r600_sb_bytecode_process(struct r600_context *rctx,
 		time_start = os_time_get_nano();
 	}
 
+	SB_DUMP_STAT( cerr << "\nsb: shader " << shader_id << "\n"; );
+
+	bc_parser parser(*ctx, bc, pshader, dump_source_bytecode, optimize);
+
+	if ((r = parser.parse())) {
+		assert(0);
+		return r;
+	}
+
 	/* skip some shaders (use shaders from default backend)
 	 * dskip_start - range start, dskip_end - range_end,
 	 * e.g. start = 5, end = 6 means shaders 5 & 6
@@ -116,15 +126,6 @@ int r600_sb_bytecode_process(struct r600_context *rctx,
 		}
 	}
 
-	SB_DUMP_STAT( cerr << "\nsb: shader " << shader_id << "\n"; );
-
-	bc_parser parser(*ctx, bc, pshader, dump_source_bytecode, optimize);
-
-	if ((r = parser.parse())) {
-		assert(0);
-		return r;
-	}
-
 	shader *sh = parser.get_shader();
 	SB_DUMP_PASS( cerr << "\n\n###### after parse\n"; sh->dump_ir(); );
 
@@ -136,8 +137,17 @@ int r600_sb_bytecode_process(struct r600_context *rctx,
 #define SB_RUN_PASS(n, dump) \
 	do { \
 		r = n(*sh).run(); \
+		if (r) { \
+			cerr << "sb: error (" << r << ") in the " << #n << " pass.\n"; \
+			if (sb_context::no_fallback) \
+				return r; \
+			cerr << "sb: using unoptimized bytecode...\n"; \
+			delete sh; \
+			return 0; \
+		} \
 		if (dump) { \
-			SB_DUMP_PASS( cerr << "\n\n###### after " << #n << "\n"; sh->dump_ir();); \
+			SB_DUMP_PASS( cerr << "\n\n###### after " << #n << "\n"; \
+				sh->dump_ir();); \
 		} \
 		assert(!r); \
 	} while (0)
@@ -175,7 +185,7 @@ int r600_sb_bytecode_process(struct r600_context *rctx,
 	// container nodes in the correct locations for code placement
 	sh->create_bbs();
 
-	SB_RUN_PASS(gcm,				0);
+	SB_RUN_PASS(gcm,				1);
 
 	sh->compute_interferences = true;
 	SB_RUN_PASS(liveness,			0);

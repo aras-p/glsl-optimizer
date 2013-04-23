@@ -72,6 +72,7 @@ static const struct debug_named_value debug_options[] = {
 	{ "sbdry", DBG_SB_DRY_RUN, "Don't use optimized bytecode (just print the dumps)" },
 	{ "sbstat", DBG_SB_STAT, "Print optimization statistics for shaders" },
 	{ "sbdump", DBG_SB_DUMP, "Print IR dumps after some optimization passes" },
+	{ "sbnofallback", DBG_SB_NO_FALLBACK, "Abort on errors instead of fallback" },
 
 	DEBUG_NAMED_VALUE_END /* must be last */
 };

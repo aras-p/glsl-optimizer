@@ -263,6 +263,7 @@ typedef boolean (*r600g_dma_blit_t)(struct pipe_context *ctx,
 #define DBG_SB_DRY_RUN	(1 << 23)
 #define DBG_SB_STAT		(1 << 24)
 #define DBG_SB_DUMP		(1 << 25)
+#define DBG_SB_NO_FALLBACK	(1 << 26)
 
 struct r600_tiling_info {
 	unsigned num_channels;

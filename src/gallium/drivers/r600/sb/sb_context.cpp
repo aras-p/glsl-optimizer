@@ -31,6 +31,7 @@ namespace r600_sb {
 unsigned sb_context::dump_pass = 0;
 unsigned sb_context::dump_stat = 0;
 unsigned sb_context::dry_run = 0;
+unsigned sb_context::no_fallback = 0;
 
 unsigned sb_context::dskip_start = 0;
 unsigned sb_context::dskip_end = 0;
