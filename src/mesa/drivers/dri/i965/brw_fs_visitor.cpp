@@ -718,6 +718,13 @@ fs_visitor::visit(ir_expression *ir)
       break;
    }
 
+   case ir_triop_fma:
+      /* Note that the instruction's argument order is reversed from GLSL
+       * and the IR.
+       */
+      emit(MAD(this->result, op[2], op[1], op[0]));
+      break;
+
    case ir_triop_lrp:
       emit_lrp(this->result, op[0], op[1], op[2]);
       break;

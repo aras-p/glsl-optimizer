@@ -285,6 +285,7 @@ public:
    fs_inst *FBH(fs_reg dst, fs_reg value);
    fs_inst *FBL(fs_reg dst, fs_reg value);
    fs_inst *CBIT(fs_reg dst, fs_reg value);
+   fs_inst *MAD(fs_reg dst, fs_reg c, fs_reg b, fs_reg a);
 
    int type_size(const struct glsl_type *type);
    fs_inst *get_instruction_generating_reg(fs_inst *start,

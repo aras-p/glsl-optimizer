@@ -360,6 +360,7 @@ ir_channel_expressions_visitor::visit_leave(ir_assignment *ir)
       assert(!"not yet supported");
       break;
 
+   case ir_triop_fma:
    case ir_triop_lrp:
    case ir_triop_bitfield_extract:
       for (i = 0; i < vector_elements; i++) {
