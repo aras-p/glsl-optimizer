@@ -175,7 +175,12 @@ static INLINE void u_print_ps(const char *name, __m128 r)
  * MSVC will never get in here as its intrinsics support do not rely on
  * compiler command line options.
  */
-static __inline __m128i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+static __inline __m128i
+#ifdef __clang__
+   __attribute__((__always_inline__, __nodebug__))
+#else
+   __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+#endif
 _mm_shuffle_epi8(__m128i a, __m128i mask)
 {
     __m128i result;
