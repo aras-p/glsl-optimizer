@@ -351,7 +351,8 @@ get_hash_header = env.CodeGenerate(
 #
 # Assembly sources
 #
-if env['gcc'] and env['platform'] not in ('cygwin', 'darwin', 'windows', 'haiku'):
+if (env['gcc'] or env['clang']) and \
+   env['platform'] not in ('cygwin', 'darwin', 'windows', 'haiku'):
     if env['machine'] == 'x86':
         env.Append(CPPDEFINES = [
             'USE_X86_ASM',

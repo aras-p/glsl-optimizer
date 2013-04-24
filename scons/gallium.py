@@ -152,7 +152,7 @@ def generate(env):
     platform = env['platform']
     x86 = env['machine'] == 'x86'
     ppc = env['machine'] == 'ppc'
-    gcc = env['gcc']
+    gcc_compat = env['gcc'] or env['clang']
     msvc = env['msvc']
     suncc = env['suncc']
     icc = env['icc']
@@ -279,7 +279,7 @@ def generate(env):
             ('_WIN32_WINNT', '0x0601'),
             ('WINVER', '0x0601'),
         ]
-        if gcc:
+        if gcc_compat:
             cppdefines += [('__MSVCRT_VERSION__', '0x0700')]
         if msvc:
             cppdefines += [
@@ -309,19 +309,20 @@ def generate(env):
     cflags = [] # C
     cxxflags = [] # C++
     ccflags = [] # C & C++
-    if gcc:
+    if gcc_compat:
         ccversion = env['CCVERSION']
         if env['build'] == 'debug':
             ccflags += ['-O0']
-        elif ccversion.startswith('4.2.'):
+        elif env['gcc'] and ccversion.startswith('4.2.'):
             # gcc 4.2.x optimizer is broken
             print "warning: gcc 4.2.x optimizer is broken -- disabling optimizations"
             ccflags += ['-O0']
         else:
             ccflags += ['-O3']
-        # gcc's builtin memcmp is slower than glibc's
-        # http://gcc.gnu.org/bugzilla/show_bug.cgi?id=43052
-        ccflags += ['-fno-builtin-memcmp']
+        if env['gcc']:
+            # gcc's builtin memcmp is slower than glibc's
+            # http://gcc.gnu.org/bugzilla/show_bug.cgi?id=43052
+            ccflags += ['-fno-builtin-memcmp']
         # Work around aliasing bugs - developers should comment this out
         ccflags += ['-fno-strict-aliasing']
         ccflags += ['-g']
@@ -329,8 +330,9 @@ def generate(env):
             # See http://code.google.com/p/jrfonseca/wiki/Gprof2Dot#Which_options_should_I_pass_to_gcc_when_compiling_for_profiling?
             ccflags += [
                 '-fno-omit-frame-pointer',
-                '-fno-optimize-sibling-calls',
             ]
+            if env['gcc']:
+                ccflags += ['-fno-optimize-sibling-calls']
         if env['machine'] == 'x86':
             ccflags += [
                 '-m32',
@@ -448,7 +450,7 @@ def generate(env):
             env.Append(SHCCFLAGS = ['/LD'])
     
     # Assembler options
-    if gcc:
+    if gcc_compat:
         if env['machine'] == 'x86':
             env.Append(ASFLAGS = ['-m32'])
         if env['machine'] == 'x86_64':
@@ -457,7 +459,7 @@ def generate(env):
     # Linker options
     linkflags = []
     shlinkflags = []
-    if gcc:
+    if gcc_compat:
         if env['machine'] == 'x86':
             linkflags += ['-m32']
         if env['machine'] == 'x86_64':
@@ -495,7 +497,7 @@ def generate(env):
     env.Append(SHLINKFLAGS = shlinkflags)
 
     # We have C++ in several libraries, so always link with the C++ compiler
-    if env['gcc'] or env['clang']:
+    if gcc_compat:
         env['LINK'] = env['CXX']
 
     # Default libs
