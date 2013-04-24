@@ -1,0 +1,29 @@
+((function fma
+   (signature float
+     (parameters
+       (declare (in) float a)
+       (declare (in) float b)
+       (declare (in) float c))
+     ((return (expression float fma (var_ref a) (var_ref b) (var_ref c)))))
+
+   (signature vec2
+     (parameters
+       (declare (in) vec2 a)
+       (declare (in) vec2 b)
+       (declare (in) vec2 c))
+     ((return (expression vec2 fma (var_ref a) (var_ref b) (var_ref c)))))
+
+   (signature vec3
+     (parameters
+       (declare (in) vec3 a)
+       (declare (in) vec3 b)
+       (declare (in) vec3 c))
+     ((return (expression vec3 fma (var_ref a) (var_ref b) (var_ref c)))))
+
+   (signature vec4
+     (parameters
+       (declare (in) vec4 a)
+       (declare (in) vec4 b)
+       (declare (in) vec4 c))
+     ((return (expression vec4 fma (var_ref a) (var_ref b) (var_ref c)))))
+))

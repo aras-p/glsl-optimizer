@@ -54,3 +54,8 @@ int   findMSB(uint  value);
 ivec2 findMSB(uvec2 value);
 ivec3 findMSB(uvec3 value);
 ivec4 findMSB(uvec4 value);
+
+float fma(float a, float b, float c);
+vec2  fma(vec2  a, vec2  b, vec2  c);
+vec3  fma(vec3  a, vec3  b, vec3  c);
+vec4  fma(vec4  a, vec4  b, vec4  c);
