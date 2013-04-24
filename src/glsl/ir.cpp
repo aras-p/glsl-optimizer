@@ -515,6 +515,7 @@ static const char *const operator_strs[] = {
    "bfm",
    "ubo_load",
    "vector_extract",
+   "fma",
    "lrp",
    "bfi",
    "bitfield_extract",

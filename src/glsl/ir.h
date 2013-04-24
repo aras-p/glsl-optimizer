@@ -1169,6 +1169,13 @@ enum ir_expression_operation {
     */
    ir_last_binop = ir_binop_vector_extract,
 
+   /**
+    * \name Fused floating-point multiply-add, part of ARB_gpu_shader5.
+    */
+   /*@{*/
+   ir_triop_fma,
+   /*@}*/
+
    ir_triop_lrp,
 
    /**

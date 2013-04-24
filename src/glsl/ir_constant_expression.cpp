@@ -1375,6 +1375,17 @@ ir_expression::constant_expression_value(struct hash_table *variable_context)
       break;
    }
 
+   case ir_triop_fma:
+      assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
+      assert(op[1]->type->base_type == GLSL_TYPE_FLOAT);
+      assert(op[2]->type->base_type == GLSL_TYPE_FLOAT);
+
+      for (unsigned c = 0; c < components; c++) {
+         data.f[c] = op[0]->value.f[c] * op[1]->value.f[c]
+                                       + op[2]->value.f[c];
+      }
+      break;
+
    case ir_triop_lrp: {
       assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
       assert(op[1]->type->base_type == GLSL_TYPE_FLOAT);

@@ -1972,6 +1972,7 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
    case ir_unop_find_msb:
    case ir_unop_find_lsb:
    case ir_binop_bfm:
+   case ir_triop_fma:
    case ir_triop_bfi:
    case ir_triop_bitfield_extract:
    case ir_quadop_bitfield_insert:
