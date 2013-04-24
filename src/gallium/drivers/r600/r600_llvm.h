@@ -7,6 +7,7 @@
 #include "radeon_llvm.h"
 #include <llvm-c/Core.h>
 
+struct r600_bytecode;
 struct r600_shader_ctx;
 struct radeon_llvm_context;
 enum radeon_family;
@@ -20,8 +21,7 @@ unsigned r600_llvm_compile(
 	unsigned char ** inst_bytes,
 	unsigned * inst_byte_count,
 	enum radeon_family family,
-	unsigned *ngpr,
-	unsigned *stack_size,
+	struct r600_bytecode *bc,
 	unsigned dump);
 
 #endif /* defined R600_USE_LLVM || defined HAVE_OPENCL */

@@ -279,7 +279,7 @@ int r600_compute_shader_create(struct pipe_context * ctx,
 	shader_ctx.bc->type = TGSI_PROCESSOR_COMPUTE;
 	shader_ctx.bc->isa = r600_ctx->isa;
 	r600_llvm_compile(mod, &bytes, &byte_count, r600_ctx->family,
-				&shader_ctx.bc->ngpr, dump);
+				shader_ctx.bc, dump);
 	r600_bytecode_from_byte_stream(&shader_ctx, bytes, byte_count);
 	if (shader_ctx.bc->chip_class == CAYMAN) {
 		cm_bytecode_add_cf_end(shader_ctx.bc);
@@ -1461,7 +1461,7 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 		mod = r600_tgsi_llvm(&radeon_llvm_ctx, tokens);
 
 		if (r600_llvm_compile(mod, &inst_bytes, &inst_byte_count,
-				      rscreen->family, &ctx.bc->ngpr, &ctx.bc->nstack, dump)) {
+				      rscreen->family, ctx.bc, dump)) {
 			FREE(inst_bytes);
 			radeon_llvm_dispose(&radeon_llvm_ctx);
 			use_llvm = 0;
