@@ -2768,6 +2768,8 @@ ir_to_mesa_visitor::copy_propagate(void)
       /* If this is a copy, add it to the ACP. */
       if (inst->op == OPCODE_MOV &&
 	  inst->dst.file == PROGRAM_TEMPORARY &&
+	  !(inst->dst.file == inst->src[0].file &&
+	    inst->dst.index == inst->src[0].index) &&
 	  !inst->dst.reladdr &&
 	  !inst->saturate &&
 	  !inst->src[0].reladdr &&
