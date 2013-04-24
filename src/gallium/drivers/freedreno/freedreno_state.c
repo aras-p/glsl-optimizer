@@ -279,7 +279,7 @@ emit_constants(struct fd_ringbuffer *ring, uint32_t base,
 	if (shader) {
 		for (i = 0; i < shader->num_immediates; i++) {
 			OUT_PKT3(ring, CP_SET_CONSTANT, 5);
-			OUT_RING(ring, base);
+			OUT_RING(ring, start_base + (4 * (shader->first_immediate + i)));
 			OUT_RING(ring, shader->immediates[i].val[0]);
 			OUT_RING(ring, shader->immediates[i].val[1]);
 			OUT_RING(ring, shader->immediates[i].val[2]);

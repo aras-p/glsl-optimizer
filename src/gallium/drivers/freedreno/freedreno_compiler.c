@@ -201,8 +201,8 @@ compile_init(struct fd_compile_context *ctx, struct fd_program_stateobj *prog,
 				ctx->input_export_idx[decl->Range.First] =
 						semantic_idx(&decl->Semantic);
 			}
-			ctx->num_regs[decl->Declaration.File] +=
-					1 + decl->Range.Last - decl->Range.First;
+			ctx->num_regs[decl->Declaration.File] =
+					MAX2(ctx->num_regs[decl->Declaration.File], decl->Range.Last + 1);
 			break;
 		}
 		case TGSI_TOKEN_TYPE_IMMEDIATE: {
