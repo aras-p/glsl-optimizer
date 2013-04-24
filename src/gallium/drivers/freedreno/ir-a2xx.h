@@ -72,7 +72,9 @@ struct ir2_instruction {
 		struct {
 			instr_fetch_opc_t opc;
 			unsigned const_idx;
-			/* maybe vertex fetch specific: */
+			/* texture fetch specific: */
+			bool is_cube : 1;
+			/* vertex fetch specific: */
 			unsigned const_idx_sel;
 			enum a2xx_sq_surfaceformat fmt;
 			bool is_signed : 1;

@@ -327,7 +327,7 @@ typedef struct PACKED {
 	instr_tex_filter_t  vol_mag_filter           : 2;
 	instr_tex_filter_t  vol_min_filter           : 2;
 	uint8_t             use_comp_lod             : 1;
-	uint8_t             use_reg_lod              : 2;
+	uint8_t             use_reg_lod              : 2;  /* 0 for cube, 1 for 2d */
 	uint8_t             pred_select              : 1;
 	/* dword2: */
 	uint8_t             use_reg_gradients        : 1;

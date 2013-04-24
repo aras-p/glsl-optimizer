@@ -339,6 +339,7 @@ static int instr_emit_fetch(struct ir2_instruction *instr,
 		tex->vol_mag_filter = TEX_FILTER_USE_FETCH_CONST;
 		tex->vol_min_filter = TEX_FILTER_USE_FETCH_CONST;
 		tex->use_comp_lod = 1;
+		tex->use_reg_lod = !instr->fetch.is_cube;
 		tex->sample_location = SAMPLE_CENTER;
 
 		if (instr->pred != IR2_PRED_NONE) {
