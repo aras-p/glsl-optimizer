@@ -16,6 +16,7 @@ if env['platform'] == 'freebsd8':
 
 progs = [
     'clear',
+    'disasm',
     'fs-fragcoord',
     'fs-frontface',
     'fs-test',
