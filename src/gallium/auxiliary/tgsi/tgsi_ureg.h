@@ -111,6 +111,12 @@ const struct tgsi_token *
 ureg_get_tokens( struct ureg_program *ureg,
                  unsigned *nr_tokens );
 
+/*
+ * Returns the number of currently declared outputs.
+ */
+const unsigned
+ureg_get_nr_outputs( const struct ureg_program *ureg );
+
 
 /* Free the tokens created by ureg_get_tokens() */
 void ureg_free_tokens( const struct tgsi_token *tokens );

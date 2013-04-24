@@ -1767,6 +1767,15 @@ no_ureg:
 }
 
 
+const unsigned
+ureg_get_nr_outputs( const struct ureg_program *ureg )
+{
+   if (!ureg)
+      return 0;
+   return ureg->nr_outputs;
+}
+
+
 void ureg_destroy( struct ureg_program *ureg )
 {
    unsigned i;
