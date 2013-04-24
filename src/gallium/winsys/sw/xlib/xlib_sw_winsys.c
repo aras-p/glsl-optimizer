@@ -165,6 +165,7 @@ alloc_shm_ximage(struct xlib_displaytarget *xlib_dt,
                                       &xlib_dt->shminfo,
                                       width, height);
    if (xlib_dt->tempImage == NULL) {
+      shmctl(xlib_dt->shminfo.shmid, IPC_RMID, 0);
       xlib_dt->shm = False;
       return;
    }
@@ -175,6 +176,11 @@ alloc_shm_ximage(struct xlib_displaytarget *xlib_dt,
    /* This may trigger the X protocol error we're ready to catch: */
    XShmAttach(xlib_dt->display, &xlib_dt->shminfo);
    XSync(xlib_dt->display, False);
+
+   /* Mark the segment to be destroyed, so that it is automatically destroyed
+    * when this process dies.  Needs to be after XShmAttach() for *BSD.
+    */
+   shmctl(xlib_dt->shminfo.shmid, IPC_RMID, 0);
 
    if (XErrorFlag) {
       /* we are on a remote display, this error is normal, don't print it */
