@@ -95,7 +95,6 @@ static struct{
    OPN(SUB, 2),
    OPN(SWZ, 1),
    OPN(XPD, 2),
-   OPN(PRINT, 0),
    OPN(END, 0),
 };
 #undef OPN
