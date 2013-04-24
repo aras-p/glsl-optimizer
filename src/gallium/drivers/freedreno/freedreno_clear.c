@@ -67,7 +67,9 @@ fd_clear(struct pipe_context *pctx, unsigned buffers,
 	if (buffers & (PIPE_CLEAR_DEPTH | PIPE_CLEAR_STENCIL))
 		fd_resource(fb->zsbuf->texture)->dirty = true;
 
-	DBG("depth=%f, stencil=%u", depth, stencil);
+	DBG("%x depth=%f, stencil=%u (%s/%s)", buffers, depth, stencil,
+			util_format_name(fb->cbufs[0]->format),
+			fb->zsbuf ? util_format_name(fb->zsbuf->format) : "none");
 
 	if ((buffers & PIPE_CLEAR_COLOR) && fb->nr_cbufs)
 		colr  = pack_rgba(fb->cbufs[0]->format, color->f);
@@ -118,6 +120,9 @@ fd_clear(struct pipe_context *pctx, unsigned buffers,
 			if (buffers & PIPE_CLEAR_DEPTH)
 				reg |= A2XX_RB_COPY_CONTROL_CLEAR_MASK(0xf);
 			break;
+		default:
+			assert(1);
+			break;
 		}
 	}
 	OUT_RING(ring, reg);
@@ -153,6 +158,19 @@ fd_clear(struct pipe_context *pctx, unsigned buffers,
 				A2XX_RB_DEPTHCONTROL_STENCILZPASS(STENCIL_REPLACE);
 	}
 	OUT_RING(ring, reg);
+
+	OUT_PKT3(ring, CP_SET_CONSTANT, 3);
+	OUT_RING(ring, CP_REG(REG_A2XX_RB_STENCILREFMASK_BF));
+	OUT_RING(ring, 0xff000000 | A2XX_RB_STENCILREFMASK_BF_STENCILWRITEMASK(0xff));
+	OUT_RING(ring, 0xff000000 | A2XX_RB_STENCILREFMASK_STENCILWRITEMASK(0xff));
+
+	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
+	OUT_RING(ring, CP_REG(REG_A2XX_RB_COLORCONTROL));
+	OUT_RING(ring, A2XX_RB_COLORCONTROL_ALPHA_FUNC(FUNC_ALWAYS) |
+			A2XX_RB_COLORCONTROL_BLEND_DISABLE |
+			A2XX_RB_COLORCONTROL_ROP_CODE(12) |
+			A2XX_RB_COLORCONTROL_DITHER_MODE(DITHER_DISABLE) |
+			A2XX_RB_COLORCONTROL_DITHER_TYPE(DITHER_PIXEL));
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 3);
 	OUT_RING(ring, CP_REG(REG_A2XX_PA_CL_CLIP_CNTL));
@@ -202,6 +220,9 @@ fd_clear(struct pipe_context *pctx, unsigned buffers,
 			FD_DIRTY_PROG |
 			FD_DIRTY_CONSTBUF |
 			FD_DIRTY_BLEND;
+
+	if (fd_mesa_debug & FD_DBG_DCLEAR)
+		ctx->dirty = 0xffffffff;
 }
 
 static void

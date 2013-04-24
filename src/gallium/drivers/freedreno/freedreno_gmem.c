@@ -528,4 +528,7 @@ fd_gmem_render_tiles(struct pipe_context *pctx)
 			FD_DIRTY_VERTTEX |
 			FD_DIRTY_FRAGTEX |
 			FD_DIRTY_BLEND;
+
+	if (fd_mesa_debug & FD_DBG_DGMEM)
+		ctx->dirty = 0xffffffff;
 }

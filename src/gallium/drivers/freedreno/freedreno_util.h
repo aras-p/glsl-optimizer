@@ -50,6 +50,8 @@ uint32_t fd_tex_swiz(enum pipe_format format, unsigned swizzle_r,
 
 #define FD_DBG_MSGS   0x1
 #define FD_DBG_DISASM 0x2
+#define FD_DBG_DCLEAR 0x4
+#define FD_DBG_DGMEM  0x8
 extern int fd_mesa_debug;
 
 #define DBG(fmt, ...) \
