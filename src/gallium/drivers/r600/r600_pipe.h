@@ -829,6 +829,9 @@ void r600_cp_dma_copy_buffer(struct r600_context *rctx,
 			     struct pipe_resource *dst, uint64_t dst_offset,
 			     struct pipe_resource *src, uint64_t src_offset,
 			     unsigned size);
+void evergreen_cp_dma_clear_buffer(struct r600_context *rctx,
+				   struct pipe_resource *dst, uint64_t offset,
+				   unsigned size, uint32_t clear_value);
 void r600_dma_copy(struct r600_context *rctx,
 		struct pipe_resource *dst,
 		struct pipe_resource *src,

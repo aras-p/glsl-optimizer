@@ -526,10 +526,16 @@ static void r600_clear_buffer(struct pipe_context *ctx, struct pipe_resource *ds
 			      unsigned offset, unsigned size, unsigned char value)
 {
 	struct r600_context *rctx = (struct r600_context*)ctx;
+	uint32_t v = value;
 
-	if (rctx->screen->has_streamout && offset % 4 == 0 && size % 4 == 0) {
+	if (rctx->screen->has_cp_dma &&
+	    rctx->chip_class >= EVERGREEN &&
+	    offset % 4 == 0 && size % 4 == 0) {
+		uint32_t clear_value = v | (v << 8) | (v << 16) | (v << 24);
+
+		evergreen_cp_dma_clear_buffer(rctx, dst, offset, size, clear_value);
+	} else if (rctx->screen->has_streamout && offset % 4 == 0 && size % 4 == 0) {
 		union pipe_color_union clear_value;
-		uint32_t v = value;
 
 		clear_value.ui[0] = v | (v << 8) | (v << 16) | (v << 24);
 

@@ -106,3 +106,69 @@ void evergreen_dma_copy(struct r600_context *rctx,
 	util_range_add(&rdst->valid_buffer_range, dst_offset,
 		       dst_offset + size);
 }
+
+/* The max number of bytes to copy per packet. */
+#define CP_DMA_MAX_BYTE_COUNT ((1 << 21) - 8)
+
+void evergreen_cp_dma_clear_buffer(struct r600_context *rctx,
+				   struct pipe_resource *dst, uint64_t offset,
+				   unsigned size, uint32_t clear_value)
+{
+	struct radeon_winsys_cs *cs = rctx->rings.gfx.cs;
+
+	assert(size);
+	assert(rctx->screen->has_cp_dma);
+
+	offset += r600_resource_va(&rctx->screen->screen, dst);
+
+	/* We flush the caches, because we might read from or write
+	 * to resources which are bound right now. */
+	rctx->flags |= R600_CONTEXT_INVAL_READ_CACHES |
+		       R600_CONTEXT_FLUSH_AND_INV |
+		       R600_CONTEXT_FLUSH_AND_INV_CB_META |
+		       R600_CONTEXT_FLUSH_AND_INV_DB_META |
+		       R600_CONTEXT_STREAMOUT_FLUSH |
+		       R600_CONTEXT_WAIT_3D_IDLE;
+
+	while (size) {
+		unsigned sync = 0;
+		unsigned byte_count = MIN2(size, CP_DMA_MAX_BYTE_COUNT);
+		unsigned reloc;
+
+		r600_need_cs_space(rctx, 10 + (rctx->flags ? R600_MAX_FLUSH_CS_DWORDS : 0), FALSE);
+
+		/* Flush the caches for the first copy only. */
+		if (rctx->flags) {
+			r600_flush_emit(rctx);
+		}
+
+		/* Do the synchronization after the last copy, so that all data is written to memory. */
+		if (size == byte_count) {
+			sync = PKT3_CP_DMA_CP_SYNC;
+		}
+
+		/* This must be done after r600_need_cs_space. */
+		reloc = r600_context_bo_reloc(rctx, &rctx->rings.gfx,
+					      (struct r600_resource*)dst, RADEON_USAGE_WRITE);
+
+		r600_write_value(cs, PKT3(PKT3_CP_DMA, 4, 0));
+		r600_write_value(cs, clear_value);	/* DATA [31:0] */
+		r600_write_value(cs, sync | PKT3_CP_DMA_SRC_SEL(2));	/* CP_SYNC [31] | SRC_SEL[30:29] */
+		r600_write_value(cs, offset);	/* DST_ADDR_LO [31:0] */
+		r600_write_value(cs, (offset >> 32) & 0xff);		/* DST_ADDR_HI [7:0] */
+		r600_write_value(cs, byte_count);	/* COMMAND [29:22] | BYTE_COUNT [20:0] */
+
+		r600_write_value(cs, PKT3(PKT3_NOP, 0, 0));
+		r600_write_value(cs, reloc);
+
+		size -= byte_count;
+		offset += byte_count;
+	}
+
+	/* Invalidate the read caches. */
+	rctx->flags |= R600_CONTEXT_INVAL_READ_CACHES;
+
+	util_range_add(&r600_resource(dst)->valid_buffer_range, offset,
+		       offset + size);
+}
+
