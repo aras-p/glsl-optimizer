@@ -326,6 +326,13 @@ draw_print_arrays(struct draw_context *draw, uint prim, int start, uint count)
                             (void *) u);
             }
             break;
+         case PIPE_FORMAT_A8R8G8B8_UNORM:
+            {
+               ubyte *u = (ubyte *) ptr;
+               debug_printf("ARGB %d %d %d %d  @ %p\n", u[0], u[1], u[2], u[3],
+                            (void *) u);
+            }
+            break;
          default:
             debug_printf("other format %s (fix me)\n",
                      util_format_name(draw->pt.vertex_element[j].src_format));
