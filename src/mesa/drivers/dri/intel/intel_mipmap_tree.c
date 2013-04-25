@@ -346,11 +346,13 @@ intel_miptree_choose_tiling(struct intel_context *intel,
         base_format == GL_DEPTH_STENCIL_EXT))
       return I915_TILING_Y;
 
-   /* If the width is smaller than a tile, don't bother tiling. */
-   if (width0 < 64)
+   int minimum_pitch = mt->total_width * mt->cpp;
+
+   /* If the width is much smaller than a tile, don't bother tiling. */
+   if (minimum_pitch < 64)
       return I915_TILING_NONE;
 
-   if (ALIGN(mt->total_width * mt->cpp, 512) >= 32768) {
+   if (ALIGN(minimum_pitch, 512) >= 32768) {
       perf_debug("%dx%d miptree too large to blit, falling back to untiled",
                  mt->total_width, mt->total_height);
       return I915_TILING_NONE;
