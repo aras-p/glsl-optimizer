@@ -50,7 +50,6 @@ struct pipe_box;
 boolean trace_dump_trace_begin(void);
 boolean trace_dump_trace_enabled(void);
 void trace_dump_trace_flush(void);
-void trace_dump_trace_end(void);
 
 /*
  * Lock and unlock the call mutex.

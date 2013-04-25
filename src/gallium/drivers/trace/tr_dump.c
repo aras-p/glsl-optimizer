@@ -59,7 +59,6 @@
 
 static boolean close_stream = FALSE;
 static FILE *stream = NULL;
-static unsigned refcount = 0;
 pipe_static_mutex(call_mutex);
 static long unsigned call_no = 0;
 static boolean dumping = FALSE;
@@ -234,7 +233,6 @@ trace_dump_trace_close(void)
          close_stream = FALSE;
          stream = NULL;
       }
-      refcount = 0;
       call_no = 0;
    }
 }
@@ -283,14 +281,12 @@ trace_dump_trace_begin(void)
       trace_dump_writes("<?xml-stylesheet type='text/xsl' href='trace.xsl'?>\n");
       trace_dump_writes("<trace version='0.1'>\n");
 
-#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS) || defined(PIPE_OS_APPLE)
-      /* Linux applications rarely cleanup GL / Gallium resources so catch
-       * application exit here */
+      /* Many applications don't exit cleanly, others may create and destroy a
+       * screen multiple times, so we only write </trace> tag and close at exit
+       * time.
+       */
       atexit(trace_dump_trace_close);
-#endif
    }
-
-   ++refcount;
 
    return TRUE;
 }
@@ -298,13 +294,6 @@ trace_dump_trace_begin(void)
 boolean trace_dump_trace_enabled(void)
 {
    return stream ? TRUE : FALSE;
-}
-
-void trace_dump_trace_end(void)
-{
-   if(stream)
-      if(!--refcount)
-         trace_dump_trace_close();
 }
 
 /*

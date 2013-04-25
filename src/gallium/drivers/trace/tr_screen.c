@@ -427,7 +427,6 @@ trace_screen_destroy(struct pipe_screen *_screen)
    trace_dump_call_begin("pipe_screen", "destroy");
    trace_dump_arg(ptr, screen);
    trace_dump_call_end();
-   trace_dump_trace_end();
 
    screen->destroy(screen);
 
@@ -497,7 +496,6 @@ trace_screen_create(struct pipe_screen *screen)
 error2:
    trace_dump_ret(ptr, screen);
    trace_dump_call_end();
-   trace_dump_trace_end();
 error1:
    return screen;
 }
