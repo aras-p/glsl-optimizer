@@ -194,13 +194,25 @@ static void st_bind_ubos(struct st_context *st,
 
       binding = &st->ctx->UniformBufferBindings[shader->UniformBlocks[i].Binding];
       st_obj = st_buffer_object(binding->BufferObject);
-      pipe_resource_reference(&cb.buffer, st_obj->buffer);
 
-      cb.buffer_size = st_obj->buffer->width0 - binding->Offset;
-      cb.buffer_offset = binding->Offset;
+      cb.buffer = st_obj->buffer;
+
+      if (cb.buffer) {
+         cb.buffer_offset = binding->Offset;
+         cb.buffer_size = cb.buffer->width0 - binding->Offset;
+
+         /* AutomaticSize is FALSE if the buffer was set with BindBufferRange.
+          * Take the minimum just to be sure.
+          */
+         if (!binding->AutomaticSize)
+            cb.buffer_size = MIN2(cb.buffer_size, binding->Size);
+      }
+      else {
+         cb.buffer_offset = 0;
+         cb.buffer_size = 0;
+      }
 
       cso_set_constant_buffer(st->cso_context, shader_type, 1 + i, &cb);
-      pipe_resource_reference(&cb.buffer, NULL);
    }
 }
 
