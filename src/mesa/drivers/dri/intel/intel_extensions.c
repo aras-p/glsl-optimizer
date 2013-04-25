@@ -125,7 +125,8 @@ intelInitExtensions(struct gl_context *ctx)
    if (intel->gen >= 4) {
       if (ctx->API == API_OPENGL_CORE)
          ctx->Extensions.ARB_base_instance = true;
-      ctx->Extensions.ARB_color_buffer_float = true;
+      if (ctx->API != API_OPENGL_CORE)
+         ctx->Extensions.ARB_color_buffer_float = true;
       ctx->Extensions.ARB_depth_buffer_float = true;
       ctx->Extensions.ARB_depth_clamp = true;
       ctx->Extensions.ARB_draw_instanced = true;
