@@ -651,7 +651,11 @@ intel_create_image_from_fds(__DRIscreen *screen,
    if (f == NULL)
       return NULL;
 
-   image = intel_allocate_image(__DRI_IMAGE_FORMAT_NONE, loaderPrivate);
+   if (f->nplanes == 1)
+      image = intel_allocate_image(f->planes[0].dri_format, loaderPrivate);
+   else
+      image = intel_allocate_image(__DRI_IMAGE_FORMAT_NONE, loaderPrivate);
+
    if (image == NULL)
       return NULL;
 
