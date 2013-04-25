@@ -107,6 +107,14 @@ vec4_visitor::emit(enum opcode opcode)
 					   src0, src1);			\
    }
 
+#define ALU3(op)							\
+   vec4_instruction *							\
+   vec4_visitor::op(dst_reg dst, src_reg src0, src_reg src1, src_reg src2)\
+   {									\
+      return new(mem_ctx) vec4_instruction(this, BRW_OPCODE_##op, dst,	\
+					   src0, src1, src2);		\
+   }
+
 ALU1(NOT)
 ALU1(MOV)
 ALU1(FRC)
@@ -127,6 +135,7 @@ ALU2(DPH)
 ALU2(SHL)
 ALU2(SHR)
 ALU2(ASR)
+ALU3(LRP)
 
 /** Gen4 predicated IF. */
 vec4_instruction *
@@ -1619,7 +1628,10 @@ vec4_visitor::visit(ir_expression *ir)
    }
 
    case ir_triop_lrp:
-      assert(!"not reached: should be handled by lrp_to_arith");
+      op[0] = fix_3src_operand(op[0]);
+      op[1] = fix_3src_operand(op[1]);
+      op[2] = fix_3src_operand(op[2]);
+      emit(LRP(result_dst, op[0], op[1], op[2]));
       break;
 
    case ir_quadop_vector:

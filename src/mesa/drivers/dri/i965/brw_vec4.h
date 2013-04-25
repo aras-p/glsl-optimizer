@@ -386,6 +386,7 @@ public:
    vec4_instruction *PULL_CONSTANT_LOAD(dst_reg dst, src_reg index);
    vec4_instruction *SCRATCH_READ(dst_reg dst, src_reg index);
    vec4_instruction *SCRATCH_WRITE(dst_reg dst, src_reg src, src_reg index);
+   vec4_instruction *LRP(dst_reg dst, src_reg a, src_reg y, src_reg x);
 
    int implied_mrf_writes(vec4_instruction *inst);
 

@@ -152,8 +152,7 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
        */
       brw_lower_packing_builtins(brw, (gl_shader_type) stage, shader->ir);
       do_mat_op_to_vec(shader->ir);
-      const int lrp_to_arith = (intel->gen < 6 || stage != MESA_SHADER_FRAGMENT)
-                                ? LRP_TO_ARITH : 0;
+      const int lrp_to_arith = intel->gen < 6 ? LRP_TO_ARITH : 0;
       lower_instructions(shader->ir,
 			 MOD_TO_FRACT |
 			 DIV_TO_MUL_RCP |

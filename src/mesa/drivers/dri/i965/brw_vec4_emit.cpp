@@ -838,6 +838,10 @@ vec4_generator::generate_code(exec_list *instructions)
          brw_F16TO32(p, dst, src[0]);
          break;
 
+      case BRW_OPCODE_LRP:
+         brw_LRP(p, dst, src[0], src[1], src[2]);
+         break;
+
       case BRW_OPCODE_IF:
 	 if (inst->src[0].file != BAD_FILE) {
 	    /* The instruction has an embedded compare (only allowed on gen6) */

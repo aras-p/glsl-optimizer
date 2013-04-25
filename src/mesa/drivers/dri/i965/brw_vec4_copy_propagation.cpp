@@ -215,6 +215,9 @@ vec4_visitor::try_copy_propagation(struct intel_context *intel,
    if (has_source_modifiers && !can_do_source_mods(inst))
       return false;
 
+   if (inst->opcode == BRW_OPCODE_LRP && value.file == UNIFORM)
+      return false;
+
    /* We can't copy-propagate a UD negation into a condmod
     * instruction, because the condmod ends up looking at the 33-bit
     * signed accumulator value instead of the 32-bit value we wanted
