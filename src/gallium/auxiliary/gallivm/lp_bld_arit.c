@@ -378,7 +378,7 @@ lp_build_add(struct lp_build_context *bld,
            if(type.width == 8)
               intrinsic = type.sign ? "llvm.ppc.altivec.vaddsbs" : "llvm.ppc.altivec.vaddubs";
            if(type.width == 16)
-              intrinsic = type.sign ? "llvm.ppc.altivec.vaddsws" : "llvm.ppc.altivec.vadduws";
+              intrinsic = type.sign ? "llvm.ppc.altivec.vaddshs" : "llvm.ppc.altivec.vadduhs";
          }
       }
    
@@ -655,7 +655,7 @@ lp_build_sub(struct lp_build_context *bld,
            if(type.width == 8)
               intrinsic = type.sign ? "llvm.ppc.altivec.vsubsbs" : "llvm.ppc.altivec.vsububs";
            if(type.width == 16)
-              intrinsic = type.sign ? "llvm.ppc.altivec.vsubsws" : "llvm.ppc.altivec.vsubuws";
+              intrinsic = type.sign ? "llvm.ppc.altivec.vsubshs" : "llvm.ppc.altivec.vsubuhs";
          }
       }
    
