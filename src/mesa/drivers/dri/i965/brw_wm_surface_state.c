@@ -566,7 +566,20 @@ brw_init_surface_formats(struct brw_context *brw)
    ctx->TextureFormatSupported[MESA_FORMAT_X8_Z24] = true;
    ctx->TextureFormatSupported[MESA_FORMAT_Z32_FLOAT] = true;
    ctx->TextureFormatSupported[MESA_FORMAT_Z32_FLOAT_X24S8] = true;
-   ctx->TextureFormatSupported[MESA_FORMAT_Z16] = true;
+
+   /* It appears that Z16 is slower than Z24 (on Intel Ivybridge and newer
+    * hardware at least), so there's no real reason to prefer it unless you're
+    * under memory (not memory bandwidth) pressure.  Our speculation is that
+    * this is due to either increased fragment shader execution from
+    * GL_LEQUAL/GL_EQUAL depth tests at the reduced precision, or due to
+    * increased depth stalls from a cacheline-based heuristic for detecting
+    * depth stalls.
+    *
+    * However, desktop GL 3.0+ require that you get exactly 16 bits when
+    * asking for DEPTH_COMPONENT16, so we have to respect that.
+    */
+   if (_mesa_is_desktop_gl(ctx))
+      ctx->TextureFormatSupported[MESA_FORMAT_Z16] = true;
 
    /* On hardware that lacks support for ETC1, we map ETC1 to RGBX
     * during glCompressedTexImage2D(). See intel_mipmap_tree::wraps_etc1.
