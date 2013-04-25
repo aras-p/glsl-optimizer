@@ -1410,14 +1410,15 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant,
    struct lp_build_sampler_soa *sampler = 0;
    LLVMValueRef ret, clipmask_bool_ptr;
    const struct draw_geometry_shader *gs = draw->gs.geometry_shader;
+   struct draw_llvm_variant_key *key = &variant->key;
    /* If geometry shader is present we need to skip both the viewport
     * transformation and clipping otherwise the inputs to the geometry
     * shader will be incorrect.
     */
-   const boolean bypass_viewport = gs || variant->key.bypass_viewport;
-   const boolean enable_cliptest = !gs && (variant->key.clip_xy ||
-                                           variant->key.clip_z  ||
-                                           variant->key.clip_user);
+   const boolean bypass_viewport = gs || key->bypass_viewport;
+   const boolean enable_cliptest = !gs && (key->clip_xy ||
+                                           key->clip_z  ||
+                                           key->clip_user);
    LLVMValueRef variant_func;
    const unsigned pos = draw_current_shader_position_output(llvm->draw);
    const unsigned cv = draw_current_shader_clipvertex_output(llvm->draw);
@@ -1507,7 +1508,7 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant,
 
    /* code generated texture sampling */
    sampler = draw_llvm_sampler_soa_create(
-      draw_llvm_variant_key_samplers(&variant->key),
+      draw_llvm_variant_key_samplers(key),
       context_ptr);
 
    if (elts) {
@@ -1524,6 +1525,7 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant,
 
    lp_build_loop_begin(&lp_loop, gallivm, start);
    {
+      unsigned nr_vertex_elements = vs_info->file_max[TGSI_FILE_INPUT] + 1;
       LLVMValueRef inputs[PIPE_MAX_SHADER_INPUTS][TGSI_NUM_CHANNELS];
       LLVMValueRef aos_attribs[PIPE_MAX_SHADER_INPUTS][LP_MAX_VECTOR_WIDTH / 32] = { { 0 } };
       LLVMValueRef io;
@@ -1562,18 +1564,22 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant,
          system_values.vertex_id = LLVMBuildInsertElement(gallivm->builder,
                                                           system_values.vertex_id, true_index,
                                                           lp_build_const_int32(gallivm, i), "");
-         for (j = 0; j < draw->pt.nr_vertex_elements; ++j) {
+         for (j = 0; j < nr_vertex_elements; ++j) {
             struct pipe_vertex_element *velem = &draw->pt.vertex_element[j];
-            LLVMValueRef vb_index =
-               lp_build_const_int32(gallivm, velem->vertex_buffer_index);
-            LLVMValueRef vb = LLVMBuildGEP(builder, vb_ptr, &vb_index, 1, "");
-            generate_fetch(gallivm, vbuffers_ptr,
-                           &aos_attribs[j][i], velem, vb, true_index,
-                           system_values.instance_id);
+            if (j < draw->pt.nr_vertex_elements) {
+               LLVMValueRef vb_index =
+                  lp_build_const_int32(gallivm, velem->vertex_buffer_index);
+               LLVMValueRef vb = LLVMBuildGEP(builder, vb_ptr, &vb_index, 1, "");
+               generate_fetch(gallivm, vbuffers_ptr,
+                              &aos_attribs[j][i], velem, vb, true_index,
+                              system_values.instance_id);
+            } else {
+               aos_attribs[j][i] = lp_build_zero(gallivm, lp_float32_vec4_type());
+            }
          }
       }
       convert_to_soa(gallivm, aos_attribs, inputs,
-                     draw->pt.nr_vertex_elements, vs_type);
+                     nr_vertex_elements, vs_type);
 
       ptr_aos = (const LLVMValueRef (*)[TGSI_NUM_CHANNELS]) inputs;
       generate_vs(variant,
@@ -1584,7 +1590,7 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant,
                   &system_values,
                   context_ptr,
                   sampler,
-                  variant->key.clamp_vertex_color);
+                  key->clamp_vertex_color);
 
       if (pos != -1 && cv != -1) {
          /* store original positions in clip before further manipulation */
@@ -1599,11 +1605,11 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant,
                                          gallivm,
                                          vs_type,
                                          outputs,
-                                         variant->key.clip_xy,
-                                         variant->key.clip_z,
-                                         variant->key.clip_user,
-                                         variant->key.clip_halfz,
-                                         variant->key.ucp_enable,
+                                         key->clip_xy,
+                                         key->clip_z,
+                                         key->clip_user,
+                                         key->clip_halfz,
+                                         key->ucp_enable,
                                          context_ptr, &have_clipdist);
             temp = LLVMBuildOr(builder, clipmask, temp, "");
             /* store temporary clipping boolean value */
@@ -1661,8 +1667,9 @@ draw_llvm_make_variant_key(struct draw_llvm *llvm, char *store)
     * here, not the number of provided elements to match keysize
     * (and the offset of sampler state in the key).
     */
-   key->nr_vertex_elements = llvm->draw->vs.vertex_shader->info.file_max[TGSI_FILE_INPUT] + 1;
-   assert(key->nr_vertex_elements <= llvm->draw->pt.nr_vertex_elements);
+   key->nr_vertex_elements =
+      MIN2(llvm->draw->vs.vertex_shader->info.file_max[TGSI_FILE_INPUT] + 1,
+           llvm->draw->pt.nr_vertex_elements);
 
    /* will have to rig this up properly later */
    key->clip_xy = llvm->draw->clip_xy;
