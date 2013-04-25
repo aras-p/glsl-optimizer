@@ -111,7 +111,7 @@ static void init_fs_constbuf( void )
 
 
    pipe_set_constant_buffer(ctx,
-                            PIPE_SHADER_FRAGMENT, 0,
+                            PIPE_SHADER_VERTEX, 0,
                             constbuf);
 }
 
