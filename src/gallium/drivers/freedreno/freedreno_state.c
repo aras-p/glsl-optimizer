@@ -172,11 +172,27 @@ fd_set_vertex_buffers(struct pipe_context *pctx,
 {
 	struct fd_context *ctx = fd_context(pctx);
 	struct fd_vertexbuf_stateobj *so = &ctx->vertexbuf;
+	int i;
+
+	/* on a2xx, pitch is encoded in the vtx fetch instruction, so
+	 * we need to mark VTXSTATE as dirty as well to trigger patching
+	 * and re-emitting the vtx shader:
+	 */
+	for (i = 0; i < count; i++) {
+		bool new_enabled = vb && (vb[i].buffer || vb[i].user_buffer);
+		bool old_enabled = so->vb[i].buffer || so->vb[i].user_buffer;
+		uint32_t new_stride = vb ? vb[i].stride : 0;
+		uint32_t old_stride = so->vb[i].stride;
+		if ((new_enabled != old_enabled) || (new_stride != old_stride)) {
+			ctx->dirty |= FD_DIRTY_VTXSTATE;
+			break;
+		}
+	}
 
 	util_set_vertex_buffers_mask(so->vb, &so->enabled_mask, vb, start_slot, count);
 	so->count = util_last_bit(so->enabled_mask);
 
-	ctx->dirty |= FD_DIRTY_VERTEXBUF;
+	ctx->dirty |= FD_DIRTY_VTXBUF;
 }
 
 static void
@@ -444,7 +460,7 @@ fd_state_emit(struct pipe_context *pctx, uint32_t dirty)
 				A2XX_PA_CL_VTE_CNTL_VPORT_Z_OFFSET_ENA);
 	}
 
-	if (dirty & (FD_DIRTY_PROG | FD_DIRTY_VTX | FD_DIRTY_VERTTEX | FD_DIRTY_FRAGTEX)) {
+	if (dirty & (FD_DIRTY_PROG | FD_DIRTY_VTXSTATE | FD_DIRTY_TEXSTATE)) {
 		fd_program_validate(ctx);
 		fd_program_emit(ring, &ctx->prog);
 	}

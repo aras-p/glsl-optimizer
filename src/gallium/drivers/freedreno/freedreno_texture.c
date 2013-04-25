@@ -185,6 +185,14 @@ fd_fragtex_sampler_states_bind(struct pipe_context *pctx,
 		unsigned nr, void **hwcso)
 {
 	struct fd_context *ctx = fd_context(pctx);
+
+	/* on a2xx, since there is a flat address space for textures/samplers,
+	 * a change in # of fragment textures/samplers will trigger patching and
+	 * re-emitting the vertex shader:
+	 */
+	if (nr != ctx->fragtex.num_samplers)
+		ctx->dirty |= FD_DIRTY_TEXSTATE;
+
 	bind_sampler_states(&ctx->fragtex, nr, hwcso);
 	ctx->dirty |= FD_DIRTY_FRAGTEX;
 }
@@ -195,6 +203,14 @@ fd_fragtex_set_sampler_views(struct pipe_context *pctx, unsigned nr,
 		struct pipe_sampler_view **views)
 {
 	struct fd_context *ctx = fd_context(pctx);
+
+	/* on a2xx, since there is a flat address space for textures/samplers,
+	 * a change in # of fragment textures/samplers will trigger patching and
+	 * re-emitting the vertex shader:
+	 */
+	if (nr != ctx->fragtex.num_textures)
+		ctx->dirty |= FD_DIRTY_TEXSTATE;
+
 	set_sampler_views(&ctx->fragtex, nr, views);
 	ctx->dirty |= FD_DIRTY_FRAGTEX;
 }
@@ -218,55 +234,24 @@ fd_verttex_set_sampler_views(struct pipe_context *pctx, unsigned nr,
 	ctx->dirty |= FD_DIRTY_VERTTEX;
 }
 
-static bool
-tex_cmp(struct fd_texture_stateobj *tex1, unsigned samp_id1,
-		struct fd_texture_stateobj *tex2, unsigned samp_id2)
-{
-	if ((samp_id1 >= tex1->num_samplers) ||
-			(samp_id2 >= tex2->num_samplers))
-		return false;
-
-	if ((tex1 == tex2) && (samp_id1 == samp_id2))
-		return true;
-
-	if (tex1->textures[samp_id1]->texture != tex2->textures[samp_id2]->texture)
-		return false;
-
-	if (memcmp(&tex1->samplers[samp_id1]->base, &tex2->samplers[samp_id2]->base,
-			sizeof(tex1->samplers[samp_id1]->base)))
-		return false;
-
-	return true;
-}
-
 /* map gallium sampler-id to hw const-idx.. adreno uses a flat address
  * space of samplers (const-idx), so we need to map the gallium sampler-id
  * which is per-shader to a global const-idx space.
+ *
+ * Fragment shader sampler maps directly to const-idx, and vertex shader
+ * is offset by the # of fragment shader samplers.  If the # of fragment
+ * shader samplers changes, this shifts the vertex shader indexes.
+ *
+ * TODO maybe we can do frag shader 0..N  and vert shader N..0 to avoid
+ * this??
  */
 unsigned
 fd_get_const_idx(struct fd_context *ctx, struct fd_texture_stateobj *tex,
 		unsigned samp_id)
 {
-	unsigned i, const_idx = 0;
-
-	/* TODO maybe worth having some sort of cache, because we need to
-	 * do this loop thru all the samplers both when patching shaders
-	 * and also when emitting sampler state..
-	 */
-
-	for (i = 0; i < ctx->verttex.num_samplers; i++) {
-		if (tex_cmp(&ctx->verttex, i, tex, samp_id))
-			return const_idx;
-		const_idx++;
-	}
-
-	for (i = 0; i < ctx->fragtex.num_samplers; i++) {
-		if (tex_cmp(&ctx->fragtex, i, tex, samp_id))
-			return const_idx;
-		const_idx++;
-	}
-
-	return const_idx;
+	if (tex == &ctx->fragtex)
+		return samp_id;
+	return samp_id + ctx->fragtex.num_samplers;
 }
 
 void

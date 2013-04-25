@@ -65,7 +65,7 @@ fd_vertex_state_bind(struct pipe_context *pctx, void *hwcso)
 {
 	struct fd_context *ctx = fd_context(pctx);
 	ctx->vtx = hwcso;
-	ctx->dirty |= FD_DIRTY_VTX;
+	ctx->dirty |= FD_DIRTY_VTXSTATE;
 }
 
 static void
@@ -193,9 +193,10 @@ fd_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
 	/* and any buffers used, need to be resolved: */
 	ctx->resolve |= buffers;
 
-	fd_state_emit(pctx, ctx->dirty);
+	if (ctx->dirty & FD_DIRTY_VTXBUF)
+		emit_vertexbufs(ctx);
 
-	emit_vertexbufs(ctx, info->count);
+	fd_state_emit(pctx, ctx->dirty);
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
 	OUT_RING(ring, CP_REG(REG_A2XX_VGT_INDX_OFFSET));

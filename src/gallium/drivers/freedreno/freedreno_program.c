@@ -275,11 +275,11 @@ fd_program_validate(struct fd_context *ctx)
 	prog->dirty = 0;
 
 	/* if necessary, fix up vertex fetch instructions: */
-	if (ctx->dirty & (FD_DIRTY_VTX | FD_DIRTY_VERTEXBUF | FD_DIRTY_PROG))
+	if (ctx->dirty & (FD_DIRTY_VTXSTATE | FD_DIRTY_PROG))
 		patch_vtx_fetches(ctx, prog->vp, ctx->vtx);
 
 	/* if necessary, fix up texture fetch instructions: */
-	if (ctx->dirty & (FD_DIRTY_VERTTEX | FD_DIRTY_FRAGTEX | FD_DIRTY_PROG)) {
+	if (ctx->dirty & (FD_DIRTY_TEXSTATE | FD_DIRTY_PROG)) {
 		patch_tex_fetches(ctx, prog->vp, &ctx->verttex);
 		patch_tex_fetches(ctx, prog->fp, &ctx->fragtex);
 	}
@@ -400,9 +400,7 @@ create_blit_vp(void)
 	ir2_reg_create(instr, 1, NULL, 0);
 	ir2_reg_create(instr, 1, NULL, 0);
 
-
 	return assemble(so);
-
 }
 
 /* Creates shader:

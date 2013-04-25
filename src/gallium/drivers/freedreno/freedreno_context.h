@@ -144,23 +144,24 @@ struct fd_context {
 
 	/* which state objects need to be re-emit'd: */
 	enum {
-		FD_DIRTY_BLEND       = (1 << 0),
-		FD_DIRTY_RASTERIZER  = (1 << 1),
-		FD_DIRTY_ZSA         = (1 << 2),
-		FD_DIRTY_FRAGTEX     = (1 << 3),
-		FD_DIRTY_VERTTEX     = (1 << 4),
-		FD_DIRTY_PROG        = (1 << 5),
-		FD_DIRTY_VTX         = (1 << 6),
-		FD_DIRTY_BLEND_COLOR = (1 << 7),
-		FD_DIRTY_STENCIL_REF = (1 << 8),
-		FD_DIRTY_SAMPLE_MASK = (1 << 9),
+		FD_DIRTY_BLEND       = (1 <<  0),
+		FD_DIRTY_RASTERIZER  = (1 <<  1),
+		FD_DIRTY_ZSA         = (1 <<  2),
+		FD_DIRTY_FRAGTEX     = (1 <<  3),
+		FD_DIRTY_VERTTEX     = (1 <<  4),
+		FD_DIRTY_TEXSTATE    = (1 <<  5),
+		FD_DIRTY_PROG        = (1 <<  6),
+		FD_DIRTY_BLEND_COLOR = (1 <<  7),
+		FD_DIRTY_STENCIL_REF = (1 <<  8),
+		FD_DIRTY_SAMPLE_MASK = (1 <<  9),
 		FD_DIRTY_FRAMEBUFFER = (1 << 10),
-		FD_DIRTY_STIPPLE     = (1 << 12),
+		FD_DIRTY_STIPPLE     = (1 << 11),
 		FD_DIRTY_VIEWPORT    = (1 << 12),
 		FD_DIRTY_CONSTBUF    = (1 << 13),
-		FD_DIRTY_VERTEXBUF   = (1 << 14),
-		FD_DIRTY_INDEXBUF    = (1 << 15),
-		FD_DIRTY_SCISSOR     = (1 << 16),
+		FD_DIRTY_VTXSTATE    = (1 << 14),
+		FD_DIRTY_VTXBUF      = (1 << 15),
+		FD_DIRTY_INDEXBUF    = (1 << 16),
+		FD_DIRTY_SCISSOR     = (1 << 17),
 	} dirty;
 
 	struct fd_blend_stateobj *blend;
