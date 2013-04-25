@@ -4743,6 +4743,26 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 		/* the array index is read from Z */
 		tex.coord_type_z = 0;
 
+	/* mask unused source components */
+	if (opcode == FETCH_OP_SAMPLE) {
+		switch (inst->Texture.Texture) {
+		case TGSI_TEXTURE_2D:
+		case TGSI_TEXTURE_RECT:
+			tex.src_sel_z = 7;
+			tex.src_sel_w = 7;
+			break;
+		case TGSI_TEXTURE_1D_ARRAY:
+			tex.src_sel_y = 7;
+			tex.src_sel_w = 7;
+			break;
+		case TGSI_TEXTURE_1D:
+			tex.src_sel_y = 7;
+			tex.src_sel_z = 7;
+			tex.src_sel_w = 7;
+			break;
+		}
+	}
+
 	r = r600_bytecode_add_tex(ctx->bc, &tex);
 	if (r)
 		return r;
