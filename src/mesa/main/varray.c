@@ -269,7 +269,6 @@ update_array(struct gl_context *ctx,
                                  ctx->Array.ArrayBufferObj);
 
    ctx->NewState |= _NEW_ARRAY;
-   ctx->Array.ArrayObj->NewArrays |= VERT_BIT(attrib);
 }
 
 
@@ -521,7 +520,6 @@ _mesa_EnableVertexAttribArray(GLuint index)
       FLUSH_VERTICES(ctx, _NEW_ARRAY);
       arrayObj->VertexAttrib[VERT_ATTRIB_GENERIC(index)].Enabled = GL_TRUE;
       arrayObj->_Enabled |= VERT_BIT_GENERIC(index);
-      arrayObj->NewArrays |= VERT_BIT_GENERIC(index);
    }
 }
 
@@ -547,7 +545,6 @@ _mesa_DisableVertexAttribArray(GLuint index)
       FLUSH_VERTICES(ctx, _NEW_ARRAY);
       arrayObj->VertexAttrib[VERT_ATTRIB_GENERIC(index)].Enabled = GL_FALSE;
       arrayObj->_Enabled &= ~VERT_BIT_GENERIC(index);
-      arrayObj->NewArrays |= VERT_BIT_GENERIC(index);
    }
 }
 
@@ -1148,7 +1145,6 @@ _mesa_VertexAttribDivisor(GLuint index, GLuint divisor)
    if (array->InstanceDivisor != divisor) {
       FLUSH_VERTICES(ctx, _NEW_ARRAY);
       array->InstanceDivisor = divisor;
-      ctx->Array.ArrayObj->NewArrays |= VERT_BIT(VERT_ATTRIB_GENERIC(index));
    }
 }
 

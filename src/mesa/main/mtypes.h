@@ -1502,9 +1502,6 @@ struct gl_array_object
    /** Mask of VERT_BIT_* values indicating which arrays are enabled */
    GLbitfield64 _Enabled;
 
-   /** Mask of VERT_BIT_* values indicating changed/dirty arrays */
-   GLbitfield64 NewArrays;
-
    /**
     * Min of all enabled arrays' _MaxElement.  When arrays reside inside VBOs
     * we can determine the max legal (in bounds) glDrawElements array index.
