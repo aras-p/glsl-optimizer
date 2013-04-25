@@ -155,7 +155,8 @@ fd_resource_create(struct pipe_screen *pscreen,
 	rsc->cpp = util_format_get_blocksize(tmpl->format);
 
 	size = rsc->pitch * tmpl->height0 * rsc->cpp;
-	flags = DRM_FREEDRENO_GEM_TYPE_KMEM; /* TODO */
+	flags = DRM_FREEDRENO_GEM_CACHE_WCOMBINE |
+			DRM_FREEDRENO_GEM_TYPE_KMEM; /* TODO */
 
 	rsc->bo = fd_bo_new(screen->dev, size, flags);
 
