@@ -1525,7 +1525,6 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant,
 
    lp_build_loop_begin(&lp_loop, gallivm, start);
    {
-      unsigned nr_vertex_elements = vs_info->file_max[TGSI_FILE_INPUT] + 1;
       LLVMValueRef inputs[PIPE_MAX_SHADER_INPUTS][TGSI_NUM_CHANNELS];
       LLVMValueRef aos_attribs[PIPE_MAX_SHADER_INPUTS][LP_MAX_VECTOR_WIDTH / 32] = { { 0 } };
       LLVMValueRef io;
@@ -1564,22 +1563,18 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant,
          system_values.vertex_id = LLVMBuildInsertElement(gallivm->builder,
                                                           system_values.vertex_id, true_index,
                                                           lp_build_const_int32(gallivm, i), "");
-         for (j = 0; j < nr_vertex_elements; ++j) {
+         for (j = 0; j < draw->pt.nr_vertex_elements; ++j) {
             struct pipe_vertex_element *velem = &draw->pt.vertex_element[j];
-            if (j < draw->pt.nr_vertex_elements) {
-               LLVMValueRef vb_index =
-                  lp_build_const_int32(gallivm, velem->vertex_buffer_index);
-               LLVMValueRef vb = LLVMBuildGEP(builder, vb_ptr, &vb_index, 1, "");
-               generate_fetch(gallivm, vbuffers_ptr,
-                              &aos_attribs[j][i], velem, vb, true_index,
-                              system_values.instance_id);
-            } else {
-               aos_attribs[j][i] = lp_build_zero(gallivm, lp_float32_vec4_type());
-            }
+            LLVMValueRef vb_index =
+               lp_build_const_int32(gallivm, velem->vertex_buffer_index);
+            LLVMValueRef vb = LLVMBuildGEP(builder, vb_ptr, &vb_index, 1, "");
+            generate_fetch(gallivm, vbuffers_ptr,
+                           &aos_attribs[j][i], velem, vb, true_index,
+                           system_values.instance_id);
          }
       }
       convert_to_soa(gallivm, aos_attribs, inputs,
-                     nr_vertex_elements, vs_type);
+                     draw->pt.nr_vertex_elements, vs_type);
 
       ptr_aos = (const LLVMValueRef (*)[TGSI_NUM_CHANNELS]) inputs;
       generate_vs(variant,
@@ -1667,9 +1662,8 @@ draw_llvm_make_variant_key(struct draw_llvm *llvm, char *store)
     * here, not the number of provided elements to match keysize
     * (and the offset of sampler state in the key).
     */
-   key->nr_vertex_elements =
-      MIN2(llvm->draw->vs.vertex_shader->info.file_max[TGSI_FILE_INPUT] + 1,
-           llvm->draw->pt.nr_vertex_elements);
+   key->nr_vertex_elements = llvm->draw->vs.vertex_shader->info.file_max[TGSI_FILE_INPUT] + 1;
+   assert(key->nr_vertex_elements <= llvm->draw->pt.nr_vertex_elements);
 
    /* will have to rig this up properly later */
    key->clip_xy = llvm->draw->clip_xy;
