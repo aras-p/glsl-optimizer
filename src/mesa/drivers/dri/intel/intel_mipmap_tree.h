@@ -540,8 +540,7 @@ intel_miptree_alloc_mcs(struct intel_context *intel,
 
 bool
 intel_miptree_alloc_hiz(struct intel_context *intel,
-			struct intel_mipmap_tree *mt,
-                        GLuint num_samples);
+			struct intel_mipmap_tree *mt);
 
 bool
 intel_miptree_slice_has_hiz(struct intel_mipmap_tree *mt,

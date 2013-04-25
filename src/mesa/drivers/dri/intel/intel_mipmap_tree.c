@@ -573,7 +573,7 @@ intel_miptree_create_for_renderbuffer(struct intel_context *intel,
       goto fail;
 
    if (intel->vtbl.is_hiz_depth_format(intel, format)) {
-      ok = intel_miptree_alloc_hiz(intel, mt, num_samples);
+      ok = intel_miptree_alloc_hiz(intel, mt);
       if (!ok)
          goto fail;
    }
@@ -1066,8 +1066,7 @@ intel_miptree_slice_enable_hiz(struct intel_context *intel,
 
 bool
 intel_miptree_alloc_hiz(struct intel_context *intel,
-			struct intel_mipmap_tree *mt,
-                        GLuint num_samples)
+			struct intel_mipmap_tree *mt)
 {
    assert(mt->hiz_mt == NULL);
    mt->hiz_mt = intel_miptree_create(intel,
@@ -1079,7 +1078,7 @@ intel_miptree_alloc_hiz(struct intel_context *intel,
                                      mt->logical_height0,
                                      mt->logical_depth0,
                                      true,
-                                     num_samples,
+                                     mt->num_samples,
                                      false /* force_y_tiling */);
 
    if (!mt->hiz_mt)
