@@ -115,6 +115,7 @@ struct _egl_extensions
 
    EGLBoolean EXT_create_context_robustness;
    EGLBoolean EXT_buffer_age;
+   EGLBoolean EXT_swap_buffers_with_damage;
 };
 
 

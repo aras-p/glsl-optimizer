@@ -131,6 +131,9 @@ typedef EGLBoolean (*PostSubBufferNV_t)(_EGLDriver *drv, _EGLDisplay *disp, _EGL
 typedef EGLint (*QueryBufferAge_t)(_EGLDriver *drv,
                                    _EGLDisplay *dpy, _EGLSurface *surface);
 
+#ifdef EGL_EXT_swap_buffers_with_damage
+typedef EGLBoolean (*SwapBuffersWithDamageEXT_t) (_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surface, const EGLint *rects, EGLint n_rects);
+#endif
 
 /**
  * The API dispatcher jumps through these functions
@@ -206,6 +209,10 @@ struct _egl_api
    UnbindWaylandDisplayWL_t UnbindWaylandDisplayWL;
    QueryWaylandBufferWL_t QueryWaylandBufferWL;
 #endif
+
+#ifdef EGL_EXT_swap_buffers_with_damage
+   SwapBuffersWithDamageEXT_t SwapBuffersWithDamageEXT;
+#endif /* EGL_EXT_swap_buffers_with_damage */
 
    PostSubBufferNV_t PostSubBufferNV;
 

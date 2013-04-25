@@ -701,6 +701,35 @@ eglSwapBuffers(EGLDisplay dpy, EGLSurface surface)
 }
 
 
+#ifdef EGL_EXT_swap_buffers_with_damage
+
+EGLBoolean EGLAPIENTRY
+eglSwapBuffersWithDamageEXT(EGLDisplay dpy, EGLSurface surface,
+                            EGLint *rects, EGLint n_rects)
+{
+   _EGLContext *ctx = _eglGetCurrentContext();
+   _EGLDisplay *disp = _eglLockDisplay(dpy);
+   _EGLSurface *surf = _eglLookupSurface(surface, disp);
+   _EGLDriver *drv;
+   EGLBoolean ret;
+
+   _EGL_CHECK_SURFACE(disp, surf, EGL_FALSE, drv);
+
+   /* surface must be bound to current context in EGL 1.4 */
+   if (_eglGetContextHandle(ctx) == EGL_NO_CONTEXT ||
+       surf != ctx->DrawSurface)
+      RETURN_EGL_ERROR(disp, EGL_BAD_SURFACE, EGL_FALSE);
+
+   if ((n_rects > 0 && rects == NULL) || n_rects < 0)
+      RETURN_EGL_ERROR(disp, EGL_BAD_PARAMETER, EGL_FALSE);
+
+   ret = drv->API.SwapBuffersWithDamageEXT(drv, disp, surf, rects, n_rects);
+
+   RETURN_EGL_EVAL(disp, ret);
+}
+
+#endif /* EGL_EXT_swap_buffers_with_damage */
+
 EGLBoolean EGLAPIENTRY
 eglCopyBuffers(EGLDisplay dpy, EGLSurface surface, EGLNativePixmapType target)
 {
@@ -939,6 +968,9 @@ eglGetProcAddress(const char *procname)
       { "eglQueryWaylandBufferWL", (_EGLProc) eglQueryWaylandBufferWL },
 #endif
       { "eglPostSubBufferNV", (_EGLProc) eglPostSubBufferNV },
+#ifdef EGL_EXT_swap_buffers_with_damage
+      { "eglSwapBuffersWithDamageEXT", (_EGLProc) eglSwapBuffersWithDamageEXT },
+#endif
       { NULL, NULL }
    };
    EGLint i;
