@@ -984,16 +984,24 @@ fs_visitor::emit_linterp(const fs_reg &attr, const fs_reg &interp,
                          bool is_centroid)
 {
    brw_wm_barycentric_interp_mode barycoord_mode;
-   if (is_centroid) {
-      if (interpolation_mode == INTERP_QUALIFIER_SMOOTH)
-         barycoord_mode = BRW_WM_PERSPECTIVE_CENTROID_BARYCENTRIC;
-      else
-         barycoord_mode = BRW_WM_NONPERSPECTIVE_CENTROID_BARYCENTRIC;
+   if (intel->gen >= 6) {
+      if (is_centroid) {
+         if (interpolation_mode == INTERP_QUALIFIER_SMOOTH)
+            barycoord_mode = BRW_WM_PERSPECTIVE_CENTROID_BARYCENTRIC;
+         else
+            barycoord_mode = BRW_WM_NONPERSPECTIVE_CENTROID_BARYCENTRIC;
+      } else {
+         if (interpolation_mode == INTERP_QUALIFIER_SMOOTH)
+            barycoord_mode = BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC;
+         else
+            barycoord_mode = BRW_WM_NONPERSPECTIVE_PIXEL_BARYCENTRIC;
+      }
    } else {
-      if (interpolation_mode == INTERP_QUALIFIER_SMOOTH)
-         barycoord_mode = BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC;
-      else
-         barycoord_mode = BRW_WM_NONPERSPECTIVE_PIXEL_BARYCENTRIC;
+      /* On Ironlake and below, there is only one interpolation mode.
+       * Centroid interpolation doesn't mean anything on this hardware --
+       * there is no multisampling.
+       */
+      barycoord_mode = BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC;
    }
    return emit(FS_OPCODE_LINTERP, attr,
                this->delta_x[barycoord_mode],
