@@ -31,46 +31,34 @@
 
 #include "eglcompiler.h"
 
-#ifdef HAVE_PTHREAD
-#include <pthread.h>
+#include "c11/threads.h"
 
-typedef pthread_mutex_t _EGLMutex;
+typedef mtx_t _EGLMutex;
 
 static INLINE void _eglInitMutex(_EGLMutex *m)
 {
-   pthread_mutex_init(m, NULL);
+   mtx_init(m, mtx_plain);
 }
 
 static INLINE void
 _eglDestroyMutex(_EGLMutex *m)
 {
-   pthread_mutex_destroy(m);
+   mtx_destroy(m);
 }
 
 static INLINE void
 _eglLockMutex(_EGLMutex *m)
 {
-   pthread_mutex_lock(m);
+   mtx_lock(m);
 }
 
 static INLINE void
 _eglUnlockMutex(_EGLMutex *m)
 {
-   pthread_mutex_unlock(m);
+   mtx_unlock(m);
 }
 
-#define _EGL_MUTEX_INITIALIZER PTHREAD_MUTEX_INITIALIZER
+#define _EGL_MUTEX_INITIALIZER _MTX_INITIALIZER_NP
 
-#else
-
-typedef int _EGLMutex;
-static INLINE void _eglInitMutex(_EGLMutex *m) { (void) m; }
-static INLINE void _eglDestroyMutex(_EGLMutex *m) { (void) m; }
-static INLINE void _eglLockMutex(_EGLMutex *m) { (void) m; }
-static INLINE void _eglUnlockMutex(_EGLMutex *m) { (void) m; }
-
-#define _EGL_MUTEX_INITIALIZER 0
-
-#endif
 
 #endif /* EGLMUTEX_INCLUDED */
