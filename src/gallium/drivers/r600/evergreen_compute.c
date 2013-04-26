@@ -454,7 +454,7 @@ static void compute_emit_cs(struct r600_context *ctx, const uint *block_layout,
 #if 0
 	COMPUTE_DBG(ctx->screen, "cdw: %i\n", cs->cdw);
 	for (i = 0; i < cs->cdw; i++) {
-		COMPUTE_DBG(ctx->screen, "%4i : 0x%08X\n", i, ctx->cs->buf[i]);
+		COMPUTE_DBG(ctx->screen, "%4i : 0x%08X\n", i, cs->buf[i]);
 	}
 #endif
 
