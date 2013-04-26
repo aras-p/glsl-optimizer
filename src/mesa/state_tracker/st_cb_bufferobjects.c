@@ -247,8 +247,10 @@ st_bufferobj_data(struct gl_context *ctx,
 
       if (data)
          pipe_buffer_write(pipe, st_obj->buffer, 0, size, data);
-      return GL_TRUE;
    }
+
+   /* BufferData may change a uniform buffer, need to update it */
+   st->dirty.st |= ST_NEW_UNIFORM_BUFFER;
 
    return GL_TRUE;
 }

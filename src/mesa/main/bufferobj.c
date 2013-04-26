@@ -2060,7 +2060,8 @@ set_ubo_binding(struct gl_context *ctx,
       return;
    }
 
-   FLUSH_VERTICES(ctx, _NEW_BUFFER_OBJECT);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->NewDriverState |= ctx->DriverFlags.NewUniformBuffer;
 
    _mesa_reference_buffer_object(ctx, &binding->BufferObject, bufObj);
    binding->Offset = offset;

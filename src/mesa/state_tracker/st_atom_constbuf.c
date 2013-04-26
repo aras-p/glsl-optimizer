@@ -217,8 +217,8 @@ static void bind_vs_ubos(struct st_context *st)
 const struct st_tracked_state st_bind_vs_ubos = {
    "st_bind_vs_ubos",
    {
-      (_NEW_PROGRAM | _NEW_BUFFER_OBJECT),
-      ST_NEW_VERTEX_PROGRAM,
+      _NEW_PROGRAM,
+      ST_NEW_VERTEX_PROGRAM | ST_NEW_UNIFORM_BUFFER,
    },
    bind_vs_ubos
 };
@@ -231,14 +231,13 @@ static void bind_fs_ubos(struct st_context *st)
       return;
 
    st_bind_ubos(st, prog->_LinkedShaders[MESA_SHADER_FRAGMENT], PIPE_SHADER_FRAGMENT);
-
 }
 
 const struct st_tracked_state st_bind_fs_ubos = {
    "st_bind_fs_ubos",
    {
-      (_NEW_PROGRAM | _NEW_BUFFER_OBJECT),
-      ST_NEW_FRAGMENT_PROGRAM,
+      _NEW_PROGRAM,
+      ST_NEW_FRAGMENT_PROGRAM | ST_NEW_UNIFORM_BUFFER,
    },
    bind_fs_ubos
 };

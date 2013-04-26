@@ -631,7 +631,9 @@ _mesa_UniformBlockBinding(GLuint program,
        uniformBlockBinding) {
       int i;
 
-      FLUSH_VERTICES(ctx, _NEW_BUFFER_OBJECT);
+      FLUSH_VERTICES(ctx, 0);
+      ctx->NewDriverState |= ctx->DriverFlags.NewUniformBuffer;
+
       shProg->UniformBlocks[uniformBlockIndex].Binding = uniformBlockBinding;
 
       for (i = 0; i < MESA_SHADER_TYPES; i++) {

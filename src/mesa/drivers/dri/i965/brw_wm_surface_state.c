@@ -1564,9 +1564,8 @@ brw_upload_wm_ubo_surfaces(struct brw_context *brw)
 
 const struct brw_tracked_state brw_wm_ubo_surfaces = {
    .dirty = {
-      .mesa = (_NEW_PROGRAM |
-	       _NEW_BUFFER_OBJECT),
-      .brw = BRW_NEW_BATCH,
+      .mesa = _NEW_PROGRAM,
+      .brw = BRW_NEW_BATCH | BRW_NEW_UNIFORM_BUFFER,
       .cache = 0,
    },
    .emit = brw_upload_wm_ubo_surfaces,

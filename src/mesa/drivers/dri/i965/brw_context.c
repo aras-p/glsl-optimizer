@@ -152,6 +152,7 @@ brwCreateContext(int api,
 
    ctx->DriverFlags.NewTransformFeedback = BRW_NEW_TRANSFORM_FEEDBACK;
    ctx->DriverFlags.NewRasterizerDiscard = BRW_NEW_RASTERIZER_DISCARD;
+   ctx->DriverFlags.NewUniformBuffer = BRW_NEW_UNIFORM_BUFFER;
 
    ctx->Const.MaxDualSourceDrawBuffers = 1;
    ctx->Const.MaxDrawBuffers = BRW_MAX_DRAW_BUFFERS;

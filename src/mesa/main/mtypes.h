@@ -3333,6 +3333,12 @@ struct gl_driver_flags
 
    /** gl_context::RasterDiscard */
    GLbitfield NewRasterizerDiscard;
+
+   /**
+    * gl_context::UniformBufferBindings
+    * gl_shader_program::UniformBlocks
+    */
+   GLbitfield NewUniformBuffer;
 };
 
 struct gl_uniform_buffer_binding

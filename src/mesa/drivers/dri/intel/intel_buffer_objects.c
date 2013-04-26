@@ -39,6 +39,10 @@
 #include "intel_mipmap_tree.h"
 #include "intel_regions.h"
 
+#ifndef I915
+#include "brw_context.h"
+#endif
+
 static GLboolean
 intel_bufferobj_unmap(struct gl_context * ctx, struct gl_buffer_object *obj);
 
@@ -49,6 +53,15 @@ intel_bufferobj_alloc_buffer(struct intel_context *intel,
 {
    intel_obj->buffer = drm_intel_bo_alloc(intel->bufmgr, "bufferobj",
 					  intel_obj->Base.Size, 64);
+
+#ifndef I915
+   /* the buffer might be bound as a uniform buffer, need to update it
+    */
+   {
+      struct brw_context *brw = brw_context(&intel->ctx);
+      brw->state.dirty.brw |= BRW_NEW_UNIFORM_BUFFER;
+   }
+#endif
 }
 
 static void
