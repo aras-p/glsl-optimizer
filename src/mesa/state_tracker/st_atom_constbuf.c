@@ -229,7 +229,7 @@ static void bind_vs_ubos(struct st_context *st)
 const struct st_tracked_state st_bind_vs_ubos = {
    "st_bind_vs_ubos",
    {
-      _NEW_PROGRAM,
+      0,
       ST_NEW_VERTEX_PROGRAM | ST_NEW_UNIFORM_BUFFER,
    },
    bind_vs_ubos
@@ -248,7 +248,7 @@ static void bind_fs_ubos(struct st_context *st)
 const struct st_tracked_state st_bind_fs_ubos = {
    "st_bind_fs_ubos",
    {
-      _NEW_PROGRAM,
+      0,
       ST_NEW_FRAGMENT_PROGRAM | ST_NEW_UNIFORM_BUFFER,
    },
    bind_fs_ubos
