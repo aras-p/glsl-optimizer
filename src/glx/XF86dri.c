@@ -305,9 +305,11 @@ XF86DRIGetClientDriverName(Display * dpy, int screen,
    *ddxDriverPatchVersion = rep.ddxDriverPatchVersion;
 
    if (rep.length) {
-      if (!
-          (*clientDriverName =
-           calloc(rep.clientDriverNameLength + 1, 1))) {
+      if (rep.clientDriverNameLength < INT_MAX)
+         *clientDriverName = calloc(rep.clientDriverNameLength + 1, 1);
+      else
+         *clientDriverName = NULL;
+      if (*clientDriverName == NULL) {
          _XEatData(dpy, ((rep.clientDriverNameLength + 3) & ~3));
          UnlockDisplay(dpy);
          SyncHandle();
