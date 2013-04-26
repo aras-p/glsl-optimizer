@@ -227,8 +227,8 @@ read_buffer_enum_to_index(GLenum buffer)
  * \param buffer  buffer token such as GL_LEFT or GL_FRONT_AND_BACK, etc.
  *
  * Note that the behaviour of this function depends on whether the
- * current ctx->DrawBuffer is a window-system framebuffer (Name=0) or
- * a user-created framebuffer object (Name!=0).
+ * current ctx->DrawBuffer is a window-system framebuffer or a user-created
+ * framebuffer object.
  *   In the former case, we update the per-context ctx->Color.DrawBuffer
  *   state var _and_ the FB's ColorDrawBuffer state.
  *   In the later case, we update the FB's ColorDrawBuffer state only.
