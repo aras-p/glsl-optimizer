@@ -38,6 +38,7 @@
 #include "lp_flush.h"
 #include "lp_fence.h"
 #include "lp_query.h"
+#include "lp_screen.h"
 #include "lp_state.h"
 
 
@@ -92,6 +93,7 @@ llvmpipe_get_query_result(struct pipe_context *pipe,
                           boolean wait,
                           union pipe_query_result *vresult)
 {
+   struct llvmpipe_screen *screen = llvmpipe_screen(pipe->screen);
    struct llvmpipe_query *pq = llvmpipe_query(q);
    uint64_t *result = (uint64_t *)vresult;
    int i;
@@ -118,12 +120,12 @@ llvmpipe_get_query_result(struct pipe_context *pipe,
 
    switch (pq->type) {
    case PIPE_QUERY_OCCLUSION_COUNTER:
-      for (i = 0; i < LP_MAX_THREADS; i++) {
+      for (i = 0; i < screen->num_threads; i++) {
          *result += pq->count[i];
       }
       break;
    case PIPE_QUERY_TIMESTAMP:
-      for (i = 0; i < LP_MAX_THREADS; i++) {
+      for (i = 0; i < screen->num_threads; i++) {
          if (pq->count[i] > *result) {
             *result = pq->count[i];
          }
