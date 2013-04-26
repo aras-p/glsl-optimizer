@@ -177,3 +177,17 @@ struct pipe_video_decoder *r600_uvd_create_decoder(struct pipe_context *context,
 			 	   width, height, max_references, expect_chunked_decode,
 				   ctx->ws, r600_uvd_set_dtb);
 }
+
+int r600_uvd_get_video_param(struct pipe_screen *screen,
+			     enum pipe_video_profile profile,
+			     enum pipe_video_cap param)
+{
+	struct r600_screen *rscreen = (struct r600_screen *)screen;
+
+	/* No support for MPEG4 on UVD 2.x */
+	if (param == PIPE_VIDEO_CAP_SUPPORTED && rscreen->family < CHIP_CEDAR &&
+	    u_reduce_video_profile(profile) == PIPE_VIDEO_CODEC_MPEG4)
+		return false;
+
+	return ruvd_get_video_param(screen, profile, param);
+}

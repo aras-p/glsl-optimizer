@@ -902,6 +902,9 @@ struct pipe_video_decoder *r600_uvd_create_decoder(struct pipe_context *context,
 struct pipe_video_buffer *r600_video_buffer_create(struct pipe_context *pipe,
 						   const struct pipe_video_buffer *tmpl);
 
+int r600_uvd_get_video_param(struct pipe_screen *screen,
+			     enum pipe_video_profile profile,
+			     enum pipe_video_cap param);
 
 /*
  * Helpers for building command buffers

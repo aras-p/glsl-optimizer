@@ -1076,7 +1076,6 @@ int ruvd_get_video_param(struct pipe_screen *screen,
 		switch (u_reduce_video_profile(profile)) {
 		case PIPE_VIDEO_CODEC_MPEG12:
 		case PIPE_VIDEO_CODEC_MPEG4:
-			/* TODO not all hw families support MPEG4 */
 		case PIPE_VIDEO_CODEC_MPEG4_AVC:
 		case PIPE_VIDEO_CODEC_VC1:
 			return true;
