@@ -155,8 +155,8 @@ static struct radeon_winsys_cs_handle* r600_uvd_set_dtb(struct ruvd_msg *msg, st
 	struct r600_texture *luma = (struct r600_texture *)buf->resources[0];
 	struct r600_texture *chroma = (struct r600_texture *)buf->resources[1];
 
-	msg->decode.dt_field_mode = buf->base.interlaced;
-	msg->decode.dt_surf_tile_config |= RUVD_NUM_BANKS(eg_num_banks(rscreen->tiling_info.num_banks));
+	msg->body.decode.dt_field_mode = buf->base.interlaced;
+	msg->body.decode.dt_surf_tile_config |= RUVD_NUM_BANKS(eg_num_banks(rscreen->tiling_info.num_banks));
 
 	ruvd_set_dt_surfaces(msg, &luma->surface, &chroma->surface);
 

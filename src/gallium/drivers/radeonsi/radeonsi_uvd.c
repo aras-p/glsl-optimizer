@@ -136,7 +136,7 @@ static struct radeon_winsys_cs_handle* radeonsi_uvd_set_dtb(struct ruvd_msg *msg
 	struct r600_resource_texture *luma = (struct r600_resource_texture *)buf->resources[0];
 	struct r600_resource_texture *chroma = (struct r600_resource_texture *)buf->resources[1];
 
-	msg->decode.dt_field_mode = buf->base.interlaced;
+	msg->body.decode.dt_field_mode = buf->base.interlaced;
 
 	ruvd_set_dt_surfaces(msg, &luma->surface, &chroma->surface);
 

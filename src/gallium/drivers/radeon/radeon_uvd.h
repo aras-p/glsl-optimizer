@@ -328,8 +328,8 @@ struct ruvd_msg {
 				struct ruvd_mpeg2	mpeg2;
 				struct ruvd_mpeg4	mpeg4;
 
-				uint32_t codec_info[768];
-			} ;
+				uint32_t info[768];
+			} codec;
 
 			uint8_t		extension_support;
 			uint8_t		reserved_8bit_1;
@@ -337,7 +337,7 @@ struct ruvd_msg {
 			uint8_t		reserved_8bit_3;
 			uint32_t	extension_reserved[64];
 		} decode;
-	};
+	} body;
 };
 
 /* driver dependent callback */

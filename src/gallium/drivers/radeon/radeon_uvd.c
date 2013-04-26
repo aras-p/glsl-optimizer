@@ -744,31 +744,31 @@ static void ruvd_end_frame(struct pipe_video_decoder *decoder,
 	msg.stream_handle = dec->stream_handle;
 	msg.status_report_feedback_number = dec->frame_number;
 
-	msg.decode.stream_type = profile2stream_type(dec->base.profile);
-	msg.decode.decode_flags = 0x1;
-	msg.decode.width_in_samples = dec->base.width;
-	msg.decode.height_in_samples = dec->base.height;
+	msg.body.decode.stream_type = profile2stream_type(dec->base.profile);
+	msg.body.decode.decode_flags = 0x1;
+	msg.body.decode.width_in_samples = dec->base.width;
+	msg.body.decode.height_in_samples = dec->base.height;
 
-	msg.decode.dpb_size = dec->dpb.buf->size;
-	msg.decode.bsd_size = bs_size;
+	msg.body.decode.dpb_size = dec->dpb.buf->size;
+	msg.body.decode.bsd_size = bs_size;
 
 	dt = dec->set_dtb(&msg, (struct vl_video_buffer *)target);
 
 	switch (u_reduce_video_profile(picture->profile)) {
 	case PIPE_VIDEO_CODEC_MPEG4_AVC:
-		msg.decode.h264 = get_h264_msg(dec, (struct pipe_h264_picture_desc*)picture);
+		msg.body.decode.codec.h264 = get_h264_msg(dec, (struct pipe_h264_picture_desc*)picture);
 		break;
 
 	case PIPE_VIDEO_CODEC_VC1:
-		msg.decode.vc1 = get_vc1_msg((struct pipe_vc1_picture_desc*)picture);
+		msg.body.decode.codec.vc1 = get_vc1_msg((struct pipe_vc1_picture_desc*)picture);
 		break;
 
 	case PIPE_VIDEO_CODEC_MPEG12:
-		msg.decode.mpeg2 = get_mpeg2_msg(dec, (struct pipe_mpeg12_picture_desc*)picture);
+		msg.body.decode.codec.mpeg2 = get_mpeg2_msg(dec, (struct pipe_mpeg12_picture_desc*)picture);
 		break;
 
 	case PIPE_VIDEO_CODEC_MPEG4:
-		msg.decode.mpeg4 = get_mpeg4_msg(dec, (struct pipe_mpeg4_picture_desc*)picture);
+		msg.body.decode.codec.mpeg4 = get_mpeg4_msg(dec, (struct pipe_mpeg4_picture_desc*)picture);
 		break;
 
 	default:
@@ -776,8 +776,8 @@ static void ruvd_end_frame(struct pipe_video_decoder *decoder,
 		return;
 	}
 
-	msg.decode.db_surf_tile_config = msg.decode.dt_surf_tile_config;
-	msg.decode.extension_support = 0x1;
+	msg.body.decode.db_surf_tile_config = msg.body.decode.dt_surf_tile_config;
+	msg.body.decode.extension_support = 0x1;
 
 	send_msg(dec, &msg);
 	send_cmd(dec, RUVD_CMD_DPB_BUFFER, dec->dpb.cs_handle, 0,
@@ -892,10 +892,10 @@ struct pipe_video_decoder *ruvd_create_decoder(struct pipe_context *context,
 	msg.size = sizeof(msg);
 	msg.msg_type = RUVD_MSG_CREATE;
 	msg.stream_handle = dec->stream_handle;
-	msg.create.stream_type = profile2stream_type(dec->base.profile);
-	msg.create.width_in_samples = dec->base.width;
-	msg.create.height_in_samples = dec->base.height;
-	msg.create.dpb_size = dec->dpb.buf->size;
+	msg.body.create.stream_type = profile2stream_type(dec->base.profile);
+	msg.body.create.width_in_samples = dec->base.width;
+	msg.body.create.height_in_samples = dec->base.height;
+	msg.body.create.dpb_size = dec->dpb.buf->size;
 	send_msg(dec, &msg);
 	flush(dec);
 	next_buffer(dec);
@@ -1029,42 +1029,42 @@ static unsigned bank_wh(unsigned bankwh)
 void ruvd_set_dt_surfaces(struct ruvd_msg *msg, struct radeon_surface *luma,
 			  struct radeon_surface *chroma)
 {
-	msg->decode.dt_pitch = luma->level[0].pitch_bytes;
+	msg->body.decode.dt_pitch = luma->level[0].pitch_bytes;
 	switch (luma->level[0].mode) {
 	case RADEON_SURF_MODE_LINEAR_ALIGNED:
-		msg->decode.dt_tiling_mode = RUVD_TILE_LINEAR;
-		msg->decode.dt_array_mode = RUVD_ARRAY_MODE_LINEAR;
+		msg->body.decode.dt_tiling_mode = RUVD_TILE_LINEAR;
+		msg->body.decode.dt_array_mode = RUVD_ARRAY_MODE_LINEAR;
 		break;
 	case RADEON_SURF_MODE_1D:
-		msg->decode.dt_tiling_mode = RUVD_TILE_8X8;
-		msg->decode.dt_array_mode = RUVD_ARRAY_MODE_1D_THIN;
+		msg->body.decode.dt_tiling_mode = RUVD_TILE_8X8;
+		msg->body.decode.dt_array_mode = RUVD_ARRAY_MODE_1D_THIN;
 		break;
 	case RADEON_SURF_MODE_2D:
-		msg->decode.dt_tiling_mode = RUVD_TILE_8X8;
-		msg->decode.dt_array_mode = RUVD_ARRAY_MODE_2D_THIN;
+		msg->body.decode.dt_tiling_mode = RUVD_TILE_8X8;
+		msg->body.decode.dt_array_mode = RUVD_ARRAY_MODE_2D_THIN;
 		break;
 	default:
 		assert(0);
 		break;
 	}
 
-	msg->decode.dt_luma_top_offset = texture_offset(luma, 0);
-	msg->decode.dt_chroma_top_offset = texture_offset(chroma, 0);
-	if (msg->decode.dt_field_mode) {
-		msg->decode.dt_luma_bottom_offset = texture_offset(luma, 1);
-		msg->decode.dt_chroma_bottom_offset = texture_offset(chroma, 1);
+	msg->body.decode.dt_luma_top_offset = texture_offset(luma, 0);
+	msg->body.decode.dt_chroma_top_offset = texture_offset(chroma, 0);
+	if (msg->body.decode.dt_field_mode) {
+		msg->body.decode.dt_luma_bottom_offset = texture_offset(luma, 1);
+		msg->body.decode.dt_chroma_bottom_offset = texture_offset(chroma, 1);
 	} else {
-		msg->decode.dt_luma_bottom_offset = msg->decode.dt_luma_top_offset;
-		msg->decode.dt_chroma_bottom_offset = msg->decode.dt_chroma_top_offset;
+		msg->body.decode.dt_luma_bottom_offset = msg->body.decode.dt_luma_top_offset;
+		msg->body.decode.dt_chroma_bottom_offset = msg->body.decode.dt_chroma_top_offset;
 	}
 
 	assert(luma->bankw == chroma->bankw);
 	assert(luma->bankh == chroma->bankh);
 	assert(luma->mtilea == chroma->mtilea);
 
-	msg->decode.dt_surf_tile_config |= RUVD_BANK_WIDTH(bank_wh(luma->bankw));
-	msg->decode.dt_surf_tile_config |= RUVD_BANK_HEIGHT(bank_wh(luma->bankh));
-	msg->decode.dt_surf_tile_config |= RUVD_MACRO_TILE_ASPECT_RATIO(macro_tile_aspect(luma->mtilea));
+	msg->body.decode.dt_surf_tile_config |= RUVD_BANK_WIDTH(bank_wh(luma->bankw));
+	msg->body.decode.dt_surf_tile_config |= RUVD_BANK_HEIGHT(bank_wh(luma->bankh));
+	msg->body.decode.dt_surf_tile_config |= RUVD_MACRO_TILE_ASPECT_RATIO(macro_tile_aspect(luma->mtilea));
 }
 
 int ruvd_get_video_param(struct pipe_screen *screen,
