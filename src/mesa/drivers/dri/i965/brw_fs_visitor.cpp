@@ -201,7 +201,10 @@ fs_visitor::visit(ir_dereference_array *ir)
 void
 fs_visitor::emit_lrp(fs_reg dst, fs_reg x, fs_reg y, fs_reg a)
 {
-   if (intel->gen < 6 || x.file != GRF || y.file != GRF || a.file != GRF) {
+   if (intel->gen < 6 ||
+       !x.is_valid_3src() ||
+       !y.is_valid_3src() ||
+       !a.is_valid_3src()) {
       /* We can't use the LRP instruction.  Emit x*(1-a) + y*a. */
       fs_reg y_times_a           = fs_reg(this, glsl_type::float_type);
       fs_reg one_minus_a         = fs_reg(this, glsl_type::float_type);

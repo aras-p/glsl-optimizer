@@ -444,6 +444,12 @@ fs_reg::is_one() const
    return type == BRW_REGISTER_TYPE_F ? imm.f == 1.0 : imm.i == 1;
 }
 
+bool
+fs_reg::is_valid_3src() const
+{
+   return file == GRF || file == UNIFORM;
+}
+
 int
 fs_visitor::type_size(const struct glsl_type *type)
 {

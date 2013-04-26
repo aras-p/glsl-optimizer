@@ -93,6 +93,7 @@ public:
    bool equals(const fs_reg &r) const;
    bool is_zero() const;
    bool is_one() const;
+   bool is_valid_3src() const;
 
    /** Register file: ARF, GRF, MRF, IMM. */
    enum register_file file;
