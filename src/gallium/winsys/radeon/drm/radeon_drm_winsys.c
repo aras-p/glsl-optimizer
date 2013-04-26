@@ -593,7 +593,7 @@ static PIPE_THREAD_ROUTINE(radeon_drm_cs_emit_ioctl, param)
     }
     ws->ncs = 0;
     pipe_mutex_unlock(ws->cs_stack_lock);
-    return NULL;
+    return 0;
 }
 
 DEBUG_GET_ONCE_BOOL_OPTION(thread, "RADEON_THREAD", TRUE)

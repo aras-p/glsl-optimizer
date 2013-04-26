@@ -810,7 +810,7 @@ PIPE_THREAD_ROUTINE(rbug_thread, void_tr_rbug)
 
    if (s < 0) {
       debug_printf("rbug_rbug - failed to listen\n");
-      return NULL;
+      return 0;
    }
 
    u_socket_block(s, false);
@@ -836,7 +836,7 @@ PIPE_THREAD_ROUTINE(rbug_thread, void_tr_rbug)
 
    u_socket_stop();
 
-   return NULL;
+   return 0;
 }
 
 /**********************************************************

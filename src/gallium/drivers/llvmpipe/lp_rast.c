@@ -858,7 +858,7 @@ static PIPE_THREAD_ROUTINE( thread_function, init_data )
       pipe_semaphore_signal(&task->work_done);
    }
 
-   return NULL;
+   return 0;
 }
 
 

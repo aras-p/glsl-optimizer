@@ -57,7 +57,7 @@ static PIPE_THREAD_ROUTINE(thread_function, thread_data)
    pipe_barrier_wait(&barrier);
    printf("thread %d exiting\n", thread_id);
 
-   return NULL;
+   return 0;
 }
 
 
