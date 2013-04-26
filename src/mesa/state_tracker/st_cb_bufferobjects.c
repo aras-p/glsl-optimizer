@@ -264,8 +264,8 @@ st_bufferobj_data(struct gl_context *ctx,
          pipe_buffer_write(pipe, st_obj->buffer, 0, size, data);
    }
 
-   /* BufferData may change a uniform buffer, need to update it */
-   st->dirty.st |= ST_NEW_UNIFORM_BUFFER;
+   /* BufferData may change an array or uniform buffer, need to update it */
+   st->dirty.st |= ST_NEW_VERTEX_ARRAYS | ST_NEW_UNIFORM_BUFFER;
 
    return GL_TRUE;
 }
