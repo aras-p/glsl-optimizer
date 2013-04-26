@@ -46,12 +46,7 @@
 #include <stdlib.h>
 #include "u_compiler.h"
 
-#if defined(HAVE_PTHREAD)
-#include <pthread.h> /* POSIX threads headers */
-#endif
-#ifdef _WIN32
-#include <windows.h>
-#endif
+#include "c11/threads.h"
 
 #if defined(HAVE_PTHREAD) || defined(_WIN32)
 #ifndef THREADS
@@ -79,43 +74,32 @@ extern "C" {
 #endif
 
 
-/*
- * POSIX threads. This should be your choice in the Unix world
- * whenever possible.  When building with POSIX threads, be sure
- * to enable any compiler flags which will cause the MT-safe
- * libc (if one exists) to be used when linking, as well as any
- * header macros for MT-safe errno, etc.  For Solaris, this is the -mt
- * compiler flag.  On Solaris with gcc, use -D_REENTRANT to enable
- * proper compiling for MT-safe libc etc.
- */
-#if defined(HAVE_PTHREAD)
-
 struct u_tsd {
-   pthread_key_t key;
+   tss_t key;
    unsigned initMagic;
 };
 
-typedef pthread_mutex_t u_mutex;
+typedef mtx_t u_mutex;
 
 #define u_mutex_declare_static(name) \
-   static u_mutex name = PTHREAD_MUTEX_INITIALIZER
+   static u_mutex name = _MTX_INITIALIZER_NP
 
-#define u_mutex_init(name)    pthread_mutex_init(&(name), NULL)
-#define u_mutex_destroy(name) pthread_mutex_destroy(&(name))
-#define u_mutex_lock(name)    (void) pthread_mutex_lock(&(name))
-#define u_mutex_unlock(name)  (void) pthread_mutex_unlock(&(name))
+#define u_mutex_init(name)    mtx_init(&(name), mtx_plain)
+#define u_mutex_destroy(name) mtx_destroy(&(name))
+#define u_mutex_lock(name)    (void) mtx_lock(&(name))
+#define u_mutex_unlock(name)  (void) mtx_unlock(&(name))
 
 static INLINE unsigned long
 u_thread_self(void)
 {
-   return (unsigned long) pthread_self();
+   return (unsigned long) thrd_current();
 }
 
 
 static INLINE void
 u_tsd_init(struct u_tsd *tsd)
 {
-   if (pthread_key_create(&tsd->key, NULL/*free*/) != 0) {
+   if (tss_create(&tsd->key, NULL/*free*/) != 0) {
       perror(INIT_TSD_ERROR);
       exit(-1);
    }
@@ -129,7 +113,7 @@ u_tsd_get(struct u_tsd *tsd)
    if (tsd->initMagic != INIT_MAGIC) {
       u_tsd_init(tsd);
    }
-   return pthread_getspecific(tsd->key);
+   return tss_get(tsd->key);
 }
 
 
@@ -139,54 +123,10 @@ u_tsd_set(struct u_tsd *tsd, void *ptr)
    if (tsd->initMagic != INIT_MAGIC) {
       u_tsd_init(tsd);
    }
-   if (pthread_setspecific(tsd->key, ptr) != 0) {
+   if (tss_set(tsd->key, ptr) != 0) {
       perror(SET_TSD_ERROR);
       exit(-1);
    }
-}
-
-#endif /* HAVE_PTHREAD */
-
-
-/*
- * Windows threads. Should work with Windows NT and 95.
- * IMPORTANT: Link with multithreaded runtime library when THREADS are
- * used!
- */
-#ifdef _WIN32
-
-struct u_tsd {
-   DWORD key;
-   unsigned initMagic;
-};
-
-typedef CRITICAL_SECTION u_mutex;
-
-/* http://locklessinc.com/articles/pthreads_on_windows/ */
-#define u_mutex_declare_static(name) \
-   static u_mutex name = {(PCRITICAL_SECTION_DEBUG)-1, -1, 0, 0, 0, 0}
-
-#define u_mutex_init(name)    InitializeCriticalSection(&name)
-#define u_mutex_destroy(name) DeleteCriticalSection(&name)
-#define u_mutex_lock(name)    EnterCriticalSection(&name)
-#define u_mutex_unlock(name)  LeaveCriticalSection(&name)
-
-static INLINE unsigned long
-u_thread_self(void)
-{
-   return GetCurrentThreadId();
-}
-
-
-static INLINE void
-u_tsd_init(struct u_tsd *tsd)
-{
-   tsd->key = TlsAlloc();
-   if (tsd->key == TLS_OUT_OF_INDEXES) {
-      perror(INIT_TSD_ERROR);
-      exit(-1);
-   }
-   tsd->initMagic = INIT_MAGIC;
 }
 
 
@@ -196,88 +136,9 @@ u_tsd_destroy(struct u_tsd *tsd)
    if (tsd->initMagic != INIT_MAGIC) {
       return;
    }
-   TlsFree(tsd->key);
+   tss_delete(tsd->key);
    tsd->initMagic = 0x0;
 }
-
-
-static INLINE void *
-u_tsd_get(struct u_tsd *tsd)
-{
-   if (tsd->initMagic != INIT_MAGIC) {
-      u_tsd_init(tsd);
-   }
-   return TlsGetValue(tsd->key);
-}
-
-
-static INLINE void
-u_tsd_set(struct u_tsd *tsd, void *ptr)
-{
-   /* the following code assumes that the struct u_tsd has been initialized
-      to zero at creation */
-   if (tsd->initMagic != INIT_MAGIC) {
-      u_tsd_init(tsd);
-   }
-   if (TlsSetValue(tsd->key, ptr) == 0) {
-      perror(SET_TSD_ERROR);
-      exit(-1);
-   }
-}
-
-#endif /* _WIN32 */
-
-
-/*
- * THREADS not defined
- */
-#ifndef THREADS
-
-struct u_tsd {
-   unsigned initMagic;
-};
-
-typedef unsigned u_mutex;
-
-#define u_mutex_declare_static(name)   static u_mutex name = 0
-#define u_mutex_init(name)             (void) name
-#define u_mutex_destroy(name)          (void) name
-#define u_mutex_lock(name)             (void) name
-#define u_mutex_unlock(name)           (void) name
-
-/*
- * no-op functions
- */
-
-static INLINE unsigned long
-u_thread_self(void)
-{
-   return 0;
-}
-
-
-static INLINE void
-u_tsd_init(struct u_tsd *tsd)
-{
-   (void) tsd;
-}
-
-
-static INLINE void *
-u_tsd_get(struct u_tsd *tsd)
-{
-   (void) tsd;
-   return NULL;
-}
-
-
-static INLINE void
-u_tsd_set(struct u_tsd *tsd, void *ptr)
-{
-   (void) tsd;
-   (void) ptr;
-}
-#endif /* THREADS */
 
 
 #ifdef __cplusplus
