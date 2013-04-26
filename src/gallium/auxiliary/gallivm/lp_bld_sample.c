@@ -1427,7 +1427,7 @@ lp_build_cube_lookup(struct lp_build_sample_context *bld,
       ar_ge_as_at = lp_build_cmp(coord_bld, PIPE_FUNC_GEQUAL, ar, maxasat);
 
       if (need_derivs) {
-         LLVMValueRef ddx_ddy[2], tmp[2], rho_vec;
+         LLVMValueRef ddx_ddy[2], tmp[3], rho_vec;
          static const unsigned char swizzle0[] = { /* no-op swizzle */
             0, LP_BLD_SWIZZLE_DONTCARE,
             LP_BLD_SWIZZLE_DONTCARE, LP_BLD_SWIZZLE_DONTCARE
