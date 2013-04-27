@@ -271,6 +271,7 @@ int r600_compute_shader_create(struct pipe_context * ctx,
 	unsigned char * bytes;
 	unsigned byte_count;
 	struct r600_shader_ctx shader_ctx;
+	boolean use_kill = false;
 	bool dump = (r600_ctx->screen->debug_flags & DBG_CS) != 0;
 
 	shader_ctx.bc = bytecode;
@@ -1445,6 +1446,7 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 		struct radeon_llvm_context radeon_llvm_ctx;
 		LLVMModuleRef mod;
 		bool dump = r600_can_dump_shader(rscreen, ctx.type);
+		boolean use_kill = false;
 
 		memset(&radeon_llvm_ctx, 0, sizeof(radeon_llvm_ctx));
 		radeon_llvm_ctx.type = ctx.type;
@@ -1461,7 +1463,7 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 		mod = r600_tgsi_llvm(&radeon_llvm_ctx, tokens);
 
 		if (r600_llvm_compile(mod, &inst_bytes, &inst_byte_count,
-				      rscreen->family, ctx.bc, dump)) {
+				      rscreen->family, ctx.bc, &use_kill, dump)) {
 			FREE(inst_bytes);
 			radeon_llvm_dispose(&radeon_llvm_ctx);
 			use_llvm = 0;
@@ -1471,6 +1473,8 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 			ctx.file_offset[TGSI_FILE_OUTPUT] =
 					ctx.file_offset[TGSI_FILE_INPUT];
 		}
+		if (use_kill)
+			ctx.shader->uses_kill = use_kill;
 		radeon_llvm_dispose(&radeon_llvm_ctx);
 	}
 #endif

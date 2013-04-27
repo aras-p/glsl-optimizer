@@ -556,6 +556,7 @@ unsigned r600_llvm_compile(
 	unsigned * inst_byte_count,
 	enum radeon_family family,
 	struct r600_bytecode *bc,
+	boolean *use_kill,
 	unsigned dump)
 {
 	unsigned r;
@@ -566,6 +567,7 @@ unsigned r600_llvm_compile(
 	*inst_byte_count = binary.code_size;
 	bc->ngpr = util_le32_to_cpu(*(uint32_t*)binary.config);
 	bc->nstack = util_le32_to_cpu(*(uint32_t*)(binary.config + 4));
+	*use_kill = util_le32_to_cpu(*(uint32_t*)(binary.config + 8));
 	return r;
 }
 
