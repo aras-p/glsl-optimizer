@@ -397,6 +397,15 @@ llvm_pipeline_generic( struct draw_pt_middle_end *middle,
          }
       }
    }
+   if (prim_info->count == 0) {
+      debug_printf("GS/IA didn't emit any vertices!\n");
+      
+      FREE(vert_info->verts);
+      if (free_prim_info) {
+         FREE(prim_info->primitive_lengths);
+      }
+      return;
+   }
 
    /* stream output needs to be done before clipping */
    draw_pt_so_emit( fpme->so_emit, vert_info, prim_info );
