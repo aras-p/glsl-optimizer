@@ -120,6 +120,7 @@ static void so_emit_prim(struct pt_so_emit *so,
    const struct pipe_stream_output_info *state = draw_so_info(draw);
    float *buffer;
    int buffer_total_bytes[PIPE_MAX_SO_BUFFERS];
+   boolean buffer_written[PIPE_MAX_SO_BUFFERS] = {0};
 
    input_ptr = so->inputs;
    if (so->use_pre_clip_pos)
@@ -129,11 +130,12 @@ static void so_emit_prim(struct pt_so_emit *so,
 
    for (i = 0; i < draw->so.num_targets; i++) {
       struct draw_so_target *target = draw->so.targets[i];
-      /* If a buffer is missing then that's equivalent to
-       * an overflow */
-      if (!target)
-         return;
-      buffer_total_bytes[i] = target->internal_offset + target->target.buffer_offset;
+      if (target) {
+         buffer_total_bytes[i] = target->internal_offset +
+            target->target.buffer_offset;
+      } else {
+         buffer_total_bytes[i] = 0;
+      }
    }
 
    /* check have we space to emit prim first - if not don't do anything */
@@ -144,7 +146,11 @@ static void so_emit_prim(struct pt_so_emit *so,
          int ob = state->output[slot].output_buffer;
          unsigned dst_offset = state->output[slot].dst_offset * sizeof(float);
          unsigned write_size = num_comps * sizeof(float);
-
+         /* If a buffer is missing then that's equivalent to
+          * an overflow */
+         if (!draw->so.targets[ob]) {
+            return;
+         }
          if ((buffer_total_bytes[ob] + write_size + dst_offset) >
              draw->so.targets[ob]->target.buffer_size) {
             return;
@@ -173,6 +179,7 @@ static void so_emit_prim(struct pt_so_emit *so,
          unsigned num_comps = state->output[slot].num_components;
 
          ob = state->output[slot].output_buffer;
+         buffer_written[ob] = TRUE;
 
          buffer = (float *)((char *)draw->so.targets[ob]->mapping +
                             draw->so.targets[ob]->target.buffer_offset +
@@ -184,8 +191,11 @@ static void so_emit_prim(struct pt_so_emit *so,
             memcpy(buffer, &input[idx][start_comp], num_comps * sizeof(float));
       }
       for (ob = 0; ob < draw->so.num_targets; ++ob) {
-         draw->so.targets[ob]->internal_offset += state->stride[ob] * sizeof(float);
-         draw->so.targets[ob]->emitted_vertices += 1;
+         struct draw_so_target *target = draw->so.targets[ob];
+         if (target && buffer_written[ob]) {
+            target->internal_offset += state->stride[ob] * sizeof(float);
+            target->emitted_vertices += 1;
+         }
       }
    }
    so->emitted_vertices += num_vertices;
