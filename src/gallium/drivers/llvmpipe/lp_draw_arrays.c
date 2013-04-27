@@ -89,8 +89,11 @@ llvmpipe_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
    }
 
    for (i = 0; i < lp->num_so_targets; i++) {
-      void *buf = llvmpipe_resource(lp->so_targets[i]->target.buffer)->data;
-      lp->so_targets[i]->mapping = buf;
+      void *buf = 0;
+      if (lp->so_targets[i]) {
+         buf = llvmpipe_resource(lp->so_targets[i]->target.buffer)->data;
+         lp->so_targets[i]->mapping = buf;
+      }
    }
    draw_set_mapped_so_targets(draw, lp->num_so_targets,
                               lp->so_targets);
