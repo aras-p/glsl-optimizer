@@ -368,7 +368,7 @@ void gcm::bu_sched_bb(bb_node* bb) {
 
 			cnt_ready[sq] = bu_ready[sq].size();
 
-			if ((sq == SQ_TEX || sq == SQ_VTX) &&
+			if ((sq == SQ_TEX || sq == SQ_VTX) && live_count <= rp_threshold &&
 					cnt_ready[sq] < ctx.max_fetch/2	&&
 					!bu_ready_next[SQ_ALU].empty()) {
 				sq = SQ_ALU;
@@ -382,6 +382,16 @@ void gcm::bu_sched_bb(bb_node* bb) {
 					clause = NULL;
 					last_count = 0;
 					last_inst_type = sq;
+				}
+
+				// simple heuristic to limit register pressure,
+				if (sq == SQ_ALU && live_count > rp_threshold &&
+						(!bu_ready[SQ_TEX].empty() ||
+						 !bu_ready[SQ_VTX].empty() ||
+						 !bu_ready_next[SQ_TEX].empty() ||
+						 !bu_ready_next[SQ_VTX].empty())) {
+					GCM_DUMP( cerr << "switching to fetch (regpressure)\n"; );
+					break;
 				}
 
 				n = bu_ready[sq].front();
@@ -442,6 +452,11 @@ void gcm::bu_release_defs(vvec& v, bool src) {
 			bu_release_defs(v->muse, true);
 		} else if (src)
 			bu_release_val(v);
+		else {
+			if (live.remove_val(v)) {
+				--live_count;
+			}
+		}
 	}
 }
 
@@ -586,6 +601,8 @@ void gcm::add_ready(node *n) {
 	sched_queue_id sq = sh.get_queue_id(n);
 	if (n->flags & NF_SCHEDULE_EARLY)
 		bu_ready_early[sq].push_back(n);
+	else if (sq == SQ_ALU && n->is_copy_mov())
+		bu_ready[sq].push_front(n);
 	else
 		bu_ready_next[sq].push_back(n);
 }
@@ -665,8 +682,14 @@ void gcm::bu_release_val(value* v) {
 	node *n = v->any_def();
 
 	if (n && n->parent == &pending) {
-		unsigned uc = ++nuc_stk[ucs_level][n];
+		nuc_map &m = nuc_stk[ucs_level];
+		unsigned uc = ++m[n];
 		unsigned uc2 = uses[n];
+
+		if (live.add_val(v)) {
+			++live_count;
+			GCM_DUMP ( cerr << "live_count: " << live_count << "\n"; );
+		}
 
 		GCM_DUMP(
 			cerr << "release val ";

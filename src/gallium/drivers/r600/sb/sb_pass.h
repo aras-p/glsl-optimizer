@@ -246,12 +246,19 @@ class gcm : public pass {
 
 	unsigned cur_sq;
 
+	// for register pressure tracking in bottom-up pass
+	val_set live;
+	int live_count;
+
+	static const int rp_threshold = 100;
+
 public:
 
 	gcm(shader &sh) : pass(sh),
 		bu_ready(), bu_ready_next(), bu_ready_early(),
 		ready(), op_map(), uses(), nuc_stk(1), ucs_level(),
-		bu_bb(), pending_defs(), pending_nodes() {}
+		bu_bb(), pending_defs(), pending_nodes(), cur_sq(),
+		live(), live_count() {}
 
 	virtual int run();
 
