@@ -1110,6 +1110,7 @@ emit_fetch_temporary(
    struct gallivm_state *gallivm = bld->bld_base.base.gallivm;
    LLVMBuilderRef builder = gallivm->builder;
    struct lp_build_context *uint_bld = &bld_base->uint_bld;
+   struct lp_build_context *float_bld = &bld_base->base;
    LLVMValueRef indirect_index = NULL;
    LLVMValueRef res;
 
@@ -1128,12 +1129,22 @@ emit_fetch_temporary(
                                 bld->bld_base.base.type.length);
       LLVMValueRef index_vec;  /* index into the const buffer */
       LLVMValueRef temps_array;
+      LLVMValueRef pixel_offsets;
+      LLVMValueRef offsets[LP_MAX_VECTOR_LENGTH];
       LLVMTypeRef float4_ptr_type;
+      int i;
+
+      /* build pixel offset vector: {0, 1, 2, 3, ...} */
+      for (i = 0; i < float_bld->type.length; i++) {
+         offsets[i] = lp_build_const_int32(gallivm, i);
+      }
+      pixel_offsets = LLVMConstVector(offsets, float_bld->type.length);
 
       /* index_vec = (indirect_index * 4 + swizzle) * length */
       index_vec = lp_build_shl_imm(uint_bld, indirect_index, 2);
       index_vec = lp_build_add(uint_bld, index_vec, swizzle_vec);
       index_vec = lp_build_mul(uint_bld, index_vec, length_vec);
+      index_vec = lp_build_add(uint_bld, index_vec, pixel_offsets);
 
       /* cast temps_array pointer to float* */
       float4_ptr_type = LLVMPointerType(LLVMFloatTypeInContext(bld->bld_base.base.gallivm->context), 0);
