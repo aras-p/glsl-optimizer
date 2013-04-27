@@ -129,6 +129,10 @@ static void so_emit_prim(struct pt_so_emit *so,
 
    for (i = 0; i < draw->so.num_targets; i++) {
       struct draw_so_target *target = draw->so.targets[i];
+      /* If a buffer is missing then that's equivalent to
+       * an overflow */
+      if (!target)
+         return;
       buffer_total_bytes[i] = target->internal_offset + target->target.buffer_offset;
    }
 
