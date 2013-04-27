@@ -64,6 +64,7 @@ extern "C" {
 #define PIPE_MAX_SHADER_RESOURCES 32
 #define PIPE_MAX_TEXTURE_LEVELS   16
 #define PIPE_MAX_SO_BUFFERS        4
+#define PIPE_MAX_SO_OUTPUTS       64
 
 
 struct pipe_reference
@@ -198,7 +199,7 @@ struct pipe_stream_output_info
       unsigned num_components:3;  /** 1 to 4 */
       unsigned output_buffer:3;   /**< 0 to PIPE_MAX_SO_BUFFERS */
       unsigned dst_offset:16;     /**< offset into the buffer in dwords */
-   } output[PIPE_MAX_SHADER_OUTPUTS];
+   } output[PIPE_MAX_SO_OUTPUTS];
 };
 
 
