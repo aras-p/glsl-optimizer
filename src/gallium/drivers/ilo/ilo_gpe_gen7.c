@@ -542,38 +542,58 @@ gen7_emit_3DSTATE_DS(const struct ilo_dev_info *dev,
 
 static void
 gen7_emit_3DSTATE_STREAMOUT(const struct ilo_dev_info *dev,
-                            bool enable,
+                            unsigned buffer_mask,
+                            int vertex_attrib_count,
                             bool rasterizer_discard,
-                            bool flatshade_first,
                             struct ilo_cp *cp)
 {
    const uint32_t cmd = ILO_GPE_CMD(0x3, 0x0, 0x1e);
    const uint8_t cmd_len = 3;
+   const bool enable = (buffer_mask != 0);
    uint32_t dw1, dw2;
-   int i;
+   int read_len;
 
    ILO_GPE_VALID_GEN(dev, 7, 7);
 
    if (!enable) {
+      dw1 = 0 << SO_RENDER_STREAM_SELECT_SHIFT;
+      if (rasterizer_discard)
+         dw1 |= SO_RENDERING_DISABLE;
+
+      dw2 = 0;
+
       ilo_cp_begin(cp, cmd_len);
       ilo_cp_write(cp, cmd | (cmd_len - 2));
-      ilo_cp_write(cp, (rasterizer_discard) ? SO_RENDERING_DISABLE : 0);
-      ilo_cp_write(cp, 0);
+      ilo_cp_write(cp, dw1);
+      ilo_cp_write(cp, dw2);
       ilo_cp_end(cp);
       return;
    }
 
+   read_len = (vertex_attrib_count + 1) / 2;
+   if (!read_len)
+      read_len = 1;
+
    dw1 = SO_FUNCTION_ENABLE |
-         SO_STATISTICS_ENABLE;
+         0 << SO_RENDER_STREAM_SELECT_SHIFT |
+         SO_STATISTICS_ENABLE |
+         buffer_mask << 8;
+
    if (rasterizer_discard)
       dw1 |= SO_RENDERING_DISABLE;
-   if (!flatshade_first)
-      dw1 |= SO_REORDER_TRAILING;
-   for (i = 0; i < 4; i++)
-      dw1 |= SO_BUFFER_ENABLE(i);
 
-   dw2 = 0 << SO_STREAM_0_VERTEX_READ_OFFSET_SHIFT |
-         0 << SO_STREAM_0_VERTEX_READ_LENGTH_SHIFT;
+   /* API_OPENGL */
+   if (true)
+      dw1 |= SO_REORDER_TRAILING;
+
+   dw2 = 0 << SO_STREAM_3_VERTEX_READ_OFFSET_SHIFT |
+         0 << SO_STREAM_3_VERTEX_READ_LENGTH_SHIFT |
+         0 << SO_STREAM_2_VERTEX_READ_OFFSET_SHIFT |
+         0 << SO_STREAM_2_VERTEX_READ_LENGTH_SHIFT |
+         0 << SO_STREAM_1_VERTEX_READ_OFFSET_SHIFT |
+         0 << SO_STREAM_1_VERTEX_READ_LENGTH_SHIFT |
+         0 << SO_STREAM_0_VERTEX_READ_OFFSET_SHIFT |
+         (read_len - 1) << SO_STREAM_0_VERTEX_READ_LENGTH_SHIFT;
 
    ilo_cp_begin(cp, cmd_len);
    ilo_cp_write(cp, cmd | (cmd_len - 2));
@@ -991,33 +1011,111 @@ gen7_emit_3DSTATE_PUSH_CONSTANT_ALLOC_PS(const struct ilo_dev_info *dev,
 
 static void
 gen7_emit_3DSTATE_SO_DECL_LIST(const struct ilo_dev_info *dev,
+                               const struct pipe_stream_output_info *so_info,
+                               const struct ilo_shader *sh,
                                struct ilo_cp *cp)
 {
    const uint32_t cmd = ILO_GPE_CMD(0x3, 0x1, 0x17);
-   uint8_t cmd_len;
-   uint16_t decls[128];
-   int num_decls, i;
+   uint16_t cmd_len;
+   int buffer_selects, num_entries, i;
+   uint16_t so_decls[128];
 
    ILO_GPE_VALID_GEN(dev, 7, 7);
 
-   memset(decls, 0, sizeof(decls));
-   num_decls = 0;
+   buffer_selects = 0;
+   num_entries = 0;
 
-   cmd_len = 2 * num_decls + 3;
+   if (so_info) {
+      int buffer_offsets[PIPE_MAX_SO_BUFFERS];
+
+      memset(buffer_offsets, 0, sizeof(buffer_offsets));
+
+      for (i = 0; i < so_info->num_outputs; i++) {
+         unsigned decl, buf, attr, mask;
+
+         buf = so_info->output[i].output_buffer;
+
+         /* pad with holes */
+         assert(buffer_offsets[buf] <= so_info->output[i].dst_offset);
+         while (buffer_offsets[buf] < so_info->output[i].dst_offset) {
+            int num_dwords;
+
+            num_dwords = so_info->output[i].dst_offset - buffer_offsets[buf];
+            if (num_dwords > 4)
+               num_dwords = 4;
+
+            decl = buf << SO_DECL_OUTPUT_BUFFER_SLOT_SHIFT |
+                   SO_DECL_HOLE_FLAG |
+                   ((1 << num_dwords) - 1) << SO_DECL_COMPONENT_MASK_SHIFT;
+
+            so_decls[num_entries++] = decl;
+            buffer_offsets[buf] += num_dwords;
+         }
+
+         /* figure out which attribute is sourced */
+         for (attr = 0; attr < sh->out.count; attr++) {
+            const int idx = sh->out.register_indices[attr];
+            if (idx == so_info->output[i].register_index)
+               break;
+         }
+
+         decl = buf << SO_DECL_OUTPUT_BUFFER_SLOT_SHIFT;
+
+         if (attr < sh->out.count) {
+            mask = ((1 << so_info->output[i].num_components) - 1) <<
+               so_info->output[i].start_component;
+
+            /* PSIZE is at W channel */
+            if (sh->out.semantic_names[attr] == TGSI_SEMANTIC_PSIZE) {
+               assert(mask == 0x1);
+               mask = (mask << 3) & 0xf;
+            }
+
+            decl |= attr << SO_DECL_REGISTER_INDEX_SHIFT |
+                    mask << SO_DECL_COMPONENT_MASK_SHIFT;
+         }
+         else {
+            assert(!"stream output an undefined register");
+            mask = (1 << so_info->output[i].num_components) - 1;
+            decl |= SO_DECL_HOLE_FLAG |
+                    mask << SO_DECL_COMPONENT_MASK_SHIFT;
+         }
+
+         so_decls[num_entries++] = decl;
+         buffer_selects |= 1 << buf;
+         buffer_offsets[buf] += so_info->output[i].num_components;
+      }
+   }
+
+   /*
+    * From the Ivy Bridge PRM, volume 2 part 1, page 201:
+    *
+    *     "Errata: All 128 decls for all four streams must be included
+    *      whenever this command is issued. The "Num Entries [n]" fields still
+    *      contain the actual numbers of valid decls."
+    *
+    * Also note that "DWord Length" has 9 bits for this command, and the type
+    * of cmd_len is thus uint16_t.
+    */
+   cmd_len = 2 * 128 + 3;
 
    ilo_cp_begin(cp, cmd_len);
    ilo_cp_write(cp, cmd | (cmd_len - 2));
-   ilo_cp_write(cp, 0 << SO_STREAM_TO_BUFFER_SELECTS_0_SHIFT |
-                    0 << SO_STREAM_TO_BUFFER_SELECTS_1_SHIFT |
+   ilo_cp_write(cp, 0 << SO_STREAM_TO_BUFFER_SELECTS_3_SHIFT |
                     0 << SO_STREAM_TO_BUFFER_SELECTS_2_SHIFT |
-                    0 << SO_STREAM_TO_BUFFER_SELECTS_3_SHIFT);
-   ilo_cp_write(cp, num_decls << SO_NUM_ENTRIES_0_SHIFT |
-                    0 << SO_NUM_ENTRIES_1_SHIFT |
+                    0 << SO_STREAM_TO_BUFFER_SELECTS_1_SHIFT |
+                    buffer_selects << SO_STREAM_TO_BUFFER_SELECTS_0_SHIFT);
+   ilo_cp_write(cp, 0 << SO_NUM_ENTRIES_3_SHIFT |
                     0 << SO_NUM_ENTRIES_2_SHIFT |
-                    0 << SO_NUM_ENTRIES_3_SHIFT);
+                    0 << SO_NUM_ENTRIES_1_SHIFT |
+                    num_entries << SO_NUM_ENTRIES_0_SHIFT);
 
-   for (i = 0; i < num_decls; i++) {
-      ilo_cp_write(cp, decls[i]);
+   for (i = 0; i < num_entries; i++) {
+      ilo_cp_write(cp, so_decls[i]);
+      ilo_cp_write(cp, 0);
+   }
+   for (; i < 128; i++) {
+      ilo_cp_write(cp, 0);
       ilo_cp_write(cp, 0);
    }
 
@@ -1026,17 +1124,18 @@ gen7_emit_3DSTATE_SO_DECL_LIST(const struct ilo_dev_info *dev,
 
 static void
 gen7_emit_3DSTATE_SO_BUFFER(const struct ilo_dev_info *dev,
-                            int index,
-                            bool enable,
+                            int index, int base, int stride,
+                            const struct pipe_stream_output_target *so_target,
                             struct ilo_cp *cp)
 {
    const uint32_t cmd = ILO_GPE_CMD(0x3, 0x1, 0x18);
    const uint8_t cmd_len = 4;
-   int start, end;
+   struct ilo_resource *res;
+   int end;
 
    ILO_GPE_VALID_GEN(dev, 7, 7);
 
-   if (!enable) {
+   if (!so_target || !so_target->buffer) {
       ilo_cp_begin(cp, cmd_len);
       ilo_cp_write(cp, cmd | (cmd_len - 2));
       ilo_cp_write(cp, index << SO_BUFFER_INDEX_SHIFT);
@@ -1046,13 +1145,22 @@ gen7_emit_3DSTATE_SO_BUFFER(const struct ilo_dev_info *dev,
       return;
    }
 
-   start = end = 0;
+   res = ilo_resource(so_target->buffer);
+
+   /* DWord-aligned */
+   assert(stride % 4 == 0 && base % 4 == 0);
+   assert(so_target->buffer_offset % 4 == 0);
+
+   stride &= ~3;
+   base = (base + so_target->buffer_offset) & ~3;
+   end = (base + so_target->buffer_size) & ~3;
 
    ilo_cp_begin(cp, cmd_len);
    ilo_cp_write(cp, cmd | (cmd_len - 2));
-   ilo_cp_write(cp, index << SO_BUFFER_INDEX_SHIFT);
-   ilo_cp_write(cp, start);
-   ilo_cp_write(cp, end);
+   ilo_cp_write(cp, index << SO_BUFFER_INDEX_SHIFT |
+                    stride);
+   ilo_cp_write_bo(cp, base, res->bo, INTEL_DOMAIN_RENDER, INTEL_DOMAIN_RENDER);
+   ilo_cp_write_bo(cp, end, res->bo, INTEL_DOMAIN_RENDER, INTEL_DOMAIN_RENDER);
    ilo_cp_end(cp);
 }
 

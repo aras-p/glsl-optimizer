@@ -224,9 +224,9 @@ typedef void
 
 typedef void
 (*ilo_gpe_gen7_3DSTATE_STREAMOUT)(const struct ilo_dev_info *dev,
-                                  bool enable,
+                                  unsigned buffer_mask,
+                                  int vertex_attrib_count,
                                   bool rasterizer_discard,
-                                  bool flatshade_first,
                                   struct ilo_cp *cp);
 
 typedef void
@@ -366,12 +366,14 @@ typedef void
 
 typedef void
 (*ilo_gpe_gen7_3DSTATE_SO_DECL_LIST)(const struct ilo_dev_info *dev,
+                                     const struct pipe_stream_output_info *so_info,
+                                     const struct ilo_shader *sh,
                                      struct ilo_cp *cp);
 
 typedef void
 (*ilo_gpe_gen7_3DSTATE_SO_BUFFER)(const struct ilo_dev_info *dev,
-                                  int index,
-                                  bool enable,
+                                  int index, int base, int stride,
+                                  const struct pipe_stream_output_target *so_target,
                                   struct ilo_cp *cp);
 
 typedef ilo_gpe_gen6_PIPE_CONTROL ilo_gpe_gen7_PIPE_CONTROL;

@@ -381,12 +381,12 @@ gen7_pipeline_sol(struct ilo_3d_pipeline *p,
          int i;
 
          for (i = 0; i < 4; i++)
-            p->gen7_3DSTATE_SO_BUFFER(p->dev, i, false, p->cp);
+            p->gen7_3DSTATE_SO_BUFFER(p->dev, i, 0, 0, NULL, p->cp);
 
-         p->gen7_3DSTATE_SO_DECL_LIST(p->dev, p->cp);
+         p->gen7_3DSTATE_SO_DECL_LIST(p->dev, NULL, NULL, p->cp);
       }
 
-      p->gen7_3DSTATE_STREAMOUT(p->dev, false, false, false, p->cp);
+      p->gen7_3DSTATE_STREAMOUT(p->dev, 0, 0, false, p->cp);
    }
 }
 
