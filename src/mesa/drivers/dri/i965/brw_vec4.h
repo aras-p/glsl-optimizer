@@ -193,8 +193,6 @@ public:
    const void *ir;
    const char *annotation;
 
-   bool is_tex();
-   bool is_math();
    bool is_send_from_grf();
    bool can_reswizzle_dst(int dst_writemask, int swizzle, int swizzle_mask);
    void reswizzle_dst(int dst_writemask, int swizzle);

@@ -340,51 +340,6 @@ fs_inst::overwrites_reg(const fs_reg &reg)
 }
 
 bool
-fs_inst::is_tex()
-{
-   return (opcode == SHADER_OPCODE_TEX ||
-           opcode == FS_OPCODE_TXB ||
-           opcode == SHADER_OPCODE_TXD ||
-           opcode == SHADER_OPCODE_TXF ||
-           opcode == SHADER_OPCODE_TXF_MS ||
-           opcode == SHADER_OPCODE_TXL ||
-           opcode == SHADER_OPCODE_TXS ||
-           opcode == SHADER_OPCODE_LOD);
-}
-
-bool
-fs_inst::is_math()
-{
-   return (opcode == SHADER_OPCODE_RCP ||
-           opcode == SHADER_OPCODE_RSQ ||
-           opcode == SHADER_OPCODE_SQRT ||
-           opcode == SHADER_OPCODE_EXP2 ||
-           opcode == SHADER_OPCODE_LOG2 ||
-           opcode == SHADER_OPCODE_SIN ||
-           opcode == SHADER_OPCODE_COS ||
-           opcode == SHADER_OPCODE_INT_QUOTIENT ||
-           opcode == SHADER_OPCODE_INT_REMAINDER ||
-           opcode == SHADER_OPCODE_POW);
-}
-
-bool
-fs_inst::is_control_flow()
-{
-   switch (opcode) {
-   case BRW_OPCODE_DO:
-   case BRW_OPCODE_WHILE:
-   case BRW_OPCODE_IF:
-   case BRW_OPCODE_ELSE:
-   case BRW_OPCODE_ENDIF:
-   case BRW_OPCODE_BREAK:
-   case BRW_OPCODE_CONTINUE:
-      return true;
-   default:
-      return false;
-   }
-}
-
-bool
 fs_inst::is_send_from_grf()
 {
    return (opcode == FS_OPCODE_VARYING_PULL_CONSTANT_LOAD_GEN7 ||

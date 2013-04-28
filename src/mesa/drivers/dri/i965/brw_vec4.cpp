@@ -141,17 +141,6 @@ src_reg::src_reg(dst_reg reg)
                                 swizzles[2], swizzles[3]);
 }
 
-bool
-vec4_instruction::is_tex()
-{
-   return (opcode == SHADER_OPCODE_TEX ||
-	   opcode == SHADER_OPCODE_TXD ||
-	   opcode == SHADER_OPCODE_TXF ||
-	   opcode == SHADER_OPCODE_TXF_MS ||
-	   opcode == SHADER_OPCODE_TXL ||
-	   opcode == SHADER_OPCODE_TXS);
-}
-
 void
 dst_reg::init()
 {
@@ -210,21 +199,6 @@ dst_reg::dst_reg(src_reg reg)
       this->writemask = WRITEMASK_XYZW;
    this->reladdr = reg.reladdr;
    this->fixed_hw_reg = reg.fixed_hw_reg;
-}
-
-bool
-vec4_instruction::is_math()
-{
-   return (opcode == SHADER_OPCODE_RCP ||
-	   opcode == SHADER_OPCODE_RSQ ||
-	   opcode == SHADER_OPCODE_SQRT ||
-	   opcode == SHADER_OPCODE_EXP2 ||
-	   opcode == SHADER_OPCODE_LOG2 ||
-	   opcode == SHADER_OPCODE_SIN ||
-	   opcode == SHADER_OPCODE_COS ||
-	   opcode == SHADER_OPCODE_INT_QUOTIENT ||
-	   opcode == SHADER_OPCODE_INT_REMAINDER ||
-	   opcode == SHADER_OPCODE_POW);
 }
 
 bool

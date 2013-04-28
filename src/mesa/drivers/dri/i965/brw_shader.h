@@ -29,6 +29,10 @@
 
 class backend_instruction : public exec_node {
 public:
+   bool is_tex();
+   bool is_math();
+   bool is_control_flow();
+
    enum opcode opcode; /* BRW_OPCODE_* or FS_OPCODE_* */
 
    uint32_t predicate;

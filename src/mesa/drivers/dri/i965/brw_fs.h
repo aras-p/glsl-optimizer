@@ -175,9 +175,6 @@ public:
 
    bool equals(fs_inst *inst);
    bool overwrites_reg(const fs_reg &reg);
-   bool is_tex();
-   bool is_math();
-   bool is_control_flow();
    bool is_send_from_grf();
    bool is_partial_write();
 

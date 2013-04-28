@@ -508,3 +508,48 @@ brw_instruction_name(enum opcode op)
       return fallback;
    }
 }
+
+bool
+backend_instruction::is_tex()
+{
+   return (opcode == SHADER_OPCODE_TEX ||
+           opcode == FS_OPCODE_TXB ||
+           opcode == SHADER_OPCODE_TXD ||
+           opcode == SHADER_OPCODE_TXF ||
+           opcode == SHADER_OPCODE_TXF_MS ||
+           opcode == SHADER_OPCODE_TXL ||
+           opcode == SHADER_OPCODE_TXS ||
+           opcode == SHADER_OPCODE_LOD);
+}
+
+bool
+backend_instruction::is_math()
+{
+   return (opcode == SHADER_OPCODE_RCP ||
+           opcode == SHADER_OPCODE_RSQ ||
+           opcode == SHADER_OPCODE_SQRT ||
+           opcode == SHADER_OPCODE_EXP2 ||
+           opcode == SHADER_OPCODE_LOG2 ||
+           opcode == SHADER_OPCODE_SIN ||
+           opcode == SHADER_OPCODE_COS ||
+           opcode == SHADER_OPCODE_INT_QUOTIENT ||
+           opcode == SHADER_OPCODE_INT_REMAINDER ||
+           opcode == SHADER_OPCODE_POW);
+}
+
+bool
+backend_instruction::is_control_flow()
+{
+   switch (opcode) {
+   case BRW_OPCODE_DO:
+   case BRW_OPCODE_WHILE:
+   case BRW_OPCODE_IF:
+   case BRW_OPCODE_ELSE:
+   case BRW_OPCODE_ENDIF:
+   case BRW_OPCODE_BREAK:
+   case BRW_OPCODE_CONTINUE:
+      return true;
+   default:
+      return false;
+   }
+}
