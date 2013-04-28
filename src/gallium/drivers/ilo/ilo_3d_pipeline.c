@@ -219,15 +219,24 @@ ilo_3d_pipeline_emit_draw(struct ilo_3d_pipeline *p,
                           const struct pipe_draw_info *info,
                           int *prim_generated, int *prim_emitted)
 {
+   const bool so_enabled = (ilo->stream_output_targets.num_targets > 0);
    bool success;
 
-   /*
-    * We keep track of the SVBI in the driver, so that we can restore it when
-    * the HW context is invalidated (by another process).  The value needs to
-    * be reset when the stream output targets are changed.
-    */
-   if (ilo->dirty & ILO_DIRTY_STREAM_OUTPUT_TARGETS)
+   if (ilo->dirty & ILO_DIRTY_STREAM_OUTPUT_TARGETS &&
+       so_enabled && !ilo->stream_output_targets.append_bitmask) {
+      /*
+       * We keep track of the SVBI in the driver, so that we can restore it
+       * when the HW context is invalidated (by another process).  The value
+       * needs to be reset when stream output is enabled and the targets are
+       * changed.
+       */
       p->state.so_num_vertices = 0;
+
+      /* on GEN7+, we need SOL_RESET to reset the SO write offsets */
+      if (p->dev->gen >= ILO_GEN(7))
+         ilo_cp_set_one_off_flags(p->cp, INTEL_EXEC_GEN7_SOL_RESET);
+   }
+
 
    while (true) {
       struct ilo_cp_jmp_buf jmp;
