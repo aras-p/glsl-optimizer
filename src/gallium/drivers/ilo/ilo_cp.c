@@ -191,10 +191,14 @@ ilo_cp_exec_bo(struct ilo_cp *cp)
       break;
    }
 
+   flags |= cp->one_off_flags;
+
    if (likely(do_exec))
       err = cp->bo->exec(cp->bo, cp->used * 4, cp->hw_ctx, flags);
    else
       err = 0;
+
+   cp->one_off_flags = 0;
 
    return err;
 }

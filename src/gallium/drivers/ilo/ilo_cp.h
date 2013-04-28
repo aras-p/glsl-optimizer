@@ -61,6 +61,7 @@ struct ilo_cp {
    enum ilo_cp_ring ring;
    bool no_implicit_flush;
    int reserve_for_pre_flush;
+   unsigned one_off_flags;
 
    struct {
       ilo_cp_hook_func func;
@@ -177,6 +178,16 @@ ilo_cp_reserve_for_pre_flush(struct ilo_cp *cp, int reserve)
    cp->size -= reserve;
    cp->reserve_for_pre_flush += reserve;
 }
+
+/**
+ * Set one-off flags.  They will be cleared after flushing.
+ */
+static inline void
+ilo_cp_set_one_off_flags(struct ilo_cp *cp, unsigned flags)
+{
+   cp->one_off_flags |= flags;
+}
+
 
 /**
  * Set a command parser hook.
