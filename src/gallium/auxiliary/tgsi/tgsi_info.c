@@ -280,6 +280,7 @@ tgsi_opcode_infer_src_type( uint opcode )
    /* XXX some src args may be signed for SAD ? */
    case TGSI_OPCODE_SAD:
    case TGSI_OPCODE_U2F:
+   case TGSI_OPCODE_UADD:
    case TGSI_OPCODE_UDIV:
    case TGSI_OPCODE_UMOD:
    case TGSI_OPCODE_UMAD:
@@ -314,8 +315,6 @@ tgsi_opcode_infer_src_type( uint opcode )
    case TGSI_OPCODE_IABS:
    case TGSI_OPCODE_ISSG:
    case TGSI_OPCODE_UARL:
-   /* UADD is both signed and unsigned require signed for working modifiers */
-   case TGSI_OPCODE_UADD:
       return TGSI_TYPE_SIGNED;
    default:
       return TGSI_TYPE_FLOAT;

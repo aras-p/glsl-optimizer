@@ -339,9 +339,9 @@ lp_build_emit_fetch(
          assert(0);
          break;
       case TGSI_TYPE_SIGNED:
+      case TGSI_TYPE_UNSIGNED:
          res = lp_build_negate( &bld_base->int_bld, res );
          break;
-      case TGSI_TYPE_UNSIGNED:
       case TGSI_TYPE_VOID:
       default:
          assert(0);

@@ -32,11 +32,8 @@ For inputs which have a floating point type, both absolute value and negation
 modifiers are supported (with absolute value being applied first).
 TGSI_OPCODE_MOV is considered to have float input type for applying modifiers.
 
-For inputs which have signed type only the negate modifier is supported. This
-includes instructions which are otherwise ignorant if the type is signed or
-unsigned, such as TGSI_OPCODE_UADD.
-
-For inputs with unsigned type no modifiers are allowed.
+For inputs which have signed or unsigned type only the negate modifier is
+supported.
 
 Instruction Set
 ---------------
