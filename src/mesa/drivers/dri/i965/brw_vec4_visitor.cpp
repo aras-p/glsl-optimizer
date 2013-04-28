@@ -1631,7 +1631,10 @@ vec4_visitor::visit(ir_expression *ir)
       op[0] = fix_3src_operand(op[0]);
       op[1] = fix_3src_operand(op[1]);
       op[2] = fix_3src_operand(op[2]);
-      emit(LRP(result_dst, op[0], op[1], op[2]));
+      /* Note that the instruction's argument order is reversed from GLSL
+       * and the IR.
+       */
+      emit(LRP(result_dst, op[2], op[1], op[0]));
       break;
 
    case ir_quadop_vector:
