@@ -1638,7 +1638,7 @@ gen7_emit_depth_stencil_hiz(struct brw_context *brw,
                             uint32_t width, uint32_t height,
                             uint32_t tile_x, uint32_t tile_y);
 
-extern const GLuint prim_to_hw_prim[GL_POLYGON+1];
+extern const GLuint prim_to_hw_prim[GL_TRIANGLE_STRIP_ADJACENCY+1];
 
 void
 brw_setup_vec4_key_clip_info(struct brw_context *brw,
