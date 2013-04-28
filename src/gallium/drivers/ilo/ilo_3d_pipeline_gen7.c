@@ -376,17 +376,56 @@ gen7_pipeline_sol(struct ilo_3d_pipeline *p,
                   const struct ilo_context *ilo,
                   struct gen6_pipeline_session *session)
 {
-   if (session->hw_ctx_changed) {
-      if (ilo->stream_output_targets.num_targets) {
-         int i;
+   const struct pipe_stream_output_info *so_info;
+   const struct ilo_shader *sh;
+   bool dirty_sh = false;
 
-         for (i = 0; i < 4; i++)
-            p->gen7_3DSTATE_SO_BUFFER(p->dev, i, 0, 0, NULL, p->cp);
+   if (ilo->gs) {
+      so_info = &ilo->gs->info.stream_output;
+      sh = ilo->gs->shader;
+      dirty_sh = DIRTY(GS);
+   }
+   else if (ilo->vs) {
+      so_info = &ilo->vs->info.stream_output;
+      sh = ilo->vs->shader;
+      dirty_sh = DIRTY(VS);
+   }
 
-         p->gen7_3DSTATE_SO_DECL_LIST(p->dev, NULL, NULL, p->cp);
+   gen6_pipeline_update_max_svbi(p, ilo, session);
+
+   /* 3DSTATE_SO_BUFFER */
+   if (DIRTY(STREAM_OUTPUT_TARGETS) || dirty_sh) {
+      int i;
+
+      for (i = 0; i < ilo->stream_output_targets.num_targets; i++) {
+         const int stride = so_info->stride[i] * 4; /* in bytes */
+         int base = 0;
+
+         /* reset HW write offsets and offset buffer base */
+         if (!p->cp->hw_ctx) {
+            ilo_cp_set_one_off_flags(p->cp, INTEL_EXEC_GEN7_SOL_RESET);
+            base += p->state.so_num_vertices * stride;
+         }
+
+         p->gen7_3DSTATE_SO_BUFFER(p->dev, i, base, stride,
+               ilo->stream_output_targets.targets[i], p->cp);
       }
 
-      p->gen7_3DSTATE_STREAMOUT(p->dev, 0, 0, false, p->cp);
+      for (; i < 4; i++)
+         p->gen7_3DSTATE_SO_BUFFER(p->dev, i, 0, 0, NULL, p->cp);
+   }
+
+   /* 3DSTATE_SO_DECL_LIST */
+   if (dirty_sh)
+      p->gen7_3DSTATE_SO_DECL_LIST(p->dev, so_info, sh, p->cp);
+
+   /* 3DSTATE_STREAMOUT */
+   if (DIRTY(STREAM_OUTPUT_TARGETS) || DIRTY(RASTERIZER) || dirty_sh) {
+      const unsigned buffer_mask =
+         (1 << ilo->stream_output_targets.num_targets) - 1;
+
+      p->gen7_3DSTATE_STREAMOUT(p->dev, buffer_mask, sh->out.count,
+            ilo->rasterizer->rasterizer_discard, p->cp);
    }
 }
 
