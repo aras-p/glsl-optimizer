@@ -178,7 +178,7 @@ ilo_context_create(struct pipe_screen *screen, void *priv)
    ilo->cp = ilo_cp_create(ilo->winsys, is->dev.has_llc);
    ilo->shader_cache = ilo_shader_cache_create(ilo->winsys);
    if (ilo->cp)
-      ilo->hw3d = ilo_3d_create(ilo->cp, ilo->dev->gen, ilo->dev->gt);
+      ilo->hw3d = ilo_3d_create(ilo->cp, ilo->dev);
 
    if (!ilo->cp || !ilo->shader_cache || !ilo->hw3d) {
       ilo_context_destroy(&ilo->base);

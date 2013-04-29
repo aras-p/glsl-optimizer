@@ -520,7 +520,7 @@ static void dump_binding_table(struct brw_context *brw, uint32_t offset,
 static void
 init_brw(struct brw_context *brw, struct ilo_3d_pipeline *p)
 {
-   brw->intel.gen = ILO_GEN_GET_MAJOR(p->gen);
+   brw->intel.gen = ILO_GEN_GET_MAJOR(p->dev->gen);
    brw->intel.batch.bo_dst.virtual = p->cp->bo->get_virtual(p->cp->bo);
    brw->intel.batch.bo = &brw->intel.batch.bo_dst;
 }

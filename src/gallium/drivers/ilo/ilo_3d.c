@@ -313,7 +313,7 @@ ilo_3d_post_cp_flush(struct ilo_3d *hw3d)
  * Create a 3D context.
  */
 struct ilo_3d *
-ilo_3d_create(struct ilo_cp *cp, int gen, int gt)
+ilo_3d_create(struct ilo_cp *cp, const struct ilo_dev_info *dev)
 {
    struct ilo_3d *hw3d;
 
@@ -329,7 +329,7 @@ ilo_3d_create(struct ilo_cp *cp, int gen, int gt)
    list_inithead(&hw3d->prim_generated_queries);
    list_inithead(&hw3d->prim_emitted_queries);
 
-   hw3d->pipeline = ilo_3d_pipeline_create(cp, gen, gt);
+   hw3d->pipeline = ilo_3d_pipeline_create(cp, dev);
    if (!hw3d->pipeline) {
       FREE(hw3d);
       return NULL;

@@ -58,7 +58,7 @@ struct ilo_3d {
 };
 
 struct ilo_3d *
-ilo_3d_create(struct ilo_cp *cp, int gen, int gt);
+ilo_3d_create(struct ilo_cp *cp, const struct ilo_dev_info *dev);
 
 void
 ilo_3d_destroy(struct ilo_3d *hw3d);

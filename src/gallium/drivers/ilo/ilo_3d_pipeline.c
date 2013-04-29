@@ -64,7 +64,7 @@ static const struct sample_position sample_position_8x[8] = {
 };
 
 struct ilo_3d_pipeline *
-ilo_3d_pipeline_create(struct ilo_cp *cp, int gen, int gt)
+ilo_3d_pipeline_create(struct ilo_cp *cp, const struct ilo_dev_info *dev)
 {
    struct ilo_3d_pipeline *p;
    int i;
@@ -74,9 +74,9 @@ ilo_3d_pipeline_create(struct ilo_cp *cp, int gen, int gt)
       return NULL;
 
    p->cp = cp;
-   p->gen = gen;
+   p->dev = dev;
 
-   switch (p->gen) {
+   switch (p->dev->gen) {
    case ILO_GEN(6):
       ilo_3d_pipeline_init_gen6(p);
       break;
@@ -89,9 +89,6 @@ ilo_3d_pipeline_create(struct ilo_cp *cp, int gen, int gt)
       return NULL;
       break;
    }
-
-   p->gpe.gen = p->gen;
-   p->gpe.gt = gt;
 
    p->invalidate_flags = ILO_3D_PIPELINE_INVALIDATE_ALL;
 
@@ -138,7 +135,7 @@ static void
 handle_invalid_batch_bo(struct ilo_3d_pipeline *p, bool unset)
 {
    if (p->invalidate_flags & ILO_3D_PIPELINE_INVALIDATE_BATCH_BO) {
-      if (p->gen == ILO_GEN(6))
+      if (p->dev->gen == ILO_GEN(6))
          p->state.has_gen6_wa_pipe_control = false;
 
       if (unset)
