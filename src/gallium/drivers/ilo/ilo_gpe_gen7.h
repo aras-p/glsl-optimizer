@@ -138,16 +138,16 @@ typedef ilo_gpe_gen6_MEDIA_STATE_FLUSH ilo_gpe_gen7_MEDIA_STATE_FLUSH;
 
 typedef void
 (*ilo_gpe_gen7_GPGPU_WALKER)(const struct ilo_gpe *gpe,
-                              struct ilo_cp *cp);
+                             struct ilo_cp *cp);
 
 typedef ilo_gpe_gen6_3DSTATE_CLEAR_PARAMS ilo_gpe_gen7_3DSTATE_CLEAR_PARAMS;
 
 typedef void
 (*ilo_gpe_gen7_3DSTATE_DEPTH_BUFFER)(const struct ilo_gpe *gpe,
-                                      const struct pipe_surface *surface,
-                                      const struct pipe_depth_stencil_alpha_state *dsa,
-                                      bool hiz,
-                                      struct ilo_cp *cp);
+                                     const struct pipe_surface *surface,
+                                     const struct pipe_depth_stencil_alpha_state *dsa,
+                                     bool hiz,
+                                     struct ilo_cp *cp);
 
 typedef ilo_gpe_gen6_3DSTATE_STENCIL_BUFFER ilo_gpe_gen7_3DSTATE_STENCIL_BUFFER;
 typedef ilo_gpe_gen6_3DSTATE_HIER_DEPTH_BUFFER ilo_gpe_gen7_3DSTATE_HIER_DEPTH_BUFFER;
@@ -157,32 +157,32 @@ typedef ilo_gpe_gen6_3DSTATE_INDEX_BUFFER ilo_gpe_gen7_3DSTATE_INDEX_BUFFER;
 
 typedef void
 (*ilo_gpe_gen7_3DSTATE_CC_STATE_POINTERS)(const struct ilo_gpe *gpe,
-                                           uint32_t color_calc_state,
-                                           struct ilo_cp *cp);
+                                          uint32_t color_calc_state,
+                                          struct ilo_cp *cp);
 
 typedef ilo_gpe_gen6_3DSTATE_SCISSOR_STATE_POINTERS ilo_gpe_gen7_3DSTATE_SCISSOR_STATE_POINTERS;
 typedef ilo_gpe_gen6_3DSTATE_VS ilo_gpe_gen7_3DSTATE_VS;
 
 typedef void
 (*ilo_gpe_gen7_3DSTATE_GS)(const struct ilo_gpe *gpe,
-                            const struct ilo_shader *gs,
-                            int max_threads, int num_samplers,
-                            struct ilo_cp *cp);
+                           const struct ilo_shader *gs,
+                           int max_threads, int num_samplers,
+                           struct ilo_cp *cp);
 
 typedef ilo_gpe_gen6_3DSTATE_CLIP ilo_gpe_gen7_3DSTATE_CLIP;
 
 typedef void
 (*ilo_gpe_gen7_3DSTATE_SF)(const struct ilo_gpe *gpe,
-                            const struct pipe_rasterizer_state *rasterizer,
-                            const struct pipe_surface *zs_surf,
-                            struct ilo_cp *cp);
+                           const struct pipe_rasterizer_state *rasterizer,
+                           const struct pipe_surface *zs_surf,
+                           struct ilo_cp *cp);
 
 typedef void
 (*ilo_gpe_gen7_3DSTATE_WM)(const struct ilo_gpe *gpe,
-                            const struct ilo_shader *fs,
-                            const struct pipe_rasterizer_state *rasterizer,
-                            bool cc_may_kill,
-                            struct ilo_cp *cp);
+                           const struct ilo_shader *fs,
+                           const struct pipe_rasterizer_state *rasterizer,
+                           bool cc_may_kill,
+                           struct ilo_cp *cp);
 
 typedef ilo_gpe_gen6_3DSTATE_CONSTANT_VS ilo_gpe_gen7_3DSTATE_CONSTANT_VS;
 typedef ilo_gpe_gen6_3DSTATE_CONSTANT_GS ilo_gpe_gen7_3DSTATE_CONSTANT_GS;
@@ -190,21 +190,21 @@ typedef ilo_gpe_gen6_3DSTATE_CONSTANT_PS ilo_gpe_gen7_3DSTATE_CONSTANT_PS;
 
 typedef void
 (*ilo_gpe_gen7_3DSTATE_SAMPLE_MASK)(const struct ilo_gpe *gpe,
-                                     unsigned sample_mask,
-                                     int num_samples,
-                                     struct ilo_cp *cp);
+                                    unsigned sample_mask,
+                                    int num_samples,
+                                    struct ilo_cp *cp);
 
 typedef void
 (*ilo_gpe_gen7_3DSTATE_CONSTANT_HS)(const struct ilo_gpe *gpe,
-                                     const uint32_t *bufs, const int *sizes,
-                                     int num_bufs,
-                                     struct ilo_cp *cp);
+                                    const uint32_t *bufs, const int *sizes,
+                                    int num_bufs,
+                                    struct ilo_cp *cp);
 
 typedef void
 (*ilo_gpe_gen7_3DSTATE_CONSTANT_DS)(const struct ilo_gpe *gpe,
-                                     const uint32_t *bufs, const int *sizes,
-                                     int num_bufs,
-                                     struct ilo_cp *cp);
+                                    const uint32_t *bufs, const int *sizes,
+                                    int num_bufs,
+                                    struct ilo_cp *cp);
 
 typedef void
 (*ilo_gpe_gen7_3DSTATE_HS)(const struct ilo_gpe *gpe,
@@ -245,93 +245,93 @@ typedef void
 
 typedef void
 (*ilo_gpe_gen7_3DSTATE_VIEWPORT_STATE_POINTERS_SF_CLIP)(const struct ilo_gpe *gpe,
-                                                         uint32_t viewport,
-                                                         struct ilo_cp *cp);
+                                                        uint32_t viewport,
+                                                        struct ilo_cp *cp);
 
 typedef void
 (*ilo_gpe_gen7_3DSTATE_VIEWPORT_STATE_POINTERS_CC)(const struct ilo_gpe *gpe,
-                                                    uint32_t viewport,
-                                                    struct ilo_cp *cp);
+                                                   uint32_t viewport,
+                                                   struct ilo_cp *cp);
 
 typedef void
 (*ilo_gpe_gen7_3DSTATE_BLEND_STATE_POINTERS)(const struct ilo_gpe *gpe,
-                                              uint32_t blend,
-                                              struct ilo_cp *cp);
+                                             uint32_t blend,
+                                             struct ilo_cp *cp);
 
 typedef void
 (*ilo_gpe_gen7_3DSTATE_DEPTH_STENCIL_STATE_POINTERS)(const struct ilo_gpe *gpe,
-                                                      uint32_t depth_stencil,
-                                                      struct ilo_cp *cp);
+                                                     uint32_t depth_stencil,
+                                                     struct ilo_cp *cp);
 
 typedef void
 (*ilo_gpe_gen7_3DSTATE_BINDING_TABLE_POINTERS_VS)(const struct ilo_gpe *gpe,
-                                                   uint32_t binding_table,
-                                                   struct ilo_cp *cp);
+                                                  uint32_t binding_table,
+                                                  struct ilo_cp *cp);
 
 typedef void
 (*ilo_gpe_gen7_3DSTATE_BINDING_TABLE_POINTERS_HS)(const struct ilo_gpe *gpe,
-                                                   uint32_t binding_table,
-                                                   struct ilo_cp *cp);
+                                                  uint32_t binding_table,
+                                                  struct ilo_cp *cp);
 
 typedef void
 (*ilo_gpe_gen7_3DSTATE_BINDING_TABLE_POINTERS_DS)(const struct ilo_gpe *gpe,
-                                                   uint32_t binding_table,
-                                                   struct ilo_cp *cp);
+                                                  uint32_t binding_table,
+                                                  struct ilo_cp *cp);
 
 typedef void
 (*ilo_gpe_gen7_3DSTATE_BINDING_TABLE_POINTERS_GS)(const struct ilo_gpe *gpe,
-                                                   uint32_t binding_table,
-                                                   struct ilo_cp *cp);
+                                                  uint32_t binding_table,
+                                                  struct ilo_cp *cp);
 
 typedef void
 (*ilo_gpe_gen7_3DSTATE_BINDING_TABLE_POINTERS_PS)(const struct ilo_gpe *gpe,
-                                                   uint32_t binding_table,
-                                                   struct ilo_cp *cp);
+                                                  uint32_t binding_table,
+                                                  struct ilo_cp *cp);
 
 typedef void
 (*ilo_gpe_gen7_3DSTATE_SAMPLER_STATE_POINTERS_VS)(const struct ilo_gpe *gpe,
-                                                   uint32_t sampler_state,
-                                                   struct ilo_cp *cp);
+                                                  uint32_t sampler_state,
+                                                  struct ilo_cp *cp);
 
 typedef void
 (*ilo_gpe_gen7_3DSTATE_SAMPLER_STATE_POINTERS_HS)(const struct ilo_gpe *gpe,
-                                                   uint32_t sampler_state,
-                                                   struct ilo_cp *cp);
+                                                  uint32_t sampler_state,
+                                                  struct ilo_cp *cp);
 
 typedef void
 (*ilo_gpe_gen7_3DSTATE_SAMPLER_STATE_POINTERS_DS)(const struct ilo_gpe *gpe,
-                                                   uint32_t sampler_state,
-                                                   struct ilo_cp *cp);
+                                                  uint32_t sampler_state,
+                                                  struct ilo_cp *cp);
 
 typedef void
 (*ilo_gpe_gen7_3DSTATE_SAMPLER_STATE_POINTERS_GS)(const struct ilo_gpe *gpe,
-                                                   uint32_t sampler_state,
-                                                   struct ilo_cp *cp);
+                                                  uint32_t sampler_state,
+                                                  struct ilo_cp *cp);
 
 typedef void
 (*ilo_gpe_gen7_3DSTATE_SAMPLER_STATE_POINTERS_PS)(const struct ilo_gpe *gpe,
-                                                   uint32_t sampler_state,
-                                                   struct ilo_cp *cp);
+                                                  uint32_t sampler_state,
+                                                  struct ilo_cp *cp);
 
 typedef void
 (*ilo_gpe_gen7_3DSTATE_URB_VS)(const struct ilo_gpe *gpe,
-                                int offset, int size, int entry_size,
-                                struct ilo_cp *cp);
+                               int offset, int size, int entry_size,
+                               struct ilo_cp *cp);
 
 typedef void
 (*ilo_gpe_gen7_3DSTATE_URB_HS)(const struct ilo_gpe *gpe,
-                                int offset, int size, int entry_size,
-                                struct ilo_cp *cp);
+                               int offset, int size, int entry_size,
+                               struct ilo_cp *cp);
 
 typedef void
 (*ilo_gpe_gen7_3DSTATE_URB_DS)(const struct ilo_gpe *gpe,
-                                int offset, int size, int entry_size,
-                                struct ilo_cp *cp);
+                               int offset, int size, int entry_size,
+                               struct ilo_cp *cp);
 
 typedef void
 (*ilo_gpe_gen7_3DSTATE_URB_GS)(const struct ilo_gpe *gpe,
-                                int offset, int size, int entry_size,
-                                struct ilo_cp *cp);
+                               int offset, int size, int entry_size,
+                               struct ilo_cp *cp);
 
 typedef ilo_gpe_gen6_3DSTATE_DRAWING_RECTANGLE ilo_gpe_gen7_3DSTATE_DRAWING_RECTANGLE;
 typedef ilo_gpe_gen6_3DSTATE_POLY_STIPPLE_OFFSET ilo_gpe_gen7_3DSTATE_POLY_STIPPLE_OFFSET;
@@ -342,38 +342,38 @@ typedef ilo_gpe_gen6_3DSTATE_MULTISAMPLE ilo_gpe_gen7_3DSTATE_MULTISAMPLE;
 
 typedef void
 (*ilo_gpe_gen7_3DSTATE_PUSH_CONSTANT_ALLOC_VS)(const struct ilo_gpe *gpe,
-                                                int offset, int size,
-                                                struct ilo_cp *cp);
+                                               int offset, int size,
+                                               struct ilo_cp *cp);
 
 typedef void
 (*ilo_gpe_gen7_3DSTATE_PUSH_CONSTANT_ALLOC_HS)(const struct ilo_gpe *gpe,
-                                                int offset, int size,
-                                                struct ilo_cp *cp);
+                                               int offset, int size,
+                                               struct ilo_cp *cp);
 
 typedef void
 (*ilo_gpe_gen7_3DSTATE_PUSH_CONSTANT_ALLOC_DS)(const struct ilo_gpe *gpe,
-                                                int offset, int size,
-                                                struct ilo_cp *cp);
+                                               int offset, int size,
+                                               struct ilo_cp *cp);
 
 typedef void
 (*ilo_gpe_gen7_3DSTATE_PUSH_CONSTANT_ALLOC_GS)(const struct ilo_gpe *gpe,
-                                                int offset, int size,
-                                                struct ilo_cp *cp);
+                                               int offset, int size,
+                                               struct ilo_cp *cp);
 
 typedef void
 (*ilo_gpe_gen7_3DSTATE_PUSH_CONSTANT_ALLOC_PS)(const struct ilo_gpe *gpe,
-                                                int offset, int size,
-                                                struct ilo_cp *cp);
+                                               int offset, int size,
+                                               struct ilo_cp *cp);
 
 typedef void
 (*ilo_gpe_gen7_3DSTATE_SO_DECL_LIST)(const struct ilo_gpe *gpe,
-                                      struct ilo_cp *cp);
+                                     struct ilo_cp *cp);
 
 typedef void
 (*ilo_gpe_gen7_3DSTATE_SO_BUFFER)(const struct ilo_gpe *gpe,
-                                   int index,
-                                   bool enable,
-                                   struct ilo_cp *cp);
+                                  int index,
+                                  bool enable,
+                                  struct ilo_cp *cp);
 
 typedef ilo_gpe_gen6_PIPE_CONTROL ilo_gpe_gen7_PIPE_CONTROL;
 typedef ilo_gpe_gen6_3DPRIMITIVE ilo_gpe_gen7_3DPRIMITIVE;
@@ -381,9 +381,9 @@ typedef ilo_gpe_gen6_INTERFACE_DESCRIPTOR_DATA ilo_gpe_gen7_INTERFACE_DESCRIPTOR
 
 typedef uint32_t
 (*ilo_gpe_gen7_SF_CLIP_VIEWPORT)(const struct ilo_gpe *gpe,
-                                  const struct pipe_viewport_state *viewports,
-                                  int num_viewports,
-                                  struct ilo_cp *cp);
+                                 const struct pipe_viewport_state *viewports,
+                                 int num_viewports,
+                                 struct ilo_cp *cp);
 
 typedef ilo_gpe_gen6_CC_VIEWPORT ilo_gpe_gen7_CC_VIEWPORT;
 typedef ilo_gpe_gen6_COLOR_CALC_STATE ilo_gpe_gen7_COLOR_CALC_STATE;
