@@ -1021,13 +1021,13 @@ gen6_emit_3DSTATE_SCISSOR_STATE_POINTERS(const struct ilo_dev_info *dev,
 static void
 gen6_emit_3DSTATE_VS(const struct ilo_dev_info *dev,
                      const struct ilo_shader *vs,
-                     int max_threads, int num_samplers,
+                     int num_samplers,
                      struct ilo_cp *cp)
 {
    const uint32_t cmd = ILO_GPE_CMD(0x3, 0x0, 0x10);
    const uint8_t cmd_len = 6;
    uint32_t dw2, dw4, dw5;
-   int vue_read_len;
+   int vue_read_len, max_threads;
 
    ILO_GPE_VALID_GEN(dev, 6, 7);
 
@@ -1056,6 +1056,36 @@ gen6_emit_3DSTATE_VS(const struct ilo_dev_info *dev,
    vue_read_len = (vs->in.count + 1) / 2;
    if (!vue_read_len)
       vue_read_len = 1;
+
+   switch (dev->gen) {
+   case ILO_GEN(6):
+      /*
+       * From the Sandy Bridge PRM, volume 1 part 1, page 22:
+       *
+       *     "Device             # of EUs        #Threads/EU
+       *      SNB GT2            12              5
+       *      SNB GT1            6               4"
+       */
+      max_threads = (dev->gt == 2) ? 60 : 24;
+      break;
+   case ILO_GEN(7):
+      /*
+       * From the Ivy Bridge PRM, volume 1 part 1, page 18:
+       *
+       *     "Device             # of EUs        #Threads/EU
+       *      Ivy Bridge (GT2)   16              8
+       *      Ivy Bridge (GT1)   6               6"
+       */
+      max_threads = (dev->gt == 2) ? 128 : 36;
+      break;
+   case ILO_GEN(7.5):
+      /* see brwCreateContext() */
+      max_threads = (dev->gt == 2) ? 280 : 70;
+      break;
+   default:
+      max_threads = 1;
+      break;
+   }
 
    dw2 = ((num_samplers + 3) / 4) << GEN6_VS_SAMPLER_COUNT_SHIFT;
    if (false)
@@ -1086,7 +1116,7 @@ gen6_emit_3DSTATE_VS(const struct ilo_dev_info *dev,
 static void
 gen6_emit_3DSTATE_GS(const struct ilo_dev_info *dev,
                      const struct ilo_shader *gs,
-                     int max_threads, const struct ilo_shader *vs,
+                     const struct ilo_shader *vs,
                      uint32_t vs_offset,
                      struct ilo_cp *cp)
 {
@@ -1105,7 +1135,7 @@ gen6_emit_3DSTATE_GS(const struct ilo_dev_info *dev,
       dw6 = 0;
    }
    else {
-      int vue_read_len;
+      int max_threads, vue_read_len;
 
       /*
        * From the Sandy Bridge PRM, volume 2 part 1, page 154:
@@ -1124,6 +1154,15 @@ gen6_emit_3DSTATE_GS(const struct ilo_dev_info *dev,
        *
        * As such, we always enable rendering, and limit the number of threads.
        */
+      if (dev->gt == 2) {
+         /* maximum is 60, but limited to 28 */
+         max_threads = 28;
+      }
+      else {
+         /* maximum is 24, but limited to 21 (see brwCreateContext()) */
+         max_threads = 21;
+      }
+
       if (max_threads > 28)
          max_threads = 28;
 
@@ -1798,7 +1837,7 @@ gen6_emit_3DSTATE_SF(const struct ilo_dev_info *dev,
 static void
 gen6_emit_3DSTATE_WM(const struct ilo_dev_info *dev,
                      const struct ilo_shader *fs,
-                     int max_threads, int num_samplers,
+                     int num_samplers,
                      const struct pipe_rasterizer_state *rasterizer,
                      bool dual_blend, bool cc_may_kill,
                      struct ilo_cp *cp)
@@ -1807,8 +1846,12 @@ gen6_emit_3DSTATE_WM(const struct ilo_dev_info *dev,
    const uint8_t cmd_len = 9;
    const int num_samples = 1;
    uint32_t dw2, dw4, dw5, dw6;
+   int max_threads;
 
    ILO_GPE_VALID_GEN(dev, 6, 6);
+
+   /* see brwCreateContext() */
+   max_threads = (dev->gt == 2) ? 80 : 40;
 
    if (!fs) {
       ilo_cp_begin(cp, cmd_len);

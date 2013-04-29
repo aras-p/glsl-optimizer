@@ -626,29 +626,57 @@ init_dev(struct ilo_dev_info *dev, const struct intel_winsys_info *info)
    dev->has_gen7_sol_reset = info->has_gen7_sol_reset;
    dev->has_llc = info->has_llc;
 
+   /*
+    * From the Sandy Bridge PRM, volume 4 part 2, page 18:
+    *
+    *     "[DevSNB]: The GT1 product's URB provides 32KB of storage, arranged
+    *      as 1024 256-bit rows. The GT2 product's URB provides 64KB of
+    *      storage, arranged as 2048 256-bit rows. A row corresponds in size
+    *      to an EU GRF register. Read/write access to the URB is generally
+    *      supported on a row-granular basis."
+    *
+    * From the Ivy Bridge PRM, volume 4 part 2, page 17:
+    *
+    *     "URB Size    URB Rows    URB Rows when SLM Enabled
+    *      128k        4096        2048
+    *      256k        8096        4096"
+    */
+
    if (IS_HASWELL(info->devid)) {
       dev->gen = ILO_GEN(7.5);
 
-      if (IS_HSW_GT2(info->devid))
+      if (IS_HSW_GT2(info->devid)) {
          dev->gt = 2;
-      else
+	 dev->urb_size = 256 * 1024;
+      }
+      else {
          dev->gt = 1;
+	 dev->urb_size = 128 * 1024;
+      }
    }
    else if (IS_GEN7(info->devid)) {
       dev->gen = ILO_GEN(7);
 
-      if (IS_IVB_GT2(info->devid))
+      if (IS_IVB_GT2(info->devid)) {
          dev->gt = 2;
-      else
+	 dev->urb_size = 256 * 1024;
+      }
+      else {
          dev->gt = 1;
+	 dev->urb_size = 128 * 1024;
+      }
    }
    else if (IS_GEN6(info->devid)) {
       dev->gen = ILO_GEN(6);
 
-      if (IS_SNB_GT2(info->devid))
+      if (IS_SNB_GT2(info->devid)) {
          dev->gt = 2;
-      else
+         dev->urb_size = 64 * 1024;
+      }
+      else {
          dev->gt = 1;
+         dev->urb_size = 32 * 1024;
+      }
    }
    else {
       ilo_err("unknown GPU generation\n");

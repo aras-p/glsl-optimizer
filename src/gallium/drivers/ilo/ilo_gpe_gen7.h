@@ -166,7 +166,7 @@ typedef ilo_gpe_gen6_3DSTATE_VS ilo_gpe_gen7_3DSTATE_VS;
 typedef void
 (*ilo_gpe_gen7_3DSTATE_GS)(const struct ilo_dev_info *dev,
                            const struct ilo_shader *gs,
-                           int max_threads, int num_samplers,
+                           int num_samplers,
                            struct ilo_cp *cp);
 
 typedef ilo_gpe_gen6_3DSTATE_CLIP ilo_gpe_gen7_3DSTATE_CLIP;
@@ -239,8 +239,7 @@ typedef void
 typedef void
 (*ilo_gpe_gen7_3DSTATE_PS)(const struct ilo_dev_info *dev,
                            const struct ilo_shader *fs,
-                           int max_threads, int num_samplers,
-                           bool dual_blend,
+                           int num_samplers, bool dual_blend,
                            struct ilo_cp *cp);
 
 typedef void

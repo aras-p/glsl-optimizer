@@ -62,6 +62,7 @@ struct ilo_dev_info {
 
    int gen;
    int gt;
+   int urb_size;
 };
 
 extern int ilo_debug;

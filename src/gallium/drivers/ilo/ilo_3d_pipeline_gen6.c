@@ -299,7 +299,7 @@ gen6_pipeline_common_urb(struct ilo_3d_pipeline *p,
       /* in bytes */
       vs_entry_size *= sizeof(float) * 4;
       gs_entry_size *= sizeof(float) * 4;
-      vs_total_size = ilo->urb.size * 1024;
+      vs_total_size = ilo->dev->urb_size;
 
       if (gs_active) {
          vs_total_size /= 2;
@@ -480,8 +480,7 @@ gen6_pipeline_vs(struct ilo_3d_pipeline *p,
       const struct ilo_shader *vs = (ilo->vs)? ilo->vs->shader : NULL;
       const int num_samplers = ilo->samplers[PIPE_SHADER_VERTEX].num_samplers;
 
-      p->gen6_3DSTATE_VS(p->dev,
-            vs, ilo->max_vs_threads, num_samplers, p->cp);
+      p->gen6_3DSTATE_VS(p->dev, vs, num_samplers, p->cp);
    }
 
    if (emit_3dstate_constant_vs && p->dev->gen == ILO_GEN(6))
@@ -506,8 +505,7 @@ gen6_pipeline_gs(struct ilo_3d_pipeline *p,
       if (gs)
          assert(!gs->pcb.clip_state_size);
 
-      p->gen6_3DSTATE_GS(p->dev,
-            gs, ilo->max_gs_threads, vs,
+      p->gen6_3DSTATE_GS(p->dev, gs, vs,
             (vs) ? vs->cache_offset + vs->gs_offsets[num_vertices - 1] : 0,
             p->cp);
    }
@@ -666,8 +664,7 @@ gen6_pipeline_wm(struct ilo_3d_pipeline *p,
       if (p->dev->gen == ILO_GEN(6) && session->hw_ctx_changed)
          gen6_wa_pipe_control_wm_max_threads_stall(p);
 
-      p->gen6_3DSTATE_WM(p->dev,
-            fs, ilo->max_wm_threads, num_samplers,
+      p->gen6_3DSTATE_WM(p->dev, fs, num_samplers,
             ilo->rasterizer, dual_blend, cc_may_kill, p->cp);
    }
 }

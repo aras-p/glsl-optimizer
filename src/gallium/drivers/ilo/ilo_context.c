@@ -137,44 +137,6 @@ ilo_context_create(struct pipe_screen *screen, void *priv)
    ilo->winsys = is->winsys;
    ilo->dev = &is->dev;
 
-   /* stolen from classic i965 */
-   /* WM maximum threads is number of EUs times number of threads per EU. */
-   if (ilo->dev->gen >= ILO_GEN(7)) {
-      if (ilo->dev->gt == 1) {
-	 ilo->max_wm_threads = 48;
-	 ilo->max_vs_threads = 36;
-	 ilo->max_gs_threads = 36;
-	 ilo->urb.size = 128;
-	 ilo->urb.max_vs_entries = 512;
-	 ilo->urb.max_gs_entries = 192;
-      } else if (ilo->dev->gt == 2) {
-	 ilo->max_wm_threads = 172;
-	 ilo->max_vs_threads = 128;
-	 ilo->max_gs_threads = 128;
-	 ilo->urb.size = 256;
-	 ilo->urb.max_vs_entries = 704;
-	 ilo->urb.max_gs_entries = 320;
-      } else {
-	 assert(!"Unknown gen7 device.");
-      }
-   } else if (ilo->dev->gen == ILO_GEN(6)) {
-      if (ilo->dev->gt == 2) {
-	 ilo->max_wm_threads = 80;
-	 ilo->max_vs_threads = 60;
-	 ilo->max_gs_threads = 60;
-	 ilo->urb.size = 64;            /* volume 5c.5 section 5.1 */
-	 ilo->urb.max_vs_entries = 256; /* volume 2a (see 3DSTATE_URB) */
-	 ilo->urb.max_gs_entries = 256;
-      } else {
-	 ilo->max_wm_threads = 40;
-	 ilo->max_vs_threads = 24;
-	 ilo->max_gs_threads = 21; /* conservative; 24 if rendering disabled */
-	 ilo->urb.size = 32;            /* volume 5c.5 section 5.1 */
-	 ilo->urb.max_vs_entries = 256; /* volume 2a (see 3DSTATE_URB) */
-	 ilo->urb.max_gs_entries = 256;
-      }
-   }
-
    ilo->cp = ilo_cp_create(ilo->winsys, is->dev.has_llc);
    ilo->shader_cache = ilo_shader_cache_create(ilo->winsys);
    if (ilo->cp)

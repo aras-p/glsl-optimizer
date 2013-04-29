@@ -73,15 +73,6 @@ struct ilo_context {
    struct intel_winsys *winsys;
    struct ilo_dev_info *dev;
 
-   int max_vs_threads;
-   int max_gs_threads;
-   int max_wm_threads;
-   struct {
-      int size;
-      int max_vs_entries;
-      int max_gs_entries;
-   } urb;
-
    struct ilo_cp *cp;
    struct intel_bo *last_cp_bo;
 

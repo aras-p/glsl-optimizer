@@ -206,7 +206,7 @@ gen7_pipeline_common_urb(struct ilo_3d_pipeline *p,
          vs_entry_size = ilo->vertex_elements->num_elements;
 
       vs_entry_size *= sizeof(float) * 4;
-      vs_total_size = ilo->urb.size * 1024 - offset;
+      vs_total_size = ilo->dev->urb_size - offset;
 
       gen7_wa_pipe_control_vs_depth_stall(p);
 
@@ -361,7 +361,7 @@ gen7_pipeline_gs(struct ilo_3d_pipeline *p,
    /* 3DSTATE_CONSTANT_GS and 3DSTATE_GS */
    if (session->hw_ctx_changed) {
       p->gen6_3DSTATE_CONSTANT_GS(p->dev, 0, 0, 0, p->cp);
-      p->gen7_3DSTATE_GS(p->dev, NULL, 0, 0, p->cp);
+      p->gen7_3DSTATE_GS(p->dev, NULL, 0, p->cp);
    }
 
    /* 3DSTATE_BINDING_TABLE_POINTERS_GS */
@@ -466,9 +466,7 @@ gen7_pipeline_wm(struct ilo_3d_pipeline *p,
       if (fs)
          assert(!fs->pcb.clip_state_size);
 
-      p->gen7_3DSTATE_PS(p->dev,
-            fs, ilo->max_wm_threads, num_samplers,
-            dual_blend, p->cp);
+      p->gen7_3DSTATE_PS(p->dev, fs, num_samplers, dual_blend, p->cp);
    }
 
    /* 3DSTATE_SCISSOR_STATE_POINTERS */

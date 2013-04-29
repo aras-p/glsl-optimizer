@@ -95,14 +95,24 @@ gen7_emit_3DSTATE_CC_STATE_POINTERS(const struct ilo_dev_info *dev,
 static void
 gen7_emit_3DSTATE_GS(const struct ilo_dev_info *dev,
                      const struct ilo_shader *gs,
-                     int max_threads, int num_samplers,
+                     int num_samplers,
                      struct ilo_cp *cp)
 {
    const uint32_t cmd = ILO_GPE_CMD(0x3, 0x0, 0x11);
    const uint8_t cmd_len = 7;
    uint32_t dw2, dw4, dw5;
+   int max_threads;
 
    ILO_GPE_VALID_GEN(dev, 7, 7);
+
+   switch (dev->gen) {
+   case ILO_GEN(7):
+      max_threads = (dev->gt == 2) ? 128 : 36;
+      break;
+   default:
+      max_threads = 1;
+      break;
+   }
 
    if (!gs) {
       ilo_cp_begin(cp, cmd_len);
@@ -597,27 +607,18 @@ gen7_emit_3DSTATE_SBE(const struct ilo_dev_info *dev,
 static void
 gen7_emit_3DSTATE_PS(const struct ilo_dev_info *dev,
                      const struct ilo_shader *fs,
-                     int max_threads, int num_samplers,
-                     bool dual_blend,
+                     int num_samplers, bool dual_blend,
                      struct ilo_cp *cp)
 {
    const uint32_t cmd = ILO_GPE_CMD(0x3, 0x0, 0x20);
    const uint8_t cmd_len = 8;
    uint32_t dw2, dw4, dw5;
+   int max_threads;
 
    ILO_GPE_VALID_GEN(dev, 7, 7);
 
-   /*
-    * From the Ivy Bridge PRM, volume 2 part 1, page 286:
-    *
-    *     "This field (Maximum Number of Threads) must have an odd value so
-    *      that the max number of PS threads is even."
-    */
-   max_threads &= ~1;
-
-   /* the valid range is [4, 48] */
-   if (max_threads < 4)
-      max_threads = 4;
+   /* see brwCreateContext() */
+   max_threads = (dev->gt == 2) ? 172 : 48;
 
    if (!fs) {
       ilo_cp_begin(cp, cmd_len);
@@ -793,7 +794,7 @@ gen7_emit_3dstate_urb(const struct ilo_dev_info *dev,
    const uint32_t cmd = ILO_GPE_CMD(0x3, 0x0, subop);
    const uint8_t cmd_len = 2;
    const int row_size = 64; /* 512 bits */
-   int alloc_size, num_entries;
+   int alloc_size, num_entries, min_entries, max_entries;
 
    ILO_GPE_VALID_GEN(dev, 7, 7);
 
@@ -824,15 +825,26 @@ gen7_emit_3dstate_urb(const struct ilo_dev_info *dev,
 
    switch (subop) {
    case 0x30: /* 3DSTATE_URB_VS */
-      assert(num_entries >= 32);
-      if (dev->gt == 2 && num_entries > 704)
-         num_entries = 704;
-      else if (dev->gt == 1 && num_entries > 512)
-         num_entries = 512;
+      min_entries = 32;
+      max_entries = (dev->gt == 2) ? 704 : 512;
+
+      assert(num_entries >= min_entries);
+      if (num_entries > max_entries)
+         num_entries = max_entries;
+      break;
+   case 0x31: /* 3DSTATE_URB_HS */
+      max_entries = (dev->gt == 2) ? 64 : 32;
+      if (num_entries > max_entries)
+         num_entries = max_entries;
       break;
    case 0x32: /* 3DSTATE_URB_DS */
       if (num_entries)
          assert(num_entries >= 138);
+      break;
+   case 0x33: /* 3DSTATE_URB_GS */
+      max_entries = (dev->gt == 2) ? 320 : 192;
+      if (num_entries > max_entries)
+         num_entries = max_entries;
       break;
    default:
       break;
