@@ -57,7 +57,7 @@ static bool debug = false;
 class schedule_node : public exec_node
 {
 public:
-   schedule_node(fs_inst *inst, const struct intel_context *intel)
+   schedule_node(backend_instruction *inst, const struct intel_context *intel)
    {
       this->inst = inst;
       this->child_array_size = 0;
@@ -79,7 +79,7 @@ public:
    void set_latency_gen4();
    void set_latency_gen7(bool is_haswell);
 
-   fs_inst *inst;
+   backend_instruction *inst;
    schedule_node **children;
    int *child_latency;
    int child_count;
@@ -341,15 +341,15 @@ schedule_node::set_latency_gen7(bool is_haswell)
 
 class instruction_scheduler {
 public:
-   instruction_scheduler(fs_visitor *v, void *mem_ctx, int grf_count,
-                         bool post_reg_alloc)
+   instruction_scheduler(backend_visitor *v, int grf_count, bool post_reg_alloc)
    {
-      this->v = v;
-      this->mem_ctx = ralloc_context(mem_ctx);
+      this->bv = v;
+      this->mem_ctx = ralloc_context(v->mem_ctx);
       this->grf_count = grf_count;
       this->instructions.make_empty();
       this->instructions_to_schedule = 0;
       this->post_reg_alloc = post_reg_alloc;
+      this->time = 0;
    }
 
    ~instruction_scheduler()
@@ -360,11 +360,10 @@ public:
    void add_dep(schedule_node *before, schedule_node *after, int latency);
    void add_dep(schedule_node *before, schedule_node *after);
 
-   void add_inst(fs_inst *inst);
-   void calculate_deps();
-   void schedule_instructions(fs_inst *next_block_header);
-
-   schedule_node *choose_instruction_to_schedule();
+   void run(exec_list *instructions);
+   void add_inst(backend_instruction *inst);
+   virtual void calculate_deps() = 0;
+   virtual schedule_node *choose_instruction_to_schedule() = 0;
 
    /**
     * Returns how many cycles it takes the instruction to issue.
@@ -373,23 +372,43 @@ public:
     * with 1 cycle per vector dispatched.  Thus 8-wide pixel shaders take 2
     * cycles to dispatch and 16-wide (compressed) instructions take 4.
     */
-   int issue_time(fs_inst *inst);
+   virtual int issue_time(backend_instruction *inst) = 0;
 
-   bool is_compressed(fs_inst *inst);
+   void schedule_instructions(backend_instruction *next_block_header);
 
    void *mem_ctx;
 
    bool post_reg_alloc;
    int instructions_to_schedule;
    int grf_count;
+   int time;
    exec_list instructions;
+   backend_visitor *bv;
+};
+
+class fs_instruction_scheduler : public instruction_scheduler
+{
+public:
+   fs_instruction_scheduler(fs_visitor *v, int grf_count, bool post_reg_alloc);
+   void calculate_deps();
+   bool is_compressed(fs_inst *inst);
+   schedule_node *choose_instruction_to_schedule();
+   int issue_time(backend_instruction *inst);
    fs_visitor *v;
 };
 
-void
-instruction_scheduler::add_inst(fs_inst *inst)
+fs_instruction_scheduler::fs_instruction_scheduler(fs_visitor *v,
+                                                   int grf_count,
+                                                   bool post_reg_alloc)
+   : instruction_scheduler(v, grf_count, post_reg_alloc),
+     v(v)
 {
-   schedule_node *n = new(mem_ctx) schedule_node(inst, v->intel);
+}
+
+void
+instruction_scheduler::add_inst(backend_instruction *inst)
+{
+   schedule_node *n = new(mem_ctx) schedule_node(inst, bv->intel);
 
    assert(!inst->is_head_sentinel());
    assert(!inst->is_tail_sentinel());
@@ -480,7 +499,7 @@ instruction_scheduler::add_barrier_deps(schedule_node *n)
  * actually writes 2 MRFs.
  */
 bool
-instruction_scheduler::is_compressed(fs_inst *inst)
+fs_instruction_scheduler::is_compressed(fs_inst *inst)
 {
    return (v->dispatch_width == 16 &&
 	   !inst->force_uncompressed &&
@@ -488,7 +507,7 @@ instruction_scheduler::is_compressed(fs_inst *inst)
 }
 
 void
-instruction_scheduler::calculate_deps()
+fs_instruction_scheduler::calculate_deps()
 {
    /* Pre-register-allocation, this tracks the last write per VGRF (so
     * different reg_offsets within it can interfere when they shouldn't).
@@ -521,7 +540,7 @@ instruction_scheduler::calculate_deps()
    /* top-to-bottom dependencies: RAW and WAW. */
    foreach_list(node, &instructions) {
       schedule_node *n = (schedule_node *)node;
-      fs_inst *inst = n->inst;
+      fs_inst *inst = (fs_inst *)n->inst;
 
       if (inst->opcode == FS_OPCODE_PLACEHOLDER_HALT)
          add_barrier_deps(n);
@@ -629,7 +648,7 @@ instruction_scheduler::calculate_deps()
 	!node->is_head_sentinel();
 	node = prev, prev = node->prev) {
       schedule_node *n = (schedule_node *)node;
-      fs_inst *inst = n->inst;
+      fs_inst *inst = (fs_inst *)n->inst;
 
       /* write-after-read deps. */
       for (int i = 0; i < 3; i++) {
@@ -721,7 +740,7 @@ instruction_scheduler::calculate_deps()
 }
 
 schedule_node *
-instruction_scheduler::choose_instruction_to_schedule()
+fs_instruction_scheduler::choose_instruction_to_schedule()
 {
    schedule_node *chosen = NULL;
 
@@ -762,9 +781,10 @@ instruction_scheduler::choose_instruction_to_schedule()
            node != instructions.get_head()->prev;
            node = (schedule_node *)node->prev) {
          schedule_node *n = (schedule_node *)node;
+         fs_inst *inst = (fs_inst *)n->inst;
 
          chosen = n;
-         if (chosen->inst->regs_written <= 1)
+         if (inst->regs_written <= 1)
             break;
       }
    }
@@ -773,18 +793,18 @@ instruction_scheduler::choose_instruction_to_schedule()
 }
 
 int
-instruction_scheduler::issue_time(fs_inst *inst)
+fs_instruction_scheduler::issue_time(backend_instruction *inst)
 {
-   if (is_compressed(inst))
+   if (is_compressed((fs_inst *)inst))
       return 4;
    else
       return 2;
 }
 
 void
-instruction_scheduler::schedule_instructions(fs_inst *next_block_header)
+instruction_scheduler::schedule_instructions(backend_instruction *next_block_header)
 {
-   int time = 0;
+   time = 0;
 
    /* Remove non-DAG heads from the list. */
    foreach_list_safe(node, &instructions) {
@@ -816,7 +836,7 @@ instruction_scheduler::schedule_instructions(fs_inst *next_block_header)
 
       if (debug) {
          printf("clock %4d, scheduled: ", time);
-         v->dump_instruction(chosen->inst);
+         bv->dump_instruction(chosen->inst);
       }
 
       /* Now that we've scheduled a new instruction, some of its
@@ -834,7 +854,7 @@ instruction_scheduler::schedule_instructions(fs_inst *next_block_header)
 	 if (child->parent_count == 0) {
             if (debug) {
                printf("now available: ");
-               v->dump_instruction(child->inst);
+               bv->dump_instruction(child->inst);
             }
 	    instructions.push_tail(child);
 	 }
@@ -856,49 +876,55 @@ instruction_scheduler::schedule_instructions(fs_inst *next_block_header)
       }
    }
 
-   if (unlikely(INTEL_DEBUG & DEBUG_WM) && post_reg_alloc) {
-      printf("fs%d estimated execution time: %d cycles\n",
-             v->dispatch_width, time);
+   assert(instructions_to_schedule == 0);
+}
+
+void
+instruction_scheduler::run(exec_list *all_instructions)
+{
+   backend_instruction *next_block_header =
+      (backend_instruction *)all_instructions->head;
+
+   if (debug) {
+      printf("\nInstructions before scheduling (reg_alloc %d)\n", post_reg_alloc);
+      bv->dump_instructions();
    }
 
-   assert(instructions_to_schedule == 0);
+   while (!next_block_header->is_tail_sentinel()) {
+      /* Add things to be scheduled until we get to a new BB. */
+      while (!next_block_header->is_tail_sentinel()) {
+	 backend_instruction *inst = next_block_header;
+	 next_block_header = (backend_instruction *)next_block_header->next;
+
+	 add_inst(inst);
+         if (inst->is_control_flow())
+	    break;
+      }
+      calculate_deps();
+      schedule_instructions(next_block_header);
+   }
+
+   if (debug) {
+      printf("\nInstructions after scheduling (reg_alloc %d)\n", post_reg_alloc);
+      bv->dump_instructions();
+   }
 }
 
 void
 fs_visitor::schedule_instructions(bool post_reg_alloc)
 {
-   fs_inst *next_block_header = (fs_inst *)instructions.head;
-
    int grf_count;
    if (post_reg_alloc)
       grf_count = grf_used;
    else
       grf_count = virtual_grf_count;
 
-   if (debug) {
-      printf("\nInstructions before scheduling (reg_alloc %d)\n", post_reg_alloc);
-      dump_instructions();
-   }
+   fs_instruction_scheduler sched(this, grf_count, post_reg_alloc);
+   sched.run(&instructions);
 
-   instruction_scheduler sched(this, mem_ctx, grf_count, post_reg_alloc);
-
-   while (!next_block_header->is_tail_sentinel()) {
-      /* Add things to be scheduled until we get to a new BB. */
-      while (!next_block_header->is_tail_sentinel()) {
-	 fs_inst *inst = next_block_header;
-	 next_block_header = (fs_inst *)next_block_header->next;
-
-	 sched.add_inst(inst);
-         if (inst->is_control_flow())
-	    break;
-      }
-      sched.calculate_deps();
-      sched.schedule_instructions(next_block_header);
-   }
-
-   if (debug) {
-      printf("\nInstructions after scheduling (reg_alloc %d)\n", post_reg_alloc);
-      dump_instructions();
+   if (unlikely(INTEL_DEBUG & DEBUG_WM) && post_reg_alloc) {
+      printf("fs%d estimated execution time: %d cycles\n",
+             dispatch_width, sched.time);
    }
 
    this->live_intervals_valid = false;
