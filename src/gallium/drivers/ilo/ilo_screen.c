@@ -325,8 +325,6 @@ ilo_get_param(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_SM3:
       return true;
    case PIPE_CAP_MAX_STREAM_OUTPUT_BUFFERS:
-      if (is->dev.gen >= ILO_GEN(7))
-         return 0; /* TODO */
       return ILO_MAX_SO_BUFFERS;
    case PIPE_CAP_PRIMITIVE_RESTART:
       return false; /* TODO */
@@ -368,7 +366,10 @@ ilo_get_param(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_MAX_STREAM_OUTPUT_INTERLEAVED_COMPONENTS:
       return ILO_MAX_SO_BINDINGS;
    case PIPE_CAP_STREAM_OUTPUT_PAUSE_RESUME:
-      return false; /* TODO */
+      if (is->dev.gen >= ILO_GEN(7))
+         return is->dev.has_gen7_sol_reset;
+      else
+         return false; /* TODO */
    case PIPE_CAP_TGSI_CAN_COMPACT_VARYINGS:
    case PIPE_CAP_TGSI_CAN_COMPACT_CONSTANTS:
       return false;
