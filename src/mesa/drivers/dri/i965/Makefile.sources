@@ -59,7 +59,6 @@ i965_FILES = \
 	brw_fs_fp.cpp \
 	brw_fs_live_variables.cpp \
 	brw_fs_reg_allocate.cpp \
-	brw_fs_schedule_instructions.cpp \
 	brw_fs_vector_splitting.cpp \
 	brw_fs_visitor.cpp \
 	brw_gs.c \
@@ -70,6 +69,7 @@ i965_FILES = \
 	brw_program.c \
 	brw_primitive_restart.c \
 	brw_queryobj.c \
+	brw_schedule_instructions.cpp \
 	brw_sf.c \
 	brw_sf_emit.c \
 	brw_sf_state.c \
