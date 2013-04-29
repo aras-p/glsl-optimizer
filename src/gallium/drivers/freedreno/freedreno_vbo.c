@@ -194,7 +194,7 @@ fd_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
 	ctx->resolve |= buffers;
 
 	if (ctx->dirty & FD_DIRTY_VTXBUF)
-		emit_vertexbufs(ctx);
+		emit_vertexbufs(ctx, info->count);
 
 	fd_state_emit(pctx, ctx->dirty);
 
