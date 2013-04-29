@@ -800,14 +800,16 @@ const char * r600_llvm_gpu_string(enum radeon_family family)
 
 	switch (family) {
 	case CHIP_R600:
-	case CHIP_RV610:
 	case CHIP_RV630:
-	case CHIP_RV620:
 	case CHIP_RV635:
 	case CHIP_RV670:
+		gpu_family = "r600";
+		break;
+	case CHIP_RV610:
+	case CHIP_RV620:
 	case CHIP_RS780:
 	case CHIP_RS880:
-		gpu_family = "r600";
+		gpu_family = "rs880";
 		break;
 	case CHIP_RV710:
 		gpu_family = "rv710";
@@ -825,6 +827,8 @@ const char * r600_llvm_gpu_string(enum radeon_family family)
 		break;
 	case CHIP_SUMO:
 	case CHIP_SUMO2:
+		gpu_family = "sumo";
+		break;
 	case CHIP_REDWOOD:
 		gpu_family = "redwood";
 		break;
