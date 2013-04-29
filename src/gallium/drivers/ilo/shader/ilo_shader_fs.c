@@ -1441,6 +1441,7 @@ fs_setup_shader_out(struct ilo_shader *sh, const struct toy_tgsi *tgsi)
 
    sh->out.count = tgsi->num_outputs;
    for (i = 0; i < tgsi->num_outputs; i++) {
+      sh->out.register_indices[i] = tgsi->outputs[i].index;
       sh->out.semantic_names[i] = tgsi->outputs[i].semantic_name;
       sh->out.semantic_indices[i] = tgsi->outputs[i].semantic_index;
 

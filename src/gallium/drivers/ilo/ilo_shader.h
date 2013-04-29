@@ -92,6 +92,7 @@ struct ilo_shader {
    } in;
 
    struct {
+      int register_indices[PIPE_MAX_SHADER_OUTPUTS];
       int semantic_names[PIPE_MAX_SHADER_OUTPUTS];
       int semantic_indices[PIPE_MAX_SHADER_OUTPUTS];
       int count;

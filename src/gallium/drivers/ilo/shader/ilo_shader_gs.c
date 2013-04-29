@@ -1094,21 +1094,31 @@ gs_setup_shader_out(struct ilo_shader *sh, const struct toy_tgsi *tgsi,
 
    /* the first two VUEs are always PSIZE and POSITION */
    num_outs = 2;
+   output_map[0] = psize_slot;
+   output_map[1] = pos_slot;
+
+   sh->out.register_indices[0] =
+      (psize_slot >= 0) ? tgsi->outputs[psize_slot].index : -1;
    sh->out.semantic_names[0] = TGSI_SEMANTIC_PSIZE;
    sh->out.semantic_indices[0] = 0;
+
+   sh->out.register_indices[1] =
+      (pos_slot >= 0) ? tgsi->outputs[pos_slot].index : -1;
    sh->out.semantic_names[1] = TGSI_SEMANTIC_POSITION;
    sh->out.semantic_indices[1] = 0;
 
    sh->out.has_pos = true;
-   output_map[0] = psize_slot;
-   output_map[1] = pos_slot;
 
    /* followed by optional clip distances */
    if (output_clipdist) {
+      sh->out.register_indices[num_outs] =
+         (clipdist_slot[0] >= 0) ? tgsi->outputs[clipdist_slot[0]].index : -1;
       sh->out.semantic_names[num_outs] = TGSI_SEMANTIC_CLIPDIST;
       sh->out.semantic_indices[num_outs] = 0;
       output_map[num_outs++] = clipdist_slot[0];
 
+      sh->out.register_indices[num_outs] =
+         (clipdist_slot[1] >= 0) ? tgsi->outputs[clipdist_slot[1]].index : -1;
       sh->out.semantic_names[num_outs] = TGSI_SEMANTIC_CLIPDIST;
       sh->out.semantic_indices[num_outs] = 1;
       output_map[num_outs++] = clipdist_slot[1];
@@ -1124,6 +1134,7 @@ gs_setup_shader_out(struct ilo_shader *sh, const struct toy_tgsi *tgsi,
       if (slot < 0)
          continue;
 
+      sh->out.register_indices[num_outs] = tgsi->outputs[slot].index;
       sh->out.semantic_names[num_outs] = tgsi->outputs[slot].semantic_name;
       sh->out.semantic_indices[num_outs] = tgsi->outputs[slot].semantic_index;
 
@@ -1140,6 +1151,7 @@ gs_setup_shader_out(struct ilo_shader *sh, const struct toy_tgsi *tgsi,
       case TGSI_SEMANTIC_BCOLOR:
          break;
       default:
+         sh->out.register_indices[num_outs] = tgsi->outputs[i].index;
          sh->out.semantic_names[num_outs] = tgsi->outputs[i].semantic_name;
          sh->out.semantic_indices[num_outs] = tgsi->outputs[i].semantic_index;
          output_map[num_outs++] = i;
