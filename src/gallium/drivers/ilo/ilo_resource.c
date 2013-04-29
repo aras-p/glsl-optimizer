@@ -323,7 +323,7 @@ map_resource(struct ilo_context *ilo, struct ilo_resource *res,
 
    /* prefer map() when there is the last-level cache */
    if (res->tiling == INTEL_TILING_NONE &&
-       (is->has_llc || (usage & PIPE_TRANSFER_READ)))
+       (is->dev.has_llc || (usage & PIPE_TRANSFER_READ)))
       err = res->bo->map(res->bo, (usage & PIPE_TRANSFER_WRITE));
    else
       err = res->bo->map_gtt(res->bo);
@@ -559,7 +559,7 @@ layout_tex_init(const struct ilo_resource *res, struct layout_tex_info *info)
       info->align_j = info->block_height;
    }
    else if (util_format_is_depth_or_stencil(templ->format)) {
-      if (is->gen >= ILO_GEN(7)) {
+      if (is->dev.gen >= ILO_GEN(7)) {
          switch (templ->format) {
          case PIPE_FORMAT_Z16_UNORM:
             info->align_i = 8;
@@ -600,7 +600,7 @@ layout_tex_init(const struct ilo_resource *res, struct layout_tex_info *info)
    }
    else {
       const bool valign_4 = (templ->nr_samples > 1) ||
-         (is->gen >= ILO_GEN(7) &&
+         (is->dev.gen >= ILO_GEN(7) &&
           (templ->bind & PIPE_BIND_RENDER_TARGET) &&
           tiling == INTEL_TILING_Y);
 
@@ -704,9 +704,9 @@ layout_tex_init(const struct ilo_resource *res, struct layout_tex_info *info)
           * res->slice_offsets, we do not need to divide QPitch by 4.
           */
          info->qpitch = h0 + h1 +
-            ((is->gen >= ILO_GEN(7)) ? 12 : 11) * info->align_j;
+            ((is->dev.gen >= ILO_GEN(7)) ? 12 : 11) * info->align_j;
 
-         if (is->gen == ILO_GEN(6) && templ->nr_samples > 1 &&
+         if (is->dev.gen == ILO_GEN(6) && templ->nr_samples > 1 &&
                templ->height0 % 4 == 1)
             info->qpitch += 4;
       }

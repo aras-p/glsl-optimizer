@@ -497,7 +497,7 @@ ilo_texture_barrier(struct pipe_context *pipe)
    ilo_3d_pipeline_emit_flush(hw3d->pipeline);
 
    /* don't know why */
-   if (ilo->gen >= ILO_GEN(7))
+   if (ilo->dev->gen >= ILO_GEN(7))
       ilo_cp_flush(hw3d->cp);
 }
 

@@ -71,9 +71,7 @@ struct ilo_context {
    struct pipe_context base;
 
    struct intel_winsys *winsys;
-   int devid;
-   int gen;
-   int gt;
+   struct ilo_dev_info *dev;
 
    int max_vs_threads;
    int max_gs_threads;

@@ -135,32 +135,19 @@ ilo_context_create(struct pipe_screen *screen, void *priv)
       return NULL;
 
    ilo->winsys = is->winsys;
-   ilo->devid = is->devid;
-   ilo->gen = is->gen;
-
-   if (IS_SNB_GT1(ilo->devid) ||
-       IS_IVB_GT1(ilo->devid) ||
-       IS_HSW_GT1(ilo->devid) ||
-       IS_BAYTRAIL(ilo->devid))
-      ilo->gt = 1;
-   else if (IS_SNB_GT2(ilo->devid) ||
-            IS_IVB_GT2(ilo->devid) ||
-            IS_HSW_GT2(ilo->devid))
-      ilo->gt = 2;
-   else
-      ilo->gt = 0;
+   ilo->dev = &is->dev;
 
    /* stolen from classic i965 */
    /* WM maximum threads is number of EUs times number of threads per EU. */
-   if (ilo->gen >= ILO_GEN(7)) {
-      if (ilo->gt == 1) {
+   if (ilo->dev->gen >= ILO_GEN(7)) {
+      if (ilo->dev->gt == 1) {
 	 ilo->max_wm_threads = 48;
 	 ilo->max_vs_threads = 36;
 	 ilo->max_gs_threads = 36;
 	 ilo->urb.size = 128;
 	 ilo->urb.max_vs_entries = 512;
 	 ilo->urb.max_gs_entries = 192;
-      } else if (ilo->gt == 2) {
+      } else if (ilo->dev->gt == 2) {
 	 ilo->max_wm_threads = 172;
 	 ilo->max_vs_threads = 128;
 	 ilo->max_gs_threads = 128;
@@ -170,8 +157,8 @@ ilo_context_create(struct pipe_screen *screen, void *priv)
       } else {
 	 assert(!"Unknown gen7 device.");
       }
-   } else if (ilo->gen == ILO_GEN(6)) {
-      if (ilo->gt == 2) {
+   } else if (ilo->dev->gen == ILO_GEN(6)) {
+      if (ilo->dev->gt == 2) {
 	 ilo->max_wm_threads = 80;
 	 ilo->max_vs_threads = 60;
 	 ilo->max_gs_threads = 60;
@@ -188,10 +175,10 @@ ilo_context_create(struct pipe_screen *screen, void *priv)
       }
    }
 
-   ilo->cp = ilo_cp_create(ilo->winsys, is->has_llc);
+   ilo->cp = ilo_cp_create(ilo->winsys, is->dev.has_llc);
    ilo->shader_cache = ilo_shader_cache_create(ilo->winsys);
    if (ilo->cp)
-      ilo->hw3d = ilo_3d_create(ilo->cp, ilo->gen, ilo->gt);
+      ilo->hw3d = ilo_3d_create(ilo->cp, ilo->dev->gen, ilo->dev->gt);
 
    if (!ilo->cp || !ilo->shader_cache || !ilo->hw3d) {
       ilo_context_destroy(&ilo->base);

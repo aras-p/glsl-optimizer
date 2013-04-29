@@ -542,7 +542,7 @@ ilo_is_format_supported(struct pipe_screen *screen,
                         unsigned bindings)
 {
    struct ilo_screen *is = ilo_screen(screen);
-   const int gen = ILO_GEN_GET_MAJOR(is->gen * 10);
+   const int gen = ILO_GEN_GET_MAJOR(is->dev.gen * 10);
    const struct surface_format_info *info;
    unsigned bind;
 

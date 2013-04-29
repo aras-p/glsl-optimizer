@@ -45,10 +45,7 @@ struct ilo_screen {
    struct pipe_screen base;
 
    struct intel_winsys *winsys;
-   int devid;
-   int gen;
-
-   bool has_llc;
+   struct ilo_dev_info dev;
 };
 
 static inline struct ilo_screen *

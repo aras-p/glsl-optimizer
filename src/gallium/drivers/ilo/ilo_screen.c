@@ -325,7 +325,7 @@ ilo_get_param(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_SM3:
       return true;
    case PIPE_CAP_MAX_STREAM_OUTPUT_BUFFERS:
-      if (is->gen >= ILO_GEN(7))
+      if (is->dev.gen >= ILO_GEN(7))
          return 0; /* TODO */
       return ILO_MAX_SO_BUFFERS;
    case PIPE_CAP_PRIMITIVE_RESTART:
@@ -336,7 +336,7 @@ ilo_get_param(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_INDEP_BLEND_FUNC:
       return true;
    case PIPE_CAP_MAX_TEXTURE_ARRAY_LAYERS:
-      return (is->gen >= ILO_GEN(7)) ? 2048 : 512;
+      return (is->dev.gen >= ILO_GEN(7)) ? 2048 : 512;
    case PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT:
    case PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT:
    case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER:
@@ -432,7 +432,7 @@ ilo_get_name(struct pipe_screen *screen)
    const char *chipset;
 
    /* stolen from classic i965 */
-   switch (is->devid) {
+   switch (is->dev.devid) {
    case PCI_CHIP_SANDYBRIDGE_GT1:
    case PCI_CHIP_SANDYBRIDGE_GT2:
    case PCI_CHIP_SANDYBRIDGE_GT2_PLUS:
@@ -619,6 +619,45 @@ ilo_screen_destroy(struct pipe_screen *screen)
    FREE(is);
 }
 
+static bool
+init_dev(struct ilo_dev_info *dev, const struct intel_winsys_info *info)
+{
+   dev->devid = info->devid;
+   dev->has_gen7_sol_reset = info->has_gen7_sol_reset;
+   dev->has_llc = info->has_llc;
+
+   if (IS_HASWELL(info->devid)) {
+      dev->gen = ILO_GEN(7.5);
+
+      if (IS_HSW_GT2(info->devid))
+         dev->gt = 2;
+      else
+         dev->gt = 1;
+   }
+   else if (IS_GEN7(info->devid)) {
+      dev->gen = ILO_GEN(7);
+
+      if (IS_IVB_GT2(info->devid))
+         dev->gt = 2;
+      else
+         dev->gt = 1;
+   }
+   else if (IS_GEN6(info->devid)) {
+      dev->gen = ILO_GEN(6);
+
+      if (IS_SNB_GT2(info->devid))
+         dev->gt = 2;
+      else
+         dev->gt = 1;
+   }
+   else {
+      ilo_err("unknown GPU generation\n");
+      return false;
+   }
+
+   return true;
+}
+
 struct pipe_screen *
 ilo_screen_create(struct intel_winsys *ws)
 {
@@ -634,21 +673,10 @@ ilo_screen_create(struct intel_winsys *ws)
    is->winsys = ws;
 
    info = is->winsys->get_info(is->winsys);
-
-   is->devid = info->devid;
-   if (IS_GEN7(info->devid)) {
-      is->gen = ILO_GEN(7);
-   }
-   else if (IS_GEN6(info->devid)) {
-      is->gen = ILO_GEN(6);
-   }
-   else {
-      ilo_err("unknown GPU generation\n");
+   if (!init_dev(&is->dev, info)) {
       FREE(is);
       return NULL;
    }
-
-   is->has_llc = info->has_llc;
 
    util_format_s3tc_init();
 
