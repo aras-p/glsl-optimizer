@@ -28,9 +28,9 @@
 #ifndef TOY_COMPILER_H
 #define TOY_COMPILER_H
 
+#include "util/u_slab.h"
 #include "brw_defines.h"
 
-#include "util/u_slab.h"
 #include "ilo_common.h"
 #include "toy_compiler_reg.h"
 
@@ -138,7 +138,7 @@ struct toy_inst {
  * Toy compiler.
  */
 struct toy_compiler {
-   int gen;
+   const struct ilo_dev_info *dev;
 
    struct toy_inst templ;
    struct util_slab_mempool mempool;
@@ -456,7 +456,7 @@ tc_fail(struct toy_compiler *tc, const char *reason)
 }
 
 void
-toy_compiler_init(struct toy_compiler *tc, int gen);
+toy_compiler_init(struct toy_compiler *tc, const struct ilo_dev_info *dev);
 
 void
 toy_compiler_cleanup(struct toy_compiler *tc);

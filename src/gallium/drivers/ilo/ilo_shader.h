@@ -126,8 +126,8 @@ struct ilo_shader {
  * Information about a shader state.
  */
 struct ilo_shader_info {
+   const struct ilo_dev_info *dev;
    int type;
-   int gen;
 
    const struct tgsi_token *tokens;
 

@@ -400,7 +400,7 @@ fs_lower_opcode_tgsi_direct(struct fs_compile_context *fcc,
       fs_lower_opcode_tgsi_in(fcc, inst->dst, dim, idx);
       break;
    case TOY_OPCODE_TGSI_CONST:
-      if (tc->gen >= ILO_GEN(7))
+      if (tc->dev->gen >= ILO_GEN(7))
          fs_lower_opcode_tgsi_const_gen7(fcc, inst->dst, dim, inst->src[1]);
       else
          fs_lower_opcode_tgsi_const_gen6(fcc, inst->dst, dim, inst->src[1]);
@@ -921,7 +921,7 @@ fs_prepare_tgsi_sampling(struct toy_compiler *tc, const struct toy_inst *inst,
    }
 
    /* set up sampler parameters */
-   if (tc->gen >= ILO_GEN(7)) {
+   if (tc->dev->gen >= ILO_GEN(7)) {
       msg_len = fs_add_sampler_params_gen7(tc, msg_type, base_mrf, param_size,
             coords, num_coords, bias_or_lod, ref_or_si, ddx, ddy, num_derivs);
    }
@@ -1607,7 +1607,7 @@ fs_setup(struct fs_compile_context *fcc,
 
    fcc->variant = variant;
 
-   toy_compiler_init(&fcc->tc, state->info.gen);
+   toy_compiler_init(&fcc->tc, state->info.dev);
 
    fcc->dispatch_mode = GEN6_WM_8_DISPATCH_ENABLE;
 
@@ -1654,7 +1654,7 @@ fs_setup(struct fs_compile_context *fcc,
    fcc->num_grf_per_vrf =
       (fcc->dispatch_mode == GEN6_WM_16_DISPATCH_ENABLE) ? 2 : 1;
 
-   if (fcc->tc.gen >= ILO_GEN(7)) {
+   if (fcc->tc.dev->gen >= ILO_GEN(7)) {
       fcc->last_free_grf -= 15;
       fcc->first_free_mrf = fcc->last_free_grf + 1;
       fcc->last_free_mrf = fcc->first_free_mrf + 14;

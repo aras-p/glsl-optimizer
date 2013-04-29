@@ -1248,7 +1248,7 @@ gs_setup(struct gs_compile_context *gcc,
    gcc->variant = variant;
    gcc->so_info = &state->info.stream_output;
 
-   toy_compiler_init(&gcc->tc, state->info.gen);
+   toy_compiler_init(&gcc->tc, state->info.dev);
 
    gcc->write_so = (state->info.stream_output.num_outputs > 0);
    gcc->write_vue = !gcc->variant->u.gs.rasterizer_discard;

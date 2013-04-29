@@ -55,7 +55,7 @@ toy_compiler_disassemble(struct toy_compiler *tc, const void *kernel, int size)
       }
 
       brw_disasm(stderr, (struct brw_instruction *) &instructions[i],
-            ILO_GEN_GET_MAJOR(tc->gen));
+            ILO_GEN_GET_MAJOR(tc->dev->gen));
    }
 }
 

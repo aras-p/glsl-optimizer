@@ -327,8 +327,8 @@ ilo_shader_state_create(const struct ilo_context *ilo,
    if (!state)
       return NULL;
 
+   state->info.dev = ilo->dev;
    state->info.type = type;
-   state->info.gen = ilo->dev->gen;
 
    if (type == PIPE_SHADER_COMPUTE) {
       const struct pipe_compute_state *c =
