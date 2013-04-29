@@ -94,6 +94,7 @@ llvmpipe_get_query_result(struct pipe_context *pipe,
                           union pipe_query_result *vresult)
 {
    struct llvmpipe_screen *screen = llvmpipe_screen(pipe->screen);
+   unsigned num_threads = MAX2(1, screen->num_threads);
    struct llvmpipe_query *pq = llvmpipe_query(q);
    uint64_t *result = (uint64_t *)vresult;
    int i;
@@ -120,12 +121,12 @@ llvmpipe_get_query_result(struct pipe_context *pipe,
 
    switch (pq->type) {
    case PIPE_QUERY_OCCLUSION_COUNTER:
-      for (i = 0; i < screen->num_threads; i++) {
+      for (i = 0; i < num_threads; i++) {
          *result += pq->count[i];
       }
       break;
    case PIPE_QUERY_TIMESTAMP:
-      for (i = 0; i < screen->num_threads; i++) {
+      for (i = 0; i < num_threads; i++) {
          if (pq->count[i] > *result) {
             *result = pq->count[i];
          }
