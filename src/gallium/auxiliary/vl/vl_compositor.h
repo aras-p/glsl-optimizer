@@ -224,7 +224,8 @@ void
 vl_compositor_render(struct vl_compositor_state *state,
                      struct vl_compositor       *compositor,
                      struct pipe_surface        *dst_surface,
-                     struct u_rect              *dirty_area);
+                     struct u_rect              *dirty_area,
+                     bool                        clear_dirty);
 
 /**
  * destroy this compositor

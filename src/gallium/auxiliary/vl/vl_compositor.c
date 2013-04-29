@@ -986,7 +986,8 @@ void
 vl_compositor_render(struct vl_compositor_state *s,
                      struct vl_compositor       *c,
                      struct pipe_surface        *dst_surface,
-                     struct u_rect              *dirty_area)
+                     struct u_rect              *dirty_area,
+                     bool                        clear_dirty)
 {
    assert(c);
    assert(dst_surface);
@@ -1004,8 +1005,8 @@ vl_compositor_render(struct vl_compositor_state *s,
 
    gen_vertex_data(c, s, dirty_area);
 
-   if (dirty_area && (dirty_area->x0 < dirty_area->x1 ||
-                      dirty_area->y0 < dirty_area->y1)) {
+   if (clear_dirty && dirty_area &&
+       (dirty_area->x0 < dirty_area->x1 || dirty_area->y0 < dirty_area->y1)) {
 
       c->pipe->clear_render_target(c->pipe, dst_surface, &s->clear_color,
                                    0, 0, dst_surface->width, dst_surface->height);

@@ -432,7 +432,7 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
 
    vl_compositor_set_layer_dst_area(cstate, 0, &dst_rect);
    vl_compositor_set_layer_dst_area(cstate, 1, &dst_rect);
-   vl_compositor_render(cstate, compositor, surf, dirty_area);
+   vl_compositor_render(cstate, compositor, surf, dirty_area, true);
 
    pipe->flush(pipe, &surface_priv->fence, 0);
 

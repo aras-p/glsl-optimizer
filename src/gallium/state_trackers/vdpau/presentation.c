@@ -264,7 +264,7 @@ vlVdpPresentationQueueDisplay(VdpPresentationQueue presentation_queue,
       vl_compositor_clear_layers(cstate);
       vl_compositor_set_rgba_layer(cstate, compositor, 0, surf->sampler_view, &src_rect, NULL, NULL);
       vl_compositor_set_dst_clip(cstate, &dst_clip);
-      vl_compositor_render(cstate, compositor, surf_draw, dirty_area);
+      vl_compositor_render(cstate, compositor, surf_draw, dirty_area, true);
    }
 
    vl_screen_set_next_timestamp(pq->device->vscreen, earliest_presentation_time);

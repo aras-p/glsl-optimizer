@@ -382,8 +382,7 @@ vlVdpOutputSurfacePutBitsIndexed(VdpOutputSurface surface,
    vl_compositor_clear_layers(cstate);
    vl_compositor_set_palette_layer(cstate, compositor, 0, sv_idx, sv_tbl, NULL, NULL, false);
    vl_compositor_set_layer_dst_area(cstate, 0, RectToPipe(destination_rect, &dst_rect));
-   vl_compositor_render(cstate, compositor, vlsurface->surface, NULL);
-   vl_compositor_reset_dirty_area(&vlsurface->dirty_area);
+   vl_compositor_render(cstate, compositor, vlsurface->surface, &vlsurface->dirty_area, false);
 
    pipe_sampler_view_reference(&sv_idx, NULL);
    pipe_sampler_view_reference(&sv_tbl, NULL);
@@ -489,8 +488,7 @@ vlVdpOutputSurfacePutBitsYCbCr(VdpOutputSurface surface,
    vl_compositor_clear_layers(cstate);
    vl_compositor_set_buffer_layer(cstate, compositor, 0, vbuffer, NULL, NULL, VL_COMPOSITOR_WEAVE);
    vl_compositor_set_layer_dst_area(cstate, 0, RectToPipe(destination_rect, &dst_rect));
-   vl_compositor_render(cstate, compositor, vlsurface->surface, NULL);
-   vl_compositor_reset_dirty_area(&vlsurface->dirty_area);
+   vl_compositor_render(cstate, compositor, vlsurface->surface, &vlsurface->dirty_area, false);
 
    vbuffer->destroy(vbuffer);
    pipe_mutex_unlock(vlsurface->device->mutex);
@@ -660,8 +658,7 @@ vlVdpOutputSurfaceRenderOutputSurface(VdpOutputSurface destination_surface,
                                 RectToPipe(source_rect, &src_rect), NULL,
                                 ColorsToPipe(colors, flags, vlcolors));
    vl_compositor_set_layer_dst_area(cstate, 0, RectToPipe(destination_rect, &dst_rect));
-   vl_compositor_render(cstate, compositor, dst_vlsurface->surface, NULL);
-   vl_compositor_reset_dirty_area(&dst_vlsurface->dirty_area);
+   vl_compositor_render(cstate, compositor, dst_vlsurface->surface, &dst_vlsurface->dirty_area, false);
 
    context->delete_blend_state(context, blend);
    pipe_mutex_unlock(dst_vlsurface->device->mutex);
@@ -720,8 +717,7 @@ vlVdpOutputSurfaceRenderBitmapSurface(VdpOutputSurface destination_surface,
                                 RectToPipe(source_rect, &src_rect), NULL,
                                 ColorsToPipe(colors, flags, vlcolors));
    vl_compositor_set_layer_dst_area(cstate, 0, RectToPipe(destination_rect, &dst_rect));
-   vl_compositor_render(cstate, compositor, dst_vlsurface->surface, NULL);
-   vl_compositor_reset_dirty_area(&dst_vlsurface->dirty_area);
+   vl_compositor_render(cstate, compositor, dst_vlsurface->surface, &dst_vlsurface->dirty_area, false);
 
    context->delete_blend_state(context, blend);
    pipe_mutex_unlock(dst_vlsurface->device->mutex);

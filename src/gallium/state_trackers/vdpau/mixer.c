@@ -312,7 +312,7 @@ VdpStatus vlVdpVideoMixerRender(VdpVideoMixer mixer,
    if (!vmixer->noise_reduction.filter && !vmixer->sharpness.filter)
       vlVdpSave4DelayedRendering(vmixer->device, destination_surface, &vmixer->cstate);
    else {
-      vl_compositor_render(&vmixer->cstate, compositor, dst->surface, &dst->dirty_area);
+      vl_compositor_render(&vmixer->cstate, compositor, dst->surface, &dst->dirty_area, true);
 
       /* applying the noise reduction after scaling is actually not very
          clever, but currently we should avoid to copy around the image
