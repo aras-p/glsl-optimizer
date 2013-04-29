@@ -44,17 +44,6 @@ class dst_reg;
 unsigned
 swizzle_for_size(int size);
 
-enum register_file {
-   ARF = BRW_ARCHITECTURE_REGISTER_FILE,
-   GRF = BRW_GENERAL_REGISTER_FILE,
-   MRF = BRW_MESSAGE_REGISTER_FILE,
-   IMM = BRW_IMMEDIATE_VALUE,
-   HW_REG, /* a struct brw_reg */
-   ATTR,
-   UNIFORM, /* prog_data->params[hw_reg] */
-   BAD_FILE
-};
-
 class reg
 {
 public:

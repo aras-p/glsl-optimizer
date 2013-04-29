@@ -258,7 +258,7 @@ fs_visitor::setup_payload_interference(struct ra_graph *g,
        * the start (see interp_reg()).
        */
       for (int i = 0; i < 3; i++) {
-         if (inst->src[i].file == FIXED_HW_REG &&
+         if (inst->src[i].file == HW_REG &&
              inst->src[i].fixed_hw_reg.file == BRW_GENERAL_REGISTER_FILE) {
             int node_nr = inst->src[i].fixed_hw_reg.nr / reg_width;
             if (node_nr >= payload_node_count)
@@ -288,7 +288,7 @@ fs_visitor::setup_payload_interference(struct ra_graph *g,
           */
          if (intel->gen >= 6) {
             int delta_x_arg = 0;
-            if (inst->src[delta_x_arg].file == FIXED_HW_REG &&
+            if (inst->src[delta_x_arg].file == HW_REG &&
                 inst->src[delta_x_arg].fixed_hw_reg.file ==
                 BRW_GENERAL_REGISTER_FILE) {
                int sechalf_node = (inst->src[delta_x_arg].fixed_hw_reg.nr /

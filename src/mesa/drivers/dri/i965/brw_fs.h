@@ -55,16 +55,6 @@ namespace {
    struct acp_entry;
 }
 
-enum register_file {
-   BAD_FILE,
-   ARF,
-   GRF,
-   MRF,
-   IMM,
-   FIXED_HW_REG, /* a struct brw_reg */
-   UNIFORM, /* prog_data->params[reg] */
-};
-
 class fs_reg {
 public:
    /* Callers of this ralloc-based new need not call delete. It's

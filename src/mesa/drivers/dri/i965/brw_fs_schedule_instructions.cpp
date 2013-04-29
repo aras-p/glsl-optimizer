@@ -524,7 +524,7 @@ instruction_scheduler::calculate_deps()
             } else {
                add_dep(last_grf_write[inst->src[i].reg], n);
             }
-	 } else if (inst->src[i].file == FIXED_HW_REG &&
+	 } else if (inst->src[i].file == HW_REG &&
 		    (inst->src[i].fixed_hw_reg.file ==
 		     BRW_GENERAL_REGISTER_FILE)) {
 	    if (post_reg_alloc) {
@@ -577,7 +577,7 @@ instruction_scheduler::calculate_deps()
 	    add_dep(last_mrf_write[reg], n);
 	    last_mrf_write[reg] = n;
 	 }
-      } else if (inst->dst.file == FIXED_HW_REG &&
+      } else if (inst->dst.file == HW_REG &&
 		 inst->dst.fixed_hw_reg.file == BRW_GENERAL_REGISTER_FILE) {
          if (post_reg_alloc) {
             for (int r = 0; r < reg_width; r++)
@@ -629,7 +629,7 @@ instruction_scheduler::calculate_deps()
             } else {
                add_dep(n, last_grf_write[inst->src[i].reg]);
             }
-	 } else if (inst->src[i].file == FIXED_HW_REG &&
+	 } else if (inst->src[i].file == HW_REG &&
 		    (inst->src[i].fixed_hw_reg.file ==
 		     BRW_GENERAL_REGISTER_FILE)) {
 	    if (post_reg_alloc) {
@@ -681,7 +681,7 @@ instruction_scheduler::calculate_deps()
 
 	    last_mrf_write[reg] = n;
 	 }
-      } else if (inst->dst.file == FIXED_HW_REG &&
+      } else if (inst->dst.file == HW_REG &&
 		 inst->dst.fixed_hw_reg.file == BRW_GENERAL_REGISTER_FILE) {
          if (post_reg_alloc) {
             for (int r = 0; r < reg_width; r++)

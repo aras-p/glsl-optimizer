@@ -854,7 +854,7 @@ brw_reg_from_fs_reg(fs_reg *reg)
 	 break;
       }
       break;
-   case FIXED_HW_REG:
+   case HW_REG:
       brw_reg = reg->fixed_hw_reg;
       break;
    case BAD_FILE:

@@ -27,6 +27,17 @@
 
 #pragma once
 
+enum register_file {
+   BAD_FILE,
+   ARF,
+   GRF,
+   MRF,
+   IMM,
+   HW_REG, /* a struct brw_reg */
+   ATTR,
+   UNIFORM, /* prog_data->params[reg] */
+};
+
 class backend_instruction : public exec_node {
 public:
    bool is_tex();

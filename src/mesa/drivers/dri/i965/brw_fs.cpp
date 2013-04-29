@@ -218,7 +218,7 @@ fs_visitor::CMP(fs_reg dst, fs_reg src0, fs_reg src1, uint32_t condition)
     */
    if (intel->gen == 4) {
       dst.type = src0.type;
-      if (dst.file == FIXED_HW_REG)
+      if (dst.file == HW_REG)
 	 dst.fixed_hw_reg.type = dst.type;
    }
 
@@ -405,7 +405,7 @@ fs_reg::fs_reg(uint32_t u)
 fs_reg::fs_reg(struct brw_reg fixed_hw_reg)
 {
    init();
-   this->file = FIXED_HW_REG;
+   this->file = HW_REG;
    this->fixed_hw_reg = fixed_hw_reg;
    this->type = fixed_hw_reg.type;
 }
@@ -1212,7 +1212,7 @@ fs_visitor::assign_curb_setup()
 						  constant_nr / 8,
 						  constant_nr % 8);
 
-	    inst->src[i].file = FIXED_HW_REG;
+	    inst->src[i].file = HW_REG;
 	    inst->src[i].fixed_hw_reg = retype(brw_reg, inst->src[i].type);
 	 }
       }
@@ -1280,12 +1280,12 @@ fs_visitor::assign_urb_setup()
       fs_inst *inst = (fs_inst *)node;
 
       if (inst->opcode == FS_OPCODE_LINTERP) {
-	 assert(inst->src[2].file == FIXED_HW_REG);
+	 assert(inst->src[2].file == HW_REG);
 	 inst->src[2].fixed_hw_reg.nr += urb_start;
       }
 
       if (inst->opcode == FS_OPCODE_CINTERP) {
-	 assert(inst->src[0].file == FIXED_HW_REG);
+	 assert(inst->src[0].file == HW_REG);
 	 inst->src[0].fixed_hw_reg.nr += urb_start;
       }
    }
@@ -2402,7 +2402,7 @@ clear_deps_for_inst_src(fs_inst *inst, int dispatch_width, bool *deps,
       int grf;
       if (inst->src[i].file == GRF) {
          grf = inst->src[i].reg;
-      } else if (inst->src[i].file == FIXED_HW_REG &&
+      } else if (inst->src[i].file == HW_REG &&
                  inst->src[i].fixed_hw_reg.file == BRW_GENERAL_REGISTER_FILE) {
          grf = inst->src[i].fixed_hw_reg.nr;
       } else {
