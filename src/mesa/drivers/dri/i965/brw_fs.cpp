@@ -2665,8 +2665,10 @@ fs_visitor::lower_uniform_pull_constant_loads()
 }
 
 void
-fs_visitor::dump_instruction(fs_inst *inst)
+fs_visitor::dump_instruction(backend_instruction *be_inst)
 {
+   fs_inst *inst = (fs_inst *)be_inst;
+
    if (inst->predicate) {
       printf("(%cf0.%d) ",
              inst->predicate_inverse ? '-' : '+',
@@ -2767,17 +2769,6 @@ fs_visitor::dump_instruction(fs_inst *inst)
       printf("2ndhalf ");
 
    printf("\n");
-}
-
-void
-fs_visitor::dump_instructions()
-{
-   int ip = 0;
-   foreach_list(node, &this->instructions) {
-      fs_inst *inst = (fs_inst *)node;
-      printf("%d: ", ip++);
-      dump_instruction(inst);
-   }
 }
 
 /**

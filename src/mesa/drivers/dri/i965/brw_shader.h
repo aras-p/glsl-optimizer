@@ -56,6 +56,9 @@ public:
     * backend_instruction)
     */
    exec_list instructions;
+
+   virtual void dump_instruction(backend_instruction *inst) = 0;
+   void dump_instructions();
 };
 
 int brw_type_for_base_type(const struct glsl_type *type);

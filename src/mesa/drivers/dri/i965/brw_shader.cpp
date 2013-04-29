@@ -552,3 +552,14 @@ backend_instruction::is_control_flow()
       return false;
    }
 }
+
+void
+backend_visitor::dump_instructions()
+{
+   int ip = 0;
+   foreach_list(node, &this->instructions) {
+      backend_instruction *inst = (backend_instruction *)node;
+      printf("%d: ", ip++);
+      dump_instruction(inst);
+   }
+}

@@ -477,8 +477,7 @@ public:
 
    bool process_move_condition(ir_rvalue *ir);
 
-   void dump_instruction(vec4_instruction *inst);
-   void dump_instructions();
+   void dump_instruction(backend_instruction *inst);
 
 protected:
    void emit_vertex();

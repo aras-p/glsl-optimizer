@@ -1064,8 +1064,10 @@ vec4_visitor::split_virtual_grfs()
 }
 
 void
-vec4_visitor::dump_instruction(vec4_instruction *inst)
+vec4_visitor::dump_instruction(backend_instruction *be_inst)
 {
+   vec4_instruction *inst = (vec4_instruction *)be_inst;
+
    printf("%s ", brw_instruction_name(inst->opcode));
 
    switch (inst->dst.file) {
@@ -1144,17 +1146,6 @@ vec4_visitor::dump_instruction(vec4_instruction *inst)
    }
 
    printf("\n");
-}
-
-void
-vec4_visitor::dump_instructions()
-{
-   int ip = 0;
-   foreach_list_safe(node, &this->instructions) {
-      vec4_instruction *inst = (vec4_instruction *)node;
-      printf("%d: ", ip++);
-      dump_instruction(inst);
-   }
 }
 
 /**
