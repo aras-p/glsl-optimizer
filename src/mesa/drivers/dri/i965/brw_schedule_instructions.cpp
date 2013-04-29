@@ -364,6 +364,17 @@ public:
    void calculate_deps();
    void schedule_instructions(fs_inst *next_block_header);
 
+   schedule_node *choose_instruction_to_schedule();
+
+   /**
+    * Returns how many cycles it takes the instruction to issue.
+    *
+    * Instructions in gen hardware are handled one simd4 vector at a time,
+    * with 1 cycle per vector dispatched.  Thus 8-wide pixel shaders take 2
+    * cycles to dispatch and 16-wide (compressed) instructions take 4.
+    */
+   int issue_time(fs_inst *inst);
+
    bool is_compressed(fs_inst *inst);
 
    void *mem_ctx;
@@ -709,6 +720,67 @@ instruction_scheduler::calculate_deps()
    }
 }
 
+schedule_node *
+instruction_scheduler::choose_instruction_to_schedule()
+{
+   schedule_node *chosen = NULL;
+
+   if (post_reg_alloc) {
+      int chosen_time = 0;
+
+      /* Of the instructions closest ready to execute or the closest to
+       * being ready, choose the oldest one.
+       */
+      foreach_list(node, &instructions) {
+         schedule_node *n = (schedule_node *)node;
+
+         if (!chosen || n->unblocked_time < chosen_time) {
+            chosen = n;
+            chosen_time = n->unblocked_time;
+         }
+      }
+   } else {
+      /* Before register allocation, we don't care about the latencies of
+       * instructions.  All we care about is reducing live intervals of
+       * variables so that we can avoid register spilling, or get 16-wide
+       * shaders which naturally do a better job of hiding instruction
+       * latency.
+       *
+       * To do so, schedule our instructions in a roughly LIFO/depth-first
+       * order: when new instructions become available as a result of
+       * scheduling something, choose those first so that our result
+       * hopefully is consumed quickly.
+       *
+       * The exception is messages that generate more than one result
+       * register (AKA texturing).  In those cases, the LIFO search would
+       * normally tend to choose them quickly (because scheduling the
+       * previous message not only unblocked the children using its result,
+       * but also the MRF setup for the next sampler message, which in turn
+       * unblocks the next sampler message).
+       */
+      for (schedule_node *node = (schedule_node *)instructions.get_tail();
+           node != instructions.get_head()->prev;
+           node = (schedule_node *)node->prev) {
+         schedule_node *n = (schedule_node *)node;
+
+         chosen = n;
+         if (chosen->inst->regs_written <= 1)
+            break;
+      }
+   }
+
+   return chosen;
+}
+
+int
+instruction_scheduler::issue_time(fs_inst *inst)
+{
+   if (is_compressed(inst))
+      return 4;
+   else
+      return 2;
+}
+
 void
 instruction_scheduler::schedule_instructions(fs_inst *next_block_header)
 {
@@ -722,52 +794,7 @@ instruction_scheduler::schedule_instructions(fs_inst *next_block_header)
    }
 
    while (!instructions.is_empty()) {
-      schedule_node *chosen = NULL;
-      int chosen_time = 0;
-
-      if (post_reg_alloc) {
-         /* Of the instructions closest ready to execute or the closest to
-          * being ready, choose the oldest one.
-          */
-         foreach_list(node, &instructions) {
-            schedule_node *n = (schedule_node *)node;
-
-            if (!chosen || n->unblocked_time < chosen_time) {
-               chosen = n;
-               chosen_time = n->unblocked_time;
-            }
-         }
-      } else {
-         /* Before register allocation, we don't care about the latencies of
-          * instructions.  All we care about is reducing live intervals of
-          * variables so that we can avoid register spilling, or get 16-wide
-          * shaders which naturally do a better job of hiding instruction
-          * latency.
-          *
-          * To do so, schedule our instructions in a roughly LIFO/depth-first
-          * order: when new instructions become available as a result of
-          * scheduling something, choose those first so that our result
-          * hopefully is consumed quickly.
-          *
-          * The exception is messages that generate more than one result
-          * register (AKA texturing).  In those cases, the LIFO search would
-          * normally tend to choose them quickly (because scheduling the
-          * previous message not only unblocked the children using its result,
-          * but also the MRF setup for the next sampler message, which in turn
-          * unblocks the next sampler message).
-          */
-         for (schedule_node *node = (schedule_node *)instructions.get_tail();
-              node != instructions.get_head()->prev;
-              node = (schedule_node *)node->prev) {
-            schedule_node *n = (schedule_node *)node;
-
-            chosen = n;
-            if (chosen->inst->regs_written <= 1)
-               break;
-         }
-
-         chosen_time = chosen->unblocked_time;
-      }
+      schedule_node *chosen = choose_instruction_to_schedule();
 
       /* Schedule this instruction. */
       assert(chosen);
@@ -775,22 +802,17 @@ instruction_scheduler::schedule_instructions(fs_inst *next_block_header)
       next_block_header->insert_before(chosen->inst);
       instructions_to_schedule--;
 
-      /* Bump the clock.  Instructions in gen hardware are handled one simd4
-       * vector at a time, with 1 cycle per vector dispatched.  Thus 8-wide
-       * pixel shaders take 2 cycles to dispatch and 16-wide (compressed)
-       * instructions take 4.
+      /* Update the clock for how soon an instruction could start after the
+       * chosen one.
        */
-      if (is_compressed(chosen->inst))
-         time += 4;
-      else
-         time += 2;
+      time += issue_time(chosen->inst);
 
       /* If we expected a delay for scheduling, then bump the clock to reflect
        * that as well.  In reality, the hardware will switch to another
        * hyperthread and may not return to dispatching our thread for a while
        * even after we're unblocked.
        */
-      time = MAX2(time, chosen_time);
+      time = MAX2(time, chosen->unblocked_time);
 
       if (debug) {
          printf("clock %4d, scheduled: ", time);
