@@ -305,9 +305,12 @@ vec4_visitor::dead_code_eliminate()
    foreach_list_safe(node, &this->instructions) {
       vec4_instruction *inst = (vec4_instruction *)node;
 
-      if (inst->dst.file == GRF && this->virtual_grf_use[inst->dst.reg] <= pc) {
-	 inst->remove();
-	 progress = true;
+      if (inst->dst.file == GRF) {
+         assert(this->virtual_grf_end[inst->dst.reg] >= pc);
+         if (this->virtual_grf_end[inst->dst.reg] == pc) {
+            inst->remove();
+            progress = true;
+         }
       }
 
       pc++;
@@ -832,7 +835,7 @@ vec4_visitor::opt_register_coalesce()
       /* Can't coalesce this GRF if someone else was going to
        * read it later.
        */
-      if (this->virtual_grf_use[inst->src[0].reg] > ip)
+      if (this->virtual_grf_end[inst->src[0].reg] > ip)
 	 continue;
 
       /* We need to check interference with the final destination between this

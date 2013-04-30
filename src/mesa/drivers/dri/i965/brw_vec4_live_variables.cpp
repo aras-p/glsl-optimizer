@@ -183,8 +183,8 @@ vec4_live_variables::~vec4_live_variables()
  * We could expose per-channel live intervals to the consumer based on the
  * information we computed in vec4_live_variables, except that our only
  * current user is virtual_grf_interferes().  So we instead union the
- * per-channel ranges into a per-vgrf range for virtual_grf_def[] and
- * virtual_grf_use[].
+ * per-channel ranges into a per-vgrf range for virtual_grf_start[] and
+ * virtual_grf_end[].
  *
  * We could potentially have virtual_grf_interferes() do the test per-channel,
  * which would let some interesting register allocation occur (particularly on
@@ -200,16 +200,16 @@ vec4_visitor::calculate_live_intervals()
    if (this->live_intervals_valid)
       return;
 
-   int *def = ralloc_array(mem_ctx, int, this->virtual_grf_count);
-   int *use = ralloc_array(mem_ctx, int, this->virtual_grf_count);
-   ralloc_free(this->virtual_grf_def);
-   ralloc_free(this->virtual_grf_use);
-   this->virtual_grf_def = def;
-   this->virtual_grf_use = use;
+   int *start = ralloc_array(mem_ctx, int, this->virtual_grf_count);
+   int *end = ralloc_array(mem_ctx, int, this->virtual_grf_count);
+   ralloc_free(this->virtual_grf_start);
+   ralloc_free(this->virtual_grf_end);
+   this->virtual_grf_start = start;
+   this->virtual_grf_end = end;
 
    for (int i = 0; i < this->virtual_grf_count; i++) {
-      def[i] = MAX_INSTRUCTION;
-      use[i] = -1;
+      start[i] = MAX_INSTRUCTION;
+      end[i] = -1;
    }
 
    /* Start by setting up the intervals with no knowledge of control
@@ -223,14 +223,16 @@ vec4_visitor::calculate_live_intervals()
 	 if (inst->src[i].file == GRF) {
 	    int reg = inst->src[i].reg;
 
-	    use[reg] = ip;
+            start[reg] = MIN2(start[reg], ip);
+            end[reg] = ip;
 	 }
       }
 
       if (inst->dst.file == GRF) {
          int reg = inst->dst.reg;
 
-         def[reg] = MIN2(def[reg], ip);
+         start[reg] = MIN2(start[reg], ip);
+         end[reg] = ip;
       }
 
       ip++;
@@ -247,60 +249,23 @@ vec4_visitor::calculate_live_intervals()
    for (int b = 0; b < cfg.num_blocks; b++) {
       for (int i = 0; i < livevars.num_vars; i++) {
 	 if (livevars.bd[b].livein[i]) {
-	    def[i / 4] = MIN2(def[i / 4], cfg.blocks[b]->start_ip);
-	    use[i / 4] = MAX2(use[i / 4], cfg.blocks[b]->start_ip);
+	    start[i / 4] = MIN2(start[i / 4], cfg.blocks[b]->start_ip);
+	    end[i / 4] = MAX2(end[i / 4], cfg.blocks[b]->start_ip);
 	 }
 
 	 if (livevars.bd[b].liveout[i]) {
-	    def[i / 4] = MIN2(def[i / 4], cfg.blocks[b]->end_ip);
-	    use[i / 4] = MAX2(use[i / 4], cfg.blocks[b]->end_ip);
+	    start[i / 4] = MIN2(start[i / 4], cfg.blocks[b]->end_ip);
+	    end[i / 4] = MAX2(end[i / 4], cfg.blocks[b]->end_ip);
 	 }
       }
    }
 
    this->live_intervals_valid = true;
-
-   /* Note in the non-control-flow code above, that we only take def[] as the
-    * first store, and use[] as the last use.  We use this in dead code
-    * elimination, to determine when a store never gets used.  However, we
-    * also use these arrays to answer the virtual_grf_interferes() question
-    * (live interval analysis), which is used for register coalescing and
-    * register allocation.
-    *
-    * So, there's a conflict over what the array should mean: if use[]
-    * considers a def after the last use, then the dead code elimination pass
-    * never does anything (and it's an important pass!).  But if we don't
-    * include dead code, then virtual_grf_interferes() lies and we'll do
-    * horrible things like coalesce the register that is dead-code-written
-    * into another register that was live across the dead write (causing the
-    * use of the second register to take the dead write's source value instead
-    * of the coalesced MOV's source value).
-    *
-    * To resolve the conflict, immediately after calculating live intervals,
-    * detect dead code, nuke it, and if we changed anything, calculate again
-    * before returning to the caller.  Now we happen to produce def[] and
-    * use[] arrays that will work for virtual_grf_interferes().
-    */
-   if (dead_code_eliminate())
-      calculate_live_intervals();
 }
 
 bool
 vec4_visitor::virtual_grf_interferes(int a, int b)
 {
-   int a_def = this->virtual_grf_def[a], a_use = this->virtual_grf_use[a];
-   int b_def = this->virtual_grf_def[b], b_use = this->virtual_grf_use[b];
-
-   /* If there's dead code (def but not use), it would break our test
-    * unless we consider it used.
-    */
-   if ((a_use == -1 && a_def != MAX_INSTRUCTION) ||
-       (b_use == -1 && b_def != MAX_INSTRUCTION)) {
-      return true;
-   }
-
-   int start = MAX2(a_def, b_def);
-   int end = MIN2(a_use, b_use);
-
-   return start < end;
+   return !(virtual_grf_end[a] <= virtual_grf_start[b] ||
+            virtual_grf_end[b] <= virtual_grf_start[a]);
 }

@@ -3173,8 +3173,8 @@ vec4_visitor::vec4_visitor(struct brw_context *brw,
 				       hash_table_pointer_hash,
 				       hash_table_pointer_compare);
 
-   this->virtual_grf_def = NULL;
-   this->virtual_grf_use = NULL;
+   this->virtual_grf_start = NULL;
+   this->virtual_grf_end = NULL;
    this->virtual_grf_sizes = NULL;
    this->virtual_grf_count = 0;
    this->virtual_grf_reg_map = NULL;
