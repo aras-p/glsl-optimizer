@@ -58,20 +58,6 @@
 
 using namespace llvm;
 
-namespace {
-
-class LLVMEnsureMultithreaded {
-public:
-   LLVMEnsureMultithreaded()
-   {
-      llvm_start_multithreaded();
-   }
-};
-
-static LLVMEnsureMultithreaded lLVMEnsureMultithreaded;
-
-}
-
 /**
  * Set the shader type we want to compile
  *

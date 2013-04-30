@@ -79,6 +79,21 @@
 
 #include "lp_bld_misc.h"
 
+namespace {
+
+class LLVMEnsureMultithreaded {
+public:
+   LLVMEnsureMultithreaded()
+   {
+      if (!LLVMIsMultithreaded()) {
+         LLVMStartMultithreaded();
+      }
+   }
+};
+
+static LLVMEnsureMultithreaded lLVMEnsureMultithreaded;
+
+}
 
 extern "C" void
 lp_set_target_options(void)
