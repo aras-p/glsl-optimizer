@@ -1728,6 +1728,12 @@ static void si_cb(struct r600_context *rctx, struct si_pm4_state *pm4,
 	si_pm4_set_reg(pm4, R_028C70_CB_COLOR0_INFO + cb * 0x3C, color_info);
 	si_pm4_set_reg(pm4, R_028C74_CB_COLOR0_ATTRIB + cb * 0x3C, color_attrib);
 
+	/* set CB_COLOR1_INFO for possible dual-src blending */
+	if (state->nr_cbufs == 1) {
+		assert(cb == 0);
+		si_pm4_set_reg(pm4, R_028C70_CB_COLOR0_INFO + 1 * 0x3C, color_info);
+	}
+
 	/* Determine pixel shader export format */
 	max_comp_size = si_colorformat_max_comp_size(format);
 	if (ntype == V_028C70_NUMBER_SRGB ||
@@ -1735,6 +1741,9 @@ static void si_cb(struct r600_context *rctx, struct si_pm4_state *pm4,
 	     max_comp_size <= 10) ||
 	    (ntype == V_028C70_NUMBER_FLOAT && max_comp_size <= 16)) {
 		rctx->export_16bpc |= 1 << cb;
+		/* set SPI_SHADER_COL_FORMAT for possible dual-src blending */
+		if (state->nr_cbufs == 1)
+			rctx->export_16bpc |= 1 << 1;
 	}
 }
 
@@ -1811,7 +1820,7 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
-	uint32_t shader_mask, tl, br;
+	uint32_t tl, br;
 	int tl_x, tl_y, br_x, br_y;
 
 	if (pm4 == NULL)
@@ -1832,10 +1841,6 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 	assert(!(rctx->export_16bpc & ~0xff));
 	si_db(rctx, pm4, state);
 
-	shader_mask = 0;
-	for (int i = 0; i < state->nr_cbufs; i++) {
-		shader_mask |= 0xf << (i * 4);
-	}
 	tl_x = 0;
 	tl_y = 0;
 	br_x = state->width;
@@ -1854,7 +1859,6 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 	si_pm4_set_reg(pm4, R_028208_PA_SC_WINDOW_SCISSOR_BR, br);
 	si_pm4_set_reg(pm4, R_028200_PA_SC_WINDOW_OFFSET, 0x00000000);
 	si_pm4_set_reg(pm4, R_028230_PA_SC_EDGERULE, 0xAAAAAAAA);
-	si_pm4_set_reg(pm4, R_02823C_CB_SHADER_MASK, shader_mask);
 	si_pm4_set_reg(pm4, R_028BE0_PA_SC_AA_CONFIG, 0x00000000);
 
 	si_pm4_set_state(rctx, framebuffer, pm4);

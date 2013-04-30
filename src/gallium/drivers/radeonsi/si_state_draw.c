@@ -213,6 +213,7 @@ static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *s
 	si_pm4_set_reg(pm4, R_028710_SPI_SHADER_Z_FORMAT, spi_shader_z_format);
 	si_pm4_set_reg(pm4, R_028714_SPI_SHADER_COL_FORMAT,
 		       shader->spi_shader_col_format);
+	si_pm4_set_reg(pm4, R_02823C_CB_SHADER_MASK, shader->cb_shader_mask);
 
 	va = r600_resource_va(ctx->screen, (void *)shader->bo);
 	si_pm4_add_bo(pm4, shader->bo, RADEON_USAGE_READ);

@@ -461,6 +461,8 @@ static void si_llvm_init_export_args(struct lp_build_tgsi_context *bld_base,
 			else
 				si_shader_ctx->shader->spi_shader_col_format |=
 					V_028714_SPI_SHADER_32_ABGR << (4 * cbuf);
+
+			si_shader_ctx->shader->cb_shader_mask |= 0xf << (4 * cbuf);
 		}
 	}
 
@@ -806,6 +808,7 @@ static void si_llvm_emit_epilogue(struct lp_build_tgsi_context * bld_base)
 
 		si_shader_ctx->shader->spi_shader_col_format |=
 			V_028714_SPI_SHADER_32_ABGR;
+		si_shader_ctx->shader->cb_shader_mask |= S_02823C_OUTPUT0_ENABLE(0xf);
 	}
 
 	/* Specify whether the EXEC mask represents the valid mask */
@@ -830,6 +833,8 @@ static void si_llvm_emit_epilogue(struct lp_build_tgsi_context * bld_base)
 
 			si_shader_ctx->shader->spi_shader_col_format |=
 				si_shader_ctx->shader->spi_shader_col_format << 4;
+			si_shader_ctx->shader->cb_shader_mask |=
+				si_shader_ctx->shader->cb_shader_mask << 4;
 		}
 
 		last_args[3] = lp_build_const_int32(base->gallivm, V_008DFC_SQ_EXP_MRT);
