@@ -1455,8 +1455,7 @@ gen7_fill_normal_SURFACE_STATE(const struct ilo_dev_info *dev,
 
    dw[0] = surface_type << BRW_SURFACE_TYPE_SHIFT |
            surface_format << BRW_SURFACE_FORMAT_SHIFT |
-           ilo_gpe_gen6_translate_winsys_tiling(res->tiling) << 13 |
-           GEN7_SURFACE_ARYSPC_FULL;
+           ilo_gpe_gen6_translate_winsys_tiling(res->tiling) << 13;
 
    if (surface_type != BRW_SURFACE_3D && depth > 1)
       dw[0] |= GEN7_SURFACE_IS_ARRAY;
@@ -1466,6 +1465,11 @@ gen7_fill_normal_SURFACE_STATE(const struct ilo_dev_info *dev,
 
    if (res->halign_8)
       dw[0] |= GEN7_SURFACE_HALIGN_8;
+
+   if (res->array_spacing_full)
+      dw[0] |= GEN7_SURFACE_ARYSPC_FULL;
+   else
+      dw[0] |= GEN7_SURFACE_ARYSPC_LOD0;
 
    if (render_cache_rw)
       dw[0] |= BRW_SURFACE_RC_READ_WRITE;

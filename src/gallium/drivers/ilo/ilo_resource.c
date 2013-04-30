@@ -441,6 +441,7 @@ struct layout_tex_info {
    bool compressed;
    int block_width, block_height;
    int align_i, align_j;
+   bool array_spacing_full;
    int qpitch;
 
    struct {
@@ -626,10 +627,45 @@ layout_tex_init(const struct ilo_resource *res, struct layout_tex_info *info)
    assert(util_is_power_of_two(info->block_width) &&
           util_is_power_of_two(info->block_height));
 
+   if (is->dev.gen >= ILO_GEN(7)) {
+      /*
+       * From the Ivy Bridge PRM, volume 1 part 1, page 111:
+       *
+       *     "note that the depth buffer and stencil buffer have an implied
+       *      value of ARYSPC_FULL"
+       *
+       * From the Ivy Bridge PRM, volume 4 part 1, page 66:
+       *
+       *     "If Multisampled Surface Storage Format is MSFMT_MSS and Number
+       *      of Multisamples is not MULTISAMPLECOUNT_1, this field (Surface
+       *      Array Spacing) must be set to ARYSPC_LOD0."
+       *
+       * We use ARYSPC_FULL only when needed, and as such, we never use
+       * ARYSPC_FULL for multisampled resources.
+       */
+      info->array_spacing_full = (templ->last_level > 0 ||
+            util_format_is_depth_or_stencil(templ->format));
+   }
+   else {
+      /*
+       * From the Sandy Bridge PRM, volume 1 part 1, page 115:
+       *
+       *     "The separate stencil buffer does not support mip mapping, thus
+       *      the storage for LODs other than LOD 0 is not needed. The
+       *      following QPitch equation applies only to the separate stencil
+       *      buffer:
+       *
+       *        QPitch = h_0"
+       *
+       * GEN6 does not support compact spacing otherwise.
+       */
+      info->array_spacing_full = (templ->format != PIPE_FORMAT_S8_UINT);
+   }
+
    last_level = templ->last_level;
-   /* need at least 2 levels to compute qpitch below */
-   if (templ->array_size > 1 && last_level == 0 &&
-       templ->format != PIPE_FORMAT_S8_UINT)
+
+   /* need at least 2 levels to compute full qpitch */
+   if (last_level == 0 && templ->array_size > 1 && info->array_spacing_full)
       last_level++;
 
    /* compute mip level sizes */
@@ -673,10 +709,7 @@ layout_tex_init(const struct ilo_resource *res, struct layout_tex_info *info)
    if (templ->array_size > 1) {
       const int h0 = align(info->sizes[0].h, info->align_j);
 
-      if (templ->format == PIPE_FORMAT_S8_UINT) {
-         info->qpitch = h0;
-      }
-      else {
+      if (info->array_spacing_full) {
          const int h1 = align(info->sizes[1].h, info->align_j);
 
          /*
@@ -696,6 +729,17 @@ layout_tex_init(const struct ilo_resource *res, struct layout_tex_info *info)
           *      the value calculated in the equation above, for every other
           *      odd Surface Height starting from 1 i.e. 1,5,9,13"
           *
+          * From the Ivy Bridge PRM, volume 1 part 1, page 111-112:
+          *
+          *     "If Surface Array Spacing is set to ARYSPC_FULL (note that the
+          *      depth buffer and stencil buffer have an implied value of
+          *      ARYSPC_FULL):
+          *
+          *        QPitch = (h0 + h1 + 12j)
+          *        QPitch = (h0 + h1 + 12j) / 4 (compressed)
+          *
+          *      (There are many typos or missing words here...)"
+          *
           * To access the N-th slice, an offset of (Stride * QPitch * N) is
           * added to the base address.  The PRM divides QPitch by 4 for
           * compressed formats because the block height for those formats are
@@ -709,6 +753,9 @@ layout_tex_init(const struct ilo_resource *res, struct layout_tex_info *info)
          if (is->dev.gen == ILO_GEN(6) && templ->nr_samples > 1 &&
                templ->height0 % 4 == 1)
             info->qpitch += 4;
+      }
+      else {
+         info->qpitch = h0;
       }
    }
 }
@@ -936,8 +983,10 @@ init_texture(struct ilo_resource *res)
    res->compressed = info.compressed;
    res->block_width = info.block_width;
    res->block_height = info.block_height;
+
    res->halign_8 = (info.align_i == 8);
    res->valign_4 = (info.align_j == 4);
+   res->array_spacing_full = info.array_spacing_full;
 
    switch (res->base.target) {
    case PIPE_TEXTURE_1D:
@@ -968,17 +1017,19 @@ init_texture(struct ilo_resource *res)
 static void
 init_buffer(struct ilo_resource *res)
 {
-   res->compressed = false;
-   res->block_width = 1;
-   res->block_height = 1;
-   res->halign_8 = false;
-   res->valign_4 = false;
-
    res->bo_width = res->base.width0;
    res->bo_height = 1;
    res->bo_cpp = 1;
    res->bo_stride = 0;
    res->tiling = INTEL_TILING_NONE;
+
+   res->compressed = false;
+   res->block_width = 1;
+   res->block_height = 1;
+
+   res->halign_8 = false;
+   res->valign_4 = false;
+   res->array_spacing_full = false;
 }
 
 static struct pipe_resource *

@@ -64,7 +64,11 @@ struct ilo_resource {
    bool compressed;
    unsigned block_width;
    unsigned block_height;
+
+   /* true if the mip level alignments are stricter */
    bool halign_8, valign_4;
+   /* true if space is reserved between layers */
+   bool array_spacing_full;
 
    /* 2D offsets into a layer/slice/face */
    struct {
