@@ -61,7 +61,7 @@ struct pipe_video_buffer *r600_video_buffer_create(struct pipe_context *pipe,
 	const enum pipe_format *resource_formats;
 	struct pipe_video_buffer template;
 	struct pipe_resource templ;
-	unsigned i, depth;
+	unsigned i, array_size;
 
 	assert(pipe);
 
@@ -70,12 +70,12 @@ struct pipe_video_buffer *r600_video_buffer_create(struct pipe_context *pipe,
 	if (!resource_formats)
 		return NULL;
 
-	depth = tmpl->interlaced ? 2 : 1;
+	array_size = tmpl->interlaced ? 2 : 1;
 	template = *tmpl;
 	template.width = align(tmpl->width, VL_MACROBLOCK_WIDTH);
-	template.height = align(tmpl->height / depth, VL_MACROBLOCK_HEIGHT);
+	template.height = align(tmpl->height / array_size, VL_MACROBLOCK_HEIGHT);
 
-	vl_vide_buffer_template(&templ, &template, resource_formats[0], depth, PIPE_USAGE_STATIC, 0);
+	vl_vide_buffer_template(&templ, &template, resource_formats[0], array_size, PIPE_USAGE_STATIC, 0);
 	if (ctx->chip_class < EVERGREEN)
 		templ.flags = R600_RESOURCE_FLAG_TRANSFER;
 	resources[0] = (struct r600_texture *)
@@ -84,7 +84,7 @@ struct pipe_video_buffer *r600_video_buffer_create(struct pipe_context *pipe,
 		goto error;
 
 	if (resource_formats[1] != PIPE_FORMAT_NONE) {
-		vl_vide_buffer_template(&templ, &template, resource_formats[1], depth, PIPE_USAGE_STATIC, 1);
+		vl_vide_buffer_template(&templ, &template, resource_formats[1], array_size, PIPE_USAGE_STATIC, 1);
 		if (ctx->chip_class < EVERGREEN)
 			templ.flags = R600_RESOURCE_FLAG_TRANSFER;
 		resources[1] = (struct r600_texture *)
@@ -94,7 +94,7 @@ struct pipe_video_buffer *r600_video_buffer_create(struct pipe_context *pipe,
 	}
 
 	if (resource_formats[2] != PIPE_FORMAT_NONE) {
-		vl_vide_buffer_template(&templ, &template, resource_formats[2], depth, PIPE_USAGE_STATIC, 2);
+		vl_vide_buffer_template(&templ, &template, resource_formats[2], array_size, PIPE_USAGE_STATIC, 2);
 		if (ctx->chip_class < EVERGREEN)
 			templ.flags = R600_RESOURCE_FLAG_TRANSFER;
 		resources[2] = (struct r600_texture *)
@@ -122,7 +122,7 @@ struct pipe_video_buffer *r600_video_buffer_create(struct pipe_context *pipe,
 			resources[i]->resource.buf);
 	}
 
-	template.height *= depth;
+	template.height *= array_size;
 	return vl_video_buffer_create_ex2(pipe, &template, (struct pipe_resource **)resources);
 
 error:

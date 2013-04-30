@@ -216,15 +216,16 @@ void
 vl_vide_buffer_template(struct pipe_resource *templ,
                         const struct pipe_video_buffer *tmpl,
                         enum pipe_format resource_format,
-                        unsigned depth, unsigned usage, unsigned plane)
+                        unsigned array_size, unsigned usage,
+                        unsigned plane)
 {
    memset(templ, 0, sizeof(*templ));
-   templ->target = depth > 1 ? PIPE_TEXTURE_3D : PIPE_TEXTURE_2D;
+   templ->target = array_size > 1 ? PIPE_TEXTURE_2D_ARRAY : PIPE_TEXTURE_2D;
    templ->format = resource_format;
    templ->width0 = tmpl->width;
    templ->height0 = tmpl->height;
-   templ->depth0 = depth;
-   templ->array_size = 1;
+   templ->depth0 = 1;
+   templ->array_size = array_size;
    templ->bind = PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET;
    templ->usage = usage;
 
@@ -349,15 +350,15 @@ vl_video_buffer_surfaces(struct pipe_video_buffer *buffer)
    struct vl_video_buffer *buf = (struct vl_video_buffer *)buffer;
    struct pipe_surface surf_templ;
    struct pipe_context *pipe;
-   unsigned i, j, depth, surf;
+   unsigned i, j, array_size, surf;
 
    assert(buf);
 
    pipe = buf->base.context;
 
-   depth = buffer->interlaced ? 2 : 1;
+   array_size = buffer->interlaced ? 2 : 1;
    for (i = 0, surf = 0; i < VL_NUM_COMPONENTS; ++i) {
-      for (j = 0; j < depth; ++j, ++surf) {
+      for (j = 0; j < array_size; ++j, ++surf) {
          assert(surf < (VL_NUM_COMPONENTS * 2));
 
          if (!buf->resources[i]) {
@@ -433,7 +434,7 @@ struct pipe_video_buffer *
 vl_video_buffer_create_ex(struct pipe_context *pipe,
                           const struct pipe_video_buffer *tmpl,
                           const enum pipe_format resource_formats[VL_NUM_COMPONENTS],
-                          unsigned depth, unsigned usage)
+                          unsigned array_size, unsigned usage)
 {
    struct pipe_resource res_tmpl;
    struct pipe_resource *resources[VL_NUM_COMPONENTS];
@@ -443,7 +444,7 @@ vl_video_buffer_create_ex(struct pipe_context *pipe,
 
    memset(resources, 0, sizeof resources);
 
-   vl_vide_buffer_template(&res_tmpl, tmpl, resource_formats[0], depth, usage, 0);
+   vl_vide_buffer_template(&res_tmpl, tmpl, resource_formats[0], array_size, usage, 0);
    resources[0] = pipe->screen->resource_create(pipe->screen, &res_tmpl);
    if (!resources[0])
       goto error;
@@ -453,7 +454,7 @@ vl_video_buffer_create_ex(struct pipe_context *pipe,
       return vl_video_buffer_create_ex2(pipe, tmpl, resources);
    }
 
-   vl_vide_buffer_template(&res_tmpl, tmpl, resource_formats[1], depth, usage, 1);
+   vl_vide_buffer_template(&res_tmpl, tmpl, resource_formats[1], array_size, usage, 1);
    resources[1] = pipe->screen->resource_create(pipe->screen, &res_tmpl);
    if (!resources[1])
       goto error;
@@ -461,7 +462,7 @@ vl_video_buffer_create_ex(struct pipe_context *pipe,
    if (resource_formats[2] == PIPE_FORMAT_NONE)
       return vl_video_buffer_create_ex2(pipe, tmpl, resources);
 
-   vl_vide_buffer_template(&res_tmpl, tmpl, resource_formats[2], depth, usage, 2);
+   vl_vide_buffer_template(&res_tmpl, tmpl, resource_formats[2], array_size, usage, 2);
    resources[2] = pipe->screen->resource_create(pipe->screen, &res_tmpl);
    if (!resources[2])
       goto error;

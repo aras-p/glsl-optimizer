@@ -98,7 +98,8 @@ void
 vl_vide_buffer_template(struct pipe_resource *templ,
 			const struct pipe_video_buffer *templat,
                         enum pipe_format resource_format,
-                        unsigned depth, unsigned usage, unsigned plane);
+                        unsigned array_size, unsigned usage,
+                        unsigned plane);
 
 /**
  * creates a video buffer, can be used as a standard implementation for pipe->create_video_buffer
@@ -108,13 +109,13 @@ vl_video_buffer_create(struct pipe_context *pipe,
                        const struct pipe_video_buffer *templat);
 
 /**
- * extended create function, gets depth, usage and formats for each plane seperately
+ * extended create function, gets array_size, usage and formats for each plane seperately
  */
 struct pipe_video_buffer *
 vl_video_buffer_create_ex(struct pipe_context *pipe,
                           const struct pipe_video_buffer *templat,
                           const enum pipe_format resource_formats[VL_NUM_COMPONENTS],
-                          unsigned depth, unsigned usage);
+                          unsigned array_size, unsigned usage);
 
 /**
  * even more extended create function, provide the pipe_resource for each plane

@@ -152,7 +152,7 @@ create_frag_shader_video_buffer(struct vl_compositor *c)
     * fragment = csc * texel
     */
    for (i = 0; i < 3; ++i)
-      ureg_TEX(shader, ureg_writemask(texel, TGSI_WRITEMASK_X << i), TGSI_TEXTURE_3D, tc, sampler[i]);
+      ureg_TEX(shader, ureg_writemask(texel, TGSI_WRITEMASK_X << i), TGSI_TEXTURE_2D_ARRAY, tc, sampler[i]);
 
    ureg_MOV(shader, ureg_writemask(texel, TGSI_WRITEMASK_W), ureg_imm1f(shader, 1.0f));
 
@@ -207,7 +207,7 @@ create_frag_shader_weave(struct vl_compositor *c)
                i_tc[i], ureg_imm1f(shader, 0.5f));
       ureg_ROUND(shader, ureg_writemask(t_tc[i], TGSI_WRITEMASK_YZ), ureg_src(t_tc[i]));
       ureg_MOV(shader, ureg_writemask(t_tc[i], TGSI_WRITEMASK_W),
-               ureg_imm1f(shader, i ? -0.25f : 0.25f));
+               ureg_imm1f(shader, i ? 1.0f : 0.0f));
       ureg_ADD(shader, ureg_writemask(t_tc[i], TGSI_WRITEMASK_YZ),
                ureg_src(t_tc[i]), ureg_imm1f(shader, 0.5f));
       ureg_MUL(shader, ureg_writemask(t_tc[i], TGSI_WRITEMASK_Y),
@@ -227,7 +227,7 @@ create_frag_shader_weave(struct vl_compositor *c)
             TGSI_SWIZZLE_X, j ? TGSI_SWIZZLE_Z : TGSI_SWIZZLE_Y, TGSI_SWIZZLE_W, TGSI_SWIZZLE_W);
 
          ureg_TEX(shader, ureg_writemask(t_texel[i], TGSI_WRITEMASK_X << j),
-                  TGSI_TEXTURE_3D, src, sampler[j]);
+                  TGSI_TEXTURE_2D_ARRAY, src, sampler[j]);
       }
 
    /* calculate linear interpolation factor
@@ -558,7 +558,7 @@ static INLINE struct u_rect
 default_rect(struct vl_compositor_layer *layer)
 {
    struct pipe_resource *res = layer->sampler_views[0]->texture;
-   struct u_rect rect = { 0, res->width0, 0, res->height0 * res->depth0 };
+   struct u_rect rect = { 0, res->width0, 0, res->height0 * res->array_size };
    return rect;
 }
 
@@ -902,14 +902,14 @@ vl_compositor_set_buffer_layer(struct vl_compositor_state *s,
          break;
 
       case VL_COMPOSITOR_BOB_TOP:
-         s->layers[layer].zw.x = 0.25f;
+         s->layers[layer].zw.x = 0.0f;
          s->layers[layer].src.tl.y += half_a_line;
          s->layers[layer].src.br.y += half_a_line;
          s->layers[layer].fs = c->fs_video_buffer;
          break;
 
       case VL_COMPOSITOR_BOB_BOTTOM:
-         s->layers[layer].zw.x = 0.75f;
+         s->layers[layer].zw.x = 1.0f;
          s->layers[layer].src.tl.y -= half_a_line;
          s->layers[layer].src.br.y -= half_a_line;
          s->layers[layer].fs = c->fs_video_buffer;
