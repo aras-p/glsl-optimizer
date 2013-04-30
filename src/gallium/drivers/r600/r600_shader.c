@@ -280,7 +280,7 @@ int r600_compute_shader_create(struct pipe_context * ctx,
 	shader_ctx.bc->type = TGSI_PROCESSOR_COMPUTE;
 	shader_ctx.bc->isa = r600_ctx->isa;
 	r600_llvm_compile(mod, &bytes, &byte_count, r600_ctx->family,
-				shader_ctx.bc, dump);
+				shader_ctx.bc, &use_kill, dump);
 	r600_bytecode_from_byte_stream(&shader_ctx, bytes, byte_count);
 	if (shader_ctx.bc->chip_class == CAYMAN) {
 		cm_bytecode_add_cf_end(shader_ctx.bc);
