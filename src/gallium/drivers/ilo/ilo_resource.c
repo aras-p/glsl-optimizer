@@ -32,6 +32,9 @@
 #include "ilo_screen.h"
 #include "ilo_resource.h"
 
+/* use PIPE_BIND_CUSTOM to indicate MCS */
+#define ILO_BIND_MCS PIPE_BIND_CUSTOM
+
 static struct intel_bo *
 alloc_buf_bo(const struct ilo_resource *res)
 {
@@ -998,6 +1001,14 @@ get_tex_tiling(const struct ilo_resource *res)
       return INTEL_TILING_NONE;
 
    /*
+    * From the Ivy Bridge PRM, volume 4 part 1, page 76:
+    *
+    *     "The MCS surface must be stored as Tile Y."
+    */
+   if (templ->bind & ILO_BIND_MCS)
+      return INTEL_TILING_Y;
+
+   /*
     * From the Sandy Bridge PRM, volume 2 part 1, page 318:
     *
     *     "[DevSNB+]: This field (Tiled Surface) must be set to TRUE. Linear
@@ -1005,8 +1016,11 @@ get_tex_tiling(const struct ilo_resource *res)
     *
     *     "The Depth Buffer, if tiled, must use Y-Major tiling."
     */
-   if (templ->bind & PIPE_BIND_DEPTH_STENCIL)
-      return INTEL_TILING_Y;
+   if (templ->bind & PIPE_BIND_DEPTH_STENCIL) {
+      /* separate stencil uses W-tiling but we do not know how to specify that */
+      return (templ->format == PIPE_FORMAT_S8_UINT) ?
+         INTEL_TILING_NONE : INTEL_TILING_Y;
+   }
 
    if (templ->bind & (PIPE_BIND_RENDER_TARGET | PIPE_BIND_SAMPLER_VIEW)) {
       enum intel_tiling_mode tiling = INTEL_TILING_NONE;
@@ -1083,6 +1097,20 @@ init_texture(struct ilo_resource *res)
    default:
       assert(!"unknown resource target");
       break;
+   }
+
+   /*
+    * From the Sandy Bridge PRM, volume 1 part 2, page 22:
+    *
+    *     "A 4KB tile is subdivided into 8-high by 8-wide array of Blocks for
+    *      W-Major Tiles (W Tiles). Each Block is 8 rows by 8 bytes."
+    *
+    * Since we ask for INTEL_TILING_NONE instead lf INTEL_TILING_W, we need to
+    * manually align the bo width and height to the tile boundaries.
+    */
+   if (format == PIPE_FORMAT_S8_UINT) {
+      res->bo_width = align(res->bo_width, 64);
+      res->bo_height = align(res->bo_height, 64);
    }
 
    /* in blocks */
