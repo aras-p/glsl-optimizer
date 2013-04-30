@@ -429,9 +429,36 @@ static void llvm_emit_tex(
 		}
 	}
 
+	if (emit_data->inst->Instruction.Opcode == TGSI_OPCODE_TEX) {
+		LLVMValueRef Vector[4] = {
+			LLVMBuildExtractElement(gallivm->builder, emit_data->args[0],
+				lp_build_const_int32(gallivm, 0), ""),
+			LLVMBuildExtractElement(gallivm->builder, emit_data->args[0],
+				lp_build_const_int32(gallivm, 1), ""),
+			LLVMBuildExtractElement(gallivm->builder, emit_data->args[0],
+				lp_build_const_int32(gallivm, 2), ""),
+			LLVMBuildExtractElement(gallivm->builder, emit_data->args[0],
+				lp_build_const_int32(gallivm, 3), ""),
+		};
+		switch (emit_data->inst->Texture.Texture) {
+		case TGSI_TEXTURE_2D:
+		case TGSI_TEXTURE_RECT:
+			Vector[2] = Vector[3] = LLVMGetUndef(bld_base->base.elem_type);
+			break;
+		case TGSI_TEXTURE_1D:
+			Vector[1] = Vector[2] = Vector[3] = LLVMGetUndef(bld_base->base.elem_type);
+			break;
+		default:
+			break;
+		}
+		args[0] = lp_build_gather_values(gallivm, Vector, 4);
+	} else {
+		args[0] = emit_data->args[0];
+	}
+
 	assert(emit_data->arg_count + 2 <= Elements(args));
 
-	for (c = 0; c < emit_data->arg_count; ++c)
+	for (c = 1; c < emit_data->arg_count; ++c)
 		args[c] = emit_data->args[c];
 
 	sampler_src = emit_data->inst->Instruction.NumSrcRegs-1;
