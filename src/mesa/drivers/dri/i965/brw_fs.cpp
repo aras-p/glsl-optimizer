@@ -1456,8 +1456,8 @@ fs_visitor::compact_virtual_grfs()
          remap_table[i] = new_index;
          virtual_grf_sizes[new_index] = virtual_grf_sizes[i];
          if (live_intervals_valid) {
-            virtual_grf_use[new_index] = virtual_grf_use[i];
-            virtual_grf_def[new_index] = virtual_grf_def[i];
+            virtual_grf_start[new_index] = virtual_grf_start[i];
+            virtual_grf_end[new_index] = virtual_grf_end[i];
          }
          ++new_index;
       }
@@ -1771,10 +1771,8 @@ fs_visitor::opt_algebraic()
 }
 
 /**
- * Must be called after calculate_live_intervales() to remove unused
- * writes to registers -- register allocation will fail otherwise
- * because something deffed but not used won't be considered to
- * interfere with other regs.
+ * Removes any instructions writing a VGRF where that VGRF is not used by any
+ * later instruction.
  */
 bool
 fs_visitor::dead_code_eliminate()
@@ -1787,9 +1785,12 @@ fs_visitor::dead_code_eliminate()
    foreach_list_safe(node, &this->instructions) {
       fs_inst *inst = (fs_inst *)node;
 
-      if (inst->dst.file == GRF && this->virtual_grf_use[inst->dst.reg] <= pc) {
-	 inst->remove();
-	 progress = true;
+      if (inst->dst.file == GRF) {
+         assert(this->virtual_grf_end[inst->dst.reg] >= pc);
+         if (this->virtual_grf_end[inst->dst.reg] == pc) {
+            inst->remove();
+            progress = true;
+         }
       }
 
       pc++;
@@ -2201,7 +2202,7 @@ fs_visitor::compute_to_mrf()
       /* Can't compute-to-MRF this GRF if someone else was going to
        * read it later.
        */
-      if (this->virtual_grf_use[inst->src[0].reg] > ip)
+      if (this->virtual_grf_end[inst->src[0].reg] > ip)
 	 continue;
 
       /* Found a move of a GRF to a MRF.  Let's see if we can go

@@ -194,7 +194,7 @@ fs_visitor::opt_cse_local(bblock_t *block, exec_list *aeb)
             /* Kill any AEB entries using registers that don't get reused any
              * more -- a sure sign they'll fail operands_match().
              */
-            if (src_reg->file == GRF && virtual_grf_use[src_reg->reg] < ip) {
+            if (src_reg->file == GRF && virtual_grf_end[src_reg->reg] < ip) {
                entry->remove();
                ralloc_free(entry);
 	       break;

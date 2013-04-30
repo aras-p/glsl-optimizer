@@ -2451,8 +2451,8 @@ fs_visitor::fs_visitor(struct brw_context *brw,
    this->virtual_grf_sizes = NULL;
    this->virtual_grf_count = 0;
    this->virtual_grf_array_size = 0;
-   this->virtual_grf_def = NULL;
-   this->virtual_grf_use = NULL;
+   this->virtual_grf_start = NULL;
+   this->virtual_grf_end = NULL;
    this->live_intervals_valid = false;
 
    this->force_uncompressed_stack = 0;

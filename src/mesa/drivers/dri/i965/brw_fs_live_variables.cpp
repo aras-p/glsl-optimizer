@@ -167,16 +167,16 @@ fs_visitor::calculate_live_intervals()
    if (this->live_intervals_valid)
       return;
 
-   int *def = ralloc_array(mem_ctx, int, num_vars);
-   int *use = ralloc_array(mem_ctx, int, num_vars);
-   ralloc_free(this->virtual_grf_def);
-   ralloc_free(this->virtual_grf_use);
-   this->virtual_grf_def = def;
-   this->virtual_grf_use = use;
+   int *start = ralloc_array(mem_ctx, int, num_vars);
+   int *end = ralloc_array(mem_ctx, int, num_vars);
+   ralloc_free(this->virtual_grf_start);
+   ralloc_free(this->virtual_grf_end);
+   this->virtual_grf_start = start;
+   this->virtual_grf_end = end;
 
    for (int i = 0; i < num_vars; i++) {
-      def[i] = MAX_INSTRUCTION;
-      use[i] = -1;
+      start[i] = MAX_INSTRUCTION;
+      end[i] = -1;
    }
 
    /* Start by setting up the intervals with no knowledge of control
@@ -189,8 +189,7 @@ fs_visitor::calculate_live_intervals()
       for (unsigned int i = 0; i < 3; i++) {
 	 if (inst->src[i].file == GRF) {
 	    int reg = inst->src[i].reg;
-
-	    use[reg] = ip;
+            int end_ip = ip;
 
             /* In most cases, a register can be written over safely by the
              * same instruction that is its last use.  For a single
@@ -220,15 +219,19 @@ fs_visitor::calculate_live_intervals()
             if (dispatch_width == 16 && (inst->src[i].smear ||
                                          (this->pixel_x.reg == reg ||
                                           this->pixel_y.reg == reg))) {
-               use[reg]++;
+               end_ip++;
             }
+
+            start[reg] = MIN2(start[reg], ip);
+            end[reg] = MAX2(end[reg], end_ip);
 	 }
       }
 
       if (inst->dst.file == GRF) {
          int reg = inst->dst.reg;
 
-         def[reg] = MIN2(def[reg], ip);
+         start[reg] = MIN2(start[reg], ip);
+         end[reg] = MAX2(end[reg], ip);
       }
 
       ip++;
@@ -241,60 +244,23 @@ fs_visitor::calculate_live_intervals()
    for (int b = 0; b < cfg.num_blocks; b++) {
       for (int i = 0; i < num_vars; i++) {
 	 if (BITSET_TEST(livevars.bd[b].livein, i)) {
-	    def[i] = MIN2(def[i], cfg.blocks[b]->start_ip);
-	    use[i] = MAX2(use[i], cfg.blocks[b]->start_ip);
+	    start[i] = MIN2(start[i], cfg.blocks[b]->start_ip);
+	    end[i] = MAX2(end[i], cfg.blocks[b]->start_ip);
 	 }
 
 	 if (BITSET_TEST(livevars.bd[b].liveout, i)) {
-	    def[i] = MIN2(def[i], cfg.blocks[b]->end_ip);
-	    use[i] = MAX2(use[i], cfg.blocks[b]->end_ip);
+	    start[i] = MIN2(start[i], cfg.blocks[b]->end_ip);
+	    end[i] = MAX2(end[i], cfg.blocks[b]->end_ip);
 	 }
       }
    }
 
    this->live_intervals_valid = true;
-
-   /* Note in the non-control-flow code above, that we only take def[] as the
-    * first store, and use[] as the last use.  We use this in dead code
-    * elimination, to determine when a store never gets used.  However, we
-    * also use these arrays to answer the virtual_grf_interferes() question
-    * (live interval analysis), which is used for register coalescing and
-    * register allocation.
-    *
-    * So, there's a conflict over what the array should mean: if use[]
-    * considers a def after the last use, then the dead code elimination pass
-    * never does anything (and it's an important pass!).  But if we don't
-    * include dead code, then virtual_grf_interferes() lies and we'll do
-    * horrible things like coalesce the register that is dead-code-written
-    * into another register that was live across the dead write (causing the
-    * use of the second register to take the dead write's source value instead
-    * of the coalesced MOV's source value).
-    *
-    * To resolve the conflict, immediately after calculating live intervals,
-    * detect dead code, nuke it, and if we changed anything, calculate again
-    * before returning to the caller.  Now we happen to produce def[] and
-    * use[] arrays that will work for virtual_grf_interferes().
-    */
-   if (dead_code_eliminate())
-      calculate_live_intervals();
 }
 
 bool
 fs_visitor::virtual_grf_interferes(int a, int b)
 {
-   int a_def = this->virtual_grf_def[a], a_use = this->virtual_grf_use[a];
-   int b_def = this->virtual_grf_def[b], b_use = this->virtual_grf_use[b];
-
-   /* If there's dead code (def but not use), it would break our test
-    * unless we consider it used.
-    */
-   if ((a_use == -1 && a_def != MAX_INSTRUCTION) ||
-       (b_use == -1 && b_def != MAX_INSTRUCTION)) {
-      return true;
-   }
-
-   int start = MAX2(a_def, b_def);
-   int end = MIN2(a_use, b_use);
-
-   return start < end;
+   return !(virtual_grf_end[a] <= virtual_grf_start[b] ||
+            virtual_grf_end[b] <= virtual_grf_start[a]);
 }
