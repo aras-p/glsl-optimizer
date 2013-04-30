@@ -257,6 +257,12 @@ typedef boolean (*r600g_dma_blit_t)(struct pipe_context *ctx,
 #define DBG_NO_CP_DMA		(1 << 18)
 #define DBG_NO_ASYNC_DMA	(1 << 19)
 #define DBG_NO_DISCARD_RANGE	(1 << 20)
+/* shader backend */
+#define DBG_SB			(1 << 21)
+#define DBG_SB_CS		(1 << 22)
+#define DBG_SB_DRY_RUN	(1 << 23)
+#define DBG_SB_STAT		(1 << 24)
+#define DBG_SB_DUMP		(1 << 25)
 
 struct r600_tiling_info {
 	unsigned num_channels;
@@ -640,6 +646,7 @@ struct r600_context {
 	unsigned			current_render_cond_mode;
 	boolean				predicate_drawing;
 
+	void				*sb_context;
 	struct r600_isa		*isa;
 };
 

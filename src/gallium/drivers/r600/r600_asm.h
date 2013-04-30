@@ -214,6 +214,7 @@ struct r600_bytecode {
 	unsigned	ar_chan;
 	unsigned        ar_handling;
 	unsigned        r6xx_nop_after_rel_dst;
+	unsigned        debug_id;
 	struct r600_isa* isa;
 };
 

@@ -32,6 +32,8 @@
 #include "util/u_memory.h"
 #include "pipe/p_shader_tokens.h"
 
+#include "sb/sb_public.h"
+
 #define NUM_OF_CYCLES 3
 #define NUM_OF_COMPONENTS 4
 
@@ -126,6 +128,10 @@ void r600_bytecode_init(struct r600_bytecode *bc,
 			enum radeon_family family,
 			enum r600_msaa_texture_mode msaa_texture_mode)
 {
+	static unsigned next_shader_id = 0;
+
+	bc->debug_id = ++next_shader_id;
+
 	if ((chip_class == R600) &&
 	    (family != CHIP_RV670 && family != CHIP_RS780 && family != CHIP_RS880)) {
 		bc->ar_handling = AR_HANDLE_RV6XX;
@@ -2381,8 +2387,13 @@ void *r600_create_vertex_fetch_shader(struct pipe_context *ctx,
 			fprintf(stderr, "\n");
 		}
 
+#if 0
 		r600_bytecode_disasm(&bc);
+
 		fprintf(stderr, "______________________________________________________________\n");
+#else
+		r600_sb_bytecode_process(rctx, &bc, NULL, 1 /*dump*/, 0 /*optimize*/);
+#endif
 	}
 
 	fs_size = bc.ndw*4;

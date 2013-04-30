@@ -63,12 +63,23 @@ struct r600_shader {
 	boolean			vs_out_point_size;
 	boolean			has_txq_cube_array_z_comp;
 	boolean			uses_tex_buffers;
+
+	unsigned		indirect_files;
+	unsigned		max_arrays;
+	unsigned		num_arrays;
+	struct r600_shader_array * arrays;
 };
 
 struct r600_shader_key {
 	unsigned color_two_side:1;
 	unsigned alpha_to_one:1;
 	unsigned nr_cbufs:4;
+};
+
+struct r600_shader_array {
+	unsigned gpr_start;
+	unsigned gpr_count;
+	unsigned comp_mask;
 };
 
 struct r600_pipe_shader {

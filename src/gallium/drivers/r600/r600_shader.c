@@ -27,6 +27,8 @@
 #include "r600_shader.h"
 #include "r600d.h"
 
+#include "sb/sb_public.h"
+
 #include "pipe/p_shader_tokens.h"
 #include "tgsi/tgsi_info.h"
 #include "tgsi/tgsi_parse.h"
@@ -61,6 +63,26 @@ The compiler must issue the source argument to slots z, y, and x
 static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 				 struct r600_pipe_shader *pipeshader,
 				 struct r600_shader_key key);
+
+static void r600_add_gpr_array(struct r600_shader *ps, int start_gpr,
+                           int size, unsigned comp_mask) {
+
+	if (!size)
+		return;
+
+	if (ps->num_arrays == ps->max_arrays) {
+		ps->max_arrays += 64;
+		ps->arrays = realloc(ps->arrays, ps->max_arrays *
+		                     sizeof(struct r600_shader_array));
+	}
+
+	int n = ps->num_arrays;
+	++ps->num_arrays;
+
+	ps->arrays[n].comp_mask = comp_mask;
+	ps->arrays[n].gpr_start = start_gpr;
+	ps->arrays[n].gpr_count = size;
+}
 
 static unsigned tgsi_get_processor_type(const struct tgsi_token *tokens)
 {
@@ -118,6 +140,7 @@ int r600_pipe_shader_create(struct pipe_context *ctx,
 	int r, i;
 	uint32_t *ptr;
 	bool dump = r600_can_dump_shader(rctx->screen, tgsi_get_processor_type(sel->tokens));
+	unsigned use_sb = rctx->screen->debug_flags & DBG_SB;
 
 	shader->shader.bc.isa = rctx->isa;
 
@@ -139,12 +162,22 @@ int r600_pipe_shader_create(struct pipe_context *ctx,
 		R600_ERR("building bytecode failed !\n");
 		return r;
 	}
+
+#if 0
 	if (dump) {
 		fprintf(stderr, "--------------------------------------------------------------\n");
 		r600_bytecode_disasm(&shader->shader.bc);
 		fprintf(stderr, "______________________________________________________________\n");
 	}
-
+#else
+	if (dump || use_sb) {
+		r = r600_sb_bytecode_process(rctx, &shader->shader.bc, &shader->shader, dump, use_sb);
+		if (r) {
+			R600_ERR("r600_sb_bytecode_process failed !\n");
+			return r;
+		}
+	}
+#endif
 
 	/* Store the shader in a buffer. */
 	if (shader->bo == NULL) {
@@ -273,6 +306,7 @@ int r600_compute_shader_create(struct pipe_context * ctx,
 	struct r600_shader_ctx shader_ctx;
 	boolean use_kill = false;
 	bool dump = (r600_ctx->screen->debug_flags & DBG_CS) != 0;
+	unsigned use_sb = r600_ctx->screen->debug_flags & DBG_SB_CS;
 
 	shader_ctx.bc = bytecode;
 	r600_bytecode_init(shader_ctx.bc, r600_ctx->chip_class, r600_ctx->family,
@@ -286,9 +320,18 @@ int r600_compute_shader_create(struct pipe_context * ctx,
 		cm_bytecode_add_cf_end(shader_ctx.bc);
 	}
 	r600_bytecode_build(shader_ctx.bc);
+
+#if 0
 	if (dump) {
 		r600_bytecode_disasm(shader_ctx.bc);
 	}
+#else
+	if (dump || use_sb) {
+		if (r600_sb_bytecode_process(r600_ctx, shader_ctx.bc, NULL, dump, use_sb))
+			R600_ERR("r600_sb_bytecode_process failed!\n");
+	}
+#endif
+
 	free(bytes);
 	return 1;
 }
@@ -956,8 +999,18 @@ static int tgsi_declaration(struct r600_shader_ctx *ctx)
 			}
 		}
 		break;
-	case TGSI_FILE_CONSTANT:
 	case TGSI_FILE_TEMPORARY:
+		if (ctx->info.indirect_files & (1 << TGSI_FILE_TEMPORARY)) {
+			if (d->Array.ArrayID) {
+				r600_add_gpr_array(ctx->shader,
+				               ctx->file_offset[TGSI_FILE_TEMPORARY] +
+								   d->Range.First,
+				               d->Range.Last - d->Range.First + 1, 0b1111);
+			}
+		}
+		break;
+
+	case TGSI_FILE_CONSTANT:
 	case TGSI_FILE_SAMPLER:
 	case TGSI_FILE_ADDRESS:
 		break;
@@ -1248,6 +1301,7 @@ static int process_twoside_color_inputs(struct r600_shader_ctx *ctx)
 	return 0;
 }
 
+
 static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 				 struct r600_pipe_shader *pipeshader,
 				 struct r600_shader_key key)
@@ -1267,6 +1321,7 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 	bool use_llvm = false;
 	unsigned char * inst_bytes = NULL;
 	unsigned inst_byte_count = 0;
+	bool indirect_gprs;
 
 #ifdef R600_USE_LLVM
 	use_llvm = !(rscreen->debug_flags & DBG_NO_LLVM);
@@ -1279,6 +1334,8 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 			   rscreen->msaa_texture_support);
 	ctx.tokens = tokens;
 	tgsi_scan_shader(tokens, &ctx.info);
+	shader->indirect_files = ctx.info.indirect_files;
+	indirect_gprs = ctx.info.indirect_files & ~(1 << TGSI_FILE_CONSTANT);
 	tgsi_parse_init(&ctx.parse, tokens);
 	ctx.type = ctx.parse.FullHeader.Processor.Processor;
 	shader->processor_type = ctx.type;
@@ -1355,6 +1412,24 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 	ctx.bc->ar_reg = ctx.file_offset[TGSI_FILE_TEMPORARY] +
 			ctx.info.file_max[TGSI_FILE_TEMPORARY] + 1;
 	ctx.temp_reg = ctx.bc->ar_reg + 1;
+
+	if (indirect_gprs) {
+		shader->max_arrays = 0;
+		shader->num_arrays = 0;
+
+		if (ctx.info.indirect_files & (1 << TGSI_FILE_INPUT)) {
+			r600_add_gpr_array(shader, ctx.file_offset[TGSI_FILE_INPUT],
+			                   ctx.file_offset[TGSI_FILE_OUTPUT] -
+			                   ctx.file_offset[TGSI_FILE_INPUT],
+			                   0b1111);
+		}
+		if (ctx.info.indirect_files & (1 << TGSI_FILE_OUTPUT)) {
+			r600_add_gpr_array(shader, ctx.file_offset[TGSI_FILE_OUTPUT],
+			                   ctx.file_offset[TGSI_FILE_TEMPORARY] -
+			                   ctx.file_offset[TGSI_FILE_OUTPUT],
+			                   0b1111);
+		}
+	}
 
 	ctx.nliterals = 0;
 	ctx.literals = NULL;

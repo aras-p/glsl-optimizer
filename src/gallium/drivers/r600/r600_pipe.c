@@ -26,6 +26,8 @@
 #include "evergreen_compute.h"
 #include "r600d.h"
 
+#include "sb/sb_public.h"
+
 #include <errno.h>
 #include "pipe/p_shader_tokens.h"
 #include "util/u_blitter.h"
@@ -63,6 +65,13 @@ static const struct debug_named_value debug_options[] = {
 	{ "nodma", DBG_NO_ASYNC_DMA, "Disable asynchronous DMA" },
 	/* GL uses the word INVALIDATE, gallium uses the word DISCARD */
 	{ "noinvalrange", DBG_NO_DISCARD_RANGE, "Disable handling of INVALIDATE_RANGE map flags" },
+
+	/* shader backend */
+	{ "sb", DBG_SB, "Enable optimization of graphics shaders" },
+	{ "sbcl", DBG_SB_CS, "Enable optimization of compute shaders" },
+	{ "sbdry", DBG_SB_DRY_RUN, "Don't use optimized bytecode (just print the dumps)" },
+	{ "sbstat", DBG_SB_STAT, "Print optimization statistics for shaders" },
+	{ "sbdump", DBG_SB_DUMP, "Print IR dumps after some optimization passes" },
 
 	DEBUG_NAMED_VALUE_END /* must be last */
 };
@@ -304,6 +313,8 @@ static void r600_destroy_context(struct pipe_context *context)
 	struct r600_context *rctx = (struct r600_context *)context;
 
 	r600_isa_destroy(rctx->isa);
+
+	r600_sb_context_destroy(rctx->sb_context);
 
 	pipe_resource_reference((struct pipe_resource**)&rctx->dummy_cmask, NULL);
 	pipe_resource_reference((struct pipe_resource**)&rctx->dummy_fmask, NULL);

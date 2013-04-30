@@ -10,8 +10,16 @@ AM_CFLAGS = \
 	$(RADEON_CFLAGS) \
 	$(VISIBILITY_CFLAGS)
 
+AM_CXXFLAGS = \
+	-I$(top_srcdir)/src/gallium/drivers \
+	-I$(top_srcdir)/include \
+	-I$(top_srcdir)/src/gallium/include \
+	-I$(top_srcdir)/src/gallium/auxiliary \
+	$(DEFINES)
+
 libr600_la_SOURCES = \
-	$(C_SOURCES)
+	$(C_SOURCES) \
+	$(CXX_SOURCES)
 
 libr600_la_LIBADD = ../radeon/libradeon.la
 
