@@ -125,6 +125,9 @@ void dce_cleanup::cleanup_dst_vec(vvec& vv) {
 		if (!v)
 			continue;
 
+		if (v->gvn_source && v->gvn_source->is_dead())
+			v->gvn_source = NULL;
+
 		if (v->is_dead())
 			v = NULL;
 	}
