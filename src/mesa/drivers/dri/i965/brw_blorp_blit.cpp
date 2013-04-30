@@ -169,6 +169,22 @@ do_blorp_blit(struct intel_context *intel, GLbitfield buffer_bit,
    intel_renderbuffer_set_needs_downsample(dst_irb);
 }
 
+static bool
+color_formats_match(gl_format src_format, gl_format dst_format)
+{
+   gl_format linear_src_format = _mesa_get_srgb_format_linear(src_format);
+   gl_format linear_dst_format = _mesa_get_srgb_format_linear(dst_format);
+
+   /* Normally, we require the formats to be equal.  However, we also support
+    * blitting from ARGB to XRGB (discarding alpha), and from XRGB to ARGB
+    * (overriding alpha to 1.0 via blending).
+    */
+   return linear_src_format == linear_dst_format ||
+          (linear_src_format == MESA_FORMAT_XRGB8888 &&
+           linear_dst_format == MESA_FORMAT_ARGB8888) ||
+          (linear_src_format == MESA_FORMAT_ARGB8888 &&
+           linear_dst_format == MESA_FORMAT_XRGB8888);
+}
 
 static bool
 formats_match(GLbitfield buffer_bit, struct intel_renderbuffer *src_irb,
@@ -182,18 +198,7 @@ formats_match(GLbitfield buffer_bit, struct intel_renderbuffer *src_irb,
    gl_format src_format = find_miptree(buffer_bit, src_irb)->format;
    gl_format dst_format = find_miptree(buffer_bit, dst_irb)->format;
 
-   gl_format linear_src_format = _mesa_get_srgb_format_linear(src_format);
-   gl_format linear_dst_format = _mesa_get_srgb_format_linear(dst_format);
-
-   /* Normally, we require the formats to be equal.  However, we also support
-    * blitting from ARGB to XRGB (discarding alpha), and from XRGB to ARGB
-    * (overriding alpha to 1.0 via blending).
-    */
-   return linear_src_format == linear_dst_format ||
-          (linear_src_format == MESA_FORMAT_XRGB8888 &&
-           linear_dst_format == MESA_FORMAT_ARGB8888) ||
-          (linear_src_format == MESA_FORMAT_ARGB8888 &&
-           linear_dst_format == MESA_FORMAT_XRGB8888);
+   return color_formats_match(src_format, dst_format);
 }
 
 static bool
@@ -313,29 +318,21 @@ brw_blorp_copytexsubimage(struct intel_context *intel,
 {
    struct gl_context *ctx = &intel->ctx;
    struct intel_renderbuffer *src_irb = intel_renderbuffer(src_rb);
-   struct intel_renderbuffer *dst_irb;
+   struct intel_texture_image *intel_image = intel_texture_image(dst_image);
+
+   /* Sync up the state of window system buffers.  We need to do this before
+    * we go looking at the src renderbuffer's miptree.
+    */
+   intel_prepare_render(intel);
+
+   struct intel_mipmap_tree *src_mt = src_irb->mt;
+   struct intel_mipmap_tree *dst_mt = intel_image->mt;
 
    /* BLORP is not supported before Gen6. */
    if (intel->gen < 6)
       return false;
 
-   /* Create a fake/wrapper renderbuffer to allow us to use do_blorp_blit(). */
-   dst_irb = intel_create_fake_renderbuffer_wrapper(intel, dst_image);
-   if (!dst_irb)
-      return false;
-
-   struct gl_renderbuffer *dst_rb = &dst_irb->Base.Base;
-
-   /* Unlike BlitFramebuffer, CopyTexSubImage doesn't have a buffer bit.
-    * It's only used by find_miptee() to decide whether to dereference the
-    * separate stencil miptree.  In the case of packed depth/stencil, core
-    * Mesa hands us the depth attachment as src_rb (not stencil), so assume
-    * non-stencil for now.  A buffer bit of 0 works for both color and depth.
-    */
-   GLbitfield buffer_bit = 0;
-
-   if (!formats_match(buffer_bit, src_irb, dst_irb)) {
-      dst_rb->Delete(ctx, dst_rb);
+   if (!color_formats_match(src_mt->format, dst_mt->format)) {
       return false;
    }
 
@@ -353,11 +350,6 @@ brw_blorp_copytexsubimage(struct intel_context *intel,
    int dstX1 = dstX0 + width;
    int dstY1 = dstY0 + height;
 
-   /* Sync up the state of window system buffers.  We need to do this before
-    * we go looking for the buffers.
-    */
-   intel_prepare_render(intel);
-
    /* Account for the fact that in the system framebuffer, the origin is at
     * the lower left.
     */
@@ -369,23 +361,29 @@ brw_blorp_copytexsubimage(struct intel_context *intel,
       mirror_y = true;
    }
 
-   do_blorp_blit(intel, buffer_bit, src_irb, dst_irb,
-                 srcX0, srcY0, dstX0, dstY0, dstX1, dstY1, false, mirror_y);
+   brw_blorp_blit_miptrees(intel,
+                           src_mt, src_irb->mt_level, src_irb->mt_layer,
+                           dst_mt, dst_image->Level, dst_image->Face,
+                           srcX0, srcY0, dstX0, dstY0, dstX1, dstY1,
+                           false, mirror_y);
 
-   /* If we're copying a packed depth stencil texture, the above do_blorp_blit
-    * copied depth (since buffer_bit != GL_STENCIL_BIT).  Now copy stencil as
-    * well.  There's no need to do a formats_match() check because the separate
-    * stencil buffer is always S8.
+   /* If we're copying to a packed depth stencil texture and the source
+    * framebuffer has separate stencil, we need to also copy the stencil data
+    * over.
     */
    src_rb = ctx->ReadBuffer->Attachment[BUFFER_STENCIL].Renderbuffer;
    if (_mesa_get_format_bits(dst_image->TexFormat, GL_STENCIL_BITS) > 0 &&
        src_rb != NULL) {
       src_irb = intel_renderbuffer(src_rb);
-      do_blorp_blit(intel, GL_STENCIL_BUFFER_BIT, src_irb, dst_irb,
-                    srcX0, srcY0, dstX0, dstY0, dstX1, dstY1, false, mirror_y);
+      if (src_irb->mt != src_mt)
+
+      brw_blorp_blit_miptrees(intel,
+                              src_irb->mt, src_irb->mt_level, src_irb->mt_layer,
+                              dst_mt, dst_image->Level, dst_image->Face,
+                              srcX0, srcY0, dstX0, dstY0, dstX1, dstY1,
+                              false, mirror_y);
    }
 
-   dst_rb->Delete(ctx, dst_rb);
    return true;
 }
 
