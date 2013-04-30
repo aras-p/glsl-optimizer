@@ -3205,10 +3205,17 @@ ast_function::hir(exec_list *instructions,
 			     "match prototype", name);
 	 }
 
-	 if (is_definition && sig->is_defined) {
-	    YYLTYPE loc = this->get_location();
-
-	    _mesa_glsl_error(& loc, state, "function `%s' redefined", name);
+         if (sig->is_defined) {
+            if (is_definition) {
+               YYLTYPE loc = this->get_location();
+               _mesa_glsl_error(& loc, state, "function `%s' redefined", name);
+            } else {
+               /* We just encountered a prototype that exactly matches a
+                * function that's already been defined.  This is redundant,
+                * and we should ignore it.
+                */
+               return NULL;
+            }
 	 }
       }
    } else {
