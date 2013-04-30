@@ -238,26 +238,7 @@ void shader::set_undef(val_set& s) {
 		v->gvn_source = undefined->gvn_source;
 	}
 }
-/*
-void shader::transfer_pins(vvec& vv, vvec &sv) {
-	vvec::iterator SI = sv.begin();
-	for (vvec::iterator I = vv.begin(), E = vv.end(); I != E; ++I, ++SI) {
-		value *v = *I;
-		value *sv = *SI;
 
-		v->pin_gpr = sv->pin_gpr;
-
-		if (sv->is_chan_pinned()) {
-			v->flags |= VLF_PIN_CHAN;
-			sv->flags &= ~VLF_PIN_CHAN;
-		}
-		if (sv->is_reg_pinned()) {
-			v->flags |= VLF_PIN_REG;
-			sv->flags &= ~VLF_PIN_REG;
-		}
-	}
-}
-*/
 value* shader::create_value(value_kind k, sel_chan regid, unsigned ver) {
 	value *v = val_pool.create(k, regid, ver);
 	return v;
@@ -351,18 +332,7 @@ bb_node* shader::create_bb(unsigned id, unsigned loop_level) {
 	all_nodes.push_back(n);
 	return n;
 }
-/*
-void shader::prepare_regs(unsigned cnt) {
-	assert(!prep_regs_count);
 
-	for (unsigned i = 0; i < cnt*4; ++i) {
-		value *v = create_value(VLK_REG, i + 1, 0);
-		assert (v->uid == i + 1);
-	}
-
-	prep_regs_count = cnt;
-}
-*/
 value* shader::get_special_ro_value(unsigned sel) {
 	return get_ro_value(special_ro_values, VLK_PARAM, sel);
 }

@@ -339,8 +339,6 @@ public:
 	value *get_undef_value();
 	void set_undef(val_set &s);
 
-	void transfer_pins(vvec& vv, vvec &sv);
-
 	node* create_node(node_type nt, node_subtype nst,
 	                  node_flags flags = NF_EMPTY);
 	alu_node* create_alu();
@@ -357,8 +355,6 @@ public:
 	                                 node_flags flags = NF_EMPTY);
 	if_node* create_if();
 	bb_node* create_bb(unsigned id, unsigned loop_level);
-
-	void prepare_regs(unsigned cnt);
 
 	value* get_value_by_uid(unsigned id) { return val_pool[id - 1]; }
 
