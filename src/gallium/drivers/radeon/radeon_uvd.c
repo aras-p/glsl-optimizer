@@ -514,6 +514,7 @@ static uint32_t get_ref_pic_idx(struct ruvd_decoder *dec, struct pipe_video_buff
 static struct ruvd_mpeg2 get_mpeg2_msg(struct ruvd_decoder *dec,
 				       struct pipe_mpeg12_picture_desc *pic)
 {
+	const int *zscan = pic->alternate_scan ? vl_zscan_alternate : vl_zscan_normal;
 	struct ruvd_mpeg2 result;
 	unsigned i;
 
@@ -524,8 +525,11 @@ static struct ruvd_mpeg2 get_mpeg2_msg(struct ruvd_decoder *dec,
 
 	result.load_intra_quantiser_matrix = 1;
 	result.load_nonintra_quantiser_matrix = 1;
-	memcpy(&result.intra_quantiser_matrix, pic->intra_matrix, 64);
-	memcpy(&result.nonintra_quantiser_matrix, pic->non_intra_matrix, 64);
+
+	for (i = 0; i < 64; ++i) {
+		result.intra_quantiser_matrix[i] = pic->intra_matrix[zscan[i]];
+		result.nonintra_quantiser_matrix[i] = pic->non_intra_matrix[zscan[i]];
+	}
 
 	result.profile_and_level_indication = 0;
 	result.chroma_format = 0x1;
