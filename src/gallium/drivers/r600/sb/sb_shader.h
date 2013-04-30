@@ -267,6 +267,8 @@ class shader {
 	std::vector<node*> all_nodes;
 
 public:
+	shader_stats src_stats, opt_stats;
+
 	error_map errors;
 
 	bool enable_dump;
@@ -393,6 +395,8 @@ public:
 	alu_node* clone(alu_node *n);
 
 	sb_value_pool& get_value_pool() { return val_pool; }
+
+	void collect_stats(bool opt);
 
 private:
 	value* create_value(value_kind k, sel_chan regid, unsigned ver);

@@ -75,8 +75,20 @@ sb_context *r600_sb_context_create(struct r600_context *rctx) {
 }
 
 void r600_sb_context_destroy(void * sctx) {
-	if (sctx)
-		delete (sb_context*)sctx;
+	if (sctx) {
+		sb_context *ctx = static_cast<sb_context*>(sctx);
+
+		if (sb_context::dump_stat) {
+			cerr << "context src stats: ";
+			ctx->src_stats.dump(cerr);
+			cerr << "context opt stats: ";
+			ctx->opt_stats.dump(cerr);
+			cerr << "context diff: ";
+			ctx->src_stats.dump_diff(cerr, ctx->opt_stats);
+		}
+
+		delete ctx;
+	}
 }
 
 int r600_sb_bytecode_process(struct r600_context *rctx,
@@ -227,15 +239,25 @@ int r600_sb_bytecode_process(struct r600_context *rctx,
 		SB_DUMP_STAT( cerr << "SB_USE_NEW_BYTECODE is not enabled\n"; );
 	}
 
-	delete sh;
 
 	if (sb_context::dump_stat) {
 		int64_t t = os_time_get_nano() - time_start;
 
 		cerr << "sb: processing shader " << shader_id << " done ( "
 				<< ((double)t)/1000000.0 << " ms ).\n";
+
+		sh->opt_stats.ndw = bc->ndw;
+		sh->collect_stats(true);
+
+		cerr << "src stats: ";
+		sh->src_stats.dump(cerr);
+		cerr << "opt stats: ";
+		sh->opt_stats.dump(cerr);
+		cerr << "diff: ";
+		sh->src_stats.dump_diff(cerr, sh->opt_stats);
 	}
 
+	delete sh;
 	return 0;
 }
 

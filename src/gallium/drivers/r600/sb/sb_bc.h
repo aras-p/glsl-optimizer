@@ -34,6 +34,7 @@ extern "C" {
 
 #include <vector>
 #include <stack>
+#include <ostream>
 
 struct r600_bytecode;
 struct r600_shader;
@@ -41,6 +42,7 @@ struct r600_shader;
 namespace r600_sb {
 
 class hw_encoding_format;
+class node;
 class alu_node;
 class cf_node;
 class fetch_node;
@@ -456,9 +458,34 @@ struct bc_fetch {
 	void set_op(unsigned op) { this->op = op; op_ptr = r600_isa_fetch(op); }
 };
 
+struct shader_stats {
+	unsigned	ndw;
+	unsigned	ngpr;
+	unsigned	nstack;
+
+	unsigned	cf; // clause instructions not included
+	unsigned	alu;
+	unsigned	alu_clauses;
+	unsigned	fetch_clauses;
+	unsigned	fetch;
+	unsigned	alu_groups;
+
+	unsigned	shaders;		// number of shaders (for accumulated stats)
+
+	shader_stats() : ndw(), ngpr(), nstack(), cf(), alu(), alu_clauses(),
+			fetch_clauses(), fetch(), alu_groups(), shaders() {}
+
+	void collect(node *n);
+	void accumulate(shader_stats &s);
+	void dump(std::ostream &o);
+	void dump_diff(std::ostream &o, shader_stats &s);
+};
+
 class sb_context {
 
 public:
+
+	shader_stats src_stats, opt_stats;
 
 	r600_isa *isa;
 
@@ -484,8 +511,8 @@ public:
 	static unsigned dskip_end;
 	static unsigned dskip_mode;
 
-	sb_context()
-		: isa(0), hw_chip(HW_CHIP_UNKNOWN), hw_class(HW_CLASS_UNKNOWN) {}
+	sb_context() : src_stats(), opt_stats(), isa(0),
+			hw_chip(HW_CHIP_UNKNOWN), hw_class(HW_CLASS_UNKNOWN) {}
 
 	int init(r600_isa *isa, sb_hw_chip chip, sb_hw_class cclass);
 

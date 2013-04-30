@@ -77,9 +77,15 @@ int bc_parser::parse() {
 	if (r)
 		return r;
 
+	sh->ngpr = bc->ngpr;
+	sh->nstack = bc->nstack;
+
+	if (sh->target != TARGET_FETCH) {
+		sh->src_stats.ndw = bc->ndw;
+		sh->collect_stats(false);
+	}
+
 	if (enable_dump) {
-		sh->ngpr = bc->ngpr;
-		sh->nstack = bc->nstack;
 		bc_dump(*sh, cerr, bc->bytecode, bc_ndw).run();
 	}
 
@@ -227,6 +233,8 @@ int bc_parser::parse_cf(unsigned &i, bool &eop) {
 
 int bc_parser::parse_alu_clause(cf_node* cf) {
 	unsigned i = cf->bc.addr << 1, cnt = cf->bc.count + 1, gcnt;
+
+	cf->subtype = NST_ALU_CLAUSE;
 
 	cgroup = 0;
 	memset(slots[0], 0, 5*sizeof(slots[0][0]));
@@ -442,6 +450,8 @@ int bc_parser::parse_alu_group(cf_node* cf, unsigned &i, unsigned &gcnt) {
 int bc_parser::parse_fetch_clause(cf_node* cf) {
 	int r;
 	unsigned i = cf->bc.addr << 1, cnt = cf->bc.count + 1;
+
+	cf->subtype = NST_TEX_CLAUSE;
 
 	vvec grad_v, grad_h;
 

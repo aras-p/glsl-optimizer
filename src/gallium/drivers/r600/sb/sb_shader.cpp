@@ -37,7 +37,7 @@ shader::shader(sb_context &sctx, shader_target t, unsigned id, bool dump)
 : ctx(sctx), next_temp_value_index(temp_regid_offset),
   prep_regs_count(), pred_sels(),
   regions(), inputs(), undef(), val_pool(sizeof(value)),
-  pool(), all_nodes(), errors(), enable_dump(dump),
+  pool(), all_nodes(), src_stats(), opt_stats(), errors(), enable_dump(dump),
   optimized(), id(id),
   coal(*this), bbs(),
   target(t), vt(ex), ex(*this), root(),
@@ -557,6 +557,23 @@ alu_node* shader::clone(alu_node* n) {
 	return c;
 }
 
+void shader::collect_stats(bool opt) {
+	if (!sb_context::dump_stat)
+		return;
+
+	shader_stats &s = opt ? opt_stats : src_stats;
+
+	s.shaders = 1;
+	s.ngpr = ngpr;
+	s.nstack = nstack;
+	s.collect(root);
+
+	if (opt)
+		ctx.opt_stats.accumulate(s);
+	else
+		ctx.src_stats.accumulate(s);
+}
+
 value* shader::get_ro_value(value_map& vm, value_kind vk, unsigned key) {
 	value_map::iterator I = vm.find(key);
 	if (I != vm.end())
@@ -655,6 +672,80 @@ sched_queue_id shader::get_queue_id(node* n) {
 			assert(0);
 			return SQ_NUM;
 	}
+}
+
+void shader_stats::collect(node *n) {
+	if (n->is_alu_inst())
+		++alu;
+	else if (n->is_fetch_inst())
+		++fetch;
+	else if (n->is_container()) {
+		container_node *c = static_cast<container_node*>(n);
+
+		if (n->is_alu_group())
+			++alu_groups;
+		else if (n->is_alu_clause())
+			++alu_clauses;
+		else if (n->is_fetch_clause())
+			++fetch_clauses;
+		else if (n->is_cf_inst())
+			++cf;
+
+		if (!c->empty()) {
+			for (node_iterator I = c->begin(), E = c->end(); I != E; ++I) {
+				collect(*I);
+			}
+		}
+	}
+}
+
+void shader_stats::accumulate(shader_stats& s) {
+	++shaders;
+	ndw += s.ndw;
+	ngpr += s.ngpr;
+	nstack += s.nstack;
+
+	alu += s.alu;
+	alu_groups += s.alu_groups;
+	alu_clauses += s.alu_clauses;
+	fetch += s.fetch;
+	fetch_clauses += s.fetch_clauses;
+	cf += s.cf;
+}
+
+void shader_stats::dump(std::ostream& o) {
+	o << "dw:" << ndw << ", gpr:" << ngpr << ", stk:" << nstack
+			<< ", alu groups:" << alu_groups << ", alu clauses: " << alu_clauses
+			<< ", alu:" << alu << ", fetch:" << fetch
+			<< ", fetch clauses:" << fetch_clauses
+			<< ", cf:" << cf;
+
+	if (shaders > 1)
+		o << ", shaders:" << shaders;
+
+	o << "\n";
+}
+
+static void print_diff(std::ostream &o, unsigned d1, unsigned d2) {
+	if (d1)
+		o << ((int)d2 - (int)d1) * 100 / (int)d1 << "%";
+	else if (d2)
+		o << "N/A";
+	else
+		o << "0%";
+}
+
+void shader_stats::dump_diff(std::ostream& o, shader_stats& s) {
+	o << "dw:"; print_diff(o, ndw, s.ndw);
+	o << ", gpr:" ; print_diff(o, ngpr, s.ngpr);
+	o << ", stk:" ; print_diff(o, nstack, s.nstack);
+	o << ", alu groups:" ; print_diff(o, alu_groups, s.alu_groups);
+	o << ", alu clauses: " ; print_diff(o, alu_clauses, s.alu_clauses);
+	o << ", alu:" ; print_diff(o, alu, s.alu);
+	o << ", fetch:" ; print_diff(o, fetch, s.fetch);
+	o << ", fetch clauses:" ; print_diff(o, fetch_clauses, s.fetch_clauses);
+	o << ", cf:" ; print_diff(o, cf, s.cf);
+	o << "\n";
 }
 
 } // namespace r600_sb
