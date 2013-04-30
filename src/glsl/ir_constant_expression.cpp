@@ -576,7 +576,9 @@ ir_expression::constant_expression_value(struct hash_table *variable_context)
 		for (unsigned c = 0; c < op[0]->type->components(); c++) {
 			mag2 += op[0]->value.f[c] * op[0]->value.f[c];
 		}
-
+		// how would one express "vec3(nan)" in GLSL? no idea, so let's just not handle it
+		if (mag2 == 0.0f)
+			return NULL;
 		float mag = sqrtf(mag2);
 		for (unsigned c = 0; c < op[0]->type->components(); c++) {
 			data.f[c] = op[0]->value.f[c] / mag;
