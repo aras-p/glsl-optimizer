@@ -221,7 +221,7 @@ VdpStatus vlVdpVideoMixerRender(VdpVideoMixer mixer,
 
    vlVdpVideoMixer *vmixer;
    vlVdpSurface *surf;
-   vlVdpOutputSurface *dst;
+   vlVdpOutputSurface *dst, *bg = NULL;
 
    struct vl_compositor *compositor;
 
@@ -250,19 +250,20 @@ VdpStatus vlVdpVideoMixerRender(VdpVideoMixer mixer,
    if (!dst)
       return VDP_STATUS_INVALID_HANDLE;
 
-   pipe_mutex_lock(vmixer->device->mutex);
-   vlVdpResolveDelayedRendering(vmixer->device, NULL, NULL);
    if (background_surface != VDP_INVALID_HANDLE) {
-      vlVdpOutputSurface *bg = vlGetDataHTAB(background_surface);
-      if (!bg) {
-         pipe_mutex_unlock(vmixer->device->mutex);
+      bg = vlGetDataHTAB(background_surface);
+      if (!bg)
          return VDP_STATUS_INVALID_HANDLE;
-      }
-      vl_compositor_set_rgba_layer(&vmixer->cstate, compositor, layer++, bg->sampler_view,
-                                   RectToPipe(background_source_rect, &rect), NULL, NULL);
    }
 
+   pipe_mutex_lock(vmixer->device->mutex);
+   vlVdpResolveDelayedRendering(vmixer->device, NULL, NULL);
+
    vl_compositor_clear_layers(&vmixer->cstate);
+
+   if (bg)
+      vl_compositor_set_rgba_layer(&vmixer->cstate, compositor, layer++, bg->sampler_view,
+                                   RectToPipe(background_source_rect, &rect), NULL, NULL);
 
    switch (current_picture_structure) {
    case VDP_VIDEO_MIXER_PICTURE_STRUCTURE_TOP_FIELD:
