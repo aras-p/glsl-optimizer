@@ -132,6 +132,9 @@ brw_blorp_blit_miptrees(struct intel_context *intel,
                         int dst_x1, int dst_y1,
                         bool mirror_x, bool mirror_y)
 {
+   intel_miptree_slice_resolve_depth(intel, src_mt, src_level, src_layer);
+   intel_miptree_slice_resolve_depth(intel, dst_mt, dst_level, dst_layer);
+
    brw_blorp_blit_params params(brw_context(&intel->ctx),
                                 src_mt, src_level, src_layer,
                                 dst_mt, dst_level, dst_layer,
@@ -140,6 +143,8 @@ brw_blorp_blit_miptrees(struct intel_context *intel,
                                 dst_x1, dst_y1,
                                 mirror_x, mirror_y);
    brw_blorp_exec(intel, &params);
+
+   intel_miptree_slice_set_needs_hiz_resolve(dst_mt, dst_level, dst_layer);
 }
 
 static void
@@ -154,12 +159,6 @@ do_blorp_blit(struct intel_context *intel, GLbitfield buffer_bit,
    struct intel_mipmap_tree *src_mt = find_miptree(buffer_bit, src_irb);
    struct intel_mipmap_tree *dst_mt = find_miptree(buffer_bit, dst_irb);
 
-   /* Get ready to blit.  This includes depth resolving the src and dst
-    * buffers if necessary.
-    */
-   intel_renderbuffer_resolve_depth(intel, src_irb);
-   intel_renderbuffer_resolve_depth(intel, dst_irb);
-
    /* Do the blit */
    brw_blorp_blit_miptrees(intel,
                            src_mt, src_irb->mt_level, src_irb->mt_layer,
@@ -167,7 +166,6 @@ do_blorp_blit(struct intel_context *intel, GLbitfield buffer_bit,
                            srcX0, srcY0, dstX0, dstY0, dstX1, dstY1,
                            mirror_x, mirror_y);
 
-   intel_renderbuffer_set_needs_hiz_resolve(dst_irb);
    intel_renderbuffer_set_needs_downsample(dst_irb);
 }
 

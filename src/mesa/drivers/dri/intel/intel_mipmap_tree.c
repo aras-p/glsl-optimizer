@@ -1288,9 +1288,6 @@ intel_miptree_updownsample(struct intel_context *intel,
    int dst_x0 = 0;
    int dst_y0 = 0;
 
-   intel_miptree_slice_resolve_depth(intel, src, 0, 0);
-   intel_miptree_slice_resolve_depth(intel, dst, 0, 0);
-
    brw_blorp_blit_miptrees(intel,
                            src, 0 /* level */, 0 /* layer */,
                            dst, 0 /* level */, 0 /* layer */,
@@ -1338,13 +1335,6 @@ intel_miptree_downsample(struct intel_context *intel,
                               mt->logical_width0,
                               mt->logical_height0);
    mt->need_downsample = false;
-
-   /* Strictly speaking, after a downsample on a depth miptree, a hiz
-    * resolve is needed on the singlesample miptree. However, since the
-    * singlesample miptree is never rendered to, the hiz resolve will never
-    * occur. Therefore we do not mark the needed hiz resolve after
-    * downsampling.
-    */
 }
 
 /**
@@ -1364,7 +1354,6 @@ intel_miptree_upsample(struct intel_context *intel,
                               mt->singlesample_mt, mt,
                               mt->logical_width0,
                               mt->logical_height0);
-   intel_miptree_slice_set_needs_hiz_resolve(mt, 0, 0);
 }
 
 void *
