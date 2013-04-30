@@ -69,6 +69,8 @@ struct ilo_resource {
    bool halign_8, valign_4;
    /* true if space is reserved between layers */
    bool array_spacing_full;
+   /* true if samples are interleaved */
+   bool interleaved;
 
    /* 2D offsets into a layer/slice/face */
    struct {

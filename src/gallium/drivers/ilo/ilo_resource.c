@@ -442,6 +442,7 @@ struct layout_tex_info {
    int block_width, block_height;
    int align_i, align_j;
    bool array_spacing_full;
+   bool interleaved;
    int qpitch;
 
    struct {
@@ -629,24 +630,45 @@ layout_tex_init(const struct ilo_resource *res, struct layout_tex_info *info)
 
    if (is->dev.gen >= ILO_GEN(7)) {
       /*
-       * From the Ivy Bridge PRM, volume 1 part 1, page 111:
+       * It is not explicitly states, but render targets are expected to be
+       * UMS/CMS (samples non-interleaved) and depth/stencil buffers are
+       * expected to be IMS (samples interleaved).
        *
-       *     "note that the depth buffer and stencil buffer have an implied
-       *      value of ARYSPC_FULL"
-       *
-       * From the Ivy Bridge PRM, volume 4 part 1, page 66:
-       *
-       *     "If Multisampled Surface Storage Format is MSFMT_MSS and Number
-       *      of Multisamples is not MULTISAMPLECOUNT_1, this field (Surface
-       *      Array Spacing) must be set to ARYSPC_LOD0."
-       *
-       * We use ARYSPC_FULL only when needed, and as such, we never use
-       * ARYSPC_FULL for multisampled resources.
+       * See "Multisampled Surface Storage Format" field of SURFACE_STATE.
        */
-      info->array_spacing_full = (templ->last_level > 0 ||
-            util_format_is_depth_or_stencil(templ->format));
+      if (util_format_is_depth_or_stencil(templ->format)) {
+         info->interleaved = true;
+
+         /*
+          * From the Ivy Bridge PRM, volume 1 part 1, page 111:
+          *
+          *     "note that the depth buffer and stencil buffer have an implied
+          *      value of ARYSPC_FULL"
+          */
+         info->array_spacing_full = true;
+      }
+      else {
+         info->interleaved = false;
+
+         /*
+          * From the Ivy Bridge PRM, volume 4 part 1, page 66:
+          *
+          *     "If Multisampled Surface Storage Format is MSFMT_MSS and
+          *      Number of Multisamples is not MULTISAMPLECOUNT_1, this field
+          *      (Surface Array Spacing) must be set to ARYSPC_LOD0."
+          *
+          * As multisampled resources are not mipmapped, we never use
+          * ARYSPC_FULL for them.
+          */
+         if (templ->nr_samples > 1)
+            assert(templ->last_level == 0);
+         info->array_spacing_full = (templ->last_level > 0);
+      }
    }
    else {
+      /* GEN6 supports only interleaved samples */
+      info->interleaved = true;
+
       /*
        * From the Sandy Bridge PRM, volume 1 part 1, page 115:
        *
@@ -695,10 +717,61 @@ layout_tex_init(const struct ilo_resource *res, struct layout_tex_info *info)
        *
        *        W_L = ceiling(W_L / 2) * 4
        *        H_L = ceiling(H_L / 2) * 4"
+       *
+       * From the Ivy Bridge PRM, volume 1 part 1, page 108:
+       *
+       *     "If the surface is multisampled and it is a depth or stencil
+       *      surface or Multisampled Surface StorageFormat in SURFACE_STATE
+       *      is MSFMT_DEPTH_STENCIL, W_L and H_L must be adjusted as follows
+       *      before proceeding:
+       *
+       *        #samples  W_L =                    H_L =
+       *        2         ceiling(W_L / 2) * 4     HL [no adjustment]
+       *        4         ceiling(W_L / 2) * 4     ceiling(H_L / 2) * 4
+       *        8         ceiling(W_L / 2) * 8     ceiling(H_L / 2) * 4
+       *        16        ceiling(W_L / 2) * 8     ceiling(H_L / 2) * 8"
+       *
+       * For interleaved samples (4x), where pixels
+       *
+       *   (x, y  ) (x+1, y  )
+       *   (x, y+1) (x+1, y+1)
+       *
+       * would be is occupied by
+       *
+       *   (x, y  , si0) (x+1, y  , si0) (x, y  , si1) (x+1, y  , si1)
+       *   (x, y+1, si0) (x+1, y+1, si0) (x, y+1, si1) (x+1, y+1, si1)
+       *   (x, y  , si2) (x+1, y  , si2) (x, y  , si3) (x+1, y  , si3)
+       *   (x, y+1, si2) (x+1, y+1, si2) (x, y+1, si3) (x+1, y+1, si3)
+       *
+       * Thus the need to
+       *
+       *   w = align(w, 2) * 2;
+       *   y = align(y, 2) * 2;
        */
-      if (templ->nr_samples > 1) {
-         w = align(w, 2) * 2;
-         h = align(h, 2) * 2;
+      if (info->interleaved) {
+         switch (templ->nr_samples) {
+         case 0:
+         case 1:
+            break;
+         case 2:
+            w = align(w, 2) * 2;
+            break;
+         case 4:
+            w = align(w, 2) * 2;
+            h = align(h, 2) * 2;
+            break;
+         case 8:
+            w = align(w, 2) * 4;
+            h = align(h, 2) * 2;
+            break;
+         case 16:
+            w = align(w, 2) * 4;
+            h = align(h, 2) * 4;
+            break;
+         default:
+            assert(!"unsupported sample count");
+            break;
+         }
       }
 
       info->sizes[lv].w = w;
@@ -767,7 +840,7 @@ static void
 layout_tex_2d(struct ilo_resource *res, const struct layout_tex_info *info)
 {
    const struct pipe_resource *templ = &res->base;
-   unsigned int level_x, level_y;
+   unsigned int level_x, level_y, num_slices;
    int lv;
 
    res->bo_width = 0;
@@ -799,8 +872,13 @@ layout_tex_2d(struct ilo_resource *res, const struct layout_tex_info *info)
          level_y += align(level_h, info->align_j);
    }
 
+   num_slices = templ->array_size;
+   /* samples of the same index are stored in a slice */
+   if (templ->nr_samples > 1 && !info->interleaved)
+      num_slices *= templ->nr_samples;
+
    /* we did not take slices into consideration in the computation above */
-   res->bo_height += info->qpitch * (templ->array_size - 1);
+   res->bo_height += info->qpitch * (num_slices - 1);
 }
 
 /**
@@ -987,6 +1065,7 @@ init_texture(struct ilo_resource *res)
    res->halign_8 = (info.align_i == 8);
    res->valign_4 = (info.align_j == 4);
    res->array_spacing_full = info.array_spacing_full;
+   res->interleaved = info.interleaved;
 
    switch (res->base.target) {
    case PIPE_TEXTURE_1D:
@@ -1030,6 +1109,7 @@ init_buffer(struct ilo_resource *res)
    res->halign_8 = false;
    res->valign_4 = false;
    res->array_spacing_full = false;
+   res->interleaved = false;
 }
 
 static struct pipe_resource *

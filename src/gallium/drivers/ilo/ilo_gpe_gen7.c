@@ -1488,6 +1488,19 @@ gen7_fill_normal_SURFACE_STATE(const struct ilo_dev_info *dev,
    dw[4] = first_layer << 18 |
            (depth - 1) << 7;
 
+   /*
+    * MSFMT_MSS means the samples are not interleaved and MSFMT_DEPTH_STENCIL
+    * means the samples are interleaved.  The layouts are the same when the
+    * number of samples is 1.
+    */
+   if (res->interleaved && res->base.nr_samples > 1) {
+      assert(!is_rt);
+      dw[4] |= GEN7_SURFACE_MSFMT_DEPTH_STENCIL;
+   }
+   else {
+      dw[4] |= GEN7_SURFACE_MSFMT_MSS;
+   }
+
    if (res->base.nr_samples > 4)
       dw[4] |= GEN7_SURFACE_MULTISAMPLECOUNT_8;
    else if (res->base.nr_samples > 2)

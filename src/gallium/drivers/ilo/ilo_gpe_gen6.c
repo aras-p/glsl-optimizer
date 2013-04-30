@@ -3742,6 +3742,9 @@ gen6_fill_normal_SURFACE_STATE(const struct ilo_dev_info *dev,
 
    /* non-full array spacing is supported only on GEN7+ */
    assert(res->array_spacing_full);
+   /* non-interleaved samples are supported only on GEN7+ */
+   if (res->base.nr_samples > 1)
+      assert(res->interleaved);
 
    /*
     * Compute the offset to the layer manually.
