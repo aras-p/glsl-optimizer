@@ -2063,10 +2063,15 @@ fs_visitor::register_coalesce_2()
 	  inst->src[0].smear != -1 ||
 	  inst->dst.file != GRF ||
 	  inst->dst.type != inst->src[0].type ||
-	  virtual_grf_sizes[inst->src[0].reg] != 1 ||
-	  virtual_grf_interferes(inst->dst.reg, inst->src[0].reg)) {
+	  virtual_grf_sizes[inst->src[0].reg] != 1) {
 	 continue;
       }
+
+      int var_from = live_intervals->var_from_reg(&inst->src[0]);
+      int var_to = live_intervals->var_from_reg(&inst->dst);
+
+      if (live_intervals->vars_interfere(var_from, var_to))
+         continue;
 
       int reg_from = inst->src[0].reg;
       assert(inst->src[0].reg_offset == 0);
@@ -2091,30 +2096,12 @@ fs_visitor::register_coalesce_2()
       }
 
       inst->remove();
-
-      /* We don't need to recalculate live intervals inside the loop despite
-       * invalidating them; we only use them for the interferes test, and we
-       * must have had a situation where the intervals were:
-       *
-       *  from  to
-       *  ^
-       *  |
-       *  v
-       *        ^
-       *        |
-       *        v
-       *
-       * Some register R that might get coalesced with one of these two could
-       * only be referencing "to", otherwise "from"'s range would have been
-       * longer.  R's range could also only start at the end of "to" or later,
-       * otherwise it will conflict with "to" when we try to coalesce "to"
-       * into Rw anyway.
-       */
-      invalidate_live_intervals();
-
       progress = true;
       continue;
    }
+
+   if (progress)
+      invalidate_live_intervals();
 
    return progress;
 }

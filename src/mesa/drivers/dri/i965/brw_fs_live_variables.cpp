@@ -244,6 +244,12 @@ fs_live_variables::compute_start_end()
    }
 }
 
+int
+fs_live_variables::var_from_reg(fs_reg *reg)
+{
+   return var_from_vgrf[reg->reg] + reg->reg_offset;
+}
+
 fs_live_variables::fs_live_variables(fs_visitor *v, cfg_t *cfg)
    : v(v), cfg(cfg)
 {
@@ -332,6 +338,13 @@ fs_visitor::calculate_live_intervals()
       virtual_grf_end[vgrf] = MAX2(virtual_grf_end[vgrf],
                                    live_intervals->end[i]);
    }
+}
+
+bool
+fs_live_variables::vars_interfere(int a, int b)
+{
+   return !(end[b] <= start[a] ||
+            end[a] <= start[b]);
 }
 
 bool

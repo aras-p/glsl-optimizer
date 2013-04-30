@@ -66,6 +66,9 @@ public:
    void compute_live_variables();
    void compute_start_end();
 
+   bool vars_interfere(int a, int b);
+   int var_from_reg(fs_reg *reg);
+
    fs_visitor *v;
    cfg_t *cfg;
    void *mem_ctx;
