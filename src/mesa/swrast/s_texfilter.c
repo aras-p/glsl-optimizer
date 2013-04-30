@@ -1436,7 +1436,7 @@ opt_sample_rgb_2d(struct gl_context *ctx,
       GLint i = IFLOOR(texcoords[k][0] * width) & colMask;
       GLint j = IFLOOR(texcoords[k][1] * height) & rowMask;
       GLint pos = (j << shift) | i;
-      GLubyte *texel = swImg->ImageSlices[0] + 3 * pos;
+      GLubyte *texel = (GLubyte *) swImg->ImageSlices[0] + 3 * pos;
       rgba[k][RCOMP] = UBYTE_TO_FLOAT(texel[2]);
       rgba[k][GCOMP] = UBYTE_TO_FLOAT(texel[1]);
       rgba[k][BCOMP] = UBYTE_TO_FLOAT(texel[0]);
