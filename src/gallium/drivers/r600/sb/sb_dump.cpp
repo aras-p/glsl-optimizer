@@ -1,0 +1,524 @@
+/*
+ * Copyright 2013 Vadim Girlin <vadimgirlin@gmail.com>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * on the rights to use, copy, modify, merge, publish, distribute, sub
+ * license, and/or sell copies of the Software, and to permit persons to whom
+ * the Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the next
+ * paragraph) shall be included in all copies or substantial portions of the
+ * Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHOR(S) AND/OR THEIR SUPPLIERS BE LIABLE FOR ANY CLAIM,
+ * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+ * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+ * USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * Authors:
+ *      Vadim Girlin
+ */
+
+#include <iostream>
+#include <iomanip>
+
+#include "sb_shader.h"
+
+#include "sb_pass.h"
+
+namespace r600_sb {
+
+using std::cerr;
+
+bool dump::visit(node& n, bool enter) {
+	if (enter) {
+		indent();
+		dump_flags(n);
+
+		switch (n.subtype) {
+			case NST_PHI:
+				dump_op(n, "* phi");
+				break;
+			case NST_PSI:
+				dump_op(n, "* psi");
+				break;
+			case NST_COPY:
+				dump_op(n, "* copy");
+				break;
+			default:
+				assert(!"invalid node subtype");
+				break;
+		}
+		cerr << "\n";
+	}
+	return false;
+}
+
+bool dump::visit(container_node& n, bool enter) {
+	if (enter) {
+		if (!n.empty()) {
+			indent();
+			dump_flags(n);
+			cerr << "{  ";
+			if (!n.dst.empty()) {
+				cerr << " preloaded inputs [";
+				dump_vec(n.dst);
+				cerr << "]  ";
+			}
+			dump_live_values(n, true);
+		}
+		++level;
+	} else {
+		--level;
+		if (!n.empty()) {
+			indent();
+			cerr << "}  ";
+			if (!n.src.empty()) {
+				cerr << " results [";
+				dump_vec(n.src);
+				cerr << "]  ";
+			}
+			dump_live_values(n, false);
+		}
+	}
+	return true;
+}
+
+bool dump::visit(bb_node& n, bool enter) {
+	if (enter) {
+		indent();
+		dump_flags(n);
+		cerr << "{ BB_" << n.id << "    loop_level = " << n.loop_level << "  ";
+		dump_live_values(n, true);
+		++level;
+	} else {
+		--level;
+		indent();
+		cerr << "} end BB_" << n.id << "  ";
+		dump_live_values(n, false);
+	}
+	return true;
+}
+
+bool dump::visit(alu_group_node& n, bool enter) {
+	if (enter) {
+		indent();
+		dump_flags(n);
+		cerr << "[  ";
+		dump_live_values(n, true);
+
+		++level;
+	} else {
+		--level;
+
+		indent();
+		cerr << "]  ";
+		dump_live_values(n, false);
+	}
+	return true;
+}
+
+bool dump::visit(cf_node& n, bool enter) {
+	if (enter) {
+		indent();
+		dump_flags(n);
+		dump_op(n, n.bc.op_ptr->name);
+
+		if (n.bc.op_ptr->flags & CF_BRANCH) {
+			cerr << " @" << (n.bc.addr << 1);
+		}
+
+		dump_common(n);
+		cerr << "\n";
+
+		if (!n.empty()) {
+			indent();
+			cerr << "<  ";
+			dump_live_values(n, true);
+		}
+
+		++level;
+	} else {
+		--level;
+		if (!n.empty()) {
+			indent();
+			cerr << ">  ";
+			dump_live_values(n, false);
+		}
+	}
+	return true;
+}
+
+bool dump::visit(alu_node& n, bool enter) {
+	if (enter) {
+		indent();
+		dump_flags(n);
+		dump_alu(&n);
+		dump_common(n);
+		cerr << "\n";
+
+		++level;
+	} else {
+		--level;
+
+	}
+	return true;
+}
+
+bool dump::visit(alu_packed_node& n, bool enter) {
+	if (enter) {
+		indent();
+		dump_flags(n);
+		dump_op(n, n.op_ptr()->name);
+		cerr << "  ";
+		dump_live_values(n, true);
+
+		++level;
+	} else {
+		--level;
+		if (!n.live_after.empty()) {
+			indent();
+			dump_live_values(n, false);
+		}
+
+	}
+	// proccess children only if their src/dst aren't moved to this node yet
+	return n.src.empty();
+}
+
+bool dump::visit(fetch_node& n, bool enter) {
+	if (enter) {
+		indent();
+		dump_flags(n);
+		dump_op(n, n.bc.op_ptr->name);
+		cerr << "\n";
+
+		++level;
+	} else {
+		--level;
+	}
+	return true;
+}
+
+bool dump::visit(region_node& n, bool enter) {
+	if (enter) {
+		indent();
+		dump_flags(n);
+		cerr << "region #" << n.region_id << "   ";
+		dump_common(n);
+
+		if (!n.vars_defined.empty()) {
+			cerr << "vars_defined: ";
+			dump_set(sh, n.vars_defined);
+		}
+
+		dump_live_values(n, true);
+
+		++level;
+
+		if (n.loop_phi)
+			run_on(*n.loop_phi);
+	} else {
+		--level;
+
+		if (n.phi)
+			run_on(*n.phi);
+
+		indent();
+		dump_live_values(n, false);
+	}
+	return true;
+}
+
+bool dump::visit(repeat_node& n, bool enter) {
+	if (enter) {
+		indent();
+		dump_flags(n);
+		cerr << "repeat region #" << n.target->region_id;
+		cerr << (n.empty() ? "   " : " after {  ");
+		dump_common(n);
+		cerr << "   ";
+		dump_live_values(n, true);
+
+		++level;
+	} else {
+		--level;
+
+		if (!n.empty()) {
+			indent();
+			cerr << "} end_repeat   ";
+			dump_live_values(n, false);
+		}
+	}
+	return true;
+}
+
+bool dump::visit(depart_node& n, bool enter) {
+	if (enter) {
+		indent();
+		dump_flags(n);
+		cerr << "depart region #" << n.target->region_id;
+		cerr << (n.empty() ? "   " : " after {  ");
+		dump_common(n);
+		cerr << "  ";
+		dump_live_values(n, true);
+
+		++level;
+	} else {
+		--level;
+		if (!n.empty()) {
+			indent();
+			cerr << "} end_depart   ";
+			dump_live_values(n, false);
+		}
+	}
+	return true;
+}
+
+bool dump::visit(if_node& n, bool enter) {
+	if (enter) {
+		indent();
+		dump_flags(n);
+		cerr << "if " << *n.cond << "    ";
+		dump_common(n);
+		cerr << "   ";
+		dump_live_values(n, true);
+
+		indent();
+		cerr <<"{\n";
+
+		++level;
+	} else {
+		--level;
+		indent();
+		cerr << "} endif   ";
+		dump_live_values(n, false);
+	}
+	return true;
+}
+
+void dump::indent() {
+	cerr << std::setw(level * 4) << "";
+}
+
+void dump::dump_vec(const vvec & vv) {
+	bool first = true;
+	for(vvec::const_iterator I = vv.begin(), E = vv.end(); I != E; ++I) {
+		value *v = *I;
+		if (!first)
+			cerr << ", ";
+		else
+			first = false;
+
+		if (v) {
+			cerr << *v;
+		} else {
+			cerr << "__";
+		}
+	}
+}
+
+void dump::dump_rels(vvec & vv) {
+	for(vvec::iterator I = vv.begin(), E = vv.end(); I != E; ++I) {
+		value *v = *I;
+
+		if (!v || !v->is_rel())
+			continue;
+
+		cerr << "\n\t\t\t\t\t";
+		cerr << "    rels: " << *v << " : ";
+		dump_vec(v->mdef);
+		cerr << " <= ";
+		dump_vec(v->muse);
+	}
+}
+
+void dump::dump_op(node &n, const char *name) {
+
+	if (n.pred) {
+		alu_node &a = static_cast<alu_node&>(n);
+		cerr << (a.bc.pred_sel-2) << " [" << *a.pred << "] ";
+	}
+
+	cerr << name;
+
+	bool has_dst = !n.dst.empty();
+
+	if (n.subtype == NST_CF_INST) {
+		cf_node *c = static_cast<cf_node*>(&n);
+		if (c->bc.op_ptr->flags & CF_EXP) {
+			static const char *exp_type[] = {"PIXEL", "POS  ", "PARAM"};
+			cerr << "  " << exp_type[c->bc.type] << " " << c->bc.array_base;
+			has_dst = false;
+		} else if (c->bc.op_ptr->flags & CF_STRM) {
+			static const char *exp_type[] = {"WRITE", "WRITE_IND", "WRITE_ACK",
+					"WRITE_IND_ACK"};
+			cerr << "  " << exp_type[c->bc.type] << " " << c->bc.array_base
+					<< "   ES:" << c->bc.elem_size;
+			has_dst = false;
+		}
+	}
+
+	cerr << "     ";
+
+	if (has_dst) {
+		dump_vec(n.dst);
+		cerr << ",       ";
+	}
+
+	dump_vec(n.src);
+}
+
+void dump::dump_set(shader &sh, val_set& v) {
+	cerr << "[";
+	for(val_set::iterator I = v.begin(sh), E = v.end(sh); I != E; ++I) {
+		value *val = *I;
+		cerr << *val << " ";
+	}
+	cerr << "]";
+}
+
+void dump::dump_common(node& n) {
+}
+
+void dump::dump_flags(node &n) {
+	if (n.flags & NF_DEAD)
+		cerr << "### DEAD  ";
+	if (n.flags & NF_REG_CONSTRAINT)
+		cerr << "R_CONS  ";
+	if (n.flags & NF_CHAN_CONSTRAINT)
+		cerr << "CH_CONS  ";
+	if (n.flags & NF_ALU_4SLOT)
+		cerr << "4S  ";
+}
+
+void dump::dump_val(value* v) {
+	cerr << *v;
+}
+
+void dump::dump_alu(alu_node *n) {
+
+	if (n->is_copy_mov())
+		cerr << "(copy) ";
+
+	if (n->pred) {
+		cerr << (n->bc.pred_sel-2) << " [" << n->pred << "] ";
+	}
+
+	cerr << n->bc.op_ptr->name;
+
+	if (n->bc.omod) {
+		static const char *omod_str[] = {"", "*2", "*4", "/2"};
+		cerr << omod_str[n->bc.omod];
+	}
+
+	if (n->bc.clamp) {
+		cerr << "_sat";
+	}
+
+	bool has_dst = !n->dst.empty();
+
+	cerr << "     ";
+
+	if (has_dst) {
+		dump_vec(n->dst);
+		cerr << ",    ";
+	}
+
+	unsigned s = 0;
+	for (vvec::iterator I = n->src.begin(), E = n->src.end(); I != E;
+			++I, ++s) {
+
+		bc_alu_src &src = n->bc.src[s];
+
+		if (src.neg)
+			cerr << "-";
+
+		if (src.abs)
+			cerr << "|";
+
+		dump_val(*I);
+
+		if (src.abs)
+			cerr << "|";
+
+		if (I + 1 != E)
+			cerr << ", ";
+	}
+
+	dump_rels(n->dst);
+	dump_rels(n->src);
+
+}
+
+void dump::dump_op(node* n) {
+	if (n->type == NT_IF) {
+		dump_op(*n, "IF ");
+		return;
+	}
+
+	switch(n->subtype) {
+	case NST_ALU_INST:
+		dump_alu(static_cast<alu_node*>(n));
+		break;
+	case NST_FETCH_INST:
+		dump_op(*n, static_cast<fetch_node*>(n)->bc.op_ptr->name);
+		break;
+	case NST_CF_INST:
+	case NST_ALU_CLAUSE:
+	case NST_TEX_CLAUSE:
+	case NST_VTX_CLAUSE:
+		dump_op(*n, static_cast<cf_node*>(n)->bc.op_ptr->name);
+		break;
+	case NST_ALU_PACKED_INST:
+		dump_op(*n, static_cast<alu_packed_node*>(n)->op_ptr()->name);
+		break;
+	case NST_PHI:
+		dump_op(*n, "PHI");
+		break;
+	case NST_PSI:
+		dump_op(*n, "PSI");
+		break;
+	case NST_COPY:
+		dump_op(*n, "COPY");
+		break;
+	default:
+		dump_op(*n, "??unknown_op");
+	}
+}
+
+void dump::dump_op_list(container_node* c) {
+	for (node_iterator I = c->begin(), E = c->end(); I != E; ++I) {
+		dump_op(*I);
+		cerr << "\n";
+	}
+}
+
+void dump::dump_queue(sched_queue& q) {
+	for (sched_queue::iterator I = q.begin(), E = q.end(); I != E; ++I) {
+		dump_op(*I);
+		cerr << "\n";
+	}
+}
+
+void dump::dump_live_values(container_node &n, bool before) {
+	if (before) {
+		if (!n.live_before.empty()) {
+			cerr << "live_before: ";
+			dump_set(sh, n.live_before);
+		}
+	} else {
+		if (!n.live_after.empty()) {
+			cerr << "live_after: ";
+			dump_set(sh, n.live_after);
+		}
+	}
+	cerr << "\n";
+}
+
+} // namespace r600_sb
