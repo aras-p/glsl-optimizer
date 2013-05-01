@@ -535,7 +535,7 @@ generate_common_ES_uniforms(exec_list *instructions,
    add_builtin_constant(instructions, symtab, "gl_MaxTextureImageUnits",
 			state->Const.MaxTextureImageUnits);
    add_builtin_constant(instructions, symtab, "gl_MaxFragmentUniformVectors",
-			state->Const.MaxFragmentUniformComponents);
+			state->Const.MaxFragmentUniformComponents / 4);
 
    add_uniform(instructions, symtab, "gl_DepthRange",
 	       state->symbols->get_type("gl_DepthRangeParameters"));
