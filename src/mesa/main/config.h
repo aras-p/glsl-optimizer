@@ -219,9 +219,8 @@
 /** For GL_ARB_vertex_shader */
 /*@{*/
 #define MAX_VERTEX_GENERIC_ATTRIBS 16
-#define MAX_VERTEX_TEXTURE_IMAGE_UNITS MAX_TEXTURE_IMAGE_UNITS
-#define MAX_COMBINED_TEXTURE_IMAGE_UNITS (MAX_VERTEX_TEXTURE_IMAGE_UNITS + \
-					  MAX_TEXTURE_IMAGE_UNITS)
+/* 6 is for vertex, hull, domain, geometry, fragment, and compute shader. */
+#define MAX_COMBINED_TEXTURE_IMAGE_UNITS (MAX_TEXTURE_IMAGE_UNITS * 6)
 /*@}*/
 
 
@@ -246,7 +245,6 @@
 
 /** For GL_ARB_geometry_shader4 */
 /*@{*/
-#define MAX_GEOMETRY_TEXTURE_IMAGE_UNITS             8
 #define MAX_GEOMETRY_VARYING_COMPONENTS              32
 #define MAX_VERTEX_VARYING_COMPONENTS                32
 #define MAX_GEOMETRY_UNIFORM_COMPONENTS              512

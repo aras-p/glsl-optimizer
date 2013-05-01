@@ -601,10 +601,10 @@ _mesa_init_constants(struct gl_context *ctx)
    ctx->Const.MaxColorAttachments = MAX_COLOR_ATTACHMENTS;
    ctx->Const.MaxRenderbufferSize = MAX_RENDERBUFFER_SIZE;
 
-   ctx->Const.MaxVertexTextureImageUnits = MAX_VERTEX_TEXTURE_IMAGE_UNITS;
+   ctx->Const.MaxVertexTextureImageUnits = MAX_TEXTURE_IMAGE_UNITS;
    ctx->Const.MaxCombinedTextureImageUnits = MAX_COMBINED_TEXTURE_IMAGE_UNITS;
    ctx->Const.MaxVarying = 16; /* old limit not to break tnl and swrast */
-   ctx->Const.MaxGeometryTextureImageUnits = MAX_GEOMETRY_TEXTURE_IMAGE_UNITS;
+   ctx->Const.MaxGeometryTextureImageUnits = MAX_TEXTURE_IMAGE_UNITS;
    ctx->Const.MaxVertexVaryingComponents = MAX_VERTEX_VARYING_COMPONENTS;
    ctx->Const.MaxGeometryVaryingComponents = MAX_GEOMETRY_VARYING_COMPONENTS;
    ctx->Const.MaxGeometryOutputVertices = MAX_GEOMETRY_OUTPUT_VERTICES;
@@ -675,8 +675,6 @@ check_context_limits(struct gl_context *ctx)
 	  (8 * sizeof(ctx->VertexProgram._Current->Base.OutputsWritten)));
    assert(VARYING_SLOT_MAX <=
 	  (8 * sizeof(ctx->FragmentProgram._Current->Base.InputsRead)));
-
-   assert(MAX_COMBINED_TEXTURE_IMAGE_UNITS <= 8 * sizeof(GLbitfield));
 
    /* shader-related checks */
    assert(ctx->Const.FragmentProgram.MaxLocalParams <= MAX_PROGRAM_LOCAL_PARAMS);
