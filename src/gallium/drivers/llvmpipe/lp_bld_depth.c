@@ -36,21 +36,13 @@
  * flushing would avoid this, but it would most likely result in depth fighting
  * artifacts.
  *
- * We are free to use a different pixel layout though. Since our basic
- * processing unit is a quad (2x2 pixel block) we store the depth/stencil
- * values tiled, a quad at time. That is, a depth buffer containing 
- *
- *  Z11 Z12 Z13 Z14 ...
- *  Z21 Z22 Z23 Z24 ...
- *  Z31 Z32 Z33 Z34 ...
- *  Z41 Z42 Z43 Z44 ...
- *  ... ... ... ... ...
- *
- * will actually be stored in memory as
- *
- *  Z11 Z12 Z21 Z22 Z13 Z14 Z23 Z24 ...
- *  Z31 Z32 Z41 Z42 Z33 Z34 Z43 Z44 ...
- *  ... ... ... ... ... ... ... ... ...
+ * Since we're using linear layout for everything, but we need to deal with
+ * 2x2 quads, we need to load/store multiple values and swizzle them into
+ * place (we could avoid this by doing depth/stencil testing in linear format,
+ * which would be easy for late depth/stencil test as we could do that after
+ * the fragment shader loop just as we do for color buffers, but more tricky
+ * for early depth test as we'd need both masks and interpolated depth in
+ * linear format).
  *
  *
  * @author Jose Fonseca <jfonseca@vmware.com>
@@ -71,6 +63,7 @@
 #include "gallivm/lp_bld_intr.h"
 #include "gallivm/lp_bld_debug.h"
 #include "gallivm/lp_bld_swizzle.h"
+#include "gallivm/lp_bld_pack.h"
 
 #include "lp_bld_depth.h"
 
@@ -515,6 +508,219 @@ lp_build_occlusion_count(struct gallivm_state *gallivm,
 }
 
 
+/**
+ * Load depth/stencil values.
+ * The stored values are linear, swizzle them.
+ *
+ * \param type  the data type of the fragment depth/stencil values
+ * \param format_desc  description of the depth/stencil surface
+ * \param loop_counter  the current loop iteration
+ * \param depth_ptr  pointer to the depth/stencil values of this 4x4 block
+ * \param depth_stride  stride of the depth/stencil buffer
+ */
+LLVMValueRef
+lp_build_depth_stencil_load_swizzled(struct gallivm_state *gallivm,
+                                     struct lp_type z_src_type,
+                                     const struct util_format_description *format_desc,
+                                     LLVMValueRef depth_ptr,
+                                     LLVMValueRef depth_stride,
+                                     LLVMValueRef loop_counter)
+{
+   LLVMBuilderRef builder = gallivm->builder;
+   LLVMValueRef shuffles[LP_MAX_VECTOR_LENGTH / 4];
+   LLVMValueRef zs_dst, zs_dst1, zs_dst2;
+   LLVMValueRef zs_dst_ptr;
+   LLVMValueRef depth_offset1, depth_offset2;
+   unsigned depth_bits = format_desc->block.bits/8;
+   struct lp_type zs_type = lp_depth_type(format_desc, z_src_type.length);
+   struct lp_type zs_load_type = zs_type;
+   zs_load_type.length = zs_load_type.length / 2;
+
+   if (z_src_type.length == 4) {
+      unsigned i;
+      LLVMValueRef looplsb = LLVMBuildAnd(builder, loop_counter,
+                                          lp_build_const_int32(gallivm, 1), "");
+      LLVMValueRef loopmsb = LLVMBuildAnd(builder, loop_counter,
+                                          lp_build_const_int32(gallivm, 2), "");
+      LLVMValueRef offset2 = LLVMBuildMul(builder, loopmsb,
+                                          depth_stride, "");
+      depth_offset1 = LLVMBuildMul(builder, looplsb,
+                                   lp_build_const_int32(gallivm, depth_bits * 2), "");
+      depth_offset1 = LLVMBuildAdd(builder, depth_offset1, offset2, "");
+
+      /* just concatenate the loaded 2x2 values into 4-wide vector */
+      for (i = 0; i < 4; i++) {
+         shuffles[i] = lp_build_const_int32(gallivm, i);
+      }
+   }
+   else {
+      unsigned i;
+      LLVMValueRef loopx2 = LLVMBuildShl(builder, loop_counter,
+                                         lp_build_const_int32(gallivm, 1), "");
+      assert(z_src_type.length == 8);
+      depth_offset1 = LLVMBuildMul(builder, loopx2, depth_stride, "");
+      /*
+       * We load 2x4 values, and need to swizzle them (order
+       * 0,1,4,5,2,3,6,7) - not so hot with avx unfortunately.
+       */
+      for (i = 0; i < 8; i++) {
+
+         shuffles[i] = lp_build_const_int32(gallivm, (i&1) + (i&2) * 2 + (i&4) / 2);
+      }
+   }
+
+   depth_offset2 = LLVMBuildAdd(builder, depth_offset1, depth_stride, "");
+
+   /* Load current z/stencil values from z/stencil buffer */
+   zs_dst_ptr = LLVMBuildGEP(builder, depth_ptr, &depth_offset1, 1, "");
+   zs_dst_ptr = LLVMBuildBitCast(builder,
+                                 zs_dst_ptr,
+                                 LLVMPointerType(lp_build_vec_type(gallivm, zs_load_type), 0), "");
+   zs_dst1 = LLVMBuildLoad(builder, zs_dst_ptr, "");
+   zs_dst_ptr = LLVMBuildGEP(builder, depth_ptr, &depth_offset2, 1, "");
+   zs_dst_ptr = LLVMBuildBitCast(builder,
+                                 zs_dst_ptr,
+                                 LLVMPointerType(lp_build_vec_type(gallivm, zs_load_type), 0), "");
+   zs_dst2 = LLVMBuildLoad(builder, zs_dst_ptr, "");
+
+   zs_dst = LLVMBuildShuffleVector(builder, zs_dst1, zs_dst2,
+                                   LLVMConstVector(shuffles, zs_type.length), "");
+
+   if (format_desc->block.bits < z_src_type.width) {
+      /* Extend destination ZS values (e.g., when reading from Z16_UNORM) */
+      zs_dst = LLVMBuildZExt(builder, zs_dst, lp_build_int_vec_type(gallivm, z_src_type), "");
+   }
+
+   lp_build_name(zs_dst, "zs_dst");
+
+   return zs_dst;
+}
+
+/**
+ * Store depth/stencil values.
+ * Incoming values are swizzled (typically n 2x2 quads), stored linear.
+ * If there's a mask it will do reload/select/store otherwise just store.
+ *
+ * \param type  the data type of the fragment depth/stencil values
+ * \param format_desc  description of the depth/stencil surface
+ * \param mask  the alive/dead pixel mask for the quad (vector)
+ * \param loop_counter  the current loop iteration
+ * \param depth_ptr  pointer to the depth/stencil values of this 4x4 block
+ * \param depth_stride  stride of the depth/stencil buffer
+ * \param zs_value  the depth/stencil values to store
+ */
+void
+lp_build_depth_stencil_write_swizzled(struct gallivm_state *gallivm,
+                                      struct lp_type z_src_type,
+                                      const struct util_format_description *format_desc,
+                                      struct lp_build_mask_context *mask,
+                                      LLVMValueRef loop_counter,
+                                      LLVMValueRef depth_ptr,
+                                      LLVMValueRef depth_stride,
+                                      LLVMValueRef zs_value)
+{
+   struct lp_build_context z_bld;
+   LLVMValueRef shuffles[LP_MAX_VECTOR_LENGTH / 4];
+   LLVMBuilderRef builder = gallivm->builder;
+   LLVMValueRef mask_value = NULL;
+   LLVMValueRef zs_dst = NULL, zs_dst1, zs_dst2;
+   LLVMValueRef zs_dst_ptr1, zs_dst_ptr2;
+   LLVMValueRef depth_offset1, depth_offset2;
+   unsigned depth_bits = format_desc->block.bits/8;
+   struct lp_type zs_type = lp_depth_type(format_desc, z_src_type.length);
+   struct lp_type zs_load_type = zs_type;
+   zs_load_type.length = zs_load_type.length / 2;
+
+   lp_build_context_init(&z_bld, gallivm, zs_type);
+
+   /*
+    * This is far from ideal, at least for late depth write we should do this
+    * outside the fs loop to avoid all the swizzle stuff.
+    */
+   if (z_src_type.length == 4) {
+      unsigned i;
+      LLVMValueRef looplsb = LLVMBuildAnd(builder, loop_counter,
+                                          lp_build_const_int32(gallivm, 1), "");
+      LLVMValueRef loopmsb = LLVMBuildAnd(builder, loop_counter,
+                                          lp_build_const_int32(gallivm, 2), "");
+      LLVMValueRef offset2 = LLVMBuildMul(builder, loopmsb,
+                                          depth_stride, "");
+      depth_offset1 = LLVMBuildMul(builder, looplsb,
+                                   lp_build_const_int32(gallivm, depth_bits * 2), "");
+      depth_offset1 = LLVMBuildAdd(builder, depth_offset1, offset2, "");
+
+      /* just concatenate the loaded 2x2 values into 4-wide vector */
+      for (i = 0; i < 4; i++) {
+         shuffles[i] = lp_build_const_int32(gallivm, i);
+      }
+   }
+   else {
+      unsigned i;
+      LLVMValueRef loopx2 = LLVMBuildShl(builder, loop_counter,
+                                         lp_build_const_int32(gallivm, 1), "");
+      assert(z_src_type.length == 8);
+      depth_offset1 = LLVMBuildMul(builder, loopx2, depth_stride, "");
+      /*
+       * We load 2x4 values, and need to swizzle them (order
+       * 0,1,4,5,2,3,6,7) - not so hot with avx unfortunately.
+       */
+      for (i = 0; i < 8; i++) {
+         shuffles[i] = lp_build_const_int32(gallivm, (i&1) + (i&2) * 2 + (i&4) / 2);
+      }
+   }
+
+
+   depth_offset2 = LLVMBuildAdd(builder, depth_offset1, depth_stride, "");
+
+   zs_dst_ptr1 = LLVMBuildGEP(builder, depth_ptr, &depth_offset1, 1, "");
+   zs_dst_ptr1 = LLVMBuildBitCast(builder,
+                                 zs_dst_ptr1,
+                                 LLVMPointerType(lp_build_vec_type(gallivm, zs_load_type), 0), "");
+   zs_dst_ptr2 = LLVMBuildGEP(builder, depth_ptr, &depth_offset2, 1, "");
+   zs_dst_ptr2 = LLVMBuildBitCast(builder,
+                                  zs_dst_ptr2,
+                                  LLVMPointerType(lp_build_vec_type(gallivm, zs_load_type), 0), "");
+
+   if (mask) {
+      zs_dst1 = LLVMBuildLoad(builder, zs_dst_ptr1, "");
+      zs_dst2 = LLVMBuildLoad(builder, zs_dst_ptr2, "");
+      zs_dst = LLVMBuildShuffleVector(builder, zs_dst1, zs_dst2,
+                                      LLVMConstVector(shuffles, zs_type.length),
+                                      "zsbufval");
+
+      mask_value = lp_build_mask_value(mask);
+   }
+
+   if (zs_type.width < z_src_type.width) {
+      /* Truncate incoming ZS and mask values (e.g., when writing to Z16_UNORM) */
+      zs_value = LLVMBuildTrunc(builder, zs_value, z_bld.vec_type, "");
+      if (mask)
+         mask_value = LLVMBuildTrunc(builder, mask_value, z_bld.vec_type, "");
+   }
+
+   if (mask) {
+      zs_value = lp_build_select(&z_bld, mask_value, zs_value, zs_dst);
+   }
+
+   if (z_src_type.length == 4) {
+      zs_dst1 = lp_build_extract_range(gallivm, zs_value, 0, 2);
+      zs_dst2 = lp_build_extract_range(gallivm, zs_value, 2, 2);
+   }
+   else {
+      assert(z_src_type.length == 8);
+      zs_dst1 = LLVMBuildShuffleVector(builder, zs_value, zs_value,
+                                       LLVMConstVector(&shuffles[0],
+                                                       zs_load_type.length),
+                                       "");
+      zs_dst2 = LLVMBuildShuffleVector(builder, zs_value, zs_value,
+                                       LLVMConstVector(&shuffles[4],
+                                                       zs_load_type.length),
+                                       "");
+
+   }
+   LLVMBuildStore(builder, zs_dst1, zs_dst_ptr1);
+   LLVMBuildStore(builder, zs_dst2, zs_dst_ptr2);
+}
 
 /**
  * Generate code for performing depth and/or stencil tests.
@@ -527,7 +733,7 @@ lp_build_occlusion_count(struct gallivm_state *gallivm,
  * \param mask  the alive/dead pixel mask for the quad (vector)
  * \param stencil_refs  the front/back stencil ref values (scalar)
  * \param z_src  the incoming depth/stencil values (n 2x2 quad values, float32)
- * \param zs_dst_ptr  pointer to depth/stencil values in framebuffer
+ * \param zs_dst  the depth/stencil values in framebuffer
  * \param face  contains boolean value indicating front/back facing polygon
  */
 void
@@ -539,7 +745,7 @@ lp_build_depth_stencil_test(struct gallivm_state *gallivm,
                             struct lp_build_mask_context *mask,
                             LLVMValueRef stencil_refs[2],
                             LLVMValueRef z_src,
-                            LLVMValueRef zs_dst_ptr,
+                            LLVMValueRef zs_dst,
                             LLVMValueRef face,
                             LLVMValueRef *zs_value,
                             boolean do_branch)
@@ -551,7 +757,7 @@ lp_build_depth_stencil_test(struct gallivm_state *gallivm,
    struct lp_build_context s_bld;
    struct lp_type s_type;
    unsigned z_shift = 0, z_width = 0, z_mask = 0;
-   LLVMValueRef zs_dst, z_dst = NULL;
+   LLVMValueRef z_dst = NULL;
    LLVMValueRef stencil_vals = NULL;
    LLVMValueRef z_bitmask = NULL, stencil_shift = NULL;
    LLVMValueRef z_pass = NULL, s_pass_mask = NULL;
@@ -637,19 +843,6 @@ lp_build_depth_stencil_test(struct gallivm_state *gallivm,
    /* Setup build context for stencil vals */
    s_type = lp_int_type(z_type);
    lp_build_context_init(&s_bld, gallivm, s_type);
-
-   /* Load current z/stencil value from z/stencil buffer */
-   zs_dst_ptr = LLVMBuildBitCast(builder,
-                                 zs_dst_ptr,
-                                 LLVMPointerType(lp_build_vec_type(gallivm, zs_type), 0), "");
-   zs_dst = LLVMBuildLoad(builder, zs_dst_ptr, "");
-   if (format_desc->block.bits < z_type.width) {
-      /* Extend destination ZS values (e.g., when reading from Z16_UNORM) */
-      zs_dst = LLVMBuildZExt(builder, zs_dst, z_bld.vec_type, "");
-   }
-
-   lp_build_name(zs_dst, "zs_dst");
-
 
    /* Compute and apply the Z/stencil bitmasks and shifts.
     */
@@ -860,65 +1053,3 @@ lp_build_depth_stencil_test(struct gallivm_state *gallivm,
 
 }
 
-
-void
-lp_build_depth_write(struct gallivm_state *gallivm,
-                     struct lp_type z_src_type,
-                     const struct util_format_description *format_desc,
-                     LLVMValueRef zs_dst_ptr,
-                     LLVMValueRef zs_value)
-{
-   LLVMBuilderRef builder = gallivm->builder;
-
-   if (format_desc->block.bits < z_src_type.width) {
-      /* Truncate income ZS values (e.g., when writing to Z16_UNORM) */
-      LLVMTypeRef zs_type = LLVMIntTypeInContext(gallivm->context, format_desc->block.bits);
-      if (z_src_type.length > 1) {
-         zs_type = LLVMVectorType(zs_type, z_src_type.length);
-      }
-      zs_value = LLVMBuildTrunc(builder, zs_value, zs_type, "");
-   }
-
-   zs_dst_ptr = LLVMBuildBitCast(builder, zs_dst_ptr,
-                                 LLVMPointerType(LLVMTypeOf(zs_value), 0), "");
-
-   LLVMBuildStore(builder, zs_value, zs_dst_ptr);
-}
-
-
-void
-lp_build_deferred_depth_write(struct gallivm_state *gallivm,
-                              struct lp_type z_src_type,
-                              const struct util_format_description *format_desc,
-                              struct lp_build_mask_context *mask,
-                              LLVMValueRef zs_dst_ptr,
-                              LLVMValueRef zs_value)
-{
-   struct lp_type z_type;
-   struct lp_build_context z_bld;
-   LLVMValueRef z_dst;
-   LLVMBuilderRef builder = gallivm->builder;
-   LLVMValueRef mask_value;
-
-   /* XXX: pointlessly redo type logic:
-    */
-   z_type = lp_depth_type(format_desc, z_src_type.length);
-   lp_build_context_init(&z_bld, gallivm, z_type);
-
-   zs_dst_ptr = LLVMBuildBitCast(builder, zs_dst_ptr,
-                                 LLVMPointerType(z_bld.vec_type, 0), "");
-
-   z_dst = LLVMBuildLoad(builder, zs_dst_ptr, "zsbufval");
-
-   mask_value = lp_build_mask_value(mask);
-
-   if (z_type.width < z_src_type.width) {
-      /* Truncate incoming ZS and mask values (e.g., when writing to Z16_UNORM) */
-      zs_value = LLVMBuildTrunc(builder, zs_value, z_bld.vec_type, "");
-      mask_value = LLVMBuildTrunc(builder, mask_value, z_bld.int_vec_type, "");
-   }
-
-   z_dst = lp_build_select(&z_bld, mask_value, zs_value, z_dst);
-
-   LLVMBuildStore(builder, z_dst, zs_dst_ptr);
-}

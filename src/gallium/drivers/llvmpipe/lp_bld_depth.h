@@ -58,30 +58,34 @@ void
 lp_build_depth_stencil_test(struct gallivm_state *gallivm,
                             const struct pipe_depth_state *depth,
                             const struct pipe_stencil_state stencil[2],
-                            struct lp_type type,
+                            struct lp_type z_src_type,
                             const struct util_format_description *format_desc,
                             struct lp_build_mask_context *mask,
                             LLVMValueRef stencil_refs[2],
-                            LLVMValueRef zs_src,
-                            LLVMValueRef zs_dst_ptr,
-                            LLVMValueRef facing,
+                            LLVMValueRef z_src,
+                            LLVMValueRef zs_dst,
+                            LLVMValueRef face,
                             LLVMValueRef *zs_value,
                             boolean do_branch);
 
-void
-lp_build_depth_write(struct gallivm_state *gallivm,
-                     struct lp_type z_src_type,
-                     const struct util_format_description *format_desc,
-                     LLVMValueRef zs_dst_ptr,
-                     LLVMValueRef zs_value);
+LLVMValueRef
+lp_build_depth_stencil_load_swizzled(struct gallivm_state *gallivm,
+                                     struct lp_type z_src_type,
+                                     const struct util_format_description *format_desc,
+                                     LLVMValueRef depth_ptr,
+                                     LLVMValueRef depth_stride,
+                                     LLVMValueRef loop_counter);
 
 void
-lp_build_deferred_depth_write(struct gallivm_state *gallivm,
-                              struct lp_type z_src_type,
-                              const struct util_format_description *format_desc,
-                              struct lp_build_mask_context *mask,
-                              LLVMValueRef zs_dst_ptr,
-                              LLVMValueRef zs_value);
+lp_build_depth_stencil_write_swizzled(struct gallivm_state *gallivm,
+                                      struct lp_type z_src_type,
+                                      const struct util_format_description *format_desc,
+                                      struct lp_build_mask_context *mask,
+                                      LLVMValueRef loop_counter,
+                                      LLVMValueRef depth_ptr,
+                                      LLVMValueRef depth_stride,
+                                      LLVMValueRef zs_value);
+
 
 void
 lp_build_occlusion_count(struct gallivm_state *gallivm,

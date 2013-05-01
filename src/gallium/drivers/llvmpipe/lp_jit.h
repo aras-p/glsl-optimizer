@@ -193,6 +193,7 @@ enum {
  * @param mask          mask of visible pixels in block
  * @param thread_data   task thread data
  * @param stride        color buffer row stride in bytes
+ * @param depth_stride  depth buffer row stride in bytes
  */
 typedef void
 (*lp_jit_frag_func)(const struct lp_jit_context *context,
@@ -206,7 +207,8 @@ typedef void
                     void *depth,
                     uint32_t mask,
                     struct lp_jit_thread_data *thread_data,
-                    unsigned *stride);
+                    unsigned *stride,
+                    unsigned depth_stride);
 
 
 void

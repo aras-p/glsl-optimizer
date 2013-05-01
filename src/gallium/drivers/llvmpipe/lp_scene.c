@@ -185,7 +185,7 @@ lp_scene_begin_rasterization(struct lp_scene *scene)
                                                zsbuf->u.tex.level,
                                                zsbuf->u.tex.first_layer,
                                                LP_TEX_USAGE_READ_WRITE,
-                                               LP_TEX_LAYOUT_NONE);
+                                               LP_TEX_LAYOUT_LINEAR);
    }
 }
 
