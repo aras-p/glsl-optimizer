@@ -234,7 +234,7 @@ brw_clear(struct gl_context *ctx, GLbitfield mask)
    /* BLORP is currently only supported on Gen6+. */
    if (intel->gen >= 6) {
       if (mask & BUFFER_BITS_COLOR) {
-         if (brw_blorp_clear_color(intel, fb)) {
+         if (brw_blorp_clear_color(intel, fb, partial_clear)) {
             debug_mask("blorp color", mask & BUFFER_BITS_COLOR);
             mask &= ~BUFFER_BITS_COLOR;
          }

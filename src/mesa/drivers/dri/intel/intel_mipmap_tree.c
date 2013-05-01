@@ -1201,6 +1201,54 @@ intel_miptree_alloc_mcs(struct intel_context *intel,
 #endif
 }
 
+
+bool
+intel_miptree_alloc_non_msrt_mcs(struct intel_context *intel,
+                                 struct intel_mipmap_tree *mt)
+{
+#ifdef I915
+   assert(!"MCS not supported on i915");
+   return false;
+#else
+   assert(mt->mcs_mt == NULL);
+
+   /* The format of the MCS buffer is opaque to the driver; all that matters
+    * is that we get its size and pitch right.  We'll pretend that the format
+    * is R32.  Since an MCS tile covers 128 blocks horizontally, and a Y-tiled
+    * R32 buffer is 32 pixels across, we'll need to scale the width down by
+    * the block width and then a further factor of 4.  Since an MCS tile
+    * covers 256 blocks vertically, and a Y-tiled R32 buffer is 32 rows high,
+    * we'll need to scale the height down by the block height and then a
+    * further factor of 8.
+    */
+   const gl_format format = MESA_FORMAT_R_UINT32;
+   unsigned block_width_px;
+   unsigned block_height;
+   intel_get_non_msrt_mcs_alignment(intel, mt, &block_width_px, &block_height);
+   unsigned width_divisor = block_width_px * 4;
+   unsigned height_divisor = block_height * 8;
+   unsigned mcs_width =
+      ALIGN(mt->logical_width0, width_divisor) / width_divisor;
+   unsigned mcs_height =
+      ALIGN(mt->logical_height0, height_divisor) / height_divisor;
+   assert(mt->logical_depth0 == 1);
+   mt->mcs_mt = intel_miptree_create(intel,
+                                     mt->target,
+                                     format,
+                                     mt->first_level,
+                                     mt->last_level,
+                                     mcs_width,
+                                     mcs_height,
+                                     mt->logical_depth0,
+                                     true,
+                                     0 /* num_samples */,
+                                     INTEL_MIPTREE_TILING_Y);
+
+   return mt->mcs_mt;
+#endif
+}
+
+
 /**
  * Helper for intel_miptree_alloc_hiz() that sets
  * \c mt->level[level].slice[layer].has_hiz. Return true if and only if

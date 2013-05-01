@@ -47,7 +47,8 @@ brw_blorp_blit_miptrees(struct intel_context *intel,
                         bool mirror_x, bool mirror_y);
 
 bool
-brw_blorp_clear_color(struct intel_context *intel, struct gl_framebuffer *fb);
+brw_blorp_clear_color(struct intel_context *intel, struct gl_framebuffer *fb,
+                      bool partial_clear);
 
 #ifdef __cplusplus
 } /* end extern "C" */
@@ -192,6 +193,13 @@ struct brw_blorp_prog_data
    bool persample_msaa_dispatch;
 };
 
+
+enum gen7_fast_clear_op {
+   GEN7_FAST_CLEAR_OP_NONE,
+   GEN7_FAST_CLEAR_OP_FAST_CLEAR,
+};
+
+
 class brw_blorp_params
 {
 public:
@@ -209,6 +217,7 @@ public:
    brw_blorp_surface_info src;
    brw_blorp_surface_info dst;
    enum gen6_hiz_op hiz_op;
+   enum gen7_fast_clear_op fast_clear_op;
    unsigned num_samples;
    bool use_wm_prog;
    brw_blorp_wm_push_constants wm_push_consts;

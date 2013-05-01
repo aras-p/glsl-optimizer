@@ -557,6 +557,7 @@
 #define GEN7_SURFACE_MCS_PITCH_MASK             INTEL_MASK(11, 3)
 
 /* Surface state DW7 */
+#define GEN7_SURFACE_CLEAR_COLOR_SHIFT		28
 #define GEN7_SURFACE_SCS_R_SHIFT                25
 #define GEN7_SURFACE_SCS_R_MASK                 INTEL_MASK(27, 25)
 #define GEN7_SURFACE_SCS_G_SHIFT                22
@@ -1615,6 +1616,7 @@ enum brw_wm_barycentric_interp_mode {
 # define GEN7_PS_PUSH_CONSTANT_ENABLE		        (1 << 11)
 # define GEN7_PS_ATTRIBUTE_ENABLE		        (1 << 10)
 # define GEN7_PS_OMASK_TO_RENDER_TARGET			(1 << 9)
+# define GEN7_PS_RENDER_TARGET_FAST_CLEAR_ENABLE	(1 << 8)
 # define GEN7_PS_DUAL_SOURCE_BLEND_ENABLE		(1 << 7)
 # define GEN7_PS_POSOFFSET_NONE				(0 << 3)
 # define GEN7_PS_POSOFFSET_CENTROID			(2 << 3)

@@ -145,6 +145,7 @@ brw_blorp_params::brw_blorp_params()
      y1(0),
      depth_format(0),
      hiz_op(GEN6_HIZ_OP_NONE),
+     fast_clear_op(GEN7_FAST_CLEAR_OP_NONE),
      num_samples(0),
      use_wm_prog(false)
 {

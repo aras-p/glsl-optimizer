@@ -199,11 +199,13 @@ gen7_blorp_emit_surface_state(struct brw_context *brw,
                                 is_render_target);
    }
 
+   surf[7] = surface->mt->fast_clear_color_value;
+
    if (intel->is_haswell) {
-      surf[7] = SET_FIELD(HSW_SCS_RED,   GEN7_SURFACE_SCS_R) |
-                SET_FIELD(HSW_SCS_GREEN, GEN7_SURFACE_SCS_G) |
-                SET_FIELD(HSW_SCS_BLUE,  GEN7_SURFACE_SCS_B) |
-                SET_FIELD(HSW_SCS_ALPHA, GEN7_SURFACE_SCS_A);
+      surf[7] |= (SET_FIELD(HSW_SCS_RED,   GEN7_SURFACE_SCS_R) |
+                  SET_FIELD(HSW_SCS_GREEN, GEN7_SURFACE_SCS_G) |
+                  SET_FIELD(HSW_SCS_BLUE,  GEN7_SURFACE_SCS_B) |
+                  SET_FIELD(HSW_SCS_ALPHA, GEN7_SURFACE_SCS_A));
    }
 
    /* Emit relocation to surface contents */
@@ -582,6 +584,14 @@ gen7_blorp_emit_ps_config(struct brw_context *brw,
       dw2 |= 1 << GEN7_PS_SAMPLER_COUNT_SHIFT; /* Up to 4 samplers */
       dw4 |= GEN7_PS_PUSH_CONSTANT_ENABLE;
       dw5 |= prog_data->first_curbe_grf << GEN7_PS_DISPATCH_START_GRF_SHIFT_0;
+   }
+
+   switch (params->fast_clear_op) {
+   case GEN7_FAST_CLEAR_OP_FAST_CLEAR:
+      dw4 |= GEN7_PS_RENDER_TARGET_FAST_CLEAR_ENABLE;
+      break;
+   default:
+      break;
    }
 
    BEGIN_BATCH(8);

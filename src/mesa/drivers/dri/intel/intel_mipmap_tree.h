@@ -459,6 +459,15 @@ struct intel_mipmap_tree
    enum intel_mcs_state mcs_state;
 #endif
 
+   /**
+    * The SURFACE_STATE bits associated with the last fast color clear to this
+    * color mipmap tree, if any.
+    *
+    * This value will only ever contain ones in bits 28-31, so it is safe to
+    * OR into dword 7 of SURFACE_STATE.
+    */
+   uint32_t fast_clear_color_value;
+
    /* These are also refcounted:
     */
    GLuint refcount;
@@ -478,6 +487,10 @@ void
 intel_get_non_msrt_mcs_alignment(struct intel_context *intel,
                                  struct intel_mipmap_tree *mt,
                                  unsigned *width_px, unsigned *height);
+
+bool
+intel_miptree_alloc_non_msrt_mcs(struct intel_context *intel,
+                                 struct intel_mipmap_tree *mt);
 
 struct intel_mipmap_tree *intel_miptree_create(struct intel_context *intel,
                                                GLenum target,
