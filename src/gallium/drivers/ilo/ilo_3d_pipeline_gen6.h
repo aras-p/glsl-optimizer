@@ -144,6 +144,11 @@ gen6_pipeline_states(struct ilo_3d_pipeline *p,
                      const struct ilo_context *ilo,
                      struct gen6_pipeline_session *session);
 
+bool
+gen6_pipeline_update_max_svbi(struct ilo_3d_pipeline *p,
+                              const struct ilo_context *ilo,
+                              struct gen6_pipeline_session *session);
+
 void
 ilo_3d_pipeline_emit_flush_gen6(struct ilo_3d_pipeline *p);
 

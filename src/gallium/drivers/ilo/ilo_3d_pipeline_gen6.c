@@ -511,12 +511,11 @@ gen6_pipeline_gs(struct ilo_3d_pipeline *p,
    }
 }
 
-static void
-gen6_pipeline_gs_svbi(struct ilo_3d_pipeline *p,
-                      const struct ilo_context *ilo,
-                      struct gen6_pipeline_session *session)
+bool
+gen6_pipeline_update_max_svbi(struct ilo_3d_pipeline *p,
+                              const struct ilo_context *ilo,
+                              struct gen6_pipeline_session *session)
 {
-   /* 3DSTATE_GS_SVB_INDEX */
    if (DIRTY(VS) || DIRTY(GS) || DIRTY(STREAM_OUTPUT_TARGETS)) {
       const struct pipe_stream_output_info *so_info =
          (ilo->gs) ? &ilo->gs->info.stream_output :
@@ -524,8 +523,7 @@ gen6_pipeline_gs_svbi(struct ilo_3d_pipeline *p,
       unsigned max_svbi = 0xffffffff;
       int i;
 
-      /* get max_svbi */
-      for (i = 0; so_info && i < so_info->num_outputs; i++) {
+      for (i = 0; i < so_info->num_outputs; i++) {
          const int output_buffer = so_info->output[i].output_buffer;
          const struct pipe_stream_output_target *so =
             ilo->stream_output_targets.targets[output_buffer];
@@ -533,8 +531,10 @@ gen6_pipeline_gs_svbi(struct ilo_3d_pipeline *p,
          const int elem_size = so_info->output[i].num_components * 4;
          int buf_size, count;
 
-         if (!so)
-            continue;
+         if (!so) {
+            max_svbi = 0;
+            break;
+         }
 
          buf_size = so->buffer_size - so_info->output[i].dst_offset * 4;
 
@@ -546,14 +546,34 @@ gen6_pipeline_gs_svbi(struct ilo_3d_pipeline *p,
             max_svbi = count;
       }
 
+      if (p->state.so_max_vertices != max_svbi) {
+         p->state.so_max_vertices = max_svbi;
+         return true;
+      }
+   }
+
+   return false;
+}
+
+static void
+gen6_pipeline_gs_svbi(struct ilo_3d_pipeline *p,
+                      const struct ilo_context *ilo,
+                      struct gen6_pipeline_session *session)
+{
+   const bool emit = gen6_pipeline_update_max_svbi(p, ilo, session);
+
+   /* 3DSTATE_GS_SVB_INDEX */
+   if (emit) {
       if (p->dev->gen == ILO_GEN(6))
          gen6_wa_pipe_control_post_sync(p, false);
 
       p->gen6_3DSTATE_GS_SVB_INDEX(p->dev,
-            0, p->state.so_num_vertices, max_svbi,
+            0, p->state.so_num_vertices, p->state.so_max_vertices,
             false, p->cp);
 
       if (session->hw_ctx_changed) {
+         int i;
+
          /*
           * From the Sandy Bridge PRM, volume 2 part 1, page 148:
           *
@@ -568,9 +588,6 @@ gen6_pipeline_gs_svbi(struct ilo_3d_pipeline *p,
                   i, 0, 0xffffffff, false, p->cp);
          }
       }
-
-      /* remember the state for calculating primtive emitted in software */
-      p->state.so_max_vertices = max_svbi;
    }
 }
 
