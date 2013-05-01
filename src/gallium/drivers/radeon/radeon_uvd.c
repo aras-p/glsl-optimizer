@@ -557,16 +557,22 @@ static struct ruvd_mpeg4 get_mpeg4_msg(struct ruvd_decoder *dec,
 {
 	struct ruvd_mpeg4 result;
 	unsigned i;
+
 	memset(&result, 0, sizeof(result));
 	result.decoded_pic_idx = dec->frame_number;
 	for (i = 0; i < 2; ++i)
 		result.ref_pic_idx[i] = get_ref_pic_idx(dec, pic->ref[i]);
 
+	result.variant_type = 0;
+	result.profile_and_level_indication = 0xF0; // ASP Level0
+
+	result.video_object_layer_verid = 0x5; // advanced simple
+	result.video_object_layer_shape = 0x0; // rectangular
+
 	result.video_object_layer_width = dec->base.width;
-        result.video_object_layer_height = dec->base.height;
+	result.video_object_layer_height = dec->base.height;
 
 	result.vop_time_increment_resolution = pic->vop_time_increment_resolution;
-	result.quant_type = pic->quant_type;
 
 	result.flags |= pic->short_video_header << 0;
 	//result.flags |= obmc_disable << 1;
@@ -574,19 +580,23 @@ static struct ruvd_mpeg4 get_mpeg4_msg(struct ruvd_decoder *dec,
         result.flags |= 1 << 3; // load_intra_quant_mat
 	result.flags |= 1 << 4; // load_nonintra_quant_mat
 	result.flags |= pic->quarter_sample << 5;
-	//result.flags |= complexity_estimation_disable << 6
+	result.flags |= 1 << 6; // complexity_estimation_disable
 	result.flags |= pic->resync_marker_disable << 7;
 	//result.flags |= data_partitioned << 8;
 	//result.flags |= reversible_vlc << 9;
-	//result.flags |= newpred_enable << 10;
-	//result.flags |= reduced_resolution_vop_enable << 11;
+	result.flags |= 0 << 10; // newpred_enable
+	result.flags |= 0 << 11; // reduced_resolution_vop_enable
 	//result.flags |= scalability << 12;
 	//result.flags |= is_object_layer_identifier << 13;
 	//result.flags |= fixed_vop_rate << 14;
 	//result.flags |= newpred_segment_type << 15;
 
-	memcpy(&result.intra_quant_mat, pic->intra_matrix, 64);
-	memcpy(&result.nonintra_quant_mat, pic->non_intra_matrix, 64);
+	result.quant_type = pic->quant_type;
+
+	for (i = 0; i < 64; ++i) {
+		result.intra_quant_mat[i] = pic->intra_matrix[vl_zscan_normal[i]];
+		result.nonintra_quant_mat[i] = pic->non_intra_matrix[vl_zscan_normal[i]];
+	}
 
 	/*
 	int32_t 	trd [2]
