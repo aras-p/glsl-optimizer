@@ -443,11 +443,13 @@ struct intel_mipmap_tree
 
 #ifndef I915
    /**
-    * \brief MCS miptree for multisampled textures.
+    * \brief MCS miptree.
     *
     * This miptree contains the "multisample control surface", which stores
-    * the necessary information to implement compressed MSAA on Gen7+
-    * (INTEL_MSAA_FORMAT_CMS).
+    * the necessary information to implement compressed MSAA
+    * (INTEL_MSAA_FORMAT_CMS) and "fast color clear" behaviour on Gen7+.
+    *
+    * NULL if no MCS miptree is in use for this surface.
     */
    struct intel_mipmap_tree *mcs_mt;
 

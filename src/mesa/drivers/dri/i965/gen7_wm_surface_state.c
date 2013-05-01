@@ -609,7 +609,7 @@ gen7_update_renderbuffer_surface(struct brw_context *brw,
              min_array_element << GEN7_SURFACE_MIN_ARRAY_ELEMENT_SHIFT |
              (depth - 1) << GEN7_SURFACE_RENDER_TARGET_VIEW_EXTENT_SHIFT;
 
-   if (irb->mt->msaa_layout == INTEL_MSAA_LAYOUT_CMS) {
+   if (irb->mt->mcs_mt) {
       gen7_set_surface_mcs_info(brw, surf, brw->wm.surf_offset[unit],
                                 irb->mt->mcs_mt, true /* is RT */);
    }
