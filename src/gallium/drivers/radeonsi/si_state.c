@@ -2273,11 +2273,31 @@ static void si_sampler_view_destroy(struct pipe_context *ctx,
 	FREE(resource);
 }
 
+static bool wrap_mode_uses_border_color(unsigned wrap, bool linear_filter)
+{
+	return wrap == PIPE_TEX_WRAP_CLAMP_TO_BORDER ||
+	       wrap == PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER ||
+	       (linear_filter &&
+	        (wrap == PIPE_TEX_WRAP_CLAMP ||
+		 wrap == PIPE_TEX_WRAP_MIRROR_CLAMP));
+}
+
+static bool sampler_state_needs_border_color(const struct pipe_sampler_state *state)
+{
+	bool linear_filter = state->min_img_filter != PIPE_TEX_FILTER_NEAREST ||
+			     state->mag_img_filter != PIPE_TEX_FILTER_NEAREST;
+
+	return (state->border_color.ui[0] || state->border_color.ui[1] ||
+		state->border_color.ui[2] || state->border_color.ui[3]) &&
+	       (wrap_mode_uses_border_color(state->wrap_s, linear_filter) ||
+		wrap_mode_uses_border_color(state->wrap_t, linear_filter) ||
+		wrap_mode_uses_border_color(state->wrap_r, linear_filter));
+}
+
 static void *si_create_sampler_state(struct pipe_context *ctx,
 				     const struct pipe_sampler_state *state)
 {
 	struct si_pipe_sampler_state *rstate = CALLOC_STRUCT(si_pipe_sampler_state);
-	union util_color uc;
 	unsigned aniso_flag_offset = state->max_anisotropy > 1 ? 2 : 0;
 	unsigned border_color_type;
 
@@ -2285,20 +2305,10 @@ static void *si_create_sampler_state(struct pipe_context *ctx,
 		return NULL;
 	}
 
-	util_pack_color(state->border_color.f, PIPE_FORMAT_A8R8G8B8_UNORM, &uc);
-	switch (uc.ui) {
-	case 0x000000FF:
-		border_color_type = V_008F3C_SQ_TEX_BORDER_COLOR_OPAQUE_BLACK;
-		break;
-	case 0x00000000:
-		border_color_type = V_008F3C_SQ_TEX_BORDER_COLOR_TRANS_BLACK;
-		break;
-	case 0xFFFFFFFF:
-		border_color_type = V_008F3C_SQ_TEX_BORDER_COLOR_OPAQUE_WHITE;
-		break;
-	default: /* Use border color pointer */
+	if (sampler_state_needs_border_color(state))
 		border_color_type = V_008F3C_SQ_TEX_BORDER_COLOR_REGISTER;
-	}
+	else
+		border_color_type = V_008F3C_SQ_TEX_BORDER_COLOR_TRANS_BLACK;
 
 	rstate->val[0] = (S_008F30_CLAMP_X(si_tex_wrap(state->wrap_s)) |
 			  S_008F30_CLAMP_Y(si_tex_wrap(state->wrap_t)) |
@@ -2317,7 +2327,7 @@ static void *si_create_sampler_state(struct pipe_context *ctx,
 	rstate->val[3] = S_008F3C_BORDER_COLOR_TYPE(border_color_type);
 
 	if (border_color_type == V_008F3C_SQ_TEX_BORDER_COLOR_REGISTER) {
-		memcpy(rstate->border_color, state->border_color.f,
+		memcpy(rstate->border_color, state->border_color.ui,
 		       sizeof(rstate->border_color));
 	}
 
@@ -2440,11 +2450,8 @@ static struct si_pm4_state *si_bind_sampler(struct r600_context *rctx, unsigned 
 			}
 
 			for (j = 0; j < 4; j++) {
-				union fi border_color;
-
-				border_color.f = rstates[i]->border_color[j];
 				border_color_table[4 * rctx->border_color_offset + j] =
-					util_le32_to_cpu(border_color.i);
+					util_le32_to_cpu(rstates[i]->border_color[j]);
 			}
 
 			rstates[i]->val[3] &= C_008F3C_BORDER_COLOR_PTR;

@@ -87,7 +87,7 @@ struct si_pipe_sampler_view {
 
 struct si_pipe_sampler_state {
 	uint32_t			val[4];
-	float				border_color[4];
+	uint32_t			border_color[4];
 };
 
 struct si_cs_shader_state {
