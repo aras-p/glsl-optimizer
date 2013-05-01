@@ -553,9 +553,9 @@ public:
 		unsigned mask = 0;
 		unsigned slot_flags = alu_slots(op_ptr);
 		if (slot_flags & AF_V)
-			mask = 0b01111;
+			mask = 0x0F;
 		if (!is_cayman() && (slot_flags & AF_S))
-			mask |= 0b10000;
+			mask |= 0x10;
 		return mask;
 	}
 

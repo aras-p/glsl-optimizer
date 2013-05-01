@@ -360,7 +360,7 @@ void ra_init::color_bs_constraint(ra_constraint* c) {
 	regbits rb(ctx.alu_temp_gprs);
 
 	unsigned chan_count[4] = {};
-	unsigned allowed_chans = 0b1111;
+	unsigned allowed_chans = 0x0F;
 
 	for (vvec::iterator I = vv.begin(), E = vv.end(); I != E; ++I) {
 		value *v = *I;

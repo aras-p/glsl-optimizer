@@ -312,7 +312,7 @@ alu_group_tracker::alu_group_tracker(shader &sh)
 	  has_mova(), uses_ar(), has_predset(), has_kill(),
 	  updates_exec_mask(), chan_count(), interp_param(), next_id() {
 
-	available_slots = sh.get_ctx().has_trans ? 0b11111 : 0b01111;
+	available_slots = sh.get_ctx().has_trans ? 0x1F : 0x0F;
 }
 
 inline
@@ -678,7 +678,7 @@ void alu_group_tracker::reset(bool keep_packed) {
 	has_predset = false;
 	has_kill = false;
 	updates_exec_mask = false;
-	available_slots = sh.get_ctx().has_trans ? 0b11111 : 0b01111;
+	available_slots = sh.get_ctx().has_trans ? 0x1F : 0x0F;
 	interp_param = 0;
 
 	chan_count[0] = 0;
@@ -1471,7 +1471,7 @@ unsigned post_scheduler::try_add_instruction(node *n) {
 		if (d) {
 			slot = d->get_final_chan();
 			a->bc.dst_chan = slot;
-			allowed_slots &= (1 << slot) | 0b10000;
+			allowed_slots &= (1 << slot) | 0x10;
 		} else {
 			if (a->bc.op_ptr->flags & AF_MOVA) {
 				if (a->bc.slot_flags & AF_V)
@@ -1484,7 +1484,7 @@ unsigned post_scheduler::try_add_instruction(node *n) {
 		// FIXME workaround for some problems with MULADD in trans slot on r700,
 		// (is it really needed on r600?)
 		if (a->bc.op == ALU_OP3_MULADD && !ctx.is_egcm()) {
-			allowed_slots &= 0b01111;
+			allowed_slots &= 0x0F;
 		}
 
 		if (!allowed_slots) {

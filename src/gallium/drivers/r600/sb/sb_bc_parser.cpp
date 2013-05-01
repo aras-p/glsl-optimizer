@@ -126,7 +126,7 @@ int bc_parser::parse_decls() {
 
 #if SB_NO_ARRAY_INFO
 
-		sh->add_gpr_array(0, pshader->bc.ngpr, 0b1111);
+		sh->add_gpr_array(0, pshader->bc.ngpr, 0x0F);
 
 #else
 
@@ -140,7 +140,7 @@ int bc_parser::parse_decls() {
 			}
 
 		} else {
-			sh->add_gpr_array(0, pshader->bc.ngpr, 0b1111);
+			sh->add_gpr_array(0, pshader->bc.ngpr, 0x0F);
 		}
 
 
@@ -149,7 +149,7 @@ int bc_parser::parse_decls() {
 	}
 
 	if (sh->target == TARGET_VS)
-		sh->add_input(0, 1, 0b1111);
+		sh->add_input(0, 1, 0x0F);
 
 	bool ps_interp = ctx.hw_class >= HW_CLASS_EVERGREEN
 			&& sh->target == TARGET_PS;
@@ -159,7 +159,7 @@ int bc_parser::parse_decls() {
 	for (unsigned i = 0; i < pshader->ninput; ++i) {
 		r600_shader_io & in = pshader->input[i];
 		bool preloaded = sh->target == TARGET_PS && !(ps_interp && in.spi_sid);
-		sh->add_input(in.gpr, preloaded, /*in.write_mask*/ 0b1111);
+		sh->add_input(in.gpr, preloaded, /*in.write_mask*/ 0x0F);
 		if (ps_interp && in.spi_sid) {
 			if (in.interpolate == TGSI_INTERPOLATE_LINEAR ||
 					in.interpolate == TGSI_INTERPOLATE_COLOR)
@@ -176,7 +176,7 @@ int bc_parser::parse_decls() {
 		unsigned gpr = 0;
 
 		while (mask) {
-			sh->add_input(gpr, true, mask & 0b1111);
+			sh->add_input(gpr, true, mask & 0x0F);
 			++gpr;
 			mask >>= 4;
 		}

@@ -1001,7 +1001,7 @@ static int tgsi_declaration(struct r600_shader_ctx *ctx)
 				r600_add_gpr_array(ctx->shader,
 				               ctx->file_offset[TGSI_FILE_TEMPORARY] +
 								   d->Range.First,
-				               d->Range.Last - d->Range.First + 1, 0b1111);
+				               d->Range.Last - d->Range.First + 1, 0x0F);
 			}
 		}
 		break;
@@ -1417,13 +1417,13 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 			r600_add_gpr_array(shader, ctx.file_offset[TGSI_FILE_INPUT],
 			                   ctx.file_offset[TGSI_FILE_OUTPUT] -
 			                   ctx.file_offset[TGSI_FILE_INPUT],
-			                   0b1111);
+			                   0x0F);
 		}
 		if (ctx.info.indirect_files & (1 << TGSI_FILE_OUTPUT)) {
 			r600_add_gpr_array(shader, ctx.file_offset[TGSI_FILE_OUTPUT],
 			                   ctx.file_offset[TGSI_FILE_TEMPORARY] -
 			                   ctx.file_offset[TGSI_FILE_OUTPUT],
-			                   0b1111);
+			                   0x0F);
 		}
 	}
 
