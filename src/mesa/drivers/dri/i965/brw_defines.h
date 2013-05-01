@@ -551,6 +551,9 @@
 #define GEN7_SURFACE_MIN_LOD_SHIFT              4
 #define GEN7_SURFACE_MIN_LOD_MASK               INTEL_MASK(7, 4)
 
+#define GEN7_SURFACE_MOCS_SHIFT                 16
+#define GEN7_SURFACE_MOCS_MASK                  INTEL_MASK(19, 16)
+
 /* Surface state DW6 */
 #define GEN7_SURFACE_MCS_ENABLE                 (1 << 0)
 #define GEN7_SURFACE_MCS_PITCH_SHIFT            3
