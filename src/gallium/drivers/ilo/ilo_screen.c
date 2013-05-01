@@ -325,6 +325,8 @@ ilo_get_param(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_SM3:
       return true;
    case PIPE_CAP_MAX_STREAM_OUTPUT_BUFFERS:
+      if (is->dev.gen >= ILO_GEN(7) && !is->dev.has_gen7_sol_reset)
+         return 0;
       return ILO_MAX_SO_BUFFERS;
    case PIPE_CAP_PRIMITIVE_RESTART:
       return false; /* TODO */
