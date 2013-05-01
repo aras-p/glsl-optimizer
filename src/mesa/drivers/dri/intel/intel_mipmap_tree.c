@@ -124,6 +124,125 @@ compute_msaa_layout(struct intel_context *intel, gl_format format, GLenum target
 
 
 /**
+ * For single-sampled render targets ("non-MSRT"), the MCS buffer is a
+ * scaled-down bitfield representation of the color buffer which is capable of
+ * recording when blocks of the color buffer are equal to the clear value.
+ * This function returns the block size that will be used by the MCS buffer
+ * corresponding to a certain color miptree.
+ *
+ * From the Ivy Bridge PRM, Vol2 Part1 11.7 "MCS Buffer for Render Target(s)",
+ * beneath the "Fast Color Clear" bullet (p327):
+ *
+ *     The following table describes the RT alignment
+ *
+ *                       Pixels  Lines
+ *         TiledY RT CL
+ *             bpp
+ *              32          8      4
+ *              64          4      4
+ *             128          2      4
+ *         TiledX RT CL
+ *             bpp
+ *              32         16      2
+ *              64          8      2
+ *             128          4      2
+ *
+ * This alignment has the following uses:
+ *
+ * - For figuring out the size of the MCS buffer.  Each 4k tile in the MCS
+ *   buffer contains 128 blocks horizontally and 256 blocks vertically.
+ *
+ * - For figuring out alignment restrictions for a fast clear operation.  Fast
+ *   clear operations must always clear aligned multiples of 16 blocks
+ *   horizontally and 32 blocks vertically.
+ *
+ * - For scaling down the coordinates sent through the render pipeline during
+ *   a fast clear.  X coordinates must be scaled down by 8 times the block
+ *   width, and Y coordinates by 16 times the block height.
+ *
+ * - For scaling down the coordinates sent through the render pipeline during
+ *   a "Render Target Resolve" operation.  X coordinates must be scaled down
+ *   by half the block width, and Y coordinates by half the block height.
+ */
+void
+intel_get_non_msrt_mcs_alignment(struct intel_context *intel,
+                                 struct intel_mipmap_tree *mt,
+                                 unsigned *width_px, unsigned *height)
+{
+   switch (mt->region->tiling) {
+   default:
+      assert(!"Non-MSRT MCS requires X or Y tiling");
+      /* In release builds, fall through */
+   case I915_TILING_Y:
+      *width_px = 32 / mt->cpp;
+      *height = 4;
+      break;
+   case I915_TILING_X:
+      *width_px = 64 / mt->cpp;
+      *height = 2;
+   }
+}
+
+
+/**
+ * For a single-sampled render target ("non-MSRT"), determine if an MCS buffer
+ * can be used.
+ *
+ * From the Ivy Bridge PRM, Vol2 Part1 11.7 "MCS Buffer for Render Target(s)",
+ * beneath the "Fast Color Clear" bullet (p326):
+ *
+ *     - Support is limited to tiled render targets.
+ *     - Support is for non-mip-mapped and non-array surface types only.
+ *
+ * And then later, on p327:
+ *
+ *     - MCS buffer for non-MSRT is supported only for RT formats 32bpp,
+ *       64bpp, and 128bpp.
+ */
+bool
+intel_is_non_msrt_mcs_buffer_supported(struct intel_context *intel,
+                                       struct intel_mipmap_tree *mt)
+{
+#ifdef I915
+   /* MCS is not supported on the i915 (pre-Gen4) driver */
+   return false;
+#else
+   struct brw_context *brw = brw_context(&intel->ctx);
+
+   /* MCS support does not exist prior to Gen7 */
+   if (intel->gen < 7)
+      return false;
+
+   /* MCS is only supported for color buffers */
+   switch (_mesa_get_format_base_format(mt->format)) {
+   case GL_DEPTH_COMPONENT:
+   case GL_DEPTH_STENCIL:
+   case GL_STENCIL_INDEX:
+      return false;
+   }
+
+   if (mt->region->tiling != I915_TILING_X &&
+       mt->region->tiling != I915_TILING_Y)
+      return false;
+   if (mt->cpp != 4 && mt->cpp != 8 && mt->cpp != 16)
+      return false;
+   if (mt->first_level != 0 || mt->last_level != 0)
+      return false;
+   if (mt->physical_depth0 != 1)
+      return false;
+
+   /* There's no point in using an MCS buffer if the surface isn't in a
+    * renderable format.
+    */
+   if (!brw->format_supported_as_render_target[mt->format])
+      return false;
+
+   return true;
+#endif
+}
+
+
+/**
  * @param for_bo Indicates that the caller is
  *        intel_miptree_create_for_bo(). If true, then do not create
  *        \c stencil_mt.
