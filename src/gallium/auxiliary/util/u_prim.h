@@ -37,6 +37,105 @@
 extern "C" {
 #endif
 
+struct u_prim_vertex_count {
+   int min;
+   int incr;
+};
+
+/**
+ * Decompose a primitive that is a loop, a strip, or a fan.  Return the
+ * original primitive if it is already decomposed.
+ */
+static INLINE unsigned
+u_decomposed_prim(unsigned prim)
+{
+   switch (prim) {
+   case PIPE_PRIM_LINE_LOOP:
+   case PIPE_PRIM_LINE_STRIP:
+      return PIPE_PRIM_LINES;
+   case PIPE_PRIM_TRIANGLE_STRIP:
+   case PIPE_PRIM_TRIANGLE_FAN:
+      return PIPE_PRIM_TRIANGLES;
+   case PIPE_PRIM_QUAD_STRIP:
+      return PIPE_PRIM_QUADS;
+   case PIPE_PRIM_LINE_STRIP_ADJACENCY:
+      return PIPE_PRIM_LINES_ADJACENCY;
+   case PIPE_PRIM_TRIANGLE_STRIP_ADJACENCY:
+      return PIPE_PRIM_TRIANGLES_ADJACENCY;
+   default:
+      return prim;
+   }
+}
+
+/**
+ * Reduce a primitive to one of PIPE_PRIM_POINTS, PIPE_PRIM_LINES, and
+ * PIPE_PRIM_TRIANGLES.
+ */
+static INLINE unsigned
+u_reduced_prim(unsigned prim)
+{
+   switch (prim) {
+   case PIPE_PRIM_POINTS:
+      return PIPE_PRIM_POINTS;
+   case PIPE_PRIM_LINES:
+   case PIPE_PRIM_LINE_LOOP:
+   case PIPE_PRIM_LINE_STRIP:
+   case PIPE_PRIM_LINES_ADJACENCY:
+   case PIPE_PRIM_LINE_STRIP_ADJACENCY:
+      return PIPE_PRIM_LINES;
+   default:
+      return PIPE_PRIM_TRIANGLES;
+   }
+}
+
+/**
+ * Re-assemble a primitive to remove its adjacency.
+ */
+static INLINE unsigned
+u_assembled_prim(unsigned prim)
+{
+   switch (prim) {
+   case PIPE_PRIM_LINES_ADJACENCY:
+   case PIPE_PRIM_LINE_STRIP_ADJACENCY:
+      return PIPE_PRIM_LINES;
+   case PIPE_PRIM_TRIANGLES_ADJACENCY:
+   case PIPE_PRIM_TRIANGLE_STRIP_ADJACENCY:
+      return PIPE_PRIM_TRIANGLES;
+   default:
+      return prim;
+   }
+}
+
+/**
+ * Return the vertex count information for a primitive.
+ *
+ * Note that if this function is called directly or indirectly anywhere in a
+ * source file, it will increase the size of the binary slightly more than
+ * expected because of the use of a table.
+ */
+static INLINE const struct u_prim_vertex_count *
+u_prim_vertex_count(unsigned prim)
+{
+   static const struct u_prim_vertex_count prim_table[PIPE_PRIM_MAX] = {
+      { 1, 1 }, /* PIPE_PRIM_POINTS */
+      { 2, 2 }, /* PIPE_PRIM_LINES */
+      { 2, 1 }, /* PIPE_PRIM_LINE_LOOP */
+      { 2, 1 }, /* PIPE_PRIM_LINE_STRIP */
+      { 3, 3 }, /* PIPE_PRIM_TRIANGLES */
+      { 3, 1 }, /* PIPE_PRIM_TRIANGLE_STRIP */
+      { 3, 1 }, /* PIPE_PRIM_TRIANGLE_FAN */
+      { 4, 4 }, /* PIPE_PRIM_QUADS */
+      { 4, 2 }, /* PIPE_PRIM_QUAD_STRIP */
+      { 3, 1 }, /* PIPE_PRIM_POLYGON */
+      { 4, 4 }, /* PIPE_PRIM_LINES_ADJACENCY */
+      { 4, 1 }, /* PIPE_PRIM_LINE_STRIP_ADJACENCY */
+      { 6, 6 }, /* PIPE_PRIM_TRIANGLES_ADJACENCY */
+      { 6, 2 }, /* PIPE_PRIM_TRIANGLE_STRIP_ADJACENCY */
+   };
+
+   return (likely(prim < PIPE_PRIM_MAX)) ? &prim_table[prim] : NULL;
+}
+
 static INLINE boolean u_validate_pipe_prim( unsigned pipe_prim, unsigned nr )
 {
    boolean ok = TRUE;
@@ -77,55 +176,16 @@ static INLINE boolean u_validate_pipe_prim( unsigned pipe_prim, unsigned nr )
 
 static INLINE boolean u_trim_pipe_prim( unsigned pipe_prim, unsigned *nr )
 {
-   boolean ok = TRUE;
-   const static unsigned values[][2] = {
-      { 1, 0 }, /* PIPE_PRIM_POINTS */
-      { 2, 2 }, /* PIPE_PRIM_LINES */
-      { 2, 0 }, /* PIPE_PRIM_LINE_LOOP */
-      { 2, 0 }, /* PIPE_PRIM_LINE_STRIP */
-      { 3, 3 }, /* PIPE_PRIM_TRIANGLES */
-      { 3, 0 }, /* PIPE_PRIM_TRIANGLE_STRIP */
-      { 3, 0 }, /* PIPE_PRIM_TRIANGLE_FAN */
-      { 4, 4 }, /* PIPE_PRIM_TRIANGLE_QUADS */
-      { 4, 2 }, /* PIPE_PRIM_TRIANGLE_QUAD_STRIP */
-      { 3, 0 }, /* PIPE_PRIM_TRIANGLE_POLYGON */
-      { 4, 4 }, /* PIPE_PRIM_LINES_ADJACENCY */
-      { 4, 0 }, /* PIPE_PRIM_LINE_STRIP_ADJACENCY */
-      { 6, 6 }, /* PIPE_PRIM_TRIANGLES_ADJACENCY */
-      { 6, 2 }, /* PIPE_PRIM_TRIANGLE_STRIP_ADJACENCY */
-   };
+   const struct u_prim_vertex_count *count = u_prim_vertex_count(pipe_prim);
 
-   if (unlikely(pipe_prim >= PIPE_PRIM_MAX)) {
-       *nr = 0;
-       return FALSE;
+   if (count && *nr >= count->min) {
+      if (count->incr > 1)
+         *nr -= (*nr % count->incr);
+      return TRUE;
    }
-
-   ok = (*nr >= values[pipe_prim][0]);
-   if (values[pipe_prim][1])
-       *nr -= (*nr % values[pipe_prim][1]);
-
-   if (!ok)
+   else {
       *nr = 0;
-
-   return ok;
-}
-
-
-static INLINE unsigned u_reduced_prim( unsigned pipe_prim )
-{
-   switch (pipe_prim) {
-   case PIPE_PRIM_POINTS:
-      return PIPE_PRIM_POINTS;
-
-   case PIPE_PRIM_LINES:
-   case PIPE_PRIM_LINES_ADJACENCY:
-   case PIPE_PRIM_LINE_STRIP:
-   case PIPE_PRIM_LINE_STRIP_ADJACENCY:
-   case PIPE_PRIM_LINE_LOOP:
-      return PIPE_PRIM_LINES;
-
-   default:
-      return PIPE_PRIM_TRIANGLES;
+      return FALSE;
    }
 }
 
@@ -216,20 +276,7 @@ u_decomposed_prims_for_vertices(int primitive, int vertices)
 static INLINE unsigned
 u_assembled_primitive(unsigned prim)
 {
-   switch (prim) {
-   case PIPE_PRIM_LINES_ADJACENCY:
-      return PIPE_PRIM_LINES;
-   case PIPE_PRIM_LINE_STRIP_ADJACENCY:
-      return PIPE_PRIM_LINES;
-   case PIPE_PRIM_TRIANGLES_ADJACENCY:
-      return PIPE_PRIM_TRIANGLES;
-   case PIPE_PRIM_TRIANGLE_STRIP_ADJACENCY:
-      return PIPE_PRIM_TRIANGLES;
-   default:
-      return prim;
-   }
-
-   return prim;
+   return u_assembled_prim(prim);
 }
       
       
