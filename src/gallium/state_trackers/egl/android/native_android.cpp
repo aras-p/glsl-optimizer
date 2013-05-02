@@ -27,12 +27,28 @@
 #define LOG_TAG "EGL-GALLIUM"
 
 #if ANDROID_VERSION >= 0x0400
+
+#if ANDROID_VERSION >= 0x0402
+#include <sync/sync.h>
+#endif
+
 #include <stdlib.h>
 #include <system/window.h>
-#else
+
+#else /* ANDROID_VERSION >= 0x0400 */
+
 #define android_native_buffer_t ANativeWindowBuffer
 #include <ui/egl/android_natives.h>
 #include <ui/android_native_buffer.h>
+
+#endif /* ANDROID_VERSION >= 0x0400 */
+
+#if ANDROID_VERSION < 0x0402
+/* rename to old logging macros */
+#define ALOGE(...) LOGE(__VA_ARGS__)
+#define ALOGW(...) LOGW(__VA_ARGS__)
+#define ALOGI(...) LOGI(__VA_ARGS__)
+#define ALOGD(...) LOGD(__VA_ARGS__)
 #endif
 
 #include <hardware/gralloc.h>
@@ -137,7 +153,7 @@ get_pipe_format(int native)
    case HAL_PIXEL_FORMAT_RGBA_4444:
       /* fmt = PIPE_FORMAT_A4B4G4R4_UNORM; */
    default:
-      LOGE("unsupported native format 0x%x", native);
+      ALOGE("unsupported native format 0x%x", native);
       fmt = PIPE_FORMAT_NONE;
       break;
    }
@@ -147,7 +163,10 @@ get_pipe_format(int native)
 
 #ifndef ANDROID_BACKEND_NO_DRM
 
+extern "C" {
 #include <gralloc_drm.h>
+}
+
 static int
 get_handle_name(buffer_handle_t handle)
 {
@@ -176,12 +195,12 @@ import_buffer(struct android_display *adpy, const struct pipe_resource *templ,
    if (templ->bind & PIPE_BIND_RENDER_TARGET) {
       if (!screen->is_format_supported(screen, templ->format,
                templ->target, 0, PIPE_BIND_RENDER_TARGET))
-         LOGW("importing unsupported buffer as render target");
+         ALOGW("importing unsupported buffer as render target");
    }
    if (templ->bind & PIPE_BIND_SAMPLER_VIEW) {
       if (!screen->is_format_supported(screen, templ->format,
                templ->target, 0, PIPE_BIND_SAMPLER_VIEW))
-         LOGW("importing unsupported buffer as sampler view");
+         ALOGW("importing unsupported buffer as sampler view");
    }
 
    if (adpy->use_drm) {
@@ -192,7 +211,7 @@ import_buffer(struct android_display *adpy, const struct pipe_resource *templ,
       /* for DRM, we need the GEM name */
       handle.handle = get_handle_name(abuf->handle);
       if (!handle.handle) {
-         LOGE("unable to import invalid buffer %p", abuf);
+         ALOGE("unable to import invalid buffer %p", abuf);
          return NULL;
       }
 
@@ -214,7 +233,7 @@ import_buffer(struct android_display *adpy, const struct pipe_resource *templ,
    }
 
    if (!res)
-      LOGE("failed to import buffer %p", abuf);
+      ALOGE("failed to import buffer %p", abuf);
 
    return res;
 }
@@ -253,7 +272,7 @@ android_surface_add_cache(struct native_surface *nsurf,
       handle = (void *) abuf->handle;
    /* NULL is invalid */
    if (!handle) {
-      LOGE("invalid buffer native buffer %p", abuf);
+      ALOGE("invalid buffer native buffer %p", abuf);
       return NULL;
    }
 
@@ -263,7 +282,7 @@ android_surface_add_cache(struct native_surface *nsurf,
          break;
    }
    if (idx == Elements(asurf->cache_handles)) {
-      LOGW("cache full: buf %p, width %d, height %d, format %d, usage 0x%x",
+      ALOGW("cache full: buf %p, width %d, height %d, format %d, usage 0x%x",
             abuf, abuf->width, abuf->height, abuf->format, abuf->usage);
       android_surface_clear_cache(&asurf->base);
       idx = 0;
@@ -317,13 +336,29 @@ android_surface_dequeue_buffer(struct native_surface *nsurf)
    struct android_surface *asurf = android_surface(nsurf);
    struct pipe_resource *res;
 
+#if ANDROID_VERSION >= 0x0402
+   int fence_fd;
+
+   if (asurf->win->dequeueBuffer(asurf->win, &asurf->buf, &fence_fd) != NO_ERROR) {
+      ALOGE("failed to dequeue window %p", asurf->win);
+      return FALSE;
+   }
+
+   if (fence_fd >= 0) {
+      sync_wait(fence_fd, -1);
+      close(fence_fd);
+   }
+
+   asurf->buf->common.incRef(&asurf->buf->common);
+#else
    if (asurf->win->dequeueBuffer(asurf->win, &asurf->buf) != NO_ERROR) {
-      LOGE("failed to dequeue window %p", asurf->win);
+      ALOGE("failed to dequeue window %p", asurf->win);
       return FALSE;
    }
 
    asurf->buf->common.incRef(&asurf->buf->common);
    asurf->win->lockBuffer(asurf->win, asurf->buf);
+#endif
 
    res = android_surface_add_cache(&asurf->base, asurf->buf);
    if (!res)
@@ -344,7 +379,11 @@ android_surface_enqueue_buffer(struct native_surface *nsurf)
 
    pipe_resource_reference(&asurf->buf_res, NULL);
 
+#if ANDROID_VERSION >= 0x0402
+   asurf->win->queueBuffer(asurf->win, asurf->buf, -1);
+#else
    asurf->win->queueBuffer(asurf->win, asurf->buf);
+#endif
 
    asurf->buf->common.decRef(&asurf->buf->common);
    asurf->buf = NULL;
@@ -505,20 +544,20 @@ android_display_create_window_surface(struct native_display *ndpy,
    int val;
 
    if (win->common.magic != ANDROID_NATIVE_WINDOW_MAGIC) {
-      LOGE("invalid native window with magic 0x%x", win->common.magic);
+      ALOGE("invalid native window with magic 0x%x", win->common.magic);
       return NULL;
    }
    if (win->query(win, NATIVE_WINDOW_FORMAT, &val)) {
-      LOGE("failed to query native window format");
+      ALOGE("failed to query native window format");
       return NULL;
    }
    format = get_pipe_format(val);
    if (format != nconf->color_format) {
-      LOGW("native window format 0x%x != config format 0x%x",
+      ALOGW("native window format 0x%x != config format 0x%x",
             format, nconf->color_format);
       if (!adpy->base.screen->is_format_supported(adpy->base.screen,
                format, PIPE_TEXTURE_2D, 0, PIPE_BIND_RENDER_TARGET)) {
-         LOGE("and the native window cannot be used as a render target");
+         ALOGE("and the native window cannot be used as a render target");
          return NULL;
       }
    }
@@ -571,7 +610,7 @@ android_display_init_configs(struct native_display *ndpy)
       if (color_format == PIPE_FORMAT_NONE ||
           !adpy->base.screen->is_format_supported(adpy->base.screen,
                color_format, PIPE_TEXTURE_2D, 0, PIPE_BIND_RENDER_TARGET)) {
-         LOGI("skip unsupported native format 0x%x", native_formats[i]);
+         ALOGI("skip unsupported native format 0x%x", native_formats[i]);
          continue;
       }
 
@@ -612,12 +651,12 @@ android_display_init_drm(struct native_display *ndpy)
 #endif
 
    if (adpy->base.screen) {
-      LOGI("using DRM screen");
+      ALOGI("using DRM screen");
       return TRUE;
    }
    else {
-      LOGW("failed to create DRM screen");
-      LOGW("will fall back to other EGL drivers if any");
+      ALOGW("failed to create DRM screen");
+      ALOGW("will fall back to other EGL drivers if any");
       return FALSE;
    }
 }
@@ -635,11 +674,11 @@ android_display_init_sw(struct native_display *ndpy)
    }
 
    if (adpy->base.screen) {
-      LOGI("using SW screen");
+      ALOGI("using SW screen");
       return TRUE;
    }
    else {
-      LOGE("failed to create SW screen");
+      ALOGE("failed to create SW screen");
       return FALSE;
    }
 }
@@ -730,7 +769,7 @@ android_display_import_buffer(struct native_display *ndpy,
 
    if (!abuf || abuf->common.magic != ANDROID_NATIVE_BUFFER_MAGIC ||
        abuf->common.version != sizeof(*abuf)) {
-      LOGE("invalid android native buffer");
+      ALOGE("invalid android native buffer");
       return NULL;
    }
 
@@ -824,13 +863,13 @@ android_log(EGLint level, const char *msg)
 {
    switch (level) {
    case _EGL_DEBUG:
-      LOGD("%s", msg);
+      ALOGD("%s", msg);
       break;
    case _EGL_INFO:
-      LOGI("%s", msg);
+      ALOGI("%s", msg);
       break;
    case _EGL_WARNING:
-      LOGW("%s", msg);
+      ALOGW("%s", msg);
       break;
    case _EGL_FATAL:
       LOG_FATAL("%s", msg);
