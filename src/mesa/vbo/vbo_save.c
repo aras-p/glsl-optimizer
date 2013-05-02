@@ -86,7 +86,7 @@ void vbo_save_init( struct gl_context *ctx )
       }
    }
 
-   ctx->Driver.CurrentSavePrimitive = PRIM_UNKNOWN;
+   ctx->Driver.CurrentSavePrimitive = PRIM_OUTSIDE_BEGIN_END;
 }
 
 
