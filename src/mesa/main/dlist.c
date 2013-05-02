@@ -1354,7 +1354,14 @@ save_DrawElementsInstancedBaseVertexBaseInstance(GLenum mode,
 	       "glDrawElementsInstancedBaseVertexBaseInstance() during display list compile");
 }
 
-static void invalidate_saved_current_state( struct gl_context *ctx )
+
+/**
+ * While building a display list we cache some OpenGL state.
+ * Under some circumstances we need to invalidate that state (immediately
+ * when we start compiling a list, or after glCallList(s)).
+ */
+static void
+invalidate_saved_current_state(struct gl_context *ctx)
 {
    GLint i;
 
@@ -1368,6 +1375,7 @@ static void invalidate_saved_current_state( struct gl_context *ctx )
 
    ctx->Driver.CurrentSavePrimitive = PRIM_UNKNOWN;
 }
+
 
 static void GLAPIENTRY
 save_CallList(GLuint list)
@@ -8623,8 +8631,7 @@ _mesa_NewList(GLuint name, GLenum mode)
    ctx->CompileFlag = GL_TRUE;
    ctx->ExecuteFlag = (mode == GL_COMPILE_AND_EXECUTE);
 
-   /* Reset acumulated list state:
-    */
+   /* Reset accumulated list state */
    invalidate_saved_current_state( ctx );
 
    /* Allocate new display list */
