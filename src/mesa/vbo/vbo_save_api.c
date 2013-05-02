@@ -1232,8 +1232,14 @@ _save_OBE_DrawArrays(GLenum mode, GLint start, GLsizei count)
    struct vbo_save_context *save = &vbo_context(ctx)->save;
    GLint i;
 
-   if (!_mesa_validate_DrawArrays(ctx, mode, start, count))
+   if (!_mesa_is_valid_prim_mode(ctx, mode)) {
+      _mesa_compile_error(ctx, GL_INVALID_ENUM, "glDrawArrays(mode)");
       return;
+   }
+   if (count < 0) {
+      _mesa_compile_error(ctx, GL_INVALID_VALUE, "glDrawArrays(count<0)");
+      return;
+   }
 
    if (save->out_of_memory)
       return;
@@ -1262,8 +1268,20 @@ _save_OBE_DrawElements(GLenum mode, GLsizei count, GLenum type,
    struct vbo_save_context *save = &vbo_context(ctx)->save;
    GLint i;
 
-   if (!_mesa_validate_DrawElements(ctx, mode, count, type, indices, 0))
+   if (!_mesa_is_valid_prim_mode(ctx, mode)) {
+      _mesa_compile_error(ctx, GL_INVALID_ENUM, "glDrawElements(mode)");
       return;
+   }
+   if (count < 0) {
+      _mesa_compile_error(ctx, GL_INVALID_VALUE, "glDrawElements(count<0)");
+      return;
+   }
+   if (type != GL_UNSIGNED_BYTE &&
+       type != GL_UNSIGNED_SHORT &&
+       type != GL_UNSIGNED_INT) {
+      _mesa_compile_error(ctx, GL_INVALID_VALUE, "glDrawElements(count<0)");
+      return;
+   }
 
    if (save->out_of_memory)
       return;
@@ -1309,9 +1327,26 @@ _save_OBE_DrawRangeElements(GLenum mode, GLuint start, GLuint end,
    GET_CURRENT_CONTEXT(ctx);
    struct vbo_save_context *save = &vbo_context(ctx)->save;
 
-   if (!_mesa_validate_DrawRangeElements(ctx, mode,
-                                         start, end, count, type, indices, 0))
+   if (!_mesa_is_valid_prim_mode(ctx, mode)) {
+      _mesa_compile_error(ctx, GL_INVALID_ENUM, "glDrawRangeElements(mode)");
       return;
+   }
+   if (count < 0) {
+      _mesa_compile_error(ctx, GL_INVALID_VALUE,
+                          "glDrawRangeElements(count<0)");
+      return;
+   }
+   if (type != GL_UNSIGNED_BYTE &&
+       type != GL_UNSIGNED_SHORT &&
+       type != GL_UNSIGNED_INT) {
+      _mesa_compile_error(ctx, GL_INVALID_ENUM, "glDrawRangeElements(type)");
+      return;
+   }
+   if (end < start) {
+      _mesa_compile_error(ctx, GL_INVALID_VALUE,
+                          "glDrawRangeElements(end < start)");
+      return;
+   }
 
    if (save->out_of_memory)
       return;
