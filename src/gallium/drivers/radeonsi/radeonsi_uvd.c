@@ -75,7 +75,7 @@ struct pipe_video_buffer *radeonsi_video_buffer_create(struct pipe_context *pipe
 	template.width = align(tmpl->width, VL_MACROBLOCK_WIDTH);
 	template.height = align(tmpl->height / array_size, VL_MACROBLOCK_HEIGHT);
 
-	vl_video_buffer_template(&templ, &template, resource_formats[0], array_size, PIPE_USAGE_STATIC, 0);
+	vl_video_buffer_template(&templ, &template, resource_formats[0], 1, array_size, PIPE_USAGE_STATIC, 0);
 	/* TODO: Setting the transfer flag is only a workaround till we get tiling working */
 	templ.flags = R600_RESOURCE_FLAG_TRANSFER;
 	resources[0] = (struct r600_resource_texture *)
@@ -84,7 +84,7 @@ struct pipe_video_buffer *radeonsi_video_buffer_create(struct pipe_context *pipe
 		goto error;
 
 	if (resource_formats[1] != PIPE_FORMAT_NONE) {
-		vl_video_buffer_template(&templ, &template, resource_formats[1], array_size, PIPE_USAGE_STATIC, 1);
+		vl_video_buffer_template(&templ, &template, resource_formats[1], 1, array_size, PIPE_USAGE_STATIC, 1);
 		templ.flags = R600_RESOURCE_FLAG_TRANSFER;
 		resources[1] = (struct r600_resource_texture *)
 			pipe->screen->resource_create(pipe->screen, &templ);
@@ -93,7 +93,7 @@ struct pipe_video_buffer *radeonsi_video_buffer_create(struct pipe_context *pipe
 	}
 
 	if (resource_formats[2] != PIPE_FORMAT_NONE) {
-		vl_video_buffer_template(&templ, &template, resource_formats[2], array_size, PIPE_USAGE_STATIC, 2);
+		vl_video_buffer_template(&templ, &template, resource_formats[2], 1, array_size, PIPE_USAGE_STATIC, 2);
 		templ.flags = R600_RESOURCE_FLAG_TRANSFER;
 		resources[2] = (struct r600_resource_texture *)
 			pipe->screen->resource_create(pipe->screen, &templ);
