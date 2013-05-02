@@ -910,7 +910,7 @@ static void vbo_exec_vtxfmt_init( struct vbo_exec_context *exec )
    struct gl_context *ctx = exec->ctx;
    GLvertexformat *vfmt = &exec->vtxfmt;
 
-   _MESA_INIT_ARRAYELT_VTXFMT(vfmt, _ae_);
+   vfmt->ArrayElement = _ae_ArrayElement;
 
    vfmt->Begin = vbo_exec_Begin;
    vfmt->End = vbo_exec_End;

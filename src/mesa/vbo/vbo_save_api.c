@@ -1394,7 +1394,7 @@ _save_vtxfmt_init(struct gl_context *ctx)
    struct vbo_save_context *save = &vbo_context(ctx)->save;
    GLvertexformat *vfmt = &save->vtxfmt;
 
-   _MESA_INIT_ARRAYELT_VTXFMT(vfmt, _ae_);
+   vfmt->ArrayElement = _ae_ArrayElement;
 
    vfmt->Color3f = _save_Color3f;
    vfmt->Color3fv = _save_Color3fv;

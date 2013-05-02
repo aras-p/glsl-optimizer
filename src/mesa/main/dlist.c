@@ -9554,7 +9554,7 @@ mesa_print_display_list(GLuint list)
 static void
 save_vtxfmt_init(GLvertexformat * vfmt)
 {
-   _MESA_INIT_ARRAYELT_VTXFMT(vfmt, _ae_);
+   vfmt->ArrayElement = _ae_ArrayElement;
 
    vfmt->Begin = save_Begin;
 

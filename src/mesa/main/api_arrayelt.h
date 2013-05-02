@@ -31,10 +31,6 @@
 
 #include "main/mtypes.h"
 
-#define _MESA_INIT_ARRAYELT_VTXFMT(vfmt, impl)     \
-   do {                                            \
-      (vfmt)->ArrayElement = impl ## ArrayElement; \
-   } while (0)
 
 extern GLboolean _ae_create_context( struct gl_context *ctx );
 extern void _ae_destroy_context( struct gl_context *ctx );
