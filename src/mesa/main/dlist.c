@@ -5646,28 +5646,21 @@ static void GLAPIENTRY
 save_Begin(GLenum mode)
 {
    GET_CURRENT_CONTEXT(ctx);
-   Node *n;
-   GLboolean error = GL_FALSE;
 
-   if (ctx->ExecuteFlag && !_mesa_valid_prim_mode(ctx, mode, "glBegin")) {
-      error = GL_TRUE;
+   if (!_mesa_is_valid_prim_mode(ctx, mode)) {
+      /* compile this error into the display list */
+      _mesa_compile_error(ctx, GL_INVALID_ENUM, "glBegin(mode)");
    }
-   else if (ctx->Driver.CurrentSavePrimitive == PRIM_UNKNOWN) {
-      /* Typically the first begin.  This may raise an error on
-       * playback, depending on whether CallList is issued from inside
-       * a begin/end or not.
-       */
-      ctx->Driver.CurrentSavePrimitive = PRIM_INSIDE_UNKNOWN_PRIM;
-   }
-   else if (!_mesa_inside_dlist_begin_end(ctx)) {
-      ctx->Driver.CurrentSavePrimitive = mode;
+   else if (_mesa_inside_dlist_begin_end(ctx) &&
+            ctx->Driver.CurrentSavePrimitive != PRIM_UNKNOWN) {
+      /* compile this error into the display list */
+      _mesa_compile_error(ctx, GL_INVALID_OPERATION, "recursive glBegin");
    }
    else {
-      _mesa_compile_error(ctx, GL_INVALID_OPERATION, "recursive begin");
-      error = GL_TRUE;
-   }
+      Node *n;
 
-   if (!error) {
+      ctx->Driver.CurrentSavePrimitive = mode;
+
       /* Give the driver an opportunity to hook in an optimized
        * display list compiler.
        */
@@ -5679,10 +5672,10 @@ save_Begin(GLenum mode)
       if (n) {
          n[1].e = mode;
       }
-   }
 
-   if (ctx->ExecuteFlag) {
-      CALL_Begin(ctx->Exec, (mode));
+      if (ctx->ExecuteFlag) {
+         CALL_Begin(ctx->Exec, (mode));
+      }
    }
 }
 
