@@ -919,7 +919,14 @@ static void vbo_exec_vtxfmt_init( struct vbo_exec_context *exec )
    vfmt->CallList = _mesa_CallList;
    vfmt->CallLists = _mesa_CallLists;
 
-   _MESA_INIT_EVAL_VTXFMT(vfmt, vbo_exec_);
+   vfmt->EvalCoord1f = vbo_exec_EvalCoord1f;
+   vfmt->EvalCoord1fv = vbo_exec_EvalCoord1fv;
+   vfmt->EvalCoord2f = vbo_exec_EvalCoord2f;
+   vfmt->EvalCoord2fv = vbo_exec_EvalCoord2fv;
+   vfmt->EvalPoint1 = vbo_exec_EvalPoint1;
+   vfmt->EvalPoint2 = vbo_exec_EvalPoint2;
+   vfmt->EvalMesh1 = vbo_exec_EvalMesh1;
+   vfmt->EvalMesh2 = vbo_exec_EvalMesh2;
 
    vfmt->Rectf = vbo_exec_Rectf;
 

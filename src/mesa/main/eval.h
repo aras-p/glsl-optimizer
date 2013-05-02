@@ -42,18 +42,6 @@
 #include <stdbool.h>
 
 
-#define _MESA_INIT_EVAL_VTXFMT(vfmt, impl)         \
-   do {                                            \
-      (vfmt)->EvalCoord1f  = impl ## EvalCoord1f;  \
-      (vfmt)->EvalCoord1fv = impl ## EvalCoord1fv; \
-      (vfmt)->EvalCoord2f  = impl ## EvalCoord2f;  \
-      (vfmt)->EvalCoord2fv = impl ## EvalCoord2fv; \
-      (vfmt)->EvalPoint1   = impl ## EvalPoint1;   \
-      (vfmt)->EvalPoint2   = impl ## EvalPoint2;   \
-      (vfmt)->EvalMesh1    = impl ## EvalMesh1;    \
-      (vfmt)->EvalMesh2    = impl ## EvalMesh2;    \
-   } while (0)
-
 extern GLuint _mesa_evaluator_components( GLenum target );
 
 

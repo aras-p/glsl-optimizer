@@ -9568,7 +9568,14 @@ save_vtxfmt_init(GLvertexformat * vfmt)
    vfmt->EdgeFlag = save_EdgeFlag;
    vfmt->End = save_End;
 
-   _MESA_INIT_EVAL_VTXFMT(vfmt, save_);
+   vfmt->EvalCoord1f = save_EvalCoord1f;
+   vfmt->EvalCoord1fv = save_EvalCoord1fv;
+   vfmt->EvalCoord2f = save_EvalCoord2f;
+   vfmt->EvalCoord2fv = save_EvalCoord2fv;
+   vfmt->EvalPoint1 = save_EvalPoint1;
+   vfmt->EvalPoint2 = save_EvalPoint2;
+   vfmt->EvalMesh1 = save_EvalMesh1;
+   vfmt->EvalMesh2 = save_EvalMesh2;
 
    vfmt->FogCoordfEXT = save_FogCoordfEXT;
    vfmt->FogCoordfvEXT = save_FogCoordfvEXT;

@@ -438,7 +438,14 @@ _mesa_noop_vtxfmt_init(GLvertexformat * vfmt)
 
    vfmt->PrimitiveRestartNV = _mesa_noop_PrimitiveRestartNV;
 
-   _MESA_INIT_EVAL_VTXFMT(vfmt, _mesa_noop_);
+   vfmt->EvalCoord1f = _mesa_noop_EvalCoord1f;
+   vfmt->EvalCoord1fv = _mesa_noop_EvalCoord1fv;
+   vfmt->EvalCoord2f = _mesa_noop_EvalCoord2f;
+   vfmt->EvalCoord2fv = _mesa_noop_EvalCoord2fv;
+   vfmt->EvalPoint1 = _mesa_noop_EvalPoint1;
+   vfmt->EvalPoint2 = _mesa_noop_EvalPoint2;
+   vfmt->EvalMesh1 = _mesa_noop_EvalMesh1;
+   vfmt->EvalMesh2 = _mesa_noop_EvalMesh2;
 
    vfmt->FogCoordfEXT = _mesa_noop_FogCoordfEXT;
    vfmt->FogCoordfvEXT = _mesa_noop_FogCoordfvEXT;

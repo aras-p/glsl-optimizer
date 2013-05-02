@@ -1521,7 +1521,14 @@ _save_vtxfmt_init(struct gl_context *ctx)
    vfmt->CallList = _save_CallList;
    vfmt->CallLists = _save_CallLists;
 
-   _MESA_INIT_EVAL_VTXFMT(vfmt, _save_);
+   vfmt->EvalCoord1f = _save_EvalCoord1f;
+   vfmt->EvalCoord1fv = _save_EvalCoord1fv;
+   vfmt->EvalCoord2f = _save_EvalCoord2f;
+   vfmt->EvalCoord2fv = _save_EvalCoord2fv;
+   vfmt->EvalPoint1 = _save_EvalPoint1;
+   vfmt->EvalPoint2 = _save_EvalPoint2;
+   vfmt->EvalMesh1 = _save_EvalMesh1;
+   vfmt->EvalMesh2 = _save_EvalMesh2;
 
    /* These calls all generate GL_INVALID_OPERATION since this vtxfmt is
     * only used when we're inside a glBegin/End pair.
