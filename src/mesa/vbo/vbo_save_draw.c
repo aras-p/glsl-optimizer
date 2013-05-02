@@ -269,17 +269,12 @@ vbo_save_playback_vertex_list(struct gl_context *ctx, void *data)
 
    if (node->prim_count > 0) {
 
-      if (_mesa_inside_begin_end(ctx) &&
-	  node->prim[0].begin) {
-
-	 /* Degenerate case: list is called inside begin/end pair and
-	  * includes operations such as glBegin or glDrawArrays.
-	  */
-	 if (0)
-	    printf("displaylist recursive begin");
-
-	 vbo_save_loopback_vertex_list( ctx, node );
-
+      if (_mesa_inside_begin_end(ctx) && node->prim[0].begin) {
+         /* Error: we're about to begin a new primitive but we're already
+          * inside a glBegin/End pair.
+          */
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "draw operation inside glBegin/End");
          goto end;
       }
       else if (save->replay_flags) {
