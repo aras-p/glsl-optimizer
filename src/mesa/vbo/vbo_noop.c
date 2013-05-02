@@ -347,17 +347,6 @@ _mesa_noop_PrimitiveRestartNV(void)
 }
 
 
-static void GLAPIENTRY
-_mesa_noop_EvalMesh1(GLenum mode, GLint i1, GLint i2)
-{
-}
-
-static void GLAPIENTRY
-_mesa_noop_EvalMesh2(GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2)
-{
-}
-
-
 /**
  * Build a vertexformat of functions that are no-ops.
  * These are used in out-of-memory situations when we have no VBO
@@ -388,8 +377,6 @@ _mesa_noop_vtxfmt_init(GLvertexformat * vfmt)
    vfmt->EvalCoord2fv = _mesa_noop_EvalCoord2fv;
    vfmt->EvalPoint1 = _mesa_noop_EvalPoint1;
    vfmt->EvalPoint2 = _mesa_noop_EvalPoint2;
-   vfmt->EvalMesh1 = _mesa_noop_EvalMesh1;
-   vfmt->EvalMesh2 = _mesa_noop_EvalMesh2;
 
    vfmt->FogCoordfEXT = _mesa_noop_FogCoordfEXT;
    vfmt->FogCoordfvEXT = _mesa_noop_FogCoordfvEXT;

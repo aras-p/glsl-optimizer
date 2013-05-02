@@ -65,8 +65,7 @@ extern GLfloat *_mesa_copy_map_points2d(GLenum target,
 
 extern void
 _mesa_install_eval_vtxfmt(struct _glapi_table *disp,
-                          const GLvertexformat *vfmt,
-                          bool beginend);
+                          const GLvertexformat *vfmt);
 
 extern void _mesa_init_eval( struct gl_context *ctx );
 extern void _mesa_free_eval_data( struct gl_context *ctx );

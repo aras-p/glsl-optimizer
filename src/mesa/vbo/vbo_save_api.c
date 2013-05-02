@@ -994,30 +994,6 @@ _save_End(void)
 
 
 static void GLAPIENTRY
-_save_EvalMesh1(GLenum mode, GLint i1, GLint i2)
-{
-   GET_CURRENT_CONTEXT(ctx);
-   (void) mode;
-   (void) i1;
-   (void) i2;
-   _mesa_compile_error(ctx, GL_INVALID_OPERATION, "glEvalMesh1");
-}
-
-
-static void GLAPIENTRY
-_save_EvalMesh2(GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2)
-{
-   GET_CURRENT_CONTEXT(ctx);
-   (void) mode;
-   (void) i1;
-   (void) i2;
-   (void) j1;
-   (void) j2;
-   _mesa_compile_error(ctx, GL_INVALID_OPERATION, "glEvalMesh2");
-}
-
-
-static void GLAPIENTRY
 _save_Begin(GLenum mode)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -1359,8 +1335,6 @@ _save_vtxfmt_init(struct gl_context *ctx)
    vfmt->EvalCoord2fv = _save_EvalCoord2fv;
    vfmt->EvalPoint1 = _save_EvalPoint1;
    vfmt->EvalPoint2 = _save_EvalPoint2;
-   vfmt->EvalMesh1 = _save_EvalMesh1;
-   vfmt->EvalMesh2 = _save_EvalMesh2;
 
    /* These calls all generate GL_INVALID_OPERATION since this vtxfmt is
     * only used when we're inside a glBegin/End pair.

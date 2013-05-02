@@ -654,111 +654,6 @@ static void GLAPIENTRY vbo_exec_EvalPoint2( GLint i, GLint j )
 }
 
 
-static void GLAPIENTRY
-vbo_exec_EvalMesh1(GLenum mode, GLint i1, GLint i2)
-{
-   GET_CURRENT_CONTEXT(ctx);
-   GLint i;
-   GLfloat u, du;
-   GLenum prim;
-
-   switch (mode) {
-   case GL_POINT:
-      prim = GL_POINTS;
-      break;
-   case GL_LINE:
-      prim = GL_LINE_STRIP;
-      break;
-   default:
-      _mesa_error( ctx, GL_INVALID_ENUM, "glEvalMesh1(mode)" );
-      return;
-   }
-
-   /* No effect if vertex maps disabled.
-    */
-   if (!ctx->Eval.Map1Vertex4 && 
-       !ctx->Eval.Map1Vertex3)
-      return;
-
-   du = ctx->Eval.MapGrid1du;
-   u = ctx->Eval.MapGrid1u1 + i1 * du;
-
-   CALL_Begin(GET_DISPATCH(), (prim));
-   for (i=i1;i<=i2;i++,u+=du) {
-      CALL_EvalCoord1f(GET_DISPATCH(), (u));
-   }
-   CALL_End(GET_DISPATCH(), ());
-}
-
-
-static void GLAPIENTRY
-vbo_exec_EvalMesh2(GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2)
-{
-   GET_CURRENT_CONTEXT(ctx);
-   GLfloat u, du, v, dv, v1, u1;
-   GLint i, j;
-
-   switch (mode) {
-   case GL_POINT:
-   case GL_LINE:
-   case GL_FILL:
-      break;
-   default:
-      _mesa_error( ctx, GL_INVALID_ENUM, "glEvalMesh2(mode)" );
-      return;
-   }
-
-   /* No effect if vertex maps disabled.
-    */
-   if (!ctx->Eval.Map2Vertex4 && 
-       !ctx->Eval.Map2Vertex3)
-      return;
-
-   du = ctx->Eval.MapGrid2du;
-   dv = ctx->Eval.MapGrid2dv;
-   v1 = ctx->Eval.MapGrid2v1 + j1 * dv;
-   u1 = ctx->Eval.MapGrid2u1 + i1 * du;
-
-   switch (mode) {
-   case GL_POINT:
-      CALL_Begin(GET_DISPATCH(), (GL_POINTS));
-      for (v=v1,j=j1;j<=j2;j++,v+=dv) {
-	 for (u=u1,i=i1;i<=i2;i++,u+=du) {
-	    CALL_EvalCoord2f(GET_DISPATCH(), (u, v));
-	 }
-      }
-      CALL_End(GET_DISPATCH(), ());
-      break;
-   case GL_LINE:
-      for (v=v1,j=j1;j<=j2;j++,v+=dv) {
-	 CALL_Begin(GET_DISPATCH(), (GL_LINE_STRIP));
-	 for (u=u1,i=i1;i<=i2;i++,u+=du) {
-	    CALL_EvalCoord2f(GET_DISPATCH(), (u, v));
-	 }
-	 CALL_End(GET_DISPATCH(), ());
-      }
-      for (u=u1,i=i1;i<=i2;i++,u+=du) {
-	 CALL_Begin(GET_DISPATCH(), (GL_LINE_STRIP));
-	 for (v=v1,j=j1;j<=j2;j++,v+=dv) {
-	    CALL_EvalCoord2f(GET_DISPATCH(), (u, v));
-	 }
-	 CALL_End(GET_DISPATCH(), ());
-      }
-      break;
-   case GL_FILL:
-      for (v=v1,j=j1;j<j2;j++,v+=dv) {
-	 CALL_Begin(GET_DISPATCH(), (GL_TRIANGLE_STRIP));
-	 for (u=u1,i=i1;i<=i2;i++,u+=du) {
-	    CALL_EvalCoord2f(GET_DISPATCH(), (u, v));
-	    CALL_EvalCoord2f(GET_DISPATCH(), (u, v+dv));
-	 }
-	 CALL_End(GET_DISPATCH(), ());
-      }
-      break;
-   }
-}
-
-
 /**
  * Called via glBegin.
  */
@@ -904,8 +799,6 @@ static void vbo_exec_vtxfmt_init( struct vbo_exec_context *exec )
    vfmt->EvalCoord2fv = vbo_exec_EvalCoord2fv;
    vfmt->EvalPoint1 = vbo_exec_EvalPoint1;
    vfmt->EvalPoint2 = vbo_exec_EvalPoint2;
-   vfmt->EvalMesh1 = vbo_exec_EvalMesh1;
-   vfmt->EvalMesh2 = vbo_exec_EvalMesh2;
 
    /* from attrib_tmp.h:
     */

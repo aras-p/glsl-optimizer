@@ -9592,8 +9592,6 @@ save_vtxfmt_init(GLvertexformat * vfmt)
    vfmt->EvalCoord2fv = save_EvalCoord2fv;
    vfmt->EvalPoint1 = save_EvalPoint1;
    vfmt->EvalPoint2 = save_EvalPoint2;
-   vfmt->EvalMesh1 = save_EvalMesh1;
-   vfmt->EvalMesh2 = save_EvalMesh2;
 
    vfmt->FogCoordfEXT = save_FogCoordfEXT;
    vfmt->FogCoordfvEXT = save_FogCoordfvEXT;

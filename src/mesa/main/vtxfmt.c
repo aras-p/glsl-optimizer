@@ -63,7 +63,7 @@ install_vtxfmt(struct gl_context *ctx, struct _glapi_table *tab,
    }
 
    if (ctx->API == API_OPENGL_COMPAT) {
-      _mesa_install_eval_vtxfmt(tab, vfmt, beginend);
+      _mesa_install_eval_vtxfmt(tab, vfmt);
    }
 
    if (ctx->API != API_OPENGL_CORE && ctx->API != API_OPENGLES2) {

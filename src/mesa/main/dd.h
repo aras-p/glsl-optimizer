@@ -1019,22 +1019,6 @@ typedef struct {
    void (GLAPIENTRYP VertexAttribP4uiv)( GLuint index, GLenum type,
 					 GLboolean normalized,
 					 const GLuint *value);
-
-   /*@}*/
-
-   /**
-    * \name Eval
-    *
-    * If you don't support eval, fallback to the default vertex format
-    * on receiving an eval call and use the pipeline mechanism to
-    * provide partial T&L acceleration.
-    *
-    * Mesa will provide a set of helper functions to do eval within
-    * accelerated vertex formats, eventually...
-    */
-   /*@{*/
-   void (GLAPIENTRYP EvalMesh1)( GLenum mode, GLint i1, GLint i2 );
-   void (GLAPIENTRYP EvalMesh2)( GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2 );
    /*@}*/
 
 } GLvertexformat;
