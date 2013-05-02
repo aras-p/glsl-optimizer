@@ -1515,8 +1515,7 @@ vbo_save_SaveFlushVertices(struct gl_context *ctx)
 
    /* Noop when we are actually active:
     */
-   if (ctx->Driver.CurrentSavePrimitive == PRIM_INSIDE_UNKNOWN_PRIM ||
-       ctx->Driver.CurrentSavePrimitive <= PRIM_MAX)
+   if (ctx->Driver.CurrentSavePrimitive <= PRIM_MAX)
       return;
 
    if (save->vert_count || save->prim_count)

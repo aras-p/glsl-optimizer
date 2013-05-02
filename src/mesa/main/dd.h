@@ -685,10 +685,9 @@ struct dd_function_table {
    GLuint CurrentExecPrimitive;
 
    /**
-    * Current state of an in-progress compilation.  
-    *
-    * May take on any of the additional values PRIM_OUTSIDE_BEGIN_END,
-    * PRIM_INSIDE_UNKNOWN_PRIM or PRIM_UNKNOWN defined above.
+    * Current glBegin state of an in-progress compilation.  May be
+    * GL_POINTS, GL_TRIANGLE_STRIP, etc. or PRIM_OUTSIDE_BEGIN_END
+    * or PRIM_UNKNOWN.
     */
    GLuint CurrentSavePrimitive;
 

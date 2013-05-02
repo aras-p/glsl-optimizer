@@ -126,7 +126,6 @@ static const char *prim_names[PRIM_UNKNOWN + 1] = {
    "GL_QUAD_STRIP",
    "GL_POLYGON",
    "outside begin/end",
-   "inside unknown primitive",
    "unknown state"
 };
 
