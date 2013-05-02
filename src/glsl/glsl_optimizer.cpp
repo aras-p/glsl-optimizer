@@ -260,7 +260,7 @@ static bool propagate_precision(exec_list* list)
 }
 
 
-static void do_optimization_passes(exec_list* ir, bool linked, _mesa_glsl_parse_state* state, void* mem_ctx)
+static void do_optimization_passes(exec_list* ir, bool linked, _mesa_glsl_parse_state* state, void* mem_ctx, bool scalar)
 {
 	bool progress;
 	do {
@@ -292,6 +292,9 @@ static void do_optimization_passes(exec_list* ir, bool linked, _mesa_glsl_parse_
 			progress2 = do_constant_variable_unlinked(ir); progress |= progress2; if (progress2) debug_print_ir ("After const variable unlinked", ir, state, mem_ctx);
 		}
 		progress2 = do_constant_folding(ir); progress |= progress2; if (progress2) debug_print_ir ("After const folding", ir, state, mem_ctx);
+        if (scalar) {
+            progress2 = do_mat_op_to_vec(ir); progress |= progress2; if (progress2) debug_print_ir ("After mat-op to vec", ir, state, mem_ctx);
+        }
 		progress2 = do_algebraic(ir); progress |= progress2; if (progress2) debug_print_ir ("After algebraic", ir, state, mem_ctx);
 		progress2 = do_lower_jumps(ir); progress |= progress2; if (progress2) debug_print_ir ("After lower jumps", ir, state, mem_ctx);
 		progress2 = do_vec_index_to_swizzle(ir); progress |= progress2; if (progress2) debug_print_ir ("After vec index to swizzle", ir, state, mem_ctx);
@@ -390,7 +393,8 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 	if (!state->error && !ir->is_empty())
 	{		
 		const bool linked = !(options & kGlslOptionNotFullShader);
-		do_optimization_passes(ir, linked, state, shader);
+        const bool scalar = options & kGlslOptionScalar;
+		do_optimization_passes(ir, linked, state, shader, scalar);
 		validate_ir_tree(ir);
 	}	
 	

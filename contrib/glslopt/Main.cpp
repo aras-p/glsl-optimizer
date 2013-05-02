@@ -15,9 +15,9 @@ static int printhelp(const char* msg)
 	return 1;
 }
 
-static bool init()
+static bool init(bool openglES)
 {
-	gContext = glslopt_initialize(false);
+	gContext = glslopt_initialize(openglES);
 	if( !gContext )
 		return false;
 	return true;
@@ -71,7 +71,7 @@ static bool saveFile(const char* filename, const char* data)
 	return true;
 }
 
-static bool compileShader(const char* dstfilename, const char* srcfilename, bool vertexShader)
+static bool compileShader(const char* dstfilename, const char* srcfilename, bool vertexShader, bool scalar)
 {
 	const char* originalShader = loadFile(srcfilename);
 	if( !originalShader )
@@ -79,7 +79,7 @@ static bool compileShader(const char* dstfilename, const char* srcfilename, bool
 
 	const glslopt_shader_type type = vertexShader ? kGlslOptShaderVertex : kGlslOptShaderFragment;
 
-	glslopt_shader* shader = glslopt_optimize(gContext, type, originalShader, 0);
+	glslopt_shader* shader = glslopt_optimize(gContext, type, originalShader, scalar ? kGlslOptionScalar : 0);
 	if( !glslopt_get_status(shader) )
 	{
 		printf( "Failed to compile %s:\n\n%s\n", srcfilename, glslopt_get_log(shader));
@@ -100,7 +100,7 @@ int main(int argc, char* argv[])
 	if( argc < 3 )
 		return printhelp(NULL);
 
-	bool vertexShader = false, freename = false;
+	bool vertexShader = false, freename = false, openglES = false, scalar = false;
 	const char* source = 0;
 	char* dest = 0;
 
@@ -110,8 +110,16 @@ int main(int argc, char* argv[])
 		{
 			if( 0 == strcmp("-v", argv[i]) )
 				vertexShader = true;
-			if( 0 == strcmp("-f", argv[i]) )
+			else if( 0 == strcmp("-f", argv[i]) )
 				vertexShader = false;
+			else if( 0 == strcmp("-noes", argv[i]) )
+				openglES = false;
+			else if( 0 == strcmp("-es", argv[i]) )
+				openglES = true;
+			else if( 0 == strcmp("-scalar", argv[i]) )
+				scalar = true;
+			else if( 0 == strcmp("-vector", argv[i]) )
+				scalar = false;
 		}
 		else
 		{
@@ -125,7 +133,7 @@ int main(int argc, char* argv[])
 	if( !source )
 		return printhelp("Must give a source");
 
-	if( !init() )
+	if( !init(openglES) )
 	{
 		printf("Failed to initialize glslopt!\n");
 		return 1;
@@ -138,7 +146,7 @@ int main(int argc, char* argv[])
 	}
 
 	int result = 0;
-	if( !compileShader(dest, source, vertexShader) )
+	if( !compileShader(dest, source, vertexShader, scalar) )
 		result = 1;
 
 	if( freename ) free(dest);
