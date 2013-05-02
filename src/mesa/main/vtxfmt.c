@@ -39,14 +39,12 @@
 
 
 /**
- * Use the per-vertex functions found in <vfmt> to initialize the given
- * API dispatch table.
- * If beginend is true, only plug in the functions which are legal
- * between glBegin/glEnd.
+ * Copy the functions found in the GLvertexformat object into the
+ * dispatch table.
  */
 static void
 install_vtxfmt(struct gl_context *ctx, struct _glapi_table *tab,
-               const GLvertexformat *vfmt, bool beginend)
+               const GLvertexformat *vfmt)
 {
    assert(ctx->Version > 0);
 
@@ -218,9 +216,9 @@ install_vtxfmt(struct gl_context *ctx, struct _glapi_table *tab,
 void
 _mesa_install_exec_vtxfmt(struct gl_context *ctx, const GLvertexformat *vfmt)
 {
-   install_vtxfmt(ctx, ctx->Exec, vfmt, false);
+   install_vtxfmt(ctx, ctx->Exec, vfmt);
    if (ctx->BeginEnd)
-      install_vtxfmt(ctx, ctx->BeginEnd, vfmt, true);
+      install_vtxfmt(ctx, ctx->BeginEnd, vfmt);
 }
 
 
@@ -232,7 +230,7 @@ void
 _mesa_install_save_vtxfmt(struct gl_context *ctx, const GLvertexformat *vfmt)
 {
    if (_mesa_is_desktop_gl(ctx))
-      install_vtxfmt(ctx, ctx->Save, vfmt, false);
+      install_vtxfmt(ctx, ctx->Save, vfmt);
 }
 
 
