@@ -994,18 +994,6 @@ _save_End(void)
 
 
 static void GLAPIENTRY
-_save_Rectf(GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2)
-{
-   GET_CURRENT_CONTEXT(ctx);
-   (void) x1;
-   (void) y1;
-   (void) x2;
-   (void) y2;
-   _mesa_compile_error(ctx, GL_INVALID_OPERATION, "glRectf");
-}
-
-
-static void GLAPIENTRY
 _save_EvalMesh1(GLenum mode, GLint i1, GLint i2)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -1378,7 +1366,6 @@ _save_vtxfmt_init(struct gl_context *ctx)
     * only used when we're inside a glBegin/End pair.
     */
    vfmt->Begin = _save_Begin;
-   vfmt->Rectf = _save_Rectf;
 }
 
 
@@ -1395,6 +1382,7 @@ vbo_initialize_save_dispatch(const struct gl_context *ctx,
    SET_DrawRangeElements(exec, _save_OBE_DrawRangeElements);
    SET_MultiDrawElementsEXT(exec, _save_OBE_MultiDrawElements);
    SET_MultiDrawElementsBaseVertex(exec, _save_OBE_MultiDrawElementsBaseVertex);
+   SET_Rectf(exec, _save_OBE_Rectf);
    /* Note: other glDraw functins aren't compiled into display lists */
 }
 
@@ -1589,9 +1577,4 @@ vbo_save_api_init(struct vbo_save_context *save)
    /* These will actually get set again when binding/drawing */
    for (i = 0; i < VBO_ATTRIB_MAX; i++)
       save->inputs[i] = &save->arrays[i];
-
-   /* Hook our array functions into the outside-begin-end vtxfmt in 
-    * ctx->ListState.
-    */
-   ctx->ListState.ListVtxfmt.Rectf = _save_OBE_Rectf;
 }

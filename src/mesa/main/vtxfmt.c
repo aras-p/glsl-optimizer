@@ -112,8 +112,6 @@ install_vtxfmt(struct gl_context *ctx, struct _glapi_table *tab,
       SET_Begin(tab, vfmt->Begin);
       SET_End(tab, vfmt->End);
       SET_PrimitiveRestartNV(tab, vfmt->PrimitiveRestartNV);
-
-      SET_Rectf(tab, vfmt->Rectf);
    }
 
    /* Originally for GL_NV_vertex_program, this is also used by dlist.c */

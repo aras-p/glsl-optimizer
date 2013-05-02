@@ -632,6 +632,23 @@ vbo_draw_arrays(struct gl_context *ctx, GLenum mode, GLint start,
 }
 
 
+/**
+ * Execute a glRectf() function.
+ */
+static void GLAPIENTRY
+vbo_exec_Rectf(GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   CALL_Begin(GET_DISPATCH(), (GL_QUADS));
+   CALL_Vertex2f(GET_DISPATCH(), (x1, y1));
+   CALL_Vertex2f(GET_DISPATCH(), (x2, y1));
+   CALL_Vertex2f(GET_DISPATCH(), (x2, y2));
+   CALL_Vertex2f(GET_DISPATCH(), (x1, y2));
+   CALL_End(GET_DISPATCH(), ());
+}
+
 
 /**
  * Called from glDrawArrays when in immediate mode (not display list mode).
@@ -1380,6 +1397,10 @@ vbo_initialize_exec_dispatch(const struct gl_context *ctx,
    }
 
    SET_MultiDrawElementsEXT(exec, vbo_exec_MultiDrawElements);
+
+   if (ctx->API == API_OPENGL_COMPAT) {
+      SET_Rectf(exec, vbo_exec_Rectf);
+   }
 
    if (_mesa_is_desktop_gl(ctx)) {
       SET_DrawElementsBaseVertex(exec, vbo_exec_DrawElementsBaseVertex);

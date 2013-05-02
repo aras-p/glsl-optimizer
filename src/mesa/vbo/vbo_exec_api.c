@@ -760,27 +760,6 @@ vbo_exec_EvalMesh2(GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2)
 
 
 /**
- * Execute a glRectf() function.  This is not suitable for GL_COMPILE
- * modes (as the test for outside begin/end is not compiled),
- * but may be useful for drivers in circumstances which exclude
- * display list interactions.
- *
- * (None of the functions in this file are suitable for GL_COMPILE
- * modes).
- */
-static void GLAPIENTRY
-vbo_exec_Rectf(GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2)
-{
-   CALL_Begin(GET_DISPATCH(), (GL_QUADS));
-   CALL_Vertex2f(GET_DISPATCH(), (x1, y1));
-   CALL_Vertex2f(GET_DISPATCH(), (x2, y1));
-   CALL_Vertex2f(GET_DISPATCH(), (x2, y2));
-   CALL_Vertex2f(GET_DISPATCH(), (x1, y2));
-   CALL_End(GET_DISPATCH(), ());
-}
-
-
-/**
  * Called via glBegin.
  */
 static void GLAPIENTRY vbo_exec_Begin( GLenum mode )
@@ -927,8 +906,6 @@ static void vbo_exec_vtxfmt_init( struct vbo_exec_context *exec )
    vfmt->EvalPoint2 = vbo_exec_EvalPoint2;
    vfmt->EvalMesh1 = vbo_exec_EvalMesh1;
    vfmt->EvalMesh2 = vbo_exec_EvalMesh2;
-
-   vfmt->Rectf = vbo_exec_Rectf;
 
    /* from attrib_tmp.h:
     */

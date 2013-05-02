@@ -5703,7 +5703,7 @@ save_Rectf(GLfloat a, GLfloat b, GLfloat c, GLfloat d)
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   SAVE_FLUSH_VERTICES(ctx);
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = alloc_instruction(ctx, OPCODE_RECTF, 4);
    if (n) {
       n[1].f = a;
@@ -8935,6 +8935,7 @@ _mesa_initialize_save_table(const struct gl_context *ctx)
    SET_RasterPos4s(table, save_RasterPos4s);
    SET_RasterPos4sv(table, save_RasterPos4sv);
    SET_ReadBuffer(table, save_ReadBuffer);
+   SET_Rectf(table, save_Rectf);
    SET_Rotated(table, save_Rotated);
    SET_Rotatef(table, save_Rotatef);
    SET_Scaled(table, save_Scaled);
@@ -9633,8 +9634,6 @@ save_vtxfmt_init(GLvertexformat * vfmt)
    vfmt->VertexAttrib3fvARB = save_VertexAttrib3fvARB;
    vfmt->VertexAttrib4fARB = save_VertexAttrib4fARB;
    vfmt->VertexAttrib4fvARB = save_VertexAttrib4fvARB;
-
-   vfmt->Rectf = save_Rectf;
 }
 
 

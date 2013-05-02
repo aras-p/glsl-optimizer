@@ -348,12 +348,6 @@ _mesa_noop_PrimitiveRestartNV(void)
 
 
 static void GLAPIENTRY
-_mesa_noop_Rectf(GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2)
-{
-}
-
-
-static void GLAPIENTRY
 _mesa_noop_EvalMesh1(GLenum mode, GLint i1, GLint i2)
 {
 }
@@ -444,8 +438,6 @@ _mesa_noop_vtxfmt_init(GLvertexformat * vfmt)
    vfmt->VertexAttrib3fvARB = _mesa_noop_VertexAttrib3fvARB;
    vfmt->VertexAttrib4fARB = _mesa_noop_VertexAttrib4fARB;
    vfmt->VertexAttrib4fvARB = _mesa_noop_VertexAttrib4fvARB;
-
-   vfmt->Rectf = _mesa_noop_Rectf;
 }
 
 

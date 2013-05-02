@@ -1022,8 +1022,6 @@ typedef struct {
 
    /*@}*/
 
-   void (GLAPIENTRYP Rectf)( GLfloat, GLfloat, GLfloat, GLfloat );
-
    /**
     * \name Eval
     *
