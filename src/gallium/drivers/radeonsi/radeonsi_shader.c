@@ -625,6 +625,7 @@ static void si_llvm_emit_epilogue(struct lp_build_tgsi_context * bld_base)
 	struct tgsi_parse_context *parse = &si_shader_ctx->parse;
 	LLVMValueRef args[9];
 	LLVMValueRef last_args[9] = { 0 };
+	unsigned semantic_name;
 	unsigned color_count = 0;
 	unsigned param_count = 0;
 	int depth_index = -1, stencil_index = -1;
@@ -668,9 +669,11 @@ static void si_llvm_emit_epilogue(struct lp_build_tgsi_context * bld_base)
 			continue;
 		}
 
+		semantic_name = d->Semantic.Name;
+handle_semantic:
 		for (index = d->Range.First; index <= d->Range.Last; index++) {
 			/* Select the correct target */
-			switch(d->Semantic.Name) {
+			switch(semantic_name) {
 			case TGSI_SEMANTIC_PSIZE:
 				shader->vs_out_misc_write = 1;
 				shader->vs_out_point_size = 1;
@@ -702,6 +705,11 @@ static void si_llvm_emit_epilogue(struct lp_build_tgsi_context * bld_base)
 					color_count++;
 				}
 				break;
+			case TGSI_SEMANTIC_CLIPDIST:
+				shader->clip_dist_write |=
+					d->Declaration.UsageMask << (d->Semantic.Index << 2);
+				target = V_008DFC_SQ_EXP_POS + 2 + d->Semantic.Index;
+				break;
 			case TGSI_SEMANTIC_CLIPVERTEX:
 				si_llvm_emit_clipvertex(bld_base, index);
 				shader->clip_dist_write = 0xFF;
@@ -716,14 +724,14 @@ static void si_llvm_emit_epilogue(struct lp_build_tgsi_context * bld_base)
 				target = 0;
 				fprintf(stderr,
 					"Warning: SI unhandled output type:%d\n",
-					d->Semantic.Name);
+					semantic_name);
 			}
 
 			si_llvm_init_export_args(bld_base, d, index, target, args);
 
 			if (si_shader_ctx->type == TGSI_PROCESSOR_VERTEX ?
-			    (d->Semantic.Name == TGSI_SEMANTIC_POSITION) :
-			    (d->Semantic.Name == TGSI_SEMANTIC_COLOR)) {
+			    (semantic_name == TGSI_SEMANTIC_POSITION) :
+			    (semantic_name == TGSI_SEMANTIC_COLOR)) {
 				if (last_args[0]) {
 					lp_build_intrinsic(base->gallivm->builder,
 							   "llvm.SI.export",
@@ -739,6 +747,11 @@ static void si_llvm_emit_epilogue(struct lp_build_tgsi_context * bld_base)
 						   args, 9);
 			}
 
+		}
+
+		if (semantic_name == TGSI_SEMANTIC_CLIPDIST) {
+			semantic_name = TGSI_SEMANTIC_GENERIC;
+			goto handle_semantic;
 		}
 	}
 
