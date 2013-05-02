@@ -3771,15 +3771,16 @@ save_ShadeModel(GLenum mode)
       CALL_ShadeModel(ctx->Exec, (mode));
    }
 
+   /* Don't compile this call if it's a no-op.
+    * By avoiding this state change we have a better chance of
+    * coalescing subsequent drawing commands into one batch.
+    */
    if (ctx->ListState.Current.ShadeModel == mode)
       return;
 
    SAVE_FLUSH_VERTICES(ctx);
 
-   /* Only save the value if we know the statechange will take effect:
-    */
-   if (!_mesa_inside_dlist_begin_end(ctx))
-      ctx->ListState.Current.ShadeModel = mode;
+   ctx->ListState.Current.ShadeModel = mode;
 
    n = alloc_instruction(ctx, OPCODE_SHADE_MODEL, 1);
    if (n) {
