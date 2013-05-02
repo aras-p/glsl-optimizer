@@ -101,9 +101,9 @@ void st_init_limits(struct st_context *st)
    c->MaxViewportHeight =
    c->MaxRenderbufferSize = c->MaxTextureRectSize;
 
-   c->MaxDrawBuffers
-      = _clamp(screen->get_param(screen, PIPE_CAP_MAX_RENDER_TARGETS),
-              1, MAX_DRAW_BUFFERS);
+   c->MaxDrawBuffers = c->MaxColorAttachments =
+      _clamp(screen->get_param(screen, PIPE_CAP_MAX_RENDER_TARGETS),
+             1, MAX_DRAW_BUFFERS);
 
    c->MaxDualSourceDrawBuffers
       = _clamp(screen->get_param(screen, PIPE_CAP_MAX_DUAL_SOURCE_RENDER_TARGETS),
@@ -138,10 +138,6 @@ void st_init_limits(struct st_context *st)
 
    c->MaxTextureLodBias
       = screen->get_paramf(screen, PIPE_CAPF_MAX_TEXTURE_LOD_BIAS);
-
-   c->MaxDrawBuffers
-      = CLAMP(screen->get_param(screen, PIPE_CAP_MAX_RENDER_TARGETS),
-              1, MAX_DRAW_BUFFERS);
 
    c->QuadsFollowProvokingVertexConvention = screen->get_param(
       screen, PIPE_CAP_QUADS_FOLLOW_PROVOKING_VERTEX_CONVENTION);
