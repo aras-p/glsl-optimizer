@@ -1105,9 +1105,9 @@ int ruvd_get_video_param(struct pipe_screen *screen,
 	case PIPE_VIDEO_CAP_PREFERED_FORMAT:
 		return PIPE_FORMAT_NV12;
 	case PIPE_VIDEO_CAP_PREFERS_INTERLACED:
-		return false;
+		return true;
 	case PIPE_VIDEO_CAP_SUPPORTS_INTERLACED:
-		return false; /* TODO: enable this */
+		return true;
 	case PIPE_VIDEO_CAP_SUPPORTS_PROGRESSIVE:
 		return true;
 	default:
