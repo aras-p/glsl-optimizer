@@ -5657,8 +5657,7 @@ save_Begin(GLenum mode)
       /* compile this error into the display list */
       _mesa_compile_error(ctx, GL_INVALID_ENUM, "glBegin(mode)");
    }
-   else if (_mesa_inside_dlist_begin_end(ctx) &&
-            ctx->Driver.CurrentSavePrimitive != PRIM_UNKNOWN) {
+   else if (_mesa_inside_dlist_begin_end(ctx)) {
       /* compile this error into the display list */
       _mesa_compile_error(ctx, GL_INVALID_OPERATION, "recursive glBegin");
    }
@@ -8659,8 +8658,7 @@ _mesa_EndList(void)
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glEndList\n");
 
-   if (ctx->ExecuteFlag && _mesa_inside_dlist_begin_end(ctx)
-       && ctx->Driver.CurrentSavePrimitive != PRIM_UNKNOWN) {
+   if (ctx->ExecuteFlag && _mesa_inside_dlist_begin_end(ctx)) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glEndList() called inside glBegin/End");
    }

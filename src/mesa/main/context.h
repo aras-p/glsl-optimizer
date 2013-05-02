@@ -207,7 +207,7 @@ _mesa_inside_begin_end(const struct gl_context *ctx)
 static inline GLboolean
 _mesa_inside_dlist_begin_end(const struct gl_context *ctx)
 {
-   return ctx->Driver.CurrentSavePrimitive != PRIM_OUTSIDE_BEGIN_END;
+   return ctx->Driver.CurrentSavePrimitive <= PRIM_MAX;
 }
 
 
