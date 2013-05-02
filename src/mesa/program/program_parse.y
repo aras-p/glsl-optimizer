@@ -2714,7 +2714,7 @@ _mesa_parse_arb_program(struct gl_context *ctx, GLenum target, const GLubyte *st
       ? & ctx->Const.VertexProgram
       : & ctx->Const.FragmentProgram;
 
-   state->MaxTextureImageUnits = ctx->Const.MaxTextureImageUnits;
+   state->MaxTextureImageUnits = ctx->Const.FragmentProgram.MaxTextureImageUnits;
    state->MaxTextureCoordUnits = ctx->Const.MaxTextureCoordUnits;
    state->MaxTextureUnits = ctx->Const.MaxTextureUnits;
    state->MaxClipPlanes = ctx->Const.MaxClipPlanes;

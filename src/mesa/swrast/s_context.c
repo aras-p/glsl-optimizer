@@ -459,7 +459,7 @@ _swrast_invalidate_state( struct gl_context *ctx, GLbitfield new_state )
       swrast->BlendFunc = _swrast_validate_blend_func;
 
    if (new_state & _SWRAST_NEW_TEXTURE_SAMPLE_FUNC)
-      for (i = 0 ; i < ctx->Const.MaxTextureImageUnits ; i++)
+      for (i = 0 ; i < ctx->Const.FragmentProgram.MaxTextureImageUnits ; i++)
 	 swrast->TextureSample[i] = NULL;
 }
 
@@ -473,7 +473,7 @@ _swrast_update_texture_samplers(struct gl_context *ctx)
    if (!swrast)
       return; /* pipe hack */
 
-   for (u = 0; u < ctx->Const.MaxTextureImageUnits; u++) {
+   for (u = 0; u < ctx->Const.FragmentProgram.MaxTextureImageUnits; u++) {
       struct gl_texture_object *tObj = ctx->Texture.Unit[u]._Current;
       /* Note: If tObj is NULL, the sample function will be a simple
        * function that just returns opaque black (0,0,0,1).

@@ -2735,6 +2735,7 @@ struct gl_program_constants
    /* GL_ARB_uniform_buffer_object */
    GLuint MaxUniformBlocks;
    GLuint MaxCombinedUniformComponents;
+   GLuint MaxTextureImageUnits;
 };
 
 
@@ -2751,11 +2752,8 @@ struct gl_constants
    GLuint MaxArrayTextureLayers; /**< Max layers in array textures */
    GLuint MaxTextureRectSize;    /**< Max rectangle texture size, in pixes */
    GLuint MaxTextureCoordUnits;
-   GLuint MaxTextureImageUnits;
-   GLuint MaxVertexTextureImageUnits;
    GLuint MaxCombinedTextureImageUnits;
-   GLuint MaxGeometryTextureImageUnits;
-   GLuint MaxTextureUnits;           /**< = MIN(CoordUnits, ImageUnits) */
+   GLuint MaxTextureUnits;           /**< = MIN(CoordUnits, FragmentProgram.ImageUnits) */
    GLfloat MaxTextureMaxAnisotropy;  /**< GL_EXT_texture_filter_anisotropic */
    GLfloat MaxTextureLodBias;        /**< GL_EXT_texture_lod_bias */
    GLuint MaxTextureBufferSize;      /**< GL_ARB_texture_buffer_object */

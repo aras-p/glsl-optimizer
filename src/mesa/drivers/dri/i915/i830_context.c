@@ -96,7 +96,7 @@ i830CreateContext(int api,
       FALLBACK(intel, INTEL_FALLBACK_USER, 1);
 
    intel->ctx.Const.MaxTextureUnits = I830_TEX_UNITS;
-   intel->ctx.Const.MaxTextureImageUnits = I830_TEX_UNITS;
+   intel->ctx.Const.FragmentProgram.MaxTextureImageUnits = I830_TEX_UNITS;
    intel->ctx.Const.MaxTextureCoordUnits = I830_TEX_UNITS;
 
    /* Advertise the full hardware capabilities.  The new memory

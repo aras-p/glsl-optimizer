@@ -159,7 +159,7 @@ nv04_context_create(struct nouveau_screen *screen, const struct gl_config *visua
 	/* GL constants. */
 	ctx->Const.MaxTextureLevels = 11;
 	ctx->Const.MaxTextureCoordUnits = NV04_TEXTURE_UNITS;
-	ctx->Const.MaxTextureImageUnits = NV04_TEXTURE_UNITS;
+	ctx->Const.FragmentProgram.MaxTextureImageUnits = NV04_TEXTURE_UNITS;
 	ctx->Const.MaxTextureUnits = NV04_TEXTURE_UNITS;
 	ctx->Const.MaxTextureMaxAnisotropy = 2;
 	ctx->Const.MaxTextureLodBias = 15;

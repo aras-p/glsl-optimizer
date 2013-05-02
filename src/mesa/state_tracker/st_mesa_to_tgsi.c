@@ -1221,7 +1221,7 @@ st_translate_mesa_program(
    }
 
    /* texture samplers */
-   for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
+   for (i = 0; i < ctx->Const.FragmentProgram.MaxTextureImageUnits; i++) {
       if (program->SamplersUsed & (1 << i)) {
          t->samplers[i] = ureg_DECL_sampler( ureg, i );
       }

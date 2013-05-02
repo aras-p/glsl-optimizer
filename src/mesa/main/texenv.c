@@ -880,7 +880,7 @@ _mesa_GetTexBumpParameterivATI( GLenum pname, GLint *param )
    }
    else if (pname == GL_BUMP_NUM_TEX_UNITS_ATI) {
       GLint count = 0;
-      for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
+      for (i = 0; i < ctx->Const.FragmentProgram.MaxTextureImageUnits; i++) {
          if (ctx->Const.SupportedBumpUnits & (1 << i)) {
             count++;
          }
@@ -888,7 +888,7 @@ _mesa_GetTexBumpParameterivATI( GLenum pname, GLint *param )
       *param = count;
    }
    else if (pname == GL_BUMP_TEX_UNITS_ATI) {
-      for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
+      for (i = 0; i < ctx->Const.FragmentProgram.MaxTextureImageUnits; i++) {
          if (ctx->Const.SupportedBumpUnits & (1 << i)) {
             *param++ = i + GL_TEXTURE0;
          }
@@ -929,7 +929,7 @@ _mesa_GetTexBumpParameterfvATI( GLenum pname, GLfloat *param )
    }
    else if (pname == GL_BUMP_NUM_TEX_UNITS_ATI) {
       GLint count = 0;
-      for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
+      for (i = 0; i < ctx->Const.FragmentProgram.MaxTextureImageUnits; i++) {
          if (ctx->Const.SupportedBumpUnits & (1 << i)) {
             count++;
          }
@@ -937,7 +937,7 @@ _mesa_GetTexBumpParameterfvATI( GLenum pname, GLfloat *param )
       *param = (GLfloat) count;
    }
    else if (pname == GL_BUMP_TEX_UNITS_ATI) {
-      for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
+      for (i = 0; i < ctx->Const.FragmentProgram.MaxTextureImageUnits; i++) {
          if (ctx->Const.SupportedBumpUnits & (1 << i)) {
             *param++ = (GLfloat) (i + GL_TEXTURE0);
          }

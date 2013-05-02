@@ -90,12 +90,12 @@ void st_init_limits(struct st_context *st)
    c->MaxArrayTextureLayers
       = screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_ARRAY_LAYERS);
 
-   c->MaxTextureImageUnits
+   c->FragmentProgram.MaxTextureImageUnits
       = _min(screen->get_shader_param(screen, PIPE_SHADER_FRAGMENT,
                                       PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS),
             MAX_TEXTURE_IMAGE_UNITS);
 
-   c->MaxVertexTextureImageUnits
+   c->VertexProgram.MaxTextureImageUnits
       = _min(screen->get_shader_param(screen, PIPE_SHADER_VERTEX,
                                       PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS),
              MAX_TEXTURE_IMAGE_UNITS);
@@ -105,9 +105,9 @@ void st_init_limits(struct st_context *st)
              MAX_COMBINED_TEXTURE_IMAGE_UNITS);
 
    c->MaxTextureCoordUnits
-      = _min(c->MaxTextureImageUnits, MAX_TEXTURE_COORD_UNITS);
+      = _min(c->FragmentProgram.MaxTextureImageUnits, MAX_TEXTURE_COORD_UNITS);
 
-   c->MaxTextureUnits = _min(c->MaxTextureImageUnits, c->MaxTextureCoordUnits);
+   c->MaxTextureUnits = _min(c->FragmentProgram.MaxTextureImageUnits, c->MaxTextureCoordUnits);
 
    /* Define max viewport size and max renderbuffer size in terms of
     * max texture size (note: max tex RECT size = max tex 2D size).

@@ -155,14 +155,14 @@ brwCreateContext(int api,
 
    ctx->Const.MaxDualSourceDrawBuffers = 1;
    ctx->Const.MaxDrawBuffers = BRW_MAX_DRAW_BUFFERS;
-   ctx->Const.MaxTextureImageUnits = BRW_MAX_TEX_UNIT;
+   ctx->Const.FragmentProgram.MaxTextureImageUnits = BRW_MAX_TEX_UNIT;
    ctx->Const.MaxTextureCoordUnits = 8; /* Mesa limit */
    ctx->Const.MaxTextureUnits = MIN2(ctx->Const.MaxTextureCoordUnits,
-                                     ctx->Const.MaxTextureImageUnits);
-   ctx->Const.MaxVertexTextureImageUnits = BRW_MAX_TEX_UNIT;
+                                     ctx->Const.FragmentProgram.MaxTextureImageUnits);
+   ctx->Const.VertexProgram.MaxTextureImageUnits = BRW_MAX_TEX_UNIT;
    ctx->Const.MaxCombinedTextureImageUnits =
-      ctx->Const.MaxVertexTextureImageUnits +
-      ctx->Const.MaxTextureImageUnits;
+      ctx->Const.VertexProgram.MaxTextureImageUnits +
+      ctx->Const.FragmentProgram.MaxTextureImageUnits;
 
    ctx->Const.MaxTextureLevels = 14; /* 8192 */
    if (ctx->Const.MaxTextureLevels > MAX_TEXTURE_LEVELS)

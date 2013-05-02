@@ -260,7 +260,7 @@ map_textures(struct gl_context *ctx, const struct gl_vertex_program *vp)
 {
    GLuint u;
 
-   for (u = 0; u < ctx->Const.MaxVertexTextureImageUnits; u++) {
+   for (u = 0; u < ctx->Const.VertexProgram.MaxTextureImageUnits; u++) {
       if (vp->Base.TexturesUsed[u]) {
          /* Note: _Current *should* correspond to the target indicated
           * in TexturesUsed[u].
@@ -279,7 +279,7 @@ unmap_textures(struct gl_context *ctx, const struct gl_vertex_program *vp)
 {
    GLuint u;
 
-   for (u = 0; u < ctx->Const.MaxVertexTextureImageUnits; u++) {
+   for (u = 0; u < ctx->Const.VertexProgram.MaxTextureImageUnits; u++) {
       if (vp->Base.TexturesUsed[u]) {
          /* Note: _Current *should* correspond to the target indicated
           * in TexturesUsed[u].

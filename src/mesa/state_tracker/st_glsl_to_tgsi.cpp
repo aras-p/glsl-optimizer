@@ -4930,7 +4930,7 @@ st_translate_program(
    assert(i == program->num_immediates);
 
    /* texture samplers */
-   for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
+   for (i = 0; i < ctx->Const.FragmentProgram.MaxTextureImageUnits; i++) {
       if (program->samplers_used & (1 << i)) {
          t->samplers[i] = ureg_DECL_sampler(ureg, i);
       }

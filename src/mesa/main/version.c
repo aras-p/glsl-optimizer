@@ -260,7 +260,7 @@ compute_version(struct gl_context *ctx)
                               ctx->Extensions.EXT_texture_snorm &&
                               ctx->Extensions.NV_primitive_restart &&
                               ctx->Extensions.NV_texture_rectangle &&
-                              ctx->Const.MaxVertexTextureImageUnits >= 16);
+                              ctx->Const.VertexProgram.MaxTextureImageUnits >= 16);
    const GLboolean ver_3_2 = (ver_3_1 &&
                               ctx->Const.GLSLVersion >= 150 &&
                               ctx->Extensions.ARB_depth_clamp &&

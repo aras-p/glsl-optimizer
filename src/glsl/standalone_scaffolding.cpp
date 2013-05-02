@@ -117,9 +117,9 @@ void initialize_context_to_defaults(struct gl_context *ctx, gl_api api)
 
    ctx->Const.VertexProgram.MaxUniformComponents = 512;
    ctx->Const.MaxVarying = 8; /* == gl_MaxVaryingFloats / 4 */
-   ctx->Const.MaxVertexTextureImageUnits = 0;
+   ctx->Const.VertexProgram.MaxTextureImageUnits = 0;
    ctx->Const.MaxCombinedTextureImageUnits = 2;
-   ctx->Const.MaxTextureImageUnits = 2;
+   ctx->Const.FragmentProgram.MaxTextureImageUnits = 2;
    ctx->Const.FragmentProgram.MaxUniformComponents = 64;
 
    ctx->Const.MaxDrawBuffers = 1;

@@ -467,7 +467,7 @@ nv20_context_create(struct nouveau_screen *screen, const struct gl_config *visua
 
 	/* GL constants. */
 	ctx->Const.MaxTextureCoordUnits = NV20_TEXTURE_UNITS;
-	ctx->Const.MaxTextureImageUnits = NV20_TEXTURE_UNITS;
+	ctx->Const.FragmentProgram.MaxTextureImageUnits = NV20_TEXTURE_UNITS;
 	ctx->Const.MaxTextureUnits = NV20_TEXTURE_UNITS;
 	ctx->Const.MaxTextureMaxAnisotropy = 8;
 	ctx->Const.MaxTextureLodBias = 15;

@@ -2237,7 +2237,7 @@ static GLboolean r200ValidateBuffers(struct gl_context *ctx)
 				       0, RADEON_GEM_DOMAIN_VRAM);
    }
 
-   for (i = 0; i < ctx->Const.MaxTextureImageUnits; ++i) {
+   for (i = 0; i < ctx->Const.FragmentProgram.MaxTextureImageUnits; ++i) {
       radeonTexObj *t;
 
       if (!ctx->Texture.Unit[i]._ReallyEnabled)

@@ -191,12 +191,12 @@ i915CreateContext(int api,
       FALLBACK(intel, INTEL_FALLBACK_USER, 1);
 
    ctx->Const.MaxTextureUnits = I915_TEX_UNITS;
-   ctx->Const.MaxTextureImageUnits = I915_TEX_UNITS;
+   ctx->Const.FragmentProgram.MaxTextureImageUnits = I915_TEX_UNITS;
    ctx->Const.MaxTextureCoordUnits = I915_TEX_UNITS;
    ctx->Const.MaxVarying = I915_TEX_UNITS;
    ctx->Const.MaxCombinedTextureImageUnits =
-      ctx->Const.MaxVertexTextureImageUnits +
-      ctx->Const.MaxTextureImageUnits;
+      ctx->Const.VertexProgram.MaxTextureImageUnits +
+      ctx->Const.FragmentProgram.MaxTextureImageUnits;
 
    /* Advertise the full hardware capabilities.  The new memory
     * manager should cope much better with overload situations:

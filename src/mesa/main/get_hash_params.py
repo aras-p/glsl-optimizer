@@ -273,8 +273,8 @@ descriptor=[
 
 # GL_ARB_fragment_program
 # == GL_MAX_TEXTURE_IMAGE_UNITS_NV
-  [ "MAX_TEXTURE_IMAGE_UNITS_ARB", "CONTEXT_INT(Const.MaxTextureImageUnits), extra_ARB_fragment_program" ],
-  [ "MAX_VERTEX_TEXTURE_IMAGE_UNITS_ARB", "CONTEXT_INT(Const.MaxVertexTextureImageUnits), extra_ARB_vertex_shader" ],
+  [ "MAX_TEXTURE_IMAGE_UNITS_ARB", "CONTEXT_INT(Const.FragmentProgram.MaxTextureImageUnits), extra_ARB_fragment_program" ],
+  [ "MAX_VERTEX_TEXTURE_IMAGE_UNITS_ARB", "CONTEXT_INT(Const.VertexProgram.MaxTextureImageUnits), extra_ARB_vertex_shader" ],
   [ "MAX_COMBINED_TEXTURE_IMAGE_UNITS_ARB", "CONTEXT_INT(Const.MaxCombinedTextureImageUnits), extra_ARB_vertex_shader" ],
 
 # GL_ARB_shader_objects
@@ -637,7 +637,7 @@ descriptor=[
   [ "MAX_VERTEX_STREAMS", "CONTEXT_INT(Const.MaxVertexStreams), extra_ARB_transform_feedback3" ],
 
 # GL_ARB_geometry_shader4
-  [ "MAX_GEOMETRY_TEXTURE_IMAGE_UNITS_ARB", "CONTEXT_INT(Const.MaxGeometryTextureImageUnits), extra_ARB_geometry_shader4" ],
+  [ "MAX_GEOMETRY_TEXTURE_IMAGE_UNITS_ARB", "CONTEXT_INT(Const.GeometryProgram.MaxTextureImageUnits), extra_ARB_geometry_shader4" ],
   [ "MAX_GEOMETRY_OUTPUT_VERTICES_ARB", "CONTEXT_INT(Const.MaxGeometryOutputVertices), extra_ARB_geometry_shader4" ],
   [ "MAX_GEOMETRY_TOTAL_OUTPUT_COMPONENTS_ARB", "CONTEXT_INT(Const.MaxGeometryTotalOutputComponents), extra_ARB_geometry_shader4" ],
   [ "MAX_GEOMETRY_UNIFORM_COMPONENTS_ARB", "CONTEXT_INT(Const.GeometryProgram.MaxUniformComponents), extra_ARB_geometry_shader4" ],

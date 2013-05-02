@@ -1512,15 +1512,15 @@ check_resources(struct gl_context *ctx, struct gl_shader_program *prog)
    };
 
    const unsigned max_samplers[MESA_SHADER_TYPES] = {
-      ctx->Const.MaxVertexTextureImageUnits,
-      ctx->Const.MaxTextureImageUnits,
-      ctx->Const.MaxGeometryTextureImageUnits
+      ctx->Const.VertexProgram.MaxTextureImageUnits,
+      ctx->Const.FragmentProgram.MaxTextureImageUnits,
+      ctx->Const.GeometryProgram.MaxTextureImageUnits
    };
 
    const unsigned max_uniform_components[MESA_SHADER_TYPES] = {
       ctx->Const.VertexProgram.MaxUniformComponents,
       ctx->Const.FragmentProgram.MaxUniformComponents,
-      0          /* FINISHME: Geometry shaders. */
+      ctx->Const.GeometryProgram.MaxUniformComponents
    };
 
    const unsigned max_uniform_blocks[MESA_SHADER_TYPES] = {
