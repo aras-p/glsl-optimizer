@@ -138,39 +138,9 @@ u_prim_vertex_count(unsigned prim)
 
 static INLINE boolean u_validate_pipe_prim( unsigned pipe_prim, unsigned nr )
 {
-   boolean ok = TRUE;
+   const struct u_prim_vertex_count *count = u_prim_vertex_count(pipe_prim);
 
-   switch (pipe_prim) {
-   case PIPE_PRIM_POINTS:
-      ok = (nr >= 1);
-      break;
-   case PIPE_PRIM_LINES:
-      ok = (nr >= 2);
-      break;
-   case PIPE_PRIM_LINE_STRIP:
-   case PIPE_PRIM_LINE_LOOP:
-      ok = (nr >= 2);
-      break;
-   case PIPE_PRIM_TRIANGLES:
-      ok = (nr >= 3);
-      break;
-   case PIPE_PRIM_TRIANGLE_STRIP:
-   case PIPE_PRIM_TRIANGLE_FAN:
-   case PIPE_PRIM_POLYGON:
-      ok = (nr >= 3);
-      break;
-   case PIPE_PRIM_QUADS:
-      ok = (nr >= 4);
-      break;
-   case PIPE_PRIM_QUAD_STRIP:
-      ok = (nr >= 4);
-      break;
-   default:
-      ok = 0;
-      break;
-   }
-
-   return ok;
+   return (count && nr >= count->min);
 }
 
 
