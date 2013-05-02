@@ -91,8 +91,8 @@ static INLINE boolean u_trim_pipe_prim( unsigned pipe_prim, unsigned *nr )
       { 3, 0 }, /* PIPE_PRIM_TRIANGLE_POLYGON */
       { 4, 4 }, /* PIPE_PRIM_LINES_ADJACENCY */
       { 4, 0 }, /* PIPE_PRIM_LINE_STRIP_ADJACENCY */
-      { 6, 5 }, /* PIPE_PRIM_TRIANGLES_ADJACENCY */
-      { 4, 0 }, /* PIPE_PRIM_TRIANGLE_STRIP_ADJACENCY */
+      { 6, 6 }, /* PIPE_PRIM_TRIANGLES_ADJACENCY */
+      { 6, 2 }, /* PIPE_PRIM_TRIANGLE_STRIP_ADJACENCY */
    };
 
    if (unlikely(pipe_prim >= PIPE_PRIM_MAX)) {
