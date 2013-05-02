@@ -85,9 +85,10 @@ struct set_entry;
 
 
 /** Extra draw modes beyond GL_POINTS, GL_TRIANGLE_FAN, etc */
-#define PRIM_OUTSIDE_BEGIN_END   (GL_POLYGON+1)
-#define PRIM_INSIDE_UNKNOWN_PRIM (GL_POLYGON+2)
-#define PRIM_UNKNOWN             (GL_POLYGON+3)
+#define PRIM_MAX                 GL_TRIANGLE_STRIP_ADJACENCY
+#define PRIM_OUTSIDE_BEGIN_END   (PRIM_MAX + 1)
+#define PRIM_INSIDE_UNKNOWN_PRIM (PRIM_MAX + 2)
+#define PRIM_UNKNOWN             (PRIM_MAX + 3)
 
 
 
