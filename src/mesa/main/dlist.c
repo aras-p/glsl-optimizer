@@ -8652,6 +8652,12 @@ _mesa_EndList(void)
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glEndList\n");
 
+   if (ctx->ExecuteFlag && _mesa_inside_dlist_begin_end(ctx)
+       && ctx->Driver.CurrentSavePrimitive != PRIM_UNKNOWN) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glEndList() called inside glBegin/End");
+   }
+
    /* Check that a list is under construction */
    if (!ctx->ListState.CurrentList) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glEndList");
