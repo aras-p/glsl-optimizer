@@ -243,6 +243,26 @@ u_decomposed_prims_for_vertices(int primitive, int vertices)
    }
 }
 
+/**
+ * Returns the number of reduced/tessellated primitives for the given vertex
+ * count.  Each quad is treated as two triangles.  Polygons are treated as
+ * triangle fans.
+ */
+static INLINE unsigned
+u_reduced_prims_for_vertices(int primitive, int vertices)
+{
+   switch (primitive) {
+   case PIPE_PRIM_QUADS:
+   case PIPE_PRIM_QUAD_STRIP:
+      return u_decomposed_prims_for_vertices(primitive, vertices) * 2;
+   case PIPE_PRIM_POLYGON:
+      primitive = PIPE_PRIM_TRIANGLE_FAN;
+      /* fall through */
+   default:
+      return u_decomposed_prims_for_vertices(primitive, vertices);
+   }
+}
+
 const char *u_prim_name( unsigned pipe_prim );
 
 #endif
