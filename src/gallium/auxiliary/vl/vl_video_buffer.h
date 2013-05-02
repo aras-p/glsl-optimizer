@@ -95,11 +95,11 @@ vl_video_buffer_get_associated_data(struct pipe_video_buffer *vbuf,
  * fill a resource template for the given plane
  */
 void
-vl_vide_buffer_template(struct pipe_resource *templ,
-			const struct pipe_video_buffer *templat,
-                        enum pipe_format resource_format,
-                        unsigned array_size, unsigned usage,
-                        unsigned plane);
+vl_video_buffer_template(struct pipe_resource *templ,
+                         const struct pipe_video_buffer *templat,
+                         enum pipe_format resource_format,
+                         unsigned array_size, unsigned usage,
+                         unsigned plane);
 
 /**
  * creates a video buffer, can be used as a standard implementation for pipe->create_video_buffer

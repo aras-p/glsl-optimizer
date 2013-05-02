@@ -213,11 +213,11 @@ vl_video_buffer_get_associated_data(struct pipe_video_buffer *vbuf,
 }
 
 void
-vl_vide_buffer_template(struct pipe_resource *templ,
-                        const struct pipe_video_buffer *tmpl,
-                        enum pipe_format resource_format,
-                        unsigned array_size, unsigned usage,
-                        unsigned plane)
+vl_video_buffer_template(struct pipe_resource *templ,
+                         const struct pipe_video_buffer *tmpl,
+                         enum pipe_format resource_format,
+                         unsigned array_size, unsigned usage,
+                         unsigned plane)
 {
    memset(templ, 0, sizeof(*templ));
    templ->target = array_size > 1 ? PIPE_TEXTURE_2D_ARRAY : PIPE_TEXTURE_2D;
@@ -444,7 +444,7 @@ vl_video_buffer_create_ex(struct pipe_context *pipe,
 
    memset(resources, 0, sizeof resources);
 
-   vl_vide_buffer_template(&res_tmpl, tmpl, resource_formats[0], array_size, usage, 0);
+   vl_video_buffer_template(&res_tmpl, tmpl, resource_formats[0], array_size, usage, 0);
    resources[0] = pipe->screen->resource_create(pipe->screen, &res_tmpl);
    if (!resources[0])
       goto error;
@@ -454,7 +454,7 @@ vl_video_buffer_create_ex(struct pipe_context *pipe,
       return vl_video_buffer_create_ex2(pipe, tmpl, resources);
    }
 
-   vl_vide_buffer_template(&res_tmpl, tmpl, resource_formats[1], array_size, usage, 1);
+   vl_video_buffer_template(&res_tmpl, tmpl, resource_formats[1], array_size, usage, 1);
    resources[1] = pipe->screen->resource_create(pipe->screen, &res_tmpl);
    if (!resources[1])
       goto error;
@@ -462,7 +462,7 @@ vl_video_buffer_create_ex(struct pipe_context *pipe,
    if (resource_formats[2] == PIPE_FORMAT_NONE)
       return vl_video_buffer_create_ex2(pipe, tmpl, resources);
 
-   vl_vide_buffer_template(&res_tmpl, tmpl, resource_formats[2], array_size, usage, 2);
+   vl_video_buffer_template(&res_tmpl, tmpl, resource_formats[2], array_size, usage, 2);
    resources[2] = pipe->screen->resource_create(pipe->screen, &res_tmpl);
    if (!resources[2])
       goto error;
