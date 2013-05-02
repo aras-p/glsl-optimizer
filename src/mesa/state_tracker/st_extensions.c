@@ -70,7 +70,6 @@ void st_init_limits(struct st_context *st)
    struct gl_constants *c = &st->ctx->Const;
    gl_shader_type sh;
    boolean can_ubo = TRUE;
-   int max_const_buffers;
 
    c->MaxTextureLevels
       = _min(screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_2D_LEVELS),
@@ -162,6 +161,13 @@ void st_init_limits(struct st_context *st)
    c->QuadsFollowProvokingVertexConvention = screen->get_param(
       screen, PIPE_CAP_QUADS_FOLLOW_PROVOKING_VERTEX_CONVENTION);
 
+   c->MaxUniformBlockSize =
+      screen->get_shader_param(screen, PIPE_SHADER_FRAGMENT,
+                               PIPE_SHADER_CAP_MAX_CONSTS) * 16;
+   if (c->MaxUniformBlockSize < 16384) {
+      can_ubo = FALSE;
+   }
+
    for (sh = 0; sh < MESA_SHADER_TYPES; ++sh) {
       struct gl_shader_compiler_options *options =
          &st->ctx->ShaderCompilerOptions[sh];
@@ -182,17 +188,33 @@ void st_init_limits(struct st_context *st)
          continue;
       }
 
-      pc->MaxNativeInstructions    = screen->get_shader_param(screen, sh, PIPE_SHADER_CAP_MAX_INSTRUCTIONS);
-      pc->MaxNativeAluInstructions = screen->get_shader_param(screen, sh, PIPE_SHADER_CAP_MAX_ALU_INSTRUCTIONS);
-      pc->MaxNativeTexInstructions = screen->get_shader_param(screen, sh, PIPE_SHADER_CAP_MAX_TEX_INSTRUCTIONS);
-      pc->MaxNativeTexIndirections = screen->get_shader_param(screen, sh, PIPE_SHADER_CAP_MAX_TEX_INDIRECTIONS);
-      pc->MaxNativeAttribs         = screen->get_shader_param(screen, sh, PIPE_SHADER_CAP_MAX_INPUTS);
-      pc->MaxNativeTemps           = screen->get_shader_param(screen, sh, PIPE_SHADER_CAP_MAX_TEMPS);
-      pc->MaxNativeAddressRegs     = screen->get_shader_param(screen, sh, PIPE_SHADER_CAP_MAX_ADDRS);
-      pc->MaxNativeParameters      = screen->get_shader_param(screen, sh, PIPE_SHADER_CAP_MAX_CONSTS);
-      pc->MaxUniformComponents     = 4 * MIN2(pc->MaxNativeParameters, MAX_UNIFORMS);
-      /* raise MaxParameters if native support is higher */
-      pc->MaxParameters            = MAX2(pc->MaxParameters, pc->MaxNativeParameters);
+      pc->MaxInstructions    = pc->MaxNativeInstructions    =
+         screen->get_shader_param(screen, sh, PIPE_SHADER_CAP_MAX_INSTRUCTIONS);
+      pc->MaxAluInstructions = pc->MaxNativeAluInstructions =
+         screen->get_shader_param(screen, sh, PIPE_SHADER_CAP_MAX_ALU_INSTRUCTIONS);
+      pc->MaxTexInstructions = pc->MaxNativeTexInstructions =
+         screen->get_shader_param(screen, sh, PIPE_SHADER_CAP_MAX_TEX_INSTRUCTIONS);
+      pc->MaxTexIndirections = pc->MaxNativeTexIndirections =
+         screen->get_shader_param(screen, sh, PIPE_SHADER_CAP_MAX_TEX_INDIRECTIONS);
+      pc->MaxAttribs         = pc->MaxNativeAttribs         =
+         screen->get_shader_param(screen, sh, PIPE_SHADER_CAP_MAX_INPUTS);
+      pc->MaxTemps           = pc->MaxNativeTemps           =
+         screen->get_shader_param(screen, sh, PIPE_SHADER_CAP_MAX_TEMPS);
+      pc->MaxAddressRegs     = pc->MaxNativeAddressRegs     =
+         screen->get_shader_param(screen, sh, PIPE_SHADER_CAP_MAX_ADDRS);
+      pc->MaxParameters      = pc->MaxNativeParameters      =
+         screen->get_shader_param(screen, sh, PIPE_SHADER_CAP_MAX_CONSTS);
+
+      pc->MaxUniformComponents = 4 * MIN2(pc->MaxNativeParameters, MAX_UNIFORMS);
+
+      pc->MaxUniformBlocks =
+         screen->get_shader_param(screen, sh, PIPE_SHADER_CAP_MAX_CONST_BUFFERS);
+      if (pc->MaxUniformBlocks)
+         pc->MaxUniformBlocks -= 1; /* The first one is for ordinary uniforms. */
+
+      pc->MaxCombinedUniformComponents = (pc->MaxUniformComponents +
+                                          c->MaxUniformBlockSize / 4 *
+                                          pc->MaxUniformBlocks);
 
       /* Gallium doesn't really care about local vs. env parameters so use the
        * same limits.
@@ -219,15 +241,9 @@ void st_init_limits(struct st_context *st)
       options->EmitNoIndirectUniform = !screen->get_shader_param(screen, sh,
                                         PIPE_SHADER_CAP_INDIRECT_CONST_ADDR);
 
-      if (pc->MaxNativeInstructions) {
-         if (options->EmitNoIndirectUniform)
+      if (pc->MaxNativeInstructions &&
+          (options->EmitNoIndirectUniform || pc->MaxUniformBlocks < 12)) {
          can_ubo = FALSE;
-
-         max_const_buffers = screen->get_shader_param(screen, sh,
-                                                      PIPE_SHADER_CAP_MAX_CONST_BUFFERS);
-         /* we need 13 buffers - 1 constant, 12 UBO */
-         if (max_const_buffers < 13)
-            can_ubo = FALSE;
       }
 
       if (options->EmitNoLoops)
@@ -236,6 +252,8 @@ void st_init_limits(struct st_context *st)
          options->MaxUnrollIterations = 255; /* SM3 limit */
       options->LowerClipDistance = true;
    }
+
+   c->VertexProgram.MaxAttribs = MIN2(c->VertexProgram.MaxAttribs, 16);
 
    /* PIPE_SHADER_CAP_MAX_INPUTS for the FS specifies the maximum number
     * of inputs. It's always 2 colors + N generic inputs. */
@@ -267,8 +285,12 @@ void st_init_limits(struct st_context *st)
 
    if (can_ubo) {
       st->ctx->Extensions.ARB_uniform_buffer_object = GL_TRUE;
-      st->ctx->Const.UniformBufferOffsetAlignment =
+      c->UniformBufferOffsetAlignment =
          screen->get_param(screen, PIPE_CAP_CONSTANT_BUFFER_OFFSET_ALIGNMENT);
+      c->MaxCombinedUniformBlocks = c->MaxUniformBufferBindings =
+         c->VertexProgram.MaxUniformBlocks +
+         c->GeometryProgram.MaxUniformBlocks +
+         c->FragmentProgram.MaxUniformBlocks;
    }
 }
 
