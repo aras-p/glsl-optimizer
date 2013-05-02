@@ -244,6 +244,12 @@ void ra_init::alloc_arrays() {
 			cerr << "\n";
 		);
 
+		// skip preallocated arrays (e.g. with preloaded inputs)
+		if (a->gpr) {
+			RA_DUMP( cerr << "   FIXED at " << a->gpr << "\n"; );
+			continue;
+		}
+
 		bool dead = a->is_dead();
 
 		if (dead) {

@@ -61,7 +61,7 @@ bool shader::assign_slot(alu_node* n, alu_node *slots[5]) {
 	return true;
 }
 
-void shader::add_gpr_values(vvec& vec, unsigned gpr, unsigned comp_mask,
+void shader::add_pinned_gpr_values(vvec& vec, unsigned gpr, unsigned comp_mask,
                             bool src) {
 	unsigned chan = 0;
 	while (comp_mask) {
@@ -71,6 +71,11 @@ void shader::add_gpr_values(vvec& vec, unsigned gpr, unsigned comp_mask,
 			if (!v->is_rel()) {
 				v->gpr = v->pin_gpr = v->select;
 				v->fix();
+			}
+			if (v->array && !v->array->gpr) {
+				// if pinned value can be accessed with indirect addressing
+				// pin the entire array to its original location
+				v->array->gpr = v->array->base_gpr;
 			}
 			vec.push_back(v);
 		}
@@ -199,7 +204,7 @@ void shader::add_input(unsigned gpr, bool preloaded, unsigned comp_mask) {
 	i.comp_mask = comp_mask;
 
 	if (preloaded) {
-		add_gpr_values(root->dst, gpr, comp_mask, true);
+		add_pinned_gpr_values(root->dst, gpr, comp_mask, true);
 	}
 
 }
@@ -217,9 +222,9 @@ void shader::init_call_fs(cf_node* cf) {
 	for(inputs_vec::const_iterator I = inputs.begin(),
 			E = inputs.end(); I != E; ++I, ++gpr) {
 		if (!I->preloaded)
-			add_gpr_values(cf->dst, gpr, I->comp_mask, false);
+			add_pinned_gpr_values(cf->dst, gpr, I->comp_mask, false);
 		else
-			add_gpr_values(cf->src, gpr, I->comp_mask, true);
+			add_pinned_gpr_values(cf->src, gpr, I->comp_mask, true);
 	}
 }
 

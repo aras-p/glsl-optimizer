@@ -345,13 +345,17 @@ void coalescer::init_reg_bitset(sb_bitset &bs, val_set &vs) {
 	for (val_set::iterator I = vs.begin(sh), E = vs.end(sh); I != E; ++I) {
 		value *v = *I;
 
-		if (!v->is_sgpr())
+		if (!v->is_any_gpr())
 			continue;
 
-		if (v->gpr) {
-			if (v->gpr >= bs.size())
-				bs.resize(v->gpr + 64);
-			bs.set(v->gpr, 1);
+		unsigned gpr = v->get_final_gpr();
+		if (!gpr)
+			continue;
+
+		if (gpr) {
+			if (gpr >= bs.size())
+				bs.resize(gpr + 64);
+			bs.set(gpr, 1);
 		}
 	}
 }

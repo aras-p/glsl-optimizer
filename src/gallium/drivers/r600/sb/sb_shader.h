@@ -315,7 +315,7 @@ public:
 	value* get_value_version(value* v, unsigned ver);
 
 	void init();
-	void add_gpr_values(vvec& vec, unsigned gpr, unsigned comp_mask, bool src);
+	void add_pinned_gpr_values(vvec& vec, unsigned gpr, unsigned comp_mask, bool src);
 
 	void dump_ir();
 
