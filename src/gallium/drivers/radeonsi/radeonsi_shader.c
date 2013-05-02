@@ -947,7 +947,7 @@ static void tex_fetch_args(
 	}
 
 	/* Pack LOD */
-	if (opcode == TGSI_OPCODE_TXL)
+	if (opcode == TGSI_OPCODE_TXL || opcode == TGSI_OPCODE_TXF)
 		address[count++] = coords[3];
 
 	if (count > 16) {
@@ -962,26 +962,56 @@ static void tex_fetch_args(
 						 "");
 	}
 
+	/* Resource */
+	emit_data->args[1] = si_shader_ctx->resources[emit_data->inst->Src[1].Register.Index];
+
+	if (opcode == TGSI_OPCODE_TXF) {
+		/* add tex offsets */
+		if (inst->Texture.NumOffsets) {
+			struct lp_build_context *uint_bld = &bld_base->uint_bld;
+			struct lp_build_tgsi_soa_context *bld = lp_soa_context(bld_base);
+			const struct tgsi_texture_offset * off = inst->TexOffsets;
+
+			assert(inst->Texture.NumOffsets == 1);
+
+			address[0] =
+				lp_build_add(uint_bld, address[0],
+					     bld->immediates[off->Index][off->SwizzleX]);
+			if (num_coords > 1)
+				address[1] =
+					lp_build_add(uint_bld, address[1],
+						     bld->immediates[off->Index][off->SwizzleY]);
+			if (num_coords > 2)
+				address[2] =
+					lp_build_add(uint_bld, address[2],
+						     bld->immediates[off->Index][off->SwizzleZ]);
+		}
+
+		emit_data->dst_type = LLVMVectorType(
+			LLVMInt32TypeInContext(bld_base->base.gallivm->context),
+			4);
+
+		emit_data->arg_count = 3;
+	} else {
+		/* Sampler */
+		emit_data->args[2] = si_shader_ctx->samplers[emit_data->inst->Src[1].Register.Index];
+
+		emit_data->dst_type = LLVMVectorType(
+			LLVMFloatTypeInContext(bld_base->base.gallivm->context),
+			4);
+
+		emit_data->arg_count = 4;
+	}
+
+	/* Dimensions */
+	emit_data->args[emit_data->arg_count - 1] =
+		lp_build_const_int32(bld_base->base.gallivm, target);
+
 	/* Pad to power of two vector */
 	while (count < util_next_power_of_two(count))
 		address[count++] = LLVMGetUndef(LLVMInt32TypeInContext(gallivm->context));
 
 	emit_data->args[0] = lp_build_gather_values(gallivm, address, count);
-
-	/* Resource */
-	emit_data->args[1] = si_shader_ctx->resources[emit_data->inst->Src[1].Register.Index];
-
-	/* Sampler */
-	emit_data->args[2] = si_shader_ctx->samplers[emit_data->inst->Src[1].Register.Index];
-
-	/* Dimensions */
-	emit_data->args[3] = lp_build_const_int32(bld_base->base.gallivm, target);
-
-	emit_data->arg_count = 4;
-
-	emit_data->dst_type = LLVMVectorType(
-			LLVMFloatTypeInContext(bld_base->base.gallivm->context),
-			4);
 }
 
 static void build_tex_intrinsic(const struct lp_build_tgsi_action * action,
@@ -1010,6 +1040,12 @@ static const struct lp_build_tgsi_action txb_action = {
 	.fetch_args = tex_fetch_args,
 	.emit = build_tex_intrinsic,
 	.intr_name = "llvm.SI.sampleb."
+};
+
+static const struct lp_build_tgsi_action txf_action = {
+	.fetch_args = tex_fetch_args,
+	.emit = build_tex_intrinsic,
+	.intr_name = "llvm.SI.imageload."
 };
 
 static const struct lp_build_tgsi_action txl_action = {
@@ -1256,6 +1292,7 @@ int si_pipe_shader_create(
 
 	bld_base->op_actions[TGSI_OPCODE_TEX] = tex_action;
 	bld_base->op_actions[TGSI_OPCODE_TXB] = txb_action;
+	bld_base->op_actions[TGSI_OPCODE_TXF] = txf_action;
 	bld_base->op_actions[TGSI_OPCODE_TXL] = txl_action;
 	bld_base->op_actions[TGSI_OPCODE_TXP] = tex_action;
 
