@@ -1550,6 +1550,24 @@ _save_vtxfmt_init(struct gl_context *ctx)
 }
 
 
+/**
+ * Initialize the dispatch table with the VBO functions for display
+ * list compilation.
+ */
+void
+vbo_initialize_save_dispatch(const struct gl_context *ctx,
+                             struct _glapi_table *exec)
+{
+   SET_DrawArrays(exec, _save_OBE_DrawArrays);
+   SET_DrawElements(exec, _save_OBE_DrawElements);
+   SET_DrawRangeElements(exec, _save_OBE_DrawRangeElements);
+   SET_MultiDrawElementsEXT(exec, _save_OBE_MultiDrawElements);
+   SET_MultiDrawElementsBaseVertex(exec, _save_OBE_MultiDrawElementsBaseVertex);
+   /* Note: other glDraw functins aren't compiled into display lists */
+}
+
+
+
 void
 vbo_save_SaveFlushVertices(struct gl_context *ctx)
 {

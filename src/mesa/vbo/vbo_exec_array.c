@@ -30,6 +30,7 @@
 #include "main/context.h"
 #include "main/state.h"
 #include "main/api_validate.h"
+#include "main/dispatch.h"
 #include "main/varray.h"
 #include "main/bufferobj.h"
 #include "main/enums.h"
@@ -1397,6 +1398,46 @@ void
 vbo_exec_array_destroy( struct vbo_exec_context *exec )
 {
    /* nothing to do */
+}
+
+
+/**
+ * Initialize the dispatch table with the VBO functions for drawing.
+ */
+void
+vbo_initialize_exec_dispatch(const struct gl_context *ctx,
+                             struct _glapi_table *exec)
+{
+   SET_DrawArrays(exec, vbo_exec_DrawArrays);
+   SET_DrawElements(exec, vbo_exec_DrawElements);
+
+   if (_mesa_is_desktop_gl(ctx) || _mesa_is_gles3(ctx)) {
+      SET_DrawRangeElements(exec, vbo_exec_DrawRangeElements);
+   }
+
+   SET_MultiDrawElementsEXT(exec, vbo_exec_MultiDrawElements);
+
+   if (_mesa_is_desktop_gl(ctx)) {
+      SET_DrawElementsBaseVertex(exec, vbo_exec_DrawElementsBaseVertex);
+      SET_DrawRangeElementsBaseVertex(exec, vbo_exec_DrawRangeElementsBaseVertex);
+      SET_MultiDrawElementsBaseVertex(exec, vbo_exec_MultiDrawElementsBaseVertex);
+      SET_DrawArraysInstancedBaseInstance(exec, vbo_exec_DrawArraysInstancedBaseInstance);
+      SET_DrawElementsInstancedBaseInstance(exec, vbo_exec_DrawElementsInstancedBaseInstance);
+      SET_DrawElementsInstancedBaseVertex(exec, vbo_exec_DrawElementsInstancedBaseVertex);
+      SET_DrawElementsInstancedBaseVertexBaseInstance(exec, vbo_exec_DrawElementsInstancedBaseVertexBaseInstance);
+   }
+
+   if (_mesa_is_desktop_gl(ctx) || _mesa_is_gles3(ctx)) {
+      SET_DrawArraysInstancedARB(exec, vbo_exec_DrawArraysInstanced);
+      SET_DrawElementsInstancedARB(exec, vbo_exec_DrawElementsInstanced);
+   }
+
+   if (_mesa_is_desktop_gl(ctx)) {
+      SET_DrawTransformFeedback(exec, vbo_exec_DrawTransformFeedback);
+      SET_DrawTransformFeedbackStream(exec, vbo_exec_DrawTransformFeedbackStream);
+      SET_DrawTransformFeedbackInstanced(exec, vbo_exec_DrawTransformFeedbackInstanced);
+      SET_DrawTransformFeedbackStreamInstanced(exec, vbo_exec_DrawTransformFeedbackStreamInstanced);
+   }
 }
 
 

@@ -73,6 +73,15 @@ void _vbo_DestroyContext( struct gl_context *ctx );
 void _vbo_InvalidateState( struct gl_context *ctx, GLuint new_state );
 
 
+void
+vbo_initialize_exec_dispatch(const struct gl_context *ctx,
+                             struct _glapi_table *exec);
+
+void
+vbo_initialize_save_dispatch(const struct gl_context *ctx,
+                             struct _glapi_table *exec);
+
+
 typedef void (*vbo_draw_func)( struct gl_context *ctx,
 			       const struct _mesa_prim *prims,
 			       GLuint nr_prims,
