@@ -37,12 +37,6 @@
 #include "main/mtypes.h"
 
 
-#define _MESA_INIT_DLIST_VTXFMT(vfmt, impl)  \
-   do {                                      \
-      (vfmt)->CallList  = impl ## CallList;  \
-      (vfmt)->CallLists = impl ## CallLists; \
-   } while (0)
-
 GLboolean GLAPIENTRY
 _mesa_IsList(GLuint list);
 void GLAPIENTRY

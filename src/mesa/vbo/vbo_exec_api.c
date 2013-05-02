@@ -916,7 +916,9 @@ static void vbo_exec_vtxfmt_init( struct vbo_exec_context *exec )
    vfmt->End = vbo_exec_End;
    vfmt->PrimitiveRestartNV = vbo_exec_PrimitiveRestartNV;
 
-   _MESA_INIT_DLIST_VTXFMT(vfmt, _mesa_);
+   vfmt->CallList = _mesa_CallList;
+   vfmt->CallLists = _mesa_CallLists;
+
    _MESA_INIT_EVAL_VTXFMT(vfmt, vbo_exec_);
 
    vfmt->Rectf = vbo_exec_Rectf;

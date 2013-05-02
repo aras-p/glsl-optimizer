@@ -9558,7 +9558,8 @@ save_vtxfmt_init(GLvertexformat * vfmt)
 
    vfmt->Begin = save_Begin;
 
-   _MESA_INIT_DLIST_VTXFMT(vfmt, save_);
+   vfmt->CallList = save_CallList;
+   vfmt->CallLists = save_CallLists;
 
    vfmt->Color3f = save_Color3f;
    vfmt->Color3fv = save_Color3fv;

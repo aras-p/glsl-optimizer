@@ -1518,7 +1518,8 @@ _save_vtxfmt_init(struct gl_context *ctx)
 
    /* This will all require us to fallback to saving the list as opcodes:
     */
-   _MESA_INIT_DLIST_VTXFMT(vfmt, _save_);       /* inside begin/end */
+   vfmt->CallList = _save_CallList;
+   vfmt->CallLists = _save_CallLists;
 
    _MESA_INIT_EVAL_VTXFMT(vfmt, _save_);
 
