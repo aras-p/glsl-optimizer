@@ -1396,7 +1396,6 @@ _save_vtxfmt_init(struct gl_context *ctx)
 
    _MESA_INIT_ARRAYELT_VTXFMT(vfmt, _ae_);
 
-   vfmt->Begin = _save_Begin;
    vfmt->Color3f = _save_Color3f;
    vfmt->Color3fv = _save_Color3fv;
    vfmt->Color4f = _save_Color4f;
