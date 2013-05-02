@@ -38,6 +38,114 @@
 #include "si_state.h"
 #include "sid.h"
 
+static uint32_t cik_num_banks(uint32_t nbanks)
+{
+	switch (nbanks) {
+	case 2:
+		return V_02803C_ADDR_SURF_2_BANK;
+	case 4:
+		return V_02803C_ADDR_SURF_4_BANK;
+	case 8:
+	default:
+		return V_02803C_ADDR_SURF_8_BANK;
+	case 16:
+		return V_02803C_ADDR_SURF_16_BANK;
+	}
+}
+
+
+static unsigned cik_tile_split(unsigned tile_split)
+{
+	switch (tile_split) {
+	case 64:
+		tile_split = V_028040_ADDR_SURF_TILE_SPLIT_64B;
+		break;
+	case 128:
+		tile_split = V_028040_ADDR_SURF_TILE_SPLIT_128B;
+		break;
+	case 256:
+		tile_split = V_028040_ADDR_SURF_TILE_SPLIT_256B;
+		break;
+	case 512:
+		tile_split = V_028040_ADDR_SURF_TILE_SPLIT_512B;
+		break;
+	default:
+	case 1024:
+		tile_split = V_028040_ADDR_SURF_TILE_SPLIT_1KB;
+		break;
+	case 2048:
+		tile_split = V_028040_ADDR_SURF_TILE_SPLIT_2KB;
+		break;
+	case 4096:
+		tile_split = V_028040_ADDR_SURF_TILE_SPLIT_4KB;
+		break;
+	}
+	return tile_split;
+}
+
+static unsigned cik_macro_tile_aspect(unsigned macro_tile_aspect)
+{
+	switch (macro_tile_aspect) {
+	default:
+	case 1:
+		macro_tile_aspect = V_02803C_ADDR_SURF_MACRO_ASPECT_1;
+		break;
+	case 2:
+		macro_tile_aspect = V_02803C_ADDR_SURF_MACRO_ASPECT_2;
+		break;
+	case 4:
+		macro_tile_aspect = V_02803C_ADDR_SURF_MACRO_ASPECT_4;
+		break;
+	case 8:
+		macro_tile_aspect = V_02803C_ADDR_SURF_MACRO_ASPECT_8;
+		break;
+	}
+	return macro_tile_aspect;
+}
+
+static unsigned cik_bank_wh(unsigned bankwh)
+{
+	switch (bankwh) {
+	default:
+	case 1:
+		bankwh = V_02803C_ADDR_SURF_BANK_WIDTH_1;
+		break;
+	case 2:
+		bankwh = V_02803C_ADDR_SURF_BANK_WIDTH_2;
+		break;
+	case 4:
+		bankwh = V_02803C_ADDR_SURF_BANK_WIDTH_4;
+		break;
+	case 8:
+		bankwh = V_02803C_ADDR_SURF_BANK_WIDTH_8;
+		break;
+	}
+	return bankwh;
+}
+
+static unsigned cik_db_pipe_config(unsigned tile_pipes,
+				   unsigned num_rbs)
+{
+	unsigned pipe_config;
+
+	switch (tile_pipes) {
+	case 8:
+		pipe_config = V_02803C_X_ADDR_SURF_P8_32X32_16X16;
+		break;
+	case 4:
+	default:
+		if (num_rbs == 4)
+			pipe_config = V_02803C_X_ADDR_SURF_P4_16X16;
+		else
+			pipe_config = V_02803C_X_ADDR_SURF_P4_8X16;
+		break;
+	case 2:
+			pipe_config = V_02803C_ADDR_SURF_P2;
+		break;
+	}
+	return pipe_config;
+}
+
 /*
  * inferred framebuffer and blender state
  */
@@ -1752,10 +1860,12 @@ static void si_cb(struct r600_context *rctx, struct si_pm4_state *pm4,
 static void si_db(struct r600_context *rctx, struct si_pm4_state *pm4,
 		  const struct pipe_framebuffer_state *state)
 {
+	struct r600_screen *rscreen = rctx->screen;
 	struct r600_resource_texture *rtex;
 	struct r600_surface *surf;
-	unsigned level, pitch, slice, format, tile_mode_index;
-	uint32_t z_info, s_info;
+	unsigned level, pitch, slice, format, tile_mode_index, array_mode;
+	unsigned macro_aspect, tile_split, stile_split, bankh, bankw, nbanks, pipe_config;
+	uint32_t z_info, s_info, db_depth_info;
 	uint64_t z_offs, s_offs;
 
 	if (state->zsbuf == NULL) {
@@ -1788,22 +1898,60 @@ static void si_db(struct r600_context *rctx, struct si_pm4_state *pm4,
 		slice = slice - 1;
 	}
 
+	db_depth_info = S_02803C_ADDR5_SWIZZLE_MASK(1);
+
 	z_info = S_028040_FORMAT(format);
 	if (rtex->surface.flags & RADEON_SURF_SBUFFER)
 		s_info = S_028044_FORMAT(V_028044_STENCIL_8);
 	else
 		s_info = S_028044_FORMAT(V_028044_STENCIL_INVALID);
 
-	tile_mode_index = si_tile_mode_index(rtex, level, false);
-	z_info |= S_028040_TILE_MODE_INDEX(tile_mode_index);
-	tile_mode_index = si_tile_mode_index(rtex, level, true);
-	s_info |= S_028044_TILE_MODE_INDEX(tile_mode_index);
+	if (rctx->chip_class >= CIK) {
+		switch (rtex->surface.level[level].mode) {
+		case RADEON_SURF_MODE_2D:
+			array_mode = V_02803C_ARRAY_2D_TILED_THIN1;
+			break;
+		case RADEON_SURF_MODE_1D:
+		case RADEON_SURF_MODE_LINEAR_ALIGNED:
+		case RADEON_SURF_MODE_LINEAR:
+		default:
+			array_mode = V_02803C_ARRAY_1D_TILED_THIN1;
+			break;
+		}
+		tile_split = rtex->surface.tile_split;
+		stile_split = rtex->surface.stencil_tile_split;
+		macro_aspect = rtex->surface.mtilea;
+		bankw = rtex->surface.bankw;
+		bankh = rtex->surface.bankh;
+		tile_split = cik_tile_split(tile_split);
+		stile_split = cik_tile_split(stile_split);
+		macro_aspect = cik_macro_tile_aspect(macro_aspect);
+		bankw = cik_bank_wh(bankw);
+		bankh = cik_bank_wh(bankh);
+		nbanks = cik_num_banks(rscreen->tiling_info.num_banks);
+		pipe_config = cik_db_pipe_config(rscreen->info.r600_num_tile_pipes,
+						 rscreen->info.r600_num_backends);
+
+		db_depth_info |= S_02803C_ARRAY_MODE(array_mode) |
+			S_02803C_PIPE_CONFIG(pipe_config) |
+			S_02803C_BANK_WIDTH(bankw) |
+			S_02803C_BANK_HEIGHT(bankh) |
+			S_02803C_MACRO_TILE_ASPECT(macro_aspect) |
+			S_02803C_NUM_BANKS(nbanks);
+		z_info |= S_028040_TILE_SPLIT(tile_split);
+		s_info |= S_028044_TILE_SPLIT(stile_split);
+	} else {
+		tile_mode_index = si_tile_mode_index(rtex, level, false);
+		z_info |= S_028040_TILE_MODE_INDEX(tile_mode_index);
+		tile_mode_index = si_tile_mode_index(rtex, level, true);
+		s_info |= S_028044_TILE_MODE_INDEX(tile_mode_index);
+	}
 
 	si_pm4_set_reg(pm4, R_028008_DB_DEPTH_VIEW,
 		       S_028008_SLICE_START(state->zsbuf->u.tex.first_layer) |
 		       S_028008_SLICE_MAX(state->zsbuf->u.tex.last_layer));
 
-	si_pm4_set_reg(pm4, R_02803C_DB_DEPTH_INFO, S_02803C_ADDR5_SWIZZLE_MASK(1));
+	si_pm4_set_reg(pm4, R_02803C_DB_DEPTH_INFO, db_depth_info);
 	si_pm4_set_reg(pm4, R_028040_DB_Z_INFO, z_info);
 	si_pm4_set_reg(pm4, R_028044_DB_STENCIL_INFO, s_info);
 
