@@ -571,6 +571,7 @@ static int tgsi_declaration(struct r600_shader_ctx *ctx)
 	switch (d->Declaration.File) {
 	case TGSI_FILE_INPUT:
 		i = ctx->shader->ninput;
+                assert(i < Elements(ctx->shader->input));
 		ctx->shader->ninput += count;
 		ctx->shader->input[i].name = d->Semantic.Name;
 		ctx->shader->input[i].sid = d->Semantic.Index;
@@ -602,6 +603,7 @@ static int tgsi_declaration(struct r600_shader_ctx *ctx)
 		break;
 	case TGSI_FILE_OUTPUT:
 		i = ctx->shader->noutput++;
+                assert(i < Elements(ctx->shader->output));
 		ctx->shader->output[i].name = d->Semantic.Name;
 		ctx->shader->output[i].sid = d->Semantic.Index;
 		ctx->shader->output[i].gpr = ctx->file_offset[TGSI_FILE_OUTPUT] + d->Range.First;
