@@ -71,7 +71,7 @@ static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
    unsigned instance_id_index = ~0;
 
    const unsigned gs_out_prim = (gs ? gs->output_primitive :
-                                 u_assembled_primitive(prim));
+                                 u_assembled_prim(prim));
 
    /* Add one to num_outputs because the pipeline occasionally tags on
     * an additional texcoord, eg for AA lines.

@@ -180,7 +180,7 @@ draw_prim_assembler_run(struct draw_context *draw,
 {
    struct draw_assembler asmblr;
    unsigned start, i;
-   unsigned assembled_prim = u_assembled_primitive(input_prims->prim);
+   unsigned assembled_prim = u_assembled_prim(input_prims->prim);
    unsigned max_primitives = u_decomposed_prims_for_vertices(
       input_prims->prim, input_prims->count);
    unsigned max_verts = u_vertices_per_prim(assembled_prim) * max_primitives;
@@ -194,7 +194,7 @@ draw_prim_assembler_run(struct draw_context *draw,
    output_prims->linear = TRUE;
    output_prims->elts = NULL;
    output_prims->start = 0;
-   output_prims->prim = u_assembled_primitive(input_prims->prim);
+   output_prims->prim = u_assembled_prim(input_prims->prim);
    output_prims->flags = 0x0;
    output_prims->primitive_lengths = MALLOC(sizeof(unsigned));
    output_prims->primitive_lengths[0] = 0;

@@ -273,14 +273,6 @@ u_decomposed_prims_for_vertices(int primitive, int vertices)
    }
 }
 
-static INLINE unsigned
-u_assembled_primitive(unsigned prim)
-{
-   return u_assembled_prim(prim);
-}
-      
-      
-
 const char *u_prim_name( unsigned pipe_prim );
 
 #endif
