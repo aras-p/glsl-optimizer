@@ -187,9 +187,6 @@ int r600_sb_bytecode_process(struct r600_context *rctx,
 	SB_RUN_PASS(dce_cleanup,		1);
 	SB_RUN_PASS(def_use,			0);
 
-	SB_RUN_PASS(liveness,			0);
-	SB_RUN_PASS(dce_cleanup,		0);
-
 	SB_RUN_PASS(ra_split,			0);
 	SB_RUN_PASS(def_use,			0);
 
