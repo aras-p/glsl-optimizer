@@ -2771,8 +2771,6 @@ struct gl_constants
    GLfloat MinLineWidthAA, MaxLineWidthAA;   /**< antialiased */
    GLfloat LineWidthGranularity;
 
-   GLuint MaxColorTableSize;
-
    GLuint MaxClipPlanes;
    GLuint MaxLights;
    GLfloat MaxShininess;                     /**< GL_NV_light_max_exponent */
