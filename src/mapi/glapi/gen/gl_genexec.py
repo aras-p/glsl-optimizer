@@ -109,6 +109,7 @@ header = """/**
 #include "main/syncobj.h"
 #include "main/formatquery.h"
 #include "main/dispatch.h"
+#include "vbo/vbo.h"
 
 
 /**
@@ -128,6 +129,8 @@ _mesa_initialize_exec_table(struct gl_context *ctx)
    assert(exec != NULL);
 
    assert(ctx->Version > 0);
+
+   vbo_initialize_exec_dispatch(ctx, exec);
 """
 
 

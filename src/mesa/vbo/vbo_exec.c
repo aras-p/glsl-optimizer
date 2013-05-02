@@ -48,7 +48,6 @@ void vbo_exec_init( struct gl_context *ctx )
       return;
 
    vbo_exec_vtx_init( exec );
-   vbo_exec_array_init( exec );
 
    ctx->Driver.NeedFlush = 0;
    ctx->Driver.CurrentExecPrimitive = PRIM_OUTSIDE_BEGIN_END;
@@ -69,7 +68,6 @@ void vbo_exec_destroy( struct gl_context *ctx )
    }
 
    vbo_exec_vtx_destroy( exec );
-   vbo_exec_array_destroy( exec );
 }
 
 

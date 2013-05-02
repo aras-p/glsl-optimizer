@@ -1025,64 +1025,6 @@ typedef struct {
    void (GLAPIENTRYP Rectf)( GLfloat, GLfloat, GLfloat, GLfloat );
 
    /**
-    * \name Array
-    */
-   /*@{*/
-   void (GLAPIENTRYP DrawArrays)( GLenum mode, GLint start, GLsizei count );
-   void (GLAPIENTRYP DrawElements)( GLenum mode, GLsizei count, GLenum type,
-			 const GLvoid *indices );
-   void (GLAPIENTRYP DrawRangeElements)( GLenum mode, GLuint start,
-			      GLuint end, GLsizei count,
-			      GLenum type, const GLvoid *indices );
-   void (GLAPIENTRYP MultiDrawElementsEXT)( GLenum mode, const GLsizei *count,
-					    GLenum type,
-					    const GLvoid **indices,
-					    GLsizei primcount);
-   void (GLAPIENTRYP DrawElementsBaseVertex)( GLenum mode, GLsizei count,
-					      GLenum type,
-					      const GLvoid *indices,
-					      GLint basevertex );
-   void (GLAPIENTRYP DrawRangeElementsBaseVertex)( GLenum mode, GLuint start,
-						   GLuint end, GLsizei count,
-						   GLenum type,
-						   const GLvoid *indices,
-						   GLint basevertex);
-   void (GLAPIENTRYP MultiDrawElementsBaseVertex)( GLenum mode,
-						   const GLsizei *count,
-						   GLenum type,
-						   const GLvoid * const *indices,
-						   GLsizei primcount,
-						   const GLint *basevertex);
-   void (GLAPIENTRYP DrawArraysInstanced)(GLenum mode, GLint first,
-                                          GLsizei count, GLsizei primcount);
-   void (GLAPIENTRYP DrawArraysInstancedBaseInstance)(GLenum mode, GLint first,
-                                                      GLsizei count, GLsizei primcount,
-                                                      GLuint baseinstance);
-   void (GLAPIENTRYP DrawElementsInstanced)(GLenum mode, GLsizei count,
-                                            GLenum type, const GLvoid *indices,
-                                            GLsizei primcount);
-   void (GLAPIENTRYP DrawElementsInstancedBaseInstance)(GLenum mode, GLsizei count,
-                                                        GLenum type, const GLvoid *indices,
-                                                        GLsizei primcount, GLuint baseinstance);
-   void (GLAPIENTRYP DrawElementsInstancedBaseVertex)(GLenum mode, GLsizei count,
-                                            GLenum type, const GLvoid *indices,
-                                            GLsizei primcount, GLint basevertex);
-   void (GLAPIENTRYP DrawElementsInstancedBaseVertexBaseInstance)(GLenum mode, GLsizei count,
-                                                                  GLenum type, const GLvoid *indices,
-                                                                  GLsizei primcount, GLint basevertex,
-                                                                  GLuint baseinstance);
-   void (GLAPIENTRYP DrawTransformFeedback)(GLenum mode, GLuint name);
-   void (GLAPIENTRYP DrawTransformFeedbackStream)(GLenum mode, GLuint name,
-                                                  GLuint stream);
-   void (GLAPIENTRYP DrawTransformFeedbackInstanced)(GLenum mode, GLuint name,
-                                                     GLsizei primcount);
-   void (GLAPIENTRYP DrawTransformFeedbackStreamInstanced)(GLenum mode,
-                                                           GLuint name,
-                                                           GLuint stream,
-                                                           GLsizei primcount);
-   /*@}*/
-
-   /**
     * \name Eval
     *
     * If you don't support eval, fallback to the default vertex format

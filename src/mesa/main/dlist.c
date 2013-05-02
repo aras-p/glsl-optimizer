@@ -69,6 +69,8 @@
 
 #include "main/dispatch.h"
 
+#include "vbo/vbo.h"
+
 
 
 /**
@@ -8820,6 +8822,9 @@ _mesa_initialize_save_table(const struct gl_context *ctx)
 
    _mesa_loopback_init_api_table(ctx, table);
 
+   /* VBO functions */
+   vbo_initialize_save_dispatch(ctx, table);
+
    /* GL 1.0 */
    SET_Accum(table, save_Accum);
    SET_AlphaFunc(table, save_AlphaFunc);
@@ -9259,6 +9264,18 @@ _mesa_initialize_save_table(const struct gl_context *ctx)
 
    /* GL_ARB_uniform_buffer_object */
    SET_UniformBlockBinding(table, save_UniformBlockBinding);
+
+   /* GL_ARB_draw_instanced */
+   SET_DrawArraysInstancedARB(table, save_DrawArraysInstancedARB);
+   SET_DrawElementsInstancedARB(table, save_DrawElementsInstancedARB);
+
+   /* GL_ARB_draw_elements_base_vertex */
+   SET_DrawElementsInstancedBaseVertex(table, save_DrawElementsInstancedBaseVertexARB);
+
+   /* GL_ARB_base_instance */
+   SET_DrawArraysInstancedBaseInstance(table, save_DrawArraysInstancedBaseInstance);
+   SET_DrawElementsInstancedBaseInstance(table, save_DrawElementsInstancedBaseInstance);
+   SET_DrawElementsInstancedBaseVertexBaseInstance(table, save_DrawElementsInstancedBaseVertexBaseInstance);
 }
 
 
@@ -9618,34 +9635,6 @@ save_vtxfmt_init(GLvertexformat * vfmt)
    vfmt->VertexAttrib4fvARB = save_VertexAttrib4fvARB;
 
    vfmt->Rectf = save_Rectf;
-
-   /* GL_ARB_draw_instanced */
-   vfmt->DrawArraysInstanced = save_DrawArraysInstancedARB;
-   vfmt->DrawElementsInstanced = save_DrawElementsInstancedARB;
-
-   /* GL_ARB_draw_elements_base_vertex */
-   vfmt->DrawElementsInstancedBaseVertex = save_DrawElementsInstancedBaseVertexARB;
-
-   /* GL_ARB_base_instance */
-   vfmt->DrawArraysInstancedBaseInstance = save_DrawArraysInstancedBaseInstance;
-   vfmt->DrawElementsInstancedBaseInstance = save_DrawElementsInstancedBaseInstance;
-   vfmt->DrawElementsInstancedBaseVertexBaseInstance = save_DrawElementsInstancedBaseVertexBaseInstance;
-
-   /* The driver is required to implement these as
-    * 1) They can probably do a better job.
-    * 2) A lot of new mechanisms would have to be added to this module
-    *     to support it.  That code would probably never get used,
-    *     because of (1).
-    */
-#if 0
-   vfmt->DrawArrays = 0;
-   vfmt->DrawElements = 0;
-   vfmt->DrawRangeElements = 0;
-   vfmt->MultiDrawElemementsEXT = 0;
-   vfmt->DrawElementsBaseVertex = 0;
-   vfmt->DrawRangeElementsBaseVertex = 0;
-   vfmt->MultiDrawElemementsBaseVertex = 0;
-#endif
 }
 
 

@@ -1364,42 +1364,6 @@ vbo_exec_DrawTransformFeedbackStreamInstanced(GLenum mode, GLuint name,
    vbo_draw_transform_feedback(ctx, mode, obj, stream, primcount);
 }
 
-/**
- * Plug in the immediate-mode vertex array drawing commands into the
- * givven vbo_exec_context object.
- */
-void
-vbo_exec_array_init( struct vbo_exec_context *exec )
-{
-   exec->vtxfmt.DrawArrays = vbo_exec_DrawArrays;
-   exec->vtxfmt.DrawElements = vbo_exec_DrawElements;
-   exec->vtxfmt.DrawRangeElements = vbo_exec_DrawRangeElements;
-   exec->vtxfmt.MultiDrawElementsEXT = vbo_exec_MultiDrawElements;
-   exec->vtxfmt.DrawElementsBaseVertex = vbo_exec_DrawElementsBaseVertex;
-   exec->vtxfmt.DrawRangeElementsBaseVertex = vbo_exec_DrawRangeElementsBaseVertex;
-   exec->vtxfmt.MultiDrawElementsBaseVertex = vbo_exec_MultiDrawElementsBaseVertex;
-   exec->vtxfmt.DrawArraysInstanced = vbo_exec_DrawArraysInstanced;
-   exec->vtxfmt.DrawArraysInstancedBaseInstance = vbo_exec_DrawArraysInstancedBaseInstance;
-   exec->vtxfmt.DrawElementsInstanced = vbo_exec_DrawElementsInstanced;
-   exec->vtxfmt.DrawElementsInstancedBaseInstance = vbo_exec_DrawElementsInstancedBaseInstance;
-   exec->vtxfmt.DrawElementsInstancedBaseVertex = vbo_exec_DrawElementsInstancedBaseVertex;
-   exec->vtxfmt.DrawElementsInstancedBaseVertexBaseInstance = vbo_exec_DrawElementsInstancedBaseVertexBaseInstance;
-   exec->vtxfmt.DrawTransformFeedback = vbo_exec_DrawTransformFeedback;
-   exec->vtxfmt.DrawTransformFeedbackStream =
-         vbo_exec_DrawTransformFeedbackStream;
-   exec->vtxfmt.DrawTransformFeedbackInstanced =
-         vbo_exec_DrawTransformFeedbackInstanced;
-   exec->vtxfmt.DrawTransformFeedbackStreamInstanced =
-         vbo_exec_DrawTransformFeedbackStreamInstanced;
-}
-
-
-void
-vbo_exec_array_destroy( struct vbo_exec_context *exec )
-{
-   /* nothing to do */
-}
-
 
 /**
  * Initialize the dispatch table with the VBO functions for drawing.

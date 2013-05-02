@@ -354,56 +354,6 @@ _mesa_noop_Rectf(GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2)
 
 
 static void GLAPIENTRY
-_mesa_noop_DrawArrays(GLenum mode, GLint start, GLsizei count)
-{
-}
-
-static void GLAPIENTRY
-_mesa_noop_DrawElements(GLenum mode, GLsizei count, GLenum type,
-                        const GLvoid * indices)
-{
-}
-
-static void GLAPIENTRY
-_mesa_noop_DrawElementsBaseVertex(GLenum mode, GLsizei count, GLenum type,
-                                  const GLvoid * indices, GLint basevertex)
-{
-}
-
-
-static void GLAPIENTRY
-_mesa_noop_DrawRangeElements(GLenum mode,
-                             GLuint start, GLuint end,
-                             GLsizei count, GLenum type,
-                             const GLvoid * indices)
-{
-}
-
-static void GLAPIENTRY
-_mesa_noop_MultiDrawElements(GLenum mode, const GLsizei * count, GLenum type,
-                             const GLvoid ** indices, GLsizei primcount)
-{
-}
-
-static void GLAPIENTRY
-_mesa_noop_DrawRangeElementsBaseVertex(GLenum mode,
-                                       GLuint start, GLuint end,
-                                       GLsizei count, GLenum type,
-                                       const GLvoid * indices,
-                                       GLint basevertex)
-{
-}
-
-static void GLAPIENTRY
-_mesa_noop_MultiDrawElementsBaseVertex(GLenum mode, const GLsizei * count,
-                                       GLenum type,
-                                       const GLvoid * const *indices,
-                                       GLsizei primcount,
-                                       const GLint * basevertex)
-{
-}
-
-static void GLAPIENTRY
 _mesa_noop_EvalMesh1(GLenum mode, GLint i1, GLint i2)
 {
 }
@@ -496,14 +446,6 @@ _mesa_noop_vtxfmt_init(GLvertexformat * vfmt)
    vfmt->VertexAttrib4fvARB = _mesa_noop_VertexAttrib4fvARB;
 
    vfmt->Rectf = _mesa_noop_Rectf;
-
-   vfmt->DrawArrays = _mesa_noop_DrawArrays;
-   vfmt->DrawElements = _mesa_noop_DrawElements;
-   vfmt->DrawRangeElements = _mesa_noop_DrawRangeElements;
-   vfmt->MultiDrawElementsEXT = _mesa_noop_MultiDrawElements;
-   vfmt->DrawElementsBaseVertex = _mesa_noop_DrawElementsBaseVertex;
-   vfmt->DrawRangeElementsBaseVertex = _mesa_noop_DrawRangeElementsBaseVertex;
-   vfmt->MultiDrawElementsBaseVertex = _mesa_noop_MultiDrawElementsBaseVertex;
 }
 
 
