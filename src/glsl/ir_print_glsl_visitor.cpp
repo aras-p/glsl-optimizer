@@ -159,22 +159,16 @@ _mesa_print_ir_glsl(exec_list *instructions,
         gl_uniform_block * block = &state->uniform_blocks[bl];
         ralloc_asprintf_append (&buffer, "uniform %s {\n", block->Name );
         for ( int vi=0; vi<block->NumUniforms; vi++ ) {
-            const char * vname = block->Uniforms[vi].Name;
-            foreach_iter(exec_list_iterator, iter, *instructions) {
-                ir_instruction *ir = (ir_instruction *)iter.get();
-                if (ir->ir_type == ir_type_variable) {
-                    ir_variable *var = static_cast<ir_variable*>(ir);
-                    if ( strcmp(vname, var->name)==0 ) {
-                        ir_print_glsl_visitor v (buffer, &gtracker, mode, state->es_shader, state);
-                        ir->accept(&v);
-                        buffer = v.buffer;
-                        ralloc_asprintf_append (&buffer, ";\n");
-                    }
-                }
-            }
+            gl_uniform_buffer_variable *var = &block->Uniforms[vi];
+            ralloc_asprintf_append (&buffer, "  ");
+            // print_precision (ir, ir->type);
+            buffer = print_type(buffer, var->Type, false);
+            ralloc_asprintf_append (&buffer, " %s", var->Name);
+            buffer = print_type_post(buffer, var->Type, false);
+            ralloc_asprintf_append (&buffer, ";\n");
         }
-        
         ralloc_asprintf_append (&buffer, "};\n");
+        printf("\n");
     }
 
    foreach_iter(exec_list_iterator, iter, *instructions) {
@@ -944,6 +938,12 @@ void ir_print_glsl_visitor::visit(ir_constant *ir)
 	 if (i != 0)
 	    ralloc_asprintf_append (&buffer, ", ");
 	 ir->get_array_element(i)->accept(this);
+      }
+   } else if (ir->type->is_record()){
+      for (unsigned i = 0; i < ir->type->length; i++) {
+        if (i != 0)
+          ralloc_asprintf_append (&buffer, ", ");
+        ir->get_record_field(i)->accept(this);
       }
    } else {
       bool first = true;

@@ -33,6 +33,7 @@ public:
 	~ir_struct_usage_visitor(void);
 	
 	virtual ir_visitor_status visit(ir_dereference_variable *);
+    virtual ir_visitor_status visit(ir_constant *);
 	
 	bool has_struct_entry(const glsl_type *t) const;
 	
@@ -79,6 +80,22 @@ ir_struct_usage_visitor::has_struct_entry(const glsl_type *t) const
 	return false;
 }
 
+ir_visitor_status
+ir_struct_usage_visitor::visit(ir_constant *ir)
+{
+    if (ir->type->is_record()){
+        const glsl_type* t = ir->type;
+		if (!has_struct_entry (t)) {
+			struct_entry *entry = new(mem_ctx) struct_entry(t);
+			this->struct_list.push_tail (entry);
+		}
+        
+        for (unsigned i = 0; i < ir->type->length; i++) {
+            ir->get_record_field(i)->accept(this);
+        }
+    }
+    return visit_continue;
+}
 
 ir_visitor_status
 ir_struct_usage_visitor::visit(ir_dereference_variable *ir)

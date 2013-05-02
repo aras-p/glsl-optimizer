@@ -1853,6 +1853,7 @@ public:
 
    ir_constant *get_array_element(unsigned i) const;
 
+   ir_constant *get_record_field(int idx);
    ir_constant *get_record_field(const char *name);
 
    /**
