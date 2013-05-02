@@ -75,7 +75,7 @@ public:
 
 	void set(unsigned index, unsigned val);
 
-	sel_chan find_free_bit(unsigned start);
+	sel_chan find_free_bit();
 	sel_chan find_free_chans(unsigned mask);
 	sel_chan find_free_array(unsigned size, unsigned mask);
 
@@ -148,24 +148,21 @@ void regbits::set(unsigned index, unsigned val) {
 }
 
 // free register for ra means the bit is set
-sel_chan regbits::find_free_bit(unsigned start) {
-	unsigned elt = start >> bt_index_shift;
-	unsigned bit = start & bt_index_mask;
+sel_chan regbits::find_free_bit() {
+	unsigned elt = 0;
+	unsigned bit = 0;
 
-	unsigned end = start < MAX_GPR - num_temps ? MAX_GPR - num_temps : MAX_GPR;
-
-	while (elt < end && !dta[elt]) {
+	while (elt < size && !dta[elt])
 		++elt;
-		bit = 0;
-	}
 
-	if (elt >= end)
+	if (elt >= size)
 		return 0;
 
-	// FIXME this seems broken when not starting from 0
+	bit = __builtin_ctz(dta[elt]) + (elt << bt_index_shift);
 
-	bit += __builtin_ctz(dta[elt]);
-	return ((elt << bt_index_shift) | bit) + 1;
+	assert(bit < MAX_GPR - num_temps);
+
+	return bit + 1;
 }
 
 // find free gpr component to use as indirectly addressable array
@@ -482,7 +479,7 @@ void ra_init::color(value* v) {
 		unsigned mask = 1 << v->pin_gpr.chan();
 		c = rb.find_free_chans(mask) + v->pin_gpr.chan();
 	} else {
-		c = rb.find_free_bit(0);
+		c = rb.find_free_bit();
 	}
 
 	assert(c && c.sel() < 128 - ctx.alu_temp_gprs && "color failed");

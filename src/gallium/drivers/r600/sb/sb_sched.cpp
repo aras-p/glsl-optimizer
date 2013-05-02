@@ -542,6 +542,10 @@ bool alu_group_tracker::try_reserve(alu_node* n) {
 
 	assert(first_slot != ~0 && last_slot != ~0);
 
+	// silence "array subscript is above array bounds" with gcc 4.8
+	if (last_slot >= 5)
+		abort();
+
 	int i = first_nf;
 	alu_node *a = slots[i];
 	bool backtrack = false;
