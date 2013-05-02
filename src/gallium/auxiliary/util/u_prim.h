@@ -26,8 +26,8 @@
  **************************************************************************/
 
 
-#ifndef U_BLIT_H
-#define U_BLIT_H
+#ifndef U_PRIM_H
+#define U_PRIM_H
 
 
 #include "pipe/p_defines.h"
