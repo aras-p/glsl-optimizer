@@ -34,7 +34,7 @@
 static void
 nvc0_flush(struct pipe_context *pipe,
            struct pipe_fence_handle **fence,
-           enum pipe_flush_flags flags)
+           unsigned flags)
 {
    struct nvc0_context *nvc0 = nvc0_context(pipe);
    struct nouveau_screen *screen = &nvc0->screen->base;

@@ -183,7 +183,7 @@ static void r600_flush(struct pipe_context *ctx, unsigned flags)
 
 static void r600_flush_from_st(struct pipe_context *ctx,
 			       struct pipe_fence_handle **fence,
-			       enum pipe_flush_flags flags)
+			       unsigned flags)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_fence **rfence = (struct r600_fence**)fence;

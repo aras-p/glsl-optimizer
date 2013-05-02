@@ -40,7 +40,7 @@
 
 static void i915_flush_pipe( struct pipe_context *pipe,
                              struct pipe_fence_handle **fence,
-                             enum pipe_flush_flags flags )
+                             unsigned flags )
 {
    struct i915_context *i915 = i915_context(pipe);
    enum i915_winsys_flush_flags winsys_flags = I915_FLUSH_ASYNC;
@@ -71,7 +71,7 @@ void i915_init_flush_functions( struct i915_context *i915 )
  */
 void i915_flush(struct i915_context *i915,
                 struct pipe_fence_handle **fence,
-                enum pipe_flush_flags flags)
+                unsigned flags)
 {
    struct i915_winsys_batchbuffer *batch = i915->batch;
 

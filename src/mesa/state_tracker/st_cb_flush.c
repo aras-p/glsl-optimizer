@@ -77,7 +77,7 @@ display_front_buffer(struct st_context *st)
 
 void st_flush(struct st_context *st,
               struct pipe_fence_handle **fence,
-              enum pipe_flush_flags flags)
+              unsigned flags)
 {
    FLUSH_VERTICES(st->ctx, 0);
    FLUSH_CURRENT(st->ctx, 0);

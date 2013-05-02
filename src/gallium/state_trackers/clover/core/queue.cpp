@@ -53,7 +53,7 @@ _cl_command_queue::flush() {
                                [](event_ptr &ev) { return !ev->signalled(); });
 
       // Flush and fence them.
-      pipe->flush(pipe, &fence, (enum pipe_flush_flags)0);
+      pipe->flush(pipe, &fence, 0);
       std::for_each(first, last, [&](event_ptr &ev) { ev->fence(fence); });
       screen->fence_reference(screen, &fence, NULL);
       queued_events.erase(first, last);

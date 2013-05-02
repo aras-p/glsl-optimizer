@@ -55,6 +55,6 @@
  */
 extern void i915_flush(struct i915_context *i915,
                        struct pipe_fence_handle **fence,
-                       enum pipe_flush_flags flags);
+                       unsigned flags);
 
 #endif

@@ -161,7 +161,7 @@ void radeonsi_flush(struct pipe_context *ctx, struct pipe_fence_handle **fence,
 
 static void r600_flush_from_st(struct pipe_context *ctx,
 			       struct pipe_fence_handle **fence,
-                               enum pipe_flush_flags flags)
+                               unsigned flags)
 {
 	radeonsi_flush(ctx, fence,
                        flags & PIPE_FLUSH_END_OF_FRAME ? RADEON_FLUSH_END_OF_FRAME : 0);

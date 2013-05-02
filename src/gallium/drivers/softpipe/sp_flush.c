@@ -96,7 +96,7 @@ softpipe_flush( struct pipe_context *pipe,
 void
 softpipe_flush_wrapped(struct pipe_context *pipe,
                        struct pipe_fence_handle **fence,
-                       enum pipe_flush_flags flags)
+                       unsigned flags)
 {
    softpipe_flush(pipe, SP_FLUSH_TEXTURE_CACHE, fence);
 }

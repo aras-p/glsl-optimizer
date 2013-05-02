@@ -42,7 +42,7 @@ st_init_flush_functions(struct dd_function_table *functions);
 extern void
 st_flush(struct st_context *st,
          struct pipe_fence_handle **fence,
-         enum pipe_flush_flags flags);
+         unsigned flags);
 
 extern void
 st_finish(struct st_context *st);

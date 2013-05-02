@@ -453,7 +453,7 @@ st_context_flush(struct st_context_iface *stctxi, unsigned flags,
                  struct pipe_fence_handle **fence)
 {
    struct st_context *st = (struct st_context *) stctxi;
-   enum pipe_flush_flags pipe_flags = 0;
+   unsigned pipe_flags = 0;
 
    if (flags & ST_FLUSH_END_OF_FRAME) {
       pipe_flags |= PIPE_FLUSH_END_OF_FRAME;

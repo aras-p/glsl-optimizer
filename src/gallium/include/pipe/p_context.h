@@ -349,10 +349,12 @@ struct pipe_context {
                                unsigned width, unsigned height);
 
    /** Flush draw commands
+    *
+    * \param flags  bitfield of enum pipe_flush_flags values.
     */
    void (*flush)(struct pipe_context *pipe,
                  struct pipe_fence_handle **fence,
-                 enum pipe_flush_flags flags);
+                 unsigned flags);
 
    /**
     * Create a view on a texture to be used by a shader stage.

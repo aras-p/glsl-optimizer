@@ -96,7 +96,7 @@ fd_context_render(struct pipe_context *pctx)
 
 static void
 fd_context_flush(struct pipe_context *pctx, struct pipe_fence_handle **fence,
-		enum pipe_flush_flags flags)
+		unsigned flags)
 {
 	DBG("fence=%p", fence);
 

@@ -139,7 +139,7 @@ void r300_flush(struct pipe_context *pipe,
 
 static void r300_flush_wrapped(struct pipe_context *pipe,
                                struct pipe_fence_handle **fence,
-                               enum pipe_flush_flags flags)
+                               unsigned flags)
 {
     r300_flush(pipe,
                flags & PIPE_FLUSH_END_OF_FRAME ? RADEON_FLUSH_END_OF_FRAME : 0,

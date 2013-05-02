@@ -77,7 +77,7 @@ ilo_context_post_cp_flush(struct ilo_cp *cp, void *data)
 static void
 ilo_flush(struct pipe_context *pipe,
           struct pipe_fence_handle **f,
-          enum pipe_flush_flags flags)
+          unsigned flags)
 {
    struct ilo_context *ilo = ilo_context(pipe);
 
