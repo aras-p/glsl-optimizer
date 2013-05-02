@@ -122,7 +122,7 @@ do {						\
  */
 #define ASSERT_OUTSIDE_SAVE_BEGIN_END_WITH_RETVAL(ctx, retval)		\
 do {									\
-   if (ctx->Driver.CurrentSavePrimitive <= GL_POLYGON ||		\
+   if (ctx->Driver.CurrentSavePrimitive <= PRIM_MAX ||			\
        ctx->Driver.CurrentSavePrimitive == PRIM_INSIDE_UNKNOWN_PRIM) {	\
       _mesa_compile_error( ctx, GL_INVALID_OPERATION, "glBegin/End" );	\
       return retval;							\
@@ -137,7 +137,7 @@ do {									\
  */
 #define ASSERT_OUTSIDE_SAVE_BEGIN_END(ctx)				\
 do {									\
-   if (ctx->Driver.CurrentSavePrimitive <= GL_POLYGON ||		\
+   if (ctx->Driver.CurrentSavePrimitive <= PRIM_MAX ||			\
        ctx->Driver.CurrentSavePrimitive == PRIM_INSIDE_UNKNOWN_PRIM) {	\
       _mesa_compile_error( ctx, GL_INVALID_OPERATION, "glBegin/End" );	\
       return;								\
