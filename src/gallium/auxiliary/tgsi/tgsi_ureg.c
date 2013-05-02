@@ -258,6 +258,7 @@ ureg_dst_register( unsigned file,
    dst.File      = file;
    dst.WriteMask = TGSI_WRITEMASK_XYZW;
    dst.Indirect  = 0;
+   dst.IndirectFile = TGSI_FILE_NULL;
    dst.IndirectIndex = 0;
    dst.IndirectSwizzle = 0;
    dst.Saturate  = 0;
@@ -943,7 +944,7 @@ ureg_emit_dst( struct ureg_program *ureg,
    
    if (dst.Indirect) {
       out[n].value = 0;
-      out[n].ind.File = TGSI_FILE_ADDRESS;
+      out[n].ind.File = dst.IndirectFile;
       out[n].ind.Swizzle = dst.IndirectSwizzle;
       out[n].ind.Index = dst.IndirectIndex;
       out[n].ind.ArrayID = dst.ArrayID;

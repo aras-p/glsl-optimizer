@@ -84,6 +84,7 @@ struct ureg_dst
    unsigned PredSwizzleW    : 2;  /* TGSI_SWIZZLE_ */
    int      Index           : 16; /* SINT */
    int      IndirectIndex   : 16; /* SINT */
+   unsigned IndirectFile    : 4;  /* TGSI_FILE_ */
    int      IndirectSwizzle : 2;  /* TGSI_SWIZZLE_ */
    unsigned ArrayID         : 10; /* UINT */
 };
@@ -1065,8 +1066,9 @@ static INLINE struct ureg_dst
 ureg_dst_indirect( struct ureg_dst reg, struct ureg_src addr )
 {
    assert(reg.File != TGSI_FILE_NULL);
-   assert(addr.File == TGSI_FILE_ADDRESS);
+   assert(addr.File == TGSI_FILE_ADDRESS || addr.File == TGSI_FILE_TEMPORARY);
    reg.Indirect = 1;
+   reg.IndirectFile = addr.File;
    reg.IndirectIndex = addr.Index;
    reg.IndirectSwizzle = addr.SwizzleX;
    return reg;
@@ -1122,10 +1124,13 @@ ureg_dst( struct ureg_src src )
 {
    struct ureg_dst dst;
 
-   assert(!src.Indirect || src.IndirectFile == TGSI_FILE_ADDRESS);
+   assert(!src.Indirect ||
+          (src.IndirectFile == TGSI_FILE_ADDRESS ||
+           src.IndirectFile == TGSI_FILE_TEMPORARY));
 
    dst.File      = src.File;
    dst.WriteMask = TGSI_WRITEMASK_XYZW;
+   dst.IndirectFile = src.IndirectFile;
    dst.Indirect  = src.Indirect;
    dst.IndirectIndex = src.IndirectIndex;
    dst.IndirectSwizzle = src.IndirectSwizzle;
@@ -1182,7 +1187,7 @@ ureg_src( struct ureg_dst dst )
    src.SwizzleZ  = TGSI_SWIZZLE_Z;
    src.SwizzleW  = TGSI_SWIZZLE_W;
    src.Indirect  = dst.Indirect;
-   src.IndirectFile = TGSI_FILE_ADDRESS;
+   src.IndirectFile = dst.IndirectFile;
    src.IndirectIndex = dst.IndirectIndex;
    src.IndirectSwizzle = dst.IndirectSwizzle;
    src.Absolute  = 0;
@@ -1209,6 +1214,7 @@ ureg_dst_undef( void )
    dst.File      = TGSI_FILE_NULL;
    dst.WriteMask = 0;
    dst.Indirect  = 0;
+   dst.IndirectFile = TGSI_FILE_NULL;
    dst.IndirectIndex = 0;
    dst.IndirectSwizzle = 0;
    dst.Saturate  = 0;
