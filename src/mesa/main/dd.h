@@ -850,28 +850,17 @@ struct dd_function_table {
 
 
 /**
- * Transform/Clip/Lighting interface
+ * Per-vertex functions.
  *
- * Drivers present a reduced set of the functions possible in
- * glBegin()/glEnd() objects.  Core mesa provides translation stubs for the
- * remaining functions to map down to these entry points.
+ * These are the functions which can appear between glBegin and glEnd.
+ * Depending on whether we're inside or outside a glBegin/End pair
+ * and whether we're in immediate mode or building a display list, these
+ * functions behave differently.  This structure allows us to switch
+ * between those modes more easily.
  *
- * These are the initial values to be installed into dispatch by
- * mesa.  If the T&L driver wants to modify the dispatch table
- * while installed, it must do so itself.  It would be possible for
- * the vertexformat to install its own initial values for these
- * functions, but this way there is an obvious list of what is
- * expected of the driver.
- *
- * If the driver wants to hook in entry points other than those
- * listed, it must restore them to their original values in
- * the disable() callback, below.
+ * Generally, these pointers point to functions in the VBO module.
  */
 typedef struct {
-   /**
-    * \name Vertex
-    */
-   /*@{*/
    void (GLAPIENTRYP ArrayElement)( GLint );
    void (GLAPIENTRYP Color3f)( GLfloat, GLfloat, GLfloat );
    void (GLAPIENTRYP Color3fv)( const GLfloat * );
@@ -1019,8 +1008,6 @@ typedef struct {
    void (GLAPIENTRYP VertexAttribP4uiv)( GLuint index, GLenum type,
 					 GLboolean normalized,
 					 const GLuint *value);
-   /*@}*/
-
 } GLvertexformat;
 
 
