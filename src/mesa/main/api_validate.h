@@ -28,7 +28,7 @@
 #ifndef API_VALIDATE_H
 #define API_VALIDATE_H
 
-
+#include <stdbool.h>
 #include "glheader.h"
 
 struct gl_buffer_object;
@@ -41,6 +41,9 @@ _mesa_max_buffer_index(struct gl_context *ctx, GLuint count, GLenum type,
                        const void *indices,
                        struct gl_buffer_object *elementBuf);
 
+
+extern bool
+_mesa_is_valid_prim_mode(struct gl_context *ctx, GLenum mode);
 
 extern GLboolean
 _mesa_valid_prim_mode(struct gl_context *ctx, GLenum mode, const char *name);
