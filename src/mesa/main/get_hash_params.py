@@ -641,8 +641,8 @@ descriptor=[
   [ "MAX_GEOMETRY_OUTPUT_VERTICES_ARB", "CONTEXT_INT(Const.MaxGeometryOutputVertices), extra_ARB_geometry_shader4" ],
   [ "MAX_GEOMETRY_TOTAL_OUTPUT_COMPONENTS_ARB", "CONTEXT_INT(Const.MaxGeometryTotalOutputComponents), extra_ARB_geometry_shader4" ],
   [ "MAX_GEOMETRY_UNIFORM_COMPONENTS_ARB", "CONTEXT_INT(Const.GeometryProgram.MaxUniformComponents), extra_ARB_geometry_shader4" ],
-  [ "MAX_GEOMETRY_VARYING_COMPONENTS_ARB", "CONTEXT_INT(Const.MaxGeometryVaryingComponents), extra_ARB_geometry_shader4" ],
-  [ "MAX_VERTEX_VARYING_COMPONENTS_ARB", "CONTEXT_INT(Const.MaxVertexVaryingComponents), extra_ARB_geometry_shader4" ],
+  [ "MAX_GEOMETRY_VARYING_COMPONENTS_ARB", "CONTEXT_INT(Const.MaxVaryingComponents), extra_ARB_geometry_shader4" ],
+  [ "MAX_VERTEX_VARYING_COMPONENTS_ARB", "CONTEXT_INT(Const.MaxVaryingComponents), extra_ARB_geometry_shader4" ],
 
 # GL_ARB_color_buffer_float
   [ "RGBA_FLOAT_MODE_ARB", "BUFFER_FIELD(Visual.floatMode, TYPE_BOOLEAN), extra_core_ARB_color_buffer_float_and_new_buffers" ],

@@ -605,8 +605,6 @@ _mesa_init_constants(struct gl_context *ctx)
    ctx->Const.MaxCombinedTextureImageUnits = MAX_COMBINED_TEXTURE_IMAGE_UNITS;
    ctx->Const.MaxVarying = 16; /* old limit not to break tnl and swrast */
    ctx->Const.GeometryProgram.MaxTextureImageUnits = MAX_TEXTURE_IMAGE_UNITS;
-   ctx->Const.MaxVertexVaryingComponents = MAX_VERTEX_VARYING_COMPONENTS;
-   ctx->Const.MaxGeometryVaryingComponents = MAX_GEOMETRY_VARYING_COMPONENTS;
    ctx->Const.MaxGeometryOutputVertices = MAX_GEOMETRY_OUTPUT_VERTICES;
    ctx->Const.MaxGeometryTotalOutputComponents = MAX_GEOMETRY_TOTAL_OUTPUT_COMPONENTS;
 

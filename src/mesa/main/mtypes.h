@@ -2803,10 +2803,9 @@ struct gl_constants
    GLuint MaxRenderbufferSize;   /**< GL_EXT_framebuffer_object */
    GLuint MaxSamples;            /**< GL_ARB_framebuffer_object */
 
-   /** Number of varying vectors between vertex and fragment shaders */
+   /** Number of varying vectors between any two shader stages. */
    GLuint MaxVarying;
-   GLuint MaxVertexVaryingComponents;   /**< Between vert and geom shader */
-   GLuint MaxGeometryVaryingComponents; /**< Between geom and frag shader */
+   GLuint MaxVaryingComponents;
 
    /** @{
     * GL_ARB_uniform_buffer_object
