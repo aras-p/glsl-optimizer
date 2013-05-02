@@ -297,9 +297,9 @@ public:
 	bool recolor_local(value *v);
 
 	void update_local_interferences();
-	void update_live_src_vec(vvec &vv, val_set &born, bool src);
+	void update_live_src_vec(vvec &vv, val_set *born, bool src);
 	void update_live_dst_vec(vvec &vv);
-	void update_live(node *n, val_set &born);
+	void update_live(node *n, val_set *born);
 	void process_group();
 
 	void set_color_local_val(value *v, sel_chan color);

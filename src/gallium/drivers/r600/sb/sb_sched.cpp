@@ -874,7 +874,7 @@ void post_scheduler::update_local_interferences() {
 	}
 }
 
-void post_scheduler::update_live_src_vec(vvec &vv, val_set &born, bool src) {
+void post_scheduler::update_live_src_vec(vvec &vv, val_set *born, bool src) {
 	for (vvec::iterator I = vv.begin(), E = vv.end(); I != E; ++I) {
 		value *v = *I;
 
@@ -892,7 +892,8 @@ void post_scheduler::update_live_src_vec(vvec &vv, val_set &born, bool src) {
 						cleared_interf.add_val(v);
 					}
 				}
-				born.add_val(v);
+				if (born)
+					born->add_val(v);
 			}
 		} else if (v->is_rel()) {
 			if (!v->rel->is_any_gpr())
@@ -924,7 +925,7 @@ void post_scheduler::update_live_dst_vec(vvec &vv) {
 	}
 }
 
-void post_scheduler::update_live(node *n, val_set &born) {
+void post_scheduler::update_live(node *n, val_set *born) {
 	update_live_dst_vec(n->dst);
 	update_live_src_vec(n->src, born, true);
 	update_live_src_vec(n->dst, born, false);
@@ -948,7 +949,7 @@ void post_scheduler::process_group() {
 		if (!n)
 			continue;
 
-		update_live(n, vals_born);
+		update_live(n, &vals_born);
 	}
 
 	PSC_DUMP(
@@ -1550,8 +1551,7 @@ bool post_scheduler::check_copy(node *n) {
 		if (s->is_prealloc() && !map_src_val(s))
 			return true;
 
-		live.remove_val(d);
-		live.add_val(s);
+		update_live(n, NULL);
 
 		release_src_values(n);
 		n->remove();
