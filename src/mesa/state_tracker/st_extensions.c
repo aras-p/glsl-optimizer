@@ -39,7 +39,7 @@
 #include "st_extensions.h"
 #include "st_format.h"
 
-static int _min(int a, int b)
+static unsigned _min(unsigned a, unsigned b)
 {
    return (a < b) ? a : b;
 }
@@ -744,6 +744,9 @@ void st_init_extensions(struct st_context *st)
    if (screen->get_param(screen, PIPE_CAP_TEXTURE_BUFFER_OBJECTS)) {
       ctx->Extensions.ARB_texture_buffer_object = GL_TRUE;
 
+      ctx->Const.MaxTextureBufferSize =
+         _min(screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_BUFFER_SIZE),
+              (1u << 31) - 1);
       ctx->Const.TextureBufferOffsetAlignment =
          screen->get_param(screen, PIPE_CAP_TEXTURE_BUFFER_OFFSET_ALIGNMENT);
 

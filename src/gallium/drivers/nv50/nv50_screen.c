@@ -105,6 +105,8 @@ nv50_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_SCALED_RESOLVE:
    case PIPE_CAP_TEXTURE_BUFFER_OBJECTS:
       return 1;
+   case PIPE_CAP_MAX_TEXTURE_BUFFER_SIZE:
+      return 65536;
    case PIPE_CAP_SEAMLESS_CUBE_MAP:
       return nv50_screen(pscreen)->tesla->oclass >= NVA0_3D_CLASS;
    case PIPE_CAP_SEAMLESS_CUBE_MAP_PER_TEXTURE:

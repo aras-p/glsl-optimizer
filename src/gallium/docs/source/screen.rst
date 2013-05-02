@@ -162,6 +162,8 @@ The integer capabilities:
   state should be swizzled manually according to the swizzle in the sampler
   view it is intended to be used with, or herein undefined results may occur
   for permutational swizzles.
+* ``PIPE_CAP_MAX_TEXTURE_BUFFER_SIZE``: The maximum accessible size with
+  a buffer sampler view, in bytes.
 
 
 .. _pipe_capf:
