@@ -39,6 +39,7 @@
 
 #include <llvm/PassManager.h>
 #include <llvm/ADT/Triple.h>
+#include <llvm/Support/CBindingWrapping.h>
 #include <llvm/Support/FormattedStream.h>
 #include <llvm/Support/Host.h>
 #include <llvm/Support/SourceMgr.h>
@@ -47,7 +48,6 @@
 #include <llvm/Support/Threading.h>
 #include <llvm/Target/TargetMachine.h>
 #include <llvm/Transforms/Scalar.h>
-#include <llvm/Wrap.h>
 #include <llvm-c/Target.h>
 
 #include <iostream>
