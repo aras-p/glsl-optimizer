@@ -289,6 +289,7 @@ _mesa_glsl_parse_state::process_version_directive(YYLTYPE *locp, int version,
 
    if (this->language_version == 300 && this->es_shader) {
       this->ARB_explicit_attrib_location_enable = true;
+      this->ARB_explicit_uniform_binding_enable = true;
    }
 }
 

@@ -383,6 +383,10 @@ struct ast_type_qualifier {
 	  */
 	 unsigned explicit_location:1;
 	 /**
+	  * Flag set if 
+	  */
+	 unsigned explicit_binding:1;
+	 /**
 	  * Flag set if GL_ARB_explicit_attrib_location "index" layout
 	  * qualifier is used.
 	  */
@@ -426,6 +430,13 @@ struct ast_type_qualifier {
     * This field is only valid if \c explicit_index is set.
     */
    int index;
+   /**
+    * Binding specified via
+    *
+    * \note
+    * This field is only valid if \c explicit_binding is set.
+    */
+   int binding;
 
    /**
     * Return true if and only if an interpolation qualifier is present.

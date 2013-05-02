@@ -49,11 +49,13 @@ ir_variable::clone(void *mem_ctx, struct hash_table *ht) const
    var->invariant = this->invariant;
    var->interpolation = this->interpolation;
    var->location = this->location;
+   var->binding = this->binding;
    var->index = this->index;
    var->warn_extension = this->warn_extension;
    var->origin_upper_left = this->origin_upper_left;
    var->pixel_center_integer = this->pixel_center_integer;
    var->explicit_location = this->explicit_location;
+   var->explicit_binding = this->explicit_binding;
    var->explicit_index = this->explicit_index;
    var->has_initializer = this->has_initializer;
    var->depth_layout = this->depth_layout;

@@ -477,6 +477,7 @@ public:
     * no effect).
     */
    unsigned explicit_location:1;
+   unsigned explicit_binding:1;
    unsigned explicit_index:1;
 
    /**
@@ -530,6 +531,11 @@ public:
     * slot has not been assigned, the value will be -1.
     */
    int location;
+    
+   /**
+    * Binding??
+    */
+   int binding;
 
    /**
     * output index for dual source blending.

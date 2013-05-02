@@ -34,6 +34,7 @@ enum glslopt_options {
 	kGlslOptionSkipPreprocessor = (1<<0), // Skip preprocessing shader source. Saves some time if you know you don't need it.
 	kGlslOptionNotFullShader = (1<<1), // Passed shader is not the full shader source. This makes some optimizations weaker.
     kGlslOptionScalar = (1<<2), // Specify optimizations which favor scalar architectures
+    kGlslOptionFancy = (1<<3),  // Allow some 4.0 and 4.1 functionality (mainly location and binding)
 };
 
 glslopt_ctx* glslopt_initialize (bool openglES);

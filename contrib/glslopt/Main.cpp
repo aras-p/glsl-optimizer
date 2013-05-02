@@ -8,9 +8,14 @@ static glslopt_ctx* gContext = 0;
 static int printhelp(const char* msg)
 {
 	if (msg) printf("%s\n\n\n", msg);
-	printf("Usage: glslopt <-f|-v> <input shader> [<output shader>]\n");
-	printf("\t-f : fragment shader\n");
-	printf("\t-v : vertex shader\n");
+	printf("Usage: glslopt <-f|-v> {<-es|-noes> <-scalar|-vector>} <input shader> [<output shader>]\n");
+	printf("\t-f\t\t: fragment shader\n");
+	printf("\t-v\t\t: vertex shader\n");
+    printf("\t-es\t\t: use OpenGL ES\n");
+    printf("\t-noes\t: use regular OpenGL\n");
+    printf("\t-scalar\t: optimize for scalar architecture\n");
+    printf("\t-vector\t: optimize for vector architecture\n");
+    printf("\t-fancy\t: enables 4.0 and 4.1 binding and location features\n");
 	printf("\n\tIf no output specified, output is to [input].out.\n");
 	return 1;
 }
@@ -71,15 +76,19 @@ static bool saveFile(const char* filename, const char* data)
 	return true;
 }
 
-static bool compileShader(const char* dstfilename, const char* srcfilename, bool vertexShader, bool scalar)
+static bool compileShader(const char* dstfilename, const char* srcfilename, bool vertexShader, bool scalar, bool fancy)
 {
 	const char* originalShader = loadFile(srcfilename);
 	if( !originalShader )
 		return false;
 
 	const glslopt_shader_type type = vertexShader ? kGlslOptShaderVertex : kGlslOptShaderFragment;
+    
+    unsigned options = 0;
+    if ( scalar )   options |= kGlslOptionScalar;
+    if ( fancy )    options |= kGlslOptionFancy;
 
-	glslopt_shader* shader = glslopt_optimize(gContext, type, originalShader, scalar ? kGlslOptionScalar : 0);
+	glslopt_shader* shader = glslopt_optimize(gContext, type, originalShader, options);
 	if( !glslopt_get_status(shader) )
 	{
 		printf( "Failed to compile %s:\n\n%s\n", srcfilename, glslopt_get_log(shader));
@@ -100,7 +109,7 @@ int main(int argc, char* argv[])
 	if( argc < 3 )
 		return printhelp(NULL);
 
-	bool vertexShader = false, freename = false, openglES = false, scalar = false;
+	bool vertexShader = false, freename = false, openglES = false, scalar = false, fancy = false;
 	const char* source = 0;
 	char* dest = 0;
 
@@ -120,6 +129,8 @@ int main(int argc, char* argv[])
 				scalar = true;
 			else if( 0 == strcmp("-vector", argv[i]) )
 				scalar = false;
+			else if( 0 == strcmp("-fancy", argv[i]) )
+				fancy = true;
 		}
 		else
 		{
@@ -146,7 +157,7 @@ int main(int argc, char* argv[])
 	}
 
 	int result = 0;
-	if( !compileShader(dest, source, vertexShader, scalar) )
+	if( !compileShader(dest, source, vertexShader, scalar, fancy) )
 		result = 1;
 
 	if( freename ) free(dest);

@@ -1965,7 +1965,12 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
 		       "fragment shader input `gl_FragCoord'",
 		       qual_string);
    }
-
+    
+   if (qual->flags.q.explicit_binding) {
+      var->explicit_binding = true;
+      var->binding = qual->binding;
+   }
+    
    if (qual->flags.q.explicit_location) {
       const bool global_scope = (state->current_function == NULL);
       bool fail = false;
@@ -1992,7 +1997,7 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
 	 break;
 
       case fragment_shader:
-	 if (!global_scope || (var->mode != ir_var_shader_out)) {
+	 if (!global_scope || ((var->mode != ir_var_shader_out) && !state->OPENGL_fancy)) {
 	    fail = true;
 	    string = "output";
 	 }
@@ -2083,7 +2088,7 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
       state->ARB_fragment_coord_conventions_enable;
 
    if (uses_layout && uses_deprecated_qualifier) {
-      if (relaxed_layout_qualifier_checking) {
+      if (relaxed_layout_qualifier_checking || state->OPENGL_fancy) {
 	 _mesa_glsl_warning(loc, state,
 			    "`layout' qualifier may not be used with "
 			    "`attribute' or `varying'");

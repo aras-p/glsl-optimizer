@@ -144,12 +144,38 @@ _mesa_print_ir_glsl(exec_list *instructions,
 			ralloc_strcat (&buffer, "#extension GL_EXT_shadow_samplers : enable\n");
 		if (state->EXT_frag_depth_enable)
 			ralloc_strcat (&buffer, "#extension GL_EXT_frag_depth : enable\n");
+        if (state->ARB_explicit_attrib_location_enable )
+            ralloc_strcat (&buffer, "#extension GL_ARB_explicit_attrib_location : enable\n");
+        if (state->ARB_uniform_buffer_object_enable)
+            ralloc_strcat (&buffer, "#extension GL_ARB_uniform_buffer_object : enable\n");
 	}
 	
 	// remove unused struct declarations
-	do_remove_unused_typedecls(instructions);
-	
+    do_remove_unused_typedecls(instructions);
+    
 	global_print_tracker gtracker;
+
+    for(int bl=0; bl<state->num_uniform_blocks; bl++ ) {
+        gl_uniform_block * block = &state->uniform_blocks[bl];
+        ralloc_asprintf_append (&buffer, "uniform %s {\n", block->Name );
+        for ( int vi=0; vi<block->NumUniforms; vi++ ) {
+            const char * vname = block->Uniforms[vi].Name;
+            foreach_iter(exec_list_iterator, iter, *instructions) {
+                ir_instruction *ir = (ir_instruction *)iter.get();
+                if (ir->ir_type == ir_type_variable) {
+                    ir_variable *var = static_cast<ir_variable*>(ir);
+                    if ( strcmp(vname, var->name)==0 ) {
+                        ir_print_glsl_visitor v (buffer, &gtracker, mode, state->es_shader, state);
+                        ir->accept(&v);
+                        buffer = v.buffer;
+                        ralloc_asprintf_append (&buffer, ";\n");
+                    }
+                }
+            }
+        }
+        
+        ralloc_asprintf_append (&buffer, "};\n");
+    }
 
    foreach_iter(exec_list_iterator, iter, *instructions) {
       ir_instruction *ir = (ir_instruction *)iter.get();
@@ -158,6 +184,8 @@ _mesa_print_ir_glsl(exec_list *instructions,
 		if ((strstr(var->name, "gl_") == var->name)
 			  && !var->invariant)
 			continue;
+        if(var->is_in_uniform_block())
+            continue;
 	  }
 
 	  ir_print_glsl_visitor v (buffer, &gtracker, mode, state->es_shader, state);
@@ -292,9 +320,15 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
       print_var_name (ir);
       return;
    }
+    
+   if ( ir->explicit_location )
+      ralloc_asprintf_append (&buffer, "layout(location=%i) ", ir->location);
+    
+   if ( ir->explicit_binding )
+      ralloc_asprintf_append (&buffer, "layout(binding=%i) ", ir->binding);
 	
    ralloc_asprintf_append (&buffer, "%s%s%s%s",
-	  cent, inv, interp[ir->interpolation], mode[decormode][ir->mode]);
+	  cent, inv, interp[ir->interpolation], ir->is_in_uniform_block() ? "  " : mode[decormode][ir->mode]);
    print_precision (ir, ir->type);
    buffer = print_type(buffer, ir->type, false);
    ralloc_asprintf_append (&buffer, " ");

@@ -17,44 +17,46 @@ _mesa_new_shader(struct gl_context *ctx, GLuint name, GLenum type);
 static void
 initialize_mesa_context(struct gl_context *ctx, gl_api api)
 {
-   memset(ctx, 0, sizeof(*ctx));
+    memset(ctx, 0, sizeof(*ctx));
 
-   ctx->API = api;
+    ctx->API = api;
 
-   ctx->Extensions.ARB_fragment_coord_conventions = GL_TRUE;
-   ctx->Extensions.EXT_texture_array = GL_TRUE;
-   ctx->Extensions.NV_texture_rectangle = GL_TRUE;
-   ctx->Extensions.ARB_shader_texture_lod = GL_TRUE;
+    ctx->Extensions.ARB_fragment_coord_conventions = GL_TRUE;
+    ctx->Extensions.EXT_texture_array = GL_TRUE;
+    ctx->Extensions.NV_texture_rectangle = GL_TRUE;
+    ctx->Extensions.ARB_shader_texture_lod = GL_TRUE;
+    ctx->Extensions.ARB_explicit_attrib_location = GL_TRUE;
+    ctx->Extensions.ARB_uniform_buffer_object = GL_TRUE;
 
-   // Enable opengl es extensions we care about here
-   if (api == API_OPENGLES2)
-   {
-	   ctx->Extensions.OES_standard_derivatives = GL_TRUE;
-	   ctx->Extensions.EXT_shadow_samplers = GL_TRUE;
-	   ctx->Extensions.EXT_frag_depth = GL_TRUE;
-   }
+    // Enable opengl es extensions we care about here
+    if (api == API_OPENGLES2)
+    {
+        ctx->Extensions.OES_standard_derivatives = GL_TRUE;
+        ctx->Extensions.EXT_shadow_samplers = GL_TRUE;
+        ctx->Extensions.EXT_frag_depth = GL_TRUE;
+    }
 
-   ctx->Const.GLSLVersion = 140;
+    ctx->Const.GLSLVersion = 140;
 
-   /* 1.20 minimums. */
-   ctx->Const.MaxLights = 8;
-   ctx->Const.MaxClipPlanes = 8;
-   ctx->Const.MaxTextureUnits = 2;
+    /* 1.20 minimums. */
+    ctx->Const.MaxLights = 8;
+    ctx->Const.MaxClipPlanes = 8;
+    ctx->Const.MaxTextureUnits = 2;
 
-   /* allow high amount */
-   ctx->Const.MaxTextureCoordUnits = 16;
+    /* allow high amount */
+    ctx->Const.MaxTextureCoordUnits = 16;
 
-   ctx->Const.VertexProgram.MaxAttribs = 16;
-   ctx->Const.VertexProgram.MaxUniformComponents = 512;
-   ctx->Const.MaxVarying = 8;
-   ctx->Const.MaxVertexTextureImageUnits = 0;
-   ctx->Const.MaxCombinedTextureImageUnits = 2;
-   ctx->Const.MaxTextureImageUnits = 2;
-   ctx->Const.FragmentProgram.MaxUniformComponents = 64;
+    ctx->Const.VertexProgram.MaxAttribs = 16;
+    ctx->Const.VertexProgram.MaxUniformComponents = 512;
+    ctx->Const.MaxVarying = 8;
+    ctx->Const.MaxVertexTextureImageUnits = 0;
+    ctx->Const.MaxCombinedTextureImageUnits = 2;
+    ctx->Const.MaxTextureImageUnits = 2;
+    ctx->Const.FragmentProgram.MaxUniformComponents = 64;
 
-   ctx->Const.MaxDrawBuffers = 2;
+    ctx->Const.MaxDrawBuffers = (api==API_OPENGLES2) ? 2 : 4;
 
-   ctx->Driver.NewShader = _mesa_new_shader;
+    ctx->Driver.NewShader = _mesa_new_shader;
 }
 
 
@@ -336,6 +338,13 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 	
 	_mesa_glsl_parse_state* state = new (shader) _mesa_glsl_parse_state (&ctx->mesa_ctx, shader->shader->Type, shader);
 	state->error = 0;
+    
+    if ( options & kGlslOptionFancy )
+    {
+        state->OPENGL_fancy = true;
+        state->ARB_explicit_uniform_binding_enable = true;
+        state->ARB_explicit_attrib_location_enable = true;
+    }
 
 	if (!(options & kGlslOptionSkipPreprocessor))
 	{
@@ -385,6 +394,8 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 			return shader;
 		}
 		ir = linked_shader->ir;
+        state->uniform_blocks = linked_shader->UniformBlocks;
+        state->num_uniform_blocks = linked_shader->NumUniformBlocks;
 		
 		debug_print_ir ("==== After link ====", ir, state, shader);
 	}

@@ -1202,6 +1202,20 @@ layout_qualifier_id:
                  }
               }
 	   }
+	
+	   if ( state->ARB_explicit_uniform_binding_enable ) {
+	      if (strcmp("binding", $1) == 0) {
+		 $$.flags.q.explicit_binding = 1;
+
+		 if ($3 >= 0) {
+		    $$.binding = $3;
+		 } else {
+		    _mesa_glsl_error(& @3, state,
+				     "invalid binding %d specified\n", $3);
+		    YYERROR;
+		 }
+	      }
+	   }
 
 	   /* If the identifier didn't match any known layout identifiers,
 	    * emit an error.
