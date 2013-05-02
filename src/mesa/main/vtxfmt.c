@@ -41,6 +41,8 @@
 /**
  * Use the per-vertex functions found in <vfmt> to initialize the given
  * API dispatch table.
+ * If beginend is true, only plug in the functions which are legal
+ * between glBegin/glEnd.
  */
 static void
 install_vtxfmt(struct gl_context *ctx, struct _glapi_table *tab,
@@ -114,36 +116,47 @@ install_vtxfmt(struct gl_context *ctx, struct _glapi_table *tab,
       SET_Rectf(tab, vfmt->Rectf);
    }
 
-   SET_DrawArrays(tab, vfmt->DrawArrays);
-   SET_DrawElements(tab, vfmt->DrawElements);
-   if (_mesa_is_desktop_gl(ctx) || _mesa_is_gles3(ctx)) {
-      SET_DrawRangeElements(tab, vfmt->DrawRangeElements);
-   }
+   if (!beginend) {
+      /* These functions are only valid outside glBegin/glEnd */
+      SET_DrawArrays(tab, vfmt->DrawArrays);
+      SET_DrawElements(tab, vfmt->DrawElements);
 
-   SET_MultiDrawElementsEXT(tab, vfmt->MultiDrawElementsEXT);
+      if (_mesa_is_desktop_gl(ctx) || _mesa_is_gles3(ctx)) {
+         SET_DrawRangeElements(tab, vfmt->DrawRangeElements);
+      }
 
-   if (_mesa_is_desktop_gl(ctx)) {
-      SET_DrawElementsBaseVertex(tab, vfmt->DrawElementsBaseVertex);
-      SET_DrawRangeElementsBaseVertex(tab, vfmt->DrawRangeElementsBaseVertex);
-      SET_MultiDrawElementsBaseVertex(tab, vfmt->MultiDrawElementsBaseVertex);
-      SET_DrawArraysInstancedBaseInstance(tab, vfmt->DrawArraysInstancedBaseInstance);
-      SET_DrawElementsInstancedBaseInstance(tab, vfmt->DrawElementsInstancedBaseInstance);
-      SET_DrawElementsInstancedBaseVertex(tab, vfmt->DrawElementsInstancedBaseVertex);
-      SET_DrawElementsInstancedBaseVertexBaseInstance(tab, vfmt->DrawElementsInstancedBaseVertexBaseInstance);
-   }
+      SET_MultiDrawElementsEXT(tab, vfmt->MultiDrawElementsEXT);
 
-   if (_mesa_is_desktop_gl(ctx) || _mesa_is_gles3(ctx)) {
-      SET_DrawArraysInstancedARB(tab, vfmt->DrawArraysInstanced);
-      SET_DrawElementsInstancedARB(tab, vfmt->DrawElementsInstanced);
-   }
+      if (_mesa_is_desktop_gl(ctx)) {
+         SET_DrawElementsBaseVertex(tab, vfmt->DrawElementsBaseVertex);
+         SET_DrawRangeElementsBaseVertex(tab,
+                                         vfmt->DrawRangeElementsBaseVertex);
+         SET_MultiDrawElementsBaseVertex(tab,
+                                         vfmt->MultiDrawElementsBaseVertex);
+         SET_DrawArraysInstancedBaseInstance(tab,
+                                     vfmt->DrawArraysInstancedBaseInstance);
+         SET_DrawElementsInstancedBaseInstance(tab,
+                                   vfmt->DrawElementsInstancedBaseInstance);
+         SET_DrawElementsInstancedBaseVertex(tab,
+                                     vfmt->DrawElementsInstancedBaseVertex);
+         SET_DrawElementsInstancedBaseVertexBaseInstance(tab,
+                         vfmt->DrawElementsInstancedBaseVertexBaseInstance);
+      }
 
-   if (_mesa_is_desktop_gl(ctx)) {
-      SET_DrawTransformFeedback(tab, vfmt->DrawTransformFeedback);
-      SET_DrawTransformFeedbackStream(tab, vfmt->DrawTransformFeedbackStream);
-      SET_DrawTransformFeedbackInstanced(tab,
-                                         vfmt->DrawTransformFeedbackInstanced);
-      SET_DrawTransformFeedbackStreamInstanced(tab,
-                                               vfmt->DrawTransformFeedbackStreamInstanced);
+      if (_mesa_is_desktop_gl(ctx) || _mesa_is_gles3(ctx)) {
+         SET_DrawArraysInstancedARB(tab, vfmt->DrawArraysInstanced);
+         SET_DrawElementsInstancedARB(tab, vfmt->DrawElementsInstanced);
+      }
+
+      if (_mesa_is_desktop_gl(ctx)) {
+         SET_DrawTransformFeedback(tab, vfmt->DrawTransformFeedback);
+         SET_DrawTransformFeedbackStream(tab,
+                                         vfmt->DrawTransformFeedbackStream);
+         SET_DrawTransformFeedbackInstanced(tab,
+                                      vfmt->DrawTransformFeedbackInstanced);
+         SET_DrawTransformFeedbackStreamInstanced(tab,
+                                vfmt->DrawTransformFeedbackStreamInstanced);
+      }
    }
 
    /* Originally for GL_NV_vertex_program, this is also used by dlist.c */
