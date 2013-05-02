@@ -44,6 +44,7 @@ manifest.txt
 .deps/
 .dirstamp
 .libs/
+cmake_temp/
 Makefile
 Makefile.in
 
@@ -72,3 +73,6 @@ glslopt
 glsl_compiler
 .settings/
 .pydevproject
+*.DS_Store
+.DS_Store
+
