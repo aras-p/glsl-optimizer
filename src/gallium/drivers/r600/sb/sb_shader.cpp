@@ -263,6 +263,7 @@ node* shader::create_node(node_type nt, node_subtype nst, node_flags flags) {
 
 alu_node* shader::create_alu() {
 	alu_node* n = new (pool.allocate(sizeof(alu_node))) alu_node();
+	memset(&n->bc, 0, sizeof(bc_alu));
 	all_nodes.push_back(n);
 	return n;
 }
@@ -283,6 +284,7 @@ alu_packed_node* shader::create_alu_packed() {
 
 cf_node* shader::create_cf() {
 	cf_node* n = new (pool.allocate(sizeof(cf_node))) cf_node();
+	memset(&n->bc, 0, sizeof(bc_cf));
 	n->bc.barrier = 1;
 	all_nodes.push_back(n);
 	return n;
@@ -290,6 +292,7 @@ cf_node* shader::create_cf() {
 
 fetch_node* shader::create_fetch() {
 	fetch_node* n = new (pool.allocate(sizeof(fetch_node))) fetch_node();
+	memset(&n->bc, 0, sizeof(bc_fetch));
 	all_nodes.push_back(n);
 	return n;
 }

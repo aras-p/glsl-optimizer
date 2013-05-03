@@ -963,7 +963,7 @@ public:
 
 class cf_node : public container_node {
 protected:
-	cf_node() : container_node(NT_OP, NST_CF_INST), bc(), jump_target(),
+	cf_node() : container_node(NT_OP, NST_CF_INST), jump_target(),
 		jump_after_target() {};
 public:
 	bc_cf bc;
@@ -983,7 +983,7 @@ public:
 
 class alu_node : public node {
 protected:
-	alu_node() : node(NT_OP, NST_ALU_INST), bc() {};
+	alu_node() : node(NT_OP, NST_ALU_INST) {};
 public:
 	bc_alu bc;
 
@@ -1029,7 +1029,7 @@ public:
 
 class fetch_node : public node {
 protected:
-	fetch_node() : node(NT_OP, NST_FETCH_INST), bc() {};
+	fetch_node() : node(NT_OP, NST_FETCH_INST) {};
 public:
 	bc_fetch bc;
 
