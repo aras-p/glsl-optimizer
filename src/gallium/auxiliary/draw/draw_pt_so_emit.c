@@ -131,8 +131,7 @@ static void so_emit_prim(struct pt_so_emit *so,
    for (i = 0; i < draw->so.num_targets; i++) {
       struct draw_so_target *target = draw->so.targets[i];
       if (target) {
-         buffer_total_bytes[i] = target->internal_offset +
-            target->target.buffer_offset;
+         buffer_total_bytes[i] = target->internal_offset;
       } else {
          buffer_total_bytes[i] = 0;
       }

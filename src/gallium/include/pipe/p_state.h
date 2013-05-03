@@ -465,6 +465,13 @@ struct pipe_constant_buffer {
  * have been written. The internal offset can be stored on the device
  * and the CPU actually doesn't have to query it.
  *
+ * Note that the buffer_size variable is actually specifying the available
+ * space in the buffer, not the size of the attached buffer. 
+ * In other words in majority of cases buffer_size would simply be 
+ * 'buffer->width0 - buffer_offset', so buffer_size refers to the size
+ * of the buffer left, after accounting for buffer offset, for stream output
+ * to write to.
+ *
  * Use PIPE_QUERY_SO_STATISTICS to know how many primitives have
  * actually been written.
  */
