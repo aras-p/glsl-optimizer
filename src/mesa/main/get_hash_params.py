@@ -726,6 +726,9 @@ descriptor=[
   [ "MAX_PROGRAM_TEXTURE_GATHER_OFFSET", "CONTEXT_INT(Const.MaxProgramTextureGatherOffset), extra_ARB_texture_gather"],
   [ "MAX_PROGRAM_TEXTURE_GATHER_COMPONENTS_ARB", "CONTEXT_INT(Const.MaxProgramTextureGatherComponents), extra_ARB_texture_gather"],
 
+# GL_ARB_separate_shader_objects
+  [ "PROGRAM_PIPELINE_BINDING", "LOC_CUSTOM, TYPE_INT, GL_PROGRAM_PIPELINE_BINDING, extra_ARB_separate_shader_objects" ],
+
 # GL_ARB_shader_atomic_counters
   [ "ATOMIC_COUNTER_BUFFER_BINDING", "LOC_CUSTOM, TYPE_INT, 0, extra_ARB_shader_atomic_counters" ],
   [ "MAX_ATOMIC_COUNTER_BUFFER_BINDINGS", "CONTEXT_INT(Const.MaxAtomicBufferBindings), extra_ARB_shader_atomic_counters" ],
