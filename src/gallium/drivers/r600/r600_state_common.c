@@ -715,6 +715,7 @@ static int r600_shader_select(struct pipe_context *ctx,
 	struct r600_pipe_shader * shader = NULL;
 	int r;
 
+	memset(&key, 0, sizeof(key));
 	key = r600_shader_selector_key(ctx, sel);
 
 	/* Check if we don't need to change anything.
@@ -762,7 +763,7 @@ static int r600_shader_select(struct pipe_context *ctx,
 			key = r600_shader_selector_key(ctx, sel);
 		}
 
-		shader->key = key;
+		memcpy(&shader->key, &key, sizeof(key));
 		sel->num_shaders++;
 	}
 
