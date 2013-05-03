@@ -159,7 +159,8 @@ void gvn::process_alu_src_constants(node &n, value* &v) {
 
 	rp_kcache_tracker kc(sh);
 
-	kc.try_reserve(v->gvn_source->select);
+	if (v->gvn_source->is_kcache())
+		kc.try_reserve(v->gvn_source->select);
 
 	// don't propagate 3rd constant to the trans-only instruction
 	if (!n.is_alu_packed()) {
