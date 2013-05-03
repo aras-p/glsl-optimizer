@@ -7,6 +7,7 @@
 #include "util/u_double_list.h"
 #include "util/u_memory.h"
 
+#include "evergreend.h"
 #include "r600_asm.h"
 #include "r600_sq.h"
 #include "r600_opcodes.h"
@@ -577,6 +578,12 @@ LLVMModuleRef r600_tgsi_llvm(
 	return ctx->gallivm.module;
 }
 
+/* We need to define these R600 registers here, because we can't include
+ * evergreend.h and r600d.h.
+ */
+#define R_028868_SQ_PGM_RESOURCES_VS                 0x028868
+#define R_028850_SQ_PGM_RESOURCES_PS                 0x028850
+
 unsigned r600_llvm_compile(
 	LLVMModuleRef mod,
 	enum radeon_family family,
@@ -587,6 +594,7 @@ unsigned r600_llvm_compile(
 	unsigned r;
 	struct radeon_llvm_binary binary;
 	const char * gpu_family = r600_llvm_gpu_string(family);
+	unsigned i;
 
 	r = radeon_llvm_compile(mod, &binary, gpu_family, dump);
 
@@ -595,9 +603,28 @@ unsigned r600_llvm_compile(
 	memcpy(bc->bytecode, binary.code, binary.code_size);
 	bc->ndw = binary.code_size / 4;
 
-	bc->ngpr = util_le32_to_cpu(*(uint32_t*)binary.config);
-	bc->nstack = util_le32_to_cpu(*(uint32_t*)(binary.config + 4));
-	*use_kill = util_le32_to_cpu(*(uint32_t*)(binary.config + 8));
+	for (i = 0; i < binary.config_size; i+= 8) {
+		unsigned reg =
+			util_le32_to_cpu(*(uint32_t*)(binary.config + i));
+		unsigned value =
+			util_le32_to_cpu(*(uint32_t*)(binary.config + i + 4));
+		switch (reg) {
+		/* R600 / R700 */
+		case R_028850_SQ_PGM_RESOURCES_PS:
+		case R_028868_SQ_PGM_RESOURCES_VS:
+		/* Evergreen / Northern Islands */
+		case R_028844_SQ_PGM_RESOURCES_PS:
+		case R_028860_SQ_PGM_RESOURCES_VS:
+		case R_0288D4_SQ_PGM_RESOURCES_LS:
+			bc->ngpr = G_028844_NUM_GPRS(value);
+			bc->nstack = G_028844_STACK_SIZE(value);
+			break;
+		case R_02880C_DB_SHADER_CONTROL:
+			*use_kill = G_02880C_KILL_ENABLE(value);
+			break;
+		}
+	}
+
 	return r;
 }
 
