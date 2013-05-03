@@ -158,7 +158,7 @@ upload_vs_state(struct brw_context *brw)
    /* Use ALT floating point mode for ARB vertex programs, because they
     * require 0^0 == 1.
     */
-   if (ctx->Shader.CurrentProgram[MESA_SHADER_VERTEX] == NULL)
+   if (ctx->_Shader->CurrentProgram[MESA_SHADER_VERTEX] == NULL)
       floating_point_mode = GEN6_VS_FLOATING_POINT_MODE_ALT;
 
    BEGIN_BATCH(6);

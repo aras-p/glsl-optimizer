@@ -147,7 +147,7 @@ brw_compute_vue_map(struct brw_context *brw, struct brw_vue_map *vue_map,
  */
 gl_clip_plane *brw_select_clip_planes(struct gl_context *ctx)
 {
-   if (ctx->Shader.CurrentProgram[MESA_SHADER_VERTEX]) {
+   if (ctx->_Shader->CurrentProgram[MESA_SHADER_VERTEX]) {
       /* There is currently a GLSL vertex shader, so clip according to GLSL
        * rules, which means compare gl_ClipVertex (or gl_Position, if
        * gl_ClipVertex wasn't assigned) against the eye-coordinate clip planes
@@ -484,7 +484,7 @@ static void brw_upload_vs_prog(struct brw_context *brw)
 			 &key, sizeof(key),
 			 &brw->vs.base.prog_offset, &brw->vs.prog_data)) {
       bool success =
-         do_vs_prog(brw, ctx->Shader.CurrentProgram[MESA_SHADER_VERTEX], vp,
+         do_vs_prog(brw, ctx->_Shader->CurrentProgram[MESA_SHADER_VERTEX], vp,
                     &key);
       (void) success;
       assert(success);

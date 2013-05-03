@@ -468,8 +468,8 @@ static GLuint
 get_handle(struct gl_context *ctx, GLenum pname)
 {
    if (pname == GL_PROGRAM_OBJECT_ARB) {
-      if (ctx->Shader.ActiveProgram)
-         return ctx->Shader.ActiveProgram->Name;
+      if (ctx->_Shader->ActiveProgram)
+         return ctx->_Shader->ActiveProgram->Name;
       else
          return 0;
    }
@@ -840,7 +840,7 @@ compile_shader(struct gl_context *ctx, GLuint shaderObj)
        */
       sh->CompileStatus = GL_FALSE;
    } else {
-      if (ctx->Shader.Flags & GLSL_DUMP) {
+      if (ctx->_Shader->Flags & GLSL_DUMP) {
          fprintf(stderr, "GLSL source for %s shader %d:\n",
                  _mesa_shader_stage_to_string(sh->Stage), sh->Name);
          fprintf(stderr, "%s\n", sh->Source);
@@ -852,11 +852,11 @@ compile_shader(struct gl_context *ctx, GLuint shaderObj)
        */
       _mesa_glsl_compile_shader(ctx, sh, false, false);
 
-      if (ctx->Shader.Flags & GLSL_LOG) {
+      if (ctx->_Shader->Flags & GLSL_LOG) {
          _mesa_write_shader_to_file(sh);
       }
 
-      if (ctx->Shader.Flags & GLSL_DUMP) {
+      if (ctx->_Shader->Flags & GLSL_DUMP) {
          if (sh->CompileStatus) {
             fprintf(stderr, "GLSL IR for shader %d:\n", sh->Name);
             _mesa_print_ir(stderr, sh->ir, NULL);
@@ -874,7 +874,7 @@ compile_shader(struct gl_context *ctx, GLuint shaderObj)
    }
 
    if (!sh->CompileStatus) {
-      if (ctx->Shader.Flags & GLSL_DUMP_ON_ERROR) {
+      if (ctx->_Shader->Flags & GLSL_DUMP_ON_ERROR) {
          fprintf(stderr, "GLSL source for %s shader %d:\n",
                  _mesa_shader_stage_to_string(sh->Stage), sh->Name);
          fprintf(stderr, "%s\n", sh->Source);
@@ -882,7 +882,7 @@ compile_shader(struct gl_context *ctx, GLuint shaderObj)
          fflush(stderr);
       }
 
-      if (ctx->Shader.Flags & GLSL_REPORT_ERRORS) {
+      if (ctx->_Shader->Flags & GLSL_REPORT_ERRORS) {
          _mesa_debug(ctx, "Error compiling shader %u:\n%s\n",
                      sh->Name, sh->InfoLog);
       }
@@ -918,7 +918,7 @@ link_program(struct gl_context *ctx, GLuint program)
    _mesa_glsl_link_shader(ctx, shProg);
 
    if (shProg->LinkStatus == GL_FALSE && 
-       (ctx->Shader.Flags & GLSL_REPORT_ERRORS)) {
+       (ctx->_Shader->Flags & GLSL_REPORT_ERRORS)) {
       _mesa_debug(ctx, "Error linking program %u:\n%s\n",
                   shProg->Name, shProg->InfoLog);
    }
@@ -994,7 +994,7 @@ use_shader_program(struct gl_context *ctx, GLenum type,
    struct gl_shader_program **target;
    gl_shader_stage stage = _mesa_shader_enum_to_shader_stage(type);
 
-   target = &ctx->Shader.CurrentProgram[stage];
+   target = &ctx->_Shader->CurrentProgram[stage];
    if ((shProg == NULL) || (shProg->_LinkedShaders[stage] == NULL))
       shProg = NULL;
 
@@ -1016,9 +1016,9 @@ use_shader_program(struct gl_context *ctx, GLenum type,
          /* Empty for now. */
          break;
       case GL_FRAGMENT_SHADER:
-	 if (*target == ctx->Shader._CurrentFragmentProgram) {
+         if (*target == ctx->_Shader->_CurrentFragmentProgram) {
 	    _mesa_reference_shader_program(ctx,
-					   &ctx->Shader._CurrentFragmentProgram,
+                                           &ctx->_Shader->_CurrentFragmentProgram,
 					   NULL);
 	 }
 	 break;
@@ -1536,7 +1536,7 @@ _mesa_UseProgram(GLhandleARB program)
       }
 
       /* debug code */
-      if (ctx->Shader.Flags & GLSL_USE_PROG) {
+      if (ctx->_Shader->Flags & GLSL_USE_PROG) {
          print_shader_info(shProg);
       }
    }
@@ -1862,9 +1862,9 @@ _mesa_UseShaderProgramEXT(GLenum type, GLuint program)
       _mesa_use_shader_program(ctx, type, shProg);
 
       /* Nothing remains current */
-      if (!ctx->Shader.CurrentVertexProgram &&
-          !ctx->Shader.CurrentGeometryProgram &&
-          !ctx->Shader.CurrentFragmentProgram &&
+      if (!ctx->Shader.CurrentProgram[MESA_SHADER_VERTEX] &&
+          !ctx->Shader.CurrentProgram[MESA_SHADER_GEOMETRY] &&
+          !ctx->Shader.CurrentProgram[MESA_SHADER_FRAGMENT] &&
           !ctx->Shader.ActiveProgram) {
 
          /* Unattach shader_state binding point */
@@ -1910,8 +1910,10 @@ _mesa_ActiveProgramEXT(GLuint program)
       _mesa_active_program(ctx, shProg, "glActiveProgramEXT");
 
       /* Nothing remains current */
-      if (!ctx->Shader.CurrentVertexProgram && !ctx->Shader.CurrentGeometryProgram &&
-          !ctx->Shader.CurrentFragmentProgram && !ctx->Shader.ActiveProgram) {
+      if (!ctx->Shader.CurrentProgram[MESA_SHADER_VERTEX] &&
+          !ctx->Shader.CurrentProgram[MESA_SHADER_GEOMETRY] &&
+          !ctx->Shader.CurrentProgram[MESA_SHADER_FRAGMENT] &&
+          !ctx->Shader.ActiveProgram) {
 
          /* Unattach shader_state binding point */
          _mesa_reference_pipeline_object(ctx, &ctx->_Shader, ctx->Pipeline.Default);

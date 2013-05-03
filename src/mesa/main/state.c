@@ -95,11 +95,11 @@ static GLbitfield
 update_program(struct gl_context *ctx)
 {
    const struct gl_shader_program *vsProg =
-      ctx->Shader.CurrentProgram[MESA_SHADER_VERTEX];
+      ctx->_Shader->CurrentProgram[MESA_SHADER_VERTEX];
    const struct gl_shader_program *gsProg =
-      ctx->Shader.CurrentProgram[MESA_SHADER_GEOMETRY];
+      ctx->_Shader->CurrentProgram[MESA_SHADER_GEOMETRY];
    struct gl_shader_program *fsProg =
-      ctx->Shader.CurrentProgram[MESA_SHADER_FRAGMENT];
+      ctx->_Shader->CurrentProgram[MESA_SHADER_FRAGMENT];
    const struct gl_vertex_program *prevVP = ctx->VertexProgram._Current;
    const struct gl_fragment_program *prevFP = ctx->FragmentProgram._Current;
    const struct gl_geometry_program *prevGP = ctx->GeometryProgram._Current;
@@ -125,7 +125,7 @@ update_program(struct gl_context *ctx)
        && fsProg->_LinkedShaders[MESA_SHADER_FRAGMENT]) {
       /* Use GLSL fragment shader */
       _mesa_reference_shader_program(ctx,
-				     &ctx->Shader._CurrentFragmentProgram,
+                                     &ctx->_Shader->_CurrentFragmentProgram,
 				     fsProg);
       _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._Current,
                                gl_fragment_program(fsProg->_LinkedShaders[MESA_SHADER_FRAGMENT]->Program));
@@ -135,7 +135,7 @@ update_program(struct gl_context *ctx)
    else if (ctx->FragmentProgram._Enabled) {
       /* Use user-defined fragment program */
       _mesa_reference_shader_program(ctx,
-				     &ctx->Shader._CurrentFragmentProgram,
+                                     &ctx->_Shader->_CurrentFragmentProgram,
 				     NULL);
       _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._Current,
                                ctx->FragmentProgram.Current);
@@ -147,7 +147,7 @@ update_program(struct gl_context *ctx)
       struct gl_shader_program *f = _mesa_get_fixed_func_fragment_program(ctx);
 
       _mesa_reference_shader_program(ctx,
-				     &ctx->Shader._CurrentFragmentProgram,
+                                     &ctx->_Shader->_CurrentFragmentProgram,
 				     f);
       _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._Current,
 			       gl_fragment_program(f->_LinkedShaders[MESA_SHADER_FRAGMENT]->Program));
@@ -310,7 +310,7 @@ update_multisample(struct gl_context *ctx)
 static void
 update_twoside(struct gl_context *ctx)
 {
-   if (ctx->Shader.CurrentProgram[MESA_SHADER_VERTEX] ||
+   if (ctx->_Shader->CurrentProgram[MESA_SHADER_VERTEX] ||
        ctx->VertexProgram._Enabled) {
       ctx->VertexProgram._TwoSideEnabled = ctx->VertexProgram.TwoSideEnabled;
    } else {

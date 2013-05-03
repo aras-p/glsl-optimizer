@@ -537,10 +537,10 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
 
       for (i = 0; i < MESA_SHADER_STAGES; i++) {
          _mesa_reference_shader_program(ctx, &save->Shader[i],
-                                     ctx->Shader.CurrentProgram[i]);
+                                     ctx->_Shader->CurrentProgram[i]);
       }
       _mesa_reference_shader_program(ctx, &save->ActiveShader,
-                                     ctx->Shader.ActiveProgram);
+                                     ctx->_Shader->ActiveProgram);
 
       _mesa_UseProgram(0);
    }
@@ -893,7 +893,7 @@ _mesa_meta_end(struct gl_context *ctx)
 	 _mesa_use_shader_program(ctx, GL_FRAGMENT_SHADER,
 				  save->Shader[MESA_SHADER_FRAGMENT]);
 
-      _mesa_reference_shader_program(ctx, &ctx->Shader.ActiveProgram,
+      _mesa_reference_shader_program(ctx, &ctx->_Shader->ActiveProgram,
 				     save->ActiveShader);
 
       for (i = 0; i < MESA_SHADER_STAGES; i++)

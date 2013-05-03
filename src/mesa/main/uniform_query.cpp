@@ -698,7 +698,7 @@ _mesa_uniform(struct gl_context *ctx, struct gl_shader_program *shProg,
       return;
    }
 
-   if (ctx->Shader.Flags & GLSL_UNIFORMS) {
+   if (ctx->_Shader->Flags & GLSL_UNIFORMS) {
       log_uniform(values, basicType, components, 1, count,
 		  false, shProg, location, uni);
    }
@@ -920,7 +920,7 @@ _mesa_uniform_matrix(struct gl_context *ctx, struct gl_shader_program *shProg,
       }
    }
 
-   if (ctx->Shader.Flags & GLSL_UNIFORMS) {
+   if (ctx->_Shader->Flags & GLSL_UNIFORMS) {
       log_uniform(values, GLSL_TYPE_FLOAT, components, vectors, count,
 		  bool(transpose), shProg, location, uni);
    }

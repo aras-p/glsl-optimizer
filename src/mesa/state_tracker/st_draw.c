@@ -131,7 +131,7 @@ setup_index_buffer(struct st_context *st,
 static void
 check_uniforms(struct gl_context *ctx)
 {
-   struct gl_shader_program **shProg = ctx->Shader.CurrentProgram;
+   struct gl_shader_program **shProg = ctx->_Shader->CurrentProgram;
    unsigned j;
 
    for (j = 0; j < 3; j++) {

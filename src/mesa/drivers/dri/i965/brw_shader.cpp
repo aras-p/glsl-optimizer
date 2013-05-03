@@ -248,7 +248,7 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
 
       _mesa_reference_program(ctx, &prog, NULL);
 
-      if (ctx->Shader.Flags & GLSL_DUMP) {
+      if (ctx->_Shader->Flags & GLSL_DUMP) {
          fprintf(stderr, "\n");
          fprintf(stderr, "GLSL IR for linked %s program %d:\n",
                  _mesa_shader_stage_to_string(shader->base.Stage),
@@ -258,7 +258,7 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
       }
    }
 
-   if ((ctx->Shader.Flags & GLSL_DUMP) && shProg->Name != 0) {
+   if ((ctx->_Shader->Flags & GLSL_DUMP) && shProg->Name != 0) {
       for (unsigned i = 0; i < shProg->NumShaders; i++) {
          const struct gl_shader *sh = shProg->Shaders[i];
          if (!sh)

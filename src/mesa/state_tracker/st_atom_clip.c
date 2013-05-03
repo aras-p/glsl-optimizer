@@ -52,7 +52,7 @@ static void update_clip( struct st_context *st )
    /* if we have a vertex shader that writes clip vertex we need to pass
       the pre-projection transformed coordinates into the driver. */
    if (st->vp) {
-      if (ctx->Shader.CurrentProgram[MESA_SHADER_VERTEX])
+      if (ctx->_Shader->CurrentProgram[MESA_SHADER_VERTEX])
          use_eye = TRUE;
    }
 

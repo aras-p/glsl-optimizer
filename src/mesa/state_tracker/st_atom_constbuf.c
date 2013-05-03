@@ -219,7 +219,7 @@ static void st_bind_ubos(struct st_context *st,
 static void bind_vs_ubos(struct st_context *st)
 {
    struct gl_shader_program *prog =
-      st->ctx->Shader.CurrentProgram[MESA_SHADER_VERTEX];
+      st->ctx->_Shader->CurrentProgram[MESA_SHADER_VERTEX];
 
    if (!prog)
       return;
@@ -239,7 +239,7 @@ const struct st_tracked_state st_bind_vs_ubos = {
 static void bind_fs_ubos(struct st_context *st)
 {
    struct gl_shader_program *prog =
-      st->ctx->Shader.CurrentProgram[MESA_SHADER_FRAGMENT];
+      st->ctx->_Shader->CurrentProgram[MESA_SHADER_FRAGMENT];
 
    if (!prog)
       return;
@@ -259,7 +259,7 @@ const struct st_tracked_state st_bind_fs_ubos = {
 static void bind_gs_ubos(struct st_context *st)
 {
    struct gl_shader_program *prog =
-      st->ctx->Shader.CurrentProgram[MESA_SHADER_GEOMETRY];
+      st->ctx->_Shader->CurrentProgram[MESA_SHADER_GEOMETRY];
 
    if (!prog)
       return;

@@ -1204,7 +1204,7 @@ st_get_gp_variant(struct st_context *st,
 void
 st_print_shaders(struct gl_context *ctx)
 {
-   struct gl_shader_program **shProg = ctx->Shader.CurrentProgram;
+   struct gl_shader_program **shProg = ctx->_Shader->CurrentProgram;
    unsigned j;
 
    for (j = 0; j < 3; j++) {

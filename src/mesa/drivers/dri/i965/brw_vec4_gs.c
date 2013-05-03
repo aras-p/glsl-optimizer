@@ -306,7 +306,7 @@ brw_upload_gs_prog(struct brw_context *brw)
                          &key, sizeof(key),
                          &stage_state->prog_offset, &brw->gs.prog_data)) {
       bool success =
-         do_gs_prog(brw, ctx->Shader.CurrentProgram[MESA_SHADER_GEOMETRY], gp,
+         do_gs_prog(brw, ctx->_Shader->CurrentProgram[MESA_SHADER_GEOMETRY], gp,
                     &key);
       assert(success);
    }

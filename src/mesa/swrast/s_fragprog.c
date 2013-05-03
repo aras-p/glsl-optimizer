@@ -182,7 +182,7 @@ init_machine(struct gl_context *ctx, struct gl_program_machine *machine,
    machine->Samplers = program->Base.SamplerUnits;
 
    /* if running a GLSL program (not ARB_fragment_program) */
-   if (ctx->Shader.CurrentProgram[MESA_SHADER_FRAGMENT]) {
+   if (ctx->_Shader->CurrentProgram[MESA_SHADER_FRAGMENT]) {
       /* Store front/back facing value */
       machine->Attribs[VARYING_SLOT_FACE][col][0] = 1.0F - span->facing;
    }

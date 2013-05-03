@@ -1855,7 +1855,7 @@ _mesa_valid_to_render(struct gl_context *ctx, const char *where)
       _mesa_update_state(ctx);
 
    for (i = 0; i < MESA_SHADER_COMPUTE; i++) {
-      if (!shader_linked_or_absent(ctx, ctx->Shader.CurrentProgram[i],
+      if (!shader_linked_or_absent(ctx, ctx->_Shader->CurrentProgram[i],
                                    &from_glsl_shader[i], where))
          return GL_FALSE;
    }
@@ -1903,8 +1903,8 @@ _mesa_valid_to_render(struct gl_context *ctx, const char *where)
    }
 
 #ifdef DEBUG
-   if (ctx->Shader.Flags & GLSL_LOG) {
-      struct gl_shader_program **shProg = ctx->Shader.CurrentProgram;
+   if (ctx->_Shader->Flags & GLSL_LOG) {
+      struct gl_shader_program **shProg = ctx->_Shader->CurrentProgram;
       gl_shader_stage i;
 
       for (i = 0; i < MESA_SHADER_STAGES; i++) {

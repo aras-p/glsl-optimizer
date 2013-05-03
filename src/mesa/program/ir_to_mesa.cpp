@@ -2917,7 +2917,7 @@ get_mesa_program(struct gl_context *ctx,
 
    set_branchtargets(&v, mesa_instructions, num_instructions);
 
-   if (ctx->Shader.Flags & GLSL_DUMP) {
+   if (ctx->_Shader->Flags & GLSL_DUMP) {
       fprintf(stderr, "\n");
       fprintf(stderr, "GLSL IR for linked %s program %d:\n", target_string,
 	      shader_program->Name);
@@ -2953,7 +2953,7 @@ get_mesa_program(struct gl_context *ctx,
 
    _mesa_reference_program(ctx, &shader->Program, prog);
 
-   if ((ctx->Shader.Flags & GLSL_NO_OPT) == 0) {
+   if ((ctx->_Shader->Flags & GLSL_NO_OPT) == 0) {
       _mesa_optimize_program(ctx, prog);
    }
 
@@ -3096,7 +3096,7 @@ _mesa_glsl_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
       }
    }
 
-   if (ctx->Shader.Flags & GLSL_DUMP) {
+   if (ctx->_Shader->Flags & GLSL_DUMP) {
       if (!prog->LinkStatus) {
 	 fprintf(stderr, "GLSL shader program %d failed to link\n", prog->Name);
       }

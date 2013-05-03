@@ -388,8 +388,8 @@ get_xfb_source(struct gl_context *ctx)
 {
    int i;
    for (i = MESA_SHADER_GEOMETRY; i >= MESA_SHADER_VERTEX; i--) {
-      if (ctx->Shader.CurrentProgram[i] != NULL)
-         return ctx->Shader.CurrentProgram[i];
+      if (ctx->_Shader->CurrentProgram[i] != NULL)
+         return ctx->_Shader->CurrentProgram[i];
    }
    return NULL;
 }

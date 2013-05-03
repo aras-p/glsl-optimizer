@@ -187,7 +187,7 @@ static void populate_key(struct brw_context *brw,
       /* BRW_NEW_TRANSFORM_FEEDBACK */
       if (_mesa_is_xfb_active_and_unpaused(ctx)) {
          const struct gl_shader_program *shaderprog =
-            ctx->Shader.CurrentProgram[MESA_SHADER_VERTEX];
+            ctx->_Shader->CurrentProgram[MESA_SHADER_VERTEX];
          const struct gl_transform_feedback_info *linked_xfb_info =
             &shaderprog->LinkedTransformFeedback;
          int i;

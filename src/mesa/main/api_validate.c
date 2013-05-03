@@ -129,7 +129,7 @@ check_valid_to_render(struct gl_context *ctx, const char *function)
    case API_OPENGL_CORE:
       {
          const struct gl_shader_program *vsProg =
-            ctx->Shader.CurrentProgram[MESA_SHADER_VERTEX];
+            ctx->_Shader->CurrentProgram[MESA_SHADER_VERTEX];
          GLboolean haveVertexShader = (vsProg && vsProg->LinkStatus);
          GLboolean haveVertexProgram = ctx->VertexProgram._Enabled;
          if (haveVertexShader || haveVertexProgram) {
@@ -270,9 +270,9 @@ _mesa_valid_prim_mode(struct gl_context *ctx, GLenum mode, const char *name)
     *   TRIANGLES_ADJACENCY_ARB or TRIANGLE_STRIP_ADJACENCY_ARB.
     *
    */
-   if (ctx->Shader.CurrentProgram[MESA_SHADER_GEOMETRY]) {
+   if (ctx->_Shader->CurrentProgram[MESA_SHADER_GEOMETRY]) {
       const GLenum geom_mode =
-         ctx->Shader.CurrentProgram[MESA_SHADER_GEOMETRY]->Geom.InputType;
+         ctx->_Shader->CurrentProgram[MESA_SHADER_GEOMETRY]->Geom.InputType;
       switch (mode) {
       case GL_POINTS:
          valid_enum = (geom_mode == GL_POINTS);
@@ -331,8 +331,8 @@ _mesa_valid_prim_mode(struct gl_context *ctx, GLenum mode, const char *name)
    if (_mesa_is_xfb_active_and_unpaused(ctx)) {
       GLboolean pass = GL_TRUE;
 
-      if(ctx->Shader.CurrentProgram[MESA_SHADER_GEOMETRY]) {
-         switch (ctx->Shader.CurrentProgram[MESA_SHADER_GEOMETRY]->Geom.OutputType) {
+      if(ctx->_Shader->CurrentProgram[MESA_SHADER_GEOMETRY]) {
+         switch (ctx->_Shader->CurrentProgram[MESA_SHADER_GEOMETRY]->Geom.OutputType) {
          case GL_POINTS:
             pass = ctx->TransformFeedback.Mode == GL_POINTS;
             break;

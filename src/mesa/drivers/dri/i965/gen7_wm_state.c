@@ -168,7 +168,7 @@ upload_ps_state(struct brw_context *brw)
     * to differentiate between the GLSL and non-GLSL cases.
     */
    /* BRW_NEW_FRAGMENT_PROGRAM */
-   if (ctx->Shader.CurrentProgram[MESA_SHADER_FRAGMENT] == NULL)
+   if (ctx->_Shader->CurrentProgram[MESA_SHADER_FRAGMENT] == NULL)
       dw2 |= GEN7_PS_FLOATING_POINT_MODE_ALT;
 
    /* Haswell requires the sample mask to be set in this packet as well as
