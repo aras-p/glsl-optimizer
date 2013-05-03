@@ -216,7 +216,7 @@ fs_visitor::calculate_live_intervals()
              * pixel_x/pixel_y, which are registers of 16-bit values and thus
              * would get stomped by the first decode as well.
              */
-            if (dispatch_width == 16 && (inst->src[i].smear ||
+            if (dispatch_width == 16 && (inst->src[i].smear >= 0 ||
                                          (this->pixel_x.reg == reg ||
                                           this->pixel_y.reg == reg))) {
                end_ip++;
