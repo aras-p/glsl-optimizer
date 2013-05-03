@@ -44,7 +44,7 @@ check_PROGRAMS = \
 TESTS = $(check_PROGRAMS)
 noinst_PROGRAMS = tests/xvmc_bench
 
-TEST_LIBS = -lXvMCW -lXvMC -lXv -lX11
+TEST_LIBS = $(XVMC_LIBS) -lXvMCW
 tests_test_context_SOURCES = tests/test_context.c tests/testlib.c
 tests_test_context_LDADD = $(TEST_LIBS)
 tests_test_surface_SOURCES = tests/test_surface.c tests/testlib.c
