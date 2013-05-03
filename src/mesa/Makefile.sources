@@ -69,6 +69,7 @@ MAIN_FILES = \
 	$(SRCDIR)main/pack.c \
 	$(SRCDIR)main/pbo.c \
 	$(SRCDIR)main/performance_monitor.c \
+	$(SRCDIR)main/pipelineobj.c \
 	$(SRCDIR)main/pixel.c \
 	$(SRCDIR)main/pixelstore.c \
 	$(SRCDIR)main/pixeltransfer.c \

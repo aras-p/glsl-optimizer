@@ -219,6 +219,11 @@ extern bool
 _mesa_validate_shader_target(const struct gl_context *ctx, GLenum type);
 
 
+/* GL_ARB_separate_shader_objects */
+extern GLuint GLAPIENTRY
+_mesa_CreateShaderProgramv(GLenum type, GLsizei count,
+                           const GLchar* const *strings);
+
 #ifdef __cplusplus
 }
 #endif

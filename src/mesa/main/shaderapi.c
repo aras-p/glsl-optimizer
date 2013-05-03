@@ -1883,3 +1883,14 @@ _mesa_copy_linked_program_data(gl_shader_stage type,
       break;
    }
 }
+
+
+/**
+ * ARB_separate_shader_objects: Compile & Link Program
+ */
+GLuint GLAPIENTRY
+_mesa_CreateShaderProgramv(GLenum type, GLsizei count,
+                           const GLchar* const *strings)
+{
+   return 0;
+}

@@ -716,66 +716,66 @@ const struct function gl_core_functions_possible[] = {
    { "glGetProgramBinary", 43, -1 },
    { "glProgramBinary", 43, -1 },
    { "glProgramParameteri", 43, -1 },
-// { "glUseProgramStages", 43, -1 },                    // XXX: Add to xml
-// { "glActiveShaderProgram", 43, -1 },                 // XXX: Add to xml
-// { "glCreateShaderProgramv", 43, -1 },                // XXX: Add to xml
-// { "glBindProgramPipeline", 43, -1 },                 // XXX: Add to xml
-// { "glDeleteProgramPipelines", 43, -1 },              // XXX: Add to xml
-// { "glGenProgramPipelines", 43, -1 },                 // XXX: Add to xml
-// { "glIsProgramPipeline", 43, -1 },                   // XXX: Add to xml
-// { "glGetProgramPipelineiv", 43, -1 },                // XXX: Add to xml
-// { "glProgramUniform1i", 43, -1 },                    // XXX: Add to xml
-// { "glProgramUniform1iv", 43, -1 },                   // XXX: Add to xml
-// { "glProgramUniform1f", 43, -1 },                    // XXX: Add to xml
-// { "glProgramUniform1fv", 43, -1 },                   // XXX: Add to xml
+   { "glUseProgramStages", 43, -1 },
+   { "glActiveShaderProgram", 43, -1 },
+   { "glCreateShaderProgramv", 43, -1 },
+   { "glBindProgramPipeline", 43, -1 },
+   { "glDeleteProgramPipelines", 43, -1 },
+   { "glGenProgramPipelines", 43, -1 },
+   { "glIsProgramPipeline", 43, -1 },
+   { "glGetProgramPipelineiv", 43, -1 },
+   { "glProgramUniform1i", 43, -1 },
+   { "glProgramUniform1iv", 43, -1 },
+   { "glProgramUniform1f", 43, -1 },
+   { "glProgramUniform1fv", 43, -1 },
 // { "glProgramUniform1d", 43, -1 },                    // XXX: Add to xml
 // { "glProgramUniform1dv", 43, -1 },                   // XXX: Add to xml
-// { "glProgramUniform1ui", 43, -1 },                   // XXX: Add to xml
-// { "glProgramUniform1uiv", 43, -1 },                  // XXX: Add to xml
-// { "glProgramUniform2i", 43, -1 },                    // XXX: Add to xml
-// { "glProgramUniform2iv", 43, -1 },                   // XXX: Add to xml
-// { "glProgramUniform2f", 43, -1 },                    // XXX: Add to xml
-// { "glProgramUniform2fv", 43, -1 },                   // XXX: Add to xml
+   { "glProgramUniform1ui", 43, -1 },
+   { "glProgramUniform1uiv", 43, -1 },
+   { "glProgramUniform2i", 43, -1 },
+   { "glProgramUniform2iv", 43, -1 },
+   { "glProgramUniform2f", 43, -1 },
+   { "glProgramUniform2fv", 43, -1 },
 // { "glProgramUniform2d", 43, -1 },                    // XXX: Add to xml
 // { "glProgramUniform2dv", 43, -1 },                   // XXX: Add to xml
-// { "glProgramUniform2ui", 43, -1 },                   // XXX: Add to xml
-// { "glProgramUniform2uiv", 43, -1 },                  // XXX: Add to xml
-// { "glProgramUniform3i", 43, -1 },                    // XXX: Add to xml
-// { "glProgramUniform3iv", 43, -1 },                   // XXX: Add to xml
-// { "glProgramUniform3f", 43, -1 },                    // XXX: Add to xml
-// { "glProgramUniform3fv", 43, -1 },                   // XXX: Add to xml
+   { "glProgramUniform2ui", 43, -1 },
+   { "glProgramUniform2uiv", 43, -1 },
+   { "glProgramUniform3i", 43, -1 },
+   { "glProgramUniform3iv", 43, -1 },
+   { "glProgramUniform3f", 43, -1 },
+   { "glProgramUniform3fv", 43, -1 },
 // { "glProgramUniform3d", 43, -1 },                    // XXX: Add to xml
 // { "glProgramUniform3dv", 43, -1 },                   // XXX: Add to xml
-// { "glProgramUniform3ui", 43, -1 },                   // XXX: Add to xml
-// { "glProgramUniform3uiv", 43, -1 },                  // XXX: Add to xml
-// { "glProgramUniform4i", 43, -1 },                    // XXX: Add to xml
-// { "glProgramUniform4iv", 43, -1 },                   // XXX: Add to xml
-// { "glProgramUniform4f", 43, -1 },                    // XXX: Add to xml
-// { "glProgramUniform4fv", 43, -1 },                   // XXX: Add to xml
+   { "glProgramUniform3ui", 43, -1 },
+   { "glProgramUniform3uiv", 43, -1 },
+   { "glProgramUniform4i", 43, -1 },
+   { "glProgramUniform4iv", 43, -1 },
+   { "glProgramUniform4f", 43, -1 },
+   { "glProgramUniform4fv", 43, -1 },
 // { "glProgramUniform4d", 43, -1 },                    // XXX: Add to xml
 // { "glProgramUniform4dv", 43, -1 },                   // XXX: Add to xml
-// { "glProgramUniform4ui", 43, -1 },                   // XXX: Add to xml
-// { "glProgramUniform4uiv", 43, -1 },                  // XXX: Add to xml
-// { "glProgramUniformMatrix2fv", 43, -1 },             // XXX: Add to xml
-// { "glProgramUniformMatrix3fv", 43, -1 },             // XXX: Add to xml
-// { "glProgramUniformMatrix4fv", 43, -1 },             // XXX: Add to xml
+   { "glProgramUniform4ui", 43, -1 },
+   { "glProgramUniform4uiv", 43, -1 },
+   { "glProgramUniformMatrix2fv", 43, -1 },
+   { "glProgramUniformMatrix3fv", 43, -1 },
+   { "glProgramUniformMatrix4fv", 43, -1 },
 // { "glProgramUniformMatrix2dv", 43, -1 },             // XXX: Add to xml
 // { "glProgramUniformMatrix3dv", 43, -1 },             // XXX: Add to xml
 // { "glProgramUniformMatrix4dv", 43, -1 },             // XXX: Add to xml
-// { "glProgramUniformMatrix2x3fv", 43, -1 },           // XXX: Add to xml
-// { "glProgramUniformMatrix3x2fv", 43, -1 },           // XXX: Add to xml
-// { "glProgramUniformMatrix2x4fv", 43, -1 },           // XXX: Add to xml
-// { "glProgramUniformMatrix4x2fv", 43, -1 },           // XXX: Add to xml
-// { "glProgramUniformMatrix3x4fv", 43, -1 },           // XXX: Add to xml
-// { "glProgramUniformMatrix4x3fv", 43, -1 },           // XXX: Add to xml
+   { "glProgramUniformMatrix2x3fv", 43, -1 },
+   { "glProgramUniformMatrix3x2fv", 43, -1 },
+   { "glProgramUniformMatrix2x4fv", 43, -1 },
+   { "glProgramUniformMatrix4x2fv", 43, -1 },
+   { "glProgramUniformMatrix3x4fv", 43, -1 },
+   { "glProgramUniformMatrix4x3fv", 43, -1 },
 // { "glProgramUniformMatrix2x3dv", 43, -1 },           // XXX: Add to xml
 // { "glProgramUniformMatrix3x2dv", 43, -1 },           // XXX: Add to xml
 // { "glProgramUniformMatrix2x4dv", 43, -1 },           // XXX: Add to xml
 // { "glProgramUniformMatrix4x2dv", 43, -1 },           // XXX: Add to xml
 // { "glProgramUniformMatrix3x4dv", 43, -1 },           // XXX: Add to xml
 // { "glProgramUniformMatrix4x3dv", 43, -1 },           // XXX: Add to xml
-// { "glValidateProgramPipeline", 43, -1 },             // XXX: Add to xml
-// { "glGetProgramPipelineInfoLog", 43, -1 },           // XXX: Add to xml
+   { "glValidateProgramPipeline", 43, -1 },
+   { "glGetProgramPipelineInfoLog", 43, -1 },
 // { "glVertexAttribL1d", 43, -1 },                     // XXX: Add to xml
 // { "glVertexAttribL2d", 43, -1 },                     // XXX: Add to xml
 // { "glVertexAttribL3d", 43, -1 },                     // XXX: Add to xml

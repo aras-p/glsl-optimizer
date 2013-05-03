@@ -111,6 +111,89 @@ _mesa_UniformMatrix3x4fv(GLint location, GLsizei count, GLboolean transpose,
 void GLAPIENTRY
 _mesa_UniformMatrix4x3fv(GLint location, GLsizei count, GLboolean transpose,
                          const GLfloat *value);
+
+void GLAPIENTRY
+_mesa_ProgramUniform1f(GLuint program, GLint, GLfloat);
+void GLAPIENTRY
+_mesa_ProgramUniform2f(GLuint program, GLint, GLfloat, GLfloat);
+void GLAPIENTRY
+_mesa_ProgramUniform3f(GLuint program, GLint, GLfloat, GLfloat, GLfloat);
+void GLAPIENTRY
+_mesa_ProgramUniform4f(GLuint program, GLint, GLfloat, GLfloat, GLfloat, GLfloat);
+void GLAPIENTRY
+_mesa_ProgramUniform1i(GLuint program, GLint, GLint);
+void GLAPIENTRY
+_mesa_ProgramUniform2i(GLuint program, GLint, GLint, GLint);
+void GLAPIENTRY
+_mesa_ProgramUniform3i(GLuint program, GLint, GLint, GLint, GLint);
+void GLAPIENTRY
+_mesa_ProgramUniform4i(GLuint program, GLint, GLint, GLint, GLint, GLint);
+void GLAPIENTRY
+_mesa_ProgramUniform1fv(GLuint program, GLint, GLsizei, const GLfloat *);
+void GLAPIENTRY
+_mesa_ProgramUniform2fv(GLuint program, GLint, GLsizei, const GLfloat *);
+void GLAPIENTRY
+_mesa_ProgramUniform3fv(GLuint program, GLint, GLsizei, const GLfloat *);
+void GLAPIENTRY
+_mesa_ProgramUniform4fv(GLuint program, GLint, GLsizei, const GLfloat *);
+void GLAPIENTRY
+_mesa_ProgramUniform1iv(GLuint program, GLint, GLsizei, const GLint *);
+void GLAPIENTRY
+_mesa_ProgramUniform2iv(GLuint program, GLint, GLsizei, const GLint *);
+void GLAPIENTRY
+_mesa_ProgramUniform3iv(GLuint program, GLint, GLsizei, const GLint *);
+void GLAPIENTRY
+_mesa_ProgramUniform4iv(GLuint program, GLint, GLsizei, const GLint *);
+void GLAPIENTRY
+_mesa_ProgramUniform1ui(GLuint program, GLint location, GLuint v0);
+void GLAPIENTRY
+_mesa_ProgramUniform2ui(GLuint program, GLint location, GLuint v0, GLuint v1);
+void GLAPIENTRY
+_mesa_ProgramUniform3ui(GLuint program, GLint location, GLuint v0, GLuint v1,
+                        GLuint v2);
+void GLAPIENTRY
+_mesa_ProgramUniform4ui(GLuint program, GLint location, GLuint v0, GLuint v1,
+                        GLuint v2, GLuint v3);
+void GLAPIENTRY
+_mesa_ProgramUniform1uiv(GLuint program, GLint location, GLsizei count,
+                         const GLuint *value);
+void GLAPIENTRY
+_mesa_ProgramUniform2uiv(GLuint program, GLint location, GLsizei count,
+                         const GLuint *value);
+void GLAPIENTRY
+_mesa_ProgramUniform3uiv(GLuint program, GLint location, GLsizei count,
+                         const GLuint *value);
+void GLAPIENTRY
+_mesa_ProgramUniform4uiv(GLuint program, GLint location, GLsizei count,
+                         const GLuint *value);
+void GLAPIENTRY
+_mesa_ProgramUniformMatrix2fv(GLuint program, GLint, GLsizei, GLboolean,
+                              const GLfloat *);
+void GLAPIENTRY
+_mesa_ProgramUniformMatrix3fv(GLuint program, GLint, GLsizei, GLboolean,
+                              const GLfloat *);
+void GLAPIENTRY
+_mesa_ProgramUniformMatrix4fv(GLuint program, GLint, GLsizei, GLboolean,
+                              const GLfloat *);
+void GLAPIENTRY
+_mesa_ProgramUniformMatrix2x3fv(GLuint program, GLint location, GLsizei count,
+                                GLboolean transpose, const GLfloat *value);
+void GLAPIENTRY
+_mesa_ProgramUniformMatrix3x2fv(GLuint program, GLint location, GLsizei count,
+                                GLboolean transpose, const GLfloat *value);
+void GLAPIENTRY
+_mesa_ProgramUniformMatrix2x4fv(GLuint program, GLint location, GLsizei count,
+                                GLboolean transpose, const GLfloat *value);
+void GLAPIENTRY
+_mesa_ProgramUniformMatrix4x2fv(GLuint program, GLint location, GLsizei count,
+                                GLboolean transpose, const GLfloat *value);
+void GLAPIENTRY
+_mesa_ProgramUniformMatrix3x4fv(GLuint program, GLint location, GLsizei count,
+                                GLboolean transpose, const GLfloat *value);
+void GLAPIENTRY
+_mesa_ProgramUniformMatrix4x3fv(GLuint program, GLint location, GLsizei count,
+                                GLboolean transpose, const GLfloat *value);
+
 void GLAPIENTRY
 _mesa_GetnUniformfvARB(GLhandleARB, GLint, GLsizei, GLfloat *);
 void GLAPIENTRY
