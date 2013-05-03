@@ -532,7 +532,10 @@ struct pipe_resource *si_texture_create(struct pipe_screen *screen,
 		if (util_format_is_compressed(templ->format)) {
 			array_mode = V_009910_ARRAY_1D_TILED_THIN1;
 		} else {
-			array_mode = V_009910_ARRAY_2D_TILED_THIN1;
+			if (rscreen->chip_class >= CIK)
+				array_mode = V_009910_ARRAY_1D_TILED_THIN1; /* XXX fix me */
+			else
+				array_mode = V_009910_ARRAY_2D_TILED_THIN1;
 		}
 	}
 
