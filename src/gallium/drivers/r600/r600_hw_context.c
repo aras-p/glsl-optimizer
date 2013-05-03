@@ -226,32 +226,6 @@ void r600_flush_emit(struct r600_context *rctx)
 	if (rctx->flags & R600_CONTEXT_FLUSH_AND_INV) {
 		cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
 		cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_EVENT) | EVENT_INDEX(0);
-		if (rctx->chip_class >= EVERGREEN) {
-			/* We were previously setting the CB and DB bits on
-			 * cp_coher_cntl, but this is unnecessary since
-			 * we are emitting the
-			 * EVENT_TYPE_CACHE_FLUSH_AND_INV_EVENT packet.
-			 * Setting the CB bits was causing lockups when using
-			 * compute on cayman.
-			 *
-			 * XXX: Do even need to emit a surface sync packet here?
-			 * Prior to e5e4c07e7964a3258ed02b530bcdc24c0650204b
-			 * surface sync was not being emitted with the
-			 * R600_CONTEXT_FLUSH_AND_INV flag.
-			 */
-			cp_coher_cntl =	S_0085F0_TC_ACTION_ENA(1) |
-					S_0085F0_DB_ACTION_ENA(1) |
-					S_0085F0_SH_ACTION_ENA(1) |
-					S_0085F0_SMX_ACTION_ENA(1) |
-					S_0085F0_FULL_CACHE_ENA(1);
-		} else {
-			cp_coher_cntl = S_0085F0_SMX_ACTION_ENA(1) |
-					S_0085F0_SH_ACTION_ENA(1) |
-					S_0085F0_VC_ACTION_ENA(1) |
-					S_0085F0_TC_ACTION_ENA(1) |
-					S_0085F0_FULL_CACHE_ENA(1);
-		}
-		emit_flush = 1;
 	}
 
 	if (rctx->flags & R600_CONTEXT_INVAL_READ_CACHES) {
