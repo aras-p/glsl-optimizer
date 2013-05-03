@@ -103,6 +103,12 @@ gallium_DRIVERS += libmesa_winsys_i915 libmesa_pipe_i915
 LOCAL_SHARED_LIBRARIES += libdrm_intel
 endif
 
+# ilo
+ifneq ($(filter ilo, $(MESA_GPU_DRIVERS)),)
+gallium_DRIVERS += libmesa_winsys_intel libmesa_pipe_ilo
+LOCAL_SHARED_LIBRARIES += libdrm_intel
+endif
+
 # nouveau
 ifneq ($(filter nouveau, $(MESA_GPU_DRIVERS)),)
 gallium_DRIVERS += \

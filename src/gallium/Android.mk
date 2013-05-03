@@ -39,6 +39,11 @@ ifneq ($(filter i915g, $(MESA_GPU_DRIVERS)),)
 SUBDIRS += winsys/i915/drm drivers/i915
 endif
 
+# ilo
+ifneq ($(filter ilo, $(MESA_GPU_DRIVERS)),)
+SUBDIRS += winsys/intel/drm drivers/ilo
+endif
+
 # nouveau
 ifneq ($(filter nouveau, $(MESA_GPU_DRIVERS)),)
 SUBDIRS += \

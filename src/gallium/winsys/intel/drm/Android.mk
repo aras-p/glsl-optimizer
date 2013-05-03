@@ -1,7 +1,6 @@
 # Mesa 3-D graphics library
 #
-# Copyright (C) 2010-2011 Chia-I Wu <olvaffe@gmail.com>
-# Copyright (C) 2010-2011 LunarG Inc.
+# Copyright (C) 2013 LunarG Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -23,59 +22,19 @@
 
 LOCAL_PATH := $(call my-dir)
 
+# get C_SOURCES
+include $(LOCAL_PATH)/Makefile.sources
+
 include $(CLEAR_VARS)
 
-LOCAL_SRC_FILES := \
-	egl.c \
-	egl_pipe.c \
-	egl_st.c
-
-LOCAL_CFLAGS := \
-	-DFEATURE_ES1=1 \
-	-DFEATURE_ES2=1 \
-	-D_EGL_MAIN=_eglBuiltInDriverGALLIUM
+LOCAL_SRC_FILES := $(C_SOURCES)
 
 LOCAL_C_INCLUDES := \
-	$(GALLIUM_TOP)/state_trackers/vega \
-	$(GALLIUM_TOP)/state_trackers/egl \
-	$(MESA_TOP)/src/egl/main \
-	$(MESA_TOP)/src/mesa
-
-# swrast
-LOCAL_CFLAGS += -DGALLIUM_SOFTPIPE
-
-# swrast only
-ifeq ($(MESA_GPU_DRIVERS),swrast)
-LOCAL_CFLAGS += -D_EGL_NO_DRM
-else
-LOCAL_C_INCLUDES += \
+	$(DRM_TOP) \
 	$(DRM_TOP)/include/drm \
-	$(DRM_TOP)
-endif
+	$(DRM_TOP)/intel
 
-ifneq ($(filter i915g, $(MESA_GPU_DRIVERS)),)
-LOCAL_CFLAGS += -D_EGL_PIPE_I915=1
-endif
-ifneq ($(filter ilo, $(MESA_GPU_DRIVERS)),)
-LOCAL_CFLAGS += -D_EGL_PIPE_ILO=1
-endif
-ifneq ($(filter nouveau, $(MESA_GPU_DRIVERS)),)
-LOCAL_CFLAGS += -D_EGL_PIPE_NOUVEAU=1
-endif
-ifneq ($(filter r300g, $(MESA_GPU_DRIVERS)),)
-LOCAL_CFLAGS += -D_EGL_PIPE_R300=1
-endif
-ifneq ($(filter r600g, $(MESA_GPU_DRIVERS)),)
-LOCAL_CFLAGS += -D_EGL_PIPE_R600=1
-endif
-ifneq ($(filter radeonsi, $(MESA_GPU_DRIVERS)),)
-LOCAL_CFLAGS += -D_EGL_PIPE_RADEONSI=1
-endif
-ifneq ($(filter vmwgfx, $(MESA_GPU_DRIVERS)),)
-LOCAL_CFLAGS += -D_EGL_PIPE_VMWGFX=1
-endif
-
-LOCAL_MODULE := libmesa_egl_gallium
+LOCAL_MODULE := libmesa_winsys_intel
 
 include $(GALLIUM_COMMON_MK)
 include $(BUILD_STATIC_LIBRARY)
