@@ -68,6 +68,9 @@ LOCAL_SHARED_LIBRARIES := \
 	libcutils \
 	libgralloc_drm \
 
+ifeq ($(shell echo "$(MESA_ANDROID_VERSION) >= 4.2" | bc),1)
+LOCAL_SHARED_LIBRARIES += libsync
+endif
 
 # add libdrm if there are hardware drivers
 ifneq ($(MESA_GPU_DRIVERS),swrast)
@@ -81,11 +84,6 @@ LOCAL_STATIC_LIBRARIES += libmesa_egl_dri2
 # require i915_dri and/or i965_dri
 LOCAL_REQUIRED_MODULES += \
 	$(addsuffix _dri, $(filter i915 i965, $(MESA_GPU_DRIVERS)))
-
-ifeq ($(shell echo "$(MESA_ANDROID_VERSION) >= 4.2" | bc),1)
-    LOCAL_SHARED_LIBRARIES += \
-        libsync
-endif
 endif # MESA_BUILD_CLASSIC
 
 ifeq ($(strip $(MESA_BUILD_GALLIUM)),true)
