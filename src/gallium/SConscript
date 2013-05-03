@@ -29,15 +29,6 @@ if not env['msvc']:
 
 if env['drm']:
     # These drivers depend on drm headers
-    if env['drm_radeon']:
-        SConscript([
-            'drivers/r300/SConscript',
-            'drivers/r600/SConscript',
-        ])
-        if env['llvm']:
-            SConscript([
-                'drivers/radeonsi/SConscript',
-            ])
     # XXX: nouveau drivers have a tight dependency on libdrm, so to enable
     # we need some version logic before we enable them. Also, ATM there is
     # no nouveau target in scons
@@ -110,11 +101,6 @@ if env['dri']:
             'winsys/i915/drm/SConscript',
         ])
 
-    if env['drm_radeon']:
-        SConscript([
-            'winsys/radeon/drm/SConscript',
-        ])
-
 #
 # Targets
 #
@@ -152,21 +138,11 @@ if not env['embedded']:
             SConscript([
                 'targets/dri-i915/SConscript',
             ])
-        if env['drm_radeon']:
-            SConscript([
-                'targets/dri-r300/SConscript',
-                'targets/dri-r600/SConscript',
-            ])
-            if env['llvm']:
-                SConscript([
-                    'targets/dri-radeonsi/SConscript',
-                ])
 
     if env['xorg'] and env['drm']:
         SConscript([
             #'targets/xorg-i915/SConscript',
             #'targets/xorg-nouveau/SConscript',
-            #'targets/xorg-radeon/SConscript',
         ])
 
 

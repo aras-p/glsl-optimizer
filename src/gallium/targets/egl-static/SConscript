@@ -98,15 +98,6 @@ if env['HAVE_DRM']:
             ws_wrapper,
         ])
 
-    if env['HAVE_DRM_RADEON']:
-        env.PkgUseModules('DRM_RADEON')
-        env.Append(CPPDEFINES = ['_EGL_PIPE_R300', '_EGL_PIPE_R600'])
-        env.Prepend(LIBS = [
-            radeonwinsys,
-            r300,
-            r600,
-        ])
-
     env.Append(CPPDEFINES = ['_EGL_PIPE_VMWGFX'])
     env.Prepend(LIBS = [
         svgadrm,
