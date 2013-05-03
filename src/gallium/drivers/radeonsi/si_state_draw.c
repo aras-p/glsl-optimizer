@@ -55,8 +55,13 @@ static void si_pipe_shader_vs(struct pipe_context *ctx, struct si_pipe_shader *s
 	 * takes care of adding a dummy export.
 	 */
 	for (nparams = 0, i = 0 ; i < shader->shader.noutput; i++) {
-		if (shader->shader.output[i].name != TGSI_SEMANTIC_POSITION)
+		switch (shader->shader.output[i].name) {
+		case TGSI_SEMANTIC_POSITION:
+		case TGSI_SEMANTIC_PSIZE:
+			break;
+		default:
 			nparams++;
+		}
 	}
 	if (nparams < 1)
 		nparams = 1;
@@ -66,7 +71,9 @@ static void si_pipe_shader_vs(struct pipe_context *ctx, struct si_pipe_shader *s
 
 	si_pm4_set_reg(pm4, R_02870C_SPI_SHADER_POS_FORMAT,
 		       S_02870C_POS0_EXPORT_FORMAT(V_02870C_SPI_SHADER_4COMP) |
-		       S_02870C_POS1_EXPORT_FORMAT(V_02870C_SPI_SHADER_NONE) |
+		       S_02870C_POS1_EXPORT_FORMAT(shader->shader.vs_out_misc_write ?
+						   V_02870C_SPI_SHADER_4COMP :
+						   V_02870C_SPI_SHADER_NONE) |
 		       S_02870C_POS2_EXPORT_FORMAT(V_02870C_SPI_SHADER_NONE) |
 		       S_02870C_POS3_EXPORT_FORMAT(V_02870C_SPI_SHADER_NONE));
 
@@ -261,6 +268,7 @@ static bool si_update_draw_info_state(struct r600_context *rctx,
 			       const struct pipe_draw_info *info)
 {
 	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
+	struct si_shader *vs = &rctx->vs_shader->current->shader;
 	unsigned prim = si_conv_pipe_prim(info->mode);
 	unsigned ls_mask = 0;
 
@@ -297,7 +305,8 @@ static bool si_update_draw_info_state(struct r600_context *rctx,
 		si_pm4_set_reg(pm4, R_028814_PA_SU_SC_MODE_CNTL, rctx->pa_su_sc_mode_cntl);
         }
 	si_pm4_set_reg(pm4, R_02881C_PA_CL_VS_OUT_CNTL,
-		       prim == PIPE_PRIM_POINTS ? rctx->pa_cl_vs_out_cntl : 0
+		       S_02881C_USE_VTX_POINT_SIZE(vs->vs_out_point_size) |
+		       S_02881C_VS_OUT_MISC_VEC_ENA(vs->vs_out_misc_write)
 		       /*| (rctx->rasterizer->clip_plane_enable &
 		       rctx->vs_shader->shader.clip_dist_write)*/);
 	si_pm4_set_reg(pm4, R_028810_PA_CL_CLIP_CNTL, rctx->pa_cl_clip_cntl

@@ -412,9 +412,6 @@ static void *si_create_rs_state(struct pipe_context *ctx,
 		S_028810_ZCLIP_NEAR_DISABLE(!state->depth_clip) |
 		S_028810_ZCLIP_FAR_DISABLE(!state->depth_clip) |
 		S_028810_DX_LINEAR_ATTR_CLIP_ENA(1);
-	rs->pa_cl_vs_out_cntl =
-		S_02881C_USE_VTX_POINT_SIZE(state->point_size_per_vertex) |
-		S_02881C_VS_OUT_MISC_VEC_ENA(state->point_size_per_vertex);
 
 	clip_rule = state->scissor ? 0xAAAA : 0xFFFF;
 
@@ -485,7 +482,6 @@ static void si_bind_rs_state(struct pipe_context *ctx, void *state)
 	rctx->pa_sc_line_stipple = rs->pa_sc_line_stipple;
 	rctx->pa_su_sc_mode_cntl = rs->pa_su_sc_mode_cntl;
 	rctx->pa_cl_clip_cntl = rs->pa_cl_clip_cntl;
-	rctx->pa_cl_vs_out_cntl = rs->pa_cl_vs_out_cntl;
 
 	si_pm4_bind_state(rctx, rasterizer, rs);
 	si_update_fb_rs_state(rctx);

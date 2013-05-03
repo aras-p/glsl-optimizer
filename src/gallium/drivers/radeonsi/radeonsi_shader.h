@@ -110,6 +110,8 @@ struct si_shader {
 	bool			uses_kill;
 	bool			uses_instanceid;
 	bool			fs_write_all;
+	bool			vs_out_misc_write;
+	bool			vs_out_point_size;
 	unsigned		nr_cbufs;
 };
 

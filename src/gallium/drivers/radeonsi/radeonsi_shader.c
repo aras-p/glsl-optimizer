@@ -612,7 +612,9 @@ static void si_llvm_emit_epilogue(struct lp_build_tgsi_context * bld_base)
 			/* Select the correct target */
 			switch(d->Semantic.Name) {
 			case TGSI_SEMANTIC_PSIZE:
-				target = V_008DFC_SQ_EXP_POS;
+				shader->vs_out_misc_write = 1;
+				shader->vs_out_point_size = 1;
+				target = V_008DFC_SQ_EXP_POS + 1;
 				break;
 			case TGSI_SEMANTIC_POSITION:
 				if (si_shader_ctx->type == TGSI_PROCESSOR_VERTEX) {
