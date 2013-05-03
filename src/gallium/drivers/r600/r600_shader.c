@@ -141,6 +141,7 @@ int r600_pipe_shader_create(struct pipe_context *ctx,
 	uint32_t *ptr;
 	bool dump = r600_can_dump_shader(rctx->screen, tgsi_get_processor_type(sel->tokens));
 	unsigned use_sb = rctx->screen->debug_flags & DBG_SB;
+	unsigned sb_disasm = use_sb || (rctx->screen->debug_flags & DBG_SB_DISASM);
 
 	shader->shader.bc.isa = rctx->isa;
 
@@ -163,21 +164,18 @@ int r600_pipe_shader_create(struct pipe_context *ctx,
 		return r;
 	}
 
-#if 0
-	if (dump) {
+	if (dump && !sb_disasm) {
 		fprintf(stderr, "--------------------------------------------------------------\n");
 		r600_bytecode_disasm(&shader->shader.bc);
 		fprintf(stderr, "______________________________________________________________\n");
-	}
-#else
-	if (dump || use_sb) {
-		r = r600_sb_bytecode_process(rctx, &shader->shader.bc, &shader->shader, dump, use_sb);
+	} else if ((dump && sb_disasm) || use_sb) {
+		r = r600_sb_bytecode_process(rctx, &shader->shader.bc, &shader->shader,
+		                             dump, use_sb);
 		if (r) {
 			R600_ERR("r600_sb_bytecode_process failed !\n");
 			return r;
 		}
 	}
-#endif
 
 	/* Store the shader in a buffer. */
 	if (shader->bo == NULL) {
@@ -307,6 +305,8 @@ int r600_compute_shader_create(struct pipe_context * ctx,
 	boolean use_kill = false;
 	bool dump = (r600_ctx->screen->debug_flags & DBG_CS) != 0;
 	unsigned use_sb = r600_ctx->screen->debug_flags & DBG_SB_CS;
+	unsigned sb_disasm = use_sb ||
+			(r600_ctx->screen->debug_flags & DBG_SB_DISASM);
 
 	shader_ctx.bc = bytecode;
 	r600_bytecode_init(shader_ctx.bc, r600_ctx->chip_class, r600_ctx->family,
@@ -321,16 +321,12 @@ int r600_compute_shader_create(struct pipe_context * ctx,
 	}
 	r600_bytecode_build(shader_ctx.bc);
 
-#if 0
-	if (dump) {
+	if (dump && !sb_disasm) {
 		r600_bytecode_disasm(shader_ctx.bc);
-	}
-#else
-	if (dump || use_sb) {
+	} else if ((dump && sb_disasm) || use_sb) {
 		if (r600_sb_bytecode_process(r600_ctx, shader_ctx.bc, NULL, dump, use_sb))
 			R600_ERR("r600_sb_bytecode_process failed!\n");
 	}
-#endif
 
 	free(bytes);
 	return 1;

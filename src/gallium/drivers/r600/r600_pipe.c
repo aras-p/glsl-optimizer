@@ -73,6 +73,7 @@ static const struct debug_named_value debug_options[] = {
 	{ "sbstat", DBG_SB_STAT, "Print optimization statistics for shaders" },
 	{ "sbdump", DBG_SB_DUMP, "Print IR dumps after some optimization passes" },
 	{ "sbnofallback", DBG_SB_NO_FALLBACK, "Abort on errors instead of fallback" },
+	{ "sbdisasm", DBG_SB_DISASM, "Use sb disassembler for shader dumps" },
 
 	DEBUG_NAMED_VALUE_END /* must be last */
 };

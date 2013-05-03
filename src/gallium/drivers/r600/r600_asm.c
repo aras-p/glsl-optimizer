@@ -2281,6 +2281,7 @@ void *r600_create_vertex_fetch_shader(struct pipe_context *ctx,
 	uint32_t *bytecode;
 	int i, j, r, fs_size;
 	struct r600_fetch_shader *shader;
+	unsigned sb_disasm = rctx->screen->debug_flags & (DBG_SB_DISASM | DBG_SB);
 
 	assert(count < 32);
 
@@ -2387,13 +2388,13 @@ void *r600_create_vertex_fetch_shader(struct pipe_context *ctx,
 			fprintf(stderr, "\n");
 		}
 
-#if 0
-		r600_bytecode_disasm(&bc);
+		if (!sb_disasm) {
+			r600_bytecode_disasm(&bc);
 
-		fprintf(stderr, "______________________________________________________________\n");
-#else
-		r600_sb_bytecode_process(rctx, &bc, NULL, 1 /*dump*/, 0 /*optimize*/);
-#endif
+			fprintf(stderr, "______________________________________________________________\n");
+		} else {
+			r600_sb_bytecode_process(rctx, &bc, NULL, 1 /*dump*/, 0 /*optimize*/);
+		}
 	}
 
 	fs_size = bc.ndw*4;
