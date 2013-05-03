@@ -112,6 +112,9 @@ ast_type_qualifier::merge_qualifier(YYLTYPE *loc,
 
    if (q.flags.q.explicit_index)
       this->index = q.index;
+    
+   if (q.flags.q.explicit_binding)
+       this->binding = q.binding;
 
    return true;
 }

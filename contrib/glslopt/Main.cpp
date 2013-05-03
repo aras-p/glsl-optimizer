@@ -16,6 +16,7 @@ static int printhelp(const char* msg)
     printf("\t-scalar\t: optimize for scalar architecture\n");
     printf("\t-vector\t: optimize for vector architecture\n");
     printf("\t-fancy\t: enables 4.0 and 4.1 binding and location features\n");
+    printf("\t-repeat N\t: rerun optimizations N times\n");
 	printf("\n\tIf no output specified, output is to [input].out.\n");
 	return 1;
 }
@@ -76,7 +77,7 @@ static bool saveFile(const char* filename, const char* data)
 	return true;
 }
 
-static bool compileShader(const char* dstfilename, const char* srcfilename, bool vertexShader, bool scalar, bool fancy)
+static bool compileShader(const char* dstfilename, const char* srcfilename, bool vertexShader, bool scalar, bool fancy, int repeat)
 {
 	const char* originalShader = loadFile(srcfilename);
 	if( !originalShader )
@@ -96,6 +97,20 @@ static bool compileShader(const char* dstfilename, const char* srcfilename, bool
 	}
 
 	const char* optimizedShader = glslopt_get_output(shader);
+    
+    while ( repeat-- )
+    {
+        glslopt_shader* new_shader = glslopt_optimize(gContext, type, optimizedShader, options | kGlslOptionSkipPreprocessor);
+        if( !glslopt_get_status(new_shader) )
+        {
+            printf( "Failed to compile during repeat pass %i\n", repeat+1);
+            return false;
+        }
+        
+        optimizedShader = glslopt_get_output(new_shader);
+        
+        glslopt_shader_delete(new_shader);
+    }
 
 	if( !saveFile(dstfilename, optimizedShader) )
 		return false;
@@ -112,6 +127,7 @@ int main(int argc, char* argv[])
 	bool vertexShader = false, freename = false, openglES = false, scalar = false, fancy = false;
 	const char* source = 0;
 	char* dest = 0;
+    int repeat = 0;
 
 	for( int i=1; i < argc; i++ )
 	{
@@ -131,6 +147,13 @@ int main(int argc, char* argv[])
 				scalar = false;
 			else if( 0 == strcmp("-fancy", argv[i]) )
 				fancy = true;
+            else if( 0 == strcmp("-repeat", argv[i]) )
+            {
+                if ( i+1 >= argc )
+                    return printhelp("-repeat needs a count");
+                else
+                    repeat = atoi(argv[i+1]), i++;
+            }
 		}
 		else
 		{
@@ -157,7 +180,7 @@ int main(int argc, char* argv[])
 	}
 
 	int result = 0;
-	if( !compileShader(dest, source, vertexShader, scalar, fancy) )
+	if( !compileShader(dest, source, vertexShader, scalar, fancy, repeat) )
 		result = 1;
 
 	if( freename ) free(dest);

@@ -2020,7 +2020,11 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
 	  * The linker needs to be able to differentiate these cases.  This
 	  * ensures that negative values stay negative.
 	  */
-	 if (qual->location >= 0) {
+     if (state->target==fragment_shader && var->mode!=ir_var_shader_out ) {
+        // this is the 4.1 special case with fragment shader explicit vertex attribute location
+        // we copy it as is
+        var->location = qual->location;
+     } else if (qual->location >= 0) {
 	    var->location = (state->target == vertex_shader)
 	       ? (qual->location + VERT_ATTRIB_GENERIC0)
 	       : (qual->location + FRAG_RESULT_DATA0);
