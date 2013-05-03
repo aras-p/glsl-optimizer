@@ -31,6 +31,11 @@
 #include "glsl_types.h"
 #include "main/context.h"
 
+/* If we're not using GNU C, elide __attribute__ */
+#ifndef __GNUC__
+#  define  __attribute__(x)  /*NOTHING*/
+#endif
+
 #if defined(_MSC_VER)
 #	pragma warning(disable: 4065) // warning C4065: switch statement contains 'default' but no 'case' labels
 #	pragma warning(disable: 4244) // warning C4244: '=' : conversion from 'double' to 'float', possible loss of data

@@ -271,7 +271,7 @@ extern int _mesa_glsl_debug;
 typedef union YYSTYPE
 {
 /* Line 2058 of yacc.c  */
-#line 64 "src/glsl/glsl_parser.yy"
+#line 69 "src/glsl/glsl_parser.yy"
 
    int n;
    float real;

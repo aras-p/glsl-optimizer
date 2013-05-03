@@ -32,6 +32,11 @@
 #include "main/core.h" /* for struct gl_extensions */
 #include "main/mtypes.h" /* for gl_api enum */
 
+/* If we're not using GNU C, elide __attribute__ */
+#ifndef __GNUC__
+#  define  __attribute__(x)  /*NOTHING*/
+#endif
+
 static void
 yyerror (YYLTYPE *locp, glcpp_parser_t *parser, const char *error);
 
