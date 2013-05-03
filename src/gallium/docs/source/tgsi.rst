@@ -473,7 +473,7 @@ This instruction replicates its result.
 
 .. opcode:: KILP - Predicated Discard
 
-  discard
+  Not really predicated, just unconditional discard
 
 
 .. opcode:: PK2H - Pack Two 16-bit Floats
@@ -720,25 +720,6 @@ This instruction replicates its result.
   dst.w = round(src.w)
 
 
-.. opcode:: BRA - Branch
-
-  pc = target
-
-.. note::
-
-   Considered for removal.
-
-.. opcode:: CAL - Subroutine Call
-
-  push(pc)
-  pc = target
-
-
-.. opcode:: RET - Subroutine Call Return
-
-  pc = pop()
-
-
 .. opcode:: SSG - Set Sign
 
 .. math::
@@ -856,99 +837,6 @@ This instruction replicates its result.
   dst = texture_sample(unit, coord, lod)
 
 
-.. opcode:: BRK - Break
-
-  Unconditionally moves the point of execution to the instruction after the
-  next endloop or endswitch. The instruction must appear within a loop/endloop
-  or switch/endswitch.
-
-
-.. opcode:: BREAKC - Break Conditional
-
-  Conditionally moves the point of execution to the instruction after the
-  next endloop or endswitch. The instruction must appear within a loop/endloop
-  or switch/endswitch.
-  Condition evaluates to true if src0.x != 0 where src0.x is interpreted
-  as an integer register.
-
-
-.. opcode:: CONT - Continue
-
-  TBD
-
-.. note::
-
-   Support for CONT is determined by a special capability bit,
-   ``TGSI_CONT_SUPPORTED``. See :ref:`Screen` for more information.
-
-
-.. opcode:: IF - Float If
-
-  Start an IF ... ELSE .. ENDIF block.  Condition evaluates to true if
-
-    src0.x != 0.0
-
-  where src0.x is interpreted as a floating point register.
-
-
-.. opcode:: UIF - Bitwise If
-
-  Start an UIF ... ELSE .. ENDIF block. Condition evaluates to true if
-
-    src0.x != 0
-
-  where src0.x is interpreted as an integer register.
-
-
-.. opcode:: ELSE - Else
-
-  Starts an else block, after an IF or UIF statement.
-
-
-.. opcode:: ENDIF - End If
-
-  Ends an IF or UIF block.
-
-
-.. opcode:: SWITCH - Switch
-
-   Starts a C-style switch expression. The switch consists of one or multiple
-   CASE statements, and at most one DEFAULT statement. Execution of a statement
-   ends when a BRK is hit, but just like in C falling through to other cases
-   without a break is allowed. Similarly, DEFAULT label is allowed anywhere not
-   just as last statement, and fallthrough is allowed into/from it.
-   CASE src arguments are evaluated at bit level against the SWITCH src argument.
-
-   Example:
-   SWITCH src[0].x
-   CASE src[0].x
-   (some instructions here)
-   (optional BRK here)
-   DEFAULT
-   (some instructions here)
-   (optional BRK here)
-   CASE src[0].x
-   (some instructions here)
-   (optional BRK here)
-   ENDSWITCH
-
-
-.. opcode:: CASE - Switch case
-
-   This represents a switch case label. The src arg must be an integer immediate.
-
-
-.. opcode:: DEFAULT - Switch default
-
-   This represents the default case in the switch, which is taken if no other
-   case matches.
-
-
-.. opcode:: ENDSWITCH - End of switch
-
-   Ends a switch expression.
-
-
 .. opcode:: PUSHA - Push Address Register On Stack
 
   push(src.x)
@@ -980,13 +868,34 @@ This instruction replicates its result.
    Considered for removal.
 
 
+.. opcode:: BRA - Branch
+
+  pc = target
+
+.. note::
+
+   Considered for removal.
+
+
+.. opcode:: CALLNZ - Subroutine Call If Not Zero
+
+   TBD
+
+.. note::
+
+   Considered for cleanup.
+
+.. note::
+
+   Considered for removal.
+
+
 Compute ISA
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 These opcodes are primarily provided for special-use computational shaders.
 Support for these opcodes indicated by a special pipe capability bit (TBD).
 
-XXX so let's discuss it, yeah?
 XXX doesn't look like most of the opcodes really belong here.
 
 .. opcode:: CEIL - Ceiling
@@ -1380,8 +1289,6 @@ Support for these opcodes indicated by PIPE_SHADER_CAP_INTEGERS (all of them?)
   dst.w = src0.w >> (unsigned) src1.x
 
 
-
-
 .. opcode:: UCMP - Integer Conditional Move
 
 .. math::
@@ -1393,6 +1300,114 @@ Support for these opcodes indicated by PIPE_SHADER_CAP_INTEGERS (all of them?)
   dst.z = src0.z ? src1.z : src2.z
 
   dst.w = src0.w ? src1.w : src2.w
+
+
+
+.. opcode:: ISSG - Integer Set Sign
+
+.. math::
+
+  dst.x = (src0.x < 0) ? -1 : (src0.x > 0) ? 1 : 0
+
+  dst.y = (src0.y < 0) ? -1 : (src0.y > 0) ? 1 : 0
+
+  dst.z = (src0.z < 0) ? -1 : (src0.z > 0) ? 1 : 0
+
+  dst.w = (src0.w < 0) ? -1 : (src0.w > 0) ? 1 : 0
+
+
+
+.. opcode:: ISLT - Signed Integer Set On Less Than
+
+.. math::
+
+  dst.x = (src0.x < src1.x) ? ~0 : 0
+
+  dst.y = (src0.y < src1.y) ? ~0 : 0
+
+  dst.z = (src0.z < src1.z) ? ~0 : 0
+
+  dst.w = (src0.w < src1.w) ? ~0 : 0
+
+
+.. opcode:: USLT - Unsigned Integer Set On Less Than
+
+.. math::
+
+  dst.x = (src0.x < src1.x) ? ~0 : 0
+
+  dst.y = (src0.y < src1.y) ? ~0 : 0
+
+  dst.z = (src0.z < src1.z) ? ~0 : 0
+
+  dst.w = (src0.w < src1.w) ? ~0 : 0
+
+
+.. opcode:: ISGE - Signed Integer Set On Greater Equal Than
+
+.. math::
+
+  dst.x = (src0.x >= src1.x) ? ~0 : 0
+
+  dst.y = (src0.y >= src1.y) ? ~0 : 0
+
+  dst.z = (src0.z >= src1.z) ? ~0 : 0
+
+  dst.w = (src0.w >= src1.w) ? ~0 : 0
+
+
+.. opcode:: USGE - Unsigned Integer Set On Greater Equal Than
+
+.. math::
+
+  dst.x = (src0.x >= src1.x) ? ~0 : 0
+
+  dst.y = (src0.y >= src1.y) ? ~0 : 0
+
+  dst.z = (src0.z >= src1.z) ? ~0 : 0
+
+  dst.w = (src0.w >= src1.w) ? ~0 : 0
+
+
+.. opcode:: USEQ - Integer Set On Equal
+
+.. math::
+
+  dst.x = (src0.x == src1.x) ? ~0 : 0
+
+  dst.y = (src0.y == src1.y) ? ~0 : 0
+
+  dst.z = (src0.z == src1.z) ? ~0 : 0
+
+  dst.w = (src0.w == src1.w) ? ~0 : 0
+
+
+.. opcode:: USNE - Integer Set On Not Equal
+
+.. math::
+
+  dst.x = (src0.x != src1.x) ? ~0 : 0
+
+  dst.y = (src0.y != src1.y) ? ~0 : 0
+
+  dst.z = (src0.z != src1.z) ? ~0 : 0
+
+  dst.w = (src0.w != src1.w) ? ~0 : 0
+
+
+.. opcode:: INEG - Integer Negate
+
+  Two's complement.
+
+.. math::
+
+  dst.x = -src.x
+
+  dst.y = -src.y
+
+  dst.z = -src.z
+
+  dst.w = -src.w
 
 
 .. opcode:: IABS - Integer Absolute Value
@@ -1416,12 +1431,14 @@ in any other type of shader.
 
 .. opcode:: EMIT - Emit
 
-  TBD
+  Generate a new vertex for the current primitive using the values in the
+  output registers.
 
 
 .. opcode:: ENDPRIM - End Primitive
 
-  TBD
+  Complete the current primitive (consisting of the emitted vertices),
+  and start a new one.
 
 
 GLSL ISA
@@ -1429,30 +1446,141 @@ GLSL ISA
 
 These opcodes are part of :term:`GLSL`'s opcode set. Support for these
 opcodes is determined by a special capability bit, ``GLSL``.
+Some require glsl version 1.30 (UIF/BREAKC/SWITCH/CASE/DEFAULT/ENDSWITCH).
+
+.. opcode:: CAL - Subroutine Call
+
+  push(pc)
+  pc = target
+
+
+.. opcode:: RET - Subroutine Call Return
+
+  pc = pop()
+
+
+.. opcode:: CONT - Continue
+
+  Unconditionally moves the point of execution to the instruction after the
+  last bgnloop. The instruction must appear within a bgnloop/endloop.
+
+.. note::
+
+   Support for CONT is determined by a special capability bit,
+   ``TGSI_CONT_SUPPORTED``. See :ref:`Screen` for more information.
+
 
 .. opcode:: BGNLOOP - Begin a Loop
 
-  TBD
+  Start a loop. Must have a matching endloop.
 
 
 .. opcode:: BGNSUB - Begin Subroutine
 
-  TBD
+  Starts definition of a subroutine. Must have a matching endsub.
 
 
 .. opcode:: ENDLOOP - End a Loop
 
-  TBD
+  End a loop started with bgnloop.
 
 
 .. opcode:: ENDSUB - End Subroutine
 
-  TBD
+  Ends definition of a subroutine.
 
 
 .. opcode:: NOP - No Operation
 
   Do nothing.
+
+
+.. opcode:: BRK - Break
+
+  Unconditionally moves the point of execution to the instruction after the
+  next endloop or endswitch. The instruction must appear within a loop/endloop
+  or switch/endswitch.
+
+
+.. opcode:: BREAKC - Break Conditional
+
+  Conditionally moves the point of execution to the instruction after the
+  next endloop or endswitch. The instruction must appear within a loop/endloop
+  or switch/endswitch.
+  Condition evaluates to true if src0.x != 0 where src0.x is interpreted
+  as an integer register.
+
+.. note::
+
+   Considered for removal as it's quite inconsistent wrt other opcodes
+   (could emulate with UIF/BRK/ENDIF). 
+
+
+.. opcode:: IF - Float If
+
+  Start an IF ... ELSE .. ENDIF block.  Condition evaluates to true if
+
+    src0.x != 0.0
+
+  where src0.x is interpreted as a floating point register.
+
+
+.. opcode:: UIF - Bitwise If
+
+  Start an UIF ... ELSE .. ENDIF block. Condition evaluates to true if
+
+    src0.x != 0
+
+  where src0.x is interpreted as an integer register.
+
+
+.. opcode:: ELSE - Else
+
+  Starts an else block, after an IF or UIF statement.
+
+
+.. opcode:: ENDIF - End If
+
+  Ends an IF or UIF block.
+
+
+.. opcode:: SWITCH - Switch
+
+   Starts a C-style switch expression. The switch consists of one or multiple
+   CASE statements, and at most one DEFAULT statement. Execution of a statement
+   ends when a BRK is hit, but just like in C falling through to other cases
+   without a break is allowed. Similarly, DEFAULT label is allowed anywhere not
+   just as last statement, and fallthrough is allowed into/from it.
+   CASE src arguments are evaluated at bit level against the SWITCH src argument.
+
+   Example:
+   SWITCH src[0].x
+   CASE src[0].x
+   (some instructions here)
+   (optional BRK here)
+   DEFAULT
+   (some instructions here)
+   (optional BRK here)
+   CASE src[0].x
+   (some instructions here)
+   (optional BRK here)
+   ENDSWITCH
+
+
+.. opcode:: CASE - Switch case
+
+   This represents a switch case label. The src arg must be an integer immediate.
+
+
+.. opcode:: DEFAULT - Switch default
+
+   This represents the default case in the switch, which is taken if no other
+   case matches.
+
+
+.. opcode:: ENDSWITCH - End of switch
+
+   Ends a switch expression.
 
 
 .. opcode:: NRM4 - 4-component Vector Normalise
@@ -1463,15 +1591,6 @@ This instruction replicates its result.
 
   dst = \frac{src.x}{src.x \times src.x + src.y \times src.y + src.z \times src.z + src.w \times src.w}
 
-
-ps_2_x
-^^^^^^^^^^^^
-
-XXX wait what
-
-.. opcode:: CALLNZ - Subroutine Call If Not Zero
-
-  TBD
 
 .. _doubleopcodes:
 
