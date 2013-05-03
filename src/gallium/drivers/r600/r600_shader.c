@@ -1371,13 +1371,6 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 	for (i = 0; i < TGSI_FILE_COUNT; i++) {
 		ctx.file_offset[i] = 0;
 	}
-	if (ctx.type == TGSI_PROCESSOR_VERTEX) {
-		ctx.file_offset[TGSI_FILE_INPUT] = 1;
-		r600_bytecode_add_cfinst(ctx.bc, CF_OP_CALL_FS);
-	}
-	if (ctx.type == TGSI_PROCESSOR_FRAGMENT && ctx.bc->chip_class >= EVERGREEN) {
-		ctx.file_offset[TGSI_FILE_INPUT] = evergreen_gpr_count(&ctx);
-	}
 
 #ifdef R600_USE_LLVM
 	if (use_llvm && ctx.info.indirect_files && (ctx.info.indirect_files & (1 << TGSI_FILE_CONSTANT)) != ctx.info.indirect_files) {
@@ -1387,6 +1380,15 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 		use_llvm = 0;
 	}
 #endif
+	if (ctx.type == TGSI_PROCESSOR_VERTEX) {
+		ctx.file_offset[TGSI_FILE_INPUT] = 1;
+		if (!use_llvm) {
+			r600_bytecode_add_cfinst(ctx.bc, CF_OP_CALL_FS);
+		}
+	}
+	if (ctx.type == TGSI_PROCESSOR_FRAGMENT && ctx.bc->chip_class >= EVERGREEN) {
+		ctx.file_offset[TGSI_FILE_INPUT] = evergreen_gpr_count(&ctx);
+	}
 	ctx.use_llvm = use_llvm;
 
 	if (use_llvm) {
