@@ -872,6 +872,16 @@ This instruction replicates its result.
   as an integer register.
 
 
+.. opcode:: CONT - Continue
+
+  TBD
+
+.. note::
+
+   Support for CONT is determined by a special capability bit,
+   ``TGSI_CONT_SUPPORTED``. See :ref:`Screen` for more information.
+
+
 .. opcode:: IF - Float If
 
   Start an IF ... ELSE .. ENDIF block.  Condition evaluates to true if
@@ -977,6 +987,7 @@ These opcodes are primarily provided for special-use computational shaders.
 Support for these opcodes indicated by a special pipe capability bit (TBD).
 
 XXX so let's discuss it, yeah?
+XXX doesn't look like most of the opcodes really belong here.
 
 .. opcode:: CEIL - Ceiling
 
@@ -989,32 +1000,6 @@ XXX so let's discuss it, yeah?
   dst.z = \lceil src.z\rceil
 
   dst.w = \lceil src.w\rceil
-
-
-.. opcode:: I2F - Integer To Float
-
-.. math::
-
-  dst.x = (float) src.x
-
-  dst.y = (float) src.y
-
-  dst.z = (float) src.z
-
-  dst.w = (float) src.w
-
-
-.. opcode:: NOT - Bitwise Not
-
-.. math::
-
-  dst.x = ~src.x
-
-  dst.y = ~src.y
-
-  dst.z = ~src.z
-
-  dst.w = ~src.w
 
 
 .. opcode:: TRUNC - Truncate
@@ -1030,58 +1015,6 @@ XXX so let's discuss it, yeah?
   dst.w = trunc(src.w)
 
 
-.. opcode:: SHL - Shift Left
-
-.. math::
-
-  dst.x = src0.x << src1.x
-
-  dst.y = src0.y << src1.x
-
-  dst.z = src0.z << src1.x
-
-  dst.w = src0.w << src1.x
-
-
-.. opcode:: SHR - Shift Right
-
-.. math::
-
-  dst.x = src0.x >> src1.x
-
-  dst.y = src0.y >> src1.x
-
-  dst.z = src0.z >> src1.x
-
-  dst.w = src0.w >> src1.x
-
-
-.. opcode:: AND - Bitwise And
-
-.. math::
-
-  dst.x = src0.x & src1.x
-
-  dst.y = src0.y & src1.y
-
-  dst.z = src0.z & src1.z
-
-  dst.w = src0.w & src1.w
-
-
-.. opcode:: OR - Bitwise Or
-
-.. math::
-
-  dst.x = src0.x | src1.x
-
-  dst.y = src0.y | src1.y
-
-  dst.z = src0.z | src1.z
-
-  dst.w = src0.w | src1.w
-
-
 .. opcode:: MOD - Modulus
 
 .. math::
@@ -1095,49 +1028,10 @@ XXX so let's discuss it, yeah?
   dst.w = src0.w \bmod src1.w
 
 
-.. opcode:: XOR - Bitwise Xor
-
-.. math::
-
-  dst.x = src0.x \oplus src1.x
-
-  dst.y = src0.y \oplus src1.y
-
-  dst.z = src0.z \oplus src1.z
-
-  dst.w = src0.w \oplus src1.w
-
-
-.. opcode:: UCMP - Integer Conditional Move
-
-.. math::
-
-  dst.x = src0.x ? src1.x : src2.x
-
-  dst.y = src0.y ? src1.y : src2.y
-
-  dst.z = src0.z ? src1.z : src2.z
-
-  dst.w = src0.w ? src1.w : src2.w
-
-
 .. opcode:: UARL - Integer Address Register Load
 
   Moves the contents of the source register, assumed to be an integer, into the
   destination register, which is assumed to be an address (ADDR) register.
-
-
-.. opcode:: IABS - Integer Absolute Value
-
-.. math::
-
-  dst.x = |src.x|
-
-  dst.y = |src.y|
-
-  dst.z = |src.z|
-
-  dst.w = |src.w|
 
 
 .. opcode:: SAD - Sum Of Absolute Differences
@@ -1173,7 +1067,7 @@ XXX so let's discuss it, yeah?
 
 .. math::
 
-  lod = src0
+  lod = src0.x
 
   dst.x = texture_width(unit, lod)
 
@@ -1182,14 +1076,336 @@ XXX so let's discuss it, yeah?
   dst.z = texture_depth(unit, lod)
 
 
-.. opcode:: CONT - Continue
+Integer ISA
+^^^^^^^^^^^^^^^^^^^^^^^^
+These opcodes are used for integer operations.
+Support for these opcodes indicated by PIPE_SHADER_CAP_INTEGERS (all of them?)
 
-  TBD
 
-.. note::
+.. opcode:: I2F - Signed Integer To Float
 
-   Support for CONT is determined by a special capability bit,
-   ``TGSI_CONT_SUPPORTED``. See :ref:`Screen` for more information.
+   Rounding is unspecified (round to nearest even suggested).
+
+.. math::
+
+  dst.x = (float) src.x
+
+  dst.y = (float) src.y
+
+  dst.z = (float) src.z
+
+  dst.w = (float) src.w
+
+
+.. opcode:: U2F - Unsigned Integer To Float
+
+   Rounding is unspecified (round to nearest even suggested).
+
+.. math::
+
+  dst.x = (float) src.x
+
+  dst.y = (float) src.y
+
+  dst.z = (float) src.z
+
+  dst.w = (float) src.w
+
+
+.. opcode:: F2I - Float to Signed Integer
+
+   Rounding is towards zero (truncate).
+   Values outside signed range (including NaNs) produce undefined results.
+
+.. math::
+
+  dst.x = (int) src.x
+
+  dst.y = (int) src.y
+
+  dst.z = (int) src.z
+
+  dst.w = (int) src.w
+
+
+.. opcode:: F2U - Float to Unsigned Integer
+
+   Rounding is towards zero (truncate).
+   Values outside unsigned range (including NaNs) produce undefined results.
+
+.. math::
+
+  dst.x = (unsigned) src.x
+
+  dst.y = (unsigned) src.y
+
+  dst.z = (unsigned) src.z
+
+  dst.w = (unsigned) src.w
+
+
+.. opcode:: UADD - Integer Add
+
+   This instruction works the same for signed and unsigned integers.
+   The low 32bit of the result is returned.
+
+.. math::
+
+  dst.x = src0.x + src1.x
+
+  dst.y = src0.y + src1.y
+
+  dst.z = src0.z + src1.z
+
+  dst.w = src0.w + src1.w
+
+
+.. opcode:: UMAD - Integer Multiply And Add
+
+   This instruction works the same for signed and unsigned integers.
+   The multiplication returns the low 32bit (as does the result itself).
+
+.. math::
+
+  dst.x = src0.x \times src1.x + src2.x
+
+  dst.y = src0.y \times src1.y + src2.y
+
+  dst.z = src0.z \times src1.z + src2.z
+
+  dst.w = src0.w \times src1.w + src2.w
+
+
+.. opcode:: UMUL - Integer Multiply
+
+   This instruction works the same for signed and unsigned integers.
+   The low 32bit of the result is returned.
+
+.. math::
+
+  dst.x = src0.x \times src1.x
+
+  dst.y = src0.y \times src1.y
+
+  dst.z = src0.z \times src1.z
+
+  dst.w = src0.w \times src1.w
+
+
+.. opcode:: IDIV - Signed Integer Division
+
+   TBD: behavior for division by zero.
+
+.. math::
+
+  dst.x = src0.x \ src1.x
+
+  dst.y = src0.y \ src1.y
+
+  dst.z = src0.z \ src1.z
+
+  dst.w = src0.w \ src1.w
+
+
+.. opcode:: UDIV - Unsigned Integer Division
+
+   For division by zero, 0xffffffff is returned.
+
+.. math::
+
+  dst.x = src0.x \ src1.x
+
+  dst.y = src0.y \ src1.y
+
+  dst.z = src0.z \ src1.z
+
+  dst.w = src0.w \ src1.w
+
+
+.. opcode:: UMOD - Unsigned Integer Remainder
+
+   If second arg is zero, 0xffffffff is returned.
+
+.. math::
+
+  dst.x = src0.x \ src1.x
+
+  dst.y = src0.y \ src1.y
+
+  dst.z = src0.z \ src1.z
+
+  dst.w = src0.w \ src1.w
+
+
+.. opcode:: NOT - Bitwise Not
+
+.. math::
+
+  dst.x = ~src.x
+
+  dst.y = ~src.y
+
+  dst.z = ~src.z
+
+  dst.w = ~src.w
+
+
+.. opcode:: AND - Bitwise And
+
+.. math::
+
+  dst.x = src0.x & src1.x
+
+  dst.y = src0.y & src1.y
+
+  dst.z = src0.z & src1.z
+
+  dst.w = src0.w & src1.w
+
+
+.. opcode:: OR - Bitwise Or
+
+.. math::
+
+  dst.x = src0.x | src1.x
+
+  dst.y = src0.y | src1.y
+
+  dst.z = src0.z | src1.z
+
+  dst.w = src0.w | src1.w
+
+
+.. opcode:: XOR - Bitwise Xor
+
+.. math::
+
+  dst.x = src0.x \oplus src1.x
+
+  dst.y = src0.y \oplus src1.y
+
+  dst.z = src0.z \oplus src1.z
+
+  dst.w = src0.w \oplus src1.w
+
+
+.. opcode:: IMAX - Maximum of Signed Integers
+
+.. math::
+
+  dst.x = max(src0.x, src1.x)
+
+  dst.y = max(src0.y, src1.y)
+
+  dst.z = max(src0.z, src1.z)
+
+  dst.w = max(src0.w, src1.w)
+
+
+.. opcode:: UMAX - Maximum of Unsigned Integers
+
+.. math::
+
+  dst.x = max(src0.x, src1.x)
+
+  dst.y = max(src0.y, src1.y)
+
+  dst.z = max(src0.z, src1.z)
+
+  dst.w = max(src0.w, src1.w)
+
+
+.. opcode:: IMIN - Minimum of Signed Integers
+
+.. math::
+
+  dst.x = min(src0.x, src1.x)
+
+  dst.y = min(src0.y, src1.y)
+
+  dst.z = min(src0.z, src1.z)
+
+  dst.w = min(src0.w, src1.w)
+
+
+.. opcode:: UMIN - Minimum of Unsigned Integers
+
+.. math::
+
+  dst.x = min(src0.x, src1.x)
+
+  dst.y = min(src0.y, src1.y)
+
+  dst.z = min(src0.z, src1.z)
+
+  dst.w = min(src0.w, src1.w)
+
+
+.. opcode:: SHL - Shift Left
+
+.. math::
+
+  dst.x = src0.x << src1.x
+
+  dst.y = src0.y << src1.x
+
+  dst.z = src0.z << src1.x
+
+  dst.w = src0.w << src1.x
+
+
+.. opcode:: ISHR - Arithmetic Shift Right (of Signed Integer)
+
+.. math::
+
+  dst.x = src0.x >> src1.x
+
+  dst.y = src0.y >> src1.x
+
+  dst.z = src0.z >> src1.x
+
+  dst.w = src0.w >> src1.x
+
+
+.. opcode:: USHR - Logical Shift Right
+
+.. math::
+
+  dst.x = src0.x >> (unsigned) src1.x
+
+  dst.y = src0.y >> (unsigned) src1.x
+
+  dst.z = src0.z >> (unsigned) src1.x
+
+  dst.w = src0.w >> (unsigned) src1.x
+
+
+
+
+.. opcode:: UCMP - Integer Conditional Move
+
+.. math::
+
+  dst.x = src0.x ? src1.x : src2.x
+
+  dst.y = src0.y ? src1.y : src2.y
+
+  dst.z = src0.z ? src1.z : src2.z
+
+  dst.w = src0.w ? src1.w : src2.w
+
+
+.. opcode:: IABS - Integer Absolute Value
+
+.. math::
+
+  dst.x = |src.x|
+
+  dst.y = |src.y|
+
+  dst.z = |src.z|
+
+  dst.w = |src.w|
 
 
 Geometry ISA
