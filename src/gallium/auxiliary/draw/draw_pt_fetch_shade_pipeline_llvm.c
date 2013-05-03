@@ -140,7 +140,7 @@ llvm_middle_end_prepare( struct draw_pt_middle_end *middle,
    struct draw_vertex_shader *vs = draw->vs.vertex_shader;
    struct draw_geometry_shader *gs = draw->gs.geometry_shader;
    const unsigned out_prim = gs ? gs->output_primitive :
-      u_assembled_primitive(in_prim);
+      u_assembled_prim(in_prim);
 
    /* Add one to num_outputs because the pipeline occasionally tags on
     * an additional texcoord, eg for AA lines.
