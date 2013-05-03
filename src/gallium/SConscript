@@ -27,19 +27,6 @@ if not env['msvc']:
         'drivers/i915/SConscript',
     ])
 
-if env['drm']:
-    # These drivers depend on drm headers
-    # XXX: nouveau drivers have a tight dependency on libdrm, so to enable
-    # we need some version logic before we enable them. Also, ATM there is
-    # no nouveau target in scons
-    # if env['drm_nouveau']:
-    #     SConscript([
-    #         'drivers/nouveau/SConscript', 
-    #         'drivers/nv50/SConscript', 
-    #         'drivers/nvc0/SConscript', 
-    #         'drivers/nvfx/SConscript',
-    #     ])
-
 #
 # State trackers
 #
@@ -132,7 +119,6 @@ if not env['embedded']:
             'targets/SConscript.dri',
             'targets/dri-swrast/SConscript',
             'targets/dri-vmwgfx/SConscript',
-            #'targets/dri-nouveau/SConscript',
         ])
         if env['drm_intel']:
             SConscript([
@@ -142,7 +128,6 @@ if not env['embedded']:
     if env['xorg'] and env['drm']:
         SConscript([
             #'targets/xorg-i915/SConscript',
-            #'targets/xorg-nouveau/SConscript',
         ])
 
 
