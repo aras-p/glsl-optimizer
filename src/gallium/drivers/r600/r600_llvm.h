@@ -18,8 +18,6 @@ LLVMModuleRef r600_tgsi_llvm(
 
 unsigned r600_llvm_compile(
 	LLVMModuleRef mod,
-	unsigned char ** inst_bytes,
-	unsigned * inst_byte_count,
 	enum radeon_family family,
 	struct r600_bytecode *bc,
 	boolean *use_kill,

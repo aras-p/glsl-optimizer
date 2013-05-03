@@ -579,8 +579,6 @@ LLVMModuleRef r600_tgsi_llvm(
 
 unsigned r600_llvm_compile(
 	LLVMModuleRef mod,
-	unsigned char ** inst_bytes,
-	unsigned * inst_byte_count,
 	enum radeon_family family,
 	struct r600_bytecode *bc,
 	boolean *use_kill,
@@ -589,9 +587,14 @@ unsigned r600_llvm_compile(
 	unsigned r;
 	struct radeon_llvm_binary binary;
 	const char * gpu_family = r600_llvm_gpu_string(family);
+
 	r = radeon_llvm_compile(mod, &binary, gpu_family, dump);
-	*inst_bytes = binary.code;
-	*inst_byte_count = binary.code_size;
+
+	assert(binary.code_size % 4 == 0);
+	bc->bytecode = CALLOC(1, binary.code_size);
+	memcpy(bc->bytecode, binary.code, binary.code_size);
+	bc->ndw = binary.code_size / 4;
+
 	bc->ngpr = util_le32_to_cpu(*(uint32_t*)binary.config);
 	bc->nstack = util_le32_to_cpu(*(uint32_t*)(binary.config + 4));
 	*use_kill = util_le32_to_cpu(*(uint32_t*)(binary.config + 8));

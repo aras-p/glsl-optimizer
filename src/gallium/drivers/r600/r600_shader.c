@@ -158,10 +158,17 @@ int r600_pipe_shader_create(struct pipe_context *ctx,
 		R600_ERR("translation from TGSI failed !\n");
 		return r;
 	}
-	r = r600_bytecode_build(&shader->shader.bc);
-	if (r) {
-		R600_ERR("building bytecode failed !\n");
-		return r;
+
+	/* Check if the bytecode has already been built.  When using the llvm
+	 * backend, r600_shader_from_tgsi() will take care of building the
+	 * bytecode.
+	 */
+	if (!shader->shader.bc.bytecode) {
+		r = r600_bytecode_build(&shader->shader.bc);
+		if (r) {
+			R600_ERR("building bytecode failed !\n");
+			return r;
+		}
 	}
 
 	if (dump && !sb_disasm) {
@@ -284,23 +291,11 @@ static int tgsi_bgnloop(struct r600_shader_ctx *ctx);
 static int tgsi_endloop(struct r600_shader_ctx *ctx);
 static int tgsi_loop_brk_cont(struct r600_shader_ctx *ctx);
 
-/*
- * bytestream -> r600 shader
- *
- * These functions are used to transform the output of the LLVM backend into
- * struct r600_bytecode.
- */
-
-static void r600_bytecode_from_byte_stream(struct r600_shader_ctx *ctx,
-				unsigned char * bytes,	unsigned num_bytes);
-
 #ifdef HAVE_OPENCL
 int r600_compute_shader_create(struct pipe_context * ctx,
 	LLVMModuleRef mod,  struct r600_bytecode * bytecode)
 {
 	struct r600_context *r600_ctx = (struct r600_context *)ctx;
-	unsigned char * bytes;
-	unsigned byte_count;
 	struct r600_shader_ctx shader_ctx;
 	boolean use_kill = false;
 	bool dump = (r600_ctx->screen->debug_flags & DBG_CS) != 0;
@@ -313,13 +308,8 @@ int r600_compute_shader_create(struct pipe_context * ctx,
 			   r600_ctx->screen->msaa_texture_support);
 	shader_ctx.bc->type = TGSI_PROCESSOR_COMPUTE;
 	shader_ctx.bc->isa = r600_ctx->isa;
-	r600_llvm_compile(mod, &bytes, &byte_count, r600_ctx->family,
+	r600_llvm_compile(mod, r600_ctx->family,
 				shader_ctx.bc, &use_kill, dump);
-	r600_bytecode_from_byte_stream(&shader_ctx, bytes, byte_count);
-	if (shader_ctx.bc->chip_class == CAYMAN) {
-		cm_bytecode_add_cf_end(shader_ctx.bc);
-	}
-	r600_bytecode_build(shader_ctx.bc);
 
 	if (dump && !sb_disasm) {
 		r600_bytecode_disasm(shader_ctx.bc);
@@ -328,365 +318,10 @@ int r600_compute_shader_create(struct pipe_context * ctx,
 			R600_ERR("r600_sb_bytecode_process failed!\n");
 	}
 
-	free(bytes);
 	return 1;
 }
 
 #endif /* HAVE_OPENCL */
-
-static uint32_t i32_from_byte_stream(unsigned char * bytes,
-		unsigned * bytes_read)
-{
-	unsigned i;
-	uint32_t out = 0;
-	for (i = 0; i < 4; i++) {
-		out |= bytes[(*bytes_read)++] << (8 * i);
-	}
-	return out;
-}
-
-static unsigned r600_src_from_byte_stream(unsigned char * bytes,
-		unsigned bytes_read, struct r600_bytecode_alu * alu, unsigned src_idx)
-{
-	unsigned i;
-	unsigned sel0, sel1;
-	sel0 = bytes[bytes_read++];
-	sel1 = bytes[bytes_read++];
-	alu->src[src_idx].sel = sel0 | (sel1 << 8);
-	alu->src[src_idx].chan = bytes[bytes_read++];
-	alu->src[src_idx].neg = bytes[bytes_read++];
-	alu->src[src_idx].abs = bytes[bytes_read++];
-	alu->src[src_idx].rel = bytes[bytes_read++];
-	alu->src[src_idx].kc_bank = bytes[bytes_read++];
-	for (i = 0; i < 4; i++) {
-		alu->src[src_idx].value |= bytes[bytes_read++] << (i * 8);
-	}
-	return bytes_read;
-}
-
-static unsigned r600_alu_from_byte_stream(struct r600_shader_ctx *ctx,
-				unsigned char * bytes, unsigned bytes_read)
-{
-	unsigned src_idx, src_num;
-	struct r600_bytecode_alu alu;
-	unsigned src_use_sel[3];
-	const struct alu_op_info *alu_op;
-	unsigned src_sel[3] = {};
-	uint32_t word0, word1;
-
-	src_num = bytes[bytes_read++];
-
-	memset(&alu, 0, sizeof(alu));
-	for(src_idx = 0; src_idx < src_num; src_idx++) {
-		unsigned i;
-		src_use_sel[src_idx] = bytes[bytes_read++];
-		for (i = 0; i < 4; i++) {
-			src_sel[src_idx] |= bytes[bytes_read++] << (i * 8);
-		}
-		for (i = 0; i < 4; i++) {
-			alu.src[src_idx].value |= bytes[bytes_read++] << (i * 8);
-		}
-	}
-
-	word0 = i32_from_byte_stream(bytes, &bytes_read);
-	word1 = i32_from_byte_stream(bytes, &bytes_read);
-
-	switch(ctx->bc->chip_class) {
-	default:
-	case R600:
-		r600_bytecode_alu_read(ctx->bc, &alu, word0, word1);
-		break;
-	case R700:
-	case EVERGREEN:
-	case CAYMAN:
-		r700_bytecode_alu_read(ctx->bc, &alu, word0, word1);
-		break;
-	}
-
-	for(src_idx = 0; src_idx < src_num; src_idx++) {
-		if (src_use_sel[src_idx]) {
-			unsigned sel = src_sel[src_idx];
-
-			alu.src[src_idx].chan = sel & 3;
-			sel >>= 2;
-
-			if (sel>=512) { /* constant */
-				sel -= 512;
-				alu.src[src_idx].kc_bank = sel >> 12;
-				alu.src[src_idx].sel = (sel & 4095) + 512;
-			}
-			else {
-				alu.src[src_idx].sel = sel;
-			}
-		}
-	}
-
-	alu_op = r600_isa_alu(alu.op);
-
-#if HAVE_LLVM < 0x0302
-	if ((alu_op->flags & AF_PRED) && alu_op->src_count == 2) {
-		alu.update_pred = 1;
-		alu.dst.write = 0;
-		alu.src[1].sel = V_SQ_ALU_SRC_0;
-		alu.src[1].chan = 0;
-		alu.last = 1;
-	}
-#endif
-
-	if (alu_op->flags & AF_MOVA) {
-		ctx->bc->ar_reg = alu.src[0].sel;
-		ctx->bc->ar_chan = alu.src[0].chan;
-		ctx->bc->ar_loaded = 0;
-		return bytes_read;
-	}
-
-	r600_bytecode_add_alu_type(ctx->bc, &alu, ctx->bc->cf_last->op);
-
-	/* XXX: Handle other KILL instructions */
-	if (alu_op->flags & AF_KILL) {
-		ctx->shader->uses_kill = 1;
-		/* XXX: This should be enforced in the LLVM backend. */
-		ctx->bc->force_add_cf = 1;
-	}
-	return bytes_read;
-}
-
-static void llvm_if(struct r600_shader_ctx *ctx)
-{
-	r600_bytecode_add_cfinst(ctx->bc, CF_OP_JUMP);
-	fc_pushlevel(ctx, FC_IF);
-	callstack_push(ctx, FC_PUSH_VPM);
-}
-
-static void r600_break_from_byte_stream(struct r600_shader_ctx *ctx)
-{
-	unsigned opcode = TGSI_OPCODE_BRK;
-	if (ctx->bc->chip_class == CAYMAN)
-		ctx->inst_info = &cm_shader_tgsi_instruction[opcode];
-	else if (ctx->bc->chip_class >= EVERGREEN)
-		ctx->inst_info = &eg_shader_tgsi_instruction[opcode];
-	else
-		ctx->inst_info = &r600_shader_tgsi_instruction[opcode];
-	llvm_if(ctx);
-	tgsi_loop_brk_cont(ctx);
-	tgsi_endif(ctx);
-}
-
-static unsigned r600_fc_from_byte_stream(struct r600_shader_ctx *ctx,
-				unsigned char * bytes, unsigned bytes_read)
-{
-	struct r600_bytecode_alu alu;
-	unsigned inst;
-	memset(&alu, 0, sizeof(alu));
-	bytes_read = r600_src_from_byte_stream(bytes, bytes_read, &alu, 0);
-	inst = bytes[bytes_read++];
-	switch (inst) {
-	case 0: /* IF_PREDICATED */
-		llvm_if(ctx);
-		break;
-	case 1: /* ELSE */
-		tgsi_else(ctx);
-		break;
-	case 2: /* ENDIF */
-		tgsi_endif(ctx);
-		break;
-	case 3: /* BGNLOOP */
-		tgsi_bgnloop(ctx);
-		break;
-	case 4: /* ENDLOOP */
-		tgsi_endloop(ctx);
-		break;
-	case 5: /* PREDICATED_BREAK */
-		r600_break_from_byte_stream(ctx);
-		break;
-	case 6: /* CONTINUE */
-		{
-			unsigned opcode = TGSI_OPCODE_CONT;
-			if (ctx->bc->chip_class == CAYMAN) {
-				ctx->inst_info =
-					&cm_shader_tgsi_instruction[opcode];
-			} else if (ctx->bc->chip_class >= EVERGREEN) {
-				ctx->inst_info =
-					&eg_shader_tgsi_instruction[opcode];
-			} else {
-				ctx->inst_info =
-					&r600_shader_tgsi_instruction[opcode];
-			}
-			tgsi_loop_brk_cont(ctx);
-		}
-		break;
-	}
-
-	return bytes_read;
-}
-
-static unsigned r600_tex_from_byte_stream(struct r600_shader_ctx *ctx,
-				unsigned char * bytes, unsigned bytes_read)
-{
-	struct r600_bytecode_tex tex;
-
-	uint32_t word0 = i32_from_byte_stream(bytes, &bytes_read);
-	uint32_t word1 = i32_from_byte_stream(bytes, &bytes_read);
-	uint32_t word2 = i32_from_byte_stream(bytes, &bytes_read);
-
-	tex.op = r600_isa_fetch_by_opcode(ctx->bc->isa, G_SQ_TEX_WORD0_TEX_INST(word0));
-	tex.resource_id = G_SQ_TEX_WORD0_RESOURCE_ID(word0);
-	tex.src_gpr = G_SQ_TEX_WORD0_SRC_GPR(word0);
-	tex.src_rel = G_SQ_TEX_WORD0_SRC_REL(word0);
-	tex.dst_gpr = G_SQ_TEX_WORD1_DST_GPR(word1);
-	tex.dst_rel = G_SQ_TEX_WORD1_DST_REL(word1);
-	tex.dst_sel_x = G_SQ_TEX_WORD1_DST_SEL_X(word1);
-	tex.dst_sel_y = G_SQ_TEX_WORD1_DST_SEL_Y(word1);
-	tex.dst_sel_z = G_SQ_TEX_WORD1_DST_SEL_Z(word1);
-	tex.dst_sel_w = G_SQ_TEX_WORD1_DST_SEL_W(word1);
-	tex.lod_bias = G_SQ_TEX_WORD1_LOD_BIAS(word1);
-	tex.coord_type_x = G_SQ_TEX_WORD1_COORD_TYPE_X(word1);
-	tex.coord_type_y = G_SQ_TEX_WORD1_COORD_TYPE_Y(word1);
-	tex.coord_type_z = G_SQ_TEX_WORD1_COORD_TYPE_Z(word1);
-	tex.coord_type_w = G_SQ_TEX_WORD1_COORD_TYPE_W(word1);
-	tex.offset_x = G_SQ_TEX_WORD2_OFFSET_X(word2);
-	tex.offset_y = G_SQ_TEX_WORD2_OFFSET_Y(word2);
-	tex.offset_z = G_SQ_TEX_WORD2_OFFSET_Z(word2);
-	tex.sampler_id = G_SQ_TEX_WORD2_SAMPLER_ID(word2);
-	tex.src_sel_x = G_SQ_TEX_WORD2_SRC_SEL_X(word2);
-	tex.src_sel_y = G_SQ_TEX_WORD2_SRC_SEL_Y(word2);
-	tex.src_sel_z = G_SQ_TEX_WORD2_SRC_SEL_Z(word2);
-	tex.src_sel_w = G_SQ_TEX_WORD2_SRC_SEL_W(word2);
-	tex.offset_x <<= 1;
-	tex.offset_y <<= 1;
-	tex.offset_z <<= 1;
-
-	tex.inst_mod = 0;
-
-	r600_bytecode_add_tex(ctx->bc, &tex);
-
-	return bytes_read;
-}
-
-static int r600_vtx_from_byte_stream(struct r600_shader_ctx *ctx,
-	unsigned char * bytes, unsigned bytes_read)
-{
-	struct r600_bytecode_vtx vtx;
-
-	uint32_t word0 = i32_from_byte_stream(bytes, &bytes_read);
-        uint32_t word1 = i32_from_byte_stream(bytes, &bytes_read);
-	uint32_t word2 = i32_from_byte_stream(bytes, &bytes_read);
-
-	memset(&vtx, 0, sizeof(vtx));
-
-	/* WORD0 */
-	vtx.op = r600_isa_fetch_by_opcode(ctx->bc->isa,
-			G_SQ_VTX_WORD0_VTX_INST(word0));
-	vtx.fetch_type = G_SQ_VTX_WORD0_FETCH_TYPE(word0);
-	vtx.buffer_id = G_SQ_VTX_WORD0_BUFFER_ID(word0);
-	vtx.src_gpr = G_SQ_VTX_WORD0_SRC_GPR(word0);
-	vtx.src_sel_x = G_SQ_VTX_WORD0_SRC_SEL_X(word0);
-	vtx.mega_fetch_count = G_SQ_VTX_WORD0_MEGA_FETCH_COUNT(word0);
-
-	/* WORD1 */
-	vtx.dst_gpr = G_SQ_VTX_WORD1_GPR_DST_GPR(word1);
-	vtx.dst_sel_x = G_SQ_VTX_WORD1_DST_SEL_X(word1);
-	vtx.dst_sel_y = G_SQ_VTX_WORD1_DST_SEL_Y(word1);
-	vtx.dst_sel_z = G_SQ_VTX_WORD1_DST_SEL_Z(word1);
-	vtx.dst_sel_w = G_SQ_VTX_WORD1_DST_SEL_W(word1);
-	vtx.use_const_fields = G_SQ_VTX_WORD1_USE_CONST_FIELDS(word1);
-	vtx.data_format = G_SQ_VTX_WORD1_DATA_FORMAT(word1);
-	vtx.num_format_all = G_SQ_VTX_WORD1_NUM_FORMAT_ALL(word1);
-	vtx.format_comp_all = G_SQ_VTX_WORD1_FORMAT_COMP_ALL(word1);
-	vtx.srf_mode_all = G_SQ_VTX_WORD1_SRF_MODE_ALL(word1);
-
-	/* WORD 2*/
-	vtx.offset = G_SQ_VTX_WORD2_OFFSET(word2);
-	vtx.endian = G_SQ_VTX_WORD2_ENDIAN_SWAP(word2);
-
-	if (r600_bytecode_add_vtx(ctx->bc, &vtx)) {
-		fprintf(stderr, "Error adding vtx\n");
-	}
-
-	/* Use the Texture Cache for compute shaders*/
-	if (ctx->bc->chip_class >= EVERGREEN &&
-		ctx->bc->type == TGSI_PROCESSOR_COMPUTE) {
-		ctx->bc->cf_last->op = CF_OP_TEX;
-	}
-	return bytes_read;
-}
-
-static int r600_export_from_byte_stream(struct r600_shader_ctx *ctx,
-	unsigned char * bytes, unsigned bytes_read)
-{
-	uint32_t word0 = 0, word1 = 0;
-	struct r600_bytecode_output output;
-	memset(&output, 0, sizeof(struct r600_bytecode_output));
-	word0 = i32_from_byte_stream(bytes, &bytes_read);
-	word1 = i32_from_byte_stream(bytes, &bytes_read);
-	if (ctx->bc->chip_class >= EVERGREEN)
-		eg_bytecode_export_read(ctx->bc, &output, word0,word1);
-	else
-		r600_bytecode_export_read(ctx->bc, &output, word0,word1);
-	r600_bytecode_add_output(ctx->bc, &output);
-	return bytes_read;
-}
-
-static void r600_bytecode_from_byte_stream(struct r600_shader_ctx *ctx,
-				unsigned char * bytes,	unsigned num_bytes)
-{
-	unsigned bytes_read = 0;
-	unsigned i, byte;
-	while (bytes_read < num_bytes) {
-		char inst_type = bytes[bytes_read++];
-		switch (inst_type) {
-		case 0:
-			bytes_read = r600_alu_from_byte_stream(ctx, bytes,
-								bytes_read);
-			break;
-		case 1:
-			bytes_read = r600_tex_from_byte_stream(ctx, bytes,
-								bytes_read);
-			break;
-		case 2:
-			bytes_read = r600_fc_from_byte_stream(ctx, bytes,
-								bytes_read);
-			break;
-		case 3:
-			r600_bytecode_add_cfinst(ctx->bc, CF_NATIVE);
-			for (i = 0; i < 2; i++) {
-				for (byte = 0 ; byte < 4; byte++) {
-					ctx->bc->cf_last->isa[i] |=
-					(bytes[bytes_read++] << (byte * 8));
-				}
-			}
-			break;
-
-		case 4:
-			bytes_read = r600_vtx_from_byte_stream(ctx, bytes,
-								bytes_read);
-			break;
-		case 5:
-            bytes_read = r600_export_from_byte_stream(ctx, bytes,
-                                bytes_read);
-            break;
-		case 6: {
-			int32_t word0 = i32_from_byte_stream(bytes, &bytes_read);
-			int32_t word1 = i32_from_byte_stream(bytes, &bytes_read);
-
-			r600_bytecode_add_cf(ctx->bc);
-			ctx->bc->cf_last->op = r600_isa_cf_by_opcode(ctx->bc->isa, G_SQ_CF_ALU_WORD1_CF_INST(word1), 1);
-			ctx->bc->cf_last->kcache[0].bank = G_SQ_CF_ALU_WORD0_KCACHE_BANK0(word0);
-			ctx->bc->cf_last->kcache[0].addr = G_SQ_CF_ALU_WORD1_KCACHE_ADDR0(word1);
-			ctx->bc->cf_last->kcache[0].mode = G_SQ_CF_ALU_WORD0_KCACHE_MODE0(word0);
-			ctx->bc->cf_last->kcache[1].bank = G_SQ_CF_ALU_WORD0_KCACHE_BANK1(word0);
-			ctx->bc->cf_last->kcache[1].addr = G_SQ_CF_ALU_WORD1_KCACHE_ADDR1(word1);
-			ctx->bc->cf_last->kcache[1].mode = G_SQ_CF_ALU_WORD1_KCACHE_MODE1(word1);
-			break;
-      }
-		default:
-			/* XXX: Error here */
-			break;
-		}
-	}
-}
-
-/* End bytestream -> r600 shader functions*/
 
 static int tgsi_is_supported(struct r600_shader_ctx *ctx)
 {
@@ -1315,8 +950,6 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 	int next_pixel_base = 0, next_pos_base = 60, next_param_base = 0;
 	/* Declarations used by llvm code */
 	bool use_llvm = false;
-	unsigned char * inst_bytes = NULL;
-	unsigned inst_byte_count = 0;
 	bool indirect_gprs;
 
 #ifdef R600_USE_LLVM
@@ -1535,9 +1168,7 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 		radeon_llvm_ctx.alpha_to_one = key.alpha_to_one;
 		mod = r600_tgsi_llvm(&radeon_llvm_ctx, tokens);
 
-		if (r600_llvm_compile(mod, &inst_bytes, &inst_byte_count,
-				      rscreen->family, ctx.bc, &use_kill, dump)) {
-			FREE(inst_bytes);
+		if (r600_llvm_compile(mod, rscreen->family, ctx.bc, &use_kill, dump)) {
 			radeon_llvm_dispose(&radeon_llvm_ctx);
 			use_llvm = 0;
 			fprintf(stderr, "R600 LLVM backend failed to compile "
@@ -1629,12 +1260,6 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 
 	/* Reset the temporary register counter. */
 	ctx.max_driver_temp_used = 0;
-
-	/* Get instructions if we are using the LLVM backend. */
-	if (use_llvm) {
-		r600_bytecode_from_byte_stream(&ctx, inst_bytes, inst_byte_count);
-		FREE(inst_bytes);
-	}
 
 	noutput = shader->noutput;
 
