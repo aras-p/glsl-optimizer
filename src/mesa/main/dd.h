@@ -696,13 +696,13 @@ struct dd_function_table {
 #define FLUSH_UPDATE_CURRENT  0x2
    /**
     * Set by the driver-supplied T&L engine whenever vertices are buffered
-    * between glBegin()/glEnd() objects or __struct gl_contextRec::Current is not
-    * updated.
+    * between glBegin()/glEnd() objects or __struct gl_contextRec::Current
+    * is not updated.  A bitmask of the FLUSH_x values above.
     *
     * The dd_function_table::FlushVertices call below may be used to resolve
     * these conditions.
     */
-   GLuint NeedFlush;
+   GLbitfield NeedFlush;
 
    /** Need to call SaveFlushVertices() upon state change? */
    GLboolean SaveNeedFlush;
