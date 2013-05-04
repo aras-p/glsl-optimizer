@@ -924,8 +924,10 @@ _save_CallLists(GLsizei n, GLenum type, const GLvoid * v)
 
 
 
-/* This begin is hooked into ...  Updating of
- * ctx->Driver.CurrentSavePrimitive is already taken care of.
+/**
+ * Called via ctx->Driver.NotifySaveBegin() when a glBegin is getting
+ * compiled into a display list.
+ * Updating of ctx->Driver.CurrentSavePrimitive is already taken care of.
  */
 GLboolean
 vbo_save_NotifyBegin(struct gl_context *ctx, GLenum mode)
@@ -953,7 +955,13 @@ vbo_save_NotifyBegin(struct gl_context *ctx, GLenum mode)
    else {
       _mesa_install_save_vtxfmt(ctx, &save->vtxfmt);
    }
+
+   /* We need to call SaveFlushVertices() if there's state change */
    ctx->Driver.SaveNeedFlush = 1;
+
+   /* GL_TRUE means we've handled this glBegin here; don't compile a BEGIN
+    * opcode into the display list.
+    */
    return GL_TRUE;
 }
 
