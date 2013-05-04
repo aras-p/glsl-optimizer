@@ -74,6 +74,8 @@ int bc_parser::parse() {
 	sh = new shader(ctx, t, bc->debug_id, enable_dump);
 	int r = parse_shader();
 
+	delete dec;
+
 	if (r)
 		return r;
 
@@ -94,7 +96,6 @@ int bc_parser::parse() {
 
 	prepare_ir();
 
-	delete dec;
 	return r;
 }
 

@@ -355,6 +355,11 @@ shader::~shader() {
 	for (node_vec::iterator I = all_nodes.begin(), E = all_nodes.end();
 			I != E; ++I)
 		(*I)->~node();
+
+	for (gpr_array_vec::iterator I = gpr_arrays.begin(), E = gpr_arrays.end();
+			I != E; ++I) {
+		delete *I;
+	}
 }
 
 void shader::dump_ir() {
