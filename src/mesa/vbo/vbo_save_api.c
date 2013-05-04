@@ -469,6 +469,8 @@ _save_compile_vertex_list(struct gl_context *ctx)
 
 
 /**
+ * This is called when we fill a vertex buffer before we hit a glEnd().
+ * We
  * TODO -- If no new vertices have been stored, don't bother saving it.
  */
 static void
@@ -577,7 +579,11 @@ _save_copy_from_current(struct gl_context *ctx)
 }
 
 
-/* Flush existing data, set new attrib size, replay copied vertices.
+/**
+ * Called when we increase the size of a vertex attribute.  For example,
+ * if we've seen one or more glTexCoord2f() calls and now we get a
+ * glTexCoord3f() call.
+ * Flush existing data, set new attrib size, replay copied vertices.
  */
 static void
 _save_upgrade_vertex(struct gl_context *ctx, GLuint attr, GLuint newsz)
@@ -634,7 +640,7 @@ _save_upgrade_vertex(struct gl_context *ctx, GLuint attr, GLuint newsz)
     * and will need fixup at runtime.
     */
    if (save->copied.nr) {
-      GLfloat *data = save->copied.buffer;
+      const GLfloat *data = save->copied.buffer;
       GLfloat *dest = save->buffer;
       GLuint j;
 
@@ -676,6 +682,11 @@ _save_upgrade_vertex(struct gl_context *ctx, GLuint attr, GLuint newsz)
 }
 
 
+/**
+ * This is called when the size of a vertex attribute changes.
+ * For example, after seeing one or more glTexCoord2f() calls we
+ * get a glTexCoord4f() or glTexCoord1f() call.
+ */
 static void
 save_fixup_vertex(struct gl_context *ctx, GLuint attr, GLuint sz)
 {
@@ -702,6 +713,11 @@ save_fixup_vertex(struct gl_context *ctx, GLuint attr, GLuint sz)
 }
 
 
+/**
+ * Reset the current size of all vertex attributes to the default
+ * value of 0.  This signals that we haven't yet seen any per-vertex
+ * commands such as glNormal3f() or glTexCoord2f().
+ */
 static void
 _save_reset_vertex(struct gl_context *ctx)
 {
@@ -933,8 +949,7 @@ GLboolean
 vbo_save_NotifyBegin(struct gl_context *ctx, GLenum mode)
 {
    struct vbo_save_context *save = &vbo_context(ctx)->save;
-
-   GLuint i = save->prim_count++;
+   const GLuint i = save->prim_count++;
 
    assert(i < save->prim_max);
    save->prim[i].mode = mode & VBO_SAVE_PRIM_MODE_MASK;
@@ -971,7 +986,7 @@ _save_End(void)
 {
    GET_CURRENT_CONTEXT(ctx);
    struct vbo_save_context *save = &vbo_context(ctx)->save;
-   GLint i = save->prim_count - 1;
+   const GLint i = save->prim_count - 1;
 
    ctx->Driver.CurrentSavePrimitive = PRIM_OUTSIDE_BEGIN_END;
    save->prim[i].end = 1;
