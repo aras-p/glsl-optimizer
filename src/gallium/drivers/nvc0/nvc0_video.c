@@ -573,15 +573,14 @@ nvc0_video_buffer_create(struct pipe_context *pipe,
    buffer->base.interlaced = true;
 
    memset(&templ, 0, sizeof(templ));
-   templ.target = PIPE_TEXTURE_3D;
-   templ.depth0 = 2;
+   templ.target = PIPE_TEXTURE_2D_ARRAY;
+   templ.depth0 = 1;
    templ.bind = PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET;
    templ.format = PIPE_FORMAT_R8_UNORM;
    templ.width0 = buffer->base.width;
    templ.height0 = buffer->base.height/2;
    templ.flags = NVC0_RESOURCE_FLAG_VIDEO;
-   templ.last_level = 0;
-   templ.array_size = 1;
+   templ.array_size = 2;
 
    buffer->resources[0] = pipe->screen->resource_create(pipe->screen, &templ);
    if (!buffer->resources[0])

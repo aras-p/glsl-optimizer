@@ -69,7 +69,7 @@ nvc0_decoder_setup_ppp(struct nvc0_decoder *dec, struct nvc0_video_buffer *targe
       struct nv50_miptree *mt = (struct nv50_miptree *)target->resources[i];
 
       PUSH_DATA (push, mt->base.address >> 8);
-      PUSH_DATA (push, (mt->base.address + mt->total_size/2/mt->base.base.array_size) >> 8);
+      PUSH_DATA (push, (mt->base.address + mt->total_size/2) >> 8);
       mt->base.status |= NOUVEAU_BUFFER_STATUS_GPU_WRITING;
    }
 }
