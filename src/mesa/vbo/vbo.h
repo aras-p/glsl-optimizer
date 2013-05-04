@@ -33,6 +33,7 @@
 #ifndef _VBO_H
 #define _VBO_H
 
+#include <stdbool.h>
 #include "main/glheader.h"
 
 struct gl_client_array;
@@ -168,6 +169,15 @@ void vbo_bind_arrays(struct gl_context *ctx);
 size_t
 vbo_count_tessellated_primitives(GLenum mode, GLuint count,
                                  GLuint num_instances);
+
+void
+vbo_try_prim_conversion(struct _mesa_prim *p);
+
+bool
+vbo_can_merge_prims(const struct _mesa_prim *p0, const struct _mesa_prim *p1);
+
+void
+vbo_merge_prims(struct _mesa_prim *p0, const struct _mesa_prim *p1);
 
 void
 vbo_sw_primitive_restart(struct gl_context *ctx,

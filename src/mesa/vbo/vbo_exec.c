@@ -157,3 +157,102 @@ vbo_count_tessellated_primitives(GLenum mode, GLuint count,
    }
    return num_primitives * num_instances;
 }
+
+
+
+/**
+ * In some degenarate cases we can improve our ability to merge
+ * consecutive primitives.  For example:
+ * glBegin(GL_LINE_STRIP);
+ * glVertex(1);
+ * glVertex(1);
+ * glEnd();
+ * glBegin(GL_LINE_STRIP);
+ * glVertex(1);
+ * glVertex(1);
+ * glEnd();
+ * Can be merged as a GL_LINES prim with four vertices.
+ *
+ * This function converts 2-vertex line strips/loops into GL_LINES, etc.
+ */
+void
+vbo_try_prim_conversion(struct _mesa_prim *p)
+{
+   if (p->mode == GL_LINE_STRIP && p->count == 2) {
+      /* convert 2-vertex line strip to a separate line */
+      p->mode = GL_LINES;
+   }
+   else if ((p->mode == GL_TRIANGLE_STRIP || p->mode == GL_TRIANGLE_FAN)
+       && p->count == 3) {
+      /* convert 3-vertex tri strip or fan to a separate triangle */
+      p->mode = GL_TRIANGLES;
+   }
+
+   /* Note: we can't convert a 4-vertex quad strip to a separate quad
+    * because the vertex ordering is different.  We'd have to muck
+    * around in the vertex data to make it work.
+    */
+}
+
+
+/**
+ * Helper function for determining if two subsequent glBegin/glEnd
+ * primitives can be combined.  This is only possible for GL_POINTS,
+ * GL_LINES, GL_TRIANGLES and GL_QUADS.
+ * If we return true, it means that we can concatenate p1 onto p0 (and
+ * discard p1).
+ */
+bool
+vbo_can_merge_prims(const struct _mesa_prim *p0, const struct _mesa_prim *p1)
+{
+   if (!p0->begin ||
+       !p1->begin ||
+       !p0->end ||
+       !p1->end)
+      return false;
+
+   /* The prim mode must match (ex: both GL_TRIANGLES) */
+   if (p0->mode != p1->mode)
+      return false;
+
+   /* p1's vertices must come right after p0 */
+   if (p0->start + p0->count != p1->start)
+      return false;
+
+   if (p0->basevertex != p1->basevertex ||
+       p0->num_instances != p1->num_instances ||
+       p0->base_instance != p1->base_instance)
+      return false;
+
+   /* can always merge subsequent GL_POINTS primitives */
+   if (p0->mode == GL_POINTS)
+      return true;
+
+   /* independent lines with no extra vertices */
+   if (p0->mode == GL_LINES && p0->count % 2 == 0 && p1->count % 2 == 0)
+      return true;
+
+   /* independent tris */
+   if (p0->mode == GL_TRIANGLES && p0->count % 3 == 0 && p1->count % 3 == 0)
+      return true;
+
+   /* independent quads */
+   if (p0->mode == GL_QUADS && p0->count % 4 == 0 && p1->count % 4 == 0)
+      return true;
+
+   return false;
+}
+
+
+/**
+ * If we've determined that p0 and p1 can be merged, this function
+ * concatenates p1 onto p0.
+ */
+void
+vbo_merge_prims(struct _mesa_prim *p0, const struct _mesa_prim *p1)
+{
+   assert(vbo_can_merge_prims(p0, p1));
+
+   p0->count += p1->count;
+   p0->end = p1->end;
+}
