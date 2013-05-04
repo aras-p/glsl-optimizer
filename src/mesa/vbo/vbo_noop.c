@@ -30,7 +30,6 @@
 
 
 #include "main/glheader.h"
-#include "main/api_arrayelt.h"
 #include "main/context.h"
 #include "main/dispatch.h"
 #include "main/dlist.h"
@@ -332,6 +331,12 @@ _mesa_noop_EvalPoint2(GLint a, GLint b)
 }
 
 static void GLAPIENTRY
+_mesa_noop_ArrayElement(GLint elem)
+{
+}
+
+
+static void GLAPIENTRY
 _mesa_noop_Begin(GLenum mode)
 {
 }
@@ -355,7 +360,7 @@ _mesa_noop_PrimitiveRestartNV(void)
 void
 _mesa_noop_vtxfmt_init(GLvertexformat * vfmt)
 {
-   vfmt->ArrayElement = _ae_ArrayElement;
+   vfmt->ArrayElement = _mesa_noop_ArrayElement;
 
    vfmt->Begin = _mesa_noop_Begin;
 
