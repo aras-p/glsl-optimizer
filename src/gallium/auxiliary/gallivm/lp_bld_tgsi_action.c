@@ -1314,7 +1314,7 @@ not_emit_cpu(
    struct lp_build_tgsi_context * bld_base,
    struct lp_build_emit_data * emit_data)
 {
-   emit_data->output[emit_data->chan] = lp_build_not(&bld_base->base,
+   emit_data->output[emit_data->chan] = lp_build_not(&bld_base->uint_bld,
                                                      emit_data->args[0]);
 }
 

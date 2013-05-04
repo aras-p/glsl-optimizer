@@ -276,6 +276,7 @@ tgsi_opcode_infer_type( uint opcode )
    case TGSI_OPCODE_MOV:
    case TGSI_OPCODE_UCMP:
       return TGSI_TYPE_UNTYPED;
+   case TGSI_OPCODE_NOT:
    case TGSI_OPCODE_SHL:
    case TGSI_OPCODE_AND:
    case TGSI_OPCODE_OR:
