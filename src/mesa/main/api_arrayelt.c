@@ -64,13 +64,19 @@ typedef struct {
    AEattrib attribs[VERT_ATTRIB_MAX + 1];
    GLuint NewState;
 
+   /* List of VBOs we need to map before executing ArrayElements */
    struct gl_buffer_object *vbo[VERT_ATTRIB_MAX];
    GLuint nr_vbos;
-   GLboolean mapped_vbos;
-
+   GLboolean mapped_vbos;  /**< Any currently mapped VBOs? */
 } AEcontext;
 
-#define AE_CONTEXT(ctx) ((AEcontext *)(ctx)->aelt_context)
+
+/** Cast wrapper */
+static INLINE AEcontext *
+AE_CONTEXT(struct gl_context *ctx)
+{
+   return (AEcontext *) ctx->aelt_context;
+}
 
 
 /*
@@ -78,7 +84,12 @@ typedef struct {
  * in the range [0, 7].  Luckily these type tokens are sequentially
  * numbered in gl.h, except for GL_DOUBLE.
  */
-#define TYPE_IDX(t) ( (t) == GL_DOUBLE ? 7 : (t) & 7 )
+static INLINE int
+TYPE_IDX(GLenum t)
+{
+   return t == GL_DOUBLE ? 7 : t & 7;
+}
+
 
 #define NUM_TYPES 8
 
@@ -1245,8 +1256,6 @@ VertexAttribI4uiv(GLuint index, const GLuint *v)
 }
 
 
-
-
 /*
  * Array [unnormalized/normalized/integer][size][type] of VertexAttrib
  * functions
@@ -1396,10 +1405,9 @@ static attrib_func AttribFuncsARB[3][4][NUM_TYPES] = {
    }
 };
 
-/**********************************************************************/
 
-
-GLboolean _ae_create_context( struct gl_context *ctx )
+GLboolean
+_ae_create_context(struct gl_context *ctx)
 {
    if (ctx->aelt_context)
       return GL_TRUE;
@@ -1432,22 +1440,29 @@ GLboolean _ae_create_context( struct gl_context *ctx )
 }
 
 
-void _ae_destroy_context( struct gl_context *ctx )
+void
+_ae_destroy_context(struct gl_context *ctx)
 {
-   if ( AE_CONTEXT( ctx ) ) {
+   if (AE_CONTEXT(ctx)) {
       free(ctx->aelt_context);
       ctx->aelt_context = NULL;
    }
 }
 
-static void check_vbo( AEcontext *actx,
-		       struct gl_buffer_object *vbo )
+
+/**
+ * Check if the given vertex buffer object exists and is not mapped.
+ * If so, add it to the list of buffers we must map before executing
+ * an glArrayElement call.
+ */
+static void
+check_vbo(AEcontext *actx, struct gl_buffer_object *vbo)
 {
    if (_mesa_is_bufferobj(vbo) && !_mesa_bufferobj_mapped(vbo)) {
       GLuint i;
       for (i = 0; i < actx->nr_vbos; i++)
-	 if (actx->vbo[i] == vbo)
-	    return;
+         if (actx->vbo[i] == vbo)
+            return;  /* already in the list, we're done */
       assert(actx->nr_vbos < VERT_ATTRIB_MAX);
       actx->vbo[actx->nr_vbos++] = vbo;
    }
@@ -1460,11 +1475,12 @@ static void check_vbo( AEcontext *actx,
  * etc).
  * Note: this may be called during display list construction.
  */
-static void _ae_update_state( struct gl_context *ctx )
+static void
+_ae_update_state(struct gl_context *ctx)
 {
    AEcontext *actx = AE_CONTEXT(ctx);
-   AEarray *aa = actx->arrays;
-   AEattrib *at = actx->attribs;
+   AEarray *aa = actx->arrays;  /* non-indexed arrays (ex: glNormal) */
+   AEattrib *at = actx->attribs;  /* indexed arrays (ex: glMultiTexCoord) */
    GLuint i;
    struct gl_array_object *arrayObj = ctx->Array.ArrayObj;
 
@@ -1508,7 +1524,8 @@ static void _ae_update_state( struct gl_context *ctx )
       aa++;
    }
    for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++) {
-      struct gl_client_array *attribArray = &arrayObj->VertexAttrib[VERT_ATTRIB_TEX(i)];
+      struct gl_client_array *attribArray =
+         &arrayObj->VertexAttrib[VERT_ATTRIB_TEX(i)];
       if (attribArray->Enabled) {
          /* NOTE: we use generic glVertexAttribNV functions here.
           * If we ever remove GL_NV_vertex_program this will have to change.
@@ -1524,9 +1541,10 @@ static void _ae_update_state( struct gl_context *ctx )
       }
    }
 
-   /* generic vertex attribute arrays */   
+   /* generic vertex attribute arrays */
    for (i = 1; i < VERT_ATTRIB_GENERIC_MAX; i++) {  /* skip zero! */
-      struct gl_client_array *attribArray = &arrayObj->VertexAttrib[VERT_ATTRIB_GENERIC(i)];
+      struct gl_client_array *attribArray =
+         &arrayObj->VertexAttrib[VERT_ATTRIB_GENERIC(i)];
       if (attribArray->Enabled) {
          GLint intOrNorm;
          at->array = attribArray;
@@ -1580,11 +1598,17 @@ static void _ae_update_state( struct gl_context *ctx )
    actx->NewState = 0;
 }
 
-void _ae_map_vbos( struct gl_context *ctx )
+
+/**
+ * Before replaying glArrayElements calls we need to map (for reading) any
+ * VBOs referenced by the enabled vertex arrays.
+ */
+void
+_ae_map_vbos(struct gl_context *ctx)
 {
    AEcontext *actx = AE_CONTEXT(ctx);
    GLuint i;
-   
+
    if (actx->mapped_vbos)
       return;
 
@@ -1601,7 +1625,12 @@ void _ae_map_vbos( struct gl_context *ctx )
       actx->mapped_vbos = GL_TRUE;
 }
 
-void _ae_unmap_vbos( struct gl_context *ctx )
+
+/**
+ * Unmap VBOs
+ */
+void
+_ae_unmap_vbos(struct gl_context *ctx)
 {
    AEcontext *actx = AE_CONTEXT(ctx);
    GLuint i;
@@ -1624,7 +1653,8 @@ void _ae_unmap_vbos( struct gl_context *ctx )
  * for all enabled vertex arrays (for elt-th element).
  * Note: this may be called during display list construction.
  */
-void GLAPIENTRY _ae_ArrayElement( GLint elt )
+void GLAPIENTRY
+_ae_ArrayElement(GLint elt)
 {
    GET_CURRENT_CONTEXT(ctx);
    const AEcontext *actx = AE_CONTEXT(ctx);
@@ -1643,7 +1673,7 @@ void GLAPIENTRY _ae_ArrayElement( GLint elt )
 
    if (actx->NewState) {
       assert(!actx->mapped_vbos);
-      _ae_update_state( ctx );
+      _ae_update_state(ctx);
    }
 
    /* Determine if we need to map/unmap VBOs */
@@ -1651,13 +1681,13 @@ void GLAPIENTRY _ae_ArrayElement( GLint elt )
 
    if (do_map)
       _ae_map_vbos(ctx);
-   
+
    /* emit generic attribute elements */
    for (at = actx->attribs; at->func; at++) {
       const GLubyte *src
          = ADD_POINTERS(at->array->BufferObj->Pointer, at->array->Ptr)
          + elt * at->array->StrideB;
-      at->func( at->index, src );
+      at->func(at->index, src);
    }
 
    /* emit conventional arrays elements */
@@ -1665,8 +1695,7 @@ void GLAPIENTRY _ae_ArrayElement( GLint elt )
       const GLubyte *src
          = ADD_POINTERS(aa->array->BufferObj->Pointer, aa->array->Ptr)
          + elt * aa->array->StrideB;
-      CALL_by_offset( disp, (array_func), aa->offset, 
-		      ((const void *) src) );
+      CALL_by_offset(disp, (array_func), aa->offset, ((const void *) src));
    }
 
    if (do_map)
@@ -1674,16 +1703,16 @@ void GLAPIENTRY _ae_ArrayElement( GLint elt )
 }
 
 
-void _ae_invalidate_state( struct gl_context *ctx, GLuint new_state )
+void
+_ae_invalidate_state(struct gl_context *ctx, GLuint new_state)
 {
    AEcontext *actx = AE_CONTEXT(ctx);
 
-   
    /* Only interested in this subset of mesa state.  Need to prune
     * this down as both tnl/ and the drivers can raise statechanges
     * for arcane reasons in the middle of seemingly atomic operations
     * like DrawElements, over which we'd like to keep a known set of
-    * arrays and vbo's mapped.  
+    * arrays and vbo's mapped.
     *
     * Luckily, neither the drivers nor tnl muck with the state that
     * concerns us here:
@@ -1696,8 +1725,9 @@ void _ae_invalidate_state( struct gl_context *ctx, GLuint new_state )
 }
 
 
-void _mesa_install_arrayelt_vtxfmt(struct _glapi_table *disp,
-                                   const GLvertexformat *vfmt)
+void
+_mesa_install_arrayelt_vtxfmt(struct _glapi_table *disp,
+                              const GLvertexformat *vfmt)
 {
    SET_ArrayElement(disp, vfmt->ArrayElement);
 }
