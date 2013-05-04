@@ -181,8 +181,13 @@ i915_texture_tiling(struct i915_screen *is, struct i915_texture *tex)
    if (tex->b.b.target == PIPE_TEXTURE_1D)
       return I915_TILE_NONE;
 
-   /* Use X tiling for 2D, 3D and compressed textures */
-   return I915_TILE_X;
+   if (util_format_is_s3tc(tex->b.b.format))
+      return I915_TILE_X;
+
+   if (is->debug.use_blitter)
+      return I915_TILE_X;
+   else
+      return I915_TILE_Y;
 }
 
 
