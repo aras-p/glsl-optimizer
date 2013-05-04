@@ -703,8 +703,9 @@ struct dd_function_table {
     * these conditions.
     */
    GLuint NeedFlush;
-   GLuint SaveNeedFlush;
 
+   /** Need to call SaveFlushVertices() upon state change? */
+   GLboolean SaveNeedFlush;
 
    /* Called prior to any of the GLvertexformat functions being
     * called.  Paired with Driver.FlushVertices().

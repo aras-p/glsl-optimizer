@@ -854,7 +854,7 @@ dlist_fallback(struct gl_context *ctx)
    else {
       _mesa_install_save_vtxfmt(ctx, &ctx->ListState.ListVtxfmt);
    }
-   ctx->Driver.SaveNeedFlush = 0;
+   ctx->Driver.SaveNeedFlush = GL_FALSE;
 }
 
 
@@ -957,7 +957,7 @@ vbo_save_NotifyBegin(struct gl_context *ctx, GLenum mode)
    }
 
    /* We need to call SaveFlushVertices() if there's state change */
-   ctx->Driver.SaveNeedFlush = 1;
+   ctx->Driver.SaveNeedFlush = GL_TRUE;
 
    /* GL_TRUE means we've handled this glBegin here; don't compile a BEGIN
     * opcode into the display list.
@@ -1380,7 +1380,7 @@ vbo_save_SaveFlushVertices(struct gl_context *ctx)
    _save_copy_to_current(ctx);
    _save_reset_vertex(ctx);
    _save_reset_counters(ctx);
-   ctx->Driver.SaveNeedFlush = 0;
+   ctx->Driver.SaveNeedFlush = GL_FALSE;
 }
 
 
@@ -1402,7 +1402,7 @@ vbo_save_NewList(struct gl_context *ctx, GLuint list, GLenum mode)
 
    _save_reset_vertex(ctx);
    _save_reset_counters(ctx);
-   ctx->Driver.SaveNeedFlush = 0;
+   ctx->Driver.SaveNeedFlush = GL_FALSE;
 }
 
 
