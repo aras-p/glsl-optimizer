@@ -554,6 +554,7 @@ vs_lower_opcode_tgsi_sampling(struct vs_compile_context *vcc,
 
    /* write to a temp first */
    tmp = tc_alloc_tmp(tc);
+   tmp.type = inst->dst.type;
    dst = inst->dst;
    inst->dst = tmp;
 

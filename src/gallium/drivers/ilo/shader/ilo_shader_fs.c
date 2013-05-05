@@ -982,6 +982,8 @@ fs_lower_opcode_tgsi_sampling(struct fs_compile_context *fcc,
 
    /* write to temps first */
    tc_alloc_tmp4(tc, tmp);
+   for (i = 0; i < 4; i++)
+      tmp[i].type = inst->dst.type;
    tdst_transpose(inst->dst, dst);
    inst->dst = tmp[0];
 
