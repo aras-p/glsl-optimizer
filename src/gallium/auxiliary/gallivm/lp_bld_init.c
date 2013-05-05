@@ -147,7 +147,10 @@ create_pass_manager(struct gallivm_state *gallivm)
        * but there are more on SVN.
        * TODO: Add more passes.
        */
+      LLVMAddScalarReplAggregatesPass(gallivm->passmgr);
+      LLVMAddLICMPass(gallivm->passmgr);
       LLVMAddCFGSimplificationPass(gallivm->passmgr);
+      LLVMAddReassociatePass(gallivm->passmgr);
 
       if (HAVE_LLVM >= 0x207 && sizeof(void*) == 4) {
          /* For LLVM >= 2.7 and 32-bit build, use this order of passes to
