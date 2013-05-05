@@ -56,7 +56,7 @@ i915_drm_winsys_create(int drmFD)
 
    idws->fd = drmFD;
    idws->base.pci_id = deviceID;
-   idws->max_batch_size = 16 * 4096;
+   idws->max_batch_size = 1 * 4096;
 
    idws->base.destroy = i915_drm_winsys_destroy;
 

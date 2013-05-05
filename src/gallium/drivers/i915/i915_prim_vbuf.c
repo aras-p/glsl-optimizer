@@ -704,12 +704,14 @@ i915_vbuf_render_create(struct i915_context *i915)
 
    i915_render->i915 = i915;
 
-   i915_render->base.max_vertex_buffer_bytes = 16*4096;
+   i915_render->base.max_vertex_buffer_bytes = 4*4096;
 
    /* NOTE: it must be such that state and vertices indices fit in a single 
-    * batch buffer.
+    * batch buffer. 4096 is one batch buffer and 430 is the max amount of 
+    * state in dwords. The result is the number of 16-bit indices which can
+    * fit in a single batch buffer.
     */
-   i915_render->base.max_indices = 16*1024;
+   i915_render->base.max_indices = (4096 - 430 * 4) / 2;
 
    i915_render->base.get_vertex_info = i915_vbuf_render_get_vertex_info;
    i915_render->base.allocate_vertices = i915_vbuf_render_allocate_vertices;
