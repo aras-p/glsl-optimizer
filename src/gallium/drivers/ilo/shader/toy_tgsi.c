@@ -357,6 +357,7 @@ aos_tex(struct toy_compiler *tc,
       break;
    case TGSI_OPCODE_TEX2:
       opcode = TOY_OPCODE_TGSI_TEX2;
+      break;
    case TGSI_OPCODE_TXB2:
       opcode = TOY_OPCODE_TGSI_TXB2;
       break;
