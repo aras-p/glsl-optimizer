@@ -432,12 +432,62 @@ bool expr_handler::fold_alu_op2(alu_node& n) {
 	return true;
 }
 
+bool expr_handler::evaluate_condition(unsigned alu_cnd_flags,
+                                      literal s1, literal s2) {
+
+	unsigned cmp_type = alu_cnd_flags & AF_CMP_TYPE_MASK;
+	unsigned cc = alu_cnd_flags & AF_CC_MASK;
+
+	switch (cmp_type) {
+	case AF_FLOAT_CMP: {
+		switch (cc) {
+		case AF_CC_E : return s1.f == s2.f;
+		case AF_CC_GT: return s1.f >  s2.f;
+		case AF_CC_GE: return s1.f >= s2.f;
+		case AF_CC_NE: return s1.f != s2.f;
+		case AF_CC_LT: return s1.f <  s2.f;
+		case AF_CC_LE: return s1.f <= s2.f;
+		default:
+			assert(!"invalid condition code");
+			return false;
+		}
+	}
+	case AF_INT_CMP: {
+		switch (cc) {
+		case AF_CC_E : return s1.i == s2.i;
+		case AF_CC_GT: return s1.i >  s2.i;
+		case AF_CC_GE: return s1.i >= s2.i;
+		case AF_CC_NE: return s1.i != s2.i;
+		case AF_CC_LT: return s1.i <  s2.i;
+		case AF_CC_LE: return s1.i <= s2.i;
+		default:
+			assert(!"invalid condition code");
+			return false;
+		}
+	}
+	case AF_UINT_CMP: {
+		switch (cc) {
+		case AF_CC_E : return s1.u == s2.u;
+		case AF_CC_GT: return s1.u >  s2.u;
+		case AF_CC_GE: return s1.u >= s2.u;
+		case AF_CC_NE: return s1.u != s2.u;
+		case AF_CC_LT: return s1.u <  s2.u;
+		case AF_CC_LE: return s1.u <= s2.u;
+		default:
+			assert(!"invalid condition code");
+			return false;
+		}
+	}
+	default:
+		assert(!"invalid cmp_type");
+		return false;
+	}
+}
+
 bool expr_handler::fold_alu_op3(alu_node& n) {
 
 	if (n.src.size() < 3)
 		return false;
-
-	// TODO handle CNDxx by some common path
 
 	value* v0 = n.src[0];
 	value* v1 = n.src[1];
@@ -448,9 +498,6 @@ bool expr_handler::fold_alu_op3(alu_node& n) {
 	bool isc0 = v0->is_const();
 	bool isc1 = v1->is_const();
 	bool isc2 = v2->is_const();
-
-	if (!isc0 && !isc1 && !isc2)
-		return false;
 
 	literal dv, cv0, cv1, cv2;
 
@@ -468,6 +515,33 @@ bool expr_handler::fold_alu_op3(alu_node& n) {
 		cv2 = v2->get_const_value();
 		apply_alu_src_mod(n.bc, 2, cv2);
 	}
+
+	if (n.bc.op_ptr->flags & AF_CMOV) {
+		int src = 0;
+
+		if (v1->gvalue() == v2->gvalue() &&
+				n.bc.src[1].neg == n.bc.src[2].neg) {
+			// result doesn't depend on condition, convert to MOV
+			src = 1;
+		} else if (isc0) {
+			// src0 is const, condition can be evaluated, convert to MOV
+			bool cond = evaluate_condition(n.bc.op_ptr->flags & (AF_CC_MASK |
+					AF_CMP_TYPE_MASK), cv0, literal(0));
+			src = cond ? 1 : 2;
+		}
+
+		if (src) {
+			// if src is selected, convert to MOV
+			n.bc.src[0] = n.bc.src[src];
+			n.src[0] = n.src[src];
+			n.src.resize(1);
+			n.bc.set_op(ALU_OP1_MOV);
+			return fold_alu_op1(n);
+		}
+	}
+
+	if (!isc0 && !isc1 && !isc2)
+		return false;
 
 	if (isc0 && isc1 && isc2) {
 		switch (n.bc.op) {

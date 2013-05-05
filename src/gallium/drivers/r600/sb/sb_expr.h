@@ -76,6 +76,8 @@ public:
    void apply_alu_dst_mod(const bc_alu &bc, literal &v);
 
    void assign_source(value *dst, value *src);
+
+   bool evaluate_condition(unsigned alu_cnd_flags, literal s1, literal s2);
 };
 
 } // namespace r600_sb
