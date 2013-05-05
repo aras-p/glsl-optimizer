@@ -43,7 +43,11 @@ namespace r600_sb {
 using std::cerr;
 
 rp_kcache_tracker::rp_kcache_tracker(shader &sh) : rp(), uc(),
-	sel_count(sh.get_ctx().is_r600() ? 4 : 2) {}
+		// FIXME: for now we'll use "two const pairs" limit for r600, same as
+		// for other chips, otherwise additional check in alu_group_tracker is
+		// required to make sure that all 4 consts in the group fit into 2
+		// kcache sets
+		sel_count(2) {}
 
 bool rp_kcache_tracker::try_reserve(sel_chan r) {
 	unsigned sel = kc_sel(r);
