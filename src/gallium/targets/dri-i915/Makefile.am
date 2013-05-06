@@ -62,17 +62,11 @@ i915_dri_la_LIBADD = \
 	$(GALLIUM_DRI_LIB_DEPS) \
 	$(INTEL_LIBS)
 
-if HAVE_MESA_LLVM
-i915_dri_la_LINK = $(CXXLINK) $(i915_dri_la_LDFLAGS)
-# Mention a dummy pure C++ file to trigger generation of the $(LINK) variable
-nodist_EXTRA_i915_dri_la_SOURCES = dummy-cpp.cpp
+nodist_EXTRA_i915_dri_la_SOURCES = dummy.cpp
 
+if HAVE_MESA_LLVM
 AM_CPPFLAGS += -DGALLIUM_LLVMPIPE
 i915_dri_la_LIBADD += $(top_builddir)/src/gallium/drivers/llvmpipe/libllvmpipe.la $(LLVM_LIBS)
-else
-i915_dri_la_LINK = $(LINK) $(i915_dri_la_LDFLAGS)
-# Mention a dummy pure C file to trigger generation of the $(LINK) variable
-nodist_EXTRA_i915_dri_la_SOURCES = dummy-c.c
 endif
 
 # Provide compatibility with scripts for the old Mesa build system for
