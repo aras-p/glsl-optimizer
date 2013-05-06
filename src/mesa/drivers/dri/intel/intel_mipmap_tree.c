@@ -1903,7 +1903,8 @@ intel_miptree_map_singlesample(struct intel_context *intel,
    else if (intel->has_llc &&
             !(mode & GL_MAP_WRITE_BIT) &&
             !mt->compressed &&
-            mt->region->tiling == I915_TILING_X &&
+            (mt->region->tiling == I915_TILING_X ||
+             (intel->gen >= 6 && mt->region->tiling == I915_TILING_Y)) &&
             mt->region->pitch < 32768) {
       intel_miptree_map_blit(intel, mt, map, level, slice);
    } else if (mt->region->tiling != I915_TILING_NONE &&
