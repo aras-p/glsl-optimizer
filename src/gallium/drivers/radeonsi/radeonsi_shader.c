@@ -902,8 +902,7 @@ static void tex_fetch_args(
 	if (opcode == TGSI_OPCODE_TXB)
 		address[count++] = coords[3];
 
-	if ((target == TGSI_TEXTURE_CUBE || target == TGSI_TEXTURE_SHADOWCUBE) &&
-	    opcode != TGSI_OPCODE_TXQ)
+	if (target == TGSI_TEXTURE_CUBE || target == TGSI_TEXTURE_SHADOWCUBE)
 		radeon_llvm_emit_prepare_cube_coords(bld_base, emit_data, coords);
 
 	/* Pack depth comparison value */
@@ -1030,6 +1029,30 @@ static void build_tex_intrinsic(const struct lp_build_tgsi_action * action,
 		LLVMReadNoneAttribute | LLVMNoUnwindAttribute);
 }
 
+static void txq_fetch_args(
+	struct lp_build_tgsi_context * bld_base,
+	struct lp_build_emit_data * emit_data)
+{
+	struct si_shader_context *si_shader_ctx = si_shader_context(bld_base);
+	const struct tgsi_full_instruction *inst = emit_data->inst;
+
+	/* Mip level */
+	emit_data->args[0] = lp_build_emit_fetch(bld_base, inst, 0, TGSI_CHAN_X);
+
+	/* Resource */
+	emit_data->args[1] = si_shader_ctx->resources[inst->Src[1].Register.Index];
+
+	/* Dimensions */
+	emit_data->args[2] = lp_build_const_int32(bld_base->base.gallivm,
+						  inst->Texture.Texture);
+
+	emit_data->arg_count = 3;
+
+	emit_data->dst_type = LLVMVectorType(
+		LLVMInt32TypeInContext(bld_base->base.gallivm->context),
+		4);
+}
+
 static const struct lp_build_tgsi_action tex_action = {
 	.fetch_args = tex_fetch_args,
 	.emit = build_tex_intrinsic,
@@ -1052,6 +1075,12 @@ static const struct lp_build_tgsi_action txl_action = {
 	.fetch_args = tex_fetch_args,
 	.emit = build_tex_intrinsic,
 	.intr_name = "llvm.SI.samplel."
+};
+
+static const struct lp_build_tgsi_action txq_action = {
+	.fetch_args = txq_fetch_args,
+	.emit = build_tgsi_intrinsic_nomem,
+	.intr_name = "llvm.SI.resinfo"
 };
 
 static void create_meta_data(struct si_shader_context *si_shader_ctx)
@@ -1295,6 +1324,7 @@ int si_pipe_shader_create(
 	bld_base->op_actions[TGSI_OPCODE_TXF] = txf_action;
 	bld_base->op_actions[TGSI_OPCODE_TXL] = txl_action;
 	bld_base->op_actions[TGSI_OPCODE_TXP] = tex_action;
+	bld_base->op_actions[TGSI_OPCODE_TXQ] = txq_action;
 
 	si_shader_ctx.radeon_bld.load_input = declare_input;
 	si_shader_ctx.radeon_bld.load_system_value = declare_system_value;
