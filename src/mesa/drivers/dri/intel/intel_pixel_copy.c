@@ -213,6 +213,9 @@ do_blit_copypixels(struct gl_context * ctx,
       return false;
    }
 
+   if (ctx->Query.CurrentOcclusionObject)
+      ctx->Query.CurrentOcclusionObject->Result += width * height;
+
 out:
    intel_check_front_buffer_rendering(intel);
 
