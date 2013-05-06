@@ -37,6 +37,8 @@
 #define FLUSH_MAP_CACHE				(1 << 0)
 #define INHIBIT_FLUSH_RENDER_CACHE		(1 << 2)
 
+#define MI_LOAD_REGISTER_IMM		(CMD_MI | (0x22 << 23))
+
 #define MI_FLUSH_DW			(CMD_MI | (0x26 << 23) | 2)
 
 /* Stalls command execution waiting for the given events to have occurred. */
@@ -277,3 +279,7 @@
 #define SO_NUM_PRIMS_WRITTEN3_IVB	0x5218
 
 #define TIMESTAMP                       0x2358
+
+#define BCS_SWCTRL                      0x22200
+# define BCS_SWCTRL_SRC_Y               (1 << 0)
+# define BCS_SWCTRL_DST_Y               (1 << 1)

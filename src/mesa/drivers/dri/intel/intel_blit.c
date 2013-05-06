@@ -107,18 +107,19 @@ intelEmitCopyBlit(struct intel_context *intel,
    int dst_y2 = dst_y + h;
    int dst_x2 = dst_x + w;
    drm_intel_bo *aper_array[3];
+   uint32_t bcs_swctrl = 0;
    BATCH_LOCALS;
 
    if (dst_tiling != I915_TILING_NONE) {
       if (dst_offset & 4095)
 	 return false;
-      if (dst_tiling == I915_TILING_Y)
+      if (dst_tiling == I915_TILING_Y && intel->gen < 6)
 	 return false;
    }
    if (src_tiling != I915_TILING_NONE) {
       if (src_offset & 4095)
 	 return false;
-      if (src_tiling == I915_TILING_Y)
+      if (src_tiling == I915_TILING_Y && intel->gen < 6)
 	 return false;
    }
 
@@ -179,10 +180,16 @@ intelEmitCopyBlit(struct intel_context *intel,
    if (dst_tiling != I915_TILING_NONE) {
       CMD |= XY_DST_TILED;
       dst_pitch /= 4;
+
+      if (dst_tiling == I915_TILING_Y)
+         bcs_swctrl |= BCS_SWCTRL_DST_Y;
    }
    if (src_tiling != I915_TILING_NONE) {
       CMD |= XY_SRC_TILED;
       src_pitch /= 4;
+
+      if (src_tiling == I915_TILING_Y)
+         bcs_swctrl |= BCS_SWCTRL_SRC_Y;
    }
 #endif
 
@@ -193,7 +200,21 @@ intelEmitCopyBlit(struct intel_context *intel,
    assert(dst_x < dst_x2);
    assert(dst_y < dst_y2);
 
-   BEGIN_BATCH_BLT(8);
+   BEGIN_BATCH_BLT(8 + ((bcs_swctrl != 0) ? 14 : 0));
+
+   if (bcs_swctrl != 0) {
+      /* Idle the blitter before we update how tiling is interpreted. */
+      OUT_BATCH(MI_FLUSH_DW);
+      OUT_BATCH(0);
+      OUT_BATCH(0);
+      OUT_BATCH(0);
+
+      OUT_BATCH(MI_LOAD_REGISTER_IMM | (3 - 2));
+      OUT_BATCH(BCS_SWCTRL);
+      OUT_BATCH((BCS_SWCTRL_DST_Y | BCS_SWCTRL_SRC_Y) << 16 |
+                bcs_swctrl);
+   }
+
    OUT_BATCH(CMD | (8 - 2));
    OUT_BATCH(BR13 | (uint16_t)dst_pitch);
    OUT_BATCH((dst_y << 16) | dst_x);
@@ -206,6 +227,18 @@ intelEmitCopyBlit(struct intel_context *intel,
    OUT_RELOC_FENCED(src_buffer,
 		    I915_GEM_DOMAIN_RENDER, 0,
 		    src_offset);
+
+   if (bcs_swctrl != 0) {
+      OUT_BATCH(MI_FLUSH_DW);
+      OUT_BATCH(0);
+      OUT_BATCH(0);
+      OUT_BATCH(0);
+
+      OUT_BATCH(MI_LOAD_REGISTER_IMM | (3 - 2));
+      OUT_BATCH(BCS_SWCTRL);
+      OUT_BATCH((BCS_SWCTRL_DST_Y | BCS_SWCTRL_SRC_Y) << 16);
+   }
+
    ADVANCE_BATCH();
 
    intel_batchbuffer_emit_mi_flush(intel);
