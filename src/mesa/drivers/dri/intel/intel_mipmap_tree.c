@@ -1451,6 +1451,29 @@ intel_miptree_all_slices_resolve_depth(struct intel_context *intel,
 					   GEN6_HIZ_OP_DEPTH_RESOLVE);
 }
 
+
+void
+intel_miptree_resolve_color(struct intel_context *intel,
+                            struct intel_mipmap_tree *mt)
+{
+#ifdef I915
+   /* Fast color clear is not supported on the i915 (pre-Gen4) driver */
+#else
+   switch (mt->mcs_state) {
+   case INTEL_MCS_STATE_NONE:
+   case INTEL_MCS_STATE_MSAA:
+   case INTEL_MCS_STATE_RESOLVED:
+      /* No resolve needed */
+      break;
+   case INTEL_MCS_STATE_UNRESOLVED:
+   case INTEL_MCS_STATE_CLEAR:
+      brw_blorp_resolve_color(intel, mt);
+      break;
+   }
+#endif
+}
+
+
 /**
  * \brief Get pointer offset into stencil buffer.
  *

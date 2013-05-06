@@ -68,6 +68,20 @@ public:
                           bool partial_clear);
 };
 
+
+/**
+ * Parameters for a blorp operation that performs a "render target resolve".
+ * This is used to resolve pending fast clear pixels before a color buffer is
+ * used for texturing, ReadPixels, or scanout.
+ */
+class brw_blorp_rt_resolve_params : public brw_blorp_const_color_params
+{
+public:
+   brw_blorp_rt_resolve_params(struct brw_context *brw,
+                               struct intel_mipmap_tree *mt);
+};
+
+
 class brw_blorp_const_color_program
 {
 public:
@@ -266,6 +280,43 @@ brw_blorp_clear_params::brw_blorp_clear_params(struct brw_context *brw,
    }
 }
 
+
+brw_blorp_rt_resolve_params::brw_blorp_rt_resolve_params(
+      struct brw_context *brw,
+      struct intel_mipmap_tree *mt)
+{
+   dst.set(brw, mt, 0 /* level */, 0 /* layer */);
+
+   /* From the Ivy Bridge PRM, Vol2 Part1 11.9 "Render Target Resolve":
+    *
+    *     A rectangle primitive must be scaled down by the following factors
+    *     with respect to render target being resolved.
+    *
+    * The scaledown factors in the table that follows are related to the
+    * alignment size returned by intel_get_non_msrt_mcs_alignment(), but with
+    * X and Y alignment each divided by 2.
+    */
+   unsigned x_align, y_align;
+   intel_get_non_msrt_mcs_alignment(&brw->intel, mt, &x_align, &y_align);
+   unsigned x_scaledown = x_align / 2;
+   unsigned y_scaledown = y_align / 2;
+   x0 = y0 = 0;
+   x1 = ALIGN(mt->logical_width0, x_scaledown) / x_scaledown;
+   y1 = ALIGN(mt->logical_height0, y_scaledown) / y_scaledown;
+
+   fast_clear_op = GEN7_FAST_CLEAR_OP_RESOLVE;
+
+   /* Note: there is no need to initialize push constants because it doesn't
+    * matter what data gets dispatched to the render target.  However, we must
+    * ensure that the fragment shader delivers the data using the "replicated
+    * color" message.
+    */
+   use_wm_prog = true;
+   memset(&wm_prog_key, 0, sizeof(wm_prog_key));
+   wm_prog_key.use_simd16_replicated_data = true;
+}
+
+
 uint32_t
 brw_blorp_const_color_params::get_wm_prog(struct brw_context *brw,
                                           brw_blorp_prog_data **prog_data)
@@ -450,6 +501,15 @@ brw_blorp_clear_color(struct intel_context *intel, struct gl_framebuffer *fb,
    }
 
    return true;
+}
+
+void
+brw_blorp_resolve_color(struct intel_context *intel, struct intel_mipmap_tree *mt)
+{
+   struct brw_context *brw = brw_context(&intel->ctx);
+   brw_blorp_rt_resolve_params params(brw, mt);
+   brw_blorp_exec(intel, &params);
+   mt->mcs_state = INTEL_MCS_STATE_RESOLVED;
 }
 
 } /* extern "C" */

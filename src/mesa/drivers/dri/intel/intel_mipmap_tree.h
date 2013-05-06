@@ -719,6 +719,10 @@ intel_miptree_used_for_rendering(struct intel_mipmap_tree *mt)
 }
 
 void
+intel_miptree_resolve_color(struct intel_context *intel,
+                            struct intel_mipmap_tree *mt);
+
+void
 intel_miptree_downsample(struct intel_context *intel,
                          struct intel_mipmap_tree *mt);
 

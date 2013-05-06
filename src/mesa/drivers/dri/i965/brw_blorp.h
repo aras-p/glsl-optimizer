@@ -50,6 +50,10 @@ bool
 brw_blorp_clear_color(struct intel_context *intel, struct gl_framebuffer *fb,
                       bool partial_clear);
 
+void
+brw_blorp_resolve_color(struct intel_context *intel,
+                        struct intel_mipmap_tree *mt);
+
 #ifdef __cplusplus
 } /* end extern "C" */
 
@@ -197,6 +201,7 @@ struct brw_blorp_prog_data
 enum gen7_fast_clear_op {
    GEN7_FAST_CLEAR_OP_NONE,
    GEN7_FAST_CLEAR_OP_FAST_CLEAR,
+   GEN7_FAST_CLEAR_OP_RESOLVE,
 };
 
 

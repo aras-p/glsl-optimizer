@@ -590,6 +590,9 @@ gen7_blorp_emit_ps_config(struct brw_context *brw,
    case GEN7_FAST_CLEAR_OP_FAST_CLEAR:
       dw4 |= GEN7_PS_RENDER_TARGET_FAST_CLEAR_ENABLE;
       break;
+   case GEN7_FAST_CLEAR_OP_RESOLVE:
+      dw4 |= GEN7_PS_RENDER_TARGET_RESOLVE_ENABLE;
+      break;
    default:
       break;
    }
