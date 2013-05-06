@@ -37,13 +37,28 @@ extern "C" {
 #include "brw_eu.h"
 #include "brw_state.h"
 
-struct brw_blorp_clear_prog_key
+struct brw_blorp_const_color_prog_key
 {
    bool use_simd16_replicated_data;
    bool pad[3];
 };
 
-class brw_blorp_clear_params : public brw_blorp_params
+/**
+ * Parameters for a blorp operation where the fragment shader outputs a
+ * constant color.  This is used for both fast color clears and color
+ * resolves.
+ */
+class brw_blorp_const_color_params : public brw_blorp_params
+{
+public:
+   virtual uint32_t get_wm_prog(struct brw_context *brw,
+                                brw_blorp_prog_data **prog_data) const;
+
+protected:
+   brw_blorp_const_color_prog_key wm_prog_key;
+};
+
+class brw_blorp_clear_params : public brw_blorp_const_color_params
 {
 public:
    brw_blorp_clear_params(struct brw_context *brw,
@@ -51,20 +66,14 @@ public:
                           struct gl_renderbuffer *rb,
                           GLubyte *color_mask,
                           bool partial_clear);
-
-   virtual uint32_t get_wm_prog(struct brw_context *brw,
-                                brw_blorp_prog_data **prog_data) const;
-
-private:
-   brw_blorp_clear_prog_key wm_prog_key;
 };
 
-class brw_blorp_clear_program
+class brw_blorp_const_color_program
 {
 public:
-   brw_blorp_clear_program(struct brw_context *brw,
-                          const brw_blorp_clear_prog_key *key);
-   ~brw_blorp_clear_program();
+   brw_blorp_const_color_program(struct brw_context *brw,
+                                 const brw_blorp_const_color_prog_key *key);
+   ~brw_blorp_const_color_program();
 
    const GLuint *compile(struct brw_context *brw, GLuint *program_size);
 
@@ -75,7 +84,7 @@ private:
 
    void *mem_ctx;
    struct brw_context *brw;
-   const brw_blorp_clear_prog_key *key;
+   const brw_blorp_const_color_prog_key *key;
    struct brw_compile func;
 
    /* Thread dispatch header */
@@ -91,9 +100,9 @@ private:
    GLuint base_mrf;
 };
 
-brw_blorp_clear_program::brw_blorp_clear_program(
+brw_blorp_const_color_program::brw_blorp_const_color_program(
       struct brw_context *brw,
-      const brw_blorp_clear_prog_key *key)
+      const brw_blorp_const_color_prog_key *key)
    : mem_ctx(ralloc_context(NULL)),
      brw(brw),
      key(key)
@@ -101,7 +110,7 @@ brw_blorp_clear_program::brw_blorp_clear_program(
    brw_init_compile(brw, &func, mem_ctx);
 }
 
-brw_blorp_clear_program::~brw_blorp_clear_program()
+brw_blorp_const_color_program::~brw_blorp_const_color_program()
 {
    ralloc_free(mem_ctx);
 }
@@ -258,17 +267,18 @@ brw_blorp_clear_params::brw_blorp_clear_params(struct brw_context *brw,
 }
 
 uint32_t
-brw_blorp_clear_params::get_wm_prog(struct brw_context *brw,
-                                   brw_blorp_prog_data **prog_data) const
+brw_blorp_const_color_params::get_wm_prog(struct brw_context *brw,
+                                          brw_blorp_prog_data **prog_data)
+   const
 {
    uint32_t prog_offset;
-   if (!brw_search_cache(&brw->cache, BRW_BLORP_CLEAR_PROG,
+   if (!brw_search_cache(&brw->cache, BRW_BLORP_CONST_COLOR_PROG,
                          &this->wm_prog_key, sizeof(this->wm_prog_key),
                          &prog_offset, prog_data)) {
-      brw_blorp_clear_program prog(brw, &this->wm_prog_key);
+      brw_blorp_const_color_program prog(brw, &this->wm_prog_key);
       GLuint program_size;
       const GLuint *program = prog.compile(brw, &program_size);
-      brw_upload_cache(&brw->cache, BRW_BLORP_CLEAR_PROG,
+      brw_upload_cache(&brw->cache, BRW_BLORP_CONST_COLOR_PROG,
                        &this->wm_prog_key, sizeof(this->wm_prog_key),
                        program, program_size,
                        &prog.prog_data, sizeof(prog.prog_data),
@@ -278,7 +288,7 @@ brw_blorp_clear_params::get_wm_prog(struct brw_context *brw,
 }
 
 void
-brw_blorp_clear_program::alloc_regs()
+brw_blorp_const_color_program::alloc_regs()
 {
    int reg = 0;
    this->R0 = retype(brw_vec8_grf(reg++, 0), BRW_REGISTER_TYPE_UW);
@@ -295,8 +305,8 @@ brw_blorp_clear_program::alloc_regs()
 }
 
 const GLuint *
-brw_blorp_clear_program::compile(struct brw_context *brw,
-                                 GLuint *program_size)
+brw_blorp_const_color_program::compile(struct brw_context *brw,
+                                       GLuint *program_size)
 {
    /* Set up prog_data */
    memset(&prog_data, 0, sizeof(prog_data));
