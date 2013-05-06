@@ -85,9 +85,15 @@ class LLVMEnsureMultithreaded {
 public:
    LLVMEnsureMultithreaded()
    {
+#if HAVE_LLVM < 0x0303
+      if (!llvm::llvm_is_multithreaded()) {
+         llvm::llvm_start_multithreaded();
+      }
+#else
       if (!LLVMIsMultithreaded()) {
          LLVMStartMultithreaded();
       }
+#endif
    }
 };
 
