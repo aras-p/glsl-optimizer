@@ -437,7 +437,7 @@ ra_simplify(struct ra_graph *g)
    }
 
    for (i = 0; i < g->count; i++) {
-      if (!g->nodes[i].in_stack)
+      if (!g->nodes[i].in_stack && g->nodes[i].reg == -1)
 	 return GL_FALSE;
    }
 
