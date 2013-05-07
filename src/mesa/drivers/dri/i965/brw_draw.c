@@ -41,6 +41,7 @@
 #include "swrast_setup/swrast_setup.h"
 #include "drivers/common/meta.h"
 
+#include "brw_blorp.h"
 #include "brw_draw.h"
 #include "brw_defines.h"
 #include "brw_context.h"
@@ -310,7 +311,9 @@ brw_predraw_resolve_buffers(struct brw_context *brw)
    if (depth_irb)
       intel_renderbuffer_resolve_hiz(intel, depth_irb);
 
-   /* Resolve depth buffer of each enabled depth texture. */
+   /* Resolve depth buffer of each enabled depth texture, and color buffer of
+    * each fast-clear-enabled color texture.
+    */
    for (int i = 0; i < BRW_MAX_TEX_UNIT; i++) {
       if (!ctx->Texture.Unit[i]._ReallyEnabled)
 	 continue;
@@ -318,6 +321,7 @@ brw_predraw_resolve_buffers(struct brw_context *brw)
       if (!tex_obj || !tex_obj->mt)
 	 continue;
       intel_miptree_all_slices_resolve_depth(intel, tex_obj->mt);
+      intel_miptree_resolve_color(intel, tex_obj->mt);
    }
 }
 

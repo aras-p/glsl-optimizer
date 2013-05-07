@@ -134,6 +134,13 @@ brw_blorp_blit_miptrees(struct intel_context *intel,
                         float dst_x1, float dst_y1,
                         bool mirror_x, bool mirror_y)
 {
+   /* Get ready to blit.  This includes depth resolving the src and dst
+    * buffers if necessary.  Note: it's not necessary to do a color resolve on
+    * the destination buffer because we use the standard render path to render
+    * to destination color buffers, and the standard render path is
+    * fast-color-aware.
+    */
+   intel_miptree_resolve_color(intel, src_mt);
    intel_miptree_slice_resolve_depth(intel, src_mt, src_level, src_layer);
    intel_miptree_slice_resolve_depth(intel, dst_mt, dst_level, dst_layer);
 

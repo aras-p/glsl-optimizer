@@ -1616,6 +1616,11 @@ intel_miptree_upsample(struct intel_context *intel,
 void *
 intel_miptree_map_raw(struct intel_context *intel, struct intel_mipmap_tree *mt)
 {
+   /* CPU accesses to color buffers don't understand fast color clears, so
+    * resolve any pending fast color clears before we map.
+    */
+   intel_miptree_resolve_color(intel, mt);
+
    drm_intel_bo *bo = mt->region->bo;
 
    if (unlikely(INTEL_DEBUG & DEBUG_PERF)) {

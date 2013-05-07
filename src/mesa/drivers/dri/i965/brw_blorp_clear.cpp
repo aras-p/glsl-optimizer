@@ -507,6 +507,7 @@ void
 brw_blorp_resolve_color(struct intel_context *intel, struct intel_mipmap_tree *mt)
 {
    struct brw_context *brw = brw_context(&intel->ctx);
+
    brw_blorp_rt_resolve_params params(brw, mt);
    brw_blorp_exec(intel, &params);
    mt->mcs_state = INTEL_MCS_STATE_RESOLVED;
