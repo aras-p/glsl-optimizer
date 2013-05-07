@@ -79,6 +79,9 @@ tgsi_util_get_inst_usage_mask(const struct tgsi_full_instruction *inst,
 struct tgsi_src_register
 tgsi_util_get_src_from_ind(const struct tgsi_ind_register *reg);
 
+int
+tgsi_util_get_texture_coord_dim(int tgsi_tex, int *shadow_or_sample);
+
 #if defined __cplusplus
 }
 #endif
