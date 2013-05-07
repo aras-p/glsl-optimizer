@@ -615,8 +615,8 @@ void intel_update_renderbuffers(__DRIcontext *context,
 void intel_prepare_render(struct intel_context *intel);
 
 void
-intel_downsample_for_dri2_flush(struct intel_context *intel,
-                                __DRIdrawable *drawable);
+intel_resolve_for_dri2_flush(struct intel_context *intel,
+                             __DRIdrawable *drawable);
 
 void i915_set_buf_info_for_region(uint32_t *state, struct intel_region *region,
 				  uint32_t buffer_id);

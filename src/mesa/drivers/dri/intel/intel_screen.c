@@ -170,7 +170,7 @@ intelDRI2Flush(__DRIdrawable *drawable)
    if (intel->gen < 4)
       INTEL_FIREVERTICES(intel);
 
-   intel_downsample_for_dri2_flush(intel, drawable);
+   intel_resolve_for_dri2_flush(intel, drawable);
    intel->need_throttle = true;
 
    if (intel->batch.used)

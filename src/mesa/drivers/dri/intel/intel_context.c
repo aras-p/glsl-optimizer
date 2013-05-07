@@ -95,12 +95,12 @@ intelGetString(struct gl_context * ctx, GLenum name)
 }
 
 void
-intel_downsample_for_dri2_flush(struct intel_context *intel,
-                                __DRIdrawable *drawable)
+intel_resolve_for_dri2_flush(struct intel_context *intel,
+                             __DRIdrawable *drawable)
 {
    if (intel->gen < 6) {
-      /* MSAA is not supported, so don't waste time checking for
-       * a multisample buffer.
+      /* MSAA and fast color clear are not supported, so don't waste time
+       * checking whether a resolve is needed.
        */
       return;
    }
@@ -120,7 +120,10 @@ intel_downsample_for_dri2_flush(struct intel_context *intel,
       rb = intel_get_renderbuffer(fb, buffers[i]);
       if (rb == NULL || rb->mt == NULL)
          continue;
-      intel_miptree_downsample(intel, rb->mt);
+      if (rb->mt->num_samples <= 1)
+         intel_miptree_resolve_color(intel, rb->mt);
+      else
+         intel_miptree_downsample(intel, rb->mt);
    }
 }
 
@@ -137,14 +140,14 @@ intel_flush_front(struct gl_context *ctx)
           driDrawable &&
           driDrawable->loaderPrivate) {
 
-         /* Downsample before flushing FAKE_FRONT_LEFT to FRONT_LEFT.
+         /* Resolve before flushing FAKE_FRONT_LEFT to FRONT_LEFT.
           *
-          * This potentially downsamples both front and back buffer. It
-          * is unnecessary to downsample the back, but harms nothing except
+          * This potentially resolves both front and back buffer. It
+          * is unnecessary to resolve the back, but harms nothing except
           * performance. And no one cares about front-buffer render
           * performance.
           */
-         intel_downsample_for_dri2_flush(intel, driDrawable);
+         intel_resolve_for_dri2_flush(intel, driDrawable);
 
          screen->dri2.loader->flushFrontBuffer(driDrawable,
                                                driDrawable->loaderPrivate);
