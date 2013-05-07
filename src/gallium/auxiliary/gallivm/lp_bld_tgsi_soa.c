@@ -972,8 +972,58 @@ emit_fetch_immediate(
    unsigned swizzle)
 {
    struct lp_build_tgsi_soa_context * bld = lp_soa_context(bld_base);
-   LLVMValueRef res = bld->immediates[reg->Register.Index][swizzle];
-   assert(res);
+   struct gallivm_state *gallivm = bld->bld_base.base.gallivm;
+   LLVMBuilderRef builder = gallivm->builder;
+   struct lp_build_context *uint_bld = &bld_base->uint_bld;
+   struct lp_build_context *float_bld = &bld_base->base;
+   LLVMValueRef res = NULL;
+   LLVMValueRef indirect_index = NULL;
+
+   if (reg->Register.Indirect) {
+      indirect_index = get_indirect_index(bld,
+                                          reg->Register.File,
+                                          reg->Register.Index,
+                                          &reg->Indirect);
+   }
+
+   if (reg->Register.Indirect) {
+      LLVMValueRef swizzle_vec =
+         lp_build_const_int_vec(bld->bld_base.base.gallivm,
+                                uint_bld->type, swizzle);
+      LLVMValueRef length_vec =
+         lp_build_const_int_vec(bld->bld_base.base.gallivm, uint_bld->type,
+                                bld->bld_base.base.type.length);
+      LLVMValueRef index_vec;  /* index into the const buffer */
+      LLVMValueRef imms_array;
+      LLVMValueRef pixel_offsets;
+      LLVMValueRef offsets[LP_MAX_VECTOR_LENGTH];
+      LLVMTypeRef float4_ptr_type;
+      int i;
+
+      /* build pixel offset vector: {0, 1, 2, 3, ...} */
+      for (i = 0; i < float_bld->type.length; i++) {
+         offsets[i] = lp_build_const_int32(gallivm, i);
+      }
+      pixel_offsets = LLVMConstVector(offsets, float_bld->type.length);
+
+      /* index_vec = (indirect_index * 4 + swizzle) * length */
+      index_vec = lp_build_shl_imm(uint_bld, indirect_index, 2);
+      index_vec = lp_build_add(uint_bld, index_vec, swizzle_vec);
+      index_vec = lp_build_mul(uint_bld, index_vec, length_vec);
+      index_vec = lp_build_add(uint_bld, index_vec, pixel_offsets);
+
+      /* cast imms_array pointer to float* */
+      float4_ptr_type = LLVMPointerType(
+         LLVMFloatTypeInContext(bld->bld_base.base.gallivm->context), 0);
+      imms_array = LLVMBuildBitCast(builder, bld->imms_array,
+                                    float4_ptr_type, "");
+
+      /* Gather values from the temporary register array */
+      res = build_gather(&bld_base->base, imms_array, index_vec);
+   }
+   else {
+      res = bld->immediates[reg->Register.Index][swizzle];
+   }
 
    if (stype == TGSI_TYPE_UNSIGNED) {
       res = LLVMConstBitCast(res, bld_base->uint_bld.vec_type);
@@ -2222,6 +2272,21 @@ void lp_emit_immediate_soa(
    for( i = size; i < 4; ++i )
       bld->immediates[bld->num_immediates][i] = bld_base->base.undef;
 
+   if (bld->indirect_files & (1 << TGSI_FILE_IMMEDIATE)) {
+      unsigned index = bld->num_immediates;
+      struct gallivm_state *gallivm = bld->bld_base.base.gallivm;
+      LLVMBuilderRef builder = gallivm->builder;
+      for (i = 0; i < 4; ++i ) {
+         LLVMValueRef lindex = lp_build_const_int32(
+            bld->bld_base.base.gallivm, index * 4 + i);
+         LLVMValueRef imm_ptr = LLVMBuildGEP(builder,
+                                             bld->imms_array, &lindex, 1, "");
+         LLVMBuildStore(builder, 
+                        bld->immediates[index][i],
+                        imm_ptr);
+      }
+   }
+
    bld->num_immediates++;
 }
 
@@ -2932,6 +2997,15 @@ static void emit_prologue(struct lp_build_tgsi_context * bld_base)
       bld->outputs_array = lp_build_array_alloca(gallivm,
                                                 bld_base->base.vec_type, array_size,
                                                 "output_array");
+   }
+
+   if (bld->indirect_files & (1 << TGSI_FILE_IMMEDIATE)) {
+      LLVMValueRef array_size =
+         lp_build_const_int32(gallivm,
+                         bld_base->info->file_max[TGSI_FILE_IMMEDIATE] * 4 + 4);
+      bld->imms_array = lp_build_array_alloca(gallivm,
+                                              bld_base->base.vec_type, array_size,
+                                              "imms_array");
    }
 
    /* If we have indirect addressing in inputs we need to copy them into

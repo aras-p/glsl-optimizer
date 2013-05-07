@@ -453,6 +453,12 @@ struct lp_build_tgsi_soa_context
     */
    LLVMValueRef inputs_array;
 
+   /* We allocate/use this array of temps if (1 << TGSI_FILE_IMMEDIATE) is
+    * set in the indirect_files field.
+    */
+   LLVMValueRef imms_array;
+
+
    struct lp_bld_tgsi_system_values system_values;
 
    /** bitmask indicating which register files are accessed indirectly */
