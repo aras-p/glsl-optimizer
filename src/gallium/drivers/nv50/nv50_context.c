@@ -242,6 +242,7 @@ nv50_create(struct pipe_screen *pscreen, void *priv)
       screen->cur_ctx = nv50;
       nouveau_pushbuf_bufctx(screen->base.pushbuf, nv50->bufctx);
    }
+   nv50->base.pushbuf->kick_notify = nv50_default_kick_notify;
 
    nv50_init_query_functions(nv50);
    nv50_init_surface_functions(nv50);
