@@ -24,8 +24,6 @@
  *      Christian König <christian.koenig@amd.com>
  */
 
-#include <byteswap.h>
-
 #include "util/u_memory.h"
 #include "util/u_framebuffer.h"
 #include "util/u_blitter.h"
@@ -2541,25 +2539,9 @@ static void si_set_constant_buffer(struct pipe_context *ctx, uint shader, uint i
 	ptr = input->user_buffer;
 
 	if (ptr) {
-		/* Upload the user buffer. */
-		if (R600_BIG_ENDIAN) {
-			uint32_t *tmpPtr;
-			unsigned i, size = input->buffer_size;
-
-			if (!(tmpPtr = malloc(size))) {
-				R600_ERR("Failed to allocate BE swap buffer.\n");
-				return;
-			}
-
-			for (i = 0; i < size / 4; ++i) {
-				tmpPtr[i] = bswap_32(((uint32_t *)ptr)[i]);
-			}
-
-			u_upload_data(rctx->uploader, 0, size, tmpPtr, &cb->buffer_offset, &cb->buffer);
-			free(tmpPtr);
-		} else {
-			u_upload_data(rctx->uploader, 0, input->buffer_size, ptr, &cb->buffer_offset, &cb->buffer);
-		}
+		r600_upload_const_buffer(rctx,
+				(struct si_resource**)&cb->buffer, ptr,
+				cb->buffer_size, &cb->buffer_offset);
 	} else {
 		/* Setup the hw buffer. */
 		cb->buffer_offset = input->buffer_offset;

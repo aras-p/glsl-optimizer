@@ -91,8 +91,11 @@ static void radeonsi_launch_grid(
 	struct r600_context *rctx = (struct r600_context*)ctx;
 	struct si_pipe_compute *program = rctx->cs_shader_state.program;
 	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
+	struct si_resource *input_buffer = NULL;
+	uint32_t input_offset = 0;
+	uint64_t input_va;
 	uint64_t shader_va;
-	unsigned arg_user_sgpr_count;
+	unsigned arg_user_sgpr_count = 2;
 	unsigned i;
 	struct si_pipe_shader *shader = &program->kernels[pc];
 
@@ -109,21 +112,16 @@ static void radeonsi_launch_grid(
 	si_pm4_inval_shader_cache(pm4);
 	si_cmd_surface_sync(pm4, pm4->cp_coher_cntl);
 
-	arg_user_sgpr_count = program->input_size / 4;
-	if (program->input_size % 4 != 0) {
-		arg_user_sgpr_count++;
-	}
+	/* Upload the input data */
+	r600_upload_const_buffer(rctx, &input_buffer, input,
+					program->input_size, &input_offset);
+	input_va = r600_resource_va(ctx->screen, (struct pipe_resource*)input_buffer);
+	input_va += input_offset;
 
-	/* XXX: We should store arguments in memory if we run out of user sgprs.
-	 */
-	assert(arg_user_sgpr_count < 16);
+	si_pm4_add_bo(pm4, input_buffer, RADEON_USAGE_READ);
 
-	for (i = 0; i < arg_user_sgpr_count; i++) {
-		uint32_t *args = (uint32_t*)input;
-		si_pm4_set_reg(pm4, R_00B900_COMPUTE_USER_DATA_0 +
-					(i * 4),
-					args[i]);
-	}
+	si_pm4_set_reg(pm4, R_00B900_COMPUTE_USER_DATA_0, input_va);
+	si_pm4_set_reg(pm4, R_00B900_COMPUTE_USER_DATA_0 + 4, S_008F04_BASE_ADDRESS_HI (input_va >> 32) | S_008F04_STRIDE(0));
 
 	si_pm4_set_reg(pm4, R_00B810_COMPUTE_START_X, 0);
 	si_pm4_set_reg(pm4, R_00B814_COMPUTE_START_Y, 0);

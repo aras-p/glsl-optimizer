@@ -25,6 +25,8 @@
  *      Corbin Simpson <MostAwesomeDude@gmail.com>
  */
 
+#include <byteswap.h>
+
 #include "pipe/p_screen.h"
 #include "util/u_format.h"
 #include "util/u_math.h"
@@ -167,4 +169,31 @@ void r600_upload_index_buffer(struct r600_context *rctx,
 {
 	u_upload_data(rctx->uploader, 0, count * ib->index_size,
 		      ib->user_buffer, &ib->offset, &ib->buffer);
+}
+
+void r600_upload_const_buffer(struct r600_context *rctx, struct si_resource **rbuffer,
+			const uint8_t *ptr, unsigned size,
+			uint32_t *const_offset)
+{
+	if (R600_BIG_ENDIAN) {
+		uint32_t *tmpPtr;
+		unsigned i;
+
+		if (!(tmpPtr = malloc(size))) {
+			R600_ERR("Failed to allocate BE swap buffer.\n");
+			return;
+		}
+
+		for (i = 0; i < size / 4; ++i) {
+			tmpPtr[i] = bswap_32(((uint32_t *)ptr)[i]);
+		}
+
+		u_upload_data(rctx->uploader, 0, size, tmpPtr, const_offset,
+				(struct pipe_resource**)rbuffer);
+
+		free(tmpPtr);
+	} else {
+		u_upload_data(rctx->uploader, 0, size, ptr, const_offset,
+					(struct pipe_resource**)rbuffer);
+	}
 }
