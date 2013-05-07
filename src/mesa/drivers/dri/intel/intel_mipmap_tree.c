@@ -154,6 +154,9 @@ intel_miptree_create_layout(struct intel_context *intel,
    mt->logical_width0 = width0;
    mt->logical_height0 = height0;
    mt->logical_depth0 = depth0;
+#ifndef I915
+   mt->mcs_state = INTEL_MCS_STATE_NONE;
+#endif
 
    /* The cpp is bytes per (1, blockheight)-sized block for compressed
     * textures.  This is why you'll see divides by blockheight all over
@@ -1048,6 +1051,7 @@ intel_miptree_alloc_mcs(struct intel_context *intel,
     *
     *     "The MCS surface must be stored as Tile Y."
     */
+   mt->mcs_state = INTEL_MCS_STATE_MSAA;
    mt->mcs_mt = intel_miptree_create(intel,
                                      mt->target,
                                      format,

@@ -1346,6 +1346,8 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
       }
    }
 
+   intel_miptree_used_for_rendering(irb->mt);
+
    region = irb->mt->region;
 
    surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE,

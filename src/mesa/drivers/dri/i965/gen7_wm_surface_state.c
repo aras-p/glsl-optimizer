@@ -545,6 +545,8 @@ gen7_update_renderbuffer_surface(struct brw_context *brw,
                                     8 * 4, 32, &brw->wm.surf_offset[unit]);
    memset(surf, 0, 8 * 4);
 
+   intel_miptree_used_for_rendering(irb->mt);
+
    /* Render targets can't use IMS layout */
    assert(irb->mt->msaa_layout != INTEL_MSAA_LAYOUT_IMS);
 
