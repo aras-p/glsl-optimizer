@@ -226,12 +226,8 @@ lower_clip_distance_visitor::visit_leave(ir_assignment *ir)
        * each of them.
        *
        * Note: to unroll into element-by-element assignments, we need to make
-       * clones of the LHS and RHS.  This is only safe if the LHS and RHS are
-       * side-effect free.  Fortunately, we know that they are, because the
-       * only kind of rvalue that can have side effects is an ir_call, and
-       * ir_calls only appear (a) as a statement on their own, or (b) as the
-       * RHS of an assignment that stores the result of the call in a
-       * temporary variable.
+       * clones of the LHS and RHS.  This is safe because expressions and
+       * l-values are side-effect free.
        */
       void *ctx = ralloc_parent(ir);
       int array_size = this->old_clip_distance_var->type->array_size();
