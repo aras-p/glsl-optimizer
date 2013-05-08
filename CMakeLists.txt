@@ -5,6 +5,10 @@ include_directories(src/mesa)
 include_directories(src/mapi)
 include_directories(src/glsl)
 
+if(${WIN32})
+	include_directories(include/c99)
+endif()
+
 option (DEBUG "Enable debugging" FALSE)
 
 if(${DEBUG} MATCHES "on")
@@ -35,8 +39,8 @@ list(REMOVE_ITEM glsl_sources ${glsl_sources_remove})
 add_library(glsl_optimizer ${glsl_sources})
 target_link_libraries(glsl_optimizer glcpp-library mesa)
 
-add_executable(glsl_compiler src/glsl/main.cpp)
-target_link_libraries(glsl_compiler glsl_optimizer)
+#add_executable(glsl_compiler src/glsl/main.cpp)
+#target_link_libraries(glsl_compiler glsl_optimizer)
 
 # disabled due to lack of OpenGL linking (I think?)
 #file(GLOB glsl_test_sources tests/*.cpp)

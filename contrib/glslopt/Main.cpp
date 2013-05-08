@@ -3,6 +3,10 @@
 #include <stdlib.h>
 #include "glsl_optimizer.h"
 
+#if _MSC_VER
+#define snprintf _snprintf
+#endif
+
 static glslopt_ctx* gContext = 0;
 
 static int printhelp(const char* msg)
