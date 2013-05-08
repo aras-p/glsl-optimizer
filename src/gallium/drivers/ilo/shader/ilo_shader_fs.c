@@ -26,6 +26,7 @@
  */
 
 #include "tgsi/tgsi_dump.h"
+#include "tgsi/tgsi_util.h"
 #include "toy_compiler.h"
 #include "toy_tgsi.h"
 #include "toy_legalize.h"
@@ -605,7 +606,7 @@ fs_prepare_tgsi_sampling(struct toy_compiler *tc, const struct toy_inst *inst,
       break;
    }
 
-   num_coords = toy_tgsi_get_texture_coord_dim(inst->tex.target, &ref_pos);
+   num_coords = tgsi_util_get_texture_coord_dim(inst->tex.target, &ref_pos);
    tsrc_transpose(inst->src[0], coords);
    bias_or_lod = tsrc_null();
    ref_or_si = tsrc_null();

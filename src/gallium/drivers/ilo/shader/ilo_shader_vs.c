@@ -26,6 +26,7 @@
  */
 
 #include "tgsi/tgsi_dump.h"
+#include "tgsi/tgsi_util.h"
 #include "toy_compiler.h"
 #include "toy_tgsi.h"
 #include "toy_legalize.h"
@@ -377,7 +378,7 @@ vs_prepare_tgsi_sampling(struct toy_compiler *tc, const struct toy_inst *inst,
    num_derivs = 0;
    sampler_src = 1;
 
-   num_coords = toy_tgsi_get_texture_coord_dim(inst->tex.target, &ref_pos);
+   num_coords = tgsi_util_get_texture_coord_dim(inst->tex.target, &ref_pos);
 
    /* extract the parameters */
    switch (inst->opcode) {
