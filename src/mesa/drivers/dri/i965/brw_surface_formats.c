@@ -535,7 +535,7 @@ brw_init_surface_formats(struct brw_context *brw)
    memset(&ctx->TextureFormatSupported, 0, sizeof(ctx->TextureFormatSupported));
 
    gen = brw->gen * 10;
-   if (brw->is_g4x)
+   if (brw->is_g4x || brw->is_haswell)
       gen += 5;
 
    for (format = MESA_FORMAT_NONE + 1; format < MESA_FORMAT_COUNT; format++) {
