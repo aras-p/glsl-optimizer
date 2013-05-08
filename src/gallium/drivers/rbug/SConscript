@@ -4,12 +4,8 @@ env = env.Clone()
 
 rbug = env.ConvenienceLibrary(
 	target = 'rbug',
-	source = [
-		'rbug_context.c',
-		'rbug_core.c',
-		'rbug_objects.c',
-		'rbug_screen.c',
-	])
+	source = env.ParseSourceList('Makefile.sources', 'C_SOURCES')
+	)
 
 env.Alias('rbug', rbug)
 

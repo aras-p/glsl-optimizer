@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
+include Makefile.sources
 include $(top_srcdir)/src/gallium/Automake.inc
 
 noinst_LTLIBRARIES = librbug.la
@@ -34,8 +35,4 @@ AM_CFLAGS = \
 	-I$(top_srcdir)/src/gallium/drivers \
 	-I$(top_srcdir)/include
 
-librbug_la_SOURCES = \
-	rbug_core.c \
-	rbug_context.c \
-	rbug_objects.c \
-	rbug_screen.c
+librbug_la_SOURCES = $(C_SOURCES)
