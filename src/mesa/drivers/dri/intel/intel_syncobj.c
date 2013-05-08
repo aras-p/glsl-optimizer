@@ -80,20 +80,12 @@ intel_fence_sync(struct gl_context *ctx, struct gl_sync_object *s,
    intel_flush(ctx);
 }
 
-/* We ignore the user-supplied timeout.  This is weaselly -- we're allowed to
- * round to an implementation-dependent accuracy, and right now our
- * implementation "rounds" to the wait-forever value.
- *
- * The fix would be a new kernel function to do the GTT transition with a
- * timeout.
- */
 static void intel_client_wait_sync(struct gl_context *ctx, struct gl_sync_object *s,
 				 GLbitfield flags, GLuint64 timeout)
 {
    struct intel_sync_object *sync = (struct intel_sync_object *)s;
 
-   if (sync->bo) {
-      drm_intel_bo_wait_rendering(sync->bo);
+   if (sync->bo && drm_intel_gem_bo_wait(sync->bo, timeout) == 0) {
       s->StatusFlag = 1;
       drm_intel_bo_unreference(sync->bo);
       sync->bo = NULL;
