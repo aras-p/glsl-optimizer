@@ -162,7 +162,7 @@ aos_simple(struct toy_compiler *tc,
    case TGSI_OPCODE_UIF:
       cond_modifier = BRW_CONDITIONAL_NEQ;
       num_src = 2;
-      assert(src[0].type == TOY_TYPE_D);
+      assert(src[0].type == TOY_TYPE_UD);
       src[0] = tsrc_swizzle1(src[0], TOY_SWIZZLE_X);
       src[1] = tsrc_imm_d(0);
       break;
@@ -1682,105 +1682,27 @@ ra_src_dimension(const struct tgsi_full_src_register *s)
 static enum toy_type
 ra_infer_opcode_type(int tgsi_opcode, bool is_dst)
 {
-   enum toy_type type;
+   enum tgsi_opcode_type type;
 
-   if (is_dst) {
-      bool type_valid = false;
+   if (is_dst)
+      type = tgsi_opcode_infer_dst_type(tgsi_opcode);
+   else
+      type = tgsi_opcode_infer_src_type(tgsi_opcode);
 
-      switch (tgsi_opcode) {
-      case TGSI_OPCODE_I2F:
-      case TGSI_OPCODE_U2F:
-      case TGSI_OPCODE_TXF:
-      case TGSI_OPCODE_TXQ:
-      case TGSI_OPCODE_TXQ_LZ:
-      case TGSI_OPCODE_SAMPLE_I:
-      case TGSI_OPCODE_SAMPLE_I_MS:
-      case TGSI_OPCODE_SAMPLE_POS:
-         type = TOY_TYPE_F;
-         type_valid = true;
-         break;
-      case TGSI_OPCODE_ARL:
-      case TGSI_OPCODE_ARR:
-      case TGSI_OPCODE_F2I:
-         type = TOY_TYPE_D;
-         type_valid = true;
-         break;
-      case TGSI_OPCODE_F2U:
-         type = TOY_TYPE_UD;
-         type_valid = true;
-         break;
-      default:
-         break;
-      }
-
-      if (type_valid)
-         return type;
-   }
-
-   switch (tgsi_opcode) {
-   case TGSI_OPCODE_UIF:
-   case TGSI_OPCODE_I2F:
-   case TGSI_OPCODE_NOT:
-   case TGSI_OPCODE_AND:
-   case TGSI_OPCODE_OR:
-   case TGSI_OPCODE_MOD:
-   case TGSI_OPCODE_XOR:
-   case TGSI_OPCODE_SAD: /* why? */
-   case TGSI_OPCODE_TXF:
-   case TGSI_OPCODE_TXQ:
-   case TGSI_OPCODE_TXQ_LZ:
-   case TGSI_OPCODE_IDIV:
-   case TGSI_OPCODE_IMAX:
-   case TGSI_OPCODE_IMIN:
-   case TGSI_OPCODE_INEG:
-   case TGSI_OPCODE_ISGE:
-   case TGSI_OPCODE_ISHR:
-   case TGSI_OPCODE_ISLT:
-   case TGSI_OPCODE_UARL: /* why? */
-   case TGSI_OPCODE_IABS:
-   case TGSI_OPCODE_ISSG:
-   case TGSI_OPCODE_ATOMXCHG:
-   case TGSI_OPCODE_ATOMCAS:
-   case TGSI_OPCODE_ATOMAND:
-   case TGSI_OPCODE_ATOMOR:
-   case TGSI_OPCODE_ATOMXOR:
-   case TGSI_OPCODE_ATOMIMIN:
-   case TGSI_OPCODE_ATOMIMAX:
-      type = TOY_TYPE_D;
-      break;
-   case TGSI_OPCODE_SHL:
-   case TGSI_OPCODE_U2F:
-   case TGSI_OPCODE_UADD:
-   case TGSI_OPCODE_UDIV:
-   case TGSI_OPCODE_UMAD:
-   case TGSI_OPCODE_UMAX:
-   case TGSI_OPCODE_UMIN:
-   case TGSI_OPCODE_UMOD:
-   case TGSI_OPCODE_UMUL:
-   case TGSI_OPCODE_USEQ:
-   case TGSI_OPCODE_USGE:
-   case TGSI_OPCODE_USHR:
-   case TGSI_OPCODE_USLT:
-   case TGSI_OPCODE_USNE:
-   case TGSI_OPCODE_SAMPLE_I:
-   case TGSI_OPCODE_SAMPLE_I_MS:
-   case TGSI_OPCODE_SVIEWINFO:
-   case TGSI_OPCODE_SAMPLE_POS:
-   case TGSI_OPCODE_SAMPLE_INFO:
-   case TGSI_OPCODE_UCMP:
-   case TGSI_OPCODE_LOAD:
-   case TGSI_OPCODE_STORE:
-   case TGSI_OPCODE_ATOMUADD:
-   case TGSI_OPCODE_ATOMUMIN:
-   case TGSI_OPCODE_ATOMUMAX:
-      type = TOY_TYPE_UD;
-      break;
+   switch (type) {
+   case TGSI_TYPE_UNSIGNED:
+      return TOY_TYPE_UD;
+   case TGSI_TYPE_SIGNED:
+      return TOY_TYPE_D;
+   case TGSI_TYPE_FLOAT:
+      return TOY_TYPE_F;
+   case TGSI_TYPE_UNTYPED:
+   case TGSI_TYPE_VOID:
+   case TGSI_TYPE_DOUBLE:
    default:
-      type = TOY_TYPE_F;
-      break;
+      assert(!"unsupported TGSI type");
+      return TOY_TYPE_UD;
    }
-
-   return type;
 }
 
 /**
@@ -1811,6 +1733,14 @@ ra_get_type(struct toy_tgsi *tgsi, const struct tgsi_full_instruction *tgsi_inst
          /* this is the best we can do */
          type = TOY_TYPE_F;
       }
+
+      return type;
+   }
+   else if (tgsi_inst->Instruction.Opcode == TGSI_OPCODE_UCMP) {
+      if (!is_dst && operand == 0)
+         type = TOY_TYPE_UD;
+      else
+         type = TOY_TYPE_F;
 
       return type;
    }
