@@ -4,13 +4,8 @@ env = env.Clone()
 
 trace = env.ConvenienceLibrary(
     target = 'trace',
-    source = [
-        'tr_context.c',
-        'tr_dump.c',
-        'tr_dump_state.c',
-        'tr_screen.c',
-        'tr_texture.c',
-    ])
+    source = env.ParseSourceList('Makefile.sources', 'C_SOURCES')
+    )
 
 env.Alias('trace', trace)
 
