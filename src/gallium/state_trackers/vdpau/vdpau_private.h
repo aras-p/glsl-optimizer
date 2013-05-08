@@ -323,19 +323,6 @@ typedef struct
 typedef struct
 {
    vlVdpDevice *device;
-   Drawable drawable;
-} vlVdpPresentationQueueTarget;
-
-typedef struct
-{
-   vlVdpDevice *device;
-   Drawable drawable;
-   struct vl_compositor_state cstate;
-} vlVdpPresentationQueue;
-
-typedef struct
-{
-   vlVdpDevice *device;
    struct vl_compositor_state cstate;
 
    struct {
@@ -375,7 +362,6 @@ typedef uint64_t vlVdpTime;
 
 typedef struct
 {
-   vlVdpTime timestamp;
    vlVdpDevice *device;
    struct pipe_surface *surface;
    struct pipe_sampler_view *sampler_view;
@@ -383,6 +369,20 @@ typedef struct
    struct vl_compositor_state cstate;
    struct u_rect dirty_area;
 } vlVdpOutputSurface;
+
+typedef struct
+{
+   vlVdpDevice *device;
+   Drawable drawable;
+} vlVdpPresentationQueueTarget;
+
+typedef struct
+{
+   vlVdpDevice *device;
+   Drawable drawable;
+   struct vl_compositor_state cstate;
+   vlVdpOutputSurface *last_surf;
+} vlVdpPresentationQueue;
 
 typedef struct
 {
