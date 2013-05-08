@@ -16,10 +16,10 @@ static int printhelp(const char* msg)
 	printf("\t-f\t\t: fragment shader\n");
 	printf("\t-v\t\t: vertex shader\n");
     printf("\t-es\t\t: use OpenGL ES\n");
-    printf("\t-noes\t: use regular OpenGL\n");
-    printf("\t-scalar\t: optimize for scalar architecture\n");
-    printf("\t-vector\t: optimize for vector architecture\n");
-    printf("\t-fancy\t: enables 4.0 and 4.1 binding and location features\n");
+    printf("\t-noes\t\t: use regular OpenGL\n");
+    printf("\t-scalar\t\t: optimize for scalar architecture\n");
+    printf("\t-vector\t\t: optimize for vector architecture\n");
+    printf("\t-fancy\t\t: enables 4.0 and 4.1 binding and location features\n");
     printf("\t-repeat N\t: rerun optimizations N times\n");
 	printf("\n\tIf no output specified, output is to [input].out.\n");
 	return 1;
