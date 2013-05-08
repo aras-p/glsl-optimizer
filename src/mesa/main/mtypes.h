@@ -1134,6 +1134,7 @@ struct gl_extensions
    GLboolean EXT_transform_feedback;
    GLboolean EXT_timer_query;
    GLboolean EXT_vertex_array_bgra;
+   GLboolean EXT_Cafe;
    GLboolean OES_standard_derivatives;
    GLboolean EXT_shadow_samplers;
    GLboolean EXT_frag_depth;

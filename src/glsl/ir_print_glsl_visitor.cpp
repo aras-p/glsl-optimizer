@@ -148,6 +148,8 @@ _mesa_print_ir_glsl(exec_list *instructions,
             ralloc_strcat (&buffer, "#extension GL_ARB_explicit_attrib_location : enable\n");
         if (state->ARB_uniform_buffer_object_enable)
             ralloc_strcat (&buffer, "#extension GL_ARB_uniform_buffer_object : enable\n");
+        if (state->EXT_Cafe_enable)
+            ralloc_strcat (&buffer, "#extension GL_EXT_Cafe : enable\n");
 	}
 	
 	// remove unused struct declarations
@@ -168,7 +170,6 @@ _mesa_print_ir_glsl(exec_list *instructions,
             ralloc_asprintf_append (&buffer, ";\n");
         }
         ralloc_asprintf_append (&buffer, "};\n");
-        printf("\n");
     }
 
    foreach_iter(exec_list_iterator, iter, *instructions) {

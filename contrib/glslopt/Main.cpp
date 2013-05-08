@@ -95,19 +95,23 @@ static bool compileShader(const char* dstfilename, const char* srcfilename, bool
 		printf( "Failed to compile %s:\n\n%s\n", srcfilename, glslopt_get_log(shader));
 		return false;
 	}
-
-	const char* optimizedShader = glslopt_get_output(shader);
     
-    while ( repeat-- )
+    printf ( "%s\n", glslopt_get_log(shader));
+
+	const char* optimizedShader = strdup(glslopt_get_output(shader));
+    
+    for ( int pass=0; repeat>0; pass++,repeat-- )
     {
         glslopt_shader* new_shader = glslopt_optimize(gContext, type, optimizedShader, options | kGlslOptionSkipPreprocessor);
         if( !glslopt_get_status(new_shader) )
         {
-            printf( "Failed to compile during repeat pass %i\n", repeat+1);
+            printf( "Failed to compile during repeat pass %i\n\n%s\n\n%s\n",
+                   pass+1, optimizedShader, glslopt_get_log(new_shader));
             return false;
         }
         
-        optimizedShader = glslopt_get_output(new_shader);
+        free((void *)optimizedShader);
+        optimizedShader = strdup(glslopt_get_output(new_shader));
         
         glslopt_shader_delete(new_shader);
     }
@@ -116,6 +120,7 @@ static bool compileShader(const char* dstfilename, const char* srcfilename, bool
 		return false;
 
 	delete[] originalShader;
+    free((void *)optimizedShader);
 	return true;
 }
 
