@@ -54,13 +54,13 @@
  *----------------------------------------------------------------------
  */
 
-static INLINE
-void surface_to_surfaceid(struct svga_winsys_context *swc, // IN
-                          struct pipe_surface *surface,    // IN
-                          SVGA3dSurfaceImageId *id,        // OUT
-                          unsigned flags)                  // IN
+static INLINE void
+surface_to_surfaceid(struct svga_winsys_context *swc, // IN
+                     struct pipe_surface *surface,    // IN
+                     SVGA3dSurfaceImageId *id,        // OUT
+                     unsigned flags)                  // IN
 {
-   if(surface) {
+   if (surface) {
       struct svga_surface *s = svga_surface(surface);
       swc->surface_relocation(swc, &id->sid, s->handle, flags);
       id->face = s->real_face; /* faces have the same order */
@@ -110,7 +110,7 @@ SVGA3D_FIFOReserve(struct svga_winsys_context *swc,
    SVGA3dCmdHeader *header;
 
    header = swc->reserve(swc, sizeof *header + cmdSize, nr_relocs);
-   if(!header)
+   if (!header)
       return NULL;
 
    header->id = cmd;
@@ -162,13 +162,13 @@ SVGA3D_DefineContext(struct svga_winsys_context *swc)  // IN
 
    cmd = SVGA3D_FIFOReserve(swc,
                             SVGA_3D_CMD_CONTEXT_DEFINE, sizeof *cmd, 0);
-   if(!cmd)
+   if (!cmd)
       return PIPE_ERROR_OUT_OF_MEMORY;
 
    cmd->cid = swc->cid;
 
    swc->commit(swc);
-   
+
    return PIPE_OK;
 }
 
@@ -193,16 +193,16 @@ enum pipe_error
 SVGA3D_DestroyContext(struct svga_winsys_context *swc)  // IN
 {
    SVGA3dCmdDestroyContext *cmd;
-   
+
    cmd = SVGA3D_FIFOReserve(swc,
                             SVGA_3D_CMD_CONTEXT_DESTROY, sizeof *cmd, 0);
-   if(!cmd)
+   if (!cmd)
       return PIPE_ERROR_OUT_OF_MEMORY;
-   
+
    cmd->cid = swc->cid;
-   
+
    swc->commit(swc);
-   
+
    return PIPE_OK;
 }
 
@@ -277,7 +277,7 @@ SVGA3D_BeginDefineSurface(struct svga_winsys_context *swc,
    cmd = SVGA3D_FIFOReserve(swc,
                             SVGA_3D_CMD_SURFACE_DEFINE, sizeof *cmd +
                             sizeof **mipSizes * numMipSizes, 1);
-   if(!cmd)
+   if (!cmd)
       return PIPE_ERROR_OUT_OF_MEMORY;
 
    swc->surface_relocation(swc, &cmd->sid, sid, SVGA_RELOC_WRITE);
@@ -289,7 +289,7 @@ SVGA3D_BeginDefineSurface(struct svga_winsys_context *swc,
 
    memset(*faces, 0, sizeof **faces * SVGA3D_MAX_SURFACE_FACES);
    memset(*mipSizes, 0, sizeof **mipSizes * numMipSizes);
-   
+
    return PIPE_OK;
 }
 
@@ -324,7 +324,7 @@ SVGA3D_DefineSurface2D(struct svga_winsys_context *swc,    // IN
 
    ret = SVGA3D_BeginDefineSurface(swc,
                                    sid, 0, format, &faces, &mipSizes, 1);
-   if(ret != PIPE_OK)
+   if (ret != PIPE_OK)
       return ret;
 
    faces[0].numMipLevels = 1;
@@ -332,9 +332,9 @@ SVGA3D_DefineSurface2D(struct svga_winsys_context *swc,    // IN
    mipSizes[0].width = width;
    mipSizes[0].height = height;
    mipSizes[0].depth = 1;
- 
+
    swc->commit(swc);;
-   
+
    return PIPE_OK;
 }
 
@@ -360,15 +360,15 @@ SVGA3D_DestroySurface(struct svga_winsys_context *swc,
                       struct svga_winsys_surface *sid)  // IN
 {
    SVGA3dCmdDestroySurface *cmd;
-   
+
    cmd = SVGA3D_FIFOReserve(swc,
                             SVGA_3D_CMD_SURFACE_DESTROY, sizeof *cmd, 1);
-   if(!cmd)
+   if (!cmd)
       return PIPE_ERROR_OUT_OF_MEMORY;
-   
+
    swc->surface_relocation(swc, &cmd->sid, sid, SVGA_RELOC_READ);
    swc->commit(swc);;
-   
+
    return PIPE_OK;
 }
 
@@ -423,18 +423,18 @@ SVGA3D_SurfaceDMA(struct svga_winsys_context *swc,
                   uint32 numBoxes,                  // IN
                   SVGA3dSurfaceDMAFlags flags)      // IN
 {
-   struct svga_texture *texture = svga_texture(st->base.resource); 
+   struct svga_texture *texture = svga_texture(st->base.resource);
    SVGA3dCmdSurfaceDMA *cmd;
    SVGA3dCmdSurfaceDMASuffix *pSuffix;
    uint32 boxesSize = sizeof *boxes * numBoxes;
    unsigned region_flags;
    unsigned surface_flags;
-   
-   if(transfer == SVGA3D_WRITE_HOST_VRAM) {
+
+   if (transfer == SVGA3D_WRITE_HOST_VRAM) {
       region_flags = SVGA_RELOC_READ;
       surface_flags = SVGA_RELOC_WRITE;
    }
-   else if(transfer == SVGA3D_READ_HOST_VRAM) {
+   else if (transfer == SVGA3D_READ_HOST_VRAM) {
       region_flags = SVGA_RELOC_WRITE;
       surface_flags = SVGA_RELOC_READ;
    }
@@ -442,12 +442,12 @@ SVGA3D_SurfaceDMA(struct svga_winsys_context *swc,
       assert(0);
       return PIPE_ERROR_BAD_INPUT;
    }
-   
+
    cmd = SVGA3D_FIFOReserve(swc,
                             SVGA_3D_CMD_SURFACE_DMA,
                             sizeof *cmd + boxesSize + sizeof *pSuffix,
                             2);
-   if(!cmd)
+   if (!cmd)
       return PIPE_ERROR_OUT_OF_MEMORY;
 
    swc->region_relocation(swc, &cmd->guest.ptr, st->hwbuf, 0, region_flags);
@@ -460,7 +460,7 @@ SVGA3D_SurfaceDMA(struct svga_winsys_context *swc,
    cmd->transfer = transfer;
 
    memcpy(&cmd[1], boxes, boxesSize);
-   
+
    pSuffix = (SVGA3dCmdSurfaceDMASuffix *)((uint8_t*)cmd + sizeof *cmd + boxesSize);
    pSuffix->suffixSize = sizeof *pSuffix;
    pSuffix->maximumOffset = st->hw_nblocksy*st->base.stride;
@@ -487,12 +487,12 @@ SVGA3D_BufferDMA(struct svga_winsys_context *swc,
    SVGA3dCmdSurfaceDMASuffix *pSuffix;
    unsigned region_flags;
    unsigned surface_flags;
-   
-   if(transfer == SVGA3D_WRITE_HOST_VRAM) {
+
+   if (transfer == SVGA3D_WRITE_HOST_VRAM) {
       region_flags = SVGA_RELOC_READ;
       surface_flags = SVGA_RELOC_WRITE;
    }
-   else if(transfer == SVGA3D_READ_HOST_VRAM) {
+   else if (transfer == SVGA3D_READ_HOST_VRAM) {
       region_flags = SVGA_RELOC_WRITE;
       surface_flags = SVGA_RELOC_READ;
    }
@@ -500,12 +500,12 @@ SVGA3D_BufferDMA(struct svga_winsys_context *swc,
       assert(0);
       return PIPE_ERROR_BAD_INPUT;
    }
-   
+
    cmd = SVGA3D_FIFOReserve(swc,
                             SVGA_3D_CMD_SURFACE_DMA,
                             sizeof *cmd + sizeof *box + sizeof *pSuffix,
                             2);
-   if(!cmd)
+   if (!cmd)
       return PIPE_ERROR_OUT_OF_MEMORY;
 
    swc->region_relocation(swc, &cmd->guest.ptr, guest, 0, region_flags);
@@ -527,7 +527,7 @@ SVGA3D_BufferDMA(struct svga_winsys_context *swc,
    box->srcx = guest_offset;
    box->srcy = 0;
    box->srcz = 0;
-   
+
    pSuffix = (SVGA3dCmdSurfaceDMASuffix *)((uint8_t*)cmd + sizeof *cmd + sizeof *box);
    pSuffix->suffixSize = sizeof *pSuffix;
    pSuffix->maximumOffset = guest_offset + size;
@@ -573,10 +573,10 @@ SVGA3D_SetRenderTarget(struct svga_winsys_context *swc,
                        struct pipe_surface *surface)  // IN
 {
    SVGA3dCmdSetRenderTarget *cmd;
-   
+
    cmd = SVGA3D_FIFOReserve(swc,
                             SVGA_3D_CMD_SETRENDERTARGET, sizeof *cmd, 1);
-   if(!cmd)
+   if (!cmd)
       return PIPE_ERROR_OUT_OF_MEMORY;
 
    cmd->cid = swc->cid;
@@ -630,7 +630,7 @@ SVGA3D_DefineShader(struct svga_winsys_context *swc,
    cmd = SVGA3D_FIFOReserve(swc,
                             SVGA_3D_CMD_SHADER_DEFINE, sizeof *cmd + bytecodeLen,
                             0);
-   if(!cmd)
+   if (!cmd)
       return PIPE_ERROR_OUT_OF_MEMORY;
 
    cmd->cid = swc->cid;
@@ -668,11 +668,11 @@ SVGA3D_DestroyShader(struct svga_winsys_context *swc,
                      SVGA3dShaderType type)  // IN
 {
    SVGA3dCmdDestroyShader *cmd;
-   
+
    cmd = SVGA3D_FIFOReserve(swc,
                             SVGA_3D_CMD_SHADER_DESTROY, sizeof *cmd,
                             0);
-   if(!cmd)
+   if (!cmd)
       return PIPE_ERROR_OUT_OF_MEMORY;
 
    cmd->cid = swc->cid;
@@ -715,11 +715,11 @@ SVGA3D_SetShaderConst(struct svga_winsys_context *swc,
                       const void *value)            // IN
 {
    SVGA3dCmdSetShaderConst *cmd;
-   
+
    cmd = SVGA3D_FIFOReserve(swc,
                             SVGA_3D_CMD_SET_SHADER_CONST, sizeof *cmd,
                             0);
-   if(!cmd)
+   if (!cmd)
       return PIPE_ERROR_OUT_OF_MEMORY;
 
    cmd->cid = swc->cid;
@@ -787,7 +787,7 @@ SVGA3D_SetShaderConsts(struct svga_winsys_context *swc,
                             SVGA_3D_CMD_SET_SHADER_CONST,
                             sizeof *cmd + (numRegs - 1) * sizeof cmd->values,
                             0);
-   if(!cmd)
+   if (!cmd)
       return PIPE_ERROR_OUT_OF_MEMORY;
 
    cmd->cid = swc->cid;
@@ -832,13 +832,13 @@ SVGA3D_SetShader(struct svga_winsys_context *swc,
                  uint32 shid)            // IN
 {
    SVGA3dCmdSetShader *cmd;
-   
+
    cmd = SVGA3D_FIFOReserve(swc,
                             SVGA_3D_CMD_SET_SHADER, sizeof *cmd,
                             0);
-   if(!cmd)
+   if (!cmd)
       return PIPE_ERROR_OUT_OF_MEMORY;
-   
+
    cmd->cid = swc->cid;
    cmd->type = type;
    cmd->shid = shid;
@@ -883,12 +883,12 @@ SVGA3D_BeginClear(struct svga_winsys_context *swc,
                   uint32 numRects)        // IN
 {
    SVGA3dCmdClear *cmd;
-   
+
    cmd = SVGA3D_FIFOReserve(swc,
-                            SVGA_3D_CMD_CLEAR, 
+                            SVGA_3D_CMD_CLEAR,
                             sizeof *cmd + sizeof **rects * numRects,
                             0);
-   if(!cmd)
+   if (!cmd)
       return PIPE_ERROR_OUT_OF_MEMORY;
 
    cmd->cid = swc->cid;
@@ -933,7 +933,7 @@ SVGA3D_ClearRect(struct svga_winsys_context *swc,
    enum pipe_error ret;
 
    ret = SVGA3D_BeginClear(swc, flags, color, depth, stencil, &rect, 1);
-   if(ret != PIPE_OK)
+   if (ret != PIPE_OK)
       return PIPE_ERROR_OUT_OF_MEMORY;
 
    memset(rect, 0, sizeof *rect);
@@ -986,10 +986,10 @@ SVGA3D_BeginDrawPrimitives(struct svga_winsys_context *swc,
    uint32 rangeSize = sizeof **ranges * numRanges;
 
    cmd = SVGA3D_FIFOReserve(swc,
-                            SVGA_3D_CMD_DRAW_PRIMITIVES, 
+                            SVGA_3D_CMD_DRAW_PRIMITIVES,
                             sizeof *cmd + declSize + rangeSize,
                             numVertexDecls + numRanges);
-   if(!cmd)
+   if (!cmd)
       return PIPE_ERROR_OUT_OF_MEMORY;
 
    cmd->cid = swc->cid;
@@ -1042,7 +1042,7 @@ SVGA3D_BeginSurfaceCopy(struct svga_winsys_context *swc,
    cmd = SVGA3D_FIFOReserve(swc,
                             SVGA_3D_CMD_SURFACE_COPY, sizeof *cmd + boxesSize,
                             2);
-   if(!cmd)
+   if (!cmd)
       return PIPE_ERROR_OUT_OF_MEMORY;
 
    surface_to_surfaceid(swc, src, &cmd->src, SVGA_RELOC_READ);
@@ -1081,11 +1081,11 @@ SVGA3D_SurfaceStretchBlt(struct svga_winsys_context *swc,
                          SVGA3dStretchBltMode mode)   // IN
 {
    SVGA3dCmdSurfaceStretchBlt *cmd;
-   
+
    cmd = SVGA3D_FIFOReserve(swc,
                             SVGA_3D_CMD_SURFACE_STRETCHBLT, sizeof *cmd,
                             2);
-   if(!cmd)
+   if (!cmd)
       return PIPE_ERROR_OUT_OF_MEMORY;
 
    surface_to_surfaceid(swc, src, &cmd->src, SVGA_RELOC_READ);
@@ -1122,11 +1122,11 @@ SVGA3D_SetViewport(struct svga_winsys_context *swc,
                    SVGA3dRect *rect)  // IN
 {
    SVGA3dCmdSetViewport *cmd;
-   
+
    cmd = SVGA3D_FIFOReserve(swc,
                             SVGA_3D_CMD_SETVIEWPORT, sizeof *cmd,
                             0);
-   if(!cmd)
+   if (!cmd)
       return PIPE_ERROR_OUT_OF_MEMORY;
 
    cmd->cid = swc->cid;
@@ -1144,8 +1144,8 @@ SVGA3D_SetViewport(struct svga_winsys_context *swc,
  *
  * SVGA3D_SetScissorRect --
  *
- *      Set the current context's scissor rectangle. If scissor
- *      is enabled then all rendering is clipped to the scissor.
+ *      Set the current context's scissor rectangle. If scissoring
+ *      is enabled then all rendering is clipped to the scissor bounds.
  *
  * Results:
  *      None.
@@ -1161,11 +1161,11 @@ SVGA3D_SetScissorRect(struct svga_winsys_context *swc,
                       SVGA3dRect *rect)  // IN
 {
    SVGA3dCmdSetScissorRect *cmd;
-   
+
    cmd = SVGA3D_FIFOReserve(swc,
                             SVGA_3D_CMD_SETSCISSORRECT, sizeof *cmd,
                             0);
-   if(!cmd)
+   if (!cmd)
       return PIPE_ERROR_OUT_OF_MEMORY;
 
    cmd->cid = swc->cid;
@@ -1181,7 +1181,7 @@ SVGA3D_SetScissorRect(struct svga_winsys_context *swc,
  * SVGA3D_SetClipPlane --
  *
  *      Set one of the current context's clip planes. If the clip
- *      plane is enabled then all 3d rendering is clipped to against
+ *      plane is enabled then all 3d rendering is clipped against
  *      the plane.
  *
  * Results:
@@ -1198,11 +1198,11 @@ SVGA3D_SetClipPlane(struct svga_winsys_context *swc,
                     uint32 index, const float *plane)
 {
    SVGA3dCmdSetClipPlane *cmd;
-   
+
    cmd = SVGA3D_FIFOReserve(swc,
                             SVGA_3D_CMD_SETCLIPPLANE, sizeof *cmd,
                             0);
-   if(!cmd)
+   if (!cmd)
       return PIPE_ERROR_OUT_OF_MEMORY;
 
    cmd->cid = swc->cid;
@@ -1239,11 +1239,11 @@ SVGA3D_SetZRange(struct svga_winsys_context *swc,
                  float zMax)  // IN
 {
    SVGA3dCmdSetZRange *cmd;
-   
+
    cmd = SVGA3D_FIFOReserve(swc,
                             SVGA_3D_CMD_SETZRANGE, sizeof *cmd,
                             0);
-   if(!cmd)
+   if (!cmd)
       return PIPE_ERROR_OUT_OF_MEMORY;
 
    cmd->cid = swc->cid;
@@ -1286,12 +1286,12 @@ SVGA3D_BeginSetTextureState(struct svga_winsys_context *swc,
                             uint32 numStates)             // IN
 {
    SVGA3dCmdSetTextureState *cmd;
-   
+
    cmd = SVGA3D_FIFOReserve(swc,
-                            SVGA_3D_CMD_SETTEXTURESTATE, 
+                            SVGA_3D_CMD_SETTEXTURESTATE,
                             sizeof *cmd + sizeof **states * numStates,
                             numStates);
-   if(!cmd)
+   if (!cmd)
       return PIPE_ERROR_OUT_OF_MEMORY;
 
    cmd->cid = swc->cid;
@@ -1332,12 +1332,12 @@ SVGA3D_BeginSetRenderState(struct svga_winsys_context *swc,
                            uint32 numStates)            // IN
 {
    SVGA3dCmdSetRenderState *cmd;
-   
+
    cmd = SVGA3D_FIFOReserve(swc,
-                            SVGA_3D_CMD_SETRENDERSTATE, 
+                            SVGA_3D_CMD_SETRENDERSTATE,
                             sizeof *cmd + sizeof **states * numStates,
                             0);
-   if(!cmd)
+   if (!cmd)
       return PIPE_ERROR_OUT_OF_MEMORY;
 
    cmd->cid = swc->cid;
@@ -1373,14 +1373,14 @@ SVGA3D_BeginQuery(struct svga_winsys_context *swc,
                             SVGA_3D_CMD_BEGIN_QUERY,
                             sizeof *cmd,
                             0);
-   if(!cmd)
+   if (!cmd)
       return PIPE_ERROR_OUT_OF_MEMORY;
 
    cmd->cid = swc->cid;
    cmd->type = type;
 
    swc->commit(swc);
-   
+
    return PIPE_OK;
 }
 
@@ -1409,10 +1409,10 @@ SVGA3D_EndQuery(struct svga_winsys_context *swc,
    SVGA3dCmdEndQuery *cmd;
 
    cmd = SVGA3D_FIFOReserve(swc,
-                            SVGA_3D_CMD_END_QUERY, 
+                            SVGA_3D_CMD_END_QUERY,
                             sizeof *cmd,
                             1);
-   if(!cmd)
+   if (!cmd)
       return PIPE_ERROR_OUT_OF_MEMORY;
 
    cmd->cid = swc->cid;
@@ -1422,7 +1422,7 @@ SVGA3D_EndQuery(struct svga_winsys_context *swc,
                           SVGA_RELOC_WRITE);
 
    swc->commit(swc);
-   
+
    return PIPE_OK;
 }
 
@@ -1456,19 +1456,19 @@ SVGA3D_WaitForQuery(struct svga_winsys_context *swc,
    SVGA3dCmdWaitForQuery *cmd;
 
    cmd = SVGA3D_FIFOReserve(swc,
-                            SVGA_3D_CMD_WAIT_FOR_QUERY, 
+                            SVGA_3D_CMD_WAIT_FOR_QUERY,
                             sizeof *cmd,
                             1);
-   if(!cmd)
+   if (!cmd)
       return PIPE_ERROR_OUT_OF_MEMORY;
 
    cmd->cid = swc->cid;
    cmd->type = type;
-   
+
    swc->region_relocation(swc, &cmd->guestResult, buffer, 0,
                           SVGA_RELOC_WRITE);
 
    swc->commit(swc);
-   
+
    return PIPE_OK;
 }
