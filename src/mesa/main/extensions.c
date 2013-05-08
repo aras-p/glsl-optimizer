@@ -279,7 +279,7 @@ static const struct extension extension_table[] = {
    { "GL_OES_texture_cube_map",                    o(ARB_texture_cube_map),                         ES1,       2007 },
    { "GL_OES_texture_env_crossbar",                o(ARB_texture_env_crossbar),                     ES1,       2005 },
    { "GL_OES_texture_mirrored_repeat",             o(dummy_true),                                   ES1,       2005 },
-   { "GL_OES_texture_npot",                        o(ARB_texture_non_power_of_two),                       ES2, 2005 },
+   { "GL_OES_texture_npot",                        o(ARB_texture_non_power_of_two),                 ES1 | ES2, 2005 },
    { "GL_OES_vertex_array_object",                 o(dummy_true),                                   ES1 | ES2, 2010 },
 
    /* Vendor extensions */
