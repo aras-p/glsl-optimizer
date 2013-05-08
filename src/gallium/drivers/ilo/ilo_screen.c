@@ -329,7 +329,7 @@ ilo_get_param(struct pipe_screen *screen, enum pipe_cap param)
          return 0;
       return ILO_MAX_SO_BUFFERS;
    case PIPE_CAP_PRIMITIVE_RESTART:
-      return false; /* TODO */
+      return true;
    case PIPE_CAP_MAX_COMBINED_SAMPLERS:
       return ILO_MAX_SAMPLERS * 2;
    case PIPE_CAP_INDEP_BLEND_ENABLE:

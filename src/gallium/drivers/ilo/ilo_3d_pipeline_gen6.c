@@ -398,7 +398,7 @@ gen6_pipeline_vf(struct ilo_3d_pipeline *p,
    /* 3DSTATE_INDEX_BUFFER */
    if (DIRTY(INDEX_BUFFER)) {
       p->gen6_3DSTATE_INDEX_BUFFER(p->dev,
-            &ilo->index_buffer, false, p->cp);
+            &ilo->index_buffer, session->info->primitive_restart, p->cp);
    }
 
    /* 3DSTATE_VERTEX_BUFFERS */

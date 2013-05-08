@@ -429,6 +429,185 @@ pass_render_condition(struct ilo_3d *hw3d, struct pipe_context *pipe)
    }
 }
 
+#define UPDATE_MIN2(a, b) (a) = MIN2((a), (b))
+#define UPDATE_MAX2(a, b) (a) = MAX2((a), (b))
+
+/**
+ * \see find_sub_primitives() from core mesa
+ */
+static int
+ilo_find_sub_primitives(const void *elements, unsigned element_size,
+                    const struct pipe_draw_info *orig_info,
+                    struct pipe_draw_info *info)
+{
+   const unsigned max_prims = orig_info->count - orig_info->start;
+   unsigned i, cur_start, cur_count;
+   int scan_index;
+   unsigned scan_num;
+
+   cur_start = orig_info->start;
+   cur_count = 0;
+   scan_num = 0;
+
+#define IB_INDEX_READ(TYPE, INDEX) (((const TYPE *) elements)[INDEX])
+
+#define SCAN_ELEMENTS(TYPE) \
+   info[scan_num] = *orig_info; \
+   info[scan_num].primitive_restart = false; \
+   for (i = orig_info->start; i < orig_info->count; i++) { \
+      scan_index = IB_INDEX_READ(TYPE, i); \
+      if (scan_index == orig_info->restart_index) { \
+         if (cur_count > 0) { \
+            assert(scan_num < max_prims); \
+            info[scan_num].start = cur_start; \
+            info[scan_num].count = cur_count; \
+            scan_num++; \
+            info[scan_num] = *orig_info; \
+            info[scan_num].primitive_restart = false; \
+         } \
+         cur_start = i + 1; \
+         cur_count = 0; \
+      } \
+      else { \
+         UPDATE_MIN2(info[scan_num].min_index, scan_index); \
+         UPDATE_MAX2(info[scan_num].max_index, scan_index); \
+         cur_count++; \
+      } \
+   } \
+   if (cur_count > 0) { \
+      assert(scan_num < max_prims); \
+      info[scan_num].start = cur_start; \
+      info[scan_num].count = cur_count; \
+      scan_num++; \
+   }
+
+   switch (element_size) {
+   case 1:
+      SCAN_ELEMENTS(uint8_t);
+      break;
+   case 2:
+      SCAN_ELEMENTS(uint16_t);
+      break;
+   case 4:
+      SCAN_ELEMENTS(uint32_t);
+      break;
+   default:
+      assert(0 && "bad index_size in find_sub_primitives()");
+   }
+
+#undef SCAN_ELEMENTS
+
+   return scan_num;
+}
+
+static inline bool
+ilo_check_restart_index(struct ilo_context *ilo,
+                        const struct pipe_draw_info *info)
+{
+   /*
+    * Haswell (GEN(7.5)) supports an arbitrary cut index, check everything
+    * older.
+    */
+   if (ilo->dev->gen >= ILO_GEN(7.5))
+      return true;
+
+   /* Note: indices must be unsigned byte, unsigned short or unsigned int */
+   switch (ilo->index_buffer.index_size) {
+   case 1:
+      return ((info->restart_index & 0xff) == 0xff);
+      break;
+   case 2:
+      return ((info->restart_index & 0xffff) == 0xffff);
+      break;
+   case 4:
+      return (info->restart_index == 0xffffffff);
+      break;
+   }
+   return false;
+}
+
+static inline bool
+ilo_check_restart_prim_type(struct ilo_context *ilo,
+                            const struct pipe_draw_info *info)
+{
+   switch (info->mode) {
+   case PIPE_PRIM_POINTS:
+   case PIPE_PRIM_LINES:
+   case PIPE_PRIM_LINE_STRIP:
+   case PIPE_PRIM_TRIANGLES:
+   case PIPE_PRIM_TRIANGLE_STRIP:
+      /* All 965 GEN graphics support a cut index for these primitive types */
+      return true;
+      break;
+
+   case PIPE_PRIM_LINE_LOOP:
+   case PIPE_PRIM_POLYGON:
+   case PIPE_PRIM_QUAD_STRIP:
+   case PIPE_PRIM_QUADS:
+   case PIPE_PRIM_TRIANGLE_FAN:
+      if (ilo->dev->gen >= ILO_GEN(7.5)) {
+         /* Haswell and newer parts can handle these prim types. */
+         return true;
+      }
+      break;
+   }
+
+   return false;
+}
+
+/*
+ * Handle VBOs using primitive restart.
+ * Verify that restart index and primitive type can be handled by the HW.
+ * Return true if this routine did the rendering
+ * Return false if this routine did NOT render because restart can be handled
+ * in HW.
+ */
+static void
+ilo_draw_vbo_with_sw_restart(struct pipe_context *pipe,
+                             const struct pipe_draw_info *info)
+{
+   struct ilo_context *ilo = ilo_context(pipe);
+   struct pipe_draw_info *restart_info = NULL;
+   int sub_prim_count = 1;
+
+   /*
+    * We have to break up the primitive into chunks manually
+    * Worst case, every other index could be a restart index so
+    * need to have space for that many primitives
+    */
+   restart_info = MALLOC(((info->count + 1) / 2) * sizeof(*info));
+   if (NULL == restart_info) {
+      /* If we can't get memory for this, bail out */
+      ilo_err("%s:%d - Out of memory", __FILE__, __LINE__);
+      return;
+   }
+
+   struct pipe_transfer *transfer = NULL;
+   const void *map = NULL;
+   map = pipe_buffer_map(pipe,
+           ilo->index_buffer.buffer,
+           PIPE_TRANSFER_READ,
+           &transfer);
+
+   sub_prim_count = ilo_find_sub_primitives(map + ilo->index_buffer.offset,
+           ilo->index_buffer.index_size,
+           info,
+           restart_info);
+
+   pipe_buffer_unmap(pipe, transfer);
+
+   info = restart_info;
+
+   while (sub_prim_count > 0) {
+      pipe->draw_vbo(pipe, info);
+
+      sub_prim_count--;
+      info++;
+   }
+
+   FREE(restart_info);
+}
+
 static void
 ilo_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
 {
@@ -438,6 +617,18 @@ ilo_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
 
    if (!pass_render_condition(hw3d, pipe))
       return;
+
+   if (info->primitive_restart && info->indexed) {
+      /*
+       * Want to draw an indexed primitive using primitive restart
+       * Check that HW can handle the request and fall to SW if not.
+       */
+      if (!ilo_check_restart_index(ilo, info) ||
+          !ilo_check_restart_prim_type(ilo, info)) {
+         ilo_draw_vbo_with_sw_restart(pipe, info);
+         return;
+      }
+   }
 
    /* assume the cache is still in use by the previous batch */
    if (hw3d->new_batch)
@@ -458,6 +649,7 @@ ilo_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
     */
    ilo->dirty |= ILO_DIRTY_VERTEX_BUFFERS | ILO_DIRTY_INDEX_BUFFER;
 
+   /* If draw_vbo ever fails, return immediately. */
    if (!draw_vbo(hw3d, ilo, info, &prim_generated, &prim_emitted))
       return;
 
