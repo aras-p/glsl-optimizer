@@ -590,13 +590,12 @@ private:
    void encode_msaa(unsigned num_samples, intel_msaa_layout layout);
    void decode_msaa(unsigned num_samples, intel_msaa_layout layout);
    void kill_if_outside_dst_rect();
-   void translate_dst_to_src();
+   void translate_dst_to_src(unsigned intel_gen);
    void single_to_blend();
    void manual_blend(unsigned num_samples);
    void sample(struct brw_reg dst);
    void texel_fetch(struct brw_reg dst);
    void mcs_fetch();
-   void expand_to_32_bits(struct brw_reg src, struct brw_reg dst);
    void texture_lookup(struct brw_reg dst, GLuint msg_type,
                        const sampler_message_arg *args, int num_args);
    void render_target_write();
@@ -773,7 +772,7 @@ brw_blorp_blit_program::compile(struct brw_context *brw,
       kill_if_outside_dst_rect();
 
    /* Next, apply a translation to obtain coordinates in the source image. */
-   translate_dst_to_src();
+   translate_dst_to_src(brw->intel.gen);
 
    /* If the source image is not multisampled, then we want to fetch sample
     * number 0, because that's the only sample there is.
@@ -845,7 +844,7 @@ brw_blorp_blit_program::alloc_push_const_regs(int base_reg)
 #define CONST_LOC(name) offsetof(brw_blorp_wm_push_constants, name)
 #define ALLOC_REG(name) \
    this->name = \
-      brw_uw1_reg(BRW_GENERAL_REGISTER_FILE, base_reg, CONST_LOC(name) / 2)
+      brw_ud1_reg(BRW_GENERAL_REGISTER_FILE, base_reg, CONST_LOC(name) / 4)
 
    ALLOC_REG(dst_x0);
    ALLOC_REG(dst_x1);
@@ -875,17 +874,23 @@ brw_blorp_blit_program::alloc_regs()
    }
    this->mcs_data =
       retype(brw_vec8_grf(reg, 0), BRW_REGISTER_TYPE_UD); reg += 8;
+
    for (int i = 0; i < 2; ++i) {
       this->x_coords[i]
-         = vec16(retype(brw_vec8_grf(reg++, 0), BRW_REGISTER_TYPE_UW));
+         = retype(brw_vec8_grf(reg, 0), BRW_REGISTER_TYPE_UD);
+      reg += 2;
       this->y_coords[i]
-         = vec16(retype(brw_vec8_grf(reg++, 0), BRW_REGISTER_TYPE_UW));
+         = retype(brw_vec8_grf(reg, 0), BRW_REGISTER_TYPE_UD);
+      reg += 2;
    }
    this->xy_coord_index = 0;
    this->sample_index
-      = vec16(retype(brw_vec8_grf(reg++, 0), BRW_REGISTER_TYPE_UW));
-   this->t1 = vec16(retype(brw_vec8_grf(reg++, 0), BRW_REGISTER_TYPE_UW));
-   this->t2 = vec16(retype(brw_vec8_grf(reg++, 0), BRW_REGISTER_TYPE_UW));
+      = retype(brw_vec8_grf(reg, 0), BRW_REGISTER_TYPE_UD);
+   reg += 2;
+   this->t1 = retype(brw_vec8_grf(reg, 0), BRW_REGISTER_TYPE_UD);
+   reg += 2;
+   this->t2 = retype(brw_vec8_grf(reg, 0), BRW_REGISTER_TYPE_UD);
+   reg += 2;
 
    /* Make sure we didn't run out of registers */
    assert(reg <= GEN7_MRF_HACK_START);
@@ -942,7 +947,8 @@ brw_blorp_blit_program::compute_frag_coords()
     * Then, we need to add the repeating sequence (0, 1, 0, 1, ...) to the
     * result, since pixels n+1 and n+3 are in the right half of the subspan.
     */
-   brw_ADD(&func, X, stride(suboffset(R1, 4), 2, 4, 0), brw_imm_v(0x10101010));
+   brw_ADD(&func, vec16(retype(X, BRW_REGISTER_TYPE_UW)),
+           stride(suboffset(R1, 4), 2, 4, 0), brw_imm_v(0x10101010));
 
    /* Similarly, Y coordinates for subspans come from R1.2[31:16] through
     * R1.5[31:16], so to get pixel Y coordinates we need to start at the 5th
@@ -952,11 +958,17 @@ brw_blorp_blit_program::compute_frag_coords()
     * And we need to add the repeating sequence (0, 0, 1, 1, ...), since
     * pixels n+2 and n+3 are in the bottom half of the subspan.
     */
-   brw_ADD(&func, Y, stride(suboffset(R1, 5), 2, 4, 0), brw_imm_v(0x11001100));
+   brw_ADD(&func, vec16(retype(Y, BRW_REGISTER_TYPE_UW)),
+           stride(suboffset(R1, 5), 2, 4, 0), brw_imm_v(0x11001100));
+
+   /* Move the coordinates to UD registers. */
+   brw_MOV(&func, vec16(Xp), retype(X, BRW_REGISTER_TYPE_UW));
+   brw_MOV(&func, vec16(Yp), retype(Y, BRW_REGISTER_TYPE_UW));
+   SWAP_XY_AND_XPYP();
 
    if (key->persample_msaa_dispatch) {
       switch (key->rt_samples) {
-      case 4:
+      case 4: {
          /* The WM will be run in MSDISPMODE_PERSAMPLE with num_samples == 4.
           * Therefore, subspan 0 will represent sample 0, subspan 1 will
           * represent sample 1, and so on.
@@ -966,9 +978,13 @@ brw_blorp_blit_program::compute_frag_coords()
           * populate a temporary variable with the sequence (0, 1, 2, 3), and
           * then copy from it using vstride=1, width=4, hstride=0.
           */
-         brw_MOV(&func, t1, brw_imm_v(0x3210));
-         brw_MOV(&func, S, stride(t1, 1, 4, 0));
+         struct brw_reg t1_uw1 = retype(t1, BRW_REGISTER_TYPE_UW);
+         brw_MOV(&func, vec16(t1_uw1), brw_imm_v(0x3210));
+         /* Move to UD sample_index register. */
+         brw_MOV(&func, S, stride(t1_uw1, 1, 4, 0));
+         brw_MOV(&func, offset(S, 1), suboffset(stride(t1_uw1, 1, 4, 0), 2));
          break;
+      }
       case 8: {
          /* The WM will be run in MSDISPMODE_PERSAMPLE with num_samples == 8.
           * Therefore, subspan 0 will represent sample N (where N is 0 or 4),
@@ -984,12 +1000,16 @@ brw_blorp_blit_program::compute_frag_coords()
           * using vstride=1, width=4, hstride=0.
           */
          struct brw_reg t1_ud1 = vec1(retype(t1, BRW_REGISTER_TYPE_UD));
+         struct brw_reg t2_uw1 = retype(t2, BRW_REGISTER_TYPE_UW);
          struct brw_reg r0_ud1 = vec1(retype(R0, BRW_REGISTER_TYPE_UD));
          brw_AND(&func, t1_ud1, r0_ud1, brw_imm_ud(0xc0));
          brw_SHR(&func, t1_ud1, t1_ud1, brw_imm_ud(5));
-         brw_MOV(&func, t2, brw_imm_v(0x3210));
-         brw_ADD(&func, S, retype(t1_ud1, BRW_REGISTER_TYPE_UW),
-                 stride(t2, 1, 4, 0));
+         brw_MOV(&func, vec16(t2_uw1), brw_imm_v(0x3210));
+         brw_ADD(&func, vec16(S), retype(t1_ud1, BRW_REGISTER_TYPE_UW),
+                 stride(t2_uw1, 1, 4, 0));
+         brw_ADD(&func, offset(S, 1),
+                 retype(t1_ud1, BRW_REGISTER_TYPE_UW),
+                 suboffset(stride(t2_uw1, 1, 4, 0), 2));
          break;
       }
       default:
@@ -1031,6 +1051,7 @@ brw_blorp_blit_program::translate_tiling(bool old_tiled_w, bool new_tiled_w)
     */
    assert(s_is_zero);
 
+   brw_set_compression_control(&func, BRW_COMPRESSION_COMPRESSED);
    if (new_tiled_w) {
       /* Given X and Y coordinates that describe an address using Y tiling,
        * translate to the X and Y coordinates that describe the same address
@@ -1100,6 +1121,7 @@ brw_blorp_blit_program::translate_tiling(bool old_tiled_w, bool new_tiled_w)
       brw_OR(&func, Yp, t1, t2);
       SWAP_XY_AND_XPYP();
    }
+   brw_set_compression_control(&func, BRW_COMPRESSION_NONE);
 }
 
 /**
@@ -1116,6 +1138,7 @@ void
 brw_blorp_blit_program::encode_msaa(unsigned num_samples,
                                     intel_msaa_layout layout)
 {
+   brw_set_compression_control(&func, BRW_COMPRESSION_COMPRESSED);
    switch (layout) {
    case INTEL_MSAA_LAYOUT_NONE:
       /* No translation necessary, and S should already be zero. */
@@ -1187,6 +1210,7 @@ brw_blorp_blit_program::encode_msaa(unsigned num_samples,
       s_is_zero = true;
       break;
    }
+   brw_set_compression_control(&func, BRW_COMPRESSION_NONE);
 }
 
 /**
@@ -1203,6 +1227,7 @@ void
 brw_blorp_blit_program::decode_msaa(unsigned num_samples,
                                     intel_msaa_layout layout)
 {
+   brw_set_compression_control(&func, BRW_COMPRESSION_COMPRESSED);
    switch (layout) {
    case INTEL_MSAA_LAYOUT_NONE:
       /* No translation necessary, and S should already be zero. */
@@ -1265,6 +1290,7 @@ brw_blorp_blit_program::decode_msaa(unsigned num_samples,
       SWAP_XY_AND_XPYP();
       break;
    }
+   brw_set_compression_control(&func, BRW_COMPRESSION_NONE);
 }
 
 /**
@@ -1277,12 +1303,12 @@ brw_blorp_blit_program::kill_if_outside_dst_rect()
 {
    struct brw_reg f0 = brw_flag_reg(0, 0);
    struct brw_reg g1 = retype(brw_vec1_grf(1, 7), BRW_REGISTER_TYPE_UW);
-   struct brw_reg null16 = vec16(retype(brw_null_reg(), BRW_REGISTER_TYPE_UW));
+   struct brw_reg null32 = vec16(retype(brw_null_reg(), BRW_REGISTER_TYPE_UD));
 
-   brw_CMP(&func, null16, BRW_CONDITIONAL_GE, X, dst_x0);
-   brw_CMP(&func, null16, BRW_CONDITIONAL_GE, Y, dst_y0);
-   brw_CMP(&func, null16, BRW_CONDITIONAL_L, X, dst_x1);
-   brw_CMP(&func, null16, BRW_CONDITIONAL_L, Y, dst_y1);
+   brw_CMP(&func, null32, BRW_CONDITIONAL_GE, X, dst_x0);
+   brw_CMP(&func, null32, BRW_CONDITIONAL_GE, Y, dst_y0);
+   brw_CMP(&func, null32, BRW_CONDITIONAL_L, X, dst_x1);
+   brw_CMP(&func, null32, BRW_CONDITIONAL_L, Y, dst_y1);
 
    brw_set_predicate_control(&func, BRW_PREDICATE_NONE);
    brw_push_insn_state(&func);
@@ -1296,12 +1322,28 @@ brw_blorp_blit_program::kill_if_outside_dst_rect()
  * coordinates.
  */
 void
-brw_blorp_blit_program::translate_dst_to_src()
+brw_blorp_blit_program::translate_dst_to_src(unsigned intel_gen)
 {
-   brw_MUL(&func, Xp, X, x_transform.multiplier);
-   brw_MUL(&func, Yp, Y, y_transform.multiplier);
+   brw_set_compression_control(&func, BRW_COMPRESSION_COMPRESSED);
+   /* For mul instruction:
+    * On SNB when both src0 and src1 are of type D or UD, only the low 16 bits
+    * of each element of src0 are used.
+    * On IVB when both src0 and src1 are of type D or UD, only the low 16 bits
+    * of each element of src1 are used.
+    * multiplier can be positive or negative. So keep the multiplier in a src
+    * register which don't get truncated during multiplication.
+    */
+   if (intel_gen == 6) {
+      brw_MUL(&func, Xp, X, x_transform.multiplier);
+      brw_MUL(&func, Yp, Y, y_transform.multiplier);
+   }
+   else {
+      brw_MUL(&func, Xp, x_transform.multiplier, X);
+      brw_MUL(&func, Yp, y_transform.multiplier, Y);
+   }
    brw_ADD(&func, Xp, Xp, x_transform.offset);
    brw_ADD(&func, Yp, Yp, y_transform.offset);
+   brw_set_compression_control(&func, BRW_COMPRESSION_NONE);
    SWAP_XY_AND_XPYP();
 }
 
@@ -1318,10 +1360,12 @@ brw_blorp_blit_program::single_to_blend()
     * that maxe up a pixel).  So we need to multiply our X and Y coordinates
     * each by 2 and then add 1.
     */
+   brw_set_compression_control(&func, BRW_COMPRESSION_COMPRESSED);
    brw_SHL(&func, t1, X, brw_imm_w(1));
    brw_SHL(&func, t2, Y, brw_imm_w(1));
    brw_ADD(&func, Xp, t1, brw_imm_w(1));
    brw_ADD(&func, Yp, t2, brw_imm_w(1));
+   brw_set_compression_control(&func, BRW_COMPRESSION_NONE);
    SWAP_XY_AND_XPYP();
 }
 
@@ -1394,7 +1438,7 @@ brw_blorp_blit_program::manual_blend(unsigned num_samples)
          s_is_zero = true;
       } else {
          s_is_zero = false;
-         brw_MOV(&func, S, brw_imm_uw(i));
+         brw_MOV(&func, vec16(S), brw_imm_ud(i));
       }
       texel_fetch(texture_data[stack_depth++]);
 
@@ -1546,16 +1590,6 @@ brw_blorp_blit_program::mcs_fetch()
 }
 
 void
-brw_blorp_blit_program::expand_to_32_bits(struct brw_reg src,
-                                          struct brw_reg dst)
-{
-   brw_MOV(&func, vec8(dst), vec8(src));
-   brw_set_compression_control(&func, BRW_COMPRESSION_2NDHALF);
-   brw_MOV(&func, offset(vec8(dst), 1), suboffset(vec8(src), 8));
-   brw_set_compression_control(&func, BRW_COMPRESSION_NONE);
-}
-
-void
 brw_blorp_blit_program::texture_lookup(struct brw_reg dst,
                                        GLuint msg_type,
                                        const sampler_message_arg *args,
@@ -1566,16 +1600,16 @@ brw_blorp_blit_program::texture_lookup(struct brw_reg dst,
    for (int arg = 0; arg < num_args; ++arg) {
       switch (args[arg]) {
       case SAMPLER_MESSAGE_ARG_U_FLOAT:
-         expand_to_32_bits(X, retype(mrf, BRW_REGISTER_TYPE_F));
+         brw_MOV(&func, retype(mrf, BRW_REGISTER_TYPE_F), X);
          break;
       case SAMPLER_MESSAGE_ARG_V_FLOAT:
-         expand_to_32_bits(Y, retype(mrf, BRW_REGISTER_TYPE_F));
+         brw_MOV(&func, retype(mrf, BRW_REGISTER_TYPE_F), Y);
          break;
       case SAMPLER_MESSAGE_ARG_U_INT:
-         expand_to_32_bits(X, mrf);
+         brw_MOV(&func, mrf, X);
          break;
       case SAMPLER_MESSAGE_ARG_V_INT:
-         expand_to_32_bits(Y, mrf);
+         brw_MOV(&func, mrf, Y);
          break;
       case SAMPLER_MESSAGE_ARG_SI_INT:
          /* Note: on Gen7, this code may be reached with s_is_zero==true
@@ -1586,7 +1620,7 @@ brw_blorp_blit_program::texture_lookup(struct brw_reg dst,
          if (s_is_zero)
             brw_MOV(&func, mrf, brw_imm_ud(0));
          else
-            expand_to_32_bits(S, mrf);
+            brw_MOV(&func, mrf, S);
          break;
       case SAMPLER_MESSAGE_ARG_MCS_INT:
          switch (key->tex_layout) {
@@ -1614,7 +1648,7 @@ brw_blorp_blit_program::texture_lookup(struct brw_reg dst,
    }
 
    brw_SAMPLE(&func,
-              retype(dst, BRW_REGISTER_TYPE_UW) /* dest */,
+              retype(dst, BRW_REGISTER_TYPE_F) /* dest */,
               base_mrf /* msg_reg_nr */,
               brw_message_reg(base_mrf) /* src0 */,
               BRW_BLORP_TEXTURE_BINDING_TABLE_INDEX,
@@ -1685,7 +1719,7 @@ brw_blorp_coord_transform_params::setup(GLuint src0, GLuint dst0, GLuint dst1,
        *   x' = 1*x + (src_x0 - dst_x0)
        */
       multiplier = 1;
-      offset = src0 - dst0;
+      offset = (int) (src0 - dst0);
    } else {
       /* When mirroring X we need:
        *   x' - src_x0 = dst_x1 - x - 1

@@ -161,22 +161,19 @@ struct brw_blorp_coord_transform_params
    void setup(GLuint src0, GLuint dst0, GLuint dst1,
               bool mirror);
 
-   int16_t multiplier;
-   int16_t offset;
+   int32_t multiplier;
+   int32_t offset;
 };
 
 
 struct brw_blorp_wm_push_constants
 {
-   uint16_t dst_x0;
-   uint16_t dst_x1;
-   uint16_t dst_y0;
-   uint16_t dst_y1;
+   uint32_t dst_x0;
+   uint32_t dst_x1;
+   uint32_t dst_y0;
+   uint32_t dst_y1;
    brw_blorp_coord_transform_params x_transform;
    brw_blorp_coord_transform_params y_transform;
-
-   /* Pad out to an integral number of registers */
-   uint16_t pad[8];
 };
 
 /* Every 32 bytes of push constant data constitutes one GEN register. */
