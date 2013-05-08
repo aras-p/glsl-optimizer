@@ -46,10 +46,10 @@
  */
 
 #include "glsl_symbol_table.h"
-#include "ir_hierarchical_visitor.h"
+#include "ir_rvalue_visitor.h"
 #include "ir.h"
 
-class lower_clip_distance_visitor : public ir_hierarchical_visitor {
+class lower_clip_distance_visitor : public ir_rvalue_visitor {
 public:
    lower_clip_distance_visitor()
       : progress(false), old_clip_distance_var(NULL),
@@ -59,10 +59,11 @@ public:
 
    virtual ir_visitor_status visit(ir_variable *);
    void create_indices(ir_rvalue*, ir_rvalue *&, ir_rvalue *&);
-   virtual ir_visitor_status visit_leave(ir_dereference_array *);
    virtual ir_visitor_status visit_leave(ir_assignment *);
    void visit_new_assignment(ir_assignment *ir);
    virtual ir_visitor_status visit_leave(ir_call *);
+
+   virtual void handle_rvalue(ir_rvalue **rvalue);
 
    bool progress;
 
@@ -173,33 +174,35 @@ lower_clip_distance_visitor::create_indices(ir_rvalue *old_index,
 }
 
 
-/**
- * Replace any expression that indexes into the gl_ClipDistance array with an
- * expression that indexes into one of the vec4's in gl_ClipDistanceMESA and
- * accesses the appropriate component.
- */
-ir_visitor_status
-lower_clip_distance_visitor::visit_leave(ir_dereference_array *ir)
+void
+lower_clip_distance_visitor::handle_rvalue(ir_rvalue **rv)
 {
    /* If the gl_ClipDistance var hasn't been declared yet, then
     * there's no way this deref can refer to it.
     */
-   if (!this->old_clip_distance_var)
-      return visit_continue;
+   if (!this->old_clip_distance_var || *rv == NULL)
+      return;
 
-   ir_dereference_variable *old_var_ref = ir->array->as_dereference_variable();
+   ir_dereference_array *const array_deref = (*rv)->as_dereference_array();
+   if (array_deref == NULL)
+      return;
+
+   /* Replace any expression that indexes into the gl_ClipDistance array
+    * with an expression that indexes into one of the vec4's in
+    * gl_ClipDistanceMESA and accesses the appropriate component.
+    */
+   ir_dereference_variable *old_var_ref =
+      array_deref->array->as_dereference_variable();
    if (old_var_ref && old_var_ref->var == this->old_clip_distance_var) {
       this->progress = true;
       ir_rvalue *array_index;
       ir_rvalue *swizzle_index;
-      this->create_indices(ir->array_index, array_index, swizzle_index);
-      void *mem_ctx = ralloc_parent(ir);
-      ir->array = new(mem_ctx) ir_dereference_array(
+      this->create_indices(array_deref->array_index, array_index, swizzle_index);
+      void *mem_ctx = ralloc_parent(array_deref);
+      array_deref->array = new(mem_ctx) ir_dereference_array(
          this->new_clip_distance_var, array_index);
-      ir->array_index = swizzle_index;
+      array_deref->array_index = swizzle_index;
    }
-
-   return visit_continue;
 }
 
 
@@ -235,17 +238,24 @@ lower_clip_distance_visitor::visit_leave(ir_assignment *ir)
       for (int i = 0; i < array_size; ++i) {
          ir_dereference_array *new_lhs = new(ctx) ir_dereference_array(
             ir->lhs->clone(ctx, NULL), new(ctx) ir_constant(i));
-         new_lhs->accept(this);
+         this->handle_rvalue((ir_rvalue **) &new_lhs);
          ir_dereference_array *new_rhs = new(ctx) ir_dereference_array(
             ir->rhs->clone(ctx, NULL), new(ctx) ir_constant(i));
-         new_rhs->accept(this);
+         this->handle_rvalue((ir_rvalue **) &new_rhs);
          this->base_ir->insert_before(
             new(ctx) ir_assignment(new_lhs, new_rhs));
       }
       ir->remove();
+
+      return visit_continue;
    }
 
-   return visit_continue;
+   /* Handle the LHS as if it were an r-value.  Normally
+    * rvalue_visit(ir_assignment *) only visits the RHS, but we need to lower
+    * expressions in the LHS as well.
+    */
+   handle_rvalue((ir_rvalue **)&ir->lhs);
+   return rvalue_visit(ir);
 }
 
 
@@ -330,7 +340,7 @@ lower_clip_distance_visitor::visit_leave(ir_call *ir)
       }
    }
 
-   return visit_continue;
+   return rvalue_visit(ir);
 }
 
 
