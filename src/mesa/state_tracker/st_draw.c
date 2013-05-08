@@ -230,7 +230,7 @@ st_draw_vbo(struct gl_context *ctx,
                                    nr_prims);
 
       if (!setup_index_buffer(st, ib, &ibuffer)) {
-         /* out of memory */
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBegin/DrawElements/DrawArray");
          return;
       }
 
