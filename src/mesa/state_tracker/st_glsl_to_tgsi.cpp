@@ -1945,8 +1945,6 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
 
       if (ir->type->base_type == GLSL_TYPE_BOOL) {
          emit(ir, TGSI_OPCODE_USNE, result_dst, cbuf, st_src_reg_for_int(0));
-         result_src.negate = 1;
-         emit(ir, TGSI_OPCODE_UCMP, result_dst, result_src, st_src_reg_for_int(~0), st_src_reg_for_int(0));
       } else {
          emit(ir, TGSI_OPCODE_MOV, result_dst, cbuf);
       }
@@ -2396,8 +2394,8 @@ glsl_to_tgsi_visitor::visit(ir_assignment *ir)
          if (native_integers) {
             /* This is necessary because TGSI's CMP instruction expects the
              * condition to be a float, and we store booleans as integers.
-             * If TGSI had a UCMP instruction or similar, this extra
-             * instruction would not be necessary.
+             * TODO: really want to avoid i2f path and use UCMP. Requires
+             * changes to process_move_condition though too.
              */
             condition_temp = get_temp(glsl_type::vec4_type);
             condition.negate = 0;
