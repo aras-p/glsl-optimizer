@@ -173,6 +173,18 @@ enum {
 #define draw_jit_vbuffer_offset(_gallivm, _ptr)         \
    lp_build_struct_get(_gallivm, _ptr, 1, "buffer_offset")
 
+enum {
+   DRAW_JIT_DVBUFFER_MAP = 0,
+   DRAW_JIT_DVBUFFER_SIZE,
+   DRAW_JIT_DVBUFFER_NUM_FIELDS  /* number of fields above */
+};
+
+#define draw_jit_dvbuffer_map(_gallivm, _ptr)         \
+   lp_build_struct_get(_gallivm, _ptr, DRAW_JIT_DVBUFFER_MAP, "map")
+
+#define draw_jit_dvbuffer_size(_gallivm, _ptr)        \
+   lp_build_struct_get(_gallivm, _ptr, DRAW_JIT_DVBUFFER_SIZE, "size")
+
 
 /**
  * This structure is passed directly to the generated geometry shader.
@@ -246,7 +258,7 @@ enum {
 typedef int
 (*draw_jit_vert_func)(struct draw_jit_context *context,
                       struct vertex_header *io,
-                      const char *vbuffers[PIPE_MAX_ATTRIBS],
+                      const struct draw_vertex_buffer vbuffers[PIPE_MAX_ATTRIBS],
                       unsigned start,
                       unsigned count,
                       unsigned stride,
@@ -257,7 +269,7 @@ typedef int
 typedef int
 (*draw_jit_vert_func_elts)(struct draw_jit_context *context,
                            struct vertex_header *io,
-                           const char *vbuffers[PIPE_MAX_ATTRIBS],
+                           const struct draw_vertex_buffer vbuffers[PIPE_MAX_ATTRIBS],
                            const unsigned *fetch_elts,
                            unsigned fetch_count,
                            unsigned stride,

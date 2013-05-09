@@ -1821,10 +1821,10 @@ static void r300_set_vertex_buffers_swtcl(struct pipe_context* pipe,
     for (i = 0; i < count; i++) {
         if (buffers[i].user_buffer) {
             draw_set_mapped_vertex_buffer(r300->draw, start_slot + i,
-                                          buffers[i].user_buffer);
+                                          buffers[i].user_buffer, ~0);
         } else if (buffers[i].buffer) {
             draw_set_mapped_vertex_buffer(r300->draw, start_slot + i,
-                r300_resource(buffers[i].buffer)->malloced_buffer);
+                                          r300_resource(buffers[i].buffer)->malloced_buffer, ~0);
         }
     }
 }

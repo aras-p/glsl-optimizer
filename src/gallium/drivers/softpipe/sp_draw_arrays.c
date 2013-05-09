@@ -76,13 +76,15 @@ softpipe_draw_vbo(struct pipe_context *pipe,
    /* Map vertex buffers */
    for (i = 0; i < sp->num_vertex_buffers; i++) {
       const void *buf = sp->vertex_buffer[i].user_buffer;
+      size_t size = ~0;
       if (!buf) {
          if (!sp->vertex_buffer[i].buffer) {
             continue;
          }
          buf = softpipe_resource(sp->vertex_buffer[i].buffer)->data;
+         size = sp->vertex_buffer[i].buffer->width0;
       }
-      draw_set_mapped_vertex_buffer(draw, i, buf);
+      draw_set_mapped_vertex_buffer(draw, i, buf, size);
    }
 
    /* Map index buffer, if present */
@@ -120,7 +122,7 @@ softpipe_draw_vbo(struct pipe_context *pipe,
 
    /* unmap vertex/index buffers - will cause draw module to flush */
    for (i = 0; i < sp->num_vertex_buffers; i++) {
-      draw_set_mapped_vertex_buffer(draw, i, NULL);
+      draw_set_mapped_vertex_buffer(draw, i, NULL, 0);
    }
    if (mapped_indices) {
       draw_set_indexes(draw, NULL, 0);

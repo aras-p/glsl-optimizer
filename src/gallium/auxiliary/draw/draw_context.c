@@ -364,9 +364,11 @@ draw_set_vertex_elements(struct draw_context *draw,
  */
 void
 draw_set_mapped_vertex_buffer(struct draw_context *draw,
-                              unsigned attr, const void *buffer)
+                              unsigned attr, const void *buffer,
+                              size_t size)
 {
-   draw->pt.user.vbuffer[attr] = buffer;
+   draw->pt.user.vbuffer[attr].map  = buffer;
+   draw->pt.user.vbuffer[attr].size = size;
 }
 
 

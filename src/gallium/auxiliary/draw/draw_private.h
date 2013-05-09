@@ -67,6 +67,14 @@ struct draw_pt_front_end;
 
 
 /**
+ * Represents the mapped vertex buffer.
+ */
+struct draw_vertex_buffer {
+   const void *map;
+   size_t size;
+};
+
+/**
  * Basic vertex info.
  * Carry some useful information around with the vertices in the prim pipe.  
  */
@@ -183,7 +191,7 @@ struct draw_context
          unsigned max_index;
          
          /** vertex arrays */
-         const void *vbuffer[PIPE_MAX_ATTRIBS];
+         struct draw_vertex_buffer vbuffer[PIPE_MAX_ATTRIBS];
          
          /** constant buffers (for vertex/geometry shader) */
          const void *vs_constants[PIPE_MAX_CONSTANT_BUFFERS];

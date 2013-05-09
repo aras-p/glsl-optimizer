@@ -215,7 +215,8 @@ void draw_set_indexes(struct draw_context *draw,
                       const void *elements, unsigned elem_size);
 
 void draw_set_mapped_vertex_buffer(struct draw_context *draw,
-                                   unsigned attr, const void *buffer);
+                                   unsigned attr, const void *buffer,
+                                   size_t size);
 
 void
 draw_set_mapped_constant_buffer(struct draw_context *draw,

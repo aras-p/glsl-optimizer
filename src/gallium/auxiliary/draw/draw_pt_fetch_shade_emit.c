@@ -159,7 +159,7 @@ fse_prepare(struct draw_pt_middle_end *middle,
    for (i = 0; i < draw->pt.nr_vertex_buffers; i++) {
       fse->active->set_buffer( fse->active,
                                i,
-                               ((const ubyte *) draw->pt.user.vbuffer[i] +
+                               ((const ubyte *) draw->pt.user.vbuffer[i].map +
                                 draw->pt.vertex_buffer[i].buffer_offset),
                               draw->pt.vertex_buffer[i].stride,
                               draw->pt.max_index );

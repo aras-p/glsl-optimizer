@@ -282,7 +282,7 @@ draw_print_arrays(struct draw_context *draw, uint prim, int start, uint count)
 
       for (j = 0; j < draw->pt.nr_vertex_elements; j++) {
          uint buf = draw->pt.vertex_element[j].vertex_buffer_index;
-         ubyte *ptr = (ubyte *) draw->pt.user.vbuffer[buf];
+         ubyte *ptr = (ubyte *) draw->pt.user.vbuffer[buf].map;
 
          if (draw->pt.vertex_element[j].instance_divisor) {
             ii = draw->instance_id / draw->pt.vertex_element[j].instance_divisor;
@@ -524,11 +524,12 @@ draw_vbo(struct draw_context *draw,
       }
       debug_printf("Buffers:\n");
       for (i = 0; i < draw->pt.nr_vertex_buffers; i++) {
-         debug_printf("  %u: stride=%u offset=%u ptr=%p\n",
+         debug_printf("  %u: stride=%u offset=%u size=%d ptr=%p\n",
                       i,
                       draw->pt.vertex_buffer[i].stride,
                       draw->pt.vertex_buffer[i].buffer_offset,
-                      draw->pt.user.vbuffer[i]);
+                      draw->pt.user.vbuffer[i].size,
+                      draw->pt.user.vbuffer[i].map);
       }
    }
 

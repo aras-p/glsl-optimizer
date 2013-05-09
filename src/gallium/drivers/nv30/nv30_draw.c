@@ -412,7 +412,7 @@ nv30_render_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
                                   PIPE_TRANSFER_UNSYNCHRONIZED |
                                   PIPE_TRANSFER_READ, &transfer[i]);
       }
-      draw_set_mapped_vertex_buffer(draw, i, map);
+      draw_set_mapped_vertex_buffer(draw, i, map, ~0);
    }
 
    if (info->indexed) {
