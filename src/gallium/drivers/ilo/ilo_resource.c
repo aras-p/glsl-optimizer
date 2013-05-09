@@ -229,6 +229,9 @@ ilo_transfer_inline_write(struct pipe_context *pipe,
          ilo_cp_flush(ilo->cp);
    }
 
+   /* for PIPE_BUFFERs, conversion should not be needed */
+   assert(res->bo_format == res->base.format);
+
    /* they should specify just an offset and a size */
    assert(level == 0);
    assert(box->y == 0);
@@ -460,15 +463,16 @@ static void
 layout_tex_init(const struct ilo_resource *res, struct layout_tex_info *info)
 {
    struct ilo_screen *is = ilo_screen(res->base.screen);
+   const enum pipe_format bo_format = res->bo_format;
    const enum intel_tiling_mode tiling = res->tiling;
    const struct pipe_resource *templ = &res->base;
    int last_level, lv;
 
    memset(info, 0, sizeof(*info));
 
-   info->compressed = util_format_is_compressed(templ->format);
-   info->block_width = util_format_get_blockwidth(templ->format);
-   info->block_height = util_format_get_blockheight(templ->format);
+   info->compressed = util_format_is_compressed(bo_format);
+   info->block_width = util_format_get_blockwidth(bo_format);
+   info->block_height = util_format_get_blockheight(bo_format);
 
    /*
     * From the Sandy Bridge PRM, volume 1 part 1, page 113:
@@ -563,9 +567,9 @@ layout_tex_init(const struct ilo_resource *res, struct layout_tex_info *info)
       info->align_i = info->block_width;
       info->align_j = info->block_height;
    }
-   else if (util_format_is_depth_or_stencil(templ->format)) {
+   else if (util_format_is_depth_or_stencil(bo_format)) {
       if (is->dev.gen >= ILO_GEN(7)) {
-         switch (templ->format) {
+         switch (bo_format) {
          case PIPE_FORMAT_Z16_UNORM:
             info->align_i = 8;
             info->align_j = 4;
@@ -591,7 +595,7 @@ layout_tex_init(const struct ilo_resource *res, struct layout_tex_info *info)
          }
       }
       else {
-         switch (templ->format) {
+         switch (bo_format) {
          case PIPE_FORMAT_S8_UINT:
             info->align_i = 4;
             info->align_j = 2;
@@ -610,7 +614,7 @@ layout_tex_init(const struct ilo_resource *res, struct layout_tex_info *info)
           tiling == INTEL_TILING_Y);
 
       if (valign_4)
-         assert(util_format_get_blocksizebits(templ->format) != 96);
+         assert(util_format_get_blocksizebits(bo_format) != 96);
 
       info->align_i = 4;
       info->align_j = (valign_4) ? 4 : 2;
@@ -639,7 +643,7 @@ layout_tex_init(const struct ilo_resource *res, struct layout_tex_info *info)
        *
        * See "Multisampled Surface Storage Format" field of SURFACE_STATE.
        */
-      if (util_format_is_depth_or_stencil(templ->format)) {
+      if (util_format_is_depth_or_stencil(bo_format)) {
          info->interleaved = true;
 
          /*
@@ -684,7 +688,7 @@ layout_tex_init(const struct ilo_resource *res, struct layout_tex_info *info)
        *
        * GEN6 does not support compact spacing otherwise.
        */
-      info->array_spacing_full = (templ->format != PIPE_FORMAT_S8_UINT);
+      info->array_spacing_full = (bo_format != PIPE_FORMAT_S8_UINT);
    }
 
    last_level = templ->last_level;
@@ -981,6 +985,7 @@ static enum intel_tiling_mode
 get_tex_tiling(const struct ilo_resource *res)
 {
    const struct pipe_resource *templ = &res->base;
+   const enum pipe_format bo_format = res->bo_format;
 
    /*
     * From the Sandy Bridge PRM, volume 1 part 2, page 32:
@@ -1018,7 +1023,7 @@ get_tex_tiling(const struct ilo_resource *res)
     */
    if (templ->bind & PIPE_BIND_DEPTH_STENCIL) {
       /* separate stencil uses W-tiling but we do not know how to specify that */
-      return (templ->format == PIPE_FORMAT_S8_UINT) ?
+      return (bo_format == PIPE_FORMAT_S8_UINT) ?
          INTEL_TILING_NONE : INTEL_TILING_Y;
    }
 
@@ -1033,7 +1038,7 @@ get_tex_tiling(const struct ilo_resource *res)
        *
        * Also, heuristically set a minimum width/height for enabling tiling.
        */
-      if (util_format_get_blocksizebits(templ->format) == 128 &&
+      if (util_format_get_blocksizebits(bo_format) == 128 &&
           (templ->bind & PIPE_BIND_RENDER_TARGET) && templ->width0 >= 64)
          tiling = INTEL_TILING_X;
       else if ((templ->width0 >= 32 && templ->height0 >= 16) ||
@@ -1064,8 +1069,9 @@ get_tex_tiling(const struct ilo_resource *res)
 static void
 init_texture(struct ilo_resource *res)
 {
-   const enum pipe_format format = res->base.format;
    struct layout_tex_info info;
+
+   res->bo_format = res->base.format;
 
    /* determine tiling first as it may affect the layout */
    res->tiling = get_tex_tiling(res);
@@ -1108,7 +1114,7 @@ init_texture(struct ilo_resource *res)
     * Since we ask for INTEL_TILING_NONE instead lf INTEL_TILING_W, we need to
     * manually align the bo width and height to the tile boundaries.
     */
-   if (format == PIPE_FORMAT_S8_UINT) {
+   if (res->bo_format == PIPE_FORMAT_S8_UINT) {
       res->bo_width = align(res->bo_width, 64);
       res->bo_height = align(res->bo_height, 64);
    }
@@ -1118,12 +1124,13 @@ init_texture(struct ilo_resource *res)
    assert(res->bo_height % info.block_height == 0);
    res->bo_width /= info.block_width;
    res->bo_height /= info.block_height;
-   res->bo_cpp = util_format_get_blocksize(format);
+   res->bo_cpp = util_format_get_blocksize(res->bo_format);
 }
 
 static void
 init_buffer(struct ilo_resource *res)
 {
+   res->bo_format = res->base.format;
    res->bo_width = res->base.width0;
    res->bo_height = 1;
    res->bo_cpp = 1;

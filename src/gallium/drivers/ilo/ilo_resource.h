@@ -48,6 +48,7 @@ struct ilo_resource {
    struct pipe_resource base;
    struct winsys_handle *handle;
 
+   enum pipe_format bo_format;
    struct intel_bo *bo;
 
    /*
