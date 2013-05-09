@@ -917,6 +917,8 @@ ir_reader::read_texture(s_expression *expr)
       { "tex", s_type, s_sampler, s_coord, s_offset };
    s_pattern lod_pattern[] =
       { "lod", s_type, s_sampler, s_coord };
+    s_pattern tx4_pattern[] =
+      { "tx4", s_type, s_sampler, s_coord };
    s_pattern txf_pattern[] =
       { "txf", s_type, s_sampler, s_coord, s_offset, s_lod };
    s_pattern txf_ms_pattern[] =
@@ -928,6 +930,8 @@ ir_reader::read_texture(s_expression *expr)
 
    if (MATCH(expr, lod_pattern)) {
       op = ir_lod;
+   } else if (MATCH(expr, tx4_pattern)) {
+       op = ir_tx4;
    } else if (MATCH(expr, tex_pattern)) {
       op = ir_tex;
    } else if (MATCH(expr, txf_pattern)) {
@@ -972,7 +976,7 @@ ir_reader::read_texture(s_expression *expr)
 	 return NULL;
       }
 
-      if (op != ir_txf_ms && op != ir_lod) {
+      if (op != ir_txf_ms && op != ir_lod && op != ir_tx4) {
          // Read texel offset - either 0 or an rvalue.
          s_int *si_offset = SX_AS_INT(s_offset);
          if (si_offset == NULL || si_offset->value() != 0) {

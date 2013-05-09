@@ -5209,6 +5209,17 @@ static const char builtin_texture2DRectProjGradARB[] =
    "))\n"
    ""
 ;
+static const char builtin_texture4[] =
+   "((function texture4\n"
+   "   (signature vec4\n"
+   "     (parameters\n"
+   "       (declare (in) sampler2D sampler) \n"
+   "       (declare (in) vec2 P) )\n"
+   "     ((return (tx4 vec4 (var_ref sampler) (var_ref P)))))\n"
+   "\n"
+   "))\n"
+   ""
+;
 static const char builtin_texture3D[] =
    "((function texture3D\n"
    "   (signature vec4\n"
@@ -19913,7 +19924,20 @@ static const char *functions_for_OES_texture_3D_vert [] = {
    builtin_texture3DProj,
    builtin_texture3DProjLod,
 };
-static gl_shader *builtin_profiles[36];
+static const char prototypes_for_EXT_Cafe[] =
+"(\n"
+"(function texture4\n"
+"  (signature vec4\n"
+"    (parameters\n"
+"      (declare (in) sampler2D sampler)\n"
+"      (declare (in) vec2 coord))\n"
+"    ()))\n"
+")"
+;
+static const char *functions_for_EXT_Cafe [] = {
+    builtin_texture4
+};
+static gl_shader *builtin_profiles[37];
 
 static void *builtin_mem_ctx = NULL;
 
@@ -20207,5 +20231,10 @@ _mesa_glsl_initialize_functions(struct _mesa_glsl_parse_state *state)
                          functions_for_OES_texture_3D_vert,
                          Elements(functions_for_OES_texture_3D_vert));
    }
-
+   if (state->target == fragment_shader && (state->EXT_Cafe_enable || state->OPENGL_fancy) ) {
+      _mesa_read_profile(state, 36,
+                         prototypes_for_EXT_Cafe,
+                         functions_for_EXT_Cafe,
+                         Elements(functions_for_EXT_Cafe));
+   }
 }

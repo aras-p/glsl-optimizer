@@ -268,6 +268,7 @@ void ir_print_visitor::visit(ir_texture *ir)
    {
    case ir_tex:
    case ir_lod:
+   case ir_tx4:
       break;
    case ir_txb:
       ir->lod_info.bias->accept(this);

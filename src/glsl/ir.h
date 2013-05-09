@@ -1448,7 +1448,8 @@ enum ir_texture_opcode {
    ir_txf,		/**< Texel fetch with explicit LOD */
    ir_txf_ms,           /**< Multisample texture fetch */
    ir_txs,		/**< Texture size */
-   ir_lod		/**< Texture lod query */
+   ir_lod,		/**< Texture lod query */
+   ir_tx4
 };
 
 

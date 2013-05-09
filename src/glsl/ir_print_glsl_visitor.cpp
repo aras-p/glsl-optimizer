@@ -633,24 +633,31 @@ void ir_print_glsl_visitor::visit(ir_texture *ir)
 		sampler_uv_dim = 3;
 	const bool is_proj = (uv_dim > sampler_uv_dim);
 	
-    // texture function name
-    //ACS: shadow lookups and lookups with dimensionality included in the name were deprecated in 130
-    if(state->language_version<130) 
+    if (ir->op == ir_tx4 )
     {
-        ralloc_asprintf_append (&buffer, "%s", is_shadow ? "shadow" : "texture");
-        ralloc_asprintf_append (&buffer, "%s", tex_sampler_dim_name[sampler_dim]);
+        ralloc_asprintf_append (&buffer, "texture4");
     }
-    else 
+    else
     {
-        ralloc_asprintf_append (&buffer, "texture");
+        // texture function name
+        //ACS: shadow lookups and lookups with dimensionality included in the name were deprecated in 130
+        if(state->language_version<130) 
+        {
+            ralloc_asprintf_append (&buffer, "%s", is_shadow ? "shadow" : "texture");
+            ralloc_asprintf_append (&buffer, "%s", tex_sampler_dim_name[sampler_dim]);
+        }
+        else 
+        {
+            ralloc_asprintf_append (&buffer, "texture");
+        }
+        
+        if (is_proj)
+            ralloc_asprintf_append (&buffer, "Proj");
+        if (ir->op == ir_txl)
+            ralloc_asprintf_append (&buffer, "Lod");
+        if (ir->op == ir_txd)
+            ralloc_asprintf_append (&buffer, "Grad");
     }
-	
-	if (is_proj)
-		ralloc_asprintf_append (&buffer, "Proj");
-	if (ir->op == ir_txl)
-		ralloc_asprintf_append (&buffer, "Lod");
-	if (ir->op == ir_txd)
-		ralloc_asprintf_append (&buffer, "Grad");
 	
 	if (state->es_shader)
 	{
