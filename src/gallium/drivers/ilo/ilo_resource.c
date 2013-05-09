@@ -35,6 +35,23 @@
 /* use PIPE_BIND_CUSTOM to indicate MCS */
 #define ILO_BIND_MCS PIPE_BIND_CUSTOM
 
+enum ilo_transfer_map_method {
+   ILO_TRANSFER_MAP_DIRECT,
+};
+
+struct ilo_transfer {
+   struct pipe_transfer base;
+
+   enum ilo_transfer_map_method method;
+   void *ptr;
+};
+
+static inline struct ilo_transfer *
+ilo_transfer(struct pipe_transfer *transfer)
+{
+   return (struct ilo_transfer *) transfer;
+}
+
 static struct intel_bo *
 alloc_buf_bo(const struct ilo_resource *res)
 {
@@ -245,15 +262,138 @@ ilo_transfer_inline_write(struct pipe_context *pipe,
 }
 
 static void
-ilo_transfer_unmap(struct pipe_context *pipe,
-                   struct pipe_transfer *transfer)
+transfer_unmap_direct(struct ilo_context *ilo,
+                      struct ilo_resource *res,
+                      struct ilo_transfer *xfer)
 {
-   struct ilo_resource *res = ilo_resource(transfer->resource);
-
    res->bo->unmap(res->bo);
+}
 
-   pipe_resource_reference(&transfer->resource, NULL);
-   FREE(transfer);
+static bool
+transfer_map_direct(struct ilo_context *ilo,
+                    struct ilo_resource *res,
+                    struct ilo_transfer *xfer)
+{
+   int x, y, err;
+
+   if (xfer->base.usage & PIPE_TRANSFER_UNSYNCHRONIZED)
+      err = res->bo->map_unsynchronized(res->bo);
+   /* prefer map() when there is the last-level cache */
+   else if (res->tiling == INTEL_TILING_NONE &&
+            (ilo->dev->has_llc || (xfer->base.usage & PIPE_TRANSFER_READ)))
+      err = res->bo->map(res->bo, (xfer->base.usage & PIPE_TRANSFER_WRITE));
+   else
+      err = res->bo->map_gtt(res->bo);
+
+   if (err)
+      return false;
+
+   /* note that stride is for a block row, not a texel row */
+   xfer->base.stride = res->bo_stride;
+
+   /*
+    * we can walk through layers when the resource is a texture array or
+    * when this is the first level of a 3D texture being mapped
+    */
+   if (res->base.array_size > 1 ||
+       (res->base.target == PIPE_TEXTURE_3D && xfer->base.level == 0)) {
+      const unsigned qpitch = res->slice_offsets[xfer->base.level][1].y -
+         res->slice_offsets[xfer->base.level][0].y;
+
+      assert(qpitch % res->block_height == 0);
+      xfer->base.layer_stride = (qpitch / res->block_height) * xfer->base.stride;
+   }
+   else {
+      xfer->base.layer_stride = 0;
+   }
+
+   x = res->slice_offsets[xfer->base.level][xfer->base.box.z].x;
+   y = res->slice_offsets[xfer->base.level][xfer->base.box.z].y;
+
+   x += xfer->base.box.x;
+   y += xfer->base.box.y;
+
+   /* in blocks */
+   assert(x % res->block_width == 0 && y % res->block_height == 0);
+   x /= res->block_width;
+   y /= res->block_height;
+
+   xfer->ptr = res->bo->get_virtual(res->bo);
+   xfer->ptr += y * res->bo_stride + x * res->bo_cpp;
+
+   return true;
+}
+
+/**
+ * Choose the best mapping method, depending on the transfer usage and whether
+ * the bo is busy.
+ */
+static bool
+transfer_map_choose_method(struct ilo_context *ilo,
+                           struct ilo_resource *res,
+                           struct ilo_transfer *xfer)
+{
+   bool will_be_busy, will_stall;
+
+   xfer->method = ILO_TRANSFER_MAP_DIRECT;
+
+   /* unsynchronized map does not stall */
+   if (xfer->base.usage & PIPE_TRANSFER_UNSYNCHRONIZED)
+      return true;
+
+   will_be_busy = ilo->cp->bo->references(ilo->cp->bo, res->bo);
+   if (!will_be_busy) {
+      /*
+       * XXX With hardware context support, the bo may be needed by GPU
+       * without being referenced by ilo->cp->bo.  We have to flush
+       * unconditionally, and that is bad.
+       */
+      if (ilo->cp->hw_ctx)
+         ilo_cp_flush(ilo->cp);
+
+      if (!intel_bo_is_busy(res->bo))
+         return true;
+   }
+
+   /* bo is busy and mapping it will stall */
+   will_stall = true;
+
+   if (xfer->base.usage & PIPE_TRANSFER_MAP_DIRECTLY) {
+      /* nothing we can do */
+   }
+   else if (xfer->base.usage & PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE) {
+      /* discard old bo and allocate a new one for mapping */
+      if (realloc_bo(res))
+         will_stall = false;
+   }
+   else if (xfer->base.usage & PIPE_TRANSFER_FLUSH_EXPLICIT) {
+      /*
+       * We could allocate and return a system buffer here.  When a region of
+       * the buffer is explicitly flushed, we pwrite() the region to a
+       * temporary bo and emit pipelined copy blit.
+       *
+       * For now, do nothing.
+       */
+   }
+   else if (xfer->base.usage & PIPE_TRANSFER_DISCARD_RANGE) {
+      /*
+       * We could allocate a temporary bo for mapping, and emit pipelined copy
+       * blit upon unmapping.
+       *
+       * For now, do nothing.
+       */
+   }
+
+   if (will_stall) {
+      if (xfer->base.usage & PIPE_TRANSFER_DONTBLOCK)
+         return false;
+
+      /* flush to make bo busy (so that map() stalls as it should be) */
+      if (will_be_busy)
+         ilo_cp_flush(ilo->cp);
+   }
+
+   return true;
 }
 
 static void
@@ -263,78 +403,25 @@ ilo_transfer_flush_region(struct pipe_context *pipe,
 {
 }
 
-static bool
-map_resource(struct ilo_context *ilo, struct ilo_resource *res,
-             unsigned usage)
+static void
+ilo_transfer_unmap(struct pipe_context *pipe,
+                   struct pipe_transfer *transfer)
 {
-   struct ilo_screen *is = ilo_screen(res->base.screen);
-   bool will_be_busy;
-   int err;
+   struct ilo_context *ilo = ilo_context(pipe);
+   struct ilo_resource *res = ilo_resource(transfer->resource);
+   struct ilo_transfer *xfer = ilo_transfer(transfer);
 
-   /* simply map unsynchronized */
-   if (usage & PIPE_TRANSFER_UNSYNCHRONIZED) {
-      err = res->bo->map_unsynchronized(res->bo);
-      return !err;
+   switch (xfer->method) {
+   case ILO_TRANSFER_MAP_DIRECT:
+      transfer_unmap_direct(ilo, res, xfer);
+      break;
+   default:
+      assert(!"unknown mapping method");
+      break;
    }
 
-   /*
-    * XXX With hardware context support, the bo may be needed by GPU without
-    * being referenced by ilo->cp->bo.  We have to flush unconditionally, and
-    * that is bad.
-    */
-   if (ilo->cp->hw_ctx)
-      ilo_cp_flush(ilo->cp);
-
-   will_be_busy = ilo->cp->bo->references(ilo->cp->bo, res->bo);
-
-   /* see if we can avoid stalling */
-   if (will_be_busy || intel_bo_is_busy(res->bo)) {
-      bool will_stall = true;
-
-      if (usage & PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE) {
-         /* discard old bo and allocate a new one for mapping */
-         if (realloc_bo(res))
-            will_stall = false;
-      }
-      else if (usage & PIPE_TRANSFER_MAP_DIRECTLY) {
-         /* nothing we can do */
-      }
-      else if (usage & PIPE_TRANSFER_FLUSH_EXPLICIT) {
-         /*
-          * We could allocate and return a system buffer here.  When a region
-          * of the buffer is explicitly flushed, we pwrite() the region to a
-          * temporary bo and emit pipelined copy blit.
-          *
-          * For now, do nothing.
-          */
-      }
-      else if (usage & PIPE_TRANSFER_DISCARD_RANGE) {
-         /*
-          * We could allocate a temporary bo for mapping, and emit pipelined
-          * copy blit upon unmapping.
-          *
-          * For now, do nothing.
-          */
-      }
-
-      if (will_stall) {
-         if (usage & PIPE_TRANSFER_DONTBLOCK)
-            return false;
-
-         /* flush to make bo busy (so that map() stalls as it should be) */
-         if (will_be_busy)
-            ilo_cp_flush(ilo->cp);
-      }
-   }
-
-   /* prefer map() when there is the last-level cache */
-   if (res->tiling == INTEL_TILING_NONE &&
-       (is->dev.has_llc || (usage & PIPE_TRANSFER_READ)))
-      err = res->bo->map(res->bo, (usage & PIPE_TRANSFER_WRITE));
-   else
-      err = res->bo->map_gtt(res->bo);
-
-   return !err;
+   pipe_resource_reference(&xfer->base.resource, NULL);
+   FREE(xfer);
 }
 
 static void *
@@ -347,61 +434,46 @@ ilo_transfer_map(struct pipe_context *pipe,
 {
    struct ilo_context *ilo = ilo_context(pipe);
    struct ilo_resource *res = ilo_resource(r);
-   struct pipe_transfer *xfer;
-   void *ptr;
-   int x, y;
+   struct ilo_transfer *xfer;
+   int ok;
 
-   xfer = MALLOC_STRUCT(pipe_transfer);
-   if (!xfer)
+   xfer = MALLOC_STRUCT(ilo_transfer);
+   if (!xfer) {
+      *transfer = NULL;
       return NULL;
+   }
 
-   if (!map_resource(ilo, res, usage)) {
+   xfer->base.resource = NULL;
+   pipe_resource_reference(&xfer->base.resource, &res->base);
+   xfer->base.level = level;
+   xfer->base.usage = usage;
+   xfer->base.box = *box;
+
+   ok = transfer_map_choose_method(ilo, res, xfer);
+   if (ok) {
+      switch (xfer->method) {
+      case ILO_TRANSFER_MAP_DIRECT:
+         ok = transfer_map_direct(ilo, res, xfer);
+         break;
+      default:
+         assert(!"unknown mapping method");
+         ok = false;
+         break;
+      }
+   }
+
+   if (!ok) {
+      pipe_resource_reference(&xfer->base.resource, NULL);
       FREE(xfer);
+
+      *transfer = NULL;
+
       return NULL;
    }
 
-   /* init transfer */
-   xfer->resource = NULL;
-   pipe_resource_reference(&xfer->resource, &res->base);
-   xfer->level = level;
-   xfer->usage = usage;
-   xfer->box = *box;
-   /* stride for a block row, not a texel row */
-   xfer->stride = res->bo_stride;
+   *transfer = &xfer->base;
 
-   /*
-    * we can walk through layers when the resource is a texture array or
-    * when this is the first level of a 3D texture being mapped
-    */
-   if (res->base.array_size > 1 ||
-       (res->base.target == PIPE_TEXTURE_3D && level == 0)) {
-      const unsigned qpitch =
-         res->slice_offsets[level][1].y - res->slice_offsets[level][0].y;
-
-      assert(qpitch % res->block_height == 0);
-      xfer->layer_stride = (qpitch / res->block_height) * xfer->stride;
-   }
-   else {
-      xfer->layer_stride = 0;
-   }
-
-   x = res->slice_offsets[level][box->z].x;
-   y = res->slice_offsets[level][box->z].y;
-
-   x += box->x;
-   y += box->y;
-
-   /* in blocks */
-   assert(x % res->block_width == 0 && y % res->block_height == 0);
-   x /= res->block_width;
-   y /= res->block_height;
-
-   ptr = res->bo->get_virtual(res->bo);
-   ptr += y * res->bo_stride + x * res->bo_cpp;
-
-   *transfer = xfer;
-
-   return ptr;
+   return xfer->ptr;
 }
 
 static bool
