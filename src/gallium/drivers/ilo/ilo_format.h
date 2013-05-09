@@ -70,6 +70,9 @@ ilo_translate_format(enum pipe_format format, unsigned bind)
        * values.  But we assume in many places that the depth values are
        * returned as I values (util_make_fragment_tex_shader_writedepth() is
        * one such example).  We have to live with that at least for now.
+       *
+       * For ETC1 format, the texture data will be decompressed before being
+       * written to the bo.  See transfer_unmap_sys_convert().
        */
       switch (format) {
       case PIPE_FORMAT_Z16_UNORM:
@@ -81,6 +84,8 @@ ilo_translate_format(enum pipe_format format, unsigned bind)
          return BRW_SURFACEFORMAT_I24X8_UNORM;
       case PIPE_FORMAT_Z32_FLOAT_S8X24_UINT:
          return BRW_SURFACEFORMAT_I32X32_FLOAT;
+      case PIPE_FORMAT_ETC1_RGB8:
+         return BRW_SURFACEFORMAT_R8G8B8X8_UNORM;
       default:
          return ilo_translate_color_format(format);
       }

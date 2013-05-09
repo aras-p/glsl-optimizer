@@ -27,6 +27,7 @@
 
 #include "util/u_surface.h"
 #include "util/u_transfer.h"
+#include "util/u_format_etc.h"
 
 #include "ilo_cp.h"
 #include "ilo_context.h"
@@ -266,6 +267,35 @@ ilo_transfer_inline_write(struct pipe_context *pipe,
 }
 
 static void
+transfer_unmap_sys_convert(enum pipe_format dst_fmt,
+                           const struct pipe_transfer *dst_xfer,
+                           void *dst,
+                           enum pipe_format src_fmt,
+                           const struct pipe_transfer *src_xfer,
+                           const void *src)
+{
+   int i;
+
+   switch (src_fmt) {
+   case PIPE_FORMAT_ETC1_RGB8:
+      assert(dst_fmt == PIPE_FORMAT_R8G8B8X8_UNORM);
+
+      for (i = 0; i < dst_xfer->box.depth; i++) {
+         util_format_etc1_rgb8_unpack_rgba_8unorm(dst,
+               dst_xfer->stride, src, src_xfer->stride,
+               dst_xfer->box.width, dst_xfer->box.height);
+
+         dst += dst_xfer->layer_stride;
+         src += src_xfer->layer_stride;
+      }
+      break;
+   default:
+      assert(!"unable to convert the staging data");
+      break;
+   }
+}
+
+static void
 transfer_unmap_sys(struct ilo_context *ilo,
                    struct ilo_resource *res,
                    struct ilo_transfer *xfer)
@@ -286,10 +316,16 @@ transfer_unmap_sys(struct ilo_context *ilo,
       return;
    }
 
-   util_copy_box(dst, res->bo_format,
-         dst_xfer->stride, dst_xfer->layer_stride, 0, 0, 0,
-         dst_xfer->box.width, dst_xfer->box.height, dst_xfer->box.depth,
-         src, xfer->base.stride, xfer->base.layer_stride, 0, 0, 0);
+   if (likely(res->bo_format != res->base.format)) {
+      transfer_unmap_sys_convert(res->bo_format, dst_xfer, dst,
+            res->base.format, &xfer->base, src);
+   }
+   else {
+      util_copy_box(dst, res->bo_format,
+            dst_xfer->stride, dst_xfer->layer_stride, 0, 0, 0,
+            dst_xfer->box.width, dst_xfer->box.height, dst_xfer->box.depth,
+            src, xfer->base.stride, xfer->base.layer_stride, 0, 0, 0);
+   }
 
    ilo->base.transfer_unmap(&ilo->base, dst_xfer);
    FREE(xfer->staging_sys);
@@ -405,6 +441,14 @@ transfer_map_choose_method(struct ilo_context *ilo,
                            struct ilo_transfer *xfer)
 {
    bool will_be_busy, will_stall;
+
+   /* need to convert on-the-fly */
+   if (res->bo_format != res->base.format &&
+       !(xfer->base.usage & PIPE_TRANSFER_MAP_DIRECTLY)) {
+      xfer->method = ILO_TRANSFER_MAP_STAGING_SYS;
+
+      return true;
+   }
 
    xfer->method = ILO_TRANSFER_MAP_DIRECT;
 
@@ -1220,7 +1264,14 @@ init_texture(struct ilo_resource *res)
 {
    struct layout_tex_info info;
 
-   res->bo_format = res->base.format;
+   switch (res->base.format) {
+   case PIPE_FORMAT_ETC1_RGB8:
+      res->bo_format = PIPE_FORMAT_R8G8B8X8_UNORM;
+      break;
+   default:
+      res->bo_format = res->base.format;
+      break;
+   }
 
    /* determine tiling first as it may affect the layout */
    res->tiling = get_tex_tiling(res);
