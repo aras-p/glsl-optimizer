@@ -25,6 +25,7 @@
  *    Chia-I Wu <olv@lunarg.com>
  */
 
+#include "util/u_surface.h"
 #include "util/u_transfer.h"
 
 #include "ilo_cp.h"
@@ -37,6 +38,7 @@
 
 enum ilo_transfer_map_method {
    ILO_TRANSFER_MAP_DIRECT,
+   ILO_TRANSFER_MAP_STAGING_SYS,
 };
 
 struct ilo_transfer {
@@ -44,6 +46,8 @@ struct ilo_transfer {
 
    enum ilo_transfer_map_method method;
    void *ptr;
+
+   void *staging_sys;
 };
 
 static inline struct ilo_transfer *
@@ -262,6 +266,73 @@ ilo_transfer_inline_write(struct pipe_context *pipe,
 }
 
 static void
+transfer_unmap_sys(struct ilo_context *ilo,
+                   struct ilo_resource *res,
+                   struct ilo_transfer *xfer)
+{
+   const void *src = xfer->ptr;
+   struct pipe_transfer *dst_xfer;
+   void *dst;
+
+   dst = ilo->base.transfer_map(&ilo->base,
+         xfer->base.resource, xfer->base.level,
+         PIPE_TRANSFER_WRITE |
+         PIPE_TRANSFER_MAP_DIRECTLY |
+         PIPE_TRANSFER_DISCARD_RANGE,
+         &xfer->base.box, &dst_xfer);
+   if (!dst_xfer) {
+      ilo_err("failed to map resource for moving staging data\n");
+      FREE(xfer->staging_sys);
+      return;
+   }
+
+   util_copy_box(dst, res->bo_format,
+         dst_xfer->stride, dst_xfer->layer_stride, 0, 0, 0,
+         dst_xfer->box.width, dst_xfer->box.height, dst_xfer->box.depth,
+         src, xfer->base.stride, xfer->base.layer_stride, 0, 0, 0);
+
+   ilo->base.transfer_unmap(&ilo->base, dst_xfer);
+   FREE(xfer->staging_sys);
+}
+
+static bool
+transfer_map_sys(struct ilo_context *ilo,
+                 struct ilo_resource *res,
+                 struct ilo_transfer *xfer)
+{
+   const struct pipe_box *box = &xfer->base.box;
+   const size_t stride = util_format_get_stride(res->base.format, box->width);
+   const size_t size =
+      util_format_get_2d_size(res->base.format, stride, box->height);
+   bool read_back;
+
+   if (xfer->base.usage & PIPE_TRANSFER_READ) {
+      read_back = true;
+   }
+   else if (xfer->base.usage & PIPE_TRANSFER_WRITE) {
+      const unsigned discard_flags =
+         (PIPE_TRANSFER_DISCARD_RANGE | PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE);
+
+      if (!(xfer->base.usage & discard_flags))
+         read_back = true;
+   }
+
+   /* TODO */
+   if (read_back)
+      return false;
+
+   xfer->staging_sys = MALLOC(size * box->depth);
+   if (!xfer->staging_sys)
+      return false;
+
+   xfer->base.stride = stride;
+   xfer->base.layer_stride = size;
+   xfer->ptr = xfer->staging_sys;
+
+   return true;
+}
+
+static void
 transfer_unmap_direct(struct ilo_context *ilo,
                       struct ilo_resource *res,
                       struct ilo_transfer *xfer)
@@ -415,6 +486,9 @@ ilo_transfer_unmap(struct pipe_context *pipe,
    case ILO_TRANSFER_MAP_DIRECT:
       transfer_unmap_direct(ilo, res, xfer);
       break;
+   case ILO_TRANSFER_MAP_STAGING_SYS:
+      transfer_unmap_sys(ilo, res, xfer);
+      break;
    default:
       assert(!"unknown mapping method");
       break;
@@ -454,6 +528,9 @@ ilo_transfer_map(struct pipe_context *pipe,
       switch (xfer->method) {
       case ILO_TRANSFER_MAP_DIRECT:
          ok = transfer_map_direct(ilo, res, xfer);
+         break;
+      case ILO_TRANSFER_MAP_STAGING_SYS:
+         ok = transfer_map_sys(ilo, res, xfer);
          break;
       default:
          assert(!"unknown mapping method");
