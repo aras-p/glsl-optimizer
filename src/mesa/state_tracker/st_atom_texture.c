@@ -434,7 +434,7 @@ update_geometry_textures(struct st_context *st)
       update_textures(st,
                       PIPE_SHADER_GEOMETRY,
                       &ctx->GeometryProgram._Current->Base,
-                      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxTextureImageUnits,
+                      ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxTextureImageUnits,
                       st->state.sampler_views[PIPE_SHADER_GEOMETRY],
                       &st->state.num_sampler_views[PIPE_SHADER_GEOMETRY]);
    }
