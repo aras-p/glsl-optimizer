@@ -445,7 +445,7 @@ modulus_result_type(const struct glsl_type *type_a,
 		    const struct glsl_type *type_b,
 		    struct _mesa_glsl_parse_state *state, YYLTYPE *loc)
 {
-   if (!state->check_version(130, 300, loc, "operator '%%' is reserved")) {
+   if (!state->OPENGL_fancy && !state->check_version(130, 300, loc, "operator '%%' is reserved")) {
       return glsl_type::error_type;
    }
 
