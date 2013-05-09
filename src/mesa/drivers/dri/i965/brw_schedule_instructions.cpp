@@ -579,7 +579,10 @@ fs_instruction_scheduler::calculate_deps()
 		    (inst->src[i].fixed_hw_reg.file ==
 		     BRW_GENERAL_REGISTER_FILE)) {
 	    if (post_reg_alloc) {
-               for (int r = 0; r < reg_width; r++)
+               int size = reg_width;
+               if (inst->src[i].fixed_hw_reg.vstride == BRW_VERTICAL_STRIDE_0)
+                  size = 1;
+               for (int r = 0; r < size; r++)
                   add_dep(last_grf_write[inst->src[i].fixed_hw_reg.nr + r], n);
             } else {
                add_dep(last_fixed_grf_write, n);
@@ -684,7 +687,10 @@ fs_instruction_scheduler::calculate_deps()
 		    (inst->src[i].fixed_hw_reg.file ==
 		     BRW_GENERAL_REGISTER_FILE)) {
 	    if (post_reg_alloc) {
-               for (int r = 0; r < reg_width; r++)
+               int size = reg_width;
+               if (inst->src[i].fixed_hw_reg.vstride == BRW_VERTICAL_STRIDE_0)
+                  size = 1;
+               for (int r = 0; r < size; r++)
                   add_dep(n, last_grf_write[inst->src[i].fixed_hw_reg.nr + r]);
             } else {
                add_dep(n, last_fixed_grf_write);
