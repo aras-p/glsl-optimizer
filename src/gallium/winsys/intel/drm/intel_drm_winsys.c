@@ -585,6 +585,26 @@ get_param(struct intel_drm_winsys *drm_ws, int param, int *value)
 }
 
 static bool
+test_address_swizzling(struct intel_drm_winsys *drm_ws)
+{
+   drm_intel_bo *bo;
+   uint32_t tiling = I915_TILING_X, swizzle;
+   unsigned long pitch;
+
+   bo = drm_intel_bo_alloc_tiled(drm_ws->bufmgr,
+         "address swizzling test", 64, 64, 4, &tiling, &pitch, 0);
+   if (bo) {
+      drm_intel_bo_get_tiling(bo, &tiling, &swizzle);
+      drm_intel_bo_unreference(bo);
+   }
+   else {
+      swizzle = I915_BIT_6_SWIZZLE_NONE;
+   }
+
+   return (swizzle != I915_BIT_6_SWIZZLE_NONE);
+}
+
+static bool
 init_info(struct intel_drm_winsys *drm_ws)
 {
    struct intel_winsys_info *info = &drm_ws->info;
@@ -604,6 +624,8 @@ init_info(struct intel_drm_winsys *drm_ws)
 
    get_param(drm_ws, I915_PARAM_HAS_GEN7_SOL_RESET, &val);
    info->has_gen7_sol_reset = val;
+
+   info->has_address_swizzling = test_address_swizzling(drm_ws);
 
    return true;
 }
