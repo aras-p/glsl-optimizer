@@ -441,6 +441,28 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
       } else if (is_vec_one(op_const[2])) {
          this->progress = true;
          return swizzle_if_required(ir, ir->operands[1]);
+      } else if (is_vec_zero(op_const[0])) {
+          /* mix(0,y,a) -> y*a */
+          this->progress = true;
+          return new(mem_ctx) ir_expression(ir_binop_mul,
+                                            ir->type,
+                                            ir->operands[1],
+                                            ir->operands[2]);
+      } else if (is_vec_zero(op_const[1]) && ir->type->base_type == GLSL_TYPE_FLOAT) {
+          /* mix(x,0,a) -> x*(1.0-a) */
+          this->progress = true;          
+          ir_constant_data data;
+          for (unsigned i = 0; i < 4; i++)
+              data.f[i] = 1.0f;
+          ir_rvalue * temp_one = new(mem_ctx) ir_constant(ir->type, &data);
+          ir_rvalue * temp_one_minus_a = new(mem_ctx) ir_expression(ir_binop_sub,
+                                                                   ir->type,
+                                                                   temp_one,
+                                                                   ir->operands[2]);
+          return new(mem_ctx) ir_expression(ir_binop_mul,
+                                            ir->type,
+                                            ir->operands[0],
+                                            temp_one_minus_a);
       }
       break;
 
