@@ -2640,12 +2640,16 @@ gen6_emit_3DSTATE_STENCIL_BUFFER(const struct ilo_dev_info *dev,
       ILO_GPE_CMD(0x3, 0x1, 0x0e);
    const uint8_t cmd_len = 3;
    struct ilo_texture *tex;
-   uint32_t slice_offset;
+   uint32_t slice_offset, x_offset, y_offset;
    int pitch;
 
    ILO_GPE_VALID_GEN(dev, 6, 7);
 
-   if (!surface) {
+   tex = (surface) ? ilo_texture(surface->texture) : NULL;
+   if (tex && surface->format != PIPE_FORMAT_S8_UINT)
+      tex = tex->separate_s8;
+
+   if (!tex) {
       ilo_cp_begin(cp, cmd_len);
       ilo_cp_write(cp, cmd | (cmd_len - 2));
       ilo_cp_write(cp, 0);
@@ -2655,16 +2659,19 @@ gen6_emit_3DSTATE_STENCIL_BUFFER(const struct ilo_dev_info *dev,
       return;
    }
 
-   tex = ilo_texture(surface->texture);
-
-   /* TODO */
-   slice_offset = 0;
+   slice_offset = ilo_texture_get_slice_offset(tex,
+         surface->u.tex.level, surface->u.tex.first_layer,
+         &x_offset, &y_offset);
+   /* XXX X/Y offsets inherit from 3DSTATE_DEPTH_BUFFER */
 
    /*
     * From the Sandy Bridge PRM, volume 2 part 1, page 329:
     *
     *     "The pitch must be set to 2x the value computed based on width, as
     *      the stencil buffer is stored with two rows interleaved."
+    *
+    * According to the classic driver, we need to do the same for GEN7+ even
+    * though the Ivy Bridge PRM does not say anything about it.
     */
    pitch = 2 * tex->bo_stride;
    assert(pitch > 0 && pitch < 128 * 1024 && pitch % 128 == 0);

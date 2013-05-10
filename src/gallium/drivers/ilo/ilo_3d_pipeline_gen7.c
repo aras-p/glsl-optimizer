@@ -545,10 +545,17 @@ gen7_pipeline_wm(struct ilo_3d_pipeline *p,
    /* 3DSTATE_DEPTH_BUFFER and 3DSTATE_CLEAR_PARAMS */
    if (DIRTY(FRAMEBUFFER) || DIRTY(DEPTH_STENCIL_ALPHA) ||
        session->state_bo_changed) {
+      const bool hiz = false;
+
       p->gen7_3DSTATE_DEPTH_BUFFER(p->dev,
             ilo->framebuffer.zsbuf,
             ilo->depth_stencil_alpha,
-            false, p->cp);
+            hiz, p->cp);
+
+      p->gen6_3DSTATE_HIER_DEPTH_BUFFER(p->dev,
+            (hiz) ? ilo->framebuffer.zsbuf : NULL, p->cp);
+
+      p->gen6_3DSTATE_STENCIL_BUFFER(p->dev, ilo->framebuffer.zsbuf, p->cp);
 
       /* TODO */
       p->gen6_3DSTATE_CLEAR_PARAMS(p->dev, 0, p->cp);
