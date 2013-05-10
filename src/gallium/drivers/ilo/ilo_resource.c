@@ -340,7 +340,7 @@ transfer_map_sys(struct ilo_context *ilo,
    const size_t stride = util_format_get_stride(res->base.format, box->width);
    const size_t size =
       util_format_get_2d_size(res->base.format, stride, box->height);
-   bool read_back;
+   bool read_back = false;
 
    if (xfer->base.usage & PIPE_TRANSFER_READ) {
       read_back = true;
