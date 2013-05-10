@@ -1984,7 +1984,7 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
        */
       switch (state->target) {
       case vertex_shader:
-	 if (!global_scope || ((var->mode != ir_var_shader_in) && !state->OPENGL_fancy)) {
+	 if (!global_scope || (var->mode != ir_var_shader_in)) {
 	    fail = true;
 	    string = "input";
 	 }
@@ -2022,11 +2022,6 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
 	  */
      if (state->target==fragment_shader && var->mode!=ir_var_shader_out ) {
         // this is the 4.1 special case with fragment shader explicit vertex attribute location
-        // we copy it as is
-        var->location = qual->location;
-     }
-     else if (state->target==vertex_shader && (var->mode==ir_var_shader_in || var->mode==ir_var_shader_out) ) {
-        // this is the 4.1 special case with vertex shader explicit vertex attribute location
         // we copy it as is
         var->location = qual->location;
      } else if (qual->location >= 0) {
