@@ -409,6 +409,7 @@ intel_create_image_from_renderbuffer(__DRIcontext *context,
    image->dri_format = intel_dri_format(image->format);
    image->has_depthstencil = irb->mt->stencil_mt? true : false;
 
+   rb->NeedsFinishRenderTexture = true;
    return image;
 }
 

@@ -306,6 +306,7 @@ intel_image_target_renderbuffer_storage(struct gl_context *ctx,
    rb->Format = image->format;
    rb->_BaseFormat = _mesa_base_fbo_format(&intel->ctx,
 					   image->internal_format);
+   rb->NeedsFinishRenderTexture = true;
 }
 
 /**
@@ -621,13 +622,10 @@ intel_finish_render_texture(struct gl_context * ctx,
                             struct gl_renderbuffer_attachment *att)
 {
    struct intel_context *intel = intel_context(ctx);
-   struct gl_texture_object *tex_obj = att->Texture;
-   struct gl_texture_image *image =
-      tex_obj->Image[att->CubeMapFace][att->TextureLevel];
-   struct intel_renderbuffer *irb = intel_renderbuffer(att->Renderbuffer);
+   struct gl_renderbuffer *rb = att->Renderbuffer;
+   struct intel_renderbuffer *irb = intel_renderbuffer(rb);
 
-   DBG("Finish render %s texture tex=%u\n",
-       _mesa_get_format_name(image->TexFormat), att->Texture->Name);
+   DBG("Finish render %s texture\n", _mesa_get_format_name(rb->Format));
 
    if (irb)
       irb->tex_image = NULL;

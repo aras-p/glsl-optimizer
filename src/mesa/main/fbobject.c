@@ -323,12 +323,14 @@ void
 _mesa_remove_attachment(struct gl_context *ctx,
                         struct gl_renderbuffer_attachment *att)
 {
+   struct gl_renderbuffer *rb = att->Renderbuffer;
+
+   /* tell driver that we're done rendering to this texture. */
+   if (rb && rb->NeedsFinishRenderTexture)
+      ctx->Driver.FinishRenderTexture(ctx, att);
+
    if (att->Type == GL_TEXTURE) {
       ASSERT(att->Texture);
-      if (ctx->Driver.FinishRenderTexture) {
-         /* tell driver that we're done rendering to this texture. */
-         ctx->Driver.FinishRenderTexture(ctx, att);
-      }
       _mesa_reference_texobj(&att->Texture, NULL); /* unbind */
       ASSERT(!att->Texture);
    }
@@ -378,6 +380,8 @@ _mesa_update_texture_renderbuffer(struct gl_context *ctx,
        * for clarity compared to user renderbuffers.
        */
       rb->AllocStorage = NULL;
+
+      rb->NeedsFinishRenderTexture = ctx->Driver.FinishRenderTexture != NULL;
    }
 
    rb->_BaseFormat = texImage->_BaseFormat;
@@ -402,16 +406,17 @@ _mesa_set_texture_attachment(struct gl_context *ctx,
                              GLenum texTarget, GLuint level, GLuint zoffset,
                              GLboolean layered)
 {
+   struct gl_renderbuffer *rb = att->Renderbuffer;
+
+   if (rb && rb->NeedsFinishRenderTexture)
+      ctx->Driver.FinishRenderTexture(ctx, att);
+
    if (att->Texture == texObj) {
       /* re-attaching same texture */
       ASSERT(att->Type == GL_TEXTURE);
-      if (ctx->Driver.FinishRenderTexture)
-	 ctx->Driver.FinishRenderTexture(ctx, att);
    }
    else {
       /* new attachment */
-      if (ctx->Driver.FinishRenderTexture && att->Texture)
-	 ctx->Driver.FinishRenderTexture(ctx, att);
       _mesa_remove_attachment(ctx, att);
       att->Type = GL_TEXTURE;
       assert(!att->Texture);
@@ -1879,7 +1884,8 @@ check_end_texture_render(struct gl_context *ctx, struct gl_framebuffer *fb)
       GLuint i;
       for (i = 0; i < BUFFER_COUNT; i++) {
          struct gl_renderbuffer_attachment *att = fb->Attachment + i;
-         if (att->Texture && att->Renderbuffer) {
+         struct gl_renderbuffer *rb = att->Renderbuffer;
+         if (rb && rb->NeedsFinishRenderTexture) {
             ctx->Driver.FinishRenderTexture(ctx, att);
          }
       }
