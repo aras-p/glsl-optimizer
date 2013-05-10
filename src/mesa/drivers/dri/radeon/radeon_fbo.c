@@ -782,36 +782,6 @@ radeon_update_wrapper(struct gl_context *ctx, struct radeon_renderbuffer *rrb,
 	return GL_TRUE;
 }
 
-
-static struct radeon_renderbuffer *
-radeon_wrap_texture(struct gl_context * ctx, struct gl_texture_image *texImage)
-{
-  const GLuint name = ~0;   /* not significant, but distinct for debugging */
-  struct radeon_renderbuffer *rrb;
-
-   /* make an radeon_renderbuffer to wrap the texture image */
-   rrb = CALLOC_STRUCT(radeon_renderbuffer);
-
-   radeon_print(RADEON_TEXTURE, RADEON_TRACE,
-		"%s(%p, rrb %p, texImage %p) \n",
-		__func__, ctx, rrb, texImage);
-
-   if (!rrb) {
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glFramebufferTexture");
-      return NULL;
-   }
-
-   _mesa_init_renderbuffer(&rrb->base.Base, name);
-   rrb->base.Base.ClassID = RADEON_RB_CLASS;
-
-   if (!radeon_update_wrapper(ctx, rrb, texImage)) {
-      free(rrb);
-      return NULL;
-   }
-
-   return rrb;
-  
-}
 static void
 radeon_render_texture(struct gl_context * ctx,
                      struct gl_framebuffer *fb,
