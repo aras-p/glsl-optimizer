@@ -327,7 +327,7 @@ _mesa_remove_attachment(struct gl_context *ctx,
 
    /* tell driver that we're done rendering to this texture. */
    if (rb && rb->NeedsFinishRenderTexture)
-      ctx->Driver.FinishRenderTexture(ctx, att);
+      ctx->Driver.FinishRenderTexture(ctx, rb);
 
    if (att->Type == GL_TEXTURE) {
       ASSERT(att->Texture);
@@ -410,7 +410,7 @@ _mesa_set_texture_attachment(struct gl_context *ctx,
    struct gl_renderbuffer *rb = att->Renderbuffer;
 
    if (rb && rb->NeedsFinishRenderTexture)
-      ctx->Driver.FinishRenderTexture(ctx, att);
+      ctx->Driver.FinishRenderTexture(ctx, rb);
 
    if (att->Texture == texObj) {
       /* re-attaching same texture */
@@ -1886,7 +1886,7 @@ check_end_texture_render(struct gl_context *ctx, struct gl_framebuffer *fb)
          struct gl_renderbuffer_attachment *att = fb->Attachment + i;
          struct gl_renderbuffer *rb = att->Renderbuffer;
          if (rb && rb->NeedsFinishRenderTexture) {
-            ctx->Driver.FinishRenderTexture(ctx, att);
+            ctx->Driver.FinishRenderTexture(ctx, rb);
          }
       }
    }

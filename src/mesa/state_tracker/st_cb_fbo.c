@@ -449,10 +449,9 @@ st_render_texture(struct gl_context *ctx,
  * Called via ctx->Driver.FinishRenderTexture.
  */
 static void
-st_finish_render_texture(struct gl_context *ctx,
-                         struct gl_renderbuffer_attachment *att)
+st_finish_render_texture(struct gl_context *ctx, struct gl_renderbuffer *rb)
 {
-   struct st_renderbuffer *strb = st_renderbuffer(att->Renderbuffer);
+   struct st_renderbuffer *strb = st_renderbuffer(rb);
 
    if (!strb)
       return;

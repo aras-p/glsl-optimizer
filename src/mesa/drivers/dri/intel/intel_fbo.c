@@ -617,11 +617,9 @@ intel_render_texture(struct gl_context * ctx,
  * Called by Mesa when rendering to a texture is done.
  */
 static void
-intel_finish_render_texture(struct gl_context * ctx,
-                            struct gl_renderbuffer_attachment *att)
+intel_finish_render_texture(struct gl_context * ctx, struct gl_renderbuffer *rb)
 {
    struct intel_context *intel = intel_context(ctx);
-   struct gl_renderbuffer *rb = att->Renderbuffer;
 
    DBG("Finish render %s texture\n", _mesa_get_format_name(rb->Format));
 

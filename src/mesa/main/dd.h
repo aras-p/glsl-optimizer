@@ -625,7 +625,7 @@ struct dd_function_table {
                          struct gl_framebuffer *fb,
                          struct gl_renderbuffer_attachment *att);
    void (*FinishRenderTexture)(struct gl_context *ctx,
-                               struct gl_renderbuffer_attachment *att);
+                               struct gl_renderbuffer *rb);
    void (*ValidateFramebuffer)(struct gl_context *ctx,
                                struct gl_framebuffer *fb);
    /*@}*/

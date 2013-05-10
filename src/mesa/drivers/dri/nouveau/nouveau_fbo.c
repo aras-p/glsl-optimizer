@@ -263,9 +263,9 @@ nouveau_render_texture(struct gl_context *ctx, struct gl_framebuffer *fb,
 
 static void
 nouveau_finish_render_texture(struct gl_context *ctx,
-			      struct gl_renderbuffer_attachment *att)
+			      struct gl_renderbuffer *rb)
 {
-	texture_dirty(att->Texture);
+	texture_dirty(rb->TexImage->TexObject);
 }
 
 void

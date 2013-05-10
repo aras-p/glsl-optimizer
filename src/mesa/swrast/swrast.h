@@ -270,7 +270,7 @@ _swrast_render_texture(struct gl_context *ctx,
 
 extern void
 _swrast_finish_render_texture(struct gl_context *ctx,
-                              struct gl_renderbuffer_attachment *att);
+                              struct gl_renderbuffer *rb);
 
 
 /**

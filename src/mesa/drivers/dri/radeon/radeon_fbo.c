@@ -850,10 +850,9 @@ radeon_render_texture(struct gl_context * ctx,
 }
 
 static void
-radeon_finish_render_texture(struct gl_context * ctx,
-                            struct gl_renderbuffer_attachment *att)
+radeon_finish_render_texture(struct gl_context *ctx, struct gl_renderbuffer *rb)
 {
-    struct gl_texture_image *image = att->Renderbuffer->TexImage;
+    struct gl_texture_image *image = rb->TexImage;
     radeon_texture_image *radeon_image = (radeon_texture_image *)image;
 
     if (radeon_image)
