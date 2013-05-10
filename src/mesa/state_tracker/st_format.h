@@ -70,10 +70,6 @@ size_t
 st_QuerySamplesForFormat(struct gl_context *ctx, GLenum target,
                          GLenum internalFormat, int samples[16]);
 
-/* can we use a sampler view to translate these formats
-   only used to make TFP so far */
-extern GLboolean
-st_sampler_compat_formats(enum pipe_format format1, enum pipe_format format2);
 
 
 extern void

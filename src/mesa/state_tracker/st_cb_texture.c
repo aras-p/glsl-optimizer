@@ -1540,6 +1540,11 @@ st_finalize_texture(struct gl_context *ctx,
       pipe_sampler_view_release(st->pipe, &stObj->sampler_view);
    }
 
+   /* If this texture comes from a window system, there is nothing else to do. */
+   if (stObj->surface_based) {
+      return GL_TRUE;
+   }
+
    /* Find gallium format for the Mesa texture */
    firstImageFormat = st_mesa_format_to_pipe_format(firstImage->base.TexFormat);
 
@@ -1567,7 +1572,7 @@ st_finalize_texture(struct gl_context *ctx,
     */
    if (stObj->pt) {
       if (stObj->pt->target != gl_target_to_pipe(stObj->base.Target) ||
-          !st_sampler_compat_formats(stObj->pt->format, firstImageFormat) ||
+          stObj->pt->format != firstImageFormat ||
           stObj->pt->last_level < stObj->lastLevel ||
           stObj->pt->width0 != ptWidth ||
           stObj->pt->height0 != ptHeight ||

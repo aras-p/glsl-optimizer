@@ -239,7 +239,8 @@ update_single_texture(struct st_context *st,
          st_mesa_format_to_pipe_format(stObj->base._BufferObjectFormat);
    }
    else {
-      view_format = stObj->pt->format;
+      view_format =
+         stObj->surface_based ? stObj->surface_format : stObj->pt->format;
 
       /* If sRGB decoding is off, use the linear format */
       if (samp->sRGBDecode == GL_SKIP_DECODE_EXT) {

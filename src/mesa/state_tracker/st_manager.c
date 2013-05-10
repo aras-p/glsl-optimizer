@@ -467,7 +467,7 @@ st_context_flush(struct st_context_iface *stctxi, unsigned flags,
 static boolean
 st_context_teximage(struct st_context_iface *stctxi,
                     enum st_texture_type tex_type,
-                    int level, enum pipe_format internal_format,
+                    int level, enum pipe_format pipe_format,
                     struct pipe_resource *tex, boolean mipmap)
 {
    struct st_context *st = (struct st_context *) stctxi;
@@ -511,28 +511,12 @@ st_context_teximage(struct st_context_iface *stctxi,
    texImage = _mesa_get_tex_image(ctx, texObj, target, level);
    stImage = st_texture_image(texImage);
    if (tex) {
-      gl_format texFormat;
+      gl_format texFormat = st_pipe_format_to_mesa_format(pipe_format);
 
-      /*
-       * XXX When internal_format and tex->format differ, st_finalize_texture
-       * needs to allocate a new texture with internal_format and copy the
-       * texture here into the new one.  It will result in surface_copy being
-       * called on surfaces whose formats differ.
-       *
-       * To avoid that, internal_format is (wrongly) ignored here.  A sane fix
-       * is to use a sampler view.
-       */
-      if (!st_sampler_compat_formats(tex->format, internal_format))
-	 internal_format = tex->format;
-     
-      if (util_format_get_component_bits(internal_format,
-               UTIL_FORMAT_COLORSPACE_RGB, 3) > 0)
+      if (util_format_has_alpha(tex->format))
          internalFormat = GL_RGBA;
       else
          internalFormat = GL_RGB;
-
-      texFormat = st_ChooseTextureFormat(ctx, target, internalFormat,
-                                         GL_BGRA, GL_UNSIGNED_BYTE);
 
       _mesa_init_teximage_fields(ctx, texImage,
                                  tex->width0, tex->height0, 1, 0,
@@ -562,6 +546,7 @@ st_context_teximage(struct st_context_iface *stctxi,
    stObj->width0 = width;
    stObj->height0 = height;
    stObj->depth0 = depth;
+   stObj->surface_format = pipe_format;
 
    _mesa_dirty_texobj(ctx, texObj, GL_TRUE);
    _mesa_unlock_texture(ctx, texObj);
