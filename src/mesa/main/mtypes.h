@@ -2586,6 +2586,14 @@ struct gl_renderbuffer
    GLenum _BaseFormat;    /**< Either GL_RGB, GL_RGBA, GL_DEPTH_COMPONENT or
                                GL_STENCIL_INDEX. */
    gl_format Format;      /**< The actual renderbuffer memory format */
+   /**
+    * Pointer to the texture image if this renderbuffer wraps a texture,
+    * otherwise NULL.
+    *
+    * Note that the reference on the gl_texture_object containing this
+    * TexImage is held by the gl_renderbuffer_attachment.
+    */
+   struct gl_texture_image *TexImage;
 
    /** Delete this renderbuffer */
    void (*Delete)(struct gl_context *ctx, struct gl_renderbuffer *rb);

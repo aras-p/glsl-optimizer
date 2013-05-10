@@ -363,7 +363,7 @@ _mesa_update_texture_renderbuffer(struct gl_context *ctx,
    struct gl_texture_image *texImage;
    struct gl_renderbuffer *rb;
 
-   texImage = _mesa_get_attachment_teximage(att);
+   texImage = att->Texture->Image[att->CubeMapFace][att->TextureLevel];
    if (!texImage)
       return;
 
@@ -390,6 +390,7 @@ _mesa_update_texture_renderbuffer(struct gl_context *ctx,
    rb->Width = texImage->Width2;
    rb->Height = texImage->Height2;
    rb->NumSamples = texImage->NumSamples;
+   rb->TexImage = texImage;
 
    ctx->Driver.RenderTexture(ctx, fb, att);
 }
@@ -889,8 +890,7 @@ _mesa_test_framebuffer_completeness(struct gl_context *ctx,
       /* get width, height, format of the renderbuffer/texture
        */
       if (att->Type == GL_TEXTURE) {
-         const struct gl_texture_image *texImg =
-            _mesa_get_attachment_teximage(att);
+         const struct gl_texture_image *texImg = att->Renderbuffer->TexImage;
          minWidth = MIN2(minWidth, texImg->Width);
          maxWidth = MAX2(maxWidth, texImg->Width);
          minHeight = MIN2(minHeight, texImg->Height);
@@ -1862,7 +1862,7 @@ check_begin_texture_render(struct gl_context *ctx, struct gl_framebuffer *fb)
 
    for (i = 0; i < BUFFER_COUNT; i++) {
       struct gl_renderbuffer_attachment *att = fb->Attachment + i;
-      if (att->Texture && _mesa_get_attachment_teximage(att)) {
+      if (att->Texture && att->Renderbuffer->TexImage) {
          ctx->Driver.RenderTexture(ctx, fb, att);
       }
    }

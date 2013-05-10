@@ -252,8 +252,7 @@ nouveau_render_texture(struct gl_context *ctx, struct gl_framebuffer *fb,
 		       struct gl_renderbuffer_attachment *att)
 {
 	struct gl_renderbuffer *rb = att->Renderbuffer;
-	struct gl_texture_image *ti =
-		att->Texture->Image[att->CubeMapFace][att->TextureLevel];
+	struct gl_texture_image *ti = rb->TexImage;
 
 	/* Update the renderbuffer fields from the texture. */
 	nouveau_surface_ref(&to_nouveau_teximage(ti)->surface,

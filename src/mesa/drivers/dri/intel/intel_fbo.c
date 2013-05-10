@@ -572,8 +572,9 @@ intel_render_texture(struct gl_context * ctx,
                      struct gl_renderbuffer_attachment *att)
 {
    struct intel_context *intel = intel_context(ctx);
-   struct gl_texture_image *image = _mesa_get_attachment_teximage(att);
-   struct intel_renderbuffer *irb = intel_renderbuffer(att->Renderbuffer);
+   struct gl_renderbuffer *rb = att->Renderbuffer;
+   struct intel_renderbuffer *irb = intel_renderbuffer(rb);
+   struct gl_texture_image *image = rb->TexImage;
    struct intel_texture_image *intel_image = intel_texture_image(image);
    struct intel_mipmap_tree *mt = intel_image->mt;
    int layer;
@@ -602,12 +603,10 @@ intel_render_texture(struct gl_context * ctx,
        return;
    }
 
-   irb->tex_image = image;
-
    DBG("Begin render %s texture tex=%u w=%d h=%d refcount=%d\n",
        _mesa_get_format_name(image->TexFormat),
        att->Texture->Name, image->Width, image->Height,
-       irb->Base.Base.RefCount);
+       rb->RefCount);
 
    /* update drawing region, etc */
    intel_draw_buffer(ctx);
@@ -623,12 +622,8 @@ intel_finish_render_texture(struct gl_context * ctx,
 {
    struct intel_context *intel = intel_context(ctx);
    struct gl_renderbuffer *rb = att->Renderbuffer;
-   struct intel_renderbuffer *irb = intel_renderbuffer(rb);
 
    DBG("Finish render %s texture\n", _mesa_get_format_name(rb->Format));
-
-   if (irb)
-      irb->tex_image = NULL;
 
    /* Since we've (probably) rendered to the texture and will (likely) use
     * it in the texture domain later on in this batchbuffer, flush the
@@ -734,10 +729,7 @@ intel_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
       }
 
       if (fb->Attachment[i].Type == GL_TEXTURE) {
-	 const struct gl_texture_image *img =
-	    _mesa_get_attachment_teximage_const(&fb->Attachment[i]);
-
-	 if (img->Border) {
+	 if (rb->TexImage->Border) {
 	    fbo_incomplete(fb, "FBO incomplete: texture with border\n");
 	    continue;
 	 }
@@ -945,14 +937,14 @@ intel_renderbuffer_move_to_temp(struct intel_context *intel,
                                 struct intel_renderbuffer *irb,
                                 bool invalidate)
 {
-   struct intel_texture_image *intel_image =
-      intel_texture_image(irb->tex_image);
+   struct gl_renderbuffer *rb =&irb->Base.Base;
+   struct intel_texture_image *intel_image = intel_texture_image(rb->TexImage);
    struct intel_mipmap_tree *new_mt;
    int width, height, depth;
 
-   intel_miptree_get_dimensions_for_image(irb->tex_image, &width, &height, &depth);
+   intel_miptree_get_dimensions_for_image(rb->TexImage, &width, &height, &depth);
 
-   new_mt = intel_miptree_create(intel, irb->tex_image->TexObject->Target,
+   new_mt = intel_miptree_create(intel, rb->TexImage->TexObject->Target,
                                  intel_image->base.Base.TexFormat,
                                  intel_image->base.Base.Level,
                                  intel_image->base.Base.Level,

@@ -2759,8 +2759,8 @@ check_rtt_cb(GLuint key, void *data, void *userData)
              att->Texture == texObj &&
              att->TextureLevel == level &&
              att->CubeMapFace == face) {
-            ASSERT(_mesa_get_attachment_teximage(att));
             _mesa_update_texture_renderbuffer(ctx, ctx->DrawBuffer, att);
+            ASSERT(att->Renderbuffer->TexImage);
             /* Mark fb status as indeterminate to force re-validation */
             fb->_Status = 0;
          }

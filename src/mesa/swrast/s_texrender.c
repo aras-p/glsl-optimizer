@@ -38,7 +38,7 @@ update_wrapper(struct gl_context *ctx, struct gl_renderbuffer_attachment *att)
 
    (void) ctx;
 
-   swImage = swrast_texture_image(_mesa_get_attachment_teximage(att));
+   swImage = swrast_texture_image(rb->TexImage);
    assert(swImage);
 
    format = swImage->Base.TexFormat;

@@ -1328,7 +1328,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
    /* _NEW_BUFFERS */
    gl_format rb_format = _mesa_get_render_format(ctx, intel_rb_format(irb));
 
-   if (irb->tex_image && !brw->has_surface_tile_offset) {
+   if (rb->TexImage && !brw->has_surface_tile_offset) {
       intel_renderbuffer_tile_offsets(irb, &tile_x, &tile_y);
 
       if (tile_x != 0 || tile_y != 0) {

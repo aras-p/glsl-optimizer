@@ -787,9 +787,9 @@ radeon_render_texture(struct gl_context * ctx,
                      struct gl_framebuffer *fb,
                      struct gl_renderbuffer_attachment *att)
 {
-   struct gl_texture_image *newImage
-      = att->Texture->Image[att->CubeMapFace][att->TextureLevel];
-   struct radeon_renderbuffer *rrb = radeon_renderbuffer(att->Renderbuffer);
+   struct gl_renderbuffer *rb = att->Renderbuffer;
+   struct gl_texture_image *newImage = rb->TexImage;
+   struct radeon_renderbuffer *rrb = radeon_renderbuffer(rb);
    radeon_texture_image *radeon_image;
    GLuint imageOffset;
 
@@ -818,7 +818,7 @@ radeon_render_texture(struct gl_context * ctx,
    DBG("Begin render texture tid %lx tex=%u w=%d h=%d refcount=%d\n",
        _glthread_GetID(),
        att->Texture->Name, newImage->Width, newImage->Height,
-       rrb->base.Base.RefCount);
+       rb->RefCount);
 
    /* point the renderbufer's region to the texture image region */
    if (rrb->bo != radeon_image->mt->bo) {
@@ -853,11 +853,8 @@ static void
 radeon_finish_render_texture(struct gl_context * ctx,
                             struct gl_renderbuffer_attachment *att)
 {
-    struct gl_texture_object *tex_obj = att->Texture;
-    radeon_texture_image *radeon_image = NULL;
-
-    if (tex_obj)
-        radeon_image = (radeon_texture_image *)_mesa_get_attachment_teximage(att);
+    struct gl_texture_image *image = att->Renderbuffer->TexImage;
+    radeon_texture_image *radeon_image = (radeon_texture_image *)image;
 
     if (radeon_image)
 	radeon_image->used_as_render_target = GL_FALSE;
@@ -883,7 +880,7 @@ radeon_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
 		}
 
 		if (att->Type == GL_TEXTURE) {
-			mesa_format = att->Texture->Image[att->CubeMapFace][att->TextureLevel]->TexFormat;
+			mesa_format = att->Renderbuffer->TexImage->TexFormat;
 		} else {
 			/* All renderbuffer formats are renderable, but not sampable */
 			continue;

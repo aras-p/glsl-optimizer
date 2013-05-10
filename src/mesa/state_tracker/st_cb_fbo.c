@@ -394,7 +394,6 @@ st_render_texture(struct gl_context *ctx,
    struct st_renderbuffer *strb = st_renderbuffer(rb);
    struct pipe_resource *pt;
    struct st_texture_object *stObj;
-   const struct gl_texture_image *texImage;
    struct pipe_surface surf_tmpl;
 
    if (!st_finalize_texture(ctx, pipe, att->Texture))
@@ -402,9 +401,6 @@ st_render_texture(struct gl_context *ctx,
 
    pt = st_get_texobj_resource(att->Texture);
    assert(pt);
-
-   /* get pointer to texture image we're rendeing to */
-   texImage = _mesa_get_attachment_teximage(att);
 
    /* get the texture for the texture object */
    stObj = st_texture_object(att->Texture);
@@ -503,7 +499,7 @@ st_validate_attachment(struct gl_context *ctx,
       return GL_FALSE;
 
    format = stObj->pt->format;
-   texFormat = _mesa_get_attachment_teximage_const(att)->TexFormat;
+   texFormat = att->Renderbuffer->TexImage->TexFormat;
 
    /* If the encoding is sRGB and sRGB rendering cannot be enabled,
     * check for linear format support instead.

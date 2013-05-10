@@ -71,25 +71,6 @@ extern struct gl_renderbuffer_attachment *
 _mesa_get_attachment(struct gl_context *ctx, struct gl_framebuffer *fb,
                      GLenum attachment);
 
-
-/** Return the texture image for a renderbuffer attachment */
-static inline struct gl_texture_image *
-_mesa_get_attachment_teximage(struct gl_renderbuffer_attachment *att)
-{
-   assert(att->Type == GL_TEXTURE);
-   return att->Texture->Image[att->CubeMapFace][att->TextureLevel];
-}
-
-
-/** Return the (const) texture image for a renderbuffer attachment */
-static inline const struct gl_texture_image *
-_mesa_get_attachment_teximage_const(const struct gl_renderbuffer_attachment *att)
-{
-   assert(att->Type == GL_TEXTURE);
-   return att->Texture->Image[att->CubeMapFace][att->TextureLevel];
-}
-
-
 extern void
 _mesa_remove_attachment(struct gl_context *ctx,
                         struct gl_renderbuffer_attachment *att);
