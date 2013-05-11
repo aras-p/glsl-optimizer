@@ -135,6 +135,8 @@ client_state(struct gl_context *ctx, GLenum cap, GLboolean state)
    else
       arrayObj->_Enabled &= ~flag;
 
+   arrayObj->NewArrays |= flag;
+
    if (ctx->Driver.Enable) {
       ctx->Driver.Enable( ctx, cap, state );
    }
