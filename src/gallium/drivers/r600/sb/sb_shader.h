@@ -271,7 +271,6 @@ public:
 
 	error_map errors;
 
-	bool enable_dump;
 	bool optimized;
 
 	unsigned id;
@@ -296,7 +295,7 @@ public:
 
 	unsigned ngpr, nstack;
 
-	shader(sb_context &sctx, shader_target t, unsigned id, bool dump);
+	shader(sb_context &sctx, shader_target t, unsigned id);
 
 	~shader();
 

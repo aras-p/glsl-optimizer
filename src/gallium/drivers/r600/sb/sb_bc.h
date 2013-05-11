@@ -674,40 +674,39 @@ class bc_parser {
 	typedef std::stack<region_node*> region_stack;
 	region_stack loop_stack;
 
-	int enable_dump;
-	int optimize;
-
 public:
 
-	bc_parser(sb_context &sctx, r600_bytecode *bc, r600_shader* pshader,
-	          int dump_source, int optimize) :
+	bc_parser(sb_context &sctx, r600_bytecode *bc, r600_shader* pshader) :
 		ctx(sctx), dec(), bc(bc), pshader(pshader),
 		dw(), bc_ndw(), max_cf(),
 		sh(), error(), slots(), cgroup(),
-		cf_map(), loop_stack(), enable_dump(dump_source),
-		optimize(optimize) { }
+		cf_map(), loop_stack() { }
 
-	int parse();
+	int decode();
+	int prepare();
 
 	shader* get_shader() { assert(!error); return sh; }
 
 private:
 
-	int parse_shader();
+	int decode_shader();
 
 	int parse_decls();
 
-	int parse_cf(unsigned &i, bool &eop);
+	int decode_cf(unsigned &i, bool &eop);
 
-	int parse_alu_clause(cf_node *cf);
-	int parse_alu_group(cf_node* cf, unsigned &i, unsigned &gcnt);
+	int decode_alu_clause(cf_node *cf);
+	int decode_alu_group(cf_node* cf, unsigned &i, unsigned &gcnt);
 
-	int parse_fetch_clause(cf_node *cf);
+	int decode_fetch_clause(cf_node *cf);
 
 	int prepare_ir();
+	int prepare_alu_clause(cf_node *cf);
+	int prepare_alu_group(cf_node* cf, alu_group_node *g);
+	int prepare_fetch_clause(cf_node *cf);
+
 	int prepare_loop(cf_node *c);
 	int prepare_if(cf_node *c);
-	int prepare_alu_clause(cf_node *c);
 
 };
 

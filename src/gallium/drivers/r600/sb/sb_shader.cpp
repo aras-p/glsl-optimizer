@@ -33,11 +33,11 @@ namespace r600_sb {
 
 using std::cerr;
 
-shader::shader(sb_context &sctx, shader_target t, unsigned id, bool dump)
+shader::shader(sb_context &sctx, shader_target t, unsigned id)
 : ctx(sctx), next_temp_value_index(temp_regid_offset),
   prep_regs_count(), pred_sels(),
   regions(), inputs(), undef(), val_pool(sizeof(value)),
-  pool(), all_nodes(), src_stats(), opt_stats(), errors(), enable_dump(dump),
+  pool(), all_nodes(), src_stats(), opt_stats(), errors(),
   optimized(), id(id),
   coal(*this), bbs(),
   target(t), vt(ex), ex(*this), root(),

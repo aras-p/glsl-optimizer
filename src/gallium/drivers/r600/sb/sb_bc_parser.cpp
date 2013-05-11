@@ -47,7 +47,7 @@ namespace r600_sb {
 
 using std::cerr;
 
-int bc_parser::parse() {
+int bc_parser::decode() {
 
 	dw = bc->bytecode;
 	bc_ndw = bc->ndw;
@@ -71,47 +71,27 @@ int bc_parser::parse() {
 			t = TARGET_FETCH;
 	}
 
-	sh = new shader(ctx, t, bc->debug_id, enable_dump);
-	int r = parse_shader();
+	sh = new shader(ctx, t, bc->debug_id);
+	int r = decode_shader();
 
 	delete dec;
-
-	if (r)
-		return r;
 
 	sh->ngpr = bc->ngpr;
 	sh->nstack = bc->nstack;
 
-	if (sh->target != TARGET_FETCH) {
-		sh->src_stats.ndw = bc->ndw;
-		sh->collect_stats(false);
-	}
-
-	if (enable_dump) {
-		bc_dump(*sh, cerr, bc->bytecode, bc_ndw).run();
-	}
-
-	if (!optimize)
-		return 0;
-
-	prepare_ir();
-
 	return r;
 }
 
-int bc_parser::parse_shader() {
+int bc_parser::decode_shader() {
 	int r = 0;
 	unsigned i = 0;
 	bool eop = false;
 
 	sh->init();
 
-	if (pshader)
-		parse_decls();
-
 	do {
 		eop = false;
-		if ((r = parse_cf(i, eop)))
+		if ((r = decode_cf(i, eop)))
 			return r;
 
 	} while (!eop || (i >> 1) <= max_cf);
@@ -119,34 +99,34 @@ int bc_parser::parse_shader() {
 	return 0;
 }
 
+int bc_parser::prepare() {
+	int r = 0;
+	if ((r = parse_decls()))
+		return r;
+	if ((r = prepare_ir()))
+		return r;
+	return 0;
+}
+
 int bc_parser::parse_decls() {
 
-//	sh->prepare_regs(rs.bc.ngpr);
+	if (!pshader) {
+		sh->add_gpr_array(0, pshader->bc.ngpr, 0x0F);
+		return 0;
+	}
 
 	if (pshader->indirect_files & ~(1 << TGSI_FILE_CONSTANT)) {
-
-#if SB_NO_ARRAY_INFO
-
-		sh->add_gpr_array(0, pshader->bc.ngpr, 0x0F);
-
-#else
 
 		assert(pshader->num_arrays);
 
 		if (pshader->num_arrays) {
-
 			for (unsigned i = 0; i < pshader->num_arrays; ++i) {
 				r600_shader_array &a = pshader->arrays[i];
 				sh->add_gpr_array(a.gpr_start, a.gpr_count, a.comp_mask);
 			}
-
 		} else {
 			sh->add_gpr_array(0, pshader->bc.ngpr, 0x0F);
 		}
-
-
-#endif
-
 	}
 
 	if (sh->target == TARGET_VS)
@@ -183,12 +163,10 @@ int bc_parser::parse_decls() {
 		}
 	}
 
-
 	return 0;
 }
 
-
-int bc_parser::parse_cf(unsigned &i, bool &eop) {
+int bc_parser::decode_cf(unsigned &i, bool &eop) {
 
 	int r;
 
@@ -210,18 +188,15 @@ int bc_parser::parse_cf(unsigned &i, bool &eop) {
 	cf_op_flags flags = (cf_op_flags)cf->bc.op_ptr->flags;
 
 	if (flags & CF_ALU) {
-		if ((r = parse_alu_clause(cf)))
+		if ((r = decode_alu_clause(cf)))
 			return r;
 	} else if (flags & CF_FETCH) {
-		if ((r = parse_fetch_clause(cf)))
+		if ((r = decode_fetch_clause(cf)))
 			return r;;
 	} else if (flags & CF_EXP) {
 		assert(!cf->bc.rw_rel);
 	} else if (flags & (CF_STRM | CF_RAT)) {
 		assert(!cf->bc.rw_rel);
-	} else if (cf->bc.op == CF_OP_CALL_FS) {
-		sh->init_call_fs(cf);
-		cf->flags |= NF_SCHEDULE_EARLY | NF_DONT_MOVE;
 	} else if (flags & CF_BRANCH) {
 		if (cf->bc.addr > max_cf)
 			max_cf = cf->bc.addr;
@@ -232,7 +207,7 @@ int bc_parser::parse_cf(unsigned &i, bool &eop) {
 	return 0;
 }
 
-int bc_parser::parse_alu_clause(cf_node* cf) {
+int bc_parser::decode_alu_clause(cf_node* cf) {
 	unsigned i = cf->bc.addr << 1, cnt = cf->bc.count + 1, gcnt;
 
 	cf->subtype = NST_ALU_CLAUSE;
@@ -243,7 +218,7 @@ int bc_parser::parse_alu_clause(cf_node* cf) {
 	unsigned ng = 0;
 
 	do {
-		parse_alu_group(cf, i, gcnt);
+		decode_alu_group(cf, i, gcnt);
 		assert(gcnt <= cnt);
 		cnt -= gcnt;
 		ng++;
@@ -252,15 +227,16 @@ int bc_parser::parse_alu_clause(cf_node* cf) {
 	return 0;
 }
 
-int bc_parser::parse_alu_group(cf_node* cf, unsigned &i, unsigned &gcnt) {
+int bc_parser::decode_alu_group(cf_node* cf, unsigned &i, unsigned &gcnt) {
 	int r;
 	alu_node *n;
 	alu_group_node *g = sh->create_alu_group();
 
 	cgroup = !cgroup;
 	memset(slots[cgroup], 0, 5*sizeof(slots[0][0]));
-
 	gcnt = 0;
+
+	unsigned literal_mask = 0;
 
 	do {
 		n = sh->create_alu();
@@ -280,11 +256,62 @@ int bc_parser::parse_alu_group(cf_node* cf, unsigned &i, unsigned &gcnt) {
 
 	assert(n->bc.last);
 
-	unsigned literal_mask = 0;
+	for (node_iterator I = g->begin(), E = g->end(); I != E; ++I) {
+		n = static_cast<alu_node*>(*I);
+
+		for (int k = 0; k < n->bc.op_ptr->src_count; ++k) {
+			bc_alu_src &src = n->bc.src[k];
+			if (src.sel == ALU_SRC_LITERAL) {
+				literal_mask |= (1 << src.chan);
+				src.value.u = dw[i + src.chan];
+			}
+		}
+	}
+
+	unsigned literal_ndw = 0;
+	while (literal_mask) {
+		g->literals.push_back(dw[i + literal_ndw]);
+		literal_ndw += 1;
+		literal_mask >>= 1;
+	}
+
+	literal_ndw = (literal_ndw + 1) & ~1u;
+
+	i += literal_ndw;
+	gcnt += literal_ndw >> 1;
+
+	cf->push_back(g);
+	return 0;
+}
+
+int bc_parser::prepare_alu_clause(cf_node* cf) {
+
+	// loop over alu groups
+	for (node_iterator I = cf->begin(), E = cf->end(); I != E; ++I) {
+		assert(I->subtype == NST_ALU_GROUP);
+		alu_group_node *g = static_cast<alu_group_node*>(*I);
+		prepare_alu_group(cf, g);
+	}
+
+	return 0;
+}
+
+int bc_parser::prepare_alu_group(cf_node* cf, alu_group_node *g) {
+
+	alu_node *n;
+
+	cgroup = !cgroup;
+	memset(slots[cgroup], 0, 5*sizeof(slots[0][0]));
 
 	for (node_iterator I = g->begin(), E = g->end();
 			I != E; ++I) {
 		n = static_cast<alu_node*>(*I);
+
+		if (!sh->assign_slot(n, slots[cgroup])) {
+			assert(!"alu slot assignment failed");
+			return -1;
+		}
+
 		unsigned src_count = n->bc.op_ptr->src_count;
 
 		if (ctx.alu_slots(n->bc.op) & AF_4SLOT)
@@ -340,10 +367,6 @@ int bc_parser::parse_alu_group(cf_node* cf, unsigned &i, unsigned &gcnt) {
 			bc_alu_src &src = n->bc.src[s];
 
 			if (src.sel == ALU_SRC_LITERAL) {
-				unsigned chan = src.chan;
-
-				literal_mask |= (1 << chan);
-				src.value.u = dw[i+chan];
 				n->src[s] = sh->get_const_value(src.value);
 			} else if (src.sel == ALU_SRC_PS || src.sel == ALU_SRC_PV) {
 				unsigned pgroup = !cgroup, prev_slot = src.sel == ALU_SRC_PS ?
@@ -430,37 +453,51 @@ int bc_parser::parse_alu_group(cf_node* cf, unsigned &i, unsigned &gcnt) {
 
 	if (p) {
 		g->push_front(p);
+
+		if (p->count() == 3 && ctx.is_cayman()) {
+			// cayman's scalar instruction that can use 3 or 4 slots
+
+			// FIXME for simplicity we'll always add 4th slot,
+			// but probably we might want to always remove 4th slot and make
+			// sure that regalloc won't choose 'w' component for dst
+
+			alu_node *f = static_cast<alu_node*>(p->first);
+			alu_node *a = sh->create_alu();
+			a->src = f->src;
+			a->dst.resize(f->dst.size());
+			a->bc = f->bc;
+			a->bc.slot = SLOT_W;
+			p->push_back(a);
+		}
 	}
 
-	unsigned literal_ndw = 0;
-	while (literal_mask) {
-		g->literals.push_back(dw[i + literal_ndw]);
-		literal_ndw += 1;
-		literal_mask >>= 1;
-	}
-
-	literal_ndw = (literal_ndw + 1) & ~1u;
-
-	i += literal_ndw;
-	gcnt += literal_ndw >> 1;
-
-	cf->push_back(g);
 	return 0;
 }
 
-int bc_parser::parse_fetch_clause(cf_node* cf) {
+int bc_parser::decode_fetch_clause(cf_node* cf) {
 	int r;
 	unsigned i = cf->bc.addr << 1, cnt = cf->bc.count + 1;
 
 	cf->subtype = NST_TEX_CLAUSE;
-
-	vvec grad_v, grad_h;
 
 	while (cnt--) {
 		fetch_node *n = sh->create_fetch();
 		cf->push_back(n);
 		if ((r = dec->decode_fetch(i, n->bc)))
 			return r;
+
+	}
+	return 0;
+}
+
+int bc_parser::prepare_fetch_clause(cf_node *cf) {
+
+	vvec grad_v, grad_h;
+
+	for (node_iterator I = cf->begin(), E = cf->end(); I != E; ++I) {
+
+		fetch_node *n = static_cast<fetch_node*>(*I);
+		assert(n->is_valid());
 
 		unsigned flags = n->bc.op_ptr->flags;
 
@@ -527,6 +564,7 @@ int bc_parser::parse_fetch_clause(cf_node* cf) {
 
 		}
 	}
+
 	return 0;
 }
 
@@ -540,7 +578,14 @@ int bc_parser::prepare_ir() {
 
 		unsigned flags = c->bc.op_ptr->flags;
 
-		if (flags & CF_LOOP_START) {
+		if (flags & CF_ALU) {
+			prepare_alu_clause(c);
+		} else if (flags & CF_FETCH) {
+			prepare_fetch_clause(c);
+		} else if (c->bc.op == CF_OP_CALL_FS) {
+			sh->init_call_fs(c);
+			c->flags |= NF_SCHEDULE_EARLY | NF_DONT_MOVE;
+		} else if (flags & CF_LOOP_START) {
 			prepare_loop(c);
 		} else if (c->bc.op == CF_OP_JUMP) {
 			prepare_if(c);
@@ -560,10 +605,6 @@ int bc_parser::prepare_ir() {
 				dep->move(c->parent->first, c);
 			c->replace_with(dep);
 			sh->simplify_dep_rep(dep);
-		} else if (flags & CF_ALU && ctx.is_cayman()) {
-			// postprocess cayman's 3-slot instructions (ex-trans-only)
-			// FIXME it shouldn't be required with proper handling
-			prepare_alu_clause(c);
 		} else if (flags & CF_EXP) {
 
 			// unroll burst exports
@@ -735,40 +776,5 @@ int bc_parser::prepare_if(cf_node* c) {
 	return 0;
 }
 
-int bc_parser::prepare_alu_clause(cf_node* c) {
-
-	// loop over alu groups
-	for (node_iterator I = c->begin(), E = c->end(); I != E; ++I) {
-		assert(I->subtype == NST_ALU_GROUP);
-
-		alu_group_node *g = static_cast<alu_group_node*>(*I);
-
-		// loop over alu_group items
-		for (node_iterator I2 = g->begin(), E2 = g->end(); I2 != E2; ++I2) {
-			if (I2->subtype != NST_ALU_PACKED_INST)
-				continue;
-
-			alu_packed_node *p = static_cast<alu_packed_node*>(*I2);
-
-			if (p->count() == 3) {
-				// cayman's scalar instruction that takes 3 or 4 slots
-
-				// FIXME for simplicity we'll always add 4th slot,
-				// but probably we might want to always remove 4th slot and make
-				// sure that regalloc won't choose w component for dst
-
-				alu_node *f = static_cast<alu_node*>(p->first);
-				alu_node *a = sh->create_alu();
-				a->src = f->src;
-				a->dst.resize(f->dst.size());
-				a->bc = f->bc;
-				a->bc.slot = SLOT_W;
-				p->push_back(a);
-			}
-		}
-	}
-
-	return 0;
-}
 
 } // namespace r600_sb

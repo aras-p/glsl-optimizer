@@ -94,7 +94,7 @@ void r600_sb_context_destroy(void * sctx) {
 int r600_sb_bytecode_process(struct r600_context *rctx,
                              struct r600_bytecode *bc,
                              struct r600_shader *pshader,
-                             int dump_source_bytecode,
+                             int dump_bytecode,
                              int optimize) {
 	int r = 0;
 	unsigned shader_id = bc->debug_id;
@@ -111,11 +111,27 @@ int r600_sb_bytecode_process(struct r600_context *rctx,
 
 	SB_DUMP_STAT( cerr << "\nsb: shader " << shader_id << "\n"; );
 
-	bc_parser parser(*ctx, bc, pshader, dump_source_bytecode, optimize);
+	bc_parser parser(*ctx, bc, pshader);
 
-	if ((r = parser.parse())) {
-		assert(0);
+	if ((r = parser.decode())) {
+		assert(!"sb: bytecode decoding error");
 		return r;
+	}
+
+	shader *sh = parser.get_shader();
+
+	if (dump_bytecode) {
+		bc_dump(*sh, cerr, bc->bytecode, bc->ndw).run();
+	}
+
+	if (!optimize) {
+		delete sh;
+		return 0;
+	}
+
+	if (sh->target != TARGET_FETCH) {
+		sh->src_stats.ndw = bc->ndw;
+		sh->collect_stats(false);
 	}
 
 	/* skip some shaders (use shaders from default backend)
@@ -138,13 +154,12 @@ int r600_sb_bytecode_process(struct r600_context *rctx,
 		}
 	}
 
-	shader *sh = parser.get_shader();
-	SB_DUMP_PASS( cerr << "\n\n###### after parse\n"; sh->dump_ir(); );
-
-	if (!optimize) {
-		delete sh;
-		return 0;
+	if ((r = parser.prepare())) {
+		assert(!"sb: bytecode parsing error");
+		return r;
 	}
+
+	SB_DUMP_PASS( cerr << "\n\n###### after parse\n"; sh->dump_ir(); );
 
 #define SB_RUN_PASS(n, dump) \
 	do { \
@@ -222,8 +237,13 @@ int r600_sb_bytecode_process(struct r600_context *rctx,
 		return r;
 	}
 
+	bytecode &nbc = builder.get_bytecode();
+
+	if (dump_bytecode) {
+		bc_dump(*sh, cerr, &nbc).run();
+	}
+
 	if (!sb_context::dry_run) {
-		bytecode &nbc = builder.get_bytecode();
 
 		free(bc->bytecode);
 		bc->ndw = nbc.ndw();
@@ -233,9 +253,8 @@ int r600_sb_bytecode_process(struct r600_context *rctx,
 		bc->ngpr = sh->ngpr;
 		bc->nstack = sh->nstack;
 	} else {
-		SB_DUMP_STAT( cerr << "SB_USE_NEW_BYTECODE is not enabled\n"; );
+		SB_DUMP_STAT( cerr << "sb: dry run: optimized bytecode is not used\n"; );
 	}
-
 
 	if (sb_context::dump_stat) {
 		int64_t t = os_time_get_nano() - time_start;

@@ -94,10 +94,6 @@ int bc_builder::build() {
 		cf_pos = bb.get_pos();
 	}
 
-	if (sh.enable_dump) {
-		bc_dump(sh, cerr, &bb).run();
-	}
-
 	return 0;
 }
 
