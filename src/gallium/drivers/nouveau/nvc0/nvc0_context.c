@@ -123,11 +123,12 @@ nvc0_destroy(struct pipe_context *pipe)
 {
    struct nvc0_context *nvc0 = nvc0_context(pipe);
 
-   if (nvc0->screen->cur_ctx == nvc0) {
-      nvc0->base.pushbuf->kick_notify = NULL;
+   if (nvc0->screen->cur_ctx == nvc0)
       nvc0->screen->cur_ctx = NULL;
-      nouveau_pushbuf_bufctx(nvc0->base.pushbuf, NULL);
-   }
+   /* Unset bufctx, we don't want to revalidate any resources after the flush.
+    * Other contexts will always set their bufctx again on action calls.
+    */
+   nouveau_pushbuf_bufctx(nvc0->base.pushbuf, NULL);
    nouveau_pushbuf_kick(nvc0->base.pushbuf, nvc0->base.pushbuf->channel);
 
    nvc0_context_unreference_resources(nvc0);
