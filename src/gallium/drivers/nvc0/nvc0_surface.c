@@ -1247,6 +1247,13 @@ nvc0_blitctx_create(struct nvc0_context *nvc0)
 }
 
 void
+nvc0_blitctx_destroy(struct nvc0_context *nvc0)
+{
+   if (nvc0->blit)
+      FREE(nvc0->blit);
+}
+
+void
 nvc0_init_surface_functions(struct nvc0_context *nvc0)
 {
    struct pipe_context *pipe = &nvc0->base.pipe;

@@ -96,6 +96,7 @@
 struct nvc0_blitctx;
 
 boolean nvc0_blitctx_create(struct nvc0_context *);
+void nvc0_blitctx_destroy(struct nvc0_context *);
 
 struct nvc0_context {
    struct nouveau_context base;

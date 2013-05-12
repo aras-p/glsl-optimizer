@@ -111,6 +111,7 @@ nvc0_destroy(struct pipe_context *pipe)
    nouveau_pushbuf_kick(nvc0->base.pushbuf, nvc0->base.pushbuf->channel);
 
    nvc0_context_unreference_resources(nvc0);
+   nvc0_blitctx_destroy(nvc0);
 
 #ifdef NVC0_WITH_DRAW_MODULE
    draw_destroy(nvc0->draw);
