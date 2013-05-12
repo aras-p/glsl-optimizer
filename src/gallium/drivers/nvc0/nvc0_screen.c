@@ -361,6 +361,7 @@ nvc0_screen_destroy(struct pipe_screen *pscreen)
    nouveau_object_del(&screen->eng3d);
    nouveau_object_del(&screen->eng2d);
    nouveau_object_del(&screen->m2mf);
+   nouveau_object_del(&screen->compute);
 
    nouveau_screen_fini(&screen->base);
 
