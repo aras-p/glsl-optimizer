@@ -279,13 +279,14 @@ xa_format_check_supported(struct xa_tracker *xa,
     return XA_ERR_NONE;
 }
 
-XA_EXPORT struct xa_surface *
-xa_surface_create(struct xa_tracker *xa,
+static struct xa_surface *
+surface_create(struct xa_tracker *xa,
 		  int width,
 		  int height,
 		  int depth,
 		  enum xa_surface_type stype,
-		  enum xa_formats xa_format, unsigned int flags)
+		  enum xa_formats xa_format, unsigned int flags,
+		  struct winsys_handle *whandle)
 {
     struct pipe_resource *template;
     struct xa_surface *srf;
@@ -320,7 +321,10 @@ xa_surface_create(struct xa_tracker *xa,
     if (flags & XA_FLAG_SCANOUT)
 	template->bind |= PIPE_BIND_SCANOUT;
 
-    srf->tex = xa->screen->resource_create(xa->screen, template);
+    if (whandle)
+	srf->tex = xa->screen->resource_from_handle(xa->screen, template, whandle);
+    else
+	srf->tex = xa->screen->resource_create(xa->screen, template);
     if (!srf->tex)
 	goto out_no_tex;
 
@@ -332,6 +336,35 @@ xa_surface_create(struct xa_tracker *xa,
  out_no_tex:
     free(srf);
     return NULL;
+}
+
+
+XA_EXPORT struct xa_surface *
+xa_surface_create(struct xa_tracker *xa,
+		  int width,
+		  int height,
+		  int depth,
+		  enum xa_surface_type stype,
+		  enum xa_formats xa_format, unsigned int flags)
+{
+    return surface_create(xa, width, height, depth, stype, xa_format, flags, NULL);
+}
+
+
+XA_EXPORT struct xa_surface *
+xa_surface_from_handle(struct xa_tracker *xa,
+		  int width,
+		  int height,
+		  int depth,
+		  enum xa_surface_type stype,
+		  enum xa_formats xa_format, unsigned int flags,
+		  uint32_t handle, uint32_t stride)
+{
+    struct winsys_handle whandle;
+    memset(&whandle, 0, sizeof(whandle));
+    whandle.handle = handle;
+    whandle.stride = stride;
+    return surface_create(xa, width, height, depth, stype, xa_format, flags, &whandle);
 }
 
 XA_EXPORT int

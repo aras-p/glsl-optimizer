@@ -160,6 +160,15 @@ extern struct xa_surface *xa_surface_create(struct xa_tracker *xa,
 					    enum xa_formats pform,
 					    unsigned int flags);
 
+extern struct xa_surface * xa_surface_from_handle(struct xa_tracker *xa,
+					    int width,
+					    int height,
+					    int depth,
+					    enum xa_surface_type stype,
+					    enum xa_formats pform,
+					    unsigned int flags,
+					    uint32_t handle, uint32_t stride);
+
 enum xa_formats xa_surface_format(const struct xa_surface *srf);
 
 extern void xa_surface_destroy(struct xa_surface *srf);
