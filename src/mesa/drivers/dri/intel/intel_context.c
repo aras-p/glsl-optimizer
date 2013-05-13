@@ -235,6 +235,32 @@ intelGetString(struct gl_context * ctx, GLenum name)
       case PCI_CHIP_HASWELL_CRW_S_GT3:
 	 chipset = "Intel(R) Haswell Server";
 	 break;
+      case PCI_CHIP_HASWELL_B_GT1:
+      case PCI_CHIP_HASWELL_B_GT2:
+      case PCI_CHIP_HASWELL_B_GT3:
+      case PCI_CHIP_HASWELL_SDV_B_GT1:
+      case PCI_CHIP_HASWELL_SDV_B_GT2:
+      case PCI_CHIP_HASWELL_SDV_B_GT3:
+      case PCI_CHIP_HASWELL_ULT_B_GT1:
+      case PCI_CHIP_HASWELL_ULT_B_GT2:
+      case PCI_CHIP_HASWELL_ULT_B_GT3:
+      case PCI_CHIP_HASWELL_CRW_B_GT1:
+      case PCI_CHIP_HASWELL_CRW_B_GT2:
+      case PCI_CHIP_HASWELL_CRW_B_GT3:
+      case PCI_CHIP_HASWELL_E_GT1:
+      case PCI_CHIP_HASWELL_E_GT2:
+      case PCI_CHIP_HASWELL_E_GT3:
+      case PCI_CHIP_HASWELL_SDV_E_GT1:
+      case PCI_CHIP_HASWELL_SDV_E_GT2:
+      case PCI_CHIP_HASWELL_SDV_E_GT3:
+      case PCI_CHIP_HASWELL_ULT_E_GT1:
+      case PCI_CHIP_HASWELL_ULT_E_GT2:
+      case PCI_CHIP_HASWELL_ULT_E_GT3:
+      case PCI_CHIP_HASWELL_CRW_E_GT1:
+      case PCI_CHIP_HASWELL_CRW_E_GT2:
+      case PCI_CHIP_HASWELL_CRW_E_GT3:
+         chipset = "Intel(R) Haswell";
+         break;
       default:
          chipset = "Unknown Intel Chipset";
          break;
