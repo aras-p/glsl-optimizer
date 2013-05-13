@@ -33,6 +33,7 @@
 #include "main/fbobject.h"
 #include "main/dd.h"
 #include "main/state.h"
+#include "main/stencil.h"
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
 
@@ -63,14 +64,14 @@ i915_update_stencil(struct gl_context * ctx)
     */
    /* _NEW_POLYGON | _NEW_STENCIL */
    if (ctx->Polygon.FrontFace == GL_CW) {
-      front_ref = ctx->Stencil.Ref[0];
+      front_ref = _mesa_get_stencil_ref(ctx, 0);
       front_mask = ctx->Stencil.ValueMask[0];
       front_writemask = ctx->Stencil.WriteMask[0];
       front_func = ctx->Stencil.Function[0];
       front_fail = ctx->Stencil.FailFunc[0];
       front_pass_z_fail = ctx->Stencil.ZFailFunc[0];
       front_pass_z_pass = ctx->Stencil.ZPassFunc[0];
-      back_ref = ctx->Stencil.Ref[ctx->Stencil._BackFace];
+      back_ref = _mesa_get_stencil_ref(ctx, ctx->Stencil._BackFace);
       back_mask = ctx->Stencil.ValueMask[ctx->Stencil._BackFace];
       back_writemask = ctx->Stencil.WriteMask[ctx->Stencil._BackFace];
       back_func = ctx->Stencil.Function[ctx->Stencil._BackFace];
@@ -78,14 +79,14 @@ i915_update_stencil(struct gl_context * ctx)
       back_pass_z_fail = ctx->Stencil.ZFailFunc[ctx->Stencil._BackFace];
       back_pass_z_pass = ctx->Stencil.ZPassFunc[ctx->Stencil._BackFace];
    } else {
-      front_ref = ctx->Stencil.Ref[ctx->Stencil._BackFace];
+      front_ref = _mesa_get_stencil_ref(ctx, ctx->Stencil._BackFace);
       front_mask = ctx->Stencil.ValueMask[ctx->Stencil._BackFace];
       front_writemask = ctx->Stencil.WriteMask[ctx->Stencil._BackFace];
       front_func = ctx->Stencil.Function[ctx->Stencil._BackFace];
       front_fail = ctx->Stencil.FailFunc[ctx->Stencil._BackFace];
       front_pass_z_fail = ctx->Stencil.ZFailFunc[ctx->Stencil._BackFace];
       front_pass_z_pass = ctx->Stencil.ZPassFunc[ctx->Stencil._BackFace];
-      back_ref = ctx->Stencil.Ref[0];
+      back_ref = _mesa_get_stencil_ref(ctx, 0);
       back_mask = ctx->Stencil.ValueMask[0];
       back_writemask = ctx->Stencil.WriteMask[0];
       back_func = ctx->Stencil.Function[0];

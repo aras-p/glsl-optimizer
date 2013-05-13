@@ -33,6 +33,7 @@
 #include "main/macros.h"
 #include "main/enums.h"
 #include "main/glformats.h"
+#include "main/stencil.h"
 
 static void
 gen6_upload_blend_state(struct brw_context *brw)
@@ -251,8 +252,8 @@ gen6_upload_color_calc_state(struct brw_context *brw)
    UNCLAMPED_FLOAT_TO_UBYTE(cc->cc1.alpha_ref_fi.ui, ctx->Color.AlphaRef);
 
    /* _NEW_STENCIL */
-   cc->cc0.stencil_ref = ctx->Stencil.Ref[0];
-   cc->cc0.bf_stencil_ref = ctx->Stencil.Ref[ctx->Stencil._BackFace];
+   cc->cc0.stencil_ref = _mesa_get_stencil_ref(ctx, 0);
+   cc->cc0.bf_stencil_ref = _mesa_get_stencil_ref(ctx, ctx->Stencil._BackFace);
 
    /* _NEW_COLOR */
    cc->constant_r = ctx->Color.BlendColorUnclamped[0];

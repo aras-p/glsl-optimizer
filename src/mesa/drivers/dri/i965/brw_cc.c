@@ -35,6 +35,7 @@
 #include "brw_defines.h"
 #include "brw_util.h"
 #include "main/macros.h"
+#include "main/stencil.h"
 #include "intel_batchbuffer.h"
 
 static void
@@ -116,7 +117,7 @@ static void upload_cc_unit(struct brw_context *brw)
 	 intel_translate_stencil_op(ctx->Stencil.ZFailFunc[0]);
       cc->cc0.stencil_pass_depth_pass_op =
 	 intel_translate_stencil_op(ctx->Stencil.ZPassFunc[0]);
-      cc->cc1.stencil_ref = ctx->Stencil.Ref[0];
+      cc->cc1.stencil_ref = _mesa_get_stencil_ref(ctx, 0);
       cc->cc1.stencil_write_mask = ctx->Stencil.WriteMask[0];
       cc->cc1.stencil_test_mask = ctx->Stencil.ValueMask[0];
 
@@ -130,7 +131,7 @@ static void upload_cc_unit(struct brw_context *brw)
 	    intel_translate_stencil_op(ctx->Stencil.ZFailFunc[back]);
 	 cc->cc0.bf_stencil_pass_depth_pass_op =
 	    intel_translate_stencil_op(ctx->Stencil.ZPassFunc[back]);
-	 cc->cc1.bf_stencil_ref = ctx->Stencil.Ref[back];
+	 cc->cc1.bf_stencil_ref = _mesa_get_stencil_ref(ctx, back);
 	 cc->cc2.bf_stencil_write_mask = ctx->Stencil.WriteMask[back];
 	 cc->cc2.bf_stencil_test_mask = ctx->Stencil.ValueMask[back];
       }
