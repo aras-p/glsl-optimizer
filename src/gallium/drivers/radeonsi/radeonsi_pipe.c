@@ -300,6 +300,7 @@ static const char *r600_get_family_name(enum radeon_family family)
 	case CHIP_PITCAIRN: return "AMD PITCAIRN";
 	case CHIP_VERDE: return "AMD CAPE VERDE";
 	case CHIP_OLAND: return "AMD OLAND";
+	case CHIP_HAINAN: return "AMD HAINAN";
 	default: return "AMD unknown";
 	}
 }
