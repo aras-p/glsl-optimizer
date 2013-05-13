@@ -41,6 +41,9 @@
 #include "pipe/p_defines.h"
 #include "cso_cache/cso_context.h"
 
+#include "main/core.h"
+#include "main/stencil.h"
+
 
 /**
  * Convert an OpenGL compare mode to a pipe tokens.
@@ -116,7 +119,7 @@ update_depth_stencil_alpha(struct st_context *st)
       dsa->stencil[0].zpass_op = gl_stencil_op_to_pipe(ctx->Stencil.ZPassFunc[0]);
       dsa->stencil[0].valuemask = ctx->Stencil.ValueMask[0] & 0xff;
       dsa->stencil[0].writemask = ctx->Stencil.WriteMask[0] & 0xff;
-      sr.ref_value[0] = ctx->Stencil.Ref[0] & 0xff;
+      sr.ref_value[0] = _mesa_get_stencil_ref(ctx, 0);
 
       if (ctx->Stencil._TestTwoSide) {
          const GLuint back = ctx->Stencil._BackFace;
@@ -127,7 +130,7 @@ update_depth_stencil_alpha(struct st_context *st)
          dsa->stencil[1].zpass_op = gl_stencil_op_to_pipe(ctx->Stencil.ZPassFunc[back]);
          dsa->stencil[1].valuemask = ctx->Stencil.ValueMask[back] & 0xff;
          dsa->stencil[1].writemask = ctx->Stencil.WriteMask[back] & 0xff;
-         sr.ref_value[1] = ctx->Stencil.Ref[back] & 0xff;
+         sr.ref_value[1] = _mesa_get_stencil_ref(ctx, back);
       }
       else {
          /* This should be unnecessary. Drivers must not expect this to
