@@ -79,4 +79,18 @@ _mesa_update_stencil(struct gl_context *ctx);
 extern void 
 _mesa_init_stencil( struct gl_context * ctx );
 
+/* From the GL 4.3 spec, 17.3.5:
+ *    "Stencil comparison operations and queries of <ref> clamp its value
+ *    to the range [0, 2^s-1], where <s> is the number of bits in the
+ *    stencil buffer attached to the draw framebuffer."
+ */
+
+static inline GLint
+_mesa_get_stencil_ref(struct gl_context const *ctx, int face)
+{
+   GLint stencilMax = (1 << ctx->DrawBuffer->Visual.stencilBits) - 1;
+   GLint ref = ctx->Stencil.Ref[face];
+   return CLAMP(ref, 0, stencilMax);
+}
+
 #endif
