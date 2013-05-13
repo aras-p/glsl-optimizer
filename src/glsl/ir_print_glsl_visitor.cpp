@@ -282,11 +282,12 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
 {
    const char *const cent = (ir->centroid) ? "centroid " : "";
    const char *const inv = (ir->invariant) ? "invariant " : "";
-   const char *const mode[3][ir_var_mode_count] = 
+   const char *const mode[3+1][ir_var_mode_count] =
    {
 	{ "", "uniform ", "in ",        "out ",     "in ", "out ", "inout ", "", "", "" },
 	{ "", "uniform ", "attribute ", "varying ", "in ", "out ", "inout ", "", "", "" },
 	{ "", "uniform ", "varying ",   "out ",     "in ", "out ", "inout ", "", "", "" },
+    { "", "uniform ", "in ",        "varying ", "in ", "out ", "inout ", "", "", "" },
    };
 	
    const char *const interp[] = { "", "smooth ", "flat ", "noperspective " };
@@ -297,6 +298,12 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
 	{
 		decormode = 0;
 	}
+    
+    // fancy vertex shader is using "in", and not "varying"
+    if ( this->state->OPENGL_fancy && this->state->target==vertex_shader )
+    {
+        decormode = 3;
+    }
 
    // give an id to any variable defined in a function that is not an uniform
    if ((this->mode == kPrintGlslNone && ir->mode != ir_var_uniform))
