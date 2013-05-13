@@ -110,7 +110,7 @@ enum intel_tiling_mode;
 
 struct intel_bo;
 struct ilo_cp;
-struct ilo_resource;
+struct ilo_texture;
 struct ilo_shader;
 
 typedef void

@@ -43,7 +43,7 @@ struct winsys_handle;
  *    - ilo_texture
  *    - ilo_global_binding
  */
-struct ilo_resource {
+struct ilo_texture {
    struct pipe_resource base;
    struct winsys_handle *handle;
 
@@ -79,21 +79,21 @@ struct ilo_resource {
    } *slice_offsets[PIPE_MAX_TEXTURE_LEVELS];
 };
 
-static inline struct ilo_resource *
-ilo_resource(struct pipe_resource *res)
+static inline struct ilo_texture *
+ilo_texture(struct pipe_resource *res)
 {
-   return (struct ilo_resource *) res;
+   return (struct ilo_texture *) res;
 }
 
 void
 ilo_init_resource_functions(struct ilo_screen *is);
 
 bool
-ilo_resource_alloc_bo(struct ilo_resource *res);
+ilo_texture_alloc_bo(struct ilo_texture *tex);
 
 unsigned
-ilo_resource_get_slice_offset(const struct ilo_resource *res,
-                              int level, int slice, bool tile_aligned,
-                              unsigned *x_offset, unsigned *y_offset);
+ilo_texture_get_slice_offset(const struct ilo_texture *tex,
+                             int level, int slice, bool tile_aligned,
+                             unsigned *x_offset, unsigned *y_offset);
 
 #endif /* ILO_RESOURCE_H */

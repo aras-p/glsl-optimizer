@@ -56,7 +56,7 @@ ilo_transfer(struct pipe_transfer *transfer)
 
 static void
 ilo_transfer_inline_write(struct pipe_context *pipe,
-                          struct pipe_resource *r,
+                          struct pipe_resource *res,
                           unsigned level,
                           unsigned usage,
                           const struct pipe_box *box,
@@ -65,7 +65,7 @@ ilo_transfer_inline_write(struct pipe_context *pipe,
                           unsigned layer_stride)
 {
    struct ilo_context *ilo = ilo_context(pipe);
-   struct ilo_resource *res = ilo_resource(r);
+   struct ilo_texture *tex = ilo_texture(res);
    int offset, size;
    bool will_be_busy;
 
@@ -74,9 +74,9 @@ ilo_transfer_inline_write(struct pipe_context *pipe,
     * unsynchronized write, as the buffer is likely to be busy and pwrite()
     * will stall.
     */
-   if (unlikely(res->base.target != PIPE_BUFFER) ||
+   if (unlikely(tex->base.target != PIPE_BUFFER) ||
        (usage & PIPE_TRANSFER_UNSYNCHRONIZED)) {
-      u_default_transfer_inline_write(pipe, r,
+      u_default_transfer_inline_write(pipe, res,
             level, usage, box, data, stride, layer_stride);
 
       return;
@@ -90,21 +90,21 @@ ilo_transfer_inline_write(struct pipe_context *pipe,
    if (ilo->cp->hw_ctx)
       ilo_cp_flush(ilo->cp);
 
-   will_be_busy = ilo->cp->bo->references(ilo->cp->bo, res->bo);
+   will_be_busy = ilo->cp->bo->references(ilo->cp->bo, tex->bo);
 
    /* see if we can avoid stalling */
-   if (will_be_busy || intel_bo_is_busy(res->bo)) {
+   if (will_be_busy || intel_bo_is_busy(tex->bo)) {
       bool will_stall = true;
 
       if (usage & PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE) {
          /* old data not needed so discard the old bo to avoid stalling */
-         if (ilo_resource_alloc_bo(res))
+         if (ilo_texture_alloc_bo(tex))
             will_stall = false;
       }
       else {
          /*
           * We could allocate a temporary bo to hold the data and emit
-          * pipelined copy blit to move them to res->bo.  But for now, do
+          * pipelined copy blit to move them to tex->bo.  But for now, do
           * nothing.
           */
       }
@@ -115,7 +115,7 @@ ilo_transfer_inline_write(struct pipe_context *pipe,
    }
 
    /* for PIPE_BUFFERs, conversion should not be needed */
-   assert(res->bo_format == res->base.format);
+   assert(tex->bo_format == tex->base.format);
 
    /* they should specify just an offset and a size */
    assert(level == 0);
@@ -126,7 +126,7 @@ ilo_transfer_inline_write(struct pipe_context *pipe,
    offset = box->x;
    size = box->width;
 
-   res->bo->pwrite(res->bo, offset, size, data);
+   tex->bo->pwrite(tex->bo, offset, size, data);
 }
 
 static void
@@ -160,7 +160,7 @@ transfer_unmap_sys_convert(enum pipe_format dst_fmt,
 
 static void
 transfer_unmap_sys(struct ilo_context *ilo,
-                   struct ilo_resource *res,
+                   struct ilo_texture *tex,
                    struct ilo_transfer *xfer)
 {
    const void *src = xfer->ptr;
@@ -179,12 +179,12 @@ transfer_unmap_sys(struct ilo_context *ilo,
       return;
    }
 
-   if (likely(res->bo_format != res->base.format)) {
-      transfer_unmap_sys_convert(res->bo_format, dst_xfer, dst,
-            res->base.format, &xfer->base, src);
+   if (likely(tex->bo_format != tex->base.format)) {
+      transfer_unmap_sys_convert(tex->bo_format, dst_xfer, dst,
+            tex->base.format, &xfer->base, src);
    }
    else {
-      util_copy_box(dst, res->bo_format,
+      util_copy_box(dst, tex->bo_format,
             dst_xfer->stride, dst_xfer->layer_stride, 0, 0, 0,
             dst_xfer->box.width, dst_xfer->box.height, dst_xfer->box.depth,
             src, xfer->base.stride, xfer->base.layer_stride, 0, 0, 0);
@@ -196,13 +196,13 @@ transfer_unmap_sys(struct ilo_context *ilo,
 
 static bool
 transfer_map_sys(struct ilo_context *ilo,
-                 struct ilo_resource *res,
+                 struct ilo_texture *tex,
                  struct ilo_transfer *xfer)
 {
    const struct pipe_box *box = &xfer->base.box;
-   const size_t stride = util_format_get_stride(res->base.format, box->width);
+   const size_t stride = util_format_get_stride(tex->base.format, box->width);
    const size_t size =
-      util_format_get_2d_size(res->base.format, stride, box->height);
+      util_format_get_2d_size(tex->base.format, stride, box->height);
    bool read_back = false;
 
    if (xfer->base.usage & PIPE_TRANSFER_READ) {
@@ -233,63 +233,63 @@ transfer_map_sys(struct ilo_context *ilo,
 
 static void
 transfer_unmap_direct(struct ilo_context *ilo,
-                      struct ilo_resource *res,
+                      struct ilo_texture *tex,
                       struct ilo_transfer *xfer)
 {
-   res->bo->unmap(res->bo);
+   tex->bo->unmap(tex->bo);
 }
 
 static bool
 transfer_map_direct(struct ilo_context *ilo,
-                    struct ilo_resource *res,
+                    struct ilo_texture *tex,
                     struct ilo_transfer *xfer)
 {
    int x, y, err;
 
    if (xfer->base.usage & PIPE_TRANSFER_UNSYNCHRONIZED)
-      err = res->bo->map_unsynchronized(res->bo);
+      err = tex->bo->map_unsynchronized(tex->bo);
    /* prefer map() when there is the last-level cache */
-   else if (res->tiling == INTEL_TILING_NONE &&
+   else if (tex->tiling == INTEL_TILING_NONE &&
             (ilo->dev->has_llc || (xfer->base.usage & PIPE_TRANSFER_READ)))
-      err = res->bo->map(res->bo, (xfer->base.usage & PIPE_TRANSFER_WRITE));
+      err = tex->bo->map(tex->bo, (xfer->base.usage & PIPE_TRANSFER_WRITE));
    else
-      err = res->bo->map_gtt(res->bo);
+      err = tex->bo->map_gtt(tex->bo);
 
    if (err)
       return false;
 
    /* note that stride is for a block row, not a texel row */
-   xfer->base.stride = res->bo_stride;
+   xfer->base.stride = tex->bo_stride;
 
    /*
     * we can walk through layers when the resource is a texture array or
     * when this is the first level of a 3D texture being mapped
     */
-   if (res->base.array_size > 1 ||
-       (res->base.target == PIPE_TEXTURE_3D && xfer->base.level == 0)) {
-      const unsigned qpitch = res->slice_offsets[xfer->base.level][1].y -
-         res->slice_offsets[xfer->base.level][0].y;
+   if (tex->base.array_size > 1 ||
+       (tex->base.target == PIPE_TEXTURE_3D && xfer->base.level == 0)) {
+      const unsigned qpitch = tex->slice_offsets[xfer->base.level][1].y -
+         tex->slice_offsets[xfer->base.level][0].y;
 
-      assert(qpitch % res->block_height == 0);
-      xfer->base.layer_stride = (qpitch / res->block_height) * xfer->base.stride;
+      assert(qpitch % tex->block_height == 0);
+      xfer->base.layer_stride = (qpitch / tex->block_height) * xfer->base.stride;
    }
    else {
       xfer->base.layer_stride = 0;
    }
 
-   x = res->slice_offsets[xfer->base.level][xfer->base.box.z].x;
-   y = res->slice_offsets[xfer->base.level][xfer->base.box.z].y;
+   x = tex->slice_offsets[xfer->base.level][xfer->base.box.z].x;
+   y = tex->slice_offsets[xfer->base.level][xfer->base.box.z].y;
 
    x += xfer->base.box.x;
    y += xfer->base.box.y;
 
    /* in blocks */
-   assert(x % res->block_width == 0 && y % res->block_height == 0);
-   x /= res->block_width;
-   y /= res->block_height;
+   assert(x % tex->block_width == 0 && y % tex->block_height == 0);
+   x /= tex->block_width;
+   y /= tex->block_height;
 
-   xfer->ptr = res->bo->get_virtual(res->bo);
-   xfer->ptr += y * res->bo_stride + x * res->bo_cpp;
+   xfer->ptr = tex->bo->get_virtual(tex->bo);
+   xfer->ptr += y * tex->bo_stride + x * tex->bo_cpp;
 
    return true;
 }
@@ -300,13 +300,13 @@ transfer_map_direct(struct ilo_context *ilo,
  */
 static bool
 transfer_map_choose_method(struct ilo_context *ilo,
-                           struct ilo_resource *res,
+                           struct ilo_texture *tex,
                            struct ilo_transfer *xfer)
 {
    bool will_be_busy, will_stall;
 
    /* need to convert on-the-fly */
-   if (res->bo_format != res->base.format &&
+   if (tex->bo_format != tex->base.format &&
        !(xfer->base.usage & PIPE_TRANSFER_MAP_DIRECTLY)) {
       xfer->method = ILO_TRANSFER_MAP_STAGING_SYS;
 
@@ -319,7 +319,7 @@ transfer_map_choose_method(struct ilo_context *ilo,
    if (xfer->base.usage & PIPE_TRANSFER_UNSYNCHRONIZED)
       return true;
 
-   will_be_busy = ilo->cp->bo->references(ilo->cp->bo, res->bo);
+   will_be_busy = ilo->cp->bo->references(ilo->cp->bo, tex->bo);
    if (!will_be_busy) {
       /*
        * XXX With hardware context support, the bo may be needed by GPU
@@ -329,7 +329,7 @@ transfer_map_choose_method(struct ilo_context *ilo,
       if (ilo->cp->hw_ctx)
          ilo_cp_flush(ilo->cp);
 
-      if (!intel_bo_is_busy(res->bo))
+      if (!intel_bo_is_busy(tex->bo))
          return true;
    }
 
@@ -341,7 +341,7 @@ transfer_map_choose_method(struct ilo_context *ilo,
    }
    else if (xfer->base.usage & PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE) {
       /* discard old bo and allocate a new one for mapping */
-      if (ilo_resource_alloc_bo(res))
+      if (ilo_texture_alloc_bo(tex))
          will_stall = false;
    }
    else if (xfer->base.usage & PIPE_TRANSFER_FLUSH_EXPLICIT) {
@@ -386,15 +386,15 @@ ilo_transfer_unmap(struct pipe_context *pipe,
                    struct pipe_transfer *transfer)
 {
    struct ilo_context *ilo = ilo_context(pipe);
-   struct ilo_resource *res = ilo_resource(transfer->resource);
+   struct ilo_texture *tex = ilo_texture(transfer->resource);
    struct ilo_transfer *xfer = ilo_transfer(transfer);
 
    switch (xfer->method) {
    case ILO_TRANSFER_MAP_DIRECT:
-      transfer_unmap_direct(ilo, res, xfer);
+      transfer_unmap_direct(ilo, tex, xfer);
       break;
    case ILO_TRANSFER_MAP_STAGING_SYS:
-      transfer_unmap_sys(ilo, res, xfer);
+      transfer_unmap_sys(ilo, tex, xfer);
       break;
    default:
       assert(!"unknown mapping method");
@@ -407,14 +407,14 @@ ilo_transfer_unmap(struct pipe_context *pipe,
 
 static void *
 ilo_transfer_map(struct pipe_context *pipe,
-                 struct pipe_resource *r,
+                 struct pipe_resource *res,
                  unsigned level,
                  unsigned usage,
                  const struct pipe_box *box,
                  struct pipe_transfer **transfer)
 {
    struct ilo_context *ilo = ilo_context(pipe);
-   struct ilo_resource *res = ilo_resource(r);
+   struct ilo_texture *tex = ilo_texture(res);
    struct ilo_transfer *xfer;
    int ok;
 
@@ -425,19 +425,19 @@ ilo_transfer_map(struct pipe_context *pipe,
    }
 
    xfer->base.resource = NULL;
-   pipe_resource_reference(&xfer->base.resource, &res->base);
+   pipe_resource_reference(&xfer->base.resource, &tex->base);
    xfer->base.level = level;
    xfer->base.usage = usage;
    xfer->base.box = *box;
 
-   ok = transfer_map_choose_method(ilo, res, xfer);
+   ok = transfer_map_choose_method(ilo, tex, xfer);
    if (ok) {
       switch (xfer->method) {
       case ILO_TRANSFER_MAP_DIRECT:
-         ok = transfer_map_direct(ilo, res, xfer);
+         ok = transfer_map_direct(ilo, tex, xfer);
          break;
       case ILO_TRANSFER_MAP_STAGING_SYS:
-         ok = transfer_map_sys(ilo, res, xfer);
+         ok = transfer_map_sys(ilo, tex, xfer);
          break;
       default:
          assert(!"unknown mapping method");

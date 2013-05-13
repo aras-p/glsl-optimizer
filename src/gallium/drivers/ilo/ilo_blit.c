@@ -39,20 +39,20 @@
 
 static bool
 blitter_xy_color_blt(struct pipe_context *pipe,
-                     struct pipe_resource *r,
+                     struct pipe_resource *res,
                      int16_t x1, int16_t y1,
                      int16_t x2, int16_t y2,
                      uint32_t color)
 {
    const int cmd_len = 6;
    struct ilo_context *ilo = ilo_context(pipe);
-   struct ilo_resource *res = ilo_resource(r);
+   struct ilo_texture *tex = ilo_texture(res);
    uint32_t cmd, br13;
    int cpp, stride;
    struct intel_bo *bo_check[2];
 
    /* how to support Y-tiling? */
-   if (res->tiling == INTEL_TILING_Y)
+   if (tex->tiling == INTEL_TILING_Y)
       return false;
 
    /* nothing to clear */
@@ -62,7 +62,7 @@ blitter_xy_color_blt(struct pipe_context *pipe,
    cmd = XY_COLOR_BLT_CMD | (cmd_len - 2);
    br13 = 0xf0 << 16;
 
-   cpp = util_format_get_blocksize(res->base.format);
+   cpp = util_format_get_blocksize(tex->base.format);
    switch (cpp) {
    case 4:
       cmd |= XY_BLT_WRITE_ALPHA | XY_BLT_WRITE_RGB;
@@ -79,9 +79,9 @@ blitter_xy_color_blt(struct pipe_context *pipe,
       break;
    }
 
-   stride = res->bo_stride;
-   if (res->tiling != INTEL_TILING_NONE) {
-      assert(res->tiling == INTEL_TILING_X);
+   stride = tex->bo_stride;
+   if (tex->tiling != INTEL_TILING_NONE) {
+      assert(tex->tiling == INTEL_TILING_X);
 
       cmd |= XY_DST_TILED;
       /* in dwords */
@@ -90,7 +90,7 @@ blitter_xy_color_blt(struct pipe_context *pipe,
 
    /* make room if necessary */
    bo_check[0] = ilo->cp->bo;
-   bo_check[1] = res->bo;
+   bo_check[1] = tex->bo;
    if (ilo->winsys->check_aperture_space(ilo->winsys, bo_check, 2))
       ilo_cp_flush(ilo->cp);
 
@@ -101,7 +101,7 @@ blitter_xy_color_blt(struct pipe_context *pipe,
    ilo_cp_write(ilo->cp, br13 | stride);
    ilo_cp_write(ilo->cp, (y1 << 16) | x1);
    ilo_cp_write(ilo->cp, (y2 << 16) | x2);
-   ilo_cp_write_bo(ilo->cp, 0, res->bo,
+   ilo_cp_write_bo(ilo->cp, 0, tex->bo,
                    INTEL_DOMAIN_RENDER,
                    INTEL_DOMAIN_RENDER);
    ilo_cp_write(ilo->cp, color);

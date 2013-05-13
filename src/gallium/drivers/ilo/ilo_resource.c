@@ -32,14 +32,14 @@
 #define ILO_BIND_MCS PIPE_BIND_CUSTOM
 
 static struct intel_bo *
-alloc_buf_bo(const struct ilo_resource *res)
+alloc_buf_bo(const struct ilo_texture *tex)
 {
-   struct ilo_screen *is = ilo_screen(res->base.screen);
+   struct ilo_screen *is = ilo_screen(tex->base.screen);
    struct intel_bo *bo;
    const char *name;
-   const unsigned size = res->bo_width;
+   const unsigned size = tex->bo_width;
 
-   switch (res->base.bind) {
+   switch (tex->base.bind) {
    case PIPE_BIND_VERTEX_BUFFER:
       name = "vertex buffer";
       break;
@@ -58,19 +58,19 @@ alloc_buf_bo(const struct ilo_resource *res)
    }
 
    /* this is what a buffer supposed to be like */
-   assert(res->bo_width * res->bo_height * res->bo_cpp == size);
-   assert(res->tiling == INTEL_TILING_NONE);
-   assert(res->bo_stride == 0);
+   assert(tex->bo_width * tex->bo_height * tex->bo_cpp == size);
+   assert(tex->tiling == INTEL_TILING_NONE);
+   assert(tex->bo_stride == 0);
 
-   if (res->handle) {
+   if (tex->handle) {
       bo = is->winsys->import_handle(is->winsys, name,
-            res->bo_width, res->bo_height, res->bo_cpp, res->handle);
+            tex->bo_width, tex->bo_height, tex->bo_cpp, tex->handle);
 
       /* since the bo is shared to us, make sure it meets the expectations */
       if (bo) {
-         assert(bo->get_size(res->bo) == size);
-         assert(bo->get_tiling(res->bo) == res->tiling);
-         assert(bo->get_pitch(res->bo) == res->bo_stride);
+         assert(bo->get_size(tex->bo) == size);
+         assert(bo->get_tiling(tex->bo) == tex->tiling);
+         assert(bo->get_pitch(tex->bo) == tex->bo_stride);
       }
    }
    else {
@@ -81,13 +81,13 @@ alloc_buf_bo(const struct ilo_resource *res)
 }
 
 static struct intel_bo *
-alloc_tex_bo(const struct ilo_resource *res)
+alloc_tex_bo(const struct ilo_texture *tex)
 {
-   struct ilo_screen *is = ilo_screen(res->base.screen);
+   struct ilo_screen *is = ilo_screen(tex->base.screen);
    struct intel_bo *bo;
    const char *name;
 
-   switch (res->base.target) {
+   switch (tex->base.target) {
    case PIPE_TEXTURE_1D:
       name = "1D texture";
       break;
@@ -117,47 +117,47 @@ alloc_tex_bo(const struct ilo_resource *res)
       break;
    }
 
-   if (res->handle) {
+   if (tex->handle) {
       bo = is->winsys->import_handle(is->winsys, name,
-            res->bo_width, res->bo_height, res->bo_cpp, res->handle);
+            tex->bo_width, tex->bo_height, tex->bo_cpp, tex->handle);
    }
    else {
       const bool for_render =
-         (res->base.bind & (PIPE_BIND_DEPTH_STENCIL |
+         (tex->base.bind & (PIPE_BIND_DEPTH_STENCIL |
                             PIPE_BIND_RENDER_TARGET));
       const unsigned long flags =
          (for_render) ? INTEL_ALLOC_FOR_RENDER : 0;
 
       bo = is->winsys->alloc(is->winsys, name,
-            res->bo_width, res->bo_height, res->bo_cpp,
-            res->tiling, flags);
+            tex->bo_width, tex->bo_height, tex->bo_cpp,
+            tex->tiling, flags);
    }
 
    return bo;
 }
 
 bool
-ilo_resource_alloc_bo(struct ilo_resource *res)
+ilo_texture_alloc_bo(struct ilo_texture *tex)
 {
-   struct intel_bo *old_bo = res->bo;
+   struct intel_bo *old_bo = tex->bo;
 
    /* a shared bo cannot be reallocated */
-   if (old_bo && res->handle)
+   if (old_bo && tex->handle)
       return false;
 
-   if (res->base.target == PIPE_BUFFER)
-      res->bo = alloc_buf_bo(res);
+   if (tex->base.target == PIPE_BUFFER)
+      tex->bo = alloc_buf_bo(tex);
    else
-      res->bo = alloc_tex_bo(res);
+      tex->bo = alloc_tex_bo(tex);
 
-   if (!res->bo) {
-      res->bo = old_bo;
+   if (!tex->bo) {
+      tex->bo = old_bo;
       return false;
    }
 
    /* winsys may decide to use a different tiling */
-   res->tiling = res->bo->get_tiling(res->bo);
-   res->bo_stride = res->bo->get_pitch(res->bo);
+   tex->tiling = tex->bo->get_tiling(tex->bo);
+   tex->bo_stride = tex->bo->get_pitch(tex->bo);
 
    if (old_bo)
       old_bo->unreference(old_bo);
@@ -166,42 +166,42 @@ ilo_resource_alloc_bo(struct ilo_resource *res)
 }
 
 static bool
-alloc_slice_offsets(struct ilo_resource *res)
+alloc_slice_offsets(struct ilo_texture *tex)
 {
    int depth, lv;
 
    /* sum the depths of all levels */
    depth = 0;
-   for (lv = 0; lv <= res->base.last_level; lv++)
-      depth += u_minify(res->base.depth0, lv);
+   for (lv = 0; lv <= tex->base.last_level; lv++)
+      depth += u_minify(tex->base.depth0, lv);
 
    /*
-    * There are (depth * res->base.array_size) slices.  Either depth is one
-    * (non-3D) or res->base.array_size is one (non-array), but it does not
+    * There are (depth * tex->base.array_size) slices.  Either depth is one
+    * (non-3D) or tex->base.array_size is one (non-array), but it does not
     * matter.
     */
-   res->slice_offsets[0] =
-      CALLOC(depth * res->base.array_size, sizeof(res->slice_offsets[0][0]));
-   if (!res->slice_offsets[0])
+   tex->slice_offsets[0] =
+      CALLOC(depth * tex->base.array_size, sizeof(tex->slice_offsets[0][0]));
+   if (!tex->slice_offsets[0])
       return false;
 
    /* point to the respective positions in the buffer */
-   for (lv = 1; lv <= res->base.last_level; lv++) {
-      res->slice_offsets[lv] = res->slice_offsets[lv - 1] +
-         u_minify(res->base.depth0, lv - 1) * res->base.array_size;
+   for (lv = 1; lv <= tex->base.last_level; lv++) {
+      tex->slice_offsets[lv] = tex->slice_offsets[lv - 1] +
+         u_minify(tex->base.depth0, lv - 1) * tex->base.array_size;
    }
 
    return true;
 }
 
 static void
-free_slice_offsets(struct ilo_resource *res)
+free_slice_offsets(struct ilo_texture *tex)
 {
    int lv;
 
-   FREE(res->slice_offsets[0]);
-   for (lv = 0; lv <= res->base.last_level; lv++)
-      res->slice_offsets[lv] = NULL;
+   FREE(tex->slice_offsets[0]);
+   for (lv = 0; lv <= tex->base.last_level; lv++)
+      tex->slice_offsets[lv] = NULL;
 }
 
 struct layout_tex_info {
@@ -221,12 +221,12 @@ struct layout_tex_info {
  * Prepare for texture layout.
  */
 static void
-layout_tex_init(const struct ilo_resource *res, struct layout_tex_info *info)
+layout_tex_init(const struct ilo_texture *tex, struct layout_tex_info *info)
 {
-   struct ilo_screen *is = ilo_screen(res->base.screen);
-   const enum pipe_format bo_format = res->bo_format;
-   const enum intel_tiling_mode tiling = res->tiling;
-   const struct pipe_resource *templ = &res->base;
+   struct ilo_screen *is = ilo_screen(tex->base.screen);
+   const enum pipe_format bo_format = tex->bo_format;
+   const enum intel_tiling_mode tiling = tex->tiling;
+   const struct pipe_resource *templ = &tex->base;
    int last_level, lv;
 
    memset(info, 0, sizeof(*info));
@@ -586,7 +586,7 @@ layout_tex_init(const struct ilo_resource *res, struct layout_tex_info *info)
           * compressed formats because the block height for those formats are
           * 4, and it wants QPitch to mean the number of memory rows, as
           * opposed to texel rows, between slices.  Since we use texel rows in
-          * res->slice_offsets, we do not need to divide QPitch by 4.
+          * tex->slice_offsets, we do not need to divide QPitch by 4.
           */
          info->qpitch = h0 + h1 +
             ((is->dev.gen >= ILO_GEN(7)) ? 12 : 11) * info->align_j;
@@ -605,14 +605,14 @@ layout_tex_init(const struct ilo_resource *res, struct layout_tex_info *info)
  * Layout a 2D texture.
  */
 static void
-layout_tex_2d(struct ilo_resource *res, const struct layout_tex_info *info)
+layout_tex_2d(struct ilo_texture *tex, const struct layout_tex_info *info)
 {
-   const struct pipe_resource *templ = &res->base;
+   const struct pipe_resource *templ = &tex->base;
    unsigned int level_x, level_y, num_slices;
    int lv;
 
-   res->bo_width = 0;
-   res->bo_height = 0;
+   tex->bo_width = 0;
+   tex->bo_height = 0;
 
    level_x = 0;
    level_y = 0;
@@ -622,16 +622,16 @@ layout_tex_2d(struct ilo_resource *res, const struct layout_tex_info *info)
       int slice;
 
       for (slice = 0; slice < templ->array_size; slice++) {
-         res->slice_offsets[lv][slice].x = level_x;
+         tex->slice_offsets[lv][slice].x = level_x;
          /* slices are qpitch apart in Y-direction */
-         res->slice_offsets[lv][slice].y = level_y + info->qpitch * slice;
+         tex->slice_offsets[lv][slice].y = level_y + info->qpitch * slice;
       }
 
       /* extend the size of the monolithic bo to cover this mip level */
-      if (res->bo_width < level_x + level_w)
-         res->bo_width = level_x + level_w;
-      if (res->bo_height < level_y + level_h)
-         res->bo_height = level_y + level_h;
+      if (tex->bo_width < level_x + level_w)
+         tex->bo_width = level_x + level_w;
+      if (tex->bo_height < level_y + level_h)
+         tex->bo_height = level_y + level_h;
 
       /* MIPLAYOUT_BELOW */
       if (lv == 1)
@@ -646,21 +646,21 @@ layout_tex_2d(struct ilo_resource *res, const struct layout_tex_info *info)
       num_slices *= templ->nr_samples;
 
    /* we did not take slices into consideration in the computation above */
-   res->bo_height += info->qpitch * (num_slices - 1);
+   tex->bo_height += info->qpitch * (num_slices - 1);
 }
 
 /**
  * Layout a 3D texture.
  */
 static void
-layout_tex_3d(struct ilo_resource *res, const struct layout_tex_info *info)
+layout_tex_3d(struct ilo_texture *tex, const struct layout_tex_info *info)
 {
-   const struct pipe_resource *templ = &res->base;
+   const struct pipe_resource *templ = &tex->base;
    unsigned int level_y;
    int lv;
 
-   res->bo_width = 0;
-   res->bo_height = 0;
+   tex->bo_width = 0;
+   tex->bo_height = 0;
 
    level_y = 0;
    for (lv = 0; lv <= templ->last_level; lv++) {
@@ -676,8 +676,8 @@ layout_tex_3d(struct ilo_resource *res, const struct layout_tex_info *info)
          int i;
 
          for (i = 0; i < num_slices_per_row && slice + i < level_d; i++) {
-            res->slice_offsets[lv][slice + i].x = slice_pitch * i;
-            res->slice_offsets[lv][slice + i].y = level_y;
+            tex->slice_offsets[lv][slice + i].x = slice_pitch * i;
+            tex->slice_offsets[lv][slice + i].y = level_y;
          }
 
          /* move on to the next slice row */
@@ -688,10 +688,10 @@ layout_tex_3d(struct ilo_resource *res, const struct layout_tex_info *info)
       slice = MIN2(num_slices_per_row, level_d) - 1;
 
       /* extend the size of the monolithic bo to cover this slice */
-      if (res->bo_width < slice_pitch * slice + level_w)
-         res->bo_width = slice_pitch * slice + level_w;
+      if (tex->bo_width < slice_pitch * slice + level_w)
+         tex->bo_width = slice_pitch * slice + level_w;
       if (lv == templ->last_level)
-         res->bo_height = (level_y - slice_qpitch) + level_h;
+         tex->bo_height = (level_y - slice_qpitch) + level_h;
    }
 }
 
@@ -743,10 +743,10 @@ guess_tex_size(const struct pipe_resource *templ,
 }
 
 static enum intel_tiling_mode
-get_tex_tiling(const struct ilo_resource *res)
+get_tex_tiling(const struct ilo_texture *tex)
 {
-   const struct pipe_resource *templ = &res->base;
-   const enum pipe_format bo_format = res->bo_format;
+   const struct pipe_resource *templ = &tex->base;
+   const enum pipe_format bo_format = tex->bo_format;
 
    /*
     * From the Sandy Bridge PRM, volume 1 part 2, page 32:
@@ -828,34 +828,34 @@ get_tex_tiling(const struct ilo_resource *res)
 }
 
 static void
-init_texture(struct ilo_resource *res)
+init_texture(struct ilo_texture *tex)
 {
    struct layout_tex_info info;
 
-   switch (res->base.format) {
+   switch (tex->base.format) {
    case PIPE_FORMAT_ETC1_RGB8:
-      res->bo_format = PIPE_FORMAT_R8G8B8X8_UNORM;
+      tex->bo_format = PIPE_FORMAT_R8G8B8X8_UNORM;
       break;
    default:
-      res->bo_format = res->base.format;
+      tex->bo_format = tex->base.format;
       break;
    }
 
    /* determine tiling first as it may affect the layout */
-   res->tiling = get_tex_tiling(res);
+   tex->tiling = get_tex_tiling(tex);
 
-   layout_tex_init(res, &info);
+   layout_tex_init(tex, &info);
 
-   res->compressed = info.compressed;
-   res->block_width = info.block_width;
-   res->block_height = info.block_height;
+   tex->compressed = info.compressed;
+   tex->block_width = info.block_width;
+   tex->block_height = info.block_height;
 
-   res->halign_8 = (info.align_i == 8);
-   res->valign_4 = (info.align_j == 4);
-   res->array_spacing_full = info.array_spacing_full;
-   res->interleaved = info.interleaved;
+   tex->halign_8 = (info.align_i == 8);
+   tex->valign_4 = (info.align_j == 4);
+   tex->array_spacing_full = info.array_spacing_full;
+   tex->interleaved = info.interleaved;
 
-   switch (res->base.target) {
+   switch (tex->base.target) {
    case PIPE_TEXTURE_1D:
    case PIPE_TEXTURE_2D:
    case PIPE_TEXTURE_CUBE:
@@ -863,10 +863,10 @@ init_texture(struct ilo_resource *res)
    case PIPE_TEXTURE_1D_ARRAY:
    case PIPE_TEXTURE_2D_ARRAY:
    case PIPE_TEXTURE_CUBE_ARRAY:
-      layout_tex_2d(res, &info);
+      layout_tex_2d(tex, &info);
       break;
    case PIPE_TEXTURE_3D:
-      layout_tex_3d(res, &info);
+      layout_tex_3d(tex, &info);
       break;
    default:
       assert(!"unknown resource target");
@@ -882,37 +882,37 @@ init_texture(struct ilo_resource *res)
     * Since we ask for INTEL_TILING_NONE instead lf INTEL_TILING_W, we need to
     * manually align the bo width and height to the tile boundaries.
     */
-   if (res->bo_format == PIPE_FORMAT_S8_UINT) {
-      res->bo_width = align(res->bo_width, 64);
-      res->bo_height = align(res->bo_height, 64);
+   if (tex->bo_format == PIPE_FORMAT_S8_UINT) {
+      tex->bo_width = align(tex->bo_width, 64);
+      tex->bo_height = align(tex->bo_height, 64);
    }
 
    /* in blocks */
-   assert(res->bo_width % info.block_width == 0);
-   assert(res->bo_height % info.block_height == 0);
-   res->bo_width /= info.block_width;
-   res->bo_height /= info.block_height;
-   res->bo_cpp = util_format_get_blocksize(res->bo_format);
+   assert(tex->bo_width % info.block_width == 0);
+   assert(tex->bo_height % info.block_height == 0);
+   tex->bo_width /= info.block_width;
+   tex->bo_height /= info.block_height;
+   tex->bo_cpp = util_format_get_blocksize(tex->bo_format);
 }
 
 static void
-init_buffer(struct ilo_resource *res)
+init_buffer(struct ilo_texture *tex)
 {
-   res->bo_format = res->base.format;
-   res->bo_width = res->base.width0;
-   res->bo_height = 1;
-   res->bo_cpp = 1;
-   res->bo_stride = 0;
-   res->tiling = INTEL_TILING_NONE;
+   tex->bo_format = tex->base.format;
+   tex->bo_width = tex->base.width0;
+   tex->bo_height = 1;
+   tex->bo_cpp = 1;
+   tex->bo_stride = 0;
+   tex->tiling = INTEL_TILING_NONE;
 
-   res->compressed = false;
-   res->block_width = 1;
-   res->block_height = 1;
+   tex->compressed = false;
+   tex->block_width = 1;
+   tex->block_height = 1;
 
-   res->halign_8 = false;
-   res->valign_4 = false;
-   res->array_spacing_full = false;
-   res->interleaved = false;
+   tex->halign_8 = false;
+   tex->valign_4 = false;
+   tex->array_spacing_full = false;
+   tex->interleaved = false;
 }
 
 static struct pipe_resource *
@@ -920,34 +920,34 @@ create_resource(struct pipe_screen *screen,
                 const struct pipe_resource *templ,
                 struct winsys_handle *handle)
 {
-   struct ilo_resource *res;
+   struct ilo_texture *tex;
 
-   res = CALLOC_STRUCT(ilo_resource);
-   if (!res)
+   tex = CALLOC_STRUCT(ilo_texture);
+   if (!tex)
       return NULL;
 
-   res->base = *templ;
-   res->base.screen = screen;
-   pipe_reference_init(&res->base.reference, 1);
-   res->handle = handle;
+   tex->base = *templ;
+   tex->base.screen = screen;
+   pipe_reference_init(&tex->base.reference, 1);
+   tex->handle = handle;
 
-   if (!alloc_slice_offsets(res)) {
-      FREE(res);
+   if (!alloc_slice_offsets(tex)) {
+      FREE(tex);
       return NULL;
    }
 
    if (templ->target == PIPE_BUFFER)
-      init_buffer(res);
+      init_buffer(tex);
    else
-      init_texture(res);
+      init_texture(tex);
 
-   if (!ilo_resource_alloc_bo(res)) {
-      free_slice_offsets(res);
-      FREE(res);
+   if (!ilo_texture_alloc_bo(tex)) {
+      free_slice_offsets(tex);
+      FREE(tex);
       return NULL;
    }
 
-   return &res->base;
+   return &tex->base;
 }
 
 static boolean
@@ -981,26 +981,26 @@ ilo_resource_from_handle(struct pipe_screen *screen,
 
 static boolean
 ilo_resource_get_handle(struct pipe_screen *screen,
-                        struct pipe_resource *r,
+                        struct pipe_resource *res,
                         struct winsys_handle *handle)
 {
-   struct ilo_resource *res = ilo_resource(r);
+   struct ilo_texture *tex = ilo_texture(res);
    int err;
 
-   err = res->bo->export_handle(res->bo, handle);
+   err = tex->bo->export_handle(tex->bo, handle);
 
    return !err;
 }
 
 static void
 ilo_resource_destroy(struct pipe_screen *screen,
-                     struct pipe_resource *r)
+                     struct pipe_resource *res)
 {
-   struct ilo_resource *res = ilo_resource(r);
+   struct ilo_texture *tex = ilo_texture(res);
 
-   free_slice_offsets(res);
-   res->bo->unreference(res->bo);
-   FREE(res);
+   free_slice_offsets(tex);
+   tex->bo->unreference(tex->bo);
+   FREE(tex);
 }
 
 /**
@@ -1025,20 +1025,20 @@ ilo_init_resource_functions(struct ilo_screen *is)
  * y_offset is always a multiple of 2.
  */
 unsigned
-ilo_resource_get_slice_offset(const struct ilo_resource *res,
-                              int level, int slice, bool tile_aligned,
-                              unsigned *x_offset, unsigned *y_offset)
+ilo_texture_get_slice_offset(const struct ilo_texture *tex,
+                             int level, int slice, bool tile_aligned,
+                             unsigned *x_offset, unsigned *y_offset)
 {
-   const unsigned x = res->slice_offsets[level][slice].x / res->block_width;
-   const unsigned y = res->slice_offsets[level][slice].y / res->block_height;
+   const unsigned x = tex->slice_offsets[level][slice].x / tex->block_width;
+   const unsigned y = tex->slice_offsets[level][slice].y / tex->block_height;
    unsigned tile_w, tile_h, tile_size, row_size;
    unsigned slice_offset;
 
    /* see the Sandy Bridge PRM, volume 1 part 2, page 24 */
 
-   switch (res->tiling) {
+   switch (tex->tiling) {
    case INTEL_TILING_NONE:
-      tile_w = res->bo_cpp;
+      tile_w = tex->bo_cpp;
       tile_h = 1;
       break;
    case INTEL_TILING_X:
@@ -1051,24 +1051,24 @@ ilo_resource_get_slice_offset(const struct ilo_resource *res,
       break;
    default:
       assert(!"unknown tiling");
-      tile_w = res->bo_cpp;
+      tile_w = tex->bo_cpp;
       tile_h = 1;
       break;
    }
 
    tile_size = tile_w * tile_h;
-   row_size = res->bo_stride * tile_h;
+   row_size = tex->bo_stride * tile_h;
 
    /*
     * for non-tiled resources, this is equivalent to
     *
-    *   slice_offset = y * res->bo_stride + x * res->bo_cpp;
+    *   slice_offset = y * tex->bo_stride + x * tex->bo_cpp;
     */
    slice_offset =
-      row_size * (y / tile_h) + tile_size * (x * res->bo_cpp / tile_w);
+      row_size * (y / tile_h) + tile_size * (x * tex->bo_cpp / tile_w);
 
    /*
-    * Since res->bo_stride is a multiple of tile_w, slice_offset should be
+    * Since tex->bo_stride is a multiple of tile_w, slice_offset should be
     * aligned at this point.
     */
    assert(slice_offset % tile_size == 0);
@@ -1080,20 +1080,20 @@ ilo_resource_get_slice_offset(const struct ilo_resource *res,
        * be a multiple of 2.
        */
       if (x_offset) {
-         assert(tile_w % res->bo_cpp == 0);
-         *x_offset = (x % (tile_w / res->bo_cpp)) * res->block_width;
+         assert(tile_w % tex->bo_cpp == 0);
+         *x_offset = (x % (tile_w / tex->bo_cpp)) * tex->block_width;
          assert(*x_offset % 4 == 0);
       }
       if (y_offset) {
-         *y_offset = (y % tile_h) * res->block_height;
+         *y_offset = (y % tile_h) * tex->block_height;
          assert(*y_offset % 2 == 0);
       }
    }
    else {
-      const unsigned tx = (x * res->bo_cpp) % tile_w;
+      const unsigned tx = (x * tex->bo_cpp) % tile_w;
       const unsigned ty = y % tile_h;
 
-      switch (res->tiling) {
+      switch (tex->tiling) {
       case INTEL_TILING_NONE:
          assert(tx == 0 && ty == 0);
          break;

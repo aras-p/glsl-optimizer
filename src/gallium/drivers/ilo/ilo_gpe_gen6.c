@@ -757,15 +757,15 @@ gen6_emit_3DSTATE_VERTEX_BUFFERS(const struct ilo_dev_info *dev,
 
       /* use null vb if there is no buffer or the stride is out of range */
       if (vb->buffer && vb->stride <= 2048) {
-         const struct ilo_resource *res = ilo_resource(vb->buffer);
+         const struct ilo_texture *tex = ilo_texture(vb->buffer);
          const uint32_t start_offset = vb->buffer_offset;
-         const uint32_t end_offset = res->bo->get_size(res->bo) - 1;
+         const uint32_t end_offset = tex->bo->get_size(tex->bo) - 1;
 
          dw |= vb->stride << BRW_VB0_PITCH_SHIFT;
 
          ilo_cp_write(cp, dw);
-         ilo_cp_write_bo(cp, start_offset, res->bo, INTEL_DOMAIN_VERTEX, 0);
-         ilo_cp_write_bo(cp, end_offset, res->bo, INTEL_DOMAIN_VERTEX, 0);
+         ilo_cp_write_bo(cp, start_offset, tex->bo, INTEL_DOMAIN_VERTEX, 0);
+         ilo_cp_write_bo(cp, end_offset, tex->bo, INTEL_DOMAIN_VERTEX, 0);
          ilo_cp_write(cp, instance_divisor);
       }
       else {
@@ -925,13 +925,13 @@ gen6_emit_3DSTATE_INDEX_BUFFER(const struct ilo_dev_info *dev,
 {
    const uint32_t cmd = ILO_GPE_CMD(0x3, 0x0, 0x0a);
    const uint8_t cmd_len = 3;
-   const struct ilo_resource *res = ilo_resource(ib->buffer);
+   const struct ilo_texture *tex = ilo_texture(ib->buffer);
    uint32_t start_offset, end_offset;
    int format;
 
    ILO_GPE_VALID_GEN(dev, 6, 7);
 
-   if (!res)
+   if (!tex)
       return;
 
    format = gen6_translate_index_size(ib->index_size);
@@ -945,7 +945,7 @@ gen6_emit_3DSTATE_INDEX_BUFFER(const struct ilo_dev_info *dev,
    }
 
    /* end_offset must also be aligned */
-   end_offset = res->bo->get_size(res->bo);
+   end_offset = tex->bo->get_size(tex->bo);
    end_offset -= (end_offset % ib->index_size);
    /* it is inclusive */
    end_offset -= 1;
@@ -954,8 +954,8 @@ gen6_emit_3DSTATE_INDEX_BUFFER(const struct ilo_dev_info *dev,
    ilo_cp_write(cp, cmd | (cmd_len - 2) |
                     ((enable_cut_index) ? BRW_CUT_INDEX_ENABLE : 0) |
                     format << 8);
-   ilo_cp_write_bo(cp, start_offset, res->bo, INTEL_DOMAIN_VERTEX, 0);
-   ilo_cp_write_bo(cp, end_offset, res->bo, INTEL_DOMAIN_VERTEX, 0);
+   ilo_cp_write_bo(cp, start_offset, tex->bo, INTEL_DOMAIN_VERTEX, 0);
+   ilo_cp_write_bo(cp, end_offset, tex->bo, INTEL_DOMAIN_VERTEX, 0);
    ilo_cp_end(cp);
 }
 
@@ -2283,7 +2283,7 @@ ilo_gpe_gen6_emit_3DSTATE_DEPTH_BUFFER(const struct ilo_dev_info *dev,
       ILO_GPE_CMD(0x3, 0x0, 0x05) : ILO_GPE_CMD(0x3, 0x1, 0x05);
    const uint8_t cmd_len = 7;
    const int max_2d_size = (dev->gen >= ILO_GEN(7)) ? 16384 : 8192;
-   struct ilo_resource *res;
+   struct ilo_texture *tex;
    uint32_t dw1, dw3;
    uint32_t slice_offset, x_offset, y_offset;
    int surface_type, depth_format, width, height;
@@ -2337,8 +2337,8 @@ ilo_gpe_gen6_emit_3DSTATE_DEPTH_BUFFER(const struct ilo_dev_info *dev,
       return;
    }
 
-   res = ilo_resource(surface->texture);
-   surface_type = ilo_gpe_gen6_translate_texture(res->base.target);
+   tex = ilo_texture(surface->texture);
+   surface_type = ilo_gpe_gen6_translate_texture(tex->base.target);
    width = surface->width;
    height = surface->height;
 
@@ -2346,7 +2346,7 @@ ilo_gpe_gen6_emit_3DSTATE_DEPTH_BUFFER(const struct ilo_dev_info *dev,
     * we always treat the resource as non-mipmapped and set the slice/x/y
     * offsets manually
     */
-   slice_offset = ilo_resource_get_slice_offset(res,
+   slice_offset = ilo_texture_get_slice_offset(tex,
          surface->u.tex.level, surface->u.tex.first_layer,
          true, &x_offset, &y_offset);
 
@@ -2369,12 +2369,12 @@ ilo_gpe_gen6_emit_3DSTATE_DEPTH_BUFFER(const struct ilo_dev_info *dev,
    height += y_offset;
 
    /* required for GEN6+ */
-   assert(res->tiling == INTEL_TILING_Y);
+   assert(tex->tiling == INTEL_TILING_Y);
 
-   assert(res->bo_stride > 0 && res->bo_stride < 128 * 1024 &&
-         res->bo_stride % 128 == 0);
+   assert(tex->bo_stride > 0 && tex->bo_stride < 128 * 1024 &&
+         tex->bo_stride % 128 == 0);
    assert(surface->u.tex.first_layer == surface->u.tex.last_layer);
-   assert(width <= res->bo_stride);
+   assert(width <= tex->bo_stride);
 
    /* we have to treat them as 2D surfaces */
    if (surface_type == BRW_SURFACE_CUBE) {
@@ -2410,7 +2410,7 @@ ilo_gpe_gen6_emit_3DSTATE_DEPTH_BUFFER(const struct ilo_dev_info *dev,
 
    dw1 = surface_type << 29 |
          depth_format << 18 |
-         (res->bo_stride - 1);
+         (tex->bo_stride - 1);
 
    if (dev->gen >= ILO_GEN(7)) {
       if (has_depth) {
@@ -2428,8 +2428,8 @@ ilo_gpe_gen6_emit_3DSTATE_DEPTH_BUFFER(const struct ilo_dev_info *dev,
             (width - 1) << 4;
    }
    else {
-      dw1 |= (res->tiling != INTEL_TILING_NONE) << 27 |
-             (res->tiling == INTEL_TILING_Y) << 26;
+      dw1 |= (tex->tiling != INTEL_TILING_NONE) << 27 |
+             (tex->tiling == INTEL_TILING_Y) << 26;
 
       if (hiz) {
          dw1 |= 1 << 22 |
@@ -2446,7 +2446,7 @@ ilo_gpe_gen6_emit_3DSTATE_DEPTH_BUFFER(const struct ilo_dev_info *dev,
    ilo_cp_write(cp, dw1);
 
    if (has_depth) {
-      ilo_cp_write_bo(cp, slice_offset, res->bo,
+      ilo_cp_write_bo(cp, slice_offset, tex->bo,
             INTEL_DOMAIN_RENDER, INTEL_DOMAIN_RENDER);
    }
    else {
@@ -2639,7 +2639,7 @@ gen6_emit_3DSTATE_STENCIL_BUFFER(const struct ilo_dev_info *dev,
       ILO_GPE_CMD(0x3, 0x0, 0x06) :
       ILO_GPE_CMD(0x3, 0x1, 0x0e);
    const uint8_t cmd_len = 3;
-   struct ilo_resource *res;
+   struct ilo_texture *tex;
    uint32_t slice_offset;
    int pitch;
 
@@ -2655,7 +2655,7 @@ gen6_emit_3DSTATE_STENCIL_BUFFER(const struct ilo_dev_info *dev,
       return;
    }
 
-   res = ilo_resource(surface->texture);
+   tex = ilo_texture(surface->texture);
 
    /* TODO */
    slice_offset = 0;
@@ -2666,13 +2666,13 @@ gen6_emit_3DSTATE_STENCIL_BUFFER(const struct ilo_dev_info *dev,
     *     "The pitch must be set to 2x the value computed based on width, as
     *      the stencil buffer is stored with two rows interleaved."
     */
-   pitch = 2 * res->bo_stride;
+   pitch = 2 * tex->bo_stride;
    assert(pitch > 0 && pitch < 128 * 1024 && pitch % 128 == 0);
 
    ilo_cp_begin(cp, cmd_len);
    ilo_cp_write(cp, cmd | (cmd_len - 2));
    ilo_cp_write(cp, pitch - 1);
-   ilo_cp_write_bo(cp, slice_offset, res->bo,
+   ilo_cp_write_bo(cp, slice_offset, tex->bo,
          INTEL_DOMAIN_RENDER, INTEL_DOMAIN_RENDER);
    ilo_cp_end(cp);
 }
@@ -2686,7 +2686,7 @@ gen6_emit_3DSTATE_HIER_DEPTH_BUFFER(const struct ilo_dev_info *dev,
       ILO_GPE_CMD(0x3, 0x0, 0x07) :
       ILO_GPE_CMD(0x3, 0x1, 0x0f);
    const uint8_t cmd_len = 3;
-   struct ilo_resource *res;
+   struct ilo_texture *tex;
    uint32_t slice_offset;
 
    ILO_GPE_VALID_GEN(dev, 6, 7);
@@ -2701,18 +2701,18 @@ gen6_emit_3DSTATE_HIER_DEPTH_BUFFER(const struct ilo_dev_info *dev,
       return;
    }
 
-   res = ilo_resource(surface->texture);
+   tex = ilo_texture(surface->texture);
 
    /* TODO */
    slice_offset = 0;
 
-   assert(res->bo_stride > 0 && res->bo_stride < 128 * 1024 &&
-          res->bo_stride % 128 == 0);
+   assert(tex->bo_stride > 0 && tex->bo_stride < 128 * 1024 &&
+          tex->bo_stride % 128 == 0);
 
    ilo_cp_begin(cp, cmd_len);
    ilo_cp_write(cp, cmd | (cmd_len - 2));
-   ilo_cp_write(cp, res->bo_stride - 1);
-   ilo_cp_write_bo(cp, slice_offset, res->bo,
+   ilo_cp_write(cp, tex->bo_stride - 1);
+   ilo_cp_write_bo(cp, slice_offset, tex->bo,
          INTEL_DOMAIN_RENDER, INTEL_DOMAIN_RENDER);
    ilo_cp_end(cp);
 }
@@ -3569,7 +3569,7 @@ gen6_fill_null_SURFACE_STATE(const struct ilo_dev_info *dev,
 
 static void
 gen6_fill_buffer_SURFACE_STATE(const struct ilo_dev_info *dev,
-                               const struct ilo_resource *res,
+                               const struct ilo_texture *tex,
                                unsigned offset, unsigned size,
                                unsigned struct_size,
                                enum pipe_format elem_format,
@@ -3635,7 +3635,7 @@ gen6_fill_buffer_SURFACE_STATE(const struct ilo_dev_info *dev,
     *     "If Surface Type is SURFTYPE_BUFFER, this field (Tiled Surface) must
     *      be false (buffers are supported only in linear memory)"
     */
-   assert(res->tiling == INTEL_TILING_NONE);
+   assert(tex->tiling == INTEL_TILING_NONE);
 
    pitch--;
    num_entries--;
@@ -3665,7 +3665,7 @@ gen6_fill_buffer_SURFACE_STATE(const struct ilo_dev_info *dev,
 
 static void
 gen6_fill_normal_SURFACE_STATE(const struct ilo_dev_info *dev,
-                               struct ilo_resource *res,
+                               struct ilo_texture *tex,
                                enum pipe_format format,
                                unsigned first_level, unsigned num_levels,
                                unsigned first_layer, unsigned num_layers,
@@ -3679,7 +3679,7 @@ gen6_fill_normal_SURFACE_STATE(const struct ilo_dev_info *dev,
    ILO_GPE_VALID_GEN(dev, 6, 6);
    assert(num_dwords == 6);
 
-   surface_type = ilo_gpe_gen6_translate_texture(res->base.target);
+   surface_type = ilo_gpe_gen6_translate_texture(tex->base.target);
    assert(surface_type != BRW_SURFACE_BUFFER);
 
    if (is_rt)
@@ -3688,13 +3688,13 @@ gen6_fill_normal_SURFACE_STATE(const struct ilo_dev_info *dev,
       surface_format = ilo_translate_texture_format(format);
    assert(surface_format >= 0);
 
-   width = res->base.width0;
-   height = res->base.height0;
-   pitch = res->bo_stride;
+   width = tex->base.width0;
+   height = tex->base.height0;
+   pitch = tex->bo_stride;
 
-   switch (res->base.target) {
+   switch (tex->base.target) {
    case PIPE_TEXTURE_3D:
-      depth = res->base.depth0;
+      depth = tex->base.depth0;
       break;
    case PIPE_TEXTURE_CUBE:
    case PIPE_TEXTURE_CUBE_ARRAY:
@@ -3741,10 +3741,10 @@ gen6_fill_normal_SURFACE_STATE(const struct ilo_dev_info *dev,
    }
 
    /* non-full array spacing is supported only on GEN7+ */
-   assert(res->array_spacing_full);
+   assert(tex->array_spacing_full);
    /* non-interleaved samples are supported only on GEN7+ */
-   if (res->base.nr_samples > 1)
-      assert(res->interleaved);
+   if (tex->base.nr_samples > 1)
+      assert(tex->interleaved);
 
    /*
     * Compute the offset to the layer manually.
@@ -3757,7 +3757,7 @@ gen6_fill_normal_SURFACE_STATE(const struct ilo_dev_info *dev,
       /* we lose the capability for layered rendering */
       assert(num_levels == 1 && num_layers == 1);
 
-      layer_offset = ilo_resource_get_slice_offset(res,
+      layer_offset = ilo_texture_get_slice_offset(tex,
             first_level, first_layer, true, &x_offset, &y_offset);
 
       assert(x_offset % 4 == 0);
@@ -3766,10 +3766,10 @@ gen6_fill_normal_SURFACE_STATE(const struct ilo_dev_info *dev,
       y_offset /= 2;
 
       /* derive the size for the LOD */
-      width = u_minify(res->base.width0, first_level);
-      height = u_minify(res->base.height0, first_level);
+      width = u_minify(tex->base.width0, first_level);
+      height = u_minify(tex->base.height0, first_level);
       if (surface_type == BRW_SURFACE_3D)
-         depth = u_minify(res->base.depth0, first_level);
+         depth = u_minify(tex->base.depth0, first_level);
 
       first_level = 0;
       first_layer = 0;
@@ -3800,7 +3800,7 @@ gen6_fill_normal_SURFACE_STATE(const struct ilo_dev_info *dev,
     *
     *     "For linear surfaces, this field (X Offset) must be zero"
     */
-   if (res->tiling == INTEL_TILING_NONE) {
+   if (tex->tiling == INTEL_TILING_NONE) {
       if (is_rt) {
          const int elem_size = util_format_get_blocksize(format);
          assert(layer_offset % elem_size == 0);
@@ -3830,17 +3830,17 @@ gen6_fill_normal_SURFACE_STATE(const struct ilo_dev_info *dev,
 
    dw[3] = (depth - 1) << BRW_SURFACE_DEPTH_SHIFT |
            (pitch - 1) << BRW_SURFACE_PITCH_SHIFT |
-           ilo_gpe_gen6_translate_winsys_tiling(res->tiling);
+           ilo_gpe_gen6_translate_winsys_tiling(tex->tiling);
 
    dw[4] = first_level << BRW_SURFACE_MIN_LOD_SHIFT |
            first_layer << 17 |
            (depth - 1) << 8 |
-           ((res->base.nr_samples > 1) ? BRW_SURFACE_MULTISAMPLECOUNT_4 :
+           ((tex->base.nr_samples > 1) ? BRW_SURFACE_MULTISAMPLECOUNT_4 :
                                          BRW_SURFACE_MULTISAMPLECOUNT_1);
 
    dw[5] = x_offset << BRW_SURFACE_X_OFFSET_SHIFT |
            y_offset << BRW_SURFACE_Y_OFFSET_SHIFT;
-   if (res->valign_4)
+   if (tex->valign_4)
       dw[5] |= BRW_SURFACE_VERTICAL_ALIGN_ENABLE;
 }
 
@@ -3890,15 +3890,15 @@ gen6_emit_surf_SURFACE_STATE(const struct ilo_dev_info *dev,
    ILO_GPE_VALID_GEN(dev, 6, 6);
 
    if (surface && surface->texture) {
-      struct ilo_resource *res = ilo_resource(surface->texture);
+      struct ilo_texture *tex = ilo_texture(surface->texture);
 
-      bo = res->bo;
+      bo = tex->bo;
 
       /*
        * classic i965 sets render_cache_rw for constant buffers and sol
        * surfaces but not render buffers.  Why?
        */
-      gen6_fill_normal_SURFACE_STATE(dev, res, surface->format,
+      gen6_fill_normal_SURFACE_STATE(dev, tex, surface->format,
             surface->u.tex.level, 1,
             surface->u.tex.first_layer,
             surface->u.tex.last_layer - surface->u.tex.first_layer + 1,
@@ -3918,19 +3918,19 @@ gen6_emit_view_SURFACE_STATE(const struct ilo_dev_info *dev,
                              const struct pipe_sampler_view *view,
                              struct ilo_cp *cp)
 {
-   struct ilo_resource *res = ilo_resource(view->texture);
+   struct ilo_texture *tex = ilo_texture(view->texture);
    uint32_t dw[6];
 
    ILO_GPE_VALID_GEN(dev, 6, 6);
 
-   gen6_fill_normal_SURFACE_STATE(dev, res, view->format,
+   gen6_fill_normal_SURFACE_STATE(dev, tex, view->format,
          view->u.tex.first_level,
          view->u.tex.last_level - view->u.tex.first_level + 1,
          view->u.tex.first_layer,
          view->u.tex.last_layer - view->u.tex.first_layer + 1,
          false, false, dw, Elements(dw));
 
-   return gen6_emit_SURFACE_STATE(dev, res->bo, false, dw, Elements(dw), cp);
+   return gen6_emit_SURFACE_STATE(dev, tex->bo, false, dw, Elements(dw), cp);
 }
 
 static uint32_t
@@ -3939,17 +3939,17 @@ gen6_emit_cbuf_SURFACE_STATE(const struct ilo_dev_info *dev,
                              struct ilo_cp *cp)
 {
    const enum pipe_format elem_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
-   struct ilo_resource *res = ilo_resource(cbuf->buffer);
+   struct ilo_texture *tex = ilo_texture(cbuf->buffer);
    uint32_t dw[6];
 
    ILO_GPE_VALID_GEN(dev, 6, 6);
 
-   gen6_fill_buffer_SURFACE_STATE(dev, res,
+   gen6_fill_buffer_SURFACE_STATE(dev, tex,
          cbuf->buffer_offset, cbuf->buffer_size,
          util_format_get_blocksize(elem_format), elem_format,
          false, false, dw, Elements(dw));
 
-   return gen6_emit_SURFACE_STATE(dev, res->bo, false, dw, Elements(dw), cp);
+   return gen6_emit_SURFACE_STATE(dev, tex->bo, false, dw, Elements(dw), cp);
 }
 
 static uint32_t
@@ -3959,7 +3959,7 @@ gen6_emit_so_SURFACE_STATE(const struct ilo_dev_info *dev,
                            int so_index,
                            struct ilo_cp *cp)
 {
-   struct ilo_resource *res = ilo_resource(so->buffer);
+   struct ilo_texture *tex = ilo_texture(so->buffer);
    unsigned bo_offset, struct_size;
    enum pipe_format elem_format;
    uint32_t dw[6];
@@ -3988,10 +3988,10 @@ gen6_emit_so_SURFACE_STATE(const struct ilo_dev_info *dev,
       break;
    }
 
-   gen6_fill_buffer_SURFACE_STATE(dev, res, bo_offset, so->buffer_size,
+   gen6_fill_buffer_SURFACE_STATE(dev, tex, bo_offset, so->buffer_size,
          struct_size, elem_format, false, true, dw, Elements(dw));
 
-   return gen6_emit_SURFACE_STATE(dev, res->bo, false, dw, Elements(dw), cp);
+   return gen6_emit_SURFACE_STATE(dev, tex->bo, false, dw, Elements(dw), cp);
 }
 
 static uint32_t
