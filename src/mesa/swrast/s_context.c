@@ -459,7 +459,7 @@ _swrast_invalidate_state( struct gl_context *ctx, GLbitfield new_state )
       swrast->BlendFunc = _swrast_validate_blend_func;
 
    if (new_state & _SWRAST_NEW_TEXTURE_SAMPLE_FUNC)
-      for (i = 0 ; i < ctx->Const.FragmentProgram.MaxTextureImageUnits ; i++)
+      for (i = 0 ; i < ARRAY_SIZE(swrast->TextureSample); i++)
 	 swrast->TextureSample[i] = NULL;
 }
 
@@ -473,7 +473,7 @@ _swrast_update_texture_samplers(struct gl_context *ctx)
    if (!swrast)
       return; /* pipe hack */
 
-   for (u = 0; u < ctx->Const.FragmentProgram.MaxTextureImageUnits; u++) {
+   for (u = 0; u < ARRAY_SIZE(swrast->TextureSample); u++) {
       struct gl_texture_object *tObj = ctx->Texture.Unit[u]._Current;
       /* Note: If tObj is NULL, the sample function will be a simple
        * function that just returns opaque black (0,0,0,1).
@@ -766,7 +766,7 @@ _swrast_CreateContext( struct gl_context *ctx )
    swrast->Driver.SpanRenderStart = _swrast_span_render_start;
    swrast->Driver.SpanRenderFinish = _swrast_span_render_finish;
 
-   for (i = 0; i < MAX_TEXTURE_IMAGE_UNITS; i++)
+   for (i = 0; i < ARRAY_SIZE(swrast->TextureSample); i++)
       swrast->TextureSample[i] = NULL;
 
    /* SpanArrays is global and shared by all SWspan instances. However, when
