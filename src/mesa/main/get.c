@@ -36,6 +36,7 @@
 #include "texcompress.h"
 #include "framebuffer.h"
 #include "samplerobj.h"
+#include "stencil.h"
 
 /* This is a table driven implemetation of the glGet*v() functions.
  * The basic idea is that most getters just look up an int somewhere
@@ -675,7 +676,10 @@ find_custom_value(struct gl_context *ctx, const struct value_desc *d, union valu
       v->value_enum = ctx->Stencil.ZPassFunc[ctx->Stencil.ActiveFace];
       break;
    case GL_STENCIL_REF:
-      v->value_int = ctx->Stencil.Ref[ctx->Stencil.ActiveFace];
+      v->value_int = _mesa_get_stencil_ref(ctx, ctx->Stencil.ActiveFace);
+      break;
+   case GL_STENCIL_BACK_REF:
+      v->value_int = _mesa_get_stencil_ref(ctx, 1);
       break;
    case GL_STENCIL_VALUE_MASK:
       v->value_int = ctx->Stencil.ValueMask[ctx->Stencil.ActiveFace];
