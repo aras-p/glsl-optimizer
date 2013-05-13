@@ -1130,7 +1130,7 @@ gen7_emit_3DSTATE_SO_BUFFER(const struct ilo_dev_info *dev,
 {
    const uint32_t cmd = ILO_GPE_CMD(0x3, 0x1, 0x18);
    const uint8_t cmd_len = 4;
-   struct ilo_texture *tex;
+   struct ilo_buffer *buf;
    int end;
 
    ILO_GPE_VALID_GEN(dev, 7, 7);
@@ -1145,7 +1145,7 @@ gen7_emit_3DSTATE_SO_BUFFER(const struct ilo_dev_info *dev,
       return;
    }
 
-   tex = ilo_texture(so_target->buffer);
+   buf = ilo_buffer(so_target->buffer);
 
    /* DWord-aligned */
    assert(stride % 4 == 0 && base % 4 == 0);
@@ -1159,8 +1159,8 @@ gen7_emit_3DSTATE_SO_BUFFER(const struct ilo_dev_info *dev,
    ilo_cp_write(cp, cmd | (cmd_len - 2));
    ilo_cp_write(cp, index << SO_BUFFER_INDEX_SHIFT |
                     stride);
-   ilo_cp_write_bo(cp, base, tex->bo, INTEL_DOMAIN_RENDER, INTEL_DOMAIN_RENDER);
-   ilo_cp_write_bo(cp, end, tex->bo, INTEL_DOMAIN_RENDER, INTEL_DOMAIN_RENDER);
+   ilo_cp_write_bo(cp, base, buf->bo, INTEL_DOMAIN_RENDER, INTEL_DOMAIN_RENDER);
+   ilo_cp_write_bo(cp, end, buf->bo, INTEL_DOMAIN_RENDER, INTEL_DOMAIN_RENDER);
    ilo_cp_end(cp);
 }
 
@@ -1296,7 +1296,7 @@ gen7_fill_null_SURFACE_STATE(const struct ilo_dev_info *dev,
 
 static void
 gen7_fill_buffer_SURFACE_STATE(const struct ilo_dev_info *dev,
-                               const struct ilo_texture *tex,
+                               const struct ilo_buffer *buf,
                                unsigned offset, unsigned size,
                                unsigned struct_size,
                                enum pipe_format elem_format,
@@ -1373,14 +1373,6 @@ gen7_fill_buffer_SURFACE_STATE(const struct ilo_dev_info *dev,
       assert(num_entries % 4 == 0);
 
    pitch = struct_size;
-
-   /*
-    * From the Ivy Bridge PRM, volume 4 part 1, page 65:
-    *
-    *     "If Surface Type is SURFTYPE_BUFFER, this field (Tiled Surface) must
-    *      be false (because buffers are supported only in linear memory)."
-    */
-   assert(tex->tiling == INTEL_TILING_NONE);
 
    pitch--;
    num_entries--;
@@ -1722,17 +1714,17 @@ gen7_emit_cbuf_SURFACE_STATE(const struct ilo_dev_info *dev,
                              struct ilo_cp *cp)
 {
    const enum pipe_format elem_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
-   struct ilo_texture *tex = ilo_texture(cbuf->buffer);
+   struct ilo_buffer *buf = ilo_buffer(cbuf->buffer);
    uint32_t dw[8];
 
    ILO_GPE_VALID_GEN(dev, 7, 7);
 
-   gen7_fill_buffer_SURFACE_STATE(dev, tex,
+   gen7_fill_buffer_SURFACE_STATE(dev, buf,
          cbuf->buffer_offset, cbuf->buffer_size,
          util_format_get_blocksize(elem_format), elem_format,
          false, false, dw, Elements(dw));
 
-   return gen7_emit_SURFACE_STATE(dev, tex->bo, false, dw, Elements(dw), cp);
+   return gen7_emit_SURFACE_STATE(dev, buf->bo, false, dw, Elements(dw), cp);
 }
 
 static uint32_t

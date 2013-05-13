@@ -757,15 +757,15 @@ gen6_emit_3DSTATE_VERTEX_BUFFERS(const struct ilo_dev_info *dev,
 
       /* use null vb if there is no buffer or the stride is out of range */
       if (vb->buffer && vb->stride <= 2048) {
-         const struct ilo_texture *tex = ilo_texture(vb->buffer);
+         const struct ilo_buffer *buf = ilo_buffer(vb->buffer);
          const uint32_t start_offset = vb->buffer_offset;
-         const uint32_t end_offset = tex->bo->get_size(tex->bo) - 1;
+         const uint32_t end_offset = buf->bo->get_size(buf->bo) - 1;
 
          dw |= vb->stride << BRW_VB0_PITCH_SHIFT;
 
          ilo_cp_write(cp, dw);
-         ilo_cp_write_bo(cp, start_offset, tex->bo, INTEL_DOMAIN_VERTEX, 0);
-         ilo_cp_write_bo(cp, end_offset, tex->bo, INTEL_DOMAIN_VERTEX, 0);
+         ilo_cp_write_bo(cp, start_offset, buf->bo, INTEL_DOMAIN_VERTEX, 0);
+         ilo_cp_write_bo(cp, end_offset, buf->bo, INTEL_DOMAIN_VERTEX, 0);
          ilo_cp_write(cp, instance_divisor);
       }
       else {
@@ -925,13 +925,13 @@ gen6_emit_3DSTATE_INDEX_BUFFER(const struct ilo_dev_info *dev,
 {
    const uint32_t cmd = ILO_GPE_CMD(0x3, 0x0, 0x0a);
    const uint8_t cmd_len = 3;
-   const struct ilo_texture *tex = ilo_texture(ib->buffer);
+   const struct ilo_buffer *buf = ilo_buffer(ib->buffer);
    uint32_t start_offset, end_offset;
    int format;
 
    ILO_GPE_VALID_GEN(dev, 6, 7);
 
-   if (!tex)
+   if (!buf)
       return;
 
    format = gen6_translate_index_size(ib->index_size);
@@ -945,7 +945,7 @@ gen6_emit_3DSTATE_INDEX_BUFFER(const struct ilo_dev_info *dev,
    }
 
    /* end_offset must also be aligned */
-   end_offset = tex->bo->get_size(tex->bo);
+   end_offset = buf->bo->get_size(buf->bo);
    end_offset -= (end_offset % ib->index_size);
    /* it is inclusive */
    end_offset -= 1;
@@ -954,8 +954,8 @@ gen6_emit_3DSTATE_INDEX_BUFFER(const struct ilo_dev_info *dev,
    ilo_cp_write(cp, cmd | (cmd_len - 2) |
                     ((enable_cut_index) ? BRW_CUT_INDEX_ENABLE : 0) |
                     format << 8);
-   ilo_cp_write_bo(cp, start_offset, tex->bo, INTEL_DOMAIN_VERTEX, 0);
-   ilo_cp_write_bo(cp, end_offset, tex->bo, INTEL_DOMAIN_VERTEX, 0);
+   ilo_cp_write_bo(cp, start_offset, buf->bo, INTEL_DOMAIN_VERTEX, 0);
+   ilo_cp_write_bo(cp, end_offset, buf->bo, INTEL_DOMAIN_VERTEX, 0);
    ilo_cp_end(cp);
 }
 
@@ -3569,7 +3569,7 @@ gen6_fill_null_SURFACE_STATE(const struct ilo_dev_info *dev,
 
 static void
 gen6_fill_buffer_SURFACE_STATE(const struct ilo_dev_info *dev,
-                               const struct ilo_texture *tex,
+                               const struct ilo_buffer *buf,
                                unsigned offset, unsigned size,
                                unsigned struct_size,
                                enum pipe_format elem_format,
@@ -3628,14 +3628,6 @@ gen6_fill_buffer_SURFACE_STATE(const struct ilo_dev_info *dev,
     *      indicates the size of the structure."
     */
    pitch = struct_size;
-
-   /*
-    * From the Sandy Bridge PRM, volume 4 part 1, page 82:
-    *
-    *     "If Surface Type is SURFTYPE_BUFFER, this field (Tiled Surface) must
-    *      be false (buffers are supported only in linear memory)"
-    */
-   assert(tex->tiling == INTEL_TILING_NONE);
 
    pitch--;
    num_entries--;
@@ -3939,17 +3931,17 @@ gen6_emit_cbuf_SURFACE_STATE(const struct ilo_dev_info *dev,
                              struct ilo_cp *cp)
 {
    const enum pipe_format elem_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
-   struct ilo_texture *tex = ilo_texture(cbuf->buffer);
+   struct ilo_buffer *buf = ilo_buffer(cbuf->buffer);
    uint32_t dw[6];
 
    ILO_GPE_VALID_GEN(dev, 6, 6);
 
-   gen6_fill_buffer_SURFACE_STATE(dev, tex,
+   gen6_fill_buffer_SURFACE_STATE(dev, buf,
          cbuf->buffer_offset, cbuf->buffer_size,
          util_format_get_blocksize(elem_format), elem_format,
          false, false, dw, Elements(dw));
 
-   return gen6_emit_SURFACE_STATE(dev, tex->bo, false, dw, Elements(dw), cp);
+   return gen6_emit_SURFACE_STATE(dev, buf->bo, false, dw, Elements(dw), cp);
 }
 
 static uint32_t
@@ -3959,7 +3951,7 @@ gen6_emit_so_SURFACE_STATE(const struct ilo_dev_info *dev,
                            int so_index,
                            struct ilo_cp *cp)
 {
-   struct ilo_texture *tex = ilo_texture(so->buffer);
+   struct ilo_buffer *buf = ilo_buffer(so->buffer);
    unsigned bo_offset, struct_size;
    enum pipe_format elem_format;
    uint32_t dw[6];
@@ -3988,10 +3980,10 @@ gen6_emit_so_SURFACE_STATE(const struct ilo_dev_info *dev,
       break;
    }
 
-   gen6_fill_buffer_SURFACE_STATE(dev, tex, bo_offset, so->buffer_size,
+   gen6_fill_buffer_SURFACE_STATE(dev, buf, bo_offset, so->buffer_size,
          struct_size, elem_format, false, true, dw, Elements(dw));
 
-   return gen6_emit_SURFACE_STATE(dev, tex->bo, false, dw, Elements(dw), cp);
+   return gen6_emit_SURFACE_STATE(dev, buf->bo, false, dw, Elements(dw), cp);
 }
 
 static uint32_t
