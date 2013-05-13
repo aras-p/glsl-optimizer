@@ -34,6 +34,7 @@ extern "C" {
 #include "main/compiler.h"
 #include "main/mtypes.h"
 #include "program/prog_parameter.h"
+#include "program/program.h"
 }
 
 class get_sampler_name : public ir_hierarchical_visitor
@@ -102,13 +103,15 @@ public:
    ir_dereference *last;
 };
 
-extern "C" {
-int
+
+extern "C" int
 _mesa_get_sampler_uniform_value(class ir_dereference *sampler,
 				struct gl_shader_program *shader_program,
 				const struct gl_program *prog)
 {
    get_sampler_name getname(sampler, shader_program);
+
+   GLuint shader = _mesa_program_target_to_index(prog->Target);
 
    sampler->accept(&getname);
 
@@ -119,6 +122,15 @@ _mesa_get_sampler_uniform_value(class ir_dereference *sampler,
       return 0;
    }
 
-   return shader_program->UniformStorage[location].sampler + getname.offset;
-}
+   if (!shader_program->UniformStorage[location].sampler[shader].active) {
+      assert(0 && "cannot return a sampler");
+      linker_error(shader_program,
+		   "cannot return a sampler named %s, because it is not "
+                   "used in this shader stage. This is a driver bug.\n",
+                   getname.name);
+      return 0;
+   }
+
+   return shader_program->UniformStorage[location].sampler[shader].index +
+          getname.offset;
 }

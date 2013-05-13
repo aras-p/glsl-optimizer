@@ -263,15 +263,19 @@ public:
    parcel_out_uniform_storage(struct string_to_uint_map *map,
 			      struct gl_uniform_storage *uniforms,
 			      union gl_constant_value *values)
-      : map(map), uniforms(uniforms), next_sampler(0), values(values)
+      : map(map), uniforms(uniforms), values(values)
    {
-      memset(this->targets, 0, sizeof(this->targets));
    }
 
-   void start_shader()
+   void start_shader(gl_shader_type shader_type)
    {
+      assert(shader_type < MESA_SHADER_TYPES);
+      this->shader_type = shader_type;
+
       this->shader_samplers_used = 0;
       this->shader_shadow_samplers = 0;
+      this->next_sampler = 0;
+      memset(this->targets, 0, sizeof(this->targets));
    }
 
    void set_and_process(struct gl_shader_program *prog,
@@ -335,8 +339,37 @@ public:
    int ubo_block_index;
    int ubo_byte_offset;
    bool ubo_row_major;
+   gl_shader_type shader_type;
 
 private:
+   void handle_samplers(const glsl_type *base_type,
+                        struct gl_uniform_storage *uniform)
+   {
+      if (base_type->is_sampler()) {
+         uniform->sampler[shader_type].index = this->next_sampler;
+         uniform->sampler[shader_type].active = true;
+
+         /* Increment the sampler by 1 for non-arrays and by the number of
+          * array elements for arrays.
+          */
+         this->next_sampler +=
+               MAX2(1, uniform->array_elements);
+
+         const gl_texture_index target = base_type->sampler_index();
+         const unsigned shadow = base_type->sampler_shadow;
+         for (unsigned i = uniform->sampler[shader_type].index;
+              i < MIN2(this->next_sampler, MAX_SAMPLERS);
+              i++) {
+            this->targets[i] = target;
+            this->shader_samplers_used |= 1U << i;
+            this->shader_shadow_samplers |= shadow << i;
+         }
+      } else {
+         uniform->sampler[shader_type].index = ~0;
+         uniform->sampler[shader_type].active = false;
+      }
+   }
+
    virtual void visit_field(const glsl_type *type, const char *name,
                             bool row_major)
    {
@@ -354,31 +387,6 @@ private:
       if (!found)
 	 return;
 
-      /* If there is already storage associated with this uniform, it means
-       * that it was set while processing an earlier shader stage.  For
-       * example, we may be processing the uniform in the fragment shader, but
-       * the uniform was already processed in the vertex shader.
-       */
-      if (this->uniforms[id].storage != NULL) {
-	 /* If the uniform already has storage set from another shader stage,
-	  * mark the samplers used for this shader stage.
-	  */
-	 if (type->contains_sampler()) {
-	    const unsigned count = MAX2(1, this->uniforms[id].array_elements);
-	    const unsigned shadow = (type->is_array())
-	       ? type->fields.array->sampler_shadow : type->sampler_shadow;
-
-	    for (unsigned i = 0; i < count; i++) {
-	       const unsigned s = this->uniforms[id].sampler + i;
-
-	       this->shader_samplers_used |= 1U << s;
-	       this->shader_shadow_samplers |= shadow << s;
-	    }
-	 }
-
-	 return;
-      }
-
       const glsl_type *base_type;
       if (type->is_array()) {
 	 this->uniforms[id].array_elements = type->length;
@@ -388,26 +396,16 @@ private:
 	 base_type = type;
       }
 
-      if (base_type->is_sampler()) {
-	 this->uniforms[id].sampler = this->next_sampler;
+      /* This assigns sampler uniforms to sampler units. */
+      handle_samplers(base_type, &this->uniforms[id]);
 
-	 /* Increment the sampler by 1 for non-arrays and by the number of
-	  * array elements for arrays.
-	  */
-	 this->next_sampler += MAX2(1, this->uniforms[id].array_elements);
-
-	 const gl_texture_index target = base_type->sampler_index();
-	 const unsigned shadow = base_type->sampler_shadow;
-	 for (unsigned i = this->uniforms[id].sampler
-		 ; i < MIN2(this->next_sampler, MAX_SAMPLERS)
-		 ; i++) {
-	    this->targets[i] = target;
-	    this->shader_samplers_used |= 1U << i;
-	    this->shader_shadow_samplers |= shadow << i;
-	 }
-
-      } else {
-	 this->uniforms[id].sampler = ~0;
+      /* If there is already storage associated with this uniform, it means
+       * that it was set while processing an earlier shader stage.  For
+       * example, we may be processing the uniform in the fragment shader, but
+       * the uniform was already processed in the vertex shader.
+       */
+      if (this->uniforms[id].storage != NULL) {
+         return;
       }
 
       this->uniforms[id].name = ralloc_strdup(this->uniforms, name);
@@ -633,17 +631,6 @@ link_assign_uniform_locations(struct gl_shader_program *prog)
       prog->UniformHash = new string_to_uint_map;
    }
 
-   /* Uniforms that lack an initializer in the shader code have an initial
-    * value of zero.  This includes sampler uniforms.
-    *
-    * Page 24 (page 30 of the PDF) of the GLSL 1.20 spec says:
-    *
-    *     "The link time initial value is either the value of the variable's
-    *     initializer, if present, or 0 if no initializer is present. Sampler
-    *     types cannot have initializers."
-    */
-   memset(prog->SamplerUnits, 0, sizeof(prog->SamplerUnits));
-
    /* First pass: Count the uniform resources used by the user-defined
     * uniforms.  While this happens, each active uniform will have an index
     * assigned to it.
@@ -655,6 +642,18 @@ link_assign_uniform_locations(struct gl_shader_program *prog)
    for (unsigned i = 0; i < MESA_SHADER_TYPES; i++) {
       if (prog->_LinkedShaders[i] == NULL)
 	 continue;
+
+      /* Uniforms that lack an initializer in the shader code have an initial
+       * value of zero.  This includes sampler uniforms.
+       *
+       * Page 24 (page 30 of the PDF) of the GLSL 1.20 spec says:
+       *
+       *     "The link time initial value is either the value of the variable's
+       *     initializer, if present, or 0 if no initializer is present. Sampler
+       *     types cannot have initializers."
+       */
+      memset(prog->_LinkedShaders[i]->SamplerUnits, 0,
+             sizeof(gl_shader::SamplerUnits));
 
       link_update_uniform_buffer_variables(prog->_LinkedShaders[i]);
 
@@ -706,9 +705,7 @@ link_assign_uniform_locations(struct gl_shader_program *prog)
       if (prog->_LinkedShaders[i] == NULL)
 	 continue;
 
-      /* Reset various per-shader target counts.
-       */
-      parcel.start_shader();
+      parcel.start_shader((gl_shader_type)i);
 
       foreach_list(node, prog->_LinkedShaders[i]->ir) {
 	 ir_variable *const var = ((ir_instruction *) node)->as_variable();
@@ -726,10 +723,11 @@ link_assign_uniform_locations(struct gl_shader_program *prog)
 
       prog->_LinkedShaders[i]->active_samplers = parcel.shader_samplers_used;
       prog->_LinkedShaders[i]->shadow_samplers = parcel.shader_shadow_samplers;
-   }
 
-   assert(sizeof(prog->SamplerTargets) == sizeof(parcel.targets));
-   memcpy(prog->SamplerTargets, parcel.targets, sizeof(prog->SamplerTargets));
+      assert(sizeof(gl_shader::SamplerTargets) == sizeof(parcel.targets));
+      memcpy(prog->_LinkedShaders[i]->SamplerTargets, parcel.targets,
+             sizeof(gl_shader::SamplerTargets));
+   }
 
 #ifndef NDEBUG
    for (unsigned i = 0; i < num_user_uniforms; i++) {

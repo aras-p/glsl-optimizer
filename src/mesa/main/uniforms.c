@@ -45,6 +45,7 @@
 #include "main/enums.h"
 #include "ir_uniform.h"
 #include "glsl_types.h"
+#include "program/program.h"
 
 /**
  * Update the vertex/fragment program's TexturesUsed array.
@@ -66,14 +67,18 @@ _mesa_update_shader_textures_used(struct gl_shader_program *shProg,
 				  struct gl_program *prog)
 {
    GLuint s;
+   struct gl_shader *shader =
+      shProg->_LinkedShaders[_mesa_program_target_to_index(prog->Target)];
 
-   memcpy(prog->SamplerUnits, shProg->SamplerUnits, sizeof(prog->SamplerUnits));
+   assert(shader);
+
+   memcpy(prog->SamplerUnits, shader->SamplerUnits, sizeof(prog->SamplerUnits));
    memset(prog->TexturesUsed, 0, sizeof(prog->TexturesUsed));
 
    for (s = 0; s < MAX_SAMPLERS; s++) {
       if (prog->SamplersUsed & (1 << s)) {
-         GLuint unit = shProg->SamplerUnits[s];
-         GLuint tgt = shProg->SamplerTargets[s];
+         GLuint unit = shader->SamplerUnits[s];
+         GLuint tgt = shader->SamplerTargets[s];
          assert(unit < Elements(prog->TexturesUsed));
          assert(tgt < NUM_TEXTURE_TARGETS);
          prog->TexturesUsed[unit] |= (1 << tgt);

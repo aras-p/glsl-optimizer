@@ -138,8 +138,16 @@ set_uniform_initializer(void *mem_ctx, gl_shader_program *prog,
       }
 
       if (base_type == GLSL_TYPE_SAMPLER) {
-	 for (unsigned int i = 0; i < storage->array_elements; i++) {
-	    prog->SamplerUnits[storage->sampler + i] = storage->storage[i].i;
+         for (int sh = 0; sh < MESA_SHADER_TYPES; sh++) {
+            gl_shader *shader = prog->_LinkedShaders[sh];
+
+            if (shader && storage->sampler[sh].active) {
+               for (unsigned i = 0; i < storage->array_elements; i++) {
+                  unsigned index = storage->sampler[sh].index + i;
+
+                  shader->SamplerUnits[index] = storage->storage[i].i;
+               }
+            }
 	 }
       }
    } else {
@@ -148,8 +156,17 @@ set_uniform_initializer(void *mem_ctx, gl_shader_program *prog,
 			       val->type->base_type,
 			       val->type->components());
 
-      if (storage->type->is_sampler())
-	 prog->SamplerUnits[storage->sampler] = storage->storage[0].i;
+      if (storage->type->is_sampler()) {
+         for (int sh = 0; sh < MESA_SHADER_TYPES; sh++) {
+            gl_shader *shader = prog->_LinkedShaders[sh];
+
+            if (shader && storage->sampler[sh].active) {
+               unsigned index = storage->sampler[sh].index;
+
+               shader->SamplerUnits[index] = storage->storage[0].i;
+            }
+         }
+      }
    }
 
    storage->initialized = true;

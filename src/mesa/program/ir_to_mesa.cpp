@@ -2404,8 +2404,10 @@ print_program(struct prog_instruction *mesa_instructions,
 class add_uniform_to_shader : public program_resource_visitor {
 public:
    add_uniform_to_shader(struct gl_shader_program *shader_program,
-			 struct gl_program_parameter_list *params)
-      : shader_program(shader_program), params(params), idx(-1)
+			 struct gl_program_parameter_list *params,
+                         gl_shader_type shader_type)
+      : shader_program(shader_program), params(params), idx(-1),
+        shader_type(shader_type)
    {
       /* empty */
    }
@@ -2425,6 +2427,7 @@ private:
    struct gl_shader_program *shader_program;
    struct gl_program_parameter_list *params;
    int idx;
+   gl_shader_type shader_type;
 };
 
 void
@@ -2471,8 +2474,11 @@ add_uniform_to_shader::visit_field(const glsl_type *type, const char *name,
 	 struct gl_uniform_storage *storage =
 	    &this->shader_program->UniformStorage[location];
 
+         assert(storage->sampler[shader_type].active);
+
 	 for (unsigned int j = 0; j < size / 4; j++)
-	    params->ParameterValues[index + j][0].f = storage->sampler + j;
+            params->ParameterValues[index + j][0].f =
+               storage->sampler[shader_type].index + j;
       }
    }
 
@@ -2498,7 +2504,8 @@ _mesa_generate_parameters_list_for_uniforms(struct gl_shader_program
 					    struct gl_program_parameter_list
 					    *params)
 {
-   add_uniform_to_shader add(shader_program, params);
+   add_uniform_to_shader add(shader_program, params,
+                             _mesa_shader_type_to_index(sh->Type));
 
    foreach_list(node, sh->ir) {
       ir_variable *var = ((ir_instruction *) node)->as_variable();

@@ -2132,6 +2132,17 @@ struct gl_shader
    /*@}*/
 
    /**
+    * Map from sampler unit to texture unit (set by glUniform1i())
+    *
+    * A sampler unit is associated with each sampler uniform by the linker.
+    * The sampler unit associated with each uniform is stored in the
+    * \c gl_uniform_storage::sampler field.
+    */
+   GLubyte SamplerUnits[MAX_SAMPLERS];
+   /** Which texture target is being sampled (TEXTURE_1D/2D/3D/etc_INDEX) */
+   gl_texture_index SamplerTargets[MAX_SAMPLERS];
+
+   /**
     * Number of uniform components used by this shader.
     *
     * This field is only set post-linking.
@@ -2334,17 +2345,6 @@ struct gl_shader_program
     * enumerated by \c glGetActiveUniform.
     */
    struct string_to_uint_map *UniformHash;
-
-   /**
-    * Map from sampler unit to texture unit (set by glUniform1i())
-    *
-    * A sampler unit is associated with each sampler uniform by the linker.
-    * The sampler unit associated with each uniform is stored in the
-    * \c gl_uniform_storage::sampler field.
-    */
-   GLubyte SamplerUnits[MAX_SAMPLERS];
-   /** Which texture target is being sampled (TEXTURE_1D/2D/3D/etc_INDEX) */
-   gl_texture_index SamplerTargets[MAX_SAMPLERS];
 
    GLboolean LinkStatus;   /**< GL_LINK_STATUS */
    GLboolean Validated;
