@@ -230,8 +230,8 @@
 				 devid == PCI_CHIP_HASWELL_CRW_GT2 || \
 				 devid == PCI_CHIP_HASWELL_CRW_M_GT2 || \
 				 devid == PCI_CHIP_HASWELL_CRW_S_GT2)
-
-#define IS_HSW_GT3(devid)	(devid == PCI_CHIP_HASWELL_M_GT3 || \
+#define IS_HSW_GT3(devid)	(devid == PCI_CHIP_HASWELL_GT3 || \
+				 devid == PCI_CHIP_HASWELL_M_GT3 || \
 				 devid == PCI_CHIP_HASWELL_S_GT3 || \
 				 devid == PCI_CHIP_HASWELL_SDV_GT3 || \
 				 devid == PCI_CHIP_HASWELL_SDV_M_GT3 || \
