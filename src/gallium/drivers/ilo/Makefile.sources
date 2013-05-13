@@ -16,6 +16,7 @@ C_SOURCES := \
 	ilo_screen.c \
 	ilo_shader.c \
 	ilo_state.c \
+	ilo_transfer.c \
 	ilo_video.c \
 	shader/ilo_shader_cs.c \
 	shader/ilo_shader_fs.c \

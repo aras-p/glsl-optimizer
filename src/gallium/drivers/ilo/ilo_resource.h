@@ -33,7 +33,6 @@
 #include "ilo_common.h"
 
 struct ilo_screen;
-struct ilo_context;
 struct winsys_handle;
 
 /*
@@ -89,8 +88,8 @@ ilo_resource(struct pipe_resource *res)
 void
 ilo_init_resource_functions(struct ilo_screen *is);
 
-void
-ilo_init_transfer_functions(struct ilo_context *ilo);
+bool
+ilo_resource_alloc_bo(struct ilo_resource *res);
 
 unsigned
 ilo_resource_get_slice_offset(const struct ilo_resource *res,

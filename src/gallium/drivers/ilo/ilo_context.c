@@ -37,6 +37,7 @@
 #include "ilo_screen.h"
 #include "ilo_shader.h"
 #include "ilo_state.h"
+#include "ilo_transfer.h"
 #include "ilo_video.h"
 #include "ilo_context.h"
 
