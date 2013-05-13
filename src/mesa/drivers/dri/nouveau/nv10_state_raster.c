@@ -31,6 +31,8 @@
 #include "nv10_3d.xml.h"
 #include "nv10_driver.h"
 
+#include "main/stencil.h"
+
 void
 nv10_emit_alpha_func(struct gl_context *ctx, int emit)
 {
@@ -145,7 +147,7 @@ nv10_emit_stencil_func(struct gl_context *ctx, int emit)
 
 	BEGIN_NV04(push, NV10_3D(STENCIL_FUNC_FUNC), 3);
 	PUSH_DATA (push, nvgl_comparison_op(ctx->Stencil.Function[0]));
-	PUSH_DATA (push, ctx->Stencil.Ref[0]);
+	PUSH_DATA (push, _mesa_get_stencil_ref(ctx, 0));
 	PUSH_DATA (push, ctx->Stencil.ValueMask[0]);
 }
 

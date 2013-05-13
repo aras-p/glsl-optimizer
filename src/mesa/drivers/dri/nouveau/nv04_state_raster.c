@@ -30,6 +30,7 @@
 #include "nv_object.xml.h"
 #include "nv04_3d.xml.h"
 #include "nv04_driver.h"
+#include "main/stencil.h"
 
 static unsigned
 get_comparison_op(unsigned op)
@@ -177,7 +178,7 @@ nv04_emit_control(struct gl_context *ctx, int emit)
 		nv04->ctrl[1] |= NV04_MULTITEX_TRIANGLE_CONTROL1_STENCIL_ENABLE;
 
 	nv04->ctrl[1] |= get_comparison_op(ctx->Stencil.Function[0]) << 4 |
-			 ctx->Stencil.Ref[0] << 8 |
+			 _mesa_get_stencil_ref(ctx, 0) << 8 |
 			 ctx->Stencil.ValueMask[0] << 16 |
 			 ctx->Stencil.WriteMask[0] << 24;
 
