@@ -42,6 +42,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/fbobject.h"
 #include "main/simple_list.h"
 #include "main/state.h"
+#include "main/core.h"
+#include "main/stencil.h"
 
 #include "vbo/vbo.h"
 #include "tnl/tnl.h"
@@ -1156,7 +1158,7 @@ radeonStencilFuncSeparate( struct gl_context *ctx, GLenum face, GLenum func,
                            GLint ref, GLuint mask )
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
-   GLuint refmask = (((ctx->Stencil.Ref[0] & 0xff) << RADEON_STENCIL_REF_SHIFT) |
+   GLuint refmask = ((_mesa_get_stencil_ref(ctx, 0) << RADEON_STENCIL_REF_SHIFT) |
 		     ((ctx->Stencil.ValueMask[0] & 0xff) << RADEON_STENCIL_MASK_SHIFT));
 
    RADEON_STATECHANGE( rmesa, ctx );

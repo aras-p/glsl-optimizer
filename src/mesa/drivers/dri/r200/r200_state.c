@@ -41,6 +41,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/light.h"
 #include "main/framebuffer.h"
 #include "main/fbobject.h"
+#include "main/stencil.h"
 
 #include "swrast/swrast.h"
 #include "vbo/vbo.h"
@@ -1384,7 +1385,7 @@ r200StencilFuncSeparate( struct gl_context *ctx, GLenum face, GLenum func,
                          GLint ref, GLuint mask )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
-   GLuint refmask = (((ctx->Stencil.Ref[0] & 0xff) << R200_STENCIL_REF_SHIFT) |
+   GLuint refmask = ((_mesa_get_stencil_ref(ctx, 0) << R200_STENCIL_REF_SHIFT) |
 		     ((ctx->Stencil.ValueMask[0] & 0xff) << R200_STENCIL_MASK_SHIFT));
 
    R200_STATECHANGE( rmesa, ctx );
