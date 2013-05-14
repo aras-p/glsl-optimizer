@@ -1973,7 +1973,7 @@ draw_gs_llvm_generate(struct draw_llvm *llvm,
    lp_build_name(context_ptr, "context");
    lp_build_name(input_array, "input");
    lp_build_name(io_ptr, "io");
-   lp_build_name(io_ptr, "num_prims");
+   lp_build_name(num_prims, "num_prims");
    lp_build_name(system_values.instance_id, "instance_id");
    lp_build_name(prim_id_ptr, "prim_id_ptr");
 
