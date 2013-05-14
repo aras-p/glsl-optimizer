@@ -101,10 +101,10 @@ struct si_pipe_shader_selector {
 
 struct si_shader {
 	unsigned		ninput;
-	struct si_shader_io	input[32];
+	struct si_shader_io	input[40];
 
 	unsigned		noutput;
-	struct si_shader_io	output[32];
+	struct si_shader_io	output[40];
 
 	unsigned		ninterp;
 	bool			uses_kill;

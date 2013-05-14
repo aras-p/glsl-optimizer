@@ -589,6 +589,7 @@ static void si_llvm_emit_epilogue(struct lp_build_tgsi_context * bld_base)
 		switch (d->Declaration.File) {
 		case TGSI_FILE_INPUT:
 			i = shader->ninput++;
+			assert(i < Elements(shader->input));
 			shader->input[i].name = d->Semantic.Name;
 			shader->input[i].sid = d->Semantic.Index;
 			shader->input[i].interpolate = d->Interp.Interpolate;
@@ -597,6 +598,7 @@ static void si_llvm_emit_epilogue(struct lp_build_tgsi_context * bld_base)
 
 		case TGSI_FILE_OUTPUT:
 			i = shader->noutput++;
+			assert(i < Elements(shader->output));
 			shader->output[i].name = d->Semantic.Name;
 			shader->output[i].sid = d->Semantic.Index;
 			shader->output[i].interpolate = d->Interp.Interpolate;
