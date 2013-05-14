@@ -1208,27 +1208,32 @@ ilo_texture_alloc_bo(struct ilo_texture *tex)
 /**
  * Return the offset (in bytes) to a slice within the bo.
  *
- * When tile_aligned is true, the offset is to the tile containing the start
- * address of the slice.  x_offset and y_offset are offsets (in pixels) from
- * the tile start to slice start.  x_offset is always a multiple of 4 and
- * y_offset is always a multiple of 2.
+ * The returned offset is aligned to tile size.  Since slices are not
+ * guaranteed to start at tile boundaries, the X and Y offsets (in pixels)
+ * from the tile origin to the slice are also returned.  X offset is always a
+ * multiple of 4 and Y offset is always a multiple of 2.
  */
 unsigned
 ilo_texture_get_slice_offset(const struct ilo_texture *tex,
-                             int level, int slice, bool tile_aligned,
+                             int level, int slice,
                              unsigned *x_offset, unsigned *y_offset)
 {
-   const unsigned x = tex->slice_offsets[level][slice].x / tex->block_width;
-   const unsigned y = tex->slice_offsets[level][slice].y / tex->block_height;
    unsigned tile_w, tile_h, tile_size, row_size;
-   unsigned slice_offset;
+   unsigned x, y, slice_offset;
 
    /* see the Sandy Bridge PRM, volume 1 part 2, page 24 */
 
    switch (tex->tiling) {
    case INTEL_TILING_NONE:
-      tile_w = tex->bo_cpp;
-      tile_h = 1;
+      /* W-tiled */
+      if (tex->bo_format == PIPE_FORMAT_S8_UINT) {
+         tile_w = 64;
+         tile_h = 64;
+      }
+      else {
+         tile_w = 1;
+         tile_h = 1;
+      }
       break;
    case INTEL_TILING_X:
       tile_w = 512;
@@ -1240,7 +1245,7 @@ ilo_texture_get_slice_offset(const struct ilo_texture *tex,
       break;
    default:
       assert(!"unknown tiling");
-      tile_w = tex->bo_cpp;
+      tile_w = 1;
       tile_h = 1;
       break;
    }
@@ -1248,13 +1253,10 @@ ilo_texture_get_slice_offset(const struct ilo_texture *tex,
    tile_size = tile_w * tile_h;
    row_size = tex->bo_stride * tile_h;
 
-   /*
-    * for non-tiled resources, this is equivalent to
-    *
-    *   slice_offset = y * tex->bo_stride + x * tex->bo_cpp;
-    */
-   slice_offset =
-      row_size * (y / tile_h) + tile_size * (x * tex->bo_cpp / tile_w);
+   /* in bytes */
+   x = tex->slice_offsets[level][slice].x / tex->block_width * tex->bo_cpp;
+   y = tex->slice_offsets[level][slice].y / tex->block_height;
+   slice_offset = row_size * (y / tile_h) + tile_size * (x / tile_w);
 
    /*
     * Since tex->bo_stride is a multiple of tile_w, slice_offset should be
@@ -1262,42 +1264,25 @@ ilo_texture_get_slice_offset(const struct ilo_texture *tex,
     */
    assert(slice_offset % tile_size == 0);
 
-   if (tile_aligned) {
-      /*
-       * because of the possible values of align_i and align_j in
-       * layout_tex_init(), x_offset must be a multiple of 4 and y_offset must
-       * be a multiple of 2.
-       */
-      if (x_offset) {
-         assert(tile_w % tex->bo_cpp == 0);
-         *x_offset = (x % (tile_w / tex->bo_cpp)) * tex->block_width;
-         assert(*x_offset % 4 == 0);
-      }
-      if (y_offset) {
-         *y_offset = (y % tile_h) * tex->block_height;
-         assert(*y_offset % 2 == 0);
-      }
+   /*
+    * because of the possible values of align_i and align_j in
+    * tex_layout_init_alignments(), x_offset is guaranteed to be a multiple of
+    * 4 and y_offset is guaranteed to be a multiple of 2.
+    */
+   if (x_offset) {
+      /* in pixels */
+      x = (x % tile_w) / tex->bo_cpp * tex->block_width;
+      assert(x % 4 == 0);
+
+      *x_offset = x;
    }
-   else {
-      const unsigned tx = (x * tex->bo_cpp) % tile_w;
-      const unsigned ty = y % tile_h;
 
-      switch (tex->tiling) {
-      case INTEL_TILING_NONE:
-         assert(tx == 0 && ty == 0);
-         break;
-      case INTEL_TILING_X:
-         slice_offset += tile_w * ty + tx;
-         break;
-      case INTEL_TILING_Y:
-         slice_offset += tile_h * 16 * (tx / 16) + ty * 16 + (tx % 16);
-         break;
-      }
+   if (y_offset) {
+      /* in pixels */
+      y = (y % tile_h) * tex->block_height;
+      assert(y % 2 == 0);
 
-      if (x_offset)
-         *x_offset = 0;
-      if (y_offset)
-         *y_offset = 0;
+      *y_offset = y;
    }
 
    return slice_offset;

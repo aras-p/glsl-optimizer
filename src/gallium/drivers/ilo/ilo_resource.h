@@ -105,7 +105,7 @@ ilo_texture_alloc_bo(struct ilo_texture *tex);
 
 unsigned
 ilo_texture_get_slice_offset(const struct ilo_texture *tex,
-                             int level, int slice, bool tile_aligned,
+                             int level, int slice,
                              unsigned *x_offset, unsigned *y_offset);
 
 #endif /* ILO_RESOURCE_H */

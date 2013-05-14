@@ -1496,7 +1496,7 @@ gen7_fill_normal_SURFACE_STATE(const struct ilo_dev_info *dev,
       assert(num_levels == 1 && num_layers == 1);
 
       layer_offset = ilo_texture_get_slice_offset(tex,
-            first_level, first_layer, true, &x_offset, &y_offset);
+            first_level, first_layer, &x_offset, &y_offset);
 
       assert(x_offset % 4 == 0);
       assert(y_offset % 2 == 0);

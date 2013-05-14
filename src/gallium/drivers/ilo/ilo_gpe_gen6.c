@@ -2348,7 +2348,7 @@ ilo_gpe_gen6_emit_3DSTATE_DEPTH_BUFFER(const struct ilo_dev_info *dev,
     */
    slice_offset = ilo_texture_get_slice_offset(tex,
          surface->u.tex.level, surface->u.tex.first_layer,
-         true, &x_offset, &y_offset);
+         &x_offset, &y_offset);
 
    /*
     * From the Sandy Bridge PRM, volume 2 part 1, page 326:
@@ -3750,7 +3750,7 @@ gen6_fill_normal_SURFACE_STATE(const struct ilo_dev_info *dev,
       assert(num_levels == 1 && num_layers == 1);
 
       layer_offset = ilo_texture_get_slice_offset(tex,
-            first_level, first_layer, true, &x_offset, &y_offset);
+            first_level, first_layer, &x_offset, &y_offset);
 
       assert(x_offset % 4 == 0);
       assert(y_offset % 2 == 0);
