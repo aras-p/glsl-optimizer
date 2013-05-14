@@ -36,7 +36,6 @@ extern "C" {
 
 #include <stack>
 #include <map>
-#include <iostream>
 
 #include "sb_bc.h"
 #include "sb_shader.h"
@@ -44,8 +43,6 @@ extern "C" {
 #include "sb_sched.h"
 
 using namespace r600_sb;
-
-using std::cerr;
 
 static sb_hw_class translate_chip_class(enum chip_class cc);
 static sb_hw_chip translate_chip(enum radeon_family rf);
@@ -79,12 +76,12 @@ void r600_sb_context_destroy(void * sctx) {
 		sb_context *ctx = static_cast<sb_context*>(sctx);
 
 		if (sb_context::dump_stat) {
-			cerr << "context src stats: ";
-			ctx->src_stats.dump(cerr);
-			cerr << "context opt stats: ";
-			ctx->opt_stats.dump(cerr);
-			cerr << "context diff: ";
-			ctx->src_stats.dump_diff(cerr, ctx->opt_stats);
+			sblog << "\ncontext src stats: ";
+			ctx->src_stats.dump();
+			sblog << "context opt stats: ";
+			ctx->opt_stats.dump();
+			sblog << "context diff: ";
+			ctx->src_stats.dump_diff(ctx->opt_stats);
 		}
 
 		delete ctx;
@@ -109,7 +106,7 @@ int r600_sb_bytecode_process(struct r600_context *rctx,
 		time_start = os_time_get_nano();
 	}
 
-	SB_DUMP_STAT( cerr << "\nsb: shader " << shader_id << "\n"; );
+	SB_DUMP_STAT( sblog << "\nsb: shader " << shader_id << "\n"; );
 
 	bc_parser parser(*ctx, bc, pshader);
 
@@ -121,7 +118,7 @@ int r600_sb_bytecode_process(struct r600_context *rctx,
 	shader *sh = parser.get_shader();
 
 	if (dump_bytecode) {
-		bc_dump(*sh, cerr, bc->bytecode, bc->ndw).run();
+		bc_dump(*sh, bc->bytecode, bc->ndw).run();
 	}
 
 	if (!optimize) {
@@ -146,7 +143,7 @@ int r600_sb_bytecode_process(struct r600_context *rctx,
 		if ((sb_context::dskip_start <= shader_id &&
 				shader_id <= sb_context::dskip_end) ==
 						(sb_context::dskip_mode == 1)) {
-			cerr << "sb: skipped shader " << shader_id << " : " << "["
+			sblog << "sb: skipped shader " << shader_id << " : " << "["
 					<< sb_context::dskip_start << "; "
 					<< sb_context::dskip_end << "] mode "
 					<< sb_context::dskip_mode << "\n";
@@ -159,21 +156,21 @@ int r600_sb_bytecode_process(struct r600_context *rctx,
 		return r;
 	}
 
-	SB_DUMP_PASS( cerr << "\n\n###### after parse\n"; sh->dump_ir(); );
+	SB_DUMP_PASS( sblog << "\n\n###### after parse\n"; sh->dump_ir(); );
 
 #define SB_RUN_PASS(n, dump) \
 	do { \
 		r = n(*sh).run(); \
 		if (r) { \
-			cerr << "sb: error (" << r << ") in the " << #n << " pass.\n"; \
+			sblog << "sb: error (" << r << ") in the " << #n << " pass.\n"; \
 			if (sb_context::no_fallback) \
 				return r; \
-			cerr << "sb: using unoptimized bytecode...\n"; \
+			sblog << "sb: using unoptimized bytecode...\n"; \
 			delete sh; \
 			return 0; \
 		} \
 		if (dump) { \
-			SB_DUMP_PASS( cerr << "\n\n###### after " << #n << "\n"; \
+			SB_DUMP_PASS( sblog << "\n\n###### after " << #n << "\n"; \
 				sh->dump_ir();); \
 		} \
 		assert(!r); \
@@ -240,7 +237,7 @@ int r600_sb_bytecode_process(struct r600_context *rctx,
 	bytecode &nbc = builder.get_bytecode();
 
 	if (dump_bytecode) {
-		bc_dump(*sh, cerr, &nbc).run();
+		bc_dump(*sh, &nbc).run();
 	}
 
 	if (!sb_context::dry_run) {
@@ -253,24 +250,24 @@ int r600_sb_bytecode_process(struct r600_context *rctx,
 		bc->ngpr = sh->ngpr;
 		bc->nstack = sh->nstack;
 	} else {
-		SB_DUMP_STAT( cerr << "sb: dry run: optimized bytecode is not used\n"; );
+		SB_DUMP_STAT( sblog << "sb: dry run: optimized bytecode is not used\n"; );
 	}
 
 	if (sb_context::dump_stat) {
 		int64_t t = os_time_get_nano() - time_start;
 
-		cerr << "sb: processing shader " << shader_id << " done ( "
+		sblog << "sb: processing shader " << shader_id << " done ( "
 				<< ((double)t)/1000000.0 << " ms ).\n";
 
 		sh->opt_stats.ndw = bc->ndw;
 		sh->collect_stats(true);
 
-		cerr << "src stats: ";
-		sh->src_stats.dump(cerr);
-		cerr << "opt stats: ";
-		sh->opt_stats.dump(cerr);
-		cerr << "diff: ";
-		sh->src_stats.dump_diff(cerr, sh->opt_stats);
+		sblog << "src stats: ";
+		sh->src_stats.dump();
+		sblog << "opt stats: ";
+		sh->opt_stats.dump();
+		sblog << "diff: ";
+		sh->src_stats.dump_diff(sh->opt_stats);
 	}
 
 	delete sh;

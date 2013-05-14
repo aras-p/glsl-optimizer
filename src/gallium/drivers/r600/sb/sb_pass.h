@@ -87,8 +87,6 @@ class bytecode;
 class bc_dump : public vpass {
 	using vpass::visit;
 
-	std::ostream &o;
-
 	uint32_t *bc_data;
 	unsigned ndw;
 
@@ -98,10 +96,10 @@ class bc_dump : public vpass {
 
 public:
 
-	bc_dump(shader &s, std::ostream &o, bytecode *bc = NULL);
+	bc_dump(shader &s, bytecode *bc = NULL);
 
-	bc_dump(shader &s, std::ostream &o, uint32_t *bc_ptr, unsigned ndw) :
-		vpass(s), o(o), bc_data(bc_ptr), ndw(ndw), id(), new_group(), group_index() {}
+	bc_dump(shader &s, uint32_t *bc_ptr, unsigned ndw) :
+		vpass(s), bc_data(bc_ptr), ndw(ndw), id(), new_group(), group_index() {}
 
 	virtual int init();
 	virtual int done();

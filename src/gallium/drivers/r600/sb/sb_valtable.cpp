@@ -32,7 +32,6 @@
 #define VT_DUMP(q)
 #endif
 
-#include <iostream>
 #include <cstring>
 
 #include "sb_shader.h"
@@ -40,11 +39,9 @@
 
 namespace r600_sb {
 
-using std::cerr;
-
 static const char * chans = "xyzw01?_";
 
-std::ostream& operator << (std::ostream &o, value &v) {
+sb_ostream& operator << (sb_ostream &o, value &v) {
 
 	bool dead = v.flags & VLF_DEAD;
 
@@ -73,9 +70,8 @@ std::ostream& operator << (std::ostream &o, value &v) {
 	}
 		break;
 	case VLK_CONST:
-		o << v.literal_value.f << "|" << std::hex
-			<< std::showbase << v.literal_value.u
-			<< std::dec << std::noshowbase;
+		o << v.literal_value.f << "|";
+		o.print_zw_hex(v.literal_value.u, 8);
 		break;
 	case VLK_PARAM:
 		o << "Param" << (v.select.sel() - ALU_SRC_PARAM_OFFSET)
@@ -137,7 +133,7 @@ void value_table::add_value(value* v) {
 	}
 
 	VT_DUMP(
-		cerr << "gvn add_value ";
+		sblog << "gvn add_value ";
 		dump::dump_val(v);
 	);
 
@@ -148,9 +144,9 @@ void value_table::add_value(value* v) {
 
 	if (v->def && ex.try_fold(v)) {
 		VT_DUMP(
-			cerr << " folded: ";
+			sblog << " folded: ";
 			dump::dump_val(v->gvn_source);
-			cerr << "\n";
+			sblog << "\n";
 		);
 		return;
 	}
@@ -166,9 +162,9 @@ void value_table::add_value(value* v) {
 			v->gvn_source = c->gvn_source;
 
 			VT_DUMP(
-				cerr << " found : equal to ";
+				sblog << " found : equal to ";
 				dump::dump_val(v->gvn_source);
-				cerr << "\n";
+				sblog << "\n";
 			);
 			return;
 		}
@@ -176,7 +172,7 @@ void value_table::add_value(value* v) {
 
 	v->gvn_source = v;
 	VT_DUMP(
-		cerr << " added new\n";
+		sblog << " added new\n";
 	);
 }
 
@@ -217,11 +213,11 @@ void value_table::get_values(vvec& v) {
 
 void value::add_use(node* n, use_kind kind, int arg) {
 	if (0) {
-	cerr << "add_use ";
+	sblog << "add_use ";
 	dump::dump_val(this);
-	cerr << "   =>  ";
+	sblog << "   =>  ";
 	dump::dump_op(n);
-	cerr << "     kind " << kind << "    arg " << arg << "\n";
+	sblog << "     kind " << kind << "    arg " << arg << "\n";
 	}
 	uses = new use_info(n, kind, arg, uses);
 }

@@ -33,17 +33,12 @@
 #endif
 
 #include <cstring>
-#include <iostream>
-#include <iomanip>
 
 #include "sb_bc.h"
 #include "sb_shader.h"
-
 #include "sb_pass.h"
 
 namespace r600_sb {
-
-using std::cerr;
 
 class regbits {
 	typedef uint32_t basetype;
@@ -88,12 +83,14 @@ void regbits::dump() {
 	for (unsigned i = 0; i < size * bt_bits; ++i) {
 
 		if (!(i & 31))
-			cerr << "\n";
+			sblog << "\n";
 
-		if (!(i & 3))
-			cerr << "    " << std::setw(3) << (i / 4) << " ";
+		if (!(i & 3)) {
+			sblog.print_wl(i / 4, 7);
+			sblog << " ";
+		}
 
-		cerr << (get(i) ? 1 : 0);
+		sblog << (get(i) ? 1 : 0);
 	}
 }
 
@@ -237,20 +234,20 @@ void ra_init::alloc_arrays() {
 		gpr_array *a = *I;
 
 		RA_DUMP(
-			cerr << "array [" << a->array_size << "] at " << a->base_gpr << "\n";
-			cerr << "\n";
+			sblog << "array [" << a->array_size << "] at " << a->base_gpr << "\n";
+			sblog << "\n";
 		);
 
 		// skip preallocated arrays (e.g. with preloaded inputs)
 		if (a->gpr) {
-			RA_DUMP( cerr << "   FIXED at " << a->gpr << "\n"; );
+			RA_DUMP( sblog << "   FIXED at " << a->gpr << "\n"; );
 			continue;
 		}
 
 		bool dead = a->is_dead();
 
 		if (dead) {
-			RA_DUMP( cerr << "   DEAD\n"; );
+			RA_DUMP( sblog << "   DEAD\n"; );
 			continue;
 		}
 
@@ -264,9 +261,9 @@ void ra_init::alloc_arrays() {
 		}
 
 		RA_DUMP(
-			cerr << "  interf: ";
+			sblog << "  interf: ";
 			dump::dump_set(sh, s);
-			cerr << "\n";
+			sblog << "\n";
 		);
 
 		regbits rb(sh, s);
@@ -274,7 +271,7 @@ void ra_init::alloc_arrays() {
 		sel_chan base = rb.find_free_array(a->array_size,
 		                                   (1 << a->base_gpr.chan()));
 
-		RA_DUMP( cerr << "  found base: " << base << "\n"; );
+		RA_DUMP( sblog << "  found base: " << base << "\n"; );
 
 		a->gpr = base;
 	}
@@ -307,9 +304,9 @@ void ra_init::process_op(node* n) {
 	bool copy = n->is_copy_mov();
 
 	RA_DUMP(
-		cerr << "ra_init: process_op : ";
+		sblog << "ra_init: process_op : ";
 		dump::dump_op(n);
-		cerr << "\n";
+		sblog << "\n";
 	);
 
 	if (n->is_alu_packed()) {
@@ -355,9 +352,9 @@ void ra_init::color_bs_constraint(ra_constraint* c) {
 	assert(vv.size() <= 8);
 
 	RA_DUMP(
-		cerr << "color_bs_constraint: ";
+		sblog << "color_bs_constraint: ";
 		dump::dump_vec(vv);
-		cerr << "\n";
+		sblog << "\n";
 	);
 
 	regbits rb(ctx.alu_temp_gprs);
@@ -380,9 +377,9 @@ void ra_init::color_bs_constraint(ra_constraint* c) {
 			interf = v->interferences;
 
 		RA_DUMP(
-			cerr << "   processing " << *v << "  interferences : ";
+			sblog << "   processing " << *v << "  interferences : ";
 			dump::dump_set(sh, interf);
-			cerr << "\n";
+			sblog << "\n";
 		);
 
 		if (gpr) {
@@ -406,9 +403,9 @@ void ra_init::color_bs_constraint(ra_constraint* c) {
 		rb.from_val_set(sh, interf);
 
 		RA_DUMP(
-			cerr << "   regbits : ";
+			sblog << "   regbits : ";
 			rb.dump();
-			cerr << "\n";
+			sblog << "\n";
 		);
 
 		while (allowed_chans && gpr.sel() < sh.num_nontemp_gpr()) {
@@ -417,7 +414,7 @@ void ra_init::color_bs_constraint(ra_constraint* c) {
 				gpr = gpr + 1;
 
 			RA_DUMP(
-				cerr << "    trying " << gpr << "\n";
+				sblog << "    trying " << gpr << "\n";
 			);
 
 			unsigned chan = gpr.chan();
@@ -441,7 +438,7 @@ void ra_init::color_bs_constraint(ra_constraint* c) {
 		}
 
 		if (!gpr) {
-			cerr << "color_bs_constraint: failed...\n";
+			sblog << "color_bs_constraint: failed...\n";
 			assert(!"coloring failed");
 		}
 	}
@@ -458,11 +455,11 @@ void ra_init::color(value* v) {
 		return;
 
 	RA_DUMP(
-		cerr << "coloring ";
+		sblog << "coloring ";
 		dump::dump_val(v);
-		cerr << "   interferences ";
+		sblog << "   interferences ";
 		dump::dump_set(sh, v->interferences);
-		cerr << "\n";
+		sblog << "\n";
 	);
 
 	if (v->is_reg_pinned()) {
@@ -475,7 +472,7 @@ void ra_init::color(value* v) {
 	sel_chan c;
 
 	if (v->is_chan_pinned()) {
-		RA_DUMP( cerr << "chan_pinned = " << v->pin_gpr.chan() << "  ";	);
+		RA_DUMP( sblog << "chan_pinned = " << v->pin_gpr.chan() << "  ";	);
 		unsigned mask = 1 << v->pin_gpr.chan();
 		c = rb.find_free_chans(mask) + v->pin_gpr.chan();
 	} else {
@@ -489,9 +486,9 @@ void ra_init::color(value* v) {
 void ra_init::assign_color(value* v, sel_chan c) {
 	v->gpr = c;
 	RA_DUMP(
-		cerr << "colored ";
+		sblog << "colored ";
 		dump::dump_val(v);
-		cerr << " to " << c << "\n";
+		sblog << " to " << c << "\n";
 	);
 }
 

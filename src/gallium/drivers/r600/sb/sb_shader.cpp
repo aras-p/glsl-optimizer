@@ -26,12 +26,9 @@
 
 #include "sb_bc.h"
 #include "sb_shader.h"
-
 #include "sb_pass.h"
 
 namespace r600_sb {
-
-using std::cerr;
 
 shader::shader(sb_context &sctx, shader_target t, unsigned id)
 : ctx(sctx), next_temp_value_index(temp_regid_offset),
@@ -400,7 +397,7 @@ void shader::add_gpr_array(unsigned gpr_start, unsigned gpr_count,
 			gpr_array *a = new gpr_array(
 					sel_chan(gpr_start, chan), gpr_count);
 
-			SB_DUMP_PASS( cerr << "add_gpr_array: @" << a->base_gpr
+			SB_DUMP_PASS( sblog << "add_gpr_array: @" << a->base_gpr
 			         << " [" << a->array_size << "]\n";
 			);
 
@@ -696,39 +693,39 @@ void shader_stats::accumulate(shader_stats& s) {
 	cf += s.cf;
 }
 
-void shader_stats::dump(std::ostream& o) {
-	o << "dw:" << ndw << ", gpr:" << ngpr << ", stk:" << nstack
+void shader_stats::dump() {
+	sblog << "dw:" << ndw << ", gpr:" << ngpr << ", stk:" << nstack
 			<< ", alu groups:" << alu_groups << ", alu clauses: " << alu_clauses
 			<< ", alu:" << alu << ", fetch:" << fetch
 			<< ", fetch clauses:" << fetch_clauses
 			<< ", cf:" << cf;
 
 	if (shaders > 1)
-		o << ", shaders:" << shaders;
+		sblog << ", shaders:" << shaders;
 
-	o << "\n";
+	sblog << "\n";
 }
 
-static void print_diff(std::ostream &o, unsigned d1, unsigned d2) {
+static void print_diff(unsigned d1, unsigned d2) {
 	if (d1)
-		o << ((int)d2 - (int)d1) * 100 / (int)d1 << "%";
+		sblog << ((int)d2 - (int)d1) * 100 / (int)d1 << "%";
 	else if (d2)
-		o << "N/A";
+		sblog << "N/A";
 	else
-		o << "0%";
+		sblog << "0%";
 }
 
-void shader_stats::dump_diff(std::ostream& o, shader_stats& s) {
-	o << "dw:"; print_diff(o, ndw, s.ndw);
-	o << ", gpr:" ; print_diff(o, ngpr, s.ngpr);
-	o << ", stk:" ; print_diff(o, nstack, s.nstack);
-	o << ", alu groups:" ; print_diff(o, alu_groups, s.alu_groups);
-	o << ", alu clauses: " ; print_diff(o, alu_clauses, s.alu_clauses);
-	o << ", alu:" ; print_diff(o, alu, s.alu);
-	o << ", fetch:" ; print_diff(o, fetch, s.fetch);
-	o << ", fetch clauses:" ; print_diff(o, fetch_clauses, s.fetch_clauses);
-	o << ", cf:" ; print_diff(o, cf, s.cf);
-	o << "\n";
+void shader_stats::dump_diff(shader_stats& s) {
+	sblog << "dw:"; print_diff(ndw, s.ndw);
+	sblog << ", gpr:" ; print_diff(ngpr, s.ngpr);
+	sblog << ", stk:" ; print_diff(nstack, s.nstack);
+	sblog << ", alu groups:" ; print_diff(alu_groups, s.alu_groups);
+	sblog << ", alu clauses: " ; print_diff(alu_clauses, s.alu_clauses);
+	sblog << ", alu:" ; print_diff(alu, s.alu);
+	sblog << ", fetch:" ; print_diff(fetch, s.fetch);
+	sblog << ", fetch clauses:" ; print_diff(fetch_clauses, s.fetch_clauses);
+	sblog << ", cf:" ; print_diff(cf, s.cf);
+	sblog << "\n";
 }
 
 } // namespace r600_sb

@@ -33,12 +33,9 @@
 #endif
 
 #include "sb_shader.h"
-
 #include "sb_pass.h"
 
 namespace r600_sb {
-
-using std::cerr;
 
 int peephole::run() {
 
@@ -112,9 +109,9 @@ void peephole::optimize_SETcc_op(alu_node* a) {
 		bool_op_info bop = {};
 
 		PPH_DUMP(
-			cerr << "optSETcc ";
+			sblog << "optSETcc ";
 			dump::dump_op(a);
-			cerr << "\n";
+			sblog << "\n";
 		);
 
 		if (!get_bool_op_info(s, bop))
@@ -136,10 +133,10 @@ void peephole::optimize_SETcc_op(alu_node* a) {
 		}
 
 		PPH_DUMP(
-			cerr << "boi node: ";
+			sblog << "boi node: ";
 			dump::dump_op(bop.n);
-			cerr << " invert: " << bop.invert << "  int_cvt: " << bop.int_cvt;
-			cerr <<"\n";
+			sblog << " invert: " << bop.invert << "  int_cvt: " << bop.int_cvt;
+			sblog <<"\n";
 		);
 
 		unsigned newop = is_pred ? get_predsetcc_opcode(cc, cmp_type) :

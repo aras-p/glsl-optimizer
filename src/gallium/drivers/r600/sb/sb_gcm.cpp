@@ -32,21 +32,17 @@
 #define GCM_DUMP(a)
 #endif
 
-#include <iostream>
 #include <map>
 
 #include "sb_bc.h"
 #include "sb_shader.h"
-
 #include "sb_pass.h"
 
 namespace r600_sb {
 
-using std::cerr;
-
 int gcm::run() {
 
-	GCM_DUMP( cerr << "==== GCM ==== \n"; sh.dump_ir(); );
+	GCM_DUMP( sblog << "==== GCM ==== \n"; sh.dump_ir(); );
 
 	collect_instructions(sh.root, true);
 
@@ -59,17 +55,17 @@ int gcm::run() {
 		node *o = *I;
 
 		GCM_DUMP(
-			cerr << "pending : ";
+			sblog << "pending : ";
 			dump::dump_op(o);
-			cerr << "\n";
+			sblog << "\n";
 		);
 
 		if (td_is_ready(o)) {
 
 			GCM_DUMP(
-				cerr << "  ready: ";
+				sblog << "  ready: ";
 				dump::dump_op(o);
-				cerr << "\n";
+				sblog << "\n";
 			);
 			pending.remove_node(o);
 			ready.push_back(o);
@@ -80,7 +76,7 @@ int gcm::run() {
 	sched_early(sh.root);
 
 	if (!pending.empty()) {
-		cerr << "##### gcm_sched_early_pass: unscheduled ops:\n";
+		sblog << "##### gcm_sched_early_pass: unscheduled ops:\n";
 		dump::dump_op(pending.front());
 	}
 
@@ -88,7 +84,7 @@ int gcm::run() {
 
 	GCM_DUMP( sh.dump_ir(); );
 
-	GCM_DUMP( cerr << "\n\n ############## gcm late\n\n"; );
+	GCM_DUMP( sblog << "\n\n ############## gcm late\n\n"; );
 
 	collect_instructions(sh.root, false);
 
@@ -96,7 +92,7 @@ int gcm::run() {
 
 	sched_late(sh.root);
 	if (!pending.empty()) {
-		cerr << "##### gcm_sched_late_pass: unscheduled ops:\n";
+		sblog << "##### gcm_sched_late_pass: unscheduled ops:\n";
 		dump::dump_op(pending.front());
 	}
 
@@ -163,9 +159,9 @@ void gcm::sched_early(container_node *n) {
 
 void gcm::td_schedule(bb_node *bb, node *n) {
 	GCM_DUMP(
-		cerr << "scheduling : ";
+		sblog << "scheduling : ";
 		dump::dump_op(n);
-		cerr << "\n";
+		sblog << "\n";
 	);
 	td_release_uses(n->dst);
 
@@ -177,7 +173,7 @@ void gcm::td_schedule(bb_node *bb, node *n) {
 
 void gcm::td_sched_bb(bb_node* bb) {
 	GCM_DUMP(
-	cerr << "td scheduling BB_" << bb->id << "\n";
+	sblog << "td scheduling BB_" << bb->id << "\n";
 	);
 
 	while (!ready.empty()) {
@@ -197,9 +193,9 @@ bool gcm::td_is_ready(node* n) {
 void gcm::td_release_val(value *v) {
 
 	GCM_DUMP(
-		cerr << "td checking uses: ";
+		sblog << "td checking uses: ";
 		dump::dump_val(v);
-		cerr << "\n";
+		sblog << "\n";
 	);
 
 	use_info *u = v->uses;
@@ -210,16 +206,16 @@ void gcm::td_release_val(value *v) {
 		}
 
 		GCM_DUMP(
-			cerr << "td    used in ";
+			sblog << "td    used in ";
 			dump::dump_op(u->op);
-			cerr << "\n";
+			sblog << "\n";
 		);
 
 		if (--uses[u->op] == 0) {
 			GCM_DUMP(
-				cerr << "td        released : ";
+				sblog << "td        released : ";
 				dump::dump_op(u->op);
-				cerr << "\n";
+				sblog << "\n";
 			);
 
 			pending.remove_node(u->op);
@@ -288,14 +284,14 @@ void gcm::sched_late(container_node *n) {
 
 void gcm::bu_sched_bb(bb_node* bb) {
 	GCM_DUMP(
-	cerr << "bu scheduling BB_" << bb->id << "\n";
+	sblog << "bu scheduling BB_" << bb->id << "\n";
 	);
 
 	bu_bb = bb;
 
 	if (!pending_nodes.empty()) {
 		GCM_DUMP(
-				cerr << "pending nodes:\n";
+				sblog << "pending nodes:\n";
 		);
 
 		// TODO consider sorting the exports by array_base,
@@ -307,7 +303,7 @@ void gcm::bu_sched_bb(bb_node* bb) {
 		}
 		pending_nodes.clear();
 		GCM_DUMP(
-			cerr << "pending nodes processed...\n";
+			sblog << "pending nodes processed...\n";
 		);
 	}
 
@@ -390,7 +386,7 @@ void gcm::bu_sched_bb(bb_node* bb) {
 						 !bu_ready[SQ_VTX].empty() ||
 						 !bu_ready_next[SQ_TEX].empty() ||
 						 !bu_ready_next[SQ_VTX].empty())) {
-					GCM_DUMP( cerr << "switching to fetch (regpressure)\n"; );
+					GCM_DUMP( sblog << "switching to fetch (regpressure)\n"; );
 					break;
 				}
 
@@ -436,7 +432,7 @@ void gcm::bu_sched_bb(bb_node* bb) {
 	bu_bb = NULL;
 
 	GCM_DUMP(
-		cerr << "bu finished scheduling BB_" << bb->id << "\n";
+		sblog << "bu finished scheduling BB_" << bb->id << "\n";
 	);
 }
 
@@ -462,7 +458,7 @@ void gcm::bu_release_defs(vvec& v, bool src) {
 
 void gcm::push_uc_stack() {
 	GCM_DUMP(
-		cerr << "pushing use count stack prev_level " << ucs_level
+		sblog << "pushing use count stack prev_level " << ucs_level
 			<< "   new level " << (ucs_level + 1) << "\n";
 	);
 	++ucs_level;
@@ -483,9 +479,9 @@ bool gcm::bu_is_ready(node* n) {
 
 void gcm::bu_schedule(container_node* c, node* n) {
 	GCM_DUMP(
-		cerr << "bu scheduling : ";
+		sblog << "bu scheduling : ";
 		dump::dump_op(n);
-		cerr << "\n";
+		sblog << "\n";
 	);
 
 	assert(op_map[n].bottom_bb == bu_bb);
@@ -497,19 +493,19 @@ void gcm::bu_schedule(container_node* c, node* n) {
 }
 
 void gcm::dump_uc_stack() {
-	cerr << "##### uc_stk start ####\n";
+	sblog << "##### uc_stk start ####\n";
 	for (unsigned l = 0; l <= ucs_level; ++l) {
 		nuc_map &m = nuc_stk[l];
 
-		cerr << "nuc_stk[" << l << "] :   @" << &m << "\n";
+		sblog << "nuc_stk[" << l << "] :   @" << &m << "\n";
 
 		for (nuc_map::iterator I = m.begin(), E = m.end(); I != E; ++I) {
-			cerr << "    uc " << I->second << " for ";
+			sblog << "    uc " << I->second << " for ";
 			dump::dump_op(I->first);
-			cerr << "\n";
+			sblog << "\n";
 		}
 	}
-	cerr << "##### uc_stk end ####\n";
+	sblog << "##### uc_stk end ####\n";
 }
 
 void gcm::pop_uc_stack() {
@@ -518,7 +514,7 @@ void gcm::pop_uc_stack() {
 	nuc_map &cm = nuc_stk[ucs_level];
 
 	GCM_DUMP(
-		cerr << "merging use stack from level " << (ucs_level+1)
+		sblog << "merging use stack from level " << (ucs_level+1)
 			<< " to " << ucs_level << "\n";
 	);
 
@@ -526,9 +522,9 @@ void gcm::pop_uc_stack() {
 		node *n = I->first;
 
 		GCM_DUMP(
-			cerr << "      " << cm[n] << " += " << I->second << "  for ";
+			sblog << "      " << cm[n] << " += " << I->second << "  for ";
 			dump::dump_op(n);
-			cerr << "\n";
+			sblog << "\n";
 		);
 
 		unsigned uc = cm[n] += I->second;
@@ -537,9 +533,9 @@ void gcm::pop_uc_stack() {
 			cm.erase(n);
 			pending_nodes.push_back(n);
 			GCM_DUMP(
-				cerr << "pushed pending_node due to stack pop ";
+				sblog << "pushed pending_node due to stack pop ";
 				dump::dump_op(n);
-				cerr << "\n";
+				sblog << "\n";
 			);
 		}
 	}
@@ -548,9 +544,9 @@ void gcm::pop_uc_stack() {
 void gcm::bu_find_best_bb(node *n, op_info &oi) {
 
 	GCM_DUMP(
-		cerr << "  find best bb : ";
+		sblog << "  find best bb : ";
 		dump::dump_op(n);
-		cerr << "\n";
+		sblog << "\n";
 	);
 
 	if (oi.bottom_bb)
@@ -611,7 +607,7 @@ void gcm::bu_release_op(node * n) {
 	op_info &oi = op_map[n];
 
 	GCM_DUMP(
-	cerr << "  bu release op  ";
+	sblog << "  bu release op  ";
 	dump::dump_op(n);
 	);
 
@@ -621,10 +617,10 @@ void gcm::bu_release_op(node * n) {
 	bu_find_best_bb(n, oi);
 
 	if (oi.bottom_bb == bu_bb) {
-		GCM_DUMP( cerr << "   ready\n";);
+		GCM_DUMP( sblog << "   ready\n";);
 		add_ready(n);
 	} else {
-		GCM_DUMP( cerr << "   ready_above\n";);
+		GCM_DUMP( sblog << "   ready_above\n";);
 		ready_above.push_back(n);
 	}
 }
@@ -661,16 +657,16 @@ void gcm::init_use_count(nuc_map& m, container_node &s) {
 		node *n = *I;
 		unsigned uc = get_uc_vec(n->dst);
 		GCM_DUMP(
-			cerr << "uc " << uc << "  ";
+			sblog << "uc " << uc << "  ";
 			dump::dump_op(n);
-			cerr << "\n";
+			sblog << "\n";
 		);
 		if (!uc) {
 			pending_nodes.push_back(n);
 			GCM_DUMP(
-				cerr << "pushed pending_node in init ";
+				sblog << "pushed pending_node in init ";
 				dump::dump_op(n);
-				cerr << "\n";
+				sblog << "\n";
 			);
 
 		} else
@@ -688,15 +684,15 @@ void gcm::bu_release_val(value* v) {
 
 		if (live.add_val(v)) {
 			++live_count;
-			GCM_DUMP ( cerr << "live_count: " << live_count << "\n"; );
+			GCM_DUMP ( sblog << "live_count: " << live_count << "\n"; );
 		}
 
 		GCM_DUMP(
-			cerr << "release val ";
+			sblog << "release val ";
 			dump::dump_val(v);
-			cerr << "  for node ";
+			sblog << "  for node ";
 			dump::dump_op(n);
-			cerr << "    new uc=" << uc << ", total " << uc2 << "\n";
+			sblog << "    new uc=" << uc << ", total " << uc2 << "\n";
 		);
 
 		if (uc == uc2)
@@ -713,9 +709,9 @@ void gcm::init_def_count(nuc_map& m, container_node& s) {
 		m[n] = dc;
 
 		GCM_DUMP(
-			cerr << "dc " << dc << "  ";
+			sblog << "dc " << dc << "  ";
 			dump::dump_op(n);
-			cerr << "\n";
+			sblog << "\n";
 		);
 	}
 }

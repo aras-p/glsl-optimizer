@@ -24,8 +24,6 @@
  *      Vadim Girlin
  */
 
-#include "sstream"
-
 #include "sb_bc.h"
 
 namespace r600_sb {

@@ -24,16 +24,10 @@
  *      Vadim Girlin
  */
 
-#include <iostream>
-#include <iomanip>
-
 #include "sb_shader.h"
-
 #include "sb_pass.h"
 
 namespace r600_sb {
-
-using std::cerr;
 
 bool dump::visit(node& n, bool enter) {
 	if (enter) {
@@ -54,7 +48,7 @@ bool dump::visit(node& n, bool enter) {
 				assert(!"invalid node subtype");
 				break;
 		}
-		cerr << "\n";
+		sblog << "\n";
 	}
 	return false;
 }
@@ -64,11 +58,11 @@ bool dump::visit(container_node& n, bool enter) {
 		if (!n.empty()) {
 			indent();
 			dump_flags(n);
-			cerr << "{  ";
+			sblog << "{  ";
 			if (!n.dst.empty()) {
-				cerr << " preloaded inputs [";
+				sblog << " preloaded inputs [";
 				dump_vec(n.dst);
-				cerr << "]  ";
+				sblog << "]  ";
 			}
 			dump_live_values(n, true);
 		}
@@ -77,11 +71,11 @@ bool dump::visit(container_node& n, bool enter) {
 		--level;
 		if (!n.empty()) {
 			indent();
-			cerr << "}  ";
+			sblog << "}  ";
 			if (!n.src.empty()) {
-				cerr << " results [";
+				sblog << " results [";
 				dump_vec(n.src);
-				cerr << "]  ";
+				sblog << "]  ";
 			}
 			dump_live_values(n, false);
 		}
@@ -93,13 +87,13 @@ bool dump::visit(bb_node& n, bool enter) {
 	if (enter) {
 		indent();
 		dump_flags(n);
-		cerr << "{ BB_" << n.id << "    loop_level = " << n.loop_level << "  ";
+		sblog << "{ BB_" << n.id << "    loop_level = " << n.loop_level << "  ";
 		dump_live_values(n, true);
 		++level;
 	} else {
 		--level;
 		indent();
-		cerr << "} end BB_" << n.id << "  ";
+		sblog << "} end BB_" << n.id << "  ";
 		dump_live_values(n, false);
 	}
 	return true;
@@ -109,7 +103,7 @@ bool dump::visit(alu_group_node& n, bool enter) {
 	if (enter) {
 		indent();
 		dump_flags(n);
-		cerr << "[  ";
+		sblog << "[  ";
 		dump_live_values(n, true);
 
 		++level;
@@ -117,7 +111,7 @@ bool dump::visit(alu_group_node& n, bool enter) {
 		--level;
 
 		indent();
-		cerr << "]  ";
+		sblog << "]  ";
 		dump_live_values(n, false);
 	}
 	return true;
@@ -130,15 +124,15 @@ bool dump::visit(cf_node& n, bool enter) {
 		dump_op(n, n.bc.op_ptr->name);
 
 		if (n.bc.op_ptr->flags & CF_BRANCH) {
-			cerr << " @" << (n.bc.addr << 1);
+			sblog << " @" << (n.bc.addr << 1);
 		}
 
 		dump_common(n);
-		cerr << "\n";
+		sblog << "\n";
 
 		if (!n.empty()) {
 			indent();
-			cerr << "<  ";
+			sblog << "<  ";
 			dump_live_values(n, true);
 		}
 
@@ -147,7 +141,7 @@ bool dump::visit(cf_node& n, bool enter) {
 		--level;
 		if (!n.empty()) {
 			indent();
-			cerr << ">  ";
+			sblog << ">  ";
 			dump_live_values(n, false);
 		}
 	}
@@ -160,7 +154,7 @@ bool dump::visit(alu_node& n, bool enter) {
 		dump_flags(n);
 		dump_alu(&n);
 		dump_common(n);
-		cerr << "\n";
+		sblog << "\n";
 
 		++level;
 	} else {
@@ -175,7 +169,7 @@ bool dump::visit(alu_packed_node& n, bool enter) {
 		indent();
 		dump_flags(n);
 		dump_op(n, n.op_ptr()->name);
-		cerr << "  ";
+		sblog << "  ";
 		dump_live_values(n, true);
 
 		++level;
@@ -196,7 +190,7 @@ bool dump::visit(fetch_node& n, bool enter) {
 		indent();
 		dump_flags(n);
 		dump_op(n, n.bc.op_ptr->name);
-		cerr << "\n";
+		sblog << "\n";
 
 		++level;
 	} else {
@@ -209,11 +203,11 @@ bool dump::visit(region_node& n, bool enter) {
 	if (enter) {
 		indent();
 		dump_flags(n);
-		cerr << "region #" << n.region_id << "   ";
+		sblog << "region #" << n.region_id << "   ";
 		dump_common(n);
 
 		if (!n.vars_defined.empty()) {
-			cerr << "vars_defined: ";
+			sblog << "vars_defined: ";
 			dump_set(sh, n.vars_defined);
 		}
 
@@ -239,10 +233,10 @@ bool dump::visit(repeat_node& n, bool enter) {
 	if (enter) {
 		indent();
 		dump_flags(n);
-		cerr << "repeat region #" << n.target->region_id;
-		cerr << (n.empty() ? "   " : " after {  ");
+		sblog << "repeat region #" << n.target->region_id;
+		sblog << (n.empty() ? "   " : " after {  ");
 		dump_common(n);
-		cerr << "   ";
+		sblog << "   ";
 		dump_live_values(n, true);
 
 		++level;
@@ -251,7 +245,7 @@ bool dump::visit(repeat_node& n, bool enter) {
 
 		if (!n.empty()) {
 			indent();
-			cerr << "} end_repeat   ";
+			sblog << "} end_repeat   ";
 			dump_live_values(n, false);
 		}
 	}
@@ -262,10 +256,10 @@ bool dump::visit(depart_node& n, bool enter) {
 	if (enter) {
 		indent();
 		dump_flags(n);
-		cerr << "depart region #" << n.target->region_id;
-		cerr << (n.empty() ? "   " : " after {  ");
+		sblog << "depart region #" << n.target->region_id;
+		sblog << (n.empty() ? "   " : " after {  ");
 		dump_common(n);
-		cerr << "  ";
+		sblog << "  ";
 		dump_live_values(n, true);
 
 		++level;
@@ -273,7 +267,7 @@ bool dump::visit(depart_node& n, bool enter) {
 		--level;
 		if (!n.empty()) {
 			indent();
-			cerr << "} end_depart   ";
+			sblog << "} end_depart   ";
 			dump_live_values(n, false);
 		}
 	}
@@ -284,26 +278,26 @@ bool dump::visit(if_node& n, bool enter) {
 	if (enter) {
 		indent();
 		dump_flags(n);
-		cerr << "if " << *n.cond << "    ";
+		sblog << "if " << *n.cond << "    ";
 		dump_common(n);
-		cerr << "   ";
+		sblog << "   ";
 		dump_live_values(n, true);
 
 		indent();
-		cerr <<"{\n";
+		sblog <<"{\n";
 
 		++level;
 	} else {
 		--level;
 		indent();
-		cerr << "} endif   ";
+		sblog << "} endif   ";
 		dump_live_values(n, false);
 	}
 	return true;
 }
 
 void dump::indent() {
-	cerr << std::setw(level * 4) << "";
+	sblog.print_wl("", level * 4);
 }
 
 void dump::dump_vec(const vvec & vv) {
@@ -311,14 +305,14 @@ void dump::dump_vec(const vvec & vv) {
 	for(vvec::const_iterator I = vv.begin(), E = vv.end(); I != E; ++I) {
 		value *v = *I;
 		if (!first)
-			cerr << ", ";
+			sblog << ", ";
 		else
 			first = false;
 
 		if (v) {
-			cerr << *v;
+			sblog << *v;
 		} else {
-			cerr << "__";
+			sblog << "__";
 		}
 	}
 }
@@ -330,10 +324,10 @@ void dump::dump_rels(vvec & vv) {
 		if (!v || !v->is_rel())
 			continue;
 
-		cerr << "\n\t\t\t\t\t";
-		cerr << "    rels: " << *v << " : ";
+		sblog << "\n\t\t\t\t\t";
+		sblog << "    rels: " << *v << " : ";
 		dump_vec(v->mdef);
-		cerr << " <= ";
+		sblog << " <= ";
 		dump_vec(v->muse);
 	}
 }
@@ -342,10 +336,10 @@ void dump::dump_op(node &n, const char *name) {
 
 	if (n.pred) {
 		alu_node &a = static_cast<alu_node&>(n);
-		cerr << (a.bc.pred_sel-2) << " [" << *a.pred << "] ";
+		sblog << (a.bc.pred_sel-2) << " [" << *a.pred << "] ";
 	}
 
-	cerr << name;
+	sblog << name;
 
 	bool has_dst = !n.dst.empty();
 
@@ -353,34 +347,34 @@ void dump::dump_op(node &n, const char *name) {
 		cf_node *c = static_cast<cf_node*>(&n);
 		if (c->bc.op_ptr->flags & CF_EXP) {
 			static const char *exp_type[] = {"PIXEL", "POS  ", "PARAM"};
-			cerr << "  " << exp_type[c->bc.type] << " " << c->bc.array_base;
+			sblog << "  " << exp_type[c->bc.type] << " " << c->bc.array_base;
 			has_dst = false;
 		} else if (c->bc.op_ptr->flags & CF_STRM) {
 			static const char *exp_type[] = {"WRITE", "WRITE_IND", "WRITE_ACK",
 					"WRITE_IND_ACK"};
-			cerr << "  " << exp_type[c->bc.type] << " " << c->bc.array_base
+			sblog << "  " << exp_type[c->bc.type] << " " << c->bc.array_base
 					<< "   ES:" << c->bc.elem_size;
 			has_dst = false;
 		}
 	}
 
-	cerr << "     ";
+	sblog << "     ";
 
 	if (has_dst) {
 		dump_vec(n.dst);
-		cerr << ",       ";
+		sblog << ",       ";
 	}
 
 	dump_vec(n.src);
 }
 
 void dump::dump_set(shader &sh, val_set& v) {
-	cerr << "[";
+	sblog << "[";
 	for(val_set::iterator I = v.begin(sh), E = v.end(sh); I != E; ++I) {
 		value *val = *I;
-		cerr << *val << " ";
+		sblog << *val << " ";
 	}
-	cerr << "]";
+	sblog << "]";
 }
 
 void dump::dump_common(node& n) {
@@ -388,46 +382,46 @@ void dump::dump_common(node& n) {
 
 void dump::dump_flags(node &n) {
 	if (n.flags & NF_DEAD)
-		cerr << "### DEAD  ";
+		sblog << "### DEAD  ";
 	if (n.flags & NF_REG_CONSTRAINT)
-		cerr << "R_CONS  ";
+		sblog << "R_CONS  ";
 	if (n.flags & NF_CHAN_CONSTRAINT)
-		cerr << "CH_CONS  ";
+		sblog << "CH_CONS  ";
 	if (n.flags & NF_ALU_4SLOT)
-		cerr << "4S  ";
+		sblog << "4S  ";
 }
 
 void dump::dump_val(value* v) {
-	cerr << *v;
+	sblog << *v;
 }
 
 void dump::dump_alu(alu_node *n) {
 
 	if (n->is_copy_mov())
-		cerr << "(copy) ";
+		sblog << "(copy) ";
 
 	if (n->pred) {
-		cerr << (n->bc.pred_sel-2) << " [" << n->pred << "] ";
+		sblog << (n->bc.pred_sel-2) << " [" << *n->pred << "] ";
 	}
 
-	cerr << n->bc.op_ptr->name;
+	sblog << n->bc.op_ptr->name;
 
 	if (n->bc.omod) {
 		static const char *omod_str[] = {"", "*2", "*4", "/2"};
-		cerr << omod_str[n->bc.omod];
+		sblog << omod_str[n->bc.omod];
 	}
 
 	if (n->bc.clamp) {
-		cerr << "_sat";
+		sblog << "_sat";
 	}
 
 	bool has_dst = !n->dst.empty();
 
-	cerr << "     ";
+	sblog << "     ";
 
 	if (has_dst) {
 		dump_vec(n->dst);
-		cerr << ",    ";
+		sblog << ",    ";
 	}
 
 	unsigned s = 0;
@@ -437,18 +431,18 @@ void dump::dump_alu(alu_node *n) {
 		bc_alu_src &src = n->bc.src[s];
 
 		if (src.neg)
-			cerr << "-";
+			sblog << "-";
 
 		if (src.abs)
-			cerr << "|";
+			sblog << "|";
 
 		dump_val(*I);
 
 		if (src.abs)
-			cerr << "|";
+			sblog << "|";
 
 		if (I + 1 != E)
-			cerr << ", ";
+			sblog << ", ";
 	}
 
 	dump_rels(n->dst);
@@ -495,30 +489,30 @@ void dump::dump_op(node* n) {
 void dump::dump_op_list(container_node* c) {
 	for (node_iterator I = c->begin(), E = c->end(); I != E; ++I) {
 		dump_op(*I);
-		cerr << "\n";
+		sblog << "\n";
 	}
 }
 
 void dump::dump_queue(sched_queue& q) {
 	for (sched_queue::iterator I = q.begin(), E = q.end(); I != E; ++I) {
 		dump_op(*I);
-		cerr << "\n";
+		sblog << "\n";
 	}
 }
 
 void dump::dump_live_values(container_node &n, bool before) {
 	if (before) {
 		if (!n.live_before.empty()) {
-			cerr << "live_before: ";
+			sblog << "live_before: ";
 			dump_set(sh, n.live_before);
 		}
 	} else {
 		if (!n.live_after.empty()) {
-			cerr << "live_after: ";
+			sblog << "live_after: ";
 			dump_set(sh, n.live_after);
 		}
 	}
-	cerr << "\n";
+	sblog << "\n";
 }
 
 } // namespace r600_sb

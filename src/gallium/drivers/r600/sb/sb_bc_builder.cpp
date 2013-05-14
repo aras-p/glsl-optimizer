@@ -24,16 +24,11 @@
  *      Vadim Girlin
  */
 
-#include <iostream>
-#include <sstream>
-
 #include "sb_bc.h"
 #include "sb_shader.h"
 #include "sb_pass.h"
 
 namespace r600_sb {
-
-using std::cerr;
 
 bc_builder::bc_builder(shader &s)
 	: sh(s), ctx(s.get_ctx()), bb(ctx.hw_class_bit()), error(0) {}

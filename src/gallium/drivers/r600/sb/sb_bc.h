@@ -32,9 +32,10 @@ extern "C" {
 #include "r600_isa.h"
 }
 
+#include <cstdio>
+#include <string>
 #include <vector>
 #include <stack>
-#include <ostream>
 
 struct r600_bytecode;
 struct r600_shader;
@@ -49,6 +50,120 @@ class fetch_node;
 class alu_group_node;
 class region_node;
 class shader;
+
+class sb_ostream {
+public:
+	sb_ostream() {}
+
+	virtual void write(const char *s) = 0;
+
+	sb_ostream& operator <<(const char *s) {
+		write(s);
+		return *this;
+	}
+
+	sb_ostream& operator <<(const std::string& s) {
+		return *this << s.c_str();
+	}
+
+	sb_ostream& operator <<(void *p) {
+		char b[32];
+		sprintf(b, "%p", p);
+		return *this << b;
+	}
+
+	sb_ostream& operator <<(char c) {
+		char b[2];
+		sprintf(b, "%c", c);
+		return *this << b;
+	}
+
+	sb_ostream& operator <<(int n) {
+		char b[32];
+		sprintf(b, "%d", n);
+		return *this << b;
+	}
+
+	sb_ostream& operator <<(unsigned n) {
+		char b[32];
+		sprintf(b, "%u", n);
+		return *this << b;
+	}
+
+	sb_ostream& operator <<(double d) {
+		char b[32];
+		sprintf(b, "%f", d);
+		return *this << b;
+	}
+
+	// print as field of specified width, right aligned
+	void print_w(int n, int width) {
+		char b[256],f[8];
+		sprintf(f, "%%%dd", width);
+		snprintf(b, 256, f, n);
+		write(b);
+	}
+
+	// print as field of specified width, left aligned
+	void print_wl(int n, int width) {
+		char b[256],f[8];
+		sprintf(f, "%%-%dd", width);
+		snprintf(b, 256, f, n);
+		write(b);
+	}
+
+	// print as field of specified width, left aligned
+	void print_wl(const std::string &s, int width) {
+		write(s.c_str());
+		int l = s.length();
+		while (l++ < width) {
+			write(" ");
+		}
+	}
+
+	// print int as field of specified width, right aligned, zero-padded
+	void print_zw(int n, int width) {
+		char b[256],f[8];
+		sprintf(f, "%%0%dd", width);
+		snprintf(b, 256, f, n);
+		write(b);
+	}
+
+	// print int as field of specified width, right aligned, zero-padded, hex
+	void print_zw_hex(int n, int width) {
+		char b[256],f[8];
+		sprintf(f, "%%0%dx", width);
+		snprintf(b, 256, f, n);
+		write(b);
+	}
+};
+
+class sb_ostringstream : public sb_ostream {
+	std::string data;
+public:
+	sb_ostringstream() : data() {}
+
+	virtual void write(const char *s) {
+		data += s;
+	}
+
+	void clear() { data.clear(); }
+
+	const char* c_str() { return data.c_str(); }
+	std::string& str() { return data; }
+};
+
+class sb_log : public sb_ostream {
+	FILE *o;
+public:
+	sb_log() : o(stderr) {}
+
+	virtual void write(const char *s) {
+		fputs(s, o);
+	}
+};
+
+extern sb_log sblog;
 
 enum shader_target
 {
@@ -477,8 +592,8 @@ struct shader_stats {
 
 	void collect(node *n);
 	void accumulate(shader_stats &s);
-	void dump(std::ostream &o);
-	void dump_diff(std::ostream &o, shader_stats &s);
+	void dump();
+	void dump_diff(shader_stats &s);
 };
 
 class sb_context {

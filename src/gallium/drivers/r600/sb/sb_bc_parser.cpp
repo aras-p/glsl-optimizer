@@ -45,8 +45,6 @@ extern "C" {
 
 namespace r600_sb {
 
-using std::cerr;
-
 int bc_parser::decode() {
 
 	dw = bc->bytecode;
@@ -728,22 +726,22 @@ int bc_parser::prepare_if(cf_node* c) {
 	cf_node *c_else = NULL, *end = cf_map[c->bc.addr];
 
 	BCP_DUMP(
-		cerr << "parsing JUMP @" << c->bc.id;
-		cerr << "\n";
+		sblog << "parsing JUMP @" << c->bc.id;
+		sblog << "\n";
 	);
 
 	if (end->bc.op == CF_OP_ELSE) {
 		BCP_DUMP(
-			cerr << "  found ELSE : ";
+			sblog << "  found ELSE : ";
 			dump::dump_op(end);
-			cerr << "\n";
+			sblog << "\n";
 		);
 
 		c_else = end;
 		end = cf_map[c_else->bc.addr];
 	} else {
 		BCP_DUMP(
-			cerr << "  no else\n";
+			sblog << "  no else\n";
 		);
 
 		c_else = end;

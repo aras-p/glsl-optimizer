@@ -33,14 +33,10 @@
 #endif
 
 #include "sb_shader.h"
-
 #include "sb_pass.h"
-
 #include "sb_sched.h"
 
 namespace r600_sb {
-
-using std::cerr;
 
 bool gvn::visit(node& n, bool enter) {
 	if (enter) {

@@ -24,14 +24,10 @@
  *      Vadim Girlin
  */
 
-#include <sstream>
-
 #include "sb_shader.h"
 #include "sb_pass.h"
 
 namespace r600_sb {
-
-using std::cerr;
 
 int ra_checker::run() {
 
@@ -54,11 +50,11 @@ int ra_checker::run() {
 
 void ra_checker::dump_error(const error_info &e) {
 
-	cerr << "error at : ";
+	sblog << "error at : ";
 	dump::dump_op(e.n);
 
-	cerr << "\n";
-	cerr << "  : " << e.message << "\n";
+	sblog << "\n";
+	sblog << "  : " << e.message << "\n";
 }
 
 void ra_checker::dump_all_errors() {
@@ -96,20 +92,20 @@ void ra_checker::kill_alu_only_regs() {
 void ra_checker::check_value_gpr(node *n, unsigned id, value *v) {
 	sel_chan gpr = v->gpr;
 	if (!gpr) {
-		std::ostringstream o;
+		sb_ostringstream o;
 		o << "operand value " << *v << " is not allocated";
 		error(n, id, o.str());
 		return;
 	}
 	reg_value_map::iterator F = rmap().find(v->gpr);
 	if (F == rmap().end()) {
-		std::ostringstream o;
+		sb_ostringstream o;
 		o << "operand value " << *v << " was not previously written to its gpr";
 		error(n, id, o.str());
 		return;
 	}
 	if (!F->second->v_equal(v)) {
-		std::ostringstream o;
+		sb_ostringstream o;
 		o << "expected operand value " << *v
 				<< ", gpr contains " << *(F->second);
 		error(n, id, o.str());
@@ -128,7 +124,7 @@ void ra_checker::check_src_vec(node *n, unsigned id, vvec &vv, bool src) {
 
 		if (v->is_rel()) {
 			if (!v->rel) {
-				std::ostringstream o;
+				sb_ostringstream o;
 				o << "expected relative offset in " << *v;
 				error(n, id, o.str());
 				return;
@@ -159,7 +155,7 @@ void ra_checker::process_op_dst(node *n) {
 		if (v->is_sgpr()) {
 
 			if (!v->gpr) {
-				std::ostringstream o;
+				sb_ostringstream o;
 				o << "destination operand " << *v << " is not allocated";
 				error(n, id, o.str());
 				return;
@@ -201,7 +197,7 @@ void ra_checker::check_alu_group(alu_group_node *g) {
 	for (node_iterator I = g->begin(), E = g->end(); I != E; ++I) {
 		node *a = *I;
 		if (!a->is_alu_inst()) {
-			std::ostringstream o;
+			sb_ostringstream o;
 			o << "non-alu node inside alu group";
 			error(a, 0, o.str());
 			return;

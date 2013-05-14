@@ -24,9 +24,6 @@
  *      Vadim Girlin
  */
 
-#include <sstream>
-#include <iomanip>
-
 #include "sb_bc.h"
 #include "sb_shader.h"
 #include "sb_pass.h"
@@ -52,7 +49,7 @@ bool bc_dump::visit(cf_node& n, bool enter) {
 		if ((n.bc.op_ptr->flags & CF_ALU) && n.bc.is_alu_extended()) {
 			dump_dw(id, 2);
 			id += 2;
-			o << "\n";
+			sblog << "\n";
 		}
 
 		dump_dw(id, 2);
@@ -68,13 +65,14 @@ bool bc_dump::visit(cf_node& n, bool enter) {
 
 bool bc_dump::visit(alu_node& n, bool enter) {
 	if (enter) {
-		o << " ";
+		sblog << " ";
 		dump_dw(id, 2);
 
-		if (new_group)
-			o << std::setw(5) << ++group_index << " ";
-		else
-			o << "      ";
+		if (new_group) {
+			sblog.print_w(++group_index, 5);
+			sblog << " ";
+		} else
+			sblog << "      ";
 
 		dump(n);
 		id += 2;
@@ -86,10 +84,10 @@ bool bc_dump::visit(alu_node& n, bool enter) {
 					static_cast<alu_group_node*>(n.get_alu_group_node());
 			assert(g);
 			for (unsigned k = 0; k < g->literals.size(); ++k) {
-				o << " ";
+				sblog << " ";
 				dump_dw(id, 1);
 				id += 1;
-				o << "\n";
+				sblog << "\n";
 			}
 
 			id = (id + 1) & ~1u;
@@ -101,7 +99,7 @@ bool bc_dump::visit(alu_node& n, bool enter) {
 
 bool bc_dump::visit(fetch_node& n, bool enter) {
 	if (enter) {
-		o << " ";
+		sblog << " ";
 		dump_dw(id, 3);
 		dump(n);
 		id += 4;
@@ -109,31 +107,31 @@ bool bc_dump::visit(fetch_node& n, bool enter) {
 	return false;
 }
 
-static void fill_to(std::ostringstream &s, int pos) {
+static void fill_to(sb_ostringstream &s, int pos) {
 	int l = s.str().length();
 	if (l < pos)
 		s << std::string(pos-l, ' ');
 }
 
 void bc_dump::dump(cf_node& n) {
-	std::ostringstream s;
+	sb_ostringstream s;
 	s << n.bc.op_ptr->name;
 
 	if (n.bc.op_ptr->flags & CF_EXP) {
 		static const char *exp_type[] = {"PIXEL", "POS  ", "PARAM"};
 
 		fill_to(s, 18);
-		s << " " << exp_type[n.bc.type];
+		s << " " << exp_type[n.bc.type] << " ";
 
 		if (n.bc.burst_count) {
-			std::ostringstream s2;
+			sb_ostringstream s2;
 			s2 << n.bc.array_base << "-" << n.bc.array_base + n.bc.burst_count;
-			s << " " << std::setw(5) << std::left << s2.str();
-			s << "R" << n.bc.rw_gpr << "-" <<
+			s.print_wl(s2.str(), 5);
+			s << " R" << n.bc.rw_gpr << "-" <<
 					n.bc.rw_gpr + n.bc.burst_count << ".";
 		} else {
-			s << " " << std::setw(5) << std::left << n.bc.array_base;
-			s << "R" << n.bc.rw_gpr << ".";
+			s.print_wl(n.bc.array_base, 5);
+			s << " R" << n.bc.rw_gpr << ".";
 		}
 
 		for (int k = 0; k < 4; ++k)
@@ -143,9 +141,9 @@ void bc_dump::dump(cf_node& n) {
 		static const char *exp_type[] = {"WRITE", "WRITE_IND", "WRITE_ACK",
 				"WRITE_IND_ACK"};
 		fill_to(s, 18);
-		s << " " << exp_type[n.bc.type];
-		s << " " << std::setw(5) << std::left << n.bc.array_base;
-		s << "R" << n.bc.rw_gpr << ".";
+		s << " " << exp_type[n.bc.type] << " ";
+		s.print_wl(n.bc.array_base, 5);
+		s << " R" << n.bc.rw_gpr << ".";
 		for (int k = 0; k < 4; ++k)
 			s << ((n.bc.comp_mask & (1 << k)) ? chans[k] : '_');
 
@@ -194,11 +192,11 @@ void bc_dump::dump(cf_node& n) {
 	if (n.bc.end_of_program)
 		s << "  EOP";
 
-	o << s.str() << "\n";
+	sblog << s.str() << "\n";
 }
 
 
-static void print_sel(std::ostream &s, int sel, int rel, int index_mode,
+static void print_sel(sb_ostream &s, int sel, int rel, int index_mode,
                       int need_brackets) {
 	if (rel && index_mode >= 5 && sel < 128)
 		s << "G";
@@ -217,7 +215,7 @@ static void print_sel(std::ostream &s, int sel, int rel, int index_mode,
 	}
 }
 
-static void print_dst(std::ostream &s, bc_alu &alu)
+static void print_dst(sb_ostream &s, bc_alu &alu)
 {
 	unsigned sel = alu.dst_gpr;
 	char reg_char = 'R';
@@ -236,7 +234,7 @@ static void print_dst(std::ostream &s, bc_alu &alu)
 	s << chans[alu.dst_chan];
 }
 
-static void print_src(std::ostream &s, bc_alu &alu, unsigned idx)
+static void print_src(sb_ostream &s, bc_alu &alu, unsigned idx)
 {
 	bc_alu_src *src = &alu.src[idx];
 	unsigned sel = src->sel, need_sel = 1, need_chan = 1, need_brackets = 0;
@@ -282,10 +280,9 @@ static void print_src(std::ostream &s, bc_alu &alu, unsigned idx)
 			need_chan = 1;
 			break;
 		case ALU_SRC_LITERAL:
-			s << "[" << std::hex << std::setfill('0') << std::setw(8)
-				<< std::showbase << src->value.u << " "
-				<< std::noshowbase << std::setfill(' ') << std::dec
-				<< src->value.f << "]";
+			s << "[0x";
+			s.print_zw_hex(src->value.u, 8);
+			s << " " << src->value.f << "]";
 			need_chan = 1;
 			break;
 		case ALU_SRC_0_5:
@@ -320,14 +317,14 @@ static void print_src(std::ostream &s, bc_alu &alu, unsigned idx)
 		s << "|";
 }
 void bc_dump::dump(alu_node& n) {
-	std::ostringstream s;
+	sb_ostringstream s;
 	static const char *omod_str[] = {"","*2","*4","/2"};
 	static const char *slots = "xyzwt";
 
-	s << (n.bc.update_exec_mask ? 'M' : ' ');
-	s << (n.bc.update_pred ? 'P' : ' ');
+	s << (n.bc.update_exec_mask ? "M" : " ");
+	s << (n.bc.update_pred ? "P" : " ");
 	s << " ";
-	s << (n.bc.pred_sel>=2 ? (n.bc.pred_sel == 2 ? '0' : '1') : ' ');
+	s << (n.bc.pred_sel>=2 ? (n.bc.pred_sel == 2 ? "0" : "1") : " ");
 	s << " ";
 
 	s << slots[n.bc.slot] << ": ";
@@ -350,11 +347,11 @@ void bc_dump::dump(alu_node& n) {
 			s << "  " << vec_bs[n.bc.bank_swizzle];
 	}
 
-	o << s.str() << "\n";
+	sblog << s.str() << "\n";
 }
 
 int bc_dump::init() {
-	std::ostringstream s;
+	sb_ostringstream s;
 	s << "===== SHADER #" << sh.id;
 
 	if (sh.optimized)
@@ -370,9 +367,9 @@ int bc_dump::init() {
 
 	s << target;
 
-	o << "\n" << s.str() << "\n";
+	sblog << "\n" << s.str() << "\n";
 
-	s.str(std::string());
+	s.clear();
 
 	if (bc_data) {
 		s << "===== " << ndw << " dw ===== " << sh.ngpr
@@ -382,25 +379,25 @@ int bc_dump::init() {
 	while (s.str().length() < 80)
 		s << "=";
 
-	o << s.str() << "\n";
+	sblog << s.str() << "\n";
 
 	return 0;
 }
 
 int bc_dump::done() {
-	std::ostringstream s;
+	sb_ostringstream s;
 	s << "===== SHADER_END ";
 
 	while (s.str().length() < 80)
 		s << "=";
 
-	o << s.str() << "\n\n";
+	sblog << s.str() << "\n\n";
 
 	return 0;
 }
 
-bc_dump::bc_dump(shader& s, std::ostream& o, bytecode* bc)  :
-	vpass(s), o(o), bc_data(), ndw(), id(),
+bc_dump::bc_dump(shader& s, bytecode* bc)  :
+	vpass(s), bc_data(), ndw(), id(),
 	new_group(), group_index() {
 
 	if (bc) {
@@ -410,7 +407,7 @@ bc_dump::bc_dump(shader& s, std::ostream& o, bytecode* bc)  :
 }
 
 void bc_dump::dump(fetch_node& n) {
-	std::ostringstream s;
+	sb_ostringstream s;
 	static const char * fetch_type[] = {"VERTEX", "INSTANCE", ""};
 
 	s << n.bc.op_ptr->name;
@@ -462,7 +459,7 @@ void bc_dump::dump(fetch_node& n) {
 				s << " O" << chans[k] << ":" << n.bc.offset[k];
 	}
 
-	o << s.str() << "\n";
+	sblog << s.str() << "\n";
 }
 
 void bc_dump::dump_dw(unsigned dw_id, unsigned count) {
@@ -471,11 +468,12 @@ void bc_dump::dump_dw(unsigned dw_id, unsigned count) {
 
 	assert(dw_id + count <= ndw);
 
-	o << std::setfill('0') << std::setw(4) << dw_id << "  ";
+	sblog.print_zw(dw_id, 4);
+	sblog << "  ";
 	while (count--) {
-		o << std::setw(8) << std::hex << bc_data[dw_id++] << " ";
+		sblog.print_zw_hex(bc_data[dw_id++], 8);
+		sblog << " ";
 	}
-	o << std::setfill(' ') << std::dec;
 }
 
 } // namespace r600_sb

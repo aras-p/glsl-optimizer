@@ -25,7 +25,6 @@
  */
 
 #include "sb_shader.h"
-
 #include "sb_pass.h"
 
 #define LIV_DEBUG 0
@@ -37,8 +36,6 @@
 #endif
 
 namespace r600_sb {
-
-using std::cerr;
 
 bool liveness::visit(container_node& n, bool enter) {
 	if (enter) {
@@ -191,9 +188,9 @@ void liveness::update_interferences() {
 		return;
 
 	LIV_DUMP(
-		cerr << "interf ";
+		sblog << "interf ";
 		dump::dump_set(sh, live);
-		cerr << "\n";
+		sblog << "\n";
 	);
 
 	val_set& s = live;
@@ -209,11 +206,11 @@ void liveness::update_interferences() {
 		v->interferences.remove_val(v);
 
 		LIV_DUMP(
-			cerr << "interferences updated for ";
+			sblog << "interferences updated for ";
 			dump::dump_val(v);
-			cerr << " : ";
+			sblog << " : ";
 			dump::dump_set(sh, v->interferences);
-			cerr << "\n";
+			sblog << "\n";
 		);
 	}
 	live_changed = false;
@@ -320,12 +317,12 @@ void liveness::process_ins(node& n) {
 void liveness::process_op(node& n) {
 
 	LIV_DUMP(
-		cerr << "process_op: ";
+		sblog << "process_op: ";
 		dump::dump_op(&n);
-		cerr << "\n";
-		cerr << "process_op: live_after:";
+		sblog << "\n";
+		sblog << "process_op: live_after:";
 		dump::dump_set(sh, live);
-		cerr << "\n";
+		sblog << "\n";
 	);
 
 	if(!n.dst.empty() || n.is_cf_op(CF_OP_CALL_FS)) {
@@ -339,9 +336,9 @@ void liveness::process_op(node& n) {
 	process_ins(n);
 
 	LIV_DUMP(
-		cerr << "process_op: live_before:";
+		sblog << "process_op: live_before:";
 		dump::dump_set(sh, live);
-		cerr << "\n";
+		sblog << "\n";
 	);
 }
 

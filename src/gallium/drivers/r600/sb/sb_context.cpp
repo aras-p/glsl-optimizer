@@ -28,6 +28,8 @@
 
 namespace r600_sb {
 
+sb_log sblog;
+
 unsigned sb_context::dump_pass = 0;
 unsigned sb_context::dump_stat = 0;
 unsigned sb_context::dry_run = 0;

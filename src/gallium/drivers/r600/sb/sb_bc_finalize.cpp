@@ -32,17 +32,11 @@
 #define FBC_DUMP(q)
 #endif
 
-#include <iostream>
-
 #include "sb_bc.h"
-
 #include "sb_shader.h"
-
 #include "sb_pass.h"
 
 namespace r600_sb {
-
-using std::cerr;
 
 int bc_finalizer::run() {
 
@@ -294,9 +288,9 @@ void bc_finalizer::finalize_alu_src(alu_group_node* g, alu_node* a) {
 	vvec &sv = a->src;
 
 	FBC_DUMP(
-		cerr << "finalize_alu_src: ";
+		sblog << "finalize_alu_src: ";
 		dump::dump_op(a);
-		cerr << "\n";
+		sblog << "\n";
 	);
 
 	unsigned si = 0;
@@ -417,9 +411,9 @@ void bc_finalizer::emit_set_grad(fetch_node* f) {
 				else if (l == literal(1.0f))
 					sel = SEL_1;
 				else {
-					cerr << "invalid fetch constant operand  " << chan << " ";
+					sblog << "invalid fetch constant operand  " << chan << " ";
 					dump::dump_op(f);
-					cerr << "\n";
+					sblog << "\n";
 					abort();
 				}
 
@@ -430,18 +424,18 @@ void bc_finalizer::emit_set_grad(fetch_node* f) {
 				if (reg == -1)
 					reg = vreg;
 				else if ((unsigned)reg != vreg) {
-					cerr << "invalid fetch source operand  " << chan << " ";
+					sblog << "invalid fetch source operand  " << chan << " ";
 					dump::dump_op(f);
-					cerr << "\n";
+					sblog << "\n";
 					abort();
 				}
 
 				sel = vchan;
 
 			} else {
-				cerr << "invalid fetch source operand  " << chan << " ";
+				sblog << "invalid fetch source operand  " << chan << " ";
 				dump::dump_op(f);
-				cerr << "\n";
+				sblog << "\n";
 				abort();
 			}
 
@@ -492,9 +486,9 @@ void bc_finalizer::finalize_fetch(fetch_node* f) {
 			else if (l == literal(1.0f))
 				sel = SEL_1;
 			else {
-				cerr << "invalid fetch constant operand  " << chan << " ";
+				sblog << "invalid fetch constant operand  " << chan << " ";
 				dump::dump_op(f);
-				cerr << "\n";
+				sblog << "\n";
 				abort();
 			}
 
@@ -505,18 +499,18 @@ void bc_finalizer::finalize_fetch(fetch_node* f) {
 			if (reg == -1)
 				reg = vreg;
 			else if ((unsigned)reg != vreg) {
-				cerr << "invalid fetch source operand  " << chan << " ";
+				sblog << "invalid fetch source operand  " << chan << " ";
 				dump::dump_op(f);
-				cerr << "\n";
+				sblog << "\n";
 				abort();
 			}
 
 			sel = vchan;
 
 		} else {
-			cerr << "invalid fetch source operand  " << chan << " ";
+			sblog << "invalid fetch source operand  " << chan << " ";
 			dump::dump_op(f);
-			cerr << "\n";
+			sblog << "\n";
 			abort();
 		}
 
@@ -552,18 +546,18 @@ void bc_finalizer::finalize_fetch(fetch_node* f) {
 			if (reg == -1)
 				reg = vreg;
 			else if ((unsigned)reg != vreg) {
-				cerr << "invalid fetch dst operand  " << chan << " ";
+				sblog << "invalid fetch dst operand  " << chan << " ";
 				dump::dump_op(f);
-				cerr << "\n";
+				sblog << "\n";
 				abort();
 			}
 
 			dst_swz[vchan] = sel;
 
 		} else {
-			cerr << "invalid fetch dst operand  " << chan << " ";
+			sblog << "invalid fetch dst operand  " << chan << " ";
 			dump::dump_op(f);
-			cerr << "\n";
+			sblog << "\n";
 			abort();
 		}
 
@@ -615,9 +609,9 @@ void bc_finalizer::finalize_cf(cf_node* c) {
 				else if (l == literal(1.0f))
 					sel = SEL_1;
 				else {
-					cerr << "invalid export constant operand  " << chan << " ";
+					sblog << "invalid export constant operand  " << chan << " ";
 					dump::dump_op(c);
-					cerr << "\n";
+					sblog << "\n";
 					abort();
 				}
 
@@ -628,18 +622,18 @@ void bc_finalizer::finalize_cf(cf_node* c) {
 				if (reg == -1)
 					reg = vreg;
 				else if ((unsigned)reg != vreg) {
-					cerr << "invalid export source operand  " << chan << " ";
+					sblog << "invalid export source operand  " << chan << " ";
 					dump::dump_op(c);
-					cerr << "\n";
+					sblog << "\n";
 					abort();
 				}
 
 				sel = vchan;
 
 			} else {
-				cerr << "invalid export source operand  " << chan << " ";
+				sblog << "invalid export source operand  " << chan << " ";
 				dump::dump_op(c);
-				cerr << "\n";
+				sblog << "\n";
 				abort();
 			}
 
@@ -662,18 +656,18 @@ void bc_finalizer::finalize_cf(cf_node* c) {
 				continue;
 
 			if (!v->is_any_gpr() || v->gpr.chan() != chan) {
-				cerr << "invalid source operand  " << chan << " ";
+				sblog << "invalid source operand  " << chan << " ";
 				dump::dump_op(c);
-				cerr << "\n";
+				sblog << "\n";
 				abort();
 			}
 			unsigned vreg = v->gpr.sel();
 			if (reg == -1)
 				reg = vreg;
 			else if ((unsigned)reg != vreg) {
-				cerr << "invalid source operand  " << chan << " ";
+				sblog << "invalid source operand  " << chan << " ";
 				dump::dump_op(c);
-				cerr << "\n";
+				sblog << "\n";
 				abort();
 			}
 
@@ -698,18 +692,18 @@ void bc_finalizer::finalize_cf(cf_node* c) {
 					continue;
 
 				if (!v->is_any_gpr() || v->gpr.chan() != chan) {
-					cerr << "invalid source operand  " << chan << " ";
+					sblog << "invalid source operand  " << chan << " ";
 					dump::dump_op(c);
-					cerr << "\n";
+					sblog << "\n";
 					abort();
 				}
 				unsigned vreg = v->gpr.sel();
 				if (reg == -1)
 					reg = vreg;
 				else if ((unsigned)reg != vreg) {
-					cerr << "invalid source operand  " << chan << " ";
+					sblog << "invalid source operand  " << chan << " ";
 					dump::dump_op(c);
-					cerr << "\n";
+					sblog << "\n";
 					abort();
 				}
 			}

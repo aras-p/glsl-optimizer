@@ -25,12 +25,9 @@
  */
 
 #include "sb_shader.h"
-
 #include "sb_pass.h"
 
 namespace r600_sb {
-
-using std::cerr;
 
 int def_use::run() {
 	run_on(sh.root, true);
@@ -57,9 +54,9 @@ void def_use::run_on(node* n, bool defs) {
 	if (is_op) {
 
 		if (0) {
-			cerr << "def_use processing op ";
+			sblog << "def_use processing op ";
 			dump::dump_op(n);
-			cerr << "\n";
+			sblog << "\n";
 		}
 
 		if (defs)

@@ -37,8 +37,6 @@
 
 namespace r600_sb {
 
-using std::cerr;
-
 int ra_coalesce::run() {
 	return sh.coal.run();
 }
@@ -65,7 +63,7 @@ void coalescer::create_chunk(value *v) {
 	c->pin = v->pin_gpr;
 
 	RA_DUMP(
-		cerr << "create_chunk: ";
+		sblog << "create_chunk: ";
 		dump_chunk(c);
 	);
 
@@ -78,7 +76,7 @@ void coalescer::unify_chunks(ra_edge *e) {
 	ra_chunk *c1 = e->a->chunk, *c2 = e->b->chunk;
 
 	RA_DUMP(
-		cerr << "unify_chunks: ";
+		sblog << "unify_chunks: ";
 		dump_chunk(c1);
 		dump_chunk(c2);
 	);
@@ -166,21 +164,21 @@ ra_constraint* coalescer::create_constraint(constraint_kind kind) {
 }
 
 void coalescer::dump_edges() {
-	cerr << "######## affinity edges\n";
+	sblog << "######## affinity edges\n";
 
 	for (edge_queue::iterator I = edges.begin(), E = edges.end();
 			I != E; ++I) {
 		ra_edge* e = *I;
-		cerr << "  ra_edge ";
+		sblog << "  ra_edge ";
 		dump::dump_val(e->a);
-		cerr << " <-> ";
+		sblog << " <-> ";
 		dump::dump_val(e->b);
-		cerr << "   cost = " << e->cost << "\n";
+		sblog << "   cost = " << e->cost << "\n";
 	}
 }
 
 void coalescer::dump_chunks() {
-	cerr << "######## chunks\n";
+	sblog << "######## chunks\n";
 
 	for (chunk_vec::iterator I = all_chunks.begin(), E = all_chunks.end();
 			I != E; ++I) {
@@ -191,7 +189,7 @@ void coalescer::dump_chunks() {
 
 
 void coalescer::dump_constraint_queue() {
-	cerr << "######## constraints\n";
+	sblog << "######## constraints\n";
 
 	for (constraint_queue::iterator I = constraints.begin(),
 			E = constraints.end(); I != E; ++I) {
@@ -201,33 +199,33 @@ void coalescer::dump_constraint_queue() {
 }
 
 void coalescer::dump_chunk(ra_chunk* c) {
-	cerr << "  ra_chunk cost = " << c->cost << "  :  ";
+	sblog << "  ra_chunk cost = " << c->cost << "  :  ";
 	dump::dump_vec(c->values);
 
 	if (c->flags & RCF_PIN_REG)
-		cerr << "   REG = " << c->pin.sel();
+		sblog << "   REG = " << c->pin.sel();
 
 	if (c->flags & RCF_PIN_CHAN)
-		cerr << "   CHAN = " << c->pin.chan();
+		sblog << "   CHAN = " << c->pin.chan();
 
-	cerr << (c->flags & RCF_GLOBAL ? "  GLOBAL" : "");
+	sblog << (c->flags & RCF_GLOBAL ? "  GLOBAL" : "");
 
-	cerr << "\n";
+	sblog << "\n";
 }
 
 void coalescer::dump_constraint(ra_constraint* c) {
-	cerr << "  ra_constraint: ";
+	sblog << "  ra_constraint: ";
 	switch (c->kind) {
-		case CK_PACKED_BS: cerr << "PACKED_BS"; break;
-		case CK_PHI: cerr << "PHI"; break;
-		case CK_SAME_REG: cerr << "SAME_REG"; break;
-		default: cerr << "UNKNOWN_KIND"; assert(0); break;
+		case CK_PACKED_BS: sblog << "PACKED_BS"; break;
+		case CK_PHI: sblog << "PHI"; break;
+		case CK_SAME_REG: sblog << "SAME_REG"; break;
+		default: sblog << "UNKNOWN_KIND"; assert(0); break;
 	}
 
-	cerr << "  cost = " << c->cost << "  : ";
+	sblog << "  cost = " << c->cost << "  : ";
 	dump::dump_vec(c->values);
 
-	cerr << "\n";
+	sblog << "\n";
 }
 
 void coalescer::get_chunk_interferences(ra_chunk *c, val_set &s) {
@@ -289,11 +287,11 @@ void coalescer::color_chunks() {
 		get_chunk_interferences(c, interf);
 
 		RA_DUMP(
-			cerr << "color_chunks: ";
+			sblog << "color_chunks: ";
 			dump_chunk(c);
-			cerr << "\n interferences: ";
+			sblog << "\n interferences: ";
 			dump::dump_set(sh,interf);
-			cerr << "\n";
+			sblog << "\n";
 		);
 
 		init_reg_bitset(rb, interf);
@@ -385,9 +383,9 @@ void coalescer::color_chunk(ra_chunk *c, sel_chan color) {
 
 
 		RA_DUMP(
-			cerr << " assigned " << color << " to ";
+			sblog << " assigned " << color << " to ";
 			dump::dump_val(v);
-			cerr << "\n";
+			sblog << "\n";
 		);
 	}
 
@@ -455,7 +453,7 @@ ra_chunk* coalescer::detach_value(value *v) {
 	}
 
 	RA_DUMP(
-		cerr << "           detached : ";
+		sblog << "           detached : ";
 		dump_chunk(v->chunk);
 	);
 
@@ -565,7 +563,7 @@ int coalescer::color_reg_constraint(ra_constraint *c) {
 		} while (std::next_permutation(swz, swz + 4));
 
 		if (!done && pass) {
-			cerr << "sb: ra_coalesce - out of registers\n";
+			sblog << "sb: ra_coalesce - out of registers\n";
 			return -1;
 		}
 
@@ -578,7 +576,7 @@ int coalescer::color_reg_constraint(ra_constraint *c) {
 	assert(done);
 
 	RA_DUMP(
-	cerr << "min reg = " << min_reg << "   min_swz = "
+	sblog << "min reg = " << min_reg << "   min_swz = "
 			<< min_swz[0] << min_swz[1] << min_swz[2] << min_swz[3] << "\n";
 	);
 
@@ -609,7 +607,7 @@ int coalescer::color_constraints() {
 		ra_constraint *c = *I;
 
 		RA_DUMP(
-			cerr << "color_constraints: ";
+			sblog << "color_constraints: ";
 			dump_constraint(c);
 		);
 

@@ -34,13 +34,10 @@
 
 #include "sb_bc.h"
 #include "sb_shader.h"
-
 #include "sb_pass.h"
 #include "sb_sched.h"
 
 namespace r600_sb {
-
-using std::cerr;
 
 rp_kcache_tracker::rp_kcache_tracker(shader &sh) : rp(), uc(),
 		// FIXME: for now we'll use "two const pairs" limit for r600, same as
@@ -156,27 +153,27 @@ void literal_tracker::unreserve(alu_node* n) {
 
 bool literal_tracker::try_reserve(literal l) {
 
-	PSC_DUMP( cerr << "literal reserve " << l.u << "  " << l.f << "\n"; );
+	PSC_DUMP( sblog << "literal reserve " << l.u << "  " << l.f << "\n"; );
 
 	for (unsigned i = 0; i < MAX_ALU_LITERALS; ++i) {
 		if (lt[i] == 0) {
 			lt[i] = l;
 			++uc[i];
-			PSC_DUMP( cerr << "  reserved new uc = " << uc[i] << "\n"; );
+			PSC_DUMP( sblog << "  reserved new uc = " << uc[i] << "\n"; );
 			return true;
 		} else if (lt[i] == l) {
 			++uc[i];
-			PSC_DUMP( cerr << "  reserved uc = " << uc[i] << "\n"; );
+			PSC_DUMP( sblog << "  reserved uc = " << uc[i] << "\n"; );
 			return true;
 		}
 	}
-	PSC_DUMP( cerr << "  failed to reserve literal\n"; );
+	PSC_DUMP( sblog << "  failed to reserve literal\n"; );
 	return false;
 }
 
 void literal_tracker::unreserve(literal l) {
 
-	PSC_DUMP( cerr << "literal unreserve " << l.u << "  " << l.f << "\n"; );
+	PSC_DUMP( sblog << "literal unreserve " << l.u << "  " << l.f << "\n"; );
 
 	for (unsigned i = 0; i < MAX_ALU_LITERALS; ++i) {
 		if (lt[i] == l) {
@@ -343,7 +340,7 @@ void alu_group_tracker::assign_slot(unsigned slot, alu_node* n) {
 
 
 void alu_group_tracker::discard_all_slots(container_node &removed_nodes) {
-	PSC_DUMP( cerr << "agt::discard_all_slots\n"; );
+	PSC_DUMP( sblog << "agt::discard_all_slots\n"; );
 	discard_slots(~available_slots & ((1 << max_slots) - 1), removed_nodes);
 }
 
@@ -351,7 +348,7 @@ void alu_group_tracker::discard_slots(unsigned slot_mask,
                                     container_node &removed_nodes) {
 
 	PSC_DUMP(
-		cerr << "discard_slots : packed_ops : " << packed_ops.size() << "\n";
+		sblog << "discard_slots : packed_ops : " << packed_ops.size() << "\n";
 	);
 
 	for (node_vec::iterator N, I = packed_ops.begin();
@@ -362,13 +359,13 @@ void alu_group_tracker::discard_slots(unsigned slot_mask,
 		unsigned pslots = n->get_slot_mask();
 
 		PSC_DUMP(
-			cerr << "discard_slots : packed slot_mask : " << pslots << "\n";
+			sblog << "discard_slots : packed slot_mask : " << pslots << "\n";
 		);
 
 		if (pslots & slot_mask) {
 
 			PSC_DUMP(
-				cerr << "discard_slots : discarding packed...\n";
+				sblog << "discard_slots : discarding packed...\n";
 			);
 
 			removed_nodes.push_back(n);
@@ -392,9 +389,9 @@ void alu_group_tracker::discard_slots(unsigned slot_mask,
 			assert(!(slots[slot]->bc.slot_flags & AF_4SLOT));
 
 			PSC_DUMP(
-				cerr << "discarding slot " << slot << " : ";
+				sblog << "discarding slot " << slot << " : ";
 				dump::dump_op(slots[slot]);
-				cerr << "\n";
+				sblog << "\n";
 			);
 
 			removed_nodes.push_back(slots[slot]);
@@ -408,9 +405,9 @@ void alu_group_tracker::discard_slots(unsigned slot_mask,
 		unsigned chan = t->bc.dst_chan;
 		if (!slots[chan]) {
 			PSC_DUMP(
-				cerr << "moving ";
+				sblog << "moving ";
 				dump::dump_op(t);
-				cerr << " from trans slot to free slot " << chan << "\n";
+				sblog << " from trans slot to free slot " << chan << "\n";
 			);
 
 			slots[chan] = t;
@@ -557,13 +554,13 @@ bool alu_group_tracker::try_reserve(alu_node* n) {
 	while (1) {
 
 		PSC_DUMP(
-			cerr << " bs: trying s" << i << " bs:" << a->bc.bank_swizzle
+			sblog << " bs: trying s" << i << " bs:" << a->bc.bank_swizzle
 				<< " bt:" << backtrack << "\n";
 		);
 
 		if (!backtrack && gpr.try_reserve(a)) {
 			PSC_DUMP(
-				cerr << " bs: reserved s" << i << " bs:" << a->bc.bank_swizzle
+				sblog << " bs: reserved s" << i << " bs:" << a->bc.bank_swizzle
 					<< "\n";
 			);
 
@@ -580,7 +577,7 @@ bool alu_group_tracker::try_reserve(alu_node* n) {
 				++a->bc.bank_swizzle;
 
 				PSC_DUMP(
-					cerr << " bs: inc s" << i << " bs:" << a->bc.bank_swizzle
+					sblog << " bs: inc s" << i << " bs:" << a->bc.bank_swizzle
 						<< "\n";
 				);
 
@@ -592,7 +589,7 @@ bool alu_group_tracker::try_reserve(alu_node* n) {
 					break;
 				a = slots[i];
 				PSC_DUMP(
-					cerr << " bs: unreserve s" << i << " bs:" << a->bc.bank_swizzle
+					sblog << " bs: unreserve s" << i << " bs:" << a->bc.bank_swizzle
 						<< "\n";
 				);
 				gpr.unreserve(a);
@@ -661,13 +658,13 @@ void alu_group_tracker::reinit() {
 
 	for (int i = max_slots - 1; i >= 0; --i) {
 		if (s[i] && !try_reserve(s[i])) {
-			cerr << "alu_group_tracker: reinit error on slot " << i <<  "\n";
+			sblog << "alu_group_tracker: reinit error on slot " << i <<  "\n";
 			for (unsigned i = 0; i < max_slots; ++i) {
-				cerr << "  slot " << i << " : ";
+				sblog << "  slot " << i << " : ";
 				if (s[i])
 					dump::dump_op(s[i]);
 
-				cerr << "\n";
+				sblog << "\n";
 			}
 			assert(!"alu_group_tracker: reinit error");
 		}
@@ -761,7 +758,7 @@ unsigned post_scheduler::init_ucm(container_node *c, node *n) {
 
 void post_scheduler::schedule_bb(bb_node* bb) {
 	PSC_DUMP(
-		cerr << "scheduling BB " << bb->id << "\n";
+		sblog << "scheduling BB " << bb->id << "\n";
 		if (!pending.empty())
 			dump::dump_op_list(&pending);
 	);
@@ -778,9 +775,9 @@ void post_scheduler::schedule_bb(bb_node* bb) {
 	while ((n = bb_pending.back())) {
 
 		PSC_DUMP(
-			cerr << "post_sched_bb ";
+			sblog << "post_sched_bb ";
 			dump::dump_op(n);
-			cerr << "\n";
+			sblog << "\n";
 		);
 
 		if (n->subtype == NST_ALU_CLAUSE) {
@@ -801,9 +798,9 @@ void post_scheduler::init_regmap() {
 	regmap.clear();
 
 	PSC_DUMP(
-		cerr << "init_regmap: live: ";
+		sblog << "init_regmap: live: ";
 		dump::dump_set(sh, live);
-		cerr << "\n";
+		sblog << "\n";
 	);
 
 	for (val_set::iterator I = live.begin(sh), E = live.end(sh); I != E; ++I) {
@@ -815,9 +812,9 @@ void post_scheduler::init_regmap() {
 		sel_chan r = v->gpr;
 
 		PSC_DUMP(
-			cerr << "init_regmap:  " << r << " <= ";
+			sblog << "init_regmap:  " << r << " <= ";
 			dump::dump_val(v);
-			cerr << "\n";
+			sblog << "\n";
 		);
 
 		assert(r);
@@ -847,15 +844,15 @@ void post_scheduler::process_alu(container_node *c) {
 		unsigned uc = init_ucm(c, n);
 
 		PSC_DUMP(
-			cerr << "process_alu uc=" << uc << "  ";
+			sblog << "process_alu uc=" << uc << "  ";
 			dump::dump_op(n);
-			cerr << "  ";
+			sblog << "  ";
 		);
 
 		if (uc) {
 			n->remove();
 			pending.push_back(n);
-			PSC_DUMP( cerr << "pending\n"; );
+			PSC_DUMP( sblog << "pending\n"; );
 		} else {
 			release_op(n);
 		}
@@ -867,9 +864,9 @@ void post_scheduler::process_alu(container_node *c) {
 void post_scheduler::update_local_interferences() {
 
 	PSC_DUMP(
-		cerr << "update_local_interferences : ";
+		sblog << "update_local_interferences : ";
 		dump::dump_set(sh, live);
-		cerr << "\n";
+		sblog << "\n";
 	);
 
 
@@ -894,7 +891,7 @@ void post_scheduler::update_live_src_vec(vvec &vv, val_set *born, bool src) {
 				if (!v->is_prealloc()) {
 					if (!cleared_interf.contains(v)) {
 						PSC_DUMP(
-							cerr << "clearing interferences for " << *v << "\n";
+							sblog << "clearing interferences for " << *v << "\n";
 						);
 						v->interferences.clear();
 						cleared_interf.add_val(v);
@@ -922,11 +919,11 @@ void post_scheduler::update_live_dst_vec(vvec &vv) {
 		} else if (v->is_any_gpr()) {
 			if (!live.remove_val(v)) {
 				PSC_DUMP(
-						cerr << "failed to remove ";
+						sblog << "failed to remove ";
 				dump::dump_val(v);
-				cerr << " from live : ";
+				sblog << " from live : ";
 				dump::dump_set(sh, live);
-				cerr << "\n";
+				sblog << "\n";
 				);
 			}
 		}
@@ -947,9 +944,9 @@ void post_scheduler::process_group() {
 	recolor_locals();
 
 	PSC_DUMP(
-		cerr << "process_group: live_before : ";
+		sblog << "process_group: live_before : ";
 		dump::dump_set(sh, live);
-		cerr << "\n";
+		sblog << "\n";
 	);
 
 	for (unsigned s = 0; s < ctx.num_slots; ++s) {
@@ -961,9 +958,9 @@ void post_scheduler::process_group() {
 	}
 
 	PSC_DUMP(
-		cerr << "process_group: live_after : ";
+		sblog << "process_group: live_after : ";
 		dump::dump_set(sh, live);
-		cerr << "\n";
+		sblog << "\n";
 	);
 
 	update_local_interferences();
@@ -979,9 +976,9 @@ void post_scheduler::process_group() {
 void post_scheduler::init_globals(val_set &s, bool prealloc) {
 
 	PSC_DUMP(
-		cerr << "init_globals: ";
+		sblog << "init_globals: ";
 		dump::dump_set(sh, s);
-		cerr << "\n";
+		sblog << "\n";
 	);
 
 	for (val_set::iterator I = s.begin(sh), E = s.end(sh); I != E; ++I) {
@@ -1039,13 +1036,13 @@ void post_scheduler::schedule_alu(container_node *c) {
 	}
 
 	if (!ready.empty()) {
-		cerr << "##post_scheduler: unscheduled ready instructions :";
+		sblog << "##post_scheduler: unscheduled ready instructions :";
 		dump::dump_op_list(&ready);
 		assert(!"unscheduled ready instructions");
 	}
 
 	if (!pending.empty()) {
-		cerr << "##post_scheduler: unscheduled pending instructions :";
+		sblog << "##post_scheduler: unscheduled pending instructions :";
 		dump::dump_op_list(&pending);
 		assert(!"unscheduled pending instructions");
 	}
@@ -1066,7 +1063,7 @@ void post_scheduler::add_interferences(value *v, sb_bitset &rb, val_set &vs) {
 			unsigned r = gpr.sel();
 
 			PSC_DUMP(
-				cerr << "\tadd_interferences: " << *vi << "\n";
+				sblog << "\tadd_interferences: " << *vi << "\n";
 			);
 
 			if (rb.size() <= r)
@@ -1080,9 +1077,9 @@ void post_scheduler::set_color_local_val(value *v, sel_chan color) {
 	v->gpr = color;
 
 	PSC_DUMP(
-		cerr << "     recolored: ";
+		sblog << "     recolored: ";
 		dump::dump_val(v);
-		cerr << "\n";
+		sblog << "\n";
 	);
 }
 
@@ -1111,15 +1108,15 @@ bool post_scheduler::recolor_local(value *v) {
 	unsigned chan = v->gpr.chan();
 
 	PSC_DUMP(
-		cerr << "recolor_local: ";
+		sblog << "recolor_local: ";
 		dump::dump_val(v);
-		cerr << "   interferences: ";
+		sblog << "   interferences: ";
 		dump::dump_set(sh, v->interferences);
-		cerr << "\n";
+		sblog << "\n";
 		if (v->chunk) {
-			cerr << "     in chunk: ";
+			sblog << "     in chunk: ";
 			coalescer::dump_chunk(v->chunk);
-			cerr << "\n";
+			sblog << "\n";
 		}
 	);
 
@@ -1128,7 +1125,7 @@ bool post_scheduler::recolor_local(value *v) {
 				E = v->chunk->values.end(); I != E; ++I) {
 			value *v2 = *I;
 
-			PSC_DUMP( cerr << "   add_interferences for " << *v2 << " :\n"; );
+			PSC_DUMP( sblog << "   add_interferences for " << *v2 << " :\n"; );
 
 			add_interferences(v, rb, v2->interferences);
 		}
@@ -1138,11 +1135,11 @@ bool post_scheduler::recolor_local(value *v) {
 
 	PSC_DUMP(
 		unsigned sz = rb.size();
-		cerr << "registers bits: " << sz;
+		sblog << "registers bits: " << sz;
 		for (unsigned r = 0; r < sz; ++r) {
 			if ((r & 7) == 0)
-				cerr << "\n  " << r << "   ";
-			cerr << (rb.get(r) ? 1 : 0);
+				sblog << "\n  " << r << "   ";
+			sblog << (rb.get(r) ? 1 : 0);
 		}
 	);
 
@@ -1182,9 +1179,9 @@ void post_scheduler::emit_load_ar() {
 	alu_node *a = alu.create_ar_load();
 
 	if (!rt.try_reserve(a)) {
-		cerr << "can't emit AR load : ";
+		sblog << "can't emit AR load : ";
 		dump::dump_op(a);
-		cerr << "\n";
+		sblog << "\n";
 	}
 
 	alu.current_ar = 0;
@@ -1206,11 +1203,11 @@ bool post_scheduler::unmap_dst_val(value *d) {
 
 		if (c && c!=d && (!c->chunk || c->chunk != d->chunk)) {
 			PSC_DUMP(
-				cerr << "dst value conflict : ";
+				sblog << "dst value conflict : ";
 				dump::dump_val(d);
-				cerr << "   regmap contains ";
+				sblog << "   regmap contains ";
 				dump::dump_val(c);
-				cerr << "\n";
+				sblog << "\n";
 			);
 			assert(!"scheduler error");
 			return false;
@@ -1232,7 +1229,7 @@ bool post_scheduler::unmap_dst(alu_node *n) {
 
 			if (d->is_AR()) {
 				if (alu.current_ar != d) {
-					cerr << "loading wrong ar value\n";
+					sblog << "loading wrong ar value\n";
 					assert(0);
 				} else {
 					alu.current_ar = NULL;
@@ -1271,11 +1268,11 @@ bool post_scheduler::map_src_val(value *v) {
 		c = F->second;
 		if (!v->v_equal(c)) {
 			PSC_DUMP(
-				cerr << "can't map src value ";
+				sblog << "can't map src value ";
 				dump::dump_val(v);
-				cerr << ", regmap contains ";
+				sblog << ", regmap contains ";
 				dump::dump_val(c);
-				cerr << "\n";
+				sblog << "\n";
 			);
 			return false;
 		}
@@ -1305,7 +1302,7 @@ bool post_scheduler::map_src_vec(vvec &vv, bool src) {
 				if (rel != alu.current_ar) {
 					if (alu.current_ar) {
 						PSC_DUMP(
-							cerr << "  current_AR is " << *alu.current_ar
+							sblog << "  current_AR is " << *alu.current_ar
 								<< "  trying to use " << *rel << "\n";
 						);
 						return false;
@@ -1314,7 +1311,7 @@ bool post_scheduler::map_src_vec(vvec &vv, bool src) {
 					alu.current_ar = rel;
 
 					PSC_DUMP(
-						cerr << "  new current_AR assigned: " << *alu.current_ar
+						sblog << "  new current_AR assigned: " << *alu.current_ar
 							<< "\n";
 					);
 				}
@@ -1341,16 +1338,16 @@ bool post_scheduler::map_src(alu_node *n) {
 
 void post_scheduler::dump_regmap() {
 
-	cerr << "# REGMAP :\n";
+	sblog << "# REGMAP :\n";
 
 	for(rv_map::iterator I = regmap.begin(), E = regmap.end(); I != E; ++I) {
-		cerr << "  # " << I->first << " => " << *(I->second) << "\n";
+		sblog << "  # " << I->first << " => " << *(I->second) << "\n";
 	}
 
 	if (alu.current_ar)
-		cerr << "    current_AR: " << *alu.current_ar << "\n";
+		sblog << "    current_AR: " << *alu.current_ar << "\n";
 	if (alu.current_pr)
-		cerr << "    current_PR: " << *alu.current_pr << "\n";
+		sblog << "    current_PR: " << *alu.current_pr << "\n";
 }
 
 void post_scheduler::recolor_locals() {
@@ -1377,7 +1374,7 @@ bool post_scheduler::check_interferences() {
 	bool discarded = false;
 
 	PSC_DUMP(
-			cerr << "check_interferences: before: \n";
+			sblog << "check_interferences: before: \n";
 	dump_regmap();
 	);
 
@@ -1406,9 +1403,9 @@ bool post_scheduler::check_interferences() {
 		PSC_DUMP(
 				for (unsigned i = 0; i < 5; ++i) {
 					if (interf_slots & (1 << i)) {
-						cerr << "!!!!!! interf slot: " << i << "  : ";
+						sblog << "!!!!!! interf slot: " << i << "  : ";
 						dump::dump_op(rt.slot(i));
-						cerr << "\n";
+						sblog << "\n";
 					}
 				}
 		);
@@ -1416,7 +1413,7 @@ bool post_scheduler::check_interferences() {
 		if (!interf_slots)
 			break;
 
-		PSC_DUMP( cerr << "ci: discarding slots " << interf_slots << "\n"; );
+		PSC_DUMP( sblog << "ci: discarding slots " << interf_slots << "\n"; );
 
 		rt.discard_slots(interf_slots, alu.conflict_nodes);
 		regmap = prev_regmap;
@@ -1425,7 +1422,7 @@ bool post_scheduler::check_interferences() {
 	} while(1);
 
 	PSC_DUMP(
-		cerr << "check_interferences: after: \n";
+		sblog << "check_interferences: after: \n";
 		dump_regmap();
 	);
 
@@ -1446,14 +1443,14 @@ unsigned post_scheduler::try_add_instruction(node *n) {
 		unsigned cnt = __builtin_popcount(slots);
 
 		if ((slots & avail_slots) != slots) {
-			PSC_DUMP( cerr << "   no slots \n"; );
+			PSC_DUMP( sblog << "   no slots \n"; );
 			return 0;
 		}
 
 		p->update_packed_items(ctx);
 
 		if (!rt.try_reserve(p)) {
-			PSC_DUMP( cerr << "   reservation failed \n"; );
+			PSC_DUMP( sblog << "   reservation failed \n"; );
 			return 0;
 		}
 
@@ -1497,17 +1494,17 @@ unsigned post_scheduler::try_add_instruction(node *n) {
 		}
 
 		if (!allowed_slots) {
-			PSC_DUMP( cerr << "   no suitable slots\n"; );
+			PSC_DUMP( sblog << "   no suitable slots\n"; );
 			return 0;
 		}
 
 		slot = __builtin_ctz(allowed_slots);
 		a->bc.slot = slot;
 
-		PSC_DUMP( cerr << "slot: " << slot << "\n"; );
+		PSC_DUMP( sblog << "slot: " << slot << "\n"; );
 
 		if (!rt.try_reserve(a)) {
-			PSC_DUMP( cerr << "   reservation failed\n"; );
+			PSC_DUMP( sblog << "   reservation failed\n"; );
 			return 0;
 		}
 
@@ -1533,9 +1530,9 @@ bool post_scheduler::check_copy(node *n) {
 	if (s->gpr == d->gpr) {
 
 		PSC_DUMP(
-			cerr << "check_copy: ";
+			sblog << "check_copy: ";
 			dump::dump_op(n);
-			cerr << "\n";
+			sblog << "\n";
 		);
 
 		rv_map::iterator F = regmap.find(d->gpr);
@@ -1543,13 +1540,13 @@ bool post_scheduler::check_copy(node *n) {
 
 		if (d->is_prealloc()) {
 			if (gpr_free) {
-				PSC_DUMP( cerr << "    copy not ready...\n";);
+				PSC_DUMP( sblog << "    copy not ready...\n";);
 				return true;
 			}
 
 			value *rv = F->second;
 			if (rv != d && (!rv->chunk || rv->chunk != d->chunk)) {
-				PSC_DUMP( cerr << "    copy not ready(2)...\n";);
+				PSC_DUMP( sblog << "    copy not ready(2)...\n";);
 				return true;
 			}
 
@@ -1563,7 +1560,7 @@ bool post_scheduler::check_copy(node *n) {
 
 		release_src_values(n);
 		n->remove();
-		PSC_DUMP( cerr << "    copy coalesced...\n";);
+		PSC_DUMP( sblog << "    copy coalesced...\n";);
 		return true;
 	}
 	return false;
@@ -1573,9 +1570,9 @@ void post_scheduler::dump_group(alu_group_tracker &rt) {
 	for (unsigned i = 0; i < 5; ++i) {
 		node *n = rt.slot(i);
 		if (n) {
-			cerr << "slot " << i << " : ";
+			sblog << "slot " << i << " : ";
 			dump::dump_op(n);
-			cerr << "\n";
+			sblog << "\n";
 		}
 	}
 }
@@ -1611,7 +1608,7 @@ bool post_scheduler::prepare_alu_group() {
 	unsigned i1 = 0;
 
 	PSC_DUMP(
-		cerr << "prepare_alu_group: starting...\n";
+		sblog << "prepare_alu_group: starting...\n";
 		dump_group(rt);
 	);
 
@@ -1631,9 +1628,9 @@ bool post_scheduler::prepare_alu_group() {
 			node *n = *I;
 
 			PSC_DUMP(
-				cerr << "p_a_g: ";
+				sblog << "p_a_g: ";
 				dump::dump_op(n);
-				cerr << "\n";
+				sblog << "\n";
 			);
 
 
@@ -1643,12 +1640,12 @@ bool post_scheduler::prepare_alu_group() {
 				continue;
 
 			PSC_DUMP(
-				cerr << "current group:\n";
+				sblog << "current group:\n";
 				dump_group(rt);
 			);
 
 			if (rt.inst_count() == ctx.num_slots) {
-				PSC_DUMP( cerr << " all slots used\n"; );
+				PSC_DUMP( sblog << " all slots used\n"; );
 				break;
 			}
 		}
@@ -1671,10 +1668,10 @@ bool post_scheduler::prepare_alu_group() {
 	} while (1);
 
 	PSC_DUMP(
-		cerr << " prepare_alu_group done, " << rt.inst_count()
+		sblog << " prepare_alu_group done, " << rt.inst_count()
 	          << " slot(s) \n";
 
-		cerr << "$$$$$$$$PAG i1=" << i1
+		sblog << "$$$$$$$$PAG i1=" << i1
 				<< "  ready " << ready.count()
 				<< "  pending " << pending.count()
 				<< "  conflicting " << alu.conflict_nodes.count()
@@ -1692,9 +1689,9 @@ void post_scheduler::release_src_values(node* n) {
 
 void post_scheduler::release_op(node *n) {
 	PSC_DUMP(
-		cerr << "release_op ";
+		sblog << "release_op ";
 		dump::dump_op(n);
-		cerr << "\n";
+		sblog << "\n";
 	);
 
 	n->remove();
@@ -1790,7 +1787,7 @@ void alu_clause_tracker::emit_group() {
 
 	new_group();
 
-	PSC_DUMP( cerr << "   #### group emitted\n"; );
+	PSC_DUMP( sblog << "   #### group emitted\n"; );
 }
 
 void alu_clause_tracker::emit_clause(container_node *c) {
@@ -1811,7 +1808,7 @@ void alu_clause_tracker::emit_clause(container_node *c) {
 	slot_count = 0;
 	kt.reset();
 
-	PSC_DUMP( cerr << "######### ALU clause emitted\n"; );
+	PSC_DUMP( sblog << "######### ALU clause emitted\n"; );
 }
 
 bool alu_clause_tracker::check_clause_limits() {
@@ -1851,7 +1848,7 @@ void literal_tracker::init_group_literals(alu_group_node* g) {
 		g->literals.push_back(lt[i]);
 
 		PSC_DUMP(
-			cerr << "literal emitted: " << lt[i].f
+			sblog << "literal emitted: " << lt[i].f
 				<< "  0x" << std::hex << lt[i].u
 				<< std::dec << "   " << lt[i].i << "\n";
 		);
@@ -1948,27 +1945,27 @@ alu_node* alu_clause_tracker::create_ar_load() {
 	a->src.push_back(current_ar);
 
 	PSC_DUMP(
-		cerr << "created AR load: ";
+		sblog << "created AR load: ";
 		dump::dump_op(a);
-		cerr << "\n";
+		sblog << "\n";
 	);
 
 	return a;
 }
 
 void alu_clause_tracker::discard_current_group() {
-	PSC_DUMP( cerr << "act::discard_current_group\n"; );
+	PSC_DUMP( sblog << "act::discard_current_group\n"; );
 	grp().discard_all_slots(conflict_nodes);
 }
 
 void rp_gpr_tracker::dump() {
-	cerr << "=== gpr_tracker dump:\n";
+	sblog << "=== gpr_tracker dump:\n";
 	for (int c = 0; c < 3; ++c) {
-		cerr << "cycle " << c << "      ";
+		sblog << "cycle " << c << "      ";
 		for (int h = 0; h < 4; ++h) {
-			cerr << rp[c][h] << ":" << uc[c][h] << "   ";
+			sblog << rp[c][h] << ":" << uc[c][h] << "   ";
 		}
-		cerr << "\n";
+		sblog << "\n";
 	}
 }
 

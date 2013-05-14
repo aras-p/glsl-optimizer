@@ -33,12 +33,9 @@
 #endif
 
 #include "sb_shader.h"
-
 #include "sb_pass.h"
 
 namespace r600_sb {
-
-using std::cerr;
 
 int if_conversion::run() {
 
@@ -116,9 +113,9 @@ unsigned if_conversion::try_convert_kills(region_node* r) {
 		alu_node *n = static_cast<alu_node*>(*I);
 
 		IFC_DUMP(
-			cerr << "converting ";
+			sblog << "converting ";
 			dump::dump_op(n);
-			cerr << "   " << n << "\n";
+			sblog << "   " << n << "\n";
 		);
 
 		n->remove();
@@ -148,7 +145,7 @@ bool if_conversion::run_on(region_node* r) {
 	r->collect_stats(s);
 
 	IFC_DUMP(
-		cerr << "ifcvt: region " << r->region_id << " :\n";
+		sblog << "ifcvt: region " << r->region_id << " :\n";
 		s.dump();
 	);
 
@@ -198,7 +195,7 @@ bool if_conversion::run_on(region_node* r) {
 			return false;
 	}
 
-	IFC_DUMP( cerr << "if_cvt: processing...\n"; );
+	IFC_DUMP( sblog << "if_cvt: processing...\n"; );
 
 	depart_node *nd1 = static_cast<depart_node*>(r->first);
 	if (!nd1->is_depart())

@@ -30,8 +30,6 @@
 
 namespace r600_sb {
 
-using std::cerr;
-
 bool node::accept(vpass& p, bool enter) { return p.visit(*this, enter); }
 bool container_node::accept(vpass& p, bool enter) { return p.visit(*this, enter); }
 bool alu_group_node::accept(vpass& p, bool enter) { return p.visit(*this, enter); }
@@ -512,18 +510,18 @@ void region_node::expand_repeat(repeat_node *r) {
 }
 
 void node_stats::dump() {
-	cerr << "  alu_count : " << alu_count << "\n";
-	cerr << "  alu_kill_count : " << alu_kill_count << "\n";
-	cerr << "  alu_copy_mov_count : " << alu_copy_mov_count << "\n";
-	cerr << "  cf_count : " << cf_count << "\n";
-	cerr << "  fetch_count : " << fetch_count << "\n";
-	cerr << "  region_count : " << region_count << "\n";
-	cerr << "  loop_count : " << loop_count << "\n";
-	cerr << "  phi_count : " << phi_count << "\n";
-	cerr << "  loop_phi_count : " << loop_phi_count << "\n";
-	cerr << "  depart_count : " << depart_count << "\n";
-	cerr << "  repeat_count : " << repeat_count << "\n";
-	cerr << "  if_count : " << if_count << "\n";
+	sblog << "  alu_count : " << alu_count << "\n";
+	sblog << "  alu_kill_count : " << alu_kill_count << "\n";
+	sblog << "  alu_copy_mov_count : " << alu_copy_mov_count << "\n";
+	sblog << "  cf_count : " << cf_count << "\n";
+	sblog << "  fetch_count : " << fetch_count << "\n";
+	sblog << "  region_count : " << region_count << "\n";
+	sblog << "  loop_count : " << loop_count << "\n";
+	sblog << "  phi_count : " << phi_count << "\n";
+	sblog << "  loop_phi_count : " << loop_phi_count << "\n";
+	sblog << "  depart_count : " << depart_count << "\n";
+	sblog << "  repeat_count : " << repeat_count << "\n";
+	sblog << "  if_count : " << if_count << "\n";
 }
 
 unsigned alu_node::interp_param() {

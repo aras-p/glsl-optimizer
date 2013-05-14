@@ -29,7 +29,6 @@
 
 #include <algorithm>
 #include <stdint.h>
-#include <iostream>
 #include <vector>
 #include <set>
 #include <algorithm>
@@ -64,7 +63,7 @@ struct sel_chan
 	static unsigned chan(unsigned idx) { return (idx-1) & 3; }
 };
 
-inline std::ostream& operator <<(std::ostream& o, sel_chan r) {
+inline sb_ostream& operator <<(sb_ostream& o, sel_chan r) {
 	static const char * ch = "xyzw";
 	o << r.sel() << "." << ch[r.chan()];
 	return o;
@@ -428,7 +427,7 @@ inline value_flags& operator &=(value_flags &l, value_flags r) {
 
 struct value;
 
-std::ostream& operator << (std::ostream &o, value &v);
+sb_ostream& operator << (sb_ostream &o, value &v);
 
 typedef uint32_t value_hash;
 
