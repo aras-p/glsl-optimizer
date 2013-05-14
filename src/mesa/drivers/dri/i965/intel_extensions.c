@@ -135,6 +135,7 @@ intelInitExtensions(struct gl_context *ctx)
 
       ctx->Extensions.EXT_framebuffer_multisample = true;
       ctx->Extensions.EXT_transform_feedback = true;
+      ctx->Extensions.EXT_framebuffer_multisample_blit_scaled = true;
       ctx->Extensions.ARB_blend_func_extended = !driQueryOptionb(&intel->optionCache, "disable_blend_func_extended");
       ctx->Extensions.ARB_draw_buffers_blend = true;
       ctx->Extensions.ARB_ES3_compatibility = true;
