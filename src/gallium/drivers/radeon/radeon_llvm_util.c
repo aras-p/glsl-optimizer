@@ -29,6 +29,7 @@
 
 #include <llvm-c/BitReader.h>
 #include <llvm-c/Core.h>
+#include <llvm-c/Transforms/PassManagerBuilder.h>
 
 LLVMModuleRef radeon_llvm_parse_bitcode(const unsigned char * bitcode,
 							unsigned bitcode_len)
@@ -48,6 +49,19 @@ unsigned radeon_llvm_get_num_kernels(const unsigned char *bitcode,
 {
 	LLVMModuleRef mod = radeon_llvm_parse_bitcode(bitcode, bitcode_len);
 	return LLVMGetNamedMetadataNumOperands(mod, "opencl.kernels");
+}
+
+static void radeon_llvm_optimize(LLVMModuleRef mod)
+{
+	LLVMPassManagerBuilderRef builder = LLVMPassManagerBuilderCreate();
+	LLVMPassManagerRef pass_manager = LLVMCreatePassManager();
+
+	LLVMPassManagerBuilderUseInlinerWithThreshold(builder, 1000000000);
+	LLVMPassManagerBuilderPopulateModulePassManager(builder, pass_manager);
+
+	LLVMRunPassManager(pass_manager, mod);
+	LLVMPassManagerBuilderDispose(builder);
+	LLVMDisposePassManager(pass_manager);
 }
 
 LLVMModuleRef radeon_llvm_get_kernel_module(unsigned index,
@@ -72,5 +86,6 @@ LLVMModuleRef radeon_llvm_get_kernel_module(unsigned index,
 		LLVMDeleteFunction(kernel_function);
 	}
 	FREE(kernel_metadata);
+	radeon_llvm_optimize(mod);
 	return mod;
 }
