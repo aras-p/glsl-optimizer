@@ -579,6 +579,22 @@ static int r600_get_compute_param(struct pipe_screen *screen,
 		}
 		return sizeof(uint64_t);
 
+	case PIPE_COMPUTE_CAP_MAX_GLOBAL_SIZE:
+		if (ret) {
+			uint64_t *max_global_size = ret;
+			/* XXX: Not sure what to put here. */
+			*max_global_size = 2000000000;
+		}
+		return sizeof(uint64_t);
+
+	case PIPE_COMPUTE_CAP_MAX_MEM_ALLOC_SIZE:
+		if (ret) {
+			uint64_t max_global_size;
+			uint64_t *max_mem_alloc_size = ret;
+			r600_get_compute_param(screen, PIPE_COMPUTE_CAP_MAX_GLOBAL_SIZE, &max_global_size);
+			*max_mem_alloc_size = max_global_size / 4;
+		}
+		return sizeof(uint64_t);
 	default:
 		fprintf(stderr, "unknown PIPE_COMPUTE_CAP %d\n", param);
 		return 0;
