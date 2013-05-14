@@ -288,6 +288,14 @@ nv50_clear_render_target(struct pipe_context *pipe,
 
    PUSH_REFN(push, bo, mt->base.domain | NOUVEAU_BO_WR);
 
+   BEGIN_NV04(push, NV50_3D(SCREEN_SCISSOR_HORIZ), 2);
+   PUSH_DATA (push, ( width << 16) | dstx);
+   PUSH_DATA (push, (height << 16) | dsty);
+   BEGIN_NV04(push, NV50_3D(SCISSOR_HORIZ(0)), 2);
+   PUSH_DATA (push, 8192 << 16);
+   PUSH_DATA (push, 8192 << 16);
+   nv50->scissors_dirty |= 1;
+
    BEGIN_NV04(push, NV50_3D(RT_CONTROL), 1);
    PUSH_DATA (push, 1);
    BEGIN_NV04(push, NV50_3D(RT_ADDRESS_HIGH(0)), 5);
@@ -325,7 +333,7 @@ nv50_clear_render_target(struct pipe_context *pipe,
                  (z << NV50_3D_CLEAR_BUFFERS_LAYER__SHIFT));
    }
 
-   nv50->dirty |= NV50_NEW_FRAMEBUFFER;
+   nv50->dirty |= NV50_NEW_FRAMEBUFFER | NV50_NEW_SCISSOR;
 }
 
 static void
@@ -364,6 +372,14 @@ nv50_clear_depth_stencil(struct pipe_context *pipe,
 
    PUSH_REFN(push, bo, mt->base.domain | NOUVEAU_BO_WR);
 
+   BEGIN_NV04(push, NV50_3D(SCREEN_SCISSOR_HORIZ), 2);
+   PUSH_DATA (push, ( width << 16) | dstx);
+   PUSH_DATA (push, (height << 16) | dsty);
+   BEGIN_NV04(push, NV50_3D(SCISSOR_HORIZ(0)), 2);
+   PUSH_DATA (push, 8192 << 16);
+   PUSH_DATA (push, 8192 << 16);
+   nv50->scissors_dirty |= 1;
+
    BEGIN_NV04(push, NV50_3D(ZETA_ADDRESS_HIGH), 5);
    PUSH_DATAh(push, bo->offset + sf->offset);
    PUSH_DATA (push, bo->offset + sf->offset);
@@ -390,7 +406,7 @@ nv50_clear_depth_stencil(struct pipe_context *pipe,
                  (z << NV50_3D_CLEAR_BUFFERS_LAYER__SHIFT));
    }
 
-   nv50->dirty |= NV50_NEW_FRAMEBUFFER;
+   nv50->dirty |= NV50_NEW_FRAMEBUFFER | NV50_NEW_SCISSOR;
 }
 
 void
