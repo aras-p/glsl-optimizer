@@ -199,6 +199,8 @@ fd_resource_from_handle(struct pipe_screen *pscreen,
 	return prsc;
 }
 
+static bool render_blit(struct pipe_context *pctx, struct pipe_blit_info *info);
+
 /**
  * Copy a block of pixels from one resource to another.
  * The resource must be of the same format.
@@ -213,8 +215,32 @@ fd_resource_copy_region(struct pipe_context *pctx,
 		unsigned src_level,
 		const struct pipe_box *src_box)
 {
-	DBG("TODO: ");
-	// TODO
+	/* TODO if we have 2d core, or other DMA engine that could be used
+	 * for simple copies and reasonably easily synchronized with the 3d
+	 * core, this is where we'd plug it in..
+	 */
+	struct pipe_blit_info info = {
+		.dst = {
+			.resource = dst,
+			.box = {
+				.x      = dstx,
+				.y      = dsty,
+				.z      = dstz,
+				.width  = src_box->width,
+				.height = src_box->height,
+				.depth  = src_box->depth,
+			},
+			.format = util_format_linear(dst->format),
+		},
+		.src = {
+			.resource = src,
+			.box      = *src_box,
+			.format   = util_format_linear(src->format),
+		},
+		.mask = PIPE_MASK_RGBA,
+		.filter = PIPE_TEX_FILTER_NEAREST,
+	};
+	render_blit(pctx, &info);
 }
 
 /* Optimal hardware path for blitting pixels.
@@ -223,7 +249,6 @@ fd_resource_copy_region(struct pipe_context *pctx,
 static void
 fd_blit(struct pipe_context *pctx, const struct pipe_blit_info *blit_info)
 {
-	struct fd_context *ctx = fd_context(pctx);
 	struct pipe_blit_info info = *blit_info;
 
 	if (info.src.resource->nr_samples > 1 &&
@@ -243,11 +268,19 @@ fd_blit(struct pipe_context *pctx, const struct pipe_blit_info *blit_info)
 		info.mask &= ~PIPE_MASK_S;
 	}
 
-	if (!util_blitter_is_blit_supported(ctx->blitter, &info)) {
+	render_blit(pctx, &info);
+}
+
+static bool
+render_blit(struct pipe_context *pctx, struct pipe_blit_info *info)
+{
+	struct fd_context *ctx = fd_context(pctx);
+
+	if (!util_blitter_is_blit_supported(ctx->blitter, info)) {
 		DBG("blit unsupported %s -> %s",
-				util_format_short_name(info.src.resource->format),
-				util_format_short_name(info.dst.resource->format));
-		return;
+				util_format_short_name(info->src.resource->format),
+				util_format_short_name(info->dst.resource->format));
+		return false;
 	}
 
 	util_blitter_save_vertex_buffer_slot(ctx->blitter, ctx->vertexbuf.vb);
@@ -268,7 +301,9 @@ fd_blit(struct pipe_context *pctx, const struct pipe_blit_info *blit_info)
 	util_blitter_save_fragment_sampler_views(ctx->blitter,
 			ctx->fragtex.num_textures, ctx->fragtex.textures);
 
-	util_blitter_blit(ctx->blitter, &info);
+	util_blitter_blit(ctx->blitter, info);
+
+	return true;
 }
 
 void
