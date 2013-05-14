@@ -302,6 +302,7 @@ static sb_hw_chip translate_chip(enum radeon_family rf) {
 		TRANSLATE_CHIP(TURKS);
 		TRANSLATE_CHIP(CAICOS);
 		TRANSLATE_CHIP(CAYMAN);
+		TRANSLATE_CHIP(ARUBA);
 #undef TRANSLATE_CHIP
 
 		default:

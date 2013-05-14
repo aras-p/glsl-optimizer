@@ -472,6 +472,7 @@ const char* shader::get_hw_chip_name() {
 		TRANSLATE_CHIP(TURKS);
 		TRANSLATE_CHIP(CAICOS);
 		TRANSLATE_CHIP(CAYMAN);
+		TRANSLATE_CHIP(ARUBA);
 #undef TRANSLATE_CHIP
 
 		default:
