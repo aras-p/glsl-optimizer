@@ -619,13 +619,10 @@ _mesa_init_buffer_objects( struct gl_context *ctx )
    _mesa_reference_buffer_object(ctx, &ctx->CopyWriteBuffer,
                                  ctx->Shared->NullBufferObj);
 
-   ctx->UniformBufferBindings = calloc(ctx->Const.MaxUniformBufferBindings,
-				      sizeof(*ctx->UniformBufferBindings));
-
    _mesa_reference_buffer_object(ctx, &ctx->UniformBuffer,
 				 ctx->Shared->NullBufferObj);
 
-   for (i = 0; i < ctx->Const.MaxUniformBufferBindings; i++) {
+   for (i = 0; i < MAX_COMBINED_UNIFORM_BUFFERS; i++) {
       _mesa_reference_buffer_object(ctx,
 				    &ctx->UniformBufferBindings[i].BufferObject,
 				    ctx->Shared->NullBufferObj);
@@ -647,14 +644,11 @@ _mesa_free_buffer_objects( struct gl_context *ctx )
 
    _mesa_reference_buffer_object(ctx, &ctx->UniformBuffer, NULL);
 
-   for (i = 0; i < ctx->Const.MaxUniformBufferBindings; i++) {
+   for (i = 0; i < MAX_COMBINED_UNIFORM_BUFFERS; i++) {
       _mesa_reference_buffer_object(ctx,
 				    &ctx->UniformBufferBindings[i].BufferObject,
 				    NULL);
    }
-
-   free(ctx->UniformBufferBindings);
-   ctx->UniformBufferBindings = NULL;
 }
 
 static bool

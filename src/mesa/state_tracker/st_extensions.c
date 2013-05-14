@@ -197,6 +197,7 @@ void st_init_limits(struct st_context *st)
          screen->get_shader_param(screen, sh, PIPE_SHADER_CAP_MAX_CONST_BUFFERS);
       if (pc->MaxUniformBlocks)
          pc->MaxUniformBlocks -= 1; /* The first one is for ordinary uniforms. */
+      pc->MaxUniformBlocks = _min(pc->MaxUniformBlocks, MAX_UNIFORM_BUFFERS);
 
       pc->MaxCombinedUniformComponents = (pc->MaxUniformComponents +
                                           c->MaxUniformBlockSize / 4 *
@@ -279,15 +280,11 @@ void st_init_limits(struct st_context *st)
       st->ctx->Extensions.ARB_uniform_buffer_object = GL_TRUE;
       c->UniformBufferOffsetAlignment =
          screen->get_param(screen, PIPE_CAP_CONSTANT_BUFFER_OFFSET_ALIGNMENT);
-      /* FIXME: _mesa_init_buffer_objects() already has been, and
-       * ctx->UniformBufferBindings allocated, so unfortunately we can't just
-       * change MaxUniformBufferBindings a posteriori. */
-#if 0
       c->MaxCombinedUniformBlocks = c->MaxUniformBufferBindings =
          c->VertexProgram.MaxUniformBlocks +
          c->GeometryProgram.MaxUniformBlocks +
          c->FragmentProgram.MaxUniformBlocks;
-#endif
+      assert(c->MaxCombinedUniformBlocks <= MAX_COMBINED_UNIFORM_BUFFERS);
    }
 }
 
