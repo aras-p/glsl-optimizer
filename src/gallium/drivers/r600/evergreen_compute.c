@@ -271,6 +271,8 @@ void evergreen_compute_upload_input(
 	uint32_t * global_size_start;
 	uint32_t * local_size_start;
 	uint32_t * kernel_parameters_start;
+	struct pipe_box box;
+	struct pipe_transfer *transfer = NULL;
 
 	if (shader->input_size == 0) {
 		return;
@@ -278,11 +280,16 @@ void evergreen_compute_upload_input(
 
 	if (!shader->kernel_param) {
 		/* Add space for the grid dimensions */
-		shader->kernel_param = r600_compute_buffer_alloc_vram(
-						ctx->screen, input_size);
+		shader->kernel_param = (struct r600_resource *)
+			pipe_buffer_create(ctx_->screen, PIPE_BIND_CUSTOM,
+					PIPE_USAGE_IMMUTABLE, input_size);
 	}
 
-	num_work_groups_start = r600_buffer_mmap_sync_with_rings(ctx, shader->kernel_param, PIPE_TRANSFER_WRITE);
+	u_box_1d(0, input_size, &box);
+	num_work_groups_start = ctx_->transfer_map(ctx_,
+			(struct pipe_resource*)shader->kernel_param,
+			0, PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD_RANGE,
+			&box, &transfer);
 	global_size_start = num_work_groups_start + (3 * (sizeof(uint) /4));
 	local_size_start = global_size_start + (3 * (sizeof(uint)) / 4);
 	kernel_parameters_start = local_size_start + (3 * (sizeof(uint)) / 4);
@@ -306,7 +313,7 @@ void evergreen_compute_upload_input(
 			((unsigned*)num_work_groups_start)[i]);
 	}
 
-	ctx->ws->buffer_unmap(shader->kernel_param->cs_buf);
+	ctx_->transfer_unmap(ctx_, transfer);
 
 	/* ID=0 is reserved for the parameters */
 	evergreen_cs_set_constant_buffer(ctx, 0, 0, input_size,
