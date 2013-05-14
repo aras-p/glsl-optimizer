@@ -233,7 +233,7 @@ st_feedback_draw_vbo(struct gl_context *ctx,
 
       draw_set_indexes(draw,
                        (ubyte *) mapped_indices + ibuffer.offset,
-                       ibuffer.index_size);
+                       ibuffer.index_size, ~0);
    }
 
    /* set the constant buffer */
@@ -252,7 +252,7 @@ st_feedback_draw_vbo(struct gl_context *ctx,
     * unmap vertex/index buffers
     */
    if (ib) {
-      draw_set_indexes(draw, NULL, 0);
+      draw_set_indexes(draw, NULL, 0, 0);
       if (ib_transfer)
          pipe_buffer_unmap(pipe, ib_transfer);
       pipe_resource_reference(&ibuffer.buffer, NULL);

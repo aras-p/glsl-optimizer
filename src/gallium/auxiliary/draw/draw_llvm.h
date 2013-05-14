@@ -271,6 +271,7 @@ typedef int
                            struct vertex_header *io,
                            const struct draw_vertex_buffer vbuffers[PIPE_MAX_ATTRIBS],
                            const unsigned *fetch_elts,
+                           unsigned fetch_max_elt,
                            unsigned fetch_count,
                            unsigned stride,
                            struct pipe_vertex_buffer *vertex_buffers,

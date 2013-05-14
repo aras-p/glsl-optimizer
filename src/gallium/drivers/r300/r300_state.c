@@ -1856,7 +1856,7 @@ static void r300_set_index_buffer_swtcl(struct pipe_context* pipe,
         }
         draw_set_indexes(r300->draw,
                          (const ubyte *) buf + ib->offset,
-                         ib->index_size);
+                         ib->index_size, ~0);
     }
 }
 

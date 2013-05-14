@@ -45,16 +45,16 @@ CONCAT(vsplit_primitive_, ELT_TYPE)(struct vsplit_frontend *vsplit,
    unsigned fetch_start, fetch_count;
    const ushort *draw_elts = NULL;
    unsigned i;
-
-   ib += istart;
+   const unsigned start = istart;
+   const unsigned end = istart + icount;
 
    /* use the ib directly */
    if (min_index == 0 && sizeof(ib[0]) == sizeof(draw_elts[0])) {
       if (icount > vsplit->max_vertices)
          return FALSE;
 
-      for (i = 0; i < icount; i++) {
-         ELT_TYPE idx = ib[i];
+      for (i = start; i < end; i++) {
+         ELT_TYPE idx = DRAW_GET_IDX(ib, i);
          if (idx < min_index || idx > max_index) {
             debug_printf("warning: index out of range\n");
          }
@@ -85,23 +85,23 @@ CONCAT(vsplit_primitive_, ELT_TYPE)(struct vsplit_frontend *vsplit,
 
    if (!draw_elts) {
       if (min_index == 0) {
-         for (i = 0; i < icount; i++) {
-            ELT_TYPE idx = ib[i];
+         for (i = start; i < end; i++) {
+            ELT_TYPE idx = DRAW_GET_IDX(ib, i);
 
             if (idx < min_index || idx > max_index) {
                debug_printf("warning: index out of range\n");
             }
-            vsplit->draw_elts[i] = (ushort) idx;
+            vsplit->draw_elts[i - start] = (ushort) idx;
          }
       }
       else {
-         for (i = 0; i < icount; i++) {
-            ELT_TYPE idx = ib[i];
+         for (i = start; i < end; i++) {
+            ELT_TYPE idx = DRAW_GET_IDX(ib, i);
 
             if (idx < min_index || idx > max_index) {
                debug_printf("warning: index out of range\n");
             }
-            vsplit->draw_elts[i] = (ushort) (idx - min_index);
+            vsplit->draw_elts[i - start] = (ushort) (idx - min_index);
          }
       }
 
@@ -138,41 +138,41 @@ CONCAT(vsplit_segment_cache_, ELT_TYPE)(struct vsplit_frontend *vsplit,
    spoken = !!spoken;
    if (ibias == 0) {
       if (spoken)
-         ADD_CACHE(vsplit, ib[ispoken]);
+         ADD_CACHE(vsplit, DRAW_GET_IDX(ib, ispoken));
 
       for (i = spoken; i < icount; i++)
-         ADD_CACHE(vsplit, ib[istart + i]);
+         ADD_CACHE(vsplit, DRAW_GET_IDX(ib, istart + i));
 
       if (close)
-         ADD_CACHE(vsplit, ib[iclose]);
+         ADD_CACHE(vsplit, DRAW_GET_IDX(ib, iclose));
    }
    else if (ibias > 0) {
       if (spoken)
-         ADD_CACHE(vsplit, (uint) ib[ispoken] + ibias);
+         ADD_CACHE(vsplit, (uint) DRAW_GET_IDX(ib, ispoken) + ibias);
 
       for (i = spoken; i < icount; i++)
-         ADD_CACHE(vsplit, (uint) ib[istart + i] + ibias);
+         ADD_CACHE(vsplit, (uint) DRAW_GET_IDX(ib, istart + i) + ibias);
 
       if (close)
-         ADD_CACHE(vsplit, (uint) ib[iclose] + ibias);
+         ADD_CACHE(vsplit, (uint) DRAW_GET_IDX(ib, iclose) + ibias);
    }
    else {
       if (spoken) {
          if ((int) ib[ispoken] < -ibias)
             return;
-         ADD_CACHE(vsplit, ib[ispoken] + ibias);
+         ADD_CACHE(vsplit, DRAW_GET_IDX(ib, ispoken) + ibias);
       }
 
       for (i = spoken; i < icount; i++) {
-         if ((int) ib[istart + i] < -ibias)
+         if ((int) DRAW_GET_IDX(ib, istart + i) < -ibias)
             return;
-         ADD_CACHE(vsplit, ib[istart + i] + ibias);
+         ADD_CACHE(vsplit, DRAW_GET_IDX(ib, istart + i) + ibias);
       }
 
       if (close) {
-         if ((int) ib[iclose] < -ibias)
+         if ((int) DRAW_GET_IDX(ib, iclose) < -ibias)
             return;
-         ADD_CACHE(vsplit, ib[iclose] + ibias);
+         ADD_CACHE(vsplit, DRAW_GET_IDX(ib, iclose) + ibias);
       }
    }
 

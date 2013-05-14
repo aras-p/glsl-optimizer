@@ -186,7 +186,8 @@ struct draw_context
          /** bytes per index (0, 1, 2 or 4) */
          unsigned eltSizeIB;
          unsigned eltSize;
-         int eltBias;
+         unsigned eltMax;
+         int eltBias;         
          unsigned min_index;
          unsigned max_index;
          
@@ -459,5 +460,13 @@ draw_get_rasterizer_no_cull( struct draw_context *draw,
                              boolean scissor,
                              boolean flatshade );
 
+
+/** 
+ * Return index i from the index buffer.
+ * If the index buffer would overflow we return the
+ * index of the first element in the vb.
+ */
+#define DRAW_GET_IDX(elts, i)                   \
+   ((i) >= draw->pt.user.eltMax) ? 0 : elts[i]
 
 #endif /* DRAW_PRIVATE_H */

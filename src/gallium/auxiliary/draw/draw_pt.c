@@ -339,7 +339,7 @@ draw_print_arrays(struct draw_context *draw, uint prim, int start, uint count)
 #define PRIM_RESTART_LOOP(elements) \
    do { \
       for (i = start; i < end; i++) { \
-         if (elements[i] == info->restart_index) { \
+         if (i < elt_max && elements[i] == info->restart_index) { \
             if (cur_count > 0) { \
                /* draw elts up to prev pos */ \
                draw_pt_arrays(draw, prim, cur_start, cur_count); \
@@ -371,6 +371,7 @@ draw_pt_arrays_restart(struct draw_context *draw,
    const unsigned start = info->start;
    const unsigned count = info->count;
    const unsigned end = start + count;
+   const unsigned elt_max = draw->pt.user.eltMax;
    unsigned i, cur_start, cur_count;
 
    assert(info->primitive_restart);
@@ -496,7 +497,7 @@ draw_vbo(struct draw_context *draw,
    assert(info->instance_count > 0);
    if (info->indexed)
       assert(draw->pt.user.elts);
-   
+
    count = info->count;
 
    draw->pt.user.eltBias = info->index_bias;
@@ -506,7 +507,7 @@ draw_vbo(struct draw_context *draw,
 
    if (0)
       debug_printf("draw_vbo(mode=%u start=%u count=%u):\n",
-                   info->mode, info->start, info->count);
+                   info->mode, info->start, count);
 
    if (0)
       tgsi_dump(draw->vs.vertex_shader->state.tokens, 0);
@@ -534,7 +535,7 @@ draw_vbo(struct draw_context *draw,
    }
 
    if (0)
-      draw_print_arrays(draw, info->mode, info->start, MIN2(info->count, 20));
+      draw_print_arrays(draw, info->mode, info->start, MIN2(count, 20));
 
    index_limit = util_draw_max_index(draw->pt.vertex_buffer,
                                      draw->pt.vertex_element,
