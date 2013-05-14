@@ -279,10 +279,15 @@ void st_init_limits(struct st_context *st)
       st->ctx->Extensions.ARB_uniform_buffer_object = GL_TRUE;
       c->UniformBufferOffsetAlignment =
          screen->get_param(screen, PIPE_CAP_CONSTANT_BUFFER_OFFSET_ALIGNMENT);
+      /* FIXME: _mesa_init_buffer_objects() already has been, and
+       * ctx->UniformBufferBindings allocated, so unfortunately we can't just
+       * change MaxUniformBufferBindings a posteriori. */
+#if 0
       c->MaxCombinedUniformBlocks = c->MaxUniformBufferBindings =
          c->VertexProgram.MaxUniformBlocks +
          c->GeometryProgram.MaxUniformBlocks +
          c->FragmentProgram.MaxUniformBlocks;
+#endif
    }
 }
 
