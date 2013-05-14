@@ -871,6 +871,7 @@ store_aos_array(struct gallivm_state *gallivm,
    LLVMBuilderRef builder = gallivm->builder;
    LLVMValueRef attr_index = lp_build_const_int32(gallivm, attrib);
    LLVMValueRef inds[LP_MAX_VECTOR_WIDTH / 32];
+   LLVMValueRef linear_inds[LP_MAX_VECTOR_WIDTH / 32];
    LLVMValueRef io_ptrs[LP_MAX_VECTOR_WIDTH / 32];
    int vector_length = soa_type.length;
    int i;
@@ -878,10 +879,11 @@ store_aos_array(struct gallivm_state *gallivm,
    debug_assert(TGSI_NUM_CHANNELS == 4);
 
    for (i = 0; i < vector_length; i++) {
+      linear_inds[i] = lp_build_const_int32(gallivm, i);
       if (indices) {
          inds[i] = indices[i];
       } else {
-         inds[i] = lp_build_const_int32(gallivm, i);
+         inds[i] = linear_inds[i];
       }
       io_ptrs[i] = LLVMBuildGEP(builder, io_ptr, &inds[i], 1, "");
    }
@@ -904,7 +906,7 @@ store_aos_array(struct gallivm_state *gallivm,
       cliptmp = LLVMBuildOr(builder, val, clipmask, "");
       for (i = 0; i < vector_length; i++) {
          LLVMValueRef id_ptr = draw_jit_header_id(gallivm, io_ptrs[i]);
-         val = LLVMBuildExtractElement(builder, cliptmp, inds[i], "");
+         val = LLVMBuildExtractElement(builder, cliptmp, linear_inds[i], "");
          val = adjust_mask(gallivm, val);
          LLVMBuildStore(builder, val, id_ptr);
 #if DEBUG_STORE
