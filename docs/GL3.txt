@@ -56,8 +56,8 @@ Signed normalized textures (GL_EXT_texture_snorm)     DONE (i965, r300, r600)
 GL 3.2:
 
 Core/compatibility profiles                           DONE
-GLSL 1.50                                             not started
-Geometry shaders (GL_ARB_geometry_shader4)            partially done (Zack)
+GLSL 1.50                                             in progress
+Geometry shaders (GL_ARB_geometry_shader4)            partially done
 BGRA vertex order (GL_ARB_vertex_array_bgra)          DONE (i965, r300, r600, swrast)
 Base vertex offset(GL_ARB_draw_elements_base_vertex)  DONE (i965, r300, r600, swrast)
 Frag shader coord (GL_ARB_fragment_coord_conventions) DONE (i965, r300, r600, swrast)
@@ -89,15 +89,15 @@ GL 4.0:
 GLSL 4.0                                             not started
 GL_ARB_texture_query_lod                             DONE (i965)
 GL_ARB_draw_buffers_blend                            DONE (i965, r600, softpipe)
-GL_ARB_draw_indirect                                 not started
-GL_ARB_gpu_shader5                                   not started
+GL_ARB_draw_indirect                                 started (Christoph)
+GL_ARB_gpu_shader5                                   started
 GL_ARB_gpu_shader_fp64                               not started
 GL_ARB_sample_shading                                not started
 GL_ARB_shader_subroutine                             not started
 GL_ARB_tessellation_shader                           not started
 GL_ARB_texture_buffer_object_rgb32                   DONE (i965, softpipe)
 GL_ARB_texture_cube_map_array                        DONE (i965, softpipe)
-GL_ARB_texture_gather                                not started
+GL_ARB_texture_gather                                started (Maxence, Chris)
 GL_ARB_transform_feedback2                           DONE
 GL_ARB_transform_feedback3                           DONE
 
@@ -124,7 +124,7 @@ GL_ARB_transform_feedback_instanced                  DONE
 GL_ARB_base_instance                                 DONE (i965, nv50, nvc0, r600, radeonsi)
 GL_ARB_shader_image_load_store                       not started
 GL_ARB_conservative_depth                            DONE (softpipe)
-GL_ARB_shading_language_420pack                      not started
+GL_ARB_shading_language_420pack                      started (Todd)
 GL_ARB_internalformat_query                          DONE (i965, gallium)
 GL_ARB_map_buffer_alignment                          DONE (r300, r600, radeonsi)
 
