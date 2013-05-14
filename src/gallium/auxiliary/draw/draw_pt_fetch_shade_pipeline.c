@@ -244,7 +244,7 @@ static void fetch_pipeline_generic( struct draw_pt_middle_end *middle,
       return;
    }
    if (draw->collect_statistics) {
-      draw->statistics.ia_vertices += fetch_info->count;
+      draw->statistics.ia_vertices += prim_info->count;
       draw->statistics.ia_primitives +=
          u_decomposed_prims_for_vertices(prim_info->prim, fetch_info->count);
       draw->statistics.vs_invocations += fetch_info->count;
