@@ -466,7 +466,7 @@ draw_get_rasterizer_no_cull( struct draw_context *draw,
  * If the index buffer would overflow we return the
  * index of the first element in the vb.
  */
-#define DRAW_GET_IDX(elts, i)                   \
-   ((i) >= draw->pt.user.eltMax) ? 0 : elts[i]
+#define DRAW_GET_IDX(_elts, _i)                   \
+   (((_i) >= draw->pt.user.eltMax) ? 0 : (_elts)[_i])
 
 #endif /* DRAW_PRIVATE_H */
