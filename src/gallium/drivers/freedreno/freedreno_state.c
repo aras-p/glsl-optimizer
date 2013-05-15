@@ -135,6 +135,17 @@ fd_set_framebuffer_state(struct pipe_context *pctx,
 	pipe_surface_reference(&cso->zsbuf, framebuffer->zsbuf);
 
 	ctx->dirty |= FD_DIRTY_FRAMEBUFFER;
+
+	/* also need to reset the scissor.. mesa/gl state tracker
+	 * does this for us, but u_blitter doesn't and other
+	 * state trackers might not..
+	 */
+	ctx->scissor.minx = 0;
+	ctx->scissor.miny = 0;
+	ctx->scissor.maxx = cso->width;
+	ctx->scissor.maxy = cso->height;
+
+	ctx->dirty |= FD_DIRTY_SCISSOR;
 }
 
 static void
