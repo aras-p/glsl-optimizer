@@ -146,7 +146,6 @@ struct r600_context {
 	struct pipe_framebuffer_state	framebuffer;
 	unsigned			pa_sc_line_stipple;
 	unsigned			pa_su_sc_mode_cntl;
-	unsigned			pa_cl_clip_cntl;
 	/* for saving when using blitter */
 	struct pipe_stencil_ref		stencil_ref;
 	struct si_pipe_shader_selector	*ps_shader;

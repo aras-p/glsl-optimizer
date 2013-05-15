@@ -49,6 +49,7 @@ struct si_state_rasterizer {
 	unsigned		pa_su_sc_mode_cntl;
 	unsigned		pa_cl_clip_cntl;
 	unsigned		pa_cl_vs_out_cntl;
+	unsigned		clip_plane_enable;
 	float			offset_units;
 	float			offset_scale;
 };

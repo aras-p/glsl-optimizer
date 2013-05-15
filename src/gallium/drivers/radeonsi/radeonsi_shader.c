@@ -554,6 +554,64 @@ static void si_alpha_test(struct lp_build_tgsi_context *bld_base,
 	}
 }
 
+static void si_llvm_emit_clipvertex(struct lp_build_tgsi_context * bld_base,
+				    unsigned index)
+{
+	struct si_shader_context *si_shader_ctx = si_shader_context(bld_base);
+	struct lp_build_context *base = &bld_base->base;
+	struct lp_build_context *uint = &si_shader_ctx->radeon_bld.soa.bld_base.uint_bld;
+	LLVMValueRef args[9];
+	unsigned reg_index;
+	unsigned chan;
+	unsigned const_chan;
+	LLVMValueRef out_elts[4];
+	LLVMValueRef base_elt;
+	LLVMValueRef ptr = LLVMGetParam(si_shader_ctx->radeon_bld.main_fn, SI_PARAM_CONST);
+	LLVMValueRef const_resource = build_indexed_load(si_shader_ctx, ptr, uint->one);
+
+	for (chan = 0; chan < TGSI_NUM_CHANNELS; chan++) {
+		LLVMValueRef out_ptr = si_shader_ctx->radeon_bld.soa.outputs[index][chan];
+		out_elts[chan] = LLVMBuildLoad(base->gallivm->builder, out_ptr, "");
+	}
+
+	for (reg_index = 0; reg_index < 2; reg_index ++) {
+		args[5] =
+		args[6] =
+		args[7] =
+		args[8] = lp_build_const_float(base->gallivm, 0.0f);
+
+		/* Compute dot products of position and user clip plane vectors */
+		for (chan = 0; chan < TGSI_NUM_CHANNELS; chan++) {
+			for (const_chan = 0; const_chan < TGSI_NUM_CHANNELS; const_chan++) {
+				args[0] = const_resource;
+				args[1] = lp_build_const_int32(base->gallivm,
+							       ((reg_index * 4 + chan) * 4 +
+								const_chan) * 4);
+				base_elt = build_intrinsic(base->gallivm->builder,
+							   "llvm.SI.load.const",
+							   base->elem_type,
+							   args, 2,
+							   LLVMReadNoneAttribute | LLVMNoUnwindAttribute);
+				args[5 + chan] =
+					lp_build_add(base, args[5 + chan],
+						     lp_build_mul(base, base_elt,
+								  out_elts[const_chan]));
+			}
+		}
+
+		args[0] = lp_build_const_int32(base->gallivm, 0xf);
+		args[1] = uint->zero;
+		args[2] = uint->zero;
+		args[3] = lp_build_const_int32(base->gallivm,
+					       V_008DFC_SQ_EXP_POS + 2 + reg_index);
+		args[4] = uint->zero;
+		lp_build_intrinsic(base->gallivm->builder,
+				   "llvm.SI.export",
+				   LLVMVoidTypeInContext(base->gallivm->context),
+				   args, 9);
+	}
+}
+
 /* XXX: This is partially implemented for VS only at this point.  It is not complete */
 static void si_llvm_emit_epilogue(struct lp_build_tgsi_context * bld_base)
 {
@@ -642,6 +700,10 @@ static void si_llvm_emit_epilogue(struct lp_build_tgsi_context * bld_base)
 					color_count++;
 				}
 				break;
+			case TGSI_SEMANTIC_CLIPVERTEX:
+				si_llvm_emit_clipvertex(bld_base, index);
+				shader->clip_dist_write = 0xFF;
+				continue;
 			case TGSI_SEMANTIC_FOG:
 			case TGSI_SEMANTIC_GENERIC:
 				target = V_008DFC_SQ_EXP_PARAM + param_count;

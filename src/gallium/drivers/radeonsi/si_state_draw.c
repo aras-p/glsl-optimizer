@@ -74,8 +74,12 @@ static void si_pipe_shader_vs(struct pipe_context *ctx, struct si_pipe_shader *s
 		       S_02870C_POS1_EXPORT_FORMAT(shader->shader.vs_out_misc_write ?
 						   V_02870C_SPI_SHADER_4COMP :
 						   V_02870C_SPI_SHADER_NONE) |
-		       S_02870C_POS2_EXPORT_FORMAT(V_02870C_SPI_SHADER_NONE) |
-		       S_02870C_POS3_EXPORT_FORMAT(V_02870C_SPI_SHADER_NONE));
+		       S_02870C_POS2_EXPORT_FORMAT((shader->shader.clip_dist_write & 0x0F) ?
+						   V_02870C_SPI_SHADER_4COMP :
+						   V_02870C_SPI_SHADER_NONE) |
+		       S_02870C_POS3_EXPORT_FORMAT((shader->shader.clip_dist_write & 0xF0) ?
+						   V_02870C_SPI_SHADER_4COMP :
+						   V_02870C_SPI_SHADER_NONE));
 
 	va = r600_resource_va(ctx->screen, (void *)shader->bo);
 	si_pm4_add_bo(pm4, shader->bo, RADEON_USAGE_READ);
@@ -306,10 +310,13 @@ static bool si_update_draw_info_state(struct r600_context *rctx,
         }
 	si_pm4_set_reg(pm4, R_02881C_PA_CL_VS_OUT_CNTL,
 		       S_02881C_USE_VTX_POINT_SIZE(vs->vs_out_point_size) |
-		       S_02881C_VS_OUT_MISC_VEC_ENA(vs->vs_out_misc_write)
-		       /*| (rctx->rasterizer->clip_plane_enable &
-		       rctx->vs_shader->shader.clip_dist_write)*/);
-	si_pm4_set_reg(pm4, R_028810_PA_CL_CLIP_CNTL, rctx->pa_cl_clip_cntl
+		       S_02881C_VS_OUT_CCDIST0_VEC_ENA((vs->clip_dist_write & 0x0F) != 0) |
+		       S_02881C_VS_OUT_CCDIST1_VEC_ENA((vs->clip_dist_write & 0xF0) != 0) |
+		       S_02881C_VS_OUT_MISC_VEC_ENA(vs->vs_out_misc_write) |
+		       (rctx->queued.named.rasterizer->clip_plane_enable &
+			vs->clip_dist_write));
+	si_pm4_set_reg(pm4, R_028810_PA_CL_CLIP_CNTL,
+		       rctx->queued.named.rasterizer->pa_cl_clip_cntl
 			/*| (rctx->vs_shader->shader.clip_dist_write ||
 			rctx->vs_shader->shader.vs_prohibit_ucps ?
 			0 : rctx->rasterizer->clip_plane_enable & 0x3F)*/);

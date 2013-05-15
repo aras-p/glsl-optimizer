@@ -237,6 +237,7 @@ static void si_set_clip_state(struct pipe_context *ctx,
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
+	struct pipe_constant_buffer cb;
 
 	if (pm4 == NULL)
 		return;
@@ -251,6 +252,13 @@ static void si_set_clip_state(struct pipe_context *ctx,
 		si_pm4_set_reg(pm4, R_0285C8_PA_CL_UCP_0_W + i * 16,
 			       fui(state->ucp[i][3]));
         }
+
+	cb.buffer = NULL;
+	cb.user_buffer = state->ucp;
+	cb.buffer_offset = 0;
+	cb.buffer_size = 4*4*8;
+	ctx->set_constant_buffer(ctx, PIPE_SHADER_VERTEX, 1, &cb);
+	pipe_resource_reference(&cb.buffer, NULL);
 
 	si_pm4_set_state(rctx, clip, pm4);
 }
@@ -387,6 +395,7 @@ static void *si_create_rs_state(struct pipe_context *ctx,
 	}
 
 	rs->two_side = state->light_twoside;
+	rs->clip_plane_enable = state->clip_plane_enable;
 
 	polygon_dual_mode = (state->fill_front != PIPE_POLYGON_MODE_FILL ||
 				state->fill_back != PIPE_POLYGON_MODE_FILL);
@@ -484,7 +493,6 @@ static void si_bind_rs_state(struct pipe_context *ctx, void *state)
 	rctx->sprite_coord_enable = rs->sprite_coord_enable;
 	rctx->pa_sc_line_stipple = rs->pa_sc_line_stipple;
 	rctx->pa_su_sc_mode_cntl = rs->pa_su_sc_mode_cntl;
-	rctx->pa_cl_clip_cntl = rs->pa_cl_clip_cntl;
 
 	si_pm4_bind_state(rctx, rasterizer, rs);
 	si_update_fb_rs_state(rctx);

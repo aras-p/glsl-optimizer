@@ -113,6 +113,7 @@ struct si_shader {
 	bool			vs_out_misc_write;
 	bool			vs_out_point_size;
 	unsigned		nr_cbufs;
+	unsigned		clip_dist_write;
 };
 
 union si_shader_key {
