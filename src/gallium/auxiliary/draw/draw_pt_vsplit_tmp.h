@@ -59,7 +59,7 @@ CONCAT(vsplit_primitive_, ELT_TYPE)(struct vsplit_frontend *vsplit,
             debug_printf("warning: index out of range\n");
          }
       }
-      draw_elts = (const ushort *) ib;
+      draw_elts = (const ushort *) (ib + istart);
    }
    else {
       /* have to go through vsplit->draw_elts */
