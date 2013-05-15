@@ -305,7 +305,7 @@ int r600_compute_shader_create(struct pipe_context * ctx,
 
 	shader_ctx.bc = bytecode;
 	r600_bytecode_init(shader_ctx.bc, r600_ctx->chip_class, r600_ctx->family,
-			   r600_ctx->screen->msaa_texture_support);
+			   r600_ctx->screen->has_compressed_msaa_texturing);
 	shader_ctx.bc->type = TGSI_PROCESSOR_COMPUTE;
 	shader_ctx.bc->isa = r600_ctx->isa;
 	r600_llvm_compile(mod, r600_ctx->family,
