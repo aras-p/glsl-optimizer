@@ -35,8 +35,13 @@
 #include "ilo_transfer.h"
 
 enum ilo_transfer_map_method {
-   ILO_TRANSFER_MAP_DIRECT,
-   ILO_TRANSFER_MAP_STAGING_SYS,
+   /* map() / map_gtt() / map_unsynchronized() */
+   ILO_TRANSFER_MAP_CPU,
+   ILO_TRANSFER_MAP_GTT,
+   ILO_TRANSFER_MAP_UNSYNC,
+
+   /* use staging system buffer */
+   ILO_TRANSFER_MAP_SW_CONVERT,
 };
 
 struct ilo_transfer {
@@ -54,6 +59,53 @@ ilo_transfer(struct pipe_transfer *transfer)
    return (struct ilo_transfer *) transfer;
 }
 
+static bool
+is_bo_busy(struct ilo_context *ilo, struct intel_bo *bo, bool *need_flush)
+{
+   const bool referenced = ilo->cp->bo->references(ilo->cp->bo, bo);
+
+   if (need_flush)
+      *need_flush = referenced;
+
+   if (referenced)
+      return true;
+
+   /*
+    * XXX With hardware context support, the bo may be needed by GPU
+    * without being referenced by ilo->cp->bo.  We have to flush
+    * unconditionally, and that is bad.
+    */
+   if (ilo->cp->hw_ctx)
+      ilo_cp_flush(ilo->cp);
+
+   return intel_bo_is_busy(bo);
+}
+
+static bool
+map_bo_for_transfer(struct ilo_context *ilo, struct intel_bo *bo,
+                    const struct ilo_transfer *xfer)
+{
+   int err;
+
+   switch (xfer->method) {
+   case ILO_TRANSFER_MAP_CPU:
+      err = bo->map(bo, (xfer->base.usage & PIPE_TRANSFER_WRITE));
+      break;
+   case ILO_TRANSFER_MAP_GTT:
+      err = bo->map_gtt(bo);
+      break;
+   case ILO_TRANSFER_MAP_UNSYNC:
+      err = bo->map_unsynchronized(bo);
+      break;
+   default:
+      assert(!"unknown mapping method");
+      err = -1;
+      break;
+   }
+
+   return !err;
+}
+
 /**
  * Choose the best mapping method, depending on the transfer usage and whether
  * the bo is busy.
@@ -62,89 +114,95 @@ static bool
 choose_transfer_method(struct ilo_context *ilo, struct ilo_transfer *xfer)
 {
    struct pipe_resource *res = xfer->base.resource;
+   const unsigned usage = xfer->base.usage;
+   /* prefer map() when there is the last-level cache */
+   const bool prefer_cpu =
+      (ilo->dev->has_llc || (usage & PIPE_TRANSFER_READ));
    struct ilo_texture *tex;
    struct ilo_buffer *buf;
    struct intel_bo *bo;
-   bool will_be_busy, will_stall;
+   bool tiled, need_flush;
 
    if (res->target == PIPE_BUFFER) {
       tex = NULL;
 
       buf = ilo_buffer(res);
       bo = buf->bo;
+      tiled = false;
    }
    else {
       buf = NULL;
 
       tex = ilo_texture(res);
       bo = tex->bo;
+      tiled = (tex->tiling != INTEL_TILING_NONE);
+   }
 
-      if (!(xfer->base.usage & PIPE_TRANSFER_MAP_DIRECTLY)) {
-         /* need to convert on-the-fly */
-         if (tex->bo_format != tex->base.format) {
-            xfer->method = ILO_TRANSFER_MAP_STAGING_SYS;
-            return true;
-         }
+   /* choose between mapping through CPU or GTT */
+   if (usage & PIPE_TRANSFER_MAP_DIRECTLY) {
+      /* we do not want fencing */
+      if (tiled || prefer_cpu)
+         xfer->method = ILO_TRANSFER_MAP_CPU;
+      else
+         xfer->method = ILO_TRANSFER_MAP_GTT;
+   }
+   else {
+      if (!tiled && prefer_cpu)
+         xfer->method = ILO_TRANSFER_MAP_CPU;
+      else
+         xfer->method = ILO_TRANSFER_MAP_GTT;
+   }
+
+   /* see if we can avoid stalling */
+   if (is_bo_busy(ilo, bo, &need_flush)) {
+      bool will_stall = true;
+
+      if (usage & PIPE_TRANSFER_MAP_DIRECTLY) {
+         /* nothing we can do */
+      }
+      else if (usage & PIPE_TRANSFER_UNSYNCHRONIZED) {
+         /* unsynchronized gtt mapping does not stall */
+         xfer->method = ILO_TRANSFER_MAP_UNSYNC;
+         will_stall = false;
+      }
+      else if (usage & PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE) {
+         /* discard old bo and allocate a new one for mapping */
+         if ((tex && ilo_texture_alloc_bo(tex)) ||
+             (buf && ilo_buffer_alloc_bo(buf)))
+            will_stall = false;
+      }
+      else if (usage & PIPE_TRANSFER_FLUSH_EXPLICIT) {
+         /*
+          * We could allocate and return a system buffer here.  When a region of
+          * the buffer is explicitly flushed, we pwrite() the region to a
+          * temporary bo and emit pipelined copy blit.
+          *
+          * For now, do nothing.
+          */
+      }
+      else if (usage & PIPE_TRANSFER_DISCARD_RANGE) {
+         /*
+          * We could allocate a temporary bo for mapping, and emit pipelined copy
+          * blit upon unmapping.
+          *
+          * For now, do nothing.
+          */
+      }
+
+      if (will_stall) {
+         if (usage & PIPE_TRANSFER_DONTBLOCK)
+            return false;
+
+         /* flush to make bo busy (so that map() stalls as it should be) */
+         if (need_flush)
+            ilo_cp_flush(ilo->cp);
       }
    }
 
-   xfer->method = ILO_TRANSFER_MAP_DIRECT;
-
-   /* unsynchronized map does not stall */
-   if (xfer->base.usage & PIPE_TRANSFER_UNSYNCHRONIZED)
-      return true;
-
-   will_be_busy = ilo->cp->bo->references(ilo->cp->bo, bo);
-   if (!will_be_busy) {
-      /*
-       * XXX With hardware context support, the bo may be needed by GPU
-       * without being referenced by ilo->cp->bo.  We have to flush
-       * unconditionally, and that is bad.
-       */
-      if (ilo->cp->hw_ctx)
-         ilo_cp_flush(ilo->cp);
-
-      if (!intel_bo_is_busy(bo))
-         return true;
-   }
-
-   /* bo is busy and mapping it will stall */
-   will_stall = true;
-
-   if (xfer->base.usage & PIPE_TRANSFER_MAP_DIRECTLY) {
-      /* nothing we can do */
-   }
-   else if (xfer->base.usage & PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE) {
-      /* discard old bo and allocate a new one for mapping */
-      if ((tex && ilo_texture_alloc_bo(tex)) ||
-          (buf && ilo_buffer_alloc_bo(buf)))
-         will_stall = false;
-   }
-   else if (xfer->base.usage & PIPE_TRANSFER_FLUSH_EXPLICIT) {
-      /*
-       * We could allocate and return a system buffer here.  When a region of
-       * the buffer is explicitly flushed, we pwrite() the region to a
-       * temporary bo and emit pipelined copy blit.
-       *
-       * For now, do nothing.
-       */
-   }
-   else if (xfer->base.usage & PIPE_TRANSFER_DISCARD_RANGE) {
-      /*
-       * We could allocate a temporary bo for mapping, and emit pipelined copy
-       * blit upon unmapping.
-       *
-       * For now, do nothing.
-       */
-   }
-
-   if (will_stall) {
-      if (xfer->base.usage & PIPE_TRANSFER_DONTBLOCK)
-         return false;
-
-      /* flush to make bo busy (so that map() stalls as it should be) */
-      if (will_be_busy)
-         ilo_cp_flush(ilo->cp);
+   if (tex && !(usage & PIPE_TRANSFER_MAP_DIRECTLY)) {
+      /* need to convert on-the-fly */
+      if (tex->bo_format != tex->base.format)
+         xfer->method = ILO_TRANSFER_MAP_SW_CONVERT;
    }
 
    return true;
@@ -317,18 +375,7 @@ tex_direct_map(struct ilo_context *ilo,
                struct ilo_texture *tex,
                struct ilo_transfer *xfer)
 {
-   int err;
-
-   if (xfer->base.usage & PIPE_TRANSFER_UNSYNCHRONIZED)
-      err = tex->bo->map_unsynchronized(tex->bo);
-   /* prefer map() when there is the last-level cache */
-   else if (tex->tiling == INTEL_TILING_NONE &&
-            (ilo->dev->has_llc || (xfer->base.usage & PIPE_TRANSFER_READ)))
-      err = tex->bo->map(tex->bo, (xfer->base.usage & PIPE_TRANSFER_WRITE));
-   else
-      err = tex->bo->map_gtt(tex->bo);
-
-   if (err)
+   if (!map_bo_for_transfer(ilo, tex->bo, xfer))
       return false;
 
    /* note that stride is for a block row, not a texel row */
@@ -356,10 +403,12 @@ tex_map(struct ilo_context *ilo, struct ilo_transfer *xfer)
       return false;
 
    switch (xfer->method) {
-   case ILO_TRANSFER_MAP_DIRECT:
+   case ILO_TRANSFER_MAP_CPU:
+   case ILO_TRANSFER_MAP_GTT:
+   case ILO_TRANSFER_MAP_UNSYNC:
       success = tex_direct_map(ilo, tex, xfer);
       break;
-   case ILO_TRANSFER_MAP_STAGING_SYS:
+   case ILO_TRANSFER_MAP_SW_CONVERT:
       success = tex_staging_sys_map(ilo, tex, xfer);
       break;
    default:
@@ -377,10 +426,12 @@ tex_unmap(struct ilo_context *ilo, struct ilo_transfer *xfer)
    struct ilo_texture *tex = ilo_texture(xfer->base.resource);
 
    switch (xfer->method) {
-   case ILO_TRANSFER_MAP_DIRECT:
+   case ILO_TRANSFER_MAP_CPU:
+   case ILO_TRANSFER_MAP_GTT:
+   case ILO_TRANSFER_MAP_UNSYNC:
       tex_direct_unmap(ilo, tex, xfer);
       break;
-   case ILO_TRANSFER_MAP_STAGING_SYS:
+   case ILO_TRANSFER_MAP_SW_CONVERT:
       tex_staging_sys_unmap(ilo, tex, xfer);
       break;
    default:
@@ -393,21 +444,11 @@ static bool
 buf_map(struct ilo_context *ilo, struct ilo_transfer *xfer)
 {
    struct ilo_buffer *buf = ilo_buffer(xfer->base.resource);
-   int err;
 
    if (!choose_transfer_method(ilo, xfer))
       return false;
 
-   assert(xfer->method == ILO_TRANSFER_MAP_DIRECT);
-
-   if (xfer->base.usage & PIPE_TRANSFER_UNSYNCHRONIZED)
-      err = buf->bo->map_unsynchronized(buf->bo);
-   else if (ilo->dev->has_llc || (xfer->base.usage & PIPE_TRANSFER_READ))
-      err = buf->bo->map(buf->bo, (xfer->base.usage & PIPE_TRANSFER_WRITE));
-   else
-      err = buf->bo->map_gtt(buf->bo);
-
-   if (err)
+   if (!map_bo_for_transfer(ilo, buf->bo, xfer))
       return false;
 
    assert(xfer->base.level == 0);
@@ -437,20 +478,10 @@ static void
 buf_pwrite(struct ilo_context *ilo, struct ilo_buffer *buf,
            unsigned usage, int offset, int size, const void *data)
 {
-   bool will_be_busy;
-
-   /*
-    * XXX With hardware context support, the bo may be needed by GPU without
-    * being referenced by ilo->cp->bo.  We have to flush unconditionally, and
-    * that is bad.
-    */
-   if (ilo->cp->hw_ctx)
-      ilo_cp_flush(ilo->cp);
-
-   will_be_busy = ilo->cp->bo->references(ilo->cp->bo, buf->bo);
+   bool need_flush;
 
    /* see if we can avoid stalling */
-   if (will_be_busy || intel_bo_is_busy(buf->bo)) {
+   if (is_bo_busy(ilo, buf->bo, &need_flush)) {
       bool will_stall = true;
 
       if (usage & PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE) {
@@ -467,7 +498,7 @@ buf_pwrite(struct ilo_context *ilo, struct ilo_buffer *buf,
       }
 
       /* flush to make bo busy (so that pwrite() stalls as it should be) */
-      if (will_stall && will_be_busy)
+      if (will_stall && need_flush)
          ilo_cp_flush(ilo->cp);
    }
 
