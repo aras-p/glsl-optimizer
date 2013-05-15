@@ -188,6 +188,11 @@ tex_staging_sys_unmap(struct ilo_context *ilo,
    struct pipe_transfer *dst_xfer;
    void *dst;
 
+   if (!(xfer->base.usage & PIPE_TRANSFER_WRITE)) {
+      FREE(xfer->staging_sys);
+      return;
+   }
+
    dst = ilo->base.transfer_map(&ilo->base,
          xfer->base.resource, xfer->base.level,
          PIPE_TRANSFER_WRITE |
