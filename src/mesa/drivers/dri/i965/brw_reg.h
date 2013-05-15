@@ -344,13 +344,6 @@ brw_uw1_reg(unsigned file, unsigned nr, unsigned subnr)
    return suboffset(retype(brw_vec1_reg(file, nr, 0), BRW_REGISTER_TYPE_UW), subnr);
 }
 
-/** Construct unsigned dword[1] register */
-static inline struct brw_reg
-brw_ud1_reg(unsigned file, unsigned nr, unsigned subnr)
-{
-   return suboffset(retype(brw_vec1_reg(file, nr, 0), BRW_REGISTER_TYPE_UD), subnr);
-}
-
 static inline struct brw_reg
 brw_imm_reg(unsigned type)
 {
