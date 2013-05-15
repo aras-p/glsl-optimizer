@@ -469,3 +469,24 @@ vlVdpVideoSurfaceClear(vlVdpSurface *vlsurf)
    }
    pipe->flush(pipe, NULL, 0);
 }
+
+/**
+ * Interop to mesa state tracker
+ */
+struct pipe_video_buffer *vlVdpVideoSurfaceGallium(VdpVideoSurface surface)
+{
+   vlVdpSurface *p_surf = vlGetDataHTAB(surface);
+   if (!p_surf)
+      return NULL;
+
+   pipe_mutex_lock(p_surf->device->mutex);
+   if (p_surf->video_buffer == NULL) {
+      struct pipe_context *pipe = p_surf->device->context;
+
+      /* try to create a video buffer if we don't already have one */
+      p_surf->video_buffer = pipe->create_video_buffer(pipe, &p_surf->templat);
+   }
+   pipe_mutex_unlock(p_surf->device->mutex);
+
+   return p_surf->video_buffer;
+}

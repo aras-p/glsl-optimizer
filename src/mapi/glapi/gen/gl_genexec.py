@@ -111,6 +111,7 @@ header = """/**
 #include "main/syncobj.h"
 #include "main/formatquery.h"
 #include "main/dispatch.h"
+#include "main/vdpau.h"
 #include "vbo/vbo.h"
 
 

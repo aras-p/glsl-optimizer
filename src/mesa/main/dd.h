@@ -868,6 +868,20 @@ struct dd_function_table {
                              struct gl_framebuffer *fb,
                              GLuint index,
                              GLfloat *outValue);
+
+   /**
+    * \name NV_vdpau_interop interface
+    */
+   void (*VDPAUMapSurface)(struct gl_context *ctx, GLenum target,
+                           GLenum access, GLboolean output,
+                           struct gl_texture_object *texObj,
+                           struct gl_texture_image *texImage,
+                           const GLvoid *vdpSurface, GLuint index);
+   void (*VDPAUUnmapSurface)(struct gl_context *ctx, GLenum target,
+                             GLenum access, GLboolean output,
+                             struct gl_texture_object *texObj,
+                             struct gl_texture_image *texImage,
+                             const GLvoid *vdpSurface, GLuint index);
 };
 
 

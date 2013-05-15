@@ -3302,6 +3302,7 @@ struct gl_extensions
    GLboolean NV_texture_barrier;
    GLboolean NV_texture_env_combine4;
    GLboolean NV_texture_rectangle;
+   GLboolean NV_vdpau_interop;
    GLboolean TDFX_texture_compression_FXT1;
    GLboolean OES_EGL_image;
    GLboolean OES_draw_texture;
@@ -3831,6 +3832,15 @@ struct gl_context
    struct vbo_context *vbo_context;
    struct st_context *st;
    void *aelt_context;
+   /*@}*/
+
+   /**
+    * \name NV_vdpau_interop
+    */
+   /*@{*/
+   const void *vdpDevice;
+   const void *vdpGetProcAddress;
+   struct set *vdpSurfaces;
    /*@}*/
 };
 

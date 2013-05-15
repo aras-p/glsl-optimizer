@@ -725,3 +725,14 @@ vlVdpOutputSurfaceRenderBitmapSurface(VdpOutputSurface destination_surface,
 
    return VDP_STATUS_OK;
 }
+
+struct pipe_resource *vlVdpOutputSurfaceGallium(VdpOutputSurface surface)
+{
+   vlVdpOutputSurface *vlsurface;
+
+   vlsurface = vlGetDataHTAB(surface);
+   if (!vlsurface || !vlsurface->surface)
+      return NULL;
+
+   return vlsurface->surface->texture;
+}

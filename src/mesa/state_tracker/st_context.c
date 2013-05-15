@@ -65,6 +65,7 @@
 #include "st_extensions.h"
 #include "st_gen_mipmap.h"
 #include "st_program.h"
+#include "st_vdpau.h"
 #include "pipe/p_context.h"
 #include "util/u_inlines.h"
 #include "util/u_upload_mgr.h"
@@ -359,6 +360,8 @@ void st_init_driver_functions(struct dd_function_table *functions)
 
    st_init_xformfb_functions(functions);
    st_init_syncobj_functions(functions);
+
+   st_init_vdpau_functions(functions);
 
    functions->UpdateState = st_invalidate_state;
 }

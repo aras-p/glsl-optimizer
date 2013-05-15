@@ -564,6 +564,7 @@ void st_init_extensions(struct st_context *st)
    ctx->Extensions.NV_fog_distance = GL_TRUE;
    ctx->Extensions.NV_texture_env_combine4 = GL_TRUE;
    ctx->Extensions.NV_texture_rectangle = GL_TRUE;
+   ctx->Extensions.NV_vdpau_interop = GL_TRUE;
 
    ctx->Extensions.OES_EGL_image = GL_TRUE;
    ctx->Extensions.OES_EGL_image_external = GL_TRUE;

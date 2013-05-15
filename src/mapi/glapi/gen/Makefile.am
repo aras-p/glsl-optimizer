@@ -141,6 +141,7 @@ API_XML = \
 	NV_conditional_render.xml \
 	NV_primitive_restart.xml \
 	NV_texture_barrier.xml \
+	NV_vdpau_interop.xml \
 	OES_EGL_image.xml \
 	GL3x.xml
 

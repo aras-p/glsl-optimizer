@@ -36,6 +36,8 @@
 #include "pipe/p_compiler.h"
 #include "pipe/p_video_codec.h"
 
+#include "state_tracker/vdpau_interop.h"
+
 #include "util/u_debug.h"
 #include "util/u_rect.h"
 #include "os/os_thread.h"
@@ -497,6 +499,10 @@ VdpVideoMixerGetParameterValues vlVdpVideoMixerGetParameterValues;
 VdpVideoMixerGetAttributeValues vlVdpVideoMixerGetAttributeValues;
 VdpVideoMixerDestroy vlVdpVideoMixerDestroy;
 VdpGenerateCSCMatrix vlVdpGenerateCSCMatrix;
+
+/* interop to mesa state tracker */
+VdpVideoSurfaceGallium vlVdpVideoSurfaceGallium;
+VdpOutputSurfaceGallium vlVdpOutputSurfaceGallium;
 
 #define VDPAU_OUT   0
 #define VDPAU_ERR   1

@@ -108,6 +108,7 @@ MAIN_FILES = \
 	$(SRCDIR)main/uniforms.c \
 	$(SRCDIR)main/uniform_query.cpp \
 	$(SRCDIR)main/varray.c \
+	$(SRCDIR)main/vdpau.c \
 	$(SRCDIR)main/version.c \
 	$(SRCDIR)main/viewport.c \
 	$(SRCDIR)main/vtxfmt.c \
@@ -248,7 +249,8 @@ STATETRACKER_FILES = \
 	$(SRCDIR)state_tracker/st_manager.c \
 	$(SRCDIR)state_tracker/st_mesa_to_tgsi.c \
 	$(SRCDIR)state_tracker/st_program.c \
-	$(SRCDIR)state_tracker/st_texture.c
+	$(SRCDIR)state_tracker/st_texture.c \
+	$(SRCDIR)state_tracker/st_vdpau.c
 
 PROGRAM_FILES = \
 	$(SRCDIR)program/arbprogparse.c \
