@@ -59,7 +59,7 @@ ilo_transfer(struct pipe_transfer *transfer)
  * the bo is busy.
  */
 static bool
-transfer_choose_method(struct ilo_context *ilo, struct ilo_transfer *xfer)
+choose_transfer_method(struct ilo_context *ilo, struct ilo_transfer *xfer)
 {
    struct pipe_resource *res = xfer->base.resource;
    struct ilo_texture *tex;
@@ -79,12 +79,12 @@ transfer_choose_method(struct ilo_context *ilo, struct ilo_transfer *xfer)
       tex = ilo_texture(res);
       bo = tex->bo;
 
-      /* need to convert on-the-fly */
-      if (tex->bo_format != tex->base.format &&
-          !(xfer->base.usage & PIPE_TRANSFER_MAP_DIRECTLY)) {
-         xfer->method = ILO_TRANSFER_MAP_STAGING_SYS;
-
-         return true;
+      if (!(xfer->base.usage & PIPE_TRANSFER_MAP_DIRECTLY)) {
+         /* need to convert on-the-fly */
+         if (tex->bo_format != tex->base.format) {
+            xfer->method = ILO_TRANSFER_MAP_STAGING_SYS;
+            return true;
+         }
       }
    }
 
@@ -151,12 +151,12 @@ transfer_choose_method(struct ilo_context *ilo, struct ilo_transfer *xfer)
 }
 
 static void
-tex_unmap_sys_convert(enum pipe_format dst_fmt,
-                      const struct pipe_transfer *dst_xfer,
-                      void *dst,
-                      enum pipe_format src_fmt,
-                      const struct pipe_transfer *src_xfer,
-                      const void *src)
+tex_staging_sys_convert_write(enum pipe_format dst_fmt,
+                              const struct pipe_transfer *dst_xfer,
+                              void *dst,
+                              enum pipe_format src_fmt,
+                              const struct pipe_transfer *src_xfer,
+                              const void *src)
 {
    int i;
 
@@ -180,9 +180,9 @@ tex_unmap_sys_convert(enum pipe_format dst_fmt,
 }
 
 static void
-tex_unmap_sys(struct ilo_context *ilo,
-              struct ilo_texture *tex,
-              struct ilo_transfer *xfer)
+tex_staging_sys_unmap(struct ilo_context *ilo,
+                      struct ilo_texture *tex,
+                      struct ilo_transfer *xfer)
 {
    const void *src = xfer->ptr;
    struct pipe_transfer *dst_xfer;
@@ -201,7 +201,7 @@ tex_unmap_sys(struct ilo_context *ilo,
    }
 
    if (likely(tex->bo_format != tex->base.format)) {
-      tex_unmap_sys_convert(tex->bo_format, dst_xfer, dst,
+      tex_staging_sys_convert_write(tex->bo_format, dst_xfer, dst,
             tex->base.format, &xfer->base, src);
    }
    else {
@@ -216,9 +216,9 @@ tex_unmap_sys(struct ilo_context *ilo,
 }
 
 static bool
-tex_map_sys(struct ilo_context *ilo,
-            struct ilo_texture *tex,
-            struct ilo_transfer *xfer)
+tex_staging_sys_map(struct ilo_context *ilo,
+                    struct ilo_texture *tex,
+                    struct ilo_transfer *xfer)
 {
    const struct pipe_box *box = &xfer->base.box;
    const size_t stride = util_format_get_stride(tex->base.format, box->width);
@@ -226,6 +226,15 @@ tex_map_sys(struct ilo_context *ilo,
       util_format_get_2d_size(tex->base.format, stride, box->height);
    bool read_back = false;
 
+   xfer->staging_sys = MALLOC(size * box->depth);
+   if (!xfer->staging_sys)
+      return false;
+
+   xfer->base.stride = stride;
+   xfer->base.layer_stride = size;
+   xfer->ptr = xfer->staging_sys;
+
+   /* see if we need to read the resource back */
    if (xfer->base.usage & PIPE_TRANSFER_READ) {
       read_back = true;
    }
@@ -237,23 +246,15 @@ tex_map_sys(struct ilo_context *ilo,
          read_back = true;
    }
 
+   if (!read_back)
+      return true;
+
    /* TODO */
-   if (read_back)
-      return false;
-
-   xfer->staging_sys = MALLOC(size * box->depth);
-   if (!xfer->staging_sys)
-      return false;
-
-   xfer->base.stride = stride;
-   xfer->base.layer_stride = size;
-   xfer->ptr = xfer->staging_sys;
-
-   return true;
+   return false;
 }
 
 static void
-tex_unmap_direct(struct ilo_context *ilo,
+tex_direct_unmap(struct ilo_context *ilo,
                  struct ilo_texture *tex,
                  struct ilo_transfer *xfer)
 {
@@ -261,7 +262,7 @@ tex_unmap_direct(struct ilo_context *ilo,
 }
 
 static bool
-tex_map_direct(struct ilo_context *ilo,
+tex_direct_map(struct ilo_context *ilo,
                struct ilo_texture *tex,
                struct ilo_transfer *xfer)
 {
@@ -321,16 +322,15 @@ tex_map(struct ilo_context *ilo, struct ilo_transfer *xfer)
    struct ilo_texture *tex = ilo_texture(xfer->base.resource);
    bool success;
 
-   success = transfer_choose_method(ilo, xfer);
-   if (!success)
+   if (!choose_transfer_method(ilo, xfer))
       return false;
 
    switch (xfer->method) {
    case ILO_TRANSFER_MAP_DIRECT:
-      success = tex_map_direct(ilo, tex, xfer);
+      success = tex_direct_map(ilo, tex, xfer);
       break;
    case ILO_TRANSFER_MAP_STAGING_SYS:
-      success = tex_map_sys(ilo, tex, xfer);
+      success = tex_staging_sys_map(ilo, tex, xfer);
       break;
    default:
       assert(!"unknown mapping method");
@@ -348,10 +348,10 @@ tex_unmap(struct ilo_context *ilo, struct ilo_transfer *xfer)
 
    switch (xfer->method) {
    case ILO_TRANSFER_MAP_DIRECT:
-      tex_unmap_direct(ilo, tex, xfer);
+      tex_direct_unmap(ilo, tex, xfer);
       break;
    case ILO_TRANSFER_MAP_STAGING_SYS:
-      tex_unmap_sys(ilo, tex, xfer);
+      tex_staging_sys_unmap(ilo, tex, xfer);
       break;
    default:
       assert(!"unknown mapping method");
@@ -365,7 +365,7 @@ buf_map(struct ilo_context *ilo, struct ilo_transfer *xfer)
    struct ilo_buffer *buf = ilo_buffer(xfer->base.resource);
    int err;
 
-   if (!transfer_choose_method(ilo, xfer))
+   if (!choose_transfer_method(ilo, xfer))
       return false;
 
    assert(xfer->method == ILO_TRANSFER_MAP_DIRECT);
