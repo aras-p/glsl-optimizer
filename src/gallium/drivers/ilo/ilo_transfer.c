@@ -150,6 +150,52 @@ choose_transfer_method(struct ilo_context *ilo, struct ilo_transfer *xfer)
    return true;
 }
 
+static unsigned
+tex_get_box_offset(const struct ilo_texture *tex, unsigned level,
+                   const struct pipe_box *box)
+{
+   unsigned x, y;
+
+   x = tex->slice_offsets[level][box->z].x;
+   y = tex->slice_offsets[level][box->z].y;
+
+   x += box->x;
+   y += box->y;
+
+   /* in blocks */
+   assert(x % tex->block_width == 0 && y % tex->block_height == 0);
+   x /= tex->block_width;
+   y /= tex->block_height;
+
+   return y * tex->bo_stride + x * tex->bo_cpp;
+}
+
+static unsigned
+tex_get_slice_stride(const struct ilo_texture *tex, unsigned level)
+{
+   unsigned qpitch;
+
+   /* there is no 3D array texture */
+   assert(tex->base.array_size == 1 || tex->base.depth0 == 1);
+
+   if (tex->base.array_size == 1) {
+      /* non-array, non-3D */
+      if (tex->base.depth0 == 1)
+         return 0;
+
+      /* only the first level has a fixed slice stride */
+      if (level > 0) {
+         assert(!"no slice stride for 3D texture with level > 0");
+         return 0;
+      }
+   }
+
+   qpitch = tex->slice_offsets[level][1].y - tex->slice_offsets[level][0].y;
+   assert(qpitch % tex->block_height == 0);
+
+   return (qpitch / tex->block_height) * tex->bo_stride;
+}
+
 static void
 tex_staging_sys_convert_write(enum pipe_format dst_fmt,
                               const struct pipe_transfer *dst_xfer,
@@ -271,7 +317,7 @@ tex_direct_map(struct ilo_context *ilo,
                struct ilo_texture *tex,
                struct ilo_transfer *xfer)
 {
-   int err, x, y;
+   int err;
 
    if (xfer->base.usage & PIPE_TRANSFER_UNSYNCHRONIZED)
       err = tex->bo->map_unsynchronized(tex->bo);
@@ -288,35 +334,14 @@ tex_direct_map(struct ilo_context *ilo,
    /* note that stride is for a block row, not a texel row */
    xfer->base.stride = tex->bo_stride;
 
-   /*
-    * we can walk through layers when the resource is a texture array or
-    * when this is the first level of a 3D texture being mapped
-    */
-   if (tex->base.array_size > 1 ||
-       (tex->base.target == PIPE_TEXTURE_3D && xfer->base.level == 0)) {
-      const unsigned qpitch = tex->slice_offsets[xfer->base.level][1].y -
-         tex->slice_offsets[xfer->base.level][0].y;
-
-      assert(qpitch % tex->block_height == 0);
-      xfer->base.layer_stride = (qpitch / tex->block_height) * xfer->base.stride;
-   }
-   else {
+   /* slice stride is not always available */
+   if (xfer->base.box.depth > 1)
+      xfer->base.layer_stride = tex_get_slice_stride(tex, xfer->base.level);
+   else
       xfer->base.layer_stride = 0;
-   }
-
-   x = tex->slice_offsets[xfer->base.level][xfer->base.box.z].x;
-   y = tex->slice_offsets[xfer->base.level][xfer->base.box.z].y;
-
-   x += xfer->base.box.x;
-   y += xfer->base.box.y;
-
-   /* in blocks */
-   assert(x % tex->block_width == 0 && y % tex->block_height == 0);
-   x /= tex->block_width;
-   y /= tex->block_height;
 
    xfer->ptr = tex->bo->get_virtual(tex->bo);
-   xfer->ptr += y * tex->bo_stride + x * tex->bo_cpp;
+   xfer->ptr += tex_get_box_offset(tex, xfer->base.level, &xfer->base.box);
 
    return true;
 }
