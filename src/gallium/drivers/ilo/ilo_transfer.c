@@ -255,26 +255,45 @@ tex_get_slice_stride(const struct ilo_texture *tex, unsigned level)
 }
 
 static void
-tex_staging_sys_convert_write(enum pipe_format dst_fmt,
-                              const struct pipe_transfer *dst_xfer,
-                              void *dst,
-                              enum pipe_format src_fmt,
-                              const struct pipe_transfer *src_xfer,
-                              const void *src)
+tex_staging_sys_convert_write(struct ilo_context *ilo,
+                              struct ilo_texture *tex,
+                              const struct ilo_transfer *xfer)
 {
-   int i;
+   const struct pipe_box *box = &xfer->base.box;
+   unsigned dst_slice_stride;
+   void *dst;
+   int slice;
 
-   switch (src_fmt) {
+   dst = tex->bo->get_virtual(tex->bo);
+   dst += tex_get_box_offset(tex, xfer->base.level, box);
+
+   /* slice stride is not always available */
+   if (box->depth > 1)
+      dst_slice_stride = tex_get_slice_stride(tex, xfer->base.level);
+   else
+      dst_slice_stride = 0;
+
+   if (unlikely(tex->bo_format == tex->base.format)) {
+      util_copy_box(dst, tex->bo_format, tex->bo_stride, dst_slice_stride,
+            0, 0, 0, box->width, box->height, box->depth,
+            xfer->staging_sys, xfer->base.stride, xfer->base.layer_stride,
+            0, 0, 0);
+      return;
+   }
+
+   switch (tex->base.format) {
    case PIPE_FORMAT_ETC1_RGB8:
-      assert(dst_fmt == PIPE_FORMAT_R8G8B8X8_UNORM);
+      assert(tex->bo_format == PIPE_FORMAT_R8G8B8X8_UNORM);
 
-      for (i = 0; i < dst_xfer->box.depth; i++) {
+      for (slice = 0; slice < box->depth; slice++) {
+         const void *src =
+            xfer->staging_sys + xfer->base.layer_stride * slice;
+
          util_format_etc1_rgb8_unpack_rgba_8unorm(dst,
-               dst_xfer->stride, src, src_xfer->stride,
-               dst_xfer->box.width, dst_xfer->box.height);
+               tex->bo_stride, src, xfer->base.stride,
+               box->width, box->height);
 
-         dst += dst_xfer->layer_stride;
-         src += src_xfer->layer_stride;
+         dst += dst_slice_stride;
       }
       break;
    default:
@@ -288,39 +307,34 @@ tex_staging_sys_unmap(struct ilo_context *ilo,
                       struct ilo_texture *tex,
                       struct ilo_transfer *xfer)
 {
-   const void *src = xfer->ptr;
-   struct pipe_transfer *dst_xfer;
-   void *dst;
+   int err;
 
    if (!(xfer->base.usage & PIPE_TRANSFER_WRITE)) {
       FREE(xfer->staging_sys);
       return;
    }
 
-   dst = ilo->base.transfer_map(&ilo->base,
-         xfer->base.resource, xfer->base.level,
-         PIPE_TRANSFER_WRITE |
-         PIPE_TRANSFER_MAP_DIRECTLY |
-         PIPE_TRANSFER_DISCARD_RANGE,
-         &xfer->base.box, &dst_xfer);
-   if (!dst_xfer) {
+   if (tex->tiling == INTEL_TILING_NONE && ilo->dev->has_llc)
+      err = tex->bo->map(tex->bo, true);
+   else
+      err = tex->bo->map_gtt(tex->bo);
+
+   if (err) {
       ilo_err("failed to map resource for moving staging data\n");
       FREE(xfer->staging_sys);
       return;
    }
 
-   if (likely(tex->bo_format != tex->base.format)) {
-      tex_staging_sys_convert_write(tex->bo_format, dst_xfer, dst,
-            tex->base.format, &xfer->base, src);
-   }
-   else {
-      util_copy_box(dst, tex->bo_format,
-            dst_xfer->stride, dst_xfer->layer_stride, 0, 0, 0,
-            dst_xfer->box.width, dst_xfer->box.height, dst_xfer->box.depth,
-            src, xfer->base.stride, xfer->base.layer_stride, 0, 0, 0);
+   switch (xfer->method) {
+   case ILO_TRANSFER_MAP_SW_CONVERT:
+      tex_staging_sys_convert_write(ilo, tex, xfer);
+      break;
+   default:
+      assert(!"unknown mapping method");
+      break;
    }
 
-   ilo->base.transfer_unmap(&ilo->base, dst_xfer);
+   tex->bo->unmap(tex->bo);
    FREE(xfer->staging_sys);
 }
 
