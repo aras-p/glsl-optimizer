@@ -38,7 +38,7 @@ struct tex_layout {
    enum pipe_format format;
    unsigned block_width, block_height, block_size;
    bool compressed;
-   bool has_depth, has_stencil;
+   bool has_depth, has_stencil, separate_stencil;
 
    enum intel_tiling_mode tiling;
    bool can_be_linear;
@@ -571,10 +571,32 @@ tex_layout_init_format(struct tex_layout *layout)
    const struct pipe_resource *templ = layout->templ;
    enum pipe_format format;
    const struct util_format_description *desc;
+   bool separate_stencil;
+
+   /* GEN7+ requires separate stencil buffers */
+   separate_stencil = (layout->dev->gen >= ILO_GEN(7));
 
    switch (templ->format) {
    case PIPE_FORMAT_ETC1_RGB8:
       format = PIPE_FORMAT_R8G8B8X8_UNORM;
+      break;
+   case PIPE_FORMAT_Z24_UNORM_S8_UINT:
+      if (separate_stencil) {
+         format = PIPE_FORMAT_Z24X8_UNORM;
+         layout->separate_stencil = true;
+      }
+      else {
+         format = templ->format;
+      }
+      break;
+   case PIPE_FORMAT_Z32_FLOAT_S8X24_UINT:
+      if (separate_stencil) {
+         format = PIPE_FORMAT_Z32_FLOAT;
+         layout->separate_stencil = true;
+      }
+      else {
+         format = templ->format;
+      }
       break;
    default:
       format = templ->format;
@@ -906,6 +928,9 @@ tex_set_bo(struct ilo_texture *tex, struct intel_bo *bo)
 static void
 tex_destroy(struct ilo_texture *tex)
 {
+   if (tex->separate_s8)
+      tex_destroy(tex->separate_s8);
+
    tex->bo->unreference(tex->bo);
    tex_free_slices(tex);
    FREE(tex);
@@ -986,6 +1011,29 @@ tex_create(struct pipe_screen *screen,
    }
 
    tex_set_bo(tex, bo);
+
+   /* allocate separate stencil resource */
+   if (layout.separate_stencil) {
+      struct pipe_resource s8_templ = *layout.templ;
+      struct pipe_resource *s8;
+
+      /*
+       * Unless PIPE_BIND_DEPTH_STENCIL is set, the resource may have other
+       * tilings.  But that should be fine since it will never be bound as the
+       * stencil buffer, and our transfer code can handle all tilings.
+       */
+      s8_templ.format = PIPE_FORMAT_S8_UINT;
+
+      s8 = screen->resource_create(screen, &s8_templ);
+      if (!s8) {
+         tex_destroy(tex);
+         return NULL;
+      }
+
+      tex->separate_s8 = ilo_texture(s8);
+
+      assert(tex->separate_s8->bo_format == PIPE_FORMAT_S8_UINT);
+   }
 
    return &tex->base;
 }

@@ -78,6 +78,8 @@ struct ilo_texture {
       unsigned x;
       unsigned y;
    } *slice_offsets[PIPE_MAX_TEXTURE_LEVELS];
+
+   struct ilo_texture *separate_s8;
 };
 
 static inline struct ilo_buffer *

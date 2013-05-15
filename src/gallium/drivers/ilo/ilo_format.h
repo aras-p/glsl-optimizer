@@ -72,7 +72,7 @@ ilo_translate_format(enum pipe_format format, unsigned bind)
        * one such example).  We have to live with that at least for now.
        *
        * For ETC1 format, the texture data will be decompressed before being
-       * written to the bo.  See transfer_unmap_sys_convert().
+       * written to the bo.  See tex_staging_sys_convert_write().
        */
       switch (format) {
       case PIPE_FORMAT_Z16_UNORM:

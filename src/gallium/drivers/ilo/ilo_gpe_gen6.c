@@ -3674,6 +3674,9 @@ gen6_fill_normal_SURFACE_STATE(const struct ilo_dev_info *dev,
    surface_type = ilo_gpe_gen6_translate_texture(tex->base.target);
    assert(surface_type != BRW_SURFACE_BUFFER);
 
+   if (format == PIPE_FORMAT_Z32_FLOAT_S8X24_UINT && tex->separate_s8)
+      format = PIPE_FORMAT_Z32_FLOAT;
+
    if (is_rt)
       surface_format = ilo_translate_render_format(format);
    else

@@ -42,6 +42,7 @@ enum ilo_transfer_map_method {
 
    /* use staging system buffer */
    ILO_TRANSFER_MAP_SW_CONVERT,
+   ILO_TRANSFER_MAP_SW_ZS,
 };
 
 struct ilo_transfer {
@@ -200,32 +201,42 @@ choose_transfer_method(struct ilo_context *ilo, struct ilo_transfer *xfer)
    }
 
    if (tex && !(usage & PIPE_TRANSFER_MAP_DIRECTLY)) {
+      if (tex->separate_s8 || tex->bo_format == PIPE_FORMAT_S8_UINT)
+         xfer->method = ILO_TRANSFER_MAP_SW_ZS;
       /* need to convert on-the-fly */
-      if (tex->bo_format != tex->base.format)
+      else if (tex->bo_format != tex->base.format)
          xfer->method = ILO_TRANSFER_MAP_SW_CONVERT;
    }
 
    return true;
 }
 
+static void
+tex_get_box_origin(const struct ilo_texture *tex,
+                   unsigned level, unsigned slice,
+                   const struct pipe_box *box,
+                   unsigned *mem_x, unsigned *mem_y)
+{
+   unsigned x, y;
+
+   x = tex->slice_offsets[level][slice + box->z].x + box->x;
+   y = tex->slice_offsets[level][slice + box->z].y + box->y;
+
+   assert(x % tex->block_width == 0 && y % tex->block_height == 0);
+
+   *mem_x = x / tex->block_width * tex->bo_cpp;
+   *mem_y = y / tex->block_height;
+}
+
 static unsigned
 tex_get_box_offset(const struct ilo_texture *tex, unsigned level,
                    const struct pipe_box *box)
 {
-   unsigned x, y;
+   unsigned mem_x, mem_y;
 
-   x = tex->slice_offsets[level][box->z].x;
-   y = tex->slice_offsets[level][box->z].y;
+   tex_get_box_origin(tex, level, 0, box, &mem_x, &mem_y);
 
-   x += box->x;
-   y += box->y;
-
-   /* in blocks */
-   assert(x % tex->block_width == 0 && y % tex->block_height == 0);
-   x /= tex->block_width;
-   y /= tex->block_height;
-
-   return y * tex->bo_stride + x * tex->bo_cpp;
+   return mem_y * tex->bo_stride + mem_x;
 }
 
 static unsigned
@@ -252,6 +263,394 @@ tex_get_slice_stride(const struct ilo_texture *tex, unsigned level)
    assert(qpitch % tex->block_height == 0);
 
    return (qpitch / tex->block_height) * tex->bo_stride;
+}
+
+static unsigned
+tex_tile_x_swizzle(unsigned addr)
+{
+   /*
+    * From the Ivy Bridge PRM, volume 1 part 2, page 24:
+    *
+    *     "As shown in the tiling algorithm, the new address bit[6] should be:
+    *
+    *        Address bit[6] <= TiledAddr bit[6] XOR
+    *                          TiledAddr bit[9] XOR
+    *                          TiledAddr bit[10]"
+    */
+   return addr ^ (((addr >> 3) ^ (addr >> 4)) & 0x40);
+}
+
+static unsigned
+tex_tile_y_swizzle(unsigned addr)
+{
+   /*
+    * From the Ivy Bridge PRM, volume 1 part 2, page 24:
+    *
+    *     "As shown in the tiling algorithm, The new address bit[6] becomes:
+    *
+    *        Address bit[6] <= TiledAddr bit[6] XOR
+    *                          TiledAddr bit[9]"
+    */
+   return addr ^ ((addr >> 3) & 0x40);
+}
+
+static unsigned
+tex_tile_x_offset(unsigned mem_x, unsigned mem_y,
+                  unsigned tiles_per_row, bool swizzle)
+{
+   /*
+    * From the Sandy Bridge PRM, volume 1 part 2, page 21, we know that a
+    * X-major tile has 8 rows and 32 OWord columns (512 bytes).  Tiles in the
+    * tiled region are numbered in row-major order, starting from zero.  The
+    * tile number can thus be calculated as follows:
+    *
+    *    tile = (mem_y / 8) * tiles_per_row + (mem_x / 512)
+    *
+    * OWords in that tile are also numbered in row-major order, starting from
+    * zero.  The OWord number can thus be calculated as follows:
+    *
+    *    oword = (mem_y % 8) * 32 + ((mem_x % 512) / 16)
+    *
+    * and the tiled offset is
+    *
+    *    offset = tile * 4096 + oword * 16 + (mem_x % 16)
+    *           = tile * 4096 + (mem_y % 8) * 512 + (mem_x % 512)
+    */
+   unsigned tile, offset;
+
+   tile = (mem_y >> 3) * tiles_per_row + (mem_x >> 9);
+   offset = tile << 12 | (mem_y & 0x7) << 9 | (mem_x & 0x1ff);
+
+   return (swizzle) ? tex_tile_x_swizzle(offset) : offset;
+}
+
+static unsigned
+tex_tile_y_offset(unsigned mem_x, unsigned mem_y,
+                  unsigned tiles_per_row, bool swizzle)
+{
+   /*
+    * From the Sandy Bridge PRM, volume 1 part 2, page 22, we know that a
+    * Y-major tile has 32 rows and 8 OWord columns (128 bytes).  Tiles in the
+    * tiled region are numbered in row-major order, starting from zero.  The
+    * tile number can thus be calculated as follows:
+    *
+    *    tile = (mem_y / 32) * tiles_per_row + (mem_x / 128)
+    *
+    * OWords in that tile are numbered in column-major order, starting from
+    * zero.  The OWord number can thus be calculated as follows:
+    *
+    *    oword = ((mem_x % 128) / 16) * 32 + (mem_y % 32)
+    *
+    * and the tiled offset is
+    *
+    *    offset = tile * 4096 + oword * 16 + (mem_x % 16)
+    */
+   unsigned tile, oword, offset;
+
+   tile = (mem_y >> 5) * tiles_per_row + (mem_x >> 7);
+   oword = (mem_x & 0x70) << 1 | (mem_y & 0x1f);
+   offset = tile << 12 | oword << 4 | (mem_x & 0xf);
+
+   return (swizzle) ? tex_tile_y_swizzle(offset) : offset;
+}
+
+static unsigned
+tex_tile_w_offset(unsigned mem_x, unsigned mem_y,
+                  unsigned tiles_per_row, bool swizzle)
+{
+   /*
+    * From the Sandy Bridge PRM, volume 1 part 2, page 23, we know that a
+    * W-major tile has 8 8x8-block rows and 8 8x8-block columns.  Tiles in the
+    * tiled region are numbered in row-major order, starting from zero.  The
+    * tile number can thus be calculated as follows:
+    *
+    *    tile = (mem_y / 64) * tiles_per_row + (mem_x / 64)
+    *
+    * 8x8-blocks in that tile are numbered in column-major order, starting
+    * from zero.  The 8x8-block number can thus be calculated as follows:
+    *
+    *    blk8 = ((mem_x % 64) / 8) * 8 + ((mem_y % 64) / 8)
+    *
+    * Each 8x8-block is divided into 4 4x4-blocks, in row-major order.  Each
+    * 4x4-block is further divided into 4 2x2-blocks, also in row-major order.
+    * We have
+    *
+    *    blk4 = (((mem_y % 64) / 4) & 1) * 2 + (((mem_x % 64) / 4) & 1)
+    *    blk2 = (((mem_y % 64) / 2) & 1) * 2 + (((mem_x % 64) / 2) & 1)
+    *    blk1 = (((mem_y % 64)    ) & 1) * 2 + (((mem_x % 64)    ) & 1)
+    *
+    * and the tiled offset is
+    *
+    *    offset = tile * 4096 + blk8 * 64 + blk4 * 16 + blk2 * 4 + blk1
+    */
+   unsigned tile, blk8, blk4, blk2, blk1, offset;
+
+   tile = (mem_y >> 6) * tiles_per_row + (mem_x >> 6);
+   blk8 = ((mem_x >> 3) & 0x7) << 3 | ((mem_y >> 3) & 0x7);
+   blk4 = ((mem_y >> 2) & 0x1) << 1 | ((mem_x >> 2) & 0x1);
+   blk2 = ((mem_y >> 1) & 0x1) << 1 | ((mem_x >> 1) & 0x1);
+   blk1 = ((mem_y     ) & 0x1) << 1 | ((mem_x     ) & 0x1);
+   offset = tile << 12 | blk8 << 6 | blk4 << 4 | blk2 << 2 | blk1;
+
+   return (swizzle) ? tex_tile_y_swizzle(offset) : offset;
+}
+
+static unsigned
+tex_tile_none_offset(unsigned mem_x, unsigned mem_y,
+                     unsigned tiles_per_row, bool swizzle)
+{
+   return mem_y * tiles_per_row + mem_x;
+}
+
+typedef unsigned (*tex_tile_offset_func)(unsigned mem_x, unsigned mem_y,
+                                         unsigned tiles_per_row,
+                                         bool swizzle);
+
+static tex_tile_offset_func
+tex_tile_choose_offset_func(const struct ilo_texture *tex,
+                            unsigned *tiles_per_row)
+{
+   switch (tex->tiling) {
+   case INTEL_TILING_X:
+      *tiles_per_row = tex->bo_stride / 512;
+      return tex_tile_x_offset;
+   case INTEL_TILING_Y:
+      *tiles_per_row = tex->bo_stride / 128;
+      return tex_tile_y_offset;
+   case INTEL_TILING_NONE:
+   default:
+      /* W-tiling */
+      if (tex->bo_format == PIPE_FORMAT_S8_UINT) {
+         *tiles_per_row = tex->bo_stride / 64;
+         return tex_tile_w_offset;
+      }
+      else {
+         *tiles_per_row = tex->bo_stride;
+         return tex_tile_none_offset;
+      }
+   }
+}
+
+static void
+tex_staging_sys_zs_read(struct ilo_context *ilo,
+                        struct ilo_texture *tex,
+                        const struct ilo_transfer *xfer)
+{
+   const bool swizzle = ilo->dev->has_address_swizzling;
+   const struct pipe_box *box = &xfer->base.box;
+   const uint8_t *src = tex->bo->get_virtual(tex->bo);
+   tex_tile_offset_func tile_offset;
+   unsigned tiles_per_row;
+   int slice;
+
+   tile_offset = tex_tile_choose_offset_func(tex, &tiles_per_row);
+
+   assert(tex->block_width == 1 && tex->block_height == 1);
+
+   if (tex->separate_s8) {
+      struct ilo_texture *s8_tex = tex->separate_s8;
+      const uint8_t *s8_src = s8_tex->bo->get_virtual(s8_tex->bo);
+      tex_tile_offset_func s8_tile_offset;
+      unsigned s8_tiles_per_row;
+      int dst_cpp, dst_s8_pos, src_cpp_used;
+
+      s8_tile_offset = tex_tile_choose_offset_func(s8_tex, &s8_tiles_per_row);
+
+      if (tex->base.format == PIPE_FORMAT_Z24_UNORM_S8_UINT) {
+         assert(tex->bo_format == PIPE_FORMAT_Z24X8_UNORM);
+
+         dst_cpp = 4;
+         dst_s8_pos = 3;
+         src_cpp_used = 3;
+      }
+      else {
+         assert(tex->base.format == PIPE_FORMAT_Z32_FLOAT_S8X24_UINT);
+         assert(tex->bo_format == PIPE_FORMAT_Z32_FLOAT);
+
+         dst_cpp = 8;
+         dst_s8_pos = 4;
+         src_cpp_used = 4;
+      }
+
+      for (slice = 0; slice < box->depth; slice++) {
+         unsigned mem_x, mem_y, s8_mem_x, s8_mem_y;
+         uint8_t *dst;
+         int i, j;
+
+         tex_get_box_origin(tex, xfer->base.level, slice,
+                            box, &mem_x, &mem_y);
+         tex_get_box_origin(s8_tex, xfer->base.level, slice,
+                            box, &s8_mem_x, &s8_mem_y);
+
+         dst = xfer->staging_sys + xfer->base.layer_stride * slice;
+
+         for (i = 0; i < box->height; i++) {
+            unsigned x = mem_x, s8_x = s8_mem_x;
+            uint8_t *d = dst;
+
+            for (j = 0; j < box->width; j++) {
+               const unsigned offset =
+                  tile_offset(x, mem_y, tiles_per_row, swizzle);
+               const unsigned s8_offset =
+                  s8_tile_offset(s8_x, s8_mem_y, s8_tiles_per_row, swizzle);
+
+               memcpy(d, src + offset, src_cpp_used);
+               d[dst_s8_pos] = s8_src[s8_offset];
+
+               d += dst_cpp;
+               x += tex->bo_cpp;
+               s8_x++;
+            }
+
+            dst += xfer->base.stride;
+            mem_y++;
+            s8_mem_y++;
+         }
+      }
+   }
+   else {
+      assert(tex->bo_format == PIPE_FORMAT_S8_UINT);
+
+      for (slice = 0; slice < box->depth; slice++) {
+         unsigned mem_x, mem_y;
+         uint8_t *dst;
+         int i, j;
+
+         tex_get_box_origin(tex, xfer->base.level, slice,
+                            box, &mem_x, &mem_y);
+
+         dst = xfer->staging_sys + xfer->base.layer_stride * slice;
+
+         for (i = 0; i < box->height; i++) {
+            unsigned x = mem_x;
+            uint8_t *d = dst;
+
+            for (j = 0; j < box->width; j++) {
+               const unsigned offset =
+                  tile_offset(x, mem_y, tiles_per_row, swizzle);
+
+               *d = src[offset];
+
+               d++;
+               x++;
+            }
+
+            dst += xfer->base.stride;
+            mem_y++;
+         }
+      }
+   }
+}
+
+static void
+tex_staging_sys_zs_write(struct ilo_context *ilo,
+                         struct ilo_texture *tex,
+                         const struct ilo_transfer *xfer)
+{
+   const bool swizzle = ilo->dev->has_address_swizzling;
+   const struct pipe_box *box = &xfer->base.box;
+   uint8_t *dst = tex->bo->get_virtual(tex->bo);
+   tex_tile_offset_func tile_offset;
+   unsigned tiles_per_row;
+   int slice;
+
+   tile_offset = tex_tile_choose_offset_func(tex, &tiles_per_row);
+
+   assert(tex->block_width == 1 && tex->block_height == 1);
+
+   if (tex->separate_s8) {
+      struct ilo_texture *s8_tex = tex->separate_s8;
+      uint8_t *s8_dst = s8_tex->bo->get_virtual(s8_tex->bo);
+      tex_tile_offset_func s8_tile_offset;
+      unsigned s8_tiles_per_row;
+      int src_cpp, src_s8_pos, dst_cpp_used;
+
+      s8_tile_offset = tex_tile_choose_offset_func(s8_tex, &s8_tiles_per_row);
+
+      if (tex->base.format == PIPE_FORMAT_Z24_UNORM_S8_UINT) {
+         assert(tex->bo_format == PIPE_FORMAT_Z24X8_UNORM);
+
+         src_cpp = 4;
+         src_s8_pos = 3;
+         dst_cpp_used = 3;
+      }
+      else {
+         assert(tex->base.format == PIPE_FORMAT_Z32_FLOAT_S8X24_UINT);
+         assert(tex->bo_format == PIPE_FORMAT_Z32_FLOAT);
+
+         src_cpp = 8;
+         src_s8_pos = 4;
+         dst_cpp_used = 4;
+      }
+
+      for (slice = 0; slice < box->depth; slice++) {
+         unsigned mem_x, mem_y, s8_mem_x, s8_mem_y;
+         const uint8_t *src;
+         int i, j;
+
+         tex_get_box_origin(tex, xfer->base.level, slice,
+                            box, &mem_x, &mem_y);
+         tex_get_box_origin(s8_tex, xfer->base.level, slice,
+                            box, &s8_mem_x, &s8_mem_y);
+
+         src = xfer->staging_sys + xfer->base.layer_stride * slice;
+
+         for (i = 0; i < box->height; i++) {
+            unsigned x = mem_x, s8_x = s8_mem_x;
+            const uint8_t *s = src;
+
+            for (j = 0; j < box->width; j++) {
+               const unsigned offset =
+                  tile_offset(x, mem_y, tiles_per_row, swizzle);
+               const unsigned s8_offset =
+                  s8_tile_offset(s8_x, s8_mem_y, s8_tiles_per_row, swizzle);
+
+               memcpy(dst + offset, s, dst_cpp_used);
+               s8_dst[s8_offset] = s[src_s8_pos];
+
+               s += src_cpp;
+               x += tex->bo_cpp;
+               s8_x++;
+            }
+
+            src += xfer->base.stride;
+            mem_y++;
+            s8_mem_y++;
+         }
+      }
+   }
+   else {
+      assert(tex->bo_format == PIPE_FORMAT_S8_UINT);
+
+      for (slice = 0; slice < box->depth; slice++) {
+         unsigned mem_x, mem_y;
+         const uint8_t *src;
+         int i, j;
+
+         tex_get_box_origin(tex, xfer->base.level, slice,
+                            box, &mem_x, &mem_y);
+
+         src = xfer->staging_sys + xfer->base.layer_stride * slice;
+
+         for (i = 0; i < box->height; i++) {
+            unsigned x = mem_x;
+            const uint8_t *s = src;
+
+            for (j = 0; j < box->width; j++) {
+               const unsigned offset =
+                  tile_offset(x, mem_y, tiles_per_row, swizzle);
+
+               dst[offset] = *s;
+
+               s++;
+               x++;
+            }
+
+            src += xfer->base.stride;
+            mem_y++;
+         }
+      }
+   }
 }
 
 static void
@@ -302,39 +701,75 @@ tex_staging_sys_convert_write(struct ilo_context *ilo,
    }
 }
 
+static bool
+tex_staging_sys_map_bo(const struct ilo_context *ilo,
+                       const struct ilo_texture *tex,
+                       bool for_read_back, bool linear_view)
+{
+   const bool prefer_cpu = (ilo->dev->has_llc || for_read_back);
+   int err;
+
+   if (prefer_cpu && (tex->tiling == INTEL_TILING_NONE || !linear_view))
+      err = tex->bo->map(tex->bo, !for_read_back);
+   else
+      err = tex->bo->map_gtt(tex->bo);
+
+   if (!tex->separate_s8)
+      return !err;
+
+   err = tex->separate_s8->bo->map(tex->separate_s8->bo, !for_read_back);
+   if (err)
+      tex->bo->unmap(tex->bo);
+
+   return !err;
+}
+
+static void
+tex_staging_sys_unmap_bo(const struct ilo_context *ilo,
+                         const struct ilo_texture *tex)
+{
+   if (tex->separate_s8)
+      tex->separate_s8->bo->unmap(tex->separate_s8->bo);
+
+   tex->bo->unmap(tex->bo);
+}
+
 static void
 tex_staging_sys_unmap(struct ilo_context *ilo,
                       struct ilo_texture *tex,
                       struct ilo_transfer *xfer)
 {
-   int err;
+   bool success;
 
    if (!(xfer->base.usage & PIPE_TRANSFER_WRITE)) {
       FREE(xfer->staging_sys);
       return;
    }
 
-   if (tex->tiling == INTEL_TILING_NONE && ilo->dev->has_llc)
-      err = tex->bo->map(tex->bo, true);
-   else
-      err = tex->bo->map_gtt(tex->bo);
-
-   if (err) {
-      ilo_err("failed to map resource for moving staging data\n");
-      FREE(xfer->staging_sys);
-      return;
-   }
-
    switch (xfer->method) {
    case ILO_TRANSFER_MAP_SW_CONVERT:
-      tex_staging_sys_convert_write(ilo, tex, xfer);
+      success = tex_staging_sys_map_bo(ilo, tex, false, true);
+      if (success) {
+         tex_staging_sys_convert_write(ilo, tex, xfer);
+         tex_staging_sys_unmap_bo(ilo, tex);
+      }
+      break;
+   case ILO_TRANSFER_MAP_SW_ZS:
+      success = tex_staging_sys_map_bo(ilo, tex, false, false);
+      if (success) {
+         tex_staging_sys_zs_write(ilo, tex, xfer);
+         tex_staging_sys_unmap_bo(ilo, tex);
+      }
       break;
    default:
       assert(!"unknown mapping method");
+      success = false;
       break;
    }
 
-   tex->bo->unmap(tex->bo);
+   if (!success)
+      ilo_err("failed to map resource for moving staging data\n");
+
    FREE(xfer->staging_sys);
 }
 
@@ -347,7 +782,7 @@ tex_staging_sys_map(struct ilo_context *ilo,
    const size_t stride = util_format_get_stride(tex->base.format, box->width);
    const size_t size =
       util_format_get_2d_size(tex->base.format, stride, box->height);
-   bool read_back = false;
+   bool read_back = false, success;
 
    xfer->staging_sys = MALLOC(size * box->depth);
    if (!xfer->staging_sys)
@@ -372,8 +807,25 @@ tex_staging_sys_map(struct ilo_context *ilo,
    if (!read_back)
       return true;
 
-   /* TODO */
-   return false;
+   switch (xfer->method) {
+   case ILO_TRANSFER_MAP_SW_CONVERT:
+      assert(!"no on-the-fly format conversion for mapping");
+      success = false;
+      break;
+   case ILO_TRANSFER_MAP_SW_ZS:
+      success = tex_staging_sys_map_bo(ilo, tex, true, false);
+      if (success) {
+         tex_staging_sys_zs_read(ilo, tex, xfer);
+         tex_staging_sys_unmap_bo(ilo, tex);
+      }
+      break;
+   default:
+      assert(!"unknown mapping method");
+      success = false;
+      break;
+   }
+
+   return success;
 }
 
 static void
@@ -423,6 +875,7 @@ tex_map(struct ilo_context *ilo, struct ilo_transfer *xfer)
       success = tex_direct_map(ilo, tex, xfer);
       break;
    case ILO_TRANSFER_MAP_SW_CONVERT:
+   case ILO_TRANSFER_MAP_SW_ZS:
       success = tex_staging_sys_map(ilo, tex, xfer);
       break;
    default:
@@ -446,6 +899,7 @@ tex_unmap(struct ilo_context *ilo, struct ilo_transfer *xfer)
       tex_direct_unmap(ilo, tex, xfer);
       break;
    case ILO_TRANSFER_MAP_SW_CONVERT:
+   case ILO_TRANSFER_MAP_SW_ZS:
       tex_staging_sys_unmap(ilo, tex, xfer);
       break;
    default:

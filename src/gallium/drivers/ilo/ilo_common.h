@@ -59,6 +59,7 @@ struct ilo_dev_info {
    int devid;
    bool has_llc;
    bool has_gen7_sol_reset;
+   bool has_address_swizzling;
 
    int gen;
    int gt;
