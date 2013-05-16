@@ -748,6 +748,8 @@ lp_setup_set_fragment_sampler_views(struct lp_setup_context *setup,
                      jit_tex->img_stride[j] = lp_tex->img_stride[j];
                   }
 
+		  /* FIXME: This is incorrect, as currently layer stride depends on miplevel */
+#if 0
                   /*
                    * We don't use anything like first_element (for buffers) or
                    * first_layer (for arrays), instead adjust the last_element
@@ -763,6 +765,7 @@ lp_setup_set_fragment_sampler_views(struct lp_setup_context *setup,
                      assert(view->u.tex.first_layer <= view->u.tex.last_layer);
                      assert(view->u.tex.last_layer < res->array_size);
                   }
+#endif
                }
                else {
                   unsigned view_blocksize = util_format_get_blocksize(view->format);
