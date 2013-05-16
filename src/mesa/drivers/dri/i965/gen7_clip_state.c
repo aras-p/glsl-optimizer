@@ -33,11 +33,15 @@ upload_clip_state(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &intel->ctx;
-   uint32_t dw1 = GEN6_CLIP_STATISTICS_ENABLE, dw2 = 0;
+   uint32_t dw1 = 0, dw2 = 0;
 
    /* _NEW_BUFFERS */
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    bool render_to_fbo = _mesa_is_user_fbo(fb);
+
+   /* BRW_NEW_META_IN_PROGRESS */
+   if (!brw->meta_in_progress)
+      dw1 |= GEN6_CLIP_STATISTICS_ENABLE;
 
    /* CACHE_NEW_WM_PROG */
    if (brw->wm.prog_data->barycentric_interp_modes &
@@ -118,7 +122,7 @@ const struct brw_tracked_state gen7_clip_state = {
                 _NEW_POLYGON |
                 _NEW_LIGHT |
                 _NEW_TRANSFORM),
-      .brw   = BRW_NEW_CONTEXT,
+      .brw   = BRW_NEW_CONTEXT | BRW_NEW_META_IN_PROGRESS,
       .cache = CACHE_NEW_WM_PROG
    },
    .emit = upload_clip_state,

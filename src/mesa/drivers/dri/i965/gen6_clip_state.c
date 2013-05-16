@@ -37,6 +37,7 @@ upload_clip_state(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &intel->ctx;
+   uint32_t dw1 = brw->meta_in_progress ? 0 : GEN6_CLIP_STATISTICS_ENABLE;
    uint32_t dw2 = 0;
 
    /* _NEW_BUFFERS */
@@ -77,7 +78,7 @@ upload_clip_state(struct brw_context *brw)
 
    BEGIN_BATCH(4);
    OUT_BATCH(_3DSTATE_CLIP << 16 | (4 - 2));
-   OUT_BATCH(GEN6_CLIP_STATISTICS_ENABLE);
+   OUT_BATCH(dw1);
    OUT_BATCH(GEN6_CLIP_ENABLE |
 	     GEN6_CLIP_API_OGL |
 	     GEN6_CLIP_MODE_NORMAL |
@@ -92,7 +93,7 @@ upload_clip_state(struct brw_context *brw)
 const struct brw_tracked_state gen6_clip_state = {
    .dirty = {
       .mesa  = _NEW_TRANSFORM | _NEW_LIGHT | _NEW_BUFFERS,
-      .brw   = (BRW_NEW_CONTEXT),
+      .brw   = BRW_NEW_CONTEXT | BRW_NEW_META_IN_PROGRESS,
       .cache = CACHE_NEW_WM_PROG
    },
    .emit = upload_clip_state,
