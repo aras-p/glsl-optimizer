@@ -143,6 +143,23 @@ brwCreateContext(int api,
       return false;
    }
 
+   if (intel->gen >= 6) {
+      /* Create a new hardware context.  Using a hardware context means that
+       * our GPU state will be saved/restored on context switch, allowing us
+       * to assume that the GPU is in the same state we left it in.
+       *
+       * This is required for transform feedback buffer offsets, query objects,
+       * and also allows us to reduce how much state we have to emit.
+       */
+      intel->hw_ctx = drm_intel_gem_context_create(intel->bufmgr);
+
+      if (!intel->hw_ctx) {
+         fprintf(stderr, "Gen6+ requires Kernel 3.6 or later.\n");
+         ralloc_free(brw);
+         return false;
+      }
+   }
+
    brw_init_surface_formats(brw);
 
    /* Initialize swrast, tnl driver tables: */
@@ -374,7 +391,6 @@ brwCreateContext(int api,
 
    brw->prim_restart.in_progress = false;
    brw->prim_restart.enable_cut_index = false;
-   intel->hw_ctx = drm_intel_gem_context_create(intel->bufmgr);
 
    brw_init_state( brw );
 

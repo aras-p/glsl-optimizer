@@ -1301,13 +1301,6 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
       intelScreen->gen = 2;
    }
 
-   if (intelScreen->gen == 7 &&
-       !intel_get_boolean(intelScreen->driScrnPriv,
-                          I915_PARAM_HAS_GEN7_SOL_RESET)) {
-      fprintf(stderr, "i965 requires Kernel 3.3 or later.\n");
-      return false;
-   }
-
    intelScreen->hw_has_separate_stencil = intelScreen->gen >= 6;
    intelScreen->hw_must_use_separate_stencil = intelScreen->gen >= 7;
 
