@@ -431,6 +431,78 @@ static void si_update_derived_state(struct r600_context *rctx)
 	}
 }
 
+static void si_constant_buffer_update(struct r600_context *rctx)
+{
+	struct pipe_context *ctx = &rctx->context;
+	struct si_pm4_state *pm4;
+	unsigned shader, i;
+	uint64_t va;
+
+	if (!rctx->constbuf_state[PIPE_SHADER_VERTEX].dirty_mask &&
+	    !rctx->constbuf_state[PIPE_SHADER_FRAGMENT].dirty_mask)
+		return;
+
+	for (shader = PIPE_SHADER_VERTEX ; shader <= PIPE_SHADER_FRAGMENT; shader++) {
+		struct r600_constbuf_state *state = &rctx->constbuf_state[shader];
+
+		pm4 = CALLOC_STRUCT(si_pm4_state);
+		if (!pm4)
+			continue;
+
+		si_pm4_inval_shader_cache(pm4);
+		si_pm4_sh_data_begin(pm4);
+
+		for (i = 0; i < 2; i++) {
+			if (state->enabled_mask & (1 << i)) {
+				struct pipe_constant_buffer *cb = &state->cb[i];
+				struct si_resource *rbuffer = si_resource(cb->buffer);
+
+				va = r600_resource_va(ctx->screen, (void*)rbuffer);
+				va += cb->buffer_offset;
+
+				si_pm4_add_bo(pm4, rbuffer, RADEON_USAGE_READ);
+
+				/* Fill in a T# buffer resource description */
+				si_pm4_sh_data_add(pm4, va);
+				si_pm4_sh_data_add(pm4, (S_008F04_BASE_ADDRESS_HI(va >> 32) |
+							 S_008F04_STRIDE(0)));
+				si_pm4_sh_data_add(pm4, cb->buffer_size);
+				si_pm4_sh_data_add(pm4, S_008F0C_DST_SEL_X(V_008F0C_SQ_SEL_X) |
+						   S_008F0C_DST_SEL_Y(V_008F0C_SQ_SEL_Y) |
+						   S_008F0C_DST_SEL_Z(V_008F0C_SQ_SEL_Z) |
+						   S_008F0C_DST_SEL_W(V_008F0C_SQ_SEL_W) |
+						   S_008F0C_NUM_FORMAT(V_008F0C_BUF_NUM_FORMAT_FLOAT) |
+						   S_008F0C_DATA_FORMAT(V_008F0C_BUF_DATA_FORMAT_32));
+			} else {
+				/* Fill in an empty T# buffer resource description */
+				si_pm4_sh_data_add(pm4, 0);
+				si_pm4_sh_data_add(pm4, 0);
+				si_pm4_sh_data_add(pm4, 0);
+				si_pm4_sh_data_add(pm4, 0);
+			}
+		}
+
+		switch (shader) {
+		case PIPE_SHADER_VERTEX:
+			si_pm4_sh_data_end(pm4, R_00B130_SPI_SHADER_USER_DATA_VS_0, SI_SGPR_CONST);
+			si_pm4_set_state(rctx, vs_const, pm4);
+			break;
+
+		case PIPE_SHADER_FRAGMENT:
+			si_pm4_sh_data_end(pm4, R_00B030_SPI_SHADER_USER_DATA_PS_0, SI_SGPR_CONST);
+			si_pm4_set_state(rctx, ps_const, pm4);
+			break;
+
+		default:
+			R600_ERR("unsupported %d\n", shader);
+			FREE(pm4);
+			return;
+		}
+
+		state->dirty_mask = 0;
+	}
+}
+
 static void si_vertex_buffer_update(struct r600_context *rctx)
 {
 	struct pipe_context *ctx = &rctx->context;
@@ -555,6 +627,7 @@ void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 		return;
 
 	si_update_derived_state(rctx);
+	si_constant_buffer_update(rctx);
 	si_vertex_buffer_update(rctx);
 
 	if (info->indexed) {

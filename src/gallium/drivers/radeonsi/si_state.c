@@ -24,12 +24,15 @@
  *      Christian König <christian.koenig@amd.com>
  */
 
+#include <byteswap.h>
+
 #include "util/u_memory.h"
 #include "util/u_framebuffer.h"
 #include "util/u_blitter.h"
 #include "util/u_helpers.h"
 #include "util/u_math.h"
 #include "util/u_pack_color.h"
+#include "util/u_upload_mgr.h"
 #include "util/u_format_s3tc.h"
 #include "tgsi/tgsi_parse.h"
 #include "radeonsi_pipe.h"
@@ -2492,64 +2495,56 @@ static void si_delete_sampler_state(struct pipe_context *ctx, void *state)
  * Constants
  */
 static void si_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
-				   struct pipe_constant_buffer *cb)
+				   struct pipe_constant_buffer *input)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct si_resource *rbuffer = cb ? si_resource(cb->buffer) : NULL;
-	struct si_pm4_state *pm4;
-	uint32_t offset;
-	uint64_t va;
+	struct r600_constbuf_state *state = &rctx->constbuf_state[shader];
+	struct pipe_constant_buffer *cb;
+	const uint8_t *ptr;
 
 	/* Note that the state tracker can unbind constant buffers by
 	 * passing NULL here.
 	 */
-	if (cb == NULL || (!cb->buffer && !cb->user_buffer))
+	if (unlikely(!input || (!input->buffer && !input->user_buffer))) {
+		state->enabled_mask &= ~(1 << index);
+		state->dirty_mask &= ~(1 << index);
+		pipe_resource_reference(&state->cb[index].buffer, NULL);
 		return;
-
-	pm4 = CALLOC_STRUCT(si_pm4_state);
-	si_pm4_inval_shader_cache(pm4);
-
-	if (cb->user_buffer)
-		r600_upload_const_buffer(rctx, &rbuffer, cb->user_buffer, cb->buffer_size, &offset);
-	else
-		offset = 0;
-	va = r600_resource_va(ctx->screen, (void*)rbuffer);
-	va += offset;
-
-	si_pm4_add_bo(pm4, rbuffer, RADEON_USAGE_READ);
-
-	si_pm4_sh_data_begin(pm4);
-
-	/* Fill in a T# buffer resource description */
-	si_pm4_sh_data_add(pm4, va);
-	si_pm4_sh_data_add(pm4, (S_008F04_BASE_ADDRESS_HI(va >> 32) |
-				 S_008F04_STRIDE(0)));
-	si_pm4_sh_data_add(pm4, cb->buffer_size);
-	si_pm4_sh_data_add(pm4, S_008F0C_DST_SEL_X(V_008F0C_SQ_SEL_X) |
-				S_008F0C_DST_SEL_Y(V_008F0C_SQ_SEL_Y) |
-				S_008F0C_DST_SEL_Z(V_008F0C_SQ_SEL_Z) |
-				S_008F0C_DST_SEL_W(V_008F0C_SQ_SEL_W) |
-				S_008F0C_NUM_FORMAT(V_008F0C_BUF_NUM_FORMAT_FLOAT) |
-				S_008F0C_DATA_FORMAT(V_008F0C_BUF_DATA_FORMAT_32));
-
-	switch (shader) {
-	case PIPE_SHADER_VERTEX:
-        	si_pm4_sh_data_end(pm4, R_00B130_SPI_SHADER_USER_DATA_VS_0, SI_SGPR_CONST);
-		si_pm4_set_state(rctx, vs_const, pm4);
-		break;
-
-	case PIPE_SHADER_FRAGMENT:
-        	si_pm4_sh_data_end(pm4, R_00B030_SPI_SHADER_USER_DATA_PS_0, SI_SGPR_CONST);
-		si_pm4_set_state(rctx, ps_const, pm4);
-		break;
-
-	default:
-		R600_ERR("unsupported %d\n", shader);
-		FREE(pm4);
 	}
 
-	if (cb->buffer != &rbuffer->b.b)
-		si_resource_reference(&rbuffer, NULL);
+	cb = &state->cb[index];
+	cb->buffer_size = input->buffer_size;
+
+	ptr = input->user_buffer;
+
+	if (ptr) {
+		/* Upload the user buffer. */
+		if (R600_BIG_ENDIAN) {
+			uint32_t *tmpPtr;
+			unsigned i, size = input->buffer_size;
+
+			if (!(tmpPtr = malloc(size))) {
+				R600_ERR("Failed to allocate BE swap buffer.\n");
+				return;
+			}
+
+			for (i = 0; i < size / 4; ++i) {
+				tmpPtr[i] = bswap_32(((uint32_t *)ptr)[i]);
+			}
+
+			u_upload_data(rctx->uploader, 0, size, tmpPtr, &cb->buffer_offset, &cb->buffer);
+			free(tmpPtr);
+		} else {
+			u_upload_data(rctx->uploader, 0, input->buffer_size, ptr, &cb->buffer_offset, &cb->buffer);
+		}
+	} else {
+		/* Setup the hw buffer. */
+		cb->buffer_offset = input->buffer_offset;
+		pipe_resource_reference(&cb->buffer, input->buffer);
+	}
+
+	state->enabled_mask |= 1 << index;
+	state->dirty_mask |= 1 << index;
 }
 
 /*
