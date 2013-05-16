@@ -111,6 +111,8 @@ lp_build_print_value(struct gallivm_state *gallivm,
       } else {
          type_fmt[2] = 'i';
       }
+   } else if (type_kind == LLVMPointerTypeKind) {
+      type_fmt[2] = 'p';
    } else {
       /* Unsupported type */
       assert(0);
