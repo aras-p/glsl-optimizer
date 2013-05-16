@@ -87,7 +87,11 @@ static void brwInitDriverFunctions(struct intel_screen *screen,
    intelInitDriverFunctions( functions );
 
    brwInitFragProgFuncs( functions );
-   brw_init_queryobj_functions(functions);
+   brw_init_common_queryobj_functions(functions);
+   if (screen->gen >= 6)
+      gen6_init_queryobj_functions(functions);
+   else
+      gen4_init_queryobj_functions(functions);
 
    functions->QuerySamplesForFormat = brw_query_samples_for_format;
    functions->BeginTransformFeedback = brw_begin_transform_feedback;

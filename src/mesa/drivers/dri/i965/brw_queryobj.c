@@ -94,40 +94,23 @@ write_timestamp(struct intel_context *intel, drm_intel_bo *query_bo, int idx)
 static void
 write_depth_count(struct intel_context *intel, drm_intel_bo *query_bo, int idx)
 {
-   if (intel->gen >= 6) {
-      /* Emit Sandybridge workaround flush: */
-      if (intel->gen == 6)
-         intel_emit_post_sync_nonzero_flush(intel);
+   assert(intel->gen < 6);
 
-      BEGIN_BATCH(5);
-      OUT_BATCH(_3DSTATE_PIPE_CONTROL | (5 - 2));
-      OUT_BATCH(PIPE_CONTROL_DEPTH_STALL |
-                PIPE_CONTROL_WRITE_DEPTH_COUNT);
-      OUT_RELOC(query_bo,
-                I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
-                PIPE_CONTROL_GLOBAL_GTT_WRITE |
-                (idx * sizeof(uint64_t)));
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      ADVANCE_BATCH();
-   } else {
-      BEGIN_BATCH(4);
-      OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2) |
-                PIPE_CONTROL_DEPTH_STALL |
-                PIPE_CONTROL_WRITE_DEPTH_COUNT);
-      /* This object could be mapped cacheable, but we don't have an exposed
-       * mechanism to support that.  Since it's going uncached, tell GEM that
-       * we're writing to it.  The usual clflush should be all that's required
-       * to pick up the results.
-       */
-      OUT_RELOC(query_bo,
-                I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
-                PIPE_CONTROL_GLOBAL_GTT_WRITE |
-                (idx * sizeof(uint64_t)));
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      ADVANCE_BATCH();
-   }
+   BEGIN_BATCH(4);
+   OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2) |
+             PIPE_CONTROL_DEPTH_STALL | PIPE_CONTROL_WRITE_DEPTH_COUNT);
+   /* This object could be mapped cacheable, but we don't have an exposed
+    * mechanism to support that.  Since it's going uncached, tell GEM that
+    * we're writing to it.  The usual clflush should be all that's required
+    * to pick up the results.
+    */
+   OUT_RELOC(query_bo,
+             I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
+             PIPE_CONTROL_GLOBAL_GTT_WRITE |
+             (idx * sizeof(uint64_t)));
+   OUT_BATCH(0);
+   OUT_BATCH(0);
+   ADVANCE_BATCH();
 }
 
 /**
@@ -141,6 +124,8 @@ brw_queryobj_get_results(struct gl_context *ctx,
 
    int i;
    uint64_t *results;
+
+   assert(intel->gen < 6);
 
    if (query->bo == NULL)
       return;
@@ -165,36 +150,12 @@ brw_queryobj_get_results(struct gl_context *ctx,
       /* The query BO contains the starting and ending timestamps.
        * Subtract the two and convert to nanoseconds.
        */
-      if (intel->gen >= 6)
-	 query->Base.Result += 80 * (results[1] - results[0]);
-      else
-	 query->Base.Result += 1000 * ((results[1] >> 32) - (results[0] >> 32));
+      query->Base.Result += 1000 * ((results[1] >> 32) - (results[0] >> 32));
       break;
 
    case GL_TIMESTAMP:
       /* The query BO contains a single timestamp value in results[0]. */
-      if (intel->gen >= 6) {
-         /* Our timer is a clock that increments every 80ns (regardless of
-          * other clock scaling in the system).  The timestamp register we can
-          * read for glGetTimestamp() masks out the top 32 bits, so we do that
-          * here too to let the two counters be compared against each other.
-          *
-          * If we just multiplied that 32 bits of data by 80, it would roll
-          * over at a non-power-of-two, so an application couldn't use
-          * GL_QUERY_COUNTER_BITS to handle rollover correctly.  Instead, we
-          * report 36 bits and truncate at that (rolling over 5 times as often
-          * as the HW counter), and when the 32-bit counter rolls over, it
-          * happens to also be at a rollover in the reported value from near
-          * (1<<36) to 0.
-          *
-          * The low 32 bits rolls over in ~343 seconds.  Our 36-bit result
-          * rolls over every ~69 seconds.
-          */
-	 query->Base.Result = 80 * (results[0] & 0xffffffff);
-         query->Base.Result &= (1ull << 36) - 1;
-      } else {
-	 query->Base.Result = 1000 * (results[0] >> 32);
-      }
+      query->Base.Result = 1000 * (results[0] >> 32);
       break;
 
    case GL_SAMPLES_PASSED_ARB:
@@ -280,7 +241,7 @@ brw_delete_query(struct gl_context *ctx, struct gl_query_object *q)
 }
 
 /**
- * Driver hook for glBeginQuery().
+ * Gen4-5 driver hook for glBeginQuery().
  *
  * Initializes driver structures and emits any GPU commands required to begin
  * recording data for the query.
@@ -291,6 +252,8 @@ brw_begin_query(struct gl_context *ctx, struct gl_query_object *q)
    struct brw_context *brw = brw_context(ctx);
    struct intel_context *intel = intel_context(ctx);
    struct brw_query_object *query = (struct brw_query_object *)q;
+
+   assert(intel->gen < 6);
 
    switch (query->Base.Target) {
    case GL_TIME_ELAPSED_EXT:
@@ -365,7 +328,7 @@ brw_begin_query(struct gl_context *ctx, struct gl_query_object *q)
 }
 
 /**
- * Driver hook for glEndQuery().
+ * Gen4-5 driver hook for glEndQuery().
  *
  * Emits GPU commands to record a final query value, ending any data capturing.
  * However, the final result isn't necessarily available until the GPU processes
@@ -378,6 +341,8 @@ brw_end_query(struct gl_context *ctx, struct gl_query_object *q)
    struct brw_context *brw = brw_context(ctx);
    struct intel_context *intel = intel_context(ctx);
    struct brw_query_object *query = (struct brw_query_object *)q;
+
+   assert(intel->gen < 6);
 
    switch (query->Base.Target) {
    case GL_TIME_ELAPSED_EXT:
@@ -450,7 +415,7 @@ brw_end_query(struct gl_context *ctx, struct gl_query_object *q)
 }
 
 /**
- * The WaitQuery() driver hook.
+ * The Gen4-5 WaitQuery() driver hook.
  *
  * Wait for a query result to become available and return it.  This is the
  * backing for glGetQueryObjectiv() with the GL_QUERY_RESULT pname.
@@ -459,12 +424,14 @@ static void brw_wait_query(struct gl_context *ctx, struct gl_query_object *q)
 {
    struct brw_query_object *query = (struct brw_query_object *)q;
 
+   assert(intel_context(ctx)->gen < 6);
+
    brw_queryobj_get_results(ctx, query);
    query->Base.Ready = true;
 }
 
 /**
- * The CheckQuery() driver hook.
+ * The Gen4-5 CheckQuery() driver hook.
  *
  * Checks whether a query result is ready yet.  If not, flushes.
  * This is the backing for glGetQueryObjectiv()'s QUERY_RESULT_AVAILABLE pname.
@@ -473,6 +440,8 @@ static void brw_check_query(struct gl_context *ctx, struct gl_query_object *q)
 {
    struct intel_context *intel = intel_context(ctx);
    struct brw_query_object *query = (struct brw_query_object *)q;
+
+   assert(intel->gen < 6);
 
    /* From the GL_ARB_occlusion_query spec:
     *
@@ -500,6 +469,8 @@ static void
 ensure_bo_has_space(struct gl_context *ctx, struct brw_query_object *query)
 {
    struct intel_context *intel = intel_context(ctx);
+
+   assert(intel->gen < 6);
 
    if (!query->bo || query->last_index * 2 + 1 >= 4096 / sizeof(uint64_t)) {
 
@@ -534,9 +505,7 @@ ensure_bo_has_space(struct gl_context *ctx, struct brw_query_object *query)
  * produces the final expected value.
  *
  * In a world with hardware contexts, PS_DEPTH_COUNT is saved and restored
- * as part of the context state, so this is unnecessary.  We could simply
- * read two values and subtract them.  However, it's safe to continue using
- * the old approach.
+ * as part of the context state, so this is unnecessary, and skipped.
  */
 void
 brw_emit_query_begin(struct brw_context *brw)
@@ -544,6 +513,9 @@ brw_emit_query_begin(struct brw_context *brw)
    struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &intel->ctx;
    struct brw_query_object *query = brw->query.obj;
+
+   if (intel->hw_ctx)
+      return;
 
    /* Skip if we're not doing any queries, or we've already recorded the
     * initial query value for this batchbuffer.
@@ -559,7 +531,8 @@ brw_emit_query_begin(struct brw_context *brw)
 }
 
 /**
- * Called at batchbuffer flush to get an ending PS_DEPTH_COUNT.
+ * Called at batchbuffer flush to get an ending PS_DEPTH_COUNT
+ * (for non-hardware context platforms).
  *
  * See the explanation in brw_emit_query_begin().
  */
@@ -568,6 +541,9 @@ brw_emit_query_end(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
    struct brw_query_object *query = brw->query.obj;
+
+   if (intel->hw_ctx)
+      return;
 
    if (!brw->query.begin_emitted)
       return;
@@ -619,14 +595,20 @@ brw_get_timestamp(struct gl_context *ctx)
    return result;
 }
 
-void brw_init_queryobj_functions(struct dd_function_table *functions)
+/* Initialize query object functions used on all generations. */
+void brw_init_common_queryobj_functions(struct dd_function_table *functions)
 {
    functions->NewQueryObject = brw_new_query_object;
    functions->DeleteQuery = brw_delete_query;
+   functions->QueryCounter = brw_query_counter;
+   functions->GetTimestamp = brw_get_timestamp;
+}
+
+/* Initialize Gen4/5-specific query object functions. */
+void gen4_init_queryobj_functions(struct dd_function_table *functions)
+{
    functions->BeginQuery = brw_begin_query;
    functions->EndQuery = brw_end_query;
-   functions->QueryCounter = brw_query_counter;
    functions->CheckQuery = brw_check_query;
    functions->WaitQuery = brw_wait_query;
-   functions->GetTimestamp = brw_get_timestamp;
 }
