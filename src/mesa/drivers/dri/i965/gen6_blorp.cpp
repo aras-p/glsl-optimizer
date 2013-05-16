@@ -750,7 +750,6 @@ gen6_blorp_emit_wm_config(struct brw_context *brw,
       assert(0);
       break;
    }
-   dw4 |= GEN6_WM_STATISTICS_ENABLE;
    dw5 |= GEN6_WM_LINE_AA_WIDTH_1_0;
    dw5 |= GEN6_WM_LINE_END_CAP_AA_WIDTH_0_5;
    dw5 |= (brw->max_wm_threads - 1) << GEN6_WM_MAX_THREADS_SHIFT;
