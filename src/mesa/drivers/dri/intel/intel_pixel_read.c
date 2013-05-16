@@ -89,12 +89,7 @@ do_blit_readpixels(struct gl_context * ctx,
    if (!src)
       return false;
 
-   if (!_mesa_is_bufferobj(pack->BufferObj)) {
-      /* PBO only for now:
-       */
-      DBG("%s - not PBO\n", __FUNCTION__);
-      return false;
-   }
+   assert(_mesa_is_bufferobj(pack->BufferObj));
 
    struct gl_renderbuffer *rb = ctx->ReadBuffer->_ColorReadBuffer;
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
@@ -178,17 +173,21 @@ intelReadPixels(struct gl_context * ctx,
 
    DBG("%s\n", __FUNCTION__);
 
-   if (do_blit_readpixels
-       (ctx, x, y, width, height, format, type, pack, pixels))
-      return;
+   if (_mesa_is_bufferobj(pack->BufferObj)) {
+      /* Using PBOs, so try the BLT based path. */
+      if (do_blit_readpixels(ctx, x, y, width, height, format, type, pack,
+                             pixels)) {
+         return;
+      }
+
+      perf_debug("%s: fallback to CPU mapping in PBO case\n", __FUNCTION__);
+   }
 
    /* glReadPixels() wont dirty the front buffer, so reset the dirty
     * flag after calling intel_prepare_render(). */
    dirty = intel->front_buffer_dirty;
    intel_prepare_render(intel);
    intel->front_buffer_dirty = dirty;
-
-   perf_debug("%s: fallback to swrast\n", __FUNCTION__);
 
    /* Update Mesa state before calling _mesa_readpixels().
     * XXX this may not be needed since ReadPixels no longer uses the
