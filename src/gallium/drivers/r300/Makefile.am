@@ -17,7 +17,8 @@ AM_CFLAGS = \
 	$(LLVM_CFLAGS) \
 	$(RADEON_CFLAGS)
 
-r300_compiler_tests_LDADD = libr300.la
+r300_compiler_tests_LDADD = libr300.la libr300-helper.la \
+	$(top_builddir)/src/gallium/auxiliary/libgallium.la
 r300_compiler_tests_CPPFLAGS = \
 	-I$(top_srcdir)/src/gallium/drivers/r300/compiler
 r300_compiler_tests_SOURCES = \
