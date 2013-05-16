@@ -72,8 +72,7 @@ libllvmpipe_la_SOURCES = \
 	lp_state_vs.c \
 	lp_surface.c \
 	lp_tex_sample.c \
-	lp_texture.c \
-	lp_tile_image.c
+	lp_texture.c
 
 libllvmpipe_la_LDFLAGS = $(LLVM_LDFLAGS)
 

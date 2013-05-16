@@ -36,9 +36,11 @@
 #include "lp_scene.h"
 #include "lp_state.h"
 #include "lp_texture.h"
-#include "lp_tile_image.h"
 #include "lp_limits.h"
 
+
+#define TILE_VECTOR_HEIGHT 4
+#define TILE_VECTOR_WIDTH 4
 
 /* If we crash in a jitted function, we can examine jit_line and jit_state
  * to get some info.  This is not thread-safe, however.

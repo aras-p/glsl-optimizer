@@ -46,9 +46,7 @@ enum lp_texture_usage
 enum lp_texture_layout
 {
    LP_TEX_LAYOUT_NONE = 0,  /**< no layout for the tile data yet */
-   LP_TEX_LAYOUT_TILED,     /**< the tile data is in tiled layout */
    LP_TEX_LAYOUT_LINEAR,    /**< the tile data is in linear layout */
-   LP_TEX_LAYOUT_BOTH       /**< the tile data is in both modes */
 };
 
 
@@ -95,7 +93,6 @@ struct llvmpipe_resource
    /** Number of 3D slices or cube faces per level */
    unsigned num_slices_faces[LP_MAX_TEXTURE_LEVELS];
    /** Offset to start of mipmap level, in bytes */
-   unsigned tiled_mip_offsets[LP_MAX_TEXTURE_LEVELS];
    unsigned linear_mip_offsets[LP_MAX_TEXTURE_LEVELS];
 
    /**
@@ -107,7 +104,6 @@ struct llvmpipe_resource
    /**
     * Malloc'ed data for regular textures, or a mapping to dt above.
     */
-   struct llvmpipe_texture_image tiled_img;
    struct llvmpipe_texture_image linear_img;
 
    /**
@@ -238,12 +234,6 @@ llvmpipe_get_texture_tile_linear(struct llvmpipe_resource *lpr,
                                   unsigned face_slice, unsigned level,
                                   enum lp_texture_usage usage,
                                   unsigned x, unsigned y);
-
-ubyte *
-llvmpipe_get_texture_tile(struct llvmpipe_resource *lpr,
-                           unsigned face_slice, unsigned level,
-                           enum lp_texture_usage usage,
-                           unsigned x, unsigned y);
 
 
 extern void
