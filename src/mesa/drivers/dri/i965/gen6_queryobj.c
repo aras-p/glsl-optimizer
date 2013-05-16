@@ -94,6 +94,57 @@ write_depth_count(struct intel_context *intel, drm_intel_bo *query_bo, int idx)
    ADVANCE_BATCH();
 }
 
+/*
+ * Write an arbitrary 64-bit register to a buffer via MI_STORE_REGISTER_MEM.
+ *
+ * Only TIMESTAMP and PS_DEPTH_COUNT have special PIPE_CONTROL support; other
+ * counters have to be read via the generic MI_STORE_REGISTER_MEM.  This
+ * function also performs a pipeline flush for proper synchronization.
+ */
+static void
+write_reg(struct intel_context *intel,
+          drm_intel_bo *query_bo, uint32_t reg, int idx)
+{
+   assert(intel->gen >= 6);
+
+   intel_batchbuffer_emit_mi_flush(intel);
+
+   /* MI_STORE_REGISTER_MEM only stores a single 32-bit value, so to
+    * read a full 64-bit register, we need to do two of them.
+    */
+   BEGIN_BATCH(3);
+   OUT_BATCH(MI_STORE_REGISTER_MEM | (3 - 2));
+   OUT_BATCH(reg);
+   OUT_RELOC(query_bo, I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
+             idx * sizeof(uint64_t));
+   ADVANCE_BATCH();
+
+   BEGIN_BATCH(3);
+   OUT_BATCH(MI_STORE_REGISTER_MEM | (3 - 2));
+   OUT_BATCH(reg + sizeof(uint32_t));
+   OUT_RELOC(query_bo, I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
+             sizeof(uint32_t) + idx * sizeof(uint64_t));
+   ADVANCE_BATCH();
+}
+
+static void
+write_primitives_generated(struct intel_context *intel,
+                           drm_intel_bo *query_bo, int idx)
+{
+   write_reg(intel, query_bo, CL_INVOCATION_COUNT, idx);
+}
+
+static void
+write_xfb_primitives_written(struct intel_context *intel,
+                             drm_intel_bo *query_bo, int idx)
+{
+   if (intel->gen >= 7) {
+      write_reg(intel, query_bo, SO_NUM_PRIMS_WRITTEN0_IVB, idx);
+   } else {
+      write_reg(intel, query_bo, SO_NUM_PRIMS_WRITTEN, idx);
+   }
+}
+
 /**
  * Wait on the query object's BO and calculate the final result.
  */
@@ -167,10 +218,7 @@ gen6_queryobj_get_results(struct gl_context *ctx,
 
    case GL_PRIMITIVES_GENERATED:
    case GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN:
-      /* We don't actually query the hardware for this value, so query->bo
-       * should always be NULL and execution should never reach here.
-       */
-      assert(!"Unreachable");
+      query->Base.Result = results[1] - results[0];
       break;
 
    default:
@@ -195,9 +243,12 @@ gen6_queryobj_get_results(struct gl_context *ctx,
 static void
 gen6_begin_query(struct gl_context *ctx, struct gl_query_object *q)
 {
-   struct brw_context *brw = brw_context(ctx);
    struct intel_context *intel = intel_context(ctx);
    struct brw_query_object *query = (struct brw_query_object *)q;
+
+   /* Since we're starting a new query, we need to throw away old results. */
+   drm_intel_bo_unreference(query->bo);
+   query->bo = drm_intel_bo_alloc(intel->bufmgr, "query results", 4096, 4096);
 
    switch (query->Base.Target) {
    case GL_TIME_ELAPSED:
@@ -220,36 +271,21 @@ gen6_begin_query(struct gl_context *ctx, struct gl_query_object *q)
        * obtain the time elapsed.  Notably, this includes time elapsed while
        * the system was doing other work, such as running other applications.
        */
-      drm_intel_bo_unreference(query->bo);
-      query->bo = drm_intel_bo_alloc(intel->bufmgr, "timer query", 4096, 4096);
       write_timestamp(intel, query->bo, 0);
       break;
 
    case GL_ANY_SAMPLES_PASSED:
    case GL_ANY_SAMPLES_PASSED_CONSERVATIVE:
    case GL_SAMPLES_PASSED_ARB:
-      /* Since we're starting a new query, we need to be sure to throw away
-       * any previous occlusion query results.
-       */
-      drm_intel_bo_unreference(query->bo);
-      query->bo = drm_intel_bo_alloc(intel->bufmgr, "occl. query", 4096, 4096);
       write_depth_count(intel, query->bo, 0);
       break;
 
    case GL_PRIMITIVES_GENERATED:
-      /* We don't actually query the hardware for this value; we keep track of
-       * it a software counter.  So just reset the counter.
-       */
-      brw->sol.primitives_generated = 0;
-      brw->sol.counting_primitives_generated = true;
+      write_primitives_generated(intel, query->bo, 0);
       break;
 
    case GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN:
-      /* We don't actually query the hardware for this value; we keep track of
-       * it a software counter.  So just reset the counter.
-       */
-      brw->sol.primitives_written = 0;
-      brw->sol.counting_primitives_written = true;
+      write_xfb_primitives_written(intel, query->bo, 0);
       break;
 
    default:
@@ -269,7 +305,6 @@ gen6_begin_query(struct gl_context *ctx, struct gl_query_object *q)
 static void
 gen6_end_query(struct gl_context *ctx, struct gl_query_object *q)
 {
-   struct brw_context *brw = brw_context(ctx);
    struct intel_context *intel = intel_context(ctx);
    struct brw_query_object *query = (struct brw_query_object *)q;
 
@@ -285,21 +320,11 @@ gen6_end_query(struct gl_context *ctx, struct gl_query_object *q)
       break;
 
    case GL_PRIMITIVES_GENERATED:
-      /* We don't actually query the hardware for this value; we keep track of
-       * it in a software counter.  So just read the counter and store it in
-       * the query object.
-       */
-      query->Base.Result = brw->sol.primitives_generated;
-      brw->sol.counting_primitives_generated = false;
+      write_primitives_generated(intel, query->bo, 1);
       break;
 
    case GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN:
-      /* We don't actually query the hardware for this value; we keep track of
-       * it in a software counter.  So just read the counter and store it in
-       * the query object.
-       */
-      query->Base.Result = brw->sol.primitives_written;
-      brw->sol.counting_primitives_written = false;
+      write_xfb_primitives_written(intel, query->bo, 1);
       break;
 
    default:
