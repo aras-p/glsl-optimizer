@@ -194,15 +194,21 @@ _mesa_ARBfp_parse_option(struct asm_parser_state *state, const char *option)
       } else if (strncmp(option, "precision_hint_", 15) == 0) {
 	 option += 15;
 
-	 if (state->option.PrecisionHint == OPTION_NONE) {
-	    if (strcmp(option, "nicest") == 0) {
-	       state->option.PrecisionHint = OPTION_NICEST;
-	       return 1;
-	    } else if (strcmp(option, "fastest") == 0) {
-	       state->option.PrecisionHint = OPTION_FASTEST;
-	       return 1;
-	    }
-	 }
+         /* The ARB_fragment_program spec, 3.11.4.5.2 says:
+          *
+          * "Only one precision control option may be specified by any given
+          * fragment program.  A fragment program that specifies both the
+          * "ARB_precision_hint_fastest" and "ARB_precision_hint_nicest"
+          * program options will fail to load.
+          */
+
+         if (strcmp(option, "nicest") == 0 && state->option.PrecisionHint != OPTION_FASTEST) {
+            state->option.PrecisionHint = OPTION_NICEST;
+            return 1;
+         } else if (strcmp(option, "fastest") == 0 && state->option.PrecisionHint != OPTION_NICEST) {
+            state->option.PrecisionHint = OPTION_FASTEST;
+            return 1;
+         }
 
 	 return 0;
       } else if (strcmp(option, "draw_buffers") == 0) {
