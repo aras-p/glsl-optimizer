@@ -902,6 +902,12 @@ intel_miptree_copy_slice(struct intel_context *intel,
        dst_mt, dst_x, dst_y, dst_mt->region->pitch,
        width, height);
 
+   /* Since we are about to copy depth data using either the blitter or swrast
+    * (neither of which respect HiZ), we need to do a depth resolve first.
+    */
+   intel_miptree_slice_resolve_depth(intel, src_mt, level, slice);
+   intel_miptree_slice_resolve_depth(intel, dst_mt, level, slice);
+
    if (!intelEmitCopyBlit(intel,
 			  dst_mt->region->cpp,
 			  src_mt->region->pitch, src_mt->region->bo,
