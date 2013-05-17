@@ -112,8 +112,8 @@ struct lp_setup_context
    struct {
       unsigned flags;
       union lp_rast_cmd_arg color;    /**< lp_rast_clear_color() cmd */
-      unsigned zsmask;
-      unsigned zsvalue;               /**< lp_rast_clear_zstencil() cmd */
+      uint64_t zsmask;
+      uint64_t zsvalue;               /**< lp_rast_clear_zstencil() cmd */
    } clear;
 
    enum setup_state {

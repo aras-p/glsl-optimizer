@@ -239,7 +239,8 @@ generate_fs_loop(struct gallivm_state *gallivm,
    LLVMValueRef mask_ptr, mask_val;
    LLVMValueRef consts_ptr;
    LLVMValueRef z;
-   LLVMValueRef zs_value = NULL;
+   LLVMValueRef z_value, s_value;
+   LLVMValueRef z_fb, s_fb;
    LLVMValueRef stencil_refs[2];
    LLVMValueRef outputs[PIPE_MAX_SHADER_OUTPUTS][TGSI_NUM_CHANNELS];
    struct lp_build_for_loop_state loop_state;
@@ -259,8 +260,7 @@ generate_fs_loop(struct gallivm_state *gallivm,
    memset(&system_values, 0, sizeof(system_values));
 
    if (key->depth.enabled ||
-       key->stencil[0].enabled ||
-       key->stencil[1].enabled) {
+       key->stencil[0].enabled) {
 
       zs_format_desc = util_format_description(key->zsbuf_format);
       assert(zs_format_desc);
@@ -281,7 +281,9 @@ generate_fs_loop(struct gallivm_state *gallivm,
       }
 
       if (!(key->depth.enabled && key->depth.writemask) &&
-          !(key->stencil[0].enabled && key->stencil[0].writemask))
+          !((key->stencil[0].enabled && (key->stencil[0].writemask ||
+                                        (key->stencil[1].enabled &&
+                                         key->stencil[1].writemask)))))
          depth_mode &= ~(LATE_DEPTH_WRITE | EARLY_DEPTH_WRITE);
    }
    else {
@@ -337,11 +339,10 @@ generate_fs_loop(struct gallivm_state *gallivm,
    z = interp->pos[2];
 
    if (depth_mode & EARLY_DEPTH_TEST) {
-      LLVMValueRef zs_dst_val;
-      zs_dst_val = lp_build_depth_stencil_load_swizzled(gallivm, type,
-                                                        zs_format_desc,
-                                                        depth_ptr, depth_stride,
-                                                        loop_state.counter);
+      lp_build_depth_stencil_load_swizzled(gallivm, type,
+                                           zs_format_desc,
+                                           depth_ptr, depth_stride,
+                                           &z_fb, &s_fb, loop_state.counter);
       lp_build_depth_stencil_test(gallivm,
                                   &key->depth,
                                   key->stencil,
@@ -349,16 +350,16 @@ generate_fs_loop(struct gallivm_state *gallivm,
                                   zs_format_desc,
                                   &mask,
                                   stencil_refs,
-                                  z,
-                                  zs_dst_val,
+                                  z, z_fb, s_fb,
                                   facing,
-                                  &zs_value,
+                                  &z_value, &s_value,
                                   !simple_shader);
 
       if (depth_mode & EARLY_DEPTH_WRITE) {
          lp_build_depth_stencil_write_swizzled(gallivm, type, zs_format_desc,
-                                               NULL, loop_state.counter,
-                                               depth_ptr, depth_stride, zs_value);
+                                               NULL, NULL, NULL, loop_state.counter,
+                                               depth_ptr, depth_stride,
+                                               z_value, s_value);
       }
    }
 
@@ -394,7 +395,6 @@ generate_fs_loop(struct gallivm_state *gallivm,
 
    /* Late Z test */
    if (depth_mode & LATE_DEPTH_TEST) {
-      LLVMValueRef zs_dst_val;
       int pos0 = find_output_by_semantic(&shader->info.base,
                                          TGSI_SEMANTIC_POSITION,
                                          0);
@@ -403,10 +403,10 @@ generate_fs_loop(struct gallivm_state *gallivm,
          z = LLVMBuildLoad(builder, outputs[pos0][2], "output.z");
       }
 
-      zs_dst_val = lp_build_depth_stencil_load_swizzled(gallivm, type,
-                                                        zs_format_desc,
-                                                        depth_ptr, depth_stride,
-                                                        loop_state.counter);
+      lp_build_depth_stencil_load_swizzled(gallivm, type,
+                                           zs_format_desc,
+                                           depth_ptr, depth_stride,
+                                           &z_fb, &s_fb, loop_state.counter);
 
       lp_build_depth_stencil_test(gallivm,
                                   &key->depth,
@@ -415,16 +415,16 @@ generate_fs_loop(struct gallivm_state *gallivm,
                                   zs_format_desc,
                                   &mask,
                                   stencil_refs,
-                                  z,
-                                  zs_dst_val,
+                                  z, z_fb, s_fb,
                                   facing,
-                                  &zs_value,
+                                  &z_value, &s_value,
                                   !simple_shader);
       /* Late Z write */
       if (depth_mode & LATE_DEPTH_WRITE) {
          lp_build_depth_stencil_write_swizzled(gallivm, type, zs_format_desc,
-                                               NULL, loop_state.counter,
-                                               depth_ptr, depth_stride, zs_value);
+                                               NULL, NULL, NULL, loop_state.counter,
+                                               depth_ptr, depth_stride,
+                                               z_value, s_value);
       }
    }
    else if ((depth_mode & EARLY_DEPTH_TEST) &&
@@ -435,8 +435,9 @@ generate_fs_loop(struct gallivm_state *gallivm,
        * write that out.
        */
       lp_build_depth_stencil_write_swizzled(gallivm, type, zs_format_desc,
-                                            &mask, loop_state.counter,
-                                            depth_ptr, depth_stride, zs_value);
+                                            &mask, z_fb, s_fb, loop_state.counter,
+                                            depth_ptr, depth_stride,
+                                            z_value, s_value);
    }
 
 

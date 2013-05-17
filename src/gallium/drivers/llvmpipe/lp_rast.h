@@ -154,8 +154,8 @@ union lp_rast_cmd_arg {
    const struct lp_rast_state *set_state;
    union pipe_color_union clear_color;
    struct {
-      uint32_t value;
-      uint32_t mask;
+      uint64_t value;
+      uint64_t mask;
    } clear_zstencil;
    const struct lp_rast_state *state;
    struct lp_fence *fence;
@@ -217,7 +217,7 @@ lp_rast_arg_fence( struct lp_fence *fence )
 
 
 static INLINE union lp_rast_cmd_arg
-lp_rast_arg_clearzs( unsigned value, unsigned mask )
+lp_rast_arg_clearzs( uint64_t value, uint64_t mask )
 {
    union lp_rast_cmd_arg arg;
    arg.clear_zstencil.value = value;

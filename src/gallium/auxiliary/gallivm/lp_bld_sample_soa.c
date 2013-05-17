@@ -1545,6 +1545,11 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
          bld.texel_type = lp_type_uint_vec(type.width, type.width * type.length);
       }
    }
+   else if (util_format_has_stencil(bld.format_desc) &&
+       !util_format_has_depth(bld.format_desc)) {
+      /* for stencil only formats, sample stencil (uint) */
+      bld.texel_type = lp_type_int_vec(type.width, type.width * type.length);
+   }
 
    if (!static_texture_state->level_zero_only) {
       derived_sampler_state.min_mip_filter = static_sampler_state->min_mip_filter;

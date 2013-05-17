@@ -255,7 +255,8 @@ lp_build_concat_n(struct gallivm_state *gallivm,
 /**
  * Interleave vector elements.
  *
- * Matches the PUNPCKLxx and PUNPCKHxx SSE instructions.
+ * Matches the PUNPCKLxx and PUNPCKHxx SSE instructions
+ * (but not for 256bit AVX vectors).
  */
 LLVMValueRef
 lp_build_interleave2(struct gallivm_state *gallivm,

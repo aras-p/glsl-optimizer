@@ -193,8 +193,10 @@ lp_rast_clear_zstencil(struct lp_rasterizer_task *task,
                        const union lp_rast_cmd_arg arg)
 {
    const struct lp_scene *scene = task->scene;
-   uint32_t clear_value = arg.clear_zstencil.value;
-   uint32_t clear_mask = arg.clear_zstencil.mask;
+   uint64_t clear_value64 = arg.clear_zstencil.value;
+   uint64_t clear_mask64 = arg.clear_zstencil.mask;
+   uint32_t clear_value = (uint32_t) clear_value64;
+   uint32_t clear_mask = (uint32_t) clear_mask64;
    const unsigned height = TILE_SIZE;
    const unsigned width = TILE_SIZE;
    const unsigned block_size = scene->zsbuf.blocksize;
@@ -260,6 +262,28 @@ lp_rast_clear_zstencil(struct lp_rasterizer_task *task,
             }
          }
          break;
+      case 8:
+         clear_value64 &= clear_mask64;
+         if (clear_mask64 == 0xffffffffffULL) {
+            for (i = 0; i < height; i++) {
+               uint64_t *row = (uint64_t *)dst;
+               for (j = 0; j < width; j++)
+                  *row++ = clear_value64;
+               dst += dst_stride;
+            }
+         }
+         else {
+            for (i = 0; i < height; i++) {
+               uint64_t *row = (uint64_t *)dst;
+               for (j = 0; j < width; j++) {
+                  uint64_t tmp = ~clear_mask64 & *row;
+                  *row++ = clear_value64 | tmp;
+               }
+               dst += dst_stride;
+            }
+         }
+         break;
+
       default:
          assert(0);
          break;
