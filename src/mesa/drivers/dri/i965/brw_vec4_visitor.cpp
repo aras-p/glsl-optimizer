@@ -1702,6 +1702,10 @@ vec4_visitor::visit(ir_expression *ir)
       emit(BFE(result_dst, op[2], op[1], op[0]));
       break;
 
+   case ir_triop_vector_insert:
+      assert(!"should have been lowered by lower_vector_insert");
+      break;
+
    case ir_quadop_bitfield_insert:
       assert(!"not reached: should be handled by "
               "bitfield_insert_to_bfm_bfi\n");

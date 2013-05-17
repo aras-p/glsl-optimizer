@@ -403,6 +403,7 @@ ir_channel_expressions_visitor::visit_leave(ir_assignment *ir)
    case ir_unop_unpack_unorm_4x8:
    case ir_unop_unpack_half_2x16:
    case ir_binop_vector_extract:
+   case ir_triop_vector_insert:
    case ir_quadop_bitfield_insert:
    case ir_quadop_vector:
       assert(!"should have been lowered");
