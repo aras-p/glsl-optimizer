@@ -5,6 +5,8 @@
 
 #include "radeon_llvm_util.h"
 
+#define MAX_GLOBAL_BUFFERS 20
+
 struct si_pipe_compute {
 	struct r600_context *ctx;
 
@@ -15,7 +17,7 @@ struct si_pipe_compute {
 	struct si_pipe_shader *kernels;
 	unsigned num_user_sgprs;
 
-        struct si_pm4_state *pm4_buffers;
+        struct pipe_resource *global_buffers[MAX_GLOBAL_BUFFERS];
 
 };
 
@@ -65,22 +67,18 @@ static void radeonsi_set_global_binding(
 	unsigned i;
 	struct r600_context *rctx = (struct r600_context*)ctx;
 	struct si_pipe_compute *program = rctx->cs_shader_state.program;
-	struct si_pm4_state *pm4;
-
-	if (!program->pm4_buffers) {
-		program->pm4_buffers = CALLOC_STRUCT(si_pm4_state);
-	}
-	pm4 = program->pm4_buffers;
-	pm4->compute_pkt = true;
 
 	if (!resources) {
+		for (i = first; i < first + n; i++) {
+			program->global_buffers[i] = NULL;
+		}
 		return;
 	}
 
 	for (i = first; i < first + n; i++) {
-		uint64_t va = r600_resource_va(ctx->screen, resources[i]);
-		si_pm4_add_bo(pm4, (struct si_resource*)resources[i],
-				RADEON_USAGE_READWRITE);
+		uint64_t va;
+		program->global_buffers[i] = resources[i];
+		va = r600_resource_va(ctx->screen, resources[i]);
 		memcpy(handles[i], &va, sizeof(va));
 	}
 }
@@ -137,6 +135,16 @@ static void radeonsi_launch_grid(
 				S_00B820_NUM_THREAD_FULL(block_layout[1]));
 	si_pm4_set_reg(pm4, R_00B824_COMPUTE_NUM_THREAD_Z,
 				S_00B824_NUM_THREAD_FULL(block_layout[2]));
+
+	/* Global buffers */
+	for (i = 0; i < MAX_GLOBAL_BUFFERS; i++) {
+		struct si_resource *buffer =
+				(struct si_resource*)program->global_buffers[i];
+		if (!buffer) {
+			continue;
+		}
+		si_pm4_add_bo(pm4, buffer, RADEON_USAGE_READWRITE);
+	}
 
 	/* XXX: This should be:
 	 * (number of compute units) * 4 * (waves per simd) - 1 */
@@ -199,7 +207,6 @@ static void radeonsi_launch_grid(
 	si_pm4_inval_shader_cache(pm4);
 	si_cmd_surface_sync(pm4, pm4->cp_coher_cntl);
 
-	si_pm4_emit(rctx, program->pm4_buffers);
 	si_pm4_emit(rctx, pm4);
 
 #if 0
