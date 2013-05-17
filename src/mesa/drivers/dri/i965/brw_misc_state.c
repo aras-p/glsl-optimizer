@@ -999,19 +999,6 @@ static void upload_invariant_state( struct brw_context *brw )
       ADVANCE_BATCH();
    }
 
-   if (intel->gen == 6) {
-      int i;
-
-      for (i = 0; i < 4; i++) {
-         BEGIN_BATCH(4);
-         OUT_BATCH(_3DSTATE_GS_SVB_INDEX << 16 | (4 - 2));
-         OUT_BATCH(i << SVB_INDEX_SHIFT);
-         OUT_BATCH(0);
-         OUT_BATCH(0xffffffff);
-         ADVANCE_BATCH();
-      }
-   }
-
    BEGIN_BATCH(2);
    OUT_BATCH(CMD_STATE_SIP << 16 | (2 - 2));
    OUT_BATCH(0);

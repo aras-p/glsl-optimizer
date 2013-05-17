@@ -132,29 +132,6 @@ const struct brw_tracked_state gen6_gs_binding_table = {
    .emit = brw_gs_upload_binding_table,
 };
 
-static void
-gen6_update_sol_indices(struct brw_context *brw)
-{
-   struct intel_context *intel = &brw->intel;
-
-   BEGIN_BATCH(4);
-   OUT_BATCH(_3DSTATE_GS_SVB_INDEX << 16 | (4 - 2));
-   OUT_BATCH(0);
-   OUT_BATCH(brw->sol.svbi_0_starting_index); /* BRW_NEW_SOL_INDICES */
-   OUT_BATCH(brw->sol.svbi_0_max_index); /* BRW_NEW_SOL_INDICES */
-   ADVANCE_BATCH();
-}
-
-const struct brw_tracked_state gen6_sol_indices = {
-   .dirty = {
-      .mesa = 0,
-      .brw = (BRW_NEW_CONTEXT |
-              BRW_NEW_SOL_INDICES),
-      .cache = 0
-   },
-   .emit = gen6_update_sol_indices,
-};
-
 void
 brw_begin_transform_feedback(struct gl_context *ctx, GLenum mode,
 			     struct gl_transform_feedback_object *obj)
@@ -175,14 +152,28 @@ brw_begin_transform_feedback(struct gl_context *ctx, GLenum mode,
       = _mesa_compute_max_transform_feedback_vertices(xfb_obj,
                                                       linked_xfb_info);
 
-   /* Initialize the SVBI 0 register to zero and set the maximum index.
-    * These values will be sent to the hardware on the next draw.
-    */
-   brw->state.dirty.brw |= BRW_NEW_SOL_INDICES;
-   brw->sol.svbi_0_starting_index = 0;
-   brw->sol.svbi_0_max_index = max_index;
+   if (intel->gen == 6) {
+      /* Initialize the SVBI 0 register to zero and set the maximum index. */
+      BEGIN_BATCH(4);
+      OUT_BATCH(_3DSTATE_GS_SVB_INDEX << 16 | (4 - 2));
+      OUT_BATCH(0); /* SVBI 0 */
+      OUT_BATCH(0); /* starting index */
+      OUT_BATCH(max_index);
+      ADVANCE_BATCH();
 
-   if (intel->gen >= 7) {
+      /* Initialize the rest of the unused streams to sane values.  Otherwise,
+       * they may indicate that there is no room to write data and prevent
+       * anything from happening at all.
+       */
+      for (int i = 1; i < 4; i++) {
+         BEGIN_BATCH(4);
+         OUT_BATCH(_3DSTATE_GS_SVB_INDEX << 16 | (4 - 2));
+         OUT_BATCH(i << SVB_INDEX_SHIFT);
+         OUT_BATCH(0); /* starting index */
+         OUT_BATCH(0xffffffff);
+         ADVANCE_BATCH();
+      }
+   } else if (intel->gen >= 7) {
       /* Reset the SOL buffer offset register. */
       for (int i = 0; i < 4; i++) {
          BEGIN_BATCH(3);

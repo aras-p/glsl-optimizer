@@ -148,7 +148,6 @@ enum brw_state_id {
    BRW_STATE_VS_CONSTBUF,
    BRW_STATE_PROGRAM_CACHE,
    BRW_STATE_STATE_BASE_ADDRESS,
-   BRW_STATE_SOL_INDICES,
    BRW_STATE_VUE_MAP_GEOM_OUT,
    BRW_STATE_TRANSFORM_FEEDBACK,
    BRW_STATE_RASTERIZER_DISCARD,
@@ -181,7 +180,6 @@ enum brw_state_id {
 #define BRW_NEW_VS_CONSTBUF            (1 << BRW_STATE_VS_CONSTBUF)
 #define BRW_NEW_PROGRAM_CACHE		(1 << BRW_STATE_PROGRAM_CACHE)
 #define BRW_NEW_STATE_BASE_ADDRESS	(1 << BRW_STATE_STATE_BASE_ADDRESS)
-#define BRW_NEW_SOL_INDICES		(1 << BRW_STATE_SOL_INDICES)
 #define BRW_NEW_VUE_MAP_GEOM_OUT	(1 << BRW_STATE_VUE_MAP_GEOM_OUT)
 #define BRW_NEW_TRANSFORM_FEEDBACK	(1 << BRW_STATE_TRANSFORM_FEEDBACK)
 #define BRW_NEW_RASTERIZER_DISCARD	(1 << BRW_STATE_RASTERIZER_DISCARD)
@@ -1084,11 +1082,6 @@ struct brw_context
       enum state_struct_type type;
    } *state_batch_list;
    int state_batch_count;
-
-   struct brw_sol_state {
-      uint32_t svbi_0_starting_index;
-      uint32_t svbi_0_max_index;
-   } sol;
 
    uint32_t render_target_format[MESA_FORMAT_COUNT];
    bool format_supported_as_render_target[MESA_FORMAT_COUNT];

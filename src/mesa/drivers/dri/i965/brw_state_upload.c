@@ -166,7 +166,6 @@ static const struct brw_tracked_state *gen6_atoms[] =
 
    &brw_drawing_rect,
 
-   &gen6_sol_indices,
    &brw_indices,
    &brw_index_buffer,
    &brw_vertices,
@@ -369,7 +368,6 @@ static struct dirty_bit_map brw_bits[] = {
    DEFINE_BIT(BRW_NEW_VS_CONSTBUF),
    DEFINE_BIT(BRW_NEW_PROGRAM_CACHE),
    DEFINE_BIT(BRW_NEW_STATE_BASE_ADDRESS),
-   DEFINE_BIT(BRW_NEW_SOL_INDICES),
    DEFINE_BIT(BRW_NEW_VUE_MAP_GEOM_OUT),
    DEFINE_BIT(BRW_NEW_TRANSFORM_FEEDBACK),
    DEFINE_BIT(BRW_NEW_RASTERIZER_DISCARD),

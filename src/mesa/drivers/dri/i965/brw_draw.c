@@ -351,57 +351,6 @@ static void brw_postdraw_set_buffers_need_resolve(struct brw_context *brw)
       intel_renderbuffer_set_needs_depth_resolve(depth_irb);
 }
 
-static int
-verts_per_prim(GLenum mode)
-{
-   switch (mode) {
-   case GL_POINTS:
-      return 1;
-   case GL_LINE_STRIP:
-   case GL_LINE_LOOP:
-   case GL_LINES:
-      return 2;
-   case GL_TRIANGLE_STRIP:
-   case GL_TRIANGLE_FAN:
-   case GL_POLYGON:
-   case GL_TRIANGLES:
-   case GL_QUADS:
-   case GL_QUAD_STRIP:
-      return 3;
-   default:
-      _mesa_problem(NULL,
-		    "unknown prim type in transform feedback primitive count");
-      return 0;
-   }
-}
-
-/**
- * Update internal counters based on the the drawing operation described in
- * prim.
- */
-static void
-brw_update_primitive_count(struct brw_context *brw,
-                           const struct _mesa_prim *prim)
-{
-   uint32_t count
-      = vbo_count_tessellated_primitives(prim->mode, prim->count,
-                                         prim->num_instances);
-   if (_mesa_is_xfb_active_and_unpaused(&brw->intel.ctx)) {
-      /* Update brw->sol.svbi_0_max_index to reflect the amount by which the
-       * hardware is going to increment SVBI 0 when this drawing operation
-       * occurs.  This is necessary because the kernel does not (yet) save and
-       * restore GPU registers when context switching, so we'll need to be
-       * able to reload SVBI 0 with the correct value in case we have to start
-       * a new batch buffer.
-       */
-      unsigned verts = verts_per_prim(prim->mode);
-      uint32_t space_avail =
-         (brw->sol.svbi_0_max_index - brw->sol.svbi_0_starting_index) / verts;
-      uint32_t primitives_written = MIN2 (space_avail, count);
-      brw->sol.svbi_0_starting_index += verts * primitives_written;
-   }
-}
-
 /* May fail if out of video memory for texture or vbo upload, or on
  * fallback conditions.
  */
@@ -524,9 +473,6 @@ retry:
 	    }
 	 }
       }
-
-      if (!_mesa_meta_in_progress(ctx))
-         brw_update_primitive_count(brw, &prim[i]);
    }
 
    if (intel->always_flush_batch)
