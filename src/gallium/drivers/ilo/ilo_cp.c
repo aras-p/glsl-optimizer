@@ -176,17 +176,21 @@ static int
 ilo_cp_exec_bo(struct ilo_cp *cp)
 {
    const bool do_exec = !(ilo_debug & ILO_DEBUG_NOHW);
+   struct intel_context *ctx;
    unsigned long flags;
    int err;
 
    switch (cp->ring) {
    case ILO_CP_RING_RENDER:
+      ctx = cp->render_ctx;
       flags = INTEL_EXEC_RENDER;
       break;
    case ILO_CP_RING_BLT:
+      ctx = NULL;
       flags = INTEL_EXEC_BLT;
       break;
    default:
+      ctx = NULL;
       flags = 0;
       break;
    }
@@ -194,7 +198,7 @@ ilo_cp_exec_bo(struct ilo_cp *cp)
    flags |= cp->one_off_flags;
 
    if (likely(do_exec))
-      err = cp->bo->exec(cp->bo, cp->used * 4, cp->hw_ctx, flags);
+      err = cp->bo->exec(cp->bo, cp->used * 4, ctx, flags);
    else
       err = 0;
 
@@ -274,8 +278,8 @@ ilo_cp_destroy(struct ilo_cp *cp)
 {
    if (cp->bo)
       cp->bo->unreference(cp->bo);
-   if (cp->hw_ctx)
-      cp->winsys->destroy_context(cp->winsys, cp->hw_ctx);
+   if (cp->render_ctx)
+      cp->winsys->destroy_context(cp->winsys, cp->render_ctx);
 
    FREE(cp->sys);
    FREE(cp);
@@ -294,7 +298,7 @@ ilo_cp_create(struct intel_winsys *winsys, bool direct_map)
       return NULL;
 
    cp->winsys = winsys;
-   cp->hw_ctx = winsys->create_context(winsys);
+   cp->render_ctx = winsys->create_context(winsys);
 
    cp->ring = ILO_CP_RING_RENDER;
    cp->no_implicit_flush = false;

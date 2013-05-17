@@ -402,7 +402,7 @@ gen7_pipeline_sol(struct ilo_3d_pipeline *p,
          int base = 0;
 
          /* reset HW write offsets and offset buffer base */
-         if (!p->cp->hw_ctx) {
+         if (!p->cp->render_ctx) {
             ilo_cp_set_one_off_flags(p->cp, INTEL_EXEC_GEN7_SOL_RESET);
             base += p->state.so_num_vertices * stride;
          }

@@ -56,7 +56,7 @@ typedef void (*ilo_cp_hook_func)(struct ilo_cp *cp, void *data);
  */
 struct ilo_cp {
    struct intel_winsys *winsys;
-   struct intel_context *hw_ctx;
+   struct intel_context *render_ctx;
 
    enum ilo_cp_ring ring;
    bool no_implicit_flush;

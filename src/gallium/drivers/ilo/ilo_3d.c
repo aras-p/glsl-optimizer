@@ -250,7 +250,7 @@ ilo_3d_new_cp_batch(struct ilo_3d *hw3d)
    ilo_3d_pipeline_invalidate(hw3d->pipeline,
          ILO_3D_PIPELINE_INVALIDATE_BATCH_BO |
          ILO_3D_PIPELINE_INVALIDATE_STATE_BO);
-   if (!hw3d->cp->hw_ctx) {
+   if (!hw3d->cp->render_ctx) {
       ilo_3d_pipeline_invalidate(hw3d->pipeline,
             ILO_3D_PIPELINE_INVALIDATE_HW);
    }

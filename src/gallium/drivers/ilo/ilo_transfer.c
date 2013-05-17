@@ -76,7 +76,7 @@ is_bo_busy(struct ilo_context *ilo, struct intel_bo *bo, bool *need_flush)
     * without being referenced by ilo->cp->bo.  We have to flush
     * unconditionally, and that is bad.
     */
-   if (ilo->cp->hw_ctx)
+   if (ilo->cp->render_ctx)
       ilo_cp_flush(ilo->cp);
 
    return intel_bo_is_busy(bo);
