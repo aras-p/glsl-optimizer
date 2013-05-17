@@ -82,15 +82,6 @@ upload_3dstate_so_buffers(struct brw_context *brw)
       end = ALIGN(start + xfb_obj->Size[i], 4);
       assert(end <= bo->size);
 
-      /* If we don't have hardware contexts, then we reset our offsets at the
-       * start of every batch, so we track the number of vertices written in
-       * software and increment our pointers by that many.
-       */
-      if (!intel->hw_ctx) {
-         start += brw->sol.offset_0_batch_start * stride;
-         assert(start <= end);
-      }
-
       BEGIN_BATCH(4);
       OUT_BATCH(_3DSTATE_SO_BUFFER << 16 | (4 - 2));
       OUT_BATCH((i << SO_BUFFER_INDEX_SHIFT) | stride);
@@ -241,12 +232,6 @@ upload_sol_state(struct brw_context *brw)
       upload_3dstate_so_buffers(brw);
       /* BRW_NEW_VUE_MAP_GEOM_OUT */
       upload_3dstate_so_decl_list(brw, &brw->vue_map_geom_out);
-
-      /* If we don't have hardware contexts, then some other client may have
-       * changed the SO write offsets, and we need to rewrite them.
-       */
-      if (!intel->hw_ctx)
-         intel->batch.needs_sol_reset = true;
    }
 
    /* Finally, set up the SOL stage.  This command must always follow updates to
