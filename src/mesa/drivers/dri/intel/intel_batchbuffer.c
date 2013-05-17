@@ -96,7 +96,6 @@ intel_batchbuffer_reset(struct intel_context *intel)
    intel->batch.reserved_space = BATCH_RESERVED;
    intel->batch.state_batch_offset = intel->batch.bo->size;
    intel->batch.used = 0;
-   intel->batch.needs_sol_reset = false;
 }
 
 void
@@ -198,9 +197,6 @@ do_flush_locked(struct intel_context *intel)
       } else {
 	 flags = I915_EXEC_BLT;
       }
-
-      if (batch->needs_sol_reset)
-	 flags |= I915_EXEC_GEN7_SOL_RESET;
 
       if (ret == 0) {
          if (unlikely(INTEL_DEBUG & DEBUG_AUB) && intel->vtbl.annotate_aub)

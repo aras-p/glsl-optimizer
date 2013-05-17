@@ -135,7 +135,6 @@ struct intel_batchbuffer {
 
    uint32_t state_batch_offset;
    bool is_blit;
-   bool needs_sol_reset;
 
    struct {
       uint16_t used;
