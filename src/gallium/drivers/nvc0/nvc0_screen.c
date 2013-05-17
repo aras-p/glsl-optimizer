@@ -549,6 +549,7 @@ nvc0_screen_create(struct nouveau_device *dev)
    case 0xc0:
    case 0xd0:
    case 0xe0:
+   case 0xf0:
       break;
    default:
       return NULL;
@@ -597,6 +598,9 @@ nvc0_screen_create(struct nouveau_device *dev)
    screen->base.fence.update = nvc0_screen_fence_update;
 
    switch (dev->chipset & 0xf0) {
+   case 0xf0:
+      obj_class = NVF0_P2MF_CLASS;
+      break;
    case 0xe0:
       obj_class = NVE4_P2MF_CLASS;
       break;
@@ -641,6 +645,9 @@ nvc0_screen_create(struct nouveau_device *dev)
    PUSH_DATA (push, screen->fence.bo->offset + 16);
 
    switch (dev->chipset & 0xf0) {
+   case 0xf0:
+      obj_class = NVF0_3D_CLASS;
+      break;
    case 0xe0:
       obj_class = NVE4_3D_CLASS;
       break;

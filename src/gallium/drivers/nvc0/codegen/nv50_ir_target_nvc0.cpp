@@ -351,7 +351,14 @@ TargetNVC0::isAccessSupported(DataFile file, DataType ty) const
    if (file == FILE_MEMORY_CONST && getChipset() >= 0xe0) // wrong encoding ?
       return typeSizeof(ty) <= 8;
    if (ty == TYPE_B96)
-      return (file == FILE_SHADER_INPUT) || (file == FILE_SHADER_OUTPUT);
+      return false;
+   if (getChipset() >= 0xf0) {
+      // XXX: find wide vfetch/export
+      if (ty == TYPE_B128)
+         return false;
+      if (ty == TYPE_U64)
+         return false;
+   }
    return true;
 }
 
