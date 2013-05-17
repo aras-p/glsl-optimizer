@@ -187,14 +187,6 @@ brw_queryobj_get_results(struct gl_context *ctx,
       }
       break;
 
-   case GL_PRIMITIVES_GENERATED:
-   case GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN:
-      /* We don't actually query the hardware for this value, so query->bo
-       * should always be NULL and execution should never reach here.
-       */
-      assert(!"Unreachable");
-      break;
-
    default:
       assert(!"Unrecognized query target in brw_queryobj_get_results()");
       break;
@@ -305,22 +297,6 @@ brw_begin_query(struct gl_context *ctx, struct gl_query_object *q)
       brw->state.dirty.brw |= BRW_NEW_STATS_WM;
       break;
 
-   case GL_PRIMITIVES_GENERATED:
-      /* We don't actually query the hardware for this value; we keep track of
-       * it a software counter.  So just reset the counter.
-       */
-      brw->sol.primitives_generated = 0;
-      brw->sol.counting_primitives_generated = true;
-      break;
-
-   case GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN:
-      /* We don't actually query the hardware for this value; we keep track of
-       * it a software counter.  So just reset the counter.
-       */
-      brw->sol.primitives_written = 0;
-      brw->sol.counting_primitives_written = true;
-      break;
-
    default:
       assert(!"Unrecognized query target in brw_begin_query()");
       break;
@@ -378,34 +354,6 @@ brw_end_query(struct gl_context *ctx, struct gl_query_object *q)
 
       intel->stats_wm--;
       brw->state.dirty.brw |= BRW_NEW_STATS_WM;
-      break;
-
-   case GL_PRIMITIVES_GENERATED:
-      /* We don't actually query the hardware for this value; we keep track of
-       * it in a software counter.  So just read the counter and store it in
-       * the query object.
-       */
-      query->Base.Result = brw->sol.primitives_generated;
-      brw->sol.counting_primitives_generated = false;
-
-      /* And set query->bo to NULL so that this query won't try to wait
-       * for any rendering to complete.
-       */
-      query->bo = NULL;
-      break;
-
-   case GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN:
-      /* We don't actually query the hardware for this value; we keep track of
-       * it in a software counter.  So just read the counter and store it in
-       * the query object.
-       */
-      query->Base.Result = brw->sol.primitives_written;
-      brw->sol.counting_primitives_written = false;
-
-      /* And set query->bo to NULL so that this query won't try to wait
-       * for any rendering to complete.
-       */
-      query->bo = NULL;
       break;
 
    default:

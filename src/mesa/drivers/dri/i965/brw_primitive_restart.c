@@ -73,17 +73,6 @@ can_cut_index_handle_prims(struct gl_context *ctx,
                            const struct _mesa_index_buffer *ib)
 {
    struct intel_context *intel = intel_context(ctx);
-   struct brw_context *brw = brw_context(ctx);
-
-   if (brw->sol.counting_primitives_generated ||
-       brw->sol.counting_primitives_written) {
-      /* Counting primitives generated in hardware is not currently
-       * supported, so take the software path. We need to investigate
-       * the *_PRIMITIVES_COUNT registers to allow this to be handled
-       * entirely in hardware.
-       */
-      return false;
-   }
 
    /* Otherwise Haswell can do it all. */
    if (intel->is_haswell)
