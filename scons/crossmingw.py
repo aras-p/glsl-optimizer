@@ -130,40 +130,6 @@ SCons.Tool.SourceFileScanner.add_scanner('.rc', SCons.Defaults.CScan)
 
 
 
-def compile_without_gstabs(env, sources, c_file):
-    '''This is a hack used to compile some source files without the
-    -gstabs option.
-
-    It seems that some versions of mingw32's gcc (4.4.2 at least) die
-    when compiling large files with the -gstabs option.  -gstabs is
-    related to debug symbols and can be omitted from the effected
-    files.
-
-    This function compiles the given c_file without -gstabs, removes
-    the c_file from the sources list, then appends the new .o file to
-    sources.  Then return the new sources list.
-    '''
-
-    # Modify CCFLAGS to not have -gstabs option:
-    env2 = env.Clone()
-    flags = str(env2['CCFLAGS'])
-    flags = flags.replace("-gstabs", "")
-    env2['CCFLAGS'] = SCons.Util.CLVar(flags)
-    
-    # Build the special-case files:
-    obj_file = env2.SharedObject(c_file)
-
-    # Replace ".cpp" or ".c" with ".o"
-    o_file = c_file.replace(".cpp", ".o")
-    o_file = o_file.replace(".c", ".o")
-
-    # Replace the .c files with the specially-compiled .o file
-    sources.remove(c_file)
-    sources.append(o_file)
-
-    return sources
-
-
 def generate(env):
     mingw_prefix = find(env)
 
@@ -220,14 +186,6 @@ def generate(env):
     env['SHLIBSUFFIX']    = '.dll'
     env['LIBPREFIXES']    = [ 'lib', '' ]
     env['LIBSUFFIXES']    = [ '.a', '.lib' ]
-
-    # MinGW x86 port of gdb does not handle well dwarf debug info which is the
-    # default in recent gcc versions.  The x64 port gdb from mingw-w64 seems to
-    # handle it fine though, so stick with the default there.
-    if env['machine'] != 'x86_64':
-        env.AppendUnique(CCFLAGS = ['-gstabs'])
-
-    env.AddMethod(compile_without_gstabs, 'compile_without_gstabs')
 
 def exists(env):
     return find(env)
