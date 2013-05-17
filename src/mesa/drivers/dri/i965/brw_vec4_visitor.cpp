@@ -1671,6 +1671,10 @@ vec4_visitor::visit(ir_expression *ir)
       break;
    }
 
+   case ir_binop_vector_extract:
+      assert(!"should have been lowered by vec_index_to_cond_assign");
+      break;
+
    case ir_triop_lrp:
       op[0] = fix_3src_operand(op[0]);
       op[1] = fix_3src_operand(op[1]);
