@@ -197,12 +197,6 @@ static void brw_new_batch( struct intel_context *intel )
 
    brw->state_batch_count = 0;
 
-   /* Gen7 needs to track what the real transform feedback vertex count was at
-    * the start of the batch, since the kernel will be resetting the offset to
-    * 0.
-    */
-   brw->sol.offset_0_batch_start = brw->sol.svbi_0_starting_index;
-
    brw->ib.type = -1;
 
    /* Mark that the current program cache BO has been used by the GPU.
