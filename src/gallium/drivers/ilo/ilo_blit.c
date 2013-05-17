@@ -37,6 +37,88 @@
 #include "ilo_screen.h"
 #include "ilo_blit.h"
 
+/*
+ * From the Sandy Bridge PRM, volume 1 part 5, page 7:
+ *
+ *     "The BLT engine is capable of transferring very large quantities of
+ *      graphics data. Any graphics data read from and written to the
+ *      destination is permitted to represent a number of pixels that occupies
+ *      up to 65,536 scan lines and up to 32,768 bytes per scan line at the
+ *      destination. The maximum number of pixels that may be represented per
+ *      scan line's worth of graphics data depends on the color depth."
+ */
+static const int gen6_max_bytes_per_scanline = 32768;
+static const int gen6_max_scanlines = 65536;
+
+static void
+ilo_blit_own_blt_ring(struct ilo_context *ilo)
+{
+   ilo_cp_set_ring(ilo->cp, ILO_CP_RING_BLT);
+   ilo_cp_set_owner(ilo->cp, NULL, 0);
+}
+
+static void
+gen6_XY_COLOR_BLT(struct ilo_context *ilo, struct intel_bo *dst_bo,
+                  uint32_t dst_offset, int16_t dst_pitch,
+                  enum intel_tiling_mode dst_tiling,
+                  int16_t x1, int16_t y1, int16_t x2, int16_t y2,
+                  uint32_t color,
+                  uint8_t rop, int cpp, bool write_alpha)
+{
+   const uint8_t cmd_len = 6;
+   struct ilo_cp *cp = ilo->cp;
+   int dst_align, dst_pitch_shift;
+   uint32_t dw0, dw1;
+
+   dw0 = XY_COLOR_BLT_CMD | (cmd_len - 2);
+
+   if (dst_tiling == INTEL_TILING_NONE) {
+      dst_align = 4;
+      dst_pitch_shift = 0;
+   }
+   else {
+      dw0 |= XY_DST_TILED;
+
+      dst_align = (dst_tiling == INTEL_TILING_Y) ? 128 : 512;
+      /* in dwords when tiled */
+      dst_pitch_shift = 2;
+   }
+
+   assert(cpp == 4 || cpp == 2 || cpp == 1);
+   assert((x2 - x1) * cpp < gen6_max_bytes_per_scanline);
+   assert(y2 - y1 < gen6_max_scanlines);
+   assert(dst_offset % dst_align == 0 && dst_pitch % dst_align == 0);
+
+   dw1 = rop << 16 |
+         dst_pitch >> dst_pitch_shift;
+
+   switch (cpp) {
+   case 4:
+      dw0 |= XY_BLT_WRITE_RGB;
+      if (write_alpha)
+         dw0 |= XY_BLT_WRITE_ALPHA;
+
+      dw1 |= BR13_8888;
+      break;
+   case 2:
+      dw1 |= BR13_565;
+      break;
+   case 1:
+      dw1 |= BR13_8;
+      break;
+   }
+
+   ilo_cp_begin(cp, cmd_len);
+   ilo_cp_write(cp, dw0);
+   ilo_cp_write(cp, dw1);
+   ilo_cp_write(cp, y1 << 16 | x1);
+   ilo_cp_write(cp, y2 << 16 | x2);
+   ilo_cp_write_bo(cp, dst_offset, dst_bo,
+                   INTEL_DOMAIN_RENDER, INTEL_DOMAIN_RENDER);
+   ilo_cp_write(cp, color);
+   ilo_cp_end(cp);
+}
+
 static bool
 blitter_xy_color_blt(struct pipe_context *pipe,
                      struct pipe_resource *res,
@@ -44,12 +126,11 @@ blitter_xy_color_blt(struct pipe_context *pipe,
                      int16_t x2, int16_t y2,
                      uint32_t color)
 {
-   const int cmd_len = 6;
    struct ilo_context *ilo = ilo_context(pipe);
    struct ilo_texture *tex = ilo_texture(res);
-   uint32_t cmd, br13;
-   int cpp, stride;
-   struct intel_bo *bo_check[2];
+   const int cpp = util_format_get_blocksize(tex->bo_format);
+   const uint8_t rop = 0xf0; /* PATCOPY */
+   struct intel_bo *aper_check[2];
 
    /* how to support Y-tiling? */
    if (tex->tiling == INTEL_TILING_Y)
@@ -59,54 +140,17 @@ blitter_xy_color_blt(struct pipe_context *pipe,
    if (x1 >= x2 || y1 >= y2)
       return true;
 
-   cmd = XY_COLOR_BLT_CMD | (cmd_len - 2);
-   br13 = 0xf0 << 16;
-
-   cpp = util_format_get_blocksize(tex->base.format);
-   switch (cpp) {
-   case 4:
-      cmd |= XY_BLT_WRITE_ALPHA | XY_BLT_WRITE_RGB;
-      br13 |= BR13_8888;
-      break;
-   case 2:
-      br13 |= BR13_565;
-      break;
-   case 1:
-      br13 |= BR13_8;
-      break;
-   default:
-      return false;
-      break;
-   }
-
-   stride = tex->bo_stride;
-   if (tex->tiling != INTEL_TILING_NONE) {
-      assert(tex->tiling == INTEL_TILING_X);
-
-      cmd |= XY_DST_TILED;
-      /* in dwords */
-      stride /= 4;
-   }
-
-   ilo_cp_set_ring(ilo->cp, ILO_CP_RING_BLT);
-   ilo_cp_set_owner(ilo->cp, NULL, 0);
+   ilo_blit_own_blt_ring(ilo);
 
    /* make room if necessary */
-   bo_check[0] = ilo->cp->bo;
-   bo_check[1] = tex->bo;
-   if (ilo->winsys->check_aperture_space(ilo->winsys, bo_check, 2))
+   aper_check[0] = ilo->cp->bo;
+   aper_check[1] = tex->bo;
+   if (ilo->winsys->check_aperture_space(ilo->winsys, aper_check, 2))
       ilo_cp_flush(ilo->cp);
 
-   ilo_cp_begin(ilo->cp, cmd_len);
-   ilo_cp_write(ilo->cp, cmd);
-   ilo_cp_write(ilo->cp, br13 | stride);
-   ilo_cp_write(ilo->cp, (y1 << 16) | x1);
-   ilo_cp_write(ilo->cp, (y2 << 16) | x2);
-   ilo_cp_write_bo(ilo->cp, 0, tex->bo,
-                   INTEL_DOMAIN_RENDER,
-                   INTEL_DOMAIN_RENDER);
-   ilo_cp_write(ilo->cp, color);
-   ilo_cp_end(ilo->cp);
+   gen6_XY_COLOR_BLT(ilo,
+         tex->bo, 0, tex->bo_stride, tex->tiling,
+         x1, y1, x2, y2, color, rop, cpp, true);
 
    return true;
 }
