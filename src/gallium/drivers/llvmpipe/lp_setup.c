@@ -748,26 +748,28 @@ lp_setup_set_fragment_sampler_views(struct lp_setup_context *setup,
                      jit_tex->img_stride[j] = lp_tex->img_stride[j];
                   }
 
-		  /* FIXME: This is incorrect, as currently layer stride depends on miplevel */
-#if 0
-                  /*
-                   * We don't use anything like first_element (for buffers) or
-                   * first_layer (for arrays), instead adjust the last_element
-                   * (width) or last_layer (depth) plus the base pointer.
-                   * Less parameters and faster at shader execution.
-                   * XXX Could do the same for mip levels.
-                   */
                   if (res->target == PIPE_TEXTURE_1D_ARRAY ||
                       res->target == PIPE_TEXTURE_2D_ARRAY) {
+                     /*
+                      * For array textures, we don't have first_layer, instead
+                      * adjust last_layer (stored as depth) plus the mip level offsets
+                      * (as we have mip-first layout can't just adjust base ptr).
+                      * XXX For mip levels, could do something similar.
+                      */
                      jit_tex->depth = view->u.tex.last_layer - view->u.tex.first_layer + 1;
-                     jit_tex->base = (uint8_t *)jit_tex->base +
-                                     view->u.tex.first_layer * lp_tex->img_stride[0];
+                     for (j = first_level; j <= last_level; j++) {
+                        jit_tex->mip_offsets[j] += view->u.tex.first_layer *
+                                                   lp_tex->img_stride[j];
+                     }
                      assert(view->u.tex.first_layer <= view->u.tex.last_layer);
                      assert(view->u.tex.last_layer < res->array_size);
                   }
-#endif
                }
                else {
+                  /*
+                   * For buffers, we don't have first_element, instead adjust
+                   * last_element (stored as width) plus the base pointer.
+                   */
                   unsigned view_blocksize = util_format_get_blocksize(view->format);
                   /* probably don't really need to fill that out */
                   jit_tex->mip_offsets[0] = 0;

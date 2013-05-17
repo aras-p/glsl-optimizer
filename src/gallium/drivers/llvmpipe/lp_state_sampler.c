@@ -320,8 +320,10 @@ prepare_shader_sampling(
                if (res->target == PIPE_TEXTURE_1D_ARRAY ||
                    res->target == PIPE_TEXTURE_2D_ARRAY) {
                   num_layers = view->u.tex.last_layer - view->u.tex.first_layer + 1;
-                  addr = (uint8_t *)addr +
-                                  view->u.tex.first_layer * lp_tex->img_stride[0];
+                  for (j = first_level; j <= last_level; j++) {
+                     mip_offsets[j] += view->u.tex.first_layer *
+                                       lp_tex->img_stride[j];
+                  }
                   assert(view->u.tex.first_layer <= view->u.tex.last_layer);
                   assert(view->u.tex.last_layer < res->array_size);
                }
