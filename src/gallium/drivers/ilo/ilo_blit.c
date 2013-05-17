@@ -119,6 +119,147 @@ gen6_XY_COLOR_BLT(struct ilo_context *ilo, struct intel_bo *dst_bo,
    ilo_cp_end(cp);
 }
 
+static void
+gen6_SRC_COPY_BLT(struct ilo_context *ilo, struct intel_bo *dst_bo,
+                  uint32_t dst_offset, int16_t dst_pitch,
+                  uint16_t width, uint16_t height,
+                  struct intel_bo *src_bo,
+                  uint32_t src_offset, int16_t src_pitch,
+                  uint8_t rop, int cpp, bool write_alpha, bool dir_rtl)
+{
+   const uint8_t cmd_len = 6;
+   struct ilo_cp *cp = ilo->cp;
+   uint32_t dw0, dw1;
+
+   assert(cpp == 4 || cpp == 2 || cpp == 1);
+   assert(width < gen6_max_bytes_per_scanline);
+   assert(height < gen6_max_scanlines);
+   /* offsets are naturally aligned and pitches are dword-aligned */
+   assert(dst_offset % cpp == 0 && dst_pitch % 4 == 0);
+   assert(src_offset % cpp == 0 && src_pitch % 4 == 0);
+
+#ifndef SRC_COPY_BLT_CMD
+#define SRC_COPY_BLT_CMD (CMD_2D | (0x43 << 22))
+#endif
+   dw0 = SRC_COPY_BLT_CMD | (cmd_len - 2);
+   dw1 = rop << 16 | dst_pitch;
+
+   if (dir_rtl)
+      dw1 |= 1 << 30;
+
+   switch (cpp) {
+   case 4:
+      dw0 |= XY_BLT_WRITE_RGB;
+      if (write_alpha)
+         dw0 |= XY_BLT_WRITE_ALPHA;
+
+      dw1 |= BR13_8888;
+      break;
+   case 2:
+      dw1 |= BR13_565;
+      break;
+   case 1:
+      dw1 |= BR13_8;
+      break;
+   }
+
+   ilo_cp_begin(cp, cmd_len);
+   ilo_cp_write(cp, dw0);
+   ilo_cp_write(cp, dw1);
+   ilo_cp_write(cp, height << 16 | width);
+   ilo_cp_write_bo(cp, dst_offset, dst_bo, INTEL_DOMAIN_RENDER,
+                                           INTEL_DOMAIN_RENDER);
+   ilo_cp_write(cp, src_pitch);
+   ilo_cp_write_bo(cp, src_offset, src_bo, INTEL_DOMAIN_RENDER, 0);
+   ilo_cp_end(cp);
+}
+
+static bool
+buf_copy_region(struct ilo_context *ilo,
+                struct ilo_buffer *dst, unsigned dst_offset,
+                struct ilo_buffer *src, unsigned src_offset,
+                unsigned size)
+{
+   const uint8_t rop = 0xcc; /* SRCCOPY */
+   unsigned offset = 0;
+   struct intel_bo *aper_check[3];
+
+   ilo_blit_own_blt_ring(ilo);
+
+   /* make room if necessary */
+   aper_check[0] = ilo->cp->bo;
+   aper_check[1] = dst->bo;
+   aper_check[2] = src->bo;
+   if (ilo->winsys->check_aperture_space(ilo->winsys, aper_check, 3))
+      ilo_cp_flush(ilo->cp);
+
+   while (size) {
+      unsigned width, height;
+      int16_t pitch;
+
+      width = size;
+      height = 1;
+      pitch = 0;
+
+      if (width > gen6_max_bytes_per_scanline) {
+         /* less than INT16_MAX and dword-aligned */
+         pitch = 32764;
+
+         width = pitch;
+         height = size / width;
+         if (height > gen6_max_scanlines)
+            height = gen6_max_scanlines;
+      }
+
+      gen6_SRC_COPY_BLT(ilo,
+            dst->bo, dst_offset + offset, pitch,
+            width, height,
+            src->bo, src_offset + offset, pitch,
+            rop, 1, true, false);
+
+      offset += pitch * height;
+      size -= width * height;
+   }
+
+   return true;
+}
+
+static void
+ilo_resource_copy_region(struct pipe_context *pipe,
+                         struct pipe_resource *dst,
+                         unsigned dst_level,
+                         unsigned dstx, unsigned dsty, unsigned dstz,
+                         struct pipe_resource *src,
+                         unsigned src_level,
+                         const struct pipe_box *src_box)
+{
+   bool success;
+
+   if (dst->target == PIPE_BUFFER && src->target == PIPE_BUFFER) {
+      const unsigned dst_offset = dstx;
+      const unsigned src_offset = src_box->x;
+      const unsigned size = src_box->width;
+
+      assert(dst_level == 0 && dsty == 0 && dstz == 0);
+      assert(src_level == 0 &&
+             src_box->y == 0 &&
+             src_box->z == 0 &&
+             src_box->height == 1 &&
+             src_box->depth == 1);
+
+      success = buf_copy_region(ilo_context(pipe),
+            ilo_buffer(dst), dst_offset, ilo_buffer(src), src_offset, size);
+   }
+   else {
+      success = false;
+   }
+
+   if (!success) {
+      util_resource_copy_region(pipe, dst, dst_level,
+            dstx, dsty, dstz, src, src_level, src_box);
+   }
+}
+
 static bool
 blitter_xy_color_blt(struct pipe_context *pipe,
                      struct pipe_resource *res,
@@ -331,7 +472,7 @@ ilo_blit(struct pipe_context *pipe, const struct pipe_blit_info *info)
 void
 ilo_init_blit_functions(struct ilo_context *ilo)
 {
-   ilo->base.resource_copy_region = util_resource_copy_region;
+   ilo->base.resource_copy_region = ilo_resource_copy_region;
    ilo->base.blit = ilo_blit;
 
    ilo->base.clear = ilo_clear;
