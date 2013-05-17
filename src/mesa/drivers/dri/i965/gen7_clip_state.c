@@ -102,6 +102,13 @@ upload_clip_state(struct brw_context *brw)
       dw2 |= GEN6_CLIP_GB_TEST;
    }
 
+   /* BRW_NEW_RASTERIZER_DISCARD */
+   if (ctx->RasterDiscard) {
+      dw2 |= GEN6_CLIP_MODE_REJECT_ALL;
+      perf_debug("Rasterizer discard is currently implemented via the clipper; "
+                 "using the SOL unit may be faster.");
+   }
+
    BEGIN_BATCH(4);
    OUT_BATCH(_3DSTATE_CLIP << 16 | (4 - 2));
    OUT_BATCH(dw1);
@@ -122,7 +129,9 @@ const struct brw_tracked_state gen7_clip_state = {
                 _NEW_POLYGON |
                 _NEW_LIGHT |
                 _NEW_TRANSFORM),
-      .brw   = BRW_NEW_CONTEXT | BRW_NEW_META_IN_PROGRESS,
+      .brw   = BRW_NEW_CONTEXT |
+               BRW_NEW_META_IN_PROGRESS |
+               BRW_NEW_RASTERIZER_DISCARD,
       .cache = CACHE_NEW_WM_PROG
    },
    .emit = upload_clip_state,
