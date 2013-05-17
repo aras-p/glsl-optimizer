@@ -58,6 +58,33 @@ ilo_blit_own_blt_ring(struct ilo_context *ilo)
 }
 
 static void
+gen6_MI_FLUSH_DW(struct ilo_context *ilo)
+{
+   const uint8_t cmd_len = 4;
+   struct ilo_cp *cp = ilo->cp;
+
+   ilo_cp_begin(cp, cmd_len);
+   ilo_cp_write(cp, MI_FLUSH_DW | (cmd_len - 2));
+   ilo_cp_write(cp, 0);
+   ilo_cp_write(cp, 0);
+   ilo_cp_write(cp, 0);
+   ilo_cp_end(cp);
+}
+
+static void
+gen6_MI_LOAD_REGISTER_IMM(struct ilo_context *ilo, uint32_t reg, uint32_t val)
+{
+   const uint8_t cmd_len = 3;
+   struct ilo_cp *cp = ilo->cp;
+
+   ilo_cp_begin(cp, cmd_len);
+   ilo_cp_write(cp, MI_LOAD_REGISTER_IMM | (cmd_len - 2));
+   ilo_cp_write(cp, reg);
+   ilo_cp_write(cp, val);
+   ilo_cp_end(cp);
+}
+
+static void
 gen6_XY_COLOR_BLT(struct ilo_context *ilo, struct intel_bo *dst_bo,
                   uint32_t dst_offset, int16_t dst_pitch,
                   enum intel_tiling_mode dst_tiling,
@@ -174,6 +201,210 @@ gen6_SRC_COPY_BLT(struct ilo_context *ilo, struct intel_bo *dst_bo,
    ilo_cp_end(cp);
 }
 
+static void
+gen6_XY_SRC_COPY_BLT(struct ilo_context *ilo, struct intel_bo *dst_bo,
+                     uint32_t dst_offset, int16_t dst_pitch,
+                     enum intel_tiling_mode dst_tiling,
+                     int16_t x1, int16_t y1, int16_t x2, int16_t y2,
+                     struct intel_bo *src_bo,
+                     uint32_t src_offset, int16_t src_pitch,
+                     enum intel_tiling_mode src_tiling,
+                     int16_t src_x, int16_t src_y,
+                     uint8_t rop, int cpp, bool write_alpha)
+{
+   const uint8_t cmd_len = 8;
+   struct ilo_cp *cp = ilo->cp;
+   int dst_align, dst_pitch_shift;
+   int src_align, src_pitch_shift;
+   uint32_t dw0, dw1;
+
+   dw0 = XY_SRC_COPY_BLT_CMD | (cmd_len - 2);
+
+   if (dst_tiling == INTEL_TILING_NONE) {
+      dst_align = 4;
+      dst_pitch_shift = 0;
+   }
+   else {
+      dw0 |= XY_DST_TILED;
+
+      dst_align = (dst_tiling == INTEL_TILING_Y) ? 128 : 512;
+      /* in dwords when tiled */
+      dst_pitch_shift = 2;
+   }
+
+   if (src_tiling == INTEL_TILING_NONE) {
+      src_align = 4;
+      src_pitch_shift = 0;
+   }
+   else {
+      dw0 |= XY_SRC_TILED;
+
+      src_align = (src_tiling == INTEL_TILING_Y) ? 128 : 512;
+      /* in dwords when tiled */
+      src_pitch_shift = 2;
+   }
+
+   assert(cpp == 4 || cpp == 2 || cpp == 1);
+   assert((x2 - x1) * cpp < gen6_max_bytes_per_scanline);
+   assert(y2 - y1 < gen6_max_scanlines);
+   assert(dst_offset % dst_align == 0 && dst_pitch % dst_align == 0);
+   assert(src_offset % src_align == 0 && src_pitch % src_align == 0);
+
+   dw1 = rop << 16 |
+         dst_pitch >> dst_pitch_shift;
+
+   switch (cpp) {
+   case 4:
+      dw0 |= XY_BLT_WRITE_RGB;
+      if (write_alpha)
+         dw0 |= XY_BLT_WRITE_ALPHA;
+
+      dw1 |= BR13_8888;
+      break;
+   case 2:
+      dw1 |= BR13_565;
+      break;
+   case 1:
+      dw1 |= BR13_8;
+      break;
+   }
+
+   ilo_cp_begin(cp, cmd_len);
+   ilo_cp_write(cp, dw0);
+   ilo_cp_write(cp, dw1);
+   ilo_cp_write(cp, y1 << 16 | x1);
+   ilo_cp_write(cp, y2 << 16 | x2);
+   ilo_cp_write_bo(cp, dst_offset, dst_bo, INTEL_DOMAIN_RENDER,
+                                           INTEL_DOMAIN_RENDER);
+   ilo_cp_write(cp, src_y << 16 | src_x);
+   ilo_cp_write(cp, src_pitch >> src_pitch_shift);
+   ilo_cp_write_bo(cp, src_offset, src_bo, INTEL_DOMAIN_RENDER, 0);
+   ilo_cp_end(cp);
+}
+
+static bool
+tex_copy_region(struct ilo_context *ilo,
+                struct ilo_texture *dst,
+                unsigned dst_level,
+                unsigned dst_x, unsigned dst_y, unsigned dst_z,
+                struct ilo_texture *src,
+                unsigned src_level,
+                const struct pipe_box *src_box)
+{
+   const struct util_format_description *desc =
+      util_format_description(dst->bo_format);
+   const unsigned max_extent = 32767; /* INT16_MAX */
+   const uint8_t rop = 0xcc; /* SRCCOPY */
+   struct intel_bo *aper_check[3];
+   uint32_t swctrl;
+   int cpp, xscale, slice;
+
+   /* no W-tiling support */
+   if (dst->separate_s8 || src->separate_s8)
+      return false;
+
+   if (dst->bo_stride > max_extent || src->bo_stride > max_extent)
+      return false;
+
+   cpp = desc->block.bits / 8;
+   xscale = 1;
+
+   /* accommodate for larger cpp */
+   if (cpp > 4) {
+      if (cpp % 2 == 1)
+         return false;
+
+      cpp = (cpp % 4 == 0) ? 4 : 2;
+      xscale = (desc->block.bits / 8) / cpp;
+   }
+
+   ilo_blit_own_blt_ring(ilo);
+
+   /* make room if necessary */
+   aper_check[0] = ilo->cp->bo;
+   aper_check[1] = dst->bo;
+   aper_check[2] = src->bo;
+   if (ilo->winsys->check_aperture_space(ilo->winsys, aper_check, 3))
+      ilo_cp_flush(ilo->cp);
+
+   swctrl = 0x0;
+
+   if (dst->tiling == INTEL_TILING_Y) {
+      swctrl |= BCS_SWCTRL_DST_Y << 16 |
+                BCS_SWCTRL_DST_Y;
+   }
+
+   if (src->tiling == INTEL_TILING_Y) {
+      swctrl |= BCS_SWCTRL_SRC_Y << 16 |
+                BCS_SWCTRL_SRC_Y;
+   }
+
+   if (swctrl) {
+      /*
+       * Most clients expect BLT engine to be stateless.  If we have to set
+       * BCS_SWCTRL to a non-default value, we have to set it back in the same
+       * batch buffer.
+       */
+      if (ilo_cp_space(ilo->cp) < (4 + 3) * 2 + src_box->depth * 8)
+         ilo_cp_flush(ilo->cp);
+
+      ilo_cp_assert_no_implicit_flush(ilo->cp, true);
+
+      /*
+       * From the Ivy Bridge PRM, volume 1 part 4, page 133:
+       *
+       *     "SW is required to flush the HW before changing the polarity of
+       *      this bit (Tile Y Destination/Source)."
+       */
+      gen6_MI_FLUSH_DW(ilo);
+      gen6_MI_LOAD_REGISTER_IMM(ilo, BCS_SWCTRL, swctrl);
+
+      swctrl &= ~(BCS_SWCTRL_DST_Y | BCS_SWCTRL_SRC_Y);
+   }
+
+   for (slice = 0; slice < src_box->depth; slice++) {
+      const struct ilo_texture_slice *dst_slice =
+         &dst->slice_offsets[dst_level][dst_z + slice];
+      const struct ilo_texture_slice *src_slice =
+         &src->slice_offsets[src_level][src_box->z + slice];
+      unsigned x1, y1, x2, y2, src_x, src_y;
+
+      x1 = (dst_slice->x + dst_x) * xscale;
+      y1 = dst_slice->y + dst_y;
+      x2 = (x1 + src_box->width) * xscale;
+      y2 = y1 + src_box->height;
+      src_x = (src_slice->x + src_box->x) * xscale;
+      src_y = src_slice->y + src_box->y;
+
+      x1 /= desc->block.width;
+      y1 /= desc->block.height;
+      x2 = (x2 + desc->block.width - 1) / desc->block.width;
+      y2 = (y2 + desc->block.height - 1) / desc->block.height;
+      src_x /= desc->block.width;
+      src_y /= desc->block.height;
+
+      if (x2 > max_extent || y2 > max_extent ||
+          src_x > max_extent || src_y > max_extent ||
+          (x2 - x1) * cpp > gen6_max_bytes_per_scanline)
+         break;
+
+      gen6_XY_SRC_COPY_BLT(ilo,
+            dst->bo, 0, dst->bo_stride, dst->tiling,
+            x1, y1, x2, y2,
+            src->bo, 0, src->bo_stride, src->tiling,
+            src_x, src_y, rop, cpp, true);
+   }
+
+   if (swctrl) {
+      gen6_MI_FLUSH_DW(ilo);
+      gen6_MI_LOAD_REGISTER_IMM(ilo, BCS_SWCTRL, swctrl);
+
+      ilo_cp_assert_no_implicit_flush(ilo->cp, false);
+   }
+
+   return (slice == src_box->depth);
+}
+
 static bool
 buf_copy_region(struct ilo_context *ilo,
                 struct ilo_buffer *dst, unsigned dst_offset,
@@ -235,7 +466,12 @@ ilo_resource_copy_region(struct pipe_context *pipe,
 {
    bool success;
 
-   if (dst->target == PIPE_BUFFER && src->target == PIPE_BUFFER) {
+   if (dst->target != PIPE_BUFFER && src->target != PIPE_BUFFER) {
+      success = tex_copy_region(ilo_context(pipe),
+            ilo_texture(dst), dst_level, dstx, dsty, dstz,
+            ilo_texture(src), src_level, src_box);
+   }
+   else if (dst->target == PIPE_BUFFER && src->target == PIPE_BUFFER) {
       const unsigned dst_offset = dstx;
       const unsigned src_offset = src_box->x;
       const unsigned size = src_box->width;
