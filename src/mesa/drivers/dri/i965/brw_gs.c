@@ -214,12 +214,6 @@ static void populate_key( struct brw_context *brw,
                swizzle_for_offset[linked_xfb_info->Outputs[i].ComponentOffset];
          }
       }
-      /* On Gen6, GS is also used for rasterizer discard. */
-      /* BRW_NEW_RASTERIZER_DISCARD */
-      if (ctx->RasterDiscard) {
-         key->need_gs_prog = true;
-         key->rasterizer_discard = true;
-      }
    } else {
       /* Pre-gen6, GS is used to transform QUADLIST, QUADSTRIP, and LINELOOP
        * into simpler primitives.
@@ -259,8 +253,7 @@ const struct brw_tracked_state brw_gs_prog = {
    .dirty = {
       .mesa  = (_NEW_LIGHT),
       .brw   = (BRW_NEW_PRIMITIVE |
-                BRW_NEW_TRANSFORM_FEEDBACK |
-                BRW_NEW_RASTERIZER_DISCARD),
+                BRW_NEW_TRANSFORM_FEEDBACK),
       .cache = CACHE_NEW_VS_PROG
    },
    .emit = brw_upload_gs_prog

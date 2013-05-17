@@ -49,7 +49,6 @@ struct brw_gs_prog_key {
 
    GLuint pv_first:1;
    GLuint need_gs_prog:1;
-   GLuint rasterizer_discard:1;
 
    /**
     * Number of varyings that are output to transform feedback.
