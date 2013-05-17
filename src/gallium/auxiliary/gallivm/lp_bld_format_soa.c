@@ -51,16 +51,25 @@ lp_build_format_swizzle_soa(const struct util_format_description *format_desc,
    assert(UTIL_FORMAT_SWIZZLE_1 == PIPE_SWIZZLE_ONE);
 
    if (format_desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS) {
+      enum util_format_swizzle swizzle;
+      LLVMValueRef depth_or_stencil;
+
+      if (util_format_has_stencil(format_desc) &&
+          !util_format_has_depth(format_desc)) {
+         assert(!bld->type.floating);
+         swizzle = format_desc->swizzle[1];
+      }
+      else {
+         assert(bld->type.floating);
+         swizzle = format_desc->swizzle[0];
+      }
       /*
-       * Return zzz1 for depth-stencil formats.
-       *
-       * XXX: Allow to control the depth swizzle with an additional parameter,
-       * as the caller may wish another depth swizzle, or retain the stencil
-       * value.
+       * Return zzz1 or sss1 for depth-stencil formats here.
+       * Correct swizzling will be handled by apply_sampler_swizzle() later.
        */
-      enum util_format_swizzle swizzle = format_desc->swizzle[0];
-      LLVMValueRef depth = lp_build_swizzle_soa_channel(bld, unswizzled, swizzle);
-      swizzled_out[2] = swizzled_out[1] = swizzled_out[0] = depth;
+      depth_or_stencil = lp_build_swizzle_soa_channel(bld, unswizzled, swizzle);
+
+      swizzled_out[2] = swizzled_out[1] = swizzled_out[0] = depth_or_stencil;
       swizzled_out[3] = bld->one;
    }
    else {
@@ -389,6 +398,40 @@ lp_build_fetch_rgba_soa(struct gallivm_state *gallivm,
       else {
          lp_build_rgb9e5_to_float(gallivm, packed, rgba_out);
       }
+      return;
+   }
+
+   if (format_desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS &&
+       format_desc->block.bits == 64) {
+      /*
+       * special case the format is 64 bits but we only require
+       * 32bit (or 8bit) from each block.
+       */
+      LLVMValueRef packed;
+
+      if (format_desc->format == PIPE_FORMAT_X32_S8X24_UINT) {
+         /*
+          * for stencil simply fix up offsets - could in fact change
+          * base_ptr instead even outside the shader.
+          */
+         unsigned mask = (1 << 8) - 1;
+         LLVMValueRef s_offset = lp_build_const_int_vec(gallivm, type, 4);
+         offset = LLVMBuildAdd(builder, offset, s_offset, "");
+         packed = lp_build_gather(gallivm, type.length,
+                                  32, type.width, base_ptr, offset);
+         packed = LLVMBuildAnd(builder, packed,
+                               lp_build_const_int_vec(gallivm, type, mask), "");
+      }
+      else {
+         assert (format_desc->format == PIPE_FORMAT_Z32_FLOAT_S8X24_UINT);
+         packed = lp_build_gather(gallivm, type.length,
+                                  32, type.width, base_ptr, offset);
+         packed = LLVMBuildBitCast(builder, packed,
+                                   lp_build_vec_type(gallivm, type), "");
+      }
+      /* for consistency with lp_build_unpack_rgba_soa() return sss1 or zzz1 */
+      rgba_out[0] = rgba_out[1] = rgba_out[2] = packed;
+      rgba_out[3] = lp_build_const_vec(gallivm, type, 1.0f);
       return;
    }
 
