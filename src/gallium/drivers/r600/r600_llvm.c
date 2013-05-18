@@ -460,6 +460,12 @@ static void llvm_emit_tex(
 	for (c = 1; c < emit_data->arg_count; ++c)
 		args[c] = emit_data->args[c];
 
+	if (emit_data->inst->Instruction.Opcode == TGSI_OPCODE_TXF) {
+		args[1] = LLVMBuildShl(gallivm->builder, args[1], lp_build_const_int32(gallivm, 1), "");
+		args[2] = LLVMBuildShl(gallivm->builder, args[2], lp_build_const_int32(gallivm, 1), "");
+		args[3] = LLVMBuildShl(gallivm->builder, args[3], lp_build_const_int32(gallivm, 1), "");
+	}
+
 	sampler_src = emit_data->inst->Instruction.NumSrcRegs-1;
 
 	args[c++] = lp_build_const_int32(gallivm,
