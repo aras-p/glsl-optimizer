@@ -1175,7 +1175,9 @@ void radeon_llvm_context_init(struct radeon_llvm_context * ctx)
 	/* XXX: We need to revisit this.I think the correct way to do this is
 	 * to use length = 4 here and use the elem_bld for everything. */
 	type.floating = TRUE;
+	type.fixed = FALSE;
 	type.sign = TRUE;
+	type.norm = FALSE;
 	type.width = 32;
 	type.length = 1;
 
