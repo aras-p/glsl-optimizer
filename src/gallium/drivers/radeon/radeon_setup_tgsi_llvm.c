@@ -654,6 +654,9 @@ void radeon_llvm_emit_prepare_cube_coords(
 			opcode == TGSI_OPCODE_TXB2 ||
 			opcode == TGSI_OPCODE_TXL2) {
 			coords[3] = coords_arg[4];
+		} else if (opcode == TGSI_OPCODE_TXB ||
+			opcode == TGSI_OPCODE_TXL) {
+			coords[3] = coords_arg[3];
 		}
 	}
 
