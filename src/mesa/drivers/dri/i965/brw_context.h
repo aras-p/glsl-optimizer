@@ -153,7 +153,8 @@ enum brw_state_id {
    BRW_STATE_TRANSFORM_FEEDBACK,
    BRW_STATE_RASTERIZER_DISCARD,
    BRW_STATE_STATS_WM,
-   BRW_STATE_UNIFORM_BUFFER
+   BRW_STATE_UNIFORM_BUFFER,
+   BRW_STATE_META_IN_PROGRESS,
 };
 
 #define BRW_NEW_URB_FENCE               (1 << BRW_STATE_URB_FENCE)
@@ -186,6 +187,7 @@ enum brw_state_id {
 #define BRW_NEW_RASTERIZER_DISCARD	(1 << BRW_STATE_RASTERIZER_DISCARD)
 #define BRW_NEW_STATS_WM		(1 << BRW_STATE_STATS_WM)
 #define BRW_NEW_UNIFORM_BUFFER          (1 << BRW_STATE_UNIFORM_BUFFER)
+#define BRW_NEW_META_IN_PROGRESS        (1 << BRW_STATE_META_IN_PROGRESS)
 
 struct brw_state_flags {
    /** State update flags signalled by mesa internals */
@@ -794,6 +796,9 @@ struct brw_context
 
    struct brw_cache cache;
    struct brw_cached_batch_item *cached_batch_items;
+
+   /* Whether a meta-operation is in progress. */
+   bool meta_in_progress;
 
    struct {
       struct brw_vertex_element inputs[VERT_ATTRIB_MAX];

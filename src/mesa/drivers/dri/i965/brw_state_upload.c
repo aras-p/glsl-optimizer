@@ -373,6 +373,7 @@ static struct dirty_bit_map brw_bits[] = {
    DEFINE_BIT(BRW_NEW_TRANSFORM_FEEDBACK),
    DEFINE_BIT(BRW_NEW_RASTERIZER_DISCARD),
    DEFINE_BIT(BRW_NEW_UNIFORM_BUFFER),
+   DEFINE_BIT(BRW_NEW_META_IN_PROGRESS),
    {0, 0, 0}
 };
 
@@ -458,6 +459,11 @@ void brw_upload_state(struct brw_context *brw)
    if (brw->vertex_program != ctx->VertexProgram._Current) {
       brw->vertex_program = ctx->VertexProgram._Current;
       brw->state.dirty.brw |= BRW_NEW_VERTEX_PROGRAM;
+   }
+
+   if (brw->meta_in_progress != _mesa_meta_in_progress(ctx)) {
+      brw->meta_in_progress = _mesa_meta_in_progress(ctx);
+      brw->state.dirty.brw |= BRW_NEW_META_IN_PROGRESS;
    }
 
    if ((state->mesa | state->cache | state->brw) == 0)
