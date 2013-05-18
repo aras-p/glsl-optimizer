@@ -22,6 +22,7 @@
 
 #define CONSTANT_BUFFER_0_ADDR_SPACE 8
 #define CONSTANT_BUFFER_1_ADDR_SPACE (CONSTANT_BUFFER_0_ADDR_SPACE + R600_UCP_CONST_BUFFER)
+#define CONSTANT_TXQ_BUFFER (CONSTANT_BUFFER_0_ADDR_SPACE + R600_TXQ_CONST_BUFFER)
 
 static LLVMValueRef llvm_load_const_buffer(
 	struct lp_build_tgsi_context * bld_base,
@@ -471,6 +472,20 @@ static void llvm_emit_tex(
 	emit_data->output[0] = build_intrinsic(gallivm->builder,
 					action->intr_name,
 					emit_data->dst_type, args, c, LLVMReadNoneAttribute);
+
+	if (emit_data->inst->Instruction.Opcode == TGSI_OPCODE_TXQ &&
+		((emit_data->inst->Texture.Texture == TGSI_TEXTURE_CUBE_ARRAY ||
+		emit_data->inst->Texture.Texture == TGSI_TEXTURE_SHADOWCUBE_ARRAY)))
+		if (emit_data->inst->Dst[0].Register.WriteMask & 4) {
+			LLVMValueRef offset = lp_build_const_int32(bld_base->base.gallivm, 0);
+			LLVMValueRef ZLayer = LLVMBuildExtractElement(gallivm->builder,
+				llvm_load_const_buffer(bld_base, offset, CONSTANT_TXQ_BUFFER),
+				lp_build_const_int32(gallivm, 0), "");
+
+			emit_data->output[0] = LLVMBuildInsertElement(gallivm->builder, emit_data->output[0], ZLayer, lp_build_const_int32(gallivm, 2), "");
+			struct radeon_llvm_context * ctx = radeon_llvm_context(bld_base);
+			ctx->has_txq_cube_array_z_comp = true;
+		}
 }
 
 static void emit_cndlt(

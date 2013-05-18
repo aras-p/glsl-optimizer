@@ -1169,6 +1169,7 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 		radeon_llvm_ctx.clip_vertex = ctx.cv_output;
 		radeon_llvm_ctx.alpha_to_one = key.alpha_to_one;
 		mod = r600_tgsi_llvm(&radeon_llvm_ctx, tokens);
+		ctx.shader->has_txq_cube_array_z_comp = radeon_llvm_ctx.has_txq_cube_array_z_comp;
 
 		if (r600_llvm_compile(mod, rscreen->family, ctx.bc, &use_kill, dump)) {
 			radeon_llvm_dispose(&radeon_llvm_ctx);
