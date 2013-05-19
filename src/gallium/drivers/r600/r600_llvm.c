@@ -23,30 +23,40 @@
 #define CONSTANT_BUFFER_0_ADDR_SPACE 8
 #define CONSTANT_BUFFER_1_ADDR_SPACE (CONSTANT_BUFFER_0_ADDR_SPACE + R600_UCP_CONST_BUFFER)
 
+static LLVMValueRef llvm_load_const_buffer(
+	struct lp_build_tgsi_context * bld_base,
+	LLVMValueRef OffsetValue,
+	unsigned ConstantAddressSpace)
+{
+	LLVMValueRef offset[2] = {
+		LLVMConstInt(LLVMInt64TypeInContext(bld_base->base.gallivm->context), 0, false),
+		OffsetValue
+	};
+
+	LLVMTypeRef const_ptr_type = LLVMPointerType(LLVMArrayType(LLVMVectorType(bld_base->base.elem_type, 4), 1024),
+							ConstantAddressSpace);
+	LLVMValueRef const_ptr = LLVMBuildIntToPtr(bld_base->base.gallivm->builder, lp_build_const_int32(bld_base->base.gallivm, 0), const_ptr_type, "");
+	LLVMValueRef ptr = LLVMBuildGEP(bld_base->base.gallivm->builder, const_ptr, offset, 2, "");
+	return LLVMBuildLoad(bld_base->base.gallivm->builder, ptr, "");
+}
+
 static LLVMValueRef llvm_fetch_const(
 	struct lp_build_tgsi_context * bld_base,
 	const struct tgsi_full_src_register *reg,
 	enum tgsi_opcode_type type,
 	unsigned swizzle)
 {
-	LLVMValueRef offset[2] = {
-		LLVMConstInt(LLVMInt64TypeInContext(bld_base->base.gallivm->context), 0, false),
-		lp_build_const_int32(bld_base->base.gallivm, reg->Register.Index)
-	};
+	LLVMValueRef offset = lp_build_const_int32(bld_base->base.gallivm, reg->Register.Index);
 	if (reg->Register.Indirect) {
 		struct lp_build_tgsi_soa_context *bld = lp_soa_context(bld_base);
 		LLVMValueRef index = LLVMBuildLoad(bld_base->base.gallivm->builder, bld->addr[reg->Indirect.Index][reg->Indirect.Swizzle], "");
-		offset[1] = LLVMBuildAdd(bld_base->base.gallivm->builder, offset[1], index, "");
+		offset = LLVMBuildAdd(bld_base->base.gallivm->builder, offset, index, "");
 	}
 	unsigned ConstantAddressSpace = CONSTANT_BUFFER_0_ADDR_SPACE ;
 	if (reg->Register.Dimension) {
 		ConstantAddressSpace += reg->Dimension.Index;
 	}
-	LLVMTypeRef const_ptr_type = LLVMPointerType(LLVMArrayType(LLVMVectorType(bld_base->base.elem_type, 4), 1024),
-							ConstantAddressSpace);
-	LLVMValueRef const_ptr = LLVMBuildIntToPtr(bld_base->base.gallivm->builder, lp_build_const_int32(bld_base->base.gallivm, 0), const_ptr_type, "");
-	LLVMValueRef ptr = LLVMBuildGEP(bld_base->base.gallivm->builder, const_ptr, offset, 2, "");
-	LLVMValueRef cvecval = LLVMBuildLoad(bld_base->base.gallivm->builder, ptr, "");
+	LLVMValueRef cvecval = llvm_load_const_buffer(bld_base, offset, ConstantAddressSpace);
 	LLVMValueRef cval = LLVMBuildExtractElement(bld_base->base.gallivm->builder, cvecval, lp_build_const_int32(bld_base->base.gallivm, swizzle), "");
 	return bitcast(bld_base, type, cval);
 }
@@ -250,14 +260,8 @@ static void llvm_emit_epilogue(struct lp_build_tgsi_context * bld_base)
 				LLVMValueRef adjusted_elements[4];
 				for (reg_index = 0; reg_index < 2; reg_index ++) {
 					for (chan = 0; chan < TGSI_NUM_CHANNELS; chan++) {
-						LLVMValueRef offset[2] = {
-							LLVMConstInt(LLVMInt64TypeInContext(bld_base->base.gallivm->context), 0, false),
-							lp_build_const_int32(bld_base->base.gallivm, reg_index * 4 + chan)
-						};
-						LLVMTypeRef const_ptr_type = LLVMPointerType(LLVMArrayType(LLVMVectorType(bld_base->base.elem_type, 4), 1024), CONSTANT_BUFFER_1_ADDR_SPACE);
-						LLVMValueRef const_ptr = LLVMBuildIntToPtr(bld_base->base.gallivm->builder, lp_build_const_int32(bld_base->base.gallivm, 0), const_ptr_type, "");
-						LLVMValueRef ptr = LLVMBuildGEP(bld_base->base.gallivm->builder, const_ptr, offset, 2, "");
-						LLVMValueRef base_vector = LLVMBuildLoad(bld_base->base.gallivm->builder, ptr, "");
+						LLVMValueRef offset = lp_build_const_int32(bld_base->base.gallivm, reg_index * 4 + chan);
+						LLVMValueRef base_vector = llvm_load_const_buffer(bld_base, offset, CONSTANT_BUFFER_1_ADDR_SPACE);
 						args[0] = output;
 						args[1] = base_vector;
 						adjusted_elements[chan] = build_intrinsic(base->gallivm->builder,
@@ -405,15 +409,8 @@ static void llvm_emit_tex(
 	if (emit_data->inst->Texture.Texture == TGSI_TEXTURE_BUFFER) {
 		switch (emit_data->inst->Instruction.Opcode) {
 		case TGSI_OPCODE_TXQ: {
-			LLVMValueRef offset[2] = {
-				LLVMConstInt(LLVMInt64TypeInContext(bld_base->base.gallivm->context), 0, false),
-				lp_build_const_int32(bld_base->base.gallivm, 1)
-			};
-			LLVMTypeRef const_ptr_type = LLVMPointerType(LLVMArrayType(LLVMVectorType(bld_base->base.elem_type, 4), 1024),
-									R600_BUFFER_INFO_CONST_BUFFER);
-			LLVMValueRef const_ptr = LLVMBuildIntToPtr(bld_base->base.gallivm->builder, lp_build_const_int32(bld_base->base.gallivm, 0), const_ptr_type, "");
-			LLVMValueRef ptr = LLVMBuildGEP(bld_base->base.gallivm->builder, const_ptr, offset, 2, "");
-			LLVMValueRef cvecval = LLVMBuildLoad(bld_base->base.gallivm->builder, ptr, "");
+			LLVMValueRef offset = lp_build_const_int32(bld_base->base.gallivm, 1);
+			LLVMValueRef cvecval = llvm_load_const_buffer(bld_base, offset, R600_BUFFER_INFO_CONST_BUFFER);
 			emit_data->output[0] = cvecval;
 			return;
 		}
