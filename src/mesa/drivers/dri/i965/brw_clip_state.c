@@ -34,11 +34,36 @@
 #include "brw_defines.h"
 
 static void
+upload_clip_vp(struct brw_context *brw)
+{
+   struct intel_context *intel = &brw->intel;
+   struct gl_context *ctx = &intel->ctx;
+   struct brw_clipper_viewport *vp;
+
+   vp = brw_state_batch(brw, AUB_TRACE_CLIP_VP_STATE,
+                        sizeof(*vp), 32, &brw->clip.vp_offset);
+
+   const float maximum_post_clamp_delta = 4096;
+   float gbx = maximum_post_clamp_delta / (float) ctx->Viewport.Width;
+   float gby = maximum_post_clamp_delta / (float) ctx->Viewport.Height;
+
+   vp->xmin = -gbx;
+   vp->xmax = gbx;
+   vp->ymin = -gby;
+   vp->ymax = gby;
+}
+
+static void
 brw_upload_clip_unit(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &intel->ctx;
    struct brw_clip_unit_state *clip;
+
+   /* _NEW_BUFFERS */
+   struct gl_framebuffer *fb = ctx->DrawBuffer;
+
+   upload_clip_vp(brw);
 
    clip = brw_state_batch(brw, AUB_TRACE_CLIP_STATE,
 			  sizeof(*clip), 32, &brw->clip.state_offset);
@@ -94,7 +119,25 @@ brw_upload_clip_unit(struct brw_context *brw)
 
    clip->clip5.userclip_enable_flags = 0x7f;
    clip->clip5.userclip_must_clip = 1;
-   clip->clip5.guard_band_enable = 0;
+
+   /* enable guardband clipping if we can */
+   if (ctx->Viewport.X == 0 &&
+       ctx->Viewport.Y == 0 &&
+       ctx->Viewport.Width == fb->Width &&
+       ctx->Viewport.Height == fb->Height)
+   {
+      clip->clip5.guard_band_enable = 1;
+      clip->clip6.clipper_viewport_state_ptr =
+         (intel->batch.bo->offset + brw->clip.vp_offset) >> 5;
+
+      /* emit clip viewport relocation */
+      drm_intel_bo_emit_reloc(brw->intel.batch.bo,
+                              (brw->clip.state_offset +
+                               offsetof(struct brw_clip_unit_state, clip6)),
+                              intel->batch.bo, brw->clip.vp_offset,
+                              I915_GEM_DOMAIN_INSTRUCTION, 0);
+   }
+
    /* _NEW_TRANSFORM */
    if (!ctx->Transform.DepthClamp)
       clip->clip5.viewport_z_clip_enable = 1;
@@ -106,7 +149,6 @@ brw_upload_clip_unit(struct brw_context *brw)
    if (intel->is_g4x)
       clip->clip5.negative_w_clip_test = 1;
 
-   clip->clip6.clipper_viewport_state_ptr = 0;
    clip->viewport_xmin = -1;
    clip->viewport_xmax = 1;
    clip->viewport_ymin = -1;
@@ -117,7 +159,7 @@ brw_upload_clip_unit(struct brw_context *brw)
 
 const struct brw_tracked_state brw_clip_unit = {
    .dirty = {
-      .mesa  = _NEW_TRANSFORM,
+      .mesa  = _NEW_TRANSFORM | _NEW_BUFFERS | _NEW_VIEWPORT,
       .brw   = (BRW_NEW_BATCH |
 		BRW_NEW_PROGRAM_CACHE |
 		BRW_NEW_CURBE_OFFSETS |
