@@ -1551,7 +1551,7 @@ Fake_glXIsDirect( Display *dpy, GLXContext ctx )
 {
    struct fake_glx_context *glxCtx = (struct fake_glx_context *) ctx;
    (void) dpy;
-   return glxCtx->xmesaContext->direct;
+   return glxCtx ? glxCtx->xmesaContext->direct : False;
 }
 
 
