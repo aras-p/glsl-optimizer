@@ -470,44 +470,44 @@ ilo_get_name(struct pipe_screen *screen)
       break;
    case PCI_CHIP_HASWELL_GT1:
    case PCI_CHIP_HASWELL_GT2:
-   case PCI_CHIP_HASWELL_GT2_PLUS:
+   case PCI_CHIP_HASWELL_GT3:
    case PCI_CHIP_HASWELL_SDV_GT1:
    case PCI_CHIP_HASWELL_SDV_GT2:
-   case PCI_CHIP_HASWELL_SDV_GT2_PLUS:
+   case PCI_CHIP_HASWELL_SDV_GT3:
    case PCI_CHIP_HASWELL_ULT_GT1:
    case PCI_CHIP_HASWELL_ULT_GT2:
-   case PCI_CHIP_HASWELL_ULT_GT2_PLUS:
+   case PCI_CHIP_HASWELL_ULT_GT3:
    case PCI_CHIP_HASWELL_CRW_GT1:
    case PCI_CHIP_HASWELL_CRW_GT2:
-   case PCI_CHIP_HASWELL_CRW_GT2_PLUS:
+   case PCI_CHIP_HASWELL_CRW_GT3:
       chipset = "Intel(R) Haswell Desktop";
       break;
    case PCI_CHIP_HASWELL_M_GT1:
    case PCI_CHIP_HASWELL_M_GT2:
-   case PCI_CHIP_HASWELL_M_GT2_PLUS:
+   case PCI_CHIP_HASWELL_M_GT3:
    case PCI_CHIP_HASWELL_SDV_M_GT1:
    case PCI_CHIP_HASWELL_SDV_M_GT2:
-   case PCI_CHIP_HASWELL_SDV_M_GT2_PLUS:
+   case PCI_CHIP_HASWELL_SDV_M_GT3:
    case PCI_CHIP_HASWELL_ULT_M_GT1:
    case PCI_CHIP_HASWELL_ULT_M_GT2:
-   case PCI_CHIP_HASWELL_ULT_M_GT2_PLUS:
+   case PCI_CHIP_HASWELL_ULT_M_GT3:
    case PCI_CHIP_HASWELL_CRW_M_GT1:
    case PCI_CHIP_HASWELL_CRW_M_GT2:
-   case PCI_CHIP_HASWELL_CRW_M_GT2_PLUS:
+   case PCI_CHIP_HASWELL_CRW_M_GT3:
       chipset = "Intel(R) Haswell Mobile";
       break;
    case PCI_CHIP_HASWELL_S_GT1:
    case PCI_CHIP_HASWELL_S_GT2:
-   case PCI_CHIP_HASWELL_S_GT2_PLUS:
+   case PCI_CHIP_HASWELL_S_GT3:
    case PCI_CHIP_HASWELL_SDV_S_GT1:
    case PCI_CHIP_HASWELL_SDV_S_GT2:
-   case PCI_CHIP_HASWELL_SDV_S_GT2_PLUS:
+   case PCI_CHIP_HASWELL_SDV_S_GT3:
    case PCI_CHIP_HASWELL_ULT_S_GT1:
    case PCI_CHIP_HASWELL_ULT_S_GT2:
-   case PCI_CHIP_HASWELL_ULT_S_GT2_PLUS:
+   case PCI_CHIP_HASWELL_ULT_S_GT3:
    case PCI_CHIP_HASWELL_CRW_S_GT1:
    case PCI_CHIP_HASWELL_CRW_S_GT2:
-   case PCI_CHIP_HASWELL_CRW_S_GT2_PLUS:
+   case PCI_CHIP_HASWELL_CRW_S_GT3:
       chipset = "Intel(R) Haswell Server";
       break;
    default:
@@ -649,13 +649,17 @@ init_dev(struct ilo_dev_info *dev, const struct intel_winsys_info *info)
    if (IS_HASWELL(info->devid)) {
       dev->gen = ILO_GEN(7.5);
 
-      if (IS_HSW_GT2(info->devid)) {
+      if (IS_HSW_GT3(info->devid)) {
+         dev->gt = 3;
+         dev->urb_size = 512 * 1024;
+      }
+      else if (IS_HSW_GT2(info->devid)) {
          dev->gt = 2;
-	 dev->urb_size = 256 * 1024;
+         dev->urb_size = 256 * 1024;
       }
       else {
          dev->gt = 1;
-	 dev->urb_size = 128 * 1024;
+         dev->urb_size = 128 * 1024;
       }
    }
    else if (IS_GEN7(info->devid)) {
@@ -663,11 +667,11 @@ init_dev(struct ilo_dev_info *dev, const struct intel_winsys_info *info)
 
       if (IS_IVB_GT2(info->devid)) {
          dev->gt = 2;
-	 dev->urb_size = 256 * 1024;
+         dev->urb_size = 256 * 1024;
       }
       else {
          dev->gt = 1;
-	 dev->urb_size = 128 * 1024;
+         dev->urb_size = 128 * 1024;
       }
    }
    else if (IS_GEN6(info->devid)) {

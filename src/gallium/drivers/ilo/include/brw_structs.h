@@ -824,7 +824,7 @@ struct brw_instruction
       GLuint access_mode:1;
       GLuint mask_control:1;
       GLuint dependency_control:2;
-      GLuint compression_control:2; /* gen6: quater control */
+      GLuint compression_control:2; /* gen6: quarter control */
       GLuint thread_control:2;
       GLuint predicate_control:4;
       GLuint predicate_inverse:1;
@@ -849,7 +849,7 @@ struct brw_instruction
 	 GLuint src0_reg_type:3;
 	 GLuint src1_reg_file:2;
 	 GLuint src1_reg_type:3;
-	 GLuint pad:1;
+         GLuint nibctrl:1; /* gen7+ */
 	 GLuint dest_subreg_nr:5;
 	 GLuint dest_reg_nr:8;
 	 GLuint dest_horiz_stride:2;
@@ -864,7 +864,7 @@ struct brw_instruction
 	 GLuint src0_reg_type:3;
 	 GLuint src1_reg_file:2;        /* 0x00000c00 */
 	 GLuint src1_reg_type:3;        /* 0x00007000 */
-	 GLuint pad:1;
+         GLuint nibctrl:1; /* gen7+ */
 	 GLint dest_indirect_offset:10;	/* offset against the deref'd address reg */
 	 GLuint dest_subreg_nr:3; /* subnr for the address reg a0.x */
 	 GLuint dest_horiz_stride:2;
@@ -879,7 +879,7 @@ struct brw_instruction
 	 GLuint src0_reg_type:3;
 	 GLuint src1_reg_file:2;
 	 GLuint src1_reg_type:3;
-	 GLuint pad:1;
+         GLuint nibctrl:1; /* gen7+ */
 	 GLuint dest_writemask:4;
 	 GLuint dest_subreg_nr:1;
 	 GLuint dest_reg_nr:8;
@@ -893,7 +893,9 @@ struct brw_instruction
 	 GLuint dest_reg_type:3;
 	 GLuint src0_reg_file:2;
 	 GLuint src0_reg_type:3;
-	 GLuint pad0:6;
+         GLuint src1_reg_file:2;
+         GLuint src1_reg_type:3;
+         GLuint nibctrl:1; /* gen7+ */
 	 GLuint dest_writemask:4;
 	 GLint dest_indirect_offset:6;
 	 GLuint dest_subreg_nr:3;
@@ -914,16 +916,21 @@ struct brw_instruction
       } branch_gen6;
 
       struct {
-	 GLuint dest_reg_file:1;
+         GLuint dest_reg_file:1; /* gen6, not gen7+ */
 	 GLuint flag_subreg_num:1;
-	 GLuint pad0:2;
+         GLuint flag_reg_nr:1; /* gen7+ */
+         GLuint pad0:1;
 	 GLuint src0_abs:1;
 	 GLuint src0_negate:1;
 	 GLuint src1_abs:1;
 	 GLuint src1_negate:1;
 	 GLuint src2_abs:1;
 	 GLuint src2_negate:1;
-	 GLuint pad1:7;
+         GLuint src_type:2; /* gen7+ */
+         GLuint dst_type:2; /* gen7+ */
+         GLuint pad1:1;
+         GLuint nibctrl:1; /* gen7+ */
+         GLuint pad2:1;
 	 GLuint dest_writemask:4;
 	 GLuint dest_subreg_nr:3;
 	 GLuint dest_reg_nr:8;
@@ -945,7 +952,7 @@ struct brw_instruction
 	 GLuint src0_width:3;
 	 GLuint src0_vert_stride:4;
 	 GLuint flag_subreg_nr:1;
-	 GLuint flag_reg_nr:1;
+         GLuint flag_reg_nr:1; /* gen7+ */
 	 GLuint pad:5;
       } da1;
 
@@ -960,7 +967,7 @@ struct brw_instruction
 	 GLuint src0_width:3;
 	 GLuint src0_vert_stride:4;
 	 GLuint flag_subreg_nr:1;
-	 GLuint flag_reg_nr:1;
+         GLuint flag_reg_nr:1; /* gen7+ */
 	 GLuint pad:5;
       } ia1;
 
@@ -978,7 +985,7 @@ struct brw_instruction
 	 GLuint pad0:1;
 	 GLuint src0_vert_stride:4;
 	 GLuint flag_subreg_nr:1;
-	 GLuint flag_reg_nr:1;
+         GLuint flag_reg_nr:1; /* gen7+ */
 	 GLuint pad1:5;
       } da16;
 
@@ -996,7 +1003,7 @@ struct brw_instruction
 	 GLuint pad0:1;
 	 GLuint src0_vert_stride:4;
 	 GLuint flag_subreg_nr:1;
-	 GLuint flag_reg_nr:1;
+         GLuint flag_reg_nr:1; /* gen7+ */
 	 GLuint pad1:5;
       } ia16;
 
