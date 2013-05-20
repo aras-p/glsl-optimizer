@@ -33,6 +33,7 @@
 
 #include "brw_context.h"
 #include "brw_state.h"
+#include "drivers/common/meta.h"
 #include "intel_batchbuffer.h"
 #include "intel_buffers.h"
 
