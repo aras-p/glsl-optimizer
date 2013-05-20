@@ -145,6 +145,8 @@ brw_begin_transform_feedback(struct gl_context *ctx, GLenum mode,
    struct gl_transform_feedback_object *xfb_obj =
       ctx->TransformFeedback.CurrentObject;
 
+   assert(intel->gen == 6);
+
    /* Compute the maximum number of vertices that we can write without
     * overflowing any of the buffers currently being used for feedback.
     */
@@ -152,36 +154,25 @@ brw_begin_transform_feedback(struct gl_context *ctx, GLenum mode,
       = _mesa_compute_max_transform_feedback_vertices(xfb_obj,
                                                       linked_xfb_info);
 
-   if (intel->gen == 6) {
-      /* Initialize the SVBI 0 register to zero and set the maximum index. */
+   /* Initialize the SVBI 0 register to zero and set the maximum index. */
+   BEGIN_BATCH(4);
+   OUT_BATCH(_3DSTATE_GS_SVB_INDEX << 16 | (4 - 2));
+   OUT_BATCH(0); /* SVBI 0 */
+   OUT_BATCH(0); /* starting index */
+   OUT_BATCH(max_index);
+   ADVANCE_BATCH();
+
+   /* Initialize the rest of the unused streams to sane values.  Otherwise,
+    * they may indicate that there is no room to write data and prevent
+    * anything from happening at all.
+    */
+   for (int i = 1; i < 4; i++) {
       BEGIN_BATCH(4);
       OUT_BATCH(_3DSTATE_GS_SVB_INDEX << 16 | (4 - 2));
-      OUT_BATCH(0); /* SVBI 0 */
+      OUT_BATCH(i << SVB_INDEX_SHIFT);
       OUT_BATCH(0); /* starting index */
-      OUT_BATCH(max_index);
+      OUT_BATCH(0xffffffff);
       ADVANCE_BATCH();
-
-      /* Initialize the rest of the unused streams to sane values.  Otherwise,
-       * they may indicate that there is no room to write data and prevent
-       * anything from happening at all.
-       */
-      for (int i = 1; i < 4; i++) {
-         BEGIN_BATCH(4);
-         OUT_BATCH(_3DSTATE_GS_SVB_INDEX << 16 | (4 - 2));
-         OUT_BATCH(i << SVB_INDEX_SHIFT);
-         OUT_BATCH(0); /* starting index */
-         OUT_BATCH(0xffffffff);
-         ADVANCE_BATCH();
-      }
-   } else if (intel->gen >= 7) {
-      /* Reset the SOL buffer offset register. */
-      for (int i = 0; i < 4; i++) {
-         BEGIN_BATCH(3);
-         OUT_BATCH(MI_LOAD_REGISTER_IMM | (3 - 2));
-         OUT_BATCH(GEN7_SO_WRITE_OFFSET(i));
-         OUT_BATCH(0);
-         ADVANCE_BATCH();
-      }
    }
 }
 

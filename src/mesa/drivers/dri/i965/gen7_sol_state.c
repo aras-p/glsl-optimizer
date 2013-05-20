@@ -254,6 +254,23 @@ const struct brw_tracked_state gen7_sol_state = {
 };
 
 void
+gen7_begin_transform_feedback(struct gl_context *ctx, GLenum mode,
+                              struct gl_transform_feedback_object *obj)
+{
+   struct brw_context *brw = brw_context(ctx);
+   struct intel_context *intel = &brw->intel;
+
+   /* Reset the SOL buffer offset register. */
+   for (int i = 0; i < 4; i++) {
+      BEGIN_BATCH(3);
+      OUT_BATCH(MI_LOAD_REGISTER_IMM | (3 - 2));
+      OUT_BATCH(GEN7_SO_WRITE_OFFSET(i));
+      OUT_BATCH(0);
+      ADVANCE_BATCH();
+   }
+}
+
+void
 gen7_end_transform_feedback(struct gl_context *ctx,
 			    struct gl_transform_feedback_object *obj)
 {

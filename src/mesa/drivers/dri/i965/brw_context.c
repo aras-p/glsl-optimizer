@@ -94,12 +94,14 @@ static void brwInitDriverFunctions(struct intel_screen *screen,
       gen4_init_queryobj_functions(functions);
 
    functions->QuerySamplesForFormat = brw_query_samples_for_format;
-   functions->BeginTransformFeedback = brw_begin_transform_feedback;
 
-   if (screen->gen >= 7)
+   if (screen->gen >= 7) {
+      functions->BeginTransformFeedback = gen7_begin_transform_feedback;
       functions->EndTransformFeedback = gen7_end_transform_feedback;
-   else
+   } else {
+      functions->BeginTransformFeedback = brw_begin_transform_feedback;
       functions->EndTransformFeedback = brw_end_transform_feedback;
+   }
 
    if (screen->gen >= 6)
       functions->GetSamplePosition = gen6_get_sample_position;

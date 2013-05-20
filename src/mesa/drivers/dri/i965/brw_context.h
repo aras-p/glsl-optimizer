@@ -1228,6 +1228,9 @@ brw_end_transform_feedback(struct gl_context *ctx,
 
 /* gen7_sol_state.c */
 void
+gen7_begin_transform_feedback(struct gl_context *ctx, GLenum mode,
+                              struct gl_transform_feedback_object *obj);
+void
 gen7_end_transform_feedback(struct gl_context *ctx,
 			    struct gl_transform_feedback_object *obj);
 
