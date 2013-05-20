@@ -63,12 +63,6 @@ brw_compute_vue_map(struct brw_context *brw, struct brw_vue_map *vue_map,
 {
    const struct intel_context *intel = &brw->intel;
 
-   /* Prior to Gen6, don't assign a slot for VARYING_SLOT_CLIP_VERTEX, since
-    * it is unsupported.
-    */
-   if (intel->gen < 6)
-      slots_valid &= ~VARYING_BIT_CLIP_VERTEX;
-
    vue_map->slots_valid = slots_valid;
    int i;
 

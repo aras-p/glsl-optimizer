@@ -2567,8 +2567,10 @@ vec4_visitor::emit_psiz_and_flags(struct brw_reg reg)
       current_annotation = "Clipping flags";
       for (i = 0; i < key->nr_userclip_plane_consts; i++) {
 	 vec4_instruction *inst;
+         gl_varying_slot slot = (prog_data->vue_map.slots_valid & VARYING_BIT_CLIP_VERTEX)
+            ? VARYING_SLOT_CLIP_VERTEX : VARYING_SLOT_POS;
 
-	 inst = emit(DP4(dst_null_f(), src_reg(output_reg[VARYING_SLOT_POS]),
+	 inst = emit(DP4(dst_null_f(), src_reg(output_reg[slot]),
                          src_reg(this->userplane[i])));
 	 inst->conditional_mod = BRW_CONDITIONAL_L;
 
