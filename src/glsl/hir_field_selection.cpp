@@ -47,20 +47,6 @@ _mesa_ast_field_selection_to_hir(const ast_expression *expr,
    YYLTYPE loc = expr->get_location();
    if (op->type->is_error()) {
       /* silently propagate the error */
-   } else if (op->type->is_vector()) {
-      ir_swizzle *swiz = ir_swizzle::create(op,
-					    expr->primary_expression.identifier,
-					    op->type->vector_elements);
-      if (swiz != NULL) {
-	 result = swiz;
-      } else {
-	 /* FINISHME: Logging of error messages should be moved into
-	  * FINISHME: ir_swizzle::create.  This allows the generation of more
-	  * FINISHME: specific error messages.
-	  */
-	 _mesa_glsl_error(& loc, state, "Invalid swizzle / mask `%s'",
-			  expr->primary_expression.identifier);
-      }
    } else if (op->type->base_type == GLSL_TYPE_STRUCT
               || op->type->base_type == GLSL_TYPE_INTERFACE) {
       result = new(ctx) ir_dereference_record(op,
@@ -81,16 +67,48 @@ _mesa_ast_field_selection_to_hir(const ast_expression *expr,
       const char *method;
       method = call->subexpressions[0]->primary_expression.identifier;
 
-      if (op->type->is_array() && strcmp(method, "length") == 0) {
-	 if (!call->expressions.is_empty())
-	    _mesa_glsl_error(&loc, state, "length method takes no arguments.");
+      if (strcmp(method, "length") == 0) {
+         if (!call->expressions.is_empty())
+            _mesa_glsl_error(&loc, state, "length method takes no arguments.");
 
-	 if (op->type->array_size() == 0)
-	    _mesa_glsl_error(&loc, state, "length called on unsized array.");
+         if (op->type->is_array()) {
+            if (op->type->array_size() == 0)
+               _mesa_glsl_error(&loc, state, "length called on unsized array.");
 
-	 result = new(ctx) ir_constant(op->type->array_size());
+            result = new(ctx) ir_constant(op->type->array_size());
+         } else if (op->type->is_vector()) {
+            if (state->ARB_shading_language_420pack_enable) {
+               /* .length() returns int. */
+               result = new(ctx) ir_constant((int) op->type->vector_elements);
+            } else {
+               _mesa_glsl_error(&loc, state, "length method on matrix only available"
+                                             "with ARB_shading_language_420pack.");
+            }
+         } else if (op->type->is_matrix()) {
+            if (state->ARB_shading_language_420pack_enable) {
+               /* .length() returns int. */
+               result = new(ctx) ir_constant((int) op->type->matrix_columns);
+            } else {
+               _mesa_glsl_error(&loc, state, "length method on matrix only available"
+                                             "with ARB_shading_language_420pack.");
+            }
+         }
       } else {
 	 _mesa_glsl_error(&loc, state, "Unknown method: `%s'.", method);
+      }
+   } else if (op->type->is_vector()) {
+      ir_swizzle *swiz = ir_swizzle::create(op,
+					    expr->primary_expression.identifier,
+					    op->type->vector_elements);
+      if (swiz != NULL) {
+	 result = swiz;
+      } else {
+	 /* FINISHME: Logging of error messages should be moved into
+	  * FINISHME: ir_swizzle::create.  This allows the generation of more
+	  * FINISHME: specific error messages.
+	  */
+	 _mesa_glsl_error(& loc, state, "Invalid swizzle / mask `%s'",
+			  expr->primary_expression.identifier);
       }
    } else {
       _mesa_glsl_error(& loc, state, "Cannot access field `%s' of "
