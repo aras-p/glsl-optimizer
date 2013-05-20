@@ -373,6 +373,7 @@ struct intel_mipmap_tree
     */
    struct intel_mipmap_tree *stencil_mt;
 
+#ifndef I915
    /**
     * \brief MCS miptree for multisampled textures.
     *
@@ -381,6 +382,7 @@ struct intel_mipmap_tree
     * (INTEL_MSAA_FORMAT_CMS).
     */
    struct intel_mipmap_tree *mcs_mt;
+#endif
 
    /* These are also refcounted:
     */

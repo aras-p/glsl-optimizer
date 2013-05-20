@@ -671,7 +671,9 @@ intel_miptree_release(struct intel_mipmap_tree **mt)
       intel_region_release(&((*mt)->region));
       intel_miptree_release(&(*mt)->stencil_mt);
       intel_miptree_release(&(*mt)->hiz_mt);
+#ifndef I915
       intel_miptree_release(&(*mt)->mcs_mt);
+#endif
       intel_miptree_release(&(*mt)->singlesample_mt);
       intel_resolve_map_clear(&(*mt)->hiz_map);
 
@@ -1012,8 +1014,11 @@ intel_miptree_alloc_mcs(struct intel_context *intel,
                         struct intel_mipmap_tree *mt,
                         GLuint num_samples)
 {
-   assert(mt->mcs_mt == NULL);
    assert(intel->gen >= 7); /* MCS only used on Gen7+ */
+#ifdef I915
+   return false;
+#else
+   assert(mt->mcs_mt == NULL);
 
    /* Choose the correct format for the MCS buffer.  All that really matters
     * is that we allocate the right buffer size, since we'll always be
@@ -1070,6 +1075,7 @@ intel_miptree_alloc_mcs(struct intel_context *intel,
    intel_miptree_unmap_raw(intel, mt->mcs_mt);
 
    return mt->mcs_mt;
+#endif
 }
 
 /**
