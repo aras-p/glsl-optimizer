@@ -24,6 +24,7 @@ r300_compiler_tests_CPPFLAGS = \
 r300_compiler_tests_SOURCES = \
 	$(testdir)/r300_compiler_tests.c \
 	$(testdir)/radeon_compiler_optimize_tests.c \
+	$(testdir)/radeon_compiler_regalloc_tests.c \
 	$(testdir)/radeon_compiler_util_tests.c \
 	$(testdir)/rc_test_helpers.c \
 	$(testdir)/unit_test.c

@@ -383,6 +383,14 @@ static enum rc_reg_class variable_get_class(
 							RC_INSTRUCTION_PAIR ) {
 						old_swizzle = r.U.P.Arg->Swizzle;
 					} else {
+						/* Source operands of TEX
+						 * instructions can't be
+						 * swizzle on r300/r400 GPUs.
+						 */
+						if (!variable->C->is_r500) {
+							can_change_writemask = 0;
+							break;
+						}
 						old_swizzle = r.U.I.Src->Swizzle;
 					}
 					new_swizzle = rc_adjust_channels(

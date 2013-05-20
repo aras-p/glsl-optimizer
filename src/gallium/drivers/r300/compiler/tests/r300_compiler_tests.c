@@ -33,6 +33,7 @@ int main(int argc, char ** argv)
 {
 	unsigned pass = 1;
 	pass &= radeon_compiler_optimize_run_tests();
+	pass &= radeon_compiler_regalloc_run_tests();
 	pass &= radeon_compiler_util_run_tests();
 
 	if (pass) {
