@@ -41,15 +41,12 @@ enum ilo_cp_ring {
    ILO_CP_RING_COUNT,
 };
 
-enum ilo_cp_hook {
-   ILO_CP_HOOK_NEW_BATCH,
-   ILO_CP_HOOK_PRE_FLUSH,
-   ILO_CP_HOOK_POST_FLUSH,
+typedef void (*ilo_cp_callback)(struct ilo_cp *cp, void *data);
 
-   ILO_CP_HOOK_COUNT,
+struct ilo_cp_owner {
+   ilo_cp_callback release_callback;
+   void *release_data;
 };
-
-typedef void (*ilo_cp_hook_func)(struct ilo_cp *cp, void *data);
 
 /**
  * Command parser.
@@ -58,15 +55,15 @@ struct ilo_cp {
    struct intel_winsys *winsys;
    struct intel_context *render_ctx;
 
+   ilo_cp_callback flush_callback;
+   void *flush_callback_data;
+
+   const struct ilo_cp_owner *owner;
+   int owner_reserve;
+
    enum ilo_cp_ring ring;
    bool no_implicit_flush;
-   int reserve_for_pre_flush;
    unsigned one_off_flags;
-
-   struct {
-      ilo_cp_hook_func func;
-      void *data;
-   } hooks[ILO_CP_HOOK_COUNT];
 
    int bo_size;
    struct intel_bo *bo;
@@ -160,26 +157,6 @@ ilo_cp_assert_no_implicit_flush(struct ilo_cp *cp, bool enable)
 }
 
 /**
- * Reserve the given size of space from the parser buffer.  The reserved space
- * will be made available temporarily for the pre-flush hook.
- *
- * \param reserve size in dwords to reserve.  It may be negative.
- */
-static inline void
-ilo_cp_reserve_for_pre_flush(struct ilo_cp *cp, int reserve)
-{
-   assert(cp->reserve_for_pre_flush + reserve >= 0);
-
-   if (cp->used > cp->size - reserve) {
-      ilo_cp_implicit_flush(cp);
-      assert(cp->used <= cp->size - reserve);
-   }
-
-   cp->size -= reserve;
-   cp->reserve_for_pre_flush += reserve;
-}
-
-/**
  * Set one-off flags.  They will be cleared after flushing.
  */
 static inline void
@@ -188,16 +165,66 @@ ilo_cp_set_one_off_flags(struct ilo_cp *cp, unsigned flags)
    cp->one_off_flags |= flags;
 }
 
-
 /**
- * Set a command parser hook.
+ * Set flush callback.  The callback is invoked after the bo has been
+ * successfully executed, and before the bo is reallocated.
  */
 static inline void
-ilo_cp_set_hook(struct ilo_cp *cp, enum ilo_cp_hook hook,
-                ilo_cp_hook_func func, void *data)
+ilo_cp_set_flush_callback(struct ilo_cp *cp, ilo_cp_callback callback,
+                          void *data)
 {
-   cp->hooks[hook].func = func;
-   cp->hooks[hook].data = data;
+   cp->flush_callback = callback;
+   cp->flush_callback_data = data;
+}
+
+/**
+ * Set the parser owner.  If this is a new owner, the previous owner is
+ * notified and the space it reserved is reclaimed.
+ *
+ * \return true if this is a new owner
+ */
+static inline bool
+ilo_cp_set_owner(struct ilo_cp *cp, const struct ilo_cp_owner *owner,
+                 int reserve)
+{
+   const bool new_owner = (cp->owner != owner);
+
+   /* release current owner */
+   if (new_owner && cp->owner) {
+      const bool no_implicit_flush = cp->no_implicit_flush;
+
+      /* reclaim the reserved space */
+      cp->size += cp->owner_reserve;
+      cp->owner_reserve = 0;
+
+      /* invoke the release callback */
+      cp->no_implicit_flush = true;
+      cp->owner->release_callback(cp, cp->owner->release_data);
+      cp->no_implicit_flush = no_implicit_flush;
+
+      cp->owner = NULL;
+   }
+
+   if (cp->owner_reserve != reserve) {
+      const int extra = reserve - cp->owner_reserve;
+
+      if (cp->used > cp->size - extra) {
+         ilo_cp_implicit_flush(cp);
+         assert(cp->used <= cp->size - reserve);
+
+         cp->size -= reserve;
+         cp->owner_reserve = reserve;
+      }
+      else {
+         cp->size -= extra;
+         cp->owner_reserve += extra;
+      }
+   }
+
+   /* set owner last because of the possible flush above */
+   cp->owner = owner;
+
+   return new_owner;
 }
 
 /**

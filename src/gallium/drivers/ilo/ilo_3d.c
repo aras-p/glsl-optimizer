@@ -35,111 +35,6 @@
 #include "ilo_state.h"
 #include "ilo_3d.h"
 
-/**
- * Begin a query.
- */
-void
-ilo_3d_begin_query(struct ilo_context *ilo, struct ilo_query *q)
-{
-   struct ilo_3d *hw3d = ilo->hw3d;
-
-   ilo_cp_set_ring(hw3d->cp, ILO_CP_RING_RENDER);
-
-   switch (q->type) {
-   case PIPE_QUERY_OCCLUSION_COUNTER:
-      /* reserve some space for pausing the query */
-      q->reg_cmd_size = ilo_3d_pipeline_estimate_size(hw3d->pipeline,
-            ILO_3D_PIPELINE_WRITE_DEPTH_COUNT, NULL);
-      ilo_cp_reserve_for_pre_flush(hw3d->cp, q->reg_cmd_size);
-
-      q->data.u64 = 0;
-
-      if (ilo_query_alloc_bo(q, 2, -1, hw3d->cp->winsys)) {
-         /* XXX we should check the aperture size */
-         ilo_3d_pipeline_emit_write_depth_count(hw3d->pipeline,
-               q->bo, q->reg_read++);
-
-         list_add(&q->list, &hw3d->occlusion_queries);
-      }
-      break;
-   case PIPE_QUERY_TIMESTAMP:
-      /* nop */
-      break;
-   case PIPE_QUERY_TIME_ELAPSED:
-      /* reserve some space for pausing the query */
-      q->reg_cmd_size = ilo_3d_pipeline_estimate_size(hw3d->pipeline,
-            ILO_3D_PIPELINE_WRITE_TIMESTAMP, NULL);
-      ilo_cp_reserve_for_pre_flush(hw3d->cp, q->reg_cmd_size);
-
-      q->data.u64 = 0;
-
-      if (ilo_query_alloc_bo(q, 2, -1, hw3d->cp->winsys)) {
-         /* XXX we should check the aperture size */
-         ilo_3d_pipeline_emit_write_timestamp(hw3d->pipeline,
-               q->bo, q->reg_read++);
-
-         list_add(&q->list, &hw3d->time_elapsed_queries);
-      }
-      break;
-   case PIPE_QUERY_PRIMITIVES_GENERATED:
-      q->data.u64 = 0;
-      list_add(&q->list, &hw3d->prim_generated_queries);
-      break;
-   case PIPE_QUERY_PRIMITIVES_EMITTED:
-      q->data.u64 = 0;
-      list_add(&q->list, &hw3d->prim_emitted_queries);
-      break;
-   default:
-      assert(!"unknown query type");
-      break;
-   }
-}
-
-/**
- * End a query.
- */
-void
-ilo_3d_end_query(struct ilo_context *ilo, struct ilo_query *q)
-{
-   struct ilo_3d *hw3d = ilo->hw3d;
-
-   ilo_cp_set_ring(hw3d->cp, ILO_CP_RING_RENDER);
-
-   switch (q->type) {
-   case PIPE_QUERY_OCCLUSION_COUNTER:
-      list_del(&q->list);
-
-      assert(q->reg_read < q->reg_total);
-      ilo_cp_reserve_for_pre_flush(hw3d->cp, -q->reg_cmd_size);
-      ilo_3d_pipeline_emit_write_depth_count(hw3d->pipeline,
-            q->bo, q->reg_read++);
-      break;
-   case PIPE_QUERY_TIMESTAMP:
-      q->data.u64 = 0;
-
-      if (ilo_query_alloc_bo(q, 1, 1, hw3d->cp->winsys)) {
-         ilo_3d_pipeline_emit_write_timestamp(hw3d->pipeline,
-               q->bo, q->reg_read++);
-      }
-      break;
-   case PIPE_QUERY_TIME_ELAPSED:
-      list_del(&q->list);
-
-      assert(q->reg_read < q->reg_total);
-      ilo_cp_reserve_for_pre_flush(hw3d->cp, -q->reg_cmd_size);
-      ilo_3d_pipeline_emit_write_timestamp(hw3d->pipeline,
-            q->bo, q->reg_read++);
-      break;
-   case PIPE_QUERY_PRIMITIVES_GENERATED:
-   case PIPE_QUERY_PRIMITIVES_EMITTED:
-      list_del(&q->list);
-      break;
-   default:
-      assert(!"unknown query type");
-      break;
-   }
-}
-
 static void
 process_query_for_occlusion_counter(struct ilo_3d *hw3d,
                                     struct ilo_query *q)
@@ -206,6 +101,178 @@ process_query_for_time_elapsed(struct ilo_3d *hw3d, struct ilo_query *q)
    q->reg_read = 0;
 }
 
+static void
+ilo_3d_resume_queries(struct ilo_3d *hw3d)
+{
+   struct ilo_query *q;
+
+   /* resume occlusion queries */
+   LIST_FOR_EACH_ENTRY(q, &hw3d->occlusion_queries, list) {
+      /* accumulate the result if the bo is alreay full */
+      if (q->reg_read >= q->reg_total)
+         process_query_for_occlusion_counter(hw3d, q);
+
+      ilo_3d_pipeline_emit_write_depth_count(hw3d->pipeline,
+            q->bo, q->reg_read++);
+   }
+
+   /* resume timer queries */
+   LIST_FOR_EACH_ENTRY(q, &hw3d->time_elapsed_queries, list) {
+      /* accumulate the result if the bo is alreay full */
+      if (q->reg_read >= q->reg_total)
+         process_query_for_time_elapsed(hw3d, q);
+
+      ilo_3d_pipeline_emit_write_timestamp(hw3d->pipeline,
+            q->bo, q->reg_read++);
+   }
+}
+
+static void
+ilo_3d_pause_queries(struct ilo_3d *hw3d)
+{
+   struct ilo_query *q;
+
+   /* pause occlusion queries */
+   LIST_FOR_EACH_ENTRY(q, &hw3d->occlusion_queries, list) {
+      assert(q->reg_read < q->reg_total);
+      ilo_3d_pipeline_emit_write_depth_count(hw3d->pipeline,
+            q->bo, q->reg_read++);
+   }
+
+   /* pause timer queries */
+   LIST_FOR_EACH_ENTRY(q, &hw3d->time_elapsed_queries, list) {
+      assert(q->reg_read < q->reg_total);
+      ilo_3d_pipeline_emit_write_timestamp(hw3d->pipeline,
+            q->bo, q->reg_read++);
+   }
+}
+
+static void
+ilo_3d_release_render_ring(struct ilo_cp *cp, void *data)
+{
+   struct ilo_3d *hw3d = data;
+
+   ilo_3d_pause_queries(hw3d);
+}
+
+static void
+ilo_3d_own_render_ring(struct ilo_3d *hw3d)
+{
+   ilo_cp_set_ring(hw3d->cp, ILO_CP_RING_RENDER);
+
+   if (ilo_cp_set_owner(hw3d->cp, &hw3d->owner, hw3d->owner_reserve))
+      ilo_3d_resume_queries(hw3d);
+}
+
+/**
+ * Begin a query.
+ */
+void
+ilo_3d_begin_query(struct ilo_context *ilo, struct ilo_query *q)
+{
+   struct ilo_3d *hw3d = ilo->hw3d;
+
+   ilo_3d_own_render_ring(hw3d);
+
+   switch (q->type) {
+   case PIPE_QUERY_OCCLUSION_COUNTER:
+      /* reserve some space for pausing the query */
+      q->reg_cmd_size = ilo_3d_pipeline_estimate_size(hw3d->pipeline,
+            ILO_3D_PIPELINE_WRITE_DEPTH_COUNT, NULL);
+      hw3d->owner_reserve += q->reg_cmd_size;
+      ilo_cp_set_owner(hw3d->cp, &hw3d->owner, hw3d->owner_reserve);
+
+      q->data.u64 = 0;
+
+      if (ilo_query_alloc_bo(q, 2, -1, hw3d->cp->winsys)) {
+         /* XXX we should check the aperture size */
+         ilo_3d_pipeline_emit_write_depth_count(hw3d->pipeline,
+               q->bo, q->reg_read++);
+
+         list_add(&q->list, &hw3d->occlusion_queries);
+      }
+      break;
+   case PIPE_QUERY_TIMESTAMP:
+      /* nop */
+      break;
+   case PIPE_QUERY_TIME_ELAPSED:
+      /* reserve some space for pausing the query */
+      q->reg_cmd_size = ilo_3d_pipeline_estimate_size(hw3d->pipeline,
+            ILO_3D_PIPELINE_WRITE_TIMESTAMP, NULL);
+      hw3d->owner_reserve += q->reg_cmd_size;
+      ilo_cp_set_owner(hw3d->cp, &hw3d->owner, hw3d->owner_reserve);
+
+      q->data.u64 = 0;
+
+      if (ilo_query_alloc_bo(q, 2, -1, hw3d->cp->winsys)) {
+         /* XXX we should check the aperture size */
+         ilo_3d_pipeline_emit_write_timestamp(hw3d->pipeline,
+               q->bo, q->reg_read++);
+
+         list_add(&q->list, &hw3d->time_elapsed_queries);
+      }
+      break;
+   case PIPE_QUERY_PRIMITIVES_GENERATED:
+      q->data.u64 = 0;
+      list_add(&q->list, &hw3d->prim_generated_queries);
+      break;
+   case PIPE_QUERY_PRIMITIVES_EMITTED:
+      q->data.u64 = 0;
+      list_add(&q->list, &hw3d->prim_emitted_queries);
+      break;
+   default:
+      assert(!"unknown query type");
+      break;
+   }
+}
+
+/**
+ * End a query.
+ */
+void
+ilo_3d_end_query(struct ilo_context *ilo, struct ilo_query *q)
+{
+   struct ilo_3d *hw3d = ilo->hw3d;
+
+   ilo_3d_own_render_ring(hw3d);
+
+   switch (q->type) {
+   case PIPE_QUERY_OCCLUSION_COUNTER:
+      list_del(&q->list);
+
+      assert(q->reg_read < q->reg_total);
+      hw3d->owner_reserve -= q->reg_cmd_size;
+      ilo_cp_set_owner(hw3d->cp, &hw3d->owner, hw3d->owner_reserve);
+      ilo_3d_pipeline_emit_write_depth_count(hw3d->pipeline,
+            q->bo, q->reg_read++);
+      break;
+   case PIPE_QUERY_TIMESTAMP:
+      q->data.u64 = 0;
+
+      if (ilo_query_alloc_bo(q, 1, 1, hw3d->cp->winsys)) {
+         ilo_3d_pipeline_emit_write_timestamp(hw3d->pipeline,
+               q->bo, q->reg_read++);
+      }
+      break;
+   case PIPE_QUERY_TIME_ELAPSED:
+      list_del(&q->list);
+
+      assert(q->reg_read < q->reg_total);
+      hw3d->owner_reserve -= q->reg_cmd_size;
+      ilo_cp_set_owner(hw3d->cp, &hw3d->owner, hw3d->owner_reserve);
+      ilo_3d_pipeline_emit_write_timestamp(hw3d->pipeline,
+            q->bo, q->reg_read++);
+      break;
+   case PIPE_QUERY_PRIMITIVES_GENERATED:
+   case PIPE_QUERY_PRIMITIVES_EMITTED:
+      list_del(&q->list);
+      break;
+   default:
+      assert(!"unknown query type");
+      break;
+   }
+}
+
 /**
  * Process the raw query data.
  */
@@ -240,11 +307,10 @@ ilo_3d_process_query(struct ilo_context *ilo, struct ilo_query *q)
  * Hook for CP new-batch.
  */
 void
-ilo_3d_new_cp_batch(struct ilo_3d *hw3d)
+ilo_3d_cp_flushed(struct ilo_3d *hw3d)
 {
-   struct ilo_query *q;
-
-   hw3d->new_batch = true;
+   if (ilo_debug & ILO_DEBUG_3D)
+      ilo_3d_pipeline_dump(hw3d->pipeline);
 
    /* invalidate the pipeline */
    ilo_3d_pipeline_invalidate(hw3d->pipeline,
@@ -255,58 +321,7 @@ ilo_3d_new_cp_batch(struct ilo_3d *hw3d)
             ILO_3D_PIPELINE_INVALIDATE_HW);
    }
 
-   /* resume occlusion queries */
-   LIST_FOR_EACH_ENTRY(q, &hw3d->occlusion_queries, list) {
-      /* accumulate the result if the bo is alreay full */
-      if (q->reg_read >= q->reg_total)
-         process_query_for_occlusion_counter(hw3d, q);
-
-      ilo_3d_pipeline_emit_write_depth_count(hw3d->pipeline,
-            q->bo, q->reg_read++);
-   }
-
-   /* resume timer queries */
-   LIST_FOR_EACH_ENTRY(q, &hw3d->time_elapsed_queries, list) {
-      /* accumulate the result if the bo is alreay full */
-      if (q->reg_read >= q->reg_total)
-         process_query_for_time_elapsed(hw3d, q);
-
-      ilo_3d_pipeline_emit_write_timestamp(hw3d->pipeline,
-            q->bo, q->reg_read++);
-   }
-}
-
-/**
- * Hook for CP pre-flush.
- */
-void
-ilo_3d_pre_cp_flush(struct ilo_3d *hw3d)
-{
-   struct ilo_query *q;
-
-   /* pause occlusion queries */
-   LIST_FOR_EACH_ENTRY(q, &hw3d->occlusion_queries, list) {
-      assert(q->reg_read < q->reg_total);
-      ilo_3d_pipeline_emit_write_depth_count(hw3d->pipeline,
-            q->bo, q->reg_read++);
-   }
-
-   /* pause timer queries */
-   LIST_FOR_EACH_ENTRY(q, &hw3d->time_elapsed_queries, list) {
-      assert(q->reg_read < q->reg_total);
-      ilo_3d_pipeline_emit_write_timestamp(hw3d->pipeline,
-            q->bo, q->reg_read++);
-   }
-}
-
-/**
- * Hook for CP post-flush
- */
-void
-ilo_3d_post_cp_flush(struct ilo_3d *hw3d)
-{
-   if (ilo_debug & ILO_DEBUG_3D)
-      ilo_3d_pipeline_dump(hw3d->pipeline);
+   hw3d->new_batch = true;
 }
 
 /**
@@ -322,6 +337,9 @@ ilo_3d_create(struct ilo_cp *cp, const struct ilo_dev_info *dev)
       return NULL;
 
    hw3d->cp = cp;
+   hw3d->owner.release_callback = ilo_3d_release_render_ring;
+   hw3d->owner.release_data = hw3d;
+
    hw3d->new_batch = true;
 
    list_inithead(&hw3d->occlusion_queries);
@@ -356,7 +374,7 @@ draw_vbo(struct ilo_3d *hw3d, const struct ilo_context *ilo,
    bool need_flush;
    int max_len;
 
-   ilo_cp_set_ring(hw3d->cp, ILO_CP_RING_RENDER);
+   ilo_3d_own_render_ring(hw3d);
 
    /*
     * Without a better tracking mechanism, when the framebuffer changes, we

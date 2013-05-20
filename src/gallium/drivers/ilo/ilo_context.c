@@ -42,25 +42,7 @@
 #include "ilo_context.h"
 
 static void
-ilo_context_new_cp_batch(struct ilo_cp *cp, void *data)
-{
-   struct ilo_context *ilo = ilo_context(data);
-
-   if (cp->ring == ILO_CP_RING_RENDER)
-      ilo_3d_new_cp_batch(ilo->hw3d);
-}
-
-static void
-ilo_context_pre_cp_flush(struct ilo_cp *cp, void *data)
-{
-   struct ilo_context *ilo = ilo_context(data);
-
-   if (cp->ring == ILO_CP_RING_RENDER)
-      ilo_3d_pre_cp_flush(ilo->hw3d);
-}
-
-static void
-ilo_context_post_cp_flush(struct ilo_cp *cp, void *data)
+ilo_context_cp_flushed(struct ilo_cp *cp, void *data)
 {
    struct ilo_context *ilo = ilo_context(data);
 
@@ -71,8 +53,7 @@ ilo_context_post_cp_flush(struct ilo_cp *cp, void *data)
    ilo->last_cp_bo = cp->bo;
    ilo->last_cp_bo->reference(ilo->last_cp_bo);
 
-   if (cp->ring == ILO_CP_RING_RENDER)
-      ilo_3d_post_cp_flush(ilo->hw3d);
+   ilo_3d_cp_flushed(ilo->hw3d);
 }
 
 static void
@@ -148,12 +129,8 @@ ilo_context_create(struct pipe_screen *screen, void *priv)
       return NULL;
    }
 
-   ilo_cp_set_hook(ilo->cp, ILO_CP_HOOK_NEW_BATCH,
-         ilo_context_new_cp_batch, (void *) ilo);
-   ilo_cp_set_hook(ilo->cp, ILO_CP_HOOK_PRE_FLUSH,
-         ilo_context_pre_cp_flush, (void *) ilo);
-   ilo_cp_set_hook(ilo->cp, ILO_CP_HOOK_POST_FLUSH,
-         ilo_context_post_cp_flush, (void *) ilo);
+   ilo_cp_set_flush_callback(ilo->cp,
+         ilo_context_cp_flushed, (void *) ilo);
 
    ilo->dirty = ILO_DIRTY_ALL;
 

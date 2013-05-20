@@ -29,10 +29,10 @@
 #define ILO_3D_H
 
 #include "ilo_common.h"
+#include "ilo_cp.h"
 
 struct ilo_3d_pipeline;
 struct ilo_context;
-struct ilo_cp;
 struct ilo_query;
 
 /**
@@ -40,6 +40,8 @@ struct ilo_query;
  */
 struct ilo_3d {
    struct ilo_cp *cp;
+   struct ilo_cp_owner owner;
+   int owner_reserve;
 
    bool new_batch;
    uint32_t shader_cache_seqno;
@@ -64,13 +66,7 @@ void
 ilo_3d_destroy(struct ilo_3d *hw3d);
 
 void
-ilo_3d_new_cp_batch(struct ilo_3d *hw3d);
-
-void
-ilo_3d_pre_cp_flush(struct ilo_3d *hw3d);
-
-void
-ilo_3d_post_cp_flush(struct ilo_3d *hw3d);
+ilo_3d_cp_flushed(struct ilo_3d *hw3d);
 
 void
 ilo_3d_begin_query(struct ilo_context *ilo, struct ilo_query *q);

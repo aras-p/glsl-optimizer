@@ -88,13 +88,14 @@ blitter_xy_color_blt(struct pipe_context *pipe,
       stride /= 4;
    }
 
+   ilo_cp_set_ring(ilo->cp, ILO_CP_RING_BLT);
+   ilo_cp_set_owner(ilo->cp, NULL, 0);
+
    /* make room if necessary */
    bo_check[0] = ilo->cp->bo;
    bo_check[1] = tex->bo;
    if (ilo->winsys->check_aperture_space(ilo->winsys, bo_check, 2))
       ilo_cp_flush(ilo->cp);
-
-   ilo_cp_set_ring(ilo->cp, ILO_CP_RING_BLT);
 
    ilo_cp_begin(ilo->cp, cmd_len);
    ilo_cp_write(ilo->cp, cmd);
