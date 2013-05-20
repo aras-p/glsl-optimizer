@@ -96,7 +96,9 @@ _mesa_ast_field_selection_to_hir(const ast_expression *expr,
       } else {
 	 _mesa_glsl_error(&loc, state, "Unknown method: `%s'.", method);
       }
-   } else if (op->type->is_vector()) {
+   } else if (op->type->is_vector() ||
+              (state->ARB_shading_language_420pack_enable &&
+               op->type->is_scalar())) {
       ir_swizzle *swiz = ir_swizzle::create(op,
 					    expr->primary_expression.identifier,
 					    op->type->vector_elements);
