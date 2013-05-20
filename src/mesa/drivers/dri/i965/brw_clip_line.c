@@ -125,6 +125,8 @@ static void brw_clip_line_alloc_regs( struct brw_clip_compile *c )
  */
 static void clip_and_emit_line( struct brw_clip_compile *c )
 {
+   /* FIXME: use VARYING_SLOT_CLIP_VERTEX if available for user clip planes. */
+
    struct brw_compile *p = &c->func;
    struct brw_context *brw = p->brw;
    struct brw_indirect vtx0     = brw_indirect(0, 0);

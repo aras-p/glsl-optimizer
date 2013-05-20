@@ -119,6 +119,9 @@ void brw_clip_tri_alloc_regs( struct brw_clip_compile *c,
       i++;
    }
 
+   c->reg.vertex_src_mask = retype(brw_vec1_grf(i, 0), BRW_REGISTER_TYPE_UD);
+   i++;
+
    if (intel->needs_ff_sync) {
       c->reg.ff_sync = retype(brw_vec1_grf(i, 0), BRW_REGISTER_TYPE_UD);
       i++;
@@ -219,6 +222,31 @@ void brw_clip_tri_flat_shade( struct brw_clip_compile *c )
 }
 
 
+static inline void
+load_vertex_pos(struct brw_clip_compile *c, struct brw_indirect vtx,
+                struct brw_reg dst,
+                GLuint hpos_offset, GLuint clip_offset)
+{
+   struct brw_compile *p = &c->func;
+
+   /*
+    * Roughly:
+    * dst = (vertex_src_mask & 1) ? src.hpos : src.clipvertex;
+    */
+
+   brw_set_conditionalmod(p, BRW_CONDITIONAL_NZ);
+   brw_AND(p, vec1(brw_null_reg()), c->reg.vertex_src_mask, brw_imm_ud(1));
+   brw_IF(p, BRW_EXECUTE_1);
+   {
+      brw_MOV(p, dst, deref_4f(vtx, clip_offset));
+   }
+   brw_ELSE(p);
+   {
+      brw_MOV(p, dst, deref_4f(vtx, hpos_offset));
+   }
+   brw_ENDIF(p);
+}
+
 
 /* Use mesa's clipping algorithms, translated to GEN4 assembly.
  */
@@ -233,13 +261,21 @@ void brw_clip_tri( struct brw_clip_compile *c )
    struct brw_indirect outlist_ptr = brw_indirect(5, 0);
    struct brw_indirect freelist_ptr = brw_indirect(6, 0);
    GLuint hpos_offset = brw_varying_to_offset(&c->vue_map, VARYING_SLOT_POS);
-   
+   GLuint clipvert_offset = brw_clip_have_varying(c, VARYING_SLOT_CLIP_VERTEX)
+      ? brw_varying_to_offset(&c->vue_map, VARYING_SLOT_CLIP_VERTEX)
+      : hpos_offset;
+
    brw_MOV(p, get_addr_reg(vtxPrev),     brw_address(c->reg.vertex[2]) );
    brw_MOV(p, get_addr_reg(plane_ptr),   brw_clip_plane0_address(c));
    brw_MOV(p, get_addr_reg(inlist_ptr),  brw_address(c->reg.inlist));
    brw_MOV(p, get_addr_reg(outlist_ptr), brw_address(c->reg.outlist));
 
    brw_MOV(p, get_addr_reg(freelist_ptr), brw_address(c->reg.vertex[3]) );
+
+   /* Set the initial vertex source mask: The first 6 planes are the bounds
+    * of the view volume; the next 6 planes are the user clipping planes.
+    */
+   brw_MOV(p, c->reg.vertex_src_mask, brw_imm_ud(0xfc0));
 
    brw_DO(p, BRW_EXECUTE_1);
    {
@@ -269,15 +305,17 @@ void brw_clip_tri( struct brw_clip_compile *c )
 	     */
 	    brw_MOV(p, get_addr_reg(vtx), deref_1uw(inlist_ptr, 0));
 
+            load_vertex_pos(c, vtxPrev, vec4(c->reg.dpPrev), hpos_offset, clipvert_offset);
 	    /* IS_NEGATIVE(prev) */
 	    brw_set_conditionalmod(p, BRW_CONDITIONAL_L);
-	    brw_DP4(p, vec4(c->reg.dpPrev), deref_4f(vtxPrev, hpos_offset), c->reg.plane_equation);
+	    brw_DP4(p, vec4(c->reg.dpPrev), vec4(c->reg.dpPrev), c->reg.plane_equation);
 	    brw_IF(p, BRW_EXECUTE_1);
 	    {
+               load_vertex_pos(c, vtx, vec4(c->reg.dp), hpos_offset, clipvert_offset);
 	       /* IS_POSITIVE(next)
 		*/
 	       brw_set_conditionalmod(p, BRW_CONDITIONAL_GE);
-	       brw_DP4(p, vec4(c->reg.dp), deref_4f(vtx, hpos_offset), c->reg.plane_equation);
+	       brw_DP4(p, vec4(c->reg.dp), vec4(c->reg.dp), c->reg.plane_equation);
 	       brw_IF(p, BRW_EXECUTE_1);
 	       {
 
@@ -316,10 +354,11 @@ void brw_clip_tri( struct brw_clip_compile *c )
 	       brw_ADD(p, get_addr_reg(outlist_ptr), get_addr_reg(outlist_ptr), brw_imm_uw(sizeof(short)));
 	       brw_ADD(p, c->reg.nr_verts, c->reg.nr_verts, brw_imm_ud(1));
 
+               load_vertex_pos(c, vtx, vec4(c->reg.dp), hpos_offset, clipvert_offset);
 	       /* IS_NEGATIVE(next)
 		*/
 	       brw_set_conditionalmod(p, BRW_CONDITIONAL_L);
-	       brw_DP4(p, vec4(c->reg.dp), deref_4f(vtx, hpos_offset), c->reg.plane_equation);
+	       brw_DP4(p, vec4(c->reg.dp), vec4(c->reg.dp), c->reg.plane_equation);
 	       brw_IF(p, BRW_EXECUTE_1);
 	       {
 		  /* Going out of bounds.  Avoid division by zero as we
@@ -392,6 +431,7 @@ void brw_clip_tri( struct brw_clip_compile *c )
        */
       brw_set_conditionalmod(p, BRW_CONDITIONAL_NZ);
       brw_SHR(p, c->reg.planemask, c->reg.planemask, brw_imm_ud(1));
+      brw_SHR(p, c->reg.vertex_src_mask, c->reg.vertex_src_mask, brw_imm_ud(1));
    }
    brw_WHILE(p);
 }

@@ -100,6 +100,15 @@ struct brw_clip_compile {
       struct brw_reg plane_equation;
        
       struct brw_reg ff_sync;
+
+      /* Bitmask indicating which coordinate attribute should be used for
+       * comparison to each clipping plane. A 0 indicates that VARYING_SLOT_POS
+       * should be used, because it's one of the fixed +/- x/y/z planes that
+       * constitute the bounds of the view volume. A 1 indicates that
+       * VARYING_SLOT_CLIP_VERTEX should be used (if available) since it's a user-
+       * defined clipping plane.
+       */
+      struct brw_reg vertex_src_mask;
    } reg;
 
    /* Number of registers storing VUE data */
