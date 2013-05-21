@@ -680,15 +680,15 @@ lp_build_depth_stencil_write_swizzled(struct gallivm_state *gallivm,
    LLVMTypeRef load_ptr_type;
    unsigned depth_bytes = format_desc->block.bits / 8;
    struct lp_type zs_type = lp_depth_type(format_desc, z_src_type.length);
+   struct lp_type z_type = zs_type;
    struct lp_type zs_load_type = zs_type;
 
    zs_load_type.length = zs_load_type.length / 2;
    load_ptr_type = LLVMPointerType(lp_build_vec_type(gallivm, zs_load_type), 0);
 
-   if (zs_type.width > 32)
-      zs_type.width = 32;
+   z_type.width = z_src_type.width;
 
-   lp_build_context_init(&z_bld, gallivm, zs_type);
+   lp_build_context_init(&z_bld, gallivm, z_type);
 
    /*
     * This is far from ideal, at least for late depth write we should do this
@@ -742,7 +742,8 @@ lp_build_depth_stencil_write_swizzled(struct gallivm_state *gallivm,
 
    if (zs_type.width < z_src_type.width) {
       /* Truncate ZS values (e.g., when writing to Z16_UNORM) */
-      z_value = LLVMBuildTrunc(builder, z_value, z_bld.vec_type, "");
+      z_value = LLVMBuildTrunc(builder, z_value,
+                               lp_build_int_vec_type(gallivm, zs_type), "");
    }
 
    if (format_desc->block.bits <= 32) {
@@ -762,9 +763,9 @@ lp_build_depth_stencil_write_swizzled(struct gallivm_state *gallivm,
    }
    else {
       if (z_src_type.length == 4) {
-         zs_dst1 = lp_build_interleave2(gallivm, zs_type,
+         zs_dst1 = lp_build_interleave2(gallivm, z_type,
                                         z_value, s_value, 0);
-         zs_dst2 = lp_build_interleave2(gallivm, zs_type,
+         zs_dst2 = lp_build_interleave2(gallivm, z_type,
                                         z_value, s_value, 1);
       }
       else {
