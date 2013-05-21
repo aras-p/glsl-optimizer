@@ -266,13 +266,20 @@ generate_fs_loop(struct gallivm_state *gallivm,
       assert(zs_format_desc);
 
       if (!shader->info.base.writes_z) {
-         if (key->alpha.enabled || shader->info.base.uses_kill)
+         if (key->alpha.enabled || shader->info.base.uses_kill) {
             /* With alpha test and kill, can do the depth test early
              * and hopefully eliminate some quads.  But need to do a
              * special deferred depth write once the final mask value
-             * is known.
+             * is known. This only works though if there's either no
+             * stencil test or the stencil value isn't written.
              */
-            depth_mode = EARLY_DEPTH_TEST | LATE_DEPTH_WRITE;
+            if (key->stencil[0].enabled && (key->stencil[0].writemask ||
+                                            (key->stencil[1].enabled &&
+                                             key->stencil[1].writemask)))
+               depth_mode = LATE_DEPTH_TEST | LATE_DEPTH_WRITE;
+            else
+               depth_mode = EARLY_DEPTH_TEST | LATE_DEPTH_WRITE;
+         }
          else
             depth_mode = EARLY_DEPTH_TEST | EARLY_DEPTH_WRITE;
       }
@@ -281,9 +288,9 @@ generate_fs_loop(struct gallivm_state *gallivm,
       }
 
       if (!(key->depth.enabled && key->depth.writemask) &&
-          !((key->stencil[0].enabled && (key->stencil[0].writemask ||
+          !(key->stencil[0].enabled && (key->stencil[0].writemask ||
                                         (key->stencil[1].enabled &&
-                                         key->stencil[1].writemask)))))
+                                         key->stencil[1].writemask))))
          depth_mode &= ~(LATE_DEPTH_WRITE | EARLY_DEPTH_WRITE);
    }
    else {
