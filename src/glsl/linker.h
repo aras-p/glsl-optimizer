@@ -64,6 +64,10 @@ bool
 validate_intrastage_interface_blocks(const gl_shader **shader_list,
                                      unsigned num_shaders);
 
+bool
+validate_interstage_interface_blocks(const gl_shader *producer,
+                                     const gl_shader *consumer);
+
 /**
  * Class for processing all of the leaf fields of a variable that corresponds
  * to a program resource.

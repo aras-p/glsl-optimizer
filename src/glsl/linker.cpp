@@ -1728,6 +1728,12 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
 	 if (prog->_LinkedShaders[i] == NULL)
 	    continue;
 
+         if (!validate_interstage_interface_blocks(prog->_LinkedShaders[prev],
+                                                   prog->_LinkedShaders[i])) {
+            linker_error(prog, "interface block mismatch between shader stages\n");
+            goto done;
+         }
+
 	 if (!cross_validate_outputs_to_inputs(prog,
 					       prog->_LinkedShaders[prev],
 					       prog->_LinkedShaders[i]))

@@ -69,3 +69,42 @@ validate_intrastage_interface_blocks(const gl_shader **shader_list,
 
    return true;
 }
+
+bool
+validate_interstage_interface_blocks(const gl_shader *producer,
+                                     const gl_shader *consumer)
+{
+   glsl_symbol_table interfaces;
+
+   /* Add non-output interfaces from the consumer to the symbol table. */
+   foreach_list(node, consumer->ir) {
+      ir_variable *var = ((ir_instruction *) node)->as_variable();
+      if (!var || !var->interface_type || var->mode == ir_var_shader_out)
+         continue;
+
+      interfaces.add_interface(var->interface_type->name,
+                               var->interface_type,
+                               (enum ir_variable_mode) var->mode);
+   }
+
+   /* Verify that the producer's interfaces match. */
+   foreach_list(node, producer->ir) {
+      ir_variable *var = ((ir_instruction *) node)->as_variable();
+      if (!var || !var->interface_type || var->mode == ir_var_shader_in)
+         continue;
+
+      enum ir_variable_mode consumer_mode =
+         var->mode == ir_var_uniform ? ir_var_uniform : ir_var_shader_in;
+      const glsl_type *expected_type =
+         interfaces.get_interface(var->interface_type->name, consumer_mode);
+
+      /* The consumer doesn't use this output block.  Ignore it. */
+      if (expected_type == NULL)
+         continue;
+
+      if (var->interface_type != expected_type)
+         return false;
+   }
+
+   return true;
+}
