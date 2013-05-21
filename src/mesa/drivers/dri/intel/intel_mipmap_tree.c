@@ -1475,6 +1475,40 @@ intel_miptree_resolve_color(struct intel_context *intel,
 
 
 /**
+ * Make it possible to share the region backing the given miptree with another
+ * process or another miptree.
+ *
+ * Fast color clears are unsafe with shared buffers, so we need to resolve and
+ * then discard the MCS buffer, if present.  We also set the mcs_state to
+ * INTEL_MCS_STATE_NONE to ensure that no MCS buffer gets allocated in the
+ * future.
+ */
+void
+intel_miptree_make_shareable(struct intel_context *intel,
+                             struct intel_mipmap_tree *mt)
+{
+#ifdef I915
+   /* Nothing needs to be done for I915 */
+   (void) intel;
+   (void) mt;
+#else
+   /* MCS buffers are also used for multisample buffers, but we can't resolve
+    * away a multisample MCS buffer because it's an integral part of how the
+    * pixel data is stored.  Fortunately this code path should never be
+    * reached for multisample buffers.
+    */
+   assert(mt->msaa_layout == INTEL_MSAA_LAYOUT_NONE);
+
+   if (mt->mcs_mt) {
+      intel_miptree_resolve_color(intel, mt);
+      intel_miptree_release(&mt->mcs_mt);
+      mt->mcs_state = INTEL_MCS_STATE_NONE;
+   }
+#endif
+}
+
+
+/**
  * \brief Get pointer offset into stencil buffer.
  *
  * The stencil buffer is W tiled. Since the GTT is incapable of W fencing, we

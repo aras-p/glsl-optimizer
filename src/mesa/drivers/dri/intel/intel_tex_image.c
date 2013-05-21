@@ -342,6 +342,7 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
 
    _mesa_lock_texture(&intel->ctx, texObj);
    texImage = _mesa_get_tex_image(ctx, texObj, target, level);
+   intel_miptree_make_shareable(intel, rb->mt);
    intel_set_texture_image_region(ctx, texImage, rb->mt->region, target,
                                   internalFormat, texFormat, 0,
                                   rb->mt->region->width,

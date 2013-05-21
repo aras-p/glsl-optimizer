@@ -723,6 +723,10 @@ intel_miptree_resolve_color(struct intel_context *intel,
                             struct intel_mipmap_tree *mt);
 
 void
+intel_miptree_make_shareable(struct intel_context *intel,
+                             struct intel_mipmap_tree *mt);
+
+void
 intel_miptree_downsample(struct intel_context *intel,
                          struct intel_mipmap_tree *mt);
 

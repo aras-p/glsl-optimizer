@@ -300,6 +300,8 @@ intel_setup_image_from_mipmap_tree(struct intel_context *intel, __DRIimage *imag
    unsigned int draw_x, draw_y;
    uint32_t mask_x, mask_y;
 
+   intel_miptree_make_shareable(intel, mt);
+
    intel_miptree_check_level_layer(mt, level, zoffset);
 
    intel_region_get_tile_masks(mt->region, &mask_x, &mask_y, false);
@@ -396,6 +398,7 @@ intel_create_image_from_renderbuffer(__DRIcontext *context,
    }
 
    irb = intel_renderbuffer(rb);
+   intel_miptree_make_shareable(intel, irb->mt);
    image = calloc(1, sizeof *image);
    if (image == NULL)
       return NULL;
