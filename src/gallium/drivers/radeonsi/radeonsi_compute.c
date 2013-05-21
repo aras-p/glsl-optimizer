@@ -11,7 +11,8 @@ struct si_pipe_compute {
 	unsigned local_size;
 	unsigned private_size;
 	unsigned input_size;
-	struct si_pipe_shader shader;
+	unsigned num_kernels;
+	struct si_pipe_shader *kernels;
 	unsigned num_user_sgprs;
 
         struct si_pm4_state *pm4_buffers;
@@ -27,7 +28,7 @@ static void *radeonsi_create_compute_state(
 					CALLOC_STRUCT(si_pipe_compute);
 	const struct pipe_llvm_program_header *header;
 	const unsigned char *code;
-	LLVMModuleRef mod;
+	unsigned i;
 
 	header = cso->prog;
 	code = cso->prog + sizeof(struct pipe_llvm_program_header);
@@ -37,8 +38,15 @@ static void *radeonsi_create_compute_state(
 	program->private_size = cso->req_private_mem;
 	program->input_size = cso->req_input_mem;
 
-	mod = radeon_llvm_parse_bitcode(code, header->num_bytes);
-	si_compile_llvm(rctx, &program->shader, mod);
+	program->num_kernels = radeon_llvm_get_num_kernels(code,
+							header->num_bytes);
+	program->kernels = CALLOC(sizeof(struct si_pipe_shader),
+							program->num_kernels);
+	for (i = 0; i < program->num_kernels; i++) {
+		LLVMModuleRef mod = radeon_llvm_get_kernel_module(i, code,
+							header->num_bytes);
+		si_compile_llvm(rctx, &program->kernels[i], mod);
+	}
 
 	return program;
 }
@@ -88,6 +96,7 @@ static void radeonsi_launch_grid(
 	uint64_t shader_va;
 	unsigned arg_user_sgpr_count;
 	unsigned i;
+	struct si_pipe_shader *shader = &program->kernels[pc];
 
 	pm4->compute_pkt = true;
 	si_cmd_context_control(pm4);
@@ -133,8 +142,8 @@ static void radeonsi_launch_grid(
 	 * (number of compute units) * 4 * (waves per simd) - 1 */
 	si_pm4_set_reg(pm4, R_00B82C_COMPUTE_MAX_WAVE_ID, 0x190 /* Default value */);
 
-	shader_va = r600_resource_va(ctx->screen, (void *)program->shader.bo);
-	si_pm4_add_bo(pm4, program->shader.bo, RADEON_USAGE_READ);
+	shader_va = r600_resource_va(ctx->screen, (void *)shader->bo);
+	si_pm4_add_bo(pm4, shader->bo, RADEON_USAGE_READ);
 	si_pm4_set_reg(pm4, R_00B830_COMPUTE_PGM_LO, (shader_va >> 8) & 0xffffffff);
 	si_pm4_set_reg(pm4, R_00B834_COMPUTE_PGM_HI, shader_va >> 40);
 
@@ -143,13 +152,13 @@ static void radeonsi_launch_grid(
 		 * TIDIG_COMP_CNT.
 		 * XXX: The compiler should account for this.
 		 */
-		S_00B848_VGPRS((MAX2(3, program->shader.num_vgprs) - 1) / 4)
+		S_00B848_VGPRS((MAX2(3, shader->num_vgprs) - 1) / 4)
 		/* We always use at least 4 + arg_user_sgpr_count.  The 4 extra
 		 * sgprs are from TGID_X_EN, TGID_Y_EN, TGID_Z_EN, TG_SIZE_EN
 		 * XXX: The compiler should account for this.
 		 */
 		|  S_00B848_SGPRS(((MAX2(4 + arg_user_sgpr_count,
-		                        program->shader.num_sgprs)) - 1) / 8))
+		                        shader->num_sgprs)) - 1) / 8))
 		;
 
 	si_pm4_set_reg(pm4, R_00B84C_COMPUTE_PGM_RSRC2,
@@ -201,7 +210,7 @@ static void radeonsi_launch_grid(
 #endif
 
 	rctx->ws->cs_flush(rctx->cs, RADEON_FLUSH_COMPUTE, 0);
-	rctx->ws->buffer_wait(program->shader.bo->buf, 0);
+	rctx->ws->buffer_wait(shader->bo->buf, 0);
 
 	FREE(pm4);
 }
