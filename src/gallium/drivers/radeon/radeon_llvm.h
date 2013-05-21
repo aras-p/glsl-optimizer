@@ -67,6 +67,7 @@ struct radeon_llvm_context {
 	unsigned fs_color_all;
 	unsigned alpha_to_one;
 	unsigned has_txq_cube_array_z_comp;
+	unsigned uses_tex_buffers;
 
 	/*=== Front end configuration ===*/
 
