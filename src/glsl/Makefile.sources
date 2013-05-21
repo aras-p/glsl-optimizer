@@ -46,6 +46,7 @@ LIBGLSL_FILES = \
 	$(GLSL_SRCDIR)/ir_variable_refcount.cpp \
 	$(GLSL_SRCDIR)/linker.cpp \
 	$(GLSL_SRCDIR)/link_functions.cpp \
+	$(GLSL_SRCDIR)/link_interface_blocks.cpp \
 	$(GLSL_SRCDIR)/link_uniforms.cpp \
 	$(GLSL_SRCDIR)/link_uniform_initializers.cpp \
 	$(GLSL_SRCDIR)/link_uniform_block_active_visitor.cpp \

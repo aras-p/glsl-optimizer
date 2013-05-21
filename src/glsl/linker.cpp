@@ -938,6 +938,12 @@ link_intrastage_shaders(void *mem_ctx,
    if (!cross_validate_globals(prog, shader_list, num_shaders, false))
       return NULL;
 
+   /* Check that interface blocks defined in multiple shaders are consistent.
+    */
+   if (!validate_intrastage_interface_blocks((const gl_shader **)shader_list,
+                                             num_shaders))
+      return NULL;
+
    /* Check that uniform blocks between shaders for a stage agree. */
    const int num_uniform_blocks =
       link_uniform_blocks(mem_ctx, prog, shader_list, num_shaders,
