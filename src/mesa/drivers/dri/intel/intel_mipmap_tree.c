@@ -382,37 +382,39 @@ intel_miptree_create(struct intel_context *intel,
    gl_format etc_format = MESA_FORMAT_NONE;
    GLuint total_width, total_height;
 
-   switch (format) {
-   case MESA_FORMAT_ETC1_RGB8:
-      format = MESA_FORMAT_RGBX8888_REV;
-      break;
-   case MESA_FORMAT_ETC2_RGB8:
-      format = MESA_FORMAT_RGBX8888_REV;
-      break;
-   case MESA_FORMAT_ETC2_SRGB8:
-   case MESA_FORMAT_ETC2_SRGB8_ALPHA8_EAC:
-   case MESA_FORMAT_ETC2_SRGB8_PUNCHTHROUGH_ALPHA1:
-      format = MESA_FORMAT_SARGB8;
-      break;
-   case MESA_FORMAT_ETC2_RGBA8_EAC:
-   case MESA_FORMAT_ETC2_RGB8_PUNCHTHROUGH_ALPHA1:
-      format = MESA_FORMAT_RGBA8888_REV;
-      break;
-   case MESA_FORMAT_ETC2_R11_EAC:
-      format = MESA_FORMAT_R16;
-      break;
-   case MESA_FORMAT_ETC2_SIGNED_R11_EAC:
-      format = MESA_FORMAT_SIGNED_R16;
-      break;
-   case MESA_FORMAT_ETC2_RG11_EAC:
-      format = MESA_FORMAT_GR1616;
-      break;
-   case MESA_FORMAT_ETC2_SIGNED_RG11_EAC:
-      format = MESA_FORMAT_SIGNED_GR1616;
-      break;
-   default:
-      /* Non ETC1 / ETC2 format */
-      break;
+   if (!intel->is_baytrail) {
+      switch (format) {
+      case MESA_FORMAT_ETC1_RGB8:
+         format = MESA_FORMAT_RGBX8888_REV;
+         break;
+      case MESA_FORMAT_ETC2_RGB8:
+         format = MESA_FORMAT_RGBX8888_REV;
+         break;
+      case MESA_FORMAT_ETC2_SRGB8:
+      case MESA_FORMAT_ETC2_SRGB8_ALPHA8_EAC:
+      case MESA_FORMAT_ETC2_SRGB8_PUNCHTHROUGH_ALPHA1:
+         format = MESA_FORMAT_SARGB8;
+         break;
+      case MESA_FORMAT_ETC2_RGBA8_EAC:
+      case MESA_FORMAT_ETC2_RGB8_PUNCHTHROUGH_ALPHA1:
+         format = MESA_FORMAT_RGBA8888_REV;
+         break;
+      case MESA_FORMAT_ETC2_R11_EAC:
+         format = MESA_FORMAT_R16;
+         break;
+      case MESA_FORMAT_ETC2_SIGNED_R11_EAC:
+         format = MESA_FORMAT_SIGNED_R16;
+         break;
+      case MESA_FORMAT_ETC2_RG11_EAC:
+         format = MESA_FORMAT_GR1616;
+         break;
+      case MESA_FORMAT_ETC2_SIGNED_RG11_EAC:
+         format = MESA_FORMAT_SIGNED_GR1616;
+         break;
+      default:
+         /* Non ETC1 / ETC2 format */
+         break;
+      }
    }
 
    etc_format = (format != tex_format) ? tex_format : MESA_FORMAT_NONE;
