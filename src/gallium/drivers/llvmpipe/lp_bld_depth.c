@@ -1097,23 +1097,18 @@ lp_build_depth_stencil_test(struct gallivm_state *gallivm,
                                   stencil_shift, "");
 
    /* Finally, merge the z/stencil values */
-   if ((depth->enabled && depth->writemask) ||
-       (stencil[0].enabled && (stencil[0].writemask ||
-                               (stencil[1].enabled && stencil[1].writemask)))) {
-
-      if (format_desc->block.bits <= 32) {
-         if (have_z && have_s)
-            *z_value = LLVMBuildOr(builder, z_dst, stencil_vals, "");
-         else if (have_z)
-            *z_value = z_dst;
-         else
-            *z_value = stencil_vals;
-         *s_value = *z_value;
-      }
-      else {
+   if (format_desc->block.bits <= 32) {
+      if (have_z && have_s)
+         *z_value = LLVMBuildOr(builder, z_dst, stencil_vals, "");
+      else if (have_z)
          *z_value = z_dst;
-         *s_value = stencil_vals;
-      }
+      else
+         *z_value = stencil_vals;
+      *s_value = *z_value;
+   }
+   else {
+      *z_value = z_dst;
+      *s_value = stencil_vals;
    }
 
    if (s_pass_mask)
