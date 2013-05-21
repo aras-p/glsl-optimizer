@@ -1,0 +1,25 @@
+#######################################################################
+# SConscript for haiku winsys
+
+
+Import('*')
+
+if env['platform'] in ('haiku'):
+
+    env = env.Clone()
+
+    env.Append(CPPPATH = [
+        '#/src/gallium/include',
+        '#/src/gallium/auxiliary',
+        '#/src/gallium/drivers',
+    ])
+
+    ws_haiku = env.ConvenienceLibrary(
+        target = 'ws_haiku',
+        source = [
+           'hgl_sw_winsys.c',
+           'bitmap_wrapper.cpp',
+        ]
+    )
+    env.Alias('ws_haiku', ws_haiku)
+    Export('ws_haiku')

@@ -74,6 +74,11 @@ if not env['msvc']:
         'winsys/i915/sw/SConscript',
     ])
 
+if env['platform'] == 'haiku':
+    SConscript([
+        'winsys/sw/hgl/SConscript',
+    ])
+
 if env['dri']:
     SConscript([
         'winsys/sw/dri/SConscript',
@@ -112,6 +117,11 @@ if not env['embedded']:
         SConscript([
             'targets/graw-gdi/SConscript',
             'targets/libgl-gdi/SConscript',
+        ])
+
+    if env['platform'] == 'haiku':
+        SConscript([
+            'targets/haiku-softpipe/SConscript',
         ])
 
     if env['dri']:

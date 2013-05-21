@@ -1,0 +1,21 @@
+Import('*')
+
+if True:
+    env.Append(CPPDEFINES = [
+        'GALLIUM_SOFTPIPE',
+        'GALLIUM_RBUG',
+        'GALLIUM_TRACE',
+    ])
+
+if env['llvm']:
+    env.Append(CPPDEFINES = 'HAVE_LLVMPIPE')
+
+softpipe_sources = [
+    'haiku-softpipe.c'
+]
+
+module = env.StaticLibrary(
+    target ='swpipe_haiku.a',
+    source = softpipe_sources,
+    SHLIBPREFIX = '',
+)
