@@ -361,6 +361,13 @@ generate_fs_loop(struct gallivm_state *gallivm,
                                                depth_ptr, depth_stride,
                                                z_value, s_value);
       }
+      /*
+       * Note mask check if stencil is enabled must be after ds write not after
+       * stencil test otherwise new stencil values may not get written if all
+       * fragments got killed by depth/stencil test.
+       */
+      if (!simple_shader && key->stencil[0].enabled)
+         lp_build_mask_check(&mask);
    }
 
    lp_build_interp_soa_update_inputs_dyn(interp, gallivm, loop_state.counter);

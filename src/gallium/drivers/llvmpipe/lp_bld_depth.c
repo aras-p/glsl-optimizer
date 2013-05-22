@@ -1116,9 +1116,5 @@ lp_build_depth_stencil_test(struct gallivm_state *gallivm,
 
    if (depth->enabled && stencil[0].enabled)
       lp_build_mask_update(mask, z_pass);
-
-   if (do_branch)
-      lp_build_mask_check(mask);
-
 }
 
