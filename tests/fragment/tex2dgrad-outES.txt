@@ -1,11 +1,12 @@
 #extension GL_EXT_shader_texture_lod : enable
 #extension GL_OES_standard_derivatives : enable
-varying vec2 uv;
+varying vec3 uv;
+uniform samplerCube cub;
 uniform sampler2D tex;
 void main ()
 {
   lowp vec4 tmpvar_1;
-  tmpvar_1 = texture2DGradEXT (tex, uv, dFdx(uv), dFdy(uv));
+  tmpvar_1 = (texture2DGradEXT (tex, uv.xy, dFdx(uv.xy), dFdy(uv.xy)) + textureCubeGradEXT (cub, uv, dFdx(uv), dFdy(uv)));
   gl_FragColor = tmpvar_1;
 }
 
