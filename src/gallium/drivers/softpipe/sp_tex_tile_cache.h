@@ -40,7 +40,7 @@ struct softpipe_tex_tile_cache;
 /**
  * Cache tile size (width and height). This needs to be a power of two.
  */
-#define TEX_TILE_SIZE_LOG2 6
+#define TEX_TILE_SIZE_LOG2 5
 #define TEX_TILE_SIZE (1 << TEX_TILE_SIZE_LOG2)
 
 
@@ -73,7 +73,13 @@ struct softpipe_tex_cached_tile
    } data;
 };
 
-#define NUM_TEX_TILE_ENTRIES 4
+/*
+ * The number of cache entries.
+ * Should not be decreased to lower than 16, and even that
+ * seems too low to avoid cache thrashing in some cases (because
+ * the cache is direct mapped, see tex_cache_pos() function).
+ */
+#define NUM_TEX_TILE_ENTRIES 16
 
 struct softpipe_tex_tile_cache
 {
