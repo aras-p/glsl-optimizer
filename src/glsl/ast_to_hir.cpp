@@ -3358,7 +3358,7 @@ ast_jump_statement::hir(exec_list *instructions,
       assert(state->current_function);
 
       if (opt_return_value) {
-	 ir_rvalue *const ret = opt_return_value->hir(instructions, state);
+	 ir_rvalue *ret = opt_return_value->hir(instructions, state);
 
 	 /* The value of the return type can be NULL if the shader says
 	  * 'return foo();' and foo() is a function that returns void.
@@ -3370,16 +3370,29 @@ ast_jump_statement::hir(exec_list *instructions,
 	 const glsl_type *const ret_type =
 	    (ret == NULL) ? glsl_type::void_type : ret->type;
 
-	 /* Implicit conversions are not allowed for return values. */
-	 if (state->current_function->return_type != ret_type) {
+         /* Implicit conversions are not allowed for return values prior to
+          * ARB_shading_language_420pack.
+          */
+         if (state->current_function->return_type != ret_type) {
 	    YYLTYPE loc = this->get_location();
 
-	    _mesa_glsl_error(& loc, state,
-			     "`return' with wrong type %s, in function `%s' "
-			     "returning %s",
-			     ret_type->name,
-			     state->current_function->function_name(),
-			     state->current_function->return_type->name);
+            if (state->ARB_shading_language_420pack_enable) {
+               if (!apply_implicit_conversion(state->current_function->return_type,
+                                              ret, state)) {
+                  _mesa_glsl_error(& loc, state,
+                                   "Could not implicitly convert return value "
+                                   "to %s, in function `%s'",
+                                   state->current_function->return_type->name,
+                                   state->current_function->function_name());
+               }
+            } else {
+               _mesa_glsl_error(& loc, state,
+                                "`return' with wrong type %s, in function `%s' "
+                                "returning %s",
+                                ret_type->name,
+                                state->current_function->function_name(),
+                                state->current_function->return_type->name);
+            }
 	 }
 
 	 inst = new(ctx) ir_return(ret);
