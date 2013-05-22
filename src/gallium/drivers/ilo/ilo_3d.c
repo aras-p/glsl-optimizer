@@ -376,13 +376,18 @@ draw_vbo(struct ilo_3d *hw3d, const struct ilo_context *ilo,
 
    ilo_3d_own_render_ring(hw3d);
 
-   /*
-    * Without a better tracking mechanism, when the framebuffer changes, we
-    * have to assume that the old framebuffer may be sampled from.  If that
-    * happens in the middle of a batch buffer, we need to insert manual
-    * flushes.
-    */
-   need_flush = (!hw3d->new_batch && (ilo->dirty & ILO_DIRTY_FRAMEBUFFER));
+   if (!hw3d->new_batch) {
+      /*
+       * Without a better tracking mechanism, when the framebuffer changes, we
+       * have to assume that the old framebuffer may be sampled from.  If that
+       * happens in the middle of a batch buffer, we need to insert manual
+       * flushes.
+       */
+      need_flush = (ilo->dirty & ILO_DIRTY_FRAMEBUFFER);
+
+      /* same to SO target changes */
+      need_flush |= (ilo->dirty & ILO_DIRTY_STREAM_OUTPUT_TARGETS);
+   }
 
    /* make sure there is enough room first */
    max_len = ilo_3d_pipeline_estimate_size(hw3d->pipeline,

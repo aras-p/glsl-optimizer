@@ -394,7 +394,8 @@ gen7_pipeline_sol(struct ilo_3d_pipeline *p,
    gen6_pipeline_update_max_svbi(p, ilo, session);
 
    /* 3DSTATE_SO_BUFFER */
-   if (DIRTY(STREAM_OUTPUT_TARGETS) || dirty_sh) {
+   if ((DIRTY(STREAM_OUTPUT_TARGETS) || dirty_sh) &&
+       ilo->stream_output_targets.num_targets) {
       int i;
 
       for (i = 0; i < ilo->stream_output_targets.num_targets; i++) {
@@ -416,7 +417,7 @@ gen7_pipeline_sol(struct ilo_3d_pipeline *p,
    }
 
    /* 3DSTATE_SO_DECL_LIST */
-   if (dirty_sh)
+   if (dirty_sh && ilo->stream_output_targets.num_targets)
       p->gen7_3DSTATE_SO_DECL_LIST(p->dev, so_info, sh, p->cp);
 
    /* 3DSTATE_STREAMOUT */
