@@ -2283,10 +2283,13 @@ ilo_gpe_gen6_emit_3DSTATE_DEPTH_BUFFER(const struct ilo_dev_info *dev,
       ILO_GPE_CMD(0x3, 0x0, 0x05) : ILO_GPE_CMD(0x3, 0x1, 0x05);
    const uint8_t cmd_len = 7;
    const int max_2d_size = (dev->gen >= ILO_GEN(7)) ? 16384 : 8192;
+   const int max_array_size = (dev->gen >= ILO_GEN(7)) ? 2048 : 512;
    struct ilo_texture *tex;
-   uint32_t dw1, dw3;
+   uint32_t dw1, dw3, dw4, dw6;
    uint32_t slice_offset, x_offset, y_offset;
-   int surface_type, depth_format, width, height;
+   int surface_type, depth_format;
+   unsigned lod, first_layer, num_layers;
+   unsigned width, height, depth;
    bool separate_stencil, has_depth, has_stencil;
 
    ILO_GPE_VALID_GEN(dev, 6, 7);
@@ -2338,69 +2341,118 @@ ilo_gpe_gen6_emit_3DSTATE_DEPTH_BUFFER(const struct ilo_dev_info *dev,
    }
 
    tex = ilo_texture(surface->texture);
+
    surface_type = ilo_gpe_gen6_translate_texture(tex->base.target);
-   width = surface->width;
-   height = surface->height;
+   lod = surface->u.tex.level;
+   first_layer = surface->u.tex.first_layer;
+   num_layers = surface->u.tex.last_layer - first_layer + 1;
+
+   width = tex->base.width0;
+   height = tex->base.height0;
+   depth = (tex->base.target == PIPE_TEXTURE_3D) ?
+      tex->base.depth0 : num_layers;
+
+   if (surface_type == BRW_SURFACE_CUBE) {
+      /*
+       * From the Sandy Bridge PRM, volume 2 part 1, page 325-326:
+       *
+       *     "For Other Surfaces (Cube Surfaces):
+       *      This field (Minimum Array Element) is ignored."
+       *
+       *     "For Other Surfaces (Cube Surfaces):
+       *      This field (Render Target View Extent) is ignored."
+       *
+       * As such, we cannot set first_layer and num_layers on cube surfaces.
+       * To work around that, treat it as a 2D surface.
+       */
+      surface_type = BRW_SURFACE_2D;
+   }
 
    /*
     * we always treat the resource as non-mipmapped and set the slice/x/y
     * offsets manually
     */
-   slice_offset = ilo_texture_get_slice_offset(tex,
-         surface->u.tex.level, surface->u.tex.first_layer,
-         &x_offset, &y_offset);
+   if (true) {
+      /* no layered rendering */
+      assert(num_layers == 1);
 
-   /*
-    * From the Sandy Bridge PRM, volume 2 part 1, page 326:
-    *
-    *     "The 3 LSBs of both offsets (Depth Coordinate Offset Y and Depth
-    *      Coordinate Offset X) must be zero to ensure correct alignment"
-    *
-    * XXX Skip the check for gen6, which seems to be fine.  We need to make
-    * sure that does not happen eventually.
-    */
-   if (dev->gen >= ILO_GEN(7)) {
-      assert((x_offset & 7) == 0 && (y_offset & 7) == 0);
-      x_offset &= ~7;
-      y_offset &= ~7;
+      slice_offset = ilo_texture_get_slice_offset(tex,
+            lod, first_layer, &x_offset, &y_offset);
+
+      /*
+       * From the Sandy Bridge PRM, volume 2 part 1, page 326:
+       *
+       *     "The 3 LSBs of both offsets (Depth Coordinate Offset Y and Depth
+       *      Coordinate Offset X) must be zero to ensure correct alignment"
+       *
+       * XXX Skip the check for gen6, which seems to be fine.  We need to make
+       * sure that does not happen eventually.
+       */
+      if (dev->gen >= ILO_GEN(7)) {
+         assert((x_offset & 7) == 0 && (y_offset & 7) == 0);
+         x_offset &= ~7;
+         y_offset &= ~7;
+      }
+
+      /* the size of the layer */
+      width = u_minify(width, lod);
+      height = u_minify(height, lod);
+      if (surface_type == BRW_SURFACE_3D)
+         depth = u_minify(depth, lod);
+      else
+         depth = 1;
+
+      lod = 0;
+      first_layer = 0;
+
+      width += x_offset;
+      height += y_offset;
+
+      /* we have to treat them as 2D surfaces */
+      if (surface_type == BRW_SURFACE_CUBE) {
+         assert(tex->base.width0 == tex->base.height0);
+         /* we will set slice_offset to point to the single face */
+         surface_type = BRW_SURFACE_2D;
+      }
+      else if (surface_type == BRW_SURFACE_1D && height > 1) {
+         assert(tex->base.height0 == 1);
+         surface_type = BRW_SURFACE_2D;
+      }
    }
-
-   width += x_offset;
-   height += y_offset;
+   else {
+      slice_offset = 0;
+      x_offset = 0;
+      y_offset = 0;
+   }
 
    /* required for GEN6+ */
    assert(tex->tiling == INTEL_TILING_Y);
-
    assert(tex->bo_stride > 0 && tex->bo_stride < 128 * 1024 &&
          tex->bo_stride % 128 == 0);
-   assert(surface->u.tex.first_layer == surface->u.tex.last_layer);
    assert(width <= tex->bo_stride);
-
-   /* we have to treat them as 2D surfaces */
-   if (surface_type == BRW_SURFACE_CUBE) {
-      assert(surface->width == surface->height);
-      /* we will set slice_offset to point to the single face */
-      surface_type = BRW_SURFACE_2D;
-   }
-   else if (surface_type == BRW_SURFACE_1D && height > 1) {
-      assert(surface->height == 1);
-      surface_type = BRW_SURFACE_2D;
-   }
 
    switch (surface_type) {
    case BRW_SURFACE_1D:
-      assert(width <= max_2d_size && height == 1);
+      assert(width <= max_2d_size && height == 1 &&
+             depth <= max_array_size);
+      assert(first_layer < max_array_size - 1 &&
+             num_layers <= max_array_size);
       break;
    case BRW_SURFACE_2D:
-      assert(width <= max_2d_size && height <= max_2d_size);
+      assert(width <= max_2d_size && height <= max_2d_size &&
+             depth <= max_array_size);
+      assert(first_layer < max_array_size - 1 &&
+             num_layers <= max_array_size);
       break;
    case BRW_SURFACE_3D:
-      assert(width <= 2048 && height <= 2048);
+      assert(width <= 2048 && height <= 2048 && depth <= 2048);
+      assert(first_layer < 2048 && num_layers <= max_array_size);
       assert(x_offset == 0 && y_offset == 0);
       break;
    case BRW_SURFACE_CUBE:
-      assert(width <= max_2d_size && height <= max_2d_size &&
-             width == height);
+      assert(width <= max_2d_size && height <= max_2d_size && depth == 1);
+      assert(first_layer == 0 && num_layers == 1);
+      assert(width == height);
       assert(x_offset == 0 && y_offset == 0);
       break;
    default:
@@ -2425,7 +2477,13 @@ ilo_gpe_gen6_emit_3DSTATE_DEPTH_BUFFER(const struct ilo_dev_info *dev,
          dw1 |= 1 << 27;
 
       dw3 = (height - 1) << 18 |
-            (width - 1) << 4;
+            (width - 1) << 4 |
+            lod;
+
+      dw4 = (depth - 1) << 21 |
+            first_layer << 10;
+
+      dw6 = (num_layers - 1) << 21;
    }
    else {
       dw1 |= (tex->tiling != INTEL_TILING_NONE) << 27 |
@@ -2438,7 +2496,14 @@ ilo_gpe_gen6_emit_3DSTATE_DEPTH_BUFFER(const struct ilo_dev_info *dev,
 
       dw3 = (height - 1) << 19 |
             (width - 1) << 6 |
+            lod << 2 |
             BRW_SURFACE_MIPMAPLAYOUT_BELOW << 1;
+
+      dw4 = (depth - 1) << 21 |
+            first_layer << 10 |
+            (num_layers - 1) << 1;
+
+      dw6 = 0;
    }
 
    ilo_cp_begin(cp, cmd_len);
@@ -2454,9 +2519,9 @@ ilo_gpe_gen6_emit_3DSTATE_DEPTH_BUFFER(const struct ilo_dev_info *dev,
    }
 
    ilo_cp_write(cp, dw3);
-   ilo_cp_write(cp, 0);
+   ilo_cp_write(cp, dw4);
    ilo_cp_write(cp, y_offset << 16 | x_offset);
-   ilo_cp_write(cp, 0);
+   ilo_cp_write(cp, dw6);
    ilo_cp_end(cp);
 }
 
@@ -2659,10 +2724,17 @@ gen6_emit_3DSTATE_STENCIL_BUFFER(const struct ilo_dev_info *dev,
       return;
    }
 
-   slice_offset = ilo_texture_get_slice_offset(tex,
-         surface->u.tex.level, surface->u.tex.first_layer,
-         &x_offset, &y_offset);
-   /* XXX X/Y offsets inherit from 3DSTATE_DEPTH_BUFFER */
+   if (true) {
+      slice_offset = ilo_texture_get_slice_offset(tex,
+            surface->u.tex.level, surface->u.tex.first_layer,
+            &x_offset, &y_offset);
+      /* XXX X/Y offsets inherit from 3DSTATE_DEPTH_BUFFER */
+   }
+   else {
+      slice_offset = 0;
+      x_offset = 0;
+      y_offset = 0;
+   }
 
    /*
     * From the Sandy Bridge PRM, volume 2 part 1, page 329:
