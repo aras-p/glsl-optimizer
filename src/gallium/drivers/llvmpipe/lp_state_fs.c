@@ -245,9 +245,14 @@ generate_fs_loop(struct gallivm_state *gallivm,
    LLVMValueRef outputs[PIPE_MAX_SHADER_OUTPUTS][TGSI_NUM_CHANNELS];
    struct lp_build_for_loop_state loop_state;
    struct lp_build_mask_context mask;
+   /*
+    * TODO: figure out if simple_shader optimization is really worthwile to
+    * keep. Disabled because it may hide some real bugs in the (depth/stencil)
+    * code since tests tend to take another codepath than real shaders.
+    */
    boolean simple_shader = (shader->info.base.file_count[TGSI_FILE_SAMPLER] == 0 &&
                             shader->info.base.num_inputs < 3 &&
-                            shader->info.base.num_instructions < 8);
+                            shader->info.base.num_instructions < 8) && 0;
    const boolean dual_source_blend = key->blend.rt[0].blend_enable &&
                                      util_blend_state_is_dual(&key->blend, 0);
    unsigned attrib;
