@@ -3393,7 +3393,23 @@ ast_jump_statement::hir(exec_list *instructions,
                                 state->current_function->function_name(),
                                 state->current_function->return_type->name);
             }
-	 }
+         } else if (state->current_function->return_type->base_type ==
+                    GLSL_TYPE_VOID) {
+            YYLTYPE loc = this->get_location();
+
+            /* The ARB_shading_language_420pack, GLSL ES 3.0, and GLSL 4.20
+             * specs add a clarification:
+             *
+             *    "A void function can only use return without a return argument, even if
+             *     the return argument has void type. Return statements only accept values:
+             *
+             *         void func1() { }
+             *         void func2() { return func1(); } // illegal return statement"
+             */
+            _mesa_glsl_error(& loc, state,
+                             "void functions can only use `return' without a "
+                             "return argument");
+         }
 
 	 inst = new(ctx) ir_return(ret);
       } else {
