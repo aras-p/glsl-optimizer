@@ -790,6 +790,13 @@ generate_130_uniforms(exec_list *instructions,
                         state->Const.MaxClipPlanes);
    add_builtin_constant(instructions, symtab, "gl_MaxVaryingComponents",
 			state->Const.MaxVaryingFloats);
+
+   if (state->ARB_shading_language_420pack_enable) {
+      add_builtin_constant(instructions, symtab, "gl_MinProgramTexelOffset",
+                           state->Const.MinProgramTexelOffset);
+      add_builtin_constant(instructions, symtab, "gl_MaxProgramTexelOffset",
+                           state->Const.MaxProgramTexelOffset);
+   }
 }
 
 
