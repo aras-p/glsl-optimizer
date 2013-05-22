@@ -50,7 +50,7 @@ sp_create_tex_tile_cache( struct pipe_context *pipe )
    uint pos;
 
    /* make sure max texture size works */
-   assert((TILE_SIZE << TEX_ADDR_BITS) >= (1 << (SP_MAX_TEXTURE_2D_LEVELS-1)));
+   assert((TEX_TILE_SIZE << TEX_ADDR_BITS) >= (1 << (SP_MAX_TEXTURE_2D_LEVELS-1)));
 
    tc = CALLOC_STRUCT( softpipe_tex_tile_cache );
    if (tc) {
@@ -212,7 +212,7 @@ sp_find_cached_tile_tex(struct softpipe_tex_tile_cache *tc,
 
    if (addr.value != tile->addr.value) {
 
-      /* cache miss.  Most misses are because we've invaldiated the
+      /* cache miss.  Most misses are because we've invalidated the
        * texture cache previously -- most commonly on binding a new
        * texture.  Currently we effectively flush the cache on texture
        * bind.
@@ -265,26 +265,26 @@ sp_find_cached_tile_tex(struct softpipe_tex_tile_cache *tc,
        */
       if (!zs && util_format_is_pure_uint(tc->format)) {
          pipe_get_tile_ui_format(tc->tex_trans, tc->tex_trans_map,
-                                 addr.bits.x * TILE_SIZE,
-                                 addr.bits.y * TILE_SIZE,
-                                 TILE_SIZE,
-                                 TILE_SIZE,
+                                 addr.bits.x * TEX_TILE_SIZE,
+                                 addr.bits.y * TEX_TILE_SIZE,
+                                 TEX_TILE_SIZE,
+                                 TEX_TILE_SIZE,
                                  tc->format,
                                  (unsigned *) tile->data.colorui);
       } else if (!zs && util_format_is_pure_sint(tc->format)) {
          pipe_get_tile_i_format(tc->tex_trans, tc->tex_trans_map,
-                                addr.bits.x * TILE_SIZE,
-                                addr.bits.y * TILE_SIZE,
-                                TILE_SIZE,
-                                 TILE_SIZE,
+                                addr.bits.x * TEX_TILE_SIZE,
+                                addr.bits.y * TEX_TILE_SIZE,
+                                TEX_TILE_SIZE,
+                                TEX_TILE_SIZE,
                                 tc->format,
                                 (int *) tile->data.colori);
       } else {
          pipe_get_tile_rgba_format(tc->tex_trans, tc->tex_trans_map,
-                                   addr.bits.x * TILE_SIZE,
-                                   addr.bits.y * TILE_SIZE,
-                                   TILE_SIZE,
-                                   TILE_SIZE,
+                                   addr.bits.x * TEX_TILE_SIZE,
+                                   addr.bits.y * TEX_TILE_SIZE,
+                                   TEX_TILE_SIZE,
+                                   TEX_TILE_SIZE,
                                    tc->format,
                                    (float *) tile->data.color);
       }

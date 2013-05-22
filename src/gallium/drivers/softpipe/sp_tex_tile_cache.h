@@ -40,11 +40,11 @@ struct softpipe_tex_tile_cache;
 /**
  * Cache tile size (width and height). This needs to be a power of two.
  */
-#define TILE_SIZE_LOG2 6
-#define TILE_SIZE (1 << TILE_SIZE_LOG2)
+#define TEX_TILE_SIZE_LOG2 6
+#define TEX_TILE_SIZE (1 << TEX_TILE_SIZE_LOG2)
 
 
-#define TEX_ADDR_BITS (SP_MAX_TEXTURE_2D_LEVELS - 1 - TILE_SIZE_LOG2)
+#define TEX_ADDR_BITS (SP_MAX_TEXTURE_2D_LEVELS - 1 - TEX_TILE_SIZE_LOG2)
 #define TEX_Z_BITS (SP_MAX_TEXTURE_2D_LEVELS - 1)
 
 /**
@@ -67,9 +67,9 @@ struct softpipe_tex_cached_tile
 {
    union tex_tile_address addr;
    union {
-      float color[TILE_SIZE][TILE_SIZE][4];
-      unsigned int colorui[TILE_SIZE][TILE_SIZE][4];
-      int colori[TILE_SIZE][TILE_SIZE][4];
+      float color[TEX_TILE_SIZE][TEX_TILE_SIZE][4];
+      unsigned int colorui[TEX_TILE_SIZE][TEX_TILE_SIZE][4];
+      int colori[TEX_TILE_SIZE][TEX_TILE_SIZE][4];
    } data;
 };
 
@@ -120,7 +120,7 @@ sp_flush_tex_tile_cache(struct softpipe_tex_tile_cache *tc);
 
 extern const struct softpipe_tex_cached_tile *
 sp_find_cached_tile_tex(struct softpipe_tex_tile_cache *tc, 
-                         union tex_tile_address addr );
+                        union tex_tile_address addr );
 
 static INLINE union tex_tile_address
 tex_tile_address( unsigned x,
@@ -132,8 +132,8 @@ tex_tile_address( unsigned x,
    union tex_tile_address addr;
 
    addr.value = 0;
-   addr.bits.x = x / TILE_SIZE;
-   addr.bits.y = y / TILE_SIZE;
+   addr.bits.x = x / TEX_TILE_SIZE;
+   addr.bits.y = y / TEX_TILE_SIZE;
    addr.bits.z = z;
    addr.bits.face = face;
    addr.bits.level = level;
@@ -145,7 +145,7 @@ tex_tile_address( unsigned x,
  */
 static INLINE const struct softpipe_tex_cached_tile *
 sp_get_cached_tile_tex(struct softpipe_tex_tile_cache *tc, 
-                         union tex_tile_address addr )
+                       union tex_tile_address addr )
 {
    if (tc->last_tile->addr.value == addr.value)
       return tc->last_tile;

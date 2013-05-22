@@ -580,10 +580,10 @@ get_texel_2d_no_border(const struct sp_sampler_view *sp_sview,
                        union tex_tile_address addr, int x, int y)
 {
    const struct softpipe_tex_cached_tile *tile;
-   addr.bits.x = x / TILE_SIZE;
-   addr.bits.y = y / TILE_SIZE;
-   y %= TILE_SIZE;
-   x %= TILE_SIZE;
+   addr.bits.x = x / TEX_TILE_SIZE;
+   addr.bits.y = y / TEX_TILE_SIZE;
+   y %= TEX_TILE_SIZE;
+   x %= TEX_TILE_SIZE;
 
    tile = sp_get_cached_tile_tex(sp_sview->cache, addr);
 
@@ -722,10 +722,10 @@ get_texel_quad_2d_no_border_single_tile(const struct sp_sampler_view *sp_sview,
 {
     const struct softpipe_tex_cached_tile *tile;
 
-   addr.bits.x = x / TILE_SIZE;
-   addr.bits.y = y / TILE_SIZE;
-   y %= TILE_SIZE;
-   x %= TILE_SIZE;
+   addr.bits.x = x / TEX_TILE_SIZE;
+   addr.bits.y = y / TEX_TILE_SIZE;
+   y %= TEX_TILE_SIZE;
+   x %= TEX_TILE_SIZE;
 
    tile = sp_get_cached_tile_tex(sp_sview->cache, addr);
       
@@ -777,11 +777,11 @@ get_texel_3d_no_border(const struct sp_sampler_view *sp_sview,
 {
    const struct softpipe_tex_cached_tile *tile;
 
-   addr.bits.x = x / TILE_SIZE;
-   addr.bits.y = y / TILE_SIZE;
+   addr.bits.x = x / TEX_TILE_SIZE;
+   addr.bits.y = y / TEX_TILE_SIZE;
    addr.bits.z = z;
-   y %= TILE_SIZE;
-   x %= TILE_SIZE;
+   y %= TEX_TILE_SIZE;
+   x %= TEX_TILE_SIZE;
 
    tile = sp_get_cached_tile_tex(sp_sview->cache, addr);
 
@@ -917,8 +917,8 @@ img_filter_2d_linear_repeat_POT(struct sp_sampler_view *sp_sview,
 {
    unsigned xpot = pot_level_size(sp_sview->xpot, level);
    unsigned ypot = pot_level_size(sp_sview->ypot, level);
-   unsigned xmax = (xpot - 1) & (TILE_SIZE - 1); /* MIN2(TILE_SIZE, xpot) - 1; */
-   unsigned ymax = (ypot - 1) & (TILE_SIZE - 1); /* MIN2(TILE_SIZE, ypot) - 1; */
+   unsigned xmax = (xpot - 1) & (TEX_TILE_SIZE - 1); /* MIN2(TEX_TILE_SIZE, xpot) - 1; */
+   unsigned ymax = (ypot - 1) & (TEX_TILE_SIZE - 1); /* MIN2(TEX_TILE_SIZE, ypot) - 1; */
    union tex_tile_address addr;
    int c;
 
