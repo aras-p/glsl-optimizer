@@ -1300,10 +1300,11 @@ struct brw_context
       struct {
          struct ra_regs *regs;
 
-         /** Array of the ra classes for the unaligned contiguous
-          * register block sizes used.
+         /**
+          * Array of the ra classes for the unaligned contiguous register
+          * block sizes used, indexed by register size.
           */
-         int *classes;
+         int classes[16];
 
          /**
           * Mapping for register-allocated objects in *regs to the first

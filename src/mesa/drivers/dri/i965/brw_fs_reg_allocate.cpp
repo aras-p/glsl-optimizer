@@ -83,9 +83,9 @@ brw_alloc_reg_set(struct brw_context *brw, int reg_width)
     * aggregates of scalar values at the GLSL level were split to scalar
     * values by split_virtual_grfs().
     *
-    * However, texture SEND messages return a series of contiguous registers.
-    * We currently always ask for 4 registers, but we may convert that to use
-    * less some day.
+    * However, texture SEND messages return a series of contiguous registers
+    * to write into.  We currently always ask for 4 registers, but we may
+    * convert that to use less some day.
     *
     * Additionally, on gen5 we need aligned pairs of registers for the PLN
     * instruction, and on gen4 we need 8 contiguous regs for workaround simd16
@@ -94,9 +94,22 @@ brw_alloc_reg_set(struct brw_context *brw, int reg_width)
     * So we have a need for classes for 1, 2, 4, and 8 registers currently,
     * and we add in '3' to make indexing the array easier for the common case
     * (since we'll probably want it for texturing later).
+    *
+    * And, on gen7 and newer, we do texturing SEND messages from GRFs, which
+    * means that we may need any size up to the sampler message size limit (11
+    * regs).
     */
-   const int class_count = 5;
-   const int class_sizes[class_count] = {1, 2, 3, 4, 8};
+   int class_count;
+   int class_sizes[BRW_MAX_MRF];
+
+   if (brw->gen >= 7) {
+      for (class_count = 0; class_count < 11; class_count++)
+         class_sizes[class_count] = class_count + 1;
+   } else {
+      for (class_count = 0; class_count < 4; class_count++)
+         class_sizes[class_count] = class_count + 1;
+      class_sizes[class_count++] = 8;
+   }
 
    /* Compute the total number of registers across all classes. */
    int ra_reg_count = 0;
@@ -159,7 +172,10 @@ brw_alloc_reg_set(struct brw_context *brw, int reg_width)
    ra_set_finalize(regs, NULL);
 
    brw->wm.reg_sets[index].regs = regs;
-   brw->wm.reg_sets[index].classes = classes;
+   for (unsigned i = 0; i < ARRAY_SIZE(brw->wm.reg_sets[index].classes); i++)
+      brw->wm.reg_sets[index].classes[i] = -1;
+   for (int i = 0; i < class_count; i++)
+      brw->wm.reg_sets[index].classes[class_sizes[i] - 1] = classes[i];
    brw->wm.reg_sets[index].ra_reg_to_grf = ra_reg_to_grf;
    brw->wm.reg_sets[index].aligned_pairs_class = aligned_pairs_class;
 }
@@ -411,17 +427,12 @@ fs_visitor::assign_regs()
                                                     node_count);
 
    for (int i = 0; i < this->virtual_grf_count; i++) {
-      int size = this->virtual_grf_sizes[i];
+      unsigned size = this->virtual_grf_sizes[i];
       int c;
 
-      if (size == 8) {
-         c = 4;
-      } else {
-         assert(size >= 1 &&
-                size <= 4 &&
-                "Register allocation relies on split_virtual_grfs()");
-         c = brw->wm.reg_sets[rsi].classes[size - 1];
-      }
+      assert(size <= ARRAY_SIZE(brw->wm.reg_sets[rsi].classes) &&
+             "Register allocation relies on split_virtual_grfs()");
+      c = brw->wm.reg_sets[rsi].classes[size - 1];
 
       /* Special case: on pre-GEN6 hardware that supports PLN, the
        * second operand of a PLN instruction needs to be an
