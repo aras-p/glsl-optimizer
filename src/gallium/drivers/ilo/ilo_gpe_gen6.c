@@ -3692,14 +3692,11 @@ gen6_fill_normal_SURFACE_STATE(const struct ilo_dev_info *dev,
 
    width = tex->base.width0;
    height = tex->base.height0;
+   depth = (tex->base.target == PIPE_TEXTURE_3D) ?
+      tex->base.depth0 : num_layers;
    pitch = tex->bo_stride;
 
-   switch (tex->base.target) {
-   case PIPE_TEXTURE_3D:
-      depth = tex->base.depth0;
-      break;
-   case PIPE_TEXTURE_CUBE:
-   case PIPE_TEXTURE_CUBE_ARRAY:
+   if (surface_type == BRW_SURFACE_CUBE) {
       /*
        * From the Sandy Bridge PRM, volume 4 part 1, page 81:
        *
@@ -3708,17 +3705,17 @@ gen6_fill_normal_SURFACE_STATE(const struct ilo_dev_info *dev,
        *      cube array elements (equal to the number of underlying 2D array
        *      elements divided by 6). For other surfaces, this field must be
        *      zero."
+       *
+       * When is_rt is true, we treat the texture as a 2D one to avoid the
+       * restriction.
        */
-      if (!is_rt) {
+      if (is_rt) {
+         surface_type = BRW_SURFACE_2D;
+      }
+      else {
          assert(num_layers % 6 == 0);
          depth = num_layers / 6;
-         break;
       }
-      assert(num_layers == 1);
-      /* fall through */
-   default:
-      depth = num_layers;
-      break;
    }
 
    /* sanity check the size */
@@ -3726,16 +3723,24 @@ gen6_fill_normal_SURFACE_STATE(const struct ilo_dev_info *dev,
    switch (surface_type) {
    case BRW_SURFACE_1D:
       assert(width <= 8192 && height == 1 && depth <= 512);
+      assert(first_layer < 512 && num_layers <= 512);
       break;
    case BRW_SURFACE_2D:
       assert(width <= 8192 && height <= 8192 && depth <= 512);
+      assert(first_layer < 512 && num_layers <= 512);
       break;
    case BRW_SURFACE_3D:
       assert(width <= 2048 && height <= 2048 && depth <= 2048);
+      assert(first_layer < 2048 && num_layers <= 512);
+      if (!is_rt)
+         assert(first_layer == 0);
       break;
    case BRW_SURFACE_CUBE:
       assert(width <= 8192 && height <= 8192 && depth <= 85);
       assert(width == height);
+      assert(first_layer < 512 && num_layers <= 512);
+      if (is_rt)
+         assert(first_layer == 0);
       break;
    default:
       assert(!"unexpected surface type");
@@ -3748,39 +3753,52 @@ gen6_fill_normal_SURFACE_STATE(const struct ilo_dev_info *dev,
    if (tex->base.nr_samples > 1)
       assert(tex->interleaved);
 
-   /*
-    * Compute the offset to the layer manually.
-    *
-    * For rendering, the hardware requires LOD to be the same for all render
-    * targets and the depth buffer.  We need to compute the offset to the
-    * layer manually and always set LOD to 0.
-    */
    if (is_rt) {
-      /* we lose the capability for layered rendering */
-      assert(num_levels == 1 && num_layers == 1);
+      /*
+       * Compute the offset to the layer manually.
+       *
+       * For rendering, the hardware requires LOD to be the same for all
+       * render targets and the depth buffer.  We need to compute the offset
+       * to the layer manually and always set LOD to 0.
+       */
+      if (true) {
+         /* we lose the capability for layered rendering */
+         assert(num_layers == 1);
 
-      layer_offset = ilo_texture_get_slice_offset(tex,
-            first_level, first_layer, &x_offset, &y_offset);
+         layer_offset = ilo_texture_get_slice_offset(tex,
+               first_level, first_layer, &x_offset, &y_offset);
 
-      assert(x_offset % 4 == 0);
-      assert(y_offset % 2 == 0);
-      x_offset /= 4;
-      y_offset /= 2;
+         assert(x_offset % 4 == 0);
+         assert(y_offset % 2 == 0);
+         x_offset /= 4;
+         y_offset /= 2;
 
-      /* derive the size for the LOD */
-      width = u_minify(tex->base.width0, first_level);
-      height = u_minify(tex->base.height0, first_level);
-      if (surface_type == BRW_SURFACE_3D)
-         depth = u_minify(tex->base.depth0, first_level);
+         /* derive the size for the LOD */
+         width = u_minify(width, first_level);
+         height = u_minify(height, first_level);
+         if (surface_type == BRW_SURFACE_3D)
+            depth = u_minify(depth, first_level);
+         else
+            depth = 1;
 
-      first_level = 0;
-      first_layer = 0;
-      lod = 0;
+         first_level = 0;
+         first_layer = 0;
+         lod = 0;
+      }
+      else {
+         layer_offset = 0;
+         x_offset = 0;
+         y_offset = 0;
+      }
+
+      assert(num_levels == 1);
+      lod = first_level;
    }
    else {
       layer_offset = 0;
       x_offset = 0;
       y_offset = 0;
+
       lod = num_levels - 1;
    }
 
@@ -3836,7 +3854,7 @@ gen6_fill_normal_SURFACE_STATE(const struct ilo_dev_info *dev,
 
    dw[4] = first_level << BRW_SURFACE_MIN_LOD_SHIFT |
            first_layer << 17 |
-           (depth - 1) << 8 |
+           (num_layers - 1) << 8 |
            ((tex->base.nr_samples > 1) ? BRW_SURFACE_MULTISAMPLECOUNT_4 :
                                          BRW_SURFACE_MULTISAMPLECOUNT_1);
 
