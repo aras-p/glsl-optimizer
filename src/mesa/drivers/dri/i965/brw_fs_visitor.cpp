@@ -493,6 +493,14 @@ fs_visitor::visit(ir_expression *ir)
       assert(!"not reached: should be handled by lower_quadop_vector");
       break;
 
+   case ir_binop_vector_extract:
+      assert(!"not reached: should be handled by lower_vec_index_to_cond_assign()");
+      break;
+
+   case ir_triop_vector_insert:
+      assert(!"not reached: should be handled by lower_vector_insert()");
+      break;
+
    case ir_unop_sqrt:
       emit_math(SHADER_OPCODE_SQRT, this->result, op[0]);
       break;
