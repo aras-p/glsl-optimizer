@@ -640,7 +640,9 @@ link_assign_uniform_locations(struct gl_shader_program *prog)
     */
    count_uniform_size uniform_size(prog->UniformHash);
    for (unsigned i = 0; i < MESA_SHADER_TYPES; i++) {
-      if (prog->_LinkedShaders[i] == NULL)
+      struct gl_shader *sh = prog->_LinkedShaders[i];
+
+      if (sh == NULL)
 	 continue;
 
       /* Uniforms that lack an initializer in the shader code have an initial
@@ -652,16 +654,15 @@ link_assign_uniform_locations(struct gl_shader_program *prog)
        *     initializer, if present, or 0 if no initializer is present. Sampler
        *     types cannot have initializers."
        */
-      memset(prog->_LinkedShaders[i]->SamplerUnits, 0,
-             sizeof(prog->_LinkedShaders[i]->SamplerUnits));
+      memset(sh->SamplerUnits, 0, sizeof(sh->SamplerUnits));
 
-      link_update_uniform_buffer_variables(prog->_LinkedShaders[i]);
+      link_update_uniform_buffer_variables(sh);
 
       /* Reset various per-shader target counts.
        */
       uniform_size.start_shader();
 
-      foreach_list(node, prog->_LinkedShaders[i]->ir) {
+      foreach_list(node, sh->ir) {
 	 ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
 	 if ((var == NULL) || (var->mode != ir_var_uniform))
@@ -678,9 +679,8 @@ link_assign_uniform_locations(struct gl_shader_program *prog)
 	 uniform_size.process(var);
       }
 
-      prog->_LinkedShaders[i]->num_samplers = uniform_size.num_shader_samplers;
-      prog->_LinkedShaders[i]->num_uniform_components =
-	 uniform_size.num_shader_uniform_components;
+      sh->num_samplers = uniform_size.num_shader_samplers;
+      sh->num_uniform_components = uniform_size.num_shader_uniform_components;
    }
 
    const unsigned num_user_uniforms = uniform_size.num_active_uniforms;
