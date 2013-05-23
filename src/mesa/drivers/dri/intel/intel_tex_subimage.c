@@ -53,12 +53,6 @@ intel_blit_texsubimage(struct gl_context * ctx,
 {
    struct intel_context *intel = intel_context(ctx);
    struct intel_texture_image *intelImage = intel_texture_image(texImage);
-   GLuint dstRowStride = 0;
-   drm_intel_bo *temp_bo = NULL;
-   unsigned int blit_x = 0, blit_y = 0;
-   unsigned long pitch;
-   uint32_t tiling_mode = I915_TILING_NONE;
-   GLubyte *dstMap;
 
    /* Try to do a blit upload of the subimage if the texture is
     * currently busy.
@@ -93,60 +87,50 @@ intel_blit_texsubimage(struct gl_context * ctx,
    if (!pixels)
       return false;
 
-   temp_bo = drm_intel_bo_alloc_tiled(intel->bufmgr,
-				      "subimage blit bo",
-				      width, height,
-				      intelImage->mt->cpp,
-				      &tiling_mode,
-				      &pitch,
-				      0);
-   if (temp_bo == NULL) {
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "intelTexSubImage");
-      return false;
-   }
+   struct intel_mipmap_tree *temp_mt =
+      intel_miptree_create(intel, GL_TEXTURE_2D, texImage->TexFormat,
+                           0, 0,
+                           width, height, 1,
+                           false, 0,
+                           (1 << I915_TILING_NONE) /* force_tiling_mask */);
+   if (!temp_mt)
+      goto err;
 
-   if (drm_intel_gem_bo_map_gtt(temp_bo)) {
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "intelTexSubImage");
-      return false;
-   }
-
-   dstMap = temp_bo->virtual;
-   dstRowStride = pitch;
-
-   intel_miptree_get_image_offset(intelImage->mt, texImage->Level,
-				  intelImage->base.Base.Face,
-				  &blit_x, &blit_y);
-   blit_x += xoffset;
-   blit_y += yoffset;
+   GLubyte *dst = intel_miptree_map_raw(intel, temp_mt);
+   if (!dst)
+      goto err;
 
    if (!_mesa_texstore(ctx, 2, texImage->_BaseFormat,
 		       texImage->TexFormat,
-		       dstRowStride,
-		       &dstMap,
+		       temp_mt->region->pitch,
+		       &dst,
 		       width, height, 1,
 		       format, type, pixels, packing)) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "intelTexSubImage");
    }
 
+   intel_miptree_unmap_raw(intel, temp_mt);
+
    bool ret;
 
-   drm_intel_gem_bo_unmap_gtt(temp_bo);
-
-   ret = intelEmitCopyBlit(intel,
-			   intelImage->mt->cpp,
-			   dstRowStride,
-			   temp_bo, 0, false,
-			   intelImage->mt->region->pitch,
-			   intelImage->mt->region->bo, 0,
-			   intelImage->mt->region->tiling,
-			   0, 0, blit_x, blit_y, width, height,
-			   GL_COPY);
+   ret = intel_miptree_blit(intel,
+                            temp_mt, 0, 0,
+                            0, 0, false,
+                            intelImage->mt, texImage->Level, texImage->Face,
+                            xoffset, yoffset, false,
+                            width, height, GL_COPY);
    assert(ret);
 
-   drm_intel_bo_unreference(temp_bo);
+   intel_miptree_release(&temp_mt);
    _mesa_unmap_teximage_pbo(ctx, packing);
 
    return ret;
+
+err:
+   _mesa_error(ctx, GL_OUT_OF_MEMORY, "intelTexSubImage");
+   intel_miptree_release(&temp_mt);
+   _mesa_unmap_teximage_pbo(ctx, packing);
+   return false;
 }
 
 /**
