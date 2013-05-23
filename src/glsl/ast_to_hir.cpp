@@ -2355,17 +2355,25 @@ process_initializer(ir_variable *var, ast_declaration *decl,
 
 	 ir_constant *constant_value = rhs->constant_expression_value();
 	 if (!constant_value) {
-	    _mesa_glsl_error(& initializer_loc, state,
-			     "initializer of %s variable `%s' must be a "
-			     "constant expression",
-			     (type->qualifier.flags.q.constant)
-			     ? "const" : "uniform",
-			     decl->identifier);
-	    if (var->type->is_numeric()) {
-	       /* Reduce cascading errors. */
-	       var->constant_value = ir_constant::zero(state, var->type);
-	    }
-	 } else {
+            /* If ARB_shading_language_420pack is enabled, initializers of
+             * const-qualified local variables do not have to be constant
+             * expressions. Const-qualified global variables must still be
+             * initialized with constant expressions.
+             */
+            if (!state->ARB_shading_language_420pack_enable
+                || state->current_function == NULL) {
+               _mesa_glsl_error(& initializer_loc, state,
+                                "initializer of %s variable `%s' must be a "
+                                "constant expression",
+                                (type->qualifier.flags.q.constant)
+                                ? "const" : "uniform",
+                                decl->identifier);
+               if (var->type->is_numeric()) {
+                  /* Reduce cascading errors. */
+                  var->constant_value = ir_constant::zero(state, var->type);
+               }
+            }
+         } else {
 	    rhs = constant_value;
 	    var->constant_value = constant_value;
 	 }
