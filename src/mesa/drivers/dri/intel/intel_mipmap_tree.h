@@ -84,8 +84,8 @@ struct intel_miptree_map {
    int x, y, w, h;
    /** Possibly malloced temporary buffer for the mapping. */
    void *buffer;
-   /** Possible pointer to a BO temporary for the mapping. */
-   drm_intel_bo *bo;
+   /** Possible pointer to a temporary linear miptree for the mapping. */
+   struct intel_mipmap_tree *mt;
    /** Pointer to the start of (map_x, map_y) returned by the mapping. */
    void *ptr;
    /** Stride of the mapping. */

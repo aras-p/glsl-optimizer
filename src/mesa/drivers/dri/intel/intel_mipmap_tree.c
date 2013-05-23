@@ -1461,57 +1461,39 @@ intel_miptree_map_blit(struct intel_context *intel,
 		       struct intel_miptree_map *map,
 		       unsigned int level, unsigned int slice)
 {
-   unsigned int image_x, image_y;
-   int x = map->x;
-   int y = map->y;
-   int ret;
-
-   /* The blitter requires the pitch to be aligned to 4. */
-   map->stride = ALIGN(map->w * mt->region->cpp, 4);
-
-   map->bo = drm_intel_bo_alloc(intel->bufmgr, "intel_miptree_map_blit() temp",
-				map->stride * map->h, 4096);
-   if (!map->bo) {
+   map->mt = intel_miptree_create(intel, GL_TEXTURE_2D, mt->format,
+                                  0, 0,
+                                  map->w, map->h, 1,
+                                  false, 0,
+                                  (1 << I915_TILING_NONE));
+   if (!map->mt) {
       fprintf(stderr, "Failed to allocate blit temporary\n");
       goto fail;
    }
+   map->stride = map->mt->region->pitch;
 
-   intel_miptree_get_image_offset(mt, level, slice, &image_x, &image_y);
-   x += image_x;
-   y += image_y;
-
-   if (!intelEmitCopyBlit(intel,
-			  mt->region->cpp,
-			  mt->region->pitch, mt->region->bo,
-			  mt->offset, mt->region->tiling,
-			  map->stride, map->bo,
-			  0, I915_TILING_NONE,
-			  x, y,
-			  0, 0,
-			  map->w, map->h,
-			  GL_COPY)) {
+   if (!intel_miptree_blit(intel,
+                           mt, level, slice,
+                           map->x, map->y, false,
+                           map->mt, 0, 0,
+                           0, 0, false,
+                           map->w, map->h, GL_COPY)) {
       fprintf(stderr, "Failed to blit\n");
       goto fail;
    }
 
    intel_batchbuffer_flush(intel);
-   ret = drm_intel_bo_map(map->bo, (map->mode & GL_MAP_WRITE_BIT) != 0);
-   if (ret) {
-      fprintf(stderr, "Failed to map blit temporary\n");
-      goto fail;
-   }
-
-   map->ptr = map->bo->virtual;
+   map->ptr = intel_miptree_map_raw(intel, map->mt);
 
    DBG("%s: %d,%d %dx%d from mt %p (%s) %d,%d = %p/%d\n", __FUNCTION__,
        map->x, map->y, map->w, map->h,
        mt, _mesa_get_format_name(mt->format),
-       x, y, map->ptr, map->stride);
+       level, slice, map->ptr, map->stride);
 
    return;
 
 fail:
-   drm_intel_bo_unreference(map->bo);
+   intel_miptree_release(&map->mt);
    map->ptr = NULL;
    map->stride = 0;
 }
@@ -1524,30 +1506,20 @@ intel_miptree_unmap_blit(struct intel_context *intel,
 			 unsigned int slice)
 {
    struct gl_context *ctx = &intel->ctx;
-   drm_intel_bo_unmap(map->bo);
+
+   intel_miptree_unmap_raw(intel, map->mt);
 
    if (map->mode & GL_MAP_WRITE_BIT) {
-      unsigned int image_x, image_y;
-      int x = map->x;
-      int y = map->y;
-      intel_miptree_get_image_offset(mt, level, slice, &image_x, &image_y);
-      x += image_x;
-      y += image_y;
-
-      bool ok = intelEmitCopyBlit(intel,
-                                  mt->region->cpp,
-                                  map->stride, map->bo,
-                                  0, I915_TILING_NONE,
-                                  mt->region->pitch, mt->region->bo,
-                                  mt->offset, mt->region->tiling,
-                                  0, 0,
-                                  x, y,
-                                  map->w, map->h,
-                                  GL_COPY);
+      bool ok = intel_miptree_blit(intel,
+                                   map->mt, 0, 0,
+                                   0, 0, false,
+                                   mt, level, slice,
+                                   map->x, map->y, false,
+                                   map->w, map->h, GL_COPY);
       WARN_ONCE(!ok, "Failed to blit from linear temporary mapping");
    }
 
-   drm_intel_bo_unreference(map->bo);
+   intel_miptree_release(&map->mt);
 }
 
 static void
@@ -1901,24 +1873,7 @@ intel_miptree_map_singlesample(struct intel_context *intel,
    } else if (mt->stencil_mt && !(mode & BRW_MAP_DIRECT_BIT)) {
       intel_miptree_map_depthstencil(intel, mt, map, level, slice);
    }
-   /* According to the Ivy Bridge PRM, Vol1 Part4, section 1.2.1.2 (Graphics
-    * Data Size Limitations):
-    *
-    *    The BLT engine is capable of transferring very large quantities of
-    *    graphics data. Any graphics data read from and written to the
-    *    destination is permitted to represent a number of pixels that
-    *    occupies up to 65,536 scan lines and up to 32,768 bytes per scan line
-    *    at the destination. The maximum number of pixels that may be
-    *    represented per scan line’s worth of graphics data depends on the
-    *    color depth.
-    *
-    * Furthermore, intelEmitCopyBlit (which is called by
-    * intel_miptree_map_blit) uses a signed 16-bit integer to represent buffer
-    * pitch, so it can only handle buffer pitches < 32k.
-    *
-    * As a result of these two limitations, we can only use
-    * intel_miptree_map_blit() when the region's pitch is less than 32k.
-    */
+   /* See intel_miptree_blit() for details on the 32k pitch limit. */
    else if (intel->has_llc &&
             !(mode & GL_MAP_WRITE_BIT) &&
             !mt->compressed &&
@@ -1964,7 +1919,7 @@ intel_miptree_unmap_singlesample(struct intel_context *intel,
       intel_miptree_unmap_etc(intel, mt, map, level, slice);
    } else if (mt->stencil_mt && !(map->mode & BRW_MAP_DIRECT_BIT)) {
       intel_miptree_unmap_depthstencil(intel, mt, map, level, slice);
-   } else if (map->bo) {
+   } else if (map->mt) {
       intel_miptree_unmap_blit(intel, mt, map, level, slice);
    } else {
       intel_miptree_unmap_gtt(intel, mt, map, level, slice);
