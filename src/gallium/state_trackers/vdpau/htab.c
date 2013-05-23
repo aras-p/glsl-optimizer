@@ -55,7 +55,7 @@ void vlDestroyHTAB(void)
 {
 #ifdef VL_HANDLES
    pipe_mutex_lock(htab_lock);
-   if (htab) {
+   if (htab && !handle_table_get_first_handle(htab)) {
       handle_table_destroy(htab);
       htab = NULL;
    }
