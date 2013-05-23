@@ -96,11 +96,6 @@ intel_copy_texsubimage(struct intel_context *intel,
       return false;
    }
 
-   /* The blitter can't handle Y-tiled buffers. */
-   if (intelImage->mt->region->tiling == I915_TILING_Y) {
-      return false;
-   }
-
    /* blit from src buffer to texture */
    if (!intel_miptree_blit(intel,
                            irb->mt, irb->mt_level, irb->mt_layer,
