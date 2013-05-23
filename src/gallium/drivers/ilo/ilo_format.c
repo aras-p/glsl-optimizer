@@ -608,6 +608,7 @@ ilo_is_format_supported(struct pipe_screen *screen,
 {
    struct ilo_screen *is = ilo_screen(screen);
    const int gen = ILO_GEN_GET_MAJOR(is->dev.gen * 10);
+   const bool is_pure_int = util_format_is_pure_integer(format);
    const struct surface_format_info *info;
    unsigned bind;
 
@@ -641,7 +642,7 @@ ilo_is_format_supported(struct pipe_screen *screen,
       if (gen < info->render_target)
          return false;
 
-      if (gen < info->alpha_blend)
+      if (!is_pure_int && gen < info->alpha_blend)
          return false;
    }
 
@@ -652,7 +653,7 @@ ilo_is_format_supported(struct pipe_screen *screen,
       if (gen < info->sampling)
          return false;
 
-      if (gen < info->filtering)
+      if (!is_pure_int && gen < info->filtering)
          return false;
    }
 
