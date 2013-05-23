@@ -139,6 +139,7 @@ vlVdpDecoderDestroy(VdpDecoder decoder)
    vldecoder->decoder->destroy(vldecoder->decoder);
    pipe_mutex_unlock(vldecoder->device->mutex);
 
+   vlRemoveDataHTAB(decoder);
    FREE(vldecoder);
 
    return VDP_STATUS_OK;

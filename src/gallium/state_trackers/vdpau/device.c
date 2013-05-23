@@ -166,6 +166,7 @@ vlVdpDeviceDestroy(VdpDevice device)
    dev->context->destroy(dev->context);
    vl_screen_destroy(dev->vscreen);
 
+   vlRemoveDataHTAB(device);
    FREE(dev);
    vlDestroyHTAB();
 

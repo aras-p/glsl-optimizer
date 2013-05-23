@@ -132,7 +132,9 @@ vlVdpVideoSurfaceDestroy(VdpVideoSurface surface)
       p_surf->video_buffer->destroy(p_surf->video_buffer);
    pipe_mutex_unlock(p_surf->device->mutex);
 
+   vlRemoveDataHTAB(surface);
    FREE(p_surf);
+
    return VDP_STATUS_OK;
 }
 
