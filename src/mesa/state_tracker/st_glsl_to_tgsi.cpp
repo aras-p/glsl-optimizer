@@ -1976,6 +1976,8 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
    case ir_triop_bitfield_extract:
    case ir_quadop_bitfield_insert:
    case ir_quadop_vector:
+   case ir_binop_vector_extract:
+   case ir_triop_vector_insert:
       /* This operation is not supported, or should have already been handled.
        */
       assert(!"Invalid ir opcode in glsl_to_tgsi_visitor::visit()");
