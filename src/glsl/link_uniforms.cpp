@@ -170,6 +170,7 @@ public:
 
    void process(ir_variable *var)
    {
+      this->is_ubo_var = var->is_in_uniform_block();
       if (var->is_interface_instance())
          program_resource_visitor::process(var->interface_type,
                                            var->interface_type->name);
@@ -197,6 +198,8 @@ public:
     */
    unsigned num_shader_uniform_components;
 
+   bool is_ubo_var;
+
 private:
    virtual void visit_field(const glsl_type *type, const char *name,
                             bool row_major)
@@ -222,7 +225,8 @@ private:
 	  * Note that samplers do not count against this limit because they
 	  * don't use any storage on current hardware.
 	  */
-	 this->num_shader_uniform_components += values;
+	 if (!is_ubo_var)
+	    this->num_shader_uniform_components += values;
       }
 
       /* If the uniform is already in the map, there's nothing more to do.
@@ -681,6 +685,12 @@ link_assign_uniform_locations(struct gl_shader_program *prog)
 
       sh->num_samplers = uniform_size.num_shader_samplers;
       sh->num_uniform_components = uniform_size.num_shader_uniform_components;
+
+      sh->num_combined_uniform_components = sh->num_uniform_components;
+      for (unsigned i = 0; i < sh->NumUniformBlocks; i++) {
+	 sh->num_combined_uniform_components +=
+	    sh->UniformBlocks[i].UniformBufferSize / 4;
+      }
    }
 
    const unsigned num_user_uniforms = uniform_size.num_active_uniforms;
