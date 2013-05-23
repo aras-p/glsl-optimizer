@@ -371,7 +371,7 @@ draw_vbo(struct ilo_3d *hw3d, const struct ilo_context *ilo,
          const struct pipe_draw_info *info,
          int *prim_generated, int *prim_emitted)
 {
-   bool need_flush;
+   bool need_flush = false;
    int max_len;
 
    ilo_3d_own_render_ring(hw3d);
