@@ -353,6 +353,7 @@ tgsi_util_get_texture_coord_dim(int tgsi_tex, int *shadow_or_sample)
     * Depending on the texture target, (src0.xyzw, src1.x) is interpreted
     * differently:
     *
+    *   (s, X, X, X, X),               for BUFFER
     *   (s, X, X, X, X),               for 1D
     *   (s, t, X, X, X),               for 2D, RECT
     *   (s, t, r, X, X),               for 3D, CUBE
@@ -373,6 +374,7 @@ tgsi_util_get_texture_coord_dim(int tgsi_tex, int *shadow_or_sample)
     *   (s, t, layer, sample, X),      for 2D_ARRAY_MSAA
     */
    switch (tgsi_tex) {
+   case TGSI_TEXTURE_BUFFER:
    case TGSI_TEXTURE_1D:
    case TGSI_TEXTURE_SHADOW1D:
       dim = 1;
