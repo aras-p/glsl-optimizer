@@ -265,7 +265,7 @@ intel_miptree_create_layout(struct intel_context *intel,
                                             mt->logical_depth0,
                                             true,
                                             num_samples,
-                                            false /* force_y_tiling */);
+                                            INTEL_MIPTREE_TILING_ANY);
       if (!mt->stencil_mt) {
 	 intel_miptree_release(&mt);
 	 return NULL;
@@ -309,7 +309,7 @@ intel_miptree_choose_tiling(struct intel_context *intel,
                             gl_format format,
                             uint32_t width0,
                             uint32_t num_samples,
-                            bool force_y_tiling,
+                            enum intel_miptree_tiling_mode requested,
                             struct intel_mipmap_tree *mt)
 {
 
@@ -320,8 +320,17 @@ intel_miptree_choose_tiling(struct intel_context *intel,
       return I915_TILING_NONE;
    }
 
-   if (force_y_tiling)
+   /* Some usages may want only one type of tiling, like depth miptrees (Y
+    * tiled), or temporary BOs for uploading data once (linear).
+    */
+   switch (requested) {
+   case INTEL_MIPTREE_TILING_ANY:
+      break;
+   case INTEL_MIPTREE_TILING_Y:
       return I915_TILING_Y;
+   case INTEL_MIPTREE_TILING_NONE:
+      return I915_TILING_NONE;
+   }
 
    if (num_samples > 1) {
       /* From p82 of the Sandy Bridge PRM, dw3[1] of SURFACE_STATE ("Tiled
@@ -375,7 +384,7 @@ intel_miptree_create(struct intel_context *intel,
 		     GLuint depth0,
 		     bool expect_accelerated_upload,
                      GLuint num_samples,
-                     bool force_y_tiling)
+                     enum intel_miptree_tiling_mode requested_tiling)
 {
    struct intel_mipmap_tree *mt;
    gl_format tex_format = format;
@@ -441,7 +450,7 @@ intel_miptree_create(struct intel_context *intel,
    }
 
    uint32_t tiling = intel_miptree_choose_tiling(intel, format, width0,
-                                                 num_samples, force_y_tiling,
+                                                 num_samples, requested_tiling,
                                                  mt);
    bool y_or_x = tiling == (I915_TILING_Y | I915_TILING_X);
 
@@ -570,7 +579,7 @@ intel_miptree_create_for_renderbuffer(struct intel_context *intel,
 
    mt = intel_miptree_create(intel, GL_TEXTURE_2D, format, 0, 0,
 			     width, height, depth, true, num_samples,
-                             false /* force_y_tiling */);
+                             INTEL_MIPTREE_TILING_ANY);
    if (!mt)
       goto fail;
 
@@ -1008,7 +1017,7 @@ intel_miptree_alloc_mcs(struct intel_context *intel,
                                      mt->logical_depth0,
                                      true,
                                      0 /* num_samples */,
-                                     true /* force_y_tiling */);
+                                     INTEL_MIPTREE_TILING_Y);
 
    /* From the Ivy Bridge PRM, Vol 2 Part 1 p326:
     *
@@ -1089,7 +1098,7 @@ intel_miptree_alloc_hiz(struct intel_context *intel,
                                      mt->logical_depth0,
                                      true,
                                      mt->num_samples,
-                                     false /* force_y_tiling */);
+                                     INTEL_MIPTREE_TILING_ANY);
 
    if (!mt->hiz_mt)
       return false;

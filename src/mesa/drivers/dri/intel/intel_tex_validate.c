@@ -106,7 +106,7 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
                                           depth,
 					  true,
                                           0 /* num_samples */,
-                                          false /* force_y_tiling */);
+                                          INTEL_MIPTREE_TILING_ANY);
       if (!intelObj->mt)
          return false;
    }

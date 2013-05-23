@@ -103,7 +103,7 @@ intel_miptree_create_for_teximage(struct intel_context *intel,
 			       depth,
 			       expect_accelerated_upload,
                                intelImage->base.Base.NumSamples,
-                               false /* force_y_tiling */);
+                               INTEL_MIPTREE_TILING_ANY);
 }
 
 /* XXX: Do this for TexSubImage also:

@@ -387,7 +387,11 @@ struct intel_mipmap_tree
    GLuint refcount;
 };
 
-
+enum intel_miptree_tiling_mode {
+   INTEL_MIPTREE_TILING_ANY,
+   INTEL_MIPTREE_TILING_Y,
+   INTEL_MIPTREE_TILING_NONE,
+};
 
 struct intel_mipmap_tree *intel_miptree_create(struct intel_context *intel,
                                                GLenum target,
@@ -399,7 +403,7 @@ struct intel_mipmap_tree *intel_miptree_create(struct intel_context *intel,
                                                GLuint depth0,
 					       bool expect_accelerated_upload,
                                                GLuint num_samples,
-                                               bool force_y_tiling);
+                                               enum intel_miptree_tiling_mode);
 
 struct intel_mipmap_tree *
 intel_miptree_create_layout(struct intel_context *intel,
