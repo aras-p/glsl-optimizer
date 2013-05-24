@@ -493,7 +493,7 @@ draw_alloc_extra_vertex_attrib(struct draw_context *draw,
    uint n;
 
    slot = draw_find_shader_output(draw, semantic_name, semantic_index);
-   if (slot > 0) {
+   if (slot >= 0) {
       return slot;
    }
 
@@ -549,9 +549,10 @@ draw_get_shader_info(const struct draw_context *draw)
  * attributes (such as texcoords for AA lines).  The driver can call this
  * function to find those attributes.
  *
- * Zero is returned if the attribute is not found since this is
- * a don't care / undefined situtation.  Returning -1 would be a bit more
- * work for the drivers.
+ * -1 is returned if the attribute is not found since this is
+ * an undefined situtation. Note, that zero is valid and can
+ * be used by any of the attributes, because position is not
+ * required to be attribute 0 or even at all present.
  */
 int
 draw_find_shader_output(const struct draw_context *draw,
@@ -574,7 +575,7 @@ draw_find_shader_output(const struct draw_context *draw,
       }
    }
 
-   return 0;
+   return -1;
 }
 
 

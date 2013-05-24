@@ -125,7 +125,7 @@ static INLINE uint
 draw_emit_vertex_attr(struct vertex_info *vinfo,
                       enum attrib_emit emit, 
                       enum interp_mode interp, /* only used by softpipe??? */
-                      uint src_index)
+                      int src_index)
 {
    const uint n = vinfo->num_attribs;
    assert(n < Elements(vinfo->attrib));
