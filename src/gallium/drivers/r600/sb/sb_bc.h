@@ -789,13 +789,15 @@ class bc_parser {
 	typedef std::stack<region_node*> region_stack;
 	region_stack loop_stack;
 
+	bool gpr_reladdr;
+
 public:
 
 	bc_parser(sb_context &sctx, r600_bytecode *bc, r600_shader* pshader) :
 		ctx(sctx), dec(), bc(bc), pshader(pshader),
 		dw(), bc_ndw(), max_cf(),
 		sh(), error(), slots(), cgroup(),
-		cf_map(), loop_stack() { }
+		cf_map(), loop_stack(), gpr_reladdr() { }
 
 	int decode();
 	int prepare();

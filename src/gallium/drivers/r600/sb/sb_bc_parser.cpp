@@ -109,7 +109,8 @@ int bc_parser::prepare() {
 int bc_parser::parse_decls() {
 
 	if (!pshader) {
-		sh->add_gpr_array(0, bc->ngpr, 0x0F);
+		if (gpr_reladdr)
+			sh->add_gpr_array(0, bc->ngpr, 0x0F);
 		return 0;
 	}
 
@@ -192,8 +193,12 @@ int bc_parser::decode_cf(unsigned &i, bool &eop) {
 		if ((r = decode_fetch_clause(cf)))
 			return r;;
 	} else if (flags & CF_EXP) {
+		if (cf->bc.rw_rel)
+			gpr_reladdr = true;
 		assert(!cf->bc.rw_rel);
 	} else if (flags & (CF_STRM | CF_RAT)) {
+		if (cf->bc.rw_rel)
+			gpr_reladdr = true;
 		assert(!cf->bc.rw_rel);
 	} else if (flags & CF_BRANCH) {
 		if (cf->bc.addr > max_cf)
@@ -257,8 +262,13 @@ int bc_parser::decode_alu_group(cf_node* cf, unsigned &i, unsigned &gcnt) {
 	for (node_iterator I = g->begin(), E = g->end(); I != E; ++I) {
 		n = static_cast<alu_node*>(*I);
 
+		if (n->bc.dst_rel)
+			gpr_reladdr = true;
+
 		for (int k = 0; k < n->bc.op_ptr->src_count; ++k) {
 			bc_alu_src &src = n->bc.src[k];
+			if (src.rel)
+				gpr_reladdr = true;
 			if (src.sel == ALU_SRC_LITERAL) {
 				literal_mask |= (1 << src.chan);
 				src.value.u = dw[i + src.chan];
@@ -483,6 +493,8 @@ int bc_parser::decode_fetch_clause(cf_node* cf) {
 		cf->push_back(n);
 		if ((r = dec->decode_fetch(i, n->bc)))
 			return r;
+		if (n->bc.src_rel || n->bc.dst_rel)
+			gpr_reladdr = true;
 
 	}
 	return 0;
