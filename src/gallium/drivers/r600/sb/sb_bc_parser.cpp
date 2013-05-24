@@ -109,7 +109,7 @@ int bc_parser::prepare() {
 int bc_parser::parse_decls() {
 
 	if (!pshader) {
-		sh->add_gpr_array(0, pshader->bc.ngpr, 0x0F);
+		sh->add_gpr_array(0, bc->ngpr, 0x0F);
 		return 0;
 	}
 
