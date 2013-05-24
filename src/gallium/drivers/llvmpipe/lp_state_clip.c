@@ -44,28 +44,33 @@ llvmpipe_set_clip_state(struct pipe_context *pipe,
 
 
 static void
-llvmpipe_set_viewport_state(struct pipe_context *pipe,
-                            const struct pipe_viewport_state *viewport)
+llvmpipe_set_viewport_states(struct pipe_context *pipe,
+                             unsigned start_slot,
+                             unsigned num_viewports,
+                             const struct pipe_viewport_state *viewports)
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
 
    /* pass the viewport info to the draw module */
-   draw_set_viewport_state(llvmpipe->draw, viewport);
+   draw_set_viewport_states(llvmpipe->draw, start_slot, num_viewports,
+                            viewports);
 
-   llvmpipe->viewport = *viewport; /* struct copy */
+   llvmpipe->viewport = *viewports; /* struct copy */
    llvmpipe->dirty |= LP_NEW_VIEWPORT;
 }
 
 
 static void
-llvmpipe_set_scissor_state(struct pipe_context *pipe,
-                           const struct pipe_scissor_state *scissor)
+llvmpipe_set_scissor_states(struct pipe_context *pipe,
+                            unsigned start_slot,
+                            unsigned num_scissors,
+                            const struct pipe_scissor_state *scissors)
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
 
    draw_flush(llvmpipe->draw);
 
-   llvmpipe->scissor = *scissor; /* struct copy */
+   llvmpipe->scissor = *scissors; /* struct copy */
    llvmpipe->dirty |= LP_NEW_SCISSOR;
 }
 
@@ -89,6 +94,6 @@ llvmpipe_init_clip_funcs(struct llvmpipe_context *llvmpipe)
 {
    llvmpipe->pipe.set_clip_state = llvmpipe_set_clip_state;
    llvmpipe->pipe.set_polygon_stipple = llvmpipe_set_polygon_stipple;
-   llvmpipe->pipe.set_scissor_state = llvmpipe_set_scissor_state;
-   llvmpipe->pipe.set_viewport_state = llvmpipe_set_viewport_state;
+   llvmpipe->pipe.set_scissor_states = llvmpipe_set_scissor_states;
+   llvmpipe->pipe.set_viewport_states = llvmpipe_set_viewport_states;
 }

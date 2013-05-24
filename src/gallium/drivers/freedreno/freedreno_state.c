@@ -158,7 +158,9 @@ fd_set_polygon_stipple(struct pipe_context *pctx,
 }
 
 static void
-fd_set_scissor_state(struct pipe_context *pctx,
+fd_set_scissor_states(struct pipe_context *pctx,
+                      unsigned start_slot,
+                      unsigned num_scissors,
 		const struct pipe_scissor_state *scissor)
 {
 	struct fd_context *ctx = fd_context(pctx);
@@ -168,7 +170,9 @@ fd_set_scissor_state(struct pipe_context *pctx,
 }
 
 static void
-fd_set_viewport_state(struct pipe_context *pctx,
+fd_set_viewport_states(struct pipe_context *pctx,
+                       unsigned start_slot,
+                      unsigned num_viewports,
 		const struct pipe_viewport_state *viewport)
 {
 	struct fd_context *ctx = fd_context(pctx);
@@ -234,8 +238,8 @@ fd_state_init(struct pipe_context *pctx)
 	pctx->set_constant_buffer = fd_set_constant_buffer;
 	pctx->set_framebuffer_state = fd_set_framebuffer_state;
 	pctx->set_polygon_stipple = fd_set_polygon_stipple;
-	pctx->set_scissor_state = fd_set_scissor_state;
-	pctx->set_viewport_state = fd_set_viewport_state;
+	pctx->set_scissor_states = fd_set_scissor_states;
+	pctx->set_viewport_states = fd_set_viewport_states;
 
 	pctx->set_vertex_buffers = fd_set_vertex_buffers;
 	pctx->set_index_buffer = fd_set_index_buffer;

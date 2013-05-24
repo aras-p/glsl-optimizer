@@ -86,7 +86,7 @@ update_scissor( struct st_context *st )
    if (memcmp(&scissor, &st->state.scissor, sizeof(scissor)) != 0) {
       /* state has changed */
       st->state.scissor = scissor;  /* struct copy */
-      st->pipe->set_scissor_state(st->pipe, &scissor); /* activate */
+      st->pipe->set_scissor_states(st->pipe, 0, 1, &scissor); /* activate */
    }
 }
 

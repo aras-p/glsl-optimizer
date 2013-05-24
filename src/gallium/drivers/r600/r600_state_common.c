@@ -660,8 +660,10 @@ static void r600_set_ps_sampler_views(struct pipe_context *ctx, unsigned count,
 	r600_set_sampler_views(ctx, PIPE_SHADER_FRAGMENT, 0, count, views);
 }
 
-static void r600_set_viewport_state(struct pipe_context *ctx,
-				    const struct pipe_viewport_state *state)
+static void r600_set_viewport_states(struct pipe_context *ctx,
+                                     unsigned start_slot,
+                                     unsigned num_viewports,
+                                     const struct pipe_viewport_state *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 
@@ -1547,7 +1549,7 @@ void r600_draw_rectangle(struct blitter_context *blitter,
 	viewport.translate[1] = 0.0f;
 	viewport.translate[2] = 0.0f;
 	viewport.translate[3] = 0.0f;
-	rctx->context.set_viewport_state(&rctx->context, &viewport);
+	rctx->context.set_viewport_states(&rctx->context, 0, 1, &viewport);
 
 	/* Upload vertices. The hw rectangle has only 3 vertices,
 	 * I guess the 4th one is derived from the first 3.
@@ -1750,7 +1752,7 @@ void r600_init_common_state_functions(struct r600_context *rctx)
 	rctx->context.set_constant_buffer = r600_set_constant_buffer;
 	rctx->context.set_sample_mask = r600_set_sample_mask;
 	rctx->context.set_stencil_ref = r600_set_pipe_stencil_ref;
-	rctx->context.set_viewport_state = r600_set_viewport_state;
+	rctx->context.set_viewport_states = r600_set_viewport_states;
 	rctx->context.set_vertex_buffers = r600_set_vertex_buffers;
 	rctx->context.set_index_buffer = r600_set_index_buffer;
 	rctx->context.set_fragment_sampler_views = r600_set_ps_sampler_views;

@@ -652,7 +652,7 @@ void cso_set_viewport(struct cso_context *ctx,
 {
    if (memcmp(&ctx->vp, vp, sizeof(*vp))) {
       ctx->vp = *vp;
-      ctx->pipe->set_viewport_state(ctx->pipe, vp);
+      ctx->pipe->set_viewport_states(ctx->pipe, 0, 1, vp);
    }
 }
 
@@ -666,7 +666,7 @@ void cso_restore_viewport(struct cso_context *ctx)
 {
    if (memcmp(&ctx->vp, &ctx->vp_saved, sizeof(ctx->vp))) {
       ctx->vp = ctx->vp_saved;
-      ctx->pipe->set_viewport_state(ctx->pipe, &ctx->vp);
+      ctx->pipe->set_viewport_states(ctx->pipe, 0, 1, &ctx->vp);
    }
 }
 

@@ -373,8 +373,10 @@ nv30_set_polygon_stipple(struct pipe_context *pipe,
 }
 
 static void
-nv30_set_scissor_state(struct pipe_context *pipe,
-                       const struct pipe_scissor_state *scissor)
+nv30_set_scissor_states(struct pipe_context *pipe,
+                        unsigned start_slot,
+                        unsigned num_viewports,
+                        const struct pipe_scissor_state *scissor)
 {
     struct nv30_context *nv30 = nv30_context(pipe);
 
@@ -383,8 +385,10 @@ nv30_set_scissor_state(struct pipe_context *pipe,
 }
 
 static void
-nv30_set_viewport_state(struct pipe_context *pipe,
-                        const struct pipe_viewport_state *vpt)
+nv30_set_viewport_states(struct pipe_context *pipe,
+                         unsigned start_slot,
+                         unsigned num_viewports,
+                         const struct pipe_viewport_state *vpt)
 {
     struct nv30_context *nv30 = nv30_context(pipe);
 
@@ -446,8 +450,8 @@ nv30_state_init(struct pipe_context *pipe)
    pipe->set_constant_buffer = nv30_set_constant_buffer;
    pipe->set_framebuffer_state = nv30_set_framebuffer_state;
    pipe->set_polygon_stipple = nv30_set_polygon_stipple;
-   pipe->set_scissor_state = nv30_set_scissor_state;
-   pipe->set_viewport_state = nv30_set_viewport_state;
+   pipe->set_scissor_states = nv30_set_scissor_states;
+   pipe->set_viewport_states = nv30_set_viewport_states;
 
    pipe->set_vertex_buffers = nv30_set_vertex_buffers;
    pipe->set_index_buffer = nv30_set_index_buffer;

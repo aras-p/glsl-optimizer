@@ -78,7 +78,8 @@ const char *tgsi_semantic_names[TGSI_SEMANTIC_COUNT] =
    "BLOCK_SIZE",
    "THREAD_ID",
    "TEXCOORD",
-   "PCOORD"
+   "PCOORD",
+   "VIEWPORT_INDEX"
 };
 
 const char *tgsi_texture_names[TGSI_TEXTURE_COUNT] =

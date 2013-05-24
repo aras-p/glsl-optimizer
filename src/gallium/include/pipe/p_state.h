@@ -65,6 +65,7 @@ extern "C" {
 #define PIPE_MAX_TEXTURE_LEVELS   16
 #define PIPE_MAX_SO_BUFFERS        4
 #define PIPE_MAX_SO_OUTPUTS       64
+#define PIPE_MAX_VIEWPORTS        16
 
 
 struct pipe_reference

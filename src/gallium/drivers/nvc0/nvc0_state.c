@@ -903,8 +903,10 @@ nvc0_set_polygon_stipple(struct pipe_context *pipe,
 }
 
 static void
-nvc0_set_scissor_state(struct pipe_context *pipe,
-                       const struct pipe_scissor_state *scissor)
+nvc0_set_scissor_states(struct pipe_context *pipe,
+                        unsigned start_slot,
+                        unsigned num_scissors,
+                        const struct pipe_scissor_state *scissor)
 {
     struct nvc0_context *nvc0 = nvc0_context(pipe);
 
@@ -913,8 +915,10 @@ nvc0_set_scissor_state(struct pipe_context *pipe,
 }
 
 static void
-nvc0_set_viewport_state(struct pipe_context *pipe,
-                        const struct pipe_viewport_state *vpt)
+nvc0_set_viewport_states(struct pipe_context *pipe,
+                         unsigned start_slot,
+                         unsigned num_viewports,
+                         const struct pipe_viewport_state *vpt)
 {
     struct nvc0_context *nvc0 = nvc0_context(pipe);
 
@@ -1223,8 +1227,8 @@ nvc0_init_state_functions(struct nvc0_context *nvc0)
    pipe->set_constant_buffer = nvc0_set_constant_buffer;
    pipe->set_framebuffer_state = nvc0_set_framebuffer_state;
    pipe->set_polygon_stipple = nvc0_set_polygon_stipple;
-   pipe->set_scissor_state = nvc0_set_scissor_state;
-   pipe->set_viewport_state = nvc0_set_viewport_state;
+   pipe->set_scissor_states = nvc0_set_scissor_states;
+   pipe->set_viewport_states = nvc0_set_viewport_states;
 
    pipe->create_vertex_elements_state = nvc0_vertex_state_create;
    pipe->delete_vertex_elements_state = nvc0_vertex_state_delete;

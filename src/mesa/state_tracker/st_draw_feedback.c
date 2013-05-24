@@ -133,7 +133,7 @@ st_feedback_draw_vbo(struct gl_context *ctx,
     * code sends state updates to the pipe, not to our private draw module.
     */
    assert(draw);
-   draw_set_viewport_state(draw, &st->state.viewport);
+   draw_set_viewport_states(draw, 0, 1, &st->state.viewport);
    draw_set_clip_state(draw, &st->state.clip);
    draw_set_rasterizer_state(draw, &st->state.rasterizer, NULL);
    draw_bind_vertex_shader(draw, st->vp_variant->draw_shader);

@@ -830,14 +830,14 @@ vl_idct_flush(struct vl_idct *idct, struct vl_idct_buffer *buffer, unsigned num_
 
    /* mismatch control */
    idct->pipe->set_framebuffer_state(idct->pipe, &buffer->fb_state_mismatch);
-   idct->pipe->set_viewport_state(idct->pipe, &buffer->viewport_mismatch);
+   idct->pipe->set_viewport_states(idct->pipe, 0, 1, &buffer->viewport_mismatch);
    idct->pipe->bind_vs_state(idct->pipe, idct->vs_mismatch);
    idct->pipe->bind_fs_state(idct->pipe, idct->fs_mismatch);
    util_draw_arrays_instanced(idct->pipe, PIPE_PRIM_POINTS, 0, 1, 0, num_instances);
 
    /* first stage */
    idct->pipe->set_framebuffer_state(idct->pipe, &buffer->fb_state);
-   idct->pipe->set_viewport_state(idct->pipe, &buffer->viewport);
+   idct->pipe->set_viewport_states(idct->pipe, 0, 1, &buffer->viewport);
    idct->pipe->bind_vs_state(idct->pipe, idct->vs);
    idct->pipe->bind_fs_state(idct->pipe, idct->fs);
    util_draw_arrays_instanced(idct->pipe, PIPE_PRIM_QUADS, 0, 4, 0, num_instances);

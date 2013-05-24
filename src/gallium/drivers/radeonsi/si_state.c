@@ -263,8 +263,10 @@ static void si_set_clip_state(struct pipe_context *ctx,
 	si_pm4_set_state(rctx, clip, pm4);
 }
 
-static void si_set_scissor_state(struct pipe_context *ctx,
-				 const struct pipe_scissor_state *state)
+static void si_set_scissor_states(struct pipe_context *ctx,
+                                  unsigned start_slot,
+                                  unsigned num_scissors,
+                                  const struct pipe_scissor_state *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
@@ -287,8 +289,10 @@ static void si_set_scissor_state(struct pipe_context *ctx,
 	si_pm4_set_state(rctx, scissor, pm4);
 }
 
-static void si_set_viewport_state(struct pipe_context *ctx,
-				  const struct pipe_viewport_state *state)
+static void si_set_viewport_states(struct pipe_context *ctx,
+                                   unsigned start_slot,
+                                   unsigned num_viewports,
+                                   const struct pipe_viewport_state *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct si_state_viewport *viewport = CALLOC_STRUCT(si_state_viewport);
@@ -2705,8 +2709,8 @@ void si_init_state_functions(struct r600_context *rctx)
 	rctx->custom_dsa_flush_inplace = si_create_db_flush_dsa(rctx, false, false);
 
 	rctx->context.set_clip_state = si_set_clip_state;
-	rctx->context.set_scissor_state = si_set_scissor_state;
-	rctx->context.set_viewport_state = si_set_viewport_state;
+	rctx->context.set_scissor_states = si_set_scissor_states;
+	rctx->context.set_viewport_states = si_set_viewport_states;
 	rctx->context.set_stencil_ref = si_set_pipe_stencil_ref;
 
 	rctx->context.set_framebuffer_state = si_set_framebuffer_state;

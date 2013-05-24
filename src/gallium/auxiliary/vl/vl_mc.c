@@ -600,7 +600,7 @@ prepare_pipe_4_rendering(struct vl_mc *renderer, struct vl_mc_buffer *buffer, un
       renderer->pipe->bind_blend_state(renderer->pipe, renderer->blend_clear[mask]);
 
    renderer->pipe->set_framebuffer_state(renderer->pipe, &buffer->fb_state);
-   renderer->pipe->set_viewport_state(renderer->pipe, &buffer->viewport);
+   renderer->pipe->set_viewport_states(renderer->pipe, 0, 1, &buffer->viewport);
 }
 
 void

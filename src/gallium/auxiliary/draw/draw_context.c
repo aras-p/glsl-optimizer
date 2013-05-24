@@ -311,9 +311,12 @@ void draw_set_clip_state( struct draw_context *draw,
 /**
  * Set the draw module's viewport state.
  */
-void draw_set_viewport_state( struct draw_context *draw,
-                              const struct pipe_viewport_state *viewport )
+void draw_set_viewport_states( struct draw_context *draw,
+                               unsigned start_slot,
+                               unsigned num_viewports,
+                               const struct pipe_viewport_state *vps )
 {
+   const struct pipe_viewport_state *viewport = vps;
    draw_do_flush(draw, DRAW_FLUSH_PARAMETER_CHANGE);
    draw->viewport = *viewport; /* struct copy */
    draw->identity_viewport = (viewport->scale[0] == 1.0f &&

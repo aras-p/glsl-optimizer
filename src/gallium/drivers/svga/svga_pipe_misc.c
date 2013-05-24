@@ -31,12 +31,14 @@
 #include "svga_surface.h"
 
 
-static void svga_set_scissor_state( struct pipe_context *pipe,
-                                 const struct pipe_scissor_state *scissor )
+static void svga_set_scissor_states( struct pipe_context *pipe,
+                                     unsigned start_slot,
+                                     unsigned num_scissors,
+                                     const struct pipe_scissor_state *scissors )
 {
    struct svga_context *svga = svga_context(pipe);
 
-   memcpy( &svga->curr.scissor, scissor, sizeof(*scissor) );
+   memcpy( &svga->curr.scissor, scissors, sizeof(*scissors) );
    svga->dirty |= SVGA_NEW_SCISSOR;
 }
 
@@ -161,12 +163,14 @@ static void svga_set_clip_state( struct pipe_context *pipe,
 /* Called when driver state tracker notices changes to the viewport
  * matrix:
  */
-static void svga_set_viewport_state( struct pipe_context *pipe,
-				     const struct pipe_viewport_state *viewport )
+static void svga_set_viewport_states( struct pipe_context *pipe,
+                                      unsigned start_slot,
+                                      unsigned num_viewports,
+                                      const struct pipe_viewport_state *viewports )
 {
    struct svga_context *svga = svga_context(pipe);
 
-   svga->curr.viewport = *viewport; /* struct copy */
+   svga->curr.viewport = *viewports; /* struct copy */
 
    svga->dirty |= SVGA_NEW_VIEWPORT;
 }
@@ -175,11 +179,11 @@ static void svga_set_viewport_state( struct pipe_context *pipe,
 
 void svga_init_misc_functions( struct svga_context *svga )
 {
-   svga->pipe.set_scissor_state = svga_set_scissor_state;
+   svga->pipe.set_scissor_states = svga_set_scissor_states;
    svga->pipe.set_polygon_stipple = svga_set_polygon_stipple;
    svga->pipe.set_framebuffer_state = svga_set_framebuffer_state;
    svga->pipe.set_clip_state = svga_set_clip_state;
-   svga->pipe.set_viewport_state = svga_set_viewport_state;
+   svga->pipe.set_viewport_states = svga_set_viewport_states;
 }
 
 

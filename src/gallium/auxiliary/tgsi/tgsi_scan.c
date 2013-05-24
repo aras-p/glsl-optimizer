@@ -211,6 +211,12 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                       fulldecl->Semantic.Name == TGSI_SEMANTIC_EDGEFLAG) {
                      info->writes_edgeflag = TRUE;
                   }
+
+                  if (procType == TGSI_PROCESSOR_GEOMETRY &&
+                      fulldecl->Semantic.Name ==
+                      TGSI_SEMANTIC_VIEWPORT_INDEX) {
+                     info->writes_viewport_index = TRUE;
+                  }
                }
 
              }

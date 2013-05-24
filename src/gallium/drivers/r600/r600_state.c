@@ -1215,8 +1215,10 @@ static void r600_emit_scissor_state(struct r600_context *rctx, struct r600_atom 
 	}
 }
 
-static void r600_set_scissor_state(struct pipe_context *ctx,
-				   const struct pipe_scissor_state *state)
+static void r600_set_scissor_states(struct pipe_context *ctx,
+                                    unsigned start_slot,
+                                    unsigned num_scissors,
+                                    const struct pipe_scissor_state *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 
@@ -3252,7 +3254,7 @@ void r600_init_state_functions(struct r600_context *rctx)
 	rctx->context.create_sampler_view = r600_create_sampler_view;
 	rctx->context.set_framebuffer_state = r600_set_framebuffer_state;
 	rctx->context.set_polygon_stipple = r600_set_polygon_stipple;
-	rctx->context.set_scissor_state = r600_set_scissor_state;
+	rctx->context.set_scissor_states = r600_set_scissor_states;
 
 	rctx->context.get_sample_position = r600_get_sample_position;
 }

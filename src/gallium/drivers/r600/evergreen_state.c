@@ -1309,7 +1309,9 @@ static void evergreen_get_scissor_rect(struct r600_context *rctx,
 	*br = S_028244_BR_X(br_x) | S_028244_BR_Y(br_y);
 }
 
-static void evergreen_set_scissor_state(struct pipe_context *ctx,
+static void evergreen_set_scissor_states(struct pipe_context *ctx,
+                                         unsigned start_slot,
+                                         unsigned num_scissors,
 					const struct pipe_scissor_state *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
@@ -3860,7 +3862,7 @@ void evergreen_init_state_functions(struct r600_context *rctx)
 	rctx->context.create_sampler_view = evergreen_create_sampler_view;
 	rctx->context.set_framebuffer_state = evergreen_set_framebuffer_state;
 	rctx->context.set_polygon_stipple = evergreen_set_polygon_stipple;
-	rctx->context.set_scissor_state = evergreen_set_scissor_state;
+	rctx->context.set_scissor_states = evergreen_set_scissor_states;
 
 	if (rctx->chip_class == EVERGREEN)
                 rctx->context.get_sample_position = evergreen_get_sample_position;

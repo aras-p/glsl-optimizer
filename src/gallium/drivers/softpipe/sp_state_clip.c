@@ -44,13 +44,16 @@ softpipe_set_clip_state(struct pipe_context *pipe,
 
 
 static void
-softpipe_set_viewport_state(struct pipe_context *pipe,
-                            const struct pipe_viewport_state *viewport)
+softpipe_set_viewport_states(struct pipe_context *pipe,
+                             unsigned start_slot,
+                             unsigned num_viewports,
+                             const struct pipe_viewport_state *viewport)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
 
    /* pass the viewport info to the draw module */
-   draw_set_viewport_state(softpipe->draw, viewport);
+   draw_set_viewport_states(softpipe->draw, start_slot, num_viewports,
+                            viewport);
 
    softpipe->viewport = *viewport; /* struct copy */
    softpipe->dirty |= SP_NEW_VIEWPORT;
@@ -58,8 +61,10 @@ softpipe_set_viewport_state(struct pipe_context *pipe,
 
 
 static void
-softpipe_set_scissor_state(struct pipe_context *pipe,
-                           const struct pipe_scissor_state *scissor)
+softpipe_set_scissor_states(struct pipe_context *pipe,
+                            unsigned start_slot,
+                            unsigned num_scissors,
+                            const struct pipe_scissor_state *scissor)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
 
@@ -87,7 +92,7 @@ void
 softpipe_init_clip_funcs(struct pipe_context *pipe)
 {
    pipe->set_clip_state = softpipe_set_clip_state;
-   pipe->set_viewport_state = softpipe_set_viewport_state;
-   pipe->set_scissor_state = softpipe_set_scissor_state;
+   pipe->set_viewport_states = softpipe_set_viewport_states;
+   pipe->set_scissor_states = softpipe_set_scissor_states;
    pipe->set_polygon_stipple = softpipe_set_polygon_stipple;
 }

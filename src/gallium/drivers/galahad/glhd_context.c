@@ -524,25 +524,29 @@ galahad_context_set_polygon_stipple(struct pipe_context *_pipe,
 }
 
 static void
-galahad_context_set_scissor_state(struct pipe_context *_pipe,
+galahad_context_set_scissor_states(struct pipe_context *_pipe,
+                                   unsigned start_slot,
+                                   unsigned num_scissors,
                            const struct pipe_scissor_state *scissor)
 {
    struct galahad_context *glhd_pipe = galahad_context(_pipe);
    struct pipe_context *pipe = glhd_pipe->pipe;
 
-   pipe->set_scissor_state(pipe,
-                           scissor);
+   pipe->set_scissor_states(pipe, start_slot, num_scissors,
+                            scissor);
 }
 
 static void
-galahad_context_set_viewport_state(struct pipe_context *_pipe,
+galahad_context_set_viewport_states(struct pipe_context *_pipe,
+                                    unsigned start_slot,
+                                    unsigned num_viewports,
                             const struct pipe_viewport_state *viewport)
 {
    struct galahad_context *glhd_pipe = galahad_context(_pipe);
    struct pipe_context *pipe = glhd_pipe->pipe;
 
-   pipe->set_viewport_state(pipe,
-                            viewport);
+   pipe->set_viewport_states(pipe, start_slot, num_viewports,
+                             viewport);
 }
 
 static void
@@ -1077,8 +1081,8 @@ galahad_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    GLHD_PIPE_INIT(set_constant_buffer);
    GLHD_PIPE_INIT(set_framebuffer_state);
    GLHD_PIPE_INIT(set_polygon_stipple);
-   GLHD_PIPE_INIT(set_scissor_state);
-   GLHD_PIPE_INIT(set_viewport_state);
+   GLHD_PIPE_INIT(set_scissor_states);
+   GLHD_PIPE_INIT(set_viewport_states);
    GLHD_PIPE_INIT(set_fragment_sampler_views);
    GLHD_PIPE_INIT(set_vertex_sampler_views);
    GLHD_PIPE_INIT(set_geometry_sampler_views);

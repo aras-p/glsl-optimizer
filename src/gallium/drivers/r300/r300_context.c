@@ -275,7 +275,7 @@ static void r300_init_states(struct pipe_context *pipe)
 
     pipe->set_blend_color(pipe, &bc);
     pipe->set_clip_state(pipe, &cs);
-    pipe->set_scissor_state(pipe, &ss);
+    pipe->set_scissor_states(pipe, 0, 1, &ss);
     pipe->set_sample_mask(pipe, ~0);
 
     /* Initialize the GPU flush. */

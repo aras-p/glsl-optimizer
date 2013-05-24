@@ -723,7 +723,7 @@ draw_layers(struct vl_compositor *c, struct vl_compositor_state *s, struct u_rec
          void *blend = layer->blend ? layer->blend : i ? c->blend_add : c->blend_clear;
 
          c->pipe->bind_blend_state(c->pipe, blend);
-         c->pipe->set_viewport_state(c->pipe, &layer->viewport);
+         c->pipe->set_viewport_states(c->pipe, 0, 1, &layer->viewport);
          c->pipe->bind_fs_state(c->pipe, layer->fs);
          c->pipe->bind_fragment_sampler_states(c->pipe, num_sampler_views, layer->samplers);
          c->pipe->set_fragment_sampler_views(c->pipe, num_sampler_views, samplers);
@@ -1014,7 +1014,7 @@ vl_compositor_render(struct vl_compositor_state *s,
       dirty_area->x1 = dirty_area->y1 = MIN_DIRTY;
    }
 
-   c->pipe->set_scissor_state(c->pipe, &s->scissor);
+   c->pipe->set_scissor_states(c->pipe, 0, 1, &s->scissor);
    c->pipe->set_framebuffer_state(c->pipe, &c->fb_state);
    c->pipe->bind_vs_state(c->pipe, c->vs);
    c->pipe->set_vertex_buffers(c->pipe, 0, 1, &c->vertex_buf);

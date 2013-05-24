@@ -80,7 +80,7 @@ static void set_draw_viewport( struct svga_context *svga )
    vp.translate[0] += adjx;
    vp.translate[1] += adjy;
 
-   draw_set_viewport_state(svga->swtnl.draw, &vp);
+   draw_set_viewport_states(svga->swtnl.draw, 0, 1, &vp);
 }
 
 static enum pipe_error

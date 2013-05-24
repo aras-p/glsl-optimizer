@@ -152,8 +152,10 @@ static void noop_set_sample_mask(struct pipe_context *pipe, unsigned sample_mask
 {
 }
 
-static void noop_set_scissor_state(struct pipe_context *ctx,
-					const struct pipe_scissor_state *state)
+static void noop_set_scissor_states(struct pipe_context *ctx,
+                                    unsigned start_slot,
+                                    unsigned num_scissors,
+                                    const struct pipe_scissor_state *state)
 {
 }
 
@@ -162,8 +164,10 @@ static void noop_set_stencil_ref(struct pipe_context *ctx,
 {
 }
 
-static void noop_set_viewport_state(struct pipe_context *ctx,
-					const struct pipe_viewport_state *state)
+static void noop_set_viewport_states(struct pipe_context *ctx,
+                                     unsigned start_slot,
+                                     unsigned num_viewports,
+                                     const struct pipe_viewport_state *state)
 {
 }
 
@@ -311,12 +315,12 @@ void noop_init_state_functions(struct pipe_context *ctx)
 	ctx->set_framebuffer_state = noop_set_framebuffer_state;
 	ctx->set_polygon_stipple = noop_set_polygon_stipple;
 	ctx->set_sample_mask = noop_set_sample_mask;
-	ctx->set_scissor_state = noop_set_scissor_state;
+	ctx->set_scissor_states = noop_set_scissor_states;
 	ctx->set_stencil_ref = noop_set_stencil_ref;
 	ctx->set_vertex_buffers = noop_set_vertex_buffers;
 	ctx->set_index_buffer = noop_set_index_buffer;
 	ctx->set_vertex_sampler_views = noop_set_vs_sampler_view;
-	ctx->set_viewport_state = noop_set_viewport_state;
+	ctx->set_viewport_states = noop_set_viewport_states;
 	ctx->sampler_view_destroy = noop_sampler_view_destroy;
 	ctx->surface_destroy = noop_surface_destroy;
 	ctx->draw_vbo = noop_draw_vbo;

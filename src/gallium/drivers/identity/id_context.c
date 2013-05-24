@@ -486,25 +486,27 @@ identity_set_polygon_stipple(struct pipe_context *_pipe,
 }
 
 static void
-identity_set_scissor_state(struct pipe_context *_pipe,
-                           const struct pipe_scissor_state *scissor)
+identity_set_scissor_states(struct pipe_context *_pipe,
+                            unsigned start_slot,
+                            unsigned num_scissors,
+                            const struct pipe_scissor_state *scissor)
 {
    struct identity_context *id_pipe = identity_context(_pipe);
    struct pipe_context *pipe = id_pipe->pipe;
 
-   pipe->set_scissor_state(pipe,
-                           scissor);
+   pipe->set_scissor_states(pipe, start_slot, num_scissors, scissor);
 }
 
 static void
-identity_set_viewport_state(struct pipe_context *_pipe,
-                            const struct pipe_viewport_state *viewport)
+identity_set_viewport_states(struct pipe_context *_pipe,
+                             unsigned start_slot,
+                             unsigned num_viewports,
+                             const struct pipe_viewport_state *viewport)
 {
    struct identity_context *id_pipe = identity_context(_pipe);
    struct pipe_context *pipe = id_pipe->pipe;
 
-   pipe->set_viewport_state(pipe,
-                            viewport);
+   pipe->set_viewport_states(pipe, start_slot, num_viewports, viewport);
 }
 
 static void
@@ -914,8 +916,8 @@ identity_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    id_pipe->base.set_constant_buffer = identity_set_constant_buffer;
    id_pipe->base.set_framebuffer_state = identity_set_framebuffer_state;
    id_pipe->base.set_polygon_stipple = identity_set_polygon_stipple;
-   id_pipe->base.set_scissor_state = identity_set_scissor_state;
-   id_pipe->base.set_viewport_state = identity_set_viewport_state;
+   id_pipe->base.set_scissor_states = identity_set_scissor_states;
+   id_pipe->base.set_viewport_states = identity_set_viewport_states;
    id_pipe->base.set_fragment_sampler_views = identity_set_fragment_sampler_views;
    id_pipe->base.set_vertex_sampler_views = identity_set_vertex_sampler_views;
    id_pipe->base.set_vertex_buffers = identity_set_vertex_buffers;

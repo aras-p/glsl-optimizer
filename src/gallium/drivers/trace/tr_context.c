@@ -765,36 +765,44 @@ trace_context_set_polygon_stipple(struct pipe_context *_pipe,
 
 
 static INLINE void
-trace_context_set_scissor_state(struct pipe_context *_pipe,
-                                const struct pipe_scissor_state *state)
+trace_context_set_scissor_states(struct pipe_context *_pipe,
+                                 unsigned start_slot,
+                                 unsigned num_scissors,
+                                 const struct pipe_scissor_state *states)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
    struct pipe_context *pipe = tr_ctx->pipe;
 
-   trace_dump_call_begin("pipe_context", "set_scissor_state");
+   trace_dump_call_begin("pipe_context", "set_scissor_states");
 
    trace_dump_arg(ptr, pipe);
-   trace_dump_arg(scissor_state, state);
+   trace_dump_arg(uint, start_slot);
+   trace_dump_arg(uint, num_scissors);
+   trace_dump_arg(scissor_state, states);
 
-   pipe->set_scissor_state(pipe, state);
+   pipe->set_scissor_states(pipe, start_slot, num_scissors, states);
 
    trace_dump_call_end();
 }
 
 
 static INLINE void
-trace_context_set_viewport_state(struct pipe_context *_pipe,
-                                 const struct pipe_viewport_state *state)
+trace_context_set_viewport_states(struct pipe_context *_pipe,
+                                  unsigned start_slot,
+                                  unsigned num_viewports,
+                                  const struct pipe_viewport_state *states)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
    struct pipe_context *pipe = tr_ctx->pipe;
 
-   trace_dump_call_begin("pipe_context", "set_viewport_state");
+   trace_dump_call_begin("pipe_context", "set_viewport_states");
 
    trace_dump_arg(ptr, pipe);
-   trace_dump_arg(viewport_state, state);
+   trace_dump_arg(uint, start_slot);
+   trace_dump_arg(uint, num_viewports);
+   trace_dump_arg(viewport_state, states);
 
-   pipe->set_viewport_state(pipe, state);
+   pipe->set_viewport_states(pipe, start_slot, num_viewports, states);
 
    trace_dump_call_end();
 }
@@ -1576,8 +1584,8 @@ trace_context_create(struct trace_screen *tr_scr,
    TR_CTX_INIT(set_constant_buffer);
    TR_CTX_INIT(set_framebuffer_state);
    TR_CTX_INIT(set_polygon_stipple);
-   TR_CTX_INIT(set_scissor_state);
-   TR_CTX_INIT(set_viewport_state);
+   TR_CTX_INIT(set_scissor_states);
+   TR_CTX_INIT(set_viewport_states);
    TR_CTX_INIT(set_fragment_sampler_views);
    TR_CTX_INIT(set_vertex_sampler_views);
    TR_CTX_INIT(set_geometry_sampler_views);

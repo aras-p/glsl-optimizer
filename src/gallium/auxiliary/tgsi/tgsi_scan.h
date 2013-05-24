@@ -75,6 +75,7 @@ struct tgsi_shader_info
    boolean origin_lower_left;
    boolean pixel_center_integer;
    boolean color0_writes_all_cbufs;
+   boolean writes_viewport_index;
 
    unsigned num_written_clipdistance;
    /**

@@ -504,7 +504,7 @@ static void blitter_restore_fragment_states(struct blitter_context_priv *ctx)
    /* XXX check whether these are saved and whether they need to be restored
     * (depending on the operation) */
    pipe->set_stencil_ref(pipe, &ctx->base.saved_stencil_ref);
-   pipe->set_viewport_state(pipe, &ctx->base.saved_viewport);
+   pipe->set_viewport_states(pipe, 0, 1, &ctx->base.saved_viewport);
 }
 
 static void blitter_check_saved_fb_state(struct blitter_context_priv *ctx)
@@ -599,7 +599,7 @@ static void blitter_set_rectangle(struct blitter_context_priv *ctx,
    ctx->viewport.translate[1] = 0.5f * ctx->dst_height;
    ctx->viewport.translate[2] = 0.0f;
    ctx->viewport.translate[3] = 0.0f;
-   ctx->base.pipe->set_viewport_state(ctx->base.pipe, &ctx->viewport);
+   ctx->base.pipe->set_viewport_states(ctx->base.pipe, 0, 1, &ctx->viewport);
 }
 
 static void blitter_set_clear_color(struct blitter_context_priv *ctx,
@@ -1401,7 +1401,7 @@ void util_blitter_blit_generic(struct blitter_context *blitter,
 
    pipe->bind_vertex_elements_state(pipe, ctx->velem_state);
    if (scissor) {
-      pipe->set_scissor_state(pipe, scissor);
+      pipe->set_scissor_states(pipe, 0, 1, scissor);
    }
 
    blitter_set_common_draw_rect_state(ctx, scissor != NULL);
@@ -1496,7 +1496,7 @@ void util_blitter_blit_generic(struct blitter_context *blitter,
    blitter_restore_textures(ctx);
    blitter_restore_fb_state(ctx);
    if (scissor) {
-      pipe->set_scissor_state(pipe, &ctx->base.saved_scissor);
+      pipe->set_scissor_states(pipe, 0, 1, &ctx->base.saved_scissor);
    }
    blitter_restore_render_cond(ctx);
    blitter_unset_running_flag(ctx);

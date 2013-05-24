@@ -68,13 +68,15 @@ objects. They all follow simple, one-method binding calls, e.g.
 * ``set_sample_mask``
 * ``set_clip_state``
 * ``set_polygon_stipple``
-* ``set_scissor_state`` sets the bounds for the scissor test, which culls
+* ``set_scissor_states`` sets the bounds for the scissor test, which culls
   pixels before blending to render targets. If the :ref:`Rasterizer` does
   not have the scissor test enabled, then the scissor bounds never need to
   be set since they will not be used.  Note that scissor xmin and ymin are
   inclusive, but  xmax and ymax are exclusive.  The inclusive ranges in x
-  and y would be [xmin..xmax-1] and [ymin..ymax-1].
-* ``set_viewport_state``
+  and y would be [xmin..xmax-1] and [ymin..ymax-1]. The number of scissors
+  should be the same as the number of set viewports and can be up to
+  PIPE_MAX_VIEWPORTS.
+* ``set_viewport_states``
 
 
 Sampler Views

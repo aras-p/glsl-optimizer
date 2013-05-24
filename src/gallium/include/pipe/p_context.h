@@ -211,11 +211,15 @@ struct pipe_context {
    void (*set_polygon_stipple)( struct pipe_context *,
 				const struct pipe_poly_stipple * );
 
-   void (*set_scissor_state)( struct pipe_context *,
-                              const struct pipe_scissor_state * );
+   void (*set_scissor_states)( struct pipe_context *,
+                               unsigned start_slot,
+                               unsigned num_scissors,
+                               const struct pipe_scissor_state * );
 
-   void (*set_viewport_state)( struct pipe_context *,
-                               const struct pipe_viewport_state * );
+   void (*set_viewport_states)( struct pipe_context *,
+                                unsigned start_slot,
+                                unsigned num_viewports,
+                                const struct pipe_viewport_state *);
 
    void (*set_fragment_sampler_views)(struct pipe_context *,
                                       unsigned num_views,

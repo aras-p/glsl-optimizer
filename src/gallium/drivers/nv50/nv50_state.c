@@ -871,8 +871,10 @@ nv50_set_polygon_stipple(struct pipe_context *pipe,
 }
 
 static void
-nv50_set_scissor_state(struct pipe_context *pipe,
-                       const struct pipe_scissor_state *scissor)
+nv50_set_scissor_states(struct pipe_context *pipe,
+                        unsigned start_slot,
+                        unsigned num_scissors,
+                        const struct pipe_scissor_state *scissor)
 {
    struct nv50_context *nv50 = nv50_context(pipe);
 
@@ -881,8 +883,10 @@ nv50_set_scissor_state(struct pipe_context *pipe,
 }
 
 static void
-nv50_set_viewport_state(struct pipe_context *pipe,
-                        const struct pipe_viewport_state *vpt)
+nv50_set_viewport_states(struct pipe_context *pipe,
+                         unsigned start_slot,
+                         unsigned num_viewports,
+                         const struct pipe_viewport_state *vpt)
 {
    struct nv50_context *nv50 = nv50_context(pipe);
 
@@ -1090,8 +1094,8 @@ nv50_init_state_functions(struct nv50_context *nv50)
    pipe->set_constant_buffer = nv50_set_constant_buffer;
    pipe->set_framebuffer_state = nv50_set_framebuffer_state;
    pipe->set_polygon_stipple = nv50_set_polygon_stipple;
-   pipe->set_scissor_state = nv50_set_scissor_state;
-   pipe->set_viewport_state = nv50_set_viewport_state;
+   pipe->set_scissor_states = nv50_set_scissor_states;
+   pipe->set_viewport_states = nv50_set_viewport_states;
 
    pipe->create_vertex_elements_state = nv50_vertex_state_create;
    pipe->delete_vertex_elements_state = nv50_vertex_state_delete;

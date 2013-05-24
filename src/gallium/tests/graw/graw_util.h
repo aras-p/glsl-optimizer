@@ -203,7 +203,7 @@ graw_util_viewport(struct graw_info *info,
    vp.translate[2] = half_depth + z;
    vp.translate[3] = 0.0f;
 
-   info->ctx->set_viewport_state(info->ctx, &vp);
+   info->ctx->set_viewport_states(info->ctx, 0, 1, &vp);
 }
 
 
