@@ -260,14 +260,8 @@ gen7_begin_transform_feedback(struct gl_context *ctx, GLenum mode,
    struct brw_context *brw = brw_context(ctx);
    struct intel_context *intel = &brw->intel;
 
-   /* Reset the SOL buffer offset register. */
-   for (int i = 0; i < 4; i++) {
-      BEGIN_BATCH(3);
-      OUT_BATCH(MI_LOAD_REGISTER_IMM | (3 - 2));
-      OUT_BATCH(GEN7_SO_WRITE_OFFSET(i));
-      OUT_BATCH(0);
-      ADVANCE_BATCH();
-   }
+   intel_batchbuffer_flush(intel);
+   intel->batch.needs_sol_reset = true;
 }
 
 void
