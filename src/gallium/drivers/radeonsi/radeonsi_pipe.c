@@ -364,7 +364,7 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 		return 256;
 
 	case PIPE_CAP_GLSL_FEATURE_LEVEL:
-		return debug_get_bool_option("R600_GLSL130", FALSE) ? 130 : 120;
+		return 130;
 
 	/* Unsupported features. */
 	case PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT:
