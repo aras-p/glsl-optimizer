@@ -212,8 +212,8 @@ static void lp_blit(struct pipe_context *pipe,
    util_blitter_save_so_targets(lp->blitter, lp->num_so_targets,
                                 (struct pipe_stream_output_target**)lp->so_targets);
    util_blitter_save_rasterizer(lp->blitter, (void*)lp->rasterizer);
-   util_blitter_save_viewport(lp->blitter, &lp->viewport);
-   util_blitter_save_scissor(lp->blitter, &lp->scissor);
+   util_blitter_save_viewport(lp->blitter, &lp->viewports[0]);
+   util_blitter_save_scissor(lp->blitter, &lp->scissors[0]);
    util_blitter_save_fragment_shader(lp->blitter, lp->fs);
    util_blitter_save_blend(lp->blitter, (void*)lp->blend);
    util_blitter_save_depth_stencil_alpha(lp->blitter, (void*)lp->depth_stencil);

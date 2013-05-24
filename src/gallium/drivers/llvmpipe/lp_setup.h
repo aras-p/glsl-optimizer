@@ -117,8 +117,8 @@ lp_setup_set_blend_color( struct lp_setup_context *setup,
                           const struct pipe_blend_color *blend_color );
 
 void
-lp_setup_set_scissor( struct lp_setup_context *setup,
-                      const struct pipe_scissor_state *scissor );
+lp_setup_set_scissors( struct lp_setup_context *setup,
+                       const struct pipe_scissor_state *scissors );
 
 void
 lp_setup_set_fragment_sampler_views(struct lp_setup_context *setup,

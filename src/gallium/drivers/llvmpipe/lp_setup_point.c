@@ -324,8 +324,12 @@ try_setup_point( struct lp_setup_context *setup,
    struct u_rect bbox;
    unsigned nr_planes = 4;
    struct point_info info;
+   unsigned scissor_index = 0;
 
-
+   if (setup->viewport_index_slot > 0) {
+      unsigned *udata = (unsigned*)v0[setup->viewport_index_slot];
+      scissor_index = *udata;
+   }
    /* Bounding rectangle (in pixels) */
    {
       /* Yes this is necessary to accurately calculate bounding boxes
@@ -346,13 +350,13 @@ try_setup_point( struct lp_setup_context *setup,
       bbox.y1--;
    }
    
-   if (!u_rect_test_intersection(&setup->draw_region, &bbox)) {
+   if (!u_rect_test_intersection(&setup->draw_regions[scissor_index], &bbox)) {
       if (0) debug_printf("offscreen\n");
       LP_COUNT(nr_culled_tris);
       return TRUE;
    }
 
-   u_rect_find_intersection(&setup->draw_region, &bbox);
+   u_rect_find_intersection(&setup->draw_regions[scissor_index], &bbox);
 
    point = lp_setup_alloc_triangle(scene,
                                    key->num_inputs,
@@ -407,7 +411,7 @@ try_setup_point( struct lp_setup_context *setup,
       plane[3].eo = 0;
    }
 
-   return lp_setup_bin_triangle(setup, point, &bbox, nr_planes);
+   return lp_setup_bin_triangle(setup, point, &bbox, nr_planes, scissor_index);
 }
 
 

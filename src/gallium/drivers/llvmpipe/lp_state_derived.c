@@ -116,6 +116,18 @@ compute_vertex_info(struct llvmpipe_context *llvmpipe)
       draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_CONSTANT, vs_index);
    }
 
+   /* Figure out if we need viewport index */
+   vs_index = draw_find_shader_output(llvmpipe->draw,
+                                      TGSI_SEMANTIC_VIEWPORT_INDEX,
+                                      0);
+   if (vs_index > 0) {
+      llvmpipe->viewport_index_slot = vinfo->num_attribs;
+      draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_CONSTANT, vs_index);
+   } else {
+      llvmpipe->viewport_index_slot = 0;
+   }
+   
+
    draw_compute_vertex_size(vinfo);
    lp_setup_set_vertex_info(llvmpipe->setup, vinfo);
 }
@@ -164,7 +176,7 @@ void llvmpipe_update_derived( struct llvmpipe_context *llvmpipe )
                                &llvmpipe->blend_color);
 
    if (llvmpipe->dirty & LP_NEW_SCISSOR)
-      lp_setup_set_scissor(llvmpipe->setup, &llvmpipe->scissor);
+      lp_setup_set_scissors(llvmpipe->setup, llvmpipe->scissors);
 
    if (llvmpipe->dirty & LP_NEW_DEPTH_STENCIL_ALPHA) {
       lp_setup_set_alpha_ref_value(llvmpipe->setup, 

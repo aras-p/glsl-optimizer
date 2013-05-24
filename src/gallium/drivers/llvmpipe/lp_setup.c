@@ -616,17 +616,20 @@ lp_setup_set_blend_color( struct lp_setup_context *setup,
 
 
 void
-lp_setup_set_scissor( struct lp_setup_context *setup,
-                      const struct pipe_scissor_state *scissor )
+lp_setup_set_scissors( struct lp_setup_context *setup,
+                       const struct pipe_scissor_state *scissors )
 {
+   unsigned i;
    LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
 
-   assert(scissor);
+   assert(scissors);
 
-   setup->scissor.x0 = scissor->minx;
-   setup->scissor.x1 = scissor->maxx-1;
-   setup->scissor.y0 = scissor->miny;
-   setup->scissor.y1 = scissor->maxy-1;
+   for (i = 0; i < PIPE_MAX_VIEWPORTS; ++i) {
+      setup->scissors[i].x0 = scissors[i].minx;
+      setup->scissors[i].x1 = scissors[i].maxx-1;
+      setup->scissors[i].y0 = scissors[i].miny;
+      setup->scissors[i].y1 = scissors[i].maxy-1;
+   }
    setup->dirty |= LP_SETUP_NEW_SCISSOR;
 }
 
@@ -1010,10 +1013,13 @@ try_update_scene_state( struct lp_setup_context *setup )
    }
 
    if (setup->dirty & LP_SETUP_NEW_SCISSOR) {
-      setup->draw_region = setup->framebuffer;
-      if (setup->scissor_test) {
-         u_rect_possible_intersection(&setup->scissor,
-                                      &setup->draw_region);
+      unsigned i;
+      for (i = 0; i < PIPE_MAX_VIEWPORTS; ++i) {
+         setup->draw_regions[i] = setup->framebuffer;
+         if (setup->scissor_test) {
+            u_rect_possible_intersection(&setup->scissors[i],
+                                         &setup->draw_regions[i]);
+         }
       }
       /* If the framebuffer is large we have to think about fixed-point
        * integer overflow.  For 2K by 2K images, coordinates need 15 bits
@@ -1059,6 +1065,7 @@ lp_setup_update_state( struct lp_setup_context *setup,
        * to know about vertex shader point size attribute.
        */
       setup->psize = lp->psize_slot;
+      setup->viewport_index_slot = lp->viewport_index_slot;
 
       assert(lp->dirty == 0);
 

@@ -55,7 +55,8 @@ llvmpipe_set_viewport_states(struct pipe_context *pipe,
    draw_set_viewport_states(llvmpipe->draw, start_slot, num_viewports,
                             viewports);
 
-   llvmpipe->viewport = *viewports; /* struct copy */
+   memcpy(llvmpipe->viewports + start_slot, viewports,
+          sizeof(struct pipe_viewport_state) * num_viewports);
    llvmpipe->dirty |= LP_NEW_VIEWPORT;
 }
 
@@ -70,7 +71,8 @@ llvmpipe_set_scissor_states(struct pipe_context *pipe,
 
    draw_flush(llvmpipe->draw);
 
-   llvmpipe->scissor = *scissors; /* struct copy */
+   memcpy(llvmpipe->scissors + start_slot, scissors,
+          sizeof(struct pipe_scissor_state) * num_scissors);
    llvmpipe->dirty |= LP_NEW_SCISSOR;
 }
 

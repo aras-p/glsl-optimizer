@@ -289,6 +289,7 @@ try_setup_line( struct lp_setup_context *setup,
    int y[4];
    int i;
    int nr_planes = 4;
+   unsigned scissor_index = 0;
    
    /* linewidth should be interpreted as integer */
    int fixed_width = util_iround(width) * FIXED_ONE;
@@ -315,6 +316,10 @@ try_setup_line( struct lp_setup_context *setup,
 
    if (setup->scissor_test) {
       nr_planes = 8;
+      if (setup->viewport_index_slot > 0) {
+         unsigned *udata = (unsigned*)v1[setup->viewport_index_slot];
+         scissor_index = *udata;
+      }
    }
    else {
       nr_planes = 4;
@@ -563,7 +568,7 @@ try_setup_line( struct lp_setup_context *setup,
       return TRUE;
    }
 
-   if (!u_rect_test_intersection(&setup->draw_region, &bbox)) {
+   if (!u_rect_test_intersection(&setup->draw_regions[scissor_index], &bbox)) {
       if (0) debug_printf("offscreen\n");
       LP_COUNT(nr_culled_tris);
       return TRUE;
@@ -672,7 +677,8 @@ try_setup_line( struct lp_setup_context *setup,
     * these planes elsewhere.
     */
    if (nr_planes == 8) {
-      const struct u_rect *scissor = &setup->scissor;
+      const struct u_rect *scissor =
+         &setup->scissors[scissor_index];
 
       plane[4].dcdx = -1;
       plane[4].dcdy = 0;
@@ -695,7 +701,7 @@ try_setup_line( struct lp_setup_context *setup,
       plane[7].eo = 0;
    }
 
-   return lp_setup_bin_triangle(setup, line, &bbox, nr_planes);
+   return lp_setup_bin_triangle(setup, line, &bbox, nr_planes, scissor_index);
 }
 
 

@@ -103,11 +103,12 @@ struct lp_setup_context
    float line_width;
    float point_size;
    float psize;
+   unsigned viewport_index_slot;
 
    struct pipe_framebuffer_state fb;
    struct u_rect framebuffer;
-   struct u_rect scissor;
-   struct u_rect draw_region;   /* intersection of fb & scissor */
+   struct u_rect scissors[PIPE_MAX_VIEWPORTS];
+   struct u_rect draw_regions[PIPE_MAX_VIEWPORTS];   /* intersection of fb & scissor */
 
    struct {
       unsigned flags;
@@ -195,6 +196,7 @@ boolean
 lp_setup_bin_triangle( struct lp_setup_context *setup,
                        struct lp_rast_triangle *tri,
                        const struct u_rect *bbox,
-                       int nr_planes );
+                       int nr_planes,
+                       unsigned scissor_index );
 
 #endif

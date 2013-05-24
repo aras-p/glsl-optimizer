@@ -246,6 +246,7 @@ do_triangle_ccw(struct lp_setup_context *setup,
    struct u_rect bbox;
    unsigned tri_bytes;
    int nr_planes = 3;
+   unsigned scissor_index = 0;
 
    /* Area should always be positive here */
    assert(position->area > 0);
@@ -255,6 +256,10 @@ do_triangle_ccw(struct lp_setup_context *setup,
 
    if (setup->scissor_test) {
       nr_planes = 7;
+      if (setup->viewport_index_slot > 0) {
+         unsigned *udata = (unsigned*)v0[setup->viewport_index_slot];
+         scissor_index = *udata;
+      }
    }
    else {
       nr_planes = 3;
@@ -285,7 +290,7 @@ do_triangle_ccw(struct lp_setup_context *setup,
       return TRUE;
    }
 
-   if (!u_rect_test_intersection(&setup->draw_region, &bbox)) {
+   if (!u_rect_test_intersection(&setup->draw_regions[scissor_index], &bbox)) {
       if (0) debug_printf("offscreen\n");
       LP_COUNT(nr_culled_tris);
       return TRUE;
@@ -491,7 +496,7 @@ do_triangle_ccw(struct lp_setup_context *setup,
     * these planes elsewhere.
     */
    if (nr_planes == 7) {
-      const struct u_rect *scissor = &setup->scissor;
+      const struct u_rect *scissor = &setup->scissors[scissor_index];
 
       plane[3].dcdx = -1;
       plane[3].dcdy = 0;
@@ -514,7 +519,7 @@ do_triangle_ccw(struct lp_setup_context *setup,
       plane[6].eo = 0;
    }
 
-   return lp_setup_bin_triangle( setup, tri, &bbox, nr_planes );
+   return lp_setup_bin_triangle( setup, tri, &bbox, nr_planes, scissor_index );
 }
 
 /*
@@ -548,7 +553,8 @@ boolean
 lp_setup_bin_triangle( struct lp_setup_context *setup,
                        struct lp_rast_triangle *tri,
                        const struct u_rect *bbox,
-                       int nr_planes )
+                       int nr_planes,
+                       unsigned scissor_index )
 {
    struct lp_scene *scene = setup->scene;
    struct u_rect trimmed_box = *bbox;   
@@ -570,7 +576,8 @@ lp_setup_bin_triangle( struct lp_setup_context *setup,
     * the rasterizer to also respect scissor, etc, just for the rare
     * cases where a small triangle extends beyond the scissor.
     */
-   u_rect_find_intersection(&setup->draw_region, &trimmed_box);
+   u_rect_find_intersection(&setup->draw_regions[scissor_index],
+                            &trimmed_box);
 
    /* Determine which tile(s) intersect the triangle's bounding box
     */
