@@ -1533,16 +1533,18 @@ void _kw_ungrab_all( Display *dpy )
 static void
 Fake_glXDestroyContext( Display *dpy, GLXContext ctx )
 {
-   struct fake_glx_context *glxCtx = (struct fake_glx_context *) ctx;
-   (void) dpy;
-   MakeCurrent_PrevContext = 0;
-   MakeCurrent_PrevDrawable = 0;
-   MakeCurrent_PrevReadable = 0;
-   MakeCurrent_PrevDrawBuffer = 0;
-   MakeCurrent_PrevReadBuffer = 0;
-   XMesaDestroyContext( glxCtx->xmesaContext );
-   XMesaGarbageCollect(dpy);
-   free(glxCtx);
+   if (ctx) {
+      struct fake_glx_context *glxCtx = (struct fake_glx_context *) ctx;
+      (void) dpy;
+      MakeCurrent_PrevContext = 0;
+      MakeCurrent_PrevDrawable = 0;
+      MakeCurrent_PrevReadable = 0;
+      MakeCurrent_PrevDrawBuffer = 0;
+      MakeCurrent_PrevReadBuffer = 0;
+      XMesaDestroyContext( glxCtx->xmesaContext );
+      XMesaGarbageCollect(dpy);
+      free(glxCtx);
+   }
 }
 
 
