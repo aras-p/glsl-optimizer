@@ -127,6 +127,8 @@ static void interp( const struct clip_stage *clip,
    const unsigned clip_attr = draw_current_shader_clipvertex_output(clip->stage.draw);
    unsigned j;
    float t_nopersp;
+   unsigned viewport_index_output =
+      draw_current_shader_viewport_index_output(clip->stage.draw);
 
    /* Vertex header.
     */
@@ -145,9 +147,14 @@ static void interp( const struct clip_stage *clip,
     * new window coordinates:
     */
    {
+      int viewport_index = 
+         draw_current_shader_uses_viewport_index(clip->stage.draw) ?
+         *((unsigned*)in->data[viewport_index_output]) : 0;
       const float *pos = dst->pre_clip_pos;
-      const float *scale = clip->stage.draw->viewport.scale;
-      const float *trans = clip->stage.draw->viewport.translate;
+      const float *scale =
+         clip->stage.draw->viewports[viewport_index].scale;
+      const float *trans =
+         clip->stage.draw->viewports[viewport_index].translate;
       const float oow = 1.0f / pos[3];
 
       dst->data[pos_attr][0] = pos[0] * oow * scale[0] + trans[0];

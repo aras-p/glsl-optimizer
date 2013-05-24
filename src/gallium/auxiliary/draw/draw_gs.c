@@ -335,8 +335,13 @@ llvm_fetch_gs_outputs(struct draw_geometry_shader *shader,
       int i;
       for (i = 0; i < total_verts; ++i) {
          struct vertex_header *vh = (struct vertex_header *)(output_ptr + shader->vertex_size * i);
-         debug_printf("%d) [%f, %f, %f, %f]\n", i,
-                      vh->data[0][0], vh->data[0][1], vh->data[0][2], vh->data[0][3]);
+         debug_printf("%d) Vertex:\n", i);
+         for (j = 0; j < shader->info.num_outputs; ++j) {
+            unsigned *udata = (unsigned*)vh->data[j];
+            debug_printf("    %d) [%f, %f, %f, %f] [%d, %d, %d, %d]\n", j,
+                         vh->data[j][0], vh->data[j][1], vh->data[j][2], vh->data[j][3],
+                         udata[0], udata[1], udata[2], udata[3]);
+         }
          
       }
    }
@@ -784,6 +789,8 @@ draw_create_geometry_shader(struct draw_context *draw,
       if (gs->info.output_semantic_name[i] == TGSI_SEMANTIC_POSITION &&
           gs->info.output_semantic_index[i] == 0)
          gs->position_output = i;
+      if (gs->info.output_semantic_name[i] == TGSI_SEMANTIC_VIEWPORT_INDEX)
+         gs->viewport_index_output = i;
    }
 
    gs->machine = draw->gs.tgsi.machine;

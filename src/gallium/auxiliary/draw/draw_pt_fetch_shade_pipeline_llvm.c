@@ -277,8 +277,8 @@ llvm_middle_end_bind_parameters(struct draw_pt_middle_end *middle)
    fpme->llvm->gs_jit_context.planes =
       (float (*)[DRAW_TOTAL_CLIP_PLANES][4]) draw->pt.user.planes[0];
 
-   fpme->llvm->jit_context.viewport = (float *) draw->viewport.scale;
-   fpme->llvm->gs_jit_context.viewport = (float *) draw->viewport.scale;
+   fpme->llvm->jit_context.viewport = (float *) draw->viewports[0].scale;
+   fpme->llvm->gs_jit_context.viewport = (float *) draw->viewports[0].scale;
 }
 
 

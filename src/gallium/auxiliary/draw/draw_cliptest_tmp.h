@@ -31,8 +31,6 @@ static boolean TAG(do_cliptest)( struct pt_post_vs *pvs,
                                  struct draw_vertex_info *info )
 {
    struct vertex_header *out = info->verts;
-   const float *scale = pvs->draw->viewport.scale;
-   const float *trans = pvs->draw->viewport.translate;
    /* const */ float (*plane)[4] = pvs->draw->plane;
    const unsigned pos = draw_current_shader_position_output(pvs->draw);
    const unsigned cv = draw_current_shader_clipvertex_output(pvs->draw);
@@ -44,6 +42,9 @@ static boolean TAG(do_cliptest)( struct pt_post_vs *pvs,
    unsigned j;
    unsigned i;
    bool have_cd = false;
+   unsigned viewport_index_output =
+      draw_current_shader_viewport_index_output(pvs->draw);
+      
    cd[0] = draw_current_shader_clipdistance_output(pvs->draw, 0);
    cd[1] = draw_current_shader_clipdistance_output(pvs->draw, 1);
   
@@ -52,7 +53,12 @@ static boolean TAG(do_cliptest)( struct pt_post_vs *pvs,
 
    for (j = 0; j < info->count; j++) {
       float *position = out->data[pos];
+      int viewport_index = 
+         draw_current_shader_uses_viewport_index(pvs->draw) ?
+         *((unsigned*)out->data[viewport_index_output]): 0;
       unsigned mask = 0x0;
+      const float *scale = pvs->draw->viewports[viewport_index].scale;
+      const float *trans = pvs->draw->viewports[viewport_index].translate;
   
       initialize_vertex_header(out);
 

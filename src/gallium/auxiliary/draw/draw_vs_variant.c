@@ -78,6 +78,26 @@ static void vsvg_set_buffer( struct draw_vs_variant *variant,
                            max_index );
 }
 
+static const struct pipe_viewport_state *
+find_viewport(struct draw_context *draw,
+              char *buffer,
+              unsigned vertex_idx,
+              unsigned stride)
+{
+   int viewport_index_output =
+      draw_current_shader_viewport_index_output(draw);
+   char *ptr = buffer + vertex_idx * stride;
+   unsigned *data = (unsigned *)ptr;
+   int viewport_index =
+      draw_current_shader_uses_viewport_index(draw) ?
+      data[viewport_index_output * 4] : 0;
+   
+   debug_assert(viewport_index < PIPE_MAX_VIEWPORTS);
+   viewport_index = MIN2(viewport_index, PIPE_MAX_VIEWPORTS - 1);
+
+   return &draw->viewports[viewport_index];
+}
+   
 
 /* Mainly for debug at this stage:
  */
@@ -86,14 +106,17 @@ static void do_rhw_viewport( struct draw_vs_variant_generic *vsvg,
                              void *output_buffer )
 {
    char *ptr = (char *)output_buffer;
-   const float *scale = vsvg->base.vs->draw->viewport.scale;
-   const float *trans = vsvg->base.vs->draw->viewport.translate;
    unsigned stride = vsvg->temp_vertex_stride;
    unsigned j;
 
    ptr += vsvg->base.vs->position_output * 4 * sizeof(float);
 
    for (j = 0; j < count; j++, ptr += stride) {
+      const struct pipe_viewport_state *viewport =
+         find_viewport(vsvg->base.vs->draw, (char*)output_buffer,
+                       j, stride);
+      const float *scale = viewport->scale;
+      const float *trans = viewport->translate;
       float *data = (float *)ptr;
       float w = 1.0f / data[3];
 
@@ -109,14 +132,17 @@ static void do_viewport( struct draw_vs_variant_generic *vsvg,
                          void *output_buffer )
 {
    char *ptr = (char *)output_buffer;
-   const float *scale = vsvg->base.vs->draw->viewport.scale;
-   const float *trans = vsvg->base.vs->draw->viewport.translate;
    unsigned stride = vsvg->temp_vertex_stride;
    unsigned j;
 
    ptr += vsvg->base.vs->position_output * 4 * sizeof(float);
 
    for (j = 0; j < count; j++, ptr += stride) {
+      const struct pipe_viewport_state *viewport =
+         find_viewport(vsvg->base.vs->draw, (char*)output_buffer,
+                       j, stride);
+      const float *scale = viewport->scale;
+      const float *trans = viewport->translate;
       float *data = (float *)ptr;
 
       data[0] = data[0] * scale[0] + trans[0];

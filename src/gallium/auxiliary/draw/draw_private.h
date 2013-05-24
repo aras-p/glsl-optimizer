@@ -241,7 +241,7 @@ struct draw_context
    /** Rasterizer CSOs without culling/stipple/etc */
    void *rasterizer_no_cull[2][2];
 
-   struct pipe_viewport_state viewport;
+   struct pipe_viewport_state viewports[PIPE_MAX_VIEWPORTS];
    boolean identity_viewport;
 
    /** Vertex shader state */
@@ -372,9 +372,6 @@ void draw_new_instance(struct draw_context *draw);
 boolean draw_vs_init( struct draw_context *draw );
 void draw_vs_destroy( struct draw_context *draw );
 
-void draw_vs_set_viewport( struct draw_context *, 
-                           const struct pipe_viewport_state * );
-
 
 /*******************************************************************************
  * Geometry shading code:
@@ -389,11 +386,14 @@ void draw_gs_destroy( struct draw_context *draw );
  */
 uint draw_current_shader_outputs(const struct draw_context *draw);
 uint draw_current_shader_position_output(const struct draw_context *draw);
+uint draw_current_shader_viewport_index_output(const struct draw_context *draw);
 uint draw_current_shader_clipvertex_output(const struct draw_context *draw);
 uint draw_current_shader_clipdistance_output(const struct draw_context *draw, int index);
 int draw_alloc_extra_vertex_attrib(struct draw_context *draw,
                                    uint semantic_name, uint semantic_index);
 void draw_remove_extra_vertex_attribs(struct draw_context *draw);
+boolean draw_current_shader_uses_viewport_index(
+   const struct draw_context *draw);
 
 
 /*******************************************************************************

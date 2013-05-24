@@ -49,13 +49,6 @@
 DEBUG_GET_ONCE_BOOL_OPTION(gallium_dump_vs, "GALLIUM_DUMP_VS", FALSE)
 
 
-void draw_vs_set_viewport( struct draw_context *draw,
-                           const struct pipe_viewport_state *viewport )
-{
-}
-
-
-
 struct draw_vertex_shader *
 draw_create_vertex_shader(struct draw_context *draw,
                           const struct pipe_shader_state *shader)
