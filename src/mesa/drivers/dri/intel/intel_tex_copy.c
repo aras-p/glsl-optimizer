@@ -62,6 +62,12 @@ intel_copy_texsubimage(struct intel_context *intel,
 
    intel_prepare_render(intel);
 
+   /* glCopyTexSubImage() can't be called on multisampled renderbuffers or
+    * textures.
+    */
+   assert(!irb->Base.Base.NumSamples);
+   assert(!intelImage->base.Base.NumSamples);
+
    if (!intelImage->mt || !irb || !irb->mt) {
       if (unlikely(INTEL_DEBUG & DEBUG_PERF))
 	 fprintf(stderr, "%s fail %p %p (0x%08x)\n",
