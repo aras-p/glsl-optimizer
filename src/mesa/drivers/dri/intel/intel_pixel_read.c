@@ -76,7 +76,6 @@ do_blit_readpixels(struct gl_context * ctx,
                    const struct gl_pixelstore_attrib *pack, GLvoid * pixels)
 {
    struct intel_context *intel = intel_context(ctx);
-   struct intel_region *src = intel_readbuf_region(intel);
    struct intel_buffer_object *dst = intel_buffer_object(pack->BufferObj);
    GLuint dst_offset;
    drm_intel_bo *dst_buffer;
@@ -85,9 +84,6 @@ do_blit_readpixels(struct gl_context * ctx,
    GLuint dirty;
 
    DBG("%s\n", __FUNCTION__);
-
-   if (!src)
-      return false;
 
    assert(_mesa_is_bufferobj(pack->BufferObj));
 
@@ -107,13 +103,13 @@ do_blit_readpixels(struct gl_context * ctx,
    }
 
    int dst_stride = _mesa_image_row_stride(pack, width, format, type);
+   bool dst_flip = false;
+   /* Mesa flips the dst_stride for pack->Invert, but we want our mt to have a
+    * normal dst_stride.
+    */
    if (pack->Invert) {
-      DBG("%s: MESA_PACK_INVERT not done yet\n", __FUNCTION__);
-      return false;
-   }
-   else {
-      if (_mesa_is_winsys_fbo(ctx->ReadBuffer))
-	 dst_stride = -dst_stride;
+      dst_stride = -dst_stride;
+      dst_flip = true;
    }
 
    dst_offset = (GLintptr)pixels;
@@ -131,29 +127,31 @@ do_blit_readpixels(struct gl_context * ctx,
    intel_prepare_render(intel);
    intel->front_buffer_dirty = dirty;
 
-   all = (width * height * src->cpp == dst->Base.Size &&
+   all = (width * height * irb->mt->cpp == dst->Base.Size &&
 	  x == 0 && dst_offset == 0);
-
-   dst_x = 0;
-   dst_y = 0;
 
    dst_buffer = intel_bufferobj_buffer(intel, dst,
 				       all ? INTEL_WRITE_FULL :
 				       INTEL_WRITE_PART);
 
-   if (_mesa_is_winsys_fbo(ctx->ReadBuffer))
-      y = ctx->ReadBuffer->Height - (y + height);
+   struct intel_mipmap_tree *pbo_mt =
+      intel_miptree_create_for_bo(intel,
+                                  dst_buffer,
+                                  irb->mt->format,
+                                  dst_offset,
+                                  width, height,
+                                  dst_stride, I915_TILING_NONE);
 
-   if (!intelEmitCopyBlit(intel,
-			  src->cpp,
-			  src->pitch, src->bo, 0, src->tiling,
-			  dst_stride, dst_buffer, dst_offset, false,
-			  x, y,
-			  dst_x, dst_y,
-			  width, height,
-			  GL_COPY)) {
+   if (!intel_miptree_blit(intel,
+                           irb->mt, irb->mt_level, irb->mt_layer,
+                           x, y, _mesa_is_winsys_fbo(ctx->ReadBuffer),
+                           pbo_mt, 0, 0,
+                           0, 0, dst_flip,
+                           width, height, GL_COPY)) {
       return false;
    }
+
+   intel_miptree_release(&pbo_mt);
 
    DBG("%s - DONE\n", __FUNCTION__);
 
