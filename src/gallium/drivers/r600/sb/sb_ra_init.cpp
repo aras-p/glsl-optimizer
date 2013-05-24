@@ -157,7 +157,7 @@ sel_chan regbits::find_free_bit() {
 
 	bit = __builtin_ctz(dta[elt]) + (elt << bt_index_shift);
 
-	assert(bit < MAX_GPR - num_temps);
+	assert(bit < ((MAX_GPR - num_temps) << 2));
 
 	return bit + 1;
 }
