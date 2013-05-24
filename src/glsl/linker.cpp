@@ -1690,6 +1690,14 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
    prog->Version = max_version;
    prog->IsES = is_es_prog;
 
+   /* Geometry shaders have to be linked with vertex shaders.
+    */
+   if (num_geom_shaders > 0 && num_vert_shaders == 0) {
+      linker_error(prog, "Geometry shader must be linked with "
+		   "vertex shader\n");
+      goto done;
+   }
+
    for (unsigned int i = 0; i < MESA_SHADER_TYPES; i++) {
       if (prog->_LinkedShaders[i] != NULL)
 	 ctx->Driver.DeleteShader(ctx, prog->_LinkedShaders[i]);
