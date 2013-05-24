@@ -194,16 +194,15 @@ void gvn::process_op(node& n, bool rewrite) {
 				process_src(v->rel, rewrite);
 			}
 
-			if (rewrite && v->gvn_source && v->gvn_source->is_readonly()
-					&& n.is_any_alu()) {
+			if (rewrite && v->gvn_source && v->gvn_source->is_readonly() &&
+					n.is_any_alu()) {
 				process_alu_src_constants(n, v);
-			} else {
-				if (rewrite && (n.is_fetch_op(FETCH_OP_VFETCH) ||
-						n.is_fetch_op(FETCH_OP_SEMFETCH)))
-					process_src(v, false);
-				else
-					process_src(v, rewrite);
-			}
+			} else if (rewrite && v->gvn_source && v->gvn_source->is_const() &&
+					(n.is_fetch_op(FETCH_OP_VFETCH) ||
+							n.is_fetch_op(FETCH_OP_SEMFETCH)))
+				process_src(v, false);
+			else
+				process_src(v, rewrite);
 		}
 	}
 	if (n.pred)
