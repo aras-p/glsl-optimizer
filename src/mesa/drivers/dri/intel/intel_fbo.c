@@ -293,10 +293,14 @@ intel_image_target_renderbuffer_storage(struct gl_context *ctx,
 
    irb = intel_renderbuffer(rb);
    intel_miptree_release(&irb->mt);
-   irb->mt = intel_miptree_create_for_region(intel,
-                                             GL_TEXTURE_2D,
-                                             image->format,
-                                             image->region);
+   irb->mt = intel_miptree_create_for_bo(intel,
+                                         image->region->bo,
+                                         image->format,
+                                         image->offset,
+                                         image->region->width,
+                                         image->region->height,
+                                         image->region->pitch,
+                                         image->region->tiling);
    if (!irb->mt)
       return;
 

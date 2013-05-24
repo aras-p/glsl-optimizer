@@ -414,14 +414,18 @@ intel_miptree_create_layout(struct intel_context *intel,
                             GLuint width0,
                             GLuint height0,
                             GLuint depth0,
-                            bool for_region,
+                            bool for_bo,
                             GLuint num_samples);
 
 struct intel_mipmap_tree *
-intel_miptree_create_for_region(struct intel_context *intel,
-				GLenum target,
-				gl_format format,
-				struct intel_region *region);
+intel_miptree_create_for_bo(struct intel_context *intel,
+                            drm_intel_bo *bo,
+                            gl_format format,
+                            uint32_t offset,
+                            uint32_t width,
+                            uint32_t height,
+                            int pitch,
+                            uint32_t tiling);
 
 struct intel_mipmap_tree*
 intel_miptree_create_for_dri2_buffer(struct intel_context *intel,

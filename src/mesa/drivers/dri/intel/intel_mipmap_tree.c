@@ -124,8 +124,8 @@ compute_msaa_layout(struct intel_context *intel, gl_format format, GLenum target
 
 
 /**
- * @param for_region Indicates that the caller is
- *        intel_miptree_create_for_region(). If true, then do not create
+ * @param for_bo Indicates that the caller is
+ *        intel_miptree_create_for_bo(). If true, then do not create
  *        \c stencil_mt.
  */
 struct intel_mipmap_tree *
@@ -137,7 +137,7 @@ intel_miptree_create_layout(struct intel_context *intel,
                             GLuint width0,
                             GLuint height0,
                             GLuint depth0,
-                            bool for_region,
+                            bool for_bo,
                             GLuint num_samples)
 {
    struct intel_mipmap_tree *mt = calloc(sizeof(*mt), 1);
@@ -250,7 +250,7 @@ intel_miptree_create_layout(struct intel_context *intel,
    mt->physical_height0 = height0;
    mt->physical_depth0 = depth0;
 
-   if (!for_region &&
+   if (!for_bo &&
        _mesa_get_format_base_format(format) == GL_DEPTH_STENCIL &&
        (intel->must_use_separate_stencil ||
 	(intel->has_separate_stencil &&
@@ -490,21 +490,50 @@ intel_miptree_create(struct intel_context *intel,
 }
 
 struct intel_mipmap_tree *
-intel_miptree_create_for_region(struct intel_context *intel,
-				GLenum target,
-				gl_format format,
-				struct intel_region *region)
+intel_miptree_create_for_bo(struct intel_context *intel,
+                            drm_intel_bo *bo,
+                            gl_format format,
+                            uint32_t offset,
+                            uint32_t width,
+                            uint32_t height,
+                            int pitch,
+                            uint32_t tiling)
 {
    struct intel_mipmap_tree *mt;
 
-   mt = intel_miptree_create_layout(intel, target, format,
-				      0, 0,
-				      region->width, region->height, 1,
-				      true, 0 /* num_samples */);
+   struct intel_region *region = calloc(1, sizeof(*region));
+   if (!region)
+      return NULL;
+
+   /* Nothing will be able to use this miptree with the BO if the offset isn't
+    * aligned.
+    */
+   if (tiling != I915_TILING_NONE)
+      assert(offset % 4096 == 0);
+
+   /* miptrees can't handle negative pitch.  If you need flipping of images,
+    * that's outside of the scope of the mt.
+    */
+   assert(pitch >= 0);
+
+   mt = intel_miptree_create_layout(intel, GL_TEXTURE_2D, format,
+                                    0, 0,
+                                    width, height, 1,
+                                    true, 0 /* num_samples */);
    if (!mt)
       return mt;
 
-   intel_region_reference(&mt->region, region);
+   region->cpp = mt->cpp;
+   region->width = width;
+   region->height = height;
+   region->pitch = pitch;
+   region->refcount = 1;
+   drm_intel_bo_reference(bo);
+   region->bo = bo;
+   region->tiling = tiling;
+
+   mt->region = region;
+   mt->offset = offset;
 
    return mt;
 }
@@ -536,8 +565,14 @@ intel_miptree_create_for_dri2_buffer(struct intel_context *intel,
    assert(_mesa_get_format_base_format(format) == GL_RGB ||
           _mesa_get_format_base_format(format) == GL_RGBA);
 
-   singlesample_mt = intel_miptree_create_for_region(intel, GL_TEXTURE_2D,
-                                                     format, region);
+   singlesample_mt = intel_miptree_create_for_bo(intel,
+                                                 region->bo,
+                                                 format,
+                                                 0,
+                                                 region->width,
+                                                 region->height,
+                                                 region->pitch,
+                                                 region->tiling);
    if (!singlesample_mt)
       return NULL;
 
