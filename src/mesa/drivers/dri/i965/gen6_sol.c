@@ -26,6 +26,7 @@
  * Code to initialize the binding table entries used by transform feedback.
  */
 
+#include "main/bufferobj.h"
 #include "main/macros.h"
 #include "brw_context.h"
 #include "intel_batchbuffer.h"
@@ -131,6 +132,34 @@ const struct brw_tracked_state gen6_gs_binding_table = {
    },
    .emit = brw_gs_upload_binding_table,
 };
+
+struct gl_transform_feedback_object *
+brw_new_transform_feedback(struct gl_context *ctx, GLuint name)
+{
+   struct brw_context *brw = brw_context(ctx);
+   struct brw_transform_feedback_object *brw_obj =
+      CALLOC_STRUCT(brw_transform_feedback_object);
+   if (!brw_obj)
+      return NULL;
+
+   _mesa_init_transform_feedback_object(&brw_obj->base, name);
+
+   return &brw_obj->base;
+}
+
+void
+brw_delete_transform_feedback(struct gl_context *ctx,
+                              struct gl_transform_feedback_object *obj)
+{
+   struct brw_transform_feedback_object *brw_obj =
+      (struct brw_transform_feedback_object *) obj;
+
+   for (unsigned i = 0; i < Elements(obj->Buffers); i++) {
+      _mesa_reference_buffer_object(ctx, &obj->Buffers[i], NULL);
+   }
+
+   free(brw_obj);
+}
 
 void
 brw_begin_transform_feedback(struct gl_context *ctx, GLenum mode,

@@ -887,6 +887,10 @@ struct intel_batchbuffer {
    } saved;
 };
 
+struct brw_transform_feedback_object {
+   struct gl_transform_feedback_object base;
+};
+
 /**
  * Data shared between each programmable stage in the pipeline (vs, gs, and
  * wm).
@@ -1574,6 +1578,11 @@ extern int intel_translate_logic_op(GLenum opcode);
 void intel_init_syncobj_functions(struct dd_function_table *functions);
 
 /* gen6_sol.c */
+struct gl_transform_feedback_object *
+brw_new_transform_feedback(struct gl_context *ctx, GLuint name);
+void
+brw_delete_transform_feedback(struct gl_context *ctx,
+                              struct gl_transform_feedback_object *obj);
 void
 brw_begin_transform_feedback(struct gl_context *ctx, GLenum mode,
 			     struct gl_transform_feedback_object *obj);
