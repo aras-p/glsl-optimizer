@@ -35,20 +35,6 @@
 #include "main/renderbuffer.h"
 
 /**
- * Return pointer to current color drawing region, or NULL.
- */
-struct intel_region *
-intel_drawbuf_region(struct intel_context *intel)
-{
-   struct intel_renderbuffer *irbColor =
-      intel_renderbuffer(intel->ctx.DrawBuffer->_ColorDrawBuffers[0]);
-   if (irbColor && irbColor->mt)
-      return irbColor->mt->region;
-   else
-      return NULL;
-}
-
-/**
  * Return pointer to current color reading region, or NULL.
  */
 struct intel_region *

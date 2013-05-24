@@ -38,8 +38,6 @@ struct intel_framebuffer;
 
 extern struct intel_region *intel_readbuf_region(struct intel_context *intel);
 
-extern struct intel_region *intel_drawbuf_region(struct intel_context *intel);
-
 extern void intel_check_front_buffer_rendering(struct intel_context *intel);
 
 static inline void
