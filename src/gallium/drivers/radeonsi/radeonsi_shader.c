@@ -40,6 +40,7 @@
 #include "tgsi/tgsi_info.h"
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_scan.h"
+#include "tgsi/tgsi_util.h"
 #include "tgsi/tgsi_dump.h"
 
 #include "radeonsi_pipe.h"
@@ -876,6 +877,8 @@ static void tex_fetch_args(
 	unsigned target = inst->Texture.Texture;
 	LLVMValueRef coords[4];
 	LLVMValueRef address[16];
+	int ref_pos;
+	unsigned num_coords = tgsi_util_get_texture_coord_dim(target, &ref_pos);
 	unsigned count = 0;
 	unsigned chan;
 
@@ -909,11 +912,10 @@ static void tex_fetch_args(
 	case TGSI_TEXTURE_SHADOW1D_ARRAY:
 	case TGSI_TEXTURE_SHADOW2D:
 	case TGSI_TEXTURE_SHADOWRECT:
-		address[count++] = coords[2];
-		break;
 	case TGSI_TEXTURE_SHADOWCUBE:
 	case TGSI_TEXTURE_SHADOW2D_ARRAY:
-		address[count++] = coords[3];
+		assert(ref_pos >= 0);
+		address[count++] = coords[ref_pos];
 		break;
 	case TGSI_TEXTURE_SHADOWCUBE_ARRAY:
 		address[count++] = lp_build_emit_fetch(bld_base, inst, 1, 0);
@@ -921,30 +923,10 @@ static void tex_fetch_args(
 
 	/* Pack texture coordinates */
 	address[count++] = coords[0];
-	switch (target) {
-	case TGSI_TEXTURE_2D:
-	case TGSI_TEXTURE_2D_ARRAY:
-	case TGSI_TEXTURE_3D:
-	case TGSI_TEXTURE_CUBE:
-	case TGSI_TEXTURE_RECT:
-	case TGSI_TEXTURE_SHADOW2D:
-	case TGSI_TEXTURE_SHADOWRECT:
-	case TGSI_TEXTURE_SHADOW2D_ARRAY:
-	case TGSI_TEXTURE_SHADOWCUBE:
-	case TGSI_TEXTURE_2D_MSAA:
-	case TGSI_TEXTURE_2D_ARRAY_MSAA:
-	case TGSI_TEXTURE_CUBE_ARRAY:
-	case TGSI_TEXTURE_SHADOWCUBE_ARRAY:
+	if (num_coords > 1)
 		address[count++] = coords[1];
-	}
-	switch (target) {
-	case TGSI_TEXTURE_3D:
-	case TGSI_TEXTURE_CUBE:
-	case TGSI_TEXTURE_SHADOWCUBE:
-	case TGSI_TEXTURE_CUBE_ARRAY:
-	case TGSI_TEXTURE_SHADOWCUBE_ARRAY:
+	if (num_coords > 2)
 		address[count++] = coords[2];
-	}
 
 	/* Pack array slice */
 	switch (target) {
