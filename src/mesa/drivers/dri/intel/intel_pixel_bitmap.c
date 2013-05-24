@@ -227,10 +227,19 @@ do_blit_bitmap( struct gl_context *ctx,
    UNCLAMPED_FLOAT_TO_UBYTE(ubcolor[2], tmpColor[2]);
    UNCLAMPED_FLOAT_TO_UBYTE(ubcolor[3], tmpColor[3]);
 
-   if (irb->mt->cpp == 2)
-      color = PACK_COLOR_565(ubcolor[0], ubcolor[1], ubcolor[2]);
-   else
+   switch (irb->mt->format) {
+   case MESA_FORMAT_ARGB8888:
+   case MESA_FORMAT_XRGB8888:
       color = PACK_COLOR_8888(ubcolor[3], ubcolor[0], ubcolor[1], ubcolor[2]);
+      break;
+   case MESA_FORMAT_RGB565:
+      color = PACK_COLOR_565(ubcolor[0], ubcolor[1], ubcolor[2]);
+      break;
+   default:
+      perf_debug("Unsupported format %s in accelerated glBitmap()\n",
+                 _mesa_get_format_name(irb->mt->format));
+      return false;
+   }
 
    if (!intel_check_blit_fragment_ops(ctx, tmpColor[3] == 1.0F))
       return false;
