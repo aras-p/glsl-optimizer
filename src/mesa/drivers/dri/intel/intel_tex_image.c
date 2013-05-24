@@ -6,6 +6,7 @@
 #include "main/bufferobj.h"
 #include "main/context.h"
 #include "main/formats.h"
+#include "main/image.h"
 #include "main/pbo.h"
 #include "main/renderbuffer.h"
 #include "main/texcompress.h"
@@ -117,9 +118,8 @@ try_pbo_upload(struct gl_context *ctx,
    struct intel_texture_image *intelImage = intel_texture_image(image);
    struct intel_context *intel = intel_context(ctx);
    struct intel_buffer_object *pbo = intel_buffer_object(unpack->BufferObj);
-   GLuint src_offset, src_stride;
-   GLuint dst_x, dst_y;
-   drm_intel_bo *dst_buffer, *src_buffer;
+   GLuint src_offset;
+   drm_intel_bo *src_buffer;
 
    if (!_mesa_is_bufferobj(unpack->BufferObj))
       return false;
@@ -132,18 +132,18 @@ try_pbo_upload(struct gl_context *ctx,
       return false;
    }
 
-   if (!_mesa_format_matches_format_and_type(image->TexFormat,
-                                             format, type, false)) {
-      DBG("%s: format mismatch (upload to %s with format 0x%x, type 0x%x)\n",
-	  __FUNCTION__, _mesa_get_format_name(image->TexFormat),
-	  format, type);
-      return false;
-   }
-
    ctx->Driver.AllocTextureImageBuffer(ctx, image);
 
    if (!intelImage->mt) {
       DBG("%s: no miptree\n", __FUNCTION__);
+      return false;
+   }
+
+   if (!_mesa_format_matches_format_and_type(intelImage->mt->format,
+                                             format, type, false)) {
+      DBG("%s: format mismatch (upload to %s with format 0x%x, type 0x%x)\n",
+	  __FUNCTION__, _mesa_get_format_name(intelImage->mt->format),
+	  format, type);
       return false;
    }
 
@@ -153,32 +153,34 @@ try_pbo_upload(struct gl_context *ctx,
       return false;
    }
 
-   dst_buffer = intelImage->mt->region->bo;
    src_buffer = intel_bufferobj_source(intel, pbo, 64, &src_offset);
    /* note: potential 64-bit ptr to 32-bit int cast */
    src_offset += (GLuint) (unsigned long) pixels;
 
-   if (unpack->RowLength > 0)
-      src_stride = unpack->RowLength;
-   else
-      src_stride = image->Width;
-   src_stride *= intelImage->mt->region->cpp;
+   int src_stride =
+      _mesa_image_row_stride(unpack, image->Width, format, type);
 
-   intel_miptree_get_image_offset(intelImage->mt, intelImage->base.Base.Level,
-				  intelImage->base.Base.Face,
-				  &dst_x, &dst_y);
+   struct intel_mipmap_tree *pbo_mt =
+      intel_miptree_create_for_bo(intel,
+                                  src_buffer,
+                                  intelImage->mt->format,
+                                  src_offset,
+                                  image->Width, image->Height,
+                                  src_stride, I915_TILING_NONE);
+   if (!pbo_mt)
+      return false;
 
-   if (!intelEmitCopyBlit(intel,
-			  intelImage->mt->cpp,
-			  src_stride, src_buffer,
-			  src_offset, false,
-			  intelImage->mt->region->pitch, dst_buffer, 0,
-			  intelImage->mt->region->tiling,
-			  0, 0, dst_x, dst_y, image->Width, image->Height,
-			  GL_COPY)) {
+   if (!intel_miptree_blit(intel,
+                           pbo_mt, 0, 0,
+                           0, 0, false,
+                           intelImage->mt, image->Level, image->Face,
+                           0, 0, false,
+                           image->Width, image->Height, GL_COPY)) {
       DBG("%s: blit failed\n", __FUNCTION__);
       return false;
    }
+
+   intel_miptree_release(&pbo_mt);
 
    DBG("%s: success\n", __FUNCTION__);
    return true;
