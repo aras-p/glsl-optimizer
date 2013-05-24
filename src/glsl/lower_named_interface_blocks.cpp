@@ -72,7 +72,8 @@ public:
    hash_table *interface_namespace;
 
    flatten_named_interface_blocks_declarations(void *mem_ctx)
-      : mem_ctx(mem_ctx)
+      : mem_ctx(mem_ctx),
+        interface_namespace(NULL)
    {
    }
 
