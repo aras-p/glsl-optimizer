@@ -92,7 +92,7 @@ public:
 
 	sb_ostream& operator <<(double d) {
 		char b[32];
-		sprintf(b, "%f", d);
+		snprintf(b, 32, "%g", d);
 		return *this << b;
 	}
 
