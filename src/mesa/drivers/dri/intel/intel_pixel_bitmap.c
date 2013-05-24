@@ -45,6 +45,7 @@
 #include "intel_context.h"
 #include "intel_batchbuffer.h"
 #include "intel_blit.h"
+#include "intel_fbo.h"
 #include "intel_regions.h"
 #include "intel_buffers.h"
 #include "intel_pixel.h"
@@ -176,8 +177,8 @@ do_blit_bitmap( struct gl_context *ctx,
 		const GLubyte *bitmap )
 {
    struct intel_context *intel = intel_context(ctx);
-   struct intel_region *dst;
    struct gl_framebuffer *fb = ctx->DrawBuffer;
+   struct intel_renderbuffer *irb;
    GLfloat tmpColor[4];
    GLubyte ubcolor[4];
    GLuint color;
@@ -200,10 +201,14 @@ do_blit_bitmap( struct gl_context *ctx,
    }
 
    intel_prepare_render(intel);
-   dst = intel_drawbuf_region(intel);
 
-   if (!dst)
-       return false;
+   if (fb->_NumColorDrawBuffers != 1) {
+      perf_debug("accelerated glBitmap() only supports rendering to a "
+                 "single color buffer\n");
+      return false;
+   }
+
+   irb = intel_renderbuffer(fb->_ColorDrawBuffers[0]);
 
    if (_mesa_is_bufferobj(unpack->BufferObj)) {
       bitmap = map_pbo(ctx, width, height, unpack, bitmap);
@@ -222,7 +227,7 @@ do_blit_bitmap( struct gl_context *ctx,
    UNCLAMPED_FLOAT_TO_UBYTE(ubcolor[2], tmpColor[2]);
    UNCLAMPED_FLOAT_TO_UBYTE(ubcolor[3], tmpColor[3]);
 
-   if (dst->cpp == 2)
+   if (irb->mt->cpp == 2)
       color = PACK_COLOR_565(ubcolor[0], ubcolor[1], ubcolor[2]);
    else
       color = PACK_COLOR_8888(ubcolor[3], ubcolor[0], ubcolor[1], ubcolor[2]);
@@ -271,14 +276,14 @@ do_blit_bitmap( struct gl_context *ctx,
 	    continue;
 
 	 if (!intelEmitImmediateColorExpandBlit(intel,
-						dst->cpp,
+						irb->mt->cpp,
 						(GLubyte *)stipple,
 						sz,
 						color,
-						dst->pitch,
-						dst->bo,
+						irb->mt->region->pitch,
+						irb->mt->region->bo,
 						0,
-						dst->tiling,
+						irb->mt->region->tiling,
 						dstx + px,
 						dsty + py,
 						w, h,
