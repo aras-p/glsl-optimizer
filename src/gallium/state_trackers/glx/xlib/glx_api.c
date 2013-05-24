@@ -1353,16 +1353,18 @@ glXQueryExtension( Display *dpy, int *errorBase, int *eventBase )
 PUBLIC void
 glXDestroyContext( Display *dpy, GLXContext ctx )
 {
-   GLXContext glxCtx = ctx;
-   (void) dpy;
-   MakeCurrent_PrevContext = 0;
-   MakeCurrent_PrevDrawable = 0;
-   MakeCurrent_PrevReadable = 0;
-   MakeCurrent_PrevDrawBuffer = 0;
-   MakeCurrent_PrevReadBuffer = 0;
-   XMesaDestroyContext( glxCtx->xmesaContext );
-   XMesaGarbageCollect();
-   free(glxCtx);
+   if (ctx) {
+      GLXContext glxCtx = ctx;
+      (void) dpy;
+      MakeCurrent_PrevContext = 0;
+      MakeCurrent_PrevDrawable = 0;
+      MakeCurrent_PrevReadable = 0;
+      MakeCurrent_PrevDrawBuffer = 0;
+      MakeCurrent_PrevReadBuffer = 0;
+      XMesaDestroyContext( glxCtx->xmesaContext );
+      XMesaGarbageCollect();
+      free(glxCtx);
+   }
 }
 
 
