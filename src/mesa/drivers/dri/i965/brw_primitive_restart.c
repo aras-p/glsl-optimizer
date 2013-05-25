@@ -43,17 +43,23 @@ static bool
 can_cut_index_handle_restart_index(struct gl_context *ctx,
                                    const struct _mesa_index_buffer *ib)
 {
+   /* The FixedIndex variant means 0xFF, 0xFFFF, or 0xFFFFFFFF based on
+    * the index buffer type, which corresponds exactly to the hardware.
+    */
+   if (ctx->Array.PrimitiveRestartFixedIndex)
+      return true;
+
    bool cut_index_will_work;
 
    switch (ib->type) {
    case GL_UNSIGNED_BYTE:
-      cut_index_will_work = (ctx->Array._RestartIndex & 0xff) == 0xff;
+      cut_index_will_work = ctx->Array.RestartIndex == 0xff;
       break;
    case GL_UNSIGNED_SHORT:
-      cut_index_will_work = (ctx->Array._RestartIndex & 0xffff) == 0xffff;
+      cut_index_will_work = ctx->Array.RestartIndex == 0xffff;
       break;
    case GL_UNSIGNED_INT:
-      cut_index_will_work = ctx->Array._RestartIndex == 0xffffffff;
+      cut_index_will_work = ctx->Array.RestartIndex == 0xffffffff;
       break;
    default:
       cut_index_will_work = false;
