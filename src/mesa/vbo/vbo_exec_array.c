@@ -1334,6 +1334,16 @@ vbo_validated_multidrawelements(struct gl_context *ctx, GLenum mode,
       }
    }
 
+   /* Draw primitives individually if one count is zero, so we can easily skip
+    * that primitive.
+    */
+   for (i = 0; i < primcount; i++) {
+      if (count[i] == 0) {
+         fallback = GL_TRUE;
+         break;
+      }
+   }
+
    /* If the index buffer isn't in a VBO, then treating the application's
     * subranges of the index buffer as one large index buffer may lead to
     * us reading unmapped memory.
@@ -1370,6 +1380,8 @@ vbo_validated_multidrawelements(struct gl_context *ctx, GLenum mode,
    } else {
       /* render one prim at a time */
       for (i = 0; i < primcount; i++) {
+	 if (count[i] == 0)
+	    continue;
 	 ib.count = count[i];
 	 ib.type = type;
 	 ib.obj = ctx->Array.ArrayObj->ElementArrayBufferObj;
