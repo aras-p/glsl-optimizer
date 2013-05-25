@@ -245,6 +245,74 @@ _mesa_valid_prim_mode(struct gl_context *ctx, GLenum mode, const char *name)
       return GL_FALSE;
    }
 
+   /* From the ARB_geometry_shader4 spec:
+    *
+    * The error INVALID_OPERATION is generated if Begin, or any command that
+    * implicitly calls Begin, is called when a geometry shader is active and:
+    *
+    * * the input primitive type of the current geometry shader is
+    *   POINTS and <mode> is not POINTS,
+    *
+    * * the input primitive type of the current geometry shader is
+    *   LINES and <mode> is not LINES, LINE_STRIP, or LINE_LOOP,
+    *
+    * * the input primitive type of the current geometry shader is
+    *   TRIANGLES and <mode> is not TRIANGLES, TRIANGLE_STRIP or
+    *   TRIANGLE_FAN,
+    *
+    * * the input primitive type of the current geometry shader is
+    *   LINES_ADJACENCY_ARB and <mode> is not LINES_ADJACENCY_ARB or
+    *   LINE_STRIP_ADJACENCY_ARB, or
+    *
+    * * the input primitive type of the current geometry shader is
+    *   TRIANGLES_ADJACENCY_ARB and <mode> is not
+    *   TRIANGLES_ADJACENCY_ARB or TRIANGLE_STRIP_ADJACENCY_ARB.
+    *
+   */
+   if (ctx->Shader.CurrentGeometryProgram) {
+      const GLenum geom_mode =
+         ctx->Shader.CurrentGeometryProgram->Geom.InputType;
+      switch (mode) {
+      case GL_POINTS:
+         valid_enum = (geom_mode == GL_POINTS);
+         break;
+      case GL_LINES:
+      case GL_LINE_LOOP:
+      case GL_LINE_STRIP:
+         valid_enum = (geom_mode == GL_LINES);
+         break;
+      case GL_TRIANGLES:
+      case GL_TRIANGLE_STRIP:
+      case GL_TRIANGLE_FAN:
+         valid_enum = (geom_mode == GL_TRIANGLES);
+         break;
+      case GL_QUADS:
+      case GL_QUAD_STRIP:
+      case GL_POLYGON:
+         valid_enum = false;
+         break;
+      case GL_LINES_ADJACENCY:
+      case GL_LINE_STRIP_ADJACENCY:
+         valid_enum = (geom_mode == GL_LINES_ADJACENCY);
+         break;
+      case GL_TRIANGLES_ADJACENCY:
+      case GL_TRIANGLE_STRIP_ADJACENCY:
+         valid_enum = (geom_mode == GL_TRIANGLES_ADJACENCY);
+         break;
+      default:
+         valid_enum = false;
+         break;
+      }
+      if (!valid_enum) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "%s(mode=%s vs geometry shader input %s)",
+                     name,
+                     _mesa_lookup_prim_by_nr(mode),
+                     _mesa_lookup_prim_by_nr(geom_mode));
+         return GL_FALSE;
+      }
+   }
+
    /* From the GL_EXT_transform_feedback spec:
     *
     *     "The error INVALID_OPERATION is generated if Begin, or any command
