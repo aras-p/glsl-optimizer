@@ -111,6 +111,10 @@ int bc_parser::parse_decls() {
 	if (!pshader) {
 		if (gpr_reladdr)
 			sh->add_gpr_array(0, bc->ngpr, 0x0F);
+
+		// compute shaders have some values preloaded in R0, R1
+		sh->add_input(0 /* GPR */, true /* preloaded */, 0x0F /* mask */);
+		sh->add_input(1 /* GPR */, true /* preloaded */, 0x0F /* mask */);
 		return 0;
 	}
 
