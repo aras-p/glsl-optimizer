@@ -577,10 +577,10 @@ vbo_draw_arrays(struct gl_context *ctx, GLenum mode, GLint start,
    prim[0].base_instance = baseInstance;
 
    /* Implement the primitive restart index */
-   if (ctx->Array._PrimitiveRestart && ctx->Array._RestartIndex < count) {
+   if (ctx->Array.PrimitiveRestart && ctx->Array.RestartIndex < count) {
       GLuint primCount = 0;
 
-      if (ctx->Array._RestartIndex == start) {
+      if (ctx->Array.RestartIndex == start) {
          /* special case: RestartIndex at beginning */
          if (count > 1) {
             prim[0].start = start + 1;
@@ -588,7 +588,7 @@ vbo_draw_arrays(struct gl_context *ctx, GLenum mode, GLint start,
             primCount = 1;
          }
       }
-      else if (ctx->Array._RestartIndex == start + count - 1) {
+      else if (ctx->Array.RestartIndex == start + count - 1) {
          /* special case: RestartIndex at end */
          if (count > 1) {
             prim[0].start = start;
@@ -599,10 +599,10 @@ vbo_draw_arrays(struct gl_context *ctx, GLenum mode, GLint start,
       else {
          /* general case: RestartIndex in middle, split into two prims */
          prim[0].start = start;
-         prim[0].count = ctx->Array._RestartIndex - start;
+         prim[0].count = ctx->Array.RestartIndex - start;
 
          prim[1] = prim[0];
-         prim[1].start = ctx->Array._RestartIndex + 1;
+         prim[1].start = ctx->Array.RestartIndex + 1;
          prim[1].count = count - prim[1].start;
 
          primCount = 2;
