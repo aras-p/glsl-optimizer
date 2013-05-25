@@ -258,7 +258,7 @@ do_triangle_ccw(struct lp_setup_context *setup,
       nr_planes = 7;
       if (setup->viewport_index_slot > 0) {
          unsigned *udata = (unsigned*)v0[setup->viewport_index_slot];
-         scissor_index = *udata;
+         scissor_index = lp_clamp_scissor_idx(*udata);
       }
    }
    else {

@@ -318,7 +318,7 @@ try_setup_line( struct lp_setup_context *setup,
       nr_planes = 8;
       if (setup->viewport_index_slot > 0) {
          unsigned *udata = (unsigned*)v1[setup->viewport_index_slot];
-         scissor_index = *udata;
+         scissor_index = lp_clamp_scissor_idx(*udata);
       }
    }
    else {

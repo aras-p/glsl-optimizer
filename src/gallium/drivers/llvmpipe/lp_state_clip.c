@@ -71,8 +71,12 @@ llvmpipe_set_scissor_states(struct pipe_context *pipe,
 
    draw_flush(llvmpipe->draw);
 
+   debug_assert(start_slot < PIPE_MAX_VIEWPORTS);
+   debug_assert((start_slot + num_scissors) <= PIPE_MAX_VIEWPORTS);
+
    memcpy(llvmpipe->scissors + start_slot, scissors,
           sizeof(struct pipe_scissor_state) * num_scissors);
+   
    llvmpipe->dirty |= LP_NEW_SCISSOR;
 }
 

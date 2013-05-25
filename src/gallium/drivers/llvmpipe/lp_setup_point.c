@@ -328,7 +328,7 @@ try_setup_point( struct lp_setup_context *setup,
 
    if (setup->viewport_index_slot > 0) {
       unsigned *udata = (unsigned*)v0[setup->viewport_index_slot];
-      scissor_index = *udata;
+      scissor_index = lp_clamp_scissor_idx(*udata);
    }
    /* Bounding rectangle (in pixels) */
    {
