@@ -319,14 +319,12 @@ void draw_set_viewport_states( struct draw_context *draw,
    const struct pipe_viewport_state *viewport = vps;
    draw_do_flush(draw, DRAW_FLUSH_PARAMETER_CHANGE);
 
-   if (start_slot > PIPE_MAX_VIEWPORTS)
-      return;
-
-   if ((start_slot + num_viewports) > PIPE_MAX_VIEWPORTS)
-      num_viewports = PIPE_MAX_VIEWPORTS - start_slot;
+   debug_assert(start_slot < PIPE_MAX_VIEWPORTS);
+   debug_assert((start_slot + num_viewports) <= PIPE_MAX_VIEWPORTS);
 
    memcpy(draw->viewports + start_slot, vps,
           sizeof(struct pipe_viewport_state) * num_viewports);
+
    draw->identity_viewport = (num_viewports == 1) &&
       (viewport->scale[0] == 1.0f &&
        viewport->scale[1] == 1.0f &&

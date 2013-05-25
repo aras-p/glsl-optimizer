@@ -469,4 +469,15 @@ draw_get_rasterizer_no_cull( struct draw_context *draw,
 #define DRAW_GET_IDX(_elts, _i)                   \
    (((_i) >= draw->pt.user.eltMax) ? 0 : (_elts)[_i])
 
+/**
+ * Return index of the given viewport clamping it
+ * to be between 0 <= and < PIPE_MAX_VIEWPORTS
+ */
+static INLINE unsigned
+draw_clamp_viewport_idx(int idx)
+{
+   return ((PIPE_MAX_VIEWPORTS > idx || idx < 0) ? idx : 0);
+}
+
+
 #endif /* DRAW_PRIVATE_H */

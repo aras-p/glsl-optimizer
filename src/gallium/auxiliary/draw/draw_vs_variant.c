@@ -91,9 +91,8 @@ find_viewport(struct draw_context *draw,
    int viewport_index =
       draw_current_shader_uses_viewport_index(draw) ?
       data[viewport_index_output * 4] : 0;
-   
-   debug_assert(viewport_index < PIPE_MAX_VIEWPORTS);
-   viewport_index = MIN2(viewport_index, PIPE_MAX_VIEWPORTS - 1);
+
+   viewport_index = draw_clamp_viewport_idx(viewport_index);
 
    return &draw->viewports[viewport_index];
 }

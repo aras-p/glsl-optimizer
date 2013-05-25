@@ -25,8 +25,6 @@
  * 
  **************************************************************************/
 
-
-
 static boolean TAG(do_cliptest)( struct pt_post_vs *pvs,
                                  struct draw_vertex_info *info )
 {
@@ -57,8 +55,10 @@ static boolean TAG(do_cliptest)( struct pt_post_vs *pvs,
          draw_current_shader_uses_viewport_index(pvs->draw) ?
          *((unsigned*)out->data[viewport_index_output]): 0;
       unsigned mask = 0x0;
-      const float *scale = pvs->draw->viewports[viewport_index].scale;
-      const float *trans = pvs->draw->viewports[viewport_index].translate;
+      const float *scale = pvs->draw->viewports[
+         draw_clamp_viewport_idx(viewport_index)].scale;
+      const float *trans = pvs->draw->viewports[
+         draw_clamp_viewport_idx(viewport_index)].translate;
   
       initialize_vertex_header(out);
 

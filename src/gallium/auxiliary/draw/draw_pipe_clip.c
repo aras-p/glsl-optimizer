@@ -112,8 +112,6 @@ static void copy_flat( struct draw_stage *stage,
    }
 }
 
-
-
 /* Interpolate between two vertices to produce a third.  
  */
 static void interp( const struct clip_stage *clip,
@@ -152,9 +150,11 @@ static void interp( const struct clip_stage *clip,
          *((unsigned*)in->data[viewport_index_output]) : 0;
       const float *pos = dst->pre_clip_pos;
       const float *scale =
-         clip->stage.draw->viewports[viewport_index].scale;
+         clip->stage.draw->viewports[
+            draw_clamp_viewport_idx(viewport_index)].scale;
       const float *trans =
-         clip->stage.draw->viewports[viewport_index].translate;
+         clip->stage.draw->viewports[
+            draw_clamp_viewport_idx(viewport_index)].translate;
       const float oow = 1.0f / pos[3];
 
       dst->data[pos_attr][0] = pos[0] * oow * scale[0] + trans[0];
