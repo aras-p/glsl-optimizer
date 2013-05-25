@@ -323,7 +323,7 @@ static void fetch_pipeline_generic( struct draw_pt_middle_end *middle,
     */
    if (draw_current_shader_position_output(draw) != -1) {
 
-      if (draw_pt_post_vs_run( fpme->post_vs, vert_info ))
+      if (draw_pt_post_vs_run( fpme->post_vs, vert_info, prim_info ))
       {
          opt |= PT_PIPELINE;
       }

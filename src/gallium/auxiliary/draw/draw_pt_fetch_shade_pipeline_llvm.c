@@ -417,7 +417,7 @@ llvm_pipeline_generic( struct draw_pt_middle_end *middle,
     */
    if (draw_current_shader_position_output(draw) != -1) {
       if ((opt & PT_SHADE) && gshader) {
-         clipped = draw_pt_post_vs_run( fpme->post_vs, vert_info );
+         clipped = draw_pt_post_vs_run( fpme->post_vs, vert_info, prim_info );
       }
       if (clipped) {
          opt |= PT_PIPELINE;

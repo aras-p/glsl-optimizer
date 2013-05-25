@@ -79,6 +79,21 @@ static INLINE struct clip_stage *clip_stage( struct draw_stage *stage )
    return (struct clip_stage *)stage;
 }
 
+static INLINE unsigned
+draw_viewport_index(struct draw_context *draw,
+                    const struct vertex_header *leading_vertex)
+{
+   if (draw_current_shader_uses_viewport_index(draw)) {
+      unsigned viewport_index_output =
+         draw_current_shader_viewport_index_output(draw);
+      unsigned viewport_index =
+         *((unsigned*)leading_vertex->data[viewport_index_output]);
+      return draw_clamp_viewport_idx(viewport_index);
+   } else {
+      return 0;
+   }
+}
+
 
 #define LINTERP(T, OUT, IN) ((OUT) + (T) * ((IN) - (OUT)))
 
@@ -118,15 +133,14 @@ static void interp( const struct clip_stage *clip,
 		    struct vertex_header *dst,
 		    float t,
 		    const struct vertex_header *out, 
-		    const struct vertex_header *in )
+		    const struct vertex_header *in,
+                    unsigned viewport_index )
 {
    const unsigned nr_attrs = draw_current_shader_outputs(clip->stage.draw);
    const unsigned pos_attr = draw_current_shader_position_output(clip->stage.draw);
    const unsigned clip_attr = draw_current_shader_clipvertex_output(clip->stage.draw);
    unsigned j;
    float t_nopersp;
-   unsigned viewport_index_output =
-      draw_current_shader_viewport_index_output(clip->stage.draw);
 
    /* Vertex header.
     */
@@ -145,16 +159,11 @@ static void interp( const struct clip_stage *clip,
     * new window coordinates:
     */
    {
-      int viewport_index = 
-         draw_current_shader_uses_viewport_index(clip->stage.draw) ?
-         *((unsigned*)in->data[viewport_index_output]) : 0;
       const float *pos = dst->pre_clip_pos;
       const float *scale =
-         clip->stage.draw->viewports[
-            draw_clamp_viewport_idx(viewport_index)].scale;
+         clip->stage.draw->viewports[viewport_index].scale;
       const float *trans =
-         clip->stage.draw->viewports[
-            draw_clamp_viewport_idx(viewport_index)].translate;
+         clip->stage.draw->viewports[viewport_index].translate;
       const float oow = 1.0f / pos[3];
 
       dst->data[pos_attr][0] = pos[0] * oow * scale[0] + trans[0];
@@ -332,10 +341,13 @@ do_clip_tri( struct draw_stage *stage,
    boolean bEdges[MAX_CLIPPED_VERTICES];
    boolean *inEdges = aEdges;
    boolean *outEdges = bEdges;
+   int viewport_index = 0;
 
    inlist[0] = header->v[0];
    inlist[1] = header->v[1];
    inlist[2] = header->v[2];
+
+   viewport_index = draw_viewport_index(clipper->stage.draw, inlist[0]);
 
    if (DEBUG_CLIP) {
       const float *v0 = header->v[0]->clip;
@@ -411,7 +423,7 @@ do_clip_tri( struct draw_stage *stage,
 		* know dp != dp_prev from DIFFERENT_SIGNS, above.
 		*/
 	       float t = dp / (dp - dp_prev);
-	       interp( clipper, new_vert, t, vert, vert_prev );
+	       interp( clipper, new_vert, t, vert, vert_prev, viewport_index );
 	       
 	       /* Whether or not to set edge flag for the new vert depends
                 * on whether it's a user-defined clipping plane.  We're
@@ -432,7 +444,7 @@ do_clip_tri( struct draw_stage *stage,
 	       /* Coming back in.
 		*/
 	       float t = dp_prev / (dp_prev - dp);
-	       interp( clipper, new_vert, t, vert_prev, vert );
+	       interp( clipper, new_vert, t, vert_prev, vert, viewport_index );
 
 	       /* Copy starting vert's edgeflag:
 		*/
@@ -505,6 +517,7 @@ do_clip_line( struct draw_stage *stage,
    float t0 = 0.0F;
    float t1 = 0.0F;
    struct prim_header newprim;
+   int viewport_index = draw_viewport_index(clipper->stage.draw, v0);
 
    while (clipmask) {
       const unsigned plane_idx = ffs(clipmask)-1;
@@ -528,7 +541,7 @@ do_clip_line( struct draw_stage *stage,
    }
 
    if (v0->clipmask) {
-      interp( clipper, stage->tmp[0], t0, v0, v1 );
+      interp( clipper, stage->tmp[0], t0, v0, v1, viewport_index );
       copy_flat(stage, stage->tmp[0], v0);
       newprim.v[0] = stage->tmp[0];
    }
@@ -537,7 +550,7 @@ do_clip_line( struct draw_stage *stage,
    }
 
    if (v1->clipmask) {
-      interp( clipper, stage->tmp[1], t1, v1, v0 );
+      interp( clipper, stage->tmp[1], t1, v1, v0, viewport_index );
       newprim.v[1] = stage->tmp[1];
    }
    else {

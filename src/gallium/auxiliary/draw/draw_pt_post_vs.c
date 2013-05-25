@@ -27,6 +27,7 @@
 
 #include "util/u_memory.h"
 #include "util/u_math.h"
+#include "util/u_prim.h"
 #include "pipe/p_context.h"
 #include "draw/draw_context.h"
 #include "draw/draw_private.h"
@@ -48,7 +49,8 @@ struct pt_post_vs {
    unsigned flags;
 
    boolean (*run)( struct pt_post_vs *pvs,
-                   struct draw_vertex_info *info );
+                   struct draw_vertex_info *info,
+                   const struct draw_prim_info *prim_info );
 };
 
 static INLINE void
@@ -115,9 +117,10 @@ dot4(const float *a, const float *b)
 
 
 boolean draw_pt_post_vs_run( struct pt_post_vs *pvs,
-			     struct draw_vertex_info *info )
+			     struct draw_vertex_info *info,
+                             const struct draw_prim_info *prim_info )
 {
-   return pvs->run( pvs, info );
+   return pvs->run( pvs, info, prim_info );
 }
 
 

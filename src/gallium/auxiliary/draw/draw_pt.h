@@ -225,7 +225,8 @@ struct pt_fetch *draw_pt_fetch_create( struct draw_context *draw );
 struct pt_post_vs;
 
 boolean draw_pt_post_vs_run( struct pt_post_vs *pvs,
-			     struct draw_vertex_info *info );
+			     struct draw_vertex_info *info,
+                             const struct draw_prim_info *prim_info );
 
 void draw_pt_post_vs_prepare( struct pt_post_vs *pvs,
 			      boolean clip_xy,
