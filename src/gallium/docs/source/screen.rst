@@ -164,6 +164,10 @@ The integer capabilities:
   for permutational swizzles.
 * ``PIPE_CAP_MAX_TEXTURE_BUFFER_SIZE``: The maximum accessible size with
   a buffer sampler view, in bytes.
+* ``PIPE_CAP_MAX_VIEWPORTS``: The maximum number of viewports (and scissors
+  since they are linked) a driver can support. Returning 0 is equivalent
+  to returning 1 because every driver has to support at least a single
+  viewport/scissor combination.  
 
 
 .. _pipe_capf:
