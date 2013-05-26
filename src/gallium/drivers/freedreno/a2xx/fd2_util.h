@@ -1,7 +1,7 @@
 /* -*- mode: C; c-file-style: "k&r"; tab-width 4; indent-tabs-mode: t; -*- */
 
 /*
- * Copyright (C) 2012 Rob Clark <robclark@freedesktop.org>
+ * Copyright (C) 2012-2013 Rob Clark <robclark@freedesktop.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -26,46 +26,22 @@
  *    Rob Clark <robclark@freedesktop.org>
  */
 
-#ifndef FREEDRENO_SCREEN_H_
-#define FREEDRENO_SCREEN_H_
+#ifndef FD2_UTIL_H_
+#define FD2_UTIL_H_
 
-#include <freedreno_drmif.h>
-#include <freedreno_ringbuffer.h>
+#include "freedreno_util.h"
 
-#include "pipe/p_screen.h"
-#include "util/u_memory.h"
+#include "a2xx.xml.h"
 
-typedef uint32_t u32;
+enum a2xx_sq_surfaceformat fd2_pipe2surface(enum pipe_format format);
+enum a2xx_colorformatx fd2_pipe2color(enum pipe_format format);
+uint32_t fd2_tex_swiz(enum pipe_format format, unsigned swizzle_r,
+		unsigned swizzle_g, unsigned swizzle_b, unsigned swizzle_a);
 
-struct fd_bo;
-
-struct fd_screen {
-	struct pipe_screen base;
-
-	uint32_t gmemsize_bytes;
-	uint32_t device_id;
-	uint32_t gpu_id;
-
-	struct fd_device *dev;
-	struct fd_pipe *pipe;
-
-	int64_t cpu_gpu_time_delta;
-};
-
-static INLINE struct fd_screen *
-fd_screen(struct pipe_screen *pscreen)
+/* convert x,y to dword */
+static inline uint32_t xy2d(uint16_t x, uint16_t y)
 {
-	return (struct fd_screen *)pscreen;
+	return ((y & 0x3fff) << 16) | (x & 0x3fff);
 }
 
-boolean fd_screen_bo_get_handle(struct pipe_screen *pscreen,
-		struct fd_bo *bo,
-		unsigned stride,
-		struct winsys_handle *whandle);
-struct fd_bo * fd_screen_bo_from_handle(struct pipe_screen *pscreen,
-		struct winsys_handle *whandle,
-		unsigned *out_stride);
-
-struct pipe_screen * fd_screen_create(struct fd_device *dev);
-
-#endif /* FREEDRENO_SCREEN_H_ */
+#endif /* FD2_UTIL_H_ */

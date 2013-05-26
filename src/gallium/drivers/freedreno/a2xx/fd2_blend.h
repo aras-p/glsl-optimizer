@@ -1,7 +1,7 @@
 /* -*- mode: C; c-file-style: "k&r"; tab-width 4; indent-tabs-mode: t; -*- */
 
 /*
- * Copyright (C) 2012 Rob Clark <robclark@freedesktop.org>
+ * Copyright (C) 2012-2013 Rob Clark <robclark@freedesktop.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -26,23 +26,26 @@
  *    Rob Clark <robclark@freedesktop.org>
  */
 
-#ifndef FREEDRENO_RASTERIZER_H_
-#define FREEDRENO_RASTERIZER_H_
+#ifndef FD2_BLEND_H_
+#define FD2_BLEND_H_
 
 #include "pipe/p_state.h"
 #include "pipe/p_context.h"
 
-struct fd_rasterizer_stateobj {
-	struct pipe_rasterizer_state base;
-	uint32_t pa_sc_line_stipple;
-	uint32_t pa_cl_clip_cntl;
-	uint32_t pa_su_vtx_cntl;
-	uint32_t pa_su_point_size;
-	uint32_t pa_su_point_minmax;
-	uint32_t pa_su_line_cntl;
-	uint32_t pa_su_sc_mode_cntl;
+struct fd2_blend_stateobj {
+	struct pipe_blend_state base;
+	uint32_t rb_blendcontrol;
+	uint32_t rb_colorcontrol;   /* must be OR'd w/ zsa->rb_colorcontrol */
+	uint32_t rb_colormask;
 };
 
-void fd_rasterizer_init(struct pipe_context *pctx);
+static INLINE struct fd2_blend_stateobj *
+fd2_blend_stateobj(struct pipe_blend_state *blend)
+{
+	return (struct fd2_blend_stateobj *)blend;
+}
 
-#endif /* FREEDRENO_RASTERIZER_H_ */
+void * fd2_blend_state_create(struct pipe_context *pctx,
+		const struct pipe_blend_state *cso);
+
+#endif /* FD2_BLEND_H_ */

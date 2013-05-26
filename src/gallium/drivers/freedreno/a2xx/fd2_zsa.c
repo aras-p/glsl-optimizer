@@ -31,43 +31,17 @@
 #include "util/u_string.h"
 #include "util/u_memory.h"
 
-#include "freedreno_zsa.h"
-#include "freedreno_context.h"
-#include "freedreno_util.h"
+#include "fd2_zsa.h"
+#include "fd2_context.h"
+#include "fd2_util.h"
 
-static enum adreno_stencil_op
-stencil_op(unsigned op)
-{
-	switch (op) {
-	case PIPE_STENCIL_OP_KEEP:
-		return STENCIL_KEEP;
-	case PIPE_STENCIL_OP_ZERO:
-		return STENCIL_ZERO;
-	case PIPE_STENCIL_OP_REPLACE:
-		return STENCIL_REPLACE;
-	case PIPE_STENCIL_OP_INCR:
-		return STENCIL_INCR_CLAMP;
-	case PIPE_STENCIL_OP_DECR:
-		return STENCIL_DECR_CLAMP;
-	case PIPE_STENCIL_OP_INCR_WRAP:
-		return STENCIL_INCR_WRAP;
-	case PIPE_STENCIL_OP_DECR_WRAP:
-		return STENCIL_DECR_WRAP;
-	case PIPE_STENCIL_OP_INVERT:
-		return STENCIL_INVERT;
-	default:
-		DBG("invalid stencil op: %u", op);
-		return 0;
-	}
-}
-
-static void *
-fd_zsa_state_create(struct pipe_context *pctx,
+void *
+fd2_zsa_state_create(struct pipe_context *pctx,
 		const struct pipe_depth_stencil_alpha_state *cso)
 {
-	struct fd_zsa_stateobj *so;
+	struct fd2_zsa_stateobj *so;
 
-	so = CALLOC_STRUCT(fd_zsa_stateobj);
+	so = CALLOC_STRUCT(fd2_zsa_stateobj);
 	if (!so)
 		return NULL;
 
@@ -87,9 +61,9 @@ fd_zsa_state_create(struct pipe_context *pctx,
 		so->rb_depthcontrol |=
 			A2XX_RB_DEPTHCONTROL_STENCIL_ENABLE |
 			A2XX_RB_DEPTHCONTROL_STENCILFUNC(s->func) | /* maps 1:1 */
-			A2XX_RB_DEPTHCONTROL_STENCILFAIL(stencil_op(s->fail_op)) |
-			A2XX_RB_DEPTHCONTROL_STENCILZPASS(stencil_op(s->zpass_op)) |
-			A2XX_RB_DEPTHCONTROL_STENCILZFAIL(stencil_op(s->zfail_op));
+			A2XX_RB_DEPTHCONTROL_STENCILFAIL(fd_stencil_op(s->fail_op)) |
+			A2XX_RB_DEPTHCONTROL_STENCILZPASS(fd_stencil_op(s->zpass_op)) |
+			A2XX_RB_DEPTHCONTROL_STENCILZFAIL(fd_stencil_op(s->zfail_op));
 		so->rb_stencilrefmask |=
 			0xff000000 | /* ??? */
 			A2XX_RB_STENCILREFMASK_STENCILWRITEMASK(s->writemask) |
@@ -101,9 +75,9 @@ fd_zsa_state_create(struct pipe_context *pctx,
 			so->rb_depthcontrol |=
 				A2XX_RB_DEPTHCONTROL_BACKFACE_ENABLE |
 				A2XX_RB_DEPTHCONTROL_STENCILFUNC_BF(bs->func) | /* maps 1:1 */
-				A2XX_RB_DEPTHCONTROL_STENCILFAIL_BF(stencil_op(bs->fail_op)) |
-				A2XX_RB_DEPTHCONTROL_STENCILZPASS_BF(stencil_op(bs->zpass_op)) |
-				A2XX_RB_DEPTHCONTROL_STENCILZFAIL_BF(stencil_op(bs->zfail_op));
+				A2XX_RB_DEPTHCONTROL_STENCILFAIL_BF(fd_stencil_op(bs->fail_op)) |
+				A2XX_RB_DEPTHCONTROL_STENCILZPASS_BF(fd_stencil_op(bs->zpass_op)) |
+				A2XX_RB_DEPTHCONTROL_STENCILZFAIL_BF(fd_stencil_op(bs->zfail_op));
 			so->rb_stencilrefmask_bf |=
 				0xff000000 | /* ??? */
 				A2XX_RB_STENCILREFMASK_STENCILWRITEMASK(bs->writemask) |
@@ -119,26 +93,4 @@ fd_zsa_state_create(struct pipe_context *pctx,
 	}
 
 	return so;
-}
-
-static void
-fd_zsa_state_bind(struct pipe_context *pctx, void *hwcso)
-{
-	struct fd_context *ctx = fd_context(pctx);
-	ctx->zsa = hwcso;
-	ctx->dirty |= FD_DIRTY_ZSA;
-}
-
-static void
-fd_zsa_state_delete(struct pipe_context *pctx, void *hwcso)
-{
-	FREE(hwcso);
-}
-
-void
-fd_zsa_init(struct pipe_context *pctx)
-{
-	pctx->create_depth_stencil_alpha_state = fd_zsa_state_create;
-	pctx->bind_depth_stencil_alpha_state = fd_zsa_state_bind;
-	pctx->delete_depth_stencil_alpha_state = fd_zsa_state_delete;
 }

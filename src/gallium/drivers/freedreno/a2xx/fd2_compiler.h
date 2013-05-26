@@ -26,12 +26,13 @@
  *    Rob Clark <robclark@freedesktop.org>
  */
 
-#ifndef FREEDRENO_CLEAR_H_
-#define FREEDRENO_CLEAR_H_
+#ifndef FD2_COMPILER_H_
+#define FD2_COMPILER_H_
 
-#include "pipe/p_context.h"
+#include "fd2_program.h"
+#include "fd2_util.h"
 
-void fd_clear_init(struct pipe_context *pctx);
+int fd2_compile_shader(struct fd_program_stateobj *prog,
+		struct fd2_shader_stateobj *so);
 
-
-#endif /* FREEDRENO_CLEAR_H_ */
+#endif /* FD2_COMPILER_H_ */

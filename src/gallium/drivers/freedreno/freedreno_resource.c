@@ -38,38 +38,6 @@
 #include "freedreno_context.h"
 #include "freedreno_util.h"
 
-static void *
-fd_resource_transfer_map(struct pipe_context *pctx,
-		struct pipe_resource *prsc,
-		unsigned level, unsigned usage,
-		const struct pipe_box *box,
-		struct pipe_transfer **pptrans)
-{
-	struct fd_context *ctx = fd_context(pctx);
-	struct fd_resource *rsc = fd_resource(prsc);
-	struct pipe_transfer *ptrans = util_slab_alloc(&ctx->transfer_pool);
-	enum pipe_format format = prsc->format;
-	char *buf;
-
-	if (!ptrans)
-		return NULL;
-
-	ptrans->resource = prsc;
-	ptrans->level = level;
-	ptrans->usage = usage;
-	ptrans->box = *box;
-	ptrans->stride = rsc->pitch * rsc->cpp;
-	ptrans->layer_stride = ptrans->stride;
-
-	buf = fd_bo_map(rsc->bo);
-
-	*pptrans = ptrans;
-
-	return buf +
-		box->y / util_format_get_blockheight(format) * ptrans->stride +
-		box->x / util_format_get_blockwidth(format) * rsc->cpp;
-}
-
 static void fd_resource_transfer_flush_region(struct pipe_context *pctx,
 		struct pipe_transfer *ptrans,
 		const struct pipe_box *box)
@@ -91,7 +59,50 @@ fd_resource_transfer_unmap(struct pipe_context *pctx,
 		struct pipe_transfer *ptrans)
 {
 	struct fd_context *ctx = fd_context(pctx);
+	pipe_resource_reference(&ptrans->resource, NULL);
 	util_slab_free(&ctx->transfer_pool, ptrans);
+}
+
+static void *
+fd_resource_transfer_map(struct pipe_context *pctx,
+		struct pipe_resource *prsc,
+		unsigned level, unsigned usage,
+		const struct pipe_box *box,
+		struct pipe_transfer **pptrans)
+{
+	struct fd_context *ctx = fd_context(pctx);
+	struct fd_resource *rsc = fd_resource(prsc);
+	struct pipe_transfer *ptrans = util_slab_alloc(&ctx->transfer_pool);
+	enum pipe_format format = prsc->format;
+	char *buf;
+
+	if (!ptrans)
+		return NULL;
+
+	/* util_slap_alloc() doesn't zero: */
+	memset(ptrans, 0, sizeof(*ptrans));
+
+	pipe_resource_reference(&ptrans->resource, prsc);
+	ptrans->level = level;
+	ptrans->usage = usage;
+	ptrans->box = *box;
+	ptrans->stride = rsc->pitch * rsc->cpp;
+	ptrans->layer_stride = ptrans->stride;
+
+	/* some state trackers (at least XA) don't do this.. */
+	fd_resource_transfer_flush_region(pctx, ptrans, box);
+
+	buf = fd_bo_map(rsc->bo);
+	if (!buf) {
+		fd_resource_transfer_unmap(pctx, ptrans);
+		return NULL;
+	}
+
+	*pptrans = ptrans;
+
+	return buf +
+		box->y / util_format_get_blockheight(format) * ptrans->stride +
+		box->x / util_format_get_blockwidth(format) * rsc->cpp;
 }
 
 static void
@@ -110,11 +121,12 @@ fd_resource_get_handle(struct pipe_screen *pscreen,
 {
 	struct fd_resource *rsc = fd_resource(prsc);
 
-	return fd_screen_bo_get_handle(pscreen, rsc->bo, rsc->pitch, handle);
+	return fd_screen_bo_get_handle(pscreen, rsc->bo,
+			rsc->pitch * rsc->cpp, handle);
 }
 
 
-const struct u_resource_vtbl fd_resource_vtbl = {
+static const struct u_resource_vtbl fd_resource_vtbl = {
 		.resource_get_handle      = fd_resource_get_handle,
 		.resource_destroy         = fd_resource_destroy,
 		.transfer_map             = fd_resource_transfer_map,
@@ -153,6 +165,8 @@ fd_resource_create(struct pipe_screen *pscreen,
 	rsc->base.vtbl = &fd_resource_vtbl;
 	rsc->pitch = align(tmpl->width0, 32);
 	rsc->cpp = util_format_get_blocksize(tmpl->format);
+
+	assert(rsc->cpp);
 
 	size = rsc->pitch * tmpl->height0 * rsc->cpp;
 	flags = DRM_FREEDRENO_GEM_CACHE_WCOMBINE |
@@ -194,7 +208,10 @@ fd_resource_from_handle(struct pipe_screen *pscreen,
 	rsc->bo = fd_screen_bo_from_handle(pscreen, handle, &rsc->pitch);
 
 	rsc->base.vtbl = &fd_resource_vtbl;
-	rsc->pitch = align(tmpl->width0, 32);
+	rsc->cpp = util_format_get_blocksize(tmpl->format);
+	rsc->pitch /= rsc->cpp;
+
+	assert(rsc->cpp);
 
 	return prsc;
 }

@@ -34,16 +34,15 @@
 #include "tgsi/tgsi_dump.h"
 #include "tgsi/tgsi_parse.h"
 
-#include "freedreno_program.h"
-#include "freedreno_compiler.h"
-#include "freedreno_vbo.h"
-#include "freedreno_texture.h"
-#include "freedreno_util.h"
+#include "fd2_program.h"
+#include "fd2_compiler.h"
+#include "fd2_texture.h"
+#include "fd2_util.h"
 
-static struct fd_shader_stateobj *
+static struct fd2_shader_stateobj *
 create_shader(enum shader_t type)
 {
-	struct fd_shader_stateobj *so = CALLOC_STRUCT(fd_shader_stateobj);
+	struct fd2_shader_stateobj *so = CALLOC_STRUCT(fd2_shader_stateobj);
 	if (!so)
 		return NULL;
 	so->type = type;
@@ -51,15 +50,16 @@ create_shader(enum shader_t type)
 }
 
 static void
-delete_shader(struct fd_shader_stateobj *so)
+delete_shader(struct fd2_shader_stateobj *so)
 {
 	ir2_shader_destroy(so->ir);
-	FREE(so->tokens);
-	FREE(so);
+	free(so->tokens);
+	free(so->bin);
+	free(so);
 }
 
-static struct fd_shader_stateobj *
-assemble(struct fd_shader_stateobj *so)
+static struct fd2_shader_stateobj *
+assemble(struct fd2_shader_stateobj *so)
 {
 	free(so->bin);
 	so->bin = ir2_shader_assemble(so->ir, &so->info);
@@ -68,7 +68,7 @@ assemble(struct fd_shader_stateobj *so)
 
 	if (fd_mesa_debug & FD_DBG_DISASM) {
 		DBG("disassemble: type=%d", so->type);
-		disasm(so->bin, so->info.sizedwords, 0, so->type);
+		disasm_a2xx(so->bin, so->info.sizedwords, 0, so->type);
 	}
 
 	return so;
@@ -79,8 +79,8 @@ fail:
 	return NULL;
 }
 
-static struct fd_shader_stateobj *
-compile(struct fd_program_stateobj *prog, struct fd_shader_stateobj *so)
+static struct fd2_shader_stateobj *
+compile(struct fd_program_stateobj *prog, struct fd2_shader_stateobj *so)
 {
 	int ret;
 
@@ -89,7 +89,7 @@ compile(struct fd_program_stateobj *prog, struct fd_shader_stateobj *so)
 		tgsi_dump(so->tokens, 0);
 	}
 
-	ret = fd_compile_shader(prog, so);
+	ret = fd2_compile_shader(prog, so);
 	if (ret)
 		goto fail;
 
@@ -109,7 +109,7 @@ fail:
 }
 
 static void
-emit(struct fd_ringbuffer *ring, struct fd_shader_stateobj *so)
+emit(struct fd_ringbuffer *ring, struct fd2_shader_stateobj *so)
 {
 	unsigned i;
 
@@ -124,10 +124,10 @@ emit(struct fd_ringbuffer *ring, struct fd_shader_stateobj *so)
 }
 
 static void *
-fd_fp_state_create(struct pipe_context *pctx,
+fd2_fp_state_create(struct pipe_context *pctx,
 		const struct pipe_shader_state *cso)
 {
-	struct fd_shader_stateobj *so = create_shader(SHADER_FRAGMENT);
+	struct fd2_shader_stateobj *so = create_shader(SHADER_FRAGMENT);
 	if (!so)
 		return NULL;
 	so->tokens = tgsi_dup_tokens(cso->tokens);
@@ -135,14 +135,14 @@ fd_fp_state_create(struct pipe_context *pctx,
 }
 
 static void
-fd_fp_state_delete(struct pipe_context *pctx, void *hwcso)
+fd2_fp_state_delete(struct pipe_context *pctx, void *hwcso)
 {
-	struct fd_shader_stateobj *so = hwcso;
+	struct fd2_shader_stateobj *so = hwcso;
 	delete_shader(so);
 }
 
 static void
-fd_fp_state_bind(struct pipe_context *pctx, void *hwcso)
+fd2_fp_state_bind(struct pipe_context *pctx, void *hwcso)
 {
 	struct fd_context *ctx = fd_context(pctx);
 	ctx->prog.fp = hwcso;
@@ -151,10 +151,10 @@ fd_fp_state_bind(struct pipe_context *pctx, void *hwcso)
 }
 
 static void *
-fd_vp_state_create(struct pipe_context *pctx,
+fd2_vp_state_create(struct pipe_context *pctx,
 		const struct pipe_shader_state *cso)
 {
-	struct fd_shader_stateobj *so = create_shader(SHADER_VERTEX);
+	struct fd2_shader_stateobj *so = create_shader(SHADER_VERTEX);
 	if (!so)
 		return NULL;
 	so->tokens = tgsi_dup_tokens(cso->tokens);
@@ -162,14 +162,14 @@ fd_vp_state_create(struct pipe_context *pctx,
 }
 
 static void
-fd_vp_state_delete(struct pipe_context *pctx, void *hwcso)
+fd2_vp_state_delete(struct pipe_context *pctx, void *hwcso)
 {
-	struct fd_shader_stateobj *so = hwcso;
+	struct fd2_shader_stateobj *so = hwcso;
 	delete_shader(so);
 }
 
 static void
-fd_vp_state_bind(struct pipe_context *pctx, void *hwcso)
+fd2_vp_state_bind(struct pipe_context *pctx, void *hwcso)
 {
 	struct fd_context *ctx = fd_context(pctx);
 	ctx->prog.vp = hwcso;
@@ -178,7 +178,7 @@ fd_vp_state_bind(struct pipe_context *pctx, void *hwcso)
 }
 
 static void
-patch_vtx_fetches(struct fd_context *ctx, struct fd_shader_stateobj *so,
+patch_vtx_fetches(struct fd_context *ctx, struct fd2_shader_stateobj *so,
 		struct fd_vertex_stateobj *vtx)
 {
 	unsigned i;
@@ -205,7 +205,7 @@ patch_vtx_fetches(struct fd_context *ctx, struct fd_shader_stateobj *so,
 		instr->fetch.const_idx = 20 + (i / 3);
 		instr->fetch.const_idx_sel = i % 3;
 
-		instr->fetch.fmt = fd_pipe2surface(format);
+		instr->fetch.fmt = fd2_pipe2surface(format);
 		instr->fetch.is_normalized = desc->channel[j].normalized;
 		instr->fetch.is_signed =
 				desc->channel[j].type == UTIL_FORMAT_TYPE_SIGNED;
@@ -215,7 +215,7 @@ patch_vtx_fetches(struct fd_context *ctx, struct fd_shader_stateobj *so,
 		for (j = 0; j < 4; j++)
 			instr->regs[0]->swizzle[j] = "xyzw01__"[desc->swizzle[j]];
 
-		assert(instr->fetch.fmt != FMT_INVALID);
+		assert(instr->fetch.fmt != ~0);
 
 		DBG("vtx[%d]: %s (%d), ci=%d, cis=%d, id=%d, swizzle=%s, "
 				"stride=%d, offset=%d",
@@ -234,7 +234,7 @@ patch_vtx_fetches(struct fd_context *ctx, struct fd_shader_stateobj *so,
 }
 
 static void
-patch_tex_fetches(struct fd_context *ctx, struct fd_shader_stateobj *so,
+patch_tex_fetches(struct fd_context *ctx, struct fd2_shader_stateobj *so,
 		struct fd_texture_stateobj *tex)
 {
 	unsigned i;
@@ -243,7 +243,7 @@ patch_tex_fetches(struct fd_context *ctx, struct fd_shader_stateobj *so,
 	for (i = 0; i < so->num_tfetch_instrs; i++) {
 		struct ir2_instruction *instr = so->tfetch_instrs[i].instr;
 		unsigned samp_id = so->tfetch_instrs[i].samp_id;
-		unsigned const_idx = fd_get_const_idx(ctx, tex, samp_id);
+		unsigned const_idx = fd2_get_const_idx(ctx, tex, samp_id);
 
 		if (const_idx != instr->fetch.const_idx) {
 			instr->fetch.const_idx = const_idx;
@@ -254,7 +254,7 @@ patch_tex_fetches(struct fd_context *ctx, struct fd_shader_stateobj *so,
 }
 
 void
-fd_program_validate(struct fd_context *ctx)
+fd2_program_validate(struct fd_context *ctx)
 {
 	struct fd_program_stateobj *prog = &ctx->prog;
 
@@ -272,8 +272,6 @@ fd_program_validate(struct fd_context *ctx)
 	if (prog->dirty)
 		ctx->dirty |= FD_DIRTY_PROG;
 
-	prog->dirty = 0;
-
 	/* if necessary, fix up vertex fetch instructions: */
 	if (ctx->dirty & (FD_DIRTY_VTXSTATE | FD_DIRTY_PROG))
 		patch_vtx_fetches(ctx, prog->vp, ctx->vtx);
@@ -286,11 +284,13 @@ fd_program_validate(struct fd_context *ctx)
 }
 
 void
-fd_program_emit(struct fd_ringbuffer *ring,
+fd2_program_emit(struct fd_ringbuffer *ring,
 		struct fd_program_stateobj *prog)
 {
-	struct ir2_shader_info *vsi = &prog->vp->info;
-	struct ir2_shader_info *fsi = &prog->fp->info;
+	struct ir2_shader_info *vsi =
+		&((struct fd2_shader_stateobj *)prog->vp)->info;
+	struct ir2_shader_info *fsi =
+		&((struct fd2_shader_stateobj *)prog->fp)->info;
 	uint8_t vs_gprs, fs_gprs, vs_export;
 
 	emit(ring, prog->vp);
@@ -308,6 +308,8 @@ fd_program_emit(struct fd_ringbuffer *ring,
 			A2XX_SQ_PROGRAM_CNTL_VS_EXPORT_COUNT(vs_export) |
 			A2XX_SQ_PROGRAM_CNTL_PS_REGS(fs_gprs) |
 			A2XX_SQ_PROGRAM_CNTL_VS_REGS(vs_gprs));
+
+	prog->dirty = 0;
 }
 
 /* Creates shader:
@@ -318,10 +320,10 @@ fd_program_emit(struct fd_ringbuffer *ring,
  *          ALU:	MAXv	export0 = R0, R0	; gl_FragColor
  *    NOP
  */
-static struct fd_shader_stateobj *
+static struct fd2_shader_stateobj *
 create_blit_fp(void)
 {
-	struct fd_shader_stateobj *so = create_shader(SHADER_FRAGMENT);
+	struct fd2_shader_stateobj *so = create_shader(SHADER_FRAGMENT);
 	struct ir2_cf *cf;
 	struct ir2_instruction *instr;
 
@@ -360,10 +362,10 @@ create_blit_fp(void)
 *           ALU:	MAXv	export0 = R1, R1
 *     NOP
  */
-static struct fd_shader_stateobj *
+static struct fd2_shader_stateobj *
 create_blit_vp(void)
 {
-	struct fd_shader_stateobj *so = create_shader(SHADER_VERTEX);
+	struct fd2_shader_stateobj *so = create_shader(SHADER_VERTEX);
 	struct ir2_cf *cf;
 	struct ir2_instruction *instr;
 
@@ -408,10 +410,10 @@ create_blit_vp(void)
  *    EXEC_END ADDR(0x1) CNT(0x1)
  *          ALU:	MAXv	export0 = C0, C0	; gl_FragColor
  */
-static struct fd_shader_stateobj *
+static struct fd2_shader_stateobj *
 create_solid_fp(void)
 {
-	struct fd_shader_stateobj *so = create_shader(SHADER_FRAGMENT);
+	struct fd2_shader_stateobj *so = create_shader(SHADER_FRAGMENT);
 	struct ir2_cf *cf;
 	struct ir2_instruction *instr;
 
@@ -441,10 +443,10 @@ create_solid_fp(void)
  *    ALLOC PARAM/PIXEL SIZE(0x0)
  *    EXEC_END ADDR(0x5) CNT(0x0)
  */
-static struct fd_shader_stateobj *
+static struct fd2_shader_stateobj *
 create_solid_vp(void)
 {
-	struct fd_shader_stateobj *so = create_shader(SHADER_VERTEX);
+	struct fd2_shader_stateobj *so = create_shader(SHADER_VERTEX);
 	struct ir2_cf *cf;
 	struct ir2_instruction *instr;
 
@@ -474,17 +476,17 @@ create_solid_vp(void)
 }
 
 void
-fd_prog_init(struct pipe_context *pctx)
+fd2_prog_init(struct pipe_context *pctx)
 {
 	struct fd_context *ctx = fd_context(pctx);
 
-	pctx->create_fs_state = fd_fp_state_create;
-	pctx->bind_fs_state = fd_fp_state_bind;
-	pctx->delete_fs_state = fd_fp_state_delete;
+	pctx->create_fs_state = fd2_fp_state_create;
+	pctx->bind_fs_state = fd2_fp_state_bind;
+	pctx->delete_fs_state = fd2_fp_state_delete;
 
-	pctx->create_vs_state = fd_vp_state_create;
-	pctx->bind_vs_state = fd_vp_state_bind;
-	pctx->delete_vs_state = fd_vp_state_delete;
+	pctx->create_vs_state = fd2_vp_state_create;
+	pctx->bind_vs_state = fd2_vp_state_bind;
+	pctx->delete_vs_state = fd2_vp_state_delete;
 
 	ctx->solid_prog.fp = create_solid_fp();
 	ctx->solid_prog.vp = create_solid_vp();
@@ -493,7 +495,7 @@ fd_prog_init(struct pipe_context *pctx)
 }
 
 void
-fd_prog_fini(struct pipe_context *pctx)
+fd2_prog_fini(struct pipe_context *pctx)
 {
 	struct fd_context *ctx = fd_context(pctx);
 

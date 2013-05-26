@@ -31,31 +31,6 @@
 
 #include "pipe/p_context.h"
 
-#include "freedreno_context.h"
-#include "freedreno_resource.h"
-#include "freedreno_util.h"
-
-struct fd_sampler_stateobj {
-	struct pipe_sampler_state base;
-	uint32_t tex0, tex3, tex4, tex5;
-};
-
-struct fd_pipe_sampler_view {
-	struct pipe_sampler_view base;
-	struct fd_resource *tex_resource;
-	enum a2xx_sq_surfaceformat fmt;
-	uint32_t tex0, tex2, tex3;
-};
-
-static INLINE struct fd_pipe_sampler_view *
-fd_pipe_sampler_view(struct pipe_sampler_view *pview)
-{
-	return (struct fd_pipe_sampler_view *)pview;
-}
-
-unsigned fd_get_const_idx(struct fd_context *ctx,
-		struct fd_texture_stateobj *tex, unsigned samp_id);
-
 void fd_texture_init(struct pipe_context *pctx);
 
 #endif /* FREEDRENO_TEXTURE_H_ */

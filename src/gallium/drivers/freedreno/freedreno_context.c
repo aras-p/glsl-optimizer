@@ -27,15 +27,10 @@
  */
 
 #include "freedreno_context.h"
-#include "freedreno_vbo.h"
-#include "freedreno_blend.h"
-#include "freedreno_rasterizer.h"
-#include "freedreno_zsa.h"
-#include "freedreno_state.h"
+#include "freedreno_draw.h"
 #include "freedreno_resource.h"
-#include "freedreno_clear.h"
-#include "freedreno_program.h"
 #include "freedreno_texture.h"
+#include "freedreno_state.h"
 #include "freedreno_gmem.h"
 #include "freedreno_util.h"
 
@@ -108,10 +103,9 @@ fd_context_flush(struct pipe_context *pctx, struct pipe_fence_handle **fence,
 #endif
 
 	fd_context_render(pctx);
-	fd_context_wait(pctx);
 }
 
-static void
+void
 fd_context_destroy(struct pipe_context *pctx)
 {
 	struct fd_context *ctx = fd_context(pctx);
@@ -125,81 +119,51 @@ fd_context_destroy(struct pipe_context *pctx)
 	fd_ringmarker_del(ctx->draw_end);
 	fd_ringbuffer_del(ctx->ring);
 
-	fd_prog_fini(pctx);
-
 	FREE(ctx);
 }
 
-static struct pipe_resource *
-create_solid_vertexbuf(struct pipe_context *pctx)
-{
-	static const float init_shader_const[] = {
-			/* for clear/gmem2mem: */
-			-1.000000, +1.000000, +1.000000, +1.100000,
-			+1.000000, +1.000000, -1.000000, -1.100000,
-			+1.000000, +1.100000, -1.100000, +1.000000,
-			/* for mem2gmem: (vertices) */
-			-1.000000, +1.000000, +1.000000, +1.000000,
-			+1.000000, +1.000000, -1.000000, -1.000000,
-			+1.000000, +1.000000, -1.000000, +1.000000,
-			/* for mem2gmem: (tex coords) */
-			+0.000000, +0.000000, +1.000000, +0.000000,
-			+0.000000, +1.000000, +1.000000, +1.000000,
-	};
-	struct pipe_resource *prsc = pipe_buffer_create(pctx->screen,
-			PIPE_BIND_CUSTOM, PIPE_USAGE_IMMUTABLE, sizeof(init_shader_const));
-	pipe_buffer_write(pctx, prsc, 0,
-			sizeof(init_shader_const), init_shader_const);
-	return prsc;
-}
-
 struct pipe_context *
-fd_context_create(struct pipe_screen *pscreen, void *priv)
+fd_context_init(struct fd_context *ctx,
+		struct pipe_screen *pscreen, void *priv)
 {
 	struct fd_screen *screen = fd_screen(pscreen);
-	struct fd_context *ctx = CALLOC_STRUCT(fd_context);
 	struct pipe_context *pctx;
-
-	if (!ctx)
-		return NULL;
-
-	DBG("");
 
 	ctx->screen = screen;
 
-	ctx->ring = fd_ringbuffer_new(screen->pipe, 0x100000);
-	ctx->draw_start = fd_ringmarker_new(ctx->ring);
-	ctx->draw_end = fd_ringmarker_new(ctx->ring);
+	/* need some sane default in case state tracker doesn't
+	 * set some state:
+	 */
+	ctx->sample_mask = 0xffff;
 
 	pctx = &ctx->base;
 	pctx->screen = pscreen;
 	pctx->priv = priv;
 	pctx->flush = fd_context_flush;
-	pctx->destroy = fd_context_destroy;
+
+	ctx->ring = fd_ringbuffer_new(screen->pipe, 0x100000);
+	if (!ctx->ring)
+		goto fail;
+
+	ctx->draw_start = fd_ringmarker_new(ctx->ring);
+	ctx->draw_end = fd_ringmarker_new(ctx->ring);
 
 	util_slab_create(&ctx->transfer_pool, sizeof(struct pipe_transfer),
 			16, UTIL_SLAB_SINGLETHREADED);
 
-	fd_vbo_init(pctx);
-	fd_blend_init(pctx);
-	fd_rasterizer_init(pctx);
-	fd_zsa_init(pctx);
-	fd_state_init(pctx);
+	fd_draw_init(pctx);
 	fd_resource_context_init(pctx);
-	fd_clear_init(pctx);
-	fd_prog_init(pctx);
 	fd_texture_init(pctx);
+	fd_state_init(pctx);
 
 	ctx->blitter = util_blitter_create(pctx);
-	if (!ctx->blitter) {
-		fd_context_destroy(pctx);
-		return NULL;
-	}
+	if (!ctx->blitter)
+		goto fail;
 
-	/* construct vertex state used for solid ops (clear, and gmem<->mem) */
-	ctx->solid_vertexbuf = create_solid_vertexbuf(pctx);
-
-	fd_state_emit_setup(pctx);
 
 	return pctx;
+
+fail:
+	pctx->destroy(pctx);
+	return NULL;
 }

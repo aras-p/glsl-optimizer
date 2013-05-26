@@ -1,7 +1,7 @@
 /* -*- mode: C; c-file-style: "k&r"; tab-width 4; indent-tabs-mode: t; -*- */
 
 /*
- * Copyright (C) 2012 Rob Clark <robclark@freedesktop.org>
+ * Copyright (C) 2012-2013 Rob Clark <robclark@freedesktop.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -26,8 +26,8 @@
  *    Rob Clark <robclark@freedesktop.org>
  */
 
-#ifndef FREEDRENO_PROGRAM_H_
-#define FREEDRENO_PROGRAM_H_
+#ifndef FD2_PROGRAM_H_
+#define FD2_PROGRAM_H_
 
 #include "pipe/p_context.h"
 
@@ -36,7 +36,7 @@
 #include "ir-a2xx.h"
 #include "disasm.h"
 
-struct fd_shader_stateobj {
+struct fd2_shader_stateobj {
 	enum shader_t type;
 
 	uint32_t *bin;
@@ -72,11 +72,11 @@ struct fd_shader_stateobj {
 	} immediates[64];
 };
 
-void fd_program_emit(struct fd_ringbuffer *ring,
+void fd2_program_emit(struct fd_ringbuffer *ring,
 		struct fd_program_stateobj *prog);
-void fd_program_validate(struct fd_context *ctx);
+void fd2_program_validate(struct fd_context *ctx);
 
-void fd_prog_init(struct pipe_context *pctx);
-void fd_prog_fini(struct pipe_context *pctx);
+void fd2_prog_init(struct pipe_context *pctx);
+void fd2_prog_fini(struct pipe_context *pctx);
 
-#endif /* FREEDRENO_PROGRAM_H_ */
+#endif /* FD2_PROGRAM_H_ */

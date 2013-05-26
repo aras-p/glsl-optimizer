@@ -38,14 +38,13 @@
 
 #include "adreno_common.xml.h"
 #include "adreno_pm4.xml.h"
-#include "a2xx.xml.h"
 
-enum a2xx_sq_surfaceformat fd_pipe2surface(enum pipe_format format);
-enum a2xx_colorformatx fd_pipe2color(enum pipe_format format);
-enum a2xx_rb_depth_format fd_pipe2depth(enum pipe_format format);
+enum adreno_rb_depth_format fd_pipe2depth(enum pipe_format format);
 enum pc_di_index_size fd_pipe2index(enum pipe_format format);
-uint32_t fd_tex_swiz(enum pipe_format format, unsigned swizzle_r,
-		unsigned swizzle_g, unsigned swizzle_b, unsigned swizzle_a);
+enum adreno_rb_blend_factor fd_blend_factor(unsigned factor);
+enum adreno_rb_blend_opcode fd_blend_func(unsigned func);
+enum adreno_pa_su_sc_draw fd_polygon_mode(unsigned mode);
+enum adreno_stencil_op fd_stencil_op(unsigned op);
 
 
 #define FD_DBG_MSGS   0x1
@@ -61,6 +60,8 @@ extern int fd_mesa_debug;
 
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 
+/* for conditionally setting boolean flag(s): */
+#define COND(bool, val) ((bool) ? (val) : 0)
 
 #define CP_REG(reg) ((0x4 << 16) | ((unsigned int)((reg) - (0x2000))))
 
@@ -74,12 +75,6 @@ static inline uint32_t DRAW(enum pc_di_primtype prim_type,
 			((index_size >> 1) << 13) |
 			(vis_cull_mode     << 9) |
 			(1                 << 14);
-}
-
-/* convert x,y to dword */
-static inline uint32_t xy2d(uint16_t x, uint16_t y)
-{
-	return ((y & 0x3fff) << 16) | (x & 0x3fff);
 }
 
 #define LOG_DWORDS 0
@@ -104,6 +99,18 @@ OUT_RELOC(struct fd_ringbuffer *ring, struct fd_bo *bo,
 				(uint32_t)(ring->cur - ring->last_start), bo, offset);
 	}
 	fd_ringbuffer_emit_reloc(ring, bo, offset, or);
+}
+
+/* shifted reloc: */
+static inline void
+OUT_RELOCS(struct fd_ringbuffer *ring, struct fd_bo *bo,
+		uint32_t offset, uint32_t or, int32_t shift)
+{
+	if (LOG_DWORDS) {
+		DBG("ring[%p]: OUT_RELOCS  %04x:  %p+%u << %d", ring,
+				(uint32_t)(ring->cur - ring->last_start), bo, offset, shift);
+	}
+	fd_ringbuffer_emit_reloc_shift(ring, bo, offset, or, shift);
 }
 
 static inline void BEGIN_RING(struct fd_ringbuffer *ring, uint32_t ndwords)

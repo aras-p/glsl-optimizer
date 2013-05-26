@@ -590,7 +590,7 @@ static void print_cf(instr_cf_t *cf, int level)
  *   2) ALU and FETCH instructions
  */
 
-int disasm(uint32_t *dwords, int sizedwords, int level, enum shader_t type)
+int disasm_a2xx(uint32_t *dwords, int sizedwords, int level, enum shader_t type)
 {
 	instr_cf_t *cfs = (instr_cf_t *)dwords;
 	int idx, max_idx;
@@ -628,5 +628,5 @@ int disasm(uint32_t *dwords, int sizedwords, int level, enum shader_t type)
 
 void disasm_set_debug(enum debug_t d)
 {
-	debug= d;
+	debug = d;
 }

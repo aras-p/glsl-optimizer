@@ -1,7 +1,7 @@
 /* -*- mode: C; c-file-style: "k&r"; tab-width 4; indent-tabs-mode: t; -*- */
 
 /*
- * Copyright (C) 2012 Rob Clark <robclark@freedesktop.org>
+ * Copyright (C) 2012-2013 Rob Clark <robclark@freedesktop.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -26,46 +26,31 @@
  *    Rob Clark <robclark@freedesktop.org>
  */
 
-#ifndef FREEDRENO_SCREEN_H_
-#define FREEDRENO_SCREEN_H_
+#ifndef FD2_ZSA_H_
+#define FD2_ZSA_H_
 
-#include <freedreno_drmif.h>
-#include <freedreno_ringbuffer.h>
 
-#include "pipe/p_screen.h"
-#include "util/u_memory.h"
+#include "pipe/p_state.h"
+#include "pipe/p_context.h"
 
-typedef uint32_t u32;
+#include "freedreno_util.h"
 
-struct fd_bo;
-
-struct fd_screen {
-	struct pipe_screen base;
-
-	uint32_t gmemsize_bytes;
-	uint32_t device_id;
-	uint32_t gpu_id;
-
-	struct fd_device *dev;
-	struct fd_pipe *pipe;
-
-	int64_t cpu_gpu_time_delta;
+struct fd2_zsa_stateobj {
+	struct pipe_depth_stencil_alpha_state base;
+	uint32_t rb_depthcontrol;
+	uint32_t rb_colorcontrol;   /* must be OR'd w/ blend->rb_colorcontrol */
+	uint32_t rb_alpha_ref;
+	uint32_t rb_stencilrefmask;
+	uint32_t rb_stencilrefmask_bf;
 };
 
-static INLINE struct fd_screen *
-fd_screen(struct pipe_screen *pscreen)
+static INLINE struct fd2_zsa_stateobj *
+fd2_zsa_stateobj(struct pipe_depth_stencil_alpha_state *zsa)
 {
-	return (struct fd_screen *)pscreen;
+	return (struct fd2_zsa_stateobj *)zsa;
 }
 
-boolean fd_screen_bo_get_handle(struct pipe_screen *pscreen,
-		struct fd_bo *bo,
-		unsigned stride,
-		struct winsys_handle *whandle);
-struct fd_bo * fd_screen_bo_from_handle(struct pipe_screen *pscreen,
-		struct winsys_handle *whandle,
-		unsigned *out_stride);
+void * fd2_zsa_state_create(struct pipe_context *pctx,
+		const struct pipe_depth_stencil_alpha_state *cso);
 
-struct pipe_screen * fd_screen_create(struct fd_device *dev);
-
-#endif /* FREEDRENO_SCREEN_H_ */
+#endif /* FD2_ZSA_H_ */

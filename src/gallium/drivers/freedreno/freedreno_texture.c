@@ -32,108 +32,13 @@
 #include "util/u_inlines.h"
 
 #include "freedreno_texture.h"
+#include "freedreno_context.h"
 #include "freedreno_util.h"
-
-static enum sq_tex_clamp
-tex_clamp(unsigned wrap)
-{
-	switch (wrap) {
-	case PIPE_TEX_WRAP_REPEAT:
-		return SQ_TEX_WRAP;
-	case PIPE_TEX_WRAP_CLAMP:
-		return SQ_TEX_CLAMP_HALF_BORDER;
-	case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
-		return SQ_TEX_CLAMP_LAST_TEXEL;
-	case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
-		return SQ_TEX_CLAMP_BORDER;
-	case PIPE_TEX_WRAP_MIRROR_REPEAT:
-		return SQ_TEX_MIRROR;
-	case PIPE_TEX_WRAP_MIRROR_CLAMP:
-		return SQ_TEX_MIRROR_ONCE_HALF_BORDER;
-	case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE:
-		return SQ_TEX_MIRROR_ONCE_LAST_TEXEL;
-	case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
-		return SQ_TEX_MIRROR_ONCE_BORDER;
-	default:
-		DBG("invalid wrap: %u", wrap);
-		return 0;
-	}
-}
-
-static enum sq_tex_filter
-tex_filter(unsigned filter)
-{
-	switch (filter) {
-	case PIPE_TEX_FILTER_NEAREST:
-		return SQ_TEX_FILTER_POINT;
-	case PIPE_TEX_FILTER_LINEAR:
-		return SQ_TEX_FILTER_BILINEAR;
-	default:
-		DBG("invalid filter: %u", filter);
-		return 0;
-	}
-}
-
-static void *
-fd_sampler_state_create(struct pipe_context *pctx,
-		const struct pipe_sampler_state *cso)
-{
-	struct fd_sampler_stateobj *so = CALLOC_STRUCT(fd_sampler_stateobj);
-
-	if (!so)
-		return NULL;
-
-	so->base = *cso;
-
-	/* SQ_TEX0_PITCH() must be OR'd in later when we know the bound texture: */
-	so->tex0 =
-		A2XX_SQ_TEX_0_CLAMP_X(tex_clamp(cso->wrap_s)) |
-		A2XX_SQ_TEX_0_CLAMP_Y(tex_clamp(cso->wrap_t)) |
-		A2XX_SQ_TEX_0_CLAMP_Z(tex_clamp(cso->wrap_r));
-
-	so->tex3 =
-		A2XX_SQ_TEX_3_XY_MAG_FILTER(tex_filter(cso->mag_img_filter)) |
-		A2XX_SQ_TEX_3_XY_MIN_FILTER(tex_filter(cso->min_img_filter));
-
-	so->tex4 = 0x00000000; /* ??? */
-	so->tex5 = 0x00000200; /* ??? */
-
-	return so;
-}
 
 static void
 fd_sampler_state_delete(struct pipe_context *pctx, void *hwcso)
 {
 	FREE(hwcso);
-}
-
-static struct pipe_sampler_view *
-fd_sampler_view_create(struct pipe_context *pctx, struct pipe_resource *prsc,
-		const struct pipe_sampler_view *cso)
-{
-	struct fd_pipe_sampler_view *so = CALLOC_STRUCT(fd_pipe_sampler_view);
-	struct fd_resource *rsc = fd_resource(prsc);
-
-	if (!so)
-		return NULL;
-
-	so->base = *cso;
-	pipe_reference(NULL, &prsc->reference);
-	so->base.texture = prsc;
-	so->base.reference.count = 1;
-	so->base.context = pctx;
-
-	so->tex_resource =  rsc;
-	so->fmt = fd_pipe2surface(cso->format);
-
-	so->tex0 = A2XX_SQ_TEX_0_PITCH(rsc->pitch);
-	so->tex2 =
-		A2XX_SQ_TEX_2_HEIGHT(prsc->height0 - 1) |
-		A2XX_SQ_TEX_2_WIDTH(prsc->width0 - 1);
-	so->tex3 = fd_tex_swiz(cso->format, cso->swizzle_r, cso->swizzle_g,
-			cso->swizzle_b, cso->swizzle_a);
-
-	return &so->base;
 }
 
 static void
@@ -148,8 +53,11 @@ static void bind_sampler_states(struct fd_texture_stateobj *prog,
 		unsigned nr, void **hwcso)
 {
 	unsigned i;
+	unsigned new_nr = 0;
 
 	for (i = 0; i < nr; i++) {
+		if (hwcso[i])
+			new_nr++;
 		prog->samplers[i] = hwcso[i];
 		prog->dirty_samplers |= (1 << i);
 	}
@@ -159,15 +67,18 @@ static void bind_sampler_states(struct fd_texture_stateobj *prog,
 		prog->dirty_samplers |= (1 << i);
 	}
 
-	prog->num_samplers = nr;
+	prog->num_samplers = new_nr;
 }
 
 static void set_sampler_views(struct fd_texture_stateobj *prog,
 		unsigned nr, struct pipe_sampler_view **views)
 {
 	unsigned i;
+	unsigned new_nr = 0;
 
 	for (i = 0; i < nr; i++) {
+		if (views[i])
+			new_nr++;
 		pipe_sampler_view_reference(&prog->textures[i], views[i]);
 		prog->dirty_samplers |= (1 << i);
 	}
@@ -177,7 +88,7 @@ static void set_sampler_views(struct fd_texture_stateobj *prog,
 		prog->dirty_samplers |= (1 << i);
 	}
 
-	prog->num_textures = nr;
+	prog->num_textures = new_nr;
 }
 
 static void
@@ -234,33 +145,11 @@ fd_verttex_set_sampler_views(struct pipe_context *pctx, unsigned nr,
 	ctx->dirty |= FD_DIRTY_VERTTEX;
 }
 
-/* map gallium sampler-id to hw const-idx.. adreno uses a flat address
- * space of samplers (const-idx), so we need to map the gallium sampler-id
- * which is per-shader to a global const-idx space.
- *
- * Fragment shader sampler maps directly to const-idx, and vertex shader
- * is offset by the # of fragment shader samplers.  If the # of fragment
- * shader samplers changes, this shifts the vertex shader indexes.
- *
- * TODO maybe we can do frag shader 0..N  and vert shader N..0 to avoid
- * this??
- */
-unsigned
-fd_get_const_idx(struct fd_context *ctx, struct fd_texture_stateobj *tex,
-		unsigned samp_id)
-{
-	if (tex == &ctx->fragtex)
-		return samp_id;
-	return samp_id + ctx->fragtex.num_samplers;
-}
-
 void
 fd_texture_init(struct pipe_context *pctx)
 {
-	pctx->create_sampler_state = fd_sampler_state_create;
 	pctx->delete_sampler_state = fd_sampler_state_delete;
 
-	pctx->create_sampler_view = fd_sampler_view_create;
 	pctx->sampler_view_destroy = fd_sampler_view_destroy;
 
 	pctx->bind_fragment_sampler_states = fd_fragtex_sampler_states_bind;

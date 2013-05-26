@@ -1,7 +1,7 @@
 /* -*- mode: C; c-file-style: "k&r"; tab-width 4; indent-tabs-mode: t; -*- */
 
 /*
- * Copyright (C) 2012 Rob Clark <robclark@freedesktop.org>
+ * Copyright (C) 2012-2013 Rob Clark <robclark@freedesktop.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -26,19 +26,13 @@
  *    Rob Clark <robclark@freedesktop.org>
  */
 
-#ifndef FREEDRENO_BLEND_H_
-#define FREEDRENO_BLEND_H_
+#ifndef FD2_DRAW_H_
+#define FD2_DRAW_H_
 
-#include "pipe/p_state.h"
 #include "pipe/p_context.h"
 
-struct fd_blend_stateobj {
-	struct pipe_blend_state base;
-	uint32_t rb_blendcontrol;
-	uint32_t rb_colorcontrol;   /* must be OR'd w/ zsa->rb_colorcontrol */
-	uint32_t rb_colormask;
-};
+#include "freedreno_draw.h"
 
-void fd_blend_init(struct pipe_context *pctx);
+void fd2_draw_init(struct pipe_context *pctx);
 
-#endif /* FREEDRENO_BLEND_H_ */
+#endif /* FD2_DRAW_H_ */

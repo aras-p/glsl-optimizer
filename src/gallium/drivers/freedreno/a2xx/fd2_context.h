@@ -1,7 +1,7 @@
 /* -*- mode: C; c-file-style: "k&r"; tab-width 4; indent-tabs-mode: t; -*- */
 
 /*
- * Copyright (C) 2012 Rob Clark <robclark@freedesktop.org>
+ * Copyright (C) 2013 Rob Clark <robclark@freedesktop.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -26,46 +26,27 @@
  *    Rob Clark <robclark@freedesktop.org>
  */
 
-#ifndef FREEDRENO_SCREEN_H_
-#define FREEDRENO_SCREEN_H_
+#ifndef FD2_CONTEXT_H_
+#define FD2_CONTEXT_H_
 
-#include <freedreno_drmif.h>
-#include <freedreno_ringbuffer.h>
+#include "freedreno_context.h"
 
-#include "pipe/p_screen.h"
-#include "util/u_memory.h"
+struct fd2_context {
+	struct fd_context base;
 
-typedef uint32_t u32;
-
-struct fd_bo;
-
-struct fd_screen {
-	struct pipe_screen base;
-
-	uint32_t gmemsize_bytes;
-	uint32_t device_id;
-	uint32_t gpu_id;
-
-	struct fd_device *dev;
-	struct fd_pipe *pipe;
-
-	int64_t cpu_gpu_time_delta;
+	/* vertex buf used for clear/gmem->mem vertices, and mem->gmem
+	 * vertices and tex coords:
+	 */
+	struct pipe_resource *solid_vertexbuf;
 };
 
-static INLINE struct fd_screen *
-fd_screen(struct pipe_screen *pscreen)
+static INLINE struct fd2_context *
+fd2_context(struct fd_context *ctx)
 {
-	return (struct fd_screen *)pscreen;
+	return (struct fd2_context *)ctx;
 }
 
-boolean fd_screen_bo_get_handle(struct pipe_screen *pscreen,
-		struct fd_bo *bo,
-		unsigned stride,
-		struct winsys_handle *whandle);
-struct fd_bo * fd_screen_bo_from_handle(struct pipe_screen *pscreen,
-		struct winsys_handle *whandle,
-		unsigned *out_stride);
+struct pipe_context *
+fd2_context_create(struct pipe_screen *pscreen, void *priv);
 
-struct pipe_screen * fd_screen_create(struct fd_device *dev);
-
-#endif /* FREEDRENO_SCREEN_H_ */
+#endif /* FD2_CONTEXT_H_ */

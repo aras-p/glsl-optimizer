@@ -31,265 +31,7 @@
 
 #include "freedreno_util.h"
 
-enum a2xx_sq_surfaceformat
-fd_pipe2surface(enum pipe_format format)
-{
-	switch (format) {
-	/* 8-bit buffers. */
-	case PIPE_FORMAT_A8_UNORM:
-	case PIPE_FORMAT_A8_SNORM:
-	case PIPE_FORMAT_A8_UINT:
-	case PIPE_FORMAT_A8_SINT:
-	case PIPE_FORMAT_I8_UNORM:
-	case PIPE_FORMAT_I8_SNORM:
-	case PIPE_FORMAT_I8_UINT:
-	case PIPE_FORMAT_I8_SINT:
-	case PIPE_FORMAT_L8_UNORM:
-	case PIPE_FORMAT_L8_SNORM:
-	case PIPE_FORMAT_L8_UINT:
-	case PIPE_FORMAT_L8_SINT:
-	case PIPE_FORMAT_L8_SRGB:
-	case PIPE_FORMAT_R8_UNORM:
-	case PIPE_FORMAT_R8_SNORM:
-	case PIPE_FORMAT_R8_UINT:
-	case PIPE_FORMAT_R8_SINT:
-		return FMT_8;
-
-	/* 16-bit buffers. */
-	case PIPE_FORMAT_B5G6R5_UNORM:
-		return FMT_5_6_5;
-	case PIPE_FORMAT_B5G5R5A1_UNORM:
-	case PIPE_FORMAT_B5G5R5X1_UNORM:
-		return FMT_1_5_5_5;
-	case PIPE_FORMAT_B4G4R4A4_UNORM:
-	case PIPE_FORMAT_B4G4R4X4_UNORM:
-		return FMT_4_4_4_4;
-	case PIPE_FORMAT_Z16_UNORM:
-		return FMT_16;
-	case PIPE_FORMAT_L8A8_UNORM:
-	case PIPE_FORMAT_L8A8_SNORM:
-	case PIPE_FORMAT_L8A8_UINT:
-	case PIPE_FORMAT_L8A8_SINT:
-	case PIPE_FORMAT_L8A8_SRGB:
-	case PIPE_FORMAT_R8G8_UNORM:
-	case PIPE_FORMAT_R8G8_SNORM:
-	case PIPE_FORMAT_R8G8_UINT:
-	case PIPE_FORMAT_R8G8_SINT:
-		return FMT_8_8;
-	case PIPE_FORMAT_R16_UNORM:
-	case PIPE_FORMAT_R16_SNORM:
-	case PIPE_FORMAT_R16_UINT:
-	case PIPE_FORMAT_R16_SINT:
-	case PIPE_FORMAT_A16_UNORM:
-	case PIPE_FORMAT_A16_SNORM:
-	case PIPE_FORMAT_A16_UINT:
-	case PIPE_FORMAT_A16_SINT:
-	case PIPE_FORMAT_L16_UNORM:
-	case PIPE_FORMAT_L16_SNORM:
-	case PIPE_FORMAT_L16_UINT:
-	case PIPE_FORMAT_L16_SINT:
-	case PIPE_FORMAT_I16_UNORM:
-	case PIPE_FORMAT_I16_SNORM:
-	case PIPE_FORMAT_I16_UINT:
-	case PIPE_FORMAT_I16_SINT:
-		return FMT_16;
-	case PIPE_FORMAT_R16_FLOAT:
-	case PIPE_FORMAT_A16_FLOAT:
-	case PIPE_FORMAT_L16_FLOAT:
-	case PIPE_FORMAT_I16_FLOAT:
-		return FMT_16_FLOAT;
-
-	/* 32-bit buffers. */
-	case PIPE_FORMAT_A8B8G8R8_SRGB:
-	case PIPE_FORMAT_A8B8G8R8_UNORM:
-	case PIPE_FORMAT_A8R8G8B8_UNORM:
-	case PIPE_FORMAT_B8G8R8A8_SRGB:
-	case PIPE_FORMAT_B8G8R8A8_UNORM:
-	case PIPE_FORMAT_B8G8R8X8_UNORM:
-	case PIPE_FORMAT_R8G8B8A8_SNORM:
-	case PIPE_FORMAT_R8G8B8A8_UNORM:
-	case PIPE_FORMAT_R8G8B8X8_UNORM:
-	case PIPE_FORMAT_R8SG8SB8UX8U_NORM:
-	case PIPE_FORMAT_X8B8G8R8_UNORM:
-	case PIPE_FORMAT_X8R8G8B8_UNORM:
-	case PIPE_FORMAT_R8G8B8_UNORM:
-	case PIPE_FORMAT_R8G8B8A8_SINT:
-	case PIPE_FORMAT_R8G8B8A8_UINT:
-		return FMT_8_8_8_8;
-	case PIPE_FORMAT_R10G10B10A2_UNORM:
-	case PIPE_FORMAT_R10G10B10X2_SNORM:
-	case PIPE_FORMAT_B10G10R10A2_UNORM:
-	case PIPE_FORMAT_B10G10R10A2_UINT:
-	case PIPE_FORMAT_R10SG10SB10SA2U_NORM:
-		return FMT_2_10_10_10;
-	case PIPE_FORMAT_Z24X8_UNORM:
-	case PIPE_FORMAT_Z24_UNORM_S8_UINT:
-		return FMT_24_8;
-	case PIPE_FORMAT_R32_UINT:
-	case PIPE_FORMAT_R32_SINT:
-	case PIPE_FORMAT_A32_UINT:
-	case PIPE_FORMAT_A32_SINT:
-	case PIPE_FORMAT_L32_UINT:
-	case PIPE_FORMAT_L32_SINT:
-	case PIPE_FORMAT_I32_UINT:
-	case PIPE_FORMAT_I32_SINT:
-		return FMT_32;
-	case PIPE_FORMAT_R32_FLOAT:
-	case PIPE_FORMAT_A32_FLOAT:
-	case PIPE_FORMAT_L32_FLOAT:
-	case PIPE_FORMAT_I32_FLOAT:
-	case PIPE_FORMAT_Z32_FLOAT:
-		return FMT_32_FLOAT;
-	case PIPE_FORMAT_R16G16_FLOAT:
-	case PIPE_FORMAT_L16A16_FLOAT:
-		return FMT_16_16_FLOAT;
-	case PIPE_FORMAT_R16G16_UNORM:
-	case PIPE_FORMAT_R16G16_SNORM:
-	case PIPE_FORMAT_R16G16_UINT:
-	case PIPE_FORMAT_R16G16_SINT:
-	case PIPE_FORMAT_L16A16_UNORM:
-	case PIPE_FORMAT_L16A16_SNORM:
-	case PIPE_FORMAT_L16A16_UINT:
-	case PIPE_FORMAT_L16A16_SINT:
-		return FMT_16_16;
-
-	/* 64-bit buffers. */
-	case PIPE_FORMAT_R16G16B16A16_UINT:
-	case PIPE_FORMAT_R16G16B16A16_SINT:
-	case PIPE_FORMAT_R16G16B16A16_UNORM:
-	case PIPE_FORMAT_R16G16B16A16_SNORM:
-		return FMT_16_16_16_16;
-	case PIPE_FORMAT_R16G16B16A16_FLOAT:
-		return FMT_16_16_16_16_FLOAT;
-	case PIPE_FORMAT_R32G32_FLOAT:
-	case PIPE_FORMAT_L32A32_FLOAT:
-		return FMT_32_32_FLOAT;
-	case PIPE_FORMAT_R32G32_SINT:
-	case PIPE_FORMAT_R32G32_UINT:
-	case PIPE_FORMAT_L32A32_UINT:
-	case PIPE_FORMAT_L32A32_SINT:
-		return FMT_32_32;
-
-	/* 96-bit buffers. */
-	case PIPE_FORMAT_R32G32B32_FLOAT:
-		return FMT_32_32_32_FLOAT;
-
-	/* 128-bit buffers. */
-	case PIPE_FORMAT_R32G32B32A32_SNORM:
-	case PIPE_FORMAT_R32G32B32A32_UNORM:
-	case PIPE_FORMAT_R32G32B32A32_SINT:
-	case PIPE_FORMAT_R32G32B32A32_UINT:
-		return FMT_32_32_32_32;
-	case PIPE_FORMAT_R32G32B32A32_FLOAT:
-		return FMT_32_32_32_32_FLOAT;
-
-	/* YUV buffers. */
-	case PIPE_FORMAT_UYVY:
-		return FMT_Cr_Y1_Cb_Y0;
-	case PIPE_FORMAT_YUYV:
-		return FMT_Y1_Cr_Y0_Cb;
-
-	default:
-		return FMT_INVALID;
-	}
-}
-
-enum a2xx_colorformatx
-fd_pipe2color(enum pipe_format format)
-{
-	switch (format) {
-	/* 8-bit buffers. */
-	case PIPE_FORMAT_A8_UNORM:
-	case PIPE_FORMAT_A8_SNORM:
-	case PIPE_FORMAT_A8_UINT:
-	case PIPE_FORMAT_A8_SINT:
-	case PIPE_FORMAT_I8_UNORM:
-	case PIPE_FORMAT_I8_SNORM:
-	case PIPE_FORMAT_I8_UINT:
-	case PIPE_FORMAT_I8_SINT:
-	case PIPE_FORMAT_L8_UNORM:
-	case PIPE_FORMAT_L8_SNORM:
-	case PIPE_FORMAT_L8_UINT:
-	case PIPE_FORMAT_L8_SINT:
-	case PIPE_FORMAT_L8_SRGB:
-	case PIPE_FORMAT_R8_UNORM:
-	case PIPE_FORMAT_R8_SNORM:
-	case PIPE_FORMAT_R8_UINT:
-	case PIPE_FORMAT_R8_SINT:
-		return COLORX_8;
-
-	/* 16-bit buffers. */
-	case PIPE_FORMAT_B5G6R5_UNORM:
-		return COLORX_5_6_5;
-	case PIPE_FORMAT_B5G5R5A1_UNORM:
-	case PIPE_FORMAT_B5G5R5X1_UNORM:
-		return COLORX_1_5_5_5;
-	case PIPE_FORMAT_B4G4R4A4_UNORM:
-	case PIPE_FORMAT_B4G4R4X4_UNORM:
-		return COLORX_4_4_4_4;
-	case PIPE_FORMAT_L8A8_UNORM:
-	case PIPE_FORMAT_L8A8_SNORM:
-	case PIPE_FORMAT_L8A8_UINT:
-	case PIPE_FORMAT_L8A8_SINT:
-	case PIPE_FORMAT_L8A8_SRGB:
-	case PIPE_FORMAT_R8G8_UNORM:
-	case PIPE_FORMAT_R8G8_SNORM:
-	case PIPE_FORMAT_R8G8_UINT:
-	case PIPE_FORMAT_R8G8_SINT:
-	case PIPE_FORMAT_Z16_UNORM:
-		return COLORX_8_8;
-	case PIPE_FORMAT_R16_FLOAT:
-	case PIPE_FORMAT_A16_FLOAT:
-	case PIPE_FORMAT_L16_FLOAT:
-	case PIPE_FORMAT_I16_FLOAT:
-		return COLORX_16_FLOAT;
-
-	/* 32-bit buffers. */
-	case PIPE_FORMAT_A8B8G8R8_SRGB:
-	case PIPE_FORMAT_A8B8G8R8_UNORM:
-	case PIPE_FORMAT_A8R8G8B8_UNORM:
-	case PIPE_FORMAT_B8G8R8A8_SRGB:
-	case PIPE_FORMAT_B8G8R8A8_UNORM:
-	case PIPE_FORMAT_B8G8R8X8_UNORM:
-	case PIPE_FORMAT_R8G8B8A8_SNORM:
-	case PIPE_FORMAT_R8G8B8A8_UNORM:
-	case PIPE_FORMAT_R8G8B8X8_UNORM:
-	case PIPE_FORMAT_R8SG8SB8UX8U_NORM:
-	case PIPE_FORMAT_X8B8G8R8_UNORM:
-	case PIPE_FORMAT_X8R8G8B8_UNORM:
-	case PIPE_FORMAT_R8G8B8_UNORM:
-	case PIPE_FORMAT_R8G8B8A8_SINT:
-	case PIPE_FORMAT_R8G8B8A8_UINT:
-	case PIPE_FORMAT_Z24_UNORM_S8_UINT:
-	case PIPE_FORMAT_Z24X8_UNORM:
-		return COLORX_8_8_8_8;
-	case PIPE_FORMAT_R32_FLOAT:
-	case PIPE_FORMAT_A32_FLOAT:
-	case PIPE_FORMAT_L32_FLOAT:
-	case PIPE_FORMAT_I32_FLOAT:
-	case PIPE_FORMAT_Z32_FLOAT:
-		return COLORX_32_FLOAT;
-	case PIPE_FORMAT_R16G16_FLOAT:
-	case PIPE_FORMAT_L16A16_FLOAT:
-		return COLORX_16_16_FLOAT;
-
-	/* 64-bit buffers. */
-	case PIPE_FORMAT_R16G16B16A16_FLOAT:
-		return COLORX_16_16_16_16_FLOAT;
-	case PIPE_FORMAT_R32G32_FLOAT:
-	case PIPE_FORMAT_L32A32_FLOAT:
-		return COLORX_32_32_FLOAT;
-
-	/* 128-bit buffers. */
-	case PIPE_FORMAT_R32G32B32A32_FLOAT:
-		return COLORX_32_32_32_32_FLOAT;
-
-	default:
-		return COLORX_INVALID;
-	}
-}
-
-enum a2xx_rb_depth_format
+enum adreno_rb_depth_format
 fd_pipe2depth(enum pipe_format format)
 {
 	switch (format) {
@@ -299,7 +41,7 @@ fd_pipe2depth(enum pipe_format format)
 	case PIPE_FORMAT_Z24_UNORM_S8_UINT:
 		return DEPTHX_24_8;
 	default:
-		return DEPTHX_INVALID;
+		return ~0;
 	}
 }
 
@@ -314,38 +56,115 @@ fd_pipe2index(enum pipe_format format)
 	case PIPE_FORMAT_I32_UINT:
 		return INDEX_SIZE_32_BIT;
 	default:
-		return INDEX_SIZE_INVALID;
+		return ~0;
 	}
 }
 
-static inline enum sq_tex_swiz
-tex_swiz(unsigned swiz)
+
+enum adreno_rb_blend_factor
+fd_blend_factor(unsigned factor)
 {
-	switch (swiz) {
+	switch (factor) {
+	case PIPE_BLENDFACTOR_ONE:
+		return FACTOR_ONE;
+	case PIPE_BLENDFACTOR_SRC_COLOR:
+		return FACTOR_SRC_COLOR;
+	case PIPE_BLENDFACTOR_SRC_ALPHA:
+		return FACTOR_SRC_ALPHA;
+	case PIPE_BLENDFACTOR_DST_ALPHA:
+		return FACTOR_DST_ALPHA;
+	case PIPE_BLENDFACTOR_DST_COLOR:
+		return FACTOR_DST_COLOR;
+	case PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE:
+		return FACTOR_SRC_ALPHA_SATURATE;
+	case PIPE_BLENDFACTOR_CONST_COLOR:
+		return FACTOR_CONSTANT_COLOR;
+	case PIPE_BLENDFACTOR_CONST_ALPHA:
+		return FACTOR_CONSTANT_ALPHA;
+	case PIPE_BLENDFACTOR_ZERO:
+	case 0:
+		return FACTOR_ZERO;
+	case PIPE_BLENDFACTOR_INV_SRC_COLOR:
+		return FACTOR_ONE_MINUS_SRC_COLOR;
+	case PIPE_BLENDFACTOR_INV_SRC_ALPHA:
+		return FACTOR_ONE_MINUS_SRC_ALPHA;
+	case PIPE_BLENDFACTOR_INV_DST_ALPHA:
+		return FACTOR_ONE_MINUS_DST_ALPHA;
+	case PIPE_BLENDFACTOR_INV_DST_COLOR:
+		return FACTOR_ONE_MINUS_DST_COLOR;
+	case PIPE_BLENDFACTOR_INV_CONST_COLOR:
+		return FACTOR_ONE_MINUS_CONSTANT_COLOR;
+	case PIPE_BLENDFACTOR_INV_CONST_ALPHA:
+		return FACTOR_ONE_MINUS_CONSTANT_ALPHA;
+	case PIPE_BLENDFACTOR_INV_SRC1_COLOR:
+	case PIPE_BLENDFACTOR_INV_SRC1_ALPHA:
+	case PIPE_BLENDFACTOR_SRC1_COLOR:
+	case PIPE_BLENDFACTOR_SRC1_ALPHA:
+		/* I don't think these are supported */
 	default:
-	case PIPE_SWIZZLE_RED:   return SQ_TEX_X;
-	case PIPE_SWIZZLE_GREEN: return SQ_TEX_Y;
-	case PIPE_SWIZZLE_BLUE:  return SQ_TEX_Z;
-	case PIPE_SWIZZLE_ALPHA: return SQ_TEX_W;
-	case PIPE_SWIZZLE_ZERO:  return SQ_TEX_ZERO;
-	case PIPE_SWIZZLE_ONE:   return SQ_TEX_ONE;
+		DBG("invalid blend factor: %x", factor);
+		return 0;
 	}
 }
 
-uint32_t
-fd_tex_swiz(enum pipe_format format, unsigned swizzle_r, unsigned swizzle_g,
-		unsigned swizzle_b, unsigned swizzle_a)
+enum adreno_rb_blend_opcode
+fd_blend_func(unsigned func)
 {
-	const struct util_format_description *desc =
-			util_format_description(format);
-	uint8_t swiz[] = {
-			swizzle_r, swizzle_g, swizzle_b, swizzle_a,
-			PIPE_SWIZZLE_ZERO, PIPE_SWIZZLE_ONE,
-			PIPE_SWIZZLE_ONE, PIPE_SWIZZLE_ONE,
-	};
+	switch (func) {
+	case PIPE_BLEND_ADD:
+		return BLEND_DST_PLUS_SRC;
+	case PIPE_BLEND_MIN:
+		return BLEND_MIN_DST_SRC;
+	case PIPE_BLEND_MAX:
+		return BLEND_MAX_DST_SRC;
+	case PIPE_BLEND_SUBTRACT:
+		return BLEND_SRC_MINUS_DST;
+	case PIPE_BLEND_REVERSE_SUBTRACT:
+		return BLEND_DST_MINUS_SRC;
+	default:
+		DBG("invalid blend func: %x", func);
+		return 0;
+	}
+}
 
-	return A2XX_SQ_TEX_3_SWIZ_X(tex_swiz(swiz[desc->swizzle[0]])) |
-			A2XX_SQ_TEX_3_SWIZ_Y(tex_swiz(swiz[desc->swizzle[1]])) |
-			A2XX_SQ_TEX_3_SWIZ_Z(tex_swiz(swiz[desc->swizzle[2]])) |
-			A2XX_SQ_TEX_3_SWIZ_W(tex_swiz(swiz[desc->swizzle[3]]));
+enum adreno_pa_su_sc_draw
+fd_polygon_mode(unsigned mode)
+{
+	switch (mode) {
+	case PIPE_POLYGON_MODE_POINT:
+		return PC_DRAW_POINTS;
+	case PIPE_POLYGON_MODE_LINE:
+		return PC_DRAW_LINES;
+	case PIPE_POLYGON_MODE_FILL:
+		return PC_DRAW_TRIANGLES;
+	default:
+		DBG("invalid polygon mode: %u", mode);
+		return 0;
+	}
+}
+
+enum adreno_stencil_op
+fd_stencil_op(unsigned op)
+{
+	switch (op) {
+	case PIPE_STENCIL_OP_KEEP:
+		return STENCIL_KEEP;
+	case PIPE_STENCIL_OP_ZERO:
+		return STENCIL_ZERO;
+	case PIPE_STENCIL_OP_REPLACE:
+		return STENCIL_REPLACE;
+	case PIPE_STENCIL_OP_INCR:
+		return STENCIL_INCR_CLAMP;
+	case PIPE_STENCIL_OP_DECR:
+		return STENCIL_DECR_CLAMP;
+	case PIPE_STENCIL_OP_INCR_WRAP:
+		return STENCIL_INCR_WRAP;
+	case PIPE_STENCIL_OP_DECR_WRAP:
+		return STENCIL_DECR_WRAP;
+	case PIPE_STENCIL_OP_INVERT:
+		return STENCIL_INVERT;
+	default:
+		DBG("invalid stencil op: %u", op);
+		return 0;
+	}
 }

@@ -1,7 +1,7 @@
 /* -*- mode: C; c-file-style: "k&r"; tab-width 4; indent-tabs-mode: t; -*- */
 
 /*
- * Copyright (C) 2012 Rob Clark <robclark@freedesktop.org>
+ * Copyright (C) 2012-2013 Rob Clark <robclark@freedesktop.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -26,46 +26,44 @@
  *    Rob Clark <robclark@freedesktop.org>
  */
 
-#ifndef FREEDRENO_SCREEN_H_
-#define FREEDRENO_SCREEN_H_
+#ifndef FD2_TEXTURE_H_
+#define FD2_TEXTURE_H_
 
-#include <freedreno_drmif.h>
-#include <freedreno_ringbuffer.h>
+#include "pipe/p_context.h"
 
-#include "pipe/p_screen.h"
-#include "util/u_memory.h"
+#include "freedreno_texture.h"
+#include "freedreno_resource.h"
 
-typedef uint32_t u32;
+#include "fd2_context.h"
+#include "fd2_util.h"
 
-struct fd_bo;
-
-struct fd_screen {
-	struct pipe_screen base;
-
-	uint32_t gmemsize_bytes;
-	uint32_t device_id;
-	uint32_t gpu_id;
-
-	struct fd_device *dev;
-	struct fd_pipe *pipe;
-
-	int64_t cpu_gpu_time_delta;
+struct fd2_sampler_stateobj {
+	struct pipe_sampler_state base;
+	uint32_t tex0, tex3, tex4, tex5;
 };
 
-static INLINE struct fd_screen *
-fd_screen(struct pipe_screen *pscreen)
+static INLINE struct fd2_sampler_stateobj *
+fd2_sampler_stateobj(struct pipe_sampler_state *samp)
 {
-	return (struct fd_screen *)pscreen;
+	return (struct fd2_sampler_stateobj *)samp;
 }
 
-boolean fd_screen_bo_get_handle(struct pipe_screen *pscreen,
-		struct fd_bo *bo,
-		unsigned stride,
-		struct winsys_handle *whandle);
-struct fd_bo * fd_screen_bo_from_handle(struct pipe_screen *pscreen,
-		struct winsys_handle *whandle,
-		unsigned *out_stride);
+struct fd2_pipe_sampler_view {
+	struct pipe_sampler_view base;
+	struct fd_resource *tex_resource;
+	enum a2xx_sq_surfaceformat fmt;
+	uint32_t tex0, tex2, tex3;
+};
 
-struct pipe_screen * fd_screen_create(struct fd_device *dev);
+static INLINE struct fd2_pipe_sampler_view *
+fd2_pipe_sampler_view(struct pipe_sampler_view *pview)
+{
+	return (struct fd2_pipe_sampler_view *)pview;
+}
 
-#endif /* FREEDRENO_SCREEN_H_ */
+unsigned fd2_get_const_idx(struct fd_context *ctx,
+		struct fd_texture_stateobj *tex, unsigned samp_id);
+
+void fd2_texture_init(struct pipe_context *pctx);
+
+#endif /* FD2_TEXTURE_H_ */

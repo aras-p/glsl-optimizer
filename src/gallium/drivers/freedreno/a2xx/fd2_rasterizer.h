@@ -1,7 +1,7 @@
 /* -*- mode: C; c-file-style: "k&r"; tab-width 4; indent-tabs-mode: t; -*- */
 
 /*
- * Copyright (C) 2012 Rob Clark <robclark@freedesktop.org>
+ * Copyright (C) 2012-2013 Rob Clark <robclark@freedesktop.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -26,46 +26,30 @@
  *    Rob Clark <robclark@freedesktop.org>
  */
 
-#ifndef FREEDRENO_SCREEN_H_
-#define FREEDRENO_SCREEN_H_
+#ifndef FD2_RASTERIZER_H_
+#define FD2_RASTERIZER_H_
 
-#include <freedreno_drmif.h>
-#include <freedreno_ringbuffer.h>
+#include "pipe/p_state.h"
+#include "pipe/p_context.h"
 
-#include "pipe/p_screen.h"
-#include "util/u_memory.h"
-
-typedef uint32_t u32;
-
-struct fd_bo;
-
-struct fd_screen {
-	struct pipe_screen base;
-
-	uint32_t gmemsize_bytes;
-	uint32_t device_id;
-	uint32_t gpu_id;
-
-	struct fd_device *dev;
-	struct fd_pipe *pipe;
-
-	int64_t cpu_gpu_time_delta;
+struct fd2_rasterizer_stateobj {
+	struct pipe_rasterizer_state base;
+	uint32_t pa_sc_line_stipple;
+	uint32_t pa_cl_clip_cntl;
+	uint32_t pa_su_vtx_cntl;
+	uint32_t pa_su_point_size;
+	uint32_t pa_su_point_minmax;
+	uint32_t pa_su_line_cntl;
+	uint32_t pa_su_sc_mode_cntl;
 };
 
-static INLINE struct fd_screen *
-fd_screen(struct pipe_screen *pscreen)
+static INLINE struct fd2_rasterizer_stateobj *
+fd2_rasterizer_stateobj(struct pipe_rasterizer_state *rast)
 {
-	return (struct fd_screen *)pscreen;
+	return (struct fd2_rasterizer_stateobj *)rast;
 }
 
-boolean fd_screen_bo_get_handle(struct pipe_screen *pscreen,
-		struct fd_bo *bo,
-		unsigned stride,
-		struct winsys_handle *whandle);
-struct fd_bo * fd_screen_bo_from_handle(struct pipe_screen *pscreen,
-		struct winsys_handle *whandle,
-		unsigned *out_stride);
+void * fd2_rasterizer_state_create(struct pipe_context *pctx,
+		const struct pipe_rasterizer_state *cso);
 
-struct pipe_screen * fd_screen_create(struct fd_device *dev);
-
-#endif /* FREEDRENO_SCREEN_H_ */
+#endif /* FD2_RASTERIZER_H_ */

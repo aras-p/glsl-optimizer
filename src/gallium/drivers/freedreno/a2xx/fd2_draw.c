@@ -1,7 +1,7 @@
 /* -*- mode: C; c-file-style: "k&r"; tab-width 4; indent-tabs-mode: t; -*- */
 
 /*
- * Copyright (C) 2012 Rob Clark <robclark@freedesktop.org>
+ * Copyright (C) 2012-2013 Rob Clark <robclark@freedesktop.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -29,16 +29,95 @@
 #include "pipe/p_state.h"
 #include "util/u_string.h"
 #include "util/u_memory.h"
-#include "util/u_inlines.h"
+#include "util/u_prim.h"
 #include "util/u_pack_color.h"
 
-#include "freedreno_clear.h"
-#include "freedreno_context.h"
-#include "freedreno_resource.h"
 #include "freedreno_state.h"
-#include "freedreno_program.h"
-#include "freedreno_zsa.h"
-#include "freedreno_util.h"
+#include "freedreno_resource.h"
+
+#include "fd2_draw.h"
+#include "fd2_context.h"
+#include "fd2_emit.h"
+#include "fd2_program.h"
+#include "fd2_util.h"
+#include "fd2_zsa.h"
+
+
+static void
+emit_cacheflush(struct fd_ringbuffer *ring)
+{
+	unsigned i;
+
+	for (i = 0; i < 12; i++) {
+		OUT_PKT3(ring, CP_EVENT_WRITE, 1);
+		OUT_RING(ring, CACHE_FLUSH);
+	}
+}
+
+static void
+emit_vertexbufs(struct fd_context *ctx)
+{
+	struct fd_vertex_stateobj *vtx = ctx->vtx;
+	struct fd_vertexbuf_stateobj *vertexbuf = &ctx->vertexbuf;
+	struct fd2_vertex_buf bufs[PIPE_MAX_ATTRIBS];
+	unsigned i;
+
+	if (!vtx->num_elements)
+		return;
+
+	for (i = 0; i < vtx->num_elements; i++) {
+		struct pipe_vertex_element *elem = &vtx->pipe[i];
+		struct pipe_vertex_buffer *vb =
+				&vertexbuf->vb[elem->vertex_buffer_index];
+		bufs[i].offset = vb->buffer_offset;
+		bufs[i].size = fd_bo_size(fd_resource(vb->buffer)->bo);
+		bufs[i].prsc = vb->buffer;
+	}
+
+	// NOTE I believe the 0x78 (or 0x9c in solid_vp) relates to the
+	// CONST(20,0) (or CONST(26,0) in soliv_vp)
+
+	fd2_emit_vertex_bufs(ctx->ring, 0x78, bufs, vtx->num_elements);
+}
+
+static void
+fd2_draw(struct fd_context *ctx, const struct pipe_draw_info *info)
+{
+	struct fd_ringbuffer *ring = ctx->ring;
+
+	if (ctx->dirty & FD_DIRTY_VTXBUF)
+		emit_vertexbufs(ctx);
+
+	fd2_emit_state(ctx, ctx->dirty);
+
+	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
+	OUT_RING(ring, CP_REG(REG_A2XX_VGT_INDX_OFFSET));
+	OUT_RING(ring, info->start);
+
+	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
+	OUT_RING(ring, CP_REG(REG_A2XX_VGT_VERTEX_REUSE_BLOCK_CNTL));
+	OUT_RING(ring, 0x0000003b);
+
+	OUT_PKT0(ring, REG_A2XX_TC_CNTL_STATUS, 1);
+	OUT_RING(ring, A2XX_TC_CNTL_STATUS_L2_INVALIDATE);
+
+	OUT_PKT3(ring, CP_WAIT_FOR_IDLE, 1);
+	OUT_RING(ring, 0x0000000);
+
+	OUT_PKT3(ring, CP_SET_CONSTANT, 3);
+	OUT_RING(ring, CP_REG(REG_A2XX_VGT_MAX_VTX_INDX));
+	OUT_RING(ring, info->max_index);        /* VGT_MAX_VTX_INDX */
+	OUT_RING(ring, info->min_index);        /* VGT_MIN_VTX_INDX */
+
+	fd_draw_emit(ctx, info);
+
+	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
+	OUT_RING(ring, CP_REG(REG_A2XX_UNKNOWN_2010));
+	OUT_RING(ring, 0x00000000);
+
+	emit_cacheflush(ring);
+}
+
 
 static uint32_t
 pack_rgba(enum pipe_format format, const float *rgba)
@@ -49,38 +128,24 @@ pack_rgba(enum pipe_format format, const float *rgba)
 }
 
 static void
-fd_clear(struct pipe_context *pctx, unsigned buffers,
+fd2_clear(struct fd_context *ctx, unsigned buffers,
 		const union pipe_color_union *color, double depth, unsigned stencil)
 {
-	struct fd_context *ctx = fd_context(pctx);
+	struct fd2_context *fd2_ctx = fd2_context(ctx);
 	struct fd_ringbuffer *ring = ctx->ring;
 	struct pipe_framebuffer_state *fb = &ctx->framebuffer;
 	uint32_t reg, colr = 0;
-
-	ctx->cleared |= buffers;
-	ctx->resolve |= buffers;
-	ctx->needs_flush = true;
-
-	if (buffers & PIPE_CLEAR_COLOR)
-		fd_resource(fb->cbufs[0]->texture)->dirty = true;
-
-	if (buffers & (PIPE_CLEAR_DEPTH | PIPE_CLEAR_STENCIL))
-		fd_resource(fb->zsbuf->texture)->dirty = true;
-
-	DBG("%x depth=%f, stencil=%u (%s/%s)", buffers, depth, stencil,
-			util_format_name(fb->cbufs[0]->format),
-			fb->zsbuf ? util_format_name(fb->zsbuf->format) : "none");
 
 	if ((buffers & PIPE_CLEAR_COLOR) && fb->nr_cbufs)
 		colr  = pack_rgba(fb->cbufs[0]->format, color->f);
 
 	/* emit generic state now: */
-	fd_state_emit(pctx, ctx->dirty &
+	fd2_emit_state(ctx, ctx->dirty &
 			(FD_DIRTY_BLEND | FD_DIRTY_VIEWPORT |
 					FD_DIRTY_FRAMEBUFFER | FD_DIRTY_SCISSOR));
 
-	fd_emit_vertex_bufs(ring, 0x9c, (struct fd_vertex_buf[]) {
-			{ .prsc = ctx->solid_vertexbuf, .size = 48 },
+	fd2_emit_vertex_bufs(ring, 0x9c, (struct fd2_vertex_buf[]) {
+			{ .prsc = fd2_ctx->solid_vertexbuf, .size = 48 },
 		}, 1);
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
@@ -91,7 +156,7 @@ fd_clear(struct pipe_context *pctx, unsigned buffers,
 	OUT_RING(ring, CP_REG(REG_A2XX_VGT_VERTEX_REUSE_BLOCK_CNTL));
 	OUT_RING(ring, 0x0000028f);
 
-	fd_program_emit(ring, &ctx->solid_prog);
+	fd2_program_emit(ring, &ctx->solid_prog);
 
 	OUT_PKT0(ring, REG_A2XX_TC_CNTL_STATUS, 1);
 	OUT_RING(ring, A2XX_TC_CNTL_STATUS_L2_INVALIDATE);
@@ -200,6 +265,11 @@ fd_clear(struct pipe_context *pctx, unsigned buffers,
 		OUT_RING(ring, 0x0);
 	}
 
+	OUT_PKT3(ring, CP_SET_CONSTANT, 3);
+	OUT_RING(ring, CP_REG(REG_A2XX_VGT_MAX_VTX_INDX));
+	OUT_RING(ring, 3);                 /* VGT_MAX_VTX_INDX */
+	OUT_RING(ring, 0);                 /* VGT_MIN_VTX_INDX */
+
 	OUT_PKT3(ring, CP_DRAW_INDX, 3);
 	OUT_RING(ring, 0x00000000);
 	OUT_RING(ring, DRAW(DI_PT_RECTLIST, DI_SRC_SEL_AUTO_INDEX,
@@ -213,39 +283,12 @@ fd_clear(struct pipe_context *pctx, unsigned buffers,
 	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
 	OUT_RING(ring, CP_REG(REG_A2XX_RB_COPY_CONTROL));
 	OUT_RING(ring, 0x00000000);
-
-	ctx->dirty |= FD_DIRTY_ZSA |
-			FD_DIRTY_RASTERIZER |
-			FD_DIRTY_SAMPLE_MASK |
-			FD_DIRTY_PROG |
-			FD_DIRTY_CONSTBUF |
-			FD_DIRTY_BLEND;
-
-	if (fd_mesa_debug & FD_DBG_DCLEAR)
-		ctx->dirty = 0xffffffff;
-}
-
-static void
-fd_clear_render_target(struct pipe_context *pctx, struct pipe_surface *ps,
-		const union pipe_color_union *color,
-		unsigned x, unsigned y, unsigned w, unsigned h)
-{
-	DBG("TODO: x=%u, y=%u, w=%u, h=%u", x, y, w, h);
-}
-
-static void
-fd_clear_depth_stencil(struct pipe_context *pctx, struct pipe_surface *ps,
-		unsigned buffers, double depth, unsigned stencil,
-		unsigned x, unsigned y, unsigned w, unsigned h)
-{
-	DBG("TODO: buffers=%u, depth=%f, stencil=%u, x=%u, y=%u, w=%u, h=%u",
-			buffers, depth, stencil, x, y, w, h);
 }
 
 void
-fd_clear_init(struct pipe_context *pctx)
+fd2_draw_init(struct pipe_context *pctx)
 {
-	pctx->clear = fd_clear;
-	pctx->clear_render_target = fd_clear_render_target;
-	pctx->clear_depth_stencil = fd_clear_depth_stencil;
+	struct fd_context *ctx = fd_context(pctx);
+	ctx->draw = fd2_draw;
+	ctx->clear = fd2_clear;
 }

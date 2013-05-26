@@ -1,7 +1,7 @@
 /* -*- mode: C; c-file-style: "k&r"; tab-width 4; indent-tabs-mode: t; -*- */
 
 /*
- * Copyright (C) 2012 Rob Clark <robclark@freedesktop.org>
+ * Copyright (C) 2012-2013 Rob Clark <robclark@freedesktop.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -26,13 +26,23 @@
  *    Rob Clark <robclark@freedesktop.org>
  */
 
-#ifndef FREEDRENO_COMPILER_H_
-#define FREEDRENO_COMPILER_H_
+#ifndef FD2_EMIT_H
+#define FD2_EMIT_H
 
-#include "freedreno_program.h"
-#include "freedreno_util.h"
+#include "pipe/p_context.h"
 
-int fd_compile_shader(struct fd_program_stateobj *prog,
-		struct fd_shader_stateobj *so);
+#include "freedreno_context.h"
 
-#endif /* FREEDRENO_COMPILER_H_ */
+struct fd_ringbuffer;
+
+struct fd2_vertex_buf {
+	unsigned offset, size;
+	struct pipe_resource *prsc;
+};
+
+void fd2_emit_vertex_bufs(struct fd_ringbuffer *ring, uint32_t val,
+		struct fd2_vertex_buf *vbufs, uint32_t n);
+void fd2_emit_state(struct fd_context *ctx, uint32_t dirty);
+void fd2_emit_setup(struct fd_context *ctx);
+
+#endif /* FD2_EMIT_H */

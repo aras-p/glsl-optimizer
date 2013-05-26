@@ -44,11 +44,12 @@
 #include <errno.h>
 #include <stdlib.h>
 
-#include "freedreno_context.h"
 #include "freedreno_screen.h"
 #include "freedreno_resource.h"
 #include "freedreno_fence.h"
 #include "freedreno_util.h"
+
+#include "fd2_screen.h"
 
 /* XXX this should go away */
 #include "state_tracker/drm_driver.h"
@@ -125,27 +126,8 @@ fd_screen_destroy(struct pipe_screen *pscreen)
 }
 
 /*
-EGL Version 1.4
-EGL Vendor Qualcomm, Inc
-EGL Extensions EGL_QUALCOMM_shared_image EGL_KHR_image EGL_AMD_create_image EGL_KHR_lock_surface EGL_KHR_lock_surface2 EGL_KHR_fence_sync EGL_IMG_context_priorityEGL_ANDROID_image_native_buffer
-GL extensions: GL_AMD_compressed_ATC_texture GL_AMD_performance_monitor GL_AMD_program_binary_Z400 GL_EXT_texture_filter_anisotropic GL_EXT_texture_format_BGRA8888 GL_EXT_texture_type_2_10_10_10_REV GL_NV_fence GL_OES_compressed_ETC1_RGB8_texture GL_OES_depth_texture GL_OES_depth24 GL_OES_EGL_image GL_OES_EGL_image_external GL_OES_element_index_uint GL_OES_fbo_render_mipmap GL_OES_fragment_precision_high GL_OES_get_program_binary GL_OES_packed_depth_stencil GL_OES_rgb8_rgba8 GL_OES_standard_derivatives GL_OES_texture_3D GL_OES_texture_float GL_OES_texture_half_float GL_OES_texture_half_float_linear GL_OES_texture_npot GL_OES_vertex_half_float GL_OES_vertex_type_10_10_10_2 GL_QCOM_alpha_test GL_QCOM_binning_control GL_QCOM_driver_control GL_QCOM_perfmon_global_mode GL_QCOM_extended_get GL_QCOM_extended_get2 GL_QCOM_tiled_rendering GL_QCOM_writeonly_rendering GL_AMD_compressed_3DC_texture
-GL_MAX_3D_TEXTURE_SIZE_OES: 1024 0 0 0
-no GL_MAX_SAMPLES_ANGLE: GL_INVALID_ENUM
-no GL_MAX_SAMPLES_APPLE: GL_INVALID_ENUM
-GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT: 16 0 0 0
-no GL_MAX_SAMPLES_IMG: GL_INVALID_ENUM
-GL_MAX_TEXTURE_SIZE: 4096 0 0 0
-GL_MAX_VIEWPORT_DIMS: 4096 4096 0 0
-GL_MAX_VERTEX_ATTRIBS: 16 0 0 0
-GL_MAX_VERTEX_UNIFORM_VECTORS: 251 0 0 0
-GL_MAX_VARYING_VECTORS: 8 0 0 0
-GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS: 20 0 0 0
-GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS: 4 0 0 0
-GL_MAX_TEXTURE_IMAGE_UNITS: 16 0 0 0
-GL_MAX_FRAGMENT_UNIFORM_VECTORS: 221 0 0 0
-GL_MAX_CUBE_MAP_TEXTURE_SIZE: 4096 0 0 0
-GL_MAX_RENDERBUFFER_SIZE: 4096 0 0 0
-no GL_TEXTURE_NUM_LEVELS_QCOM: GL_INVALID_ENUM
+TODO either move caps to a2xx/a3xx specific code, or maybe have some
+tables for things that differ if the delta is not too much..
  */
 static int
 fd_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
@@ -337,74 +319,6 @@ fd_screen_get_shader_param(struct pipe_screen *pscreen, unsigned shader,
 	return 0;
 }
 
-static boolean
-fd_screen_is_format_supported(struct pipe_screen *pscreen,
-		enum pipe_format format,
-		enum pipe_texture_target target,
-		unsigned sample_count,
-		unsigned usage)
-{
-	unsigned retval = 0;
-
-	if ((target >= PIPE_MAX_TEXTURE_TYPES) ||
-			(sample_count > 1) || /* TODO add MSAA */
-			!util_format_is_supported(format, usage)) {
-		DBG("not supported: format=%s, target=%d, sample_count=%d, usage=%x",
-				util_format_name(format), target, sample_count, usage);
-		return FALSE;
-	}
-
-	/* TODO figure out how to render to other formats.. */
-	if ((usage & PIPE_BIND_RENDER_TARGET) &&
-			((format != PIPE_FORMAT_B8G8R8A8_UNORM) &&
-			 (format != PIPE_FORMAT_B8G8R8X8_UNORM))) {
-		DBG("not supported render target: format=%s, target=%d, sample_count=%d, usage=%x",
-				util_format_name(format), target, sample_count, usage);
-		return FALSE;
-	}
-
-	if ((usage & (PIPE_BIND_SAMPLER_VIEW |
-				PIPE_BIND_VERTEX_BUFFER)) &&
-			(fd_pipe2surface(format) != FMT_INVALID)) {
-		retval |= usage & (PIPE_BIND_SAMPLER_VIEW |
-				PIPE_BIND_VERTEX_BUFFER);
-	}
-
-	if ((usage & (PIPE_BIND_RENDER_TARGET |
-				PIPE_BIND_DISPLAY_TARGET |
-				PIPE_BIND_SCANOUT |
-				PIPE_BIND_SHARED)) &&
-			(fd_pipe2color(format) != COLORX_INVALID)) {
-		retval |= usage & (PIPE_BIND_RENDER_TARGET |
-				PIPE_BIND_DISPLAY_TARGET |
-				PIPE_BIND_SCANOUT |
-				PIPE_BIND_SHARED);
-	}
-
-	if ((usage & PIPE_BIND_DEPTH_STENCIL) &&
-			(fd_pipe2depth(format) != DEPTHX_INVALID)) {
-		retval |= PIPE_BIND_DEPTH_STENCIL;
-	}
-
-	if ((usage & PIPE_BIND_INDEX_BUFFER) &&
-			(fd_pipe2index(format) != INDEX_SIZE_INVALID)) {
-		retval |= PIPE_BIND_INDEX_BUFFER;
-	}
-
-	if (usage & PIPE_BIND_TRANSFER_READ)
-		retval |= PIPE_BIND_TRANSFER_READ;
-	if (usage & PIPE_BIND_TRANSFER_WRITE)
-		retval |= PIPE_BIND_TRANSFER_WRITE;
-
-	if (retval != usage) {
-		DBG("not supported: format=%s, target=%d, sample_count=%d, "
-				"usage=%x, retval=%x", util_format_name(format),
-				target, sample_count, usage, retval);
-	}
-
-	return retval == usage;
-}
-
 boolean
 fd_screen_bo_get_handle(struct pipe_screen *pscreen,
 		struct fd_bo *bo,
@@ -477,13 +391,36 @@ fd_screen_create(struct fd_device *dev)
 	}
 	screen->device_id = val;
 
+	if (fd_pipe_get_param(screen->pipe, FD_GPU_ID, &val)) {
+		DBG("could not get gpu-id");
+		goto fail;
+	}
+	screen->gpu_id = val;
+
+	/* explicitly checking for GPU revisions that are known to work.  This
+	 * may be overly conservative for a3xx, where spoofing the gpu_id with
+	 * the blob driver seems to generate identical cmdstream dumps.  But
+	 * on a2xx, there seem to be small differences between the GPU revs
+	 * so it is probably better to actually test first on real hardware
+	 * before enabling:
+	 *
+	 * If you have a different adreno version, feel free to add it to one
+	 * of the two cases below and see what happens.  And if it works, please
+	 * send a patch ;-)
+	 */
+	switch (screen->gpu_id) {
+	case 220:
+		fd2_screen_init(pscreen);
+		break;
+	default:
+		debug_printf("unsupported GPU: a%03d\n", screen->gpu_id);
+		goto fail;
+	}
 
 	pscreen->destroy = fd_screen_destroy;
 	pscreen->get_param = fd_screen_get_param;
 	pscreen->get_paramf = fd_screen_get_paramf;
 	pscreen->get_shader_param = fd_screen_get_shader_param;
-	pscreen->context_create = fd_context_create;
-	pscreen->is_format_supported = fd_screen_is_format_supported;
 
 	fd_resource_screen_init(pscreen);
 

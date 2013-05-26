@@ -30,22 +30,18 @@
 #define FREEDRENO_STATE_H_
 
 #include "pipe/p_context.h"
+#include "freedreno_context.h"
 
-struct fd_vertexbuf_stateobj;
-struct fd_zsa_stateobj;
-struct fd_framebuffer_stateobj;
-struct fd_ringbuffer;
+static inline bool fd_depth_enabled(struct fd_context *ctx)
+{
+	return ctx->zsa->depth.enabled;
+}
+
+static inline bool fd_stencil_enabled(struct fd_context *ctx)
+{
+	return ctx->zsa->stencil[0].enabled;
+}
 
 void fd_state_init(struct pipe_context *pctx);
-
-struct fd_vertex_buf {
-	unsigned offset, size;
-	struct pipe_resource *prsc;
-};
-
-void fd_emit_vertex_bufs(struct fd_ringbuffer *ring, uint32_t val,
-		struct fd_vertex_buf *vbufs, uint32_t n);
-void fd_state_emit(struct pipe_context *pctx, uint32_t dirty);
-void fd_state_emit_setup(struct pipe_context *pctx);
 
 #endif /* FREEDRENO_STATE_H_ */

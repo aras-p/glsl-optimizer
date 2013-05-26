@@ -8,10 +8,10 @@ http://0x04.net/cgit/index.cgi/rules-ng-ng
 git clone git://0x04.net/rules-ng-ng
 
 The rules-ng-ng source files this header was generated from are:
-- /home/robclark/src/freedreno/envytools/rnndb/a2xx.xml                (  30372 bytes, from 2013-04-05 17:32:29)
+- /home/robclark/src/freedreno/envytools/rnndb/a2xx.xml                (  30127 bytes, from 2013-05-05 18:29:35)
 - /home/robclark/src/freedreno/envytools/rnndb/freedreno_copyright.xml (   1453 bytes, from 2013-03-31 16:51:27)
-- /home/robclark/src/freedreno/envytools/rnndb/adreno_common.xml       (   2972 bytes, from 2013-04-05 17:32:38)
-- /home/robclark/src/freedreno/envytools/rnndb/adreno_pm4.xml          (   7736 bytes, from 2013-04-04 20:24:12)
+- /home/robclark/src/freedreno/envytools/rnndb/adreno_common.xml       (   3094 bytes, from 2013-05-05 18:29:22)
+- /home/robclark/src/freedreno/envytools/rnndb/adreno_pm4.xml          (   9712 bytes, from 2013-05-26 15:22:37)
 
 Copyright (C) 2013 by the following authors:
 - Rob Clark <robdclark@gmail.com> (robclark)
@@ -59,7 +59,6 @@ enum a2xx_colorformatx {
 	COLORX_32_32_32_32_FLOAT = 12,
 	COLORX_2_3_3 = 13,
 	COLORX_8_8_8 = 14,
-	COLORX_INVALID = 15,
 };
 
 enum a2xx_sq_surfaceformat {
@@ -124,13 +123,6 @@ enum a2xx_sq_surfaceformat {
 	FMT_DXT5A = 59,
 	FMT_CTX1 = 60,
 	FMT_DXT3A_AS_1_1_1_1 = 61,
-	FMT_INVALID = 62,
-};
-
-enum a2xx_rb_depth_format {
-	DEPTHX_16 = 0,
-	DEPTHX_24_8 = 1,
-	DEPTHX_INVALID = 2,
 };
 
 enum a2xx_sq_ps_vtx_mode {
@@ -539,7 +531,7 @@ static inline uint32_t A2XX_RB_COLOR_INFO_BASE(uint32_t val)
 #define REG_A2XX_RB_DEPTH_INFO					0x00002002
 #define A2XX_RB_DEPTH_INFO_DEPTH_FORMAT__MASK			0x00000001
 #define A2XX_RB_DEPTH_INFO_DEPTH_FORMAT__SHIFT			0
-static inline uint32_t A2XX_RB_DEPTH_INFO_DEPTH_FORMAT(enum a2xx_rb_depth_format val)
+static inline uint32_t A2XX_RB_DEPTH_INFO_DEPTH_FORMAT(enum adreno_rb_depth_format val)
 {
 	return ((val) << A2XX_RB_DEPTH_INFO_DEPTH_FORMAT__SHIFT) & A2XX_RB_DEPTH_INFO_DEPTH_FORMAT__MASK;
 }
@@ -587,13 +579,13 @@ static inline uint32_t A2XX_PA_SC_SCREEN_SCISSOR_BR_Y(uint32_t val)
 #define REG_A2XX_PA_SC_WINDOW_OFFSET				0x00002080
 #define A2XX_PA_SC_WINDOW_OFFSET_X__MASK			0x00007fff
 #define A2XX_PA_SC_WINDOW_OFFSET_X__SHIFT			0
-static inline uint32_t A2XX_PA_SC_WINDOW_OFFSET_X(uint32_t val)
+static inline uint32_t A2XX_PA_SC_WINDOW_OFFSET_X(int32_t val)
 {
 	return ((val) << A2XX_PA_SC_WINDOW_OFFSET_X__SHIFT) & A2XX_PA_SC_WINDOW_OFFSET_X__MASK;
 }
 #define A2XX_PA_SC_WINDOW_OFFSET_Y__MASK			0x7fff0000
 #define A2XX_PA_SC_WINDOW_OFFSET_Y__SHIFT			16
-static inline uint32_t A2XX_PA_SC_WINDOW_OFFSET_Y(uint32_t val)
+static inline uint32_t A2XX_PA_SC_WINDOW_OFFSET_Y(int32_t val)
 {
 	return ((val) << A2XX_PA_SC_WINDOW_OFFSET_Y__SHIFT) & A2XX_PA_SC_WINDOW_OFFSET_Y__MASK;
 }
