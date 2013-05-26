@@ -50,6 +50,7 @@
 #include "freedreno_util.h"
 
 #include "fd2_screen.h"
+#include "fd3_screen.h"
 
 /* XXX this should go away */
 #include "state_tracker/drm_driver.h"
@@ -411,6 +412,9 @@ fd_screen_create(struct fd_device *dev)
 	switch (screen->gpu_id) {
 	case 220:
 		fd2_screen_init(pscreen);
+		break;
+	case 320:
+		fd3_screen_init(pscreen);
 		break;
 	default:
 		debug_printf("unsupported GPU: a%03d\n", screen->gpu_id);

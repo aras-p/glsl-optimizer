@@ -39,6 +39,8 @@ fd_pipe2depth(enum pipe_format format)
 		return DEPTHX_16;
 	case PIPE_FORMAT_Z24X8_UNORM:
 	case PIPE_FORMAT_Z24_UNORM_S8_UINT:
+	case PIPE_FORMAT_X8Z24_UNORM:
+	case PIPE_FORMAT_S8_UINT_Z24_UNORM:
 		return DEPTHX_24_8;
 	default:
 		return ~0;
