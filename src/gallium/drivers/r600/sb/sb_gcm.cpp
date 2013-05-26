@@ -359,6 +359,13 @@ void gcm::bu_sched_bb(bb_node* bb) {
 
 		for (unsigned sq = SQ_CF; sq < SQ_NUM; ++sq) {
 
+			if (sq == SQ_CF && pending_exec_mask_update) {
+				pending_exec_mask_update = false;
+				sq = SQ_ALU;
+				--sq;
+				continue;
+			}
+
 			if (!bu_ready_next[sq].empty())
 				bu_ready[sq].splice(bu_ready[sq].end(), bu_ready_next[sq]);
 
@@ -599,7 +606,14 @@ void gcm::add_ready(node *n) {
 		bu_ready_early[sq].push_back(n);
 	else if (sq == SQ_ALU && n->is_copy_mov())
 		bu_ready[sq].push_front(n);
-	else
+	else if (n->is_alu_inst()) {
+		alu_node *a = static_cast<alu_node*>(n);
+		if (a->bc.op_ptr->flags & AF_PRED && a->dst[2]) {
+			// PRED_SET instruction that updates exec mask
+			pending_exec_mask_update = true;
+		}
+		bu_ready_next[sq].push_back(n);
+	} else
 		bu_ready_next[sq].push_back(n);
 }
 

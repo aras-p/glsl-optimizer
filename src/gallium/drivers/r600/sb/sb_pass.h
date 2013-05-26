@@ -250,13 +250,15 @@ class gcm : public pass {
 
 	static const int rp_threshold = 100;
 
+	bool pending_exec_mask_update;
+
 public:
 
 	gcm(shader &sh) : pass(sh),
 		bu_ready(), bu_ready_next(), bu_ready_early(),
 		ready(), op_map(), uses(), nuc_stk(1), ucs_level(),
 		bu_bb(), pending_defs(), pending_nodes(), cur_sq(),
-		live(), live_count() {}
+		live(), live_count(), pending_exec_mask_update() {}
 
 	virtual int run();
 
