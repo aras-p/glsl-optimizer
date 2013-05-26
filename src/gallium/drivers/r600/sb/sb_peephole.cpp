@@ -56,7 +56,7 @@ void peephole::run_on(container_node* c) {
 			if (n->is_alu_inst()) {
 				alu_node *a = static_cast<alu_node*>(n);
 
-				if (a->bc.op_ptr->flags & AF_CC_MASK) {
+				if (a->bc.op_ptr->flags & (AF_PRED | AF_SET | AF_CMOV)) {
 					optimize_cc_op(a);
 				} else if (a->bc.op == ALU_OP1_FLT_TO_INT) {
 
