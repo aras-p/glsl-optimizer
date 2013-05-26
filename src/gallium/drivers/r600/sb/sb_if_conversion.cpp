@@ -56,89 +56,75 @@ int if_conversion::run() {
 	return 0;
 }
 
-unsigned if_conversion::try_convert_kills(region_node* r) {
+void if_conversion::convert_kill_instructions(region_node *r,
+                                              value *em, bool branch,
+                                              container_node *c) {
+	value *cnd = NULL;
 
-	// handling the simplest (and probably most frequent) case only -
-	// if - 4 kills - endif
+	for (node_iterator I = c->begin(), E = c->end(), N; I != E; I = N) {
+		N = I + 1;
 
-	// TODO handle more complex cases
+		if (!I->is_alu_inst())
+			continue;
 
-	depart_node *d1 = static_cast<depart_node*>(r->front());
-	if (!d1->is_depart())
-		return 0;
+		alu_node *a = static_cast<alu_node*>(*I);
+		unsigned flags = a->bc.op_ptr->flags;
 
-	if_node *f = static_cast<if_node*>(d1->front());
-	if (!f->is_if())
-		return 0;
+		if (!(flags & AF_KILL))
+			continue;
 
-	depart_node *d2 = static_cast<depart_node*>(f->front());
-	if (!d2->is_depart())
-		return 0;
+		// ignore predicated or non-const kill instructions
+		if (a->pred || !a->src[0]->is_const() || !a->src[1]->is_const())
+			continue;
 
-	unsigned cnt = 0;
+		literal l0 = a->src[0]->literal_value;
+		literal l1 = a->src[1]->literal_value;
 
-	for (node_iterator I = d2->begin(), E = d2->end(); I != E; ++I) {
-		alu_node *n = static_cast<alu_node*>(*I);
-		if (!n->is_alu_inst())
-			return 0;
+		expr_handler::apply_alu_src_mod(a->bc, 0, l0);
+		expr_handler::apply_alu_src_mod(a->bc, 1, l1);
 
-		if (!(n->bc.op_ptr->flags & AF_KILL))
-			return 0;
+		if (expr_handler::evaluate_condition(flags, l0, l1)) {
+			// kill with constant 'true' condition, we'll convert it to the
+			// conditional kill outside of the if-then-else block
 
-		if (n->bc.op_ptr->src_count != 2 || n->src.size() != 2)
-			return 0;
+			a->remove();
 
-		value *s1 = n->src[0], *s2 = n->src[1];
+			if (!cnd) {
+				cnd = get_select_value_for_em(sh, em);
+			} else {
+				// more than one kill with the same condition, just remove it
+				continue;
+			}
 
-		// assuming that the KILL with constant operands is "always kill"
+			r->insert_before(a);
+			a->bc.set_op(branch ? ALU_OP2_KILLE_INT : ALU_OP2_KILLNE_INT);
 
-		if (!s1 || !s2 || !s1->is_const() || !s2->is_const())
-			return 0;
-
-		++cnt;
+			a->src[0] = cnd;
+			a->src[1] = sh.get_const_value(0);
+			// clear modifiers
+			memset(&a->bc.src[0], 0, sizeof(bc_alu_src));
+			memset(&a->bc.src[1], 0, sizeof(bc_alu_src));
+		} else {
+			// kill with constant 'false' condition, this shouldn't happen
+			// but remove it anyway
+			a->remove();
+		}
 	}
-
-	if (cnt > 4)
-		return 0;
-
-	value *cond = f->cond;
-	value *pred = get_select_value_for_em(sh, cond);
-
-	if (!pred)
-		return 0;
-
-	for (node_iterator N, I = d2->begin(), E = d2->end(); I != E; I = N) {
-		N = I; ++N;
-
-		alu_node *n = static_cast<alu_node*>(*I);
-
-		IFC_DUMP(
-			sblog << "converting ";
-			dump::dump_op(n);
-			sblog << "   " << n << "\n";
-		);
-
-		n->remove();
-
-		n->bc.set_op(ALU_OP2_KILLE_INT);
-		n->src[0] = pred;
-		n->src[1] = sh.get_const_value(0);
-		// reset src modifiers
-		memset(&n->bc.src[0], 0, sizeof(bc_alu_src));
-		memset(&n->bc.src[1], 0, sizeof(bc_alu_src));
-
-		r->insert_before(n);
-	}
-
-	return cnt;
 }
 
+bool if_conversion::check_and_convert(region_node *r) {
 
-
-bool if_conversion::run_on(region_node* r) {
-
-	if (r->dep_count() != 2 || r->rep_count() != 1)
+	depart_node *nd1 = static_cast<depart_node*>(r->first);
+	if (!nd1->is_depart())
 		return false;
+	if_node *nif = static_cast<if_node*>(nd1->first);
+	if (!nif->is_if())
+		return false;
+	depart_node *nd2 = static_cast<depart_node*>(nif->first);
+	if (!nd2->is_depart())
+		return false;
+
+	value* &em = nif->cond;
 
 	node_stats s;
 
@@ -149,7 +135,7 @@ bool if_conversion::run_on(region_node* r) {
 		s.dump();
 	);
 
-	if (s.region_count || s.fetch_count ||
+	if (s.region_count || s.fetch_count || s.alu_kill_count ||
 			s.if_count != 1 || s.repeat_count)
 		return false;
 
@@ -189,25 +175,8 @@ bool if_conversion::run_on(region_node* r) {
 	if (real_alu_count > 400)
 		return false;
 
-	if (s.alu_kill_count) {
-		unsigned kcnt = try_convert_kills(r);
-		if (kcnt < s.alu_kill_count)
-			return false;
-	}
-
 	IFC_DUMP( sblog << "if_cvt: processing...\n"; );
 
-	depart_node *nd1 = static_cast<depart_node*>(r->first);
-	if (!nd1->is_depart())
-		return false;
-	if_node *nif = static_cast<if_node*>(nd1->first);
-	if (!nif->is_if())
-		return false;
-	depart_node *nd2 = static_cast<depart_node*>(nif->first);
-	if (!nd2->is_depart())
-		return false;
-
-	value *em = nif->cond;
 	value *select = get_select_value_for_em(sh, em);
 
 	if (!select)
@@ -228,6 +197,83 @@ bool if_conversion::run_on(region_node* r) {
 	r->expand();
 
 	return true;
+}
+
+bool if_conversion::run_on(region_node* r) {
+
+	if (r->dep_count() != 2 || r->rep_count() != 1)
+		return false;
+
+	depart_node *nd1 = static_cast<depart_node*>(r->first);
+	if (!nd1->is_depart())
+		return false;
+	if_node *nif = static_cast<if_node*>(nd1->first);
+	if (!nif->is_if())
+		return false;
+	depart_node *nd2 = static_cast<depart_node*>(nif->first);
+	if (!nd2->is_depart())
+		return false;
+
+	value* &em = nif->cond;
+
+	convert_kill_instructions(r, em, true, nd2);
+	convert_kill_instructions(r, em, false, nd1);
+
+	if (check_and_convert(r))
+		return true;
+
+	if (nd2->empty() && nif->next) {
+		// empty true branch, non-empty false branch
+		// we'll invert it to get rid of 'else'
+
+		assert(em && em->def);
+
+		alu_node *predset = static_cast<alu_node*>(em->def);
+
+		// create clone of PREDSET instruction with inverted condition.
+		// PREDSET has 3 dst operands in our IR (value written to gpr,
+		// predicate value and exec mask value), we'll split it such that
+		// new PREDSET will define exec mask value only, and two others will
+		// be defined in the old PREDSET (if they are not used then DCE will
+		// simply remove old PREDSET).
+
+		alu_node *newpredset = sh.clone(predset);
+		predset->insert_after(newpredset);
+
+		predset->dst[2] = NULL;
+
+		newpredset->dst[0] = NULL;
+		newpredset->dst[1] = NULL;
+
+		em->def = newpredset;
+
+		unsigned cc = newpredset->bc.op_ptr->flags & AF_CC_MASK;
+		unsigned cmptype = newpredset->bc.op_ptr->flags & AF_CMP_TYPE_MASK;
+		bool swapargs = false;
+
+		cc = invert_setcc_condition(cc, swapargs);
+
+		if (swapargs) {
+			std::swap(newpredset->src[0], newpredset->src[1]);
+			std::swap(newpredset->bc.src[0], newpredset->bc.src[1]);
+		}
+
+		unsigned newopcode = get_predsetcc_opcode(cc, cmptype);
+		newpredset->bc.set_op(newopcode);
+
+		// move the code from the 'false' branch ('else') to the 'true' branch
+		nd2->move(nif->next, NULL);
+
+		// swap phi operands
+		for (node_iterator I = r->phi->begin(), E = r->phi->end(); I != E;
+				++I) {
+			node *p = *I;
+			assert(p->src.size() == 2);
+			std::swap(p->src[0], p->src[1]);
+		}
+	}
+
+	return false;
 }
 
 alu_node* if_conversion::convert_phi(value* select, node* phi) {

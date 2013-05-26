@@ -338,9 +338,12 @@ public:
 
 	bool run_on(region_node *r);
 
-	alu_node* convert_phi(value *select, node *phi);
+	void convert_kill_instructions(region_node *r, value *em, bool branch,
+	                               container_node *c);
 
-	unsigned try_convert_kills(region_node* r);
+	bool check_and_convert(region_node *r);
+
+	alu_node* convert_phi(value *select, node *phi);
 
 };
 

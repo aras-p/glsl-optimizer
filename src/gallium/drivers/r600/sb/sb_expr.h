@@ -72,12 +72,13 @@ public:
    bool fold_alu_op2(alu_node &n);
    bool fold_alu_op3(alu_node &n);
 
-   void apply_alu_src_mod(const bc_alu &bc, unsigned src, literal &v);
-   void apply_alu_dst_mod(const bc_alu &bc, literal &v);
+   static void apply_alu_src_mod(const bc_alu &bc, unsigned src, literal &v);
+   static void apply_alu_dst_mod(const bc_alu &bc, literal &v);
 
    void assign_source(value *dst, value *src);
 
-   bool evaluate_condition(unsigned alu_cnd_flags, literal s1, literal s2);
+   static bool evaluate_condition(unsigned alu_cnd_flags, literal s1,
+                                  literal s2);
 };
 
 } // namespace r600_sb
