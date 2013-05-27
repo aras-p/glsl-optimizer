@@ -463,10 +463,12 @@ void brw_draw_prims( struct gl_context *ctx,
 		     GLboolean index_bounds_valid,
 		     GLuint min_index,
 		     GLuint max_index,
-		     struct gl_transform_feedback_object *tfb_vertcount )
+		     struct gl_transform_feedback_object *unused_tfb_object)
 {
    struct brw_context *brw = brw_context(ctx);
    const struct gl_client_array **arrays = ctx->Array._DrawArrays;
+
+   assert(unused_tfb_object == NULL);
 
    if (!_mesa_check_conditional_render(ctx))
       return;
