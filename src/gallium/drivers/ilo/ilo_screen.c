@@ -132,7 +132,7 @@ ilo_get_shader_param(struct pipe_screen *screen, unsigned shader,
    case PIPE_SHADER_CAP_INDIRECT_TEMP_ADDR:
       return (shader == PIPE_SHADER_FRAGMENT) ? 0 : 1;
    case PIPE_SHADER_CAP_INDIRECT_CONST_ADDR:
-      return (shader == PIPE_SHADER_FRAGMENT) ? 0 : 1;
+      return 1;
    case PIPE_SHADER_CAP_SUBROUTINES:
       return 0;
    case PIPE_SHADER_CAP_INTEGERS:
@@ -395,6 +395,7 @@ ilo_get_param(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_USER_CONSTANT_BUFFERS:
       return false; /* TODO push constants */
    case PIPE_CAP_CONSTANT_BUFFER_OFFSET_ALIGNMENT:
+      /* imposed by OWord (Dual) Block Read */
       return 16;
    case PIPE_CAP_START_INSTANCE:
    case PIPE_CAP_QUERY_TIMESTAMP:
