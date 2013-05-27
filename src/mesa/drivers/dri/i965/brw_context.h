@@ -889,6 +889,9 @@ struct intel_batchbuffer {
 
 struct brw_transform_feedback_object {
    struct gl_transform_feedback_object base;
+
+   /** A buffer to hold SO_WRITE_OFFSET(n) values while paused. */
+   drm_intel_bo *offset_bo;
 };
 
 /**
@@ -1597,6 +1600,12 @@ gen7_begin_transform_feedback(struct gl_context *ctx, GLenum mode,
 void
 gen7_end_transform_feedback(struct gl_context *ctx,
 			    struct gl_transform_feedback_object *obj);
+void
+gen7_pause_transform_feedback(struct gl_context *ctx,
+                              struct gl_transform_feedback_object *obj);
+void
+gen7_resume_transform_feedback(struct gl_context *ctx,
+                               struct gl_transform_feedback_object *obj);
 
 /* brw_blorp_blit.cpp */
 GLbitfield

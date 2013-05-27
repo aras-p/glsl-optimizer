@@ -255,6 +255,8 @@ brw_init_driver_functions(struct brw_context *brw,
    if (brw->gen >= 7) {
       functions->BeginTransformFeedback = gen7_begin_transform_feedback;
       functions->EndTransformFeedback = gen7_end_transform_feedback;
+      functions->PauseTransformFeedback = gen7_pause_transform_feedback;
+      functions->ResumeTransformFeedback = gen7_resume_transform_feedback;
    } else {
       functions->BeginTransformFeedback = brw_begin_transform_feedback;
       functions->EndTransformFeedback = brw_end_transform_feedback;

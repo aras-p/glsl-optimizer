@@ -273,3 +273,43 @@ gen7_end_transform_feedback(struct gl_context *ctx,
 
    intel_batchbuffer_emit_mi_flush(brw);
 }
+
+void
+gen7_pause_transform_feedback(struct gl_context *ctx,
+                              struct gl_transform_feedback_object *obj)
+{
+   struct brw_context *brw = brw_context(ctx);
+   struct brw_transform_feedback_object *brw_obj =
+      (struct brw_transform_feedback_object *) obj;
+
+   /* Save the SOL buffer offset register values. */
+   for (int i = 0; i < 4; i++) {
+      BEGIN_BATCH(3);
+      OUT_BATCH(MI_STORE_REGISTER_MEM | (3 - 2));
+      OUT_BATCH(GEN7_SO_WRITE_OFFSET(i));
+      OUT_RELOC(brw_obj->offset_bo,
+                I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
+                i * sizeof(uint32_t));
+      ADVANCE_BATCH();
+   }
+}
+
+void
+gen7_resume_transform_feedback(struct gl_context *ctx,
+                               struct gl_transform_feedback_object *obj)
+{
+   struct brw_context *brw = brw_context(ctx);
+   struct brw_transform_feedback_object *brw_obj =
+      (struct brw_transform_feedback_object *) obj;
+
+   /* Reload the SOL buffer offset registers. */
+   for (int i = 0; i < 4; i++) {
+      BEGIN_BATCH(3);
+      OUT_BATCH(GEN7_MI_LOAD_REGISTER_MEM | (3 - 2));
+      OUT_BATCH(GEN7_SO_WRITE_OFFSET(i));
+      OUT_RELOC(brw_obj->offset_bo,
+                I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
+                i * sizeof(uint32_t));
+      ADVANCE_BATCH();
+   }
+}

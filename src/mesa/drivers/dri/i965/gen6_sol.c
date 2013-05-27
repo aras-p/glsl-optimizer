@@ -144,6 +144,9 @@ brw_new_transform_feedback(struct gl_context *ctx, GLuint name)
 
    _mesa_init_transform_feedback_object(&brw_obj->base, name);
 
+   brw_obj->offset_bo =
+      drm_intel_bo_alloc(brw->bufmgr, "transform feedback offsets", 16, 64);
+
    return &brw_obj->base;
 }
 
@@ -157,6 +160,8 @@ brw_delete_transform_feedback(struct gl_context *ctx,
    for (unsigned i = 0; i < Elements(obj->Buffers); i++) {
       _mesa_reference_buffer_object(ctx, &obj->Buffers[i], NULL);
    }
+
+   drm_intel_bo_unreference(brw_obj->offset_bo);
 
    free(brw_obj);
 }
