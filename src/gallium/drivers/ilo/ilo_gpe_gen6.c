@@ -4010,19 +4010,37 @@ gen6_emit_view_SURFACE_STATE(const struct ilo_dev_info *dev,
                              const struct pipe_sampler_view *view,
                              struct ilo_cp *cp)
 {
-   struct ilo_texture *tex = ilo_texture(view->texture);
+   struct intel_bo *bo;
    uint32_t dw[6];
 
    ILO_GPE_VALID_GEN(dev, 6, 6);
 
-   gen6_fill_normal_SURFACE_STATE(dev, tex, view->format,
-         view->u.tex.first_level,
-         view->u.tex.last_level - view->u.tex.first_level + 1,
-         view->u.tex.first_layer,
-         view->u.tex.last_layer - view->u.tex.first_layer + 1,
-         false, false, dw, Elements(dw));
+   if (view->texture->target == PIPE_BUFFER) {
+      const unsigned elem_size = util_format_get_blocksize(view->format);
+      const unsigned first_elem = view->u.buf.first_element;
+      const unsigned num_elems = view->u.buf.last_element - first_elem + 1;
+      struct ilo_buffer *buf = ilo_buffer(view->texture);
 
-   return gen6_emit_SURFACE_STATE(dev, tex->bo, false, dw, Elements(dw), cp);
+      gen6_fill_buffer_SURFACE_STATE(dev, buf,
+            first_elem * elem_size, num_elems * elem_size,
+            elem_size, view->format, false, false, dw, Elements(dw));
+
+      bo = buf->bo;
+   }
+   else {
+      struct ilo_texture *tex = ilo_texture(view->texture);
+
+      gen6_fill_normal_SURFACE_STATE(dev, tex, view->format,
+            view->u.tex.first_level,
+            view->u.tex.last_level - view->u.tex.first_level + 1,
+            view->u.tex.first_layer,
+            view->u.tex.last_layer - view->u.tex.first_layer + 1,
+            false, false, dw, Elements(dw));
+
+      bo = tex->bo;
+   }
+
+   return gen6_emit_SURFACE_STATE(dev, bo, false, dw, Elements(dw), cp);
 }
 
 static uint32_t
