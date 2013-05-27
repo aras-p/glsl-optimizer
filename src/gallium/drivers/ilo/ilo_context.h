@@ -36,7 +36,7 @@
  * \see brw_context.h
  */
 #define ILO_MAX_DRAW_BUFFERS    8
-#define ILO_MAX_CONST_BUFFERS   1
+#define ILO_MAX_CONST_BUFFERS   (1 + 12)
 #define ILO_MAX_SAMPLER_VIEWS   16
 #define ILO_MAX_SAMPLERS        16
 #define ILO_MAX_SO_BINDINGS     64
