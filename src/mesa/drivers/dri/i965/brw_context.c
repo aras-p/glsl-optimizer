@@ -329,6 +329,8 @@ brw_initialize_context_constants(struct brw_context *brw)
    ctx->Const.MaxTransformFeedbackSeparateComponents =
       BRW_MAX_SOL_BINDINGS / BRW_MAX_SOL_BUFFERS;
 
+   ctx->Const.AlwaysUseGetTransformFeedbackVertexCount = true;
+
    if (brw->gen == 6) {
       ctx->Const.MaxSamples = 4;
       ctx->Const.MaxColorTextureSamples = 4;

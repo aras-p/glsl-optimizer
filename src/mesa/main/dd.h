@@ -843,6 +843,14 @@ struct dd_function_table {
                                    struct gl_transform_feedback_object *obj);
 
    /**
+    * Return the number of vertices written to a stream during the last
+    * Begin/EndTransformFeedback block.
+    */
+   GLsizei (*GetTransformFeedbackVertexCount)(struct gl_context *ctx,
+                                              struct gl_transform_feedback_object *obj,
+                                              GLuint stream);
+
+   /**
     * \name GL_NV_texture_barrier interface
     */
    void (*TextureBarrier)(struct gl_context *ctx);

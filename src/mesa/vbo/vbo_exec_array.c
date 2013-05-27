@@ -1464,6 +1464,16 @@ vbo_draw_transform_feedback(struct gl_context *ctx, GLenum mode,
       return;
    }
 
+   if (ctx->Driver.GetTransformFeedbackVertexCount &&
+       (ctx->Const.AlwaysUseGetTransformFeedbackVertexCount ||
+        (ctx->Const.PrimitiveRestartInSoftware &&
+         ctx->Array._PrimitiveRestart) ||
+        !vbo_all_varyings_in_vbos(exec->array.inputs))) {
+      GLsizei n = ctx->Driver.GetTransformFeedbackVertexCount(ctx, obj, stream);
+      vbo_draw_arrays(ctx, mode, 0, n, numInstances, 0);
+      return;
+   }
+
    vbo_bind_arrays(ctx);
 
    /* init most fields to zero */
