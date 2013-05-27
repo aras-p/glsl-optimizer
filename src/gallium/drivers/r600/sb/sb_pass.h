@@ -413,7 +413,7 @@ public:
 
 	void optimize_cc_op(alu_node *a);
 
-	void optimize_SETcc_op(alu_node *a);
+	void optimize_cc_op2(alu_node *a);
 	void optimize_CNDcc_op(alu_node *a);
 
 	bool get_bool_op_info(value *b, bool_op_info& bop);

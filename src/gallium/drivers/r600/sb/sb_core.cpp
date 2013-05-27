@@ -188,9 +188,14 @@ int r600_sb_bytecode_process(struct r600_context *rctx,
 
 	sh->set_undef(sh->root->live_before);
 
-	SB_RUN_PASS(peephole,			1);
 	SB_RUN_PASS(if_conversion,		1);
 
+	// if_conversion breaks info about uses, but next pass (peephole)
+	// doesn't need it, so we can skip def/use update here
+	// until it's really required
+	//SB_RUN_PASS(def_use,			0);
+
+	SB_RUN_PASS(peephole,			1);
 	SB_RUN_PASS(def_use,			0);
 
 	SB_RUN_PASS(gvn,				1);

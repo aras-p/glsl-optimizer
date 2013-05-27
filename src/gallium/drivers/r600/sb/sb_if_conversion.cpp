@@ -258,7 +258,7 @@ bool if_conversion::run_on(region_node* r) {
 			std::swap(newpredset->bc.src[0], newpredset->bc.src[1]);
 		}
 
-		unsigned newopcode = get_predsetcc_opcode(cc, cmptype);
+		unsigned newopcode = get_predsetcc_op(cc, cmptype);
 		newpredset->bc.set_op(newopcode);
 
 		// move the code from the 'false' branch ('else') to the 'true' branch

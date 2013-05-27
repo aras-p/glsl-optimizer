@@ -37,8 +37,9 @@ value* get_select_value_for_em(shader &sh, value *em);
 
 void convert_predset_to_set(shader &sh, alu_node *a);
 unsigned invert_setcc_condition(unsigned cc, bool &swap_args);
-unsigned get_setcc_opcode(unsigned cc, unsigned cmp_type, bool int_dst);
-unsigned get_predsetcc_opcode(unsigned cc, unsigned cmp_type);
+unsigned get_setcc_op(unsigned cc, unsigned cmp_type, bool int_dst);
+unsigned get_predsetcc_op(unsigned cc, unsigned cmp_type);
+unsigned get_killcc_op(unsigned cc, unsigned cmp_type);
 
 class expr_handler {
 

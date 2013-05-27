@@ -580,7 +580,7 @@ unsigned invert_setcc_condition(unsigned cc, bool &swap_args) {
 	return ncc;
 }
 
-unsigned get_setcc_opcode(unsigned cc, unsigned cmp_type, bool int_dst) {
+unsigned get_setcc_op(unsigned cc, unsigned cmp_type, bool int_dst) {
 
 	if (int_dst && cmp_type == AF_FLOAT_CMP) {
 		switch (cc) {
@@ -612,6 +612,8 @@ unsigned get_setcc_opcode(unsigned cc, unsigned cmp_type, bool int_dst) {
 		}
 		case AF_UINT_CMP: {
 			switch (cc) {
+			case AF_CC_E: return ALU_OP2_SETE_INT;
+			case AF_CC_NE: return ALU_OP2_SETNE_INT;
 			case AF_CC_GT: return ALU_OP2_SETGT_UINT;
 			case AF_CC_GE: return ALU_OP2_SETGE_UINT;
 			}
@@ -624,7 +626,7 @@ unsigned get_setcc_opcode(unsigned cc, unsigned cmp_type, bool int_dst) {
 	return ~0u;
 }
 
-unsigned get_predsetcc_opcode(unsigned cc, unsigned cmp_type) {
+unsigned get_predsetcc_op(unsigned cc, unsigned cmp_type) {
 
 	switch(cmp_type) {
 	case AF_FLOAT_CMP: {
@@ -647,6 +649,8 @@ unsigned get_predsetcc_opcode(unsigned cc, unsigned cmp_type) {
 	}
 	case AF_UINT_CMP: {
 		switch (cc) {
+		case AF_CC_E: return ALU_OP2_PRED_SETE_INT;
+		case AF_CC_NE: return ALU_OP2_PRED_SETNE_INT;
 		case AF_CC_GT: return ALU_OP2_PRED_SETGT_UINT;
 		case AF_CC_GE: return ALU_OP2_PRED_SETGE_UINT;
 		}
@@ -658,6 +662,44 @@ unsigned get_predsetcc_opcode(unsigned cc, unsigned cmp_type) {
 	return ~0u;
 }
 
+unsigned get_killcc_op(unsigned cc, unsigned cmp_type) {
+
+	switch(cmp_type) {
+	case AF_FLOAT_CMP: {
+		switch (cc) {
+		case AF_CC_E: return ALU_OP2_KILLE;
+		case AF_CC_NE: return ALU_OP2_KILLNE;
+		case AF_CC_GT: return ALU_OP2_KILLGT;
+		case AF_CC_GE: return ALU_OP2_KILLGE;
+		}
+		break;
+	}
+	case AF_INT_CMP: {
+		switch (cc) {
+		case AF_CC_E: return ALU_OP2_KILLE_INT;
+		case AF_CC_NE: return ALU_OP2_KILLNE_INT;
+		case AF_CC_GT: return ALU_OP2_KILLGT_INT;
+		case AF_CC_GE: return ALU_OP2_KILLGE_INT;
+		}
+		break;
+	}
+	case AF_UINT_CMP: {
+		switch (cc) {
+		case AF_CC_E: return ALU_OP2_KILLE_INT;
+		case AF_CC_NE: return ALU_OP2_KILLNE_INT;
+		case AF_CC_GT: return ALU_OP2_KILLGT_UINT;
+		case AF_CC_GE: return ALU_OP2_KILLGE_UINT;
+		}
+		break;
+	}
+	}
+
+	assert(!"unexpected cc&cmp_type combination");
+	return ~0u;
+}
+
+
+
 void convert_predset_to_set(shader& sh, alu_node* a) {
 
 	unsigned flags = a->bc.op_ptr->flags;
@@ -668,7 +710,7 @@ void convert_predset_to_set(shader& sh, alu_node* a) {
 
 	cc = invert_setcc_condition(cc, swap_args);
 
-	unsigned newop = get_setcc_opcode(cc, cmp_type, true);
+	unsigned newop = get_setcc_op(cc, cmp_type, true);
 
 	a->dst.resize(1);
 	a->bc.set_op(newop);
