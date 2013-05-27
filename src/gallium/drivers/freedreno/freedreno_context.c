@@ -83,6 +83,8 @@ fd_context_render(struct pipe_context *pctx)
 
 	ctx->needs_flush = false;
 	ctx->cleared = ctx->restore = ctx->resolve = 0;
+	ctx->gmem_reason = 0;
+	ctx->num_draws = 0;
 
 	fd_resource(pfb->cbufs[0]->texture)->dirty = false;
 	if (pfb->zsbuf)

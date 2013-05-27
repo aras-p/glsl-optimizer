@@ -117,6 +117,23 @@ struct fd_context {
 
 	bool needs_flush;
 
+	/* To decide whether to render to system memory, keep track of the
+	 * number of draws, and whether any of them require multisample,
+	 * depth_test (or depth write), stencil_test, blending, and
+	 * color_logic_Op (since those functions are disabled when by-
+	 * passing GMEM.
+	 */
+	enum {
+		FD_GMEM_CLEARS_DEPTH_STENCIL = 0x01,
+		FD_GMEM_DEPTH_ENABLED        = 0x02,
+		FD_GMEM_STENCIL_ENABLED      = 0x04,
+
+		FD_GMEM_MSAA_ENABLED         = 0x08,
+		FD_GMEM_BLEND_ENABLED        = 0x10,
+		FD_GMEM_LOGICOP_ENABLED      = 0x20,
+	} gmem_reason;
+	unsigned num_draws;
+
 	struct fd_ringbuffer *ring;
 	struct fd_ringmarker *draw_start, *draw_end;
 
@@ -185,6 +202,9 @@ struct fd_context {
 			uint32_t bin_w, uint32_t bin_h);
 	void (*emit_tile_gmem2mem)(struct fd_context *ctx, uint32_t xoff, uint32_t yoff,
 			uint32_t bin_w, uint32_t bin_h);
+
+	/* optional, for GMEM bypass: */
+	void (*emit_sysmem_prep)(struct fd_context *ctx);
 
 	/* draw: */
 	void (*draw)(struct fd_context *pctx, const struct pipe_draw_info *info);

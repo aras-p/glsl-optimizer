@@ -114,7 +114,7 @@ fd_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
 {
 	struct fd_context *ctx = fd_context(pctx);
 	struct pipe_framebuffer_state *pfb = &ctx->framebuffer;
-	unsigned buffers;
+	unsigned i, buffers = 0;
 
 	/* if we supported transform feedback, we'd have to disable this: */
 	if (((ctx->scissor.maxx - ctx->scissor.minx) *
@@ -124,18 +124,39 @@ fd_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
 
 	ctx->needs_flush = true;
 
-	fd_resource(pfb->cbufs[0]->texture)->dirty = true;
+	/*
+	 * Figure out the buffers/features we need:
+	 */
 
-	/* figure out the buffers we need: */
-	buffers = FD_BUFFER_COLOR;
 	if (fd_depth_enabled(ctx)) {
 		buffers |= FD_BUFFER_DEPTH;
 		fd_resource(pfb->zsbuf->texture)->dirty = true;
+		ctx->gmem_reason |= FD_GMEM_DEPTH_ENABLED;
 	}
+
 	if (fd_stencil_enabled(ctx)) {
 		buffers |= FD_BUFFER_STENCIL;
 		fd_resource(pfb->zsbuf->texture)->dirty = true;
+		ctx->gmem_reason |= FD_GMEM_STENCIL_ENABLED;
 	}
+
+	if (fd_logicop_enabled(ctx))
+		ctx->gmem_reason |= FD_GMEM_LOGICOP_ENABLED;
+
+	for (i = 0; i < pfb->nr_cbufs; i++) {
+		struct pipe_resource *surf = pfb->cbufs[i]->texture;
+
+		fd_resource(surf)->dirty = true;
+		buffers |= FD_BUFFER_COLOR;
+
+		if (surf->nr_samples > 1)
+			ctx->gmem_reason |= FD_GMEM_MSAA_ENABLED;
+
+		if (fd_blend_enabled(ctx, i))
+			ctx->gmem_reason |= FD_GMEM_BLEND_ENABLED;
+	}
+
+	ctx->num_draws++;
 
 	/* any buffers that haven't been cleared, we need to restore: */
 	ctx->restore |= buffers & (FD_BUFFER_ALL & ~ctx->cleared);
@@ -165,8 +186,10 @@ fd_clear(struct pipe_context *pctx, unsigned buffers,
 	if (buffers & PIPE_CLEAR_COLOR)
 		fd_resource(pfb->cbufs[0]->texture)->dirty = true;
 
-	if (buffers & (PIPE_CLEAR_DEPTH | PIPE_CLEAR_STENCIL))
+	if (buffers & (PIPE_CLEAR_DEPTH | PIPE_CLEAR_STENCIL)) {
 		fd_resource(pfb->zsbuf->texture)->dirty = true;
+		ctx->gmem_reason |= FD_GMEM_CLEARS_DEPTH_STENCIL;
+	}
 
 	DBG("%x depth=%f, stencil=%u (%s/%s)", buffers, depth, stencil,
 			util_format_name(pfb->cbufs[0]->format),

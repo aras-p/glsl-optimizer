@@ -94,7 +94,5 @@ fd3_zsa_state_create(struct pipe_context *pctx,
 		// TODO alpha_ref and alpha_test_enable??
 	}
 
-	so->rb_render_control |= 0x2000;  /* ??? */
-
 	return so;
 }

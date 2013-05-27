@@ -128,23 +128,11 @@ calculate_tiles(struct fd_context *ctx)
 	gmem->height = height;
 }
 
-
-void
-fd_gmem_render_tiles(struct pipe_context *pctx)
+static void
+render_tiles(struct fd_context *ctx)
 {
-	struct fd_context *ctx = fd_context(pctx);
-	struct pipe_framebuffer_state *pfb = &ctx->framebuffer;
 	struct fd_gmem_stateobj *gmem = &ctx->gmem;
-	uint32_t i, timestamp, yoff = 0;
-
-	calculate_tiles(ctx);
-
-	DBG("rendering %dx%d tiles (%s/%s)", gmem->nbins_x, gmem->nbins_y,
-			util_format_name(pfb->cbufs[0]->format),
-			pfb->zsbuf ? util_format_name(pfb->zsbuf->format) : "none");
-
-	/* mark the end of the clear/draw cmds before emitting per-tile cmds: */
-	fd_ringmarker_mark(ctx->draw_end);
+	uint32_t i, yoff = 0;
 
 	yoff= gmem->miny;
 
@@ -183,6 +171,50 @@ fd_gmem_render_tiles(struct pipe_context *pctx)
 		}
 
 		yoff += bh;
+	}
+}
+
+static void
+render_sysmem(struct fd_context *ctx)
+{
+	ctx->emit_sysmem_prep(ctx);
+
+	/* emit IB to drawcmds: */
+	OUT_IB(ctx->ring, ctx->draw_start, ctx->draw_end);
+}
+
+void
+fd_gmem_render_tiles(struct pipe_context *pctx)
+{
+	struct fd_context *ctx = fd_context(pctx);
+	struct pipe_framebuffer_state *pfb = &ctx->framebuffer;
+	uint32_t timestamp = 0;
+	bool sysmem = false;
+
+	if (ctx->emit_sysmem_prep) {
+		if (ctx->cleared || ctx->gmem_reason || (ctx->num_draws > 5)) {
+			DBG("GMEM: cleared=%x, gmem_reason=%x, num_draws=%u",
+				ctx->cleared, ctx->gmem_reason, ctx->num_draws);
+		} else {
+			sysmem = true;
+		}
+	}
+
+	/* mark the end of the clear/draw cmds before emitting per-tile cmds: */
+	fd_ringmarker_mark(ctx->draw_end);
+
+	if (sysmem) {
+		DBG("rendering sysmem (%s/%s)",
+			util_format_name(pfb->cbufs[0]->format),
+			pfb->zsbuf ? util_format_name(pfb->zsbuf->format) : "none");
+		render_sysmem(ctx);
+	} else {
+		struct fd_gmem_stateobj *gmem = &ctx->gmem;
+		DBG("rendering %dx%d tiles (%s/%s)", gmem->nbins_x, gmem->nbins_y,
+			util_format_name(pfb->cbufs[0]->format),
+			pfb->zsbuf ? util_format_name(pfb->zsbuf->format) : "none");
+		calculate_tiles(ctx);
+		render_tiles(ctx);
 	}
 
 	/* GPU executes starting from tile cmds, which IB back to draw cmds: */

@@ -47,7 +47,14 @@ static void
 emit_mrt(struct fd_ringbuffer *ring, unsigned nr_bufs,
 		struct pipe_surface **bufs, uint32_t *bases, uint32_t bin_w)
 {
+	enum a3xx_tile_mode tile_mode;
 	unsigned i;
+
+	if (bin_w) {
+		tile_mode = TILE_32X32;
+	} else {
+		tile_mode = LINEAR;
+	}
 
 	for (i = 0; i < 4; i++) {
 		enum a3xx_color_fmt format = 0;
@@ -58,23 +65,32 @@ emit_mrt(struct fd_ringbuffer *ring, unsigned nr_bufs,
 
 		if (i < nr_bufs) {
 			struct pipe_surface *psurf = bufs[i];
-			struct fd_resource *res = fd_resource(psurf->texture);
 
+			res = fd_resource(psurf->texture);
 			format = fd3_pipe2color(psurf->format);
 			swap = fd3_pipe2swap(psurf->format);
-			stride = bin_w * res->cpp;
 
-			if (bases) {
-				base = bases[i] * res->cpp;
+			if (bin_w) {
+				stride = bin_w * res->cpp;
+
+				if (bases) {
+					base = bases[i] * res->cpp;
+				}
+			} else {
+				stride = res->pitch * res->cpp;
 			}
 		}
 
 		OUT_PKT0(ring, REG_A3XX_RB_MRT_BUF_INFO(i), 2);
 		OUT_RING(ring, A3XX_RB_MRT_BUF_INFO_COLOR_FORMAT(format) |
+				A3XX_RB_MRT_BUF_INFO_COLOR_TILE_MODE(tile_mode) |
 				A3XX_RB_MRT_BUF_INFO_COLOR_BUF_PITCH(stride) |
-				A3XX_RB_MRT_BUF_INFO_COLOR_TILE_MODE(TILE_32X32) |
 				A3XX_RB_MRT_BUF_INFO_COLOR_SWAP(swap));
-		OUT_RING(ring, A3XX_RB_MRT_BUF_BASE_COLOR_BUF_BASE(base));
+		if (bin_w || (i >= nr_bufs)) {
+			OUT_RING(ring, A3XX_RB_MRT_BUF_BASE_COLOR_BUF_BASE(base));
+		} else {
+			OUT_RELOCS(ring, res->bo, 0, 0, -1);
+		}
 
 		OUT_PKT0(ring, REG_A3XX_SP_FS_IMAGE_OUTPUT_REG(i), 1);
 		OUT_RING(ring, A3XX_SP_FS_IMAGE_OUTPUT_REG_MRTFORMAT(format));
@@ -381,6 +397,42 @@ update_vsc_pipe(struct fd_context *ctx)
 	}
 }
 
+/* for rendering directly to system memory: */
+static void
+fd3_emit_sysmem_prep(struct fd_context *ctx)
+{
+	struct pipe_framebuffer_state *pfb = &ctx->framebuffer;
+	struct fd_resource *rsc = fd_resource(pfb->cbufs[0]->texture);
+	struct fd_ringbuffer *ring = ctx->ring;
+
+	fd3_emit_restore(ctx);
+
+	OUT_PKT0(ring, REG_A3XX_RB_WINDOW_SIZE, 1);
+	OUT_RING(ring, A3XX_RB_WINDOW_SIZE_WIDTH(pfb->width) |
+			A3XX_RB_WINDOW_SIZE_HEIGHT(pfb->height));
+
+	emit_mrt(ring, pfb->nr_cbufs, pfb->cbufs, NULL, 0);
+
+	fd3_emit_rbrc_tile_state(ring,
+			A3XX_RB_RENDER_CONTROL_BIN_WIDTH(rsc->pitch));
+
+	/* setup scissor/offset for current tile: */
+	OUT_PKT0(ring, REG_A3XX_PA_SC_WINDOW_OFFSET, 1);
+	OUT_RING(ring, A3XX_PA_SC_WINDOW_OFFSET_X(0) |
+			A3XX_PA_SC_WINDOW_OFFSET_Y(0));
+
+	OUT_PKT0(ring, REG_A3XX_GRAS_SC_SCREEN_SCISSOR_TL, 2);
+	OUT_RING(ring, A3XX_GRAS_SC_SCREEN_SCISSOR_TL_X(0) |
+			A3XX_GRAS_SC_SCREEN_SCISSOR_TL_Y(0));
+	OUT_RING(ring, A3XX_GRAS_SC_SCREEN_SCISSOR_BR_X(pfb->width - 1) |
+			A3XX_GRAS_SC_SCREEN_SCISSOR_BR_Y(pfb->height - 1));
+
+	OUT_PKT0(ring, REG_A3XX_RB_MODE_CONTROL, 1);
+	OUT_RING(ring, A3XX_RB_MODE_CONTROL_RENDER_MODE(RB_RENDERING_PASS) |
+			A3XX_RB_MODE_CONTROL_GMEM_BYPASS |
+			A3XX_RB_MODE_CONTROL_MARB_CACHE_SPLIT_MODE);
+}
+
 /* before first tile */
 static void
 fd3_emit_tile_init(struct fd_context *ctx)
@@ -478,6 +530,7 @@ fd3_gmem_init(struct pipe_context *pctx)
 {
 	struct fd_context *ctx = fd_context(pctx);
 
+	ctx->emit_sysmem_prep = fd3_emit_sysmem_prep;
 	ctx->emit_tile_init = fd3_emit_tile_init;
 	ctx->emit_tile_prep = fd3_emit_tile_prep;
 	ctx->emit_tile_mem2gmem = fd3_emit_tile_mem2gmem;
