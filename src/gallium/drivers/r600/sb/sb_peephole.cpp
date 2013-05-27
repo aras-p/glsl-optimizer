@@ -111,6 +111,9 @@ void peephole::optimize_cc_op2(alu_node* a) {
 	if (a->src[0]->is_const() && a->src[0]->literal_value == literal(0)) {
 		std::swap(a->src[0],a->src[1]);
 		swapped = true;
+		// clear modifiers
+		memset(&a->bc.src[0], 0, sizeof(bc_alu_src));
+		memset(&a->bc.src[1], 0, sizeof(bc_alu_src));
 	}
 
 	if (swapped || (a->src[1]->is_const() &&
@@ -187,8 +190,92 @@ void peephole::optimize_cc_op2(alu_node* a) {
 }
 
 void peephole::optimize_CNDcc_op(alu_node* a) {
+	unsigned flags = a->bc.op_ptr->flags;
+	unsigned cc = flags & AF_CC_MASK;
+	unsigned cmp_type = flags & AF_CMP_TYPE_MASK;
+	bool swap = false;
 
-	//TODO
+	if (cc == AF_CC_E) {
+		swap = !swap;
+		cc = AF_CC_NE;
+	} else if (cc != AF_CC_NE)
+		return;
+
+	value *s = a->src[0];
+
+	bool_op_info bop = {};
+
+	PPH_DUMP(
+		sblog << "cndcc: ";
+		dump::dump_op(a);
+		sblog << "\n";
+	);
+
+	if (!get_bool_op_info(s, bop))
+		return;
+
+	alu_node *d = bop.n;
+
+	if (d->bc.omod)
+		return;
+
+	PPH_DUMP(
+		sblog << "cndcc def: ";
+		dump::dump_op(d);
+		sblog << "\n";
+	);
+
+
+	unsigned dflags = d->bc.op_ptr->flags;
+	unsigned dcc = dflags & AF_CC_MASK;
+	unsigned dcmp_type = dflags & AF_CMP_TYPE_MASK;
+	unsigned ddst_type = dflags & AF_DST_TYPE_MASK;
+	int nds;
+
+	// TODO we can handle some of these cases,
+	// though probably this shouldn't happen
+	if (cmp_type != AF_FLOAT_CMP && ddst_type == AF_FLOAT_DST)
+		return;
+
+	if (d->src[0]->is_const() && d->src[0]->literal_value == literal(0))
+		nds = 1;
+	else if ((d->src[1]->is_const() &&
+			d->src[1]->literal_value == literal(0)))
+		nds = 0;
+	else
+		return;
+
+	// can't propagate ABS modifier to CNDcc because it's OP3
+	if (d->bc.src[nds].abs)
+		return;
+
+	// TODO we can handle some cases for uint comparison
+	if (dcmp_type == AF_UINT_CMP)
+		return;
+
+	if (dcc == AF_CC_NE) {
+		dcc = AF_CC_E;
+		swap = !swap;
+	}
+
+	if (nds == 1) {
+		switch (dcc) {
+		case AF_CC_GT: dcc = AF_CC_GE; swap = !swap; break;
+		case AF_CC_GE: dcc = AF_CC_GT; swap = !swap; break;
+		default: break;
+		}
+	}
+
+	a->src[0] = d->src[nds];
+	a->bc.src[0] = d->bc.src[nds];
+
+	if (swap) {
+		std::swap(a->src[1], a->src[2]);
+		std::swap(a->bc.src[1], a->bc.src[2]);
+	}
+
+	a->bc.set_op(get_cndcc_op(dcc, dcmp_type));
+
 }
 
 bool peephole::get_bool_flt_to_int_source(alu_node* &a) {

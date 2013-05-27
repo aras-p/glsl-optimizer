@@ -698,6 +698,30 @@ unsigned get_killcc_op(unsigned cc, unsigned cmp_type) {
 	return ~0u;
 }
 
+unsigned get_cndcc_op(unsigned cc, unsigned cmp_type) {
+
+	switch(cmp_type) {
+	case AF_FLOAT_CMP: {
+		switch (cc) {
+		case AF_CC_E: return ALU_OP3_CNDE;
+		case AF_CC_GT: return ALU_OP3_CNDGT;
+		case AF_CC_GE: return ALU_OP3_CNDGE;
+		}
+		break;
+	}
+	case AF_INT_CMP: {
+		switch (cc) {
+		case AF_CC_E: return ALU_OP3_CNDE_INT;
+		case AF_CC_GT: return ALU_OP3_CNDGT_INT;
+		case AF_CC_GE: return ALU_OP3_CNDGE_INT;
+		}
+		break;
+	}
+	}
+
+	assert(!"unexpected cc&cmp_type combination");
+	return ~0u;
+}
 
 
 void convert_predset_to_set(shader& sh, alu_node* a) {
