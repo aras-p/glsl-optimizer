@@ -29,8 +29,76 @@
 #ifndef VA_PRIVATE_H
 #define VA_PRIVATE_H
 
+#include <assert.h>
+
 #include <va/va.h>
 #include <va/va_backend.h>
+
+#include "pipe/p_video_enums.h"
+
+#define VL_VA_DRIVER(ctx) ((vlVaDriver *)ctx->pDriverData)
+#define VL_VA_PSCREEN(ctx) (VL_VA_DRIVER(ctx)->vscreen->pscreen)
+
+static inline VAProfile
+PipeToProfile(enum pipe_video_profile profile)
+{
+   switch (profile) {
+   case PIPE_VIDEO_PROFILE_MPEG2_SIMPLE:
+      return VAProfileMPEG2Simple;
+   case PIPE_VIDEO_PROFILE_MPEG2_MAIN:
+      return VAProfileMPEG2Main;
+   case PIPE_VIDEO_PROFILE_MPEG4_SIMPLE:
+      return VAProfileMPEG4Simple;
+   case PIPE_VIDEO_PROFILE_MPEG4_ADVANCED_SIMPLE:
+      return VAProfileMPEG4AdvancedSimple;
+   case PIPE_VIDEO_PROFILE_VC1_SIMPLE:
+      return VAProfileVC1Simple;
+   case PIPE_VIDEO_PROFILE_VC1_MAIN:
+      return VAProfileVC1Main;
+   case PIPE_VIDEO_PROFILE_VC1_ADVANCED:
+      return VAProfileVC1Advanced;
+   case PIPE_VIDEO_PROFILE_MPEG4_AVC_BASELINE:
+      return VAProfileH264Baseline;
+   case PIPE_VIDEO_PROFILE_MPEG4_AVC_MAIN:
+      return VAProfileH264Main;
+   case PIPE_VIDEO_PROFILE_MPEG4_AVC_HIGH:
+      return VAProfileH264High;
+   case PIPE_VIDEO_PROFILE_MPEG4_AVC_EXTENDED:
+       return VAProfileNone;
+   default:
+      assert(0);
+      return -1;
+   }
+}
+
+static inline enum pipe_video_profile
+ProfileToPipe(VAProfile profile)
+{
+   switch (profile) {
+   case VAProfileMPEG2Simple:
+      return PIPE_VIDEO_PROFILE_MPEG2_SIMPLE;
+   case VAProfileMPEG2Main:
+      return PIPE_VIDEO_PROFILE_MPEG2_MAIN;
+   case VAProfileMPEG4Simple:
+      return PIPE_VIDEO_PROFILE_MPEG4_SIMPLE;
+   case VAProfileMPEG4AdvancedSimple:
+      return PIPE_VIDEO_PROFILE_MPEG4_ADVANCED_SIMPLE;
+   case VAProfileVC1Simple:
+      return PIPE_VIDEO_PROFILE_VC1_SIMPLE;
+   case VAProfileVC1Main:
+      return PIPE_VIDEO_PROFILE_VC1_MAIN;
+   case VAProfileVC1Advanced:
+      return PIPE_VIDEO_PROFILE_VC1_ADVANCED;
+   case VAProfileH264Baseline:
+      return PIPE_VIDEO_PROFILE_MPEG4_AVC_BASELINE;
+   case VAProfileH264Main:
+      return PIPE_VIDEO_PROFILE_MPEG4_AVC_MAIN;
+   case VAProfileH264High:
+      return PIPE_VIDEO_PROFILE_MPEG4_AVC_HIGH;
+   default:
+      return PIPE_VIDEO_PROFILE_UNKNOWN;
+   }
+}
 
 typedef struct {
    struct vl_screen *vscreen;

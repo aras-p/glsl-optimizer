@@ -104,7 +104,7 @@ VA_DRIVER_INIT_FUNC(VADriverContextP ctx)
    ctx->version_major = 0;
    ctx->version_minor = 1;
    *ctx->vtable = vtable;
-   ctx->max_profiles = 1;
+   ctx->max_profiles = PIPE_VIDEO_PROFILE_MPEG4_AVC_HIGH - PIPE_VIDEO_PROFILE_UNKNOWN;
    ctx->max_entrypoints = 1;
    ctx->max_attributes = 1;
    ctx->max_image_formats = 1;
