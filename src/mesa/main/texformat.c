@@ -218,6 +218,7 @@ _mesa_choose_tex_format(struct gl_context *ctx, GLenum target,
       RETURN_IF_SUPPORTED(MESA_FORMAT_Z16);
       RETURN_IF_SUPPORTED(MESA_FORMAT_X8_Z24);
       RETURN_IF_SUPPORTED(MESA_FORMAT_S8_Z24);
+      break;
 
  case GL_COMPRESSED_ALPHA_ARB:
     RETURN_IF_SUPPORTED(MESA_FORMAT_A8);
