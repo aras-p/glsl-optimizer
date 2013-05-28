@@ -1714,7 +1714,7 @@ radeon_llvm_check() {
                       sources with the --enable-experimental-targets=R600
                       configure flag])
     fi
-    LLVM_COMPONENTS="${LLVM_COMPONENTS} r600 bitreader"
+    LLVM_COMPONENTS="${LLVM_COMPONENTS} r600 bitreader ipo"
     NEED_RADEON_LLVM=yes
     AC_CHECK_LIB([elf], [elf_memory], [ELF_LIB=-lelf],
                                  [AC_MSG_ERROR([radeonsi and r600g require libelf when using LLVM])])
@@ -1770,7 +1770,7 @@ if test "x$with_gallium_drivers" != x; then
             if test "x$enable_r600_llvm" = xyes -o "x$enable_opencl" = xyes; then
                 radeon_llvm_check
                 R600_NEED_RADEON_GALLIUM=yes;
-                LLVM_COMPONENTS="${LLVM_COMPONENTS} ipo bitreader asmparser"
+                LLVM_COMPONENTS="${LLVM_COMPONENTS} bitreader asmparser"
             fi
             if test "x$enable_r600_llvm" = xyes; then
                 USE_R600_LLVM_COMPILER=yes;
