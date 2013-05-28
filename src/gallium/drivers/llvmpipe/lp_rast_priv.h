@@ -341,6 +341,6 @@ lp_rast_set_state(struct lp_rasterizer_task *task,
                   const union lp_rast_cmd_arg arg);
  
 void
-lp_debug_bin( const struct cmd_bin *bin );
+lp_debug_bin( const struct cmd_bin *bin, int x, int y );
 
 #endif

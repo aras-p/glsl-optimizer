@@ -90,13 +90,13 @@ is_blend( const struct lp_rast_state *state,
 
 
 static void
-debug_bin( const struct cmd_bin *bin )
+debug_bin( const struct cmd_bin *bin, int x, int y )
 {
    const struct lp_rast_state *state = NULL;
    const struct cmd_block *head = bin->head;
    int i, j = 0;
 
-   debug_printf("bin %d,%d:\n", bin->x, bin->y);
+   debug_printf("bin %d,%d:\n", x, y);
                 
    while (head) {
       for (i = 0; i < head->count; i++, j++) {
@@ -231,13 +231,14 @@ debug_triangle(int tilex, int tiley,
 static void
 do_debug_bin( struct tile *tile,
               const struct cmd_bin *bin,
+              int x, int y,
               boolean print_cmds)
 {
    unsigned k, j = 0;
    const struct cmd_block *block;
 
-   int tx = bin->x * TILE_SIZE;
-   int ty = bin->y * TILE_SIZE;
+   int tx = x * TILE_SIZE;
+   int ty = y * TILE_SIZE;
 
    memset(tile->data, ' ', sizeof tile->data);
    tile->coverage = 0;
@@ -286,13 +287,13 @@ do_debug_bin( struct tile *tile,
 }
 
 void
-lp_debug_bin( const struct cmd_bin *bin)
+lp_debug_bin( const struct cmd_bin *bin, int i, int j)
 {
    struct tile tile;
    int x,y;
 
    if (bin->head) {
-      do_debug_bin(&tile, bin, TRUE);
+      do_debug_bin(&tile, bin, i, j, TRUE);
 
       debug_printf("------------------------------------------------------------------\n");
       for (y = 0; y < TILE_SIZE; y++) {
@@ -349,9 +350,9 @@ lp_debug_draw_bins_by_coverage( struct lp_scene *scene )
          struct tile tile;
 
          if (bin->head) {
-            //lp_debug_bin(bin);
+            //lp_debug_bin(bin, x, y);
 
-            do_debug_bin(&tile, bin, FALSE);
+            do_debug_bin(&tile, bin, x, y, FALSE);
 
             total += tile.coverage;
             possible += 64*64;
@@ -419,7 +420,7 @@ lp_debug_bins( struct lp_scene *scene )
       for (x = 0; x < scene->tiles_x; x++) {
          struct cmd_bin *bin = lp_scene_get_bin(scene, x, y);
          if (bin->head) {
-            debug_bin(bin);
+            debug_bin(bin, x, y);
          }
       }
    }

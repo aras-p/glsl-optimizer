@@ -468,7 +468,7 @@ lp_scene_bin_iter_begin( struct lp_scene *scene )
  * of work (a bin) to work on.
  */
 struct cmd_bin *
-lp_scene_bin_iter_next( struct lp_scene *scene )
+lp_scene_bin_iter_next( struct lp_scene *scene , int *x, int *y)
 {
    struct cmd_bin *bin = NULL;
 
@@ -485,6 +485,8 @@ lp_scene_bin_iter_next( struct lp_scene *scene )
    }
 
    bin = lp_scene_get_bin(scene, scene->curr_x, scene->curr_y);
+   *x = scene->curr_x;
+   *y = scene->curr_y;
 
 end:
    /*printf("return bin %p at %d, %d\n", (void *) bin, *bin_x, *bin_y);*/

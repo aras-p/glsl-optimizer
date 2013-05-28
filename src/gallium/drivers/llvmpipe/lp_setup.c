@@ -181,7 +181,7 @@ begin_binning( struct lp_setup_context *setup )
    struct lp_scene *scene = setup->scene;
    boolean need_zsload = FALSE;
    boolean ok;
-   unsigned i, j;
+   unsigned i;
 
    assert(scene);
    assert(scene->fence == NULL);
@@ -191,15 +191,6 @@ begin_binning( struct lp_setup_context *setup )
    scene->fence = lp_fence_create(MAX2(1, setup->num_threads));
    if (!scene->fence)
       return FALSE;
-
-   /* Initialize the bin flags and x/y coords:
-    */
-   for (i = 0; i < scene->tiles_x; i++) {
-      for (j = 0; j < scene->tiles_y; j++) {
-         scene->tile[i][j].x = i;
-         scene->tile[i][j].y = j;
-      }
-   }
 
    ok = try_update_scene_state(setup);
    if (!ok)

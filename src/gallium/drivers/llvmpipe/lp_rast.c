@@ -87,13 +87,14 @@ lp_rast_end( struct lp_rasterizer *rast )
  */
 static void
 lp_rast_tile_begin(struct lp_rasterizer_task *task,
-                   const struct cmd_bin *bin)
+                   const struct cmd_bin *bin,
+                   int x, int y)
 {
-   LP_DBG(DEBUG_RAST, "%s %d,%d\n", __FUNCTION__, bin->x, bin->y);
+   LP_DBG(DEBUG_RAST, "%s %d,%d\n", __FUNCTION__, x, y);
 
    task->bin = bin;
-   task->x = bin->x * TILE_SIZE;
-   task->y = bin->y * TILE_SIZE;
+   task->x = x * TILE_SIZE;
+   task->y = y * TILE_SIZE;
 
    /* reset pointers to color and depth tile(s) */
    memset(task->color_tiles, 0, sizeof(task->color_tiles));
@@ -575,13 +576,14 @@ static lp_rast_cmd_func dispatch[LP_RAST_OP_MAX] =
 
 static void
 do_rasterize_bin(struct lp_rasterizer_task *task,
-                 const struct cmd_bin *bin)
+                 const struct cmd_bin *bin,
+                 int x, int y)
 {
    const struct cmd_block *block;
    unsigned k;
 
    if (0)
-      lp_debug_bin(bin);
+      lp_debug_bin(bin, x, y);
 
    for (block = bin->head; block; block = block->next) {
       for (k = 0; k < block->count; k++) {
@@ -600,11 +602,11 @@ do_rasterize_bin(struct lp_rasterizer_task *task,
  */
 static void
 rasterize_bin(struct lp_rasterizer_task *task,
-              const struct cmd_bin *bin )
+              const struct cmd_bin *bin, int x, int y )
 {
-   lp_rast_tile_begin( task, bin );
+   lp_rast_tile_begin( task, bin, x, y );
 
-   do_rasterize_bin(task, bin);
+   do_rasterize_bin(task, bin, x, y);
 
    lp_rast_tile_end(task);
 
@@ -646,27 +648,16 @@ rasterize_scene(struct lp_rasterizer_task *task,
 
    if (!task->rast->no_rast && !scene->discard) {
       /* loop over scene bins, rasterize each */
-#if 0
-      {
-         unsigned i, j;
-         for (i = 0; i < scene->tiles_x; i++) {
-            for (j = 0; j < scene->tiles_y; j++) {
-               struct cmd_bin *bin = lp_scene_get_bin(scene, i, j);
-               rasterize_bin(task, bin, i, j);
-            }
-         }
-      }
-#else
       {
          struct cmd_bin *bin;
+         int i, j;
 
          assert(scene);
-         while ((bin = lp_scene_bin_iter_next(scene))) {
+         while ((bin = lp_scene_bin_iter_next(scene, &i, &j))) {
             if (!is_empty_bin( bin ))
-               rasterize_bin(task, bin);
+               rasterize_bin(task, bin, i, j);
          }
       }
-#endif
    }
 
 
