@@ -263,13 +263,13 @@ void
 gen7_end_transform_feedback(struct gl_context *ctx,
 			    struct gl_transform_feedback_object *obj)
 {
-   /* Because we have to rely on the kernel to reset our SO write offsets, and
-    * we only get to do it once per batchbuffer, flush the batch after feedback
-    * so another transform feedback can get the write offset reset it needs.
-    *
-    * This also covers any cache flushing required.
+   /* After EndTransformFeedback, it's likely that the client program will try
+    * to draw using the contents of the transform feedback buffer as vertex
+    * input.  In order for this to work, we need to flush the data through at
+    * least the GS stage of the pipeline, and flush out the render cache.  For
+    * simplicity, just do a full flush.
     */
    struct brw_context *brw = brw_context(ctx);
 
-   intel_batchbuffer_flush(brw);
+   intel_batchbuffer_emit_mi_flush(brw);
 }
