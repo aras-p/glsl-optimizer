@@ -1460,6 +1460,8 @@ void brw_emit_query_end(struct brw_context *brw);
 
 /** gen6_queryobj.c */
 void gen6_init_queryobj_functions(struct dd_function_table *functions);
+void brw_store_register_mem64(struct brw_context *brw,
+                              drm_intel_bo *bo, uint32_t reg, int idx);
 
 /*======================================================================
  * brw_state_dump.c
