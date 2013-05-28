@@ -80,17 +80,23 @@ intel_copy_texsubimage(struct intel_context *intel,
       perf_debug("no support for array textures\n");
    }
 
-   copy_supported = intelImage->base.Base.TexFormat == intel_rb_format(irb);
+   /* glCopyTexImage (and the glBlitFramebuffer() path that reuses this)
+    * doesn't do any sRGB conversions.
+    */
+   gl_format src_format = _mesa_get_srgb_format_linear(intel_rb_format(irb));
+   gl_format dst_format = _mesa_get_srgb_format_linear(intelImage->base.Base.TexFormat);
+
+   copy_supported = src_format == dst_format;
 
    /* Converting ARGB8888 to XRGB8888 is trivial: ignore the alpha bits */
-   if (intel_rb_format(irb) == MESA_FORMAT_ARGB8888 &&
-       intelImage->base.Base.TexFormat == MESA_FORMAT_XRGB8888) {
+   if (src_format == MESA_FORMAT_ARGB8888 &&
+       dst_format == MESA_FORMAT_XRGB8888) {
       copy_supported = true;
    }
 
    /* Converting XRGB8888 to ARGB8888 requires setting the alpha bits to 1.0 */
-   if (intel_rb_format(irb) == MESA_FORMAT_XRGB8888 &&
-       intelImage->base.Base.TexFormat == MESA_FORMAT_ARGB8888) {
+   if (src_format == MESA_FORMAT_XRGB8888 &&
+       dst_format == MESA_FORMAT_ARGB8888) {
       copy_supported_with_alpha_override = true;
    }
 
