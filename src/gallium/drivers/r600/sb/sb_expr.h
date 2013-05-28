@@ -42,6 +42,9 @@ unsigned get_predsetcc_op(unsigned cc, unsigned cmp_type);
 unsigned get_killcc_op(unsigned cc, unsigned cmp_type);
 unsigned get_cndcc_op(unsigned cc, unsigned cmp_type);
 
+void convert_to_mov(alu_node &n, value *src,
+                    bool neg = false, bool abs = false);
+
 class expr_handler {
 
    shader &sh;
