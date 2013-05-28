@@ -42,27 +42,11 @@ enum lp_texture_usage
 };
 
 
-/** Per-tile layout mode */
-enum lp_texture_layout
-{
-   LP_TEX_LAYOUT_NONE = 0,  /**< no layout for the tile data yet */
-   LP_TEX_LAYOUT_LINEAR,    /**< the tile data is in linear layout */
-};
-
-
 struct pipe_context;
 struct pipe_screen;
 struct llvmpipe_context;
 
 struct sw_displaytarget;
-
-
-/**
- * We keep one or two copies of the texture image data:  one in a simple
- * linear layout (for texture sampling) and another in a tiled layout (for
- * render targets).  We keep track of whether each image tile is linear
- * or tiled on a per-tile basis.
- */
 
 
 /** A 1D/2D/3D image, one mipmap level */
@@ -75,10 +59,9 @@ struct llvmpipe_texture_image
 /**
  * llvmpipe subclass of pipe_resource.  A texture, drawing surface,
  * vertex buffer, const buffer, etc.
- * Textures are stored differently than othere types of objects such as
+ * Textures are stored differently than other types of objects such as
  * vertex buffers and const buffers.
- * The former are tiled and have per-tile layout flags.
- * The later are simple malloc'd blocks of memory.
+ * The latter are simple malloc'd blocks of memory.
  */
 struct llvmpipe_resource
 {
@@ -88,8 +71,6 @@ struct llvmpipe_resource
    unsigned row_stride[LP_MAX_TEXTURE_LEVELS];
    /** Image stride (for cube maps, array or 3D textures) in bytes */
    unsigned img_stride[LP_MAX_TEXTURE_LEVELS];
-   unsigned tiles_per_row[LP_MAX_TEXTURE_LEVELS];
-   unsigned tiles_per_image[LP_MAX_TEXTURE_LEVELS];
    /** Number of 3D slices or cube faces per level */
    unsigned num_slices_faces[LP_MAX_TEXTURE_LEVELS];
    /** Offset to start of mipmap level, in bytes */
@@ -110,9 +91,6 @@ struct llvmpipe_resource
     * Data for non-texture resources.
     */
    void *data;
-
-   /** array [level][face or slice][tile_y][tile_x] of layout values) */
-   enum lp_texture_layout *layout[LP_MAX_TEXTURE_LEVELS];
 
    boolean userBuffer;  /** Is this a user-space buffer? */
    unsigned timestamp;
@@ -183,7 +161,7 @@ llvmpipe_resource_is_texture(const struct pipe_resource *resource)
 
 static INLINE unsigned
 llvmpipe_resource_stride(struct pipe_resource *resource,
-                        unsigned level)
+                         unsigned level)
 {
    struct llvmpipe_resource *lpr = llvmpipe_resource(resource);
    assert(level < LP_MAX_TEXTURE_2D_LEVELS);
@@ -195,13 +173,12 @@ void *
 llvmpipe_resource_map(struct pipe_resource *resource,
                       unsigned level,
                       unsigned layer,
-                      enum lp_texture_usage tex_usage,
-                      enum lp_texture_layout layout);
+                      enum lp_texture_usage tex_usage);
 
 void
 llvmpipe_resource_unmap(struct pipe_resource *resource,
-                       unsigned level,
-                       unsigned layer);
+                        unsigned level,
+                        unsigned layer);
 
 
 void *
@@ -214,26 +191,23 @@ llvmpipe_resource_size(const struct pipe_resource *resource);
 
 ubyte *
 llvmpipe_get_texture_image_address(struct llvmpipe_resource *lpr,
-                                    unsigned face_slice, unsigned level,
-                                    enum lp_texture_layout layout);
+                                   unsigned face_slice, unsigned level);
 
 void *
 llvmpipe_get_texture_image(struct llvmpipe_resource *resource,
-                            unsigned face_slice, unsigned level,
-                            enum lp_texture_usage usage,
-                            enum lp_texture_layout layout);
+                           unsigned face_slice, unsigned level,
+                           enum lp_texture_usage usage);
 
 void *
 llvmpipe_get_texture_image_all(struct llvmpipe_resource *lpr,
                                unsigned level,
-                               enum lp_texture_usage usage,
-                               enum lp_texture_layout layout);
+                               enum lp_texture_usage usage);
 
 ubyte *
 llvmpipe_get_texture_tile_linear(struct llvmpipe_resource *lpr,
-                                  unsigned face_slice, unsigned level,
-                                  enum lp_texture_usage usage,
-                                  unsigned x, unsigned y);
+                                 unsigned face_slice, unsigned level,
+                                 enum lp_texture_usage usage,
+                                 unsigned x, unsigned y);
 
 
 extern void

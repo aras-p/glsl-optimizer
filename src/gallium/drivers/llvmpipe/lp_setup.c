@@ -704,8 +704,7 @@ lp_setup_set_fragment_sampler_views(struct lp_setup_context *setup,
                 * still are tiled.
                 */
                mip_ptr = llvmpipe_get_texture_image_all(lp_tex, first_level,
-                                                        LP_TEX_USAGE_READ,
-                                                        LP_TEX_LAYOUT_LINEAR);
+                                                        LP_TEX_USAGE_READ);
                jit_tex->base = lp_tex->linear_img.data;
             }
             else {
@@ -736,8 +735,7 @@ lp_setup_set_fragment_sampler_views(struct lp_setup_context *setup,
                if (llvmpipe_resource_is_texture(res)) {
                   for (j = first_level; j <= last_level; j++) {
                      mip_ptr = llvmpipe_get_texture_image_all(lp_tex, j,
-                                                              LP_TEX_USAGE_READ,
-                                                              LP_TEX_LAYOUT_LINEAR);
+                                                              LP_TEX_USAGE_READ);
                      jit_tex->mip_offsets[j] = (uint8_t *)mip_ptr - (uint8_t *)jit_tex->base;
                      /*
                       * could get mip offset directly but need call above to

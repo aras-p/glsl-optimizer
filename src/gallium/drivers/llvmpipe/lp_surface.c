@@ -153,12 +153,10 @@ lp_resource_copy(struct pipe_context *pipe,
    {
       const ubyte *src_linear_ptr
          = llvmpipe_get_texture_image_address(src_tex, src_box->z,
-                                              src_level,
-                                              LP_TEX_LAYOUT_LINEAR);
+                                              src_level);
       ubyte *dst_linear_ptr
          = llvmpipe_get_texture_image_address(dst_tex, dstz,
-                                              dst_level,
-                                              LP_TEX_LAYOUT_LINEAR);
+                                              dst_level);
 
       if (dst_linear_ptr && src_linear_ptr) {
          util_copy_box(dst_linear_ptr, format,

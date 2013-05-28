@@ -300,14 +300,12 @@ prepare_shader_sampling(
                /* must trigger allocation first before we can get base ptr */
                /* XXX this may fail due to OOM ? */
                mip_ptr = llvmpipe_get_texture_image_all(lp_tex, view->u.tex.first_level,
-                                                        LP_TEX_USAGE_READ,
-                                                        LP_TEX_LAYOUT_LINEAR);
+                                                        LP_TEX_USAGE_READ);
                addr = lp_tex->linear_img.data;
 
                for (j = first_level; j <= last_level; j++) {
                   mip_ptr = llvmpipe_get_texture_image_all(lp_tex, j,
-                                                           LP_TEX_USAGE_READ,
-                                                           LP_TEX_LAYOUT_LINEAR);
+                                                           LP_TEX_USAGE_READ);
                   mip_offsets[j] = (uint8_t *)mip_ptr - (uint8_t *)addr;
                   /*
                    * could get mip offset directly but need call above to

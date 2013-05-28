@@ -163,8 +163,7 @@ lp_scene_begin_rasterization(struct lp_scene *scene)
          scene->cbufs[i].map = llvmpipe_resource_map(cbuf->texture,
                                                      cbuf->u.tex.level,
                                                      cbuf->u.tex.first_layer,
-                                                     LP_TEX_USAGE_READ_WRITE,
-                                                     LP_TEX_LAYOUT_LINEAR);
+                                                     LP_TEX_USAGE_READ_WRITE);
       }
       else {
          struct llvmpipe_resource *lpr = llvmpipe_resource(cbuf->texture);
@@ -184,8 +183,7 @@ lp_scene_begin_rasterization(struct lp_scene *scene)
       scene->zsbuf.map = llvmpipe_resource_map(zsbuf->texture,
                                                zsbuf->u.tex.level,
                                                zsbuf->u.tex.first_layer,
-                                               LP_TEX_USAGE_READ_WRITE,
-                                               LP_TEX_LAYOUT_LINEAR);
+                                               LP_TEX_USAGE_READ_WRITE);
    }
 }
 
