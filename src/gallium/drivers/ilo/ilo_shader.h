@@ -74,8 +74,6 @@ struct ilo_shader_variant {
  */
 struct ilo_shader {
    struct ilo_shader_variant variant;
-   /* hash of the shader variant for quicker lookup */
-   unsigned hash;
 
    struct {
       int semantic_names[PIPE_MAX_SHADER_INPUTS];

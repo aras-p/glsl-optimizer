@@ -160,23 +160,6 @@ ilo_shader_variant_guess(struct ilo_shader_variant *variant,
    }
 }
 
-/**
- * Hash a shader variant.
- */
-static unsigned int
-ilo_shader_variant_hash(const struct ilo_shader_variant *variant)
-{
-   const int num_bytes = sizeof(*variant);
-   const unsigned char *bytes = (const unsigned char *) variant;
-   const unsigned int seed = 131;
-   unsigned int hash = 0;
-   int i;
-
-   for (i = 0; i < num_bytes; i++)
-      hash = hash * seed + bytes[i];
-
-   return hash;
-}
 
 /**
  * Parse a TGSI instruction for the shader info.
@@ -428,14 +411,12 @@ ilo_shader_state_gc(struct ilo_shader_state *state)
  */
 static struct ilo_shader *
 ilo_shader_state_search_variant(struct ilo_shader_state *state,
-                                unsigned int hash,
                                 const struct ilo_shader_variant *variant)
 {
    struct ilo_shader *sh = NULL, *tmp;
 
    LIST_FOR_EACH_ENTRY(tmp, &state->variants, list) {
-      if (tmp->hash == hash &&
-          memcmp(&tmp->variant, variant, sizeof(*variant)) == 0) {
+      if (memcmp(&tmp->variant, variant, sizeof(*variant)) == 0) {
          sh = tmp;
          break;
       }
@@ -451,10 +432,9 @@ struct ilo_shader *
 ilo_shader_state_add_variant(struct ilo_shader_state *state,
                              const struct ilo_shader_variant *variant)
 {
-   const unsigned int hash = ilo_shader_variant_hash(variant);
    struct ilo_shader *sh;
 
-   sh = ilo_shader_state_search_variant(state, hash, variant);
+   sh = ilo_shader_state_search_variant(state, variant);
    if (sh)
       return sh;
 
@@ -483,7 +463,6 @@ ilo_shader_state_add_variant(struct ilo_shader_state *state,
    }
 
    sh->variant = *variant;
-   sh->hash = hash;
 
    ilo_shader_state_add_shader(state, sh);
 
