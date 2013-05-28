@@ -653,7 +653,7 @@ link_assign_uniform_locations(struct gl_shader_program *prog)
        *     types cannot have initializers."
        */
       memset(prog->_LinkedShaders[i]->SamplerUnits, 0,
-             sizeof(gl_shader::SamplerUnits));
+             sizeof(prog->_LinkedShaders[i]->SamplerUnits));
 
       link_update_uniform_buffer_variables(prog->_LinkedShaders[i]);
 
@@ -724,9 +724,9 @@ link_assign_uniform_locations(struct gl_shader_program *prog)
       prog->_LinkedShaders[i]->active_samplers = parcel.shader_samplers_used;
       prog->_LinkedShaders[i]->shadow_samplers = parcel.shader_shadow_samplers;
 
-      assert(sizeof(gl_shader::SamplerTargets) == sizeof(parcel.targets));
+      STATIC_ASSERT(sizeof(prog->_LinkedShaders[i]->SamplerTargets) == sizeof(parcel.targets));
       memcpy(prog->_LinkedShaders[i]->SamplerTargets, parcel.targets,
-             sizeof(gl_shader::SamplerTargets));
+             sizeof(prog->_LinkedShaders[i]->SamplerTargets));
    }
 
 #ifndef NDEBUG
