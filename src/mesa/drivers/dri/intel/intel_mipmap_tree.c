@@ -575,6 +575,7 @@ intel_miptree_create_for_dri2_buffer(struct intel_context *intel,
                                                  region->tiling);
    if (!singlesample_mt)
       return NULL;
+   singlesample_mt->region->name = region->name;
 
    if (num_samples == 0)
       return singlesample_mt;
