@@ -263,6 +263,14 @@ get_surface_type(struct intel_context *intel,
          else {
             return ubyte_types_norm[size];
          }
+      case GL_FIXED:
+         if (intel->gen >= 8 || intel->is_haswell)
+            return fixed_point_types[size];
+
+         /* This produces GL_FIXED inputs as values between INT32_MIN and
+          * INT32_MAX, which will be scaled down by 1/65536 by the VS.
+          */
+         return int_types_scale[size];
       /* See GL_ARB_vertex_type_2_10_10_10_rev.
        * W/A: Pre-Haswell, the hardware doesn't really support the formats we'd
        * like to use here, so upload everything as UINT and fix
