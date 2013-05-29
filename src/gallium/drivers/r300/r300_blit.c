@@ -363,13 +363,12 @@ static void r300_clear(struct pipe_context* pipe,
 
     /* Clear. */
     if (buffers) {
-        enum pipe_format cformat = fb->nr_cbufs ? fb->cbufs[0]->format : PIPE_FORMAT_NONE;
         /* Clear using the blitter. */
         r300_blitter_begin(r300, R300_CLEAR);
         util_blitter_clear(r300->blitter,
                            width,
                            height,
-                           buffers, cformat, color, depth, stencil);
+                           buffers, color, depth, stencil);
         r300_blitter_end(r300);
     } else if (r300->zmask_clear.dirty ||
                r300->hiz_clear.dirty ||

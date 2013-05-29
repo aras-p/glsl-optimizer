@@ -98,8 +98,6 @@ struct blitter_context_priv
 
    /* Vertex elements states. */
    void *velem_state;
-   void *velem_uint_state;
-   void *velem_sint_state;
    void *velem_state_readbuf[4]; /**< X, XY, XYZ, XYZW */
 
    /* Sampler state. */
@@ -119,7 +117,6 @@ struct blitter_context_priv
    unsigned dst_height;
 
    boolean has_geometry_shader;
-   boolean vertex_has_integers;
    boolean has_stream_out;
    boolean has_stencil_export;
    boolean has_texture_multisample;
@@ -171,9 +168,6 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
    ctx->has_geometry_shader =
       pipe->screen->get_shader_param(pipe->screen, PIPE_SHADER_GEOMETRY,
                                      PIPE_SHADER_CAP_MAX_INSTRUCTIONS) > 0;
-   ctx->vertex_has_integers =
-      pipe->screen->get_shader_param(pipe->screen, PIPE_SHADER_VERTEX,
-                                     PIPE_SHADER_CAP_INTEGERS);
    ctx->has_stream_out =
       pipe->screen->get_param(pipe->screen,
                               PIPE_CAP_MAX_STREAM_OUTPUT_BUFFERS) != 0;
@@ -265,26 +259,6 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
    }
    ctx->velem_state = pipe->create_vertex_elements_state(pipe, 2, &velem[0]);
 
-   if (ctx->vertex_has_integers) {
-      memset(&velem[0], 0, sizeof(velem[0]) * 2);
-      velem[0].src_offset = 0;
-      velem[0].src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
-      velem[0].vertex_buffer_index = ctx->base.vb_slot;
-      velem[1].src_offset = 4 * sizeof(float);
-      velem[1].src_format = PIPE_FORMAT_R32G32B32A32_SINT;
-      velem[1].vertex_buffer_index = ctx->base.vb_slot;
-      ctx->velem_sint_state = pipe->create_vertex_elements_state(pipe, 2, &velem[0]);
-
-      memset(&velem[0], 0, sizeof(velem[0]) * 2);
-      velem[0].src_offset = 0;
-      velem[0].src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
-      velem[0].vertex_buffer_index = ctx->base.vb_slot;
-      velem[1].src_offset = 4 * sizeof(float);
-      velem[1].src_format = PIPE_FORMAT_R32G32B32A32_UINT;
-      velem[1].vertex_buffer_index = ctx->base.vb_slot;
-      ctx->velem_uint_state = pipe->create_vertex_elements_state(pipe, 2, &velem[0]);
-   }
-
    if (ctx->has_stream_out) {
       static enum pipe_format formats[4] = {
          PIPE_FORMAT_R32_UINT,
@@ -368,10 +342,6 @@ void util_blitter_destroy(struct blitter_context *blitter)
    if (ctx->vs_pos_only)
       pipe->delete_vs_state(pipe, ctx->vs_pos_only);
    pipe->delete_vertex_elements_state(pipe, ctx->velem_state);
-   if (ctx->vertex_has_integers) {
-      pipe->delete_vertex_elements_state(pipe, ctx->velem_sint_state);
-      pipe->delete_vertex_elements_state(pipe, ctx->velem_uint_state);
-   }
    for (i = 0; i < 4; i++) {
       if (ctx->velem_state_readbuf[i]) {
          pipe->delete_vertex_elements_state(pipe, ctx->velem_state_readbuf[i]);
@@ -982,7 +952,6 @@ void util_blitter_draw_rectangle(struct blitter_context *blitter,
 static void util_blitter_clear_custom(struct blitter_context *blitter,
                                       unsigned width, unsigned height,
                                       unsigned clear_buffers,
-                                      enum pipe_format cbuf_format,
                                       const union pipe_color_union *color,
                                       double depth, unsigned stencil,
                                       void *custom_blend, void *custom_dsa)
@@ -1020,13 +989,7 @@ static void util_blitter_clear_custom(struct blitter_context *blitter,
    sr.ref_value[0] = stencil & 0xff;
    pipe->set_stencil_ref(pipe, &sr);
 
-   if (util_format_is_pure_sint(cbuf_format)) {
-      pipe->bind_vertex_elements_state(pipe, ctx->velem_sint_state);
-   } else if (util_format_is_pure_uint(cbuf_format)) {
-      pipe->bind_vertex_elements_state(pipe, ctx->velem_uint_state);
-   } else {
-      pipe->bind_vertex_elements_state(pipe, ctx->velem_state);
-   }
+   pipe->bind_vertex_elements_state(pipe, ctx->velem_state);
    ctx->bind_fs_state(pipe, ctx->fs_write_all_cbufs);
    pipe->set_sample_mask(pipe, ~0);
 
@@ -1044,12 +1007,11 @@ static void util_blitter_clear_custom(struct blitter_context *blitter,
 void util_blitter_clear(struct blitter_context *blitter,
                         unsigned width, unsigned height,
                         unsigned clear_buffers,
-                        enum pipe_format cbuf_format,
                         const union pipe_color_union *color,
                         double depth, unsigned stencil)
 {
    util_blitter_clear_custom(blitter, width, height,
-                             clear_buffers, cbuf_format, color, depth, stencil,
+                             clear_buffers, color, depth, stencil,
                              NULL, NULL);
 }
 
@@ -1058,8 +1020,8 @@ void util_blitter_custom_clear_depth(struct blitter_context *blitter,
                                      double depth, void *custom_dsa)
 {
     static const union pipe_color_union color;
-    util_blitter_clear_custom(blitter, width, height,
-                              0, PIPE_FORMAT_NONE, &color, depth, 0, NULL, custom_dsa);
+    util_blitter_clear_custom(blitter, width, height, 0, &color, depth, 0,
+                              NULL, custom_dsa);
 }
 
 void util_blitter_default_dst_texture(struct pipe_surface *dst_templ,
