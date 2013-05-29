@@ -60,6 +60,7 @@ static const struct debug_named_value debug_options[] = {
 		{"disasm",    FD_DBG_DISASM, "Dump TGSI and adreno shader disassembly"},
 		{"dclear",    FD_DBG_DCLEAR, "Mark all state dirty after clear"},
 		{"dgmem",     FD_DBG_DGMEM,  "Mark all state dirty after GMEM tile pass"},
+		{"dscis",     FD_DBG_DSCIS,  "Disable scissor optimization"},
 		DEBUG_NAMED_VALUE_END
 };
 

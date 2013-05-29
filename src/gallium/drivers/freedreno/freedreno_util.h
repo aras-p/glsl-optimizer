@@ -47,10 +47,11 @@ enum adreno_pa_su_sc_draw fd_polygon_mode(unsigned mode);
 enum adreno_stencil_op fd_stencil_op(unsigned op);
 
 
-#define FD_DBG_MSGS   0x1
-#define FD_DBG_DISASM 0x2
-#define FD_DBG_DCLEAR 0x4
-#define FD_DBG_DGMEM  0x8
+#define FD_DBG_MSGS     0x01
+#define FD_DBG_DISASM   0x02
+#define FD_DBG_DCLEAR   0x04
+#define FD_DBG_DGMEM    0x08
+#define FD_DBG_DSCIS    0x10
 extern int fd_mesa_debug;
 
 #define DBG(fmt, ...) \
