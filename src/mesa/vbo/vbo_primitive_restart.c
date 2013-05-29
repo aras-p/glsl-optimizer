@@ -31,6 +31,7 @@
 #include "main/imports.h"
 #include "main/bufferobj.h"
 #include "main/macros.h"
+#include "main/varray.h"
 
 #include "vbo.h"
 #include "vbo_context.h"
@@ -171,7 +172,7 @@ vbo_sw_primitive_restart(struct gl_context *ctx,
    GLuint sub_prim_num;
    GLuint end_index;
    GLuint sub_end_index;
-   GLuint restart_index = ctx->Array._RestartIndex;
+   GLuint restart_index = _mesa_primitive_restart_index(ctx, ib->type);
    struct _mesa_prim temp_prim;
    struct vbo_context *vbo = vbo_context(ctx);
    vbo_draw_func draw_prims_func = vbo->draw_prims;

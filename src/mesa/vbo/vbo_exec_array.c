@@ -92,7 +92,7 @@ vbo_get_minmax_index(struct gl_context *ctx,
 		     const GLuint count)
 {
    const GLboolean restart = ctx->Array._PrimitiveRestart;
-   const GLuint restartIndex = ctx->Array._RestartIndex;
+   const GLuint restartIndex = _mesa_primitive_restart_index(ctx, ib->type);
    const int index_size = vbo_sizeof_ib_type(ib->type);
    const char *indices;
    GLuint i;
