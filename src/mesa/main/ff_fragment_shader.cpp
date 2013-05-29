@@ -31,6 +31,7 @@ extern "C" {
 #include "glheader.h"
 #include "imports.h"
 #include "mtypes.h"
+#include "main/context.h"
 #include "main/uniforms.h"
 #include "main/macros.h"
 #include "main/samplerobj.h"
@@ -1309,7 +1310,7 @@ create_new_program(struct gl_context *ctx, struct state_key *key)
 
    state->language_version = 130;
    state->es_shader = false;
-   if (ctx->Extensions.OES_EGL_image_external)
+   if (_mesa_is_gles(ctx) && ctx->Extensions.OES_EGL_image_external)
       state->OES_EGL_image_external_enable = true;
    _mesa_glsl_initialize_types(state);
    _mesa_glsl_initialize_variables(p.instructions, state);

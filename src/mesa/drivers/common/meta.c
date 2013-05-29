@@ -654,7 +654,8 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
                _mesa_set_enable(ctx, GL_TEXTURE_2D, GL_FALSE);
                if (ctx->Extensions.ARB_texture_cube_map)
                   _mesa_set_enable(ctx, GL_TEXTURE_CUBE_MAP, GL_FALSE);
-               if (ctx->Extensions.OES_EGL_image_external)
+               if (_mesa_is_gles(ctx) &&
+                   ctx->Extensions.OES_EGL_image_external)
                   _mesa_set_enable(ctx, GL_TEXTURE_EXTERNAL_OES, GL_FALSE);
 
                if (ctx->API == API_OPENGL_COMPAT) {

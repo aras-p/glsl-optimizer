@@ -573,8 +573,7 @@ void st_init_extensions(struct st_context *st)
    ctx->Extensions.NV_texture_rectangle = GL_TRUE;
 
    ctx->Extensions.OES_EGL_image = GL_TRUE;
-   if (ctx->API != API_OPENGL_COMPAT)
-      ctx->Extensions.OES_EGL_image_external = GL_TRUE;
+   ctx->Extensions.OES_EGL_image_external = GL_TRUE;
    ctx->Extensions.OES_draw_texture = GL_TRUE;
 
    /* Expose the extensions which directly correspond to gallium caps. */

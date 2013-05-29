@@ -798,7 +798,7 @@ _mesa_select_tex_object(struct gl_context *ctx,
                 ctx->Extensions.ARB_texture_buffer_object ?
                 texUnit->CurrentTex[TEXTURE_BUFFER_INDEX] : NULL;
       case GL_TEXTURE_EXTERNAL_OES:
-         return ctx->Extensions.OES_EGL_image_external
+         return _mesa_is_gles(ctx) && ctx->Extensions.OES_EGL_image_external
             ? texUnit->CurrentTex[TEXTURE_EXTERNAL_INDEX] : NULL;
       case GL_TEXTURE_2D_MULTISAMPLE:
          return ctx->Extensions.ARB_texture_multisample
@@ -3243,7 +3243,8 @@ _mesa_EGLImageTargetTexture2DOES (GLenum target, GLeglImageOES image)
       valid_target = ctx->Extensions.OES_EGL_image;
       break;
    case GL_TEXTURE_EXTERNAL_OES:
-      valid_target = ctx->Extensions.OES_EGL_image_external;
+      valid_target =
+         _mesa_is_gles(ctx) ? ctx->Extensions.OES_EGL_image_external : false;
       break;
    default:
       valid_target = false;

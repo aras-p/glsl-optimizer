@@ -1184,14 +1184,14 @@ glcpp_parser_create (const struct gl_extensions *extensions, int api)
 	parser->is_gles = false;
 
 	/* Add pre-defined macros. */
-	if (extensions != NULL) {
-	   if (extensions->OES_EGL_image_external)
-	      add_builtin_define(parser, "GL_OES_EGL_image_external", 1);
-	}
-
 	if (api == API_OPENGLES2) {
-		parser->is_gles = true;
-		add_builtin_define(parser, "GL_ES", 1);
+           parser->is_gles = true;
+           add_builtin_define(parser, "GL_ES", 1);
+
+           if (extensions != NULL) {
+              if (extensions->OES_EGL_image_external)
+                 add_builtin_define(parser, "GL_OES_EGL_image_external", 1);
+           }
 	} else {
 	   add_builtin_define(parser, "GL_ARB_draw_buffers", 1);
 	   add_builtin_define(parser, "GL_ARB_texture_rectangle", 1);
