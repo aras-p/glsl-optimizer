@@ -39,6 +39,7 @@
 #define ILO_MAX_SAMPLERS        16
 #define ILO_MAX_SO_BINDINGS     64
 #define ILO_MAX_SO_BUFFERS      4
+#define ILO_MAX_VIEWPORTS       1
 
 #define ILO_MAX_VS_SURFACES        (ILO_MAX_CONST_BUFFERS + ILO_MAX_SAMPLER_VIEWS)
 #define ILO_VS_CONST_SURFACE(i)    (i)
@@ -72,6 +73,15 @@ struct ilo_so_state {
    unsigned append_bitmask;
 
    bool enabled;
+};
+
+struct ilo_viewport_state {
+   struct pipe_viewport_state states[ILO_MAX_VIEWPORTS];
+   unsigned count;
+};
+
+struct ilo_scissor_state {
+   struct pipe_scissor_state states[ILO_MAX_VIEWPORTS];
 };
 
 #endif /* ILO_GPE_H */

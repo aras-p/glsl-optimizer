@@ -568,11 +568,13 @@ static void
 ilo_set_scissor_states(struct pipe_context *pipe,
                        unsigned start_slot,
                        unsigned num_scissors,
-                       const struct pipe_scissor_state *state)
+                       const struct pipe_scissor_state *scissors)
 {
    struct ilo_context *ilo = ilo_context(pipe);
+   unsigned i;
 
-   ilo->scissor = *state;
+   for (i = 0; i < num_scissors; i++)
+      ilo->scissor.states[start_slot + i] = scissors[i];
 
    ilo->dirty |= ILO_DIRTY_SCISSOR;
 }
@@ -581,11 +583,24 @@ static void
 ilo_set_viewport_states(struct pipe_context *pipe,
                         unsigned start_slot,
                         unsigned num_viewports,
-                        const struct pipe_viewport_state *state)
+                        const struct pipe_viewport_state *viewports)
 {
    struct ilo_context *ilo = ilo_context(pipe);
 
-   ilo->viewport = *state;
+   if (viewports) {
+      unsigned i;
+
+      for (i = 0; i < num_viewports; i++)
+         ilo->viewport.states[start_slot + i] = viewports[i];
+
+      if (ilo->viewport.count < start_slot + num_viewports)
+         ilo->viewport.count = start_slot + num_viewports;
+   }
+   else {
+      if (ilo->viewport.count <= start_slot + num_viewports &&
+          ilo->viewport.count > start_slot)
+         ilo->viewport.count = start_slot;
+   }
 
    ilo->dirty |= ILO_DIRTY_VIEWPORT;
 }

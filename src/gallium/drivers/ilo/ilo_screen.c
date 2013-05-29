@@ -421,6 +421,8 @@ ilo_get_param(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_MAX_TEXTURE_BUFFER_SIZE:
       /* a BRW_SURFACE_BUFFER can have up to 2^27 elements */
       return 1 << 27;
+   case PIPE_CAP_MAX_VIEWPORTS:
+      return ILO_MAX_VIEWPORTS;
 
    default:
       return 0;

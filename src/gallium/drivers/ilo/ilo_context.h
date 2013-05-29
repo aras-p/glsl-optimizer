@@ -62,6 +62,10 @@ struct ilo_context {
 
    struct ilo_so_state so;
 
+   struct pipe_clip_state clip;
+   struct ilo_viewport_state viewport;
+   struct ilo_scissor_state scissor;
+
    struct pipe_blend_state *blend;
    struct pipe_rasterizer_state *rasterizer;
    struct pipe_depth_stencil_alpha_state *depth_stencil_alpha;
@@ -72,11 +76,8 @@ struct ilo_context {
    struct pipe_blend_color blend_color;
    struct pipe_stencil_ref stencil_ref;
    unsigned sample_mask;
-   struct pipe_clip_state clip;
    struct pipe_framebuffer_state framebuffer;
    struct pipe_poly_stipple poly_stipple;
-   struct pipe_scissor_state scissor;
-   struct pipe_viewport_state viewport;
 
    struct {
       struct pipe_sampler_state *samplers[ILO_MAX_SAMPLERS];

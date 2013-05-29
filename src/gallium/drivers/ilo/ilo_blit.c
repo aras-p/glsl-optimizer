@@ -554,7 +554,7 @@ ilo_blitter_begin(struct ilo_context *ilo, enum ilo_blitter_op op)
    util_blitter_save_blend(ilo->blitter, ilo->blend);
 
    /* undocumented? */
-   util_blitter_save_viewport(ilo->blitter, &ilo->viewport);
+   util_blitter_save_viewport(ilo->blitter, &ilo->viewport.states[0]);
    util_blitter_save_stencil_ref(ilo->blitter, &ilo->stencil_ref);
    util_blitter_save_sample_mask(ilo->blitter, ilo->sample_mask);
 
