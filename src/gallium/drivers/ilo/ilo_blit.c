@@ -560,13 +560,13 @@ ilo_blitter_begin(struct ilo_context *ilo, enum ilo_blitter_op op)
 
    switch (op) {
    case ILO_BLITTER_CLEAR:
-      util_blitter_save_rasterizer(ilo->blitter, ilo->rasterizer);
+      util_blitter_save_rasterizer(ilo->blitter, (void *) ilo->rasterizer);
       break;
    case ILO_BLITTER_CLEAR_SURFACE:
       util_blitter_save_framebuffer(ilo->blitter, &ilo->framebuffer);
       break;
    case ILO_BLITTER_BLIT:
-      util_blitter_save_rasterizer(ilo->blitter, ilo->rasterizer);
+      util_blitter_save_rasterizer(ilo->blitter, (void *) ilo->rasterizer);
       util_blitter_save_framebuffer(ilo->blitter, &ilo->framebuffer);
 
       util_blitter_save_fragment_sampler_states(ilo->blitter,

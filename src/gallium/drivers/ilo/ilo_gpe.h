@@ -84,4 +84,8 @@ struct ilo_scissor_state {
    struct pipe_scissor_state states[ILO_MAX_VIEWPORTS];
 };
 
+struct ilo_rasterizer_state {
+   struct pipe_rasterizer_state state;
+};
+
 #endif /* ILO_GPE_H */

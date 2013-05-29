@@ -300,12 +300,12 @@ static void *
 ilo_create_rasterizer_state(struct pipe_context *pipe,
                             const struct pipe_rasterizer_state *state)
 {
-   struct pipe_rasterizer_state *rast;
+   struct ilo_rasterizer_state *rast;
 
-   rast = MALLOC_STRUCT(pipe_rasterizer_state);
+   rast = MALLOC_STRUCT(ilo_rasterizer_state);
    assert(rast);
 
-   *rast = *state;
+   rast->state = *state;
 
    return rast;
 }

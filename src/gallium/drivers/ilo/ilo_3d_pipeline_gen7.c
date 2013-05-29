@@ -424,7 +424,7 @@ gen7_pipeline_sol(struct ilo_3d_pipeline *p,
       const unsigned buffer_mask = (1 << ilo->so.count) - 1;
 
       p->gen7_3DSTATE_STREAMOUT(p->dev, buffer_mask, sh->out.count,
-            ilo->rasterizer->rasterizer_discard, p->cp);
+            ilo->rasterizer->state.rasterizer_discard, p->cp);
    }
 }
 
@@ -441,7 +441,7 @@ gen7_pipeline_sf(struct ilo_3d_pipeline *p,
          (ilo->vs)? ilo->vs->shader : NULL;
 
       p->gen7_3DSTATE_SBE(p->dev,
-            ilo->rasterizer, fs, last_sh, p->cp);
+            &ilo->rasterizer->state, fs, last_sh, p->cp);
    }
 
    /* 3DSTATE_SF */
@@ -449,7 +449,7 @@ gen7_pipeline_sf(struct ilo_3d_pipeline *p,
       gen7_wa_pipe_control_cs_stall(p, true, true);
 
       p->gen7_3DSTATE_SF(p->dev,
-            ilo->rasterizer, ilo->framebuffer.zsbuf, p->cp);
+            &ilo->rasterizer->state, ilo->framebuffer.zsbuf, p->cp);
    }
 }
 
@@ -472,7 +472,7 @@ gen7_pipeline_wm(struct ilo_3d_pipeline *p,
          gen7_wa_pipe_control_wm_max_threads_stall(p);
 
       p->gen7_3DSTATE_WM(p->dev,
-            fs, ilo->rasterizer, cc_may_kill, p->cp);
+            fs, &ilo->rasterizer->state, cc_may_kill, p->cp);
    }
 
    /* 3DSTATE_BINDING_TABLE_POINTERS_PS */
@@ -582,7 +582,7 @@ gen7_pipeline_wm_multisample(struct ilo_3d_pipeline *p,
          &p->packed_sample_position_1x;
 
       p->gen6_3DSTATE_MULTISAMPLE(p->dev, num_samples, packed_sample_pos,
-            ilo->rasterizer->half_pixel_center, p->cp);
+            ilo->rasterizer->state.half_pixel_center, p->cp);
 
       p->gen7_3DSTATE_SAMPLE_MASK(p->dev,
             (num_samples > 1) ? ilo->sample_mask : 0x1,

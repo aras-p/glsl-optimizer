@@ -615,7 +615,7 @@ gen6_pipeline_clip(struct ilo_3d_pipeline *p,
           y1 <= 0.0f && y2 >= (float) ilo->framebuffer.height);
 
       p->gen6_3DSTATE_CLIP(p->dev,
-            ilo->rasterizer,
+            &ilo->rasterizer->state,
             (ilo->fs && ilo->fs->shader->in.has_linear_interp),
             enable_guardband, 1, p->cp);
    }
@@ -634,7 +634,7 @@ gen6_pipeline_sf(struct ilo_3d_pipeline *p,
          (ilo->vs)? ilo->vs->shader : NULL;
 
       p->gen6_3DSTATE_SF(p->dev,
-            ilo->rasterizer, fs, last_sh, p->cp);
+            &ilo->rasterizer->state, fs, last_sh, p->cp);
    }
 }
 
@@ -682,7 +682,7 @@ gen6_pipeline_wm(struct ilo_3d_pipeline *p,
          gen6_wa_pipe_control_wm_max_threads_stall(p);
 
       p->gen6_3DSTATE_WM(p->dev, fs, num_samplers,
-            ilo->rasterizer, dual_blend, cc_may_kill, p->cp);
+            &ilo->rasterizer->state, dual_blend, cc_may_kill, p->cp);
    }
 }
 
@@ -708,7 +708,7 @@ gen6_pipeline_wm_multisample(struct ilo_3d_pipeline *p,
       }
 
       p->gen6_3DSTATE_MULTISAMPLE(p->dev, num_samples, packed_sample_pos,
-            ilo->rasterizer->half_pixel_center, p->cp);
+            ilo->rasterizer->state.half_pixel_center, p->cp);
 
       p->gen6_3DSTATE_SAMPLE_MASK(p->dev,
             (num_samples > 1) ? ilo->sample_mask : 0x1, p->cp);
@@ -742,7 +742,7 @@ gen6_pipeline_wm_raster(struct ilo_3d_pipeline *p,
 {
    /* 3DSTATE_POLY_STIPPLE_PATTERN and 3DSTATE_POLY_STIPPLE_OFFSET */
    if ((DIRTY(RASTERIZER) || DIRTY(POLY_STIPPLE)) &&
-       ilo->rasterizer->poly_stipple_enable) {
+       ilo->rasterizer->state.poly_stipple_enable) {
       if (p->dev->gen == ILO_GEN(6))
          gen6_wa_pipe_control_post_sync(p, false);
 
@@ -753,17 +753,17 @@ gen6_pipeline_wm_raster(struct ilo_3d_pipeline *p,
    }
 
    /* 3DSTATE_LINE_STIPPLE */
-   if (DIRTY(RASTERIZER) && ilo->rasterizer->line_stipple_enable) {
+   if (DIRTY(RASTERIZER) && ilo->rasterizer->state.line_stipple_enable) {
       if (p->dev->gen == ILO_GEN(6))
          gen6_wa_pipe_control_post_sync(p, false);
 
       p->gen6_3DSTATE_LINE_STIPPLE(p->dev,
-            ilo->rasterizer->line_stipple_pattern,
-            ilo->rasterizer->line_stipple_factor + 1, p->cp);
+            ilo->rasterizer->state.line_stipple_pattern,
+            ilo->rasterizer->state.line_stipple_factor + 1, p->cp);
    }
 
    /* 3DSTATE_AA_LINE_PARAMETERS */
-   if (DIRTY(RASTERIZER) && ilo->rasterizer->line_smooth) {
+   if (DIRTY(RASTERIZER) && ilo->rasterizer->state.line_smooth) {
       if (p->dev->gen == ILO_GEN(6))
          gen6_wa_pipe_control_post_sync(p, false);
 
