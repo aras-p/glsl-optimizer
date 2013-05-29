@@ -322,11 +322,12 @@ util_make_fragment_tex_shader_writestencil(struct pipe_context *pipe,
 void *
 util_make_fragment_passthrough_shader(struct pipe_context *pipe,
                                       int input_semantic,
-                                      int input_interpolate)
+                                      int input_interpolate,
+                                      boolean write_all_cbufs)
 {
    static const char shader_templ[] =
          "FRAG\n"
-         "PROPERTY FS_COLOR0_WRITES_ALL_CBUFS 1\n"
+         "%s"
          "DCL IN[0], %s[0], %s\n"
          "DCL OUT[0], COLOR[0]\n"
 
@@ -337,7 +338,9 @@ util_make_fragment_passthrough_shader(struct pipe_context *pipe,
    struct tgsi_token tokens[1000];
    struct pipe_shader_state state = {tokens};
 
-   sprintf(text, shader_templ, tgsi_semantic_names[input_semantic],
+   sprintf(text, shader_templ,
+           write_all_cbufs ? "PROPERTY FS_COLOR0_WRITES_ALL_CBUFS 1\n" : "",
+           tgsi_semantic_names[input_semantic],
            tgsi_interpolate_names[input_interpolate]);
 
    if (!tgsi_text_translate(text, tokens, Elements(tokens))) {

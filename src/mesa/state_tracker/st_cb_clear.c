@@ -99,7 +99,8 @@ set_fragment_shader(struct st_context *st)
    if (!st->clear.fs)
       st->clear.fs =
          util_make_fragment_passthrough_shader(st->pipe, TGSI_SEMANTIC_GENERIC,
-                                               TGSI_INTERPOLATE_CONSTANT);
+                                               TGSI_INTERPOLATE_CONSTANT,
+                                               TRUE);
 
    cso_set_fragment_shader_handle(st->cso_context, st->clear.fs);
 }

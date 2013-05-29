@@ -959,7 +959,8 @@ hud_create(struct pipe_context *pipe, struct cso_context *cso)
    hud->fs_color =
          util_make_fragment_passthrough_shader(pipe,
                                                TGSI_SEMANTIC_COLOR,
-                                               TGSI_INTERPOLATE_CONSTANT);
+                                               TGSI_INTERPOLATE_CONSTANT,
+                                               TRUE);
 
    {
       /* Read a texture and do .xxxx swizzling. */
