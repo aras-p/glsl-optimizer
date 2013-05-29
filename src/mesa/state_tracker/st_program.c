@@ -1031,8 +1031,6 @@ st_translate_geometry_program(struct st_context *st,
       }
    }
 
-   assert(gs_output_semantic_name[0] == TGSI_SEMANTIC_POSITION);
-
    /* find max output slot referenced to compute gs_num_outputs */
    for (attr = 0; attr < VARYING_SLOT_MAX; attr++) {
       if (outputMapping[attr] != ~0 && outputMapping[attr] > maxSlot)
