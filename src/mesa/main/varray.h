@@ -248,6 +248,8 @@ _mesa_PrimitiveRestartIndex(GLuint index);
 extern void GLAPIENTRY
 _mesa_VertexAttribDivisor(GLuint index, GLuint divisor);
 
+extern unsigned
+_mesa_primitive_restart_index(const struct gl_context *ctx, GLenum ib_type);
 
 extern void
 _mesa_copy_client_array(struct gl_context *ctx,
