@@ -548,30 +548,6 @@ util_clear_depth_stencil(struct pipe_context *pipe,
 }
 
 
-/* Return whether this is an RGBA, Z, S, or combined ZS format.
- */
-static unsigned
-get_format_mask(enum pipe_format format)
-{
-   const struct util_format_description *desc = util_format_description(format);
-
-   assert(desc);
-
-   if (util_format_has_depth(desc)) {
-      if (util_format_has_stencil(desc)) {
-         return PIPE_MASK_ZS;
-      } else {
-         return PIPE_MASK_Z;
-      }
-   } else {
-      if (util_format_has_stencil(desc)) {
-         return PIPE_MASK_S;
-      } else {
-         return PIPE_MASK_RGBA;
-      }
-   }
-}
-
 /* Return if the box is totally inside the resource.
  */
 static boolean
@@ -654,7 +630,7 @@ boolean
 util_try_blit_via_copy_region(struct pipe_context *ctx,
                               const struct pipe_blit_info *blit)
 {
-   unsigned mask = get_format_mask(blit->dst.format);
+   unsigned mask = util_format_get_mask(blit->dst.format);
 
    /* No format conversions. */
    if (blit->src.resource->format != blit->src.format ||

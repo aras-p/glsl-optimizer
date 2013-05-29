@@ -31,6 +31,7 @@
 
 
 #include "pipe/p_format.h"
+#include "pipe/p_defines.h"
 #include "util/u_debug.h"
 
 union pipe_color_union;
@@ -520,6 +521,33 @@ util_format_is_depth_and_stencil(enum pipe_format format)
           util_format_has_stencil(desc);
 }
 
+/**
+ * Return whether this is an RGBA, Z, S, or combined ZS format.
+ * Useful for initializing pipe_blit_info::mask.
+ */
+static INLINE unsigned
+util_format_get_mask(enum pipe_format format)
+{
+   const struct util_format_description *desc =
+      util_format_description(format);
+
+   if (!desc)
+      return 0;
+
+   if (util_format_has_depth(desc)) {
+      if (util_format_has_stencil(desc)) {
+         return PIPE_MASK_ZS;
+      } else {
+         return PIPE_MASK_Z;
+      }
+   } else {
+      if (util_format_has_stencil(desc)) {
+         return PIPE_MASK_S;
+      } else {
+         return PIPE_MASK_RGBA;
+      }
+   }
+}
 
 /**
  * Give the RGBA colormask of the channels that can be represented in this
