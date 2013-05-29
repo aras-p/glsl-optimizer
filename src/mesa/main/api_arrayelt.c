@@ -1666,7 +1666,7 @@ _ae_ArrayElement(GLint elt)
    /* If PrimitiveRestart is enabled and the index is the RestartIndex
     * then we call PrimitiveRestartNV and return.
     */
-   if (ctx->Array._PrimitiveRestart && (elt == ctx->Array._RestartIndex)) {
+   if (ctx->Array.PrimitiveRestart && (elt == ctx->Array.RestartIndex)) {
       CALL_PrimitiveRestartNV((struct _glapi_table *)disp, ());
       return;
    }
