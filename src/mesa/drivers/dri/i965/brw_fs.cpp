@@ -1504,7 +1504,13 @@ fs_visitor::remove_dead_constants()
 	    if (inst->src[i].file != UNIFORM)
 	       continue;
 
-	    assert(constant_nr < (int)c->prog_data.nr_params);
+	    /* if we get a negative constant nr or one greater than we can
+	     * handle, this can cause an overflow, we can't just refuse to
+	     * build, so just go undefined and alias everyone to constant 0.
+	     */
+	    if (constant_nr < 0 || constant_nr >= (int)c->prog_data.nr_params) {
+	       constant_nr = 0;
+	    }
 
 	    /* For now, set this to non-negative.  We'll give it the
 	     * actual new number in a moment, in order to keep the
@@ -1552,6 +1558,10 @@ fs_visitor::remove_dead_constants()
 	 if (inst->src[i].file != UNIFORM)
 	    continue;
 
+         /* as above alias to 0 */
+	 if (constant_nr < 0 || constant_nr >= (int)c->prog_data.nr_params) {
+	    constant_nr = 0;
+	 }
 	 assert(this->params_remap[constant_nr] != -1);
 	 inst->src[i].reg = this->params_remap[constant_nr];
 	 inst->src[i].reg_offset = 0;
