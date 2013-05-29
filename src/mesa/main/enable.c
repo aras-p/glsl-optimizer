@@ -53,11 +53,6 @@ update_derived_primitive_restart_state(struct gl_context *ctx)
 {
    /* Update derived primitive restart state.
     */
-   if (ctx->Array.PrimitiveRestart)
-      ctx->Array._RestartIndex = ctx->Array.RestartIndex;
-   else
-      ctx->Array._RestartIndex = ~0;
-
    ctx->Array._PrimitiveRestart = ctx->Array.PrimitiveRestart
       || ctx->Array.PrimitiveRestartFixedIndex;
 }
