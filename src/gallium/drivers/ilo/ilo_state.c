@@ -785,15 +785,16 @@ ilo_set_stream_output_targets(struct pipe_context *pipe,
    if (!targets)
       num_targets = 0;
 
-   for (i = 0; i < num_targets; i++) {
-      pipe_so_target_reference(&ilo->stream_output_targets.targets[i],
-                               targets[i]);
-   }
-   for (; i < ilo->stream_output_targets.num_targets; i++)
-      pipe_so_target_reference(&ilo->stream_output_targets.targets[i], NULL);
+   for (i = 0; i < num_targets; i++)
+      pipe_so_target_reference(&ilo->so.states[i], targets[i]);
 
-   ilo->stream_output_targets.num_targets = num_targets;
-   ilo->stream_output_targets.append_bitmask = append_bitmask;
+   for (; i < ilo->so.count; i++)
+      pipe_so_target_reference(&ilo->so.states[i], NULL);
+
+   ilo->so.count = num_targets;
+   ilo->so.append_bitmask = append_bitmask;
+
+   ilo->so.enabled = (ilo->so.count > 0);
 
    ilo->dirty |= ILO_DIRTY_STREAM_OUTPUT_TARGETS;
 }

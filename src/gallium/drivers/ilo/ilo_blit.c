@@ -546,9 +546,7 @@ ilo_blitter_begin(struct ilo_context *ilo, enum ilo_blitter_op op)
    util_blitter_save_vertex_elements(ilo->blitter, (void *) ilo->ve);
    util_blitter_save_vertex_shader(ilo->blitter, ilo->vs);
    util_blitter_save_geometry_shader(ilo->blitter, ilo->gs);
-   util_blitter_save_so_targets(ilo->blitter,
-         ilo->stream_output_targets.num_targets,
-         ilo->stream_output_targets.targets);
+   util_blitter_save_so_targets(ilo->blitter, ilo->so.count, ilo->so.states);
 
    util_blitter_save_fragment_shader(ilo->blitter, ilo->fs);
    util_blitter_save_depth_stencil_alpha(ilo->blitter,

@@ -152,11 +152,10 @@ ilo_3d_pipeline_emit_draw(struct ilo_3d_pipeline *p,
                           const struct pipe_draw_info *info,
                           int *prim_generated, int *prim_emitted)
 {
-   const bool so_enabled = (ilo->stream_output_targets.num_targets > 0);
    bool success;
 
    if (ilo->dirty & ILO_DIRTY_STREAM_OUTPUT_TARGETS &&
-       so_enabled && !ilo->stream_output_targets.append_bitmask) {
+       ilo->so.enabled && !ilo->so.append_bitmask) {
       /*
        * We keep track of the SVBI in the driver, so that we can restore it
        * when the HW context is invalidated (by another process).  The value

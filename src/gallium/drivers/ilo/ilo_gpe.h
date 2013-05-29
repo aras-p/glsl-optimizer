@@ -66,4 +66,12 @@ struct ilo_ve_state {
    unsigned count;
 };
 
+struct ilo_so_state {
+   struct pipe_stream_output_target *states[ILO_MAX_SO_BUFFERS];
+   unsigned count;
+   unsigned append_bitmask;
+
+   bool enabled;
+};
+
 #endif /* ILO_GPE_H */

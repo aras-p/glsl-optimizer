@@ -394,11 +394,10 @@ gen7_pipeline_sol(struct ilo_3d_pipeline *p,
    gen6_pipeline_update_max_svbi(p, ilo, session);
 
    /* 3DSTATE_SO_BUFFER */
-   if ((DIRTY(STREAM_OUTPUT_TARGETS) || dirty_sh) &&
-       ilo->stream_output_targets.num_targets) {
+   if ((DIRTY(STREAM_OUTPUT_TARGETS) || dirty_sh) && ilo->so.enabled) {
       int i;
 
-      for (i = 0; i < ilo->stream_output_targets.num_targets; i++) {
+      for (i = 0; i < ilo->so.count; i++) {
          const int stride = so_info->stride[i] * 4; /* in bytes */
          int base = 0;
 
@@ -409,7 +408,7 @@ gen7_pipeline_sol(struct ilo_3d_pipeline *p,
          }
 
          p->gen7_3DSTATE_SO_BUFFER(p->dev, i, base, stride,
-               ilo->stream_output_targets.targets[i], p->cp);
+               ilo->so.states[i], p->cp);
       }
 
       for (; i < 4; i++)
@@ -417,13 +416,12 @@ gen7_pipeline_sol(struct ilo_3d_pipeline *p,
    }
 
    /* 3DSTATE_SO_DECL_LIST */
-   if (dirty_sh && ilo->stream_output_targets.num_targets)
+   if (dirty_sh && ilo->so.enabled)
       p->gen7_3DSTATE_SO_DECL_LIST(p->dev, so_info, sh, p->cp);
 
    /* 3DSTATE_STREAMOUT */
    if (DIRTY(STREAM_OUTPUT_TARGETS) || DIRTY(RASTERIZER) || dirty_sh) {
-      const unsigned buffer_mask =
-         (1 << ilo->stream_output_targets.num_targets) - 1;
+      const unsigned buffer_mask = (1 << ilo->so.count) - 1;
 
       p->gen7_3DSTATE_STREAMOUT(p->dev, buffer_mask, sh->out.count,
             ilo->rasterizer->rasterizer_discard, p->cp);

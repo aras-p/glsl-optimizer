@@ -525,7 +525,7 @@ gen6_pipeline_update_max_svbi(struct ilo_3d_pipeline *p,
       for (i = 0; i < so_info->num_outputs; i++) {
          const int output_buffer = so_info->output[i].output_buffer;
          const struct pipe_stream_output_target *so =
-            ilo->stream_output_targets.targets[output_buffer];
+            ilo->so.states[output_buffer];
          const int struct_size = so_info->stride[output_buffer] * 4;
          const int elem_size = so_info->output[i].num_components * 4;
          int buf_size, count;
@@ -901,9 +901,8 @@ gen6_pipeline_state_surfaces_so(struct ilo_3d_pipeline *p,
    const struct ilo_shader_state *vs = ilo->vs;
    const struct ilo_shader_state *gs = ilo->gs;
    const struct pipe_stream_output_target **so_targets =
-      (const struct pipe_stream_output_target **)
-      ilo->stream_output_targets.targets;
-   const int num_so_targets = ilo->stream_output_targets.num_targets;
+      (const struct pipe_stream_output_target **) ilo->so.states;
+   const int num_so_targets = ilo->so.count;
 
    if (p->dev->gen != ILO_GEN(6))
       return;

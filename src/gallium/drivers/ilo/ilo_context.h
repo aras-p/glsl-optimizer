@@ -60,6 +60,8 @@ struct ilo_context {
    const struct ilo_ve_state *ve;
    struct ilo_ib_state ib;
 
+   struct ilo_so_state so;
+
    struct pipe_blend_state *blend;
    struct pipe_rasterizer_state *rasterizer;
    struct pipe_depth_stencil_alpha_state *depth_stencil_alpha;
@@ -90,12 +92,6 @@ struct ilo_context {
       struct pipe_constant_buffer buffers[ILO_MAX_CONST_BUFFERS];
       unsigned num_buffers;
    } constant_buffers[PIPE_SHADER_TYPES];
-
-   struct {
-      struct pipe_stream_output_target *targets[ILO_MAX_SO_BUFFERS];
-      unsigned num_targets;
-      unsigned append_bitmask;
-   } stream_output_targets;
 
    struct {
       struct pipe_surface *surfaces[PIPE_MAX_SHADER_RESOURCES];
