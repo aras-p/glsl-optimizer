@@ -156,12 +156,12 @@ static void *
 ilo_create_blend_state(struct pipe_context *pipe,
                        const struct pipe_blend_state *state)
 {
-   struct pipe_blend_state *blend;
+   struct ilo_blend_state *blend;
 
-   blend = MALLOC_STRUCT(pipe_blend_state);
+   blend = MALLOC_STRUCT(ilo_blend_state);
    assert(blend);
 
-   *blend = *state;
+   blend->state = *state;
 
    return blend;
 }
@@ -330,12 +330,12 @@ static void *
 ilo_create_depth_stencil_alpha_state(struct pipe_context *pipe,
                                      const struct pipe_depth_stencil_alpha_state *state)
 {
-   struct pipe_depth_stencil_alpha_state *dsa;
+   struct ilo_dsa_state *dsa;
 
-   dsa = MALLOC_STRUCT(pipe_depth_stencil_alpha_state);
+   dsa = MALLOC_STRUCT(ilo_dsa_state);
    assert(dsa);
 
-   *dsa = *state;
+   dsa->state = *state;
 
    return dsa;
 }
@@ -345,7 +345,7 @@ ilo_bind_depth_stencil_alpha_state(struct pipe_context *pipe, void *state)
 {
    struct ilo_context *ilo = ilo_context(pipe);
 
-   ilo->depth_stencil_alpha = state;
+   ilo->dsa = state;
 
    ilo->dirty |= ILO_DIRTY_DEPTH_STENCIL_ALPHA;
 }
@@ -548,7 +548,17 @@ ilo_set_framebuffer_state(struct pipe_context *pipe,
 {
    struct ilo_context *ilo = ilo_context(pipe);
 
-   util_copy_framebuffer_state(&ilo->framebuffer, state);
+   util_copy_framebuffer_state(&ilo->fb.state, state);
+
+   if (state->nr_cbufs)
+      ilo->fb.num_samples = state->cbufs[0]->texture->nr_samples;
+   else if (state->zsbuf)
+      ilo->fb.num_samples = state->zsbuf->texture->nr_samples;
+   else
+      ilo->fb.num_samples = 1;
+
+   if (!ilo->fb.num_samples)
+      ilo->fb.num_samples = 1;
 
    ilo->dirty |= ILO_DIRTY_FRAMEBUFFER;
 }

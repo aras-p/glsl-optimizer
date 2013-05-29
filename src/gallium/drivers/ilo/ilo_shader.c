@@ -64,8 +64,8 @@ ilo_shader_variant_init(struct ilo_shader_variant *variant,
       variant->u.fs.flatshade =
          (info->has_color_interp && ilo->rasterizer->state.flatshade);
       variant->u.fs.fb_height = (info->has_pos) ?
-         ilo->framebuffer.height : 1;
-      variant->u.fs.num_cbufs = ilo->framebuffer.nr_cbufs;
+         ilo->fb.state.height : 1;
+      variant->u.fs.num_cbufs = ilo->fb.state.nr_cbufs;
       break;
    default:
       assert(!"unknown shader type");
@@ -137,7 +137,7 @@ ilo_shader_variant_guess(struct ilo_shader_variant *variant,
    case PIPE_SHADER_FRAGMENT:
       variant->u.fs.flatshade = false;
       variant->u.fs.fb_height = (info->has_pos) ?
-         ilo->framebuffer.height : 1;
+         ilo->fb.state.height : 1;
       variant->u.fs.num_cbufs = 1;
       break;
    default:

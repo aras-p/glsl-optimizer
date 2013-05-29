@@ -70,15 +70,15 @@ struct ilo_context {
    struct pipe_poly_stipple poly_stipple;
    unsigned sample_mask;
 
-   struct pipe_blend_state *blend;
-   struct pipe_depth_stencil_alpha_state *depth_stencil_alpha;
+   const struct ilo_dsa_state *dsa;
+   struct pipe_stencil_ref stencil_ref;
+   const struct ilo_blend_state *blend;
+   struct pipe_blend_color blend_color;
+   struct ilo_fb_state fb;
+
    struct ilo_shader_state *fs;
    struct ilo_shader_state *vs;
    struct ilo_shader_state *gs;
-
-   struct pipe_blend_color blend_color;
-   struct pipe_stencil_ref stencil_ref;
-   struct pipe_framebuffer_state framebuffer;
 
    struct {
       struct pipe_sampler_state *samplers[ILO_MAX_SAMPLERS];

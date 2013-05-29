@@ -449,7 +449,7 @@ gen7_pipeline_sf(struct ilo_3d_pipeline *p,
       gen7_wa_pipe_control_cs_stall(p, true, true);
 
       p->gen7_3DSTATE_SF(p->dev,
-            &ilo->rasterizer->state, ilo->framebuffer.zsbuf, p->cp);
+            &ilo->rasterizer->state, ilo->fb.state.zsbuf, p->cp);
    }
 }
 
@@ -462,8 +462,8 @@ gen7_pipeline_wm(struct ilo_3d_pipeline *p,
    if (DIRTY(FS) || DIRTY(BLEND) || DIRTY(DEPTH_STENCIL_ALPHA) ||
        DIRTY(RASTERIZER)) {
       const struct ilo_shader *fs = (ilo->fs)? ilo->fs->shader : NULL;
-      const bool cc_may_kill = (ilo->depth_stencil_alpha->alpha.enabled ||
-                                   ilo->blend->alpha_to_coverage);
+      const bool cc_may_kill = (ilo->dsa->state.alpha.enabled ||
+                                ilo->blend->state.alpha_to_coverage);
 
       if (fs)
          assert(!fs->pcb.clip_state_size);
@@ -497,9 +497,10 @@ gen7_pipeline_wm(struct ilo_3d_pipeline *p,
       const struct ilo_shader *fs = (ilo->fs)? ilo->fs->shader : NULL;
       const int num_samplers =
          ilo->samplers[PIPE_SHADER_FRAGMENT].num_samplers;
-      const bool dual_blend = (!ilo->blend->logicop_enable &&
-                                  ilo->blend->rt[0].blend_enable &&
-                                  util_blend_state_is_dual(ilo->blend, 0));
+      const bool dual_blend =
+         (!ilo->blend->state.logicop_enable &&
+          ilo->blend->state.rt[0].blend_enable &&
+          util_blend_state_is_dual(&ilo->blend->state, 0));
 
       if (fs)
          assert(!fs->pcb.clip_state_size);
@@ -547,14 +548,12 @@ gen7_pipeline_wm(struct ilo_3d_pipeline *p,
       const bool hiz = false;
 
       p->gen7_3DSTATE_DEPTH_BUFFER(p->dev,
-            ilo->framebuffer.zsbuf,
-            ilo->depth_stencil_alpha,
-            hiz, p->cp);
+            ilo->fb.state.zsbuf, &ilo->dsa->state, hiz, p->cp);
 
       p->gen6_3DSTATE_HIER_DEPTH_BUFFER(p->dev,
-            (hiz) ? ilo->framebuffer.zsbuf : NULL, p->cp);
+            (hiz) ? ilo->fb.state.zsbuf : NULL, p->cp);
 
-      p->gen6_3DSTATE_STENCIL_BUFFER(p->dev, ilo->framebuffer.zsbuf, p->cp);
+      p->gen6_3DSTATE_STENCIL_BUFFER(p->dev, ilo->fb.state.zsbuf, p->cp);
 
       /* TODO */
       p->gen6_3DSTATE_CLEAR_PARAMS(p->dev, 0, p->cp);
@@ -569,24 +568,21 @@ gen7_pipeline_wm_multisample(struct ilo_3d_pipeline *p,
    /* 3DSTATE_MULTISAMPLE and 3DSTATE_SAMPLE_MASK */
    if (DIRTY(SAMPLE_MASK) || DIRTY(FRAMEBUFFER)) {
       const uint32_t *packed_sample_pos;
-      int num_samples = 1;
 
       gen7_wa_pipe_control_cs_stall(p, true, true);
 
-      if (ilo->framebuffer.nr_cbufs)
-         num_samples = ilo->framebuffer.cbufs[0]->texture->nr_samples;
-
       packed_sample_pos =
-         (num_samples > 4) ? p->packed_sample_position_8x :
-         (num_samples > 1) ? &p->packed_sample_position_4x :
+         (ilo->fb.num_samples > 4) ? p->packed_sample_position_8x :
+         (ilo->fb.num_samples > 1) ? &p->packed_sample_position_4x :
          &p->packed_sample_position_1x;
 
-      p->gen6_3DSTATE_MULTISAMPLE(p->dev, num_samples, packed_sample_pos,
+      p->gen6_3DSTATE_MULTISAMPLE(p->dev,
+            ilo->fb.num_samples, packed_sample_pos,
             ilo->rasterizer->state.half_pixel_center, p->cp);
 
       p->gen7_3DSTATE_SAMPLE_MASK(p->dev,
-            (num_samples > 1) ? ilo->sample_mask : 0x1,
-            num_samples, p->cp);
+            (ilo->fb.num_samples > 1) ? ilo->sample_mask : 0x1,
+            ilo->fb.num_samples, p->cp);
    }
 }
 
@@ -734,7 +730,7 @@ gen7_pipeline_estimate_states(const struct ilo_3d_pipeline *p,
     * sampler views (vs, fs)
     * constant buffers (vs, fs)
     */
-   count = ilo->framebuffer.nr_cbufs;
+   count = ilo->fb.state.nr_cbufs;
    for (shader_type = 0; shader_type < PIPE_SHADER_TYPES; shader_type++) {
       count += ilo->sampler_views[shader_type].num_views;
       count += ilo->constant_buffers[shader_type].num_buffers;

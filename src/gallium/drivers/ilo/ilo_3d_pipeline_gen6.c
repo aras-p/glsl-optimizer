@@ -611,8 +611,8 @@ gen6_pipeline_clip(struct ilo_3d_pipeline *p,
       y1 = fabs(vp->scale[1]) * -1.0f + vp->translate[1];
       y2 = fabs(vp->scale[1]) *  1.0f + vp->translate[1];
       enable_guardband =
-         (x1 <= 0.0f && x2 >= (float) ilo->framebuffer.width &&
-          y1 <= 0.0f && y2 >= (float) ilo->framebuffer.height);
+         (x1 <= 0.0f && x2 >= (float) ilo->fb.state.width &&
+          y1 <= 0.0f && y2 >= (float) ilo->fb.state.height);
 
       p->gen6_3DSTATE_CLIP(p->dev,
             &ilo->rasterizer->state,
@@ -649,7 +649,7 @@ gen6_pipeline_sf_rect(struct ilo_3d_pipeline *p,
          gen6_wa_pipe_control_post_sync(p, false);
 
       p->gen6_3DSTATE_DRAWING_RECTANGLE(p->dev, 0, 0,
-            ilo->framebuffer.width, ilo->framebuffer.height, p->cp);
+            ilo->fb.state.width, ilo->fb.state.height, p->cp);
    }
 }
 
@@ -669,11 +669,12 @@ gen6_pipeline_wm(struct ilo_3d_pipeline *p,
       const struct ilo_shader *fs = (ilo->fs)? ilo->fs->shader : NULL;
       const int num_samplers =
          ilo->samplers[PIPE_SHADER_FRAGMENT].num_samplers;
-      const bool dual_blend = (!ilo->blend->logicop_enable &&
-                                  ilo->blend->rt[0].blend_enable &&
-                                  util_blend_state_is_dual(ilo->blend, 0));
-      const bool cc_may_kill = (ilo->depth_stencil_alpha->alpha.enabled ||
-                                   ilo->blend->alpha_to_coverage);
+      const bool dual_blend =
+         (!ilo->blend->state.logicop_enable &&
+          ilo->blend->state.rt[0].blend_enable &&
+          util_blend_state_is_dual(&ilo->blend->state, 0));
+      const bool cc_may_kill = (ilo->dsa->state.alpha.enabled ||
+                                ilo->blend->state.alpha_to_coverage);
 
       if (fs)
          assert(!fs->pcb.clip_state_size);
@@ -694,12 +695,8 @@ gen6_pipeline_wm_multisample(struct ilo_3d_pipeline *p,
    /* 3DSTATE_MULTISAMPLE and 3DSTATE_SAMPLE_MASK */
    if (DIRTY(SAMPLE_MASK) || DIRTY(FRAMEBUFFER)) {
       const uint32_t *packed_sample_pos;
-      int num_samples = 1;
 
-      if (ilo->framebuffer.nr_cbufs)
-         num_samples = ilo->framebuffer.cbufs[0]->texture->nr_samples;
-
-      packed_sample_pos = (num_samples > 1) ?
+      packed_sample_pos = (ilo->fb.num_samples > 1) ?
          &p->packed_sample_position_4x : &p->packed_sample_position_1x;
 
       if (p->dev->gen == ILO_GEN(6)) {
@@ -707,11 +704,12 @@ gen6_pipeline_wm_multisample(struct ilo_3d_pipeline *p,
          gen6_wa_pipe_control_wm_multisample_flush(p);
       }
 
-      p->gen6_3DSTATE_MULTISAMPLE(p->dev, num_samples, packed_sample_pos,
+      p->gen6_3DSTATE_MULTISAMPLE(p->dev,
+            ilo->fb.num_samples, packed_sample_pos,
             ilo->rasterizer->state.half_pixel_center, p->cp);
 
       p->gen6_3DSTATE_SAMPLE_MASK(p->dev,
-            (num_samples > 1) ? ilo->sample_mask : 0x1, p->cp);
+            (ilo->fb.num_samples > 1) ? ilo->sample_mask : 0x1, p->cp);
    }
 }
 
@@ -728,7 +726,7 @@ gen6_pipeline_wm_depth(struct ilo_3d_pipeline *p,
       }
 
       p->gen6_3DSTATE_DEPTH_BUFFER(p->dev,
-            ilo->framebuffer.zsbuf, false, p->cp);
+            ilo->fb.state.zsbuf, false, p->cp);
 
       /* TODO */
       p->gen6_3DSTATE_CLEAR_PARAMS(p->dev, 0, p->cp);
@@ -809,18 +807,16 @@ gen6_pipeline_state_cc(struct ilo_3d_pipeline *p,
    /* BLEND_STATE */
    if (DIRTY(BLEND) || DIRTY(FRAMEBUFFER) || DIRTY(DEPTH_STENCIL_ALPHA)) {
       p->state.BLEND_STATE = p->gen6_BLEND_STATE(p->dev,
-            ilo->blend, &ilo->framebuffer,
-            &ilo->depth_stencil_alpha->alpha, p->cp);
+            &ilo->blend->state, &ilo->fb, &ilo->dsa->state.alpha, p->cp);
 
       session->cc_state_blend_changed = true;
    }
 
    /* COLOR_CALC_STATE */
    if (DIRTY(DEPTH_STENCIL_ALPHA) || DIRTY(STENCIL_REF) || DIRTY(BLEND_COLOR)) {
-      p->state.COLOR_CALC_STATE = p->gen6_COLOR_CALC_STATE(p->dev,
-            &ilo->stencil_ref,
-            ilo->depth_stencil_alpha->alpha.ref_value,
-            &ilo->blend_color, p->cp);
+      p->state.COLOR_CALC_STATE =
+         p->gen6_COLOR_CALC_STATE(p->dev, &ilo->stencil_ref,
+               ilo->dsa->state.alpha.ref_value, &ilo->blend_color, p->cp);
 
       session->cc_state_cc_changed = true;
    }
@@ -828,8 +824,7 @@ gen6_pipeline_state_cc(struct ilo_3d_pipeline *p,
    /* DEPTH_STENCIL_STATE */
    if (DIRTY(DEPTH_STENCIL_ALPHA)) {
       p->state.DEPTH_STENCIL_STATE =
-         p->gen6_DEPTH_STENCIL_STATE(p->dev,
-               ilo->depth_stencil_alpha, p->cp);
+         p->gen6_DEPTH_STENCIL_STATE(p->dev, &ilo->dsa->state, p->cp);
 
       session->cc_state_dsa_changed = true;
    }
@@ -861,8 +856,8 @@ gen6_pipeline_state_surfaces_rt(struct ilo_3d_pipeline *p,
       uint32_t *surface_state = &p->state.wm.SURFACE_STATE[offset];
       int i;
 
-      for (i = 0; i < ilo->framebuffer.nr_cbufs; i++) {
-         const struct pipe_surface *surface = ilo->framebuffer.cbufs[i];
+      for (i = 0; i < ilo->fb.state.nr_cbufs; i++) {
+         const struct pipe_surface *surface = ilo->fb.state.cbufs[i];
 
          assert(surface);
          surface_state[i] =
@@ -877,8 +872,8 @@ gen6_pipeline_state_surfaces_rt(struct ilo_3d_pipeline *p,
          struct pipe_surface null_surface;
 
          memset(&null_surface, 0, sizeof(null_surface));
-         null_surface.width = ilo->framebuffer.width;
-         null_surface.height = ilo->framebuffer.height;
+         null_surface.width = ilo->fb.state.width;
+         null_surface.height = ilo->fb.state.height;
 
          surface_state[i] =
             p->gen6_surf_SURFACE_STATE(p->dev, &null_surface, p->cp);
@@ -1516,7 +1511,7 @@ gen6_pipeline_estimate_states(const struct ilo_3d_pipeline *p,
     * sampler views (vs, fs)
     * constant buffers (vs, fs)
     */
-   count = ilo->framebuffer.nr_cbufs;
+   count = ilo->fb.state.nr_cbufs;
 
    if (ilo->gs)
       count += ilo->gs->info.stream_output.num_outputs;

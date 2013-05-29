@@ -3254,7 +3254,7 @@ gen6_blend_factor_dst_alpha_forced_one(int factor)
 static uint32_t
 gen6_emit_BLEND_STATE(const struct ilo_dev_info *dev,
                       const struct pipe_blend_state *blend,
-                      const struct pipe_framebuffer_state *framebuffer,
+                      const struct ilo_fb_state *fb,
                       const struct pipe_alpha_state *alpha,
                       struct ilo_cp *cp)
 {
@@ -3270,7 +3270,7 @@ gen6_emit_BLEND_STATE(const struct ilo_dev_info *dev,
     *
     *     "The blend state is stored as an array of up to 8 elements..."
     */
-   num_targets = framebuffer->nr_cbufs;
+   num_targets = fb->state.nr_cbufs;
    assert(num_targets <= 8);
 
    if (!num_targets) {
@@ -3288,11 +3288,10 @@ gen6_emit_BLEND_STATE(const struct ilo_dev_info *dev,
    for (i = 0; i < num_targets; i++) {
       const int target = (blend->independent_blend_enable) ? i : 0;
       const struct pipe_rt_blend_state *rt = &blend->rt[target];
-      const int num_samples = (target < framebuffer->nr_cbufs) ?
-         framebuffer->cbufs[target]->texture->nr_samples : 1;
+      const int num_samples = fb->num_samples;
       const struct util_format_description *format_desc =
-         (target < framebuffer->nr_cbufs) ?
-         util_format_description(framebuffer->cbufs[target]->format) : NULL;
+         (target < fb->state.nr_cbufs) ?
+         util_format_description(fb->state.cbufs[target]->format) : NULL;
       bool rt_is_unorm, rt_is_pure_integer, rt_dst_alpha_forced_one;
 
       rt_is_unorm = true;
@@ -3446,6 +3445,9 @@ gen6_emit_DEPTH_STENCIL_STATE(const struct ilo_dev_info *dev,
                               const struct pipe_depth_stencil_alpha_state *dsa,
                               struct ilo_cp *cp)
 {
+   const struct pipe_depth_state *depth = &dsa->depth;
+   const struct pipe_stencil_state *stencil0 = &dsa->stencil[0];
+   const struct pipe_stencil_state *stencil1 = &dsa->stencil[1];
    const int state_align = 64 / 4;
    const int state_len = 3;
    uint32_t state_offset, *dw;
@@ -3469,33 +3471,29 @@ gen6_emit_DEPTH_STENCIL_STATE(const struct ilo_dev_info *dev,
     *
     * TODO We do not check these yet.
     */
-   if (dsa->stencil[0].enabled) {
-      const struct pipe_stencil_state *stencil = &dsa->stencil[0];
-
+   if (stencil0->enabled) {
       dw[0] = 1 << 31 |
-              gen6_translate_dsa_func(stencil->func) << 28 |
-              gen6_translate_pipe_stencil_op(stencil->fail_op) << 25 |
-              gen6_translate_pipe_stencil_op(stencil->zfail_op) << 22 |
-              gen6_translate_pipe_stencil_op(stencil->zpass_op) << 19;
-      if (stencil->writemask)
+              gen6_translate_dsa_func(stencil0->func) << 28 |
+              gen6_translate_pipe_stencil_op(stencil0->fail_op) << 25 |
+              gen6_translate_pipe_stencil_op(stencil0->zfail_op) << 22 |
+              gen6_translate_pipe_stencil_op(stencil0->zpass_op) << 19;
+      if (stencil0->writemask)
          dw[0] |= 1 << 18;
 
-      dw[1] = stencil->valuemask << 24 |
-              stencil->writemask << 16;
+      dw[1] = stencil0->valuemask << 24 |
+              stencil0->writemask << 16;
 
-      if (dsa->stencil[1].enabled) {
-         stencil = &dsa->stencil[1];
-
+      if (stencil1->enabled) {
          dw[0] |= 1 << 15 |
-                  gen6_translate_dsa_func(stencil->func) << 12 |
-                  gen6_translate_pipe_stencil_op(stencil->fail_op) << 9 |
-                  gen6_translate_pipe_stencil_op(stencil->zfail_op) << 6 |
-                  gen6_translate_pipe_stencil_op(stencil->zpass_op) << 3;
-         if (stencil->writemask)
+                  gen6_translate_dsa_func(stencil1->func) << 12 |
+                  gen6_translate_pipe_stencil_op(stencil1->fail_op) << 9 |
+                  gen6_translate_pipe_stencil_op(stencil1->zfail_op) << 6 |
+                  gen6_translate_pipe_stencil_op(stencil1->zpass_op) << 3;
+         if (stencil1->writemask)
             dw[0] |= 1 << 18;
 
-         dw[1] |= stencil->valuemask << 8 |
-                  stencil->writemask;
+         dw[1] |= stencil1->valuemask << 8 |
+                  stencil1->writemask;
       }
    }
    else {
@@ -3516,10 +3514,10 @@ gen6_emit_DEPTH_STENCIL_STATE(const struct ilo_dev_info *dev,
     *
     * TODO We do not check these yet.
     */
-   dw[2] = dsa->depth.enabled << 31 |
-           dsa->depth.writemask << 26;
-   if (dsa->depth.enabled)
-      dw[2] |= gen6_translate_dsa_func(dsa->depth.func) << 27;
+   dw[2] = depth->enabled << 31 |
+           depth->writemask << 26;
+   if (depth->enabled)
+      dw[2] |= gen6_translate_dsa_func(depth->func) << 27;
    else
       dw[2] |= BRW_COMPAREFUNCTION_ALWAYS << 27;
 

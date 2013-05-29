@@ -88,4 +88,18 @@ struct ilo_rasterizer_state {
    struct pipe_rasterizer_state state;
 };
 
+struct ilo_dsa_state {
+   struct pipe_depth_stencil_alpha_state state;
+};
+
+struct ilo_blend_state {
+   struct pipe_blend_state state;
+};
+
+struct ilo_fb_state {
+   struct pipe_framebuffer_state state;
+
+   unsigned num_samples;
+};
+
 #endif /* ILO_GPE_H */

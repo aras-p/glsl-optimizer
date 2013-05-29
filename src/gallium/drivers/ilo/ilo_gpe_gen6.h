@@ -403,7 +403,7 @@ typedef uint32_t
 typedef uint32_t
 (*ilo_gpe_gen6_BLEND_STATE)(const struct ilo_dev_info *dev,
                             const struct pipe_blend_state *blend,
-                            const struct pipe_framebuffer_state *framebuffer,
+                            const struct ilo_fb_state *fb,
                             const struct pipe_alpha_state *alpha,
                             struct ilo_cp *cp);
 
