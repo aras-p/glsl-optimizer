@@ -369,7 +369,6 @@ static void r300_clear(struct pipe_context* pipe,
         util_blitter_clear(r300->blitter,
                            width,
                            height,
-                           fb->nr_cbufs,
                            buffers, cformat, color, depth, stencil);
         r300_blitter_end(r300);
     } else if (r300->zmask_clear.dirty ||

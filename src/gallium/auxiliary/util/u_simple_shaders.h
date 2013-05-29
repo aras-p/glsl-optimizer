@@ -94,6 +94,10 @@ util_make_fragment_passthrough_shader(struct pipe_context *pipe,
 
 
 extern void *
+util_make_empty_fragment_shader(struct pipe_context *pipe);
+
+
+extern void *
 util_make_fragment_cloneinput_shader(struct pipe_context *pipe, int num_cbufs,
                                      int input_semantic,
                                      int input_interpolate);

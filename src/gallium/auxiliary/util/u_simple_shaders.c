@@ -355,6 +355,18 @@ util_make_fragment_passthrough_shader(struct pipe_context *pipe,
 }
 
 
+void *
+util_make_empty_fragment_shader(struct pipe_context *pipe)
+{
+   struct ureg_program *ureg = ureg_create(TGSI_PROCESSOR_FRAGMENT);
+   if (ureg == NULL)
+      return NULL;
+
+   ureg_END(ureg);
+   return ureg_create_shader_and_destroy(ureg, pipe);
+}
+
+
 /**
  * Make a fragment shader that copies the input color to N output colors.
  */

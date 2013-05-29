@@ -183,7 +183,6 @@ void util_blitter_draw_rectangle(struct blitter_context *blitter,
  */
 void util_blitter_clear(struct blitter_context *blitter,
                         unsigned width, unsigned height,
-                        unsigned num_cbufs,
                         unsigned clear_buffers,
                         enum pipe_format cbuf_format,
                         const union pipe_color_union *color,
