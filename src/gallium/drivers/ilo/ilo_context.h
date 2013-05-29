@@ -41,11 +41,6 @@ struct ilo_cp;
 struct ilo_screen;
 struct ilo_shader_state;
 
-struct ilo_vertex_element {
-   struct pipe_vertex_element elements[PIPE_MAX_ATTRIBS];
-   unsigned num_elements;
-};
-
 struct ilo_context {
    struct pipe_context base;
 
@@ -61,13 +56,16 @@ struct ilo_context {
 
    uint32_t dirty;
 
+   struct ilo_vb_state vb;
+   const struct ilo_ve_state *ve;
+   struct ilo_ib_state ib;
+
    struct pipe_blend_state *blend;
    struct pipe_rasterizer_state *rasterizer;
    struct pipe_depth_stencil_alpha_state *depth_stencil_alpha;
    struct ilo_shader_state *fs;
    struct ilo_shader_state *vs;
    struct ilo_shader_state *gs;
-   struct ilo_vertex_element *vertex_elements;
 
    struct pipe_blend_color blend_color;
    struct pipe_stencil_ref stencil_ref;
@@ -77,12 +75,6 @@ struct ilo_context {
    struct pipe_poly_stipple poly_stipple;
    struct pipe_scissor_state scissor;
    struct pipe_viewport_state viewport;
-   struct pipe_index_buffer index_buffer;
-
-   struct {
-      struct pipe_vertex_buffer buffers[PIPE_MAX_ATTRIBS];
-      unsigned num_buffers;
-   } vertex_buffers;
 
    struct {
       struct pipe_sampler_state *samplers[ILO_MAX_SAMPLERS];

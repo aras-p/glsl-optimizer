@@ -290,8 +290,8 @@ gen6_pipeline_common_urb(struct ilo_3d_pipeline *p,
        *          VS-generated output data, output URB availability isn't a
        *          factor."
        */
-      if (vs_entry_size < ilo->vertex_elements->num_elements)
-         vs_entry_size = ilo->vertex_elements->num_elements;
+      if (vs_entry_size < ilo->ve->count)
+         vs_entry_size = ilo->ve->count;
 
       gs_entry_size = (gs) ? gs->out.count :
          (vs && vs->stream_output) ? vs_entry_size : 0;
@@ -398,19 +398,18 @@ gen6_pipeline_vf(struct ilo_3d_pipeline *p,
    /* 3DSTATE_INDEX_BUFFER */
    if (DIRTY(INDEX_BUFFER)) {
       p->gen6_3DSTATE_INDEX_BUFFER(p->dev,
-            &ilo->index_buffer, session->info->primitive_restart, p->cp);
+            &ilo->ib.state, session->info->primitive_restart, p->cp);
    }
 
    /* 3DSTATE_VERTEX_BUFFERS */
    if (DIRTY(VERTEX_BUFFERS)) {
       p->gen6_3DSTATE_VERTEX_BUFFERS(p->dev,
-            ilo->vertex_buffers.buffers, NULL,
-            (1 << ilo->vertex_buffers.num_buffers) - 1, p->cp);
+            ilo->vb.states, NULL, ilo->vb.enabled_mask, p->cp);
    }
 
    /* 3DSTATE_VERTEX_ELEMENTS */
    if (DIRTY(VERTEX_ELEMENTS) || DIRTY(VS)) {
-      const struct ilo_vertex_element *ive = ilo->vertex_elements;
+      const struct ilo_ve_state *ve = ilo->ve;
       bool last_velement_edgeflag = false;
       bool prepend_generate_ids = false;
 
@@ -419,7 +418,7 @@ gen6_pipeline_vf(struct ilo_3d_pipeline *p,
 
          if (info->edgeflag_in >= 0) {
             /* we rely on the state tracker here */
-            assert(info->edgeflag_in ==  ive->num_elements - 1);
+            assert(info->edgeflag_in == ve->count - 1);
             last_velement_edgeflag = true;
          }
 
@@ -427,7 +426,7 @@ gen6_pipeline_vf(struct ilo_3d_pipeline *p,
       }
 
       p->gen6_3DSTATE_VERTEX_ELEMENTS(p->dev,
-            ive->elements, ive->num_elements,
+            ve->states, ve->count,
             last_velement_edgeflag, prepend_generate_ids, p->cp);
    }
 }

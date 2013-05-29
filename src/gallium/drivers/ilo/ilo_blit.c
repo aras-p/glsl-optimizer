@@ -542,9 +542,8 @@ static void
 ilo_blitter_begin(struct ilo_context *ilo, enum ilo_blitter_op op)
 {
    /* as documented in util/u_blitter.h */
-   util_blitter_save_vertex_buffer_slot(ilo->blitter,
-         ilo->vertex_buffers.buffers);
-   util_blitter_save_vertex_elements(ilo->blitter, ilo->vertex_elements);
+   util_blitter_save_vertex_buffer_slot(ilo->blitter, ilo->vb.states);
+   util_blitter_save_vertex_elements(ilo->blitter, (void *) ilo->ve);
    util_blitter_save_vertex_shader(ilo->blitter, ilo->vs);
    util_blitter_save_geometry_shader(ilo->blitter, ilo->gs);
    util_blitter_save_so_targets(ilo->blitter,

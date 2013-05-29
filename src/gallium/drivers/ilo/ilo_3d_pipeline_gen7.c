@@ -202,8 +202,8 @@ gen7_pipeline_common_urb(struct ilo_3d_pipeline *p,
        *      Allocation Size must be sized to the maximum of the vertex input
        *      and output structures."
        */
-      if (vs_entry_size < ilo->vertex_elements->num_elements)
-         vs_entry_size = ilo->vertex_elements->num_elements;
+      if (vs_entry_size < ilo->ve->count)
+         vs_entry_size = ilo->ve->count;
 
       vs_entry_size *= sizeof(float) * 4;
       vs_total_size = ilo->dev->urb_size - offset;

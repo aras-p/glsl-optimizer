@@ -52,4 +52,18 @@
 #define ILO_WM_CONST_SURFACE(i)    (ILO_MAX_DRAW_BUFFERS + i)
 #define ILO_WM_TEXTURE_SURFACE(i)  (ILO_MAX_DRAW_BUFFERS + ILO_MAX_CONST_BUFFERS  + i)
 
+struct ilo_vb_state {
+   struct pipe_vertex_buffer states[PIPE_MAX_ATTRIBS];
+   uint32_t enabled_mask;
+};
+
+struct ilo_ib_state {
+   struct pipe_index_buffer state;
+};
+
+struct ilo_ve_state {
+   struct pipe_vertex_element states[PIPE_MAX_ATTRIBS];
+   unsigned count;
+};
+
 #endif /* ILO_GPE_H */

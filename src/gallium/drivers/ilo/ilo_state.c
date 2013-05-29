@@ -436,15 +436,15 @@ ilo_create_vertex_elements_state(struct pipe_context *pipe,
                                  unsigned num_elements,
                                  const struct pipe_vertex_element *elements)
 {
-   struct ilo_vertex_element *velem;
+   struct ilo_ve_state *ve;
 
-   velem = MALLOC_STRUCT(ilo_vertex_element);
-   assert(velem);
+   ve = MALLOC_STRUCT(ilo_ve_state);
+   assert(ve);
 
-   memcpy(velem->elements, elements, sizeof(*elements) * num_elements);
-   velem->num_elements = num_elements;
+   memcpy(ve->states, elements, sizeof(*elements) * num_elements);
+   ve->count = num_elements;
 
-   return velem;
+   return ve;
 }
 
 static void
@@ -452,7 +452,7 @@ ilo_bind_vertex_elements_state(struct pipe_context *pipe, void *state)
 {
    struct ilo_context *ilo = ilo_context(pipe);
 
-   ilo->vertex_elements = state;
+   ilo->ve = state;
 
    ilo->dirty |= ILO_DIRTY_VERTEX_ELEMENTS;
 }
@@ -460,7 +460,9 @@ ilo_bind_vertex_elements_state(struct pipe_context *pipe, void *state)
 static void
 ilo_delete_vertex_elements_state(struct pipe_context *pipe, void *state)
 {
-   FREE(state);
+   struct ilo_ve_state *ve = state;
+
+   FREE(ve);
 }
 
 static void
@@ -722,8 +724,8 @@ ilo_set_vertex_buffers(struct pipe_context *pipe,
 {
    struct ilo_context *ilo = ilo_context(pipe);
 
-   util_set_vertex_buffers_count(ilo->vertex_buffers.buffers,
-         &ilo->vertex_buffers.num_buffers, buffers, start_slot, num_buffers);
+   util_set_vertex_buffers_mask(ilo->vb.states,
+         &ilo->vb.enabled_mask, buffers, start_slot, num_buffers);
 
    ilo->dirty |= ILO_DIRTY_VERTEX_BUFFERS;
 }
@@ -735,16 +737,16 @@ ilo_set_index_buffer(struct pipe_context *pipe,
    struct ilo_context *ilo = ilo_context(pipe);
 
    if (state) {
-      ilo->index_buffer.index_size = state->index_size;
-      ilo->index_buffer.offset = state->offset;
-      pipe_resource_reference(&ilo->index_buffer.buffer, state->buffer);
-      ilo->index_buffer.user_buffer = state->user_buffer;
+      ilo->ib.state.index_size = state->index_size;
+      ilo->ib.state.offset = state->offset;
+      pipe_resource_reference(&ilo->ib.state.buffer, state->buffer);
+      ilo->ib.state.user_buffer = state->user_buffer;
    }
    else {
-      ilo->index_buffer.index_size = 0;
-      ilo->index_buffer.offset = 0;
-      pipe_resource_reference(&ilo->index_buffer.buffer, NULL);
-      ilo->index_buffer.user_buffer = NULL;
+      ilo->ib.state.index_size = 0;
+      ilo->ib.state.offset = 0;
+      pipe_resource_reference(&ilo->ib.state.buffer, NULL);
+      ilo->ib.state.user_buffer = NULL;
    }
 
    ilo->dirty |= ILO_DIRTY_INDEX_BUFFER;
