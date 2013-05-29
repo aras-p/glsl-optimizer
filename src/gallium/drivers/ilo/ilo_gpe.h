@@ -96,10 +96,52 @@ struct ilo_blend_state {
    struct pipe_blend_state state;
 };
 
+struct ilo_sampler_state {
+   struct pipe_sampler_state *states[ILO_MAX_SAMPLERS];
+   unsigned count;
+};
+
+struct ilo_view_state {
+   struct pipe_sampler_view *states[ILO_MAX_SAMPLER_VIEWS];
+   unsigned count;
+};
+
+struct ilo_cbuf_state {
+   struct pipe_constant_buffer states[ILO_MAX_CONST_BUFFERS];
+   unsigned count;
+};
+
+struct ilo_resource_state {
+   struct pipe_surface *states[PIPE_MAX_SHADER_RESOURCES];
+   unsigned count;
+};
+
 struct ilo_fb_state {
    struct pipe_framebuffer_state state;
 
    unsigned num_samples;
+};
+
+struct ilo_global_binding {
+   /*
+    * XXX These should not be treated as real resources (and there could be
+    * thousands of them).  They should be treated as regions in GLOBAL
+    * resource, which is the only real resource.
+    *
+    * That is, a resource here should instead be
+    *
+    *   struct ilo_global_region {
+    *     struct pipe_resource base;
+    *     int offset;
+    *     int size;
+    *   };
+    *
+    * and it describes the region [offset, offset + size) in GLOBAL
+    * resource.
+    */
+   struct pipe_resource *resources[PIPE_MAX_SHADER_RESOURCES];
+   uint32_t *handles[PIPE_MAX_SHADER_RESOURCES];
+   unsigned count;
 };
 
 #endif /* ILO_GPE_H */

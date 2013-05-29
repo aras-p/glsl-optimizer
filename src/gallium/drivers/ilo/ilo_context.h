@@ -60,6 +60,9 @@ struct ilo_context {
    const struct ilo_ve_state *ve;
    struct ilo_ib_state ib;
 
+   struct ilo_shader_state *vs;
+   struct ilo_shader_state *gs;
+
    struct ilo_so_state so;
 
    struct pipe_clip_state clip;
@@ -70,64 +73,24 @@ struct ilo_context {
    struct pipe_poly_stipple poly_stipple;
    unsigned sample_mask;
 
+   struct ilo_shader_state *fs;
+
    const struct ilo_dsa_state *dsa;
    struct pipe_stencil_ref stencil_ref;
    const struct ilo_blend_state *blend;
    struct pipe_blend_color blend_color;
    struct ilo_fb_state fb;
 
-   struct ilo_shader_state *fs;
-   struct ilo_shader_state *vs;
-   struct ilo_shader_state *gs;
+   /* shader resources */
+   struct ilo_sampler_state sampler[PIPE_SHADER_TYPES];
+   struct ilo_view_state view[PIPE_SHADER_TYPES];
+   struct ilo_cbuf_state cbuf[PIPE_SHADER_TYPES];
+   struct ilo_resource_state resource;
 
-   struct {
-      struct pipe_sampler_state *samplers[ILO_MAX_SAMPLERS];
-      unsigned num_samplers;
-   } samplers[PIPE_SHADER_TYPES];
-
-   struct {
-      struct pipe_sampler_view *views[ILO_MAX_SAMPLER_VIEWS];
-      unsigned num_views;
-   } sampler_views[PIPE_SHADER_TYPES];
-
-   struct {
-      struct pipe_constant_buffer buffers[ILO_MAX_CONST_BUFFERS];
-      unsigned num_buffers;
-   } constant_buffers[PIPE_SHADER_TYPES];
-
-   struct {
-      struct pipe_surface *surfaces[PIPE_MAX_SHADER_RESOURCES];
-      unsigned num_surfaces;
-   } shader_resources;
-
-   struct ilo_shader_state *compute;
-
-   struct {
-      struct pipe_surface *surfaces[PIPE_MAX_SHADER_RESOURCES];
-      unsigned num_surfaces;
-   } compute_resources;
-
-   struct {
-      /*
-       * XXX These should not be treated as real resources (and there could be
-       * thousands of them).  They should be treated as regions in GLOBAL
-       * resource, which is the only real resource.
-       *
-       * That is, a resource here should instead be
-       *
-       *   struct ilo_global_region {
-       *     struct pipe_resource base;
-       *     int offset;
-       *     int size;
-       *   };
-       *
-       * and it describes the region [offset, offset + size) in GLOBAL
-       * resource.
-       */
-      struct pipe_resource *resources[PIPE_MAX_SHADER_RESOURCES];
-      uint32_t *handles[PIPE_MAX_SHADER_RESOURCES];
-      unsigned num_resources;
-   } global_binding;
+   /* GPGPU */
+   struct ilo_shader_state *cs;
+   struct ilo_resource_state cs_resource;
+   struct ilo_global_binding global_binding;
 };
 
 static inline struct ilo_context *

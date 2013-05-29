@@ -495,8 +495,7 @@ gen7_pipeline_wm(struct ilo_3d_pipeline *p,
    if (DIRTY(FS) || DIRTY(FRAGMENT_SAMPLERS) ||
        DIRTY(BLEND)) {
       const struct ilo_shader *fs = (ilo->fs)? ilo->fs->shader : NULL;
-      const int num_samplers =
-         ilo->samplers[PIPE_SHADER_FRAGMENT].num_samplers;
+      const int num_samplers = ilo->sampler[PIPE_SHADER_FRAGMENT].count;
       const bool dual_blend =
          (!ilo->blend->state.logicop_enable &&
           ilo->blend->state.rt[0].blend_enable &&
@@ -732,8 +731,8 @@ gen7_pipeline_estimate_states(const struct ilo_3d_pipeline *p,
     */
    count = ilo->fb.state.nr_cbufs;
    for (shader_type = 0; shader_type < PIPE_SHADER_TYPES; shader_type++) {
-      count += ilo->sampler_views[shader_type].num_views;
-      count += ilo->constant_buffers[shader_type].num_buffers;
+      count += ilo->view[shader_type].count;
+      count += ilo->cbuf[shader_type].count;
    }
 
    if (count) {
@@ -743,7 +742,7 @@ gen7_pipeline_estimate_states(const struct ilo_3d_pipeline *p,
 
    /* samplers (vs, fs) */
    for (shader_type = 0; shader_type < PIPE_SHADER_TYPES; shader_type++) {
-      count = ilo->samplers[shader_type].num_samplers;
+      count = ilo->sampler[shader_type].count;
       if (count) {
          size += gen7->estimate_state_size(p->dev,
                ILO_GPE_GEN7_SAMPLER_BORDER_COLOR_STATE, count);

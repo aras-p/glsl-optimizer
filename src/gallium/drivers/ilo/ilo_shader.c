@@ -72,15 +72,15 @@ ilo_shader_variant_init(struct ilo_shader_variant *variant,
       break;
    }
 
-   num_views = ilo->sampler_views[info->type].num_views;
+   num_views = ilo->view[info->type].count;
    assert(info->num_samplers <= num_views);
 
    variant->num_sampler_views = info->num_samplers;
    for (i = 0; i < info->num_samplers; i++) {
       const struct pipe_sampler_view *view =
-         ilo->sampler_views[info->type].views[i];
+         ilo->view[info->type].states[i];
       const struct pipe_sampler_state *sampler =
-         ilo->samplers[info->type].samplers[i];
+         ilo->sampler[info->type].states[i];
 
       if (view) {
          variant->sampler_view_swizzles[i].r = view->swizzle_r;

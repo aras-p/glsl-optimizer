@@ -477,7 +477,7 @@ gen6_pipeline_vs(struct ilo_3d_pipeline *p,
    /* 3DSTATE_VS */
    if (emit_3dstate_vs) {
       const struct ilo_shader *vs = (ilo->vs)? ilo->vs->shader : NULL;
-      const int num_samplers = ilo->samplers[PIPE_SHADER_VERTEX].num_samplers;
+      const int num_samplers = ilo->sampler[PIPE_SHADER_VERTEX].count;
 
       p->gen6_3DSTATE_VS(p->dev, vs, num_samplers, p->cp);
    }
@@ -667,8 +667,7 @@ gen6_pipeline_wm(struct ilo_3d_pipeline *p,
        DIRTY(BLEND) || DIRTY(DEPTH_STENCIL_ALPHA) ||
        DIRTY(RASTERIZER)) {
       const struct ilo_shader *fs = (ilo->fs)? ilo->fs->shader : NULL;
-      const int num_samplers =
-         ilo->samplers[PIPE_SHADER_FRAGMENT].num_samplers;
+      const int num_samplers = ilo->sampler[PIPE_SHADER_FRAGMENT].count;
       const bool dual_blend =
          (!ilo->blend->state.logicop_enable &&
           ilo->blend->state.rt[0].blend_enable &&
@@ -943,9 +942,8 @@ gen6_pipeline_state_surfaces_view(struct ilo_3d_pipeline *p,
                                   struct gen6_pipeline_session *session)
 {
    const struct pipe_sampler_view **views =
-      (const struct pipe_sampler_view **)
-      ilo->sampler_views[shader_type].views;
-   const int num_views = ilo->sampler_views[shader_type].num_views;
+      (const struct pipe_sampler_view **) ilo->view[shader_type].states;
+   const int num_views = ilo->view[shader_type].count;
    uint32_t *surface_state;
    int offset, i;
    bool skip = false;
@@ -1005,8 +1003,8 @@ gen6_pipeline_state_surfaces_const(struct ilo_3d_pipeline *p,
                                    struct gen6_pipeline_session *session)
 {
    const struct pipe_constant_buffer *buffers =
-      ilo->constant_buffers[shader_type].buffers;
-   const int num_buffers = ilo->constant_buffers[shader_type].num_buffers;
+      ilo->cbuf[shader_type].states;
+   const int num_buffers = ilo->cbuf[shader_type].count;
    uint32_t *surface_state;
    int offset, i;
    bool skip = false;
@@ -1125,13 +1123,11 @@ gen6_pipeline_state_samplers(struct ilo_3d_pipeline *p,
                              struct gen6_pipeline_session *session)
 {
    const struct pipe_sampler_state **samplers =
-      (const struct pipe_sampler_state **)
-      ilo->samplers[shader_type].samplers;
+      (const struct pipe_sampler_state **) ilo->sampler[shader_type].states;
    const struct pipe_sampler_view **views =
-      (const struct pipe_sampler_view **)
-      ilo->sampler_views[shader_type].views;
-   const int num_samplers = ilo->samplers[shader_type].num_samplers;
-   const int num_views = ilo->sampler_views[shader_type].num_views;
+      (const struct pipe_sampler_view **) ilo->view[shader_type].states;
+   const int num_samplers = ilo->sampler[shader_type].count;
+   const int num_views = ilo->view[shader_type].count;
    uint32_t *sampler_state, *border_color_state;
    bool emit_border_color = false;
    bool skip = false;
@@ -1519,8 +1515,8 @@ gen6_pipeline_estimate_states(const struct ilo_3d_pipeline *p,
       count += ilo->vs->info.stream_output.num_outputs;
 
    for (shader_type = 0; shader_type < PIPE_SHADER_TYPES; shader_type++) {
-      count += ilo->sampler_views[shader_type].num_views;
-      count += ilo->constant_buffers[shader_type].num_buffers;
+      count += ilo->view[shader_type].count;
+      count += ilo->cbuf[shader_type].count;
    }
 
    if (count) {
@@ -1530,7 +1526,7 @@ gen6_pipeline_estimate_states(const struct ilo_3d_pipeline *p,
 
    /* samplers (vs, fs) */
    for (shader_type = 0; shader_type < PIPE_SHADER_TYPES; shader_type++) {
-      count = ilo->samplers[shader_type].num_samplers;
+      count = ilo->sampler[shader_type].count;
       if (count) {
          size += gen6->estimate_state_size(p->dev,
                ILO_GPE_GEN6_SAMPLER_BORDER_COLOR_STATE, count);

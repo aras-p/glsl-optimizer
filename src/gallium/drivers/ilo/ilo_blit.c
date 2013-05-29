@@ -569,12 +569,12 @@ ilo_blitter_begin(struct ilo_context *ilo, enum ilo_blitter_op op)
       util_blitter_save_framebuffer(ilo->blitter, &ilo->fb.state);
 
       util_blitter_save_fragment_sampler_states(ilo->blitter,
-            ilo->samplers[PIPE_SHADER_FRAGMENT].num_samplers,
-            (void **) ilo->samplers[PIPE_SHADER_FRAGMENT].samplers);
+            ilo->sampler[PIPE_SHADER_FRAGMENT].count,
+            (void **) ilo->sampler[PIPE_SHADER_FRAGMENT].states);
 
       util_blitter_save_fragment_sampler_views(ilo->blitter,
-            ilo->sampler_views[PIPE_SHADER_FRAGMENT].num_views,
-            ilo->sampler_views[PIPE_SHADER_FRAGMENT].views);
+            ilo->view[PIPE_SHADER_FRAGMENT].count,
+            ilo->view[PIPE_SHADER_FRAGMENT].states);
 
       /* disable render condition? */
       break;
