@@ -186,17 +186,6 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
    int i, count;
    const char *region_name;
 
-   /* If we're rendering to the fake front buffer, make sure all the
-    * pending drawing has landed on the real front buffer.  Otherwise
-    * when we eventually get to DRI2GetBuffersWithFormat the stale
-    * real front buffer contents will get copied to the new fake front
-    * buffer.
-    */
-   if (intel->is_front_buffer_rendering) {
-      intel_flush(&intel->ctx);
-      intel_flush_front(&intel->ctx);
-   }
-
    /* Set this up front, so that in case our buffers get invalidated
     * while we're getting new buffers, we don't clobber the stamp and
     * thus ignore the invalidate. */
@@ -925,6 +914,15 @@ intel_query_dri2_buffers(struct intel_context *intel,
    if ((intel->is_front_buffer_rendering ||
 	intel->is_front_buffer_reading ||
 	!back_rb) && front_rb) {
+      /* If a fake front buffer is in use, then querying for
+       * __DRI_BUFFER_FRONT_LEFT will cause the server to copy the image from
+       * the real front buffer to the fake front buffer.  So before doing the
+       * query, we need to make sure all the pending drawing has landed in the
+       * real front buffer.
+       */
+      intel_flush(&intel->ctx);
+      intel_flush_front(&intel->ctx);
+
       attachments[i++] = __DRI_BUFFER_FRONT_LEFT;
       attachments[i++] = intel_bits_per_pixel(front_rb);
    }
