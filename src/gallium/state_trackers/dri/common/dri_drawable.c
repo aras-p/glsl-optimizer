@@ -374,12 +374,12 @@ dri_msaa_resolve(struct dri_context *ctx,
    memset(&blit, 0, sizeof(blit));
    blit.dst.resource = dst;
    blit.dst.box.width = dst->width0;
-   blit.dst.box.height = dst->width0;
+   blit.dst.box.height = dst->height0;
    blit.dst.box.depth = 1;
    blit.dst.format = util_format_linear(dst->format);
    blit.src.resource = src;
    blit.src.box.width = src->width0;
-   blit.src.box.height = src->width0;
+   blit.src.box.height = src->height0;
    blit.src.box.depth = 1;
    blit.src.format = util_format_linear(src->format);
    blit.mask = PIPE_MASK_RGBA;
