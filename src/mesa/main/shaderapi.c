@@ -1634,7 +1634,7 @@ _mesa_ProgramParameteri(GLuint program, GLenum pname, GLint value)
       if (!_mesa_is_desktop_gl(ctx) || !ctx->Extensions.ARB_geometry_shader4)
          break;
 
-      if (value < 1 ||
+      if (value < 0 ||
           (unsigned) value > ctx->Const.MaxGeometryOutputVertices) {
          _mesa_error(ctx, GL_INVALID_VALUE,
                      "glProgramParameteri(GL_GEOMETRY_VERTICES_OUT_ARB=%d)",
