@@ -689,22 +689,25 @@
 
 <!-- 71. GL_OES_vertex_array_object -->
 <category name="GL_OES_vertex_array_object" number="71">
-    <function name="BindVertexArrayOES" alias="BindVertexArray" es2="2.0">
+    <function name="BindVertexArrayOES" alias="BindVertexArray"
+              static_dispatch="false" es2="2.0">
         <param name="array" type="GLuint"/>
     </function>
 
     <function name="DeleteVertexArraysOES" alias="DeleteVertexArrays"
-              es2="2.0">
+              static_dispatch="false" es2="2.0">
         <param name="n" type="GLsizei"/>
         <param name="arrays" type="const GLuint *" count="n"/>
     </function>
 
-    <function name="GenVertexArraysOES" alias="GenVertexArrays" es2="2.0">
+    <function name="GenVertexArraysOES" alias="GenVertexArrays"
+              static_dispatch="false" es2="2.0">
         <param name="n" type="GLsizei"/>
         <param name="arrays" type="GLuint *" output="true" count="n"/>
     </function>
 
-    <function name="IsVertexArrayOES" alias="IsVertexArray" es2="2.0">
+    <function name="IsVertexArrayOES" alias="IsVertexArray"
+              static_dispatch="false" es2="2.0">
         <param name="array" type="GLuint"/>
         <return type="GLboolean"/>
     </function>
@@ -779,7 +782,8 @@
         <size name="Get" mode="get"/>
     </enum>
 
-    <function name="DrawBuffersNV" alias="DrawBuffers" es2="2.0">
+    <function name="DrawBuffersNV" alias="DrawBuffers"
+              static_dispatch="false" es2="2.0">
         <param name="n" type="GLsizei" counter="true"/>
         <param name="bufs" type="const GLenum *" count="n"/>
     </function>
@@ -787,7 +791,8 @@
 
 <!-- 93. GL_NV_read_buffer -->
 <category name="GL_NV_read_buffer">
-    <function name="ReadBufferNV" alias="ReadBuffer" es2="2.0">
+    <function name="ReadBufferNV" alias="ReadBuffer"
+              static_dispatch="false" es2="2.0">
         <param name="mode" type="GLenum"/>
     </function>
 </category>
@@ -815,8 +820,8 @@
     <enum name="MAP_FLUSH_EXPLICIT_BIT_EXT"               value="0x0010"/>
     <enum name="MAP_UNSYNCHRONIZED_BIT_EXT"               value="0x0020"/>
 
-    <function name="MapBufferRangeEXT" alias="MapBufferRange" es1="1.0"
-              es2="2.0">
+    <function name="MapBufferRangeEXT" alias="MapBufferRange"
+              static_dispatch="false" es1="1.0" es2="2.0">
         <param name="target" type="GLenum"/>
         <param name="offset" type="GLintptr"/>
         <param name="size" type="GLsizeiptr"/>
@@ -825,7 +830,7 @@
     </function>
 
     <function name="FlushMappedBufferRangeEXT" alias="FlushMappedBufferRange"
-              es1="1.0" es2="2.0">
+              static_dispatch="false" es1="1.0" es2="2.0">
         <param name="target" type="GLenum"/>
         <param name="offset" type="GLintptr"/>
         <param name="length" type="GLsizeiptr"/>
