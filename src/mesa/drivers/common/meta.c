@@ -3764,10 +3764,20 @@ get_temp_image_type(struct gl_context *ctx, gl_format format)
             return datatype;
          return GL_FLOAT;
       }
-   case GL_DEPTH_COMPONENT:
-      return GL_UNSIGNED_INT;
-   case GL_DEPTH_STENCIL:
-      return GL_UNSIGNED_INT_24_8;
+   case GL_DEPTH_COMPONENT: {
+      GLenum datatype = _mesa_get_format_datatype(format);
+      if (datatype == GL_FLOAT)
+         return GL_FLOAT;
+      else
+         return GL_UNSIGNED_INT;
+   }
+   case GL_DEPTH_STENCIL: {
+      GLenum datatype = _mesa_get_format_datatype(format);
+      if (datatype == GL_FLOAT)
+         return GL_FLOAT_32_UNSIGNED_INT_24_8_REV;
+      else
+         return GL_UNSIGNED_INT_24_8;
+   }
    default:
       _mesa_problem(ctx, "Unexpected format %d in get_temp_image_type()",
 		    baseFormat);
