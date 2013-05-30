@@ -1193,14 +1193,14 @@ gen7_emit_3DPRIMITIVE(const struct ilo_dev_info *dev,
 
 static uint32_t
 gen7_emit_SF_CLIP_VIEWPORT(const struct ilo_dev_info *dev,
-                           const struct pipe_viewport_state *viewports,
-                           int num_viewports,
+                           const struct ilo_viewport_cso *viewports,
+                           unsigned num_viewports,
                            struct ilo_cp *cp)
 {
    const int state_align = 64 / 4;
    const int state_len = 16 * num_viewports;
    uint32_t state_offset, *dw;
-   int i;
+   unsigned i;
 
    ILO_GPE_VALID_GEN(dev, 7, 7);
 
@@ -1220,12 +1220,20 @@ gen7_emit_SF_CLIP_VIEWPORT(const struct ilo_dev_info *dev,
          state_len, state_align, &state_offset);
 
    for (i = 0; i < num_viewports; i++) {
-      const struct pipe_viewport_state *vp = &viewports[i];
+      const struct ilo_viewport_cso *vp = &viewports[i];
 
-      ilo_gpe_gen6_fill_SF_VIEWPORT(dev, vp, 1, dw, 8);
-
-      ilo_gpe_gen6_fill_CLIP_VIEWPORT(dev, vp, 1, dw + 8, 4);
-
+      dw[0] = fui(vp->m00);
+      dw[1] = fui(vp->m11);
+      dw[2] = fui(vp->m22);
+      dw[3] = fui(vp->m30);
+      dw[4] = fui(vp->m31);
+      dw[5] = fui(vp->m32);
+      dw[6] = 0;
+      dw[7] = 0;
+      dw[8] = fui(vp->min_gbx);
+      dw[9] = fui(vp->max_gbx);
+      dw[10] = fui(vp->min_gby);
+      dw[11] = fui(vp->max_gby);
       dw[12] = 0;
       dw[13] = 0;
       dw[14] = 0;

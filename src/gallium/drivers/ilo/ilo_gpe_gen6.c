@@ -2973,166 +2973,115 @@ gen6_emit_INTERFACE_DESCRIPTOR_DATA(const struct ilo_dev_info *dev,
    return state_offset;
 }
 
-void
-ilo_gpe_gen6_fill_SF_VIEWPORT(const struct ilo_dev_info *dev,
-                              const struct pipe_viewport_state *viewports,
-                              int num_viewports,
-                              uint32_t *dw, int num_dwords)
-{
-   int i;
-
-   ILO_GPE_VALID_GEN(dev, 6, 7);
-   assert(num_dwords == 8 * num_viewports);
-
-   for (i = 0; i < num_viewports; i++) {
-      const struct pipe_viewport_state *vp = &viewports[i];
-
-      dw[0] = fui(vp->scale[0]);
-      dw[1] = fui(vp->scale[1]);
-      dw[2] = fui(vp->scale[2]);
-      dw[3] = fui(vp->translate[0]);
-      dw[4] = fui(vp->translate[1]);
-      dw[5] = fui(vp->translate[2]);
-
-      /* padding */
-      dw[6] = 0;
-      dw[7] = 0;
-
-      dw += 8;
-   }
-}
-
-void
-ilo_gpe_gen6_fill_CLIP_VIEWPORT(const struct ilo_dev_info *dev,
-                                const struct pipe_viewport_state *viewports,
-                                int num_viewports,
-                                uint32_t *dw, int num_dwords)
-{
-   int i;
-
-   ILO_GPE_VALID_GEN(dev, 6, 7);
-   assert(num_dwords == 4 * num_viewports);
-
-   /*
-    * CLIP_VIEWPORT specifies the guard band.
-    *
-    * Clipping an object that is not entirely inside or outside the viewport
-    * (that is, trivially accepted or rejected) is expensive.  Guard band test
-    * allows clipping to be skipped in this stage and let the renderer dicards
-    * pixels that are outside the viewport.
-    *
-    * The reason that we need CLIP_VIEWPORT is that the renderer has a limit
-    * on the object size.  We have to clip normally when the object exceeds
-    * the limit.
-    */
-
-   for (i = 0; i < num_viewports; i++) {
-      const struct pipe_viewport_state *vp = &viewports[i];
-      /*
-       * From the Sandy Bridge PRM, volume 2 part 1, page 234:
-       *
-       *     "Per-Device Guardband Extents
-       *
-       *      * Supported X,Y ScreenSpace "Guardband" Extent: [-16K,16K-1]
-       *      * Maximum Post-Clamp Delta (X or Y): 16K"
-       *
-       *     "In addition, in order to be correctly rendered, objects must
-       *      have a screenspace bounding box not exceeding 8K in the X or Y
-       *      direction.  This additional restriction must also be
-       *      comprehended by software, i.e., enforced by use of clipping."
-       *
-       * From the Ivy Bridge PRM, volume 2 part 1, page 248:
-       *
-       *     "Per-Device Guardband Extents
-       *
-       *      * Supported X,Y ScreenSpace "Guardband" Extent: [-32K,32K-1]
-       *      * Maximum Post-Clamp Delta (X or Y): N/A"
-       *
-       *     "In addition, in order to be correctly rendered, objects must
-       *      have a screenspace bounding box not exceeding 8K in the X or Y
-       *      direction. This additional restriction must also be comprehended
-       *      by software, i.e., enforced by use of clipping."
-       *
-       * Combined, the bounding box of any object can not exceed 8K in both
-       * width and height.
-       *
-       * Below we set the guardband as a squre of length 8K, centered at where
-       * the viewport is.  This makes sure all objects passing the GB test are
-       * valid to the renderer, and those failing the XY clipping have a
-       * better chance of passing the GB test.
-       */
-      const float xscale = fabs(vp->scale[0]);
-      const float yscale = fabs(vp->scale[1]);
-      const int max_extent = (dev->gen >= ILO_GEN(7)) ? 32768 : 16384;
-      const int half_len = 8192 / 2;
-      int center_x = (int) vp->translate[0];
-      int center_y = (int) vp->translate[1];
-      float xmin, xmax, ymin, ymax;
-
-      /* make sure the guardband is within the valid range */
-      if (center_x - half_len < -max_extent)
-         center_x = -max_extent + half_len;
-      else if (center_x + half_len > max_extent)
-         center_x = max_extent - half_len;
-
-      if (center_y - half_len < -max_extent)
-         center_y = -max_extent + half_len;
-      else if (center_y + half_len > max_extent)
-         center_y = max_extent - half_len;
-
-      xmin = (float) (center_x - half_len);
-      xmax = (float) (center_x + half_len);
-      ymin = (float) (center_y - half_len);
-      ymax = (float) (center_y + half_len);
-
-      /* screen space to NDC space */
-      xmin = (xmin - vp->translate[0]) / xscale;
-      xmax = (xmax - vp->translate[0]) / xscale;
-      ymin = (ymin - vp->translate[1]) / yscale;
-      ymax = (ymax - vp->translate[1]) / yscale;
-
-      dw[0] = fui(xmin);
-      dw[1] = fui(xmax);
-      dw[2] = fui(ymin);
-      dw[3] = fui(ymax);
-
-      dw += 4;
-   }
-}
-
 static void
-gen6_fill_CC_VIEWPORT(const struct ilo_dev_info *dev,
-                      const struct pipe_viewport_state *viewports,
-                      int num_viewports,
-                      uint32_t *dw, int num_dwords)
+viewport_get_guardband(const struct ilo_dev_info *dev,
+                       int center_x, int center_y,
+                       int *min_gbx, int *max_gbx,
+                       int *min_gby, int *max_gby)
 {
-   int i;
+   /*
+    * From the Sandy Bridge PRM, volume 2 part 1, page 234:
+    *
+    *     "Per-Device Guardband Extents
+    *
+    *       - Supported X,Y ScreenSpace "Guardband" Extent: [-16K,16K-1]
+    *       - Maximum Post-Clamp Delta (X or Y): 16K"
+    *
+    *     "In addition, in order to be correctly rendered, objects must have a
+    *      screenspace bounding box not exceeding 8K in the X or Y direction.
+    *      This additional restriction must also be comprehended by software,
+    *      i.e., enforced by use of clipping."
+    *
+    * From the Ivy Bridge PRM, volume 2 part 1, page 248:
+    *
+    *     "Per-Device Guardband Extents
+    *
+    *       - Supported X,Y ScreenSpace "Guardband" Extent: [-32K,32K-1]
+    *       - Maximum Post-Clamp Delta (X or Y): N/A"
+    *
+    *     "In addition, in order to be correctly rendered, objects must have a
+    *      screenspace bounding box not exceeding 8K in the X or Y direction.
+    *      This additional restriction must also be comprehended by software,
+    *      i.e., enforced by use of clipping."
+    *
+    * Combined, the bounding box of any object can not exceed 8K in both
+    * width and height.
+    *
+    * Below we set the guardband as a squre of length 8K, centered at where
+    * the viewport is.  This makes sure all objects passing the GB test are
+    * valid to the renderer, and those failing the XY clipping have a
+    * better chance of passing the GB test.
+    */
+   const int max_extent = (dev->gen >= ILO_GEN(7)) ? 32768 : 16384;
+   const int half_len = 8192 / 2;
+
+   /* make sure the guardband is within the valid range */
+   if (center_x - half_len < -max_extent)
+      center_x = -max_extent + half_len;
+   else if (center_x + half_len > max_extent - 1)
+      center_x = max_extent - half_len;
+
+   if (center_y - half_len < -max_extent)
+      center_y = -max_extent + half_len;
+   else if (center_y + half_len > max_extent - 1)
+      center_y = max_extent - half_len;
+
+   *min_gbx = (float) (center_x - half_len);
+   *max_gbx = (float) (center_x + half_len);
+   *min_gby = (float) (center_y - half_len);
+   *max_gby = (float) (center_y + half_len);
+}
+
+void
+ilo_gpe_set_viewport_cso(const struct ilo_dev_info *dev,
+                         const struct pipe_viewport_state *state,
+                         struct ilo_viewport_cso *vp)
+{
+   const float scale_x = fabs(state->scale[0]);
+   const float scale_y = fabs(state->scale[1]);
+   const float scale_z = fabs(state->scale[2]);
+   int min_gbx, max_gbx, min_gby, max_gby;
 
    ILO_GPE_VALID_GEN(dev, 6, 7);
-   assert(num_dwords == 2 * num_viewports);
 
-   for (i = 0; i < num_viewports; i++) {
-      const struct pipe_viewport_state *vp = &viewports[i];
-      const float scale = fabs(vp->scale[2]);
-      const float min = vp->translate[2] - scale;
-      const float max = vp->translate[2] + scale;
+   viewport_get_guardband(dev,
+         (int) state->translate[0],
+         (int) state->translate[1],
+         &min_gbx, &max_gbx, &min_gby, &max_gby);
 
-      dw[0] = fui(min);
-      dw[1] = fui(max);
+   /* matrix form */
+   vp->m00 = state->scale[0];
+   vp->m11 = state->scale[1];
+   vp->m22 = state->scale[2];
+   vp->m30 = state->translate[0];
+   vp->m31 = state->translate[1];
+   vp->m32 = state->translate[2];
 
-      dw += 2;
-   }
+   /* guardband in NDC space */
+   vp->min_gbx = ((float) min_gbx - state->translate[0]) / scale_x;
+   vp->max_gbx = ((float) max_gbx - state->translate[0]) / scale_x;
+   vp->min_gby = ((float) min_gby - state->translate[1]) / scale_y;
+   vp->max_gby = ((float) max_gby - state->translate[1]) / scale_y;
+
+   /* viewport in screen space */
+   vp->min_x = scale_x * -1.0f + state->translate[0];
+   vp->max_x = scale_x *  1.0f + state->translate[0];
+   vp->min_y = scale_y * -1.0f + state->translate[1];
+   vp->max_y = scale_y *  1.0f + state->translate[1];
+   vp->min_z = scale_z * -1.0f + state->translate[2];
+   vp->max_z = scale_z *  1.0f + state->translate[2];
 }
 
 static uint32_t
 gen6_emit_SF_VIEWPORT(const struct ilo_dev_info *dev,
-                      const struct pipe_viewport_state *viewports,
-                      int num_viewports,
+                      const struct ilo_viewport_cso *viewports,
+                      unsigned num_viewports,
                       struct ilo_cp *cp)
 {
    const int state_align = 32 / 4;
    const int state_len = 8 * num_viewports;
    uint32_t state_offset, *dw;
+   unsigned i;
 
    ILO_GPE_VALID_GEN(dev, 6, 6);
 
@@ -3147,21 +3096,34 @@ gen6_emit_SF_VIEWPORT(const struct ilo_dev_info *dev,
    dw = ilo_cp_steal_ptr(cp, "SF_VIEWPORT",
          state_len, state_align, &state_offset);
 
-   ilo_gpe_gen6_fill_SF_VIEWPORT(dev,
-         viewports, num_viewports, dw, state_len);
+   for (i = 0; i < num_viewports; i++) {
+      const struct ilo_viewport_cso *vp = &viewports[i];
+
+      dw[0] = fui(vp->m00);
+      dw[1] = fui(vp->m11);
+      dw[2] = fui(vp->m22);
+      dw[3] = fui(vp->m30);
+      dw[4] = fui(vp->m31);
+      dw[5] = fui(vp->m32);
+      dw[6] = 0;
+      dw[7] = 0;
+
+      dw += 8;
+   }
 
    return state_offset;
 }
 
 static uint32_t
 gen6_emit_CLIP_VIEWPORT(const struct ilo_dev_info *dev,
-                        const struct pipe_viewport_state *viewports,
-                        int num_viewports,
+                        const struct ilo_viewport_cso *viewports,
+                        unsigned num_viewports,
                         struct ilo_cp *cp)
 {
    const int state_align = 32 / 4;
    const int state_len = 4 * num_viewports;
    uint32_t state_offset, *dw;
+   unsigned i;
 
    ILO_GPE_VALID_GEN(dev, 6, 6);
 
@@ -3176,21 +3138,30 @@ gen6_emit_CLIP_VIEWPORT(const struct ilo_dev_info *dev,
    dw = ilo_cp_steal_ptr(cp, "CLIP_VIEWPORT",
          state_len, state_align, &state_offset);
 
-   ilo_gpe_gen6_fill_CLIP_VIEWPORT(dev,
-         viewports, num_viewports, dw, state_len);
+   for (i = 0; i < num_viewports; i++) {
+      const struct ilo_viewport_cso *vp = &viewports[i];
+
+      dw[0] = fui(vp->min_gbx);
+      dw[1] = fui(vp->max_gbx);
+      dw[2] = fui(vp->min_gby);
+      dw[3] = fui(vp->max_gby);
+
+      dw += 4;
+   }
 
    return state_offset;
 }
 
 static uint32_t
 gen6_emit_CC_VIEWPORT(const struct ilo_dev_info *dev,
-                      const struct pipe_viewport_state *viewports,
-                      int num_viewports,
+                      const struct ilo_viewport_cso *viewports,
+                      unsigned num_viewports,
                       struct ilo_cp *cp)
 {
    const int state_align = 32 / 4;
    const int state_len = 2 * num_viewports;
    uint32_t state_offset, *dw;
+   unsigned i;
 
    ILO_GPE_VALID_GEN(dev, 6, 7);
 
@@ -3204,7 +3175,14 @@ gen6_emit_CC_VIEWPORT(const struct ilo_dev_info *dev,
    dw = ilo_cp_steal_ptr(cp, "CC_VIEWPORT",
          state_len, state_align, &state_offset);
 
-   gen6_fill_CC_VIEWPORT(dev, viewports, num_viewports, dw, state_len);
+   for (i = 0; i < num_viewports; i++) {
+      const struct ilo_viewport_cso *vp = &viewports[i];
+
+      dw[0] = fui(vp->min_z);
+      dw[1] = fui(vp->max_z);
+
+      dw += 2;
+   }
 
    return state_offset;
 }

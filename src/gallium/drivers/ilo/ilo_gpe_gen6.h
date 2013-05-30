@@ -377,20 +377,20 @@ typedef uint32_t
                                           struct ilo_cp *cp);
 typedef uint32_t
 (*ilo_gpe_gen6_SF_VIEWPORT)(const struct ilo_dev_info *dev,
-                            const struct pipe_viewport_state *viewports,
-                            int num_viewports,
+                            const struct ilo_viewport_cso *viewports,
+                            unsigned num_viewports,
                             struct ilo_cp *cp);
 
 typedef uint32_t
 (*ilo_gpe_gen6_CLIP_VIEWPORT)(const struct ilo_dev_info *dev,
-                              const struct pipe_viewport_state *viewports,
-                              int num_viewports,
+                              const struct ilo_viewport_cso *viewports,
+                              unsigned num_viewports,
                               struct ilo_cp *cp);
 
 typedef uint32_t
 (*ilo_gpe_gen6_CC_VIEWPORT)(const struct ilo_dev_info *dev,
-                            const struct pipe_viewport_state *viewports,
-                            int num_viewports,
+                            const struct ilo_viewport_cso *viewports,
+                            unsigned num_viewports,
                             struct ilo_cp *cp);
 
 typedef uint32_t
@@ -575,17 +575,5 @@ ilo_gpe_gen6_emit_3DSTATE_DEPTH_BUFFER(const struct ilo_dev_info *dev,
                                        const struct pipe_depth_stencil_alpha_state *dsa,
                                        bool hiz,
                                        struct ilo_cp *cp);
-
-void
-ilo_gpe_gen6_fill_SF_VIEWPORT(const struct ilo_dev_info *dev,
-                              const struct pipe_viewport_state *viewports,
-                              int num_viewports,
-                              uint32_t *dw, int num_dwords);
-
-void
-ilo_gpe_gen6_fill_CLIP_VIEWPORT(const struct ilo_dev_info *dev,
-                                const struct pipe_viewport_state *viewports,
-                                int num_viewports,
-                                uint32_t *dw, int num_dwords);
 
 #endif /* ILO_GPE_GEN6_H */

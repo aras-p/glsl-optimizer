@@ -600,11 +600,17 @@ ilo_set_viewport_states(struct pipe_context *pipe,
    if (viewports) {
       unsigned i;
 
-      for (i = 0; i < num_viewports; i++)
-         ilo->viewport.states[start_slot + i] = viewports[i];
+      for (i = 0; i < num_viewports; i++) {
+         ilo_gpe_set_viewport_cso(ilo->dev, &viewports[i],
+               &ilo->viewport.cso[start_slot + i]);
+      }
 
       if (ilo->viewport.count < start_slot + num_viewports)
          ilo->viewport.count = start_slot + num_viewports;
+
+      /* need to save viewport 0 for util_blitter */
+      if (!start_slot && num_viewports)
+         ilo->viewport.viewport0 = viewports[0];
    }
    else {
       if (ilo->viewport.count <= start_slot + num_viewports &&

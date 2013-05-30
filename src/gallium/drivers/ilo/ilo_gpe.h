@@ -75,9 +75,23 @@ struct ilo_so_state {
    bool enabled;
 };
 
+struct ilo_viewport_cso {
+   /* matrix form */
+   float m00, m11, m22, m30, m31, m32;
+
+   /* guardband in NDC space */
+   float min_gbx, min_gby, max_gbx, max_gby;
+
+   /* viewport in screen space */
+   float min_x, min_y, min_z;
+   float max_x, max_y, max_z;
+};
+
 struct ilo_viewport_state {
-   struct pipe_viewport_state states[ILO_MAX_VIEWPORTS];
+   struct ilo_viewport_cso cso[ILO_MAX_VIEWPORTS];
    unsigned count;
+
+   struct pipe_viewport_state viewport0;
 };
 
 struct ilo_scissor_state {
@@ -143,5 +157,10 @@ struct ilo_global_binding {
    uint32_t *handles[PIPE_MAX_SHADER_RESOURCES];
    unsigned count;
 };
+
+void
+ilo_gpe_set_viewport_cso(const struct ilo_dev_info *dev,
+                         const struct pipe_viewport_state *state,
+                         struct ilo_viewport_cso *vp);
 
 #endif /* ILO_GPE_H */

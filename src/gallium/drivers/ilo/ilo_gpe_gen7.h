@@ -382,8 +382,8 @@ typedef ilo_gpe_gen6_INTERFACE_DESCRIPTOR_DATA ilo_gpe_gen7_INTERFACE_DESCRIPTOR
 
 typedef uint32_t
 (*ilo_gpe_gen7_SF_CLIP_VIEWPORT)(const struct ilo_dev_info *dev,
-                                 const struct pipe_viewport_state *viewports,
-                                 int num_viewports,
+                                 const struct ilo_viewport_cso *viewports,
+                                 unsigned num_viewports,
                                  struct ilo_cp *cp);
 
 typedef ilo_gpe_gen6_CC_VIEWPORT ilo_gpe_gen7_CC_VIEWPORT;

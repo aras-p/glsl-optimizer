@@ -598,21 +598,22 @@ gen6_pipeline_clip(struct ilo_3d_pipeline *p,
    /* 3DSTATE_CLIP */
    if (DIRTY(RASTERIZER) || DIRTY(FS) ||
        DIRTY(VIEWPORT) || DIRTY(FRAMEBUFFER)) {
-      const struct pipe_viewport_state *vp = &ilo->viewport.states[0];
-      bool enable_guardband;
-      float x1, x2, y1, y2;
+      bool enable_guardband = true;
+      unsigned i;
 
       /*
        * We do not do 2D clipping yet.  Guard band test should only be enabled
        * when the viewport is larger than the framebuffer.
        */
-      x1 = fabs(vp->scale[0]) * -1.0f + vp->translate[0];
-      x2 = fabs(vp->scale[0]) *  1.0f + vp->translate[0];
-      y1 = fabs(vp->scale[1]) * -1.0f + vp->translate[1];
-      y2 = fabs(vp->scale[1]) *  1.0f + vp->translate[1];
-      enable_guardband =
-         (x1 <= 0.0f && x2 >= (float) ilo->fb.state.width &&
-          y1 <= 0.0f && y2 >= (float) ilo->fb.state.height);
+      for (i = 0; i < ilo->viewport.count; i++) {
+         const struct ilo_viewport_cso *vp = &ilo->viewport.cso[i];
+
+         if (vp->min_x > 0.0f || vp->max_x < ilo->fb.state.width ||
+             vp->min_y > 0.0f || vp->max_y < ilo->fb.state.height) {
+            enable_guardband = false;
+            break;
+         }
+      }
 
       p->gen6_3DSTATE_CLIP(p->dev,
             &ilo->rasterizer->state,
@@ -776,23 +777,23 @@ gen6_pipeline_state_viewports(struct ilo_3d_pipeline *p,
    /* SF_CLIP_VIEWPORT and CC_VIEWPORT */
    if (p->dev->gen >= ILO_GEN(7) && DIRTY(VIEWPORT)) {
       p->state.SF_CLIP_VIEWPORT = p->gen7_SF_CLIP_VIEWPORT(p->dev,
-            ilo->viewport.states, ilo->viewport.count, p->cp);
+            ilo->viewport.cso, ilo->viewport.count, p->cp);
 
       p->state.CC_VIEWPORT = p->gen6_CC_VIEWPORT(p->dev,
-            ilo->viewport.states, ilo->viewport.count, p->cp);
+            ilo->viewport.cso, ilo->viewport.count, p->cp);
 
       session->viewport_state_changed = true;
    }
    /* SF_VIEWPORT, CLIP_VIEWPORT, and CC_VIEWPORT */
    else if (DIRTY(VIEWPORT)) {
       p->state.CLIP_VIEWPORT = p->gen6_CLIP_VIEWPORT(p->dev,
-            ilo->viewport.states, ilo->viewport.count, p->cp);
+            ilo->viewport.cso, ilo->viewport.count, p->cp);
 
       p->state.SF_VIEWPORT = p->gen6_SF_VIEWPORT(p->dev,
-            ilo->viewport.states, ilo->viewport.count, p->cp);
+            ilo->viewport.cso, ilo->viewport.count, p->cp);
 
       p->state.CC_VIEWPORT = p->gen6_CC_VIEWPORT(p->dev,
-            ilo->viewport.states, ilo->viewport.count, p->cp);
+            ilo->viewport.cso, ilo->viewport.count, p->cp);
 
       session->viewport_state_changed = true;
    }
