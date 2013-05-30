@@ -132,7 +132,7 @@ intel_flush_front(struct gl_context *ctx)
     __DRIdrawable *driDrawable = driContext->driDrawablePriv;
     __DRIscreen *const screen = intel->intelScreen->driScrnPriv;
 
-    if (_mesa_is_winsys_fbo(ctx->DrawBuffer) && intel->front_buffer_dirty) {
+    if (intel->front_buffer_dirty && _mesa_is_winsys_fbo(ctx->DrawBuffer)) {
       if (screen->dri2.loader->flushFrontBuffer != NULL &&
           driDrawable &&
           driDrawable->loaderPrivate) {
