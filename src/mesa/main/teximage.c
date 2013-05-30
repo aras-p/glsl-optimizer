@@ -315,15 +315,17 @@ _mesa_base_tex_format( struct gl_context *ctx, GLint internalFormat )
       case GL_SRGB_EXT:
       case GL_SRGB8_EXT:
       case GL_COMPRESSED_SRGB_EXT:
-      case GL_COMPRESSED_SRGB_S3TC_DXT1_EXT:
          return GL_RGB;
+      case GL_COMPRESSED_SRGB_S3TC_DXT1_EXT:
+         return ctx->Extensions.EXT_texture_compression_s3tc ? GL_RGB : -1;
       case GL_SRGB_ALPHA_EXT:
       case GL_SRGB8_ALPHA8_EXT:
       case GL_COMPRESSED_SRGB_ALPHA_EXT:
+         return GL_RGBA;
       case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT:
       case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT:
       case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT:
-         return GL_RGBA;
+         return ctx->Extensions.EXT_texture_compression_s3tc ? GL_RGBA : -1;
       case GL_SLUMINANCE_ALPHA_EXT:
       case GL_SLUMINANCE8_ALPHA8_EXT:
       case GL_COMPRESSED_SLUMINANCE_ALPHA_EXT:
