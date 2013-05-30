@@ -839,7 +839,7 @@ gen6_pipeline_state_scissors(struct ilo_3d_pipeline *p,
    if (DIRTY(SCISSOR) || DIRTY(VIEWPORT)) {
       /* there should be as many scissors as there are viewports */
       p->state.SCISSOR_RECT = p->gen6_SCISSOR_RECT(p->dev,
-            ilo->scissor.states, ilo->viewport.count, p->cp);
+            &ilo->scissor, ilo->viewport.count, p->cp);
 
       session->scissor_state_changed = true;
    }

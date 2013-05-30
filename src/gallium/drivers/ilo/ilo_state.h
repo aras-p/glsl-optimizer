@@ -119,6 +119,12 @@ void
 ilo_init_state_functions(struct ilo_context *ilo);
 
 void
+ilo_init_states(struct ilo_context *ilo);
+
+void
+ilo_cleanup_states(struct ilo_context *ilo);
+
+void
 ilo_finalize_states(struct ilo_context *ilo);
 
 #endif /* ILO_STATE_H */

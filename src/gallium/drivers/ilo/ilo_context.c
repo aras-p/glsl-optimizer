@@ -91,6 +91,8 @@ ilo_context_destroy(struct pipe_context *pipe)
 {
    struct ilo_context *ilo = ilo_context(pipe);
 
+   ilo_cleanup_states(ilo);
+
    if (ilo->last_cp_bo)
       ilo->last_cp_bo->unreference(ilo->last_cp_bo);
 
@@ -147,6 +149,8 @@ ilo_context_create(struct pipe_screen *screen, void *priv)
    ilo_init_transfer_functions(ilo);
    ilo_init_video_functions(ilo);
    ilo_init_gpgpu_functions(ilo);
+
+   ilo_init_states(ilo);
 
    /* this must be called last as u_blitter is a client of the pipe context */
    ilo->blitter = util_blitter_create(&ilo->base);

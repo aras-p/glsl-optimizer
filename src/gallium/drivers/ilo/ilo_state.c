@@ -581,10 +581,9 @@ ilo_set_scissor_states(struct pipe_context *pipe,
                        const struct pipe_scissor_state *scissors)
 {
    struct ilo_context *ilo = ilo_context(pipe);
-   unsigned i;
 
-   for (i = 0; i < num_scissors; i++)
-      ilo->scissor.states[start_slot + i] = scissors[i];
+   ilo_gpe_set_scissor(ilo->dev, start_slot, num_scissors,
+         scissors, &ilo->scissor);
 
    ilo->dirty |= ILO_DIRTY_SCISSOR;
 }
@@ -1055,4 +1054,15 @@ ilo_init_state_functions(struct ilo_context *ilo)
    ilo->base.delete_compute_state = ilo_delete_compute_state;
    ilo->base.set_compute_resources = ilo_set_compute_resources;
    ilo->base.set_global_binding = ilo_set_global_binding;
+}
+
+void
+ilo_init_states(struct ilo_context *ilo)
+{
+   ilo_gpe_set_scissor_null(ilo->dev, &ilo->scissor);
+}
+
+void
+ilo_cleanup_states(struct ilo_context *ilo)
+{
 }

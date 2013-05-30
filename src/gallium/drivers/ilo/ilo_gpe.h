@@ -95,7 +95,8 @@ struct ilo_viewport_state {
 };
 
 struct ilo_scissor_state {
-   struct pipe_scissor_state states[ILO_MAX_VIEWPORTS];
+   /* SCISSOR_RECT */
+   uint32_t payload[ILO_MAX_VIEWPORTS * 2];
 };
 
 struct ilo_rasterizer_state {
@@ -162,5 +163,16 @@ void
 ilo_gpe_set_viewport_cso(const struct ilo_dev_info *dev,
                          const struct pipe_viewport_state *state,
                          struct ilo_viewport_cso *vp);
+
+void
+ilo_gpe_set_scissor(const struct ilo_dev_info *dev,
+                    unsigned start_slot,
+                    unsigned num_states,
+                    const struct pipe_scissor_state *states,
+                    struct ilo_scissor_state *scissor);
+
+void
+ilo_gpe_set_scissor_null(const struct ilo_dev_info *dev,
+                         struct ilo_scissor_state *scissor);
 
 #endif /* ILO_GPE_H */

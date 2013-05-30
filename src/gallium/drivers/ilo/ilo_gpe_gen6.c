@@ -3502,16 +3502,63 @@ gen6_emit_DEPTH_STENCIL_STATE(const struct ilo_dev_info *dev,
    return state_offset;
 }
 
+void
+ilo_gpe_set_scissor(const struct ilo_dev_info *dev,
+                    unsigned start_slot,
+                    unsigned num_states,
+                    const struct pipe_scissor_state *states,
+                    struct ilo_scissor_state *scissor)
+{
+   unsigned i;
+
+   ILO_GPE_VALID_GEN(dev, 6, 7);
+
+   for (i = 0; i < num_states; i++) {
+      uint16_t min_x, min_y, max_x, max_y;
+
+      /* both max and min are inclusive in SCISSOR_RECT */
+      if (states[i].minx < states[i].maxx &&
+          states[i].miny < states[i].maxy) {
+         min_x = states[i].minx;
+         min_y = states[i].miny;
+         max_x = states[i].maxx - 1;
+         max_y = states[i].maxy - 1;
+      }
+      else {
+         /* we have to make min greater than max */
+         min_x = 1;
+         min_y = 1;
+         max_x = 0;
+         max_y = 0;
+      }
+
+      scissor->payload[start_slot * 2 + 0] = min_y << 16 | min_x;
+      scissor->payload[start_slot * 2 + 1] = max_y << 16 | max_x;
+      start_slot++;
+   }
+}
+
+void
+ilo_gpe_set_scissor_null(const struct ilo_dev_info *dev,
+                         struct ilo_scissor_state *scissor)
+{
+   unsigned i;
+
+   for (i = 0; i < Elements(scissor->payload); i += 2) {
+      scissor->payload[i + 0] = 1 << 16 | 1;
+      scissor->payload[i + 1] = 0;
+   }
+}
+
 static uint32_t
 gen6_emit_SCISSOR_RECT(const struct ilo_dev_info *dev,
-                       const struct pipe_scissor_state *scissors,
-                       int num_scissors,
+                       const struct ilo_scissor_state *scissor,
+                       unsigned num_viewports,
                        struct ilo_cp *cp)
 {
    const int state_align = 32 / 4;
-   const int state_len = 2 * num_scissors;
+   const int state_len = 2 * num_viewports;
    uint32_t state_offset, *dw;
-   int i;
 
    ILO_GPE_VALID_GEN(dev, 6, 7);
 
@@ -3521,25 +3568,12 @@ gen6_emit_SCISSOR_RECT(const struct ilo_dev_info *dev,
     *     "The viewport-specific state used by the SF unit (SCISSOR_RECT) is
     *      stored as an array of up to 16 elements..."
     */
-   assert(num_scissors && num_scissors <= 16);
+   assert(num_viewports && num_viewports <= 16);
 
    dw = ilo_cp_steal_ptr(cp, "SCISSOR_RECT",
          state_len, state_align, &state_offset);
 
-   for (i = 0; i < num_scissors; i++) {
-      if (scissors[i].minx < scissors[i].maxx &&
-          scissors[i].miny < scissors[i].maxy) {
-         dw[0] = scissors[i].miny << 16 | scissors[i].minx;
-         dw[1] = (scissors[i].maxy - 1) << 16 | (scissors[i].maxx - 1);
-      }
-      else {
-         /* we have to make min greater than max as they are both inclusive */
-         dw[0] = 1 << 16 | 1;
-         dw[1] = 0;
-      }
-
-      dw += 2;
-   }
+   memcpy(dw, scissor->payload, state_len * 4);
 
    return state_offset;
 }

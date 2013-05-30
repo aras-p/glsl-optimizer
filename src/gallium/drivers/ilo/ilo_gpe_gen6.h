@@ -414,8 +414,8 @@ typedef uint32_t
 
 typedef uint32_t
 (*ilo_gpe_gen6_SCISSOR_RECT)(const struct ilo_dev_info *dev,
-                             const struct pipe_scissor_state *scissors,
-                             int num_scissors,
+                             const struct ilo_scissor_state *scissor,
+                             unsigned num_viewports,
                              struct ilo_cp *cp);
 
 typedef uint32_t
