@@ -388,14 +388,21 @@ brw_blorp_copytexsubimage(struct intel_context *intel,
    if (_mesa_get_format_bits(dst_image->TexFormat, GL_STENCIL_BITS) > 0 &&
        src_rb != NULL) {
       src_irb = intel_renderbuffer(src_rb);
-      if (src_irb->mt != src_mt)
+      src_mt = src_irb->mt;
 
-      brw_blorp_blit_miptrees(intel,
-                              src_irb->mt, src_irb->mt_level, src_irb->mt_layer,
-                              dst_mt, dst_image->Level, dst_image->Face,
-                              srcX0, srcY0, srcX1, srcY1,
-                              dstX0, dstY0, dstX1, dstY1,
-                              false, mirror_y);
+      if (src_mt->stencil_mt)
+         src_mt = src_mt->stencil_mt;
+      if (dst_mt->stencil_mt)
+         dst_mt = dst_mt->stencil_mt;
+
+      if (src_mt != dst_mt) {
+         brw_blorp_blit_miptrees(intel,
+                                 src_mt, src_irb->mt_level, src_irb->mt_layer,
+                                 dst_mt, dst_image->Level, dst_image->Face,
+                                 srcX0, srcY0, srcX1, srcY1,
+                                 dstX0, dstY0, dstX1, dstY1,
+                                 false, mirror_y);
+      }
    }
 
    return true;
