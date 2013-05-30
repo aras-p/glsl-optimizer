@@ -86,6 +86,7 @@ struct lp_rasterizer_task
 
    struct lp_scene *scene;
    unsigned x, y;          /**< Pos of this tile in framebuffer, in pixels */
+   unsigned width, height; /**< width, height of current tile, in pixels */
 
    uint8_t *color_tiles[PIPE_MAX_COLOR_BUFS];
    uint8_t *depth_tile;
@@ -293,21 +294,27 @@ lp_rast_shade_quads_all( struct lp_rasterizer_task *task,
       depth_stride = scene->zsbuf.stride;
    }
 
-   /* run shader on 4x4 block */
-   BEGIN_JIT_CALL(state, task);
-   variant->jit_function[RAST_WHOLE]( &state->jit_context,
-                                      x, y,
-                                      inputs->frontfacing,
-                                      GET_A0(inputs),
-                                      GET_DADX(inputs),
-                                      GET_DADY(inputs),
-                                      color,
-                                      depth,
-                                      0xffff,
-                                      &task->thread_data,
-                                      stride,
-                                      depth_stride);
-   END_JIT_CALL();
+   /*
+    * The rasterizer may produce fragments outside our
+    * allocated 4x4 blocks hence need to filter them out here.
+    */
+   if ((x % TILE_SIZE) < task->width && (y % TILE_SIZE) < task->height) {
+      /* run shader on 4x4 block */
+      BEGIN_JIT_CALL(state, task);
+      variant->jit_function[RAST_WHOLE]( &state->jit_context,
+                                         x, y,
+                                         inputs->frontfacing,
+                                         GET_A0(inputs),
+                                         GET_DADX(inputs),
+                                         GET_DADY(inputs),
+                                         color,
+                                         depth,
+                                         0xffff,
+                                         &task->thread_data,
+                                         stride,
+                                         depth_stride);
+      END_JIT_CALL();
+   }
 }
 
 void lp_rast_triangle_1( struct lp_rasterizer_task *, 

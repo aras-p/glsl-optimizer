@@ -49,6 +49,7 @@
 #include "lp_texture.h"
 #include "lp_setup.h"
 #include "lp_state.h"
+#include "lp_rast.h"
 
 #include "state_tracker/sw_winsys.h"
 
@@ -84,15 +85,15 @@ llvmpipe_texture_layout(struct llvmpipe_screen *screen,
       {
          unsigned alignment, nblocksx, nblocksy, block_size;
 
-         /* For non-compressed formats we need to align the texture size
-          * to the tile size to facilitate render-to-texture.
-          * XXX this blows up 1d/1d array textures by unreasonable
-          * amount (factor 64), probably should do something about it.
+         /* For non-compressed formats we need 4x4 pixel alignment
+          * (for now). We also want cache line size in x direction,
+          * otherwise same cache line could end up in multiple threads.
+          * XXX this blows up 1d/1d array textures by a factor of 4.
           */
          if (util_format_is_compressed(pt->format))
             alignment = 1;
          else
-            alignment = TILE_SIZE;
+            alignment = LP_RASTER_BLOCK_SIZE;
 
          nblocksx = util_format_get_nblocksx(pt->format,
                                              align(width, alignment));
@@ -100,7 +101,10 @@ llvmpipe_texture_layout(struct llvmpipe_screen *screen,
                                              align(height, alignment));
          block_size = util_format_get_blocksize(pt->format);
 
-         lpr->row_stride[level] = align(nblocksx * block_size, 16);
+         if (util_format_is_compressed(pt->format))
+            lpr->row_stride[level] = nblocksx * block_size;
+         else
+            lpr->row_stride[level] = align(nblocksx * block_size, util_cpu_caps.cacheline);
 
          /* if row_stride * height > LP_MAX_TEXTURE_SIZE */
          if (lpr->row_stride[level] > LP_MAX_TEXTURE_SIZE / nblocksy) {
@@ -244,7 +248,12 @@ llvmpipe_resource_create(struct pipe_screen *_screen,
       assert(templat->height0 == 1);
       assert(templat->depth0 == 1);
       assert(templat->last_level == 0);
-      lpr->data = align_malloc(bytes, 16);
+      /*
+       * Reserve some extra storage since if we'd render to a buffer we
+       * read/write always LP_RASTER_BLOCK_SIZE pixels, but the element
+       * offset doesn't need to be aligned to LP_RASTER_BLOCK_SIZE.
+       */
+      lpr->data = align_malloc(bytes + (LP_RASTER_BLOCK_SIZE - 1) * 4 * sizeof(float), 16);
       /*
        * buffers don't really have stride but it's probably safer
        * (for code doing same calculations for buffers and textures)
@@ -327,7 +336,6 @@ llvmpipe_resource_map(struct pipe_resource *resource,
       struct llvmpipe_screen *screen = llvmpipe_screen(resource->screen);
       struct sw_winsys *winsys = screen->winsys;
       unsigned dt_usage;
-      uint8_t *map2;
 
       if (tex_usage == LP_TEX_USAGE_READ) {
          dt_usage = PIPE_TRANSFER_READ;
@@ -345,14 +353,11 @@ llvmpipe_resource_map(struct pipe_resource *resource,
       /* install this linear image in texture data structure */
       lpr->linear_img.data = map;
 
-      /* make sure tiled data gets converted to linear data */
-      map2 = llvmpipe_get_texture_image(lpr, 0, 0, tex_usage);
-      return map2;
+      return map;
    }
    else if (llvmpipe_resource_is_texture(resource)) {
 
-      map = llvmpipe_get_texture_image(lpr, layer, level,
-                                       tex_usage);
+      map = llvmpipe_get_texture_image(lpr, layer, level, tex_usage);
       return map;
    }
    else {

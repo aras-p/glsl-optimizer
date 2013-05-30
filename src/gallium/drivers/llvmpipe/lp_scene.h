@@ -144,6 +144,10 @@ struct lp_scene {
    /** list of resources referenced by the scene commands */
    struct resource_ref *resources;
 
+   /** aligned scene width, height */
+   unsigned width_aligned;
+   unsigned height_aligned;
+
    /** Total memory used by the scene (in bytes).  This sums all the
     * data blocks and counts all bins, state, resource references and
     * other random allocations within the scene.

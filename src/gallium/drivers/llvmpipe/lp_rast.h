@@ -50,6 +50,9 @@ struct cmd_bin;
 #define FIXED_ORDER 4
 #define FIXED_ONE (1<<FIXED_ORDER)
 
+/* Rasterizer output size going to jit fs, width/height */
+#define LP_RASTER_BLOCK_SIZE 4
+
 
 struct lp_rasterizer_task;
 

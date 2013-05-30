@@ -694,8 +694,7 @@ lp_setup_set_fragment_sampler_views(struct lp_setup_context *setup,
                assert(last_level <= res->last_level);
 
                /*
-                * The complexity here is only necessary for depth textures which
-                * still are tiled.
+                * The complexity here should no longer be necessary.
                 */
                mip_ptr = llvmpipe_get_texture_image_all(lp_tex, first_level,
                                                         LP_TEX_USAGE_READ);

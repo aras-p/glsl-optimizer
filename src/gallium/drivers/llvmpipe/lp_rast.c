@@ -95,6 +95,10 @@ lp_rast_tile_begin(struct lp_rasterizer_task *task,
    task->bin = bin;
    task->x = x * TILE_SIZE;
    task->y = y * TILE_SIZE;
+   task->width = TILE_SIZE + x * TILE_SIZE > task->scene->width_aligned ?
+                    task->scene->width_aligned - x * TILE_SIZE : TILE_SIZE;
+   task->height = TILE_SIZE + y * TILE_SIZE > task->scene->height_aligned ?
+                    task->scene->height_aligned - y * TILE_SIZE : TILE_SIZE;
 
    /* reset pointers to color and depth tile(s) */
    memset(task->color_tiles, 0, sizeof(task->color_tiles));
@@ -144,8 +148,8 @@ lp_rast_clear_color(struct lp_rasterizer_task *task,
                            scene->cbufs[i].stride,
                            task->x,
                            task->y,
-                           TILE_SIZE,
-                           TILE_SIZE,
+                           task->width,
+                           task->height,
                            &uc);
          }
       }
@@ -172,8 +176,8 @@ lp_rast_clear_color(struct lp_rasterizer_task *task,
                            scene->cbufs[i].stride,
                            task->x,
                            task->y,
-                           TILE_SIZE,
-                           TILE_SIZE,
+                           task->width,
+                           task->height,
                            &uc);
          }
       }
@@ -198,8 +202,8 @@ lp_rast_clear_zstencil(struct lp_rasterizer_task *task,
    uint64_t clear_mask64 = arg.clear_zstencil.mask;
    uint32_t clear_value = (uint32_t) clear_value64;
    uint32_t clear_mask = (uint32_t) clear_mask64;
-   const unsigned height = TILE_SIZE;
-   const unsigned width = TILE_SIZE;
+   const unsigned height = task->height;
+   const unsigned width = task->width;
    const unsigned block_size = scene->zsbuf.blocksize;
    const unsigned dst_stride = scene->zsbuf.stride;
    uint8_t *dst;
@@ -325,8 +329,8 @@ lp_rast_shade_tile(struct lp_rasterizer_task *task,
    variant = state->variant;
 
    /* render the whole 64x64 tile in 4x4 chunks */
-   for (y = 0; y < TILE_SIZE; y += 4){
-      for (x = 0; x < TILE_SIZE; x += 4) {
+   for (y = 0; y < task->height; y += 4){
+      for (x = 0; x < task->width; x += 4) {
          uint8_t *color[PIPE_MAX_COLOR_BUFS];
          unsigned stride[PIPE_MAX_COLOR_BUFS];
          uint8_t *depth = NULL;
@@ -434,21 +438,27 @@ lp_rast_shade_quads_mask(struct lp_rasterizer_task *task,
 
    assert(lp_check_alignment(state->jit_context.u8_blend_color, 16));
 
-   /* run shader on 4x4 block */
-   BEGIN_JIT_CALL(state, task);
-   variant->jit_function[RAST_EDGE_TEST](&state->jit_context,
-                                         x, y,
-                                         inputs->frontfacing,
-                                         GET_A0(inputs),
-                                         GET_DADX(inputs),
-                                         GET_DADY(inputs),
-                                         color,
-                                         depth,
-                                         mask,
-                                         &task->thread_data,
-                                         stride,
-                                         depth_stride);
-   END_JIT_CALL();
+   /*
+    * The rasterizer may produce fragments outside our
+    * allocated 4x4 blocks hence need to filter them out here.
+    */
+   if ((x % TILE_SIZE) < task->width && (y % TILE_SIZE) < task->height) {
+      /* run shader on 4x4 block */
+      BEGIN_JIT_CALL(state, task);
+      variant->jit_function[RAST_EDGE_TEST](&state->jit_context,
+                                            x, y,
+                                            inputs->frontfacing,
+                                            GET_A0(inputs),
+                                            GET_DADX(inputs),
+                                            GET_DADY(inputs),
+                                            color,
+                                            depth,
+                                            mask,
+                                            &task->thread_data,
+                                            stride,
+                                            depth_stride);
+      END_JIT_CALL();
+   }
 }
 
 
