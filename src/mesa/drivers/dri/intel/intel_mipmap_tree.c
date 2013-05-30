@@ -1502,7 +1502,7 @@ intel_miptree_map_blit(struct intel_context *intel,
                                   0, 0,
                                   map->w, map->h, 1,
                                   false, 0,
-                                  (1 << I915_TILING_NONE));
+                                  INTEL_MIPTREE_TILING_NONE);
    if (!map->mt) {
       fprintf(stderr, "Failed to allocate blit temporary\n");
       goto fail;

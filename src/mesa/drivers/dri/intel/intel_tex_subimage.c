@@ -91,8 +91,7 @@ intel_blit_texsubimage(struct gl_context * ctx,
       intel_miptree_create(intel, GL_TEXTURE_2D, texImage->TexFormat,
                            0, 0,
                            width, height, 1,
-                           false, 0,
-                           (1 << I915_TILING_NONE) /* force_tiling_mask */);
+                           false, 0, INTEL_MIPTREE_TILING_NONE);
    if (!temp_mt)
       goto err;
 
