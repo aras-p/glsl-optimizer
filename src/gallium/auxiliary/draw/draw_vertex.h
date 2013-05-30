@@ -128,6 +128,13 @@ draw_emit_vertex_attr(struct vertex_info *vinfo,
                       int src_index)
 {
    const uint n = vinfo->num_attribs;
+
+   /* If the src_index is negative, meaning it hasn't been found
+    * lets just redirect it to the first output slot */
+   if (src_index < 0) {
+      src_index = 0;
+   }
+
    assert(n < Elements(vinfo->attrib));
    vinfo->attrib[n].emit = emit;
    vinfo->attrib[n].interp_mode = interp;
