@@ -440,6 +440,7 @@ public:
     * uniform index.
     */
    int *params_remap;
+   int nr_params_remap;
 
    struct hash_table *variable_ht;
    fs_reg frag_depth;
