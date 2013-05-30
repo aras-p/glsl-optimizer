@@ -1308,29 +1308,38 @@ st_get_color_read_renderbuffer(struct gl_context *ctx)
 }
 
 
-/** Do the src/dest regions overlap? */
-static GLboolean
-regions_overlap(GLint srcX, GLint srcY, GLint dstX, GLint dstY,
-                GLsizei width, GLsizei height)
+/**
+ * \return TRUE if two regions overlap, FALSE otherwise
+ */
+static boolean
+regions_overlap(int srcX0, int srcY0,
+                int srcX1, int srcY1,
+                int dstX0, int dstY0,
+                int dstX1, int dstY1)
 {
-   if (srcX + width <= dstX ||
-       dstX + width <= srcX ||
-       srcY + height <= dstY ||
-       dstY + height <= srcY)
-      return GL_FALSE;
-   else
-      return GL_TRUE;
+   if (MAX2(srcX0, srcX1) < MIN2(dstX0, dstX1))
+      return FALSE; /* src completely left of dst */
+
+   if (MAX2(dstX0, dstX1) < MIN2(srcX0, srcX1))
+      return FALSE; /* dst completely left of src */
+
+   if (MAX2(srcY0, srcY1) < MIN2(dstY0, dstY1))
+      return FALSE; /* src completely above dst */
+
+   if (MAX2(dstY0, dstY1) < MIN2(srcY0, srcY1))
+      return FALSE; /* dst completely above src */
+
+   return TRUE; /* some overlap */
 }
 
 
 /**
  * Try to do a glCopyPixels for simple cases with a blit by calling
- * pipe->resource_copy_region().
+ * pipe->blit().
  *
  * We can do this when we're copying color pixels (depth/stencil
  * eventually) with no pixel zoom, no pixel transfer ops, no
- * per-fragment ops, the src/dest regions don't overlap and the
- * src/dest pixel formats are the same.
+ * per-fragment ops, and the src/dest regions don't overlap.
  */
 static GLboolean
 blit_copy_pixels(struct gl_context *ctx, GLint srcx, GLint srcy,
@@ -1339,8 +1348,9 @@ blit_copy_pixels(struct gl_context *ctx, GLint srcx, GLint srcy,
 {
    struct st_context *st = st_context(ctx);
    struct pipe_context *pipe = st->pipe;
+   struct pipe_screen *screen = pipe->screen;
    struct gl_pixelstore_attrib pack, unpack;
-   GLint readX, readY, readW, readH;
+   GLint readX, readY, readW, readH, drawX, drawY, drawW, drawH;
 
    if (type == GL_COLOR &&
        ctx->Pixel.ZoomX == 1.0 &&
@@ -1354,11 +1364,9 @@ blit_copy_pixels(struct gl_context *ctx, GLint srcx, GLint srcy,
        !ctx->FragmentProgram.Enabled &&
        !ctx->VertexProgram.Enabled &&
        !ctx->Shader.CurrentFragmentProgram &&
-       st_fb_orientation(ctx->ReadBuffer) == st_fb_orientation(ctx->DrawBuffer) &&
        ctx->DrawBuffer->_NumColorDrawBuffers == 1 &&
        !ctx->Query.CondRenderQuery) {
       struct st_renderbuffer *rbRead, *rbDraw;
-      GLint drawX, drawY;
 
       /*
        * Clip the read region against the src buffer bounds.
@@ -1385,29 +1393,65 @@ blit_copy_pixels(struct gl_context *ctx, GLint srcx, GLint srcy,
       readX = readX - pack.SkipPixels + unpack.SkipPixels;
       readY = readY - pack.SkipRows + unpack.SkipRows;
 
+      drawW = readW;
+      drawH = readH;
+
       rbRead = st_get_color_read_renderbuffer(ctx);
       rbDraw = st_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[0]);
 
-      if ((rbRead != rbDraw ||
-           !regions_overlap(readX, readY, drawX, drawY, readW, readH)) &&
-          rbRead->Base.Format == rbDraw->Base.Format) {
-         struct pipe_box srcBox;
+      /* Flip src/dst position depending on the orientation of buffers. */
+      if (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP) {
+         readY = rbRead->Base.Height - readY;
+         readH = -readH;
+      }
 
-         /* flip src/dst position if needed */
-         if (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP) {
-            /* both buffers will have the same orientation */
-            readY = ctx->ReadBuffer->Height - readY - readH;
-            drawY = ctx->DrawBuffer->Height - drawY - readH;
+      if (st_fb_orientation(ctx->DrawBuffer) == Y_0_TOP) {
+         /* We can't flip the destination for pipe->blit, so we only adjust
+          * its position and flip the source.
+          */
+         drawY = rbDraw->Base.Height - drawY - drawH;
+         readY += readH;
+         readH = -readH;
+      }
+
+      if (rbRead != rbDraw ||
+          !regions_overlap(readX, readY, readX + readW, readY + readH,
+                           drawX, drawY, drawX + drawW, drawY + drawH)) {
+         struct pipe_blit_info blit;
+
+         memset(&blit, 0, sizeof(blit));
+         blit.src.resource = rbRead->texture;
+         blit.src.level = rbRead->rtt_level;
+         blit.src.format = rbRead->texture->format;
+         blit.src.box.x = readX;
+         blit.src.box.y = readY;
+         blit.src.box.z = rbRead->rtt_face + rbRead->rtt_slice;
+         blit.src.box.width = readW;
+         blit.src.box.height = readH;
+         blit.src.box.depth = 1;
+         blit.dst.resource = rbDraw->texture;
+         blit.dst.level = rbDraw->rtt_level;
+         blit.dst.format = rbDraw->texture->format;
+         blit.dst.box.x = drawX;
+         blit.dst.box.y = drawY;
+         blit.dst.box.z = rbDraw->rtt_face + rbDraw->rtt_slice;
+         blit.dst.box.width = drawW;
+         blit.dst.box.height = drawH;
+         blit.dst.box.depth = 1;
+         blit.mask = PIPE_MASK_RGBA;
+         blit.filter = PIPE_TEX_FILTER_NEAREST;
+
+         if (screen->is_format_supported(screen, blit.src.format,
+                                         blit.src.resource->target,
+                                         blit.src.resource->nr_samples,
+                                         PIPE_BIND_SAMPLER_VIEW) &&
+             screen->is_format_supported(screen, blit.dst.format,
+                                         blit.dst.resource->target,
+                                         blit.dst.resource->nr_samples,
+                                         PIPE_BIND_RENDER_TARGET)) {
+            pipe->blit(pipe, &blit);
+            return GL_TRUE;
          }
-
-         u_box_2d(readX, readY, readW, readH, &srcBox);
-
-         pipe->resource_copy_region(pipe,
-                                    rbDraw->texture,
-                                    rbDraw->rtt_level, drawX, drawY, 0,
-                                    rbRead->texture,
-                                    rbRead->rtt_level, &srcBox);
-         return GL_TRUE;
       }
    }
 
