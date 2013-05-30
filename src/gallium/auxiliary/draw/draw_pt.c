@@ -529,7 +529,7 @@ draw_vbo(struct draw_context *draw,
                       i,
                       draw->pt.vertex_buffer[i].stride,
                       draw->pt.vertex_buffer[i].buffer_offset,
-                      draw->pt.user.vbuffer[i].size,
+                      (int) draw->pt.user.vbuffer[i].size,
                       draw->pt.user.vbuffer[i].map);
       }
    }
