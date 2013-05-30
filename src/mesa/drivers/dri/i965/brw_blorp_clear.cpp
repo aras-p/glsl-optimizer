@@ -37,6 +37,8 @@ extern "C" {
 #include "brw_eu.h"
 #include "brw_state.h"
 
+#define FILE_DEBUG_FLAG DEBUG_BLORP
+
 struct brw_blorp_const_color_prog_key
 {
    bool use_simd16_replicated_data;
@@ -489,6 +491,9 @@ brw_blorp_clear_color(struct intel_context *intel, struct gl_framebuffer *fb,
          }
       }
 
+      DBG("%s to mt %p level %d layer %d\n", __FUNCTION__,
+          irb->mt, irb->mt_level, irb->mt_layer);
+
       brw_blorp_exec(intel, &params);
 
       if (is_fast_clear) {
@@ -507,6 +512,8 @@ void
 brw_blorp_resolve_color(struct intel_context *intel, struct intel_mipmap_tree *mt)
 {
    struct brw_context *brw = brw_context(&intel->ctx);
+
+   DBG("%s to mt %p\n", __FUNCTION__, mt);
 
    brw_blorp_rt_resolve_params params(brw, mt);
    brw_blorp_exec(intel, &params);

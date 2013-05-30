@@ -34,6 +34,7 @@
 #include "brw_eu.h"
 #include "brw_state.h"
 
+#define FILE_DEBUG_FLAG DEBUG_BLORP
 
 /**
  * Helper function for handling mirror image blits.
@@ -143,6 +144,15 @@ brw_blorp_blit_miptrees(struct intel_context *intel,
    intel_miptree_resolve_color(intel, src_mt);
    intel_miptree_slice_resolve_depth(intel, src_mt, src_level, src_layer);
    intel_miptree_slice_resolve_depth(intel, dst_mt, dst_level, dst_layer);
+
+   DBG("%s from %s mt %p %d %d (%f,%f) (%f,%f)"
+       "to %s mt %p %d %d (%f,%f) (%f,%f) (flip %d,%d)\n",
+       __FUNCTION__,
+       _mesa_get_format_name(src_mt->format), src_mt,
+       src_level, src_layer, src_x0, src_y0, src_x1, src_y1,
+       _mesa_get_format_name(dst_mt->format), dst_mt,
+       dst_level, dst_layer, dst_x0, dst_y0, dst_x1, dst_y1,
+       mirror_x, mirror_y);
 
    brw_blorp_blit_params params(brw_context(&intel->ctx),
                                 src_mt, src_level, src_layer,
