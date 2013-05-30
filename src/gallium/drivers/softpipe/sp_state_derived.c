@@ -127,7 +127,7 @@ softpipe_get_vertex_info(struct softpipe_context *softpipe)
          src = draw_find_shader_output(softpipe->draw,
                                        fsInfo->input_semantic_name[i],
                                        fsInfo->input_semantic_index[i]);
-	 if (fsInfo->input_semantic_name[i] == TGSI_SEMANTIC_COLOR && src == 0)
+	 if (fsInfo->input_semantic_name[i] == TGSI_SEMANTIC_COLOR && src == -1)
 	   /* try and find a bcolor */
 	   src = draw_find_shader_output(softpipe->draw,
 					 TGSI_SEMANTIC_BCOLOR, fsInfo->input_semantic_index[i]);
