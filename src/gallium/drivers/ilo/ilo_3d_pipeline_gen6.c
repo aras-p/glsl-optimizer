@@ -402,9 +402,9 @@ gen6_pipeline_vf(struct ilo_3d_pipeline *p,
    }
 
    /* 3DSTATE_VERTEX_BUFFERS */
-   if (DIRTY(VERTEX_BUFFERS)) {
+   if (DIRTY(VERTEX_BUFFERS) || DIRTY(VERTEX_ELEMENTS)) {
       p->gen6_3DSTATE_VERTEX_BUFFERS(p->dev,
-            ilo->vb.states, NULL, ilo->vb.enabled_mask, p->cp);
+            ilo->vb.states, ilo->vb.enabled_mask, ilo->ve, p->cp);
    }
 
    /* 3DSTATE_VERTEX_ELEMENTS */
@@ -425,8 +425,7 @@ gen6_pipeline_vf(struct ilo_3d_pipeline *p,
          prepend_generate_ids = (info->has_instanceid || info->has_vertexid);
       }
 
-      p->gen6_3DSTATE_VERTEX_ELEMENTS(p->dev,
-            ve->states, ve->count,
+      p->gen6_3DSTATE_VERTEX_ELEMENTS(p->dev, ve,
             last_velement_edgeflag, prepend_generate_ids, p->cp);
    }
 }

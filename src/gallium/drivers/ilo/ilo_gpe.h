@@ -62,9 +62,18 @@ struct ilo_ib_state {
    struct pipe_index_buffer state;
 };
 
+struct ilo_ve_cso {
+   /* VERTEX_ELEMENT_STATE */
+   uint32_t payload[2];
+};
+
 struct ilo_ve_state {
-   struct pipe_vertex_element states[PIPE_MAX_ATTRIBS];
+   struct ilo_ve_cso cso[PIPE_MAX_ATTRIBS];
    unsigned count;
+
+   unsigned instance_divisors[PIPE_MAX_ATTRIBS];
+   unsigned vb_mapping[PIPE_MAX_ATTRIBS];
+   unsigned vb_count;
 };
 
 struct ilo_so_state {
@@ -189,6 +198,12 @@ struct ilo_global_binding {
    uint32_t *handles[PIPE_MAX_SHADER_RESOURCES];
    unsigned count;
 };
+
+void
+ilo_gpe_init_ve(const struct ilo_dev_info *dev,
+                unsigned num_states,
+                const struct pipe_vertex_element *states,
+                struct ilo_ve_state *ve);
 
 void
 ilo_gpe_set_viewport_cso(const struct ilo_dev_info *dev,

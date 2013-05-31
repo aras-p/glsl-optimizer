@@ -438,13 +438,13 @@ ilo_create_vertex_elements_state(struct pipe_context *pipe,
                                  unsigned num_elements,
                                  const struct pipe_vertex_element *elements)
 {
+   struct ilo_context *ilo = ilo_context(pipe);
    struct ilo_ve_state *ve;
 
    ve = MALLOC_STRUCT(ilo_ve_state);
    assert(ve);
 
-   memcpy(ve->states, elements, sizeof(*elements) * num_elements);
-   ve->count = num_elements;
+   ilo_gpe_init_ve(ilo->dev, num_elements, elements, ve);
 
    return ve;
 }

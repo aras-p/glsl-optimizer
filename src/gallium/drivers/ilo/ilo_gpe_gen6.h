@@ -195,14 +195,13 @@ typedef void
 typedef void
 (*ilo_gpe_gen6_3DSTATE_VERTEX_BUFFERS)(const struct ilo_dev_info *dev,
                                        const struct pipe_vertex_buffer *vbuffers,
-                                       const int *instance_divisors,
-                                       uint32_t vbuffer_mask,
+                                       uint64_t vbuffer_mask,
+                                       const struct ilo_ve_state *ve,
                                        struct ilo_cp *cp);
 
 typedef void
 (*ilo_gpe_gen6_3DSTATE_VERTEX_ELEMENTS)(const struct ilo_dev_info *dev,
-                                        const struct pipe_vertex_element *velements,
-                                        int num_elements,
+                                        const struct ilo_ve_state *ve,
                                         bool last_velement_edgeflag,
                                         bool prepend_generated_ids,
                                         struct ilo_cp *cp);

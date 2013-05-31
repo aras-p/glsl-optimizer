@@ -712,12 +712,13 @@ gen6_emit_3DSTATE_URB(const struct ilo_dev_info *dev,
 static void
 gen6_emit_3DSTATE_VERTEX_BUFFERS(const struct ilo_dev_info *dev,
                                  const struct pipe_vertex_buffer *vbuffers,
-                                 const int *instance_divisors,
-                                 uint32_t vbuffer_mask,
+                                 uint64_t vbuffer_mask,
+                                 const struct ilo_ve_state *ve,
                                  struct ilo_cp *cp)
 {
    const uint32_t cmd = ILO_GPE_CMD(0x3, 0x0, 0x08);
    uint8_t cmd_len;
+   unsigned hw_idx;
 
    ILO_GPE_VALID_GEN(dev, 6, 7);
 
@@ -725,27 +726,34 @@ gen6_emit_3DSTATE_VERTEX_BUFFERS(const struct ilo_dev_info *dev,
     * From the Sandy Bridge PRM, volume 2 part 1, page 82:
     *
     *     "From 1 to 33 VBs can be specified..."
-    *
-    * Because of the type of vbuffer_mask, this is always the case.
     */
    assert(vbuffer_mask <= (1UL << 33));
 
    if (!vbuffer_mask)
       return;
 
-   cmd_len = 4 * util_bitcount(vbuffer_mask) + 1;
+   cmd_len = 1;
+
+   for (hw_idx = 0; hw_idx < ve->vb_count; hw_idx++) {
+      const unsigned pipe_idx = ve->vb_mapping[hw_idx];
+
+      if (vbuffer_mask & (1 << pipe_idx))
+         cmd_len += 4;
+   }
 
    ilo_cp_begin(cp, cmd_len);
    ilo_cp_write(cp, cmd | (cmd_len - 2));
 
-   while (vbuffer_mask) {
-      const int index = u_bit_scan(&vbuffer_mask);
-      const struct pipe_vertex_buffer *vb = &vbuffers[index];
-      const int instance_divisor =
-         (instance_divisors) ? instance_divisors[index] : 0;
+   for (hw_idx = 0; hw_idx < ve->vb_count; hw_idx++) {
+      const unsigned instance_divisor = ve->instance_divisors[hw_idx];
+      const unsigned pipe_idx = ve->vb_mapping[hw_idx];
+      const struct pipe_vertex_buffer *vb = &vbuffers[pipe_idx];
       uint32_t dw;
 
-      dw = index << GEN6_VB0_INDEX_SHIFT;
+      if (!(vbuffer_mask & (1 << pipe_idx)))
+         continue;
+
+      dw = hw_idx << GEN6_VB0_INDEX_SHIFT;
 
       if (instance_divisor)
          dw |= GEN6_VB0_ACCESS_INSTANCEDATA;
@@ -782,16 +790,163 @@ gen6_emit_3DSTATE_VERTEX_BUFFERS(const struct ilo_dev_info *dev,
 }
 
 static void
+ve_set_cso_edgeflag(const struct ilo_dev_info *dev,
+                    struct ilo_ve_cso *cso)
+{
+   int format;
+
+   ILO_GPE_VALID_GEN(dev, 6, 7);
+
+   /*
+    * From the Sandy Bridge PRM, volume 2 part 1, page 94:
+    *
+    *     "- This bit (Edge Flag Enable) must only be ENABLED on the last
+    *        valid VERTEX_ELEMENT structure.
+    *
+    *      - When set, Component 0 Control must be set to VFCOMP_STORE_SRC,
+    *        and Component 1-3 Control must be set to VFCOMP_NOSTORE.
+    *
+    *      - The Source Element Format must be set to the UINT format.
+    *
+    *      - [DevSNB]: Edge Flags are not supported for QUADLIST
+    *        primitives.  Software may elect to convert QUADLIST primitives
+    *        to some set of corresponding edge-flag-supported primitive
+    *        types (e.g., POLYGONs) prior to submission to the 3D pipeline."
+    */
+
+   cso->payload[0] |= GEN6_VE0_EDGE_FLAG_ENABLE;
+   cso->payload[1] =
+         BRW_VE1_COMPONENT_STORE_SRC << BRW_VE1_COMPONENT_0_SHIFT |
+         BRW_VE1_COMPONENT_NOSTORE << BRW_VE1_COMPONENT_1_SHIFT |
+         BRW_VE1_COMPONENT_NOSTORE << BRW_VE1_COMPONENT_2_SHIFT |
+         BRW_VE1_COMPONENT_NOSTORE << BRW_VE1_COMPONENT_3_SHIFT;
+
+   /*
+    * Edge flags have format BRW_SURFACEFORMAT_R8_UINT when defined via
+    * glEdgeFlagPointer(), and format BRW_SURFACEFORMAT_R32_FLOAT when defined
+    * via glEdgeFlag(), as can be seen in vbo_attrib_tmp.h.
+    *
+    * Since all the hardware cares about is whether the flags are zero or not,
+    * we can treat them as BRW_SURFACEFORMAT_R32_UINT in the latter case.
+    */
+   format = (cso->payload[0] >> BRW_VE0_FORMAT_SHIFT) & 0x1ff;
+   if (format == BRW_SURFACEFORMAT_R32_FLOAT) {
+      STATIC_ASSERT(BRW_SURFACEFORMAT_R32_UINT ==
+            BRW_SURFACEFORMAT_R32_FLOAT - 1);
+
+      cso->payload[0] -= (1 << BRW_VE0_FORMAT_SHIFT);
+   }
+   else {
+      assert(format == BRW_SURFACEFORMAT_R8_UINT);
+   }
+}
+
+static void
+ve_init_cso_with_components(const struct ilo_dev_info *dev,
+                            int comp0, int comp1, int comp2, int comp3,
+                            struct ilo_ve_cso *cso)
+{
+   ILO_GPE_VALID_GEN(dev, 6, 7);
+
+   STATIC_ASSERT(Elements(cso->payload) >= 2);
+   cso->payload[0] = GEN6_VE0_VALID;
+   cso->payload[1] =
+         comp0 << BRW_VE1_COMPONENT_0_SHIFT |
+         comp1 << BRW_VE1_COMPONENT_1_SHIFT |
+         comp2 << BRW_VE1_COMPONENT_2_SHIFT |
+         comp3 << BRW_VE1_COMPONENT_3_SHIFT;
+}
+
+static void
+ve_init_cso(const struct ilo_dev_info *dev,
+            const struct pipe_vertex_element *state,
+            unsigned vb_index,
+            struct ilo_ve_cso *cso)
+{
+   int comp[4] = {
+      BRW_VE1_COMPONENT_STORE_SRC,
+      BRW_VE1_COMPONENT_STORE_SRC,
+      BRW_VE1_COMPONENT_STORE_SRC,
+      BRW_VE1_COMPONENT_STORE_SRC,
+   };
+   int format;
+
+   ILO_GPE_VALID_GEN(dev, 6, 7);
+
+   switch (util_format_get_nr_components(state->src_format)) {
+   case 1: comp[1] = BRW_VE1_COMPONENT_STORE_0;
+   case 2: comp[2] = BRW_VE1_COMPONENT_STORE_0;
+   case 3: comp[3] = (util_format_is_pure_integer(state->src_format)) ?
+                     BRW_VE1_COMPONENT_STORE_1_INT :
+                     BRW_VE1_COMPONENT_STORE_1_FLT;
+   }
+
+   format = ilo_translate_vertex_format(state->src_format);
+
+   STATIC_ASSERT(Elements(cso->payload) >= 2);
+   cso->payload[0] =
+      vb_index << GEN6_VE0_INDEX_SHIFT |
+      GEN6_VE0_VALID |
+      format << BRW_VE0_FORMAT_SHIFT |
+      state->src_offset << BRW_VE0_SRC_OFFSET_SHIFT;
+
+   cso->payload[1] =
+         comp[0] << BRW_VE1_COMPONENT_0_SHIFT |
+         comp[1] << BRW_VE1_COMPONENT_1_SHIFT |
+         comp[2] << BRW_VE1_COMPONENT_2_SHIFT |
+         comp[3] << BRW_VE1_COMPONENT_3_SHIFT;
+}
+
+void
+ilo_gpe_init_ve(const struct ilo_dev_info *dev,
+                unsigned num_states,
+                const struct pipe_vertex_element *states,
+                struct ilo_ve_state *ve)
+{
+   unsigned i;
+
+   ILO_GPE_VALID_GEN(dev, 6, 7);
+
+   ve->count = num_states;
+   ve->vb_count = 0;
+
+   for (i = 0; i < num_states; i++) {
+      const unsigned pipe_idx = states[i].vertex_buffer_index;
+      const unsigned instance_divisor = states[i].instance_divisor;
+      unsigned hw_idx;
+
+      /*
+       * map the pipe vb to the hardware vb, which has a fixed instance
+       * divisor
+       */
+      for (hw_idx = 0; hw_idx < ve->vb_count; hw_idx++) {
+         if (ve->vb_mapping[hw_idx] == pipe_idx &&
+             ve->instance_divisors[hw_idx] == instance_divisor)
+            break;
+      }
+
+      /* create one if there is no matching hardware vb */
+      if (hw_idx >= ve->vb_count) {
+         hw_idx = ve->vb_count++;
+
+         ve->vb_mapping[hw_idx] = pipe_idx;
+         ve->instance_divisors[hw_idx] = instance_divisor;
+      }
+
+      ve_init_cso(dev, &states[i], hw_idx, &ve->cso[i]);
+   }
+}
+
+static void
 gen6_emit_3DSTATE_VERTEX_ELEMENTS(const struct ilo_dev_info *dev,
-                                  const struct pipe_vertex_element *velements,
-                                  int num_velements,
+                                  const struct ilo_ve_state *ve,
                                   bool last_velement_edgeflag,
                                   bool prepend_generated_ids,
                                   struct ilo_cp *cp)
 {
    const uint32_t cmd = ILO_GPE_CMD(0x3, 0x0, 0x09);
    uint8_t cmd_len;
-   int format, i;
+   unsigned i;
 
    ILO_GPE_VALID_GEN(dev, 6, 7);
 
@@ -800,118 +955,58 @@ gen6_emit_3DSTATE_VERTEX_ELEMENTS(const struct ilo_dev_info *dev,
     *
     *     "Up to 34 (DevSNB+) vertex elements are supported."
     */
-   assert(num_velements + prepend_generated_ids <= 34);
+   assert(ve->count + prepend_generated_ids <= 34);
 
-   if (!num_velements && !prepend_generated_ids) {
+   if (!ve->count && !prepend_generated_ids) {
+      struct ilo_ve_cso dummy;
+
+      ve_init_cso_with_components(dev,
+            BRW_VE1_COMPONENT_STORE_0,
+            BRW_VE1_COMPONENT_STORE_0,
+            BRW_VE1_COMPONENT_STORE_0,
+            BRW_VE1_COMPONENT_STORE_1_FLT,
+            &dummy);
+
       cmd_len = 3;
-      format = BRW_SURFACEFORMAT_R32G32B32A32_FLOAT;
-
       ilo_cp_begin(cp, cmd_len);
       ilo_cp_write(cp, cmd | (cmd_len - 2));
-      ilo_cp_write(cp,
-            0 << GEN6_VE0_INDEX_SHIFT |
-            GEN6_VE0_VALID |
-            format << BRW_VE0_FORMAT_SHIFT |
-            0 << BRW_VE0_SRC_OFFSET_SHIFT);
-      ilo_cp_write(cp,
-            BRW_VE1_COMPONENT_STORE_0 << BRW_VE1_COMPONENT_0_SHIFT |
-            BRW_VE1_COMPONENT_STORE_0 << BRW_VE1_COMPONENT_1_SHIFT |
-            BRW_VE1_COMPONENT_STORE_0 << BRW_VE1_COMPONENT_2_SHIFT |
-            BRW_VE1_COMPONENT_STORE_1_FLT << BRW_VE1_COMPONENT_3_SHIFT);
+      ilo_cp_write_multi(cp, dummy.payload, 2);
       ilo_cp_end(cp);
 
       return;
    }
 
-   cmd_len = 2 * (num_velements + prepend_generated_ids) + 1;
+   cmd_len = 2 * (ve->count + prepend_generated_ids) + 1;
 
    ilo_cp_begin(cp, cmd_len);
    ilo_cp_write(cp, cmd | (cmd_len - 2));
 
    if (prepend_generated_ids) {
-      ilo_cp_write(cp, GEN6_VE0_VALID);
-      ilo_cp_write(cp,
-            BRW_VE1_COMPONENT_STORE_VID << BRW_VE1_COMPONENT_0_SHIFT |
-            BRW_VE1_COMPONENT_STORE_IID << BRW_VE1_COMPONENT_1_SHIFT |
-            BRW_VE1_COMPONENT_NOSTORE << BRW_VE1_COMPONENT_2_SHIFT |
-            BRW_VE1_COMPONENT_NOSTORE << BRW_VE1_COMPONENT_3_SHIFT);
+      struct ilo_ve_cso gen_ids;
+
+      ve_init_cso_with_components(dev,
+            BRW_VE1_COMPONENT_STORE_VID,
+            BRW_VE1_COMPONENT_STORE_IID,
+            BRW_VE1_COMPONENT_NOSTORE,
+            BRW_VE1_COMPONENT_NOSTORE,
+            &gen_ids);
+
+      ilo_cp_write_multi(cp, gen_ids.payload, 2);
    }
 
-   for (i = 0; i < num_velements; i++) {
-      const struct pipe_vertex_element *ve = &velements[i];
-      int comp[4] = {
-         BRW_VE1_COMPONENT_STORE_SRC,
-         BRW_VE1_COMPONENT_STORE_SRC,
-         BRW_VE1_COMPONENT_STORE_SRC,
-         BRW_VE1_COMPONENT_STORE_SRC,
-      };
-      int edgeflag_enable;
+   if (last_velement_edgeflag) {
+      struct ilo_ve_cso edgeflag;
 
-      if (last_velement_edgeflag && i == num_velements - 1) {
-         /*
-          * From the Sandy Bridge PRM, volume 2 part 1, page 94:
-          *
-          *     "* This bit (Edge Flag Enable) must only be ENABLED on the
-          *        last valid VERTEX_ELEMENT structure.
-          *
-          *      * When set, Component 0 Control must be set to
-          *        VFCOMP_STORE_SRC, and Component 1-3 Control must be set to
-          *        VFCOMP_NOSTORE.
-          *
-          *      * The Source Element Format must be set to the UINT format.
-          *
-          *      * [DevSNB]: Edge Flags are not supported for QUADLIST
-          *        primitives.  Software may elect to convert QUADLIST
-          *        primitives to some set of corresponding edge-flag-supported
-          *        primitive types (e.g., POLYGONs) prior to submission to the
-          *        3D pipeline."
-          *
-          * Only a limitied set of primitive types could have Edge Flag Enable
-          * set.  The caller should not set last_velement_edgeflag for such
-          * primitive types.
-          */
-         comp[1] = BRW_VE1_COMPONENT_NOSTORE;
-         comp[2] = BRW_VE1_COMPONENT_NOSTORE;
-         comp[3] = BRW_VE1_COMPONENT_NOSTORE;
+      for (i = 0; i < ve->count - 1; i++)
+         ilo_cp_write_multi(cp, ve->cso[i].payload, 2);
 
-         switch (ve->src_format) {
-         case PIPE_FORMAT_R32_FLOAT:
-            format = ilo_translate_vertex_format(PIPE_FORMAT_R32_UINT);
-            break;
-         default:
-            assert(ve->src_format == PIPE_FORMAT_R8_UINT);
-            format = ilo_translate_vertex_format(ve->src_format);
-            break;
-         }
-
-         edgeflag_enable = GEN6_VE0_EDGE_FLAG_ENABLE;
-      }
-      else {
-         switch (util_format_get_nr_components(ve->src_format)) {
-         case 1: comp[1] = BRW_VE1_COMPONENT_STORE_0;
-         case 2: comp[2] = BRW_VE1_COMPONENT_STORE_0;
-         case 3: comp[3] = (util_format_is_pure_integer(ve->src_format)) ?
-                           BRW_VE1_COMPONENT_STORE_1_INT :
-                           BRW_VE1_COMPONENT_STORE_1_FLT;
-         }
-
-         format = ilo_translate_vertex_format(ve->src_format);
-
-         edgeflag_enable = 0;
-      }
-
-      ilo_cp_write(cp,
-            ve->vertex_buffer_index << GEN6_VE0_INDEX_SHIFT |
-            GEN6_VE0_VALID |
-            format << BRW_VE0_FORMAT_SHIFT |
-            edgeflag_enable |
-            ve->src_offset << BRW_VE0_SRC_OFFSET_SHIFT);
-
-      ilo_cp_write(cp,
-            comp[0] << BRW_VE1_COMPONENT_0_SHIFT |
-            comp[1] << BRW_VE1_COMPONENT_1_SHIFT |
-            comp[2] << BRW_VE1_COMPONENT_2_SHIFT |
-            comp[3] << BRW_VE1_COMPONENT_3_SHIFT);
+      edgeflag = ve->cso[i];
+      ve_set_cso_edgeflag(dev, &edgeflag);
+      ilo_cp_write_multi(cp, edgeflag.payload, 2);
+   }
+   else {
+      for (i = 0; i < ve->count; i++)
+         ilo_cp_write_multi(cp, ve->cso[i].payload, 2);
    }
 
    ilo_cp_end(cp);

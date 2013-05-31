@@ -347,7 +347,7 @@ ilo_get_param(struct pipe_screen *screen, enum pipe_cap param)
       return false;
    case PIPE_CAP_TGSI_INSTANCEID:
    case PIPE_CAP_VERTEX_ELEMENT_INSTANCE_DIVISOR:
-      return false; /* TODO */
+      return true;
    case PIPE_CAP_FRAGMENT_COLOR_CLAMPED:
       return false;
    case PIPE_CAP_MIXED_COLORBUFFER_FORMATS:
