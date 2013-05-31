@@ -925,6 +925,15 @@ intel_query_dri2_buffers(struct intel_context *intel,
 
       attachments[i++] = __DRI_BUFFER_FRONT_LEFT;
       attachments[i++] = intel_bits_per_pixel(front_rb);
+   } else if (front_rb && intel->front_buffer_dirty) {
+      /* We have pending front buffer rendering, but we aren't querying for a
+       * front buffer.  If the front buffer we have is a fake front buffer,
+       * the X server is going to throw it away when it processes the query.
+       * So before doing the query, make sure all the pending drawing has
+       * landed in the real front buffer.
+       */
+      intel_flush(&intel->ctx);
+      intel_flush_front(&intel->ctx);
    }
 
    if (back_rb) {
