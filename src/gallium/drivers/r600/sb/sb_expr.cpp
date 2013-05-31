@@ -467,7 +467,7 @@ bool expr_handler::fold_alu_op2(alu_node& n) {
 	value* v0 = n.src[0]->gvalue();
 	value* v1 = n.src[1]->gvalue();
 
-	assert(v0 && v1 && n.dst[0]);
+	assert(v0 && v1);
 
 	bool isc0 = v0->is_const();
 	bool isc1 = v1->is_const();
