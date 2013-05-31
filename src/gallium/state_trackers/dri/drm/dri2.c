@@ -180,6 +180,8 @@ dri2_drawable_process_buffers(struct dri_drawable *drawable,
    struct winsys_handle whandle;
    boolean alloc_depthstencil = FALSE;
    unsigned i, j, bind;
+   struct pipe_screen *pscreen = screen->base.screen;
+   struct pipe_context *pipe = NULL;
 
    if (drawable->old_num == buffer_count &&
        drawable->old_w == dri_drawable->w &&
@@ -296,6 +298,26 @@ dri2_drawable_process_buffers(struct dri_drawable *drawable,
                   screen->base.screen->resource_create(screen->base.screen,
                                                        &templ);
                assert(drawable->msaa_textures[att]);
+
+               /* If there are any MSAA resources, we should initialize them
+                * such that they contain the same data as the single-sample
+                * resources we just got from the X server.
+                *
+                * The reason for this is that the state tracker (and
+                * therefore the app) can access the MSAA resources only.
+                * The single-sample resources are not exposed
+                * to the state tracker.
+                *
+                * We don't have a context here, so create one temporarily.
+                * We may need to create a persistent context if creation and
+                * destruction of the context becomes a bottleneck.
+                */
+               if (!pipe)
+                  pipe = pscreen->context_create(pscreen, NULL);
+
+               dri_pipe_blit(pipe,
+                             drawable->msaa_textures[att],
+                             drawable->textures[att]);
             }
          }
          else {
@@ -349,6 +371,11 @@ dri2_drawable_process_buffers(struct dri_drawable *drawable,
    drawable->old_w = dri_drawable->w;
    drawable->old_h = dri_drawable->h;
    memcpy(drawable->old, buffers, sizeof(__DRIbuffer) * buffer_count);
+
+   if (pipe) {
+      pipe->flush(pipe, NULL, 0);
+      pipe->destroy(pipe);
+   }
 }
 
 static __DRIbuffer *
