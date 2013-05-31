@@ -156,12 +156,13 @@ static void *
 ilo_create_blend_state(struct pipe_context *pipe,
                        const struct pipe_blend_state *state)
 {
+   struct ilo_context *ilo = ilo_context(pipe);
    struct ilo_blend_state *blend;
 
    blend = MALLOC_STRUCT(ilo_blend_state);
    assert(blend);
 
-   blend->state = *state;
+   ilo_gpe_init_blend(ilo->dev, state, blend);
 
    return blend;
 }

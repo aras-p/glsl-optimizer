@@ -669,12 +669,9 @@ gen6_pipeline_wm(struct ilo_3d_pipeline *p,
        DIRTY(RASTERIZER)) {
       const struct ilo_shader *fs = (ilo->fs)? ilo->fs->shader : NULL;
       const int num_samplers = ilo->sampler[PIPE_SHADER_FRAGMENT].count;
-      const bool dual_blend =
-         (!ilo->blend->state.logicop_enable &&
-          ilo->blend->state.rt[0].blend_enable &&
-          util_blend_state_is_dual(&ilo->blend->state, 0));
+      const bool dual_blend = ilo->blend->dual_blend;
       const bool cc_may_kill = (ilo->dsa->state.alpha.enabled ||
-                                ilo->blend->state.alpha_to_coverage);
+                                ilo->blend->alpha_to_coverage);
 
       if (fs)
          assert(!fs->pcb.clip_state_size);
@@ -807,7 +804,7 @@ gen6_pipeline_state_cc(struct ilo_3d_pipeline *p,
    /* BLEND_STATE */
    if (DIRTY(BLEND) || DIRTY(FRAMEBUFFER) || DIRTY(DEPTH_STENCIL_ALPHA)) {
       p->state.BLEND_STATE = p->gen6_BLEND_STATE(p->dev,
-            &ilo->blend->state, &ilo->fb, &ilo->dsa->state.alpha, p->cp);
+            ilo->blend, &ilo->fb, &ilo->dsa->state.alpha, p->cp);
 
       session->cc_state_blend_changed = true;
    }

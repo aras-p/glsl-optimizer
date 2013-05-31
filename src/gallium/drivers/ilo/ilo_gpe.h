@@ -107,8 +107,23 @@ struct ilo_dsa_state {
    struct pipe_depth_stencil_alpha_state state;
 };
 
+struct ilo_blend_cso {
+   /* BLEND_STATE */
+   uint32_t payload[2];
+
+   uint32_t dw_blend;
+   uint32_t dw_blend_dst_alpha_forced_one;
+
+   uint32_t dw_logicop;
+   uint32_t dw_alpha_mod;
+};
+
 struct ilo_blend_state {
-   struct pipe_blend_state state;
+   struct ilo_blend_cso cso[ILO_MAX_DRAW_BUFFERS];
+
+   bool independent_blend_enable;
+   bool dual_blend;
+   bool alpha_to_coverage;
 };
 
 struct ilo_sampler_cso {
@@ -190,6 +205,11 @@ ilo_gpe_set_scissor(const struct ilo_dev_info *dev,
 void
 ilo_gpe_set_scissor_null(const struct ilo_dev_info *dev,
                          struct ilo_scissor_state *scissor);
+
+void
+ilo_gpe_init_blend(const struct ilo_dev_info *dev,
+                   const struct pipe_blend_state *state,
+                   struct ilo_blend_state *blend);
 
 void
 ilo_gpe_init_sampler_cso(const struct ilo_dev_info *dev,

@@ -463,7 +463,7 @@ gen7_pipeline_wm(struct ilo_3d_pipeline *p,
        DIRTY(RASTERIZER)) {
       const struct ilo_shader *fs = (ilo->fs)? ilo->fs->shader : NULL;
       const bool cc_may_kill = (ilo->dsa->state.alpha.enabled ||
-                                ilo->blend->state.alpha_to_coverage);
+                                ilo->blend->alpha_to_coverage);
 
       if (fs)
          assert(!fs->pcb.clip_state_size);
@@ -496,10 +496,7 @@ gen7_pipeline_wm(struct ilo_3d_pipeline *p,
        DIRTY(BLEND)) {
       const struct ilo_shader *fs = (ilo->fs)? ilo->fs->shader : NULL;
       const int num_samplers = ilo->sampler[PIPE_SHADER_FRAGMENT].count;
-      const bool dual_blend =
-         (!ilo->blend->state.logicop_enable &&
-          ilo->blend->state.rt[0].blend_enable &&
-          util_blend_state_is_dual(&ilo->blend->state, 0));
+      const bool dual_blend = ilo->blend->dual_blend;
 
       if (fs)
          assert(!fs->pcb.clip_state_size);
