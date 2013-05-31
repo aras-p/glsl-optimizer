@@ -1768,24 +1768,6 @@ gen7_emit_cbuf_SURFACE_STATE(const struct ilo_dev_info *dev,
    return gen7_emit_SURFACE_STATE(dev, buf->bo, false, dw, Elements(dw), cp);
 }
 
-static uint32_t
-gen7_emit_SAMPLER_BORDER_COLOR_STATE(const struct ilo_dev_info *dev,
-                                     const union pipe_color_union *color,
-                                     struct ilo_cp *cp)
-{
-   const int state_align = 32 / 4;
-   const int state_len = 4;
-   uint32_t state_offset, *dw;
-
-   ILO_GPE_VALID_GEN(dev, 7, 7);
-
-   dw = ilo_cp_steal_ptr(cp, "SAMPLER_BORDER_COLOR_STATE",
-         state_len, state_align, &state_offset);
-   memcpy(dw, color->f, 4 * 4);
-
-   return state_offset;
-}
-
 static int
 gen7_estimate_command_size(const struct ilo_dev_info *dev,
                            enum ilo_gpe_gen7_command cmd,
@@ -2014,7 +1996,7 @@ gen7_init(struct ilo_gpe_gen7 *gen7)
    GEN7_SET(gen7, view_SURFACE_STATE);
    GEN7_SET(gen7, cbuf_SURFACE_STATE);
    GEN7_USE(gen7, SAMPLER_STATE, gen6);
-   GEN7_SET(gen7, SAMPLER_BORDER_COLOR_STATE);
+   GEN7_USE(gen7, SAMPLER_BORDER_COLOR_STATE, gen6);
    GEN7_USE(gen7, push_constant_buffer, gen6);
 #undef GEN7_USE
 #undef GEN7_SET

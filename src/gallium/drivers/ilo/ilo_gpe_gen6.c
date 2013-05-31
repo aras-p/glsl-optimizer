@@ -4114,361 +4114,18 @@ gen6_emit_so_SURFACE_STATE(const struct ilo_dev_info *dev,
    return gen6_emit_SURFACE_STATE(dev, buf->bo, false, dw, Elements(dw), cp);
 }
 
-static uint32_t
-gen6_emit_SAMPLER_STATE(const struct ilo_dev_info *dev,
-                        const struct pipe_sampler_state **samplers,
-                        const struct pipe_sampler_view **sampler_views,
-                        const uint32_t *sampler_border_colors,
-                        int num_samplers,
-                        struct ilo_cp *cp)
+static void
+sampler_init_border_color_gen6(const struct ilo_dev_info *dev,
+                               const union pipe_color_union *color,
+                               uint32_t *dw, int num_dwords)
 {
-   const int state_align = 32 / 4;
-   const int state_len = 4 * num_samplers;
-   uint32_t state_offset, *dw;
-   int i;
-
-   ILO_GPE_VALID_GEN(dev, 6, 7);
-
-   /*
-    * From the Sandy Bridge PRM, volume 4 part 1, page 101:
-    *
-    *     "The sampler state is stored as an array of up to 16 elements..."
-    */
-   assert(num_samplers <= 16);
-
-   if (!num_samplers)
-      return 0;
-
-   dw = ilo_cp_steal_ptr(cp, "SAMPLER_STATE",
-         state_len, state_align, &state_offset);
-
-   for (i = 0; i < num_samplers; i++) {
-      const struct pipe_sampler_state *sampler = samplers[i];
-      const struct pipe_sampler_view *view = sampler_views[i];
-      const uint32_t border_color = sampler_border_colors[i];
-      enum pipe_texture_target target;
-      int mip_filter, min_filter, mag_filter, max_aniso;
-      int lod_bias, max_lod, min_lod, base_level;
-      int wrap_s, wrap_t, wrap_r;
-      bool clamp_to_edge;
-
-      /* there may be holes */
-      if (!sampler || !view) {
-         /* disabled sampler */
-         dw[0] = 1 << 31;
-         dw[1] = 0;
-         dw[2] = 0;
-         dw[3] = 0;
-         dw += 4;
-
-         continue;
-      }
-
-      target = view->texture->target;
-
-      /* determine mip/min/mag filters */
-      mip_filter = gen6_translate_tex_mipfilter(sampler->min_mip_filter);
-
-      /*
-       * From the Sandy Bridge PRM, volume 4 part 1, page 103:
-       *
-       *     "Only MAPFILTER_NEAREST and MAPFILTER_LINEAR are supported for
-       *      surfaces of type SURFTYPE_3D."
-       */
-      if (sampler->max_anisotropy && target != PIPE_TEXTURE_3D) {
-         min_filter = BRW_MAPFILTER_ANISOTROPIC;
-         mag_filter = BRW_MAPFILTER_ANISOTROPIC;
-
-         if (sampler->max_anisotropy >= 2 && sampler->max_anisotropy <= 16)
-            max_aniso = sampler->max_anisotropy / 2 - 1;
-         else if (sampler->max_anisotropy > 16)
-            max_aniso = BRW_ANISORATIO_16;
-         else
-            max_aniso = BRW_ANISORATIO_2;
-      }
-      else {
-         min_filter = gen6_translate_tex_filter(sampler->min_img_filter);
-         mag_filter = gen6_translate_tex_filter(sampler->mag_img_filter);
-
-         /* ignored */
-         max_aniso = 0;
-      }
-
-      /*
-       * For nearest filtering, PIPE_TEX_WRAP_CLAMP means
-       * PIPE_TEX_WRAP_CLAMP_TO_EDGE;  for linear filtering,
-       * PIPE_TEX_WRAP_CLAMP means PIPE_TEX_WRAP_CLAMP_TO_BORDER while
-       * additionally clamping the texture coordinates to [0.0, 1.0].
-       *
-       * The clamping is taken care of in the shaders.  There are two filters
-       * here, but let the minification one has a say.
-       */
-      clamp_to_edge = (sampler->min_img_filter == PIPE_TEX_FILTER_NEAREST);
-
-      switch (target) {
-      case PIPE_TEXTURE_CUBE:
-         /*
-          * From the Sandy Bridge PRM, volume 4 part 1, page 107:
-          *
-          *     "When using cube map texture coordinates, only
-          *      TEXCOORDMODE_CLAMP and TEXCOORDMODE_CUBE settings are valid,
-          *      and each TC component must have the same Address Control
-          *      mode."
-          *
-          * From the Ivy Bridge PRM, volume 4 part 1, page 96:
-          *
-          *     "This field (Cube Surface Control Mode) must be set to
-          *      CUBECTRLMODE_PROGRAMMED"
-          *
-          * Therefore, we cannot use "Cube Surface Control Mode" for semless
-          * cube map filtering.
-          */
-         if (sampler->seamless_cube_map &&
-             (sampler->min_img_filter != PIPE_TEX_FILTER_NEAREST ||
-              sampler->mag_img_filter != PIPE_TEX_FILTER_NEAREST)) {
-            wrap_s = BRW_TEXCOORDMODE_CUBE;
-            wrap_t = BRW_TEXCOORDMODE_CUBE;
-            wrap_r = BRW_TEXCOORDMODE_CUBE;
-         }
-         else {
-            wrap_s = BRW_TEXCOORDMODE_CLAMP;
-            wrap_t = BRW_TEXCOORDMODE_CLAMP;
-            wrap_r = BRW_TEXCOORDMODE_CLAMP;
-         }
-         break;
-      case PIPE_TEXTURE_1D:
-         wrap_s = gen6_translate_tex_wrap(sampler->wrap_s, clamp_to_edge);
-         /*
-          * as noted in the classic i965 driver, the HW may look at these
-          * values so we need to set them to a safe mode
-          */
-         wrap_t = BRW_TEXCOORDMODE_WRAP;
-         wrap_r = BRW_TEXCOORDMODE_WRAP;
-         break;
-      default:
-         wrap_s = gen6_translate_tex_wrap(sampler->wrap_s, clamp_to_edge);
-         wrap_t = gen6_translate_tex_wrap(sampler->wrap_t, clamp_to_edge);
-         wrap_r = gen6_translate_tex_wrap(sampler->wrap_r, clamp_to_edge);
-         break;
-      }
-
-      /*
-       * Here is how the hardware calculate per-pixel LOD, from my reading of
-       * the PRMs:
-       *
-       *  1) LOD is set to log2(ratio of texels to pixels) if not specified in
-       *     other ways.  The number of texels is measured using level
-       *     SurfMinLod.
-       *  2) Bias is added to LOD.
-       *  3) LOD is clamped to [MinLod, MaxLod], and the clamped value is
-       *     compared with Base to determine whether magnification or
-       *     minification is needed.
-       *     (if preclamp is disabled, LOD is compared with Base before
-       *      clamping)
-       *  4) If magnification is needed, or no mipmapping is requested, LOD is
-       *     set to floor(MinLod).
-       *  5) LOD is clamped to [0, MIPCnt], and SurfMinLod is added to LOD.
-       *
-       * With Gallium interface, Base is always zero and view->u.tex.first_level
-       * specifies SurfMinLod.
-       *
-       * From the Sandy Bridge PRM, volume 4 part 1, page 21:
-       *
-       *     "[DevSNB] Errata: Incorrect behavior is observed in cases where
-       *      the min and mag mode filters are different and SurfMinLOD is
-       *      nonzero. The determination of MagMode uses the following equation
-       *      instead of the one in the above pseudocode: MagMode = (LOD +
-       *      SurfMinLOD - Base <= 0)"
-       *
-       * As a way to work around that, we set Base to view->u.tex.first_level
-       * on GEN6.
-       */
-      if (dev->gen >= ILO_GEN(7)) {
-         const float scale = 256.0f;
-
-         /* [-16.0, 16.0) in S4.8 */
-         lod_bias = (int)
-            (CLAMP(sampler->lod_bias, -16.0f, 15.9f) * scale);
-         lod_bias &= 0x1fff;
-
-         base_level = 0;
-
-         /* [0.0, 14.0] in U4.8 */
-         max_lod = (int) (CLAMP(sampler->max_lod, 0.0f, 14.0f) * scale);
-         min_lod = (int) (CLAMP(sampler->min_lod, 0.0f, 14.0f) * scale);
-      }
-      else {
-         const float scale = 64.0f;
-
-         /* [-16.0, 16.0) in S4.6 */
-         lod_bias = (int)
-            (CLAMP(sampler->lod_bias, -16.0f, 15.9f) * scale);
-         lod_bias &= 0x7ff;
-
-         base_level = view->u.tex.first_level;
-
-         /* [0.0, 13.0] in U4.6 */
-         max_lod = (int) (CLAMP(sampler->max_lod, 0.0f, 13.0f) * scale);
-         min_lod = (int) (CLAMP(sampler->min_lod, 0.0f, 13.0f) * scale);
-      }
-
-      /*
-       * We want LOD to be clamped to determine magnification/minification,
-       * and get set to zero when it is magnification or when mipmapping is
-       * disabled.  The hardware would set LOD to floor(MinLod) and that is a
-       * problem when MinLod is greater than or equal to 1.0f.
-       *
-       * We know that with Base being zero, it is always minification when
-       * MinLod is non-zero.  To meet our need, we just need to set MinLod to
-       * zero and set MagFilter to MinFilter when mipmapping is disabled.
-       */
-      if (sampler->min_mip_filter == PIPE_TEX_MIPFILTER_NONE && min_lod) {
-         min_lod = 0;
-         mag_filter = min_filter;
-      }
-
-      if (!sampler->normalized_coords) {
-         /* work around a bug in util_blitter */
-         mip_filter = BRW_MIPFILTER_NONE;
-
-         /*
-          * From the Ivy Bridge PRM, volume 4 part 1, page 98:
-          *
-          *     "The following state must be set as indicated if this field
-          *      (Non-normalized Coordinate Enable) is enabled:
-          *
-          *      - TCX/Y/Z Address Control Mode must be TEXCOORDMODE_CLAMP,
-          *        TEXCOORDMODE_HALF_BORDER, or TEXCOORDMODE_CLAMP_BORDER.
-          *      - Surface Type must be SURFTYPE_2D or SURFTYPE_3D.
-          *      - Mag Mode Filter must be MAPFILTER_NEAREST or
-          *        MAPFILTER_LINEAR.
-          *      - Min Mode Filter must be MAPFILTER_NEAREST or
-          *        MAPFILTER_LINEAR.
-          *      - Mip Mode Filter must be MIPFILTER_NONE.
-          *      - Min LOD must be 0.
-          *      - Max LOD must be 0.
-          *      - MIP Count must be 0.
-          *      - Surface Min LOD must be 0.
-          *      - Texture LOD Bias must be 0."
-          */
-         assert(wrap_s == BRW_TEXCOORDMODE_CLAMP ||
-                wrap_s == BRW_TEXCOORDMODE_CLAMP_BORDER);
-         assert(wrap_t == BRW_TEXCOORDMODE_CLAMP ||
-                wrap_t == BRW_TEXCOORDMODE_CLAMP_BORDER);
-         assert(wrap_r == BRW_TEXCOORDMODE_CLAMP ||
-                wrap_r == BRW_TEXCOORDMODE_CLAMP_BORDER);
-
-         assert(target == PIPE_TEXTURE_RECT);
-
-         assert(mag_filter == BRW_MAPFILTER_NEAREST ||
-                mag_filter == BRW_MAPFILTER_LINEAR);
-         assert(min_filter == BRW_MAPFILTER_NEAREST ||
-                min_filter == BRW_MAPFILTER_LINEAR);
-         assert(mip_filter == BRW_MIPFILTER_NONE);
-      }
-
-      if (dev->gen >= ILO_GEN(7)) {
-         dw[0] = 1 << 28 |
-                 base_level << 22 |
-                 mip_filter << 20 |
-                 mag_filter << 17 |
-                 min_filter << 14 |
-                 lod_bias << 1;
-
-         /* enable EWA filtering unconditionally breaks some piglit tests */
-         if (sampler->max_anisotropy)
-            dw[0] |= 1;
-
-         dw[1] = min_lod << 20 |
-                 max_lod << 8;
-
-         if (sampler->compare_mode != PIPE_TEX_COMPARE_NONE)
-            dw[1] |= gen6_translate_shadow_func(sampler->compare_func) << 1;
-
-         assert(!(border_color & 0x1f));
-         dw[2] = border_color;
-
-         dw[3] = max_aniso << 19 |
-                 wrap_s << 6 |
-                 wrap_t << 3 |
-                 wrap_r;
-
-         /* round the coordinates for linear filtering */
-         if (min_filter != BRW_MAPFILTER_NEAREST) {
-            dw[3] |= (BRW_ADDRESS_ROUNDING_ENABLE_U_MIN |
-                      BRW_ADDRESS_ROUNDING_ENABLE_V_MIN |
-                      BRW_ADDRESS_ROUNDING_ENABLE_R_MIN) << 13;
-         }
-         if (mag_filter != BRW_MAPFILTER_NEAREST) {
-            dw[3] |= (BRW_ADDRESS_ROUNDING_ENABLE_U_MAG |
-                      BRW_ADDRESS_ROUNDING_ENABLE_V_MAG |
-                      BRW_ADDRESS_ROUNDING_ENABLE_R_MAG) << 13;
-         }
-
-         if (!sampler->normalized_coords)
-            dw[3] |= 1 << 10;
-      }
-      else {
-         dw[0] = 1 << 28 |
-                 (min_filter != mag_filter) << 27 |
-                 base_level << 22 |
-                 mip_filter << 20 |
-                 mag_filter << 17 |
-                 min_filter << 14 |
-                 lod_bias << 3;
-
-         if (sampler->compare_mode != PIPE_TEX_COMPARE_NONE)
-            dw[0] |= gen6_translate_shadow_func(sampler->compare_func);
-
-         dw[1] = min_lod << 22 |
-                 max_lod << 12 |
-                 wrap_s << 6 |
-                 wrap_t << 3 |
-                 wrap_r;
-
-         assert(!(border_color & 0x1f));
-         dw[2] = border_color;
-
-         dw[3] = max_aniso << 19;
-
-         /* round the coordinates for linear filtering */
-         if (min_filter != BRW_MAPFILTER_NEAREST) {
-            dw[3] |= (BRW_ADDRESS_ROUNDING_ENABLE_U_MIN |
-                      BRW_ADDRESS_ROUNDING_ENABLE_V_MIN |
-                      BRW_ADDRESS_ROUNDING_ENABLE_R_MIN) << 13;
-         }
-         if (mag_filter != BRW_MAPFILTER_NEAREST) {
-            dw[3] |= (BRW_ADDRESS_ROUNDING_ENABLE_U_MAG |
-                      BRW_ADDRESS_ROUNDING_ENABLE_V_MAG |
-                      BRW_ADDRESS_ROUNDING_ENABLE_R_MAG) << 13;
-         }
-
-         if (!sampler->normalized_coords)
-            dw[3] |= 1;
-      }
-
-      dw += 4;
-   }
-
-   return state_offset;
-}
-
-static uint32_t
-gen6_emit_SAMPLER_BORDER_COLOR_STATE(const struct ilo_dev_info *dev,
-                                     const union pipe_color_union *color,
-                                     struct ilo_cp *cp)
-{
-   const int state_align = 32 / 4;
-   const int state_len = 12;
-   uint32_t state_offset, *dw;
    float rgba[4] = {
       color->f[0], color->f[1], color->f[2], color->f[3],
    };
 
    ILO_GPE_VALID_GEN(dev, 6, 6);
 
-   dw = ilo_cp_steal_ptr(cp, "SAMPLER_BORDER_COLOR_STATE",
-         state_len, state_align, &state_offset);
+   assert(num_dwords >= 12);
 
    /*
     * This state is not documented in the Sandy Bridge PRM, but in the
@@ -4522,6 +4179,424 @@ gen6_emit_SAMPLER_BORDER_COLOR_STATE(const struct ilo_dev_info *dev,
            (uint16_t) util_iround(rgba[1] * 65535.0f) << 16;
    dw[8] = (uint16_t) util_iround(rgba[2] * 65535.0f) |
            (uint16_t) util_iround(rgba[3] * 65535.0f) << 16;
+}
+
+void
+ilo_gpe_init_sampler_cso(const struct ilo_dev_info *dev,
+                         const struct pipe_sampler_state *state,
+                         struct ilo_sampler_cso *sampler)
+{
+   int mip_filter, min_filter, mag_filter, max_aniso;
+   int lod_bias, max_lod, min_lod;
+   int wrap_s, wrap_t, wrap_r, wrap_cube;
+   bool clamp_is_to_edge;
+   uint32_t dw0, dw1, dw3;
+
+   ILO_GPE_VALID_GEN(dev, 6, 7);
+
+   memset(sampler, 0, sizeof(*sampler));
+
+   mip_filter = gen6_translate_tex_mipfilter(state->min_mip_filter);
+   min_filter = gen6_translate_tex_filter(state->min_img_filter);
+   mag_filter = gen6_translate_tex_filter(state->mag_img_filter);
+
+   sampler->anisotropic = state->max_anisotropy;
+
+   if (state->max_anisotropy >= 2 && state->max_anisotropy <= 16)
+      max_aniso = state->max_anisotropy / 2 - 1;
+   else if (state->max_anisotropy > 16)
+      max_aniso = BRW_ANISORATIO_16;
+   else
+      max_aniso = BRW_ANISORATIO_2;
+
+   /*
+    *
+    * Here is how the hardware calculate per-pixel LOD, from my reading of the
+    * PRMs:
+    *
+    *  1) LOD is set to log2(ratio of texels to pixels) if not specified in
+    *     other ways.  The number of texels is measured using level
+    *     SurfMinLod.
+    *  2) Bias is added to LOD.
+    *  3) LOD is clamped to [MinLod, MaxLod], and the clamped value is
+    *     compared with Base to determine whether magnification or
+    *     minification is needed.  (if preclamp is disabled, LOD is compared
+    *     with Base before clamping)
+    *  4) If magnification is needed, or no mipmapping is requested, LOD is
+    *     set to floor(MinLod).
+    *  5) LOD is clamped to [0, MIPCnt], and SurfMinLod is added to LOD.
+    *
+    * With Gallium interface, Base is always zero and
+    * pipe_sampler_view::u.tex.first_level specifies SurfMinLod.
+    */
+   if (dev->gen >= ILO_GEN(7)) {
+      const float scale = 256.0f;
+
+      /* [-16.0, 16.0) in S4.8 */
+      lod_bias = (int)
+         (CLAMP(state->lod_bias, -16.0f, 15.9f) * scale);
+      lod_bias &= 0x1fff;
+
+      /* [0.0, 14.0] in U4.8 */
+      max_lod = (int) (CLAMP(state->max_lod, 0.0f, 14.0f) * scale);
+      min_lod = (int) (CLAMP(state->min_lod, 0.0f, 14.0f) * scale);
+   }
+   else {
+      const float scale = 64.0f;
+
+      /* [-16.0, 16.0) in S4.6 */
+      lod_bias = (int)
+         (CLAMP(state->lod_bias, -16.0f, 15.9f) * scale);
+      lod_bias &= 0x7ff;
+
+      /* [0.0, 13.0] in U4.6 */
+      max_lod = (int) (CLAMP(state->max_lod, 0.0f, 13.0f) * scale);
+      min_lod = (int) (CLAMP(state->min_lod, 0.0f, 13.0f) * scale);
+   }
+
+   /*
+    * We want LOD to be clamped to determine magnification/minification, and
+    * get set to zero when it is magnification or when mipmapping is disabled.
+    * The hardware would set LOD to floor(MinLod) and that is a problem when
+    * MinLod is greater than or equal to 1.0f.
+    *
+    * With Base being zero, it is always minification when MinLod is non-zero.
+    * To achieve our goal, we just need to set MinLod to zero and set
+    * MagFilter to MinFilter when mipmapping is disabled.
+    */
+   if (state->min_mip_filter == PIPE_TEX_MIPFILTER_NONE && min_lod) {
+      min_lod = 0;
+      mag_filter = min_filter;
+   }
+
+   /*
+    * For nearest filtering, PIPE_TEX_WRAP_CLAMP means
+    * PIPE_TEX_WRAP_CLAMP_TO_EDGE;  for linear filtering, PIPE_TEX_WRAP_CLAMP
+    * means PIPE_TEX_WRAP_CLAMP_TO_BORDER while additionally clamping the
+    * texture coordinates to [0.0, 1.0].
+    *
+    * The clamping will be taken care of in the shaders.  There are two
+    * filters here, but let the minification one has a say.
+    */
+   clamp_is_to_edge = (state->min_img_filter == PIPE_TEX_FILTER_NEAREST);
+   if (!clamp_is_to_edge) {
+      sampler->saturate_s = (state->wrap_s == PIPE_TEX_WRAP_CLAMP);
+      sampler->saturate_t = (state->wrap_t == PIPE_TEX_WRAP_CLAMP);
+      sampler->saturate_r = (state->wrap_r == PIPE_TEX_WRAP_CLAMP);
+   }
+
+   /* determine wrap s/t/r */
+   wrap_s = gen6_translate_tex_wrap(state->wrap_s, clamp_is_to_edge);
+   wrap_t = gen6_translate_tex_wrap(state->wrap_t, clamp_is_to_edge);
+   wrap_r = gen6_translate_tex_wrap(state->wrap_r, clamp_is_to_edge);
+
+   /*
+    * From the Sandy Bridge PRM, volume 4 part 1, page 107:
+    *
+    *     "When using cube map texture coordinates, only TEXCOORDMODE_CLAMP
+    *      and TEXCOORDMODE_CUBE settings are valid, and each TC component
+    *      must have the same Address Control mode."
+    *
+    * From the Ivy Bridge PRM, volume 4 part 1, page 96:
+    *
+    *     "This field (Cube Surface Control Mode) must be set to
+    *      CUBECTRLMODE_PROGRAMMED"
+    *
+    * Therefore, we cannot use "Cube Surface Control Mode" for semless cube
+    * map filtering.
+    */
+   if (state->seamless_cube_map &&
+       (state->min_img_filter != PIPE_TEX_FILTER_NEAREST ||
+        state->mag_img_filter != PIPE_TEX_FILTER_NEAREST)) {
+      wrap_cube = BRW_TEXCOORDMODE_CUBE;
+   }
+   else {
+      wrap_cube = BRW_TEXCOORDMODE_CLAMP;
+   }
+
+   if (!state->normalized_coords) {
+      /*
+       * From the Ivy Bridge PRM, volume 4 part 1, page 98:
+       *
+       *     "The following state must be set as indicated if this field
+       *      (Non-normalized Coordinate Enable) is enabled:
+       *
+       *      - TCX/Y/Z Address Control Mode must be TEXCOORDMODE_CLAMP,
+       *        TEXCOORDMODE_HALF_BORDER, or TEXCOORDMODE_CLAMP_BORDER.
+       *      - Surface Type must be SURFTYPE_2D or SURFTYPE_3D.
+       *      - Mag Mode Filter must be MAPFILTER_NEAREST or
+       *        MAPFILTER_LINEAR.
+       *      - Min Mode Filter must be MAPFILTER_NEAREST or
+       *        MAPFILTER_LINEAR.
+       *      - Mip Mode Filter must be MIPFILTER_NONE.
+       *      - Min LOD must be 0.
+       *      - Max LOD must be 0.
+       *      - MIP Count must be 0.
+       *      - Surface Min LOD must be 0.
+       *      - Texture LOD Bias must be 0."
+       */
+      assert(wrap_s == BRW_TEXCOORDMODE_CLAMP ||
+             wrap_s == BRW_TEXCOORDMODE_CLAMP_BORDER);
+      assert(wrap_t == BRW_TEXCOORDMODE_CLAMP ||
+             wrap_t == BRW_TEXCOORDMODE_CLAMP_BORDER);
+      assert(wrap_r == BRW_TEXCOORDMODE_CLAMP ||
+             wrap_r == BRW_TEXCOORDMODE_CLAMP_BORDER);
+
+      assert(mag_filter == BRW_MAPFILTER_NEAREST ||
+             mag_filter == BRW_MAPFILTER_LINEAR);
+      assert(min_filter == BRW_MAPFILTER_NEAREST ||
+             min_filter == BRW_MAPFILTER_LINEAR);
+
+      /* work around a bug in util_blitter */
+      mip_filter = BRW_MIPFILTER_NONE;
+
+      assert(mip_filter == BRW_MIPFILTER_NONE);
+   }
+
+   if (dev->gen >= ILO_GEN(7)) {
+      dw0 = 1 << 28 |
+            mip_filter << 20 |
+            lod_bias << 1;
+
+      sampler->dw_filter = mag_filter << 17 |
+                           min_filter << 14;
+
+      sampler->dw_filter_aniso = BRW_MAPFILTER_ANISOTROPIC << 17 |
+                                 BRW_MAPFILTER_ANISOTROPIC << 14 |
+                                 1;
+
+      dw1 = min_lod << 20 |
+            max_lod << 8;
+
+      if (state->compare_mode != PIPE_TEX_COMPARE_NONE)
+         dw1 |= gen6_translate_shadow_func(state->compare_func) << 1;
+
+      dw3 = max_aniso << 19;
+
+      /* round the coordinates for linear filtering */
+      if (min_filter != BRW_MAPFILTER_NEAREST) {
+         dw3 |= (BRW_ADDRESS_ROUNDING_ENABLE_U_MIN |
+                 BRW_ADDRESS_ROUNDING_ENABLE_V_MIN |
+                 BRW_ADDRESS_ROUNDING_ENABLE_R_MIN) << 13;
+      }
+      if (mag_filter != BRW_MAPFILTER_NEAREST) {
+         dw3 |= (BRW_ADDRESS_ROUNDING_ENABLE_U_MAG |
+                 BRW_ADDRESS_ROUNDING_ENABLE_V_MAG |
+                 BRW_ADDRESS_ROUNDING_ENABLE_R_MAG) << 13;
+      }
+
+      if (!state->normalized_coords)
+         dw3 |= 1 << 10;
+
+      sampler->dw_wrap = wrap_s << 6 |
+                         wrap_t << 3 |
+                         wrap_r;
+
+      /*
+       * As noted in the classic i965 driver, the HW may still reference
+       * wrap_t and wrap_r for 1D textures.  We need to set them to a safe
+       * mode
+       */
+      sampler->dw_wrap_1d = wrap_s << 6 |
+                            BRW_TEXCOORDMODE_WRAP << 3 |
+                            BRW_TEXCOORDMODE_WRAP;
+
+      sampler->dw_wrap_cube = wrap_cube << 6 |
+                              wrap_cube << 3 |
+                              wrap_cube;
+
+      STATIC_ASSERT(Elements(sampler->payload) >= 7);
+
+      sampler->payload[0] = dw0;
+      sampler->payload[1] = dw1;
+      sampler->payload[2] = dw3;
+
+      memcpy(&sampler->payload[3],
+            state->border_color.ui, sizeof(state->border_color.ui));
+   }
+   else {
+      dw0 = 1 << 28 |
+            mip_filter << 20 |
+            lod_bias << 3;
+
+      if (state->compare_mode != PIPE_TEX_COMPARE_NONE)
+         dw0 |= gen6_translate_shadow_func(state->compare_func);
+
+      sampler->dw_filter = (min_filter != mag_filter) << 27 |
+                           mag_filter << 17 |
+                           min_filter << 14;
+
+      sampler->dw_filter_aniso = BRW_MAPFILTER_ANISOTROPIC << 17 |
+                                 BRW_MAPFILTER_ANISOTROPIC << 14;
+
+      dw1 = min_lod << 22 |
+            max_lod << 12;
+
+      sampler->dw_wrap = wrap_s << 6 |
+                         wrap_t << 3 |
+                         wrap_r;
+
+      sampler->dw_wrap_1d = wrap_s << 6 |
+                            BRW_TEXCOORDMODE_WRAP << 3 |
+                            BRW_TEXCOORDMODE_WRAP;
+
+      sampler->dw_wrap_cube = wrap_cube << 6 |
+                              wrap_cube << 3 |
+                              wrap_cube;
+
+      dw3 = max_aniso << 19;
+
+      /* round the coordinates for linear filtering */
+      if (min_filter != BRW_MAPFILTER_NEAREST) {
+         dw3 |= (BRW_ADDRESS_ROUNDING_ENABLE_U_MIN |
+                 BRW_ADDRESS_ROUNDING_ENABLE_V_MIN |
+                 BRW_ADDRESS_ROUNDING_ENABLE_R_MIN) << 13;
+      }
+      if (mag_filter != BRW_MAPFILTER_NEAREST) {
+         dw3 |= (BRW_ADDRESS_ROUNDING_ENABLE_U_MAG |
+                 BRW_ADDRESS_ROUNDING_ENABLE_V_MAG |
+                 BRW_ADDRESS_ROUNDING_ENABLE_R_MAG) << 13;
+      }
+
+      if (!state->normalized_coords)
+         dw3 |= 1;
+
+      STATIC_ASSERT(Elements(sampler->payload) >= 15);
+
+      sampler->payload[0] = dw0;
+      sampler->payload[1] = dw1;
+      sampler->payload[2] = dw3;
+
+      sampler_init_border_color_gen6(dev,
+            &state->border_color, &sampler->payload[3], 12);
+   }
+}
+
+static uint32_t
+gen6_emit_SAMPLER_STATE(const struct ilo_dev_info *dev,
+                        const struct ilo_sampler_cso * const *samplers,
+                        const struct pipe_sampler_view * const *sampler_views,
+                        const uint32_t *sampler_border_colors,
+                        int num_samplers,
+                        struct ilo_cp *cp)
+{
+   const int state_align = 32 / 4;
+   const int state_len = 4 * num_samplers;
+   uint32_t state_offset, *dw;
+   int i;
+
+   ILO_GPE_VALID_GEN(dev, 6, 7);
+
+   /*
+    * From the Sandy Bridge PRM, volume 4 part 1, page 101:
+    *
+    *     "The sampler state is stored as an array of up to 16 elements..."
+    */
+   assert(num_samplers <= 16);
+
+   if (!num_samplers)
+      return 0;
+
+   dw = ilo_cp_steal_ptr(cp, "SAMPLER_STATE",
+         state_len, state_align, &state_offset);
+
+   for (i = 0; i < num_samplers; i++) {
+      const struct ilo_sampler_cso *sampler = samplers[i];
+      const struct pipe_sampler_view *view = sampler_views[i];
+      const uint32_t border_color = sampler_border_colors[i];
+      uint32_t dw_filter, dw_wrap;
+
+      /* there may be holes */
+      if (!sampler || !view) {
+         /* disabled sampler */
+         dw[0] = 1 << 31;
+         dw[1] = 0;
+         dw[2] = 0;
+         dw[3] = 0;
+         dw += 4;
+
+         continue;
+      }
+
+      /* determine filter and wrap modes */
+      switch (view->texture->target) {
+      case PIPE_TEXTURE_1D:
+         dw_filter = (sampler->anisotropic) ?
+            sampler->dw_filter_aniso : sampler->dw_filter;
+         dw_wrap = sampler->dw_wrap_1d;
+         break;
+      case PIPE_TEXTURE_3D:
+         /*
+          * From the Sandy Bridge PRM, volume 4 part 1, page 103:
+          *
+          *     "Only MAPFILTER_NEAREST and MAPFILTER_LINEAR are supported for
+          *      surfaces of type SURFTYPE_3D."
+          */
+         dw_filter = sampler->dw_filter;
+         dw_wrap = sampler->dw_wrap;
+         break;
+      case PIPE_TEXTURE_CUBE:
+         dw_filter = (sampler->anisotropic) ?
+            sampler->dw_filter_aniso : sampler->dw_filter;
+         dw_wrap = sampler->dw_wrap_cube;
+         break;
+      default:
+         dw_filter = (sampler->anisotropic) ?
+            sampler->dw_filter_aniso : sampler->dw_filter;
+         dw_wrap = sampler->dw_wrap;
+         break;
+      }
+
+      dw[0] = sampler->payload[0];
+      dw[1] = sampler->payload[1];
+      assert(!(border_color & 0x1f));
+      dw[2] = border_color;
+      dw[3] = sampler->payload[2];
+
+      dw[0] |= dw_filter;
+
+      if (dev->gen >= ILO_GEN(7)) {
+         dw[3] |= dw_wrap;
+      }
+      else {
+         /*
+          * From the Sandy Bridge PRM, volume 4 part 1, page 21:
+          *
+          *     "[DevSNB] Errata: Incorrect behavior is observed in cases
+          *      where the min and mag mode filters are different and
+          *      SurfMinLOD is nonzero. The determination of MagMode uses the
+          *      following equation instead of the one in the above
+          *      pseudocode: MagMode = (LOD + SurfMinLOD - Base <= 0)"
+          *
+          * As a way to work around that, we set Base to
+          * view->u.tex.first_level.
+          */
+         dw[0] |= view->u.tex.first_level << 22;
+
+         dw[1] |= dw_wrap;
+      }
+
+      dw += 4;
+   }
+
+   return state_offset;
+}
+
+static uint32_t
+gen6_emit_SAMPLER_BORDER_COLOR_STATE(const struct ilo_dev_info *dev,
+                                     const struct ilo_sampler_cso *sampler,
+                                     struct ilo_cp *cp)
+{
+   const int state_align = 32 / 4;
+   const int state_len = (dev->gen >= ILO_GEN(7)) ? 4 : 12;
+   uint32_t state_offset, *dw;
+
+   ILO_GPE_VALID_GEN(dev, 6, 7);
+
+   dw = ilo_cp_steal_ptr(cp, "SAMPLER_BORDER_COLOR_STATE",
+         state_len, state_align, &state_offset);
+
+   memcpy(dw, &sampler->payload[3], state_len * 4);
 
    return state_offset;
 }

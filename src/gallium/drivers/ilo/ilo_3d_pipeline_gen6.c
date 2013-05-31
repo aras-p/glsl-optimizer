@@ -1123,8 +1123,8 @@ gen6_pipeline_state_samplers(struct ilo_3d_pipeline *p,
                              int shader_type,
                              struct gen6_pipeline_session *session)
 {
-   const struct pipe_sampler_state **samplers =
-      (const struct pipe_sampler_state **) ilo->sampler[shader_type].states;
+   const struct ilo_sampler_cso * const *samplers =
+      ilo->sampler[shader_type].cso;
    const struct pipe_sampler_view **views =
       (const struct pipe_sampler_view **) ilo->view[shader_type].states;
    const int num_samplers = ilo->sampler[shader_type].count;
@@ -1177,7 +1177,7 @@ gen6_pipeline_state_samplers(struct ilo_3d_pipeline *p,
       for (i = 0; i < num_samplers; i++) {
          border_color_state[i] = (samplers[i]) ?
             p->gen6_SAMPLER_BORDER_COLOR_STATE(p->dev,
-                  &samplers[i]->border_color, p->cp) : 0;
+                  samplers[i], p->cp) : 0;
       }
    }
 

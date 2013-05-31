@@ -79,8 +79,8 @@ ilo_shader_variant_init(struct ilo_shader_variant *variant,
    for (i = 0; i < info->num_samplers; i++) {
       const struct pipe_sampler_view *view =
          ilo->view[info->type].states[i];
-      const struct pipe_sampler_state *sampler =
-         ilo->sampler[info->type].states[i];
+      const struct ilo_sampler_cso *sampler =
+         ilo->sampler[info->type].cso[i];
 
       if (view) {
          variant->sampler_view_swizzles[i].r = view->swizzle_r;
@@ -106,13 +106,10 @@ ilo_shader_variant_init(struct ilo_shader_variant *variant,
        * the HW wrap mode is set to BRW_TEXCOORDMODE_CLAMP_BORDER, and we need
        * to manually saturate the texture coordinates.
        */
-      if (sampler && sampler->min_img_filter != PIPE_TEX_FILTER_NEAREST) {
-         if (sampler->wrap_s == PIPE_TEX_WRAP_CLAMP)
-            variant->saturate_tex_coords[0] |= 1 << i;
-         if (sampler->wrap_t == PIPE_TEX_WRAP_CLAMP)
-            variant->saturate_tex_coords[1] |= 1 << i;
-         if (sampler->wrap_r == PIPE_TEX_WRAP_CLAMP)
-            variant->saturate_tex_coords[2] |= 1 << i;
+      if (sampler) {
+         variant->saturate_tex_coords[0] |= sampler->saturate_s << i;
+         variant->saturate_tex_coords[1] |= sampler->saturate_t << i;
+         variant->saturate_tex_coords[2] |= sampler->saturate_r << i;
       }
    }
 }

@@ -186,12 +186,13 @@ static void *
 ilo_create_sampler_state(struct pipe_context *pipe,
                          const struct pipe_sampler_state *state)
 {
-   struct pipe_sampler_state *sampler;
+   struct ilo_context *ilo = ilo_context(pipe);
+   struct ilo_sampler_cso *sampler;
 
-   sampler = MALLOC_STRUCT(pipe_sampler_state);
+   sampler = MALLOC_STRUCT(ilo_sampler_cso);
    assert(sampler);
 
-   *sampler = *state;
+   ilo_gpe_init_sampler_cso(ilo->dev, state, sampler);
 
    return sampler;
 }
@@ -201,10 +202,10 @@ bind_samplers(struct ilo_context *ilo,
               unsigned shader, unsigned start, unsigned count,
               void **samplers, bool unbind_old)
 {
-   struct pipe_sampler_state **dst = ilo->sampler[shader].states;
+   const struct ilo_sampler_cso **dst = ilo->sampler[shader].cso;
    unsigned i;
 
-   assert(start + count <= Elements(ilo->sampler[shader].states));
+   assert(start + count <= Elements(ilo->sampler[shader].cso));
 
    if (unbind_old) {
       if (!samplers) {
@@ -237,7 +238,7 @@ bind_samplers(struct ilo_context *ilo,
    if (ilo->sampler[shader].count <= start + count) {
       count += start;
 
-      while (count > 0 && !ilo->sampler[shader].states[count - 1])
+      while (count > 0 && !ilo->sampler[shader].cso[count - 1])
          count--;
 
       ilo->sampler[shader].count = count;

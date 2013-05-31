@@ -448,15 +448,15 @@ typedef uint32_t
 
 typedef uint32_t
 (*ilo_gpe_gen6_SAMPLER_STATE)(const struct ilo_dev_info *dev,
-                              const struct pipe_sampler_state **samplers,
-                              const struct pipe_sampler_view **sampler_views,
+                              const struct ilo_sampler_cso * const *samplers,
+                              const struct pipe_sampler_view * const *sampler_views,
                               const uint32_t *sampler_border_colors,
                               int num_samplers,
                               struct ilo_cp *cp);
 
 typedef uint32_t
 (*ilo_gpe_gen6_SAMPLER_BORDER_COLOR_STATE)(const struct ilo_dev_info *dev,
-                                           const union pipe_color_union *color,
+                                           const struct ilo_sampler_cso *sampler,
                                            struct ilo_cp *cp);
 
 typedef uint32_t

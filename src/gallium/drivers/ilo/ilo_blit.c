@@ -570,7 +570,7 @@ ilo_blitter_begin(struct ilo_context *ilo, enum ilo_blitter_op op)
 
       util_blitter_save_fragment_sampler_states(ilo->blitter,
             ilo->sampler[PIPE_SHADER_FRAGMENT].count,
-            (void **) ilo->sampler[PIPE_SHADER_FRAGMENT].states);
+            (void **) ilo->sampler[PIPE_SHADER_FRAGMENT].cso);
 
       util_blitter_save_fragment_sampler_views(ilo->blitter,
             ilo->view[PIPE_SHADER_FRAGMENT].count,
