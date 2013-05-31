@@ -669,7 +669,7 @@ gen6_pipeline_wm(struct ilo_3d_pipeline *p,
       const struct ilo_shader *fs = (ilo->fs)? ilo->fs->shader : NULL;
       const int num_samplers = ilo->sampler[PIPE_SHADER_FRAGMENT].count;
       const bool dual_blend = ilo->blend->dual_blend;
-      const bool cc_may_kill = (ilo->dsa->state.alpha.enabled ||
+      const bool cc_may_kill = (ilo->dsa->alpha.enabled ||
                                 ilo->blend->alpha_to_coverage);
 
       if (fs)
@@ -802,7 +802,7 @@ gen6_pipeline_state_cc(struct ilo_3d_pipeline *p,
    /* BLEND_STATE */
    if (DIRTY(BLEND) || DIRTY(FRAMEBUFFER) || DIRTY(DEPTH_STENCIL_ALPHA)) {
       p->state.BLEND_STATE = p->gen6_BLEND_STATE(p->dev,
-            ilo->blend, &ilo->fb, &ilo->dsa->state.alpha, p->cp);
+            ilo->blend, &ilo->fb, &ilo->dsa->alpha, p->cp);
 
       session->cc_state_blend_changed = true;
    }
@@ -811,7 +811,7 @@ gen6_pipeline_state_cc(struct ilo_3d_pipeline *p,
    if (DIRTY(DEPTH_STENCIL_ALPHA) || DIRTY(STENCIL_REF) || DIRTY(BLEND_COLOR)) {
       p->state.COLOR_CALC_STATE =
          p->gen6_COLOR_CALC_STATE(p->dev, &ilo->stencil_ref,
-               ilo->dsa->state.alpha.ref_value, &ilo->blend_color, p->cp);
+               ilo->dsa->alpha.ref_value, &ilo->blend_color, p->cp);
 
       session->cc_state_cc_changed = true;
    }
@@ -819,7 +819,7 @@ gen6_pipeline_state_cc(struct ilo_3d_pipeline *p,
    /* DEPTH_STENCIL_STATE */
    if (DIRTY(DEPTH_STENCIL_ALPHA)) {
       p->state.DEPTH_STENCIL_STATE =
-         p->gen6_DEPTH_STENCIL_STATE(p->dev, &ilo->dsa->state, p->cp);
+         p->gen6_DEPTH_STENCIL_STATE(p->dev, ilo->dsa, p->cp);
 
       session->cc_state_dsa_changed = true;
    }

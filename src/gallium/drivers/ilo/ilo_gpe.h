@@ -113,7 +113,10 @@ struct ilo_rasterizer_state {
 };
 
 struct ilo_dsa_state {
-   struct pipe_depth_stencil_alpha_state state;
+   /* DEPTH_STENCIL_STATE */
+   uint32_t payload[3];
+
+   struct pipe_alpha_state alpha;
 };
 
 struct ilo_blend_cso {
@@ -220,6 +223,11 @@ ilo_gpe_set_scissor(const struct ilo_dev_info *dev,
 void
 ilo_gpe_set_scissor_null(const struct ilo_dev_info *dev,
                          struct ilo_scissor_state *scissor);
+
+void
+ilo_gpe_init_dsa(const struct ilo_dev_info *dev,
+                 const struct pipe_depth_stencil_alpha_state *state,
+                 struct ilo_dsa_state *dsa);
 
 void
 ilo_gpe_init_blend(const struct ilo_dev_info *dev,

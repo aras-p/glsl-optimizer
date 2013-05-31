@@ -385,7 +385,7 @@ gen7_pipeline_sol(struct ilo_3d_pipeline *p,
       sh = ilo->gs->shader;
       dirty_sh = DIRTY(GS);
    }
-   else if (ilo->vs) {
+   else {
       so_info = &ilo->vs->info.stream_output;
       sh = ilo->vs->shader;
       dirty_sh = DIRTY(VS);
@@ -462,7 +462,7 @@ gen7_pipeline_wm(struct ilo_3d_pipeline *p,
    if (DIRTY(FS) || DIRTY(BLEND) || DIRTY(DEPTH_STENCIL_ALPHA) ||
        DIRTY(RASTERIZER)) {
       const struct ilo_shader *fs = (ilo->fs)? ilo->fs->shader : NULL;
-      const bool cc_may_kill = (ilo->dsa->state.alpha.enabled ||
+      const bool cc_may_kill = (ilo->dsa->alpha.enabled ||
                                 ilo->blend->alpha_to_coverage);
 
       if (fs)

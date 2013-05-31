@@ -3573,22 +3573,23 @@ gen6_emit_BLEND_STATE(const struct ilo_dev_info *dev,
    return state_offset;
 }
 
-static uint32_t
-gen6_emit_DEPTH_STENCIL_STATE(const struct ilo_dev_info *dev,
-                              const struct pipe_depth_stencil_alpha_state *dsa,
-                              struct ilo_cp *cp)
+void
+ilo_gpe_init_dsa(const struct ilo_dev_info *dev,
+                 const struct pipe_depth_stencil_alpha_state *state,
+                 struct ilo_dsa_state *dsa)
 {
-   const struct pipe_depth_state *depth = &dsa->depth;
-   const struct pipe_stencil_state *stencil0 = &dsa->stencil[0];
-   const struct pipe_stencil_state *stencil1 = &dsa->stencil[1];
-   const int state_align = 64 / 4;
-   const int state_len = 3;
-   uint32_t state_offset, *dw;
+   const struct pipe_depth_state *depth = &state->depth;
+   const struct pipe_stencil_state *stencil0 = &state->stencil[0];
+   const struct pipe_stencil_state *stencil1 = &state->stencil[1];
+   uint32_t *dw;
 
    ILO_GPE_VALID_GEN(dev, 6, 7);
 
-   dw = ilo_cp_steal_ptr(cp, "DEPTH_STENCIL_STATE",
-         state_len, state_align, &state_offset);
+   /* copy alpha state for later use */
+   dsa->alpha = state->alpha;
+
+   STATIC_ASSERT(Elements(dsa->payload) >= 3);
+   dw = dsa->payload;
 
    /*
     * From the Sandy Bridge PRM, volume 2 part 1, page 359:
@@ -3653,6 +3654,26 @@ gen6_emit_DEPTH_STENCIL_STATE(const struct ilo_dev_info *dev,
       dw[2] |= gen6_translate_dsa_func(depth->func) << 27;
    else
       dw[2] |= BRW_COMPAREFUNCTION_ALWAYS << 27;
+}
+
+static uint32_t
+gen6_emit_DEPTH_STENCIL_STATE(const struct ilo_dev_info *dev,
+                              const struct ilo_dsa_state *dsa,
+                              struct ilo_cp *cp)
+{
+   const int state_align = 64 / 4;
+   const int state_len = 3;
+   uint32_t state_offset, *dw;
+
+
+   ILO_GPE_VALID_GEN(dev, 6, 7);
+
+   dw = ilo_cp_steal_ptr(cp, "DEPTH_STENCIL_STATE",
+         state_len, state_align, &state_offset);
+
+   dw[0] = dsa->payload[0];
+   dw[1] = dsa->payload[1];
+   dw[2] = dsa->payload[2];
 
    return state_offset;
 }

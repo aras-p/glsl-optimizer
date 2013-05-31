@@ -407,7 +407,7 @@ typedef uint32_t
 
 typedef uint32_t
 (*ilo_gpe_gen6_DEPTH_STENCIL_STATE)(const struct ilo_dev_info *dev,
-                                    const struct pipe_depth_stencil_alpha_state *dsa,
+                                    const struct ilo_dsa_state *dsa,
                                     struct ilo_cp *cp);
 
 typedef uint32_t

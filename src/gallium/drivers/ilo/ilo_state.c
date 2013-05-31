@@ -332,12 +332,13 @@ static void *
 ilo_create_depth_stencil_alpha_state(struct pipe_context *pipe,
                                      const struct pipe_depth_stencil_alpha_state *state)
 {
+   struct ilo_context *ilo = ilo_context(pipe);
    struct ilo_dsa_state *dsa;
 
    dsa = MALLOC_STRUCT(ilo_dsa_state);
    assert(dsa);
 
-   dsa->state = *state;
+   ilo_gpe_init_dsa(ilo->dev, state, dsa);
 
    return dsa;
 }
