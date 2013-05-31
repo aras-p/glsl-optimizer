@@ -1365,7 +1365,8 @@ blit_copy_pixels(struct gl_context *ctx, GLint srcx, GLint srcy,
        !ctx->VertexProgram.Enabled &&
        !ctx->Shader.CurrentFragmentProgram &&
        ctx->DrawBuffer->_NumColorDrawBuffers == 1 &&
-       !ctx->Query.CondRenderQuery) {
+       !ctx->Query.CondRenderQuery &&
+       !ctx->Query.CurrentOcclusionObject) {
       struct st_renderbuffer *rbRead, *rbDraw;
 
       /*
