@@ -414,6 +414,7 @@ dri_flush(__DRIcontext *cPriv,
    struct dri_context *ctx = dri_context(cPriv);
    struct dri_drawable *drawable = dri_drawable(dPriv);
    unsigned flush_flags;
+   boolean swap_msaa_buffers = FALSE;
 
    if (!ctx) {
       assert(0);
@@ -439,6 +440,12 @@ dri_flush(__DRIcontext *cPriv,
          dri_pipe_blit(ctx->st->pipe,
                        drawable->textures[ST_ATTACHMENT_BACK_LEFT],
                        drawable->msaa_textures[ST_ATTACHMENT_BACK_LEFT]);
+
+         if (reason == __DRI2_THROTTLE_SWAPBUFFER &&
+             drawable->msaa_textures[ST_ATTACHMENT_FRONT_LEFT] &&
+             drawable->msaa_textures[ST_ATTACHMENT_BACK_LEFT]) {
+            swap_msaa_buffers = TRUE;
+         }
 
          /* FRONT_LEFT is resolved in drawable->flush_frontbuffer. */
       }
@@ -493,6 +500,24 @@ dri_flush(__DRIcontext *cPriv,
 
    if (drawable) {
       drawable->flushing = FALSE;
+   }
+
+   /* Swap the MSAA front and back buffers, so that reading
+    * from the front buffer after SwapBuffers returns what was
+    * in the back buffer.
+    */
+   if (swap_msaa_buffers) {
+      struct pipe_resource *tmp =
+         drawable->msaa_textures[ST_ATTACHMENT_FRONT_LEFT];
+
+      drawable->msaa_textures[ST_ATTACHMENT_FRONT_LEFT] =
+         drawable->msaa_textures[ST_ATTACHMENT_BACK_LEFT];
+      drawable->msaa_textures[ST_ATTACHMENT_BACK_LEFT] = tmp;
+
+      /* Now that we have swapped the buffers, this tells the state
+       * tracker to revalidate the framebuffer.
+       */
+      p_atomic_inc(&drawable->base.stamp);
    }
 }
 
