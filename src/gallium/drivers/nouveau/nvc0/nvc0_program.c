@@ -512,7 +512,7 @@ nvc0_program_dump(struct nvc0_program *prog)
 
    if (prog->type != PIPE_SHADER_COMPUTE) {
       for (pos = 0; pos < sizeof(prog->hdr) / sizeof(prog->hdr[0]); ++pos)
-         debug_printf("HDR[%02lx] = 0x%08x\n",
+         debug_printf("HDR[%02"PRIxPTR"] = 0x%08x\n",
                       pos * sizeof(prog->hdr[0]), prog->hdr[pos]);
    }
    debug_printf("shader binary code (0x%x bytes):", prog->code_size);
