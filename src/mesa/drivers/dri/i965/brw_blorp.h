@@ -178,8 +178,15 @@ struct brw_blorp_wm_push_constants
    uint32_t dst_x1;
    uint32_t dst_y0;
    uint32_t dst_y1;
+   /* Top right coordinates of the rectangular sample grid used for
+    * multisample scaled blitting.
+    */
+   float sample_grid_x1;
+   float sample_grid_y1;
    brw_blorp_coord_transform_params x_transform;
    brw_blorp_coord_transform_params y_transform;
+   /* Pad out to an integral number of registers */
+   uint32_t pad[6];
 };
 
 /* Every 32 bytes of push constant data constitutes one GEN register. */
@@ -319,6 +326,15 @@ struct brw_blorp_blit_prog_key
     * than one sample per pixel.
     */
    bool persample_msaa_dispatch;
+
+   /* True for scaled blitting. */
+   bool blit_scaled;
+
+   /* Scale factors between the pixel grid and the grid of samples. We're
+    * using grid of samples for bilinear filetring in multisample scaled blits.
+    */
+   float x_scale;
+   float y_scale;
 };
 
 class brw_blorp_blit_params : public brw_blorp_params
