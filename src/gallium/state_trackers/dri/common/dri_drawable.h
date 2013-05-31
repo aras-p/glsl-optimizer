@@ -110,9 +110,9 @@ dri_drawable_get_format(struct dri_drawable *drawable,
                         unsigned *bind);
 
 void
-dri_msaa_resolve(struct dri_context *ctx,
-                 struct dri_drawable *drawable,
-                 enum st_attachment_type att);
+dri_pipe_blit(struct pipe_context *pipe,
+              struct pipe_resource *dst,
+              struct pipe_resource *src);
 
 void
 dri_flush(__DRIcontext *cPriv,

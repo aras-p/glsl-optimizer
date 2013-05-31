@@ -359,13 +359,10 @@ swap_fences_unref(struct dri_drawable *draw)
 }
 
 void
-dri_msaa_resolve(struct dri_context *ctx,
-                 struct dri_drawable *drawable,
-                 enum st_attachment_type att)
+dri_pipe_blit(struct pipe_context *pipe,
+              struct pipe_resource *dst,
+              struct pipe_resource *src)
 {
-   struct pipe_context *pipe = ctx->st->pipe;
-   struct pipe_resource *dst = drawable->textures[att];
-   struct pipe_resource *src = drawable->msaa_textures[att];
    struct pipe_blit_info blit;
 
    if (!dst || !src)
@@ -437,9 +434,12 @@ dri_flush(__DRIcontext *cPriv,
    /* Flush the drawable. */
    if ((flags & __DRI2_FLUSH_DRAWABLE) &&
        drawable->textures[ST_ATTACHMENT_BACK_LEFT]) {
-      /* Resolve MSAA buffers. */
       if (drawable->stvis.samples > 1) {
-         dri_msaa_resolve(ctx, drawable, ST_ATTACHMENT_BACK_LEFT);
+         /* Resolve the MSAA back buffer. */
+         dri_pipe_blit(ctx->st->pipe,
+                       drawable->textures[ST_ATTACHMENT_BACK_LEFT],
+                       drawable->msaa_textures[ST_ATTACHMENT_BACK_LEFT]);
+
          /* FRONT_LEFT is resolved in drawable->flush_frontbuffer. */
       }
 

@@ -470,7 +470,10 @@ dri2_flush_frontbuffer(struct dri_context *ctx,
    if (drawable->stvis.samples > 1) {
       struct pipe_context *pipe = ctx->st->pipe;
 
-      dri_msaa_resolve(ctx, drawable, ST_ATTACHMENT_FRONT_LEFT);
+      /* Resolve the front buffer. */
+      dri_pipe_blit(ctx->st->pipe,
+                    drawable->textures[ST_ATTACHMENT_FRONT_LEFT],
+                    drawable->msaa_textures[ST_ATTACHMENT_FRONT_LEFT]);
       pipe->flush(pipe, NULL, 0);
    }
 
