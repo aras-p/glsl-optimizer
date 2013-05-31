@@ -423,6 +423,7 @@ nvc0_vertex_arrays_validate(struct nvc0_context *nvc0)
 
    nouveau_bufctx_reset(nvc0->bufctx_3d, NVC0_BIND_VTX);
 
+   assert(vertex);
    if (unlikely(vertex->need_conversion) ||
        unlikely(nvc0->vertprog->vp.edgeflag < PIPE_MAX_ATTRIBS)) {
       vbo_mode = 3;
