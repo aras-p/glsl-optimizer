@@ -1474,10 +1474,9 @@ st_CopyPixels(struct gl_context *ctx, GLint srcx, GLint srcy,
    struct pipe_sampler_view *sv[2];
    int num_sampler_view = 1;
    GLfloat *color;
-   enum pipe_format srcFormat, texFormat;
+   enum pipe_format srcFormat;
    GLboolean invertTex = GL_FALSE;
    GLint readX, readY, readW, readH;
-   GLuint sample_count;
    struct gl_pixelstore_attrib pack = ctx->DefaultPacking;
    struct st_fp_variant *fpv;
 
@@ -1539,35 +1538,51 @@ st_CopyPixels(struct gl_context *ctx, GLint srcx, GLint srcy,
    /* update fragment program constants */
    st_upload_constants(st, fpv->parameters, PIPE_SHADER_FRAGMENT);
 
-   sample_count = rbRead->texture->nr_samples;
-   /* I believe this would be legal, presumably would need to do a resolve
-      for color, and for depth/stencil spec says to just use one of the
-      depth/stencil samples per pixel? Need some transfer clarifications. */
-   assert(sample_count < 2);
-
+   /* Choose the format for the temporary texture. */
    srcFormat = rbRead->texture->format;
 
-   if (screen->is_format_supported(screen, srcFormat, st->internal_target,
-                                   sample_count,
-                                   PIPE_BIND_SAMPLER_VIEW)) {
-      texFormat = srcFormat;
-   }
-   else {
-      /* srcFormat can't be used as a texture format */
+   if (!screen->is_format_supported(screen, srcFormat, st->internal_target, 0,
+                                    PIPE_BIND_SAMPLER_VIEW |
+                                    (type == GL_COLOR ? PIPE_BIND_RENDER_TARGET
+                                     : PIPE_BIND_DEPTH_STENCIL))) {
       if (type == GL_DEPTH) {
-         texFormat = st_choose_format(st, GL_DEPTH_COMPONENT,
-                                      GL_NONE, GL_NONE, st->internal_target,
-                                      sample_count, PIPE_BIND_DEPTH_STENCIL,
-                                      FALSE);
-         assert(texFormat != PIPE_FORMAT_NONE);
+         srcFormat = st_choose_format(st, GL_DEPTH_COMPONENT, GL_NONE,
+                                      GL_NONE, st->internal_target, 0,
+                                      PIPE_BIND_SAMPLER_VIEW |
+                                      PIPE_BIND_DEPTH_STENCIL, FALSE);
       }
       else {
-         /* default color format */
-         texFormat = st_choose_format(st, GL_RGBA,
-                                      GL_NONE, GL_NONE, st->internal_target,
-                                      sample_count, PIPE_BIND_SAMPLER_VIEW,
-                                      FALSE);
-         assert(texFormat != PIPE_FORMAT_NONE);
+         assert(type == GL_COLOR);
+
+         if (util_format_is_float(srcFormat)) {
+            srcFormat = st_choose_format(st, GL_RGBA32F, GL_NONE,
+                                         GL_NONE, st->internal_target, 0,
+                                         PIPE_BIND_SAMPLER_VIEW |
+                                         PIPE_BIND_RENDER_TARGET, FALSE);
+         }
+         else if (util_format_is_pure_sint(srcFormat)) {
+            srcFormat = st_choose_format(st, GL_RGBA32I, GL_NONE,
+                                         GL_NONE, st->internal_target, 0,
+                                         PIPE_BIND_SAMPLER_VIEW |
+                                         PIPE_BIND_RENDER_TARGET, FALSE);
+         }
+         else if (util_format_is_pure_uint(srcFormat)) {
+            srcFormat = st_choose_format(st, GL_RGBA32UI, GL_NONE,
+                                         GL_NONE, st->internal_target, 0,
+                                         PIPE_BIND_SAMPLER_VIEW |
+                                         PIPE_BIND_RENDER_TARGET, FALSE);
+         }
+         else {
+            srcFormat = st_choose_format(st, GL_RGBA, GL_NONE,
+                                         GL_NONE, st->internal_target, 0,
+                                         PIPE_BIND_SAMPLER_VIEW |
+                                         PIPE_BIND_RENDER_TARGET, FALSE);
+         }
+      }
+
+      if (srcFormat == PIPE_FORMAT_NONE) {
+         assert(0 && "cannot choose a format for src of CopyPixels");
+         return;
       }
    }
 
@@ -1599,8 +1614,8 @@ st_CopyPixels(struct gl_context *ctx, GLint srcx, GLint srcy,
    readW = MAX2(0, readW);
    readH = MAX2(0, readH);
 
-   /* alloc temporary texture */
-   pt = alloc_texture(st, width, height, texFormat);
+   /* Allocate the temporary texture. */
+   pt = alloc_texture(st, width, height, srcFormat);
    if (!pt)
       return;
 
@@ -1610,70 +1625,33 @@ st_CopyPixels(struct gl_context *ctx, GLint srcx, GLint srcy,
       return;
    }
 
-   /* Make temporary texture which is a copy of the src region.
-    */
-   if (srcFormat == texFormat) {
-      struct pipe_box src_box;
-      u_box_2d(readX, readY, readW, readH, &src_box);
-      /* copy source framebuffer surface into mipmap/texture */
-      pipe->resource_copy_region(pipe,
-                                 pt,                                /* dest tex */
-                                 0,                                 /* dest lvl */
-                                 pack.SkipPixels, pack.SkipRows, 0, /* dest pos */
-                                 rbRead->texture,                   /* src tex */
-                                 rbRead->rtt_level,                 /* src lvl */
-                                 &src_box);
+   /* Copy the src region to the temporary texture. */
+   {
+      struct pipe_blit_info blit;
 
-   }
-   else {
-      /* CPU-based fallback/conversion */
-      struct pipe_transfer *ptRead;
-      void *mapRead =
-         pipe_transfer_map(st->pipe, rbRead->texture,
-                           rbRead->rtt_level,
-                           rbRead->rtt_face + rbRead->rtt_slice,
-                           PIPE_TRANSFER_READ,
-                           readX, readY, readW, readH, &ptRead);
-      struct pipe_transfer *ptTex;
-      void *mapTex;
-      enum pipe_transfer_usage transfer_usage;
+      memset(&blit, 0, sizeof(blit));
+      blit.src.resource = rbRead->texture;
+      blit.src.level = rbRead->rtt_level;
+      blit.src.format = rbRead->texture->format;
+      blit.src.box.x = readX;
+      blit.src.box.y = readY;
+      blit.src.box.z = rbRead->rtt_face + rbRead->rtt_slice;
+      blit.src.box.width = readW;
+      blit.src.box.height = readH;
+      blit.src.box.depth = 1;
+      blit.dst.resource = pt;
+      blit.dst.level = 0;
+      blit.dst.format = pt->format;
+      blit.dst.box.x = pack.SkipPixels;
+      blit.dst.box.y = pack.SkipRows;
+      blit.dst.box.z = 0;
+      blit.dst.box.width = readW;
+      blit.dst.box.height = readH;
+      blit.dst.box.depth = 1;
+      blit.mask = util_format_get_mask(pt->format) & ~PIPE_MASK_S;
+      blit.filter = PIPE_TEX_FILTER_NEAREST;
 
-      if (ST_DEBUG & DEBUG_FALLBACK)
-         debug_printf("%s: fallback processing\n", __FUNCTION__);
-
-      if (type == GL_DEPTH && util_format_is_depth_and_stencil(pt->format))
-         transfer_usage = PIPE_TRANSFER_READ_WRITE;
-      else
-         transfer_usage = PIPE_TRANSFER_WRITE;
-
-      mapTex = pipe_transfer_map(st->pipe, pt, 0, 0, transfer_usage,
-                                 0, 0, width, height, &ptTex);
-
-      /* copy image from ptRead surface to ptTex surface */
-      if (type == GL_COLOR) {
-         /* alternate path using get/put_tile() */
-         GLfloat *buf = malloc(width * height * 4 * sizeof(GLfloat));
-         enum pipe_format readFormat, drawFormat;
-         readFormat = util_format_linear(rbRead->texture->format);
-         drawFormat = util_format_linear(pt->format);
-         pipe_get_tile_rgba_format(ptRead, mapRead, 0, 0, readW, readH,
-                                   readFormat, buf);
-         pipe_put_tile_rgba_format(ptTex, mapTex, pack.SkipPixels,
-                                   pack.SkipRows,
-                                   readW, readH, drawFormat, buf);
-         free(buf);
-      }
-      else {
-         /* GL_DEPTH */
-         GLuint *buf = malloc(width * height * sizeof(GLuint));
-         pipe_get_tile_z(ptRead, mapRead, 0, 0, readW, readH, buf);
-         pipe_put_tile_z(ptTex, mapTex, pack.SkipPixels, pack.SkipRows,
-                         readW, readH, buf);
-         free(buf);
-      }
-
-      pipe->transfer_unmap(pipe, ptRead);
-      pipe->transfer_unmap(pipe, ptTex);
+      pipe->blit(pipe, &blit);
    }
 
    /* OK, the texture 'pt' contains the src image/pixels.  Now draw a
