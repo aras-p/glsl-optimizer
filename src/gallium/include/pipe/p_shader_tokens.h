@@ -165,7 +165,8 @@ struct tgsi_declaration_interp
 #define TGSI_SEMANTIC_TEXCOORD   19 /**< texture or sprite coordinates */
 #define TGSI_SEMANTIC_PCOORD     20 /**< point sprite coordinate */
 #define TGSI_SEMANTIC_VIEWPORT_INDEX 21 /**< viewport index */
-#define TGSI_SEMANTIC_COUNT      22 /**< number of semantic values */
+#define TGSI_SEMANTIC_LAYER      22 /**< layer (rendertarget index) */
+#define TGSI_SEMANTIC_COUNT      23 /**< number of semantic values */
 
 struct tgsi_declaration_semantic
 {
