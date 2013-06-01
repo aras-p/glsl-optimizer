@@ -477,7 +477,6 @@ llvmpipe_create_surface(struct pipe_context *pipe,
 {
    struct pipe_surface *ps;
 
-   assert(surf_tmpl->u.tex.level <= pt->last_level);
    if (!(pt->bind & (PIPE_BIND_DEPTH_STENCIL | PIPE_BIND_RENDER_TARGET)))
       debug_printf("Illegal surface creation without bind flag\n");
 
@@ -505,7 +504,8 @@ llvmpipe_create_surface(struct pipe_context *pipe,
          ps->u.buf.first_element = surf_tmpl->u.buf.first_element;
          ps->u.buf.last_element = surf_tmpl->u.buf.last_element;
          assert(ps->u.buf.first_element <= ps->u.buf.last_element);
-         assert(ps->u.buf.last_element < ps->width);
+         assert(util_format_get_blocksize(surf_tmpl->format) *
+                (ps->u.buf.last_element + 1) <= pt->width0);
       }
    }
    return ps;
