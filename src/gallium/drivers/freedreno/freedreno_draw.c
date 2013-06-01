@@ -114,11 +114,12 @@ fd_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
 {
 	struct fd_context *ctx = fd_context(pctx);
 	struct pipe_framebuffer_state *pfb = &ctx->framebuffer;
+	struct pipe_scissor_state *scissor = fd_context_get_scissor(ctx);
 	unsigned i, buffers = 0;
 
 	/* if we supported transform feedback, we'd have to disable this: */
-	if (((ctx->scissor.maxx - ctx->scissor.minx) *
-			(ctx->scissor.maxy - ctx->scissor.miny)) == 0) {
+	if (((scissor->maxx - scissor->minx) *
+			(scissor->maxy - scissor->miny)) == 0) {
 		return;
 	}
 

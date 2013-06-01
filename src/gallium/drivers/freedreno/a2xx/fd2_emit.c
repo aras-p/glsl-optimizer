@@ -238,17 +238,19 @@ fd2_emit_state(struct fd_context *ctx, uint32_t dirty)
 	}
 
 	if (dirty & FD_DIRTY_SCISSOR) {
+		struct pipe_scissor_state *scissor = fd_context_get_scissor(ctx);
+
 		OUT_PKT3(ring, CP_SET_CONSTANT, 3);
 		OUT_RING(ring, CP_REG(REG_A2XX_PA_SC_WINDOW_SCISSOR_TL));
-		OUT_RING(ring, xy2d(ctx->scissor.minx,   /* PA_SC_WINDOW_SCISSOR_TL */
-				ctx->scissor.miny));
-		OUT_RING(ring, xy2d(ctx->scissor.maxx,   /* PA_SC_WINDOW_SCISSOR_BR */
-				ctx->scissor.maxy));
+		OUT_RING(ring, xy2d(scissor->minx,       /* PA_SC_WINDOW_SCISSOR_TL */
+				scissor->miny));
+		OUT_RING(ring, xy2d(scissor->maxx,       /* PA_SC_WINDOW_SCISSOR_BR */
+				scissor->maxy));
 
-		ctx->max_scissor.minx = MIN2(ctx->max_scissor.minx, ctx->scissor.minx);
-		ctx->max_scissor.miny = MIN2(ctx->max_scissor.miny, ctx->scissor.miny);
-		ctx->max_scissor.maxx = MAX2(ctx->max_scissor.maxx, ctx->scissor.maxx);
-		ctx->max_scissor.maxy = MAX2(ctx->max_scissor.maxy, ctx->scissor.maxy);
+		ctx->max_scissor.minx = MIN2(ctx->max_scissor.minx, scissor->minx);
+		ctx->max_scissor.miny = MIN2(ctx->max_scissor.miny, scissor->miny);
+		ctx->max_scissor.maxx = MAX2(ctx->max_scissor.maxx, scissor->maxx);
+		ctx->max_scissor.maxy = MAX2(ctx->max_scissor.maxy, scissor->maxy);
 	}
 
 	if (dirty & FD_DIRTY_VIEWPORT) {

@@ -139,6 +139,12 @@ struct fd_context {
 
 	struct pipe_scissor_state scissor;
 
+	/* we don't have a disable/enable bit for scissor, so instead we keep
+	 * a disabled-scissor state which matches the entire bound framebuffer
+	 * and use that when scissor is not enabled.
+	 */
+	struct pipe_scissor_state disabled_scissor;
+
 	/* Track the maximal bounds of the scissor of all the draws within a
 	 * batch.  Used at the tile rendering step (fd_gmem_render_tiles(),
 	 * mem2gmem/gmem2mem) to avoid needlessly moving data in/out of gmem.
@@ -216,6 +222,14 @@ static INLINE struct fd_context *
 fd_context(struct pipe_context *pctx)
 {
 	return (struct fd_context *)pctx;
+}
+
+static INLINE struct pipe_scissor_state *
+fd_context_get_scissor(struct fd_context *ctx)
+{
+	if (ctx->rasterizer && ctx->rasterizer->scissor)
+		return &ctx->scissor;
+	return &ctx->disabled_scissor;
 }
 
 struct pipe_context * fd_context_init(struct fd_context *ctx,
