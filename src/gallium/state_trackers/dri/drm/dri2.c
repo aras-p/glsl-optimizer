@@ -179,7 +179,7 @@ dri2_drawable_process_buffers(struct dri_drawable *drawable,
    struct pipe_resource templ;
    struct winsys_handle whandle;
    boolean alloc_depthstencil = FALSE;
-   unsigned i, bind;
+   unsigned i, j, bind;
 
    if (drawable->old_num == buffer_count &&
        drawable->old_w == dri_drawable->w &&
@@ -187,10 +187,41 @@ dri2_drawable_process_buffers(struct dri_drawable *drawable,
        memcmp(drawable->old, buffers, sizeof(__DRIbuffer) * buffer_count) == 0)
       return;
 
-   for (i = 0; i < ST_ATTACHMENT_COUNT; i++)
+   /* See if we need a depth-stencil buffer. */
+   for (i = 0; i < att_count; i++) {
+      if (atts[i] == ST_ATTACHMENT_DEPTH_STENCIL) {
+         alloc_depthstencil = TRUE;
+         break;
+      }
+   }
+
+   /* Delete the resources we won't need. */
+   for (i = 0; i < ST_ATTACHMENT_COUNT; i++) {
+      /* Don't delete the depth-stencil buffer, we can reuse it. */
+      if (i == ST_ATTACHMENT_DEPTH_STENCIL && alloc_depthstencil)
+         continue;
+
       pipe_resource_reference(&drawable->textures[i], NULL);
-   for (i = 0; i < ST_ATTACHMENT_COUNT; i++)
-      pipe_resource_reference(&drawable->msaa_textures[i], NULL);
+   }
+
+   if (drawable->stvis.samples > 1) {
+      for (i = 0; i < ST_ATTACHMENT_COUNT; i++) {
+         boolean del = TRUE;
+
+         /* Don't delete MSAA resources for the attachments which are enabled,
+          * we can reuse them. */
+         for (j = 0; j < att_count; j++) {
+            if (i == atts[j]) {
+               del = FALSE;
+               break;
+            }
+         }
+
+         if (del) {
+            pipe_resource_reference(&drawable->msaa_textures[i], NULL);
+         }
+      }
+   }
 
    memset(&templ, 0, sizeof(templ));
    templ.target = screen->target;
@@ -244,52 +275,73 @@ dri2_drawable_process_buffers(struct dri_drawable *drawable,
       for (i = 0; i < att_count; i++) {
          enum st_attachment_type att = atts[i];
 
+         if (att == ST_ATTACHMENT_DEPTH_STENCIL)
+            continue;
+
          if (drawable->textures[att]) {
             templ.format = drawable->textures[att]->format;
             templ.bind = drawable->textures[att]->bind;
             templ.nr_samples = drawable->stvis.samples;
 
-            drawable->msaa_textures[att] =
-               screen->base.screen->resource_create(screen->base.screen,
-                                                    &templ);
-            assert(drawable->msaa_textures[att]);
-         }
-      }
-   }
+            /* Try to reuse the resource.
+             * (the other resource parameters should be constant)
+             */
+            if (!drawable->msaa_textures[att] ||
+                drawable->msaa_textures[att]->width0 != templ.width0 ||
+                drawable->msaa_textures[att]->height0 != templ.height0) {
+               /* Allocate a new one. */
+               pipe_resource_reference(&drawable->msaa_textures[att], NULL);
 
-   /* See if we need a depth-stencil buffer. */
-   for (i = 0; i < att_count; i++) {
-      if (atts[i] == ST_ATTACHMENT_DEPTH_STENCIL) {
-         alloc_depthstencil = TRUE;
-         break;
+               drawable->msaa_textures[att] =
+                  screen->base.screen->resource_create(screen->base.screen,
+                                                       &templ);
+               assert(drawable->msaa_textures[att]);
+            }
+         }
+         else {
+            pipe_resource_reference(&drawable->msaa_textures[att], NULL);
+         }
       }
    }
 
    /* Allocate a private depth-stencil buffer. */
    if (alloc_depthstencil) {
+      enum st_attachment_type att = ST_ATTACHMENT_DEPTH_STENCIL;
+      struct pipe_resource **zsbuf;
       enum pipe_format format;
       unsigned bind;
 
-      dri_drawable_get_format(drawable, ST_ATTACHMENT_DEPTH_STENCIL,
-                              &format, &bind);
+      dri_drawable_get_format(drawable, att, &format, &bind);
+
       if (format) {
          templ.format = format;
          templ.bind = bind;
 
          if (drawable->stvis.samples > 1) {
             templ.nr_samples = drawable->stvis.samples;
-            drawable->msaa_textures[ST_ATTACHMENT_DEPTH_STENCIL] =
-               screen->base.screen->resource_create(screen->base.screen,
-                                                    &templ);
-            assert(drawable->msaa_textures[ST_ATTACHMENT_DEPTH_STENCIL]);
+            zsbuf = &drawable->msaa_textures[att];
          }
          else {
             templ.nr_samples = 0;
-            drawable->textures[ST_ATTACHMENT_DEPTH_STENCIL] =
-               screen->base.screen->resource_create(screen->base.screen,
-                                                    &templ);
-            assert(drawable->textures[ST_ATTACHMENT_DEPTH_STENCIL]);
+            zsbuf = &drawable->textures[att];
          }
+
+         /* Try to reuse the resource.
+          * (the other resource parameters should be constant)
+          */
+         if (!*zsbuf ||
+             (*zsbuf)->width0 != templ.width0 ||
+             (*zsbuf)->height0 != templ.height0) {
+            /* Allocate a new one. */
+            pipe_resource_reference(zsbuf, NULL);
+            *zsbuf = screen->base.screen->resource_create(screen->base.screen,
+                                                          &templ);
+            assert(*zsbuf);
+         }
+      }
+      else {
+         pipe_resource_reference(&drawable->msaa_textures[att], NULL);
+         pipe_resource_reference(&drawable->textures[att], NULL);
       }
    }
 
