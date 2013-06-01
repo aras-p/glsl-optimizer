@@ -45,7 +45,7 @@
 static void
 dri2_flush_drawable(__DRIdrawable *dPriv)
 {
-   dri_flush(dPriv->driContextPriv, dPriv, __DRI2_FLUSH_DRAWABLE, 0);
+   dri_flush(dPriv->driContextPriv, dPriv, __DRI2_FLUSH_DRAWABLE, -1);
 }
 
 static void
