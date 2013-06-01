@@ -241,8 +241,12 @@ lp_build_concat_n(struct gallivm_state *gallivm,
    assert(num_srcs >= num_dsts);
    assert((num_srcs % size) == 0);
 
-   if (num_srcs == num_dsts)
+   if (num_srcs == num_dsts) {
+      for (i = 0; i < num_dsts; ++i) {
+         dst[i] = src[i];
+      }
       return 1;
+   }
 
    for (i = 0; i < num_dsts; ++i) {
       dst[i] = lp_build_concat(gallivm, &src[i * size], src_type, size);
