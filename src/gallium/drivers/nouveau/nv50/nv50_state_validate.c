@@ -400,6 +400,10 @@ nv50_switch_pipe_context(struct nv50_context *ctx_to)
    ctx_to->viewports_dirty = ~0;
    ctx_to->scissors_dirty = ~0;
 
+   ctx_to->constbuf_dirty[0] =
+   ctx_to->constbuf_dirty[1] =
+   ctx_to->constbuf_dirty[2] = (1 << NV50_MAX_PIPE_CONSTBUFS) - 1;
+
    if (!ctx_to->vertex)
       ctx_to->dirty &= ~(NV50_NEW_VERTEX | NV50_NEW_ARRAYS);
 
