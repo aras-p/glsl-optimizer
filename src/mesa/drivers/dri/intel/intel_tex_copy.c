@@ -62,11 +62,16 @@ intel_copy_texsubimage(struct intel_context *intel,
 
    intel_prepare_render(intel);
 
-   /* glCopyTexSubImage() can't be called on multisampled renderbuffers or
-    * textures.
+   /* glCopyTexSubImage() can be called on a multisampled renderbuffer (if
+    * that renderbuffer is associated with the window system framebuffer),
+    * however the hardware blitter can't handle this case, so fall back to
+    * meta (which can, since it uses ReadPixels).
     */
-   assert(!irb->Base.Base.NumSamples);
-   assert(!intelImage->base.Base.NumSamples);
+   if (irb->Base.Base.NumSamples != 0)
+      return false;
+
+   /* glCopyTexSubImage() can't be called on a multisampled texture. */
+   assert(intelImage->base.Base.NumSamples == 0);
 
    if (!intelImage->mt || !irb || !irb->mt) {
       if (unlikely(INTEL_DEBUG & DEBUG_PERF))
