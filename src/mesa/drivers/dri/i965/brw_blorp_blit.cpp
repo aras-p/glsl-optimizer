@@ -347,6 +347,12 @@ brw_blorp_copytexsubimage(struct intel_context *intel,
       return false;
    }
 
+   /* We can't use blorp to copy to a 1D array texture, since it can only
+    * write to one layer of the texture at a time.
+    */
+   if (dst_mt->target == GL_TEXTURE_1D_ARRAY)
+      return false;
+
    /* Source clipping shouldn't be necessary, since copytexsubimage (in
     * src/mesa/main/teximage.c) calls _mesa_clip_copytexsubimage() which
     * takes care of it.

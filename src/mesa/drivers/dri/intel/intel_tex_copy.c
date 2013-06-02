@@ -83,6 +83,7 @@ intel_copy_texsubimage(struct intel_context *intel,
    if (intelImage->base.Base.TexObject->Target == GL_TEXTURE_1D_ARRAY ||
        intelImage->base.Base.TexObject->Target == GL_TEXTURE_2D_ARRAY) {
       perf_debug("no support for array textures\n");
+      return false;
    }
 
    /* glCopyTexImage (and the glBlitFramebuffer() path that reuses this)
