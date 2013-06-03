@@ -4187,36 +4187,6 @@ gen6_emit_SURFACE_STATE(const struct ilo_dev_info *dev,
 }
 
 static uint32_t
-gen6_emit_surf_SURFACE_STATE(const struct ilo_dev_info *dev,
-                             const struct pipe_surface *surface,
-                             struct ilo_cp *cp)
-{
-   struct ilo_view_surface surf;
-
-   ILO_GPE_VALID_GEN(dev, 6, 6);
-
-   if (surface && surface->texture) {
-      struct ilo_texture *tex = ilo_texture(surface->texture);
-
-      /*
-       * classic i965 sets render_cache_rw for constant buffers and sol
-       * surfaces but not render buffers.  Why?
-       */
-      ilo_gpe_init_view_surface_for_texture_gen6(dev, tex, surface->format,
-            surface->u.tex.level, 1,
-            surface->u.tex.first_layer,
-            surface->u.tex.last_layer - surface->u.tex.first_layer + 1,
-            true, true, &surf);
-   }
-   else {
-      ilo_gpe_init_view_surface_null_gen6(dev,
-            surface->width, surface->height, 1, 0, &surf);
-   }
-
-   return gen6_emit_SURFACE_STATE(dev, &surf, true, cp);
-}
-
-static uint32_t
 gen6_emit_so_SURFACE_STATE(const struct ilo_dev_info *dev,
                            const struct pipe_stream_output_target *so,
                            const struct pipe_stream_output_info *so_info,
@@ -4942,7 +4912,6 @@ static const struct ilo_gpe_gen6 gen6_gpe = {
    GEN6_SET(SCISSOR_RECT),
    GEN6_SET(BINDING_TABLE_STATE),
    GEN6_SET(SURFACE_STATE),
-   GEN6_SET(surf_SURFACE_STATE),
    GEN6_SET(so_SURFACE_STATE),
    GEN6_SET(SAMPLER_STATE),
    GEN6_SET(SAMPLER_BORDER_COLOR_STATE),

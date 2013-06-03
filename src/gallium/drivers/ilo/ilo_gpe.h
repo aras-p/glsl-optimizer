@@ -194,6 +194,15 @@ struct ilo_resource_state {
    unsigned count;
 };
 
+struct ilo_surface_cso {
+   struct pipe_surface base;
+
+   bool is_rt;
+   union {
+      struct ilo_view_surface rt;
+   } u;
+};
+
 struct ilo_fb_state {
    struct pipe_framebuffer_state state;
 

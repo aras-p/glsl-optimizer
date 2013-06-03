@@ -894,21 +894,44 @@ ilo_create_surface(struct pipe_context *pipe,
                    struct pipe_resource *res,
                    const struct pipe_surface *templ)
 {
-   struct pipe_surface *surface;
+   struct ilo_context *ilo = ilo_context(pipe);
+   struct ilo_surface_cso *surf;
 
-   surface = MALLOC_STRUCT(pipe_surface);
-   assert(surface);
+   surf = MALLOC_STRUCT(ilo_surface_cso);
+   assert(surf);
 
-   *surface = *templ;
-   pipe_reference_init(&surface->reference, 1);
-   surface->texture = NULL;
-   pipe_resource_reference(&surface->texture, res);
+   surf->base = *templ;
+   pipe_reference_init(&surf->base.reference, 1);
+   surf->base.texture = NULL;
+   pipe_resource_reference(&surf->base.texture, res);
 
-   surface->context = pipe;
-   surface->width = u_minify(res->width0, surface->u.tex.level);
-   surface->height = u_minify(res->height0, surface->u.tex.level);
+   surf->base.context = pipe;
+   surf->base.width = u_minify(res->width0, templ->u.tex.level);
+   surf->base.height = u_minify(res->height0, templ->u.tex.level);
 
-   return surface;
+   surf->is_rt = !util_format_is_depth_or_stencil(templ->format);
+
+   if (surf->is_rt) {
+      /* relax this? */
+      assert(res->target != PIPE_BUFFER);
+
+      /*
+       * classic i965 sets render_cache_rw for constant buffers and sol
+       * surfaces but not render buffers.  Why?
+       */
+      ilo_gpe_init_view_surface_for_texture(ilo->dev, ilo_texture(res),
+            templ->format, templ->u.tex.level, 1,
+            templ->u.tex.first_layer,
+            templ->u.tex.last_layer - templ->u.tex.first_layer + 1,
+            true, true, &surf->u.rt);
+   }
+   else {
+      assert(res->target != PIPE_BUFFER);
+
+      /* will construct dynamically */
+   }
+
+   return &surf->base;
 }
 
 static void

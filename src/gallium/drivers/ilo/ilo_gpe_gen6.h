@@ -429,11 +429,6 @@ typedef uint32_t
                               struct ilo_cp *cp);
 
 typedef uint32_t
-(*ilo_gpe_gen6_surf_SURFACE_STATE)(const struct ilo_dev_info *dev,
-                                   const struct pipe_surface *surface,
-                                   struct ilo_cp *cp);
-
-typedef uint32_t
 (*ilo_gpe_gen6_so_SURFACE_STATE)(const struct ilo_dev_info *dev,
                                  const struct pipe_stream_output_target *so,
                                  const struct pipe_stream_output_info *so_info,
@@ -525,7 +520,6 @@ struct ilo_gpe_gen6 {
    GEN6_EMIT(SCISSOR_RECT);
    GEN6_EMIT(BINDING_TABLE_STATE);
    GEN6_EMIT(SURFACE_STATE);
-   GEN6_EMIT(surf_SURFACE_STATE);
    GEN6_EMIT(so_SURFACE_STATE);
    GEN6_EMIT(SAMPLER_STATE);
    GEN6_EMIT(SAMPLER_BORDER_COLOR_STATE);

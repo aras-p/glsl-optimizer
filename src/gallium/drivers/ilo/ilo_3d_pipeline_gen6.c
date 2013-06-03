@@ -852,11 +852,12 @@ gen6_pipeline_state_surfaces_rt(struct ilo_3d_pipeline *p,
       int i;
 
       for (i = 0; i < ilo->fb.state.nr_cbufs; i++) {
-         const struct pipe_surface *surface = ilo->fb.state.cbufs[i];
+         const struct ilo_surface_cso *surface =
+            (const struct ilo_surface_cso *) ilo->fb.state.cbufs[i];
 
-         assert(surface);
+         assert(surface && surface->is_rt);
          surface_state[i] =
-            p->gen6_surf_SURFACE_STATE(p->dev, surface, p->cp);
+            p->gen6_SURFACE_STATE(p->dev, &surface->u.rt, true, p->cp);
       }
 
       /*
@@ -864,14 +865,14 @@ gen6_pipeline_state_surfaces_rt(struct ilo_3d_pipeline *p,
        * brw_update_renderbuffer_surfaces() does.  I don't know why.
        */
       if (i == 0) {
-         struct pipe_surface null_surface;
+         struct ilo_view_surface null_surface;
 
-         memset(&null_surface, 0, sizeof(null_surface));
-         null_surface.width = ilo->fb.state.width;
-         null_surface.height = ilo->fb.state.height;
+         ilo_gpe_init_view_surface_null(p->dev,
+               ilo->fb.state.width, ilo->fb.state.height,
+               1, 0, &null_surface);
 
          surface_state[i] =
-            p->gen6_surf_SURFACE_STATE(p->dev, &null_surface, p->cp);
+            p->gen6_SURFACE_STATE(p->dev, &null_surface, true, p->cp);
 
          i++;
       }
@@ -1642,7 +1643,6 @@ ilo_3d_pipeline_init_gen6(struct ilo_3d_pipeline *p)
    GEN6_USE(p, SCISSOR_RECT, gen6);
    GEN6_USE(p, BINDING_TABLE_STATE, gen6);
    GEN6_USE(p, SURFACE_STATE, gen6);
-   GEN6_USE(p, surf_SURFACE_STATE, gen6);
    GEN6_USE(p, so_SURFACE_STATE, gen6);
    GEN6_USE(p, SAMPLER_STATE, gen6);
    GEN6_USE(p, SAMPLER_BORDER_COLOR_STATE, gen6);

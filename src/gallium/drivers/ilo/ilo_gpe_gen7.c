@@ -1652,71 +1652,6 @@ ilo_gpe_init_view_surface_for_texture_gen7(const struct ilo_dev_info *dev,
    surf->bo = tex->bo;
 }
 
-static uint32_t
-gen7_emit_SURFACE_STATE(const struct ilo_dev_info *dev,
-                        const struct ilo_view_surface *surf,
-                        bool for_render, struct ilo_cp *cp)
-{
-   const int state_align = 32 / 4;
-   const int state_len = 8;
-   uint32_t state_offset;
-   uint32_t read_domains, write_domain;
-
-   ILO_GPE_VALID_GEN(dev, 7, 7);
-
-   if (for_render) {
-      read_domains = INTEL_DOMAIN_RENDER;
-      write_domain = INTEL_DOMAIN_RENDER;
-   }
-   else {
-      read_domains = INTEL_DOMAIN_SAMPLER;
-      write_domain = 0;
-   }
-
-   ilo_cp_steal(cp, "SURFACE_STATE", state_len, state_align, &state_offset);
-   ilo_cp_write(cp, surf->payload[0]);
-   ilo_cp_write_bo(cp, surf->payload[1], surf->bo, read_domains, write_domain);
-   ilo_cp_write(cp, surf->payload[2]);
-   ilo_cp_write(cp, surf->payload[3]);
-   ilo_cp_write(cp, surf->payload[4]);
-   ilo_cp_write(cp, surf->payload[5]);
-   ilo_cp_write(cp, surf->payload[6]);
-   ilo_cp_write(cp, surf->payload[7]);
-   ilo_cp_end(cp);
-
-   return state_offset;
-}
-
-static uint32_t
-gen7_emit_surf_SURFACE_STATE(const struct ilo_dev_info *dev,
-                             const struct pipe_surface *surface,
-                             struct ilo_cp *cp)
-{
-   struct ilo_view_surface surf;
-
-   ILO_GPE_VALID_GEN(dev, 7, 7);
-
-   if (surface && surface->texture) {
-      struct ilo_texture *tex = ilo_texture(surface->texture);
-
-      /*
-       * classic i965 sets render_cache_rw for constant buffers and sol
-       * surfaces but not render buffers.  Why?
-       */
-      ilo_gpe_init_view_surface_for_texture_gen7(dev, tex, surface->format,
-            surface->u.tex.level, 1,
-            surface->u.tex.first_layer,
-            surface->u.tex.last_layer - surface->u.tex.first_layer + 1,
-            true, true, &surf);
-   }
-   else {
-      ilo_gpe_init_view_surface_null_gen7(dev,
-            surface->width, surface->height, 1, 0, &surf);
-   }
-
-   return gen7_emit_SURFACE_STATE(dev, &surf, true, cp);
-}
-
 static int
 gen7_estimate_command_size(const struct ilo_dev_info *dev,
                            enum ilo_gpe_gen7_command cmd,
@@ -1942,7 +1877,6 @@ gen7_init(struct ilo_gpe_gen7 *gen7)
    GEN7_USE(gen7, SCISSOR_RECT, gen6);
    GEN7_USE(gen7, BINDING_TABLE_STATE, gen6);
    GEN7_USE(gen7, SURFACE_STATE, gen6);
-   GEN7_SET(gen7, surf_SURFACE_STATE);
    GEN7_USE(gen7, SAMPLER_STATE, gen6);
    GEN7_USE(gen7, SAMPLER_BORDER_COLOR_STATE, gen6);
    GEN7_USE(gen7, push_constant_buffer, gen6);
