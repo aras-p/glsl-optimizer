@@ -1133,7 +1133,7 @@ fallback_copy_texsubimage(struct gl_context *ctx,
                           struct st_renderbuffer *strb,
                           struct st_texture_image *stImage,
                           GLenum baseFormat,
-                          GLint destX, GLint destY, GLint destZ,
+                          GLint destX, GLint destY, GLint slice,
                           GLint srcX, GLint srcY,
                           GLsizei width, GLsizei height)
 {
@@ -1154,14 +1154,6 @@ fallback_copy_texsubimage(struct gl_context *ctx,
       srcY = strb->Base.Height - srcY - height;
    }
 
-   if (stImage->pt->target == PIPE_TEXTURE_1D_ARRAY) {
-      /* Move y/height to z/depth for 1D array textures.  */
-      destZ = destY;
-      destY = 0;
-      dst_depth = dst_height;
-      dst_height = 1;
-   }
-
    map = pipe_transfer_map(pipe,
                            strb->texture,
                            strb->rtt_level,
@@ -1178,7 +1170,7 @@ fallback_copy_texsubimage(struct gl_context *ctx,
       transfer_usage = PIPE_TRANSFER_WRITE;
 
    texDest = st_texture_image_map(st, stImage, transfer_usage,
-                                  destX, destY, destZ,
+                                  destX, destY, slice,
                                   dst_width, dst_height, dst_depth);
 
    if (baseFormat == GL_DEPTH_COMPONENT ||
@@ -1292,7 +1284,7 @@ fallback_copy_texsubimage(struct gl_context *ctx,
 static void
 st_CopyTexSubImage(struct gl_context *ctx, GLuint dims,
                    struct gl_texture_image *texImage,
-                   GLint destX, GLint destY, GLint destZ,
+                   GLint destX, GLint destY, GLint slice,
                    struct gl_renderbuffer *rb,
                    GLint srcX, GLint srcY, GLsizei width, GLsizei height)
 {
@@ -1306,7 +1298,7 @@ st_CopyTexSubImage(struct gl_context *ctx, GLuint dims,
    enum pipe_format dst_format;
    GLboolean do_flip = (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP);
    unsigned bind;
-   GLint srcY0, srcY1, yStep;
+   GLint srcY0, srcY1;
 
    if (!strb || !strb->surface || !stImage->pt) {
       debug_printf("%s: null strb or stImage\n", __FUNCTION__);
@@ -1351,12 +1343,10 @@ st_CopyTexSubImage(struct gl_context *ctx, GLuint dims,
    if (do_flip) {
       srcY1 = strb->Base.Height - srcY - height;
       srcY0 = srcY1 + height;
-      yStep = -1;
    }
    else {
       srcY0 = srcY;
       srcY1 = srcY0 + height;
-      yStep = 1;
    }
 
    /* Blit the texture.
@@ -1377,39 +1367,20 @@ st_CopyTexSubImage(struct gl_context *ctx, GLuint dims,
    blit.dst.level = stObj->pt != stImage->pt ? 0 : texImage->Level;
    blit.dst.box.x = destX;
    blit.dst.box.y = destY;
-   blit.dst.box.z = stImage->base.Face + destZ;
+   blit.dst.box.z = stImage->base.Face + slice;
    blit.dst.box.width = width;
    blit.dst.box.height = height;
    blit.dst.box.depth = 1;
    blit.mask = st_get_blit_mask(rb->_BaseFormat, texImage->_BaseFormat);
    blit.filter = PIPE_TEX_FILTER_NEAREST;
-
-   /* 1D array textures need special treatment.
-    * Blit rows from the source to layers in the destination. */
-   if (texImage->TexObject->Target == GL_TEXTURE_1D_ARRAY) {
-      int y, layer;
-
-      for (y = srcY0, layer = 0; layer < height; y += yStep, layer++) {
-         blit.src.box.y = y;
-         blit.src.box.height = 1;
-         blit.dst.box.y = 0;
-         blit.dst.box.height = 1;
-         blit.dst.box.z = destY + layer;
-
-         pipe->blit(pipe, &blit);
-      }
-   }
-   else {
-      /* All the other texture targets. */
-      pipe->blit(pipe, &blit);
-   }
+   pipe->blit(pipe, &blit);
    return;
 
 fallback:
    /* software fallback */
    fallback_copy_texsubimage(ctx,
                              strb, stImage, texImage->_BaseFormat,
-                             destX, destY, destZ,
+                             destX, destY, slice,
                              srcX, srcY, width, height);
 }
 

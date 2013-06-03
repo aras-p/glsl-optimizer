@@ -135,13 +135,14 @@ intel_copy_texsubimage(struct intel_context *intel,
 static void
 intelCopyTexSubImage(struct gl_context *ctx, GLuint dims,
                      struct gl_texture_image *texImage,
-                     GLint xoffset, GLint yoffset, GLint zoffset,
+                     GLint xoffset, GLint yoffset, GLint slice,
                      struct gl_renderbuffer *rb,
                      GLint x, GLint y,
                      GLsizei width, GLsizei height)
 {
    struct intel_context *intel = intel_context(ctx);
-   if (dims != 3) {
+
+   if (slice == 0) {
 #ifndef I915
       /* Try BLORP first.  It can handle almost everything. */
       if (brw_blorp_copytexsubimage(intel, rb, texImage, x, y,
@@ -160,7 +161,7 @@ intelCopyTexSubImage(struct gl_context *ctx, GLuint dims,
    /* Finally, fall back to meta.  This will likely be slow. */
    perf_debug("%s - fallback to swrast\n", __FUNCTION__);
    _mesa_meta_CopyTexSubImage(ctx, dims, texImage,
-                              xoffset, yoffset, zoffset,
+                              xoffset, yoffset, slice,
                               rb, x, y, width, height);
 }
 

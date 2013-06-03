@@ -116,7 +116,7 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
 extern void
 _mesa_meta_CopyTexSubImage(struct gl_context *ctx, GLuint dims,
                            struct gl_texture_image *texImage,
-                           GLint xoffset, GLint yoffset, GLint zoffset,
+                           GLint xoffset, GLint yoffset, GLint slice,
                            struct gl_renderbuffer *rb,
                            GLint x, GLint y,
                            GLsizei width, GLsizei height);
