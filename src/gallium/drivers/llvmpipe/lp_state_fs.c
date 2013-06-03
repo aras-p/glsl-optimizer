@@ -100,6 +100,7 @@
 #include "lp_tex_sample.h"
 #include "lp_flush.h"
 #include "lp_state_fs.h"
+#include "lp_rast.h"
 
 
 /** Fragment shader number (for debugging) */
@@ -528,7 +529,7 @@ generate_fs_twiddle(struct gallivm_state *gallivm,
    bool twiddle;
    bool split;
 
-   unsigned pixels = num_fs == 4 ? 1 : 2;
+   unsigned pixels = type.length / 4;
    unsigned reorder_group;
    unsigned src_channels;
    unsigned src_count;
@@ -537,7 +538,7 @@ generate_fs_twiddle(struct gallivm_state *gallivm,
    src_channels = dst_channels < 3 ? dst_channels : 4;
    src_count = num_fs * src_channels;
 
-   assert(pixels == 2 || num_fs == 4);
+   assert(pixels == 2 || pixels == 1);
    assert(num_fs * src_channels <= Elements(src));
 
    /*
@@ -917,6 +918,7 @@ scale_bits(struct gallivm_state *gallivm,
  */
 static void
 convert_to_blend_type(struct gallivm_state *gallivm,
+                      unsigned block_size,
                       const struct util_format_description *src_fmt,
                       struct lp_type src_type,
                       struct lp_type dst_type,
@@ -928,7 +930,7 @@ convert_to_blend_type(struct gallivm_state *gallivm,
    struct lp_type blend_type;
    struct lp_type mem_type;
    unsigned i, j, k;
-   unsigned pixels = 16 / num_srcs;
+   unsigned pixels = block_size / num_srcs;
    bool is_arith;
 
    /*
@@ -945,13 +947,15 @@ convert_to_blend_type(struct gallivm_state *gallivm,
       assert(dst_type.floating);
       assert(dst_type.width == 32);
       assert(dst_type.length % 4 == 0);
+      assert(num_srcs % 4 == 0);
+
       for (i = 0; i < 4; i++) {
          tmpsrc[i] = src[i];
       }
       for (i = 0; i < num_srcs / 4; i++) {
          LLVMValueRef tmpsoa[4];
          LLVMValueRef tmps = tmpsrc[i];
-         if (num_srcs == 8) {
+         if (dst_type.length == 8) {
             LLVMValueRef shuffles[8];
             unsigned j;
             /* fetch was 4 values but need 8-wide output values */
@@ -1062,6 +1066,7 @@ convert_to_blend_type(struct gallivm_state *gallivm,
  */
 static void
 convert_from_blend_type(struct gallivm_state *gallivm,
+                        unsigned block_size,
                         const struct util_format_description *src_fmt,
                         struct lp_type src_type,
                         struct lp_type dst_type,
@@ -1073,7 +1078,7 @@ convert_from_blend_type(struct gallivm_state *gallivm,
    struct lp_type mem_type;
    struct lp_type blend_type;
    LLVMBuilderRef builder = gallivm->builder;
-   unsigned pixels = 16 / num_srcs;
+   unsigned pixels = block_size / num_srcs;
    bool is_arith;
 
    /*
@@ -1090,11 +1095,12 @@ convert_from_blend_type(struct gallivm_state *gallivm,
       assert(src_type.width == 32);
       assert(src_type.length % 4 == 0);
       assert(dst_type.width == 32);
+
       for (i = 0; i < num_srcs / 4; i++) {
          LLVMValueRef tmpsoa[4], tmpdst;
          lp_build_transpose_aos(gallivm, src_type, &src[i * 4], tmpsoa);
          tmpdst = lp_build_float_to_r11g11b10(gallivm, tmpsoa);
-         if (num_srcs == 8) {
+         if (src_type.length == 8) {
             LLVMValueRef tmpaos, shuffles[8];
             unsigned j;
             /*
@@ -1228,9 +1234,13 @@ convert_alpha(struct gallivm_state *gallivm,
    row_type.length = alpha_type.length;
 
    /* Twiddle the alpha to match pixels */
-   lp_bld_quad_twiddle(gallivm, alpha_type, src_alpha, 4, src_alpha);
+   lp_bld_quad_twiddle(gallivm, alpha_type, src_alpha, block_height, src_alpha);
 
-   for (i = 0; i < 4; ++i) {
+   /*
+    * TODO this should use single lp_build_conv call for
+    * src_count == 1 && dst_channels == 1 case (dropping the concat below)
+    */
+   for (i = 0; i < block_height; ++i) {
       lp_build_conv(gallivm, alpha_type, row_type, &src_alpha[i], 1, &src_alpha[i], 1);
    }
 
@@ -1238,10 +1248,9 @@ convert_alpha(struct gallivm_state *gallivm,
    row_type.length = length;
 
    /* If only one channel we can only need the single alpha value per pixel */
-   if (src_count == 1) {
-      assert(dst_channels == 1);
+   if (src_count == 1 && dst_channels == 1) {
 
-      lp_build_concat_n(gallivm, alpha_type, src_alpha, 4, src_alpha, src_count);
+      lp_build_concat_n(gallivm, alpha_type, src_alpha, block_height, src_alpha, src_count);
    } else {
       /* If there are more srcs than rows then we need to split alpha up */
       if (src_count > block_height) {
@@ -1249,7 +1258,8 @@ convert_alpha(struct gallivm_state *gallivm,
             unsigned pixels = block_size / src_count;
             unsigned idx = i - 1;
 
-            src_alpha[idx] = lp_build_extract_range(gallivm, src_alpha[(idx * pixels) / 4], (idx * pixels) % 4, pixels);
+            src_alpha[idx] = lp_build_extract_range(gallivm, src_alpha[(idx * pixels) / 4],
+                                                    (idx * pixels) % 4, pixels);
          }
       }
 
@@ -1317,8 +1327,8 @@ generate_unswizzled_blend(struct gallivm_state *gallivm,
                           boolean do_branch)
 {
    const unsigned alpha_channel = 3;
-   const unsigned block_width = 4;
-   const unsigned block_height = 4;
+   const unsigned block_width = LP_RASTER_BLOCK_SIZE;
+   const unsigned block_height = LP_RASTER_BLOCK_SIZE;
    const unsigned block_size = block_width * block_height;
    const unsigned lp_integer_vector_width = 128;
 
@@ -1523,9 +1533,11 @@ generate_unswizzled_blend(struct gallivm_state *gallivm,
    /*
     * Pixel twiddle from fragment shader order to memory order
     */
-   src_count = generate_fs_twiddle(gallivm, fs_type, num_fs, dst_channels, fs_src, src, pad_inline);
+   src_count = generate_fs_twiddle(gallivm, fs_type, num_fs,
+                                   dst_channels, fs_src, src, pad_inline);
    if (dual_source_blend) {
-      generate_fs_twiddle(gallivm, fs_type, num_fs, dst_channels, fs_src1, src1, pad_inline);
+      generate_fs_twiddle(gallivm, fs_type, num_fs, dst_channels,
+                          fs_src1, src1, pad_inline);
    }
 
    src_channels = dst_channels < 3 ? dst_channels : 4;
@@ -1553,7 +1565,10 @@ generate_unswizzled_blend(struct gallivm_state *gallivm,
       unsigned bits = row_type.width * row_type.length;
       unsigned combined;
 
+      assert(src_count >= (vector_width / bits));
+
       dst_count = src_count / (vector_width / bits);
+
       combined = lp_build_concat_n(gallivm, row_type, src, src_count, src, dst_count);
       if (dual_source_blend) {
          lp_build_concat_n(gallivm, row_type, src1, src_count, src1, dst_count);
@@ -1593,7 +1608,7 @@ generate_unswizzled_blend(struct gallivm_state *gallivm,
    /*
     * Mask conversion
     */
-   lp_bld_quad_twiddle(gallivm, mask_type, &src_mask[0], 4, &src_mask[0]);
+   lp_bld_quad_twiddle(gallivm, mask_type, &src_mask[0], block_height, &src_mask[0]);
 
    if (src_count < block_height) {
       lp_build_concat_n(gallivm, mask_type, src_mask, 4, src_mask, src_count);
@@ -1602,7 +1617,8 @@ generate_unswizzled_blend(struct gallivm_state *gallivm,
          unsigned pixels = block_size / src_count;
          unsigned idx = i - 1;
 
-         src_mask[idx] = lp_build_extract_range(gallivm, src_mask[(idx * pixels) / 4], (idx * pixels) % 4, pixels);
+         src_mask[idx] = lp_build_extract_range(gallivm, src_mask[(idx * pixels) / 4],
+                                                (idx * pixels) % 4, pixels);
       }
    }
 
@@ -1657,7 +1673,7 @@ generate_unswizzled_blend(struct gallivm_state *gallivm,
       dst_count = src_count;
    }
 
-   dst_type.length *= 16 / dst_count;
+   dst_type.length *= block_size / dst_count;
 
    if (out_format == PIPE_FORMAT_R11G11B10_FLOAT) {
       /*
@@ -1699,7 +1715,7 @@ generate_unswizzled_blend(struct gallivm_state *gallivm,
     * It seems some cleanup could be done here (like skipping conversion/blend
     * when not needed).
     */
-   convert_to_blend_type(gallivm, out_format_desc, dst_type, row_type, dst, src_count);
+   convert_to_blend_type(gallivm, block_size, out_format_desc, dst_type, row_type, dst, src_count);
 
    for (i = 0; i < src_count; ++i) {
       dst[i] = lp_build_blend_aos(gallivm,
@@ -1719,7 +1735,7 @@ generate_unswizzled_blend(struct gallivm_state *gallivm,
                                   pad_inline ? 4 : dst_channels);
    }
 
-   convert_from_blend_type(gallivm, out_format_desc, row_type, dst_type, dst, src_count);
+   convert_from_blend_type(gallivm, block_size, out_format_desc, row_type, dst_type, dst, src_count);
 
    /* Split the blend rows back to memory rows */
    if (dst_count > src_count) {
@@ -1741,7 +1757,6 @@ generate_unswizzled_blend(struct gallivm_state *gallivm,
       row_type.length /= 2;
       src_count *= 2;
    }
-
 
    /*
     * Store blend result to memory
