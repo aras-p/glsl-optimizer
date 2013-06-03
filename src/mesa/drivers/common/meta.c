@@ -3397,6 +3397,8 @@ setup_glsl_generate_mipmap(struct gl_context *ctx,
                                    sizeof(struct vertex), OFFSET(x));
       _mesa_VertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE,
                                    sizeof(struct vertex), OFFSET(tex));
+      _mesa_EnableVertexAttribArray(0);
+      _mesa_EnableVertexAttribArray(1);
    }
 
    /* Generate a fragment shader program appropriate for the texture target */
@@ -3468,8 +3470,6 @@ setup_glsl_generate_mipmap(struct gl_context *ctx,
    _mesa_DeleteObjectARB(vs);
    _mesa_BindAttribLocation(mipmap->ShaderProg, 0, "position");
    _mesa_BindAttribLocation(mipmap->ShaderProg, 1, "texcoords");
-   _mesa_EnableVertexAttribArray(0);
-   _mesa_EnableVertexAttribArray(1);
    link_program_with_debug(ctx, mipmap->ShaderProg);
    sampler->shader_prog = mipmap->ShaderProg;
    ralloc_free(mem_ctx);
