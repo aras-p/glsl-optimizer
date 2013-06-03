@@ -51,7 +51,7 @@
 static bool
 intel_copy_texsubimage(struct intel_context *intel,
                        struct intel_texture_image *intelImage,
-                       GLint dstx, GLint dsty,
+                       GLint dstx, GLint dsty, GLint slice,
                        struct intel_renderbuffer *irb,
                        GLint x, GLint y, GLsizei width, GLsizei height)
 {
@@ -77,18 +77,12 @@ intel_copy_texsubimage(struct intel_context *intel,
       return false;
    }
 
-   if (intelImage->base.Base.TexObject->Target == GL_TEXTURE_1D_ARRAY ||
-       intelImage->base.Base.TexObject->Target == GL_TEXTURE_2D_ARRAY) {
-      perf_debug("no support for array textures\n");
-      return false;
-   }
-
    /* blit from src buffer to texture */
    if (!intel_miptree_blit(intel,
                            irb->mt, irb->mt_level, irb->mt_layer,
                            x, y, irb->Base.Base.Name == 0,
                            intelImage->mt, intelImage->base.Base.Level,
-                           intelImage->base.Base.Face,
+                           intelImage->base.Base.Face + slice,
                            dstx, dsty, false,
                            width, height, GL_COPY)) {
       return false;
@@ -115,13 +109,14 @@ intelCopyTexSubImage(struct gl_context *ctx, GLuint dims,
                                     xoffset, yoffset, width, height))
          return;
 #endif
+   }
 
-      /* Next, try the BLT engine. */
-      if (intel_copy_texsubimage(intel,
-                                 intel_texture_image(texImage),
-                                 xoffset, yoffset,
-                                 intel_renderbuffer(rb), x, y, width, height))
-         return;
+   /* Next, try the BLT engine. */
+   if (intel_copy_texsubimage(intel,
+                              intel_texture_image(texImage),
+                              xoffset, yoffset, slice,
+                              intel_renderbuffer(rb), x, y, width, height)) {
+      return;
    }
 
    /* Finally, fall back to meta.  This will likely be slow. */
