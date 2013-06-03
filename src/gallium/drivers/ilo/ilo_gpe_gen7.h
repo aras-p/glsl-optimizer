@@ -387,7 +387,6 @@ typedef ilo_gpe_gen6_SCISSOR_RECT ilo_gpe_gen7_SCISSOR_RECT;
 typedef ilo_gpe_gen6_BINDING_TABLE_STATE ilo_gpe_gen7_BINDING_TABLE_STATE;
 typedef ilo_gpe_gen6_SURFACE_STATE ilo_gpe_gen7_SURFACE_STATE;
 typedef ilo_gpe_gen6_surf_SURFACE_STATE ilo_gpe_gen7_surf_SURFACE_STATE;
-typedef ilo_gpe_gen6_cbuf_SURFACE_STATE ilo_gpe_gen7_cbuf_SURFACE_STATE;
 typedef ilo_gpe_gen6_SAMPLER_STATE ilo_gpe_gen7_SAMPLER_STATE;
 typedef ilo_gpe_gen6_SAMPLER_BORDER_COLOR_STATE ilo_gpe_gen7_SAMPLER_BORDER_COLOR_STATE;
 typedef ilo_gpe_gen6_push_constant_buffer ilo_gpe_gen7_push_constant_buffer;
@@ -485,7 +484,6 @@ struct ilo_gpe_gen7 {
    GEN7_EMIT(BINDING_TABLE_STATE);
    GEN7_EMIT(SURFACE_STATE);
    GEN7_EMIT(surf_SURFACE_STATE);
-   GEN7_EMIT(cbuf_SURFACE_STATE);
    GEN7_EMIT(SAMPLER_STATE);
    GEN7_EMIT(SAMPLER_BORDER_COLOR_STATE);
    GEN7_EMIT(push_constant_buffer);

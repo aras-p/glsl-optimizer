@@ -131,11 +131,11 @@ finalize_constant_buffers(struct ilo_context *ilo)
       return;
 
    for (sh = 0; sh < PIPE_SHADER_TYPES; sh++) {
-      int last_cbuf = Elements(ilo->cbuf[sh].states) - 1;
+      int last_cbuf = Elements(ilo->cbuf[sh].cso) - 1;
 
       /* find the last cbuf */
       while (last_cbuf >= 0 &&
-             !ilo->cbuf[sh].states[last_cbuf].buffer)
+             !ilo->cbuf[sh].cso[last_cbuf].resource)
          last_cbuf--;
 
       ilo->cbuf[sh].count = last_cbuf + 1;
@@ -519,25 +519,26 @@ ilo_set_constant_buffer(struct pipe_context *pipe,
                         struct pipe_constant_buffer *buf)
 {
    struct ilo_context *ilo = ilo_context(pipe);
-   struct pipe_constant_buffer *cbuf;
+   struct ilo_cbuf_cso *cbuf;
 
    assert(shader < Elements(ilo->cbuf));
-   assert(index < Elements(ilo->cbuf[shader].states));
+   assert(index < Elements(ilo->cbuf[shader].cso));
 
-   cbuf = &ilo->cbuf[shader].states[index];
-
-   pipe_resource_reference(&cbuf->buffer, NULL);
+   cbuf = &ilo->cbuf[shader].cso[index];
 
    if (buf) {
-      pipe_resource_reference(&cbuf->buffer, buf->buffer);
-      cbuf->buffer_offset = buf->buffer_offset;
-      cbuf->buffer_size = buf->buffer_size;
-      cbuf->user_buffer = buf->user_buffer;
+      const enum pipe_format elem_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
+
+      pipe_resource_reference(&cbuf->resource, buf->buffer);
+
+      ilo_gpe_init_view_surface_for_buffer(ilo->dev, ilo_buffer(buf->buffer),
+            buf->buffer_offset, buf->buffer_size,
+            util_format_get_blocksize(elem_format), elem_format,
+            false, false, &cbuf->surface);
    }
    else {
-      cbuf->buffer_offset = 0;
-      cbuf->buffer_size = 0;
-      cbuf->user_buffer = 0;
+      pipe_resource_reference(&cbuf->resource, NULL);
+      cbuf->surface.bo = NULL;
    }
 
    /* the correct value will be set in ilo_finalize_states() */

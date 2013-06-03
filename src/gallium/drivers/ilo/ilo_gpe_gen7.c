@@ -1717,25 +1717,6 @@ gen7_emit_surf_SURFACE_STATE(const struct ilo_dev_info *dev,
    return gen7_emit_SURFACE_STATE(dev, &surf, true, cp);
 }
 
-static uint32_t
-gen7_emit_cbuf_SURFACE_STATE(const struct ilo_dev_info *dev,
-                             const struct pipe_constant_buffer *cbuf,
-                             struct ilo_cp *cp)
-{
-   const enum pipe_format elem_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
-   struct ilo_buffer *buf = ilo_buffer(cbuf->buffer);
-   struct ilo_view_surface surf;
-
-   ILO_GPE_VALID_GEN(dev, 7, 7);
-
-   ilo_gpe_init_view_surface_for_buffer_gen7(dev, buf,
-         cbuf->buffer_offset, cbuf->buffer_size,
-         util_format_get_blocksize(elem_format), elem_format,
-         false, false, &surf);
-
-   return gen7_emit_SURFACE_STATE(dev, &surf, false, cp);
-}
-
 static int
 gen7_estimate_command_size(const struct ilo_dev_info *dev,
                            enum ilo_gpe_gen7_command cmd,
@@ -1962,7 +1943,6 @@ gen7_init(struct ilo_gpe_gen7 *gen7)
    GEN7_USE(gen7, BINDING_TABLE_STATE, gen6);
    GEN7_USE(gen7, SURFACE_STATE, gen6);
    GEN7_SET(gen7, surf_SURFACE_STATE);
-   GEN7_SET(gen7, cbuf_SURFACE_STATE);
    GEN7_USE(gen7, SAMPLER_STATE, gen6);
    GEN7_USE(gen7, SAMPLER_BORDER_COLOR_STATE, gen6);
    GEN7_USE(gen7, push_constant_buffer, gen6);

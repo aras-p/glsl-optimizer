@@ -1001,8 +1001,7 @@ gen6_pipeline_state_surfaces_const(struct ilo_3d_pipeline *p,
                                    int shader_type,
                                    struct gen6_pipeline_session *session)
 {
-   const struct pipe_constant_buffer *buffers =
-      ilo->cbuf[shader_type].states;
+   const struct ilo_cbuf_cso *buffers = ilo->cbuf[shader_type].cso;
    const int num_buffers = ilo->cbuf[shader_type].count;
    uint32_t *surface_state;
    int offset, i;
@@ -1041,9 +1040,11 @@ gen6_pipeline_state_surfaces_const(struct ilo_3d_pipeline *p,
       return;
 
    for (i = 0; i < num_buffers; i++) {
-      if (buffers[i].buffer) {
+      if (buffers[i].resource) {
+         const struct ilo_view_surface *surf = &buffers[i].surface;
+
          surface_state[i] =
-            p->gen6_cbuf_SURFACE_STATE(p->dev, &buffers[i], p->cp);
+            p->gen6_SURFACE_STATE(p->dev, surf, false, p->cp);
       }
       else {
          surface_state[i] = 0;
@@ -1642,7 +1643,6 @@ ilo_3d_pipeline_init_gen6(struct ilo_3d_pipeline *p)
    GEN6_USE(p, BINDING_TABLE_STATE, gen6);
    GEN6_USE(p, SURFACE_STATE, gen6);
    GEN6_USE(p, surf_SURFACE_STATE, gen6);
-   GEN6_USE(p, cbuf_SURFACE_STATE, gen6);
    GEN6_USE(p, so_SURFACE_STATE, gen6);
    GEN6_USE(p, SAMPLER_STATE, gen6);
    GEN6_USE(p, SAMPLER_BORDER_COLOR_STATE, gen6);

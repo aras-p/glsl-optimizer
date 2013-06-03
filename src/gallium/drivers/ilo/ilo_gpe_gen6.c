@@ -4217,25 +4217,6 @@ gen6_emit_surf_SURFACE_STATE(const struct ilo_dev_info *dev,
 }
 
 static uint32_t
-gen6_emit_cbuf_SURFACE_STATE(const struct ilo_dev_info *dev,
-                             const struct pipe_constant_buffer *cbuf,
-                             struct ilo_cp *cp)
-{
-   const enum pipe_format elem_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
-   struct ilo_buffer *buf = ilo_buffer(cbuf->buffer);
-   struct ilo_view_surface surf;
-
-   ILO_GPE_VALID_GEN(dev, 6, 6);
-
-   ilo_gpe_init_view_surface_for_buffer_gen6(dev, buf,
-         cbuf->buffer_offset, cbuf->buffer_size,
-         util_format_get_blocksize(elem_format), elem_format,
-         false, false, &surf);
-
-   return gen6_emit_SURFACE_STATE(dev, &surf, false, cp);
-}
-
-static uint32_t
 gen6_emit_so_SURFACE_STATE(const struct ilo_dev_info *dev,
                            const struct pipe_stream_output_target *so,
                            const struct pipe_stream_output_info *so_info,
@@ -4962,7 +4943,6 @@ static const struct ilo_gpe_gen6 gen6_gpe = {
    GEN6_SET(BINDING_TABLE_STATE),
    GEN6_SET(SURFACE_STATE),
    GEN6_SET(surf_SURFACE_STATE),
-   GEN6_SET(cbuf_SURFACE_STATE),
    GEN6_SET(so_SURFACE_STATE),
    GEN6_SET(SAMPLER_STATE),
    GEN6_SET(SAMPLER_BORDER_COLOR_STATE),

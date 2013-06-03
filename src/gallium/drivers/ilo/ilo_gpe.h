@@ -179,8 +179,13 @@ struct ilo_view_state {
    unsigned count;
 };
 
+struct ilo_cbuf_cso {
+   struct pipe_resource *resource;
+   struct ilo_view_surface surface;
+};
+
 struct ilo_cbuf_state {
-   struct pipe_constant_buffer states[ILO_MAX_CONST_BUFFERS];
+   struct ilo_cbuf_cso cso[ILO_MAX_CONST_BUFFERS];
    unsigned count;
 };
 
