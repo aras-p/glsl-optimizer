@@ -7056,7 +7056,10 @@ save_SamplerParameterfv(GLuint sampler, GLenum pname, const GLfloat *params)
 static void GLAPIENTRY
 save_SamplerParameterf(GLuint sampler, GLenum pname, GLfloat param)
 {
-   save_SamplerParameterfv(sampler, pname, &param);
+   GLfloat parray[4];
+   parray[0] = param;
+   parray[1] = parray[2] = parray[3] = 0.0F;
+   save_SamplerParameterfv(sampler, pname, parray);
 }
 
 static void GLAPIENTRY
