@@ -50,162 +50,161 @@
  * internalFormat parameters passed to glTexImage().
  *
  * \param ctx  the GL context.
+ * \param target  a texture target (GL_TEXTURE_x)
  * \param internalFormat  user's prefered internal texture format.
  * \param format  incoming image pixel format.
  * \param type  incoming image data type.
  *
- * \return a pointer to a gl_texture_format object which describes the
- * choosen texture format, or NULL on failure.
- * 
- * This is called via dd_function_table::ChooseTextureFormat.  Hardware drivers
- * will typically override this function with a specialized version.
+ * \return the closest gl_format for the given format/type arguments
+ *
+ * This is called via dd_function_table::ChooseTextureFormat.  Hardware
+ * drivers may override this function with a specialized version.
  */
 gl_format
 _mesa_choose_tex_format(struct gl_context *ctx, GLenum target,
                         GLint internalFormat, GLenum format, GLenum type)
 {
    (void) format;
-   (void) type;
 
    switch (internalFormat) {
-      /* shallow RGBA formats */
-      case 4:
-      case GL_RGBA:
-	 if (type == GL_UNSIGNED_SHORT_4_4_4_4_REV) {
-	    RETURN_IF_SUPPORTED(MESA_FORMAT_ARGB4444);
-	 } else if (type == GL_UNSIGNED_SHORT_1_5_5_5_REV) {
-	    RETURN_IF_SUPPORTED(MESA_FORMAT_ARGB1555);
-         } else if (type == GL_UNSIGNED_INT_2_10_10_10_REV) {
-            RETURN_IF_SUPPORTED(MESA_FORMAT_ARGB2101010);
-         }
-	 RETURN_IF_SUPPORTED(MESA_FORMAT_RGBA8888);
-	 RETURN_IF_SUPPORTED(MESA_FORMAT_ARGB8888);
-	 break;
+   /* shallow RGBA formats */
+   case 4:
+   case GL_RGBA:
+      if (type == GL_UNSIGNED_SHORT_4_4_4_4_REV) {
+         RETURN_IF_SUPPORTED(MESA_FORMAT_ARGB4444);
+      } else if (type == GL_UNSIGNED_SHORT_1_5_5_5_REV) {
+         RETURN_IF_SUPPORTED(MESA_FORMAT_ARGB1555);
+      } else if (type == GL_UNSIGNED_INT_2_10_10_10_REV) {
+         RETURN_IF_SUPPORTED(MESA_FORMAT_ARGB2101010);
+      }
+      RETURN_IF_SUPPORTED(MESA_FORMAT_RGBA8888);
+      RETURN_IF_SUPPORTED(MESA_FORMAT_ARGB8888);
+      break;
 
-      case GL_RGBA8:
-	 RETURN_IF_SUPPORTED(MESA_FORMAT_RGBA8888);
-	 RETURN_IF_SUPPORTED(MESA_FORMAT_ARGB8888);
-	 break;
-      case GL_RGB5_A1:
-	 RETURN_IF_SUPPORTED(MESA_FORMAT_ARGB1555);
-	 break;
-      case GL_RGBA2:
-	 RETURN_IF_SUPPORTED(MESA_FORMAT_ARGB4444_REV); /* just to test another format*/
-	 RETURN_IF_SUPPORTED(MESA_FORMAT_ARGB4444);
-	 break;
-      case GL_RGBA4:
-	 RETURN_IF_SUPPORTED(MESA_FORMAT_ARGB4444);
-	 break;
+   case GL_RGBA8:
+      RETURN_IF_SUPPORTED(MESA_FORMAT_RGBA8888);
+      RETURN_IF_SUPPORTED(MESA_FORMAT_ARGB8888);
+      break;
+   case GL_RGB5_A1:
+      RETURN_IF_SUPPORTED(MESA_FORMAT_ARGB1555);
+      break;
+   case GL_RGBA2:
+      RETURN_IF_SUPPORTED(MESA_FORMAT_ARGB4444_REV); /* just to test another format*/
+      RETURN_IF_SUPPORTED(MESA_FORMAT_ARGB4444);
+      break;
+   case GL_RGBA4:
+      RETURN_IF_SUPPORTED(MESA_FORMAT_ARGB4444);
+      break;
 
-      /* deep RGBA formats */
-      case GL_RGB10_A2:
-	 RETURN_IF_SUPPORTED(MESA_FORMAT_ARGB2101010);
-	 RETURN_IF_SUPPORTED(MESA_FORMAT_ARGB8888);
-	 break;
-      case GL_RGBA12:
-      case GL_RGBA16:
-	 RETURN_IF_SUPPORTED(MESA_FORMAT_RGBA_16);
-	 RETURN_IF_SUPPORTED(MESA_FORMAT_RGBA_16);
-	 RETURN_IF_SUPPORTED(MESA_FORMAT_RGBA8888);
-	 RETURN_IF_SUPPORTED(MESA_FORMAT_ARGB8888);
-	 break;
+   /* deep RGBA formats */
+   case GL_RGB10_A2:
+      RETURN_IF_SUPPORTED(MESA_FORMAT_ARGB2101010);
+      RETURN_IF_SUPPORTED(MESA_FORMAT_ARGB8888);
+      break;
+   case GL_RGBA12:
+   case GL_RGBA16:
+      RETURN_IF_SUPPORTED(MESA_FORMAT_RGBA_16);
+      RETURN_IF_SUPPORTED(MESA_FORMAT_RGBA_16);
+      RETURN_IF_SUPPORTED(MESA_FORMAT_RGBA8888);
+      RETURN_IF_SUPPORTED(MESA_FORMAT_ARGB8888);
+      break;
 
-      /* shallow RGB formats */
-      case 3:
-      case GL_RGB:
-         if (type == GL_UNSIGNED_INT_2_10_10_10_REV) {
-            RETURN_IF_SUPPORTED(MESA_FORMAT_ARGB2101010);
-         }
-         /* fallthrough */
-      case GL_RGB8:
-	 RETURN_IF_SUPPORTED(MESA_FORMAT_RGB888);
-	 RETURN_IF_SUPPORTED(MESA_FORMAT_XRGB8888);
-	 RETURN_IF_SUPPORTED(MESA_FORMAT_ARGB8888);
-	 break;
-      case GL_R3_G3_B2:
-	 RETURN_IF_SUPPORTED(MESA_FORMAT_RGB332);
-	 RETURN_IF_SUPPORTED(MESA_FORMAT_RGB565);
-	 RETURN_IF_SUPPORTED(MESA_FORMAT_RGB565_REV);
-	 RETURN_IF_SUPPORTED(MESA_FORMAT_RGB888);
-	 RETURN_IF_SUPPORTED(MESA_FORMAT_XRGB8888);
-	 RETURN_IF_SUPPORTED(MESA_FORMAT_ARGB8888);
-	 break;
-      case GL_RGB4:
-	 RETURN_IF_SUPPORTED(MESA_FORMAT_RGB565_REV); /* just to test another format */
-	 RETURN_IF_SUPPORTED(MESA_FORMAT_RGB565);
-	 break;
-      case GL_RGB5:
-	 RETURN_IF_SUPPORTED(MESA_FORMAT_RGB565);
-	 break;
+   /* shallow RGB formats */
+   case 3:
+   case GL_RGB:
+      if (type == GL_UNSIGNED_INT_2_10_10_10_REV) {
+         RETURN_IF_SUPPORTED(MESA_FORMAT_ARGB2101010);
+      }
+      /* fallthrough */
+   case GL_RGB8:
+      RETURN_IF_SUPPORTED(MESA_FORMAT_RGB888);
+      RETURN_IF_SUPPORTED(MESA_FORMAT_XRGB8888);
+      RETURN_IF_SUPPORTED(MESA_FORMAT_ARGB8888);
+      break;
+   case GL_R3_G3_B2:
+      RETURN_IF_SUPPORTED(MESA_FORMAT_RGB332);
+      RETURN_IF_SUPPORTED(MESA_FORMAT_RGB565);
+      RETURN_IF_SUPPORTED(MESA_FORMAT_RGB565_REV);
+      RETURN_IF_SUPPORTED(MESA_FORMAT_RGB888);
+      RETURN_IF_SUPPORTED(MESA_FORMAT_XRGB8888);
+      RETURN_IF_SUPPORTED(MESA_FORMAT_ARGB8888);
+      break;
+   case GL_RGB4:
+      RETURN_IF_SUPPORTED(MESA_FORMAT_RGB565_REV); /* just to test another format */
+      RETURN_IF_SUPPORTED(MESA_FORMAT_RGB565);
+      break;
+   case GL_RGB5:
+      RETURN_IF_SUPPORTED(MESA_FORMAT_RGB565);
+      break;
 
-      /* deep RGB formats */
-      case GL_RGB10:
-      case GL_RGB12:
-      case GL_RGB16:
-	 RETURN_IF_SUPPORTED(MESA_FORMAT_XBGR16161616_UNORM);
-	 RETURN_IF_SUPPORTED(MESA_FORMAT_RGBA_16);
-	 RETURN_IF_SUPPORTED(MESA_FORMAT_XRGB8888);
-	 RETURN_IF_SUPPORTED(MESA_FORMAT_ARGB8888);
-	 break;
+   /* deep RGB formats */
+   case GL_RGB10:
+   case GL_RGB12:
+   case GL_RGB16:
+      RETURN_IF_SUPPORTED(MESA_FORMAT_XBGR16161616_UNORM);
+      RETURN_IF_SUPPORTED(MESA_FORMAT_RGBA_16);
+      RETURN_IF_SUPPORTED(MESA_FORMAT_XRGB8888);
+      RETURN_IF_SUPPORTED(MESA_FORMAT_ARGB8888);
+      break;
 
-      /* Alpha formats */
-      case GL_ALPHA:
-      case GL_ALPHA4:
-      case GL_ALPHA8:
-	 RETURN_IF_SUPPORTED(MESA_FORMAT_A8);
-	 break;
+   /* Alpha formats */
+   case GL_ALPHA:
+   case GL_ALPHA4:
+   case GL_ALPHA8:
+      RETURN_IF_SUPPORTED(MESA_FORMAT_A8);
+      break;
 
-      case GL_ALPHA12:
-      case GL_ALPHA16:
-	 RETURN_IF_SUPPORTED(MESA_FORMAT_A16);
-	 RETURN_IF_SUPPORTED(MESA_FORMAT_A8);
-	 break;
+   case GL_ALPHA12:
+   case GL_ALPHA16:
+      RETURN_IF_SUPPORTED(MESA_FORMAT_A16);
+      RETURN_IF_SUPPORTED(MESA_FORMAT_A8);
+      break;
 
-      /* Luminance formats */
-      case 1:
-      case GL_LUMINANCE:
-      case GL_LUMINANCE4:
-      case GL_LUMINANCE8:
-	 RETURN_IF_SUPPORTED(MESA_FORMAT_L8);
-	 break;
+   /* Luminance formats */
+   case 1:
+   case GL_LUMINANCE:
+   case GL_LUMINANCE4:
+   case GL_LUMINANCE8:
+      RETURN_IF_SUPPORTED(MESA_FORMAT_L8);
+      break;
 
-      case GL_LUMINANCE12:
-      case GL_LUMINANCE16:
-	 RETURN_IF_SUPPORTED(MESA_FORMAT_L16);
-	 RETURN_IF_SUPPORTED(MESA_FORMAT_L8);
-	 break;
+   case GL_LUMINANCE12:
+   case GL_LUMINANCE16:
+      RETURN_IF_SUPPORTED(MESA_FORMAT_L16);
+      RETURN_IF_SUPPORTED(MESA_FORMAT_L8);
+      break;
 
       /* Luminance/Alpha formats */
-      case GL_LUMINANCE4_ALPHA4:
-	 RETURN_IF_SUPPORTED(MESA_FORMAT_AL44);
-	 RETURN_IF_SUPPORTED(MESA_FORMAT_AL88);
-	 break;
+   case GL_LUMINANCE4_ALPHA4:
+      RETURN_IF_SUPPORTED(MESA_FORMAT_AL44);
+      RETURN_IF_SUPPORTED(MESA_FORMAT_AL88);
+      break;
 
-      case 2:
-      case GL_LUMINANCE_ALPHA:
-      case GL_LUMINANCE6_ALPHA2:
-      case GL_LUMINANCE8_ALPHA8:
-	 RETURN_IF_SUPPORTED(MESA_FORMAT_AL88);
-	 break;
+   case 2:
+   case GL_LUMINANCE_ALPHA:
+   case GL_LUMINANCE6_ALPHA2:
+   case GL_LUMINANCE8_ALPHA8:
+      RETURN_IF_SUPPORTED(MESA_FORMAT_AL88);
+      break;
 
-      case GL_LUMINANCE12_ALPHA4:
-      case GL_LUMINANCE12_ALPHA12:
-      case GL_LUMINANCE16_ALPHA16:
-	 RETURN_IF_SUPPORTED(MESA_FORMAT_AL1616);
-	 RETURN_IF_SUPPORTED(MESA_FORMAT_AL88);
-	 break;
+   case GL_LUMINANCE12_ALPHA4:
+   case GL_LUMINANCE12_ALPHA12:
+   case GL_LUMINANCE16_ALPHA16:
+      RETURN_IF_SUPPORTED(MESA_FORMAT_AL1616);
+      RETURN_IF_SUPPORTED(MESA_FORMAT_AL88);
+      break;
 
-      case GL_INTENSITY:
-      case GL_INTENSITY4:
-      case GL_INTENSITY8:
-	 RETURN_IF_SUPPORTED(MESA_FORMAT_I8);
-	 break;
+   case GL_INTENSITY:
+   case GL_INTENSITY4:
+   case GL_INTENSITY8:
+      RETURN_IF_SUPPORTED(MESA_FORMAT_I8);
+      break;
 
-      case GL_INTENSITY12:
-      case GL_INTENSITY16:
-	 RETURN_IF_SUPPORTED(MESA_FORMAT_I16);
-	 RETURN_IF_SUPPORTED(MESA_FORMAT_I8);
-	 break;
+   case GL_INTENSITY12:
+   case GL_INTENSITY16:
+      RETURN_IF_SUPPORTED(MESA_FORMAT_I16);
+      RETURN_IF_SUPPORTED(MESA_FORMAT_I8);
+      break;
 
    case GL_DEPTH_COMPONENT:
    case GL_DEPTH_COMPONENT24:
@@ -220,49 +219,49 @@ _mesa_choose_tex_format(struct gl_context *ctx, GLenum target,
       RETURN_IF_SUPPORTED(MESA_FORMAT_S8_Z24);
       break;
 
- case GL_COMPRESSED_ALPHA_ARB:
-    RETURN_IF_SUPPORTED(MESA_FORMAT_A8);
-    break;
- case GL_COMPRESSED_LUMINANCE_ARB:
-    RETURN_IF_SUPPORTED(MESA_FORMAT_L8);
-    break;
- case GL_COMPRESSED_LUMINANCE_ALPHA_ARB:
-    RETURN_IF_SUPPORTED(MESA_FORMAT_AL88);
-    break;
- case GL_COMPRESSED_INTENSITY_ARB:
-    RETURN_IF_SUPPORTED(MESA_FORMAT_I8);
-    break;
- case GL_COMPRESSED_RGB_ARB:
-    /* We don't use texture compression for 1D and 1D array textures.
-     * For 1D textures, compressions doesn't buy us much.
-     * For 1D ARRAY textures, there's complicated issues with updating
-     * sub-regions on non-block boundaries with glCopyTexSubImage, among
-     * other issues.  FWIW, the GL_EXT_texture_array extension prohibits
-     * 1D ARRAY textures in S3TC format.
-     */
-    if (target != GL_TEXTURE_1D && target != GL_TEXTURE_1D_ARRAY) {
-       if (ctx->Extensions.EXT_texture_compression_s3tc ||
-           ctx->Extensions.ANGLE_texture_compression_dxt)
-          RETURN_IF_SUPPORTED(MESA_FORMAT_RGB_DXT1);
-       if (ctx->Extensions.TDFX_texture_compression_FXT1)
-          RETURN_IF_SUPPORTED(MESA_FORMAT_RGB_FXT1);
-    }
-    RETURN_IF_SUPPORTED(MESA_FORMAT_RGB888);
-    RETURN_IF_SUPPORTED(MESA_FORMAT_XRGB8888);
-    RETURN_IF_SUPPORTED(MESA_FORMAT_ARGB8888);
-    break;
- case GL_COMPRESSED_RGBA_ARB:
-    /* We don't use texture compression for 1D and 1D array textures. */
-    if (target != GL_TEXTURE_1D && target != GL_TEXTURE_1D_ARRAY) {
-       if (ctx->Extensions.EXT_texture_compression_s3tc ||
-           ctx->Extensions.ANGLE_texture_compression_dxt)
-          RETURN_IF_SUPPORTED(MESA_FORMAT_RGBA_DXT3); /* Not rgba_dxt1, see spec */
-       if (ctx->Extensions.TDFX_texture_compression_FXT1)
-          RETURN_IF_SUPPORTED(MESA_FORMAT_RGBA_FXT1);
-    }
-    RETURN_IF_SUPPORTED(MESA_FORMAT_RGBA8888);
-    RETURN_IF_SUPPORTED(MESA_FORMAT_ARGB8888);
-    break;
+   case GL_COMPRESSED_ALPHA_ARB:
+      RETURN_IF_SUPPORTED(MESA_FORMAT_A8);
+      break;
+   case GL_COMPRESSED_LUMINANCE_ARB:
+      RETURN_IF_SUPPORTED(MESA_FORMAT_L8);
+      break;
+   case GL_COMPRESSED_LUMINANCE_ALPHA_ARB:
+      RETURN_IF_SUPPORTED(MESA_FORMAT_AL88);
+      break;
+   case GL_COMPRESSED_INTENSITY_ARB:
+      RETURN_IF_SUPPORTED(MESA_FORMAT_I8);
+      break;
+   case GL_COMPRESSED_RGB_ARB:
+      /* We don't use texture compression for 1D and 1D array textures.
+       * For 1D textures, compressions doesn't buy us much.
+       * For 1D ARRAY textures, there's complicated issues with updating
+       * sub-regions on non-block boundaries with glCopyTexSubImage, among
+       * other issues.  FWIW, the GL_EXT_texture_array extension prohibits
+       * 1D ARRAY textures in S3TC format.
+       */
+      if (target != GL_TEXTURE_1D && target != GL_TEXTURE_1D_ARRAY) {
+         if (ctx->Extensions.EXT_texture_compression_s3tc ||
+             ctx->Extensions.ANGLE_texture_compression_dxt)
+            RETURN_IF_SUPPORTED(MESA_FORMAT_RGB_DXT1);
+         if (ctx->Extensions.TDFX_texture_compression_FXT1)
+            RETURN_IF_SUPPORTED(MESA_FORMAT_RGB_FXT1);
+      }
+      RETURN_IF_SUPPORTED(MESA_FORMAT_RGB888);
+      RETURN_IF_SUPPORTED(MESA_FORMAT_XRGB8888);
+      RETURN_IF_SUPPORTED(MESA_FORMAT_ARGB8888);
+      break;
+   case GL_COMPRESSED_RGBA_ARB:
+      /* We don't use texture compression for 1D and 1D array textures. */
+      if (target != GL_TEXTURE_1D && target != GL_TEXTURE_1D_ARRAY) {
+         if (ctx->Extensions.EXT_texture_compression_s3tc ||
+             ctx->Extensions.ANGLE_texture_compression_dxt)
+            RETURN_IF_SUPPORTED(MESA_FORMAT_RGBA_DXT3); /* Not rgba_dxt1, see spec */
+         if (ctx->Extensions.TDFX_texture_compression_FXT1)
+            RETURN_IF_SUPPORTED(MESA_FORMAT_RGBA_FXT1);
+      }
+      RETURN_IF_SUPPORTED(MESA_FORMAT_RGBA8888);
+      RETURN_IF_SUPPORTED(MESA_FORMAT_ARGB8888);
+      break;
 
    case GL_RGB565:
       RETURN_IF_SUPPORTED(MESA_FORMAT_RGB565);
@@ -821,4 +820,3 @@ _mesa_choose_tex_format(struct gl_context *ctx, GLenum target,
                  _mesa_lookup_enum_by_nr(internalFormat));
    return MESA_FORMAT_NONE;
 }
-
