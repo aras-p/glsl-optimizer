@@ -141,14 +141,7 @@ typedef void
                              struct ilo_cp *cp);
 
 typedef ilo_gpe_gen6_3DSTATE_CLEAR_PARAMS ilo_gpe_gen7_3DSTATE_CLEAR_PARAMS;
-
-typedef void
-(*ilo_gpe_gen7_3DSTATE_DEPTH_BUFFER)(const struct ilo_dev_info *dev,
-                                     const struct pipe_surface *surface,
-                                     const struct pipe_depth_stencil_alpha_state *dsa,
-                                     bool hiz,
-                                     struct ilo_cp *cp);
-
+typedef ilo_gpe_gen6_3DSTATE_DEPTH_BUFFER ilo_gpe_gen7_3DSTATE_DEPTH_BUFFER;
 typedef ilo_gpe_gen6_3DSTATE_STENCIL_BUFFER ilo_gpe_gen7_3DSTATE_STENCIL_BUFFER;
 typedef ilo_gpe_gen6_3DSTATE_HIER_DEPTH_BUFFER ilo_gpe_gen7_3DSTATE_HIER_DEPTH_BUFFER;
 typedef ilo_gpe_gen6_3DSTATE_VERTEX_BUFFERS ilo_gpe_gen7_3DSTATE_VERTEX_BUFFERS;

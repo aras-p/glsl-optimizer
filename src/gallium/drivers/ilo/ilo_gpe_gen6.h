@@ -301,7 +301,6 @@ typedef void
 typedef void
 (*ilo_gpe_gen6_3DSTATE_DEPTH_BUFFER)(const struct ilo_dev_info *dev,
                                      const struct pipe_surface *surface,
-                                     bool hiz,
                                      struct ilo_cp *cp);
 
 typedef void
@@ -568,12 +567,5 @@ ilo_gpe_gen6_fill_3dstate_sf_sbe(const struct ilo_dev_info *dev,
                                  const struct ilo_shader *fs,
                                  const struct ilo_shader *last_sh,
                                  uint32_t *dw, int num_dwords);
-
-void
-ilo_gpe_gen6_emit_3DSTATE_DEPTH_BUFFER(const struct ilo_dev_info *dev,
-                                       const struct pipe_surface *surface,
-                                       const struct pipe_depth_stencil_alpha_state *dsa,
-                                       bool hiz,
-                                       struct ilo_cp *cp);
 
 #endif /* ILO_GPE_GEN6_H */

@@ -2272,18 +2272,17 @@ gen6_get_depth_buffer_format(const struct ilo_dev_info *dev,
    return depth_format;
 }
 
-void
-ilo_gpe_gen6_emit_3DSTATE_DEPTH_BUFFER(const struct ilo_dev_info *dev,
-                                       const struct pipe_surface *surface,
-                                       const struct pipe_depth_stencil_alpha_state *dsa,
-                                       bool hiz,
-                                       struct ilo_cp *cp)
+static void
+gen6_emit_3DSTATE_DEPTH_BUFFER(const struct ilo_dev_info *dev,
+                               const struct pipe_surface *surface,
+                               struct ilo_cp *cp)
 {
    const uint32_t cmd = (dev->gen >= ILO_GEN(7)) ?
       ILO_GPE_CMD(0x3, 0x0, 0x05) : ILO_GPE_CMD(0x3, 0x1, 0x05);
    const uint8_t cmd_len = 7;
    const int max_2d_size = (dev->gen >= ILO_GEN(7)) ? 16384 : 8192;
    const int max_array_size = (dev->gen >= ILO_GEN(7)) ? 2048 : 512;
+   const bool hiz = false;
    struct ilo_texture *tex;
    uint32_t dw1, dw3, dw4, dw6;
    uint32_t slice_offset, x_offset, y_offset;
@@ -2465,16 +2464,14 @@ ilo_gpe_gen6_emit_3DSTATE_DEPTH_BUFFER(const struct ilo_dev_info *dev,
          (tex->bo_stride - 1);
 
    if (dev->gen >= ILO_GEN(7)) {
-      if (has_depth) {
-         if (dsa->depth.writemask)
-            dw1 |= 1 << 28;
-         if (hiz)
-            dw1 |= 1 << 22;
-      }
+      if (has_depth)
+         dw1 |= 1 << 28;
 
-      if (has_stencil &&
-          (dsa->stencil[0].writemask || dsa->stencil[1].writemask))
+      if (has_stencil)
          dw1 |= 1 << 27;
+
+      if (hiz)
+         dw1 |= 1 << 22;
 
       dw3 = (height - 1) << 18 |
             (width - 1) << 4 |
@@ -2523,15 +2520,6 @@ ilo_gpe_gen6_emit_3DSTATE_DEPTH_BUFFER(const struct ilo_dev_info *dev,
    ilo_cp_write(cp, y_offset << 16 | x_offset);
    ilo_cp_write(cp, dw6);
    ilo_cp_end(cp);
-}
-
-static void
-gen6_emit_3DSTATE_DEPTH_BUFFER(const struct ilo_dev_info *dev,
-                               const struct pipe_surface *surface,
-                               bool hiz,
-                               struct ilo_cp *cp)
-{
-   ilo_gpe_gen6_emit_3DSTATE_DEPTH_BUFFER(dev, surface, NULL, hiz, cp);
 }
 
 static void
@@ -2765,12 +2753,13 @@ gen6_emit_3DSTATE_HIER_DEPTH_BUFFER(const struct ilo_dev_info *dev,
       ILO_GPE_CMD(0x3, 0x0, 0x07) :
       ILO_GPE_CMD(0x3, 0x1, 0x0f);
    const uint8_t cmd_len = 3;
+   const bool hiz = false;
    struct ilo_texture *tex;
    uint32_t slice_offset;
 
    ILO_GPE_VALID_GEN(dev, 6, 7);
 
-   if (!surface) {
+   if (!surface || !hiz) {
       ilo_cp_begin(cp, cmd_len);
       ilo_cp_write(cp, cmd | (cmd_len - 2));
       ilo_cp_write(cp, 0);

@@ -722,8 +722,7 @@ gen6_pipeline_wm_depth(struct ilo_3d_pipeline *p,
          gen6_wa_pipe_control_wm_depth_flush(p);
       }
 
-      p->gen6_3DSTATE_DEPTH_BUFFER(p->dev,
-            ilo->fb.state.zsbuf, false, p->cp);
+      p->gen6_3DSTATE_DEPTH_BUFFER(p->dev, ilo->fb.state.zsbuf, p->cp);
 
       /* TODO */
       p->gen6_3DSTATE_CLEAR_PARAMS(p->dev, 0, p->cp);

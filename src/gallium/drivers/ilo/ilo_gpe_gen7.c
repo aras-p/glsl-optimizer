@@ -59,16 +59,6 @@ gen7_emit_3DSTATE_CLEAR_PARAMS(const struct ilo_dev_info *dev,
 }
 
 static void
-gen7_emit_3DSTATE_DEPTH_BUFFER(const struct ilo_dev_info *dev,
-                               const struct pipe_surface *surface,
-                               const struct pipe_depth_stencil_alpha_state *dsa,
-                               bool hiz,
-                               struct ilo_cp *cp)
-{
-   ilo_gpe_gen6_emit_3DSTATE_DEPTH_BUFFER(dev, surface, dsa, hiz, cp);
-}
-
-static void
 gen7_emit_3dstate_pointer(const struct ilo_dev_info *dev,
                           int subop, uint32_t pointer,
                           struct ilo_cp *cp)
@@ -1926,7 +1916,7 @@ gen7_init(struct ilo_gpe_gen7 *gen7)
    GEN7_USE(gen7, MEDIA_STATE_FLUSH, gen6);
    GEN7_SET(gen7, GPGPU_WALKER);
    GEN7_SET(gen7, 3DSTATE_CLEAR_PARAMS);
-   GEN7_SET(gen7, 3DSTATE_DEPTH_BUFFER);
+   GEN7_USE(gen7, 3DSTATE_DEPTH_BUFFER, gen6);
    GEN7_USE(gen7, 3DSTATE_STENCIL_BUFFER, gen6);
    GEN7_USE(gen7, 3DSTATE_HIER_DEPTH_BUFFER, gen6);
    GEN7_USE(gen7, 3DSTATE_VERTEX_BUFFERS, gen6);
