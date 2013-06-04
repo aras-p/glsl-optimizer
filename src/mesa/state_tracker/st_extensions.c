@@ -187,7 +187,8 @@ void st_init_limits(struct st_context *st)
       pc->MaxTemps           = pc->MaxNativeTemps           =
          screen->get_shader_param(screen, sh, PIPE_SHADER_CAP_MAX_TEMPS);
       pc->MaxAddressRegs     = pc->MaxNativeAddressRegs     =
-         screen->get_shader_param(screen, sh, PIPE_SHADER_CAP_MAX_ADDRS);
+         _min(screen->get_shader_param(screen, sh, PIPE_SHADER_CAP_MAX_ADDRS),
+              MAX_PROGRAM_ADDRESS_REGS);
       pc->MaxParameters      = pc->MaxNativeParameters      =
          screen->get_shader_param(screen, sh, PIPE_SHADER_CAP_MAX_CONSTS);
 
