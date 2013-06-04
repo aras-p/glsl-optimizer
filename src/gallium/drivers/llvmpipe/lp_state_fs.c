@@ -1384,18 +1384,6 @@ generate_unswizzled_blend(struct gallivm_state *gallivm,
       fs_mask[i] = lp_build_zero(gallivm, mask_type);
    }
 
-   /* Compute the alignment of the destination pointer in bytes */
-#if 0
-   dst_alignment = (block_width * out_format_desc->block.bits + 7)/(out_format_desc->block.width * 8);
-#else
-   /* FIXME -- currently we're fetching pixels one by one, instead of row by row */
-   dst_alignment = (1 * out_format_desc->block.bits + 7)/(out_format_desc->block.width * 8);
-#endif
-   /* Force power-of-two alignment by extracting only the least-significant-bit */
-   dst_alignment = 1 << (ffs(dst_alignment) - 1);
-   /* Resource base and stride pointers are aligned to 16 bytes, so that's the maximum alignment we can guarantee */
-   dst_alignment = MIN2(dst_alignment, 16);
-
    /* Do not bother executing code when mask is empty.. */
    if (do_branch) {
       check_mask = LLVMConstNull(lp_build_int_vec_type(gallivm, mask_type));
@@ -1729,6 +1717,27 @@ generate_unswizzled_blend(struct gallivm_state *gallivm,
       dst_count = block_height;
       dst_type.length = block_width;
    }
+
+   /*
+    * Compute the alignment of the destination pointer in bytes
+    * We fetch 1-4 pixels, if the format has pot alignment then those fetches
+    * are always aligned by MIN2(16, fetch_width) except for buffers (not
+    * 1d tex but can't distinguish here) so need to stick with per-pixel
+    * alignment in this case.
+    */
+   if (is_1d) {
+      dst_alignment = (out_format_desc->block.bits + 7)/(out_format_desc->block.width * 8);
+   }
+   else {
+      dst_alignment = dst_type.length * dst_type.width / 8;
+   }
+   /* Force power-of-two alignment by extracting only the least-significant-bit */
+   dst_alignment = 1 << (ffs(dst_alignment) - 1);
+   /*
+    * Resource base and stride pointers are aligned to 16 bytes, so that's
+    * the maximum alignment we can guarantee
+    */
+   dst_alignment = MIN2(16, dst_alignment);
 
    if (is_1d) {
       load_unswizzled_block(gallivm, color_ptr, stride, block_width, 1,
