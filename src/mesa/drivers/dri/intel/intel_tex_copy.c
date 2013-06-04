@@ -55,10 +55,7 @@ intel_copy_texsubimage(struct intel_context *intel,
                        struct intel_renderbuffer *irb,
                        GLint x, GLint y, GLsizei width, GLsizei height)
 {
-   struct gl_context *ctx = &intel->ctx;
    const GLenum internalFormat = intelImage->base.Base.InternalFormat;
-   bool copy_supported = false;
-   bool copy_supported_with_alpha_override = false;
 
    intel_prepare_render(intel);
 
@@ -86,34 +83,6 @@ intel_copy_texsubimage(struct intel_context *intel,
       return false;
    }
 
-   /* glCopyTexImage (and the glBlitFramebuffer() path that reuses this)
-    * doesn't do any sRGB conversions.
-    */
-   gl_format src_format = _mesa_get_srgb_format_linear(intel_rb_format(irb));
-   gl_format dst_format = _mesa_get_srgb_format_linear(intelImage->base.Base.TexFormat);
-
-   copy_supported = src_format == dst_format;
-
-   /* Converting ARGB8888 to XRGB8888 is trivial: ignore the alpha bits */
-   if (src_format == MESA_FORMAT_ARGB8888 &&
-       dst_format == MESA_FORMAT_XRGB8888) {
-      copy_supported = true;
-   }
-
-   /* Converting XRGB8888 to ARGB8888 requires setting the alpha bits to 1.0 */
-   if (src_format == MESA_FORMAT_XRGB8888 &&
-       dst_format == MESA_FORMAT_ARGB8888) {
-      copy_supported_with_alpha_override = true;
-   }
-
-   if (!copy_supported && !copy_supported_with_alpha_override) {
-      perf_debug("%s mismatched formats %s, %s\n",
-		 __FUNCTION__,
-		 _mesa_get_format_name(intelImage->base.Base.TexFormat),
-		 _mesa_get_format_name(intel_rb_format(irb)));
-      return false;
-   }
-
    /* blit from src buffer to texture */
    if (!intel_miptree_blit(intel,
                            irb->mt, irb->mt_level, irb->mt_layer,
@@ -124,9 +93,6 @@ intel_copy_texsubimage(struct intel_context *intel,
                            width, height, GL_COPY)) {
       return false;
    }
-
-   if (copy_supported_with_alpha_override)
-      intel_set_teximage_alpha_to_one(ctx, intelImage);
 
    return true;
 }

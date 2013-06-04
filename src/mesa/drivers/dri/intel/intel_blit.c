@@ -43,6 +43,11 @@
 
 #define FILE_DEBUG_FLAG DEBUG_BLIT
 
+static void
+intel_miptree_set_alpha_to_one(struct intel_context *intel,
+                               struct intel_mipmap_tree *mt,
+                               int x, int y, int width, int height);
+
 static GLuint translate_raster_op(GLenum logicop)
 {
    switch(logicop) {
@@ -152,10 +157,29 @@ intel_miptree_blit(struct intel_context *intel,
                    uint32_t width, uint32_t height,
                    GLenum logicop)
 {
-   /* We don't assert on format because we may blit from ARGB8888 to XRGB8888,
-    * for example.
+   /* No sRGB decode or encode is done by the hardware blitter, which is
+    * consistent with what we want in the callers (glCopyTexSubImage(),
+    * glBlitFramebuffer(), texture validation, etc.).
     */
-   assert(src_mt->cpp == dst_mt->cpp);
+   gl_format src_format = _mesa_get_srgb_format_linear(src_mt->format);
+   gl_format dst_format = _mesa_get_srgb_format_linear(dst_mt->format);
+
+   /* The blitter doesn't support doing any format conversions.  We do also
+    * support blitting ARGB8888 to XRGB8888 (trivial, the values dropped into
+    * the X channel don't matter), and XRGB8888 to ARGB8888 by setting the A
+    * channel to 1.0 at the end.
+    */
+   if (src_format != dst_format &&
+      ((src_format != MESA_FORMAT_ARGB8888 &&
+        src_format != MESA_FORMAT_XRGB8888) ||
+       (dst_format != MESA_FORMAT_ARGB8888 &&
+        dst_format != MESA_FORMAT_XRGB8888))) {
+      perf_debug("%s: Can't use hardware blitter from %s to %s, "
+                 "falling back.\n", __FUNCTION__,
+                 _mesa_get_format_name(src_format),
+                 _mesa_get_format_name(dst_format));
+      return false;
+   }
 
    /* According to the Ivy Bridge PRM, Vol1 Part4, section 1.2.1.2 (Graphics
     * Data Size Limitations):
@@ -211,18 +235,29 @@ intel_miptree_blit(struct intel_context *intel,
    dst_x += dst_image_x;
    dst_y += dst_image_y;
 
-   return intelEmitCopyBlit(intel,
-                            src_mt->cpp,
-                            src_pitch,
-                            src_mt->region->bo, src_mt->offset,
-                            src_mt->region->tiling,
-                            dst_mt->region->pitch,
-                            dst_mt->region->bo, dst_mt->offset,
-                            dst_mt->region->tiling,
-                            src_x, src_y,
-                            dst_x, dst_y,
-                            width, height,
-                            logicop);
+   if (!intelEmitCopyBlit(intel,
+                          src_mt->cpp,
+                          src_pitch,
+                          src_mt->region->bo, src_mt->offset,
+                          src_mt->region->tiling,
+                          dst_mt->region->pitch,
+                          dst_mt->region->bo, dst_mt->offset,
+                          dst_mt->region->tiling,
+                          src_x, src_y,
+                          dst_x, dst_y,
+                          width, height,
+                          logicop)) {
+      return false;
+   }
+
+   if (src_mt->format == MESA_FORMAT_XRGB8888 &&
+       dst_mt->format == MESA_FORMAT_ARGB8888) {
+      intel_miptree_set_alpha_to_one(intel, dst_mt,
+                                     dst_x, dst_y,
+                                     width, height);
+   }
+
+   return true;
 }
 
 /* Copy BitBlt
@@ -673,52 +708,29 @@ intel_emit_linear_blit(struct intel_context *intel,
 }
 
 /**
- * Used to initialize the alpha value of an ARGB8888 teximage after
- * loading it from an XRGB8888 source.
+ * Used to initialize the alpha value of an ARGB8888 miptree after copying
+ * into it from an XRGB8888 source.
  *
- * This is very common with glCopyTexImage2D().
+ * This is very common with glCopyTexImage2D().  Note that the coordinates are
+ * relative to the start of the miptree, not relative to a slice within the
+ * miptree.
  */
-void
-intel_set_teximage_alpha_to_one(struct gl_context *ctx,
-				struct intel_texture_image *intel_image)
+static void
+intel_miptree_set_alpha_to_one(struct intel_context *intel,
+                              struct intel_mipmap_tree *mt,
+                              int x, int y, int width, int height)
 {
-   struct intel_context *intel = intel_context(ctx);
-   unsigned int image_x, image_y;
-   uint32_t x1, y1, x2, y2;
+   struct intel_region *region = mt->region;
    uint32_t BR13, CMD;
    int pitch, cpp;
    drm_intel_bo *aper_array[2];
-   struct intel_region *region = intel_image->mt->region;
-   int width, height, depth;
    BATCH_LOCALS;
-
-   /* This target would require iterating over the slices, which we don't do */
-   assert(intel_image->base.Base.TexObject->Target != GL_TEXTURE_1D_ARRAY);
-
-   intel_miptree_get_dimensions_for_image(&intel_image->base.Base,
-                                          &width, &height, &depth);
-   assert(depth == 1);
-
-   assert(intel_image->base.Base.TexFormat == MESA_FORMAT_ARGB8888);
-
-   /* get dest x/y in destination texture */
-   intel_miptree_get_image_offset(intel_image->mt,
-				  intel_image->base.Base.Level,
-				  intel_image->base.Base.Face,
-				  &image_x, &image_y);
-
-   x1 = image_x;
-   y1 = image_y;
-   x2 = image_x + width;
-   y2 = image_y + height;
 
    pitch = region->pitch;
    cpp = region->cpp;
 
    DBG("%s dst:buf(%p)/%d %d,%d sz:%dx%d\n",
-       __FUNCTION__,
-       intel_image->mt->region->bo, pitch,
-       x1, y1, x2 - x1, y2 - y1);
+       __FUNCTION__, region->bo, pitch, x, y, width, height);
 
    BR13 = br13_for_cpp(cpp) | 0xf0 << 16;
    CMD = XY_COLOR_BLT_CMD;
@@ -746,8 +758,8 @@ intel_set_teximage_alpha_to_one(struct gl_context *ctx,
    BEGIN_BATCH_BLT_TILED(6, dst_y_tiled, false);
    OUT_BATCH(CMD | (6 - 2));
    OUT_BATCH(BR13);
-   OUT_BATCH((y1 << 16) | x1);
-   OUT_BATCH((y2 << 16) | x2);
+   OUT_BATCH((y << 16) | x);
+   OUT_BATCH(((y + height) << 16) | (x + width));
    OUT_RELOC_FENCED(region->bo,
 		    I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
 		    0);
