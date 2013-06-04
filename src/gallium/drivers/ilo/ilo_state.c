@@ -1115,4 +1115,42 @@ ilo_init_states(struct ilo_context *ilo)
 void
 ilo_cleanup_states(struct ilo_context *ilo)
 {
+   unsigned i, sh;
+
+   for (i = 0; i < Elements(ilo->vb.states); i++) {
+      if (ilo->vb.enabled_mask & (1 << i))
+         pipe_resource_reference(&ilo->vb.states[i].buffer, NULL);
+   }
+
+   pipe_resource_reference(&ilo->ib.state.buffer, NULL);
+
+   for (i = 0; i < ilo->so.count; i++)
+      pipe_so_target_reference(&ilo->so.states[i], NULL);
+
+   for (sh = 0; sh < PIPE_SHADER_TYPES; sh++) {
+      for (i = 0; i < ilo->view[sh].count; i++) {
+         struct pipe_sampler_view *view = ilo->view[sh].states[i];
+         pipe_sampler_view_reference(&view, NULL);
+      }
+
+      for (i = 0; i < Elements(ilo->cbuf[sh].cso); i++) {
+         struct ilo_cbuf_cso *cbuf = &ilo->cbuf[sh].cso[i];
+         pipe_resource_reference(&cbuf->resource, NULL);
+      }
+   }
+
+   for (i = 0; i < ilo->resource.count; i++)
+      pipe_surface_reference(&ilo->resource.states[i], NULL);
+
+   for (i = 0; i < ilo->fb.state.nr_cbufs; i++)
+      pipe_surface_reference(&ilo->fb.state.cbufs[i], NULL);
+
+   if (ilo->fb.state.zsbuf)
+      pipe_surface_reference(&ilo->fb.state.zsbuf, NULL);
+
+   for (i = 0; i < ilo->cs_resource.count; i++)
+      pipe_surface_reference(&ilo->cs_resource.states[i], NULL);
+
+   for (i = 0; i < ilo->global_binding.count; i++)
+      pipe_resource_reference(&ilo->global_binding.resources[i], NULL);
 }
