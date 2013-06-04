@@ -719,8 +719,8 @@ intel_create_image_from_fds(__DRIscreen *screen,
       return NULL;
 
    image->region = intel_region_alloc_for_fd(intelScreen,
-                                             1, width, height,
-                                             strides[0], fds[0], "image");
+                                             f->planes[0].cpp, width, height, strides[0],
+                                             height * strides[0], fds[0], "image");
    if (image->region == NULL) {
       free(image);
       return NULL;

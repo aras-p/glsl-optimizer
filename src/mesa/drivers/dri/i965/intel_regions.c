@@ -209,6 +209,7 @@ struct intel_region *
 intel_region_alloc_for_fd(struct intel_screen *screen,
                           GLuint cpp,
                           GLuint width, GLuint height, GLuint pitch,
+                          GLuint size,
                           int fd, const char *name)
 {
    struct intel_region *region;
@@ -216,8 +217,7 @@ intel_region_alloc_for_fd(struct intel_screen *screen,
    int ret;
    uint32_t bit_6_swizzle, tiling;
 
-   buffer = drm_intel_bo_gem_create_from_prime(screen->bufmgr,
-                                               fd, height * pitch);
+   buffer = drm_intel_bo_gem_create_from_prime(screen->bufmgr, fd, size);
    if (buffer == NULL)
       return NULL;
    ret = drm_intel_bo_get_tiling(buffer, &tiling, &bit_6_swizzle);

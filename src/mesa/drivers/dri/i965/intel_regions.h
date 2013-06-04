@@ -92,6 +92,7 @@ struct intel_region *
 intel_region_alloc_for_fd(struct intel_screen *screen,
                           GLuint cpp,
                           GLuint width, GLuint height, GLuint pitch,
+                          GLuint size,
                           int fd, const char *name);
 
 bool
