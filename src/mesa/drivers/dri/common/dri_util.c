@@ -106,10 +106,10 @@ const struct __DriverAPIRec *globalDriverAPI = &driDriverAPI;
  * Display.
  */
 static __DRIscreen *
-dri2CreateNewScreen2(int scrn, int fd,
-                     const __DRIextension **extensions,
-                     const __DRIextension **driver_extensions,
-                     const __DRIconfig ***driver_configs, void *data)
+driCreateNewScreen2(int scrn, int fd,
+                    const __DRIextension **extensions,
+                    const __DRIextension **driver_extensions,
+                    const __DRIconfig ***driver_configs, void *data)
 {
     static const __DRIextension *emptyExtensionList[] = { NULL };
     __DRIscreen *psp;
@@ -190,7 +190,7 @@ dri2CreateNewScreen(int scrn, int fd,
 		    const __DRIextension **extensions,
 		    const __DRIconfig ***driver_configs, void *data)
 {
-   return dri2CreateNewScreen2(scrn, fd, extensions, NULL,
+   return driCreateNewScreen2(scrn, fd, extensions, NULL,
                                driver_configs, data);
 }
 
@@ -199,7 +199,7 @@ static __DRIscreen *
 driSWRastCreateNewScreen(int scrn, const __DRIextension **extensions,
                          const __DRIconfig ***driver_configs, void *data)
 {
-   return dri2CreateNewScreen2(scrn, -1, extensions, NULL,
+   return driCreateNewScreen2(scrn, -1, extensions, NULL,
                                driver_configs, data);
 }
 
@@ -208,7 +208,7 @@ driSWRastCreateNewScreen2(int scrn, const __DRIextension **extensions,
                           const __DRIextension **driver_extensions,
                           const __DRIconfig ***driver_configs, void *data)
 {
-   return dri2CreateNewScreen2(scrn, -1, extensions, driver_extensions,
+   return driCreateNewScreen2(scrn, -1, extensions, driver_extensions,
                                driver_configs, data);
 }
 
@@ -291,13 +291,13 @@ validate_context_version(__DRIscreen *screen,
 /*@{*/
 
 static __DRIcontext *
-dri2CreateContextAttribs(__DRIscreen *screen, int api,
-			 const __DRIconfig *config,
-			 __DRIcontext *shared,
-			 unsigned num_attribs,
-			 const uint32_t *attribs,
-			 unsigned *error,
-			 void *data)
+driCreateContextAttribs(__DRIscreen *screen, int api,
+                        const __DRIconfig *config,
+                        __DRIcontext *shared,
+                        unsigned num_attribs,
+                        const uint32_t *attribs,
+                        unsigned *error,
+                        void *data)
 {
     __DRIcontext *context;
     const struct gl_config *modes = (config != NULL) ? &config->modes : NULL;
@@ -447,22 +447,22 @@ dri2CreateContextAttribs(__DRIscreen *screen, int api,
 }
 
 static __DRIcontext *
-dri2CreateNewContextForAPI(__DRIscreen *screen, int api,
-			   const __DRIconfig *config,
-			   __DRIcontext *shared, void *data)
+driCreateNewContextForAPI(__DRIscreen *screen, int api,
+                          const __DRIconfig *config,
+                          __DRIcontext *shared, void *data)
 {
     unsigned error;
 
-    return dri2CreateContextAttribs(screen, api, config, shared, 0, NULL,
-				    &error, data);
+    return driCreateContextAttribs(screen, api, config, shared, 0, NULL,
+                                   &error, data);
 }
 
 static __DRIcontext *
-dri2CreateNewContext(__DRIscreen *screen, const __DRIconfig *config,
-		      __DRIcontext *shared, void *data)
+driCreateNewContext(__DRIscreen *screen, const __DRIconfig *config,
+                    __DRIcontext *shared, void *data)
 {
-    return dri2CreateNewContextForAPI(screen, __DRI_API_OPENGL,
-				      config, shared, data);
+    return driCreateNewContextForAPI(screen, __DRI_API_OPENGL,
+                                     config, shared, data);
 }
 
 /**
@@ -614,9 +614,9 @@ static void dri_put_drawable(__DRIdrawable *pdp)
 }
 
 static __DRIdrawable *
-dri2CreateNewDrawable(__DRIscreen *screen,
-		      const __DRIconfig *config,
-		      void *data)
+driCreateNewDrawable(__DRIscreen *screen,
+                     const __DRIconfig *config,
+                     void *data)
 {
     __DRIdrawable *pdraw;
 
@@ -703,7 +703,7 @@ dri2ConfigQueryf(__DRIscreen *screen, const char *var, GLfloat *val)
 }
 
 static unsigned int
-dri2GetAPIMask(__DRIscreen *screen)
+driGetAPIMask(__DRIscreen *screen)
 {
     return screen->api_mask;
 }
@@ -734,7 +734,7 @@ const __DRIcoreExtension driCoreExtension = {
     .createNewDrawable          = NULL,
     .destroyDrawable            = driDestroyDrawable,
     .swapBuffers                = driSwapBuffers, /* swrast */
-    .createNewContext           = dri2CreateNewContext, /* swrast */
+    .createNewContext           = driCreateNewContext, /* swrast */
     .copyContext                = driCopyContext,
     .destroyContext             = driDestroyContext,
     .bindContext                = driBindContext,
@@ -746,22 +746,22 @@ const __DRIdri2Extension driDRI2Extension = {
     .base = { __DRI_DRI2, 4 },
 
     .createNewScreen            = dri2CreateNewScreen,
-    .createNewDrawable          = dri2CreateNewDrawable,
-    .createNewContext           = dri2CreateNewContext,
-    .getAPIMask                 = dri2GetAPIMask,
-    .createNewContextForAPI     = dri2CreateNewContextForAPI,
+    .createNewDrawable          = driCreateNewDrawable,
+    .createNewContext           = driCreateNewContext,
+    .getAPIMask                 = driGetAPIMask,
+    .createNewContextForAPI     = driCreateNewContextForAPI,
     .allocateBuffer             = dri2AllocateBuffer,
     .releaseBuffer              = dri2ReleaseBuffer,
-    .createContextAttribs       = dri2CreateContextAttribs,
-    .createNewScreen2           = dri2CreateNewScreen2,
+    .createContextAttribs       = driCreateContextAttribs,
+    .createNewScreen2           = driCreateNewScreen2,
 };
 
 const __DRIswrastExtension driSWRastExtension = {
     { __DRI_SWRAST, 4 },
     driSWRastCreateNewScreen,
-    dri2CreateNewDrawable,
-    dri2CreateNewContextForAPI,
-    dri2CreateContextAttribs,
+    driCreateNewDrawable,
+    driCreateNewContextForAPI,
+    driCreateContextAttribs,
     driSWRastCreateNewScreen2,
 };
 

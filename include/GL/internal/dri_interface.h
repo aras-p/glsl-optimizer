@@ -763,6 +763,40 @@ struct __DRIswrastExtensionRec {
 
 };
 
+/** Common DRI function definitions, shared among DRI2 and Image extensions
+ */
+
+typedef __DRIscreen *
+(*__DRIcreateNewScreen2Func)(int screen, int fd,
+                             const __DRIextension **extensions,
+                             const __DRIextension **driver_extensions,
+                             const __DRIconfig ***driver_configs,
+                             void *loaderPrivate);
+
+typedef __DRIdrawable *
+(*__DRIcreateNewDrawableFunc)(__DRIscreen *screen,
+                              const __DRIconfig *config,
+                              void *loaderPrivate);
+
+typedef __DRIcontext *
+(*__DRIcreateNewContextFunc)(__DRIscreen *screen,
+                             const __DRIconfig *config,
+                             __DRIcontext *shared,
+                             void *loaderPrivate);
+
+typedef __DRIcontext *
+(*__DRIcreateContextAttribsFunc)(__DRIscreen *screen,
+                                 int api,
+                                 const __DRIconfig *config,
+                                 __DRIcontext *shared,
+                                 unsigned num_attribs,
+                                 const uint32_t *attribs,
+                                 unsigned *error,
+                                 void *loaderPrivate);
+
+typedef unsigned int
+(*__DRIgetAPIMaskFunc)(__DRIscreen *screen);
+
 /**
  * DRI2 Loader extension.
  */
@@ -910,17 +944,11 @@ struct __DRIdri2ExtensionRec {
 				    const __DRIconfig ***driver_configs,
 				    void *loaderPrivate);
 
-    __DRIdrawable *(*createNewDrawable)(__DRIscreen *screen,
-					const __DRIconfig *config,
-					void *loaderPrivate);
-
-    __DRIcontext *(*createNewContext)(__DRIscreen *screen,
-				      const __DRIconfig *config,
-				      __DRIcontext *shared,
-				      void *loaderPrivate);
+   __DRIcreateNewDrawableFunc   createNewDrawable;
+   __DRIcreateNewContextFunc    createNewContext;
 
    /* Since version 2 */
-   unsigned int (*getAPIMask)(__DRIscreen *screen);
+   __DRIgetAPIMaskFunc          getAPIMask;
 
    __DRIcontext *(*createNewContextForAPI)(__DRIscreen *screen,
 					   int api,
@@ -943,25 +971,14 @@ struct __DRIdri2ExtensionRec {
     *
     * \sa __DRIswrastExtensionRec::createContextAttribs
     */
-   __DRIcontext *(*createContextAttribs)(__DRIscreen *screen,
-					 int api,
-					 const __DRIconfig *config,
-					 __DRIcontext *shared,
-					 unsigned num_attribs,
-					 const uint32_t *attribs,
-					 unsigned *error,
-					 void *loaderPrivate);
+   __DRIcreateContextAttribsFunc        createContextAttribs;
 
    /**
     * createNewScreen with the driver's extension list passed in.
     *
     * \since version 4
     */
-    __DRIscreen *(*createNewScreen2)(int screen, int fd,
-                                     const __DRIextension **loader_extensions,
-                                     const __DRIextension **driver_extensions,
-                                     const __DRIconfig ***driver_configs,
-                                     void *loaderPrivate);
+   __DRIcreateNewScreen2Func            createNewScreen2;
 };
 
 
