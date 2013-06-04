@@ -307,6 +307,9 @@ void u_vbuf_destroy(struct u_vbuf *mgr)
    unsigned num_vb = screen->get_shader_param(screen, PIPE_SHADER_VERTEX,
                                               PIPE_SHADER_CAP_MAX_INPUTS);
 
+   mgr->pipe->set_index_buffer(mgr->pipe, NULL);
+   pipe_resource_reference(&mgr->index_buffer.buffer, NULL);
+
    mgr->pipe->set_vertex_buffers(mgr->pipe, 0, num_vb, NULL);
 
    for (i = 0; i < PIPE_MAX_ATTRIBS; i++) {
