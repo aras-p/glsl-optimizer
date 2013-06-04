@@ -256,8 +256,13 @@ ilo_cp_flush(struct ilo_cp *cp)
 void
 ilo_cp_destroy(struct ilo_cp *cp)
 {
-   if (cp->bo)
+   if (cp->bo) {
+      if (!cp->sys)
+         cp->bo->unmap(cp->bo);
+
       cp->bo->unreference(cp->bo);
+   }
+
    if (cp->render_ctx)
       cp->winsys->destroy_context(cp->winsys, cp->render_ctx);
 
