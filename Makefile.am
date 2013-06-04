@@ -36,7 +36,7 @@ check-local:
 
 # Rules for making release tarballs
 
-PACKAGE_VERSION=9.2-devel
+PACKAGE_VERSION=9.2.0-devel
 PACKAGE_DIR = Mesa-$(PACKAGE_VERSION)
 PACKAGE_NAME = MesaLib-$(PACKAGE_VERSION)
 
