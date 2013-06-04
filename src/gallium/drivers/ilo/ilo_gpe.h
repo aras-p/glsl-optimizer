@@ -111,8 +111,17 @@ struct ilo_scissor_state {
    uint32_t payload[ILO_MAX_VIEWPORTS * 2];
 };
 
+struct ilo_rasterizer_clip {
+   /* 3DSTATE_CLIP */
+   uint32_t payload[3];
+
+   uint32_t can_enable_guardband;
+};
+
 struct ilo_rasterizer_state {
    struct pipe_rasterizer_state state;
+
+   struct ilo_rasterizer_clip clip;
 };
 
 struct ilo_dsa_state {
@@ -252,6 +261,19 @@ ilo_gpe_set_scissor(const struct ilo_dev_info *dev,
 void
 ilo_gpe_set_scissor_null(const struct ilo_dev_info *dev,
                          struct ilo_scissor_state *scissor);
+
+void
+ilo_gpe_init_rasterizer_clip(const struct ilo_dev_info *dev,
+                             const struct pipe_rasterizer_state *state,
+                             struct ilo_rasterizer_clip *clip);
+
+static inline void
+ilo_gpe_init_rasterizer(const struct ilo_dev_info *dev,
+                        const struct pipe_rasterizer_state *state,
+                        struct ilo_rasterizer_state *rasterizer)
+{
+   ilo_gpe_init_rasterizer_clip(dev, state, &rasterizer->clip);
+}
 
 void
 ilo_gpe_init_dsa(const struct ilo_dev_info *dev,

@@ -303,12 +303,14 @@ static void *
 ilo_create_rasterizer_state(struct pipe_context *pipe,
                             const struct pipe_rasterizer_state *state)
 {
+   struct ilo_context *ilo = ilo_context(pipe);
    struct ilo_rasterizer_state *rast;
 
    rast = MALLOC_STRUCT(ilo_rasterizer_state);
    assert(rast);
 
    rast->state = *state;
+   ilo_gpe_init_rasterizer(ilo->dev, state, rast);
 
    return rast;
 }

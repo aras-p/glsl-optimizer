@@ -247,7 +247,7 @@ typedef void
 
 typedef void
 (*ilo_gpe_gen6_3DSTATE_CLIP)(const struct ilo_dev_info *dev,
-                             const struct pipe_rasterizer_state *rasterizer,
+                             const struct ilo_rasterizer_state *rasterizer,
                              bool has_linear_interp,
                              bool enable_guardband,
                              int num_viewports,

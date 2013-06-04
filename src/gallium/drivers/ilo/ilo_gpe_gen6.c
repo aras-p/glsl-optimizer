@@ -1350,30 +1350,14 @@ gen6_emit_3DSTATE_GS(const struct ilo_dev_info *dev,
    ilo_cp_end(cp);
 }
 
-static void
-gen6_emit_3DSTATE_CLIP(const struct ilo_dev_info *dev,
-                       const struct pipe_rasterizer_state *rasterizer,
-                       bool has_linear_interp,
-                       bool enable_guardband,
-                       int num_viewports,
-                       struct ilo_cp *cp)
+void
+ilo_gpe_init_rasterizer_clip(const struct ilo_dev_info *dev,
+                             const struct pipe_rasterizer_state *state,
+                             struct ilo_rasterizer_clip *clip)
 {
-   const uint32_t cmd = ILO_GPE_CMD(0x3, 0x0, 0x12);
-   const uint8_t cmd_len = 4;
    uint32_t dw1, dw2, dw3;
 
    ILO_GPE_VALID_GEN(dev, 6, 7);
-
-   if (!rasterizer) {
-      ilo_cp_begin(cp, cmd_len);
-      ilo_cp_write(cp, cmd | (cmd_len - 2));
-      ilo_cp_write(cp, 0);
-      ilo_cp_write(cp, 0);
-      ilo_cp_write(cp, 0);
-      ilo_cp_end(cp);
-
-      return;
-   }
 
    dw1 = GEN6_CLIP_STATISTICS_ENABLE;
 
@@ -1390,10 +1374,10 @@ gen6_emit_3DSTATE_CLIP(const struct ilo_dev_info *dev,
       dw1 |= 0 << 19 |
              GEN7_CLIP_EARLY_CULL;
 
-      if (rasterizer->front_ccw)
+      if (state->front_ccw)
          dw1 |= GEN7_CLIP_WINDING_CCW;
 
-      switch (rasterizer->cull_face) {
+      switch (state->cull_face) {
       case PIPE_FACE_NONE:
          dw1 |= GEN7_CLIP_CULLMODE_NONE;
          break;
@@ -1411,38 +1395,18 @@ gen6_emit_3DSTATE_CLIP(const struct ilo_dev_info *dev,
 
    dw2 = GEN6_CLIP_ENABLE |
          GEN6_CLIP_XY_TEST |
-         rasterizer->clip_plane_enable << GEN6_USER_CLIP_CLIP_DISTANCES_SHIFT |
+         state->clip_plane_enable << GEN6_USER_CLIP_CLIP_DISTANCES_SHIFT |
          GEN6_CLIP_MODE_NORMAL;
 
-   if (rasterizer->clip_halfz)
+   if (state->clip_halfz)
       dw2 |= GEN6_CLIP_API_D3D;
    else
       dw2 |= GEN6_CLIP_API_OGL;
 
-   if (rasterizer->depth_clip)
+   if (state->depth_clip)
       dw2 |= GEN6_CLIP_Z_TEST;
 
-   /*
-    * There are several reasons that guard band test should be disabled
-    *
-    *  - when the renderer does not perform 2D clipping
-    *  - GL wide points (to avoid partially visibie object)
-    *  - GL wide or AA lines (to avoid partially visibie object)
-    */
-   if (enable_guardband && true /* API_GL */) {
-      if (rasterizer->point_size_per_vertex || rasterizer->point_size > 1.0f)
-         enable_guardband = false;
-      if (rasterizer->line_smooth || rasterizer->line_width > 1.0f)
-         enable_guardband = false;
-   }
-
-   if (enable_guardband)
-      dw2 |= GEN6_CLIP_GB_TEST;
-
-   if (has_linear_interp)
-      dw2 |= GEN6_CLIP_NON_PERSPECTIVE_BARYCENTRIC_ENABLE;
-
-   if (rasterizer->flatshade_first) {
+   if (state->flatshade_first) {
       dw2 |= 0 << GEN6_CLIP_TRI_PROVOKE_SHIFT |
              0 << GEN6_CLIP_LINE_PROVOKE_SHIFT |
              1 << GEN6_CLIP_TRIFAN_PROVOKE_SHIFT;
@@ -1454,9 +1418,57 @@ gen6_emit_3DSTATE_CLIP(const struct ilo_dev_info *dev,
    }
 
    dw3 = 0x1 << GEN6_CLIP_MIN_POINT_WIDTH_SHIFT |
-         0x7ff << GEN6_CLIP_MAX_POINT_WIDTH_SHIFT |
-         GEN6_CLIP_FORCE_ZERO_RTAINDEX |
-         (num_viewports - 1);
+         0x7ff << GEN6_CLIP_MAX_POINT_WIDTH_SHIFT;
+
+   clip->payload[0] = dw1;
+   clip->payload[1] = dw2;
+   clip->payload[2] = dw3;
+
+   clip->can_enable_guardband = true;
+
+   /*
+    * There are several reasons that guard band test should be disabled
+    *
+    *  - GL wide points (to avoid partially visibie object)
+    *  - GL wide or AA lines (to avoid partially visibie object)
+    */
+   if (state->point_size_per_vertex || state->point_size > 1.0f)
+      clip->can_enable_guardband = false;
+   if (state->line_smooth || state->line_width > 1.0f)
+      clip->can_enable_guardband = false;
+}
+
+static void
+gen6_emit_3DSTATE_CLIP(const struct ilo_dev_info *dev,
+                       const struct ilo_rasterizer_state *rasterizer,
+                       bool has_linear_interp,
+                       bool enable_guardband,
+                       int num_viewports,
+                       struct ilo_cp *cp)
+{
+   const uint32_t cmd = ILO_GPE_CMD(0x3, 0x0, 0x12);
+   const uint8_t cmd_len = 4;
+   uint32_t dw1, dw2, dw3;
+
+   if (rasterizer) {
+      dw1 = rasterizer->clip.payload[0];
+      dw2 = rasterizer->clip.payload[1];
+      dw3 = rasterizer->clip.payload[2];
+
+      if (enable_guardband && rasterizer->clip.can_enable_guardband)
+         dw2 |= GEN6_CLIP_GB_TEST;
+
+      if (has_linear_interp)
+         dw2 |= GEN6_CLIP_NON_PERSPECTIVE_BARYCENTRIC_ENABLE;
+
+      dw3 |= GEN6_CLIP_FORCE_ZERO_RTAINDEX |
+             (num_viewports - 1);
+   }
+   else {
+      dw1 = 0;
+      dw2 = 0;
+      dw3 = 0;
+   }
 
    ilo_cp_begin(cp, cmd_len);
    ilo_cp_write(cp, cmd | (cmd_len - 2));

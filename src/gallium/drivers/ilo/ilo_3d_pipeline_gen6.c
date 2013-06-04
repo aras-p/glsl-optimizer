@@ -615,7 +615,7 @@ gen6_pipeline_clip(struct ilo_3d_pipeline *p,
       }
 
       p->gen6_3DSTATE_CLIP(p->dev,
-            &ilo->rasterizer->state,
+            ilo->rasterizer,
             (ilo->fs && ilo->fs->shader->in.has_linear_interp),
             enable_guardband, 1, p->cp);
    }
