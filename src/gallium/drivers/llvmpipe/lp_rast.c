@@ -95,10 +95,10 @@ lp_rast_tile_begin(struct lp_rasterizer_task *task,
    task->bin = bin;
    task->x = x * TILE_SIZE;
    task->y = y * TILE_SIZE;
-   task->width = TILE_SIZE + x * TILE_SIZE > task->scene->width_aligned ?
-                    task->scene->width_aligned - x * TILE_SIZE : TILE_SIZE;
-   task->height = TILE_SIZE + y * TILE_SIZE > task->scene->height_aligned ?
-                    task->scene->height_aligned - y * TILE_SIZE : TILE_SIZE;
+   task->width = TILE_SIZE + x * TILE_SIZE > task->scene->fb.width ?
+                    task->scene->fb.width - x * TILE_SIZE : TILE_SIZE;
+   task->height = TILE_SIZE + y * TILE_SIZE > task->scene->fb.height ?
+                    task->scene->fb.height - y * TILE_SIZE : TILE_SIZE;
 
    /* reset pointers to color and depth tile(s) */
    memset(task->color_tiles, 0, sizeof(task->color_tiles));

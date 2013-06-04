@@ -525,6 +525,7 @@ lp_build_occlusion_count(struct gallivm_state *gallivm,
  *
  * \param type  the data type of the fragment depth/stencil values
  * \param format_desc  description of the depth/stencil surface
+ * \param is_1d  whether this resource has only one dimension
  * \param loop_counter  the current loop iteration
  * \param depth_ptr  pointer to the depth/stencil values of this 4x4 block
  * \param depth_stride  stride of the depth/stencil buffer
@@ -535,6 +536,7 @@ void
 lp_build_depth_stencil_load_swizzled(struct gallivm_state *gallivm,
                                      struct lp_type z_src_type,
                                      const struct util_format_description *format_desc,
+                                     boolean is_1d,
                                      LLVMValueRef depth_ptr,
                                      LLVMValueRef depth_stride,
                                      LLVMValueRef *z_fb,
@@ -592,9 +594,14 @@ lp_build_depth_stencil_load_swizzled(struct gallivm_state *gallivm,
    zs_dst_ptr = LLVMBuildGEP(builder, depth_ptr, &depth_offset1, 1, "");
    zs_dst_ptr = LLVMBuildBitCast(builder, zs_dst_ptr, load_ptr_type, "");
    zs_dst1 = LLVMBuildLoad(builder, zs_dst_ptr, "");
-   zs_dst_ptr = LLVMBuildGEP(builder, depth_ptr, &depth_offset2, 1, "");
-   zs_dst_ptr = LLVMBuildBitCast(builder, zs_dst_ptr, load_ptr_type, "");
-   zs_dst2 = LLVMBuildLoad(builder, zs_dst_ptr, "");
+   if (is_1d) {
+      zs_dst2 = lp_build_undef(gallivm, zs_load_type);
+   }
+   else {
+      zs_dst_ptr = LLVMBuildGEP(builder, depth_ptr, &depth_offset2, 1, "");
+      zs_dst_ptr = LLVMBuildBitCast(builder, zs_dst_ptr, load_ptr_type, "");
+      zs_dst2 = LLVMBuildLoad(builder, zs_dst_ptr, "");
+   }
 
    *z_fb = LLVMBuildShuffleVector(builder, zs_dst1, zs_dst2,
                                   LLVMConstVector(shuffles, zs_type.length), "");
@@ -648,6 +655,7 @@ lp_build_depth_stencil_load_swizzled(struct gallivm_state *gallivm,
  *
  * \param type  the data type of the fragment depth/stencil values
  * \param format_desc  description of the depth/stencil surface
+ * \param is_1d  whether this resource has only one dimension
  * \param mask  the alive/dead pixel mask for the quad (vector)
  * \param z_fb  z values read from fb (with padding)
  * \param s_fb  s values read from fb (with padding)
@@ -661,6 +669,7 @@ void
 lp_build_depth_stencil_write_swizzled(struct gallivm_state *gallivm,
                                       struct lp_type z_src_type,
                                       const struct util_format_description *format_desc,
+                                      boolean is_1d,
                                       struct lp_build_mask_context *mask,
                                       LLVMValueRef z_fb,
                                       LLVMValueRef s_fb,
@@ -791,7 +800,9 @@ lp_build_depth_stencil_write_swizzled(struct gallivm_state *gallivm,
    }
 
    LLVMBuildStore(builder, zs_dst1, zs_dst_ptr1);
-   LLVMBuildStore(builder, zs_dst2, zs_dst_ptr2);
+   if (!is_1d) {
+      LLVMBuildStore(builder, zs_dst2, zs_dst_ptr2);
+   }
 }
 
 /**

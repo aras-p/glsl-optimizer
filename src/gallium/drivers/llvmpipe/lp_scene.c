@@ -505,8 +505,6 @@ void lp_scene_begin_binning( struct lp_scene *scene,
 
    scene->tiles_x = align(fb->width, TILE_SIZE) / TILE_SIZE;
    scene->tiles_y = align(fb->height, TILE_SIZE) / TILE_SIZE;
-   scene->width_aligned = align(fb->width, LP_RASTER_BLOCK_SIZE);
-   scene->height_aligned = align(fb->height, LP_RASTER_BLOCK_SIZE);
 
    assert(scene->tiles_x <= TILES_X);
    assert(scene->tiles_y <= TILES_Y);

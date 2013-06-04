@@ -353,7 +353,7 @@ generate_fs_loop(struct gallivm_state *gallivm,
 
    if (depth_mode & EARLY_DEPTH_TEST) {
       lp_build_depth_stencil_load_swizzled(gallivm, type,
-                                           zs_format_desc,
+                                           zs_format_desc, key->resource_1d,
                                            depth_ptr, depth_stride,
                                            &z_fb, &s_fb, loop_state.counter);
       lp_build_depth_stencil_test(gallivm,
@@ -369,7 +369,8 @@ generate_fs_loop(struct gallivm_state *gallivm,
                                   !simple_shader);
 
       if (depth_mode & EARLY_DEPTH_WRITE) {
-         lp_build_depth_stencil_write_swizzled(gallivm, type, zs_format_desc,
+         lp_build_depth_stencil_write_swizzled(gallivm, type,
+                                               zs_format_desc, key->resource_1d,
                                                NULL, NULL, NULL, loop_state.counter,
                                                depth_ptr, depth_stride,
                                                z_value, s_value);
@@ -424,7 +425,7 @@ generate_fs_loop(struct gallivm_state *gallivm,
       }
 
       lp_build_depth_stencil_load_swizzled(gallivm, type,
-                                           zs_format_desc,
+                                           zs_format_desc, key->resource_1d,
                                            depth_ptr, depth_stride,
                                            &z_fb, &s_fb, loop_state.counter);
 
@@ -441,7 +442,8 @@ generate_fs_loop(struct gallivm_state *gallivm,
                                   !simple_shader);
       /* Late Z write */
       if (depth_mode & LATE_DEPTH_WRITE) {
-         lp_build_depth_stencil_write_swizzled(gallivm, type, zs_format_desc,
+         lp_build_depth_stencil_write_swizzled(gallivm, type,
+                                               zs_format_desc, key->resource_1d,
                                                NULL, NULL, NULL, loop_state.counter,
                                                depth_ptr, depth_stride,
                                                z_value, s_value);
@@ -454,7 +456,8 @@ generate_fs_loop(struct gallivm_state *gallivm,
        * depth value, update from zs_value with the new mask value and
        * write that out.
        */
-      lp_build_depth_stencil_write_swizzled(gallivm, type, zs_format_desc,
+      lp_build_depth_stencil_write_swizzled(gallivm, type,
+                                            zs_format_desc, key->resource_1d,
                                             &mask, z_fb, s_fb, loop_state.counter,
                                             depth_ptr, depth_stride,
                                             z_value, s_value);
@@ -508,6 +511,7 @@ generate_fs_loop(struct gallivm_state *gallivm,
  *
  * @param type            fragment shader type (4x or 8x float)
  * @param num_fs          number of fs_src
+ * @param is_1d           whether we're outputting to a 1d resource
  * @param dst_channels    number of output channels
  * @param fs_src          output from fragment shader
  * @param dst             pointer to store result
@@ -1345,6 +1349,7 @@ generate_unswizzled_blend(struct gallivm_state *gallivm,
    LLVMValueRef blend_alpha;
    LLVMValueRef i32_zero;
    LLVMValueRef check_mask;
+   LLVMValueRef undef_src_val;
 
    struct lp_build_mask_context mask_ctx;
    struct lp_type mask_type;
@@ -1369,8 +1374,15 @@ generate_unswizzled_blend(struct gallivm_state *gallivm,
    const boolean dual_source_blend = variant->key.blend.rt[0].blend_enable &&
                                      util_blend_state_is_dual(&variant->key.blend, 0);
 
+   const boolean is_1d = variant->key.resource_1d;
+   unsigned num_fullblock_fs = is_1d ? 2 * num_fs : num_fs;
+
    mask_type = lp_int32_vec4_type();
    mask_type.length = fs_type.length;
+
+   for (i = num_fs; i < num_fullblock_fs; i++) {
+      fs_mask[i] = lp_build_zero(gallivm, mask_type);
+   }
 
    /* Compute the alignment of the destination pointer in bytes */
 #if 0
@@ -1388,7 +1400,7 @@ generate_unswizzled_blend(struct gallivm_state *gallivm,
    if (do_branch) {
       check_mask = LLVMConstNull(lp_build_int_vec_type(gallivm, mask_type));
 
-      for (i = 0; i < num_fs; ++i) {
+      for (i = 0; i < num_fullblock_fs; ++i) {
          check_mask = LLVMBuildOr(builder, check_mask, fs_mask[i], "");
       }
 
@@ -1398,6 +1410,17 @@ generate_unswizzled_blend(struct gallivm_state *gallivm,
 
    partial_mask |= !variant->opaque;
    i32_zero = lp_build_const_int32(gallivm, 0);
+
+#if HAVE_LLVM < 0x0302
+   /*
+    * undef triggers a crash in LLVMBuildTrunc in convert_from_blend_type in some
+    * cases (seen with r10g10b10a2, 128bit wide vectors) (only used for 1d case).
+    */
+   undef_src_val = lp_build_zero(gallivm, fs_type);
+#else
+   undef_src_val = lp_build_undef(gallivm, fs_type);
+#endif
+
 
    /* Get type from output format */
    lp_blend_type_from_format_desc(out_format_desc, &row_type);
@@ -1459,14 +1482,25 @@ generate_unswizzled_blend(struct gallivm_state *gallivm,
    /*
     * Load shader output
     */
-   for (i = 0; i < num_fs; ++i) {
+   for (i = 0; i < num_fullblock_fs; ++i) {
       /* Always load alpha for use in blending */
-      LLVMValueRef alpha = LLVMBuildLoad(builder, fs_out_color[rt][alpha_channel][i], "");
+      LLVMValueRef alpha;
+      if (i < num_fs) {
+         alpha = LLVMBuildLoad(builder, fs_out_color[rt][alpha_channel][i], "");
+      }
+      else {
+         alpha = undef_src_val;
+      }
 
       /* Load each channel */
       for (j = 0; j < dst_channels; ++j) {
          assert(swizzle[j] < 4);
-         fs_src[i][j] = LLVMBuildLoad(builder, fs_out_color[rt][swizzle[j]][i], "");
+         if (i < num_fs) {
+            fs_src[i][j] = LLVMBuildLoad(builder, fs_out_color[rt][swizzle[j]][i], "");
+         }
+         else {
+            fs_src[i][j] = undef_src_val;
+         }
       }
 
       /* If 3 channels then pad to include alpha for 4 element transpose */
@@ -1492,12 +1526,23 @@ generate_unswizzled_blend(struct gallivm_state *gallivm,
    }
    if (dual_source_blend) {
       /* same as above except different src/dst, skip masks and comments... */
-      for (i = 0; i < num_fs; ++i) {
-         LLVMValueRef alpha = LLVMBuildLoad(builder, fs_out_color[1][alpha_channel][i], "");
+      for (i = 0; i < num_fullblock_fs; ++i) {
+         LLVMValueRef alpha;
+         if (i < num_fs) {
+            alpha = LLVMBuildLoad(builder, fs_out_color[1][alpha_channel][i], "");
+         }
+         else {
+            alpha = undef_src_val;
+         }
 
          for (j = 0; j < dst_channels; ++j) {
             assert(swizzle[j] < 4);
-            fs_src1[i][j] = LLVMBuildLoad(builder, fs_out_color[1][swizzle[j]][i], "");
+            if (i < num_fs) {
+               fs_src1[i][j] = LLVMBuildLoad(builder, fs_out_color[1][swizzle[j]][i], "");
+            }
+            else {
+               fs_src1[i][j] = undef_src_val;
+            }
          }
          if (dst_channels == 3 && !has_alpha) {
             fs_src1[i][3] = alpha;
@@ -1518,7 +1563,7 @@ generate_unswizzled_blend(struct gallivm_state *gallivm,
        */
       fs_type.floating = 0;
       fs_type.sign = dst_type.sign;
-      for (i = 0; i < num_fs; ++i) {
+      for (i = 0; i < num_fullblock_fs; ++i) {
          for (j = 0; j < dst_channels; ++j) {
             fs_src[i][j] = LLVMBuildBitCast(builder, fs_src[i][j],
                                             lp_build_vec_type(gallivm, fs_type), "");
@@ -1533,16 +1578,16 @@ generate_unswizzled_blend(struct gallivm_state *gallivm,
    /*
     * Pixel twiddle from fragment shader order to memory order
     */
-   src_count = generate_fs_twiddle(gallivm, fs_type, num_fs,
+   src_count = generate_fs_twiddle(gallivm, fs_type, num_fullblock_fs,
                                    dst_channels, fs_src, src, pad_inline);
    if (dual_source_blend) {
-      generate_fs_twiddle(gallivm, fs_type, num_fs, dst_channels,
+      generate_fs_twiddle(gallivm, fs_type, num_fullblock_fs, dst_channels,
                           fs_src1, src1, pad_inline);
    }
 
    src_channels = dst_channels < 3 ? dst_channels : 4;
-   if (src_count != num_fs * src_channels) {
-      unsigned ds = src_count / (num_fs * src_channels);
+   if (src_count != num_fullblock_fs * src_channels) {
+      unsigned ds = src_count / (num_fullblock_fs * src_channels);
       row_type.length /= ds;
       fs_type.length = row_type.length;
    }
@@ -1685,8 +1730,18 @@ generate_unswizzled_blend(struct gallivm_state *gallivm,
       dst_type.length = block_width;
    }
 
-   load_unswizzled_block(gallivm, color_ptr, stride, block_width, block_height,
-                         dst, dst_type, dst_count, dst_alignment);
+   if (is_1d) {
+      load_unswizzled_block(gallivm, color_ptr, stride, block_width, 1,
+                            dst, dst_type, dst_count / 4, dst_alignment);
+      for (i = dst_count / 4; i < dst_count; i++) {
+         dst[i] = lp_build_undef(gallivm, dst_type);
+      }
+
+   }
+   else {
+      load_unswizzled_block(gallivm, color_ptr, stride, block_width, block_height,
+                            dst, dst_type, dst_count, dst_alignment);
+   }
 
 
    /*
@@ -1761,8 +1816,14 @@ generate_unswizzled_blend(struct gallivm_state *gallivm,
    /*
     * Store blend result to memory
     */
-   store_unswizzled_block(gallivm, color_ptr, stride, block_width, block_height,
-                          dst, dst_type, dst_count, dst_alignment);
+   if (is_1d) {
+      store_unswizzled_block(gallivm, color_ptr, stride, block_width, 1,
+                             dst, dst_type, dst_count / 4, dst_alignment);
+   }
+   else {
+      store_unswizzled_block(gallivm, color_ptr, stride, block_width, block_height,
+                             dst, dst_type, dst_count, dst_alignment);
+   }
 
    if (do_branch) {
       lp_build_mask_end(&mask_ctx);
@@ -1855,7 +1916,6 @@ generate_fragment(struct llvmpipe_context *lp,
    fs_type.norm = FALSE;         /* values are not limited to [0,1] or [-1,1] */
    fs_type.width = 32;           /* 32-bit float */
    fs_type.length = MIN2(lp_native_vector_width / 32, 16); /* n*4 elements per vector */
-   num_fs = 16 / fs_type.length; /* number of loops per 4x4 stamp */
 
    memset(&blend_type, 0, sizeof blend_type);
    blend_type.floating = FALSE; /* values are integers */
@@ -1943,6 +2003,11 @@ generate_fragment(struct llvmpipe_context *lp,
 
    /* code generated texture sampling */
    sampler = lp_llvm_sampler_soa_create(key->state, context_ptr);
+
+   num_fs = 16 / fs_type.length; /* number of loops per 4x4 stamp */
+   /* for 1d resources only run "upper half" of stamp */
+   if (key->resource_1d)
+      num_fs /= 2;
 
    {
       LLVMValueRef num_loop = lp_build_const_int32(gallivm, num_fs);
@@ -2533,6 +2598,9 @@ make_variant_key(struct llvmpipe_context *lp,
          key->zsbuf_format = zsbuf_format;
          memcpy(&key->stencil, &lp->depth_stencil->stencil, sizeof key->stencil);
       }
+      if (llvmpipe_resource_is_1d(lp->framebuffer.zsbuf->texture)) {
+         key->resource_1d = TRUE;
+      }
    }
 
    /* alpha test only applies if render buffer 0 is non-integer (or does not exist) */
@@ -2569,6 +2637,15 @@ make_variant_key(struct llvmpipe_context *lp,
       const struct util_format_description *format_desc;
 
       key->cbuf_format[i] = format;
+
+      /*
+       * Figure out if this is a 1d resource. Note that OpenGL allows crazy
+       * mixing of 2d textures with height 1 and 1d textures, so make sure
+       * we pick 1d if any cbuf or zsbuf is 1d.
+       */
+      if (llvmpipe_resource_is_1d(lp->framebuffer.cbufs[0]->texture)) {
+         key->resource_1d = TRUE;
+      }
 
       format_desc = util_format_description(format);
       assert(format_desc->colorspace == UTIL_FORMAT_COLORSPACE_RGB ||

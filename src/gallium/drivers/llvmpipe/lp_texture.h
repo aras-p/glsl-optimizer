@@ -159,6 +159,27 @@ llvmpipe_resource_is_texture(const struct pipe_resource *resource)
 }
 
 
+static INLINE boolean
+llvmpipe_resource_is_1d(const struct pipe_resource *resource)
+{
+   switch (resource->target) {
+   case PIPE_BUFFER:
+   case PIPE_TEXTURE_1D:
+   case PIPE_TEXTURE_1D_ARRAY:
+      return TRUE;
+   case PIPE_TEXTURE_2D:
+   case PIPE_TEXTURE_2D_ARRAY:
+   case PIPE_TEXTURE_RECT:
+   case PIPE_TEXTURE_3D:
+   case PIPE_TEXTURE_CUBE:
+      return FALSE;
+   default:
+      assert(0);
+      return FALSE;
+   }
+}
+
+
 static INLINE unsigned
 llvmpipe_resource_stride(struct pipe_resource *resource,
                          unsigned level)

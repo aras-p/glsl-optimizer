@@ -83,22 +83,30 @@ llvmpipe_texture_layout(struct llvmpipe_screen *screen,
 
       /* Row stride and image stride */
       {
-         unsigned alignment, nblocksx, nblocksy, block_size;
+         unsigned align_x, align_y, nblocksx, nblocksy, block_size;
 
          /* For non-compressed formats we need 4x4 pixel alignment
-          * (for now). We also want cache line size in x direction,
+          * so we can read/write LP_RASTER_BLOCK_SIZE when rendering to them.
+          * We also want cache line size in x direction,
           * otherwise same cache line could end up in multiple threads.
-          * XXX this blows up 1d/1d array textures by a factor of 4.
+          * For explicit 1d resources however we reduce this to 4x1 and
+          * handle specially in render output code (as we need to do special
+          * handling there for buffers in any case).
           */
          if (util_format_is_compressed(pt->format))
-            alignment = 1;
-         else
-            alignment = LP_RASTER_BLOCK_SIZE;
+            align_x = align_y = 1;
+         else {
+            align_x = LP_RASTER_BLOCK_SIZE;
+            if (llvmpipe_resource_is_1d(&lpr->base))
+               align_y = 1;
+            else
+               align_y = LP_RASTER_BLOCK_SIZE;
+         }
 
          nblocksx = util_format_get_nblocksx(pt->format,
-                                             align(width, alignment));
+                                             align(width, align_x));
          nblocksy = util_format_get_nblocksy(pt->format,
-                                             align(height, alignment));
+                                             align(height, align_y));
          block_size = util_format_get_blocksize(pt->format);
 
          if (util_format_is_compressed(pt->format))
