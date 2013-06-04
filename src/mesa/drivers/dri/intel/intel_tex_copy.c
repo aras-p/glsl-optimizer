@@ -102,14 +102,12 @@ intelCopyTexSubImage(struct gl_context *ctx, GLuint dims,
 {
    struct intel_context *intel = intel_context(ctx);
 
-   if (slice == 0) {
 #ifndef I915
-      /* Try BLORP first.  It can handle almost everything. */
-      if (brw_blorp_copytexsubimage(intel, rb, texImage, x, y,
-                                    xoffset, yoffset, width, height))
-         return;
+   /* Try BLORP first.  It can handle almost everything. */
+   if (brw_blorp_copytexsubimage(intel, rb, texImage, slice, x, y,
+                                 xoffset, yoffset, width, height))
+      return;
 #endif
-   }
 
    /* Next, try the BLT engine. */
    if (intel_copy_texsubimage(intel,

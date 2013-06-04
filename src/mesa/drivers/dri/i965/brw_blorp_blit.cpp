@@ -330,6 +330,7 @@ bool
 brw_blorp_copytexsubimage(struct intel_context *intel,
                           struct gl_renderbuffer *src_rb,
                           struct gl_texture_image *dst_image,
+                          int slice,
                           int srcX0, int srcY0,
                           int dstX0, int dstY0,
                           int width, int height)
@@ -353,12 +354,6 @@ brw_blorp_copytexsubimage(struct intel_context *intel,
    if (!color_formats_match(src_mt->format, dst_mt->format)) {
       return false;
    }
-
-   /* We can't use blorp to copy to a 1D array texture, since it can only
-    * write to one layer of the texture at a time.
-    */
-   if (dst_mt->target == GL_TEXTURE_1D_ARRAY)
-      return false;
 
    /* Source clipping shouldn't be necessary, since copytexsubimage (in
     * src/mesa/main/teximage.c) calls _mesa_clip_copytexsubimage() which
@@ -388,7 +383,7 @@ brw_blorp_copytexsubimage(struct intel_context *intel,
 
    brw_blorp_blit_miptrees(intel,
                            src_mt, src_irb->mt_level, src_irb->mt_layer,
-                           dst_mt, dst_image->Level, dst_image->Face,
+                           dst_mt, dst_image->Level, dst_image->Face + slice,
                            srcX0, srcY0, srcX1, srcY1,
                            dstX0, dstY0, dstX1, dstY1,
                            false, mirror_y);
@@ -411,7 +406,8 @@ brw_blorp_copytexsubimage(struct intel_context *intel,
       if (src_mt != dst_mt) {
          brw_blorp_blit_miptrees(intel,
                                  src_mt, src_irb->mt_level, src_irb->mt_layer,
-                                 dst_mt, dst_image->Level, dst_image->Face,
+                                 dst_mt, dst_image->Level,
+                                 dst_image->Face + slice,
                                  srcX0, srcY0, srcX1, srcY1,
                                  dstX0, dstY0, dstX1, dstY1,
                                  false, mirror_y);

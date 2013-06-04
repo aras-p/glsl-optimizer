@@ -1238,6 +1238,7 @@ bool
 brw_blorp_copytexsubimage(struct intel_context *intel,
                           struct gl_renderbuffer *src_rb,
                           struct gl_texture_image *dst_image,
+                          int slice,
                           int srcX0, int srcY0,
                           int dstX0, int dstY0,
                           int width, int height);
