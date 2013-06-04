@@ -71,7 +71,7 @@ struct draw_pt_front_end;
  */
 struct draw_vertex_buffer {
    const void *map;
-   size_t size;
+   uint32_t size;
 };
 
 /**
