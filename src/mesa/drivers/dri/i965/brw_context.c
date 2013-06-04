@@ -1028,12 +1028,11 @@ intel_process_dri2_buffer(struct brw_context *brw,
                           struct intel_renderbuffer *rb,
                           const char *buffer_name);
 
-void
-intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
+static void
+intel_update_dri2_buffers(struct brw_context *brw, __DRIdrawable *drawable)
 {
    struct gl_framebuffer *fb = drawable->driverPrivate;
    struct intel_renderbuffer *rb;
-   struct brw_context *brw = context->driverPrivate;
    __DRIbuffer *buffers = NULL;
    int i, count;
    const char *region_name;
@@ -1082,6 +1081,23 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
 
        intel_process_dri2_buffer(brw, drawable, &buffers[i], rb, region_name);
    }
+
+}
+
+void
+intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
+{
+   struct brw_context *brw = context->driverPrivate;
+
+   /* Set this up front, so that in case our buffers get invalidated
+    * while we're getting new buffers, we don't clobber the stamp and
+    * thus ignore the invalidate. */
+   drawable->lastStamp = drawable->dri2.stamp;
+
+   if (unlikely(INTEL_DEBUG & DEBUG_DRI))
+      fprintf(stderr, "enter %s, drawable %p\n", __func__, drawable);
+
+   intel_update_dri2_buffers(brw, drawable);
 
    driUpdateFramebufferSize(&brw->ctx, drawable);
 }

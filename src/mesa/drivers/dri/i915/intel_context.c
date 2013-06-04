@@ -141,15 +141,58 @@ intel_process_dri2_buffer(struct intel_context *intel,
 			  struct intel_renderbuffer *rb,
 			  const char *buffer_name);
 
-void
-intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
+static void
+intel_update_dri2_buffers(struct intel_context *intel, __DRIdrawable *drawable)
 {
-   struct gl_framebuffer *fb = drawable->driverPrivate;
-   struct intel_renderbuffer *rb;
-   struct intel_context *intel = context->driverPrivate;
    __DRIbuffer *buffers = NULL;
    int i, count;
    const char *region_name;
+   struct intel_renderbuffer *rb;
+   struct gl_framebuffer *fb = drawable->driverPrivate;
+
+   intel_query_dri2_buffers(intel, drawable, &buffers, &count);
+
+   if (buffers == NULL)
+      return;
+
+   for (i = 0; i < count; i++) {
+      switch (buffers[i].attachment) {
+      case __DRI_BUFFER_FRONT_LEFT:
+         rb = intel_get_renderbuffer(fb, BUFFER_FRONT_LEFT);
+         region_name = "dri2 front buffer";
+         break;
+
+      case __DRI_BUFFER_FAKE_FRONT_LEFT:
+         rb = intel_get_renderbuffer(fb, BUFFER_FRONT_LEFT);
+         region_name = "dri2 fake front buffer";
+         break;
+
+      case __DRI_BUFFER_BACK_LEFT:
+         rb = intel_get_renderbuffer(fb, BUFFER_BACK_LEFT);
+         region_name = "dri2 back buffer";
+         break;
+
+      case __DRI_BUFFER_DEPTH:
+      case __DRI_BUFFER_HIZ:
+      case __DRI_BUFFER_DEPTH_STENCIL:
+      case __DRI_BUFFER_STENCIL:
+      case __DRI_BUFFER_ACCUM:
+      default:
+         fprintf(stderr,
+                 "unhandled buffer attach event, attachment type %d\n",
+                 buffers[i].attachment);
+         return;
+      }
+
+      intel_process_dri2_buffer(intel, drawable, &buffers[i], rb, region_name);
+   }
+}
+
+void
+intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
+{
+   struct intel_context *intel = context->driverPrivate;
+   __DRIscreen *screen = intel->intelScreen->driScrnPriv;
 
    /* Set this up front, so that in case our buffers get invalidated
     * while we're getting new buffers, we don't clobber the stamp and
@@ -159,42 +202,7 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
    if (unlikely(INTEL_DEBUG & DEBUG_DRI))
       fprintf(stderr, "enter %s, drawable %p\n", __func__, drawable);
 
-   intel_query_dri2_buffers(intel, drawable, &buffers, &count);
-
-   if (buffers == NULL)
-      return;
-
-   for (i = 0; i < count; i++) {
-       switch (buffers[i].attachment) {
-       case __DRI_BUFFER_FRONT_LEFT:
-	   rb = intel_get_renderbuffer(fb, BUFFER_FRONT_LEFT);
-	   region_name = "dri2 front buffer";
-	   break;
-
-       case __DRI_BUFFER_FAKE_FRONT_LEFT:
-	   rb = intel_get_renderbuffer(fb, BUFFER_FRONT_LEFT);
-	   region_name = "dri2 fake front buffer";
-	   break;
-
-       case __DRI_BUFFER_BACK_LEFT:
-	   rb = intel_get_renderbuffer(fb, BUFFER_BACK_LEFT);
-	   region_name = "dri2 back buffer";
-	   break;
-
-       case __DRI_BUFFER_DEPTH:
-       case __DRI_BUFFER_HIZ:
-       case __DRI_BUFFER_DEPTH_STENCIL:
-       case __DRI_BUFFER_STENCIL:
-       case __DRI_BUFFER_ACCUM:
-       default:
-	   fprintf(stderr,
-		   "unhandled buffer attach event, attachment type %d\n",
-		   buffers[i].attachment);
-	   return;
-       }
-
-       intel_process_dri2_buffer(intel, drawable, &buffers[i], rb, region_name);
-   }
+   intel_update_dri2_buffers(intel, drawable);
 
    driUpdateFramebufferSize(&intel->ctx, drawable);
 }
