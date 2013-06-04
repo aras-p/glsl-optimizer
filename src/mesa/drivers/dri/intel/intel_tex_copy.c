@@ -48,7 +48,7 @@
 #define FILE_DEBUG_FLAG DEBUG_TEXTURE
 
 
-bool
+static bool
 intel_copy_texsubimage(struct intel_context *intel,
                        struct intel_texture_image *intelImage,
                        GLint dstx, GLint dsty,

@@ -737,76 +737,85 @@ intel_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
  *         normal path.
  */
 static GLbitfield
-intel_blit_framebuffer_copy_tex_sub_image(struct gl_context *ctx,
-                                          GLint srcX0, GLint srcY0,
-                                          GLint srcX1, GLint srcY1,
-                                          GLint dstX0, GLint dstY0,
-                                          GLint dstX1, GLint dstY1,
-                                          GLbitfield mask, GLenum filter)
+intel_blit_framebuffer_with_blitter(struct gl_context *ctx,
+                                    GLint srcX0, GLint srcY0,
+                                    GLint srcX1, GLint srcY1,
+                                    GLint dstX0, GLint dstY0,
+                                    GLint dstX1, GLint dstY1,
+                                    GLbitfield mask, GLenum filter)
 {
+   struct intel_context *intel = intel_context(ctx);
+
    if (mask & GL_COLOR_BUFFER_BIT) {
       GLint i;
       const struct gl_framebuffer *drawFb = ctx->DrawBuffer;
       const struct gl_framebuffer *readFb = ctx->ReadBuffer;
-      const struct gl_renderbuffer_attachment *drawAtt;
-      struct intel_renderbuffer *srcRb = 
-         intel_renderbuffer(readFb->_ColorReadBuffer);
+      struct gl_renderbuffer *src_rb = readFb->_ColorReadBuffer;
+      struct intel_renderbuffer *src_irb = intel_renderbuffer(src_rb);
+
+      if (!src_irb) {
+         perf_debug("glBlitFramebuffer(): missing src renderbuffer.  "
+                    "Falling back to software rendering.\n");
+         return mask;
+      }
 
       /* If the source and destination are the same size with no mirroring,
        * the rectangles are within the size of the texture and there is no
-       * scissor then we can use glCopyTexSubimage2D to implement the blit.
-       * This will end up as a fast hardware blit on some drivers.
+       * scissor, then we can probably use the blit engine.
        */
-      const GLboolean use_intel_copy_texsubimage =
-         srcX0 - srcX1 == dstX0 - dstX1 &&
-         srcY0 - srcY1 == dstY0 - dstY1 &&
-         srcX1 >= srcX0 &&
-         srcY1 >= srcY0 &&
-         srcX0 >= 0 && srcX1 <= readFb->Width &&
-         srcY0 >= 0 && srcY1 <= readFb->Height &&
-         dstX0 >= 0 && dstX1 <= drawFb->Width &&
-         dstY0 >= 0 && dstY1 <= drawFb->Height &&
-         !ctx->Scissor.Enabled;
-
-      /* Verify that all the draw buffers can be blitted using
-       * intel_copy_texsubimage().
-       */
-      for (i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers; i++) {
-         int idx = ctx->DrawBuffer->_ColorDrawBufferIndexes[i];
-         if (idx == -1)
-            continue;
-         drawAtt = &drawFb->Attachment[idx];
-
-         if (srcRb && drawAtt && drawAtt->Texture &&
-             use_intel_copy_texsubimage)
-            continue;
-         else
-            return mask;
+      if (!(srcX0 - srcX1 == dstX0 - dstX1 &&
+            srcY0 - srcY1 == dstY0 - dstY1 &&
+            srcX1 >= srcX0 &&
+            srcY1 >= srcY0 &&
+            srcX0 >= 0 && srcX1 <= readFb->Width &&
+            srcY0 >= 0 && srcY1 <= readFb->Height &&
+            dstX0 >= 0 && dstX1 <= drawFb->Width &&
+            dstY0 >= 0 && dstY1 <= drawFb->Height &&
+            !ctx->Scissor.Enabled)) {
+         perf_debug("glBlitFramebuffer(): non-1:1 blit.  "
+                    "Falling back to software rendering.\n");
+         return mask;
       }
 
-      /* Blit to all active draw buffers */
+      /* Blit to all active draw buffers.  We don't do any pre-checking,
+       * because we assume that copying to MRTs is rare, and failure midway
+       * through copying is even more rare.  Even if it was to occur, it's
+       * safe to let meta start the copy over from scratch, because
+       * glBlitFramebuffer completely overwrites the destination pixels, and
+       * results are undefined if any destination pixels have a dependency on
+       * source pixels.
+       */
       for (i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers; i++) {
-         int idx = ctx->DrawBuffer->_ColorDrawBufferIndexes[i];
-         if (idx == -1)
-            continue;
-         drawAtt = &drawFb->Attachment[idx];
+         struct gl_renderbuffer *dst_rb = ctx->DrawBuffer->_ColorDrawBuffers[i];
+         struct intel_renderbuffer *dst_irb = intel_renderbuffer(dst_rb);
 
-         {
-            const struct gl_texture_object *texObj = drawAtt->Texture;
-            const GLuint dstLevel = drawAtt->TextureLevel;
-            const GLenum target = texObj->Target;
+         if (!dst_irb) {
+            perf_debug("glBlitFramebuffer(): missing dst renderbuffer.  "
+                       "Falling back to software rendering.\n");
+            return mask;
+         }
 
-            struct gl_texture_image *texImage =
-               _mesa_select_tex_image(ctx, texObj, target, dstLevel);
+         gl_format src_format = _mesa_get_srgb_format_linear(src_rb->Format);
+         gl_format dst_format = _mesa_get_srgb_format_linear(dst_rb->Format);
+         if (src_format != dst_format) {
+            perf_debug("glBlitFramebuffer(): unsupported blit from %s to %s.  "
+                       "Falling back to software rendering.\n",
+                       _mesa_get_format_name(src_format),
+                       _mesa_get_format_name(dst_format));
+            return mask;
+         }
 
-            if (!intel_copy_texsubimage(intel_context(ctx),
-                                        intel_texture_image(texImage),
-                                        dstX0, dstY0,
-                                        srcRb,
-                                        srcX0, srcY0,
-                                        srcX1 - srcX0, /* width */
-                                        srcY1 - srcY0))
-               return mask;
+         if (!intel_miptree_blit(intel,
+                                 src_irb->mt,
+                                 src_irb->mt_level, src_irb->mt_layer,
+                                 srcX0, srcY0, src_rb->Name == 0,
+                                 dst_irb->mt,
+                                 dst_irb->mt_level, dst_irb->mt_layer,
+                                 dstX0, dstY0, dst_rb->Name == 0,
+                                 dstX1 - dstX0, dstY1 - dstY0, GL_COPY)) {
+            perf_debug("glBlitFramebuffer(): unknown blit failure.  "
+                       "Falling back to software rendering.\n");
+            return mask;
          }
       }
 
@@ -831,11 +840,11 @@ intel_blit_framebuffer(struct gl_context *ctx,
       return;
 #endif
 
-   /* Try glCopyTexSubImage2D approach which uses the BLT. */
-   mask = intel_blit_framebuffer_copy_tex_sub_image(ctx,
-                                                    srcX0, srcY0, srcX1, srcY1,
-                                                    dstX0, dstY0, dstX1, dstY1,
-                                                    mask, filter);
+   /* Try using the BLT engine. */
+   mask = intel_blit_framebuffer_with_blitter(ctx,
+                                              srcX0, srcY0, srcX1, srcY1,
+                                              dstX0, dstY0, dstX1, dstY1,
+                                              mask, filter);
    if (mask == 0x0)
       return;
 

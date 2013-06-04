@@ -68,13 +68,6 @@ bool
 intel_tex_image_s8z24_create_renderbuffers(struct intel_context *intel,
 					   struct intel_texture_image *image);
 
-bool intel_copy_texsubimage(struct intel_context *intel,
-                            struct intel_texture_image *intelImage,
-                            GLint dstx, GLint dsty,
-                            struct intel_renderbuffer *irb,
-                            GLint x, GLint y,
-                            GLsizei width, GLsizei height);
-
 bool
 intel_texsubimage_tiled_memcpy(struct gl_context *ctx,
                                GLuint dims,
