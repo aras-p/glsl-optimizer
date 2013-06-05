@@ -70,6 +70,8 @@ int bc_parser::decode() {
 	}
 
 	sh = new shader(ctx, t, bc->debug_id);
+	sh->safe_math = sb_context::safe_math || (t == TARGET_COMPUTE);
+
 	int r = decode_shader();
 
 	delete dec;

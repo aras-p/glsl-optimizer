@@ -388,6 +388,18 @@ bool expr_handler::fold_alu_op1(alu_node& n) {
 	assert(v0 && n.dst[0]);
 
 	if (!v0->is_const()) {
+		// handle (MOV -(MOV -x)) => (MOV x)
+		if (n.bc.op == ALU_OP1_MOV && n.bc.src[0].neg && !n.bc.src[1].abs
+				&& v0->def && v0->def->is_alu_op(ALU_OP1_MOV)) {
+			alu_node *sd = static_cast<alu_node*>(v0->def);
+			if (!sd->bc.clamp && !sd->bc.omod && !sd->bc.src[0].abs &&
+					sd->bc.src[0].neg) {
+				n.src[0] = sd->src[0];
+				n.bc.src[0].neg = 0;
+				v0 = n.src[0]->gvalue();
+			}
+		}
+
 		if ((n.bc.op == ALU_OP1_MOV || n.bc.op == ALU_OP1_MOVA_INT ||
 				n.bc.op == ALU_OP1_MOVA_GPR_INT)
 				&& n.bc.clamp == 0 && n.bc.omod == 0
@@ -452,6 +464,260 @@ bool expr_handler::fold_alu_op1(alu_node& n) {
 	return true;
 }
 
+bool expr_handler::fold_mul_add(alu_node *n) {
+
+	bool ieee;
+	value* v0 = n->src[0]->gvalue();
+
+	alu_node *d0 = (v0->def && v0->def->is_alu_inst()) ?
+			static_cast<alu_node*>(v0->def) : NULL;
+
+	if (d0) {
+		if (d0->is_alu_op(ALU_OP2_MUL_IEEE))
+			ieee = true;
+		else if (d0->is_alu_op(ALU_OP2_MUL))
+			ieee = false;
+		else
+			return false;
+
+		if (!d0->bc.src[0].abs && !d0->bc.src[1].abs &&
+				!n->bc.src[1].abs && !n->bc.src[0].abs && !d0->bc.omod &&
+				!d0->bc.clamp && !n->bc.omod &&
+				(!d0->src[0]->is_kcache() || !d0->src[1]->is_kcache() ||
+						!n->src[1]->is_kcache())) {
+
+			bool mul_neg = n->bc.src[0].neg;
+
+			n->src.resize(3);
+			n->bc.set_op(ieee ? ALU_OP3_MULADD_IEEE : ALU_OP3_MULADD);
+			n->src[2] = n->src[1];
+			n->bc.src[2] = n->bc.src[1];
+			n->src[0] = d0->src[0];
+			n->bc.src[0] = d0->bc.src[0];
+			n->src[1] = d0->src[1];
+			n->bc.src[1] = d0->bc.src[1];
+
+			n->bc.src[0].neg ^= mul_neg;
+
+			fold_alu_op3(*n);
+			return true;
+		}
+	}
+
+	value* v1 = n->src[1]->gvalue();
+
+	alu_node *d1 = (v1->def && v1->def->is_alu_inst()) ?
+			static_cast<alu_node*>(v1->def) : NULL;
+
+	if (d1) {
+		if (d1->is_alu_op(ALU_OP2_MUL_IEEE))
+			ieee = true;
+		else if (d1->is_alu_op(ALU_OP2_MUL))
+			ieee = false;
+		else
+			return false;
+
+		if (!d1->bc.src[1].abs && !d1->bc.src[0].abs &&
+				!n->bc.src[0].abs && !n->bc.src[1].abs && !d1->bc.omod &&
+				!d1->bc.clamp && !n->bc.omod &&
+				(!d1->src[0]->is_kcache() || !d1->src[1]->is_kcache() ||
+						!n->src[0]->is_kcache())) {
+
+			bool mul_neg = n->bc.src[1].neg;
+
+			n->src.resize(3);
+			n->bc.set_op(ieee ? ALU_OP3_MULADD_IEEE : ALU_OP3_MULADD);
+			n->src[2] = n->src[0];
+			n->bc.src[2] = n->bc.src[0];
+			n->src[1] = d1->src[1];
+			n->bc.src[1] = d1->bc.src[1];
+			n->src[0] = d1->src[0];
+			n->bc.src[0] = d1->bc.src[0];
+
+			n->bc.src[1].neg ^= mul_neg;
+
+			fold_alu_op3(*n);
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool expr_handler::eval_const_op(unsigned op, literal &r,
+                                 literal cv0, literal cv1) {
+
+	switch (op) {
+	case ALU_OP2_ADD: r = cv0.f + cv1.f; break;
+	case ALU_OP2_ADDC_UINT:
+		r = (uint32_t)(((uint64_t)cv0.u + cv1.u)>>32); break;
+	case ALU_OP2_ADD_INT: r = cv0.i + cv1.i; break;
+	case ALU_OP2_AND_INT: r = cv0.i & cv1.i; break;
+	case ALU_OP2_ASHR_INT: r = cv0.i >> (cv1.i & 0x1F); break;
+	case ALU_OP2_BFM_INT:
+		r = (((1 << (cv0.i & 0x1F)) - 1) << (cv1.i & 0x1F)); break;
+	case ALU_OP2_LSHL_INT: r = cv0.i << cv1.i; break;
+	case ALU_OP2_LSHR_INT: r = cv0.u >> cv1.u; break;
+	case ALU_OP2_MAX:
+	case ALU_OP2_MAX_DX10: r = cv0.f > cv1.f ? cv0.f : cv1.f; break;
+	case ALU_OP2_MAX_INT: r = cv0.i > cv1.i ? cv0.i : cv1.i; break;
+	case ALU_OP2_MAX_UINT: r = cv0.u > cv1.u ? cv0.u : cv1.u; break;
+	case ALU_OP2_MIN:
+	case ALU_OP2_MIN_DX10: r = cv0.f < cv1.f ? cv0.f : cv1.f; break;
+	case ALU_OP2_MIN_INT: r = cv0.i < cv1.i ? cv0.i : cv1.i; break;
+	case ALU_OP2_MIN_UINT: r = cv0.u < cv1.u ? cv0.u : cv1.u; break;
+	case ALU_OP2_MUL:
+	case ALU_OP2_MUL_IEEE: r = cv0.f * cv1.f; break;
+	case ALU_OP2_MULHI_INT:
+		r = (int32_t)(((int64_t)cv0.u * cv1.u)>>32); break;
+	case ALU_OP2_MULHI_UINT:
+		r = (uint32_t)(((uint64_t)cv0.u * cv1.u)>>32); break;
+	case ALU_OP2_MULLO_INT:
+		r = (int32_t)(((int64_t)cv0.u * cv1.u) & 0xFFFFFFFF); break;
+	case ALU_OP2_MULLO_UINT:
+		r = (uint32_t)(((uint64_t)cv0.u * cv1.u) & 0xFFFFFFFF); break;
+	case ALU_OP2_OR_INT: r = cv0.i | cv1.i; break;
+	case ALU_OP2_SUB_INT: r = cv0.i - cv1.i; break;
+	case ALU_OP2_XOR_INT: r = cv0.i ^ cv1.i; break;
+
+	default:
+		return false;
+	}
+
+	return true;
+}
+
+// fold the chain of associative ops, e.g. (ADD 2, (ADD x, 3)) => (ADD x, 5)
+bool expr_handler::fold_assoc(alu_node *n) {
+
+	alu_node *a = n;
+	literal cr;
+
+	int last_arg = -3;
+
+	unsigned op = n->bc.op;
+	bool allow_neg = false, cur_neg = false;
+
+	switch(op) {
+	case ALU_OP2_ADD:
+	case ALU_OP2_MUL:
+	case ALU_OP2_MUL_IEEE:
+		allow_neg = true;
+		break;
+	case ALU_OP3_MULADD:
+		allow_neg = true;
+		op = ALU_OP2_MUL;
+		break;
+	case ALU_OP3_MULADD_IEEE:
+		allow_neg = true;
+		op = ALU_OP2_MUL_IEEE;
+		break;
+	default:
+		if (n->bc.op_ptr->src_count != 2)
+			return false;
+	}
+
+	// check if we can evaluate the op
+	if (!eval_const_op(op, cr, literal(0), literal(0)))
+		return false;
+
+	while (true) {
+
+		value *v0 = a->src[0]->gvalue();
+		value *v1 = a->src[1]->gvalue();
+
+		last_arg = -2;
+
+		if (v1->is_const()) {
+			literal arg = v1->get_const_value();
+			apply_alu_src_mod(a->bc, 1, arg);
+			if (cur_neg)
+				arg.f = -arg.f;
+
+			if (a == n)
+				cr = arg;
+			else
+				eval_const_op(op, cr, cr, arg);
+
+			if (v0->def) {
+				alu_node *d0 = static_cast<alu_node*>(v0->def);
+				if ((d0->is_alu_op(op) ||
+						(op == ALU_OP2_MUL_IEEE &&
+								d0->is_alu_op(ALU_OP2_MUL))) &&
+						!d0->bc.omod && !d0->bc.clamp &&
+						(!a->bc.src[0].neg || allow_neg)) {
+					cur_neg ^= a->bc.src[0].neg;
+					a = d0;
+					continue;
+				}
+			}
+			last_arg = 0;
+
+		}
+
+		if (v0->is_const()) {
+			literal arg = v0->get_const_value();
+			apply_alu_src_mod(a->bc, 0, arg);
+			if (cur_neg)
+				arg.f = -arg.f;
+
+			if (last_arg == 0) {
+				eval_const_op(op, cr, cr, arg);
+				last_arg = -1;
+				break;
+			}
+
+			if (a == n)
+				cr = arg;
+			else
+				eval_const_op(op, cr, cr, arg);
+
+			if (v1->def) {
+				alu_node *d1 = static_cast<alu_node*>(v1->def);
+				if ((d1->is_alu_op(op) ||
+						(op == ALU_OP2_MUL_IEEE &&
+								d1->is_alu_op(ALU_OP2_MUL))) &&
+						!d1->bc.omod && !d1->bc.clamp &&
+						(!a->bc.src[1].neg || allow_neg)) {
+					cur_neg ^= a->bc.src[1].neg;
+					a = d1;
+					continue;
+				}
+			}
+
+			last_arg = 1;
+		}
+
+		break;
+	};
+
+	if (last_arg == -1) {
+		// result is const
+		apply_alu_dst_mod(n->bc, cr);
+
+		if (n->bc.op == op) {
+			convert_to_mov(*n, sh.get_const_value(cr));
+			fold_alu_op1(*n);
+			return true;
+		} else { // MULADD => ADD
+			n->src[0] = n->src[2];
+			n->bc.src[0] = n->bc.src[2];
+			n->src[1] = sh.get_const_value(cr);
+			memset(&n->bc.src[1], 0, sizeof(bc_alu_src));
+
+			n->src.resize(2);
+			n->bc.set_op(ALU_OP2_ADD);
+		}
+	} else if (last_arg >= 0) {
+		n->src[0] = a->src[last_arg];
+		n->bc.src[0] = a->bc.src[last_arg];
+		n->bc.src[0].neg ^= cur_neg;
+		n->src[1] = sh.get_const_value(cr);
+		memset(&n->bc.src[1], 0, sizeof(bc_alu_src));
+	}
+
+	return false;
+}
 
 bool expr_handler::fold_alu_op2(alu_node& n) {
 
@@ -464,10 +730,52 @@ bool expr_handler::fold_alu_op2(alu_node& n) {
 		return fold_setcc(n);
 	}
 
+	if (!sh.safe_math && (flags & AF_M_ASSOC)) {
+		if (fold_assoc(&n))
+			return true;
+	}
+
 	value* v0 = n.src[0]->gvalue();
 	value* v1 = n.src[1]->gvalue();
 
 	assert(v0 && v1);
+
+	// handle some operations with equal args, e.g. x + x => x * 2
+	if (v0 == v1) {
+		if (n.bc.src[0].neg == n.bc.src[1].neg &&
+				n.bc.src[0].abs == n.bc.src[1].abs) {
+			switch (n.bc.op) {
+			case ALU_OP2_MIN: // (MIN x, x) => (MOV x)
+			case ALU_OP2_MAX:
+				convert_to_mov(n, v0, n.bc.src[0].neg, n.bc.src[0].abs);
+				return fold_alu_op1(n);
+			case ALU_OP2_ADD:  // (ADD x, x) => (MUL x, 2)
+				if (!sh.safe_math) {
+					n.src[1] = sh.get_const_value(2.0f);
+					memset(&n.bc.src[1], 0, sizeof(bc_alu_src));
+					n.bc.set_op(ALU_OP2_MUL);
+					return fold_alu_op2(n);
+				}
+				break;
+			}
+		}
+		if (n.bc.src[0].neg != n.bc.src[1].neg &&
+				n.bc.src[0].abs == n.bc.src[1].abs) {
+			switch (n.bc.op) {
+			case ALU_OP2_ADD:  // (ADD x, -x) => (MOV 0)
+				if (!sh.safe_math) {
+					convert_to_mov(n, sh.get_const_value(literal(0)));
+					return fold_alu_op1(n);
+				}
+				break;
+			}
+		}
+	}
+
+	if (n.bc.op == ALU_OP2_ADD) {
+		if (fold_mul_add(&n))
+			return true;
+	}
 
 	bool isc0 = v0->is_const();
 	bool isc1 = v1->is_const();
@@ -488,42 +796,9 @@ bool expr_handler::fold_alu_op2(alu_node& n) {
 	}
 
 	if (isc0 && isc1) {
-		switch (n.bc.op) {
-		case ALU_OP2_ADD: dv = cv0.f + cv1.f; break;
-		case ALU_OP2_ADDC_UINT:
-			dv = (uint32_t)(((uint64_t)cv0.u + cv1.u)>>32); break;
-		case ALU_OP2_ADD_INT: dv = cv0.i + cv1.i; break;
-		case ALU_OP2_AND_INT: dv = cv0.i & cv1.i; break;
-		case ALU_OP2_ASHR_INT: dv = cv0.i >> (cv1.i & 0x1F); break;
-		case ALU_OP2_BFM_INT:
-			dv = (((1 << (cv0.i & 0x1F)) - 1) << (cv1.i & 0x1F)); break;
-		case ALU_OP2_LSHL_INT: dv = cv0.i << cv1.i; break;
-		case ALU_OP2_LSHR_INT: dv = cv0.u >> cv1.u; break;
-		case ALU_OP2_MAX:
-		case ALU_OP2_MAX_DX10: dv = cv0.f > cv1.f ? cv0.f : cv1.f; break;
-		case ALU_OP2_MAX_INT: dv = cv0.i > cv1.i ? cv0.i : cv1.i; break;
-		case ALU_OP2_MAX_UINT: dv = cv0.u > cv1.u ? cv0.u : cv1.u; break;
-		case ALU_OP2_MIN:
-		case ALU_OP2_MIN_DX10: dv = cv0.f < cv1.f ? cv0.f : cv1.f; break;
-		case ALU_OP2_MIN_INT: dv = cv0.i < cv1.i ? cv0.i : cv1.i; break;
-		case ALU_OP2_MIN_UINT: dv = cv0.u < cv1.u ? cv0.u : cv1.u; break;
-		case ALU_OP2_MUL:
-		case ALU_OP2_MUL_IEEE: dv = cv0.f * cv1.f; break;
-		case ALU_OP2_MULHI_INT:
-			dv = (int32_t)(((int64_t)cv0.u * cv1.u)>>32); break;
-		case ALU_OP2_MULHI_UINT:
-			dv = (uint32_t)(((uint64_t)cv0.u * cv1.u)>>32); break;
-		case ALU_OP2_MULLO_INT:
-			dv = (int32_t)(((int64_t)cv0.u * cv1.u) & 0xFFFFFFFF); break;
-		case ALU_OP2_MULLO_UINT:
-			dv = (uint32_t)(((uint64_t)cv0.u * cv1.u) & 0xFFFFFFFF); break;
-		case ALU_OP2_OR_INT: dv = cv0.i | cv1.i; break;
-		case ALU_OP2_SUB_INT: dv = cv0.i - cv1.i; break;
-		case ALU_OP2_XOR_INT: dv = cv0.i ^ cv1.i; break;
 
-		default:
+		if (!eval_const_op(n.bc.op, dv, cv0, cv1))
 			return false;
-		}
 
 	} else { // one source is const
 
@@ -649,6 +924,11 @@ bool expr_handler::fold_alu_op3(alu_node& n) {
 	if (n.src.size() < 3)
 		return false;
 
+	if (!sh.safe_math && (n.bc.op_ptr->flags & AF_M_ASSOC)) {
+		if (fold_assoc(&n))
+			return true;
+	}
+
 	value* v0 = n.src[0]->gvalue();
 	value* v1 = n.src[1]->gvalue();
 	value* v2 = n.src[2]->gvalue();
@@ -698,6 +978,77 @@ bool expr_handler::fold_alu_op3(alu_node& n) {
 		}
 	}
 
+	// handle (MULADD a, x, MUL (x, b)) => (MUL x, ADD (a, b))
+	if (!sh.safe_math && (n.bc.op == ALU_OP3_MULADD ||
+			n.bc.op == ALU_OP3_MULADD_IEEE)) {
+
+		unsigned op = n.bc.op == ALU_OP3_MULADD_IEEE ?
+				ALU_OP2_MUL_IEEE : ALU_OP2_MUL;
+
+		if (!isc2 && v2->def && v2->def->is_alu_op(op)) {
+
+			alu_node *md = static_cast<alu_node*>(v2->def);
+			value *mv0 = md->src[0]->gvalue();
+			value *mv1 = md->src[1]->gvalue();
+
+			int es0 = -1, es1;
+
+			if (v0 == mv0) {
+				es0 = 0;
+				es1 = 0;
+			} else if (v0 == mv1) {
+				es0 = 0;
+				es1 = 1;
+			} else if (v1 == mv0) {
+				es0 = 1;
+				es1 = 0;
+			} else if (v1 == mv1) {
+				es0 = 1;
+				es1 = 1;
+			}
+
+			if (es0 != -1) {
+				value *va0 = es0 == 0 ? v1 : v0;
+				value *va1 = es1 == 0 ? mv1 : mv0;
+
+				alu_node *add = sh.create_alu();
+				add->bc.set_op(ALU_OP2_ADD);
+
+				add->dst.resize(1);
+				add->src.resize(2);
+
+				value *t = sh.create_temp_value();
+				t->def = add;
+				add->dst[0] = t;
+				add->src[0] = va0;
+				add->src[1] = va1;
+				add->bc.src[0] = n.bc.src[!es0];
+				add->bc.src[1] = md->bc.src[!es1];
+
+				add->bc.src[1].neg ^= n.bc.src[2].neg ^
+						(n.bc.src[es0].neg != md->bc.src[es1].neg);
+
+				n.insert_before(add);
+				vt.add_value(t);
+
+				t = t->gvalue();
+
+				if (es0 == 1) {
+					n.src[0] = n.src[1];
+					n.bc.src[0] = n.bc.src[1];
+				}
+
+				n.src[1] = t;
+				memset(&n.bc.src[1], 0, sizeof(bc_alu_src));
+
+				n.src.resize(2);
+
+				n.bc.set_op(op);
+				return fold_alu_op2(n);
+			}
+		}
+	}
+
 	if (!isc0 && !isc1 && !isc2)
 		return false;
 
@@ -727,13 +1078,36 @@ bool expr_handler::fold_alu_op3(alu_node& n) {
 			}
 		}
 
-		if ((isc0 && cv0 == literal(0)) || (isc1 && cv1 == literal(0))) {
-			switch (n.bc.op) {
-			case ALU_OP3_MULADD:
+		if (n.bc.op == ALU_OP3_MULADD) {
+			if ((isc0 && cv0 == literal(0)) || (isc1 && cv1 == literal(0))) {
 				convert_to_mov(n, n.src[2], n.bc.src[2].neg,  n.bc.src[2].abs);
 				return fold_alu_op1(n);
 			}
 		}
+
+		if (n.bc.op == ALU_OP3_MULADD || n.bc.op == ALU_OP3_MULADD_IEEE) {
+			unsigned op = n.bc.op == ALU_OP3_MULADD_IEEE ?
+					ALU_OP2_MUL_IEEE : ALU_OP2_MUL;
+
+			if (isc1 && v0 == v2) {
+				cv1.f += (n.bc.src[2].neg != n.bc.src[0].neg ? -1.0f : 1.0f);
+				n.src[1] = sh.get_const_value(cv1);
+				n.bc.src[1].neg = 0;
+				n.bc.src[1].abs = 0;
+				n.bc.set_op(op);
+				n.src.resize(2);
+				return fold_alu_op2(n);
+			} else if (isc0 && v1 == v2) {
+				cv0.f += (n.bc.src[2].neg != n.bc.src[1].neg ? -1.0f : 1.0f);
+				n.src[0] = sh.get_const_value(cv0);
+				n.bc.src[0].neg = 0;
+				n.bc.src[0].abs = 0;
+				n.bc.set_op(op);
+				n.src.resize(2);
+				return fold_alu_op2(n);
+			}
+		}
+
 		return false;
 	}
 

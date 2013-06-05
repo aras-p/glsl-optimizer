@@ -63,6 +63,7 @@ sb_context *r600_sb_context_create(struct r600_context *rctx) {
 	sb_context::dump_stat = df & DBG_SB_STAT;
 	sb_context::dry_run = df & DBG_SB_DRY_RUN;
 	sb_context::no_fallback = df & DBG_SB_NO_FALLBACK;
+	sb_context::safe_math = df & DBG_SB_SAFEMATH;
 
 	sb_context::dskip_start = debug_get_num_option("R600_SB_DSKIP_START", 0);
 	sb_context::dskip_end = debug_get_num_option("R600_SB_DSKIP_END", 0);

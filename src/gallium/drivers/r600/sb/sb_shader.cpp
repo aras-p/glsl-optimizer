@@ -39,7 +39,7 @@ shader::shader(sb_context &sctx, shader_target t, unsigned id)
   coal(*this), bbs(),
   target(t), vt(ex), ex(*this), root(),
   compute_interferences(),
-  has_alu_predication(), uses_gradients(), ngpr(), nstack() {}
+  has_alu_predication(), uses_gradients(), safe_math(), ngpr(), nstack() {}
 
 bool shader::assign_slot(alu_node* n, alu_node *slots[5]) {
 

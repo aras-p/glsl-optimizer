@@ -77,6 +77,10 @@ public:
    bool fold_alu_op2(alu_node &n);
    bool fold_alu_op3(alu_node &n);
 
+   bool fold_mul_add(alu_node *n);
+   bool eval_const_op(unsigned op, literal &r, literal cv0, literal cv1);
+   bool fold_assoc(alu_node *n);
+
    static void apply_alu_src_mod(const bc_alu &bc, unsigned src, literal &v);
    static void apply_alu_dst_mod(const bc_alu &bc, literal &v);
 

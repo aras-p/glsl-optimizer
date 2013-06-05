@@ -84,7 +84,8 @@ enum alu_op_flags
 	 * includes MULADDs (considering the MUL part on src0 and src1 only) */
 	AF_M_COMM = (1 << 23),
 
-	/* associative operation ((a op b) op c) == (a op (b op c))  */
+	/* associative operation ((a op b) op c) == (a op (b op c)),
+	 * includes MULADDs (considering the MUL part on src0 and src1 only) */
 	AF_M_ASSOC = (1 << 24),
 
 	AF_PRED_PUSH = (1 << 25),
@@ -373,11 +374,11 @@ static const struct alu_op_info alu_op_table[] = {
 		{"SAD_ACCUM_HI_UINT",         3, {   -1, 0x0F },{      0,     0,  AF_V,  AF_V},  AF_UINT_DST },
 		{"MULADD_UINT24",             3, {   -1, 0x10 },{      0,     0,  AF_V,  AF_V},  AF_UINT_DST | AF_24 },
 		{"LDS_IDX_OP",                3, {   -1, 0x11 },{      0,     0,  AF_V,  AF_V},  0 },
-		{"MULADD",                    3, { 0x10, 0x14 },{  AF_VS, AF_VS, AF_VS, AF_VS},  AF_M_COMM },
-		{"MULADD_M2",                 3, { 0x11, 0x15 },{  AF_VS, AF_VS, AF_VS, AF_VS},  AF_M_COMM },
-		{"MULADD_M4",                 3, { 0x12, 0x16 },{  AF_VS, AF_VS, AF_VS, AF_VS},  AF_M_COMM },
-		{"MULADD_D2",                 3, { 0x13, 0x17 },{  AF_VS, AF_VS, AF_VS, AF_VS},  AF_M_COMM },
-		{"MULADD_IEEE",               3, { 0x14, 0x18 },{  AF_VS, AF_VS, AF_VS, AF_VS},  AF_M_COMM | AF_IEEE },
+		{"MULADD",                    3, { 0x10, 0x14 },{  AF_VS, AF_VS, AF_VS, AF_VS},  AF_M_COMM | AF_M_ASSOC },
+		{"MULADD_M2",                 3, { 0x11, 0x15 },{  AF_VS, AF_VS, AF_VS, AF_VS},  AF_M_COMM | AF_M_ASSOC },
+		{"MULADD_M4",                 3, { 0x12, 0x16 },{  AF_VS, AF_VS, AF_VS, AF_VS},  AF_M_COMM | AF_M_ASSOC },
+		{"MULADD_D2",                 3, { 0x13, 0x17 },{  AF_VS, AF_VS, AF_VS, AF_VS},  AF_M_COMM | AF_M_ASSOC },
+		{"MULADD_IEEE",               3, { 0x14, 0x18 },{  AF_VS, AF_VS, AF_VS, AF_VS},  AF_M_COMM | AF_M_ASSOC | AF_IEEE },
 		{"CNDE",                      3, { 0x18, 0x19 },{  AF_VS, AF_VS, AF_VS, AF_VS},  AF_CMOV | AF_CC_E },
 		{"CNDGT",                     3, { 0x19, 0x1A },{  AF_VS, AF_VS, AF_VS, AF_VS},  AF_CMOV | AF_CC_GT },
 		{"CNDGE",                     3, { 0x1A, 0x1B },{  AF_VS, AF_VS, AF_VS, AF_VS},  AF_CMOV | AF_CC_GE },
@@ -397,9 +398,9 @@ static const struct alu_op_info alu_op_table[] = {
 		{"MUL_LIT_M2",                3, { 0x0D,   -1 },{  AF_VS, AF_VS,     0,     0},  0 },
 		{"MUL_LIT_M4",                3, { 0x0E,   -1 },{  AF_VS, AF_VS,     0,     0},  0 },
 		{"MUL_LIT_D2",                3, { 0x0F,   -1 },{  AF_VS, AF_VS,     0,     0},  0 },
-		{"MULADD_IEEE_M2",            3, { 0x15,   -1 },{  AF_VS, AF_VS,     0,     0},  AF_IEEE },
-		{"MULADD_IEEE_M4",            3, { 0x16,   -1 },{  AF_VS, AF_VS,     0,     0},  AF_IEEE },
-		{"MULADD_IEEE_D2",            3, { 0x17,   -1 },{  AF_VS, AF_VS,     0,     0},  AF_IEEE },
+		{"MULADD_IEEE_M2",            3, { 0x15,   -1 },{  AF_VS, AF_VS,     0,     0},  AF_M_COMM | AF_M_ASSOC | AF_IEEE },
+		{"MULADD_IEEE_M4",            3, { 0x16,   -1 },{  AF_VS, AF_VS,     0,     0},  AF_M_COMM | AF_M_ASSOC | AF_IEEE },
+		{"MULADD_IEEE_D2",            3, { 0x17,   -1 },{  AF_VS, AF_VS,     0,     0},  AF_M_COMM | AF_M_ASSOC | AF_IEEE },
 
 		{"LDS_ADD",                   2, {   -1, 0x0011 },{      0,     0,  AF_V,  AF_V},  AF_LDS },
 		{"LDS_SUB",                   2, {   -1, 0x0111 },{      0,     0,  AF_V,  AF_V},  AF_LDS },

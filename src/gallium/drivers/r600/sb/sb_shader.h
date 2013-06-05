@@ -293,6 +293,8 @@ public:
 	bool has_alu_predication;
 	bool uses_gradients;
 
+	bool safe_math;
+
 	unsigned ngpr, nstack;
 
 	shader(sb_context &sctx, shader_target t, unsigned id);
