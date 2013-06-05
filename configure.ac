@@ -2007,6 +2007,7 @@ AC_CONFIG_FILES([Makefile
 		src/gallium/drivers/identity/Makefile
 		src/gallium/drivers/ilo/Makefile
 		src/gallium/drivers/llvmpipe/Makefile
+		src/gallium/drivers/noop/Makefile
 		src/gallium/drivers/nouveau/Makefile
 		src/gallium/drivers/r300/Makefile
 		src/gallium/drivers/r600/Makefile

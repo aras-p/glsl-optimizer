@@ -7,9 +7,7 @@ env = env.Clone()
 
 noop = env.ConvenienceLibrary(
 	target = 'noop',
-	source = [
-		'noop_pipe.c',
-		'noop_state.c'
-		]
-    ) + extra
+	source = env.ParseSourceList('Makefile.sources', 'C_SOURCES')
+	) + extra
+
 Export('noop')

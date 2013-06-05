@@ -11,7 +11,7 @@ AM_CFLAGS = $(VISIBILITY_CFLAGS)
 
 noinst_LTLIBRARIES =
 
-SUBDIRS = . identity trace rbug
+SUBDIRS = . identity noop trace rbug
 
 ################################################################################
 
@@ -21,17 +21,6 @@ galahad_libgalahad_la_SOURCES = \
 	galahad/glhd_objects.c \
 	galahad/glhd_context.c \
 	galahad/glhd_screen.c
-
-################################################################################
-
-# Meta-driver which combines whichever software rasterizers have been
-# built into a single convenience library.
-
-noinst_LTLIBRARIES += noop/libnoop.la
-
-noop_libnoop_la_SOURCES = \
-	noop/noop_pipe.c \
-	noop/noop_state.c
 
 ################################################################################
 

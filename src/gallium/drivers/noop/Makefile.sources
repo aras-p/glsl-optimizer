@@ -1,0 +1,3 @@
+C_SOURCES := \
+	noop_pipe.c \
+	noop_state.c
