@@ -15,15 +15,8 @@ env.Append(CPPPATH = [
     xmlpool_options.dir.dir, # Dir to generated xmlpool/options.h
 ])
 
-sources = [
-    'dri_context.c',
-    'dri_drawable.c',
-    'dri_screen.c',
-    'dri2.c',
-]
-
 st_dri = env.ConvenienceLibrary(
     target = 'st_dri',
-    source = sources,
+    source = env.ParseSourceList('Makefile.sources', 'C_SOURCES')
 )
 Export('st_dri')

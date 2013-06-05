@@ -1,0 +1,5 @@
+C_SOURCES := \
+	dri_context.c \
+	dri_screen.c \
+	dri_drawable.c \
+	dri2.c
