@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
+include Makefile.sources
 include $(top_srcdir)/src/gallium/Automake.inc
 
 AM_CPPFLAGS = \
@@ -34,8 +35,4 @@ AM_CPPFLAGS = \
 
 noinst_LTLIBRARIES = libdrisw.la
 
-libdrisw_la_SOURCES = \
-	dri_context.c \
-	dri_screen.c \
-	dri_drawable.c \
-	drisw.c
+libdrisw_la_SOURCES =  $(C_SOURCES)

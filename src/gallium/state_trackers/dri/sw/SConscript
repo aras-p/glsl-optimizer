@@ -15,15 +15,8 @@ env.Append(CPPPATH = [
 
 env.Append(CPPDEFINES = [('__NOT_HAVE_DRM_H', '1')])
 
-sources = [
-    'dri_context.c',
-    'dri_drawable.c',
-    'dri_screen.c',
-    'drisw.c',
-]
-
 st_drisw = env.ConvenienceLibrary(
     target = 'st_drisw',
-    source = sources,
+    source = env.ParseSourceList('Makefile.sources', 'C_SOURCES')
 )
 Export('st_drisw')
