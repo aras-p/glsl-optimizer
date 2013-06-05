@@ -337,6 +337,12 @@ static const int extra_EXT_framebuffer_sRGB_and_new_buffers[] = {
    EXTRA_END
 };
 
+static const int extra_MESA_texture_array_es3[] = {
+   EXT(MESA_texture_array),
+   EXTRA_API_ES3,
+   EXTRA_END
+};
+
 EXTRA_EXT(ARB_texture_cube_map);
 EXTRA_EXT(MESA_texture_array);
 EXTRA_EXT2(EXT_secondary_color, ARB_vertex_program);
