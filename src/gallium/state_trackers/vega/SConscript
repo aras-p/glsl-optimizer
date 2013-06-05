@@ -15,38 +15,6 @@ env.Append(CPPDEFINES = [
     'KHRONOS_DLL_EXPORTS',
 ])
 
-vega_sources = [
-    'api.c',
-    'api_context.c',
-    'api_filters.c',
-    'api_images.c',
-    'api_masks.c',
-    'api_misc.c',
-    'api_paint.c',
-    'api_params.c',
-    'api_path.c',
-    'api_text.c',
-    'api_transform.c',
-    'arc.c',
-    'bezier.c',
-    'handle.c',
-    'image.c',
-    'mask.c',
-    'paint.c',
-    'path.c',
-    'polygon.c',
-    'renderer.c',
-    'shader.c',
-    'shaders_cache.c',
-    'stroker.c',
-    'text.c',
-    'vg_context.c',
-    'vg_manager.c',
-    'vg_state.c',
-    'vg_translate.c',
-    'vgu.c'
-]
-
 api_tmp, = env.CodeGenerate(
         target = 'api_tmp.h',
         script = '#src/mapi/mapi_abi.py',
@@ -56,7 +24,7 @@ api_tmp, = env.CodeGenerate(
 
 st_vega = env.ConvenienceLibrary(
     target = 'st_vega',
-    source = vega_sources,
+    source = env.ParseSourceList('Makefile.sources', 'C_SOURCES')
 )
 
 Export('st_vega')

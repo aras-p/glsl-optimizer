@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
+include Makefile.sources
 include $(top_srcdir)/src/gallium/Automake.inc
 
 AM_CFLAGS = $(GALLIUM_CFLAGS)
@@ -29,36 +30,7 @@ AM_CPPFLAGS = \
 
 noinst_LTLIBRARIES = libvega.la
 
-libvega_la_SOURCES =	\
-	api.c		\
-	api_context.c	\
-	api_filters.c	\
-	api_images.c	\
-	api_masks.c	\
-	api_misc.c	\
-	api_paint.c	\
-	api_params.c	\
-	api_path.c	\
-	api_text.c	\
-	api_transform.c	\
-	arc.c		\
-	bezier.c	\
-	handle.c	\
-	image.c		\
-	mask.c		\
-	paint.c		\
-	path.c		\
-	polygon.c	\
-	renderer.c	\
-	shader.c	\
-	shaders_cache.c	\
-	stroker.c	\
-	text.c		\
-	vg_context.c	\
-	vg_manager.c	\
-	vg_state.c	\
-	vg_translate.c	\
-	vgu.c
+libvega_la_SOURCES = $(C_SOURCES)
 
 BUILT_SOURCES = api_tmp.h
 CLEANFILES = api_tmp.h
