@@ -250,6 +250,11 @@ util_cpu_detect(void)
    util_cpu_caps.nr_cpus = 1;
 #endif
 
+   /* Make the fallback cacheline size nonzero so that it can be
+    * safely passed to align().
+    */
+   util_cpu_caps.cacheline = sizeof(void *);
+
 #if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
    if (has_cpuid()) {
       uint32_t regs[4];
