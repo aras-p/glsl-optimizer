@@ -11,7 +11,7 @@ AM_CFLAGS = $(VISIBILITY_CFLAGS)
 
 noinst_LTLIBRARIES =
 
-SUBDIRS = . trace rbug
+SUBDIRS = . identity trace rbug
 
 ################################################################################
 
@@ -21,15 +21,6 @@ galahad_libgalahad_la_SOURCES = \
 	galahad/glhd_objects.c \
 	galahad/glhd_context.c \
 	galahad/glhd_screen.c
-
-################################################################################
-
-noinst_LTLIBRARIES += identity/libidentity.la
-
-identity_libidentity_la_SOURCES = \
-	identity/id_objects.c \
-	identity/id_context.c \
-	identity/id_screen.c
 
 ################################################################################
 

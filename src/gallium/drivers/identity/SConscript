@@ -4,11 +4,8 @@ env = env.Clone()
 
 identity = env.ConvenienceLibrary(
 	target = 'identity',
-	source = [
-		'id_context.c',
-		'id_objects.c',
-		'id_screen.c',
-	])
+	source = env.ParseSourceList('Makefile.sources', 'C_SOURCES')
+	)
 
 env.Alias('identity', identity)
 
