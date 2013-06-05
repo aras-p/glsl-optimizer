@@ -28,7 +28,7 @@
 #include <string.h>
 #include <errno.h>
 #ifndef ETIME
-#define ETIME ETIMEOUT
+#define ETIME ETIMEDOUT
 #endif
 
 #include <xf86drm.h>
