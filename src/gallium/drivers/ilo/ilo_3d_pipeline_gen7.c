@@ -447,9 +447,7 @@ gen7_pipeline_sf(struct ilo_3d_pipeline *p,
    /* 3DSTATE_SF */
    if (DIRTY(RASTERIZER) || DIRTY(FRAMEBUFFER)) {
       gen7_wa_pipe_control_cs_stall(p, true, true);
-
-      p->gen7_3DSTATE_SF(p->dev,
-            &ilo->rasterizer->state, ilo->fb.state.zsbuf, p->cp);
+      p->gen7_3DSTATE_SF(p->dev, ilo->rasterizer, ilo->fb.state.zsbuf, p->cp);
    }
 }
 

@@ -1478,95 +1478,25 @@ gen6_emit_3DSTATE_CLIP(const struct ilo_dev_info *dev,
    ilo_cp_end(cp);
 }
 
-/**
- * Fill in DW2 to DW7 of 3DSTATE_SF.
- */
 void
-ilo_gpe_gen6_fill_3dstate_sf_raster(const struct ilo_dev_info *dev,
-                                    const struct pipe_rasterizer_state *rasterizer,
-                                    int num_samples,
-                                    enum pipe_format depth_format,
-                                    bool separate_stencil,
-                                    uint32_t *dw, int num_dwords)
+ilo_gpe_init_rasterizer_sf(const struct ilo_dev_info *dev,
+                           const struct pipe_rasterizer_state *state,
+                           struct ilo_rasterizer_sf *sf)
 {
    float offset_const, offset_scale, offset_clamp;
-   int format, line_width, point_width;
+   int line_width, point_width;
+   uint32_t dw1, dw2, dw3;
 
    ILO_GPE_VALID_GEN(dev, 6, 7);
-   assert(num_dwords == 6);
-
-   if (!rasterizer) {
-      dw[0] = 0;
-      dw[1] = (num_samples > 1) ? GEN6_SF_MSRAST_ON_PATTERN : 0;
-      dw[2] = 0;
-      dw[3] = 0;
-      dw[4] = 0;
-      dw[5] = 0;
-
-      return;
-   }
 
    /*
     * Scale the constant term.  The minimum representable value used by the HW
     * is not large enouch to be the minimum resolvable difference.
     */
-   offset_const = rasterizer->offset_units * 2.0f;
+   offset_const = state->offset_units * 2.0f;
 
-   offset_scale = rasterizer->offset_scale;
-   offset_clamp = rasterizer->offset_clamp;
-
-   if (separate_stencil) {
-      switch (depth_format) {
-      case PIPE_FORMAT_Z24_UNORM_S8_UINT:
-         depth_format = PIPE_FORMAT_Z24X8_UNORM;
-         break;
-      case PIPE_FORMAT_Z32_FLOAT_S8X24_UINT:
-         depth_format = PIPE_FORMAT_Z32_FLOAT;;
-         break;
-      case PIPE_FORMAT_S8_UINT:
-         depth_format = PIPE_FORMAT_NONE;
-         break;
-      default:
-         break;
-      }
-   }
-
-   format = gen6_translate_depth_format(depth_format);
-   /* FLOAT surface is assumed when there is no depth buffer */
-   if (format < 0)
-      format = BRW_DEPTHFORMAT_D32_FLOAT;
-
-   /*
-    * Smooth lines should intersect ceil(line_width) or (ceil(line_width) + 1)
-    * pixels in the minor direction.  We have to make the lines slightly
-    * thicker, 0.5 pixel on both sides, so that they intersect that many
-    * pixels are considered into the lines.
-    *
-    * Line width is in U3.7.
-    */
-   line_width = (int) ((rasterizer->line_width +
-            (float) rasterizer->line_smooth) * 128.0f + 0.5f);
-   line_width = CLAMP(line_width, 0, 1023);
-
-   /*
-    * From the Sandy Bridge PRM, volume 2 part 1, page 251:
-    *
-    *     "Software must not program a value of 0.0 when running in
-    *      MSRASTMODE_ON_xxx modes - zero-width lines are not available when
-    *      multisampling rasterization is enabled."
-    */
-   if (rasterizer->multisample) {
-      if (!line_width)
-         line_width = 128; /* 1.0f */
-   }
-   else if (line_width == 128 && !rasterizer->line_smooth) {
-      /* use GIQ rules */
-      line_width = 0;
-   }
-
-   /* in U8.3 */
-   point_width = (int) (rasterizer->point_size * 8.0f + 0.5f);
-   point_width = CLAMP(point_width, 1, 2047);
+   offset_scale = state->offset_scale;
+   offset_clamp = state->offset_clamp;
 
    /*
     * From the Sandy Bridge PRM, volume 2 part 1, page 248:
@@ -1576,13 +1506,11 @@ ilo_gpe_gen6_fill_3dstate_sf_raster(const struct ilo_dev_info *dev,
     *      should be cleared if clipping is disabled or Statistics Enable in
     *      CLIP_STATE is clear."
     */
-   dw[0] = GEN6_SF_STATISTICS_ENABLE |
-           GEN6_SF_VIEWPORT_TRANSFORM_ENABLE;
+   dw1 = GEN6_SF_STATISTICS_ENABLE |
+         GEN6_SF_VIEWPORT_TRANSFORM_ENABLE;
 
    /* XXX GEN6 path seems to work fine for GEN7 */
    if (false && dev->gen >= ILO_GEN(7)) {
-      dw[0] |= format << GEN7_SF_DEPTH_BUFFER_SURFACE_FORMAT_SHIFT;
-
       /*
        * From the Ivy Bridge PRM, volume 2 part 1, page 258:
        *
@@ -1592,15 +1520,13 @@ ilo_gpe_gen6_fill_3dstate_sf_raster(const struct ilo_dev_info *dev,
        *      bias (Slope, Bias) values are used. Setting this bit may have
        *      some degradation of performance for some workloads."
        */
-      if (rasterizer->offset_tri ||
-          rasterizer->offset_line ||
-          rasterizer->offset_point) {
+      if (state->offset_tri || state->offset_line || state->offset_point) {
          /* XXX need to scale offset_const according to the depth format */
-         dw[0] |= GEN6_SF_LEGACY_GLOBAL_DEPTH_BIAS;
+         dw1 |= GEN6_SF_LEGACY_GLOBAL_DEPTH_BIAS;
 
-         dw[0] |= GEN6_SF_GLOBAL_DEPTH_OFFSET_SOLID |
-                  GEN6_SF_GLOBAL_DEPTH_OFFSET_WIREFRAME |
-                  GEN6_SF_GLOBAL_DEPTH_OFFSET_POINT;
+         dw1 |= GEN6_SF_GLOBAL_DEPTH_OFFSET_SOLID |
+                GEN6_SF_GLOBAL_DEPTH_OFFSET_WIREFRAME |
+                GEN6_SF_GLOBAL_DEPTH_OFFSET_POINT;
       }
       else {
          offset_const = 0.0f;
@@ -1609,47 +1535,44 @@ ilo_gpe_gen6_fill_3dstate_sf_raster(const struct ilo_dev_info *dev,
       }
    }
    else {
-      if (dev->gen >= ILO_GEN(7))
-         dw[0] |= format << GEN7_SF_DEPTH_BUFFER_SURFACE_FORMAT_SHIFT;
-
-      if (rasterizer->offset_tri)
-         dw[0] |= GEN6_SF_GLOBAL_DEPTH_OFFSET_SOLID;
-      if (rasterizer->offset_line)
-         dw[0] |= GEN6_SF_GLOBAL_DEPTH_OFFSET_WIREFRAME;
-      if (rasterizer->offset_point)
-         dw[0] |= GEN6_SF_GLOBAL_DEPTH_OFFSET_POINT;
+      if (state->offset_tri)
+         dw1 |= GEN6_SF_GLOBAL_DEPTH_OFFSET_SOLID;
+      if (state->offset_line)
+         dw1 |= GEN6_SF_GLOBAL_DEPTH_OFFSET_WIREFRAME;
+      if (state->offset_point)
+         dw1 |= GEN6_SF_GLOBAL_DEPTH_OFFSET_POINT;
    }
 
-   switch (rasterizer->fill_front) {
+   switch (state->fill_front) {
    case PIPE_POLYGON_MODE_FILL:
-      dw[0] |= GEN6_SF_FRONT_SOLID;
+      dw1 |= GEN6_SF_FRONT_SOLID;
       break;
    case PIPE_POLYGON_MODE_LINE:
-      dw[0] |= GEN6_SF_FRONT_WIREFRAME;
+      dw1 |= GEN6_SF_FRONT_WIREFRAME;
       break;
    case PIPE_POLYGON_MODE_POINT:
-      dw[0] |= GEN6_SF_FRONT_POINT;
+      dw1 |= GEN6_SF_FRONT_POINT;
       break;
    }
 
-   switch (rasterizer->fill_back) {
+   switch (state->fill_back) {
    case PIPE_POLYGON_MODE_FILL:
-      dw[0] |= GEN6_SF_BACK_SOLID;
+      dw1 |= GEN6_SF_BACK_SOLID;
       break;
    case PIPE_POLYGON_MODE_LINE:
-      dw[0] |= GEN6_SF_BACK_WIREFRAME;
+      dw1 |= GEN6_SF_BACK_WIREFRAME;
       break;
    case PIPE_POLYGON_MODE_POINT:
-      dw[0] |= GEN6_SF_BACK_POINT;
+      dw1 |= GEN6_SF_BACK_POINT;
       break;
    }
 
-   if (rasterizer->front_ccw)
-      dw[0] |= GEN6_SF_WINDING_CCW;
+   if (state->front_ccw)
+      dw1 |= GEN6_SF_WINDING_CCW;
 
-   dw[1] = 0;
+   dw2 = 0;
 
-   if (rasterizer->line_smooth) {
+   if (state->line_smooth) {
       /*
        * From the Sandy Bridge PRM, volume 2 part 1, page 251:
        *
@@ -1663,58 +1586,154 @@ ilo_gpe_gen6_fill_3dstate_sf_raster(const struct ilo_dev_info *dev,
        *
        * TODO We do not check those yet.
        */
-      dw[1] |= GEN6_SF_LINE_AA_ENABLE |
-               GEN6_SF_LINE_END_CAP_WIDTH_1_0;
+      dw2 |= GEN6_SF_LINE_AA_ENABLE |
+             GEN6_SF_LINE_END_CAP_WIDTH_1_0;
    }
 
-   switch (rasterizer->cull_face) {
+   switch (state->cull_face) {
    case PIPE_FACE_NONE:
-      dw[1] |= GEN6_SF_CULL_NONE;
+      dw2 |= GEN6_SF_CULL_NONE;
       break;
    case PIPE_FACE_FRONT:
-      dw[1] |= GEN6_SF_CULL_FRONT;
+      dw2 |= GEN6_SF_CULL_FRONT;
       break;
    case PIPE_FACE_BACK:
-      dw[1] |= GEN6_SF_CULL_BACK;
+      dw2 |= GEN6_SF_CULL_BACK;
       break;
    case PIPE_FACE_FRONT_AND_BACK:
-      dw[1] |= GEN6_SF_CULL_BOTH;
+      dw2 |= GEN6_SF_CULL_BOTH;
       break;
    }
 
-   dw[1] |= line_width << GEN6_SF_LINE_WIDTH_SHIFT;
+   /*
+    * Smooth lines should intersect ceil(line_width) or (ceil(line_width) + 1)
+    * pixels in the minor direction.  We have to make the lines slightly
+    * thicker, 0.5 pixel on both sides, so that they intersect that many
+    * pixels are considered into the lines.
+    *
+    * Line width is in U3.7.
+    */
+   line_width = (int) ((state->line_width +
+            (float) state->line_smooth) * 128.0f + 0.5f);
+   line_width = CLAMP(line_width, 0, 1023);
 
-   if (rasterizer->scissor)
-      dw[1] |= GEN6_SF_SCISSOR_ENABLE;
+   if (line_width == 128 && !state->line_smooth) {
+      /* use GIQ rules */
+      line_width = 0;
+   }
 
-   if (num_samples > 1 && rasterizer->multisample)
-      dw[1] |= GEN6_SF_MSRAST_ON_PATTERN;
+   dw2 |= line_width << GEN6_SF_LINE_WIDTH_SHIFT;
 
-   dw[2] = GEN6_SF_LINE_AA_MODE_TRUE |
-           GEN6_SF_VERTEX_SUBPIXEL_8BITS;
+   if (state->scissor)
+      dw2 |= GEN6_SF_SCISSOR_ENABLE;
 
-   if (rasterizer->line_last_pixel)
-      dw[2] |= 1 << 31;
+   dw3 = GEN6_SF_LINE_AA_MODE_TRUE |
+         GEN6_SF_VERTEX_SUBPIXEL_8BITS;
 
-   if (rasterizer->flatshade_first) {
-      dw[2] |= 0 << GEN6_SF_TRI_PROVOKE_SHIFT |
-               0 << GEN6_SF_LINE_PROVOKE_SHIFT |
-               1 << GEN6_SF_TRIFAN_PROVOKE_SHIFT;
+   if (state->line_last_pixel)
+      dw3 |= 1 << 31;
+
+   if (state->flatshade_first) {
+      dw3 |= 0 << GEN6_SF_TRI_PROVOKE_SHIFT |
+             0 << GEN6_SF_LINE_PROVOKE_SHIFT |
+             1 << GEN6_SF_TRIFAN_PROVOKE_SHIFT;
    }
    else {
-      dw[2] |= 2 << GEN6_SF_TRI_PROVOKE_SHIFT |
-               1 << GEN6_SF_LINE_PROVOKE_SHIFT |
-               2 << GEN6_SF_TRIFAN_PROVOKE_SHIFT;
+      dw3 |= 2 << GEN6_SF_TRI_PROVOKE_SHIFT |
+             1 << GEN6_SF_LINE_PROVOKE_SHIFT |
+             2 << GEN6_SF_TRIFAN_PROVOKE_SHIFT;
    }
 
-   if (!rasterizer->point_size_per_vertex)
-      dw[2] |= GEN6_SF_USE_STATE_POINT_WIDTH;
+   if (!state->point_size_per_vertex)
+      dw3 |= GEN6_SF_USE_STATE_POINT_WIDTH;
 
-   dw[2] |= point_width;
+   /* in U8.3 */
+   point_width = (int) (state->point_size * 8.0f + 0.5f);
+   point_width = CLAMP(point_width, 1, 2047);
 
-   dw[3] = fui(offset_const);
-   dw[4] = fui(offset_scale);
-   dw[5] = fui(offset_clamp);
+   dw3 |= point_width;
+
+   STATIC_ASSERT(Elements(sf->payload) >= 6);
+   sf->payload[0] = dw1;
+   sf->payload[1] = dw2;
+   sf->payload[2] = dw3;
+   sf->payload[3] = fui(offset_const);
+   sf->payload[4] = fui(offset_scale);
+   sf->payload[5] = fui(offset_clamp);
+
+   if (state->multisample) {
+      sf->dw_msaa = GEN6_SF_MSRAST_ON_PATTERN;
+
+      /*
+       * From the Sandy Bridge PRM, volume 2 part 1, page 251:
+       *
+       *     "Software must not program a value of 0.0 when running in
+       *      MSRASTMODE_ON_xxx modes - zero-width lines are not available
+       *      when multisampling rasterization is enabled."
+       */
+      if (!line_width) {
+         line_width = 128; /* 1.0f */
+
+         sf->dw_msaa |= line_width << GEN6_SF_LINE_WIDTH_SHIFT;
+      }
+   }
+   else {
+      sf->dw_msaa = 0;
+   }
+}
+
+/**
+ * Fill in DW2 to DW7 of 3DSTATE_SF.
+ */
+void
+ilo_gpe_gen6_fill_3dstate_sf_raster(const struct ilo_dev_info *dev,
+                                    const struct ilo_rasterizer_sf *sf,
+                                    int num_samples,
+                                    enum pipe_format depth_format,
+                                    uint32_t *payload, unsigned payload_len)
+{
+   assert(payload_len == Elements(sf->payload));
+
+   if (sf) {
+      memcpy(payload, sf->payload, sizeof(sf->payload));
+
+      if (num_samples > 1)
+         payload[1] |= sf->dw_msaa;
+
+      if (dev->gen >= ILO_GEN(7)) {
+         int format;
+
+         /* separate stencil */
+         switch (depth_format) {
+         case PIPE_FORMAT_Z24_UNORM_S8_UINT:
+            depth_format = PIPE_FORMAT_Z24X8_UNORM;
+            break;
+         case PIPE_FORMAT_Z32_FLOAT_S8X24_UINT:
+            depth_format = PIPE_FORMAT_Z32_FLOAT;;
+            break;
+         case PIPE_FORMAT_S8_UINT:
+            depth_format = PIPE_FORMAT_NONE;
+            break;
+         default:
+            break;
+         }
+
+         format = gen6_translate_depth_format(depth_format);
+         /* FLOAT surface is assumed when there is no depth buffer */
+         if (format < 0)
+            format = BRW_DEPTHFORMAT_D32_FLOAT;
+
+         payload[0] |= format << GEN7_SF_DEPTH_BUFFER_SURFACE_FORMAT_SHIFT;
+      }
+   }
+   else {
+      payload[0] = 0;
+      payload[1] = (num_samples > 1) ? GEN6_SF_MSRAST_ON_PATTERN : 0;
+      payload[2] = 0;
+      payload[3] = 0;
+      payload[4] = 0;
+      payload[5] = 0;
+   }
 }
 
 /**
@@ -1917,27 +1936,27 @@ ilo_gpe_gen6_fill_3dstate_sf_sbe(const struct ilo_dev_info *dev,
 
 static void
 gen6_emit_3DSTATE_SF(const struct ilo_dev_info *dev,
-                     const struct pipe_rasterizer_state *rasterizer,
+                     const struct ilo_rasterizer_state *rasterizer,
                      const struct ilo_shader *fs,
                      const struct ilo_shader *last_sh,
                      struct ilo_cp *cp)
 {
    const uint32_t cmd = ILO_GPE_CMD(0x3, 0x0, 0x13);
    const uint8_t cmd_len = 20;
-   uint32_t dw_raster[6], dw_sbe[13];
+   uint32_t payload_raster[6], payload_sbe[13];
 
    ILO_GPE_VALID_GEN(dev, 6, 6);
 
-   ilo_gpe_gen6_fill_3dstate_sf_raster(dev, rasterizer,
-         1, PIPE_FORMAT_NONE, false, dw_raster, Elements(dw_raster));
-   ilo_gpe_gen6_fill_3dstate_sf_sbe(dev, rasterizer,
-         fs, last_sh, dw_sbe, Elements(dw_sbe));
+   ilo_gpe_gen6_fill_3dstate_sf_raster(dev, &rasterizer->sf,
+         1, PIPE_FORMAT_NONE, payload_raster, Elements(payload_raster));
+   ilo_gpe_gen6_fill_3dstate_sf_sbe(dev, &rasterizer->state,
+         fs, last_sh, payload_sbe, Elements(payload_sbe));
 
    ilo_cp_begin(cp, cmd_len);
    ilo_cp_write(cp, cmd | (cmd_len - 2));
-   ilo_cp_write(cp, dw_sbe[0]);
-   ilo_cp_write_multi(cp, dw_raster, 6);
-   ilo_cp_write_multi(cp, &dw_sbe[1], 12);
+   ilo_cp_write(cp, payload_sbe[0]);
+   ilo_cp_write_multi(cp, payload_raster, 6);
+   ilo_cp_write_multi(cp, &payload_sbe[1], 12);
    ilo_cp_end(cp);
 }
 

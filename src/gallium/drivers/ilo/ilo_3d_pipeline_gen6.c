@@ -633,8 +633,7 @@ gen6_pipeline_sf(struct ilo_3d_pipeline *p,
          (ilo->gs)? ilo->gs->shader :
          (ilo->vs)? ilo->vs->shader : NULL;
 
-      p->gen6_3DSTATE_SF(p->dev,
-            &ilo->rasterizer->state, fs, last_sh, p->cp);
+      p->gen6_3DSTATE_SF(p->dev, ilo->rasterizer, fs, last_sh, p->cp);
    }
 }
 

@@ -141,23 +141,25 @@ gen7_emit_3DSTATE_GS(const struct ilo_dev_info *dev,
 
 static void
 gen7_emit_3DSTATE_SF(const struct ilo_dev_info *dev,
-                     const struct pipe_rasterizer_state *rasterizer,
+                     const struct ilo_rasterizer_state *rasterizer,
                      const struct pipe_surface *zs_surf,
                      struct ilo_cp *cp)
 {
    const uint32_t cmd = ILO_GPE_CMD(0x3, 0x0, 0x13);
    const uint8_t cmd_len = 7;
-   uint32_t dw[6];
+   const int num_samples = 1;
+   uint32_t payload[6];
 
    ILO_GPE_VALID_GEN(dev, 7, 7);
 
-   ilo_gpe_gen6_fill_3dstate_sf_raster(dev, rasterizer,
-         1, (zs_surf) ? zs_surf->format : PIPE_FORMAT_NONE, true,
-         dw, Elements(dw));
+   ilo_gpe_gen6_fill_3dstate_sf_raster(dev,
+         &rasterizer->sf, num_samples,
+         (zs_surf) ? zs_surf->format : PIPE_FORMAT_NONE,
+         payload, Elements(payload));
 
    ilo_cp_begin(cp, cmd_len);
    ilo_cp_write(cp, cmd | (cmd_len - 2));
-   ilo_cp_write_multi(cp, dw, 6);
+   ilo_cp_write_multi(cp, payload, 6);
    ilo_cp_end(cp);
 }
 

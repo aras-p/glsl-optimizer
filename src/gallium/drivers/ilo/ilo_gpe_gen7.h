@@ -166,7 +166,7 @@ typedef ilo_gpe_gen6_3DSTATE_CLIP ilo_gpe_gen7_3DSTATE_CLIP;
 
 typedef void
 (*ilo_gpe_gen7_3DSTATE_SF)(const struct ilo_dev_info *dev,
-                           const struct pipe_rasterizer_state *rasterizer,
+                           const struct ilo_rasterizer_state *rasterizer,
                            const struct pipe_surface *zs_surf,
                            struct ilo_cp *cp);
 

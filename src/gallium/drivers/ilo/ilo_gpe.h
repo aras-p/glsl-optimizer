@@ -118,10 +118,17 @@ struct ilo_rasterizer_clip {
    uint32_t can_enable_guardband;
 };
 
+struct ilo_rasterizer_sf {
+   /* 3DSTATE_SF */
+   uint32_t payload[6];
+   uint32_t dw_msaa;
+};
+
 struct ilo_rasterizer_state {
    struct pipe_rasterizer_state state;
 
    struct ilo_rasterizer_clip clip;
+   struct ilo_rasterizer_sf sf;
 };
 
 struct ilo_dsa_state {
@@ -267,12 +274,18 @@ ilo_gpe_init_rasterizer_clip(const struct ilo_dev_info *dev,
                              const struct pipe_rasterizer_state *state,
                              struct ilo_rasterizer_clip *clip);
 
+void
+ilo_gpe_init_rasterizer_sf(const struct ilo_dev_info *dev,
+                           const struct pipe_rasterizer_state *state,
+                           struct ilo_rasterizer_sf *sf);
+
 static inline void
 ilo_gpe_init_rasterizer(const struct ilo_dev_info *dev,
                         const struct pipe_rasterizer_state *state,
                         struct ilo_rasterizer_state *rasterizer)
 {
    ilo_gpe_init_rasterizer_clip(dev, state, &rasterizer->clip);
+   ilo_gpe_init_rasterizer_sf(dev, state, &rasterizer->sf);
 }
 
 void
