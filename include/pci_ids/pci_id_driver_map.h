@@ -8,13 +8,13 @@
 #endif
 
 static const int i915_chip_ids[] = {
-#define CHIPSET(chip, desc, misc) chip,
+#define CHIPSET(chip, desc) chip,
 #include "pci_ids/i915_pci_ids.h"
 #undef CHIPSET
 };
 
 static const int i965_chip_ids[] = {
-#define CHIPSET(chip, desc, misc) chip,
+#define CHIPSET(chip, desc) chip,
 #include "pci_ids/i965_pci_ids.h"
 #undef CHIPSET
 };
