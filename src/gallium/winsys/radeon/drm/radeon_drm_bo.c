@@ -167,7 +167,7 @@ static void radeon_bo_wait(struct pb_buffer *_buf, enum radeon_bo_usage usage)
         struct drm_radeon_gem_wait_idle args;
         memset(&args, 0, sizeof(args));
         args.handle = bo->handle;
-        while (drmCommandWriteRead(bo->rws->fd, DRM_RADEON_GEM_WAIT_IDLE,
+        while (drmCommandWrite(bo->rws->fd, DRM_RADEON_GEM_WAIT_IDLE,
                                    &args, sizeof(args)) == -EBUSY);
     }
 }

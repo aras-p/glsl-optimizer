@@ -98,7 +98,7 @@ static void bo_wait(struct ctx *ctx, struct bo *bo)
     memset(&args, 0, sizeof(args));
     args.handle = bo->handle;
     do {
-        r = drmCommandWriteRead(ctx->fd, DRM_RADEON_GEM_WAIT_IDLE, &args, sizeof(args));
+        r = drmCommandWrite(ctx->fd, DRM_RADEON_GEM_WAIT_IDLE, &args, sizeof(args));
     } while (r == -EBUSY);
 }
 
