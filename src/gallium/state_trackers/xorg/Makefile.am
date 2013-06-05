@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
+include Makefile.sources
 include $(top_srcdir)/src/gallium/Automake.inc
 
 AM_CFLAGS = \
@@ -28,6 +29,7 @@ AM_CFLAGS = \
 	$(LIBKMS_XORG_CFLAGS) \
 	$(LIBDRM_XORG_CFLAGS) \
 	$(shell $(PKG_CONFIG) --cflags-only-I xorg-server)
+
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/src/mesa \
@@ -38,14 +40,4 @@ AM_CPPFLAGS = \
 
 noinst_LTLIBRARIES = libxorgtracker.la
 
-libxorgtracker_la_SOURCES =	\
-	xorg_composite.c	\
-	xorg_crtc.c		\
-	xorg_dri2.c		\
-	xorg_driver.c		\
-	xorg_exa.c		\
-	xorg_exa_tgsi.c		\
-	xorg_output.c		\
-	xorg_renderer.c		\
-	xorg_xv.c		\
-	xorg_xvmc.c
+libxorgtracker_la_SOURCES = $(C_SOURCES)
