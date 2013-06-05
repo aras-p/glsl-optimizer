@@ -407,6 +407,12 @@ static const int extra_gl30_es3[] = {
     EXTRA_END,
 };
 
+static const int extra_gl32_es3[] = {
+    EXTRA_VERSION_32,
+    EXTRA_API_ES3,
+    EXTRA_END,
+};
+
 static const int
 extra_ARB_vertex_program_api_es2[] = {
    EXT(ARB_vertex_program),
@@ -724,6 +730,7 @@ find_custom_value(struct gl_context *ctx, const struct value_desc *d, union valu
       break;
 
    case GL_MAX_VARYING_FLOATS_ARB:
+   case GL_MAX_FRAGMENT_INPUT_COMPONENTS:
       v->value_int = ctx->Const.MaxVarying * 4;
       break;
 
