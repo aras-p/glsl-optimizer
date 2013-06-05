@@ -2003,6 +2003,7 @@ AC_CONFIG_FILES([Makefile
 		src/gallium/drivers/freedreno/Makefile
 		src/gallium/drivers/freedreno/a2xx/Makefile
 		src/gallium/drivers/freedreno/a3xx/Makefile
+		src/gallium/drivers/galahad/Makefile
 		src/gallium/drivers/i915/Makefile
 		src/gallium/drivers/identity/Makefile
 		src/gallium/drivers/ilo/Makefile

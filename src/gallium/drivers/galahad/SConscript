@@ -4,11 +4,8 @@ env = env.Clone()
 
 galahad = env.ConvenienceLibrary(
 	target = 'galahad',
-	source = [
-		'glhd_context.c',
-		'glhd_objects.c',
-		'glhd_screen.c',
-	])
+	source = env.ParseSourceList('Makefile.sources', 'C_SOURCES')
+	)
 
 env.Alias('galahad', galahad)
 

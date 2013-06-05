@@ -1,26 +1,7 @@
 AUTOMAKE_OPTIONS = subdir-objects
 
-AM_CPPFLAGS = \
-	-I$(top_srcdir)/include \
-	-I$(top_srcdir)/src/gallium/include \
-	-I$(top_srcdir)/src/gallium/auxiliary \
-	-I$(top_srcdir)/src/gallium/drivers \
-	$(DEFINES)
 
-AM_CFLAGS = $(VISIBILITY_CFLAGS)
-
-noinst_LTLIBRARIES =
-
-SUBDIRS = . identity noop trace rbug
-
-################################################################################
-
-noinst_LTLIBRARIES += galahad/libgalahad.la
-
-galahad_libgalahad_la_SOURCES = \
-	galahad/glhd_objects.c \
-	galahad/glhd_context.c \
-	galahad/glhd_screen.c
+SUBDIRS = . galahad identity noop trace rbug
 
 ################################################################################
 
