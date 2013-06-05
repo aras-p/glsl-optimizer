@@ -438,7 +438,7 @@ test "x$enable_asm" = xno && AC_MSG_RESULT([no])
 # disable if cross compiling on x86/x86_64 since we must run gen_matypes
 if test "x$enable_asm" = xyes && test "x$cross_compiling" = xyes; then
     case "$host_cpu" in
-    i?86 | x86_64)
+    i?86 | x86_64 | amd64)
         enable_asm=no
         AC_MSG_RESULT([no, cross compiling])
         ;;
@@ -457,7 +457,7 @@ if test "x$enable_asm" = xyes; then
             ;;
         esac
         ;;
-    x86_64)
+    x86_64|amd64)
         case "$host_os" in
         linux* | *freebsd* | dragonfly* | *netbsd* | openbsd*)
             test "x$enable_32bit" = xyes && asm_arch=x86 || asm_arch=x86_64
@@ -478,7 +478,7 @@ if test "x$enable_asm" = xyes; then
         DEFINES="$DEFINES -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM"
         AC_MSG_RESULT([yes, x86])
         ;;
-    x86_64)
+    x86_64|amd64)
         DEFINES="$DEFINES -DUSE_X86_64_ASM"
         AC_MSG_RESULT([yes, x86_64])
         ;;
@@ -966,7 +966,7 @@ if test "x$enable_dri" = xyes; then
         DEFINES="$DEFINES -DHAVE_ALIAS"
 
         case "$host_cpu" in
-        x86_64)
+        x86_64|amd64)
             if test "x$DRI_DIRS" = "xyes"; then
                 DRI_DIRS="i915 i965 nouveau r200 radeon swrast"
             fi
@@ -1573,7 +1573,7 @@ if test "x$with_gallium_drivers" = x; then
 fi
 if test "x$enable_gallium_llvm" = xauto; then
     case "$host_cpu" in
-    i*86|x86_64) enable_gallium_llvm=yes;;
+    i*86|x86_64|amd64) enable_gallium_llvm=yes;;
     esac
 fi
 if test "x$enable_gallium_llvm" = xyes; then
@@ -1705,7 +1705,7 @@ gallium_check_st() {
 gallium_require_llvm() {
     if test "x$MESA_LLVM" = x0; then
         case "$host_cpu" in
-        i*86|x86_64) AC_MSG_ERROR([LLVM is required to build $1 on x86 and x86_64]);;
+        i*86|x86_64|amd64) AC_MSG_ERROR([LLVM is required to build $1 on x86 and x86_64]);;
         esac
     fi
 }
