@@ -1,6 +1,5 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.9
  *
  * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
  * Copyright (C) 2010 LunarG Inc.

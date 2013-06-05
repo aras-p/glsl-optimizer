@@ -1,6 +1,5 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.7
  *
  * Copyright (C) 2009 Chia-I Wu <olv@0xlab.org>
  *

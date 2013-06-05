@@ -1,6 +1,5 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
  *
  * Copyright (C) 2005  Tungsten Graphics   All Rights Reserved.
  *

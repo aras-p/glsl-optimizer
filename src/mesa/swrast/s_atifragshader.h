@@ -1,6 +1,5 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
  *
  * Copyright (C) 1999-2003  David Airlie   All Rights Reserved.
  *

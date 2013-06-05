@@ -1,6 +1,5 @@
 /*
  * Mesa 3-D graphics library
- * Version:  3.0
  * Copyright (C) 1995-1998  Brian Paul
  *
  * This library is free software; you can redistribute it and/or

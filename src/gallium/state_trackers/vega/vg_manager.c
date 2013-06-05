@@ -1,6 +1,5 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.9
  *
  * Copyright 2009 VMware, Inc.  All Rights Reserved.
  * Copyright (C) 2010 LunarG Inc.

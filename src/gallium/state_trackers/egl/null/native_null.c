@@ -1,6 +1,5 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.12
  *
  * Copyright (C) 2011 LunarG Inc.
  *
