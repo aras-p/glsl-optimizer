@@ -737,7 +737,18 @@ draw_current_shader_clipvertex_output(const struct draw_context *draw)
 uint
 draw_current_shader_clipdistance_output(const struct draw_context *draw, int index)
 {
+   if (draw->gs.geometry_shader)
+      return draw->gs.geometry_shader->clipdistance_output[index];
    return draw->vs.clipdistance_output[index];
+}
+
+
+uint
+draw_current_shader_num_written_clipdistances(const struct draw_context *draw)
+{
+   if (draw->gs.geometry_shader)
+      return draw->gs.geometry_shader->info.num_written_clipdistance;
+   return draw->vs.vertex_shader->info.num_written_clipdistance;
 }
 
 /**

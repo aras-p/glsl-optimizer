@@ -111,7 +111,8 @@ static boolean TAG(do_cliptest)( struct pt_post_vs *pvs,
 
          if (flags & DO_CLIP_USER) {
             unsigned ucp_mask = ucp_enable;
-            int num_written_clipdistance = pvs->draw->vs.vertex_shader->info.num_written_clipdistance;
+            int num_written_clipdistance =
+               draw_current_shader_num_written_clipdistances(pvs->draw);
             while (ucp_mask) {
                unsigned plane_idx = ffs(ucp_mask)-1;
                ucp_mask &= ~(1 << plane_idx);

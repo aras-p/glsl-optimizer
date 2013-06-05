@@ -791,6 +791,12 @@ draw_create_geometry_shader(struct draw_context *draw,
          gs->position_output = i;
       if (gs->info.output_semantic_name[i] == TGSI_SEMANTIC_VIEWPORT_INDEX)
          gs->viewport_index_output = i;
+      if (gs->info.output_semantic_name[i] == TGSI_SEMANTIC_CLIPDIST) {
+         if (gs->info.output_semantic_index[i] == 0)
+            gs->clipdistance_output[0] = i;
+         else
+            gs->clipdistance_output[1] = i;
+      }
    }
 
    gs->machine = draw->gs.tgsi.machine;
