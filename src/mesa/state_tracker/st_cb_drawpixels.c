@@ -1546,6 +1546,7 @@ st_CopyPixels(struct gl_context *ctx, GLint srcx, GLint srcy,
 
    if (!screen->is_format_supported(screen, srcFormat, st->internal_target, 0,
                                     srcBind)) {
+      /* srcFormat is non-renderable. Find a compatible renderable format. */
       if (type == GL_DEPTH) {
          srcFormat = st_choose_format(st, GL_DEPTH_COMPONENT, GL_NONE,
                                       GL_NONE, st->internal_target, 0,
@@ -1566,6 +1567,11 @@ st_CopyPixels(struct gl_context *ctx, GLint srcx, GLint srcy,
          }
          else if (util_format_is_pure_uint(srcFormat)) {
             srcFormat = st_choose_format(st, GL_RGBA32UI, GL_NONE,
+                                         GL_NONE, st->internal_target, 0,
+                                         srcBind, FALSE);
+         }
+         else if (util_format_is_snorm(srcFormat)) {
+            srcFormat = st_choose_format(st, GL_RGBA16_SNORM, GL_NONE,
                                          GL_NONE, st->internal_target, 0,
                                          srcBind, FALSE);
          }
