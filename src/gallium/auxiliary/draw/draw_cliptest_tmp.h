@@ -35,8 +35,8 @@ static boolean TAG(do_cliptest)( struct pt_post_vs *pvs,
    const unsigned cv = draw_current_shader_clipvertex_output(pvs->draw);
    unsigned cd[2];
    const unsigned ef = pvs->draw->vs.edgeflag_output;
-   const unsigned ucp_enable = pvs->draw->rasterizer->clip_plane_enable;
-   const unsigned flags = (FLAGS);
+   unsigned ucp_enable = pvs->draw->rasterizer->clip_plane_enable;
+   unsigned flags = (FLAGS);
    unsigned need_pipeline = 0;
    unsigned j;
    unsigned i;
@@ -46,12 +46,21 @@ static boolean TAG(do_cliptest)( struct pt_post_vs *pvs,
    int viewport_index = 
       draw_current_shader_uses_viewport_index(pvs->draw) ?
       *((unsigned*)out->data[viewport_index_output]): 0;
-      
+   int num_written_clipdistance =
+      draw_current_shader_num_written_clipdistances(pvs->draw);
+
    cd[0] = draw_current_shader_clipdistance_output(pvs->draw, 0);
    cd[1] = draw_current_shader_clipdistance_output(pvs->draw, 1);
-  
+
    if (cd[0] != pos || cd[1] != pos)
-     have_cd = true;
+      have_cd = true;
+
+   /* If clipdistance semantic has been written by the shader
+    * that means we're expected to do 'user plane clipping' */
+   if (num_written_clipdistance && !(flags & DO_CLIP_USER)) {
+      flags |= DO_CLIP_USER;
+      ucp_enable = (1 << num_written_clipdistance) - 1;
+   }
 
    for (j = 0; j < info->count; j++) {
       float *position = out->data[pos];
@@ -111,8 +120,7 @@ static boolean TAG(do_cliptest)( struct pt_post_vs *pvs,
 
          if (flags & DO_CLIP_USER) {
             unsigned ucp_mask = ucp_enable;
-            int num_written_clipdistance =
-               draw_current_shader_num_written_clipdistances(pvs->draw);
+
             while (ucp_mask) {
                unsigned plane_idx = ffs(ucp_mask)-1;
                ucp_mask &= ~(1 << plane_idx);

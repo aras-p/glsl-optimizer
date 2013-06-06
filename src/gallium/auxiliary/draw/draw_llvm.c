@@ -1146,6 +1146,11 @@ generate_clipmask(struct draw_llvm *llvm,
    if (cd[0] != pos || cd[1] != pos)
       have_cd = true;
 
+   if (num_written_clipdistance && !clip_user) {
+      clip_user = true;
+      ucp_enable = (1 << num_written_clipdistance) - 1;
+   }
+
    mask = lp_build_const_int_vec(gallivm, i32_type, 0);
    temp = lp_build_const_int_vec(gallivm, i32_type, 0);
    zero = lp_build_const_vec(gallivm, f32_type, 0);         /* 0.0f 0.0f 0.0f 0.0f */
