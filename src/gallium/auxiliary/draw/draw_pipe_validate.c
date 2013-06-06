@@ -93,6 +93,9 @@ draw_need_pipeline(const struct draw_context *draw,
       /* AA lines */
       if (rasterizer->line_smooth && draw->pipeline.aaline)
          return TRUE;
+
+      if (draw_current_shader_num_written_culldistances(draw))
+         return TRUE;
    }
 
    if (points(prim))
@@ -136,6 +139,9 @@ draw_need_pipeline(const struct draw_context *draw,
       /* two-side lighting */
       if (rasterizer->light_twoside)
          return TRUE;
+
+      if (draw_current_shader_num_written_culldistances(draw))
+         return TRUE;
    }
 
    /* polygon cull - this is difficult - hardware can cull just fine
@@ -145,7 +151,7 @@ draw_need_pipeline(const struct draw_context *draw,
     *
    if (rasterizer->cull_mode)
       return TRUE;
-    */
+   */
 
    return FALSE;
 }
@@ -260,7 +266,8 @@ static struct draw_stage *validate_pipeline( struct draw_stage *stage )
     * to less work emitting vertices, smaller vertex buffers, etc.
     * It's difficult to say whether this will be true in general.
     */
-   if (need_det || rast->cull_face != PIPE_FACE_NONE) {
+   if (need_det || rast->cull_face != PIPE_FACE_NONE ||
+       draw_current_shader_num_written_culldistances(draw)) {
       draw->pipeline.cull->next = next;
       next = draw->pipeline.cull;
    }

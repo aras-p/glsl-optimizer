@@ -68,6 +68,7 @@ struct draw_geometry_shader {
    unsigned position_output;
    unsigned viewport_index_output;
    unsigned clipdistance_output[2];
+   unsigned culldistance_output[2];
 
    unsigned max_output_vertices;
    unsigned primitive_boundary;

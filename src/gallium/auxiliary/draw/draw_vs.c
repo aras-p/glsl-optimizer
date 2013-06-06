@@ -90,6 +90,9 @@ draw_create_vertex_shader(struct draw_context *draw,
                vs->clipdistance_output[0] = i;
             else
                vs->clipdistance_output[1] = i;
+         } else if (vs->info.output_semantic_name[i] == TGSI_SEMANTIC_CULLDIST) {
+            debug_assert(vs->info.output_semantic_index[i] < Elements(vs->culldistance_output));
+            vs->culldistance_output[vs->info.output_semantic_index[i]] = i;
          }
       }
       if (!found_clipvertex)

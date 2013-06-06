@@ -113,6 +113,7 @@ struct draw_vertex_shader {
    unsigned edgeflag_output;
    unsigned clipvertex_output;
    unsigned clipdistance_output[2];
+   unsigned culldistance_output[2];
    /* Extracted from shader:
     */
    const float (*immediates)[4];

@@ -752,6 +752,23 @@ draw_current_shader_num_written_clipdistances(const struct draw_context *draw)
    return draw->vs.vertex_shader->info.num_written_clipdistance;
 }
 
+
+uint
+draw_current_shader_culldistance_output(const struct draw_context *draw, int index)
+{
+   if (draw->gs.geometry_shader)
+      return draw->gs.geometry_shader->culldistance_output[index];
+   return draw->vs.vertex_shader->culldistance_output[index];
+}
+
+uint
+draw_current_shader_num_written_culldistances(const struct draw_context *draw)
+{
+   if (draw->gs.geometry_shader)
+      return draw->gs.geometry_shader->info.num_written_culldistance;
+   return draw->vs.vertex_shader->info.num_written_culldistance;
+}
+
 /**
  * Return a pointer/handle for a driver/CSO rasterizer object which
  * disabled culling, stippling, unfilled tris, etc.

@@ -797,6 +797,10 @@ draw_create_geometry_shader(struct draw_context *draw,
          else
             gs->clipdistance_output[1] = i;
       }
+      if (gs->info.output_semantic_name[i] == TGSI_SEMANTIC_CULLDIST) {
+         debug_assert(gs->info.output_semantic_index[i] < Elements(gs->culldistance_output));
+         gs->culldistance_output[gs->info.output_semantic_index[i]] = i;
+      }
    }
 
    gs->machine = draw->gs.tgsi.machine;
