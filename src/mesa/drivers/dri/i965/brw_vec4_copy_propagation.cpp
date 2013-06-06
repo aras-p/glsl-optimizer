@@ -216,6 +216,7 @@ vec4_visitor::try_copy_propagation(struct intel_context *intel,
       return false;
 
    bool is_3src_inst = (inst->opcode == BRW_OPCODE_LRP ||
+                        inst->opcode == BRW_OPCODE_MAD ||
                         inst->opcode == BRW_OPCODE_BFE ||
                         inst->opcode == BRW_OPCODE_BFI2);
    if (is_3src_inst && value.file == UNIFORM)

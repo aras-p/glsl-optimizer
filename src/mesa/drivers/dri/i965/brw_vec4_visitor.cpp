@@ -1250,6 +1250,38 @@ vec4_visitor::try_emit_sat(ir_expression *ir)
    return true;
 }
 
+bool
+vec4_visitor::try_emit_mad(ir_expression *ir, int mul_arg)
+{
+   /* 3-src instructions were introduced in gen6. */
+   if (intel->gen < 6)
+      return false;
+
+   /* MAD can only handle floating-point data. */
+   if (ir->type->base_type != GLSL_TYPE_FLOAT)
+      return false;
+
+   ir_rvalue *nonmul = ir->operands[1 - mul_arg];
+   ir_expression *mul = ir->operands[mul_arg]->as_expression();
+
+   if (!mul || mul->operation != ir_binop_mul)
+      return false;
+
+   nonmul->accept(this);
+   src_reg src0 = fix_3src_operand(this->result);
+
+   mul->operands[0]->accept(this);
+   src_reg src1 = fix_3src_operand(this->result);
+
+   mul->operands[1]->accept(this);
+   src_reg src2 = fix_3src_operand(this->result);
+
+   this->result = src_reg(this, ir->type);
+   emit(BRW_OPCODE_MAD, dst_reg(this->result), src0, src1, src2);
+
+   return true;
+}
+
 void
 vec4_visitor::emit_bool_comparison(unsigned int op,
 				 dst_reg dst, src_reg src0, src_reg src1)
@@ -1292,6 +1324,11 @@ vec4_visitor::visit(ir_expression *ir)
 
    if (try_emit_sat(ir))
       return;
+
+   if (ir->operation == ir_binop_add) {
+      if (try_emit_mad(ir, 0) || try_emit_mad(ir, 1))
+	 return;
+   }
 
    for (operand = 0; operand < ir->get_num_operands(); operand++) {
       this->result.file = BAD_FILE;

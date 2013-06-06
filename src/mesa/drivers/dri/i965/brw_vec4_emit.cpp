@@ -772,6 +772,10 @@ vec4_generator::generate_code(exec_list *instructions)
 	 brw_set_acc_write_control(p, 0);
 	 break;
 
+      case BRW_OPCODE_MAD:
+         brw_MAD(p, dst, src[0], src[1], src[2]);
+         break;
+
       case BRW_OPCODE_FRC:
 	 brw_FRC(p, dst, src[0]);
 	 break;
