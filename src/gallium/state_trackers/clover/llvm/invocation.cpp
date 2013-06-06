@@ -211,6 +211,13 @@ namespace {
    find_kernels(llvm::Module *mod, std::vector<llvm::Function *> &kernels) {
       const llvm::NamedMDNode *kernel_node =
                                  mod->getNamedMetadata("opencl.kernels");
+      // This means there are no kernels in the program.  The spec does not
+      // require that we return an error here, but there will be an error if
+      // the user tries to pass this program to a clCreateKernel() call.
+      if (!kernel_node) {
+         return;
+      }
+
       for (unsigned i = 0; i < kernel_node->getNumOperands(); ++i) {
          kernels.push_back(llvm::dyn_cast<llvm::Function>(
                                     kernel_node->getOperand(i)->getOperand(0)));
