@@ -79,7 +79,8 @@ const char *tgsi_semantic_names[TGSI_SEMANTIC_COUNT] =
    "THREAD_ID",
    "TEXCOORD",
    "PCOORD",
-   "VIEWPORT_INDEX"
+   "VIEWPORT_INDEX",
+   "LAYER"
 };
 
 const char *tgsi_texture_names[TGSI_TEXTURE_COUNT] =

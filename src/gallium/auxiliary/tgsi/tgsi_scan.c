@@ -217,6 +217,11 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                       TGSI_SEMANTIC_VIEWPORT_INDEX) {
                      info->writes_viewport_index = TRUE;
                   }
+                  if (procType == TGSI_PROCESSOR_GEOMETRY &&
+                      fulldecl->Semantic.Name ==
+                      TGSI_SEMANTIC_LAYER) {
+                     info->writes_layer = TRUE;
+                  }
                }
 
              }
