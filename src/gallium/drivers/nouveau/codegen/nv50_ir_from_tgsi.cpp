@@ -2199,7 +2199,6 @@ Converter::handleInstruction(const struct tgsi_full_instruction *insn)
    case TGSI_OPCODE_IMUL_HI:
    case TGSI_OPCODE_UMUL_HI:
    case TGSI_OPCODE_OR:
-   case TGSI_OPCODE_POW:
    case TGSI_OPCODE_SHL:
    case TGSI_OPCODE_ISHR:
    case TGSI_OPCODE_USHR:
@@ -2253,6 +2252,11 @@ Converter::handleInstruction(const struct tgsi_full_instruction *insn)
    case TGSI_OPCODE_UARL:
       FOR_EACH_DST_ENABLED_CHANNEL(0, c, tgsi)
          mkOp1(OP_MOV, TYPE_U32, dst0[c], fetchSrc(0, c));
+      break;
+   case TGSI_OPCODE_POW:
+      val0 = mkOp2v(op, TYPE_F32, getScratch(), fetchSrc(0, 0), fetchSrc(1, 0));
+      FOR_EACH_DST_ENABLED_CHANNEL(0, c, tgsi)
+         mkOp1(OP_MOV, TYPE_F32, dst0[c], val0);
       break;
    case TGSI_OPCODE_EX2:
    case TGSI_OPCODE_LG2:
