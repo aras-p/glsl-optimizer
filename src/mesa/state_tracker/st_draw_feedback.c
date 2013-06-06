@@ -40,6 +40,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "util/u_inlines.h"
+#include "util/u_draw.h"
 
 #include "draw/draw_private.h"
 #include "draw/draw_context.h"
@@ -77,6 +78,27 @@ set_feedback_vertex_format(struct gl_context *ctx)
 
    draw_set_vertex_info(st->draw, &vinfo);
 #endif
+}
+
+
+/**
+ * Helper for drawing current vertex arrays.
+ */
+static void
+draw_arrays(struct draw_context *draw, unsigned mode,
+            unsigned start, unsigned count)
+{
+   struct pipe_draw_info info;
+
+   util_draw_init_info(&info);
+
+   info.mode = mode;
+   info.start = start;
+   info.count = count;
+   info.min_index = start;
+   info.max_index = start + count - 1;
+
+   draw_vbo(draw, &info);
 }
 
 
