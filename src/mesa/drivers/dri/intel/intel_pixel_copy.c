@@ -44,34 +44,6 @@
 #define FILE_DEBUG_FLAG DEBUG_PIXEL
 
 /**
- * Check if any fragment operations are in effect which might effect
- * glCopyPixels.  Differs from intel_check_blit_fragment_ops in that
- * we allow Scissor.
- */
-static bool
-intel_check_copypixel_blit_fragment_ops(struct gl_context * ctx)
-{
-   if (ctx->NewState)
-      _mesa_update_state(ctx);
-
-   /* Could do logicop with the blitter: 
-    */
-   return !(ctx->_ImageTransferState ||
-            ctx->Color.AlphaEnabled ||
-            ctx->Depth.Test ||
-            ctx->Fog.Enabled ||
-            ctx->Stencil._Enabled ||
-            !ctx->Color.ColorMask[0][0] ||
-            !ctx->Color.ColorMask[0][1] ||
-            !ctx->Color.ColorMask[0][2] ||
-            !ctx->Color.ColorMask[0][3] ||
-            ctx->Texture._EnabledUnits ||
-	    ctx->FragmentProgram._Enabled ||
-	    ctx->Color.BlendEnabled);
-}
-
-
-/**
  * CopyPixels with the blitter.  Don't support zooming, pixel transfer, etc.
  */
 static bool
@@ -129,12 +101,46 @@ do_blit_copypixels(struct gl_context * ctx,
       return false;
    }
 
-   /* Copypixels can be more than a straight copy.  Ensure all the
-    * extra operations are disabled:
-    */
-   if (!intel_check_copypixel_blit_fragment_ops(ctx) ||
-       ctx->Pixel.ZoomX != 1.0F || ctx->Pixel.ZoomY != 1.0F)
+   if (ctx->_ImageTransferState) {
+      perf_debug("glCopyPixels(): Unsupported image transfer state\n");
       return false;
+   }
+
+   if (ctx->Depth.Test) {
+      perf_debug("glCopyPixels(): Unsupported depth test state\n");
+      return false;
+   }
+
+   if (ctx->Stencil._Enabled) {
+      perf_debug("glCopyPixels(): Unsupported stencil test state\n");
+      return false;
+   }
+
+   if (ctx->Fog.Enabled ||
+       ctx->Texture._EnabledUnits ||
+       ctx->FragmentProgram._Enabled) {
+      perf_debug("glCopyPixels(): Unsupported fragment shader state\n");
+      return false;
+   }
+
+   if (ctx->Color.AlphaEnabled ||
+       ctx->Color.BlendEnabled) {
+      perf_debug("glCopyPixels(): Unsupported blend state\n");
+      return false;
+   }
+
+   if (!ctx->Color.ColorMask[0][0] ||
+       !ctx->Color.ColorMask[0][1] ||
+       !ctx->Color.ColorMask[0][2] ||
+       !ctx->Color.ColorMask[0][3]) {
+      perf_debug("glCopyPixels(): Unsupported color mask state\n");
+      return false;
+   }
+
+   if (ctx->Pixel.ZoomX != 1.0F || ctx->Pixel.ZoomY != 1.0F) {
+      perf_debug("glCopyPixles(): Unsupported pixel zoom\n");
+      return false;
+   }
 
    intel_prepare_render(intel);
 
