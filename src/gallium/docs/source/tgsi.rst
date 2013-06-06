@@ -2425,6 +2425,17 @@ contains the layer value to use for the color and depth/stencil surfaces.
 Only the X value is used. (Also known as rendertarget array index.)
 
 
+TGSI_SEMANTIC_CULLDIST
+""""""""""""""""""""""
+
+Used as distance to plane for performing application-defined culling
+of individual primitives against a plane. When components of vertex
+elements are given this label, these values are assumed to be a
+float32 signed distance to a plane. Primitives will be completely
+discarded if the plane distance for all of the vertices in the
+primitive are < 0. If a vertex has a cull distance of NaN, that
+vertex counts as "out" (as if its < 0);
+
 
 Declaration Interpolate
 ^^^^^^^^^^^^^^^^^^^^^^^

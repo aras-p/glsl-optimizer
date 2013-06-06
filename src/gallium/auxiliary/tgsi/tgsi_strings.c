@@ -80,7 +80,8 @@ const char *tgsi_semantic_names[TGSI_SEMANTIC_COUNT] =
    "TEXCOORD",
    "PCOORD",
    "VIEWPORT_INDEX",
-   "LAYER"
+   "LAYER",
+   "CULLDIST"
 };
 
 const char *tgsi_texture_names[TGSI_TEXTURE_COUNT] =

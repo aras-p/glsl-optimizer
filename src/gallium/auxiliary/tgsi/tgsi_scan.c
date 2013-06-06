@@ -200,6 +200,10 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                       fulldecl->Semantic.Name == TGSI_SEMANTIC_CLIPDIST) {
                      info->num_written_clipdistance += util_bitcount(fulldecl->Declaration.UsageMask);
                   }
+                  if ((procType == TGSI_PROCESSOR_VERTEX || procType == TGSI_PROCESSOR_GEOMETRY) &&
+                      fulldecl->Semantic.Name == TGSI_SEMANTIC_CULLDIST) {
+                     info->num_written_culldistance += util_bitcount(fulldecl->Declaration.UsageMask);
+                  }
                   /* extra info for special outputs */
                   if (procType == TGSI_PROCESSOR_FRAGMENT &&
                       fulldecl->Semantic.Name == TGSI_SEMANTIC_POSITION)
