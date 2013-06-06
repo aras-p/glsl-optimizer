@@ -53,6 +53,9 @@
 #define ILO_WM_CONST_SURFACE(i)    (ILO_MAX_DRAW_BUFFERS + i)
 #define ILO_WM_TEXTURE_SURFACE(i)  (ILO_MAX_DRAW_BUFFERS + ILO_MAX_CONST_BUFFERS  + i)
 
+struct ilo_buffer;
+struct ilo_texture;
+
 struct ilo_vb_state {
    struct pipe_vertex_buffer states[PIPE_MAX_ATTRIBS];
    uint32_t enabled_mask;
@@ -159,6 +162,12 @@ struct ilo_sampler_state {
    unsigned count;
 };
 
+struct ilo_view_surface {
+   /* SURFACE_STATE */
+   uint32_t payload[8];
+   struct intel_bo *bo;
+};
+
 struct ilo_view_state {
    struct pipe_sampler_view *states[ILO_MAX_SAMPLER_VIEWS];
    unsigned count;
@@ -238,5 +247,115 @@ void
 ilo_gpe_init_sampler_cso(const struct ilo_dev_info *dev,
                          const struct pipe_sampler_state *state,
                          struct ilo_sampler_cso *sampler);
+
+void
+ilo_gpe_init_view_surface_null_gen6(const struct ilo_dev_info *dev,
+                                    unsigned width, unsigned height,
+                                    unsigned depth, unsigned level,
+                                    struct ilo_view_surface *surf);
+
+void
+ilo_gpe_init_view_surface_for_buffer_gen6(const struct ilo_dev_info *dev,
+                                          const struct ilo_buffer *buf,
+                                          unsigned offset, unsigned size,
+                                          unsigned struct_size,
+                                          enum pipe_format elem_format,
+                                          bool is_rt, bool render_cache_rw,
+                                          struct ilo_view_surface *surf);
+
+void
+ilo_gpe_init_view_surface_for_texture_gen6(const struct ilo_dev_info *dev,
+                                           const struct ilo_texture *tex,
+                                           enum pipe_format format,
+                                           unsigned first_level,
+                                           unsigned num_levels,
+                                           unsigned first_layer,
+                                           unsigned num_layers,
+                                           bool is_rt, bool render_cache_rw,
+                                           struct ilo_view_surface *surf);
+
+void
+ilo_gpe_init_view_surface_null_gen7(const struct ilo_dev_info *dev,
+                                    unsigned width, unsigned height,
+                                    unsigned depth, unsigned level,
+                                    struct ilo_view_surface *surf);
+
+void
+ilo_gpe_init_view_surface_for_buffer_gen7(const struct ilo_dev_info *dev,
+                                          const struct ilo_buffer *buf,
+                                          unsigned offset, unsigned size,
+                                          unsigned struct_size,
+                                          enum pipe_format elem_format,
+                                          bool is_rt, bool render_cache_rw,
+                                          struct ilo_view_surface *surf);
+
+void
+ilo_gpe_init_view_surface_for_texture_gen7(const struct ilo_dev_info *dev,
+                                           const struct ilo_texture *tex,
+                                           enum pipe_format format,
+                                           unsigned first_level,
+                                           unsigned num_levels,
+                                           unsigned first_layer,
+                                           unsigned num_layers,
+                                           bool is_rt, bool render_cache_rw,
+                                           struct ilo_view_surface *surf);
+
+static inline void
+ilo_gpe_init_view_surface_null(const struct ilo_dev_info *dev,
+                               unsigned width, unsigned height,
+                               unsigned depth, unsigned level,
+                               struct ilo_view_surface *surf)
+{
+   if (dev->gen >= ILO_GEN(7)) {
+      ilo_gpe_init_view_surface_null_gen7(dev,
+            width, height, depth, level, surf);
+   }
+   else {
+      ilo_gpe_init_view_surface_null_gen6(dev,
+            width, height, depth, level, surf);
+   }
+}
+
+static inline void
+ilo_gpe_init_view_surface_for_buffer(const struct ilo_dev_info *dev,
+                                     const struct ilo_buffer *buf,
+                                     unsigned offset, unsigned size,
+                                     unsigned struct_size,
+                                     enum pipe_format elem_format,
+                                     bool is_rt, bool render_cache_rw,
+                                     struct ilo_view_surface *surf)
+{
+   if (dev->gen >= ILO_GEN(7)) {
+      ilo_gpe_init_view_surface_for_buffer_gen7(dev, buf, offset, size,
+            struct_size, elem_format, is_rt, render_cache_rw, surf);
+   }
+   else {
+      ilo_gpe_init_view_surface_for_buffer_gen6(dev, buf, offset, size,
+            struct_size, elem_format, is_rt, render_cache_rw, surf);
+   }
+}
+
+static inline void
+ilo_gpe_init_view_surface_for_texture(const struct ilo_dev_info *dev,
+                                      const struct ilo_texture *tex,
+                                      enum pipe_format format,
+                                      unsigned first_level,
+                                      unsigned num_levels,
+                                      unsigned first_layer,
+                                      unsigned num_layers,
+                                      bool is_rt, bool render_cache_rw,
+                                      struct ilo_view_surface *surf)
+{
+   if (dev->gen >= ILO_GEN(7)) {
+      ilo_gpe_init_view_surface_for_texture_gen7(dev, tex, format,
+            first_level, num_levels, first_layer, num_layers,
+            is_rt, render_cache_rw, surf);
+   }
+   else {
+      ilo_gpe_init_view_surface_for_texture_gen6(dev, tex, format,
+            first_level, num_levels, first_layer, num_layers,
+            is_rt, render_cache_rw, surf);
+   }
+}
 
 #endif /* ILO_GPE_H */

@@ -3784,14 +3784,15 @@ gen6_emit_BINDING_TABLE_STATE(const struct ilo_dev_info *dev,
    return state_offset;
 }
 
-static void
-gen6_fill_null_SURFACE_STATE(const struct ilo_dev_info *dev,
-                             unsigned width, unsigned height,
-                             unsigned depth, unsigned lod,
-                             uint32_t *dw, int num_dwords)
+void
+ilo_gpe_init_view_surface_null_gen6(const struct ilo_dev_info *dev,
+                                    unsigned width, unsigned height,
+                                    unsigned depth, unsigned level,
+                                    struct ilo_view_surface *surf)
 {
+   uint32_t *dw;
+
    ILO_GPE_VALID_GEN(dev, 6, 6);
-   assert(num_dwords == 6);
 
    /*
     * From the Sandy Bridge PRM, volume 4 part 1, page 71:
@@ -3816,6 +3817,9 @@ gen6_fill_null_SURFACE_STATE(const struct ilo_dev_info *dev,
     *      true"
     */
 
+   STATIC_ASSERT(Elements(surf->payload) >= 6);
+   dw = surf->payload;
+
    dw[0] = BRW_SURFACE_NULL << BRW_SURFACE_TYPE_SHIFT |
            BRW_SURFACEFORMAT_B8G8R8A8_UNORM << BRW_SURFACE_FORMAT_SHIFT;
 
@@ -3823,30 +3827,32 @@ gen6_fill_null_SURFACE_STATE(const struct ilo_dev_info *dev,
 
    dw[2] = (height - 1) << BRW_SURFACE_HEIGHT_SHIFT |
            (width  - 1) << BRW_SURFACE_WIDTH_SHIFT |
-           lod << BRW_SURFACE_LOD_SHIFT;
+           level << BRW_SURFACE_LOD_SHIFT;
 
    dw[3] = (depth - 1) << BRW_SURFACE_DEPTH_SHIFT |
            BRW_SURFACE_TILED;
 
    dw[4] = 0;
    dw[5] = 0;
+
+   surf->bo = NULL;
 }
 
-static void
-gen6_fill_buffer_SURFACE_STATE(const struct ilo_dev_info *dev,
-                               const struct ilo_buffer *buf,
-                               unsigned offset, unsigned size,
-                               unsigned struct_size,
-                               enum pipe_format elem_format,
-                               bool is_rt, bool render_cache_rw,
-                               uint32_t *dw, int num_dwords)
+void
+ilo_gpe_init_view_surface_for_buffer_gen6(const struct ilo_dev_info *dev,
+                                          const struct ilo_buffer *buf,
+                                          unsigned offset, unsigned size,
+                                          unsigned struct_size,
+                                          enum pipe_format elem_format,
+                                          bool is_rt, bool render_cache_rw,
+                                          struct ilo_view_surface *surf)
 {
    const int elem_size = util_format_get_blocksize(elem_format);
    int width, height, depth, pitch;
    int surface_format, num_entries;
+   uint32_t *dw;
 
    ILO_GPE_VALID_GEN(dev, 6, 6);
-   assert(num_dwords == 6);
 
    /*
     * For SURFTYPE_BUFFER, a SURFACE_STATE specifies an element of a
@@ -3903,6 +3909,9 @@ gen6_fill_buffer_SURFACE_STATE(const struct ilo_dev_info *dev,
    /* bits [26:20] */
    depth  = (num_entries & 0x07f00000) >> 20;
 
+   STATIC_ASSERT(Elements(surf->payload) >= 6);
+   dw = surf->payload;
+
    dw[0] = BRW_SURFACE_BUFFER << BRW_SURFACE_TYPE_SHIFT |
            surface_format << BRW_SURFACE_FORMAT_SHIFT;
    if (render_cache_rw)
@@ -3918,23 +3927,28 @@ gen6_fill_buffer_SURFACE_STATE(const struct ilo_dev_info *dev,
 
    dw[4] = 0;
    dw[5] = 0;
+
+   /* do not increment reference count */
+   surf->bo = buf->bo;
 }
 
-static void
-gen6_fill_normal_SURFACE_STATE(const struct ilo_dev_info *dev,
-                               struct ilo_texture *tex,
-                               enum pipe_format format,
-                               unsigned first_level, unsigned num_levels,
-                               unsigned first_layer, unsigned num_layers,
-                               bool is_rt, bool render_cache_rw,
-                               uint32_t *dw, int num_dwords)
+void
+ilo_gpe_init_view_surface_for_texture_gen6(const struct ilo_dev_info *dev,
+                                           const struct ilo_texture *tex,
+                                           enum pipe_format format,
+                                           unsigned first_level,
+                                           unsigned num_levels,
+                                           unsigned first_layer,
+                                           unsigned num_layers,
+                                           bool is_rt, bool render_cache_rw,
+                                           struct ilo_view_surface *surf)
 {
    int surface_type, surface_format;
    int width, height, depth, pitch, lod;
    unsigned layer_offset, x_offset, y_offset;
+   uint32_t *dw;
 
    ILO_GPE_VALID_GEN(dev, 6, 6);
-   assert(num_dwords == 6);
 
    surface_type = ilo_gpe_gen6_translate_texture(tex->base.target);
    assert(surface_type != BRW_SURFACE_BUFFER);
@@ -4088,6 +4102,9 @@ gen6_fill_normal_SURFACE_STATE(const struct ilo_dev_info *dev,
       assert(!x_offset);
    }
 
+   STATIC_ASSERT(Elements(surf->payload) >= 6);
+   dw = surf->payload;
+
    dw[0] = surface_type << BRW_SURFACE_TYPE_SHIFT |
            surface_format << BRW_SURFACE_FORMAT_SHIFT |
            BRW_SURFACE_MIPMAPLAYOUT_BELOW << BRW_SURFACE_MIPLAYOUT_SHIFT;
@@ -4120,12 +4137,15 @@ gen6_fill_normal_SURFACE_STATE(const struct ilo_dev_info *dev,
            y_offset << BRW_SURFACE_Y_OFFSET_SHIFT;
    if (tex->valign_4)
       dw[5] |= BRW_SURFACE_VERTICAL_ALIGN_ENABLE;
+
+   /* do not increment reference count */
+   surf->bo = tex->bo;
 }
 
 static uint32_t
 gen6_emit_SURFACE_STATE(const struct ilo_dev_info *dev,
-                        struct intel_bo *bo, bool for_render,
-                        const uint32_t *dw, int num_dwords,
+                        const struct ilo_view_surface *surf,
+                        bool for_render,
                         struct ilo_cp *cp)
 {
    const int state_align = 32 / 4;
@@ -4134,7 +4154,6 @@ gen6_emit_SURFACE_STATE(const struct ilo_dev_info *dev,
    uint32_t read_domains, write_domain;
 
    ILO_GPE_VALID_GEN(dev, 6, 6);
-   assert(num_dwords == state_len);
 
    if (for_render) {
       read_domains = INTEL_DOMAIN_RENDER;
@@ -4146,12 +4165,15 @@ gen6_emit_SURFACE_STATE(const struct ilo_dev_info *dev,
    }
 
    ilo_cp_steal(cp, "SURFACE_STATE", state_len, state_align, &state_offset);
-   ilo_cp_write(cp, dw[0]);
-   ilo_cp_write_bo(cp, dw[1], bo, read_domains, write_domain);
-   ilo_cp_write(cp, dw[2]);
-   ilo_cp_write(cp, dw[3]);
-   ilo_cp_write(cp, dw[4]);
-   ilo_cp_write(cp, dw[5]);
+
+   ilo_cp_write(cp, surf->payload[0]);
+   ilo_cp_write_bo(cp, surf->payload[1],
+         surf->bo, read_domains, write_domain);
+   ilo_cp_write(cp, surf->payload[2]);
+   ilo_cp_write(cp, surf->payload[3]);
+   ilo_cp_write(cp, surf->payload[4]);
+   ilo_cp_write(cp, surf->payload[5]);
+
    ilo_cp_end(cp);
 
    return state_offset;
@@ -4162,33 +4184,29 @@ gen6_emit_surf_SURFACE_STATE(const struct ilo_dev_info *dev,
                              const struct pipe_surface *surface,
                              struct ilo_cp *cp)
 {
-   struct intel_bo *bo;
-   uint32_t dw[6];
+   struct ilo_view_surface surf;
 
    ILO_GPE_VALID_GEN(dev, 6, 6);
 
    if (surface && surface->texture) {
       struct ilo_texture *tex = ilo_texture(surface->texture);
 
-      bo = tex->bo;
-
       /*
        * classic i965 sets render_cache_rw for constant buffers and sol
        * surfaces but not render buffers.  Why?
        */
-      gen6_fill_normal_SURFACE_STATE(dev, tex, surface->format,
+      ilo_gpe_init_view_surface_for_texture_gen6(dev, tex, surface->format,
             surface->u.tex.level, 1,
             surface->u.tex.first_layer,
             surface->u.tex.last_layer - surface->u.tex.first_layer + 1,
-            true, true, dw, Elements(dw));
+            true, true, &surf);
    }
    else {
-      bo = NULL;
-      gen6_fill_null_SURFACE_STATE(dev,
-            surface->width, surface->height, 1, 0, dw, Elements(dw));
+      ilo_gpe_init_view_surface_null_gen6(dev,
+            surface->width, surface->height, 1, 0, &surf);
    }
 
-   return gen6_emit_SURFACE_STATE(dev, bo, true, dw, Elements(dw), cp);
+   return gen6_emit_SURFACE_STATE(dev, &surf, true, cp);
 }
 
 static uint32_t
@@ -4196,8 +4214,7 @@ gen6_emit_view_SURFACE_STATE(const struct ilo_dev_info *dev,
                              const struct pipe_sampler_view *view,
                              struct ilo_cp *cp)
 {
-   struct intel_bo *bo;
-   uint32_t dw[6];
+   struct ilo_view_surface surf;
 
    ILO_GPE_VALID_GEN(dev, 6, 6);
 
@@ -4207,26 +4224,22 @@ gen6_emit_view_SURFACE_STATE(const struct ilo_dev_info *dev,
       const unsigned num_elems = view->u.buf.last_element - first_elem + 1;
       struct ilo_buffer *buf = ilo_buffer(view->texture);
 
-      gen6_fill_buffer_SURFACE_STATE(dev, buf,
+      ilo_gpe_init_view_surface_for_buffer_gen6(dev, buf,
             first_elem * elem_size, num_elems * elem_size,
-            elem_size, view->format, false, false, dw, Elements(dw));
-
-      bo = buf->bo;
+            elem_size, view->format, false, false, &surf);
    }
    else {
       struct ilo_texture *tex = ilo_texture(view->texture);
 
-      gen6_fill_normal_SURFACE_STATE(dev, tex, view->format,
+      ilo_gpe_init_view_surface_for_texture_gen6(dev, tex, view->format,
             view->u.tex.first_level,
             view->u.tex.last_level - view->u.tex.first_level + 1,
             view->u.tex.first_layer,
             view->u.tex.last_layer - view->u.tex.first_layer + 1,
-            false, false, dw, Elements(dw));
-
-      bo = tex->bo;
+            false, false, &surf);
    }
 
-   return gen6_emit_SURFACE_STATE(dev, bo, false, dw, Elements(dw), cp);
+   return gen6_emit_SURFACE_STATE(dev, &surf, false, cp);
 }
 
 static uint32_t
@@ -4236,16 +4249,16 @@ gen6_emit_cbuf_SURFACE_STATE(const struct ilo_dev_info *dev,
 {
    const enum pipe_format elem_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
    struct ilo_buffer *buf = ilo_buffer(cbuf->buffer);
-   uint32_t dw[6];
+   struct ilo_view_surface surf;
 
    ILO_GPE_VALID_GEN(dev, 6, 6);
 
-   gen6_fill_buffer_SURFACE_STATE(dev, buf,
+   ilo_gpe_init_view_surface_for_buffer_gen6(dev, buf,
          cbuf->buffer_offset, cbuf->buffer_size,
          util_format_get_blocksize(elem_format), elem_format,
-         false, false, dw, Elements(dw));
+         false, false, &surf);
 
-   return gen6_emit_SURFACE_STATE(dev, buf->bo, false, dw, Elements(dw), cp);
+   return gen6_emit_SURFACE_STATE(dev, &surf, false, cp);
 }
 
 static uint32_t
@@ -4258,7 +4271,7 @@ gen6_emit_so_SURFACE_STATE(const struct ilo_dev_info *dev,
    struct ilo_buffer *buf = ilo_buffer(so->buffer);
    unsigned bo_offset, struct_size;
    enum pipe_format elem_format;
-   uint32_t dw[6];
+   struct ilo_view_surface surf;
 
    ILO_GPE_VALID_GEN(dev, 6, 6);
 
@@ -4284,10 +4297,10 @@ gen6_emit_so_SURFACE_STATE(const struct ilo_dev_info *dev,
       break;
    }
 
-   gen6_fill_buffer_SURFACE_STATE(dev, buf, bo_offset, so->buffer_size,
-         struct_size, elem_format, false, true, dw, Elements(dw));
+   ilo_gpe_init_view_surface_for_buffer_gen6(dev, buf, bo_offset, so->buffer_size,
+         struct_size, elem_format, false, true, &surf);
 
-   return gen6_emit_SURFACE_STATE(dev, buf->bo, false, dw, Elements(dw), cp);
+   return gen6_emit_SURFACE_STATE(dev, &surf, false, cp);
 }
 
 static void
