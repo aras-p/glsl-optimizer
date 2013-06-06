@@ -168,6 +168,12 @@ struct ilo_view_surface {
    struct intel_bo *bo;
 };
 
+struct ilo_view_cso {
+   struct pipe_sampler_view base;
+
+   struct ilo_view_surface surface;
+};
+
 struct ilo_view_state {
    struct pipe_sampler_view *states[ILO_MAX_SAMPLER_VIEWS];
    unsigned count;

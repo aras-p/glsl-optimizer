@@ -4149,11 +4149,11 @@ gen6_emit_SURFACE_STATE(const struct ilo_dev_info *dev,
                         struct ilo_cp *cp)
 {
    const int state_align = 32 / 4;
-   const int state_len = 6;
+   const int state_len = (dev->gen >= ILO_GEN(7)) ? 8 : 6;
    uint32_t state_offset;
    uint32_t read_domains, write_domain;
 
-   ILO_GPE_VALID_GEN(dev, 6, 6);
+   ILO_GPE_VALID_GEN(dev, 6, 7);
 
    if (for_render) {
       read_domains = INTEL_DOMAIN_RENDER;
@@ -4166,6 +4166,8 @@ gen6_emit_SURFACE_STATE(const struct ilo_dev_info *dev,
 
    ilo_cp_steal(cp, "SURFACE_STATE", state_len, state_align, &state_offset);
 
+   STATIC_ASSERT(Elements(surf->payload) >= 8);
+
    ilo_cp_write(cp, surf->payload[0]);
    ilo_cp_write_bo(cp, surf->payload[1],
          surf->bo, read_domains, write_domain);
@@ -4173,6 +4175,11 @@ gen6_emit_SURFACE_STATE(const struct ilo_dev_info *dev,
    ilo_cp_write(cp, surf->payload[3]);
    ilo_cp_write(cp, surf->payload[4]);
    ilo_cp_write(cp, surf->payload[5]);
+
+   if (dev->gen >= ILO_GEN(7)) {
+      ilo_cp_write(cp, surf->payload[6]);
+      ilo_cp_write(cp, surf->payload[7]);
+   }
 
    ilo_cp_end(cp);
 
@@ -4207,39 +4214,6 @@ gen6_emit_surf_SURFACE_STATE(const struct ilo_dev_info *dev,
    }
 
    return gen6_emit_SURFACE_STATE(dev, &surf, true, cp);
-}
-
-static uint32_t
-gen6_emit_view_SURFACE_STATE(const struct ilo_dev_info *dev,
-                             const struct pipe_sampler_view *view,
-                             struct ilo_cp *cp)
-{
-   struct ilo_view_surface surf;
-
-   ILO_GPE_VALID_GEN(dev, 6, 6);
-
-   if (view->texture->target == PIPE_BUFFER) {
-      const unsigned elem_size = util_format_get_blocksize(view->format);
-      const unsigned first_elem = view->u.buf.first_element;
-      const unsigned num_elems = view->u.buf.last_element - first_elem + 1;
-      struct ilo_buffer *buf = ilo_buffer(view->texture);
-
-      ilo_gpe_init_view_surface_for_buffer_gen6(dev, buf,
-            first_elem * elem_size, num_elems * elem_size,
-            elem_size, view->format, false, false, &surf);
-   }
-   else {
-      struct ilo_texture *tex = ilo_texture(view->texture);
-
-      ilo_gpe_init_view_surface_for_texture_gen6(dev, tex, view->format,
-            view->u.tex.first_level,
-            view->u.tex.last_level - view->u.tex.first_level + 1,
-            view->u.tex.first_layer,
-            view->u.tex.last_layer - view->u.tex.first_layer + 1,
-            false, false, &surf);
-   }
-
-   return gen6_emit_SURFACE_STATE(dev, &surf, false, cp);
 }
 
 static uint32_t
@@ -4664,7 +4638,7 @@ ilo_gpe_init_sampler_cso(const struct ilo_dev_info *dev,
 static uint32_t
 gen6_emit_SAMPLER_STATE(const struct ilo_dev_info *dev,
                         const struct ilo_sampler_cso * const *samplers,
-                        const struct pipe_sampler_view * const *sampler_views,
+                        const struct pipe_sampler_view * const *views,
                         const uint32_t *sampler_border_colors,
                         int num_samplers,
                         struct ilo_cp *cp)
@@ -4691,7 +4665,7 @@ gen6_emit_SAMPLER_STATE(const struct ilo_dev_info *dev,
 
    for (i = 0; i < num_samplers; i++) {
       const struct ilo_sampler_cso *sampler = samplers[i];
-      const struct pipe_sampler_view *view = sampler_views[i];
+      const struct pipe_sampler_view *view = views[i];
       const uint32_t border_color = sampler_border_colors[i];
       uint32_t dw_filter, dw_wrap;
 
@@ -4986,8 +4960,8 @@ static const struct ilo_gpe_gen6 gen6_gpe = {
    GEN6_SET(DEPTH_STENCIL_STATE),
    GEN6_SET(SCISSOR_RECT),
    GEN6_SET(BINDING_TABLE_STATE),
+   GEN6_SET(SURFACE_STATE),
    GEN6_SET(surf_SURFACE_STATE),
-   GEN6_SET(view_SURFACE_STATE),
    GEN6_SET(cbuf_SURFACE_STATE),
    GEN6_SET(so_SURFACE_STATE),
    GEN6_SET(SAMPLER_STATE),

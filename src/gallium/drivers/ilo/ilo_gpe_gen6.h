@@ -423,13 +423,14 @@ typedef uint32_t
                                     struct ilo_cp *cp);
 
 typedef uint32_t
-(*ilo_gpe_gen6_surf_SURFACE_STATE)(const struct ilo_dev_info *dev,
-                                   const struct pipe_surface *surface,
-                                   struct ilo_cp *cp);
+(*ilo_gpe_gen6_SURFACE_STATE)(const struct ilo_dev_info *dev,
+                              const struct ilo_view_surface *surface,
+                              bool for_render,
+                              struct ilo_cp *cp);
 
 typedef uint32_t
-(*ilo_gpe_gen6_view_SURFACE_STATE)(const struct ilo_dev_info *dev,
-                                   const struct pipe_sampler_view *view,
+(*ilo_gpe_gen6_surf_SURFACE_STATE)(const struct ilo_dev_info *dev,
+                                   const struct pipe_surface *surface,
                                    struct ilo_cp *cp);
 
 typedef uint32_t
@@ -447,7 +448,7 @@ typedef uint32_t
 typedef uint32_t
 (*ilo_gpe_gen6_SAMPLER_STATE)(const struct ilo_dev_info *dev,
                               const struct ilo_sampler_cso * const *samplers,
-                              const struct pipe_sampler_view * const *sampler_views,
+                              const struct pipe_sampler_view * const *views,
                               const uint32_t *sampler_border_colors,
                               int num_samplers,
                               struct ilo_cp *cp);
@@ -528,8 +529,8 @@ struct ilo_gpe_gen6 {
    GEN6_EMIT(DEPTH_STENCIL_STATE);
    GEN6_EMIT(SCISSOR_RECT);
    GEN6_EMIT(BINDING_TABLE_STATE);
+   GEN6_EMIT(SURFACE_STATE);
    GEN6_EMIT(surf_SURFACE_STATE);
-   GEN6_EMIT(view_SURFACE_STATE);
    GEN6_EMIT(cbuf_SURFACE_STATE);
    GEN6_EMIT(so_SURFACE_STATE);
    GEN6_EMIT(SAMPLER_STATE);

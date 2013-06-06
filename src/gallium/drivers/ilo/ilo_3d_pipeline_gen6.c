@@ -937,7 +937,7 @@ gen6_pipeline_state_surfaces_view(struct ilo_3d_pipeline *p,
                                   int shader_type,
                                   struct gen6_pipeline_session *session)
 {
-   const struct pipe_sampler_view **views =
+   const struct pipe_sampler_view * const *views =
       (const struct pipe_sampler_view **) ilo->view[shader_type].states;
    const int num_views = ilo->view[shader_type].count;
    uint32_t *surface_state;
@@ -978,8 +978,11 @@ gen6_pipeline_state_surfaces_view(struct ilo_3d_pipeline *p,
 
    for (i = 0; i < num_views; i++) {
       if (views[i]) {
+         const struct ilo_view_cso *cso =
+            (const struct ilo_view_cso *) views[i];
+
          surface_state[i] =
-            p->gen6_view_SURFACE_STATE(p->dev, views[i], p->cp);
+            p->gen6_SURFACE_STATE(p->dev, &cso->surface, false, p->cp);
       }
       else {
          surface_state[i] = 0;
@@ -1120,7 +1123,7 @@ gen6_pipeline_state_samplers(struct ilo_3d_pipeline *p,
 {
    const struct ilo_sampler_cso * const *samplers =
       ilo->sampler[shader_type].cso;
-   const struct pipe_sampler_view **views =
+   const struct pipe_sampler_view * const *views =
       (const struct pipe_sampler_view **) ilo->view[shader_type].states;
    const int num_samplers = ilo->sampler[shader_type].count;
    const int num_views = ilo->view[shader_type].count;
@@ -1637,8 +1640,8 @@ ilo_3d_pipeline_init_gen6(struct ilo_3d_pipeline *p)
    GEN6_USE(p, DEPTH_STENCIL_STATE, gen6);
    GEN6_USE(p, SCISSOR_RECT, gen6);
    GEN6_USE(p, BINDING_TABLE_STATE, gen6);
+   GEN6_USE(p, SURFACE_STATE, gen6);
    GEN6_USE(p, surf_SURFACE_STATE, gen6);
-   GEN6_USE(p, view_SURFACE_STATE, gen6);
    GEN6_USE(p, cbuf_SURFACE_STATE, gen6);
    GEN6_USE(p, so_SURFACE_STATE, gen6);
    GEN6_USE(p, SAMPLER_STATE, gen6);

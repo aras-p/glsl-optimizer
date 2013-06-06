@@ -1718,39 +1718,6 @@ gen7_emit_surf_SURFACE_STATE(const struct ilo_dev_info *dev,
 }
 
 static uint32_t
-gen7_emit_view_SURFACE_STATE(const struct ilo_dev_info *dev,
-                             const struct pipe_sampler_view *view,
-                             struct ilo_cp *cp)
-{
-   struct ilo_view_surface surf;
-
-   ILO_GPE_VALID_GEN(dev, 7, 7);
-
-   if (view->texture->target == PIPE_BUFFER) {
-      const unsigned elem_size = util_format_get_blocksize(view->format);
-      const unsigned first_elem = view->u.buf.first_element;
-      const unsigned num_elems = view->u.buf.last_element - first_elem + 1;
-      struct ilo_buffer *buf = ilo_buffer(view->texture);
-
-      ilo_gpe_init_view_surface_for_buffer_gen7(dev, buf,
-            first_elem * elem_size, num_elems * elem_size,
-            elem_size, view->format, false, false, &surf);
-   }
-   else {
-      struct ilo_texture *tex = ilo_texture(view->texture);
-
-      ilo_gpe_init_view_surface_for_texture_gen7(dev, tex, view->format,
-            view->u.tex.first_level,
-            view->u.tex.last_level - view->u.tex.first_level + 1,
-            view->u.tex.first_layer,
-            view->u.tex.last_layer - view->u.tex.first_layer + 1,
-            false, false, &surf);
-   }
-
-   return gen7_emit_SURFACE_STATE(dev, &surf, false, cp);
-}
-
-static uint32_t
 gen7_emit_cbuf_SURFACE_STATE(const struct ilo_dev_info *dev,
                              const struct pipe_constant_buffer *cbuf,
                              struct ilo_cp *cp)
@@ -1993,8 +1960,8 @@ gen7_init(struct ilo_gpe_gen7 *gen7)
    GEN7_USE(gen7, DEPTH_STENCIL_STATE, gen6);
    GEN7_USE(gen7, SCISSOR_RECT, gen6);
    GEN7_USE(gen7, BINDING_TABLE_STATE, gen6);
+   GEN7_USE(gen7, SURFACE_STATE, gen6);
    GEN7_SET(gen7, surf_SURFACE_STATE);
-   GEN7_SET(gen7, view_SURFACE_STATE);
    GEN7_SET(gen7, cbuf_SURFACE_STATE);
    GEN7_USE(gen7, SAMPLER_STATE, gen6);
    GEN7_USE(gen7, SAMPLER_BORDER_COLOR_STATE, gen6);

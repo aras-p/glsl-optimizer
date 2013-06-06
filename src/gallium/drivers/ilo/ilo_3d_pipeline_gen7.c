@@ -828,8 +828,8 @@ ilo_3d_pipeline_init_gen7(struct ilo_3d_pipeline *p)
    GEN6_USE(p, DEPTH_STENCIL_STATE, gen7);
    GEN6_USE(p, SCISSOR_RECT, gen7);
    GEN6_USE(p, BINDING_TABLE_STATE, gen7);
+   GEN6_USE(p, SURFACE_STATE, gen7);
    GEN6_USE(p, surf_SURFACE_STATE, gen7);
-   GEN6_USE(p, view_SURFACE_STATE, gen7);
    GEN6_USE(p, cbuf_SURFACE_STATE, gen7);
    GEN6_USE(p, SAMPLER_STATE, gen7);
    GEN6_USE(p, SAMPLER_BORDER_COLOR_STATE, gen7);

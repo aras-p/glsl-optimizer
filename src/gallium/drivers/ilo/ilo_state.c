@@ -29,6 +29,7 @@
 #include "util/u_helpers.h"
 
 #include "ilo_context.h"
+#include "ilo_resource.h"
 #include "ilo_shader.h"
 #include "ilo_state.h"
 
@@ -845,18 +846,38 @@ ilo_create_sampler_view(struct pipe_context *pipe,
                         struct pipe_resource *res,
                         const struct pipe_sampler_view *templ)
 {
-   struct pipe_sampler_view *view;
+   struct ilo_context *ilo = ilo_context(pipe);
+   struct ilo_view_cso *view;
 
-   view = MALLOC_STRUCT(pipe_sampler_view);
+   view = MALLOC_STRUCT(ilo_view_cso);
    assert(view);
 
-   *view = *templ;
-   pipe_reference_init(&view->reference, 1);
-   view->texture = NULL;
-   pipe_resource_reference(&view->texture, res);
-   view->context = pipe;
+   view->base = *templ;
+   pipe_reference_init(&view->base.reference, 1);
+   view->base.texture = NULL;
+   pipe_resource_reference(&view->base.texture, res);
+   view->base.context = pipe;
 
-   return view;
+   if (res->target == PIPE_BUFFER) {
+      const unsigned elem_size = util_format_get_blocksize(templ->format);
+      const unsigned first_elem = templ->u.buf.first_element;
+      const unsigned num_elems = templ->u.buf.last_element - first_elem + 1;
+
+      ilo_gpe_init_view_surface_for_buffer(ilo->dev, ilo_buffer(res),
+            first_elem * elem_size, num_elems * elem_size,
+            elem_size, templ->format, false, false, &view->surface);
+   }
+   else {
+      ilo_gpe_init_view_surface_for_texture(ilo->dev, ilo_texture(res),
+            templ->format,
+            templ->u.tex.first_level,
+            templ->u.tex.last_level - templ->u.tex.first_level + 1,
+            templ->u.tex.first_layer,
+            templ->u.tex.last_layer - templ->u.tex.first_layer + 1,
+            false, false, &view->surface);
+   }
+
+   return &view->base;
 }
 
 static void
