@@ -548,7 +548,7 @@ draw_get_shader_info(const struct draw_context *draw)
  * function to find those attributes.
  *
  * -1 is returned if the attribute is not found since this is
- * an undefined situtation. Note, that zero is valid and can
+ * an undefined situation. Note, that zero is valid and can
  * be used by any of the attributes, because position is not
  * required to be attribute 0 or even at all present.
  */
