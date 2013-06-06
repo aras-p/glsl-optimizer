@@ -433,7 +433,7 @@ dump_info(const struct tgsi_token *tokens,
                &tex_info->coord[chan];
          if (chan_info->file != TGSI_FILE_NULL) {
             debug_printf(" %s[%u].%c",
-                         tgsi_file_names[chan_info->file],
+                         tgsi_file_name(chan_info->file),
                          chan_info->u.index,
                          "xyzw01"[chan_info->swizzle]);
          } else {

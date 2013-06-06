@@ -99,11 +99,11 @@ _dump_register_src(
    struct dump_ctx *ctx,
    const struct tgsi_full_src_register *src )
 {
-   ENM(src->Register.File, tgsi_file_names);
+   TXT(tgsi_file_name(src->Register.File));
    if (src->Register.Dimension) {
       if (src->Dimension.Indirect) {
          CHR( '[' );
-         ENM( src->DimIndirect.File, tgsi_file_names );
+         TXT(tgsi_file_name(src->DimIndirect.File));
          CHR( '[' );
          SID( src->DimIndirect.Index );
          TXT( "]." );
@@ -127,7 +127,7 @@ _dump_register_src(
    }
    if (src->Register.Indirect) {
       CHR( '[' );
-      ENM( src->Indirect.File, tgsi_file_names );
+      TXT(tgsi_file_name(src->Indirect.File));
       CHR( '[' );
       SID( src->Indirect.Index );
       TXT( "]." );
@@ -156,11 +156,11 @@ _dump_register_dst(
    struct dump_ctx *ctx,
    const struct tgsi_full_dst_register *dst )
 {
-   ENM(dst->Register.File, tgsi_file_names);
+   TXT(tgsi_file_name(dst->Register.File));
    if (dst->Register.Dimension) {
       if (dst->Dimension.Indirect) {
          CHR( '[' );
-         ENM( dst->DimIndirect.File, tgsi_file_names );
+         TXT(tgsi_file_name(dst->DimIndirect.File));
          CHR( '[' );
          SID( dst->DimIndirect.Index );
          TXT( "]." );
@@ -184,7 +184,7 @@ _dump_register_dst(
    }
    if (dst->Register.Indirect) {
       CHR( '[' );
-      ENM( dst->Indirect.File, tgsi_file_names );
+      TXT(tgsi_file_name(dst->Indirect.File));
       CHR( '[' );
       SID( dst->Indirect.Index );
       TXT( "]." );
@@ -266,7 +266,7 @@ iter_declaration(
 
    TXT( "DCL " );
 
-   ENM(decl->Declaration.File, tgsi_file_names);
+   TXT(tgsi_file_name(decl->Declaration.File));
 
    /* all geometry shader inputs are two dimensional */
    if (decl->Declaration.File == TGSI_FILE_INPUT &&
@@ -576,7 +576,7 @@ iter_instruction(
       ENM( inst->Texture.Texture, tgsi_texture_names );
       for (i = 0; i < inst->Texture.NumOffsets; i++) {
          TXT( ", " );
-         ENM( inst->TexOffsets[i].File, tgsi_file_names);
+         TXT(tgsi_file_name(inst->TexOffsets[i].File));
          CHR( '[' );
          SID( inst->TexOffsets[i].Index );
          CHR( ']' );

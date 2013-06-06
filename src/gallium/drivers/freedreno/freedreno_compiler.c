@@ -339,7 +339,7 @@ add_dst_reg(struct fd_compile_context *ctx, struct ir2_instruction *alu,
 		break;
 	default:
 		DBG("unsupported dst register file: %s",
-				tgsi_file_names[dst->File]);
+			tgsi_file_name(dst->File));
 		assert(0);
 		break;
 	}
@@ -385,7 +385,7 @@ add_src_reg(struct fd_compile_context *ctx, struct ir2_instruction *alu,
 		break;
 	default:
 		DBG("unsupported src register file: %s",
-				tgsi_file_names[src->File]);
+			tgsi_file_name(src->File));
 		assert(0);
 		break;
 	}

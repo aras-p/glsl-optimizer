@@ -40,7 +40,7 @@ const char *tgsi_processor_type_names[4] =
    "COMP"
 };
 
-const char *tgsi_file_names[TGSI_FILE_COUNT] =
+static const char *tgsi_file_names[] =
 {
    "NULL",
    "CONST",
@@ -176,7 +176,6 @@ const char *tgsi_immediate_type_names[3] =
 static INLINE void
 tgsi_strings_check(void)
 {
-   STATIC_ASSERT(Elements(tgsi_file_names) == TGSI_FILE_COUNT);
    STATIC_ASSERT(Elements(tgsi_semantic_names) == TGSI_SEMANTIC_COUNT);
    STATIC_ASSERT(Elements(tgsi_texture_names) == TGSI_TEXTURE_COUNT);
    STATIC_ASSERT(Elements(tgsi_property_names) == TGSI_PROPERTY_COUNT);
@@ -187,4 +186,15 @@ tgsi_strings_check(void)
    (void) tgsi_immediate_type_names;
    (void) tgsi_fs_coord_origin_names;
    (void) tgsi_fs_coord_pixel_center_names;
+}
+
+
+const char *
+tgsi_file_name(unsigned file)
+{
+   STATIC_ASSERT(Elements(tgsi_file_names) == TGSI_FILE_COUNT);
+   if (file < Elements(tgsi_file_names))
+      return tgsi_file_names[file];
+   else
+      return "invalid file";
 }

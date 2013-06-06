@@ -2565,11 +2565,11 @@ dump_reg_mapping(void *key, void *val, void *data)
 
    if (tgsi_dim) {
       ilo_printf("  v%d:\t%s[%d][%d]\n", vrf,
-            tgsi_file_names[tgsi_file], tgsi_dim, tgsi_index);
+                 tgsi_file_name(tgsi_file), tgsi_dim, tgsi_index);
    }
    else {
       ilo_printf("  v%d:\t%s[%d]\n", vrf,
-            tgsi_file_names[tgsi_file], tgsi_index);
+                 tgsi_file_name(tgsi_file), tgsi_index);
    }
 
    return PIPE_OK;
