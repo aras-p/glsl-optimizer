@@ -458,7 +458,8 @@ fs_visitor::assign_regs()
       int reg = choose_spill_reg(g);
 
       if (reg == -1) {
-	 fail("no register to spill\n");
+         fail("no register to spill:\n");
+         dump_instructions();
       } else if (dispatch_width == 16) {
 	 fail("Failure to register allocate.  Reduce number of live scalar "
               "values to avoid this.");
