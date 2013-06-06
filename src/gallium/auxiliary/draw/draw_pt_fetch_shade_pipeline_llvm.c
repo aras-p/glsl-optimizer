@@ -411,6 +411,8 @@ llvm_pipeline_generic( struct draw_pt_middle_end *middle,
    /* stream output needs to be done before clipping */
    draw_pt_so_emit( fpme->so_emit, vert_info, prim_info );
 
+   draw_stats_clipper_primitives(draw, prim_info);
+
    /*
     * if there's no position, need to stop now, or the latter stages
     * will try to access non-existent position output.

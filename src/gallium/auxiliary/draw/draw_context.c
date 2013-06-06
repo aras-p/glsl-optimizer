@@ -37,6 +37,7 @@
 #include "util/u_cpu_detect.h"
 #include "util/u_inlines.h"
 #include "util/u_helpers.h"
+#include "util/u_prim.h"
 #include "draw_context.h"
 #include "draw_vs.h"
 #include "draw_gs.h"
@@ -924,4 +925,28 @@ draw_collect_pipeline_statistics(struct draw_context *draw,
                                  boolean enable)
 {
    draw->collect_statistics = enable;
+}
+
+/**
+ * Computes clipper invocation statistics.
+ *
+ * Figures out how many primitives would have been
+ * sent to the clipper given the specified
+ * prim info data.
+ */
+void
+draw_stats_clipper_primitives(struct draw_context *draw,
+                              const struct draw_prim_info *prim_info)
+{
+   if (draw->collect_statistics) {
+      unsigned start, i;
+      for (start = i = 0;
+           i < prim_info->primitive_count;
+           start += prim_info->primitive_lengths[i], i++)
+      {
+         draw->statistics.c_invocations +=
+            u_decomposed_prims_for_vertices(prim_info->prim,
+                                            prim_info->primitive_lengths[i]);
+      }
+   }
 }

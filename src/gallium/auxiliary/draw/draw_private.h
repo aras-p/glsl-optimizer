@@ -461,6 +461,10 @@ draw_get_rasterizer_no_cull( struct draw_context *draw,
                              boolean scissor,
                              boolean flatshade );
 
+void
+draw_stats_clipper_primitives(struct draw_context *draw,
+                              const struct draw_prim_info *prim_info);
+
 
 /** 
  * Return index i from the index buffer.
