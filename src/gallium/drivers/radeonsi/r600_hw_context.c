@@ -161,7 +161,11 @@ static void r600_flush_framebuffer(struct r600_context *ctx)
 	if (!(ctx->flags & R600_CONTEXT_DST_CACHES_DIRTY))
 		return;
 
-	pm4 = CALLOC_STRUCT(si_pm4_state);
+	pm4 = si_pm4_alloc_state(ctx);
+
+	if (pm4 == NULL)
+		return;
+
 	si_cmd_surface_sync(pm4, S_0085F0_CB0_DEST_BASE_ENA(1) |
 				S_0085F0_CB1_DEST_BASE_ENA(1) |
 				S_0085F0_CB2_DEST_BASE_ENA(1) |

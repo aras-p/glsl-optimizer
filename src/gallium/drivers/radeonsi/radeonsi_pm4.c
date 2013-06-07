@@ -173,6 +173,18 @@ void si_pm4_free_state(struct r600_context *rctx,
 	FREE(state);
 }
 
+struct si_pm4_state * si_pm4_alloc_state(struct r600_context *rctx)
+{
+	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
+
+        if (pm4 == NULL)
+                return NULL;
+
+	pm4->chip_class = rctx->chip_class;
+
+	return pm4;
+}
+
 uint32_t si_pm4_sync_flags(struct r600_context *rctx)
 {
 	uint32_t cp_coher_cntl = 0;

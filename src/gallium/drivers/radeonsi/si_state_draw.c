@@ -46,7 +46,10 @@ static void si_pipe_shader_vs(struct pipe_context *ctx, struct si_pipe_shader *s
 	uint64_t va;
 
 	si_pm4_delete_state(rctx, vs, shader->pm4);
-	pm4 = shader->pm4 = CALLOC_STRUCT(si_pm4_state);
+	pm4 = shader->pm4 = si_pm4_alloc_state(rctx);
+
+	if (pm4 == NULL)
+		return;
 
 	si_pm4_inval_shader_cache(pm4);
 
@@ -125,7 +128,10 @@ static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *s
 	uint64_t va;
 
 	si_pm4_delete_state(rctx, ps, shader->pm4);
-	pm4 = shader->pm4 = CALLOC_STRUCT(si_pm4_state);
+	pm4 = shader->pm4 = si_pm4_alloc_state(rctx);
+
+	if (pm4 == NULL)
+		return;
 
 	si_pm4_inval_shader_cache(pm4);
 
@@ -283,7 +289,7 @@ static unsigned si_conv_pipe_prim(unsigned pprim)
 static bool si_update_draw_info_state(struct r600_context *rctx,
 			       const struct pipe_draw_info *info)
 {
-	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
+	struct si_pm4_state *pm4 = si_pm4_alloc_state(rctx);
 	struct si_shader *vs = &rctx->vs_shader->current->shader;
 	unsigned prim = si_conv_pipe_prim(info->mode);
 	unsigned ls_mask = 0;
@@ -343,7 +349,7 @@ static void si_update_spi_map(struct r600_context *rctx)
 {
 	struct si_shader *ps = &rctx->ps_shader->current->shader;
 	struct si_shader *vs = &rctx->vs_shader->current->shader;
-	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
+	struct si_pm4_state *pm4 = si_pm4_alloc_state(rctx);
 	unsigned i, j, tmp;
 
 	for (i = 0; i < ps->ninput; i++) {
@@ -527,7 +533,7 @@ static void si_constant_buffer_update(struct r600_context *rctx)
 static void si_vertex_buffer_update(struct r600_context *rctx)
 {
 	struct pipe_context *ctx = &rctx->context;
-	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
+	struct si_pm4_state *pm4 = si_pm4_alloc_state(rctx);
 	bool bound[PIPE_MAX_ATTRIBS] = {};
 	unsigned i, count;
 	uint64_t va;
@@ -587,7 +593,10 @@ static void si_state_draw(struct r600_context *rctx,
 			  const struct pipe_draw_info *info,
 			  const struct pipe_index_buffer *ib)
 {
-	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
+	struct si_pm4_state *pm4 = si_pm4_alloc_state(rctx);
+
+	if (pm4 == NULL)
+		return;
 
 	/* queries need some special values
 	 * (this is non-zero if any query is active) */
@@ -678,7 +687,11 @@ void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 
 	cp_coher_cntl = si_pm4_sync_flags(rctx);
 	if (cp_coher_cntl) {
-		struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
+		struct si_pm4_state *pm4 = si_pm4_alloc_state(rctx);
+
+		if (pm4 == NULL)
+			return;
+
 		si_cmd_surface_sync(pm4, cp_coher_cntl);
 		si_pm4_set_state(rctx, sync, pm4);
 	}

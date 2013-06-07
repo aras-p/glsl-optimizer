@@ -35,9 +35,12 @@
 
 // forward defines
 struct r600_context;
+enum chip_class;
 
 struct si_pm4_state
 {
+	/* family specific handling */
+	enum chip_class chip_class;
 	/* PKT3_SET_*_REG handling */
 	unsigned	last_opcode;
 	unsigned	last_reg;
@@ -83,6 +86,7 @@ void si_pm4_inval_zsbuf_cache(struct si_pm4_state *state);
 void si_pm4_free_state(struct r600_context *rctx,
 		       struct si_pm4_state *state,
 		       unsigned idx);
+struct si_pm4_state * si_pm4_alloc_state(struct r600_context *rctx);
 
 uint32_t si_pm4_sync_flags(struct r600_context *rctx);
 unsigned si_pm4_dirty_dw(struct r600_context *rctx);

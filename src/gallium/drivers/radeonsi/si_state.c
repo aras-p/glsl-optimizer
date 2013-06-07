@@ -158,7 +158,7 @@ static void si_update_fb_blend_state(struct r600_context *rctx)
 	if (blend == NULL)
 		return;
 
-	pm4 = CALLOC_STRUCT(si_pm4_state);
+	pm4 = si_pm4_alloc_state(rctx);
 	if (pm4 == NULL)
 		return;
 
@@ -321,7 +321,7 @@ static void si_set_blend_color(struct pipe_context *ctx,
 			       const struct pipe_blend_color *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
+	struct si_pm4_state *pm4 = si_pm4_alloc_state(rctx);
 
         if (pm4 == NULL)
                 return;
@@ -342,7 +342,7 @@ static void si_set_clip_state(struct pipe_context *ctx,
 			      const struct pipe_clip_state *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
+	struct si_pm4_state *pm4 = si_pm4_alloc_state(rctx);
 	struct pipe_constant_buffer cb;
 
 	if (pm4 == NULL)
@@ -375,7 +375,7 @@ static void si_set_scissor_states(struct pipe_context *ctx,
                                   const struct pipe_scissor_state *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
+	struct si_pm4_state *pm4 = si_pm4_alloc_state(rctx);
 	uint32_t tl, br;
 
 	if (pm4 == NULL)
@@ -457,7 +457,11 @@ static void si_update_fb_rs_state(struct r600_context *rctx)
 		return;
 	}
 
-	pm4 = CALLOC_STRUCT(si_pm4_state);
+	pm4 = si_pm4_alloc_state(rctx);
+
+	if (pm4 == NULL)
+		return;
+
 	/* FIXME some of those reg can be computed with cso */
 	offset_db_fmt_cntl |= S_028B78_POLY_OFFSET_NEG_NUM_DB_BITS(depth);
 	si_pm4_set_reg(pm4, R_028B80_PA_SU_POLY_OFFSET_FRONT_SCALE,
@@ -619,7 +623,7 @@ static void si_delete_rs_state(struct pipe_context *ctx, void *state)
  */
 static void si_update_dsa_stencil_ref(struct r600_context *rctx)
 {
-	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
+	struct si_pm4_state *pm4 = si_pm4_alloc_state(rctx);
 	struct pipe_stencil_ref *ref = &rctx->stencil_ref;
         struct si_state_dsa *dsa = rctx->queued.named.dsa;
 
@@ -1969,7 +1973,7 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 				     const struct pipe_framebuffer_state *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
+	struct si_pm4_state *pm4 = si_pm4_alloc_state(rctx);
 	uint32_t tl, br;
 	int tl_x, tl_y, br_x, br_y;
 
@@ -2491,7 +2495,7 @@ static struct si_pm4_state *si_set_sampler_view(struct r600_context *rctx,
 						unsigned user_data_reg)
 {
 	struct si_pipe_sampler_view **resource = (struct si_pipe_sampler_view **)views;
-	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
+	struct si_pm4_state *pm4 = si_pm4_alloc_state(rctx);
 	int i, j;
 
 	if (!count)
@@ -2565,7 +2569,7 @@ static struct si_pm4_state *si_bind_sampler(struct r600_context *rctx, unsigned 
 					    unsigned user_data_reg)
 {
 	struct si_pipe_sampler_state **rstates = (struct si_pipe_sampler_state **)states;
-	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
+	struct si_pm4_state *pm4 = si_pm4_alloc_state(rctx);
 	uint32_t *border_color_table = NULL;
 	int i, j;
 
@@ -2814,7 +2818,10 @@ static void si_set_polygon_stipple(struct pipe_context *ctx,
 static void si_texture_barrier(struct pipe_context *ctx)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
+	struct si_pm4_state *pm4 = si_pm4_alloc_state(rctx);
+
+	if (pm4 == NULL)
+		return;
 
 	si_pm4_inval_texture_cache(pm4);
 	si_pm4_inval_fb_cache(pm4, rctx->framebuffer.nr_cbufs);
@@ -2886,7 +2893,10 @@ void si_init_state_functions(struct r600_context *rctx)
 
 void si_init_config(struct r600_context *rctx)
 {
-	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
+	struct si_pm4_state *pm4 = si_pm4_alloc_state(rctx);
+
+	if (pm4 == NULL)
+		return;
 
 	si_cmd_context_control(pm4);
 
