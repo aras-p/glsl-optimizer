@@ -1619,9 +1619,9 @@ static const toy_tgsi_translate soa_translate_table[TGSI_OPCODE_LAST] = {
    [TGSI_OPCODE_ATOMUMAX]     = soa_unsupported,
    [TGSI_OPCODE_ATOMIMIN]     = soa_unsupported,
    [TGSI_OPCODE_ATOMIMAX]     = soa_unsupported,
-   [TGSI_OPCODE_TEX2]         = soa_unsupported,
-   [TGSI_OPCODE_TXB2]         = soa_unsupported,
-   [TGSI_OPCODE_TXL2]         = soa_unsupported,
+   [TGSI_OPCODE_TEX2]         = soa_passthrough,
+   [TGSI_OPCODE_TXB2]         = soa_passthrough,
+   [TGSI_OPCODE_TXL2]         = soa_passthrough,
 };
 
 static bool
