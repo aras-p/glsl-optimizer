@@ -386,6 +386,10 @@ lp_build_add(struct lp_build_context *bld,
          return lp_build_intrinsic_binary(builder, intrinsic, lp_build_vec_type(bld->gallivm, bld->type), a, b);
    }
 
+   /* TODO: handle signed case */
+   if(type.norm && !type.floating && !type.fixed && !type.sign)
+      a = lp_build_min_simple(bld, a, lp_build_comp(bld, b));
+
    if(LLVMIsConstant(a) && LLVMIsConstant(b))
       if (type.floating)
          res = LLVMConstFAdd(a, b);
@@ -662,6 +666,10 @@ lp_build_sub(struct lp_build_context *bld,
       if(intrinsic)
          return lp_build_intrinsic_binary(builder, intrinsic, lp_build_vec_type(bld->gallivm, bld->type), a, b);
    }
+
+   /* TODO: handle signed case */
+   if(type.norm && !type.floating && !type.fixed && !type.sign)
+      a = lp_build_max_simple(bld, a, b);
 
    if(LLVMIsConstant(a) && LLVMIsConstant(b))
       if (type.floating)
