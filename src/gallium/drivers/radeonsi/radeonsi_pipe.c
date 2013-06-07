@@ -239,6 +239,13 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 		rctx->max_db = 8;
 		si_init_config(rctx);
 		break;
+	case CIK:
+		si_init_state_functions(rctx);
+		LIST_INITHEAD(&rctx->active_query_list);
+		rctx->cs = rctx->ws->cs_create(rctx->ws, RING_GFX, NULL);
+		rctx->max_db = 8;
+		si_init_config(rctx);
+		break;
 	default:
 		R600_ERR("Unsupported chip class %d.\n", rctx->chip_class);
 		r600_destroy_context(&rctx->context);
@@ -304,6 +311,9 @@ static const char *r600_get_family_name(enum radeon_family family)
 	case CHIP_VERDE: return "AMD CAPE VERDE";
 	case CHIP_OLAND: return "AMD OLAND";
 	case CHIP_HAINAN: return "AMD HAINAN";
+	case CHIP_BONAIRE: return "AMD BONAIRE";
+	case CHIP_KAVERI: return "AMD KAVERI";
+	case CHIP_KABINI: return "AMD KABINI";
 	default: return "AMD unknown";
 	}
 }
@@ -794,7 +804,9 @@ struct pipe_screen *radeonsi_screen_create(struct radeon_winsys *ws)
 	}
 
 	/* setup class */
-	if (rscreen->family >= CHIP_TAHITI) {
+	if (rscreen->family >= CHIP_BONAIRE) {
+		rscreen->chip_class = CIK;
+	} else if (rscreen->family >= CHIP_TAHITI) {
 		rscreen->chip_class = SI;
 	} else {
 		fprintf(stderr, "r600: Unsupported family %d\n", rscreen->family);

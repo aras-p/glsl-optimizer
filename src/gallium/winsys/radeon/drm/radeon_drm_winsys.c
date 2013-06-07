@@ -324,6 +324,11 @@ static boolean do_winsys_init(struct radeon_drm_winsys *ws)
     case CHIP_HAINAN:
         ws->info.chip_class = SI;
         break;
+    case CHIP_BONAIRE:
+    case CHIP_KAVERI:
+    case CHIP_KABINI:
+        ws->info.chip_class = CIK;
+        break;
     }
 
     /* Check for dma */

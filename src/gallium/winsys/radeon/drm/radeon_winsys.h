@@ -125,6 +125,9 @@ enum radeon_family {
     CHIP_VERDE,
     CHIP_OLAND,
     CHIP_HAINAN,
+    CHIP_BONAIRE,
+    CHIP_KAVERI,
+    CHIP_KABINI,
     CHIP_LAST,
 };
 
@@ -138,6 +141,7 @@ enum chip_class {
     EVERGREEN,
     CAYMAN,
     SI,
+    CIK,
 };
 
 enum ring_type {
