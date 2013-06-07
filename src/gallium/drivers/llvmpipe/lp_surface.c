@@ -232,11 +232,68 @@ static void lp_blit(struct pipe_context *pipe,
 }
 
 
+static struct pipe_surface *
+llvmpipe_create_surface(struct pipe_context *pipe,
+                        struct pipe_resource *pt,
+                        const struct pipe_surface *surf_tmpl)
+{
+   struct pipe_surface *ps;
+
+   if (!(pt->bind & (PIPE_BIND_DEPTH_STENCIL | PIPE_BIND_RENDER_TARGET)))
+      debug_printf("Illegal surface creation without bind flag\n");
+
+   ps = CALLOC_STRUCT(pipe_surface);
+   if (ps) {
+      pipe_reference_init(&ps->reference, 1);
+      pipe_resource_reference(&ps->texture, pt);
+      ps->context = pipe;
+      ps->format = surf_tmpl->format;
+      if (llvmpipe_resource_is_texture(pt)) {
+         assert(surf_tmpl->u.tex.level <= pt->last_level);
+         assert(surf_tmpl->u.tex.first_layer <= surf_tmpl->u.tex.last_layer);
+         ps->width = u_minify(pt->width0, surf_tmpl->u.tex.level);
+         ps->height = u_minify(pt->height0, surf_tmpl->u.tex.level);
+         ps->u.tex.level = surf_tmpl->u.tex.level;
+         ps->u.tex.first_layer = surf_tmpl->u.tex.first_layer;
+         ps->u.tex.last_layer = surf_tmpl->u.tex.last_layer;
+      }
+      else {
+         /* setting width as number of elements should get us correct renderbuffer width */
+         ps->width = surf_tmpl->u.buf.last_element - surf_tmpl->u.buf.first_element + 1;
+         ps->height = pt->height0;
+         ps->u.buf.first_element = surf_tmpl->u.buf.first_element;
+         ps->u.buf.last_element = surf_tmpl->u.buf.last_element;
+         assert(ps->u.buf.first_element <= ps->u.buf.last_element);
+         assert(util_format_get_blocksize(surf_tmpl->format) *
+                (ps->u.buf.last_element + 1) <= pt->width0);
+      }
+   }
+   return ps;
+}
+
+
+static void
+llvmpipe_surface_destroy(struct pipe_context *pipe,
+                         struct pipe_surface *surf)
+{
+   /* Effectively do the texture_update work here - if texture images
+    * needed post-processing to put them into hardware layout, this is
+    * where it would happen.  For llvmpipe, nothing to do.
+    */
+   assert(surf->texture);
+   pipe_resource_reference(&surf->texture, NULL);
+   FREE(surf);
+}
+
+
 void
 llvmpipe_init_surface_functions(struct llvmpipe_context *lp)
 {
-   lp->pipe.resource_copy_region = lp_resource_copy;
    lp->pipe.clear_render_target = util_clear_render_target;
    lp->pipe.clear_depth_stencil = util_clear_depth_stencil;
+   lp->pipe.create_surface = llvmpipe_create_surface;
+   lp->pipe.surface_destroy = llvmpipe_surface_destroy;
+   /* These two are not actually functions dealing with surfaces */
+   lp->pipe.resource_copy_region = lp_resource_copy;
    lp->pipe.blit = lp_blit;
 }
