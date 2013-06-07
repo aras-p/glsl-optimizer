@@ -886,7 +886,7 @@ ir_reader::read_dereference(s_expression *expr)
       }
 
       ir_rvalue *idx = read_rvalue(s_index);
-      if (subject == NULL) {
+      if (idx == NULL) {
 	 ir_read_error(NULL, "when reading the index of an array_ref");
 	 return NULL;
       }
