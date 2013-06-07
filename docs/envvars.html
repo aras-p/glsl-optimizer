@@ -153,10 +153,6 @@ Mesa EGL supports different sets of environment variables.  See the
     rather than stderr.
 <li>GALLIUM_PRINT_OPTIONS - if non-zero, print all the Gallium environment
     variables which are used, and their current values.
-<li>GALLIUM_NOSSE - if non-zero, do not use SSE runtime code generation for
-    shader execution
-<li>GALLIUM_NOPPC - if non-zero, do not use PPC runtime code generation for
-    shader execution
 <li>GALLIUM_DUMP_CPU - if non-zero, print information about the CPU on start-up
 <li>TGSI_PRINT_SANITY - if set, do extra sanity checking on TGSI shaders and
     print any errors to stderr.
@@ -164,6 +160,9 @@ Mesa EGL supports different sets of environment variables.  See the
 <LI>DRAW_NO_FSE - ???
 <li>DRAW_USE_LLVM - if set to zero, the draw module will not use LLVM to execute
     shaders, vertex fetch, etc.
+<li>ST_DEBUG - controls debug output from the Mesa/Gallium state tracker.
+Setting to "tgsi", for example, will print all the TGSI shaders.
+See src/mesa/state_tracker/st_debug.c for other options.
 </ul>
 
 <h3>Softpipe driver environment variables</h3>
@@ -188,6 +187,16 @@ Mesa EGL supports different sets of environment variables.  See the
 <li>LP_NUM_THREADS - an integer indicating how many threads to use for rendering.
     Zero turns of threading completely.  The default value is the number of CPU
     cores present.
+</ul>
+
+<h3>VMware SVGA driver environment variables</h3>
+<ul>
+<li>SVGA_FORCE_SWTNL - force use of software vertex transformation
+<li>SVGA_NO_SWTNL - don't allow software vertex transformation fallbacks
+(will often result in incorrect rendering).
+<li>SVGA_DEBUG - for dumping shaders, constant buffers, etc.  See the code
+for details.
+<li>See the driver code for other, lesser-used variables.
 </ul>
 
 
