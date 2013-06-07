@@ -2937,23 +2937,40 @@ void si_init_config(struct r600_context *rctx)
 
 	si_pm4_set_reg(pm4, R_02882C_PA_SU_PRIM_FILTER_CNTL, 0);
 
-	switch (rctx->screen->family) {
-	case CHIP_TAHITI:
-	case CHIP_PITCAIRN:
-		si_pm4_set_reg(pm4, R_028350_PA_SC_RASTER_CONFIG, 0x2a00126a);
-		break;
-	case CHIP_VERDE:
-		si_pm4_set_reg(pm4, R_028350_PA_SC_RASTER_CONFIG, 0x0000124a);
-		break;
-	case CHIP_OLAND:
-		si_pm4_set_reg(pm4, R_028350_PA_SC_RASTER_CONFIG, 0x00000082);
-		break;
-	case CHIP_HAINAN:
-		si_pm4_set_reg(pm4, R_028350_PA_SC_RASTER_CONFIG, 0x00000000);
-		break;
-	default:
-		si_pm4_set_reg(pm4, R_028350_PA_SC_RASTER_CONFIG, 0x00000000);
-		break;
+	if (rctx->chip_class >= CIK) {
+		switch (rctx->screen->family) {
+		case CHIP_BONAIRE:
+			si_pm4_set_reg(pm4, R_028350_PA_SC_RASTER_CONFIG, 0x16000012);
+			si_pm4_set_reg(pm4, R_028354_PA_SC_RASTER_CONFIG_1, 0x00000000);
+			break;
+		case CHIP_KAVERI:
+			/* XXX todo */
+		case CHIP_KABINI:
+			/* XXX todo */
+		default:
+			si_pm4_set_reg(pm4, R_028350_PA_SC_RASTER_CONFIG, 0x00000000);
+			si_pm4_set_reg(pm4, R_028354_PA_SC_RASTER_CONFIG_1, 0x00000000);
+			break;
+		}
+	} else {
+		switch (rctx->screen->family) {
+		case CHIP_TAHITI:
+		case CHIP_PITCAIRN:
+			si_pm4_set_reg(pm4, R_028350_PA_SC_RASTER_CONFIG, 0x2a00126a);
+			break;
+		case CHIP_VERDE:
+			si_pm4_set_reg(pm4, R_028350_PA_SC_RASTER_CONFIG, 0x0000124a);
+			break;
+		case CHIP_OLAND:
+			si_pm4_set_reg(pm4, R_028350_PA_SC_RASTER_CONFIG, 0x00000082);
+			break;
+		case CHIP_HAINAN:
+			si_pm4_set_reg(pm4, R_028350_PA_SC_RASTER_CONFIG, 0x00000000);
+			break;
+		default:
+			si_pm4_set_reg(pm4, R_028350_PA_SC_RASTER_CONFIG, 0x00000000);
+			break;
+		}
 	}
 
 	si_pm4_set_state(rctx, init, pm4);
