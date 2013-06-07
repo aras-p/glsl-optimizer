@@ -137,7 +137,7 @@ enum chip_class {
     R700,
     EVERGREEN,
     CAYMAN,
-    TAHITI,
+    SI,
 };
 
 enum ring_type {

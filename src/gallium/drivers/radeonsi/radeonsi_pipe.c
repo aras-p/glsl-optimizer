@@ -232,7 +232,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	}
 
 	switch (rctx->chip_class) {
-	case TAHITI:
+	case SI:
 		si_init_state_functions(rctx);
 		LIST_INITHEAD(&rctx->active_query_list);
 		rctx->cs = rctx->ws->cs_create(rctx->ws, RING_GFX, NULL);
@@ -795,7 +795,7 @@ struct pipe_screen *radeonsi_screen_create(struct radeon_winsys *ws)
 
 	/* setup class */
 	if (rscreen->family >= CHIP_TAHITI) {
-		rscreen->chip_class = TAHITI;
+		rscreen->chip_class = SI;
 	} else {
 		fprintf(stderr, "r600: Unsupported family %d\n", rscreen->family);
 		FREE(rscreen);
