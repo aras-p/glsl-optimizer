@@ -472,15 +472,14 @@ The box parameter to some of these functions defines a 1D, 2D or 3D
 region of pixels.  This is self-explanatory for 1D, 2D and 3D texture
 targets.
 
-For PIPE_TEXTURE_1D_ARRAY, the box::y and box::height fields refer to the
-array dimension of the texture.
-
-For PIPE_TEXTURE_2D_ARRAY, the box::z and box::depth fields refer to the
-array dimension of the texture.
+For PIPE_TEXTURE_1D_ARRAY and PIPE_TEXTURE_2D_ARRAY, the box::z and box::depth
+fields refer to the array dimension of the texture.
 
 For PIPE_TEXTURE_CUBE, the box:z and box::depth fields refer to the
 faces of the cube map (z + depth <= 6).
 
+For PIPE_TEXTURE_CUBE_ARRAY, the box:z and box::depth fields refer to both
+the face and array dimension of the texture (face = z % 6, array = z / 6).
 
 
 .. _transfer_flush_region:
