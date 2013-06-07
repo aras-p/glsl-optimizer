@@ -26,9 +26,27 @@
 #ifndef U_RESOURCE_H
 #define U_RESOURCE_H
 
-struct pipe_resource;
+#include "pipe/p_state.h"
 
 unsigned
 util_resource_size(const struct pipe_resource *res);
+
+/**
+ * Return true if the resource is an array texture.
+ *
+ * Note that this function returns true for single-layered array textures.
+ */
+static INLINE boolean
+util_resource_is_array_texture(const struct pipe_resource *res)
+{
+   switch (res->target) {
+   case PIPE_TEXTURE_1D_ARRAY:
+   case PIPE_TEXTURE_2D_ARRAY:
+   case PIPE_TEXTURE_CUBE_ARRAY:
+      return TRUE;
+   default:
+      return FALSE;
+   }
+}
 
 #endif
