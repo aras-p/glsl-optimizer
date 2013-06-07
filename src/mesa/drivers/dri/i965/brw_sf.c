@@ -76,7 +76,7 @@ static void compile_sf_prog( struct brw_context *brw,
       c.vue_map.varying_to_slot[BRW_VARYING_SLOT_PNTC] = c.vue_map.num_slots;
       c.vue_map.slot_to_varying[c.vue_map.num_slots++] = BRW_VARYING_SLOT_PNTC;
    }
-   c.urb_entry_read_offset = brw_sf_compute_urb_entry_read_offset(intel);
+   c.urb_entry_read_offset = BRW_SF_URB_ENTRY_READ_OFFSET;
    c.nr_attr_regs = (c.vue_map.num_slots + 1)/2 - c.urb_entry_read_offset;
    c.nr_setup_regs = c.nr_attr_regs;
 

@@ -2746,7 +2746,6 @@ vec4_visitor::emit_urb_slot(int mrf, int varying)
       current_annotation = "NDC";
       emit(MOV(reg, src_reg(output_reg[BRW_VARYING_SLOT_NDC])));
       break;
-   case BRW_VARYING_SLOT_POS_DUPLICATE:
    case VARYING_SLOT_POS:
       current_annotation = "gl_Position";
       emit(MOV(reg, src_reg(output_reg[VARYING_SLOT_POS])));

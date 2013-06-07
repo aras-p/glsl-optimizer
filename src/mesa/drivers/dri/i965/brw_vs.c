@@ -85,34 +85,17 @@ brw_compute_vue_map(struct brw_context *brw, struct brw_vue_map *vue_map,
     */
    switch (intel->gen) {
    case 4:
+   case 5:
       /* There are 8 dwords in VUE header pre-Ironlake:
        * dword 0-3 is indices, point width, clip flags.
        * dword 4-7 is ndc position
        * dword 8-11 is the first vertex data.
-       */
-      assign_vue_slot(vue_map, VARYING_SLOT_PSIZ);
-      assign_vue_slot(vue_map, BRW_VARYING_SLOT_NDC);
-      assign_vue_slot(vue_map, VARYING_SLOT_POS);
-      break;
-   case 5:
-      /* There are 20 DWs (D0-D19) in VUE header on Ironlake:
-       * dword 0-3 of the header is indices, point width, clip flags.
-       * dword 4-7 is the ndc position
-       * dword 8-11 of the vertex header is the 4D space position
-       * dword 12-19 of the vertex header is the user clip distance.
-       * dword 20-23 is a pad so that the vertex element data is aligned
-       * dword 24-27 is the first vertex data we fill.
        *
-       * Note: future pipeline stages expect 4D space position to be
-       * contiguous with the other varyings, so we make dword 24-27 a
-       * duplicate copy of the 4D space position.
+       * On Ironlake the VUE header is nominally 20 dwords, but the hardware
+       * will accept the same header layout as Gen4 [and should be a bit faster]
        */
       assign_vue_slot(vue_map, VARYING_SLOT_PSIZ);
       assign_vue_slot(vue_map, BRW_VARYING_SLOT_NDC);
-      assign_vue_slot(vue_map, BRW_VARYING_SLOT_POS_DUPLICATE);
-      assign_vue_slot(vue_map, VARYING_SLOT_CLIP_DIST0);
-      assign_vue_slot(vue_map, VARYING_SLOT_CLIP_DIST1);
-      assign_vue_slot(vue_map, BRW_VARYING_SLOT_PAD);
       assign_vue_slot(vue_map, VARYING_SLOT_POS);
       break;
    case 6:

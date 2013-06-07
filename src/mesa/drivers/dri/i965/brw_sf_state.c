@@ -124,19 +124,6 @@ const struct brw_tracked_state brw_sf_vp = {
    .emit = upload_sf_vp
 };
 
-/**
- * Compute the offset within the URB (expressed in 256-bit register
- * increments) that should be used to read the VUE in th efragment shader.
- */
-int
-brw_sf_compute_urb_entry_read_offset(struct intel_context *intel)
-{
-   if (intel->gen == 5)
-      return 3;
-   else
-      return 1;
-}
-
 static void upload_sf_unit( struct brw_context *brw )
 {
    struct intel_context *intel = &brw->intel;
@@ -163,9 +150,7 @@ static void upload_sf_unit( struct brw_context *brw )
    sf->thread1.floating_point_mode = BRW_FLOATING_POINT_NON_IEEE_754;
 
    sf->thread3.dispatch_grf_start_reg = 3;
-
-   sf->thread3.urb_entry_read_offset =
-      brw_sf_compute_urb_entry_read_offset(intel);
+   sf->thread3.urb_entry_read_offset = BRW_SF_URB_ENTRY_READ_OFFSET;
 
    /* CACHE_NEW_SF_PROG */
    sf->thread3.urb_entry_read_length = brw->sf.prog_data->urb_read_length;

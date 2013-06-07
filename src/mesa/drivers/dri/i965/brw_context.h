@@ -333,7 +333,6 @@ struct brw_wm_prog_data {
 typedef enum
 {
    BRW_VARYING_SLOT_NDC = VARYING_SLOT_MAX,
-   BRW_VARYING_SLOT_POS_DUPLICATE,
    BRW_VARYING_SLOT_PAD,
    /**
     * Technically this is not a varying but just a placeholder that
