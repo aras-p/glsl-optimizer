@@ -25,6 +25,7 @@
  *    Chia-I Wu <olv@lunarg.com>
  */
 
+#include "util/u_resource.h"
 #include "brw_defines.h"
 #include "intel_reg.h"
 
@@ -1591,8 +1592,23 @@ ilo_gpe_init_view_surface_for_texture_gen7(const struct ilo_dev_info *dev,
            surface_format << BRW_SURFACE_FORMAT_SHIFT |
            ilo_gpe_gen6_translate_winsys_tiling(tex->tiling) << 13;
 
-   if (surface_type != BRW_SURFACE_3D && depth > 1)
-      dw[0] |= GEN7_SURFACE_IS_ARRAY;
+   /*
+    * From the Ivy Bridge PRM, volume 4 part 1, page 63:
+    *
+    *     "If this field (Surface Array) is enabled, the Surface Type must be
+    *      SURFTYPE_1D, SURFTYPE_2D, or SURFTYPE_CUBE. If this field is
+    *      disabled and Surface Type is SURFTYPE_1D, SURFTYPE_2D, or
+    *      SURFTYPE_CUBE, the Depth field must be set to zero."
+    *
+    * For non-3D sampler surfaces, resinfo (the sampler message) always
+    * returns zero for the number of layers when this field is not set.
+    */
+   if (surface_type != BRW_SURFACE_3D) {
+      if (util_resource_is_array_texture(&tex->base))
+         dw[0] |= GEN7_SURFACE_IS_ARRAY;
+      else
+         assert(depth == 1);
+   }
 
    if (tex->valign_4)
       dw[0] |= GEN7_SURFACE_VALIGN_4;
