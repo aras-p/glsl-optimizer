@@ -271,6 +271,28 @@ lp_build_interleave2(struct gallivm_state *gallivm,
 {
    LLVMValueRef shuffle;
 
+   if (type.length == 2 && type.width == 128 && util_cpu_caps.has_avx) {
+      /*
+       * XXX: This is a workaround for llvm code generation deficiency. Strangely
+       * enough, while this needs vinsertf128/vextractf128 instructions (hence
+       * a natural match when using 2x128bit vectors) the "normal" unpack shuffle
+       * generates code ranging from atrocious (llvm 3.1) to terrible (llvm 3.2, 3.3).
+       * So use some different shuffles instead (the exact shuffles don't seem to
+       * matter, as long as not using 128bit wide vectors, works with 8x32 or 4x64).
+       */
+      struct lp_type tmp_type = type;
+      LLVMValueRef srchalf[2], tmpdst;
+      tmp_type.length = 4;
+      tmp_type.width = 64;
+      a = LLVMBuildBitCast(gallivm->builder, a, lp_build_vec_type(gallivm, tmp_type), "");
+      b = LLVMBuildBitCast(gallivm->builder, b, lp_build_vec_type(gallivm, tmp_type), "");
+      srchalf[0] = lp_build_extract_range(gallivm, a, lo_hi * 2, 2);
+      srchalf[1] = lp_build_extract_range(gallivm, b, lo_hi * 2, 2);
+      tmp_type.length = 2;
+      tmpdst = lp_build_concat(gallivm, srchalf, tmp_type, 2);
+      return LLVMBuildBitCast(gallivm->builder, tmpdst, lp_build_vec_type(gallivm, type), "");
+   }
+
    shuffle = lp_build_const_unpack_shuffle(gallivm, type.length, lo_hi);
 
    return LLVMBuildShuffleVector(gallivm->builder, a, b, shuffle, "");
