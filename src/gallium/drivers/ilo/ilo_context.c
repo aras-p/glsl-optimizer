@@ -96,6 +96,8 @@ ilo_context_destroy(struct pipe_context *pipe)
    if (ilo->last_cp_bo)
       ilo->last_cp_bo->unreference(ilo->last_cp_bo);
 
+   util_slab_destroy(&ilo->transfer_mempool);
+
    if (ilo->blitter)
       util_blitter_destroy(ilo->blitter);
    if (ilo->hw3d)
@@ -133,6 +135,9 @@ ilo_context_create(struct pipe_screen *screen, void *priv)
 
    ilo_cp_set_flush_callback(ilo->cp,
          ilo_context_cp_flushed, (void *) ilo);
+
+   util_slab_create(&ilo->transfer_mempool,
+         sizeof(struct ilo_transfer), 64, UTIL_SLAB_SINGLETHREADED);
 
    ilo->dirty = ILO_DIRTY_ALL;
 

@@ -34,32 +34,6 @@
 #include "ilo_resource.h"
 #include "ilo_transfer.h"
 
-enum ilo_transfer_map_method {
-   /* map() / map_gtt() / map_unsynchronized() */
-   ILO_TRANSFER_MAP_CPU,
-   ILO_TRANSFER_MAP_GTT,
-   ILO_TRANSFER_MAP_UNSYNC,
-
-   /* use staging system buffer */
-   ILO_TRANSFER_MAP_SW_CONVERT,
-   ILO_TRANSFER_MAP_SW_ZS,
-};
-
-struct ilo_transfer {
-   struct pipe_transfer base;
-
-   enum ilo_transfer_map_method method;
-   void *ptr;
-
-   void *staging_sys;
-};
-
-static inline struct ilo_transfer *
-ilo_transfer(struct pipe_transfer *transfer)
-{
-   return (struct ilo_transfer *) transfer;
-}
-
 static bool
 is_bo_busy(struct ilo_context *ilo, struct intel_bo *bo, bool *need_flush)
 {
@@ -993,7 +967,8 @@ ilo_transfer_unmap(struct pipe_context *pipe,
       tex_unmap(ilo, xfer);
 
    pipe_resource_reference(&xfer->base.resource, NULL);
-   FREE(xfer);
+
+   util_slab_free(&ilo->transfer_mempool, xfer);
 }
 
 static void *
@@ -1008,7 +983,7 @@ ilo_transfer_map(struct pipe_context *pipe,
    struct ilo_transfer *xfer;
    bool success;
 
-   xfer = MALLOC_STRUCT(ilo_transfer);
+   xfer = util_slab_alloc(&ilo->transfer_mempool);
    if (!xfer) {
       *transfer = NULL;
       return NULL;

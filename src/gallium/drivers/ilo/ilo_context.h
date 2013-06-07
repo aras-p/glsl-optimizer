@@ -29,6 +29,7 @@
 #define ILO_CONTEXT_H
 
 #include "pipe/p_context.h"
+#include "util/u_slab.h"
 
 #include "ilo_gpe.h"
 #include "ilo_common.h"
@@ -49,6 +50,8 @@ struct ilo_context {
 
    struct ilo_cp *cp;
    struct intel_bo *last_cp_bo;
+
+   struct util_slab_mempool transfer_mempool;
 
    struct ilo_shader_cache *shader_cache;
    struct ilo_3d *hw3d;

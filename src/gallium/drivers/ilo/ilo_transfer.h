@@ -28,9 +28,37 @@
 #ifndef ILO_TRANSFER_H
 #define ILO_TRANSFER_H
 
+#include "pipe/p_state.h"
+
 #include "ilo_common.h"
 
+enum ilo_transfer_map_method {
+   /* map() / map_gtt() / map_unsynchronized() */
+   ILO_TRANSFER_MAP_CPU,
+   ILO_TRANSFER_MAP_GTT,
+   ILO_TRANSFER_MAP_UNSYNC,
+
+   /* use staging system buffer */
+   ILO_TRANSFER_MAP_SW_CONVERT,
+   ILO_TRANSFER_MAP_SW_ZS,
+};
+
+struct ilo_transfer {
+   struct pipe_transfer base;
+
+   enum ilo_transfer_map_method method;
+   void *ptr;
+
+   void *staging_sys;
+};
+
 struct ilo_context;
+
+static inline struct ilo_transfer *
+ilo_transfer(struct pipe_transfer *transfer)
+{
+   return (struct ilo_transfer *) transfer;
+}
 
 void
 ilo_init_transfer_functions(struct ilo_context *ilo);
