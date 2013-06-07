@@ -290,6 +290,7 @@ try_setup_line( struct lp_setup_context *setup,
    int i;
    int nr_planes = 4;
    unsigned scissor_index = 0;
+   unsigned layer = 0;
    
    /* linewidth should be interpreted as integer */
    int fixed_width = util_iround(width) * FIXED_ONE;
@@ -325,6 +326,10 @@ try_setup_line( struct lp_setup_context *setup,
       nr_planes = 4;
    }
 
+   if (setup->layer_slot > 0) {
+      layer = *(unsigned*)v1[setup->layer_slot];
+      layer = MIN2(layer, scene->fb_max_layer);
+   }
 
    dx = v1[0][0] - v2[0][0];
    dy = v1[0][1] - v2[0][1];
@@ -616,6 +621,7 @@ try_setup_line( struct lp_setup_context *setup,
    line->inputs.frontfacing = TRUE;
    line->inputs.disable = FALSE;
    line->inputs.opaque = FALSE;
+   line->inputs.layer = layer;
 
    for (i = 0; i < 4; i++) {
 

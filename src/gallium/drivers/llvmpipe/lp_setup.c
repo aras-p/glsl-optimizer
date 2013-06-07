@@ -1056,6 +1056,7 @@ lp_setup_update_state( struct lp_setup_context *setup,
        */
       setup->psize = lp->psize_slot;
       setup->viewport_index_slot = lp->viewport_index_slot;
+      setup->layer_slot = lp->layer_slot;
 
       assert(lp->dirty == 0);
 

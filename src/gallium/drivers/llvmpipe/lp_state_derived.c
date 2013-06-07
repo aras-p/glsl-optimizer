@@ -126,7 +126,18 @@ compute_vertex_info(struct llvmpipe_context *llvmpipe)
    } else {
       llvmpipe->viewport_index_slot = 0;
    }
-   
+
+   /* Figure out if we need layer */
+   vs_index = draw_find_shader_output(llvmpipe->draw,
+                                      TGSI_SEMANTIC_LAYER,
+                                      0);
+   if (vs_index >= 0) {
+      llvmpipe->layer_slot = vinfo->num_attribs;
+      draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_CONSTANT, vs_index);
+   } else {
+      llvmpipe->layer_slot = 0;
+   }
+
 
    draw_compute_vertex_size(vinfo);
    lp_setup_set_vertex_info(llvmpipe->setup, vinfo);

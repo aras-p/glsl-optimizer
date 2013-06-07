@@ -203,7 +203,8 @@ lp_rast_get_unswizzled_depth_tile_pointer(struct lp_rasterizer_task *task,
  */
 static INLINE uint8_t *
 lp_rast_get_unswizzled_color_block_pointer(struct lp_rasterizer_task *task,
-                                           unsigned buf, unsigned x, unsigned y)
+                                           unsigned buf, unsigned x, unsigned y,
+                                           unsigned layer)
 {
    unsigned px, py, pixel_offset, format_bytes;
    uint8_t *color;
@@ -225,6 +226,10 @@ lp_rast_get_unswizzled_color_block_pointer(struct lp_rasterizer_task *task,
 
    color = color + pixel_offset;
 
+   if (layer) {
+      color += layer * task->scene->cbufs[buf].layer_stride;
+   }
+
    assert(lp_check_alignment(color, llvmpipe_get_format_alignment(task->scene->fb.cbufs[buf]->format)));
    return color;
 }
@@ -236,7 +241,7 @@ lp_rast_get_unswizzled_color_block_pointer(struct lp_rasterizer_task *task,
  */
 static INLINE uint8_t *
 lp_rast_get_unswizzled_depth_block_pointer(struct lp_rasterizer_task *task,
-                                           unsigned x, unsigned y)
+                                           unsigned x, unsigned y, unsigned layer)
 {
    unsigned px, py, pixel_offset, format_bytes;
    uint8_t *depth;
@@ -256,6 +261,10 @@ lp_rast_get_unswizzled_depth_block_pointer(struct lp_rasterizer_task *task,
    pixel_offset = px * format_bytes + py * task->scene->zsbuf.stride;
 
    depth = depth + pixel_offset;
+
+   if (layer) {
+      depth += layer * task->scene->zsbuf.layer_stride;
+   }
 
    assert(lp_check_alignment(depth, llvmpipe_get_format_alignment(task->scene->fb.zsbuf->format)));
    return depth;
@@ -278,19 +287,18 @@ lp_rast_shade_quads_all( struct lp_rasterizer_task *task,
    struct lp_fragment_shader_variant *variant = state->variant;
    uint8_t *color[PIPE_MAX_COLOR_BUFS];
    unsigned stride[PIPE_MAX_COLOR_BUFS];
-   void *depth = NULL;
+   uint8_t *depth = NULL;
    unsigned depth_stride = 0;
    unsigned i;
 
    /* color buffer */
    for (i = 0; i < scene->fb.nr_cbufs; i++) {
       stride[i] = scene->cbufs[i].stride;
-
-      color[i] = lp_rast_get_unswizzled_color_block_pointer(task, i, x, y);
+      color[i] = lp_rast_get_unswizzled_color_block_pointer(task, i, x, y, inputs->layer);
    }
 
    if (scene->zsbuf.map) {
-      depth = lp_rast_get_unswizzled_depth_block_pointer(task, x, y);
+      depth = lp_rast_get_unswizzled_depth_block_pointer(task, x, y, inputs->layer);
       depth_stride = scene->zsbuf.stride;
    }
 

@@ -181,6 +181,16 @@ llvmpipe_resource_is_1d(const struct pipe_resource *resource)
 
 
 static INLINE unsigned
+llvmpipe_layer_stride(struct pipe_resource *resource,
+                      unsigned level)
+{
+   struct llvmpipe_resource *lpr = llvmpipe_resource(resource);
+   assert(level < LP_MAX_TEXTURE_2D_LEVELS);
+   return lpr->img_stride[level];
+}
+
+
+static INLINE unsigned
 llvmpipe_resource_stride(struct pipe_resource *resource,
                          unsigned level)
 {

@@ -151,6 +151,7 @@ lp_scene_begin_rasterization(struct lp_scene *scene)
 {
    const struct pipe_framebuffer_state *fb = &scene->fb;
    int i;
+   unsigned max_layer = ~0;
 
    //LP_DBG(DEBUG_RAST, "%s\n", __FUNCTION__);
 
@@ -159,6 +160,9 @@ lp_scene_begin_rasterization(struct lp_scene *scene)
       if (llvmpipe_resource_is_texture(cbuf->texture)) {
          scene->cbufs[i].stride = llvmpipe_resource_stride(cbuf->texture,
                                                            cbuf->u.tex.level);
+         scene->cbufs[i].layer_stride = llvmpipe_layer_stride(cbuf->texture,
+                                                              cbuf->u.tex.level);
+         max_layer = MIN2(max_layer, cbuf->u.tex.last_layer - cbuf->u.tex.first_layer);
 
          scene->cbufs[i].map = llvmpipe_resource_map(cbuf->texture,
                                                      cbuf->u.tex.level,
@@ -169,6 +173,8 @@ lp_scene_begin_rasterization(struct lp_scene *scene)
          struct llvmpipe_resource *lpr = llvmpipe_resource(cbuf->texture);
          unsigned pixstride = util_format_get_blocksize(cbuf->format);
          scene->cbufs[i].stride = cbuf->texture->width0;
+         max_layer = 0;
+
          scene->cbufs[i].map = lpr->data;
          scene->cbufs[i].map += cbuf->u.buf.first_element * pixstride;
       }
@@ -177,14 +183,16 @@ lp_scene_begin_rasterization(struct lp_scene *scene)
    if (fb->zsbuf) {
       struct pipe_surface *zsbuf = scene->fb.zsbuf;
       scene->zsbuf.stride = llvmpipe_resource_stride(zsbuf->texture, zsbuf->u.tex.level);
-      scene->zsbuf.blocksize = 
-         util_format_get_blocksize(zsbuf->texture->format);
+      scene->zsbuf.layer_stride = llvmpipe_layer_stride(zsbuf->texture, zsbuf->u.tex.level);
+      max_layer = MIN2(max_layer, zsbuf->u.tex.last_layer - zsbuf->u.tex.first_layer);
 
       scene->zsbuf.map = llvmpipe_resource_map(zsbuf->texture,
                                                zsbuf->u.tex.level,
                                                zsbuf->u.tex.first_layer,
                                                LP_TEX_USAGE_READ_WRITE);
    }
+
+   scene->fb_max_layer = max_layer;
 }
 
 

@@ -104,6 +104,7 @@ struct lp_setup_context
    float point_size;
    float psize;
    unsigned viewport_index_slot;
+   unsigned layer_slot;
 
    struct pipe_framebuffer_state fb;
    struct u_rect framebuffer;

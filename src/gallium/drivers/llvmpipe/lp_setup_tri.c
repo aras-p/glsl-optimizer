@@ -203,7 +203,14 @@ lp_setup_whole_tile(struct lp_setup_context *setup,
    LP_COUNT(nr_fully_covered_64);
 
    /* if variant is opaque and scissor doesn't effect the tile */
-   if (inputs->opaque) {
+   /*
+    * Need to disable this optimization for layered rendering and cannot use
+    * setup->layer_slot here to determine it, because it could incorrectly
+    * reset the tile if a previous shader used layer_slot but not this one
+    * (or maybe even "undo" clears). So determine this from presence of layers
+    * instead (in which case layer_slot will have no effect).
+    */
+   if (inputs->opaque && scene->fb_max_layer == 0) {
       if (!scene->fb.zsbuf) {
          /*
           * All previous rendering will be overwritten so reset the bin.
@@ -247,6 +254,7 @@ do_triangle_ccw(struct lp_setup_context *setup,
    unsigned tri_bytes;
    int nr_planes = 3;
    unsigned scissor_index = 0;
+   unsigned layer = 0;
 
    /* Area should always be positive here */
    assert(position->area > 0);
@@ -263,6 +271,10 @@ do_triangle_ccw(struct lp_setup_context *setup,
    }
    else {
       nr_planes = 3;
+   }
+   if (setup->layer_slot > 0) {
+      layer = *(unsigned*)v1[setup->layer_slot];
+      layer = MIN2(layer, scene->fb_max_layer);
    }
 
    /* Bounding rectangle (in pixels) */
@@ -334,6 +346,7 @@ do_triangle_ccw(struct lp_setup_context *setup,
    tri->inputs.frontfacing = frontfacing;
    tri->inputs.disable = FALSE;
    tri->inputs.opaque = setup->fs.current.variant->opaque;
+   tri->inputs.layer = layer;
 
    if (0)
       lp_dump_setup_coef(&setup->setup.variant->key,
@@ -519,7 +532,7 @@ do_triangle_ccw(struct lp_setup_context *setup,
       plane[6].eo = 0;
    }
 
-   return lp_setup_bin_triangle( setup, tri, &bbox, nr_planes, scissor_index );
+   return lp_setup_bin_triangle(setup, tri, &bbox, nr_planes, scissor_index);
 }
 
 /*

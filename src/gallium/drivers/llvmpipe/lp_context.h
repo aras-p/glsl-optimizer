@@ -119,6 +119,9 @@ struct llvmpipe_context {
    /** Which vertex shader output slot contains viewport index */
    int viewport_index_slot;
 
+   /** Which geometry shader output slot contains layer */
+   int layer_slot;
+
    /**< minimum resolvable depth value, for polygon offset */   
    double mrd;
    

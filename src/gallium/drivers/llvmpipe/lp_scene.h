@@ -135,9 +135,12 @@ struct lp_scene {
    struct {
       uint8_t *map;
       unsigned stride;
-      unsigned blocksize;
+      unsigned layer_stride;
    } zsbuf, cbufs[PIPE_MAX_COLOR_BUFS];
-   
+
+   /* OpenGL permits different amount of layers per rt, but rendering limited to minimum */
+   unsigned fb_max_layer;
+
    /** the framebuffer to render the scene into */
    struct pipe_framebuffer_state fb;
 

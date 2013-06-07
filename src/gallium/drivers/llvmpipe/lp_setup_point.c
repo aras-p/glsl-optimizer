@@ -325,11 +325,17 @@ try_setup_point( struct lp_setup_context *setup,
    unsigned nr_planes = 4;
    struct point_info info;
    unsigned scissor_index = 0;
+   unsigned layer = 0;
 
    if (setup->viewport_index_slot > 0) {
       unsigned *udata = (unsigned*)v0[setup->viewport_index_slot];
       scissor_index = lp_clamp_scissor_idx(*udata);
    }
+   if (setup->layer_slot > 0) {
+      layer = *(unsigned*)v0[setup->layer_slot];
+      layer = MIN2(layer, scene->fb_max_layer);
+   }
+
    /* Bounding rectangle (in pixels) */
    {
       /* Yes this is necessary to accurately calculate bounding boxes
@@ -386,6 +392,7 @@ try_setup_point( struct lp_setup_context *setup,
    point->inputs.frontfacing = TRUE;
    point->inputs.disable = FALSE;
    point->inputs.opaque = FALSE;
+   point->inputs.layer = layer;
 
    {
       struct lp_rast_plane *plane = GET_PLANES(point);
