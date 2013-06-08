@@ -49,26 +49,6 @@ const struct brw_tracked_state gen7_cc_state_pointer = {
 };
 
 static void
-upload_blend_state_pointer(struct brw_context *brw)
-{
-   struct intel_context *intel = &brw->intel;
-
-   BEGIN_BATCH(2);
-   OUT_BATCH(_3DSTATE_BLEND_STATE_POINTERS << 16 | (2 - 2));
-   OUT_BATCH(brw->cc.blend_state_offset | 1);
-   ADVANCE_BATCH();
-}
-
-const struct brw_tracked_state gen7_blend_state_pointer = {
-   .dirty = {
-      .mesa = 0,
-      .brw = BRW_NEW_BATCH,
-      .cache = CACHE_NEW_BLEND_STATE
-   },
-   .emit = upload_blend_state_pointer,
-};
-
-static void
 upload_depth_stencil_state_pointer(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;

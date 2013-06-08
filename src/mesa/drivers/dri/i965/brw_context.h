@@ -606,7 +606,6 @@ struct brw_vs_prog_data {
 #define SHADER_TIME_STRIDE 64
 
 enum brw_cache_id {
-   BRW_BLEND_STATE,
    BRW_DEPTH_STENCIL_STATE,
    BRW_COLOR_CALC_STATE,
    BRW_CC_VP,
@@ -701,7 +700,6 @@ enum shader_time_shader_type {
 
 /* Flags for brw->state.cache.
  */
-#define CACHE_NEW_BLEND_STATE            (1<<BRW_BLEND_STATE)
 #define CACHE_NEW_DEPTH_STENCIL_STATE    (1<<BRW_DEPTH_STENCIL_STATE)
 #define CACHE_NEW_COLOR_CALC_STATE       (1<<BRW_COLOR_CALC_STATE)
 #define CACHE_NEW_CC_VP                  (1<<BRW_CC_VP)

@@ -106,7 +106,6 @@ extern const struct brw_tracked_state gen6_vs_state;
 extern const struct brw_tracked_state gen6_wm_push_constants;
 extern const struct brw_tracked_state gen6_wm_state;
 extern const struct brw_tracked_state gen7_depthbuffer;
-extern const struct brw_tracked_state gen7_blend_state_pointer;
 extern const struct brw_tracked_state gen7_cc_state_pointer;
 extern const struct brw_tracked_state gen7_cc_viewport_state_pointer;
 extern const struct brw_tracked_state gen7_clip_state;
