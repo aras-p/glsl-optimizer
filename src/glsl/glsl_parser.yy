@@ -267,10 +267,16 @@ version_statement:
 	| VERSION_TOK INTCONSTANT EOL
 	{
            state->process_version_directive(&@2, $2, NULL);
+	   if (state->error) {
+	      YYERROR;
+	   }
 	}
         | VERSION_TOK INTCONSTANT any_identifier EOL
         {
            state->process_version_directive(&@2, $2, $3);
+	   if (state->error) {
+	      YYERROR;
+	   }
         }
 	;
 
