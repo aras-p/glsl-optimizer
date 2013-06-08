@@ -25,14 +25,17 @@
  *
  */
 
+#include "intel_batchbuffer.h"
 #include "intel_fbo.h"
 #include "brw_context.h"
+#include "brw_defines.h"
 #include "brw_state.h"
 
 static void
 gen6_upload_depth_stencil_state(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->intel.ctx;
+   struct intel_context *intel = &brw->intel;
    struct gen6_depth_stencil_state *ds;
    struct intel_renderbuffer *depth_irb;
 
@@ -84,13 +87,26 @@ gen6_upload_depth_stencil_state(struct brw_context *brw)
       ds->ds2.depth_write_enable = ctx->Depth.Mask;
    }
 
-   brw->state.dirty.cache |= CACHE_NEW_DEPTH_STENCIL_STATE;
+   /* Point the GPU at the new indirect state. */
+   if (intel->gen == 6) {
+      BEGIN_BATCH(4);
+      OUT_BATCH(_3DSTATE_CC_STATE_POINTERS << 16 | (4 - 2));
+      OUT_BATCH(0);
+      OUT_BATCH(brw->cc.depth_stencil_state_offset | 1);
+      OUT_BATCH(0);
+      ADVANCE_BATCH();
+   } else {
+      BEGIN_BATCH(2);
+      OUT_BATCH(_3DSTATE_DEPTH_STENCIL_STATE_POINTERS << 16 | (2 - 2));
+      OUT_BATCH(brw->cc.depth_stencil_state_offset | 1);
+      ADVANCE_BATCH();
+   }
 }
 
 const struct brw_tracked_state gen6_depth_stencil_state = {
    .dirty = {
       .mesa = _NEW_DEPTH | _NEW_STENCIL | _NEW_BUFFERS,
-      .brw  = BRW_NEW_BATCH,
+      .brw  = BRW_NEW_BATCH | BRW_NEW_STATE_BASE_ADDRESS,
       .cache = 0,
    },
    .emit = gen6_upload_depth_stencil_state,

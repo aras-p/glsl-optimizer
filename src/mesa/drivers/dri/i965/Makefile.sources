@@ -114,7 +114,6 @@ i965_FILES = \
 	gen6_vs_state.c \
 	gen6_wm_state.c \
 	gen7_blorp.cpp \
-	gen7_cc_state.c \
 	gen7_clip_state.c \
 	gen7_disable.c \
 	gen7_misc_state.c \

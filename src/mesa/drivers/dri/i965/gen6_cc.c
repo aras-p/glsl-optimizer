@@ -300,25 +300,3 @@ const struct brw_tracked_state gen6_color_calc_state = {
    },
    .emit = gen6_upload_color_calc_state,
 };
-
-static void upload_cc_state_pointers(struct brw_context *brw)
-{
-   struct intel_context *intel = &brw->intel;
-
-   BEGIN_BATCH(4);
-   OUT_BATCH(_3DSTATE_CC_STATE_POINTERS << 16 | (4 - 2));
-   OUT_BATCH(0);
-   OUT_BATCH(brw->cc.depth_stencil_state_offset | 1);
-   OUT_BATCH(0);
-   ADVANCE_BATCH();
-}
-
-const struct brw_tracked_state gen6_cc_state_pointers = {
-   .dirty = {
-      .mesa = 0,
-      .brw = (BRW_NEW_BATCH |
-	      BRW_NEW_STATE_BASE_ADDRESS),
-      .cache = CACHE_NEW_DEPTH_STENCIL_STATE
-   },
-   .emit = upload_cc_state_pointers,
-};
