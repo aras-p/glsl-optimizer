@@ -73,15 +73,6 @@ gen7_allocate_push_constants(struct brw_context *brw)
    ADVANCE_BATCH();
 }
 
-const struct brw_tracked_state gen7_push_constant_alloc = {
-   .dirty = {
-      .mesa = 0,
-      .brw = BRW_NEW_CONTEXT,
-      .cache = 0,
-   },
-   .emit = gen7_allocate_push_constants,
-};
-
 static void
 gen7_upload_urb(struct brw_context *brw)
 {

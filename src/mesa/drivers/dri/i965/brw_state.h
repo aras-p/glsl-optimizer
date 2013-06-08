@@ -112,7 +112,6 @@ extern const struct brw_tracked_state gen7_cc_viewport_state_pointer;
 extern const struct brw_tracked_state gen7_clip_state;
 extern const struct brw_tracked_state gen7_depth_stencil_state_pointer;
 extern const struct brw_tracked_state gen7_ps_state;
-extern const struct brw_tracked_state gen7_push_constant_alloc;
 extern const struct brw_tracked_state gen7_samplers;
 extern const struct brw_tracked_state gen7_sbe_state;
 extern const struct brw_tracked_state gen7_sf_clip_viewport;
@@ -216,6 +215,9 @@ get_attr_override(const struct brw_vue_map *vue_map, int urb_entry_read_offset,
 
 /* gen7_disable.c */
 void gen7_disable_unused_stages(struct brw_context *brw);
+
+/* gen7_urb.c */
+void gen7_allocate_push_constants(struct brw_context *brw);
 
 #ifdef __cplusplus
 }

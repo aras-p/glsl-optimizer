@@ -176,7 +176,6 @@ static const struct brw_tracked_state *gen7_atoms[] =
    &brw_wm_prog,
 
    /* Command packets: */
-   &gen7_push_constant_alloc,
 
    /* must do before binding table pointers, cc state ptrs */
    &brw_state_base_address,
@@ -253,6 +252,7 @@ brw_upload_initial_gpu_state(struct brw_context *brw)
    brw_upload_invariant_state(brw);
 
    if (intel->gen >= 7) {
+      gen7_allocate_push_constants(brw);
       gen7_disable_unused_stages(brw);
    }
 }
