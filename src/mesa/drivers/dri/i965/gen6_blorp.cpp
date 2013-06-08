@@ -50,30 +50,11 @@ gen6_blorp_emit_batch_head(struct brw_context *brw,
                            const brw_blorp_params *params)
 {
    struct gl_context *ctx = &brw->intel.ctx;
-   struct intel_context *intel = &brw->intel;
 
    /* To ensure that the batch contains only the resolve, flush the batch
     * before beginning and after finishing emitting the resolve packets.
-    *
-    * Ideally, we would not need to flush for the resolve op. But, I suspect
-    * that it's unsafe for CMD_PIPELINE_SELECT to occur multiple times in
-    * a single batch, and there is no safe way to ensure that other than by
-    * fencing the resolve with flushes. Ideally, we would just detect if
-    * a batch is in progress and do the right thing, but that would require
-    * the ability to *safely* access brw_context::state::dirty::brw
-    * outside of the brw_upload_state() codepath.
     */
    intel_flush(ctx);
-
-   /* CMD_PIPELINE_SELECT
-    *
-    * Select the 3D pipeline, as opposed to the media pipeline.
-    */
-   {
-      BEGIN_BATCH(1);
-      OUT_BATCH(brw->CMD_PIPELINE_SELECT << 16);
-      ADVANCE_BATCH();
-   }
 }
 
 
