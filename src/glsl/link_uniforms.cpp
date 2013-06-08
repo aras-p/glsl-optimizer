@@ -157,7 +157,7 @@ class count_uniform_size : public program_resource_visitor {
 public:
    count_uniform_size(struct string_to_uint_map *map)
       : num_active_uniforms(0), num_values(0), num_shader_samplers(0),
-	num_shader_uniform_components(0), map(map)
+	num_shader_uniform_components(0), is_ubo_var(false), map(map)
    {
       /* empty */
    }
