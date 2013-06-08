@@ -558,8 +558,6 @@ nvc0_video_buffer_create(struct pipe_context *pipe,
    buffer = CALLOC_STRUCT(nvc0_video_buffer);
    if (!buffer)
       return NULL;
-   assert(!(templat->height % 4));
-   assert(!(templat->width % 2));
 
    buffer->base.buffer_format = templat->buffer_format;
    buffer->base.context = pipe;
@@ -578,7 +576,7 @@ nvc0_video_buffer_create(struct pipe_context *pipe,
    templ.bind = PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET;
    templ.format = PIPE_FORMAT_R8_UNORM;
    templ.width0 = buffer->base.width;
-   templ.height0 = buffer->base.height/2;
+   templ.height0 = (buffer->base.height + 1)/2;
    templ.flags = NVC0_RESOURCE_FLAG_VIDEO;
    templ.array_size = 2;
 
@@ -588,8 +586,8 @@ nvc0_video_buffer_create(struct pipe_context *pipe,
 
    templ.format = PIPE_FORMAT_R8G8_UNORM;
    buffer->num_planes = 2;
-   templ.width0 /= 2;
-   templ.height0 /= 2;
+   templ.width0 = (templ.width0 + 1) / 2;
+   templ.height0 = (templ.height0 + 1) / 2;
    for (i = 1; i < buffer->num_planes; ++i) {
       buffer->resources[i] = pipe->screen->resource_create(pipe->screen, &templ);
       if (!buffer->resources[i])
