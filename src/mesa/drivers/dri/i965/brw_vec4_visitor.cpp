@@ -1313,6 +1313,20 @@ vec4_visitor::emit_minmax(uint32_t conditionalmod, dst_reg dst,
    }
 }
 
+static bool
+is_16bit_constant(ir_rvalue *rvalue)
+{
+   ir_constant *constant = rvalue->as_constant();
+   if (!constant)
+      return false;
+
+   if (constant->type != glsl_type::int_type &&
+       constant->type != glsl_type::uint_type)
+      return false;
+
+   return constant->value.u[0] < (1 << 16);
+}
+
 void
 vec4_visitor::visit(ir_expression *ir)
 {
@@ -1472,19 +1486,29 @@ vec4_visitor::visit(ir_expression *ir)
 
    case ir_binop_mul:
       if (ir->type->is_integer()) {
-	 /* For integer multiplication, the MUL uses the low 16 bits
-	  * of one of the operands (src0 on gen6, src1 on gen7).  The
-	  * MACH accumulates in the contribution of the upper 16 bits
-	  * of that operand.
-	  *
-	  * FINISHME: Emit just the MUL if we know an operand is small
-	  * enough.
-	  */
-	 struct brw_reg acc = retype(brw_acc_reg(), BRW_REGISTER_TYPE_D);
+	 /* For integer multiplication, the MUL uses the low 16 bits of one of
+	  * the operands (src0 through SNB, src1 on IVB and later).  The MACH
+	  * accumulates in the contribution of the upper 16 bits of that
+	  * operand.  If we can determine that one of the args is in the low
+	  * 16 bits, though, we can just emit a single MUL.
+          */
+         if (is_16bit_constant(ir->operands[0])) {
+            if (intel->gen < 7)
+               emit(MUL(result_dst, op[0], op[1]));
+            else
+               emit(MUL(result_dst, op[1], op[0]));
+         } else if (is_16bit_constant(ir->operands[1])) {
+            if (intel->gen < 7)
+               emit(MUL(result_dst, op[1], op[0]));
+            else
+               emit(MUL(result_dst, op[0], op[1]));
+         } else {
+            struct brw_reg acc = retype(brw_acc_reg(), BRW_REGISTER_TYPE_D);
 
-	 emit(MUL(acc, op[0], op[1]));
-	 emit(MACH(dst_null_d(), op[0], op[1]));
-	 emit(MOV(result_dst, src_reg(acc)));
+            emit(MUL(acc, op[0], op[1]));
+            emit(MACH(dst_null_d(), op[0], op[1]));
+            emit(MOV(result_dst, src_reg(acc)));
+         }
       } else {
 	 emit(MUL(result_dst, op[0], op[1]));
       }
