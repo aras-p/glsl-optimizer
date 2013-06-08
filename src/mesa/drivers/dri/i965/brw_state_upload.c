@@ -414,7 +414,7 @@ brw_update_dirty_count(struct dirty_bit_map *bit_map, int32_t bits)
 }
 
 static void
-brw_print_dirty_count(struct dirty_bit_map *bit_map, int32_t bits)
+brw_print_dirty_count(struct dirty_bit_map *bit_map)
 {
    int i;
 
@@ -513,9 +513,9 @@ void brw_upload_state(struct brw_context *brw)
       brw_update_dirty_count(brw_bits, state->brw);
       brw_update_dirty_count(cache_bits, state->cache);
       if (dirty_count++ % 1000 == 0) {
-	 brw_print_dirty_count(mesa_bits, state->mesa);
-	 brw_print_dirty_count(brw_bits, state->brw);
-	 brw_print_dirty_count(cache_bits, state->cache);
+	 brw_print_dirty_count(mesa_bits);
+	 brw_print_dirty_count(brw_bits);
+	 brw_print_dirty_count(cache_bits);
 	 fprintf(stderr, "\n");
       }
    }
