@@ -226,6 +226,19 @@ _mesa_glsl_parse_state::process_version_directive(YYLTYPE *locp, int version,
    if (ident) {
       if (strcmp(ident, "es") == 0) {
          es_token_present = true;
+      } else if (version >= 150) {
+         if (strcmp(ident, "core") == 0) {
+            /* Accept the token.  There's no need to record that this is
+             * a core profile shader since that's the only profile we support.
+             */
+         } else if (strcmp(ident, "compatibility") == 0) {
+            _mesa_glsl_error(locp, this,
+                             "The compatibility profile is not supported.\n");
+         } else {
+            _mesa_glsl_error(locp, this,
+                             "\"%s\" is not a valid shading language profile; "
+                             "if present, it must be \"core\".\n", ident);
+         }
       } else {
          _mesa_glsl_error(locp, this,
                           "Illegal text following version number\n");
