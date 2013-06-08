@@ -95,7 +95,7 @@ def createConvenienceLibBuilder(env):
 
 # TODO: handle import statements with multiple modules
 # TODO: handle from import statements
-import_re = re.compile(r'^import\s+(\S+)$', re.M)
+import_re = re.compile(r'^\s*import\s+(\S+)\s*$', re.M)
 
 def python_scan(node, env, path):
     # http://www.scons.org/doc/0.98.5/HTML/scons-user/c2781.html#AEN2789
@@ -113,6 +113,7 @@ def python_scan(node, env, path):
             if os.path.exists(file):
                 results.append(env.File(file))
                 break
+    #print node, map(str, results)
     return results
 
 python_scanner = SCons.Scanner.Scanner(function = python_scan, skeys = ['.py'])
