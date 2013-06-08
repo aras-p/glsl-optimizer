@@ -2064,6 +2064,9 @@ _glcpp_parser_handle_version_declaration(glcpp_parser_t *parser, intmax_t versio
 		add_builtin_define (parser, "GL_ES", 1);
 	}
 
+	if (version >= 150)
+		add_builtin_define(parser, "GL_core_profile", 1);
+
 	/* Currently, all ES2/ES3 implementations support highp in the
 	 * fragment shader, so we always define this macro in ES2/ES3.
 	 * If we ever get a driver that doesn't support highp, we'll
