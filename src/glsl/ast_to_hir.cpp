@@ -94,6 +94,24 @@ _mesa_ast_to_hir(exec_list *instructions, struct _mesa_glsl_parse_state *state)
    detect_conflicting_assignments(state, instructions);
 
    state->toplevel_ir = NULL;
+
+   /* Move all of the variable declarations to the front of the IR list, and
+    * reverse the order.  This has the (intended!) side effect that vertex
+    * shader inputs and fragment shader outputs will appear in the IR in the
+    * same order that they appeared in the shader code.  This results in the
+    * locations being assigned in the declared order.  Many (arguably buggy)
+    * applications depend on this behavior, and it matches what nearly all
+    * other drivers do.
+    */
+   foreach_list_safe(node, instructions) {
+      ir_variable *const var = ((ir_instruction *) node)->as_variable();
+
+      if (var == NULL)
+         continue;
+
+      var->remove();
+      instructions->push_head(var);
+   }
 }
 
 
