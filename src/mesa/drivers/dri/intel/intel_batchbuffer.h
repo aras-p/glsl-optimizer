@@ -17,11 +17,10 @@ extern "C" {
  * This includes:
  * - MI_BATCHBUFFER_END (4 bytes)
  * - Optional MI_NOOP for ensuring the batch length is qword aligned (4 bytes)
- * - Any state emitted by vtbl->finish_batch()
- *   - On 965+, this means ending occlusion queries (on Gen6, which has the
- *     most workaround flushes, this can be as much as (4+4+5)*4 = 52 bytes)
+ * - Any state emitted by vtbl->finish_batch():
+ *   - Gen4-5 record ending occlusion query values (4 * 4 = 16 bytes)
  */
-#define BATCH_RESERVED 60
+#define BATCH_RESERVED 24
 
 struct intel_batchbuffer;
 
