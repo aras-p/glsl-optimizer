@@ -111,7 +111,6 @@ extern const struct brw_tracked_state gen7_cc_state_pointer;
 extern const struct brw_tracked_state gen7_cc_viewport_state_pointer;
 extern const struct brw_tracked_state gen7_clip_state;
 extern const struct brw_tracked_state gen7_depth_stencil_state_pointer;
-extern const struct brw_tracked_state gen7_disable_stages;
 extern const struct brw_tracked_state gen7_ps_state;
 extern const struct brw_tracked_state gen7_push_constant_alloc;
 extern const struct brw_tracked_state gen7_samplers;
@@ -214,6 +213,9 @@ void upload_default_color(struct brw_context *brw,
 uint32_t
 get_attr_override(const struct brw_vue_map *vue_map, int urb_entry_read_offset,
                   int fs_attr, bool two_side_color, uint32_t *max_source_attr);
+
+/* gen7_disable.c */
+void gen7_disable_unused_stages(struct brw_context *brw);
 
 #ifdef __cplusplus
 }
