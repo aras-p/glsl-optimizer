@@ -255,6 +255,7 @@ static void
 gen6_upload_color_calc_state(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->intel.ctx;
+   struct intel_context *intel = &brw->intel;
    struct gen6_color_calc_state *cc;
 
    cc = brw_state_batch(brw, AUB_TRACE_CC_STATE,
@@ -275,13 +276,26 @@ gen6_upload_color_calc_state(struct brw_context *brw)
    cc->constant_b = ctx->Color.BlendColorUnclamped[2];
    cc->constant_a = ctx->Color.BlendColorUnclamped[3];
 
-   brw->state.dirty.cache |= CACHE_NEW_COLOR_CALC_STATE;
+   /* Point the GPU at the new indirect state. */
+   if (intel->gen == 6) {
+      BEGIN_BATCH(4);
+      OUT_BATCH(_3DSTATE_CC_STATE_POINTERS << 16 | (4 - 2));
+      OUT_BATCH(0);
+      OUT_BATCH(0);
+      OUT_BATCH(brw->cc.state_offset | 1);
+      ADVANCE_BATCH();
+   } else {
+      BEGIN_BATCH(2);
+      OUT_BATCH(_3DSTATE_CC_STATE_POINTERS << 16 | (2 - 2));
+      OUT_BATCH(brw->cc.state_offset | 1);
+      ADVANCE_BATCH();
+   }
 }
 
 const struct brw_tracked_state gen6_color_calc_state = {
    .dirty = {
       .mesa = _NEW_COLOR | _NEW_STENCIL,
-      .brw = BRW_NEW_BATCH,
+      .brw = BRW_NEW_BATCH | BRW_NEW_STATE_BASE_ADDRESS,
       .cache = 0,
    },
    .emit = gen6_upload_color_calc_state,
@@ -295,7 +309,7 @@ static void upload_cc_state_pointers(struct brw_context *brw)
    OUT_BATCH(_3DSTATE_CC_STATE_POINTERS << 16 | (4 - 2));
    OUT_BATCH(0);
    OUT_BATCH(brw->cc.depth_stencil_state_offset | 1);
-   OUT_BATCH(brw->cc.state_offset | 1);
+   OUT_BATCH(0);
    ADVANCE_BATCH();
 }
 
@@ -304,8 +318,7 @@ const struct brw_tracked_state gen6_cc_state_pointers = {
       .mesa = 0,
       .brw = (BRW_NEW_BATCH |
 	      BRW_NEW_STATE_BASE_ADDRESS),
-      .cache = (CACHE_NEW_COLOR_CALC_STATE |
-		CACHE_NEW_DEPTH_STENCIL_STATE)
+      .cache = CACHE_NEW_DEPTH_STENCIL_STATE
    },
    .emit = upload_cc_state_pointers,
 };

@@ -29,26 +29,6 @@
 #include "main/macros.h"
 
 static void
-upload_cc_state_pointers(struct brw_context *brw)
-{
-   struct intel_context *intel = &brw->intel;
-
-   BEGIN_BATCH(2);
-   OUT_BATCH(_3DSTATE_CC_STATE_POINTERS << 16 | (2 - 2));
-   OUT_BATCH(brw->cc.state_offset | 1);
-   ADVANCE_BATCH();
-}
-
-const struct brw_tracked_state gen7_cc_state_pointer = {
-   .dirty = {
-      .mesa = 0,
-      .brw = BRW_NEW_BATCH,
-      .cache = CACHE_NEW_COLOR_CALC_STATE
-   },
-   .emit = upload_cc_state_pointers,
-};
-
-static void
 upload_depth_stencil_state_pointer(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
