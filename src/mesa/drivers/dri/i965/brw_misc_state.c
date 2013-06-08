@@ -978,7 +978,8 @@ const struct brw_tracked_state brw_line_stipple = {
  * Misc invariant state packets
  */
 
-static void upload_invariant_state( struct brw_context *brw )
+void
+brw_upload_invariant_state(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
 
@@ -1016,7 +1017,7 @@ const struct brw_tracked_state brw_invariant_state = {
       .brw = BRW_NEW_CONTEXT,
       .cache = 0
    },
-   .emit = upload_invariant_state
+   .emit = brw_upload_invariant_state
 };
 
 /**

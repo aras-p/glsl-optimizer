@@ -111,7 +111,6 @@ static const struct brw_tracked_state *gen6_atoms[] =
    &gen6_sf_vp,
 
    /* Command packets: */
-   &brw_invariant_state,
 
    /* must do before binding table pointers, cc state ptrs */
    &brw_state_base_address,
@@ -177,7 +176,6 @@ static const struct brw_tracked_state *gen7_atoms[] =
    &brw_wm_prog,
 
    /* Command packets: */
-   &brw_invariant_state,
    &gen7_push_constant_alloc,
 
    /* must do before binding table pointers, cc state ptrs */
@@ -241,6 +239,20 @@ static const struct brw_tracked_state *gen7_atoms[] =
    &haswell_cut_index,
 };
 
+static void
+brw_upload_initial_gpu_state(struct brw_context *brw)
+{
+   struct intel_context *intel = &brw->intel;
+
+   /* On platforms with hardware contexts, we can set our initial GPU state
+    * right away rather than doing it via state atoms.  This saves a small
+    * amount of overhead on every draw call.
+    */
+   if (!intel->hw_ctx)
+      return;
+
+   brw_upload_invariant_state(brw);
+}
 
 void brw_init_state( struct brw_context *brw )
 {
@@ -270,6 +282,8 @@ void brw_init_state( struct brw_context *brw )
       assert((*atoms)->emit);
       atoms++;
    }
+
+   brw_upload_initial_gpu_state(brw);
 }
 
 
