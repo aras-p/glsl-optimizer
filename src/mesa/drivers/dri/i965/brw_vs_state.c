@@ -55,7 +55,14 @@ brw_upload_vs_unit(struct brw_context *brw)
 			brw->vs.prog_offset +
 			(vs->thread0.grf_reg_count << 1)) >> 6;
 
-   vs->thread1.floating_point_mode = BRW_FLOATING_POINT_NON_IEEE_754;
+   /* Use ALT floating point mode for ARB vertex programs, because they
+    * require 0^0 == 1.
+    */
+   if (brw->ctx.Shader.CurrentVertexProgram == NULL)
+      vs->thread1.floating_point_mode = BRW_FLOATING_POINT_NON_IEEE_754;
+   else
+      vs->thread1.floating_point_mode = BRW_FLOATING_POINT_IEEE_754;
+
    /* Choosing multiple program flow means that we may get 2-vertex threads,
     * which will have the channel mask for dwords 4-7 enabled in the thread,
     * and those dwords will be written to the second URB handle when we
