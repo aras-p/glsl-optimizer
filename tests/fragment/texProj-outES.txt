@@ -1,7 +1,7 @@
 #extension GL_EXT_shader_texture_lod : enable
 #extension GL_EXT_shadow_samplers : enable
 varying highp vec4 uv;
-uniform sampler2DShadow shadowmap;
+uniform lowp sampler2DShadow shadowmap;
 uniform sampler2D tex;
 void main ()
 {

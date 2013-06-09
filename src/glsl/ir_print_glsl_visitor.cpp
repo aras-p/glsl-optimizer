@@ -212,8 +212,10 @@ void ir_print_glsl_visitor::print_precision (ir_instruction* ir, const glsl_type
 	}
 	glsl_precision prec = precision_from_ir(ir);
 	
-	// skip precision for samplers that end up being lowp (default anyway) or undefined
-	if (type && type->is_sampler())
+	// skip precision for samplers that end up being lowp (default anyway) or undefined;
+	// except always emit it for shadowmap samplers (some drivers don't implement
+	// default EXT_shadow_samplers precision)
+	if (type && type->is_sampler() && !type->sampler_shadow)
 	{
 		if (prec == glsl_precision_low || prec == glsl_precision_undefined)
 			return;
