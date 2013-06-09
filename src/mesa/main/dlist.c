@@ -7027,7 +7027,7 @@ save_SamplerParameteri(GLuint sampler, GLenum pname, GLint param)
    GLint parray[4];
    parray[0] = param;
    parray[1] = parray[2] = parray[3] = 0;
-   save_SamplerParameteriv(sampler, pname, param);
+   save_SamplerParameteriv(sampler, pname, parray);
 }
 
 static void GLAPIENTRY
