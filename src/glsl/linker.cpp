@@ -1094,9 +1094,7 @@ update_array_sizes(struct gl_shader_program *prog)
       foreach_list(node, prog->_LinkedShaders[i]->ir) {
 	 ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
-	 if ((var == NULL) || (var->mode != ir_var_uniform &&
-			       var->mode != ir_var_shader_in &&
-			       var->mode != ir_var_shader_out) ||
+	 if ((var == NULL) || (var->mode != ir_var_uniform) ||
 	     !var->type->is_array())
 	    continue;
 
