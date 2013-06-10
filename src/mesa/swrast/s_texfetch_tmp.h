@@ -1430,6 +1430,43 @@ FETCH(rgba_16)(const struct swrast_texture_image *texImage,
 
 
 
+/* MESA_FORMAT_XBGR.... **********************************************/
+
+static void
+FETCH(xbgr16161616_unorm)(const struct swrast_texture_image *texImage,
+                          GLint i, GLint j, GLint k, GLfloat *texel)
+{
+   const GLushort *s = TEXEL_ADDR(GLushort, texImage, i, j, k, 4);
+   texel[RCOMP] = USHORT_TO_FLOAT(s[0]);
+   texel[GCOMP] = USHORT_TO_FLOAT(s[1]);
+   texel[BCOMP] = USHORT_TO_FLOAT(s[2]);
+   texel[ACOMP] = 1.0f;
+}
+
+static void
+FETCH(xbgr16161616_float)(const struct swrast_texture_image *texImage,
+                          GLint i, GLint j, GLint k, GLfloat *texel)
+{
+   const GLhalfARB *s = TEXEL_ADDR(GLhalfARB, texImage, i, j, k, 4);
+   texel[RCOMP] = _mesa_half_to_float(s[0]);
+   texel[GCOMP] = _mesa_half_to_float(s[1]);
+   texel[BCOMP] = _mesa_half_to_float(s[2]);
+   texel[ACOMP] = 1.0f;
+}
+
+static void
+FETCH(xbgr32323232_float)(const struct swrast_texture_image *texImage,
+                          GLint i, GLint j, GLint k, GLfloat *texel)
+{
+   const GLfloat *s = TEXEL_ADDR(GLfloat, texImage, i, j, k, 4);
+   texel[RCOMP] = s[0];
+   texel[GCOMP] = s[1];
+   texel[BCOMP] = s[2];
+   texel[ACOMP] = 1.0f;
+}
+
+/* XXX other XBGR formats need to be implemented here */
+
 
 
 /* MESA_FORMAT_YCBCR *********************************************************/
