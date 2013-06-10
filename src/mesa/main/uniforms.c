@@ -538,7 +538,7 @@ _mesa_GetUniformLocation(GLhandleARB programObj, const GLcharARB *name)
    if (shProg->UniformStorage[index].block_index != -1)
       return -1;
 
-   return _mesa_uniform_merge_location_offset(index, offset);
+   return _mesa_uniform_merge_location_offset(shProg, index, offset);
 }
 
 GLuint GLAPIENTRY

@@ -235,7 +235,7 @@ validate_uniform_parameters(struct gl_context *ctx,
       return false;
    }
 
-   _mesa_uniform_split_location_offset(location, loc, array_index);
+   _mesa_uniform_split_location_offset(shProg, location, loc, array_index);
 
    if (*loc >= shProg->NumUserUniformStorage) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "%s(location=%d)",

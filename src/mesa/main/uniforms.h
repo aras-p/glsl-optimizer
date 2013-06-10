@@ -269,7 +269,8 @@ struct gl_builtin_uniform_desc {
  * Combine the uniform's base location and the offset
  */
 static inline GLint
-_mesa_uniform_merge_location_offset(unsigned base_location, unsigned offset)
+_mesa_uniform_merge_location_offset(const struct gl_shader_program *prog,
+                                    unsigned base_location, unsigned offset)
 {
    return (base_location << 16) | offset;
 }
@@ -278,7 +279,8 @@ _mesa_uniform_merge_location_offset(unsigned base_location, unsigned offset)
  * Separate the uniform base location and parameter offset
  */
 static inline void
-_mesa_uniform_split_location_offset(GLint location, unsigned *base_location,
+_mesa_uniform_split_location_offset(const struct gl_shader_program *prog,
+                                    GLint location, unsigned *base_location,
 				    unsigned *offset)
 {
    *offset = location & 0xffff;
