@@ -150,6 +150,7 @@ void trace_dump_rasterizer_state(const struct pipe_rasterizer_state *state)
    trace_dump_member(bool, state, bottom_edge_rule);
    trace_dump_member(bool, state, rasterizer_discard);
    trace_dump_member(bool, state, depth_clip);
+   trace_dump_member(bool, state, clip_halfz);
    trace_dump_member(uint, state, clip_plane_enable);
 
    trace_dump_member(float, state, line_width);
