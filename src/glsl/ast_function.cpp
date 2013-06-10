@@ -648,7 +648,7 @@ process_array_constructor(exec_list *instructions,
 
       _mesa_glsl_error(loc, state, "array constructor must have %s %u "
 		       "parameter%s",
-		       (constructor_type->length != 0) ? "at least" : "exactly",
+		       (constructor_type->length == 0) ? "at least" : "exactly",
 		       min_param, (min_param <= 1) ? "" : "s");
       return ir_rvalue::error_value(ctx);
    }
