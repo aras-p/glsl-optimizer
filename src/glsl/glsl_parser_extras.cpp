@@ -959,7 +959,7 @@ ast_declaration::print(void) const
 }
 
 
-ast_declaration::ast_declaration(const char *identifier, int is_array,
+ast_declaration::ast_declaration(const char *identifier, bool is_array,
 				 ast_expression *array_size,
 				 ast_expression *initializer)
 {

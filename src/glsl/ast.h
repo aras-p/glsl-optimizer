@@ -317,13 +317,13 @@ public:
 
 class ast_declaration : public ast_node {
 public:
-   ast_declaration(const char *identifier, int is_array, ast_expression *array_size,
+   ast_declaration(const char *identifier, bool is_array, ast_expression *array_size,
 		   ast_expression *initializer);
    virtual void print(void) const;
 
    const char *identifier;
    
-   int is_array;
+   bool is_array;
    ast_expression *array_size;
 
    ast_expression *initializer;
@@ -498,7 +498,7 @@ public:
    const char *type_name;
    ast_struct_specifier *structure;
 
-   int is_array;
+   bool is_array;
    ast_expression *array_size;
 
    unsigned precision:2;
@@ -566,7 +566,7 @@ public:
 
    ast_fully_specified_type *type;
    const char *identifier;
-   int is_array;
+   bool is_array;
    ast_expression *array_size;
 
    static void parameters_to_hir(exec_list *ast_parameters,
