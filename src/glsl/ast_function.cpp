@@ -1311,13 +1311,19 @@ ast_function_expression::hir(exec_list *instructions,
       }
 
 
-      /* There are two kinds of constructor call.  Constructors for built-in
-       * language types, such as mat4 and vec2, are free form.  The only
-       * requirement is that the parameters must provide enough values of the
-       * correct scalar type.  Constructors for arrays and structures must
-       * have the exact number of parameters with matching types in the
-       * correct order.  These constructors follow essentially the same type
-       * matching rules as functions.
+      /* There are two kinds of constructor calls.  Constructors for arrays and
+       * structures must have the exact number of arguments with matching types
+       * in the correct order.  These constructors follow essentially the same
+       * type matching rules as functions.
+       *
+       * Constructors for built-in language types, such as mat4 and vec2, are
+       * free form.  The only requirements are that the parameters must provide
+       * enough values of the correct scalar type and that no arguments are
+       * given past the last used argument.
+       *
+       * When using the C-style initializer syntax from GLSL 4.20, constructors
+       * must have the exact number of arguments with matching types in the
+       * correct order.
        */
       if (constructor_type->is_record()) {
 	 exec_list actual_parameters;
