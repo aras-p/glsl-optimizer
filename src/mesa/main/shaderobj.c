@@ -283,6 +283,7 @@ _mesa_clear_shader_program_data(struct gl_context *ctx,
       ralloc_free(shProg->UniformStorage);
       shProg->NumUserUniformStorage = 0;
       shProg->UniformStorage = NULL;
+      shProg->UniformLocationBaseScale = 0;
    }
 
    if (shProg->UniformHash) {

@@ -739,6 +739,8 @@ link_assign_uniform_locations(struct gl_shader_program *prog)
              sizeof(prog->_LinkedShaders[i]->SamplerTargets));
    }
 
+   prog->UniformLocationBaseScale = (1U<<16);
+
 #ifndef NDEBUG
    for (unsigned i = 0; i < num_user_uniforms; i++) {
       assert(uniforms[i].storage != NULL);

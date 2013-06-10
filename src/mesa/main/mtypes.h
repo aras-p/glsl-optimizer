@@ -2333,6 +2333,21 @@ struct gl_shader_program
    unsigned NumUniformBlocks;
 
    /**
+    * Scale factor for the uniform base location
+    *
+    * This is used to generate locations (returned by \c glGetUniformLocation)
+    * of uniforms.  The base location of the uniform is multiplied by this
+    * value, and the array index is added.
+    *
+    * \note
+    * Must be >= 1.
+    *
+    * \sa
+    * _mesa_uniform_merge_location_offset, _mesa_uniform_split_location_offset
+    */
+   unsigned UniformLocationBaseScale;
+
+   /**
     * Indices into the _LinkedShaders's UniformBlocks[] array for each stage
     * they're used in, or -1.
     *
