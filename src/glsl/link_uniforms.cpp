@@ -739,7 +739,19 @@ link_assign_uniform_locations(struct gl_shader_program *prog)
              sizeof(prog->_LinkedShaders[i]->SamplerTargets));
    }
 
-   prog->UniformLocationBaseScale = (1U<<16);
+   /* Determine the size of the largest uniform array queryable via
+    * glGetUniformLocation.  Using this as the location scale guarantees that
+    * there is enough "room" for the array index to be stored in the low order
+    * part of the uniform location.  It also makes the locations be more
+    * tightly packed.
+    */
+   unsigned max_array_size = 1;
+   for (unsigned i = 0; i < num_user_uniforms; i++) {
+      if (uniforms[i].array_elements > max_array_size)
+         max_array_size = uniforms[i].array_elements;
+   }
+
+   prog->UniformLocationBaseScale = max_array_size;
 
 #ifndef NDEBUG
    for (unsigned i = 0; i < num_user_uniforms; i++) {
