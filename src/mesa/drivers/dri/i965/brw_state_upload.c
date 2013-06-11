@@ -210,6 +210,7 @@ static const struct brw_tracked_state *gen7_atoms[] =
    &gen7_samplers,
    &gen6_multisample_state,
 
+   &gen7_disable_stages,
    &gen7_vs_state,
    &gen7_sol_state,
    &gen7_clip_state,
@@ -253,7 +254,6 @@ brw_upload_initial_gpu_state(struct brw_context *brw)
 
    if (intel->gen >= 7) {
       gen7_allocate_push_constants(brw);
-      gen7_disable_unused_stages(brw);
    }
 }
 

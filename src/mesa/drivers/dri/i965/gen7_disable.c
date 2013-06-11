@@ -26,8 +26,8 @@
 #include "brw_defines.h"
 #include "intel_batchbuffer.h"
 
-void
-gen7_disable_unused_stages(struct brw_context *brw)
+static void
+disable_stages(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
 
@@ -123,3 +123,12 @@ gen7_disable_unused_stages(struct brw_context *brw)
    OUT_BATCH(0);
    ADVANCE_BATCH();
 }
+
+const struct brw_tracked_state gen7_disable_stages = {
+   .dirty = {
+      .mesa  = 0,
+      .brw   = BRW_NEW_CONTEXT,
+      .cache = 0,
+   },
+   .emit = disable_stages,
+};
