@@ -1871,6 +1871,7 @@ _mesa_copy_linked_program_data(gl_shader_type type,
       dst_gp->VerticesOut = src->Geom.VerticesOut;
       dst_gp->InputType = src->Geom.InputType;
       dst_gp->OutputType = src->Geom.OutputType;
+      dst_gp->UsesClipDistance = src->Geom.UsesClipDistance;
    }
       break;
    default:

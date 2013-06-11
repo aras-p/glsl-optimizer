@@ -373,6 +373,52 @@ link_invalidate_variable_locations(gl_shader *sh, int input_base,
 
 
 /**
+ * Set UsesClipDistance and ClipDistanceArraySize based on the given shader.
+ *
+ * Also check for errors based on incorrect usage of gl_ClipVertex and
+ * gl_ClipDistance.
+ *
+ * Return false if an error was reported.
+ */
+static void
+analyze_clip_usage(const char *shader_type, struct gl_shader_program *prog,
+                   struct gl_shader *shader, GLboolean *UsesClipDistance,
+                   GLuint *ClipDistanceArraySize)
+{
+   *ClipDistanceArraySize = 0;
+
+   if (!prog->IsES && prog->Version >= 130) {
+      /* From section 7.1 (Vertex Shader Special Variables) of the
+       * GLSL 1.30 spec:
+       *
+       *   "It is an error for a shader to statically write both
+       *   gl_ClipVertex and gl_ClipDistance."
+       *
+       * This does not apply to GLSL ES shaders, since GLSL ES defines neither
+       * gl_ClipVertex nor gl_ClipDistance.
+       */
+      find_assignment_visitor clip_vertex("gl_ClipVertex");
+      find_assignment_visitor clip_distance("gl_ClipDistance");
+
+      clip_vertex.run(shader->ir);
+      clip_distance.run(shader->ir);
+      if (clip_vertex.variable_found() && clip_distance.variable_found()) {
+         linker_error(prog, "%s shader writes to both `gl_ClipVertex' "
+                      "and `gl_ClipDistance'\n", shader_type);
+         return;
+      }
+      *UsesClipDistance = clip_distance.variable_found();
+      ir_variable *clip_distance_var =
+         shader->symbols->get_variable("gl_ClipDistance");
+      if (clip_distance_var)
+         *ClipDistanceArraySize = clip_distance_var->type->length;
+   } else {
+      *UsesClipDistance = false;
+   }
+}
+
+
+/**
  * Verify that a vertex shader executable meets all semantic requirements.
  *
  * Also sets prog->Vert.UsesClipDistance and prog->Vert.ClipDistanceArraySize
@@ -422,34 +468,8 @@ validate_vertex_shader_executable(struct gl_shader_program *prog,
       }
    }
 
-   prog->Vert.ClipDistanceArraySize = 0;
-
-   if (!prog->IsES && prog->Version >= 130) {
-      /* From section 7.1 (Vertex Shader Special Variables) of the
-       * GLSL 1.30 spec:
-       *
-       *   "It is an error for a shader to statically write both
-       *   gl_ClipVertex and gl_ClipDistance."
-       *
-       * This does not apply to GLSL ES shaders, since GLSL ES defines neither
-       * gl_ClipVertex nor gl_ClipDistance.
-       */
-      find_assignment_visitor clip_vertex("gl_ClipVertex");
-      find_assignment_visitor clip_distance("gl_ClipDistance");
-
-      clip_vertex.run(shader->ir);
-      clip_distance.run(shader->ir);
-      if (clip_vertex.variable_found() && clip_distance.variable_found()) {
-         linker_error(prog, "vertex shader writes to both `gl_ClipVertex' "
-                      "and `gl_ClipDistance'\n");
-         return;
-      }
-      prog->Vert.UsesClipDistance = clip_distance.variable_found();
-      ir_variable *clip_distance_var =
-         shader->symbols->get_variable("gl_ClipDistance");
-      if (clip_distance_var)
-         prog->Vert.ClipDistanceArraySize = clip_distance_var->type->length;
-   }
+   analyze_clip_usage("vertex", prog, shader, &prog->Vert.UsesClipDistance,
+                      &prog->Vert.ClipDistanceArraySize);
 }
 
 
@@ -480,7 +500,8 @@ validate_fragment_shader_executable(struct gl_shader_program *prog,
 /**
  * Verify that a geometry shader executable meets all semantic requirements
  *
- * Also sets prog->Geom.VerticesIn as a side effect.
+ * Also sets prog->Geom.VerticesIn, prog->Geom.UsesClipDistance, and
+ * prog->Geom.ClipDistanceArraySize as a side effect.
  *
  * \param shader Geometry shader executable to be verified
  */
@@ -493,6 +514,9 @@ validate_geometry_shader_executable(struct gl_shader_program *prog,
 
    unsigned num_vertices = vertices_per_prim(prog->Geom.InputType);
    prog->Geom.VerticesIn = num_vertices;
+
+   analyze_clip_usage("geometry", prog, shader, &prog->Geom.UsesClipDistance,
+                      &prog->Geom.ClipDistanceArraySize);
 }
 
 
