@@ -413,12 +413,84 @@ static boolean is_simple_msaa_resolve(const struct pipe_blit_info *info)
 		dst_tile_mode >= RADEON_SURF_MODE_1D;
 }
 
+static void r600_clear_buffer(struct pipe_context *ctx, struct pipe_resource *dst,
+			      unsigned offset, unsigned size, unsigned char value);
+
+static void evergreen_set_clear_color(struct pipe_context *ctx,
+				      struct pipe_surface *cbuf,
+				      const union pipe_color_union *color)
+{
+	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct pipe_framebuffer_state *fb = &rctx->framebuffer.state;
+	unsigned *clear_value = ((struct r600_texture *)cbuf->texture)->color_clear_value;
+	union util_color uc;
+
+	memset(&uc, 0, sizeof(uc));
+	util_pack_color(color->f, fb->cbufs[0]->format, &uc);
+	memcpy(clear_value, &uc, 2 * sizeof(uint32_t));
+}
+
+static bool can_fast_clear_color(struct pipe_context *ctx)
+{
+	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct pipe_framebuffer_state *fb = &rctx->framebuffer.state;
+	int i;
+
+	if (rctx->chip_class < EVERGREEN) {
+		return false;
+	}
+
+	for (i = 0; i < fb->nr_cbufs; i++) {
+		struct r600_texture *tex = (struct r600_texture *)fb->cbufs[i]->texture;
+		int target = fb->cbufs[i]->texture->target;
+
+		if (tex->cmask_size == 0) {
+			return false;
+		}
+
+		/* cannot pack color for pure integer formats */
+		/* 128-bit formats are unuspported */
+		if (util_format_is_pure_integer(fb->cbufs[i]->format) ||
+		    util_format_get_blocksizebits(fb->cbufs[i]->format) > 64) {
+			return false;
+		}
+
+		/* textures with multiple images are not supported */
+		if (target != PIPE_TEXTURE_2D && target != PIPE_TEXTURE_RECT &&
+				target != PIPE_TEXTURE_1D) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
 static void r600_clear(struct pipe_context *ctx, unsigned buffers,
 		       const union pipe_color_union *color,
 		       double depth, unsigned stencil)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct pipe_framebuffer_state *fb = &rctx->framebuffer.state;
+
+	/* fast color clear on AA framebuffers (EG+) */
+	if ((buffers & PIPE_CLEAR_COLOR) && can_fast_clear_color(ctx)) {
+		int i;
+
+		for (i = 0; i < fb->nr_cbufs; i++) {
+			struct r600_texture *tex = (struct r600_texture *)fb->cbufs[i]->texture;
+
+			evergreen_set_clear_color(ctx, fb->cbufs[i], color);
+			r600_clear_buffer(ctx, fb->cbufs[i]->texture,
+					tex->cmask_offset, tex->cmask_size, 0);
+			tex->dirty_level_mask |= 1 << fb->cbufs[i]->u.tex.level;
+		}
+
+		rctx->framebuffer.atom.dirty = true;
+
+		buffers &= ~PIPE_CLEAR_COLOR;
+		if (!buffers)
+			return;
+	}
 
 	/* if hyperz enabled just clear hyperz */
 	if (fb->zsbuf && (buffers & PIPE_CLEAR_DEPTH)) {

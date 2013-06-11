@@ -91,6 +91,8 @@ struct r600_texture {
 	struct r600_resource		*htile;
 	/* use htile only for first level */
 	float				depth_clear;
+
+	unsigned			color_clear_value[2];
 };
 
 #define R600_TEX_IS_TILED(tex, level) ((tex)->array_mode[level] != V_038000_ARRAY_LINEAR_GENERAL && (tex)->array_mode[level] != V_038000_ARRAY_LINEAR_ALIGNED)

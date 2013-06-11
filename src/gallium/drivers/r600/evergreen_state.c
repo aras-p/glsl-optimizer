@@ -1853,7 +1853,7 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 	}
 
 	/* Colorbuffers. */
-	rctx->framebuffer.atom.num_dw += state->nr_cbufs * 21;
+	rctx->framebuffer.atom.num_dw += state->nr_cbufs * 23;
 	if (rctx->keep_tiling_flags)
 		rctx->framebuffer.atom.num_dw += state->nr_cbufs * 2;
 	rctx->framebuffer.atom.num_dw += (12 - state->nr_cbufs) * 3;
@@ -2173,12 +2173,13 @@ static void evergreen_emit_framebuffer_state(struct r600_context *rctx, struct r
 	/* Colorbuffers. */
 	for (i = 0; i < nr_cbufs; i++) {
 		struct r600_surface *cb = (struct r600_surface*)state->cbufs[i];
+		struct r600_texture *tex = (struct r600_texture *)cb->base.texture;
 		unsigned reloc = r600_context_bo_reloc(rctx,
 						       &rctx->rings.gfx,
 						       (struct r600_resource*)cb->base.texture,
 						       RADEON_USAGE_READWRITE);
 
-		r600_write_context_reg_seq(cs, R_028C60_CB_COLOR0_BASE + i * 0x3C, 11);
+		r600_write_context_reg_seq(cs, R_028C60_CB_COLOR0_BASE + i * 0x3C, 13);
 		r600_write_value(cs, cb->cb_color_base);	/* R_028C60_CB_COLOR0_BASE */
 		r600_write_value(cs, cb->cb_color_pitch);	/* R_028C64_CB_COLOR0_PITCH */
 		r600_write_value(cs, cb->cb_color_slice);	/* R_028C68_CB_COLOR0_SLICE */
@@ -2190,6 +2191,8 @@ static void evergreen_emit_framebuffer_state(struct r600_context *rctx, struct r
 		r600_write_value(cs, cb->cb_color_cmask_slice);	/* R_028C80_CB_COLOR0_CMASK_SLICE */
 		r600_write_value(cs, cb->cb_color_fmask);	/* R_028C84_CB_COLOR0_FMASK */
 		r600_write_value(cs, cb->cb_color_fmask_slice); /* R_028C88_CB_COLOR0_FMASK_SLICE */
+		r600_write_value(cs, tex->color_clear_value[0]); /* R_028C8C_CB_COLOR0_CLEAR_WORD0 */
+		r600_write_value(cs, tex->color_clear_value[1]); /* R_028C90_CB_COLOR0_CLEAR_WORD1 */
 
 		r600_write_value(cs, PKT3(PKT3_NOP, 0, 0)); /* R_028C60_CB_COLOR0_BASE */
 		r600_write_value(cs, reloc);
