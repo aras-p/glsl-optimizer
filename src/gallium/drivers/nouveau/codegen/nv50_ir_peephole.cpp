@@ -561,7 +561,7 @@ ConstantFolding::expr(Instruction *i,
       if (i->src(0).getImmediate(src0))
          expr(i, src0, *i->getSrc(1)->asImm());
    } else {
-      i->op = OP_MOV;
+      i->op = i->saturate ? OP_SAT : OP_MOV; /* SAT handled by unary() */
    }
 }
 
@@ -612,6 +612,7 @@ ConstantFolding::unary(Instruction *i, const ImmediateValue &imm)
    switch (i->op) {
    case OP_NEG: res.data.f32 = -imm.reg.data.f32; break;
    case OP_ABS: res.data.f32 = fabsf(imm.reg.data.f32); break;
+   case OP_SAT: res.data.f32 = CLAMP(imm.reg.data.f32, 0.0f, 1.0f); break;
    case OP_RCP: res.data.f32 = 1.0f / imm.reg.data.f32; break;
    case OP_RSQ: res.data.f32 = 1.0f / sqrtf(imm.reg.data.f32); break;
    case OP_LG2: res.data.f32 = log2f(imm.reg.data.f32); break;
@@ -922,6 +923,7 @@ ConstantFolding::opnd(Instruction *i, ImmediateValue &imm0, int s)
 
    case OP_ABS:
    case OP_NEG:
+   case OP_SAT:
    case OP_LG2:
    case OP_RCP:
    case OP_SQRT:
