@@ -767,7 +767,7 @@ gen6_emit_3DSTATE_VERTEX_BUFFERS(const struct ilo_dev_info *dev,
       if (vb->buffer && vb->stride <= 2048) {
          const struct ilo_buffer *buf = ilo_buffer(vb->buffer);
          const uint32_t start_offset = vb->buffer_offset;
-         const uint32_t end_offset = buf->bo->get_size(buf->bo) - 1;
+         const uint32_t end_offset = buf->bo_size - 1;
 
          dw |= vb->stride << BRW_VB0_PITCH_SHIFT;
 
@@ -1040,7 +1040,7 @@ gen6_emit_3DSTATE_INDEX_BUFFER(const struct ilo_dev_info *dev,
    }
 
    /* end_offset must also be aligned */
-   end_offset = buf->bo->get_size(buf->bo);
+   end_offset = buf->bo_size;
    end_offset -= (end_offset % ib->index_size);
    /* it is inclusive */
    end_offset -= 1;
