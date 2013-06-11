@@ -125,6 +125,7 @@ extern "C" {
 struct brw_context;
 struct brw_instruction;
 struct brw_vs_prog_key;
+struct brw_vec4_prog_key;
 struct brw_wm_prog_key;
 struct brw_wm_prog_data;
 
@@ -1585,6 +1586,11 @@ gen7_emit_depth_stencil_hiz(struct brw_context *brw,
                             uint32_t tile_x, uint32_t tile_y);
 
 extern const GLuint prim_to_hw_prim[GL_POLYGON+1];
+
+void
+brw_setup_vec4_key_clip_info(struct brw_context *brw,
+                             struct brw_vec4_prog_key *key,
+                             bool program_uses_clip_distance);
 
 #ifdef __cplusplus
 }
