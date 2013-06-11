@@ -1,5 +1,5 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  *
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,7 +22,7 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
 /**
@@ -51,10 +51,10 @@ static INLINE struct cull_stage *cull_stage( struct draw_stage *stage )
    return (struct cull_stage *)stage;
 }
 
-static INLINE
-boolean cull_distance_is_out(float dist)
+static INLINE boolean
+cull_distance_is_out(float dist)
 {
-   return (dist < 0) || util_is_inf_or_nan(dist);
+   return (dist < 0.0f) || util_is_inf_or_nan(dist);
 }
 
 /*
@@ -68,23 +68,21 @@ static void cull_point( struct draw_stage *stage,
 {
    const unsigned num_written_culldistances =
       draw_current_shader_num_written_culldistances(stage->draw);
+   unsigned i;
 
-   if (num_written_culldistances) {
-      unsigned i;
-      boolean culled = FALSE;
-      for (i = 0; i < num_written_culldistances; ++i) {
-         unsigned cull_idx = i / 4;
-         unsigned out_idx =
-            draw_current_shader_culldistance_output(stage->draw, cull_idx);
-         unsigned idx = i % 4;
-         float cull1 = header->v[0]->data[out_idx][idx];
-         boolean vert1_out = cull_distance_is_out(cull1);
-         if (vert1_out)
-            culled = TRUE;
-      }
-      if (!culled)
-         stage->next->point( stage->next, header );
+   debug_assert(num_written_culldistances);
+
+   for (i = 0; i < num_written_culldistances; ++i) {
+      unsigned cull_idx = i / 4;
+      unsigned out_idx =
+         draw_current_shader_culldistance_output(stage->draw, cull_idx);
+      unsigned idx = i % 4;
+      float cull1 = header->v[0]->data[out_idx][idx];
+      boolean vert1_out = cull_distance_is_out(cull1);
+      if (vert1_out)
+         return;
    }
+   stage->next->point( stage->next, header );
 }
 
 /*
@@ -94,29 +92,27 @@ static void cull_point( struct draw_stage *stage,
  * on primitives without faces (e.g. points and lines)
  */
 static void cull_line( struct draw_stage *stage,
-		      struct prim_header *header )
+                       struct prim_header *header )
 {
    const unsigned num_written_culldistances =
       draw_current_shader_num_written_culldistances(stage->draw);
+   unsigned i;
 
-   if (num_written_culldistances) {
-      unsigned i;
-      boolean culled = FALSE;
-      for (i = 0; i < num_written_culldistances; ++i) {
-         unsigned cull_idx = i / 4;
-         unsigned out_idx =
-            draw_current_shader_culldistance_output(stage->draw, cull_idx);
-         unsigned idx = i % 4;
-         float cull1 = header->v[0]->data[out_idx][idx];
-         float cull2 = header->v[1]->data[out_idx][idx];
-         boolean vert1_out = cull_distance_is_out(cull1);
-         boolean vert2_out = cull_distance_is_out(cull2);
-         if (vert1_out && vert2_out)
-            culled = TRUE;
-      }
-      if (!culled)
-         stage->next->line( stage->next, header );
+   debug_assert(num_written_culldistances);
+
+   for (i = 0; i < num_written_culldistances; ++i) {
+      unsigned cull_idx = i / 4;
+      unsigned out_idx =
+         draw_current_shader_culldistance_output(stage->draw, cull_idx);
+      unsigned idx = i % 4;
+      float cull1 = header->v[0]->data[out_idx][idx];
+      float cull2 = header->v[1]->data[out_idx][idx];
+      boolean vert1_out = cull_distance_is_out(cull1);
+      boolean vert2_out = cull_distance_is_out(cull2);
+      if (vert1_out && vert2_out)
+         return;
    }
+   stage->next->line( stage->next, header );
 }
 
 /*
@@ -133,7 +129,6 @@ static void cull_tri( struct draw_stage *stage,
    /* Do the distance culling */
    if (num_written_culldistances) {
       unsigned i;
-      boolean culled = FALSE;
       for (i = 0; i < num_written_culldistances; ++i) {
          unsigned cull_idx = i / 4;
          unsigned out_idx =
@@ -146,10 +141,8 @@ static void cull_tri( struct draw_stage *stage,
          boolean vert2_out = cull_distance_is_out(cull2);
          boolean vert3_out = cull_distance_is_out(cull3);
          if (vert1_out && vert2_out && vert3_out)
-            culled = TRUE;
+            return;
       }
-      if (!culled)
-         stage->next->tri( stage->next, header );
    }
 
    /* Do the regular face culling */
@@ -166,7 +159,7 @@ static void cull_tri( struct draw_stage *stage,
       const float fx = v1[0] - v2[0];
       const float fy = v1[1] - v2[1];
 
-   
+
       /* det = cross(e,f).z */
       header->det = ex * fy - ey * fx;
 
@@ -217,7 +210,7 @@ static void cull_first_line( struct draw_stage *stage,
    }
 }
 
-static void cull_first_tri( struct draw_stage *stage, 
+static void cull_first_tri( struct draw_stage *stage,
 			    struct prim_header *header )
 {
    struct cull_stage *cull = cull_stage(stage);
