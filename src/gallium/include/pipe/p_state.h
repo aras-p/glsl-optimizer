@@ -66,6 +66,8 @@ extern "C" {
 #define PIPE_MAX_SO_BUFFERS        4
 #define PIPE_MAX_SO_OUTPUTS       64
 #define PIPE_MAX_VIEWPORTS        16
+#define PIPE_MAX_CLIP_OR_CULL_DISTANCE_COUNT 8
+#define PIPE_MAX_CLIP_OR_CULL_DISTANCE_ELEMENT_COUNT 2
 
 
 struct pipe_reference

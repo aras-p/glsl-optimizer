@@ -738,6 +738,7 @@ draw_current_shader_clipvertex_output(const struct draw_context *draw)
 uint
 draw_current_shader_clipdistance_output(const struct draw_context *draw, int index)
 {
+   debug_assert(index < PIPE_MAX_CLIP_OR_CULL_DISTANCE_ELEMENT_COUNT);
    if (draw->gs.geometry_shader)
       return draw->gs.geometry_shader->clipdistance_output[index];
    return draw->vs.clipdistance_output[index];
@@ -756,6 +757,7 @@ draw_current_shader_num_written_clipdistances(const struct draw_context *draw)
 uint
 draw_current_shader_culldistance_output(const struct draw_context *draw, int index)
 {
+   debug_assert(index < PIPE_MAX_CLIP_OR_CULL_DISTANCE_ELEMENT_COUNT);
    if (draw->gs.geometry_shader)
       return draw->gs.geometry_shader->culldistance_output[index];
    return draw->vs.vertex_shader->culldistance_output[index];

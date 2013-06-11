@@ -2435,6 +2435,29 @@ float32 signed distance to a plane. Primitives will be completely
 discarded if the plane distance for all of the vertices in the
 primitive are < 0. If a vertex has a cull distance of NaN, that
 vertex counts as "out" (as if its < 0);
+The limits on both clip and cull distances are bound
+by the PIPE_MAX_CLIP_OR_CULL_DISTANCE_COUNT define which defines
+the maximum number of components that can be used to hold the
+distances and by the PIPE_MAX_CLIP_OR_CULL_DISTANCE_ELEMENT_COUNT
+which specifies the maximum number of registers which can be
+annotated with those semantics.
+
+
+TGSI_SEMANTIC_CLIPDIST
+""""""""""""""""""""""
+
+When components of vertex elements are identified this way, these
+values are each assumed to be a float32 signed distance to a plane.
+Primitive setup only invokes rasterization on pixels for which
+the interpolated plane distances are >= 0. Multiple clip planes
+can be implemented simultaneously, by annotating multiple
+components of one or more vertex elements with the above specified
+semantic. The limits on both clip and cull distances are bound
+by the PIPE_MAX_CLIP_OR_CULL_DISTANCE_COUNT define which defines
+the maximum number of components that can be used to hold the
+distances and by the PIPE_MAX_CLIP_OR_CULL_DISTANCE_ELEMENT_COUNT
+which specifies the maximum number of registers which can be
+annotated with those semantics.
 
 
 Declaration Interpolate
