@@ -380,8 +380,6 @@ extern char *__progname;
  */
 #define ROUND_DOWN_TO(value, alignment) ((value) & ~(alignment - 1))
 
-#define IS_POWER_OF_TWO(val) (((val) & (val - 1)) == 0)
-
 static INLINE uint32_t
 U_FIXED(float value, uint32_t frac_bits)
 {
