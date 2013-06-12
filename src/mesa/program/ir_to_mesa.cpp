@@ -3097,69 +3097,6 @@ _mesa_ir_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
    return prog->LinkStatus;
 }
 
-
-/**
- * Compile a GLSL shader.  Called via glCompileShader().
- */
-void
-_mesa_glsl_compile_shader(struct gl_context *ctx, struct gl_shader *shader)
-{
-   struct _mesa_glsl_parse_state *state =
-      new(shader) _mesa_glsl_parse_state(ctx, shader->Type, shader);
-
-   const char *source = shader->Source;
-
-   state->error = glcpp_preprocess(state, &source, &state->info_log,
-			     &ctx->Extensions, ctx);
-
-   if (!state->error) {
-     _mesa_glsl_lexer_ctor(state, source);
-     _mesa_glsl_parse(state);
-     _mesa_glsl_lexer_dtor(state);
-   }
-
-   ralloc_free(shader->ir);
-   shader->ir = new(shader) exec_list;
-   if (!state->error && !state->translation_unit.is_empty())
-      _mesa_ast_to_hir(shader->ir, state);
-
-   if (!state->error && !shader->ir->is_empty()) {
-      validate_ir_tree(shader->ir);
-      struct gl_shader_compiler_options *options =
-         &ctx->ShaderCompilerOptions[_mesa_shader_type_to_index(shader->Type)];
-
-      /* Do some optimization at compile time to reduce shader IR size
-       * and reduce later work if the same shader is linked multiple times
-       */
-      while (do_common_optimization(shader->ir, false, false, 32, options))
-	 ;
-
-      validate_ir_tree(shader->ir);
-   }
-
-   shader->symbols = state->symbols;
-
-   shader->CompileStatus = !state->error;
-   shader->InfoLog = state->info_log;
-   shader->Version = state->language_version;
-   shader->IsES = state->es_shader;
-   memcpy(shader->builtins_to_link, state->builtins_to_link,
-	  sizeof(shader->builtins_to_link[0]) * state->num_builtins_to_link);
-   shader->num_builtins_to_link = state->num_builtins_to_link;
-
-   if (shader->UniformBlocks)
-      ralloc_free(shader->UniformBlocks);
-   shader->NumUniformBlocks = state->num_uniform_blocks;
-   shader->UniformBlocks = state->uniform_blocks;
-   ralloc_steal(shader, shader->UniformBlocks);
-
-   /* Retain any live IR, but trash the rest. */
-   reparent_ir(shader->ir, shader->ir);
-
-   ralloc_free(state);
-}
-
-
 /**
  * Link a GLSL shader program.  Called via glLinkProgram().
  */

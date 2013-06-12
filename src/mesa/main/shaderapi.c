@@ -55,6 +55,7 @@
 #include "../glsl/glsl_parser_extras.h"
 #include "../glsl/ir.h"
 #include "../glsl/ir_uniform.h"
+#include "../glsl/program.h"
 
 /** Define this to enable shader substitution (see below) */
 #define SHADER_SUBST 0
@@ -760,7 +761,7 @@ compile_shader(struct gl_context *ctx, GLuint shaderObj)
       /* this call will set the shader->CompileStatus field to indicate if
        * compilation was successful.
        */
-      _mesa_glsl_compile_shader(ctx, sh);
+      _mesa_glsl_compile_shader(ctx, sh, false, false);
 
       if (ctx->Shader.Flags & GLSL_LOG) {
          _mesa_write_shader_to_file(sh);

@@ -28,6 +28,7 @@
 extern "C" {
 #include "main/core.h" /* for struct gl_context */
 #include "main/context.h"
+#include "main/shaderobj.h"
 }
 
 #include "ralloc.h"
@@ -1237,6 +1238,88 @@ ast_struct_specifier::ast_struct_specifier(const char *identifier,
    this->declarations.push_degenerate_list_at_head(&declarator_list->link);
 }
 
+extern "C" {
+
+void
+_mesa_glsl_compile_shader(struct gl_context *ctx, struct gl_shader *shader,
+                          bool dump_ast, bool dump_hir)
+{
+   struct _mesa_glsl_parse_state *state =
+      new(shader) _mesa_glsl_parse_state(ctx, shader->Type, shader);
+   const char *source = shader->Source;
+
+   state->error = glcpp_preprocess(state, &source, &state->info_log,
+                             &ctx->Extensions, ctx);
+
+   if (!state->error) {
+     _mesa_glsl_lexer_ctor(state, source);
+     _mesa_glsl_parse(state);
+     _mesa_glsl_lexer_dtor(state);
+   }
+
+   if (dump_ast) {
+      foreach_list_const(n, &state->translation_unit) {
+         ast_node *ast = exec_node_data(ast_node, n, link);
+         ast->print();
+      }
+      printf("\n\n");
+   }
+
+   ralloc_free(shader->ir);
+   shader->ir = new(shader) exec_list;
+   if (!state->error && !state->translation_unit.is_empty())
+      _mesa_ast_to_hir(shader->ir, state);
+
+   if (!state->error) {
+      validate_ir_tree(shader->ir);
+
+      /* Print out the unoptimized IR. */
+      if (dump_hir) {
+         _mesa_print_ir(shader->ir, state);
+      }
+   }
+
+
+   if (!state->error && !shader->ir->is_empty()) {
+      struct gl_shader_compiler_options *options =
+         &ctx->ShaderCompilerOptions[_mesa_shader_type_to_index(shader->Type)];
+
+      /* Do some optimization at compile time to reduce shader IR size
+       * and reduce later work if the same shader is linked multiple times
+       */
+      while (do_common_optimization(shader->ir, false, false, 32, options))
+         ;
+
+      validate_ir_tree(shader->ir);
+   }
+
+   if (shader->InfoLog)
+      ralloc_free(shader->InfoLog);
+
+   shader->symbols = state->symbols;
+   shader->CompileStatus = !state->error;
+   shader->InfoLog = state->info_log;
+   shader->Version = state->language_version;
+   shader->InfoLog = state->info_log;
+   shader->IsES = state->es_shader;
+
+   memcpy(shader->builtins_to_link, state->builtins_to_link,
+          sizeof(shader->builtins_to_link[0]) * state->num_builtins_to_link);
+   shader->num_builtins_to_link = state->num_builtins_to_link;
+
+   if (shader->UniformBlocks)
+      ralloc_free(shader->UniformBlocks);
+   shader->NumUniformBlocks = state->num_uniform_blocks;
+   shader->UniformBlocks = state->uniform_blocks;
+   ralloc_steal(shader, shader->UniformBlocks);
+
+   /* Retain any live IR, but trash the rest. */
+   reparent_ir(shader->ir, shader->ir);
+
+   ralloc_free(state);
+}
+
+} /* extern "C" */
 /**
  * Do the set of common optimizations passes
  *
