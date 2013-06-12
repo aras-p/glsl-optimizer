@@ -2052,6 +2052,14 @@ extern char *
 prototype_string(const glsl_type *return_type, const char *name,
 		 exec_list *parameters);
 
+extern "C" {
 #endif /* __cplusplus */
+
+extern void _mesa_print_ir(struct exec_list *instructions,
+                           struct _mesa_glsl_parse_state *state);
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
 
 #endif /* IR_H */

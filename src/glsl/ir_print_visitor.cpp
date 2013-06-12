@@ -38,6 +38,7 @@ ir_instruction::print(void) const
    deconsted->accept(&v);
 }
 
+extern "C" {
 void
 _mesa_print_ir(exec_list *instructions,
 	       struct _mesa_glsl_parse_state *state)
@@ -68,6 +69,8 @@ _mesa_print_ir(exec_list *instructions,
    }
    printf("\n)");
 }
+
+} /* extern "C" */
 
 ir_print_visitor::ir_print_visitor()
 {
