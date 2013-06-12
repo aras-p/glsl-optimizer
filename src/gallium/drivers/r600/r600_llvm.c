@@ -640,6 +640,9 @@ unsigned r600_llvm_compile(
 		case R_02880C_DB_SHADER_CONTROL:
 			*use_kill = G_02880C_KILL_ENABLE(value);
 			break;
+		case CM_R_0288E8_SQ_LDS_ALLOC:
+			bc->nlds_dw = value;
+			break;
 		}
 	}
 

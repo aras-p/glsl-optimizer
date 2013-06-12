@@ -2974,9 +2974,6 @@ void evergreen_init_common_regs(struct r600_command_buffer *cb,
 		r600_store_value(cb, tmp); /* R_008C0C_SQ_GPR_RESOURCE_MGMT_3 */
 	}
 
-	r600_store_config_reg(cb, R_008E2C_SQ_LDS_RESOURCE_MGMT,
-			      S_008E2C_NUM_PS_LDS(0x1000) | S_008E2C_NUM_LS_LDS(0x1000));
-
 	r600_store_context_reg(cb, R_028A4C_PA_SC_MODE_CNTL_1, 0);
 
 	/* The cs checker requires this register to be set. */
@@ -3194,6 +3191,9 @@ void evergreen_init_atom_start_cs(struct r600_context *rctx)
 	tmp = S_008C28_NUM_HS_STACK_ENTRIES(num_hs_stack_entries);
 	tmp |= S_008C28_NUM_LS_STACK_ENTRIES(num_ls_stack_entries);
 	r600_store_value(cb, tmp); /* R_008C28_SQ_STACK_RESOURCE_MGMT_3 */
+
+	r600_store_config_reg(cb, R_008E2C_SQ_LDS_RESOURCE_MGMT,
+			      S_008E2C_NUM_PS_LDS(0x1000) | S_008E2C_NUM_LS_LDS(0x1000));
 
 	r600_store_config_reg(cb, R_009100_SPI_CONFIG_CNTL, 0);
 	r600_store_config_reg(cb, R_00913C_SPI_CONFIG_CNTL_1, S_00913C_VTX_DONE_DELAY(4));

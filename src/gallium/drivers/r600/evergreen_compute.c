@@ -211,7 +211,8 @@ void *evergreen_create_compute_state(
 #endif
 
 	shader->ctx = (struct r600_context*)ctx;
-	shader->local_size = cso->req_local_mem; ///TODO: assert it
+	/* XXX: We ignore cso->req_local_mem, because we compute this value
+	 * ourselves on a per-kernel basis. */
 	shader->private_size = cso->req_private_mem;
 	shader->input_size = cso->req_input_mem;
 
@@ -327,13 +328,13 @@ static void evergreen_emit_direct_dispatch(
 {
 	int i;
 	struct radeon_winsys_cs *cs = rctx->rings.gfx.cs;
+	struct r600_pipe_compute *shader = rctx->cs_shader_state.shader;
 	unsigned num_waves;
 	unsigned num_pipes = rctx->screen->info.r600_max_pipes;
 	unsigned wave_divisor = (16 * num_pipes);
 	int group_size = 1;
 	int grid_size = 1;
-	/* XXX: Enable lds and get size from cs_shader_state */
-	unsigned lds_size = 0;
+	unsigned lds_size = shader->active_kernel->bc.nlds_dw;
 
 	/* Calculate group_size/grid_size */
 	for (i = 0; i < 3; i++) {
@@ -348,16 +349,10 @@ static void evergreen_emit_direct_dispatch(
 	num_waves = (block_layout[0] * block_layout[1] * block_layout[2] +
 			wave_divisor - 1) / wave_divisor;
 
-	COMPUTE_DBG(rctx->screen, "Using %u pipes, there are %u wavefronts per thread block\n",
-							num_pipes, num_waves);
-
-	/* XXX: Partition the LDS between PS/CS.  By default half (4096 dwords
-	 * on Evergreen) oes to Pixel Shaders and half goes to Compute Shaders.
-	 * We may need to allocat the entire LDS space for Compute Shaders.
-	 *
-	 * EG: R_008E2C_SQ_LDS_RESOURCE_MGMT := S_008E2C_NUM_LS_LDS(lds_dwords)
-	 * CM: CM_R_0286FC_SPI_LDS_MGMT :=  S_0286FC_NUM_LS_LDS(lds_dwords)
-	 */
+	COMPUTE_DBG(rctx->screen, "Using %u pipes, "
+				"%u wavefronts per thread block, "
+				"allocating %u dwords lds.\n",
+				num_pipes, num_waves, lds_size);
 
 	r600_write_config_reg(cs, R_008970_VGT_NUM_INDICES, group_size);
 
@@ -373,6 +368,14 @@ static void evergreen_emit_direct_dispatch(
 	r600_write_value(cs, block_layout[0]); /* R_0286EC_SPI_COMPUTE_NUM_THREAD_X */
 	r600_write_value(cs, block_layout[1]); /* R_0286F0_SPI_COMPUTE_NUM_THREAD_Y */
 	r600_write_value(cs, block_layout[2]); /* R_0286F4_SPI_COMPUTE_NUM_THREAD_Z */
+
+	if (rctx->chip_class < CAYMAN) {
+		assert(lds_size <= 8192);
+	} else {
+		/* Cayman appears to have a slightly smaller limit, see the
+		 * value of CM_R_0286FC_SPI_LDS_MGMT.NUM_LS_LDS */
+		assert(lds_size <= 8160);
+	}
 
 	r600_write_compute_context_reg(cs, CM_R_0288E8_SQ_LDS_ALLOC,
 					lds_size | (num_waves << 14));
@@ -517,12 +520,14 @@ static void evergreen_launch_grid(
 	struct r600_context *ctx = (struct r600_context *)ctx_;
 
 #ifdef HAVE_OPENCL 
-	COMPUTE_DBG(ctx->screen, "*** evergreen_launch_grid: pc = %u\n", pc);
 
 	struct r600_pipe_compute *shader = ctx->cs_shader_state.shader;
-	if (!shader->kernels[pc].code_bo) {
+	struct r600_kernel *kernel = &shader->kernels[pc];
+
+	COMPUTE_DBG(ctx->screen, "*** evergreen_launch_grid: pc = %u\n", pc);
+
+	if (!kernel->code_bo) {
 		void *p;
-		struct r600_kernel *kernel = &shader->kernels[pc];
 		struct r600_bytecode *bc = &kernel->bc;
 		LLVMModuleRef mod = kernel->llvm_module;
 		boolean use_kill = false;
@@ -551,7 +556,7 @@ static void evergreen_launch_grid(
 		ctx->ws->buffer_unmap(kernel->code_bo->cs_buf);
 	}
 #endif
-
+	shader->active_kernel = kernel;
 	ctx->cs_shader_state.kernel_index = pc;
 	evergreen_compute_upload_input(ctx_, block_layout, grid_layout, input);
 	compute_emit_cs(ctx, block_layout, grid_layout);
@@ -791,6 +796,20 @@ void evergreen_init_atom_start_compute_cs(struct r600_context *ctx)
 		 * set it to the maximum value for the CS (aka LS) stage. */
 		r600_store_value(cb,
 			S_008C28_NUM_LS_STACK_ENTRIES(num_stack_entries));
+	}
+	/* Give the compute shader all the available LDS space.
+	 * NOTE: This only sets the maximum number of dwords that a compute
+	 * shader can allocate.  When a shader is executed, we still need to
+	 * allocate the appropriate amount of LDS dwords using the
+	 * CM_R_0288E8_SQ_LDS_ALLOC register.
+	 */
+	if (ctx->chip_class < CAYMAN) {
+		r600_store_config_reg(cb, R_008E2C_SQ_LDS_RESOURCE_MGMT,
+			S_008E2C_NUM_PS_LDS(0x0000) | S_008E2C_NUM_LS_LDS(8192));
+	} else {
+		r600_store_context_reg(cb, CM_R_0286FC_SPI_LDS_MGMT,
+			S_0286FC_NUM_PS_LDS(0) |
+			S_0286FC_NUM_LS_LDS(255)); /* 255 * 32 = 8160 dwords */
 	}
 
 	/* Context Registers */

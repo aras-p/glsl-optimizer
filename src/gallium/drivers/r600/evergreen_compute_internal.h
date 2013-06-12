@@ -42,6 +42,7 @@ struct r600_pipe_compute {
 	unsigned num_kernels;
 	struct r600_kernel *kernels;
 
+	struct r600_kernel *active_kernel;
 	unsigned local_size;
 	unsigned private_size;
 	unsigned input_size;

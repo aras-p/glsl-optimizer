@@ -203,6 +203,7 @@ struct r600_bytecode {
 	unsigned			ncf;
 	unsigned			ngpr;
 	unsigned			nstack;
+	unsigned			nlds_dw;
 	unsigned			nresource;
 	unsigned			force_add_cf;
 	uint32_t			*bytecode;
