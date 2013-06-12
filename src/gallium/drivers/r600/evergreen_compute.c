@@ -46,6 +46,7 @@
 #include "evergreen_compute.h"
 #include "evergreen_compute_internal.h"
 #include "compute_memory_pool.h"
+#include "sb/sb_public.h"
 #ifdef HAVE_OPENCL
 #include "radeon_llvm_util.h"
 #endif
@@ -522,7 +523,27 @@ static void evergreen_launch_grid(
 	if (!shader->kernels[pc].code_bo) {
 		void *p;
 		struct r600_kernel *kernel = &shader->kernels[pc];
-		r600_compute_shader_create(ctx_, kernel->llvm_module, &kernel->bc);
+		struct r600_bytecode *bc = &kernel->bc;
+		LLVMModuleRef mod = kernel->llvm_module;
+		boolean use_kill = false;
+		bool dump = (ctx->screen->debug_flags & DBG_CS) != 0;
+		unsigned use_sb = ctx->screen->debug_flags & DBG_SB_CS;
+		unsigned sb_disasm = use_sb ||
+			(ctx->screen->debug_flags & DBG_SB_DISASM);
+
+		r600_bytecode_init(bc, ctx->chip_class, ctx->family,
+			   ctx->screen->has_compressed_msaa_texturing);
+		bc->type = TGSI_PROCESSOR_COMPUTE;
+		bc->isa = ctx->isa;
+		r600_llvm_compile(mod, ctx->family, bc, &use_kill, dump);
+
+		if (dump && !sb_disasm) {
+			r600_bytecode_disasm(bc);
+		} else if ((dump && sb_disasm) || use_sb) {
+			if (r600_sb_bytecode_process(ctx, bc, NULL, dump, use_sb))
+				R600_ERR("r600_sb_bytecode_process failed!\n");
+		}
+
 		kernel->code_bo = r600_compute_buffer_alloc_vram(ctx->screen,
 							kernel->bc.ndw * 4);
 		p = r600_buffer_mmap_sync_with_rings(ctx, kernel->code_bo, PIPE_TRANSFER_WRITE);
