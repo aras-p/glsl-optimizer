@@ -205,8 +205,8 @@ _mesa_program_index_to_target(GLuint i)
 {
    static const GLenum enums[MESA_SHADER_TYPES] = {
       GL_VERTEX_PROGRAM_ARB,
-      GL_FRAGMENT_PROGRAM_ARB,
       GL_GEOMETRY_PROGRAM_NV,
+      GL_FRAGMENT_PROGRAM_ARB
    };
    if(i >= MESA_SHADER_TYPES)
       return 0;

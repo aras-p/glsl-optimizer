@@ -123,8 +123,8 @@ _mesa_shader_index_to_type(GLuint i)
 {
    static const GLenum enums[MESA_SHADER_TYPES] = {
       GL_VERTEX_SHADER,
-      GL_FRAGMENT_SHADER,
-      GL_GEOMETRY_SHADER ,
+      GL_GEOMETRY_SHADER,
+      GL_FRAGMENT_SHADER
    };
    if (i >= MESA_SHADER_TYPES)
       return 0;

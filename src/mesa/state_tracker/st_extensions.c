@@ -68,7 +68,7 @@ void st_init_limits(struct st_context *st)
 {
    struct pipe_screen *screen = st->pipe->screen;
    struct gl_constants *c = &st->ctx->Const;
-   gl_shader_type sh;
+   unsigned sh;
    boolean can_ubo = TRUE;
 
    c->MaxTextureLevels
@@ -149,23 +149,25 @@ void st_init_limits(struct st_context *st)
       can_ubo = FALSE;
    }
 
-   for (sh = 0; sh < MESA_SHADER_TYPES; ++sh) {
-      struct gl_shader_compiler_options *options =
-         &st->ctx->ShaderCompilerOptions[sh];
+   for (sh = 0; sh < PIPE_SHADER_TYPES; ++sh) {
+      struct gl_shader_compiler_options *options;
       struct gl_program_constants *pc;
 
       switch (sh) {
       case PIPE_SHADER_FRAGMENT:
          pc = &c->FragmentProgram;
+         options = &st->ctx->ShaderCompilerOptions[MESA_SHADER_FRAGMENT];
          break;
       case PIPE_SHADER_VERTEX:
          pc = &c->VertexProgram;
+         options = &st->ctx->ShaderCompilerOptions[MESA_SHADER_VERTEX];
          break;
       case PIPE_SHADER_GEOMETRY:
          pc = &c->GeometryProgram;
+         options = &st->ctx->ShaderCompilerOptions[MESA_SHADER_GEOMETRY];
          break;
       default:
-         assert(0);
+         /* compute shader, etc. */
          continue;
       }
 

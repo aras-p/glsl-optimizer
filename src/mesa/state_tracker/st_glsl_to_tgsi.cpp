@@ -5271,15 +5271,11 @@ st_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
       linked_prog = get_mesa_program(ctx, prog, prog->_LinkedShaders[i]);
 
       if (linked_prog) {
-	 static const GLenum targets[] = {
-	    GL_VERTEX_PROGRAM_ARB,
-	    GL_FRAGMENT_PROGRAM_ARB,
-	    GL_GEOMETRY_PROGRAM_NV
-	 };
-
 	 _mesa_reference_program(ctx, &prog->_LinkedShaders[i]->Program,
 				 linked_prog);
-         if (!ctx->Driver.ProgramStringNotify(ctx, targets[i], linked_prog)) {
+         if (!ctx->Driver.ProgramStringNotify(ctx,
+                                              _mesa_program_index_to_target(i),
+                                              linked_prog)) {
 	    _mesa_reference_program(ctx, &prog->_LinkedShaders[i]->Program,
 				    NULL);
             _mesa_reference_program(ctx, &linked_prog, NULL);

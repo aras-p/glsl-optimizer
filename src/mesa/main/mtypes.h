@@ -2173,13 +2173,16 @@ struct gl_shader
 
 /**
  * Shader stages. Note that these will become 5 with tessellation.
- * These MUST have the same values as gallium's PIPE_SHADER_*
+ *
+ * The order must match how shaders are ordered in the pipeline.
+ * The GLSL linker assumes that if i<j, then the j-th shader is
+ * executed later than the i-th shader.
  */
 typedef enum
 {
    MESA_SHADER_VERTEX = 0,
-   MESA_SHADER_FRAGMENT = 1,
-   MESA_SHADER_GEOMETRY = 2,
+   MESA_SHADER_GEOMETRY = 1,
+   MESA_SHADER_FRAGMENT = 2,
    MESA_SHADER_TYPES = 3
 } gl_shader_type;
 

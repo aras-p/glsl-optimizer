@@ -117,17 +117,13 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
    for (stage = 0; stage < ARRAY_SIZE(shProg->_LinkedShaders); stage++) {
       struct brw_shader *shader =
 	 (struct brw_shader *)shProg->_LinkedShaders[stage];
-      static const GLenum targets[] = {
-	 GL_VERTEX_PROGRAM_ARB,
-	 GL_FRAGMENT_PROGRAM_ARB,
-	 GL_GEOMETRY_PROGRAM_NV
-      };
 
       if (!shader)
 	 continue;
 
       struct gl_program *prog =
-	 ctx->Driver.NewProgram(ctx, targets[stage], shader->base.Name);
+	 ctx->Driver.NewProgram(ctx, _mesa_program_index_to_target(stage),
+                                shader->base.Name);
       if (!prog)
 	return false;
       prog->Parameters = _mesa_new_parameter_list();

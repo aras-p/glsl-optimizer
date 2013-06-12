@@ -1514,31 +1514,31 @@ static bool
 check_resources(struct gl_context *ctx, struct gl_shader_program *prog)
 {
    static const char *const shader_names[MESA_SHADER_TYPES] = {
-      "vertex", "fragment", "geometry"
+      "vertex", "geometry", "fragment"
    };
 
    const unsigned max_samplers[MESA_SHADER_TYPES] = {
       ctx->Const.VertexProgram.MaxTextureImageUnits,
-      ctx->Const.FragmentProgram.MaxTextureImageUnits,
-      ctx->Const.GeometryProgram.MaxTextureImageUnits
+      ctx->Const.GeometryProgram.MaxTextureImageUnits,
+      ctx->Const.FragmentProgram.MaxTextureImageUnits
    };
 
    const unsigned max_default_uniform_components[MESA_SHADER_TYPES] = {
       ctx->Const.VertexProgram.MaxUniformComponents,
-      ctx->Const.FragmentProgram.MaxUniformComponents,
-      ctx->Const.GeometryProgram.MaxUniformComponents
+      ctx->Const.GeometryProgram.MaxUniformComponents,
+      ctx->Const.FragmentProgram.MaxUniformComponents
    };
 
    const unsigned max_combined_uniform_components[MESA_SHADER_TYPES] = {
       ctx->Const.VertexProgram.MaxCombinedUniformComponents,
-      ctx->Const.FragmentProgram.MaxCombinedUniformComponents,
-      ctx->Const.GeometryProgram.MaxCombinedUniformComponents
+      ctx->Const.GeometryProgram.MaxCombinedUniformComponents,
+      ctx->Const.FragmentProgram.MaxCombinedUniformComponents
    };
 
    const unsigned max_uniform_blocks[MESA_SHADER_TYPES] = {
       ctx->Const.VertexProgram.MaxUniformBlocks,
-      ctx->Const.FragmentProgram.MaxUniformBlocks,
       ctx->Const.GeometryProgram.MaxUniformBlocks,
+      ctx->Const.FragmentProgram.MaxUniformBlocks
    };
 
    for (unsigned i = 0; i < MESA_SHADER_TYPES; i++) {
