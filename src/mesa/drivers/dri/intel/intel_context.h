@@ -298,8 +298,6 @@ struct intel_context
    struct tnl_attr_map vertex_attrs[VERT_ATTRIB_MAX];
    GLuint vertex_attr_count;
 
-   GLfloat polygon_offset_scale;        /* dependent on depth_scale, bpp */
-
    bool hw_stencil;
    bool hw_stipple;
    bool no_rast;

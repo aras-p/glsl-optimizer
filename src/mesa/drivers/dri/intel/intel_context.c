@@ -639,23 +639,6 @@ intelInitContext(struct intel_context *intel,
    intel->hw_stencil = mesaVis->stencilBits && mesaVis->depthBits == 24;
    intel->hw_stipple = 1;
 
-   /* XXX FBO: this doesn't seem to be used anywhere */
-   switch (mesaVis->depthBits) {
-   case 0:                     /* what to do in this case? */
-   case 16:
-      intel->polygon_offset_scale = 1.0;
-      break;
-   case 24:
-      intel->polygon_offset_scale = 2.0;     /* req'd to pass glean */
-      break;
-   default:
-      assert(0);
-      break;
-   }
-
-   if (intel->gen >= 4)
-      intel->polygon_offset_scale /= 0xffff;
-
    intel->RenderIndex = ~0;
 
    intelInitExtensions(ctx);

@@ -216,7 +216,7 @@ brw_upload_clip_prog(struct brw_context *brw)
 
 	    if (offset_back || offset_front) {
 	       /* _NEW_POLYGON, _NEW_BUFFERS */
-	       key.offset_units = ctx->Polygon.OffsetUnits * brw->intel.polygon_offset_scale;
+	       key.offset_units = ctx->Polygon.OffsetUnits * ctx->DrawBuffer->_MRD * 2;
 	       key.offset_factor = ctx->Polygon.OffsetFactor * ctx->DrawBuffer->_MRD;
 	    }
 
