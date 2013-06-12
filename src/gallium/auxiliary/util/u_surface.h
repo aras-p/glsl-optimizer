@@ -65,6 +65,13 @@ util_fill_rect(ubyte * dst, enum pipe_format format,
                unsigned dst_stride, unsigned dst_x, unsigned dst_y,
                unsigned width, unsigned height, union util_color *uc);
 
+extern void
+util_fill_box(ubyte * dst, enum pipe_format format,
+              unsigned stride, unsigned layer_stride,
+              unsigned x, unsigned y, unsigned z,
+              unsigned width, unsigned height, unsigned depth,
+              union util_color *uc);
+
 
 extern void
 util_resource_copy_region(struct pipe_context *pipe,

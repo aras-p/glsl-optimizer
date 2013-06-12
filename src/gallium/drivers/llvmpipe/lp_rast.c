@@ -135,8 +135,6 @@ lp_rast_clear_color(struct lp_rasterizer_task *task,
 
          for (i = 0; i < scene->fb.nr_cbufs; i++) {
             enum pipe_format format = scene->fb.cbufs[i]->format;
-            unsigned layer;
-            uint8_t *map_layer = scene->cbufs[i].map;
 
             if (util_format_is_pure_sint(format)) {
                util_format_write_4i(format, arg.clear_color.i, 0, &uc, 0, 0, 0, 1, 1);
@@ -146,17 +144,17 @@ lp_rast_clear_color(struct lp_rasterizer_task *task,
                util_format_write_4ui(format, arg.clear_color.ui, 0, &uc, 0, 0, 0, 1, 1);
             }
 
-            for (layer = 0; layer <= scene->fb_max_layer; layer++) {
-               util_fill_rect(map_layer,
-                              scene->fb.cbufs[i]->format,
-                              scene->cbufs[i].stride,
-                              task->x,
-                              task->y,
-                              task->width,
-                              task->height,
-                              &uc);
-               map_layer += scene->cbufs[i].layer_stride;
-            }
+            util_fill_box(scene->cbufs[i].map,
+                          format,
+                          scene->cbufs[i].stride,
+                          scene->cbufs[i].layer_stride,
+                          task->x,
+                          task->y,
+                          0,
+                          task->width,
+                          task->height,
+                          scene->fb_max_layer + 1,
+                          &uc);
          }
       }
       else {
@@ -173,22 +171,20 @@ lp_rast_clear_color(struct lp_rasterizer_task *task,
                     clear_color[3]);
 
          for (i = 0; i < scene->fb.nr_cbufs; i++) {
-            unsigned layer;
-            uint8_t *map_layer = scene->cbufs[i].map;
+            util_pack_color(arg.clear_color.f,
+                            scene->fb.cbufs[i]->format, &uc);
 
-            for (layer = 0; layer <= scene->fb_max_layer; layer++) {
-               util_pack_color(arg.clear_color.f,
-                               scene->fb.cbufs[i]->format, &uc);
-               util_fill_rect(map_layer,
-                              scene->fb.cbufs[i]->format,
-                              scene->cbufs[i].stride,
-                              task->x,
-                              task->y,
-                              task->width,
-                              task->height,
-                              &uc);
-               map_layer += scene->cbufs[i].layer_stride;
-            }
+            util_fill_box(scene->cbufs[i].map,
+                          scene->fb.cbufs[i]->format,
+                          scene->cbufs[i].stride,
+                          scene->cbufs[i].layer_stride,
+                          task->x,
+                          task->y,
+                          0,
+                          task->width,
+                          task->height,
+                          scene->fb_max_layer + 1,
+                          &uc);
          }
       }
    }

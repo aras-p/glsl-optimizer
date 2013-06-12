@@ -214,6 +214,30 @@ util_fill_rect(ubyte * dst,
 }
 
 
+void
+util_fill_box(ubyte * dst,
+              enum pipe_format format,
+              unsigned stride,
+              unsigned layer_stride,
+              unsigned x,
+              unsigned y,
+              unsigned z,
+              unsigned width,
+              unsigned height,
+              unsigned depth,
+              union util_color *uc)
+{
+   unsigned layer;
+   dst += z * layer_stride;
+   for (layer = z; layer < depth; layer++) {
+      util_fill_rect(dst, format,
+                     stride,
+                     x, y, width, height, uc);
+      dst += layer_stride;
+   }
+}
+
+
 /**
  * Fallback function for pipe->resource_copy_region().
  * Note: (X,Y)=(0,0) is always the upper-left corner.
@@ -319,7 +343,7 @@ util_clear_render_target(struct pipe_context *pipe,
    struct pipe_transfer *dst_trans;
    ubyte *dst_map;
    union util_color uc;
-   unsigned max_layer, layer;
+   unsigned max_layer;
 
    assert(dst->texture);
    if (!dst->texture)
@@ -349,7 +373,7 @@ util_clear_render_target(struct pipe_context *pipe,
                                      dst->u.tex.level,
                                      PIPE_TRANSFER_WRITE,
                                      dstx, dsty, dst->u.tex.first_layer,
-                                     width, height, max_layer, &dst_trans);
+                                     width, height, max_layer + 1, &dst_trans);
    }
 
    assert(dst_map);
@@ -376,12 +400,9 @@ util_clear_render_target(struct pipe_context *pipe,
          util_pack_color(color->f, dst->format, &uc);
       }
 
-      for (layer = 0; layer <= max_layer; layer++) {
-         util_fill_rect(dst_map, dst->format,
-                        dst_trans->stride,
-                        0, 0, width, height, &uc);
-         dst_map += dst_trans->layer_stride;
-      }
+      util_fill_box(dst_map, dst->format,
+                    dst_trans->stride, dst_trans->layer_stride,
+                    0, 0, 0, width, height, max_layer + 1, &uc);
 
       pipe->transfer_unmap(pipe, dst_trans);
    }
@@ -430,8 +451,7 @@ util_clear_depth_stencil(struct pipe_context *pipe,
 
    if (dst_map) {
       unsigned dst_stride = dst_trans->stride;
-      uint64_t zstencil = util_pack64_z_stencil(format,
-                                                depth, stencil);
+      uint64_t zstencil = util_pack64_z_stencil(format, depth, stencil);
       ubyte *dst_layer = dst_map;
       unsigned i, j;
       assert(dst_trans->stride > 0);
