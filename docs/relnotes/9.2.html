@@ -68,6 +68,9 @@ Note: some of the new features are only available with certain drivers.
 2007.</li>
 <li>Removed GL_MESA_resize_buffers because it was only really implemented by
 the (unsupported) GDI driver.</li>
+<li>GL_EXT_separate_shader_objects has been removed from all Gallium drivers,
+    because it disallows a critical GLSL shader optimization.
+    GL_ARB_separate_shader_objects doesn't have this issue.
 </ul>
 
 </div>

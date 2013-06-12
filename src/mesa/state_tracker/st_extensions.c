@@ -554,7 +554,14 @@ void st_init_extensions(struct st_context *st)
    ctx->Extensions.EXT_pixel_buffer_object = GL_TRUE;
    ctx->Extensions.EXT_point_parameters = GL_TRUE;
    ctx->Extensions.EXT_provoking_vertex = GL_TRUE;
-   ctx->Extensions.EXT_separate_shader_objects = GL_TRUE;
+
+   /* IMPORTANT:
+    *    Don't enable EXT_separate_shader_objects. It disallows a certain
+    *    optimization in the GLSL compiler and therefore is considered
+    *    harmful.
+    */
+   ctx->Extensions.EXT_separate_shader_objects = GL_FALSE;
+
    ctx->Extensions.EXT_texture_env_dot3 = GL_TRUE;
    ctx->Extensions.EXT_vertex_array_bgra = GL_TRUE;
 
