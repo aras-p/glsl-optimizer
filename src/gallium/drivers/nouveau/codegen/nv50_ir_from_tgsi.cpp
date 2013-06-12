@@ -2457,7 +2457,12 @@ Converter::handleInstruction(const struct tgsi_full_instruction *insn)
       break;
    case TGSI_OPCODE_KILL_IF:
       val0 = new_LValue(func, FILE_PREDICATE);
+      mask = 0;
       for (c = 0; c < 4; ++c) {
+         const int s = tgsi.getSrc(0).getSwizzle(c);
+         if (mask & (1 << s))
+            continue;
+         mask |= 1 << s;
          mkCmp(OP_SET, CC_LT, TYPE_F32, val0, TYPE_F32, fetchSrc(0, c), zero);
          mkOp(OP_DISCARD, TYPE_NONE, NULL)->setPredicate(CC_P, val0);
       }
