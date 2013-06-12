@@ -1784,13 +1784,6 @@ emit_sample(struct lp_build_tgsi_soa_context *bld,
       return;
    }
 
-   /*
-    * unlike old-style tex opcodes the texture/sampler indices
-    * always come from src1 and src2 respectively.
-    */
-   texture_unit = inst->Src[1].Register.Index;
-   sampler_unit = inst->Src[2].Register.Index;
-
    if (modifier == LP_BLD_TEX_MODIFIER_LOD_BIAS) {
       lod_bias = lp_build_emit_fetch( &bld->bld_base, inst, 3, 0 );
       explicit_lod = NULL;
