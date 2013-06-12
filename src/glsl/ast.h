@@ -435,6 +435,12 @@ struct ast_type_qualifier {
          unsigned column_major:1;
          unsigned row_major:1;
 	 /** \} */
+
+	 /** \name Layout qualifiers for GLSL 1.50 geometry shaders */
+	 /** \{ */
+	 unsigned prim_type:1;
+	 unsigned max_vertices:1;
+	 /** \} */
       }
       /** \brief Set of flags, accessed by name. */
       q;
@@ -460,6 +466,12 @@ struct ast_type_qualifier {
     * This field is only valid if \c explicit_index is set.
     */
    int index;
+
+   /** Maximum output vertices in GLSL 1.50 geometry shaders. */
+   int max_vertices;
+
+   /** Input or output primitive type in GLSL 1.50 geometry shaders */
+   GLenum prim_type;
 
    /**
     * Binding specified via GL_ARB_shading_language_420pack's "binding" keyword.
@@ -931,6 +943,28 @@ public:
     */
    ast_expression *array_size;
 };
+
+
+/**
+ * AST node representing a declaration of the input layout for geometry
+ * shaders.
+ */
+class ast_gs_input_layout : public ast_node
+{
+public:
+   ast_gs_input_layout(const struct YYLTYPE &locp, GLenum prim_type)
+      : prim_type(prim_type)
+   {
+      set_location(locp);
+   }
+
+   virtual ir_rvalue *hir(exec_list *instructions,
+                          struct _mesa_glsl_parse_state *state);
+
+private:
+   const GLenum prim_type;
+};
+
 /*@}*/
 
 extern void

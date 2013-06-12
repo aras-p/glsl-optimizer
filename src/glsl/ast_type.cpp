@@ -133,6 +133,25 @@ ast_type_qualifier::merge_qualifier(YYLTYPE *loc,
       return false;
    }
 
+   if (q.flags.q.prim_type) {
+      if (this->flags.q.prim_type && this->prim_type != q.prim_type) {
+	 _mesa_glsl_error(loc, state,
+			  "conflicting primitive type qualifiers used");
+	 return false;
+      }
+      this->prim_type = q.prim_type;
+   }
+
+   if (q.flags.q.max_vertices) {
+      if (this->flags.q.max_vertices && this->max_vertices != q.max_vertices) {
+	 _mesa_glsl_error(loc, state,
+			  "geometry shader set conflicting max_vertices "
+			  "(%d and %d)", this->max_vertices, q.max_vertices);
+	 return false;
+      }
+      this->max_vertices = q.max_vertices;
+   }
+
    if ((q.flags.i & ubo_mat_mask.flags.i) != 0)
       this->flags.i &= ~ubo_mat_mask.flags.i;
    if ((q.flags.i & ubo_layout_mask.flags.i) != 0)

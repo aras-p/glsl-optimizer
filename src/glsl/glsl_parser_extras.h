@@ -166,6 +166,24 @@ struct _mesa_glsl_parse_state {
    struct ast_type_qualifier *default_uniform_qualifier;
 
    /**
+    * True if a geometry shader input primitive type was specified using a
+    * layout directive.
+    *
+    * Note: this value is computed at ast_to_hir time rather than at parse
+    * time.
+    */
+   bool gs_input_prim_type_specified;
+
+   /**
+    * If gs_input_prim_type_specified is true, the primitive type that was
+    * specified.  Otherwise ignored.
+    */
+   GLenum gs_input_prim_type;
+
+   /** Output layout qualifiers from GLSL 1.50. (geometry shader controls)*/
+   struct ast_type_qualifier *out_qualifier;
+
+   /**
     * Printable list of GLSL versions supported by the current context
     *
     * \note

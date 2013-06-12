@@ -254,6 +254,7 @@ _mesa_glsl_lex(YYSTYPE *val, YYLTYPE *loc, _mesa_glsl_parse_state *state)
 %type <node> for_init_statement
 %type <for_rest_statement> for_rest_statement
 %type <n> integer_constant
+%type <node> layout_defaults
 
 %right THEN ELSE
 %%
@@ -1222,6 +1223,34 @@ layout_qualifier_id:
          }
       }
 
+      /* Layout qualifiers for GLSL 1.50 geometry shaders. */
+      if (!$$.flags.i) {
+         struct {
+            const char *s;
+            GLenum e;
+         } map[] = {
+                 { "points", GL_POINTS },
+                 { "lines", GL_LINES },
+                 { "lines_adjacency", GL_LINES_ADJACENCY },
+                 { "line_strip", GL_LINE_STRIP },
+                 { "triangles", GL_TRIANGLES },
+                 { "triangles_adjacency", GL_TRIANGLES_ADJACENCY },
+                 { "triangle_strip", GL_TRIANGLE_STRIP },
+         };
+         for (unsigned i = 0; i < Elements(map); i++) {
+            if (strcmp($1, map[i].s) == 0) {
+               $$.flags.q.prim_type = 1;
+               $$.prim_type = map[i].e;
+               break;
+            }
+         }
+
+         if ($$.flags.i && !state->is_version(150, 0)) {
+            _mesa_glsl_error(& @1, state, "#version 150 layout "
+                             "qualifier `%s' used", $1);
+         }
+      }
+
       if (!$$.flags.i) {
          _mesa_glsl_error(& @1, state, "unrecognized layout identifier "
                           "`%s'", $1);
@@ -1262,6 +1291,23 @@ layout_qualifier_id:
           strcmp("binding", $1) == 0) {
          $$.flags.q.explicit_binding = 1;
          $$.binding = $3;
+      }
+
+      if (strcmp("max_vertices", $1) == 0) {
+         $$.flags.q.max_vertices = 1;
+
+         if ($3 < 0) {
+            _mesa_glsl_error(& @3, state,
+                             "invalid max_vertices %d specified", $3);
+            YYERROR;
+         } else {
+            $$.max_vertices = $3;
+            if (!state->is_version(150, 0)) {
+               _mesa_glsl_error(& @3, state,
+                                "#version 150 max_vertices qualifier "
+                                "specified", $3);
+            }
+         }
       }
 
       /* If the identifier didn't match any known layout identifiers,
@@ -2046,7 +2092,7 @@ external_declaration:
    function_definition      { $$ = $1; }
    | declaration            { $$ = $1; }
    | pragma_statement       { $$ = NULL; }
-   | layout_defaults        { $$ = NULL; }
+   | layout_defaults        { $$ = $1; }
    ;
 
 function_definition:
@@ -2263,4 +2309,32 @@ layout_defaults:
       if (!state->default_uniform_qualifier->merge_qualifier(& @1, state, $1)) {
          YYERROR;
       }
+      $$ = NULL;
+   }
+
+   | layout_qualifier IN_TOK ';'
+   {
+      void *ctx = state;
+      if (state->target != geometry_shader) {
+         _mesa_glsl_error(& @1, state,
+                          "input layout qualifiers only valid in "
+                          "geometry shaders");
+      } else if (!$1.flags.q.prim_type) {
+         _mesa_glsl_error(& @1, state,
+                          "input layout qualifiers must specify a primitive"
+                          " type");
+      }
+      $$ = new(ctx) ast_gs_input_layout(@1, $1.prim_type);
+   }
+
+   | layout_qualifier OUT_TOK ';'
+   {
+      if (state->target != geometry_shader) {
+         _mesa_glsl_error(& @1, state,
+                          "out layout qualifiers only valid in "
+                          "geometry shaders");
+      } else if (!state->out_qualifier->merge_qualifier(& @1, state, $1)) {
+         YYERROR;
+      }
+      $$ = NULL;
    }

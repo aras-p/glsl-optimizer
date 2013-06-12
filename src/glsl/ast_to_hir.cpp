@@ -72,6 +72,8 @@ _mesa_ast_to_hir(exec_list *instructions, struct _mesa_glsl_parse_state *state)
 
    state->toplevel_ir = instructions;
 
+   state->gs_input_prim_type_specified = false;
+
    /* Section 4.2 of the GLSL 1.20 specification states:
     * "The built-in functions are scoped in a scope outside the global scope
     *  users declare global variables in.  That is, a shader's global scope,
@@ -4450,6 +4452,31 @@ ast_interface_block::hir(exec_list *instructions,
 
    return NULL;
 }
+
+
+ir_rvalue *
+ast_gs_input_layout::hir(exec_list *instructions,
+                         struct _mesa_glsl_parse_state *state)
+{
+   YYLTYPE loc = this->get_location();
+
+   /* If any geometry input layout declaration preceded this one, make sure it
+    * was consistent with this one.
+    */
+   if (state->gs_input_prim_type_specified &&
+       state->gs_input_prim_type != this->prim_type) {
+      _mesa_glsl_error(&loc, state,
+                       "geometry shader input layout does not match"
+                       " previous declaration");
+      return NULL;
+   }
+
+   state->gs_input_prim_type_specified = true;
+   state->gs_input_prim_type = this->prim_type;
+
+   return NULL;
+}
+
 
 static void
 detect_conflicting_assignments(struct _mesa_glsl_parse_state *state,
