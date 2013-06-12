@@ -1887,6 +1887,9 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
             goto done;
       }
 
+      do_dead_builtin_varyings(ctx, sh->ir, NULL,
+                               num_tfeedback_decls, tfeedback_decls);
+
       demote_shader_inputs_and_outputs(sh, ir_var_shader_out);
 
       /* Eliminate code that is now dead due to unused outputs being demoted.
@@ -1895,10 +1898,12 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
          ;
    }
    else if (first == MESA_SHADER_FRAGMENT) {
-      /* If the program only contains a fragment shader, just demote
-       * user-defined varyings.
+      /* If the program only contains a fragment shader...
        */
       gl_shader *const sh = prog->_LinkedShaders[first];
+
+      do_dead_builtin_varyings(ctx, NULL, sh->ir,
+                               num_tfeedback_decls, tfeedback_decls);
 
       demote_shader_inputs_and_outputs(sh, ir_var_shader_in);
 
@@ -1918,6 +1923,10 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
                 next == MESA_SHADER_FRAGMENT ? num_tfeedback_decls : 0,
                 tfeedback_decls))
          goto done;
+
+      do_dead_builtin_varyings(ctx, sh_i->ir, sh_next->ir,
+                next == MESA_SHADER_FRAGMENT ? num_tfeedback_decls : 0,
+                tfeedback_decls);
 
       demote_shader_inputs_and_outputs(sh_i, ir_var_shader_out);
       demote_shader_inputs_and_outputs(sh_next, ir_var_shader_in);

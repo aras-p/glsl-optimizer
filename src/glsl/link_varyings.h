@@ -125,6 +125,10 @@ public:
          return this->vector_elements * this->matrix_columns * this->size;
    }
 
+   unsigned get_location() const {
+      return this->location;
+   }
+
 private:
    /**
     * The name that was supplied to glTransformFeedbackVaryings.  Used for
