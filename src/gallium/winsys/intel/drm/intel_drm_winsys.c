@@ -47,18 +47,9 @@
 struct intel_winsys {
    int fd;
    drm_intel_bufmgr *bufmgr;
-   struct drm_intel_decode *decode;
-
    struct intel_winsys_info info;
 
-   drm_intel_bo **drm_bo_array;
-   int array_size;
-};
-
-struct intel_bo {
-   struct pipe_reference reference;
-
-   drm_intel_bo *bo;
+   struct drm_intel_decode *decode;
 };
 
 static bool
@@ -164,7 +155,6 @@ intel_winsys_destroy(struct intel_winsys *winsys)
       drm_intel_decode_context_free(winsys->decode);
 
    drm_intel_bufmgr_destroy(winsys->bufmgr);
-   FREE(winsys->drm_bo_array);
    FREE(winsys);
 }
 
@@ -201,20 +191,6 @@ intel_winsys_read_reg(struct intel_winsys *winsys,
    return drm_intel_reg_read(winsys->bufmgr, reg, val);
 }
 
-static struct intel_bo *
-create_bo(void)
-{
-   struct intel_bo *bo;
-
-   bo = CALLOC_STRUCT(intel_bo);
-   if (!bo)
-      return NULL;
-
-   pipe_reference_init(&bo->reference, 1);
-
-   return bo;
-}
-
 struct intel_bo *
 intel_winsys_alloc_buffer(struct intel_winsys *winsys,
                           const char *name,
@@ -222,27 +198,18 @@ intel_winsys_alloc_buffer(struct intel_winsys *winsys,
                           unsigned long flags)
 {
    const int alignment = 4096; /* always page-aligned */
-   struct intel_bo *bo;
-
-   bo = create_bo();
-   if (!bo)
-      return NULL;
+   drm_intel_bo *bo;
 
    if (flags == INTEL_ALLOC_FOR_RENDER) {
-      bo->bo = drm_intel_bo_alloc_for_render(winsys->bufmgr,
+      bo = drm_intel_bo_alloc_for_render(winsys->bufmgr,
             name, size, alignment);
    }
    else {
       assert(!flags);
-      bo->bo = drm_intel_bo_alloc(winsys->bufmgr, name, size, alignment);
+      bo = drm_intel_bo_alloc(winsys->bufmgr, name, size, alignment);
    }
 
-   if (!bo->bo) {
-      FREE(bo);
-      return NULL;
-   }
-
-   return bo;
+   return (struct intel_bo *) bo;
 }
 
 struct intel_bo *
@@ -254,27 +221,20 @@ intel_winsys_alloc_texture(struct intel_winsys *winsys,
                            unsigned long *pitch)
 {
    uint32_t real_tiling = tiling;
-   struct intel_bo *bo;
+   drm_intel_bo *bo;
 
-   bo = create_bo();
+   bo = drm_intel_bo_alloc_tiled(winsys->bufmgr, name,
+         width, height, cpp, &real_tiling, pitch, flags);
    if (!bo)
       return NULL;
 
-   bo->bo = drm_intel_bo_alloc_tiled(winsys->bufmgr, name,
-         width, height, cpp, &real_tiling, pitch, flags);
-   if (!bo->bo) {
-      FREE(bo);
-      return NULL;
-   }
-
    if (real_tiling != tiling) {
       assert(!"tiling mismatch");
-      drm_intel_bo_unreference(bo->bo);
-      FREE(bo);
+      drm_intel_bo_unreference(bo);
       return NULL;
    }
 
-   return bo;
+   return (struct intel_bo *) bo;
 }
 
 struct intel_bo *
@@ -285,51 +245,45 @@ intel_winsys_import_handle(struct intel_winsys *winsys,
                            enum intel_tiling_mode *tiling,
                            unsigned long *pitch)
 {
-   struct intel_bo *bo;
    uint32_t real_tiling, swizzle;
+   drm_intel_bo *bo;
    int err;
-
-   bo = create_bo();
-   if (!bo)
-      return NULL;
 
    switch (handle->type) {
    case DRM_API_HANDLE_TYPE_SHARED:
       {
          const uint32_t gem_name = handle->handle;
-         bo->bo = drm_intel_bo_gem_create_from_name(winsys->bufmgr,
+         bo = drm_intel_bo_gem_create_from_name(winsys->bufmgr,
                name, gem_name);
       }
       break;
 #if 0
-   case DRM_API_HANDLE_TYPE_PRIME:
+   case DRM_API_HANDLE_TYPE_FD:
       {
          const int fd = (int) handle->handle;
-         bo->bo = drm_intel_bo_gem_create_from_prime(winsys->bufmgr,
+         bo = drm_intel_bo_gem_create_from_prime(winsys->bufmgr,
                fd, height * handle->stride);
       }
       break;
 #endif
    default:
+      bo = NULL;
       break;
    }
 
-   if (!bo->bo) {
-      FREE(bo);
+   if (!bo)
       return NULL;
-   }
 
-   err = drm_intel_bo_get_tiling(bo->bo, &real_tiling, &swizzle);
+   err = drm_intel_bo_get_tiling(bo, &real_tiling, &swizzle);
    if (err) {
-      drm_intel_bo_unreference(bo->bo);
-      FREE(bo);
+      drm_intel_bo_unreference(bo);
       return NULL;
    }
 
    *tiling = real_tiling;
    *pitch = handle->stride;
 
-   return bo;
+   return (struct intel_bo *) bo;
 }
 
 int
@@ -346,20 +300,20 @@ intel_winsys_export_handle(struct intel_winsys *winsys,
       {
          uint32_t name;
 
-         err = drm_intel_bo_flink(bo->bo, &name);
+         err = drm_intel_bo_flink((drm_intel_bo *) bo, &name);
          if (!err)
             handle->handle = name;
       }
       break;
    case DRM_API_HANDLE_TYPE_KMS:
-      handle->handle = bo->bo->handle;
+      handle->handle = ((drm_intel_bo *) bo)->handle;
       break;
 #if 0
-   case DRM_API_HANDLE_TYPE_PRIME:
+   case DRM_API_HANDLE_TYPE_FD:
       {
          int fd;
 
-         err = drm_intel_bo_gem_export_to_prime(bo->bo, &fd);
+         err = drm_intel_bo_gem_export_to_prime((drm_intel_bo *) bo, &fd);
          if (!err)
             handle->handle = fd;
       }
@@ -383,32 +337,8 @@ intel_winsys_check_aperture_space(struct intel_winsys *winsys,
                                   struct intel_bo **bo_array,
                                   int count)
 {
-   drm_intel_bo *drm_bo_array[8];
-   int i;
-
-   if (likely(count <= Elements(drm_bo_array))) {
-      for (i = 0; i < count; i++)
-         drm_bo_array[i] = bo_array[i]->bo;
-
-      return drm_intel_bufmgr_check_aperture_space(drm_bo_array, count);
-   }
-
-   /* resize bo array if necessary */
-   if (winsys->array_size < count) {
-      void *tmp = MALLOC(count * sizeof(*winsys->drm_bo_array));
-
-      if (!tmp)
-         return -1;
-
-      FREE(winsys->drm_bo_array);
-      winsys->drm_bo_array = tmp;
-      winsys->array_size = count;
-   }
-
-   for (i = 0; i < count; i++)
-      winsys->drm_bo_array[i] = bo_array[i]->bo;
-
-   return drm_intel_bufmgr_check_aperture_space(winsys->drm_bo_array, count);
+   return drm_intel_bufmgr_check_aperture_space((drm_intel_bo **) bo_array,
+                                                count);
 }
 
 void
@@ -426,7 +356,7 @@ intel_winsys_decode_commands(struct intel_winsys *winsys,
       drm_intel_decode_set_output_file(winsys->decode, stderr);
    }
 
-   err = drm_intel_bo_map(bo->bo, false);
+   err = intel_bo_map(bo, false);
    if (err) {
       debug_printf("failed to map buffer for decoding\n");
       return;
@@ -436,64 +366,59 @@ intel_winsys_decode_commands(struct intel_winsys *winsys,
    used /= 4;
 
    drm_intel_decode_set_batch_pointer(winsys->decode,
-         bo->bo->virtual,
-         bo->bo->offset,
-         used);
+         intel_bo_get_virtual(bo), intel_bo_get_offset(bo), used);
 
    drm_intel_decode(winsys->decode);
 
-   drm_intel_bo_unmap(bo->bo);
+   intel_bo_unmap(bo);
 }
 
 void
 intel_bo_reference(struct intel_bo *bo)
 {
-   pipe_reference(NULL, &bo->reference);
+   drm_intel_bo_reference((drm_intel_bo *) bo);
 }
 
 void
 intel_bo_unreference(struct intel_bo *bo)
 {
-   if (pipe_reference(&bo->reference, NULL)) {
-      drm_intel_bo_unreference(bo->bo);
-      FREE(bo);
-   }
+   drm_intel_bo_unreference((drm_intel_bo *) bo);
 }
 
 unsigned long
 intel_bo_get_size(const struct intel_bo *bo)
 {
-   return bo->bo->size;
+   return ((drm_intel_bo *) bo)->size;
 }
 
 unsigned long
 intel_bo_get_offset(const struct intel_bo *bo)
 {
-   return bo->bo->offset;
+   return ((drm_intel_bo *) bo)->offset;
 }
 
 void *
 intel_bo_get_virtual(const struct intel_bo *bo)
 {
-   return bo->bo->virtual;
+   return ((drm_intel_bo *) bo)->virtual;
 }
 
 int
 intel_bo_map(struct intel_bo *bo, bool write_enable)
 {
-   return drm_intel_bo_map(bo->bo, write_enable);
+   return drm_intel_bo_map((drm_intel_bo *) bo, write_enable);
 }
 
 int
 intel_bo_map_gtt(struct intel_bo *bo)
 {
-   return drm_intel_gem_bo_map_gtt(bo->bo);
+   return drm_intel_gem_bo_map_gtt((drm_intel_bo *) bo);
 }
 
 int
 intel_bo_map_unsynchronized(struct intel_bo *bo)
 {
-   return drm_intel_gem_bo_map_unsynchronized(bo->bo);
+   return drm_intel_gem_bo_map_unsynchronized((drm_intel_bo *) bo);
 }
 
 void
@@ -501,7 +426,7 @@ intel_bo_unmap(struct intel_bo *bo)
 {
    int err;
 
-   err = drm_intel_bo_unmap(bo->bo);
+   err = drm_intel_bo_unmap((drm_intel_bo *) bo);
    assert(!err);
 }
 
@@ -509,14 +434,14 @@ int
 intel_bo_pwrite(struct intel_bo *bo, unsigned long offset,
                 unsigned long size, const void *data)
 {
-   return drm_intel_bo_subdata(bo->bo, offset, size, data);
+   return drm_intel_bo_subdata((drm_intel_bo *) bo, offset, size, data);
 }
 
 int
 intel_bo_pread(struct intel_bo *bo, unsigned long offset,
                unsigned long size, void *data)
 {
-   return drm_intel_bo_get_subdata(bo->bo, offset, size, data);
+   return drm_intel_bo_get_subdata((drm_intel_bo *) bo, offset, size, data);
 }
 
 int
@@ -524,26 +449,28 @@ intel_bo_emit_reloc(struct intel_bo *bo, uint32_t offset,
                     struct intel_bo *target_bo, uint32_t target_offset,
                     uint32_t read_domains, uint32_t write_domain)
 {
-   return drm_intel_bo_emit_reloc(bo->bo, offset,
-         target_bo->bo, target_offset, read_domains, write_domain);
+   return drm_intel_bo_emit_reloc((drm_intel_bo *) bo, offset,
+         (drm_intel_bo *) target_bo, target_offset,
+         read_domains, write_domain);
 }
 
 int
 intel_bo_get_reloc_count(struct intel_bo *bo)
 {
-   return drm_intel_gem_bo_get_reloc_count(bo->bo);
+   return drm_intel_gem_bo_get_reloc_count((drm_intel_bo *) bo);
 }
 
 void
 intel_bo_clear_relocs(struct intel_bo *bo, int start)
 {
-   return drm_intel_gem_bo_clear_relocs(bo->bo, start);
+   return drm_intel_gem_bo_clear_relocs((drm_intel_bo *) bo, start);
 }
 
 bool
 intel_bo_references(struct intel_bo *bo, struct intel_bo *target_bo)
 {
-   return drm_intel_bo_references(bo->bo, target_bo->bo);
+   return drm_intel_bo_references((drm_intel_bo *) bo,
+         (drm_intel_bo *) target_bo);
 }
 
 int
@@ -551,11 +478,12 @@ intel_bo_exec(struct intel_bo *bo, int used,
               struct intel_context *ctx, unsigned long flags)
 {
    if (ctx) {
-      return drm_intel_gem_bo_context_exec(bo->bo,
+      return drm_intel_gem_bo_context_exec((drm_intel_bo *) bo,
             (drm_intel_context *) ctx, used, flags);
    }
    else {
-      return drm_intel_bo_mrb_exec(bo->bo, used, NULL, 0, 0, flags);
+      return drm_intel_bo_mrb_exec((drm_intel_bo *) bo,
+            used, NULL, 0, 0, flags);
    }
 }
 
@@ -564,7 +492,7 @@ intel_bo_wait(struct intel_bo *bo, int64_t timeout)
 {
    int err;
 
-   err = drm_intel_gem_bo_wait(bo->bo, timeout);
+   err = drm_intel_gem_bo_wait((drm_intel_bo *) bo, timeout);
    /* consider the bo idle on errors */
    if (err && err != -ETIME)
       err = 0;
