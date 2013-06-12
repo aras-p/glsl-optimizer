@@ -29,7 +29,6 @@
 #include "brw_vec4.h"
 #include "glsl/glsl_types.h"
 #include "glsl/ir_optimization.h"
-#include "glsl/ir_print_visitor.h"
 
 using namespace brw;
 

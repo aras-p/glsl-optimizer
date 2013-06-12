@@ -35,7 +35,6 @@ extern "C" {
 
 #include "brw_fs.h"
 #include "brw_cfg.h"
-#include "glsl/ir_print_visitor.h"
 
 fs_generator::fs_generator(struct brw_context *brw,
                            struct brw_wm_compile *c,

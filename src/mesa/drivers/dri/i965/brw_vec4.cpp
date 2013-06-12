@@ -23,7 +23,6 @@
 
 #include "brw_vec4.h"
 #include "brw_cfg.h"
-#include "glsl/ir_print_visitor.h"
 
 extern "C" {
 #include "main/macros.h"

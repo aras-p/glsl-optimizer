@@ -27,7 +27,6 @@ extern "C" {
 } /* extern "C" */
 
 #include "brw_vec4.h"
-#include "glsl/ir_print_visitor.h"
 
 using namespace brw;
 

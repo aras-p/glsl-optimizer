@@ -48,7 +48,6 @@ extern "C" {
 }
 #include "brw_fs.h"
 #include "glsl/glsl_types.h"
-#include "glsl/ir_print_visitor.h"
 
 void
 fs_inst::init()

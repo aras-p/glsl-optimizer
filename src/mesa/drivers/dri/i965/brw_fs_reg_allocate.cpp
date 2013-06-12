@@ -28,7 +28,6 @@
 #include "brw_fs.h"
 #include "glsl/glsl_types.h"
 #include "glsl/ir_optimization.h"
-#include "glsl/ir_print_visitor.h"
 
 static void
 assign_reg(int *reg_hw_locations, fs_reg *reg, int reg_width)

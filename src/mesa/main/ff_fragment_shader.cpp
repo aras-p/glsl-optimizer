@@ -51,7 +51,6 @@ extern "C" {
 #include "../glsl/glsl_symbol_table.h"
 #include "../glsl/glsl_parser_extras.h"
 #include "../glsl/ir_optimization.h"
-#include "../glsl/ir_print_visitor.h"
 #include "../program/ir_to_mesa.h"
 
 using namespace ir_builder;

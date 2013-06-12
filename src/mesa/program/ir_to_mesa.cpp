@@ -33,7 +33,6 @@
 #include "main/compiler.h"
 #include "ir.h"
 #include "ir_visitor.h"
-#include "ir_print_visitor.h"
 #include "ir_expression_flattening.h"
 #include "ir_uniform.h"
 #include "glsl_types.h"
@@ -1057,9 +1056,9 @@ ir_to_mesa_visitor::emit_swz(ir_expression *ir)
    this->result.file = PROGRAM_UNDEFINED;
    deref->accept(this);
    if (this->result.file == PROGRAM_UNDEFINED) {
-      ir_print_visitor v;
       printf("Failed to get tree for expression operand:\n");
-      deref->accept(&v);
+      deref->print();
+      printf("\n");
       exit(1);
    }
 
@@ -1129,9 +1128,9 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
       this->result.file = PROGRAM_UNDEFINED;
       ir->operands[operand]->accept(this);
       if (this->result.file == PROGRAM_UNDEFINED) {
-	 ir_print_visitor v;
 	 printf("Failed to get tree for expression operand:\n");
-	 ir->operands[operand]->accept(&v);
+         ir->operands[operand]->print();
+         printf("\n");
 	 exit(1);
       }
       op[operand] = this->result;

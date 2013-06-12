@@ -47,7 +47,6 @@ extern "C" {
 #include "brw_fs.h"
 #include "glsl/glsl_types.h"
 #include "glsl/ir_optimization.h"
-#include "glsl/ir_print_visitor.h"
 
 void
 fs_visitor::visit(ir_variable *ir)
@@ -333,9 +332,9 @@ fs_visitor::visit(ir_expression *ir)
    for (operand = 0; operand < ir->get_num_operands(); operand++) {
       ir->operands[operand]->accept(this);
       if (this->result.file == BAD_FILE) {
-	 ir_print_visitor v;
 	 fail("Failed to get tree for expression operand:\n");
-	 ir->operands[operand]->accept(&v);
+	 ir->operands[operand]->print();
+         printf("\n");
       }
       op[operand] = this->result;
 
