@@ -59,12 +59,14 @@ struct intel_bo {
    struct pipe_reference reference;
 
    drm_intel_bo *bo;
-   enum intel_tiling_mode tiling;
-   unsigned long pitch;
 };
 
 int
-intel_bo_export_handle(struct intel_bo *bo, struct winsys_handle *handle)
+intel_winsys_export_handle(struct intel_winsys *winsys,
+                           struct intel_bo *bo,
+                           enum intel_tiling_mode tiling,
+                           unsigned long pitch,
+                           struct winsys_handle *handle)
 {
    int err = 0;
 
@@ -100,7 +102,7 @@ intel_bo_export_handle(struct intel_bo *bo, struct winsys_handle *handle)
    if (err)
       return err;
 
-   handle->stride = bo->pitch;
+   handle->stride = pitch;
 
    return 0;
 }
@@ -176,10 +178,13 @@ intel_bo_map_unsynchronized(struct intel_bo *bo)
    return drm_intel_gem_bo_map_unsynchronized(bo->bo);
 }
 
-int
+void
 intel_bo_unmap(struct intel_bo *bo)
 {
-   return drm_intel_bo_unmap(bo->bo);
+   int err;
+
+   err = drm_intel_bo_unmap(bo->bo);
+   assert(!err);
 }
 
 int
@@ -214,18 +219,6 @@ intel_bo_get_virtual(const struct intel_bo *bo)
    return bo->bo->virtual;
 }
 
-enum intel_tiling_mode
-intel_bo_get_tiling(const struct intel_bo *bo)
-{
-   return bo->tiling;
-}
-
-unsigned long
-intel_bo_get_pitch(const struct intel_bo *bo)
-{
-   return bo->pitch;
-}
-
 void
 intel_bo_reference(struct intel_bo *bo)
 {
@@ -251,36 +244,38 @@ create_bo(void)
       return NULL;
 
    pipe_reference_init(&bo->reference, 1);
-   bo->tiling = INTEL_TILING_NONE;
-   bo->pitch = 0;
 
    return bo;
 }
 
 struct intel_bo *
-intel_winsys_alloc(struct intel_winsys *winsys,
-                   const char *name,
-                   int width, int height, int cpp,
-                   enum intel_tiling_mode tiling,
-                   unsigned long flags)
+intel_winsys_alloc_texture(struct intel_winsys *winsys,
+                           const char *name,
+                           int width, int height, int cpp,
+                           enum intel_tiling_mode tiling,
+                           unsigned long flags,
+                           unsigned long *pitch)
 {
    struct intel_bo *bo;
    uint32_t real_tiling = tiling;
-   unsigned long pitch;
 
    bo = create_bo();
    if (!bo)
       return NULL;
 
    bo->bo = drm_intel_bo_alloc_tiled(winsys->bufmgr, name,
-         width, height, cpp, &real_tiling, &pitch, flags);
+         width, height, cpp, &real_tiling, pitch, flags);
    if (!bo->bo) {
       FREE(bo);
       return NULL;
    }
 
-   bo->tiling = real_tiling;
-   bo->pitch = pitch;
+   if (tiling != real_tiling) {
+      assert(!"tiling mis-match");
+      drm_intel_bo_unreference(bo->bo);
+      FREE(bo);
+      return NULL;
+   }
 
    return bo;
 }
@@ -318,12 +313,13 @@ intel_winsys_alloc_buffer(struct intel_winsys *winsys,
 struct intel_bo *
 intel_winsys_import_handle(struct intel_winsys *winsys,
                            const char *name,
+                           const struct winsys_handle *handle,
                            int width, int height, int cpp,
-                           const struct winsys_handle *handle)
+                           enum intel_tiling_mode *tiling,
+                           unsigned long *pitch)
 {
    struct intel_bo *bo;
-   const unsigned long pitch = handle->stride;
-   uint32_t tiling, swizzle;
+   uint32_t real_tiling, swizzle;
    int err;
 
    bo = create_bo();
@@ -343,7 +339,7 @@ intel_winsys_import_handle(struct intel_winsys *winsys,
       {
          const int fd = (int) handle->handle;
          bo->bo = drm_intel_bo_gem_create_from_prime(winsys->bufmgr,
-               fd, height * pitch);
+               fd, height * handle->stride);
       }
       break;
 #endif
@@ -356,15 +352,15 @@ intel_winsys_import_handle(struct intel_winsys *winsys,
       return NULL;
    }
 
-   err = drm_intel_bo_get_tiling(bo->bo, &tiling, &swizzle);
+   err = drm_intel_bo_get_tiling(bo->bo, &real_tiling, &swizzle);
    if (err) {
       drm_intel_bo_unreference(bo->bo);
       FREE(bo);
       return NULL;
    }
 
-   bo->tiling = tiling;
-   bo->pitch = pitch;
+   *tiling = real_tiling;
+   *pitch = handle->stride;
 
    return bo;
 }

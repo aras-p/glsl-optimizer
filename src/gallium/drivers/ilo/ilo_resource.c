@@ -868,6 +868,8 @@ tex_create_bo(struct ilo_texture *tex,
    struct ilo_screen *is = ilo_screen(tex->base.screen);
    const char *name;
    struct intel_bo *bo;
+   enum intel_tiling_mode tiling;
+   unsigned long pitch;
 
    switch (tex->base.target) {
    case PIPE_TEXTURE_1D:
@@ -900,13 +902,16 @@ tex_create_bo(struct ilo_texture *tex,
    }
 
    if (handle) {
-      bo = intel_winsys_import_handle(is->winsys, name,
-            tex->bo_width, tex->bo_height, tex->bo_cpp, handle);
+      bo = intel_winsys_import_handle(is->winsys, name, handle,
+            tex->bo_width, tex->bo_height, tex->bo_cpp,
+            &tiling, &pitch);
    }
    else {
-      bo = intel_winsys_alloc(is->winsys, name,
+      bo = intel_winsys_alloc_texture(is->winsys, name,
             tex->bo_width, tex->bo_height, tex->bo_cpp,
-            tex->tiling, tex->bo_flags);
+            tex->tiling, tex->bo_flags, &pitch);
+
+      tiling = tex->tiling;
    }
 
    if (!bo)
@@ -916,8 +921,8 @@ tex_create_bo(struct ilo_texture *tex,
       intel_bo_unreference(tex->bo);
 
    tex->bo = bo;
-   tex->tiling = intel_bo_get_tiling(bo);
-   tex->bo_stride = intel_bo_get_pitch(bo);
+   tex->tiling = tiling;
+   tex->bo_stride = pitch;
 
    return true;
 }
@@ -1034,9 +1039,11 @@ tex_create(struct pipe_screen *screen,
 static bool
 tex_get_handle(struct ilo_texture *tex, struct winsys_handle *handle)
 {
+   struct ilo_screen *is = ilo_screen(tex->base.screen);
    int err;
 
-   err = intel_bo_export_handle(tex->bo, handle);
+   err = intel_winsys_export_handle(is->winsys, tex->bo,
+         tex->tiling, tex->bo_stride, handle);
 
    return !err;
 }

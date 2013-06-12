@@ -109,17 +109,30 @@ intel_winsys_alloc_buffer(struct intel_winsys *winsys,
                           unsigned long flags);
 
 struct intel_bo *
-intel_winsys_alloc(struct intel_winsys *winsys,
-                   const char *name,
-                   int width, int height, int cpp,
-                   enum intel_tiling_mode tiling,
-                   unsigned long flags);
+intel_winsys_alloc_texture(struct intel_winsys *winsys,
+                           const char *name,
+                           int width, int height, int cpp,
+                           enum intel_tiling_mode tiling,
+                           unsigned long flags,
+                           unsigned long *pitch);
 
 struct intel_bo *
 intel_winsys_import_handle(struct intel_winsys *winsys,
                            const char *name,
+                           const struct winsys_handle *handle,
                            int width, int height, int cpp,
-                           const struct winsys_handle *handle);
+                           enum intel_tiling_mode *tiling,
+                           unsigned long *pitch);
+
+/**
+ * Export a handle for inter-process sharing.
+ */
+int
+intel_winsys_export_handle(struct intel_winsys *winsys,
+                           struct intel_bo *bo,
+                           enum intel_tiling_mode tiling,
+                           unsigned long pitch,
+                           struct winsys_handle *handle);
 
 int
 intel_winsys_check_aperture_space(struct intel_winsys *winsys,
@@ -144,12 +157,6 @@ intel_bo_get_offset(const struct intel_bo *bo);
 
 void *
 intel_bo_get_virtual(const struct intel_bo *bo);
-
-enum intel_tiling_mode
-intel_bo_get_tiling(const struct intel_bo *bo);
-
-unsigned long
-intel_bo_get_pitch(const struct intel_bo *bo);
 
 /**
  * Map/unmap \p bo for CPU access.
@@ -176,7 +183,7 @@ intel_bo_map_gtt(struct intel_bo *bo);
 int
 intel_bo_map_unsynchronized(struct intel_bo *bo);
 
-int
+void
 intel_bo_unmap(struct intel_bo *bo);
 
 /**
@@ -241,13 +248,6 @@ intel_bo_exec(struct intel_bo *bo, int used,
  */
 int
 intel_bo_wait(struct intel_bo *bo, int64_t timeout);
-
-/**
- * Export a handle for inter-process sharing.
- */
-int
-intel_bo_export_handle(struct intel_bo *bo,
-                       struct winsys_handle *handle);
 
 /**
  * Return true if \p bo is busy.
