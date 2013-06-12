@@ -640,7 +640,7 @@ do {							\
 } while (0)
 
 
-#define DEPTH_SCALE intel->polygon_offset_scale
+#define DEPTH_SCALE (ctx->DrawBuffer->Visual.depthBits == 16 ? 1.0 : 2.0)
 #define UNFILLED_TRI unfilled_tri
 #define UNFILLED_QUAD unfilled_quad
 #define VERT_X(_v) _v->v.x
