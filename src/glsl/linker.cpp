@@ -66,6 +66,7 @@
 
 #include "main/core.h"
 #include "glsl_symbol_table.h"
+#include "glsl_parser_extras.h"
 #include "ir.h"
 #include "program.h"
 #include "program/hash_table.h"
@@ -1009,8 +1010,7 @@ link_intrastage_shaders(void *mem_ctx,
 
    if (main == NULL) {
       linker_error(prog, "%s shader lacks `main'\n",
-		   (shader_list[0]->Type == GL_VERTEX_SHADER)
-		   ? "vertex" : "fragment");
+		   _mesa_glsl_shader_target_name(shader_list[0]->Type));
       return NULL;
    }
 

@@ -4994,7 +4994,6 @@ get_mesa_program(struct gl_context *ctx,
    glsl_to_tgsi_visitor* v;
    struct gl_program *prog;
    GLenum target;
-   const char *target_string;
    bool progress;
    struct gl_shader_compiler_options *options =
          &ctx->ShaderCompilerOptions[_mesa_shader_type_to_index(shader->Type)];
@@ -5005,17 +5004,14 @@ get_mesa_program(struct gl_context *ctx,
    case GL_VERTEX_SHADER:
       target = GL_VERTEX_PROGRAM_ARB;
       ptarget = PIPE_SHADER_VERTEX;
-      target_string = "vertex";
       break;
    case GL_FRAGMENT_SHADER:
       target = GL_FRAGMENT_PROGRAM_ARB;
       ptarget = PIPE_SHADER_FRAGMENT;
-      target_string = "fragment";
       break;
    case GL_GEOMETRY_SHADER:
       target = GL_GEOMETRY_PROGRAM_NV;
       ptarget = PIPE_SHADER_GEOMETRY;
-      target_string = "geometry";
       break;
    default:
       assert(!"should not be reached");
@@ -5105,7 +5101,8 @@ get_mesa_program(struct gl_context *ctx,
 
    if (ctx->Shader.Flags & GLSL_DUMP) {
       printf("\n");
-      printf("GLSL IR for linked %s program %d:\n", target_string,
+      printf("GLSL IR for linked %s program %d:\n",
+             _mesa_glsl_shader_target_name(shader->Type),
              shader_program->Name);
       _mesa_print_ir(shader->ir, NULL);
       printf("\n");

@@ -2810,22 +2810,19 @@ get_mesa_program(struct gl_context *ctx,
    int i;
    struct gl_program *prog;
    GLenum target;
-   const char *target_string;
+   const char *target_string = _mesa_glsl_shader_target_name(shader->Type);
    struct gl_shader_compiler_options *options =
          &ctx->ShaderCompilerOptions[_mesa_shader_type_to_index(shader->Type)];
 
    switch (shader->Type) {
    case GL_VERTEX_SHADER:
       target = GL_VERTEX_PROGRAM_ARB;
-      target_string = "vertex";
       break;
    case GL_FRAGMENT_SHADER:
       target = GL_FRAGMENT_PROGRAM_ARB;
-      target_string = "fragment";
       break;
    case GL_GEOMETRY_SHADER:
       target = GL_GEOMETRY_PROGRAM_NV;
-      target_string = "geometry";
       break;
    default:
       assert(!"should not be reached");

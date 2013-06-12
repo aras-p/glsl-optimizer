@@ -28,6 +28,7 @@ extern "C" {
 }
 #include "brw_fs.h"
 #include "glsl/ir_optimization.h"
+#include "glsl/glsl_parser_extras.h"
 
 struct gl_shader *
 brw_new_shader(struct gl_context *ctx, GLuint name, GLuint type)
@@ -112,8 +113,6 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
    struct brw_context *brw = brw_context(ctx);
    struct intel_context *intel = &brw->intel;
    unsigned int stage;
-   static const char *target_strings[]
-      = { "vertex", "fragment", "geometry" };
 
    for (stage = 0; stage < ARRAY_SIZE(shProg->_LinkedShaders); stage++) {
       struct brw_shader *shader =
@@ -262,8 +261,8 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
 
       if (ctx->Shader.Flags & GLSL_DUMP) {
          printf("\n");
-         printf("GLSL IR for linked %s program %d:\n", target_strings[stage],
-                shProg->Name);
+         printf("GLSL IR for linked %s program %d:\n",
+                _mesa_glsl_shader_target_name(shader->base.Type), shProg->Name);
          _mesa_print_ir(shader->base.ir, NULL);
          printf("\n");
       }
@@ -276,7 +275,7 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
             continue;
 
          printf("GLSL %s shader %d source for linked program %d:\n",
-                target_strings[_mesa_shader_type_to_index(sh->Type)],
+                _mesa_glsl_shader_target_name(sh->Type),
                 i,
                 shProg->Name);
          printf("%s", sh->Source);

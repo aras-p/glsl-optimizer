@@ -816,21 +816,8 @@ print_shader_info(const struct gl_shader_program *shProg)
 
    printf("Mesa: glUseProgram(%u)\n", shProg->Name);
    for (i = 0; i < shProg->NumShaders; i++) {
-      const char *s;
-      switch (shProg->Shaders[i]->Type) {
-      case GL_VERTEX_SHADER:
-         s = "vertex";
-         break;
-      case GL_FRAGMENT_SHADER:
-         s = "fragment";
-         break;
-      case GL_GEOMETRY_SHADER:
-         s = "geometry";
-         break;
-      default:
-         s = "";
-      }
-      printf("  %s shader %u, checksum %u\n", s, 
+      printf("  %s shader %u, checksum %u\n",
+             _mesa_glsl_shader_target_name(shProg->Shaders[i]->Type),
 	     shProg->Shaders[i]->Name,
 	     shProg->Shaders[i]->SourceChecksum);
    }

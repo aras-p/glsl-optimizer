@@ -371,6 +371,9 @@ _mesa_glsl_shader_target_name(enum _mesa_glsl_parser_targets target);
 extern "C" {
 #endif
 
+extern const char *
+_mesa_glsl_shader_target_name(GLenum type);
+
 extern int glcpp_preprocess(void *ctx, const char **shader, char **info_log,
                       const struct gl_extensions *extensions, struct gl_context *gl_ctx);
 

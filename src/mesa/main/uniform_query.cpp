@@ -33,6 +33,7 @@
 #include "program/hash_table.h"
 #include "../glsl/program.h"
 #include "../glsl/ir_uniform.h"
+#include "../glsl/glsl_parser_extras.h"
 #include "main/shaderapi.h"
 #include "main/shaderobj.h"
 #include "uniforms.h"
@@ -434,12 +435,6 @@ log_uniform(const void *values, enum glsl_base_type basicType,
 static void
 log_program_parameters(const struct gl_shader_program *shProg)
 {
-   static const char *stages[] = {
-      "vertex", "fragment", "geometry"
-   };
-
-   assert(Elements(stages) == MESA_SHADER_TYPES);
-
    for (unsigned i = 0; i < MESA_SHADER_TYPES; i++) {
       if (shProg->_LinkedShaders[i] == NULL)
 	 continue;
@@ -447,7 +442,7 @@ log_program_parameters(const struct gl_shader_program *shProg)
       const struct gl_program *const prog = shProg->_LinkedShaders[i]->Program;
 
       printf("Program %d %s shader parameters:\n",
-	     shProg->Name, stages[i]);
+             shProg->Name, _mesa_glsl_shader_target_name(prog->Target));
       for (unsigned j = 0; j < prog->Parameters->NumParameters; j++) {
 	 printf("%s: %p %f %f %f %f\n",
 		prog->Parameters->Parameters[j].Name,
