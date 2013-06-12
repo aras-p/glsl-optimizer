@@ -1836,9 +1836,9 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
       goto done;
    }
 
-   unsigned prev;
-   for (prev = 0; prev < MESA_SHADER_TYPES; prev++) {
-      if (prog->_LinkedShaders[prev] != NULL)
+   unsigned first;
+   for (first = 0; first < MESA_SHADER_TYPES; first++) {
+      if (prog->_LinkedShaders[first] != NULL)
 	 break;
    }
 
@@ -1850,7 +1850,7 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
        *     non-zero, but the program object has no vertex or geometry
        *     shader;
        */
-      if (prev >= MESA_SHADER_FRAGMENT) {
+      if (first >= MESA_SHADER_FRAGMENT) {
          linker_error(prog, "Transform feedback varyings specified, but "
                       "no vertex or geometry shader is present.");
          goto done;
@@ -1864,68 +1864,76 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
          goto done;
    }
 
-   for (unsigned i = prev + 1; i < MESA_SHADER_TYPES; i++) {
-      if (prog->_LinkedShaders[i] == NULL)
-	 continue;
-
-      if (!assign_varying_locations(
-				    ctx, mem_ctx, prog, prog->_LinkedShaders[prev], prog->_LinkedShaders[i],
-             i == MESA_SHADER_FRAGMENT ? num_tfeedback_decls : 0,
-             tfeedback_decls))
-	 goto done;
-
-      prev = i;
+   /* Linking the stages in the opposite order (from fragment to vertex)
+    * ensures that inter-shader outputs written to in an earlier stage are
+    * eliminated if they are (transitively) not used in a later stage.
+    */
+   int last, next;
+   for (last = MESA_SHADER_TYPES-1; last >= 0; last--) {
+      if (prog->_LinkedShaders[last] != NULL)
+         break;
    }
 
-   if (prev != MESA_SHADER_FRAGMENT && num_tfeedback_decls != 0) {
-      /* There was no fragment shader, but we still have to assign varying
-       * locations for use by transform feedback.
+   if (last >= 0 && last < MESA_SHADER_FRAGMENT) {
+      gl_shader *const sh = prog->_LinkedShaders[last];
+
+      if (num_tfeedback_decls != 0) {
+         /* There was no fragment shader, but we still have to assign varying
+          * locations for use by transform feedback.
+          */
+         if (!assign_varying_locations(ctx, mem_ctx, prog,
+                                       sh, NULL,
+                                       num_tfeedback_decls, tfeedback_decls))
+            goto done;
+      }
+
+      demote_shader_inputs_and_outputs(sh, ir_var_shader_out);
+
+      /* Eliminate code that is now dead due to unused outputs being demoted.
        */
-      if (!assign_varying_locations(
-				    ctx, mem_ctx, prog, prog->_LinkedShaders[prev], NULL, num_tfeedback_decls,
-             tfeedback_decls))
+      while (do_dead_code(sh->ir, false))
+         ;
+   }
+   else if (first == MESA_SHADER_FRAGMENT) {
+      /* If the program only contains a fragment shader, just demote
+       * user-defined varyings.
+       */
+      gl_shader *const sh = prog->_LinkedShaders[first];
+
+      demote_shader_inputs_and_outputs(sh, ir_var_shader_in);
+
+      while (do_dead_code(sh->ir, false))
+         ;
+   }
+
+   next = last;
+   for (int i = next - 1; i >= 0; i--) {
+      if (prog->_LinkedShaders[i] == NULL)
+         continue;
+
+      gl_shader *const sh_i = prog->_LinkedShaders[i];
+      gl_shader *const sh_next = prog->_LinkedShaders[next];
+
+      if (!assign_varying_locations(ctx, mem_ctx, prog, sh_i, sh_next,
+                next == MESA_SHADER_FRAGMENT ? num_tfeedback_decls : 0,
+                tfeedback_decls))
          goto done;
+
+      demote_shader_inputs_and_outputs(sh_i, ir_var_shader_out);
+      demote_shader_inputs_and_outputs(sh_next, ir_var_shader_in);
+
+      /* Eliminate code that is now dead due to unused outputs being demoted.
+       */
+      while (do_dead_code(sh_i->ir, false))
+         ;
+      while (do_dead_code(sh_next->ir, false))
+         ;
+
+      next = i;
    }
 
    if (!store_tfeedback_info(ctx, prog, num_tfeedback_decls, tfeedback_decls))
       goto done;
-
-   if (prog->_LinkedShaders[MESA_SHADER_VERTEX] != NULL) {
-      demote_shader_inputs_and_outputs(prog->_LinkedShaders[MESA_SHADER_VERTEX],
-				       ir_var_shader_out);
-
-      /* Eliminate code that is now dead due to unused vertex outputs being
-       * demoted.
-       */
-      while (do_dead_code(prog->_LinkedShaders[MESA_SHADER_VERTEX]->ir, false))
-	 ;
-   }
-
-   if (prog->_LinkedShaders[MESA_SHADER_GEOMETRY] != NULL) {
-      gl_shader *const sh = prog->_LinkedShaders[MESA_SHADER_GEOMETRY];
-
-      demote_shader_inputs_and_outputs(sh, ir_var_shader_in);
-      demote_shader_inputs_and_outputs(sh, ir_var_shader_out);
-
-      /* Eliminate code that is now dead due to unused geometry outputs being
-       * demoted.
-       */
-      while (do_dead_code(prog->_LinkedShaders[MESA_SHADER_GEOMETRY]->ir, false))
-	 ;
-   }
-
-   if (prog->_LinkedShaders[MESA_SHADER_FRAGMENT] != NULL) {
-      gl_shader *const sh = prog->_LinkedShaders[MESA_SHADER_FRAGMENT];
-
-      demote_shader_inputs_and_outputs(sh, ir_var_shader_in);
-
-      /* Eliminate code that is now dead due to unused fragment inputs being
-       * demoted.  This shouldn't actually do anything other than remove
-       * declarations of the (now unused) global variables.
-       */
-      while (do_dead_code(prog->_LinkedShaders[MESA_SHADER_FRAGMENT]->ir, false))
-	 ;
-   }
 
    update_array_sizes(prog);
    link_assign_uniform_locations(prog);
