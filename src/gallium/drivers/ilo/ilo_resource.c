@@ -900,11 +900,11 @@ tex_create_bo(struct ilo_texture *tex,
    }
 
    if (handle) {
-      bo = is->winsys->import_handle(is->winsys, name,
+      bo = intel_winsys_import_handle(is->winsys, name,
             tex->bo_width, tex->bo_height, tex->bo_cpp, handle);
    }
    else {
-      bo = is->winsys->alloc(is->winsys, name,
+      bo = intel_winsys_alloc(is->winsys, name,
             tex->bo_width, tex->bo_height, tex->bo_cpp,
             tex->tiling, tex->bo_flags);
    }
@@ -913,13 +913,11 @@ tex_create_bo(struct ilo_texture *tex,
       return false;
 
    if (tex->bo)
-      tex->bo->unreference(tex->bo);
+      intel_bo_unreference(tex->bo);
 
    tex->bo = bo;
-
-   /* winsys may decide to use a different tiling */
-   tex->tiling = tex->bo->get_tiling(tex->bo);
-   tex->bo_stride = tex->bo->get_pitch(tex->bo);
+   tex->tiling = intel_bo_get_tiling(bo);
+   tex->bo_stride = intel_bo_get_pitch(bo);
 
    return true;
 }
@@ -930,7 +928,7 @@ tex_destroy(struct ilo_texture *tex)
    if (tex->separate_s8)
       tex_destroy(tex->separate_s8);
 
-   tex->bo->unreference(tex->bo);
+   intel_bo_unreference(tex->bo);
    tex_free_slices(tex);
    FREE(tex);
 }
@@ -1038,7 +1036,7 @@ tex_get_handle(struct ilo_texture *tex, struct winsys_handle *handle)
 {
    int err;
 
-   err = tex->bo->export_handle(tex->bo, handle);
+   err = intel_bo_export_handle(tex->bo, handle);
 
    return !err;
 }
@@ -1094,13 +1092,13 @@ buf_create_bo(struct ilo_buffer *buf)
       break;
    }
 
-   bo = is->winsys->alloc_buffer(is->winsys,
+   bo = intel_winsys_alloc_buffer(is->winsys,
          name, buf->bo_size, buf->bo_flags);
    if (!bo)
       return false;
 
    if (buf->bo)
-      buf->bo->unreference(buf->bo);
+      intel_bo_unreference(buf->bo);
 
    buf->bo = bo;
 
@@ -1110,7 +1108,7 @@ buf_create_bo(struct ilo_buffer *buf)
 static void
 buf_destroy(struct ilo_buffer *buf)
 {
-   buf->bo->unreference(buf->bo);
+   intel_bo_unreference(buf->bo);
    FREE(buf);
 }
 

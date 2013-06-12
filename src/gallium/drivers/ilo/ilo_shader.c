@@ -498,9 +498,9 @@ static void
 ilo_shader_cache_reset(struct ilo_shader_cache *shc)
 {
    if (shc->bo)
-      shc->bo->unreference(shc->bo);
+      intel_bo_unreference(shc->bo);
 
-   shc->bo = shc->winsys->alloc_buffer(shc->winsys,
+   shc->bo = intel_winsys_alloc_buffer(shc->winsys,
          "shader cache", shc->size, 0);
    shc->busy = false;
    shc->cur = 0;
@@ -540,7 +540,7 @@ void
 ilo_shader_cache_destroy(struct ilo_shader_cache *shc)
 {
    if (shc->bo)
-      shc->bo->unreference(shc->bo);
+      intel_bo_unreference(shc->bo);
 
    FREE(shc);
 }
@@ -596,7 +596,7 @@ ilo_shader_cache_set(struct ilo_shader_cache *shc,
       if (shaders[i]->cache_seqno != shc->seqno) {
          /* kernels must be aligned to 64-byte */
          shc->cur = align(shc->cur, 64);
-         shc->bo->pwrite(shc->bo, shc->cur,
+         intel_bo_pwrite(shc->bo, shc->cur,
                shaders[i]->kernel_size, shaders[i]->kernel);
 
          shaders[i]->cache_seqno = shc->seqno;

@@ -317,10 +317,10 @@ ilo_cp_write_bo(struct ilo_cp *cp, uint32_t val, struct intel_bo *bo,
                 uint32_t read_domains, uint32_t write_domain)
 {
    if (bo) {
-      cp->bo->emit_reloc(cp->bo, cp->cmd_cur * 4,
+      intel_bo_emit_reloc(cp->bo, cp->cmd_cur * 4,
             bo, val, read_domains, write_domain);
 
-      ilo_cp_write(cp, val + bo->get_offset(bo));
+      ilo_cp_write(cp, val + intel_bo_get_offset(bo));
    }
    else {
       ilo_cp_write(cp, val);

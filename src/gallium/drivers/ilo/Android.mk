@@ -29,7 +29,7 @@ include $(CLEAR_VARS)
 
 LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/include \
-	$(GALLIUM_TOP)/winsys/intel/drm
+	$(GALLIUM_TOP)/winsys/intel
 
 LOCAL_SRC_FILES := $(C_SOURCES)
 

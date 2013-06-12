@@ -42,7 +42,7 @@ ilo_cp_dump(struct ilo_cp *cp)
 {
    ilo_printf("dumping %d bytes\n", cp->used * 4);
    if (cp->used)
-      cp->winsys->decode_commands(cp->winsys, cp->bo, cp->used * 4);
+      intel_winsys_decode_commands(cp->winsys, cp->bo, cp->used * 4);
 }
 
 /**
@@ -60,7 +60,7 @@ ilo_cp_setjmp(struct ilo_cp *cp, struct ilo_cp_jmp_buf *jmp)
    jmp->used = cp->used;
    jmp->stolen = cp->stolen;
    /* save reloc count to rewind ilo_cp_write_bo() */
-   jmp->reloc_count = cp->bo->get_reloc_count(cp->bo);
+   jmp->reloc_count = intel_bo_get_reloc_count(cp->bo);
 }
 
 /**
@@ -77,7 +77,7 @@ ilo_cp_longjmp(struct ilo_cp *cp, const struct ilo_cp_jmp_buf *jmp)
    cp->size = jmp->size;
    cp->used = jmp->used;
    cp->stolen = jmp->stolen;
-   cp->bo->clear_relocs(cp->bo, jmp->reloc_count);
+   intel_bo_clear_relocs(cp->bo, jmp->reloc_count);
 }
 
 /**
@@ -132,15 +132,15 @@ ilo_cp_upload_buffer(struct ilo_cp *cp)
    int err;
 
    if (!cp->sys) {
-      cp->bo->unmap(cp->bo);
+      intel_bo_unmap(cp->bo);
       return 0;
    }
 
-   err = cp->bo->pwrite(cp->bo, 0, cp->used * 4, cp->ptr);
+   err = intel_bo_pwrite(cp->bo, 0, cp->used * 4, cp->ptr);
    if (likely(!err && cp->stolen)) {
       const int offset = cp->bo_size - cp->stolen;
 
-      err = cp->bo->pwrite(cp->bo, offset * 4,
+      err = intel_bo_pwrite(cp->bo, offset * 4,
             cp->stolen * 4, &cp->ptr[offset]);
    }
 
@@ -159,21 +159,21 @@ ilo_cp_realloc_bo(struct ilo_cp *cp)
     * allocate the new bo before unreferencing the old one so that they
     * won't point at the same address, which is needed for jmpbuf
     */
-   bo = cp->winsys->alloc_buffer(cp->winsys,
+   bo = intel_winsys_alloc_buffer(cp->winsys,
          "batch buffer", cp->bo_size * 4, 0);
    if (unlikely(!bo)) {
       /* reuse the old one */
       bo = cp->bo;
-      bo->reference(bo);
+      intel_bo_reference(bo);
    }
 
    if (cp->bo)
-      cp->bo->unreference(cp->bo);
+      intel_bo_unreference(cp->bo);
    cp->bo = bo;
 
    if (!cp->sys) {
-      cp->bo->map(cp->bo, true);
-      cp->ptr = cp->bo->get_virtual(cp->bo);
+      intel_bo_map(cp->bo, true);
+      cp->ptr = intel_bo_get_virtual(cp->bo);
    }
 }
 
@@ -206,7 +206,7 @@ ilo_cp_exec_bo(struct ilo_cp *cp)
    flags |= cp->one_off_flags;
 
    if (likely(do_exec))
-      err = cp->bo->exec(cp->bo, cp->used * 4, ctx, flags);
+      err = intel_bo_exec(cp->bo, cp->used * 4, ctx, flags);
    else
       err = 0;
 
@@ -258,13 +258,13 @@ ilo_cp_destroy(struct ilo_cp *cp)
 {
    if (cp->bo) {
       if (!cp->sys)
-         cp->bo->unmap(cp->bo);
+         intel_bo_unmap(cp->bo);
 
-      cp->bo->unreference(cp->bo);
+      intel_bo_unreference(cp->bo);
    }
 
    if (cp->render_ctx)
-      cp->winsys->destroy_context(cp->winsys, cp->render_ctx);
+      intel_winsys_destroy_context(cp->winsys, cp->render_ctx);
 
    FREE(cp->sys);
    FREE(cp);
@@ -283,7 +283,7 @@ ilo_cp_create(struct intel_winsys *winsys, bool direct_map)
       return NULL;
 
    cp->winsys = winsys;
-   cp->render_ctx = winsys->create_context(winsys);
+   cp->render_ctx = intel_winsys_create_context(winsys);
 
    cp->ring = ILO_CP_RING_RENDER;
    cp->no_implicit_flush = false;

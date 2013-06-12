@@ -37,7 +37,7 @@
 static bool
 is_bo_busy(struct ilo_context *ilo, struct intel_bo *bo, bool *need_flush)
 {
-   const bool referenced = ilo->cp->bo->references(ilo->cp->bo, bo);
+   const bool referenced = intel_bo_references(ilo->cp->bo, bo);
 
    if (need_flush)
       *need_flush = referenced;
@@ -64,13 +64,13 @@ map_bo_for_transfer(struct ilo_context *ilo, struct intel_bo *bo,
 
    switch (xfer->method) {
    case ILO_TRANSFER_MAP_CPU:
-      err = bo->map(bo, (xfer->base.usage & PIPE_TRANSFER_WRITE));
+      err = intel_bo_map(bo, (xfer->base.usage & PIPE_TRANSFER_WRITE));
       break;
    case ILO_TRANSFER_MAP_GTT:
-      err = bo->map_gtt(bo);
+      err = intel_bo_map_gtt(bo);
       break;
    case ILO_TRANSFER_MAP_UNSYNC:
-      err = bo->map_unsynchronized(bo);
+      err = intel_bo_map_unsynchronized(bo);
       break;
    default:
       assert(!"unknown mapping method");
@@ -412,7 +412,7 @@ tex_staging_sys_zs_read(struct ilo_context *ilo,
 {
    const bool swizzle = ilo->dev->has_address_swizzling;
    const struct pipe_box *box = &xfer->base.box;
-   const uint8_t *src = tex->bo->get_virtual(tex->bo);
+   const uint8_t *src = intel_bo_get_virtual(tex->bo);
    tex_tile_offset_func tile_offset;
    unsigned tiles_per_row;
    int slice;
@@ -423,7 +423,7 @@ tex_staging_sys_zs_read(struct ilo_context *ilo,
 
    if (tex->separate_s8) {
       struct ilo_texture *s8_tex = tex->separate_s8;
-      const uint8_t *s8_src = s8_tex->bo->get_virtual(s8_tex->bo);
+      const uint8_t *s8_src = intel_bo_get_virtual(s8_tex->bo);
       tex_tile_offset_func s8_tile_offset;
       unsigned s8_tiles_per_row;
       int dst_cpp, dst_s8_pos, src_cpp_used;
@@ -523,7 +523,7 @@ tex_staging_sys_zs_write(struct ilo_context *ilo,
 {
    const bool swizzle = ilo->dev->has_address_swizzling;
    const struct pipe_box *box = &xfer->base.box;
-   uint8_t *dst = tex->bo->get_virtual(tex->bo);
+   uint8_t *dst = intel_bo_get_virtual(tex->bo);
    tex_tile_offset_func tile_offset;
    unsigned tiles_per_row;
    int slice;
@@ -534,7 +534,7 @@ tex_staging_sys_zs_write(struct ilo_context *ilo,
 
    if (tex->separate_s8) {
       struct ilo_texture *s8_tex = tex->separate_s8;
-      uint8_t *s8_dst = s8_tex->bo->get_virtual(s8_tex->bo);
+      uint8_t *s8_dst = intel_bo_get_virtual(s8_tex->bo);
       tex_tile_offset_func s8_tile_offset;
       unsigned s8_tiles_per_row;
       int src_cpp, src_s8_pos, dst_cpp_used;
@@ -637,7 +637,7 @@ tex_staging_sys_convert_write(struct ilo_context *ilo,
    void *dst;
    int slice;
 
-   dst = tex->bo->get_virtual(tex->bo);
+   dst = intel_bo_get_virtual(tex->bo);
    dst += tex_get_box_offset(tex, xfer->base.level, box);
 
    /* slice stride is not always available */
@@ -684,16 +684,16 @@ tex_staging_sys_map_bo(const struct ilo_context *ilo,
    int err;
 
    if (prefer_cpu && (tex->tiling == INTEL_TILING_NONE || !linear_view))
-      err = tex->bo->map(tex->bo, !for_read_back);
+      err = intel_bo_map(tex->bo, !for_read_back);
    else
-      err = tex->bo->map_gtt(tex->bo);
+      err = intel_bo_map_gtt(tex->bo);
 
    if (!tex->separate_s8)
       return !err;
 
-   err = tex->separate_s8->bo->map(tex->separate_s8->bo, !for_read_back);
+   err = intel_bo_map(tex->separate_s8->bo, !for_read_back);
    if (err)
-      tex->bo->unmap(tex->bo);
+      intel_bo_unmap(tex->bo);
 
    return !err;
 }
@@ -703,9 +703,9 @@ tex_staging_sys_unmap_bo(const struct ilo_context *ilo,
                          const struct ilo_texture *tex)
 {
    if (tex->separate_s8)
-      tex->separate_s8->bo->unmap(tex->separate_s8->bo);
+      intel_bo_unmap(tex->separate_s8->bo);
 
-   tex->bo->unmap(tex->bo);
+   intel_bo_unmap(tex->bo);
 }
 
 static void
@@ -807,7 +807,7 @@ tex_direct_unmap(struct ilo_context *ilo,
                  struct ilo_texture *tex,
                  struct ilo_transfer *xfer)
 {
-   tex->bo->unmap(tex->bo);
+   intel_bo_unmap(tex->bo);
 }
 
 static bool
@@ -827,7 +827,7 @@ tex_direct_map(struct ilo_context *ilo,
    else
       xfer->base.layer_stride = 0;
 
-   xfer->ptr = tex->bo->get_virtual(tex->bo);
+   xfer->ptr = intel_bo_get_virtual(tex->bo);
    xfer->ptr += tex_get_box_offset(tex, xfer->base.level, &xfer->base.box);
 
    return true;
@@ -902,7 +902,7 @@ buf_map(struct ilo_context *ilo, struct ilo_transfer *xfer)
    xfer->base.stride = 0;
    xfer->base.layer_stride = 0;
 
-   xfer->ptr = buf->bo->get_virtual(buf->bo);
+   xfer->ptr = intel_bo_get_virtual(buf->bo);
    xfer->ptr += xfer->base.box.x;
 
    return true;
@@ -913,7 +913,7 @@ buf_unmap(struct ilo_context *ilo, struct ilo_transfer *xfer)
 {
    struct ilo_buffer *buf = ilo_buffer(xfer->base.resource);
 
-   buf->bo->unmap(buf->bo);
+   intel_bo_unmap(buf->bo);
 }
 
 static void
@@ -944,7 +944,7 @@ buf_pwrite(struct ilo_context *ilo, struct ilo_buffer *buf,
          ilo_cp_flush(ilo->cp);
    }
 
-   buf->bo->pwrite(buf->bo, offset, size, data);
+   intel_bo_pwrite(buf->bo, offset, size, data);
 }
 
 static void

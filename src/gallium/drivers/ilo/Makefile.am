@@ -28,7 +28,7 @@ noinst_LTLIBRARIES = libilo.la
 
 AM_CPPFLAGS = \
 	-Iinclude \
-	-I$(top_srcdir)/src/gallium/winsys/intel/drm \
+	-I$(top_srcdir)/src/gallium/winsys/intel \
 	$(GALLIUM_CFLAGS)
 
 AM_CFLAGS = \

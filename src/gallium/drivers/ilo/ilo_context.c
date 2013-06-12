@@ -47,11 +47,11 @@ ilo_context_cp_flushed(struct ilo_cp *cp, void *data)
    struct ilo_context *ilo = ilo_context(data);
 
    if (ilo->last_cp_bo)
-      ilo->last_cp_bo->unreference(ilo->last_cp_bo);
+      intel_bo_unreference(ilo->last_cp_bo);
 
    /* remember the just flushed bo, on which fences could wait */
    ilo->last_cp_bo = cp->bo;
-   ilo->last_cp_bo->reference(ilo->last_cp_bo);
+   intel_bo_reference(ilo->last_cp_bo);
 
    ilo_3d_cp_flushed(ilo->hw3d);
 }
@@ -77,7 +77,7 @@ ilo_flush(struct pipe_context *pipe,
             fence->bo = ilo->cp->bo;
 
          if (fence->bo)
-            fence->bo->reference(fence->bo);
+            intel_bo_reference(fence->bo);
       }
 
       *f = (struct pipe_fence_handle *) fence;
@@ -94,7 +94,7 @@ ilo_context_destroy(struct pipe_context *pipe)
    ilo_cleanup_states(ilo);
 
    if (ilo->last_cp_bo)
-      ilo->last_cp_bo->unreference(ilo->last_cp_bo);
+      intel_bo_unreference(ilo->last_cp_bo);
 
    util_slab_destroy(&ilo->transfer_mempool);
 

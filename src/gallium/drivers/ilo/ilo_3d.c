@@ -45,11 +45,11 @@ process_query_for_occlusion_counter(struct ilo_3d *hw3d,
    /* in pairs */
    assert(q->reg_read % 2 == 0);
 
-   q->bo->map(q->bo, false);
-   vals = q->bo->get_virtual(q->bo);
+   intel_bo_map(q->bo, false);
+   vals = intel_bo_get_virtual(q->bo);
    for (i = 1; i < q->reg_read; i += 2)
       depth_count += vals[i] - vals[i - 1];
-   q->bo->unmap(q->bo);
+   intel_bo_unmap(q->bo);
 
    /* accumulate so that the query can be resumed if wanted */
    q->data.u64 += depth_count;
@@ -70,10 +70,10 @@ process_query_for_timestamp(struct ilo_3d *hw3d, struct ilo_query *q)
 
    assert(q->reg_read == 1);
 
-   q->bo->map(q->bo, false);
-   vals = q->bo->get_virtual(q->bo);
+   intel_bo_map(q->bo, false);
+   vals = intel_bo_get_virtual(q->bo);
    timestamp = vals[0];
-   q->bo->unmap(q->bo);
+   intel_bo_unmap(q->bo);
 
    q->data.u64 = timestamp_to_ns(timestamp);
    q->reg_read = 0;
@@ -88,13 +88,13 @@ process_query_for_time_elapsed(struct ilo_3d *hw3d, struct ilo_query *q)
    /* in pairs */
    assert(q->reg_read % 2 == 0);
 
-   q->bo->map(q->bo, false);
-   vals = q->bo->get_virtual(q->bo);
+   intel_bo_map(q->bo, false);
+   vals = intel_bo_get_virtual(q->bo);
 
    for (i = 1; i < q->reg_read; i += 2)
       elapsed += vals[i] - vals[i - 1];
 
-   q->bo->unmap(q->bo);
+   intel_bo_unmap(q->bo);
 
    /* accumulate so that the query can be resumed if wanted */
    q->data.u64 += timestamp_to_ns(elapsed);

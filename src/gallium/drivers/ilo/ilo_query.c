@@ -101,7 +101,7 @@ ilo_destroy_query(struct pipe_context *pipe, struct pipe_query *query)
    struct ilo_query *q = ilo_query(query);
 
    if (q->bo)
-      q->bo->unreference(q->bo);
+      intel_bo_unreference(q->bo);
 
    FREE(q);
 }
@@ -168,7 +168,7 @@ ilo_get_query_result(struct pipe_context *pipe, struct pipe_query *query,
       return false;
 
    if (q->bo) {
-      if (ilo->cp->bo->references(ilo->cp->bo, q->bo))
+      if (intel_bo_references(ilo->cp->bo, q->bo))
          ilo_cp_flush(ilo->cp);
 
       if (!wait && intel_bo_is_busy(q->bo))
@@ -209,9 +209,9 @@ ilo_query_alloc_bo(struct ilo_query *q, int reg_count, int repeat_count,
       const int size = reg_total * sizeof(uint64_t);
 
       if (q->bo)
-         q->bo->unreference(q->bo);
+         intel_bo_unreference(q->bo);
 
-      q->bo = winsys->alloc_buffer(winsys, name, size, 0);
+      q->bo = intel_winsys_alloc_buffer(winsys, name, size, 0);
       q->reg_total = (q->bo) ? reg_total : 0;
    }
 

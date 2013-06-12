@@ -533,7 +533,7 @@ ilo_get_timestamp(struct pipe_screen *screen)
       uint32_t dw[2];
    } timestamp;
 
-   is->winsys->read_reg(is->winsys, TIMESTAMP, &timestamp.val);
+   intel_winsys_read_reg(is->winsys, TIMESTAMP, &timestamp.val);
 
    /*
     * From the Ivy Bridge PRM, volume 1 part 3, page 107:
@@ -572,7 +572,7 @@ ilo_fence_reference(struct pipe_screen *screen,
       struct ilo_fence *old = *ptr;
 
       if (old->bo)
-         old->bo->unreference(old->bo);
+         intel_bo_unreference(old->bo);
       FREE(old);
    }
 
@@ -587,7 +587,7 @@ ilo_fence_signalled(struct pipe_screen *screen,
 
    /* mark signalled if the bo is idle */
    if (fence->bo && !intel_bo_is_busy(fence->bo)) {
-      fence->bo->unreference(fence->bo);
+      intel_bo_unreference(fence->bo);
       fence->bo = NULL;
    }
 
@@ -607,11 +607,11 @@ ilo_fence_finish(struct pipe_screen *screen,
       return true;
 
    /* wait and see if it returns error */
-   if (fence->bo->wait(fence->bo, wait_timeout))
+   if (intel_bo_wait(fence->bo, wait_timeout))
       return false;
 
    /* mark signalled */
-   fence->bo->unreference(fence->bo);
+   intel_bo_unreference(fence->bo);
    fence->bo = NULL;
 
    return true;
@@ -623,7 +623,7 @@ ilo_screen_destroy(struct pipe_screen *screen)
    struct ilo_screen *is = ilo_screen(screen);
 
    /* as it seems, winsys is owned by the screen */
-   is->winsys->destroy(is->winsys);
+   intel_winsys_destroy(is->winsys);
 
    FREE(is);
 }
@@ -714,9 +714,9 @@ ilo_screen_create(struct intel_winsys *ws)
 
    is->winsys = ws;
 
-   is->winsys->enable_reuse(is->winsys);
+   intel_winsys_enable_reuse(is->winsys);
 
-   info = is->winsys->get_info(is->winsys);
+   info = intel_winsys_get_info(is->winsys);
    if (!init_dev(&is->dev, info)) {
       FREE(is);
       return NULL;

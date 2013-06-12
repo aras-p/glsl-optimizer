@@ -324,7 +324,7 @@ tex_copy_region(struct ilo_context *ilo,
    aper_check[0] = ilo->cp->bo;
    aper_check[1] = dst->bo;
    aper_check[2] = src->bo;
-   if (ilo->winsys->check_aperture_space(ilo->winsys, aper_check, 3))
+   if (intel_winsys_check_aperture_space(ilo->winsys, aper_check, 3))
       ilo_cp_flush(ilo->cp);
 
    swctrl = 0x0;
@@ -421,7 +421,7 @@ buf_copy_region(struct ilo_context *ilo,
    aper_check[0] = ilo->cp->bo;
    aper_check[1] = dst->bo;
    aper_check[2] = src->bo;
-   if (ilo->winsys->check_aperture_space(ilo->winsys, aper_check, 3))
+   if (intel_winsys_check_aperture_space(ilo->winsys, aper_check, 3))
       ilo_cp_flush(ilo->cp);
 
    while (size) {
@@ -522,7 +522,7 @@ blitter_xy_color_blt(struct pipe_context *pipe,
    /* make room if necessary */
    aper_check[0] = ilo->cp->bo;
    aper_check[1] = tex->bo;
-   if (ilo->winsys->check_aperture_space(ilo->winsys, aper_check, 2))
+   if (intel_winsys_check_aperture_space(ilo->winsys, aper_check, 2))
       ilo_cp_flush(ilo->cp);
 
    gen6_XY_COLOR_BLT(ilo,
