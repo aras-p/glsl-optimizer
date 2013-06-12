@@ -1279,8 +1279,11 @@ NV50LoweringPreSSA::checkPredicate(Instruction *insn)
    Value *pred = insn->getPredicate();
    Value *cdst;
 
-   if (!pred || pred->reg.file == FILE_FLAGS)
+   // FILE_PREDICATE will simply be changed to FLAGS on conversion to SSA
+   if (!pred ||
+       pred->reg.file == FILE_FLAGS || pred->reg.file == FILE_PREDICATE)
       return;
+
    cdst = bld.getSSA(1, FILE_FLAGS);
 
    bld.mkCmp(OP_SET, CC_NEU, insn->dType, cdst, insn->dType, bld.loadImm(NULL, 0), pred);
