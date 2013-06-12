@@ -1936,6 +1936,8 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
 				 bool ubo_qualifiers_valid,
                                  bool is_parameter)
 {
+   STATIC_ASSERT(sizeof(qual->flags.q) <= sizeof(qual->flags.i));
+
    if (qual->flags.q.invariant) {
       if (var->used) {
 	 _mesa_glsl_error(loc, state,
