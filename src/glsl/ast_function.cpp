@@ -1260,6 +1260,63 @@ emit_inline_record_constructor(const glsl_type *type,
 }
 
 
+static ir_rvalue *
+process_record_constructor(exec_list *instructions,
+                           const glsl_type *constructor_type,
+                           YYLTYPE *loc, exec_list *parameters,
+                           struct _mesa_glsl_parse_state *state)
+{
+   void *ctx = state;
+   exec_list actual_parameters;
+
+   process_parameters(instructions, &actual_parameters,
+                      parameters, state);
+
+   exec_node *node = actual_parameters.head;
+   for (unsigned i = 0; i < constructor_type->length; i++) {
+      ir_rvalue *ir = (ir_rvalue *) node;
+
+      if (node->is_tail_sentinel()) {
+         _mesa_glsl_error(loc, state,
+                          "insufficient parameters to constructor for `%s'",
+                          constructor_type->name);
+         return ir_rvalue::error_value(ctx);
+      }
+
+      if (apply_implicit_conversion(constructor_type->fields.structure[i].type,
+                                 ir, state)) {
+         node->replace_with(ir);
+      } else {
+         _mesa_glsl_error(loc, state,
+                          "parameter type mismatch in constructor for `%s.%s' "
+                          "(%s vs %s)",
+                          constructor_type->name,
+                          constructor_type->fields.structure[i].name,
+                          ir->type->name,
+                          constructor_type->fields.structure[i].type->name);
+         return ir_rvalue::error_value(ctx);;
+      }
+
+      node = node->next;
+   }
+
+   if (!node->is_tail_sentinel()) {
+      _mesa_glsl_error(loc, state, "too many parameters in constructor "
+                                    "for `%s'", constructor_type->name);
+      return ir_rvalue::error_value(ctx);
+   }
+
+   ir_rvalue *const constant =
+      constant_record_constructor(constructor_type, &actual_parameters,
+                                  state);
+
+   return (constant != NULL)
+            ? constant
+            : emit_inline_record_constructor(constructor_type, instructions,
+                                             &actual_parameters, state);
+}
+
+
 ir_rvalue *
 ast_function_expression::hir(exec_list *instructions,
 			     struct _mesa_glsl_parse_state *state)
@@ -1326,54 +1383,9 @@ ast_function_expression::hir(exec_list *instructions,
        * correct order.
        */
       if (constructor_type->is_record()) {
-	 exec_list actual_parameters;
-
-	 process_parameters(instructions, &actual_parameters,
-			    &this->expressions, state);
-
-	 exec_node *node = actual_parameters.head;
-	 for (unsigned i = 0; i < constructor_type->length; i++) {
-	    ir_rvalue *ir = (ir_rvalue *) node;
-
-	    if (node->is_tail_sentinel()) {
-	       _mesa_glsl_error(&loc, state,
-				"insufficient parameters to constructor "
-				"for `%s'",
-				constructor_type->name);
-	       return ir_rvalue::error_value(ctx);
-	    }
-
-	    if (apply_implicit_conversion(constructor_type->fields.structure[i].type,
-					  ir, state)) {
-	       node->replace_with(ir);
-	    } else {
-	       _mesa_glsl_error(&loc, state,
-				"parameter type mismatch in constructor "
-				"for `%s.%s' (%s vs %s)",
-				constructor_type->name,
-				constructor_type->fields.structure[i].name,
-				ir->type->name,
-				constructor_type->fields.structure[i].type->name);
-	       return ir_rvalue::error_value(ctx);;
-	    }
-
-	    node = node->next;
-	 }
-
-	 if (!node->is_tail_sentinel()) {
-	    _mesa_glsl_error(&loc, state, "too many parameters in constructor "
-			     "for `%s'", constructor_type->name);
-	    return ir_rvalue::error_value(ctx);
-	 }
-
-	 ir_rvalue *const constant =
-	    constant_record_constructor(constructor_type, &actual_parameters,
-					state);
-
-	 return (constant != NULL)
-	    ? constant
-	    : emit_inline_record_constructor(constructor_type, instructions,
-					     &actual_parameters, state);
+         return process_record_constructor(instructions, constructor_type,
+                                           &loc, &this->expressions,
+                                           state);
       }
 
       if (!constructor_type->is_numeric() && !constructor_type->is_boolean())
