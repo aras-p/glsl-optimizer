@@ -621,14 +621,178 @@ vec4_generator::generate_pull_constant_load_gen7(vec4_instruction *inst,
                            0);
 }
 
+/**
+ * Generate assembly for a Vec4 IR instruction.
+ *
+ * \param instruction The Vec4 IR instruction to generate code for.
+ * \param dst         The destination register.
+ * \param src         An array of up to three source registers.
+ */
 void
 vec4_generator::generate_vec4_instruction(vec4_instruction *instruction,
                                           struct brw_reg dst,
                                           struct brw_reg *src)
 {
-   vec4_instruction *inst = (vec4_instruction *)instruction;
+   vec4_instruction *inst = (vec4_instruction *) instruction;
 
    switch (inst->opcode) {
+   case BRW_OPCODE_MOV:
+      brw_MOV(p, dst, src[0]);
+      break;
+   case BRW_OPCODE_ADD:
+      brw_ADD(p, dst, src[0], src[1]);
+      break;
+   case BRW_OPCODE_MUL:
+      brw_MUL(p, dst, src[0], src[1]);
+      break;
+   case BRW_OPCODE_MACH:
+      brw_set_acc_write_control(p, 1);
+      brw_MACH(p, dst, src[0], src[1]);
+      brw_set_acc_write_control(p, 0);
+      break;
+
+   case BRW_OPCODE_MAD:
+      brw_MAD(p, dst, src[0], src[1], src[2]);
+      break;
+
+   case BRW_OPCODE_FRC:
+      brw_FRC(p, dst, src[0]);
+      break;
+   case BRW_OPCODE_RNDD:
+      brw_RNDD(p, dst, src[0]);
+      break;
+   case BRW_OPCODE_RNDE:
+      brw_RNDE(p, dst, src[0]);
+      break;
+   case BRW_OPCODE_RNDZ:
+      brw_RNDZ(p, dst, src[0]);
+      break;
+
+   case BRW_OPCODE_AND:
+      brw_AND(p, dst, src[0], src[1]);
+      break;
+   case BRW_OPCODE_OR:
+      brw_OR(p, dst, src[0], src[1]);
+      break;
+   case BRW_OPCODE_XOR:
+      brw_XOR(p, dst, src[0], src[1]);
+      break;
+   case BRW_OPCODE_NOT:
+      brw_NOT(p, dst, src[0]);
+      break;
+   case BRW_OPCODE_ASR:
+      brw_ASR(p, dst, src[0], src[1]);
+      break;
+   case BRW_OPCODE_SHR:
+      brw_SHR(p, dst, src[0], src[1]);
+      break;
+   case BRW_OPCODE_SHL:
+      brw_SHL(p, dst, src[0], src[1]);
+      break;
+
+   case BRW_OPCODE_CMP:
+      brw_CMP(p, dst, inst->conditional_mod, src[0], src[1]);
+      break;
+   case BRW_OPCODE_SEL:
+      brw_SEL(p, dst, src[0], src[1]);
+      break;
+
+   case BRW_OPCODE_DPH:
+      brw_DPH(p, dst, src[0], src[1]);
+      break;
+
+   case BRW_OPCODE_DP4:
+      brw_DP4(p, dst, src[0], src[1]);
+      break;
+
+   case BRW_OPCODE_DP3:
+      brw_DP3(p, dst, src[0], src[1]);
+      break;
+
+   case BRW_OPCODE_DP2:
+      brw_DP2(p, dst, src[0], src[1]);
+      break;
+
+   case BRW_OPCODE_F32TO16:
+      brw_F32TO16(p, dst, src[0]);
+      break;
+
+   case BRW_OPCODE_F16TO32:
+      brw_F16TO32(p, dst, src[0]);
+      break;
+
+   case BRW_OPCODE_LRP:
+      brw_LRP(p, dst, src[0], src[1], src[2]);
+      break;
+
+   case BRW_OPCODE_BFREV:
+      /* BFREV only supports UD type for src and dst. */
+      brw_BFREV(p, retype(dst, BRW_REGISTER_TYPE_UD),
+                   retype(src[0], BRW_REGISTER_TYPE_UD));
+      break;
+   case BRW_OPCODE_FBH:
+      /* FBH only supports UD type for dst. */
+      brw_FBH(p, retype(dst, BRW_REGISTER_TYPE_UD), src[0]);
+      break;
+   case BRW_OPCODE_FBL:
+      /* FBL only supports UD type for dst. */
+      brw_FBL(p, retype(dst, BRW_REGISTER_TYPE_UD), src[0]);
+      break;
+   case BRW_OPCODE_CBIT:
+      /* CBIT only supports UD type for dst. */
+      brw_CBIT(p, retype(dst, BRW_REGISTER_TYPE_UD), src[0]);
+      break;
+
+   case BRW_OPCODE_BFE:
+      brw_BFE(p, dst, src[0], src[1], src[2]);
+      break;
+
+   case BRW_OPCODE_BFI1:
+      brw_BFI1(p, dst, src[0], src[1]);
+      break;
+   case BRW_OPCODE_BFI2:
+      brw_BFI2(p, dst, src[0], src[1], src[2]);
+      break;
+
+   case BRW_OPCODE_IF:
+      if (inst->src[0].file != BAD_FILE) {
+         /* The instruction has an embedded compare (only allowed on gen6) */
+         assert(intel->gen == 6);
+         gen6_IF(p, inst->conditional_mod, src[0], src[1]);
+      } else {
+         struct brw_instruction *brw_inst = brw_IF(p, BRW_EXECUTE_8);
+         brw_inst->header.predicate_control = inst->predicate;
+      }
+      break;
+
+   case BRW_OPCODE_ELSE:
+      brw_ELSE(p);
+      break;
+   case BRW_OPCODE_ENDIF:
+      brw_ENDIF(p);
+      break;
+
+   case BRW_OPCODE_DO:
+      brw_DO(p, BRW_EXECUTE_8);
+      break;
+
+   case BRW_OPCODE_BREAK:
+      brw_BREAK(p);
+      brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+      break;
+   case BRW_OPCODE_CONTINUE:
+      /* FINISHME: We need to write the loop instruction support still. */
+      if (intel->gen >= 6)
+         gen6_CONT(p);
+      else
+         brw_CONT(p);
+      brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+      break;
+
+   case BRW_OPCODE_WHILE:
+      brw_WHILE(p);
+      break;
+
    case SHADER_OPCODE_RCP:
    case SHADER_OPCODE_RSQ:
    case SHADER_OPCODE_SQRT:
@@ -756,168 +920,7 @@ vec4_generator::generate_code(exec_list *instructions)
 
       unsigned pre_emit_nr_insn = p->nr_insn;
 
-      switch (inst->opcode) {
-      case BRW_OPCODE_MOV:
-	 brw_MOV(p, dst, src[0]);
-	 break;
-      case BRW_OPCODE_ADD:
-	 brw_ADD(p, dst, src[0], src[1]);
-	 break;
-      case BRW_OPCODE_MUL:
-	 brw_MUL(p, dst, src[0], src[1]);
-	 break;
-      case BRW_OPCODE_MACH:
-	 brw_set_acc_write_control(p, 1);
-	 brw_MACH(p, dst, src[0], src[1]);
-	 brw_set_acc_write_control(p, 0);
-	 break;
-
-      case BRW_OPCODE_MAD:
-         brw_MAD(p, dst, src[0], src[1], src[2]);
-         break;
-
-      case BRW_OPCODE_FRC:
-	 brw_FRC(p, dst, src[0]);
-	 break;
-      case BRW_OPCODE_RNDD:
-	 brw_RNDD(p, dst, src[0]);
-	 break;
-      case BRW_OPCODE_RNDE:
-	 brw_RNDE(p, dst, src[0]);
-	 break;
-      case BRW_OPCODE_RNDZ:
-	 brw_RNDZ(p, dst, src[0]);
-	 break;
-
-      case BRW_OPCODE_AND:
-	 brw_AND(p, dst, src[0], src[1]);
-	 break;
-      case BRW_OPCODE_OR:
-	 brw_OR(p, dst, src[0], src[1]);
-	 break;
-      case BRW_OPCODE_XOR:
-	 brw_XOR(p, dst, src[0], src[1]);
-	 break;
-      case BRW_OPCODE_NOT:
-	 brw_NOT(p, dst, src[0]);
-	 break;
-      case BRW_OPCODE_ASR:
-	 brw_ASR(p, dst, src[0], src[1]);
-	 break;
-      case BRW_OPCODE_SHR:
-	 brw_SHR(p, dst, src[0], src[1]);
-	 break;
-      case BRW_OPCODE_SHL:
-	 brw_SHL(p, dst, src[0], src[1]);
-	 break;
-
-      case BRW_OPCODE_CMP:
-	 brw_CMP(p, dst, inst->conditional_mod, src[0], src[1]);
-	 break;
-      case BRW_OPCODE_SEL:
-	 brw_SEL(p, dst, src[0], src[1]);
-	 break;
-
-      case BRW_OPCODE_DPH:
-	 brw_DPH(p, dst, src[0], src[1]);
-	 break;
-
-      case BRW_OPCODE_DP4:
-	 brw_DP4(p, dst, src[0], src[1]);
-	 break;
-
-      case BRW_OPCODE_DP3:
-	 brw_DP3(p, dst, src[0], src[1]);
-	 break;
-
-      case BRW_OPCODE_DP2:
-	 brw_DP2(p, dst, src[0], src[1]);
-	 break;
-
-      case BRW_OPCODE_F32TO16:
-         brw_F32TO16(p, dst, src[0]);
-         break;
-
-      case BRW_OPCODE_F16TO32:
-         brw_F16TO32(p, dst, src[0]);
-         break;
-
-      case BRW_OPCODE_LRP:
-         brw_LRP(p, dst, src[0], src[1], src[2]);
-         break;
-
-      case BRW_OPCODE_BFREV:
-         /* BFREV only supports UD type for src and dst. */
-         brw_BFREV(p, retype(dst, BRW_REGISTER_TYPE_UD),
-                      retype(src[0], BRW_REGISTER_TYPE_UD));
-         break;
-      case BRW_OPCODE_FBH:
-         /* FBH only supports UD type for dst. */
-         brw_FBH(p, retype(dst, BRW_REGISTER_TYPE_UD), src[0]);
-         break;
-      case BRW_OPCODE_FBL:
-         /* FBL only supports UD type for dst. */
-         brw_FBL(p, retype(dst, BRW_REGISTER_TYPE_UD), src[0]);
-         break;
-      case BRW_OPCODE_CBIT:
-         /* CBIT only supports UD type for dst. */
-         brw_CBIT(p, retype(dst, BRW_REGISTER_TYPE_UD), src[0]);
-         break;
-
-      case BRW_OPCODE_BFE:
-         brw_BFE(p, dst, src[0], src[1], src[2]);
-         break;
-
-      case BRW_OPCODE_BFI1:
-         brw_BFI1(p, dst, src[0], src[1]);
-         break;
-      case BRW_OPCODE_BFI2:
-         brw_BFI2(p, dst, src[0], src[1], src[2]);
-         break;
-
-      case BRW_OPCODE_IF:
-	 if (inst->src[0].file != BAD_FILE) {
-	    /* The instruction has an embedded compare (only allowed on gen6) */
-	    assert(intel->gen == 6);
-	    gen6_IF(p, inst->conditional_mod, src[0], src[1]);
-	 } else {
-	    struct brw_instruction *brw_inst = brw_IF(p, BRW_EXECUTE_8);
-	    brw_inst->header.predicate_control = inst->predicate;
-	 }
-	 break;
-
-      case BRW_OPCODE_ELSE:
-	 brw_ELSE(p);
-	 break;
-      case BRW_OPCODE_ENDIF:
-	 brw_ENDIF(p);
-	 break;
-
-      case BRW_OPCODE_DO:
-	 brw_DO(p, BRW_EXECUTE_8);
-	 break;
-
-      case BRW_OPCODE_BREAK:
-	 brw_BREAK(p);
-	 brw_set_predicate_control(p, BRW_PREDICATE_NONE);
-	 break;
-      case BRW_OPCODE_CONTINUE:
-	 /* FINISHME: We need to write the loop instruction support still. */
-	 if (intel->gen >= 6)
-	    gen6_CONT(p);
-	 else
-	    brw_CONT(p);
-	 brw_set_predicate_control(p, BRW_PREDICATE_NONE);
-	 break;
-
-      case BRW_OPCODE_WHILE:
-	 brw_WHILE(p);
-	 break;
-
-      default:
-	 generate_vec4_instruction(inst, dst, src);
-	 break;
-      }
+      generate_vec4_instruction(inst, dst, src);
 
       if (inst->no_dd_clear || inst->no_dd_check) {
          assert(p->nr_insn == pre_emit_nr_insn + 1 ||
