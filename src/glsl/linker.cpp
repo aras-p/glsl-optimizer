@@ -77,6 +77,7 @@
 
 extern "C" {
 #include "main/shaderobj.h"
+#include "main/enums.h"
 }
 
 void linker_error(gl_shader_program *, const char *, ...);
@@ -917,6 +918,99 @@ public:
 };
 
 /**
+ * Performs the cross-validation of geometry shader max_vertices and
+ * primitive type layout qualifiers for the attached geometry shaders,
+ * and propagates them to the linked GS and linked shader program.
+ */
+static void
+link_gs_inout_layout_qualifiers(struct gl_shader_program *prog,
+				struct gl_shader *linked_shader,
+				struct gl_shader **shader_list,
+				unsigned num_shaders)
+{
+   linked_shader->Geom.VerticesOut = 0;
+   linked_shader->Geom.InputType = PRIM_UNKNOWN;
+   linked_shader->Geom.OutputType = PRIM_UNKNOWN;
+
+   /* No in/out qualifiers defined for anything but GLSL 1.50+
+    * geometry shaders so far.
+    */
+   if (linked_shader->Type != GL_GEOMETRY_SHADER || prog->Version < 150)
+      return;
+
+   /* From the GLSL 1.50 spec, page 46:
+    *
+    *     "All geometry shader output layout declarations in a program
+    *      must declare the same layout and same value for
+    *      max_vertices. There must be at least one geometry output
+    *      layout declaration somewhere in a program, but not all
+    *      geometry shaders (compilation units) are required to
+    *      declare it."
+    */
+
+   for (unsigned i = 0; i < num_shaders; i++) {
+      struct gl_shader *shader = shader_list[i];
+
+      if (shader->Geom.InputType != PRIM_UNKNOWN) {
+	 if (linked_shader->Geom.InputType != PRIM_UNKNOWN &&
+	     linked_shader->Geom.InputType != shader->Geom.InputType) {
+	    linker_error(prog, "geometry shader defined with conflicting "
+			 "input types\n");
+	    return;
+	 }
+	 linked_shader->Geom.InputType = shader->Geom.InputType;
+      }
+
+      if (shader->Geom.OutputType != PRIM_UNKNOWN) {
+	 if (linked_shader->Geom.OutputType != PRIM_UNKNOWN &&
+	     linked_shader->Geom.OutputType != shader->Geom.OutputType) {
+	    linker_error(prog, "geometry shader defined with conflicting "
+			 "output types\n");
+	    return;
+	 }
+	 linked_shader->Geom.OutputType = shader->Geom.OutputType;
+      }
+
+      if (shader->Geom.VerticesOut != 0) {
+	 if (linked_shader->Geom.VerticesOut != 0 &&
+	     linked_shader->Geom.VerticesOut != shader->Geom.VerticesOut) {
+	    linker_error(prog, "geometry shader defined with conflicting "
+			 "output vertex count (%d and %d)\n",
+			 linked_shader->Geom.VerticesOut,
+			 shader->Geom.VerticesOut);
+	    return;
+	 }
+	 linked_shader->Geom.VerticesOut = shader->Geom.VerticesOut;
+      }
+   }
+
+   /* Just do the intrastage -> interstage propagation right now,
+    * since we already know we're in the right type of shader program
+    * for doing it.
+    */
+   if (linked_shader->Geom.InputType == PRIM_UNKNOWN) {
+      linker_error(prog,
+		   "geometry shader didn't declare primitive input type\n");
+      return;
+   }
+   prog->Geom.InputType = linked_shader->Geom.InputType;
+
+   if (linked_shader->Geom.OutputType == PRIM_UNKNOWN) {
+      linker_error(prog,
+		   "geometry shader didn't declare primitive output type\n");
+      return;
+   }
+   prog->Geom.OutputType = linked_shader->Geom.OutputType;
+
+   if (linked_shader->Geom.VerticesOut == 0) {
+      linker_error(prog,
+		   "geometry shader didn't declare max_vertices\n");
+      return;
+   }
+   prog->Geom.VerticesOut = linked_shader->Geom.VerticesOut;
+}
+
+/**
  * Combine a group of shaders for a single stage to generate a linked shader
  *
  * \note
@@ -1019,6 +1113,8 @@ link_intrastage_shaders(void *mem_ctx,
    linked->UniformBlocks = uniform_blocks;
    linked->NumUniformBlocks = num_uniform_blocks;
    ralloc_steal(linked, linked->UniformBlocks);
+
+   link_gs_inout_layout_qualifiers(prog, linked, shader_list, num_shaders);
 
    populate_symbol_table(linked);
 
