@@ -139,8 +139,6 @@ ilo_context_create(struct pipe_screen *screen, void *priv)
    util_slab_create(&ilo->transfer_mempool,
          sizeof(struct ilo_transfer), 64, UTIL_SLAB_SINGLETHREADED);
 
-   ilo->dirty = ILO_DIRTY_ALL;
-
    ilo->base.screen = screen;
    ilo->base.priv = priv;
 

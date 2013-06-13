@@ -1110,6 +1110,8 @@ void
 ilo_init_states(struct ilo_context *ilo)
 {
    ilo_gpe_set_scissor_null(ilo->dev, &ilo->scissor);
+
+   ilo->dirty = ILO_DIRTY_ALL;
 }
 
 void
