@@ -806,15 +806,36 @@ draw_get_rasterizer_no_cull( struct draw_context *draw,
    return draw->rasterizer_no_cull[scissor][flatshade];
 }
 
+/**
+ * Sets the mapped so targets.
+ *
+ * The append bitmask specifies which of the buffers are in
+ * the append mode. The append mode means that the buffer
+ * should be appended to, rather than written to from the start.
+ * i.e. the outputs should be written starting from the last 
+ * location to which the previous
+ * pass of stream output wrote to in this buffer.
+ * If the buffer is not in an append mode (which is more common)
+ * the writing begins from the start of the buffer.
+ *
+ */
 void
 draw_set_mapped_so_targets(struct draw_context *draw,
                            int num_targets,
-                           struct draw_so_target *targets[PIPE_MAX_SO_BUFFERS])
+                           struct draw_so_target *targets[PIPE_MAX_SO_BUFFERS],
+                           unsigned append_bitmask)
 {
    int i;
 
-   for (i = 0; i < num_targets; i++)
+   for (i = 0; i < num_targets; i++) {
       draw->so.targets[i] = targets[i];
+      /* if we're not appending then lets reset the internal
+         data of our so target */
+      if (!(append_bitmask & (1 << i)) && draw->so.targets[i]) {
+         draw->so.targets[i]->internal_offset = 0;
+         draw->so.targets[i]->emitted_vertices = 0;
+      }
+   }
    for (i = num_targets; i < PIPE_MAX_SO_BUFFERS; i++)
       draw->so.targets[i] = NULL;
 

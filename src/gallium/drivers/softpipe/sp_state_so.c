@@ -77,6 +77,7 @@ softpipe_set_so_targets(struct pipe_context *pipe,
    }
 
    softpipe->num_so_targets = num_targets;
+   softpipe->so_append_bitmask = append_bitmask;
 }
 
 void
