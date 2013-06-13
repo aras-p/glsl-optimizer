@@ -210,7 +210,8 @@ gen6_pipeline_common_base_address(struct ilo_3d_pipeline *p,
                                   struct gen6_pipeline_session *session)
 {
    /* STATE_BASE_ADDRESS */
-   if (session->state_bo_changed || session->instruction_bo_changed) {
+   if (session->state_bo_changed || session->instruction_bo_changed ||
+       session->batch_bo_changed) {
       if (p->dev->gen == ILO_GEN(6))
          gen6_wa_pipe_control_post_sync(p, false);
 
@@ -396,13 +397,14 @@ gen6_pipeline_vf(struct ilo_3d_pipeline *p,
                  struct gen6_pipeline_session *session)
 {
    /* 3DSTATE_INDEX_BUFFER */
-   if (DIRTY(INDEX_BUFFER)) {
+   if (DIRTY(INDEX_BUFFER) || session->batch_bo_changed) {
       p->gen6_3DSTATE_INDEX_BUFFER(p->dev,
             &ilo->ib.state, session->info->primitive_restart, p->cp);
    }
 
    /* 3DSTATE_VERTEX_BUFFERS */
-   if (DIRTY(VERTEX_BUFFERS) || DIRTY(VERTEX_ELEMENTS)) {
+   if (DIRTY(VERTEX_BUFFERS) || DIRTY(VERTEX_ELEMENTS) ||
+       session->batch_bo_changed) {
       p->gen6_3DSTATE_VERTEX_BUFFERS(p->dev,
             ilo->vb.states, ilo->vb.enabled_mask, ilo->ve, p->cp);
    }
@@ -714,7 +716,7 @@ gen6_pipeline_wm_depth(struct ilo_3d_pipeline *p,
                        struct gen6_pipeline_session *session)
 {
    /* 3DSTATE_DEPTH_BUFFER and 3DSTATE_CLEAR_PARAMS */
-   if (DIRTY(FRAMEBUFFER)) {
+   if (DIRTY(FRAMEBUFFER) || session->batch_bo_changed) {
       if (p->dev->gen == ILO_GEN(6)) {
          gen6_wa_pipe_control_post_sync(p, false);
          gen6_wa_pipe_control_wm_depth_flush(p);
@@ -1298,11 +1300,24 @@ gen6_pipeline_prepare(const struct ilo_3d_pipeline *p,
 
    if (session->hw_ctx_changed) {
       /* these should be enough to make everything uploaded */
+      session->batch_bo_changed = true;
       session->state_bo_changed = true;
       session->instruction_bo_changed = true;
       session->prim_changed = true;
    }
    else {
+      /*
+       * Any state that involves resources needs to be re-emitted when the
+       * batch bo changed.  This is because we do not pin the resources and
+       * their offsets (or existence) may change between batch buffers.
+       *
+       * Since we messed around with ILO_3D_PIPELINE_INVALIDATE_BATCH_BO in
+       * handle_invalid_batch_bo(), use ILO_3D_PIPELINE_INVALIDATE_STATE_BO as
+       * a temporary workaround.
+       */
+      session->batch_bo_changed =
+         (p->invalidate_flags & ILO_3D_PIPELINE_INVALIDATE_STATE_BO);
+
       session->state_bo_changed =
          (p->invalidate_flags & ILO_3D_PIPELINE_INVALIDATE_STATE_BO);
       session->instruction_bo_changed =

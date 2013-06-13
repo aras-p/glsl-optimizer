@@ -42,6 +42,7 @@ struct gen6_pipeline_session {
    int init_cp_space;
 
    bool hw_ctx_changed;
+   bool batch_bo_changed;
    bool state_bo_changed;
    bool instruction_bo_changed;
    bool prim_changed;

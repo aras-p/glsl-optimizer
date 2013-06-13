@@ -394,7 +394,8 @@ gen7_pipeline_sol(struct ilo_3d_pipeline *p,
    gen6_pipeline_update_max_svbi(p, ilo, session);
 
    /* 3DSTATE_SO_BUFFER */
-   if ((DIRTY(STREAM_OUTPUT_TARGETS) || dirty_sh) && ilo->so.enabled) {
+   if ((DIRTY(STREAM_OUTPUT_TARGETS) || dirty_sh ||
+        session->batch_bo_changed) && ilo->so.enabled) {
       int i;
 
       for (i = 0; i < ilo->so.count; i++) {
@@ -529,15 +530,8 @@ gen7_pipeline_wm(struct ilo_3d_pipeline *p,
          gen7_wa_pipe_control_wm_depth_stall(p, emit_3dstate_depth_buffer);
    }
 
-   /*
-    * glCopyPixels() with GL_DEPTH, which flushes the context before copying
-    * the depth buffer to a temporary texture, could not update the depth
-    * buffer _sometimes_.  Reissuing 3DSTATE_DEPTH_BUFFER in the new batch
-    * makes the problem gone.
-    */
-
    /* 3DSTATE_DEPTH_BUFFER and 3DSTATE_CLEAR_PARAMS */
-   if (DIRTY(FRAMEBUFFER) || session->state_bo_changed) {
+   if (DIRTY(FRAMEBUFFER) || session->batch_bo_changed) {
       p->gen7_3DSTATE_DEPTH_BUFFER(p->dev, ilo->fb.state.zsbuf, p->cp);
       p->gen6_3DSTATE_HIER_DEPTH_BUFFER(p->dev, ilo->fb.state.zsbuf, p->cp);
       p->gen6_3DSTATE_STENCIL_BUFFER(p->dev, ilo->fb.state.zsbuf, p->cp);

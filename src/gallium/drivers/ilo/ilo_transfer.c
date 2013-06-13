@@ -45,14 +45,6 @@ is_bo_busy(struct ilo_context *ilo, struct intel_bo *bo, bool *need_flush)
    if (referenced)
       return true;
 
-   /*
-    * XXX With hardware context support, the bo may be needed by GPU
-    * without being referenced by ilo->cp->bo.  We have to flush
-    * unconditionally, and that is bad.
-    */
-   if (ilo->cp->render_ctx)
-      ilo_cp_flush(ilo->cp);
-
    return intel_bo_is_busy(bo);
 }
 
