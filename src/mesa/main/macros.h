@@ -141,7 +141,6 @@ extern GLfloat _mesa_ubyte_to_float_color_tab[256];
  *** CLAMPED_FLOAT_TO_UBYTE: map float known to be in [0,1] to ubyte in [0,255]
  ***/
 #if defined(USE_IEEE) && !defined(DEBUG)
-#define IEEE_0996 0x3f7f0000	/* 0.996 or so */
 /* This function/macro is sensitive to precision.  Test very carefully
  * if you change it!
  */
@@ -151,7 +150,7 @@ extern GLfloat _mesa_ubyte_to_float_color_tab[256];
            __tmp.f = (F);						\
            if (__tmp.i < 0)						\
               UB = (GLubyte) 0;						\
-           else if (__tmp.i >= IEEE_0996)				\
+           else if (__tmp.i >= IEEE_ONE)				\
               UB = (GLubyte) 255;					\
            else {							\
               __tmp.f = __tmp.f * (255.0F/256.0F) + 32768.0F;		\

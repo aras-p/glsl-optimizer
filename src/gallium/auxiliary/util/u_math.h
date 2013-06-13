@@ -540,14 +540,13 @@ ubyte_to_float(ubyte ub)
 static INLINE ubyte
 float_to_ubyte(float f)
 {
-   const int ieee_0996 = 0x3f7f0000;   /* 0.996 or so */
    union fi tmp;
 
    tmp.f = f;
    if (tmp.i < 0) {
       return (ubyte) 0;
    }
-   else if (tmp.i >= ieee_0996) {
+   else if (tmp.i >= 0x3f800000 /* 1.0f */) {
       return (ubyte) 255;
    }
    else {
