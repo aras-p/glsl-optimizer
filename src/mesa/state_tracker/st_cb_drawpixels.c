@@ -460,12 +460,12 @@ internal_format(struct gl_context *ctx, GLenum format, GLenum type)
  */
 static struct pipe_resource *
 alloc_texture(struct st_context *st, GLsizei width, GLsizei height,
-              enum pipe_format texFormat)
+              enum pipe_format texFormat, unsigned bind)
 {
    struct pipe_resource *pt;
 
    pt = st_texture_create(st, st->internal_target, texFormat, 0,
-                          width, height, 1, 1, 0, PIPE_BIND_SAMPLER_VIEW);
+                          width, height, 1, 1, 0, bind);
 
    return pt;
 }
@@ -515,7 +515,7 @@ make_texture(struct st_context *st,
       return NULL;
 
    /* alloc temporary texture */
-   pt = alloc_texture(st, width, height, pipeFormat);
+   pt = alloc_texture(st, width, height, pipeFormat, PIPE_BIND_SAMPLER_VIEW);
    if (!pt) {
       _mesa_unmap_pbo_source(ctx, unpack);
       return NULL;
@@ -1475,6 +1475,7 @@ st_CopyPixels(struct gl_context *ctx, GLint srcx, GLint srcy,
    int num_sampler_view = 1;
    GLfloat *color;
    enum pipe_format srcFormat;
+   unsigned srcBind;
    GLboolean invertTex = GL_FALSE;
    GLint readX, readY, readW, readH;
    struct gl_pixelstore_attrib pack = ctx->DefaultPacking;
@@ -1540,16 +1541,15 @@ st_CopyPixels(struct gl_context *ctx, GLint srcx, GLint srcy,
 
    /* Choose the format for the temporary texture. */
    srcFormat = rbRead->texture->format;
+   srcBind = PIPE_BIND_SAMPLER_VIEW |
+      (type == GL_COLOR ? PIPE_BIND_RENDER_TARGET : PIPE_BIND_DEPTH_STENCIL);
 
    if (!screen->is_format_supported(screen, srcFormat, st->internal_target, 0,
-                                    PIPE_BIND_SAMPLER_VIEW |
-                                    (type == GL_COLOR ? PIPE_BIND_RENDER_TARGET
-                                     : PIPE_BIND_DEPTH_STENCIL))) {
+                                    srcBind)) {
       if (type == GL_DEPTH) {
          srcFormat = st_choose_format(st, GL_DEPTH_COMPONENT, GL_NONE,
                                       GL_NONE, st->internal_target, 0,
-                                      PIPE_BIND_SAMPLER_VIEW |
-                                      PIPE_BIND_DEPTH_STENCIL, FALSE);
+                                      srcBind, FALSE);
       }
       else {
          assert(type == GL_COLOR);
@@ -1557,26 +1557,22 @@ st_CopyPixels(struct gl_context *ctx, GLint srcx, GLint srcy,
          if (util_format_is_float(srcFormat)) {
             srcFormat = st_choose_format(st, GL_RGBA32F, GL_NONE,
                                          GL_NONE, st->internal_target, 0,
-                                         PIPE_BIND_SAMPLER_VIEW |
-                                         PIPE_BIND_RENDER_TARGET, FALSE);
+                                         srcBind, FALSE);
          }
          else if (util_format_is_pure_sint(srcFormat)) {
             srcFormat = st_choose_format(st, GL_RGBA32I, GL_NONE,
                                          GL_NONE, st->internal_target, 0,
-                                         PIPE_BIND_SAMPLER_VIEW |
-                                         PIPE_BIND_RENDER_TARGET, FALSE);
+                                         srcBind, FALSE);
          }
          else if (util_format_is_pure_uint(srcFormat)) {
             srcFormat = st_choose_format(st, GL_RGBA32UI, GL_NONE,
                                          GL_NONE, st->internal_target, 0,
-                                         PIPE_BIND_SAMPLER_VIEW |
-                                         PIPE_BIND_RENDER_TARGET, FALSE);
+                                         srcBind, FALSE);
          }
          else {
             srcFormat = st_choose_format(st, GL_RGBA, GL_NONE,
                                          GL_NONE, st->internal_target, 0,
-                                         PIPE_BIND_SAMPLER_VIEW |
-                                         PIPE_BIND_RENDER_TARGET, FALSE);
+                                         srcBind, FALSE);
          }
       }
 
@@ -1615,7 +1611,7 @@ st_CopyPixels(struct gl_context *ctx, GLint srcx, GLint srcy,
    readH = MAX2(0, readH);
 
    /* Allocate the temporary texture. */
-   pt = alloc_texture(st, width, height, srcFormat);
+   pt = alloc_texture(st, width, height, srcFormat, srcBind);
    if (!pt)
       return;
 
