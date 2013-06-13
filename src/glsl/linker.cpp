@@ -1929,6 +1929,10 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
       while (do_dead_code(sh_next->ir, false))
          ;
 
+      /* This must be done after all dead varyings are eliminated. */
+      if (!check_against_varying_limit(ctx, prog, sh_next))
+         goto done;
+
       next = i;
    }
 

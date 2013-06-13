@@ -1113,16 +1113,12 @@ assign_varying_locations(struct gl_context *ctx,
       }
    }
 
-   unsigned varying_vectors = 0;
-
    if (consumer) {
       foreach_list(node, consumer->ir) {
          ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
-         if ((var == NULL) || (var->mode != ir_var_shader_in))
-            continue;
-
-         if (var->is_unmatched_generic_inout) {
+         if (var && var->mode == ir_var_shader_in &&
+             var->is_unmatched_generic_inout) {
             if (prog->Version <= 120) {
                /* On page 25 (page 31 of the PDF) of the GLSL 1.20 spec:
                 *
@@ -1148,12 +1144,29 @@ assign_varying_locations(struct gl_context *ctx,
              * value is written by the previous stage.
              */
             var->mode = ir_var_auto;
-         } else if (is_varying_var(consumer->Type, var)) {
-            /* The packing rules are used for vertex shader inputs are also
-             * used for fragment shader inputs.
-             */
-            varying_vectors += count_attribute_slots(var->type);
          }
+      }
+   }
+
+   return true;
+}
+
+bool
+check_against_varying_limit(struct gl_context *ctx,
+                            struct gl_shader_program *prog,
+                            gl_shader *consumer)
+{
+   unsigned varying_vectors = 0;
+
+   foreach_list(node, consumer->ir) {
+      ir_variable *const var = ((ir_instruction *) node)->as_variable();
+
+      if (var && var->mode == ir_var_shader_in &&
+          is_varying_var(consumer->Type, var)) {
+         /* The packing rules used for vertex shader inputs are also
+          * used for fragment shader inputs.
+          */
+         varying_vectors += count_attribute_slots(var->type);
       }
    }
 
