@@ -1414,6 +1414,34 @@ ast_struct_specifier::ast_struct_specifier(const char *identifier,
    is_declaration = true;
 }
 
+static void
+set_shader_inout_layout(struct gl_shader *shader,
+		     struct _mesa_glsl_parse_state *state)
+{
+   if (shader->Type != GL_GEOMETRY_SHADER) {
+      /* Should have been prevented by the parser. */
+      assert(!state->gs_input_prim_type_specified);
+      assert(!state->out_qualifier->flags.i);
+      return;
+   }
+
+   shader->Geom.VerticesOut = 0;
+   if (state->out_qualifier->flags.q.max_vertices)
+      shader->Geom.VerticesOut = state->out_qualifier->max_vertices;
+
+   if (state->gs_input_prim_type_specified) {
+      shader->Geom.InputType = state->gs_input_prim_type;
+   } else {
+      shader->Geom.InputType = PRIM_UNKNOWN;
+   }
+
+   if (state->out_qualifier->flags.q.prim_type) {
+      shader->Geom.OutputType = state->out_qualifier->prim_type;
+   } else {
+      shader->Geom.OutputType = PRIM_UNKNOWN;
+   }
+}
+
 extern "C" {
 
 void
@@ -1488,6 +1516,9 @@ _mesa_glsl_compile_shader(struct gl_context *ctx, struct gl_shader *shader,
    shader->NumUniformBlocks = state->num_uniform_blocks;
    shader->UniformBlocks = state->uniform_blocks;
    ralloc_steal(shader, shader->UniformBlocks);
+
+   if (!state->error)
+      set_shader_inout_layout(shader, state);
 
    /* Retain any live IR, but trash the rest. */
    reparent_ir(shader->ir, shader->ir);
