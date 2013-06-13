@@ -905,6 +905,20 @@ struct brw_instruction *brw_##OP(struct brw_compile *p,	\
    return brw_alu3(p, BRW_OPCODE_##OP, dest, src0, src1, src2);	\
 }
 
+#define ALU3F(OP)                                               \
+struct brw_instruction *brw_##OP(struct brw_compile *p,         \
+                                 struct brw_reg dest,           \
+                                 struct brw_reg src0,           \
+                                 struct brw_reg src1,           \
+                                 struct brw_reg src2)           \
+{                                                               \
+   assert(dest.type == BRW_REGISTER_TYPE_F);                    \
+   assert(src0.type == BRW_REGISTER_TYPE_F);                    \
+   assert(src1.type == BRW_REGISTER_TYPE_F);                    \
+   assert(src2.type == BRW_REGISTER_TYPE_F);                    \
+   return brw_alu3(p, BRW_OPCODE_##OP, dest, src0, src1, src2); \
+}
+
 /* Rounding operations (other than RNDD) require two instructions - the first
  * stores a rounded value (possibly the wrong way) in the dest register, but
  * also sets a per-channel "increment bit" in the flag register.  A predicated
@@ -955,8 +969,8 @@ ALU2(DP3)
 ALU2(DP2)
 ALU2(LINE)
 ALU2(PLN)
-ALU3(MAD)
-ALU3(LRP)
+ALU3F(MAD)
+ALU3F(LRP)
 ALU1(BFREV)
 ALU3(BFE)
 ALU2(BFI1)
