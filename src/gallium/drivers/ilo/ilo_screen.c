@@ -372,7 +372,6 @@ ilo_get_param(struct pipe_screen *screen, enum pipe_cap param)
          return is->dev.has_gen7_sol_reset;
       else
          return false; /* TODO */
-   case PIPE_CAP_TGSI_CAN_COMPACT_VARYINGS:
    case PIPE_CAP_TGSI_CAN_COMPACT_CONSTANTS:
       return false;
    case PIPE_CAP_VERTEX_COLOR_UNCLAMPED:

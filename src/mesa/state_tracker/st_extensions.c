@@ -276,9 +276,6 @@ void st_init_limits(struct st_context *st)
    c->GLSLSkipStrictMaxUniformLimitCheck =
       screen->get_param(screen, PIPE_CAP_TGSI_CAN_COMPACT_CONSTANTS);
 
-   c->GLSLSkipStrictMaxVaryingLimitCheck =
-      screen->get_param(screen, PIPE_CAP_TGSI_CAN_COMPACT_VARYINGS);
-
    if (can_ubo) {
       st->ctx->Extensions.ARB_uniform_buffer_object = GL_TRUE;
       c->UniformBufferOffsetAlignment =
