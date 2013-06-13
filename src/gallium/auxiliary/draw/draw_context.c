@@ -138,6 +138,7 @@ boolean draw_init(struct draw_context *draw)
    draw->clip_z = TRUE;
 
    draw->pt.user.planes = (float (*) [DRAW_TOTAL_CLIP_PLANES][4]) &(draw->plane[0]);
+   draw->pt.user.eltMax = ~0;
 
    if (!draw_pipeline_init( draw ))
       return FALSE;
