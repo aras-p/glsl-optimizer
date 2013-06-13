@@ -602,10 +602,7 @@ ilo_clear(struct pipe_context *pipe,
 
    util_blitter_clear(ilo->blitter,
          ilo->fb.state.width, ilo->fb.state.height,
-         ilo->fb.state.nr_cbufs, buffers,
-         (ilo->fb.state.nr_cbufs) ? ilo->fb.state.cbufs[0]->format :
-                                    PIPE_FORMAT_NONE,
-         color, depth, stencil);
+         buffers, color, depth, stencil);
 
    ilo_blitter_end(ilo);
 }
