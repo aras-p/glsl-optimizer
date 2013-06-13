@@ -1156,3 +1156,103 @@ ilo_cleanup_states(struct ilo_context *ilo)
    for (i = 0; i < ilo->global_binding.count; i++)
       pipe_resource_reference(&ilo->global_binding.resources[i], NULL);
 }
+
+/**
+ * Mark all states that have the resource dirty.
+ */
+void
+ilo_mark_states_with_resource_dirty(struct ilo_context *ilo,
+                                    const struct pipe_resource *res)
+{
+   uint32_t states = 0;
+   unsigned sh, i;
+
+   if (res->target == PIPE_BUFFER) {
+      uint32_t vb_mask = ilo->vb.enabled_mask;
+
+      while (vb_mask) {
+         const unsigned idx = u_bit_scan(&vb_mask);
+
+         if (ilo->vb.states[idx].buffer == res) {
+            states |= ILO_DIRTY_VERTEX_BUFFERS;
+            break;
+         }
+      }
+
+      if (ilo->ib.state.buffer == res)
+         states |= ILO_DIRTY_INDEX_BUFFER;
+
+      for (i = 0; i < ilo->so.count; i++) {
+         if (ilo->so.states[i]->buffer == res) {
+            states |= ILO_DIRTY_STREAM_OUTPUT_TARGETS;
+            break;
+         }
+      }
+   }
+
+   for (sh = 0; sh < PIPE_SHADER_TYPES; sh++) {
+      for (i = 0; i < ilo->view[sh].count; i++) {
+         struct pipe_sampler_view *view = ilo->view[sh].states[i];
+
+         if (view->texture == res) {
+            static const unsigned view_dirty_bits[PIPE_SHADER_TYPES] = {
+               [PIPE_SHADER_VERTEX]    = ILO_DIRTY_VERTEX_SAMPLER_VIEWS,
+               [PIPE_SHADER_FRAGMENT]  = ILO_DIRTY_FRAGMENT_SAMPLER_VIEWS,
+               [PIPE_SHADER_GEOMETRY]  = ILO_DIRTY_GEOMETRY_SAMPLER_VIEWS,
+               [PIPE_SHADER_COMPUTE]   = ILO_DIRTY_COMPUTE_SAMPLER_VIEWS,
+            };
+
+            states |= view_dirty_bits[sh];
+            break;
+         }
+      }
+
+      if (res->target == PIPE_BUFFER) {
+         for (i = 0; i < Elements(ilo->cbuf[sh].cso); i++) {
+            struct ilo_cbuf_cso *cbuf = &ilo->cbuf[sh].cso[i];
+
+            if (cbuf->resource == res) {
+               states |= ILO_DIRTY_CONSTANT_BUFFER;
+               break;
+            }
+         }
+      }
+   }
+
+   for (i = 0; i < ilo->resource.count; i++) {
+      if (ilo->resource.states[i]->texture == res) {
+         states |= ILO_DIRTY_SHADER_RESOURCES;
+         break;
+      }
+   }
+
+   /* for now? */
+   if (res->target != PIPE_BUFFER) {
+      for (i = 0; i < ilo->fb.state.nr_cbufs; i++) {
+         if (ilo->fb.state.cbufs[i]->texture == res) {
+            states |= ILO_DIRTY_FRAMEBUFFER;
+            break;
+         }
+      }
+
+      if (ilo->fb.state.zsbuf && ilo->fb.state.zsbuf->texture == res)
+         states |= ILO_DIRTY_FRAMEBUFFER;
+   }
+
+   for (i = 0; i < ilo->cs_resource.count; i++) {
+      pipe_surface_reference(&ilo->cs_resource.states[i], NULL);
+      if (ilo->cs_resource.states[i]->texture == res) {
+         states |= ILO_DIRTY_COMPUTE_RESOURCES;
+         break;
+      }
+   }
+
+   for (i = 0; i < ilo->global_binding.count; i++) {
+      if (ilo->global_binding.resources[i] == res) {
+         states |= ILO_DIRTY_GLOBAL_BINDING;
+         break;
+      }
+   }
+
+   ilo->dirty |= states;
+}

@@ -661,13 +661,6 @@ ilo_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
             ILO_3D_PIPELINE_INVALIDATE_KERNEL_BO);
    }
 
-   /*
-    * The VBs and/or IB may have different BOs due to being mapped with
-    * PIPE_TRANSFER_DISCARD_x.  We should track that instead of setting the
-    * dirty flags for the performance reason.
-    */
-   ilo->dirty |= ILO_DIRTY_VERTEX_BUFFERS | ILO_DIRTY_INDEX_BUFFER;
-
    /* If draw_vbo ever fails, return immediately. */
    if (!draw_vbo(hw3d, ilo, info, &prim_generated, &prim_emitted))
       return;

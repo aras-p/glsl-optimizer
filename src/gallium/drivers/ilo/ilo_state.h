@@ -113,6 +113,7 @@ enum ilo_dirty_flags {
    ILO_DIRTY_ALL                      = 0xffffffff,
 };
 
+struct pipe_resource;
 struct ilo_context;
 
 void
@@ -126,5 +127,9 @@ ilo_cleanup_states(struct ilo_context *ilo);
 
 void
 ilo_finalize_states(struct ilo_context *ilo);
+
+void
+ilo_mark_states_with_resource_dirty(struct ilo_context *ilo,
+                                    const struct pipe_resource *res);
 
 #endif /* ILO_STATE_H */

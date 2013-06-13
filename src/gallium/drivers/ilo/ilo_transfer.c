@@ -32,6 +32,7 @@
 #include "ilo_cp.h"
 #include "ilo_context.h"
 #include "ilo_resource.h"
+#include "ilo_state.h"
 #include "ilo_transfer.h"
 
 static bool
@@ -135,8 +136,10 @@ choose_transfer_method(struct ilo_context *ilo, struct ilo_transfer *xfer)
       else if (usage & PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE) {
          /* discard old bo and allocate a new one for mapping */
          if ((tex && ilo_texture_alloc_bo(tex)) ||
-             (buf && ilo_buffer_alloc_bo(buf)))
+             (buf && ilo_buffer_alloc_bo(buf))) {
+            ilo_mark_states_with_resource_dirty(ilo, res);
             will_stall = false;
+         }
       }
       else if (usage & PIPE_TRANSFER_FLUSH_EXPLICIT) {
          /*
@@ -920,8 +923,10 @@ buf_pwrite(struct ilo_context *ilo, struct ilo_buffer *buf,
 
       if (usage & PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE) {
          /* old data not needed so discard the old bo to avoid stalling */
-         if (ilo_buffer_alloc_bo(buf))
+         if (ilo_buffer_alloc_bo(buf)) {
+            ilo_mark_states_with_resource_dirty(ilo, &buf->base);
             will_stall = false;
+         }
       }
       else {
          /*
