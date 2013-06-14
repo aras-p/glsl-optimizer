@@ -1147,7 +1147,7 @@ update_array_sizes(struct gl_shader_program *prog)
 	    }
 	 }
 
-	 if (size + 1 != var->type->fields.array->length) {
+	 if (size + 1 != var->type->length) {
 	    /* If this is a built-in uniform (i.e., it's backed by some
 	     * fixed-function state), adjust the number of state slots to
 	     * match the new array size.  The number of slots per array entry
