@@ -458,6 +458,8 @@ vs_prepare_tgsi_sampling(struct toy_compiler *tc, const struct toy_inst *inst,
       break;
    default:
       assert(!"unhandled sampling opcode");
+      if (ret_sampler_index)
+         *ret_sampler_index = 0;
       return tsrc_null();
       break;
    }
