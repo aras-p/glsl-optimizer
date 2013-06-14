@@ -316,7 +316,7 @@ static INLINE GLuint CPU_TO_LE32(GLuint x)
     defined(__arm__) || \
     defined(__sh__) || defined(__m32r__) || \
     (defined(__sun) && defined(_IEEE_754)) || \
-    (defined(__alpha__) && defined(__IEEE_FLOAT))
+    defined(__alpha__)
 #define USE_IEEE
 #define IEEE_ONE 0x3f800000
 #endif
