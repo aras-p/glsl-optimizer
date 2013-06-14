@@ -112,12 +112,14 @@ do_flush( struct pipe_context *pipe,
 static void
 llvmpipe_render_condition ( struct pipe_context *pipe,
                             struct pipe_query *query,
+                            boolean condition,
                             uint mode )
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context( pipe );
 
    llvmpipe->render_cond_query = query;
    llvmpipe->render_cond_mode = mode;
+   llvmpipe->render_cond_cond = condition;
 }
 
 struct pipe_context *

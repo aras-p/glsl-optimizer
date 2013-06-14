@@ -153,8 +153,10 @@ struct r600_context {
 	struct si_cs_shader_state	cs_shader_state;
 	struct pipe_query		*current_render_cond;
 	unsigned			current_render_cond_mode;
+	boolean				current_render_cond_cond;
 	struct pipe_query		*saved_render_cond;
 	unsigned			saved_render_cond_mode;
+	boolean				saved_render_cond_cond;
 	/* shader information */
 	unsigned			sprite_coord_enable;
 	unsigned			export_16bpc;

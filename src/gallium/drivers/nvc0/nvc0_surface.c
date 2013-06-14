@@ -801,7 +801,7 @@ nvc0_blitctx_post_blit(struct nvc0_blitctx *blit)
 
    if (nvc0->cond_query)
       nvc0->base.pipe.render_condition(&nvc0->base.pipe, nvc0->cond_query,
-                                       nvc0->cond_mode);
+                                       nvc0->cond_cond, nvc0->cond_mode);
 
    nouveau_bufctx_reset(nvc0->bufctx_3d, NVC0_BIND_FB);
    nouveau_bufctx_reset(nvc0->bufctx_3d, NVC0_BIND_TEX(4, 0));

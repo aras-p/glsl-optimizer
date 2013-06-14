@@ -284,12 +284,13 @@ llvmpipe_check_render_cond(struct llvmpipe_context *lp)
 
    if (!lp->render_cond_query)
       return TRUE; /* no query predicate, draw normally */
+
    wait = (lp->render_cond_mode == PIPE_RENDER_COND_WAIT ||
            lp->render_cond_mode == PIPE_RENDER_COND_BY_REGION_WAIT);
 
    b = pipe->get_query_result(pipe, lp->render_cond_query, wait, (void*)&result);
    if (b)
-      return result > 0;
+      return (!result == lp->render_cond_cond);
    else
       return TRUE;
 }

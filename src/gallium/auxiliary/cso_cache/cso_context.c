@@ -111,6 +111,7 @@ struct cso_context {
    void *velements, *velements_saved;
    struct pipe_query *render_condition, *render_condition_saved;
    uint render_condition_mode, render_condition_mode_saved;
+   boolean render_condition_cond, render_condition_cond_saved;
 
    struct pipe_clip_state clip;
    struct pipe_clip_state clip_saved;
@@ -723,13 +724,17 @@ void cso_restore_stencil_ref(struct cso_context *ctx)
 }
 
 void cso_set_render_condition(struct cso_context *ctx,
-                              struct pipe_query *query, uint mode)
+                              struct pipe_query *query,
+                              boolean condition, uint mode)
 {
    struct pipe_context *pipe = ctx->pipe;
 
-   if (ctx->render_condition != query || ctx->render_condition_mode != mode) {
-      pipe->render_condition(pipe, query, mode);
+   if (ctx->render_condition != query ||
+       ctx->render_condition_mode != mode ||
+       ctx->render_condition_cond != condition) {
+      pipe->render_condition(pipe, query, condition, mode);
       ctx->render_condition = query;
+      ctx->render_condition_cond = condition;
       ctx->render_condition_mode = mode;
    }
 }
@@ -737,12 +742,14 @@ void cso_set_render_condition(struct cso_context *ctx,
 void cso_save_render_condition(struct cso_context *ctx)
 {
    ctx->render_condition_saved = ctx->render_condition;
+   ctx->render_condition_cond_saved = ctx->render_condition_cond;
    ctx->render_condition_mode_saved = ctx->render_condition_mode;
 }
 
 void cso_restore_render_condition(struct cso_context *ctx)
 {
    cso_set_render_condition(ctx, ctx->render_condition_saved,
+                            ctx->render_condition_cond_saved,
                             ctx->render_condition_mode_saved);
 }
 

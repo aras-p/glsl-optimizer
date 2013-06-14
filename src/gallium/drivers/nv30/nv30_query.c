@@ -232,7 +232,8 @@ nv30_query_result(struct pipe_context *pipe, struct pipe_query *pq,
 
 static void
 nv40_query_render_condition(struct pipe_context *pipe,
-                            struct pipe_query *pq, uint mode)
+                            struct pipe_query *pq,
+                            boolean condition, uint mode)
 {
    struct nv30_context *nv30 = nv30_context(pipe);
    struct nv30_query *q = nv30_query(pq);
@@ -240,6 +241,7 @@ nv40_query_render_condition(struct pipe_context *pipe,
 
    nv30->render_cond_query = pq;
    nv30->render_cond_mode = mode;
+   nv30->render_cond_cond = condition;
 
    if (!pq) {
       BEGIN_NV04(push, SUBC_3D(0x1e98), 1);

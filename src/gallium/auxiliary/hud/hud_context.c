@@ -456,7 +456,7 @@ hud_draw(struct hud_context *hud, struct pipe_resource *tex)
    cso_set_geometry_shader_handle(cso, NULL);
    cso_set_vertex_shader_handle(cso, hud->vs);
    cso_set_vertex_elements(cso, 2, hud->velems);
-   cso_set_render_condition(cso, NULL, 0);
+   cso_set_render_condition(cso, NULL, FALSE, 0);
    cso_set_sampler_views(cso, PIPE_SHADER_FRAGMENT, 1,
                          &hud->font_sampler_view);
    cso_set_samplers(cso, PIPE_SHADER_FRAGMENT, 1, sampler_states);

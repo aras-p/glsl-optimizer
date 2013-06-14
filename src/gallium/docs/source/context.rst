@@ -382,15 +382,19 @@ Conditional Rendering
 ^^^^^^^^^^^^^^^^^^^^^
 
 A drawing command can be skipped depending on the outcome of a query
-(typically an occlusion query).  The ``render_condition`` function specifies
-the query which should be checked prior to rendering anything.
+(typically an occlusion query, or streamout overflow predicate).
+The ``render_condition`` function specifies the query which should be checked
+prior to rendering anything. Functions honoring render_condition include
+(and are limited to) draw_vbo, clear, clear_render_target, clear_depth_stencil.
 
 If ``render_condition`` is called with ``query`` = NULL, conditional
 rendering is disabled and drawing takes place normally.
 
 If ``render_condition`` is called with a non-null ``query`` subsequent
-drawing commands will be predicated on the outcome of the query.  If
-the query result is zero subsequent drawing commands will be skipped.
+drawing commands will be predicated on the outcome of the query.
+Commands will be skipped if ``condition`` is equal to the predicate result
+(for non-boolean queries such as OCCLUSION_QUERY, zero counts as FALSE,
+non-zero as TRUE).
 
 If ``mode`` is PIPE_RENDER_COND_WAIT the driver will wait for the
 query to complete before deciding whether to render.
@@ -401,7 +405,7 @@ has completed, drawing will be predicated on the outcome of the query.
 
 If ``mode`` is PIPE_RENDER_COND_BY_REGION_WAIT or
 PIPE_RENDER_COND_BY_REGION_NO_WAIT rendering will be predicated as above
-for the non-REGION modes but in the case that an occulusion query returns
+for the non-REGION modes but in the case that an occlusion query returns
 a non-zero result, regions which were occluded may be ommitted by subsequent
 drawing commands.  This can result in better performance with some GPUs.
 Normally, if the occlusion query returned a non-zero result subsequent

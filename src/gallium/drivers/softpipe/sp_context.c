@@ -175,12 +175,14 @@ softpipe_is_resource_referenced( struct pipe_context *pipe,
 static void
 softpipe_render_condition( struct pipe_context *pipe,
                            struct pipe_query *query,
+                           boolean condition,
                            uint mode )
 {
    struct softpipe_context *softpipe = softpipe_context( pipe );
 
    softpipe->render_cond_query = query;
    softpipe->render_cond_mode = mode;
+   softpipe->render_cond_cond = condition;
 }
 
 

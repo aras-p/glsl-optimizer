@@ -125,6 +125,7 @@ struct blitter_context
 
    struct pipe_query *saved_render_cond_query;
    uint saved_render_cond_mode;
+   boolean saved_render_cond_cond;
 };
 
 /**
@@ -515,10 +516,12 @@ util_blitter_save_sample_mask(struct blitter_context *blitter,
 static INLINE void
 util_blitter_save_render_condition(struct blitter_context *blitter,
                                    struct pipe_query *query,
+                                   boolean condition,
                                    uint mode)
 {
    blitter->saved_render_cond_query = query;
    blitter->saved_render_cond_mode = mode;
+   blitter->saved_render_cond_cond = condition;
 }
 
 #ifdef __cplusplus

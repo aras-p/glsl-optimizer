@@ -156,6 +156,7 @@ struct nv50_context {
    boolean vbo_push_hint;
 
    struct pipe_query *cond_query;
+   boolean cond_cond;
    uint cond_mode;
 
    struct nv50_blitctx *blit;

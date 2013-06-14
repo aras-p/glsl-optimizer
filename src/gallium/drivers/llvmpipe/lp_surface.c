@@ -227,7 +227,7 @@ static void lp_blit(struct pipe_context *pipe,
                      lp->num_sampler_views[PIPE_SHADER_FRAGMENT],
                      lp->sampler_views[PIPE_SHADER_FRAGMENT]);
    util_blitter_save_render_condition(lp->blitter, lp->render_cond_query,
-                                      lp->render_cond_mode);
+                                      lp->render_cond_cond, lp->render_cond_mode);
    util_blitter_blit(lp->blitter, &info);
 }
 

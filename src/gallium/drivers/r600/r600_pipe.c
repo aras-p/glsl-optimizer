@@ -162,13 +162,15 @@ static void r600_flush(struct pipe_context *ctx, unsigned flags)
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct pipe_query *render_cond = NULL;
 	unsigned render_cond_mode = 0;
+	boolean render_cond_cond = FALSE;
 
 	rctx->rings.gfx.flushing = true;
 	/* Disable render condition. */
 	if (rctx->current_render_cond) {
 		render_cond = rctx->current_render_cond;
+		render_cond_cond = rctx->current_render_cond_cond;
 		render_cond_mode = rctx->current_render_cond_mode;
-		ctx->render_condition(ctx, NULL, 0);
+		ctx->render_condition(ctx, NULL, FALSE, 0);
 	}
 
 	r600_context_flush(rctx, flags);
@@ -177,7 +179,7 @@ static void r600_flush(struct pipe_context *ctx, unsigned flags)
 
 	/* Re-enable render condition. */
 	if (render_cond) {
-		ctx->render_condition(ctx, render_cond, render_cond_mode);
+		ctx->render_condition(ctx, render_cond, render_cond_cond, render_cond_mode);
 	}
 }
 

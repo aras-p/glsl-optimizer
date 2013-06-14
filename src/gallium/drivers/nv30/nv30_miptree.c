@@ -213,7 +213,7 @@ nv30_blit(struct pipe_context *pipe,
    util_blitter_save_fragment_sampler_views(nv30->blitter,
                      nv30->fragprog.num_textures, nv30->fragprog.textures);
    util_blitter_save_render_condition(nv30->blitter, nv30->render_cond_query,
-                                      nv30->render_cond_mode);
+                                      nv30->render_cond_cond, nv30->render_cond_mode);
    util_blitter_blit(nv30->blitter, &info);
 }
 

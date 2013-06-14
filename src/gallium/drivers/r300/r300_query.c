@@ -178,6 +178,7 @@ static boolean r300_get_query_result(struct pipe_context* pipe,
 
 static void r300_render_condition(struct pipe_context *pipe,
                                   struct pipe_query *query,
+                                  boolean condition,
                                   uint mode)
 {
     struct r300_context *r300 = r300_context(pipe);
@@ -192,10 +193,10 @@ static void r300_render_condition(struct pipe_context *pipe,
 
         if (r300_get_query_result(pipe, query, wait, &result)) {
             if (r300_query(query)->type == PIPE_QUERY_OCCLUSION_PREDICATE) {
-                r300->skip_rendering = !result.b;
+                r300->skip_rendering = condition == result.b;
             } else {
-                r300->skip_rendering = !result.u64;
-	    }
+                r300->skip_rendering = condition == !!result.u64;
+            }
         }
     }
 }

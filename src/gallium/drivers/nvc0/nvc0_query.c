@@ -518,7 +518,8 @@ nvc0_query_fifo_wait(struct nouveau_pushbuf *push, struct pipe_query *pq)
 
 static void
 nvc0_render_condition(struct pipe_context *pipe,
-                      struct pipe_query *pq, uint mode)
+                      struct pipe_query *pq,
+                      boolean condition, uint mode)
 {
    struct nvc0_context *nvc0 = nvc0_context(pipe);
    struct nouveau_pushbuf *push = nvc0->base.pushbuf;
@@ -530,6 +531,7 @@ nvc0_render_condition(struct pipe_context *pipe,
       mode != PIPE_RENDER_COND_BY_REGION_NO_WAIT;
 
    nvc0->cond_query = pq;
+   nvc0->cond_cond = condition;
    nvc0->cond_mode = mode;
 
    if (!pq) {

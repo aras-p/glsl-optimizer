@@ -76,12 +76,12 @@ st_BeginConditionalRender(struct gl_context *ctx, struct gl_query_object *q,
       m = PIPE_RENDER_COND_WAIT;
    }
 
-   cso_set_render_condition(st->cso_context, stq->pq, m);
+   cso_set_render_condition(st->cso_context, stq->pq, FALSE, m);
 }
 
 
 /**
- * Called via ctx->Driver.BeginConditionalRender()
+ * Called via ctx->Driver.EndConditionalRender()
  */
 static void
 st_EndConditionalRender(struct gl_context *ctx, struct gl_query_object *q)
@@ -91,7 +91,7 @@ st_EndConditionalRender(struct gl_context *ctx, struct gl_query_object *q)
 
    st_flush_bitmap_cache(st);
 
-   cso_set_render_condition(st->cso_context, NULL, 0);
+   cso_set_render_condition(st->cso_context, NULL, FALSE, 0);
 }
 
 

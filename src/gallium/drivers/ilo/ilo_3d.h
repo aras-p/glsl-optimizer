@@ -49,6 +49,7 @@ struct ilo_3d {
    struct {
       struct pipe_query *query;
       unsigned mode;
+      boolean cond;
    } render_condition;
 
    struct list_head occlusion_queries;

@@ -1011,12 +1011,13 @@ galahad_context_transfer_inline_write(struct pipe_context *_context,
 static void
 galahad_context_render_condition(struct pipe_context *_context,
                                  struct pipe_query *query,
+                                 boolean condition,
                                  uint mode)
 {
    struct galahad_context *glhd_context = galahad_context(_context);
    struct pipe_context *context = glhd_context->pipe;
 
-   context->render_condition(context, query, mode);
+   context->render_condition(context, query, condition, mode);
 }
 
 

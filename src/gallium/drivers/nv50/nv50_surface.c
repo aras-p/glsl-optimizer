@@ -902,7 +902,7 @@ nv50_blitctx_post_blit(struct nv50_blitctx *blit)
 
    if (nv50->cond_query)
       nv50->base.pipe.render_condition(&nv50->base.pipe, nv50->cond_query,
-                                       nv50->cond_mode);
+                                       nv50->cond_cond, nv50->cond_mode);
 
    nouveau_bufctx_reset(nv50->bufctx_3d, NV50_BIND_FB);
    nouveau_bufctx_reset(nv50->bufctx_3d, NV50_BIND_TEXTURES);

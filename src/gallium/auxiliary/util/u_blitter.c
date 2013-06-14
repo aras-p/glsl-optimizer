@@ -492,7 +492,7 @@ static void blitter_disable_render_cond(struct blitter_context_priv *ctx)
    struct pipe_context *pipe = ctx->base.pipe;
 
    if (ctx->base.saved_render_cond_query) {
-      pipe->render_condition(pipe, NULL, 0);
+      pipe->render_condition(pipe, NULL, FALSE, 0);
    }
 }
 
@@ -502,6 +502,7 @@ static void blitter_restore_render_cond(struct blitter_context_priv *ctx)
 
    if (ctx->base.saved_render_cond_query) {
       pipe->render_condition(pipe, ctx->base.saved_render_cond_query,
+                             ctx->base.saved_render_cond_cond,
                              ctx->base.saved_render_cond_mode);
       ctx->base.saved_render_cond_query = NULL;
    }

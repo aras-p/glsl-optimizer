@@ -669,6 +669,7 @@ static boolean r600_get_query_result(struct pipe_context *ctx,
 
 static void r600_render_condition(struct pipe_context *ctx,
 				  struct pipe_query *query,
+				  boolean condition,
 				  uint mode)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
@@ -676,6 +677,7 @@ static void r600_render_condition(struct pipe_context *ctx,
 	bool wait_flag = false;
 
 	rctx->current_render_cond = query;
+	rctx->current_render_cond_cond = condition;
 	rctx->current_render_cond_mode = mode;
 
 	if (query == NULL) {

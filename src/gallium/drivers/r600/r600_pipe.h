@@ -629,6 +629,7 @@ struct r600_context {
 	/* Render condition. */
 	struct pipe_query		*current_render_cond;
 	unsigned			current_render_cond_mode;
+	boolean				current_render_cond_cond;
 	boolean				predicate_drawing;
 
 	void				*sb_context;

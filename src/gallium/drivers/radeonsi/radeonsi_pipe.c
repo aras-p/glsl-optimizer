@@ -139,6 +139,7 @@ void radeonsi_flush(struct pipe_context *ctx, struct pipe_fence_handle **fence,
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_fence **rfence = (struct r600_fence**)fence;
 	struct pipe_query *render_cond = NULL;
+	boolean render_cond_cond = FALSE;
 	unsigned render_cond_mode = 0;
 
 	if (rfence)
@@ -147,15 +148,16 @@ void radeonsi_flush(struct pipe_context *ctx, struct pipe_fence_handle **fence,
 	/* Disable render condition. */
 	if (rctx->current_render_cond) {
 		render_cond = rctx->current_render_cond;
+		render_cond_cond = rctx->current_render_cond_cond;
 		render_cond_mode = rctx->current_render_cond_mode;
-		ctx->render_condition(ctx, NULL, 0);
+		ctx->render_condition(ctx, NULL, FALSE, 0);
 	}
 
 	si_context_flush(rctx, flags);
 
 	/* Re-enable render condition. */
 	if (render_cond) {
-		ctx->render_condition(ctx, render_cond, render_cond_mode);
+		ctx->render_condition(ctx, render_cond, render_cond_cond, render_cond_mode);
 	}
 }
 

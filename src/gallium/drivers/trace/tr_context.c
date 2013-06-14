@@ -1482,6 +1482,7 @@ trace_context_transfer_inline_write(struct pipe_context *_context,
 
 static void trace_context_render_condition(struct pipe_context *_context,
                                            struct pipe_query *query,
+                                           boolean condition,
                                            uint mode)
 {
    struct trace_context *tr_context = trace_context(_context);
@@ -1491,11 +1492,12 @@ static void trace_context_render_condition(struct pipe_context *_context,
 
    trace_dump_arg(ptr, context);
    trace_dump_arg(ptr, query);
+   trace_dump_arg(bool, condition);
    trace_dump_arg(uint, mode);
 
    trace_dump_call_end();
 
-   context->render_condition(context, query, mode);
+   context->render_condition(context, query, condition, mode);
 }
 
 

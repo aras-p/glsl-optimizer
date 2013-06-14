@@ -445,7 +445,7 @@ pass_render_condition(struct ilo_3d *hw3d, struct pipe_context *pipe)
 
    if (pipe->get_query_result(pipe, hw3d->render_condition.query,
             wait, (union pipe_query_result *) &result)) {
-      return (result > 0);
+      return (!result == hw3d->render_condition.cond);
    }
    else {
       return true;
@@ -679,6 +679,7 @@ ilo_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
 static void
 ilo_render_condition(struct pipe_context *pipe,
                      struct pipe_query *query,
+                     boolean condition,
                      uint mode)
 {
    struct ilo_context *ilo = ilo_context(pipe);
@@ -687,6 +688,7 @@ ilo_render_condition(struct pipe_context *pipe,
    /* reference count? */
    hw3d->render_condition.query = query;
    hw3d->render_condition.mode = mode;
+   hw3d->render_condition.cond = condition;
 }
 
 static void

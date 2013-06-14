@@ -321,13 +321,15 @@ nv84_query_fifo_wait(struct nouveau_pushbuf *push, struct pipe_query *pq)
 
 static void
 nv50_render_condition(struct pipe_context *pipe,
-                      struct pipe_query *pq, uint mode)
+                      struct pipe_query *pq,
+                      boolean condition, uint mode)
 {
    struct nv50_context *nv50 = nv50_context(pipe);
    struct nouveau_pushbuf *push = nv50->base.pushbuf;
    struct nv50_query *q;
 
    nv50->cond_query = pq;
+   nv50->cond_cond = condition;
    nv50->cond_mode = mode;
 
    PUSH_SPACE(push, 6);

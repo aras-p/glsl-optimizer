@@ -88,6 +88,7 @@ static void r600_blitter_begin(struct pipe_context *ctx, enum r600_blitter_op op
 	if ((op & R600_DISABLE_RENDER_COND) && rctx->current_render_cond) {
            util_blitter_save_render_condition(rctx->blitter,
                                               rctx->current_render_cond,
+                                              rctx->current_render_cond_cond,
                                               rctx->current_render_cond_mode);
         }
 }

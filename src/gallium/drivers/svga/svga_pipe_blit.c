@@ -206,7 +206,7 @@ static void svga_blit(struct pipe_context *pipe,
                      svga->curr.num_sampler_views,
                      svga->curr.sampler_views);
    /*util_blitter_save_render_condition(svga->blitter, svga->render_cond_query,
-                                      svga->render_cond_mode);*/
+                                      svga->render_cond_cond, svga->render_cond_mode);*/
    util_blitter_blit(svga->blitter, &info);
 }
 

@@ -129,6 +129,7 @@ struct nv30_context {
 
    struct pipe_query *render_cond_query;
    unsigned render_cond_mode;
+   boolean render_cond_cond;
 };
 
 static INLINE struct nv30_context *
