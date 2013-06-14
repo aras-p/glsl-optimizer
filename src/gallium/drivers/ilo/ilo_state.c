@@ -531,6 +531,9 @@ ilo_set_constant_buffer(struct pipe_context *pipe,
    if (buf) {
       const enum pipe_format elem_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
 
+      /* no PIPE_CAP_USER_CONSTANT_BUFFERS */
+      assert(!buf->user_buffer);
+
       pipe_resource_reference(&cbuf->resource, buf->buffer);
 
       ilo_gpe_init_view_surface_for_buffer(ilo->dev, ilo_buffer(buf->buffer),
@@ -760,6 +763,13 @@ ilo_set_vertex_buffers(struct pipe_context *pipe,
                        const struct pipe_vertex_buffer *buffers)
 {
    struct ilo_context *ilo = ilo_context(pipe);
+   unsigned i;
+
+   /* no PIPE_CAP_USER_VERTEX_BUFFERS */
+   if (buffers) {
+      for (i = 0; i < num_buffers; i++)
+         assert(!buffers[i].user_buffer);
+   }
 
    util_set_vertex_buffers_mask(ilo->vb.states,
          &ilo->vb.enabled_mask, buffers, start_slot, num_buffers);
@@ -774,6 +784,9 @@ ilo_set_index_buffer(struct pipe_context *pipe,
    struct ilo_context *ilo = ilo_context(pipe);
 
    if (state) {
+      /* no PIPE_CAP_USER_INDEX_BUFFERS */
+      assert(!state->user_buffer);
+
       ilo->ib.state.index_size = state->index_size;
       ilo->ib.state.offset = state->offset;
       pipe_resource_reference(&ilo->ib.state.buffer, state->buffer);
@@ -871,7 +884,16 @@ ilo_create_sampler_view(struct pipe_context *pipe,
             elem_size, templ->format, false, false, &view->surface);
    }
    else {
-      ilo_gpe_init_view_surface_for_texture(ilo->dev, ilo_texture(res),
+      struct ilo_texture *tex = ilo_texture(res);
+
+      /* warn about degraded performance because of a missing binding flag */
+      if (tex->tiling == INTEL_TILING_NONE &&
+          !(tex->base.bind & PIPE_BIND_SAMPLER_VIEW)) {
+         ilo_warn("creating sampler view for a resource "
+                  "not created for sampling\n");
+      }
+
+      ilo_gpe_init_view_surface_for_texture(ilo->dev, tex,
             templ->format,
             templ->u.tex.first_level,
             templ->u.tex.last_level - templ->u.tex.first_level + 1,
