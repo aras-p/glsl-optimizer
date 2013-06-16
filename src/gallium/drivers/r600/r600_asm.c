@@ -27,9 +27,9 @@
 #include "r600d.h"
 
 #include <errno.h>
-#include <byteswap.h>
 #include "util/u_dump.h"
 #include "util/u_memory.h"
+#include "util/u_math.h"
 #include "pipe/p_shader_tokens.h"
 
 #include "sb/sb_public.h"
@@ -2419,7 +2419,7 @@ void *r600_create_vertex_fetch_shader(struct pipe_context *ctx,
 
 	if (R600_BIG_ENDIAN) {
 		for (i = 0; i < fs_size / 4; ++i) {
-			bytecode[i] = bswap_32(bc.bytecode[i]);
+			bytecode[i] = util_bswap32(bc.bytecode[i]);
 		}
 	} else {
 		memcpy(bytecode, bc.bytecode, fs_size);

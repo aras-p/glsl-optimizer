@@ -25,8 +25,6 @@
  *      Corbin Simpson <MostAwesomeDude@gmail.com>
  */
 
-#include <byteswap.h>
-
 #include "pipe/p_screen.h"
 #include "util/u_format.h"
 #include "util/u_math.h"
@@ -185,7 +183,7 @@ void r600_upload_const_buffer(struct r600_context *rctx, struct si_resource **rb
 		}
 
 		for (i = 0; i < size / 4; ++i) {
-			tmpPtr[i] = bswap_32(((uint32_t *)ptr)[i]);
+			tmpPtr[i] = util_bswap32(((uint32_t *)ptr)[i]);
 		}
 
 		u_upload_data(rctx->uploader, 0, size, tmpPtr, const_offset,

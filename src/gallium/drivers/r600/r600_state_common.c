@@ -32,8 +32,8 @@
 #include "util/u_index_modify.h"
 #include "util/u_memory.h"
 #include "util/u_upload_mgr.h"
+#include "util/u_math.h"
 #include "tgsi/tgsi_parse.h"
-#include <byteswap.h>
 
 #define R600_PRIM_RECTANGLE_LIST PIPE_PRIM_MAX
 
@@ -953,7 +953,7 @@ static void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint
 			}
 
 			for (i = 0; i < size / 4; ++i) {
-				tmpPtr[i] = bswap_32(((uint32_t *)ptr)[i]);
+				tmpPtr[i] = util_bswap32(((uint32_t *)ptr)[i]);
 			}
 
 			u_upload_data(rctx->uploader, 0, size, tmpPtr, &cb->buffer_offset, &cb->buffer);

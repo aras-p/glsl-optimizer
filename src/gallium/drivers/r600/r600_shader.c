@@ -35,9 +35,9 @@
 #include "tgsi/tgsi_scan.h"
 #include "tgsi/tgsi_dump.h"
 #include "util/u_memory.h"
+#include "util/u_math.h"
 #include <stdio.h>
 #include <errno.h>
-#include <byteswap.h>
 
 /* CAYMAN notes 
 Why CAYMAN got loops for lots of instructions is explained here.
@@ -194,7 +194,7 @@ int r600_pipe_shader_create(struct pipe_context *ctx,
 		ptr = r600_buffer_mmap_sync_with_rings(rctx, shader->bo, PIPE_TRANSFER_WRITE);
 		if (R600_BIG_ENDIAN) {
 			for (i = 0; i < shader->shader.bc.ndw; ++i) {
-				ptr[i] = bswap_32(shader->shader.bc.bytecode[i]);
+				ptr[i] = util_bswap32(shader->shader.bc.bytecode[i]);
 			}
 		} else {
 			memcpy(ptr, shader->shader.bc.bytecode, shader->shader.bc.ndw * sizeof(*ptr));
