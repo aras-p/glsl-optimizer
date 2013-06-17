@@ -25,11 +25,11 @@
  *    Chia-I Wu <olv@lunarg.com>
  */
 
-#include "util/u_blitter.h"
 #include "intel_chipset.h"
 
 #include "ilo_3d.h"
 #include "ilo_blit.h"
+#include "ilo_blitter.h"
 #include "ilo_cp.h"
 #include "ilo_gpgpu.h"
 #include "ilo_query.h"
@@ -99,7 +99,7 @@ ilo_context_destroy(struct pipe_context *pipe)
    util_slab_destroy(&ilo->transfer_mempool);
 
    if (ilo->blitter)
-      util_blitter_destroy(ilo->blitter);
+      ilo_blitter_destroy(ilo->blitter);
    if (ilo->hw3d)
       ilo_3d_destroy(ilo->hw3d);
    if (ilo->shader_cache)
@@ -156,7 +156,7 @@ ilo_context_create(struct pipe_screen *screen, void *priv)
    ilo_init_states(ilo);
 
    /* this must be called last as u_blitter is a client of the pipe context */
-   ilo->blitter = util_blitter_create(&ilo->base);
+   ilo->blitter = ilo_blitter_create(ilo);
    if (!ilo->blitter) {
       ilo_context_destroy(&ilo->base);
       return NULL;

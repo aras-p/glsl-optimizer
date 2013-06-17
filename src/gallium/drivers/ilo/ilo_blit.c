@@ -25,12 +25,11 @@
  *    Chia-I Wu <olv@lunarg.com>
  */
 
-#include "util/u_blitter.h"
-#include "util/u_clear.h"
 #include "util/u_pack_color.h"
 #include "util/u_surface.h"
 #include "intel_reg.h"
 
+#include "ilo_blitter.h"
 #include "ilo_context.h"
 #include "ilo_cp.h"
 #include "ilo_resource.h"
@@ -532,62 +531,6 @@ blitter_xy_color_blt(struct pipe_context *pipe,
    return true;
 }
 
-enum ilo_blitter_op {
-   ILO_BLITTER_CLEAR,
-   ILO_BLITTER_CLEAR_SURFACE,
-   ILO_BLITTER_BLIT,
-};
-
-static void
-ilo_blitter_begin(struct ilo_context *ilo, enum ilo_blitter_op op)
-{
-   /* as documented in util/u_blitter.h */
-   util_blitter_save_vertex_buffer_slot(ilo->blitter, ilo->vb.states);
-   util_blitter_save_vertex_elements(ilo->blitter, (void *) ilo->ve);
-   util_blitter_save_vertex_shader(ilo->blitter, ilo->vs);
-   util_blitter_save_geometry_shader(ilo->blitter, ilo->gs);
-   util_blitter_save_so_targets(ilo->blitter, ilo->so.count, ilo->so.states);
-
-   util_blitter_save_fragment_shader(ilo->blitter, ilo->fs);
-   util_blitter_save_depth_stencil_alpha(ilo->blitter, (void *) ilo->dsa);
-   util_blitter_save_blend(ilo->blitter, (void *) ilo->blend);
-
-   /* undocumented? */
-   util_blitter_save_viewport(ilo->blitter, &ilo->viewport.viewport0);
-   util_blitter_save_stencil_ref(ilo->blitter, &ilo->stencil_ref);
-   util_blitter_save_sample_mask(ilo->blitter, ilo->sample_mask);
-
-   switch (op) {
-   case ILO_BLITTER_CLEAR:
-      util_blitter_save_rasterizer(ilo->blitter, (void *) ilo->rasterizer);
-      break;
-   case ILO_BLITTER_CLEAR_SURFACE:
-      util_blitter_save_framebuffer(ilo->blitter, &ilo->fb.state);
-      break;
-   case ILO_BLITTER_BLIT:
-      util_blitter_save_rasterizer(ilo->blitter, (void *) ilo->rasterizer);
-      util_blitter_save_framebuffer(ilo->blitter, &ilo->fb.state);
-
-      util_blitter_save_fragment_sampler_states(ilo->blitter,
-            ilo->sampler[PIPE_SHADER_FRAGMENT].count,
-            (void **) ilo->sampler[PIPE_SHADER_FRAGMENT].cso);
-
-      util_blitter_save_fragment_sampler_views(ilo->blitter,
-            ilo->view[PIPE_SHADER_FRAGMENT].count,
-            ilo->view[PIPE_SHADER_FRAGMENT].states);
-
-      /* disable render condition? */
-      break;
-   default:
-      break;
-   }
-}
-
-static void
-ilo_blitter_end(struct ilo_context *ilo)
-{
-}
-
 static void
 ilo_clear(struct pipe_context *pipe,
           unsigned buffers,
@@ -597,14 +540,7 @@ ilo_clear(struct pipe_context *pipe,
 {
    struct ilo_context *ilo = ilo_context(pipe);
 
-   /* TODO we should pause/resume some queries */
-   ilo_blitter_begin(ilo, ILO_BLITTER_CLEAR);
-
-   util_blitter_clear(ilo->blitter,
-         ilo->fb.state.width, ilo->fb.state.height,
-         buffers, color, depth, stencil);
-
-   ilo_blitter_end(ilo);
+   ilo_blitter_pipe_clear_fb(ilo->blitter, buffers, color, depth, stencil);
 }
 
 static void
@@ -634,10 +570,8 @@ ilo_clear_render_target(struct pipe_context *pipe,
                             packed.ui))
       return;
 
-   ilo_blitter_begin(ilo, ILO_BLITTER_CLEAR_SURFACE);
-   util_blitter_clear_render_target(ilo->blitter,
+   ilo_blitter_pipe_clear_rt(ilo->blitter,
          dst, color, dstx, dsty, width, height);
-   ilo_blitter_end(ilo);
 }
 
 static void
@@ -656,43 +590,17 @@ ilo_clear_depth_stencil(struct pipe_context *pipe,
     * not tell us how to program it.  Since depth buffers are always Y-tiled,
     * HW blit will not work.
     */
-   ilo_blitter_begin(ilo, ILO_BLITTER_CLEAR_SURFACE);
-   util_blitter_clear_depth_stencil(ilo->blitter,
+
+   ilo_blitter_pipe_clear_zs(ilo->blitter,
          dst, clear_flags, depth, stencil, dstx, dsty, width, height);
-   ilo_blitter_end(ilo);
 }
 
 static void
 ilo_blit(struct pipe_context *pipe, const struct pipe_blit_info *info)
 {
    struct ilo_context *ilo = ilo_context(pipe);
-   struct pipe_blit_info skip_stencil;
 
-   if (util_try_blit_via_copy_region(pipe, info))
-      return;
-
-   if (!util_blitter_is_blit_supported(ilo->blitter, info)) {
-      /* try without stencil */
-      if (info->mask & PIPE_MASK_S) {
-         skip_stencil = *info;
-         skip_stencil.mask = info->mask & ~PIPE_MASK_S;
-
-         if (util_blitter_is_blit_supported(ilo->blitter, &skip_stencil))
-            info = &skip_stencil;
-      }
-
-      if (info == &skip_stencil) {
-         ilo_warn("ignore stencil buffer blitting\n");
-      }
-      else {
-         ilo_warn("failed to blit with the generic blitter\n");
-         return;
-      }
-   }
-
-   ilo_blitter_begin(ilo, ILO_BLITTER_BLIT);
-   util_blitter_blit(ilo->blitter, info);
-   ilo_blitter_end(ilo);
+   ilo_blitter_pipe_blit(ilo->blitter, info);
 }
 
 /**
