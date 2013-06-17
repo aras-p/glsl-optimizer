@@ -77,4 +77,26 @@ ilo_blitter_pipe_clear_fb(struct ilo_blitter *blitter,
                           const union pipe_color_union *color,
                           double depth, unsigned stencil);
 
+bool
+ilo_blitter_blt_copy_resource(struct ilo_blitter *blitter,
+                              struct pipe_resource *dst, unsigned dst_level,
+                              unsigned dst_x, unsigned dst_y, unsigned dst_z,
+                              struct pipe_resource *src, unsigned src_level,
+                              const struct pipe_box *src_box);
+
+bool
+ilo_blitter_blt_clear_rt(struct ilo_blitter *blitter,
+                         struct pipe_surface *rt,
+                         const union pipe_color_union *color,
+                         unsigned x, unsigned y,
+                         unsigned width, unsigned height);
+
+bool
+ilo_blitter_blt_clear_zs(struct ilo_blitter *blitter,
+                         struct pipe_surface *zs,
+                         unsigned clear_flags,
+                         double depth, unsigned stencil,
+                         unsigned x, unsigned y,
+                         unsigned width, unsigned height);
+
 #endif /* ILO_BLITTER_H */
