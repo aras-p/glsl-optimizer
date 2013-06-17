@@ -125,6 +125,12 @@ llvmpipe_get_query_result(struct pipe_context *pipe,
          *result += pq->count[i];
       }
       break;
+   case PIPE_QUERY_OCCLUSION_PREDICATE:
+      for (i = 0; i < num_threads; i++) {
+         /* safer (still not guaranteed) when there's an overflow */
+         *result = *result || pq->count[i];
+      }
+      break;
    case PIPE_QUERY_TIMESTAMP:
       for (i = 0; i < num_threads; i++) {
          if (pq->count[i] > *result) {
@@ -183,28 +189,25 @@ llvmpipe_begin_query(struct pipe_context *pipe, struct pipe_query *q)
    memset(pq->count, 0, sizeof(pq->count));
    lp_setup_begin_query(llvmpipe->setup, pq);
 
-   if (pq->type == PIPE_QUERY_PRIMITIVES_EMITTED) {
+   switch (pq->type) {
+   case PIPE_QUERY_PRIMITIVES_EMITTED:
       pq->num_primitives_written = 0;
       llvmpipe->so_stats.num_primitives_written = 0;
-   }
-
-   if (pq->type == PIPE_QUERY_PRIMITIVES_GENERATED) {
+      break;
+   case PIPE_QUERY_PRIMITIVES_GENERATED:
       pq->num_primitives_generated = 0;
       llvmpipe->num_primitives_generated = 0;
-   }
-
-   if (pq->type == PIPE_QUERY_SO_STATISTICS) {
+      break;
+   case PIPE_QUERY_SO_STATISTICS:
       pq->num_primitives_written = 0;
       llvmpipe->so_stats.num_primitives_written = 0;
       pq->num_primitives_generated = 0;
       llvmpipe->num_primitives_generated = 0;
-   }
-
-   if (pq->type == PIPE_QUERY_SO_OVERFLOW_PREDICATE) {
+      break;
+   case PIPE_QUERY_SO_OVERFLOW_PREDICATE:
       pq->so_has_overflown = FALSE;
-   }
-
-   if (pq->type == PIPE_QUERY_PIPELINE_STATISTICS) {
+      break;
+   case PIPE_QUERY_PIPELINE_STATISTICS:
       /* reset our cache */
       if (llvmpipe->active_statistics_queries == 0) {
          memset(&llvmpipe->pipeline_statistics, 0,
@@ -212,11 +215,16 @@ llvmpipe_begin_query(struct pipe_context *pipe, struct pipe_query *q)
       }
       memcpy(&pq->stats, &llvmpipe->pipeline_statistics, sizeof(pq->stats));
       llvmpipe->active_statistics_queries++;
-   }
-
-   if (pq->type == PIPE_QUERY_OCCLUSION_COUNTER) {
-      llvmpipe->active_occlusion_query = TRUE;
+      break;
+   case PIPE_QUERY_OCCLUSION_COUNTER:
+   case PIPE_QUERY_OCCLUSION_PREDICATE:
+      /* Both active at same time will still fail all over the place.
+       * Then again several of each type can be active too... */
+      llvmpipe->active_occlusion_query++;
       llvmpipe->dirty |= LP_NEW_OCCLUSION_QUERY;
+      break;
+   default:
+      break;
    }
 }
 
@@ -229,25 +237,23 @@ llvmpipe_end_query(struct pipe_context *pipe, struct pipe_query *q)
 
    lp_setup_end_query(llvmpipe->setup, pq);
 
-   if (pq->type == PIPE_QUERY_PRIMITIVES_EMITTED) {
+   switch (pq->type) {
+
+   case PIPE_QUERY_PRIMITIVES_EMITTED:
       pq->num_primitives_written = llvmpipe->so_stats.num_primitives_written;
-   }
-
-   if (pq->type == PIPE_QUERY_PRIMITIVES_GENERATED) {
+      break;
+   case PIPE_QUERY_PRIMITIVES_GENERATED:
       pq->num_primitives_generated = llvmpipe->num_primitives_generated;
-   }
-
-   if (pq->type == PIPE_QUERY_SO_STATISTICS) {
+      break;
+   case PIPE_QUERY_SO_STATISTICS:
       pq->num_primitives_written = llvmpipe->so_stats.num_primitives_written;
       pq->num_primitives_generated = llvmpipe->num_primitives_generated;
-   }
-
-   if (pq->type == PIPE_QUERY_SO_OVERFLOW_PREDICATE) {
+      break;
+   case PIPE_QUERY_SO_OVERFLOW_PREDICATE:
       pq->so_has_overflown = (llvmpipe->num_primitives_generated >
                               llvmpipe->so_stats.num_primitives_written);
-   }
-
-   if (pq->type == PIPE_QUERY_PIPELINE_STATISTICS) {
+      break;
+   case PIPE_QUERY_PIPELINE_STATISTICS:
       pq->stats.ia_vertices =
          llvmpipe->pipeline_statistics.ia_vertices - pq->stats.ia_vertices;
       pq->stats.ia_primitives =
@@ -266,12 +272,15 @@ llvmpipe_end_query(struct pipe_context *pipe, struct pipe_query *q)
          llvmpipe->pipeline_statistics.ps_invocations - pq->stats.ps_invocations;
 
       llvmpipe->active_statistics_queries--;
-   }
-
-   if (pq->type == PIPE_QUERY_OCCLUSION_COUNTER) {
+      break;
+   case PIPE_QUERY_OCCLUSION_COUNTER:
+   case PIPE_QUERY_OCCLUSION_PREDICATE:
       assert(llvmpipe->active_occlusion_query);
-      llvmpipe->active_occlusion_query = FALSE;
+      llvmpipe->active_occlusion_query--;
       llvmpipe->dirty |= LP_NEW_OCCLUSION_QUERY;
+      break;
+   default:
+      break;
    }
 }
 

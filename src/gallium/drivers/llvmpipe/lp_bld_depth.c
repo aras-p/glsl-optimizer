@@ -429,6 +429,7 @@ get_s_shift_and_mask(const struct util_format_description *format_desc,
  * Test the depth mask. Add the number of channel which has none zero mask
  * into the occlusion counter. e.g. maskvalue is {-1, -1, -1, -1}.
  * The counter will add 4.
+ * TODO: could get that out of the loop, and need to use 64bit counter.
  *
  * \param type holds element type of the mask vector.
  * \param maskvalue is the depth test mask.

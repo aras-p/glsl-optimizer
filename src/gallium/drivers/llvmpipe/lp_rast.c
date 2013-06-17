@@ -490,6 +490,7 @@ lp_rast_begin_query(struct lp_rasterizer_task *task,
 
    switch (pq->type) {
    case PIPE_QUERY_OCCLUSION_COUNTER:
+   case PIPE_QUERY_OCCLUSION_PREDICATE:
       task->thread_data.vis_counter = 0;
       break;
    case PIPE_QUERY_PRIMITIVES_GENERATED:
@@ -521,6 +522,7 @@ lp_rast_end_query(struct lp_rasterizer_task *task,
 
    switch (pq->type) {
    case PIPE_QUERY_OCCLUSION_COUNTER:
+   case PIPE_QUERY_OCCLUSION_PREDICATE:
       pq->count[task->thread_index] += task->thread_data.vis_counter;
       break;
    case PIPE_QUERY_TIMESTAMP:

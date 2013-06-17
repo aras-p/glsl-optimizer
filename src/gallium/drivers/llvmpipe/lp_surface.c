@@ -32,6 +32,7 @@
 #include "lp_limits.h"
 #include "lp_surface.h"
 #include "lp_texture.h"
+#include "lp_query.h"
 
 
 /**
@@ -286,11 +287,48 @@ llvmpipe_surface_destroy(struct pipe_context *pipe,
 }
 
 
+static void
+llvmpipe_clear_render_target(struct pipe_context *pipe,
+                             struct pipe_surface *dst,
+                             const union pipe_color_union *color,
+                             unsigned dstx, unsigned dsty,
+                             unsigned width, unsigned height)
+{
+   struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
+
+   if (!llvmpipe_check_render_cond(llvmpipe))
+      return;
+
+   util_clear_render_target(pipe, dst, color,
+                            dstx, dsty, width, height);
+}
+
+
+static void
+llvmpipe_clear_depth_stencil(struct pipe_context *pipe,
+                             struct pipe_surface *dst,
+                             unsigned clear_flags,
+                             double depth,
+                             unsigned stencil,
+                             unsigned dstx, unsigned dsty,
+                             unsigned width, unsigned height)
+{
+   struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
+
+   if (!llvmpipe_check_render_cond(llvmpipe))
+      return;
+
+   util_clear_depth_stencil(pipe, dst, clear_flags,
+                            depth, stencil,
+                            dstx, dsty, width, height);
+}
+
+
 void
 llvmpipe_init_surface_functions(struct llvmpipe_context *lp)
 {
-   lp->pipe.clear_render_target = util_clear_render_target;
-   lp->pipe.clear_depth_stencil = util_clear_depth_stencil;
+   lp->pipe.clear_render_target = llvmpipe_clear_render_target;
+   lp->pipe.clear_depth_stencil = llvmpipe_clear_depth_stencil;
    lp->pipe.create_surface = llvmpipe_create_surface;
    lp->pipe.surface_destroy = llvmpipe_surface_destroy;
    /* These two are not actually functions dealing with surfaces */
