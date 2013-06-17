@@ -597,7 +597,7 @@ gen7_update_renderbuffer_surface(struct brw_context *brw,
 
    assert(brw->has_surface_tile_offset);
 
-   surf[5] = irb->mt_level;
+   surf[5] = irb->mt_level - irb->mt->first_level;
 
    surf[2] = SET_FIELD(irb->mt->logical_width0 - 1, GEN7_SURFACE_WIDTH) |
              SET_FIELD(irb->mt->logical_height0 - 1, GEN7_SURFACE_HEIGHT);
