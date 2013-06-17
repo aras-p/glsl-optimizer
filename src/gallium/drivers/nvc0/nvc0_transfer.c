@@ -505,13 +505,13 @@ nvc0_miptree_transfer_unmap(struct pipe_context *pctx,
    FREE(tx);
 }
 
+/* This happens rather often with DTD9/st. */
 void
 nvc0_cb_push(struct nouveau_context *nv,
              struct nouveau_bo *bo, unsigned domain,
              unsigned base, unsigned size,
              unsigned offset, unsigned words, const uint32_t *data)
 {
-   struct nouveau_bufctx *bctx = nvc0_context(&nv->pipe)->bufctx;
    struct nouveau_pushbuf *push = nv->pushbuf;
 
    NOUVEAU_DRV_STAT(nv->screen, constbuf_upload_count, 1);
@@ -519,10 +519,6 @@ nvc0_cb_push(struct nouveau_context *nv,
 
    assert(!(offset & 3));
    size = align(size, 0x100);
-
-   nouveau_bufctx_refn(bctx, 0, bo, NOUVEAU_BO_WR | domain);
-   nouveau_pushbuf_bufctx(push, bctx);
-   nouveau_pushbuf_validate(push);
 
    BEGIN_NVC0(push, NVC0_3D(CB_SIZE), 3);
    PUSH_DATA (push, size);
@@ -534,6 +530,8 @@ nvc0_cb_push(struct nouveau_context *nv,
       nr = MIN2(nr, words);
       nr = MIN2(nr, NV04_PFIFO_MAX_PACKET_LEN - 1);
 
+      PUSH_SPACE(push, nr + 2);
+      PUSH_REFN (push, bo, NOUVEAU_BO_WR | domain);
       BEGIN_1IC0(push, NVC0_3D(CB_POS), nr + 1);
       PUSH_DATA (push, offset);
       PUSH_DATAp(push, data, nr);
@@ -542,8 +540,6 @@ nvc0_cb_push(struct nouveau_context *nv,
       data += nr;
       offset += nr * 4;
    }
-
-   nouveau_bufctx_reset(bctx, 0);
 }
 
 void
