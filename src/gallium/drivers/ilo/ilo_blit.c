@@ -26,13 +26,9 @@
  */
 
 #include "util/u_surface.h"
-#include "intel_reg.h"
 
 #include "ilo_blitter.h"
 #include "ilo_context.h"
-#include "ilo_cp.h"
-#include "ilo_resource.h"
-#include "ilo_screen.h"
 #include "ilo_blit.h"
 
 static void
@@ -47,6 +43,11 @@ ilo_resource_copy_region(struct pipe_context *pipe,
    struct ilo_context *ilo = ilo_context(pipe);
 
    if (ilo_blitter_blt_copy_resource(ilo->blitter,
+            dst, dst_level, dstx, dsty, dstz,
+            src, src_level, src_box))
+      return;
+
+   if (ilo_blitter_pipe_copy_resource(ilo->blitter,
             dst, dst_level, dstx, dsty, dstz,
             src, src_level, src_box))
       return;

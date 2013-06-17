@@ -139,7 +139,26 @@ ilo_blitter_pipe_copy_resource(struct ilo_blitter *blitter,
                                struct pipe_resource *src, unsigned src_level,
                                const struct pipe_box *src_box)
 {
-   return false;
+   const unsigned mask = PIPE_MASK_RGBAZS;
+   const bool copy_all_samples = true;
+
+   /* not until we allow rendertargets to be buffers */
+   if (dst->target == PIPE_BUFFER || src->target == PIPE_BUFFER)
+      return false;
+
+   if (!util_blitter_is_copy_supported(blitter->pipe_blitter, dst, src, mask))
+      return false;
+
+   ilo_blitter_pipe_begin(blitter, ILO_BLITTER_PIPE_COPY);
+
+   util_blitter_copy_texture(blitter->pipe_blitter,
+         dst, dst_level, dst_x, dst_y, dst_z,
+         src, src_level, src_box,
+         mask, copy_all_samples);
+
+   ilo_blitter_pipe_end(blitter);
+
+   return true;
 }
 
 bool
