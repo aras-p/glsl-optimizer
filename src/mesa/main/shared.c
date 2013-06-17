@@ -218,7 +218,8 @@ delete_shader_cb(GLuint id, void *data, void *userData)
 {
    struct gl_context *ctx = (struct gl_context *) userData;
    struct gl_shader *sh = (struct gl_shader *) data;
-   if (sh->Type == GL_FRAGMENT_SHADER || sh->Type == GL_VERTEX_SHADER) {
+   if (sh->Type == GL_FRAGMENT_SHADER || sh->Type == GL_VERTEX_SHADER ||
+       sh->Type == GL_GEOMETRY_SHADER) {
       ctx->Driver.DeleteShader(ctx, sh);
    }
    else {
