@@ -566,11 +566,10 @@ nvc0_state_validate(struct nvc0_context *nvc0, uint32_t mask, unsigned words)
 
    nouveau_pushbuf_bufctx(nvc0->base.pushbuf, nvc0->bufctx_3d);
    ret = nouveau_pushbuf_validate(nvc0->base.pushbuf);
-   if (unlikely(ret))
-      return FALSE;
 
-   if (unlikely(nvc0->state.flushed))
+   if (unlikely(nvc0->state.flushed)) {
+      nvc0->state.flushed = FALSE;
       nvc0_bufctx_fence(nvc0, nvc0->bufctx_3d, TRUE);
-
-   return TRUE;
+   }
+   return !ret;
 }
