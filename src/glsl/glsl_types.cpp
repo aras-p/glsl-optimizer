@@ -600,13 +600,13 @@ glsl_type::get_instance(unsigned base_type, unsigned rows, unsigned columns)
    if (columns == 1) {
       switch (base_type) {
       case GLSL_TYPE_UINT:
-	 return uint_type + (rows - 1);
+	 return uvec(rows);
       case GLSL_TYPE_INT:
-	 return int_type + (rows - 1);
+	 return ivec(rows);
       case GLSL_TYPE_FLOAT:
-	 return float_type + (rows - 1);
+	 return vec(rows);
       case GLSL_TYPE_BOOL:
-	 return bool_type + (rows - 1);
+	 return bvec(rows);
       default:
 	 return error_type;
       }
