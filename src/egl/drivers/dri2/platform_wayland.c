@@ -715,8 +715,15 @@ registry_handle_global(void *data, struct wl_registry *registry, uint32_t name,
    }
 }
 
+static void
+registry_handle_global_remove(void *data, struct wl_registry *registry,
+			      uint32_t name)
+{
+}
+
 static const struct wl_registry_listener registry_listener = {
-	registry_handle_global
+   registry_handle_global,
+   registry_handle_global_remove
 };
 
 EGLBoolean
