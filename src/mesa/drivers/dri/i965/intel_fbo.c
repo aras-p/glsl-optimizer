@@ -268,6 +268,13 @@ intel_image_target_renderbuffer_storage(struct gl_context *ctx,
       return;
    }
 
+   /* Buffers originating from outside are for read-only. */
+   if (image->dma_buf_imported) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+            "glEGLImageTargetRenderbufferStorage(dma buffers are read-only)");
+      return;
+   }
+
    /* __DRIimage is opaque to the core so it has to be checked here */
    switch (image->format) {
    case MESA_FORMAT_RGBA8888_REV:
