@@ -112,7 +112,7 @@ softpipe_draw_vbo(struct pipe_context *pipe,
    }
 
    draw_set_mapped_so_targets(draw, sp->num_so_targets,
-                              sp->so_targets, sp->so_append_bitmask);
+                              sp->so_targets);
 
    if (sp->gs && !sp->gs->shader.tokens) {
       /* we have an empty geometry shader with stream output, so
@@ -135,7 +135,7 @@ softpipe_draw_vbo(struct pipe_context *pipe,
       draw_set_indexes(draw, NULL, 0, 0);
    }
 
-   draw_set_mapped_so_targets(draw, 0, NULL, 0);
+   draw_set_mapped_so_targets(draw, 0, NULL);
 
    /*
     * TODO: Flush only when a user vertex/index buffer is present

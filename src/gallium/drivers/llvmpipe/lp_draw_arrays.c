@@ -104,7 +104,7 @@ llvmpipe_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
       }
    }
    draw_set_mapped_so_targets(draw, lp->num_so_targets,
-                              lp->so_targets, lp->so_append_bitmask);
+                              lp->so_targets);
 
    llvmpipe_prepare_vertex_sampling(lp,
                                     lp->num_sampler_views[PIPE_SHADER_VERTEX],
@@ -134,7 +134,7 @@ llvmpipe_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
    if (mapped_indices) {
       draw_set_indexes(draw, NULL, 0, 0);
    }
-   draw_set_mapped_so_targets(draw, 0, NULL, 0);
+   draw_set_mapped_so_targets(draw, 0, NULL);
 
    if (lp->gs && !lp->gs->shader.tokens) {
       /* we have attached stream output to the vs for rendering,

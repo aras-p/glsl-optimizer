@@ -88,7 +88,6 @@ struct softpipe_context {
 
    struct draw_so_target *so_targets[PIPE_MAX_SO_BUFFERS];
    unsigned num_so_targets;
-   unsigned so_append_bitmask;
    
    struct pipe_query_data_so_statistics so_stats;
    unsigned num_primitives_generated;
