@@ -45,17 +45,6 @@
                              * sizeof(float))
 /** \} */
 
-void
-gen6_blorp_emit_batch_head(struct brw_context *brw,
-                           const brw_blorp_params *params)
-{
-   /* To ensure that the batch contains only the resolve, flush the batch
-    * before beginning and after finishing emitting the resolve packets.
-    */
-   intel_batchbuffer_flush(brw);
-}
-
-
 /**
  * CMD_STATE_BASE_ADDRESS
  *
@@ -1045,7 +1034,6 @@ gen6_blorp_exec(struct brw_context *brw,
    uint32_t wm_bind_bo_offset = 0;
 
    uint32_t prog_offset = params->get_wm_prog(brw, &prog_data);
-   gen6_blorp_emit_batch_head(brw, params);
    gen6_emit_3dstate_multisample(brw, params->num_samples);
    gen6_emit_3dstate_sample_mask(brw, params->num_samples, 1.0, false, ~0u);
    gen6_blorp_emit_state_base_address(brw, params);
