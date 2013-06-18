@@ -153,38 +153,17 @@ struct glsl_type {
       struct glsl_struct_field *structure;      /**< List of struct fields. */
    } fields;
 
-
    /**
     * \name Pointers to various public type singletons
     */
    /*@{*/
-   static const glsl_type *const error_type;
-   static const glsl_type *const void_type;
-   static const glsl_type *const int_type;
-   static const glsl_type *const ivec2_type;
-   static const glsl_type *const ivec3_type;
-   static const glsl_type *const ivec4_type;
-   static const glsl_type *const uint_type;
-   static const glsl_type *const uvec2_type;
-   static const glsl_type *const uvec3_type;
-   static const glsl_type *const uvec4_type;
-   static const glsl_type *const float_type;
-   static const glsl_type *const vec2_type;
-   static const glsl_type *const vec3_type;
-   static const glsl_type *const vec4_type;
-   static const glsl_type *const bool_type;
-   static const glsl_type *const bvec2_type;
-   static const glsl_type *const bvec3_type;
-   static const glsl_type *const bvec4_type;
-   static const glsl_type *const mat2_type;
-   static const glsl_type *const mat2x3_type;
-   static const glsl_type *const mat2x4_type;
-   static const glsl_type *const mat3x2_type;
-   static const glsl_type *const mat3_type;
-   static const glsl_type *const mat3x4_type;
-   static const glsl_type *const mat4x2_type;
-   static const glsl_type *const mat4x3_type;
-   static const glsl_type *const mat4_type;
+#undef  DECL_TYPE
+#define DECL_TYPE(NAME, REST...) \
+   static const glsl_type *const NAME##_type;
+#undef  STRUCT_TYPE
+#define STRUCT_TYPE(NAME) \
+   static const glsl_type *const struct_##NAME##_type;
+#include "builtin_type_macros.h"
    /*@}*/
 
    /**
@@ -551,53 +530,14 @@ private:
    static unsigned record_key_hash(const void *key);
 
    /**
-    * \name Pointers to various type singletons
+    * \name Built-in type flyweights
     */
    /*@{*/
-   static const glsl_type _error_type;
-   static const glsl_type _void_type;
-   static const glsl_type _sampler3D_type;
-   static const glsl_type _samplerCubeShadow_type;
-   static const glsl_type builtin_core_types[];
-   static const glsl_type builtin_structure_types[];
-   static const glsl_type builtin_110_deprecated_structure_types[];
-   static const glsl_type builtin_110_types[];
-   static const glsl_type builtin_120_types[];
-   static const glsl_type builtin_130_types[];
-   static const glsl_type builtin_140_types[];
-   static const glsl_type builtin_ARB_texture_rectangle_types[];
-   static const glsl_type builtin_EXT_texture_array_types[];
-   static const glsl_type builtin_EXT_texture_buffer_object_types[];
-   static const glsl_type builtin_OES_EGL_image_external_types[];
-   static const glsl_type builtin_ARB_texture_cube_map_array_types[];
-   static const glsl_type builtin_ARB_texture_multisample_types[];
-   /*@}*/
-
-   /**
-    * \name Methods to populate a symbol table with built-in types.
-    *
-    * \internal
-    * This is one of the truely annoying things about C++.  Methods that are
-    * completely internal and private to a type still have to be advertised to
-    * the world in a public header file.
-    */
-   /*@{*/
-   static void generate_100ES_types(glsl_symbol_table *);
-   static void generate_300ES_types(glsl_symbol_table *);
-   static void generate_110_types(glsl_symbol_table *, bool add_deprecated,
-                                  bool skip_1d);
-   static void generate_120_types(glsl_symbol_table *, bool add_deprecated,
-                                  bool skip_1d);
-   static void generate_130_types(glsl_symbol_table *, bool add_deprecated,
-                                  bool skip_1d);
-   static void generate_140_types(glsl_symbol_table *);
-   static void generate_150_types(glsl_symbol_table *);
-   static void generate_ARB_texture_rectangle_types(glsl_symbol_table *, bool);
-   static void generate_EXT_texture_array_types(glsl_symbol_table *, bool);
-   static void generate_OES_texture_3D_types(glsl_symbol_table *, bool);
-   static void generate_OES_EGL_image_external_types(glsl_symbol_table *, bool);
-   static void generate_ARB_texture_cube_map_array_types(glsl_symbol_table *, bool);
-   static void generate_ARB_texture_multisample_types(glsl_symbol_table *, bool);
+#undef  DECL_TYPE
+#define DECL_TYPE(NAME, REST...) static const glsl_type _##NAME##_type;
+#undef  STRUCT_TYPE
+#define STRUCT_TYPE(NAME)        static const glsl_type _struct_##NAME##_type;
+#include "builtin_type_macros.h"
    /*@}*/
 
    /**
@@ -625,6 +565,8 @@ glsl_align(unsigned int a, unsigned int align)
    return (a + align - 1) / align * align;
 }
 
+#undef DECL_TYPE
+#undef STRUCT_TYPE
 #endif /* __cplusplus */
 
 #endif /* GLSL_TYPES_H */
