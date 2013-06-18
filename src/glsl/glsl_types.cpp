@@ -534,6 +534,58 @@ glsl_type::glsl_type(const glsl_type *array, unsigned length) :
 }
 
 
+const glsl_type *const
+glsl_type::vec(unsigned components)
+{
+   if (components == 0 || components > 4)
+      return error_type;
+
+   static const glsl_type *const ts[] = {
+      float_type, vec2_type, vec3_type, vec4_type
+   };
+   return ts[components - 1];
+}
+
+
+const glsl_type *const
+glsl_type::ivec(unsigned components)
+{
+   if (components == 0 || components > 4)
+      return error_type;
+
+   static const glsl_type *const ts[] = {
+      int_type, ivec2_type, ivec3_type, ivec4_type
+   };
+   return ts[components - 1];
+}
+
+
+const glsl_type *const
+glsl_type::uvec(unsigned components)
+{
+   if (components == 0 || components > 4)
+      return error_type;
+
+   static const glsl_type *const ts[] = {
+      uint_type, uvec2_type, uvec3_type, uvec4_type
+   };
+   return ts[components - 1];
+}
+
+
+const glsl_type *const
+glsl_type::bvec(unsigned components)
+{
+   if (components == 0 || components > 4)
+      return error_type;
+
+   static const glsl_type *const ts[] = {
+      bool_type, bvec2_type, bvec3_type, bvec4_type
+   };
+   return ts[components - 1];
+}
+
+
 const glsl_type *
 glsl_type::get_instance(unsigned base_type, unsigned rows, unsigned columns)
 {
