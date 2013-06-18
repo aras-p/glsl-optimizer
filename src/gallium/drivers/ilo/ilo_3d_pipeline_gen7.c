@@ -532,9 +532,22 @@ gen7_pipeline_wm(struct ilo_3d_pipeline *p,
 
    /* 3DSTATE_DEPTH_BUFFER and 3DSTATE_CLEAR_PARAMS */
    if (DIRTY(FRAMEBUFFER) || session->batch_bo_changed) {
-      p->gen7_3DSTATE_DEPTH_BUFFER(p->dev, ilo->fb.state.zsbuf, p->cp);
-      p->gen6_3DSTATE_HIER_DEPTH_BUFFER(p->dev, ilo->fb.state.zsbuf, p->cp);
-      p->gen6_3DSTATE_STENCIL_BUFFER(p->dev, ilo->fb.state.zsbuf, p->cp);
+      const struct ilo_zs_surface *zs;
+
+      if (ilo->fb.state.zsbuf) {
+         const struct ilo_surface_cso *surface =
+            (const struct ilo_surface_cso *) ilo->fb.state.zsbuf;
+
+         assert(!surface->is_rt);
+         zs = &surface->u.zs;
+      }
+      else {
+         zs = &ilo->fb.null_zs;
+      }
+
+      p->gen7_3DSTATE_DEPTH_BUFFER(p->dev, zs, p->cp);
+      p->gen6_3DSTATE_HIER_DEPTH_BUFFER(p->dev, zs, p->cp);
+      p->gen6_3DSTATE_STENCIL_BUFFER(p->dev, zs, p->cp);
 
       /* TODO */
       p->gen6_3DSTATE_CLEAR_PARAMS(p->dev, 0, p->cp);

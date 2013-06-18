@@ -717,12 +717,25 @@ gen6_pipeline_wm_depth(struct ilo_3d_pipeline *p,
 {
    /* 3DSTATE_DEPTH_BUFFER and 3DSTATE_CLEAR_PARAMS */
    if (DIRTY(FRAMEBUFFER) || session->batch_bo_changed) {
+      const struct ilo_zs_surface *zs;
+
+      if (ilo->fb.state.zsbuf) {
+         const struct ilo_surface_cso *surface =
+            (const struct ilo_surface_cso *) ilo->fb.state.zsbuf;
+
+         assert(!surface->is_rt);
+         zs = &surface->u.zs;
+      }
+      else {
+         zs = &ilo->fb.null_zs;
+      }
+
       if (p->dev->gen == ILO_GEN(6)) {
          gen6_wa_pipe_control_post_sync(p, false);
          gen6_wa_pipe_control_wm_depth_flush(p);
       }
 
-      p->gen6_3DSTATE_DEPTH_BUFFER(p->dev, ilo->fb.state.zsbuf, p->cp);
+      p->gen6_3DSTATE_DEPTH_BUFFER(p->dev, zs, p->cp);
 
       /* TODO */
       p->gen6_3DSTATE_CLEAR_PARAMS(p->dev, 0, p->cp);

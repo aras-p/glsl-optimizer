@@ -216,12 +216,19 @@ struct ilo_surface_cso {
    bool is_rt;
    union {
       struct ilo_view_surface rt;
+      struct ilo_zs_surface {
+         uint32_t payload[10];
+         struct intel_bo *bo;
+         struct intel_bo *hiz_bo;
+         struct intel_bo *separate_s8_bo;
+      } zs;
    } u;
 };
 
 struct ilo_fb_state {
    struct pipe_framebuffer_state state;
 
+   struct ilo_zs_surface null_zs;
    unsigned num_samples;
 };
 
@@ -412,5 +419,13 @@ ilo_gpe_init_view_surface_for_texture(const struct ilo_dev_info *dev,
             is_rt, render_cache_rw, surf);
    }
 }
+
+void
+ilo_gpe_init_zs_surface(const struct ilo_dev_info *dev,
+                        const struct ilo_texture *tex,
+                        enum pipe_format format,
+                        unsigned level,
+                        unsigned first_layer, unsigned num_layers,
+                        struct ilo_zs_surface *zs);
 
 #endif /* ILO_GPE_H */

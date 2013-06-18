@@ -2334,20 +2334,86 @@ gen6_emit_3DSTATE_DRAWING_RECTANGLE(const struct ilo_dev_info *dev,
    ilo_cp_end(cp);
 }
 
-static int
-gen6_get_depth_buffer_format(const struct ilo_dev_info *dev,
-                             enum pipe_format format,
-                             bool hiz,
-                             bool separate_stencil,
-                             bool *has_depth,
-                             bool *has_stencil)
+struct ilo_zs_surface_info {
+   int surface_type;
+   int format;
+
+   struct {
+      struct intel_bo *bo;
+      unsigned stride;
+      enum intel_tiling_mode tiling;
+      uint32_t offset;
+   } zs, stencil, hiz;
+
+   unsigned width, height, depth;
+   unsigned lod, first_layer, num_layers;
+   uint32_t x_offset, y_offset;
+};
+
+static void
+zs_init_info_null(const struct ilo_dev_info *dev,
+                  struct ilo_zs_surface_info *info)
 {
-   int depth_format;
+   ILO_GPE_VALID_GEN(dev, 6, 7);
+
+   memset(info, 0, sizeof(*info));
+
+   info->surface_type = BRW_SURFACE_NULL;
+   info->format = BRW_DEPTHFORMAT_D32_FLOAT;
+   info->width = 1;
+   info->height = 1;
+   info->depth = 1;
+   info->num_layers = 1;
+}
+
+static void
+zs_init_info(const struct ilo_dev_info *dev,
+             const struct ilo_texture *tex,
+             enum pipe_format format,
+             unsigned level,
+             unsigned first_layer, unsigned num_layers,
+             struct ilo_zs_surface_info *info)
+{
+   const bool rebase_layer = true;
+   struct intel_bo * const hiz_bo = NULL;
+   bool separate_stencil;
+   uint32_t x_offset[3], y_offset[3];
 
    ILO_GPE_VALID_GEN(dev, 6, 7);
 
-   *has_depth = true;
-   *has_stencil = false;
+   memset(info, 0, sizeof(*info));
+
+   info->surface_type = ilo_gpe_gen6_translate_texture(tex->base.target);
+
+   if (info->surface_type == BRW_SURFACE_CUBE) {
+      /*
+       * From the Sandy Bridge PRM, volume 2 part 1, page 325-326:
+       *
+       *     "For Other Surfaces (Cube Surfaces):
+       *      This field (Minimum Array Element) is ignored."
+       *
+       *     "For Other Surfaces (Cube Surfaces):
+       *      This field (Render Target View Extent) is ignored."
+       *
+       * As such, we cannot set first_layer and num_layers on cube surfaces.
+       * To work around that, treat it as a 2D surface.
+       */
+      info->surface_type = BRW_SURFACE_2D;
+   }
+
+   if (dev->gen >= ILO_GEN(7)) {
+      separate_stencil = true;
+   }
+   else {
+      /*
+       * From the Sandy Bridge PRM, volume 2 part 1, page 317:
+       *
+       *     "This field (Separate Stencil Buffer Enable) must be set to the
+       *      same value (enabled or disabled) as Hierarchical Depth Buffer
+       *      Enable."
+       */
+      separate_stencil = (hiz_bo != NULL);
+   }
 
    /*
     * From the Sandy Bridge PRM, volume 2 part 1, page 317:
@@ -2366,156 +2432,130 @@ gen6_get_depth_buffer_format(const struct ilo_dev_info *dev,
     * is indeed used, the depth values output by the fragment shaders will
     * be different when read back.
     *
-    * As for GEN7+, separate_stencil_buffer is always true.
+    * As for GEN7+, separate_stencil is always true.
     */
    switch (format) {
    case PIPE_FORMAT_Z16_UNORM:
-      depth_format = BRW_DEPTHFORMAT_D16_UNORM;
+      info->format = BRW_DEPTHFORMAT_D16_UNORM;
       break;
    case PIPE_FORMAT_Z32_FLOAT:
-      depth_format = BRW_DEPTHFORMAT_D32_FLOAT;
+      info->format = BRW_DEPTHFORMAT_D32_FLOAT;
       break;
    case PIPE_FORMAT_Z24X8_UNORM:
-      depth_format = (separate_stencil) ?
-         BRW_DEPTHFORMAT_D24_UNORM_X8_UINT :
-         BRW_DEPTHFORMAT_D24_UNORM_S8_UINT;
-      break;
    case PIPE_FORMAT_Z24_UNORM_S8_UINT:
-      depth_format = (separate_stencil) ?
+      info->format = (separate_stencil) ?
          BRW_DEPTHFORMAT_D24_UNORM_X8_UINT :
          BRW_DEPTHFORMAT_D24_UNORM_S8_UINT;
-      *has_stencil = true;
       break;
    case PIPE_FORMAT_Z32_FLOAT_S8X24_UINT:
-      depth_format = (separate_stencil) ?
+      info->format = (separate_stencil) ?
          BRW_DEPTHFORMAT_D32_FLOAT :
          BRW_DEPTHFORMAT_D32_FLOAT_S8X24_UINT;
-      *has_stencil = true;
       break;
    case PIPE_FORMAT_S8_UINT:
       if (separate_stencil) {
-         depth_format = BRW_DEPTHFORMAT_D32_FLOAT;
-         *has_depth = false;
-         *has_stencil = true;
+         info->format = BRW_DEPTHFORMAT_D32_FLOAT;
          break;
       }
       /* fall through */
    default:
       assert(!"unsupported depth/stencil format");
-      depth_format = BRW_DEPTHFORMAT_D32_FLOAT;
-      *has_depth = false;
-      *has_stencil = false;
+      zs_init_info_null(dev, info);
+      return;
       break;
    }
 
-   return depth_format;
-}
+   if (format != PIPE_FORMAT_S8_UINT) {
+      info->zs.bo = tex->bo;
+      info->zs.stride = tex->bo_stride;
+      info->zs.tiling = tex->tiling;
 
-static void
-gen6_emit_3DSTATE_DEPTH_BUFFER(const struct ilo_dev_info *dev,
-                               const struct pipe_surface *surface,
-                               struct ilo_cp *cp)
-{
-   const uint32_t cmd = (dev->gen >= ILO_GEN(7)) ?
-      ILO_GPE_CMD(0x3, 0x0, 0x05) : ILO_GPE_CMD(0x3, 0x1, 0x05);
-   const uint8_t cmd_len = 7;
-   const int max_2d_size = (dev->gen >= ILO_GEN(7)) ? 16384 : 8192;
-   const int max_array_size = (dev->gen >= ILO_GEN(7)) ? 2048 : 512;
-   const bool hiz = false;
-   struct ilo_texture *tex;
-   uint32_t dw1, dw3, dw4, dw6;
-   uint32_t slice_offset, x_offset, y_offset;
-   int surface_type, depth_format;
-   unsigned lod, first_layer, num_layers;
-   unsigned width, height, depth;
-   bool separate_stencil, has_depth, has_stencil;
-
-   ILO_GPE_VALID_GEN(dev, 6, 7);
-
-   if (dev->gen >= ILO_GEN(7)) {
-      separate_stencil = true;
-   }
-   else {
-      /*
-       * From the Sandy Bridge PRM, volume 2 part 1, page 317:
-       *
-       *     "This field (Separate Stencil Buffer Enable) must be set to the
-       *      same value (enabled or disabled) as Hierarchical Depth Buffer
-       *      Enable."
-       */
-      separate_stencil = hiz;
-   }
-
-   if (surface) {
-      depth_format = gen6_get_depth_buffer_format(dev,
-            surface->format, hiz, separate_stencil, &has_depth, &has_stencil);
-   }
-   else {
-      has_depth = false;
-      has_stencil = false;
-   }
-
-   if (!has_depth && !has_stencil) {
-      dw1 = BRW_SURFACE_NULL << 29 |
-            BRW_DEPTHFORMAT_D32_FLOAT << 18;
-
-      /* Y-tiled */
-      if (dev->gen == ILO_GEN(6)) {
-         dw1 |= 1 << 27 |
-                1 << 26;
+      if (rebase_layer) {
+         info->zs.offset = ilo_texture_get_slice_offset(tex,
+               level, first_layer, &x_offset[0], &y_offset[0]);
       }
-
-      ilo_cp_begin(cp, cmd_len);
-      ilo_cp_write(cp, cmd | (cmd_len - 2));
-      ilo_cp_write(cp, dw1);
-      ilo_cp_write(cp, 0);
-      ilo_cp_write(cp, 0);
-      ilo_cp_write(cp, 0);
-      ilo_cp_write(cp, 0);
-      ilo_cp_write(cp, 0);
-      ilo_cp_end(cp);
-
-      return;
    }
 
-   tex = ilo_texture(surface->texture);
+   if (tex->separate_s8 || format == PIPE_FORMAT_S8_UINT) {
+      const struct ilo_texture *s8_tex =
+         (tex->separate_s8) ? tex->separate_s8 : tex;
 
-   surface_type = ilo_gpe_gen6_translate_texture(tex->base.target);
-   lod = surface->u.tex.level;
-   first_layer = surface->u.tex.first_layer;
-   num_layers = surface->u.tex.last_layer - first_layer + 1;
+      info->stencil.bo = s8_tex->bo;
 
-   width = tex->base.width0;
-   height = tex->base.height0;
-   depth = (tex->base.target == PIPE_TEXTURE_3D) ?
+      /*
+       * From the Sandy Bridge PRM, volume 2 part 1, page 329:
+       *
+       *     "The pitch must be set to 2x the value computed based on width,
+       *       as the stencil buffer is stored with two rows interleaved."
+       *
+       * According to the classic driver, we need to do the same for GEN7+
+       * even though the Ivy Bridge PRM does not say anything about it.
+       */
+      info->stencil.stride = s8_tex->bo_stride * 2;
+
+      info->stencil.tiling = s8_tex->tiling;
+
+      if (rebase_layer) {
+         info->stencil.offset = ilo_texture_get_slice_offset(s8_tex,
+               level, first_layer, &x_offset[1], &y_offset[1]);
+      }
+   }
+
+   if (hiz_bo) {
+      info->hiz.bo = hiz_bo;
+      info->hiz.stride = 0;
+      info->hiz.tiling = 0;
+      info->hiz.offset = 0;
+      x_offset[2] = 0;
+      y_offset[2] = 0;
+   }
+
+   info->width = tex->base.width0;
+   info->height = tex->base.height0;
+   info->depth = (tex->base.target == PIPE_TEXTURE_3D) ?
       tex->base.depth0 : num_layers;
 
-   if (surface_type == BRW_SURFACE_CUBE) {
-      /*
-       * From the Sandy Bridge PRM, volume 2 part 1, page 325-326:
-       *
-       *     "For Other Surfaces (Cube Surfaces):
-       *      This field (Minimum Array Element) is ignored."
-       *
-       *     "For Other Surfaces (Cube Surfaces):
-       *      This field (Render Target View Extent) is ignored."
-       *
-       * As such, we cannot set first_layer and num_layers on cube surfaces.
-       * To work around that, treat it as a 2D surface.
-       */
-      surface_type = BRW_SURFACE_2D;
-   }
+   info->lod = level;
+   info->first_layer = first_layer;
+   info->num_layers = num_layers;
 
-   /*
-    * we always treat the resource as non-mipmapped and set the slice/x/y
-    * offsets manually
-    */
-   if (true) {
+   if (rebase_layer) {
+      /* the size of the layer */
+      info->width = u_minify(info->width, level);
+      info->height = u_minify(info->height, level);
+      if (info->surface_type == BRW_SURFACE_3D)
+         info->depth = u_minify(info->depth, level);
+      else
+         info->depth = 1;
+
       /* no layered rendering */
       assert(num_layers == 1);
 
-      slice_offset = ilo_texture_get_slice_offset(tex,
-            lod, first_layer, &x_offset, &y_offset);
+      info->lod = 0;
+      info->first_layer = 0;
+      info->num_layers = 1;
+
+      /* all three share the same X/Y offsets */
+      if (info->zs.bo) {
+         if (info->stencil.bo) {
+            assert(x_offset[0] == x_offset[1]);
+            assert(y_offset[0] == y_offset[1]);
+         }
+
+         info->x_offset = x_offset[0];
+         info->y_offset = y_offset[0];
+      }
+      else {
+         assert(info->stencil.bo);
+
+         info->x_offset = x_offset[1];
+         info->y_offset = y_offset[1];
+      }
+
+      if (info->hiz.bo) {
+         assert(info->x_offset == x_offset[2]);
+         assert(info->y_offset == y_offset[2]);
+      }
 
       /*
        * From the Sandy Bridge PRM, volume 2 part 1, page 326:
@@ -2527,137 +2567,205 @@ gen6_emit_3DSTATE_DEPTH_BUFFER(const struct ilo_dev_info *dev,
        * sure that does not happen eventually.
        */
       if (dev->gen >= ILO_GEN(7)) {
-         assert((x_offset & 7) == 0 && (y_offset & 7) == 0);
-         x_offset &= ~7;
-         y_offset &= ~7;
+         assert((info->x_offset & 7) == 0 && (info->y_offset & 7) == 0);
+         info->x_offset &= ~7;
+         info->y_offset &= ~7;
       }
 
-      /* the size of the layer */
-      width = u_minify(width, lod);
-      height = u_minify(height, lod);
-      if (surface_type == BRW_SURFACE_3D)
-         depth = u_minify(depth, lod);
-      else
-         depth = 1;
-
-      lod = 0;
-      first_layer = 0;
-
-      width += x_offset;
-      height += y_offset;
+      info->width += info->x_offset;
+      info->height += info->y_offset;
 
       /* we have to treat them as 2D surfaces */
-      if (surface_type == BRW_SURFACE_CUBE) {
+      if (info->surface_type == BRW_SURFACE_CUBE) {
          assert(tex->base.width0 == tex->base.height0);
          /* we will set slice_offset to point to the single face */
-         surface_type = BRW_SURFACE_2D;
+         info->surface_type = BRW_SURFACE_2D;
       }
-      else if (surface_type == BRW_SURFACE_1D && height > 1) {
+      else if (info->surface_type == BRW_SURFACE_1D && info->height > 1) {
          assert(tex->base.height0 == 1);
-         surface_type = BRW_SURFACE_2D;
+         info->surface_type = BRW_SURFACE_2D;
       }
    }
-   else {
-      slice_offset = 0;
-      x_offset = 0;
-      y_offset = 0;
-   }
+}
 
-   /* required for GEN6+ */
-   assert(tex->tiling == INTEL_TILING_Y);
-   assert(tex->bo_stride > 0 && tex->bo_stride < 128 * 1024 &&
-         tex->bo_stride % 128 == 0);
-   assert(width <= tex->bo_stride);
+void
+ilo_gpe_init_zs_surface(const struct ilo_dev_info *dev,
+                        const struct ilo_texture *tex,
+                        enum pipe_format format,
+                        unsigned level,
+                        unsigned first_layer, unsigned num_layers,
+                        struct ilo_zs_surface *zs)
+{
+   const int max_2d_size = (dev->gen >= ILO_GEN(7)) ? 16384 : 8192;
+   const int max_array_size = (dev->gen >= ILO_GEN(7)) ? 2048 : 512;
+   struct ilo_zs_surface_info info;
+   uint32_t dw1, dw2, dw3, dw4, dw5, dw6;
 
-   switch (surface_type) {
+   ILO_GPE_VALID_GEN(dev, 6, 7);
+
+   if (tex)
+      zs_init_info(dev, tex, format, level, first_layer, num_layers, &info);
+   else
+      zs_init_info_null(dev, &info);
+
+   switch (info.surface_type) {
+   case BRW_SURFACE_NULL:
+      break;
    case BRW_SURFACE_1D:
-      assert(width <= max_2d_size && height == 1 &&
-             depth <= max_array_size);
-      assert(first_layer < max_array_size - 1 &&
-             num_layers <= max_array_size);
+      assert(info.width <= max_2d_size && info.height == 1 &&
+             info.depth <= max_array_size);
+      assert(info.first_layer < max_array_size - 1 &&
+             info.num_layers <= max_array_size);
       break;
    case BRW_SURFACE_2D:
-      assert(width <= max_2d_size && height <= max_2d_size &&
-             depth <= max_array_size);
-      assert(first_layer < max_array_size - 1 &&
-             num_layers <= max_array_size);
+      assert(info.width <= max_2d_size && info.height <= max_2d_size &&
+             info.depth <= max_array_size);
+      assert(info.first_layer < max_array_size - 1 &&
+             info.num_layers <= max_array_size);
       break;
    case BRW_SURFACE_3D:
-      assert(width <= 2048 && height <= 2048 && depth <= 2048);
-      assert(first_layer < 2048 && num_layers <= max_array_size);
-      assert(x_offset == 0 && y_offset == 0);
+      assert(info.width <= 2048 && info.height <= 2048 && info.depth <= 2048);
+      assert(info.first_layer < 2048 && info.num_layers <= max_array_size);
+      assert(info.x_offset == 0 && info.y_offset == 0);
       break;
    case BRW_SURFACE_CUBE:
-      assert(width <= max_2d_size && height <= max_2d_size && depth == 1);
-      assert(first_layer == 0 && num_layers == 1);
-      assert(width == height);
-      assert(x_offset == 0 && y_offset == 0);
+      assert(info.width <= max_2d_size && info.height <= max_2d_size &&
+             info.depth == 1);
+      assert(info.first_layer == 0 && info.num_layers == 1);
+      assert(info.width == info.height);
+      assert(info.x_offset == 0 && info.y_offset == 0);
       break;
    default:
       assert(!"unexpected depth surface type");
       break;
    }
 
-   dw1 = surface_type << 29 |
-         depth_format << 18 |
-         (tex->bo_stride - 1);
+   dw1 = info.surface_type << 29 |
+         info.format << 18;
 
-   if (dev->gen >= ILO_GEN(7)) {
-      if (has_depth)
-         dw1 |= 1 << 28;
+   if (info.zs.bo) {
+      /* required for GEN6+ */
+      assert(info.zs.tiling == INTEL_TILING_Y);
+      assert(info.zs.stride > 0 && info.zs.stride < 128 * 1024 &&
+            info.zs.stride % 128 == 0);
+      assert(info.width <= info.zs.stride);
 
-      if (has_stencil)
-         dw1 |= 1 << 27;
-
-      if (hiz)
-         dw1 |= 1 << 22;
-
-      dw3 = (height - 1) << 18 |
-            (width - 1) << 4 |
-            lod;
-
-      dw4 = (depth - 1) << 21 |
-            first_layer << 10;
-
-      dw6 = (num_layers - 1) << 21;
+      dw1 |= (info.zs.stride - 1);
+      dw2 = info.zs.offset;
    }
    else {
-      dw1 |= (tex->tiling != INTEL_TILING_NONE) << 27 |
-             (tex->tiling == INTEL_TILING_Y) << 26;
+      dw2 = 0;
+   }
 
-      if (hiz) {
+   if (dev->gen >= ILO_GEN(7)) {
+      if (info.zs.bo)
+         dw1 |= 1 << 28;
+
+      if (info.stencil.bo)
+         dw1 |= 1 << 27;
+
+      if (info.hiz.bo)
+         dw1 |= 1 << 22;
+
+      dw3 = (info.height - 1) << 18 |
+            (info.width - 1) << 4 |
+            info.lod;
+
+      dw4 = (info.depth - 1) << 21 |
+            info.first_layer << 10;
+
+      dw5 = info.y_offset << 16 | info.x_offset;
+
+      dw6 = (info.num_layers - 1) << 21;
+   }
+   else {
+      /* always Y-tiled */
+      dw1 |= 1 << 27 |
+             1 << 26;
+
+      if (info.hiz.bo) {
          dw1 |= 1 << 22 |
                 1 << 21;
       }
 
-      dw3 = (height - 1) << 19 |
-            (width - 1) << 6 |
-            lod << 2 |
+      dw3 = (info.height - 1) << 19 |
+            (info.width - 1) << 6 |
+            info.lod << 2 |
             BRW_SURFACE_MIPMAPLAYOUT_BELOW << 1;
 
-      dw4 = (depth - 1) << 21 |
-            first_layer << 10 |
-            (num_layers - 1) << 1;
+      dw4 = (info.depth - 1) << 21 |
+            info.first_layer << 10 |
+            (info.num_layers - 1) << 1;
+
+      dw5 = info.y_offset << 16 | info.x_offset;
 
       dw6 = 0;
    }
 
-   ilo_cp_begin(cp, cmd_len);
-   ilo_cp_write(cp, cmd | (cmd_len - 2));
-   ilo_cp_write(cp, dw1);
+   STATIC_ASSERT(Elements(zs->payload) >= 10);
 
-   if (has_depth) {
-      ilo_cp_write_bo(cp, slice_offset, tex->bo,
-            INTEL_DOMAIN_RENDER, INTEL_DOMAIN_RENDER);
+   zs->payload[0] = dw1;
+   zs->payload[1] = dw2;
+   zs->payload[2] = dw3;
+   zs->payload[3] = dw4;
+   zs->payload[4] = dw5;
+   zs->payload[5] = dw6;
+
+   /* do not increment reference count */
+   zs->bo = info.zs.bo;
+
+   /* separate stencil */
+   if (info.stencil.bo) {
+      assert(info.stencil.stride > 0 && info.stencil.stride < 128 * 1024 &&
+             info.stencil.stride % 128 == 0);
+
+      zs->payload[6] = info.stencil.stride - 1;
+      zs->payload[7] = info.stencil.offset;
+
+      /* do not increment reference count */
+      zs->separate_s8_bo = info.stencil.bo;
    }
    else {
-      ilo_cp_write(cp, 0);
+      zs->payload[6] = 0;
+      zs->payload[7] = 0;
+      zs->separate_s8_bo = NULL;
    }
 
-   ilo_cp_write(cp, dw3);
-   ilo_cp_write(cp, dw4);
-   ilo_cp_write(cp, y_offset << 16 | x_offset);
-   ilo_cp_write(cp, dw6);
+   /* hiz */
+   if (info.hiz.bo) {
+      zs->payload[8] = info.hiz.stride - 1;
+      zs->payload[9] = info.hiz.offset;
+
+      /* do not increment reference count */
+      zs->hiz_bo = info.hiz.bo;
+   }
+   else {
+      zs->payload[8] = 0;
+      zs->payload[9] = 0;
+      zs->hiz_bo = NULL;
+   }
+}
+
+static void
+gen6_emit_3DSTATE_DEPTH_BUFFER(const struct ilo_dev_info *dev,
+                               const struct ilo_zs_surface *zs,
+                               struct ilo_cp *cp)
+{
+   const uint32_t cmd = (dev->gen >= ILO_GEN(7)) ?
+      ILO_GPE_CMD(0x3, 0x0, 0x05) : ILO_GPE_CMD(0x3, 0x1, 0x05);
+   const uint8_t cmd_len = 7;
+
+   ILO_GPE_VALID_GEN(dev, 6, 7);
+
+   ilo_cp_begin(cp, cmd_len);
+   ilo_cp_write(cp, cmd | (cmd_len - 2));
+   ilo_cp_write(cp, zs->payload[0]);
+   ilo_cp_write_bo(cp, zs->payload[1], zs->bo,
+         INTEL_DOMAIN_RENDER, INTEL_DOMAIN_RENDER);
+   ilo_cp_write(cp, zs->payload[2]);
+   ilo_cp_write(cp, zs->payload[3]);
+   ilo_cp_write(cp, zs->payload[4]);
+   ilo_cp_write(cp, zs->payload[5]);
    ilo_cp_end(cp);
 }
 
@@ -2824,102 +2932,42 @@ gen6_emit_3DSTATE_MULTISAMPLE(const struct ilo_dev_info *dev,
 
 static void
 gen6_emit_3DSTATE_STENCIL_BUFFER(const struct ilo_dev_info *dev,
-                                 const struct pipe_surface *surface,
+                                 const struct ilo_zs_surface *zs,
                                  struct ilo_cp *cp)
 {
    const uint32_t cmd = (dev->gen >= ILO_GEN(7)) ?
       ILO_GPE_CMD(0x3, 0x0, 0x06) :
       ILO_GPE_CMD(0x3, 0x1, 0x0e);
    const uint8_t cmd_len = 3;
-   struct ilo_texture *tex;
-   uint32_t slice_offset, x_offset, y_offset;
-   int pitch;
 
    ILO_GPE_VALID_GEN(dev, 6, 7);
 
-   tex = (surface) ? ilo_texture(surface->texture) : NULL;
-   if (tex && surface->format != PIPE_FORMAT_S8_UINT)
-      tex = tex->separate_s8;
-
-   if (!tex) {
-      ilo_cp_begin(cp, cmd_len);
-      ilo_cp_write(cp, cmd | (cmd_len - 2));
-      ilo_cp_write(cp, 0);
-      ilo_cp_write(cp, 0);
-      ilo_cp_end(cp);
-
-      return;
-   }
-
-   if (true) {
-      slice_offset = ilo_texture_get_slice_offset(tex,
-            surface->u.tex.level, surface->u.tex.first_layer,
-            &x_offset, &y_offset);
-      /* XXX X/Y offsets inherit from 3DSTATE_DEPTH_BUFFER */
-   }
-   else {
-      slice_offset = 0;
-      x_offset = 0;
-      y_offset = 0;
-   }
-
-   /*
-    * From the Sandy Bridge PRM, volume 2 part 1, page 329:
-    *
-    *     "The pitch must be set to 2x the value computed based on width, as
-    *      the stencil buffer is stored with two rows interleaved."
-    *
-    * According to the classic driver, we need to do the same for GEN7+ even
-    * though the Ivy Bridge PRM does not say anything about it.
-    */
-   pitch = 2 * tex->bo_stride;
-   assert(pitch > 0 && pitch < 128 * 1024 && pitch % 128 == 0);
-
    ilo_cp_begin(cp, cmd_len);
    ilo_cp_write(cp, cmd | (cmd_len - 2));
-   ilo_cp_write(cp, pitch - 1);
-   ilo_cp_write_bo(cp, slice_offset, tex->bo,
+   /* see ilo_gpe_init_zs_surface() */
+   ilo_cp_write(cp, zs->payload[6]);
+   ilo_cp_write_bo(cp, zs->payload[7], zs->separate_s8_bo,
          INTEL_DOMAIN_RENDER, INTEL_DOMAIN_RENDER);
    ilo_cp_end(cp);
 }
 
 static void
 gen6_emit_3DSTATE_HIER_DEPTH_BUFFER(const struct ilo_dev_info *dev,
-                                    const struct pipe_surface *surface,
+                                    const struct ilo_zs_surface *zs,
                                     struct ilo_cp *cp)
 {
    const uint32_t cmd = (dev->gen >= ILO_GEN(7)) ?
       ILO_GPE_CMD(0x3, 0x0, 0x07) :
       ILO_GPE_CMD(0x3, 0x1, 0x0f);
    const uint8_t cmd_len = 3;
-   const bool hiz = false;
-   struct ilo_texture *tex;
-   uint32_t slice_offset;
 
    ILO_GPE_VALID_GEN(dev, 6, 7);
 
-   if (!surface || !hiz) {
-      ilo_cp_begin(cp, cmd_len);
-      ilo_cp_write(cp, cmd | (cmd_len - 2));
-      ilo_cp_write(cp, 0);
-      ilo_cp_write(cp, 0);
-      ilo_cp_end(cp);
-
-      return;
-   }
-
-   tex = ilo_texture(surface->texture);
-
-   /* TODO */
-   slice_offset = 0;
-
-   assert(tex->bo_stride > 0 && tex->bo_stride < 128 * 1024 &&
-          tex->bo_stride % 128 == 0);
-
    ilo_cp_begin(cp, cmd_len);
    ilo_cp_write(cp, cmd | (cmd_len - 2));
-   ilo_cp_write(cp, tex->bo_stride - 1);
-   ilo_cp_write_bo(cp, slice_offset, tex->bo,
+   /* see ilo_gpe_init_zs_surface() */
+   ilo_cp_write(cp, zs->payload[8]);
+   ilo_cp_write_bo(cp, zs->payload[9], zs->hiz_bo,
          INTEL_DOMAIN_RENDER, INTEL_DOMAIN_RENDER);
    ilo_cp_end(cp);
 }
@@ -4754,6 +4802,7 @@ gen6_emit_SAMPLER_BORDER_COLOR_STATE(const struct ilo_dev_info *dev,
    dw = ilo_cp_steal_ptr(cp, "SAMPLER_BORDER_COLOR_STATE",
          state_len, state_align, &state_offset);
 
+   /* see ilo_gpe_init_sampler_cso() */
    memcpy(dw, &sampler->payload[3], state_len * 4);
 
    return state_offset;

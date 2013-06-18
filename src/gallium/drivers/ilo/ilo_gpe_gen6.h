@@ -299,7 +299,7 @@ typedef void
 
 typedef void
 (*ilo_gpe_gen6_3DSTATE_DEPTH_BUFFER)(const struct ilo_dev_info *dev,
-                                     const struct pipe_surface *surface,
+                                     const struct ilo_zs_surface *zs,
                                      struct ilo_cp *cp);
 
 typedef void
@@ -338,12 +338,12 @@ typedef void
 
 typedef void
 (*ilo_gpe_gen6_3DSTATE_STENCIL_BUFFER)(const struct ilo_dev_info *dev,
-                                       const struct pipe_surface *surface,
+                                       const struct ilo_zs_surface *zs,
                                        struct ilo_cp *cp);
 
 typedef void
 (*ilo_gpe_gen6_3DSTATE_HIER_DEPTH_BUFFER)(const struct ilo_dev_info *dev,
-                                          const struct pipe_surface *surface,
+                                          const struct ilo_zs_surface *zs,
                                           struct ilo_cp *cp);
 
 typedef void
