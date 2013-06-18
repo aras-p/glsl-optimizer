@@ -265,8 +265,9 @@ drisw_update_tex_buffer(struct dri_drawable *drawable,
    /* Copy the Drawable content to the mapped texture buffer */
    get_image(dPriv, x, y, w, h, map);
 
-   /* The pipe transfer has a pitch rounded up to the nearest 64 pixels. */
-   ximage_stride = w * cpp;
+   /* The pipe transfer has a pitch rounded up to the nearest 64 pixels.
+      get_image() has a pitch rounded up to 4 bytes.  */
+   ximage_stride = ((w * cpp) + 3) & -4;
    for (line = h-1; line; --line) {
       memmove(&map[line * transfer->stride],
               &map[line * ximage_stride],
