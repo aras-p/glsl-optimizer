@@ -28,6 +28,7 @@ void intel_batchbuffer_init(struct brw_context *brw);
 void intel_batchbuffer_free(struct brw_context *brw);
 void intel_batchbuffer_save_state(struct brw_context *brw);
 void intel_batchbuffer_reset_to_saved(struct brw_context *brw);
+void intel_batchbuffer_clear_cache(struct brw_context *brw);
 
 int _intel_batchbuffer_flush(struct brw_context *brw,
 			     const char *file, int line);

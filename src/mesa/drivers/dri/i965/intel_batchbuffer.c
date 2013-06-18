@@ -41,8 +41,8 @@ struct cached_batch_item {
    uint16_t size;
 };
 
-static void
-clear_cache(struct brw_context *brw)
+void
+intel_batchbuffer_clear_cache(struct brw_context *brw)
 {
    struct cached_batch_item *item = brw->batch.cached_items;
 
@@ -85,7 +85,7 @@ intel_batchbuffer_reset(struct brw_context *brw)
    }
    brw->batch.last_bo = brw->batch.bo;
 
-   clear_cache(brw);
+   intel_batchbuffer_clear_cache(brw);
 
    brw->batch.bo = drm_intel_bo_alloc(brw->bufmgr, "batchbuffer",
 					BATCH_SZ, 4096);
@@ -118,7 +118,7 @@ intel_batchbuffer_reset_to_saved(struct brw_context *brw)
    /* Cached batch state is dead, since we just cleared some unknown part of the
     * batchbuffer.  Assume that the caller resets any other state necessary.
     */
-   clear_cache(brw);
+   intel_batchbuffer_clear_cache(brw);
 }
 
 void
@@ -128,7 +128,7 @@ intel_batchbuffer_free(struct brw_context *brw)
    drm_intel_bo_unreference(brw->batch.last_bo);
    drm_intel_bo_unreference(brw->batch.bo);
    drm_intel_bo_unreference(brw->batch.workaround_bo);
-   clear_cache(brw);
+   intel_batchbuffer_clear_cache(brw);
 }
 
 static void
