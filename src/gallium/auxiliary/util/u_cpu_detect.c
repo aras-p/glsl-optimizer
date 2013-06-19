@@ -283,6 +283,7 @@ util_cpu_detect(void)
          util_cpu_caps.has_ssse3  = (regs2[2] >>  9) & 1; /* 0x0000020 */
          util_cpu_caps.has_sse4_1 = (regs2[2] >> 19) & 1;
          util_cpu_caps.has_sse4_2 = (regs2[2] >> 20) & 1;
+         util_cpu_caps.has_popcnt = (regs2[2] >> 23) & 1;
          util_cpu_caps.has_avx    = (regs2[2] >> 28) & 1;
          util_cpu_caps.has_f16c   = (regs2[2] >> 29) & 1;
          util_cpu_caps.has_mmx2   = util_cpu_caps.has_sse; /* SSE cpus supports mmxext too */

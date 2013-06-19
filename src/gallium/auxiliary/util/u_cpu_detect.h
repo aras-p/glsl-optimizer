@@ -62,6 +62,7 @@ struct util_cpu_caps {
    unsigned has_ssse3:1;
    unsigned has_sse4_1:1;
    unsigned has_sse4_2:1;
+   unsigned has_popcnt:1;
    unsigned has_avx:1;
    unsigned has_f16c:1;
    unsigned has_3dnow:1;
