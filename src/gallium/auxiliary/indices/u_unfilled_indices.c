@@ -151,7 +151,14 @@ int u_unfilled_translator( unsigned prim,
 }
 
 
-
+/**
+ * Utility for converting unfilled polygons into points, lines, triangles.
+ * Few drivers have direct support for OpenGL's glPolygonMode.
+ * This function helps with converting triangles into points or lines
+ * when the front and back fill modes are the same.  When there's
+ * different front/back fill modes, that can be handled with the
+ * 'draw' module.
+ */
 int u_unfilled_generator( unsigned prim,
                           unsigned start,
                           unsigned nr,

@@ -150,9 +150,26 @@ int u_index_translator( unsigned hw_mask,
 }
 
 
-
-
-
+/**
+ * If a driver does not support a particular gallium primitive type
+ * (such as PIPE_PRIM_QUAD_STRIP) this function can be used to help
+ * convert the primitive into a simpler type (like PIPE_PRIM_TRIANGLES).
+ *
+ * The generator functions generates a number of ushort or uint indexes
+ * for drawing the new type of primitive.
+ *
+ * \param hw_mask  a bitmask of (1 << PIPE_PRIM_x) values that indicates
+ *                 kind of primitives are supported by the driver.
+ * \param prim  the PIPE_PRIM_x that the user wants to draw
+ * \param start  index of first vertex to draw
+ * \param nr  number of vertices to draw
+ * \param in_pv  user's provoking vertex (PV_FIRST/LAST)
+ * \param out_pv  desired proking vertex for the hardware (PV_FIRST/LAST)
+ * \param out_prim  returns the new primitive type for the driver
+ * \param out_index_size  returns OUT_USHORT or OUT_UINT
+ * \param out_nr  returns new number of vertices to draw
+ * \param out_generate  returns pointer to the generator function
+ */
 int u_index_generator( unsigned hw_mask,
                        unsigned prim,
                        unsigned start,
