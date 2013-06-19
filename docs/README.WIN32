@@ -1,6 +1,6 @@
 File: docs/README.WIN32
 
-Last updated: 23 April 2011
+Last updated: 21 June 2013
 
 
 Quick Start
@@ -30,6 +30,23 @@ At this time, only the gallium GDI driver is known to work.
 Source code also exists in the tree for other drivers in
 src/mesa/drivers/windows, but the status of this code is unknown.
 
+Recipe
+------
+
+Building on windows requires several open-source packages. These are
+steps that work as of this writing.
+
+1) install python 2.7
+2) install scons (latest)
+3) install mingw, flex, and bison
+4) install libxml2 from here: http://www.lfd.uci.edu/~gohlke/pythonlibs
+  get libxml2-python-2.9.1.win-amd64-py2.7.exe
+5) install pywin32 from here: http://www.lfd.uci.edu/~gohlke/pythonlibs
+  get pywin32-218.4.win-amd64-py2.7.exe
+6) install git
+7) download mesa from git
+  see http://www.mesa3d.org/repository.html
+8) run scons
 
 General
 -------
