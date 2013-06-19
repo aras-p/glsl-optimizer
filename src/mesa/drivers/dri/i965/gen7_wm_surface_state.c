@@ -295,15 +295,12 @@ gen7_update_texture_surface(struct gl_context *ctx,
    struct intel_mipmap_tree *mt = intelObj->mt;
    struct gl_texture_image *firstImage = tObj->Image[0][tObj->BaseLevel];
    struct gl_sampler_object *sampler = _mesa_get_samplerobj(ctx, unit);
-   int width, height, depth;
    uint32_t tile_x, tile_y;
 
    if (tObj->Target == GL_TEXTURE_BUFFER) {
       gen7_update_buffer_texture_surface(ctx, unit, binding_table, surf_index);
       return;
    }
-
-   intel_miptree_get_dimensions_for_image(firstImage, &width, &height, &depth);
 
    uint32_t *surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE,
                                     8 * 4, 32, &binding_table[surf_index]);
@@ -324,7 +321,7 @@ gen7_update_texture_surface(struct gl_context *ctx,
    if (mt->align_w == 8)
       surf[0] |= GEN7_SURFACE_HALIGN_8;
 
-   if (depth > 1 && tObj->Target != GL_TEXTURE_3D)
+   if (mt->logical_depth0 > 1 && tObj->Target != GL_TEXTURE_3D)
       surf[0] |= GEN7_SURFACE_IS_ARRAY;
 
    if (mt->array_spacing_lod0)
@@ -334,9 +331,9 @@ gen7_update_texture_surface(struct gl_context *ctx,
    surf[1] += intel_miptree_get_tile_offsets(intelObj->mt, firstImage->Level, 0,
                                              &tile_x, &tile_y);
 
-   surf[2] = SET_FIELD(width - 1, GEN7_SURFACE_WIDTH) |
-             SET_FIELD(height - 1, GEN7_SURFACE_HEIGHT);
-   surf[3] = SET_FIELD(depth - 1, BRW_SURFACE_DEPTH) |
+   surf[2] = SET_FIELD(mt->logical_width0 - 1, GEN7_SURFACE_WIDTH) |
+             SET_FIELD(mt->logical_height0 - 1, GEN7_SURFACE_HEIGHT);
+   surf[3] = SET_FIELD(mt->logical_depth0 - 1, BRW_SURFACE_DEPTH) |
              ((intelObj->mt->region->pitch) - 1);
 
    surf[4] = gen7_surface_msaa_bits(mt->num_samples, mt->msaa_layout);
