@@ -38,6 +38,7 @@
 #include "lp_rast.h"
 #include "lp_state_fs.h"
 #include "lp_state_setup.h"
+#include "lp_context.h"
 
 #define NUM_CHANNELS 4
 
@@ -332,6 +333,11 @@ do_triangle_ccw(struct lp_setup_context *setup,
 #endif
 
    LP_COUNT(nr_tris);
+
+   if (setup->active_query[PIPE_QUERY_PIPELINE_STATISTICS]) {
+      struct llvmpipe_context *lp_context = (struct llvmpipe_context *)setup->pipe;
+      lp_context->pipeline_statistics.c_primitives++;
+   }
 
    /* Setup parameter interpolants:
     */
@@ -883,6 +889,8 @@ typedef void (*triangle_func_t)(struct lp_setup_context *setup,
 /**
  * Subdivide this triangle by bisecting edge (v0, v1).
  * \param pv  the provoking vertex (must = v0 or v1 or v2)
+ * TODO: should probably think about non-overflowing arithmetic elsewhere.
+ * This will definitely screw with pipeline counters for instance.
  */
 static void
 subdiv_tri(struct lp_setup_context *setup,

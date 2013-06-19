@@ -29,13 +29,14 @@
  * Binning code for points
  */
 
-#include "lp_setup_context.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
+#include "lp_setup_context.h"
 #include "lp_perf.h"
 #include "lp_rast.h"
 #include "lp_state_fs.h"
 #include "lp_state_setup.h"
+#include "lp_context.h"
 #include "tgsi/tgsi_scan.h"
 
 #define NUM_CHANNELS 4
@@ -375,6 +376,13 @@ try_setup_point( struct lp_setup_context *setup,
    point->v[0][0] = v0[0][0];
    point->v[0][1] = v0[0][1];
 #endif
+
+   LP_COUNT(nr_tris);
+
+   if (setup->active_query[PIPE_QUERY_PIPELINE_STATISTICS]) {
+      struct llvmpipe_context *lp_context = (struct llvmpipe_context *)setup->pipe;
+      lp_context->pipeline_statistics.c_primitives++;
+   }
 
    info.v0 = v0;
    info.dx01 = 0;

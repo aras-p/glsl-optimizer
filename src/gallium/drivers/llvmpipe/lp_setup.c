@@ -1215,7 +1215,7 @@ lp_setup_begin_query(struct lp_setup_context *setup,
    assert(setup->active_query[pq->type] == NULL);
 
    set_scene_state(setup, SETUP_ACTIVE, "begin_query");
-   
+
    setup->active_query[pq->type] = pq;
 
    /* XXX: It is possible that a query is created before the scene
@@ -1249,7 +1249,7 @@ lp_setup_end_query(struct lp_setup_context *setup, struct llvmpipe_query *pq)
 {
    set_scene_state(setup, SETUP_ACTIVE, "end_query");
 
-   if (pq->type != PIPE_QUERY_TIMESTAMP) {
+   if (pq->type != PIPE_QUERY_TIMESTAMP && pq->type != PIPE_QUERY_GPU_FINISHED) {
       assert(setup->active_query[pq->type] == pq);
       setup->active_query[pq->type] = NULL;
    }

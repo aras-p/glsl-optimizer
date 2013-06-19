@@ -36,6 +36,7 @@
 #include "lp_rast.h"
 #include "lp_state_fs.h"
 #include "lp_state_setup.h"
+#include "lp_context.h"
 
 #define NUM_CHANNELS 4
 
@@ -541,11 +542,6 @@ try_setup_line( struct lp_setup_context *setup,
       y[3] = subpixel_snap(v1[0][1] + y_offset     - setup->pixel_offset);
    }
 
-
-
-   LP_COUNT(nr_tris);
-
- 
    /* Bounding rectangle (in pixels) */
    {
       /* Yes this is necessary to accurately calculate bounding boxes
@@ -597,6 +593,13 @@ try_setup_line( struct lp_setup_context *setup,
    line->v[0][1] = v1[0][1];
    line->v[1][1] = v2[0][1];
 #endif
+
+   LP_COUNT(nr_tris);
+
+   if (setup->active_query[PIPE_QUERY_PIPELINE_STATISTICS]) {
+      struct llvmpipe_context *lp_context = (struct llvmpipe_context *)setup->pipe;
+      lp_context->pipeline_statistics.c_primitives++;
+   }
 
    /* calculate the deltas */
    plane = GET_PLANES(line);

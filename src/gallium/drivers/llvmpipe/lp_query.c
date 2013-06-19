@@ -40,6 +40,7 @@
 #include "lp_query.h"
 #include "lp_screen.h"
 #include "lp_state.h"
+#include "lp_rast.h"
 
 
 static struct llvmpipe_query *llvmpipe_query( struct pipe_query *p )
@@ -128,7 +129,7 @@ llvmpipe_get_query_result(struct pipe_context *pipe,
    case PIPE_QUERY_OCCLUSION_PREDICATE:
       for (i = 0; i < num_threads; i++) {
          /* safer (still not guaranteed) when there's an overflow */
-         *result = *result || pq->count[i];
+         vresult->b = vresult->b || pq->count[i];
       }
       break;
    case PIPE_QUERY_TIMESTAMP:
@@ -140,6 +141,17 @@ llvmpipe_get_query_result(struct pipe_context *pipe,
             *result = os_time_get_nano();
       }
       break;
+   case PIPE_QUERY_TIMESTAMP_DISJOINT: {
+      struct pipe_query_data_timestamp_disjoint *td =
+         (struct pipe_query_data_timestamp_disjoint *)vresult;
+      /* os_get_time_nano return nanoseconds */
+      td->frequency = UINT64_C(1000000000);
+      td->disjoint = FALSE;
+   }
+      break;
+   case PIPE_QUERY_GPU_FINISHED:
+      vresult->b = TRUE;
+      break;
    case PIPE_QUERY_PRIMITIVES_GENERATED:
       *result = pq->num_primitives_generated;
       break;
@@ -147,7 +159,7 @@ llvmpipe_get_query_result(struct pipe_context *pipe,
       *result = pq->num_primitives_written;
       break;
    case PIPE_QUERY_SO_OVERFLOW_PREDICATE:
-      *result = pq->so_has_overflown;
+      vresult->b = pq->so_has_overflown;
       break;
    case PIPE_QUERY_SO_STATISTICS: {
       struct pipe_query_data_so_statistics *stats =
@@ -159,6 +171,11 @@ llvmpipe_get_query_result(struct pipe_context *pipe,
    case PIPE_QUERY_PIPELINE_STATISTICS: {
       struct pipe_query_data_pipeline_statistics *stats =
          (struct pipe_query_data_pipeline_statistics *)vresult;
+      /* only ps_invocations come from binned query */
+      for (i = 0; i < num_threads; i++) {
+         pq->stats.ps_invocations += pq->count[i];
+      }
+      pq->stats.ps_invocations *= LP_RASTER_BLOCK_SIZE * LP_RASTER_BLOCK_SIZE;
       *stats = pq->stats;
    }
       break;

@@ -455,6 +455,10 @@ lp_rast_shade_quads_mask(struct lp_rasterizer_task *task,
     * allocated 4x4 blocks hence need to filter them out here.
     */
    if ((x % TILE_SIZE) < task->width && (y % TILE_SIZE) < task->height) {
+      if (task->query[PIPE_QUERY_PIPELINE_STATISTICS]) {
+         /* not very accurate would need a popcount on the mask */
+         task->ps_invocations++;
+      }
       /* run shader on 4x4 block */
       BEGIN_JIT_CALL(state, task);
       variant->jit_function[RAST_EDGE_TEST](&state->jit_context,
@@ -493,11 +497,14 @@ lp_rast_begin_query(struct lp_rasterizer_task *task,
    case PIPE_QUERY_OCCLUSION_PREDICATE:
       task->thread_data.vis_counter = 0;
       break;
+   case PIPE_QUERY_PIPELINE_STATISTICS:
+      task->ps_invocations = 0;
+      break;
    case PIPE_QUERY_PRIMITIVES_GENERATED:
    case PIPE_QUERY_PRIMITIVES_EMITTED:
    case PIPE_QUERY_SO_STATISTICS:
-   case PIPE_QUERY_PIPELINE_STATISTICS:
    case PIPE_QUERY_SO_OVERFLOW_PREDICATE:
+   case PIPE_QUERY_TIMESTAMP_DISJOINT:
       break;
    default:
       assert(0);
@@ -518,7 +525,9 @@ lp_rast_end_query(struct lp_rasterizer_task *task,
                   const union lp_rast_cmd_arg arg)
 {
    struct llvmpipe_query *pq = arg.query_obj;
-   assert(task->query[pq->type] == pq || pq->type == PIPE_QUERY_TIMESTAMP);
+   assert(task->query[pq->type] == pq ||
+          pq->type == PIPE_QUERY_TIMESTAMP ||
+          pq->type == PIPE_QUERY_GPU_FINISHED);
 
    switch (pq->type) {
    case PIPE_QUERY_OCCLUSION_COUNTER:
@@ -528,11 +537,15 @@ lp_rast_end_query(struct lp_rasterizer_task *task,
    case PIPE_QUERY_TIMESTAMP:
       pq->count[task->thread_index] = os_time_get_nano();
       break;
+   case PIPE_QUERY_PIPELINE_STATISTICS:
+      pq->count[task->thread_index] += task->ps_invocations;
+      break;
    case PIPE_QUERY_PRIMITIVES_GENERATED:
    case PIPE_QUERY_PRIMITIVES_EMITTED:
    case PIPE_QUERY_SO_STATISTICS:
-   case PIPE_QUERY_PIPELINE_STATISTICS:
    case PIPE_QUERY_SO_OVERFLOW_PREDICATE:
+   case PIPE_QUERY_TIMESTAMP_DISJOINT:
+   case PIPE_QUERY_GPU_FINISHED:
       break;
    default:
       assert(0);

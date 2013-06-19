@@ -99,8 +99,8 @@ struct lp_rasterizer_task
 
    /* occlude counter for visible pixels */
    struct lp_jit_thread_data thread_data;
-   uint64_t query_start;
    struct llvmpipe_query *query[PIPE_QUERY_TYPES];
+   uint64_t ps_invocations;
 
    pipe_semaphore work_ready;
    pipe_semaphore work_done;
@@ -307,6 +307,10 @@ lp_rast_shade_quads_all( struct lp_rasterizer_task *task,
     * allocated 4x4 blocks hence need to filter them out here.
     */
    if ((x % TILE_SIZE) < task->width && (y % TILE_SIZE) < task->height) {
+      if (task->query[PIPE_QUERY_PIPELINE_STATISTICS]) {
+         /* not very accurate would need a popcount on the mask */
+         task->ps_invocations++;
+      }
       /* run shader on 4x4 block */
       BEGIN_JIT_CALL(state, task);
       variant->jit_function[RAST_WHOLE]( &state->jit_context,
