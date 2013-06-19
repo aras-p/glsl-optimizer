@@ -735,7 +735,6 @@ brw_render_target_supported(struct intel_context *intel,
 GLuint
 translate_tex_format(struct intel_context *intel,
                      gl_format mesa_format,
-		     GLenum internal_format,
 		     GLenum depth_mode,
 		     GLenum srgb_decode)
 {
@@ -980,7 +979,6 @@ brw_update_texture_surface(struct gl_context *ctx,
 	      BRW_SURFACE_CUBEFACE_ENABLES |
 	      (translate_tex_format(intel,
                                     mt->format,
-				    firstImage->InternalFormat,
 				    tObj->DepthMode,
 				    sampler->sRGBDecode) <<
 	       BRW_SURFACE_FORMAT_SHIFT));
