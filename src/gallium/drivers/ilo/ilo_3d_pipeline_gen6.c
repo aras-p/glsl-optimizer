@@ -29,6 +29,7 @@
 #include "util/u_prim.h"
 #include "intel_reg.h"
 
+#include "ilo_3d.h"
 #include "ilo_context.h"
 #include "ilo_cp.h"
 #include "ilo_gpe_gen6.h"
@@ -210,13 +211,13 @@ gen6_pipeline_common_base_address(struct ilo_3d_pipeline *p,
                                   struct gen6_pipeline_session *session)
 {
    /* STATE_BASE_ADDRESS */
-   if (session->state_bo_changed || session->instruction_bo_changed ||
+   if (session->state_bo_changed || session->kernel_bo_changed ||
        session->batch_bo_changed) {
       if (p->dev->gen == ILO_GEN(6))
          gen6_wa_pipe_control_post_sync(p, false);
 
       p->gen6_STATE_BASE_ADDRESS(p->dev,
-            NULL, p->cp->bo, p->cp->bo, NULL, ilo->shader_cache->bo,
+            NULL, p->cp->bo, p->cp->bo, NULL, ilo->hw3d->kernel.bo,
             0, 0, 0, 0, p->cp);
 
       /*
@@ -457,7 +458,8 @@ gen6_pipeline_vs(struct ilo_3d_pipeline *p,
                  const struct ilo_context *ilo,
                  struct gen6_pipeline_session *session)
 {
-   const bool emit_3dstate_vs = (DIRTY(VS) || DIRTY(VERTEX_SAMPLERS));
+   const bool emit_3dstate_vs = (DIRTY(VS) || DIRTY(VERTEX_SAMPLERS) ||
+                                 session->kernel_bo_changed);
    const bool emit_3dstate_constant_vs = session->pcb_state_vs_changed;
 
    /*
@@ -497,7 +499,8 @@ gen6_pipeline_gs(struct ilo_3d_pipeline *p,
       p->gen6_3DSTATE_CONSTANT_GS(p->dev, NULL, NULL, 0, p->cp);
 
    /* 3DSTATE_GS */
-   if (DIRTY(GS) || DIRTY(VS) || session->prim_changed) {
+   if (DIRTY(GS) || DIRTY(VS) ||
+       session->prim_changed || session->kernel_bo_changed) {
       const struct ilo_shader *gs = (ilo->gs)? ilo->gs->shader : NULL;
       const struct ilo_shader *vs = (ilo->vs)? ilo->vs->shader : NULL;
       const int num_vertices = u_vertices_per_prim(session->reduced_prim);
@@ -666,7 +669,7 @@ gen6_pipeline_wm(struct ilo_3d_pipeline *p,
    /* 3DSTATE_WM */
    if (DIRTY(FS) || DIRTY(FRAGMENT_SAMPLERS) ||
        DIRTY(BLEND) || DIRTY(DEPTH_STENCIL_ALPHA) ||
-       DIRTY(RASTERIZER)) {
+       DIRTY(RASTERIZER) || session->kernel_bo_changed) {
       const struct ilo_shader *fs = (ilo->fs)? ilo->fs->shader : NULL;
       const int num_samplers = ilo->sampler[PIPE_SHADER_FRAGMENT].count;
       const bool dual_blend = ilo->blend->dual_blend;
@@ -1315,7 +1318,7 @@ gen6_pipeline_prepare(const struct ilo_3d_pipeline *p,
       /* these should be enough to make everything uploaded */
       session->batch_bo_changed = true;
       session->state_bo_changed = true;
-      session->instruction_bo_changed = true;
+      session->kernel_bo_changed = true;
       session->prim_changed = true;
    }
    else {
@@ -1333,7 +1336,7 @@ gen6_pipeline_prepare(const struct ilo_3d_pipeline *p,
 
       session->state_bo_changed =
          (p->invalidate_flags & ILO_3D_PIPELINE_INVALIDATE_STATE_BO);
-      session->instruction_bo_changed =
+      session->kernel_bo_changed =
          (p->invalidate_flags & ILO_3D_PIPELINE_INVALIDATE_KERNEL_BO);
       session->prim_changed = (p->state.reduced_prim != session->reduced_prim);
    }

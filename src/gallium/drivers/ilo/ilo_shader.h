@@ -31,6 +31,8 @@
 #include "ilo_common.h"
 #include "ilo_context.h"
 
+struct ilo_shader_cache;
+
 /* XXX The interface needs to be reworked */
 
 /**
@@ -117,6 +119,7 @@ struct ilo_shader {
 
    struct list_head list;
 
+   /* managed by shader cache */
    uint32_t cache_seqno;
    uint32_t cache_offset;
 };
@@ -160,17 +163,30 @@ struct ilo_shader_state {
    int num_variants, total_size;
 
    struct ilo_shader *shader;
+
+   /* managed by shader cache */
+   struct ilo_shader_cache *cache;
+   struct list_head list;
 };
 
-struct ilo_shader_cache {
-   struct intel_winsys *winsys;
-   struct intel_bo *bo;
-   int cur, size;
-   bool busy;
+struct ilo_shader_cache *
+ilo_shader_cache_create(void);
 
-   /* starting from 1, incremented whenever a new bo is allocated */
-   uint32_t seqno;
-};
+void
+ilo_shader_cache_destroy(struct ilo_shader_cache *shc);
+
+void
+ilo_shader_cache_add(struct ilo_shader_cache *shc,
+                     struct ilo_shader_state *shader);
+
+void
+ilo_shader_cache_remove(struct ilo_shader_cache *shc,
+                        struct ilo_shader_state *shader);
+
+int
+ilo_shader_cache_upload(struct ilo_shader_cache *shc,
+                        struct intel_bo *bo, unsigned offset,
+                        bool incremental);
 
 void
 ilo_shader_variant_init(struct ilo_shader_variant *variant,
@@ -191,24 +207,6 @@ ilo_shader_state_add_variant(struct ilo_shader_state *state,
 bool
 ilo_shader_state_use_variant(struct ilo_shader_state *state,
                              const struct ilo_shader_variant *variant);
-
-struct ilo_shader_cache *
-ilo_shader_cache_create(struct intel_winsys *winsys);
-
-void
-ilo_shader_cache_destroy(struct ilo_shader_cache *shc);
-
-void
-ilo_shader_cache_set(struct ilo_shader_cache *shc,
-                     struct ilo_shader **shaders,
-                     int num_shaders);
-
-static inline void
-ilo_shader_cache_mark_busy(struct ilo_shader_cache *shc)
-{
-   if (shc->cur)
-      shc->busy = true;
-}
 
 struct ilo_shader *
 ilo_shader_compile_vs(const struct ilo_shader_state *state,

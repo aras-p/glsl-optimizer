@@ -44,7 +44,11 @@ struct ilo_3d {
    int owner_reserve;
 
    bool new_batch;
-   uint32_t shader_cache_seqno;
+
+   struct {
+      struct intel_bo *bo;
+      unsigned used, size;
+   } kernel;
 
    struct {
       struct pipe_query *query;

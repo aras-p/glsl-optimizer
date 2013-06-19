@@ -30,6 +30,204 @@
 
 #include "ilo_shader.h"
 
+struct ilo_shader_cache {
+   struct list_head shaders;
+   struct list_head changed;
+};
+
+/**
+ * Create a shader cache.  A shader cache can manage shaders and upload them
+ * to a bo as a whole.
+ */
+struct ilo_shader_cache *
+ilo_shader_cache_create(void)
+{
+   struct ilo_shader_cache *shc;
+
+   shc = CALLOC_STRUCT(ilo_shader_cache);
+   if (!shc)
+      return NULL;
+
+   list_inithead(&shc->shaders);
+   list_inithead(&shc->changed);
+
+   return shc;
+}
+
+/**
+ * Destroy a shader cache.
+ */
+void
+ilo_shader_cache_destroy(struct ilo_shader_cache *shc)
+{
+   FREE(shc);
+}
+
+/**
+ * Add a shader to the cache.
+ */
+void
+ilo_shader_cache_add(struct ilo_shader_cache *shc,
+                     struct ilo_shader_state *shader)
+{
+   struct ilo_shader *sh;
+
+   shader->cache = shc;
+   LIST_FOR_EACH_ENTRY(sh, &shader->variants, list)
+      sh->cache_seqno = false;
+
+   list_add(&shader->list, &shc->changed);
+}
+
+/**
+ * Remove a shader from the cache.
+ */
+void
+ilo_shader_cache_remove(struct ilo_shader_cache *shc,
+                        struct ilo_shader_state *shader)
+{
+   list_del(&shader->list);
+   shader->cache = NULL;
+}
+
+/**
+ * Notify the cache that a managed shader has changed.
+ */
+static void
+ilo_shader_cache_notify_change(struct ilo_shader_cache *shc,
+                               struct ilo_shader_state *shader)
+{
+   if (shader->cache == shc) {
+      list_del(&shader->list);
+      list_add(&shader->list, &shc->changed);
+   }
+}
+
+/**
+ * Upload a managed shader to the bo.
+ */
+static int
+ilo_shader_cache_upload_shader(struct ilo_shader_cache *shc,
+                               struct ilo_shader_state *shader,
+                               struct intel_bo *bo, unsigned offset,
+                               bool incremental)
+{
+   const unsigned base = offset;
+   struct ilo_shader *sh;
+
+   LIST_FOR_EACH_ENTRY(sh, &shader->variants, list) {
+      int err;
+
+      if (incremental && sh->cache_seqno)
+         continue;
+
+      /* kernels must be aligned to 64-byte */
+      offset = align(offset, 64);
+
+      err = intel_bo_pwrite(bo, offset, sh->kernel_size, sh->kernel);
+      if (unlikely(err))
+         return -1;
+
+      sh->cache_seqno = true;
+      sh->cache_offset = offset;
+
+      offset += sh->kernel_size;
+   }
+
+   return (int) (offset - base);
+}
+
+/**
+ * Similar to ilo_shader_cache_upload(), except no upload happens.
+ */
+static int
+ilo_shader_cache_get_upload_size(struct ilo_shader_cache *shc,
+                                 unsigned offset,
+                                 bool incremental)
+{
+   const unsigned base = offset;
+   struct ilo_shader_state *shader;
+
+   if (!incremental) {
+      LIST_FOR_EACH_ENTRY(shader, &shc->shaders, list) {
+         struct ilo_shader *sh;
+
+         /* see ilo_shader_cache_upload_shader() */
+         LIST_FOR_EACH_ENTRY(sh, &shader->variants, list) {
+            if (!incremental || !sh->cache_seqno)
+               offset = align(offset, 64) + sh->kernel_size;
+         }
+      }
+   }
+
+   LIST_FOR_EACH_ENTRY(shader, &shc->changed, list) {
+      struct ilo_shader *sh;
+
+      /* see ilo_shader_cache_upload_shader() */
+      LIST_FOR_EACH_ENTRY(sh, &shader->variants, list) {
+         if (!incremental || !sh->cache_seqno)
+            offset = align(offset, 64) + sh->kernel_size;
+      }
+   }
+
+   /*
+    * From the Sandy Bridge PRM, volume 4 part 2, page 112:
+    *
+    *     "Due to prefetch of the instruction stream, the EUs may attempt to
+    *      access up to 8 instructions (128 bytes) beyond the end of the
+    *      kernel program - possibly into the next memory page.  Although
+    *      these instructions will not be executed, software must account for
+    *      the prefetch in order to avoid invalid page access faults."
+    */
+   if (offset > base)
+      offset += 128;
+
+   return (int) (offset - base);
+}
+
+/**
+ * Upload managed shaders to the bo.  When incremental is true, only shaders
+ * that are changed or added after the last upload are uploaded.
+ */
+int
+ilo_shader_cache_upload(struct ilo_shader_cache *shc,
+                        struct intel_bo *bo, unsigned offset,
+                        bool incremental)
+{
+   struct ilo_shader_state *shader, *next;
+   int size = 0, s;
+
+   if (!bo)
+      return ilo_shader_cache_get_upload_size(shc, offset, incremental);
+
+   if (!incremental) {
+      LIST_FOR_EACH_ENTRY(shader, &shc->shaders, list) {
+         s = ilo_shader_cache_upload_shader(shc, shader,
+               bo, offset, incremental);
+         if (unlikely(s < 0))
+            return s;
+
+         size += s;
+         offset += s;
+      }
+   }
+
+   LIST_FOR_EACH_ENTRY_SAFE(shader, next, &shc->changed, list) {
+      s = ilo_shader_cache_upload_shader(shc, shader,
+            bo, offset, incremental);
+      if (unlikely(s < 0))
+         return s;
+
+      size += s;
+      offset += s;
+
+      list_del(&shader->list);
+      list_add(&shader->list, &shc->shaders);
+   }
+
+   return size;
+}
+
 /**
  * Initialize a shader variant.
  */
@@ -366,6 +564,9 @@ ilo_shader_state_add_shader(struct ilo_shader_state *state,
    list_add(&sh->list, &state->variants);
    state->num_variants++;
    state->total_size += sh->kernel_size;
+
+   if (state->cache)
+      ilo_shader_cache_notify_change(state->cache, state);
 }
 
 /**
@@ -489,120 +690,4 @@ ilo_shader_state_use_variant(struct ilo_shader_state *state,
    state->shader = sh;
 
    return true;
-}
-
-/**
- * Reset the shader cache.
- */
-static void
-ilo_shader_cache_reset(struct ilo_shader_cache *shc)
-{
-   if (shc->bo)
-      intel_bo_unreference(shc->bo);
-
-   shc->bo = intel_winsys_alloc_buffer(shc->winsys,
-         "shader cache", shc->size, 0);
-   shc->busy = false;
-   shc->cur = 0;
-   shc->seqno++;
-   if (!shc->seqno)
-      shc->seqno = 1;
-}
-
-/**
- * Create a shader cache.  A shader cache is a bo holding all compiled shaders.
- * When the bo is full, a larger bo is allocated and all cached shaders are
- * invalidated.  This is how outdated shaders get dropped.  Active shaders
- * will be added to the new bo when used.
- */
-struct ilo_shader_cache *
-ilo_shader_cache_create(struct intel_winsys *winsys)
-{
-   struct ilo_shader_cache *shc;
-
-   shc = CALLOC_STRUCT(ilo_shader_cache);
-   if (!shc)
-      return NULL;
-
-   shc->winsys = winsys;
-   /* initial cache size */
-   shc->size = 4096;
-
-   ilo_shader_cache_reset(shc);
-
-   return shc;
-}
-
-/**
- * Destroy a shader cache.
- */
-void
-ilo_shader_cache_destroy(struct ilo_shader_cache *shc)
-{
-   if (shc->bo)
-      intel_bo_unreference(shc->bo);
-
-   FREE(shc);
-}
-
-/**
- * Add shaders to the cache.  This may invalidate all other shaders in the
- * cache.
- */
-void
-ilo_shader_cache_set(struct ilo_shader_cache *shc,
-                     struct ilo_shader **shaders,
-                     int num_shaders)
-{
-   int new_cur, i;
-
-   /* calculate the space needed */
-   new_cur = shc->cur;
-   for (i = 0; i < num_shaders; i++) {
-      if (shaders[i]->cache_seqno != shc->seqno)
-         new_cur = align(new_cur, 64) + shaders[i]->kernel_size;
-   }
-
-   /* all shaders are already in the cache */
-   if (new_cur == shc->cur)
-      return;
-
-   /*
-    * From the Sandy Bridge PRM, volume 4 part 2, page 112:
-    *
-    *     "Due to prefetch of the instruction stream, the EUs may attempt to
-    *      access up to 8 instructions (128 bytes) beyond the end of the kernel
-    *      program - possibly into the next memory page.  Although these
-    *      instructions will not be executed, software must account for the
-    *      prefetch in order to avoid invalid page access faults."
-    */
-   new_cur += 128;
-
-   /*
-    * we should be able to append data without being blocked even the bo
-    * is busy...
-    */
-
-   /* reallocate when the cache is full or busy */
-   if (new_cur > shc->size || shc->busy) {
-      while (new_cur > shc->size)
-         shc->size <<= 1;
-
-      ilo_shader_cache_reset(shc);
-   }
-
-   /* upload now */
-   for (i = 0; i < num_shaders; i++) {
-      if (shaders[i]->cache_seqno != shc->seqno) {
-         /* kernels must be aligned to 64-byte */
-         shc->cur = align(shc->cur, 64);
-         intel_bo_pwrite(shc->bo, shc->cur,
-               shaders[i]->kernel_size, shaders[i]->kernel);
-
-         shaders[i]->cache_seqno = shc->seqno;
-         shaders[i]->cache_offset = shc->cur;
-
-         shc->cur += shaders[i]->kernel_size;
-      }
-   }
 }

@@ -492,7 +492,7 @@ gen7_pipeline_wm(struct ilo_3d_pipeline *p,
 
    /* 3DSTATE_PS */
    if (DIRTY(FS) || DIRTY(FRAGMENT_SAMPLERS) ||
-       DIRTY(BLEND)) {
+       DIRTY(BLEND) || session->kernel_bo_changed) {
       const struct ilo_shader *fs = (ilo->fs)? ilo->fs->shader : NULL;
       const int num_samplers = ilo->sampler[PIPE_SHADER_FRAGMENT].count;
       const bool dual_blend = ilo->blend->dual_blend;

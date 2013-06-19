@@ -46,14 +46,12 @@ finalize_shader_states(struct ilo_context *ilo)
    const struct {
       struct ilo_shader_state *state;
       struct ilo_shader *prev_shader;
-      uint32_t prev_cache_seqno;
       uint32_t dirty;
       uint32_t deps;
    } sh[PIPE_SHADER_TYPES] = {
       [PIPE_SHADER_VERTEX] = {
          .state = ilo->vs,
          .prev_shader = (ilo->vs) ? ilo->vs->shader : NULL,
-         .prev_cache_seqno = (ilo->vs) ? ilo->vs->shader->cache_seqno : 0,
          .dirty = ILO_DIRTY_VS,
          .deps = ILO_DIRTY_VERTEX_SAMPLER_VIEWS |
                  ILO_DIRTY_RASTERIZER,
@@ -61,7 +59,6 @@ finalize_shader_states(struct ilo_context *ilo)
       [PIPE_SHADER_FRAGMENT] = {
          .state = ilo->fs,
          .prev_shader = (ilo->fs) ? ilo->fs->shader : NULL,
-         .prev_cache_seqno = (ilo->fs) ? ilo->fs->shader->cache_seqno : 0,
          .dirty = ILO_DIRTY_FS,
          .deps = ILO_DIRTY_FRAGMENT_SAMPLER_VIEWS |
                  ILO_DIRTY_RASTERIZER |
@@ -70,7 +67,6 @@ finalize_shader_states(struct ilo_context *ilo)
       [PIPE_SHADER_GEOMETRY] = {
          .state = ilo->gs,
          .prev_shader = (ilo->gs) ? ilo->gs->shader : NULL,
-         .prev_cache_seqno = (ilo->gs) ? ilo->gs->shader->cache_seqno : 0,
          .dirty = ILO_DIRTY_GS,
          .deps = ILO_DIRTY_GEOMETRY_SAMPLER_VIEWS |
                  ILO_DIRTY_VS |
@@ -79,13 +75,11 @@ finalize_shader_states(struct ilo_context *ilo)
       [PIPE_SHADER_COMPUTE] = {
          .state = NULL,
          .prev_shader = NULL,
-         .prev_cache_seqno = 0,
          .dirty = 0,
          .deps = 0,
       },
    };
-   struct ilo_shader *shaders[PIPE_SHADER_TYPES];
-   int num_shaders = 0, i;
+   int i;
 
    for (i = 0; i < PIPE_SHADER_TYPES; i++) {
       /* no state bound */
@@ -99,25 +93,15 @@ finalize_shader_states(struct ilo_context *ilo)
          ilo_shader_variant_init(&variant, &sh[i].state->info, ilo);
          ilo_shader_state_use_variant(sh[i].state, &variant);
       }
-
-      shaders[num_shaders++] = sh[i].state->shader;
    }
-
-   ilo_shader_cache_set(ilo->shader_cache, shaders, num_shaders);
 
    for (i = 0; i < PIPE_SHADER_TYPES; i++) {
       /* no state bound */
       if (!sh[i].state)
          continue;
 
-      /*
-       * mark the shader state dirty if
-       *
-       *  - a new variant is selected, or
-       *  - the kernel is uploaded to a different bo
-       */
-      if (sh[i].state->shader != sh[i].prev_shader ||
-          sh[i].state->shader->cache_seqno != sh[i].prev_cache_seqno)
+      /* mark the shader state dirty if new variant is selected */
+      if (sh[i].state->shader != sh[i].prev_shader)
          ilo->dirty |= sh[i].dirty;
    }
 }
@@ -367,7 +351,14 @@ ilo_create_fs_state(struct pipe_context *pipe,
                     const struct pipe_shader_state *state)
 {
    struct ilo_context *ilo = ilo_context(pipe);
-   return ilo_shader_state_create(ilo, PIPE_SHADER_FRAGMENT, state);
+   struct ilo_shader_state *shader;
+
+   shader = ilo_shader_state_create(ilo, PIPE_SHADER_FRAGMENT, state);
+   assert(shader);
+
+   ilo_shader_cache_add(ilo->shader_cache, shader);
+
+   return shader;
 }
 
 static void
@@ -383,7 +374,10 @@ ilo_bind_fs_state(struct pipe_context *pipe, void *state)
 static void
 ilo_delete_fs_state(struct pipe_context *pipe, void *state)
 {
+   struct ilo_context *ilo = ilo_context(pipe);
    struct ilo_shader_state *fs = (struct ilo_shader_state *) state;
+
+   ilo_shader_cache_remove(ilo->shader_cache, fs);
    ilo_shader_state_destroy(fs);
 }
 
@@ -392,7 +386,14 @@ ilo_create_vs_state(struct pipe_context *pipe,
                     const struct pipe_shader_state *state)
 {
    struct ilo_context *ilo = ilo_context(pipe);
-   return ilo_shader_state_create(ilo, PIPE_SHADER_VERTEX, state);
+   struct ilo_shader_state *shader;
+
+   shader = ilo_shader_state_create(ilo, PIPE_SHADER_VERTEX, state);
+   assert(shader);
+
+   ilo_shader_cache_add(ilo->shader_cache, shader);
+
+   return shader;
 }
 
 static void
@@ -408,7 +409,10 @@ ilo_bind_vs_state(struct pipe_context *pipe, void *state)
 static void
 ilo_delete_vs_state(struct pipe_context *pipe, void *state)
 {
+   struct ilo_context *ilo = ilo_context(pipe);
    struct ilo_shader_state *vs = (struct ilo_shader_state *) state;
+
+   ilo_shader_cache_remove(ilo->shader_cache, vs);
    ilo_shader_state_destroy(vs);
 }
 
@@ -417,7 +421,14 @@ ilo_create_gs_state(struct pipe_context *pipe,
                     const struct pipe_shader_state *state)
 {
    struct ilo_context *ilo = ilo_context(pipe);
-   return ilo_shader_state_create(ilo, PIPE_SHADER_GEOMETRY, state);
+   struct ilo_shader_state *shader;
+
+   shader = ilo_shader_state_create(ilo, PIPE_SHADER_GEOMETRY, state);
+   assert(shader);
+
+   ilo_shader_cache_add(ilo->shader_cache, shader);
+
+   return shader;
 }
 
 static void
@@ -433,7 +444,10 @@ ilo_bind_gs_state(struct pipe_context *pipe, void *state)
 static void
 ilo_delete_gs_state(struct pipe_context *pipe, void *state)
 {
+   struct ilo_context *ilo = ilo_context(pipe);
    struct ilo_shader_state *gs = (struct ilo_shader_state *) state;
+
+   ilo_shader_cache_remove(ilo->shader_cache, gs);
    ilo_shader_state_destroy(gs);
 }
 
@@ -975,7 +989,14 @@ ilo_create_compute_state(struct pipe_context *pipe,
                          const struct pipe_compute_state *state)
 {
    struct ilo_context *ilo = ilo_context(pipe);
-   return ilo_shader_state_create(ilo, PIPE_SHADER_COMPUTE, state);
+   struct ilo_shader_state *shader;
+
+   shader = ilo_shader_state_create(ilo, PIPE_SHADER_COMPUTE, state);
+   assert(shader);
+
+   ilo_shader_cache_add(ilo->shader_cache, shader);
+
+   return shader;
 }
 
 static void
@@ -991,7 +1012,10 @@ ilo_bind_compute_state(struct pipe_context *pipe, void *state)
 static void
 ilo_delete_compute_state(struct pipe_context *pipe, void *state)
 {
+   struct ilo_context *ilo = ilo_context(pipe);
    struct ilo_shader_state *cs = (struct ilo_shader_state *) state;
+
+   ilo_shader_cache_remove(ilo->shader_cache, cs);
    ilo_shader_state_destroy(cs);
 }
 
