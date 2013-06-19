@@ -146,88 +146,10 @@ boolean svga_translate_decl_sm30( struct svga_shader_emitter *emit,
                                const struct tgsi_full_declaration *decl );
 
 
-static INLINE boolean emit_dst( struct svga_shader_emitter *emit,
-                         SVGA3dShaderDestToken dest )
-{
-   assert(dest.reserved0);
-   assert(dest.mask);
-   return svga_shader_emit_dword( emit, dest.value );
-}
-
-static INLINE boolean emit_src( struct svga_shader_emitter *emit,
-                         const struct src_register src )
-{
-   if (src.base.relAddr) {
-      assert(src.base.reserved0);
-      assert(src.indirect.reserved0);
-      return (svga_shader_emit_dword( emit, src.base.value ) &&
-              svga_shader_emit_dword( emit, src.indirect.value ));
-   }
-   else {
-      assert(src.base.reserved0);
-      return svga_shader_emit_dword( emit, src.base.value );
-   }
-}
-
-
 static INLINE boolean emit_instruction( struct svga_shader_emitter *emit,
                                  SVGA3dShaderInstToken opcode )
 {
    return svga_shader_emit_opcode( emit, opcode.value );
-}
-
-
-static INLINE boolean emit_op1( struct svga_shader_emitter *emit,
-                         SVGA3dShaderInstToken inst,
-                         SVGA3dShaderDestToken dest,
-                         struct src_register src0 )
-{
-   return (emit_instruction( emit, inst ) &&
-           emit_dst( emit, dest ) &&
-           emit_src( emit, src0 ));
-}
-
-static INLINE boolean emit_op2( struct svga_shader_emitter *emit,
-                     SVGA3dShaderInstToken inst,
-                     SVGA3dShaderDestToken dest,
-                     struct src_register src0,
-                     struct src_register src1 )
-{
-   return (emit_instruction( emit, inst ) &&
-           emit_dst( emit, dest ) &&
-           emit_src( emit, src0 ) &&
-           emit_src( emit, src1 ));
-}
-
-static INLINE boolean emit_op3( struct svga_shader_emitter *emit,
-                         SVGA3dShaderInstToken inst,
-                         SVGA3dShaderDestToken dest,
-                         struct src_register src0,
-                         struct src_register src1,
-                         struct src_register src2 )
-{
-   return (emit_instruction( emit, inst ) &&
-           emit_dst( emit, dest ) &&
-           emit_src( emit, src0 ) &&
-           emit_src( emit, src1 ) &&
-           emit_src( emit, src2 ));
-}
-
-
-static INLINE boolean emit_op4( struct svga_shader_emitter *emit,
-                                SVGA3dShaderInstToken inst,
-                                SVGA3dShaderDestToken dest,
-                                struct src_register src0,
-                                struct src_register src1,
-                                struct src_register src2,
-                                struct src_register src3)
-{
-   return (emit_instruction( emit, inst ) &&
-           emit_dst( emit, dest ) &&
-           emit_src( emit, src0 ) &&
-           emit_src( emit, src1 ) &&
-           emit_src( emit, src2 ) &&
-           emit_src( emit, src3 ));
 }
 
 
@@ -320,36 +242,6 @@ src_token( unsigned file, int number )
 
 
 static INLINE struct src_register 
-absolute( struct src_register src )
-{
-   src.base.srcMod = SVGA3DSRCMOD_ABS;
-
-   return src;
-}
-
-
-static INLINE struct src_register 
-negate( struct src_register src )
-{
-   switch (src.base.srcMod) {
-   case SVGA3DSRCMOD_ABS:
-      src.base.srcMod = SVGA3DSRCMOD_ABSNEG;
-      break;
-   case SVGA3DSRCMOD_ABSNEG:
-      src.base.srcMod = SVGA3DSRCMOD_ABS;
-      break;
-   case SVGA3DSRCMOD_NEG:
-      src.base.srcMod = SVGA3DSRCMOD_NONE;
-      break;
-   case SVGA3DSRCMOD_NONE:
-      src.base.srcMod = SVGA3DSRCMOD_NEG;
-      break;
-   }
-   return src;
-}
-
-
-static INLINE struct src_register 
 src_register( unsigned file, int number )
 {
    struct src_register src;
@@ -372,22 +264,5 @@ static INLINE struct src_register src( SVGA3dShaderDestToken dst )
                         dst.num );
 }
 
-static INLINE ubyte svga_tgsi_sampler_type( struct svga_shader_emitter *emit,
-                                            int idx )
-{
-   switch (emit->key.fkey.tex[idx].texture_target) {
-   case PIPE_TEXTURE_1D:
-      return SVGA3DSAMP_2D;
-   case PIPE_TEXTURE_2D:
-   case PIPE_TEXTURE_RECT:
-      return SVGA3DSAMP_2D;
-   case PIPE_TEXTURE_3D:
-      return SVGA3DSAMP_VOLUME;
-   case PIPE_TEXTURE_CUBE:
-      return SVGA3DSAMP_CUBE;
-   }
-
-   return SVGA3DSAMP_UNKNOWN;
-}
 
 #endif

@@ -491,6 +491,26 @@ vs30_output(struct svga_shader_emitter *emit,
 }
 
 
+/** Translate PIPE_TEXTURE_x to SVGA3DSAMP_x */
+static ubyte
+svga_tgsi_sampler_type(const struct svga_shader_emitter *emit, int idx)
+{
+   switch (emit->key.fkey.tex[idx].texture_target) {
+   case PIPE_TEXTURE_1D:
+      return SVGA3DSAMP_2D;
+   case PIPE_TEXTURE_2D:
+   case PIPE_TEXTURE_RECT:
+      return SVGA3DSAMP_2D;
+   case PIPE_TEXTURE_3D:
+      return SVGA3DSAMP_VOLUME;
+   case PIPE_TEXTURE_CUBE:
+      return SVGA3DSAMP_CUBE;
+   }
+
+   return SVGA3DSAMP_UNKNOWN;
+}
+
+
 static boolean
 ps30_sampler( struct svga_shader_emitter *emit,
               struct tgsi_declaration_semantic semantic,

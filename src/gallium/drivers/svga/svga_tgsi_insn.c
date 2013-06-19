@@ -292,6 +292,135 @@ reset_temp_regs(struct svga_shader_emitter *emit)
 }
 
 
+/** Emit bytecode for a src_register */
+static boolean
+emit_src(struct svga_shader_emitter *emit, const struct src_register src)
+{
+   if (src.base.relAddr) {
+      assert(src.base.reserved0);
+      assert(src.indirect.reserved0);
+      return (svga_shader_emit_dword( emit, src.base.value ) &&
+              svga_shader_emit_dword( emit, src.indirect.value ));
+   }
+   else {
+      assert(src.base.reserved0);
+      return svga_shader_emit_dword( emit, src.base.value );
+   }
+}
+
+
+/** Emit bytecode for a dst_register */
+static boolean
+emit_dst(struct svga_shader_emitter *emit, SVGA3dShaderDestToken dest)
+{
+   assert(dest.reserved0);
+   assert(dest.mask);
+   return svga_shader_emit_dword( emit, dest.value );
+}
+
+
+/** Emit bytecode for a 1-operand instruction */
+static boolean
+emit_op1(struct svga_shader_emitter *emit,
+         SVGA3dShaderInstToken inst,
+         SVGA3dShaderDestToken dest,
+         struct src_register src0)
+{
+   return (emit_instruction(emit, inst) &&
+           emit_dst(emit, dest) &&
+           emit_src(emit, src0));
+}
+
+
+/** Emit bytecode for a 2-operand instruction */
+static boolean
+emit_op2(struct svga_shader_emitter *emit,
+         SVGA3dShaderInstToken inst,
+         SVGA3dShaderDestToken dest,
+         struct src_register src0,
+         struct src_register src1)
+{
+   return (emit_instruction(emit, inst) &&
+           emit_dst(emit, dest) &&
+           emit_src(emit, src0) &&
+           emit_src(emit, src1));
+}
+
+
+/** Emit bytecode for a 3-operand instruction */
+static boolean
+emit_op3(struct svga_shader_emitter *emit,
+         SVGA3dShaderInstToken inst,
+         SVGA3dShaderDestToken dest,
+         struct src_register src0,
+         struct src_register src1,
+         struct src_register src2)
+{
+   return (emit_instruction(emit, inst) &&
+           emit_dst(emit, dest) &&
+           emit_src(emit, src0) &&
+           emit_src(emit, src1) &&
+           emit_src(emit, src2));
+}
+
+
+/** Emit bytecode for a 4-operand instruction */
+static boolean
+emit_op4(struct svga_shader_emitter *emit,
+         SVGA3dShaderInstToken inst,
+         SVGA3dShaderDestToken dest,
+         struct src_register src0,
+         struct src_register src1,
+         struct src_register src2,
+         struct src_register src3)
+{
+   return (emit_instruction(emit, inst) &&
+           emit_dst(emit, dest) &&
+           emit_src(emit, src0) &&
+           emit_src(emit, src1) &&
+           emit_src(emit, src2) &&
+           emit_src(emit, src3));
+}
+
+
+/**
+ * Apply the absolute value modifier to the given src_register, returning
+ * a new src_register.
+ */
+static struct src_register 
+absolute(struct src_register src)
+{
+   src.base.srcMod = SVGA3DSRCMOD_ABS;
+   return src;
+}
+
+
+/**
+ * Apply the negation modifier to the given src_register, returning
+ * a new src_register.
+ */
+static struct src_register 
+negate(struct src_register src)
+{
+   switch (src.base.srcMod) {
+   case SVGA3DSRCMOD_ABS:
+      src.base.srcMod = SVGA3DSRCMOD_ABSNEG;
+      break;
+   case SVGA3DSRCMOD_ABSNEG:
+      src.base.srcMod = SVGA3DSRCMOD_ABS;
+      break;
+   case SVGA3DSRCMOD_NEG:
+      src.base.srcMod = SVGA3DSRCMOD_NONE;
+      break;
+   case SVGA3DSRCMOD_NONE:
+      src.base.srcMod = SVGA3DSRCMOD_NEG;
+      break;
+   }
+   return src;
+}
+
+
+
 /* Replace the src with the temporary specified in the dst, but copying
  * only the necessary channels, and preserving the original swizzle (which is
  * important given that several opcodes have constraints in the allowed
