@@ -3108,22 +3108,9 @@ _mesa_glsl_compile_shader(struct gl_context *ctx, struct gl_shader *shader)
       new(shader) _mesa_glsl_parse_state(ctx, shader->Type, shader);
 
    const char *source = shader->Source;
-   /* Check if the user called glCompileShader without first calling
-    * glShaderSource.  This should fail to compile, but not raise a GL_ERROR.
-    */
-   if (source == NULL) {
-      shader->CompileStatus = GL_FALSE;
-      return;
-   }
 
    state->error = glcpp_preprocess(state, &source, &state->info_log,
 			     &ctx->Extensions, ctx);
-
-   if (ctx->Shader.Flags & GLSL_DUMP) {
-      printf("GLSL source for %s shader %d:\n",
-	     _mesa_glsl_shader_target_name(state->target), shader->Name);
-      printf("%s\n", shader->Source);
-   }
 
    if (!state->error) {
      _mesa_glsl_lexer_ctor(state, source);
@@ -3159,24 +3146,6 @@ _mesa_glsl_compile_shader(struct gl_context *ctx, struct gl_shader *shader)
    memcpy(shader->builtins_to_link, state->builtins_to_link,
 	  sizeof(shader->builtins_to_link[0]) * state->num_builtins_to_link);
    shader->num_builtins_to_link = state->num_builtins_to_link;
-
-   if (ctx->Shader.Flags & GLSL_LOG) {
-      _mesa_write_shader_to_file(shader);
-   }
-
-   if (ctx->Shader.Flags & GLSL_DUMP) {
-      if (shader->CompileStatus) {
-	 printf("GLSL IR for shader %d:\n", shader->Name);
-	 _mesa_print_ir(shader->ir, NULL);
-	 printf("\n\n");
-      } else {
-	 printf("GLSL shader %d failed to compile.\n", shader->Name);
-      }
-      if (shader->InfoLog && shader->InfoLog[0] != 0) {
-	 printf("GLSL shader %d info log:\n", shader->Name);
-	 printf("%s\n", shader->InfoLog);
-      }
-   }
 
    if (shader->UniformBlocks)
       ralloc_free(shader->UniformBlocks);
