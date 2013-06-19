@@ -138,6 +138,7 @@ struct si_pipe_shader {
 	struct si_resource		*bo;
 	unsigned			num_sgprs;
 	unsigned			num_vgprs;
+	unsigned			lds_size;
 	unsigned			spi_ps_input_ena;
 	unsigned			spi_shader_col_format;
 	unsigned			cb_shader_mask;

@@ -191,7 +191,7 @@ static void radeonsi_launch_grid(
 		| S_00B84C_TGID_Z_EN(1)
 		| S_00B84C_TG_SIZE_EN(1)
 		| S_00B84C_TIDIG_COMP_CNT(2)
-		| S_00B84C_LDS_SIZE(0)
+		| S_00B84C_LDS_SIZE(shader->lds_size)
 		| S_00B84C_EXCP_EN(0))
 		;
 	si_pm4_set_reg(pm4, R_00B854_COMPUTE_RESOURCE_LIMITS, 0);
