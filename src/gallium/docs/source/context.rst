@@ -330,11 +330,13 @@ scaled to nanoseconds, recorded after all commands issued prior to
 This query does not require a call to ``begin_query``.
 The result is an unsigned 64-bit integer.
 
-``PIPE_QUERY_TIMESTAMP_DISJOINT`` can be used to check whether the
-internal timer resolution is good enough to distinguish between the
-events at ``begin_query`` and ``end_query``.
+``PIPE_QUERY_TIMESTAMP_DISJOINT`` can be used to check the
+internal timer resolution and whether the timestamp counter has become
+unreliable due to things like throttling etc. - only if this is FALSE
+a timestamp query (within the timestamp_disjoint query) should be trusted.
 The result is a 64-bit integer specifying the timer resolution in Hz,
-followed by a boolean value indicating whether the timer has incremented.
+followed by a boolean value indicating whether the timestamp counter
+is discontinuous or disjoint.
 
 ``PIPE_QUERY_PRIMITIVES_GENERATED`` returns a 64-bit integer indicating
 the number of primitives processed by the pipeline (regardless of whether

@@ -181,7 +181,6 @@ nv50_query_begin(struct pipe_context *pipe, struct pipe_query *pq)
       nv50_query_get(push, q, 0x20, 0x05805002);
       nv50_query_get(push, q, 0x30, 0x06805002);
       break;
-   case PIPE_QUERY_TIMESTAMP_DISJOINT:
    case PIPE_QUERY_TIME_ELAPSED:
       nv50_query_get(push, q, 0x10, 0x00005002);
       break;
@@ -218,7 +217,6 @@ nv50_query_end(struct pipe_context *pipe, struct pipe_query *pq)
    case PIPE_QUERY_TIMESTAMP:
       q->sequence++;
       /* fall through */
-   case PIPE_QUERY_TIMESTAMP_DISJOINT:
    case PIPE_QUERY_TIME_ELAPSED:
       nv50_query_get(push, q, 0, 0x00005002);
       break;
@@ -228,6 +226,8 @@ nv50_query_end(struct pipe_context *pipe, struct pipe_query *pq)
       break;
    case NVA0_QUERY_STREAM_OUTPUT_BUFFER_OFFSET:
       nv50_query_get(push, q, 0, 0x0d005002 | (q->index << 5));
+      break;
+   case PIPE_QUERY_TIMESTAMP_DISJOINT:
       break;
    default:
       assert(0);
@@ -287,9 +287,9 @@ nv50_query_result(struct pipe_context *pipe, struct pipe_query *pq,
    case PIPE_QUERY_TIMESTAMP:
       res64[0] = data64[1];
       break;
-   case PIPE_QUERY_TIMESTAMP_DISJOINT: /* u32 sequence, u32 0, u64 time */
+   case PIPE_QUERY_TIMESTAMP_DISJOINT:
       res64[0] = 1000000000;
-      res8[8] = (data64[1] == data64[3]) ? FALSE : TRUE;
+      res8[8] = FALSE;
       break;
    case PIPE_QUERY_TIME_ELAPSED:
       res64[0] = data64[1] - data64[3];
