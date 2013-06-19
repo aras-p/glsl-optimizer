@@ -120,7 +120,8 @@ _mesa_SampleMaski(GLuint index, GLbitfield mask)
 }
 
 
-/* Helper for checking a requested sample count against the limit
+/**
+ * Helper for checking a requested sample count against the limit
  * for a particular (target, internalFormat) pair. The limit imposed,
  * and the error generated, both depend on which extensions are supported.
  *
@@ -131,8 +132,9 @@ GLenum
 _mesa_check_sample_count(struct gl_context *ctx, GLenum target,
                          GLenum internalFormat, GLsizei samples)
 {
-   /* If ARB_internalformat_query is supported, then treat its highest returned sample
-    * count as the absolute maximum for this format; it is allowed to exceed MAX_SAMPLES.
+   /* If ARB_internalformat_query is supported, then treat its highest
+    * returned sample count as the absolute maximum for this format; it is
+    * allowed to exceed MAX_SAMPLES.
     *
     * From the ARB_internalformat_query spec:
     *
@@ -141,7 +143,8 @@ _mesa_check_sample_count(struct gl_context *ctx, GLenum target,
     */
    if (ctx->Extensions.ARB_internalformat_query) {
       GLint buffer[16];
-      int count = ctx->Driver.QuerySamplesForFormat(ctx, target, internalFormat, buffer);
+      int count = ctx->Driver.QuerySamplesForFormat(ctx, target,
+                                                    internalFormat, buffer);
       int limit = count ? buffer[0] : -1;
 
       return samples > limit ? GL_INVALID_OPERATION : GL_NO_ERROR;
@@ -159,7 +162,8 @@ _mesa_check_sample_count(struct gl_context *ctx, GLenum target,
     *
     * And when describing the operation of TexImage*Multisample:
     *
-    * "The error INVALID_OPERATION may be generated if any of the following are true:
+    * "The error INVALID_OPERATION may be generated if any of the following
+    * are true:
     *
     * * <internalformat> is a depth/stencil-renderable format and <samples>
     *   is greater than the value of MAX_DEPTH_TEXTURE_SAMPLES
@@ -171,7 +175,8 @@ _mesa_check_sample_count(struct gl_context *ctx, GLenum target,
 
    if (ctx->Extensions.ARB_texture_multisample) {
       if (_mesa_is_enum_format_integer(internalFormat))
-         return samples > ctx->Const.MaxIntegerSamples ? GL_INVALID_OPERATION : GL_NO_ERROR;
+         return samples > ctx->Const.MaxIntegerSamples
+            ? GL_INVALID_OPERATION : GL_NO_ERROR;
 
       if (target == GL_TEXTURE_2D_MULTISAMPLE ||
           target == GL_TEXTURE_2D_MULTISAMPLE_ARRAY) {
