@@ -195,7 +195,7 @@ lp_jit_create_types(struct lp_fragment_shader_variant *lp)
       LLVMTypeRef elem_types[LP_JIT_THREAD_DATA_COUNT];
       LLVMTypeRef thread_data_type;
 
-      elem_types[LP_JIT_THREAD_DATA_COUNTER] = LLVMInt32TypeInContext(lc);
+      elem_types[LP_JIT_THREAD_DATA_COUNTER] = LLVMInt64TypeInContext(lc);
 
       thread_data_type = LLVMStructTypeInContext(lc, elem_types,
                                                  Elements(elem_types), 0);

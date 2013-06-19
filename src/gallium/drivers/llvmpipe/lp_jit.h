@@ -164,7 +164,7 @@ enum {
 
 struct lp_jit_thread_data
 {
-   uint32_t vis_counter;
+   uint64_t vis_counter;
 };
 
 

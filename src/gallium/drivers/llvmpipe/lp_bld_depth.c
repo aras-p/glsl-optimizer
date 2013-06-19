@@ -429,7 +429,7 @@ get_s_shift_and_mask(const struct util_format_description *format_desc,
  * Test the depth mask. Add the number of channel which has none zero mask
  * into the occlusion counter. e.g. maskvalue is {-1, -1, -1, -1}.
  * The counter will add 4.
- * TODO: could get that out of the loop, and need to use 64bit counter.
+ * TODO: could get that out of the fs loop.
  *
  * \param type holds element type of the mask vector.
  * \param maskvalue is the depth test mask.
@@ -458,6 +458,7 @@ lp_build_occlusion_count(struct gallivm_state *gallivm,
                                       LLVMInt32TypeInContext(context), bits);
       count = lp_build_intrinsic_unary(builder, popcntintr,
                                        LLVMInt32TypeInContext(context), bits);
+      count = LLVMBuildZExt(builder, count, LLVMIntTypeInContext(context, 64), "");
    }
    else if(util_cpu_caps.has_avx && type.length == 8) {
       const char *movmskintr = "llvm.x86.avx.movmsk.ps.256";
@@ -468,6 +469,7 @@ lp_build_occlusion_count(struct gallivm_state *gallivm,
                                       LLVMInt32TypeInContext(context), bits);
       count = lp_build_intrinsic_unary(builder, popcntintr,
                                        LLVMInt32TypeInContext(context), bits);
+      count = LLVMBuildZExt(builder, count, LLVMIntTypeInContext(context, 64), "");
    }
    else {
       unsigned i;
@@ -510,8 +512,11 @@ lp_build_occlusion_count(struct gallivm_state *gallivm,
        }
        count = lp_build_intrinsic_unary(builder, popcntintr, counttype, countd);
 
-       if (type.length > 4) {
-          count = LLVMBuildTrunc(builder, count, LLVMIntTypeInContext(context, 32), "");
+       if (type.length > 8) {
+          count = LLVMBuildTrunc(builder, count, LLVMIntTypeInContext(context, 64), "");
+       }
+       else if (type.length < 8) {
+          count = LLVMBuildZExt(builder, count, LLVMIntTypeInContext(context, 64), "");
        }
    }
    newcount = LLVMBuildLoad(builder, counter, "origcount");
