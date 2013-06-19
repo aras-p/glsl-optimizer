@@ -225,6 +225,7 @@ svga_hwtnl_draw_arrays( struct svga_hwtnl *hwtnl,
    if (hwtnl->api_fillmode != PIPE_POLYGON_MODE_FILL &&
        prim >= PIPE_PRIM_TRIANGLES)
    {
+      /* Convert unfilled polygons into points, lines, triangles */
       gen_type = u_unfilled_generator( prim,
                                        start,
                                        count,
@@ -235,6 +236,10 @@ svga_hwtnl_draw_arrays( struct svga_hwtnl *hwtnl,
                                        &gen_func );
    }
    else {
+      /* Convert PIPE_PRIM_LINE_LOOP to PIPE_PRIM_LINESTRIP,
+       * convert PIPE_PRIM_POLYGON to PIPE_PRIM_TRIANGLE_FAN,
+       * etc, if needed (as determined by svga_hw_prims mask).
+       */
       gen_type = u_index_generator( svga_hw_prims,
                                     prim,
                                     start,
