@@ -62,8 +62,6 @@ nvc0_decoder_setup_ppp(struct nvc0_decoder *dec, struct nvc0_video_buffer *targe
    PUSH_DATA (push, in_addr + y2); // 70c
    PUSH_DATA (push, in_addr + cbcr); // 710
    PUSH_DATA (push, in_addr + cbcr2); // 714
-   assert(target->resources[0]->width0 >= 16 * dec_w);
-   assert(target->resources[0]->height0 >= dec->base.height/2);
 
    for (i = 0; i < 2; ++i) {
       struct nv50_miptree *mt = (struct nv50_miptree *)target->resources[i];
