@@ -141,9 +141,6 @@ brw_update_draw_buffer(struct intel_context *intel)
     * renderbuffers' buffer objects.
     */
    intel->NewGLState |= _NEW_BUFFERS;
-
-   /* update viewport/scissor since it depends on window size */
-   intel->NewGLState |= _NEW_VIEWPORT | _NEW_SCISSOR;
 }
 
 /**
