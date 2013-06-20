@@ -205,11 +205,9 @@ intel_miptree_blit(struct intel_context *intel,
       return false;
    }
 
-   /* The blitter has no idea about HiZ or fast color clears, so we need to
-    * resolve the miptrees before we do anything.
+   /* The blitter has no idea about fast color clears, so we need to resolve
+    * the miptrees before we do anything.
     */
-   intel_miptree_slice_resolve_depth(intel, src_mt, src_level, src_slice);
-   intel_miptree_slice_resolve_depth(intel, dst_mt, dst_level, dst_slice);
    intel_miptree_resolve_color(intel, src_mt);
    intel_miptree_resolve_color(intel, dst_mt);
 

@@ -490,13 +490,6 @@ intel_renderbuffer_update_wrapper(struct intel_context *intel,
 
    intel_renderbuffer_set_draw_offset(irb);
 
-   if (mt->hiz_mt == NULL &&
-       intel->vtbl.is_hiz_depth_format(intel, rb->Format)) {
-      intel_miptree_alloc_hiz(intel, mt);
-      if (!mt->hiz_mt)
-	 return false;
-   }
-
    return true;
 }
 
@@ -649,16 +642,6 @@ intel_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
 	    fbo_incomplete(fb, "FBO incomplete: separate stencil is %s "
                            "instead of S8\n",
                            _mesa_get_format_name(stencil_mt->format));
-	 }
-	 if (intel->gen < 7 && !intel_renderbuffer_has_hiz(depthRb)) {
-	    /* Before Gen7, separate depth and stencil buffers can be used
-	     * only if HiZ is enabled. From the Sandybridge PRM, Volume 2,
-	     * Part 1, Bit 3DSTATE_DEPTH_BUFFER.SeparateStencilBufferEnable:
-	     *     [DevSNB]: This field must be set to the same value (enabled
-	     *     or disabled) as Hierarchical Depth Buffer Enable.
-	     */
-	    fbo_incomplete(fb, "FBO incomplete: separate stencil "
-                           "without HiZ\n");
 	 }
       }
    }
@@ -840,61 +823,6 @@ intel_renderbuffer_set_needs_downsample(struct intel_renderbuffer *irb)
       irb->mt->need_downsample = true;
 }
 
-/**
- * Does the renderbuffer have hiz enabled?
- */
-bool
-intel_renderbuffer_has_hiz(struct intel_renderbuffer *irb)
-{
-   return intel_miptree_slice_has_hiz(irb->mt, irb->mt_level, irb->mt_layer);
-}
-
-void
-intel_renderbuffer_set_needs_hiz_resolve(struct intel_renderbuffer *irb)
-{
-   if (irb->mt) {
-      intel_miptree_slice_set_needs_hiz_resolve(irb->mt,
-                                                irb->mt_level,
-                                                irb->mt_layer);
-   }
-}
-
-void
-intel_renderbuffer_set_needs_depth_resolve(struct intel_renderbuffer *irb)
-{
-   if (irb->mt) {
-      intel_miptree_slice_set_needs_depth_resolve(irb->mt,
-                                                  irb->mt_level,
-                                                  irb->mt_layer);
-   }
-}
-
-bool
-intel_renderbuffer_resolve_hiz(struct intel_context *intel,
-			       struct intel_renderbuffer *irb)
-{
-   if (irb->mt)
-      return intel_miptree_slice_resolve_hiz(intel,
-                                             irb->mt,
-                                             irb->mt_level,
-                                             irb->mt_layer);
-
-   return false;
-}
-
-bool
-intel_renderbuffer_resolve_depth(struct intel_context *intel,
-				 struct intel_renderbuffer *irb)
-{
-   if (irb->mt)
-      return intel_miptree_slice_resolve_depth(intel,
-                                               irb->mt,
-                                               irb->mt_level,
-                                               irb->mt_layer);
-
-   return false;
-}
-
 void
 intel_renderbuffer_move_to_temp(struct intel_context *intel,
                                 struct intel_renderbuffer *irb,
@@ -915,10 +843,6 @@ intel_renderbuffer_move_to_temp(struct intel_context *intel,
                                  true,
                                  irb->mt->num_samples,
                                  INTEL_MIPTREE_TILING_ANY);
-
-   if (intel->vtbl.is_hiz_depth_format(intel, new_mt->format)) {
-      intel_miptree_alloc_hiz(intel, new_mt);
-   }
 
    intel_miptree_copy_teximage(intel, intel_image, new_mt, invalidate);
 

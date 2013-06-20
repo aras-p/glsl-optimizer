@@ -33,7 +33,6 @@
 #include "intel_context.h"
 #include "intel_mipmap_tree.h"
 #include "intel_regions.h"
-#include "intel_resolve_map.h"
 #include "intel_tex_layout.h"
 #include "intel_tex.h"
 #include "intel_blit.h"
@@ -376,9 +375,7 @@ intel_miptree_create_layout(struct intel_context *intel,
 
    if (!for_bo &&
        _mesa_get_format_base_format(format) == GL_DEPTH_STENCIL &&
-       (intel->must_use_separate_stencil ||
-	(intel->has_separate_stencil &&
-	 intel->vtbl.is_hiz_depth_format(intel, format)))) {
+       (intel->must_use_separate_stencil)) {
       mt->stencil_mt = intel_miptree_create(intel,
                                             mt->target,
                                             MESA_FORMAT_S8,
@@ -763,12 +760,6 @@ intel_miptree_create_for_renderbuffer(struct intel_context *intel,
    if (!mt)
       goto fail;
 
-   if (intel->vtbl.is_hiz_depth_format(intel, format)) {
-      ok = intel_miptree_alloc_hiz(intel, mt);
-      if (!ok)
-         goto fail;
-   }
-
    if (mt->msaa_layout == INTEL_MSAA_LAYOUT_CMS) {
       ok = intel_miptree_alloc_mcs(intel, mt, num_samples);
       if (!ok)
@@ -814,12 +805,10 @@ intel_miptree_release(struct intel_mipmap_tree **mt)
 
       intel_region_release(&((*mt)->region));
       intel_miptree_release(&(*mt)->stencil_mt);
-      intel_miptree_release(&(*mt)->hiz_mt);
 #ifndef I915
       intel_miptree_release(&(*mt)->mcs_mt);
 #endif
       intel_miptree_release(&(*mt)->singlesample_mt);
-      intel_resolve_map_clear(&(*mt)->hiz_map);
 
       for (i = 0; i < MAX_TEXTURE_LEVELS; i++) {
 	 free((*mt)->level[i].slice);
@@ -1269,210 +1258,6 @@ intel_miptree_alloc_non_msrt_mcs(struct intel_context *intel,
    return mt->mcs_mt;
 #endif
 }
-
-
-/**
- * Helper for intel_miptree_alloc_hiz() that sets
- * \c mt->level[level].slice[layer].has_hiz. Return true if and only if
- * \c has_hiz was set.
- */
-static bool
-intel_miptree_slice_enable_hiz(struct intel_context *intel,
-                               struct intel_mipmap_tree *mt,
-                               uint32_t level,
-                               uint32_t layer)
-{
-   assert(mt->hiz_mt);
-
-   if (intel->is_haswell) {
-      /* Disable HiZ for some slices to work around a hardware bug.
-       *
-       * Haswell hardware fails to respect
-       * 3DSTATE_DEPTH_BUFFER.Depth_Coordinate_Offset_X/Y when during HiZ
-       * ambiguate operations.  The failure is inconsistent and affected by
-       * other GPU contexts. Running a heavy GPU workload in a separate
-       * process causes the failure rate to drop to nearly 0.
-       *
-       * To workaround the bug, we enable HiZ only when we can guarantee that
-       * the Depth Coordinate Offset fields will be set to 0. The function
-       * brw_get_depthstencil_tile_masks() is used to calculate the fields,
-       * and the function is sometimes called in such a way that the presence
-       * of an attached stencil buffer changes the fuction's return value.
-       *
-       * The largest tile size considered by brw_get_depthstencil_tile_masks()
-       * is that of the stencil buffer. Therefore, if this hiz slice's
-       * corresponding depth slice has an offset that is aligned to the
-       * stencil buffer tile size, 64x64 pixels, then
-       * 3DSTATE_DEPTH_BUFFER.Depth_Coordinate_Offset_X/Y is set to 0.
-       */
-      uint32_t depth_x_offset = mt->level[level].slice[layer].x_offset;
-      uint32_t depth_y_offset = mt->level[level].slice[layer].y_offset;
-      if ((depth_x_offset & 63) || (depth_y_offset & 63)) {
-         return false;
-      }
-   }
-
-   mt->level[level].slice[layer].has_hiz = true;
-   return true;
-}
-
-
-
-bool
-intel_miptree_alloc_hiz(struct intel_context *intel,
-			struct intel_mipmap_tree *mt)
-{
-   assert(mt->hiz_mt == NULL);
-   mt->hiz_mt = intel_miptree_create(intel,
-                                     mt->target,
-                                     mt->format,
-                                     mt->first_level,
-                                     mt->last_level,
-                                     mt->logical_width0,
-                                     mt->logical_height0,
-                                     mt->logical_depth0,
-                                     true,
-                                     mt->num_samples,
-                                     INTEL_MIPTREE_TILING_ANY);
-
-   if (!mt->hiz_mt)
-      return false;
-
-   /* Mark that all slices need a HiZ resolve. */
-   struct intel_resolve_map *head = &mt->hiz_map;
-   for (int level = mt->first_level; level <= mt->last_level; ++level) {
-      for (int layer = 0; layer < mt->level[level].depth; ++layer) {
-         if (!intel_miptree_slice_enable_hiz(intel, mt, level, layer))
-            continue;
-
-	 head->next = malloc(sizeof(*head->next));
-	 head->next->prev = head;
-	 head->next->next = NULL;
-	 head = head->next;
-
-	 head->level = level;
-	 head->layer = layer;
-	 head->need = GEN6_HIZ_OP_HIZ_RESOLVE;
-      }
-   }
-
-   return true;
-}
-
-/**
- * Does the miptree slice have hiz enabled?
- */
-bool
-intel_miptree_slice_has_hiz(struct intel_mipmap_tree *mt,
-                            uint32_t level,
-                            uint32_t layer)
-{
-   intel_miptree_check_level_layer(mt, level, layer);
-   return mt->level[level].slice[layer].has_hiz;
-}
-
-void
-intel_miptree_slice_set_needs_hiz_resolve(struct intel_mipmap_tree *mt,
-					  uint32_t level,
-					  uint32_t layer)
-{
-   if (!intel_miptree_slice_has_hiz(mt, level, layer))
-      return;
-
-   intel_resolve_map_set(&mt->hiz_map,
-			 level, layer, GEN6_HIZ_OP_HIZ_RESOLVE);
-}
-
-
-void
-intel_miptree_slice_set_needs_depth_resolve(struct intel_mipmap_tree *mt,
-                                            uint32_t level,
-                                            uint32_t layer)
-{
-   if (!intel_miptree_slice_has_hiz(mt, level, layer))
-      return;
-
-   intel_resolve_map_set(&mt->hiz_map,
-			 level, layer, GEN6_HIZ_OP_DEPTH_RESOLVE);
-}
-
-static bool
-intel_miptree_slice_resolve(struct intel_context *intel,
-			    struct intel_mipmap_tree *mt,
-			    uint32_t level,
-			    uint32_t layer,
-			    enum gen6_hiz_op need)
-{
-   intel_miptree_check_level_layer(mt, level, layer);
-
-   struct intel_resolve_map *item =
-	 intel_resolve_map_get(&mt->hiz_map, level, layer);
-
-   if (!item || item->need != need)
-      return false;
-
-   intel_hiz_exec(intel, mt, level, layer, need);
-   intel_resolve_map_remove(item);
-   return true;
-}
-
-bool
-intel_miptree_slice_resolve_hiz(struct intel_context *intel,
-				struct intel_mipmap_tree *mt,
-				uint32_t level,
-				uint32_t layer)
-{
-   return intel_miptree_slice_resolve(intel, mt, level, layer,
-				      GEN6_HIZ_OP_HIZ_RESOLVE);
-}
-
-bool
-intel_miptree_slice_resolve_depth(struct intel_context *intel,
-				  struct intel_mipmap_tree *mt,
-				  uint32_t level,
-				  uint32_t layer)
-{
-   return intel_miptree_slice_resolve(intel, mt, level, layer,
-				      GEN6_HIZ_OP_DEPTH_RESOLVE);
-}
-
-static bool
-intel_miptree_all_slices_resolve(struct intel_context *intel,
-				 struct intel_mipmap_tree *mt,
-				 enum gen6_hiz_op need)
-{
-   bool did_resolve = false;
-   struct intel_resolve_map *i, *next;
-
-   for (i = mt->hiz_map.next; i; i = next) {
-      next = i->next;
-      if (i->need != need)
-	 continue;
-
-      intel_hiz_exec(intel, mt, i->level, i->layer, need);
-      intel_resolve_map_remove(i);
-      did_resolve = true;
-   }
-
-   return did_resolve;
-}
-
-bool
-intel_miptree_all_slices_resolve_hiz(struct intel_context *intel,
-				     struct intel_mipmap_tree *mt)
-{
-   return intel_miptree_all_slices_resolve(intel, mt,
-					   GEN6_HIZ_OP_HIZ_RESOLVE);
-}
-
-bool
-intel_miptree_all_slices_resolve_depth(struct intel_context *intel,
-				       struct intel_mipmap_tree *mt)
-{
-   return intel_miptree_all_slices_resolve(intel, mt,
-					   GEN6_HIZ_OP_DEPTH_RESOLVE);
-}
-
 
 void
 intel_miptree_resolve_color(struct intel_context *intel,
@@ -2157,11 +1942,6 @@ intel_miptree_map_singlesample(struct intel_context *intel,
       *out_ptr = NULL;
       *out_stride = 0;
       return;
-   }
-
-   intel_miptree_slice_resolve_depth(intel, mt, level, slice);
-   if (map->mode & GL_MAP_WRITE_BIT) {
-      intel_miptree_slice_set_needs_hiz_resolve(mt, level, slice);
    }
 
    if (mt->format == MESA_FORMAT_S8) {

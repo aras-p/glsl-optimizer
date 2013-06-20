@@ -15,7 +15,6 @@ i915_FILES = \
 	intel_clear.c \
 	intel_extensions.c \
 	intel_mipmap_tree.c \
-	intel_resolve_map.c \
 	intel_tex_layout.c \
 	intel_tex_image.c \
 	intel_tex_subimage.c \

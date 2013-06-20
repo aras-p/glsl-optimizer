@@ -31,7 +31,6 @@
 #include <assert.h>
 
 #include "intel_regions.h"
-#include "intel_resolve_map.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -63,7 +62,6 @@ extern "C" {
  * temporary system buffers.
  */
 
-struct intel_resolve_map;
 struct intel_texture_image;
 
 /**
@@ -152,15 +150,6 @@ struct intel_mipmap_level
        * intel_miptree_map/unmap on this slice.
        */
       struct intel_miptree_map *map;
-
-      /**
-       * \brief Is HiZ enabled for this slice?
-       *
-       * If \c mt->level[l].slice[s].has_hiz is set, then (1) \c mt->hiz_mt
-       * has been allocated and (2) the HiZ memory corresponding to this slice
-       * resides at \c mt->hiz_mt->level[l].slice[s].
-       */
-      bool has_hiz;
    } *slice;
 };
 
@@ -346,11 +335,6 @@ struct intel_mipmap_tree
    GLuint total_width;
    GLuint total_height;
 
-   /* The 3DSTATE_CLEAR_PARAMS value associated with the last depth clear to
-    * this depth mipmap tree, if any.
-    */
-   uint32_t depth_clear_value;
-
    /* Includes image offset tables:
     */
    struct intel_mipmap_level level[MAX_TEXTURE_LEVELS];
@@ -406,28 +390,6 @@ struct intel_mipmap_tree
     * \brief A downsample is needed from this miptree to singlesample_mt.
     */
    bool need_downsample;
-
-   /**
-    * \brief HiZ miptree
-    *
-    * The hiz miptree contains the miptree's hiz buffer. To allocate the hiz
-    * miptree, use intel_miptree_alloc_hiz().
-    *
-    * To determine if hiz is enabled, do not check this pointer. Instead, use
-    * intel_miptree_slice_has_hiz().
-    */
-   struct intel_mipmap_tree *hiz_mt;
-
-   /**
-    * \brief Map of miptree slices to needed resolves.
-    *
-    * This is used only when the miptree has a child HiZ miptree.
-    *
-    * Let \c mt be a depth miptree with HiZ enabled. Then the resolve map is
-    * \c mt->hiz_map. The resolve map of the child HiZ miptree, \c
-    * mt->hiz_mt->hiz_map, is unused.
-    */
-   struct intel_resolve_map hiz_map;
 
    /**
     * \brief Stencil miptree for depthstencil textures.
@@ -631,70 +593,6 @@ intel_miptree_alloc_mcs(struct intel_context *intel,
                         struct intel_mipmap_tree *mt,
                         GLuint num_samples);
 
-/**
- * \name Miptree HiZ functions
- * \{
- *
- * It is safe to call the "slice_set_need_resolve" and "slice_resolve"
- * functions on a miptree without HiZ. In that case, each function is a no-op.
- */
-
-/**
- * \brief Allocate the miptree's embedded HiZ miptree.
- * \see intel_mipmap_tree:hiz_mt
- * \return false if allocation failed
- */
-
-bool
-intel_miptree_alloc_hiz(struct intel_context *intel,
-			struct intel_mipmap_tree *mt);
-
-bool
-intel_miptree_slice_has_hiz(struct intel_mipmap_tree *mt,
-                            uint32_t level,
-                            uint32_t layer);
-
-void
-intel_miptree_slice_set_needs_hiz_resolve(struct intel_mipmap_tree *mt,
-                                          uint32_t level,
-					  uint32_t depth);
-void
-intel_miptree_slice_set_needs_depth_resolve(struct intel_mipmap_tree *mt,
-                                            uint32_t level,
-					    uint32_t depth);
-
-/**
- * \return false if no resolve was needed
- */
-bool
-intel_miptree_slice_resolve_hiz(struct intel_context *intel,
-				struct intel_mipmap_tree *mt,
-				unsigned int level,
-				unsigned int depth);
-
-/**
- * \return false if no resolve was needed
- */
-bool
-intel_miptree_slice_resolve_depth(struct intel_context *intel,
-				  struct intel_mipmap_tree *mt,
-				  unsigned int level,
-				  unsigned int depth);
-
-/**
- * \return false if no resolve was needed
- */
-bool
-intel_miptree_all_slices_resolve_hiz(struct intel_context *intel,
-				     struct intel_mipmap_tree *mt);
-
-/**
- * \return false if no resolve was needed
- */
-bool
-intel_miptree_all_slices_resolve_depth(struct intel_context *intel,
-				       struct intel_mipmap_tree *mt);
-
 /**\}*/
 
 /**
@@ -766,20 +664,6 @@ intel_miptree_unmap(struct intel_context *intel,
 		    unsigned int level,
 		    unsigned int slice);
 
-#ifdef I915
-static inline void
-intel_hiz_exec(struct intel_context *intel, struct intel_mipmap_tree *mt,
-	       unsigned int level, unsigned int layer, enum gen6_hiz_op op)
-{
-   /* Stub on i915.  It would be nice if we didn't execute resolve code at all
-    * there.
-    */
-}
-#else
-void
-intel_hiz_exec(struct intel_context *intel, struct intel_mipmap_tree *mt,
-	       unsigned int level, unsigned int layer, enum gen6_hiz_op op);
-#endif
 
 #ifdef __cplusplus
 }
