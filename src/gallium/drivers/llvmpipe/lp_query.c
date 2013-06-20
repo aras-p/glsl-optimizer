@@ -100,20 +100,17 @@ llvmpipe_get_query_result(struct pipe_context *pipe,
    uint64_t *result = (uint64_t *)vresult;
    int i;
 
-   if (!pq->fence) {
-      /* no fence because there was no scene, so results is zero */
-      *result = 0;
-      return TRUE;
-   }
+   if (pq->fence) {
+      /* only have a fence if there was a scene */
+      if (!lp_fence_signalled(pq->fence)) {
+         if (!lp_fence_issued(pq->fence))
+            llvmpipe_flush(pipe, NULL, __FUNCTION__);
 
-   if (!lp_fence_signalled(pq->fence)) {
-      if (!lp_fence_issued(pq->fence))
-         llvmpipe_flush(pipe, NULL, __FUNCTION__);
+         if (!wait)
+            return FALSE;
 
-      if (!wait)
-         return FALSE;
-
-      lp_fence_wait(pq->fence);
+         lp_fence_wait(pq->fence);
+      }
    }
 
    /* Sum the results from each of the threads:
