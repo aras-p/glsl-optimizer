@@ -93,15 +93,6 @@ struct dd_function_table {
    void (*UpdateState)( struct gl_context *ctx, GLbitfield new_state );
 
    /**
-    * Get the width and height of the named buffer/window.
-    *
-    * Mesa uses this to determine when the driver's window size has changed.
-    * XXX OBSOLETE: this function will be removed in the future.
-    */
-   void (*GetBufferSize)( struct gl_framebuffer *buffer,
-                          GLuint *width, GLuint *height );
-
-   /**
     * Resize the given framebuffer to the given size.
     * XXX OBSOLETE: this function will be removed in the future.
     */

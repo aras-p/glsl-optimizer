@@ -710,7 +710,6 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
       /* override with our functions */
       functions.GetString = get_string;
       functions.UpdateState = osmesa_update_state;
-      functions.GetBufferSize = NULL;
 
       if (!_mesa_initialize_context(&osmesa->mesa,
                                     API_OPENGL_COMPAT,

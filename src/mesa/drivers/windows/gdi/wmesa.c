@@ -605,7 +605,6 @@ WMesaContext WMesaCreateContext(HDC hDC,
     _mesa_init_driver_functions(&functions);
     functions.GetString = wmesa_get_string;
     functions.UpdateState = wmesa_update_state;
-    functions.GetBufferSize = wmesa_get_buffer_size;
     functions.Flush = wmesa_flush;
     functions.Clear = clear;
     functions.ResizeBuffers = wmesa_resize_buffers;

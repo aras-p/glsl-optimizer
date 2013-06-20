@@ -1388,25 +1388,6 @@ check_compatible(const struct gl_context *ctx,
 
 
 /**
- * Do one-time initialization for the given framebuffer.  Specifically,
- * ask the driver for the window's current size and update the framebuffer
- * object to match.
- * Really, the device driver should totally take care of this.
- */
-static void
-initialize_framebuffer_size(struct gl_context *ctx, struct gl_framebuffer *fb)
-{
-   GLuint width, height;
-   if (ctx->Driver.GetBufferSize) {
-      ctx->Driver.GetBufferSize(fb, &width, &height);
-      if (ctx->Driver.ResizeBuffers)
-         ctx->Driver.ResizeBuffers(ctx, fb, width, height);
-      fb->Initialized = GL_TRUE;
-   }
-}
-
-
-/**
  * Check if the viewport/scissor size has not yet been initialized.
  * Initialize the size if the given width and height are non-zero.
  */
@@ -1507,32 +1488,6 @@ _mesa_make_current( struct gl_context *newCtx,
           * framebuffer bindings.
           */
 	 newCtx->NewState |= _NEW_BUFFERS;
-
-#if 1
-         /* We want to get rid of these lines: */
-         if (!drawBuffer->Initialized) {
-            initialize_framebuffer_size(newCtx, drawBuffer);
-         }
-         if (readBuffer != drawBuffer && !readBuffer->Initialized) {
-            initialize_framebuffer_size(newCtx, readBuffer);
-         }
-
-	 _mesa_resizebuffers(newCtx);
-#else
-         /* We want the drawBuffer and readBuffer to be initialized by
-          * the driver.
-          * This generally means the Width and Height match the actual
-          * window size and the renderbuffers (both hardware and software
-          * based) are allocated to match.  The later can generally be
-          * done with a call to _mesa_resize_framebuffer().
-          *
-          * It's theoretically possible for a buffer to have zero width
-          * or height, but for now, assert check that the driver did what's
-          * expected of it.
-          */
-         ASSERT(drawBuffer->Width > 0);
-         ASSERT(drawBuffer->Height > 0);
-#endif
 
          if (drawBuffer) {
             _mesa_check_init_viewport(newCtx,

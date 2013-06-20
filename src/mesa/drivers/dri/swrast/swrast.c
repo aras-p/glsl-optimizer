@@ -642,7 +642,6 @@ swrast_init_driver_functions(struct dd_function_table *driver)
 {
     driver->GetString = get_string;
     driver->UpdateState = update_state;
-    driver->GetBufferSize = NULL;
     driver->Viewport = viewport;
     driver->ChooseTextureFormat = swrastChooseTextureFormat;
     driver->MapRenderbuffer = swrast_map_renderbuffer;
