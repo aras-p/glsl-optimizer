@@ -40,7 +40,6 @@
 #include "main/enums.h"
 #include "main/formats.h"
 #include "main/glformats.h"
-#include "main/texcompress_etc.h"
 #include "main/teximage.h"
 
 #define FILE_DEBUG_FLAG DEBUG_MIPTREE
@@ -186,46 +185,8 @@ intel_miptree_create(struct intel_context *intel,
                      enum intel_miptree_tiling_mode requested_tiling)
 {
    struct intel_mipmap_tree *mt;
-   gl_format tex_format = format;
-   gl_format etc_format = MESA_FORMAT_NONE;
    GLuint total_width, total_height;
 
-   if (!intel->is_baytrail) {
-      switch (format) {
-      case MESA_FORMAT_ETC1_RGB8:
-         format = MESA_FORMAT_RGBX8888_REV;
-         break;
-      case MESA_FORMAT_ETC2_RGB8:
-         format = MESA_FORMAT_RGBX8888_REV;
-         break;
-      case MESA_FORMAT_ETC2_SRGB8:
-      case MESA_FORMAT_ETC2_SRGB8_ALPHA8_EAC:
-      case MESA_FORMAT_ETC2_SRGB8_PUNCHTHROUGH_ALPHA1:
-         format = MESA_FORMAT_SARGB8;
-         break;
-      case MESA_FORMAT_ETC2_RGBA8_EAC:
-      case MESA_FORMAT_ETC2_RGB8_PUNCHTHROUGH_ALPHA1:
-         format = MESA_FORMAT_RGBA8888_REV;
-         break;
-      case MESA_FORMAT_ETC2_R11_EAC:
-         format = MESA_FORMAT_R16;
-         break;
-      case MESA_FORMAT_ETC2_SIGNED_R11_EAC:
-         format = MESA_FORMAT_SIGNED_R16;
-         break;
-      case MESA_FORMAT_ETC2_RG11_EAC:
-         format = MESA_FORMAT_GR1616;
-         break;
-      case MESA_FORMAT_ETC2_SIGNED_RG11_EAC:
-         format = MESA_FORMAT_SIGNED_GR1616;
-         break;
-      default:
-         /* Non ETC1 / ETC2 format */
-         break;
-      }
-   }
-
-   etc_format = (format != tex_format) ? tex_format : MESA_FORMAT_NONE;
 
    mt = intel_miptree_create_layout(intel, target, format,
 				      first_level, last_level, width0,
@@ -247,7 +208,6 @@ intel_miptree_create(struct intel_context *intel,
                                                  mt);
    bool y_or_x = tiling == (I915_TILING_Y | I915_TILING_X);
 
-   mt->etc_format = etc_format;
    mt->region = intel_region_alloc(intel->intelScreen,
 				   y_or_x ? I915_TILING_Y : tiling,
 				   mt->cpp,
@@ -464,8 +424,6 @@ intel_miptree_match_image(struct intel_mipmap_tree *mt,
    assert(target_to_target(image->TexObject->Target) == mt->target);
 
    gl_format mt_format = mt->format;
-   if (mt->etc_format != MESA_FORMAT_NONE)
-      mt_format = mt->etc_format;
 
    if (image->TexFormat != mt_format)
       return false;
@@ -603,15 +561,14 @@ intel_miptree_copy_slice_sw(struct intel_context *intel,
                      level, slice,
                      0, 0,
                      width, height,
-                     GL_MAP_READ_BIT | BRW_MAP_DIRECT_BIT,
+                     GL_MAP_READ_BIT,
                      &src, &src_stride);
 
    intel_miptree_map(intel, dst_mt,
                      level, slice,
                      0, 0,
                      width, height,
-                     GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT |
-                     BRW_MAP_DIRECT_BIT,
+                     GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT,
                      &dst, &dst_stride);
 
    DBG("sw blit %s mt %p %p/%d -> %s mt %p %p/%d (%dx%d)\n",
@@ -865,58 +822,6 @@ intel_miptree_unmap_blit(struct intel_context *intel,
    intel_miptree_release(&map->mt);
 }
 
-static void
-intel_miptree_map_etc(struct intel_context *intel,
-                      struct intel_mipmap_tree *mt,
-                      struct intel_miptree_map *map,
-                      unsigned int level,
-                      unsigned int slice)
-{
-   assert(mt->etc_format != MESA_FORMAT_NONE);
-   if (mt->etc_format == MESA_FORMAT_ETC1_RGB8) {
-      assert(mt->format == MESA_FORMAT_RGBX8888_REV);
-   }
-
-   assert(map->mode & GL_MAP_WRITE_BIT);
-   assert(map->mode & GL_MAP_INVALIDATE_RANGE_BIT);
-
-   map->stride = _mesa_format_row_stride(mt->etc_format, map->w);
-   map->buffer = malloc(_mesa_format_image_size(mt->etc_format,
-                                                map->w, map->h, 1));
-   map->ptr = map->buffer;
-}
-
-static void
-intel_miptree_unmap_etc(struct intel_context *intel,
-                        struct intel_mipmap_tree *mt,
-                        struct intel_miptree_map *map,
-                        unsigned int level,
-                        unsigned int slice)
-{
-   uint32_t image_x;
-   uint32_t image_y;
-   intel_miptree_get_image_offset(mt, level, slice, &image_x, &image_y);
-
-   image_x += map->x;
-   image_y += map->y;
-
-   uint8_t *dst = intel_miptree_map_raw(intel, mt)
-                + image_y * mt->region->pitch
-                + image_x * mt->region->cpp;
-
-   if (mt->etc_format == MESA_FORMAT_ETC1_RGB8)
-      _mesa_etc1_unpack_rgba8888(dst, mt->region->pitch,
-                                 map->ptr, map->stride,
-                                 map->w, map->h);
-   else
-      _mesa_unpack_etc2_format(dst, mt->region->pitch,
-                               map->ptr, map->stride,
-                               map->w, map->h, mt->etc_format);
-
-   intel_miptree_unmap_raw(intel, mt);
-   free(map->buffer);
-}
-
 /**
  * Create and attach a map to the miptree at (level, slice). Return the
  * attached map.
@@ -985,17 +890,13 @@ intel_miptree_map(struct intel_context *intel,
       return;
    }
 
-   if (mt->etc_format != MESA_FORMAT_NONE &&
-       !(mode & BRW_MAP_DIRECT_BIT)) {
-      intel_miptree_map_etc(intel, mt, map, level, slice);
-   }
    /* See intel_miptree_blit() for details on the 32k pitch limit. */
-   else if (intel->has_llc &&
-            !(mode & GL_MAP_WRITE_BIT) &&
-            !mt->compressed &&
-            (mt->region->tiling == I915_TILING_X ||
-             (intel->gen >= 6 && mt->region->tiling == I915_TILING_Y)) &&
-            mt->region->pitch < 32768) {
+   if (intel->has_llc &&
+       !(mode & GL_MAP_WRITE_BIT) &&
+       !mt->compressed &&
+       (mt->region->tiling == I915_TILING_X ||
+        (intel->gen >= 6 && mt->region->tiling == I915_TILING_Y)) &&
+       mt->region->pitch < 32768) {
       intel_miptree_map_blit(intel, mt, map, level, slice);
    } else if (mt->region->tiling != I915_TILING_NONE &&
               mt->region->bo->size >= intel->max_gtt_map_object_size) {
@@ -1026,10 +927,7 @@ intel_miptree_unmap(struct intel_context *intel,
    DBG("%s: mt %p (%s) level %d slice %d\n", __FUNCTION__,
        mt, _mesa_get_format_name(mt->format), level, slice);
 
-   if (mt->etc_format != MESA_FORMAT_NONE &&
-       !(map->mode & BRW_MAP_DIRECT_BIT)) {
-      intel_miptree_unmap_etc(intel, mt, map, level, slice);
-   } else if (map->mt) {
+   if (map->mt) {
       intel_miptree_unmap_blit(intel, mt, map, level, slice);
    } else {
       intel_miptree_unmap_gtt(intel, mt, map, level, slice);

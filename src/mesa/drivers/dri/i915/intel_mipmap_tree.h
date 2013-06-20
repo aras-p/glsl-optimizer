@@ -64,17 +64,6 @@ extern "C" {
 
 struct intel_texture_image;
 
-/**
- * When calling intel_miptree_map() on an ETC-transcoded-to-RGB miptree or a
- * depthstencil-split-to-separate-stencil miptree, we'll normally make a
- * tmeporary and recreate the kind of data requested by Mesa core, since we're
- * satisfying some glGetTexImage() request or something.
- *
- * However, occasionally you want to actually map the miptree's current data
- * without transcoding back.  This flag to intel_miptree_map() gets you that.
- */
-#define BRW_MAP_DIRECT_BIT	0x80000000
-
 struct intel_miptree_map {
    /** Bitfield of GL_MAP_READ_BIT, GL_MAP_WRITE_BIT, GL_MAP_INVALIDATE_BIT */
    GLbitfield mode;
@@ -155,16 +144,10 @@ struct intel_mipmap_tree
    GLenum target;
 
    /**
-    * Generally, this is just the same as the gl_texture_image->TexFormat or
+    * This is just the same as the gl_texture_image->TexFormat or
     * gl_renderbuffer->Format.
-    *
-    * For ETC1/ETC2 textures, this is one of the uncompressed mesa texture
-    * formats if the hardware lacks support for ETC1/ETC2. See @ref wraps_etc.
     */
    gl_format format;
-
-   /** This variable stores the value of ETC compressed texture format */
-   gl_format etc_format;
 
    /**
     * The X offset of each image in the miptree must be aligned to this. See
