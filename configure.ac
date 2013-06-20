@@ -1605,14 +1605,14 @@ if test "x$enable_gallium_llvm" = xyes; then
         fi
 
         LLVM_COMPONENTS="engine bitwriter"
-        if $LLVM_CONFIG --components | grep -q '\<mcjit\>'; then
+        if $LLVM_CONFIG --components | grep -qw 'mcjit'; then
             LLVM_COMPONENTS="${LLVM_COMPONENTS} mcjit"
         fi
 
         if test "x$enable_opencl" = xyes; then
             LLVM_COMPONENTS="${LLVM_COMPONENTS} ipo linker instrumentation"
             # LLVM 3.3 >= 177971 requires IRReader
-            if $LLVM_CONFIG --components | grep -q '\<irreader\>'; then
+            if $LLVM_CONFIG --components | grep -qw 'irreader'; then
                 LLVM_COMPONENTS="${LLVM_COMPONENTS} irreader"
             fi
         fi
@@ -1727,7 +1727,7 @@ radeon_llvm_check() {
     if test "$LLVM_VERSION_INT" -lt "${LLVM_REQUIRED_VERSION_MAJOR}0${LLVM_REQUIRED_VERSION_MINOR}"; then
         AC_MSG_ERROR([LLVM $LLVM_REQUIRED_VERSION_MAJOR.$LLVM_REQUIRED_VERSION_MINOR or newer is required for r600g and radeonsi.])
     fi
-    if test true && $LLVM_CONFIG --targets-built | grep -qv '\<R600\>' ; then
+    if test true && $LLVM_CONFIG --targets-built | grep -qvw 'R600' ; then
         AC_MSG_ERROR([LLVM R600 Target not enabled.  You can enable it when building the LLVM
                       sources with the --enable-experimental-targets=R600
                       configure flag])
