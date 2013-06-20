@@ -74,7 +74,7 @@ ilo_shader_cache_add(struct ilo_shader_cache *shc,
 
    shader->cache = shc;
    LIST_FOR_EACH_ENTRY(sh, &shader->variants, list)
-      sh->cache_seqno = false;
+      sh->uploaded = false;
 
    list_add(&shader->list, &shc->changed);
 }
@@ -118,7 +118,7 @@ ilo_shader_cache_upload_shader(struct ilo_shader_cache *shc,
    LIST_FOR_EACH_ENTRY(sh, &shader->variants, list) {
       int err;
 
-      if (incremental && sh->cache_seqno)
+      if (incremental && sh->uploaded)
          continue;
 
       /* kernels must be aligned to 64-byte */
@@ -128,7 +128,7 @@ ilo_shader_cache_upload_shader(struct ilo_shader_cache *shc,
       if (unlikely(err))
          return -1;
 
-      sh->cache_seqno = true;
+      sh->uploaded = true;
       sh->cache_offset = offset;
 
       offset += sh->kernel_size;
@@ -154,7 +154,7 @@ ilo_shader_cache_get_upload_size(struct ilo_shader_cache *shc,
 
          /* see ilo_shader_cache_upload_shader() */
          LIST_FOR_EACH_ENTRY(sh, &shader->variants, list) {
-            if (!incremental || !sh->cache_seqno)
+            if (!incremental || !sh->uploaded)
                offset = align(offset, 64) + sh->kernel_size;
          }
       }
@@ -165,7 +165,7 @@ ilo_shader_cache_get_upload_size(struct ilo_shader_cache *shc,
 
       /* see ilo_shader_cache_upload_shader() */
       LIST_FOR_EACH_ENTRY(sh, &shader->variants, list) {
-         if (!incremental || !sh->cache_seqno)
+         if (!incremental || !sh->uploaded)
             offset = align(offset, 64) + sh->kernel_size;
       }
    }

@@ -120,7 +120,7 @@ struct ilo_shader {
    struct list_head list;
 
    /* managed by shader cache */
-   uint32_t cache_seqno;
+   bool uploaded;
    uint32_t cache_offset;
 };
 
