@@ -1398,7 +1398,7 @@ append_gs_to_vs(struct ilo_shader *vs, struct ilo_shader *gs, int num_verts)
    vs->gs_offsets[num_verts - 1] = gs_offset;
    vs->gs_start_grf = gs->in.start_grf;
 
-   ilo_shader_destroy(gs);
+   ilo_shader_destroy_kernel(gs);
 
    return true;
 }

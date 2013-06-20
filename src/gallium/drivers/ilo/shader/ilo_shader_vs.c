@@ -1280,7 +1280,7 @@ ilo_shader_compile_vs(const struct ilo_shader_state *state,
 
       if (!ilo_shader_compile_gs_passthrough(state, variant,
                so_mapping, vcc.shader)) {
-         ilo_shader_destroy(vcc.shader);
+         ilo_shader_destroy_kernel(vcc.shader);
          vcc.shader = NULL;
       }
    }

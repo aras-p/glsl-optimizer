@@ -55,10 +55,26 @@ ilo_shader_cache_upload(struct ilo_shader_cache *shc,
                         bool incremental);
 
 struct ilo_shader_state *
-ilo_shader_state_create(const struct ilo_context *ilo,
-                        int type, const void *templ);
+ilo_shader_create_vs(const struct ilo_dev_info *dev,
+                     const struct pipe_shader_state *state,
+                     const struct ilo_context *precompile);
+
+struct ilo_shader_state *
+ilo_shader_create_gs(const struct ilo_dev_info *dev,
+                     const struct pipe_shader_state *state,
+                     const struct ilo_context *precompile);
+
+struct ilo_shader_state *
+ilo_shader_create_fs(const struct ilo_dev_info *dev,
+                     const struct pipe_shader_state *state,
+                     const struct ilo_context *precompile);
+
+struct ilo_shader_state *
+ilo_shader_create_cs(const struct ilo_dev_info *dev,
+                     const struct pipe_compute_state *state,
+                     const struct ilo_context *precompile);
 
 void
-ilo_shader_state_destroy(struct ilo_shader_state *state);
+ilo_shader_destroy(struct ilo_shader_state *shader);
 
 #endif /* ILO_SHADER_H */

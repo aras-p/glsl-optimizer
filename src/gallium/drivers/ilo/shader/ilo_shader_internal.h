@@ -203,7 +203,7 @@ ilo_shader_compile_cs(const struct ilo_shader_state *state,
                       const struct ilo_shader_variant *variant);
 
 static inline void
-ilo_shader_destroy(struct ilo_shader *sh)
+ilo_shader_destroy_kernel(struct ilo_shader *sh)
 {
    FREE(sh->kernel);
    FREE(sh);

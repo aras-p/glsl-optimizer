@@ -495,7 +495,7 @@ ilo_shader_info_parse_tokens(struct ilo_shader_info *info)
 /**
  * Create a shader state.
  */
-struct ilo_shader_state *
+static struct ilo_shader_state *
 ilo_shader_state_create(const struct ilo_context *ilo,
                         int type, const void *templ)
 {
@@ -533,26 +533,11 @@ ilo_shader_state_create(const struct ilo_context *ilo,
    /* guess and compile now */
    ilo_shader_variant_guess(&variant, &state->info, ilo);
    if (!ilo_shader_state_use_variant(state, &variant)) {
-      ilo_shader_state_destroy(state);
+      ilo_shader_destroy(state);
       return NULL;
    }
 
    return state;
-}
-
-/**
- * Destroy a shader state.
- */
-void
-ilo_shader_state_destroy(struct ilo_shader_state *state)
-{
-   struct ilo_shader *sh, *next;
-
-   LIST_FOR_EACH_ENTRY_SAFE(sh, next, &state->variants, list)
-      ilo_shader_destroy(sh);
-
-   FREE((struct tgsi_token *) state->info.tokens);
-   FREE(state);
 }
 
 /**
@@ -598,7 +583,7 @@ ilo_shader_state_gc(struct ilo_shader_state *state)
    /* remove from the tail as the most recently ones are at the head */
    LIST_FOR_EACH_ENTRY_SAFE_REV(sh, next, &state->variants, list) {
       ilo_shader_state_remove_shader(state, sh);
-      ilo_shader_destroy(sh);
+      ilo_shader_destroy_kernel(sh);
 
       if (state->total_size <= limit / 2)
          break;
@@ -691,4 +676,67 @@ ilo_shader_state_use_variant(struct ilo_shader_state *state,
    state->shader = sh;
 
    return true;
+}
+
+struct ilo_shader_state *
+ilo_shader_create_vs(const struct ilo_dev_info *dev,
+                     const struct pipe_shader_state *state,
+                     const struct ilo_context *precompile)
+{
+   struct ilo_shader_state *shader;
+
+   shader = ilo_shader_state_create(precompile, PIPE_SHADER_VERTEX, state);
+
+   return shader;
+}
+
+struct ilo_shader_state *
+ilo_shader_create_gs(const struct ilo_dev_info *dev,
+                     const struct pipe_shader_state *state,
+                     const struct ilo_context *precompile)
+{
+   struct ilo_shader_state *shader;
+
+   shader = ilo_shader_state_create(precompile, PIPE_SHADER_GEOMETRY, state);
+
+   return shader;
+}
+
+struct ilo_shader_state *
+ilo_shader_create_fs(const struct ilo_dev_info *dev,
+                     const struct pipe_shader_state *state,
+                     const struct ilo_context *precompile)
+{
+   struct ilo_shader_state *shader;
+
+   shader = ilo_shader_state_create(precompile, PIPE_SHADER_FRAGMENT, state);
+
+   return shader;
+}
+
+struct ilo_shader_state *
+ilo_shader_create_cs(const struct ilo_dev_info *dev,
+                     const struct pipe_compute_state *state,
+                     const struct ilo_context *precompile)
+{
+   struct ilo_shader_state *shader;
+
+   shader = ilo_shader_state_create(precompile, PIPE_SHADER_COMPUTE, state);
+
+   return shader;
+}
+
+/**
+ * Destroy a shader state.
+ */
+void
+ilo_shader_destroy(struct ilo_shader_state *shader)
+{
+   struct ilo_shader *sh, *next;
+
+   LIST_FOR_EACH_ENTRY_SAFE(sh, next, &shader->variants, list)
+      ilo_shader_destroy_kernel(sh);
+
+   FREE((struct tgsi_token *) shader->info.tokens);
+   FREE(shader);
 }
