@@ -74,9 +74,6 @@ intel_horizontal_texture_alignment_unit(struct intel_context *intel,
       return i;
     }
 
-   if (format == MESA_FORMAT_S8)
-      return 8;
-
    /* The depth alignment requirements in the table above are for rendering to
     * depth miplevels using the LOD control fields.  We don't use LOD control
     * fields, and instead use page offsets plus intra-tile x/y offsets, which
@@ -122,9 +119,6 @@ intel_vertical_texture_alignment_unit(struct intel_context *intel,
     */
    if (_mesa_is_format_compressed(format))
       return 4;
-
-   if (format == MESA_FORMAT_S8)
-      return intel->gen >= 7 ? 8 : 4;
 
    GLenum base_format = _mesa_get_format_base_format(format);
 

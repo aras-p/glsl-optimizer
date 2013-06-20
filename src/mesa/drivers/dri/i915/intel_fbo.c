@@ -58,12 +58,9 @@ struct intel_region*
 intel_get_rb_region(struct gl_framebuffer *fb, GLuint attIndex)
 {
    struct intel_renderbuffer *irb = intel_get_renderbuffer(fb, attIndex);
-   if (irb && irb->mt) {
-      if (attIndex == BUFFER_STENCIL && irb->mt->stencil_mt)
-	 return irb->mt->stencil_mt->region;
-      else
-	 return irb->mt->region;
-   } else
+   if (irb && irb->mt)
+      return irb->mt->region;
+   else
       return NULL;
 }
 
@@ -197,12 +194,7 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
    case GL_STENCIL_INDEX8_EXT:
    case GL_STENCIL_INDEX16_EXT:
       /* These aren't actual texture formats, so force them here. */
-      if (intel->has_separate_stencil) {
-	 rb->Format = MESA_FORMAT_S8;
-      } else {
-	 assert(!intel->must_use_separate_stencil);
-	 rb->Format = MESA_FORMAT_S8_Z24;
-      }
+      rb->Format = MESA_FORMAT_S8_Z24;
       break;
    }
 
@@ -561,18 +553,15 @@ intel_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
 
    if (depthRb)
       depth_mt = depthRb->mt;
-   if (stencilRb) {
+   if (stencilRb)
       stencil_mt = stencilRb->mt;
-      if (stencil_mt->stencil_mt)
-	 stencil_mt = stencil_mt->stencil_mt;
-   }
 
    if (depth_mt && stencil_mt) {
+      /* Make sure that the depth and stencil buffers are actually the same
+       * slice of the same miptree, since we only support packed
+       * depth/stencil.
+       */
       if (depth_mt == stencil_mt) {
-	 /* For true packed depth/stencil (not faked on prefers-separate-stencil
-	  * hardware) we need to be sure they're the same level/layer, since
-	  * we'll be emitting a single packet describing the packed setup.
-	  */
 	 if (depthRb->mt_level != stencilRb->mt_level ||
 	     depthRb->mt_layer != stencilRb->mt_layer) {
 	    fbo_incomplete(fb,
@@ -584,15 +573,7 @@ intel_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
                            stencilRb->mt_layer);
 	 }
       } else {
-	 if (!intel->has_separate_stencil) {
-	    fbo_incomplete(fb, "FBO incomplete: separate stencil "
-                           "unsupported\n");
-	 }
-	 if (stencil_mt->format != MESA_FORMAT_S8) {
-	    fbo_incomplete(fb, "FBO incomplete: separate stencil is %s "
-                           "instead of S8\n",
-                           _mesa_get_format_name(stencil_mt->format));
-	 }
+         fbo_incomplete(fb, "FBO incomplete: separate stencil unsupported\n");
       }
    }
 

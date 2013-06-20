@@ -149,7 +149,6 @@ struct __DRIimageRec {
    GLuint height;
    GLuint tile_x;
    GLuint tile_y;
-   bool has_depthstencil;
 
    void *data;
 };

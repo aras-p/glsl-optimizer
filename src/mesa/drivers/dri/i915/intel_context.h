@@ -221,8 +221,6 @@ struct intel_context
    bool is_baytrail;
    bool is_g4x;
    bool is_945;
-   bool has_separate_stencil;
-   bool must_use_separate_stencil;
    bool has_llc;
    bool has_swizzling;
 

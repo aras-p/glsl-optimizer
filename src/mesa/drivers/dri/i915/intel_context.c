@@ -499,8 +499,6 @@ intelInitContext(struct intel_context *intel,
       intel->needs_ff_sync = true;
    }
 
-   intel->has_separate_stencil = intel->intelScreen->hw_has_separate_stencil;
-   intel->must_use_separate_stencil = intel->intelScreen->hw_must_use_separate_stencil;
    intel->has_llc = intel->intelScreen->hw_has_llc;
    intel->has_swizzling = intel->intelScreen->hw_has_swizzling;
 

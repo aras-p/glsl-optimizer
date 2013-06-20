@@ -115,7 +115,6 @@ intel_init_texture_formats(struct gl_context *ctx)
    /* Depth and stencil */
    ctx->TextureFormatSupported[MESA_FORMAT_S8_Z24] = true;
    ctx->TextureFormatSupported[MESA_FORMAT_X8_Z24] = true;
-   ctx->TextureFormatSupported[MESA_FORMAT_S8] = intel->has_separate_stencil;
 
    /*
     * This was disabled in initial FBO enabling to avoid combinations

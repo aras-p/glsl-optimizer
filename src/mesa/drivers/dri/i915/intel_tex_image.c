@@ -367,14 +367,6 @@ intel_image_target_texture_2d(struct gl_context *ctx, GLenum target,
    if (image == NULL)
       return;
 
-   /* Disallow depth/stencil textures: we don't have a way to pass the
-    * separate stencil miptree of a GL_DEPTH_STENCIL texture through.
-    */
-   if (image->has_depthstencil) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, __func__);
-      return;
-   }
-
    intel_set_texture_image_region(ctx, texImage, image->region,
 				  target, image->internal_format,
                                   image->format, image->offset,

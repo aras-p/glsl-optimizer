@@ -158,13 +158,6 @@ struct intel_mipmap_tree
     * Generally, this is just the same as the gl_texture_image->TexFormat or
     * gl_renderbuffer->Format.
     *
-    * However, for textures and renderbuffers with packed depth/stencil formats
-    * on hardware where we want or need to use separate stencil, there will be
-    * two miptrees for storing the data.  If the depthstencil texture or rb is
-    * MESA_FORMAT_Z32_FLOAT_X24S8, then mt->format will be
-    * MESA_FORMAT_Z32_FLOAT, otherwise for MESA_FORMAT_S8_Z24 objects it will be
-    * MESA_FORMAT_X8_Z24.
-    *
     * For ETC1/ETC2 textures, this is one of the uncompressed mesa texture
     * formats if the hardware lacks support for ETC1/ETC2. See @ref wraps_etc.
     */
@@ -231,18 +224,6 @@ struct intel_mipmap_tree
    /* Offset into region bo where miptree starts:
     */
    uint32_t offset;
-
-   /**
-    * \brief Stencil miptree for depthstencil textures.
-    *
-    * This miptree is used for depthstencil textures and renderbuffers that
-    * require separate stencil.  It always has the true copy of the stencil
-    * bits, regardless of mt->format.
-    *
-    * \see intel_miptree_map_depthstencil()
-    * \see intel_miptree_unmap_depthstencil()
-    */
-   struct intel_mipmap_tree *stencil_mt;
 
    /* These are also refcounted:
     */
@@ -360,30 +341,6 @@ void
 intel_miptree_copy_teximage(struct intel_context *intel,
                             struct intel_texture_image *intelImage,
                             struct intel_mipmap_tree *dst_mt, bool invalidate);
-
-/**
- * Copy the stencil data from \c mt->stencil_mt->region to \c mt->region for
- * the given miptree slice.
- *
- * \see intel_mipmap_tree::stencil_mt
- */
-void
-intel_miptree_s8z24_scatter(struct intel_context *intel,
-                            struct intel_mipmap_tree *mt,
-                            uint32_t level,
-                            uint32_t slice);
-
-/**
- * Copy the stencil data in \c mt->stencil_mt->region to \c mt->region for the
- * given miptree slice.
- *
- * \see intel_mipmap_tree::stencil_mt
- */
-void
-intel_miptree_s8z24_gather(struct intel_context *intel,
-                           struct intel_mipmap_tree *mt,
-                           uint32_t level,
-                           uint32_t layer);
 
 /**\}*/
 

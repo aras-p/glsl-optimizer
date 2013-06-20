@@ -316,7 +316,6 @@ intel_setup_image_from_dimensions(__DRIimage *image)
    image->height   = image->region->height;
    image->tile_x = 0;
    image->tile_y = 0;
-   image->has_depthstencil = false;
 }
 
 static inline uint32_t
@@ -398,7 +397,6 @@ intel_create_image_from_renderbuffer(__DRIcontext *context,
    intel_region_reference(&image->region, irb->mt->region);
    intel_setup_image_from_dimensions(image);
    image->dri_format = intel_dri_format(image->format);
-   image->has_depthstencil = irb->mt->stencil_mt? true : false;
 
    rb->NeedsFinishRenderTexture = true;
    return image;
@@ -453,7 +451,6 @@ intel_create_image_from_texture(__DRIcontext *context, int target,
    image->data = loaderPrivate;
    intel_setup_image_from_mipmap_tree(intel, image, iobj->mt, level, zoffset);
    image->dri_format = intel_dri_format(image->format);
-   image->has_depthstencil = iobj->mt->stencil_mt? true : false;
    if (image->dri_format == MESA_FORMAT_NONE) {
       *error = __DRI_IMAGE_ERROR_BAD_PARAMETER;
       free(image);
@@ -565,7 +562,6 @@ intel_dup_image(__DRIimage *orig_image, void *loaderPrivate)
    image->height          = orig_image->height;
    image->tile_x          = orig_image->tile_x;
    image->tile_y          = orig_image->tile_y;
-   image->has_depthstencil = orig_image->has_depthstencil;
    image->data            = loaderPrivate;
 
    memcpy(image->strides, orig_image->strides, sizeof(image->strides));
@@ -849,20 +845,13 @@ intelCreateBuffer(__DRIscreen * driScrnPriv,
    if (mesaVis->depthBits == 24) {
       assert(mesaVis->stencilBits == 8);
 
-      if (screen->hw_has_separate_stencil) {
-         rb = intel_create_private_renderbuffer(MESA_FORMAT_X8_Z24);
-         _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &rb->Base.Base);
-         rb = intel_create_private_renderbuffer(MESA_FORMAT_S8);
-         _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &rb->Base.Base);
-      } else {
-         /*
-          * Use combined depth/stencil. Note that the renderbuffer is
-          * attached to two attachment points.
-          */
-         rb = intel_create_private_renderbuffer(MESA_FORMAT_S8_Z24);
-         _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &rb->Base.Base);
-         _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &rb->Base.Base);
-      }
+      /*
+       * Use combined depth/stencil. Note that the renderbuffer is
+       * attached to two attachment points.
+       */
+      rb = intel_create_private_renderbuffer(MESA_FORMAT_S8_Z24);
+      _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &rb->Base.Base);
+      _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &rb->Base.Base);
    }
    else if (mesaVis->depthBits == 16) {
       assert(mesaVis->stencilBits == 0);
@@ -974,31 +963,6 @@ intel_init_bufmgr(struct intel_screen *intelScreen)
    }
 
    return true;
-}
-
-/**
- * Override intel_screen.hw_has_separate_stencil with environment variable
- * INTEL_SEPARATE_STENCIL.
- *
- * Valid values for INTEL_SEPARATE_STENCIL are "0" and "1". If an invalid
- * valid value is encountered, a warning is emitted and INTEL_SEPARATE_STENCIL
- * is ignored.
- */
-static void
-intel_override_separate_stencil(struct intel_screen *screen)
-{
-   const char *s = getenv("INTEL_SEPARATE_STENCIL");
-   if (!s) {
-      return;
-   } else if (!strncmp("0", s, 2)) {
-      screen->hw_has_separate_stencil = false;
-   } else if (!strncmp("1", s, 2)) {
-      screen->hw_has_separate_stencil = true;
-   } else {
-      fprintf(stderr,
-	      "warning: env variable INTEL_SEPARATE_STENCIL=\"%s\" has "
-	      "invalid value and is ignored", s);
-   }
 }
 
 static bool
@@ -1222,9 +1186,6 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
       intelScreen->gen = 2;
    }
 
-   intelScreen->hw_has_separate_stencil = intelScreen->gen >= 6;
-   intelScreen->hw_must_use_separate_stencil = intelScreen->gen >= 7;
-
    int has_llc = 0;
    bool success = intel_get_param(intelScreen->driScrnPriv, I915_PARAM_HAS_LLC,
 				  &has_llc);
@@ -1232,8 +1193,6 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
       intelScreen->hw_has_llc = true;
    else if (!success && intelScreen->gen >= 6)
       intelScreen->hw_has_llc = true;
-
-   intel_override_separate_stencil(intelScreen);
 
    intelScreen->hw_has_swizzling = intel_detect_swizzling(intelScreen);
 
