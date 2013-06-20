@@ -161,10 +161,6 @@ intel_renderbuffer_get_tile_offsets(struct intel_renderbuffer *irb,
 struct intel_region*
 intel_get_rb_region(struct gl_framebuffer *fb, GLuint attIndex);
 
-void intel_renderbuffer_move_to_temp(struct intel_context *intel,
-                                     struct intel_renderbuffer *irb,
-                                     bool invalidate);
-
 #ifdef __cplusplus
 }
 #endif

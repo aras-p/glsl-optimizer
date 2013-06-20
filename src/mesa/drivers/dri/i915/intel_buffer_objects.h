@@ -70,13 +70,6 @@ void intel_upload_data(struct intel_context *intel,
 		       drm_intel_bo **return_bo,
 		       GLuint *return_offset);
 
-void *intel_upload_map(struct intel_context *intel,
-		       GLuint size, GLuint align);
-void intel_upload_unmap(struct intel_context *intel,
-			const void *ptr, GLuint size, GLuint align,
-			drm_intel_bo **return_bo,
-			GLuint *return_offset);
-
 void intel_upload_finish(struct intel_context *intel);
 
 /* Hook the bufferobject implementation into mesa:

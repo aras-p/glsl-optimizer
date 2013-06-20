@@ -735,33 +735,6 @@ intel_blit_framebuffer(struct gl_context *ctx,
                               mask, filter);
 }
 
-void
-intel_renderbuffer_move_to_temp(struct intel_context *intel,
-                                struct intel_renderbuffer *irb,
-                                bool invalidate)
-{
-   struct gl_renderbuffer *rb =&irb->Base.Base;
-   struct intel_texture_image *intel_image = intel_texture_image(rb->TexImage);
-   struct intel_mipmap_tree *new_mt;
-   int width, height, depth;
-
-   intel_miptree_get_dimensions_for_image(rb->TexImage, &width, &height, &depth);
-
-   new_mt = intel_miptree_create(intel, rb->TexImage->TexObject->Target,
-                                 intel_image->base.Base.TexFormat,
-                                 intel_image->base.Base.Level,
-                                 intel_image->base.Base.Level,
-                                 width, height, depth,
-                                 true,
-                                 INTEL_MIPTREE_TILING_ANY);
-
-   intel_miptree_copy_teximage(intel, intel_image, new_mt, invalidate);
-
-   intel_miptree_reference(&irb->mt, intel_image->mt);
-   intel_renderbuffer_set_draw_offset(irb);
-   intel_miptree_release(&new_mt);
-}
-
 /**
  * Do one-time context initializations related to GL_EXT_framebuffer_object.
  * Hook in device driver functions.

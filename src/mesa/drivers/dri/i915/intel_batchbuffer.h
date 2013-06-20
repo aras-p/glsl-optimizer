@@ -26,8 +26,6 @@ struct intel_batchbuffer;
 
 void intel_batchbuffer_init(struct intel_context *intel);
 void intel_batchbuffer_free(struct intel_context *intel);
-void intel_batchbuffer_save_state(struct intel_context *intel);
-void intel_batchbuffer_reset_to_saved(struct intel_context *intel);
 
 int _intel_batchbuffer_flush(struct intel_context *intel,
 			     const char *file, int line);
@@ -55,9 +53,6 @@ bool intel_batchbuffer_emit_reloc_fenced(struct intel_context *intel,
 					      uint32_t write_domain,
 					      uint32_t offset);
 void intel_batchbuffer_emit_mi_flush(struct intel_context *intel);
-void intel_emit_post_sync_nonzero_flush(struct intel_context *intel);
-void intel_emit_depth_stall_flushes(struct intel_context *intel);
-void gen7_emit_vs_workaround_flush(struct intel_context *intel);
 
 static INLINE uint32_t float_as_int(float f)
 {
@@ -143,8 +138,6 @@ intel_batchbuffer_advance(struct intel_context *intel)
    batch->total = 0;
 #endif
 }
-
-void intel_batchbuffer_cached_advance(struct intel_context *intel);
 
 /* Here are the crusty old macros, to be removed:
  */

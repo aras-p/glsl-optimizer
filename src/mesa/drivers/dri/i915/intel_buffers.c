@@ -35,20 +35,6 @@
 #include "main/renderbuffer.h"
 
 /**
- * Return pointer to current color reading region, or NULL.
- */
-struct intel_region *
-intel_readbuf_region(struct intel_context *intel)
-{
-   struct intel_renderbuffer *irb
-      = intel_renderbuffer(intel->ctx.ReadBuffer->_ColorReadBuffer);
-   if (irb && irb->mt)
-      return irb->mt->region;
-   else
-      return NULL;
-}
-
-/**
  * Check if we're about to draw into the front color buffer.
  * If so, set the intel->front_buffer_dirty field to true.
  */

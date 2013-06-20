@@ -121,9 +121,6 @@ struct intel_batchbuffer {
    drm_intel_bo *bo;
    /** Last BO submitted to the hardware.  Used for glFinish(). */
    drm_intel_bo *last_bo;
-   /** BO for post-sync nonzero writes for gen6 workaround. */
-   drm_intel_bo *workaround_bo;
-   bool need_workaround_flush;
 
    struct cached_batch_item *cached_items;
 
@@ -136,11 +133,6 @@ struct intel_batchbuffer {
    uint32_t state_batch_offset;
    bool is_blit;
    bool needs_sol_reset;
-
-   struct {
-      uint16_t used;
-      int reloc_count;
-   } saved;
 };
 
 /**
