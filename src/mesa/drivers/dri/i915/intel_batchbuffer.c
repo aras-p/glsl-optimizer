@@ -35,25 +35,6 @@
 static void
 intel_batchbuffer_reset(struct intel_context *intel);
 
-struct cached_batch_item {
-   struct cached_batch_item *next;
-   uint16_t header;
-   uint16_t size;
-};
-
-static void clear_cache( struct intel_context *intel )
-{
-   struct cached_batch_item *item = intel->batch.cached_items;
-
-   while (item) {
-      struct cached_batch_item *next = item->next;
-      free(item);
-      item = next;
-   }
-
-   intel->batch.cached_items = NULL;
-}
-
 void
 intel_batchbuffer_init(struct intel_context *intel)
 {
@@ -74,8 +55,6 @@ intel_batchbuffer_reset(struct intel_context *intel)
    }
    intel->batch.last_bo = intel->batch.bo;
 
-   clear_cache(intel);
-
    intel->batch.bo = drm_intel_bo_alloc(intel->bufmgr, "batchbuffer",
 					intel->maxBatchSize, 4096);
    if (intel->has_llc) {
@@ -95,7 +74,6 @@ intel_batchbuffer_free(struct intel_context *intel)
    free(intel->batch.cpu_map);
    drm_intel_bo_unreference(intel->batch.last_bo);
    drm_intel_bo_unreference(intel->batch.bo);
-   clear_cache(intel);
 }
 
 static void

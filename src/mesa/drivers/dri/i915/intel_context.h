@@ -122,8 +122,6 @@ struct intel_batchbuffer {
    /** Last BO submitted to the hardware.  Used for glFinish(). */
    drm_intel_bo *last_bo;
 
-   struct cached_batch_item *cached_items;
-
    uint16_t emit, total;
    uint16_t used, reserved_space;
    uint32_t *map;
