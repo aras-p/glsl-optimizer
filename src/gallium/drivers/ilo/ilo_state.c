@@ -28,82 +28,50 @@
 #include "util/u_framebuffer.h"
 #include "util/u_helpers.h"
 
-#include "shader/ilo_shader_internal.h"
 #include "ilo_context.h"
 #include "ilo_resource.h"
 #include "ilo_shader.h"
 #include "ilo_state.h"
 
-/*
- * We simply remember the pipe states here and derive HW commands/states from
- * them later.  We could do better by deriving (some of the) HW
- * commands/states directly.
- */
-
 static void
 finalize_shader_states(struct ilo_context *ilo)
 {
-   /* this table is ugly and is a burden to maintain.. */
-   const struct {
-      struct ilo_shader_state *state;
-      struct ilo_shader *prev_shader;
-      uint32_t dirty;
-      uint32_t deps;
-   } sh[PIPE_SHADER_TYPES] = {
-      [PIPE_SHADER_VERTEX] = {
-         .state = ilo->vs,
-         .prev_shader = (ilo->vs) ? ilo->vs->shader : NULL,
-         .dirty = ILO_DIRTY_VS,
-         .deps = ILO_DIRTY_VERTEX_SAMPLER_VIEWS |
-                 ILO_DIRTY_RASTERIZER,
-      },
-      [PIPE_SHADER_FRAGMENT] = {
-         .state = ilo->fs,
-         .prev_shader = (ilo->fs) ? ilo->fs->shader : NULL,
-         .dirty = ILO_DIRTY_FS,
-         .deps = ILO_DIRTY_FRAGMENT_SAMPLER_VIEWS |
-                 ILO_DIRTY_RASTERIZER |
-                 ILO_DIRTY_FRAMEBUFFER,
-      },
-      [PIPE_SHADER_GEOMETRY] = {
-         .state = ilo->gs,
-         .prev_shader = (ilo->gs) ? ilo->gs->shader : NULL,
-         .dirty = ILO_DIRTY_GS,
-         .deps = ILO_DIRTY_GEOMETRY_SAMPLER_VIEWS |
-                 ILO_DIRTY_VS |
-                 ILO_DIRTY_RASTERIZER,
-      },
-      [PIPE_SHADER_COMPUTE] = {
-         .state = NULL,
-         .prev_shader = NULL,
-         .dirty = 0,
-         .deps = 0,
-      },
-   };
-   int i;
+   unsigned type;
 
-   for (i = 0; i < PIPE_SHADER_TYPES; i++) {
-      /* no state bound */
-      if (!sh[i].state)
-         continue;
+   for (type = 0; type < PIPE_SHADER_TYPES; type++) {
+      struct ilo_shader_state *shader;
+      uint32_t state;
 
-      /* switch variant if the shader or the states it depends on changed */
-      if (ilo->dirty & (sh[i].dirty | sh[i].deps)) {
-         struct ilo_shader_variant variant;
-
-         ilo_shader_variant_init(&variant, &sh[i].state->info, ilo);
-         ilo_shader_state_use_variant(sh[i].state, &variant);
+      switch (type) {
+      case PIPE_SHADER_VERTEX:
+         shader = ilo->vs;
+         state = ILO_DIRTY_VS;
+         break;
+      case PIPE_SHADER_GEOMETRY:
+         shader = ilo->gs;
+         state = ILO_DIRTY_GS;
+         break;
+      case PIPE_SHADER_FRAGMENT:
+         shader = ilo->fs;
+         state = ILO_DIRTY_FS;
+         break;
+      default:
+         shader = NULL;
+         state = 0;
+         break;
       }
-   }
 
-   for (i = 0; i < PIPE_SHADER_TYPES; i++) {
-      /* no state bound */
-      if (!sh[i].state)
+      if (!shader)
          continue;
 
-      /* mark the shader state dirty if new variant is selected */
-      if (sh[i].state->shader != sh[i].prev_shader)
-         ilo->dirty |= sh[i].dirty;
+      /* compile if the shader or the states it depends on changed */
+      if (ilo->dirty & state) {
+         ilo_shader_select_kernel(shader, ilo, ILO_DIRTY_ALL);
+      }
+      else if (ilo_shader_select_kernel(shader, ilo, ilo->dirty)) {
+         /* mark the state dirty if a new kernel is selected */
+         ilo->dirty |= state;
+      }
    }
 }
 

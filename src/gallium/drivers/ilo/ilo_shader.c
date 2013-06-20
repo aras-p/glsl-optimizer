@@ -29,6 +29,7 @@
 #include "intel_winsys.h"
 
 #include "shader/ilo_shader_internal.h"
+#include "ilo_state.h"
 #include "ilo_shader.h"
 
 struct ilo_shader_cache {
@@ -687,6 +688,10 @@ ilo_shader_create_vs(const struct ilo_dev_info *dev,
 
    shader = ilo_shader_state_create(precompile, PIPE_SHADER_VERTEX, state);
 
+   /* states used in ilo_shader_variant_init() */
+   shader->info.non_orthogonal_states = ILO_DIRTY_VERTEX_SAMPLER_VIEWS |
+                                        ILO_DIRTY_RASTERIZER;
+
    return shader;
 }
 
@@ -698,6 +703,11 @@ ilo_shader_create_gs(const struct ilo_dev_info *dev,
    struct ilo_shader_state *shader;
 
    shader = ilo_shader_state_create(precompile, PIPE_SHADER_GEOMETRY, state);
+
+   /* states used in ilo_shader_variant_init() */
+   shader->info.non_orthogonal_states = ILO_DIRTY_GEOMETRY_SAMPLER_VIEWS |
+                                        ILO_DIRTY_VS |
+                                        ILO_DIRTY_RASTERIZER;
 
    return shader;
 }
@@ -711,6 +721,11 @@ ilo_shader_create_fs(const struct ilo_dev_info *dev,
 
    shader = ilo_shader_state_create(precompile, PIPE_SHADER_FRAGMENT, state);
 
+   /* states used in ilo_shader_variant_init() */
+   shader->info.non_orthogonal_states = ILO_DIRTY_FRAGMENT_SAMPLER_VIEWS |
+                                        ILO_DIRTY_RASTERIZER |
+                                        ILO_DIRTY_FRAMEBUFFER;
+
    return shader;
 }
 
@@ -722,6 +737,8 @@ ilo_shader_create_cs(const struct ilo_dev_info *dev,
    struct ilo_shader_state *shader;
 
    shader = ilo_shader_state_create(precompile, PIPE_SHADER_COMPUTE, state);
+
+   shader->info.non_orthogonal_states = 0;
 
    return shader;
 }
@@ -739,4 +756,29 @@ ilo_shader_destroy(struct ilo_shader_state *shader)
 
    FREE((struct tgsi_token *) shader->info.tokens);
    FREE(shader);
+}
+
+/**
+ * Select a kernel for the given context.  This will compile a new kernel if
+ * none of the existing kernels work with the context.
+ *
+ * \param ilo the context
+ * \param dirty states of the context that are considered changed
+ * \return true if a different kernel is selected
+ */
+bool
+ilo_shader_select_kernel(struct ilo_shader_state *shader,
+                         const struct ilo_context *ilo,
+                         uint32_t dirty)
+{
+   const struct ilo_shader * const cur = shader->shader;
+   struct ilo_shader_variant variant;
+
+   if (!(shader->info.non_orthogonal_states & dirty))
+      return false;
+
+   ilo_shader_variant_init(&variant, &shader->info, ilo);
+   ilo_shader_state_use_variant(shader, &variant);
+
+   return (shader->shader != cur);
 }

@@ -138,6 +138,8 @@ struct ilo_shader_info {
       unsigned req_input_mem;
    } compute;
 
+   uint32_t non_orthogonal_states;
+
    bool has_color_interp;
    bool has_pos;
    bool has_vertexid;

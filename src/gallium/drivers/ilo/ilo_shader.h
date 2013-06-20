@@ -77,4 +77,9 @@ ilo_shader_create_cs(const struct ilo_dev_info *dev,
 void
 ilo_shader_destroy(struct ilo_shader_state *shader);
 
+bool
+ilo_shader_select_kernel(struct ilo_shader_state *shader,
+                         const struct ilo_context *ilo,
+                         uint32_t dirty);
+
 #endif /* ILO_SHADER_H */
