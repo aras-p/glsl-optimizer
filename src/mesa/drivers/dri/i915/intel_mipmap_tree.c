@@ -147,12 +147,6 @@ intel_miptree_choose_tiling(struct intel_context *intel,
       return I915_TILING_NONE;
    }
 
-   GLenum base_format = _mesa_get_format_base_format(format);
-   if (intel->gen >= 4 &&
-       (base_format == GL_DEPTH_COMPONENT ||
-        base_format == GL_DEPTH_STENCIL_EXT))
-      return I915_TILING_Y;
-
    int minimum_pitch = mt->total_width * mt->cpp;
 
    /* If the width is much smaller than a tile, don't bother tiling. */
@@ -165,11 +159,8 @@ intel_miptree_choose_tiling(struct intel_context *intel,
       return I915_TILING_NONE;
    }
 
-   /* Pre-gen6 doesn't have BLORP to handle Y-tiling, so use X-tiling. */
-   if (intel->gen < 6)
-      return I915_TILING_X;
-
-   return I915_TILING_Y | I915_TILING_X;
+   /* We don't have BLORP to handle Y-tiled blits, so use X-tiling. */
+   return I915_TILING_X;
 }
 
 struct intel_mipmap_tree *
@@ -894,8 +885,7 @@ intel_miptree_map(struct intel_context *intel,
    if (intel->has_llc &&
        !(mode & GL_MAP_WRITE_BIT) &&
        !mt->compressed &&
-       (mt->region->tiling == I915_TILING_X ||
-        (intel->gen >= 6 && mt->region->tiling == I915_TILING_Y)) &&
+       mt->region->tiling == I915_TILING_X &&
        mt->region->pitch < 32768) {
       intel_miptree_map_blit(intel, mt, map, level, slice);
    } else if (mt->region->tiling != I915_TILING_NONE &&

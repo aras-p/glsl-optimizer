@@ -74,17 +74,6 @@ intel_horizontal_texture_alignment_unit(struct intel_context *intel,
       return i;
     }
 
-   /* The depth alignment requirements in the table above are for rendering to
-    * depth miplevels using the LOD control fields.  We don't use LOD control
-    * fields, and instead use page offsets plus intra-tile x/y offsets, which
-    * require that the low 3 bits are zero.  To reduce the number of x/y
-    * offset workaround blits we do, align the X to 8, which depth texturing
-    * can handle (sadly, it can't handle 8 in the Y direction).
-    */
-   if (intel->gen >= 7 &&
-       _mesa_get_format_base_format(format) == GL_DEPTH_COMPONENT)
-      return 8;
-
    return 4;
 }
 
@@ -119,14 +108,6 @@ intel_vertical_texture_alignment_unit(struct intel_context *intel,
     */
    if (_mesa_is_format_compressed(format))
       return 4;
-
-   GLenum base_format = _mesa_get_format_base_format(format);
-
-   if (intel->gen >= 6 &&
-       (base_format == GL_DEPTH_COMPONENT ||
-	base_format == GL_DEPTH_STENCIL)) {
-      return 4;
-   }
 
    return 2;
 }

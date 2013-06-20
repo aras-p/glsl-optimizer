@@ -80,8 +80,7 @@ intel_miptree_create_for_teximage(struct intel_context *intel,
        */
       if ((intelObj->base.Sampler.MinFilter == GL_NEAREST ||
 	   intelObj->base.Sampler.MinFilter == GL_LINEAR) &&
-	  intelImage->base.Base.Level == firstLevel &&
-	  (intel->gen < 4 || firstLevel == 0)) {
+	  intelImage->base.Base.Level == firstLevel) {
 	 lastLevel = firstLevel;
       } else {
 	 lastLevel = (firstLevel +

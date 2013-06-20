@@ -59,16 +59,6 @@ intel_batchbuffer_init(struct intel_context *intel)
 {
    intel_batchbuffer_reset(intel);
 
-   if (intel->gen >= 6) {
-      /* We can't just use brw_state_batch to get a chunk of space for
-       * the gen6 workaround because it involves actually writing to
-       * the buffer, and the kernel doesn't let us write to the batch.
-       */
-      intel->batch.workaround_bo = drm_intel_bo_alloc(intel->bufmgr,
-						      "pipe_control workaround",
-						      4096, 4096);
-   }
-
    if (!intel->has_llc) {
       intel->batch.cpu_map = malloc(intel->maxBatchSize);
       intel->batch.map = intel->batch.cpu_map;
@@ -191,14 +181,7 @@ do_flush_locked(struct intel_context *intel)
    }
 
    if (!intel->intelScreen->no_hw) {
-      int flags;
-
-      if (intel->gen < 6 || !batch->is_blit) {
-	 flags = I915_EXEC_RENDER;
-      } else {
-	 flags = I915_EXEC_BLT;
-      }
-
+      int flags = I915_EXEC_RENDER;
       if (batch->needs_sol_reset)
 	 flags |= I915_EXEC_GEN7_SOL_RESET;
 
@@ -511,50 +494,7 @@ intel_emit_post_sync_nonzero_flush(struct intel_context *intel)
 void
 intel_batchbuffer_emit_mi_flush(struct intel_context *intel)
 {
-   if (intel->gen >= 6) {
-      if (intel->batch.is_blit) {
-	 BEGIN_BATCH_BLT(4);
-	 OUT_BATCH(MI_FLUSH_DW);
-	 OUT_BATCH(0);
-	 OUT_BATCH(0);
-	 OUT_BATCH(0);
-	 ADVANCE_BATCH();
-      } else {
-	 if (intel->gen == 6) {
-	    /* Hardware workaround: SNB B-Spec says:
-	     *
-	     * [Dev-SNB{W/A}]: Before a PIPE_CONTROL with Write Cache
-	     * Flush Enable =1, a PIPE_CONTROL with any non-zero
-	     * post-sync-op is required.
-	     */
-	    intel_emit_post_sync_nonzero_flush(intel);
-	 }
-
-	 BEGIN_BATCH(4);
-	 OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2));
-	 OUT_BATCH(PIPE_CONTROL_INSTRUCTION_FLUSH |
-		   PIPE_CONTROL_WRITE_FLUSH |
-		   PIPE_CONTROL_DEPTH_CACHE_FLUSH |
-                   PIPE_CONTROL_VF_CACHE_INVALIDATE |
-		   PIPE_CONTROL_TC_FLUSH |
-		   PIPE_CONTROL_NO_WRITE |
-                   PIPE_CONTROL_CS_STALL);
-	 OUT_BATCH(0); /* write address */
-	 OUT_BATCH(0); /* write data */
-	 ADVANCE_BATCH();
-      }
-   } else if (intel->gen >= 4) {
-      BEGIN_BATCH(4);
-      OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2) |
-		PIPE_CONTROL_WRITE_FLUSH |
-		PIPE_CONTROL_NO_WRITE);
-      OUT_BATCH(0); /* write address */
-      OUT_BATCH(0); /* write data */
-      OUT_BATCH(0); /* write data */
-      ADVANCE_BATCH();
-   } else {
-      BEGIN_BATCH(1);
-      OUT_BATCH(MI_FLUSH);
-      ADVANCE_BATCH();
-   }
+   BEGIN_BATCH(1);
+   OUT_BATCH(MI_FLUSH);
+   ADVANCE_BATCH();
 }

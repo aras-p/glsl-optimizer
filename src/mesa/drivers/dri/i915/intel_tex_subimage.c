@@ -67,12 +67,6 @@ intel_blit_texsubimage(struct gl_context * ctx,
    if (texImage->TexObject->Target != GL_TEXTURE_2D)
       return false;
 
-   /* On gen6, it's probably not worth swapping to the blit ring to do
-    * this because of all the overhead involved.
-    */
-   if (intel->gen >= 6)
-      return false;
-
    if (!drm_intel_bo_busy(intelImage->mt->region->bo))
       return false;
 

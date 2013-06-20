@@ -159,8 +159,7 @@ intelDRI2Flush(__DRIdrawable *drawable)
    if (intel == NULL)
       return;
 
-   if (intel->gen < 4)
-      INTEL_FIREVERTICES(intel);
+   INTEL_FIREVERTICES(intel);
 
    intel->need_throttle = true;
 
@@ -799,7 +798,6 @@ intelCreateBuffer(__DRIscreen * driScrnPriv,
                   const struct gl_config * mesaVis, GLboolean isPixmap)
 {
    struct intel_renderbuffer *rb;
-   struct intel_screen *screen = (struct intel_screen*) driScrnPriv->driverPrivate;
    gl_format rgbFormat;
    struct gl_framebuffer *fb;
 
@@ -818,15 +816,8 @@ intelCreateBuffer(__DRIscreen * driScrnPriv,
       rgbFormat = MESA_FORMAT_SARGB8;
    else if (mesaVis->alphaBits == 0)
       rgbFormat = MESA_FORMAT_XRGB8888;
-   else {
-      if (screen->gen >= 4) {
-         rgbFormat = MESA_FORMAT_SARGB8;
-         fb->Visual.sRGBCapable = true;
-      } else {
-         rgbFormat = MESA_FORMAT_ARGB8888;
-      }
-
-   }
+   else
+      rgbFormat = MESA_FORMAT_ARGB8888;
 
    /* setup the hardware-based renderbuffers */
    rb = intel_create_renderbuffer(rgbFormat);
@@ -1004,7 +995,6 @@ intel_screen_make_configs(__DRIscreen *dri_screen)
 
    static const uint8_t singlesample_samples[1] = {0};
 
-   struct intel_screen *screen = dri_screen->driverPrivate;
    uint8_t depth_bits[4], stencil_bits[4];
    __DRIconfig **configs = NULL;
 
@@ -1015,7 +1005,7 @@ intel_screen_make_configs(__DRIscreen *dri_screen)
 
       /* Starting with DRI2 protocol version 1.1 we can request a depth/stencil
        * buffer that has a different number of bits per pixel than the color
-       * buffer, gen >= 6 supports this.
+       * buffer.
        */
       depth_bits[0] = 0;
       stencil_bits[0] = 0;
@@ -1023,11 +1013,6 @@ intel_screen_make_configs(__DRIscreen *dri_screen)
       if (formats[i] == MESA_FORMAT_RGB565) {
          depth_bits[1] = 16;
          stencil_bits[1] = 0;
-         if (screen->gen >= 6) {
-             depth_bits[2] = 24;
-             stencil_bits[2] = 8;
-             num_depth_stencil_bits = 3;
-         }
       } else {
          depth_bits[1] = 24;
          stencil_bits[1] = 8;
@@ -1190,8 +1175,6 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
    bool success = intel_get_param(intelScreen->driScrnPriv, I915_PARAM_HAS_LLC,
 				  &has_llc);
    if (success && has_llc)
-      intelScreen->hw_has_llc = true;
-   else if (!success && intelScreen->gen >= 6)
       intelScreen->hw_has_llc = true;
 
    intelScreen->hw_has_swizzling = intel_detect_swizzling(intelScreen);

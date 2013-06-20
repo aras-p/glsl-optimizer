@@ -291,7 +291,6 @@ static const struct dri_debug_control debug_control[] = {
    { "vs",    DEBUG_VS },
    { "clip",  DEBUG_CLIP },
    { "aub",   DEBUG_AUB },
-   { "shader_time", DEBUG_SHADER_TIME },
    { "no16",  DEBUG_NO16 },
    { "blorp", DEBUG_BLORP },
    { NULL,    0 }
@@ -321,8 +320,7 @@ intel_flush_rendering_to_batch(struct gl_context *ctx)
    if (intel->Fallback)
       _swrast_flush(ctx);
 
-   if (intel->gen < 4)
-      INTEL_FIREVERTICES(intel);
+   INTEL_FIREVERTICES(intel);
 }
 
 void
@@ -495,10 +493,6 @@ intelInitContext(struct intel_context *intel,
       intel->is_945 = true;
    }
 
-   if (intel->gen >= 5) {
-      intel->needs_ff_sync = true;
-   }
-
    intel->has_llc = intel->intelScreen->hw_has_llc;
    intel->has_swizzling = intel->intelScreen->hw_has_swizzling;
 
@@ -506,11 +500,8 @@ intelInitContext(struct intel_context *intel,
 	  0, sizeof(ctx->TextureFormatSupported));
 
    driParseConfigFiles(&intel->optionCache, &intelScreen->optionCache,
-                       sPriv->myNum, (intel->gen >= 4) ? "i965" : "i915");
-   if (intel->gen < 4)
-      intel->maxBatchSize = 4096;
-   else
-      intel->maxBatchSize = BATCH_SZ;
+                       sPriv->myNum, "i915");
+   intel->maxBatchSize = 4096;
 
    /* Estimate the size of the mappable aperture into the GTT.  There's an
     * ioctl to get the whole GTT size, but not one to get the mappable subset.
@@ -552,9 +543,6 @@ intelInitContext(struct intel_context *intel,
    ctx->Const.MaxPointSizeAA = 3.0;
    ctx->Const.PointSizeGranularity = 1.0;
 
-   if (intel->gen >= 6)
-      ctx->Const.MaxClipPlanes = 8;
-
    ctx->Const.StripTextureBorder = GL_TRUE;
 
    /* reinitialize the context point state.
@@ -562,22 +550,9 @@ intelInitContext(struct intel_context *intel,
     */
    _mesa_init_point(ctx);
 
-   if (intel->gen >= 4) {
-      ctx->Const.MaxRenderbufferSize = 8192;
-   } else {
-      ctx->Const.MaxRenderbufferSize = 2048;
-   }
+   ctx->Const.MaxRenderbufferSize = 2048;
 
-   /* Initialize the software rasterizer and helper modules.
-    *
-    * As of GL 3.1 core, the gen4+ driver doesn't need the swrast context for
-    * software fallbacks (which we have to support on legacy GL to do weird
-    * glDrawPixels(), glBitmap(), and other functions).
-    */
-   if (intel->gen <= 3 || api != API_OPENGL_CORE) {
-      _swrast_CreateContext(ctx);
-   }
-
+   _swrast_CreateContext(ctx);
    _vbo_CreateContext(ctx);
    if (ctx->swrast_context) {
       _tnl_CreateContext(ctx);
@@ -600,11 +575,6 @@ intelInitContext(struct intel_context *intel,
    INTEL_DEBUG = driParseDebugString(getenv("INTEL_DEBUG"), debug_control);
    if (INTEL_DEBUG & DEBUG_BUFMGR)
       dri_bufmgr_set_debug(intel->bufmgr, true);
-   if ((INTEL_DEBUG & DEBUG_SHADER_TIME) && intel->gen < 7) {
-      fprintf(stderr,
-              "shader_time debugging requires gen7 (Ivybridge) or better.\n");
-      INTEL_DEBUG &= ~DEBUG_SHADER_TIME;
-   }
    if (INTEL_DEBUG & DEBUG_PERF)
       intel->perf_debug = true;
 

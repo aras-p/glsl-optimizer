@@ -216,7 +216,6 @@ struct intel_context
     */
    int gen;
    int gt;
-   bool needs_ff_sync;
    bool is_haswell;
    bool is_baytrail;
    bool is_g4x;
@@ -433,7 +432,6 @@ extern int INTEL_DEBUG;
 #define DEBUG_VS        0x1000000
 #define DEBUG_CLIP      0x2000000
 #define DEBUG_AUB       0x4000000
-#define DEBUG_SHADER_TIME 0x8000000
 #define DEBUG_BLORP     0x10000000
 #define DEBUG_NO16      0x20000000
 
