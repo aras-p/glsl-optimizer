@@ -419,20 +419,6 @@ extern int INTEL_DEBUG;
    }                                                            \
 } while (0)
 
-#define PCI_CHIP_845_G			0x2562
-#define PCI_CHIP_I830_M			0x3577
-#define PCI_CHIP_I855_GM		0x3582
-#define PCI_CHIP_I865_G			0x2572
-#define PCI_CHIP_I915_G			0x2582
-#define PCI_CHIP_I915_GM		0x2592
-#define PCI_CHIP_I945_G			0x2772
-#define PCI_CHIP_I945_GM		0x27A2
-#define PCI_CHIP_I945_GME		0x27AE
-#define PCI_CHIP_G33_G			0x29C2
-#define PCI_CHIP_Q35_G			0x29B2
-#define PCI_CHIP_Q33_G			0x29D2
-
-
 /* ================================================================
  * intel_context.c:
  */
