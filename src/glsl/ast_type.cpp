@@ -22,9 +22,6 @@
  */
 
 #include "ast.h"
-extern "C" {
-#include "program/symbol_table.h"
-}
 
 void
 ast_type_specifier::print(void) const
