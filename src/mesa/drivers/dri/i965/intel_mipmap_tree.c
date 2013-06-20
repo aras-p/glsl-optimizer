@@ -473,9 +473,8 @@ intel_miptree_choose_tiling(struct intel_context *intel,
    }
 
    GLenum base_format = _mesa_get_format_base_format(format);
-   if (intel->gen >= 4 &&
-       (base_format == GL_DEPTH_COMPONENT ||
-        base_format == GL_DEPTH_STENCIL_EXT))
+   if (base_format == GL_DEPTH_COMPONENT ||
+       base_format == GL_DEPTH_STENCIL_EXT)
       return I915_TILING_Y;
 
    int minimum_pitch = mt->total_width * mt->cpp;

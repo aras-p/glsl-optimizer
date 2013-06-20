@@ -167,9 +167,6 @@ intelDRI2Flush(__DRIdrawable *drawable)
    if (intel == NULL)
       return;
 
-   if (intel->gen < 4)
-      INTEL_FIREVERTICES(intel);
-
    intel_resolve_for_dri2_flush(intel, drawable);
    intel->need_throttle = true;
 
@@ -836,13 +833,8 @@ intelCreateBuffer(__DRIscreen * driScrnPriv,
    else if (mesaVis->alphaBits == 0)
       rgbFormat = MESA_FORMAT_XRGB8888;
    else {
-      if (screen->gen >= 4) {
-         rgbFormat = MESA_FORMAT_SARGB8;
-         fb->Visual.sRGBCapable = true;
-      } else {
-         rgbFormat = MESA_FORMAT_ARGB8888;
-      }
-
+      rgbFormat = MESA_FORMAT_SARGB8;
+      fb->Visual.sRGBCapable = true;
    }
 
    /* setup the hardware-based renderbuffers */

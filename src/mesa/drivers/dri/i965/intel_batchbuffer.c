@@ -543,7 +543,7 @@ intel_batchbuffer_emit_mi_flush(struct intel_context *intel)
 	 OUT_BATCH(0); /* write data */
 	 ADVANCE_BATCH();
       }
-   } else if (intel->gen >= 4) {
+   } else {
       BEGIN_BATCH(4);
       OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2) |
 		PIPE_CONTROL_WRITE_FLUSH |
@@ -551,10 +551,6 @@ intel_batchbuffer_emit_mi_flush(struct intel_context *intel)
       OUT_BATCH(0); /* write address */
       OUT_BATCH(0); /* write data */
       OUT_BATCH(0); /* write data */
-      ADVANCE_BATCH();
-   } else {
-      BEGIN_BATCH(1);
-      OUT_BATCH(MI_FLUSH);
       ADVANCE_BATCH();
    }
 }

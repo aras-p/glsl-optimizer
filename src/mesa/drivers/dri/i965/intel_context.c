@@ -363,9 +363,6 @@ intel_flush_rendering_to_batch(struct gl_context *ctx)
 
    if (intel->Fallback)
       _swrast_flush(ctx);
-
-   if (intel->gen < 4)
-      INTEL_FIREVERTICES(intel);
 }
 
 void
@@ -552,11 +549,8 @@ intelInitContext(struct intel_context *intel,
 	  0, sizeof(ctx->TextureFormatSupported));
 
    driParseConfigFiles(&intel->optionCache, &intelScreen->optionCache,
-                       sPriv->myNum, (intel->gen >= 4) ? "i965" : "i915");
-   if (intel->gen < 4)
-      intel->maxBatchSize = 4096;
-   else
-      intel->maxBatchSize = BATCH_SZ;
+                       sPriv->myNum, "i965");
+   intel->maxBatchSize = BATCH_SZ;
 
    /* Estimate the size of the mappable aperture into the GTT.  There's an
     * ioctl to get the whole GTT size, but not one to get the mappable subset.
@@ -564,8 +558,6 @@ intelInitContext(struct intel_context *intel,
     * was smaller.
     */
    uint32_t gtt_size = 256 * 1024 * 1024;
-   if (intel->gen == 2)
-      gtt_size = 128 * 1024 * 1024;
 
    /* We don't want to map two objects such that a memcpy between them would
     * just fault one mapping in and then the other over and over forever.  So
@@ -608,11 +600,7 @@ intelInitContext(struct intel_context *intel,
     */
    _mesa_init_point(ctx);
 
-   if (intel->gen >= 4) {
-      ctx->Const.MaxRenderbufferSize = 8192;
-   } else {
-      ctx->Const.MaxRenderbufferSize = 2048;
-   }
+   ctx->Const.MaxRenderbufferSize = 8192;
 
    /* Initialize the software rasterizer and helper modules.
     *
@@ -620,7 +608,7 @@ intelInitContext(struct intel_context *intel,
     * software fallbacks (which we have to support on legacy GL to do weird
     * glDrawPixels(), glBitmap(), and other functions).
     */
-   if (intel->gen <= 3 || api != API_OPENGL_CORE) {
+   if (api != API_OPENGL_CORE) {
       _swrast_CreateContext(ctx);
    }
 
