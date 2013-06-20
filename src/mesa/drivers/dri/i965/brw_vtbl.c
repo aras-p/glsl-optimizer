@@ -144,11 +144,6 @@ brw_update_draw_buffer(struct intel_context *intel)
 
    /* update viewport/scissor since it depends on window size */
    intel->NewGLState |= _NEW_VIEWPORT | _NEW_SCISSOR;
-
-   /* Update culling direction which changes depending on the
-    * orientation of the buffer:
-    */
-   intel->NewGLState |= _NEW_POLYGON;
 }
 
 /**
