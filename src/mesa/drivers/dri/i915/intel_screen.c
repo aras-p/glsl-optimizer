@@ -1065,33 +1065,12 @@ set_max_gl_versions(struct intel_screen *screen)
    int gl_version_override = _mesa_get_gl_version_override();
 
    switch (screen->gen) {
-   case 7:
-      screen->max_gl_core_version = 31;
-      screen->max_gl_compat_version = 30;
-      screen->max_gl_es1_version = 11;
-      screen->max_gl_es2_version = 30;
-      break;
-   case 6:
-      screen->max_gl_core_version = 31;
-      screen->max_gl_compat_version = 30;
-      screen->max_gl_es1_version = 11;
-      screen->max_gl_es2_version = 30;
-      break;
-   case 5:
-   case 4:
-      screen->max_gl_core_version = 0;
-      screen->max_gl_compat_version = 21;
-      screen->max_gl_es1_version = 11;
-      screen->max_gl_es2_version = 20;
-      break;
-   case 3: {
+   case 3:
       screen->max_gl_core_version = 0;
       screen->max_gl_es1_version = 11;
       screen->max_gl_compat_version = 21;
       screen->max_gl_es2_version = 20;
-
       break;
-   }
    case 2:
       screen->max_gl_core_version = 0;
       screen->max_gl_compat_version = 13;
