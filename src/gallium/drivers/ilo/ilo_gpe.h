@@ -55,6 +55,7 @@
 
 struct ilo_buffer;
 struct ilo_texture;
+struct ilo_shader_state;
 
 struct ilo_vb_state {
    struct pipe_vertex_buffer states[PIPE_MAX_ATTRIBS];
@@ -254,6 +255,10 @@ struct ilo_global_binding {
    unsigned count;
 };
 
+struct ilo_shader_cso {
+   uint32_t payload[5];
+};
+
 void
 ilo_gpe_init_ve(const struct ilo_dev_info *dev,
                 unsigned num_states,
@@ -427,5 +432,10 @@ ilo_gpe_init_zs_surface(const struct ilo_dev_info *dev,
                         unsigned level,
                         unsigned first_layer, unsigned num_layers,
                         struct ilo_zs_surface *zs);
+
+void
+ilo_gpe_init_vs_cso(const struct ilo_dev_info *dev,
+                    const struct ilo_shader_state *vs,
+                    struct ilo_shader_cso *cso);
 
 #endif /* ILO_GPE_H */

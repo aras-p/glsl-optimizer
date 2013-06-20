@@ -480,10 +480,9 @@ gen6_pipeline_vs(struct ilo_3d_pipeline *p,
 
    /* 3DSTATE_VS */
    if (emit_3dstate_vs) {
-      const struct ilo_shader *vs = (ilo->vs)? ilo->vs->shader : NULL;
       const int num_samplers = ilo->sampler[PIPE_SHADER_VERTEX].count;
 
-      p->gen6_3DSTATE_VS(p->dev, vs, num_samplers, p->cp);
+      p->gen6_3DSTATE_VS(p->dev, ilo->vs, num_samplers, p->cp);
    }
 
    if (emit_3dstate_constant_vs && p->dev->gen == ILO_GEN(6))

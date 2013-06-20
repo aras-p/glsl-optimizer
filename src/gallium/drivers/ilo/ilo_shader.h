@@ -62,6 +62,7 @@ struct intel_bo;
 struct ilo_context;
 struct ilo_shader_cache;
 struct ilo_shader_state;
+struct ilo_shader_cso;
 
 struct ilo_shader_cache *
 ilo_shader_cache_create(void);
@@ -119,5 +120,8 @@ ilo_shader_get_kernel_offset(const struct ilo_shader_state *shader);
 int
 ilo_shader_get_kernel_param(const struct ilo_shader_state *shader,
                             enum ilo_kernel_param param);
+
+const struct ilo_shader_cso *
+ilo_shader_get_kernel_cso(const struct ilo_shader_state *shader);
 
 #endif /* ILO_SHADER_H */

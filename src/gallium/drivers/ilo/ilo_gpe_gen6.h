@@ -235,7 +235,7 @@ typedef void
 
 typedef void
 (*ilo_gpe_gen6_3DSTATE_VS)(const struct ilo_dev_info *dev,
-                           const struct ilo_shader *vs,
+                           const struct ilo_shader_state *vs,
                            int num_samplers,
                            struct ilo_cp *cp);
 

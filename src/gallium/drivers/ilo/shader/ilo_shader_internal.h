@@ -75,6 +75,8 @@ struct ilo_shader_variant {
 struct ilo_shader {
    struct ilo_shader_variant variant;
 
+   struct ilo_shader_cso cso;
+
    struct {
       int semantic_names[PIPE_MAX_SHADER_INPUTS];
       int semantic_indices[PIPE_MAX_SHADER_INPUTS];
@@ -173,10 +175,6 @@ void
 ilo_shader_variant_init(struct ilo_shader_variant *variant,
                         const struct ilo_shader_info *info,
                         const struct ilo_context *ilo);
-
-struct ilo_shader *
-ilo_shader_state_add_variant(struct ilo_shader_state *state,
-                             const struct ilo_shader_variant *variant);
 
 bool
 ilo_shader_state_use_variant(struct ilo_shader_state *state,

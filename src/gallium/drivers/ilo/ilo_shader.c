@@ -613,17 +613,11 @@ ilo_shader_state_search_variant(struct ilo_shader_state *state,
 /**
  * Add a shader variant to the shader state.
  */
-struct ilo_shader *
+static struct ilo_shader *
 ilo_shader_state_add_variant(struct ilo_shader_state *state,
                              const struct ilo_shader_variant *variant)
 {
    struct ilo_shader *sh;
-
-   sh = ilo_shader_state_search_variant(state, variant);
-   if (sh)
-      return sh;
-
-   ilo_shader_state_gc(state);
 
    switch (state->info.type) {
    case PIPE_SHADER_VERTEX:
@@ -663,10 +657,18 @@ ilo_shader_state_use_variant(struct ilo_shader_state *state,
                              const struct ilo_shader_variant *variant)
 {
    struct ilo_shader *sh;
+   bool construct_cso = false;
 
-   sh = ilo_shader_state_add_variant(state, variant);
-   if (!sh)
-      return false;
+   sh = ilo_shader_state_search_variant(state, variant);
+   if (!sh) {
+      ilo_shader_state_gc(state);
+
+      sh = ilo_shader_state_add_variant(state, variant);
+      if (!sh)
+         return false;
+
+      construct_cso = true;
+   }
 
    /* move to head */
    if (state->variants.next != &sh->list) {
@@ -675,6 +677,16 @@ ilo_shader_state_use_variant(struct ilo_shader_state *state,
    }
 
    state->shader = sh;
+
+   if (construct_cso) {
+      switch (state->info.type) {
+      case PIPE_SHADER_VERTEX:
+         ilo_gpe_init_vs_cso(state->info.dev, state, &sh->cso);
+         break;
+      default:
+         break;
+      }
+   }
 
    return true;
 }
@@ -895,4 +907,17 @@ ilo_shader_get_kernel_param(const struct ilo_shader_state *shader,
    }
 
    return val;
+}
+
+/**
+ * Return the CSO of the selected kernel.
+ */
+const struct ilo_shader_cso *
+ilo_shader_get_kernel_cso(const struct ilo_shader_state *shader)
+{
+   const struct ilo_shader *kernel = shader->shader;
+
+   assert(kernel);
+
+   return &kernel->cso;
 }

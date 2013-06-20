@@ -1127,30 +1127,18 @@ gen6_emit_3DSTATE_SCISSOR_STATE_POINTERS(const struct ilo_dev_info *dev,
    ilo_cp_end(cp);
 }
 
-static void
-gen6_emit_3DSTATE_VS(const struct ilo_dev_info *dev,
-                     const struct ilo_shader *vs,
-                     int num_samplers,
-                     struct ilo_cp *cp)
+void
+ilo_gpe_init_vs_cso(const struct ilo_dev_info *dev,
+                    const struct ilo_shader_state *vs,
+                    struct ilo_shader_cso *cso)
 {
-   const uint32_t cmd = ILO_GPE_CMD(0x3, 0x0, 0x10);
-   const uint8_t cmd_len = 6;
+   int start_grf, vue_read_len, max_threads;
    uint32_t dw2, dw4, dw5;
-   int vue_read_len, max_threads;
 
    ILO_GPE_VALID_GEN(dev, 6, 7);
 
-   if (!vs) {
-      ilo_cp_begin(cp, cmd_len);
-      ilo_cp_write(cp, cmd | (cmd_len - 2));
-      ilo_cp_write(cp, 0);
-      ilo_cp_write(cp, 0);
-      ilo_cp_write(cp, 0);
-      ilo_cp_write(cp, 0);
-      ilo_cp_write(cp, 0);
-      ilo_cp_end(cp);
-      return;
-   }
+   start_grf = ilo_shader_get_kernel_param(vs, ILO_KERNEL_URB_DATA_START_REG);
+   vue_read_len = ilo_shader_get_kernel_param(vs, ILO_KERNEL_INPUT_COUNT);
 
    /*
     * From the Sandy Bridge PRM, volume 2 part 1, page 135:
@@ -1162,7 +1150,7 @@ gen6_emit_3DSTATE_VS(const struct ilo_dev_info *dev,
     *     "It is UNDEFINED to set this field to 0 indicating no Vertex URB
     *      data to be read and passed to the thread."
     */
-   vue_read_len = (vs->in.count + 1) / 2;
+   vue_read_len = (vue_read_len + 1) / 2;
    if (!vue_read_len)
       vue_read_len = 1;
 
@@ -1196,11 +1184,9 @@ gen6_emit_3DSTATE_VS(const struct ilo_dev_info *dev,
       break;
    }
 
-   dw2 = ((num_samplers + 3) / 4) << GEN6_VS_SAMPLER_COUNT_SHIFT;
-   if (false)
-      dw2 |= GEN6_VS_FLOATING_POINT_MODE_ALT;
+   dw2 = (true) ? 0 : GEN6_VS_FLOATING_POINT_MODE_ALT;
 
-   dw4 = vs->in.start_grf << GEN6_VS_DISPATCH_START_GRF_SHIFT |
+   dw4 = start_grf << GEN6_VS_DISPATCH_START_GRF_SHIFT |
          vue_read_len << GEN6_VS_URB_READ_LENGTH_SHIFT |
          0 << GEN6_VS_URB_ENTRY_READ_OFFSET_SHIFT;
 
@@ -1212,9 +1198,47 @@ gen6_emit_3DSTATE_VS(const struct ilo_dev_info *dev,
    else
       dw5 |= (max_threads - 1) << GEN6_VS_MAX_THREADS_SHIFT;
 
+   STATIC_ASSERT(Elements(cso->payload) >= 3);
+   cso->payload[0] = dw2;
+   cso->payload[1] = dw4;
+   cso->payload[2] = dw5;
+}
+
+static void
+gen6_emit_3DSTATE_VS(const struct ilo_dev_info *dev,
+                     const struct ilo_shader_state *vs,
+                     int num_samplers,
+                     struct ilo_cp *cp)
+{
+   const uint32_t cmd = ILO_GPE_CMD(0x3, 0x0, 0x10);
+   const uint8_t cmd_len = 6;
+   const struct ilo_shader_cso *cso;
+   uint32_t dw2, dw4, dw5;
+
+   ILO_GPE_VALID_GEN(dev, 6, 7);
+
+   if (!vs) {
+      ilo_cp_begin(cp, cmd_len);
+      ilo_cp_write(cp, cmd | (cmd_len - 2));
+      ilo_cp_write(cp, 0);
+      ilo_cp_write(cp, 0);
+      ilo_cp_write(cp, 0);
+      ilo_cp_write(cp, 0);
+      ilo_cp_write(cp, 0);
+      ilo_cp_end(cp);
+      return;
+   }
+
+   cso = ilo_shader_get_kernel_cso(vs);
+   dw2 = cso->payload[0];
+   dw4 = cso->payload[1];
+   dw5 = cso->payload[2];
+
+   dw2 |= ((num_samplers + 3) / 4) << GEN6_VS_SAMPLER_COUNT_SHIFT;
+
    ilo_cp_begin(cp, cmd_len);
    ilo_cp_write(cp, cmd | (cmd_len - 2));
-   ilo_cp_write(cp, vs->cache_offset);
+   ilo_cp_write(cp, ilo_shader_get_kernel_offset(vs));
    ilo_cp_write(cp, dw2);
    ilo_cp_write(cp, 0); /* scratch */
    ilo_cp_write(cp, dw4);
