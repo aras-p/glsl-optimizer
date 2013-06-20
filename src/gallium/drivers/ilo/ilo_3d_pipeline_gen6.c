@@ -501,16 +501,9 @@ gen6_pipeline_gs(struct ilo_3d_pipeline *p,
    /* 3DSTATE_GS */
    if (DIRTY(GS) || DIRTY(VS) ||
        session->prim_changed || session->kernel_bo_changed) {
-      const struct ilo_shader *gs = (ilo->gs)? ilo->gs->shader : NULL;
-      const struct ilo_shader *vs = (ilo->vs)? ilo->vs->shader : NULL;
-      const int num_vertices = u_vertices_per_prim(session->reduced_prim);
+      const int verts_per_prim = u_vertices_per_prim(session->reduced_prim);
 
-      if (gs)
-         assert(!gs->pcb.clip_state_size);
-
-      p->gen6_3DSTATE_GS(p->dev, gs, vs,
-            (vs) ? vs->cache_offset + vs->gs_offsets[num_vertices - 1] : 0,
-            p->cp);
+      p->gen6_3DSTATE_GS(p->dev, ilo->gs, ilo->vs, verts_per_prim, p->cp);
    }
 }
 

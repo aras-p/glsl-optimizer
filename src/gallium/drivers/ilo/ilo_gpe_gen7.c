@@ -84,18 +84,21 @@ gen7_emit_3DSTATE_CC_STATE_POINTERS(const struct ilo_dev_info *dev,
    gen7_emit_3dstate_pointer(dev, 0x0e, color_calc_state, cp);
 }
 
-static void
-gen7_emit_3DSTATE_GS(const struct ilo_dev_info *dev,
-                     const struct ilo_shader *gs,
-                     int num_samplers,
-                     struct ilo_cp *cp)
+void
+ilo_gpe_init_gs_cso_gen7(const struct ilo_dev_info *dev,
+                         const struct ilo_shader_state *gs,
+                         struct ilo_shader_cso *cso)
 {
-   const uint32_t cmd = ILO_GPE_CMD(0x3, 0x0, 0x11);
-   const uint8_t cmd_len = 7;
+   int start_grf, vue_read_len, max_threads;
    uint32_t dw2, dw4, dw5;
-   int max_threads;
 
    ILO_GPE_VALID_GEN(dev, 7, 7);
+
+   start_grf = ilo_shader_get_kernel_param(gs, ILO_KERNEL_URB_DATA_START_REG);
+   vue_read_len = ilo_shader_get_kernel_param(gs, ILO_KERNEL_INPUT_COUNT);
+
+   /* in pairs */
+   vue_read_len = (vue_read_len + 1) / 2;
 
    switch (dev->gen) {
    case ILO_GEN(7):
@@ -105,6 +108,36 @@ gen7_emit_3DSTATE_GS(const struct ilo_dev_info *dev,
       max_threads = 1;
       break;
    }
+
+   dw2 = (true) ? 0 : GEN6_GS_FLOATING_POINT_MODE_ALT;
+
+   dw4 = vue_read_len << GEN6_GS_URB_READ_LENGTH_SHIFT |
+         GEN7_GS_INCLUDE_VERTEX_HANDLES |
+         0 << GEN6_GS_URB_ENTRY_READ_OFFSET_SHIFT |
+         start_grf << GEN6_GS_DISPATCH_START_GRF_SHIFT;
+
+   dw5 = (max_threads - 1) << GEN6_GS_MAX_THREADS_SHIFT |
+         GEN6_GS_STATISTICS_ENABLE |
+         GEN6_GS_ENABLE;
+
+   STATIC_ASSERT(Elements(cso->payload) >= 3);
+   cso->payload[0] = dw2;
+   cso->payload[1] = dw4;
+   cso->payload[2] = dw5;
+}
+
+static void
+gen7_emit_3DSTATE_GS(const struct ilo_dev_info *dev,
+                     const struct ilo_shader_state *gs,
+                     int num_samplers,
+                     struct ilo_cp *cp)
+{
+   const uint32_t cmd = ILO_GPE_CMD(0x3, 0x0, 0x11);
+   const uint8_t cmd_len = 7;
+   const struct ilo_shader_cso *cso;
+   uint32_t dw2, dw4, dw5;
+
+   ILO_GPE_VALID_GEN(dev, 7, 7);
 
    if (!gs) {
       ilo_cp_begin(cp, cmd_len);
@@ -119,20 +152,16 @@ gen7_emit_3DSTATE_GS(const struct ilo_dev_info *dev,
       return;
    }
 
-   dw2 = ((num_samplers + 3) / 4) << GEN6_GS_SAMPLER_COUNT_SHIFT;
+   cso = ilo_shader_get_kernel_cso(gs);
+   dw2 = cso->payload[0];
+   dw4 = cso->payload[1];
+   dw5 = cso->payload[2];
 
-   dw4 = ((gs->in.count + 1) / 2) << GEN6_GS_URB_READ_LENGTH_SHIFT |
-         GEN7_GS_INCLUDE_VERTEX_HANDLES |
-         0 << GEN6_GS_URB_ENTRY_READ_OFFSET_SHIFT |
-         gs->in.start_grf << GEN6_GS_DISPATCH_START_GRF_SHIFT;
-
-   dw5 = (max_threads - 1) << GEN6_GS_MAX_THREADS_SHIFT |
-         GEN6_GS_STATISTICS_ENABLE |
-         GEN6_GS_ENABLE;
+   dw2 |= ((num_samplers + 3) / 4) << GEN6_GS_SAMPLER_COUNT_SHIFT;
 
    ilo_cp_begin(cp, cmd_len);
    ilo_cp_write(cp, cmd | (cmd_len - 2));
-   ilo_cp_write(cp, gs->cache_offset);
+   ilo_cp_write(cp, ilo_shader_get_kernel_offset(gs));
    ilo_cp_write(cp, dw2);
    ilo_cp_write(cp, 0); /* scratch */
    ilo_cp_write(cp, dw4);

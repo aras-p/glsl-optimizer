@@ -158,7 +158,7 @@ typedef ilo_gpe_gen6_3DSTATE_VS ilo_gpe_gen7_3DSTATE_VS;
 
 typedef void
 (*ilo_gpe_gen7_3DSTATE_GS)(const struct ilo_dev_info *dev,
-                           const struct ilo_shader *gs,
+                           const struct ilo_shader_state *gs,
                            int num_samplers,
                            struct ilo_cp *cp);
 

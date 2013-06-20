@@ -1246,135 +1246,167 @@ gen6_emit_3DSTATE_VS(const struct ilo_dev_info *dev,
    ilo_cp_end(cp);
 }
 
+void
+ilo_gpe_init_gs_cso_gen6(const struct ilo_dev_info *dev,
+                         const struct ilo_shader_state *gs,
+                         struct ilo_shader_cso *cso)
+{
+   int start_grf, vue_read_len, max_threads;
+   uint32_t dw2, dw4, dw5, dw6;
+
+   ILO_GPE_VALID_GEN(dev, 6, 6);
+
+   if (ilo_shader_get_type(gs) == PIPE_SHADER_GEOMETRY) {
+      start_grf = ilo_shader_get_kernel_param(gs,
+            ILO_KERNEL_URB_DATA_START_REG);
+
+      vue_read_len = ilo_shader_get_kernel_param(gs, ILO_KERNEL_INPUT_COUNT);
+   }
+   else {
+      start_grf = ilo_shader_get_kernel_param(gs,
+            ILO_KERNEL_VS_GEN6_SO_START_REG);
+
+      vue_read_len = ilo_shader_get_kernel_param(gs, ILO_KERNEL_OUTPUT_COUNT);
+   }
+
+   /*
+    * From the Sandy Bridge PRM, volume 2 part 1, page 153:
+    *
+    *     "Specifies the amount of URB data read and passed in the thread
+    *      payload for each Vertex URB entry, in 256-bit register increments.
+    *
+    *      It is UNDEFINED to set this field (Vertex URB Entry Read Length) to
+    *      0 indicating no Vertex URB data to be read and passed to the
+    *      thread."
+    */
+   vue_read_len = (vue_read_len + 1) / 2;
+   if (!vue_read_len)
+      vue_read_len = 1;
+
+   /*
+    * From the Sandy Bridge PRM, volume 2 part 1, page 154:
+    *
+    *     "Maximum Number of Threads valid range is [0,27] when Rendering
+    *      Enabled bit is set."
+    *
+    * From the Sandy Bridge PRM, volume 2 part 1, page 173:
+    *
+    *     "Programming Note: If the GS stage is enabled, software must always
+    *      allocate at least one GS URB Entry. This is true even if the GS
+    *      thread never needs to output vertices to the pipeline, e.g., when
+    *      only performing stream output. This is an artifact of the need to
+    *      pass the GS thread an initial destination URB handle."
+    *
+    * As such, we always enable rendering, and limit the number of threads.
+    */
+   if (dev->gt == 2) {
+      /* maximum is 60, but limited to 28 */
+      max_threads = 28;
+   }
+   else {
+      /* maximum is 24, but limited to 21 (see brwCreateContext()) */
+      max_threads = 21;
+   }
+
+   if (max_threads > 28)
+      max_threads = 28;
+
+   dw2 = GEN6_GS_SPF_MODE;
+
+   dw4 = vue_read_len << GEN6_GS_URB_READ_LENGTH_SHIFT |
+         0 << GEN6_GS_URB_ENTRY_READ_OFFSET_SHIFT |
+         start_grf << GEN6_GS_DISPATCH_START_GRF_SHIFT;
+
+   dw5 = (max_threads - 1) << GEN6_GS_MAX_THREADS_SHIFT |
+         GEN6_GS_STATISTICS_ENABLE |
+         GEN6_GS_SO_STATISTICS_ENABLE |
+         GEN6_GS_RENDERING_ENABLE;
+
+   /*
+    * we cannot make use of GEN6_GS_REORDER because it will reorder
+    * triangle strips according to D3D rules (triangle 2N+1 uses vertices
+    * (2N+1, 2N+3, 2N+2)), instead of GL rules (triangle 2N+1 uses vertices
+    * (2N+2, 2N+1, 2N+3)).
+    */
+   dw6 = GEN6_GS_ENABLE;
+
+   if (ilo_shader_get_kernel_param(gs, ILO_KERNEL_GS_DISCARD_ADJACENCY))
+      dw6 |= GEN6_GS_DISCARD_ADJACENCY;
+
+   if (ilo_shader_get_kernel_param(gs, ILO_KERNEL_VS_GEN6_SO)) {
+      const uint32_t svbi_post_inc =
+         ilo_shader_get_kernel_param(gs, ILO_KERNEL_GS_GEN6_SVBI_POST_INC);
+
+      dw6 |= GEN6_GS_SVBI_PAYLOAD_ENABLE;
+      if (svbi_post_inc) {
+         dw6 |= GEN6_GS_SVBI_POSTINCREMENT_ENABLE |
+                svbi_post_inc << GEN6_GS_SVBI_POSTINCREMENT_VALUE_SHIFT;
+      }
+   }
+
+   STATIC_ASSERT(Elements(cso->payload) >= 4);
+   cso->payload[0] = dw2;
+   cso->payload[1] = dw4;
+   cso->payload[2] = dw5;
+   cso->payload[3] = dw6;
+}
+
 static void
 gen6_emit_3DSTATE_GS(const struct ilo_dev_info *dev,
-                     const struct ilo_shader *gs,
-                     const struct ilo_shader *vs,
-                     uint32_t vs_offset,
+                     const struct ilo_shader_state *gs,
+                     const struct ilo_shader_state *vs,
+                     int verts_per_prim,
                      struct ilo_cp *cp)
 {
    const uint32_t cmd = ILO_GPE_CMD(0x3, 0x0, 0x11);
    const uint8_t cmd_len = 7;
    uint32_t dw1, dw2, dw4, dw5, dw6;
-   int i;
 
    ILO_GPE_VALID_GEN(dev, 6, 6);
 
-   if (!gs && (!vs || !vs->stream_output)) {
+   if (gs) {
+      const struct ilo_shader_cso *cso;
+
+      dw1 = ilo_shader_get_kernel_offset(gs);
+
+      cso = ilo_shader_get_kernel_cso(gs);
+      dw2 = cso->payload[0];
+      dw4 = cso->payload[1];
+      dw5 = cso->payload[2];
+      dw6 = cso->payload[3];
+   }
+   else if (vs && ilo_shader_get_kernel_param(vs, ILO_KERNEL_VS_GEN6_SO)) {
+      struct ilo_shader_cso cso;
+      enum ilo_kernel_param param;
+
+      switch (verts_per_prim) {
+      case 1:
+         param = ILO_KERNEL_VS_GEN6_SO_POINT_OFFSET;
+         break;
+      case 2:
+         param = ILO_KERNEL_VS_GEN6_SO_LINE_OFFSET;
+         break;
+      default:
+         param = ILO_KERNEL_VS_GEN6_SO_TRI_OFFSET;
+         break;
+      }
+
+      dw1 = ilo_shader_get_kernel_offset(vs) +
+         ilo_shader_get_kernel_param(vs, param);
+
+      /* cannot use VS's CSO */
+      ilo_gpe_init_gs_cso_gen6(dev, vs, &cso);
+      dw2 = cso.payload[0];
+      dw4 = cso.payload[1];
+      dw5 = cso.payload[2];
+      dw6 = cso.payload[3];
+   }
+   else {
       dw1 = 0;
       dw2 = 0;
       dw4 = 1 << GEN6_GS_URB_READ_LENGTH_SHIFT;
       dw5 = GEN6_GS_STATISTICS_ENABLE;
       dw6 = 0;
-   }
-   else {
-      int max_threads, vue_read_len;
-
-      /*
-       * From the Sandy Bridge PRM, volume 2 part 1, page 154:
-       *
-       *     "Maximum Number of Threads valid range is [0,27] when Rendering
-       *      Enabled bit is set."
-       *
-       * From the Sandy Bridge PRM, volume 2 part 1, page 173:
-       *
-       *     "Programming Note: If the GS stage is enabled, software must
-       *      always allocate at least one GS URB Entry. This is true even if
-       *      the GS thread never needs to output vertices to the pipeline,
-       *      e.g., when only performing stream output. This is an artifact of
-       *      the need to pass the GS thread an initial destination URB
-       *      handle."
-       *
-       * As such, we always enable rendering, and limit the number of threads.
-       */
-      if (dev->gt == 2) {
-         /* maximum is 60, but limited to 28 */
-         max_threads = 28;
-      }
-      else {
-         /* maximum is 24, but limited to 21 (see brwCreateContext()) */
-         max_threads = 21;
-      }
-
-      if (max_threads > 28)
-         max_threads = 28;
-
-      dw2 = GEN6_GS_SPF_MODE;
-
-      dw5 = (max_threads - 1) << GEN6_GS_MAX_THREADS_SHIFT |
-            GEN6_GS_STATISTICS_ENABLE |
-            GEN6_GS_SO_STATISTICS_ENABLE |
-            GEN6_GS_RENDERING_ENABLE;
-
-      /*
-       * we cannot make use of GEN6_GS_REORDER because it will reorder
-       * triangle strips according to D3D rules (triangle 2N+1 uses vertices
-       * (2N+1, 2N+3, 2N+2)), instead of GL rules (triangle 2N+1 uses vertices
-       * (2N+2, 2N+1, 2N+3)).
-       */
-      dw6 = GEN6_GS_ENABLE;
-
-      if (gs) {
-         /* VS ouputs must match GS inputs */
-         assert(gs->in.count == vs->out.count);
-         for (i = 0; i < gs->in.count; i++) {
-            assert(gs->in.semantic_names[i] == vs->out.semantic_names[i]);
-            assert(gs->in.semantic_indices[i] == vs->out.semantic_indices[i]);
-         }
-
-         /*
-          * From the Sandy Bridge PRM, volume 2 part 1, page 153:
-          *
-          *     "It is UNDEFINED to set this field (Vertex URB Entry Read
-          *      Length) to 0 indicating no Vertex URB data to be read and
-          *      passed to the thread."
-          */
-         vue_read_len = (gs->in.count + 1) / 2;
-         if (!vue_read_len)
-            vue_read_len = 1;
-
-         dw1 = gs->cache_offset;
-         dw4 = vue_read_len << GEN6_GS_URB_READ_LENGTH_SHIFT |
-               0 << GEN6_GS_URB_ENTRY_READ_OFFSET_SHIFT |
-               gs->in.start_grf << GEN6_GS_DISPATCH_START_GRF_SHIFT;
-
-         if (gs->in.discard_adj)
-            dw6 |= GEN6_GS_DISCARD_ADJACENCY;
-
-         if (gs->stream_output) {
-            dw6 |= GEN6_GS_SVBI_PAYLOAD_ENABLE;
-            if (gs->svbi_post_inc) {
-               dw6 |= GEN6_GS_SVBI_POSTINCREMENT_ENABLE |
-                      gs->svbi_post_inc << GEN6_GS_SVBI_POSTINCREMENT_VALUE_SHIFT;
-            }
-         }
-      }
-      else {
-         /*
-          * From the Sandy Bridge PRM, volume 2 part 1, page 153:
-          *
-          *     "It is UNDEFINED to set this field (Vertex URB Entry Read
-          *      Length) to 0 indicating no Vertex URB data to be read and
-          *      passed to the thread."
-          */
-         vue_read_len = (vs->out.count + 1) / 2;
-         if (!vue_read_len)
-            vue_read_len = 1;
-
-         dw1 = vs_offset;
-         dw4 = vue_read_len << GEN6_GS_URB_READ_LENGTH_SHIFT |
-               0 << GEN6_GS_URB_ENTRY_READ_OFFSET_SHIFT |
-               vs->gs_start_grf << GEN6_GS_DISPATCH_START_GRF_SHIFT;
-
-         if (vs->in.discard_adj)
-            dw6 |= GEN6_GS_DISCARD_ADJACENCY;
-
-         dw6 |= GEN6_GS_SVBI_PAYLOAD_ENABLE;
-         if (vs->svbi_post_inc) {
-            dw6 |= GEN6_GS_SVBI_POSTINCREMENT_ENABLE |
-                   vs->svbi_post_inc << GEN6_GS_SVBI_POSTINCREMENT_VALUE_SHIFT;
-         }
-      }
    }
 
    ilo_cp_begin(cp, cmd_len);
