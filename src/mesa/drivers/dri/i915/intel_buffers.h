@@ -1,3 +1,4 @@
+
 /**************************************************************************
  * 
  * Copyright 2006 Tungsten Graphics, Inc., Cedar Park, Texas.
@@ -12,7 +13,7 @@
  * the following conditions:
  * 
  * The above copyright notice and this permission notice (including the
- * next paragraph) shall be included in all copies or substantial portionsalloc
+ * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
  * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
@@ -25,34 +26,31 @@
  * 
  **************************************************************************/
 
-#include "main/glheader.h"
-#include "main/enums.h"
-#include "main/image.h"
-#include "main/mtypes.h"
-#include "main/teximage.h"
-#include "main/texobj.h"
-#include "main/texstate.h"
-#include "swrast/swrast.h"
-#include "drivers/common/meta.h"
+#ifndef INTEL_BUFFERS_H
+#define INTEL_BUFFERS_H
 
+#include "dri_util.h"
+#include "drm.h"
 #include "intel_context.h"
-#include "intel_pixel.h"
 
-void
-intelDrawPixels(struct gl_context * ctx,
-                GLint x, GLint y,
-                GLsizei width, GLsizei height,
-                GLenum format,
-                GLenum type,
-                const struct gl_pixelstore_attrib *unpack,
-                const GLvoid * pixels)
+struct intel_context;
+struct intel_framebuffer;
+
+extern struct intel_region *intel_readbuf_region(struct intel_context *intel);
+
+extern void intel_check_front_buffer_rendering(struct intel_context *intel);
+
+static inline void
+intel_draw_buffer(struct gl_context * ctx)
 {
-   if (format == GL_STENCIL_INDEX) {
-      _swrast_DrawPixels(ctx, x, y, width, height, format, type,
-                         unpack, pixels);
-      return;
-   }
+   struct intel_context *intel = intel_context(ctx);
 
-   _mesa_meta_DrawPixels(ctx, x, y, width, height, format, type,
-                         unpack, pixels);
+   intel->vtbl.update_draw_buffer(intel);
 }
+
+extern void intelInitBufferFuncs(struct dd_function_table *functions);
+#ifdef I915
+void intelCalcViewport(struct gl_context * ctx);
+#endif
+
+#endif /* INTEL_BUFFERS_H */

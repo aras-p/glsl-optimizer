@@ -12,7 +12,7 @@
  * the following conditions:
  * 
  * The above copyright notice and this permission notice (including the
- * next paragraph) shall be included in all copies or substantial portionsalloc
+ * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
  * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
@@ -24,35 +24,17 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * 
  **************************************************************************/
+ /*
+  * Authors:
+  *   Keith Whitwell <keith@tungstengraphics.com>
+  *   Michel Dänzer <michel@tungstengraphics.com>
+  */
 
-#include "main/glheader.h"
-#include "main/enums.h"
-#include "main/image.h"
-#include "main/mtypes.h"
-#include "main/teximage.h"
-#include "main/texobj.h"
-#include "main/texstate.h"
-#include "swrast/swrast.h"
-#include "drivers/common/meta.h"
+#include "main/macros.h"
 
-#include "intel_context.h"
-#include "intel_pixel.h"
+extern void i945_miptree_layout_2d(struct intel_mipmap_tree *mt);
 
 void
-intelDrawPixels(struct gl_context * ctx,
-                GLint x, GLint y,
-                GLsizei width, GLsizei height,
-                GLenum format,
-                GLenum type,
-                const struct gl_pixelstore_attrib *unpack,
-                const GLvoid * pixels)
-{
-   if (format == GL_STENCIL_INDEX) {
-      _swrast_DrawPixels(ctx, x, y, width, height, format, type,
-                         unpack, pixels);
-      return;
-   }
-
-   _mesa_meta_DrawPixels(ctx, x, y, width, height, format, type,
-                         unpack, pixels);
-}
+intel_get_texture_alignment_unit(struct intel_context *intel,
+				 gl_format format,
+				 unsigned int *w, unsigned int *h);

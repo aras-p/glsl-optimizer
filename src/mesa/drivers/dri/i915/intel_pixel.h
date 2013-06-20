@@ -12,7 +12,7 @@
  * the following conditions:
  * 
  * The above copyright notice and this permission notice (including the
- * next paragraph) shall be included in all copies or substantial portionsalloc
+ * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
  * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
@@ -25,34 +25,39 @@
  * 
  **************************************************************************/
 
-#include "main/glheader.h"
-#include "main/enums.h"
-#include "main/image.h"
+#ifndef INTEL_PIXEL_H
+#define INTEL_PIXEL_H
+
 #include "main/mtypes.h"
-#include "main/teximage.h"
-#include "main/texobj.h"
-#include "main/texstate.h"
-#include "swrast/swrast.h"
-#include "drivers/common/meta.h"
 
-#include "intel_context.h"
-#include "intel_pixel.h"
+void intelInitPixelFuncs(struct dd_function_table *functions);
+bool intel_check_blit_fragment_ops(struct gl_context * ctx,
+					bool src_alpha_is_one);
 
-void
-intelDrawPixels(struct gl_context * ctx,
-                GLint x, GLint y,
-                GLsizei width, GLsizei height,
-                GLenum format,
-                GLenum type,
-                const struct gl_pixelstore_attrib *unpack,
-                const GLvoid * pixels)
-{
-   if (format == GL_STENCIL_INDEX) {
-      _swrast_DrawPixels(ctx, x, y, width, height, format, type,
-                         unpack, pixels);
-      return;
-   }
+void intelReadPixels(struct gl_context * ctx,
+                     GLint x, GLint y,
+                     GLsizei width, GLsizei height,
+                     GLenum format, GLenum type,
+                     const struct gl_pixelstore_attrib *pack,
+                     GLvoid * pixels);
 
-   _mesa_meta_DrawPixels(ctx, x, y, width, height, format, type,
-                         unpack, pixels);
-}
+void intelDrawPixels(struct gl_context * ctx,
+                     GLint x, GLint y,
+                     GLsizei width, GLsizei height,
+                     GLenum format,
+                     GLenum type,
+                     const struct gl_pixelstore_attrib *unpack,
+                     const GLvoid * pixels);
+
+void intelCopyPixels(struct gl_context * ctx,
+                     GLint srcx, GLint srcy,
+                     GLsizei width, GLsizei height,
+                     GLint destx, GLint desty, GLenum type);
+
+void intelBitmap(struct gl_context * ctx,
+		 GLint x, GLint y,
+		 GLsizei width, GLsizei height,
+		 const struct gl_pixelstore_attrib *unpack,
+		 const GLubyte * pixels);
+
+#endif

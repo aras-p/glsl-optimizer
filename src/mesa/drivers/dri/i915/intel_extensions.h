@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2006 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -12,7 +12,7 @@
  * the following conditions:
  * 
  * The above copyright notice and this permission notice (including the
- * next paragraph) shall be included in all copies or substantial portionsalloc
+ * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
  * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
@@ -25,34 +25,18 @@
  * 
  **************************************************************************/
 
-#include "main/glheader.h"
-#include "main/enums.h"
-#include "main/image.h"
-#include "main/mtypes.h"
-#include "main/teximage.h"
-#include "main/texobj.h"
-#include "main/texstate.h"
-#include "swrast/swrast.h"
-#include "drivers/common/meta.h"
+#ifndef INTEL_EXTENSIONS_H
+#define INTEL_EXTENSIONS_H
 
-#include "intel_context.h"
-#include "intel_pixel.h"
 
-void
-intelDrawPixels(struct gl_context * ctx,
-                GLint x, GLint y,
-                GLsizei width, GLsizei height,
-                GLenum format,
-                GLenum type,
-                const struct gl_pixelstore_attrib *unpack,
-                const GLvoid * pixels)
-{
-   if (format == GL_STENCIL_INDEX) {
-      _swrast_DrawPixels(ctx, x, y, width, height, format, type,
-                         unpack, pixels);
-      return;
-   }
+extern void
+intelInitExtensions(struct gl_context *ctx);
 
-   _mesa_meta_DrawPixels(ctx, x, y, width, height, format, type,
-                         unpack, pixels);
-}
+extern void
+intelInitExtensionsES1(struct gl_context *ctx);
+
+extern void
+intelInitExtensionsES2(struct gl_context *ctx);
+
+
+#endif
