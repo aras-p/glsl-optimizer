@@ -47,7 +47,7 @@ gen6_upload_depth_stencil_state(struct brw_context *brw)
 			&brw->cc.depth_stencil_state_offset);
    memset(ds, 0, sizeof(*ds));
 
-   /* _NEW_STENCIL */
+   /* _NEW_STENCIL | _NEW_BUFFERS */
    if (ctx->Stencil._Enabled) {
       int back = ctx->Stencil._BackFace;
 

@@ -130,12 +130,7 @@ brw_update_draw_buffer(struct intel_context *intel)
       return;
    }
 
-   /* Mesa's Stencil._Enabled field is updated when
-    * _NEW_BUFFERS | _NEW_STENCIL, but i965 code assumes that the value
-    * only changes with _NEW_STENCIL (which seems sensible).  So flag it
-    * here since this is the _NEW_BUFFERS path.
-    */
-   intel->NewGLState |= (_NEW_DEPTH | _NEW_STENCIL);
+   intel->NewGLState |= _NEW_DEPTH;
 
    /* The driver uses this in places that need to look up
     * renderbuffers' buffer objects.

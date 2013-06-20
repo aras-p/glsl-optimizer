@@ -104,7 +104,7 @@ static void upload_cc_unit(struct brw_context *brw)
 			sizeof(*cc), 64, &brw->cc.state_offset);
    memset(cc, 0, sizeof(*cc));
 
-   /* _NEW_STENCIL */
+   /* _NEW_STENCIL | _NEW_BUFFERS */
    if (ctx->Stencil._Enabled) {
       const unsigned back = ctx->Stencil._BackFace;
 
@@ -230,7 +230,7 @@ static void upload_cc_unit(struct brw_context *brw)
 
 const struct brw_tracked_state brw_cc_unit = {
    .dirty = {
-      .mesa = _NEW_STENCIL | _NEW_COLOR | _NEW_DEPTH,
+      .mesa = _NEW_STENCIL | _NEW_COLOR | _NEW_DEPTH | _NEW_BUFFERS,
       .brw = BRW_NEW_BATCH | BRW_NEW_STATS_WM,
       .cache = CACHE_NEW_CC_VP
    },
