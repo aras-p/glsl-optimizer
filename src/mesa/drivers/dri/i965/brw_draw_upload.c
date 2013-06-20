@@ -506,8 +506,24 @@ static void brw_prepare_vertices(struct brw_context *brw)
 	    ptr = glarray->Ptr;
 	 }
 	 else if (interleaved != glarray->StrideB ||
-		  (uintptr_t)(glarray->Ptr - ptr) > interleaved)
+                  glarray->Ptr < ptr ||
+                  (uintptr_t)(glarray->Ptr - ptr) + glarray->_ElementSize > interleaved)
 	 {
+            /* If our stride is different from the first attribute's stride,
+             * or if the first attribute's stride didn't cover our element,
+             * disable the interleaved upload optimization.  The second case
+             * can most commonly occur in cases where there is a single vertex
+             * and, for example, the data is stored on the application's
+             * stack.
+             *
+             * NOTE: This will also disable the optimization in cases where
+             * the data is in a different order than the array indices.
+             * Something like:
+             *
+             *     float data[...];
+             *     glVertexAttribPointer(0, 4, GL_FLOAT, 32, &data[4]);
+             *     glVertexAttribPointer(1, 4, GL_FLOAT, 32, &data[0]);
+             */
 	    interleaved = 0;
 	 }
 
