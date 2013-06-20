@@ -1171,12 +1171,6 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
       intelScreen->gen = 2;
    }
 
-   int has_llc = 0;
-   bool success = intel_get_param(intelScreen->driScrnPriv, I915_PARAM_HAS_LLC,
-				  &has_llc);
-   if (success && has_llc)
-      intelScreen->hw_has_llc = true;
-
    intelScreen->hw_has_swizzling = intel_detect_swizzling(intelScreen);
 
    set_max_gl_versions(intelScreen);

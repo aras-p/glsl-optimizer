@@ -68,15 +68,4 @@ bool
 intel_tex_image_s8z24_create_renderbuffers(struct intel_context *intel,
 					   struct intel_texture_image *image);
 
-bool
-intel_texsubimage_tiled_memcpy(struct gl_context *ctx,
-                               GLuint dims,
-                               struct gl_texture_image *texImage,
-                               GLint xoffset, GLint yoffset, GLint zoffset,
-                               GLsizei width, GLsizei height, GLsizei depth,
-                               GLenum format, GLenum type,
-                               const GLvoid *pixels,
-                               const struct gl_pixelstore_attrib *packing,
-                               bool for_glTexImage);
-
 #endif

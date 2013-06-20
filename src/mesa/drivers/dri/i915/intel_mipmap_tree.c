@@ -882,14 +882,8 @@ intel_miptree_map(struct intel_context *intel,
    }
 
    /* See intel_miptree_blit() for details on the 32k pitch limit. */
-   if (intel->has_llc &&
-       !(mode & GL_MAP_WRITE_BIT) &&
-       !mt->compressed &&
-       mt->region->tiling == I915_TILING_X &&
-       mt->region->pitch < 32768) {
-      intel_miptree_map_blit(intel, mt, map, level, slice);
-   } else if (mt->region->tiling != I915_TILING_NONE &&
-              mt->region->bo->size >= intel->max_gtt_map_object_size) {
+   if (mt->region->tiling != I915_TILING_NONE &&
+       mt->region->bo->size >= intel->max_gtt_map_object_size) {
       assert(mt->region->pitch < 32768);
       intel_miptree_map_blit(intel, mt, map, level, slice);
    } else {

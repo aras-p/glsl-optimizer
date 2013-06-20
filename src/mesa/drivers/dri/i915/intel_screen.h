@@ -49,7 +49,6 @@ struct intel_screen
 
    bool no_hw;
 
-   bool hw_has_llc;
    bool hw_has_swizzling;
 
    bool no_vbo;
