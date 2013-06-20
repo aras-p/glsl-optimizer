@@ -91,47 +91,6 @@ br13_for_cpp(int cpp)
 }
 
 /**
- * Emits the packet for switching the blitter from X to Y tiled or back.
- *
- * This has to be called in a single BEGIN_BATCH_BLT_TILED() /
- * ADVANCE_BATCH_TILED().  This is because BCS_SWCTRL is saved and restored as
- * part of the power context, not a render context, and if the batchbuffer was
- * to get flushed between setting and blitting, or blitting and restoring, our
- * tiling state would leak into other unsuspecting applications (like the X
- * server).
- */
-static void
-set_blitter_tiling(struct intel_context *intel,
-                   bool dst_y_tiled, bool src_y_tiled)
-{
-   assert(intel->gen >= 6);
-
-   /* Idle the blitter before we update how tiling is interpreted. */
-   OUT_BATCH(MI_FLUSH_DW);
-   OUT_BATCH(0);
-   OUT_BATCH(0);
-   OUT_BATCH(0);
-
-   OUT_BATCH(MI_LOAD_REGISTER_IMM | (3 - 2));
-   OUT_BATCH(BCS_SWCTRL);
-   OUT_BATCH((BCS_SWCTRL_DST_Y | BCS_SWCTRL_SRC_Y) << 16 |
-             (dst_y_tiled ? BCS_SWCTRL_DST_Y : 0) |
-             (src_y_tiled ? BCS_SWCTRL_SRC_Y : 0));
-}
-
-#define BEGIN_BATCH_BLT_TILED(n, dst_y_tiled, src_y_tiled) do {         \
-      BEGIN_BATCH_BLT(n + ((dst_y_tiled || src_y_tiled) ? 14 : 0));     \
-      if (dst_y_tiled || src_y_tiled)                                   \
-         set_blitter_tiling(intel, dst_y_tiled, src_y_tiled);           \
-   } while (0)
-
-#define ADVANCE_BATCH_TILED(dst_y_tiled, src_y_tiled) do {              \
-      if (dst_y_tiled || src_y_tiled)                                   \
-         set_blitter_tiling(intel, false, false);                       \
-      ADVANCE_BATCH();                                                  \
-   } while (0)
-
-/**
  * Implements a rectangular block transfer (blit) of pixels between two
  * miptrees.
  *
@@ -286,7 +245,7 @@ intelEmitCopyBlit(struct intel_context *intel,
       if (src_offset & 4095)
 	 return false;
    }
-   if ((dst_y_tiled || src_y_tiled) && intel->gen < 6)
+   if (dst_y_tiled || src_y_tiled)
       return false;
 
    /* do space check before going any further */
@@ -305,7 +264,7 @@ intelEmitCopyBlit(struct intel_context *intel,
    if (pass >= 2)
       return false;
 
-   intel_batchbuffer_require_space(intel, 8 * 4, true);
+   intel_batchbuffer_require_space(intel, 8 * 4);
    DBG("%s src:buf(%p)/%d+%d %d,%d dst:buf(%p)/%d+%d %d,%d sz:%dx%d\n",
        __FUNCTION__,
        src_buffer, src_pitch, src_offset, src_x, src_y,
@@ -356,7 +315,7 @@ intelEmitCopyBlit(struct intel_context *intel,
    assert(dst_x < dst_x2);
    assert(dst_y < dst_y2);
 
-   BEGIN_BATCH_BLT_TILED(8, dst_y_tiled, src_y_tiled);
+   BEGIN_BATCH(8);
 
    OUT_BATCH(CMD | (8 - 2));
    OUT_BATCH(BR13 | (uint16_t)dst_pitch);
@@ -371,7 +330,7 @@ intelEmitCopyBlit(struct intel_context *intel,
 		    I915_GEM_DOMAIN_RENDER, 0,
 		    src_offset);
 
-   ADVANCE_BATCH_TILED(dst_y_tiled, src_y_tiled);
+   ADVANCE_BATCH();
 
    intel_batchbuffer_emit_mi_flush(intel);
 
@@ -531,7 +490,7 @@ intelClearWithBlit(struct gl_context *ctx, GLbitfield mask)
 	 intel_batchbuffer_flush(intel);
       }
 
-      BEGIN_BATCH_BLT(6);
+      BEGIN_BATCH(6);
       OUT_BATCH(CMD | (6 - 2));
       OUT_BATCH(BR13);
       OUT_BATCH((y1 << 16) | x1);
@@ -589,7 +548,7 @@ intelEmitImmediateColorExpandBlit(struct intel_context *intel,
    intel_batchbuffer_require_space(intel,
 				   (8 * 4) +
 				   (3 * 4) +
-				   dwords * 4, true);
+				   dwords * 4);
 
    opcode = XY_SETUP_BLT_CMD;
    if (cpp == 4)
@@ -602,7 +561,7 @@ intelEmitImmediateColorExpandBlit(struct intel_context *intel,
    if (dst_tiling != I915_TILING_NONE)
       blit_cmd |= XY_DST_TILED;
 
-   BEGIN_BATCH_BLT(8 + 3);
+   BEGIN_BATCH(8 + 3);
    OUT_BATCH(opcode | (8 - 2));
    OUT_BATCH(br13);
    OUT_BATCH((0 << 16) | 0); /* clip x1, y1 */
@@ -619,7 +578,7 @@ intelEmitImmediateColorExpandBlit(struct intel_context *intel,
    OUT_BATCH(((y + h) << 16) | (x + w));
    ADVANCE_BATCH();
 
-   intel_batchbuffer_data(intel, src_bits, dwords * 4, true);
+   intel_batchbuffer_data(intel, src_bits, dwords * 4);
 
    intel_batchbuffer_emit_mi_flush(intel);
 
@@ -716,9 +675,7 @@ intel_miptree_set_alpha_to_one(struct intel_context *intel,
       intel_batchbuffer_flush(intel);
    }
 
-   bool dst_y_tiled = region->tiling == I915_TILING_Y;
-
-   BEGIN_BATCH_BLT_TILED(6, dst_y_tiled, false);
+   BEGIN_BATCH(6);
    OUT_BATCH(CMD | (6 - 2));
    OUT_BATCH(BR13);
    OUT_BATCH((y << 16) | x);
@@ -727,7 +684,7 @@ intel_miptree_set_alpha_to_one(struct intel_context *intel,
 		    I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
 		    0);
    OUT_BATCH(0xffffffff); /* white, but only alpha gets written */
-   ADVANCE_BATCH_TILED(dst_y_tiled, false);
+   ADVANCE_BATCH();
 
    intel_batchbuffer_emit_mi_flush(intel);
 }

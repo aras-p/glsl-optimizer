@@ -40,7 +40,7 @@ int _intel_batchbuffer_flush(struct intel_context *intel,
  * intel_buffer_dword() calls.
  */
 void intel_batchbuffer_data(struct intel_context *intel,
-                            const void *data, GLuint bytes, bool is_blit);
+                            const void *data, GLuint bytes);
 
 bool intel_batchbuffer_emit_reloc(struct intel_context *intel,
                                        drm_intel_bo *buffer,
@@ -95,16 +95,8 @@ intel_batchbuffer_emit_float(struct intel_context *intel, float f)
 
 static INLINE void
 intel_batchbuffer_require_space(struct intel_context *intel,
-                                GLuint sz, int is_blit)
+                                GLuint sz)
 {
-
-   if (intel->gen >= 6 &&
-       intel->batch.is_blit != is_blit && intel->batch.used) {
-      intel_batchbuffer_flush(intel);
-   }
-
-   intel->batch.is_blit = is_blit;
-
 #ifdef DEBUG
    assert(sz < intel->maxBatchSize - BATCH_RESERVED);
 #endif
@@ -113,9 +105,9 @@ intel_batchbuffer_require_space(struct intel_context *intel,
 }
 
 static INLINE void
-intel_batchbuffer_begin(struct intel_context *intel, int n, bool is_blit)
+intel_batchbuffer_begin(struct intel_context *intel, int n)
 {
-   intel_batchbuffer_require_space(intel, n * 4, is_blit);
+   intel_batchbuffer_require_space(intel, n * 4);
 
    intel->batch.emit = intel->batch.used;
 #ifdef DEBUG
@@ -143,8 +135,7 @@ intel_batchbuffer_advance(struct intel_context *intel)
  */
 #define BATCH_LOCALS
 
-#define BEGIN_BATCH(n) intel_batchbuffer_begin(intel, n, false)
-#define BEGIN_BATCH_BLT(n) intel_batchbuffer_begin(intel, n, true)
+#define BEGIN_BATCH(n) intel_batchbuffer_begin(intel, n)
 #define OUT_BATCH(d) intel_batchbuffer_emit_dword(intel, d)
 #define OUT_BATCH_F(f) intel_batchbuffer_emit_float(intel,f)
 #define OUT_RELOC(buf, read_domains, write_domain, delta) do {		\

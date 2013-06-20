@@ -129,8 +129,6 @@ struct intel_batchbuffer {
 #define BATCH_SZ (8192*sizeof(uint32_t))
 
    uint32_t state_batch_offset;
-   bool is_blit;
-   bool needs_sol_reset;
 };
 
 /**
@@ -185,8 +183,6 @@ struct intel_context
    int gen;
    bool is_945;
    bool has_swizzling;
-
-   drm_intel_context *hw_ctx;
 
    struct intel_batchbuffer batch;
 

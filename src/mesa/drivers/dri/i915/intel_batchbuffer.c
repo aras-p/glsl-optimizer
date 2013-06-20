@@ -59,7 +59,6 @@ intel_batchbuffer_reset(struct intel_context *intel)
    intel->batch.reserved_space = BATCH_RESERVED;
    intel->batch.state_batch_offset = intel->batch.bo->size;
    intel->batch.used = 0;
-   intel->batch.needs_sol_reset = false;
 }
 
 void
@@ -127,20 +126,11 @@ do_flush_locked(struct intel_context *intel)
    }
 
    if (!intel->intelScreen->no_hw) {
-      int flags = I915_EXEC_RENDER;
-      if (batch->needs_sol_reset)
-	 flags |= I915_EXEC_GEN7_SOL_RESET;
-
       if (ret == 0) {
          if (unlikely(INTEL_DEBUG & DEBUG_AUB) && intel->vtbl.annotate_aub)
             intel->vtbl.annotate_aub(intel);
-	 if (intel->hw_ctx == NULL || batch->is_blit) {
-	    ret = drm_intel_bo_mrb_exec(batch->bo, 4 * batch->used, NULL, 0, 0,
-					flags);
-	 } else {
-	    ret = drm_intel_gem_bo_context_exec(batch->bo, intel->hw_ctx,
-						4 * batch->used, flags);
-	 }
+         ret = drm_intel_bo_mrb_exec(batch->bo, 4 * batch->used, NULL, 0, 0,
+                                     I915_EXEC_RENDER);
       }
    }
 
@@ -259,10 +249,10 @@ intel_batchbuffer_emit_reloc_fenced(struct intel_context *intel,
 
 void
 intel_batchbuffer_data(struct intel_context *intel,
-                       const void *data, GLuint bytes, bool is_blit)
+                       const void *data, GLuint bytes)
 {
    assert((bytes & 3) == 0);
-   intel_batchbuffer_require_space(intel, bytes, is_blit);
+   intel_batchbuffer_require_space(intel, bytes);
    __memcpy(intel->batch.map + intel->batch.used, data, bytes);
    intel->batch.used += bytes >> 2;
 }
