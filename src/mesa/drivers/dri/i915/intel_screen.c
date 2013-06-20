@@ -1157,15 +1157,7 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
 
    intelScreen->deviceID = drm_intel_bufmgr_gem_get_devid(intelScreen->bufmgr);
 
-   if (IS_GEN7(intelScreen->deviceID)) {
-      intelScreen->gen = 7;
-   } else if (IS_GEN6(intelScreen->deviceID)) {
-      intelScreen->gen = 6;
-   } else if (IS_GEN5(intelScreen->deviceID)) {
-      intelScreen->gen = 5;
-   } else if (IS_965(intelScreen->deviceID)) {
-      intelScreen->gen = 4;
-   } else if (IS_9XX(intelScreen->deviceID)) {
+   if (IS_9XX(intelScreen->deviceID)) {
       intelScreen->gen = 3;
    } else {
       intelScreen->gen = 2;
