@@ -314,9 +314,12 @@ intel_image_target_renderbuffer_storage(struct gl_context *ctx,
 }
 
 /**
- * Called for each hardware renderbuffer when a _window_ is resized.
- * Just update fields.
- * Not used for user-created renderbuffers!
+ * Called by _mesa_resize_framebuffer() for each hardware renderbuffer when a
+ * window system framebuffer is resized.
+ *
+ * Any actual buffer reallocations for hardware renderbuffers (which would
+ * have triggered _mesa_resize_framebuffer()) were done by
+ * intel_process_dri2_buffer().
  */
 static GLboolean
 intel_alloc_window_storage(struct gl_context * ctx, struct gl_renderbuffer *rb,
@@ -329,32 +332,6 @@ intel_alloc_window_storage(struct gl_context * ctx, struct gl_renderbuffer *rb,
 
    return true;
 }
-
-
-static void
-intel_resize_buffers(struct gl_context *ctx, struct gl_framebuffer *fb,
-		     GLuint width, GLuint height)
-{
-   int i;
-
-   _mesa_resize_framebuffer(ctx, fb, width, height);
-
-   if (_mesa_is_user_fbo(fb)) {
-      return;
-   }
-
-
-   /* Make sure all window system renderbuffers are up to date */
-   for (i = BUFFER_FRONT_LEFT; i <= BUFFER_BACK_RIGHT; i++) {
-      struct gl_renderbuffer *rb = fb->Attachment[i].Renderbuffer;
-
-      /* only resize if size is changing */
-      if (rb && (rb->Width != width || rb->Height != height)) {
-	 rb->AllocStorage(ctx, rb, rb->InternalFormat, width, height);
-      }
-   }
-}
-
 
 /** Dummy function for gl_renderbuffer::AllocStorage() */
 static GLboolean
@@ -965,7 +942,6 @@ intel_fbo_init(struct intel_context *intel)
    intel->ctx.Driver.FramebufferRenderbuffer = intel_framebuffer_renderbuffer;
    intel->ctx.Driver.RenderTexture = intel_render_texture;
    intel->ctx.Driver.FinishRenderTexture = intel_finish_render_texture;
-   intel->ctx.Driver.ResizeBuffers = intel_resize_buffers;
    intel->ctx.Driver.ValidateFramebuffer = intel_validate_framebuffer;
    intel->ctx.Driver.BlitFramebuffer = intel_blit_framebuffer;
    intel->ctx.Driver.EGLImageTargetRenderbufferStorage =
