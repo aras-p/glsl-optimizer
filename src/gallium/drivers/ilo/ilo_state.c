@@ -28,6 +28,7 @@
 #include "util/u_framebuffer.h"
 #include "util/u_helpers.h"
 
+#include "shader/ilo_shader_internal.h"
 #include "ilo_context.h"
 #include "ilo_resource.h"
 #include "ilo_shader.h"

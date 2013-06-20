@@ -28,6 +28,7 @@
 #include "tgsi/tgsi_parse.h"
 #include "intel_winsys.h"
 
+#include "shader/ilo_shader_internal.h"
 #include "ilo_shader.h"
 
 struct ilo_shader_cache {

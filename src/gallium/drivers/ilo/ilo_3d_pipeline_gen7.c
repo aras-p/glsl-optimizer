@@ -28,6 +28,7 @@
 #include "util/u_dual_blend.h"
 #include "intel_reg.h"
 
+#include "shader/ilo_shader_internal.h"
 #include "ilo_common.h"
 #include "ilo_context.h"
 #include "ilo_cp.h"

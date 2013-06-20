@@ -25,7 +25,7 @@
  *    Chia-I Wu <olv@lunarg.com>
  */
 
-#include "ilo_shader.h"
+#include "ilo_shader_internal.h"
 
 /**
  * Compile the compute shader.

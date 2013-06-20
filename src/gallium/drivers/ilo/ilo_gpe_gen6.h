@@ -29,6 +29,7 @@
 #define ILO_GPE_GEN6_H
 
 #include "ilo_common.h"
+#include "ilo_gpe.h"
 
 #define ILO_GPE_VALID_GEN(dev, min_gen, max_gen) \
    assert((dev)->gen >= ILO_GEN(min_gen) && (dev)->gen <= ILO_GEN(max_gen))

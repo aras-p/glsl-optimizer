@@ -31,7 +31,7 @@
 #include "toy_legalize.h"
 #include "toy_optimize.h"
 #include "toy_helpers.h"
-#include "ilo_shader.h"
+#include "ilo_shader_internal.h"
 
 /* XXX Below is proof-of-concept code.  Skip this file! */
 

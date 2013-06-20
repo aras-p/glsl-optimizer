@@ -29,6 +29,7 @@
 #include "brw_defines.h"
 #include "intel_reg.h"
 
+#include "shader/ilo_shader_internal.h"
 #include "ilo_cp.h"
 #include "ilo_format.h"
 #include "ilo_resource.h"

@@ -29,6 +29,7 @@
 #include "util/u_prim.h"
 #include "intel_reg.h"
 
+#include "shader/ilo_shader_internal.h"
 #include "ilo_3d.h"
 #include "ilo_context.h"
 #include "ilo_cp.h"
