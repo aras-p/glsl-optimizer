@@ -44,7 +44,7 @@ gen7_emit_depth_stencil_hiz(struct brw_context *brw,
 
    intel_emit_depth_stall_flushes(intel);
 
-   /* _NEW_DEPTH, _NEW_STENCIL */
+   /* _NEW_DEPTH, _NEW_STENCIL, _NEW_BUFFERS */
    BEGIN_BATCH(7);
    OUT_BATCH(GEN7_3DSTATE_DEPTH_BUFFER << 16 | (7 - 2));
    OUT_BATCH((depth_mt ? depth_mt->region->pitch - 1 : 0) |

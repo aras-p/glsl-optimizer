@@ -130,8 +130,6 @@ brw_update_draw_buffer(struct intel_context *intel)
       return;
    }
 
-   intel->NewGLState |= _NEW_DEPTH;
-
    /* The driver uses this in places that need to look up
     * renderbuffers' buffer objects.
     */
