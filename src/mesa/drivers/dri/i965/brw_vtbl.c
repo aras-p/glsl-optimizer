@@ -92,38 +92,16 @@ static void brw_destroy_context( struct intel_context *intel )
 }
 
 /**
- * Update the hardware state for drawing into a window or framebuffer object.
+ * Stub state update function for i915.
  *
- * Called by glDrawBuffer, glBindFramebufferEXT, MakeCurrent, and other
- * places within the driver.
- *
- * Basically, this needs to be called any time the current framebuffer
- * changes, the renderbuffers change, or we need to draw into different
- * color buffers.
+ * In i915, hardware state updates for drawbuffer changes are driven by
+ * driver-internal calls to GL state update hooks.  In i965, we recompute the
+ * apporpriate state at draw time as a result of _NEW_BUFFERS being set, so we
+ * don't need this hook.
  */
 static void
 brw_update_draw_buffer(struct intel_context *intel)
 {
-   struct gl_context *ctx = &intel->ctx;
-   struct gl_framebuffer *fb = ctx->DrawBuffer;
-
-   if (!fb) {
-      /* this can happen during the initial context initialization */
-      return;
-   }
-
-   if (fb->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {
-      /* this may occur when we're called by glBindFrameBuffer() during
-       * the process of someone setting up renderbuffers, etc.
-       */
-      /*_mesa_debug(ctx, "DrawBuffer: incomplete user FBO\n");*/
-      return;
-   }
-
-   /* The driver uses this in places that need to look up
-    * renderbuffers' buffer objects.
-    */
-   intel->NewGLState |= _NEW_BUFFERS;
 }
 
 /**
