@@ -171,28 +171,6 @@ struct intel_context
       void (*annotate_aub)(struct intel_context *intel);
       bool (*render_target_supported)(struct intel_context *intel,
 				      struct gl_renderbuffer *rb);
-
-      /**
-       * Surface state operations (i965+ only)
-       * \{
-       */
-      void (*update_texture_surface)(struct gl_context *ctx,
-                                     unsigned unit,
-                                     uint32_t *binding_table,
-                                     unsigned surf_index);
-      void (*update_renderbuffer_surface)(struct brw_context *brw,
-					  struct gl_renderbuffer *rb,
-					  bool layered,
-					  unsigned unit);
-      void (*update_null_renderbuffer_surface)(struct brw_context *brw,
-					       unsigned unit);
-      void (*create_constant_surface)(struct brw_context *brw,
-				      drm_intel_bo *bo,
-				      uint32_t offset,
-				      uint32_t size,
-				      uint32_t *out_offset,
-                                      bool dword_pitch);
-      /** \} */
    } vtbl;
 
    GLbitfield Fallback;  /**< mask of INTEL_FALLBACK_x bits */
@@ -205,15 +183,8 @@ struct intel_context
     * Generation number of the hardware: 2 is 8xx, 3 is 9xx pre-965, 4 is 965.
     */
    int gen;
-   int gt;
-   bool is_haswell;
-   bool is_baytrail;
-   bool is_g4x;
    bool is_945;
-   bool has_llc;
    bool has_swizzling;
-
-   int urb_size;
 
    drm_intel_context *hw_ctx;
 
