@@ -127,8 +127,6 @@ struct intel_batchbuffer {
    uint32_t *map;
    uint32_t *cpu_map;
 #define BATCH_SZ (8192*sizeof(uint32_t))
-
-   uint32_t state_batch_offset;
 };
 
 /**
