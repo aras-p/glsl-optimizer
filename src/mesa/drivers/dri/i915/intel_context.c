@@ -268,7 +268,6 @@ intel_viewport(struct gl_context *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 static const struct dri_debug_control debug_control[] = {
    { "tex",   DEBUG_TEXTURE},
    { "state", DEBUG_STATE},
-   { "ioctl", DEBUG_IOCTL},
    { "blit",  DEBUG_BLIT},
    { "mip",   DEBUG_MIPTREE},
    { "fall",  DEBUG_PERF},
@@ -279,20 +278,11 @@ static const struct dri_debug_control debug_control[] = {
    { "reg",   DEBUG_REGION},
    { "fbo",   DEBUG_FBO},
    { "fs",    DEBUG_WM },
-   { "gs",    DEBUG_GS},
    { "sync",  DEBUG_SYNC},
-   { "prim",  DEBUG_PRIMS },
-   { "vert",  DEBUG_VERTS },
    { "dri",   DEBUG_DRI },
-   { "sf",    DEBUG_SF },
    { "stats", DEBUG_STATS },
    { "wm",    DEBUG_WM },
-   { "urb",   DEBUG_URB },
-   { "vs",    DEBUG_VS },
-   { "clip",  DEBUG_CLIP },
    { "aub",   DEBUG_AUB },
-   { "no16",  DEBUG_NO16 },
-   { "blorp", DEBUG_BLORP },
    { NULL,    0 }
 };
 

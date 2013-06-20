@@ -366,7 +366,6 @@ extern int INTEL_DEBUG;
 
 #define DEBUG_TEXTURE	0x1
 #define DEBUG_STATE	0x2
-#define DEBUG_IOCTL	0x4
 #define DEBUG_BLIT	0x8
 #define DEBUG_MIPTREE   0x10
 #define DEBUG_PERF	0x20
@@ -375,20 +374,11 @@ extern int INTEL_DEBUG;
 #define DEBUG_BUFMGR    0x200
 #define DEBUG_REGION    0x400
 #define DEBUG_FBO       0x800
-#define DEBUG_GS        0x1000
 #define DEBUG_SYNC	0x2000
-#define DEBUG_PRIMS	0x4000
-#define DEBUG_VERTS	0x8000
 #define DEBUG_DRI       0x10000
-#define DEBUG_SF        0x20000
 #define DEBUG_STATS     0x100000
 #define DEBUG_WM        0x400000
-#define DEBUG_URB       0x800000
-#define DEBUG_VS        0x1000000
-#define DEBUG_CLIP      0x2000000
 #define DEBUG_AUB       0x4000000
-#define DEBUG_BLORP     0x10000000
-#define DEBUG_NO16      0x20000000
 
 #ifdef HAVE_ANDROID_PLATFORM
 #define LOG_TAG "INTEL-MESA"
