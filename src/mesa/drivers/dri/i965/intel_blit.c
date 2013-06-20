@@ -357,7 +357,6 @@ intelEmitCopyBlit(struct intel_context *intel,
       return false;
    }
 
-#ifndef I915
    if (dst_tiling != I915_TILING_NONE) {
       CMD |= XY_DST_TILED;
       dst_pitch /= 4;
@@ -366,7 +365,6 @@ intelEmitCopyBlit(struct intel_context *intel,
       CMD |= XY_SRC_TILED;
       src_pitch /= 4;
    }
-#endif
 
    if (dst_y2 <= dst_y || dst_x2 <= dst_x) {
       return true;
@@ -499,12 +497,10 @@ intelClearWithBlit(struct gl_context *ctx, GLbitfield mask)
 
       assert(region->tiling != I915_TILING_Y);
 
-#ifndef I915
       if (region->tiling != I915_TILING_NONE) {
 	 CMD |= XY_DST_TILED;
 	 pitch /= 4;
       }
-#endif
       BR13 |= pitch;
 
       if (is_depth_stencil) {
@@ -619,12 +615,10 @@ intelEmitImmediateColorExpandBlit(struct intel_context *intel,
    opcode = XY_SETUP_BLT_CMD;
    if (cpp == 4)
       opcode |= XY_BLT_WRITE_ALPHA | XY_BLT_WRITE_RGB;
-#ifndef I915
    if (dst_tiling != I915_TILING_NONE) {
       opcode |= XY_DST_TILED;
       dst_pitch /= 4;
    }
-#endif
 
    br13 = dst_pitch | (translate_raster_op(logic_op) << 16) | (1 << 29);
    br13 |= br13_for_cpp(cpp);
@@ -736,12 +730,10 @@ intel_miptree_set_alpha_to_one(struct intel_context *intel,
    CMD = XY_COLOR_BLT_CMD;
    CMD |= XY_BLT_WRITE_ALPHA;
 
-#ifndef I915
    if (region->tiling != I915_TILING_NONE) {
       CMD |= XY_DST_TILED;
       pitch /= 4;
    }
-#endif
    BR13 |= pitch;
 
    /* do space check before going any further */

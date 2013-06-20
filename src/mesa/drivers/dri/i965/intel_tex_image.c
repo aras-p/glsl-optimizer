@@ -23,9 +23,7 @@
 #include "intel_blit.h"
 #include "intel_fbo.h"
 
-#ifndef I915
 #include "brw_context.h"
-#endif
 
 #define FILE_DEBUG_FLAG DEBUG_TEXTURE
 
@@ -244,10 +242,10 @@ intel_set_texture_image_region(struct gl_context *ctx,
                                GLuint tile_y)
 {
    struct intel_context *intel = intel_context(ctx);
+   struct brw_context *brw = brw_context(ctx);
    struct intel_texture_image *intel_image = intel_texture_image(image);
    struct gl_texture_object *texobj = image->TexObject;
    struct intel_texture_object *intel_texobj = intel_texture_object(texobj);
-   bool has_surface_tile_offset = false;
    uint32_t draw_x, draw_y;
 
    _mesa_init_teximage_fields(&intel->ctx, image,
@@ -269,15 +267,12 @@ intel_set_texture_image_region(struct gl_context *ctx,
    intel_image->mt->level[0].slice[0].y_offset = tile_y;
 
    intel_miptree_get_tile_offsets(intel_image->mt, 0, 0, &draw_x, &draw_y);
-#ifndef I915
-   has_surface_tile_offset = brw_context(ctx)->has_surface_tile_offset;
-#endif
 
    /* From "OES_EGL_image" error reporting. We report GL_INVALID_OPERATION
     * for EGL images from non-tile aligned sufaces in gen4 hw and earlier which has
     * trouble resolving back to destination image due to alignment issues.
     */
-   if (!has_surface_tile_offset &&
+   if (!brw->has_surface_tile_offset &&
        (draw_x != 0 || draw_y != 0)) {
       _mesa_error(ctx, GL_INVALID_OPERATION, __func__);
       intel_miptree_release(&intel_image->mt);

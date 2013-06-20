@@ -38,9 +38,7 @@
 #include "intel_tex.h"
 #include "intel_blit.h"
 
-#ifndef I915
 #include "brw_blorp.h"
-#endif
 
 #include "main/enums.h"
 #include "main/formats.h"
@@ -203,10 +201,6 @@ bool
 intel_is_non_msrt_mcs_buffer_supported(struct intel_context *intel,
                                        struct intel_mipmap_tree *mt)
 {
-#ifdef I915
-   /* MCS is not supported on the i915 (pre-Gen4) driver */
-   return false;
-#else
    struct brw_context *brw = brw_context(&intel->ctx);
 
    /* MCS support does not exist prior to Gen7 */
@@ -238,7 +232,6 @@ intel_is_non_msrt_mcs_buffer_supported(struct intel_context *intel,
       return false;
 
    return true;
-#endif
 }
 
 
@@ -275,9 +268,7 @@ intel_miptree_create_layout(struct intel_context *intel,
    mt->logical_width0 = width0;
    mt->logical_height0 = height0;
    mt->logical_depth0 = depth0;
-#ifndef I915
    mt->mcs_state = INTEL_MCS_STATE_NONE;
-#endif
 
    /* The cpp is bytes per (1, blockheight)-sized block for compressed
     * textures.  This is why you'll see divides by blockheight all over
@@ -412,15 +403,7 @@ intel_miptree_create_layout(struct intel_context *intel,
    intel_get_texture_alignment_unit(intel, mt->format,
 				    &mt->align_w, &mt->align_h);
 
-#ifdef I915
-   (void) intel;
-   if (intel->is_945)
-      i945_miptree_layout(mt);
-   else
-      i915_miptree_layout(mt);
-#else
    brw_miptree_layout(intel, mt);
-#endif
 
    return mt;
 }
@@ -609,7 +592,6 @@ intel_miptree_create(struct intel_context *intel,
        return NULL;
    }
 
-#ifndef I915
    /* If this miptree is capable of supporting fast color clears, set
     * mcs_state appropriately to ensure that fast clears will occur.
     * Allocation of the MCS miptree will be deferred until the first fast
@@ -617,7 +599,6 @@ intel_miptree_create(struct intel_context *intel,
     */
    if (intel_is_non_msrt_mcs_buffer_supported(intel, mt))
       mt->mcs_state = INTEL_MCS_STATE_RESOLVED;
-#endif
 
    return mt;
 }
@@ -710,7 +691,6 @@ intel_miptree_create_for_dri2_buffer(struct intel_context *intel,
       return NULL;
    singlesample_mt->region->name = region->name;
 
-#ifndef I915
    /* If this miptree is capable of supporting fast color clears, set
     * mcs_state appropriately to ensure that fast clears will occur.
     * Allocation of the MCS miptree will be deferred until the first fast
@@ -718,7 +698,6 @@ intel_miptree_create_for_dri2_buffer(struct intel_context *intel,
     */
    if (intel_is_non_msrt_mcs_buffer_supported(intel, singlesample_mt))
       singlesample_mt->mcs_state = INTEL_MCS_STATE_RESOLVED;
-#endif
 
    if (num_samples == 0)
       return singlesample_mt;
@@ -814,9 +793,7 @@ intel_miptree_release(struct intel_mipmap_tree **mt)
       intel_region_release(&((*mt)->region));
       intel_miptree_release(&(*mt)->stencil_mt);
       intel_miptree_release(&(*mt)->hiz_mt);
-#ifndef I915
       intel_miptree_release(&(*mt)->mcs_mt);
-#endif
       intel_miptree_release(&(*mt)->singlesample_mt);
       intel_resolve_map_clear(&(*mt)->hiz_map);
 
@@ -1158,9 +1135,6 @@ intel_miptree_alloc_mcs(struct intel_context *intel,
                         GLuint num_samples)
 {
    assert(intel->gen >= 7); /* MCS only used on Gen7+ */
-#ifdef I915
-   return false;
-#else
    assert(mt->mcs_mt == NULL);
 
    /* Choose the correct format for the MCS buffer.  All that really matters
@@ -1219,7 +1193,6 @@ intel_miptree_alloc_mcs(struct intel_context *intel,
    intel_miptree_unmap_raw(intel, mt->mcs_mt);
 
    return mt->mcs_mt;
-#endif
 }
 
 
@@ -1227,10 +1200,6 @@ bool
 intel_miptree_alloc_non_msrt_mcs(struct intel_context *intel,
                                  struct intel_mipmap_tree *mt)
 {
-#ifdef I915
-   assert(!"MCS not supported on i915");
-   return false;
-#else
    assert(mt->mcs_mt == NULL);
 
    /* The format of the MCS buffer is opaque to the driver; all that matters
@@ -1266,7 +1235,6 @@ intel_miptree_alloc_non_msrt_mcs(struct intel_context *intel,
                                      INTEL_MIPTREE_TILING_Y);
 
    return mt->mcs_mt;
-#endif
 }
 
 
@@ -1477,9 +1445,6 @@ void
 intel_miptree_resolve_color(struct intel_context *intel,
                             struct intel_mipmap_tree *mt)
 {
-#ifdef I915
-   /* Fast color clear is not supported on the i915 (pre-Gen4) driver */
-#else
    switch (mt->mcs_state) {
    case INTEL_MCS_STATE_NONE:
    case INTEL_MCS_STATE_MSAA:
@@ -1491,7 +1456,6 @@ intel_miptree_resolve_color(struct intel_context *intel,
       brw_blorp_resolve_color(intel, mt);
       break;
    }
-#endif
 }
 
 
@@ -1508,11 +1472,6 @@ void
 intel_miptree_make_shareable(struct intel_context *intel,
                              struct intel_mipmap_tree *mt)
 {
-#ifdef I915
-   /* Nothing needs to be done for I915 */
-   (void) intel;
-   (void) mt;
-#else
    /* MCS buffers are also used for multisample buffers, but we can't resolve
     * away a multisample MCS buffer because it's an integral part of how the
     * pixel data is stored.  Fortunately this code path should never be
@@ -1525,7 +1484,6 @@ intel_miptree_make_shareable(struct intel_context *intel,
       intel_miptree_release(&mt->mcs_mt);
       mt->mcs_state = INTEL_MCS_STATE_NONE;
    }
-#endif
 }
 
 
@@ -1592,7 +1550,6 @@ intel_miptree_updownsample(struct intel_context *intel,
                            unsigned width,
                            unsigned height)
 {
-#ifndef I915
    int src_x0 = 0;
    int src_y0 = 0;
    int dst_x0 = 0;
@@ -1617,7 +1574,6 @@ intel_miptree_updownsample(struct intel_context *intel,
                               width, height,
                               false, false /*mirror x, y*/);
    }
-#endif /* I915 */
 }
 
 static void

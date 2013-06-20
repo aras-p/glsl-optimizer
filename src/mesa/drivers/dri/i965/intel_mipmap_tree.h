@@ -201,7 +201,6 @@ enum intel_msaa_layout
 };
 
 
-#ifndef I915
 /**
  * Enum for keeping track of the state of an MCS buffer associated with a
  * miptree.  This determines when fast clear related operations are needed.
@@ -266,7 +265,6 @@ enum intel_mcs_state
     */
    INTEL_MCS_STATE_CLEAR,
 };
-#endif
 
 struct intel_mipmap_tree
 {
@@ -441,7 +439,6 @@ struct intel_mipmap_tree
     */
    struct intel_mipmap_tree *stencil_mt;
 
-#ifndef I915
    /**
     * \brief MCS miptree.
     *
@@ -457,7 +454,6 @@ struct intel_mipmap_tree
     * MCS state for this buffer.
     */
    enum intel_mcs_state mcs_state;
-#endif
 
    /**
     * The SURFACE_STATE bits associated with the last fast color clear to this
@@ -704,18 +700,12 @@ intel_miptree_all_slices_resolve_depth(struct intel_context *intel,
 static inline void
 intel_miptree_used_for_rendering(struct intel_mipmap_tree *mt)
 {
-#ifdef I915
-   /* Nothing needs to be done for I915, since it doesn't support fast
-    * clear.
-    */
-#else
    /* If the buffer was previously in fast clear state, change it to
     * unresolved state, since it won't be guaranteed to be clear after
     * rendering occurs.
     */
    if (mt->mcs_state == INTEL_MCS_STATE_CLEAR)
       mt->mcs_state = INTEL_MCS_STATE_UNRESOLVED;
-#endif
 }
 
 void
@@ -766,20 +756,9 @@ intel_miptree_unmap(struct intel_context *intel,
 		    unsigned int level,
 		    unsigned int slice);
 
-#ifdef I915
-static inline void
-intel_hiz_exec(struct intel_context *intel, struct intel_mipmap_tree *mt,
-	       unsigned int level, unsigned int layer, enum gen6_hiz_op op)
-{
-   /* Stub on i915.  It would be nice if we didn't execute resolve code at all
-    * there.
-    */
-}
-#else
 void
 intel_hiz_exec(struct intel_context *intel, struct intel_mipmap_tree *mt,
 	       unsigned int level, unsigned int layer, enum gen6_hiz_op op);
-#endif
 
 #ifdef __cplusplus
 }

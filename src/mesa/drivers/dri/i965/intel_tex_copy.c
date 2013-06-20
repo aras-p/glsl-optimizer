@@ -41,9 +41,7 @@
 #include "intel_fbo.h"
 #include "intel_tex.h"
 #include "intel_blit.h"
-#ifndef I915
 #include "brw_context.h"
-#endif
 
 #define FILE_DEBUG_FLAG DEBUG_TEXTURE
 
@@ -102,12 +100,10 @@ intelCopyTexSubImage(struct gl_context *ctx, GLuint dims,
 {
    struct intel_context *intel = intel_context(ctx);
 
-#ifndef I915
    /* Try BLORP first.  It can handle almost everything. */
    if (brw_blorp_copytexsubimage(intel, rb, texImage, slice, x, y,
                                  xoffset, yoffset, width, height))
       return;
-#endif
 
    /* Next, try the BLT engine. */
    if (intel_copy_texsubimage(intel,
