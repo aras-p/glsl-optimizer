@@ -166,7 +166,6 @@ intelDRI2Flush(__DRIdrawable *drawable)
    if (intel->gen < 4)
       INTEL_FIREVERTICES(intel);
 
-   intel_resolve_for_dri2_flush(intel, drawable);
    intel->need_throttle = true;
 
    if (intel->batch.used)
@@ -296,8 +295,6 @@ intel_setup_image_from_mipmap_tree(struct intel_context *intel, __DRIimage *imag
    unsigned int draw_x, draw_y;
    uint32_t mask_x, mask_y;
 
-   intel_miptree_make_shareable(intel, mt);
-
    intel_miptree_check_level_layer(mt, level, zoffset);
 
    intel_region_get_tile_masks(mt->region, &mask_x, &mask_y, false);
@@ -394,7 +391,6 @@ intel_create_image_from_renderbuffer(__DRIcontext *context,
    }
 
    irb = intel_renderbuffer(rb);
-   intel_miptree_make_shareable(intel, irb->mt);
    image = calloc(1, sizeof *image);
    if (image == NULL)
       return NULL;
@@ -813,7 +809,6 @@ intelCreateBuffer(__DRIscreen * driScrnPriv,
    struct intel_renderbuffer *rb;
    struct intel_screen *screen = (struct intel_screen*) driScrnPriv->driverPrivate;
    gl_format rgbFormat;
-   unsigned num_samples = intel_quantize_num_samples(screen, mesaVis->samples);
    struct gl_framebuffer *fb;
 
    if (isPixmap)
@@ -842,11 +837,11 @@ intelCreateBuffer(__DRIscreen * driScrnPriv,
    }
 
    /* setup the hardware-based renderbuffers */
-   rb = intel_create_renderbuffer(rgbFormat, num_samples);
+   rb = intel_create_renderbuffer(rgbFormat);
    _mesa_add_renderbuffer(fb, BUFFER_FRONT_LEFT, &rb->Base.Base);
 
    if (mesaVis->doubleBufferMode) {
-      rb = intel_create_renderbuffer(rgbFormat, num_samples);
+      rb = intel_create_renderbuffer(rgbFormat);
       _mesa_add_renderbuffer(fb, BUFFER_BACK_LEFT, &rb->Base.Base);
    }
 
@@ -859,27 +854,23 @@ intelCreateBuffer(__DRIscreen * driScrnPriv,
       assert(mesaVis->stencilBits == 8);
 
       if (screen->hw_has_separate_stencil) {
-         rb = intel_create_private_renderbuffer(MESA_FORMAT_X8_Z24,
-                                                num_samples);
+         rb = intel_create_private_renderbuffer(MESA_FORMAT_X8_Z24);
          _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &rb->Base.Base);
-         rb = intel_create_private_renderbuffer(MESA_FORMAT_S8,
-                                                num_samples);
+         rb = intel_create_private_renderbuffer(MESA_FORMAT_S8);
          _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &rb->Base.Base);
       } else {
          /*
           * Use combined depth/stencil. Note that the renderbuffer is
           * attached to two attachment points.
           */
-         rb = intel_create_private_renderbuffer(MESA_FORMAT_S8_Z24,
-                                                num_samples);
+         rb = intel_create_private_renderbuffer(MESA_FORMAT_S8_Z24);
          _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &rb->Base.Base);
          _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &rb->Base.Base);
       }
    }
    else if (mesaVis->depthBits == 16) {
       assert(mesaVis->stencilBits == 0);
-      rb = intel_create_private_renderbuffer(MESA_FORMAT_Z16,
-                                             num_samples);
+      rb = intel_create_private_renderbuffer(MESA_FORMAT_Z16);
       _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &rb->Base.Base);
    }
    else {
@@ -1068,7 +1059,6 @@ intel_screen_make_configs(__DRIscreen *dri_screen)
    };
 
    static const uint8_t singlesample_samples[1] = {0};
-   static const uint8_t multisample_samples[2]  = {4, 8};
 
    struct intel_screen *screen = dri_screen->driverPrivate;
    uint8_t depth_bits[4], stencil_bits[4];
@@ -1128,54 +1118,6 @@ intel_screen_make_configs(__DRIscreen *dri_screen)
                                      back_buffer_modes, 1,
                                      singlesample_samples, 1,
                                      true);
-      configs = driConcatConfigs(configs, new_configs);
-   }
-
-   /* Generate multisample configs.
-    *
-    * This loop breaks early, and hence is a no-op, on gen < 6.
-    *
-    * Multisample configs must follow the singlesample configs in order to
-    * work around an X server bug present in 1.12. The X server chooses to
-    * associate the first listed RGBA888-Z24S8 config, regardless of its
-    * sample count, with the 32-bit depth visual used for compositing.
-    *
-    * Only doublebuffer configs with GLX_SWAP_UNDEFINED_OML behavior are
-    * supported.  Singlebuffer configs are not supported because no one wants
-    * them.
-    */
-   for (int i = 0; i < ARRAY_SIZE(formats); i++) {
-      if (screen->gen < 6)
-         break;
-
-      __DRIconfig **new_configs;
-      const int num_depth_stencil_bits = 2;
-      int num_msaa_modes = 0;
-
-      depth_bits[0] = 0;
-      stencil_bits[0] = 0;
-
-      if (formats[i] == MESA_FORMAT_RGB565) {
-         depth_bits[1] = 16;
-         stencil_bits[1] = 0;
-      } else {
-         depth_bits[1] = 24;
-         stencil_bits[1] = 8;
-      }
-
-      if (screen->gen >= 7)
-         num_msaa_modes = 2;
-      else if (screen->gen == 6)
-         num_msaa_modes = 1;
-
-      new_configs = driCreateConfigs(formats[i],
-                                     depth_bits,
-                                     stencil_bits,
-                                     num_depth_stencil_bits,
-                                     back_buffer_modes, 1,
-                                     multisample_samples,
-                                     num_msaa_modes,
-                                     false);
       configs = driConcatConfigs(configs, new_configs);
    }
 

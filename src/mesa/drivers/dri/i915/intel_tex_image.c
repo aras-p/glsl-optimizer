@@ -103,7 +103,6 @@ intel_miptree_create_for_teximage(struct intel_context *intel,
 			       height,
 			       depth,
 			       expect_accelerated_upload,
-                               intelImage->base.Base.NumSamples,
                                INTEL_MIPTREE_TILING_ANY);
 }
 
@@ -259,7 +258,7 @@ intel_set_texture_image_region(struct gl_context *ctx,
    intel_image->mt = intel_miptree_create_layout(intel, target, image->TexFormat,
                                                  0, 0,
                                                  width, height, 1,
-                                                 true, 0 /* num_samples */);
+                                                 true);
    if (intel_image->mt == NULL)
        return;
    intel_region_reference(&intel_image->mt->region, region);
@@ -342,7 +341,6 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
 
    _mesa_lock_texture(&intel->ctx, texObj);
    texImage = _mesa_get_tex_image(ctx, texObj, target, level);
-   intel_miptree_make_shareable(intel, rb->mt);
    intel_set_texture_image_region(ctx, texImage, rb->mt->region, target,
                                   internalFormat, texFormat, 0,
                                   rb->mt->region->width,

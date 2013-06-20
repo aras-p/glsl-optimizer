@@ -88,12 +88,6 @@ struct intel_miptree_map {
    void *ptr;
    /** Stride of the mapping. */
    int stride;
-
-   /**
-    * intel_mipmap_tree::singlesample_mt is temporary storage that persists
-    * only for the duration of the map.
-    */
-   bool singlesample_mt_is_tmp;
 };
 
 /**
@@ -153,109 +147,6 @@ struct intel_mipmap_level
    } *slice;
 };
 
-/**
- * Enum for keeping track of the different MSAA layouts supported by Gen7.
- */
-enum intel_msaa_layout
-{
-   /**
-    * Ordinary surface with no MSAA.
-    */
-   INTEL_MSAA_LAYOUT_NONE,
-
-   /**
-    * Interleaved Multisample Surface.  The additional samples are
-    * accommodated by scaling up the width and the height of the surface so
-    * that all the samples corresponding to a pixel are located at nearby
-    * memory locations.
-    */
-   INTEL_MSAA_LAYOUT_IMS,
-
-   /**
-    * Uncompressed Multisample Surface.  The surface is stored as a 2D array,
-    * with array slice n containing all pixel data for sample n.
-    */
-   INTEL_MSAA_LAYOUT_UMS,
-
-   /**
-    * Compressed Multisample Surface.  The surface is stored as in
-    * INTEL_MSAA_LAYOUT_UMS, but there is an additional buffer called the MCS
-    * (Multisample Control Surface) buffer.  Each pixel in the MCS buffer
-    * indicates the mapping from sample number to array slice.  This allows
-    * the common case (where all samples constituting a pixel have the same
-    * color value) to be stored efficiently by just using a single array
-    * slice.
-    */
-   INTEL_MSAA_LAYOUT_CMS,
-};
-
-
-#ifndef I915
-/**
- * Enum for keeping track of the state of an MCS buffer associated with a
- * miptree.  This determines when fast clear related operations are needed.
- *
- * Fast clear works by deferring the memory writes that would be used to clear
- * the buffer, so that instead of performing them at the time of the clear
- * operation, the hardware automatically performs them at the time that the
- * buffer is later accessed for rendering.  The MCS buffer keeps track of
- * which regions of the buffer still have pending clear writes.
- *
- * This enum keeps track of the driver's knowledge of the state of the MCS
- * buffer.
- *
- * MCS buffers only exist on Gen7+.
- */
-enum intel_mcs_state
-{
-   /**
-    * There is no MCS buffer for this miptree, and one should never be
-    * allocated.
-    */
-   INTEL_MCS_STATE_NONE,
-
-   /**
-    * An MCS buffer exists for this miptree, and it is used for MSAA purposes.
-    */
-   INTEL_MCS_STATE_MSAA,
-
-   /**
-    * No deferred clears are pending for this miptree, and the contents of the
-    * color buffer are entirely correct.  An MCS buffer may or may not exist
-    * for this miptree.  If it does exist, it is entirely in the "no deferred
-    * clears pending" state.  If it does not exist, it will be created the
-    * first time a fast color clear is executed.
-    *
-    * In this state, the color buffer can be used for purposes other than
-    * rendering without needing a render target resolve.
-    */
-   INTEL_MCS_STATE_RESOLVED,
-
-   /**
-    * An MCS buffer exists for this miptree, and deferred clears are pending
-    * for some regions of the color buffer, as indicated by the MCS buffer.
-    * The contents of the color buffer are only correct for the regions where
-    * the MCS buffer doesn't indicate a deferred clear.
-    *
-    * In this state, a render target resolve must be performed before the
-    * color buffer can be used for purposes other than rendering.
-    */
-   INTEL_MCS_STATE_UNRESOLVED,
-
-   /**
-    * An MCS buffer exists for this miptree, and deferred clears are pending
-    * for the entire color buffer, and the contents of the MCS buffer reflect
-    * this.  The contents of the color buffer are undefined.
-    *
-    * In this state, a render target resolve must be performed before the
-    * color buffer can be used for purposes other than rendering.
-    *
-    * If the client attempts to clear a buffer which is already in this state,
-    * the clear can be safely skipped, since the buffer is already clear.
-    */
-   INTEL_MCS_STATE_CLEAR,
-};
-#endif
 
 struct intel_mipmap_tree
 {
@@ -303,7 +194,6 @@ struct intel_mipmap_tree
    GLuint physical_width0, physical_height0, physical_depth0;
 
    GLuint cpp;
-   GLuint num_samples;
    bool compressed;
 
    /**
@@ -325,11 +215,6 @@ struct intel_mipmap_tree
     */
    bool array_spacing_lod0;
 
-   /**
-    * MSAA layout used by this buffer.
-    */
-   enum intel_msaa_layout msaa_layout;
-
    /* Derived from the above:
     */
    GLuint total_width;
@@ -348,50 +233,6 @@ struct intel_mipmap_tree
    uint32_t offset;
 
    /**
-    * \brief Singlesample miptree.
-    *
-    * This is used under two cases.
-    *
-    * --- Case 1: As persistent singlesample storage for multisample window
-    *  system front and back buffers ---
-    *
-    * Suppose that the window system FBO was created with a multisample
-    * config.  Let `back_irb` be the `intel_renderbuffer` for the FBO's back
-    * buffer. Then `back_irb` contains two miptrees: a parent multisample
-    * miptree (back_irb->mt) and a child singlesample miptree
-    * (back_irb->mt->singlesample_mt).  The DRM buffer shared with DRI2
-    * belongs to `back_irb->mt->singlesample_mt` and contains singlesample
-    * data.  The singlesample miptree is created at the same time as and
-    * persists for the lifetime of its parent multisample miptree.
-    *
-    * When access to the singlesample data is needed, such as at
-    * eglSwapBuffers and glReadPixels, an automatic downsample occurs from
-    * `back_rb->mt` to `back_rb->mt->singlesample_mt` when necessary.
-    *
-    * This description of the back buffer applies analogously to the front
-    * buffer.
-    *
-    *
-    * --- Case 2: As temporary singlesample storage for mapping multisample
-    *  miptrees ---
-    *
-    * Suppose the intel_miptree_map is called on a multisample miptree, `mt`,
-    * for which case 1 does not apply (that is, `mt` does not belong to
-    * a front or back buffer).  Then `mt->singlesample_mt` is null at the
-    * start of the call. intel_miptree_map will create a temporary
-    * singlesample miptree, store it at `mt->singlesample_mt`, downsample from
-    * `mt` to `mt->singlesample_mt` if necessary, then map
-    * `mt->singlesample_mt`. The temporary miptree is later deleted during
-    * intel_miptree_unmap.
-    */
-   struct intel_mipmap_tree *singlesample_mt;
-
-   /**
-    * \brief A downsample is needed from this miptree to singlesample_mt.
-    */
-   bool need_downsample;
-
-   /**
     * \brief Stencil miptree for depthstencil textures.
     *
     * This miptree is used for depthstencil textures and renderbuffers that
@@ -402,33 +243,6 @@ struct intel_mipmap_tree
     * \see intel_miptree_unmap_depthstencil()
     */
    struct intel_mipmap_tree *stencil_mt;
-
-#ifndef I915
-   /**
-    * \brief MCS miptree.
-    *
-    * This miptree contains the "multisample control surface", which stores
-    * the necessary information to implement compressed MSAA
-    * (INTEL_MSAA_FORMAT_CMS) and "fast color clear" behaviour on Gen7+.
-    *
-    * NULL if no MCS miptree is in use for this surface.
-    */
-   struct intel_mipmap_tree *mcs_mt;
-
-   /**
-    * MCS state for this buffer.
-    */
-   enum intel_mcs_state mcs_state;
-#endif
-
-   /**
-    * The SURFACE_STATE bits associated with the last fast color clear to this
-    * color mipmap tree, if any.
-    *
-    * This value will only ever contain ones in bits 28-31, so it is safe to
-    * OR into dword 7 of SURFACE_STATE.
-    */
-   uint32_t fast_clear_color_value;
 
    /* These are also refcounted:
     */
@@ -441,19 +255,6 @@ enum intel_miptree_tiling_mode {
    INTEL_MIPTREE_TILING_NONE,
 };
 
-bool
-intel_is_non_msrt_mcs_buffer_supported(struct intel_context *intel,
-                                       struct intel_mipmap_tree *mt);
-
-void
-intel_get_non_msrt_mcs_alignment(struct intel_context *intel,
-                                 struct intel_mipmap_tree *mt,
-                                 unsigned *width_px, unsigned *height);
-
-bool
-intel_miptree_alloc_non_msrt_mcs(struct intel_context *intel,
-                                 struct intel_mipmap_tree *mt);
-
 struct intel_mipmap_tree *intel_miptree_create(struct intel_context *intel,
                                                GLenum target,
 					       gl_format format,
@@ -463,7 +264,6 @@ struct intel_mipmap_tree *intel_miptree_create(struct intel_context *intel,
                                                GLuint height0,
                                                GLuint depth0,
 					       bool expect_accelerated_upload,
-                                               GLuint num_samples,
                                                enum intel_miptree_tiling_mode);
 
 struct intel_mipmap_tree *
@@ -475,8 +275,7 @@ intel_miptree_create_layout(struct intel_context *intel,
                             GLuint width0,
                             GLuint height0,
                             GLuint depth0,
-                            bool for_bo,
-                            GLuint num_samples);
+                            bool for_bo);
 
 struct intel_mipmap_tree *
 intel_miptree_create_for_bo(struct intel_context *intel,
@@ -492,7 +291,6 @@ struct intel_mipmap_tree*
 intel_miptree_create_for_dri2_buffer(struct intel_context *intel,
                                      unsigned dri_attachment,
                                      gl_format format,
-                                     uint32_t num_samples,
                                      struct intel_region *region);
 
 /**
@@ -506,8 +304,7 @@ struct intel_mipmap_tree*
 intel_miptree_create_for_renderbuffer(struct intel_context *intel,
                                       gl_format format,
                                       uint32_t width,
-                                      uint32_t height,
-                                      uint32_t num_samples);
+                                      uint32_t height);
 
 /** \brief Assert that the level and layer are valid for the miptree. */
 static inline void
@@ -588,49 +385,7 @@ intel_miptree_s8z24_gather(struct intel_context *intel,
                            uint32_t level,
                            uint32_t layer);
 
-bool
-intel_miptree_alloc_mcs(struct intel_context *intel,
-                        struct intel_mipmap_tree *mt,
-                        GLuint num_samples);
-
 /**\}*/
-
-/**
- * Update the fast clear state for a miptree to indicate that it has been used
- * for rendering.
- */
-static inline void
-intel_miptree_used_for_rendering(struct intel_mipmap_tree *mt)
-{
-#ifdef I915
-   /* Nothing needs to be done for I915, since it doesn't support fast
-    * clear.
-    */
-#else
-   /* If the buffer was previously in fast clear state, change it to
-    * unresolved state, since it won't be guaranteed to be clear after
-    * rendering occurs.
-    */
-   if (mt->mcs_state == INTEL_MCS_STATE_CLEAR)
-      mt->mcs_state = INTEL_MCS_STATE_UNRESOLVED;
-#endif
-}
-
-void
-intel_miptree_resolve_color(struct intel_context *intel,
-                            struct intel_mipmap_tree *mt);
-
-void
-intel_miptree_make_shareable(struct intel_context *intel,
-                             struct intel_mipmap_tree *mt);
-
-void
-intel_miptree_downsample(struct intel_context *intel,
-                         struct intel_mipmap_tree *mt);
-
-void
-intel_miptree_upsample(struct intel_context *intel,
-                       struct intel_mipmap_tree *mt);
 
 /* i915_mipmap_tree.c:
  */

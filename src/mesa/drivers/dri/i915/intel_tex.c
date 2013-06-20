@@ -67,13 +67,6 @@ intel_alloc_texture_image_buffer(struct gl_context *ctx,
 
    assert(image->Border == 0);
 
-   /* Quantize sample count */
-   if (image->NumSamples) {
-      image->NumSamples = intel_quantize_num_samples(intel->intelScreen, image->NumSamples);
-      if (!image->NumSamples)
-         return false;
-   }
-
    /* Because the driver uses AllocTextureImageBuffer() internally, it may end
     * up mismatched with FreeTextureImageBuffer(), but that is safe to call
     * multiple times.

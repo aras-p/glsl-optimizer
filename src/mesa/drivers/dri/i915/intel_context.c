@@ -94,39 +94,6 @@ intelGetString(struct gl_context * ctx, GLenum name)
    }
 }
 
-void
-intel_resolve_for_dri2_flush(struct intel_context *intel,
-                             __DRIdrawable *drawable)
-{
-   if (intel->gen < 6) {
-      /* MSAA and fast color clear are not supported, so don't waste time
-       * checking whether a resolve is needed.
-       */
-      return;
-   }
-
-   struct gl_framebuffer *fb = drawable->driverPrivate;
-   struct intel_renderbuffer *rb;
-
-   /* Usually, only the back buffer will need to be downsampled. However,
-    * the front buffer will also need it if the user has rendered into it.
-    */
-   static const gl_buffer_index buffers[2] = {
-         BUFFER_BACK_LEFT,
-         BUFFER_FRONT_LEFT,
-   };
-
-   for (int i = 0; i < 2; ++i) {
-      rb = intel_get_renderbuffer(fb, buffers[i]);
-      if (rb == NULL || rb->mt == NULL)
-         continue;
-      if (rb->mt->num_samples <= 1)
-         intel_miptree_resolve_color(intel, rb->mt);
-      else
-         intel_miptree_downsample(intel, rb->mt);
-   }
-}
-
 static void
 intel_flush_front(struct gl_context *ctx)
 {
@@ -139,16 +106,6 @@ intel_flush_front(struct gl_context *ctx)
       if (screen->dri2.loader->flushFrontBuffer != NULL &&
           driDrawable &&
           driDrawable->loaderPrivate) {
-
-         /* Resolve before flushing FAKE_FRONT_LEFT to FRONT_LEFT.
-          *
-          * This potentially resolves both front and back buffer. It
-          * is unnecessary to resolve the back, but harms nothing except
-          * performance. And no one cares about front-buffer render
-          * performance.
-          */
-         intel_resolve_for_dri2_flush(intel, driDrawable);
-
          screen->dri2.loader->flushFrontBuffer(driDrawable,
                                                driDrawable->loaderPrivate);
 
@@ -956,24 +913,14 @@ intel_process_dri2_buffer(struct intel_context *intel,
    if (!rb)
       return;
 
-   unsigned num_samples = rb->Base.Base.NumSamples;
-
    /* We try to avoid closing and reopening the same BO name, because the first
     * use of a mapping of the buffer involves a bunch of page faulting which is
     * moderately expensive.
     */
-   if (num_samples == 0) {
-       if (rb->mt &&
-           rb->mt->region &&
-           rb->mt->region->name == buffer->name)
-          return;
-   } else {
-       if (rb->mt &&
-           rb->mt->singlesample_mt &&
-           rb->mt->singlesample_mt->region &&
-           rb->mt->singlesample_mt->region->name == buffer->name)
-          return;
-   }
+   if (rb->mt &&
+       rb->mt->region &&
+       rb->mt->region->name == buffer->name)
+      return;
 
    if (unlikely(INTEL_DEBUG & DEBUG_DRI)) {
       fprintf(stderr,
@@ -996,7 +943,6 @@ intel_process_dri2_buffer(struct intel_context *intel,
    rb->mt = intel_miptree_create_for_dri2_buffer(intel,
                                                  buffer->attachment,
                                                  intel_rb_format(rb),
-                                                 num_samples,
                                                  region);
    intel_region_release(&region);
 }

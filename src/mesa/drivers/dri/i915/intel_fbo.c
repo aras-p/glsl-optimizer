@@ -171,36 +171,6 @@ intel_unmap_renderbuffer(struct gl_context *ctx,
    intel_miptree_unmap(intel, irb->mt, irb->mt_level, irb->mt_layer);
 }
 
-
-/**
- * Round up the requested multisample count to the next supported sample size.
- */
-unsigned
-intel_quantize_num_samples(struct intel_screen *intel, unsigned num_samples)
-{
-   switch (intel->gen) {
-   case 6:
-      /* Gen6 supports only 4x multisampling. */
-      if (num_samples > 0)
-         return 4;
-      else
-         return 0;
-   case 7:
-      /* Gen7 supports 4x and 8x multisampling. */
-      if (num_samples > 4)
-         return 8;
-      else if (num_samples > 0)
-         return 4;
-      else
-         return 0;
-      return 0;
-   default:
-      /* MSAA unsupported. */
-      return 0;
-   }
-}
-
-
 /**
  * Called via glRenderbufferStorageEXT() to set the format and allocate
  * storage for a user-created renderbuffer.
@@ -211,9 +181,7 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
                                  GLuint width, GLuint height)
 {
    struct intel_context *intel = intel_context(ctx);
-   struct intel_screen *screen = intel->intelScreen;
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
-   rb->NumSamples = intel_quantize_num_samples(screen, rb->NumSamples);
 
    switch (internalFormat) {
    default:
@@ -255,8 +223,7 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
       return true;
 
    irb->mt = intel_miptree_create_for_renderbuffer(intel, rb->Format,
-						   width, height,
-                                                   rb->NumSamples);
+						   width, height);
    if (!irb->mt)
       return false;
 
@@ -345,11 +312,9 @@ intel_nop_alloc_storage(struct gl_context * ctx, struct gl_renderbuffer *rb,
 /**
  * Create a new intel_renderbuffer which corresponds to an on-screen window,
  * not a user-created renderbuffer.
- *
- * \param num_samples must be quantized.
  */
 struct intel_renderbuffer *
-intel_create_renderbuffer(gl_format format, unsigned num_samples)
+intel_create_renderbuffer(gl_format format)
 {
    struct intel_renderbuffer *irb;
    struct gl_renderbuffer *rb;
@@ -369,7 +334,6 @@ intel_create_renderbuffer(gl_format format, unsigned num_samples)
    rb->_BaseFormat = _mesa_get_format_base_format(format);
    rb->Format = format;
    rb->InternalFormat = rb->_BaseFormat;
-   rb->NumSamples = num_samples;
 
    /* intel-specific methods */
    rb->Delete = intel_delete_renderbuffer;
@@ -383,15 +347,13 @@ intel_create_renderbuffer(gl_format format, unsigned num_samples)
  * server created with intel_create_renderbuffer()) are most similar in their
  * handling to user-created renderbuffers, but they have a resize handler that
  * may be called at intel_update_renderbuffers() time.
- *
- * \param num_samples must be quantized.
  */
 struct intel_renderbuffer *
-intel_create_private_renderbuffer(gl_format format, unsigned num_samples)
+intel_create_private_renderbuffer(gl_format format)
 {
    struct intel_renderbuffer *irb;
 
-   irb = intel_create_renderbuffer(format, num_samples);
+   irb = intel_create_renderbuffer(format);
    irb->Base.Base.AllocStorage = intel_alloc_renderbuffer_storage;
 
    return irb;
@@ -475,16 +437,7 @@ intel_renderbuffer_update_wrapper(struct intel_context *intel,
 
    intel_miptree_check_level_layer(mt, level, layer);
    irb->mt_level = level;
-
-   switch (mt->msaa_layout) {
-      case INTEL_MSAA_LAYOUT_UMS:
-      case INTEL_MSAA_LAYOUT_CMS:
-         irb->mt_layer = layer * mt->num_samples;
-         break;
-
-      default:
-         irb->mt_layer = layer;
-   }
+   irb->mt_layer = layer;
 
    intel_miptree_reference(&irb->mt, mt);
 
@@ -813,16 +766,6 @@ intel_blit_framebuffer(struct gl_context *ctx,
                               mask, filter);
 }
 
-/**
- * This is a no-op except on multisample buffers shared with DRI2.
- */
-void
-intel_renderbuffer_set_needs_downsample(struct intel_renderbuffer *irb)
-{
-   if (irb->mt && irb->mt->singlesample_mt)
-      irb->mt->need_downsample = true;
-}
-
 void
 intel_renderbuffer_move_to_temp(struct intel_context *intel,
                                 struct intel_renderbuffer *irb,
@@ -841,7 +784,6 @@ intel_renderbuffer_move_to_temp(struct intel_context *intel,
                                  intel_image->base.Base.Level,
                                  width, height, depth,
                                  true,
-                                 irb->mt->num_samples,
                                  INTEL_MIPTREE_TILING_ANY);
 
    intel_miptree_copy_teximage(intel, intel_image, new_mt, invalidate);

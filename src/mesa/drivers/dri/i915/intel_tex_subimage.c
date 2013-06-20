@@ -91,7 +91,7 @@ intel_blit_texsubimage(struct gl_context * ctx,
       intel_miptree_create(intel, GL_TEXTURE_2D, texImage->TexFormat,
                            0, 0,
                            width, height, 1,
-                           false, 0, INTEL_MIPTREE_TILING_NONE);
+                           false, INTEL_MIPTREE_TILING_NONE);
    if (!temp_mt)
       goto err;
 
@@ -205,11 +205,6 @@ intel_texsubimage_tiled_memcpy(struct gl_context * ctx,
       /* The algorithm below is written only for X-tiled memory. */
       return false;
    }
-
-   /* Since we are going to write raw data to the miptree, we need to resolve
-    * any pending fast color clears before we start.
-    */
-   intel_miptree_resolve_color(intel, image->mt);
 
    bo = image->mt->region->bo;
 

@@ -205,12 +205,6 @@ intel_miptree_blit(struct intel_context *intel,
       return false;
    }
 
-   /* The blitter has no idea about fast color clears, so we need to resolve
-    * the miptrees before we do anything.
-    */
-   intel_miptree_resolve_color(intel, src_mt);
-   intel_miptree_resolve_color(intel, dst_mt);
-
    if (src_flip)
       src_y = src_mt->level[src_level].height - src_y - height;
 

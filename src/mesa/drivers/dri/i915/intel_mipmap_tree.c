@@ -65,182 +65,6 @@ target_to_target(GLenum target)
    }
 }
 
-
-/**
- * Determine which MSAA layout should be used by the MSAA surface being
- * created, based on the chip generation and the surface type.
- */
-static enum intel_msaa_layout
-compute_msaa_layout(struct intel_context *intel, gl_format format, GLenum target)
-{
-   /* Prior to Gen7, all MSAA surfaces used IMS layout. */
-   if (intel->gen < 7)
-      return INTEL_MSAA_LAYOUT_IMS;
-
-   /* In Gen7, IMS layout is only used for depth and stencil buffers. */
-   switch (_mesa_get_format_base_format(format)) {
-   case GL_DEPTH_COMPONENT:
-   case GL_STENCIL_INDEX:
-   case GL_DEPTH_STENCIL:
-      return INTEL_MSAA_LAYOUT_IMS;
-   default:
-      /* From the Ivy Bridge PRM, Vol4 Part1 p77 ("MCS Enable"):
-       *
-       *   This field must be set to 0 for all SINT MSRTs when all RT channels
-       *   are not written
-       *
-       * In practice this means that we have to disable MCS for all signed
-       * integer MSAA buffers.  The alternative, to disable MCS only when one
-       * of the render target channels is disabled, is impractical because it
-       * would require converting between CMS and UMS MSAA layouts on the fly,
-       * which is expensive.
-       */
-      if (_mesa_get_format_datatype(format) == GL_INT) {
-         /* TODO: is this workaround needed for future chipsets? */
-         assert(intel->gen == 7);
-         return INTEL_MSAA_LAYOUT_UMS;
-      } else {
-         /* For now, if we're going to be texturing from this surface,
-          * force UMS, so that the shader doesn't have to do different things
-          * based on whether there's a multisample control surface needing sampled first.
-          * We can't just blindly read the MCS surface in all cases because:
-          *
-          * From the Ivy Bridge PRM, Vol4 Part1 p77 ("MCS Enable"):
-          *
-          *    If this field is disabled and the sampling engine <ld_mcs> message
-          *    is issued on this surface, the MCS surface may be accessed. Software
-          *    must ensure that the surface is defined to avoid GTT errors.
-          */
-         if (target == GL_TEXTURE_2D_MULTISAMPLE ||
-             target == GL_TEXTURE_2D_MULTISAMPLE_ARRAY) {
-            return INTEL_MSAA_LAYOUT_UMS;
-         } else {
-            return INTEL_MSAA_LAYOUT_CMS;
-         }
-      }
-   }
-}
-
-
-/**
- * For single-sampled render targets ("non-MSRT"), the MCS buffer is a
- * scaled-down bitfield representation of the color buffer which is capable of
- * recording when blocks of the color buffer are equal to the clear value.
- * This function returns the block size that will be used by the MCS buffer
- * corresponding to a certain color miptree.
- *
- * From the Ivy Bridge PRM, Vol2 Part1 11.7 "MCS Buffer for Render Target(s)",
- * beneath the "Fast Color Clear" bullet (p327):
- *
- *     The following table describes the RT alignment
- *
- *                       Pixels  Lines
- *         TiledY RT CL
- *             bpp
- *              32          8      4
- *              64          4      4
- *             128          2      4
- *         TiledX RT CL
- *             bpp
- *              32         16      2
- *              64          8      2
- *             128          4      2
- *
- * This alignment has the following uses:
- *
- * - For figuring out the size of the MCS buffer.  Each 4k tile in the MCS
- *   buffer contains 128 blocks horizontally and 256 blocks vertically.
- *
- * - For figuring out alignment restrictions for a fast clear operation.  Fast
- *   clear operations must always clear aligned multiples of 16 blocks
- *   horizontally and 32 blocks vertically.
- *
- * - For scaling down the coordinates sent through the render pipeline during
- *   a fast clear.  X coordinates must be scaled down by 8 times the block
- *   width, and Y coordinates by 16 times the block height.
- *
- * - For scaling down the coordinates sent through the render pipeline during
- *   a "Render Target Resolve" operation.  X coordinates must be scaled down
- *   by half the block width, and Y coordinates by half the block height.
- */
-void
-intel_get_non_msrt_mcs_alignment(struct intel_context *intel,
-                                 struct intel_mipmap_tree *mt,
-                                 unsigned *width_px, unsigned *height)
-{
-   switch (mt->region->tiling) {
-   default:
-      assert(!"Non-MSRT MCS requires X or Y tiling");
-      /* In release builds, fall through */
-   case I915_TILING_Y:
-      *width_px = 32 / mt->cpp;
-      *height = 4;
-      break;
-   case I915_TILING_X:
-      *width_px = 64 / mt->cpp;
-      *height = 2;
-   }
-}
-
-
-/**
- * For a single-sampled render target ("non-MSRT"), determine if an MCS buffer
- * can be used.
- *
- * From the Ivy Bridge PRM, Vol2 Part1 11.7 "MCS Buffer for Render Target(s)",
- * beneath the "Fast Color Clear" bullet (p326):
- *
- *     - Support is limited to tiled render targets.
- *     - Support is for non-mip-mapped and non-array surface types only.
- *
- * And then later, on p327:
- *
- *     - MCS buffer for non-MSRT is supported only for RT formats 32bpp,
- *       64bpp, and 128bpp.
- */
-bool
-intel_is_non_msrt_mcs_buffer_supported(struct intel_context *intel,
-                                       struct intel_mipmap_tree *mt)
-{
-#ifdef I915
-   /* MCS is not supported on the i915 (pre-Gen4) driver */
-   return false;
-#else
-   struct brw_context *brw = brw_context(&intel->ctx);
-
-   /* MCS support does not exist prior to Gen7 */
-   if (intel->gen < 7)
-      return false;
-
-   /* MCS is only supported for color buffers */
-   switch (_mesa_get_format_base_format(mt->format)) {
-   case GL_DEPTH_COMPONENT:
-   case GL_DEPTH_STENCIL:
-   case GL_STENCIL_INDEX:
-      return false;
-   }
-
-   if (mt->region->tiling != I915_TILING_X &&
-       mt->region->tiling != I915_TILING_Y)
-      return false;
-   if (mt->cpp != 4 && mt->cpp != 8 && mt->cpp != 16)
-      return false;
-   if (mt->first_level != 0 || mt->last_level != 0)
-      return false;
-   if (mt->physical_depth0 != 1)
-      return false;
-
-   /* There's no point in using an MCS buffer if the surface isn't in a
-    * renderable format.
-    */
-   if (!brw->format_supported_as_render_target[mt->format])
-      return false;
-
-   return true;
-#endif
-}
-
-
 /**
  * @param for_bo Indicates that the caller is
  *        intel_miptree_create_for_bo(). If true, then do not create
@@ -255,8 +79,7 @@ intel_miptree_create_layout(struct intel_context *intel,
                             GLuint width0,
                             GLuint height0,
                             GLuint depth0,
-                            bool for_bo,
-                            GLuint num_samples)
+                            bool for_bo)
 {
    struct intel_mipmap_tree *mt = calloc(sizeof(*mt), 1);
    if (!mt)
@@ -274,9 +97,6 @@ intel_miptree_create_layout(struct intel_context *intel,
    mt->logical_width0 = width0;
    mt->logical_height0 = height0;
    mt->logical_depth0 = depth0;
-#ifndef I915
-   mt->mcs_state = INTEL_MCS_STATE_NONE;
-#endif
 
    /* The cpp is bytes per (1, blockheight)-sized block for compressed
     * textures.  This is why you'll see divides by blockheight all over
@@ -286,83 +106,8 @@ intel_miptree_create_layout(struct intel_context *intel,
    assert(_mesa_get_format_bytes(mt->format) % bw == 0);
    mt->cpp = _mesa_get_format_bytes(mt->format) / bw;
 
-   mt->num_samples = num_samples;
    mt->compressed = _mesa_is_format_compressed(format);
-   mt->msaa_layout = INTEL_MSAA_LAYOUT_NONE;
    mt->refcount = 1; 
-
-   if (num_samples > 1) {
-      /* Adjust width/height/depth for MSAA */
-      mt->msaa_layout = compute_msaa_layout(intel, format, mt->target);
-      if (mt->msaa_layout == INTEL_MSAA_LAYOUT_IMS) {
-         /* In the Sandy Bridge PRM, volume 4, part 1, page 31, it says:
-          *
-          *     "Any of the other messages (sample*, LOD, load4) used with a
-          *      (4x) multisampled surface will in-effect sample a surface with
-          *      double the height and width as that indicated in the surface
-          *      state. Each pixel position on the original-sized surface is
-          *      replaced with a 2x2 of samples with the following arrangement:
-          *
-          *         sample 0 sample 2
-          *         sample 1 sample 3"
-          *
-          * Thus, when sampling from a multisampled texture, it behaves as
-          * though the layout in memory for (x,y,sample) is:
-          *
-          *      (0,0,0) (0,0,2)   (1,0,0) (1,0,2)
-          *      (0,0,1) (0,0,3)   (1,0,1) (1,0,3)
-          *
-          *      (0,1,0) (0,1,2)   (1,1,0) (1,1,2)
-          *      (0,1,1) (0,1,3)   (1,1,1) (1,1,3)
-          *
-          * However, the actual layout of multisampled data in memory is:
-          *
-          *      (0,0,0) (1,0,0)   (0,0,1) (1,0,1)
-          *      (0,1,0) (1,1,0)   (0,1,1) (1,1,1)
-          *
-          *      (0,0,2) (1,0,2)   (0,0,3) (1,0,3)
-          *      (0,1,2) (1,1,2)   (0,1,3) (1,1,3)
-          *
-          * This pattern repeats for each 2x2 pixel block.
-          *
-          * As a result, when calculating the size of our 4-sample buffer for
-          * an odd width or height, we have to align before scaling up because
-          * sample 3 is in that bottom right 2x2 block.
-          */
-         switch (num_samples) {
-         case 4:
-            width0 = ALIGN(width0, 2) * 2;
-            height0 = ALIGN(height0, 2) * 2;
-            break;
-         case 8:
-            width0 = ALIGN(width0, 2) * 4;
-            height0 = ALIGN(height0, 2) * 2;
-            break;
-         default:
-            /* num_samples should already have been quantized to 0, 1, 4, or
-             * 8.
-             */
-            assert(false);
-         }
-      } else {
-         /* Non-interleaved */
-         depth0 *= num_samples;
-      }
-   }
-
-   /* array_spacing_lod0 is only used for non-IMS MSAA surfaces.  TODO: can we
-    * use it elsewhere?
-    */
-   switch (mt->msaa_layout) {
-   case INTEL_MSAA_LAYOUT_NONE:
-   case INTEL_MSAA_LAYOUT_IMS:
-      mt->array_spacing_lod0 = false;
-      break;
-   case INTEL_MSAA_LAYOUT_UMS:
-   case INTEL_MSAA_LAYOUT_CMS:
-      mt->array_spacing_lod0 = true;
-      break;
-   }
 
    if (target == GL_TEXTURE_CUBE_MAP) {
       assert(depth0 == 1);
@@ -385,7 +130,6 @@ intel_miptree_create_layout(struct intel_context *intel,
                                             mt->logical_height0,
                                             mt->logical_depth0,
                                             true,
-                                            num_samples,
                                             INTEL_MIPTREE_TILING_ANY);
       if (!mt->stencil_mt) {
 	 intel_miptree_release(&mt);
@@ -429,7 +173,6 @@ static uint32_t
 intel_miptree_choose_tiling(struct intel_context *intel,
                             gl_format format,
                             uint32_t width0,
-                            uint32_t num_samples,
                             enum intel_miptree_tiling_mode requested,
                             struct intel_mipmap_tree *mt)
 {
@@ -451,22 +194,6 @@ intel_miptree_choose_tiling(struct intel_context *intel,
       return I915_TILING_Y;
    case INTEL_MIPTREE_TILING_NONE:
       return I915_TILING_NONE;
-   }
-
-   if (num_samples > 1) {
-      /* From p82 of the Sandy Bridge PRM, dw3[1] of SURFACE_STATE ("Tiled
-       * Surface"):
-       *
-       *   [DevSNB+]: For multi-sample render targets, this field must be
-       *   1. MSRTs can only be tiled.
-       *
-       * Our usual reason for preferring X tiling (fast blits using the
-       * blitting engine) doesn't apply to MSAA, since we'll generally be
-       * downsampling or upsampling when blitting between the MSAA buffer
-       * and another buffer, and the blitting engine doesn't support that.
-       * So use Y tiling, since it makes better use of the cache.
-       */
-      return I915_TILING_Y;
    }
 
    GLenum base_format = _mesa_get_format_base_format(format);
@@ -504,7 +231,6 @@ intel_miptree_create(struct intel_context *intel,
 		     GLuint height0,
 		     GLuint depth0,
 		     bool expect_accelerated_upload,
-                     GLuint num_samples,
                      enum intel_miptree_tiling_mode requested_tiling)
 {
    struct intel_mipmap_tree *mt;
@@ -552,7 +278,7 @@ intel_miptree_create(struct intel_context *intel,
    mt = intel_miptree_create_layout(intel, target, format,
 				      first_level, last_level, width0,
 				      height0, depth0,
-				      false, num_samples);
+				      false);
    /*
     * pitch == 0 || height == 0  indicates the null texture
     */
@@ -571,7 +297,7 @@ intel_miptree_create(struct intel_context *intel,
    }
 
    uint32_t tiling = intel_miptree_choose_tiling(intel, format, width0,
-                                                 num_samples, requested_tiling,
+                                                 requested_tiling,
                                                  mt);
    bool y_or_x = tiling == (I915_TILING_Y | I915_TILING_X);
 
@@ -607,16 +333,6 @@ intel_miptree_create(struct intel_context *intel,
        return NULL;
    }
 
-#ifndef I915
-   /* If this miptree is capable of supporting fast color clears, set
-    * mcs_state appropriately to ensure that fast clears will occur.
-    * Allocation of the MCS miptree will be deferred until the first fast
-    * clear actually occurs.
-    */
-   if (intel_is_non_msrt_mcs_buffer_supported(intel, mt))
-      mt->mcs_state = INTEL_MCS_STATE_RESOLVED;
-#endif
-
    return mt;
 }
 
@@ -650,7 +366,7 @@ intel_miptree_create_for_bo(struct intel_context *intel,
    mt = intel_miptree_create_layout(intel, GL_TEXTURE_2D, format,
                                     0, 0,
                                     width, height, 1,
-                                    true, 0 /* num_samples */);
+                                    true);
    if (!mt)
       return mt;
 
@@ -681,11 +397,9 @@ struct intel_mipmap_tree*
 intel_miptree_create_for_dri2_buffer(struct intel_context *intel,
                                      unsigned dri_attachment,
                                      gl_format format,
-                                     uint32_t num_samples,
                                      struct intel_region *region)
 {
-   struct intel_mipmap_tree *singlesample_mt = NULL;
-   struct intel_mipmap_tree *multisample_mt = NULL;
+   struct intel_mipmap_tree *mt = NULL;
 
    /* Only the front and back buffers, which are color buffers, are shared
     * through DRI2.
@@ -696,81 +410,32 @@ intel_miptree_create_for_dri2_buffer(struct intel_context *intel,
    assert(_mesa_get_format_base_format(format) == GL_RGB ||
           _mesa_get_format_base_format(format) == GL_RGBA);
 
-   singlesample_mt = intel_miptree_create_for_bo(intel,
-                                                 region->bo,
-                                                 format,
-                                                 0,
-                                                 region->width,
-                                                 region->height,
-                                                 region->pitch,
-                                                 region->tiling);
-   if (!singlesample_mt)
+   mt = intel_miptree_create_for_bo(intel,
+                                    region->bo,
+                                    format,
+                                    0,
+                                    region->width,
+                                    region->height,
+                                    region->pitch,
+                                    region->tiling);
+   if (!mt)
       return NULL;
-   singlesample_mt->region->name = region->name;
+   mt->region->name = region->name;
 
-#ifndef I915
-   /* If this miptree is capable of supporting fast color clears, set
-    * mcs_state appropriately to ensure that fast clears will occur.
-    * Allocation of the MCS miptree will be deferred until the first fast
-    * clear actually occurs.
-    */
-   if (intel_is_non_msrt_mcs_buffer_supported(intel, singlesample_mt))
-      singlesample_mt->mcs_state = INTEL_MCS_STATE_RESOLVED;
-#endif
-
-   if (num_samples == 0)
-      return singlesample_mt;
-
-   multisample_mt = intel_miptree_create_for_renderbuffer(intel,
-                                                          format,
-                                                          region->width,
-                                                          region->height,
-                                                          num_samples);
-   if (!multisample_mt) {
-      intel_miptree_release(&singlesample_mt);
-      return NULL;
-   }
-
-   multisample_mt->singlesample_mt = singlesample_mt;
-   multisample_mt->need_downsample = false;
-
-   if (intel->is_front_buffer_rendering &&
-       (dri_attachment == __DRI_BUFFER_FRONT_LEFT ||
-        dri_attachment == __DRI_BUFFER_FAKE_FRONT_LEFT)) {
-      intel_miptree_upsample(intel, multisample_mt);
-   }
-
-   return multisample_mt;
+   return mt;
 }
 
 struct intel_mipmap_tree*
 intel_miptree_create_for_renderbuffer(struct intel_context *intel,
                                       gl_format format,
                                       uint32_t width,
-                                      uint32_t height,
-                                      uint32_t num_samples)
+                                      uint32_t height)
 {
-   struct intel_mipmap_tree *mt;
    uint32_t depth = 1;
-   bool ok;
 
-   mt = intel_miptree_create(intel, GL_TEXTURE_2D, format, 0, 0,
-			     width, height, depth, true, num_samples,
-                             INTEL_MIPTREE_TILING_ANY);
-   if (!mt)
-      goto fail;
-
-   if (mt->msaa_layout == INTEL_MSAA_LAYOUT_CMS) {
-      ok = intel_miptree_alloc_mcs(intel, mt, num_samples);
-      if (!ok)
-         goto fail;
-   }
-
-   return mt;
-
-fail:
-   intel_miptree_release(&mt);
-   return NULL;
+   return intel_miptree_create(intel, GL_TEXTURE_2D, format, 0, 0,
+                               width, height, depth, true,
+                               INTEL_MIPTREE_TILING_ANY);
 }
 
 void
@@ -805,10 +470,6 @@ intel_miptree_release(struct intel_mipmap_tree **mt)
 
       intel_region_release(&((*mt)->region));
       intel_miptree_release(&(*mt)->stencil_mt);
-#ifndef I915
-      intel_miptree_release(&(*mt)->mcs_mt);
-#endif
-      intel_miptree_release(&(*mt)->singlesample_mt);
 
       for (i = 0; i < MAX_TEXTURE_LEVELS; i++) {
 	 free((*mt)->level[i].slice);
@@ -896,9 +557,6 @@ intel_miptree_match_image(struct intel_mipmap_tree *mt,
          return false;
       }
    }
-
-   if (image->NumSamples != mt->num_samples)
-      return false;
 
    return true;
 }
@@ -1142,179 +800,6 @@ intel_miptree_copy_teximage(struct intel_context *intel,
    intel_obj->needs_validate = true;
 }
 
-bool
-intel_miptree_alloc_mcs(struct intel_context *intel,
-                        struct intel_mipmap_tree *mt,
-                        GLuint num_samples)
-{
-   assert(intel->gen >= 7); /* MCS only used on Gen7+ */
-#ifdef I915
-   return false;
-#else
-   assert(mt->mcs_mt == NULL);
-
-   /* Choose the correct format for the MCS buffer.  All that really matters
-    * is that we allocate the right buffer size, since we'll always be
-    * accessing this miptree using MCS-specific hardware mechanisms, which
-    * infer the correct format based on num_samples.
-    */
-   gl_format format;
-   switch (num_samples) {
-   case 4:
-      /* 8 bits/pixel are required for MCS data when using 4x MSAA (2 bits for
-       * each sample).
-       */
-      format = MESA_FORMAT_R8;
-      break;
-   case 8:
-      /* 32 bits/pixel are required for MCS data when using 8x MSAA (3 bits
-       * for each sample, plus 8 padding bits).
-       */
-      format = MESA_FORMAT_R_UINT32;
-      break;
-   default:
-      assert(!"Unrecognized sample count in intel_miptree_alloc_mcs");
-      return false;
-   };
-
-   /* From the Ivy Bridge PRM, Vol4 Part1 p76, "MCS Base Address":
-    *
-    *     "The MCS surface must be stored as Tile Y."
-    */
-   mt->mcs_state = INTEL_MCS_STATE_MSAA;
-   mt->mcs_mt = intel_miptree_create(intel,
-                                     mt->target,
-                                     format,
-                                     mt->first_level,
-                                     mt->last_level,
-                                     mt->logical_width0,
-                                     mt->logical_height0,
-                                     mt->logical_depth0,
-                                     true,
-                                     0 /* num_samples */,
-                                     INTEL_MIPTREE_TILING_Y);
-
-   /* From the Ivy Bridge PRM, Vol 2 Part 1 p326:
-    *
-    *     When MCS buffer is enabled and bound to MSRT, it is required that it
-    *     is cleared prior to any rendering.
-    *
-    * Since we don't use the MCS buffer for any purpose other than rendering,
-    * it makes sense to just clear it immediately upon allocation.
-    *
-    * Note: the clear value for MCS buffers is all 1's, so we memset to 0xff.
-    */
-   void *data = intel_miptree_map_raw(intel, mt->mcs_mt);
-   memset(data, 0xff, mt->mcs_mt->region->bo->size);
-   intel_miptree_unmap_raw(intel, mt->mcs_mt);
-
-   return mt->mcs_mt;
-#endif
-}
-
-
-bool
-intel_miptree_alloc_non_msrt_mcs(struct intel_context *intel,
-                                 struct intel_mipmap_tree *mt)
-{
-#ifdef I915
-   assert(!"MCS not supported on i915");
-   return false;
-#else
-   assert(mt->mcs_mt == NULL);
-
-   /* The format of the MCS buffer is opaque to the driver; all that matters
-    * is that we get its size and pitch right.  We'll pretend that the format
-    * is R32.  Since an MCS tile covers 128 blocks horizontally, and a Y-tiled
-    * R32 buffer is 32 pixels across, we'll need to scale the width down by
-    * the block width and then a further factor of 4.  Since an MCS tile
-    * covers 256 blocks vertically, and a Y-tiled R32 buffer is 32 rows high,
-    * we'll need to scale the height down by the block height and then a
-    * further factor of 8.
-    */
-   const gl_format format = MESA_FORMAT_R_UINT32;
-   unsigned block_width_px;
-   unsigned block_height;
-   intel_get_non_msrt_mcs_alignment(intel, mt, &block_width_px, &block_height);
-   unsigned width_divisor = block_width_px * 4;
-   unsigned height_divisor = block_height * 8;
-   unsigned mcs_width =
-      ALIGN(mt->logical_width0, width_divisor) / width_divisor;
-   unsigned mcs_height =
-      ALIGN(mt->logical_height0, height_divisor) / height_divisor;
-   assert(mt->logical_depth0 == 1);
-   mt->mcs_mt = intel_miptree_create(intel,
-                                     mt->target,
-                                     format,
-                                     mt->first_level,
-                                     mt->last_level,
-                                     mcs_width,
-                                     mcs_height,
-                                     mt->logical_depth0,
-                                     true,
-                                     0 /* num_samples */,
-                                     INTEL_MIPTREE_TILING_Y);
-
-   return mt->mcs_mt;
-#endif
-}
-
-void
-intel_miptree_resolve_color(struct intel_context *intel,
-                            struct intel_mipmap_tree *mt)
-{
-#ifdef I915
-   /* Fast color clear is not supported on the i915 (pre-Gen4) driver */
-#else
-   switch (mt->mcs_state) {
-   case INTEL_MCS_STATE_NONE:
-   case INTEL_MCS_STATE_MSAA:
-   case INTEL_MCS_STATE_RESOLVED:
-      /* No resolve needed */
-      break;
-   case INTEL_MCS_STATE_UNRESOLVED:
-   case INTEL_MCS_STATE_CLEAR:
-      brw_blorp_resolve_color(intel, mt);
-      break;
-   }
-#endif
-}
-
-
-/**
- * Make it possible to share the region backing the given miptree with another
- * process or another miptree.
- *
- * Fast color clears are unsafe with shared buffers, so we need to resolve and
- * then discard the MCS buffer, if present.  We also set the mcs_state to
- * INTEL_MCS_STATE_NONE to ensure that no MCS buffer gets allocated in the
- * future.
- */
-void
-intel_miptree_make_shareable(struct intel_context *intel,
-                             struct intel_mipmap_tree *mt)
-{
-#ifdef I915
-   /* Nothing needs to be done for I915 */
-   (void) intel;
-   (void) mt;
-#else
-   /* MCS buffers are also used for multisample buffers, but we can't resolve
-    * away a multisample MCS buffer because it's an integral part of how the
-    * pixel data is stored.  Fortunately this code path should never be
-    * reached for multisample buffers.
-    */
-   assert(mt->msaa_layout == INTEL_MSAA_LAYOUT_NONE);
-
-   if (mt->mcs_mt) {
-      intel_miptree_resolve_color(intel, mt);
-      intel_miptree_release(&mt->mcs_mt);
-      mt->mcs_state = INTEL_MCS_STATE_NONE;
-   }
-#endif
-}
-
-
 /**
  * \brief Get pointer offset into stencil buffer.
  *
@@ -1371,97 +856,9 @@ intel_offset_S8(uint32_t stride, uint32_t x, uint32_t y, bool swizzled)
    return u;
 }
 
-static void
-intel_miptree_updownsample(struct intel_context *intel,
-                           struct intel_mipmap_tree *src,
-                           struct intel_mipmap_tree *dst,
-                           unsigned width,
-                           unsigned height)
-{
-#ifndef I915
-   int src_x0 = 0;
-   int src_y0 = 0;
-   int dst_x0 = 0;
-   int dst_y0 = 0;
-
-   brw_blorp_blit_miptrees(intel,
-                           src, 0 /* level */, 0 /* layer */,
-                           dst, 0 /* level */, 0 /* layer */,
-                           src_x0, src_y0,
-                           width, height,
-                           dst_x0, dst_y0,
-                           width, height,
-                           false, false /*mirror x, y*/);
-
-   if (src->stencil_mt) {
-      brw_blorp_blit_miptrees(intel,
-                              src->stencil_mt, 0 /* level */, 0 /* layer */,
-                              dst->stencil_mt, 0 /* level */, 0 /* layer */,
-                              src_x0, src_y0,
-                              width, height,
-                              dst_x0, dst_y0,
-                              width, height,
-                              false, false /*mirror x, y*/);
-   }
-#endif /* I915 */
-}
-
-static void
-assert_is_flat(struct intel_mipmap_tree *mt)
-{
-   assert(mt->target == GL_TEXTURE_2D);
-   assert(mt->first_level == 0);
-   assert(mt->last_level == 0);
-}
-
-/**
- * \brief Downsample from mt to mt->singlesample_mt.
- *
- * If the miptree needs no downsample, then skip.
- */
-void
-intel_miptree_downsample(struct intel_context *intel,
-                         struct intel_mipmap_tree *mt)
-{
-   /* Only flat, renderbuffer-like miptrees are supported. */
-   assert_is_flat(mt);
-
-   if (!mt->need_downsample)
-      return;
-   intel_miptree_updownsample(intel,
-                              mt, mt->singlesample_mt,
-                              mt->logical_width0,
-                              mt->logical_height0);
-   mt->need_downsample = false;
-}
-
-/**
- * \brief Upsample from mt->singlesample_mt to mt.
- *
- * The upsample is done unconditionally.
- */
-void
-intel_miptree_upsample(struct intel_context *intel,
-                       struct intel_mipmap_tree *mt)
-{
-   /* Only flat, renderbuffer-like miptrees are supported. */
-   assert_is_flat(mt);
-   assert(!mt->need_downsample);
-
-   intel_miptree_updownsample(intel,
-                              mt->singlesample_mt, mt,
-                              mt->logical_width0,
-                              mt->logical_height0);
-}
-
 void *
 intel_miptree_map_raw(struct intel_context *intel, struct intel_mipmap_tree *mt)
 {
-   /* CPU accesses to color buffers don't understand fast color clears, so
-    * resolve any pending fast color clears before we map.
-    */
-   intel_miptree_resolve_color(intel, mt);
-
    drm_intel_bo *bo = mt->region->bo;
 
    if (unlikely(INTEL_DEBUG & DEBUG_PERF)) {
@@ -1548,7 +945,7 @@ intel_miptree_map_blit(struct intel_context *intel,
    map->mt = intel_miptree_create(intel, GL_TEXTURE_2D, mt->format,
                                   0, 0,
                                   map->w, map->h, 1,
-                                  false, 0,
+                                  false,
                                   INTEL_MIPTREE_TILING_NONE);
    if (!map->mt) {
       fprintf(stderr, "Failed to allocate blit temporary\n");
@@ -1920,22 +1317,20 @@ intel_miptree_release_map(struct intel_mipmap_tree *mt,
    *map = NULL;
 }
 
-static void
-intel_miptree_map_singlesample(struct intel_context *intel,
-                               struct intel_mipmap_tree *mt,
-                               unsigned int level,
-                               unsigned int slice,
-                               unsigned int x,
-                               unsigned int y,
-                               unsigned int w,
-                               unsigned int h,
-                               GLbitfield mode,
-                               void **out_ptr,
-                               int *out_stride)
+void
+intel_miptree_map(struct intel_context *intel,
+                  struct intel_mipmap_tree *mt,
+                  unsigned int level,
+                  unsigned int slice,
+                  unsigned int x,
+                  unsigned int y,
+                  unsigned int w,
+                  unsigned int h,
+                  GLbitfield mode,
+                  void **out_ptr,
+                  int *out_stride)
 {
    struct intel_miptree_map *map;
-
-   assert(mt->num_samples <= 1);
 
    map = intel_miptree_attach_map(mt, level, slice, x, y, w, h, mode);
    if (!map){
@@ -1975,15 +1370,13 @@ intel_miptree_map_singlesample(struct intel_context *intel,
       intel_miptree_release_map(mt, level, slice);
 }
 
-static void
-intel_miptree_unmap_singlesample(struct intel_context *intel,
-                                 struct intel_mipmap_tree *mt,
-                                 unsigned int level,
-                                 unsigned int slice)
+void
+intel_miptree_unmap(struct intel_context *intel,
+                    struct intel_mipmap_tree *mt,
+                    unsigned int level,
+                    unsigned int slice)
 {
    struct intel_miptree_map *map = mt->level[level].slice[slice].map;
-
-   assert(mt->num_samples <= 1);
 
    if (!map)
       return;
@@ -2005,127 +1398,4 @@ intel_miptree_unmap_singlesample(struct intel_context *intel,
    }
 
    intel_miptree_release_map(mt, level, slice);
-}
-
-static void
-intel_miptree_map_multisample(struct intel_context *intel,
-                              struct intel_mipmap_tree *mt,
-                              unsigned int level,
-                              unsigned int slice,
-                              unsigned int x,
-                              unsigned int y,
-                              unsigned int w,
-                              unsigned int h,
-                              GLbitfield mode,
-                              void **out_ptr,
-                              int *out_stride)
-{
-   struct intel_miptree_map *map;
-
-   assert(mt->num_samples > 1);
-
-   /* Only flat, renderbuffer-like miptrees are supported. */
-   if (mt->target != GL_TEXTURE_2D ||
-       mt->first_level != 0 ||
-       mt->last_level != 0) {
-      _mesa_problem(&intel->ctx, "attempt to map a multisample miptree for "
-                    "which (target, first_level, last_level != "
-                    "(GL_TEXTURE_2D, 0, 0)");
-      goto fail;
-   }
-
-   map = intel_miptree_attach_map(mt, level, slice, x, y, w, h, mode);
-   if (!map)
-      goto fail;
-
-   if (!mt->singlesample_mt) {
-      mt->singlesample_mt =
-         intel_miptree_create_for_renderbuffer(intel,
-                                               mt->format,
-                                               mt->logical_width0,
-                                               mt->logical_height0,
-                                               0 /*num_samples*/);
-      if (!mt->singlesample_mt)
-         goto fail;
-
-      map->singlesample_mt_is_tmp = true;
-      mt->need_downsample = true;
-   }
-
-   intel_miptree_downsample(intel, mt);
-   intel_miptree_map_singlesample(intel, mt->singlesample_mt,
-                                  level, slice,
-                                  x, y, w, h,
-                                  mode,
-                                  out_ptr, out_stride);
-   return;
-
-fail:
-   intel_miptree_release_map(mt, level, slice);
-   *out_ptr = NULL;
-   *out_stride = 0;
-}
-
-static void
-intel_miptree_unmap_multisample(struct intel_context *intel,
-                                struct intel_mipmap_tree *mt,
-                                unsigned int level,
-                                unsigned int slice)
-{
-   struct intel_miptree_map *map = mt->level[level].slice[slice].map;
-
-   assert(mt->num_samples > 1);
-
-   if (!map)
-      return;
-
-   intel_miptree_unmap_singlesample(intel, mt->singlesample_mt, level, slice);
-
-   mt->need_downsample = false;
-   if (map->mode & GL_MAP_WRITE_BIT)
-      intel_miptree_upsample(intel, mt);
-
-   if (map->singlesample_mt_is_tmp)
-      intel_miptree_release(&mt->singlesample_mt);
-
-   intel_miptree_release_map(mt, level, slice);
-}
-
-void
-intel_miptree_map(struct intel_context *intel,
-		  struct intel_mipmap_tree *mt,
-		  unsigned int level,
-		  unsigned int slice,
-		  unsigned int x,
-		  unsigned int y,
-		  unsigned int w,
-		  unsigned int h,
-		  GLbitfield mode,
-		  void **out_ptr,
-		  int *out_stride)
-{
-   if (mt->num_samples <= 1)
-      intel_miptree_map_singlesample(intel, mt,
-                                     level, slice,
-                                     x, y, w, h,
-                                     mode,
-                                     out_ptr, out_stride);
-   else
-      intel_miptree_map_multisample(intel, mt,
-                                    level, slice,
-                                    x, y, w, h,
-                                    mode,
-                                    out_ptr, out_stride);
-}
-
-void
-intel_miptree_unmap(struct intel_context *intel,
-		    struct intel_mipmap_tree *mt,
-		    unsigned int level,
-		    unsigned int slice)
-{
-   if (mt->num_samples <= 1)
-      intel_miptree_unmap_singlesample(intel, mt, level, slice);
-   else
-      intel_miptree_unmap_multisample(intel, mt, level, slice);
 }

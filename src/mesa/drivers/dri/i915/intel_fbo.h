@@ -129,10 +129,10 @@ intel_rb_format(const struct intel_renderbuffer *rb)
 }
 
 extern struct intel_renderbuffer *
-intel_create_renderbuffer(gl_format format, unsigned num_samples);
+intel_create_renderbuffer(gl_format format);
 
 struct intel_renderbuffer *
-intel_create_private_renderbuffer(gl_format format, unsigned num_samples);
+intel_create_private_renderbuffer(gl_format format);
 
 struct gl_renderbuffer*
 intel_create_wrapped_renderbuffer(struct gl_context * ctx,
@@ -161,15 +161,9 @@ intel_renderbuffer_get_tile_offsets(struct intel_renderbuffer *irb,
 struct intel_region*
 intel_get_rb_region(struct gl_framebuffer *fb, GLuint attIndex);
 
-void
-intel_renderbuffer_set_needs_downsample(struct intel_renderbuffer *irb);
-
 void intel_renderbuffer_move_to_temp(struct intel_context *intel,
                                      struct intel_renderbuffer *irb,
                                      bool invalidate);
-
-unsigned
-intel_quantize_num_samples(struct intel_screen *intel, unsigned num_samples);
 
 #ifdef __cplusplus
 }
