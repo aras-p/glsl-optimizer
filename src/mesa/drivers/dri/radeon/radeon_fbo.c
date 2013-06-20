@@ -621,36 +621,6 @@ radeon_alloc_window_storage(struct gl_context * ctx, struct gl_renderbuffer *rb,
    return GL_TRUE;
 }
 
-
-static void
-radeon_resize_buffers(struct gl_context *ctx, struct gl_framebuffer *fb,
-		     GLuint width, GLuint height)
-{
-     struct radeon_framebuffer *radeon_fb = (struct radeon_framebuffer*)fb;
-   int i;
-
-  radeon_print(RADEON_TEXTURE, RADEON_TRACE,
-		"%s(%p, fb %p) \n",
-		__func__, ctx, fb);
-
-   _mesa_resize_framebuffer(ctx, fb, width, height);
-
-   if (fb->Name != 0) {
-      return;
-   }
-
-   /* Make sure all window system renderbuffers are up to date */
-   for (i = 0; i < 2; i++) {
-      struct gl_renderbuffer *rb = &radeon_fb->color_rb[i]->base.Base;
-
-      /* only resize if size is changing */
-      if (rb && (rb->Width != width || rb->Height != height)) {
-	 rb->AllocStorage(ctx, rb, rb->InternalFormat, width, height);
-      }
-   }
-}
-
-
 /** Dummy function for gl_renderbuffer::AllocStorage() */
 static GLboolean
 radeon_nop_alloc_storage(struct gl_context * ctx, struct gl_renderbuffer *rb,
@@ -903,7 +873,6 @@ void radeon_fbo_init(struct radeon_context *radeon)
   radeon->glCtx.Driver.FramebufferRenderbuffer = radeon_framebuffer_renderbuffer;
   radeon->glCtx.Driver.RenderTexture = radeon_render_texture;
   radeon->glCtx.Driver.FinishRenderTexture = radeon_finish_render_texture;
-  radeon->glCtx.Driver.ResizeBuffers = radeon_resize_buffers;
   radeon->glCtx.Driver.ValidateFramebuffer = radeon_validate_framebuffer;
   radeon->glCtx.Driver.BlitFramebuffer = _mesa_meta_BlitFramebuffer;
   radeon->glCtx.Driver.EGLImageTargetRenderbufferStorage =
