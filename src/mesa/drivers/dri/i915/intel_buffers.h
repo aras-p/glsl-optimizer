@@ -49,8 +49,6 @@ intel_draw_buffer(struct gl_context * ctx)
 }
 
 extern void intelInitBufferFuncs(struct dd_function_table *functions);
-#ifdef I915
 void intelCalcViewport(struct gl_context * ctx);
-#endif
 
 #endif /* INTEL_BUFFERS_H */

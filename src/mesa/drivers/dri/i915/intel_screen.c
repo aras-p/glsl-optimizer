@@ -90,10 +90,6 @@ const GLuint __driNConfigOptions = 13;
 #include "intel_tex.h"
 #include "intel_regions.h"
 
-#ifndef I915
-#include "brw_context.h"
-#endif
-
 #include "i915_drm.h"
 
 #ifdef USE_NEW_INTERFACE
@@ -920,15 +916,6 @@ i915CreateContext(int api,
                   unsigned minor_version,
                   unsigned *error,
 		  void *sharedContextPrivate);
-extern bool
-brwCreateContext(int api,
-	         const struct gl_config *mesaVis,
-	         __DRIcontext *driContextPriv,
-                 unsigned major_version,
-                 unsigned minor_version,
-                 uint32_t flags,
-                 unsigned *error,
-		 void *sharedContextPrivate);
 
 static GLboolean
 intelCreateContext(gl_api api,
@@ -942,7 +929,6 @@ intelCreateContext(gl_api api,
 {
    bool success = false;
 
-#ifdef I915
    __DRIscreen *sPriv = driContextPriv->driScreenPriv;
    struct intel_screen *intelScreen = sPriv->driverPrivate;
 
@@ -956,12 +942,6 @@ intelCreateContext(gl_api api,
                                   major_version, minor_version, error,
                                   sharedContextPrivate);
    }
-#else
-   success = brwCreateContext(api, mesaVis,
-                              driContextPriv,
-                              major_version, minor_version, flags,
-                              error, sharedContextPrivate);
-#endif
 
    if (success)
       return true;

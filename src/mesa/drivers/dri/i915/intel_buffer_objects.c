@@ -39,10 +39,6 @@
 #include "intel_mipmap_tree.h"
 #include "intel_regions.h"
 
-#ifndef I915
-#include "brw_context.h"
-#endif
-
 static GLboolean
 intel_bufferobj_unmap(struct gl_context * ctx, struct gl_buffer_object *obj);
 
@@ -53,15 +49,6 @@ intel_bufferobj_alloc_buffer(struct intel_context *intel,
 {
    intel_obj->buffer = drm_intel_bo_alloc(intel->bufmgr, "bufferobj",
 					  intel_obj->Base.Size, 64);
-
-#ifndef I915
-   /* the buffer might be bound as a uniform buffer, need to update it
-    */
-   {
-      struct brw_context *brw = brw_context(&intel->ctx);
-      brw->state.dirty.brw |= BRW_NEW_UNIFORM_BUFFER;
-   }
-#endif
 }
 
 static void
@@ -134,12 +121,6 @@ intel_bufferobj_data(struct gl_context * ctx,
    struct intel_context *intel = intel_context(ctx);
    struct intel_buffer_object *intel_obj = intel_buffer_object(obj);
 
-   /* Part of the ABI, but this function doesn't use it.
-    */
-#ifndef I915
-   (void) target;
-#endif
-
    intel_obj->Base.Size = size;
    intel_obj->Base.Usage = usage;
 
@@ -152,9 +133,8 @@ intel_bufferobj_data(struct gl_context * ctx,
    intel_obj->sys_buffer = NULL;
 
    if (size != 0) {
-#ifdef I915
-      /* On pre-965, stick VBOs in system memory, as we're always doing
-       * swtnl with their contents anyway.
+      /* Stick VBOs in system memory, as we're always doing swtnl with their
+       * contents anyway.
        */
       if (target == GL_ARRAY_BUFFER || target == GL_ELEMENT_ARRAY_BUFFER) {
 	 intel_obj->sys_buffer = malloc(size);
@@ -164,7 +144,7 @@ intel_bufferobj_data(struct gl_context * ctx,
 	    return true;
 	 }
       }
-#endif
+
       intel_bufferobj_alloc_buffer(intel, intel_obj);
       if (!intel_obj->buffer)
          return false;

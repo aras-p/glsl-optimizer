@@ -24,7 +24,6 @@
 include Makefile.sources
 
 AM_CFLAGS = \
-	-DI915 \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/src/ \
 	-I$(top_srcdir)/src/mapi \

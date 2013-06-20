@@ -37,10 +37,6 @@
 #include "intel_tex.h"
 #include "intel_blit.h"
 
-#ifndef I915
-#include "brw_blorp.h"
-#endif
-
 #include "main/enums.h"
 #include "main/formats.h"
 #include "main/glformats.h"
@@ -153,15 +149,11 @@ intel_miptree_create_layout(struct intel_context *intel,
    intel_get_texture_alignment_unit(intel, mt->format,
 				    &mt->align_w, &mt->align_h);
 
-#ifdef I915
    (void) intel;
    if (intel->is_945)
       i945_miptree_layout(mt);
    else
       i915_miptree_layout(mt);
-#else
-   brw_miptree_layout(intel, mt);
-#endif
 
    return mt;
 }

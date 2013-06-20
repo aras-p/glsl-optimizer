@@ -48,9 +48,6 @@
 #include "intel_mipmap_tree.h"
 #include "intel_regions.h"
 #include "intel_tex.h"
-#ifndef I915
-#include "brw_context.h"
-#endif
 
 #define FILE_DEBUG_FLAG DEBUG_FBO
 
@@ -742,15 +739,6 @@ intel_blit_framebuffer(struct gl_context *ctx,
                        GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
                        GLbitfield mask, GLenum filter)
 {
-#ifndef I915
-   mask = brw_blorp_framebuffer(intel_context(ctx),
-                                srcX0, srcY0, srcX1, srcY1,
-                                dstX0, dstY0, dstX1, dstY1,
-                                mask, filter);
-   if (mask == 0x0)
-      return;
-#endif
-
    /* Try using the BLT engine. */
    mask = intel_blit_framebuffer_with_blitter(ctx,
                                               srcX0, srcY0, srcX1, srcY1,
