@@ -29,7 +29,6 @@
 
 import sys
 import xml.parsers.expat
-import binascii
 import optparse
 
 from model import *
@@ -305,9 +304,9 @@ class TraceParser(XmlParser):
         
     def parse_bytes(self):
         self.element_start('bytes')
-        value = binascii.a2b_hex(self.character_data())
+        value = self.character_data()
         self.element_end('bytes')
-        return Literal(value)
+        return Blob(value)
         
     def parse_array(self):
         self.element_start('array')
