@@ -55,11 +55,6 @@ struct intel_screen
    dri_bufmgr *bufmgr;
 
    /**
-    * A unique ID for shader programs.
-    */
-   unsigned program_id;
-
-   /**
    * Configuration cache with default values for all contexts
    */
    driOptionCache optionCache;

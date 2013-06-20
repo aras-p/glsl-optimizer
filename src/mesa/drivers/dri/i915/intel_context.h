@@ -114,8 +114,6 @@ struct intel_sync_object {
    drm_intel_bo *bo;
 };
 
-struct brw_context;
-
 struct intel_batchbuffer {
    /** Current batchbuffer being queued up. */
    drm_intel_bo *bo;
@@ -218,8 +216,6 @@ struct intel_context
    } upload;
 
    uint32_t max_gtt_map_object_size;
-
-   GLuint stats_wm;
 
    /* Offsets of fields within the current vertex:
     */
