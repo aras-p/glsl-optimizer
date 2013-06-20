@@ -85,7 +85,6 @@ void radeonSetCliprects(radeonContextPtr radeon)
 	    (draw_rfb->base.Height != drawable->h)) {
 		_mesa_resize_framebuffer(&radeon->glCtx, &draw_rfb->base,
 					 drawable->w, drawable->h);
-		draw_rfb->base.Initialized = GL_TRUE;
 	}
 
 	if (drawable != readable) {
@@ -93,7 +92,6 @@ void radeonSetCliprects(radeonContextPtr radeon)
 		    (read_rfb->base.Height != readable->h)) {
 			_mesa_resize_framebuffer(&radeon->glCtx, &read_rfb->base,
 						 readable->w, readable->h);
-			read_rfb->base.Initialized = GL_TRUE;
 		}
 	}
 

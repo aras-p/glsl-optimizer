@@ -431,8 +431,6 @@ st_framebuffer_create(struct st_framebuffer_iface *stfbi)
    stfb->stamp = 0;
    st_framebuffer_update_attachments(stfb);
 
-   stfb->Base.Initialized = GL_TRUE;
-
    return stfb;
 }
 

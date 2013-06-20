@@ -916,7 +916,6 @@ OSMesaMakeCurrent( OSMesaContext osmesa, void *buffer, GLenum type,
     * osmesa_renderbuffer_storage() function to get called.
     */
    _mesa_resize_framebuffer(&osmesa->mesa, osmesa->gl_buffer, width, height);
-   osmesa->gl_buffer->Initialized = GL_TRUE; /* XXX TEMPORARY? */
 
    _mesa_make_current( &osmesa->mesa, osmesa->gl_buffer, osmesa->gl_buffer );
 

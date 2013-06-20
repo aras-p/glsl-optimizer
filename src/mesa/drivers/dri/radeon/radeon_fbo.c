@@ -635,8 +635,6 @@ radeon_resize_buffers(struct gl_context *ctx, struct gl_framebuffer *fb,
 
    _mesa_resize_framebuffer(ctx, fb, width, height);
 
-   fb->Initialized = GL_TRUE; /* XXX remove someday */
-
    if (fb->Name != 0) {
       return;
    }

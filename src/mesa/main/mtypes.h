@@ -2680,8 +2680,6 @@ struct gl_framebuffer
     */
    struct gl_config Visual;
 
-   GLboolean Initialized;
-
    GLuint Width, Height;	/**< size of frame buffer in pixels */
 
    /** \name  Drawing bounds (Intersection of buffer size and scissor box) */

@@ -339,8 +339,6 @@ intel_resize_buffers(struct gl_context *ctx, struct gl_framebuffer *fb,
 
    _mesa_resize_framebuffer(ctx, fb, width, height);
 
-   fb->Initialized = true; /* XXX remove someday */
-
    if (_mesa_is_user_fbo(fb)) {
       return;
    }
