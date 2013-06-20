@@ -1418,7 +1418,7 @@ trace_context_transfer_unmap(struct pipe_context *_context,
 
       trace_dump_arg_begin("data");
       trace_dump_box_bytes(tr_trans->map,
-                           resource->format,
+                           resource,
                            box,
                            stride,
                            layer_stride);
@@ -1464,7 +1464,7 @@ trace_context_transfer_inline_write(struct pipe_context *_context,
 
    trace_dump_arg_begin("data");
    trace_dump_box_bytes(data,
-                        resource->format,
+                        resource,
                         box,
                         stride,
                         layer_stride);

@@ -88,7 +88,7 @@ void trace_dump_uint(long long unsigned value);
 void trace_dump_float(double value);
 void trace_dump_bytes(const void *data, size_t size);
 void trace_dump_box_bytes(const void *data,
-			  enum pipe_format format,
+                          struct pipe_resource *resource,
 			  const struct pipe_box *box,
 			  unsigned stride,
 			  unsigned slice_stride);
