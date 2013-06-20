@@ -352,9 +352,9 @@ class TraceParser(XmlParser):
     
 class TraceDumper(TraceParser):
     
-    def __init__(self, fp):
+    def __init__(self, fp, outStream = sys.stdout):
         TraceParser.__init__(self, fp)
-        self.formatter = format.DefaultFormatter(sys.stdout)
+        self.formatter = format.DefaultFormatter(outStream)
         self.pretty_printer = PrettyPrinter(self.formatter)
 
     def handle_call(self, call):
