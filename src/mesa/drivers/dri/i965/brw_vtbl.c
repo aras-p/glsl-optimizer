@@ -112,14 +112,6 @@ brw_update_draw_buffer(struct intel_context *intel)
       return;
    }
 
-   /* Do this here, not core Mesa, since this function is called from
-    * many places within the driver.
-    */
-   if (ctx->NewState & _NEW_BUFFERS) {
-      /* this updates the DrawBuffer->_NumColorDrawBuffers fields, etc */
-      _mesa_update_framebuffer(ctx);
-   }
-
    if (fb->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {
       /* this may occur when we're called by glBindFrameBuffer() during
        * the process of someone setting up renderbuffers, etc.
