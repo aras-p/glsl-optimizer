@@ -359,9 +359,6 @@ struct intel_context
    driOptionCache optionCache;
 };
 
-extern char *__progname;
-
-
 #define SUBPIXEL_X 0.125
 #define SUBPIXEL_Y 0.125
 

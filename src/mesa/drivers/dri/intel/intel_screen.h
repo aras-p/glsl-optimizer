@@ -45,12 +45,9 @@ struct intel_screen
    int max_gl_es1_version;
    int max_gl_es2_version;
 
-   int logTextureGranularity;
-
    __DRIscreen *driScrnPriv;
 
    bool no_hw;
-   GLuint relaxed_relocations;
 
    /*
     * The hardware hiz and separate stencil fields are needed in intel_screen,
@@ -76,8 +73,6 @@ struct intel_screen
    */
    driOptionCache optionCache;
 };
-
-extern bool intelMapScreenRegions(__DRIscreen * sPriv);
 
 extern void intelDestroyContext(__DRIcontext * driContextPriv);
 

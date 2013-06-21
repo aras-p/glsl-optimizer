@@ -94,8 +94,6 @@ static void intel_start_inline(struct intel_context *intel, uint32_t prim)
 
    intel->no_batch_wrap = true;
 
-   /*printf("%s *", __progname);*/
-
    /* Emit a slot which will be filled with the inline primitive
     * command later.
     */

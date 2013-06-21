@@ -51,7 +51,6 @@ struct intel_renderbuffer
 {
    struct swrast_renderbuffer Base;
    struct intel_mipmap_tree *mt; /**< The renderbuffer storage. */
-   drm_intel_bo *map_bo;
 
    /**
     * \name Miptree view
