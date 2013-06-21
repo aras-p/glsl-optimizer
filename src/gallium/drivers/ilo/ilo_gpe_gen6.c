@@ -2081,70 +2081,31 @@ ilo_gpe_init_rasterizer_wm_gen6(const struct ilo_dev_info *dev,
    wm->payload[1] = dw6;
 }
 
-static void
-gen6_emit_3DSTATE_WM(const struct ilo_dev_info *dev,
-                     const struct ilo_shader *fs,
-                     int num_samplers,
-                     const struct ilo_rasterizer_state *rasterizer,
-                     bool dual_blend, bool cc_may_kill,
-                     struct ilo_cp *cp)
+void
+ilo_gpe_init_fs_cso_gen6(const struct ilo_dev_info *dev,
+                         const struct ilo_shader_state *fs,
+                         struct ilo_shader_cso *cso)
 {
-   const uint32_t cmd = ILO_GPE_CMD(0x3, 0x0, 0x14);
-   const uint8_t cmd_len = 9;
-   const int num_samples = 1;
+   int start_grf, input_count, interps, max_threads;
    uint32_t dw2, dw4, dw5, dw6;
-   int max_threads;
 
    ILO_GPE_VALID_GEN(dev, 6, 6);
+
+   start_grf = ilo_shader_get_kernel_param(fs, ILO_KERNEL_URB_DATA_START_REG);
+   input_count = ilo_shader_get_kernel_param(fs, ILO_KERNEL_INPUT_COUNT);
+   interps = ilo_shader_get_kernel_param(fs,
+         ILO_KERNEL_FS_BARYCENTRIC_INTERPOLATIONS);
 
    /* see brwCreateContext() */
    max_threads = (dev->gt == 2) ? 80 : 40;
 
-   if (!fs) {
-      ilo_cp_begin(cp, cmd_len);
-      ilo_cp_write(cp, cmd | (cmd_len - 2));
-      ilo_cp_write(cp, 0);
-      ilo_cp_write(cp, 0);
-      ilo_cp_write(cp, 0);
-      ilo_cp_write(cp, 0);
-      /* honor the valid range even if dispatching is disabled */
-      ilo_cp_write(cp, (max_threads - 1) << GEN6_WM_MAX_THREADS_SHIFT);
-      ilo_cp_write(cp, 0);
-      ilo_cp_write(cp, 0);
-      ilo_cp_write(cp, 0);
-      ilo_cp_end(cp);
+   dw2 = (true) ? 0 : GEN6_WM_FLOATING_POINT_MODE_ALT;
 
-      return;
-   }
-
-   dw2 = (num_samplers + 3) / 4 << GEN6_WM_SAMPLER_COUNT_SHIFT;
-   if (false)
-      dw2 |= GEN6_WM_FLOATING_POINT_MODE_ALT;
-
-   dw4 = fs->in.start_grf << GEN6_WM_DISPATCH_START_GRF_SHIFT_0 |
+   dw4 = start_grf << GEN6_WM_DISPATCH_START_GRF_SHIFT_0 |
          0 << GEN6_WM_DISPATCH_START_GRF_SHIFT_1 |
          0 << GEN6_WM_DISPATCH_START_GRF_SHIFT_2;
 
-   if (true) {
-      dw4 |= GEN6_WM_STATISTICS_ENABLE;
-   }
-   else {
-      /*
-       * From the Sandy Bridge PRM, volume 2 part 1, page 248:
-       *
-       *     "This bit (Statistics Enable) must be disabled if either of these
-       *      bits is set: Depth Buffer Clear , Hierarchical Depth Buffer
-       *      Resolve Enable or Depth Buffer Resolve Enable."
-       */
-      dw4 |= GEN6_WM_DEPTH_CLEAR;
-      dw4 |= GEN6_WM_DEPTH_RESOLVE;
-      dw4 |= GEN6_WM_HIERARCHICAL_DEPTH_RESOLVE;
-   }
-
-   dw5 = rasterizer->wm.payload[0];
-   dw6 = rasterizer->wm.payload[1];
-
-   dw5 |= (max_threads - 1) << GEN6_WM_MAX_THREADS_SHIFT;
+   dw5 = (max_threads - 1) << GEN6_WM_MAX_THREADS_SHIFT;
 
    /*
     * From the Sandy Bridge PRM, volume 2 part 1, page 275:
@@ -2171,7 +2132,7 @@ gen6_emit_3DSTATE_WM(const struct ilo_dev_info *dev,
     *      therefore not via PS instructions, there should be no need to
     *      ENABLE this bit due to ClipDistance clipping."
     */
-   if (fs->has_kill || cc_may_kill)
+   if (ilo_shader_get_kernel_param(fs, ILO_KERNEL_FS_USE_KILL))
       dw5 |= GEN6_WM_KILL_ENABLE;
 
    /*
@@ -2182,14 +2143,17 @@ gen6_emit_3DSTATE_WM(const struct ilo_dev_info *dev,
     *
     * TODO This is not checked yet.
     */
-   if (fs->out.has_pos)
+   if (ilo_shader_get_kernel_param(fs, ILO_KERNEL_FS_OUTPUT_Z))
       dw5 |= GEN6_WM_COMPUTED_DEPTH;
 
-   if (fs->in.has_pos)
-      dw5 |= GEN6_WM_USES_SOURCE_DEPTH | GEN6_WM_USES_SOURCE_W;
+   if (ilo_shader_get_kernel_param(fs, ILO_KERNEL_FS_INPUT_Z))
+      dw5 |= GEN6_WM_USES_SOURCE_DEPTH;
+
+   if (ilo_shader_get_kernel_param(fs, ILO_KERNEL_FS_INPUT_W))
+      dw5 |= GEN6_WM_USES_SOURCE_W;
 
    /*
-    * Set this bit if
+    * TODO set this bit only when
     *
     *  a) fs writes colors and color is not masked, or
     *  b) fs writes depth, or
@@ -2198,18 +2162,91 @@ gen6_emit_3DSTATE_WM(const struct ilo_dev_info *dev,
    if (true)
       dw5 |= GEN6_WM_DISPATCH_ENABLE;
 
+   assert(!ilo_shader_get_kernel_param(fs, ILO_KERNEL_FS_DISPATCH_16_OFFSET));
+   dw5 |= GEN6_WM_8_DISPATCH_ENABLE;
+
+   dw6 = input_count << GEN6_WM_NUM_SF_OUTPUTS_SHIFT |
+         GEN6_WM_POSOFFSET_NONE |
+         interps << GEN6_WM_BARYCENTRIC_INTERPOLATION_MODE_SHIFT;
+
+   STATIC_ASSERT(Elements(cso->payload) >= 4);
+   cso->payload[0] = dw2;
+   cso->payload[1] = dw4;
+   cso->payload[2] = dw5;
+   cso->payload[3] = dw6;
+}
+
+static void
+gen6_emit_3DSTATE_WM(const struct ilo_dev_info *dev,
+                     const struct ilo_shader_state *fs,
+                     int num_samplers,
+                     const struct ilo_rasterizer_state *rasterizer,
+                     bool dual_blend, bool cc_may_kill,
+                     struct ilo_cp *cp)
+{
+   const uint32_t cmd = ILO_GPE_CMD(0x3, 0x0, 0x14);
+   const uint8_t cmd_len = 9;
+   const int num_samples = 1;
+   const struct ilo_shader_cso *fs_cso;
+   uint32_t dw2, dw4, dw5, dw6;
+
+   ILO_GPE_VALID_GEN(dev, 6, 6);
+
+   if (!fs) {
+      /* see brwCreateContext() */
+      const int max_threads = (dev->gt == 2) ? 80 : 40;
+
+      ilo_cp_begin(cp, cmd_len);
+      ilo_cp_write(cp, cmd | (cmd_len - 2));
+      ilo_cp_write(cp, 0);
+      ilo_cp_write(cp, 0);
+      ilo_cp_write(cp, 0);
+      ilo_cp_write(cp, 0);
+      /* honor the valid range even if dispatching is disabled */
+      ilo_cp_write(cp, (max_threads - 1) << GEN6_WM_MAX_THREADS_SHIFT);
+      ilo_cp_write(cp, 0);
+      ilo_cp_write(cp, 0);
+      ilo_cp_write(cp, 0);
+      ilo_cp_end(cp);
+
+      return;
+   }
+
+   fs_cso = ilo_shader_get_kernel_cso(fs);
+   dw2 = fs_cso->payload[0];
+   dw4 = fs_cso->payload[1];
+   dw5 = fs_cso->payload[2];
+   dw6 = fs_cso->payload[3];
+
+   dw2 |= (num_samplers + 3) / 4 << GEN6_WM_SAMPLER_COUNT_SHIFT;
+
+   if (true) {
+      dw4 |= GEN6_WM_STATISTICS_ENABLE;
+   }
+   else {
+      /*
+       * From the Sandy Bridge PRM, volume 2 part 1, page 248:
+       *
+       *     "This bit (Statistics Enable) must be disabled if either of these
+       *      bits is set: Depth Buffer Clear , Hierarchical Depth Buffer
+       *      Resolve Enable or Depth Buffer Resolve Enable."
+       */
+      dw4 |= GEN6_WM_DEPTH_CLEAR;
+      dw4 |= GEN6_WM_DEPTH_RESOLVE;
+      dw4 |= GEN6_WM_HIERARCHICAL_DEPTH_RESOLVE;
+   }
+
+   if (cc_may_kill) {
+      dw5 |= GEN6_WM_KILL_ENABLE |
+             GEN6_WM_DISPATCH_ENABLE;
+   }
+
    if (dual_blend)
       dw5 |= GEN6_WM_DUAL_SOURCE_BLEND_ENABLE;
 
-   if (fs->dispatch_16)
-      dw5 |= GEN6_WM_16_DISPATCH_ENABLE;
-   else
-      dw5 |= GEN6_WM_8_DISPATCH_ENABLE;
+   dw5 |= rasterizer->wm.payload[0];
 
-   dw6 |= fs->in.count << GEN6_WM_NUM_SF_OUTPUTS_SHIFT |
-          GEN6_WM_POSOFFSET_NONE |
-          fs->in.barycentric_interpolation_mode <<
-             GEN6_WM_BARYCENTRIC_INTERPOLATION_MODE_SHIFT;
+   dw6 |= rasterizer->wm.payload[1];
 
    if (num_samples > 1) {
       dw6 |= rasterizer->wm.dw_msaa_rast |
@@ -2218,7 +2255,7 @@ gen6_emit_3DSTATE_WM(const struct ilo_dev_info *dev,
 
    ilo_cp_begin(cp, cmd_len);
    ilo_cp_write(cp, cmd | (cmd_len - 2));
-   ilo_cp_write(cp, fs->cache_offset);
+   ilo_cp_write(cp, ilo_shader_get_kernel_offset(fs));
    ilo_cp_write(cp, dw2);
    ilo_cp_write(cp, 0); /* scratch */
    ilo_cp_write(cp, dw4);

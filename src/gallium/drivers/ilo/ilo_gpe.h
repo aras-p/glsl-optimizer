@@ -484,4 +484,27 @@ ilo_gpe_init_gs_cso(const struct ilo_dev_info *dev,
    }
 }
 
+void
+ilo_gpe_init_fs_cso_gen6(const struct ilo_dev_info *dev,
+                         const struct ilo_shader_state *fs,
+                         struct ilo_shader_cso *cso);
+
+void
+ilo_gpe_init_fs_cso_gen7(const struct ilo_dev_info *dev,
+                         const struct ilo_shader_state *fs,
+                         struct ilo_shader_cso *cso);
+
+static inline void
+ilo_gpe_init_fs_cso(const struct ilo_dev_info *dev,
+                    const struct ilo_shader_state *fs,
+                    struct ilo_shader_cso *cso)
+{
+   if (dev->gen >= ILO_GEN(7)) {
+      ilo_gpe_init_fs_cso_gen7(dev, fs, cso);
+   }
+   else {
+      ilo_gpe_init_fs_cso_gen6(dev, fs, cso);
+   }
+}
+
 #endif /* ILO_GPE_H */

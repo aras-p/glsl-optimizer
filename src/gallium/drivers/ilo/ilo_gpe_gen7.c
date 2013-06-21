@@ -241,9 +241,104 @@ ilo_gpe_init_rasterizer_wm_gen7(const struct ilo_dev_info *dev,
    wm->payload[1] = dw2;
 }
 
+void
+ilo_gpe_init_fs_cso_gen7(const struct ilo_dev_info *dev,
+                         const struct ilo_shader_state *fs,
+                         struct ilo_shader_cso *cso)
+{
+   int start_grf, max_threads;
+   uint32_t dw2, dw4, dw5;
+   uint32_t wm_interps, wm_dw1;
+
+   ILO_GPE_VALID_GEN(dev, 7, 7);
+
+   start_grf = ilo_shader_get_kernel_param(fs, ILO_KERNEL_URB_DATA_START_REG);
+   /* see brwCreateContext() */
+   max_threads = (dev->gt == 2) ? 172 : 48;
+
+   dw2 = (true) ? 0 : GEN7_PS_FLOATING_POINT_MODE_ALT;
+
+   dw4 = (max_threads - 1) << IVB_PS_MAX_THREADS_SHIFT |
+         GEN7_PS_POSOFFSET_NONE;
+
+   if (false)
+      dw4 |= GEN7_PS_PUSH_CONSTANT_ENABLE;
+
+   if (ilo_shader_get_kernel_param(fs, ILO_KERNEL_INPUT_COUNT))
+      dw4 |= GEN7_PS_ATTRIBUTE_ENABLE;
+
+   assert(!ilo_shader_get_kernel_param(fs, ILO_KERNEL_FS_DISPATCH_16_OFFSET));
+   dw4 |= GEN7_PS_8_DISPATCH_ENABLE;
+
+   dw5 = start_grf << GEN7_PS_DISPATCH_START_GRF_SHIFT_0 |
+         0 << GEN7_PS_DISPATCH_START_GRF_SHIFT_1 |
+         0 << GEN7_PS_DISPATCH_START_GRF_SHIFT_2;
+
+   /* FS affects 3DSTATE_WM too */
+   wm_dw1 = 0;
+
+   /*
+    * TODO set this bit only when
+    *
+    *  a) fs writes colors and color is not masked, or
+    *  b) fs writes depth, or
+    *  c) fs or cc kills
+    */
+   wm_dw1 |= GEN7_WM_DISPATCH_ENABLE;
+
+   /*
+    * From the Ivy Bridge PRM, volume 2 part 1, page 278:
+    *
+    *     "This bit (Pixel Shader Kill Pixel), if ENABLED, indicates that
+    *      the PS kernel or color calculator has the ability to kill
+    *      (discard) pixels or samples, other than due to depth or stencil
+    *      testing. This bit is required to be ENABLED in the following
+    *      situations:
+    *
+    *      - The API pixel shader program contains "killpix" or "discard"
+    *        instructions, or other code in the pixel shader kernel that
+    *        can cause the final pixel mask to differ from the pixel mask
+    *        received on dispatch.
+    *
+    *      - A sampler with chroma key enabled with kill pixel mode is used
+    *        by the pixel shader.
+    *
+    *      - Any render target has Alpha Test Enable or AlphaToCoverage
+    *        Enable enabled.
+    *
+    *      - The pixel shader kernel generates and outputs oMask.
+    *
+    *      Note: As ClipDistance clipping is fully supported in hardware
+    *      and therefore not via PS instructions, there should be no need
+    *      to ENABLE this bit due to ClipDistance clipping."
+    */
+   if (ilo_shader_get_kernel_param(fs, ILO_KERNEL_FS_USE_KILL))
+      wm_dw1 |= GEN7_WM_KILL_ENABLE;
+
+   if (ilo_shader_get_kernel_param(fs, ILO_KERNEL_FS_OUTPUT_Z))
+      wm_dw1 |= GEN7_WM_PSCDEPTH_ON;
+
+   if (ilo_shader_get_kernel_param(fs, ILO_KERNEL_FS_INPUT_Z))
+      wm_dw1 |= GEN7_WM_USES_SOURCE_DEPTH;
+
+   if (ilo_shader_get_kernel_param(fs, ILO_KERNEL_FS_INPUT_W))
+      wm_dw1 |= GEN7_WM_USES_SOURCE_W;
+
+   wm_interps = ilo_shader_get_kernel_param(fs,
+         ILO_KERNEL_FS_BARYCENTRIC_INTERPOLATIONS);
+
+   wm_dw1 |= wm_interps << GEN7_WM_BARYCENTRIC_INTERPOLATION_MODE_SHIFT;
+
+   STATIC_ASSERT(Elements(cso->payload) >= 4);
+   cso->payload[0] = dw2;
+   cso->payload[1] = dw4;
+   cso->payload[2] = dw5;
+   cso->payload[3] = wm_dw1;
+}
+
 static void
 gen7_emit_3DSTATE_WM(const struct ilo_dev_info *dev,
-                     const struct ilo_shader *fs,
+                     const struct ilo_shader_state *fs,
                      const struct ilo_rasterizer_state *rasterizer,
                      bool cc_may_kill,
                      struct ilo_cp *cp)
@@ -268,55 +363,14 @@ gen7_emit_3DSTATE_WM(const struct ilo_dev_info *dev,
    }
 
    if (fs) {
-      /*
-       * Set this bit if
-       *
-       *  a) fs writes colors and color is not masked, or
-       *  b) fs writes depth, or
-       *  c) fs or cc kills
-       */
-      dw1 |= GEN7_WM_DISPATCH_ENABLE;
+      const struct ilo_shader_cso *fs_cso = ilo_shader_get_kernel_cso(fs);
 
-      /*
-       * From the Ivy Bridge PRM, volume 2 part 1, page 278:
-       *
-       *     "This bit (Pixel Shader Kill Pixel), if ENABLED, indicates that
-       *      the PS kernel or color calculator has the ability to kill
-       *      (discard) pixels or samples, other than due to depth or stencil
-       *      testing. This bit is required to be ENABLED in the following
-       *      situations:
-       *
-       *      - The API pixel shader program contains "killpix" or "discard"
-       *        instructions, or other code in the pixel shader kernel that
-       *        can cause the final pixel mask to differ from the pixel mask
-       *        received on dispatch.
-       *
-       *      - A sampler with chroma key enabled with kill pixel mode is used
-       *        by the pixel shader.
-       *
-       *      - Any render target has Alpha Test Enable or AlphaToCoverage
-       *        Enable enabled.
-       *
-       *      - The pixel shader kernel generates and outputs oMask.
-       *
-       *      Note: As ClipDistance clipping is fully supported in hardware
-       *      and therefore not via PS instructions, there should be no need
-       *      to ENABLE this bit due to ClipDistance clipping."
-       */
-      if (fs->has_kill || cc_may_kill)
-         dw1 |= GEN7_WM_KILL_ENABLE;
-
-      if (fs->out.has_pos)
-         dw1 |= GEN7_WM_PSCDEPTH_ON;
-      if (fs->in.has_pos)
-         dw1 |= GEN7_WM_USES_SOURCE_DEPTH | GEN7_WM_USES_SOURCE_W;
-
-      dw1 |= fs->in.barycentric_interpolation_mode <<
-         GEN7_WM_BARYCENTRIC_INTERPOLATION_MODE_SHIFT;
+      dw1 |= fs_cso->payload[3];
    }
-   else if (cc_may_kill) {
-         dw1 |= GEN7_WM_DISPATCH_ENABLE |
-                GEN7_WM_KILL_ENABLE;
+
+   if (cc_may_kill) {
+      dw1 |= GEN7_WM_DISPATCH_ENABLE |
+             GEN7_WM_KILL_ENABLE;
    }
 
    if (num_samples > 1) {
@@ -676,21 +730,21 @@ gen7_emit_3DSTATE_SBE(const struct ilo_dev_info *dev,
 
 static void
 gen7_emit_3DSTATE_PS(const struct ilo_dev_info *dev,
-                     const struct ilo_shader *fs,
+                     const struct ilo_shader_state *fs,
                      int num_samplers, bool dual_blend,
                      struct ilo_cp *cp)
 {
    const uint32_t cmd = ILO_GPE_CMD(0x3, 0x0, 0x20);
    const uint8_t cmd_len = 8;
+   const struct ilo_shader_cso *cso;
    uint32_t dw2, dw4, dw5;
-   int max_threads;
 
    ILO_GPE_VALID_GEN(dev, 7, 7);
 
-   /* see brwCreateContext() */
-   max_threads = (dev->gt == 2) ? 172 : 48;
-
    if (!fs) {
+      /* see brwCreateContext() */
+      const int max_threads = (dev->gt == 2) ? 172 : 48;
+
       ilo_cp_begin(cp, cmd_len);
       ilo_cp_write(cp, cmd | (cmd_len - 2));
       ilo_cp_write(cp, 0);
@@ -707,33 +761,19 @@ gen7_emit_3DSTATE_PS(const struct ilo_dev_info *dev,
       return;
    }
 
-   dw2 = (num_samplers + 3) / 4 << GEN7_PS_SAMPLER_COUNT_SHIFT |
-         0 << GEN7_PS_BINDING_TABLE_ENTRY_COUNT_SHIFT;
-   if (false)
-      dw2 |= GEN7_PS_FLOATING_POINT_MODE_ALT;
+   cso = ilo_shader_get_kernel_cso(fs);
+   dw2 = cso->payload[0];
+   dw4 = cso->payload[1];
+   dw5 = cso->payload[2];
 
-   dw4 = (max_threads - 1) << IVB_PS_MAX_THREADS_SHIFT |
-         GEN7_PS_POSOFFSET_NONE;
+   dw2 |= (num_samplers + 3) / 4 << GEN7_PS_SAMPLER_COUNT_SHIFT;
 
-   if (false)
-      dw4 |= GEN7_PS_PUSH_CONSTANT_ENABLE;
-   if (fs->in.count)
-      dw4 |= GEN7_PS_ATTRIBUTE_ENABLE;
    if (dual_blend)
       dw4 |= GEN7_PS_DUAL_SOURCE_BLEND_ENABLE;
 
-   if (fs->dispatch_16)
-      dw4 |= GEN7_PS_16_DISPATCH_ENABLE;
-   else
-      dw4 |= GEN7_PS_8_DISPATCH_ENABLE;
-
-   dw5 = fs->in.start_grf << GEN7_PS_DISPATCH_START_GRF_SHIFT_0 |
-         0 << GEN7_PS_DISPATCH_START_GRF_SHIFT_1 |
-         0 << GEN7_PS_DISPATCH_START_GRF_SHIFT_2;
-
    ilo_cp_begin(cp, cmd_len);
    ilo_cp_write(cp, cmd | (cmd_len - 2));
-   ilo_cp_write(cp, fs->cache_offset);
+   ilo_cp_write(cp, ilo_shader_get_kernel_offset(fs));
    ilo_cp_write(cp, dw2);
    ilo_cp_write(cp, 0); /* scratch */
    ilo_cp_write(cp, dw4);

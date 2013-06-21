@@ -686,6 +686,9 @@ ilo_shader_state_use_variant(struct ilo_shader_state *state,
       case PIPE_SHADER_GEOMETRY:
          ilo_gpe_init_gs_cso(state->info.dev, state, &sh->cso);
          break;
+      case PIPE_SHADER_FRAGMENT:
+         ilo_gpe_init_fs_cso(state->info.dev, state, &sh->cso);
+         break;
       default:
          break;
       }

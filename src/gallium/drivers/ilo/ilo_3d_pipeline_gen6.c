@@ -663,19 +663,18 @@ gen6_pipeline_wm(struct ilo_3d_pipeline *p,
    if (DIRTY(FS) || DIRTY(FRAGMENT_SAMPLERS) ||
        DIRTY(BLEND) || DIRTY(DEPTH_STENCIL_ALPHA) ||
        DIRTY(RASTERIZER) || session->kernel_bo_changed) {
-      const struct ilo_shader *fs = (ilo->fs)? ilo->fs->shader : NULL;
       const int num_samplers = ilo->sampler[PIPE_SHADER_FRAGMENT].count;
       const bool dual_blend = ilo->blend->dual_blend;
       const bool cc_may_kill = (ilo->dsa->alpha.enabled ||
                                 ilo->blend->alpha_to_coverage);
 
-      if (fs)
-         assert(!fs->pcb.clip_state_size);
+      if (ilo->fs)
+         assert(!ilo->fs->shader->pcb.clip_state_size);
 
       if (p->dev->gen == ILO_GEN(6) && session->hw_ctx_changed)
          gen6_wa_pipe_control_wm_max_threads_stall(p);
 
-      p->gen6_3DSTATE_WM(p->dev, fs, num_samplers,
+      p->gen6_3DSTATE_WM(p->dev, ilo->fs, num_samplers,
             ilo->rasterizer, dual_blend, cc_may_kill, p->cp);
    }
 }

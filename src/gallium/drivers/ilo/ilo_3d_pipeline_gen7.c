@@ -460,17 +460,17 @@ gen7_pipeline_wm(struct ilo_3d_pipeline *p,
    /* 3DSTATE_WM */
    if (DIRTY(FS) || DIRTY(BLEND) || DIRTY(DEPTH_STENCIL_ALPHA) ||
        DIRTY(RASTERIZER)) {
-      const struct ilo_shader *fs = (ilo->fs)? ilo->fs->shader : NULL;
       const bool cc_may_kill = (ilo->dsa->alpha.enabled ||
                                 ilo->blend->alpha_to_coverage);
 
-      if (fs)
-         assert(!fs->pcb.clip_state_size);
+      if (ilo->fs)
+         assert(!ilo->fs->shader->pcb.clip_state_size);
 
       if (p->dev->gen == ILO_GEN(7) && session->hw_ctx_changed)
          gen7_wa_pipe_control_wm_max_threads_stall(p);
 
-      p->gen7_3DSTATE_WM(p->dev, fs, ilo->rasterizer, cc_may_kill, p->cp);
+      p->gen7_3DSTATE_WM(p->dev, ilo->fs,
+            ilo->rasterizer, cc_may_kill, p->cp);
    }
 
    /* 3DSTATE_BINDING_TABLE_POINTERS_PS */
@@ -492,14 +492,13 @@ gen7_pipeline_wm(struct ilo_3d_pipeline *p,
    /* 3DSTATE_PS */
    if (DIRTY(FS) || DIRTY(FRAGMENT_SAMPLERS) ||
        DIRTY(BLEND) || session->kernel_bo_changed) {
-      const struct ilo_shader *fs = (ilo->fs)? ilo->fs->shader : NULL;
       const int num_samplers = ilo->sampler[PIPE_SHADER_FRAGMENT].count;
       const bool dual_blend = ilo->blend->dual_blend;
 
-      if (fs)
-         assert(!fs->pcb.clip_state_size);
+      if (ilo->fs)
+         assert(!ilo->fs->shader->pcb.clip_state_size);
 
-      p->gen7_3DSTATE_PS(p->dev, fs, num_samplers, dual_blend, p->cp);
+      p->gen7_3DSTATE_PS(p->dev, ilo->fs, num_samplers, dual_blend, p->cp);
    }
 
    /* 3DSTATE_SCISSOR_STATE_POINTERS */
