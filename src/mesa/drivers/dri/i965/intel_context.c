@@ -519,8 +519,6 @@ intelInitContext(struct intel_context *intel,
       intel->gt = 1;
    } else if (IS_G4X(devID)) {
       intel->is_g4x = true;
-   } else if (IS_945(devID)) {
-      intel->is_945 = true;
    }
 
    if (intel->gen >= 5) {
