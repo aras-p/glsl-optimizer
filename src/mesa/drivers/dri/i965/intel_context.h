@@ -57,12 +57,6 @@ extern "C" {
 #include "tnl_dd/t_dd_vertex.h"
 #undef TAG
 
-#define DV_PF_555  (1<<8)
-#define DV_PF_565  (2<<8)
-#define DV_PF_8888 (3<<8)
-#define DV_PF_4444 (8<<8)
-#define DV_PF_1555 (9<<8)
-
 struct intel_region;
 struct intel_context;
 
