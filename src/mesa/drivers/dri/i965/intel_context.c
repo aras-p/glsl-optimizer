@@ -613,7 +613,6 @@ intelInitContext(struct intel_context *intel,
    _mesa_meta_init(ctx);
 
    intel->hw_stencil = mesaVis->stencilBits && mesaVis->depthBits == 24;
-   intel->hw_stipple = 1;
 
    intelInitExtensions(ctx);
 
