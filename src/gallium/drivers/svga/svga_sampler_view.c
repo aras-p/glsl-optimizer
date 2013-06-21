@@ -103,6 +103,9 @@ svga_get_tex_sampler_view(struct pipe_context *pipe,
    }
 
    sv = CALLOC_STRUCT(svga_sampler_view);
+   if (!sv)
+      return NULL;
+
    pipe_reference_init(&sv->reference, 1);
 
    /* Note: we're not refcounting the texture resource here to avoid
