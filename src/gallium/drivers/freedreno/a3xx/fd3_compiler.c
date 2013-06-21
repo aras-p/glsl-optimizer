@@ -304,6 +304,19 @@ get_internal_temp(struct fd3_compile_context *ctx,
 	src_from_dst(tmp_src, tmp_dst);
 }
 
+/* same as get_internal_temp, but w/ src.xxxx (for instructions that
+ * replicate their results)
+ */
+static void
+get_internal_temp_repl(struct fd3_compile_context *ctx,
+		struct tgsi_dst_register *tmp_dst,
+		struct tgsi_src_register *tmp_src)
+{
+	get_internal_temp(ctx, tmp_dst, tmp_src);
+	tmp_src->SwizzleX = tmp_src->SwizzleY =
+		tmp_src->SwizzleZ = tmp_src->SwizzleW = TGSI_SWIZZLE_X;
+}
+
 static void
 get_immediate(struct fd3_compile_context *ctx,
 		struct tgsi_src_register *reg, uint32_t val)
@@ -498,10 +511,7 @@ trans_dotp(const struct instr_translater *t,
 	opc_t opc_mad    = ctx->so->half_precision ? OPC_MAD_F16 : OPC_MAD_F32;
 	unsigned i;
 
-	assert(inst->Instruction.NumSrcRegs == 2);
-	assert(inst->Instruction.NumDstRegs == 1);
-
-	get_internal_temp(ctx, &tmp_dst, &tmp_src);
+	get_internal_temp_repl(ctx, &tmp_dst, &tmp_src);
 
 	/* Blob compiler never seems to use a const in src1 position for
 	 * mad.*, although there does seem (according to disassembler
@@ -628,10 +638,7 @@ trans_pow(const struct instr_translater *t,
 	struct tgsi_src_register *src0 = &inst->Src[0].Register;
 	struct tgsi_src_register *src1 = &inst->Src[1].Register;
 
-	assert(inst->Instruction.NumSrcRegs == 2);
-	assert(inst->Instruction.NumDstRegs == 1);
-
-	get_internal_temp(ctx, &tmp_dst, &tmp_src);
+	get_internal_temp_repl(ctx, &tmp_dst, &tmp_src);
 
 	/* log2 Rtmp, Rsrc0 */
 	ir3_instr_create(ctx->ir, 0, OPC_NOP)->repeat = 5;
@@ -697,9 +704,6 @@ trans_samp(const struct instr_translater *t,
 	if (tex == TGSI_TEXTURE_3D)
 		flags |= IR3_INSTR_3D;
 
-	assert(inst->Instruction.NumSrcRegs == 2);
-	assert(inst->Instruction.NumDstRegs == 1);
-
 	/* The texture sample instructions need to coord in successive
 	 * registers/components (ie. src.xy but not src.yx).  And TXP
 	 * needs the .w component in .z for 2D..  so in some cases we
@@ -707,7 +711,7 @@ trans_samp(const struct instr_translater *t,
 	 * around:
 	 */
 	for (i = 1; (i < 4) && (order[i] >= 0); i++) {
-		if (src_swiz(coord, 0) != (src_swiz(coord, i) + order[i])) {
+		if (src_swiz(coord, i) != (src_swiz(coord, 0) + order[i])) {
 			type_t type_mov = get_type(ctx);
 
 			/* need to move things around: */
@@ -882,9 +886,6 @@ instr_cat0(const struct instr_translater *t,
 		struct fd3_compile_context *ctx,
 		struct tgsi_full_instruction *inst)
 {
-	assert(inst->Instruction.NumSrcRegs == 0);
-	assert(inst->Instruction.NumDstRegs == 0);
-
 	ir3_instr_create(ctx->ir, 0, t->opc);
 }
 
@@ -895,9 +896,6 @@ instr_cat1(const struct instr_translater *t,
 {
 	struct tgsi_dst_register *dst = get_dst(ctx, inst);
 	struct tgsi_src_register *src = &inst->Src[0].Register;
-
-	assert(inst->Instruction.NumSrcRegs == 1);
-	assert(inst->Instruction.NumDstRegs == 1);
 
 	/* mov instructions can't handle a negate on src: */
 	if (src->Negate) {
@@ -975,9 +973,6 @@ instr_cat3(const struct instr_translater *t,
 	struct tgsi_src_register tmp_src;
 	struct ir3_instruction *instr;
 
-	assert(inst->Instruction.NumSrcRegs == 3);
-	assert(inst->Instruction.NumDstRegs == 1);
-
 	/* Blob compiler never seems to use a const in src1 position..
 	 * although there does seem (according to disassembler hidden
 	 * in libllvm-a3xx.so) to be a bit to indicate that src1 is a
@@ -1007,9 +1002,6 @@ instr_cat4(const struct instr_translater *t,
 {
 	struct tgsi_dst_register *dst = get_dst(ctx, inst);
 	struct ir3_instruction *instr;
-
-	assert(inst->Instruction.NumSrcRegs == 1);
-	assert(inst->Instruction.NumDstRegs == 1);
 
 	ir3_instr_create(ctx->ir, 0, OPC_NOP)->repeat = 5;
 	instr = ir3_instr_create(ctx->ir, 4, t->opc);
@@ -1126,6 +1118,8 @@ decl_out(struct fd3_compile_context *ctx, struct tgsi_full_declaration *decl)
 			break;
 		case TGSI_SEMANTIC_COLOR:
 		case TGSI_SEMANTIC_GENERIC:
+		case TGSI_SEMANTIC_FOG:
+		case TGSI_SEMANTIC_TEXCOORD:
 			for (i = decl->Range.First; i <= decl->Range.Last; i++)
 				so->outputs[so->outputs_count++].regid = regid(i + base, 0);
 			break;
