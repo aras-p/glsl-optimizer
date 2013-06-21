@@ -29,7 +29,6 @@
 #include "brw_defines.h"
 #include "intel_reg.h"
 
-#include "shader/ilo_shader_internal.h"
 #include "ilo_cp.h"
 #include "ilo_format.h"
 #include "ilo_resource.h"
@@ -529,51 +528,24 @@ gen7_emit_3DSTATE_CONSTANT_DS(const struct ilo_dev_info *dev,
 
 static void
 gen7_emit_3DSTATE_HS(const struct ilo_dev_info *dev,
-                     const struct ilo_shader *hs,
-                     int max_threads, int num_samplers,
+                     const struct ilo_shader_state *hs,
+                     int num_samplers,
                      struct ilo_cp *cp)
 {
    const uint32_t cmd = ILO_GPE_CMD(0x3, 0x0, 0x1b);
    const uint8_t cmd_len = 7;
-   uint32_t dw1, dw2, dw5;
 
    ILO_GPE_VALID_GEN(dev, 7, 7);
 
-   if (!hs) {
-      ilo_cp_begin(cp, cmd_len);
-      ilo_cp_write(cp, cmd | (cmd_len - 2));
-      ilo_cp_write(cp, 0);
-      ilo_cp_write(cp, 0);
-      ilo_cp_write(cp, 0);
-      ilo_cp_write(cp, 0);
-      ilo_cp_write(cp, 0);
-      ilo_cp_write(cp, 0);
-      ilo_cp_end(cp);
-
-      return;
-   }
-
-   dw1 = (num_samplers + 3) / 4 << 27 |
-         0 << 18 |
-         (max_threads - 1);
-   if (false)
-      dw1 |= 1 << 16;
-
-   dw2 = 1 << 31 | /* HS Enable */
-         1 << 29 | /* HS Statistics Enable */
-         0; /* Instance Count */
-
-   dw5 = hs->in.start_grf << 19 |
-         0 << 11 |
-         0 << 4;
+   assert(!hs);
 
    ilo_cp_begin(cp, cmd_len);
    ilo_cp_write(cp, cmd | (cmd_len - 2));
-   ilo_cp_write(cp, dw1);
-   ilo_cp_write(cp, dw2);
-   ilo_cp_write(cp, hs->cache_offset);
    ilo_cp_write(cp, 0);
-   ilo_cp_write(cp, dw5);
+   ilo_cp_write(cp, 0);
+   ilo_cp_write(cp, 0);
+   ilo_cp_write(cp, 0);
+   ilo_cp_write(cp, 0);
    ilo_cp_write(cp, 0);
    ilo_cp_end(cp);
 }
@@ -597,51 +569,26 @@ gen7_emit_3DSTATE_TE(const struct ilo_dev_info *dev,
 
 static void
 gen7_emit_3DSTATE_DS(const struct ilo_dev_info *dev,
-                     const struct ilo_shader *ds,
-                     int max_threads, int num_samplers,
+                     const struct ilo_shader_state *ds,
+                     int num_samplers,
                      struct ilo_cp *cp)
 {
    const uint32_t cmd = ILO_GPE_CMD(0x3, 0x0, 0x1d);
    const uint8_t cmd_len = 6;
-   uint32_t dw2, dw4, dw5;
 
    ILO_GPE_VALID_GEN(dev, 7, 7);
 
-   if (!ds) {
-      ilo_cp_begin(cp, cmd_len);
-      ilo_cp_write(cp, cmd | (cmd_len - 2));
-      ilo_cp_write(cp, 0);
-      ilo_cp_write(cp, 0);
-      ilo_cp_write(cp, 0);
-      ilo_cp_write(cp, 0);
-      ilo_cp_write(cp, 0);
-      ilo_cp_end(cp);
-
-      return;
-   }
-
-   dw2 = (num_samplers + 3) / 4 << 27 |
-         0 << 18 |
-         (max_threads - 1);
-   if (false)
-      dw2 |= 1 << 16;
-
-   dw4 = ds->in.start_grf << 20 |
-         0 << 11 |
-         0 << 4;
-
-   dw5 = (max_threads - 1) << 25 |
-         1 << 10 |
-         1;
+   assert(!ds);
 
    ilo_cp_begin(cp, cmd_len);
    ilo_cp_write(cp, cmd | (cmd_len - 2));
-   ilo_cp_write(cp, ds->cache_offset);
-   ilo_cp_write(cp, dw2);
    ilo_cp_write(cp, 0);
-   ilo_cp_write(cp, dw4);
-   ilo_cp_write(cp, dw5);
+   ilo_cp_write(cp, 0);
+   ilo_cp_write(cp, 0);
+   ilo_cp_write(cp, 0);
+   ilo_cp_write(cp, 0);
    ilo_cp_end(cp);
+
 }
 
 static void
@@ -709,8 +656,8 @@ gen7_emit_3DSTATE_STREAMOUT(const struct ilo_dev_info *dev,
 static void
 gen7_emit_3DSTATE_SBE(const struct ilo_dev_info *dev,
                       const struct ilo_rasterizer_state *rasterizer,
-                      const struct ilo_shader *fs,
-                      const struct ilo_shader *last_sh,
+                      const struct ilo_shader_state *fs,
+                      const struct ilo_shader_state *last_sh,
                       struct ilo_cp *cp)
 {
    const uint32_t cmd = ILO_GPE_CMD(0x3, 0x0, 0x1f);

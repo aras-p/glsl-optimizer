@@ -626,12 +626,8 @@ gen6_pipeline_sf(struct ilo_3d_pipeline *p,
 {
    /* 3DSTATE_SF */
    if (DIRTY(RASTERIZER) || DIRTY(VS) || DIRTY(GS) || DIRTY(FS)) {
-      const struct ilo_shader *fs = (ilo->fs)? ilo->fs->shader : NULL;
-      const struct ilo_shader *last_sh =
-         (ilo->gs)? ilo->gs->shader :
-         (ilo->vs)? ilo->vs->shader : NULL;
-
-      p->gen6_3DSTATE_SF(p->dev, ilo->rasterizer, fs, last_sh, p->cp);
+      p->gen6_3DSTATE_SF(p->dev, ilo->rasterizer, ilo->fs,
+            (ilo->gs) ? ilo->gs : ilo->vs, p->cp);
    }
 }
 

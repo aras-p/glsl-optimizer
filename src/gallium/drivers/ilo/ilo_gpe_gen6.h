@@ -257,8 +257,8 @@ typedef void
 typedef void
 (*ilo_gpe_gen6_3DSTATE_SF)(const struct ilo_dev_info *dev,
                            const struct ilo_rasterizer_state *rasterizer,
-                           const struct ilo_shader *fs,
-                           const struct ilo_shader *last_sh,
+                           const struct ilo_shader_state *fs,
+                           const struct ilo_shader_state *last_sh,
                            struct ilo_cp *cp);
 
 typedef void
@@ -367,7 +367,7 @@ typedef void
 
 typedef uint32_t
 (*ilo_gpe_gen6_INTERFACE_DESCRIPTOR_DATA)(const struct ilo_dev_info *dev,
-                                          const struct ilo_shader **cs,
+                                          const struct ilo_shader_state **cs,
                                           uint32_t *sampler_state,
                                           int *num_samplers,
                                           uint32_t *binding_table_state,
@@ -552,8 +552,8 @@ ilo_gpe_gen6_fill_3dstate_sf_raster(const struct ilo_dev_info *dev,
 void
 ilo_gpe_gen6_fill_3dstate_sf_sbe(const struct ilo_dev_info *dev,
                                  const struct ilo_rasterizer_state *rasterizer,
-                                 const struct ilo_shader *fs,
-                                 const struct ilo_shader *last_sh,
+                                 const struct ilo_shader_state *fs,
+                                 const struct ilo_shader_state *last_sh,
                                  uint32_t *dw, int num_dwords);
 
 #endif /* ILO_GPE_GEN6_H */

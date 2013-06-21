@@ -201,8 +201,8 @@ typedef void
 
 typedef void
 (*ilo_gpe_gen7_3DSTATE_HS)(const struct ilo_dev_info *dev,
-                           const struct ilo_shader *hs,
-                           int max_threads, int num_samplers,
+                           const struct ilo_shader_state *hs,
+                           int num_samplers,
                            struct ilo_cp *cp);
 
 typedef void
@@ -211,8 +211,8 @@ typedef void
 
 typedef void
 (*ilo_gpe_gen7_3DSTATE_DS)(const struct ilo_dev_info *dev,
-                           const struct ilo_shader *ds,
-                           int max_threads, int num_samplers,
+                           const struct ilo_shader_state *ds,
+                           int num_samplers,
                            struct ilo_cp *cp);
 
 typedef void
@@ -225,8 +225,8 @@ typedef void
 typedef void
 (*ilo_gpe_gen7_3DSTATE_SBE)(const struct ilo_dev_info *dev,
                             const struct ilo_rasterizer_state *rasterizer,
-                            const struct ilo_shader *fs,
-                            const struct ilo_shader *last_sh,
+                            const struct ilo_shader_state *fs,
+                            const struct ilo_shader_state *last_sh,
                             struct ilo_cp *cp);
 
 typedef void

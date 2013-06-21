@@ -319,7 +319,7 @@ gen7_pipeline_hs(struct ilo_3d_pipeline *p,
    /* 3DSTATE_CONSTANT_HS and 3DSTATE_HS */
    if (session->hw_ctx_changed) {
       p->gen7_3DSTATE_CONSTANT_HS(p->dev, 0, 0, 0, p->cp);
-      p->gen7_3DSTATE_HS(p->dev, NULL, 0, 0, p->cp);
+      p->gen7_3DSTATE_HS(p->dev, NULL, 0, p->cp);
    }
 
    /* 3DSTATE_BINDING_TABLE_POINTERS_HS */
@@ -345,7 +345,7 @@ gen7_pipeline_ds(struct ilo_3d_pipeline *p,
    /* 3DSTATE_CONSTANT_DS and 3DSTATE_DS */
    if (session->hw_ctx_changed) {
       p->gen7_3DSTATE_CONSTANT_DS(p->dev, 0, 0, 0, p->cp);
-      p->gen7_3DSTATE_DS(p->dev, NULL, 0, 0, p->cp);
+      p->gen7_3DSTATE_DS(p->dev, NULL, 0, p->cp);
    }
 
    /* 3DSTATE_BINDING_TABLE_POINTERS_DS */
@@ -439,12 +439,8 @@ gen7_pipeline_sf(struct ilo_3d_pipeline *p,
 {
    /* 3DSTATE_SBE */
    if (DIRTY(RASTERIZER) || DIRTY(VS) || DIRTY(GS) || DIRTY(FS)) {
-      const struct ilo_shader *fs = (ilo->fs)? ilo->fs->shader : NULL;
-      const struct ilo_shader *last_sh =
-         (ilo->gs)? ilo->gs->shader :
-         (ilo->vs)? ilo->vs->shader : NULL;
-
-      p->gen7_3DSTATE_SBE(p->dev, ilo->rasterizer, fs, last_sh, p->cp);
+      p->gen7_3DSTATE_SBE(p->dev, ilo->rasterizer, ilo->fs,
+            (ilo->gs) ? ilo->gs : ilo->vs, ilo->cp);
    }
 
    /* 3DSTATE_SF */

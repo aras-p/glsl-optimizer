@@ -1814,10 +1814,12 @@ ilo_gpe_gen6_fill_3dstate_sf_raster(const struct ilo_dev_info *dev,
 void
 ilo_gpe_gen6_fill_3dstate_sf_sbe(const struct ilo_dev_info *dev,
                                  const struct ilo_rasterizer_state *rasterizer,
-                                 const struct ilo_shader *fs,
-                                 const struct ilo_shader *last_sh,
+                                 const struct ilo_shader_state *fs_state,
+                                 const struct ilo_shader_state *last_sh_state,
                                  uint32_t *dw, int num_dwords)
 {
+   const struct ilo_shader *fs = fs_state->shader;
+   const struct ilo_shader *last_sh = last_sh_state->shader;
    uint32_t point_sprite_enable, const_interp_enable;
    uint16_t attr_ctrl[PIPE_MAX_SHADER_INPUTS];
    int vue_offset, vue_len;
@@ -2010,8 +2012,8 @@ ilo_gpe_gen6_fill_3dstate_sf_sbe(const struct ilo_dev_info *dev,
 static void
 gen6_emit_3DSTATE_SF(const struct ilo_dev_info *dev,
                      const struct ilo_rasterizer_state *rasterizer,
-                     const struct ilo_shader *fs,
-                     const struct ilo_shader *last_sh,
+                     const struct ilo_shader_state *fs,
+                     const struct ilo_shader_state *last_sh,
                      struct ilo_cp *cp)
 {
    const uint32_t cmd = ILO_GPE_CMD(0x3, 0x0, 0x13);
@@ -3222,7 +3224,7 @@ gen6_emit_3DPRIMITIVE(const struct ilo_dev_info *dev,
 
 static uint32_t
 gen6_emit_INTERFACE_DESCRIPTOR_DATA(const struct ilo_dev_info *dev,
-                                    const struct ilo_shader **cs,
+                                    const struct ilo_shader_state **cs,
                                     uint32_t *sampler_state,
                                     int *num_samplers,
                                     uint32_t *binding_table_state,
@@ -3254,18 +3256,14 @@ gen6_emit_INTERFACE_DESCRIPTOR_DATA(const struct ilo_dev_info *dev,
          state_len, state_align, &state_offset);
 
    for (i = 0; i < num_ids; i++) {
-      int curbe_read_len;
-
-      curbe_read_len = (cs[i]->pcb.clip_state_size + 31) / 32;
-
-      dw[0] = cs[i]->cache_offset;
+      dw[0] = ilo_shader_get_kernel_offset(cs[i]);
       dw[1] = 1 << 18; /* SPF */
       dw[2] = sampler_state[i] |
               (num_samplers[i] + 3) / 4 << 2;
       dw[3] = binding_table_state[i] |
               num_surfaces[i];
-      dw[4] = curbe_read_len << 16 |  /* CURBE Read Length */
-              0;                      /* CURBE Read Offset */
+      dw[4] = 0 << 16 |  /* CURBE Read Length */
+              0;         /* CURBE Read Offset */
       dw[5] = 0; /* Barrier ID */
       dw[6] = 0;
       dw[7] = 0;
