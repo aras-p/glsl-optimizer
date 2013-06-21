@@ -635,8 +635,6 @@ intelInitContext(struct intel_context *intel,
 
    intel_fbo_init(intel);
 
-   intel->use_early_z = driQueryOptionb(&intel->optionCache, "early_z");
-
    if (!driQueryOptionb(&intel->optionCache, "hiz")) {
        intel->has_hiz = false;
        /* On gen6, you can only do separate stencil with HIZ. */

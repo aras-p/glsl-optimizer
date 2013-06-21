@@ -257,8 +257,6 @@ struct intel_context
     */
    bool is_front_buffer_reading;
 
-   bool use_early_z;
-
    int driFd;
 
    __DRIcontext *driContext;
