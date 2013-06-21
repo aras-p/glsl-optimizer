@@ -134,29 +134,13 @@ struct intel_context
    struct
    {
       void (*destroy) (struct intel_context * intel);
-      void (*emit_state) (struct intel_context * intel);
       void (*finish_batch) (struct intel_context * intel);
       void (*new_batch) (struct intel_context * intel);
-      void (*emit_invarient_state) (struct intel_context * intel);
-      void (*update_texture_state) (struct intel_context * intel);
 
-      void (*render_start) (struct intel_context * intel);
-      void (*render_prevalidate) (struct intel_context * intel);
-      void (*set_draw_region) (struct intel_context * intel,
-                               struct intel_region * draw_regions[],
-                               struct intel_region * depth_region,
-			       GLuint num_regions);
       void (*update_draw_buffer)(struct intel_context *intel);
 
-      void (*reduced_primitive_state) (struct intel_context * intel,
-                                       GLenum rprim);
-
-      bool (*check_vertex_size) (struct intel_context * intel,
-				      GLuint expected);
       void (*invalidate_state) (struct intel_context *intel,
 				GLuint new_state);
-
-      void (*assert_not_dirty) (struct intel_context *intel);
 
       void (*debug_batch)(struct intel_context *intel);
       void (*annotate_aub)(struct intel_context *intel);
@@ -167,10 +151,6 @@ struct intel_context
       bool (*is_hiz_depth_format)(struct intel_context *intel,
 	                          gl_format format);
 
-      /**
-       * Surface state operations (i965+ only)
-       * \{
-       */
       void (*update_texture_surface)(struct gl_context *ctx,
                                      unsigned unit,
                                      uint32_t *binding_table,
@@ -187,7 +167,6 @@ struct intel_context
 				      uint32_t size,
 				      uint32_t *out_offset,
                                       bool dword_pitch);
-      /** \} */
 
       /**
        * Send the appropriate state packets to configure depth, stencil, and

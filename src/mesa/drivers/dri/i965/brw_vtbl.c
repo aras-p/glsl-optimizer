@@ -195,12 +195,6 @@ static bool brw_is_hiz_depth_format(struct intel_context *intel,
 
 void brwInitVtbl( struct brw_context *brw )
 {
-   brw->intel.vtbl.check_vertex_size = 0;
-   brw->intel.vtbl.emit_state = 0;
-   brw->intel.vtbl.reduced_primitive_state = 0;
-   brw->intel.vtbl.render_start = 0;
-   brw->intel.vtbl.update_texture_state = 0;
-
    brw->intel.vtbl.invalidate_state = brw_invalidate_state;
    brw->intel.vtbl.new_batch = brw_new_batch;
    brw->intel.vtbl.finish_batch = brw_finish_batch;
