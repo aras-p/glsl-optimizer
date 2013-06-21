@@ -117,28 +117,39 @@ translate_dst_register( struct svga_shader_emitter *emit,
 }
 
 
+/**
+ * Apply a swizzle to a src_register, returning a new src_register
+ * Ex: swizzle(SRC.ZZYY, SWIZZLE_Z, SWIZZLE_W, SWIZZLE_X, SWIZZLE_Y)
+ * would return SRC.YYZZ
+ */
 static struct src_register
-swizzle( struct src_register src,
-         int x,
-         int y,
-         int z,
-         int w )
+swizzle(struct src_register src,
+        unsigned x, unsigned y, unsigned z, unsigned w)
 {
+   assert(x < 4);
+   assert(y < 4);
+   assert(z < 4);
+   assert(w < 4);
    x = (src.base.swizzle >> (x * 2)) & 0x3;
    y = (src.base.swizzle >> (y * 2)) & 0x3;
    z = (src.base.swizzle >> (z * 2)) & 0x3;
    w = (src.base.swizzle >> (w * 2)) & 0x3;
 
-   src.base.swizzle = TRANSLATE_SWIZZLE(x,y,z,w);
+   src.base.swizzle = TRANSLATE_SWIZZLE(x, y, z, w);
 
    return src;
 }
 
 
+/**
+ * Apply a "scalar" swizzle to a src_register returning a new
+ * src_register where all the swizzle terms are the same.
+ * Ex: scalar(SRC.WZYX, SWIZZLE_Y) would return SRC.ZZZZ
+ */
 static struct src_register
-scalar( struct src_register src,
-        int comp )
+scalar(struct src_register src, unsigned comp)
 {
+   assert(comp < 4);
    return swizzle( src, comp, comp, comp, comp );
 }
 
