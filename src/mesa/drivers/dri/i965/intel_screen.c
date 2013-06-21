@@ -1165,20 +1165,6 @@ set_max_gl_versions(struct intel_screen *screen)
       screen->max_gl_es1_version = 11;
       screen->max_gl_es2_version = 20;
       break;
-   case 3: {
-      screen->max_gl_core_version = 0;
-      screen->max_gl_es1_version = 11;
-      screen->max_gl_compat_version = 21;
-      screen->max_gl_es2_version = 20;
-
-      break;
-   }
-   case 2:
-      screen->max_gl_core_version = 0;
-      screen->max_gl_compat_version = 13;
-      screen->max_gl_es1_version = 11;
-      screen->max_gl_es2_version = 0;
-      break;
    default:
       assert(!"unrecognized intel_screen::gen");
       break;
@@ -1244,12 +1230,8 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
       intelScreen->gen = 6;
    } else if (IS_GEN5(intelScreen->deviceID)) {
       intelScreen->gen = 5;
-   } else if (IS_965(intelScreen->deviceID)) {
-      intelScreen->gen = 4;
-   } else if (IS_9XX(intelScreen->deviceID)) {
-      intelScreen->gen = 3;
    } else {
-      intelScreen->gen = 2;
+      intelScreen->gen = 4;
    }
 
    intelScreen->hw_has_separate_stencil = intelScreen->gen >= 6;
