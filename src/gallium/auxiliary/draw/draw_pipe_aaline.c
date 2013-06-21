@@ -831,7 +831,12 @@ static struct aaline_stage *
 aaline_stage_from_pipe(struct pipe_context *pipe)
 {
    struct draw_context *draw = (struct draw_context *) pipe->draw;
-   return aaline_stage(draw->pipeline.aaline);
+
+   if (draw) {
+      return aaline_stage(draw->pipeline.aaline);
+   } else {
+      return NULL;
+   }
 }
 
 
@@ -844,7 +849,12 @@ aaline_create_fs_state(struct pipe_context *pipe,
                        const struct pipe_shader_state *fs)
 {
    struct aaline_stage *aaline = aaline_stage_from_pipe(pipe);
-   struct aaline_fragment_shader *aafs = CALLOC_STRUCT(aaline_fragment_shader);
+   struct aaline_fragment_shader *aafs = NULL;
+
+   if (aaline == NULL)
+      return NULL;
+
+   aafs = CALLOC_STRUCT(aaline_fragment_shader);
 
    if (aafs == NULL)
       return NULL;
@@ -864,6 +874,10 @@ aaline_bind_fs_state(struct pipe_context *pipe, void *fs)
    struct aaline_stage *aaline = aaline_stage_from_pipe(pipe);
    struct aaline_fragment_shader *aafs = (struct aaline_fragment_shader *) fs;
 
+   if (aaline == NULL) {
+      return;
+   }
+
    /* save current */
    aaline->fs = aafs;
    /* pass-through */
@@ -877,14 +891,19 @@ aaline_delete_fs_state(struct pipe_context *pipe, void *fs)
    struct aaline_stage *aaline = aaline_stage_from_pipe(pipe);
    struct aaline_fragment_shader *aafs = (struct aaline_fragment_shader *) fs;
 
-   /* pass-through */
-   aaline->driver_delete_fs_state(pipe, aafs->driver_fs);
+   if (aafs == NULL) {
+      return;
+   }
 
-   if (aafs->aaline_fs)
-      aaline->driver_delete_fs_state(pipe, aafs->aaline_fs);
+   if (aaline != NULL) {
+      /* pass-through */
+      aaline->driver_delete_fs_state(pipe, aafs->driver_fs);
+
+      if (aafs->aaline_fs)
+         aaline->driver_delete_fs_state(pipe, aafs->aaline_fs);
+   }
 
    FREE((void*)aafs->state.tokens);
-
    FREE(aafs);
 }
 
@@ -894,6 +913,10 @@ aaline_bind_sampler_states(struct pipe_context *pipe,
                            unsigned num, void **sampler)
 {
    struct aaline_stage *aaline = aaline_stage_from_pipe(pipe);
+
+   if (aaline == NULL) {
+      return;
+   }
 
    /* save current */
    memcpy(aaline->state.sampler, sampler, num * sizeof(void *));
@@ -911,6 +934,10 @@ aaline_set_sampler_views(struct pipe_context *pipe,
 {
    struct aaline_stage *aaline = aaline_stage_from_pipe(pipe);
    uint i;
+
+   if (aaline == NULL) {
+      return;
+   }
 
    /* save current */
    for (i = 0; i < num; i++) {
