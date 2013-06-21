@@ -940,12 +940,19 @@ instr_cat2(const struct instr_translater *t,
 {
 	struct tgsi_dst_register *dst = get_dst(ctx, inst);
 	struct ir3_instruction *instr;
-
-	assert(inst->Instruction.NumSrcRegs == 2);
-	assert(inst->Instruction.NumDstRegs == 1);
+	unsigned src0_flags = 0;
 
 	instr = ir3_instr_create(ctx->ir, 2, t->opc);
-	instr->cat2.condition = t->arg;
+
+	switch (t->tgsi_opc) {
+	case TGSI_OPCODE_SLT:
+	case TGSI_OPCODE_SGE:
+		instr->cat2.condition = t->arg;
+		break;
+	case TGSI_OPCODE_ABS:
+		src0_flags = IR3_REG_ABS;
+		break;
+	}
 
 	switch (t->opc) {
 	case OPC_ABSNEG_F:
@@ -964,11 +971,11 @@ instr_cat2(const struct instr_translater *t,
 	case OPC_CBITS_B:
 		/* these only have one src reg */
 		vectorize(ctx, instr, dst, 1,
-				&inst->Src[0].Register, 0);
+				&inst->Src[0].Register, src0_flags);
 		break;
 	default:
 		vectorize(ctx, instr, dst, 2,
-				&inst->Src[0].Register, 0,
+				&inst->Src[0].Register, src0_flags,
 				&inst->Src[1].Register, 0);
 		break;
 	}
@@ -1053,6 +1060,7 @@ static const struct instr_translater translaters[TGSI_OPCODE_LAST] = {
 	INSTR(EX2,          instr_cat4, .opc = OPC_EXP2),
 	INSTR(LG2,          instr_cat4, .opc = OPC_LOG2),
 	INSTR(POW,          trans_pow),
+	INSTR(ABS,          instr_cat2, .opc = OPC_ABSNEG_F),
 	INSTR(COS,          instr_cat4, .opc = OPC_SIN),
 	INSTR(SIN,          instr_cat4, .opc = OPC_COS),
 	INSTR(TEX,          trans_samp, .opc = OPC_SAM, .arg = TGSI_OPCODE_TEX),
