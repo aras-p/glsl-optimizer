@@ -214,7 +214,6 @@ struct intel_context
    drm_intel_bo *first_post_swapbuffers_batch;
    bool need_throttle;
    bool no_batch_wrap;
-   bool tnl_pipeline_running; /**< Set while i915's _tnl_run_pipeline. */
 
    /**
     * Set if we're either a debug context or the INTEL_DEBUG=perf environment
@@ -222,19 +221,6 @@ struct intel_context
     * might lead to a perf_debug() call.
     */
    bool perf_debug;
-
-   struct
-   {
-      GLuint id;
-      uint32_t start_ptr; /**< for i8xx */
-      uint32_t primitive;	/**< Current hardware primitive type */
-      void (*flush) (struct intel_context *);
-      drm_intel_bo *vb_bo;
-      uint8_t *vb;
-      unsigned int start_offset; /**< Byte offset of primitive sequence */
-      unsigned int current_offset; /**< Byte offset of next vertex */
-      unsigned int count;	/**< Number of vertices in current primitive */
-   } prim;
 
    struct {
       drm_intel_bo *bo;
@@ -248,15 +234,6 @@ struct intel_context
 
    GLuint stats_wm;
 
-   /* Offsets of fields within the current vertex:
-    */
-   GLuint coloroffset;
-   GLuint specoffset;
-   GLuint wpos_offset;
-
-   struct tnl_attr_map vertex_attrs[VERT_ATTRIB_MAX];
-   GLuint vertex_attr_count;
-
    bool hw_stencil;
    bool hw_stipple;
    bool no_rast;
@@ -264,20 +241,7 @@ struct intel_context
    bool always_flush_cache;
    bool disable_throttling;
 
-   /* State for intelvb.c and inteltris.c.
-    */
-   GLuint RenderIndex;
-   GLmatrix ViewportMatrix;
-   GLenum render_primitive;
-   GLenum reduced_primitive; /*< Only gen < 6 */
-   GLuint vertex_size;
-   GLubyte *verts;              /* points to tnl->clipspace.vertex_buf */
-
-   /* Fallback rasterization functions 
-    */
-   intel_point_func draw_point;
-   intel_line_func draw_line;
-   intel_tri_func draw_tri;
+   GLenum reduced_primitive;
 
    /**
     * Set if rendering has occured to the drawable's front buffer.
@@ -346,12 +310,6 @@ S_FIXED(float value, uint32_t frac_bits)
 {
    return value * (1 << frac_bits);
 }
-
-#define INTEL_FIREVERTICES(intel)		\
-do {						\
-   if ((intel)->prim.flush)			\
-      (intel)->prim.flush(intel);		\
-} while (0)
 
 /* ================================================================
  * From linux kernel i386 header files, copes with odd sizes better
@@ -485,7 +443,6 @@ extern bool intelInitContext(struct intel_context *intel,
                              unsigned *dri_ctx_error);
 
 extern void intelFinish(struct gl_context * ctx);
-extern void intel_flush_rendering_to_batch(struct gl_context *ctx);
 extern void _intel_flush(struct gl_context * ctx, const char *file, int line);
 
 #define intel_flush(ctx) _intel_flush(ctx, __FILE__, __LINE__)

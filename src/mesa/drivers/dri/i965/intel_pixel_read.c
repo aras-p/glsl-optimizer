@@ -167,8 +167,6 @@ intelReadPixels(struct gl_context * ctx,
    struct intel_context *intel = intel_context(ctx);
    bool dirty;
 
-   intel_flush_rendering_to_batch(ctx);
-
    DBG("%s\n", __FUNCTION__);
 
    if (_mesa_is_bufferobj(pack->BufferObj)) {

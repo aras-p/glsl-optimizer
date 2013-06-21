@@ -616,8 +616,6 @@ intelInitContext(struct intel_context *intel,
    intel->hw_stencil = mesaVis->stencilBits && mesaVis->depthBits == 24;
    intel->hw_stipple = 1;
 
-   intel->RenderIndex = ~0;
-
    intelInitExtensions(ctx);
 
    INTEL_DEBUG = driParseDebugString(getenv("INTEL_DEBUG"), debug_control);
@@ -647,8 +645,6 @@ intelInitContext(struct intel_context *intel,
 	  intel->has_separate_stencil = false;
    }
 
-   intel->prim.primitive = ~0;
-
    if (driQueryOptionb(&intel->optionCache, "always_flush_batch")) {
       fprintf(stderr, "flushing batchbuffer before/after each draw call\n");
       intel->always_flush_batch = 1;
@@ -676,8 +672,6 @@ intelDestroyContext(__DRIcontext * driContextPriv)
 
    assert(intel);               /* should never be null */
    if (intel) {
-      INTEL_FIREVERTICES(intel);
-
       /* Dump a final BMP in case the application doesn't call SwapBuffers */
       if (INTEL_DEBUG & DEBUG_AUB) {
          intel_batchbuffer_flush(intel);
@@ -699,10 +693,6 @@ intelDestroyContext(__DRIcontext * driContextPriv)
 
       intel_batchbuffer_free(intel);
 
-      free(intel->prim.vb);
-      intel->prim.vb = NULL;
-      drm_intel_bo_unreference(intel->prim.vb_bo);
-      intel->prim.vb_bo = NULL;
       drm_intel_bo_unreference(intel->first_post_swapbuffers_batch);
       intel->first_post_swapbuffers_batch = NULL;
 
@@ -710,8 +700,6 @@ intelDestroyContext(__DRIcontext * driContextPriv)
 
       /* free the Mesa context */
       _mesa_free_context_data(&intel->ctx);
-
-      _math_matrix_dtr(&intel->ViewportMatrix);
 
       ralloc_free(intel);
       driContextPriv->driverPrivate = NULL;
