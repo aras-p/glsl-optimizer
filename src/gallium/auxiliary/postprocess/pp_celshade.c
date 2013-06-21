@@ -30,9 +30,17 @@
 #include "postprocess/pp_filters.h"
 
 /** Init function */
-void
+bool
 pp_celshade_init(struct pp_queue_t *ppq, unsigned int n, unsigned int val)
 {
    ppq->shaders[n][1] =
       pp_tgsi_to_state(ppq->p->pipe, celshade, false, "celshade");
+
+   return (ppq->shaders[n][1] != NULL) ? TRUE : FALSE;
+}
+
+/** Free function */
+void
+pp_celshade_free(struct pp_queue_t *ppq, unsigned int n)
+{
 }

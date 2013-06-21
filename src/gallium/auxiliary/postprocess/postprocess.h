@@ -53,11 +53,13 @@ struct pp_queue_t
 
    struct pipe_resource *depth; /* depth of original input */
    struct pipe_resource *stencil;       /* stencil shared by inner_tmps */
+   struct pipe_resource *constbuf;      /* MLAA constant buffer */
+   struct pipe_resource *areamaptex;    /* MLAA area map texture */
 
    struct pipe_surface *tmps[2], *inner_tmps[3], *stencils;
 
    void ***shaders;             /* Shaders in TGSI form */
-   unsigned int *verts;
+   unsigned int *filters;       /* Active filter to filters.h mapping. */
    struct program *p;
 
    bool fbos_init;
@@ -88,14 +90,20 @@ void pp_jimenezmlaa_color(struct pp_queue_t *, struct pipe_resource *,
 
 /* The filter init functions */
 
-void pp_celshade_init(struct pp_queue_t *, unsigned int, unsigned int);
+bool pp_celshade_init(struct pp_queue_t *, unsigned int, unsigned int);
 
-void pp_nored_init(struct pp_queue_t *, unsigned int, unsigned int);
-void pp_nogreen_init(struct pp_queue_t *, unsigned int, unsigned int);
-void pp_noblue_init(struct pp_queue_t *, unsigned int, unsigned int);
+bool pp_nored_init(struct pp_queue_t *, unsigned int, unsigned int);
+bool pp_nogreen_init(struct pp_queue_t *, unsigned int, unsigned int);
+bool pp_noblue_init(struct pp_queue_t *, unsigned int, unsigned int);
 
-void pp_jimenezmlaa_init(struct pp_queue_t *, unsigned int, unsigned int);
-void pp_jimenezmlaa_init_color(struct pp_queue_t *, unsigned int,
+bool pp_jimenezmlaa_init(struct pp_queue_t *, unsigned int, unsigned int);
+bool pp_jimenezmlaa_init_color(struct pp_queue_t *, unsigned int,
                                unsigned int);
+
+/* The filter free functions */
+
+void pp_celshade_free(struct pp_queue_t *, unsigned int);
+void pp_nocolor_free(struct pp_queue_t *, unsigned int);
+void pp_jimenezmlaa_free(struct pp_queue_t *, unsigned int);
 
 #endif

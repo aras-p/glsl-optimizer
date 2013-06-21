@@ -57,24 +57,37 @@ pp_nocolor(struct pp_queue_t *ppq, struct pipe_resource *in,
 
 /* Init functions */
 
-void
+bool
 pp_nored_init(struct pp_queue_t *ppq, unsigned int n, unsigned int val)
 {
-   ppq->shaders[n][1] = pp_tgsi_to_state(ppq->p->pipe, nored, false, "nored");
+   ppq->shaders[n][1] =
+      pp_tgsi_to_state(ppq->p->pipe, nored, false, "nored");
+
+   return (ppq->shaders[n][1] != NULL) ? TRUE : FALSE;
 }
 
 
-void
+bool
 pp_nogreen_init(struct pp_queue_t *ppq, unsigned int n, unsigned int val)
 {
    ppq->shaders[n][1] =
       pp_tgsi_to_state(ppq->p->pipe, nogreen, false, "nogreen");
+
+   return (ppq->shaders[n][1] != NULL) ? TRUE : FALSE;
 }
 
 
-void
+bool
 pp_noblue_init(struct pp_queue_t *ppq, unsigned int n, unsigned int val)
 {
    ppq->shaders[n][1] =
       pp_tgsi_to_state(ppq->p->pipe, noblue, false, "noblue");
+
+   return (ppq->shaders[n][1] != NULL) ? TRUE : FALSE;
+}
+
+/* Free functions */
+void
+pp_nocolor_free(struct pp_queue_t *ppq, unsigned int n)
+{
 }

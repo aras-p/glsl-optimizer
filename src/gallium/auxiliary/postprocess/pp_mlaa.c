@@ -56,16 +56,16 @@
 static float constants[] = { 1, 1, 0, 0 };
 static unsigned int dimensions[2] = { 0, 0 };
 
-static struct pipe_resource *constbuf, *areamaptex;
-
 /** Upload the constants. */
 static void
-up_consts(struct pipe_context *pipe)
+up_consts(struct pp_queue_t *ppq)
 {
+   struct pipe_context *pipe = ppq->p->pipe;
    struct pipe_box box;
 
    u_box_2d(0, 0, sizeof(constants), 1, &box);
-   pipe->transfer_inline_write(pipe, constbuf, 0, PIPE_TRANSFER_WRITE,
+
+   pipe->transfer_inline_write(pipe, ppq->constbuf, 0, PIPE_TRANSFER_WRITE,
                                &box, constants, sizeof(constants),
                                sizeof(constants));
 }
@@ -81,11 +81,24 @@ pp_jimenezmlaa_run(struct pp_queue_t *ppq, struct pipe_resource *in,
    struct pipe_depth_stencil_alpha_state mstencil;
    struct pipe_sampler_view v_tmp, *arr[3];
 
-   unsigned int w = p->framebuffer.width;
-   unsigned int h = p->framebuffer.height;
+   unsigned int w = 0;
+   unsigned int h = 0;
 
    const struct pipe_stencil_ref ref = { {1} };
+
+   /* Insufficient initialization checks. */
+   assert(p);
+   assert(ppq);
+   assert(ppq->constbuf);
+   assert(ppq->areamaptex);
+   assert(ppq->inner_tmp);
+   assert(ppq->shaders[n]);
+
+   w = p->framebuffer.width;
+   h = p->framebuffer.height;
+
    memset(&mstencil, 0, sizeof(mstencil));
+
    cso_set_stencil_ref(p->cso, &ref);
 
    /* Init the pixel size constant */
@@ -94,13 +107,15 @@ pp_jimenezmlaa_run(struct pp_queue_t *ppq, struct pipe_resource *in,
       constants[0] = 1.0f / p->framebuffer.width;
       constants[1] = 1.0f / p->framebuffer.height;
 
-      up_consts(p->pipe);
+      up_consts(ppq);
       dimensions[0] = p->framebuffer.width;
       dimensions[1] = p->framebuffer.height;
    }
 
-   cso_set_constant_buffer_resource(p->cso, PIPE_SHADER_VERTEX, 0, constbuf);
-   cso_set_constant_buffer_resource(p->cso, PIPE_SHADER_FRAGMENT, 0, constbuf);
+   cso_set_constant_buffer_resource(p->cso, PIPE_SHADER_VERTEX,
+                                    0, ppq->constbuf);
+   cso_set_constant_buffer_resource(p->cso, PIPE_SHADER_FRAGMENT,
+                                    0, ppq->constbuf);
 
    mstencil.stencil[0].enabled = 1;
    mstencil.stencil[0].valuemask = mstencil.stencil[0].writemask = ~0;
@@ -142,7 +157,7 @@ pp_jimenezmlaa_run(struct pp_queue_t *ppq, struct pipe_resource *in,
    mstencil.stencil[0].zpass_op = PIPE_STENCIL_OP_KEEP;
    cso_set_depth_stencil_alpha(p->cso, &mstencil);
 
-   pp_filter_setup_in(p, areamaptex);
+   pp_filter_setup_in(p, ppq->areamaptex);
    pp_filter_setup_out(p, ppq->inner_tmp[1]);
 
    u_sampler_view_default_template(&v_tmp, ppq->inner_tmp[0],
@@ -206,32 +221,34 @@ pp_jimenezmlaa_run(struct pp_queue_t *ppq, struct pipe_resource *in,
 }
 
 /** The init function of the MLAA filter. */
-static void
+static bool
 pp_jimenezmlaa_init_run(struct pp_queue_t *ppq, unsigned int n,
                         unsigned int val, bool iscolor)
 {
 
    struct pipe_box box;
    struct pipe_resource res;
-   char *tmp_text;
-
-   constbuf = pipe_buffer_create(ppq->p->screen, PIPE_BIND_CONSTANT_BUFFER,
-                                 PIPE_USAGE_STATIC, sizeof(constants));
-   if (!constbuf) {
-      pp_debug("Failed to allocate constant buffer\n");
-      return;
-   }
-
-
-   pp_debug("mlaa: using %u max search steps\n", val);
+   char *tmp_text = NULL;
 
    tmp_text = CALLOC(sizeof(blend2fs_1) + sizeof(blend2fs_2) +
                      IMM_SPACE, sizeof(char));
 
-   if (!tmp_text) {
+   if (tmp_text == NULL) {
       pp_debug("Failed to allocate shader space\n");
-      return;
+      return FALSE;
    }
+
+   ppq->constbuf = pipe_buffer_create(ppq->p->screen,
+                                      PIPE_BIND_CONSTANT_BUFFER,
+                                      PIPE_USAGE_STATIC,
+                                      sizeof(constants));
+   if (ppq->constbuf == NULL) {
+      pp_debug("Failed to allocate constant buffer\n");
+      goto fail;
+   }
+
+   pp_debug("mlaa: using %u max search steps\n", val);
+
    util_sprintf(tmp_text, "%s"
                 "IMM FLT32 {    %.8f,     0.0000,     0.0000,     0.0000}\n"
                 "%s\n", blend2fs_1, (float) val, blend2fs_2);
@@ -249,14 +266,18 @@ pp_jimenezmlaa_init_run(struct pp_queue_t *ppq, unsigned int n,
                                             res.target, 1, res.bind))
       pp_debug("Areamap format not supported\n");
 
-   areamaptex = ppq->p->screen->resource_create(ppq->p->screen, &res);
+   ppq->areamaptex = ppq->p->screen->resource_create(ppq->p->screen, &res);
+   
+   if (ppq->areamaptex == NULL) {
+      pp_debug("Failed to allocate area map texture\n");
+      goto fail;
+   }
+   
    u_box_2d(0, 0, 165, 165, &box);
 
-   ppq->p->pipe->transfer_inline_write(ppq->p->pipe, areamaptex, 0,
+   ppq->p->pipe->transfer_inline_write(ppq->p->pipe, ppq->areamaptex, 0,
                                        PIPE_TRANSFER_WRITE, &box,
                                        areamap, 165 * 2, sizeof(areamap));
-
-
 
    ppq->shaders[n][1] = pp_tgsi_to_state(ppq->p->pipe, offsetvs, true,
                                          "offsetvs");
@@ -272,23 +293,35 @@ pp_jimenezmlaa_init_run(struct pp_queue_t *ppq, unsigned int n,
                                          "neigh3fs");
 
    FREE(tmp_text);
+
+   return TRUE;
+
+ fail:
+   
+   FREE(tmp_text);
+
+   /*
+    * Call the common free function for destruction of partially initialized
+    * resources.
+    */
+   pp_jimenezmlaa_free(ppq, n);
+
+   return FALSE;
 }
 
 /** Short wrapper to init the depth version. */
-void
+bool
 pp_jimenezmlaa_init(struct pp_queue_t *ppq, unsigned int n, unsigned int val)
 {
-
-   pp_jimenezmlaa_init_run(ppq, n, val, false);
+   return pp_jimenezmlaa_init_run(ppq, n, val, false);
 }
 
 /** Short wrapper to init the color version. */
-void
+bool
 pp_jimenezmlaa_init_color(struct pp_queue_t *ppq, unsigned int n,
                           unsigned int val)
 {
-
-   pp_jimenezmlaa_init_run(ppq, n, val, true);
+   return pp_jimenezmlaa_init_run(ppq, n, val, true);
 }
 
 /** Short wrapper to run the depth version. */
@@ -306,3 +339,23 @@ pp_jimenezmlaa_color(struct pp_queue_t *ppq, struct pipe_resource *in,
 {
    pp_jimenezmlaa_run(ppq, in, out, n, true);
 }
+
+
+/**
+ * Short wrapper to free the mlaa filter resources. Shaders are freed in
+ * the common code in pp_free.
+ */
+void
+pp_jimenezmlaa_free(struct pp_queue_t *ppq, unsigned int n)
+{
+   if (ppq->areamaptex) {
+      ppq->p->screen->resource_destroy(ppq->p->screen, ppq->areamaptex);
+      ppq->areamaptex = NULL;
+   }
+
+   if (ppq->constbuf) {
+      ppq->p->screen->resource_destroy(ppq->p->screen, ppq->constbuf);
+      ppq->constbuf = NULL;
+   }
+}
+

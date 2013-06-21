@@ -32,6 +32,8 @@
 #include "util/u_inlines.h"
 #include "util/u_sampler.h"
 
+#include "tgsi/tgsi_parse.h"
+
 /**
 *	Main run function of the PP queue. Called on swapbuffers/flush.
 *
@@ -46,6 +48,13 @@ pp_run(struct pp_queue_t *ppq, struct pipe_resource *in,
    unsigned int i;
    struct cso_context *cso = ppq->p->cso;
 
+   if (ppq->n_filters == 0)
+      return;
+
+   assert(ppq->pp_queue);
+   assert(ppq->tmp[0]);
+   assert(ppq->tmp[1]);
+ 
    if (in->width0 != ppq->p->framebuffer.width ||
        in->height0 != ppq->p->framebuffer.height) {
       pp_debug("Resizing the temp pp buffers\n");
@@ -98,6 +107,9 @@ pp_run(struct pp_queue_t *ppq, struct pipe_resource *in,
    pipe_resource_reference(&refout, out);
 
    switch (ppq->n_filters) {
+   case 0:
+      /* Failsafe, but never reached. */
+      break;
    case 1:                     /* No temp buf */
       ppq->pp_queue[0] (ppq, in, out, 0);
       break;
@@ -192,7 +204,19 @@ pp_tgsi_to_state(struct pipe_context *pipe, const char *text, bool isvs,
                  const char *name)
 {
    struct pipe_shader_state state;
-   struct tgsi_token tokens[PP_MAX_TOKENS];
+   struct tgsi_token *tokens = NULL;
+   void *ret_state = NULL;
+ 
+   /*
+    * Allocate temporary token storage. State creation will duplicate
+    * tokens so we must free them on exit.
+    */ 
+   tokens = tgsi_alloc_tokens(PP_MAX_TOKENS);
+
+   if (tokens == NULL) {
+      pp_debug("Failed to allocate temporary token storage.\n");
+      return NULL;
+   }
 
    if (tgsi_text_translate(text, tokens, Elements(tokens)) == FALSE) {
       pp_debug("Failed to translate %s\n", name);
@@ -202,10 +226,15 @@ pp_tgsi_to_state(struct pipe_context *pipe, const char *text, bool isvs,
    state.tokens = tokens;
    memset(&state.stream_output, 0, sizeof(state.stream_output));
 
-   if (isvs)
-      return pipe->create_vs_state(pipe, &state);
-   else
-      return pipe->create_fs_state(pipe, &state);
+   if (isvs) {
+      ret_state = pipe->create_vs_state(pipe, &state);
+      FREE(tokens);
+   } else {
+      ret_state = pipe->create_fs_state(pipe, &state);
+      FREE(tokens);
+   }
+
+   return ret_state;
 }
 
 /** Setup misc state for the filter. */
