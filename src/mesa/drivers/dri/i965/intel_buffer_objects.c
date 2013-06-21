@@ -104,8 +104,6 @@ intel_bufferobj_free(struct gl_context * ctx, struct gl_buffer_object *obj)
    if (obj->Pointer)
       intel_bufferobj_unmap(ctx, obj);
 
-   free(intel_obj->sys_buffer);
-
    drm_intel_bo_unreference(intel_obj->buffer);
    free(intel_obj);
 }
@@ -141,9 +139,6 @@ intel_bufferobj_data(struct gl_context * ctx,
    if (intel_obj->buffer != NULL)
       release_buffer(intel_obj);
 
-   free(intel_obj->sys_buffer);
-   intel_obj->sys_buffer = NULL;
-
    if (size != 0) {
       intel_bufferobj_alloc_buffer(intel, intel_obj);
       if (!intel_obj->buffer)
@@ -178,21 +173,6 @@ intel_bufferobj_subdata(struct gl_context * ctx,
 
    assert(intel_obj);
 
-   /* If we have a single copy in system memory, update that */
-   if (intel_obj->sys_buffer) {
-      if (intel_obj->source)
-	 release_buffer(intel_obj);
-
-      if (intel_obj->buffer == NULL) {
-	 memcpy((char *)intel_obj->sys_buffer + offset, data, size);
-	 return;
-      }
-
-      free(intel_obj->sys_buffer);
-      intel_obj->sys_buffer = NULL;
-   }
-
-   /* Otherwise we need to update the copy in video memory. */
    busy =
       drm_intel_bo_busy(intel_obj->buffer) ||
       drm_intel_bo_references(intel->batch.bo, intel_obj->buffer);
@@ -238,14 +218,10 @@ intel_bufferobj_get_subdata(struct gl_context * ctx,
    struct intel_context *intel = intel_context(ctx);
 
    assert(intel_obj);
-   if (intel_obj->sys_buffer)
-      memcpy(data, (char *)intel_obj->sys_buffer + offset, size);
-   else {
-      if (drm_intel_bo_references(intel->batch.bo, intel_obj->buffer)) {
-	 intel_batchbuffer_flush(intel);
-      }
-      drm_intel_bo_get_subdata(intel_obj->buffer, offset, size, data);
+   if (drm_intel_bo_references(intel->batch.bo, intel_obj->buffer)) {
+      intel_batchbuffer_flush(intel);
    }
+   drm_intel_bo_get_subdata(intel_obj->buffer, offset, size, data);
 }
 
 
@@ -282,22 +258,6 @@ intel_bufferobj_map_range(struct gl_context * ctx,
    obj->Offset = offset;
    obj->Length = length;
    obj->AccessFlags = access;
-
-   if (intel_obj->sys_buffer) {
-      const bool read_only =
-	 (access & (GL_MAP_READ_BIT | GL_MAP_WRITE_BIT)) == GL_MAP_READ_BIT;
-
-      if (!read_only && intel_obj->source)
-	 release_buffer(intel_obj);
-
-      if (!intel_obj->buffer || intel_obj->source) {
-	 obj->Pointer = intel_obj->sys_buffer + offset;
-	 return obj->Pointer;
-      }
-
-      free(intel_obj->sys_buffer);
-      intel_obj->sys_buffer = NULL;
-   }
 
    if (intel_obj->buffer == NULL) {
       obj->Pointer = NULL;
@@ -413,9 +373,7 @@ intel_bufferobj_unmap(struct gl_context * ctx, struct gl_buffer_object *obj)
 
    assert(intel_obj);
    assert(obj->Pointer);
-   if (intel_obj->sys_buffer != NULL) {
-      /* always keep the mapping around. */
-   } else if (intel_obj->range_map_buffer != NULL) {
+   if (intel_obj->range_map_buffer != NULL) {
       /* Since we've emitted some blits to buffers that will (likely) be used
        * in rendering operations in other cache domains in this batch, emit a
        * flush.  Once again, we wish for a domain tracker in libdrm to cover
@@ -458,17 +416,6 @@ intel_bufferobj_buffer(struct intel_context *intel,
 {
    if (intel_obj->source)
       release_buffer(intel_obj);
-
-   if (intel_obj->buffer == NULL) {
-      intel_bufferobj_alloc_buffer(intel, intel_obj);
-      drm_intel_bo_subdata(intel_obj->buffer,
-			   0, intel_obj->Base.Size,
-			   intel_obj->sys_buffer);
-
-      free(intel_obj->sys_buffer);
-      intel_obj->sys_buffer = NULL;
-      intel_obj->offset = 0;
-   }
 
    return intel_obj->buffer;
 }
@@ -611,13 +558,6 @@ intel_bufferobj_source(struct intel_context *intel,
                        struct intel_buffer_object *intel_obj,
 		       GLuint align, GLuint *offset)
 {
-   if (intel_obj->buffer == NULL) {
-      intel_upload_data(intel,
-			intel_obj->sys_buffer, intel_obj->Base.Size, align,
-			&intel_obj->buffer, &intel_obj->offset);
-      intel_obj->source = 1;
-   }
-
    *offset = intel_obj->offset;
    return intel_obj->buffer;
 }
@@ -637,37 +577,6 @@ intel_bufferobj_copy_subdata(struct gl_context *ctx,
 
    if (size == 0)
       return;
-
-   /* If we're in system memory, just map and memcpy. */
-   if (intel_src->sys_buffer || intel_dst->sys_buffer) {
-      /* The same buffer may be used, but note that regions copied may
-       * not overlap.
-       */
-      if (src == dst) {
-	 char *ptr = intel_bufferobj_map_range(ctx, 0, dst->Size,
-					       GL_MAP_READ_BIT |
-					       GL_MAP_WRITE_BIT,
-					       dst);
-	 memmove(ptr + write_offset, ptr + read_offset, size);
-	 intel_bufferobj_unmap(ctx, dst);
-      } else {
-	 const char *src_ptr;
-	 char *dst_ptr;
-
-	 src_ptr =  intel_bufferobj_map_range(ctx, 0, src->Size,
-					      GL_MAP_READ_BIT, src);
-	 dst_ptr =  intel_bufferobj_map_range(ctx, 0, dst->Size,
-					      GL_MAP_WRITE_BIT, dst);
-
-	 memcpy(dst_ptr + write_offset, src_ptr + read_offset, size);
-
-	 intel_bufferobj_unmap(ctx, src);
-	 intel_bufferobj_unmap(ctx, dst);
-      }
-      return;
-   }
-
-   /* Otherwise, we have real BOs, so blit them. */
 
    dst_bo = intel_bufferobj_buffer(intel, intel_dst, INTEL_WRITE_PART);
    src_bo = intel_bufferobj_source(intel, intel_src, 64, &src_offset);
@@ -706,9 +615,6 @@ intel_buffer_object_purgeable(struct gl_context * ctx,
       return intel_buffer_purgeable(intel_obj->buffer);
 
    if (option == GL_RELEASED_APPLE) {
-      free(intel_obj->sys_buffer);
-      intel_obj->sys_buffer = NULL;
-
       return GL_RELEASED_APPLE;
    } else {
       /* XXX Create the buffer and madvise(MADV_DONTNEED)? */

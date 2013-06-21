@@ -43,9 +43,6 @@ struct intel_buffer_object
    drm_intel_bo *buffer;     /* the low-level buffer manager's buffer handle */
    GLuint offset;            /* any offset into that buffer */
 
-   /** System memory buffer data, if not using a BO to store the data. */
-   void *sys_buffer;
-
    drm_intel_bo *range_map_bo;
    void *range_map_buffer;
    unsigned int range_map_offset;
