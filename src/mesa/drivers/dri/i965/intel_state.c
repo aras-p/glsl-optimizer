@@ -114,46 +114,6 @@ intel_translate_stencil_op(GLenum op)
 }
 
 int
-intel_translate_blend_factor(GLenum factor)
-{
-   switch (factor) {
-   case GL_ZERO:
-      return BLENDFACT_ZERO;
-   case GL_SRC_ALPHA:
-      return BLENDFACT_SRC_ALPHA;
-   case GL_ONE:
-      return BLENDFACT_ONE;
-   case GL_SRC_COLOR:
-      return BLENDFACT_SRC_COLR;
-   case GL_ONE_MINUS_SRC_COLOR:
-      return BLENDFACT_INV_SRC_COLR;
-   case GL_DST_COLOR:
-      return BLENDFACT_DST_COLR;
-   case GL_ONE_MINUS_DST_COLOR:
-      return BLENDFACT_INV_DST_COLR;
-   case GL_ONE_MINUS_SRC_ALPHA:
-      return BLENDFACT_INV_SRC_ALPHA;
-   case GL_DST_ALPHA:
-      return BLENDFACT_DST_ALPHA;
-   case GL_ONE_MINUS_DST_ALPHA:
-      return BLENDFACT_INV_DST_ALPHA;
-   case GL_SRC_ALPHA_SATURATE:
-      return BLENDFACT_SRC_ALPHA_SATURATE;
-   case GL_CONSTANT_COLOR:
-      return BLENDFACT_CONST_COLOR;
-   case GL_ONE_MINUS_CONSTANT_COLOR:
-      return BLENDFACT_INV_CONST_COLOR;
-   case GL_CONSTANT_ALPHA:
-      return BLENDFACT_CONST_ALPHA;
-   case GL_ONE_MINUS_CONSTANT_ALPHA:
-      return BLENDFACT_INV_CONST_ALPHA;
-   }
-
-   fprintf(stderr, "Unknown value in %s: %x\n", __FUNCTION__, factor);
-   return BLENDFACT_ZERO;
-}
-
-int
 intel_translate_logic_op(GLenum opcode)
 {
    switch (opcode) {

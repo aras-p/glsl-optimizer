@@ -516,7 +516,6 @@ enum {
 extern int intel_translate_shadow_compare_func(GLenum func);
 extern int intel_translate_compare_func(GLenum func);
 extern int intel_translate_stencil_op(GLenum op);
-extern int intel_translate_blend_factor(GLenum factor);
 extern int intel_translate_logic_op(GLenum opcode);
 
 void intel_update_renderbuffers(__DRIcontext *context,
