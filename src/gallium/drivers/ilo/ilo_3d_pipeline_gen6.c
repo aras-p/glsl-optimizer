@@ -676,7 +676,7 @@ gen6_pipeline_wm(struct ilo_3d_pipeline *p,
          gen6_wa_pipe_control_wm_max_threads_stall(p);
 
       p->gen6_3DSTATE_WM(p->dev, fs, num_samplers,
-            &ilo->rasterizer->state, dual_blend, cc_may_kill, p->cp);
+            ilo->rasterizer, dual_blend, cc_may_kill, p->cp);
    }
 }
 

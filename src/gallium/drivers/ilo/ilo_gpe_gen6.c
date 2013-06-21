@@ -2030,11 +2030,59 @@ gen6_emit_3DSTATE_SF(const struct ilo_dev_info *dev,
    ilo_cp_end(cp);
 }
 
+void
+ilo_gpe_init_rasterizer_wm_gen6(const struct ilo_dev_info *dev,
+                                const struct pipe_rasterizer_state *state,
+                                struct ilo_rasterizer_wm *wm)
+{
+   uint32_t dw5, dw6;
+
+   ILO_GPE_VALID_GEN(dev, 6, 6);
+
+   /* only the FF unit states are set, as in GEN7 */
+
+   dw5 = GEN6_WM_LINE_AA_WIDTH_2_0;
+
+   /* same value as in 3DSTATE_SF */
+   if (state->line_smooth)
+      dw5 |= GEN6_WM_LINE_END_CAP_AA_WIDTH_1_0;
+
+   if (state->poly_stipple_enable)
+      dw5 |= GEN6_WM_POLYGON_STIPPLE_ENABLE;
+   if (state->line_stipple_enable)
+      dw5 |= GEN6_WM_LINE_STIPPLE_ENABLE;
+
+   dw6 = GEN6_WM_POSITION_ZW_PIXEL |
+         GEN6_WM_MSRAST_OFF_PIXEL |
+         GEN6_WM_MSDISPMODE_PERSAMPLE;
+
+   if (state->bottom_edge_rule)
+      dw6 |= GEN6_WM_POINT_RASTRULE_UPPER_RIGHT;
+
+   /*
+    * assertion that makes sure
+    *
+    *   dw6 |= wm->dw_msaa_rast | wm->dw_msaa_disp;
+    *
+    * is valid
+    */
+   STATIC_ASSERT(GEN6_WM_MSRAST_OFF_PIXEL == 0 &&
+                 GEN6_WM_MSDISPMODE_PERSAMPLE == 0);
+
+   wm->dw_msaa_rast =
+      (state->multisample) ? GEN6_WM_MSRAST_ON_PATTERN : 0;
+   wm->dw_msaa_disp = GEN6_WM_MSDISPMODE_PERPIXEL;
+
+   STATIC_ASSERT(Elements(wm->payload) >= 2);
+   wm->payload[0] = dw5;
+   wm->payload[1] = dw6;
+}
+
 static void
 gen6_emit_3DSTATE_WM(const struct ilo_dev_info *dev,
                      const struct ilo_shader *fs,
                      int num_samplers,
-                     const struct pipe_rasterizer_state *rasterizer,
+                     const struct ilo_rasterizer_state *rasterizer,
                      bool dual_blend, bool cc_may_kill,
                      struct ilo_cp *cp)
 {
@@ -2090,8 +2138,10 @@ gen6_emit_3DSTATE_WM(const struct ilo_dev_info *dev,
       dw4 |= GEN6_WM_HIERARCHICAL_DEPTH_RESOLVE;
    }
 
-   dw5 = (max_threads - 1) << GEN6_WM_MAX_THREADS_SHIFT |
-         GEN6_WM_LINE_AA_WIDTH_2_0;
+   dw5 = rasterizer->wm.payload[0];
+   dw6 = rasterizer->wm.payload[1];
+
+   dw5 |= (max_threads - 1) << GEN6_WM_MAX_THREADS_SHIFT;
 
    /*
     * From the Sandy Bridge PRM, volume 2 part 1, page 275:
@@ -2145,15 +2195,6 @@ gen6_emit_3DSTATE_WM(const struct ilo_dev_info *dev,
    if (true)
       dw5 |= GEN6_WM_DISPATCH_ENABLE;
 
-   /* same value as in 3DSTATE_SF */
-   if (rasterizer->line_smooth)
-      dw5 |= GEN6_WM_LINE_END_CAP_AA_WIDTH_1_0;
-
-   if (rasterizer->poly_stipple_enable)
-      dw5 |= GEN6_WM_POLYGON_STIPPLE_ENABLE;
-   if (rasterizer->line_stipple_enable)
-      dw5 |= GEN6_WM_LINE_STIPPLE_ENABLE;
-
    if (dual_blend)
       dw5 |= GEN6_WM_DUAL_SOURCE_BLEND_ENABLE;
 
@@ -2162,25 +2203,14 @@ gen6_emit_3DSTATE_WM(const struct ilo_dev_info *dev,
    else
       dw5 |= GEN6_WM_8_DISPATCH_ENABLE;
 
-   dw6 = fs->in.count << GEN6_WM_NUM_SF_OUTPUTS_SHIFT |
-         GEN6_WM_POSOFFSET_NONE |
-         GEN6_WM_POSITION_ZW_PIXEL |
-         fs->in.barycentric_interpolation_mode <<
-           GEN6_WM_BARYCENTRIC_INTERPOLATION_MODE_SHIFT;
-
-   if (rasterizer->bottom_edge_rule)
-      dw6 |= GEN6_WM_POINT_RASTRULE_UPPER_RIGHT;
+   dw6 |= fs->in.count << GEN6_WM_NUM_SF_OUTPUTS_SHIFT |
+          GEN6_WM_POSOFFSET_NONE |
+          fs->in.barycentric_interpolation_mode <<
+             GEN6_WM_BARYCENTRIC_INTERPOLATION_MODE_SHIFT;
 
    if (num_samples > 1) {
-      if (rasterizer->multisample)
-         dw6 |= GEN6_WM_MSRAST_ON_PATTERN;
-      else
-         dw6 |= GEN6_WM_MSRAST_OFF_PIXEL;
-      dw6 |= GEN6_WM_MSDISPMODE_PERPIXEL;
-   }
-   else {
-      dw6 |= GEN6_WM_MSRAST_OFF_PIXEL |
-             GEN6_WM_MSDISPMODE_PERSAMPLE;
+      dw6 |= rasterizer->wm.dw_msaa_rast |
+             rasterizer->wm.dw_msaa_disp;
    }
 
    ilo_cp_begin(cp, cmd_len);

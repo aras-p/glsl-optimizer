@@ -125,11 +125,19 @@ struct ilo_rasterizer_sf {
    uint32_t dw_msaa;
 };
 
+struct ilo_rasterizer_wm {
+   /* 3DSTATE_WM */
+   uint32_t payload[2];
+   uint32_t dw_msaa_rast;
+   uint32_t dw_msaa_disp;
+};
+
 struct ilo_rasterizer_state {
    struct pipe_rasterizer_state state;
 
    struct ilo_rasterizer_clip clip;
    struct ilo_rasterizer_sf sf;
+   struct ilo_rasterizer_wm wm;
 };
 
 struct ilo_dsa_state {
@@ -291,6 +299,16 @@ ilo_gpe_init_rasterizer_sf(const struct ilo_dev_info *dev,
                            const struct pipe_rasterizer_state *state,
                            struct ilo_rasterizer_sf *sf);
 
+void
+ilo_gpe_init_rasterizer_wm_gen6(const struct ilo_dev_info *dev,
+                                const struct pipe_rasterizer_state *state,
+                                struct ilo_rasterizer_wm *wm);
+
+void
+ilo_gpe_init_rasterizer_wm_gen7(const struct ilo_dev_info *dev,
+                                const struct pipe_rasterizer_state *state,
+                                struct ilo_rasterizer_wm *wm);
+
 static inline void
 ilo_gpe_init_rasterizer(const struct ilo_dev_info *dev,
                         const struct pipe_rasterizer_state *state,
@@ -298,6 +316,11 @@ ilo_gpe_init_rasterizer(const struct ilo_dev_info *dev,
 {
    ilo_gpe_init_rasterizer_clip(dev, state, &rasterizer->clip);
    ilo_gpe_init_rasterizer_sf(dev, state, &rasterizer->sf);
+
+   if (dev->gen >= ILO_GEN(7))
+      ilo_gpe_init_rasterizer_wm_gen7(dev, state, &rasterizer->wm);
+   else
+      ilo_gpe_init_rasterizer_wm_gen6(dev, state, &rasterizer->wm);
 }
 
 void

@@ -194,10 +194,57 @@ gen7_emit_3DSTATE_SF(const struct ilo_dev_info *dev,
    ilo_cp_end(cp);
 }
 
+void
+ilo_gpe_init_rasterizer_wm_gen7(const struct ilo_dev_info *dev,
+                                const struct pipe_rasterizer_state *state,
+                                struct ilo_rasterizer_wm *wm)
+{
+   uint32_t dw1, dw2;
+
+   ILO_GPE_VALID_GEN(dev, 7, 7);
+
+   dw1 = GEN7_WM_POSITION_ZW_PIXEL |
+         GEN7_WM_LINE_AA_WIDTH_2_0 |
+         GEN7_WM_MSRAST_OFF_PIXEL;
+
+   /* same value as in 3DSTATE_SF */
+   if (state->line_smooth)
+      dw1 |= GEN7_WM_LINE_END_CAP_AA_WIDTH_1_0;
+
+   if (state->poly_stipple_enable)
+      dw1 |= GEN7_WM_POLYGON_STIPPLE_ENABLE;
+   if (state->line_stipple_enable)
+      dw1 |= GEN7_WM_LINE_STIPPLE_ENABLE;
+
+   if (state->bottom_edge_rule)
+      dw1 |= GEN7_WM_POINT_RASTRULE_UPPER_RIGHT;
+
+   dw2 = GEN7_WM_MSDISPMODE_PERSAMPLE;
+
+   /*
+    * assertion that makes sure
+    *
+    *   dw1 |= wm->dw_msaa_rast;
+    *   dw2 |= wm->dw_msaa_disp;
+    *
+    * is valid
+    */
+   STATIC_ASSERT(GEN7_WM_MSRAST_OFF_PIXEL == 0 &&
+                 GEN7_WM_MSDISPMODE_PERSAMPLE == 0);
+
+   wm->dw_msaa_rast =
+      (state->multisample) ? GEN7_WM_MSRAST_ON_PATTERN : 0;
+   wm->dw_msaa_disp = GEN7_WM_MSDISPMODE_PERPIXEL;
+
+   STATIC_ASSERT(Elements(wm->payload) >= 2);
+   wm->payload[0] = dw1;
+   wm->payload[1] = dw2;
+}
+
 static void
 gen7_emit_3DSTATE_WM(const struct ilo_dev_info *dev,
                      const struct ilo_shader *fs,
-                     const struct pipe_rasterizer_state *rasterizer,
+                     const struct ilo_rasterizer_state *rasterizer,
                      bool cc_may_kill,
                      struct ilo_cp *cp)
 {
@@ -208,8 +255,11 @@ gen7_emit_3DSTATE_WM(const struct ilo_dev_info *dev,
 
    ILO_GPE_VALID_GEN(dev, 7, 7);
 
-   dw1 = GEN7_WM_STATISTICS_ENABLE |
-         GEN7_WM_LINE_AA_WIDTH_2_0;
+   /* see ilo_gpe_init_rasterizer_wm() */
+   dw1 = rasterizer->wm.payload[0];
+   dw2 = rasterizer->wm.payload[1];
+
+   dw1 |= GEN7_WM_STATISTICS_ENABLE;
 
    if (false) {
       dw1 |= GEN7_WM_DEPTH_CLEAR;
@@ -269,32 +319,9 @@ gen7_emit_3DSTATE_WM(const struct ilo_dev_info *dev,
                 GEN7_WM_KILL_ENABLE;
    }
 
-   dw1 |= GEN7_WM_POSITION_ZW_PIXEL;
-
-   /* same value as in 3DSTATE_SF */
-   if (rasterizer->line_smooth)
-      dw1 |= GEN7_WM_LINE_END_CAP_AA_WIDTH_1_0;
-
-   if (rasterizer->poly_stipple_enable)
-      dw1 |= GEN7_WM_POLYGON_STIPPLE_ENABLE;
-   if (rasterizer->line_stipple_enable)
-      dw1 |= GEN7_WM_LINE_STIPPLE_ENABLE;
-
-   if (rasterizer->bottom_edge_rule)
-      dw1 |= GEN7_WM_POINT_RASTRULE_UPPER_RIGHT;
-
    if (num_samples > 1) {
-      if (rasterizer->multisample)
-         dw1 |= GEN7_WM_MSRAST_ON_PATTERN;
-      else
-         dw1 |= GEN7_WM_MSRAST_OFF_PIXEL;
-
-      dw2 = GEN7_WM_MSDISPMODE_PERPIXEL;
-   }
-   else {
-      dw1 |= GEN7_WM_MSRAST_OFF_PIXEL;
-
-      dw2 = GEN7_WM_MSDISPMODE_PERSAMPLE;
+      dw1 |= rasterizer->wm.dw_msaa_rast;
+      dw2 |= rasterizer->wm.dw_msaa_disp;
    }
 
    ilo_cp_begin(cp, cmd_len);

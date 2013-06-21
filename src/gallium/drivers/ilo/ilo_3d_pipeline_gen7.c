@@ -471,8 +471,7 @@ gen7_pipeline_wm(struct ilo_3d_pipeline *p,
       if (p->dev->gen == ILO_GEN(7) && session->hw_ctx_changed)
          gen7_wa_pipe_control_wm_max_threads_stall(p);
 
-      p->gen7_3DSTATE_WM(p->dev,
-            fs, &ilo->rasterizer->state, cc_may_kill, p->cp);
+      p->gen7_3DSTATE_WM(p->dev, fs, ilo->rasterizer, cc_may_kill, p->cp);
    }
 
    /* 3DSTATE_BINDING_TABLE_POINTERS_PS */

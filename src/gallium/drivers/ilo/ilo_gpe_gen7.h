@@ -173,7 +173,7 @@ typedef void
 typedef void
 (*ilo_gpe_gen7_3DSTATE_WM)(const struct ilo_dev_info *dev,
                            const struct ilo_shader *fs,
-                           const struct pipe_rasterizer_state *rasterizer,
+                           const struct ilo_rasterizer_state *rasterizer,
                            bool cc_may_kill,
                            struct ilo_cp *cp);
 
