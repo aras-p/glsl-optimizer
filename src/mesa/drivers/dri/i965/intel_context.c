@@ -612,8 +612,6 @@ intelInitContext(struct intel_context *intel,
 
    _mesa_meta_init(ctx);
 
-   intel->hw_stencil = mesaVis->stencilBits && mesaVis->depthBits == 24;
-
    intelInitExtensions(ctx);
 
    INTEL_DEBUG = driParseDebugString(getenv("INTEL_DEBUG"), debug_control);

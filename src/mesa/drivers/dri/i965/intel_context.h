@@ -224,7 +224,6 @@ struct intel_context
 
    GLuint stats_wm;
 
-   bool hw_stencil;
    bool no_rast;
    bool always_flush_batch;
    bool always_flush_cache;
