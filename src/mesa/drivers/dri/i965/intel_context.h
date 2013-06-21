@@ -272,9 +272,6 @@ struct intel_context
    driOptionCache optionCache;
 };
 
-#define SUBPIXEL_X 0.125
-#define SUBPIXEL_Y 0.125
-
 /**
  * Align a value down to an alignment value
  *
