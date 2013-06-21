@@ -70,8 +70,6 @@ typedef void (*intel_point_func) (struct intel_context *, intelVertex *);
 #define INTEL_WRITE_FULL  0x2
 #define INTEL_READ        0x4
 
-#define INTEL_MAX_FIXUP 64
-
 #ifndef likely
 #ifdef __GNUC__
 #define likely(expr) (__builtin_expect(expr, 1))
