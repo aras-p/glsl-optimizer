@@ -732,51 +732,53 @@ const struct brw_tracked_state gen6_renderbuffer_surfaces = {
    .emit = brw_update_renderbuffer_surfaces,
 };
 
+
+static void
+update_stage_texture_surfaces(struct brw_context *brw,
+                              const struct gl_program *prog,
+                              uint32_t *surf_offset)
+{
+   if (!prog)
+      return;
+
+   struct gl_context *ctx = &brw->ctx;
+
+   unsigned num_samplers = _mesa_fls(prog->SamplersUsed);
+
+   for (unsigned s = 0; s < num_samplers; s++) {
+      surf_offset[s] = 0;
+
+      if (prog->SamplersUsed & (1 << s)) {
+         const unsigned unit = prog->SamplerUnits[s];
+
+         /* _NEW_TEXTURE */
+         if (ctx->Texture.Unit[unit]._ReallyEnabled) {
+            brw->vtbl.update_texture_surface(ctx, unit, surf_offset + s);
+         }
+      }
+   }
+}
+
+
 /**
  * Construct SURFACE_STATE objects for enabled textures.
  */
 static void
 brw_update_texture_surfaces(struct brw_context *brw)
 {
-   struct gl_context *ctx = &brw->ctx;
-
-   /* BRW_NEW_VERTEX_PROGRAM and BRW_NEW_FRAGMENT_PROGRAM:
-    * Unfortunately, we're stuck using the gl_program structs until the
-    * ARB_fragment_program front-end gets converted to GLSL IR.  These
-    * have the downside that SamplerUnits is split and only contains the
-    * mappings for samplers active in that stage.
-    */
+   /* BRW_NEW_VERTEX_PROGRAM */
    struct gl_program *vs = (struct gl_program *) brw->vertex_program;
+
+   /* BRW_NEW_FRAGMENT_PROGRAM */
    struct gl_program *fs = (struct gl_program *) brw->fragment_program;
 
-   unsigned num_samplers = _mesa_fls(vs->SamplersUsed | fs->SamplersUsed);
-
-   for (unsigned s = 0; s < num_samplers; s++) {
-      brw->vs.base.surf_offset[SURF_INDEX_VEC4_TEXTURE(s)] = 0;
-      brw->wm.surf_offset[SURF_INDEX_TEXTURE(s)] = 0;
-
-      if (vs->SamplersUsed & (1 << s)) {
-         const unsigned unit = vs->SamplerUnits[s];
-
-         /* _NEW_TEXTURE */
-         if (ctx->Texture.Unit[unit]._ReallyEnabled) {
-            brw->vtbl.update_texture_surface(ctx, unit,
-                                             brw->vs.base.surf_offset +
-                                             SURF_INDEX_VEC4_TEXTURE(s));
-         }
-      }
-
-      if (fs->SamplersUsed & (1 << s)) {
-         const unsigned unit = fs->SamplerUnits[s];
-
-         /* _NEW_TEXTURE */
-         if (ctx->Texture.Unit[unit]._ReallyEnabled) {
-            brw->vtbl.update_texture_surface(ctx, unit,
-                                             brw->wm.surf_offset +
-                                             SURF_INDEX_TEXTURE(s));
-         }
-      }
-   }
+   /* _NEW_TEXTURE */
+   update_stage_texture_surfaces(brw, vs,
+                                 brw->vs.base.surf_offset +
+                                 SURF_INDEX_VEC4_TEXTURE(0));
+   update_stage_texture_surfaces(brw, fs,
+                                 brw->wm.surf_offset +
+                                 SURF_INDEX_TEXTURE(0));
 
    brw->state.dirty.brw |= BRW_NEW_SURFACES;
 }
