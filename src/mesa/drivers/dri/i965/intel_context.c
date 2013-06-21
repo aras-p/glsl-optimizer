@@ -357,20 +357,9 @@ intelInvalidateState(struct gl_context * ctx, GLuint new_state)
 }
 
 void
-intel_flush_rendering_to_batch(struct gl_context *ctx)
-{
-   struct intel_context *intel = intel_context(ctx);
-
-   if (intel->Fallback)
-      _swrast_flush(ctx);
-}
-
-void
 _intel_flush(struct gl_context *ctx, const char *file, int line)
 {
    struct intel_context *intel = intel_context(ctx);
-
-   intel_flush_rendering_to_batch(ctx);
 
    if (intel->batch.used)
       _intel_batchbuffer_flush(intel, file, line);
@@ -707,7 +696,6 @@ intelDestroyContext(__DRIcontext * driContextPriv)
 
       if (ctx->swrast_context)
          _swrast_DestroyContext(&intel->ctx);
-      intel->Fallback = 0x0;      /* don't call _swrast_Flush later */
 
       intel_batchbuffer_free(intel);
 
