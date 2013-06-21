@@ -610,6 +610,42 @@ ilo_shader_state_search_variant(struct ilo_shader_state *state,
    return sh;
 }
 
+static void
+copy_so_info(struct ilo_shader *sh,
+             const struct pipe_stream_output_info *so_info)
+{
+   unsigned i, attr;
+
+   if (!so_info->num_outputs)
+      return;
+
+   sh->so_info = *so_info;
+
+   for (i = 0; i < so_info->num_outputs; i++) {
+      /* figure out which attribute is sourced */
+      for (attr = 0; attr < sh->out.count; attr++) {
+         const int reg_idx = sh->out.register_indices[attr];
+         if (reg_idx == so_info->output[i].register_index)
+            break;
+      }
+
+      if (attr < sh->out.count) {
+         sh->so_info.output[i].register_index = attr;
+      }
+      else {
+         assert(!"stream output an undefined register");
+         sh->so_info.output[i].register_index = 0;
+      }
+
+      /* PSIZE is at W channel */
+      if (sh->out.semantic_names[attr] == TGSI_SEMANTIC_PSIZE) {
+         assert(so_info->output[i].start_component == 0);
+         assert(so_info->output[i].num_components == 1);
+         sh->so_info.output[i].start_component = 3;
+      }
+   }
+}
+
 /**
  * Add a shader variant to the shader state.
  */
@@ -642,6 +678,8 @@ ilo_shader_state_add_variant(struct ilo_shader_state *state,
    }
 
    sh->variant = *variant;
+
+   copy_so_info(sh, &state->info.stream_output);
 
    ilo_shader_state_add_shader(state, sh);
 
@@ -926,4 +964,17 @@ ilo_shader_get_kernel_cso(const struct ilo_shader_state *shader)
    assert(kernel);
 
    return &kernel->cso;
+}
+
+/**
+ * Return the SO info of the selected kernel.
+ */
+const struct pipe_stream_output_info *
+ilo_shader_get_kernel_so_info(const struct ilo_shader_state *shader)
+{
+   const struct ilo_shader *kernel = shader->shader;
+
+   assert(kernel);
+
+   return &kernel->so_info;
 }

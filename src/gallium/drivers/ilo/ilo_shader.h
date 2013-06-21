@@ -124,4 +124,7 @@ ilo_shader_get_kernel_param(const struct ilo_shader_state *shader,
 const struct ilo_shader_cso *
 ilo_shader_get_kernel_cso(const struct ilo_shader_state *shader);
 
+const struct pipe_stream_output_info *
+ilo_shader_get_kernel_so_info(const struct ilo_shader_state *shader);
+
 #endif /* ILO_SHADER_H */

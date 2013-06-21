@@ -378,19 +378,19 @@ gen7_pipeline_sol(struct ilo_3d_pipeline *p,
                   struct gen6_pipeline_session *session)
 {
    const struct pipe_stream_output_info *so_info;
-   const struct ilo_shader *sh;
+   const struct ilo_shader_state *shader;
    bool dirty_sh = false;
 
    if (ilo->gs) {
-      so_info = &ilo->gs->info.stream_output;
-      sh = ilo->gs->shader;
+      shader = ilo->gs;
       dirty_sh = DIRTY(GS);
    }
    else {
-      so_info = &ilo->vs->info.stream_output;
-      sh = ilo->vs->shader;
+      shader = ilo->vs;
       dirty_sh = DIRTY(VS);
    }
+
+   so_info = ilo_shader_get_kernel_so_info(shader);
 
    gen6_pipeline_update_max_svbi(p, ilo, session);
 
@@ -419,13 +419,15 @@ gen7_pipeline_sol(struct ilo_3d_pipeline *p,
 
    /* 3DSTATE_SO_DECL_LIST */
    if (dirty_sh && ilo->so.enabled)
-      p->gen7_3DSTATE_SO_DECL_LIST(p->dev, so_info, sh, p->cp);
+      p->gen7_3DSTATE_SO_DECL_LIST(p->dev, so_info, p->cp);
 
    /* 3DSTATE_STREAMOUT */
    if (DIRTY(STREAM_OUTPUT_TARGETS) || DIRTY(RASTERIZER) || dirty_sh) {
       const unsigned buffer_mask = (1 << ilo->so.count) - 1;
+      const int output_count = ilo_shader_get_kernel_param(shader,
+            ILO_KERNEL_OUTPUT_COUNT);
 
-      p->gen7_3DSTATE_STREAMOUT(p->dev, buffer_mask, sh->out.count,
+      p->gen7_3DSTATE_STREAMOUT(p->dev, buffer_mask, output_count,
             ilo->rasterizer->state.rasterizer_discard, p->cp);
    }
 }

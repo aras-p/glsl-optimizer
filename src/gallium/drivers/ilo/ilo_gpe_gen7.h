@@ -360,7 +360,6 @@ typedef void
 typedef void
 (*ilo_gpe_gen7_3DSTATE_SO_DECL_LIST)(const struct ilo_dev_info *dev,
                                      const struct pipe_stream_output_info *so_info,
-                                     const struct ilo_shader *sh,
                                      struct ilo_cp *cp);
 
 typedef void

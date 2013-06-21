@@ -1102,7 +1102,6 @@ gen7_emit_3DSTATE_PUSH_CONSTANT_ALLOC_PS(const struct ilo_dev_info *dev,
 static void
 gen7_emit_3DSTATE_SO_DECL_LIST(const struct ilo_dev_info *dev,
                                const struct pipe_stream_output_info *so_info,
-                               const struct ilo_shader *sh,
                                struct ilo_cp *cp)
 {
    const uint32_t cmd = ILO_GPE_CMD(0x3, 0x1, 0x17);
@@ -1121,7 +1120,7 @@ gen7_emit_3DSTATE_SO_DECL_LIST(const struct ilo_dev_info *dev,
       memset(buffer_offsets, 0, sizeof(buffer_offsets));
 
       for (i = 0; i < so_info->num_outputs; i++) {
-         unsigned decl, buf, attr, mask;
+         unsigned decl, buf, reg, mask;
 
          buf = so_info->output[i].output_buffer;
 
@@ -1142,34 +1141,13 @@ gen7_emit_3DSTATE_SO_DECL_LIST(const struct ilo_dev_info *dev,
             buffer_offsets[buf] += num_dwords;
          }
 
-         /* figure out which attribute is sourced */
-         for (attr = 0; attr < sh->out.count; attr++) {
-            const int idx = sh->out.register_indices[attr];
-            if (idx == so_info->output[i].register_index)
-               break;
-         }
+         reg = so_info->output[i].register_index;
+         mask = ((1 << so_info->output[i].num_components) - 1) <<
+            so_info->output[i].start_component;
 
-         decl = buf << SO_DECL_OUTPUT_BUFFER_SLOT_SHIFT;
-
-         if (attr < sh->out.count) {
-            mask = ((1 << so_info->output[i].num_components) - 1) <<
-               so_info->output[i].start_component;
-
-            /* PSIZE is at W channel */
-            if (sh->out.semantic_names[attr] == TGSI_SEMANTIC_PSIZE) {
-               assert(mask == 0x1);
-               mask = (mask << 3) & 0xf;
-            }
-
-            decl |= attr << SO_DECL_REGISTER_INDEX_SHIFT |
-                    mask << SO_DECL_COMPONENT_MASK_SHIFT;
-         }
-         else {
-            assert(!"stream output an undefined register");
-            mask = (1 << so_info->output[i].num_components) - 1;
-            decl |= SO_DECL_HOLE_FLAG |
-                    mask << SO_DECL_COMPONENT_MASK_SHIFT;
-         }
+         decl = buf << SO_DECL_OUTPUT_BUFFER_SLOT_SHIFT |
+                reg << SO_DECL_REGISTER_INDEX_SHIFT |
+                mask << SO_DECL_COMPONENT_MASK_SHIFT;
 
          so_decls[num_entries++] = decl;
          buffer_selects |= 1 << buf;

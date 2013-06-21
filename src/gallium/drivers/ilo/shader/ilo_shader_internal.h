@@ -105,6 +105,8 @@ struct ilo_shader {
 
    bool stream_output;
    int svbi_post_inc;
+   struct pipe_stream_output_info so_info;
+
    /* for VS stream output / rasterizer discard */
    int gs_offsets[3];
    int gs_start_grf;
