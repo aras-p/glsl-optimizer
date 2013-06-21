@@ -184,7 +184,7 @@ gen7_emit_3DSTATE_SF(const struct ilo_dev_info *dev,
    ILO_GPE_VALID_GEN(dev, 7, 7);
 
    ilo_gpe_gen6_fill_3dstate_sf_raster(dev,
-         &rasterizer->sf, num_samples,
+         rasterizer, num_samples,
          (zs_surf) ? zs_surf->format : PIPE_FORMAT_NONE,
          payload, Elements(payload));
 
@@ -654,7 +654,7 @@ gen7_emit_3DSTATE_STREAMOUT(const struct ilo_dev_info *dev,
 
 static void
 gen7_emit_3DSTATE_SBE(const struct ilo_dev_info *dev,
-                      const struct pipe_rasterizer_state *rasterizer,
+                      const struct ilo_rasterizer_state *rasterizer,
                       const struct ilo_shader *fs,
                       const struct ilo_shader *last_sh,
                       struct ilo_cp *cp)

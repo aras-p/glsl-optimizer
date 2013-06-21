@@ -1757,11 +1757,13 @@ ilo_gpe_init_rasterizer_sf(const struct ilo_dev_info *dev,
  */
 void
 ilo_gpe_gen6_fill_3dstate_sf_raster(const struct ilo_dev_info *dev,
-                                    const struct ilo_rasterizer_sf *sf,
+                                    const struct ilo_rasterizer_state *rasterizer,
                                     int num_samples,
                                     enum pipe_format depth_format,
                                     uint32_t *payload, unsigned payload_len)
 {
+   const struct ilo_rasterizer_sf *sf = &rasterizer->sf;
+
    assert(payload_len == Elements(sf->payload));
 
    if (sf) {
@@ -1811,7 +1813,7 @@ ilo_gpe_gen6_fill_3dstate_sf_raster(const struct ilo_dev_info *dev,
  */
 void
 ilo_gpe_gen6_fill_3dstate_sf_sbe(const struct ilo_dev_info *dev,
-                                 const struct pipe_rasterizer_state *rasterizer,
+                                 const struct ilo_rasterizer_state *rasterizer,
                                  const struct ilo_shader *fs,
                                  const struct ilo_shader *last_sh,
                                  uint32_t *dw, int num_dwords)
@@ -1868,11 +1870,11 @@ ilo_gpe_gen6_fill_3dstate_sf_sbe(const struct ilo_dev_info *dev,
        * TODO We do not check that yet.
        */
       if (semantic == TGSI_SEMANTIC_GENERIC &&
-          (rasterizer->sprite_coord_enable & (1 << index)))
+          (rasterizer->state.sprite_coord_enable & (1 << index)))
          point_sprite_enable |= 1 << dst;
 
       if (interp == TGSI_INTERPOLATE_CONSTANT ||
-          (interp == TGSI_INTERPOLATE_COLOR && rasterizer->flatshade))
+          (interp == TGSI_INTERPOLATE_COLOR && rasterizer->state.flatshade))
          const_interp_enable |= 1 << dst;
 
       if (!last_sh) {
@@ -1889,7 +1891,8 @@ ilo_gpe_gen6_fill_3dstate_sf_sbe(const struct ilo_dev_info *dev,
 
          ctrl = src;
 
-         if (semantic == TGSI_SEMANTIC_COLOR && rasterizer->light_twoside &&
+         if (semantic == TGSI_SEMANTIC_COLOR &&
+             rasterizer->state.light_twoside &&
              src < vue_len - 1) {
             const int next = src + 1;
 
@@ -1984,7 +1987,7 @@ ilo_gpe_gen6_fill_3dstate_sf_sbe(const struct ilo_dev_info *dev,
          dw[0] |= GEN6_SF_SWIZZLE_ENABLE;
    }
 
-   switch (rasterizer->sprite_coord_mode) {
+   switch (rasterizer->state.sprite_coord_mode) {
    case PIPE_SPRITE_COORD_UPPER_LEFT:
       dw[0] |= GEN6_SF_POINT_SPRITE_UPPERLEFT;
       break;
@@ -2017,9 +2020,9 @@ gen6_emit_3DSTATE_SF(const struct ilo_dev_info *dev,
 
    ILO_GPE_VALID_GEN(dev, 6, 6);
 
-   ilo_gpe_gen6_fill_3dstate_sf_raster(dev, &rasterizer->sf,
+   ilo_gpe_gen6_fill_3dstate_sf_raster(dev, rasterizer,
          1, PIPE_FORMAT_NONE, payload_raster, Elements(payload_raster));
-   ilo_gpe_gen6_fill_3dstate_sf_sbe(dev, &rasterizer->state,
+   ilo_gpe_gen6_fill_3dstate_sf_sbe(dev, rasterizer,
          fs, last_sh, payload_sbe, Elements(payload_sbe));
 
    ilo_cp_begin(cp, cmd_len);

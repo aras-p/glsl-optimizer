@@ -544,14 +544,14 @@ ilo_gpe_gen6_translate_texture(enum pipe_texture_target target);
 
 void
 ilo_gpe_gen6_fill_3dstate_sf_raster(const struct ilo_dev_info *dev,
-                                    const struct ilo_rasterizer_sf *sf,
+                                    const struct ilo_rasterizer_state *rasterizer,
                                     int num_samples,
                                     enum pipe_format depth_format,
                                     uint32_t *payload, unsigned payload_len);
 
 void
 ilo_gpe_gen6_fill_3dstate_sf_sbe(const struct ilo_dev_info *dev,
-                                 const struct pipe_rasterizer_state *rasterizer,
+                                 const struct ilo_rasterizer_state *rasterizer,
                                  const struct ilo_shader *fs,
                                  const struct ilo_shader *last_sh,
                                  uint32_t *dw, int num_dwords);

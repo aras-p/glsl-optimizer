@@ -224,7 +224,7 @@ typedef void
 
 typedef void
 (*ilo_gpe_gen7_3DSTATE_SBE)(const struct ilo_dev_info *dev,
-                            const struct pipe_rasterizer_state *rasterizer,
+                            const struct ilo_rasterizer_state *rasterizer,
                             const struct ilo_shader *fs,
                             const struct ilo_shader *last_sh,
                             struct ilo_cp *cp);
