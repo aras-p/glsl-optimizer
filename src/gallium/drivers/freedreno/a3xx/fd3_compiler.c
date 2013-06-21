@@ -1072,12 +1072,13 @@ static const struct instr_translater translaters[TGSI_OPCODE_LAST] = {
 	INSTR(END,          instr_cat0, .opc = OPC_END),
 };
 
-static void
+static int
 decl_in(struct fd3_compile_context *ctx, struct tgsi_full_declaration *decl)
 {
 	struct fd3_shader_stateobj *so = ctx->so;
 	unsigned base = ctx->base_reg[TGSI_FILE_INPUT];
 	unsigned i, flags = 0;
+	int nop = 0;
 
 	if (ctx->so->half_precision)
 		flags |= IR3_REG_HALF;
@@ -1115,8 +1116,12 @@ decl_in(struct fd3_compile_context *ctx, struct tgsi_full_declaration *decl)
 
 			/* input base (always r0.x): */
 			ir3_reg_create(instr, regid(0,0), 0);
+
+			nop = 6;
 		}
 	}
+
+	return nop;
 }
 
 static void
@@ -1174,6 +1179,7 @@ static void
 compile_instructions(struct fd3_compile_context *ctx)
 {
 	struct ir3_shader *ir = ctx->ir;
+	int nop = 0;
 
 	while (!tgsi_parse_end_of_tokens(&ctx->parser)) {
 		tgsi_parse_token(&ctx->parser);
@@ -1185,7 +1191,7 @@ compile_instructions(struct fd3_compile_context *ctx)
 			if (decl->Declaration.File == TGSI_FILE_OUTPUT) {
 				decl_out(ctx, decl);
 			} else if (decl->Declaration.File == TGSI_FILE_INPUT) {
-				decl_in(ctx, decl);
+				nop = decl_in(ctx, decl);
 			} else if (decl->Declaration.File == TGSI_FILE_SAMPLER) {
 				decl_samp(ctx, decl);
 			}
@@ -1207,6 +1213,11 @@ compile_instructions(struct fd3_compile_context *ctx)
 					&ctx->parser.FullToken.FullInstruction;
 			unsigned opc = inst->Instruction.Opcode;
 			const struct instr_translater *t = &translaters[opc];
+
+			if (nop) {
+				ir3_instr_create(ctx->ir, 0, OPC_NOP)->repeat = nop - 1;
+				nop = 0;
+			}
 
 			if (t->fxn) {
 				t->fxn(t, ctx, inst);
