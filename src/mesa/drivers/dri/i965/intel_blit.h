@@ -33,8 +33,6 @@
 extern void intelCopyBuffer(const __DRIdrawable * dpriv,
                             const drm_clip_rect_t * rect);
 
-extern GLbitfield intelClearWithBlit(struct gl_context * ctx, GLbitfield mask);
-
 bool
 intelEmitCopyBlit(struct intel_context *intel,
                               GLuint cpp,
