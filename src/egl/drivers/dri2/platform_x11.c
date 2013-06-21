@@ -743,6 +743,20 @@ dri2_swap_buffers_msc(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw,
       free(reply);
    }
 
+   /* Since we aren't watching for the server's invalidate events like we're
+    * supposed to (due to XCB providing no mechanism for filtering the events
+    * the way xlib does), and SwapBuffers is a common cause of invalidate
+    * events, just shove one down to the driver, even though we haven't told
+    * the driver that we're the kind of loader that provides reliable
+    * invalidate events.  This causes the driver to request buffers again at
+    * its next draw, so that we get the correct buffers if a pageflip
+    * happened.  The driver should still be using the viewport hack to catch
+    * window resizes.
+    */
+   if (dri2_dpy->flush &&
+       dri2_dpy->flush->base.version >= 3 && dri2_dpy->flush->invalidate)
+      (*dri2_dpy->flush->invalidate)(dri2_surf->dri_drawable);
+
    return swap_count;
 }
 
