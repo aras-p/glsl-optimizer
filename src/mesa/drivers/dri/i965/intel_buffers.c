@@ -84,8 +84,6 @@ intelDrawBuffer(struct gl_context * ctx, GLenum mode)
       if (!was_front_buffer_rendering && intel->is_front_buffer_rendering)
 	 dri2InvalidateDrawable(intel->driContext->driDrawablePriv);
    }
-
-   intel_draw_buffer(ctx);
 }
 
 

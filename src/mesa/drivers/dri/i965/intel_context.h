@@ -137,8 +137,6 @@ struct intel_context
       void (*finish_batch) (struct intel_context * intel);
       void (*new_batch) (struct intel_context * intel);
 
-      void (*update_draw_buffer)(struct intel_context *intel);
-
       void (*invalidate_state) (struct intel_context *intel,
 				GLuint new_state);
 

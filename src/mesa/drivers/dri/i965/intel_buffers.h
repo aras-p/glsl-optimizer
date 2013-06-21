@@ -40,14 +40,6 @@ extern struct intel_region *intel_readbuf_region(struct intel_context *intel);
 
 extern void intel_check_front_buffer_rendering(struct intel_context *intel);
 
-static inline void
-intel_draw_buffer(struct gl_context * ctx)
-{
-   struct intel_context *intel = intel_context(ctx);
-
-   intel->vtbl.update_draw_buffer(intel);
-}
-
 extern void intelInitBufferFuncs(struct dd_function_table *functions);
 
 #endif /* INTEL_BUFFERS_H */

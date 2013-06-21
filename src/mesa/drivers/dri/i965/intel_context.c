@@ -251,7 +251,6 @@ intel_prepare_render(struct intel_context *intel)
    if (drawable && drawable->dri2.stamp != driContext->dri2.draw_stamp) {
       if (drawable->lastStamp != drawable->dri2.stamp)
 	 intel_update_renderbuffers(driContext, drawable);
-      intel_draw_buffer(&intel->ctx);
       driContext->dri2.draw_stamp = drawable->dri2.stamp;
    }
 
@@ -804,12 +803,6 @@ intelMakeCurrent(__DRIcontext * driContextPriv,
 
       intel_gles3_srgb_workaround(intel, ctx->WinSysDrawBuffer);
       intel_gles3_srgb_workaround(intel, ctx->WinSysReadBuffer);
-
-      /* We do this in intel_prepare_render() too, but intel->ctx.DrawBuffer
-       * is NULL at that point.  We can't call _mesa_makecurrent()
-       * first, since we need the buffer size for the initial
-       * viewport.  So just call intel_draw_buffer() again here. */
-      intel_draw_buffer(ctx);
    }
    else {
       _mesa_make_current(NULL, NULL, NULL);

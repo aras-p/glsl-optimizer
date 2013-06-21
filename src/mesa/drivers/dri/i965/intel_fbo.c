@@ -425,37 +425,6 @@ intel_new_renderbuffer(struct gl_context * ctx, GLuint name)
    return rb;
 }
 
-
-/**
- * Called via glBindFramebufferEXT().
- */
-static void
-intel_bind_framebuffer(struct gl_context * ctx, GLenum target,
-                       struct gl_framebuffer *fb, struct gl_framebuffer *fbread)
-{
-   if (target == GL_FRAMEBUFFER_EXT || target == GL_DRAW_FRAMEBUFFER_EXT) {
-      intel_draw_buffer(ctx);
-   }
-   else {
-      /* don't need to do anything if target == GL_READ_FRAMEBUFFER_EXT */
-   }
-}
-
-
-/**
- * Called via glFramebufferRenderbufferEXT().
- */
-static void
-intel_framebuffer_renderbuffer(struct gl_context * ctx,
-                               struct gl_framebuffer *fb,
-                               GLenum attachment, struct gl_renderbuffer *rb)
-{
-   DBG("Intel FramebufferRenderbuffer %u %u\n", fb->Name, rb ? rb->Name : 0);
-
-   _mesa_framebuffer_renderbuffer(ctx, fb, attachment, rb);
-   intel_draw_buffer(ctx);
-}
-
 static bool
 intel_renderbuffer_update_wrapper(struct intel_context *intel,
                                   struct intel_renderbuffer *irb,
@@ -560,9 +529,6 @@ intel_render_texture(struct gl_context * ctx,
        _mesa_get_format_name(image->TexFormat),
        att->Texture->Name, image->Width, image->Height, image->Depth,
        rb->RefCount);
-
-   /* update drawing region, etc */
-   intel_draw_buffer(ctx);
 }
 
 
@@ -934,8 +900,6 @@ intel_fbo_init(struct intel_context *intel)
    intel->ctx.Driver.NewRenderbuffer = intel_new_renderbuffer;
    intel->ctx.Driver.MapRenderbuffer = intel_map_renderbuffer;
    intel->ctx.Driver.UnmapRenderbuffer = intel_unmap_renderbuffer;
-   intel->ctx.Driver.BindFramebuffer = intel_bind_framebuffer;
-   intel->ctx.Driver.FramebufferRenderbuffer = intel_framebuffer_renderbuffer;
    intel->ctx.Driver.RenderTexture = intel_render_texture;
    intel->ctx.Driver.FinishRenderTexture = intel_finish_render_texture;
    intel->ctx.Driver.ValidateFramebuffer = intel_validate_framebuffer;

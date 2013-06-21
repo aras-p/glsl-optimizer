@@ -92,19 +92,6 @@ static void brw_destroy_context( struct intel_context *intel )
 }
 
 /**
- * Stub state update function for i915.
- *
- * In i915, hardware state updates for drawbuffer changes are driven by
- * driver-internal calls to GL state update hooks.  In i965, we recompute the
- * apporpriate state at draw time as a result of _NEW_BUFFERS being set, so we
- * don't need this hook.
- */
-static void
-brw_update_draw_buffer(struct intel_context *intel)
-{
-}
-
-/**
  * called from intel_batchbuffer_flush and children before sending a
  * batchbuffer off.
  *
@@ -199,7 +186,6 @@ void brwInitVtbl( struct brw_context *brw )
    brw->intel.vtbl.new_batch = brw_new_batch;
    brw->intel.vtbl.finish_batch = brw_finish_batch;
    brw->intel.vtbl.destroy = brw_destroy_context;
-   brw->intel.vtbl.update_draw_buffer = brw_update_draw_buffer;
    brw->intel.vtbl.debug_batch = brw_debug_batch;
    brw->intel.vtbl.annotate_aub = brw_annotate_aub;
    brw->intel.vtbl.render_target_supported = brw_render_target_supported;
