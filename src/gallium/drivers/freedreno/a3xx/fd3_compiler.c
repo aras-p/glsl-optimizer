@@ -187,6 +187,7 @@ struct instr_translater {
 	void (*fxn)(const struct instr_translater *t,
 			struct fd3_compile_context *ctx,
 			struct tgsi_full_instruction *inst);
+	unsigned tgsi_opc;
 	opc_t opc;
 	opc_t hopc;    /* opc to use for half_precision mode, if different */
 	unsigned arg;
@@ -509,6 +510,7 @@ trans_dotp(const struct instr_translater *t,
 	unsigned swiz0[] = { src0->SwizzleX, src0->SwizzleY, src0->SwizzleZ, src0->SwizzleW };
 	unsigned swiz1[] = { src1->SwizzleX, src1->SwizzleY, src1->SwizzleZ, src1->SwizzleW };
 	opc_t opc_mad    = ctx->so->half_precision ? OPC_MAD_F16 : OPC_MAD_F32;
+	unsigned n = t->arg;     /* number of components */
 	unsigned i;
 
 	get_internal_temp_repl(ctx, &tmp_dst, &tmp_src);
@@ -539,7 +541,7 @@ trans_dotp(const struct instr_translater *t,
 	add_src_reg(ctx, instr, src0, swiz0[0]);
 	add_src_reg(ctx, instr, src1, swiz1[0]);
 
-	for (i = 1; i < t->arg; i++) {
+	for (i = 1; i < n; i++) {
 		ir3_instr_create(ctx->ir, 0, OPC_NOP);
 
 		instr = ir3_instr_create(ctx->ir, 3, opc_mad);
@@ -549,10 +551,22 @@ trans_dotp(const struct instr_translater *t,
 		add_src_reg(ctx, instr, &tmp_src, 0);
 	}
 
+	/* DPH(a,b) = (a.x * b.x) + (a.y * b.y) + (a.z * b.z) + b.w */
+	if (t->tgsi_opc == TGSI_OPCODE_DPH) {
+		ir3_instr_create(ctx->ir, 0, OPC_NOP);
+
+		instr = ir3_instr_create(ctx->ir, 2, OPC_ADD_F);
+		add_dst_reg(ctx, instr, &tmp_dst, 0);
+		add_src_reg(ctx, instr, src1, swiz1[i]);
+		add_src_reg(ctx, instr, &tmp_src, 0);
+
+		n++;
+	}
+
 	ir3_instr_create(ctx->ir, 0, OPC_NOP);
 
 	/* pad out to multiple of 4 scalar instructions: */
-	for (i = 2 * t->arg; i % 4; i++) {
+	for (i = 2 * n; i % 4; i++) {
 		ir3_instr_create(ctx->ir, 0, OPC_NOP);
 	}
 
@@ -1016,7 +1030,7 @@ instr_cat4(const struct instr_translater *t,
 
 static const struct instr_translater translaters[TGSI_OPCODE_LAST] = {
 #define INSTR(n, f, ...) \
-	[TGSI_OPCODE_ ## n] = { .fxn = (f), ##__VA_ARGS__ }
+	[TGSI_OPCODE_ ## n] = { .fxn = (f), .tgsi_opc = TGSI_OPCODE_ ## n, ##__VA_ARGS__ }
 
 	INSTR(MOV,          instr_cat1),
 	INSTR(RCP,          instr_cat4, .opc = OPC_RCP),
@@ -1027,6 +1041,7 @@ static const struct instr_translater translaters[TGSI_OPCODE_LAST] = {
 	INSTR(DP2,          trans_dotp, .arg = 2),
 	INSTR(DP3,          trans_dotp, .arg = 3),
 	INSTR(DP4,          trans_dotp, .arg = 4),
+	INSTR(DPH,          trans_dotp, .arg = 3),   /* almost like DP3 */
 	INSTR(MIN,          instr_cat2, .opc = OPC_MIN_F),
 	INSTR(MAX,          instr_cat2, .opc = OPC_MAX_F),
 	INSTR(SLT,          instr_cat2, .opc = OPC_CMPS_F, .arg = IR3_COND_LT),
