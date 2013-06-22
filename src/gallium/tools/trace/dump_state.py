@@ -53,13 +53,23 @@ PIPE_BUFFER = 0
 def serialize(obj):
     '''JSON serializer function for non-standard Python objects.'''
 
-    # Don't dump full blobs, but merely a description of their size and
-    # CRC32 hash.
     if isinstance(obj, bytearray):
-        crc32 = binascii.crc32(obj)
-        if crc32 < 0:
-            crc32 += 0x100000000
-        return 'blob(size=%u,crc32=0x%08x)' % (len(obj), crc32)
+        # TODO: Decide on a single way of dumping blobs
+        if False:
+            # Don't dump full blobs, but merely a description of their size and
+            # CRC32 hash.
+            crc32 = binascii.crc32(obj)
+            if crc32 < 0:
+                crc32 += 0x100000000
+            return 'blob(size=%u,crc32=0x%08x)' % (len(obj), crc32)
+        if True
+            # Dump blobs as an array of 16byte hexadecimals
+            res = []
+            for i in range(0, len(obj), 16):
+                res.append(binascii.b2a_hex(obj[i: i+16]))
+            return res
+        # Dump blobs as a single hexadecimal string
+        return binascii.b2a_hex(obj)
 
     # If the object has a __json__ method, use it.
     try:
@@ -211,6 +221,7 @@ class Context(Dispatcher):
         self._state.scissors = []
         self._state.viewports = []
         self._state.vertex_buffers = []
+        self._state.constant_buffer = [[] for i in range(3)]
 
         self._draw_no = 0
 
@@ -266,6 +277,9 @@ class Context(Dispatcher):
         if not state.alpha.enabled:
             del state.alpha.func
             del state.alpha.ref_value
+        for i in range(2):
+            if not state.stencil[i].enabled:
+                del state.stencil[i].func
         return state
 
     def bind_depth_stencil_alpha_state(self, state):
@@ -324,8 +338,7 @@ class Context(Dispatcher):
         sys.stdout.flush()
 
     def set_constant_buffer(self, shader, index, constant_buffer):
-        # TODO
-        pass
+        self._update(self._state.constant_buffer[shader], index, 1, [constant_buffer])
 
     def set_framebuffer_state(self, state):
         self._state.fb = state
@@ -465,7 +478,7 @@ class Context(Dispatcher):
             min_index, max_index = self._merge_indices(info)
         else:
             min_index = info.start
-            max_index = info.start + count - 1
+            max_index = info.start + info.count - 1
         self._merge_vertices(min_index, max_index - min_index + 1)
 
         self._dump_state()
@@ -533,6 +546,13 @@ class Context(Dispatcher):
     
     def destroy_query(self, query):
         pass
+
+    def create_stream_output_target(self, res, buffer_offset, buffer_size):
+        so_target = Struct()
+        so_target.resource = res
+        so_target.offset = buffer_offset
+        so_target.size = buffer_size
+        return so_target
 
 
 class Interpreter(parser.TraceDumper):
