@@ -1100,6 +1100,8 @@ trace_context_create_stream_output_target(struct pipe_context *_pipe,
    result = pipe->create_stream_output_target(pipe,
                                               res, buffer_offset, buffer_size);
 
+   trace_dump_ret(ptr, result);
+
    trace_dump_call_end();
 
    return result;
