@@ -766,6 +766,19 @@ entry:
             continue;
          }
 
+      } else if (entry->run == dct_Escape &&
+                 bs->decoder->profile == PIPE_VIDEO_PROFILE_MPEG1) {
+         i += vl_vlc_get_uimsbf(&bs->vlc, 6) + 1;
+         if (i > 64)
+            break;
+
+         dst[i] = vl_vlc_get_simsbf(&bs->vlc, 8);
+         if (dst[i] == -128)
+            dst[i] = vl_vlc_get_uimsbf(&bs->vlc, 8) - 256;
+         else if (dst[i] == 0)
+            dst[i] = vl_vlc_get_uimsbf(&bs->vlc, 8);
+
+         dst[i] *= scale;
       } else if (entry->run == dct_Escape) {
          i += vl_vlc_get_uimsbf(&bs->vlc, 6) + 1;
          if (i > 64)
@@ -812,18 +825,23 @@ decode_slice(struct vl_mpg12_bs *bs, struct pipe_video_buffer *target)
    do {
       int inc = 0;
 
-      if (bs->decoder->profile == PIPE_VIDEO_PROFILE_MPEG1)
+      while (1) {
+         /* MPEG-1 macroblock stuffing, can appear an arbitrary number of times. */
          while (vl_vlc_peekbits(&bs->vlc, 11) == 15) {
             vl_vlc_eatbits(&bs->vlc, 11);
             vl_vlc_fillbits(&bs->vlc);
          }
 
-      while (vl_vlc_peekbits(&bs->vlc, 11) == 8) {
-         vl_vlc_eatbits(&bs->vlc, 11);
-         vl_vlc_fillbits(&bs->vlc);
-         inc += 33;
+         if (vl_vlc_peekbits(&bs->vlc, 11) == 8) {
+            vl_vlc_eatbits(&bs->vlc, 11);
+            vl_vlc_fillbits(&bs->vlc);
+            inc += 33;
+         } else {
+            inc += vl_vlc_get_vlclbf(&bs->vlc, tbl_B1, 11);
+            break;
+         }
       }
-      inc += vl_vlc_get_vlclbf(&bs->vlc, tbl_B1, 11);
+
       if (x != -1) {
          if (!inc)
             return;
