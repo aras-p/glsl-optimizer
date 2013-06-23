@@ -1553,6 +1553,7 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 
 	if (rctx->framebuffer.state.nr_cbufs) {
 		rctx->flags |= R600_CONTEXT_WAIT_3D_IDLE | R600_CONTEXT_FLUSH_AND_INV;
+		rctx->flags |= R600_CONTEXT_FLUSH_AND_INV_CB;
 
 		if (rctx->chip_class >= R700 &&
 		    rctx->framebuffer.state.cbufs[0]->texture->nr_samples > 1) {
@@ -1561,6 +1562,7 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 	}
 	if (rctx->framebuffer.state.zsbuf) {
 		rctx->flags |= R600_CONTEXT_WAIT_3D_IDLE | R600_CONTEXT_FLUSH_AND_INV;
+		rctx->flags |= R600_CONTEXT_FLUSH_AND_INV_DB;
 
 		rtex = (struct r600_texture*)rctx->framebuffer.state.zsbuf->texture;
 		if (rctx->chip_class >= R700 && rtex->htile) {

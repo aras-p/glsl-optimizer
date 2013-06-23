@@ -89,9 +89,10 @@ static void r600_texture_barrier(struct pipe_context *ctx)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 
-	rctx->flags |= R600_CONTEXT_WAIT_3D_IDLE;
-	rctx->flags |= R600_CONTEXT_INVAL_READ_CACHES;
-	rctx->flags |= R600_CONTEXT_FLUSH_AND_INV;
+	rctx->flags |= R600_CONTEXT_INVAL_READ_CACHES |
+		       R600_CONTEXT_FLUSH_AND_INV_CB |
+		       R600_CONTEXT_FLUSH_AND_INV |
+		       R600_CONTEXT_WAIT_3D_IDLE;
 }
 
 static unsigned r600_conv_pipe_prim(unsigned prim)

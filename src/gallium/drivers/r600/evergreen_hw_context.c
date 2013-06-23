@@ -125,6 +125,8 @@ void evergreen_cp_dma_clear_buffer(struct r600_context *rctx,
 	 * to resources which are bound right now. */
 	rctx->flags |= R600_CONTEXT_INVAL_READ_CACHES |
 		       R600_CONTEXT_FLUSH_AND_INV |
+		       R600_CONTEXT_FLUSH_AND_INV_CB |
+		       R600_CONTEXT_FLUSH_AND_INV_DB |
 		       R600_CONTEXT_FLUSH_AND_INV_CB_META |
 		       R600_CONTEXT_FLUSH_AND_INV_DB_META |
 		       R600_CONTEXT_STREAMOUT_FLUSH |

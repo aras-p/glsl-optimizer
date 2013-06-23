@@ -1715,6 +1715,7 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 
 	if (rctx->framebuffer.state.nr_cbufs) {
 		rctx->flags |= R600_CONTEXT_WAIT_3D_IDLE | R600_CONTEXT_FLUSH_AND_INV;
+		rctx->flags |= R600_CONTEXT_FLUSH_AND_INV_CB;
 
 		if (rctx->framebuffer.state.cbufs[0]->texture->nr_samples > 1) {
 			rctx->flags |= R600_CONTEXT_FLUSH_AND_INV_CB_META;
@@ -1722,6 +1723,7 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 	}
 	if (rctx->framebuffer.state.zsbuf) {
 		rctx->flags |= R600_CONTEXT_WAIT_3D_IDLE | R600_CONTEXT_FLUSH_AND_INV;
+		rctx->flags |= R600_CONTEXT_FLUSH_AND_INV_DB;
 
 		rtex = (struct r600_texture*)rctx->framebuffer.state.zsbuf->texture;
 		if (rtex->htile) {

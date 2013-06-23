@@ -185,7 +185,6 @@ void r600_flush_emit(struct r600_context *rctx)
 	struct radeon_winsys_cs *cs = rctx->rings.gfx.cs;
 	unsigned cp_coher_cntl = 0;
 	unsigned wait_until = 0;
-	unsigned emit_flush = 0;
 
 	if (!rctx->flags) {
 		return;
@@ -231,8 +230,32 @@ void r600_flush_emit(struct r600_context *rctx)
 	if (rctx->flags & R600_CONTEXT_INVAL_READ_CACHES) {
 		cp_coher_cntl |= S_0085F0_VC_ACTION_ENA(1) |
 				S_0085F0_TC_ACTION_ENA(1) |
+				S_0085F0_SH_ACTION_ENA(1) |
 				S_0085F0_FULL_CACHE_ENA(1);
-		emit_flush = 1;
+	}
+
+	if (rctx->flags & R600_CONTEXT_FLUSH_AND_INV_DB) {
+		cp_coher_cntl |= S_0085F0_DB_ACTION_ENA(1) |
+				S_0085F0_DB_DEST_BASE_ENA(1) |
+				S_0085F0_SMX_ACTION_ENA(1);
+	}
+
+	if (rctx->flags & R600_CONTEXT_FLUSH_AND_INV_CB) {
+		cp_coher_cntl |= S_0085F0_CB_ACTION_ENA(1) |
+				S_0085F0_CB0_DEST_BASE_ENA(1) |
+				S_0085F0_CB1_DEST_BASE_ENA(1) |
+				S_0085F0_CB2_DEST_BASE_ENA(1) |
+				S_0085F0_CB3_DEST_BASE_ENA(1) |
+				S_0085F0_CB4_DEST_BASE_ENA(1) |
+				S_0085F0_CB5_DEST_BASE_ENA(1) |
+				S_0085F0_CB6_DEST_BASE_ENA(1) |
+				S_0085F0_CB7_DEST_BASE_ENA(1) |
+				S_0085F0_SMX_ACTION_ENA(1);
+		if (rctx->chip_class >= EVERGREEN)
+			cp_coher_cntl |= S_0085F0_CB8_DEST_BASE_ENA(1) |
+					S_0085F0_CB9_DEST_BASE_ENA(1) |
+					S_0085F0_CB10_DEST_BASE_ENA(1) |
+					S_0085F0_CB11_DEST_BASE_ENA(1);
 	}
 
 	if (rctx->flags & R600_CONTEXT_STREAMOUT_FLUSH) {
@@ -241,10 +264,9 @@ void r600_flush_emit(struct r600_context *rctx)
 				S_0085F0_SO2_DEST_BASE_ENA(1) |
 				S_0085F0_SO3_DEST_BASE_ENA(1) |
 				S_0085F0_SMX_ACTION_ENA(1);
-		emit_flush = 1;
 	}
 
-	if (emit_flush) {
+	if (cp_coher_cntl) {
 		cs->buf[cs->cdw++] = PKT3(PKT3_SURFACE_SYNC, 3, 0);
 		cs->buf[cs->cdw++] = cp_coher_cntl;   /* CP_COHER_CNTL */
 		cs->buf[cs->cdw++] = 0xffffffff;      /* CP_COHER_SIZE */
@@ -289,6 +311,8 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 	 * this will also flush the framebuffer cache
 	 */
 	ctx->flags |= R600_CONTEXT_FLUSH_AND_INV |
+		      R600_CONTEXT_FLUSH_AND_INV_CB |
+		      R600_CONTEXT_FLUSH_AND_INV_DB |
 		      R600_CONTEXT_FLUSH_AND_INV_CB_META |
 		      R600_CONTEXT_FLUSH_AND_INV_DB_META |
 		      R600_CONTEXT_WAIT_3D_IDLE |
@@ -594,6 +618,8 @@ void r600_cp_dma_copy_buffer(struct r600_context *rctx,
 	 * to resources which are bound right now. */
 	rctx->flags |= R600_CONTEXT_INVAL_READ_CACHES |
 		       R600_CONTEXT_FLUSH_AND_INV |
+		       R600_CONTEXT_FLUSH_AND_INV_CB |
+		       R600_CONTEXT_FLUSH_AND_INV_DB |
 		       R600_CONTEXT_FLUSH_AND_INV_CB_META |
 		       R600_CONTEXT_FLUSH_AND_INV_DB_META |
 		       R600_CONTEXT_STREAMOUT_FLUSH |
