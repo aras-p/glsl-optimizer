@@ -1638,7 +1638,7 @@ _mesa_ProgramParameteri(GLuint program, GLenum pname, GLint value)
       if (value < 1 ||
           (unsigned) value > ctx->Const.MaxGeometryOutputVertices) {
          _mesa_error(ctx, GL_INVALID_VALUE,
-                     "glProgramParameteri(GL_GEOMETRY_VERTICES_OUT_ARB=%d",
+                     "glProgramParameteri(GL_GEOMETRY_VERTICES_OUT_ARB=%d)",
                      value);
          return;
       }
@@ -1658,7 +1658,7 @@ _mesa_ProgramParameteri(GLuint program, GLenum pname, GLint value)
          break;
       default:
          _mesa_error(ctx, GL_INVALID_VALUE,
-                     "glProgramParameteri(geometry input type = %s",
+                     "glProgramParameteri(geometry input type = %s)",
                      _mesa_lookup_enum_by_nr(value));
          return;
       }
@@ -1675,7 +1675,7 @@ _mesa_ProgramParameteri(GLuint program, GLenum pname, GLint value)
          break;
       default:
          _mesa_error(ctx, GL_INVALID_VALUE,
-                     "glProgramParameteri(geometry output type = %s",
+                     "glProgramParameteri(geometry output type = %s)",
                      _mesa_lookup_enum_by_nr(value));
          return;
       }
