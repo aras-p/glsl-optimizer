@@ -42,7 +42,7 @@ struct hud_graph {
    char name[128];
    void *query_data;
    void (*query_new_value)(struct hud_graph *gr);
-   void (*free_query_data)(void *ptr);
+   void (*free_query_data)(void *ptr); /**< do not use ordinary free() */
 
    /* mutable variables */
    unsigned num_vertices;

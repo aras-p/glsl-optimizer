@@ -116,6 +116,12 @@ query_cpu_load(struct hud_graph *gr)
    }
 }
 
+static void
+free_query_data(void *p)
+{
+   FREE(p);
+}
+
 void
 hud_cpu_graph_install(struct hud_pane *pane, unsigned cpu_index)
 {
@@ -144,7 +150,11 @@ hud_cpu_graph_install(struct hud_pane *pane, unsigned cpu_index)
    }
 
    gr->query_new_value = query_cpu_load;
-   gr->free_query_data = free;
+
+   /* Don't use free() as our callback as that messes up Gallium's
+    * memory debugger.  Use simple free_query_data() wrapper.
+    */
+   gr->free_query_data = free_query_data;
 
    info = gr->query_data;
    info->cpu_index = cpu_index;
