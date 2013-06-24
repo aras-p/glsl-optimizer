@@ -218,7 +218,7 @@ svga_texture_destroy(struct pipe_screen *screen,
 		     struct pipe_resource *pt)
 {
    struct svga_screen *ss = svga_screen(screen);
-   struct svga_texture *tex = (struct svga_texture *)pt;
+   struct svga_texture *tex = svga_texture(pt);
 
    ss->texture_timestamp++;
 
