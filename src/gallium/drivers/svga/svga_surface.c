@@ -315,7 +315,7 @@ svga_mark_surface_dirty(struct pipe_surface *surf)
       /* Increment the view_age and texture age for this surface's slice
        * so that any sampler views into the texture are re-validated too.
        */
-      tex->view_age[surf->u.tex.first_layer] = ++(tex->age);
+      svga_age_texture_view(tex, surf->u.tex.first_layer);
    }
 }
 
