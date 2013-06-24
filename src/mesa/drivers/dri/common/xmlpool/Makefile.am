@@ -66,7 +66,7 @@ options.h: t_options.h $(MOS)
 
 # Update .mo files from the corresponding .po files.
 %/LC_MESSAGES/options.mo: %.po
-	@mo="$@" \
+	@mo="$@"; \
 	lang=$${mo%%/*}; \
 	echo "Updating ($$lang) $@ from $?."; \
 	mkdir -p $$lang/LC_MESSAGES; \
