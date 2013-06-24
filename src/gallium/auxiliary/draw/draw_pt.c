@@ -508,11 +508,15 @@ draw_vbo(struct draw_context *draw,
                                      draw->pt.vertex_element,
                                      draw->pt.nr_vertex_elements,
                                      info);
-
-   if (index_limit == 0) {
+#if HAVE_LLVM
+   if (!draw->llvm)
+#endif
+   {
+      if (index_limit == 0) {
       /* one of the buffers is too small to do any valid drawing */
-      debug_warning("draw: VBO too small to draw anything\n");
-      return;
+         debug_warning("draw: VBO too small to draw anything\n");
+         return;
+      }
    }
 
    /* If we're collecting stats then make sure we start from scratch */
