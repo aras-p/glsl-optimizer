@@ -72,6 +72,14 @@ finalize_shader_states(struct ilo_context *ilo)
          /* mark the state dirty if a new kernel is selected */
          ilo->dirty |= state;
       }
+
+      /* need to setup SBE for FS */
+      if (type == PIPE_SHADER_FRAGMENT && ilo->dirty &
+            (state | ILO_DIRTY_GS | ILO_DIRTY_VS | ILO_DIRTY_RASTERIZER)) {
+         if (ilo_shader_select_kernel_routing(shader,
+               (ilo->gs) ? ilo->gs : ilo->vs, ilo->rasterizer))
+            ilo->dirty |= state;
+      }
    }
 }
 

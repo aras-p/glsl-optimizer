@@ -1574,6 +1574,9 @@ fs_setup_shader_in(struct ilo_shader *sh, const struct toy_tgsi *tgsi,
       }
 
       switch (tgsi->inputs[i].interp) {
+      case TGSI_INTERPOLATE_CONSTANT:
+         sh->in.const_interp_enable |= 1 << i;
+         break;
       case TGSI_INTERPOLATE_LINEAR:
          sh->in.has_linear_interp = true;
 
@@ -1587,8 +1590,10 @@ fs_setup_shader_in(struct ilo_shader *sh, const struct toy_tgsi *tgsi,
          }
          break;
       case TGSI_INTERPOLATE_COLOR:
-         if (flatshade)
+         if (flatshade) {
+            sh->in.const_interp_enable |= 1 << i;
             break;
+         }
          /* fall through */
       case TGSI_INTERPOLATE_PERSPECTIVE:
          if (tgsi->inputs[i].centroid) {

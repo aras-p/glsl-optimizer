@@ -30,6 +30,7 @@
 
 #include "ilo_common.h"
 #include "ilo_context.h"
+#include "ilo_shader.h"
 
 /* XXX The interface needs to be reworked */
 
@@ -88,6 +89,7 @@ struct ilo_shader {
       bool has_pos;
       bool has_linear_interp;
       int barycentric_interpolation_mode;
+      uint32_t const_interp_enable;
       bool discard_adj;
    } in;
 
@@ -113,6 +115,8 @@ struct ilo_shader {
 
    void *kernel;
    int kernel_size;
+
+   struct ilo_kernel_routing routing;
 
    /* what does the push constant buffer consist of? */
    struct {

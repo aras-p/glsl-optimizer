@@ -27,6 +27,7 @@
 
 #include "tgsi/tgsi_parse.h"
 #include "intel_winsys.h"
+#include "brw_defines.h" /* for SBE setup */
 
 #include "shader/ilo_shader_internal.h"
 #include "ilo_state.h"
@@ -848,6 +849,157 @@ ilo_shader_select_kernel(struct ilo_shader_state *shader,
    return (shader->shader != cur);
 }
 
+static int
+route_attr(const int *semantics, const int *indices, int len,
+           int semantic, int index)
+{
+   int i;
+
+   for (i = 0; i < len; i++) {
+      if (semantics[i] == semantic && indices[i] == index)
+         return i;
+   }
+
+   /* failed to match for COLOR, try BCOLOR */
+   if (semantic == TGSI_SEMANTIC_COLOR) {
+      for (i = 0; i < len; i++) {
+         if (semantics[i] == TGSI_SEMANTIC_BCOLOR && indices[i] == index)
+            return i;
+      }
+   }
+
+   return -1;
+}
+
+/**
+ * Select a routing for the given source shader and rasterizer state.
+ *
+ * \return true if a different routing is selected
+ */
+bool
+ilo_shader_select_kernel_routing(struct ilo_shader_state *shader,
+                                 const struct ilo_shader_state *source,
+                                 const struct ilo_rasterizer_state *rasterizer)
+{
+   const uint32_t sprite_coord_enable = rasterizer->state.sprite_coord_enable;
+   const bool light_twoside = rasterizer->state.light_twoside;
+   struct ilo_shader *kernel = shader->shader;
+   struct ilo_kernel_routing *routing = &kernel->routing;
+   const int *src_semantics, *src_indices;
+   int src_len, max_src_slot;
+   int dst_len, dst_slot;
+
+   /* we are constructing 3DSTATE_SBE here */
+   assert(shader->info.dev->gen >= ILO_GEN(6) &&
+          shader->info.dev->gen <= ILO_GEN(7));
+
+   assert(kernel);
+
+   if (source) {
+      assert(source->shader);
+      src_semantics = source->shader->out.semantic_names;
+      src_indices = source->shader->out.semantic_indices;
+      src_len = source->shader->out.count;
+
+      /* skip PSIZE and POSITION (how about the optional CLIPDISTs?) */
+      assert(src_semantics[0] == TGSI_SEMANTIC_PSIZE);
+      assert(src_semantics[1] == TGSI_SEMANTIC_POSITION);
+      routing->source_skip = 2;
+      routing->source_len = src_len - routing->source_skip;
+      src_semantics += routing->source_skip;
+      src_indices += routing->source_skip;
+   }
+   else {
+      src_semantics = kernel->in.semantic_names;
+      src_indices = kernel->in.semantic_indices;
+      src_len = kernel->in.count;
+
+      routing->source_skip = 0;
+      routing->source_len = src_len;
+   }
+
+   routing->const_interp_enable = kernel->in.const_interp_enable;
+   routing->point_sprite_enable = 0;
+   routing->swizzle_enable = false;
+
+   assert(kernel->in.count <= Elements(routing->swizzles));
+   dst_len = MIN2(kernel->in.count, Elements(routing->swizzles));
+   max_src_slot = -1;
+
+   for (dst_slot = 0; dst_slot < dst_len; dst_slot++) {
+      const int semantic = kernel->in.semantic_names[dst_slot];
+      const int index = kernel->in.semantic_indices[dst_slot];
+      int src_slot;
+
+      if (semantic == TGSI_SEMANTIC_GENERIC &&
+          (sprite_coord_enable & (1 << index)))
+         routing->point_sprite_enable |= 1 << dst_slot;
+
+      if (source) {
+         src_slot = route_attr(src_semantics, src_indices,
+               routing->source_len, semantic, index);
+
+         /*
+          * The source shader stage does not output this attribute.  The value
+          * is supposed to be undefined, unless the attribute goes through
+          * point sprite replacement or the attribute is
+          * TGSI_SEMANTIC_POSITION.  In all cases, we do not care which source
+          * attribute is picked.
+          *
+          * We should update the kernel code and omit the output of
+          * TGSI_SEMANTIC_POSITION here.
+          */
+         if (src_slot < 0)
+            src_slot = 0;
+      }
+      else {
+         src_slot = dst_slot;
+      }
+
+      routing->swizzles[dst_slot] = src_slot;
+
+      /* use the following slot for two-sided lighting */
+      if (semantic == TGSI_SEMANTIC_COLOR && light_twoside &&
+          src_slot + 1 < routing->source_len &&
+          src_semantics[src_slot + 1] == TGSI_SEMANTIC_BCOLOR &&
+          src_indices[src_slot + 1] == index) {
+         routing->swizzles[dst_slot] |= ATTRIBUTE_SWIZZLE_INPUTATTR_FACING <<
+            ATTRIBUTE_SWIZZLE_SHIFT;
+         src_slot++;
+      }
+
+      if (routing->swizzles[dst_slot] != dst_slot)
+         routing->swizzle_enable = true;
+
+      if (max_src_slot < src_slot)
+         max_src_slot = src_slot;
+   }
+
+   memset(&routing->swizzles[dst_slot], 0, sizeof(routing->swizzles) -
+         sizeof(routing->swizzles[0]) * dst_slot);
+
+   /*
+    * From the Sandy Bridge PRM, volume 2 part 1, page 248:
+    *
+    *     "It is UNDEFINED to set this field (Vertex URB Entry Read Length) to
+    *      0 indicating no Vertex URB data to be read.
+    *
+    *      This field should be set to the minimum length required to read the
+    *      maximum source attribute. The maximum source attribute is indicated
+    *      by the maximum value of the enabled Attribute # Source Attribute if
+    *      Attribute Swizzle Enable is set, Number of Output Attributes-1 if
+    *      enable is not set.
+    *
+    *        read_length = ceiling((max_source_attr+1)/2)
+    *
+    *      [errata] Corruption/Hang possible if length programmed larger than
+    *      recommended"
+    */
+   routing->source_len = max_src_slot + 1;
+
+   return true;
+}
+
 /**
  * Return the cache offset of the selected kernel.  This must be called after
  * ilo_shader_select_kernel() and ilo_shader_cache_upload().
@@ -977,4 +1129,17 @@ ilo_shader_get_kernel_so_info(const struct ilo_shader_state *shader)
    assert(kernel);
 
    return &kernel->so_info;
+}
+
+/**
+ * Return the routing info of the selected kernel.
+ */
+const struct ilo_kernel_routing *
+ilo_shader_get_kernel_routing(const struct ilo_shader_state *shader)
+{
+   const struct ilo_shader *kernel = shader->shader;
+
+   assert(kernel);
+
+   return &kernel->routing;
 }

@@ -30,7 +30,6 @@
 #include "brw_defines.h"
 #include "intel_reg.h"
 
-#include "shader/ilo_shader_internal.h"
 #include "ilo_context.h"
 #include "ilo_cp.h"
 #include "ilo_format.h"
@@ -1814,178 +1813,52 @@ ilo_gpe_gen6_fill_3dstate_sf_raster(const struct ilo_dev_info *dev,
 void
 ilo_gpe_gen6_fill_3dstate_sf_sbe(const struct ilo_dev_info *dev,
                                  const struct ilo_rasterizer_state *rasterizer,
-                                 const struct ilo_shader_state *fs_state,
-                                 const struct ilo_shader_state *last_sh_state,
+                                 const struct ilo_shader_state *fs,
+                                 const struct ilo_shader_state *last_sh,
                                  uint32_t *dw, int num_dwords)
 {
-   const struct ilo_shader *fs = fs_state->shader;
-   const struct ilo_shader *last_sh = last_sh_state->shader;
-   uint32_t point_sprite_enable, const_interp_enable;
-   uint16_t attr_ctrl[PIPE_MAX_SHADER_INPUTS];
-   int vue_offset, vue_len;
-   int dst, max_src, i;
+   int output_count, vue_offset, vue_len;
+   const struct ilo_kernel_routing *routing;
 
    ILO_GPE_VALID_GEN(dev, 6, 7);
    assert(num_dwords == 13);
 
    if (!fs) {
+      memset(dw, 0, sizeof(dw[0]) * num_dwords);
+
       if (dev->gen >= ILO_GEN(7))
          dw[0] = 1 << GEN7_SBE_URB_ENTRY_READ_LENGTH_SHIFT;
       else
          dw[0] = 1 << GEN6_SF_URB_ENTRY_READ_LENGTH_SHIFT;
 
-      for (i = 1; i < num_dwords; i++)
-         dw[i] = 0;
-
       return;
    }
 
-   if (last_sh) {
-      /* skip PSIZE and POSITION (how about the optional CLIPDISTs?) */
-      assert(last_sh->out.semantic_names[0] == TGSI_SEMANTIC_PSIZE);
-      assert(last_sh->out.semantic_names[1] == TGSI_SEMANTIC_POSITION);
-      vue_offset = 2;
-      vue_len = last_sh->out.count - vue_offset;
-   }
-   else {
-      vue_offset = 0;
-      vue_len = fs->in.count;
-   }
+   output_count = ilo_shader_get_kernel_param(fs, ILO_KERNEL_INPUT_COUNT);
+   assert(output_count <= 32);
 
-   point_sprite_enable = 0;
-   const_interp_enable = 0;
-   max_src = (last_sh) ? 0 : fs->in.count - 1;
+   routing = ilo_shader_get_kernel_routing(fs);
 
-   for (dst = 0; dst < fs->in.count; dst++) {
-      const int semantic = fs->in.semantic_names[dst];
-      const int index = fs->in.semantic_indices[dst];
-      const int interp = fs->in.interp[dst];
-      int src;
-      uint16_t ctrl;
-
-      /*
-       * From the Ivy Bridge PRM, volume 2 part 1, page 268:
-       *
-       *     "This field (Point Sprite Texture Coordinate Enable) must be
-       *      programmed to 0 when non-point primitives are rendered."
-       *
-       * TODO We do not check that yet.
-       */
-      if (semantic == TGSI_SEMANTIC_GENERIC &&
-          (rasterizer->state.sprite_coord_enable & (1 << index)))
-         point_sprite_enable |= 1 << dst;
-
-      if (interp == TGSI_INTERPOLATE_CONSTANT ||
-          (interp == TGSI_INTERPOLATE_COLOR && rasterizer->state.flatshade))
-         const_interp_enable |= 1 << dst;
-
-      if (!last_sh) {
-         attr_ctrl[dst] = 0;
-         continue;
-      }
-
-      /* find the matching VS/GS OUT for FS IN[i] */
-      ctrl = 0;
-      for (src = 0; src < vue_len; src++) {
-         if (last_sh->out.semantic_names[vue_offset + src] != semantic ||
-             last_sh->out.semantic_indices[vue_offset + src] != index)
-            continue;
-
-         ctrl = src;
-
-         if (semantic == TGSI_SEMANTIC_COLOR &&
-             rasterizer->state.light_twoside &&
-             src < vue_len - 1) {
-            const int next = src + 1;
-
-            if (last_sh->out.semantic_names[vue_offset + next] ==
-                  TGSI_SEMANTIC_BCOLOR &&
-                last_sh->out.semantic_indices[vue_offset + next] == index) {
-               ctrl |= ATTRIBUTE_SWIZZLE_INPUTATTR_FACING <<
-                  ATTRIBUTE_SWIZZLE_SHIFT;
-               src++;
-            }
-         }
-
-         break;
-      }
-
-      /* if there is no COLOR, try BCOLOR */
-      if (src >= vue_len && semantic == TGSI_SEMANTIC_COLOR) {
-         for (src = 0; src < vue_len; src++) {
-            if (last_sh->out.semantic_names[vue_offset + src] !=
-                  TGSI_SEMANTIC_BCOLOR ||
-                last_sh->out.semantic_indices[vue_offset + src] != index)
-               continue;
-
-            ctrl = src;
-            break;
-         }
-      }
-
-      if (src < vue_len) {
-         attr_ctrl[dst] = ctrl;
-         if (max_src < src)
-            max_src = src;
-      }
-      else {
-         /*
-          * The previous shader stage does not output this attribute.  The
-          * value is supposed to be undefined for fs, unless the attribute
-          * goes through point sprite replacement or the attribute is
-          * TGSI_SEMANTIC_POSITION.  In all cases, we do not care which source
-          * attribute is picked.
-          *
-          * We should update the fs code and omit the output of
-          * TGSI_SEMANTIC_POSITION here.
-          */
-         attr_ctrl[dst] = 0;
-      }
-   }
-
-   for (; dst < Elements(attr_ctrl); dst++)
-      attr_ctrl[dst] = 0;
-
-   /* only the first 16 attributes can be remapped */
-   for (dst = 16; dst < Elements(attr_ctrl); dst++)
-      assert(attr_ctrl[dst] == 0 || attr_ctrl[dst] == dst);
-
-   /*
-    * From the Sandy Bridge PRM, volume 2 part 1, page 248:
-    *
-    *     "It is UNDEFINED to set this field (Vertex URB Entry Read Length) to
-    *      0 indicating no Vertex URB data to be read.
-    *
-    *      This field should be set to the minimum length required to read the
-    *      maximum source attribute. The maximum source attribute is indicated
-    *      by the maximum value of the enabled Attribute # Source Attribute if
-    *      Attribute Swizzle Enable is set, Number of Output Attributes-1 if
-    *      enable is not set.
-    *
-    *        read_length = ceiling((max_source_attr+1)/2)
-    *
-    *      [errata] Corruption/Hang possible if length programmed larger than
-    *      recommended"
-    */
-   vue_len = max_src + 1;
-
-   assert(fs->in.count <= 32);
+   vue_offset = routing->source_skip;
    assert(vue_offset % 2 == 0);
+   vue_offset /= 2;
+
+   vue_len = (routing->source_len + 1) / 2;
+   if (!vue_len)
+      vue_len = 1;
 
    if (dev->gen >= ILO_GEN(7)) {
-      dw[0] = fs->in.count << GEN7_SBE_NUM_OUTPUTS_SHIFT |
-              (vue_len + 1) / 2 << GEN7_SBE_URB_ENTRY_READ_LENGTH_SHIFT |
-              vue_offset / 2 << GEN7_SBE_URB_ENTRY_READ_OFFSET_SHIFT;
-
-      if (last_sh)
+      dw[0] = output_count << GEN7_SBE_NUM_OUTPUTS_SHIFT |
+              vue_len << GEN7_SBE_URB_ENTRY_READ_LENGTH_SHIFT |
+              vue_offset << GEN7_SBE_URB_ENTRY_READ_OFFSET_SHIFT;
+      if (routing->swizzle_enable)
          dw[0] |= GEN7_SBE_SWIZZLE_ENABLE;
    }
    else {
-      dw[0] = fs->in.count << GEN6_SF_NUM_OUTPUTS_SHIFT |
-              (vue_len + 1) / 2 << GEN6_SF_URB_ENTRY_READ_LENGTH_SHIFT |
-              vue_offset / 2 << GEN6_SF_URB_ENTRY_READ_OFFSET_SHIFT;
-
-      if (last_sh)
+      dw[0] = output_count << GEN6_SF_NUM_OUTPUTS_SHIFT |
+              vue_len << GEN6_SF_URB_ENTRY_READ_LENGTH_SHIFT |
+              vue_offset << GEN6_SF_URB_ENTRY_READ_OFFSET_SHIFT;
+      if (routing->swizzle_enable)
          dw[0] |= GEN6_SF_SWIZZLE_ENABLE;
    }
 
@@ -1998,11 +1871,20 @@ ilo_gpe_gen6_fill_3dstate_sf_sbe(const struct ilo_dev_info *dev,
       break;
    }
 
-   for (i = 0; i < 8; i++)
-      dw[1 + i] = attr_ctrl[2 * i + 1] << 16 | attr_ctrl[2 * i];
+   STATIC_ASSERT(Elements(routing->swizzles) >= 16);
+   memcpy(&dw[1], routing->swizzles, 2 * 16);
 
-   dw[9] = point_sprite_enable;
-   dw[10] = const_interp_enable;
+   /*
+    * From the Ivy Bridge PRM, volume 2 part 1, page 268:
+    *
+    *     "This field (Point Sprite Texture Coordinate Enable) must be
+    *      programmed to 0 when non-point primitives are rendered."
+    *
+    * TODO We do not check that yet.
+    */
+   dw[9] = routing->point_sprite_enable;
+
+   dw[10] = routing->const_interp_enable;
 
    /* WrapShortest enables */
    dw[11] = 0;
