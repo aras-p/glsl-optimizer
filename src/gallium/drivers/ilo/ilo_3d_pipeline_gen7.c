@@ -28,7 +28,6 @@
 #include "util/u_dual_blend.h"
 #include "intel_reg.h"
 
-#include "shader/ilo_shader_internal.h"
 #include "ilo_common.h"
 #include "ilo_context.h"
 #include "ilo_cp.h"
@@ -188,12 +187,12 @@ gen7_pipeline_common_urb(struct ilo_3d_pipeline *p,
 {
    /* 3DSTATE_URB_{VS,GS,HS,DS} */
    if (DIRTY(VERTEX_ELEMENTS) || DIRTY(VS)) {
-      const struct ilo_shader *vs = (ilo->vs) ? ilo->vs->shader : NULL;
       /* the first 16KB are reserved for VS and PS PCBs */
       const int offset = 16 * 1024;
       int vs_entry_size, vs_total_size;
 
-      vs_entry_size = (vs) ? vs->out.count : 0;
+      vs_entry_size = (ilo->vs) ?
+         ilo_shader_get_kernel_param(ilo->vs, ILO_KERNEL_OUTPUT_COUNT) : 0;
 
       /*
        * From the Ivy Bridge PRM, volume 2 part 1, page 35:
@@ -461,9 +460,6 @@ gen7_pipeline_wm(struct ilo_3d_pipeline *p,
       const bool cc_may_kill = (ilo->dsa->alpha.enabled ||
                                 ilo->blend->alpha_to_coverage);
 
-      if (ilo->fs)
-         assert(!ilo->fs->shader->pcb.clip_state_size);
-
       if (p->dev->gen == ILO_GEN(7) && session->hw_ctx_changed)
          gen7_wa_pipe_control_wm_max_threads_stall(p);
 
@@ -492,9 +488,6 @@ gen7_pipeline_wm(struct ilo_3d_pipeline *p,
        DIRTY(BLEND) || session->kernel_bo_changed) {
       const int num_samplers = ilo->sampler[PIPE_SHADER_FRAGMENT].count;
       const bool dual_blend = ilo->blend->dual_blend;
-
-      if (ilo->fs)
-         assert(!ilo->fs->shader->pcb.clip_state_size);
 
       p->gen7_3DSTATE_PS(p->dev, ilo->fs, num_samplers, dual_blend, p->cp);
    }
@@ -743,8 +736,10 @@ gen7_pipeline_estimate_states(const struct ilo_3d_pipeline *p,
    }
 
    /* pcb (vs) */
-   if (ilo->vs && ilo->vs->shader->pcb.clip_state_size) {
-      const int pcb_size = ilo->vs->shader->pcb.clip_state_size;
+   if (ilo->vs &&
+       ilo_shader_get_kernel_param(ilo->vs, ILO_KERNEL_VS_PCB_UCP_SIZE)) {
+      const int pcb_size =
+         ilo_shader_get_kernel_param(ilo->vs, ILO_KERNEL_VS_PCB_UCP_SIZE);
 
       size += gen7->estimate_state_size(p->dev,
             ILO_GPE_GEN7_PUSH_CONSTANT_BUFFER, pcb_size);
