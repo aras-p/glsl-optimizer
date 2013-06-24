@@ -30,6 +30,7 @@
 #include "pipe/p_compiler.h"
 #include "pipe/p_state.h"
 #include "util/u_inlines.h"
+#include "util/u_memory.h"
 #include "util/u_transfer.h"
 #include "svga_screen_cache.h"
 
@@ -115,6 +116,18 @@ svga_transfer(struct pipe_transfer *transfer)
    return (struct svga_transfer *)transfer;
 }
 
+
+/**
+ * Increment the age of a view into a texture
+ * This is used to track updates to textures when we draw into
+ * them via a surface.
+ */
+static INLINE void
+svga_age_texture_view(struct svga_texture *tex, unsigned level)
+{
+   assert(level < Elements(tex->view_age));
+   tex->view_age[level] = ++(tex->age);
+}
 
 
 struct pipe_resource *

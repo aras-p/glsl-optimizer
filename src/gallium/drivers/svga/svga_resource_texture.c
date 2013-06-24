@@ -362,7 +362,7 @@ svga_texture_transfer_unmap(struct pipe_context *pipe,
 
       svga_transfer_dma(svga, st, SVGA3D_WRITE_HOST_VRAM, flags);
       ss->texture_timestamp++;
-      tex->view_age[transfer->level] = ++(tex->age);
+      svga_age_texture_view(tex, transfer->level);
       if (transfer->resource->target == PIPE_TEXTURE_CUBE)
          tex->defined[transfer->box.z][transfer->level] = TRUE;
       else
