@@ -19,7 +19,7 @@ static int num_iters = 100;
 
 enum pipe_format formats[] = {
    PIPE_FORMAT_RGBA8888_UNORM,
-   PIPE_FORMAT_BGR8888_UNORM,
+   PIPE_FORMAT_BGRA8888_UNORM,
    PIPE_FORMAT_NONE
 };
 
