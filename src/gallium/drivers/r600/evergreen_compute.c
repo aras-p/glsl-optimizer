@@ -412,7 +412,8 @@ static void compute_emit_cs(struct r600_context *ctx, const uint *block_layout,
 	r600_flush_emit(ctx);
 
 	/* Emit colorbuffers. */
-	for (i = 0; i < ctx->framebuffer.state.nr_cbufs; i++) {
+	/* XXX support more than 8 colorbuffers (the offsets are not a multiple of 0x3C for CB8-11) */
+	for (i = 0; i < 8 && i < ctx->framebuffer.state.nr_cbufs; i++) {
 		struct r600_surface *cb = (struct r600_surface*)ctx->framebuffer.state.cbufs[i];
 		unsigned reloc = r600_context_bo_reloc(ctx, &ctx->rings.gfx,
 						       (struct r600_resource*)cb->base.texture,
@@ -437,6 +438,16 @@ static void compute_emit_cs(struct r600_context *ctx, const uint *block_layout,
 
 		r600_write_value(cs, PKT3(PKT3_NOP, 0, 0)); /* R_028C74_CB_COLOR0_ATTRIB */
 		r600_write_value(cs, reloc);
+	}
+	if (ctx->keep_tiling_flags) {
+		for (; i < 8 ; i++) {
+			r600_write_compute_context_reg(cs, R_028C70_CB_COLOR0_INFO + i * 0x3C,
+						       S_028C70_FORMAT(V_028C70_COLOR_INVALID));
+		}
+		for (; i < 12; i++) {
+			r600_write_compute_context_reg(cs, R_028E50_CB_COLOR8_INFO + (i - 8) * 0x1C,
+						       S_028C70_FORMAT(V_028C70_COLOR_INVALID));
+		}
 	}
 
 	/* Set CB_TARGET_MASK  XXX: Use cb_misc_state */
