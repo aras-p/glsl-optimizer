@@ -42,6 +42,13 @@ extern "C" {
 #endif
 
 
+/**
+ * Represent a frame from a stack backtrace.
+ *
+ * XXX: Do not change this.
+ *
+ * TODO: This should be refactored as a void * typedef.
+ */
 struct debug_stack_frame 
 {
    const void *function;

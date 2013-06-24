@@ -36,7 +36,17 @@
 #include "u_debug_symbol.h"
 #include "u_debug_stack.h"
 
+#if defined(PIPE_OS_WINDOWS)
+#include <windows.h>
+#endif
 
+
+/**
+ * Capture stack backtrace.
+ *
+ * NOTE: The implementation of this function is quite big, but it is important not to
+ * break it down in smaller functions to avoid adding new frames to the calling stack.
+ */
 void
 debug_backtrace_capture(struct debug_stack_frame *backtrace,
                         unsigned start_frame, 
@@ -45,8 +55,50 @@ debug_backtrace_capture(struct debug_stack_frame *backtrace,
    const void **frame_pointer = NULL;
    unsigned i = 0;
 
-   if(!nr_frames)
+   if (!nr_frames) {
       return;
+   }
+
+   /*
+    * On Windows try obtaining the stack backtrace via CaptureStackBackTrace.
+    *
+    * It works reliably both for x86 for x86_64.
+    */
+#if defined(PIPE_OS_WINDOWS)
+   {
+      typedef USHORT (WINAPI *PFNCAPTURESTACKBACKTRACE)(ULONG, ULONG, PVOID *, PULONG);
+      static PFNCAPTURESTACKBACKTRACE pfnCaptureStackBackTrace = NULL;
+
+      if (!pfnCaptureStackBackTrace) {
+         static HMODULE hModule = NULL;
+         if (!hModule) {
+            hModule = LoadLibraryA("kernel32");
+            assert(hModule);
+         }
+         if (hModule) {
+            pfnCaptureStackBackTrace = (PFNCAPTURESTACKBACKTRACE)GetProcAddress(hModule,
+                                                                                "RtlCaptureStackBackTrace");
+         }
+      }
+      if (pfnCaptureStackBackTrace) {
+         /*
+          * Skip this (debug_backtrace_capture) function's frame.
+          */
+
+         start_frame += 1;
+
+         assert(start_frame + nr_frames < 63);
+         i = pfnCaptureStackBackTrace(start_frame, nr_frames, (PVOID *) &backtrace->function, NULL);
+
+         /* Pad remaing requested frames with NULL */
+         while (i < nr_frames) {
+            backtrace[i++].function = NULL;
+         }
+
+         return;
+      }
+   }
+#endif
 
 #if defined(PIPE_CC_GCC)
    frame_pointer = ((const void **)__builtin_frame_address(1));
@@ -86,7 +138,7 @@ debug_backtrace_capture(struct debug_stack_frame *backtrace,
 #else
    (void) frame_pointer;
 #endif
-   
+
    while(nr_frames) {
       backtrace[i++].function = NULL;
       --nr_frames;
