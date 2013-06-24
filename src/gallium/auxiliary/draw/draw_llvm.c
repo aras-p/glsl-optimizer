@@ -720,7 +720,7 @@ generate_fetch(struct gallivm_state *gallivm,
                                      stride, buffer_size,
                                      "buffer_overflowed");
    /*
-   lp_build_printf(gallivm, "vbuf index = %d, stride is %d\n", indices, stride);
+   lp_build_printf(gallivm, "vbuf index = %u, stride is %u\n", index, stride);
    lp_build_print_value(gallivm, "   buffer size = ", buffer_size);
    lp_build_print_value(gallivm, "   buffer overflowed = ", buffer_overflowed);
    */
@@ -1595,6 +1595,7 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant,
    if (elts) {
       start = zero;
       end = fetch_count;
+      count = fetch_count;
    }
    else {
       end = lp_build_add(&bld, start, count);
@@ -1604,7 +1605,7 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant,
 
    fetch_max = LLVMBuildSub(builder, end, one, "fetch_max");
 
-   lp_build_loop_begin(&lp_loop, gallivm, start);
+   lp_build_loop_begin(&lp_loop, gallivm, zero);
    {
       LLVMValueRef inputs[PIPE_MAX_SHADER_INPUTS][TGSI_NUM_CHANNELS];
       LLVMValueRef aos_attribs[PIPE_MAX_SHADER_INPUTS][LP_MAX_VECTOR_WIDTH / 32] = { { 0 } };
@@ -1612,10 +1613,7 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant,
       LLVMValueRef clipmask;   /* holds the clipmask value */
       const LLVMValueRef (*ptr_aos)[TGSI_NUM_CHANNELS];
 
-      if (elts)
-         io_itr = lp_loop.counter;
-      else
-         io_itr = LLVMBuildSub(builder, lp_loop.counter, start, "");
+      io_itr = lp_loop.counter;
 
       io = LLVMBuildGEP(builder, io_ptr, &io_itr, 1, "");
 #if DEBUG_STORE
@@ -1628,6 +1626,7 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant,
             LLVMBuildAdd(builder,
                          lp_loop.counter,
                          lp_build_const_int32(gallivm, i), "");
+         true_index = LLVMBuildAdd(builder, start, true_index, "");
 
          /* make sure we're not out of bounds which can happen
           * if fetch_count % 4 != 0, because on the last iteration
@@ -1744,8 +1743,7 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant,
                      vs_info->num_outputs, vs_type,
                      have_clipdist);
    }
-
-   lp_build_loop_end_cond(&lp_loop, end, step, LLVMIntUGE);
+   lp_build_loop_end_cond(&lp_loop, count, step, LLVMIntUGE);
 
    sampler->destroy(sampler);
 
