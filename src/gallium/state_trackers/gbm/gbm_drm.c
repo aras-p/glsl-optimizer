@@ -45,9 +45,9 @@ gbm_format_to_gallium(enum gbm_bo_format format)
 {
    switch (format) {
    case GBM_BO_FORMAT_XRGB8888:
-      return PIPE_FORMAT_B8G8R8X8_UNORM;
+      return PIPE_FORMAT_BGRX8888_UNORM;
    case GBM_BO_FORMAT_ARGB8888:
-      return PIPE_FORMAT_B8G8R8A8_UNORM;
+      return PIPE_FORMAT_BGRA8888_UNORM;
    default:
       return PIPE_FORMAT_NONE;
    }
@@ -145,10 +145,10 @@ gbm_gallium_drm_bo_import(struct gbm_device *gbm,
    bo->base.base.height = resource->height0;
 
    switch (resource->format) {
-   case PIPE_FORMAT_B8G8R8X8_UNORM:
+   case PIPE_FORMAT_BGRX8888_UNORM:
       bo->base.base.format = GBM_BO_FORMAT_XRGB8888;
       break;
-   case PIPE_FORMAT_B8G8R8A8_UNORM:
+   case PIPE_FORMAT_BGRA8888_UNORM:
       bo->base.base.format = GBM_BO_FORMAT_ARGB8888;
       break;
    default:

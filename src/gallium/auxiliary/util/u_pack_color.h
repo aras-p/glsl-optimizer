@@ -65,32 +65,32 @@ util_pack_color_ub(ubyte r, ubyte g, ubyte b, ubyte a,
                    enum pipe_format format, union util_color *uc)
 {
    switch (format) {
-   case PIPE_FORMAT_A8B8G8R8_UNORM:
+   case PIPE_FORMAT_ABGR8888_UNORM:
       {
          uc->ui = (r << 24) | (g << 16) | (b << 8) | a;
       }
       return;
-   case PIPE_FORMAT_X8B8G8R8_UNORM:
+   case PIPE_FORMAT_XBGR8888_UNORM:
       {
          uc->ui = (r << 24) | (g << 16) | (b << 8) | 0xff;
       }
       return;
-   case PIPE_FORMAT_B8G8R8A8_UNORM:
+   case PIPE_FORMAT_BGRA8888_UNORM:
       {
          uc->ui = (a << 24) | (r << 16) | (g << 8) | b;
       }
       return;
-   case PIPE_FORMAT_B8G8R8X8_UNORM:
+   case PIPE_FORMAT_BGRX8888_UNORM:
       {
          uc->ui = (0xff << 24) | (r << 16) | (g << 8) | b;
       }
       return;
-   case PIPE_FORMAT_A8R8G8B8_UNORM:
+   case PIPE_FORMAT_ARGB8888_UNORM:
       {
          uc->ui = (b << 24) | (g << 16) | (r << 8) | a;
       }
       return;
-   case PIPE_FORMAT_X8R8G8B8_UNORM:
+   case PIPE_FORMAT_XRGB8888_UNORM:
       {
          uc->ui = (b << 24) | (g << 16) | (r << 8) | 0xff;
       }
@@ -166,7 +166,7 @@ util_unpack_color_ub(enum pipe_format format, union util_color *uc,
                      ubyte *r, ubyte *g, ubyte *b, ubyte *a)
 {
    switch (format) {
-   case PIPE_FORMAT_A8B8G8R8_UNORM:
+   case PIPE_FORMAT_ABGR8888_UNORM:
       {
          uint p = uc->ui;
          *r = (ubyte) ((p >> 24) & 0xff);
@@ -175,7 +175,7 @@ util_unpack_color_ub(enum pipe_format format, union util_color *uc,
          *a = (ubyte) ((p >>  0) & 0xff);
       }
       return;
-   case PIPE_FORMAT_X8B8G8R8_UNORM:
+   case PIPE_FORMAT_XBGR8888_UNORM:
       {
          uint p = uc->ui;
          *r = (ubyte) ((p >> 24) & 0xff);
@@ -184,7 +184,7 @@ util_unpack_color_ub(enum pipe_format format, union util_color *uc,
          *a = (ubyte) 0xff;
       }
       return;
-   case PIPE_FORMAT_B8G8R8A8_UNORM:
+   case PIPE_FORMAT_BGRA8888_UNORM:
       {
          uint p = uc->ui;
          *r = (ubyte) ((p >> 16) & 0xff);
@@ -193,7 +193,7 @@ util_unpack_color_ub(enum pipe_format format, union util_color *uc,
          *a = (ubyte) ((p >> 24) & 0xff);
       }
       return;
-   case PIPE_FORMAT_B8G8R8X8_UNORM:
+   case PIPE_FORMAT_BGRX8888_UNORM:
       {
          uint p = uc->ui;
          *r = (ubyte) ((p >> 16) & 0xff);
@@ -202,7 +202,7 @@ util_unpack_color_ub(enum pipe_format format, union util_color *uc,
          *a = (ubyte) 0xff;
       }
       return;
-   case PIPE_FORMAT_A8R8G8B8_UNORM:
+   case PIPE_FORMAT_ARGB8888_UNORM:
       {
          uint p = uc->ui;
          *r = (ubyte) ((p >>  8) & 0xff);
@@ -211,7 +211,7 @@ util_unpack_color_ub(enum pipe_format format, union util_color *uc,
          *a = (ubyte) ((p >>  0) & 0xff);
       }
       return;
-   case PIPE_FORMAT_X8R8G8B8_UNORM:
+   case PIPE_FORMAT_XRGB8888_UNORM:
       {
          uint p = uc->ui;
          *r = (ubyte) ((p >>  8) & 0xff);
@@ -350,32 +350,32 @@ util_pack_color(const float rgba[4], enum pipe_format format, union util_color *
    }
 
    switch (format) {
-   case PIPE_FORMAT_A8B8G8R8_UNORM:
+   case PIPE_FORMAT_ABGR8888_UNORM:
       {
          uc->ui = (r << 24) | (g << 16) | (b << 8) | a;
       }
       return;
-   case PIPE_FORMAT_X8B8G8R8_UNORM:
+   case PIPE_FORMAT_XBGR8888_UNORM:
       {
          uc->ui = (r << 24) | (g << 16) | (b << 8) | 0xff;
       }
       return;
-   case PIPE_FORMAT_B8G8R8A8_UNORM:
+   case PIPE_FORMAT_BGRA8888_UNORM:
       {
          uc->ui = (a << 24) | (r << 16) | (g << 8) | b;
       }
       return;
-   case PIPE_FORMAT_B8G8R8X8_UNORM:
+   case PIPE_FORMAT_BGRX8888_UNORM:
       {
          uc->ui = (0xff << 24) | (r << 16) | (g << 8) | b;
       }
       return;
-   case PIPE_FORMAT_A8R8G8B8_UNORM:
+   case PIPE_FORMAT_ARGB8888_UNORM:
       {
          uc->ui = (b << 24) | (g << 16) | (r << 8) | a;
       }
       return;
-   case PIPE_FORMAT_X8R8G8B8_UNORM:
+   case PIPE_FORMAT_XRGB8888_UNORM:
       {
          uc->ui = (b << 24) | (g << 16) | (r << 8) | 0xff;
       }

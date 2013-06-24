@@ -139,12 +139,12 @@ format_matches_type(const struct util_format_description *desc,
 
 
 /**
- * Unpack a single pixel into its RGBA components.
+ * Unpack a single pixel into its XYZW components.
  *
  * @param desc  the pixel format for the packed pixel value
  * @param packed integer pixel in a format such as PIPE_FORMAT_B8G8R8A8_UNORM
  *
- * @return RGBA in a float[4] or ubyte[4] or ushort[4] vector.
+ * @return XYZW in a float[4] or ubyte[4] or ushort[4] vector.
  */
 static INLINE LLVMValueRef
 lp_build_unpack_arith_rgba_aos(struct gallivm_state *gallivm,
@@ -159,7 +159,6 @@ lp_build_unpack_arith_rgba_aos(struct gallivm_state *gallivm,
 
    boolean normalized;
    boolean needs_uitofp;
-   unsigned shift;
    unsigned i;
 
    /* TODO: Support more formats */
@@ -171,10 +170,6 @@ lp_build_unpack_arith_rgba_aos(struct gallivm_state *gallivm,
    /* Do the intermediate integer computations with 32bit integers since it
     * matches floating point size */
    assert (LLVMTypeOf(packed) == LLVMInt32TypeInContext(gallivm->context));
-
-#ifdef PIPE_ARCH_BIG_ENDIAN
-   packed = lp_build_bswap(gallivm, packed, lp_type_uint(32));
-#endif
 
    /* Broadcast the packed value to all four channels
     * before: packed = BGRA
@@ -194,11 +189,11 @@ lp_build_unpack_arith_rgba_aos(struct gallivm_state *gallivm,
    /* Initialize vector constants */
    normalized = FALSE;
    needs_uitofp = FALSE;
-   shift = 0;
 
    /* Loop over 4 color components */
    for (i = 0; i < 4; ++i) {
       unsigned bits = desc->channel[i].size;
+      unsigned shift = desc->channel[i].shift;
 
       if (desc->channel[i].type == UTIL_FORMAT_TYPE_VOID) {
          shifts[i] = LLVMGetUndef(LLVMInt32TypeInContext(gallivm->context));
@@ -224,12 +219,10 @@ lp_build_unpack_arith_rgba_aos(struct gallivm_state *gallivm,
          else
             scales[i] =  lp_build_const_float(gallivm, 1.0);
       }
-
-      shift += bits;
    }
 
-   /* Ex: convert packed = {BGRA, BGRA, BGRA, BGRA}
-    * into masked = {B, G, R, A}
+   /* Ex: convert packed = {XYZW, XYZW, XYZW, XYZW}
+    * into masked = {X, Y, Z, W}
     */
    shifted = LLVMBuildLShr(builder, packed, LLVMConstVector(shifts, 4), "");
    masked = LLVMBuildAnd(builder, shifted, LLVMConstVector(masks, 4), "");
@@ -276,7 +269,6 @@ lp_build_pack_rgba_aos(struct gallivm_state *gallivm,
    LLVMValueRef shifts[4];
    LLVMValueRef scales[4];
    boolean normalized;
-   unsigned shift;
    unsigned i, j;
 
    assert(desc->layout == UTIL_FORMAT_LAYOUT_PLAIN);
@@ -302,9 +294,9 @@ lp_build_pack_rgba_aos(struct gallivm_state *gallivm,
                                        LLVMConstVector(swizzles, 4), "");
 
    normalized = FALSE;
-   shift = 0;
    for (i = 0; i < 4; ++i) {
       unsigned bits = desc->channel[i].size;
+      unsigned shift = desc->channel[i].shift;
 
       if (desc->channel[i].type == UTIL_FORMAT_TYPE_VOID) {
          shifts[i] = LLVMGetUndef(LLVMInt32TypeInContext(gallivm->context));
@@ -325,8 +317,6 @@ lp_build_pack_rgba_aos(struct gallivm_state *gallivm,
          else
             scales[i] = lp_build_const_float(gallivm, 1.0);
       }
-
-      shift += bits;
    }
 
    if (normalized)
@@ -410,16 +400,11 @@ lp_build_fetch_rgba_aos(struct gallivm_state *gallivm,
 
       packed = lp_build_gather(gallivm, type.length/4,
                                format_desc->block.bits, type.width*4,
-                               base_ptr, offset);
+                               base_ptr, offset, TRUE);
 
       assert(format_desc->block.bits <= vec_len);
 
       packed = LLVMBuildBitCast(gallivm->builder, packed, dst_vec_type, "");
-#ifdef PIPE_ARCH_BIG_ENDIAN
-      if (type.floating)
-         packed = lp_build_bswap_vec(gallivm, packed, type,
-                                    lp_type_float_vec(type.width, vec_len));
-#endif
       return lp_build_format_swizzle_aos(format_desc, &bld, packed);
    }
 
@@ -453,7 +438,7 @@ lp_build_fetch_rgba_aos(struct gallivm_state *gallivm,
 
          packed = lp_build_gather_elem(gallivm, num_pixels,
                                        format_desc->block.bits, 32,
-                                       base_ptr, offset, k);
+                                       base_ptr, offset, k, FALSE);
 
          tmps[k] = lp_build_unpack_arith_rgba_aos(gallivm,
                                                   format_desc,

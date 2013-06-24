@@ -87,8 +87,8 @@ dri_fill_in_modes(struct dri_screen *screen)
       MESA_FORMAT_RGB565,
    };
    static const enum pipe_format pipe_formats[3] = {
-      PIPE_FORMAT_B8G8R8A8_UNORM,
-      PIPE_FORMAT_B8G8R8X8_UNORM,
+      PIPE_FORMAT_BGRA8888_UNORM,
+      PIPE_FORMAT_BGRX8888_UNORM,
       PIPE_FORMAT_B5G6R5_UNORM,
    };
    gl_format format;
@@ -250,9 +250,9 @@ dri_fill_st_visual(struct st_visual *stvis, struct dri_screen *screen,
 
    if (mode->redBits == 8) {
       if (mode->alphaBits == 8)
-         stvis->color_format = PIPE_FORMAT_B8G8R8A8_UNORM;
+         stvis->color_format = PIPE_FORMAT_BGRA8888_UNORM;
       else
-         stvis->color_format = PIPE_FORMAT_B8G8R8X8_UNORM;
+         stvis->color_format = PIPE_FORMAT_BGRX8888_UNORM;
    } else {
       stvis->color_format = PIPE_FORMAT_B5G6R5_UNORM;
    }

@@ -133,6 +133,7 @@ struct util_format_channel_description
    unsigned normalized:1;
    unsigned pure_integer:1;
    unsigned size:9;        /**< bits per channel */
+   unsigned shift:16;      /** number of bits from lsb */
 };
 
 
@@ -179,9 +180,31 @@ struct util_format_description
    unsigned is_mixed:1;
 
    /**
-    * Input channel description.
+    * Input channel description, in the order XYZW.
     *
     * Only valid for UTIL_FORMAT_LAYOUT_PLAIN formats.
+    *
+    * If each channel is accessed as an individual N-byte value, X is always
+    * at the lowest address in memory, Y is always next, and so on.  For all
+    * currently-defined formats, the N-byte value has native endianness.
+    *
+    * If instead a group of channels is accessed as a single N-byte value,
+    * the order of the channels within that value depends on endianness.
+    * For big-endian targets, X is the most significant subvalue,
+    * otherwise it is the least significant one.
+    *
+    * For example, if X is 8 bits and Y is 24 bits, the memory order is:
+    *
+    *                 0  1  2  3
+    *  little-endian: X  Yl Ym Yu    (l = lower, m = middle, u = upper)
+    *  big-endian:    X  Yu Ym Yl
+    *
+    * If X is 5 bits, Y is 5 bits, Z is 5 bits and W is 1 bit, the layout is:
+    *
+    *                        0        1
+    *                 msb  lsb msb  lsb
+    *  little-endian: YYYXXXXX WZZZZZYY
+    *  big-endian:    XXXXXYYY YYZZZZZW
     */
    struct util_format_channel_description channel[4];
 

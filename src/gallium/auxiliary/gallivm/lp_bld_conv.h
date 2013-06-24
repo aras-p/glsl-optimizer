@@ -43,17 +43,6 @@
 struct lp_type;
 
 LLVMValueRef
-lp_build_bswap(struct gallivm_state *gallivm,
-               LLVMValueRef res,
-               struct lp_type type);
-
-LLVMValueRef
-lp_build_bswap_vec(struct gallivm_state *gallivm,
-                   LLVMValueRef packed,
-                   struct lp_type src_type,
-                   struct lp_type dst_type);
-
-LLVMValueRef
 lp_build_half_to_float(struct gallivm_state *gallivm,
                        LLVMValueRef src);
 

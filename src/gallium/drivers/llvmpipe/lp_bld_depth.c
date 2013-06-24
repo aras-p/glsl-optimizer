@@ -349,8 +349,6 @@ get_z_shift_and_mask(const struct util_format_description *format_desc,
 {
    unsigned total_bits;
    unsigned z_swizzle;
-   unsigned chan;
-   unsigned padding_left, padding_right;
 
    assert(format_desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS);
    assert(format_desc->block.width == 1);
@@ -365,24 +363,13 @@ get_z_shift_and_mask(const struct util_format_description *format_desc,
       return FALSE;
 
    *width = format_desc->channel[z_swizzle].size;
+   *shift = format_desc->channel[z_swizzle].shift;
 
-   padding_right = 0;
-   for (chan = 0; chan < z_swizzle; ++chan)
-      padding_right += format_desc->channel[chan].size;
-
-   padding_left =
-      total_bits - (padding_right + *width);
-
-   if (padding_left || padding_right) {
-      unsigned long long mask_left = (1ULL << (total_bits - padding_left)) - 1;
-      unsigned long long mask_right = (1ULL << (padding_right)) - 1;
-      *mask = mask_left ^ mask_right;
-   }
-   else {
+   if (*width == total_bits) {
       *mask = 0xffffffff;
+   } else {
+      *mask = ((1 << *width) - 1) << *shift;
    }
-
-   *shift = padding_right;
 
    return TRUE;
 }
@@ -398,7 +385,7 @@ get_s_shift_and_mask(const struct util_format_description *format_desc,
                      unsigned *shift, unsigned *mask)
 {
    unsigned s_swizzle;
-   unsigned chan, sz;
+   unsigned sz;
 
    s_swizzle = format_desc->swizzle[1];
 
@@ -407,16 +394,14 @@ get_s_shift_and_mask(const struct util_format_description *format_desc,
 
    /* just special case 64bit d/s format */
    if (format_desc->block.bits > 32) {
+      /* XXX big-endian? */
       assert(format_desc->format == PIPE_FORMAT_Z32_FLOAT_S8X24_UINT);
       *shift = 0;
       *mask = 0xff;
       return TRUE;
    }
 
-   *shift = 0;
-   for (chan = 0; chan < s_swizzle; chan++)
-      *shift += format_desc->channel[chan].size;
-
+   *shift = format_desc->channel[s_swizzle].shift;
    sz = format_desc->channel[s_swizzle].size;
    *mask = (1U << sz) - 1U;
 

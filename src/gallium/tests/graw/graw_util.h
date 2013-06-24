@@ -32,8 +32,8 @@ graw_util_create_window(struct graw_info *info,
                         int num_cbufs, bool zstencil_buf)
 {
    static const enum pipe_format formats[] = {
-      PIPE_FORMAT_R8G8B8A8_UNORM,
-      PIPE_FORMAT_B8G8R8A8_UNORM,
+      PIPE_FORMAT_RGBA8888_UNORM,
+      PIPE_FORMAT_BGRA8888_UNORM,
       PIPE_FORMAT_NONE
    };
    enum pipe_format format;
@@ -226,7 +226,7 @@ graw_util_create_tex2d(const struct graw_info *info,
    struct pipe_box box;
 
    temp.target = PIPE_TEXTURE_2D;
-   temp.format = PIPE_FORMAT_B8G8R8A8_UNORM;
+   temp.format = format;
    temp.width0 = width;
    temp.height0 = height;
    temp.depth0 = 1;

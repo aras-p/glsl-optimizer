@@ -99,15 +99,6 @@ def generate_format_type(format):
     print
 
 
-def bswap_format(format):
-    '''Generate a structure that describes the format.'''
-
-    if format.is_bitmask() and not format.is_array() and format.block_size() > 8:
-        print '#ifdef PIPE_ARCH_BIG_ENDIAN'
-        print '   pixel.value = util_bswap%u(pixel.value);' % format.block_size()
-        print '#endif'
-
-
 def is_format_supported(format):
     '''Determines whether we actually have the plumbing necessary to generate the 
     to read/write to/from this format.'''
@@ -423,16 +414,11 @@ def generate_unpack_kernel(format, dst_channel, dst_native_type):
             elif src_channel.type == SIGNED:
                 print '         int%u_t %s;' % (depth, src_channel.name)
 
-        if depth > 8:
-            print '#ifdef PIPE_ARCH_BIG_ENDIAN'
-            print '         value = util_bswap%u(value);' % depth
-            print '#endif'
-
         # Compute the intermediate unshifted values 
-        shift = 0
         for i in range(format.nr_channels()):
             src_channel = format.channels[i]
             value = 'value'
+            shift = src_channel.shift
             if src_channel.type == UNSIGNED:
                 if shift:
                     value = '%s >> %u' % (value, shift)
@@ -455,8 +441,6 @@ def generate_unpack_kernel(format, dst_channel, dst_native_type):
             if value is not None:
                 print '         %s = %s;' % (src_channel.name, value)
                 
-            shift += src_channel.size
-
         # Convert, swizzle, and store final values
         for i in range(4):
             swizzle = format.swizzles[i]
@@ -484,7 +468,6 @@ def generate_unpack_kernel(format, dst_channel, dst_native_type):
     else:
         print '         union util_format_%s pixel;' % format.short_name()
         print '         memcpy(&pixel, src, sizeof pixel);'
-        bswap_format(format)
     
         for i in range(4):
             swizzle = format.swizzles[i]
@@ -525,9 +508,9 @@ def generate_pack_kernel(format, src_channel, src_native_type):
         depth = format.block_size()
         print '         uint%u_t value = 0;' % depth 
 
-        shift = 0
         for i in range(4):
             dst_channel = format.channels[i]
+            shift = dst_channel.shift
             if inv_swizzle[i] is not None:
                 value ='src[%u]' % inv_swizzle[i]
                 dst_colorspace = format.colorspace
@@ -551,13 +534,6 @@ def generate_pack_kernel(format, src_channel, src_native_type):
                 if value is not None:
                     print '         value |= %s;' % (value)
                 
-            shift += dst_channel.size
-
-        if depth > 8:
-            print '#ifdef PIPE_ARCH_BIG_ENDIAN'
-            print '         value = util_bswap%u(value);' % depth
-            print '#endif'
-        
         print '         *(uint%u_t *)dst = value;' % depth 
 
     else:
@@ -579,7 +555,6 @@ def generate_pack_kernel(format, src_channel, src_native_type):
                                     dst_colorspace = dst_colorspace)
             print '         pixel.chan.%s = %s;' % (dst_channel.name, value)
     
-        bswap_format(format)
         print '         memcpy(dst, &pixel, sizeof pixel);'
     
 

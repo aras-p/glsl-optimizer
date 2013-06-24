@@ -89,13 +89,13 @@ graw_create_window_and_screen( int x,
    if (visinfo->red_mask == 0xff0000 &&
        visinfo->green_mask == 0xff00 &&
        visinfo->blue_mask == 0xff) {
-      if (format != PIPE_FORMAT_B8G8R8A8_UNORM)
+      if (format != PIPE_FORMAT_BGRA8888_UNORM)
          goto fail;
    }
    else if (visinfo->red_mask == 0xff &&
             visinfo->green_mask == 0xff00 &&
             visinfo->blue_mask == 0xff0000) {
-      if (format != PIPE_FORMAT_R8G8B8A8_UNORM)
+      if (format != PIPE_FORMAT_RGBA8888_UNORM)
          goto fail;
    }
    else {

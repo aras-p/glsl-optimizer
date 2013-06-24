@@ -78,7 +78,8 @@ lp_build_gather_elem(struct gallivm_state *gallivm,
                      unsigned dst_width,
                      LLVMValueRef base_ptr,
                      LLVMValueRef offsets,
-                     unsigned i)
+                     unsigned i,
+                     boolean vector_justify)
 {
    LLVMTypeRef src_type = LLVMIntTypeInContext(gallivm->context, src_width);
    LLVMTypeRef src_ptr_type = LLVMPointerType(src_type, 0);
@@ -97,10 +98,12 @@ lp_build_gather_elem(struct gallivm_state *gallivm,
       res = LLVMBuildTrunc(gallivm->builder, res, dst_elem_type, "");
    } else if (src_width < dst_width) {
       res = LLVMBuildZExt(gallivm->builder, res, dst_elem_type, "");
+      if (vector_justify) {
 #ifdef PIPE_ARCH_BIG_ENDIAN
-      res = LLVMBuildShl(gallivm->builder, res,
-                         LLVMConstInt(dst_elem_type, dst_width - src_width, 0), "");
+         res = LLVMBuildShl(gallivm->builder, res,
+                            LLVMConstInt(dst_elem_type, dst_width - src_width, 0), "");
 #endif
+      }
    }
 
    return res;
@@ -112,11 +115,20 @@ lp_build_gather_elem(struct gallivm_state *gallivm,
  * Use for fetching texels from a texture.
  * For SSE, typical values are length=4, src_width=32, dst_width=32.
  *
+ * When src_width < dst_width, the return value can be justified in
+ * one of two ways:
+ * "integer justification" is used when the caller treats the destination
+ * as a packed integer bitmask, as described by the channels' "shift" and
+ * "width" fields;
+ * "vector justification" is used when the caller casts the destination
+ * to a vector and needs channel X to be in vector element 0.
+ *
  * @param length length of the offsets
  * @param src_width src element width in bits
  * @param dst_width result element width in bits (src will be expanded to fit)
  * @param base_ptr base pointer, should be a i8 pointer type.
  * @param offsets vector with offsets
+ * @param vector_justify select vector rather than integer justification
  */
 LLVMValueRef
 lp_build_gather(struct gallivm_state *gallivm,
@@ -124,7 +136,8 @@ lp_build_gather(struct gallivm_state *gallivm,
                 unsigned src_width,
                 unsigned dst_width,
                 LLVMValueRef base_ptr,
-                LLVMValueRef offsets)
+                LLVMValueRef offsets,
+                boolean vector_justify)
 {
    LLVMValueRef res;
 
@@ -132,7 +145,7 @@ lp_build_gather(struct gallivm_state *gallivm,
       /* Scalar */
       return lp_build_gather_elem(gallivm, length,
                                   src_width, dst_width,
-                                  base_ptr, offsets, 0);
+                                  base_ptr, offsets, 0, vector_justify);
    } else {
       /* Vector */
 
@@ -146,7 +159,7 @@ lp_build_gather(struct gallivm_state *gallivm,
          LLVMValueRef elem;
          elem = lp_build_gather_elem(gallivm, length,
                                      src_width, dst_width,
-                                     base_ptr, offsets, i);
+                                     base_ptr, offsets, i, vector_justify);
          res = LLVMBuildInsertElement(gallivm->builder, res, elem, index, "");
       }
    }

@@ -217,6 +217,20 @@ lp_build_swizzle_scalar_aos(struct lp_build_context *bld,
 
       a = LLVMBuildBitCast(builder, a, lp_build_vec_type(bld->gallivm, type2), "");
 
+      /*
+       * Vector element 0 is always channel X.
+       *
+       *                        76 54 32 10 (array numbering)
+       * Little endian reg in:  YX YX YX YX
+       * Little endian reg out: YY YY YY YY if shift right (shift == -1)
+       *                        XX XX XX XX if shift left (shift == 1)
+       *
+       *                        01 23 45 67 (array numbering)
+       * Big endian reg in:     XY XY XY XY
+       * Big endian reg out:    YY YY YY YY if shift left (shift == 1)
+       *                        XX XX XX XX if shift right (shift == -1)
+       *
+       */
 #ifdef PIPE_ARCH_LITTLE_ENDIAN
       shift = channel == 0 ? 1 : -1;
 #else
@@ -240,10 +254,23 @@ lp_build_swizzle_scalar_aos(struct lp_build_context *bld,
       /*
        * Bit mask and recursive shifts
        *
+       * Little-endian registers:
+       *
+       *   7654 3210
+       *   WZYX WZYX .... WZYX  <= input
+       *   00Y0 00Y0 .... 00Y0  <= mask
+       *   00YY 00YY .... 00YY  <= shift right 1 (shift amount -1)
+       *   YYYY YYYY .... YYYY  <= shift left 2 (shift amount 2)
+       *
+       * Big-endian registers:
+       *
+       *   0123 4567
        *   XYZW XYZW .... XYZW  <= input
-       *   0Y00 0Y00 .... 0Y00
-       *   YY00 YY00 .... YY00
-       *   YYYY YYYY .... YYYY  <= output
+       *   0Y00 0Y00 .... 0Y00  <= mask
+       *   YY00 YY00 .... YY00  <= shift left 1 (shift amount 1)
+       *   YYYY YYYY .... YYYY  <= shift right 2 (shift amount -2)
+       *
+       * shifts[] gives little-endian shift amounts; we need to negate for big-endian.
        */
       struct lp_type type4;
       const int shifts[4][2] = {
@@ -274,14 +301,15 @@ lp_build_swizzle_scalar_aos(struct lp_build_context *bld,
          LLVMValueRef tmp = NULL;
          int shift = shifts[channel][i];
 
-#ifdef PIPE_ARCH_LITTLE_ENDIAN
+         /* See endianness diagram above */
+#ifdef PIPE_ARCH_BIG_ENDIAN
          shift = -shift;
 #endif
 
          if(shift > 0)
-            tmp = LLVMBuildLShr(builder, a, lp_build_const_int_vec(bld->gallivm, type4, shift*type.width), "");
+            tmp = LLVMBuildShl(builder, a, lp_build_const_int_vec(bld->gallivm, type4, shift*type.width), "");
          if(shift < 0)
-            tmp = LLVMBuildShl(builder, a, lp_build_const_int_vec(bld->gallivm, type4, -shift*type.width), "");
+            tmp = LLVMBuildLShr(builder, a, lp_build_const_int_vec(bld->gallivm, type4, -shift*type.width), "");
 
          assert(tmp);
          if(tmp)
@@ -474,21 +502,39 @@ lp_build_swizzle_aos(struct lp_build_context *bld,
 
       /*
        * Mask and shift the channels, trying to group as many channels in the
-       * same shift as possible
+       * same shift as possible.  The shift amount is positive for shifts left
+       * and negative for shifts right.
        */
       for (shift = -3; shift <= 3; ++shift) {
          uint64_t mask = 0;
 
          assert(type4.width <= sizeof(mask)*8);
 
+         /*
+          * Vector element numbers follow the XYZW order, so 0 is always X, etc.
+          * After widening 4 times we have:
+          *
+          *                                3210
+          * Little-endian register layout: WZYX
+          *
+          *                                0123
+          * Big-endian register layout:    XYZW
+          *
+          * For little-endian, higher-numbered channels are obtained by a shift right
+          * (negative shift amount) and lower-numbered channels by a shift left
+          * (positive shift amount).  The opposite is true for big-endian.
+          */
          for (chan = 0; chan < 4; ++chan) {
-            /* FIXME: big endian */
-            if (swizzles[chan] < 4 &&
-                chan - swizzles[chan] == shift) {
+            if (swizzles[chan] < 4) {
+               /* We need to move channel swizzles[chan] into channel chan */
 #ifdef PIPE_ARCH_LITTLE_ENDIAN
-               mask |= ((1ULL << type.width) - 1) << (swizzles[chan] * type.width);
+               if (swizzles[chan] - chan == -shift) {
+                  mask |= ((1ULL << type.width) - 1) << (swizzles[chan] * type.width);
+               }
 #else
-               mask |= ((1ULL << type.width) - 1) << (type4.width - type.width) >> (swizzles[chan] * type.width);
+               if (swizzles[chan] - chan == shift) {
+                  mask |= ((1ULL << type.width) - 1) << (type4.width - type.width) >> (swizzles[chan] * type.width);
+               }
 #endif
             }
          }
@@ -502,21 +548,11 @@ lp_build_swizzle_aos(struct lp_build_context *bld,
             masked = LLVMBuildAnd(builder, a,
                                   lp_build_const_int_vec(bld->gallivm, type4, mask), "");
             if (shift > 0) {
-#ifdef PIPE_ARCH_LITTLE_ENDIAN
                shifted = LLVMBuildShl(builder, masked,
                                       lp_build_const_int_vec(bld->gallivm, type4, shift*type.width), "");
-#else
-               shifted = LLVMBuildLShr(builder, masked,
-                                       lp_build_const_int_vec(bld->gallivm, type4, shift*type.width), "");
-#endif
             } else if (shift < 0) {
-#ifdef PIPE_ARCH_LITTLE_ENDIAN
                shifted = LLVMBuildLShr(builder, masked,
                                        lp_build_const_int_vec(bld->gallivm, type4, -shift*type.width), "");
-#else
-               shifted = LLVMBuildShl(builder, masked,
-                                      lp_build_const_int_vec(bld->gallivm, type4, -shift*type.width), "");
-#endif
             } else {
                shifted = masked;
             }

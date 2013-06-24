@@ -10,8 +10,8 @@
 #include "pipe/p_defines.h"
 
 enum pipe_format formats[] = {
-   PIPE_FORMAT_R8G8B8A8_UNORM,
-   PIPE_FORMAT_B8G8R8A8_UNORM,
+   PIPE_FORMAT_RGBA8888_UNORM,
+   PIPE_FORMAT_BGRA8888_UNORM,
    PIPE_FORMAT_NONE
 };
 

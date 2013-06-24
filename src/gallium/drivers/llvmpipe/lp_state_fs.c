@@ -1015,12 +1015,17 @@ convert_to_blend_type(struct gallivm_state *gallivm,
    for (i = 0; i < num_srcs; ++i) {
       LLVMValueRef chans[4];
       LLVMValueRef res = NULL;
-      unsigned sa = 0;
 
       dst[i] = LLVMBuildZExt(builder, src[i], lp_build_vec_type(gallivm, src_type), "");
 
       for (j = 0; j < src_fmt->nr_channels; ++j) {
          unsigned mask = 0;
+         unsigned sa = src_fmt->channel[j].shift;
+#ifdef PIPE_ARCH_LITTLE_ENDIAN
+         unsigned from_lsb = j;
+#else
+         unsigned from_lsb = src_fmt->nr_channels - j - 1;
+#endif
 
          for (k = 0; k < src_fmt->channel[j].size; ++k) {
             mask |= 1 << k;
@@ -1046,10 +1051,8 @@ convert_to_blend_type(struct gallivm_state *gallivm,
          /* Insert bits into correct position */
          chans[j] = LLVMBuildShl(builder,
                                  chans[j],
-                                 lp_build_const_int_vec(gallivm, src_type, j * blend_type.width),
+                                 lp_build_const_int_vec(gallivm, src_type, from_lsb * blend_type.width),
                                  "");
-
-         sa += src_fmt->channel[j].size;
 
          if (j == 0) {
             res = chans[j];
@@ -1166,12 +1169,17 @@ convert_from_blend_type(struct gallivm_state *gallivm,
    for (i = 0; i < num_srcs; ++i) {
       LLVMValueRef chans[4];
       LLVMValueRef res = NULL;
-      unsigned sa = 0;
 
       dst[i] = LLVMBuildBitCast(builder, src[i], lp_build_vec_type(gallivm, src_type), "");
 
       for (j = 0; j < src_fmt->nr_channels; ++j) {
          unsigned mask = 0;
+         unsigned sa = src_fmt->channel[j].shift;
+#ifdef PIPE_ARCH_LITTLE_ENDIAN
+         unsigned from_lsb = j;
+#else
+         unsigned from_lsb = src_fmt->nr_channels - j - 1;
+#endif
 
          assert(blend_type.width > src_fmt->channel[j].size);
 
@@ -1182,7 +1190,7 @@ convert_from_blend_type(struct gallivm_state *gallivm,
          /* Extract bits */
          chans[j] = LLVMBuildLShr(builder,
                                   dst[i],
-                                  lp_build_const_int_vec(gallivm, src_type, j * blend_type.width),
+                                  lp_build_const_int_vec(gallivm, src_type, from_lsb * blend_type.width),
                                   "");
 
          chans[j] = LLVMBuildAnd(builder,

@@ -30,6 +30,8 @@
 '''
 
 
+import sys
+
 VOID, UNSIGNED, SIGNED, FIXED, FLOAT = range(5)
 
 SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_W, SWIZZLE_0, SWIZZLE_1, SWIZZLE_NONE, = range(7)
@@ -41,6 +43,9 @@ SRGB = 'srgb'
 YUV = 'yuv'
 ZS = 'zs'
 
+
+# Not cross-compiler friendly
+is_big_endian = sys.byteorder == 'big'
 
 def is_pot(x):
    return (x & (x - 1)) == 0
@@ -306,6 +311,11 @@ def parse(filename):
                 size = 0
             channel = Channel(type, norm, pure, size, names[i])
             channels.append(channel)
+
+        shift = 0
+        for channel in channels[3::-1] if is_big_endian else channels:
+            channel.shift = shift
+            shift += channel.size
 
         format = Format(name, layout, block_width, block_height, channels, swizzles, colorspace)
         formats.append(format)
