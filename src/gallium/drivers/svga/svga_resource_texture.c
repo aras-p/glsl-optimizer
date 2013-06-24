@@ -258,7 +258,6 @@ svga_texture_transfer_map(struct pipe_context *pipe,
    if (usage & PIPE_TRANSFER_MAP_DIRECTLY)
       return NULL;
 
-   assert(box->depth == 1);
    st = CALLOC_STRUCT(svga_transfer);
    if (!st)
       return NULL;
@@ -268,19 +267,19 @@ svga_texture_transfer_map(struct pipe_context *pipe,
    st->base.usage = usage;
    st->base.box = *box;
    st->base.stride = nblocksx*util_format_get_blocksize(texture->format);
-   st->base.layer_stride = 0;
+   st->base.layer_stride = st->base.stride * nblocksy;
 
    st->hw_nblocksy = nblocksy;
 
    st->hwbuf = svga_winsys_buffer_create(svga,
                                          1, 
                                          0,
-                                         st->hw_nblocksy*st->base.stride);
+                                         st->hw_nblocksy * st->base.stride * box->depth);
    while(!st->hwbuf && (st->hw_nblocksy /= 2)) {
       st->hwbuf = svga_winsys_buffer_create(svga,
                                             1, 
                                             0,
-                                            st->hw_nblocksy*st->base.stride);
+                                            st->hw_nblocksy * st->base.stride * box->depth);
    }
 
    if(!st->hwbuf)
