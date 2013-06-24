@@ -116,6 +116,10 @@ struct ilo_shader {
    void *kernel;
    int kernel_size;
 
+   bool routing_initialized;
+   int routing_src_semantics[PIPE_MAX_SHADER_OUTPUTS];
+   int routing_src_indices[PIPE_MAX_SHADER_OUTPUTS];
+   uint32_t routing_sprite_coord_enable;
    struct ilo_kernel_routing routing;
 
    /* what does the push constant buffer consist of? */

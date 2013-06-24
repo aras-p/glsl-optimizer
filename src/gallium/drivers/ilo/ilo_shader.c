@@ -900,20 +900,36 @@ ilo_shader_select_kernel_routing(struct ilo_shader_state *shader,
       src_semantics = source->shader->out.semantic_names;
       src_indices = source->shader->out.semantic_indices;
       src_len = source->shader->out.count;
-
-      /* skip PSIZE and POSITION (how about the optional CLIPDISTs?) */
-      assert(src_semantics[0] == TGSI_SEMANTIC_PSIZE);
-      assert(src_semantics[1] == TGSI_SEMANTIC_POSITION);
-      routing->source_skip = 2;
-      routing->source_len = src_len - routing->source_skip;
-      src_semantics += routing->source_skip;
-      src_indices += routing->source_skip;
    }
    else {
       src_semantics = kernel->in.semantic_names;
       src_indices = kernel->in.semantic_indices;
       src_len = kernel->in.count;
+   }
 
+   /* no change */
+   if (kernel->routing_initialized &&
+       routing->source_skip + routing->source_len <= src_len &&
+       kernel->routing_sprite_coord_enable == sprite_coord_enable &&
+       !memcmp(kernel->routing_src_semantics,
+          &src_semantics[routing->source_skip],
+          sizeof(kernel->routing_src_semantics[0]) * routing->source_len) &&
+       !memcmp(kernel->routing_src_indices,
+          &src_indices[routing->source_skip],
+          sizeof(kernel->routing_src_indices[0]) * routing->source_len))
+      return false;
+
+   if (source) {
+      /* skip PSIZE and POSITION (how about the optional CLIPDISTs?) */
+      assert(src_semantics[0] == TGSI_SEMANTIC_PSIZE);
+      assert(src_semantics[1] == TGSI_SEMANTIC_POSITION);
+      routing->source_skip = 2;
+
+      routing->source_len = src_len - routing->source_skip;
+      src_semantics += routing->source_skip;
+      src_indices += routing->source_skip;
+   }
+   else {
       routing->source_skip = 0;
       routing->source_len = src_len;
    }
@@ -996,6 +1012,14 @@ ilo_shader_select_kernel_routing(struct ilo_shader_state *shader,
     *      recommended"
     */
    routing->source_len = max_src_slot + 1;
+
+   /* remember the states of the source */
+   kernel->routing_initialized = true;
+   kernel->routing_sprite_coord_enable = sprite_coord_enable;
+   memcpy(kernel->routing_src_semantics, src_semantics,
+         sizeof(kernel->routing_src_semantics[0]) * routing->source_len);
+   memcpy(kernel->routing_src_indices, src_indices,
+         sizeof(kernel->routing_src_indices[0]) * routing->source_len);
 
    return true;
 }
