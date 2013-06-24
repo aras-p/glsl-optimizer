@@ -62,7 +62,7 @@ def serialize(obj):
             if crc32 < 0:
                 crc32 += 0x100000000
             return 'blob(size=%u,crc32=0x%08x)' % (len(obj), crc32)
-        if True
+        if True:
             # Dump blobs as an array of 16byte hexadecimals
             res = []
             for i in range(0, len(obj), 16):
