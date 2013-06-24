@@ -364,9 +364,9 @@ svga_texture_transfer_unmap(struct pipe_context *pipe,
       ss->texture_timestamp++;
       svga_age_texture_view(tex, transfer->level);
       if (transfer->resource->target == PIPE_TEXTURE_CUBE)
-         tex->defined[transfer->box.z][transfer->level] = TRUE;
+         svga_define_texture_level(tex, transfer->box.z, transfer->level);
       else
-         tex->defined[0][transfer->level] = TRUE;
+         svga_define_texture_level(tex, 0, transfer->level);
    }
 
    FREE(st->swbuf);

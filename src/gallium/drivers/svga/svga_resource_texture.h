@@ -130,6 +130,19 @@ svga_age_texture_view(struct svga_texture *tex, unsigned level)
 }
 
 
+/**
+ * Mark the given texture face/level as being defined.
+ */
+static INLINE void
+svga_define_texture_level(struct svga_texture *tex,
+                          unsigned face,unsigned level)
+{
+   assert(face < Elements(tex->defined));
+   assert(level < Elements(tex->defined[0]));
+   tex->defined[face][level] = TRUE;
+}
+
+
 struct pipe_resource *
 svga_texture_create(struct pipe_screen *screen,
                     const struct pipe_resource *template);
