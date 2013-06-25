@@ -695,6 +695,7 @@ generate_fetch(struct gallivm_state *gallivm,
    LLVMValueRef buffer_size = draw_jit_dvbuffer_size(gallivm, vbuffer_ptr);
    LLVMValueRef stride;
    LLVMValueRef buffer_overflowed;
+   LLVMValueRef needed_buffer_size;
    LLVMValueRef temp_ptr =
       lp_build_alloca(gallivm,
                       lp_build_vec_type(gallivm, lp_float32_vec4_type()), "");
@@ -715,15 +716,30 @@ generate_fetch(struct gallivm_state *gallivm,
    stride = LLVMBuildAdd(builder, stride,
                          lp_build_const_int32(gallivm, velem->src_offset),
                          "");
+   needed_buffer_size = LLVMBuildAdd(
+      builder, stride,
+      lp_build_const_int32(gallivm,
+                           util_format_get_blocksize(velem->src_format)),
+      "");
 
-   buffer_overflowed = LLVMBuildICmp(builder, LLVMIntUGE,
-                                     stride, buffer_size,
+   buffer_overflowed = LLVMBuildICmp(builder, LLVMIntUGT,
+                                     needed_buffer_size, buffer_size,
                                      "buffer_overflowed");
-   /*
-   lp_build_printf(gallivm, "vbuf index = %u, stride is %u\n", index, stride);
-   lp_build_print_value(gallivm, "   buffer size = ", buffer_size);
+#if 0
+   lp_build_printf(gallivm, "vbuf index = %u, vb_stride is %u\n",
+                   index, vb_stride);
+   lp_build_printf(gallivm, "   vb_buffer_offset = %u, src_offset is %u\n",
+                   vb_buffer_offset,
+                   lp_build_const_int32(gallivm, velem->src_offset));
+   lp_build_print_value(gallivm, "   blocksize = ",
+                        lp_build_const_int32(
+                           gallivm,
+                           util_format_get_blocksize(velem->src_format)));
+   lp_build_printf(gallivm, "   stride = %u\n", stride);
+   lp_build_printf(gallivm, "   buffer size = %u\n", buffer_size);
+   lp_build_printf(gallivm, "   needed_buffer_size = %u\n", needed_buffer_size);
    lp_build_print_value(gallivm, "   buffer overflowed = ", buffer_overflowed);
-   */
+#endif
 
    lp_build_if(&if_ctx, gallivm, buffer_overflowed);
    {
