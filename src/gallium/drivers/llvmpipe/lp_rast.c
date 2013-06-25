@@ -61,7 +61,6 @@ static void
 lp_rast_begin( struct lp_rasterizer *rast,
                struct lp_scene *scene )
 {
-
    rast->curr_scene = scene;
 
    LP_DBG(DEBUG_RAST, "%s\n", __FUNCTION__);
@@ -99,6 +98,9 @@ lp_rast_tile_begin(struct lp_rasterizer_task *task,
                     task->scene->fb.width - x * TILE_SIZE : TILE_SIZE;
    task->height = TILE_SIZE + y * TILE_SIZE > task->scene->fb.height ?
                     task->scene->fb.height - y * TILE_SIZE : TILE_SIZE;
+
+   task->thread_data.vis_counter = 0;
+   task->ps_invocations = 0;
 
    /* reset pointers to color and depth tile(s) */
    memset(task->color_tiles, 0, sizeof(task->color_tiles));
@@ -455,10 +457,10 @@ lp_rast_shade_quads_mask(struct lp_rasterizer_task *task,
     * allocated 4x4 blocks hence need to filter them out here.
     */
    if ((x % TILE_SIZE) < task->width && (y % TILE_SIZE) < task->height) {
-      if (task->query[PIPE_QUERY_PIPELINE_STATISTICS]) {
-         /* not very accurate would need a popcount on the mask */
-         task->ps_invocations++;
-      }
+      /* not very accurate would need a popcount on the mask */
+      /* always count this not worth bothering? */
+      task->ps_invocations++;
+
       /* run shader on 4x4 block */
       BEGIN_JIT_CALL(state, task);
       variant->jit_function[RAST_EDGE_TEST](&state->jit_context,
@@ -490,28 +492,18 @@ lp_rast_begin_query(struct lp_rasterizer_task *task,
 {
    struct llvmpipe_query *pq = arg.query_obj;
 
-   assert(task->query[pq->type] == NULL);
-
    switch (pq->type) {
    case PIPE_QUERY_OCCLUSION_COUNTER:
    case PIPE_QUERY_OCCLUSION_PREDICATE:
-      task->thread_data.vis_counter = 0;
+      pq->start[task->thread_index] = task->thread_data.vis_counter;
       break;
    case PIPE_QUERY_PIPELINE_STATISTICS:
-      task->ps_invocations = 0;
-      break;
-   case PIPE_QUERY_PRIMITIVES_GENERATED:
-   case PIPE_QUERY_PRIMITIVES_EMITTED:
-   case PIPE_QUERY_SO_STATISTICS:
-   case PIPE_QUERY_SO_OVERFLOW_PREDICATE:
-   case PIPE_QUERY_TIMESTAMP_DISJOINT:
+      pq->start[task->thread_index] = task->ps_invocations;
       break;
    default:
       assert(0);
       break;
    }
-
-   task->query[pq->type] = pq;
 }
 
 
@@ -525,35 +517,25 @@ lp_rast_end_query(struct lp_rasterizer_task *task,
                   const union lp_rast_cmd_arg arg)
 {
    struct llvmpipe_query *pq = arg.query_obj;
-   assert(task->query[pq->type] == pq ||
-          pq->type == PIPE_QUERY_TIMESTAMP ||
-          pq->type == PIPE_QUERY_GPU_FINISHED);
 
    switch (pq->type) {
    case PIPE_QUERY_OCCLUSION_COUNTER:
    case PIPE_QUERY_OCCLUSION_PREDICATE:
-      pq->count[task->thread_index] += task->thread_data.vis_counter;
+      pq->end[task->thread_index] +=
+         task->thread_data.vis_counter - pq->start[task->thread_index];
+      pq->start[task->thread_index] = 0;
       break;
    case PIPE_QUERY_TIMESTAMP:
-      pq->count[task->thread_index] = os_time_get_nano();
+      pq->end[task->thread_index] = os_time_get_nano();
       break;
    case PIPE_QUERY_PIPELINE_STATISTICS:
-      pq->count[task->thread_index] += task->ps_invocations;
-      break;
-   case PIPE_QUERY_PRIMITIVES_GENERATED:
-   case PIPE_QUERY_PRIMITIVES_EMITTED:
-   case PIPE_QUERY_SO_STATISTICS:
-   case PIPE_QUERY_SO_OVERFLOW_PREDICATE:
-   case PIPE_QUERY_TIMESTAMP_DISJOINT:
-   case PIPE_QUERY_GPU_FINISHED:
+      pq->end[task->thread_index] +=
+         task->ps_invocations - pq->start[task->thread_index];
+      pq->start[task->thread_index] = 0;
       break;
    default:
       assert(0);
       break;
-   }
-
-   if (task->query[pq->type] == pq) {
-      task->query[pq->type] = NULL;
    }
 }
 
@@ -575,10 +557,8 @@ lp_rast_tile_end(struct lp_rasterizer_task *task)
 {
    unsigned i;
 
-   for (i = 0; i < PIPE_QUERY_TYPES; ++i) {
-      if (task->query[i]) {
-         lp_rast_end_query(task, lp_rast_arg_query(task->query[i]));
-      }
+   for (i = 0; i < task->scene->num_active_queries; ++i) {
+      lp_rast_end_query(task, lp_rast_arg_query(task->scene->active_queries[i]));
    }
 
    /* debug */

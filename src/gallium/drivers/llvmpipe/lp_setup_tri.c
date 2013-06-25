@@ -215,6 +215,11 @@ lp_setup_whole_tile(struct lp_setup_context *setup,
       if (!scene->fb.zsbuf) {
          /*
           * All previous rendering will be overwritten so reset the bin.
+          * XXX This is wrong wrt to all queries arriving here (timestamp,
+          * occlusion, ps invocations). Not counting stuff might be ok but it
+          * will kill the begin/end query commands too which is definitely
+          * wrong (and at this point we don't even know if there were any
+          * such commands here).
           */
          lp_scene_bin_reset( scene, tx, ty );
       }

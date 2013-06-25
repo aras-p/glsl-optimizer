@@ -155,6 +155,23 @@ lp_setup_rasterize_scene( struct lp_setup_context *setup )
    struct lp_scene *scene = setup->scene;
    struct llvmpipe_screen *screen = llvmpipe_screen(scene->pipe->screen);
 
+   scene->num_active_queries = 0;
+   if (setup->active_query[PIPE_QUERY_OCCLUSION_COUNTER]) {
+      scene->active_queries[scene->num_active_queries] =
+         setup->active_query[PIPE_QUERY_OCCLUSION_COUNTER];
+      scene->num_active_queries++;
+   }
+   if (setup->active_query[PIPE_QUERY_OCCLUSION_PREDICATE]) {
+      scene->active_queries[scene->num_active_queries] =
+         setup->active_query[PIPE_QUERY_OCCLUSION_PREDICATE];
+      scene->num_active_queries++;
+   }
+   if (setup->active_query[PIPE_QUERY_PIPELINE_STATISTICS]) {
+      scene->active_queries[scene->num_active_queries] =
+         setup->active_query[PIPE_QUERY_PIPELINE_STATISTICS];
+      scene->num_active_queries++;
+   }
+
    lp_scene_end_binning(scene);
 
    lp_fence_reference(&setup->last_fence, scene->fence);
@@ -181,7 +198,6 @@ begin_binning( struct lp_setup_context *setup )
    struct lp_scene *scene = setup->scene;
    boolean need_zsload = FALSE;
    boolean ok;
-   unsigned i;
 
    assert(scene);
    assert(scene->fence == NULL);
@@ -225,16 +241,6 @@ begin_binning( struct lp_setup_context *setup )
                                        lp_rast_arg_clearzs(
                                           setup->clear.zsvalue,
                                           setup->clear.zsmask));
-         if (!ok)
-            return FALSE;
-      }
-   }
-
-   for (i = 0; i < PIPE_QUERY_TYPES; ++i) {
-      if (setup->active_query[i]) {
-         ok = lp_scene_bin_everywhere( scene,
-                                       LP_RAST_OP_BEGIN_QUERY,
-                                       lp_rast_arg_query(setup->active_query[i]) );
          if (!ok)
             return FALSE;
       }
@@ -1211,18 +1217,20 @@ void
 lp_setup_begin_query(struct lp_setup_context *setup,
                      struct llvmpipe_query *pq)
 {
-   /* init the query to its beginning state */
-   assert(setup->active_query[pq->type] == NULL);
 
    set_scene_state(setup, SETUP_ACTIVE, "begin_query");
 
+   if (!(pq->type == PIPE_QUERY_OCCLUSION_COUNTER ||
+         pq->type == PIPE_QUERY_OCCLUSION_PREDICATE ||
+         pq->type == PIPE_QUERY_PIPELINE_STATISTICS))
+      return;
+
+   /* init the query to its beginning state */
+   assert(setup->active_query[pq->type] == NULL);
+
    setup->active_query[pq->type] = pq;
 
-   /* XXX: It is possible that a query is created before the scene
-    * has been created. This means that setup->scene == NULL resulting
-    * in the query not being binned and thus is ignored.
-    */
-
+   assert(setup->scene);
    if (setup->scene) {
       if (!lp_scene_bin_everywhere(setup->scene,
                                    LP_RAST_OP_BEGIN_QUERY,
@@ -1249,31 +1257,46 @@ lp_setup_end_query(struct lp_setup_context *setup, struct llvmpipe_query *pq)
 {
    set_scene_state(setup, SETUP_ACTIVE, "end_query");
 
-   if (pq->type != PIPE_QUERY_TIMESTAMP && pq->type != PIPE_QUERY_GPU_FINISHED) {
+   if (pq->type == PIPE_QUERY_OCCLUSION_COUNTER ||
+       pq->type == PIPE_QUERY_OCCLUSION_PREDICATE ||
+       pq->type == PIPE_QUERY_PIPELINE_STATISTICS) {
       assert(setup->active_query[pq->type] == pq);
-      setup->active_query[pq->type] = NULL;
    }
 
-   /* Setup will automatically re-issue any query which carried over a
-    * scene boundary, and the rasterizer automatically "ends" queries
-    * which are active at the end of a scene, so there is no need to
-    * retry this commands on failure.
-    */
+   assert(setup->scene);
    if (setup->scene) {
       /* pq->fence should be the fence of the *last* scene which
        * contributed to the query result.
        */
       lp_fence_reference(&pq->fence, setup->scene->fence);
 
-      if (!lp_scene_bin_everywhere(setup->scene,
-                                   LP_RAST_OP_END_QUERY,
-                                   lp_rast_arg_query(pq))) {
-         lp_setup_flush(setup, NULL, __FUNCTION__);
+      if (pq->type == PIPE_QUERY_OCCLUSION_COUNTER ||
+          pq->type == PIPE_QUERY_OCCLUSION_PREDICATE ||
+          pq->type == PIPE_QUERY_PIPELINE_STATISTICS ||
+          pq->type == PIPE_QUERY_TIMESTAMP) {
+         if (!lp_scene_bin_everywhere(setup->scene,
+                                      LP_RAST_OP_END_QUERY,
+                                      lp_rast_arg_query(pq))) {
+            if (!lp_setup_flush_and_restart(setup))
+               goto fail;
+
+            if (!lp_scene_bin_everywhere(setup->scene,
+                                         LP_RAST_OP_END_QUERY,
+                                         lp_rast_arg_query(pq))) {
+               goto fail;
+            }
+         }
       }
    }
    else {
       lp_fence_reference(&pq->fence, setup->last_fence);
    }
+
+fail:
+   /* Need to do this now not earlier since it still needs to be marked as
+    * active when binning it would cause a flush.
+    */
+   setup->active_query[pq->type] = NULL;
 }
 
 

@@ -120,19 +120,19 @@ llvmpipe_get_query_result(struct pipe_context *pipe,
    switch (pq->type) {
    case PIPE_QUERY_OCCLUSION_COUNTER:
       for (i = 0; i < num_threads; i++) {
-         *result += pq->count[i];
+         *result += pq->end[i];
       }
       break;
    case PIPE_QUERY_OCCLUSION_PREDICATE:
       for (i = 0; i < num_threads; i++) {
          /* safer (still not guaranteed) when there's an overflow */
-         vresult->b = vresult->b || pq->count[i];
+         vresult->b = vresult->b || pq->end[i];
       }
       break;
    case PIPE_QUERY_TIMESTAMP:
       for (i = 0; i < num_threads; i++) {
-         if (pq->count[i] > *result) {
-            *result = pq->count[i];
+         if (pq->end[i] > *result) {
+            *result = pq->end[i];
          }
          if (*result == 0)
             *result = os_time_get_nano();
@@ -170,7 +170,7 @@ llvmpipe_get_query_result(struct pipe_context *pipe,
          (struct pipe_query_data_pipeline_statistics *)vresult;
       /* only ps_invocations come from binned query */
       for (i = 0; i < num_threads; i++) {
-         pq->stats.ps_invocations += pq->count[i];
+         pq->stats.ps_invocations += pq->end[i];
       }
       pq->stats.ps_invocations *= LP_RASTER_BLOCK_SIZE * LP_RASTER_BLOCK_SIZE;
       *stats = pq->stats;
@@ -200,7 +200,8 @@ llvmpipe_begin_query(struct pipe_context *pipe, struct pipe_query *q)
    }
 
 
-   memset(pq->count, 0, sizeof(pq->count));
+   memset(pq->start, 0, sizeof(pq->start));
+   memset(pq->end, 0, sizeof(pq->end));
    lp_setup_begin_query(llvmpipe->setup, pq);
 
    switch (pq->type) {
@@ -232,8 +233,6 @@ llvmpipe_begin_query(struct pipe_context *pipe, struct pipe_query *q)
       break;
    case PIPE_QUERY_OCCLUSION_COUNTER:
    case PIPE_QUERY_OCCLUSION_PREDICATE:
-      /* Both active at same time will still fail all over the place.
-       * Then again several of each type can be active too... */
       llvmpipe->active_occlusion_query++;
       llvmpipe->dirty |= LP_NEW_OCCLUSION_QUERY;
       break;

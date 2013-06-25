@@ -42,7 +42,8 @@ struct llvmpipe_context;
 
 
 struct llvmpipe_query {
-   uint64_t count[LP_MAX_THREADS];  /* a counter for each thread */
+   uint64_t start[LP_MAX_THREADS];  /* start count value for each thread */
+   uint64_t end[LP_MAX_THREADS];    /* end count value for each thread */
    struct lp_fence *fence;          /* fence from last scene this was binned in */
    unsigned type;                   /* PIPE_QUERY_* */
    unsigned num_primitives_generated;
