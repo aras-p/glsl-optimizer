@@ -1510,7 +1510,7 @@ ilo_gpe_init_rasterizer_clip(const struct ilo_dev_info *dev,
 static void
 gen6_emit_3DSTATE_CLIP(const struct ilo_dev_info *dev,
                        const struct ilo_rasterizer_state *rasterizer,
-                       bool has_linear_interp,
+                       const struct ilo_shader_state *fs,
                        bool enable_guardband,
                        int num_viewports,
                        struct ilo_cp *cp)
@@ -1520,6 +1520,8 @@ gen6_emit_3DSTATE_CLIP(const struct ilo_dev_info *dev,
    uint32_t dw1, dw2, dw3;
 
    if (rasterizer) {
+      int interps;
+
       dw1 = rasterizer->clip.payload[0];
       dw2 = rasterizer->clip.payload[1];
       dw3 = rasterizer->clip.payload[2];
@@ -1527,7 +1529,12 @@ gen6_emit_3DSTATE_CLIP(const struct ilo_dev_info *dev,
       if (enable_guardband && rasterizer->clip.can_enable_guardband)
          dw2 |= GEN6_CLIP_GB_TEST;
 
-      if (has_linear_interp)
+      interps = (fs) ?  ilo_shader_get_kernel_param(fs,
+            ILO_KERNEL_FS_BARYCENTRIC_INTERPOLATIONS) : 0;
+
+      if (interps & (1 << BRW_WM_NONPERSPECTIVE_PIXEL_BARYCENTRIC |
+                     1 << BRW_WM_NONPERSPECTIVE_CENTROID_BARYCENTRIC |
+                     1 << BRW_WM_NONPERSPECTIVE_SAMPLE_BARYCENTRIC))
          dw2 |= GEN6_CLIP_NON_PERSPECTIVE_BARYCENTRIC_ENABLE;
 
       dw3 |= GEN6_CLIP_FORCE_ZERO_RTAINDEX |

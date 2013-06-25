@@ -29,7 +29,6 @@
 #include "util/u_prim.h"
 #include "intel_reg.h"
 
-#include "shader/ilo_shader_internal.h"
 #include "ilo_3d.h"
 #include "ilo_context.h"
 #include "ilo_cp.h"
@@ -265,13 +264,13 @@ gen6_pipeline_common_urb(struct ilo_3d_pipeline *p,
 {
    /* 3DSTATE_URB */
    if (DIRTY(VERTEX_ELEMENTS) || DIRTY(VS) || DIRTY(GS)) {
-      const struct ilo_shader *vs = (ilo->vs) ? ilo->vs->shader : NULL;
-      const struct ilo_shader *gs = (ilo->gs) ? ilo->gs->shader : NULL;
-      const bool gs_active = (gs || (vs && vs->stream_output));
+      const bool gs_active = (ilo->gs || (ilo->vs &&
+               ilo_shader_get_kernel_param(ilo->vs, ILO_KERNEL_VS_GEN6_SO)));
       int vs_entry_size, gs_entry_size;
       int vs_total_size, gs_total_size;
 
-      vs_entry_size = (vs) ? vs->out.count : 0;
+      vs_entry_size = (ilo->vs) ?
+         ilo_shader_get_kernel_param(ilo->vs, ILO_KERNEL_OUTPUT_COUNT) : 0;
 
       /*
        * As indicated by 2e712e41db0c0676e9f30fc73172c0e8de8d84d4, VF and VS
@@ -296,8 +295,9 @@ gen6_pipeline_common_urb(struct ilo_3d_pipeline *p,
       if (vs_entry_size < ilo->ve->count)
          vs_entry_size = ilo->ve->count;
 
-      gs_entry_size = (gs) ? gs->out.count :
-         (vs && vs->stream_output) ? vs_entry_size : 0;
+      gs_entry_size = (ilo->gs) ?
+         ilo_shader_get_kernel_param(ilo->gs, ILO_KERNEL_OUTPUT_COUNT) :
+         (gs_active) ? vs_entry_size : 0;
 
       /* in bytes */
       vs_entry_size *= sizeof(float) * 4;
@@ -418,15 +418,20 @@ gen6_pipeline_vf(struct ilo_3d_pipeline *p,
       bool prepend_generate_ids = false;
 
       if (ilo->vs) {
-         const struct ilo_shader_info *info = &ilo->vs->info;
-
-         if (info->edgeflag_in >= 0) {
+         if (ilo_shader_get_kernel_param(ilo->vs,
+                  ILO_KERNEL_VS_INPUT_EDGEFLAG)) {
             /* we rely on the state tracker here */
-            assert(info->edgeflag_in == ve->count - 1);
+            assert(ilo_shader_get_kernel_param(ilo->vs,
+                     ILO_KERNEL_INPUT_COUNT) == ve->count);
+
             last_velement_edgeflag = true;
          }
 
-         prepend_generate_ids = (info->has_instanceid || info->has_vertexid);
+         if (ilo_shader_get_kernel_param(ilo->vs,
+                  ILO_KERNEL_VS_INPUT_INSTANCEID) ||
+             ilo_shader_get_kernel_param(ilo->vs,
+                  ILO_KERNEL_VS_INPUT_VERTEXID))
+            prepend_generate_ids = true;
       }
 
       p->gen6_3DSTATE_VERTEX_ELEMENTS(p->dev, ve,
@@ -514,8 +519,8 @@ gen6_pipeline_update_max_svbi(struct ilo_3d_pipeline *p,
 {
    if (DIRTY(VS) || DIRTY(GS) || DIRTY(STREAM_OUTPUT_TARGETS)) {
       const struct pipe_stream_output_info *so_info =
-         (ilo->gs) ? &ilo->gs->info.stream_output :
-         (ilo->vs) ? &ilo->vs->info.stream_output : NULL;
+         (ilo->gs) ? ilo_shader_get_kernel_so_info(ilo->gs) :
+         (ilo->vs) ? ilo_shader_get_kernel_so_info(ilo->vs) : NULL;
       unsigned max_svbi = 0xffffffff;
       int i;
 
@@ -612,10 +617,8 @@ gen6_pipeline_clip(struct ilo_3d_pipeline *p,
          }
       }
 
-      p->gen6_3DSTATE_CLIP(p->dev,
-            ilo->rasterizer,
-            (ilo->fs && ilo->fs->shader->in.has_linear_interp),
-            enable_guardband, 1, p->cp);
+      p->gen6_3DSTATE_CLIP(p->dev, ilo->rasterizer,
+            ilo->fs, enable_guardband, 1, p->cp);
    }
 }
 
@@ -663,9 +666,6 @@ gen6_pipeline_wm(struct ilo_3d_pipeline *p,
       const bool dual_blend = ilo->blend->dual_blend;
       const bool cc_may_kill = (ilo->dsa->alpha.enabled ||
                                 ilo->blend->alpha_to_coverage);
-
-      if (ilo->fs)
-         assert(!ilo->fs->shader->pcb.clip_state_size);
 
       if (p->dev->gen == ILO_GEN(6) && session->hw_ctx_changed)
          gen6_wa_pipe_control_wm_max_threads_stall(p);
@@ -896,8 +896,6 @@ gen6_pipeline_state_surfaces_so(struct ilo_3d_pipeline *p,
                                 const struct ilo_context *ilo,
                                 struct gen6_pipeline_session *session)
 {
-   const struct ilo_shader_state *vs = ilo->vs;
-   const struct ilo_shader_state *gs = ilo->gs;
    const struct pipe_stream_output_target **so_targets =
       (const struct pipe_stream_output_target **) ilo->so.states;
    const int num_so_targets = ilo->so.count;
@@ -908,8 +906,8 @@ gen6_pipeline_state_surfaces_so(struct ilo_3d_pipeline *p,
    /* SURFACE_STATEs for stream output targets */
    if (DIRTY(VS) || DIRTY(GS) || DIRTY(STREAM_OUTPUT_TARGETS)) {
       const struct pipe_stream_output_info *so_info =
-         (gs) ? &gs->info.stream_output :
-         (vs) ? &vs->info.stream_output : NULL;
+         (ilo->gs) ? ilo_shader_get_kernel_so_info(ilo->gs) :
+         (ilo->vs) ? ilo_shader_get_kernel_so_info(ilo->vs) : NULL;
       const int offset = ILO_GS_SO_SURFACE(0);
       uint32_t *surface_state = &p->state.gs.SURFACE_STATE[offset];
       int i;
@@ -1200,17 +1198,19 @@ gen6_pipeline_state_pcb(struct ilo_3d_pipeline *p,
 {
    /* push constant buffer for VS */
    if (DIRTY(VS) || DIRTY(CLIP)) {
-      const struct ilo_shader *vs = (ilo->vs)? ilo->vs->shader : NULL;
+      const int clip_state_size = (ilo->vs) ?
+            ilo_shader_get_kernel_param(ilo->vs,
+                  ILO_KERNEL_VS_PCB_UCP_SIZE) : 0;
 
-      if (vs && vs->pcb.clip_state_size) {
+      if (clip_state_size) {
          void *pcb;
 
-         p->state.vs.PUSH_CONSTANT_BUFFER_size = vs->pcb.clip_state_size;
+         p->state.vs.PUSH_CONSTANT_BUFFER_size = clip_state_size;
          p->state.vs.PUSH_CONSTANT_BUFFER =
             p->gen6_push_constant_buffer(p->dev,
                   p->state.vs.PUSH_CONSTANT_BUFFER_size, &pcb, p->cp);
 
-         memcpy(pcb, &ilo->clip, vs->pcb.clip_state_size);
+         memcpy(pcb, &ilo->clip, clip_state_size);
       }
       else {
          p->state.vs.PUSH_CONSTANT_BUFFER_size = 0;
@@ -1528,10 +1528,18 @@ gen6_pipeline_estimate_states(const struct ilo_3d_pipeline *p,
     */
    count = ilo->fb.state.nr_cbufs;
 
-   if (ilo->gs)
-      count += ilo->gs->info.stream_output.num_outputs;
-   else if (ilo->vs)
-      count += ilo->vs->info.stream_output.num_outputs;
+   if (ilo->gs) {
+      const struct pipe_stream_output_info *so_info =
+         ilo_shader_get_kernel_so_info(ilo->gs);
+
+      count += so_info->num_outputs;
+   }
+   else if (ilo->vs) {
+      const struct pipe_stream_output_info *so_info =
+         ilo_shader_get_kernel_so_info(ilo->vs);
+
+      count += so_info->num_outputs;
+   }
 
    for (shader_type = 0; shader_type < PIPE_SHADER_TYPES; shader_type++) {
       count += ilo->view[shader_type].count;
@@ -1555,8 +1563,10 @@ gen6_pipeline_estimate_states(const struct ilo_3d_pipeline *p,
    }
 
    /* pcb (vs) */
-   if (ilo->vs && ilo->vs->shader->pcb.clip_state_size) {
-      const int pcb_size = ilo->vs->shader->pcb.clip_state_size;
+   if (ilo->vs &&
+       ilo_shader_get_kernel_param(ilo->vs, ILO_KERNEL_VS_PCB_UCP_SIZE)) {
+      const int pcb_size =
+         ilo_shader_get_kernel_param(ilo->vs, ILO_KERNEL_VS_PCB_UCP_SIZE);
 
       size += gen6->estimate_state_size(p->dev,
             ILO_GPE_GEN6_PUSH_CONSTANT_BUFFER, pcb_size);
