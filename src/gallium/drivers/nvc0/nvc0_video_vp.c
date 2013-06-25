@@ -653,7 +653,7 @@ nvc0_decoder_vp(struct nvc0_decoder *dec, union pipe_desc desc,
       do {
          usleep(100);
          if ((spin++ & 0xff) == 0xff) {
-            debug_printf("vp%u: %u\n", dec->fence_seq, dec->fence_map[4]);
+            debug_printf("v%u: %u\n", dec->fence_seq, dec->fence_map[4]);
             dump_comm_vp(dec, dec->comm, comm_seq, inter_bo, slice_size << 8);
          }
       } while (dec->fence_seq > dec->fence_map[4]);

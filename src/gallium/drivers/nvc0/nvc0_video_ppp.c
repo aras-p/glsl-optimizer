@@ -132,7 +132,7 @@ nvc0_decoder_ppp(struct nvc0_decoder *dec, union pipe_desc desc, struct nvc0_vid
       do {
          usleep(100);
          if ((spin++ & 0xff) == 0xff)
-            debug_printf("ppp%u: %u\n", dec->fence_seq, dec->fence_map[8]);
+            debug_printf("p%u: %u\n", dec->fence_seq, dec->fence_map[8]);
       } while (dec->fence_seq > dec->fence_map[8]);
    }
 #else

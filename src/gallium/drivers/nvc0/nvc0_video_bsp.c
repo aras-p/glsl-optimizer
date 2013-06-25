@@ -406,7 +406,7 @@ nvc0_decoder_bsp(struct nvc0_decoder *dec, union pipe_desc desc,
       do {
          usleep(100);
          if ((spin++ & 0xff) == 0xff) {
-            debug_printf("%u: %u\n", dec->fence_seq, dec->fence_map[0]);
+            debug_printf("b%u: %u\n", dec->fence_seq, dec->fence_map[0]);
             dump_comm_bsp(dec->comm);
          }
       } while (dec->fence_seq > dec->fence_map[0]);
