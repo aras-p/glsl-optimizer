@@ -759,6 +759,15 @@ ilo_shader_destroy(struct ilo_shader_state *shader)
 }
 
 /**
+ * Return the type (PIPE_SHADER_x) of the shader.
+ */
+int
+ilo_shader_get_type(const struct ilo_shader_state *shader)
+{
+   return shader->info.type;
+}
+
+/**
  * Select a kernel for the given context.  This will compile a new kernel if
  * none of the existing kernels work with the context.
  *
@@ -781,4 +790,109 @@ ilo_shader_select_kernel(struct ilo_shader_state *shader,
    ilo_shader_state_use_variant(shader, &variant);
 
    return (shader->shader != cur);
+}
+
+/**
+ * Return the cache offset of the selected kernel.  This must be called after
+ * ilo_shader_select_kernel() and ilo_shader_cache_upload().
+ */
+uint32_t
+ilo_shader_get_kernel_offset(const struct ilo_shader_state *shader)
+{
+   const struct ilo_shader *kernel = shader->shader;
+
+   assert(kernel && kernel->uploaded);
+
+   return kernel->cache_offset;
+}
+
+/**
+ * Query a kernel parameter for the selected kernel.
+ */
+int
+ilo_shader_get_kernel_param(const struct ilo_shader_state *shader,
+                            enum ilo_kernel_param param)
+{
+   const struct ilo_shader *kernel = shader->shader;
+   int val;
+
+   assert(kernel);
+
+   switch (param) {
+   case ILO_KERNEL_INPUT_COUNT:
+      val = kernel->in.count;
+      break;
+   case ILO_KERNEL_OUTPUT_COUNT:
+      val = kernel->out.count;
+      break;
+   case ILO_KERNEL_URB_DATA_START_REG:
+      val = kernel->in.start_grf;
+      break;
+
+   case ILO_KERNEL_VS_INPUT_INSTANCEID:
+      val = shader->info.has_instanceid;
+      break;
+   case ILO_KERNEL_VS_INPUT_VERTEXID:
+      val = shader->info.has_vertexid;
+      break;
+   case ILO_KERNEL_VS_INPUT_EDGEFLAG:
+      if (shader->info.edgeflag_in >= 0) {
+         /* we rely on the state tracker here */
+         assert(shader->info.edgeflag_in == kernel->in.count - 1);
+         val = true;
+      }
+      else {
+         val = false;
+      }
+      break;
+   case ILO_KERNEL_VS_PCB_UCP_SIZE:
+      val = kernel->pcb.clip_state_size;
+      break;
+   case ILO_KERNEL_VS_GEN6_SO:
+      val = kernel->stream_output;
+      break;
+   case ILO_KERNEL_VS_GEN6_SO_START_REG:
+      val = kernel->gs_start_grf;
+      break;
+   case ILO_KERNEL_VS_GEN6_SO_POINT_OFFSET:
+      val = kernel->gs_offsets[0];
+      break;
+   case ILO_KERNEL_VS_GEN6_SO_LINE_OFFSET:
+      val = kernel->gs_offsets[1];
+      break;
+   case ILO_KERNEL_VS_GEN6_SO_TRI_OFFSET:
+      val = kernel->gs_offsets[2];
+      break;
+
+   case ILO_KERNEL_GS_DISCARD_ADJACENCY:
+      val = kernel->in.discard_adj;
+      break;
+   case ILO_KERNEL_GS_GEN6_SVBI_POST_INC:
+      val = kernel->svbi_post_inc;
+      break;
+
+   case ILO_KERNEL_FS_INPUT_Z:
+   case ILO_KERNEL_FS_INPUT_W:
+      val = kernel->in.has_pos;
+      break;
+   case ILO_KERNEL_FS_OUTPUT_Z:
+      val = kernel->out.has_pos;
+      break;
+   case ILO_KERNEL_FS_USE_KILL:
+      val = kernel->has_kill;
+      break;
+   case ILO_KERNEL_FS_BARYCENTRIC_INTERPOLATIONS:
+      val = kernel->in.barycentric_interpolation_mode;
+      break;
+   case ILO_KERNEL_FS_DISPATCH_16_OFFSET:
+      val = 0;
+      break;
+
+   default:
+      assert(!"unknown kernel parameter");
+      val = 0;
+      break;
+   }
+
+   return val;
 }

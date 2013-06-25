@@ -30,6 +30,34 @@
 
 #include "ilo_common.h"
 
+enum ilo_kernel_param {
+   ILO_KERNEL_INPUT_COUNT,
+   ILO_KERNEL_OUTPUT_COUNT,
+   ILO_KERNEL_URB_DATA_START_REG,
+
+   ILO_KERNEL_VS_INPUT_INSTANCEID,
+   ILO_KERNEL_VS_INPUT_VERTEXID,
+   ILO_KERNEL_VS_INPUT_EDGEFLAG,
+   ILO_KERNEL_VS_PCB_UCP_SIZE,
+   ILO_KERNEL_VS_GEN6_SO,
+   ILO_KERNEL_VS_GEN6_SO_START_REG,
+   ILO_KERNEL_VS_GEN6_SO_POINT_OFFSET,
+   ILO_KERNEL_VS_GEN6_SO_LINE_OFFSET,
+   ILO_KERNEL_VS_GEN6_SO_TRI_OFFSET,
+
+   ILO_KERNEL_GS_DISCARD_ADJACENCY,
+   ILO_KERNEL_GS_GEN6_SVBI_POST_INC,
+
+   ILO_KERNEL_FS_INPUT_Z,
+   ILO_KERNEL_FS_INPUT_W,
+   ILO_KERNEL_FS_OUTPUT_Z,
+   ILO_KERNEL_FS_USE_KILL,
+   ILO_KERNEL_FS_BARYCENTRIC_INTERPOLATIONS,
+   ILO_KERNEL_FS_DISPATCH_16_OFFSET,
+
+   ILO_KERNEL_PARAM_COUNT,
+};
+
 struct intel_bo;
 struct ilo_context;
 struct ilo_shader_cache;
@@ -77,9 +105,19 @@ ilo_shader_create_cs(const struct ilo_dev_info *dev,
 void
 ilo_shader_destroy(struct ilo_shader_state *shader);
 
+int
+ilo_shader_get_type(const struct ilo_shader_state *shader);
+
 bool
 ilo_shader_select_kernel(struct ilo_shader_state *shader,
                          const struct ilo_context *ilo,
                          uint32_t dirty);
+
+uint32_t
+ilo_shader_get_kernel_offset(const struct ilo_shader_state *shader);
+
+int
+ilo_shader_get_kernel_param(const struct ilo_shader_state *shader,
+                            enum ilo_kernel_param param);
 
 #endif /* ILO_SHADER_H */
