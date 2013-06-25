@@ -469,6 +469,22 @@ public:
 
 class ast_type_specifier : public ast_node {
 public:
+   /**
+    * \brief Make a shallow copy of an ast_type_specifier, specifying array
+    *        fields.
+    *
+    * Use only if the objects are allocated from the same context and will not
+    * be modified. Zeros the inherited ast_node's fields.
+    */
+   ast_type_specifier(const ast_type_specifier *that, bool is_array,
+                      ast_expression *array_size)
+      : ast_node(), type_name(that->type_name), structure(that->structure),
+        is_array(is_array), array_size(array_size), precision(that->precision),
+        is_precision_statement(that->is_precision_statement)
+   {
+      /* empty */
+   }
+
    /** Construct a type specifier from a type name */
    ast_type_specifier(const char *name) 
       : type_name(name), structure(NULL),
