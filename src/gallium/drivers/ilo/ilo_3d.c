@@ -426,9 +426,10 @@ update_prim_count(struct ilo_3d *hw3d, int generated, int emitted)
       q->data.u64 += emitted;
 }
 
-static bool
-pass_render_condition(struct ilo_3d *hw3d, struct pipe_context *pipe)
+bool
+ilo_3d_pass_render_condition(struct ilo_context *ilo)
 {
+   struct ilo_3d *hw3d = ilo->hw3d;
    uint64_t result;
    bool wait;
 
@@ -447,13 +448,11 @@ pass_render_condition(struct ilo_3d *hw3d, struct pipe_context *pipe)
       break;
    }
 
-   if (pipe->get_query_result(pipe, hw3d->render_condition.query,
-            wait, (union pipe_query_result *) &result)) {
+   if (ilo->base.get_query_result(&ilo->base, hw3d->render_condition.query,
+            wait, (union pipe_query_result *) &result))
       return (!result == hw3d->render_condition.cond);
-   }
-   else {
+   else
       return true;
-   }
 }
 
 #define UPDATE_MIN2(a, b) (a) = MIN2((a), (b))
@@ -698,7 +697,7 @@ ilo_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
    struct ilo_3d *hw3d = ilo->hw3d;
    int prim_generated, prim_emitted;
 
-   if (!pass_render_condition(hw3d, pipe))
+   if (!ilo_3d_pass_render_condition(ilo))
       return;
 
    if (info->primitive_restart && info->indexed) {

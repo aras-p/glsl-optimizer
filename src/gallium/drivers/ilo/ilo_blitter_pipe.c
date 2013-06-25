@@ -28,6 +28,7 @@
 #include "util/u_blitter.h"
 #include "util/u_surface.h"
 
+#include "ilo_3d.h"
 #include "ilo_context.h"
 #include "ilo_blitter.h"
 
@@ -66,6 +67,11 @@ ilo_blitter_pipe_begin(struct ilo_blitter *blitter,
    case ILO_BLITTER_PIPE_COPY:
       util_blitter_save_rasterizer(b, (void *) ilo->rasterizer);
       util_blitter_save_framebuffer(b, &ilo->fb.state);
+
+      util_blitter_save_render_condition(b,
+            ilo->hw3d->render_condition.query,
+            ilo->hw3d->render_condition.cond,
+            ilo->hw3d->render_condition.mode);
 
       util_blitter_save_fragment_sampler_states(b,
             ilo->sampler[PIPE_SHADER_FRAGMENT].count,

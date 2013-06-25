@@ -82,6 +82,9 @@ ilo_3d_end_query(struct ilo_context *ilo, struct ilo_query *q);
 void
 ilo_3d_process_query(struct ilo_context *ilo, struct ilo_query *q);
 
+bool
+ilo_3d_pass_render_condition(struct ilo_context *ilo);
+
 void
 ilo_init_3d_functions(struct ilo_context *ilo);
 

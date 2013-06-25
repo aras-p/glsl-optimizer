@@ -28,6 +28,7 @@
 #include "util/u_pack_color.h"
 #include "intel_reg.h"
 
+#include "ilo_3d.h"
 #include "ilo_context.h"
 #include "ilo_cp.h"
 #include "ilo_resource.h"
@@ -692,6 +693,9 @@ ilo_blitter_blt_clear_rt(struct ilo_blitter *blitter,
    union util_color packed;
    bool success;
 
+   if (!ilo_3d_pass_render_condition(blitter->ilo))
+      return true;
+
    switch (cpp) {
    case 1:
       mask = GEN6_BLT_MASK_8;
@@ -752,6 +756,9 @@ ilo_blitter_blt_clear_zs(struct ilo_blitter *blitter,
    enum gen6_blt_mask value_mask, write_mask;
    struct pipe_box box;
    uint32_t val;
+
+   if (!ilo_3d_pass_render_condition(blitter->ilo))
+      return true;
 
    switch (zs->format) {
    case PIPE_FORMAT_Z16_UNORM:
