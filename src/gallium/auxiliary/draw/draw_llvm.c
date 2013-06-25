@@ -768,6 +768,7 @@ generate_fetch(struct gallivm_state *gallivm,
                         lp_build_const_int32(
                            gallivm,
                            util_format_get_blocksize(velem->src_format)));
+   lp_build_printf(gallivm, "   instance_id = %u\n", instance_id);
    lp_build_printf(gallivm, "   stride = %u\n", stride);
    lp_build_printf(gallivm, "   buffer size = %u\n", buffer_size);
    lp_build_printf(gallivm, "   needed_buffer_size = %u\n", needed_buffer_size);
