@@ -84,17 +84,19 @@ public:
    }
 
    symbol_table_entry(ir_variable *v)               :
-      v(v), f(0), t(0), ibu(0), ibi(0), ibo(0) {}
+      v(v), f(0), t(0), ibu(0), ibi(0), ibo(0), a(0) {}
    symbol_table_entry(ir_function *f)               :
-      v(0), f(f), t(0), ibu(0), ibi(0), ibo(0) {}
+      v(0), f(f), t(0), ibu(0), ibi(0), ibo(0), a(0) {}
    symbol_table_entry(const glsl_type *t)           :
-      v(0), f(0), t(t), ibu(0), ibi(0), ibo(0) {}
+      v(0), f(0), t(t), ibu(0), ibi(0), ibo(0), a(0) {}
    symbol_table_entry(const glsl_type *t, enum ir_variable_mode mode) :
-      v(0), f(0), t(0), ibu(0), ibi(0), ibo(0)
+      v(0), f(0), t(0), ibu(0), ibi(0), ibo(0), a(0)
    {
       assert(t->is_interface());
       add_interface(t, mode);
    }
+   symbol_table_entry(const class ast_type_specifier *a):
+      v(0), f(0), t(0), ibu(0), ibi(0), ibo(0), a(a) {}
 
    ir_variable *v;
    ir_function *f;
@@ -102,6 +104,7 @@ public:
    const glsl_type *ibu;
    const glsl_type *ibi;
    const glsl_type *ibo;
+   const class ast_type_specifier *a;
 };
 
 glsl_symbol_table::glsl_symbol_table()
@@ -172,6 +175,15 @@ bool glsl_symbol_table::add_type(const char *name, const glsl_type *t)
    return _mesa_symbol_table_add_symbol(table, -1, name, entry) == 0;
 }
 
+bool glsl_symbol_table::add_type_ast(const char *name, const class ast_type_specifier *a)
+{
+   symbol_table_entry *entry = new(mem_ctx) symbol_table_entry(a);
+   char ast_name[strlen("#ast.") + strlen(name) + 1];
+   strcpy(ast_name, "#ast.");
+   strcat(ast_name + strlen("#ast."), name);
+   return _mesa_symbol_table_add_symbol(table, -1, ast_name, entry) == 0;
+}
+
 bool glsl_symbol_table::add_interface(const char *name, const glsl_type *i,
                                       enum ir_variable_mode mode)
 {
@@ -221,6 +233,15 @@ const glsl_type *glsl_symbol_table::get_type(const char *name)
 {
    symbol_table_entry *entry = get_entry(name);
    return entry != NULL ? entry->t : NULL;
+}
+
+const class ast_type_specifier *glsl_symbol_table::get_type_ast(const char *name)
+{
+   char ast_name[strlen("#ast.") + strlen(name) + 1];
+   strcpy(ast_name, "#ast.");
+   strcat(ast_name + strlen("#ast."), name);
+   symbol_table_entry *entry = get_entry(ast_name);
+   return entry != NULL ? entry->a : NULL;
 }
 
 const glsl_type *glsl_symbol_table::get_interface(const char *name,
