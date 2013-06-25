@@ -272,7 +272,7 @@ static inline GLint
 _mesa_uniform_merge_location_offset(const struct gl_shader_program *prog,
                                     unsigned base_location, unsigned offset)
 {
-   assert(prog->UniformLocationBaseScale >= 0);
+   assert(prog->UniformLocationBaseScale >= 1);
    assert(offset < prog->UniformLocationBaseScale);
    return (base_location * prog->UniformLocationBaseScale) + offset;
 }
