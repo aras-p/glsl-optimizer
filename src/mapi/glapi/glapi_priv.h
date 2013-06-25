@@ -40,8 +40,8 @@
 
 #ifndef GL_OES_fixed_point
 typedef int GLfixed;
-typedef int GLclampx;
 #endif
+typedef int GLclampx;
 
 #ifndef GL_OES_EGL_image
 typedef void *GLeglImageOES;
