@@ -450,7 +450,7 @@ nvc0_create_decoder(struct pipe_context *context,
    dec->comm = (struct comm *)(dec->fence_map + (COMM_OFFSET/sizeof(*dec->fence_map)));
 
    /* So lets test if the fence is working? */
-   PUSH_SPACE(push[0], 6);
+   nouveau_pushbuf_space(push[0], 6, 1, 0);
    PUSH_REFN (push[0], dec->fence_bo, NOUVEAU_BO_GART|NOUVEAU_BO_RDWR);
    BEGIN_NVC0(push[0], SUBC_BSP(0x240), 3);
    PUSH_DATAh(push[0], dec->fence_bo->offset);
@@ -461,7 +461,7 @@ nvc0_create_decoder(struct pipe_context *context,
    PUSH_DATA (push[0], 0);
    PUSH_KICK (push[0]);
 
-   PUSH_SPACE(push[1], 6);
+   nouveau_pushbuf_space(push[1], 6, 1, 0);
    PUSH_REFN (push[1], dec->fence_bo, NOUVEAU_BO_GART|NOUVEAU_BO_RDWR);
    BEGIN_NVC0(push[1], SUBC_VP(0x240), 3);
    PUSH_DATAh(push[1], (dec->fence_bo->offset + 0x10));
@@ -472,7 +472,7 @@ nvc0_create_decoder(struct pipe_context *context,
    PUSH_DATA (push[1], 0);
    PUSH_KICK (push[1]);
 
-   PUSH_SPACE(push[2], 6);
+   nouveau_pushbuf_space(push[2], 6, 1, 0);
    PUSH_REFN (push[2], dec->fence_bo, NOUVEAU_BO_GART|NOUVEAU_BO_RDWR);
    BEGIN_NVC0(push[2], SUBC_PPP(0x240), 3);
    PUSH_DATAh(push[2], (dec->fence_bo->offset + 0x20));

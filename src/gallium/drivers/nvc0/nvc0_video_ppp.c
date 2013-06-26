@@ -99,7 +99,7 @@ nvc0_decoder_ppp(struct nvc0_decoder *dec, union pipe_desc desc, struct nvc0_vid
    fence_extra = 4;
 #endif
 
-   PUSH_SPACE(push, 11 + (codec == PIPE_VIDEO_CODEC_VC1 ? 2 : 0) + 3 + fence_extra + 2);
+   nouveau_pushbuf_space(push, 11 + (codec == PIPE_VIDEO_CODEC_VC1 ? 2 : 0) + 3 + fence_extra + 2, 4, 0);
 
    switch (codec) {
    case PIPE_VIDEO_CODEC_MPEG12: {

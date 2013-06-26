@@ -580,8 +580,8 @@ nvc0_decoder_vp(struct nvc0_decoder *dec, union pipe_desc desc,
    if (!is_ref)
       nvc0_decoder_kick_ref(dec, target);
 
-   PUSH_SPACE(push, 8 + 3 * (codec != PIPE_VIDEO_CODEC_MPEG12) +
-              6 + codec_extra + fence_extra + 2);
+   nouveau_pushbuf_space(push, 8 + 3 * (codec != PIPE_VIDEO_CODEC_MPEG12) +
+              6 + codec_extra + fence_extra + 2, num_refs, 0);
 
    nouveau_pushbuf_refn(push, bo_refs, num_refs);
 
