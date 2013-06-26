@@ -208,7 +208,7 @@ st_readpixels(struct gl_context *ctx, GLint x, GLint y,
       const uint bytesPerRow = width * util_format_get_blocksize(dst_format);
       GLuint row;
 
-      for (row = 0; row < height; row++) {
+      for (row = 0; row < (unsigned) height; row++) {
          GLvoid *dest = _mesa_image_address3d(pack, pixels,
                                               width, height, format,
                                               type, 0, row, 0);

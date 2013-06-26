@@ -734,7 +734,7 @@ st_TexSubImage(struct gl_context *ctx, GLuint dims,
       const uint bytesPerRow = width * util_format_get_blocksize(src_format);
       GLuint row, slice;
 
-      for (slice = 0; slice < depth; slice++) {
+      for (slice = 0; slice < (unsigned) depth; slice++) {
          if (gl_target == GL_TEXTURE_1D_ARRAY) {
             /* 1D array textures.
              * We need to convert gallium coords to GL coords.
@@ -747,7 +747,7 @@ st_TexSubImage(struct gl_context *ctx, GLuint dims,
          else {
             ubyte *slice_map = map;
 
-            for (row = 0; row < height; row++) {
+            for (row = 0; row < (unsigned) height; row++) {
                GLvoid *src = _mesa_image_address3d(unpack, pixels,
                                                    width, height, format,
                                                    type, slice, row, 0);
@@ -1625,7 +1625,7 @@ st_AllocTextureStorage(struct gl_context *ctx,
    GLuint ptWidth, ptHeight, ptDepth, ptLayers, bindings;
    enum pipe_format fmt;
    GLint level;
-   int num_samples = texImage->NumSamples;
+   GLuint num_samples = texImage->NumSamples;
 
    assert(levels > 0);
 

@@ -118,7 +118,7 @@ compute_num_levels(struct gl_context *ctx,
    baseImage = _mesa_get_tex_image(ctx, texObj, target, texObj->BaseLevel);
 
    numLevels = texObj->BaseLevel + baseImage->MaxNumLevels;
-   numLevels = MIN2(numLevels, texObj->MaxLevel + 1);
+   numLevels = MIN2(numLevels, (GLuint) texObj->MaxLevel + 1);
    assert(numLevels >= 1);
 
    return numLevels;

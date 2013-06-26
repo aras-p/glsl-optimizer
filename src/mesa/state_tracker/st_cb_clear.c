@@ -346,8 +346,8 @@ is_scissor_enabled(struct gl_context *ctx, struct gl_renderbuffer *rb)
    return ctx->Scissor.Enabled &&
           (ctx->Scissor.X > 0 ||
            ctx->Scissor.Y > 0 ||
-           ctx->Scissor.Width < rb->Width ||
-           ctx->Scissor.Height < rb->Height);
+           (unsigned) ctx->Scissor.Width < rb->Width ||
+           (unsigned) ctx->Scissor.Height < rb->Height);
 }
 
 

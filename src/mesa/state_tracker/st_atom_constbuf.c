@@ -205,7 +205,7 @@ static void st_bind_ubos(struct st_context *st,
           * Take the minimum just to be sure.
           */
          if (!binding->AutomaticSize)
-            cb.buffer_size = MIN2(cb.buffer_size, binding->Size);
+            cb.buffer_size = MIN2(cb.buffer_size, (unsigned) binding->Size);
       }
       else {
          cb.buffer_offset = 0;
