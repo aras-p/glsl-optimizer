@@ -449,7 +449,7 @@ if test "x$enable_asm" = xyes; then
     case "$host_cpu" in
     i?86)
         case "$host_os" in
-        linux* | *freebsd* | dragonfly* | *netbsd*)
+        linux* | *freebsd* | dragonfly* | *netbsd* | openbsd*)
             test "x$enable_64bit" = xyes && asm_arch=x86_64 || asm_arch=x86
             ;;
         gnu*)
@@ -459,7 +459,7 @@ if test "x$enable_asm" = xyes; then
         ;;
     x86_64)
         case "$host_os" in
-        linux* | *freebsd* | dragonfly* | *netbsd*)
+        linux* | *freebsd* | dragonfly* | *netbsd* | openbsd*)
             test "x$enable_32bit" = xyes && asm_arch=x86 || asm_arch=x86_64
             ;;
         esac
@@ -985,7 +985,7 @@ if test "x$enable_dri" = xyes; then
             ;;
         esac
         ;;
-    freebsd* | dragonfly* | *netbsd*)
+    freebsd* | dragonfly* | *netbsd* | openbsd*)
         DEFINES="$DEFINES -DHAVE_PTHREAD -DUSE_EXTERNAL_DXTN_LIB=1"
         DEFINES="$DEFINES -DHAVE_ALIAS"
 
