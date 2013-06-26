@@ -52,8 +52,6 @@ PUBLIC const char __dri2ConfigOptions[] =
       DRI_CONF_SECTION_END
    DRI_CONF_END;
 
-static const uint __dri2NConfigOptions = 1;
-
 /*****************************************************************/
 /** \name Screen handling functions                              */
 /*****************************************************************/
@@ -112,7 +110,7 @@ dri2CreateNewScreen(int scrn, int fd,
 	return NULL;
     }
 
-    driParseOptionInfo(&psp->optionInfo, __dri2ConfigOptions, __dri2NConfigOptions);
+    driParseOptionInfo(&psp->optionInfo, __dri2ConfigOptions);
     driParseConfigFiles(&psp->optionCache, &psp->optionInfo, psp->myNum, "dri2");
 
     return psp;

@@ -95,7 +95,6 @@ DRI_CONF_BEGIN
         DRI_CONF_NO_RAST("false")
     DRI_CONF_SECTION_END
 DRI_CONF_END;
-static const GLuint __driNConfigOptions = 14;
 
 #elif defined(RADEON_R200)
 
@@ -123,7 +122,6 @@ DRI_CONF_BEGIN
         DRI_CONF_NO_RAST("false")
     DRI_CONF_SECTION_END
 DRI_CONF_END;
-static const GLuint __driNConfigOptions = 15;
 
 #endif
 
@@ -492,8 +490,7 @@ radeonCreateScreen2(__DRIscreen *sPriv)
    radeon_init_debug();
 
    /* parse information in __driConfigOptions */
-   driParseOptionInfo (&screen->optionCache,
-		       __driConfigOptions, __driNConfigOptions);
+   driParseOptionInfo (&screen->optionCache, __driConfigOptions);
 
    screen->chip_flags = 0;
 

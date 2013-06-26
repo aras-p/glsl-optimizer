@@ -76,7 +76,6 @@ typedef struct driOptionCache {
     GLuint tableSize;
   /**< \brief Size of the arrays
    *
-   * Depending on the hash function this may differ from __driNConfigOptions.
    * In the current implementation it's not actually a size but log2(size).
    * The value is the same in the screen and all contexts. */
 } driOptionCache;
@@ -87,14 +86,13 @@ typedef struct driOptionCache {
  *
  * \param info    pointer to a driOptionCache that will store the option info
  * \param configOptions   XML document describing available configuration opts
- * \param nConfigOptions  number of options, used to choose a hash table size
  *
  * For the option information to be available to external configuration tools
  * it must be a public symbol __driConfigOptions. It is also passed as a
  * parameter to driParseOptionInfo in order to avoid driver-independent code
  * depending on symbols in driver-specific code. */
 void driParseOptionInfo (driOptionCache *info,
-			 const char *configOptions, GLuint nConfigOptions);
+			 const char *configOptions);
 /** \brief Initialize option cache from info and parse configuration files
  *
  * To be called in <driver>CreateContext. screenNum and driverName select

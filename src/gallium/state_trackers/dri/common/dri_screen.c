@@ -74,8 +74,6 @@ PUBLIC const char __driConfigOptions[] =
 
 #define false 0
 
-static const uint __driNConfigOptions = 13;
-
 static const __DRIconfig **
 dri_fill_in_modes(struct dri_screen *screen)
 {
@@ -417,8 +415,7 @@ dri_init_screen_helper(struct dri_screen *screen,
    else
       screen->target = PIPE_TEXTURE_RECT;
 
-   driParseOptionInfo(&screen->optionCacheDefaults,
-                      __driConfigOptions, __driNConfigOptions);
+   driParseOptionInfo(&screen->optionCacheDefaults, __driConfigOptions);
 
    driParseConfigFiles(&screen->optionCache,
 		       &screen->optionCacheDefaults,

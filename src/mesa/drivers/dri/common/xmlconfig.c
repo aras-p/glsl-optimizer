@@ -132,16 +132,6 @@ static GLuint findOption (const driOptionCache *cache, const char *name) {
     return hash;
 }
 
-/** \brief Count the real number of options in an option cache */
-static GLuint countOptions (const driOptionCache *cache) {
-    GLuint size = 1 << cache->tableSize;
-    GLuint i, count = 0;
-    for (i = 0; i < size; ++i)
-	if (cache->info[i].name)
-	    count++;
-    return count;
-}
-
 /** \brief Like strdup but using malloc and with error checking. */
 #define XSTRDUP(dest,source) do { \
     GLuint len = strlen (source); \
@@ -685,25 +675,18 @@ static void optInfoEndElem (void *userData, const XML_Char *name) {
     }
 }
 
-void driParseOptionInfo (driOptionCache *info,
-			 const char *configOptions, GLuint nConfigOptions) {
+void driParseOptionInfo (driOptionCache *info, const char *configOptions) {
     XML_Parser p;
     int status;
     struct OptInfoData userData;
     struct OptInfoData *data = &userData;
-    GLuint realNoptions;
 
-  /* determine hash table size and allocate memory:
-   * 3/2 of the number of options, rounded up, so there remains always
-   * at least one free entry. This is needed for detecting undefined
-   * options in configuration files without getting a hash table overflow.
-   * Round this up to a power of two. */
-    GLuint minSize = (nConfigOptions*3 + 1) / 2;
-    GLuint size, log2size;
-    for (size = 1, log2size = 0; size < minSize; size <<= 1, ++log2size);
-    info->tableSize = log2size;
-    info->info = calloc(size, sizeof (driOptionInfo));
-    info->values = calloc(size, sizeof (driOptionValue));
+    /* Make the hash table big enough to fit more than the maximum number of
+     * config options we've ever seen in a driver.
+     */
+    info->tableSize = 6;
+    info->info = calloc(1 << info->tableSize, sizeof (driOptionInfo));
+    info->values = calloc(1 << info->tableSize, sizeof (driOptionValue));
     if (info->info == NULL || info->values == NULL) {
 	fprintf (stderr, "%s: %d: out of memory.\n", __FILE__, __LINE__);
 	abort();
@@ -728,17 +711,6 @@ void driParseOptionInfo (driOptionCache *info,
 	XML_FATAL ("%s.", XML_ErrorString(XML_GetErrorCode(p)));
 
     XML_ParserFree (p);
-
-  /* Check if the actual number of options matches nConfigOptions.
-   * A mismatch is not fatal (a hash table overflow would be) but we
-   * want the driver developer's attention anyway. */
-    realNoptions = countOptions (info);
-    if (realNoptions != nConfigOptions) {
-	fprintf (stderr,
-		 "Error: nConfigOptions (%u) does not match the actual number of options in\n"
-		 "       __driConfigOptions (%u).\n",
-		 nConfigOptions, realNoptions);
-    }
 }
 
 /** \brief Parser context for configuration files. */

@@ -77,8 +77,6 @@ PUBLIC const char __driConfigOptions[] =
    DRI_CONF_SECTION_END
 DRI_CONF_END;
 
-const GLuint __driNConfigOptions = 12;
-
 #include "intel_batchbuffer.h"
 #include "intel_buffers.h"
 #include "intel_bufmgr.h"
@@ -1124,8 +1122,7 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
       return false;
    }
    /* parse information in __driConfigOptions */
-   driParseOptionInfo(&intelScreen->optionCache,
-                      __driConfigOptions, __driNConfigOptions);
+   driParseOptionInfo(&intelScreen->optionCache, __driConfigOptions);
 
    intelScreen->driScrnPriv = psp;
    psp->driverPrivate = (void *) intelScreen;
