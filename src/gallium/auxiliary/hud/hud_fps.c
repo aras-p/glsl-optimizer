@@ -52,7 +52,7 @@ query_fps(struct hud_graph *gr)
          info->frames = 0;
          info->last_time = now;
 
-         hud_graph_add_value(gr, fps);
+         hud_graph_add_value(gr, (uint64_t) fps);
       }
    }
    else {
