@@ -659,11 +659,11 @@ _mesa_DebugMessageControlARB(GLenum gl_source, GLenum gl_type,
 }
 
 void GLAPIENTRY
-_mesa_DebugMessageCallbackARB(GLDEBUGPROCARB callback, const GLvoid *userParam)
+_mesa_DebugMessageCallbackARB(GLDEBUGPROCARB callback, GLvoid *userParam)
 {
    GET_CURRENT_CONTEXT(ctx);
    ctx->Debug.Callback = callback;
-   ctx->Debug.CallbackData = (void *) userParam;
+   ctx->Debug.CallbackData = userParam;
 }
 
 void
