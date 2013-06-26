@@ -108,8 +108,8 @@ hud_draw_colored_prims(struct hud_context *hud, unsigned prim,
    hud->constants.color[1] = g;
    hud->constants.color[2] = b;
    hud->constants.color[3] = a;
-   hud->constants.translate[0] = xoffset;
-   hud->constants.translate[1] = yoffset;
+   hud->constants.translate[0] = (float) xoffset;
+   hud->constants.translate[1] = (float) yoffset;
    hud->constants.scale[0] = 1;
    hud->constants.scale[1] = yscale;
    cso_set_constant_buffer(cso, PIPE_SHADER_VERTEX, 0, &hud->constbuf);
@@ -129,10 +129,10 @@ hud_draw_colored_quad(struct hud_context *hud, unsigned prim,
                       float r, float g, float b, float a)
 {
    float buffer[] = {
-      x1, y1,
-      x1, y2,
-      x2, y2,
-      x2, y1,
+      (float) x1, (float) y1,
+      (float) x1, (float) y2,
+      (float) x2, (float) y2,
+      (float) x2, (float) y1,
    };
 
    hud_draw_colored_prims(hud, prim, buffer, 4, r, g, b, a, 0, 0, 1);
@@ -147,17 +147,17 @@ hud_draw_background_quad(struct hud_context *hud,
 
    assert(hud->bg.num_vertices + 4 <= hud->bg.max_num_vertices);
 
-   vertices[num++] = x1;
-   vertices[num++] = y1;
+   vertices[num++] = (float) x1;
+   vertices[num++] = (float) y1;
 
-   vertices[num++] = x1;
-   vertices[num++] = y2;
+   vertices[num++] = (float) x1;
+   vertices[num++] = (float) y2;
 
-   vertices[num++] = x2;
-   vertices[num++] = y2;
+   vertices[num++] = (float) x2;
+   vertices[num++] = (float) y2;
 
-   vertices[num++] = x2;
-   vertices[num++] = y1;
+   vertices[num++] = (float) x2;
+   vertices[num++] = (float) y1;
 
    hud->bg.num_vertices += num/2;
 }
@@ -202,25 +202,25 @@ hud_draw_string(struct hud_context *hud, unsigned x, unsigned y,
 
       assert(hud->text.num_vertices + num/4 + 4 <= hud->text.max_num_vertices);
 
-      vertices[num++] = x1;
-      vertices[num++] = y1;
-      vertices[num++] = tx1;
-      vertices[num++] = ty1;
+      vertices[num++] = (float) x1;
+      vertices[num++] = (float) y1;
+      vertices[num++] = (float) tx1;
+      vertices[num++] = (float) ty1;
 
-      vertices[num++] = x1;
-      vertices[num++] = y2;
-      vertices[num++] = tx1;
-      vertices[num++] = ty2;
+      vertices[num++] = (float) x1;
+      vertices[num++] = (float) y2;
+      vertices[num++] = (float) tx1;
+      vertices[num++] = (float) ty2;
 
-      vertices[num++] = x2;
-      vertices[num++] = y2;
-      vertices[num++] = tx2;
-      vertices[num++] = ty2;
+      vertices[num++] = (float) x2;
+      vertices[num++] = (float) y2;
+      vertices[num++] = (float) tx2;
+      vertices[num++] = (float) ty2;
 
-      vertices[num++] = x2;
-      vertices[num++] = y1;
-      vertices[num++] = tx2;
-      vertices[num++] = ty1;
+      vertices[num++] = (float) x2;
+      vertices[num++] = (float) y1;
+      vertices[num++] = (float) tx2;
+      vertices[num++] = (float) ty1;
 
       x += hud->font.glyph_width;
       s++;
@@ -318,25 +318,25 @@ hud_pane_accumulate_vertices(struct hud_context *hud,
 
    /* draw border */
    assert(hud->whitelines.num_vertices + num/2 + 8 <= hud->whitelines.max_num_vertices);
-   line_verts[num++] = pane->x1;
-   line_verts[num++] = pane->y1;
-   line_verts[num++] = pane->x2;
-   line_verts[num++] = pane->y1;
+   line_verts[num++] = (float) pane->x1;
+   line_verts[num++] = (float) pane->y1;
+   line_verts[num++] = (float) pane->x2;
+   line_verts[num++] = (float) pane->y1;
 
-   line_verts[num++] = pane->x2;
-   line_verts[num++] = pane->y1;
-   line_verts[num++] = pane->x2;
-   line_verts[num++] = pane->y2;
+   line_verts[num++] = (float) pane->x2;
+   line_verts[num++] = (float) pane->y1;
+   line_verts[num++] = (float) pane->x2;
+   line_verts[num++] = (float) pane->y2;
 
-   line_verts[num++] = pane->x1;
-   line_verts[num++] = pane->y2;
-   line_verts[num++] = pane->x2;
-   line_verts[num++] = pane->y2;
+   line_verts[num++] = (float) pane->x1;
+   line_verts[num++] = (float) pane->y2;
+   line_verts[num++] = (float) pane->x2;
+   line_verts[num++] = (float) pane->y2;
 
-   line_verts[num++] = pane->x1;
-   line_verts[num++] = pane->y1;
-   line_verts[num++] = pane->x1;
-   line_verts[num++] = pane->y2;
+   line_verts[num++] = (float) pane->x1;
+   line_verts[num++] = (float) pane->y1;
+   line_verts[num++] = (float) pane->x1;
+   line_verts[num++] = (float) pane->y2;
 
    /* draw horizontal lines inside the graph */
    for (i = 0; i <= 5; i++) {
