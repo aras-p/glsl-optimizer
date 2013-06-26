@@ -1304,9 +1304,6 @@ ilo_gpe_init_gs_cso_gen6(const struct ilo_dev_info *dev,
       max_threads = 21;
    }
 
-   if (max_threads > 28)
-      max_threads = 28;
-
    dw2 = GEN6_GS_SPF_MODE;
 
    dw4 = vue_read_len << GEN6_GS_URB_READ_LENGTH_SHIFT |
