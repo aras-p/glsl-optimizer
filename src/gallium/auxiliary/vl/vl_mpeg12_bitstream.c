@@ -729,6 +729,7 @@ decode_dct(struct vl_mpg12_bs *bs, struct pipe_mpeg12_macroblock *mb, int scale)
       vl_vlc_eatbits(&bs->vlc, entry->length);
       if (entry->run == dct_End_of_Block) {
 
+next_d:
          dst += 64;
          cbp <<= 1;
          cbp &= 0x3F;
@@ -760,6 +761,8 @@ entry:
             dst[0] = bs->pred_dc[cc];
             i = 0;
 
+            if (bs->desc->picture_coding_type == PIPE_MPEG12_PICTURE_CODING_TYPE_D)
+               goto next_d;
          } else {
             entry = tbl_B14_DC + vl_vlc_peekbits(&bs->vlc, 17);
             i = -1;
@@ -797,6 +800,9 @@ entry:
       vl_vlc_fillbits(&bs->vlc);
       entry = table + vl_vlc_peekbits(&bs->vlc, 17);
    }
+
+   if (bs->desc->picture_coding_type == PIPE_MPEG12_PICTURE_CODING_TYPE_D)
+      vl_vlc_eatbits(&bs->vlc, 1);
 }
 
 static INLINE void
@@ -821,7 +827,7 @@ decode_slice(struct vl_mpg12_bs *bs, struct pipe_video_buffer *target)
          vl_vlc_fillbits(&bs->vlc);
 
    vl_vlc_fillbits(&bs->vlc);
-   assert(vl_vlc_bits_left(&bs->vlc) > 23 && vl_vlc_peekbits(&bs->vlc, 23));
+   assert(vl_vlc_peekbits(&bs->vlc, 23));
    do {
       int inc = 0;
 
@@ -849,6 +855,11 @@ decode_slice(struct vl_mpg12_bs *bs, struct pipe_video_buffer *target)
          bs->decoder->decode_macroblock(bs->decoder, target, &bs->desc->base, &mb.base, 1);
       }
       mb.x = x += inc;
+      if (bs->decoder->profile == PIPE_VIDEO_PROFILE_MPEG1) {
+         int width = align(bs->decoder->width, 16) / 16;
+         mb.y += mb.x / width;
+         mb.x = x %= width;
+      }
 
       switch (bs->desc->picture_coding_type) {
       case PIPE_MPEG12_PICTURE_CODING_TYPE_I:
@@ -863,10 +874,10 @@ decode_slice(struct vl_mpg12_bs *bs, struct pipe_video_buffer *target)
          mb.macroblock_type = vl_vlc_get_vlclbf(&bs->vlc, tbl_B4, 6);
          break;
 
-      default:
-         mb.macroblock_type = 0;
-         /* dumb gcc */
-         assert(0);
+      case PIPE_MPEG12_PICTURE_CODING_TYPE_D:
+         vl_vlc_eatbits(&bs->vlc, 1);
+         mb.macroblock_type = PIPE_MPEG12_MB_TYPE_INTRA;
+         break;
       }
 
       mb.macroblock_modes.value = 0;
