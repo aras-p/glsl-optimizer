@@ -68,7 +68,8 @@ static const struct brw_tracked_state *gen4_atoms[] =
    &brw_vs_binding_table,
    &brw_wm_binding_table,
 
-   &brw_samplers,
+   &brw_fs_samplers,
+   &brw_vs_samplers,
 
    /* These set up state for brw_psp_urb_cbs */
    &brw_wm_unit,
@@ -143,7 +144,8 @@ static const struct brw_tracked_state *gen6_atoms[] =
    &gen6_gs_binding_table,
    &brw_wm_binding_table,
 
-   &brw_samplers,
+   &brw_fs_samplers,
+   &brw_vs_samplers,
    &gen6_sampler_state,
    &gen6_multisample_state,
 
@@ -206,7 +208,8 @@ static const struct brw_tracked_state *gen7_atoms[] =
    &brw_vs_binding_table,
    &brw_wm_binding_table,
 
-   &brw_samplers,
+   &brw_fs_samplers,
+   &brw_vs_samplers,
    &gen6_multisample_state,
 
    &gen7_disable_stages,

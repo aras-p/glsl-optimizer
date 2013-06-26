@@ -404,7 +404,7 @@ brw_upload_sampler_state_table(struct brw_context *brw,
 }
 
 static void
-brw_upload_samplers(struct brw_context *brw)
+brw_upload_fs_samplers(struct brw_context *brw)
 {
    /* BRW_NEW_FRAGMENT_PROGRAM */
    struct gl_program *fs = (struct gl_program *) brw->fragment_program;
@@ -412,7 +412,21 @@ brw_upload_samplers(struct brw_context *brw)
                                         &brw->wm.sampler_count,
                                         &brw->wm.sampler_offset,
                                         brw->wm.sdc_offset);
+}
 
+const struct brw_tracked_state brw_fs_samplers = {
+   .dirty = {
+      .mesa = _NEW_TEXTURE,
+      .brw = BRW_NEW_BATCH |
+             BRW_NEW_FRAGMENT_PROGRAM,
+      .cache = 0
+   },
+   .emit = brw_upload_fs_samplers,
+};
+
+static void
+brw_upload_vs_samplers(struct brw_context *brw)
+{
    /* BRW_NEW_VERTEX_PROGRAM */
    struct gl_program *vs = (struct gl_program *) brw->vertex_program;
    brw->vtbl.upload_sampler_state_table(brw, vs,
@@ -421,16 +435,17 @@ brw_upload_samplers(struct brw_context *brw)
                                         brw->vs.sdc_offset);
 }
 
-const struct brw_tracked_state brw_samplers = {
+
+const struct brw_tracked_state brw_vs_samplers = {
    .dirty = {
       .mesa = _NEW_TEXTURE,
       .brw = BRW_NEW_BATCH |
-             BRW_NEW_VERTEX_PROGRAM |
-             BRW_NEW_FRAGMENT_PROGRAM,
+             BRW_NEW_VERTEX_PROGRAM,
       .cache = 0
    },
-   .emit = brw_upload_samplers,
+   .emit = brw_upload_vs_samplers,
 };
+
 
 void
 gen4_init_vtable_sampler_functions(struct brw_context *brw)
