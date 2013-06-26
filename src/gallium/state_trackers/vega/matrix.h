@@ -221,9 +221,9 @@ static INLINE void matrix_rotate(struct matrix *dst,
    else if (floatsEqual(angle, 180))
       cos_val = -1.f;
    else {
-      float radians = DEGREES_TO_RADIANS(angle);
-      sin_val = sin(radians);
-      cos_val = cos(radians);
+      double radians = DEGREES_TO_RADIANS(angle);
+      sin_val = (float) sin(radians);
+      cos_val = (float) cos(radians);
    }
 
    if (!matrix_is_affine(dst)) {
@@ -410,7 +410,7 @@ static INLINE void line_normalize(float *l)
 {
    float x = l[2] - l[0];
    float y = l[3] - l[1];
-   float len = sqrt(x*x + y*y);
+   float len = (float) sqrt(x*x + y*y);
    l[2] = l[0] + x/len;
    l[3] = l[1] + y/len;
 }
@@ -420,14 +420,14 @@ static INLINE VGfloat line_length(VGfloat x1, VGfloat y1,
 {
    VGfloat x = x2 - x1;
    VGfloat y = y2 - y1;
-   return sqrt(x*x + y*y);
+   return (VGfloat) sqrt(x*x + y*y);
 }
 
 static INLINE VGfloat line_lengthv(const VGfloat *l)
 {
    VGfloat x = l[2] - l[0];
    VGfloat y = l[3] - l[1];
-   return sqrt(x*x + y*y);
+   return (VGfloat) sqrt(x*x + y*y);
 }
 
 
@@ -442,7 +442,7 @@ static INLINE void line_point_at(float *l, float t, float *pt)
 
 static INLINE void vector_unit(float *vec)
 {
-   float len = sqrt(vec[0] * vec[0] + vec[1] * vec[1]);
+   float len = (float) sqrt(vec[0] * vec[0] + vec[1] * vec[1]);
    vec[0] /= len;
    vec[1] /= len;
 }

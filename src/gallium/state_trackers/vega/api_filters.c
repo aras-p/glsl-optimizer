@@ -273,7 +273,7 @@ void vegaColorMatrix(VGImage dst, VGImage src,
 
 static VGfloat texture_offset(VGfloat width, VGint kernelSize, VGint current, VGint shift)
 {
-   VGfloat diff = current - shift;
+   VGfloat diff = (VGfloat) (current - shift);
 
    return diff / width;
 }
@@ -336,7 +336,7 @@ void vegaConvolve(VGImage dst, VGImage src,
    buffer[2] = 2.f; /*unused*/
    buffer[3] = 4.f; /*unused*/
 
-   buffer[4] = kernelWidth * kernelHeight;
+   buffer[4] = (VGfloat) (kernelWidth * kernelHeight);
    buffer[5] = scale;
    buffer[6] = bias;
    buffer[7] = 0.f;
@@ -347,8 +347,8 @@ void vegaConvolve(VGImage dst, VGImage src,
          VGint index = j * kernelWidth + i;
          VGfloat x, y;
 
-         x = texture_offset(s->width, kernelWidth, i, shiftX);
-         y = texture_offset(s->height, kernelHeight, j, shiftY);
+         x = (VGfloat) texture_offset(s->width, kernelWidth, i, shiftX);
+         y = (VGfloat) texture_offset(s->height, kernelHeight, j, shiftY);
 
          buffer[idx + index*4 + 0] = x;
          buffer[idx + index*4 + 1] = y;
