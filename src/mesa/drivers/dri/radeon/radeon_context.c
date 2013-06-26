@@ -261,12 +261,6 @@ r100CreateContext( gl_api api,
    _swsetup_CreateContext( ctx );
    _ae_create_context( ctx );
 
-   /* Set the maximum texture size small enough that we can guarentee that
-    * all texture units can bind a maximal texture and have all of them in
-    * texturable memory at once. Depending on the allow_large_textures driconf
-    * setting allow larger textures.
-    */
-
    ctx->Const.MaxTextureUnits = driQueryOptioni (&rmesa->radeon.optionCache,
 						 "texture_units");
    ctx->Const.FragmentProgram.MaxTextureImageUnits = ctx->Const.MaxTextureUnits;
@@ -274,8 +268,6 @@ r100CreateContext( gl_api api,
    ctx->Const.MaxCombinedTextureImageUnits = ctx->Const.MaxTextureUnits;
 
    ctx->Const.StripTextureBorder = GL_TRUE;
-
-   i = driQueryOptioni( &rmesa->radeon.optionCache, "allow_large_textures");
 
    /* FIXME: When no memory manager is available we should set this 
     * to some reasonable value based on texture memory pool size */

@@ -61,7 +61,6 @@ PUBLIC const char __driConfigOptions[] =
    DRI_CONF_SECTION_END
    DRI_CONF_SECTION_QUALITY
       DRI_CONF_FORCE_S3TC_ENABLE("false")
-      DRI_CONF_ALLOW_LARGE_TEXTURES(2)
    DRI_CONF_SECTION_END
    DRI_CONF_SECTION_DEBUG
       DRI_CONF_NO_RAST("false")
@@ -78,7 +77,7 @@ PUBLIC const char __driConfigOptions[] =
    DRI_CONF_SECTION_END
 DRI_CONF_END;
 
-const GLuint __driNConfigOptions = 13;
+const GLuint __driNConfigOptions = 12;
 
 #include "intel_batchbuffer.h"
 #include "intel_buffers.h"
