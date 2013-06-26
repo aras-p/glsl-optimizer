@@ -1314,7 +1314,7 @@ intelReleaseBuffer(__DRIscreen *screen, __DRIbuffer *buffer)
 }
 
 
-const struct __DriverAPIRec driDriverAPI = {
+static const struct __DriverAPIRec brw_driver_api = {
    .InitScreen		 = intelInitScreen2,
    .DestroyScreen	 = intelDestroyScreen,
    .CreateContext	 = brwCreateContext,
@@ -1327,10 +1327,22 @@ const struct __DriverAPIRec driDriverAPI = {
    .ReleaseBuffer        = intelReleaseBuffer
 };
 
-/* This is the table of extensions that the loader will dlsym() for. */
-PUBLIC const __DRIextension *__driDriverExtensions[] = {
+static const struct __DRIDriverVtableExtensionRec brw_vtable = {
+   .base = { __DRI_DRIVER_VTABLE, 1 },
+   .vtable = &brw_driver_api,
+};
+
+static const __DRIextension *brw_driver_extensions[] = {
     &driCoreExtension.base,
     &driDRI2Extension.base,
+    &brw_vtable.base,
     &brw_config_options.base,
     NULL
 };
+
+PUBLIC const __DRIextension **__driDriverGetExtensions_i965(void)
+{
+   globalDriverAPI = &brw_driver_api;
+
+   return brw_driver_extensions;
+}

@@ -82,6 +82,23 @@ setupLoaderExtensions(__DRIscreen *psp,
 }
 
 /**
+ * This pointer determines which driver API we'll use in the case of the
+ * loader not passing us an explicit driver extensions list (that would,
+ * itself, contain a pointer to a driver API.)
+ *
+ * A driver's driDriverGetExtensions_drivername() can update this pointer to
+ * what it's returning, and a loader that is ignorant of createNewScreen2()
+ * will get the correct driver screen created, as long as no other
+ * driDriverGetExtensions() happened in between the first one and the
+ * createNewScreen().
+ *
+ * This allows the X Server to not require the significant dri_interface.h
+ * updates for doing createNewScreen2(), which would discourage backporting of
+ * the X Server patches to support the new loader interface.
+ */
+const struct __DriverAPIRec *globalDriverAPI = &driDriverAPI;
+
+/**
  * This is the first entrypoint in the driver called by the DRI driver loader
  * after dlopen()ing it.
  *
@@ -102,7 +119,7 @@ dri2CreateNewScreen2(int scrn, int fd,
 	return NULL;
 
     /* By default, use the global driDriverAPI symbol (non-megadrivers). */
-    psp->driver = &driDriverAPI;
+    psp->driver = globalDriverAPI;
 
     /* If the driver exposes its vtable through its extensions list
      * (megadrivers), use that instead.

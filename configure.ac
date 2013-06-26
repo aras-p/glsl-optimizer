@@ -711,8 +711,6 @@ fi
 AM_CONDITIONAL(HAVE_DRI_GLX, test "x$enable_glx" = xyes -a \
                                   "x$enable_dri" = xyes)
 AM_CONDITIONAL(HAVE_DRI, test "x$enable_dri" = xyes)
-AM_CONDITIONAL(NEED_LIBMESA, test "x$enable_xlib_glx" = xyes -o \
-                                  "x$enable_osmesa" = xyes)
 
 AC_ARG_ENABLE([shared-glapi],
     [AS_HELP_STRING([--enable-shared-glapi],
@@ -863,8 +861,6 @@ AC_SUBST([GLESv1_CM_LIB_DEPS])
 AC_SUBST([GLESv1_CM_PC_LIB_PRIV])
 AC_SUBST([GLESv2_LIB_DEPS])
 AC_SUBST([GLESv2_PC_LIB_PRIV])
-
-DRI_LIB_DEPS="\$(top_builddir)/src/mesa/libdricore/libdricore${VERSION}.la"
 
 AC_SUBST([HAVE_XF86VIDMODE])
 
@@ -1039,10 +1035,32 @@ if test "x$enable_dri" = xyes; then
 
     DRI_DRIVER_LDFLAGS="-module -avoid-version -shared -Wl,-Bsymbolic"
 fi
-AM_CONDITIONAL(NEED_LIBDRICORE, test -n "$DRI_DIRS")
+
+enable_dricore=no
+enable_megadriver=no
+for driver in $DRI_DIRS; do
+    if test $driver != "i965"; then
+        enable_dricore=yes
+    else
+        enable_megadriver=yes
+    fi
+done
+
+# megadriver wants to use libmesa.la, while non-megadrivers want to
+# automatically get libdricore.  Some day hopefully we'll transition
+# everything to megadriver.
+MEGADRIVER_DRI_LIB_DEPS=$DRI_LIB_DEPS
+DRI_LIB_DEPS="\$(top_builddir)/src/mesa/libdricore/libdricore${VERSION}.la $DRI_LIB_DEPS"
+
+AM_CONDITIONAL(NEED_LIBDRICORE, test "x$enable_dricore" = xyes)
+AM_CONDITIONAL(NEED_MEGADRIVER, test "x$enable_megadriver" = xyes)
+AM_CONDITIONAL(NEED_LIBMESA, test "x$enable_xlib_glx" = xyes -o \
+                                  "x$enable_osmesa" = xyes -o \
+                                  "x$enable_megadriver" = xyes)
 AC_SUBST([EXPAT_INCLUDES])
 AC_SUBST([DRI_LIB_DEPS])
 AC_SUBST([DRI_DRIVER_LDFLAGS])
+AC_SUBST([MEGADRIVER_DRI_LIB_DEPS])
 AC_SUBST([GALLIUM_DRI_LIB_DEPS])
 
 case $DRI_DIRS in
@@ -1946,6 +1964,7 @@ AC_SUBST([ELF_LIB])
 AM_CONDITIONAL(NEED_LIBPROGRAM, test "x$with_gallium_drivers" != x -o \
                                      "x$enable_xlib_glx" = xyes -o \
                                      "x$enable_osmesa" = xyes -o \
+                                     "x$enable_megadriver" = xyes -o \
                                      "x$enable_gallium_osmesa" = xyes)
 AM_CONDITIONAL(HAVE_X11_DRIVER, test "x$enable_xlib_glx" = xyes)
 AM_CONDITIONAL(HAVE_OSMESA, test "x$enable_osmesa" = xyes)

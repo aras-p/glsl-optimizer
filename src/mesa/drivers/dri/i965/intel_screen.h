@@ -67,6 +67,8 @@ extern void intelDestroyContext(__DRIcontext * driContextPriv);
 
 extern GLboolean intelUnbindContext(__DRIcontext * driContextPriv);
 
+PUBLIC const __DRIextension **__driDriverGetExtensions_i965(void);
+
 extern GLboolean
 intelMakeCurrent(__DRIcontext * driContextPriv,
                  __DRIdrawable * driDrawPriv,

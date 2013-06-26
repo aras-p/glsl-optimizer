@@ -32,6 +32,7 @@ AM_CFLAGS = \
 
 noinst_LTLIBRARIES = \
 	libdricommon.la \
+	libmegadriver_stub.la \
 	libdri_test_stubs.la
 
 libdricommon_la_SOURCES = \
@@ -42,5 +43,7 @@ libdricommon_la_SOURCES = \
 libdri_test_stubs_la_SOURCES = \
 	dri_test.c
 libdri_test_stubs_la_CFLAGS = $(AM_CFLAGS) -DNO_MAIN
+
+libmegadriver_stub_la_SOURCES = megadriver_stub.c
 
 sysconf_DATA = drirc

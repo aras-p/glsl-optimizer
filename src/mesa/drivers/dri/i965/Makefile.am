@@ -38,29 +38,18 @@ AM_CFLAGS = \
 
 AM_CXXFLAGS = $(AM_CFLAGS)
 
-dridir = $(DRI_DRIVER_INSTALL_DIR)
-
 noinst_LTLIBRARIES = libi965_dri.la
-dri_LTLIBRARIES = i965_dri.la
-
 libi965_dri_la_SOURCES = $(i965_FILES)
-
-# list of libs to be linked against by i965_dri.so and i965 test programs.
-COMMON_LIBS = \
-	libi965_dri.la \
-	../common/libdricommon.la \
-	$(DRI_LIB_DEPS) \
-	$(INTEL_LIBS)
+libi965_dri_la_LIBADD = $(INTEL_LIBS)
 
 TEST_LIBS = \
-	$(COMMON_LIBS) \
+	libi965_dri.la \
+	../common/libdricommon.la \
+	../common/libmegadriver_stub.la \
+	$(MEGADRIVER_DRI_LIB_DEPS) \
+        ../../../libmesa.la \
         -lrt \
 	../common/libdri_test_stubs.la
-
-i965_dri_la_SOURCES =
-nodist_EXTRA_i965_dri_la_SOURCES = dummy2.cpp
-i965_dri_la_LIBADD = $(COMMON_LIBS)
-i965_dri_la_LDFLAGS = $(DRI_DRIVER_LDFLAGS)
 
 TESTS = \
         test_eu_compact \
@@ -77,9 +66,3 @@ test_eu_compact_SOURCES = \
 	test_eu_compact.c
 nodist_EXTRA_test_eu_compact_SOURCES = dummy.cpp
 test_eu_compact_LDADD = $(TEST_LIBS)
-
-# Provide compatibility with scripts for the old Mesa build system for
-# a while by putting a link to the driver into /lib of the build tree.
-all-local: i965_dri.la
-	$(MKDIR_P) $(top_builddir)/$(LIB_DIR);
-	ln -f .libs/i965_dri.so $(top_builddir)/$(LIB_DIR)/i965_dri.so;
