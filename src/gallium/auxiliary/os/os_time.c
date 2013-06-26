@@ -84,7 +84,7 @@ os_time_get_nano(void)
 void
 os_time_sleep(int64_t usecs)
 {
-   DWORD dwMilliseconds = (usecs + 999) / 1000;
+   DWORD dwMilliseconds = (DWORD) ((usecs + 999) / 1000);
    /* Avoid Sleep(O) as that would cause to sleep for an undetermined duration */
    if (dwMilliseconds) {
       Sleep(dwMilliseconds);
