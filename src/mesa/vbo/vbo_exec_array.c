@@ -1371,7 +1371,7 @@ vbo_validated_multidrawelements(struct gl_context *ctx, GLenum mode,
 static void GLAPIENTRY
 vbo_exec_MultiDrawElements(GLenum mode,
 			   const GLsizei *count, GLenum type,
-			   const GLvoid **indices,
+			   const GLvoid * const *indices,
 			   GLsizei primcount)
 {
    GET_CURRENT_CONTEXT(ctx);

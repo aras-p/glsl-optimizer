@@ -1182,7 +1182,7 @@ _save_OBE_DrawRangeElements(GLenum mode, GLuint start, GLuint end,
 
 static void GLAPIENTRY
 _save_OBE_MultiDrawElements(GLenum mode, const GLsizei *count, GLenum type,
-                            const GLvoid **indices, GLsizei primcount)
+                            const GLvoid * const *indices, GLsizei primcount)
 {
    GLsizei i;
 
