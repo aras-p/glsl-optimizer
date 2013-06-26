@@ -87,17 +87,21 @@ finalize_shader_states(struct ilo_context *ilo)
 static void
 finalize_constant_buffers(struct ilo_context *ilo)
 {
-   int sh, i;
+   int sh;
 
    if (!(ilo->dirty & ILO_DIRTY_CONSTANT_BUFFER))
       return;
 
    /* TODO push constants? */
    for (sh = 0; sh < PIPE_SHADER_TYPES; sh++) {
-      int last_cbuf = -1;
+      unsigned enabled_mask = ilo->cbuf[sh].enabled_mask;
 
-      for (i = 0; i < Elements(ilo->cbuf[sh].cso); i++) {
-         struct ilo_cbuf_cso *cbuf = &ilo->cbuf[sh].cso[i];
+      while (enabled_mask) {
+         struct ilo_cbuf_cso *cbuf;
+         int i;
+
+         i = u_bit_scan(&enabled_mask);
+         cbuf = &ilo->cbuf[sh].cso[i];
 
          /* upload user buffer */
          if (cbuf->user_buffer) {
@@ -117,12 +121,9 @@ finalize_constant_buffers(struct ilo_context *ilo)
             cbuf->user_buffer = NULL;
             cbuf->user_buffer_size = 0;
          }
-
-         if (cbuf->resource)
-            last_cbuf = i;
       }
 
-      ilo->cbuf[sh].count = last_cbuf + 1;
+      ilo->cbuf[sh].count = util_last_bit(ilo->cbuf[sh].enabled_mask);
    }
 }
 
@@ -610,6 +611,8 @@ ilo_set_constant_buffer(struct pipe_context *pipe,
          cbuf->user_buffer = state->user_buffer;
          cbuf->user_buffer_size = state->buffer_size;
       }
+
+      ilo->cbuf[shader].enabled_mask |= 1 << index;
    }
    else {
       pipe_resource_reference(&cbuf->resource, NULL);
@@ -617,10 +620,9 @@ ilo_set_constant_buffer(struct pipe_context *pipe,
 
       cbuf->user_buffer = NULL;
       cbuf->user_buffer_size = 0;
-   }
 
-   /* the correct value will be set in ilo_finalize_3d_states() */
-   ilo->cbuf[shader].count = 0;
+      ilo->cbuf[shader].enabled_mask &= ~(1 << index);
+   }
 
    ilo->dirty |= ILO_DIRTY_CONSTANT_BUFFER;
 }
