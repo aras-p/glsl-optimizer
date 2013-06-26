@@ -568,6 +568,7 @@ nvc0_screen_create(struct nouveau_device *dev)
    chan = screen->base.channel;
    push = screen->base.pushbuf;
    push->user_priv = screen;
+   push->rsvd_kick = 5;
 
    screen->base.vidmem_bindings |= PIPE_BIND_CONSTANT_BUFFER |
       PIPE_BIND_VERTEX_BUFFER | PIPE_BIND_INDEX_BUFFER;
