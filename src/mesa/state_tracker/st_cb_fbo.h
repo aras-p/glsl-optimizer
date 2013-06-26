@@ -59,7 +59,7 @@ struct st_renderbuffer
    void *data;
 
    struct st_texture_object *rtt;  /**< GL render to texture's texture */
-   int rtt_level, rtt_face, rtt_slice;
+   unsigned rtt_level, rtt_face, rtt_slice;
 };
 
 
