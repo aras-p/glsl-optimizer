@@ -27,6 +27,7 @@
 
 #include "util/u_framebuffer.h"
 #include "util/u_helpers.h"
+#include "util/u_upload_mgr.h"
 
 #include "ilo_context.h"
 #include "ilo_resource.h"
@@ -86,18 +87,40 @@ finalize_shader_states(struct ilo_context *ilo)
 static void
 finalize_constant_buffers(struct ilo_context *ilo)
 {
-   int sh;
+   int sh, i;
 
    if (!(ilo->dirty & ILO_DIRTY_CONSTANT_BUFFER))
       return;
 
+   /* TODO push constants? */
    for (sh = 0; sh < PIPE_SHADER_TYPES; sh++) {
-      int last_cbuf = Elements(ilo->cbuf[sh].cso) - 1;
+      int last_cbuf = -1;
 
-      /* find the last cbuf */
-      while (last_cbuf >= 0 &&
-             !ilo->cbuf[sh].cso[last_cbuf].resource)
-         last_cbuf--;
+      for (i = 0; i < Elements(ilo->cbuf[sh].cso); i++) {
+         struct ilo_cbuf_cso *cbuf = &ilo->cbuf[sh].cso[i];
+
+         /* upload user buffer */
+         if (cbuf->user_buffer) {
+            const enum pipe_format elem_format =
+               PIPE_FORMAT_R32G32B32A32_FLOAT;
+            unsigned offset;
+
+            u_upload_data(ilo->uploader, 0, cbuf->user_buffer_size,
+                  cbuf->user_buffer, &offset, &cbuf->resource);
+
+            ilo_gpe_init_view_surface_for_buffer(ilo->dev,
+                  ilo_buffer(cbuf->resource),
+                  offset, cbuf->user_buffer_size,
+                  util_format_get_blocksize(elem_format), elem_format,
+                  false, false, &cbuf->surface);
+
+            cbuf->user_buffer = NULL;
+            cbuf->user_buffer_size = 0;
+         }
+
+         if (cbuf->resource)
+            last_cbuf = i;
+      }
 
       ilo->cbuf[sh].count = last_cbuf + 1;
    }
@@ -112,6 +135,8 @@ ilo_finalize_states(struct ilo_context *ilo)
 {
    finalize_shader_states(ilo);
    finalize_constant_buffers(ilo);
+
+   u_upload_unmap(ilo->uploader);
 }
 
 static void *
@@ -509,7 +534,7 @@ ilo_set_clip_state(struct pipe_context *pipe,
 static void
 ilo_set_constant_buffer(struct pipe_context *pipe,
                         uint shader, uint index,
-                        struct pipe_constant_buffer *buf)
+                        struct pipe_constant_buffer *state)
 {
    struct ilo_context *ilo = ilo_context(pipe);
    struct ilo_cbuf_cso *cbuf;
@@ -519,22 +544,37 @@ ilo_set_constant_buffer(struct pipe_context *pipe,
 
    cbuf = &ilo->cbuf[shader].cso[index];
 
-   if (buf) {
-      const enum pipe_format elem_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
+   if (state) {
+      pipe_resource_reference(&cbuf->resource, state->buffer);
 
-      /* no PIPE_CAP_USER_CONSTANT_BUFFERS */
-      assert(!buf->user_buffer);
+      if (state->buffer) {
+         const enum pipe_format elem_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
 
-      pipe_resource_reference(&cbuf->resource, buf->buffer);
+         ilo_gpe_init_view_surface_for_buffer(ilo->dev,
+               ilo_buffer(cbuf->resource),
+               state->buffer_offset, state->buffer_size,
+               util_format_get_blocksize(elem_format), elem_format,
+               false, false, &cbuf->surface);
 
-      ilo_gpe_init_view_surface_for_buffer(ilo->dev, ilo_buffer(buf->buffer),
-            buf->buffer_offset, buf->buffer_size,
-            util_format_get_blocksize(elem_format), elem_format,
-            false, false, &cbuf->surface);
+         cbuf->user_buffer = NULL;
+         cbuf->user_buffer_size = 0;
+      }
+      else {
+         assert(state->user_buffer);
+
+         cbuf->surface.bo = NULL;
+
+         /* state->buffer_offset does not apply for user buffer */
+         cbuf->user_buffer = state->user_buffer;
+         cbuf->user_buffer_size = state->buffer_size;
+      }
    }
    else {
       pipe_resource_reference(&cbuf->resource, NULL);
       cbuf->surface.bo = NULL;
+
+      cbuf->user_buffer = NULL;
+      cbuf->user_buffer_size = 0;
    }
 
    /* the correct value will be set in ilo_finalize_states() */

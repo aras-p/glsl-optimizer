@@ -34,6 +34,7 @@
 #include "ilo_gpe.h"
 #include "ilo_common.h"
 
+struct u_upload_mgr;
 struct intel_winsys;
 struct intel_bo;
 struct ilo_3d;
@@ -48,14 +49,16 @@ struct ilo_context {
    struct intel_winsys *winsys;
    struct ilo_dev_info *dev;
 
+   struct util_slab_mempool transfer_mempool;
+
    struct ilo_cp *cp;
    struct intel_bo *last_cp_bo;
-
-   struct util_slab_mempool transfer_mempool;
 
    struct ilo_shader_cache *shader_cache;
    struct ilo_3d *hw3d;
    struct ilo_blitter *blitter;
+
+   struct u_upload_mgr *uploader;
 
    uint32_t dirty;
 

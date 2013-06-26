@@ -207,6 +207,13 @@ struct ilo_view_state {
 struct ilo_cbuf_cso {
    struct pipe_resource *resource;
    struct ilo_view_surface surface;
+
+   /*
+    * this CSO is not so constant because user buffer needs to be uploaded in
+    * finalize_constant_buffers()
+    */
+   const void *user_buffer;
+   unsigned user_buffer_size;
 };
 
 struct ilo_cbuf_state {

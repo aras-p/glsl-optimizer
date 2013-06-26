@@ -25,6 +25,7 @@
  *    Chia-I Wu <olv@lunarg.com>
  */
 
+#include "util/u_upload_mgr.h"
 #include "intel_chipset.h"
 
 #include "ilo_3d.h"
@@ -96,7 +97,8 @@ ilo_context_destroy(struct pipe_context *pipe)
    if (ilo->last_cp_bo)
       intel_bo_unreference(ilo->last_cp_bo);
 
-   util_slab_destroy(&ilo->transfer_mempool);
+   if (ilo->uploader)
+      u_upload_destroy(ilo->uploader);
 
    if (ilo->blitter)
       ilo_blitter_destroy(ilo->blitter);
@@ -106,6 +108,8 @@ ilo_context_destroy(struct pipe_context *pipe)
       ilo_shader_cache_destroy(ilo->shader_cache);
    if (ilo->cp)
       ilo_cp_destroy(ilo->cp);
+
+   util_slab_destroy(&ilo->transfer_mempool);
 
    FREE(ilo);
 }
@@ -123,6 +127,13 @@ ilo_context_create(struct pipe_screen *screen, void *priv)
    ilo->winsys = is->winsys;
    ilo->dev = &is->dev;
 
+   /*
+    * initialize first, otherwise it may not be safe to call
+    * ilo_context_destroy() on errors
+    */
+   util_slab_create(&ilo->transfer_mempool,
+         sizeof(struct ilo_transfer), 64, UTIL_SLAB_SINGLETHREADED);
+
    ilo->cp = ilo_cp_create(ilo->winsys, is->dev.has_llc);
    ilo->shader_cache = ilo_shader_cache_create();
    if (ilo->cp)
@@ -133,11 +144,15 @@ ilo_context_create(struct pipe_screen *screen, void *priv)
       return NULL;
    }
 
+   ilo->uploader = u_upload_create(&ilo->base, 1024 * 1024, 16,
+         PIPE_BIND_CONSTANT_BUFFER);
+   if (!ilo->uploader) {
+      ilo_context_destroy(&ilo->base);
+      return NULL;
+   }
+
    ilo_cp_set_flush_callback(ilo->cp,
          ilo_context_cp_flushed, (void *) ilo);
-
-   util_slab_create(&ilo->transfer_mempool,
-         sizeof(struct ilo_transfer), 64, UTIL_SLAB_SINGLETHREADED);
 
    ilo->base.screen = screen;
    ilo->base.priv = priv;
