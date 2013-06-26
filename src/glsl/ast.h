@@ -453,6 +453,18 @@ class ast_declarator_list;
 
 class ast_struct_specifier : public ast_node {
 public:
+   /**
+    * \brief Make a shallow copy of an ast_struct_specifier.
+    *
+    * Use only if the objects are allocated from the same context and will not
+    * be modified. Zeros the inherited ast_node's fields.
+    */
+   ast_struct_specifier(const ast_struct_specifier& that):
+      ast_node(), name(that.name), declarations(that.declarations)
+   {
+      /* empty */
+   }
+
    ast_struct_specifier(const char *identifier,
 			ast_declarator_list *declarator_list);
    virtual void print(void) const;
