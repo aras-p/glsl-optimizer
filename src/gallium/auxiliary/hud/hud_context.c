@@ -33,6 +33,8 @@
  * Set GALLIUM_HUD=help for more info.
  */
 
+#include <stdio.h>
+
 #include "hud/hud_context.h"
 #include "hud/hud_private.h"
 #include "hud/font.h"
