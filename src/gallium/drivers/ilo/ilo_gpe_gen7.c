@@ -1182,6 +1182,7 @@ gen7_emit_3DSTATE_SO_BUFFER(const struct ilo_dev_info *dev,
 static void
 gen7_emit_3DPRIMITIVE(const struct ilo_dev_info *dev,
                       const struct pipe_draw_info *info,
+                      const struct ilo_ib_state *ib,
                       bool rectlist,
                       struct ilo_cp *cp)
 {
@@ -1192,6 +1193,8 @@ gen7_emit_3DPRIMITIVE(const struct ilo_dev_info *dev,
    const int vb_access = (info->indexed) ?
       GEN7_3DPRIM_VERTEXBUFFER_ACCESS_RANDOM :
       GEN7_3DPRIM_VERTEXBUFFER_ACCESS_SEQUENTIAL;
+   const uint32_t vb_start = info->start +
+      ((info->indexed) ? ib->draw_start_offset : 0);
 
    ILO_GPE_VALID_GEN(dev, 7, 7);
 
@@ -1199,7 +1202,7 @@ gen7_emit_3DPRIMITIVE(const struct ilo_dev_info *dev,
    ilo_cp_write(cp, cmd | (cmd_len - 2));
    ilo_cp_write(cp, vb_access | prim);
    ilo_cp_write(cp, info->count);
-   ilo_cp_write(cp, info->start);
+   ilo_cp_write(cp, vb_start);
    ilo_cp_write(cp, info->instance_count);
    ilo_cp_write(cp, info->start_instance);
    ilo_cp_write(cp, info->index_bias);

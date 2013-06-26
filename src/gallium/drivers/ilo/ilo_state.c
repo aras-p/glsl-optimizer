@@ -126,6 +126,44 @@ finalize_constant_buffers(struct ilo_context *ilo)
    }
 }
 
+static void
+finalize_index_buffer(struct ilo_context *ilo)
+{
+   struct pipe_resource *res;
+   unsigned offset, size;
+   bool uploaded = false;
+
+   if (!ilo->draw->indexed)
+      return;
+
+   res = ilo->ib.resource;
+   offset = ilo->ib.state.index_size * ilo->draw->start;
+   size = ilo->ib.state.index_size * ilo->draw->count;
+
+   if (ilo->ib.state.user_buffer) {
+      u_upload_data(ilo->uploader, 0, size,
+            ilo->ib.state.user_buffer + offset, &offset, &res);
+      uploaded = true;
+   }
+   else if (unlikely(ilo->ib.state.offset % ilo->ib.state.index_size)) {
+      u_upload_buffer(ilo->uploader, 0, ilo->ib.state.offset + offset, size,
+            ilo->ib.state.buffer, &offset, &res);
+      uploaded = true;
+   }
+
+   if (uploaded) {
+      ilo->ib.resource = res;
+
+      assert(offset % ilo->ib.state.index_size == 0);
+      ilo->ib.draw_start_offset = offset / ilo->ib.state.index_size;
+
+      /* could be negative */
+      ilo->ib.draw_start_offset -= ilo->draw->start;
+
+      ilo->dirty |= ILO_DIRTY_INDEX_BUFFER;
+   }
+}
+
 /**
  * Finalize states.  Some states depend on other states and are
  * incomplete/invalid until finalized.
@@ -138,6 +176,7 @@ ilo_finalize_3d_states(struct ilo_context *ilo,
 
    finalize_shader_states(ilo);
    finalize_constant_buffers(ilo);
+   finalize_index_buffer(ilo);
 
    u_upload_unmap(ilo->uploader);
 }
@@ -818,19 +857,28 @@ ilo_set_index_buffer(struct pipe_context *pipe,
    struct ilo_context *ilo = ilo_context(pipe);
 
    if (state) {
-      /* no PIPE_CAP_USER_INDEX_BUFFERS */
-      assert(!state->user_buffer);
-
-      ilo->ib.state.index_size = state->index_size;
-      ilo->ib.state.offset = state->offset;
       pipe_resource_reference(&ilo->ib.state.buffer, state->buffer);
+      ilo->ib.state.offset = state->offset;
+      ilo->ib.state.index_size = state->index_size;
+
+      /* state->offset does not apply for user buffer */
       ilo->ib.state.user_buffer = state->user_buffer;
+
+      /*
+       * when there is no state->buffer or state->offset is misaligned,
+       * ilo_finalize_3d_states() will set these to the valid values
+       */
+      pipe_resource_reference(&ilo->ib.resource, state->buffer);
+      ilo->ib.draw_start_offset = state->offset / state->index_size;
    }
    else {
-      ilo->ib.state.index_size = 0;
-      ilo->ib.state.offset = 0;
       pipe_resource_reference(&ilo->ib.state.buffer, NULL);
+      ilo->ib.state.offset = 0;
+      ilo->ib.state.index_size = 0;
       ilo->ib.state.user_buffer = NULL;
+
+      pipe_resource_reference(&ilo->ib.resource, NULL);
+      ilo->ib.draw_start_offset = 0;
    }
 
    ilo->dirty |= ILO_DIRTY_INDEX_BUFFER;

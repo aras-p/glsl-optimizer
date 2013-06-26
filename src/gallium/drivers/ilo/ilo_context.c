@@ -145,7 +145,7 @@ ilo_context_create(struct pipe_screen *screen, void *priv)
    }
 
    ilo->uploader = u_upload_create(&ilo->base, 1024 * 1024, 16,
-         PIPE_BIND_CONSTANT_BUFFER);
+         PIPE_BIND_CONSTANT_BUFFER | PIPE_BIND_INDEX_BUFFER);
    if (!ilo->uploader) {
       ilo_context_destroy(&ilo->base);
       return NULL;

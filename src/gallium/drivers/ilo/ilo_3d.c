@@ -605,15 +605,22 @@ ilo_draw_vbo_with_sw_restart(struct pipe_context *pipe,
       return;
    }
 
-   struct pipe_transfer *transfer = NULL;
-   const void *map = NULL;
-   map = pipe_buffer_map(pipe, ilo->ib.state.buffer,
-         PIPE_TRANSFER_READ, &transfer);
+   if (ilo->ib.state.buffer) {
+      struct pipe_transfer *transfer;
+      const void *map;
 
-   sub_prim_count = ilo_find_sub_primitives(map + ilo->ib.state.offset,
-           ilo->ib.state.index_size, info, restart_info);
+      map = pipe_buffer_map(pipe, ilo->ib.state.buffer,
+            PIPE_TRANSFER_READ, &transfer);
 
-   pipe_buffer_unmap(pipe, transfer);
+      sub_prim_count = ilo_find_sub_primitives(map + ilo->ib.state.offset,
+            ilo->ib.state.index_size, info, restart_info);
+
+      pipe_buffer_unmap(pipe, transfer);
+   }
+   else {
+      sub_prim_count = ilo_find_sub_primitives(ilo->ib.state.user_buffer,
+            ilo->ib.state.index_size, info, restart_info);
+   }
 
    info = restart_info;
 

@@ -64,6 +64,9 @@ struct ilo_vb_state {
 
 struct ilo_ib_state {
    struct pipe_index_buffer state;
+
+   struct pipe_resource *resource;
+   int64_t draw_start_offset;
 };
 
 struct ilo_ve_cso {

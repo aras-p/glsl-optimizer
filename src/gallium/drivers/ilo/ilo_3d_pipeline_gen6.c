@@ -401,7 +401,7 @@ gen6_pipeline_vf(struct ilo_3d_pipeline *p,
    /* 3DSTATE_INDEX_BUFFER */
    if (DIRTY(INDEX_BUFFER) || session->batch_bo_changed) {
       p->gen6_3DSTATE_INDEX_BUFFER(p->dev,
-            &ilo->ib.state, ilo->draw->primitive_restart, p->cp);
+            &ilo->ib, ilo->draw->primitive_restart, p->cp);
    }
 
    /* 3DSTATE_VERTEX_BUFFERS */
@@ -455,7 +455,7 @@ gen6_pipeline_vf_draw(struct ilo_3d_pipeline *p,
                       struct gen6_pipeline_session *session)
 {
    /* 3DPRIMITIVE */
-   p->gen6_3DPRIMITIVE(p->dev, ilo->draw, false, p->cp);
+   p->gen6_3DPRIMITIVE(p->dev, ilo->draw, &ilo->ib, false, p->cp);
    p->state.has_gen6_wa_pipe_control = false;
 }
 

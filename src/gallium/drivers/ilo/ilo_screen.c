@@ -391,7 +391,6 @@ ilo_get_param(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_COMPUTE:
       return false; /* TODO */
    case PIPE_CAP_USER_INDEX_BUFFERS:
-      return false;
    case PIPE_CAP_USER_CONSTANT_BUFFERS:
       return true;
    case PIPE_CAP_CONSTANT_BUFFER_OFFSET_ALIGNMENT:

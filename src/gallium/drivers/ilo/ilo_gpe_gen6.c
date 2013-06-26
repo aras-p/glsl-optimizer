@@ -1027,13 +1027,13 @@ gen6_emit_3DSTATE_VERTEX_ELEMENTS(const struct ilo_dev_info *dev,
 
 static void
 gen6_emit_3DSTATE_INDEX_BUFFER(const struct ilo_dev_info *dev,
-                               const struct pipe_index_buffer *ib,
+                               const struct ilo_ib_state *ib,
                                bool enable_cut_index,
                                struct ilo_cp *cp)
 {
    const uint32_t cmd = ILO_GPE_CMD(0x3, 0x0, 0x0a);
    const uint8_t cmd_len = 3;
-   const struct ilo_buffer *buf = ilo_buffer(ib->buffer);
+   const struct ilo_buffer *buf = ilo_buffer(ib->resource);
    uint32_t start_offset, end_offset;
    int format;
 
@@ -1042,21 +1042,18 @@ gen6_emit_3DSTATE_INDEX_BUFFER(const struct ilo_dev_info *dev,
    if (!buf)
       return;
 
-   format = gen6_translate_index_size(ib->index_size);
+   format = gen6_translate_index_size(ib->state.index_size);
 
-   start_offset = ib->offset;
-   /* start_offset must be aligned to index size */
-   if (start_offset % ib->index_size) {
-      /* TODO need a u_upload_mgr to upload the IB to an aligned address */
-      assert(!"unaligned index buffer offset");
-      start_offset -= start_offset % ib->index_size;
-   }
-
-   /* end_offset must also be aligned */
+   /*
+    * set start_offset to 0 here and adjust pipe_draw_info::start with
+    * ib->draw_start_offset in 3DPRIMITIVE
+    */
+   start_offset = 0;
    end_offset = buf->bo_size;
-   end_offset -= (end_offset % ib->index_size);
-   /* it is inclusive */
-   end_offset -= 1;
+
+   /* end_offset must also be aligned and is inclusive */
+   end_offset -= (end_offset % ib->state.index_size);
+   end_offset--;
 
    ilo_cp_begin(cp, cmd_len);
    ilo_cp_write(cp, cmd | (cmd_len - 2) |
@@ -3086,6 +3083,7 @@ gen6_emit_PIPE_CONTROL(const struct ilo_dev_info *dev,
 static void
 gen6_emit_3DPRIMITIVE(const struct ilo_dev_info *dev,
                       const struct pipe_draw_info *info,
+                      const struct ilo_ib_state *ib,
                       bool rectlist,
                       struct ilo_cp *cp)
 {
@@ -3096,6 +3094,8 @@ gen6_emit_3DPRIMITIVE(const struct ilo_dev_info *dev,
    const int vb_access = (info->indexed) ?
       GEN4_3DPRIM_VERTEXBUFFER_ACCESS_RANDOM :
       GEN4_3DPRIM_VERTEXBUFFER_ACCESS_SEQUENTIAL;
+   const uint32_t vb_start = info->start +
+      ((info->indexed) ? ib->draw_start_offset : 0);
 
    ILO_GPE_VALID_GEN(dev, 6, 6);
 
@@ -3104,7 +3104,7 @@ gen6_emit_3DPRIMITIVE(const struct ilo_dev_info *dev,
                     prim << GEN4_3DPRIM_TOPOLOGY_TYPE_SHIFT |
                     vb_access);
    ilo_cp_write(cp, info->count);
-   ilo_cp_write(cp, info->start);
+   ilo_cp_write(cp, vb_start);
    ilo_cp_write(cp, info->instance_count);
    ilo_cp_write(cp, info->start_instance);
    ilo_cp_write(cp, info->index_bias);

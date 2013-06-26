@@ -209,7 +209,7 @@ typedef void
 
 typedef void
 (*ilo_gpe_gen6_3DSTATE_INDEX_BUFFER)(const struct ilo_dev_info *dev,
-                                     const struct pipe_index_buffer *ib,
+                                     const struct ilo_ib_state *ib,
                                      bool enable_cut_index,
                                      struct ilo_cp *cp);
 
@@ -362,6 +362,7 @@ typedef void
 typedef void
 (*ilo_gpe_gen6_3DPRIMITIVE)(const struct ilo_dev_info *dev,
                             const struct pipe_draw_info *info,
+                            const struct ilo_ib_state *ib,
                             bool rectlist,
                             struct ilo_cp *cp);
 
