@@ -89,7 +89,8 @@ struct lp_setup_context
    struct lp_scene *scene;               /**< current scene being built */
 
    struct lp_fence *last_fence;
-   struct llvmpipe_query *active_query[PIPE_QUERY_TYPES];
+   struct llvmpipe_query *active_queries[LP_MAX_ACTIVE_BINNED_QUERIES];
+   unsigned active_binned_queries;
 
    boolean subdivide_large_triangles;
    boolean flatshade_first;

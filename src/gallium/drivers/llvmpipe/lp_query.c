@@ -233,7 +233,7 @@ llvmpipe_begin_query(struct pipe_context *pipe, struct pipe_query *q)
       break;
    case PIPE_QUERY_OCCLUSION_COUNTER:
    case PIPE_QUERY_OCCLUSION_PREDICATE:
-      llvmpipe->active_occlusion_query++;
+      llvmpipe->active_occlusion_queries++;
       llvmpipe->dirty |= LP_NEW_OCCLUSION_QUERY;
       break;
    default:
@@ -288,8 +288,8 @@ llvmpipe_end_query(struct pipe_context *pipe, struct pipe_query *q)
       break;
    case PIPE_QUERY_OCCLUSION_COUNTER:
    case PIPE_QUERY_OCCLUSION_PREDICATE:
-      assert(llvmpipe->active_occlusion_query);
-      llvmpipe->active_occlusion_query--;
+      assert(llvmpipe->active_occlusion_queries);
+      llvmpipe->active_occlusion_queries--;
       llvmpipe->dirty |= LP_NEW_OCCLUSION_QUERY;
       break;
    default:

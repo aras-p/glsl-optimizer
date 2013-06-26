@@ -97,9 +97,9 @@ struct llvmpipe_context {
    struct pipe_query_data_pipeline_statistics pipeline_statistics;
    unsigned active_statistics_queries;
 
-   unsigned dirty; /**< Mask of LP_NEW_x flags */
+   unsigned active_occlusion_queries;
 
-   unsigned active_occlusion_query;
+   unsigned dirty; /**< Mask of LP_NEW_x flags */
 
    /** Mapped vertex buffers */
    ubyte *mapped_vbuffer[PIPE_MAX_ATTRIBS];

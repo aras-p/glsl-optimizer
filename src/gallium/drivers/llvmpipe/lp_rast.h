@@ -53,6 +53,8 @@ struct cmd_bin;
 /* Rasterizer output size going to jit fs, width/height */
 #define LP_RASTER_BLOCK_SIZE 4
 
+#define LP_MAX_ACTIVE_BINNED_QUERIES 16
+
 
 struct lp_rasterizer_task;
 

@@ -155,22 +155,9 @@ lp_setup_rasterize_scene( struct lp_setup_context *setup )
    struct lp_scene *scene = setup->scene;
    struct llvmpipe_screen *screen = llvmpipe_screen(scene->pipe->screen);
 
-   scene->num_active_queries = 0;
-   if (setup->active_query[PIPE_QUERY_OCCLUSION_COUNTER]) {
-      scene->active_queries[scene->num_active_queries] =
-         setup->active_query[PIPE_QUERY_OCCLUSION_COUNTER];
-      scene->num_active_queries++;
-   }
-   if (setup->active_query[PIPE_QUERY_OCCLUSION_PREDICATE]) {
-      scene->active_queries[scene->num_active_queries] =
-         setup->active_query[PIPE_QUERY_OCCLUSION_PREDICATE];
-      scene->num_active_queries++;
-   }
-   if (setup->active_query[PIPE_QUERY_PIPELINE_STATISTICS]) {
-      scene->active_queries[scene->num_active_queries] =
-         setup->active_query[PIPE_QUERY_PIPELINE_STATISTICS];
-      scene->num_active_queries++;
-   }
+   scene->num_active_queries = setup->active_binned_queries;
+   memcpy(scene->active_queries, setup->active_queries,
+          scene->num_active_queries * sizeof(scene->active_queries[0]));
 
    lp_scene_end_binning(scene);
 
@@ -1226,9 +1213,14 @@ lp_setup_begin_query(struct lp_setup_context *setup,
       return;
 
    /* init the query to its beginning state */
-   assert(setup->active_query[pq->type] == NULL);
-
-   setup->active_query[pq->type] = pq;
+   assert(setup->active_binned_queries < LP_MAX_ACTIVE_BINNED_QUERIES);
+   /* exceeding list size so just ignore the query */
+   if (setup->active_binned_queries >= LP_MAX_ACTIVE_BINNED_QUERIES) {
+      return;
+   }
+   assert(setup->active_queries[setup->active_binned_queries] == NULL);
+   setup->active_queries[setup->active_binned_queries] = pq;
+   setup->active_binned_queries++;
 
    assert(setup->scene);
    if (setup->scene) {
@@ -1256,12 +1248,6 @@ void
 lp_setup_end_query(struct lp_setup_context *setup, struct llvmpipe_query *pq)
 {
    set_scene_state(setup, SETUP_ACTIVE, "end_query");
-
-   if (pq->type == PIPE_QUERY_OCCLUSION_COUNTER ||
-       pq->type == PIPE_QUERY_OCCLUSION_PREDICATE ||
-       pq->type == PIPE_QUERY_PIPELINE_STATISTICS) {
-      assert(setup->active_query[pq->type] == pq);
-   }
 
    assert(setup->scene);
    if (setup->scene) {
@@ -1296,7 +1282,23 @@ fail:
    /* Need to do this now not earlier since it still needs to be marked as
     * active when binning it would cause a flush.
     */
-   setup->active_query[pq->type] = NULL;
+   if (pq->type == PIPE_QUERY_OCCLUSION_COUNTER ||
+      pq->type == PIPE_QUERY_OCCLUSION_PREDICATE ||
+      pq->type == PIPE_QUERY_PIPELINE_STATISTICS) {
+      unsigned i;
+
+      /* remove from active binned query list */
+      for (i = 0; i < setup->active_binned_queries; i++) {
+         if (setup->active_queries[i] == pq)
+            break;
+      }
+      assert(i < setup->active_binned_queries);
+      if (i == setup->active_binned_queries)
+         return;
+      setup->active_binned_queries--;
+      setup->active_queries[i] = setup->active_queries[setup->active_binned_queries];
+      setup->active_queries[setup->active_binned_queries] = NULL;
+   }
 }
 
 

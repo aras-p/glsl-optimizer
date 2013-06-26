@@ -303,6 +303,7 @@ static boolean
 try_setup_point( struct lp_setup_context *setup,
                  const float (*v0)[4] )
 {
+   struct llvmpipe_context *lp_context = (struct llvmpipe_context *)setup->pipe;
    /* x/y positions in fixed point */
    const struct lp_setup_variant_key *key = &setup->setup.variant->key;
    const int sizeAttr = setup->psize;
@@ -379,8 +380,7 @@ try_setup_point( struct lp_setup_context *setup,
 
    LP_COUNT(nr_tris);
 
-   if (setup->active_query[PIPE_QUERY_PIPELINE_STATISTICS]) {
-      struct llvmpipe_context *lp_context = (struct llvmpipe_context *)setup->pipe;
+   if (lp_context->active_statistics_queries) {
       lp_context->pipeline_statistics.c_primitives++;
    }
 

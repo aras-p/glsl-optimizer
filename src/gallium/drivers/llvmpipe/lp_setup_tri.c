@@ -252,6 +252,7 @@ do_triangle_ccw(struct lp_setup_context *setup,
                 const float (*v2)[4],
                 boolean frontfacing )
 {
+   struct llvmpipe_context *lp_context = (struct llvmpipe_context *)setup->pipe;
    struct lp_scene *scene = setup->scene;
    const struct lp_setup_variant_key *key = &setup->setup.variant->key;
    struct lp_rast_triangle *tri;
@@ -339,8 +340,7 @@ do_triangle_ccw(struct lp_setup_context *setup,
 
    LP_COUNT(nr_tris);
 
-   if (setup->active_query[PIPE_QUERY_PIPELINE_STATISTICS]) {
-      struct llvmpipe_context *lp_context = (struct llvmpipe_context *)setup->pipe;
+   if (lp_context->active_statistics_queries) {
       lp_context->pipeline_statistics.c_primitives++;
    }
 

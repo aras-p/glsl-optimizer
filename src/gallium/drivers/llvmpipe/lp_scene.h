@@ -130,7 +130,7 @@ struct lp_scene {
    struct lp_fence *fence;
 
    /* The queries still active at end of scene */
-   struct llvmpipe_query *active_queries[3];
+   struct llvmpipe_query *active_queries[LP_MAX_ACTIVE_BINNED_QUERIES];
    unsigned num_active_queries;
 
    /* Framebuffer mappings - valid only between begin_rasterization()
