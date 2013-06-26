@@ -55,7 +55,7 @@ static void util_slab_add_new_page(struct util_slab_mempool *pool)
 {
    struct util_slab_page *page;
    struct util_slab_block *block;
-   int i;
+   unsigned i;
 
    page = MALLOC(pool->page_size);
    insert_at_tail(&pool->list, page);

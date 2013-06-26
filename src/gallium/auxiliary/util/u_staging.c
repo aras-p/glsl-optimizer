@@ -84,7 +84,7 @@ util_staging_transfer_init(struct pipe_context *pipe,
    if (usage & PIPE_TRANSFER_READ)
    {
       /* XXX this looks wrong dst is always the same but looping over src z? */
-      unsigned zi;
+      int zi;
       struct pipe_box sbox;
       sbox.x = box->x;
       sbox.y = box->y;
@@ -111,7 +111,7 @@ util_staging_transfer_destroy(struct pipe_context *pipe, struct pipe_transfer *p
    {
       if(tx->base.usage & PIPE_TRANSFER_WRITE) {
          /* XXX this looks wrong src is always the same but looping over dst z? */
-         unsigned zi;
+         int zi;
          struct pipe_box sbox;
          sbox.x = 0;
          sbox.y = 0;
