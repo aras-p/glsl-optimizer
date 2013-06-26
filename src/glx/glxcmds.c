@@ -575,20 +575,19 @@ static Bool
 __glXIsDirect(Display * dpy, GLXContextID contextID)
 {
    CARD8 opcode;
+   xcb_connection_t *c;
+   xcb_generic_error_t *err;
+   xcb_glx_is_direct_reply_t *reply;
+   Bool is_direct;
 
    opcode = __glXSetupForCommand(dpy);
    if (!opcode) {
       return GL_FALSE;
    }
 
-   xcb_connection_t *c = XGetXCBConnection(dpy);
-   xcb_generic_error_t *err;
-   xcb_glx_is_direct_reply_t *reply = xcb_glx_is_direct_reply(c,
-                                                              xcb_glx_is_direct
-                                                              (c, contextID),
-                                                              &err);
-
-   const Bool is_direct = (reply != NULL && reply->is_direct) ? True : False;
+   c = XGetXCBConnection(dpy);
+   reply = xcb_glx_is_direct_reply(c, xcb_glx_is_direct(c, contextID), &err);
+   is_direct = (reply != NULL && reply->is_direct) ? True : False;
 
    if (err != NULL) {
       __glXSendErrorForXcb(dpy, err);

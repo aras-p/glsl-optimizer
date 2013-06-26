@@ -886,8 +886,9 @@ __indirect_glAreTexturesResident(GLsizei n, const GLuint * textures,
    GLboolean retval = (GLboolean) 0;
    if (__builtin_expect((n >= 0) && (dpy != NULL), 1)) {
       xcb_connection_t *c = XGetXCBConnection(dpy);
+      xcb_glx_are_textures_resident_reply_t *reply;
       (void) __glXFlushRenderBuffer(gc, gc->pc);
-      xcb_glx_are_textures_resident_reply_t *reply =
+      reply =
          xcb_glx_are_textures_resident_reply(c,
                                              xcb_glx_are_textures_resident
                                              (c, gc->currentContextTag, n,
