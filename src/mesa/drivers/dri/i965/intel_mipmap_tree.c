@@ -260,6 +260,8 @@ intel_miptree_create_layout(struct intel_context *intel,
                             GLuint num_samples)
 {
    struct intel_mipmap_tree *mt = calloc(sizeof(*mt), 1);
+   if (!mt)
+      return NULL;
 
    DBG("%s target %s format %s level %d..%d <-- %p\n", __FUNCTION__,
        _mesa_lookup_enum_by_nr(target),
