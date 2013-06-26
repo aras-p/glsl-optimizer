@@ -186,6 +186,7 @@ gen7_update_sampler_state(struct brw_context *brw, int unit, int ss_index,
 
 static void
 gen7_upload_sampler_state_table(struct brw_context *brw,
+                                struct gl_program *prog,
                                 uint32_t *sampler_count,
                                 uint32_t *sst_offset,
                                 uint32_t *sdc_offset)
@@ -193,11 +194,7 @@ gen7_upload_sampler_state_table(struct brw_context *brw,
    struct gl_context *ctx = &brw->ctx;
    struct gen7_sampler_state *samplers;
 
-   /* BRW_NEW_VERTEX_PROGRAM and BRW_NEW_FRAGMENT_PROGRAM */
-   struct gl_program *vs = (struct gl_program *) brw->vertex_program;
-   struct gl_program *fs = (struct gl_program *) brw->fragment_program;
-
-   GLbitfield SamplersUsed = vs->SamplersUsed | fs->SamplersUsed;
+   GLbitfield SamplersUsed = prog->SamplersUsed;
 
    *sampler_count = _mesa_fls(SamplersUsed);
 
@@ -209,10 +206,9 @@ gen7_upload_sampler_state_table(struct brw_context *brw,
 			      32, sst_offset);
    memset(samplers, 0, *sampler_count * sizeof(*samplers));
 
-   for (unsigned s = 0; s < brw->wm.sampler_count; s++) {
+   for (unsigned s = 0; s < *sampler_count; s++) {
       if (SamplersUsed & (1 << s)) {
-         const unsigned unit = (fs->SamplersUsed & (1 << s)) ?
-            fs->SamplerUnits[s] : vs->SamplerUnits[s];
+         const unsigned unit = prog->SamplerUnits[s];
          if (ctx->Texture.Unit[unit]._ReallyEnabled)
             gen7_update_sampler_state(brw, unit, s, &samplers[s],
                                       &sdc_offset[s]);
