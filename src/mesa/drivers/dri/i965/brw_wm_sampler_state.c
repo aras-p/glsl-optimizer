@@ -410,15 +410,15 @@ brw_upload_sampler_state_table(struct brw_context *brw,
 static void
 brw_upload_samplers(struct brw_context *brw)
 {
-   brw_upload_sampler_state_table(brw,
-                                  &brw->wm.sampler_count,
-                                  &brw->wm.sampler_offset,
-                                  brw->wm.sdc_offset);
+   brw->vtbl.upload_sampler_state_table(brw,
+                                        &brw->wm.sampler_count,
+                                        &brw->wm.sampler_offset,
+                                        brw->wm.sdc_offset);
 
-   brw_upload_sampler_state_table(brw,
-                                  &brw->vs.sampler_count,
-                                  &brw->vs.sampler_offset,
-                                  brw->vs.sdc_offset);
+   brw->vtbl.upload_sampler_state_table(brw,
+                                        &brw->vs.sampler_count,
+                                        &brw->vs.sampler_offset,
+                                        brw->vs.sdc_offset);
 }
 
 const struct brw_tracked_state brw_samplers = {
@@ -432,4 +432,8 @@ const struct brw_tracked_state brw_samplers = {
    .emit = brw_upload_samplers,
 };
 
-
+void
+gen4_init_vtable_sampler_functions(struct brw_context *brw)
+{
+   brw->vtbl.upload_sampler_state_table = brw_upload_sampler_state_table;
+}

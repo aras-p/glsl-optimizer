@@ -222,27 +222,8 @@ gen7_upload_sampler_state_table(struct brw_context *brw,
    brw->state.dirty.cache |= CACHE_NEW_SAMPLER;
 }
 
-static void
-gen7_upload_samplers(struct brw_context *brw)
+void
+gen7_init_vtable_sampler_functions(struct brw_context *brw)
 {
-   gen7_upload_sampler_state_table(brw,
-                                   &brw->wm.sampler_count,
-                                   &brw->wm.sampler_offset,
-                                   brw->wm.sdc_offset);
-
-   gen7_upload_sampler_state_table(brw,
-                                   &brw->vs.sampler_count,
-                                   &brw->vs.sampler_offset,
-                                   brw->vs.sdc_offset);
+   brw->vtbl.upload_sampler_state_table = gen7_upload_sampler_state_table;
 }
-
-const struct brw_tracked_state gen7_samplers = {
-   .dirty = {
-      .mesa = _NEW_TEXTURE,
-      .brw = BRW_NEW_BATCH |
-             BRW_NEW_VERTEX_PROGRAM |
-             BRW_NEW_FRAGMENT_PROGRAM,
-      .cache = 0
-   },
-   .emit = gen7_upload_samplers,
-};

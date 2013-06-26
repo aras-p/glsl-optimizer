@@ -111,7 +111,6 @@ extern const struct brw_tracked_state gen7_cc_viewport_state_pointer;
 extern const struct brw_tracked_state gen7_clip_state;
 extern const struct brw_tracked_state gen7_disable_stages;
 extern const struct brw_tracked_state gen7_ps_state;
-extern const struct brw_tracked_state gen7_samplers;
 extern const struct brw_tracked_state gen7_sbe_state;
 extern const struct brw_tracked_state gen7_sf_clip_viewport;
 extern const struct brw_tracked_state gen7_sf_state;
@@ -210,6 +209,10 @@ void upload_default_color(struct brw_context *brw,
 			  struct gl_sampler_object *sampler,
 			  int unit,
                           uint32_t *sdc_offset);
+void gen4_init_vtable_sampler_functions(struct brw_context *brw);
+
+/* gen7_sampler_state.c */
+void gen7_init_vtable_sampler_functions(struct brw_context *brw);
 
 /* gen6_sf_state.c */
 uint32_t

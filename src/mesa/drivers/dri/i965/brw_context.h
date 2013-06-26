@@ -815,6 +815,12 @@ struct brw_context
 				      uint32_t *out_offset,
                                       bool dword_pitch);
 
+      /** Upload a SAMPLER_STATE table. */
+      void (*upload_sampler_state_table)(struct brw_context *brw,
+                                         uint32_t *sampler_count,
+                                         uint32_t *sst_offset,
+                                         uint32_t *sdc_offset);
+
       /**
        * Send the appropriate state packets to configure depth, stencil, and
        * HiZ buffers (i965+ only)
