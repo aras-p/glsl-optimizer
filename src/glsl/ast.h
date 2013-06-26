@@ -526,6 +526,7 @@ public:
 			  struct _mesa_glsl_parse_state *state);
 
    ast_fully_specified_type *type;
+   /** List of 'ast_declaration *' */
    exec_list declarations;
 
    /**
