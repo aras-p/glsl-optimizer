@@ -38,8 +38,8 @@ extern "C" {
 #endif
 
 struct u_prim_vertex_count {
-   int min;
-   int incr;
+   unsigned min;
+   unsigned incr;
 };
 
 /**
