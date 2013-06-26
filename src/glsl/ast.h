@@ -460,7 +460,8 @@ public:
     * be modified. Zeros the inherited ast_node's fields.
     */
    ast_struct_specifier(const ast_struct_specifier& that):
-      ast_node(), name(that.name), declarations(that.declarations)
+      ast_node(), name(that.name), declarations(that.declarations),
+      is_declaration(that.is_declaration)
    {
       /* empty */
    }
@@ -475,6 +476,7 @@ public:
    const char *name;
    /* List of ast_declarator_list * */
    exec_list declarations;
+   bool is_declaration;
 };
 
 

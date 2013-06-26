@@ -1236,6 +1236,7 @@ ast_struct_specifier::ast_struct_specifier(const char *identifier,
    }
    name = identifier;
    this->declarations.push_degenerate_list_at_head(&declarator_list->link);
+   is_declaration = true;
 }
 
 extern "C" {
