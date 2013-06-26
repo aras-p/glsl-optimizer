@@ -234,6 +234,7 @@ static void radeonsi_launch_grid(
 	rctx->ws->buffer_wait(shader->bo->buf, 0);
 
 	FREE(pm4);
+	FREE(kernel_args);
 }
 
 
