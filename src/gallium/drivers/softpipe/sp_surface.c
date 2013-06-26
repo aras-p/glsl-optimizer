@@ -29,6 +29,7 @@
 #include "util/u_surface.h"
 #include "sp_context.h"
 #include "sp_surface.h"
+#include "sp_query.h"
 
 static void sp_blit(struct pipe_context *pipe,
                     const struct pipe_blit_info *info)
@@ -82,11 +83,48 @@ static void sp_blit(struct pipe_context *pipe,
    util_blitter_blit(sp->blitter, info);
 }
 
+static void
+softpipe_clear_render_target(struct pipe_context *pipe,
+                             struct pipe_surface *dst,
+                             const union pipe_color_union *color,
+                             unsigned dstx, unsigned dsty,
+                             unsigned width, unsigned height)
+{
+   struct softpipe_context *softpipe = softpipe_context(pipe);
+
+   if (!softpipe_check_render_cond(softpipe))
+      return;
+
+   util_clear_render_target(pipe, dst, color,
+                            dstx, dsty, width, height);
+}
+
+
+static void
+softpipe_clear_depth_stencil(struct pipe_context *pipe,
+                             struct pipe_surface *dst,
+                             unsigned clear_flags,
+                             double depth,
+                             unsigned stencil,
+                             unsigned dstx, unsigned dsty,
+                             unsigned width, unsigned height)
+{
+   struct softpipe_context *softpipe = softpipe_context(pipe);
+
+   if (!softpipe_check_render_cond(softpipe))
+      return;
+
+   util_clear_depth_stencil(pipe, dst, clear_flags,
+                            depth, stencil,
+                            dstx, dsty, width, height);
+}
+
+
 void
 sp_init_surface_functions(struct softpipe_context *sp)
 {
    sp->pipe.resource_copy_region = util_resource_copy_region;
-   sp->pipe.clear_render_target = util_clear_render_target;
-   sp->pipe.clear_depth_stencil = util_clear_depth_stencil;
+   sp->pipe.clear_render_target = softpipe_clear_render_target;
+   sp->pipe.clear_depth_stencil = softpipe_clear_depth_stencil;
    sp->pipe.blit = sp_blit;
 }
