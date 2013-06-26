@@ -130,12 +130,12 @@ util_semantic_layout_from_set(unsigned char *layout, const struct util_semantic_
       last = i;
    }
 
-   if(last < efficient_slots)
+   if (last < (int) efficient_slots)
    {
       UTIL_SEMANTIC_SET_FOR_EACH(i, set)
          layout[i] = i;
    }
-   else if((last - first) < efficient_slots)
+   else if ((last - first) < (int) efficient_slots)
    {
       UTIL_SEMANTIC_SET_FOR_EACH(i, set)
          layout[i - first] = i;
