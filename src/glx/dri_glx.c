@@ -184,10 +184,21 @@ _X_EXPORT const char *
 glXGetDriverConfig(const char *driverName)
 {
    void *handle = driOpenDriver(driverName);
-   if (handle)
-      return dlsym(handle, "__driConfigOptions");
-   else
+   const __DRIextension **extensions;
+
+   if (!handle)
       return NULL;
+
+   extensions = driGetDriverExtensions(handle);
+   if (extensions) {
+      for (int i = 0; extensions[i]; i++) {
+         if (strcmp(extensions[i]->name, __DRI_CONFIG_OPTIONS) == 0)
+            return ((__DRIconfigOptionsExtension *)extensions[i])->xml;
+      }
+   }
+
+   /* Fall back to the old method */
+   return dlsym(handle, "__driConfigOptions");
 }
 
 #ifdef XDAMAGE_1_1_INTERFACE

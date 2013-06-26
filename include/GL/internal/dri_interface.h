@@ -330,12 +330,6 @@ struct __DRI2throttleExtensionRec {
 		    enum __DRI2throttleReason reason);
 };
 
-/**
- * XML document describing the configuration options supported by the
- * driver.
- */
-extern const char __driConfigOptions[];
-
 /*@}*/
 
 /**
@@ -1225,5 +1219,19 @@ typedef struct __DRIrobustnessExtensionRec __DRIrobustnessExtension;
 struct __DRIrobustnessExtensionRec {
    __DRIextension base;
 };
+
+/**
+ * DRI config options extension.
+ *
+ * This extension provides the XML string containing driver options for use by
+ * the loader in supporting the driconf application.
+ */
+#define __DRI_CONFIG_OPTIONS "DRI_ConfigOptions"
+#define __DRI_CONFIG_OPTIONS_VERSION 1
+
+typedef struct __DRIconfigOptionsExtensionRec {
+   __DRIextension base;
+   const char *xml;
+} __DRIconfigOptionsExtension;
 
 #endif
