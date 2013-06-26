@@ -630,9 +630,10 @@ ra_get_best_spill_node(struct ra_graph *g)
     * colored that we couldn't manage to color in ra_select().
     */
    for (i = g->stack_optimistic_start; i < g->stack_count; i++) {
+      float cost, benefit;
+
       n = g->stack[i];
-      float cost = g->nodes[n].spill_cost;
-      float benefit;
+      cost = g->nodes[n].spill_cost;
 
       if (cost <= 0.0)
          continue;
