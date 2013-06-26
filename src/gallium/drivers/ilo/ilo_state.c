@@ -131,8 +131,11 @@ finalize_constant_buffers(struct ilo_context *ilo)
  * incomplete/invalid until finalized.
  */
 void
-ilo_finalize_states(struct ilo_context *ilo)
+ilo_finalize_3d_states(struct ilo_context *ilo,
+                       const struct pipe_draw_info *draw)
 {
+   ilo->draw = draw;
+
    finalize_shader_states(ilo);
    finalize_constant_buffers(ilo);
 
@@ -577,7 +580,7 @@ ilo_set_constant_buffer(struct pipe_context *pipe,
       cbuf->user_buffer_size = 0;
    }
 
-   /* the correct value will be set in ilo_finalize_states() */
+   /* the correct value will be set in ilo_finalize_3d_states() */
    ilo->cbuf[shader].count = 0;
 
    ilo->dirty |= ILO_DIRTY_CONSTANT_BUFFER;

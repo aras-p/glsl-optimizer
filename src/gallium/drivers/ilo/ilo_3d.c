@@ -372,7 +372,6 @@ ilo_3d_destroy(struct ilo_3d *hw3d)
 
 static bool
 draw_vbo(struct ilo_3d *hw3d, const struct ilo_context *ilo,
-         const struct pipe_draw_info *info,
          int *prim_generated, int *prim_emitted)
 {
    bool need_flush = false;
@@ -410,7 +409,7 @@ draw_vbo(struct ilo_3d *hw3d, const struct ilo_context *ilo,
    if (need_flush)
       ilo_3d_pipeline_emit_flush(hw3d->pipeline);
 
-   return ilo_3d_pipeline_emit_draw(hw3d->pipeline, ilo, info,
+   return ilo_3d_pipeline_emit_draw(hw3d->pipeline, ilo,
          prim_generated, prim_emitted);
 }
 
@@ -527,8 +526,7 @@ ilo_find_sub_primitives(const void *elements, unsigned element_size,
 }
 
 static inline bool
-ilo_check_restart_index(struct ilo_context *ilo,
-                        const struct pipe_draw_info *info)
+ilo_check_restart_index(const struct ilo_context *ilo, unsigned restart_index)
 {
    /*
     * Haswell (GEN(7.5)) supports an arbitrary cut index, check everything
@@ -540,23 +538,22 @@ ilo_check_restart_index(struct ilo_context *ilo,
    /* Note: indices must be unsigned byte, unsigned short or unsigned int */
    switch (ilo->ib.state.index_size) {
    case 1:
-      return ((info->restart_index & 0xff) == 0xff);
+      return ((restart_index & 0xff) == 0xff);
       break;
    case 2:
-      return ((info->restart_index & 0xffff) == 0xffff);
+      return ((restart_index & 0xffff) == 0xffff);
       break;
    case 4:
-      return (info->restart_index == 0xffffffff);
+      return (restart_index == 0xffffffff);
       break;
    }
    return false;
 }
 
 static inline bool
-ilo_check_restart_prim_type(struct ilo_context *ilo,
-                            const struct pipe_draw_info *info)
+ilo_check_restart_prim_type(const struct ilo_context *ilo, unsigned prim)
 {
-   switch (info->mode) {
+   switch (prim) {
    case PIPE_PRIM_POINTS:
    case PIPE_PRIM_LINES:
    case PIPE_PRIM_LINE_STRIP:
@@ -705,20 +702,20 @@ ilo_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
        * Want to draw an indexed primitive using primitive restart
        * Check that HW can handle the request and fall to SW if not.
        */
-      if (!ilo_check_restart_index(ilo, info) ||
-          !ilo_check_restart_prim_type(ilo, info)) {
+      if (!ilo_check_restart_index(ilo, info->restart_index) ||
+          !ilo_check_restart_prim_type(ilo, info->mode)) {
          ilo_draw_vbo_with_sw_restart(pipe, info);
          return;
       }
    }
 
-   ilo_finalize_states(ilo);
+   ilo_finalize_3d_states(ilo, info);
 
    if (!upload_shaders(hw3d, ilo->shader_cache))
       return;
 
    /* If draw_vbo ever fails, return immediately. */
-   if (!draw_vbo(hw3d, ilo, info, &prim_generated, &prim_emitted))
+   if (!draw_vbo(hw3d, ilo, &prim_generated, &prim_emitted))
       return;
 
    /* clear dirty status */

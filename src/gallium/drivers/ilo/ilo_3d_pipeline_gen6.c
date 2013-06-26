@@ -401,7 +401,7 @@ gen6_pipeline_vf(struct ilo_3d_pipeline *p,
    /* 3DSTATE_INDEX_BUFFER */
    if (DIRTY(INDEX_BUFFER) || session->batch_bo_changed) {
       p->gen6_3DSTATE_INDEX_BUFFER(p->dev,
-            &ilo->ib.state, session->info->primitive_restart, p->cp);
+            &ilo->ib.state, ilo->draw->primitive_restart, p->cp);
    }
 
    /* 3DSTATE_VERTEX_BUFFERS */
@@ -455,7 +455,7 @@ gen6_pipeline_vf_draw(struct ilo_3d_pipeline *p,
                       struct gen6_pipeline_session *session)
 {
    /* 3DPRIMITIVE */
-   p->gen6_3DPRIMITIVE(p->dev, session->info, false, p->cp);
+   p->gen6_3DPRIMITIVE(p->dev, ilo->draw, false, p->cp);
    p->state.has_gen6_wa_pipe_control = false;
 }
 
@@ -1288,13 +1288,11 @@ gen6_pipeline_states(struct ilo_3d_pipeline *p,
 void
 gen6_pipeline_prepare(const struct ilo_3d_pipeline *p,
                       const struct ilo_context *ilo,
-                      const struct pipe_draw_info *info,
                       struct gen6_pipeline_session *session)
 {
    memset(session, 0, sizeof(*session));
-   session->info = info;
    session->pipe_dirty = ilo->dirty;
-   session->reduced_prim = u_reduced_prim(info->mode);
+   session->reduced_prim = u_reduced_prim(ilo->draw->mode);
 
    /* available space before the session */
    session->init_cp_space = ilo_cp_space(p->cp);
@@ -1369,12 +1367,11 @@ gen6_pipeline_end(struct ilo_3d_pipeline *p,
 
 static void
 ilo_3d_pipeline_emit_draw_gen6(struct ilo_3d_pipeline *p,
-                               const struct ilo_context *ilo,
-                               const struct pipe_draw_info *info)
+                               const struct ilo_context *ilo)
 {
    struct gen6_pipeline_session session;
 
-   gen6_pipeline_prepare(p, ilo, info, &session);
+   gen6_pipeline_prepare(p, ilo, &session);
 
    session.emit_draw_states = gen6_pipeline_states;
    session.emit_draw_commands = gen6_pipeline_commands;

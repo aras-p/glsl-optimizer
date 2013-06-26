@@ -34,8 +34,6 @@ struct ilo_3d_pipeline;
 struct ilo_context;
 
 struct gen6_pipeline_session {
-   const struct pipe_draw_info *info;
-
    uint32_t pipe_dirty;
 
    int reduced_prim;
@@ -77,7 +75,6 @@ struct gen6_pipeline_session {
 void
 gen6_pipeline_prepare(const struct ilo_3d_pipeline *p,
                       const struct ilo_context *ilo,
-                      const struct pipe_draw_info *info,
                       struct gen6_pipeline_session *session);
 
 void

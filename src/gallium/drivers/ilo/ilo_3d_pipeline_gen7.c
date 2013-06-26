@@ -605,12 +605,11 @@ gen7_pipeline_commands(struct ilo_3d_pipeline *p,
 
 static void
 ilo_3d_pipeline_emit_draw_gen7(struct ilo_3d_pipeline *p,
-                               const struct ilo_context *ilo,
-                               const struct pipe_draw_info *info)
+                               const struct ilo_context *ilo)
 {
    struct gen6_pipeline_session session;
 
-   gen6_pipeline_prepare(p, ilo, info, &session);
+   gen6_pipeline_prepare(p, ilo, &session);
 
    session.emit_draw_states = gen6_pipeline_states;
    session.emit_draw_commands = gen7_pipeline_commands;

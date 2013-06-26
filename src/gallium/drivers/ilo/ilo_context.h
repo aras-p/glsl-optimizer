@@ -34,6 +34,7 @@
 #include "ilo_gpe.h"
 #include "ilo_common.h"
 
+struct pipe_draw_info;
 struct u_upload_mgr;
 struct intel_winsys;
 struct intel_bo;
@@ -60,6 +61,7 @@ struct ilo_context {
 
    struct u_upload_mgr *uploader;
 
+   const struct pipe_draw_info *draw;
    uint32_t dirty;
 
    struct ilo_vb_state vb;

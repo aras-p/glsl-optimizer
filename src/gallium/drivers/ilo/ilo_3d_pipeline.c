@@ -149,7 +149,6 @@ handle_invalid_batch_bo(struct ilo_3d_pipeline *p, bool unset)
 bool
 ilo_3d_pipeline_emit_draw(struct ilo_3d_pipeline *p,
                           const struct ilo_context *ilo,
-                          const struct pipe_draw_info *info,
                           int *prim_generated, int *prim_emitted)
 {
    bool success;
@@ -181,7 +180,7 @@ ilo_3d_pipeline_emit_draw(struct ilo_3d_pipeline *p,
 
       /* draw! */
       ilo_cp_assert_no_implicit_flush(p->cp, true);
-      p->emit_draw(p, ilo, info);
+      p->emit_draw(p, ilo);
       ilo_cp_assert_no_implicit_flush(p->cp, false);
 
       err = intel_winsys_check_aperture_space(ilo->winsys, &p->cp->bo, 1);
@@ -204,10 +203,12 @@ ilo_3d_pipeline_emit_draw(struct ilo_3d_pipeline *p,
    }
 
    if (success) {
-      const int num_verts = u_vertices_per_prim(u_reduced_prim(info->mode));
+      const int num_verts =
+         u_vertices_per_prim(u_reduced_prim(ilo->draw->mode));
       const int max_emit =
          (p->state.so_max_vertices - p->state.so_num_vertices) / num_verts;
-      const int generated = u_reduced_prims_for_vertices(info->mode, info->count);
+      const int generated =
+         u_reduced_prims_for_vertices(ilo->draw->mode, ilo->draw->count);
       const int emitted = MIN2(generated, max_emit);
 
       p->state.so_num_vertices += emitted * num_verts;

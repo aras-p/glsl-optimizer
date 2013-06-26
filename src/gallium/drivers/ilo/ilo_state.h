@@ -126,7 +126,8 @@ void
 ilo_cleanup_states(struct ilo_context *ilo);
 
 void
-ilo_finalize_states(struct ilo_context *ilo);
+ilo_finalize_3d_states(struct ilo_context *ilo,
+                       const struct pipe_draw_info *draw);
 
 void
 ilo_mark_states_with_resource_dirty(struct ilo_context *ilo,
