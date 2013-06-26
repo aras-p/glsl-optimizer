@@ -1056,7 +1056,7 @@ __indirect_glMultiDrawArrays(GLenum mode, const GLint *first,
 
 void
 __indirect_glMultiDrawElementsEXT(GLenum mode, const GLsizei * count,
-                                  GLenum type, const GLvoid ** indices,
+                                  GLenum type, const GLvoid * const * indices,
                                   GLsizei primcount)
 {
    struct glx_context *gc = __glXGetCurrentContext();
