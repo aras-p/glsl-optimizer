@@ -90,16 +90,6 @@ _mesa_Hint( GLenum target, GLenum mode )
          ctx->Hint.PolygonSmooth = mode;
          break;
 
-      /* GL_EXT_clip_volume_hint */
-      case GL_CLIP_VOLUME_CLIPPING_HINT_EXT:
-         if (ctx->API != API_OPENGL_COMPAT)
-            goto invalid_target;
-         if (ctx->Hint.ClipVolumeClipping == mode)
-	    return;
-	 FLUSH_VERTICES(ctx, _NEW_HINT);
-         ctx->Hint.ClipVolumeClipping = mode;
-         break;
-
       /* GL_ARB_texture_compression */
       case GL_TEXTURE_COMPRESSION_HINT_ARB:
          if (!_mesa_is_desktop_gl(ctx))
@@ -158,7 +148,6 @@ void _mesa_init_hint( struct gl_context * ctx )
    ctx->Hint.LineSmooth = GL_DONT_CARE;
    ctx->Hint.PolygonSmooth = GL_DONT_CARE;
    ctx->Hint.Fog = GL_DONT_CARE;
-   ctx->Hint.ClipVolumeClipping = GL_DONT_CARE;
    ctx->Hint.TextureCompression = GL_DONT_CARE;
    ctx->Hint.GenerateMipmap = GL_DONT_CARE;
    ctx->Hint.FragmentShaderDerivative = GL_DONT_CARE;

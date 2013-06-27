@@ -794,7 +794,6 @@ struct gl_hint_attrib
    GLenum LineSmooth;
    GLenum PolygonSmooth;
    GLenum Fog;
-   GLenum ClipVolumeClipping;   /**< GL_EXT_clip_volume_hint */
    GLenum TextureCompression;   /**< GL_ARB_texture_compression */
    GLenum GenerateMipmap;       /**< GL_SGIS_generate_mipmap */
    GLenum FragmentShaderDerivative; /**< GL_ARB_fragment_shader */
@@ -3053,7 +3052,6 @@ struct gl_extensions
    GLboolean EXT_blend_equation_separate;
    GLboolean EXT_blend_func_separate;
    GLboolean EXT_blend_minmax;
-   GLboolean EXT_clip_volume_hint;
    GLboolean EXT_depth_bounds_test;
    GLboolean EXT_draw_buffers2;
    GLboolean EXT_fog_coord;

@@ -174,7 +174,6 @@ static const struct extension extension_table[] = {
    { "GL_EXT_discard_framebuffer",                 o(EXT_framebuffer_object),                        ES1 | ES2, 2009 },
    { "GL_EXT_blend_minmax",                        o(EXT_blend_minmax),                        GLL | ES1 | ES2, 1995 },
    { "GL_EXT_blend_subtract",                      o(dummy_true),                              GLL,            1995 },
-   { "GL_EXT_clip_volume_hint",                    o(EXT_clip_volume_hint),                    GL,             1996 },
    { "GL_EXT_compiled_vertex_array",               o(dummy_true),                              GLL,            1996 },
    { "GL_EXT_copy_texture",                        o(dummy_true),                              GLL,            1995 },
    { "GL_EXT_depth_bounds_test",                   o(EXT_depth_bounds_test),                   GL,             2002 },
