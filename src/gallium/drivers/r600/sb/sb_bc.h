@@ -847,7 +847,7 @@ public:
 	unsigned ndw() { return bc.size(); }
 
 	void write_data(uint32_t* dst) {
-		memcpy(dst, bc.data(), 4 * bc.size());
+		std::copy(bc.begin(), bc.end(), dst);
 	}
 
 	void align(unsigned a) {
@@ -871,7 +871,7 @@ public:
 	}
 
 	unsigned get_pos() { return pos; }
-	uint32_t *data() { return bc.data(); }
+	uint32_t *data() { return &bc[0]; }
 
 	bytecode & operator <<(uint32_t v) {
 		if (pos == ndw()) {

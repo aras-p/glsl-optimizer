@@ -680,7 +680,7 @@ void ra_split::split_vec(vvec &vv, vvec &v1, vvec &v2, bool allow_swz) {
 
 			value *t;
 			vvec::iterator F =
-					allow_swz ? find(v2.begin(), v2.end(), o) : v2.end();
+					allow_swz ? std::find(v2.begin(), v2.end(), o) : v2.end();
 
 			if (F != v2.end()) {
 				t = *(v1.begin() + (F - v2.begin()));

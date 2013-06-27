@@ -207,7 +207,7 @@ void value_table::get_values(vvec& v) {
 
 	for(vt_table::iterator I = hashtable.begin(), E = hashtable.end();
 			I != E; ++I) {
-		T = copy(I->begin(), I->end(), T);
+		T = std::copy(I->begin(), I->end(), T);
 	}
 }
 
@@ -368,7 +368,7 @@ inline bool sb_bitset::set_chk(unsigned id, bool bit) {
 }
 
 void sb_bitset::clear() {
-	memset(data.data(), 0, sizeof(basetype) * data.size());
+	std::fill(data.begin(), data.end(), 0);
 }
 
 void sb_bitset::resize(unsigned size) {

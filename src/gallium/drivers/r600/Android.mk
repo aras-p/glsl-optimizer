@@ -28,11 +28,12 @@ include $(LOCAL_PATH)/Makefile.sources
 
 include $(CLEAR_VARS)
 
-LOCAL_SRC_FILES := $(C_SOURCES)
+LOCAL_SRC_FILES := $(C_SOURCES) $(CXX_SOURCES)
 
-LOCAL_C_INCLUDES :=
+LOCAL_C_INCLUDES := $(DRM_TOP)
 
 LOCAL_MODULE := libmesa_pipe_r600
 
+include external/stlport/libstlport.mk
 include $(GALLIUM_COMMON_MK)
 include $(BUILD_STATIC_LIBRARY)
