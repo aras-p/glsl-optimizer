@@ -1584,8 +1584,26 @@ if test "x$enable_gallium_llvm" = xyes; then
     fi
 
     if test "x$LLVM_CONFIG" != xno; then
-	LLVM_VERSION=`$LLVM_CONFIG --version | sed 's/svn.*//g'`
-	LLVM_VERSION_INT=`echo $LLVM_VERSION | sed -e 's/\([[0-9]]\)\.\([[0-9]]\)/\10\2/g'`
+        LLVM_VERSION=`$LLVM_CONFIG --version | sed 's/svn.*//g'`
+        LLVM_LDFLAGS=`$LLVM_CONFIG --ldflags`
+        LLVM_BINDIR=`$LLVM_CONFIG --bindir`
+        LLVM_CPPFLAGS=`strip_unwanted_llvm_flags "$LLVM_CONFIG --cppflags"`
+        LLVM_CFLAGS=$LLVM_CPPFLAGS   # CPPFLAGS seem to be sufficient
+        LLVM_CXXFLAGS=`strip_unwanted_llvm_flags "$LLVM_CONFIG --cxxflags"`
+        LLVM_INCLUDEDIR=`$LLVM_CONFIG --includedir`
+        LLVM_LIBDIR=`$LLVM_CONFIG --libdir`
+
+        AC_COMPUTE_INT([LLVM_VERSION_MAJOR], [LLVM_VERSION_MAJOR],
+            [#include "${LLVM_INCLUDEDIR}/llvm/Config/llvm-config.h"])
+        AC_COMPUTE_INT([LLVM_VERSION_MINOR], [LLVM_VERSION_MINOR],
+            [#include "${LLVM_INCLUDEDIR}/llvm/Config/llvm-config.h"])
+
+        if test "x${LLVM_VERSION_MAJOR}" != x; then
+            LLVM_VERSION_INT="${LLVM_VERSION_MAJOR}0${LLVM_VERSION_MINOR}"
+        else
+            LLVM_VERSION_INT=`echo $LLVM_VERSION | sed -e 's/\([[0-9]]\)\.\([[0-9]]\)/\10\2/g'`
+        fi
+
         LLVM_COMPONENTS="engine bitwriter"
         if $LLVM_CONFIG --components | grep -q '\<mcjit\>'; then
             LLVM_COMPONENTS="${LLVM_COMPONENTS} mcjit"
@@ -1598,17 +1616,10 @@ if test "x$enable_gallium_llvm" = xyes; then
                 LLVM_COMPONENTS="${LLVM_COMPONENTS} irreader"
             fi
         fi
-	LLVM_LDFLAGS=`$LLVM_CONFIG --ldflags`
-	LLVM_BINDIR=`$LLVM_CONFIG --bindir`
-	LLVM_CPPFLAGS=`strip_unwanted_llvm_flags "$LLVM_CONFIG --cppflags"`
-	LLVM_CFLAGS=$LLVM_CPPFLAGS   # CPPFLAGS seem to be sufficient
-	LLVM_CXXFLAGS=`strip_unwanted_llvm_flags "$LLVM_CONFIG --cxxflags"`
-	LLVM_INCLUDEDIR=`$LLVM_CONFIG --includedir`
-	LLVM_LIBDIR=`$LLVM_CONFIG --libdir`
-	DEFINES="${DEFINES} -DHAVE_LLVM=0x0$LLVM_VERSION_INT"
-	MESA_LLVM=1
+        DEFINES="${DEFINES} -DHAVE_LLVM=0x0$LLVM_VERSION_INT"
+        MESA_LLVM=1
 
-	dnl Check for Clang interanl headers
+        dnl Check for Clang internal headers
         if test "x$enable_opencl" = xyes; then
             if test "x$CLANG_LIBDIR" = x; then
                 CLANG_LIBDIR=${LLVM_LIBDIR}
@@ -1618,8 +1629,8 @@ if test "x$enable_gallium_llvm" = xyes; then
                 [AC_MSG_ERROR([Could not find clang internal header stddef.h in $CLANG_RESOURCE_DIR Use --with-clang-libdir to specify the correct path to the clang libraries.])])
         fi
     else
-	MESA_LLVM=0
-	LLVM_VERSION_INT=0
+        MESA_LLVM=0
+        LLVM_VERSION_INT=0
     fi
 else
     MESA_LLVM=0
