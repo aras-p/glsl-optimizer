@@ -237,6 +237,8 @@ begin_binning( struct lp_setup_context *setup )
    setup->clear.zsmask = 0;
    setup->clear.zsvalue = 0;
 
+   scene->had_queries = !!setup->active_binned_queries;
+
    LP_DBG(DEBUG_SETUP, "%s done\n", __FUNCTION__);
    return TRUE;
 }
@@ -1237,6 +1239,7 @@ lp_setup_begin_query(struct lp_setup_context *setup,
             return;
          }
       }
+      setup->scene->had_queries |= TRUE;
    }
 }
 
@@ -1272,6 +1275,7 @@ lp_setup_end_query(struct lp_setup_context *setup, struct llvmpipe_query *pq)
                goto fail;
             }
          }
+         setup->scene->had_queries |= TRUE;
       }
    }
    else {

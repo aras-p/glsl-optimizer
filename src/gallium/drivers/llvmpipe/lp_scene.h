@@ -132,6 +132,8 @@ struct lp_scene {
    /* The queries still active at end of scene */
    struct llvmpipe_query *active_queries[LP_MAX_ACTIVE_BINNED_QUERIES];
    unsigned num_active_queries;
+   /* If queries were either active or there were begin/end query commands */
+   boolean had_queries;
 
    /* Framebuffer mappings - valid only between begin_rasterization()
     * and end_rasterization().

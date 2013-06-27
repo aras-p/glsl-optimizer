@@ -204,22 +204,22 @@ lp_setup_whole_tile(struct lp_setup_context *setup,
    LP_COUNT(nr_fully_covered_64);
 
    /* if variant is opaque and scissor doesn't effect the tile */
-   /*
-    * Need to disable this optimization for layered rendering and cannot use
-    * setup->layer_slot here to determine it, because it could incorrectly
-    * reset the tile if a previous shader used layer_slot but not this one
-    * (or maybe even "undo" clears). So determine this from presence of layers
-    * instead (in which case layer_slot will have no effect).
-    */
-   if (inputs->opaque && scene->fb_max_layer == 0) {
-      if (!scene->fb.zsbuf) {
+   if (inputs->opaque) {
+      /* Several things prevent this optimization from working:
+       * - For layered rendering we can't determine if this covers the same layer
+       * as previous rendering (or in case of clears those actually always cover
+       * all layers so optimization is impossible). Need to use fb_max_layer and
+       * not setup->layer_slot to determine this since even if there's currently
+       * no slot assigned previous rendering could have used one.
+       * - If there were any Begin/End query commands in the scene then those
+       * would get removed which would be very wrong. Furthermore, if queries
+       * were just active we also can't do the optimization since to get
+       * accurate query results we unfortunately need to execute the rendering
+       * commands.
+       */
+      if (!scene->fb.zsbuf && scene->fb_max_layer == 0 && !scene->had_queries) {
          /*
           * All previous rendering will be overwritten so reset the bin.
-          * XXX This is wrong wrt to all queries arriving here (timestamp,
-          * occlusion, ps invocations). Not counting stuff might be ok but it
-          * will kill the begin/end query commands too which is definitely
-          * wrong (and at this point we don't even know if there were any
-          * such commands here).
           */
          lp_scene_bin_reset( scene, tx, ty );
       }
