@@ -1248,6 +1248,7 @@ ilo_cleanup_states(struct ilo_context *ilo)
    }
 
    pipe_resource_reference(&ilo->ib.state.buffer, NULL);
+   pipe_resource_reference(&ilo->ib.resource, NULL);
 
    for (i = 0; i < ilo->so.count; i++)
       pipe_so_target_reference(&ilo->so.states[i], NULL);
