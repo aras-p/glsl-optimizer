@@ -109,8 +109,8 @@ typedef void                        *EGLNativeDisplayType;
 #ifdef MESA_EGL_NO_X11_HEADERS
 
 typedef void            *EGLNativeDisplayType;
-typedef khronos_uint32_t EGLNativePixmapType;
-typedef khronos_uint32_t EGLNativeWindowType;
+typedef khronos_uintptr_t EGLNativePixmapType;
+typedef khronos_uintptr_t EGLNativeWindowType;
 
 #else
 
