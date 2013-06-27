@@ -3,6 +3,12 @@ Import('*')
 from sys import executable as python_cmd
 
 
+# Be conservative and depend on all XML files here.  Missing dependencies means
+# broken builds, whereas extraneous dependencies merely means regenerate the
+# .[ch] files -- scons should not recompile them though.
+sources = ['gl_and_es_API.xml'] + env.Glob('*.xml')
+
+
 # Generate the GL API headers that are used by various parts of the
 # Mesa and GLX tree.  Other .c and .h files are generated elsewhere
 # if they're only used in one place.
@@ -10,28 +16,28 @@ from sys import executable as python_cmd
 env.CodeGenerate(
     target = '../../../mesa/main/dispatch.h',
     script = 'gl_table.py',
-    source = 'gl_and_es_API.xml',
+    source = sources,
     command = python_cmd + ' $SCRIPT -m remap_table -f $SOURCE > $TARGET',
     )
 
 env.CodeGenerate(
     target = '../../../mapi/glapi/glapitable.h',
     script = 'gl_table.py',
-    source = 'gl_and_es_API.xml',
+    source = sources,
     command = python_cmd + ' $SCRIPT -f $SOURCE > $TARGET'
     )
 
 env.CodeGenerate(
     target = '../../../mapi/glapi/glapitemp.h',
     script = 'gl_apitemp.py',
-    source = 'gl_and_es_API.xml',
+    source = sources,
     command = python_cmd + ' $SCRIPT -f $SOURCE > $TARGET'
     )
 
 env.CodeGenerate(
     target = '../../../mapi/glapi/glprocs.h',
     script = 'gl_procs.py',
-    source = 'gl_and_es_API.xml',
+    source = sources,
     command = python_cmd + ' $SCRIPT -f $SOURCE > $TARGET'
     )
 
