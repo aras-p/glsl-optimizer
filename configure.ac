@@ -1490,6 +1490,13 @@ AC_SUBST([EGL_NATIVE_PLATFORM])
 AC_SUBST([EGL_PLATFORMS])
 AC_SUBST([EGL_CFLAGS])
 
+# If we don't have the X11 platform, set this define so we don't try to include
+# the X11 headers.
+if ! echo "$egl_platforms" | grep -q 'x11'; then
+    DEFINES="$DEFINES -DMESA_EGL_NO_X11_HEADERS"
+    GL_PC_CFLAGS="$GL_PC_CFLAGS -DMESA_EGL_NO_X11_HEADERS"
+fi
+
 AC_ARG_WITH([egl-driver-dir],
     [AS_HELP_STRING([--with-egl-driver-dir=DIR],
                     [directory for EGL drivers [[default=${libdir}/egl]]])],
