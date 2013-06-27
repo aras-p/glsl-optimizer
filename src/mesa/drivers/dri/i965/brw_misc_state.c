@@ -598,7 +598,7 @@ brw_emit_depthbuffer(struct brw_context *brw)
       depth_mt = stencil_mt;
    }
 
-   if (depth_irb) {
+   if (depth_irb && depth_mt) {
       /* When 3DSTATE_DEPTH_BUFFER.Separate_Stencil_Enable is set, then
        * 3DSTATE_DEPTH_BUFFER.Surface_Format is not permitted to be a packed
        * depthstencil format.
