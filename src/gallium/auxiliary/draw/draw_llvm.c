@@ -32,6 +32,7 @@
 #include "draw_gs.h"
 
 #include "gallivm/lp_bld_arit.h"
+#include "gallivm/lp_bld_arit_overflow.h"
 #include "gallivm/lp_bld_logic.h"
 #include "gallivm/lp_bld_const.h"
 #include "gallivm/lp_bld_swizzle.h"
@@ -699,13 +700,7 @@ generate_fetch(struct gallivm_state *gallivm,
    LLVMValueRef temp_ptr =
       lp_build_alloca(gallivm,
                       lp_build_vec_type(gallivm, lp_float32_vec4_type()), "");
-   LLVMValueRef ofbit, oresult;
-   LLVMTypeRef oelems[2] = {
-      LLVMInt32TypeInContext(gallivm->context),
-      LLVMInt1TypeInContext(gallivm->context)
-   };
-   LLVMTypeRef otype = LLVMStructTypeInContext(gallivm->context,
-                                               oelems, 2, FALSE);
+   LLVMValueRef ofbit = NULL;
    struct lp_build_if_state if_ctx;
 
    if (velem->instance_divisor) {
@@ -715,44 +710,16 @@ generate_fetch(struct gallivm_state *gallivm,
                             "instance_divisor");
    }
 
-   oresult = lp_build_intrinsic_binary(builder,
-                                       "llvm.umul.with.overflow.i32",
-                                       otype, vb_stride, index);
-   ofbit = LLVMBuildExtractValue(builder, oresult, 1, "");
-   stride = LLVMBuildExtractValue(builder, oresult, 0, "");
-
-   oresult = lp_build_intrinsic_binary(builder,
-                                       "llvm.uadd.with.overflow.i32",
-                                       otype, stride, vb_buffer_offset);
-   ofbit = LLVMBuildOr(
-      builder, ofbit,
-      LLVMBuildExtractValue(builder, oresult,  1, ""),
-      "");
-   stride = LLVMBuildExtractValue(builder, oresult, 0, "");
-
-   oresult = lp_build_intrinsic_binary(
-      builder,
-      "llvm.uadd.with.overflow.i32",
-      otype, stride,
-      lp_build_const_int32(gallivm, velem->src_offset));
-   ofbit = LLVMBuildOr(
-      builder, ofbit,
-      LLVMBuildExtractValue(builder, oresult, 1, ""),
-      "");
-   stride = LLVMBuildExtractValue(builder, oresult,  0, "");
-
-
-   oresult = lp_build_intrinsic_binary(
-      builder,
-      "llvm.uadd.with.overflow.i32",
-      otype, stride,
+   stride = lp_build_umul_overflow(gallivm, vb_stride, index, &ofbit);
+   stride = lp_build_uadd_overflow(gallivm, stride, vb_buffer_offset, &ofbit);
+   stride = lp_build_uadd_overflow(
+      gallivm, stride,
+      lp_build_const_int32(gallivm, velem->src_offset), &ofbit);
+   needed_buffer_size = lp_build_uadd_overflow(
+      gallivm, stride,
       lp_build_const_int32(gallivm,
-                           util_format_get_blocksize(velem->src_format)));
-   ofbit = LLVMBuildOr(
-      builder, ofbit,
-      LLVMBuildExtractValue(builder, oresult, 1, ""),
-      "");
-   needed_buffer_size = LLVMBuildExtractValue(builder, oresult, 0, "");
+                           util_format_get_blocksize(velem->src_format)),
+      &ofbit);
 
    buffer_overflowed = LLVMBuildICmp(builder, LLVMIntUGT,
                                      needed_buffer_size, buffer_size,
