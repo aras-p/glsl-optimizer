@@ -158,7 +158,7 @@ struct glsl_type {
     */
    /*@{*/
 #undef  DECL_TYPE
-#define DECL_TYPE(NAME, REST...) \
+#define DECL_TYPE(NAME, ...) \
    static const glsl_type *const NAME##_type;
 #undef  STRUCT_TYPE
 #define STRUCT_TYPE(NAME) \
@@ -534,7 +534,7 @@ private:
     */
    /*@{*/
 #undef  DECL_TYPE
-#define DECL_TYPE(NAME, REST...) static const glsl_type _##NAME##_type;
+#define DECL_TYPE(NAME, ...) static const glsl_type _##NAME##_type;
 #undef  STRUCT_TYPE
 #define STRUCT_TYPE(NAME)        static const glsl_type _struct_##NAME##_type;
 #include "builtin_type_macros.h"
