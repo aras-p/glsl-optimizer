@@ -134,8 +134,6 @@ llvmpipe_get_query_result(struct pipe_context *pipe,
          if (pq->end[i] > *result) {
             *result = pq->end[i];
          }
-         if (*result == 0)
-            *result = os_time_get_nano();
       }
       break;
    case PIPE_QUERY_TIMESTAMP_DISJOINT: {
