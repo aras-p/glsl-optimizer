@@ -729,6 +729,9 @@ ilo_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
    ilo->dirty = 0x0;
    hw3d->new_batch = false;
 
+   /* avoid dangling pointer reference */
+   ilo->draw = NULL;
+
    update_prim_count(hw3d, prim_generated, prim_emitted);
 
    if (ilo_debug & ILO_DEBUG_NOCACHE)
