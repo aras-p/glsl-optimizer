@@ -187,6 +187,7 @@ struct ilo_3d_pipeline {
    struct ilo_3d_pipeline_state {
       bool has_gen6_wa_pipe_control;
 
+      bool primitive_restart;
       int reduced_prim;
       int so_num_vertices, so_max_vertices;
 

@@ -399,7 +399,8 @@ gen6_pipeline_vf(struct ilo_3d_pipeline *p,
                  struct gen6_pipeline_session *session)
 {
    /* 3DSTATE_INDEX_BUFFER */
-   if (DIRTY(INDEX_BUFFER) || session->batch_bo_changed) {
+   if (DIRTY(INDEX_BUFFER) || session->primitive_restart_changed ||
+       session->batch_bo_changed) {
       p->gen6_3DSTATE_INDEX_BUFFER(p->dev,
             &ilo->ib, ilo->draw->primitive_restart, p->cp);
    }
@@ -1306,6 +1307,7 @@ gen6_pipeline_prepare(const struct ilo_3d_pipeline *p,
       session->state_bo_changed = true;
       session->kernel_bo_changed = true;
       session->prim_changed = true;
+      session->primitive_restart_changed = true;
    }
    else {
       /*
@@ -1325,6 +1327,8 @@ gen6_pipeline_prepare(const struct ilo_3d_pipeline *p,
       session->kernel_bo_changed =
          (p->invalidate_flags & ILO_3D_PIPELINE_INVALIDATE_KERNEL_BO);
       session->prim_changed = (p->state.reduced_prim != session->reduced_prim);
+      session->primitive_restart_changed =
+         (p->state.primitive_restart != ilo->draw->primitive_restart);
    }
 }
 
@@ -1363,6 +1367,7 @@ gen6_pipeline_end(struct ilo_3d_pipeline *p,
    assert(used <= estimate);
 
    p->state.reduced_prim = session->reduced_prim;
+   p->state.primitive_restart = ilo->draw->primitive_restart;
 }
 
 static void

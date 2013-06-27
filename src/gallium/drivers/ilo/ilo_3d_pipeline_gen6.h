@@ -44,6 +44,7 @@ struct gen6_pipeline_session {
    bool state_bo_changed;
    bool kernel_bo_changed;
    bool prim_changed;
+   bool primitive_restart_changed;
 
    void (*emit_draw_states)(struct ilo_3d_pipeline *p,
                             const struct ilo_context *ilo,
