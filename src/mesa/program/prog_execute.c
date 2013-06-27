@@ -145,7 +145,7 @@ get_src_register_pointer(const struct prog_src_register *source,
       _mesa_problem(NULL,
          "Invalid src register file %d in get_src_register_pointer()",
          source->File);
-      return NULL;
+      return ZeroVec;
    }
 }
 
@@ -184,7 +184,7 @@ get_dst_register_pointer(const struct prog_dst_register *dest,
       _mesa_problem(NULL,
          "Invalid dest register file %d in get_dst_register_pointer()",
          dest->File);
-      return NULL;
+      return dummyReg;
    }
 }
 
@@ -199,7 +199,6 @@ fetch_vector4(const struct prog_src_register *source,
               const struct gl_program_machine *machine, GLfloat result[4])
 {
    const GLfloat *src = get_src_register_pointer(source, machine);
-   ASSERT(src);
 
    if (source->Swizzle == SWIZZLE_NOOP) {
       /* no swizzling */
@@ -302,7 +301,6 @@ fetch_vector1(const struct prog_src_register *source,
               const struct gl_program_machine *machine, GLfloat result[4])
 {
    const GLfloat *src = get_src_register_pointer(source, machine);
-   ASSERT(src);
 
    result[0] = src[GET_SWZ(source->Swizzle, 0)];
 
