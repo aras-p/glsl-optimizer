@@ -263,7 +263,7 @@ gen6_pipeline_common_urb(struct ilo_3d_pipeline *p,
                          struct gen6_pipeline_session *session)
 {
    /* 3DSTATE_URB */
-   if (DIRTY(VERTEX_ELEMENTS) || DIRTY(VS) || DIRTY(GS)) {
+   if (DIRTY(VE) || DIRTY(VS) || DIRTY(GS)) {
       const bool gs_active = (ilo->gs || (ilo->vs &&
                ilo_shader_get_kernel_param(ilo->vs, ILO_KERNEL_VS_GEN6_SO)));
       int vs_entry_size, gs_entry_size;
@@ -399,21 +399,20 @@ gen6_pipeline_vf(struct ilo_3d_pipeline *p,
                  struct gen6_pipeline_session *session)
 {
    /* 3DSTATE_INDEX_BUFFER */
-   if (DIRTY(INDEX_BUFFER) || session->primitive_restart_changed ||
+   if (DIRTY(IB) || session->primitive_restart_changed ||
        session->batch_bo_changed) {
       p->gen6_3DSTATE_INDEX_BUFFER(p->dev,
             &ilo->ib, ilo->draw->primitive_restart, p->cp);
    }
 
    /* 3DSTATE_VERTEX_BUFFERS */
-   if (DIRTY(VERTEX_BUFFERS) || DIRTY(VERTEX_ELEMENTS) ||
-       session->batch_bo_changed) {
+   if (DIRTY(VB) || DIRTY(VE) || session->batch_bo_changed) {
       p->gen6_3DSTATE_VERTEX_BUFFERS(p->dev,
             ilo->vb.states, ilo->vb.enabled_mask, ilo->ve, p->cp);
    }
 
    /* 3DSTATE_VERTEX_ELEMENTS */
-   if (DIRTY(VERTEX_ELEMENTS) || DIRTY(VS)) {
+   if (DIRTY(VE) || DIRTY(VS)) {
       const struct ilo_ve_state *ve = ilo->ve;
       bool last_velement_edgeflag = false;
       bool prepend_generate_ids = false;
@@ -465,7 +464,7 @@ gen6_pipeline_vs(struct ilo_3d_pipeline *p,
                  const struct ilo_context *ilo,
                  struct gen6_pipeline_session *session)
 {
-   const bool emit_3dstate_vs = (DIRTY(VS) || DIRTY(VERTEX_SAMPLERS) ||
+   const bool emit_3dstate_vs = (DIRTY(VS) || DIRTY(SAMPLER_VS) ||
                                  session->kernel_bo_changed);
    const bool emit_3dstate_constant_vs = session->pcb_state_vs_changed;
 
@@ -518,7 +517,7 @@ gen6_pipeline_update_max_svbi(struct ilo_3d_pipeline *p,
                               const struct ilo_context *ilo,
                               struct gen6_pipeline_session *session)
 {
-   if (DIRTY(VS) || DIRTY(GS) || DIRTY(STREAM_OUTPUT_TARGETS)) {
+   if (DIRTY(VS) || DIRTY(GS) || DIRTY(SO)) {
       const struct pipe_stream_output_info *so_info =
          (ilo->gs) ? ilo_shader_get_kernel_so_info(ilo->gs) :
          (ilo->vs) ? ilo_shader_get_kernel_so_info(ilo->vs) : NULL;
@@ -599,8 +598,7 @@ gen6_pipeline_clip(struct ilo_3d_pipeline *p,
                    struct gen6_pipeline_session *session)
 {
    /* 3DSTATE_CLIP */
-   if (DIRTY(RASTERIZER) || DIRTY(FS) ||
-       DIRTY(VIEWPORT) || DIRTY(FRAMEBUFFER)) {
+   if (DIRTY(RASTERIZER) || DIRTY(FS) || DIRTY(VIEWPORT) || DIRTY(FB)) {
       bool enable_guardband = true;
       unsigned i;
 
@@ -641,7 +639,7 @@ gen6_pipeline_sf_rect(struct ilo_3d_pipeline *p,
                       struct gen6_pipeline_session *session)
 {
    /* 3DSTATE_DRAWING_RECTANGLE */
-   if (DIRTY(FRAMEBUFFER)) {
+   if (DIRTY(FB)) {
       if (p->dev->gen == ILO_GEN(6))
          gen6_wa_pipe_control_post_sync(p, false);
 
@@ -660,8 +658,7 @@ gen6_pipeline_wm(struct ilo_3d_pipeline *p,
       p->gen6_3DSTATE_CONSTANT_PS(p->dev, NULL, NULL, 0, p->cp);
 
    /* 3DSTATE_WM */
-   if (DIRTY(FS) || DIRTY(FRAGMENT_SAMPLERS) ||
-       DIRTY(BLEND) || DIRTY(DEPTH_STENCIL_ALPHA) ||
+   if (DIRTY(FS) || DIRTY(SAMPLER_FS) || DIRTY(BLEND) || DIRTY(DSA) ||
        DIRTY(RASTERIZER) || session->kernel_bo_changed) {
       const int num_samplers = ilo->sampler[PIPE_SHADER_FRAGMENT].count;
       const bool dual_blend = ilo->blend->dual_blend;
@@ -682,7 +679,7 @@ gen6_pipeline_wm_multisample(struct ilo_3d_pipeline *p,
                              struct gen6_pipeline_session *session)
 {
    /* 3DSTATE_MULTISAMPLE and 3DSTATE_SAMPLE_MASK */
-   if (DIRTY(SAMPLE_MASK) || DIRTY(FRAMEBUFFER)) {
+   if (DIRTY(SAMPLE_MASK) || DIRTY(FB)) {
       const uint32_t *packed_sample_pos;
 
       packed_sample_pos = (ilo->fb.num_samples > 1) ?
@@ -708,7 +705,7 @@ gen6_pipeline_wm_depth(struct ilo_3d_pipeline *p,
                        struct gen6_pipeline_session *session)
 {
    /* 3DSTATE_DEPTH_BUFFER and 3DSTATE_CLEAR_PARAMS */
-   if (DIRTY(FRAMEBUFFER) || session->batch_bo_changed) {
+   if (DIRTY(FB) || session->batch_bo_changed) {
       const struct ilo_zs_surface *zs;
 
       if (ilo->fb.state.zsbuf) {
@@ -806,7 +803,7 @@ gen6_pipeline_state_cc(struct ilo_3d_pipeline *p,
                        struct gen6_pipeline_session *session)
 {
    /* BLEND_STATE */
-   if (DIRTY(BLEND) || DIRTY(FRAMEBUFFER) || DIRTY(DEPTH_STENCIL_ALPHA)) {
+   if (DIRTY(BLEND) || DIRTY(FB) || DIRTY(DSA)) {
       p->state.BLEND_STATE = p->gen6_BLEND_STATE(p->dev,
             ilo->blend, &ilo->fb, &ilo->dsa->alpha, p->cp);
 
@@ -814,7 +811,7 @@ gen6_pipeline_state_cc(struct ilo_3d_pipeline *p,
    }
 
    /* COLOR_CALC_STATE */
-   if (DIRTY(DEPTH_STENCIL_ALPHA) || DIRTY(STENCIL_REF) || DIRTY(BLEND_COLOR)) {
+   if (DIRTY(DSA) || DIRTY(STENCIL_REF) || DIRTY(BLEND_COLOR)) {
       p->state.COLOR_CALC_STATE =
          p->gen6_COLOR_CALC_STATE(p->dev, &ilo->stencil_ref,
                ilo->dsa->alpha.ref_value, &ilo->blend_color, p->cp);
@@ -823,7 +820,7 @@ gen6_pipeline_state_cc(struct ilo_3d_pipeline *p,
    }
 
    /* DEPTH_STENCIL_STATE */
-   if (DIRTY(DEPTH_STENCIL_ALPHA)) {
+   if (DIRTY(DSA)) {
       p->state.DEPTH_STENCIL_STATE =
          p->gen6_DEPTH_STENCIL_STATE(p->dev, ilo->dsa, p->cp);
 
@@ -852,7 +849,7 @@ gen6_pipeline_state_surfaces_rt(struct ilo_3d_pipeline *p,
                                 struct gen6_pipeline_session *session)
 {
    /* SURFACE_STATEs for render targets */
-   if (DIRTY(FRAMEBUFFER)) {
+   if (DIRTY(FB)) {
       const int offset = ILO_WM_DRAW_SURFACE(0);
       uint32_t *surface_state = &p->state.wm.SURFACE_STATE[offset];
       int i;
@@ -905,7 +902,7 @@ gen6_pipeline_state_surfaces_so(struct ilo_3d_pipeline *p,
       return;
 
    /* SURFACE_STATEs for stream output targets */
-   if (DIRTY(VS) || DIRTY(GS) || DIRTY(STREAM_OUTPUT_TARGETS)) {
+   if (DIRTY(VS) || DIRTY(GS) || DIRTY(SO)) {
       const struct pipe_stream_output_info *so_info =
          (ilo->gs) ? ilo_shader_get_kernel_so_info(ilo->gs) :
          (ilo->vs) ? ilo_shader_get_kernel_so_info(ilo->vs) : NULL;
@@ -952,7 +949,7 @@ gen6_pipeline_state_surfaces_view(struct ilo_3d_pipeline *p,
    /* SURFACE_STATEs for sampler views */
    switch (shader_type) {
    case PIPE_SHADER_VERTEX:
-      if (DIRTY(VERTEX_SAMPLER_VIEWS)) {
+      if (DIRTY(VIEW_VS)) {
          offset = ILO_VS_TEXTURE_SURFACE(0);
          surface_state = &p->state.vs.SURFACE_STATE[offset];
 
@@ -963,7 +960,7 @@ gen6_pipeline_state_surfaces_view(struct ilo_3d_pipeline *p,
       }
       break;
    case PIPE_SHADER_FRAGMENT:
-      if (DIRTY(FRAGMENT_SAMPLER_VIEWS)) {
+      if (DIRTY(VIEW_FS)) {
          offset = ILO_WM_TEXTURE_SURFACE(0);
          surface_state = &p->state.wm.SURFACE_STATE[offset];
 
@@ -1015,7 +1012,7 @@ gen6_pipeline_state_surfaces_const(struct ilo_3d_pipeline *p,
    /* SURFACE_STATEs for constant buffers */
    switch (shader_type) {
    case PIPE_SHADER_VERTEX:
-      if (DIRTY(CONSTANT_BUFFER)) {
+      if (DIRTY(CBUF)) {
          offset = ILO_VS_CONST_SURFACE(0);
          surface_state = &p->state.vs.SURFACE_STATE[offset];
 
@@ -1026,7 +1023,7 @@ gen6_pipeline_state_surfaces_const(struct ilo_3d_pipeline *p,
       }
       break;
    case PIPE_SHADER_FRAGMENT:
-      if (DIRTY(CONSTANT_BUFFER)) {
+      if (DIRTY(CBUF)) {
          offset = ILO_WM_CONST_SURFACE(0);
          surface_state = &p->state.wm.SURFACE_STATE[offset];
 
@@ -1140,11 +1137,11 @@ gen6_pipeline_state_samplers(struct ilo_3d_pipeline *p,
    /* SAMPLER_BORDER_COLOR_STATE and SAMPLER_STATE */
    switch (shader_type) {
    case PIPE_SHADER_VERTEX:
-      if (DIRTY(VERTEX_SAMPLERS) || DIRTY(VERTEX_SAMPLER_VIEWS)) {
+      if (DIRTY(SAMPLER_VS) || DIRTY(VIEW_VS)) {
          sampler_state = &p->state.vs.SAMPLER_STATE;
          border_color_state = p->state.vs.SAMPLER_BORDER_COLOR_STATE;
 
-         if (DIRTY(VERTEX_SAMPLERS))
+         if (DIRTY(SAMPLER_VS))
             emit_border_color = true;
 
          session->sampler_state_vs_changed = true;
@@ -1154,11 +1151,11 @@ gen6_pipeline_state_samplers(struct ilo_3d_pipeline *p,
       }
       break;
    case PIPE_SHADER_FRAGMENT:
-      if (DIRTY(FRAGMENT_SAMPLERS) || DIRTY(FRAGMENT_SAMPLER_VIEWS)) {
+      if (DIRTY(SAMPLER_FS) || DIRTY(VIEW_FS)) {
          sampler_state = &p->state.wm.SAMPLER_STATE;
          border_color_state = p->state.wm.SAMPLER_BORDER_COLOR_STATE;
 
-         if (DIRTY(FRAGMENT_SAMPLERS))
+         if (DIRTY(SAMPLER_FS))
             emit_border_color = true;
 
          session->sampler_state_fs_changed = true;

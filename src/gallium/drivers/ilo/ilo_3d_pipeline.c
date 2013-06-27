@@ -153,7 +153,7 @@ ilo_3d_pipeline_emit_draw(struct ilo_3d_pipeline *p,
 {
    bool success;
 
-   if (ilo->dirty & ILO_DIRTY_STREAM_OUTPUT_TARGETS &&
+   if (ilo->dirty & ILO_DIRTY_SO &&
        ilo->so.enabled && !ilo->so.append_bitmask) {
       /*
        * We keep track of the SVBI in the driver, so that we can restore it

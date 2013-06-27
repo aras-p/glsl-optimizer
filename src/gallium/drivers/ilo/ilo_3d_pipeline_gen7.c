@@ -186,7 +186,7 @@ gen7_pipeline_common_urb(struct ilo_3d_pipeline *p,
                          struct gen6_pipeline_session *session)
 {
    /* 3DSTATE_URB_{VS,GS,HS,DS} */
-   if (DIRTY(VERTEX_ELEMENTS) || DIRTY(VS)) {
+   if (DIRTY(VE) || DIRTY(VS)) {
       /* the first 16KB are reserved for VS and PS PCBs */
       const int offset = 16 * 1024;
       int vs_entry_size, vs_total_size;
@@ -288,7 +288,7 @@ gen7_pipeline_vs(struct ilo_3d_pipeline *p,
    const bool emit_3dstate_sampler_state = session->sampler_state_vs_changed;
    /* see gen6_pipeline_vs() */
    const bool emit_3dstate_constant_vs = session->pcb_state_vs_changed;
-   const bool emit_3dstate_vs = (DIRTY(VS) || DIRTY(VERTEX_SAMPLERS));
+   const bool emit_3dstate_vs = (DIRTY(VS) || DIRTY(SAMPLER_VS));
 
    /* emit depth stall before any of the VS commands */
    if (emit_3dstate_binding_table || emit_3dstate_sampler_state ||
@@ -394,8 +394,8 @@ gen7_pipeline_sol(struct ilo_3d_pipeline *p,
    gen6_pipeline_update_max_svbi(p, ilo, session);
 
    /* 3DSTATE_SO_BUFFER */
-   if ((DIRTY(STREAM_OUTPUT_TARGETS) || dirty_sh ||
-        session->batch_bo_changed) && ilo->so.enabled) {
+   if ((DIRTY(SO) || dirty_sh || session->batch_bo_changed) &&
+       ilo->so.enabled) {
       int i;
 
       for (i = 0; i < ilo->so.count; i++) {
@@ -421,7 +421,7 @@ gen7_pipeline_sol(struct ilo_3d_pipeline *p,
       p->gen7_3DSTATE_SO_DECL_LIST(p->dev, so_info, p->cp);
 
    /* 3DSTATE_STREAMOUT */
-   if (DIRTY(STREAM_OUTPUT_TARGETS) || DIRTY(RASTERIZER) || dirty_sh) {
+   if (DIRTY(SO) || DIRTY(RASTERIZER) || dirty_sh) {
       const unsigned buffer_mask = (1 << ilo->so.count) - 1;
       const int output_count = ilo_shader_get_kernel_param(shader,
             ILO_KERNEL_OUTPUT_COUNT);
@@ -443,7 +443,7 @@ gen7_pipeline_sf(struct ilo_3d_pipeline *p,
    }
 
    /* 3DSTATE_SF */
-   if (DIRTY(RASTERIZER) || DIRTY(FRAMEBUFFER)) {
+   if (DIRTY(RASTERIZER) || DIRTY(FB)) {
       gen7_wa_pipe_control_cs_stall(p, true, true);
       p->gen7_3DSTATE_SF(p->dev, ilo->rasterizer, ilo->fb.state.zsbuf, p->cp);
    }
@@ -455,8 +455,7 @@ gen7_pipeline_wm(struct ilo_3d_pipeline *p,
                  struct gen6_pipeline_session *session)
 {
    /* 3DSTATE_WM */
-   if (DIRTY(FS) || DIRTY(BLEND) || DIRTY(DEPTH_STENCIL_ALPHA) ||
-       DIRTY(RASTERIZER)) {
+   if (DIRTY(FS) || DIRTY(BLEND) || DIRTY(DSA) || DIRTY(RASTERIZER)) {
       const bool cc_may_kill = (ilo->dsa->alpha.enabled ||
                                 ilo->blend->alpha_to_coverage);
 
@@ -484,8 +483,8 @@ gen7_pipeline_wm(struct ilo_3d_pipeline *p,
       p->gen6_3DSTATE_CONSTANT_PS(p->dev, NULL, NULL, 0, p->cp);
 
    /* 3DSTATE_PS */
-   if (DIRTY(FS) || DIRTY(FRAGMENT_SAMPLERS) ||
-       DIRTY(BLEND) || session->kernel_bo_changed) {
+   if (DIRTY(FS) || DIRTY(SAMPLER_FS) || DIRTY(BLEND) ||
+       session->kernel_bo_changed) {
       const int num_samplers = ilo->sampler[PIPE_SHADER_FRAGMENT].count;
       const bool dual_blend = ilo->blend->dual_blend;
 
@@ -500,12 +499,10 @@ gen7_pipeline_wm(struct ilo_3d_pipeline *p,
 
    /* XXX what is the best way to know if this workaround is needed? */
    {
-      const bool emit_3dstate_ps = (DIRTY(FS) ||
-                                       DIRTY(FRAGMENT_SAMPLERS) ||
-                                       DIRTY(BLEND));
+      const bool emit_3dstate_ps =
+         (DIRTY(FS) || DIRTY(SAMPLER_FS) || DIRTY(BLEND));
       const bool emit_3dstate_depth_buffer =
-         (DIRTY(FRAMEBUFFER) || DIRTY(DEPTH_STENCIL_ALPHA) ||
-          session->state_bo_changed);
+         (DIRTY(FB) || DIRTY(DSA) || session->state_bo_changed);
 
       if (emit_3dstate_ps ||
           emit_3dstate_depth_buffer ||
@@ -520,7 +517,7 @@ gen7_pipeline_wm(struct ilo_3d_pipeline *p,
    }
 
    /* 3DSTATE_DEPTH_BUFFER and 3DSTATE_CLEAR_PARAMS */
-   if (DIRTY(FRAMEBUFFER) || session->batch_bo_changed) {
+   if (DIRTY(FB) || session->batch_bo_changed) {
       const struct ilo_zs_surface *zs;
 
       if (ilo->fb.state.zsbuf) {
@@ -549,7 +546,7 @@ gen7_pipeline_wm_multisample(struct ilo_3d_pipeline *p,
                              struct gen6_pipeline_session *session)
 {
    /* 3DSTATE_MULTISAMPLE and 3DSTATE_SAMPLE_MASK */
-   if (DIRTY(SAMPLE_MASK) || DIRTY(FRAMEBUFFER)) {
+   if (DIRTY(SAMPLE_MASK) || DIRTY(FB)) {
       const uint32_t *packed_sample_pos;
 
       gen7_wa_pipe_control_cs_stall(p, true, true);

@@ -89,7 +89,7 @@ finalize_constant_buffers(struct ilo_context *ilo)
 {
    int sh;
 
-   if (!(ilo->dirty & ILO_DIRTY_CONSTANT_BUFFER))
+   if (!(ilo->dirty & ILO_DIRTY_CBUF))
       return;
 
    /* TODO push constants? */
@@ -161,7 +161,7 @@ finalize_index_buffer(struct ilo_context *ilo)
       /* could be negative */
       ilo->ib.draw_start_offset -= ilo->draw->start;
 
-      ilo->dirty |= ILO_DIRTY_INDEX_BUFFER;
+      ilo->dirty |= ILO_DIRTY_IB;
    }
 }
 
@@ -284,7 +284,7 @@ ilo_bind_fragment_sampler_states(struct pipe_context *pipe,
    struct ilo_context *ilo = ilo_context(pipe);
 
    bind_samplers(ilo, PIPE_SHADER_FRAGMENT, 0, num_samplers, samplers, true);
-   ilo->dirty |= ILO_DIRTY_FRAGMENT_SAMPLERS;
+   ilo->dirty |= ILO_DIRTY_SAMPLER_FS;
 }
 
 static void
@@ -295,7 +295,7 @@ ilo_bind_vertex_sampler_states(struct pipe_context *pipe,
    struct ilo_context *ilo = ilo_context(pipe);
 
    bind_samplers(ilo, PIPE_SHADER_VERTEX, 0, num_samplers, samplers, true);
-   ilo->dirty |= ILO_DIRTY_VERTEX_SAMPLERS;
+   ilo->dirty |= ILO_DIRTY_SAMPLER_VS;
 }
 
 static void
@@ -306,7 +306,7 @@ ilo_bind_geometry_sampler_states(struct pipe_context *pipe,
    struct ilo_context *ilo = ilo_context(pipe);
 
    bind_samplers(ilo, PIPE_SHADER_GEOMETRY, 0, num_samplers, samplers, true);
-   ilo->dirty |= ILO_DIRTY_GEOMETRY_SAMPLERS;
+   ilo->dirty |= ILO_DIRTY_SAMPLER_GS;
 }
 
 static void
@@ -319,7 +319,7 @@ ilo_bind_compute_sampler_states(struct pipe_context *pipe,
 
    bind_samplers(ilo, PIPE_SHADER_COMPUTE,
          start_slot, num_samplers, samplers, false);
-   ilo->dirty |= ILO_DIRTY_COMPUTE_SAMPLERS;
+   ilo->dirty |= ILO_DIRTY_SAMPLER_CS;
 }
 
 static void
@@ -382,7 +382,7 @@ ilo_bind_depth_stencil_alpha_state(struct pipe_context *pipe, void *state)
 
    ilo->dsa = state;
 
-   ilo->dirty |= ILO_DIRTY_DEPTH_STENCIL_ALPHA;
+   ilo->dirty |= ILO_DIRTY_DSA;
 }
 
 static void
@@ -519,7 +519,7 @@ ilo_bind_vertex_elements_state(struct pipe_context *pipe, void *state)
 
    ilo->ve = state;
 
-   ilo->dirty |= ILO_DIRTY_VERTEX_ELEMENTS;
+   ilo->dirty |= ILO_DIRTY_VE;
 }
 
 static void
@@ -624,7 +624,7 @@ ilo_set_constant_buffer(struct pipe_context *pipe,
       ilo->cbuf[shader].enabled_mask &= ~(1 << index);
    }
 
-   ilo->dirty |= ILO_DIRTY_CONSTANT_BUFFER;
+   ilo->dirty |= ILO_DIRTY_CBUF;
 }
 
 static void
@@ -645,7 +645,7 @@ ilo_set_framebuffer_state(struct pipe_context *pipe,
    if (!ilo->fb.num_samples)
       ilo->fb.num_samples = 1;
 
-   ilo->dirty |= ILO_DIRTY_FRAMEBUFFER;
+   ilo->dirty |= ILO_DIRTY_FB;
 }
 
 static void
@@ -761,7 +761,7 @@ ilo_set_fragment_sampler_views(struct pipe_context *pipe,
    struct ilo_context *ilo = ilo_context(pipe);
 
    set_sampler_views(ilo, PIPE_SHADER_FRAGMENT, 0, num_views, views, true);
-   ilo->dirty |= ILO_DIRTY_FRAGMENT_SAMPLER_VIEWS;
+   ilo->dirty |= ILO_DIRTY_VIEW_FS;
 }
 
 static void
@@ -772,7 +772,7 @@ ilo_set_vertex_sampler_views(struct pipe_context *pipe,
    struct ilo_context *ilo = ilo_context(pipe);
 
    set_sampler_views(ilo, PIPE_SHADER_VERTEX, 0, num_views, views, true);
-   ilo->dirty |= ILO_DIRTY_VERTEX_SAMPLER_VIEWS;
+   ilo->dirty |= ILO_DIRTY_VIEW_VS;
 }
 
 static void
@@ -783,7 +783,7 @@ ilo_set_geometry_sampler_views(struct pipe_context *pipe,
    struct ilo_context *ilo = ilo_context(pipe);
 
    set_sampler_views(ilo, PIPE_SHADER_GEOMETRY, 0, num_views, views, true);
-   ilo->dirty |= ILO_DIRTY_GEOMETRY_SAMPLER_VIEWS;
+   ilo->dirty |= ILO_DIRTY_VIEW_GS;
 }
 
 static void
@@ -796,7 +796,7 @@ ilo_set_compute_sampler_views(struct pipe_context *pipe,
    set_sampler_views(ilo, PIPE_SHADER_COMPUTE,
          start_slot, num_views, views, false);
 
-   ilo->dirty |= ILO_DIRTY_COMPUTE_SAMPLER_VIEWS;
+   ilo->dirty |= ILO_DIRTY_VIEW_CS;
 }
 
 static void
@@ -829,7 +829,7 @@ ilo_set_shader_resources(struct pipe_context *pipe,
       ilo->resource.count = count;
    }
 
-   ilo->dirty |= ILO_DIRTY_SHADER_RESOURCES;
+   ilo->dirty |= ILO_DIRTY_RESOURCE;
 }
 
 static void
@@ -849,7 +849,7 @@ ilo_set_vertex_buffers(struct pipe_context *pipe,
    util_set_vertex_buffers_mask(ilo->vb.states,
          &ilo->vb.enabled_mask, buffers, start_slot, num_buffers);
 
-   ilo->dirty |= ILO_DIRTY_VERTEX_BUFFERS;
+   ilo->dirty |= ILO_DIRTY_VB;
 }
 
 static void
@@ -883,7 +883,7 @@ ilo_set_index_buffer(struct pipe_context *pipe,
       ilo->ib.draw_start_offset = 0;
    }
 
-   ilo->dirty |= ILO_DIRTY_INDEX_BUFFER;
+   ilo->dirty |= ILO_DIRTY_IB;
 }
 
 static struct pipe_stream_output_target *
@@ -930,7 +930,7 @@ ilo_set_stream_output_targets(struct pipe_context *pipe,
 
    ilo->so.enabled = (ilo->so.count > 0);
 
-   ilo->dirty |= ILO_DIRTY_STREAM_OUTPUT_TARGETS;
+   ilo->dirty |= ILO_DIRTY_SO;
 }
 
 static void
@@ -1076,7 +1076,7 @@ ilo_bind_compute_state(struct pipe_context *pipe, void *state)
 
    ilo->cs = state;
 
-   ilo->dirty |= ILO_DIRTY_COMPUTE;
+   ilo->dirty |= ILO_DIRTY_CS;
 }
 
 static void
@@ -1119,7 +1119,7 @@ ilo_set_compute_resources(struct pipe_context *pipe,
       ilo->cs_resource.count = count;
    }
 
-   ilo->dirty |= ILO_DIRTY_COMPUTE_RESOURCES;
+   ilo->dirty |= ILO_DIRTY_CS_RESOURCE;
 }
 
 static void
@@ -1298,17 +1298,17 @@ ilo_mark_states_with_resource_dirty(struct ilo_context *ilo,
          const unsigned idx = u_bit_scan(&vb_mask);
 
          if (ilo->vb.states[idx].buffer == res) {
-            states |= ILO_DIRTY_VERTEX_BUFFERS;
+            states |= ILO_DIRTY_VB;
             break;
          }
       }
 
       if (ilo->ib.state.buffer == res)
-         states |= ILO_DIRTY_INDEX_BUFFER;
+         states |= ILO_DIRTY_IB;
 
       for (i = 0; i < ilo->so.count; i++) {
          if (ilo->so.states[i]->buffer == res) {
-            states |= ILO_DIRTY_STREAM_OUTPUT_TARGETS;
+            states |= ILO_DIRTY_SO;
             break;
          }
       }
@@ -1320,10 +1320,10 @@ ilo_mark_states_with_resource_dirty(struct ilo_context *ilo,
 
          if (view->texture == res) {
             static const unsigned view_dirty_bits[PIPE_SHADER_TYPES] = {
-               [PIPE_SHADER_VERTEX]    = ILO_DIRTY_VERTEX_SAMPLER_VIEWS,
-               [PIPE_SHADER_FRAGMENT]  = ILO_DIRTY_FRAGMENT_SAMPLER_VIEWS,
-               [PIPE_SHADER_GEOMETRY]  = ILO_DIRTY_GEOMETRY_SAMPLER_VIEWS,
-               [PIPE_SHADER_COMPUTE]   = ILO_DIRTY_COMPUTE_SAMPLER_VIEWS,
+               [PIPE_SHADER_VERTEX]    = ILO_DIRTY_VIEW_VS,
+               [PIPE_SHADER_FRAGMENT]  = ILO_DIRTY_VIEW_FS,
+               [PIPE_SHADER_GEOMETRY]  = ILO_DIRTY_VIEW_GS,
+               [PIPE_SHADER_COMPUTE]   = ILO_DIRTY_VIEW_CS,
             };
 
             states |= view_dirty_bits[sh];
@@ -1336,7 +1336,7 @@ ilo_mark_states_with_resource_dirty(struct ilo_context *ilo,
             struct ilo_cbuf_cso *cbuf = &ilo->cbuf[sh].cso[i];
 
             if (cbuf->resource == res) {
-               states |= ILO_DIRTY_CONSTANT_BUFFER;
+               states |= ILO_DIRTY_CBUF;
                break;
             }
          }
@@ -1345,7 +1345,7 @@ ilo_mark_states_with_resource_dirty(struct ilo_context *ilo,
 
    for (i = 0; i < ilo->resource.count; i++) {
       if (ilo->resource.states[i]->texture == res) {
-         states |= ILO_DIRTY_SHADER_RESOURCES;
+         states |= ILO_DIRTY_RESOURCE;
          break;
       }
    }
@@ -1354,19 +1354,19 @@ ilo_mark_states_with_resource_dirty(struct ilo_context *ilo,
    if (res->target != PIPE_BUFFER) {
       for (i = 0; i < ilo->fb.state.nr_cbufs; i++) {
          if (ilo->fb.state.cbufs[i]->texture == res) {
-            states |= ILO_DIRTY_FRAMEBUFFER;
+            states |= ILO_DIRTY_FB;
             break;
          }
       }
 
       if (ilo->fb.state.zsbuf && ilo->fb.state.zsbuf->texture == res)
-         states |= ILO_DIRTY_FRAMEBUFFER;
+         states |= ILO_DIRTY_FB;
    }
 
    for (i = 0; i < ilo->cs_resource.count; i++) {
       pipe_surface_reference(&ilo->cs_resource.states[i], NULL);
       if (ilo->cs_resource.states[i]->texture == res) {
-         states |= ILO_DIRTY_COMPUTE_RESOURCES;
+         states |= ILO_DIRTY_CS_RESOURCE;
          break;
       }
    }

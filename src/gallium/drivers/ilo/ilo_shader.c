@@ -746,7 +746,7 @@ ilo_shader_create_vs(const struct ilo_dev_info *dev,
    shader = ilo_shader_state_create(precompile, PIPE_SHADER_VERTEX, state);
 
    /* states used in ilo_shader_variant_init() */
-   shader->info.non_orthogonal_states = ILO_DIRTY_VERTEX_SAMPLER_VIEWS |
+   shader->info.non_orthogonal_states = ILO_DIRTY_VIEW_VS |
                                         ILO_DIRTY_RASTERIZER;
 
    return shader;
@@ -762,7 +762,7 @@ ilo_shader_create_gs(const struct ilo_dev_info *dev,
    shader = ilo_shader_state_create(precompile, PIPE_SHADER_GEOMETRY, state);
 
    /* states used in ilo_shader_variant_init() */
-   shader->info.non_orthogonal_states = ILO_DIRTY_GEOMETRY_SAMPLER_VIEWS |
+   shader->info.non_orthogonal_states = ILO_DIRTY_VIEW_GS |
                                         ILO_DIRTY_VS |
                                         ILO_DIRTY_RASTERIZER;
 
@@ -779,9 +779,9 @@ ilo_shader_create_fs(const struct ilo_dev_info *dev,
    shader = ilo_shader_state_create(precompile, PIPE_SHADER_FRAGMENT, state);
 
    /* states used in ilo_shader_variant_init() */
-   shader->info.non_orthogonal_states = ILO_DIRTY_FRAGMENT_SAMPLER_VIEWS |
+   shader->info.non_orthogonal_states = ILO_DIRTY_VIEW_FS |
                                         ILO_DIRTY_RASTERIZER |
-                                        ILO_DIRTY_FRAMEBUFFER;
+                                        ILO_DIRTY_FB;
 
    return shader;
 }

@@ -386,10 +386,10 @@ draw_vbo(struct ilo_3d *hw3d, const struct ilo_context *ilo,
        * happens in the middle of a batch buffer, we need to insert manual
        * flushes.
        */
-      need_flush = (ilo->dirty & ILO_DIRTY_FRAMEBUFFER);
+      need_flush = (ilo->dirty & ILO_DIRTY_FB);
 
       /* same to SO target changes */
-      need_flush |= (ilo->dirty & ILO_DIRTY_STREAM_OUTPUT_TARGETS);
+      need_flush |= (ilo->dirty & ILO_DIRTY_SO);
    }
 
    /* make sure there is enough room first */
