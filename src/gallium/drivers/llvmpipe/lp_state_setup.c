@@ -244,6 +244,7 @@ lp_do_offset_tri(struct gallivm_state *gallivm,
 {
    LLVMBuilderRef b = gallivm->builder;
    struct lp_build_context bld;
+   struct lp_build_context flt_scalar_bld;
    LLVMValueRef zoffset, mult;
    LLVMValueRef z0_new, z1_new, z2_new;
    LLVMValueRef dzdxdzdy, dzdx, dzdy, dzxyz20, dyzzx01, dyzzx01_dzxyz20, dzx01_dyz20;
@@ -298,6 +299,18 @@ lp_do_offset_tri(struct gallivm_state *gallivm,
                            lp_build_const_float(gallivm, key->pgon_offset_units),
                            mult, "zoffset");
 
+   lp_build_context_init(&flt_scalar_bld, gallivm, lp_type_float_vec(32, 32));
+   if (key->pgon_offset_clamp > 0) {
+      zoffset = lp_build_min(&flt_scalar_bld,
+                             lp_build_const_float(gallivm, key->pgon_offset_clamp),
+                             zoffset);
+   }
+   else if (key->pgon_offset_clamp < 0) {
+      zoffset = lp_build_max(&flt_scalar_bld,
+                             lp_build_const_float(gallivm, key->pgon_offset_clamp),
+                             zoffset);
+   }
+
    /* yuck */
    shuffles[0] = twoi;
    shuffles[1] = lp_build_const_int32(gallivm, 6);
@@ -312,6 +325,10 @@ lp_do_offset_tri(struct gallivm_state *gallivm,
    zoffset = vec4f_from_scalar(gallivm, zoffset, "");
 
    /* clamp and do offset */
+   /*
+    * FIXME I suspect the clamp (is that even right to always clamp to fixed
+    * 0.0/1.0?) should really be per fragment?
+    */
    z0z1z2 = lp_build_clamp(&bld, LLVMBuildFAdd(b, z0z1z2, zoffset, ""), bld.zero, bld.one);
 
    /* insert into args->a0.z, a1.z, a2.z:
@@ -810,7 +827,7 @@ lp_make_setup_variant_key(struct llvmpipe_context *lp,
    key->pixel_center_half = lp->rasterizer->half_pixel_center;
    key->twoside = lp->rasterizer->light_twoside;
    key->size = Offset(struct lp_setup_variant_key,
-		      inputs[key->num_inputs]);
+                      inputs[key->num_inputs]);
 
    key->color_slot  = lp->color_slot [0];
    key->bcolor_slot = lp->bcolor_slot[0];
@@ -823,6 +840,7 @@ lp_make_setup_variant_key(struct llvmpipe_context *lp,
 
    key->pgon_offset_units = (float) (lp->rasterizer->offset_units * lp->mrd);
    key->pgon_offset_scale = lp->rasterizer->offset_scale;
+   key->pgon_offset_clamp = lp->rasterizer->offset_clamp;
    key->pad = 0;
    memcpy(key->inputs, fs->inputs, key->num_inputs * sizeof key->inputs[0]);
    for (i = 0; i < key->num_inputs; i++) {

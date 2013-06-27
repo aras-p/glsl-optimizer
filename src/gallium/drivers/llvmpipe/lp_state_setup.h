@@ -14,7 +14,7 @@ struct lp_setup_variant_list_item
 };
 
 
-struct lp_setup_variant_key {   
+struct lp_setup_variant_key {
    unsigned size:16;
    unsigned num_inputs:8;
    int color_slot:8;
@@ -27,8 +27,10 @@ struct lp_setup_variant_key {
    unsigned twoside:1;
    unsigned pad:5;
 
+   /* TODO: get those floats out of the key and use a jit_context for setup */
    float pgon_offset_units;
    float pgon_offset_scale;
+   float pgon_offset_clamp;
    struct lp_shader_input inputs[PIPE_MAX_SHADER_INPUTS];
 };
 

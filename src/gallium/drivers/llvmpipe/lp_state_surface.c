@@ -65,6 +65,8 @@ llvmpipe_set_framebuffer_state(struct pipe_context *pipe,
       }
 
       /* Tell draw module how deep the Z/depth buffer is */
+      /* FIXME: mrd constant isn't right should use a value derived from
+       * current primitive not a constant (for float depth buffers) */
       if (lp->framebuffer.zsbuf) {
          int depth_bits;
          double mrd;
