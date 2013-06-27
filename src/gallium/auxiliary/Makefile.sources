@@ -44,6 +44,7 @@ C_SOURCES := \
 	hud/hud_fps.c \
         hud/hud_driver_query.c \
 	os/os_misc.c \
+	os/os_process.c \
 	os/os_time.c \
 	pipebuffer/pb_buffer_fenced.c \
 	pipebuffer/pb_buffer_malloc.c \
