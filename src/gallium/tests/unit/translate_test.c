@@ -260,13 +260,13 @@ int main(int argc, char** argv)
             buffer[0] = byte_buffer;
 
          translate[0]->set_buffer(translate[0], 0, buffer[0], input_format_size, count - 1);
-         translate[0]->run_elts(translate[0], elts, count, 0, buffer[1]);
+         translate[0]->run_elts(translate[0], elts, count, 0, 0, buffer[1]);
          translate[1]->set_buffer(translate[1], 0, buffer[1], output_format_size, count - 1);
-         translate[1]->run_elts(translate[1], elts, count, 0, buffer[2]);
+         translate[1]->run_elts(translate[1], elts, count, 0, 0, buffer[2]);
          translate[0]->set_buffer(translate[0], 0, buffer[2], input_format_size, count - 1);
-         translate[0]->run_elts(translate[0], elts, count, 0, buffer[3]);
+         translate[0]->run_elts(translate[0], elts, count, 0, 0, buffer[3]);
          translate[1]->set_buffer(translate[1], 0, buffer[3], output_format_size, count - 1);
-         translate[1]->run_elts(translate[1], elts, count, 0, buffer[4]);
+         translate[1]->run_elts(translate[1], elts, count, 0, 0, buffer[4]);
 
          for (i = 0; i < count; ++i)
          {
