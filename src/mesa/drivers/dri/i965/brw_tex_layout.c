@@ -151,17 +151,15 @@ brw_miptree_layout(struct intel_context *intel, struct intel_mipmap_tree *mt)
 {
    switch (mt->target) {
    case GL_TEXTURE_CUBE_MAP:
-      if (intel->gen >= 5) {
-	 /* On Ironlake, cube maps are finally represented as just a series of
-	  * MIPLAYOUT_BELOW 2D textures (like 2D texture arrays), separated by a
-	  * pitch of qpitch rows, where qpitch is defined by the equation given
-	  * in Volume 1 of the BSpec.
-	  */
+      if (intel->gen == 4) {
+         /* Gen4 stores cube maps as 3D textures. */
+         assert(mt->physical_depth0 == 6);
+         brw_miptree_layout_texture_3d(intel, mt);
+      } else {
+         /* All other hardware stores cube maps as 2D arrays. */
 	 brw_miptree_layout_texture_array(intel, mt);
-	 break;
       }
-      assert(mt->physical_depth0 == 6);
-      /* FALLTHROUGH */
+      break;
 
    case GL_TEXTURE_3D:
       brw_miptree_layout_texture_3d(intel, mt);
