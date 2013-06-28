@@ -44,62 +44,93 @@ intelInitExtensions(struct gl_context *ctx)
 
    assert(intel->gen >= 4);
 
+   ctx->Extensions.ARB_depth_buffer_float = true;
+   ctx->Extensions.ARB_depth_clamp = true;
    ctx->Extensions.ARB_depth_texture = true;
    ctx->Extensions.ARB_draw_elements_base_vertex = true;
+   ctx->Extensions.ARB_draw_instanced = true;
    ctx->Extensions.ARB_ES2_compatibility = true;
    ctx->Extensions.ARB_explicit_attrib_location = true;
+   ctx->Extensions.ARB_fragment_coord_conventions = true;
    ctx->Extensions.ARB_fragment_program = true;
+   ctx->Extensions.ARB_fragment_program_shadow = true;
    ctx->Extensions.ARB_fragment_shader = true;
    ctx->Extensions.ARB_framebuffer_object = true;
    ctx->Extensions.ARB_half_float_pixel = true;
+   ctx->Extensions.ARB_half_float_vertex = true;
+   ctx->Extensions.ARB_instanced_arrays = true;
    ctx->Extensions.ARB_internalformat_query = true;
    ctx->Extensions.ARB_map_buffer_range = true;
    ctx->Extensions.ARB_occlusion_query = true;
+   ctx->Extensions.ARB_occlusion_query2 = true;
    ctx->Extensions.ARB_point_sprite = true;
+   ctx->Extensions.ARB_seamless_cube_map = true;
+   ctx->Extensions.ARB_shader_bit_encoding = true;
    ctx->Extensions.ARB_shader_objects = true;
+   ctx->Extensions.ARB_shader_texture_lod = true;
    ctx->Extensions.ARB_shading_language_100 = true;
    ctx->Extensions.ARB_shadow = true;
    ctx->Extensions.ARB_sync = true;
    ctx->Extensions.ARB_texture_border_clamp = true;
+   ctx->Extensions.ARB_texture_compression_rgtc = true;
    ctx->Extensions.ARB_texture_cube_map = true;
    ctx->Extensions.ARB_texture_env_combine = true;
    ctx->Extensions.ARB_texture_env_crossbar = true;
    ctx->Extensions.ARB_texture_env_dot3 = true;
+   ctx->Extensions.ARB_texture_float = true;
    ctx->Extensions.ARB_texture_non_power_of_two = true;
+   ctx->Extensions.ARB_texture_rg = true;
+   ctx->Extensions.ARB_texture_rgb10_a2ui = true;
    ctx->Extensions.ARB_texture_storage = true;
    ctx->Extensions.ARB_vertex_program = true;
    ctx->Extensions.ARB_vertex_shader = true;
+   ctx->Extensions.ARB_vertex_type_2_10_10_10_rev = true;
    ctx->Extensions.EXT_blend_color = true;
    ctx->Extensions.EXT_blend_equation_separate = true;
    ctx->Extensions.EXT_blend_func_separate = true;
    ctx->Extensions.EXT_blend_minmax = true;
+   ctx->Extensions.EXT_draw_buffers2 = true;
    ctx->Extensions.EXT_framebuffer_blit = true;
    ctx->Extensions.EXT_framebuffer_object = true;
    ctx->Extensions.EXT_fog_coord = true;
+   ctx->Extensions.EXT_framebuffer_sRGB = true;
    ctx->Extensions.EXT_gpu_program_parameters = true;
    ctx->Extensions.EXT_packed_depth_stencil = true;
+   ctx->Extensions.EXT_packed_float = true;
    ctx->Extensions.EXT_pixel_buffer_object = true;
    ctx->Extensions.EXT_point_parameters = true;
    ctx->Extensions.EXT_provoking_vertex = true;
    ctx->Extensions.EXT_secondary_color = true;
    ctx->Extensions.EXT_separate_shader_objects = true;
+   ctx->Extensions.EXT_texture_array = true;
    ctx->Extensions.EXT_texture_env_dot3 = true;
    ctx->Extensions.EXT_texture_filter_anisotropic = true;
+   ctx->Extensions.EXT_texture_integer = true;
+   ctx->Extensions.EXT_texture_shared_exponent = true;
+   ctx->Extensions.EXT_texture_snorm = true;
    ctx->Extensions.EXT_texture_sRGB = true;
    ctx->Extensions.EXT_texture_sRGB_decode = true;
+   ctx->Extensions.EXT_texture_swizzle = true;
    ctx->Extensions.EXT_shadow_funcs = true;
    ctx->Extensions.EXT_stencil_two_side = true;
+   ctx->Extensions.EXT_vertex_array_bgra = true;
    ctx->Extensions.APPLE_object_purgeable = true;
+   ctx->Extensions.ATI_envmap_bumpmap = true;
    ctx->Extensions.ATI_separate_stencil = true;
    ctx->Extensions.ATI_texture_env_combine3 = true;
    ctx->Extensions.MESA_pack_invert = true;
+   ctx->Extensions.MESA_texture_array = true;
    ctx->Extensions.MESA_ycbcr_texture = true;
    ctx->Extensions.NV_blend_square = true;
+   ctx->Extensions.NV_conditional_render = true;
+   ctx->Extensions.NV_primitive_restart = true;
    ctx->Extensions.NV_texture_env_combine4 = true;
    ctx->Extensions.NV_texture_rectangle = true;
    ctx->Extensions.TDFX_texture_compression_FXT1 = true;
+   ctx->Extensions.OES_compressed_ETC1_RGB8_texture = true;
    ctx->Extensions.OES_EGL_image = true;
    ctx->Extensions.OES_draw_texture = true;
+   ctx->Extensions.OES_standard_derivatives = true;
 
    if (intel->gen >= 6)
       ctx->Const.GLSLVersion = 140;
@@ -135,53 +166,14 @@ intelInitExtensions(struct gl_context *ctx)
          ctx->Extensions.ARB_timer_query = true;
    }
 
-   if (intel->gen >= 4) {
-      if (ctx->API == API_OPENGL_CORE)
-         ctx->Extensions.ARB_base_instance = true;
-      if (ctx->API != API_OPENGL_CORE)
-         ctx->Extensions.ARB_color_buffer_float = true;
-      ctx->Extensions.ARB_depth_buffer_float = true;
-      ctx->Extensions.ARB_depth_clamp = true;
-      ctx->Extensions.ARB_draw_instanced = true;
-      ctx->Extensions.ARB_instanced_arrays = true;
-      ctx->Extensions.ARB_fragment_coord_conventions = true;
-      ctx->Extensions.ARB_fragment_program_shadow = true;
-      ctx->Extensions.ARB_fragment_shader = true;
-      ctx->Extensions.ARB_half_float_vertex = true;
-      ctx->Extensions.ARB_occlusion_query = true;
-      ctx->Extensions.ARB_occlusion_query2 = true;
-      ctx->Extensions.ARB_point_sprite = true;
-      ctx->Extensions.ARB_seamless_cube_map = true;
-      ctx->Extensions.ARB_shader_bit_encoding = true;
-      ctx->Extensions.ARB_shader_texture_lod = true;
-      ctx->Extensions.ARB_texture_float = true;
-      ctx->Extensions.EXT_texture_shared_exponent = true;
-      ctx->Extensions.EXT_packed_float = true;
-      ctx->Extensions.ARB_texture_compression_rgtc = true;
-      ctx->Extensions.ARB_texture_rg = true;
-      ctx->Extensions.ARB_texture_rgb10_a2ui = true;
-      ctx->Extensions.ARB_vertex_type_2_10_10_10_rev = true;
-      ctx->Extensions.EXT_draw_buffers2 = true;
-      ctx->Extensions.EXT_framebuffer_sRGB = true;
-      ctx->Extensions.EXT_texture_array = true;
-      ctx->Extensions.EXT_texture_integer = true;
-      ctx->Extensions.EXT_texture_snorm = true;
-      ctx->Extensions.EXT_texture_swizzle = true;
-      ctx->Extensions.EXT_vertex_array_bgra = true;
-      ctx->Extensions.ATI_envmap_bumpmap = true;
-      ctx->Extensions.MESA_texture_array = true;
-      ctx->Extensions.NV_conditional_render = true;
-      ctx->Extensions.OES_compressed_ETC1_RGB8_texture = true;
-      ctx->Extensions.OES_standard_derivatives = true;
-   }
+   if (ctx->API == API_OPENGL_CORE)
+      ctx->Extensions.ARB_base_instance = true;
+   if (ctx->API != API_OPENGL_CORE)
+      ctx->Extensions.ARB_color_buffer_float = true;
 
    if (intel->ctx.Mesa_DXTn
        || driQueryOptionb(&intel->optionCache, "force_s3tc_enable"))
       ctx->Extensions.EXT_texture_compression_s3tc = true;
 
    ctx->Extensions.ANGLE_texture_compression_dxt = true;
-
-   if (intel->gen >= 4) {
-      ctx->Extensions.NV_primitive_restart = true;
-   }
 }
