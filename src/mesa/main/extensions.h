@@ -42,16 +42,6 @@ struct gl_context;
 
 extern void _mesa_enable_sw_extensions(struct gl_context *ctx);
 
-extern void _mesa_enable_1_3_extensions(struct gl_context *ctx);
-
-extern void _mesa_enable_1_4_extensions(struct gl_context *ctx);
-
-extern void _mesa_enable_1_5_extensions(struct gl_context *ctx);
-
-extern void _mesa_enable_2_0_extensions(struct gl_context *ctx);
-
-extern void _mesa_enable_2_1_extensions(struct gl_context *ctx);
-
 extern void _mesa_enable_extension(struct gl_context *ctx, const char *name);
 
 extern void _mesa_disable_extension(struct gl_context *ctx, const char *name);
