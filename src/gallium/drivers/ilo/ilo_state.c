@@ -229,50 +229,53 @@ ilo_create_sampler_state(struct pipe_context *pipe,
 }
 
 static void
-bind_samplers(struct ilo_context *ilo,
-              unsigned shader, unsigned start, unsigned count,
-              void **samplers, bool unbind_old)
+ilo_bind_sampler_states(struct pipe_context *pipe, unsigned shader,
+                        unsigned start, unsigned count, void **samplers)
 {
-   const struct ilo_sampler_cso **dst = ilo->sampler[shader].cso;
+   struct ilo_context *ilo = ilo_context(pipe);
+   struct ilo_sampler_state *dst = &ilo->sampler[shader];
    unsigned i;
 
-   assert(start + count <= Elements(ilo->sampler[shader].cso));
+   assert(start + count <= Elements(dst->cso));
 
-   if (unbind_old) {
+   if (likely(shader != PIPE_SHADER_COMPUTE)) {
       if (!samplers) {
          start = 0;
          count = 0;
       }
 
+      /* samplers not in range are also unbound */
       for (i = 0; i < start; i++)
-         dst[i] = NULL;
+         dst->cso[i] = NULL;
       for (; i < start + count; i++)
-         dst[i] = samplers[i - start];
-      for (; i < ilo->sampler[shader].count; i++)
-         dst[i] = NULL;
+         dst->cso[i] = samplers[i - start];
+      for (; i < dst->count; i++)
+         dst->cso[i] = NULL;
 
-      ilo->sampler[shader].count = start + count;
+      dst->count = start + count;
 
       return;
    }
 
-   dst += start;
    if (samplers) {
       for (i = 0; i < count; i++)
-         dst[i] = samplers[i];
+         dst->cso[start + i] = samplers[i];
    }
    else {
       for (i = 0; i < count; i++)
-         dst[i] = NULL;
+         dst->cso[start + i] = NULL;
    }
 
-   if (ilo->sampler[shader].count <= start + count) {
-      count += start;
+   if (dst->count <= start + count) {
+      if (samplers)
+         count += start;
+      else
+         count = start;
 
-      while (count > 0 && !ilo->sampler[shader].cso[count - 1])
+      while (count > 0 && !dst->cso[count - 1])
          count--;
 
-      ilo->sampler[shader].count = count;
+      dst->count = count;
    }
 }
 
@@ -283,7 +286,9 @@ ilo_bind_fragment_sampler_states(struct pipe_context *pipe,
 {
    struct ilo_context *ilo = ilo_context(pipe);
 
-   bind_samplers(ilo, PIPE_SHADER_FRAGMENT, 0, num_samplers, samplers, true);
+   ilo_bind_sampler_states(pipe, PIPE_SHADER_FRAGMENT,
+         0, num_samplers, samplers);
+
    ilo->dirty |= ILO_DIRTY_SAMPLER_FS;
 }
 
@@ -294,7 +299,9 @@ ilo_bind_vertex_sampler_states(struct pipe_context *pipe,
 {
    struct ilo_context *ilo = ilo_context(pipe);
 
-   bind_samplers(ilo, PIPE_SHADER_VERTEX, 0, num_samplers, samplers, true);
+   ilo_bind_sampler_states(pipe, PIPE_SHADER_VERTEX,
+         0, num_samplers, samplers);
+
    ilo->dirty |= ILO_DIRTY_SAMPLER_VS;
 }
 
@@ -305,7 +312,9 @@ ilo_bind_geometry_sampler_states(struct pipe_context *pipe,
 {
    struct ilo_context *ilo = ilo_context(pipe);
 
-   bind_samplers(ilo, PIPE_SHADER_GEOMETRY, 0, num_samplers, samplers, true);
+   ilo_bind_sampler_states(pipe, PIPE_SHADER_GEOMETRY,
+         0, num_samplers, samplers);
+
    ilo->dirty |= ILO_DIRTY_SAMPLER_GS;
 }
 
@@ -317,8 +326,9 @@ ilo_bind_compute_sampler_states(struct pipe_context *pipe,
 {
    struct ilo_context *ilo = ilo_context(pipe);
 
-   bind_samplers(ilo, PIPE_SHADER_COMPUTE,
-         start_slot, num_samplers, samplers, false);
+   ilo_bind_sampler_states(pipe, PIPE_SHADER_COMPUTE,
+         start_slot, num_samplers, samplers);
+
    ilo->dirty |= ILO_DIRTY_SAMPLER_CS;
 }
 
@@ -706,50 +716,54 @@ ilo_set_viewport_states(struct pipe_context *pipe,
 }
 
 static void
-set_sampler_views(struct ilo_context *ilo,
-                  unsigned shader, unsigned start, unsigned count,
-                  struct pipe_sampler_view **views, bool unset_old)
+ilo_set_sampler_views(struct pipe_context *pipe, unsigned shader,
+                      unsigned start, unsigned count,
+                      struct pipe_sampler_view **views)
 {
-   struct pipe_sampler_view **dst = ilo->view[shader].states;
+   struct ilo_context *ilo = ilo_context(pipe);
+   struct ilo_view_state *dst = &ilo->view[shader];
    unsigned i;
 
-   assert(start + count <= Elements(ilo->view[shader].states));
+   assert(start + count <= Elements(dst->states));
 
-   if (unset_old) {
+   if (likely(shader != PIPE_SHADER_COMPUTE)) {
       if (!views) {
          start = 0;
          count = 0;
       }
 
+      /* views not in range are also unbound */
       for (i = 0; i < start; i++)
-         pipe_sampler_view_reference(&dst[i], NULL);
+         pipe_sampler_view_reference(&dst->states[i], NULL);
       for (; i < start + count; i++)
-         pipe_sampler_view_reference(&dst[i], views[i - start]);
-      for (; i < ilo->view[shader].count; i++)
-         pipe_sampler_view_reference(&dst[i], NULL);
+         pipe_sampler_view_reference(&dst->states[i], views[i - start]);
+      for (; i < dst->count; i++)
+         pipe_sampler_view_reference(&dst->states[i], NULL);
 
-      ilo->view[shader].count = start + count;
+      dst->count = start + count;
 
       return;
    }
 
-   dst += start;
    if (views) {
       for (i = 0; i < count; i++)
-         pipe_sampler_view_reference(&dst[i], views[i]);
+         pipe_sampler_view_reference(&dst->states[start + i], views[i]);
    }
    else {
       for (i = 0; i < count; i++)
-         pipe_sampler_view_reference(&dst[i], NULL);
+         pipe_sampler_view_reference(&dst->states[start + i], NULL);
    }
 
-   if (ilo->view[shader].count <= start + count) {
-      count += start;
+   if (dst->count <= start + count) {
+      if (views)
+         count += start;
+      else
+         count = start;
 
-      while (count > 0 && !ilo->view[shader].states[count - 1])
+      while (count > 0 && !dst->states[count - 1])
          count--;
 
-      ilo->view[shader].count = count;
+      dst->count = count;
    }
 }
 
@@ -760,7 +774,9 @@ ilo_set_fragment_sampler_views(struct pipe_context *pipe,
 {
    struct ilo_context *ilo = ilo_context(pipe);
 
-   set_sampler_views(ilo, PIPE_SHADER_FRAGMENT, 0, num_views, views, true);
+   ilo_set_sampler_views(pipe, PIPE_SHADER_FRAGMENT,
+         0, num_views, views);
+
    ilo->dirty |= ILO_DIRTY_VIEW_FS;
 }
 
@@ -771,7 +787,9 @@ ilo_set_vertex_sampler_views(struct pipe_context *pipe,
 {
    struct ilo_context *ilo = ilo_context(pipe);
 
-   set_sampler_views(ilo, PIPE_SHADER_VERTEX, 0, num_views, views, true);
+   ilo_set_sampler_views(pipe, PIPE_SHADER_VERTEX,
+         0, num_views, views);
+
    ilo->dirty |= ILO_DIRTY_VIEW_VS;
 }
 
@@ -782,7 +800,9 @@ ilo_set_geometry_sampler_views(struct pipe_context *pipe,
 {
    struct ilo_context *ilo = ilo_context(pipe);
 
-   set_sampler_views(ilo, PIPE_SHADER_GEOMETRY, 0, num_views, views, true);
+   ilo_set_sampler_views(pipe, PIPE_SHADER_GEOMETRY,
+         0, num_views, views);
+
    ilo->dirty |= ILO_DIRTY_VIEW_GS;
 }
 
@@ -793,8 +813,8 @@ ilo_set_compute_sampler_views(struct pipe_context *pipe,
 {
    struct ilo_context *ilo = ilo_context(pipe);
 
-   set_sampler_views(ilo, PIPE_SHADER_COMPUTE,
-         start_slot, num_views, views, false);
+   ilo_set_sampler_views(pipe, PIPE_SHADER_COMPUTE,
+         start_slot, num_views, views);
 
    ilo->dirty |= ILO_DIRTY_VIEW_CS;
 }
@@ -805,28 +825,30 @@ ilo_set_shader_resources(struct pipe_context *pipe,
                          struct pipe_surface **surfaces)
 {
    struct ilo_context *ilo = ilo_context(pipe);
-   struct pipe_surface **dst = ilo->resource.states;
+   struct ilo_resource_state *dst = &ilo->resource;
    unsigned i;
 
-   assert(start + count <= Elements(ilo->resource.states));
+   assert(start + count <= Elements(dst->states));
 
-   dst += start;
    if (surfaces) {
       for (i = 0; i < count; i++)
-         pipe_surface_reference(&dst[i], surfaces[i]);
+         pipe_surface_reference(&dst->states[start + i], surfaces[i]);
    }
    else {
       for (i = 0; i < count; i++)
-         pipe_surface_reference(&dst[i], NULL);
+         pipe_surface_reference(&dst->states[start + i], NULL);
    }
 
-   if (ilo->resource.count <= start + count) {
-      count += start;
+   if (dst->count <= start + count) {
+      if (surfaces)
+         count += start;
+      else
+         count = start;
 
-      while (count > 0 && !ilo->resource.states[count - 1])
+      while (count > 0 && !dst->states[count - 1])
          count--;
 
-      ilo->resource.count = count;
+      dst->count = count;
    }
 
    ilo->dirty |= ILO_DIRTY_RESOURCE;
@@ -1095,28 +1117,30 @@ ilo_set_compute_resources(struct pipe_context *pipe,
                           struct pipe_surface **surfaces)
 {
    struct ilo_context *ilo = ilo_context(pipe);
-   struct pipe_surface **dst = ilo->cs_resource.states;
+   struct ilo_resource_state *dst = &ilo->cs_resource;
    unsigned i;
 
-   assert(start + count <= Elements(ilo->cs_resource.states));
+   assert(start + count <= Elements(dst->states));
 
-   dst += start;
    if (surfaces) {
       for (i = 0; i < count; i++)
-         pipe_surface_reference(&dst[i], surfaces[i]);
+         pipe_surface_reference(&dst->states[start + i], surfaces[i]);
    }
    else {
       for (i = 0; i < count; i++)
-         pipe_surface_reference(&dst[i], NULL);
+         pipe_surface_reference(&dst->states[start + i], NULL);
    }
 
-   if (ilo->cs_resource.count <= start + count) {
-      count += start;
+   if (dst->count <= start + count) {
+      if (surfaces)
+         count += start;
+      else
+         count = start;
 
-      while (count > 0 && !ilo->cs_resource.states[count - 1])
+      while (count > 0 && !dst->states[count - 1])
          count--;
 
-      ilo->cs_resource.count = count;
+      dst->count = count;
    }
 
    ilo->dirty |= ILO_DIRTY_CS_RESOURCE;
@@ -1129,28 +1153,30 @@ ilo_set_global_binding(struct pipe_context *pipe,
                        uint32_t **handles)
 {
    struct ilo_context *ilo = ilo_context(pipe);
-   struct pipe_resource **dst = ilo->global_binding.resources;
+   struct ilo_global_binding *dst = &ilo->global_binding;
    unsigned i;
 
-   assert(start + count <= Elements(ilo->global_binding.resources));
+   assert(start + count <= Elements(dst->resources));
 
-   dst += start;
    if (resources) {
       for (i = 0; i < count; i++)
-         pipe_resource_reference(&dst[i], resources[i]);
+         pipe_resource_reference(&dst->resources[start + i], resources[i]);
    }
    else {
       for (i = 0; i < count; i++)
-         pipe_resource_reference(&dst[i], NULL);
+         pipe_resource_reference(&dst->resources[start + i], NULL);
    }
 
-   if (ilo->global_binding.count <= start + count) {
-      count += start;
+   if (dst->count <= start + count) {
+      if (resources)
+         count += start;
+      else
+         count = start;
 
-      while (count > 0 && !ilo->global_binding.resources[count - 1])
+      while (count > 0 && !dst->resources[count - 1])
          count--;
 
-      ilo->global_binding.count = count;
+      dst->count = count;
    }
 
    ilo->dirty |= ILO_DIRTY_GLOBAL_BINDING;
