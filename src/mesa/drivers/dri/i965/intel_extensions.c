@@ -146,7 +146,6 @@ intelInitExtensions(struct gl_context *ctx)
       ctx->Extensions.OES_depth_texture_cube_map = true;
       ctx->Extensions.ARB_shading_language_packing = true;
       ctx->Extensions.ARB_texture_multisample = true;
-      ctx->Extensions.ARB_texture_storage_multisample = true;
 
       /* Test if the kernel has the ioctl. */
       if (drm_intel_reg_read(intel->bufmgr, TIMESTAMP, &dummy) == 0)

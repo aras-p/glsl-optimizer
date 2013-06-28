@@ -176,12 +176,12 @@ get_texobj(struct gl_context *ctx, GLenum target, GLboolean get)
       }
       break;
    case GL_TEXTURE_2D_MULTISAMPLE:
-      if (ctx->Extensions.ARB_texture_storage_multisample) {
+      if (ctx->Extensions.ARB_texture_multisample) {
          return texUnit->CurrentTex[TEXTURE_2D_MULTISAMPLE_INDEX];
       }
       break;
    case GL_TEXTURE_2D_MULTISAMPLE_ARRAY:
-      if (ctx->Extensions.ARB_texture_storage_multisample) {
+      if (ctx->Extensions.ARB_texture_multisample) {
          return texUnit->CurrentTex[TEXTURE_2D_MULTISAMPLE_ARRAY_INDEX];
       }
       break;
