@@ -171,6 +171,7 @@ draw_pt_emit(struct pt_emit *emit,
    translate->run(translate,
 		  0,
 		  vertex_count,
+                  draw->start_instance,
                   draw->instance_id,
 		  hw_verts );
 
@@ -234,6 +235,7 @@ draw_pt_emit_linear(struct pt_emit *emit,
    translate->run(translate,
                   0,
                   count,
+                  draw->start_instance,
                   draw->instance_id,
                   hw_verts);
 

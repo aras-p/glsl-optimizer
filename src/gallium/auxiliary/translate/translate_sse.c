@@ -112,6 +112,7 @@ struct translate_sse {
 
    boolean use_instancing;
    unsigned instance_id;
+   unsigned start_instance;
 
    /* these are actually known values, but putting them in a struct
     * like this is helpful to keep them in sync across the file.
@@ -1061,6 +1062,8 @@ static boolean init_inputs( struct translate_sse *p,
    unsigned i;
    struct x86_reg instance_id = x86_make_disp(p->machine_EDI,
                                               get_offset(p, &p->instance_id));
+   struct x86_reg start_instance = x86_make_disp(p->machine_EDI,
+                                                 get_offset(p, &p->start_instance));
 
    for (i = 0; i < p->nr_buffer_variants; i++) {
       struct translate_buffer_variant *variant = &p->buffer_variant[i];
@@ -1082,7 +1085,8 @@ static boolean init_inputs( struct translate_sse *p,
           *   base_ptr + stride * index, where index depends on instance divisor
           */
          if (variant->instance_divisor) {
-            /* Our index is instance ID divided by instance divisor.
+            /* Start with instance = instance_id
+             * which is true if divisor is 1.
              */
             x86_mov(p->func, tmp_EAX, instance_id);
 
@@ -1090,13 +1094,22 @@ static boolean init_inputs( struct translate_sse *p,
                struct x86_reg tmp_EDX = p->tmp2_EDX;
                struct x86_reg tmp_ECX = p->src_ECX;
 
+               /* instance_num = instance_id - start_instance */
+               x86_mov(p->func, tmp_EDX, start_instance);
+               x86_sub(p->func, tmp_EAX, tmp_EDX);
+
                /* TODO: Add x86_shr() to rtasm and use it whenever
                 *       instance divisor is power of two.
                 */
-
                x86_xor(p->func, tmp_EDX, tmp_EDX);
                x86_mov_reg_imm(p->func, tmp_ECX, variant->instance_divisor);
                x86_div(p->func, tmp_ECX);    /* EAX = EDX:EAX / ECX */
+
+               /* instance = (instance_id - start_instance) / divisor + 
+                *             start_instance 
+                */
+               x86_mov(p->func, tmp_EDX, start_instance);
+               x86_add(p->func, tmp_EAX, tmp_EDX);
             }
 
             /* XXX we need to clamp the index here too, but to a
@@ -1312,16 +1325,23 @@ static boolean build_vertex_emit( struct translate_sse *p,
    x86_mov(p->func, p->count_EBP, x86_fn_arg(p->func, 3));
 
    if(x86_target(p->func) != X86_32)
-      x64_mov64(p->func, p->outbuf_EBX, x86_fn_arg(p->func, 5));
+      x64_mov64(p->func, p->outbuf_EBX, x86_fn_arg(p->func, 6));
    else
-      x86_mov(p->func, p->outbuf_EBX, x86_fn_arg(p->func, 5));
+      x86_mov(p->func, p->outbuf_EBX, x86_fn_arg(p->func, 6));
 
    /* Load instance ID.
     */
-   if (p->use_instancing) {
+   if (p->use_instancing) {      
+      x86_mov(p->func,
+              p->tmp2_EDX,
+              x86_fn_arg(p->func, 4));
+      x86_mov(p->func,
+              x86_make_disp(p->machine_EDI, get_offset(p, &p->start_instance)),
+              p->tmp2_EDX);
+
       x86_mov(p->func,
               p->tmp_EAX,
-              x86_fn_arg(p->func, 4));
+              x86_fn_arg(p->func, 5));
       x86_mov(p->func,
               x86_make_disp(p->machine_EDI, get_offset(p, &p->instance_id)),
               p->tmp_EAX);

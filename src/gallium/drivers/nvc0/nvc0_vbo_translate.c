@@ -215,7 +215,7 @@ disp_vertices_i08(struct push_context *ctx, unsigned start, unsigned count)
       if (unlikely(ctx->prim_restart))
          nR = prim_restart_search_i08(elts, nR, ctx->restart_index);
 
-      translate->run_elts8(translate, elts, nR, ctx->instance_id, ctx->dest);
+      translate->run_elts8(translate, elts, nR, 0, ctx->instance_id, ctx->dest);
       count -= nR;
       ctx->dest += nR * ctx->vertex_size;
 
@@ -271,7 +271,7 @@ disp_vertices_i16(struct push_context *ctx, unsigned start, unsigned count)
       if (unlikely(ctx->prim_restart))
          nR = prim_restart_search_i16(elts, nR, ctx->restart_index);
 
-      translate->run_elts16(translate, elts, nR, ctx->instance_id, ctx->dest);
+      translate->run_elts16(translate, elts, nR, 0, ctx->instance_id, ctx->dest);
       count -= nR;
       ctx->dest += nR * ctx->vertex_size;
 
@@ -327,7 +327,7 @@ disp_vertices_i32(struct push_context *ctx, unsigned start, unsigned count)
       if (unlikely(ctx->prim_restart))
          nR = prim_restart_search_i32(elts, nR, ctx->restart_index);
 
-      translate->run_elts(translate, elts, nR, ctx->instance_id, ctx->dest);
+      translate->run_elts(translate, elts, nR, 0, ctx->instance_id, ctx->dest);
       count -= nR;
       ctx->dest += nR * ctx->vertex_size;
 
@@ -376,7 +376,7 @@ disp_vertices_seq(struct push_context *ctx, unsigned start, unsigned count)
    struct translate *translate = ctx->translate;
    unsigned pos = 0;
 
-   translate->run(translate, start, count, ctx->instance_id, ctx->dest);
+   translate->run(translate, start, count, 0, ctx->instance_id, ctx->dest);
    do {
       unsigned nr = count;
 

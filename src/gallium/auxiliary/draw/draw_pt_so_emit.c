@@ -182,12 +182,29 @@ static void so_emit_prim(struct pt_so_emit *so,
 
          buffer = (float *)((char *)draw->so.targets[ob]->mapping +
                             draw->so.targets[ob]->target.buffer_offset +
-                            draw->so.targets[ob]->internal_offset) + state->output[slot].dst_offset;
+                            draw->so.targets[ob]->internal_offset) +
+            state->output[slot].dst_offset;
          
          if (idx == so->pos_idx && pcp_ptr)
-            memcpy(buffer, &pre_clip_pos[start_comp], num_comps * sizeof(float));
+            memcpy(buffer, &pre_clip_pos[start_comp],
+                   num_comps * sizeof(float));
          else
-            memcpy(buffer, &input[idx][start_comp], num_comps * sizeof(float));
+            memcpy(buffer, &input[idx][start_comp],
+                   num_comps * sizeof(float));
+#if 0
+         {
+            int j;
+            debug_printf("VERT[%d], offset = %d, slot[%d] sc = %d, num_c = %d, idx = %d = [",
+                         i + draw->so.targets[ob]->emitted_vertices,
+                         draw->so.targets[ob]->internal_offset,
+                         slot, start_comp, num_comps, idx);
+            for (j = 0; j < num_comps; ++j) {
+               unsigned *ubuffer = (unsigned*)buffer;
+               debug_printf("%d (0x%x), ", ubuffer[j], ubuffer[j]);
+            }
+            debug_printf("]\n");
+         }
+#endif
       }
       for (ob = 0; ob < draw->so.num_targets; ++ob) {
          struct draw_so_target *target = draw->so.targets[ob];

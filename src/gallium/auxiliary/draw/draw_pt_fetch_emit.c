@@ -210,6 +210,7 @@ static void fetch_emit_run( struct draw_pt_middle_end *middle,
    feme->translate->run_elts( feme->translate,
 			      fetch_elts,
 			      fetch_count,
+                              draw->start_instance,
                               draw->instance_id,
 			      hw_verts );
 
@@ -267,6 +268,7 @@ static void fetch_emit_run_linear( struct draw_pt_middle_end *middle,
    feme->translate->run( feme->translate,
                          start,
                          count,
+                         draw->start_instance,
                          draw->instance_id,
                          hw_verts );
 
@@ -326,6 +328,7 @@ static boolean fetch_emit_run_linear_elts( struct draw_pt_middle_end *middle,
    feme->translate->run( feme->translate,
                          start,
                          count,
+                         draw->start_instance,
                          draw->instance_id,
                          hw_verts );
 

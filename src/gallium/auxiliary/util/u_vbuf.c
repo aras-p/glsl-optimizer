@@ -403,13 +403,13 @@ u_vbuf_translate_buffers(struct u_vbuf *mgr, struct translate_key *key,
 
       switch (ib->index_size) {
       case 4:
-         tr->run_elts(tr, (unsigned*)map, num_indices, 0, out_map);
+         tr->run_elts(tr, (unsigned*)map, num_indices, 0, 0, out_map);
          break;
       case 2:
-         tr->run_elts16(tr, (uint16_t*)map, num_indices, 0, out_map);
+         tr->run_elts16(tr, (uint16_t*)map, num_indices, 0, 0, out_map);
          break;
       case 1:
-         tr->run_elts8(tr, map, num_indices, 0, out_map);
+         tr->run_elts8(tr, map, num_indices, 0, 0, out_map);
          break;
       }
 
@@ -428,7 +428,7 @@ u_vbuf_translate_buffers(struct u_vbuf *mgr, struct translate_key *key,
 
       out_offset -= key->output_stride * start_vertex;
 
-      tr->run(tr, 0, num_vertices, 0, out_map);
+      tr->run(tr, 0, num_vertices, 0, 0, out_map);
    }
 
    /* Unmap all buffers. */

@@ -607,6 +607,7 @@ static emit_func get_emit_func( enum pipe_format format )
 
 static ALWAYS_INLINE void PIPE_CDECL generic_run_one( struct translate_generic *tg,
                                          unsigned elt,
+                                         unsigned start_instance,
                                          unsigned instance_id,
                                          void *vert )
 {
@@ -623,7 +624,9 @@ static ALWAYS_INLINE void PIPE_CDECL generic_run_one( struct translate_generic *
          int copy_size;
 
          if (tg->attrib[attr].instance_divisor) {
-            index = instance_id / tg->attrib[attr].instance_divisor;
+            index = start_instance;
+            index += (instance_id - start_instance) /
+               tg->attrib[attr].instance_divisor;
             /* XXX we need to clamp the index here too, but to a
              * per-array max value, not the draw->pt.max_index value
              * that's being given to us via translate->set_buffer().
@@ -674,6 +677,7 @@ static ALWAYS_INLINE void PIPE_CDECL generic_run_one( struct translate_generic *
 static void PIPE_CDECL generic_run_elts( struct translate *translate,
                                          const unsigned *elts,
                                          unsigned count,
+                                         unsigned start_instance,
                                          unsigned instance_id,
                                          void *output_buffer )
 {
@@ -682,7 +686,7 @@ static void PIPE_CDECL generic_run_elts( struct translate *translate,
    unsigned i;
 
    for (i = 0; i < count; i++) {
-      generic_run_one(tg, *elts++, instance_id, vert);
+      generic_run_one(tg, *elts++, start_instance, instance_id, vert);
       vert += tg->translate.key.output_stride;
    }
 }
@@ -690,6 +694,7 @@ static void PIPE_CDECL generic_run_elts( struct translate *translate,
 static void PIPE_CDECL generic_run_elts16( struct translate *translate,
                                          const uint16_t *elts,
                                          unsigned count,
+                                         unsigned start_instance,
                                          unsigned instance_id,
                                          void *output_buffer )
 {
@@ -698,7 +703,7 @@ static void PIPE_CDECL generic_run_elts16( struct translate *translate,
    unsigned i;
 
    for (i = 0; i < count; i++) {
-      generic_run_one(tg, *elts++, instance_id, vert);
+      generic_run_one(tg, *elts++, start_instance, instance_id, vert);
       vert += tg->translate.key.output_stride;
    }
 }
@@ -706,6 +711,7 @@ static void PIPE_CDECL generic_run_elts16( struct translate *translate,
 static void PIPE_CDECL generic_run_elts8( struct translate *translate,
                                          const uint8_t *elts,
                                          unsigned count,
+                                         unsigned start_instance, 
                                          unsigned instance_id,
                                          void *output_buffer )
 {
@@ -714,7 +720,7 @@ static void PIPE_CDECL generic_run_elts8( struct translate *translate,
    unsigned i;
 
    for (i = 0; i < count; i++) {
-      generic_run_one(tg, *elts++, instance_id, vert);
+      generic_run_one(tg, *elts++, start_instance, instance_id, vert);
       vert += tg->translate.key.output_stride;
    }
 }
@@ -722,6 +728,7 @@ static void PIPE_CDECL generic_run_elts8( struct translate *translate,
 static void PIPE_CDECL generic_run( struct translate *translate,
                                     unsigned start,
                                     unsigned count,
+                                    unsigned start_instance,
                                     unsigned instance_id,
                                     void *output_buffer )
 {
@@ -730,7 +737,7 @@ static void PIPE_CDECL generic_run( struct translate *translate,
    unsigned i;
 
    for (i = 0; i < count; i++) {
-      generic_run_one(tg, start + i, instance_id, vert);
+      generic_run_one(tg, start + i, start_instance, instance_id, vert);
       vert += tg->translate.key.output_stride;
    }
 }

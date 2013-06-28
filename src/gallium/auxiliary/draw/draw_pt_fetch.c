@@ -168,6 +168,7 @@ draw_pt_fetch_run(struct pt_fetch *fetch,
    translate->run_elts( translate,
 			elts,
 			count,
+                        draw->start_instance,
                         draw->instance_id,
 			verts );
 }
@@ -195,6 +196,7 @@ draw_pt_fetch_run_linear(struct pt_fetch *fetch,
    translate->run( translate,
                    start,
                    count,
+                   draw->start_instance,
                    draw->instance_id,
                    verts );
 }

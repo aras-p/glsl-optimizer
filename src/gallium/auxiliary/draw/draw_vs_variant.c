@@ -168,6 +168,7 @@ static void PIPE_CDECL vsvg_run_elts( struct draw_vs_variant *variant,
    vsvg->fetch->run_elts( vsvg->fetch, 
                           elts,
                           count,
+                          vsvg->draw->start_instance,
                           vsvg->draw->instance_id,
                           temp_buffer );
 
@@ -211,6 +212,7 @@ static void PIPE_CDECL vsvg_run_elts( struct draw_vs_variant *variant,
 
    vsvg->emit->run( vsvg->emit,
                     0, count,
+                    vsvg->draw->start_instance,
                     vsvg->draw->instance_id,
                     output_buffer );
 
@@ -234,6 +236,7 @@ static void PIPE_CDECL vsvg_run_linear( struct draw_vs_variant *variant,
    vsvg->fetch->run( vsvg->fetch, 
                      start,
                      count,
+                     vsvg->draw->start_instance,
                      vsvg->draw->instance_id,
                      temp_buffer );
 
@@ -274,6 +277,7 @@ static void PIPE_CDECL vsvg_run_linear( struct draw_vs_variant *variant,
    
    vsvg->emit->run( vsvg->emit,
                     0, count,
+                    vsvg->draw->start_instance,
                     vsvg->draw->instance_id,
                     output_buffer );
 

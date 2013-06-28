@@ -533,6 +533,7 @@ draw_vbo(struct draw_context *draw,
 
    for (instance = 0; instance < info->instance_count; instance++) {
       draw->instance_id = instance + info->start_instance;
+      draw->start_instance = info->start_instance;
       /* check for overflow */
       if (draw->instance_id < instance ||
           draw->instance_id < info->start_instance) {

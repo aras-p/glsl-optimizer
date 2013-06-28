@@ -76,7 +76,7 @@ emit_vertices_i08(struct push_context *ctx, unsigned start, unsigned count)
 
       BEGIN_NI04(ctx->push, NV50_3D(VERTEX_DATA), size);
 
-      ctx->translate->run_elts8(ctx->translate, elts, nr, ctx->instance_id,
+      ctx->translate->run_elts8(ctx->translate, elts, nr, 0, ctx->instance_id,
                                 ctx->push->cur);
 
       ctx->push->cur += size;
@@ -109,7 +109,7 @@ emit_vertices_i16(struct push_context *ctx, unsigned start, unsigned count)
 
       BEGIN_NI04(ctx->push, NV50_3D(VERTEX_DATA), size);
 
-      ctx->translate->run_elts16(ctx->translate, elts, nr, ctx->instance_id,
+      ctx->translate->run_elts16(ctx->translate, elts, nr, 0, ctx->instance_id,
                                  ctx->push->cur);
 
       ctx->push->cur += size;
@@ -142,7 +142,7 @@ emit_vertices_i32(struct push_context *ctx, unsigned start, unsigned count)
 
       BEGIN_NI04(ctx->push, NV50_3D(VERTEX_DATA), size);
 
-      ctx->translate->run_elts(ctx->translate, elts, nr, ctx->instance_id,
+      ctx->translate->run_elts(ctx->translate, elts, nr, 0, ctx->instance_id,
                                ctx->push->cur);
 
       ctx->push->cur += size;
@@ -167,7 +167,7 @@ emit_vertices_seq(struct push_context *ctx, unsigned start, unsigned count)
 
       BEGIN_NI04(ctx->push, NV50_3D(VERTEX_DATA), size);
 
-      ctx->translate->run(ctx->translate, start, push, ctx->instance_id,
+      ctx->translate->run(ctx->translate, start, push, 0, ctx->instance_id,
                           ctx->push->cur);
       ctx->push->cur += size;
       count -= push;

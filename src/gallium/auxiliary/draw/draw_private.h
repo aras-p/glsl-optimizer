@@ -306,6 +306,7 @@ struct draw_context
    } extra_shader_outputs;
 
    unsigned instance_id;
+   unsigned start_instance;
 
 #ifdef HAVE_LLVM
    struct draw_llvm *llvm;

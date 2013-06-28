@@ -138,7 +138,7 @@ emit_vertex( struct vbuf_stage *vbuf,
       /* Note: we really do want data[0] here, not data[pos]: 
        */
       vbuf->translate->set_buffer(vbuf->translate, 0, vertex->data[0], 0, ~0);
-      vbuf->translate->run(vbuf->translate, 0, 1, 0, vbuf->vertex_ptr);
+      vbuf->translate->run(vbuf->translate, 0, 1, 0, 0, vbuf->vertex_ptr);
 
       if (0) draw_dump_emitted_vertex(vbuf->vinfo, (uint8_t *)vbuf->vertex_ptr);
       
