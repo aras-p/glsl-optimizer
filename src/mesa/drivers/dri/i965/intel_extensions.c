@@ -139,6 +139,8 @@ intelInitExtensions(struct gl_context *ctx)
    _mesa_override_glsl_version(ctx);
 
    if (intel->gen >= 6) {
+      uint64_t dummy;
+
       ctx->Extensions.EXT_framebuffer_multisample = true;
       ctx->Extensions.EXT_transform_feedback = true;
       ctx->Extensions.ARB_blend_func_extended = !driQueryOptionb(&intel->optionCache, "disable_blend_func_extended");
@@ -152,18 +154,15 @@ intelInitExtensions(struct gl_context *ctx)
       ctx->Extensions.ARB_shading_language_packing = true;
       ctx->Extensions.ARB_texture_multisample = true;
       ctx->Extensions.ARB_texture_storage_multisample = true;
+
+      /* Test if the kernel has the ioctl. */
+      if (drm_intel_reg_read(intel->bufmgr, TIMESTAMP, &dummy) == 0)
+         ctx->Extensions.ARB_timer_query = true;
    }
 
    if (intel->gen >= 5) {
       ctx->Extensions.ARB_texture_query_lod = true;
       ctx->Extensions.EXT_timer_query = true;
-   }
-
-   if (intel->gen >= 6) {
-      uint64_t dummy;
-      /* Test if the kernel has the ioctl. */
-      if (drm_intel_reg_read(intel->bufmgr, TIMESTAMP, &dummy) == 0)
-         ctx->Extensions.ARB_timer_query = true;
    }
 
    if (ctx->API == API_OPENGL_CORE)
