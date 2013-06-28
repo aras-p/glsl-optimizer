@@ -46,13 +46,18 @@
 /**
  * Convert from PIPE_SHADER_* to SVGA3D_SHADERTYPE_*
  */
-static int
+static unsigned
 svga_shader_type(unsigned shader)
 {
-   assert(PIPE_SHADER_VERTEX + 1 == SVGA3D_SHADERTYPE_VS);
-   assert(PIPE_SHADER_FRAGMENT + 1 == SVGA3D_SHADERTYPE_PS);
-   assert(shader <= PIPE_SHADER_FRAGMENT);
-   return shader + 1;
+   switch (shader) {
+   case PIPE_SHADER_VERTEX:
+      return SVGA3D_SHADERTYPE_VS;
+   case PIPE_SHADER_FRAGMENT:
+      return SVGA3D_SHADERTYPE_PS;
+   default:
+      assert(!"Unexpected shader type");
+      return SVGA3D_SHADERTYPE_VS;
+   }
 }
 
 
