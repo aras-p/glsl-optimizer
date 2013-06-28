@@ -554,11 +554,6 @@ intel_miptree_check_level_layer(struct intel_mipmap_tree *mt,
    assert(layer < mt->level[level].depth);
 }
 
-int intel_miptree_pitch_align (struct intel_context *intel,
-			       struct intel_mipmap_tree *mt,
-			       uint32_t tiling,
-			       int pitch);
-
 void intel_miptree_reference(struct intel_mipmap_tree **dst,
                              struct intel_mipmap_tree *src);
 
@@ -597,30 +592,6 @@ void
 intel_miptree_copy_teximage(struct intel_context *intel,
                             struct intel_texture_image *intelImage,
                             struct intel_mipmap_tree *dst_mt, bool invalidate);
-
-/**
- * Copy the stencil data from \c mt->stencil_mt->region to \c mt->region for
- * the given miptree slice.
- *
- * \see intel_mipmap_tree::stencil_mt
- */
-void
-intel_miptree_s8z24_scatter(struct intel_context *intel,
-                            struct intel_mipmap_tree *mt,
-                            uint32_t level,
-                            uint32_t slice);
-
-/**
- * Copy the stencil data in \c mt->stencil_mt->region to \c mt->region for the
- * given miptree slice.
- *
- * \see intel_mipmap_tree::stencil_mt
- */
-void
-intel_miptree_s8z24_gather(struct intel_context *intel,
-                           struct intel_mipmap_tree *mt,
-                           uint32_t level,
-                           uint32_t layer);
 
 bool
 intel_miptree_alloc_mcs(struct intel_context *intel,

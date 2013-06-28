@@ -33,14 +33,6 @@
 #ifndef BRW_STRUCTS_H
 #define BRW_STRUCTS_H
 
-/* These seem to be passed around as function args, so it works out
- * better to keep them as #defines:
- */
-#define BRW_FLUSH_READ_CACHE           0x1
-#define BRW_FLUSH_STATE_CACHE          0x2
-#define BRW_INHIBIT_FLUSH_RENDER_CACHE 0x4
-#define BRW_FLUSH_SNAPSHOT_COUNTERS    0x8
-
 struct brw_urb_fence
 {
    struct
@@ -772,29 +764,6 @@ struct gen7_sf_clip_viewport {
    } guardband;
 
    GLfloat pad1[4];
-};
-
-struct brw_vertex_element_state
-{
-   struct
-   {
-      GLuint src_offset:11; 
-      GLuint pad:5;
-      GLuint src_format:9; 
-      GLuint pad0:1;
-      GLuint valid:1; 
-      GLuint vertex_buffer_index:5; 
-   } ve0;
-   
-   struct
-   {
-      GLuint dst_offset:8; 
-      GLuint pad:8;
-      GLuint vfcomponent3:4; 
-      GLuint vfcomponent2:4; 
-      GLuint vfcomponent1:4; 
-      GLuint vfcomponent0:4; 
-   } ve1;
 };
 
 struct brw_urb_immediate {

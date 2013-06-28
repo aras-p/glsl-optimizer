@@ -25,27 +25,6 @@
  *
  */
 
-#define PCI_CHIP_I810			0x7121
-#define PCI_CHIP_I810_DC100		0x7123
-#define PCI_CHIP_I810_E			0x7125
-#define PCI_CHIP_I815			0x1132
-
-#define PCI_CHIP_I830_M			0x3577
-#define PCI_CHIP_845_G			0x2562
-#define PCI_CHIP_I855_GM		0x3582
-#define PCI_CHIP_I865_G			0x2572
-
-#define PCI_CHIP_I915_G			0x2582
-#define PCI_CHIP_E7221_G		0x258A
-#define PCI_CHIP_I915_GM		0x2592
-#define PCI_CHIP_I945_G			0x2772
-#define PCI_CHIP_I945_GM		0x27A2
-#define PCI_CHIP_I945_GME		0x27AE
-
-#define PCI_CHIP_Q35_G			0x29B2
-#define PCI_CHIP_G33_G			0x29C2
-#define PCI_CHIP_Q33_G			0x29D2
-
 #define PCI_CHIP_IGD_GM			0xA011
 #define PCI_CHIP_IGD_G			0xA001
 
@@ -154,16 +133,6 @@
 #define PCI_CHIP_HASWELL_CRW_E_GT2      0x0D1E
 #define PCI_CHIP_HASWELL_CRW_E_GT3      0x0D2E
 
-#define IS_MOBILE(devid)	(devid == PCI_CHIP_I855_GM || \
-				 devid == PCI_CHIP_I915_GM || \
-				 devid == PCI_CHIP_I945_GM || \
-				 devid == PCI_CHIP_I945_GME || \
-				 devid == PCI_CHIP_I965_GM || \
-				 devid == PCI_CHIP_I965_GME || \
-				 devid == PCI_CHIP_GM45_GM || \
-				 IS_IGD(devid) || \
-				 devid == PCI_CHIP_ILM_G)
-
 #define IS_G45(devid)           (devid == PCI_CHIP_IGD_E_G || \
                                  devid == PCI_CHIP_Q45_G || \
                                  devid == PCI_CHIP_G45_G || \
@@ -176,28 +145,6 @@
 #define IS_ILD(devid)           (devid == PCI_CHIP_ILD_G)
 #define IS_ILM(devid)           (devid == PCI_CHIP_ILM_G)
 #define IS_GEN5(devid)          (IS_ILD(devid) || IS_ILM(devid))
-
-#define IS_915(devid)		(devid == PCI_CHIP_I915_G || \
-				 devid == PCI_CHIP_E7221_G || \
-				 devid == PCI_CHIP_I915_GM)
-
-#define IS_945(devid)		(devid == PCI_CHIP_I945_G || \
-				 devid == PCI_CHIP_I945_GM || \
-				 devid == PCI_CHIP_I945_GME || \
-				 devid == PCI_CHIP_G33_G || \
-				 devid == PCI_CHIP_Q33_G || \
-				 devid == PCI_CHIP_Q35_G || IS_IGD(devid))
-
-#define IS_GEN4(devid)		(devid == PCI_CHIP_I965_G || \
-				 devid == PCI_CHIP_I965_Q || \
-				 devid == PCI_CHIP_I965_G_1 || \
-				 devid == PCI_CHIP_I965_GM || \
-				 devid == PCI_CHIP_I965_GME || \
-				 devid == PCI_CHIP_I946_GZ || \
-				 IS_G4X(devid))
-
-/* Compat macro for intel_decode.c */
-#define IS_IRONLAKE(devid)	IS_GEN5(devid)
 
 #define IS_SNB_GT1(devid)	(devid == PCI_CHIP_SANDYBRIDGE_GT1 || \
 				 devid == PCI_CHIP_SANDYBRIDGE_M_GT1 || \
@@ -294,21 +241,3 @@
 #define IS_HASWELL(devid)       (IS_HSW_GT1(devid) || \
 				 IS_HSW_GT2(devid) || \
 				 IS_HSW_GT3(devid))
-
-#define IS_965(devid)		(IS_GEN4(devid) || \
-				 IS_G4X(devid) || \
-				 IS_GEN5(devid) || \
-				 IS_GEN6(devid) || \
-				 IS_GEN7(devid))
-
-#define IS_9XX(devid)		(IS_915(devid) || \
-				 IS_945(devid) || \
-				 IS_965(devid))
-
-#define IS_GEN3(devid)		(IS_915(devid) ||	\
-				 IS_945(devid))
-
-#define IS_GEN2(devid)		(devid == PCI_CHIP_I830_M || \
-				 devid == PCI_CHIP_845_G ||  \
-				 devid == PCI_CHIP_I855_GM ||	\
-				 devid == PCI_CHIP_I865_G)

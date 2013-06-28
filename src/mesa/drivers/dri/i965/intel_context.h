@@ -53,18 +53,8 @@ extern "C" {
 
 #include "tnl/t_vertex.h"
 
-#define TAG(x) intel##x
-#include "tnl_dd/t_dd_vertex.h"
-#undef TAG
-
 struct intel_region;
 struct intel_context;
-
-typedef void (*intel_tri_func) (struct intel_context *, intelVertex *,
-                                intelVertex *, intelVertex *);
-typedef void (*intel_line_func) (struct intel_context *, intelVertex *,
-                                 intelVertex *);
-typedef void (*intel_point_func) (struct intel_context *, intelVertex *);
 
 #define INTEL_WRITE_PART  0x1
 #define INTEL_WRITE_FULL  0x2
@@ -193,8 +183,6 @@ struct intel_context
    bool has_hiz;
    bool has_llc;
    bool has_swizzling;
-
-   int urb_size;
 
    drm_intel_context *hw_ctx;
 
@@ -493,10 +481,6 @@ void intel_prepare_render(struct intel_context *intel);
 void
 intel_resolve_for_dri2_flush(struct intel_context *intel,
                              __DRIdrawable *drawable);
-
-void i915_set_buf_info_for_region(uint32_t *state, struct intel_region *region,
-				  uint32_t buffer_id);
-void intel_init_texture_formats(struct gl_context *ctx);
 
 /*======================================================================
  * Inline conversion functions.  

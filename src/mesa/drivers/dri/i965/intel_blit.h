@@ -30,9 +30,6 @@
 
 #include "intel_context.h"
 
-extern void intelCopyBuffer(const __DRIdrawable * dpriv,
-                            const drm_clip_rect_t * rect);
-
 bool
 intelEmitCopyBlit(struct intel_context *intel,
                               GLuint cpp,

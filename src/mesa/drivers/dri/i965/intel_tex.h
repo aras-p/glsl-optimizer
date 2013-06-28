@@ -55,19 +55,6 @@ intel_miptree_create_for_teximage(struct intel_context *intel,
 
 GLuint intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit);
 
-void intel_tex_map_level_images(struct intel_context *intel,
-				struct intel_texture_object *intelObj,
-				int level,
-				GLbitfield mode);
-
-void intel_tex_unmap_level_images(struct intel_context *intel,
-				  struct intel_texture_object *intelObj,
-				  int level);
-
-bool
-intel_tex_image_s8z24_create_renderbuffers(struct intel_context *intel,
-					   struct intel_texture_image *image);
-
 bool
 intel_texsubimage_tiled_memcpy(struct gl_context *ctx,
                                GLuint dims,

@@ -778,13 +778,6 @@ brw_indirect(unsigned addr_subnr, int offset)
    return ptr;
 }
 
-/** Do two brw_regs refer to the same register? */
-static inline bool
-brw_same_reg(struct brw_reg r1, struct brw_reg r2)
-{
-   return r1.file == r2.file && r1.nr == r2.nr;
-}
-
 void brw_print_reg(struct brw_reg reg);
 
 #ifdef __cplusplus

@@ -102,8 +102,6 @@ struct brw_gs_compile {
    struct brw_vue_map vue_map;
 };
 
-#define ATTR_SIZE  (4*4)
-
 void brw_gs_quads( struct brw_gs_compile *c, struct brw_gs_prog_key *key );
 void brw_gs_quad_strip( struct brw_gs_compile *c, struct brw_gs_prog_key *key );
 void brw_gs_lines( struct brw_gs_compile *c );

@@ -32,11 +32,4 @@
 extern void
 intelInitExtensions(struct gl_context *ctx);
 
-extern void
-intelInitExtensionsES1(struct gl_context *ctx);
-
-extern void
-intelInitExtensionsES2(struct gl_context *ctx);
-
-
 #endif

@@ -101,8 +101,6 @@ void intel_region_reference(struct intel_region **dst,
 
 void intel_region_release(struct intel_region **ib);
 
-void intel_recreate_static_regions(struct intel_context *intel);
-
 void
 intel_region_get_tile_masks(struct intel_region *region,
                             uint32_t *mask_x, uint32_t *mask_y,

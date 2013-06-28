@@ -141,10 +141,6 @@ intel_create_wrapped_renderbuffer(struct gl_context * ctx,
 extern void
 intel_fbo_init(struct intel_context *intel);
 
-
-extern void
-intel_flip_renderbuffers(struct gl_framebuffer *fb);
-
 void
 intel_renderbuffer_set_draw_offset(struct intel_renderbuffer *irb);
 
@@ -156,9 +152,6 @@ intel_renderbuffer_get_tile_offsets(struct intel_renderbuffer *irb,
    return intel_miptree_get_tile_offsets(irb->mt, irb->mt_level, irb->mt_layer,
                                          tile_x, tile_y);
 }
-
-struct intel_region*
-intel_get_rb_region(struct gl_framebuffer *fb, GLuint attIndex);
 
 void
 intel_renderbuffer_set_needs_downsample(struct intel_renderbuffer *irb);

@@ -122,8 +122,6 @@ struct brw_clip_compile {
    struct brw_vue_map vue_map;
 };
 
-#define ATTR_SIZE  (4*4)
-
 /**
  * True if the given varying is one of the outputs of the vertex shader.
  */
