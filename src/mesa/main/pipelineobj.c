@@ -223,6 +223,34 @@ _mesa_UseProgramStages(GLuint pipeline, GLbitfield stages, GLuint program)
 void GLAPIENTRY
 _mesa_ActiveShaderProgram(GLuint pipeline, GLuint program)
 {
+   GET_CURRENT_CONTEXT(ctx);
+   struct gl_shader_program *shProg = NULL;
+   struct gl_pipeline_object *pipe = lookup_pipeline_object(ctx, pipeline);
+
+   if (program != 0) {
+      shProg = _mesa_lookup_shader_program_err(ctx, program,
+                                               "glActiveShaderProgram(program)");
+      if (shProg == NULL)
+         return;
+   }
+
+   if (!pipe) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glActiveShaderProgram(pipeline)");
+      return;
+   }
+
+   /* Object is created by any Pipeline call but glGenProgramPipelines,
+    * glIsProgramPipeline and GetProgramPipelineInfoLog
+    */
+   pipe->EverBound = GL_TRUE;
+
+   if ((shProg != NULL) && !shProg->LinkStatus) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+            "glActiveShaderProgram(program %u not linked)", shProg->Name);
+      return;
+   }
+
+   _mesa_reference_shader_program(ctx, &pipe->ActiveProgram, shProg);
 }
 
 /**
