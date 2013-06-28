@@ -3061,7 +3061,6 @@ struct gl_extensions
    GLboolean EXT_pixel_buffer_object;
    GLboolean EXT_point_parameters;
    GLboolean EXT_provoking_vertex;
-   GLboolean EXT_shadow_funcs;
    GLboolean EXT_separate_shader_objects;
    GLboolean EXT_stencil_two_side;
    GLboolean EXT_texture3D;

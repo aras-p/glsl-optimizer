@@ -105,7 +105,6 @@ intelInitExtensions(struct gl_context *ctx)
    ctx->Extensions.EXT_texture_sRGB = true;
    ctx->Extensions.EXT_texture_sRGB_decode = true;
    ctx->Extensions.EXT_texture_swizzle = true;
-   ctx->Extensions.EXT_shadow_funcs = true;
    ctx->Extensions.EXT_stencil_two_side = true;
    ctx->Extensions.EXT_vertex_array_bgra = true;
    ctx->Extensions.APPLE_object_purgeable = true;

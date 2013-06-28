@@ -397,7 +397,6 @@ void st_init_extensions(struct st_context *st)
 
       { o(EXT_blend_equation_separate),      PIPE_CAP_BLEND_EQUATION_SEPARATE          },
       { o(EXT_draw_buffers2),                PIPE_CAP_INDEP_BLEND_ENABLE               },
-      { o(EXT_shadow_funcs),                 PIPE_CAP_TEXTURE_SHADOW_MAP               },
       { o(EXT_stencil_two_side),             PIPE_CAP_TWO_SIDED_STENCIL                },
       { o(EXT_texture_array),                PIPE_CAP_MAX_TEXTURE_ARRAY_LAYERS         },
       { o(EXT_texture_filter_anisotropic),   PIPE_CAP_ANISOTROPIC_FILTER               },

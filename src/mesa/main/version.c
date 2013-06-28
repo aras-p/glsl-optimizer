@@ -207,8 +207,7 @@ compute_version(struct gl_context *ctx)
                               ctx->Extensions.EXT_blend_minmax &&
                               ctx->Extensions.EXT_point_parameters);
    const GLboolean ver_1_5 = (ver_1_4 &&
-                              ctx->Extensions.ARB_occlusion_query &&
-                              ctx->Extensions.EXT_shadow_funcs);
+                              ctx->Extensions.ARB_occlusion_query);
    const GLboolean ver_2_0 = (ver_1_5 &&
                               ctx->Extensions.ARB_point_sprite &&
                               ctx->Extensions.ARB_vertex_shader &&

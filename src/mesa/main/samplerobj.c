@@ -529,21 +529,15 @@ set_sampler_compare_func(struct gl_context *ctx,
    switch (param) {
    case GL_LEQUAL:
    case GL_GEQUAL:
-      flush(ctx);
-      samp->CompareFunc = param;
-      return GL_TRUE;
    case GL_EQUAL:
    case GL_NOTEQUAL:
    case GL_LESS:
    case GL_GREATER:
    case GL_ALWAYS:
    case GL_NEVER:
-      if (ctx->Extensions.EXT_shadow_funcs) {
-         flush(ctx);
-         samp->CompareFunc = param;
-         return GL_TRUE;
-      }
-      /* fall-through */
+      flush(ctx);
+      samp->CompareFunc = param;
+      return GL_TRUE;
    default:
       return INVALID_PARAM;
    }
