@@ -392,7 +392,6 @@ GLboolean r200CreateContext( gl_api api,
    ctx->Extensions.ATI_texture_env_combine3 = true;
    ctx->Extensions.ATI_texture_mirror_once = true;
    ctx->Extensions.MESA_pack_invert = true;
-   ctx->Extensions.NV_blend_square = true;
    ctx->Extensions.NV_texture_rectangle = true;
    ctx->Extensions.OES_EGL_image = true;
    ctx->Extensions.ARB_occlusion_query = true;

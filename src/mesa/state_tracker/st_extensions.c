@@ -564,7 +564,6 @@ void st_init_extensions(struct st_context *st)
 
    ctx->Extensions.MESA_pack_invert = GL_TRUE;
 
-   ctx->Extensions.NV_blend_square = GL_TRUE;
    ctx->Extensions.NV_fog_distance = GL_TRUE;
    ctx->Extensions.NV_texture_env_combine4 = GL_TRUE;
    ctx->Extensions.NV_texture_rectangle = GL_TRUE;

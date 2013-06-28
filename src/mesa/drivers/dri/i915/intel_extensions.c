@@ -78,7 +78,6 @@ intelInitExtensions(struct gl_context *ctx)
    ctx->Extensions.APPLE_object_purgeable = true;
    ctx->Extensions.MESA_pack_invert = true;
    ctx->Extensions.MESA_ycbcr_texture = true;
-   ctx->Extensions.NV_blend_square = true;
    ctx->Extensions.NV_texture_rectangle = true;
    ctx->Extensions.TDFX_texture_compression_FXT1 = true;
    ctx->Extensions.OES_EGL_image = true;

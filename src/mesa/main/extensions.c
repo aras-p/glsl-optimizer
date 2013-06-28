@@ -311,7 +311,7 @@ static const struct extension extension_table[] = {
    { "GL_MESA_texture_signed_rgba",                o(EXT_texture_snorm),                       GL,             2009 },
    { "GL_MESA_window_pos",                         o(dummy_true),                              GLL,            2000 },
    { "GL_MESA_ycbcr_texture",                      o(MESA_ycbcr_texture),                      GL,             2002 },
-   { "GL_NV_blend_square",                         o(NV_blend_square),                         GLL,            1999 },
+   { "GL_NV_blend_square",                         o(dummy_true),                              GLL,            1999 },
    { "GL_NV_conditional_render",                   o(NV_conditional_render),                   GL,             2008 },
    { "GL_NV_depth_clamp",                          o(ARB_depth_clamp),                         GL,             2001 },
    { "GL_NV_draw_buffers",                         o(dummy_true),                                         ES2, 2011 },
@@ -443,7 +443,6 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
    ctx->Extensions.MESA_pack_invert = GL_TRUE;
    ctx->Extensions.MESA_texture_array = GL_TRUE;
    ctx->Extensions.MESA_ycbcr_texture = GL_TRUE;
-   ctx->Extensions.NV_blend_square = GL_TRUE;
    ctx->Extensions.NV_conditional_render = GL_TRUE;
    ctx->Extensions.NV_point_sprite = GL_TRUE;
    ctx->Extensions.NV_texture_env_combine4 = GL_TRUE;

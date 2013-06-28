@@ -48,7 +48,6 @@ legal_src_factor(const struct gl_context *ctx, GLenum factor)
    switch (factor) {
    case GL_SRC_COLOR:
    case GL_ONE_MINUS_SRC_COLOR:
-      return ctx->Extensions.NV_blend_square;
    case GL_ZERO:
    case GL_ONE:
    case GL_DST_COLOR:
@@ -86,7 +85,6 @@ legal_dst_factor(const struct gl_context *ctx, GLenum factor)
    switch (factor) {
    case GL_DST_COLOR:
    case GL_ONE_MINUS_DST_COLOR:
-      return ctx->Extensions.NV_blend_square;
    case GL_ZERO:
    case GL_ONE:
    case GL_SRC_COLOR:
