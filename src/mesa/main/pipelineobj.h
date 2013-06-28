@@ -34,6 +34,31 @@ extern "C" {
 
 struct _glapi_table;
 struct gl_context;
+struct gl_pipeline_object;
+
+extern void
+_mesa_delete_pipeline_object(struct gl_context *ctx, struct gl_pipeline_object *obj);
+
+extern void
+_mesa_init_pipeline(struct gl_context *ctx);
+
+extern void
+_mesa_free_pipeline_data(struct gl_context *ctx);
+
+extern void
+_mesa_reference_pipeline_object_(struct gl_context *ctx,
+                                 struct gl_pipeline_object **ptr,
+                                 struct gl_pipeline_object *obj);
+
+static inline void
+_mesa_reference_pipeline_object(struct gl_context *ctx,
+                                struct gl_pipeline_object **ptr,
+                                struct gl_pipeline_object *obj)
+{
+   if (*ptr != obj)
+      _mesa_reference_pipeline_object_(ctx, ptr, obj);
+}
+
 
 extern void GLAPIENTRY
 _mesa_UseProgramStages(GLuint pipeline, GLbitfield stages, GLuint program);

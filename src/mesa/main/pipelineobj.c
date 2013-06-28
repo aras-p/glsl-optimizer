@@ -29,7 +29,6 @@
  *
  * Implementation of pipeline object related API functions. Based on
  * GL_ARB_separate_shader_objects extension.
- *
  */
 
 #include "main/glheader.h"
@@ -50,6 +49,164 @@
 #include "../glsl/glsl_parser_extras.h"
 #include "../glsl/ir_uniform.h"
 
+/**
+ * Delete a pipeline object.
+ */
+void
+_mesa_delete_pipeline_object(struct gl_context *ctx,
+                             struct gl_pipeline_object *obj)
+{
+   unsinged i;
+
+   _mesa_reference_shader_program(ctx, &obj->_CurrentFragmentProgram, NULL);
+
+   for (i = 0; i < MESA_SHADER_STAGES; i++)
+      _mesa_reference_shader_program(ctx, &obj->CurrentProgram[i], NULL);
+
+   _mesa_reference_shader_program(ctx, &obj->ActiveProgram, NULL);
+   _glthread_DESTROY_MUTEX(obj->Mutex);
+   ralloc_free(obj);
+}
+
+/**
+ * Allocate and initialize a new pipeline object.
+ */
+static struct gl_pipeline_object *
+_mesa_new_pipeline_object(struct gl_context *ctx, GLuint name)
+{
+   struct gl_pipeline_object *obj = rzalloc(NULL, struct gl_pipeline_object);
+   if (obj) {
+      obj->Name = name;
+      _glthread_INIT_MUTEX(obj->Mutex);
+      obj->RefCount = 1;
+      obj->Flags = _mesa_get_shader_flags();
+   }
+
+   return obj;
+}
+
+/**
+ * Initialize pipeline object state for given context.
+ */
+void
+_mesa_init_pipeline(struct gl_context *ctx)
+{
+   ctx->Pipeline.Objects = _mesa_NewHashTable();
+
+   ctx->Pipeline.Current = NULL;
+}
+
+
+/**
+ * Callback for deleting a pipeline object.  Called by _mesa_HashDeleteAll().
+ */
+static void
+delete_pipelineobj_cb(GLuint id, void *data, void *userData)
+{
+   struct gl_pipeline_object *obj = (struct gl_pipeline_object *) data;
+   struct gl_context *ctx = (struct gl_context *) userData;
+   _mesa_delete_pipeline_object(ctx, obj);
+}
+
+
+/**
+ * Free pipeline state for given context.
+ */
+void
+_mesa_free_pipeline_data(struct gl_context *ctx)
+{
+   _mesa_HashDeleteAll(ctx->Pipeline.Objects, delete_pipelineobj_cb, ctx);
+   _mesa_DeleteHashTable(ctx->Pipeline.Objects);
+}
+
+/**
+ * Look up the pipeline object for the given ID.
+ *
+ * \returns
+ * Either a pointer to the pipeline object with the specified ID or \c NULL for
+ * a non-existent ID.  The spec defines ID 0 as being technically
+ * non-existent.
+ */
+static inline struct gl_pipeline_object *
+lookup_pipeline_object(struct gl_context *ctx, GLuint id)
+{
+   if (id == 0)
+      return NULL;
+   else
+      return (struct gl_pipeline_object *)
+         _mesa_HashLookup(ctx->Pipeline.Objects, id);
+}
+
+/**
+ * Add the given pipeline object to the pipeline object pool.
+ */
+static void
+save_pipeline_object(struct gl_context *ctx, struct gl_pipeline_object *obj)
+{
+   if (obj->Name > 0) {
+      _mesa_HashInsert(ctx->Pipeline.Objects, obj->Name, obj);
+   }
+}
+
+/**
+ * Remove the given pipeline object from the pipeline object pool.
+ * Do not deallocate the pipeline object though.
+ */
+static void
+remove_pipeline_object(struct gl_context *ctx, struct gl_pipeline_object *obj)
+{
+   if (obj->Name > 0) {
+      _mesa_HashRemove(ctx->Pipeline.Objects, obj->Name);
+   }
+}
+
+/**
+ * Set ptr to obj w/ reference counting.
+ * Note: this should only be called from the _mesa_reference_pipeline_object()
+ * inline function.
+ */
+void
+_mesa_reference_pipeline_object_(struct gl_context *ctx,
+                                 struct gl_pipeline_object **ptr,
+                                 struct gl_pipeline_object *obj)
+{
+   assert(*ptr != obj);
+
+   if (*ptr) {
+      /* Unreference the old pipeline object */
+      GLboolean deleteFlag = GL_FALSE;
+      struct gl_pipeline_object *oldObj = *ptr;
+
+      _glthread_LOCK_MUTEX(oldObj->Mutex);
+      ASSERT(oldObj->RefCount > 0);
+      oldObj->RefCount--;
+      deleteFlag = (oldObj->RefCount == 0);
+      _glthread_UNLOCK_MUTEX(oldObj->Mutex);
+
+      if (deleteFlag) {
+         _mesa_delete_pipeline_object(ctx, oldObj);
+      }
+
+      *ptr = NULL;
+   }
+   ASSERT(!*ptr);
+
+   if (obj) {
+      /* reference new pipeline object */
+      _glthread_LOCK_MUTEX(obj->Mutex);
+      if (obj->RefCount == 0) {
+         /* this pipeline's being deleted (look just above) */
+         /* Not sure this can ever really happen.  Warn if it does. */
+         _mesa_problem(NULL, "referencing deleted pipeline object");
+         *ptr = NULL;
+      }
+      else {
+         obj->RefCount++;
+         *ptr = obj;
+      }
+      _glthread_UNLOCK_MUTEX(obj->Mutex);
+   }
+}
 
 /**
  * Bound program to severals stages of the pipeline

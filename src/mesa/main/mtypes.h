@@ -2757,9 +2757,15 @@ struct gl_shader_program
 
 /**
  * Context state for GLSL vertex/fragment shaders.
+ * Extended to support pipeline object
  */
-struct gl_shader_state
+struct gl_pipeline_object
 {
+   /** Name of the pipeline object as received from glGenProgramPipelines.
+    * It would be 0 for shaders without separate shader objects.
+    */
+   GLuint Name;
+
    GLint RefCount;
 
    _glthread_Mutex Mutex;
@@ -2785,6 +2791,17 @@ struct gl_shader_state
    GLbitfield Flags;                    /**< Mask of GLSL_x flags */
 };
 
+/**
+ * Context state for GLSL pipeline shaders.
+ */
+struct gl_pipeline_shader_state
+{
+   /** Currently bound pipeline object. See _mesa_BindProgramPipeline() */
+   struct gl_pipeline_object *Current;
+
+   /** Pipeline objects */
+   struct _mesa_HashTable *Objects;
+};
 
 /**
  * Compiler options for a single GLSL shaders type
@@ -4085,7 +4102,8 @@ struct gl_context
    struct gl_geometry_program_state GeometryProgram;
    struct gl_ati_fragment_shader_state ATIFragmentShader;
 
-   struct gl_shader_state Shader; /**< GLSL shader object state */
+   struct gl_pipeline_shader_state Pipeline; /**< GLSL pipeline shader object state */
+   struct gl_pipeline_object Shader; /**< GLSL shader object state */
    struct gl_shader_compiler_options ShaderCompilerOptions[MESA_SHADER_STAGES];
 
    struct gl_query_state Query;  /**< occlusion, timer queries */
