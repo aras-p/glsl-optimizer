@@ -44,6 +44,7 @@
 #include "main/hash.h"
 #include "main/hash_table.h"
 #include "main/mtypes.h"
+#include "main/pipelineobj.h"
 #include "main/shaderapi.h"
 #include "main/shaderobj.h"
 #include "main/transformfeedback.h"
@@ -144,6 +145,8 @@ _mesa_free_shader_state(struct gl_context *ctx)
    _mesa_reference_shader_program(ctx, &ctx->Shader.ActiveProgram, NULL);
 
    /* Extended for ARB_separate_shader_objects */
+   _mesa_reference_pipeline_object(ctx, &ctx->_Shader, NULL);
+
    assert(ctx->Shader.RefCount == 1);
    mtx_destroy(&ctx->Shader.Mutex);
 }
@@ -1541,7 +1544,31 @@ _mesa_UseProgram(GLhandleARB program)
       shProg = NULL;
    }
 
-   _mesa_use_program(ctx, shProg);
+   /* The "Dependencies on EXT_separate_shader_objects" section of the
+    * ARB_separate_shader_object spec says:
+    *
+    *     "The executable code for an individual shader stage is taken from
+    *     the current program for that stage.  If there is a current program
+    *     object for any shader stage or for uniform updates established by
+    *     UseProgram, UseShaderProgramEXT, or ActiveProgramEXT, the current
+    *     program for that stage (if any) is considered current.  Otherwise,
+    *     if there is a bound program pipeline object ..."
+    */
+   if (program) {
+      /* Attach shader state to the binding point */
+      _mesa_reference_pipeline_object(ctx, &ctx->_Shader, &ctx->Shader);
+      /* Update the program */
+      _mesa_use_program(ctx, shProg);
+   } else {
+      /* Must be done first: detach the progam */
+      _mesa_use_program(ctx, shProg);
+      /* Unattach shader_state binding point */
+      _mesa_reference_pipeline_object(ctx, &ctx->_Shader, ctx->Pipeline.Default);
+      /* If a pipeline was bound, rebind it */
+      if (ctx->Pipeline.Current) {
+         _mesa_BindProgramPipeline(ctx->Pipeline.Current->Name);
+      }
+   }
 }
 
 
@@ -1815,7 +1842,41 @@ _mesa_UseShaderProgramEXT(GLenum type, GLuint program)
       }
    }
 
-   _mesa_use_shader_program(ctx, type, shProg);
+   /* The "Dependencies on EXT_separate_shader_objects" section of the
+    * ARB_separate_shader_object spec says:
+    *
+    *     "The executable code for an individual shader stage is taken from
+    *     the current program for that stage.  If there is a current program
+    *     object for any shader stage or for uniform updates established by
+    *     UseProgram, UseShaderProgramEXT, or ActiveProgramEXT, the current
+    *     program for that stage (if any) is considered current.  Otherwise,
+    *     if there is a bound program pipeline object ..."
+    */
+   if (program) {
+      /* Attach shader state to the binding point */
+      _mesa_reference_pipeline_object(ctx, &ctx->_Shader, &ctx->Shader);
+      /* Update the program */
+      _mesa_use_shader_program(ctx, type, shProg);
+   } else {
+      /* Must be done first: detach the progam */
+      _mesa_use_shader_program(ctx, type, shProg);
+
+      /* Nothing remains current */
+      if (!ctx->Shader.CurrentVertexProgram &&
+          !ctx->Shader.CurrentGeometryProgram &&
+          !ctx->Shader.CurrentFragmentProgram &&
+          !ctx->Shader.ActiveProgram) {
+
+         /* Unattach shader_state binding point */
+         _mesa_reference_pipeline_object(ctx, &ctx->_Shader,
+                                         ctx->Pipeline.Default);
+
+         /* If a pipeline was bound, rebind it */
+         if (ctx->Pipeline.Current) {
+            _mesa_BindProgramPipeline(ctx->Pipeline.Current->Name);
+         }
+      }
+   }
 }
 
 
@@ -1830,7 +1891,37 @@ _mesa_ActiveProgramEXT(GLuint program)
       ? _mesa_lookup_shader_program_err(ctx, program, "glActiveProgramEXT")
       : NULL;
 
-   _mesa_active_program(ctx, shProg, "glActiveProgramEXT");
+   /* The "Dependencies on EXT_separate_shader_objects" section of the
+    * ARB_separate_shader_object spec says:
+    *
+    *     "The executable code for an individual shader stage is taken from
+    *     the current program for that stage.  If there is a current program
+    *     object for any shader stage or for uniform updates established by
+    *     UseProgram, UseShaderProgramEXT, or ActiveProgramEXT, the current
+    *     program for that stage (if any) is considered current.  Otherwise,
+    *     if there is a bound program pipeline object ..."
+    */
+   if (shProg != NULL) {
+      /* Attach shader state to the binding point */
+      _mesa_reference_pipeline_object(ctx, &ctx->_Shader, &ctx->Shader);
+      _mesa_active_program(ctx, shProg, "glActiveProgramEXT");
+   } else {
+      /* Must be done first: unset the current active progam */
+      _mesa_active_program(ctx, shProg, "glActiveProgramEXT");
+
+      /* Nothing remains current */
+      if (!ctx->Shader.CurrentVertexProgram && !ctx->Shader.CurrentGeometryProgram &&
+          !ctx->Shader.CurrentFragmentProgram && !ctx->Shader.ActiveProgram) {
+
+         /* Unattach shader_state binding point */
+         _mesa_reference_pipeline_object(ctx, &ctx->_Shader, ctx->Pipeline.Default);
+         /* If a pipeline was bound, rebind it */
+         if (ctx->Pipeline.Current) {
+            _mesa_BindProgramPipeline(ctx->Pipeline.Current->Name);
+         }
+      }
+   }
+
    return;
 }
 

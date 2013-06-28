@@ -2817,6 +2817,9 @@ struct gl_pipeline_shader_state
    /** Currently bound pipeline object. See _mesa_BindProgramPipeline() */
    struct gl_pipeline_object *Current;
 
+   /* Default Object to ensure that _Shader is never NULL */
+   struct gl_pipeline_object *Default;
+
    /** Pipeline objects */
    struct _mesa_HashTable *Objects;
 };
@@ -4123,6 +4126,26 @@ struct gl_context
 
    struct gl_pipeline_shader_state Pipeline; /**< GLSL pipeline shader object state */
    struct gl_pipeline_object Shader; /**< GLSL shader object state */
+
+   /**
+    * Current active shader pipeline state
+    *
+    * Almost all internal users want ::_Shader instead of ::Shader.  The
+    * exceptions are bits of legacy GLSL API that do not know about separate
+    * shader objects.
+    *
+    * If a program is active via \c glUseProgram, this will point to
+    * \c ::Shader.
+    *
+    * If a program pipeline is active via \c glBindProgramPipeline, this will
+    * point to \c ::Pipeline.Current.
+    *
+    * If neither a program nor a program pipeline is active, this will point to
+    * \c ::Pipeline.Default.  This ensures that \c ::_Shader will never be
+    * \c NULL.
+    */
+   struct gl_pipeline_object *_Shader;
+
    struct gl_shader_compiler_options ShaderCompilerOptions[MESA_SHADER_STAGES];
 
    struct gl_query_state Query;  /**< occlusion, timer queries */

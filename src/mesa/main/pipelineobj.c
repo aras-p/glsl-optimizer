@@ -94,6 +94,10 @@ _mesa_init_pipeline(struct gl_context *ctx)
    ctx->Pipeline.Objects = _mesa_NewHashTable();
 
    ctx->Pipeline.Current = NULL;
+
+   /* Install a default Pipeline */
+   ctx->Pipeline.Default = _mesa_new_pipeline_object(ctx, 0);
+   _mesa_reference_pipeline_object(ctx, &ctx->_Shader, ctx->Pipeline.Default);
 }
 
 
@@ -117,6 +121,10 @@ _mesa_free_pipeline_data(struct gl_context *ctx)
 {
    _mesa_HashDeleteAll(ctx->Pipeline.Objects, delete_pipelineobj_cb, ctx);
    _mesa_DeleteHashTable(ctx->Pipeline.Objects);
+
+   _mesa_reference_pipeline_object(ctx, &ctx->_Shader, NULL);
+   _mesa_delete_pipeline_object(ctx, ctx->Pipeline.Default);
+
 }
 
 /**
