@@ -850,13 +850,14 @@ gen6_pipeline_state_surfaces_rt(struct ilo_3d_pipeline *p,
 {
    /* SURFACE_STATEs for render targets */
    if (DIRTY(FB)) {
+      const struct ilo_fb_state *fb = &ilo->fb;
       const int offset = ILO_WM_DRAW_SURFACE(0);
       uint32_t *surface_state = &p->state.wm.SURFACE_STATE[offset];
       int i;
 
-      for (i = 0; i < ilo->fb.state.nr_cbufs; i++) {
+      for (i = 0; i < fb->state.nr_cbufs; i++) {
          const struct ilo_surface_cso *surface =
-            (const struct ilo_surface_cso *) ilo->fb.state.cbufs[i];
+            (const struct ilo_surface_cso *) fb->state.cbufs[i];
 
          assert(surface && surface->is_rt);
          surface_state[i] =
@@ -871,7 +872,7 @@ gen6_pipeline_state_surfaces_rt(struct ilo_3d_pipeline *p,
          struct ilo_view_surface null_surface;
 
          ilo_gpe_init_view_surface_null(p->dev,
-               ilo->fb.state.width, ilo->fb.state.height,
+               fb->state.width, fb->state.height,
                1, 0, &null_surface);
 
          surface_state[i] =
@@ -894,9 +895,7 @@ gen6_pipeline_state_surfaces_so(struct ilo_3d_pipeline *p,
                                 const struct ilo_context *ilo,
                                 struct gen6_pipeline_session *session)
 {
-   const struct pipe_stream_output_target **so_targets =
-      (const struct pipe_stream_output_target **) ilo->so.states;
-   const int num_so_targets = ilo->so.count;
+   const struct ilo_so_state *so = &ilo->so;
 
    if (p->dev->gen != ILO_GEN(6))
       return;
@@ -913,7 +912,7 @@ gen6_pipeline_state_surfaces_so(struct ilo_3d_pipeline *p,
       for (i = 0; so_info && i < so_info->num_outputs; i++) {
          const int target = so_info->output[i].output_buffer;
          const struct pipe_stream_output_target *so_target =
-            (target < num_so_targets) ? so_targets[target] : NULL;
+            (target < so->count) ? so->states[target] : NULL;
 
          if (so_target) {
             surface_state[i] = p->gen6_so_SURFACE_STATE(p->dev,
@@ -939,9 +938,7 @@ gen6_pipeline_state_surfaces_view(struct ilo_3d_pipeline *p,
                                   int shader_type,
                                   struct gen6_pipeline_session *session)
 {
-   const struct pipe_sampler_view * const *views =
-      (const struct pipe_sampler_view **) ilo->view[shader_type].states;
-   const int num_views = ilo->view[shader_type].count;
+   const struct ilo_view_state *view = &ilo->view[shader_type];
    uint32_t *surface_state;
    int offset, i;
    bool skip = false;
@@ -978,10 +975,10 @@ gen6_pipeline_state_surfaces_view(struct ilo_3d_pipeline *p,
    if (skip)
       return;
 
-   for (i = 0; i < num_views; i++) {
-      if (views[i]) {
+   for (i = 0; i < view->count; i++) {
+      if (view->states[i]) {
          const struct ilo_view_cso *cso =
-            (const struct ilo_view_cso *) views[i];
+            (const struct ilo_view_cso *) view->states[i];
 
          surface_state[i] =
             p->gen6_SURFACE_STATE(p->dev, &cso->surface, false, p->cp);
