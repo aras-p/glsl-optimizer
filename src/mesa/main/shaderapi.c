@@ -65,8 +65,8 @@
 /**
  * Return mask of GLSL_x flags by examining the MESA_GLSL env var.
  */
-static GLbitfield
-get_shader_flags(void)
+GLbitfield
+_mesa_get_shader_flags(void)
 {
    GLbitfield flags = 0x0;
    const char *env = _mesa_getenv("MESA_GLSL");
@@ -120,7 +120,7 @@ _mesa_init_shader_state(struct gl_context *ctx)
    for (sh = 0; sh < MESA_SHADER_STAGES; ++sh)
       memcpy(&ctx->ShaderCompilerOptions[sh], &options, sizeof(options));
 
-   ctx->Shader.Flags = get_shader_flags();
+   ctx->Shader.Flags = _mesa_get_shader_flags();
 }
 
 
