@@ -897,11 +897,6 @@ intelDestroyBuffer(__DRIdrawable * driDrawPriv)
     _mesa_reference_framebuffer(&fb, NULL);
 }
 
-/* There are probably better ways to do this, such as an
- * init-designated function to register chipids and createcontext
- * functions.
- */
-
 static GLboolean
 intelCreateContext(gl_api api,
 		   const struct gl_config * mesaVis,
