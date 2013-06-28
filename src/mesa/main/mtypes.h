@@ -2586,6 +2586,12 @@ struct gl_shader_program
     */
    GLboolean InternalSeparateShader;
 
+   /**
+    * Indicates whether program can be bound for individual pipeline stages
+    * using UseProgramStages after it is next linked.
+    */
+   GLboolean SeparateShader;
+
    GLuint NumShaders;          /**< number of attached shaders */
    struct gl_shader **Shaders; /**< List of attached the shaders */
 

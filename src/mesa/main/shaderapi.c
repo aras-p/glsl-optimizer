@@ -696,6 +696,12 @@ get_programiv(struct gl_context *ctx, GLuint program, GLenum pname, GLint *param
          params[i] = shProg->Comp.LocalSize[i];
       return;
    }
+   case GL_PROGRAM_SEPARABLE:
+      if (!ctx->Extensions.ARB_separate_shader_objects)
+         break;
+
+      *params = shProg->SeparateShader;
+      return;
    default:
       break;
    }
@@ -1736,6 +1742,25 @@ _mesa_ProgramParameteri(GLuint program, GLenum pname, GLint value)
        */
       shProg->BinaryRetreivableHint = value;
       return;
+
+   case GL_PROGRAM_SEPARABLE:
+      if (!ctx->Extensions.ARB_separate_shader_objects)
+         break;
+
+      /* Spec imply that the behavior is the same as ARB_get_program_binary
+       * Chapter 7.3 Program Objects
+       */
+      if (value != GL_TRUE && value != GL_FALSE) {
+         _mesa_error(ctx, GL_INVALID_VALUE,
+                     "glProgramParameteri(pname=%s, value=%d): "
+                     "value must be 0 or 1.",
+                     _mesa_lookup_enum_by_nr(pname),
+                     value);
+         return;
+      }
+      shProg->SeparateShader = value;
+      return;
+
    default:
       break;
    }
