@@ -242,6 +242,39 @@ _mesa_BindProgramPipeline(GLuint pipeline)
 void GLAPIENTRY
 _mesa_DeleteProgramPipelines(GLsizei n, const GLuint *pipelines)
 {
+   GET_CURRENT_CONTEXT(ctx);
+   GLsizei i;
+
+   if (n < 0) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glDeleteProgramPipelines(n<0)");
+      return;
+   }
+
+   for (i = 0; i < n; i++) {
+      struct gl_pipeline_object *obj =
+         lookup_pipeline_object(ctx, pipelines[i]);
+
+      if (obj) {
+         ASSERT(obj->Name == pipelines[i]);
+
+         /* If the pipeline object is currently bound, the spec says "If an
+          * object that is currently bound is deleted, the binding for that
+          * object reverts to zero and no program pipeline object becomes
+          * current."
+          */
+         if (obj == ctx->Pipeline.Current) {
+            _mesa_BindProgramPipeline(0);
+         }
+
+         /* The ID is immediately freed for re-use */
+         remove_pipeline_object(ctx, obj);
+
+         /* Unreference the pipeline object.
+          * If refcount hits zero, the object will be deleted.
+          */
+         _mesa_reference_pipeline_object(ctx, &obj, NULL);
+      }
+   }
 }
 
 /**
