@@ -307,7 +307,6 @@ static const struct extension extension_table[] = {
    { "GL_IBM_texture_mirrored_repeat",             o(dummy_true),                              GLL,            1998 },
    { "GL_INGR_blend_func_separate",                o(EXT_blend_func_separate),                 GLL,            1999 },
    { "GL_MESA_pack_invert",                        o(MESA_pack_invert),                        GL,             2002 },
-   { "GL_MESA_resize_buffers",                     o(MESA_resize_buffers),                     GL,             1999 },
    { "GL_MESA_texture_array",                      o(MESA_texture_array),                      GLL,            2007 },
    { "GL_MESA_texture_signed_rgba",                o(EXT_texture_snorm),                       GL,             2009 },
    { "GL_MESA_window_pos",                         o(dummy_true),                              GLL,            2000 },
@@ -445,7 +444,6 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
    /*ctx->Extensions.EXT_transform_feedback = GL_TRUE;*/
    ctx->Extensions.EXT_vertex_array_bgra = GL_TRUE;
    ctx->Extensions.MESA_pack_invert = GL_TRUE;
-   ctx->Extensions.MESA_resize_buffers = GL_TRUE;
    ctx->Extensions.MESA_texture_array = GL_TRUE;
    ctx->Extensions.MESA_ycbcr_texture = GL_TRUE;
    ctx->Extensions.NV_blend_square = GL_TRUE;

@@ -12,7 +12,7 @@ Contact
 
 Status
 
-    Shipping (since Mesa version 2.2)
+    Obsolete.
 
 Version
 

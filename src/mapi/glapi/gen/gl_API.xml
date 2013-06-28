@@ -11032,7 +11032,7 @@
 </category>
 
 <category name="GL_MESA_resize_buffers" number="196">
-    <function name="ResizeBuffersMESA" offset="assign">
+    <function name="ResizeBuffersMESA" offset="assign" exec="skip">
         <glx ignore="true"/>
     </function>
 </category>

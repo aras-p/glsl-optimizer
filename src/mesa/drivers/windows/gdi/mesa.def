@@ -556,7 +556,6 @@ EXPORTS
 	glFogCoorddvEXT
 	glFogCoordPointerEXT
 	glBlendFuncSeparateEXT
-	glResizeBuffersMESA
 	glWindowPos2dMESA
 	glWindowPos2dvMESA
 	glWindowPos2fMESA

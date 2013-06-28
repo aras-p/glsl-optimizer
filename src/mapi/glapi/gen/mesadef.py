@@ -134,7 +134,6 @@ def PrintTail():
     print '\t_mesa_new_buffer_object'
     print '\t_mesa_new_texture_object'
     print '\t_mesa_problem'
-    print '\t_mesa_ResizeBuffersMESA'
     print '\t_mesa_store_compressed_teximage1d'
     print '\t_mesa_store_compressed_teximage2d'
     print '\t_mesa_store_compressed_teximage3d'

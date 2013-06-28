@@ -501,9 +501,6 @@ const struct function gl_core_functions_possible[] = {
    /* GL_EXT_transform_feedback */
    { "glBindBufferOffsetEXT", 31, -1 },
 
-   /* GL_MESA_resize_buffers */
-   { "glResizeBuffersMESA", 31, -1 },
-
    /* GL_IBM_multimode_draw_arrays */
    { "glMultiModeDrawArraysIBM", 31, -1 },
    { "glMultiModeDrawElementsIBM", 31, -1 },

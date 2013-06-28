@@ -319,16 +319,6 @@ _mesa_resize_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb,
    }
 }
 
-/*
- * XXX THIS IS OBSOLETE
- */
-void GLAPIENTRY
-_mesa_ResizeBuffersMESA( void )
-{
-}
-
-
-
 /**
  * Examine all the framebuffer's renderbuffers to update the Width/Height
  * fields of the framebuffer.  If we have renderbuffers with different
