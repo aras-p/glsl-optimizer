@@ -285,6 +285,36 @@ _mesa_DeleteProgramPipelines(GLsizei n, const GLuint *pipelines)
 void GLAPIENTRY
 _mesa_GenProgramPipelines(GLsizei n, GLuint *pipelines)
 {
+   GET_CURRENT_CONTEXT(ctx);
+
+   GLuint first;
+   GLint i;
+
+   if (n < 0) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glGenProgramPipelines(n<0)");
+      return;
+   }
+
+   if (!pipelines) {
+      return;
+   }
+
+   first = _mesa_HashFindFreeKeyBlock(ctx->Pipeline.Objects, n);
+
+   for (i = 0; i < n; i++) {
+      struct gl_pipeline_object *obj;
+      GLuint name = first + i;
+
+      obj = _mesa_new_pipeline_object(ctx, name);
+      if (!obj) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glGenProgramPipelines");
+         return;
+      }
+
+      save_pipeline_object(ctx, obj);
+      pipelines[i] = first + i;
+   }
+
 }
 
 /**
