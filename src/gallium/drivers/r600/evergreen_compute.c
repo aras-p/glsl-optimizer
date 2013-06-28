@@ -519,12 +519,12 @@ static void evergreen_launch_grid(
 {
 	struct r600_context *ctx = (struct r600_context *)ctx_;
 
-#ifdef HAVE_OPENCL 
-
 	struct r600_pipe_compute *shader = ctx->cs_shader_state.shader;
 	struct r600_kernel *kernel = &shader->kernels[pc];
 
 	COMPUTE_DBG(ctx->screen, "*** evergreen_launch_grid: pc = %u\n", pc);
+
+#ifdef HAVE_OPENCL
 
 	if (!kernel->code_bo) {
 		void *p;
