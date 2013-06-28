@@ -1003,10 +1003,9 @@ gen6_pipeline_state_surfaces_const(struct ilo_3d_pipeline *p,
                                    int shader_type,
                                    struct gen6_pipeline_session *session)
 {
-   const struct ilo_cbuf_cso *buffers = ilo->cbuf[shader_type].cso;
-   const int num_buffers = ilo->cbuf[shader_type].count;
+   const struct ilo_cbuf_state *cbuf = &ilo->cbuf[shader_type];
    uint32_t *surface_state;
-   int offset, i;
+   int offset, count, i;
    bool skip = false;
 
    /* SURFACE_STATEs for constant buffers */
@@ -1041,22 +1040,21 @@ gen6_pipeline_state_surfaces_const(struct ilo_3d_pipeline *p,
    if (skip)
       return;
 
-   for (i = 0; i < num_buffers; i++) {
-      if (buffers[i].resource) {
-         const struct ilo_view_surface *surf = &buffers[i].surface;
-
-         surface_state[i] =
-            p->gen6_SURFACE_STATE(p->dev, surf, false, p->cp);
+   count = util_last_bit(cbuf->enabled_mask);
+   for (i = 0; i < count; i++) {
+      if (cbuf->cso[i].resource) {
+         surface_state[i] = p->gen6_SURFACE_STATE(p->dev,
+               &cbuf->cso[i].surface, false, p->cp);
       }
       else {
          surface_state[i] = 0;
       }
    }
 
-   memset(&surface_state[i], 0, (ILO_MAX_CONST_BUFFERS - i) * 4);
+   memset(&surface_state[count], 0, (ILO_MAX_CONST_BUFFERS - count) * 4);
 
-   if (i && session->num_surfaces[shader_type] < offset + i)
-      session->num_surfaces[shader_type] = offset + i;
+   if (count && session->num_surfaces[shader_type] < offset + count)
+      session->num_surfaces[shader_type] = offset + count;
 }
 
 static void
@@ -1542,7 +1540,7 @@ gen6_pipeline_estimate_states(const struct ilo_3d_pipeline *p,
 
    for (shader_type = 0; shader_type < PIPE_SHADER_TYPES; shader_type++) {
       count += ilo->view[shader_type].count;
-      count += ilo->cbuf[shader_type].count;
+      count += util_bitcount(ilo->cbuf[shader_type].enabled_mask);
    }
 
    if (count) {

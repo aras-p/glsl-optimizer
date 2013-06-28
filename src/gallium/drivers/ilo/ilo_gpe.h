@@ -222,7 +222,6 @@ struct ilo_cbuf_cso {
 struct ilo_cbuf_state {
    struct ilo_cbuf_cso cso[ILO_MAX_CONST_BUFFERS];
    uint32_t enabled_mask;
-   unsigned count;
 };
 
 struct ilo_resource_state {

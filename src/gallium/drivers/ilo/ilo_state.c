@@ -122,8 +122,6 @@ finalize_constant_buffers(struct ilo_context *ilo)
             cbuf->user_buffer_size = 0;
          }
       }
-
-      ilo->cbuf[sh].count = util_last_bit(ilo->cbuf[sh].enabled_mask);
    }
 }
 

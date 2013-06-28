@@ -712,7 +712,7 @@ gen7_pipeline_estimate_states(const struct ilo_3d_pipeline *p,
    count = ilo->fb.state.nr_cbufs;
    for (shader_type = 0; shader_type < PIPE_SHADER_TYPES; shader_type++) {
       count += ilo->view[shader_type].count;
-      count += ilo->cbuf[shader_type].count;
+      count += util_bitcount(ilo->cbuf[shader_type].enabled_mask);
    }
 
    if (count) {
