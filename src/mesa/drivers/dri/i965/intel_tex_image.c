@@ -310,8 +310,7 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
    if (!intelObj)
       return;
 
-   if (dPriv->lastStamp != dPriv->dri2.stamp ||
-       !pDRICtx->driScreenPriv->dri2.useInvalidate)
+   if (dPriv->lastStamp != dPriv->dri2.stamp)
       intel_update_renderbuffers(pDRICtx, dPriv);
 
    rb = intel_get_renderbuffer(fb, BUFFER_FRONT_LEFT);

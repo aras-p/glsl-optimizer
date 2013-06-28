@@ -290,21 +290,6 @@ intel_prepare_render(struct intel_context *intel)
    }
 }
 
-static void
-intel_viewport(struct gl_context *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
-{
-    struct intel_context *intel = intel_context(ctx);
-    __DRIcontext *driContext = intel->driContext;
-
-    if (intel->saved_viewport)
-	intel->saved_viewport(ctx, x, y, w, h);
-
-    if (_mesa_is_winsys_fbo(ctx->DrawBuffer)) {
-       dri2InvalidateDrawable(driContext->driDrawablePriv);
-       dri2InvalidateDrawable(driContext->driReadablePriv);
-    }
-}
-
 static const struct dri_debug_control debug_control[] = {
    { "tex",   DEBUG_TEXTURE},
    { "state", DEBUG_STATE},
@@ -473,12 +458,6 @@ intelInitContext(struct intel_context *intel,
                                  api, major_version, minor_version,
                                  dri_ctx_error))
       return false;
-
-   /* Can't rely on invalidate events, fall back to glViewport hack */
-   if (!driContextPriv->driScreenPriv->dri2.useInvalidate) {
-      intel->saved_viewport = functions->Viewport;
-      functions->Viewport = intel_viewport;
-   }
 
    if (mesaVis == NULL) {
       memset(&visual, 0, sizeof visual);
