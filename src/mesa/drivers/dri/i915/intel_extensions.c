@@ -51,7 +51,6 @@ intelInitExtensions(struct gl_context *ctx)
    ctx->Extensions.ARB_internalformat_query = true;
    ctx->Extensions.ARB_map_buffer_range = true;
    ctx->Extensions.ARB_point_sprite = true;
-   ctx->Extensions.ARB_shading_language_100 = true;
    ctx->Extensions.ARB_sync = true;
    ctx->Extensions.ARB_texture_border_clamp = true;
    ctx->Extensions.ARB_texture_cube_map = true;
