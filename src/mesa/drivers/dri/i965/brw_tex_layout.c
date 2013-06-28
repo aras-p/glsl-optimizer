@@ -42,12 +42,12 @@
 static void
 brw_miptree_layout_2d(struct intel_mipmap_tree *mt)
 {
-   GLuint level;
-   GLuint x = 0;
-   GLuint y = 0;
-   GLuint width = mt->physical_width0;
-   GLuint height = mt->physical_height0;
-   GLuint depth = mt->physical_depth0; /* number of array layers. */
+   unsigned level;
+   unsigned x = 0;
+   unsigned y = 0;
+   unsigned width = mt->physical_width0;
+   unsigned height = mt->physical_height0;
+   unsigned depth = mt->physical_depth0; /* number of array layers. */
 
    mt->total_width = mt->physical_width0;
 
@@ -61,7 +61,7 @@ brw_miptree_layout_2d(struct intel_mipmap_tree *mt)
     * 2nd mipmap out past the width of its parent.
     */
    if (mt->first_level != mt->last_level) {
-       GLuint mip1_width;
+       unsigned mip1_width;
 
        if (mt->compressed) {
           mip1_width = ALIGN(minify(mt->physical_width0, 1), mt->align_w) +
@@ -79,7 +79,7 @@ brw_miptree_layout_2d(struct intel_mipmap_tree *mt)
    mt->total_height = 0;
 
    for ( level = mt->first_level ; level <= mt->last_level ; level++ ) {
-      GLuint img_height;
+      unsigned img_height;
 
       intel_miptree_set_level_info(mt, level, x, y, width,
 				   height, depth);
@@ -110,8 +110,8 @@ static void
 brw_miptree_layout_texture_array(struct intel_context *intel,
 				 struct intel_mipmap_tree *mt)
 {
-   GLuint level;
-   GLuint qpitch = 0;
+   unsigned level;
+   unsigned qpitch = 0;
    int h0, h1, q;
 
    h0 = ALIGN(mt->physical_height0, mt->align_h);
@@ -137,12 +137,12 @@ static void
 brw_miptree_layout_texture_3d(struct intel_context *intel,
                               struct intel_mipmap_tree *mt)
 {
-   GLuint width  = mt->physical_width0;
-   GLuint height = mt->physical_height0;
-   GLuint depth = mt->physical_depth0;
-   GLuint pack_x_pitch, pack_x_nr;
-   GLuint pack_y_pitch;
-   GLuint level;
+   unsigned width  = mt->physical_width0;
+   unsigned height = mt->physical_height0;
+   unsigned depth = mt->physical_depth0;
+   unsigned pack_x_pitch, pack_x_nr;
+   unsigned pack_y_pitch;
+   unsigned level;
 
    mt->total_height = 0;
 
@@ -158,9 +158,9 @@ brw_miptree_layout_texture_3d(struct intel_context *intel,
    pack_x_nr = 1;
 
    for (level = mt->first_level ; level <= mt->last_level ; level++) {
-      GLint x = 0;
-      GLint y = 0;
-      GLint q, j;
+      int x = 0;
+      int y = 0;
+      int q, j;
 
       intel_miptree_set_level_info(mt, level,
                                    0, mt->total_height,
