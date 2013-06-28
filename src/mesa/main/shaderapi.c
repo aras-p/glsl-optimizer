@@ -121,6 +121,10 @@ _mesa_init_shader_state(struct gl_context *ctx)
       memcpy(&ctx->ShaderCompilerOptions[sh], &options, sizeof(options));
 
    ctx->Shader.Flags = _mesa_get_shader_flags();
+
+   /* Extended for ARB_separate_shader_objects */
+   ctx->Shader.RefCount = 1;
+   _glthread_INIT_MUTEX(ctx->Shader.Mutex);
 }
 
 
@@ -138,6 +142,10 @@ _mesa_free_shader_state(struct gl_context *ctx)
    _mesa_reference_shader_program(ctx, &ctx->Shader._CurrentFragmentProgram,
 				  NULL);
    _mesa_reference_shader_program(ctx, &ctx->Shader.ActiveProgram, NULL);
+
+   /* Extended for ARB_separate_shader_objects */
+   assert(ctx->Shader.RefCount == 1);
+   _glthread_DESTROY_MUTEX(ctx->Shader.Mutex);
 }
 
 

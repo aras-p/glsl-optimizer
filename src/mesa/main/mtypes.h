@@ -2760,6 +2760,10 @@ struct gl_shader_program
  */
 struct gl_shader_state
 {
+   GLint RefCount;
+
+   _glthread_Mutex Mutex;
+
    /**
     * Programs used for rendering
     *
