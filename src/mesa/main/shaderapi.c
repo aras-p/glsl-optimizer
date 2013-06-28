@@ -1832,19 +1832,16 @@ _mesa_ActiveProgramEXT(GLuint program)
    return;
 }
 
-
-/**
- * For GL_EXT_separate_shader_objects
- */
-GLuint GLAPIENTRY
-_mesa_CreateShaderProgramEXT(GLenum type, const GLchar *string)
+static GLuint
+_mesa_create_shader_program(struct gl_context* ctx, GLboolean separate,
+                            GLenum type, GLsizei count, const GLchar* const *strings)
 {
-   GET_CURRENT_CONTEXT(ctx);
    const GLuint shader = create_shader(ctx, type);
    GLuint program = 0;
 
    if (shader) {
-      shader_source(ctx, shader, _mesa_strdup(string));
+      _mesa_ShaderSource(shader, count, strings, NULL);
+
       compile_shader(ctx, shader);
 
       program = create_shader_program(ctx);
@@ -1855,6 +1852,8 @@ _mesa_CreateShaderProgramEXT(GLenum type, const GLchar *string)
 
 	 shProg = _mesa_lookup_shader_program(ctx, program);
 	 sh = _mesa_lookup_shader(ctx, shader);
+
+	 shProg->SeparateShader = separate;
 
 	 get_shaderiv(ctx, shader, GL_COMPILE_STATUS, &compiled);
 	 if (compiled) {
@@ -1917,6 +1916,17 @@ _mesa_copy_linked_program_data(gl_shader_stage type,
    }
 }
 
+
+/**
+ * For GL_EXT_separate_shader_objects
+ */
+GLuint GLAPIENTRY
+_mesa_CreateShaderProgramEXT(GLenum type, const GLchar *string)
+{
+   GET_CURRENT_CONTEXT(ctx);
+
+   return _mesa_create_shader_program(ctx, GL_FALSE, type, 1, &string);
+}
 
 /**
  * ARB_separate_shader_objects: Compile & Link Program
