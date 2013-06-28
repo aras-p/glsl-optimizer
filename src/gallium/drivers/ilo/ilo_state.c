@@ -587,51 +587,66 @@ ilo_set_clip_state(struct pipe_context *pipe,
 static void
 ilo_set_constant_buffer(struct pipe_context *pipe,
                         uint shader, uint index,
-                        struct pipe_constant_buffer *state)
+                        struct pipe_constant_buffer *buf)
 {
    struct ilo_context *ilo = ilo_context(pipe);
-   struct ilo_cbuf_cso *cbuf;
+   struct ilo_cbuf_state *cbuf = &ilo->cbuf[shader];
+   const unsigned count = 1;
+   unsigned i;
 
    assert(shader < Elements(ilo->cbuf));
-   assert(index < Elements(ilo->cbuf[shader].cso));
+   assert(index + count <= Elements(ilo->cbuf[shader].cso));
 
-   cbuf = &ilo->cbuf[shader].cso[index];
+   if (buf) {
+      for (i = 0; i < count; i++) {
+         struct ilo_cbuf_cso *cso = &cbuf->cso[index + i];
 
-   if (state) {
-      pipe_resource_reference(&cbuf->resource, state->buffer);
+         pipe_resource_reference(&cso->resource, buf[i].buffer);
 
-      if (state->buffer) {
-         const enum pipe_format elem_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
+         if (buf[i].buffer) {
+            const enum pipe_format elem_format =
+               PIPE_FORMAT_R32G32B32A32_FLOAT;
 
-         ilo_gpe_init_view_surface_for_buffer(ilo->dev,
-               ilo_buffer(cbuf->resource),
-               state->buffer_offset, state->buffer_size,
-               util_format_get_blocksize(elem_format), elem_format,
-               false, false, &cbuf->surface);
+            ilo_gpe_init_view_surface_for_buffer(ilo->dev,
+                  ilo_buffer(buf[i].buffer),
+                  buf[i].buffer_offset, buf[i].buffer_size,
+                  util_format_get_blocksize(elem_format), elem_format,
+                  false, false, &cso->surface);
 
-         cbuf->user_buffer = NULL;
-         cbuf->user_buffer_size = 0;
+            cso->user_buffer = NULL;
+            cso->user_buffer_size = 0;
+
+            cbuf->enabled_mask |= 1 << (index + i);
+         }
+         else if (buf[i].user_buffer) {
+            cso->surface.bo = NULL;
+
+            /* buffer_offset does not apply for user buffer */
+            cso->user_buffer = buf[i].user_buffer;
+            cso->user_buffer_size = buf[i].buffer_size;
+
+            cbuf->enabled_mask |= 1 << (index + i);
+         }
+         else {
+            cso->surface.bo = NULL;
+            cso->user_buffer = NULL;
+            cso->user_buffer_size = 0;
+
+            cbuf->enabled_mask &= ~(1 << (index + i));
+         }
       }
-      else {
-         assert(state->user_buffer);
-
-         cbuf->surface.bo = NULL;
-
-         /* state->buffer_offset does not apply for user buffer */
-         cbuf->user_buffer = state->user_buffer;
-         cbuf->user_buffer_size = state->buffer_size;
-      }
-
-      ilo->cbuf[shader].enabled_mask |= 1 << index;
    }
    else {
-      pipe_resource_reference(&cbuf->resource, NULL);
-      cbuf->surface.bo = NULL;
+      for (i = 0; i < count; i++) {
+         struct ilo_cbuf_cso *cso = &cbuf->cso[index + i];
 
-      cbuf->user_buffer = NULL;
-      cbuf->user_buffer_size = 0;
+         pipe_resource_reference(&cso->resource, NULL);
+         cso->surface.bo = NULL;
+         cso->user_buffer = NULL;
+         cso->user_buffer_size = 0;
 
-      ilo->cbuf[shader].enabled_mask &= ~(1 << index);
+         cbuf->enabled_mask &= ~(1 << (index + i));
+      }
    }
 
    ilo->dirty |= ILO_DIRTY_CBUF;
