@@ -266,7 +266,7 @@ svga_remap_generic_index(int8_t remap_table[MAX_GENERIC_VARYING],
  */
 static struct svga_shader_result *
 svga_tgsi_translate(const struct svga_shader *shader,
-                    struct svga_compile_key key, unsigned unit)
+                    const struct svga_compile_key *key, unsigned unit)
 {
    struct svga_shader_result *result = NULL;
    struct svga_shader_emitter emit;
@@ -281,17 +281,17 @@ svga_tgsi_translate(const struct svga_shader *shader,
 
    emit.ptr = emit.buf;
    emit.unit = unit;
-   emit.key = key;
+   emit.key = *key;
 
    tgsi_scan_shader(shader->tokens, &emit.info);
 
    emit.imm_start = emit.info.file_max[TGSI_FILE_CONSTANT] + 1;
 
    if (unit == PIPE_SHADER_FRAGMENT)
-      emit.imm_start += key.fkey.num_unnormalized_coords;
+      emit.imm_start += key->fkey.num_unnormalized_coords;
 
    if (unit == PIPE_SHADER_VERTEX) {
-      emit.imm_start += key.vkey.need_prescale ? 2 : 0;
+      emit.imm_start += key->vkey.need_prescale ? 2 : 0;
    }
 
    emit.nr_hw_float_const =
@@ -324,7 +324,7 @@ svga_tgsi_translate(const struct svga_shader *shader,
    result->shader = shader;
    result->tokens = (const unsigned *) emit.buf;
    result->nr_tokens = (emit.ptr - emit.buf) / sizeof(unsigned);
-   memcpy(&result->key, &key, sizeof key);
+   memcpy(&result->key, key, sizeof(*key));
    result->id = UTIL_BITMASK_INVALID_INDEX;
 
    if (SVGA_DEBUG & DEBUG_TGSI) {
@@ -360,7 +360,7 @@ svga_translate_fragment_program(const struct svga_fragment_shader *fs,
    memcpy(key.generic_remap_table, fs->generic_remap_table,
           sizeof(fs->generic_remap_table));
 
-   return svga_tgsi_translate(&fs->base, key, PIPE_SHADER_FRAGMENT);
+   return svga_tgsi_translate(&fs->base, &key, PIPE_SHADER_FRAGMENT);
 }
 
 
@@ -379,7 +379,7 @@ svga_translate_vertex_program(const struct svga_vertex_shader *vs,
     */
    svga_remap_generics(vkey->fs_generic_inputs, key.generic_remap_table);
 
-   return svga_tgsi_translate(&vs->base, key, PIPE_SHADER_VERTEX);
+   return svga_tgsi_translate(&vs->base, &key, PIPE_SHADER_VERTEX);
 }
 
 
