@@ -619,11 +619,6 @@ WMesaContext WMesaCreateContext(HDC hDC,
     _mesa_destroy_visual(visual);
 
     _mesa_enable_sw_extensions(ctx);
-    _mesa_enable_1_3_extensions(ctx);
-    _mesa_enable_1_4_extensions(ctx);
-    _mesa_enable_1_5_extensions(ctx);
-    _mesa_enable_2_0_extensions(ctx);
-    _mesa_enable_2_1_extensions(ctx);
   
     _mesa_meta_init(ctx);
 
