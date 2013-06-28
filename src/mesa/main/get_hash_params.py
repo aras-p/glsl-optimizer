@@ -107,9 +107,9 @@ descriptor=[
   [ "IMPLEMENTATION_COLOR_READ_FORMAT_OES", "LOC_CUSTOM, TYPE_INT, 0, extra_new_buffers" ],
 
 # GL_EXT_framebuffer_object
-  [ "FRAMEBUFFER_BINDING_EXT", "BUFFER_INT(Name), extra_EXT_framebuffer_object" ],
-  [ "RENDERBUFFER_BINDING_EXT", "LOC_CUSTOM, TYPE_INT, 0, extra_EXT_framebuffer_object" ],
-  [ "MAX_RENDERBUFFER_SIZE_EXT", "CONTEXT_INT(Const.MaxRenderbufferSize), extra_EXT_framebuffer_object" ],
+  [ "FRAMEBUFFER_BINDING_EXT", "BUFFER_INT(Name), NO_EXTRA" ],
+  [ "RENDERBUFFER_BINDING_EXT", "LOC_CUSTOM, TYPE_INT, 0, NO_EXTRA" ],
+  [ "MAX_RENDERBUFFER_SIZE_EXT", "CONTEXT_INT(Const.MaxRenderbufferSize), NO_EXTRA" ],
 
 # This entry isn't spec'ed for GLES 2, but is needed for Mesa's
 # GLSL:
@@ -258,7 +258,7 @@ descriptor=[
   [ "MAX_DRAW_BUFFERS_ARB", "CONTEXT_INT(Const.MaxDrawBuffers), NO_EXTRA" ],
 
 # GL_EXT_framebuffer_object / GL_NV_fbo_color_attachments
-  [ "MAX_COLOR_ATTACHMENTS", "CONTEXT_INT(Const.MaxColorAttachments), extra_EXT_framebuffer_object" ],
+  [ "MAX_COLOR_ATTACHMENTS", "CONTEXT_INT(Const.MaxColorAttachments), NO_EXTRA" ],
 
 # GL_ARB_draw_buffers / GL_NV_draw_buffers (for ES 2.0)
   [ "DRAW_BUFFER0_ARB", "BUFFER_ENUM(ColorDrawBuffer[0]), NO_EXTRA" ],

@@ -60,7 +60,6 @@ supported_buffer_bitmask(const struct gl_context *ctx,
    if (_mesa_is_user_fbo(fb)) {
       /* A user-created renderbuffer */
       GLuint i;
-      ASSERT(ctx->Extensions.EXT_framebuffer_object);
       for (i = 0; i < ctx->Const.MaxColorAttachments; i++) {
          mask |= (BUFFER_BIT_COLOR0 << i);
       }

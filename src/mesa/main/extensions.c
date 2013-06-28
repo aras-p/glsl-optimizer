@@ -171,7 +171,7 @@ static const struct extension extension_table[] = {
    { "GL_EXT_blend_color",                         o(EXT_blend_color),                         GLL,            1995 },
    { "GL_EXT_blend_equation_separate",             o(EXT_blend_equation_separate),             GL,             2003 },
    { "GL_EXT_blend_func_separate",                 o(EXT_blend_func_separate),                 GLL,            1999 },
-   { "GL_EXT_discard_framebuffer",                 o(EXT_framebuffer_object),                        ES1 | ES2, 2009 },
+   { "GL_EXT_discard_framebuffer",                 o(dummy_true),                                    ES1 | ES2, 2009 },
    { "GL_EXT_blend_minmax",                        o(EXT_blend_minmax),                        GLL | ES1 | ES2, 1995 },
    { "GL_EXT_blend_subtract",                      o(dummy_true),                              GLL,            1995 },
    { "GL_EXT_compiled_vertex_array",               o(dummy_true),                              GLL,            1996 },
@@ -184,7 +184,7 @@ static const struct extension extension_table[] = {
    { "GL_EXT_framebuffer_blit",                    o(EXT_framebuffer_blit),                    GL,             2005 },
    { "GL_EXT_framebuffer_multisample",             o(EXT_framebuffer_multisample),             GL,             2005 },
    { "GL_EXT_framebuffer_multisample_blit_scaled", o(EXT_framebuffer_multisample_blit_scaled), GL,             2011 },
-   { "GL_EXT_framebuffer_object",                  o(EXT_framebuffer_object),                  GL,             2000 },
+   { "GL_EXT_framebuffer_object",                  o(dummy_true),                              GL,             2000 },
    { "GL_EXT_framebuffer_sRGB",                    o(EXT_framebuffer_sRGB),                    GL,             1998 },
    { "GL_EXT_gpu_program_parameters",              o(EXT_gpu_program_parameters),              GLL,            2006 },
    { "GL_EXT_gpu_shader4",                         o(EXT_gpu_shader4),                         GL,             2006 },
@@ -248,7 +248,7 @@ static const struct extension extension_table[] = {
    { "GL_OES_byte_coordinates",                    o(dummy_true),                                   ES1,       2002 },
    { "GL_OES_compressed_ETC1_RGB8_texture",        o(OES_compressed_ETC1_RGB8_texture),             ES1 | ES2, 2005 },
    { "GL_OES_compressed_paletted_texture",         o(dummy_true),                                   ES1,       2003 },
-   { "GL_OES_depth24",                             o(EXT_framebuffer_object),                       ES1 | ES2, 2005 },
+   { "GL_OES_depth24",                             o(dummy_true),                                   ES1 | ES2, 2005 },
    { "GL_OES_depth32",                             o(dummy_false),                     DISABLE,                2005 },
    { "GL_OES_depth_texture",                       o(ARB_depth_texture),                                  ES2, 2006 },
    { "GL_OES_depth_texture_cube_map",              o(OES_depth_texture_cube_map),                         ES2, 2012 },
@@ -257,9 +257,9 @@ static const struct extension extension_table[] = {
    { "GL_OES_EGL_image",                           o(OES_EGL_image),                           GL | ES1 | ES2, 2006 },
    { "GL_OES_EGL_image_external",                  o(OES_EGL_image_external),                       ES1 | ES2, 2010 },
    { "GL_OES_element_index_uint",                  o(dummy_true),                                   ES1 | ES2, 2005 },
-   { "GL_OES_fbo_render_mipmap",                   o(EXT_framebuffer_object),                       ES1 | ES2, 2005 },
+   { "GL_OES_fbo_render_mipmap",                   o(dummy_true),                                   ES1 | ES2, 2005 },
    { "GL_OES_fixed_point",                         o(dummy_true),                                   ES1,       2002 },
-   { "GL_OES_framebuffer_object",                  o(EXT_framebuffer_object),                       ES1,       2005 },
+   { "GL_OES_framebuffer_object",                  o(dummy_true),                                   ES1,       2005 },
    { "GL_OES_get_program_binary",                  o(ARB_shader_objects),                                 ES2, 2008 },
    { "GL_OES_mapbuffer",                           o(dummy_true),                                   ES1 | ES2, 2005 },
    { "GL_OES_matrix_get",                          o(dummy_true),                                   ES1,       2004 },
@@ -268,12 +268,12 @@ static const struct extension extension_table[] = {
    { "GL_OES_point_sprite",                        o(ARB_point_sprite),                             ES1,       2004 },
    { "GL_OES_query_matrix",                        o(dummy_true),                                   ES1,       2003 },
    { "GL_OES_read_format",                         o(dummy_true),                              GL | ES1,       2003 },
-   { "GL_OES_rgb8_rgba8",                          o(EXT_framebuffer_object),                       ES1 | ES2, 2005 },
+   { "GL_OES_rgb8_rgba8",                          o(dummy_true),                                   ES1 | ES2, 2005 },
    { "GL_OES_single_precision",                    o(dummy_true),                                   ES1,       2003 },
    { "GL_OES_standard_derivatives",                o(OES_standard_derivatives),                           ES2, 2005 },
    { "GL_OES_stencil1",                            o(dummy_false),                     DISABLE,                2005 },
    { "GL_OES_stencil4",                            o(dummy_false),                     DISABLE,                2005 },
-   { "GL_OES_stencil8",                            o(EXT_framebuffer_object),                       ES1 | ES2, 2005 },
+   { "GL_OES_stencil8",                            o(dummy_true),                                   ES1 | ES2, 2005 },
    { "GL_OES_stencil_wrap",                        o(dummy_true),                                   ES1,       2002 },
    { "GL_OES_texture_3D",                          o(EXT_texture3D),                                      ES2, 2005 },
    { "GL_OES_texture_cube_map",                    o(ARB_texture_cube_map),                         ES1,       2007 },
@@ -315,7 +315,7 @@ static const struct extension extension_table[] = {
    { "GL_NV_conditional_render",                   o(NV_conditional_render),                   GL,             2008 },
    { "GL_NV_depth_clamp",                          o(ARB_depth_clamp),                         GL,             2001 },
    { "GL_NV_draw_buffers",                         o(dummy_true),                                         ES2, 2011 },
-   { "GL_NV_fbo_color_attachments",                o(EXT_framebuffer_object),                             ES2, 2010 },
+   { "GL_NV_fbo_color_attachments",                o(dummy_true),                                         ES2, 2010 },
    { "GL_NV_fog_distance",                         o(NV_fog_distance),                         GLL,            2001 },
    { "GL_NV_fragment_program_option",              o(NV_fragment_program_option),              GLL,            2005 },
    { "GL_NV_light_max_exponent",                   o(dummy_true),                              GLL,            1999 },
@@ -423,7 +423,6 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
    ctx->Extensions.EXT_depth_bounds_test = GL_TRUE;
    ctx->Extensions.EXT_draw_buffers2 = GL_TRUE;
    ctx->Extensions.EXT_fog_coord = GL_TRUE;
-   ctx->Extensions.EXT_framebuffer_object = GL_TRUE;
    ctx->Extensions.EXT_framebuffer_blit = GL_TRUE;
    ctx->Extensions.EXT_packed_depth_stencil = GL_TRUE;
    ctx->Extensions.EXT_pixel_buffer_object = GL_TRUE;

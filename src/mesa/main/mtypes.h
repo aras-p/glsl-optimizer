@@ -3058,7 +3058,6 @@ struct gl_extensions
    GLboolean EXT_framebuffer_blit;
    GLboolean EXT_framebuffer_multisample;
    GLboolean EXT_framebuffer_multisample_blit_scaled;
-   GLboolean EXT_framebuffer_object;
    GLboolean EXT_framebuffer_sRGB;
    GLboolean EXT_gpu_program_parameters;
    GLboolean EXT_gpu_shader4;

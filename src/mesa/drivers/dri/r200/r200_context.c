@@ -397,7 +397,6 @@ GLboolean r200CreateContext( gl_api api,
    ctx->Extensions.NV_blend_square = true;
    ctx->Extensions.NV_texture_rectangle = true;
    ctx->Extensions.OES_EGL_image = true;
-   ctx->Extensions.EXT_framebuffer_object = true;
    ctx->Extensions.ARB_occlusion_query = true;
 
    if (!(rmesa->radeon.radeonScreen->chip_flags & R200_CHIPSET_YCBCR_BROKEN)) {

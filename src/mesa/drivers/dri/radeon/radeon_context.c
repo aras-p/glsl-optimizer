@@ -355,7 +355,6 @@ r100CreateContext( gl_api api,
    ctx->Extensions.MESA_ycbcr_texture = true;
    ctx->Extensions.NV_blend_square = true;
    ctx->Extensions.OES_EGL_image = true;
-   ctx->Extensions.EXT_framebuffer_object = true;
    ctx->Extensions.ARB_texture_cube_map = true;
 
    if (rmesa->radeon.glCtx.Mesa_DXTn) {

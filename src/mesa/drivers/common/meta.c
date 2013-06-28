@@ -3049,12 +3049,6 @@ _mesa_meta_check_generate_mipmap_fallback(struct gl_context *ctx, GLenum target,
    GLenum status;
 
    /* check for fallbacks */
-   if (!ctx->Extensions.EXT_framebuffer_object) {
-      _mesa_perf_debug(ctx, MESA_DEBUG_SEVERITY_HIGH,
-                       "glGenerateMipmap() without FBOs\n");
-      return GL_TRUE;
-   }
-
    if (target == GL_TEXTURE_3D ||
        target == GL_TEXTURE_1D_ARRAY ||
        target == GL_TEXTURE_2D_ARRAY) {

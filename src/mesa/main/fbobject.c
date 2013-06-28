@@ -1909,16 +1909,9 @@ _mesa_BindFramebuffer(GLenum target, GLuint framebuffer)
 
 #ifdef DEBUG
    if (ctx->Extensions.ARB_framebuffer_object) {
-      ASSERT(ctx->Extensions.EXT_framebuffer_object);
       ASSERT(ctx->Extensions.EXT_framebuffer_blit);
    }
 #endif
-
-   if (!ctx->Extensions.EXT_framebuffer_object) {
-      _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glBindFramebufferEXT(unsupported)");
-      return;
-   }
 
    switch (target) {
    case GL_DRAW_FRAMEBUFFER_EXT:
