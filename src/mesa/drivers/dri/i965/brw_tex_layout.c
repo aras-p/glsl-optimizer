@@ -1,4 +1,6 @@
 /*
+ Copyright 2006 Tungsten Graphics, Inc., Cedar Park, Texas.
+ All Rights Reserved.
  Copyright (C) Intel Corp.  2006.  All Rights Reserved.
  Intel funded Tungsten Graphics (http://www.tungstengraphics.com) to
  develop this 3D driver.
@@ -27,6 +29,7 @@
  /*
   * Authors:
   *   Keith Whitwell <keith@tungstengraphics.com>
+  *   Michel Dänzer <michel@tungstengraphics.com>
   */
 
 /* Code to layout images in a mipmap tree for i965.
@@ -38,6 +41,73 @@
 #include "main/macros.h"
 
 #define FILE_DEBUG_FLAG DEBUG_MIPTREE
+
+static void
+brw_miptree_layout_2d(struct intel_mipmap_tree *mt)
+{
+   GLuint level;
+   GLuint x = 0;
+   GLuint y = 0;
+   GLuint width = mt->physical_width0;
+   GLuint height = mt->physical_height0;
+   GLuint depth = mt->physical_depth0; /* number of array layers. */
+
+   mt->total_width = mt->physical_width0;
+
+   if (mt->compressed) {
+       mt->total_width = ALIGN(mt->physical_width0, mt->align_w);
+   }
+
+   /* May need to adjust width to accomodate the placement of
+    * the 2nd mipmap.  This occurs when the alignment
+    * constraints of mipmap placement push the right edge of the
+    * 2nd mipmap out past the width of its parent.
+    */
+   if (mt->first_level != mt->last_level) {
+       GLuint mip1_width;
+
+       if (mt->compressed) {
+          mip1_width = ALIGN(minify(mt->physical_width0, 1), mt->align_w) +
+             ALIGN(minify(mt->physical_width0, 2), mt->align_w);
+       } else {
+          mip1_width = ALIGN(minify(mt->physical_width0, 1), mt->align_w) +
+             minify(mt->physical_width0, 2);
+       }
+
+       if (mip1_width > mt->total_width) {
+           mt->total_width = mip1_width;
+       }
+   }
+
+   mt->total_height = 0;
+
+   for ( level = mt->first_level ; level <= mt->last_level ; level++ ) {
+      GLuint img_height;
+
+      intel_miptree_set_level_info(mt, level, x, y, width,
+				   height, depth);
+
+      img_height = ALIGN(height, mt->align_h);
+      if (mt->compressed)
+	 img_height /= mt->align_h;
+
+      /* Because the images are packed better, the final offset
+       * might not be the maximal one:
+       */
+      mt->total_height = MAX2(mt->total_height, y + img_height);
+
+      /* Layout_below: step right after second mipmap.
+       */
+      if (level == mt->first_level + 1) {
+	 x += ALIGN(width, mt->align_w);
+      } else {
+	 y += img_height;
+      }
+
+      width  = minify(width, 1);
+      height = minify(height, 1);
+   }
+}
 
 static void
 brw_miptree_layout_texture_array(struct intel_context *intel,
@@ -56,7 +126,7 @@ brw_miptree_layout_texture_array(struct intel_context *intel,
    if (mt->compressed)
       qpitch /= 4;
 
-   i945_miptree_layout_2d(mt);
+   brw_miptree_layout_2d(mt);
 
    for (level = mt->first_level; level <= mt->last_level; level++) {
       for (q = 0; q < mt->physical_depth0; q++) {
@@ -180,7 +250,7 @@ brw_miptree_layout(struct intel_context *intel, struct intel_mipmap_tree *mt)
          break;
       case INTEL_MSAA_LAYOUT_NONE:
       case INTEL_MSAA_LAYOUT_IMS:
-         i945_miptree_layout_2d(mt);
+         brw_miptree_layout_2d(mt);
          break;
       }
       break;
