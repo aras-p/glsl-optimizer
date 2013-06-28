@@ -648,41 +648,6 @@ swrast_init_driver_functions(struct dd_function_table *driver)
     driver->UnmapRenderbuffer = swrast_unmap_renderbuffer;
 }
 
-static const char *es2_extensions[] = {
-   /* Used by mesa internally (cf all_mesa_extensions in ../common/utils.c) */
-   "GL_EXT_blend_func_separate",
-   "GL_EXT_framebuffer_blit",
-   "GL_MESA_window_pos",
-
-   /* Required by GLES2 */
-   "GL_ARB_fragment_program",
-   "GL_ARB_fragment_shader",
-   "GL_ARB_shader_objects",
-   "GL_ARB_texture_cube_map",
-   "GL_ARB_texture_non_power_of_two",
-   "GL_ARB_vertex_shader",
-   "GL_EXT_blend_color",
-   "GL_EXT_blend_equation_separate",
-   "GL_EXT_blend_minmax",
-
-   /* Optional GLES2 */
-   "GL_ARB_framebuffer_object",
-   "GL_EXT_texture_filter_anisotropic",
-   "GL_ARB_depth_texture",
-   "GL_EXT_packed_depth_stencil",
-   "GL_EXT_framebuffer_object",
-   NULL,
-};
-
-static void
-InitExtensionsES2(struct gl_context *ctx)
-{
-   int i;
-
-   for (i = 0; es2_extensions[i]; i++)
-      _mesa_enable_extension(ctx, es2_extensions[i]);
-}
-
 /**
  * Context-related functions.
  */
@@ -768,27 +733,6 @@ dri_create_context(gl_api api,
 
     _mesa_meta_init(mesaCtx);
     _mesa_enable_sw_extensions(mesaCtx);
-
-    switch (api) {
-    case API_OPENGL_CORE:
-        /* XXX fix me, fall-through for now */
-    case API_OPENGL_COMPAT:
-        _mesa_enable_1_3_extensions(mesaCtx);
-        _mesa_enable_1_4_extensions(mesaCtx);
-        _mesa_enable_1_5_extensions(mesaCtx);
-        _mesa_enable_2_0_extensions(mesaCtx);
-        _mesa_enable_2_1_extensions(mesaCtx);
-        break;
-    case API_OPENGLES:
-        _mesa_enable_1_3_extensions(mesaCtx);
-        _mesa_enable_1_4_extensions(mesaCtx);
-        _mesa_enable_1_5_extensions(mesaCtx);
-
-        break;
-    case API_OPENGLES2:
-        InitExtensionsES2( mesaCtx);
-        break;
-    }
 
     _mesa_compute_version(mesaCtx);
 
