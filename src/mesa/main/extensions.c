@@ -456,11 +456,10 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
    ctx->Extensions.NV_fragment_program_option = GL_TRUE;
    ctx->Extensions.EXT_gpu_program_parameters = GL_TRUE;
    ctx->Extensions.OES_standard_derivatives = GL_TRUE;
-   _mesa_enable_extension(ctx, "GL_3DFX_texture_compression_FXT1");
+   ctx->Extensions.TDFX_texture_compression_FXT1 = GL_TRUE;
    if (ctx->Mesa_DXTn) {
       ctx->Extensions.ANGLE_texture_compression_dxt = GL_TRUE;
-      _mesa_enable_extension(ctx, "GL_EXT_texture_compression_s3tc");
-      _mesa_enable_extension(ctx, "GL_S3_s3tc");
+      ctx->Extensions.EXT_texture_compression_s3tc = GL_TRUE;
    }
 }
 
