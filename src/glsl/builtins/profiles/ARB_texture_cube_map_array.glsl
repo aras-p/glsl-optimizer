@@ -7,7 +7,8 @@ ivec3 textureSize(usamplerCubeArray sampler, int lod);
 ivec3 textureSize(samplerCubeArrayShadow sampler, int lod);
 
  vec4 texture( samplerCubeArray sampler, vec4 coord);
- vec4 texture( samplerCubeArray sampler, vec4 coord, float bias);
+ivec4 texture(isamplerCubeArray sampler, vec4 coord);
+uvec4 texture(usamplerCubeArray sampler, vec4 coord);
 float texture( samplerCubeArrayShadow sampler, vec4 P, float compare);
 
  vec4 textureGrad( samplerCubeArray sampler, vec4 P, vec3 dPdx, vec3 dPdy);
