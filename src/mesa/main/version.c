@@ -205,7 +205,6 @@ compute_version(struct gl_context *ctx)
                               ctx->Extensions.EXT_blend_color &&
                               ctx->Extensions.EXT_blend_func_separate &&
                               ctx->Extensions.EXT_blend_minmax &&
-                              ctx->Extensions.EXT_fog_coord &&
                               ctx->Extensions.EXT_point_parameters);
    const GLboolean ver_1_5 = (ver_1_4 &&
                               ctx->Extensions.ARB_occlusion_query &&

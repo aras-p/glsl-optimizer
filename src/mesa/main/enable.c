@@ -1420,7 +1420,6 @@ _mesa_IsEnabled( GLenum cap )
       case GL_FOG_COORDINATE_ARRAY_EXT:
          if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
-         CHECK_EXTENSION(EXT_fog_coord);
          return (ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_FOG].Enabled != 0);
       case GL_SECONDARY_COLOR_ARRAY_EXT:
          if (ctx->API != API_OPENGL_COMPAT)

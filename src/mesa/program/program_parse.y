@@ -1149,11 +1149,6 @@ vtxAttribItem: POSITION
 	}
 	| FOGCOORD
 	{
-	   if (!state->ctx->Extensions.EXT_fog_coord) {
-	      yyerror(& @1, state, "GL_EXT_fog_coord not supported");
-	      YYERROR;
-	   }
-
 	   $$ = VERT_ATTRIB_FOG;
 	}
 	| TEXCOORD optTexCoordUnitNum

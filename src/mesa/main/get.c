@@ -272,12 +272,6 @@ static const int extra_flush_current[] = {
    EXTRA_END
 };
 
-static const int extra_EXT_fog_coord_flush_current[] = {
-   EXT(EXT_fog_coord),
-   EXTRA_FLUSH_CURRENT,
-   EXTRA_END
-};
-
 static const int extra_EXT_texture_integer[] = {
    EXT(EXT_texture_integer),
    EXTRA_END
@@ -339,7 +333,6 @@ static const int extra_MESA_texture_array_es3[] = {
 
 EXTRA_EXT(ARB_texture_cube_map);
 EXTRA_EXT(MESA_texture_array);
-EXTRA_EXT(EXT_fog_coord);
 EXTRA_EXT(NV_fog_distance);
 EXTRA_EXT(EXT_texture_filter_anisotropic);
 EXTRA_EXT(NV_point_sprite);

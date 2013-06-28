@@ -552,11 +552,11 @@ descriptor=[
   [ "SECONDARY_COLOR_ARRAY_SIZE", "ARRAY_INT(VertexAttrib[VERT_ATTRIB_COLOR1].Size), NO_EXTRA" ],
 
 # GL_EXT_fog_coord
-  [ "CURRENT_FOG_COORDINATE", "CONTEXT_FLOAT(Current.Attrib[VERT_ATTRIB_FOG][0]), extra_EXT_fog_coord_flush_current" ],
-  [ "FOG_COORDINATE_ARRAY", "ARRAY_BOOL(VertexAttrib[VERT_ATTRIB_FOG].Enabled), extra_EXT_fog_coord" ],
-  [ "FOG_COORDINATE_ARRAY_TYPE", "ARRAY_ENUM(VertexAttrib[VERT_ATTRIB_FOG].Type), extra_EXT_fog_coord" ],
-  [ "FOG_COORDINATE_ARRAY_STRIDE", "ARRAY_INT(VertexAttrib[VERT_ATTRIB_FOG].Stride), extra_EXT_fog_coord" ],
-  [ "FOG_COORDINATE_SOURCE", "CONTEXT_ENUM(Fog.FogCoordinateSource), extra_EXT_fog_coord" ],
+  [ "CURRENT_FOG_COORDINATE", "CONTEXT_FLOAT(Current.Attrib[VERT_ATTRIB_FOG][0]), extra_flush_current" ],
+  [ "FOG_COORDINATE_ARRAY", "ARRAY_BOOL(VertexAttrib[VERT_ATTRIB_FOG].Enabled), NO_EXTRA" ],
+  [ "FOG_COORDINATE_ARRAY_TYPE", "ARRAY_ENUM(VertexAttrib[VERT_ATTRIB_FOG].Type), NO_EXTRA" ],
+  [ "FOG_COORDINATE_ARRAY_STRIDE", "ARRAY_INT(VertexAttrib[VERT_ATTRIB_FOG].Stride), NO_EXTRA" ],
+  [ "FOG_COORDINATE_SOURCE", "CONTEXT_ENUM(Fog.FogCoordinateSource), NO_EXTRA" ],
 
 # GL_NV_fog_distance
   [ "FOG_DISTANCE_MODE_NV", "CONTEXT_ENUM(Fog.FogDistanceMode), extra_NV_fog_distance" ],

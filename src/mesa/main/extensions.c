@@ -180,7 +180,7 @@ static const struct extension extension_table[] = {
    { "GL_EXT_draw_buffers2",                       o(EXT_draw_buffers2),                       GL,             2006 },
    { "GL_EXT_draw_instanced",                      o(ARB_draw_instanced),                      GL,             2006 },
    { "GL_EXT_draw_range_elements",                 o(dummy_true),                              GLL,            1997 },
-   { "GL_EXT_fog_coord",                           o(EXT_fog_coord),                           GLL,            1999 },
+   { "GL_EXT_fog_coord",                           o(dummy_true),                              GLL,            1999 },
    { "GL_EXT_framebuffer_blit",                    o(EXT_framebuffer_blit),                    GL,             2005 },
    { "GL_EXT_framebuffer_multisample",             o(EXT_framebuffer_multisample),             GL,             2005 },
    { "GL_EXT_framebuffer_multisample_blit_scaled", o(EXT_framebuffer_multisample_blit_scaled), GL,             2011 },
@@ -422,7 +422,6 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
    ctx->Extensions.EXT_blend_minmax = GL_TRUE;
    ctx->Extensions.EXT_depth_bounds_test = GL_TRUE;
    ctx->Extensions.EXT_draw_buffers2 = GL_TRUE;
-   ctx->Extensions.EXT_fog_coord = GL_TRUE;
    ctx->Extensions.EXT_framebuffer_blit = GL_TRUE;
    ctx->Extensions.EXT_packed_depth_stencil = GL_TRUE;
    ctx->Extensions.EXT_pixel_buffer_object = GL_TRUE;

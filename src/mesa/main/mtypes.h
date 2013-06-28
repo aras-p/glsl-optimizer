@@ -3054,7 +3054,6 @@ struct gl_extensions
    GLboolean EXT_blend_minmax;
    GLboolean EXT_depth_bounds_test;
    GLboolean EXT_draw_buffers2;
-   GLboolean EXT_fog_coord;
    GLboolean EXT_framebuffer_blit;
    GLboolean EXT_framebuffer_multisample;
    GLboolean EXT_framebuffer_multisample_blit_scaled;

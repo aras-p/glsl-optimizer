@@ -162,7 +162,7 @@ _mesa_Fogfv( GLenum pname, const GLfloat *params )
          break;
       case GL_FOG_COORDINATE_SOURCE_EXT: {
 	 GLenum p = (GLenum) (GLint) *params;
-         if (ctx->API != API_OPENGL_COMPAT || !ctx->Extensions.EXT_fog_coord ||
+         if (ctx->API != API_OPENGL_COMPAT ||
              (p != GL_FOG_COORDINATE_EXT && p != GL_FRAGMENT_DEPTH_EXT)) {
 	    _mesa_error(ctx, GL_INVALID_ENUM, "glFog");
 	    return;
