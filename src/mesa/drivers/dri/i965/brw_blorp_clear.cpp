@@ -121,7 +121,11 @@ brw_blorp_const_color_program::brw_blorp_const_color_program(
       const brw_blorp_const_color_prog_key *key)
    : mem_ctx(ralloc_context(NULL)),
      brw(brw),
-     key(key)
+     key(key),
+     R0(),
+     R1(),
+     clear_rgba(),
+     base_mrf(0)
 {
    brw_init_compile(brw, &func, mem_ctx);
 }
