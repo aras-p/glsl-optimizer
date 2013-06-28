@@ -932,7 +932,7 @@ _mesa_active_program(struct gl_context *ctx, struct gl_shader_program *shProg,
 
 /**
  */
-static bool
+static void
 use_shader_program(struct gl_context *ctx, GLenum type,
 		   struct gl_shader_program *shProg)
 {
@@ -961,7 +961,7 @@ use_shader_program(struct gl_context *ctx, GLenum type,
       }
       break;
    default:
-      return false;
+      return;
    }
 
    if (*target != shProg) {
@@ -988,10 +988,8 @@ use_shader_program(struct gl_context *ctx, GLenum type,
       }
 
       _mesa_reference_shader_program(ctx, target, shProg);
-      return true;
+      return;
    }
-
-   return false;
 }
 
 /**
