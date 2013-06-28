@@ -42,7 +42,6 @@
 static void
 brw_miptree_layout_2d(struct intel_mipmap_tree *mt)
 {
-   unsigned level;
    unsigned x = 0;
    unsigned y = 0;
    unsigned width = mt->physical_width0;
@@ -78,7 +77,7 @@ brw_miptree_layout_2d(struct intel_mipmap_tree *mt)
 
    mt->total_height = 0;
 
-   for ( level = mt->first_level ; level <= mt->last_level ; level++ ) {
+   for (unsigned level = mt->first_level; level <= mt->last_level; level++) {
       unsigned img_height;
 
       intel_miptree_set_level_info(mt, level, x, y, width,
@@ -110,9 +109,8 @@ static void
 brw_miptree_layout_texture_array(struct intel_context *intel,
 				 struct intel_mipmap_tree *mt)
 {
-   unsigned level;
    unsigned qpitch = 0;
-   int h0, h1, q;
+   int h0, h1;
 
    h0 = ALIGN(mt->physical_height0, mt->align_h);
    h1 = ALIGN(minify(mt->physical_height0, 1), mt->align_h);
@@ -125,8 +123,8 @@ brw_miptree_layout_texture_array(struct intel_context *intel,
 
    brw_miptree_layout_2d(mt);
 
-   for (level = mt->first_level; level <= mt->last_level; level++) {
-      for (q = 0; q < mt->physical_depth0; q++) {
+   for (unsigned level = mt->first_level; level <= mt->last_level; level++) {
+      for (int q = 0; q < mt->physical_depth0; q++) {
 	 intel_miptree_set_image_offset(mt, level, q, 0, q * qpitch);
       }
    }
@@ -142,7 +140,6 @@ brw_miptree_layout_texture_3d(struct intel_context *intel,
    unsigned depth = mt->physical_depth0;
    unsigned pack_x_pitch, pack_x_nr;
    unsigned pack_y_pitch;
-   unsigned level;
 
    mt->total_height = 0;
 
@@ -157,17 +154,16 @@ brw_miptree_layout_texture_3d(struct intel_context *intel,
    pack_x_pitch = width;
    pack_x_nr = 1;
 
-   for (level = mt->first_level ; level <= mt->last_level ; level++) {
+   for (unsigned level = mt->first_level; level <= mt->last_level; level++) {
       int x = 0;
       int y = 0;
-      int q, j;
 
       intel_miptree_set_level_info(mt, level,
                                    0, mt->total_height,
                                    width, height, depth);
 
-      for (q = 0; q < depth; /* empty */) {
-         for (j = 0; j < pack_x_nr && q < depth; j++, q++) {
+      for (int q = 0; q < depth; /* empty */) {
+         for (int j = 0; j < pack_x_nr && q < depth; j++, q++) {
             intel_miptree_set_image_offset(mt, level, q, x, y);
             x += pack_x_pitch;
          }
