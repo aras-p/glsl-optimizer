@@ -1930,10 +1930,15 @@ _mesa_CreateShaderProgramEXT(GLenum type, const GLchar *string)
 
 /**
  * ARB_separate_shader_objects: Compile & Link Program
+ *
+ * Basically the same as _mesa_CreateShaderProgramEXT but with support of
+ * multiple strings and sets the SeparateShader flag to true.
  */
 GLuint GLAPIENTRY
 _mesa_CreateShaderProgramv(GLenum type, GLsizei count,
                            const GLchar* const *strings)
 {
-   return 0;
+   GET_CURRENT_CONTEXT(ctx);
+
+   return _mesa_create_shader_program(ctx, GL_TRUE, type, count, strings);
 }
