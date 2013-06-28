@@ -150,10 +150,6 @@ void
 brw_miptree_layout(struct intel_context *intel, struct intel_mipmap_tree *mt)
 {
    switch (mt->target) {
-   case GL_TEXTURE_CUBE_MAP_ARRAY:
-      brw_miptree_layout_texture_array(intel, mt);
-      break;
-
    case GL_TEXTURE_CUBE_MAP:
       if (intel->gen >= 5) {
 	 /* On Ironlake, cube maps are finally represented as just a series of
@@ -171,9 +167,10 @@ brw_miptree_layout(struct intel_context *intel, struct intel_mipmap_tree *mt)
       brw_miptree_layout_texture_3d(intel, mt);
       break;
 
-   case GL_TEXTURE_2D_ARRAY:
    case GL_TEXTURE_1D_ARRAY:
+   case GL_TEXTURE_2D_ARRAY:
    case GL_TEXTURE_2D_MULTISAMPLE_ARRAY:
+   case GL_TEXTURE_CUBE_MAP_ARRAY:
       brw_miptree_layout_texture_array(intel, mt);
       break;
 
