@@ -327,7 +327,13 @@ _mesa_GenProgramPipelines(GLsizei n, GLuint *pipelines)
 GLboolean GLAPIENTRY
 _mesa_IsProgramPipeline(GLuint pipeline)
 {
-   return GL_FALSE;
+   GET_CURRENT_CONTEXT(ctx);
+
+   struct gl_pipeline_object *obj = lookup_pipeline_object(ctx, pipeline);
+   if (obj == NULL)
+      return GL_FALSE;
+
+   return obj->EverBound;
 }
 
 /**

@@ -2789,6 +2789,8 @@ struct gl_pipeline_object
    struct gl_shader_program *ActiveProgram;
 
    GLbitfield Flags;                    /**< Mask of GLSL_x flags */
+
+   GLboolean EverBound;                 /**< Has the pipeline object been created */
 };
 
 /**
