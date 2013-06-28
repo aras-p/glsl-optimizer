@@ -494,51 +494,6 @@ set_extension( struct gl_context *ctx, const char *name, GLboolean state )
    }
 }
 
-
-/**
- * Enable the named extension.
- * Typically called by drivers.
- */
-void
-_mesa_enable_extension( struct gl_context *ctx, const char *name )
-{
-   if (!set_extension(ctx, name, GL_TRUE))
-      _mesa_problem(ctx, "Trying to enable unknown extension: %s", name);
-}
-
-
-/**
- * Disable the named extension.
- * XXX is this really needed???
- */
-void
-_mesa_disable_extension( struct gl_context *ctx, const char *name )
-{
-   if (!set_extension(ctx, name, GL_FALSE))
-      _mesa_problem(ctx, "Trying to disable unknown extension: %s", name);
-}
-
-
-/**
- * Test if the named extension is enabled in this context.
- */
-GLboolean
-_mesa_extension_is_enabled( struct gl_context *ctx, const char *name )
-{
-   size_t offset;
-   GLboolean *base;
-
-   if (name == 0)
-      return GL_FALSE;
-
-   offset = name_to_offset(name);
-   if (offset == 0)
-      return GL_FALSE;
-   base = (GLboolean *) &ctx->Extensions;
-   return base[offset];
-}
-
-
 /**
  * \brief Apply the \c MESA_EXTENSION_OVERRIDE environment variable.
  *
