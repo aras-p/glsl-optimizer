@@ -42,6 +42,8 @@ intelInitExtensions(struct gl_context *ctx)
 {
    struct intel_context *intel = intel_context(ctx);
 
+   assert(intel->gen == 2 || intel->gen == 3);
+
    ctx->Extensions.ARB_draw_elements_base_vertex = true;
    ctx->Extensions.ARB_explicit_attrib_location = true;
    ctx->Extensions.ARB_framebuffer_object = true;
@@ -85,79 +87,8 @@ intelInitExtensions(struct gl_context *ctx)
    ctx->Extensions.OES_EGL_image = true;
    ctx->Extensions.OES_draw_texture = true;
 
-   if (intel->gen >= 6)
-      ctx->Const.GLSLVersion = 140;
-   else
-      ctx->Const.GLSLVersion = 120;
+   ctx->Const.GLSLVersion = 120;
    _mesa_override_glsl_version(ctx);
-
-   if (intel->gen >= 6) {
-      ctx->Extensions.EXT_framebuffer_multisample = true;
-      ctx->Extensions.EXT_transform_feedback = true;
-      ctx->Extensions.ARB_blend_func_extended = !driQueryOptionb(&intel->optionCache, "disable_blend_func_extended");
-      ctx->Extensions.ARB_draw_buffers_blend = true;
-      ctx->Extensions.ARB_ES3_compatibility = true;
-      ctx->Extensions.ARB_uniform_buffer_object = true;
-      ctx->Extensions.ARB_texture_buffer_object = true;
-      ctx->Extensions.ARB_texture_buffer_object_rgb32 = true;
-      ctx->Extensions.ARB_texture_cube_map_array = true;
-      ctx->Extensions.OES_depth_texture_cube_map = true;
-      ctx->Extensions.ARB_shading_language_packing = true;
-      ctx->Extensions.ARB_texture_multisample = true;
-      ctx->Extensions.ARB_texture_storage_multisample = true;
-   }
-
-   if (intel->gen >= 5) {
-      ctx->Extensions.ARB_texture_query_lod = true;
-      ctx->Extensions.EXT_timer_query = true;
-   }
-
-   if (intel->gen >= 6) {
-      uint64_t dummy;
-      /* Test if the kernel has the ioctl. */
-      if (drm_intel_reg_read(intel->bufmgr, TIMESTAMP, &dummy) == 0)
-         ctx->Extensions.ARB_timer_query = true;
-   }
-
-   if (intel->gen >= 4) {
-      if (ctx->API == API_OPENGL_CORE)
-         ctx->Extensions.ARB_base_instance = true;
-      if (ctx->API != API_OPENGL_CORE)
-         ctx->Extensions.ARB_color_buffer_float = true;
-      ctx->Extensions.ARB_depth_buffer_float = true;
-      ctx->Extensions.ARB_depth_clamp = true;
-      ctx->Extensions.ARB_draw_instanced = true;
-      ctx->Extensions.ARB_instanced_arrays = true;
-      ctx->Extensions.ARB_fragment_coord_conventions = true;
-      ctx->Extensions.ARB_fragment_program_shadow = true;
-      ctx->Extensions.ARB_fragment_shader = true;
-      ctx->Extensions.ARB_half_float_vertex = true;
-      ctx->Extensions.ARB_occlusion_query = true;
-      ctx->Extensions.ARB_occlusion_query2 = true;
-      ctx->Extensions.ARB_point_sprite = true;
-      ctx->Extensions.ARB_seamless_cube_map = true;
-      ctx->Extensions.ARB_shader_bit_encoding = true;
-      ctx->Extensions.ARB_shader_texture_lod = true;
-      ctx->Extensions.ARB_texture_float = true;
-      ctx->Extensions.EXT_texture_shared_exponent = true;
-      ctx->Extensions.EXT_packed_float = true;
-      ctx->Extensions.ARB_texture_compression_rgtc = true;
-      ctx->Extensions.ARB_texture_rg = true;
-      ctx->Extensions.ARB_texture_rgb10_a2ui = true;
-      ctx->Extensions.ARB_vertex_type_2_10_10_10_rev = true;
-      ctx->Extensions.EXT_draw_buffers2 = true;
-      ctx->Extensions.EXT_framebuffer_sRGB = true;
-      ctx->Extensions.EXT_texture_array = true;
-      ctx->Extensions.EXT_texture_integer = true;
-      ctx->Extensions.EXT_texture_snorm = true;
-      ctx->Extensions.EXT_texture_swizzle = true;
-      ctx->Extensions.EXT_vertex_array_bgra = true;
-      ctx->Extensions.ATI_envmap_bumpmap = true;
-      ctx->Extensions.MESA_texture_array = true;
-      ctx->Extensions.NV_conditional_render = true;
-      ctx->Extensions.OES_compressed_ETC1_RGB8_texture = true;
-      ctx->Extensions.OES_standard_derivatives = true;
-   }
 
    if (intel->gen >= 3) {
       ctx->Extensions.ARB_ES2_compatibility = true;
@@ -181,8 +112,4 @@ intelInitExtensions(struct gl_context *ctx)
       ctx->Extensions.EXT_texture_compression_s3tc = true;
 
    ctx->Extensions.ANGLE_texture_compression_dxt = true;
-
-   if (intel->gen >= 4) {
-      ctx->Extensions.NV_primitive_restart = true;
-   }
 }
