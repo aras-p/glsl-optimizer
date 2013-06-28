@@ -280,7 +280,7 @@ descriptor=[
 # GL_ARB_shader_objects
 # Actually, this token isn't part of GL_ARB_shader_objects, but is
 # close enough for now.
-  [ "CURRENT_PROGRAM", "LOC_CUSTOM, TYPE_INT, 0, extra_ARB_shader_objects" ],
+  [ "CURRENT_PROGRAM", "LOC_CUSTOM, TYPE_INT, 0, NO_EXTRA" ],
 
 # OpenGL 2.0
   [ "STENCIL_BACK_FUNC", "CONTEXT_ENUM(Stencil.Function[1]), NO_EXTRA" ],
@@ -311,8 +311,8 @@ descriptor=[
   [ "SHADER_BINARY_FORMATS", "CONST(0), extra_ARB_ES2_compatibility_api_es2" ],
 
 # GL_ARB_get_program_binary / GL_OES_get_program_binary
-  [ "NUM_PROGRAM_BINARY_FORMATS", "CONST(0), extra_ARB_shader_objects" ],
-  [ "PROGRAM_BINARY_FORMATS", "LOC_CUSTOM, TYPE_INVALID, 0, extra_ARB_shader_objects" ],
+  [ "NUM_PROGRAM_BINARY_FORMATS", "CONST(0), NO_EXTRA" ],
+  [ "PROGRAM_BINARY_FORMATS", "LOC_CUSTOM, TYPE_INVALID, 0, NO_EXTRA" ],
 ]},
 
 # GLES3 is not a typo.

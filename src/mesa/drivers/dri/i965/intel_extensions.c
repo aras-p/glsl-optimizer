@@ -66,7 +66,6 @@ intelInitExtensions(struct gl_context *ctx)
    ctx->Extensions.ARB_point_sprite = true;
    ctx->Extensions.ARB_seamless_cube_map = true;
    ctx->Extensions.ARB_shader_bit_encoding = true;
-   ctx->Extensions.ARB_shader_objects = true;
    ctx->Extensions.ARB_shader_texture_lod = true;
    ctx->Extensions.ARB_shading_language_100 = true;
    ctx->Extensions.ARB_shadow = true;

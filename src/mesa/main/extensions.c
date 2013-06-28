@@ -100,7 +100,7 @@ static const struct extension extension_table[] = {
    { "GL_ARB_fragment_shader",                     o(ARB_fragment_shader),                     GL,             2002 },
    { "GL_ARB_framebuffer_object",                  o(ARB_framebuffer_object),                  GL,             2005 },
    { "GL_ARB_framebuffer_sRGB",                    o(EXT_framebuffer_sRGB),                    GL,             1998 },
-   { "GL_ARB_get_program_binary",                  o(ARB_shader_objects),                      GL,             2010 },
+   { "GL_ARB_get_program_binary",                  o(dummy_true),                              GL,             2010 },
    { "GL_ARB_gpu_shader5",                         o(ARB_gpu_shader5),                         GL,             2010 },
    { "GL_ARB_half_float_pixel",                    o(ARB_half_float_pixel),                    GL,             2003 },
    { "GL_ARB_half_float_vertex",                   o(ARB_half_float_vertex),                   GL,             2008 },
@@ -121,7 +121,7 @@ static const struct extension extension_table[] = {
    { "GL_ARB_sampler_objects",                     o(dummy_true),                              GL,             2009 },
    { "GL_ARB_seamless_cube_map",                   o(ARB_seamless_cube_map),                   GL,             2009 },
    { "GL_ARB_shader_bit_encoding",                 o(ARB_shader_bit_encoding),                 GL,             2010 },
-   { "GL_ARB_shader_objects",                      o(ARB_shader_objects),                      GL,             2002 },
+   { "GL_ARB_shader_objects",                      o(dummy_true),                              GL,             2002 },
    { "GL_ARB_shader_stencil_export",               o(ARB_shader_stencil_export),               GL,             2009 },
    { "GL_ARB_shader_texture_lod",                  o(ARB_shader_texture_lod),                  GL,             2009 },
    { "GL_ARB_shading_language_100",                o(ARB_shading_language_100),                GLL,            2003 },
@@ -260,7 +260,7 @@ static const struct extension extension_table[] = {
    { "GL_OES_fbo_render_mipmap",                   o(dummy_true),                                   ES1 | ES2, 2005 },
    { "GL_OES_fixed_point",                         o(dummy_true),                                   ES1,       2002 },
    { "GL_OES_framebuffer_object",                  o(dummy_true),                                   ES1,       2005 },
-   { "GL_OES_get_program_binary",                  o(ARB_shader_objects),                                 ES2, 2008 },
+   { "GL_OES_get_program_binary",                  o(dummy_true),                                         ES2, 2008 },
    { "GL_OES_mapbuffer",                           o(dummy_true),                                   ES1 | ES2, 2005 },
    { "GL_OES_matrix_get",                          o(dummy_true),                                   ES1,       2004 },
    { "GL_OES_packed_depth_stencil",                o(EXT_packed_depth_stencil),                     ES1 | ES2, 2007 },
@@ -390,7 +390,6 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
    ctx->Extensions.ARB_occlusion_query = GL_TRUE;
    ctx->Extensions.ARB_occlusion_query2 = GL_TRUE;
    ctx->Extensions.ARB_point_sprite = GL_TRUE;
-   ctx->Extensions.ARB_shader_objects = GL_TRUE;
    ctx->Extensions.EXT_separate_shader_objects = GL_TRUE;
    ctx->Extensions.ARB_shading_language_100 = GL_TRUE;
    ctx->Extensions.ARB_shadow = GL_TRUE;
