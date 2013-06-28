@@ -79,7 +79,6 @@ intelInitExtensions(struct gl_context *ctx)
    ctx->Extensions.ARB_texture_non_power_of_two = true;
    ctx->Extensions.ARB_texture_rg = true;
    ctx->Extensions.ARB_texture_rgb10_a2ui = true;
-   ctx->Extensions.ARB_texture_storage = true;
    ctx->Extensions.ARB_vertex_program = true;
    ctx->Extensions.ARB_vertex_shader = true;
    ctx->Extensions.ARB_vertex_type_2_10_10_10_rev = true;

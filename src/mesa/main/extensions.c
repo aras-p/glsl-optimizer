@@ -149,7 +149,7 @@ static const struct extension extension_table[] = {
    { "GL_ARB_texture_rectangle",                   o(NV_texture_rectangle),                    GL,             2004 },
    { "GL_ARB_texture_rgb10_a2ui",                  o(ARB_texture_rgb10_a2ui),                  GL,             2009 },
    { "GL_ARB_texture_rg",                          o(ARB_texture_rg),                          GL,             2008 },
-   { "GL_ARB_texture_storage",                     o(ARB_texture_storage),                     GL,             2011 },
+   { "GL_ARB_texture_storage",                     o(dummy_true),                              GL,             2011 },
    { "GL_ARB_texture_storage_multisample",         o(ARB_texture_storage_multisample),         GL,             2012 },
    { "GL_ARB_texture_swizzle",                     o(EXT_texture_swizzle),                     GL,             2008 },
    { "GL_ARB_timer_query",                         o(ARB_timer_query),                         GL,             2010 },
@@ -403,7 +403,6 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
    ctx->Extensions.ARB_texture_non_power_of_two = GL_TRUE;
    ctx->Extensions.ARB_texture_rg = GL_TRUE;
    ctx->Extensions.ARB_texture_compression_rgtc = GL_TRUE;
-   ctx->Extensions.ARB_texture_storage = GL_TRUE;
    ctx->Extensions.ARB_vertex_program = GL_TRUE;
    ctx->Extensions.ARB_vertex_shader = GL_TRUE;
    ctx->Extensions.ARB_sync = GL_TRUE;

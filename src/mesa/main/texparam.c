@@ -1541,8 +1541,6 @@ _mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params )
          break;
 
       case GL_TEXTURE_IMMUTABLE_FORMAT:
-         if (!ctx->Extensions.ARB_texture_storage)
-            goto invalid_pname;
          *params = (GLfloat) obj->Immutable;
          break;
 
@@ -1724,8 +1722,6 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
          break;
 
       case GL_TEXTURE_IMMUTABLE_FORMAT:
-         if (!ctx->Extensions.ARB_texture_storage)
-            goto invalid_pname;
          *params = (GLint) obj->Immutable;
          break;
 

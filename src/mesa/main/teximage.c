@@ -1852,12 +1852,8 @@ legal_texsubimage_target(struct gl_context *ctx, GLuint dims, GLenum target)
 static GLboolean
 mutable_tex_object(struct gl_context *ctx, GLenum target)
 {
-   if (ctx->Extensions.ARB_texture_storage) {
-      struct gl_texture_object *texObj =
-         _mesa_get_current_tex_object(ctx, target);
-      return !texObj->Immutable;
-   }
-   return GL_TRUE;
+   struct gl_texture_object *texObj = _mesa_get_current_tex_object(ctx, target);
+   return !texObj->Immutable;
 }
 
 
