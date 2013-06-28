@@ -557,7 +557,6 @@ void st_init_extensions(struct st_context *st)
    ctx->Extensions.EXT_pixel_buffer_object = GL_TRUE;
    ctx->Extensions.EXT_point_parameters = GL_TRUE;
    ctx->Extensions.EXT_provoking_vertex = GL_TRUE;
-   ctx->Extensions.EXT_secondary_color = GL_TRUE;
    ctx->Extensions.EXT_separate_shader_objects = GL_TRUE;
    ctx->Extensions.EXT_texture_env_dot3 = GL_TRUE;
    ctx->Extensions.EXT_vertex_array_bgra = GL_TRUE;

@@ -755,7 +755,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
       case GL_COLOR_SUM_EXT:
          if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
-         CHECK_EXTENSION2(EXT_secondary_color, ARB_vertex_program, cap);
+         CHECK_EXTENSION(ARB_vertex_program, cap);
          if (ctx->Fog.ColorSumEnabled == state)
             return;
          FLUSH_VERTICES(ctx, _NEW_FOG);
@@ -1425,7 +1425,6 @@ _mesa_IsEnabled( GLenum cap )
       case GL_SECONDARY_COLOR_ARRAY_EXT:
          if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
-         CHECK_EXTENSION(EXT_secondary_color);
          return (ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_COLOR1].Enabled != 0);
       case GL_POINT_SIZE_ARRAY_OES:
          if (ctx->API != API_OPENGLES)
@@ -1441,7 +1440,7 @@ _mesa_IsEnabled( GLenum cap )
       case GL_COLOR_SUM_EXT:
          if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
-         CHECK_EXTENSION2(EXT_secondary_color, ARB_vertex_program);
+         CHECK_EXTENSION(ARB_vertex_program);
          return ctx->Fog.ColorSumEnabled;
 
       /* GL_ARB_multisample */

@@ -198,7 +198,7 @@ static const struct extension extension_table[] = {
    { "GL_EXT_polygon_offset",                      o(dummy_true),                              GLL,            1995 },
    { "GL_EXT_provoking_vertex",                    o(EXT_provoking_vertex),                    GL,             2009 },
    { "GL_EXT_rescale_normal",                      o(dummy_true),                              GLL,            1997 },
-   { "GL_EXT_secondary_color",                     o(EXT_secondary_color),                     GLL,            1999 },
+   { "GL_EXT_secondary_color",                     o(dummy_true),                              GLL,            1999 },
    { "GL_EXT_separate_shader_objects",             o(EXT_separate_shader_objects),             GLL,            2008 },
    { "GL_EXT_separate_specular_color",             o(dummy_true),                              GLL,            1997 },
    { "GL_EXT_shadow_funcs",                        o(EXT_shadow_funcs),                        GLL,            2002 },
@@ -429,7 +429,6 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
    ctx->Extensions.EXT_point_parameters = GL_TRUE;
    ctx->Extensions.EXT_provoking_vertex = GL_TRUE;
    ctx->Extensions.EXT_shadow_funcs = GL_TRUE;
-   ctx->Extensions.EXT_secondary_color = GL_TRUE;
    ctx->Extensions.EXT_stencil_two_side = GL_TRUE;
    ctx->Extensions.EXT_texture_array = GL_TRUE;
    ctx->Extensions.EXT_texture_compression_latc = GL_TRUE;

@@ -544,12 +544,12 @@ descriptor=[
   [ "TRANSPOSE_TEXTURE_MATRIX_ARB", "CONTEXT_MATRIX_T(TextureMatrixStack), NO_EXTRA" ],
 
 # GL_EXT_secondary_color
-  [ "COLOR_SUM", "CONTEXT_BOOL(Fog.ColorSumEnabled), extra_EXT_secondary_color_ARB_vertex_program" ],
-  [ "CURRENT_SECONDARY_COLOR", "CONTEXT_FIELD(Current.Attrib[VERT_ATTRIB_COLOR1][0], TYPE_FLOATN_4), extra_EXT_secondary_color_flush_current" ],
-  [ "SECONDARY_COLOR_ARRAY", "ARRAY_BOOL(VertexAttrib[VERT_ATTRIB_COLOR1].Enabled), extra_EXT_secondary_color" ],
-  [ "SECONDARY_COLOR_ARRAY_TYPE", "ARRAY_ENUM(VertexAttrib[VERT_ATTRIB_COLOR1].Type), extra_EXT_secondary_color" ],
-  [ "SECONDARY_COLOR_ARRAY_STRIDE", "ARRAY_INT(VertexAttrib[VERT_ATTRIB_COLOR1].Stride), extra_EXT_secondary_color" ],
-  [ "SECONDARY_COLOR_ARRAY_SIZE", "ARRAY_INT(VertexAttrib[VERT_ATTRIB_COLOR1].Size), extra_EXT_secondary_color" ],
+  [ "COLOR_SUM", "CONTEXT_BOOL(Fog.ColorSumEnabled), extra_ARB_vertex_program" ],
+  [ "CURRENT_SECONDARY_COLOR", "CONTEXT_FIELD(Current.Attrib[VERT_ATTRIB_COLOR1][0], TYPE_FLOATN_4), extra_flush_current" ],
+  [ "SECONDARY_COLOR_ARRAY", "ARRAY_BOOL(VertexAttrib[VERT_ATTRIB_COLOR1].Enabled), NO_EXTRA" ],
+  [ "SECONDARY_COLOR_ARRAY_TYPE", "ARRAY_ENUM(VertexAttrib[VERT_ATTRIB_COLOR1].Type), NO_EXTRA" ],
+  [ "SECONDARY_COLOR_ARRAY_STRIDE", "ARRAY_INT(VertexAttrib[VERT_ATTRIB_COLOR1].Stride), NO_EXTRA" ],
+  [ "SECONDARY_COLOR_ARRAY_SIZE", "ARRAY_INT(VertexAttrib[VERT_ATTRIB_COLOR1].Size), NO_EXTRA" ],
 
 # GL_EXT_fog_coord
   [ "CURRENT_FOG_COORDINATE", "CONTEXT_FLOAT(Current.Attrib[VERT_ATTRIB_FOG][0]), extra_EXT_fog_coord_flush_current" ],
