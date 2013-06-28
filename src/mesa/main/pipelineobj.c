@@ -370,6 +370,64 @@ _mesa_IsProgramPipeline(GLuint pipeline)
 void GLAPIENTRY
 _mesa_GetProgramPipelineiv(GLuint pipeline, GLenum pname, GLint *params)
 {
+   GET_CURRENT_CONTEXT(ctx);
+   struct gl_pipeline_object *pipe = lookup_pipeline_object(ctx, pipeline);
+
+   /* Are geometry shaders available in this context?
+    */
+   const bool has_gs = _mesa_has_geometry_shaders(ctx);
+
+   if (!pipe) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glGetProgramPipelineiv(pipeline)");
+      return;
+   }
+
+   /* Object is created by any Pipeline call but glGenProgramPipelines,
+    * glIsProgramPipeline and GetProgramPipelineInfoLog
+    */
+   pipe->EverBound = GL_TRUE;
+
+   switch (pname) {
+   case GL_ACTIVE_PROGRAM:
+      *params = pipe->ActiveProgram ? pipe->ActiveProgram->Name : 0;
+      return;
+   case GL_INFO_LOG_LENGTH:
+      /* FINISHME: Implement the info log.
+       */
+      *params = 0;
+      return;
+   case GL_VALIDATE_STATUS:
+      /* FINISHME: Implement validation status.
+       */
+      *params = 0;
+      return;
+   case GL_VERTEX_SHADER:
+      *params = pipe->CurrentProgram[MESA_SHADER_VERTEX]
+         ? pipe->CurrentProgram[MESA_SHADER_VERTEX]->Name : 0;
+      return;
+   case GL_TESS_EVALUATION_SHADER:
+      /* NOT YET SUPPORTED */
+      break;
+   case GL_TESS_CONTROL_SHADER:
+      /* NOT YET SUPPORTED */
+      break;
+   case GL_GEOMETRY_SHADER:
+      if (!has_gs)
+         break;
+      *params = pipe->CurrentProgram[MESA_SHADER_GEOMETRY]
+         ? pipe->CurrentProgram[MESA_SHADER_GEOMETRY]->Name : 0;
+      return;
+   case GL_FRAGMENT_SHADER:
+      *params = pipe->CurrentProgram[MESA_SHADER_FRAGMENT]
+         ? pipe->CurrentProgram[MESA_SHADER_FRAGMENT]->Name : 0;
+      return;
+   default:
+      break;
+   }
+
+   _mesa_error(ctx, GL_INVALID_ENUM, "glGetProgramPipelineiv(pname=%s)",
+               _mesa_lookup_enum_by_nr(pname));
 }
 
 /**
