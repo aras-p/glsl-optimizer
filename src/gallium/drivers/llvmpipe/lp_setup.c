@@ -40,6 +40,7 @@
 #include "util/u_memory.h"
 #include "util/u_pack_color.h"
 #include "draw/draw_pipe.h"
+#include "os/os_time.h"
 #include "lp_context.h"
 #include "lp_memory.h"
 #include "lp_scene.h"
@@ -1263,6 +1264,15 @@ lp_setup_end_query(struct lp_setup_context *setup, struct llvmpipe_query *pq)
           pq->type == PIPE_QUERY_OCCLUSION_PREDICATE ||
           pq->type == PIPE_QUERY_PIPELINE_STATISTICS ||
           pq->type == PIPE_QUERY_TIMESTAMP) {
+         if (pq->type == PIPE_QUERY_TIMESTAMP &&
+               !(setup->scene->tiles_x | setup->scene->tiles_y)) {
+            /*
+             * If there's a zero width/height framebuffer, there's no bins and
+             * hence no rast task is ever run. So fill in something here instead.
+             */
+            pq->end[0] = os_time_get_nano();
+         }
+
          if (!lp_scene_bin_everywhere(setup->scene,
                                       LP_RAST_OP_END_QUERY,
                                       lp_rast_arg_query(pq))) {
