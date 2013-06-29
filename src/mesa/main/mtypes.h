@@ -2808,6 +2808,8 @@ struct gl_pipeline_object
 
    GLboolean EverBound;                 /**< Has the pipeline object been created */
 
+   GLboolean Validated;                 /**< Pipeline Validation status */
+
    GLchar *InfoLog;
 };
 

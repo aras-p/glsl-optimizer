@@ -1841,6 +1841,7 @@ shader_linked_or_absent(struct gl_context *ctx,
  * Prior to drawing anything with glBegin, glDrawArrays, etc. this function
  * is called to see if it's valid to render.  This involves checking that
  * the current shader is valid and the framebuffer is complete.
+ * It also check the current pipeline object is valid if any.
  * If an error is detected it'll be recorded here.
  * \return GL_TRUE if OK to render, GL_FALSE if not
  */
@@ -1888,6 +1889,15 @@ _mesa_valid_to_render(struct gl_context *ctx, const char *where)
       if (ctx->DrawBuffer && ctx->DrawBuffer->_IntegerColor) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "%s(integer format but no fragment shader)", where);
+         return GL_FALSE;
+      }
+   }
+
+   /* A pipeline object is bound */
+   if (ctx->_Shader->Name && !ctx->_Shader->Validated) {
+      /* Error message will be printed inside _mesa_validate_program_pipeline.
+       */
+      if (!_mesa_validate_program_pipeline(ctx, ctx->_Shader, GL_TRUE)) {
          return GL_FALSE;
       }
    }

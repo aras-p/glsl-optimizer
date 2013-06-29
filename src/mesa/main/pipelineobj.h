@@ -59,6 +59,9 @@ _mesa_reference_pipeline_object(struct gl_context *ctx,
       _mesa_reference_pipeline_object_(ctx, ptr, obj);
 }
 
+extern GLboolean
+_mesa_validate_program_pipeline(struct gl_context * ctx, struct gl_pipeline_object *pipe, GLboolean IsBound);
+
 
 extern void GLAPIENTRY
 _mesa_UseProgramStages(GLuint pipeline, GLbitfield stages, GLuint program);
