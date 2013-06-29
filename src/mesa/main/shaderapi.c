@@ -989,17 +989,21 @@ _mesa_active_program(struct gl_context *ctx, struct gl_shader_program *shProg,
  */
 static void
 use_shader_program(struct gl_context *ctx, GLenum type,
-		   struct gl_shader_program *shProg)
+                   struct gl_shader_program *shProg,
+                   struct gl_pipeline_object *shTarget)
 {
    struct gl_shader_program **target;
    gl_shader_stage stage = _mesa_shader_enum_to_shader_stage(type);
 
-   target = &ctx->_Shader->CurrentProgram[stage];
+   target = &shTarget->CurrentProgram[stage];
    if ((shProg == NULL) || (shProg->_LinkedShaders[stage] == NULL))
       shProg = NULL;
 
    if (*target != shProg) {
-      FLUSH_VERTICES(ctx, _NEW_PROGRAM | _NEW_PROGRAM_CONSTANTS);
+      /* Program is current, flush it */
+      if (shTarget == ctx->_Shader) {
+         FLUSH_VERTICES(ctx, _NEW_PROGRAM | _NEW_PROGRAM_CONSTANTS);
+      }
 
       /* If the shader is also bound as the current rendering shader, unbind
        * it from that binding point as well.  This ensures that the correct
@@ -1035,10 +1039,10 @@ use_shader_program(struct gl_context *ctx, GLenum type,
 void
 _mesa_use_program(struct gl_context *ctx, struct gl_shader_program *shProg)
 {
-   use_shader_program(ctx, GL_VERTEX_SHADER, shProg);
-   use_shader_program(ctx, GL_GEOMETRY_SHADER_ARB, shProg);
-   use_shader_program(ctx, GL_FRAGMENT_SHADER, shProg);
-   use_shader_program(ctx, GL_COMPUTE_SHADER, shProg);
+   use_shader_program(ctx, GL_VERTEX_SHADER, shProg, &ctx->Shader);
+   use_shader_program(ctx, GL_GEOMETRY_SHADER_ARB, shProg, &ctx->Shader);
+   use_shader_program(ctx, GL_FRAGMENT_SHADER, shProg, &ctx->Shader);
+   use_shader_program(ctx, GL_COMPUTE_SHADER, shProg, &ctx->Shader);
    _mesa_active_program(ctx, shProg, "glUseProgram");
 
    if (ctx->Driver.UseProgram)
@@ -1800,9 +1804,10 @@ _mesa_ProgramParameteri(GLuint program, GLenum pname, GLint value)
 
 void
 _mesa_use_shader_program(struct gl_context *ctx, GLenum type,
-			 struct gl_shader_program *shProg)
+                         struct gl_shader_program *shProg,
+                         struct gl_pipeline_object *shTarget)
 {
-   use_shader_program(ctx, type, shProg);
+   use_shader_program(ctx, type, shProg, shTarget);
 
    if (ctx->Driver.UseProgram)
       ctx->Driver.UseProgram(ctx, shProg);
@@ -1856,10 +1861,10 @@ _mesa_UseShaderProgramEXT(GLenum type, GLuint program)
       /* Attach shader state to the binding point */
       _mesa_reference_pipeline_object(ctx, &ctx->_Shader, &ctx->Shader);
       /* Update the program */
-      _mesa_use_shader_program(ctx, type, shProg);
+      _mesa_use_shader_program(ctx, type, shProg, ctx->_Shader);
    } else {
       /* Must be done first: detach the progam */
-      _mesa_use_shader_program(ctx, type, shProg);
+      _mesa_use_shader_program(ctx, type, shProg, ctx->_Shader);
 
       /* Nothing remains current */
       if (!ctx->Shader.CurrentProgram[MESA_SHADER_VERTEX] &&

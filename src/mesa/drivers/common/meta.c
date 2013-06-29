@@ -899,16 +899,19 @@ _mesa_meta_end(struct gl_context *ctx)
 
       if (ctx->Extensions.ARB_vertex_shader) {
 	 _mesa_use_shader_program(ctx, GL_VERTEX_SHADER,
-                                  save->Shader[MESA_SHADER_VERTEX]);
+                                  save->Shader[MESA_SHADER_VERTEX],
+                                  ctx->_Shader);
       }
 
       if (_mesa_has_geometry_shaders(ctx))
 	 _mesa_use_shader_program(ctx, GL_GEOMETRY_SHADER_ARB,
-				  save->Shader[MESA_SHADER_GEOMETRY]);
+                                  save->Shader[MESA_SHADER_GEOMETRY],
+                                  ctx->_Shader);
 
       if (ctx->Extensions.ARB_fragment_shader)
 	 _mesa_use_shader_program(ctx, GL_FRAGMENT_SHADER,
-				  save->Shader[MESA_SHADER_FRAGMENT]);
+                                  save->Shader[MESA_SHADER_FRAGMENT],
+                                  ctx->_Shader);
 
       _mesa_reference_shader_program(ctx, &ctx->_Shader->ActiveProgram,
 				     save->ActiveShader);

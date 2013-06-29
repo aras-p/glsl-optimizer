@@ -202,7 +202,8 @@ _mesa_ProgramParameteri(GLuint program, GLenum pname, GLint value);
 
 void
 _mesa_use_shader_program(struct gl_context *ctx, GLenum type,
-			 struct gl_shader_program *shProg);
+                         struct gl_shader_program *shProg,
+                         struct gl_pipeline_object *shTarget);
 
 extern void GLAPIENTRY
 _mesa_UseShaderProgramEXT(GLenum type, GLuint program);
