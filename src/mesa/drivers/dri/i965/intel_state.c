@@ -59,7 +59,7 @@ intel_translate_shadow_compare_func(GLenum func)
        return BRW_COMPAREFUNCTION_NEVER;
    }
 
-   fprintf(stderr, "Unknown value in %s: %x\n", __FUNCTION__, func);
+   assert(!"Invalid shadow comparison function.");
    return BRW_COMPAREFUNCTION_NEVER;
 }
 
@@ -85,7 +85,7 @@ intel_translate_compare_func(GLenum func)
       return BRW_COMPAREFUNCTION_ALWAYS;
    }
 
-   fprintf(stderr, "Unknown value in %s: %x\n", __FUNCTION__, func);
+   assert(!"Invalid comparison function.");
    return BRW_COMPAREFUNCTION_ALWAYS;
 }
 
