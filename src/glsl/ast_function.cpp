@@ -690,6 +690,7 @@ process_array_constructor(exec_list *instructions,
 			  "expected: %s, found %s",
 			  constructor_type->element_type()->name,
 			  result->type->name);
+         return ir_rvalue::error_value(ctx);
       }
 
       /* Attempt to convert the parameter to a constant valued expression.
