@@ -31,6 +31,7 @@
 #include "intel_reg.h"
 #include "intel_bufmgr.h"
 #include "intel_buffers.h"
+#include "brw_context.h"
 
 static void
 intel_batchbuffer_reset(struct intel_context *intel);
@@ -165,8 +166,7 @@ do_batch_dump(struct intel_context *intel)
    if (ret == 0) {
       drm_intel_bo_unmap(batch->bo);
 
-      if (intel->vtbl.debug_batch != NULL)
-	 intel->vtbl.debug_batch(intel);
+      brw_debug_batch(intel);
    }
 }
 

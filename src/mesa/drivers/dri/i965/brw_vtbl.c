@@ -159,7 +159,6 @@ void brwInitVtbl( struct brw_context *brw )
    brw->intel.vtbl.new_batch = brw_new_batch;
    brw->intel.vtbl.finish_batch = brw_finish_batch;
    brw->intel.vtbl.destroy = brw_destroy_context;
-   brw->intel.vtbl.debug_batch = brw_debug_batch;
    brw->intel.vtbl.annotate_aub = brw_annotate_aub;
 
    assert(brw->intel.gen >= 4);
