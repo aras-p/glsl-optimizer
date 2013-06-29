@@ -119,9 +119,6 @@ struct intel_context
       void (*finish_batch) (struct intel_context * intel);
       void (*new_batch) (struct intel_context * intel);
 
-      void (*invalidate_state) (struct intel_context *intel,
-				GLuint new_state);
-
       void (*debug_batch)(struct intel_context *intel);
       void (*annotate_aub)(struct intel_context *intel);
       bool (*render_target_supported)(struct intel_context *intel,

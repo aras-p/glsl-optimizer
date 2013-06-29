@@ -333,9 +333,6 @@ intelInvalidateState(struct gl_context * ctx, GLuint new_state)
    _vbo_InvalidateState(ctx, new_state);
 
    intel->NewGLState |= new_state;
-
-   if (intel->vtbl.invalidate_state)
-      intel->vtbl.invalidate_state( intel, new_state );
 }
 
 void

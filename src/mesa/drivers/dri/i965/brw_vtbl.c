@@ -154,11 +154,6 @@ static void brw_new_batch( struct intel_context *intel )
       brw_collect_and_report_shader_time(brw);
 }
 
-static void brw_invalidate_state( struct intel_context *intel, GLuint new_state )
-{
-   /* nothing */
-}
-
 /**
  * \see intel_context.vtbl.is_hiz_depth_format
  */
@@ -182,7 +177,6 @@ static bool brw_is_hiz_depth_format(struct intel_context *intel,
 
 void brwInitVtbl( struct brw_context *brw )
 {
-   brw->intel.vtbl.invalidate_state = brw_invalidate_state;
    brw->intel.vtbl.new_batch = brw_new_batch;
    brw->intel.vtbl.finish_batch = brw_finish_batch;
    brw->intel.vtbl.destroy = brw_destroy_context;
