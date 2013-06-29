@@ -610,6 +610,120 @@ dereference_component(ir_rvalue *src, unsigned component)
 
 
 static ir_rvalue *
+process_vec_mat_constructor(exec_list *instructions,
+                            const glsl_type *constructor_type,
+                            YYLTYPE *loc, exec_list *parameters,
+                            struct _mesa_glsl_parse_state *state)
+{
+   void *ctx = state;
+
+   /* The ARB_shading_language_420pack spec says:
+    *
+    * "If an initializer is a list of initializers enclosed in curly braces,
+    *  the variable being declared must be a vector, a matrix, an array, or a
+    *  structure.
+    *
+    *      int i = { 1 }; // illegal, i is not an aggregate"
+    */
+   if (constructor_type->vector_elements <= 1) {
+      _mesa_glsl_error(loc, state, "Aggregates can only initialize vectors, "
+                       "matrices, arrays, and structs");
+      return ir_rvalue::error_value(ctx);
+   }
+
+   exec_list actual_parameters;
+   const unsigned parameter_count =
+      process_parameters(instructions, &actual_parameters, parameters, state);
+
+   if (parameter_count == 0
+       || (constructor_type->is_vector() &&
+           constructor_type->vector_elements != parameter_count)
+       || (constructor_type->is_matrix() &&
+           constructor_type->matrix_columns != parameter_count)) {
+      _mesa_glsl_error(loc, state, "%s constructor must have %u parameters",
+                       constructor_type->is_vector() ? "vector" : "matrix",
+                       constructor_type->vector_elements);
+      return ir_rvalue::error_value(ctx);
+   }
+
+   bool all_parameters_are_constant = true;
+
+   /* Type cast each parameter and, if possible, fold constants. */
+   foreach_list_safe(n, &actual_parameters) {
+      ir_rvalue *ir = (ir_rvalue *) n;
+      ir_rvalue *result = ir;
+
+      /* Apply implicit conversions (not the scalar constructor rules!). See
+       * the spec quote above. */
+      if (constructor_type->is_float()) {
+         const glsl_type *desired_type =
+            glsl_type::get_instance(GLSL_TYPE_FLOAT,
+                                    ir->type->vector_elements,
+                                    ir->type->matrix_columns);
+         if (result->type->can_implicitly_convert_to(desired_type)) {
+            /* Even though convert_component() implements the constructor
+             * conversion rules (not the implicit conversion rules), its safe
+             * to use it here because we already checked that the implicit
+             * conversion is legal.
+             */
+            result = convert_component(ir, desired_type);
+         }
+      }
+
+      if (constructor_type->is_matrix()) {
+         if (result->type != constructor_type->column_type()) {
+            _mesa_glsl_error(loc, state, "type error in matrix constructor: "
+                             "expected: %s, found %s",
+                             constructor_type->column_type()->name,
+                             result->type->name);
+            return ir_rvalue::error_value(ctx);
+         }
+      } else if (result->type != constructor_type->get_scalar_type()) {
+         _mesa_glsl_error(loc, state, "type error in vector constructor: "
+                          "expected: %s, found %s",
+                          constructor_type->get_scalar_type()->name,
+                          result->type->name);
+         return ir_rvalue::error_value(ctx);
+      }
+
+      /* Attempt to convert the parameter to a constant valued expression.
+       * After doing so, track whether or not all the parameters to the
+       * constructor are trivially constant valued expressions.
+       */
+      ir_rvalue *const constant = result->constant_expression_value();
+
+      if (constant != NULL)
+         result = constant;
+      else
+         all_parameters_are_constant = false;
+
+      ir->replace_with(result);
+   }
+
+   if (all_parameters_are_constant)
+      return new(ctx) ir_constant(constructor_type, &actual_parameters);
+
+   ir_variable *var = new(ctx) ir_variable(constructor_type, "vec_mat_ctor",
+                                           ir_var_temporary);
+   instructions->push_tail(var);
+
+   int i = 0;
+   foreach_list(node, &actual_parameters) {
+      ir_rvalue *rhs = (ir_rvalue *) node;
+      ir_rvalue *lhs = new(ctx) ir_dereference_array(var,
+                                                     new(ctx) ir_constant(i));
+
+      ir_instruction *assignment = new(ctx) ir_assignment(lhs, rhs, NULL);
+      instructions->push_tail(assignment);
+
+      i++;
+   }
+
+   return new(ctx) ir_dereference_variable(var);
+}
+
+
+static ir_rvalue *
 process_array_constructor(exec_list *instructions,
 			  const glsl_type *constructor_type,
 			  YYLTYPE *loc, exec_list *parameters,
