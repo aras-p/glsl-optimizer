@@ -1213,6 +1213,8 @@ void brw_upload_ubo_surfaces(struct brw_context *brw,
 
 /* brw_surface_formats.c */
 bool brw_is_hiz_depth_format(struct intel_context *ctx, gl_format format);
+bool brw_render_target_supported(struct intel_context *intel,
+                                 struct gl_renderbuffer *rb);
 
 /* gen6_sol.c */
 void

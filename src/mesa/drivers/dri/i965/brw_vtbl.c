@@ -161,7 +161,6 @@ void brwInitVtbl( struct brw_context *brw )
    brw->intel.vtbl.destroy = brw_destroy_context;
    brw->intel.vtbl.debug_batch = brw_debug_batch;
    brw->intel.vtbl.annotate_aub = brw_annotate_aub;
-   brw->intel.vtbl.render_target_supported = brw_render_target_supported;
 
    assert(brw->intel.gen >= 4);
    if (brw->intel.gen >= 7) {

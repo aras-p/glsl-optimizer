@@ -121,8 +121,6 @@ struct intel_context
 
       void (*debug_batch)(struct intel_context *intel);
       void (*annotate_aub)(struct intel_context *intel);
-      bool (*render_target_supported)(struct intel_context *intel,
-				      struct gl_renderbuffer *rb);
 
       void (*update_texture_surface)(struct gl_context *ctx,
                                      unsigned unit,
