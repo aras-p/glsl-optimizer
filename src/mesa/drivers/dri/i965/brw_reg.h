@@ -778,8 +778,6 @@ brw_indirect(unsigned addr_subnr, int offset)
    return ptr;
 }
 
-void brw_print_reg(struct brw_reg reg);
-
 #ifdef __cplusplus
 }
 #endif
