@@ -1211,6 +1211,9 @@ void brw_upload_ubo_surfaces(struct brw_context *brw,
 			     struct gl_shader *shader,
 			     uint32_t *surf_offsets);
 
+/* brw_surface_formats.c */
+bool brw_is_hiz_depth_format(struct intel_context *ctx, gl_format format);
+
 /* gen6_sol.c */
 void
 brw_begin_transform_feedback(struct gl_context *ctx, GLenum mode,

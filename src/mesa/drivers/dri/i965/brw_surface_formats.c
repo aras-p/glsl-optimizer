@@ -729,3 +729,22 @@ translate_tex_format(struct intel_context *intel,
       return brw_format_for_mesa_format(mesa_format);
    }
 }
+
+/** Can HiZ be enabled on a depthbuffer of the given format? */
+bool
+brw_is_hiz_depth_format(struct intel_context *intel, gl_format format)
+{
+   if (!intel->has_hiz)
+      return false;
+
+   switch (format) {
+   case MESA_FORMAT_Z32_FLOAT:
+   case MESA_FORMAT_Z32_FLOAT_X24S8:
+   case MESA_FORMAT_X8_Z24:
+   case MESA_FORMAT_S8_Z24:
+   case MESA_FORMAT_Z16:
+      return true;
+   default:
+      return false;
+   }
+}

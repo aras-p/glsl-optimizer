@@ -154,27 +154,6 @@ static void brw_new_batch( struct intel_context *intel )
       brw_collect_and_report_shader_time(brw);
 }
 
-/**
- * \see intel_context.vtbl.is_hiz_depth_format
- */
-static bool brw_is_hiz_depth_format(struct intel_context *intel,
-                                    gl_format format)
-{
-   if (!intel->has_hiz)
-      return false;
-
-   switch (format) {
-   case MESA_FORMAT_Z32_FLOAT:
-   case MESA_FORMAT_Z32_FLOAT_X24S8:
-   case MESA_FORMAT_X8_Z24:
-   case MESA_FORMAT_S8_Z24:
-   case MESA_FORMAT_Z16:
-      return true;
-   default:
-      return false;
-   }
-}
-
 void brwInitVtbl( struct brw_context *brw )
 {
    brw->intel.vtbl.new_batch = brw_new_batch;
@@ -183,7 +162,6 @@ void brwInitVtbl( struct brw_context *brw )
    brw->intel.vtbl.debug_batch = brw_debug_batch;
    brw->intel.vtbl.annotate_aub = brw_annotate_aub;
    brw->intel.vtbl.render_target_supported = brw_render_target_supported;
-   brw->intel.vtbl.is_hiz_depth_format = brw_is_hiz_depth_format;
 
    assert(brw->intel.gen >= 4);
    if (brw->intel.gen >= 7) {

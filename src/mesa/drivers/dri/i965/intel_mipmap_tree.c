@@ -369,7 +369,7 @@ intel_miptree_create_layout(struct intel_context *intel,
        _mesa_get_format_base_format(format) == GL_DEPTH_STENCIL &&
        (intel->must_use_separate_stencil ||
 	(intel->has_separate_stencil &&
-	 intel->vtbl.is_hiz_depth_format(intel, format)))) {
+	 brw_is_hiz_depth_format(intel, format)))) {
       mt->stencil_mt = intel_miptree_create(intel,
                                             mt->target,
                                             MESA_FORMAT_S8,
@@ -741,7 +741,7 @@ intel_miptree_create_for_renderbuffer(struct intel_context *intel,
    if (!mt)
       goto fail;
 
-   if (intel->vtbl.is_hiz_depth_format(intel, format)) {
+   if (brw_is_hiz_depth_format(intel, format)) {
       ok = intel_miptree_alloc_hiz(intel, mt);
       if (!ok)
          goto fail;

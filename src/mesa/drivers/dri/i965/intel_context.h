@@ -124,10 +124,6 @@ struct intel_context
       bool (*render_target_supported)(struct intel_context *intel,
 				      struct gl_renderbuffer *rb);
 
-      /** Can HiZ be enabled on a depthbuffer of the given format? */
-      bool (*is_hiz_depth_format)(struct intel_context *intel,
-	                          gl_format format);
-
       void (*update_texture_surface)(struct gl_context *ctx,
                                      unsigned unit,
                                      uint32_t *binding_table,
