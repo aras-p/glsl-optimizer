@@ -35,31 +35,32 @@
 
 #include "intel_screen.h"
 #include "intel_context.h"
+#include "brw_defines.h"
 
 int
 intel_translate_shadow_compare_func(GLenum func)
 {
    switch (func) {
    case GL_NEVER: 
-       return COMPAREFUNC_ALWAYS;
+       return BRW_COMPAREFUNCTION_ALWAYS;
    case GL_LESS: 
-       return COMPAREFUNC_LEQUAL;
+       return BRW_COMPAREFUNCTION_LEQUAL;
    case GL_LEQUAL: 
-       return COMPAREFUNC_LESS;
+       return BRW_COMPAREFUNCTION_LESS;
    case GL_GREATER: 
-       return COMPAREFUNC_GEQUAL;
+       return BRW_COMPAREFUNCTION_GEQUAL;
    case GL_GEQUAL: 
-      return COMPAREFUNC_GREATER;
+      return BRW_COMPAREFUNCTION_GREATER;
    case GL_NOTEQUAL: 
-      return COMPAREFUNC_EQUAL;
+      return BRW_COMPAREFUNCTION_EQUAL;
    case GL_EQUAL: 
-      return COMPAREFUNC_NOTEQUAL;
+      return BRW_COMPAREFUNCTION_NOTEQUAL;
    case GL_ALWAYS: 
-       return COMPAREFUNC_NEVER;
+       return BRW_COMPAREFUNCTION_NEVER;
    }
 
    fprintf(stderr, "Unknown value in %s: %x\n", __FUNCTION__, func);
-   return COMPAREFUNC_NEVER;
+   return BRW_COMPAREFUNCTION_NEVER;
 }
 
 int
@@ -67,25 +68,25 @@ intel_translate_compare_func(GLenum func)
 {
    switch (func) {
    case GL_NEVER:
-      return COMPAREFUNC_NEVER;
+      return BRW_COMPAREFUNCTION_NEVER;
    case GL_LESS:
-      return COMPAREFUNC_LESS;
+      return BRW_COMPAREFUNCTION_LESS;
    case GL_LEQUAL:
-      return COMPAREFUNC_LEQUAL;
+      return BRW_COMPAREFUNCTION_LEQUAL;
    case GL_GREATER:
-      return COMPAREFUNC_GREATER;
+      return BRW_COMPAREFUNCTION_GREATER;
    case GL_GEQUAL:
-      return COMPAREFUNC_GEQUAL;
+      return BRW_COMPAREFUNCTION_GEQUAL;
    case GL_NOTEQUAL:
-      return COMPAREFUNC_NOTEQUAL;
+      return BRW_COMPAREFUNCTION_NOTEQUAL;
    case GL_EQUAL:
-      return COMPAREFUNC_EQUAL;
+      return BRW_COMPAREFUNCTION_EQUAL;
    case GL_ALWAYS:
-      return COMPAREFUNC_ALWAYS;
+      return BRW_COMPAREFUNCTION_ALWAYS;
    }
 
    fprintf(stderr, "Unknown value in %s: %x\n", __FUNCTION__, func);
-   return COMPAREFUNC_ALWAYS;
+   return BRW_COMPAREFUNCTION_ALWAYS;
 }
 
 int
@@ -93,23 +94,23 @@ intel_translate_stencil_op(GLenum op)
 {
    switch (op) {
    case GL_KEEP:
-      return STENCILOP_KEEP;
+      return BRW_STENCILOP_KEEP;
    case GL_ZERO:
-      return STENCILOP_ZERO;
+      return BRW_STENCILOP_ZERO;
    case GL_REPLACE:
-      return STENCILOP_REPLACE;
+      return BRW_STENCILOP_REPLACE;
    case GL_INCR:
-      return STENCILOP_INCRSAT;
+      return BRW_STENCILOP_INCRSAT;
    case GL_DECR:
-      return STENCILOP_DECRSAT;
+      return BRW_STENCILOP_DECRSAT;
    case GL_INCR_WRAP:
-      return STENCILOP_INCR;
+      return BRW_STENCILOP_INCR;
    case GL_DECR_WRAP:
-      return STENCILOP_DECR;
+      return BRW_STENCILOP_DECR;
    case GL_INVERT:
-      return STENCILOP_INVERT;
+      return BRW_STENCILOP_INVERT;
    default:
-      return STENCILOP_ZERO;
+      return BRW_STENCILOP_ZERO;
    }
 }
 
@@ -118,38 +119,38 @@ intel_translate_logic_op(GLenum opcode)
 {
    switch (opcode) {
    case GL_CLEAR:
-      return LOGICOP_CLEAR;
+      return BRW_LOGICOPFUNCTION_CLEAR;
    case GL_AND:
-      return LOGICOP_AND;
+      return BRW_LOGICOPFUNCTION_AND;
    case GL_AND_REVERSE:
-      return LOGICOP_AND_RVRSE;
+      return BRW_LOGICOPFUNCTION_AND_REVERSE;
    case GL_COPY:
-      return LOGICOP_COPY;
+      return BRW_LOGICOPFUNCTION_COPY;
    case GL_COPY_INVERTED:
-      return LOGICOP_COPY_INV;
+      return BRW_LOGICOPFUNCTION_COPY_INVERTED;
    case GL_AND_INVERTED:
-      return LOGICOP_AND_INV;
+      return BRW_LOGICOPFUNCTION_AND_INVERTED;
    case GL_NOOP:
-      return LOGICOP_NOOP;
+      return BRW_LOGICOPFUNCTION_NOOP;
    case GL_XOR:
-      return LOGICOP_XOR;
+      return BRW_LOGICOPFUNCTION_XOR;
    case GL_OR:
-      return LOGICOP_OR;
+      return BRW_LOGICOPFUNCTION_OR;
    case GL_OR_INVERTED:
-      return LOGICOP_OR_INV;
+      return BRW_LOGICOPFUNCTION_OR_INVERTED;
    case GL_NOR:
-      return LOGICOP_NOR;
+      return BRW_LOGICOPFUNCTION_NOR;
    case GL_EQUIV:
-      return LOGICOP_EQUIV;
+      return BRW_LOGICOPFUNCTION_EQUIV;
    case GL_INVERT:
-      return LOGICOP_INV;
+      return BRW_LOGICOPFUNCTION_INVERT;
    case GL_OR_REVERSE:
-      return LOGICOP_OR_RVRSE;
+      return BRW_LOGICOPFUNCTION_OR_REVERSE;
    case GL_NAND:
-      return LOGICOP_NAND;
+      return BRW_LOGICOPFUNCTION_NAND;
    case GL_SET:
-      return LOGICOP_SET;
+      return BRW_LOGICOPFUNCTION_SET;
    default:
-      return LOGICOP_SET;
+      return BRW_LOGICOPFUNCTION_SET;
    }
 }

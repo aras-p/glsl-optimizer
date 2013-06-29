@@ -330,7 +330,7 @@ gen6_blorp_emit_depth_stencil_state(struct brw_context *brw,
    state->ds2.depth_write_enable = 1;
    if (params->hiz_op == GEN6_HIZ_OP_DEPTH_RESOLVE) {
       state->ds2.depth_test_enable = 1;
-      state->ds2.depth_test_func = COMPAREFUNC_NEVER;
+      state->ds2.depth_test_func = BRW_COMPAREFUNCTION_NEVER;
    }
 
    return depthstencil_offset;
