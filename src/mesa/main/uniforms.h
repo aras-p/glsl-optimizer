@@ -300,6 +300,8 @@ _mesa_update_shader_textures_used(struct gl_shader_program *shProg,
 extern bool
 _mesa_sampler_uniforms_are_valid(const struct gl_shader_program *shProg,
 				 char *errMsg, size_t errMsgLength);
+extern bool
+_mesa_sampler_uniforms_pipeline_are_valid(struct gl_pipeline_object *);
 
 extern const struct gl_program_parameter *
 get_uniform_parameter(struct gl_shader_program *shProg, GLint index);
