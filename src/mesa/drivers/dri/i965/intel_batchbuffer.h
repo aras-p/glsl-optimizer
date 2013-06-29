@@ -111,7 +111,7 @@ intel_batchbuffer_require_space(struct intel_context *intel,
    intel->batch.is_blit = is_blit;
 
 #ifdef DEBUG
-   assert(sz < intel->maxBatchSize - BATCH_RESERVED);
+   assert(sz < BATCH_SZ - BATCH_RESERVED);
 #endif
    if (intel_batchbuffer_space(intel) < sz)
       intel_batchbuffer_flush(intel);

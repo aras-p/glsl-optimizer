@@ -71,7 +71,7 @@ intel_batchbuffer_init(struct intel_context *intel)
    }
 
    if (!intel->has_llc) {
-      intel->batch.cpu_map = malloc(intel->maxBatchSize);
+      intel->batch.cpu_map = malloc(BATCH_SZ);
       intel->batch.map = intel->batch.cpu_map;
    }
 }
@@ -88,7 +88,7 @@ intel_batchbuffer_reset(struct intel_context *intel)
    clear_cache(intel);
 
    intel->batch.bo = drm_intel_bo_alloc(intel->bufmgr, "batchbuffer",
-					intel->maxBatchSize, 4096);
+					BATCH_SZ, 4096);
    if (intel->has_llc) {
       drm_intel_bo_map(intel->batch.bo, true);
       intel->batch.map = intel->batch.bo->virtual;

@@ -510,7 +510,6 @@ intelInitContext(struct intel_context *intel,
 
    driParseConfigFiles(&intel->optionCache, &intelScreen->optionCache,
                        sPriv->myNum, "i965");
-   intel->maxBatchSize = BATCH_SZ;
 
    /* Estimate the size of the mappable aperture into the GTT.  There's an
     * ioctl to get the whole GTT size, but not one to get the mappable subset.

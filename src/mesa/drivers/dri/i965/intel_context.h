@@ -155,7 +155,6 @@ struct intel_context
    GLuint NewGLState;
  
    dri_bufmgr *bufmgr;
-   unsigned int maxBatchSize;
 
    /**
     * Generation number of the hardware: 2 is 8xx, 3 is 9xx pre-965, 4 is 965.
