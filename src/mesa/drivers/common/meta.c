@@ -576,11 +576,10 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
          _mesa_set_enable(ctx, GL_FRAGMENT_SHADER_ATI, GL_FALSE);
       }
 
-      if (ctx->Extensions.ARB_separate_shader_objects) {
-         if (ctx->Pipeline.Current) {
-            _mesa_reference_pipeline_object(ctx, &save->Pipeline,
-                                            ctx->Pipeline.Current);
-            _mesa_BindProgramPipeline(0);
+      if (ctx->Pipeline.Current) {
+         _mesa_reference_pipeline_object(ctx, &save->Pipeline,
+                                         ctx->Pipeline.Current);
+         _mesa_BindProgramPipeline(0);
       }
 
       /* Save the shader state from ctx->Shader (instead of ctx->_Shader) so
@@ -975,7 +974,6 @@ _mesa_meta_end(struct gl_context *ctx)
                                          ctx->Pipeline.Default);
 
       if (save->Pipeline) {
-         assert(ctx->Extensions.ARB_separate_shader_objects);
          _mesa_bind_pipeline(ctx, save->Pipeline);
 
          _mesa_reference_pipeline_object(ctx, &save->Pipeline, NULL);

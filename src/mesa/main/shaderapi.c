@@ -700,9 +700,6 @@ get_programiv(struct gl_context *ctx, GLuint program, GLenum pname, GLint *param
       return;
    }
    case GL_PROGRAM_SEPARABLE:
-      if (!ctx->Extensions.ARB_separate_shader_objects)
-         break;
-
       *params = shProg->SeparateShader;
       return;
    default:
@@ -1777,9 +1774,6 @@ _mesa_ProgramParameteri(GLuint program, GLenum pname, GLint value)
       return;
 
    case GL_PROGRAM_SEPARABLE:
-      if (!ctx->Extensions.ARB_separate_shader_objects)
-         break;
-
       /* Spec imply that the behavior is the same as ARB_get_program_binary
        * Chapter 7.3 Program Objects
        */
