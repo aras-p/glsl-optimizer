@@ -80,6 +80,7 @@ _mesa_new_pipeline_object(struct gl_context *ctx, GLuint name)
       mtx_init(&obj->Mutex, mtx_plain);
       obj->RefCount = 1;
       obj->Flags = _mesa_get_shader_flags();
+      obj->InfoLog = NULL;
    }
 
    return obj;
@@ -572,9 +573,7 @@ _mesa_GetProgramPipelineiv(GLuint pipeline, GLenum pname, GLint *params)
       *params = pipe->ActiveProgram ? pipe->ActiveProgram->Name : 0;
       return;
    case GL_INFO_LOG_LENGTH:
-      /* FINISHME: Implement the info log.
-       */
-      *params = 0;
+      *params = pipe->InfoLog ? strlen(pipe->InfoLog) + 1 : 0;
       return;
    case GL_VALIDATE_STATUS:
       /* FINISHME: Implement validation status.
@@ -621,4 +620,24 @@ void GLAPIENTRY
 _mesa_GetProgramPipelineInfoLog(GLuint pipeline, GLsizei bufSize,
                                 GLsizei *length, GLchar *infoLog)
 {
+   GET_CURRENT_CONTEXT(ctx);
+
+   struct gl_pipeline_object *pipe = lookup_pipeline_object(ctx, pipeline);
+
+   if (!pipe) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "glGetProgramPipelineInfoLog(pipeline)");
+      return;
+   }
+
+   if (bufSize < 0) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "glGetProgramPipelineInfoLog(bufSize)");
+      return;
+   }
+
+   if (pipe->InfoLog)
+      _mesa_copy_string(infoLog, bufSize, length, pipe->InfoLog);
+   else
+      *length = 0;
 }

@@ -2807,6 +2807,8 @@ struct gl_pipeline_object
    GLbitfield Flags;                    /**< Mask of GLSL_x flags */
 
    GLboolean EverBound;                 /**< Has the pipeline object been created */
+
+   GLchar *InfoLog;
 };
 
 /**
