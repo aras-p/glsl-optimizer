@@ -222,6 +222,108 @@ _mesa_reference_pipeline_object_(struct gl_context *ctx,
 void GLAPIENTRY
 _mesa_UseProgramStages(GLuint pipeline, GLbitfield stages, GLuint program)
 {
+   GET_CURRENT_CONTEXT(ctx);
+
+   struct gl_pipeline_object *pipe = lookup_pipeline_object(ctx, pipeline);
+   struct gl_shader_program *shProg = NULL;
+
+   if (!pipe) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glUseProgramStages(pipeline)");
+      return;
+   }
+
+   /* Object is created by any Pipeline call but glGenProgramPipelines,
+    * glIsProgramPipeline and GetProgramPipelineInfoLog
+    */
+   pipe->EverBound = GL_TRUE;
+
+   /* Section 2.11.4 (Program Pipeline Objects) of the OpenGL 4.1 spec says:
+    *
+    *     "If stages is not the special value ALL_SHADER_BITS, and has a bit
+    *     set that is not recognized, the error INVALID_VALUE is generated."
+    *
+    * NOT YET SUPPORTED:
+    * GL_TESS_CONTROL_SHADER_BIT
+    * GL_TESS_EVALUATION_SHADER_BIT
+    */
+   GLbitfield any_valid_stages = GL_VERTEX_SHADER_BIT | GL_FRAGMENT_SHADER_BIT;
+   if (_mesa_has_geometry_shaders(ctx))
+      any_valid_stages |= GL_GEOMETRY_SHADER_BIT;
+
+   if (stages != GL_ALL_SHADER_BITS && (stages & ~any_valid_stages) != 0) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glUseProgramStages(Stages)");
+      return;
+   }
+
+   /* Section 2.17.2 (Transform Feedback Primitive Capture) of the OpenGL 4.1
+    * spec says:
+    *
+    *     "The error INVALID_OPERATION is generated:
+    *
+    *      ...
+    *
+    *         - by UseProgramStages if the program pipeline object it refers
+    *           to is current and the current transform feedback object is
+    *           active and not paused;
+    */
+   if (ctx->_Shader == pipe) {
+      if (_mesa_is_xfb_active_and_unpaused(ctx)) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+               "glUseProgramStages(transform feedback active)");
+         return;
+      }
+   }
+
+   if (program) {
+      shProg = _mesa_lookup_shader_program_err(ctx, program,
+                                               "glUseProgramStages");
+      if (shProg == NULL)
+         return;
+
+      /* Section 2.11.4 (Program Pipeline Objects) of the OpenGL 4.1 spec
+       * says:
+       *
+       *     "If the program object named by program was linked without the
+       *     PROGRAM_SEPARABLE parameter set, or was not linked successfully,
+       *     the error INVALID_OPERATION is generated and the corresponding
+       *     shader stages in the pipeline program pipeline object are not
+       *     modified."
+       */
+      if (!shProg->LinkStatus) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glUseProgramStages(program not linked)");
+         return;
+      }
+
+      if (!shProg->SeparateShader) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glUseProgramStages(program wasn't linked with the "
+                     "PROGRAM_SEPARABLE flag)");
+         return;
+      }
+   }
+
+   /* Enable individual stages from the program as requested by the
+    * application.  If there is no shader for a requested stage in the
+    * program, _mesa_use_shader_program will enable fixed-function processing
+    * as dictated by the spec.
+    *
+    * Section 2.11.4 (Program Pipeline Objects) of the OpenGL 4.1 spec
+    * says:
+    *
+    *     "If UseProgramStages is called with program set to zero or with a
+    *     program object that contains no executable code for the given
+    *     stages, it is as if the pipeline object has no programmable stage
+    *     configured for the indicated shader stages."
+    */
+   if ((stages & GL_VERTEX_SHADER_BIT) != 0)
+      _mesa_use_shader_program(ctx, GL_VERTEX_SHADER, shProg, pipe);
+
+   if ((stages & GL_FRAGMENT_SHADER_BIT) != 0)
+      _mesa_use_shader_program(ctx, GL_FRAGMENT_SHADER, shProg, pipe);
+
+   if ((stages & GL_GEOMETRY_SHADER_BIT) != 0)
+      _mesa_use_shader_program(ctx, GL_GEOMETRY_SHADER, shProg, pipe);
 }
 
 /**
