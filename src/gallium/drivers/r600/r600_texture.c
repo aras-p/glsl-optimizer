@@ -865,24 +865,24 @@ static void *r600_texture_transfer_map(struct pipe_context *ctx,
 			 *
 			 * Only the region being mapped is transfered.
 			 */
-			struct pipe_resource *temp;
 			struct pipe_resource resource;
 
 			r600_init_temp_resource_from_box(&resource, texture, box, level, 0);
-			temp = ctx->screen->resource_create(ctx->screen, &resource);
 
-			r600_copy_region_with_blit(ctx, temp, 0, 0, 0, 0, texture, level, box);
-
-			if (!r600_init_flushed_depth_texture(ctx, temp, &staging_depth)) {
+			if (!r600_init_flushed_depth_texture(ctx, &resource, &staging_depth)) {
 				R600_ERR("failed to create temporary texture to hold untiled copy\n");
 				FREE(trans);
 				return NULL;
 			}
 
-			r600_blit_decompress_depth(ctx, (struct r600_texture*)temp, staging_depth,
-						   0, 0, 0, box->depth, 0, 0);
+			if (usage & PIPE_TRANSFER_READ) {
+				struct pipe_resource *temp = ctx->screen->resource_create(ctx->screen, &resource);
 
-	                pipe_resource_reference((struct pipe_resource**)&temp, NULL);
+				r600_copy_region_with_blit(ctx, temp, 0, 0, 0, 0, texture, level, box);
+				r600_blit_decompress_depth(ctx, (struct r600_texture*)temp, staging_depth,
+							   0, 0, 0, box->depth, 0, 0);
+				pipe_resource_reference((struct pipe_resource**)&temp, NULL);
+			}
 		}
 		else {
 			/* XXX: only readback the rectangle which is being mapped? */
