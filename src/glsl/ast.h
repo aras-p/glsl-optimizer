@@ -915,6 +915,11 @@ _mesa_ast_array_index_to_hir(void *mem_ctx,
 			     ir_rvalue *array, ir_rvalue *idx,
 			     YYLTYPE &loc, YYLTYPE &idx_loc);
 
+extern void
+_mesa_ast_set_aggregate_type(const ast_type_specifier *type,
+                             ast_expression *expr,
+                             _mesa_glsl_parse_state *state);
+
 void
 emit_function(_mesa_glsl_parse_state *state, ir_function *f);
 

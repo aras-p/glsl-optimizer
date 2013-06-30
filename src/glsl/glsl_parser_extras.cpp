@@ -663,6 +663,194 @@ _mesa_glsl_process_extension(const char *name, YYLTYPE *name_locp,
    return true;
 }
 
+
+/**
+ * Returns the name of the type of a column of a matrix. E.g.,
+ *
+ *    "mat3"   -> "vec3"
+ *    "mat4x2" -> "vec2"
+ */
+static const char *
+_mesa_ast_get_matrix_column_type_name(const char *matrix_type_name)
+{
+   static const char *vec_name[] = { "vec2", "vec3", "vec4" };
+
+   /* The number of elements in a row of a matrix is specified by the last
+    * character of the matrix type name.
+    */
+   long rows = strtol(matrix_type_name + strlen(matrix_type_name) - 1,
+                      NULL, 10);
+   return vec_name[rows - 2];
+}
+
+/**
+ * Recurses through <type> and <expr> if <expr> is an aggregate initializer
+ * and sets <expr>'s <constructor_type> field to <type>. Gives later functions
+ * (process_array_constructor, et al) sufficient information to do type
+ * checking.
+ *
+ * Operates on assignments involving an aggregate initializer. E.g.,
+ *
+ * vec4 pos = {1.0, -1.0, 0.0, 1.0};
+ *
+ * or more ridiculously,
+ *
+ * struct S {
+ *     vec4 v[2];
+ * };
+ *
+ * struct {
+ *     S a[2], b;
+ *     int c;
+ * } aggregate = {
+ *     {
+ *         {
+ *             {
+ *                 {1.0, 2.0, 3.0, 4.0}, // a[0].v[0]
+ *                 {5.0, 6.0, 7.0, 8.0}  // a[0].v[1]
+ *             } // a[0].v
+ *         }, // a[0]
+ *         {
+ *             {
+ *                 {1.0, 2.0, 3.0, 4.0}, // a[1].v[0]
+ *                 {5.0, 6.0, 7.0, 8.0}  // a[1].v[1]
+ *             } // a[1].v
+ *         } // a[1]
+ *     }, // a
+ *     {
+ *         {
+ *             {1.0, 2.0, 3.0, 4.0}, // b.v[0]
+ *             {5.0, 6.0, 7.0, 8.0}  // b.v[1]
+ *         } // b.v
+ *     }, // b
+ *     4 // c
+ * };
+ *
+ * This pass is necessary because the right-hand side of <type> e = { ... }
+ * doesn't contain sufficient information to determine if the types match.
+ */
+void
+_mesa_ast_set_aggregate_type(const ast_type_specifier *type,
+                             ast_expression *expr,
+                             _mesa_glsl_parse_state *state)
+{
+   void *ctx = state;
+   ast_aggregate_initializer *ai = (ast_aggregate_initializer *)expr;
+   ai->constructor_type = (ast_type_specifier *)type;
+
+   bool is_declaration = ai->constructor_type->structure != NULL;
+   if (!is_declaration) {
+      /* Look up <type> name in the symbol table to see if it's a struct. */
+      const ast_type_specifier *struct_type =
+         state->symbols->get_type_ast(type->type_name);
+      ai->constructor_type->structure =
+         struct_type ? new(ctx) ast_struct_specifier(*struct_type->structure)
+                     : NULL;
+   }
+
+   /* If the aggregate is an array, recursively set its elements' types. */
+   if (type->is_array) {
+      /* We want to set the element type which is not an array itself, so make
+       * a copy of the array type and set its is_array field to false.
+       *
+       * E.g., if <type> if struct S[2] we want to set each element's type to
+       * struct S.
+       *
+       * FINISHME: Update when ARB_array_of_arrays is supported.
+       */
+      const ast_type_specifier *non_array_type =
+         new(ctx) ast_type_specifier(type, false, NULL);
+
+      for (exec_node *expr_node = ai->expressions.head;
+           !expr_node->is_tail_sentinel();
+           expr_node = expr_node->next) {
+         ast_expression *expr = exec_node_data(ast_expression, expr_node,
+                                               link);
+
+         if (expr->oper == ast_aggregate)
+            _mesa_ast_set_aggregate_type(non_array_type, expr, state);
+      }
+
+   /* If the aggregate is a struct, recursively set its fields' types. */
+   } else if (ai->constructor_type->structure) {
+      ai->constructor_type->structure->is_declaration = is_declaration;
+      exec_node *expr_node = ai->expressions.head;
+
+      /* Iterate through the struct's fields' declarations. E.g., iterate from
+       * "float a, b" to "int c" in the struct below.
+       *
+       *     struct {
+       *         float a, b;
+       *         int c;
+       *     } s;
+       */
+      for (exec_node *decl_list_node =
+              ai->constructor_type->structure->declarations.head;
+           !decl_list_node->is_tail_sentinel();
+           decl_list_node = decl_list_node->next) {
+         ast_declarator_list *decl_list = exec_node_data(ast_declarator_list,
+                                                         decl_list_node, link);
+
+         for (exec_node *decl_node = decl_list->declarations.head;
+              !decl_node->is_tail_sentinel() && !expr_node->is_tail_sentinel();
+              decl_node = decl_node->next, expr_node = expr_node->next) {
+            ast_declaration *decl = exec_node_data(ast_declaration, decl_node,
+                                                   link);
+            ast_expression *expr = exec_node_data(ast_expression, expr_node,
+                                                  link);
+
+            bool is_array = decl_list->type->specifier->is_array;
+            ast_expression *array_size = decl_list->type->specifier->array_size;
+
+            /* Recognize variable declarations with the bracketed size attached
+             * to the type rather than the variable name as arrays. E.g.,
+             *
+             *     float a[2];
+             *     float[2] b;
+             *
+             * are both arrays, but <a>'s array_size is decl->array_size, while
+             * <b>'s array_size is decl_list->type->specifier->array_size.
+             */
+            if (!is_array) {
+               /* FINISHME: Update when ARB_array_of_arrays is supported. */
+               is_array = decl->is_array;
+               array_size = decl->array_size;
+            }
+
+            /* Declaration shadows the <type> parameter. */
+            ast_type_specifier *type =
+               new(ctx) ast_type_specifier(decl_list->type->specifier,
+                                           is_array, array_size);
+
+            if (expr->oper == ast_aggregate)
+               _mesa_ast_set_aggregate_type(type, expr, state);
+         }
+      }
+   } else {
+      /* If the aggregate is a matrix, set its columns' types. */
+      const char *name;
+      const glsl_type *const constructor_type =
+         ai->constructor_type->glsl_type(&name, state);
+
+      if (constructor_type->is_matrix()) {
+         for (exec_node *expr_node = ai->expressions.head;
+              !expr_node->is_tail_sentinel();
+              expr_node = expr_node->next) {
+            ast_expression *expr = exec_node_data(ast_expression, expr_node,
+                                                  link);
+
+            /* Declaration shadows the <type> parameter. */
+            ast_type_specifier *type = new(ctx)
+               ast_type_specifier(_mesa_ast_get_matrix_column_type_name(name));
+
+            if (expr->oper == ast_aggregate)
+               _mesa_ast_set_aggregate_type(type, expr, state);
+         }
+      }
+   }
+}
+
+
 void
 _mesa_ast_type_qualifier_print(const struct ast_type_qualifier *q)
 {

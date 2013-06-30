@@ -4005,7 +4005,19 @@ ast_type_specifier::hir(exec_list *instructions,
       return NULL;
    }
 
-   if (this->structure != NULL)
+   /* _mesa_ast_set_aggregate_type() sets the <structure> field so that
+    * process_record_constructor() can do type-checking on C-style initializer
+    * expressions of structs, but ast_struct_specifier should only be translated
+    * to HIR if it is declaring the type of a structure.
+    *
+    * The ->is_declaration field is false for initializers of variables
+    * declared separately from the struct's type definition.
+    *
+    *    struct S { ... };              (is_declaration = true)
+    *    struct T { ... } t = { ... };  (is_declaration = true)
+    *    S s = { ... };                 (is_declaration = false)
+    */
+   if (this->structure != NULL && this->structure->is_declaration)
       return this->structure->hir(instructions, state);
 
    return NULL;
