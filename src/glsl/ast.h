@@ -189,7 +189,8 @@ enum ast_operators {
    ast_float_constant,
    ast_bool_constant,
 
-   ast_sequence
+   ast_sequence,
+   ast_aggregate
 };
 
 /**
@@ -292,6 +293,29 @@ private:
    bool cons;
 };
 
+/**
+ * C-style aggregate initialization class
+ *
+ * Represents C-style initializers of vectors, matrices, arrays, and
+ * structures. E.g., vec3 pos = {1.0, 0.0, -1.0} is equivalent to
+ * vec3 pos = vec3(1.0, 0.0, -1.0).
+ *
+ * Specified in GLSL 4.20 and GL_ARB_shading_language_420pack.
+ *
+ * \sa _mesa_ast_set_aggregate_type
+ */
+class ast_aggregate_initializer : public ast_expression {
+public:
+   ast_aggregate_initializer()
+      : ast_expression(ast_aggregate, NULL, NULL, NULL)
+   {
+      /* empty */
+   }
+
+   ast_type_specifier *constructor_type;
+   virtual ir_rvalue *hir(exec_list *instructions,
+                          struct _mesa_glsl_parse_state *state);
+};
 
 /**
  * Number of possible operators for an ast_expression

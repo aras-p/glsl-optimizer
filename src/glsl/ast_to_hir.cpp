@@ -1068,6 +1068,10 @@ ast_expression::hir(exec_list *instructions,
    loc = this->get_location();
 
    switch (this->oper) {
+   case ast_aggregate:
+         assert(!"ast_aggregate: Should never get here.");
+         break;
+
    case ast_assign: {
       op[0] = this->subexpressions[0]->hir(instructions, state);
       op[1] = this->subexpressions[1]->hir(instructions, state);

@@ -862,6 +862,19 @@ ast_expression::print(void) const
       break;
    }
 
+   case ast_aggregate: {
+      printf("{ ");
+      foreach_list_const(n, & this->expressions) {
+	 if (n != this->expressions.get_head())
+	    printf(", ");
+
+	 ast_node *ast = exec_node_data(ast_node, n, link);
+	 ast->print();
+      }
+      printf("} ");
+      break;
+   }
+
    default:
       assert(0);
       break;

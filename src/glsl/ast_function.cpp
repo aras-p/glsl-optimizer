@@ -1699,3 +1699,33 @@ ast_function_expression::hir(exec_list *instructions,
 
    return ir_rvalue::error_value(ctx);
 }
+
+ir_rvalue *
+ast_aggregate_initializer::hir(exec_list *instructions,
+                               struct _mesa_glsl_parse_state *state)
+{
+   void *ctx = state;
+   YYLTYPE loc = this->get_location();
+   const char *name;
+   const glsl_type *const constructor_type =
+      this->constructor_type->glsl_type(&name, state);
+
+   if (!state->ARB_shading_language_420pack_enable) {
+      _mesa_glsl_error(&loc, state, "C-style initialization requires the "
+                       "GL_ARB_shading_language_420pack extension");
+      return ir_rvalue::error_value(ctx);
+   }
+
+   if (this->constructor_type->is_array) {
+      return process_array_constructor(instructions, constructor_type, &loc,
+                                       &this->expressions, state);
+   }
+
+   if (this->constructor_type->structure) {
+      return process_record_constructor(instructions, constructor_type, &loc,
+                                        &this->expressions, state);
+   }
+
+   return process_vec_mat_constructor(instructions, constructor_type, &loc,
+                                      &this->expressions, state);
+}
