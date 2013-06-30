@@ -834,6 +834,8 @@ boolean r600_dma_blit(struct pipe_context *ctx,
 			const struct pipe_box *src_box);
 void r600_emit_streamout_begin(struct r600_context *ctx, struct r600_atom *atom);
 void r600_emit_streamout_end(struct r600_context *ctx);
+void r600_flag_resource_cache_flush(struct r600_context *rctx,
+				    struct pipe_resource *res);
 
 /*
  * evergreen_hw_context.c
