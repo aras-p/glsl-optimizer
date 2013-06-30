@@ -923,11 +923,6 @@ static void *r600_texture_transfer_map(struct pipe_context *ctx,
 		trans->transfer.layer_stride = staging->surface.level[0].slice_size;
 		if (usage & PIPE_TRANSFER_READ) {
 			r600_copy_to_staging_texture(ctx, trans);
-			/* flush gfx & dma ring, order does not matter as only one can be live */
-			if (rctx->rings.dma.cs) {
-				rctx->rings.dma.flush(rctx, 0);
-			}
-			rctx->rings.gfx.flush(rctx, 0);
 		}
 	} else {
 		/* the resource is mapped directly */
