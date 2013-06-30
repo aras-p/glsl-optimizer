@@ -292,10 +292,9 @@ void *r600_buffer_mmap_sync_with_rings(struct r600_context *ctx,
 			ctx->ws->cs_sync_flush(ctx->rings.dma.cs);
 		}
 	}
-	ctx->ws->buffer_wait(resource->buf, rusage);
 
 	/* at this point everything is synchronized */
-	return ctx->ws->buffer_map(resource->cs_buf, NULL, usage | PIPE_TRANSFER_UNSYNCHRONIZED);
+	return ctx->ws->buffer_map(resource->cs_buf, NULL, usage);
 }
 
 static void r600_flush_from_winsys(void *ctx, unsigned flags)
