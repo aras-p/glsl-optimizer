@@ -89,7 +89,7 @@ static void r600_texture_barrier(struct pipe_context *ctx)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 
-	rctx->flags |= R600_CONTEXT_INVAL_READ_CACHES |
+	rctx->flags |= R600_CONTEXT_INV_TEX_CACHE |
 		       R600_CONTEXT_FLUSH_AND_INV_CB |
 		       R600_CONTEXT_FLUSH_AND_INV |
 		       R600_CONTEXT_WAIT_3D_IDLE;
@@ -500,7 +500,7 @@ static void r600_set_index_buffer(struct pipe_context *ctx,
 void r600_vertex_buffers_dirty(struct r600_context *rctx)
 {
 	if (rctx->vertex_buffer_state.dirty_mask) {
-		rctx->flags |= R600_CONTEXT_INVAL_READ_CACHES;
+		rctx->flags |= R600_CONTEXT_INV_VERTEX_CACHE;
 		rctx->vertex_buffer_state.atom.num_dw = (rctx->chip_class >= EVERGREEN ? 12 : 11) *
 					       util_bitcount(rctx->vertex_buffer_state.dirty_mask);
 		rctx->vertex_buffer_state.atom.dirty = true;
@@ -557,7 +557,7 @@ void r600_sampler_views_dirty(struct r600_context *rctx,
 			      struct r600_samplerview_state *state)
 {
 	if (state->dirty_mask) {
-		rctx->flags |= R600_CONTEXT_INVAL_READ_CACHES;
+		rctx->flags |= R600_CONTEXT_INV_TEX_CACHE;
 		state->atom.num_dw = (rctx->chip_class >= EVERGREEN ? 14 : 13) *
 				     util_bitcount(state->dirty_mask);
 		state->atom.dirty = true;
@@ -912,7 +912,7 @@ static void r600_delete_vs_state(struct pipe_context *ctx, void *state)
 void r600_constant_buffers_dirty(struct r600_context *rctx, struct r600_constbuf_state *state)
 {
 	if (state->dirty_mask) {
-		rctx->flags |= R600_CONTEXT_INVAL_READ_CACHES;
+		rctx->flags |= R600_CONTEXT_INV_CONST_CACHE;
 		state->atom.num_dw = rctx->chip_class >= EVERGREEN ? util_bitcount(state->dirty_mask)*20
 								   : util_bitcount(state->dirty_mask)*19;
 		state->atom.dirty = true;

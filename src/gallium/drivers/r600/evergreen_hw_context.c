@@ -123,7 +123,9 @@ void evergreen_cp_dma_clear_buffer(struct r600_context *rctx,
 
 	/* We flush the caches, because we might read from or write
 	 * to resources which are bound right now. */
-	rctx->flags |= R600_CONTEXT_INVAL_READ_CACHES |
+	rctx->flags |= R600_CONTEXT_INV_CONST_CACHE |
+		       R600_CONTEXT_INV_VERTEX_CACHE |
+		       R600_CONTEXT_INV_TEX_CACHE |
 		       R600_CONTEXT_FLUSH_AND_INV |
 		       R600_CONTEXT_FLUSH_AND_INV_CB |
 		       R600_CONTEXT_FLUSH_AND_INV_DB |
@@ -168,7 +170,9 @@ void evergreen_cp_dma_clear_buffer(struct r600_context *rctx,
 	}
 
 	/* Invalidate the read caches. */
-	rctx->flags |= R600_CONTEXT_INVAL_READ_CACHES;
+	rctx->flags |= R600_CONTEXT_INV_CONST_CACHE |
+		       R600_CONTEXT_INV_VERTEX_CACHE |
+		       R600_CONTEXT_INV_TEX_CACHE;
 
 	util_range_add(&r600_resource(dst)->valid_buffer_range, offset,
 		       offset + size);

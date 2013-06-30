@@ -64,16 +64,21 @@
 #define R600_ERR(fmt, args...) \
 	fprintf(stderr, "EE %s:%d %s - "fmt, __FILE__, __LINE__, __func__, ##args)
 
-#define R600_CONTEXT_INVAL_READ_CACHES		(1 << 0)
-#define R600_CONTEXT_STREAMOUT_FLUSH		(1 << 1)
-#define R600_CONTEXT_WAIT_3D_IDLE		(1 << 2)
-#define R600_CONTEXT_WAIT_CP_DMA_IDLE		(1 << 3)
-#define R600_CONTEXT_FLUSH_AND_INV		(1 << 4)
-#define R600_CONTEXT_FLUSH_AND_INV_CB_META	(1 << 5)
-#define R600_CONTEXT_PS_PARTIAL_FLUSH		(1 << 6)
-#define R600_CONTEXT_FLUSH_AND_INV_DB_META      (1 << 7)
-#define R600_CONTEXT_FLUSH_AND_INV_DB		(1 << 8)
-#define R600_CONTEXT_FLUSH_AND_INV_CB		(1 << 9)
+/* read caches */
+#define R600_CONTEXT_INV_VERTEX_CACHE		(1 << 0)
+#define R600_CONTEXT_INV_TEX_CACHE		(1 << 1)
+#define R600_CONTEXT_INV_CONST_CACHE		(1 << 2)
+/* read-write caches */
+#define R600_CONTEXT_STREAMOUT_FLUSH		(1 << 8)
+#define R600_CONTEXT_FLUSH_AND_INV		(1 << 9)
+#define R600_CONTEXT_FLUSH_AND_INV_CB_META	(1 << 10)
+#define R600_CONTEXT_FLUSH_AND_INV_DB_META	(1 << 11)
+#define R600_CONTEXT_FLUSH_AND_INV_DB		(1 << 12)
+#define R600_CONTEXT_FLUSH_AND_INV_CB		(1 << 13)
+/* engine synchronization */
+#define R600_CONTEXT_PS_PARTIAL_FLUSH		(1 << 16)
+#define R600_CONTEXT_WAIT_3D_IDLE		(1 << 17)
+#define R600_CONTEXT_WAIT_CP_DMA_IDLE		(1 << 18)
 
 #define R600_QUERY_DRAW_CALLS		(PIPE_QUERY_DRIVER_SPECIFIC + 0)
 #define R600_QUERY_REQUESTED_VRAM	(PIPE_QUERY_DRIVER_SPECIFIC + 1)

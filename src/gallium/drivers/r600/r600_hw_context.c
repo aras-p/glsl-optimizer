@@ -220,6 +220,14 @@ void r600_flush_emit(struct r600_context *rctx)
 	    (rctx->flags & R600_CONTEXT_FLUSH_AND_INV_DB_META)) {
 		cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
 		cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_FLUSH_AND_INV_DB_META) | EVENT_INDEX(0);
+
+		/* Set FULL_CACHE_ENA for DB META flushes on r7xx and later.
+		 *
+		 * This hack predates use of FLUSH_AND_INV_DB_META, so it's
+		 * unclear whether it's still needed or even whether it has
+		 * any effect.
+		 */
+		cp_coher_cntl |= S_0085F0_FULL_CACHE_ENA(1);
 	}
 
 	if (rctx->flags & R600_CONTEXT_FLUSH_AND_INV) {
@@ -227,11 +235,15 @@ void r600_flush_emit(struct r600_context *rctx)
 		cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_EVENT) | EVENT_INDEX(0);
 	}
 
-	if (rctx->flags & R600_CONTEXT_INVAL_READ_CACHES) {
-		cp_coher_cntl |= S_0085F0_VC_ACTION_ENA(1) |
-				S_0085F0_TC_ACTION_ENA(1) |
-				S_0085F0_SH_ACTION_ENA(1) |
-				S_0085F0_FULL_CACHE_ENA(1);
+	if (rctx->flags & R600_CONTEXT_INV_CONST_CACHE) {
+		cp_coher_cntl |= S_0085F0_SH_ACTION_ENA(1);
+	}
+	if (rctx->flags & R600_CONTEXT_INV_VERTEX_CACHE) {
+		cp_coher_cntl |= rctx->has_vertex_cache ? S_0085F0_VC_ACTION_ENA(1)
+							: S_0085F0_TC_ACTION_ENA(1);
+	}
+	if (rctx->flags & R600_CONTEXT_INV_TEX_CACHE) {
+		cp_coher_cntl |= S_0085F0_TC_ACTION_ENA(1);
 	}
 
 	if (rctx->flags & R600_CONTEXT_FLUSH_AND_INV_DB) {
@@ -616,7 +628,9 @@ void r600_cp_dma_copy_buffer(struct r600_context *rctx,
 
 	/* We flush the caches, because we might read from or write
 	 * to resources which are bound right now. */
-	rctx->flags |= R600_CONTEXT_INVAL_READ_CACHES |
+	rctx->flags |= R600_CONTEXT_INV_CONST_CACHE |
+		       R600_CONTEXT_INV_VERTEX_CACHE |
+		       R600_CONTEXT_INV_TEX_CACHE |
 		       R600_CONTEXT_FLUSH_AND_INV |
 		       R600_CONTEXT_FLUSH_AND_INV_CB |
 		       R600_CONTEXT_FLUSH_AND_INV_DB |
@@ -666,7 +680,9 @@ void r600_cp_dma_copy_buffer(struct r600_context *rctx,
 	}
 
 	/* Invalidate the read caches. */
-	rctx->flags |= R600_CONTEXT_INVAL_READ_CACHES;
+	rctx->flags |= R600_CONTEXT_INV_CONST_CACHE |
+		       R600_CONTEXT_INV_VERTEX_CACHE |
+		       R600_CONTEXT_INV_TEX_CACHE;
 
 	util_range_add(&r600_resource(dst)->valid_buffer_range, dst_offset,
 		       dst_offset + size);
