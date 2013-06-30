@@ -337,6 +337,11 @@ TargetNVC0::insnCanLoad(const Instruction *i, int s,
          // (except if we implement more constraints)
          if (ld->getSrc(0)->asImm()->reg.data.u32 & 0xfff)
             return false;
+      } else
+      if (i->op == OP_ADD && i->sType == TYPE_F32) {
+         // add f32 LIMM cannot saturate
+         if (i->saturate && (reg.data.u32 & 0xfff))
+            return false;
       }
    }
 
@@ -430,6 +435,13 @@ TargetNVC0::isSatSupported(const Instruction *insn) const
 
    if (insn->dType == TYPE_U32)
       return (insn->op == OP_ADD) || (insn->op == OP_MAD);
+
+   // add f32 LIMM cannot saturate
+   if (insn->op == OP_ADD && insn->sType == TYPE_F32) {
+      if (insn->getSrc(1)->asImm() &&
+          insn->getSrc(1)->reg.data.u32 & 0xfff)
+         return false;
+   }
 
    return insn->dType == TYPE_F32;
 }
