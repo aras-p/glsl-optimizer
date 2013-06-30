@@ -787,8 +787,6 @@ void r600_init_surface_functions(struct r600_context *r600);
 uint32_t r600_translate_texformat(struct pipe_screen *screen, enum pipe_format format,
 				  const unsigned char *swizzle_view,
 				  uint32_t *word4_p, uint32_t *yuv_format_p);
-unsigned r600_texture_get_offset(struct r600_texture *rtex,
-					unsigned level, unsigned layer);
 struct pipe_surface *r600_create_surface_custom(struct pipe_context *pipe,
 						struct pipe_resource *texture,
 						const struct pipe_surface *templ,

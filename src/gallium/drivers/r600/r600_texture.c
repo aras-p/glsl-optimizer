@@ -116,11 +116,15 @@ static void r600_copy_from_staging_texture(struct pipe_context *ctx, struct r600
 	}
 }
 
-unsigned r600_texture_get_offset(struct r600_texture *rtex,
-					unsigned level, unsigned layer)
+static unsigned r600_texture_get_offset(struct r600_texture *rtex, unsigned level,
+					const struct pipe_box *box)
 {
+	enum pipe_format format = rtex->resource.b.b.format;
+
 	return rtex->surface.level[level].offset +
-	       layer * rtex->surface.level[level].slice_size;
+	       box->z * rtex->surface.level[level].slice_size +
+	       box->y / util_format_get_blockheight(format) * rtex->surface.level[level].pitch_bytes +
+	       box->x / util_format_get_blockwidth(format) * util_format_get_blocksize(format);
 }
 
 static int r600_init_surface(struct r600_screen *rscreen,
@@ -805,7 +809,6 @@ static void *r600_texture_transfer_map(struct pipe_context *ctx,
 	struct r600_texture *rtex = (struct r600_texture*)texture;
 	struct r600_transfer *trans;
 	boolean use_staging_texture = FALSE;
-	enum pipe_format format = texture->format;
 	struct r600_resource *buf;
 	unsigned offset = 0;
 	char *map;
@@ -849,8 +852,6 @@ static void *r600_texture_transfer_map(struct pipe_context *ctx,
 	trans->transfer.box = *box;
 
 	if (rtex->is_depth) {
-		/* XXX: only readback the rectangle which is being mapped? */
-		/* XXX: when discard is true, no need to read back from depth texture */
 		struct r600_texture *staging_depth;
 
 		if (rtex->resource.b.b.nr_samples > 1) {
@@ -861,6 +862,8 @@ static void *r600_texture_transfer_map(struct pipe_context *ctx,
 			 *
 			 * First downsample the depth buffer to a temporary texture,
 			 * then decompress the temporary one to staging.
+			 *
+			 * Only the region being mapped is transfered.
 			 */
 			struct pipe_resource *temp;
 			struct pipe_resource resource;
@@ -880,9 +883,10 @@ static void *r600_texture_transfer_map(struct pipe_context *ctx,
 						   0, 0, 0, box->depth, 0, 0);
 
 	                pipe_resource_reference((struct pipe_resource**)&temp, NULL);
-			trans->offset = 0;
 		}
 		else {
+			/* XXX: only readback the rectangle which is being mapped? */
+			/* XXX: when discard is true, no need to read back from depth texture */
 			if (!r600_init_flushed_depth_texture(ctx, texture, &staging_depth)) {
 				R600_ERR("failed to create temporary texture to hold untiled copy\n");
 				FREE(trans);
@@ -894,7 +898,7 @@ static void *r600_texture_transfer_map(struct pipe_context *ctx,
 						   box->z, box->z + box->depth - 1,
 						   0, 0);
 
-			trans->offset = r600_texture_get_offset(staging_depth, level, box->z);
+			offset = r600_texture_get_offset(staging_depth, level, box);
 		}
 
 		trans->transfer.stride = staging_depth->surface.level[level].pitch_bytes;
@@ -926,9 +930,10 @@ static void *r600_texture_transfer_map(struct pipe_context *ctx,
 			rctx->rings.gfx.flush(rctx, 0);
 		}
 	} else {
+		/* the resource is mapped directly */
 		trans->transfer.stride = rtex->surface.level[level].pitch_bytes;
 		trans->transfer.layer_stride = rtex->surface.level[level].slice_size;
-		trans->offset = r600_texture_get_offset(rtex, level, box->z);
+		offset = r600_texture_get_offset(rtex, level, box);
 	}
 
 	if (trans->staging) {
@@ -936,11 +941,6 @@ static void *r600_texture_transfer_map(struct pipe_context *ctx,
 	} else {
 		buf = &rtex->resource;
 	}
-
-	if (rtex->is_depth || !trans->staging)
-		offset = trans->offset +
-			box->y / util_format_get_blockheight(format) * trans->transfer.stride +
-			box->x / util_format_get_blockwidth(format) * util_format_get_blocksize(format);
 
 	if (!(map = r600_buffer_mmap_sync_with_rings(rctx, buf, usage))) {
 		pipe_resource_reference((struct pipe_resource**)&trans->staging, NULL);
