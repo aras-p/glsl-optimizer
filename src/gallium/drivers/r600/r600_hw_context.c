@@ -302,9 +302,6 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 {
 	struct radeon_winsys_cs *cs = ctx->rings.gfx.cs;
 
-	if (cs->cdw == ctx->start_cs_cmd.num_dw)
-		return;
-
 	ctx->nontimer_queries_suspended = false;
 	ctx->streamout.suspended = false;
 
@@ -418,6 +415,8 @@ void r600_begin_new_cs(struct r600_context *ctx)
 	/* Re-emit the draw state. */
 	ctx->last_primitive_type = -1;
 	ctx->last_start_instance = -1;
+
+	ctx->initial_gfx_cs_size = ctx->rings.gfx.cs->cdw;
 }
 
 void r600_context_emit_fence(struct r600_context *ctx, struct r600_resource *fence_bo, unsigned offset, unsigned value)

@@ -533,6 +533,7 @@ struct r600_context {
 	struct u_suballocator		*allocator_so_filled_size;
 	struct u_suballocator		*allocator_fetch_shader;
 	struct util_slab_mempool	pool_transfers;
+	unsigned			initial_gfx_cs_size;
 
 	/* Hardware info. */
 	enum radeon_family		family;

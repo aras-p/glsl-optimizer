@@ -164,6 +164,9 @@ static void r600_flush(struct pipe_context *ctx, unsigned flags)
 	unsigned render_cond_mode = 0;
 	boolean render_cond_cond = FALSE;
 
+	if (rctx->rings.gfx.cs->cdw == rctx->initial_gfx_cs_size)
+		return;
+
 	rctx->rings.gfx.flushing = true;
 	/* Disable render condition. */
 	if (rctx->current_render_cond) {
@@ -181,6 +184,8 @@ static void r600_flush(struct pipe_context *ctx, unsigned flags)
 	if (render_cond) {
 		ctx->render_condition(ctx, render_cond, render_cond_cond, render_cond_mode);
 	}
+
+	rctx->initial_gfx_cs_size = rctx->rings.gfx.cs->cdw;
 }
 
 static void r600_flush_from_st(struct pipe_context *ctx,
