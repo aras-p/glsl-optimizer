@@ -569,9 +569,17 @@ void r600_copy_buffer(struct pipe_context *ctx, struct pipe_resource *dst, unsig
 	else if (rctx->screen->has_streamout &&
 		 /* Require 4-byte alignment. */
 		 dstx % 4 == 0 && src_box->x % 4 == 0 && src_box->width % 4 == 0) {
+
+		/* Flush both resources. */
+		r600_flag_resource_cache_flush(rctx, src);
+		r600_flag_resource_cache_flush(rctx, dst);
+
 		r600_blitter_begin(ctx, R600_COPY_BUFFER);
 		util_blitter_copy_buffer(rctx->blitter, dst, dstx, src, src_box->x, src_box->width);
 		r600_blitter_end(ctx);
+
+		/* Flush the dst in case the 3D engine has been prefetching the resource. */
+		r600_flag_resource_cache_flush(rctx, dst);
 	} else {
 		util_resource_copy_region(ctx, dst, 0, dstx, 0, 0, src, 0, src_box);
 	}
@@ -594,10 +602,15 @@ static void r600_clear_buffer(struct pipe_context *ctx, struct pipe_resource *ds
 
 		clear_value.ui[0] = v | (v << 8) | (v << 16) | (v << 24);
 
+		r600_flag_resource_cache_flush(rctx, dst);
+
 		r600_blitter_begin(ctx, R600_DISABLE_RENDER_COND);
 		util_blitter_clear_buffer(rctx->blitter, dst, offset, size,
 					  1, &clear_value);
 		r600_blitter_end(ctx);
+
+		/* Flush again in case the 3D engine has been prefetching the resource. */
+		r600_flag_resource_cache_flush(rctx, dst);
 	} else {
 		char *map = r600_buffer_mmap_sync_with_rings(rctx, r600_resource(dst),
 							     PIPE_TRANSFER_WRITE);
