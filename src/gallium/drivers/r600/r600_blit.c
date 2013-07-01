@@ -416,17 +416,22 @@ static boolean is_simple_msaa_resolve(const struct pipe_blit_info *info)
 static void r600_clear_buffer(struct pipe_context *ctx, struct pipe_resource *dst,
 			      unsigned offset, unsigned size, unsigned char value);
 
-static void evergreen_set_clear_color(struct pipe_context *ctx,
-				      struct pipe_surface *cbuf,
+static void evergreen_set_clear_color(struct pipe_surface *cbuf,
 				      const union pipe_color_union *color)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct pipe_framebuffer_state *fb = &rctx->framebuffer.state;
 	unsigned *clear_value = ((struct r600_texture *)cbuf->texture)->color_clear_value;
 	union util_color uc;
 
 	memset(&uc, 0, sizeof(uc));
-	util_pack_color(color->f, fb->cbufs[0]->format, &uc);
+
+	if (util_format_is_pure_uint(cbuf->format)) {
+		util_format_write_4ui(cbuf->format, color->ui, 0, &uc, 0, 0, 0, 1, 1);
+	} else if (util_format_is_pure_sint(cbuf->format)) {
+		util_format_write_4i(cbuf->format, color->i, 0, &uc, 0, 0, 0, 1, 1);
+	} else {
+		util_pack_color(color->f, cbuf->format, &uc);
+	}
+
 	memcpy(clear_value, &uc, 2 * sizeof(uint32_t));
 }
 
@@ -448,10 +453,8 @@ static bool can_fast_clear_color(struct pipe_context *ctx)
 			return false;
 		}
 
-		/* cannot pack color for pure integer formats */
 		/* 128-bit formats are unuspported */
-		if (util_format_is_pure_integer(fb->cbufs[i]->format) ||
-		    util_format_get_blocksizebits(fb->cbufs[i]->format) > 64) {
+		if (util_format_get_blocksizebits(fb->cbufs[i]->format) > 64) {
 			return false;
 		}
 
@@ -479,7 +482,7 @@ static void r600_clear(struct pipe_context *ctx, unsigned buffers,
 		for (i = 0; i < fb->nr_cbufs; i++) {
 			struct r600_texture *tex = (struct r600_texture *)fb->cbufs[i]->texture;
 
-			evergreen_set_clear_color(ctx, fb->cbufs[i], color);
+			evergreen_set_clear_color(fb->cbufs[i], color);
 			r600_clear_buffer(ctx, fb->cbufs[i]->texture,
 					tex->cmask_offset, tex->cmask_size, 0);
 			tex->dirty_level_mask |= 1 << fb->cbufs[i]->u.tex.level;
