@@ -1,0 +1,321 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <title>Mesa Release Notes</title>
+  <link rel="stylesheet" type="text/css" href="../mesa.css">
+</head>
+<body>
+
+<div class="header">
+  <h1>The Mesa 3D Graphics Library</h1>
+</div>
+
+<iframe src="../contents.html"></iframe>
+<div class="content">
+
+<h1>Mesa 9.1.4 Release Notes / July 1st, 2013</h1>
+
+<p>
+Mesa 9.1.4 is a bug fix release which fixes bugs found since the 9.1.3 release.
+</p>
+<p>
+Mesa 9.1 implements the OpenGL 3.1 API, but the version reported by
+glGetString(GL_VERSION) or glGetIntegerv(GL_MAJOR_VERSION) /
+glGetIntegerv(GL_MINOR_VERSION) depends on the particular driver being used.
+Some drivers don't support all the features required in OpenGL 3.1.  OpenGL
+3.1 is <strong>only</strong> available if requested at context creation
+because GL_ARB_compatibility is not supported.
+</p>
+
+<h2>MD5 checksums</h2>
+<pre>
+a2c4e25d0e27918bc67f61bae04d0cb8  MesaLib-9.1.4.tar.bz2
+8c7e9ce5b05cb2223f0587396dd9dc08  MesaLib-9.1.4.tar.gz
+020459c5793d4279bdcb2daa1f7dd9f6  MesaLib-9.1.4.zip
+</pre>
+
+<h2>New features</h2>
+<p>None.</p>
+
+<h2>Bug fixes</h2>
+
+<p>This list is likely incomplete.</p>
+
+<ul>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=37871">Bug 37871</a> - [bisected i965] Bus error (core dumped) on oglc texdecaltile</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=42182">Bug 42182</a> - egl/opengles1/tri_x11 renders wrong</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=44958">Bug 44958</a> - [SNB IVB HSW] mesa demo test texleak bus error</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=53494">Bug 53494</a> - [snb] crash in texsubimage to a large atlas in clutter</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=60518">Bug 60518</a> - glDrawElements segfault when compiled into display list</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=61821">Bug 61821</a> - src/mesa/drivers/dri/common/xmlpool.h:96:29: fatal error: xmlpool/options.h</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=63520">Bug 63520</a> - r300g regression (RV380): Strange rendering of light sources in Penumbra  (bisected)</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=63701">Bug 63701</a> - [HSW] support new haswell graphics [8086:0a2e]</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=64727">Bug 64727</a> - [gm45, bisected] some piglit glsl 1.10 built-in-functions tests crash</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=64745">Bug 64745</a> - [llvmpipe] SIGSEGV src/gallium/state_trackers/glx/xlib/glx_api.c:1374</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=64934">Bug 64934</a> - [llvmpipe] SIGSEGV src/gallium/state_trackers/glx/xlib/glx_api.c:1363</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=65173">Bug 65173</a> - segfault in _mesa_get_format_datatype and _mesa_get_color_read_type when state dumping with glretrace</li>
+
+</ul>
+
+<h2>Changes</h2>
+<p>The full set of changes can be viewed by using the following GIT command:</p>
+
+<pre>
+  git log mesa-9.1.3..mesa-9.1.4
+</pre>
+
+<p>Alan Coopersmith (2):</p>
+<ul>
+  <li>integer overflow in XF86DRIOpenConnection() [CVE-2013-1993 1/2]</li>
+  <li>integer overflow in XF86DRIGetClientDriverName() [CVE-2013-1993 2/2]</li>
+</ul>
+
+<p>Alex Deucher (3):</p>
+<ul>
+  <li>radeonsi: add support for hainan chips</li>
+  <li>radeonsi: add Hainan pci ids</li>
+  <li>winsys/radeon: add env var to disable VM on Cayman/Trinity</li>
+</ul>
+pp
+<p>Andreas Boll (1):</p>
+<ul>
+  <li>glapi: Add some missing static_dispatch="false" annotations to es_EXT.xml</li>
+</ul>
+
+<p>Anuj Phogat (1):</p>
+<ul>
+  <li>intel: Add a null pointer check before dereferencing the pointer</li>
+</ul>
+
+<p>Armin K (1):</p>
+<ul>
+  <li>gallivm: Fix build with LLVM 3.3</li>
+</ul>
+
+<p>Brian Paul (9):</p>
+<ul>
+  <li>mesa: fix the compressed TexSubImage size checking code</li>
+  <li>st/mesa: generate GL_OUT_OF_MEMORY if we can't create the index buffer</li>
+  <li>mesa: fix error checking of DXT sRGB formats in _mesa_base_tex_format()</li>
+  <li>st/glx/xlib: check for null ctx pointer in glXIsDirect()</li>
+  <li>xlib: check for null ctx pointer in glXIsDirect()</li>
+  <li>st/glx: add null ctx check in glXDestroyContext()</li>
+  <li>xlib: add null ctx check in glXDestroyContext()</li>
+  <li>meta: move vertex array enables for mipmap generation</li>
+  <li>mesa: handle missing read buffer in _mesa_get_color_read_format/type()</li>
+</ul>
+
+<p>Bryan Cain (1):</p>
+<ul>
+  <li>nv50: initialize kick_notify callback in nv50_create</li>
+</ul>
+
+<p>Chad Versace (3):</p>
+<ul>
+  <li>egl/android: Fix error condition for EGL_ANDROID_image_native_buffer</li>
+  <li>i965: Fix glColorPointer(GL_FIXED)</li>
+  <li>intel: Return early if miptree allocation fails</li>
+</ul>
+
+<p>Chia-I Wu (1):</p>
+<ul>
+  <li>u_vbuf: fix index buffer leak</li>
+</ul>
+
+<p>Chris Forbes (8):</p>
+<ul>
+  <li>mesa: add accessor for effective stencil ref</li>
+  <li>intel: Use accessor for stencil reference values</li>
+  <li>nouveau: Use accessor for stencil reference values</li>
+  <li>radeon: Use accessor for stencil reference values</li>
+  <li>st: Use accessor for stencil reference values</li>
+  <li>swrast: Use accessor for stencil reference values</li>
+  <li>mesa: Stop clamping stencil reference value at specification time</li>
+  <li>mesa: Use accessor for stencil reference values in glGet</li>
+</ul>
+
+<p>Chí-Thanh Christopher Nguyễn (1):</p>
+<ul>
+  <li>targets/dri-i915: Force c++ linker in all cases</li>
+</ul>
+
+<p>Daniel Martin (1):</p>
+<ul>
+  <li>Fix build of swrast only without libdrm</li>
+</ul>
+
+<p>Dave Airlie (1):</p>
+<ul>
+  <li>i965: fix problem with constant out of bounds access (v3)</li>
+</ul>
+
+<p>Eric Anholt (10):</p>
+<ul>
+  <li>mesa: Make core Mesa allocate the texture renderbuffer wrapper.</li>
+  <li>mesa: Make gl_renderbuffers backed by EGL images use FinishRenderTexture.</li>
+  <li>i965/fs: Bake regs_written into the IR instead of recomputing it later.</li>
+  <li>i965/vs: Fix implied_mrf_writes() for integer division pre-gen6.</li>
+  <li>intel: Add support for writing to our linear-temporary-CPU-map case.</li>
+  <li>intel: Do temporary CPU maps of textures that are too big to GTT map.</li>
+  <li>intel: Avoid making tiled miptrees we won't be able to blit.</li>
+  <li>intel: Fix MRT handling of glBitmap().</li>
+  <li>intel: Fix format handling of blit glBitmap()</li>
+  <li>i965: Shut up the last release build warning.</li>
+</ul>
+
+<p>Fabian Bieler (2):</p>
+<ul>
+  <li>mesa/st: Don't copy propagate from swizzles.</li>
+  <li>mesa/program: Don't copy propagate from swizzles.</li>
+</ul>
+
+<p>Frank Henigman (1):</p>
+<ul>
+  <li>intel: initialize fs_visitor::params_remap in constructor</li>
+</ul>
+
+<p>Ian Romanick (2):</p>
+<ul>
+  <li>docs: Add 9.1.3 release md5sums</li>
+  <li>mesa: Bump version to 9.1.4</li>
+</ul>
+
+<p>José Fonseca (1):</p>
+<ul>
+  <li>scons: Fix implicit python dependency discovery on Windows.</li>
+</ul>
+
+<p>Kenneth Graunke (17):</p>
+<ul>
+  <li>mesa: Add i965 varying index patches to .cherry-ignore.</li>
+  <li>i965: Turn brw-&gt;urb.vs_size and gs_size into local variables.</li>
+  <li>i965: Use a variable for the push constant size in kB.</li>
+  <li>i965: Update URB partitioning code for Haswell's GT3 variant.</li>
+  <li>i965: Add chipset limits for the Haswell GT3 variant.</li>
+  <li>i965: Enable the Bay Trail platform.</li>
+  <li>mesa: Add a reverted commit to cherry-ignore.</li>
+  <li>vbo: Ignore PRIMITIVE_RESTART_FIXED_INDEX for glDrawArrays().</li>
+  <li>mesa: Add a helper function for determining the restart index.</li>
+  <li>vbo: Use the new primitive restart index helper function.</li>
+  <li>i965: Use the correct restart index for fixed index mode on Haswell.</li>
+  <li>mesa: Cherry-ignore a patch that got picked but squashed.</li>
+  <li>i965: Fix can_cut_index_handle_restart_index() for byte/short types.</li>
+  <li>st/mesa: Go back to using ctx-&gt;Array.RestartIndex, not _RestartIndex.</li>
+  <li>mesa: Ignore fixed-index primitive restart in ArrayElement().</li>
+  <li>mesa: Delete the ctx-&gt;Array._RestartIndex derived state.</li>
+  <li>glsl: Bail on parsing if the #version directive is bogus.</li>
+</ul>
+
+<p>Lauri Kasanen (1):</p>
+<ul>
+  <li>r600g: Correctly initialize the shader key, v2</li>
+</ul>
+
+<p>Maarten Lankhorst (4):</p>
+<ul>
+  <li>nvc0: fix up video buffer alignment requirements</li>
+  <li>nvc0: kill assert in ppp code</li>
+  <li>nvc0: set rsvd_kick correctly</li>
+  <li>nvc0: allow frame dropping in h264</li>
+</ul>
+
+<p>Marek Olšák (7):</p>
+<ul>
+  <li>radeonsi: increase array size for shader inputs and outputs</li>
+  <li>vbo: fix possible use-after-free segfault after a VAO is deleted</li>
+  <li>glsl: fix the value of gl_MaxFragmentUniformVectors</li>
+  <li>st/mesa: initialize all program constants and UBO limits</li>
+  <li>st/mesa: initialize Const.MaxColorAttachments</li>
+  <li>st/mesa: fix a couple of issues in st_bind_ubos</li>
+  <li>mesa: declare UniformBufferBindings as an array with a static size</li>
+</ul>
+
+<p>Matt Turner (3):</p>
+<ul>
+  <li>configure.ac: Remove redundant checks of enable_dri.</li>
+  <li>configure.ac: Build dricommon for DRI gallium drivers</li>
+  <li>i965: NULL check depth_mt to quiet static analysis.</li>
+</ul>
+
+<p>Michel Dänzer (3):</p>
+<ul>
+  <li>radeonsi: Fix handling of TGSI_SEMANTIC_PSIZE</li>
+  <li>radeonsi: Fix user clip planes</li>
+  <li>mesa: Note that two radeonsi fixes cannot be backported after all</li>
+</ul>
+
+<p>Mike Stroyan (1):</p>
+<ul>
+  <li>configure.ac: Build dricommon for gallium swrast</li>
+</ul>
+
+<p>Naohiro Aota (1):</p>
+<ul>
+  <li>xmlpool/build: Make sure to set mo properly</li>
+</ul>
+
+<p>Paul Berry (2):</p>
+<ul>
+  <li>glsl: Fix error checking on "flat" keyword to match GLSL ES 3.00, GLSL 1.50.</li>
+  <li>i965/gen7.5: Allow HW primitive restart for all primitive types.</li>
+</ul>
+
+<p>Paulo Zanoni (1):</p>
+<ul>
+  <li>i965: make GT3 machines work as GT3 instead of GT2</li>
+</ul>
+
+<p>Rodrigo Vivi (2):</p>
+<ul>
+  <li>i965: Add missing Haswell GT3 Desktop to IS_HSW_GT3 check.</li>
+  <li>i965: Adding more reserved PCI IDs for Haswell.</li>
+</ul>
+
+<p>Roland Scheidegger (1):</p>
+<ul>
+  <li>gallivm: fix out-of-bounds access with mirror_clamp_to_edge address mode</li>
+</ul>
+
+<p>Stéphane Marchesin (2):</p>
+<ul>
+  <li>st/xlib: Fix upside down coordinates for CopySubBuffer</li>
+  <li>st/xlib: Flush the front buffer before doing CopySubBuffer</li>
+</ul>
+
+<p>Sven Joachim (1):</p>
+<ul>
+  <li>mesa: Fix ieee fp on Alpha</li>
+</ul>
+
+<p>Tapani Pälli (1):</p>
+<ul>
+  <li>mesa: fix type comparison errors in sub-texture error checking code</li>
+</ul>
+
+<p>Tom Stellard (2):</p>
+<ul>
+  <li>gallivm: Fix build with LLVM &gt;= r180063</li>
+  <li>r300g/compiler: Prevent regalloc from swizzling texture operands v2</li>
+</ul>
+
+<p>Vinson Lee (1):</p>
+<ul>
+  <li>radeon: Initialize variables in radeon_llvm_context_init.</li>
+</ul>
+
+</div>
+</body>
+</html>
