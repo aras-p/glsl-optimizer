@@ -523,7 +523,8 @@ class Context(Dispatcher):
             resource.data[box.x : box.x + box.width] = data
 
     def flush(self, flags):
-        pass
+        # Return a fake fence
+        return self.interpreter.call_no
 
     def clear(self, buffers, color, depth, stencil):
         pass
