@@ -127,9 +127,7 @@ fs_generator::generate_fb_write(fs_inst *inst)
 		 retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UD));
 	 brw_set_compression_control(p, BRW_COMPRESSION_NONE);
 
-         if (inst->target > 0 &&
-	     c->key.nr_color_regions > 1 &&
-	     c->key.sample_alpha_to_coverage) {
+         if (inst->target > 0 && c->key.replicate_alpha) {
             /* Set "Source0 Alpha Present to RenderTarget" bit in message
              * header.
              */
