@@ -230,8 +230,9 @@ class PrettyPrinter:
         if node.ret is not None:
             self.formatter.text(' = ')
             node.ret.visit(self)
-        self.formatter.text(' // time ')
-        node.time.visit(self)
+        if node.time is not None:
+            self.formatter.text(' // time ')
+            node.time.visit(self)
 
     def visit_trace(self, node):
         for call in node.calls:

@@ -214,7 +214,7 @@ class TraceParser(XmlParser):
         method = attrs['method']
         args = []
         ret = None
-        time = 0
+        time = None
         while self.token.type == ELEMENT_START:
             if self.token.name_or_data == 'arg':
                 arg = self.parse_arg()
