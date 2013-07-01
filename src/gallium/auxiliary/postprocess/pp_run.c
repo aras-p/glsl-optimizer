@@ -53,8 +53,7 @@ pp_run(struct pp_queue_t *ppq, struct pipe_resource *in,
 
    assert(ppq->pp_queue);
    assert(ppq->tmp[0]);
-   assert(ppq->tmp[1]);
- 
+
    if (in->width0 != ppq->p->framebuffer.width ||
        in->height0 != ppq->p->framebuffer.height) {
       pp_debug("Resizing the temp pp buffers\n");
@@ -120,6 +119,7 @@ pp_run(struct pp_queue_t *ppq, struct pipe_resource *in,
 
       break;
    default:                    /* Two temp bufs */
+      assert(ppq->tmp[1]);
       ppq->pp_queue[0] (ppq, in, ppq->tmp[0], 0);
 
       for (i = 1; i < (ppq->n_filters - 1); i++) {
