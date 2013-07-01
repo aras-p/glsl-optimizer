@@ -44,6 +44,20 @@ env.CodeGenerate(
 env.CodeGenerate(
     target = '../../../mesa/main/remap_helper.h',
     script = 'remap_helper.py',
-    source = 'gl_and_es_API.xml',
+    source = sources,
+    command = python_cmd + ' $SCRIPT -f $SOURCE > $TARGET'
+    )
+
+env.CodeGenerate(
+    target = '../../../mesa/main/enums.c',
+    script = 'gl_enums.py',
+    source = sources,
+    command = python_cmd + ' $SCRIPT -f $SOURCE > $TARGET'
+    )
+
+env.CodeGenerate(
+    target = '../../../mesa/main/api_exec.c',
+    script = 'gl_genexec.py',
+    source = sources,
     command = python_cmd + ' $SCRIPT -f $SOURCE > $TARGET'
     )

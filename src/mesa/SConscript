@@ -417,23 +417,6 @@ if (env['gcc'] or env['clang']) and \
         env.Append(CPPPATH = [matypes[0].dir])
 
 
-# The enums.c file is generated from the GL/ES API.xml file
-env.CodeGenerate(
-    target = 'main/enums.c',
-    script = GLAPI + 'gen/gl_enums.py',
-    source = GLAPI + 'gen/gl_and_es_API.xml',
-    command = python_cmd + ' $SCRIPT -f $SOURCE > $TARGET'
-    )
-
-# The api_exec.c file is generated from the GL/ES API.xml file
-env.CodeGenerate(
-    target = 'main/api_exec.c',
-    script = GLAPI + 'gen/gl_genexec.py',
-    source = GLAPI + 'gen/gl_and_es_API.xml',
-    command = python_cmd + ' $SCRIPT -f $SOURCE > $TARGET'
-    )
-
-
 def write_git_sha1_h_file(filename):
     """Mesa looks for a git_sha1.h file at compile time in order to display
     the current git hash id in the GL_VERSION string.  This function tries
