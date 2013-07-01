@@ -447,7 +447,6 @@ static bool can_fast_clear_color(struct pipe_context *ctx)
 
 	for (i = 0; i < fb->nr_cbufs; i++) {
 		struct r600_texture *tex = (struct r600_texture *)fb->cbufs[i]->texture;
-		int target = fb->cbufs[i]->texture->target;
 
 		if (tex->cmask_size == 0) {
 			return false;
@@ -458,9 +457,9 @@ static bool can_fast_clear_color(struct pipe_context *ctx)
 			return false;
 		}
 
-		/* textures with multiple images are not supported */
-		if (target != PIPE_TEXTURE_2D && target != PIPE_TEXTURE_RECT &&
-				target != PIPE_TEXTURE_1D) {
+		/* the clear is allowed if all layers are bound */
+		if (fb->cbufs[i]->u.tex.first_layer != 0 ||
+		    fb->cbufs[i]->u.tex.last_layer != util_max_layer(&tex->resource.b.b, 0)) {
 			return false;
 		}
 	}
