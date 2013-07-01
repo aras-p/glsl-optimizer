@@ -185,8 +185,6 @@ nvc0_decoder_handle_references(struct nvc0_decoder *dec, struct nvc0_video_buffe
               (!dec->refs[idx].decoded_bottom || !dec->refs[idx].decoded_top)));
       if (target == refs[i])
          empty_spot = 0;
-      assert(!h264 ||
-             dec->refs[idx].last_used == seq - 1);
 
       if (dec->refs[idx].vidbuf != refs[i]) {
          debug_printf("%p is not a real ref\n", refs[i]);
@@ -338,7 +336,6 @@ nvc0_decoder_fill_picparm_h264_vp(struct nvc0_decoder *dec,
    unsigned ring, i, j = 0;
    assert(offsetof(struct h264_picparm_vp, u224) == 0x224);
    *is_ref = d->is_reference;
-   assert(!d->frame_num || dec->last_frame_num + 1 == d->frame_num || dec->last_frame_num == d->frame_num);
    dec->last_frame_num = d->frame_num;
 
    h->width = mb(dec->base.width);
