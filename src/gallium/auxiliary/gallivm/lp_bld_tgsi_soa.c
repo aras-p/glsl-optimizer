@@ -1026,9 +1026,9 @@ emit_fetch_immediate(
    }
 
    if (stype == TGSI_TYPE_UNSIGNED) {
-      res = LLVMConstBitCast(res, bld_base->uint_bld.vec_type);
+      res = LLVMBuildBitCast(builder, res, bld_base->uint_bld.vec_type, "");
    } else if (stype == TGSI_TYPE_SIGNED) {
-      res = LLVMConstBitCast(res, bld_base->int_bld.vec_type);
+      res = LLVMBuildBitCast(builder, res, bld_base->int_bld.vec_type, "");
    }
    return res;
 }
