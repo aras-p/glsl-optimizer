@@ -482,6 +482,9 @@ void
 intel_resolve_for_dri2_flush(struct intel_context *intel,
                              __DRIdrawable *drawable);
 
+extern void
+intelInitExtensions(struct gl_context *ctx);
+
 /*======================================================================
  * Inline conversion functions.  
  * These are better-typed than the macros used previously:
