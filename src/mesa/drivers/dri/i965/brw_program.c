@@ -102,6 +102,17 @@ static struct gl_program *brwNewProgram( struct gl_context *ctx,
 	 return NULL;
    }
 
+   case MESA_GEOMETRY_PROGRAM: {
+      struct brw_geometry_program *prog = CALLOC_STRUCT(brw_geometry_program);
+      if (prog) {
+         prog->id = get_new_program_id(brw->intelScreen);
+
+         return _mesa_init_geometry_program(ctx, &prog->program, target, id);
+      } else {
+         return NULL;
+      }
+   }
+
    default:
       return _mesa_new_program(ctx, target, id);
    }
