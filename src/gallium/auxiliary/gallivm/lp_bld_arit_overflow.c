@@ -62,9 +62,8 @@ build_binary_int_overflow(struct gallivm_state *gallivm,
                           LLVMValueRef b,
                           LLVMValueRef *ofbit)
 {
-   static const int MAX_INTR_STR = 256;
    LLVMBuilderRef builder = gallivm->builder;
-   char intr_str[MAX_INTR_STR];
+   char intr_str[256];
    LLVMTypeRef type_ref;
    LLVMTypeKind type_kind;
    LLVMTypeRef oelems[2] = {
@@ -82,18 +81,18 @@ build_binary_int_overflow(struct gallivm_state *gallivm,
 
    switch (LLVMGetIntTypeWidth(type_ref)) {
    case 16:
-      snprintf(intr_str, MAX_INTR_STR - 1, "%s.i16",
-               intr_prefix);
+      util_snprintf(intr_str, sizeof intr_str, "%s.i16",
+                    intr_prefix);
       oelems[0] = LLVMInt16TypeInContext(gallivm->context);
       break;
    case 32:
-      snprintf(intr_str, MAX_INTR_STR - 1, "%s.i32",
-               intr_prefix);
+      util_snprintf(intr_str, sizeof intr_str, "%s.i32",
+                    intr_prefix);
       oelems[0] = LLVMInt32TypeInContext(gallivm->context);
       break;
    case 64:
-      snprintf(intr_str, MAX_INTR_STR - 1, "%s.i64",
-               intr_prefix);
+      util_snprintf(intr_str, sizeof intr_str, "%s.i64",
+                    intr_prefix);
       oelems[0] = LLVMInt64TypeInContext(gallivm->context);
       break;
    default:
