@@ -257,5 +257,7 @@ nv30_context_create(struct pipe_screen *pscreen, void *priv)
       return NULL;
    }
 
+   nouveau_context_init_vdec(&nv30->base);
+
    return pipe;
 }

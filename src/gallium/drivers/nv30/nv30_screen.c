@@ -377,6 +377,7 @@ nv30_screen_create(struct nouveau_device *dev)
    pscreen->context_create = nv30_context_create;
    pscreen->is_format_supported = nv30_screen_is_format_supported;
    nv30_resource_screen_init(pscreen);
+   nouveau_screen_init_vdec(&screen->base);
 
    screen->base.fence.emit = nv30_screen_fence_emit;
    screen->base.fence.update = nv30_screen_fence_update;
