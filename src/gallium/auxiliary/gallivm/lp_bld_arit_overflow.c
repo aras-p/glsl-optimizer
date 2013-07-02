@@ -66,10 +66,8 @@ build_binary_int_overflow(struct gallivm_state *gallivm,
    char intr_str[256];
    LLVMTypeRef type_ref;
    LLVMTypeKind type_kind;
-   LLVMTypeRef oelems[2] = {
-      LLVMInt32TypeInContext(gallivm->context),
-      LLVMInt1TypeInContext(gallivm->context)
-   };
+   unsigned type_width;
+   LLVMTypeRef oelems[2];
    LLVMValueRef oresult;
    LLVMTypeRef otype;
 
@@ -78,26 +76,15 @@ build_binary_int_overflow(struct gallivm_state *gallivm,
    type_kind = LLVMGetTypeKind(type_ref);
 
    debug_assert(type_kind == LLVMIntegerTypeKind);
+   type_width = LLVMGetIntTypeWidth(type_ref);
 
-   switch (LLVMGetIntTypeWidth(type_ref)) {
-   case 16:
-      util_snprintf(intr_str, sizeof intr_str, "%s.i16",
-                    intr_prefix);
-      oelems[0] = LLVMInt16TypeInContext(gallivm->context);
-      break;
-   case 32:
-      util_snprintf(intr_str, sizeof intr_str, "%s.i32",
-                    intr_prefix);
-      oelems[0] = LLVMInt32TypeInContext(gallivm->context);
-      break;
-   case 64:
-      util_snprintf(intr_str, sizeof intr_str, "%s.i64",
-                    intr_prefix);
-      oelems[0] = LLVMInt64TypeInContext(gallivm->context);
-      break;
-   default:
-      debug_assert(!"Unsupported integer width in overflow computation!");
-   }
+   debug_assert(type_width == 16 || type_width == 32 || type_width == 64);
+
+   util_snprintf(intr_str, sizeof intr_str, "%s.i%u",
+                 intr_prefix, type_width);
+
+   oelems[0] = type_ref;
+   oelems[1] = LLVMInt1TypeInContext(gallivm->context);
 
    otype = LLVMStructTypeInContext(gallivm->context, oelems, 2, FALSE);
    oresult = lp_build_intrinsic_binary(builder, intr_str,
