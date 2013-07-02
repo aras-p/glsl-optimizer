@@ -45,7 +45,6 @@
 #include "intel_buffers.h"
 #include "intel_tex.h"
 #include "intel_batchbuffer.h"
-#include "intel_clear.h"
 #include "intel_pixel.h"
 #include "intel_regions.h"
 #include "intel_buffer_objects.h"

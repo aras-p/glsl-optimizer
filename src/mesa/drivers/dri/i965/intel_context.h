@@ -484,6 +484,8 @@ intel_resolve_for_dri2_flush(struct intel_context *intel,
 
 extern void
 intelInitExtensions(struct gl_context *ctx);
+extern void
+intelInitClearFuncs(struct dd_function_table *functions);
 
 /*======================================================================
  * Inline conversion functions.  
