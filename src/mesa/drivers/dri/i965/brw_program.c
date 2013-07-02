@@ -126,7 +126,8 @@ brwProgramStringNotify(struct gl_context *ctx,
 {
    struct brw_context *brw = brw_context(ctx);
 
-   if (target == GL_FRAGMENT_PROGRAM_ARB) {
+   switch (target) {
+   case GL_FRAGMENT_PROGRAM_ARB: {
       struct gl_fragment_program *fprog = (struct gl_fragment_program *) prog;
       struct brw_fragment_program *newFP = brw_fragment_program(fprog);
       const struct brw_fragment_program *curFP =
@@ -135,8 +136,9 @@ brwProgramStringNotify(struct gl_context *ctx,
       if (newFP == curFP)
 	 brw->state.dirty.brw |= BRW_NEW_FRAGMENT_PROGRAM;
       newFP->id = get_new_program_id(brw->intel.intelScreen);
+      break;
    }
-   else if (target == GL_VERTEX_PROGRAM_ARB) {
+   case GL_VERTEX_PROGRAM_ARB: {
       struct gl_vertex_program *vprog = (struct gl_vertex_program *) prog;
       struct brw_vertex_program *newVP = brw_vertex_program(vprog);
       const struct brw_vertex_program *curVP =
@@ -152,6 +154,18 @@ brwProgramStringNotify(struct gl_context *ctx,
       /* Also tell tnl about it:
        */
       _tnl_program_string(ctx, target, prog);
+      break;
+   }
+   default:
+      /*
+       * driver->ProgramStringNotify is only called for ARB programs, fixed
+       * function vertex programs, and ir_to_mesa (which isn't used by the
+       * i965 back-end).  Therefore, even after geometry shaders are added,
+       * this function should only ever be called with a target of
+       * GL_VERTEX_PROGRAM_ARB or GL_FRAGMENT_PROGRAM_ARB.
+       */
+      assert(!"Unexpected target in brwProgramStringNotify");
+      break;
    }
 
    brw_add_texrect_params(prog);
