@@ -65,7 +65,6 @@ release_buffer(struct intel_buffer_object *intel_obj)
    drm_intel_bo_unreference(intel_obj->buffer);
    intel_obj->buffer = NULL;
    intel_obj->offset = 0;
-   intel_obj->source = 0;
 }
 
 /**
@@ -414,9 +413,6 @@ intel_bufferobj_buffer(struct intel_context *intel,
                        struct intel_buffer_object *intel_obj,
 		       GLuint flag)
 {
-   if (intel_obj->source)
-      release_buffer(intel_obj);
-
    if (intel_obj->buffer == NULL)
       intel_bufferobj_alloc_buffer(intel, intel_obj);
 

@@ -47,8 +47,6 @@ struct intel_buffer_object
    void *range_map_buffer;
    unsigned int range_map_offset;
    GLsizei range_map_size;
-
-   bool source;
 };
 
 
