@@ -119,8 +119,6 @@ struct intel_context
       void (*finish_batch) (struct intel_context * intel);
       void (*new_batch) (struct intel_context * intel);
 
-      void (*annotate_aub)(struct intel_context *intel);
-
       void (*update_texture_surface)(struct gl_context *ctx,
                                      unsigned unit,
                                      uint32_t *binding_table,
