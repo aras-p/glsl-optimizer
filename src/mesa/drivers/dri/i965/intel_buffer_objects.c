@@ -417,6 +417,9 @@ intel_bufferobj_buffer(struct intel_context *intel,
    if (intel_obj->source)
       release_buffer(intel_obj);
 
+   if (intel_obj->buffer == NULL)
+      intel_bufferobj_alloc_buffer(intel, intel_obj);
+
    return intel_obj->buffer;
 }
 
