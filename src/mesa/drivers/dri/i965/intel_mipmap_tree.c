@@ -400,9 +400,6 @@ intel_miptree_create_layout(struct intel_context *intel,
       }
    }
 
-   intel_get_texture_alignment_unit(intel, mt->format,
-				    &mt->align_w, &mt->align_h);
-
    brw_miptree_layout(intel, mt);
 
    return mt;

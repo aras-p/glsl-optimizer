@@ -212,6 +212,9 @@ brw_miptree_layout_texture_3d(struct intel_context *intel,
 void
 brw_miptree_layout(struct intel_context *intel, struct intel_mipmap_tree *mt)
 {
+   intel_get_texture_alignment_unit(intel, mt->format,
+                                    &mt->align_w, &mt->align_h);
+
    switch (mt->target) {
    case GL_TEXTURE_CUBE_MAP:
       if (intel->gen == 4) {
