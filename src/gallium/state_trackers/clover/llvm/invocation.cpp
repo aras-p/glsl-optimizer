@@ -175,6 +175,7 @@ namespace {
 
       // clc.h requires that this macro be defined:
       c.getPreprocessorOpts().addMacroDef("cl_clang_storage_class_specifiers");
+      c.getPreprocessorOpts().addMacroDef("cl_khr_fp64");
 
       c.getLangOpts().NoBuiltin = true;
       c.getTargetOpts().Triple = triple;
