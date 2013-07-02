@@ -46,7 +46,6 @@ struct intel_buffer_object
    drm_intel_bo *range_map_bo;
    void *range_map_buffer;
    unsigned int range_map_offset;
-   GLsizei range_map_size;
 };
 
 
