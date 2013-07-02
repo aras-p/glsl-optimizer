@@ -7,7 +7,6 @@
 #include "intel_mipmap_tree.h"
 #include "intel_blit.h"
 #include "intel_tex.h"
-#include "intel_tex_layout.h"
 
 #define FILE_DEBUG_FLAG DEBUG_TEXTURE
 
