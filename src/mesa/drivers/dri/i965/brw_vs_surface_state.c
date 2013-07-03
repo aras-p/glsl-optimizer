@@ -44,7 +44,6 @@
 static void
 brw_upload_vs_pull_constants(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
    /* BRW_NEW_VERTEX_PROGRAM */
    struct brw_vertex_program *vp =
       (struct brw_vertex_program *) brw->vertex_program;
@@ -69,7 +68,7 @@ brw_upload_vs_pull_constants(struct brw_context *brw)
    /* _NEW_PROGRAM_CONSTANTS */
    drm_intel_bo_unreference(brw->vs.const_bo);
    uint32_t size = brw->vs.prog_data->base.nr_pull_params * 4;
-   brw->vs.const_bo = drm_intel_bo_alloc(intel->bufmgr, "vp_const_buffer",
+   brw->vs.const_bo = drm_intel_bo_alloc(brw->bufmgr, "vp_const_buffer",
 					 size, 64);
 
    drm_intel_gem_bo_map_gtt(brw->vs.const_bo);

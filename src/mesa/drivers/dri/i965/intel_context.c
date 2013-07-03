@@ -527,14 +527,14 @@ intelInitContext(struct brw_context *brw,
     */
    intel->max_gtt_map_object_size = gtt_size / 4;
 
-   intel->bufmgr = intelScreen->bufmgr;
+   brw->bufmgr = intelScreen->bufmgr;
 
    bo_reuse_mode = driQueryOptioni(&brw->optionCache, "bo_reuse");
    switch (bo_reuse_mode) {
    case DRI_CONF_BO_REUSE_DISABLED:
       break;
    case DRI_CONF_BO_REUSE_ALL:
-      intel_bufmgr_gem_enable_reuse(intel->bufmgr);
+      intel_bufmgr_gem_enable_reuse(brw->bufmgr);
       break;
    }
 
@@ -564,7 +564,7 @@ intelInitContext(struct brw_context *brw,
 
    INTEL_DEBUG = driParseDebugString(getenv("INTEL_DEBUG"), debug_control);
    if (INTEL_DEBUG & DEBUG_BUFMGR)
-      dri_bufmgr_set_debug(intel->bufmgr, true);
+      dri_bufmgr_set_debug(brw->bufmgr, true);
    if ((INTEL_DEBUG & DEBUG_SHADER_TIME) && intel->gen < 7) {
       fprintf(stderr,
               "shader_time debugging requires gen7 (Ivybridge) or better.\n");
@@ -574,7 +574,7 @@ intelInitContext(struct brw_context *brw,
       intel->perf_debug = true;
 
    if (INTEL_DEBUG & DEBUG_AUB)
-      drm_intel_bufmgr_gem_set_aub_dump(intel->bufmgr, true);
+      drm_intel_bufmgr_gem_set_aub_dump(brw->bufmgr, true);
 
    intel_batchbuffer_init(brw);
 

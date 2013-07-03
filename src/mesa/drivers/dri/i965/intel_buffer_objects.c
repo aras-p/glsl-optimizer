@@ -49,8 +49,7 @@ static void
 intel_bufferobj_alloc_buffer(struct brw_context *brw,
 			     struct intel_buffer_object *intel_obj)
 {
-   struct intel_context *intel = &brw->intel;
-   intel_obj->buffer = drm_intel_bo_alloc(intel->bufmgr, "bufferobj",
+   intel_obj->buffer = drm_intel_bo_alloc(brw->bufmgr, "bufferobj",
 					  intel_obj->Base.Size, 64);
 
    /* the buffer might be bound as a uniform buffer, need to update it
@@ -187,7 +186,7 @@ intel_bufferobj_subdata(struct gl_context * ctx,
                     "glBufferSubData() to a busy buffer object.\n",
                     (long)size);
 	 drm_intel_bo *temp_bo =
-	    drm_intel_bo_alloc(intel->bufmgr, "subdata temp", size, 64);
+	    drm_intel_bo_alloc(brw->bufmgr, "subdata temp", size, 64);
 
 	 drm_intel_bo_subdata(temp_bo, 0, size, data);
 
@@ -301,7 +300,7 @@ intel_bufferobj_map_range(struct gl_context * ctx,
 	 intel_obj->range_map_buffer = malloc(length);
 	 obj->Pointer = intel_obj->range_map_buffer;
       } else {
-	 intel_obj->range_map_bo = drm_intel_bo_alloc(intel->bufmgr,
+	 intel_obj->range_map_bo = drm_intel_bo_alloc(brw->bufmgr,
 						      "range map",
 						      length, 64);
 	 if (!(access & GL_MAP_READ_BIT)) {
@@ -338,7 +337,6 @@ intel_bufferobj_flush_mapped_range(struct gl_context *ctx,
 				   struct gl_buffer_object *obj)
 {
    struct brw_context *brw = brw_context(ctx);
-   struct intel_context *intel = intel_context(ctx);
    struct intel_buffer_object *intel_obj = intel_buffer_object(obj);
    drm_intel_bo *temp_bo;
 
@@ -351,7 +349,7 @@ intel_bufferobj_flush_mapped_range(struct gl_context *ctx,
    if (length == 0)
       return;
 
-   temp_bo = drm_intel_bo_alloc(intel->bufmgr, "range map flush", length, 64);
+   temp_bo = drm_intel_bo_alloc(brw->bufmgr, "range map flush", length, 64);
 
    drm_intel_bo_subdata(temp_bo, 0, length, intel_obj->range_map_buffer);
 
@@ -451,7 +449,7 @@ static void wrap_buffers(struct brw_context *brw, GLuint size)
    if (size < INTEL_UPLOAD_SIZE)
       size = INTEL_UPLOAD_SIZE;
 
-   intel->upload.bo = drm_intel_bo_alloc(intel->bufmgr, "upload", size, 0);
+   intel->upload.bo = drm_intel_bo_alloc(brw->bufmgr, "upload", size, 0);
    intel->upload.offset = 0;
 }
 

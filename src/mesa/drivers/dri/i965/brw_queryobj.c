@@ -272,7 +272,7 @@ brw_begin_query(struct gl_context *ctx, struct gl_query_object *q)
        * the system was doing other work, such as running other applications.
        */
       drm_intel_bo_unreference(query->bo);
-      query->bo = drm_intel_bo_alloc(intel->bufmgr, "timer query", 4096, 4096);
+      query->bo = drm_intel_bo_alloc(brw->bufmgr, "timer query", 4096, 4096);
       write_timestamp(brw, query->bo, 0);
       break;
 
@@ -420,6 +420,7 @@ static void brw_check_query(struct gl_context *ctx, struct gl_query_object *q)
 static void
 ensure_bo_has_space(struct gl_context *ctx, struct brw_query_object *query)
 {
+   struct brw_context *brw = brw_context(ctx);
    struct intel_context *intel = intel_context(ctx);
 
    assert(intel->gen < 6);
@@ -434,7 +435,7 @@ ensure_bo_has_space(struct gl_context *ctx, struct brw_query_object *query)
          brw_queryobj_get_results(ctx, query);
       }
 
-      query->bo = drm_intel_bo_alloc(intel->bufmgr, "query", 4096, 1);
+      query->bo = drm_intel_bo_alloc(brw->bufmgr, "query", 4096, 1);
       query->last_index = 0;
    }
 }
@@ -517,13 +518,12 @@ static void
 brw_query_counter(struct gl_context *ctx, struct gl_query_object *q)
 {
    struct brw_context *brw = brw_context(ctx);
-   struct intel_context *intel = intel_context(ctx);
    struct brw_query_object *query = (struct brw_query_object *) q;
 
    assert(q->Target == GL_TIMESTAMP);
 
    drm_intel_bo_unreference(query->bo);
-   query->bo = drm_intel_bo_alloc(intel->bufmgr, "timestamp query", 4096, 4096);
+   query->bo = drm_intel_bo_alloc(brw->bufmgr, "timestamp query", 4096, 4096);
    write_timestamp(brw, query->bo, 0);
 }
 
@@ -535,10 +535,10 @@ brw_query_counter(struct gl_context *ctx, struct gl_query_object *q)
 static uint64_t
 brw_get_timestamp(struct gl_context *ctx)
 {
-   struct intel_context *intel = intel_context(ctx);
+   struct brw_context *brw = brw_context(ctx);
    uint64_t result = 0;
 
-   drm_intel_reg_read(intel->bufmgr, TIMESTAMP, &result);
+   drm_intel_reg_read(brw->bufmgr, TIMESTAMP, &result);
 
    /* See logic in brw_queryobj_get_results() */
    result = result >> 32;

@@ -321,7 +321,7 @@ brwCreateContext(int api,
        * This is required for transform feedback buffer offsets, query objects,
        * and also allows us to reduce how much state we have to emit.
        */
-      intel->hw_ctx = drm_intel_gem_context_create(intel->bufmgr);
+      intel->hw_ctx = drm_intel_gem_context_create(brw->bufmgr);
 
       if (!intel->hw_ctx) {
          fprintf(stderr, "Gen6+ requires Kernel 3.6 or later.\n");

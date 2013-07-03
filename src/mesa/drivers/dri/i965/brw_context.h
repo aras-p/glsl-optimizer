@@ -802,6 +802,8 @@ struct brw_context
 
    } vtbl;
 
+   dri_bufmgr *bufmgr;
+
    /**
     * Set if rendering has occured to the drawable's front buffer.
     *

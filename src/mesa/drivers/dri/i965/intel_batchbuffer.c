@@ -67,7 +67,7 @@ intel_batchbuffer_init(struct brw_context *brw)
        * the gen6 workaround because it involves actually writing to
        * the buffer, and the kernel doesn't let us write to the batch.
        */
-      intel->batch.workaround_bo = drm_intel_bo_alloc(intel->bufmgr,
+      intel->batch.workaround_bo = drm_intel_bo_alloc(brw->bufmgr,
 						      "pipe_control workaround",
 						      4096, 4096);
    }
@@ -90,7 +90,7 @@ intel_batchbuffer_reset(struct brw_context *brw)
 
    clear_cache(brw);
 
-   intel->batch.bo = drm_intel_bo_alloc(intel->bufmgr, "batchbuffer",
+   intel->batch.bo = drm_intel_bo_alloc(brw->bufmgr, "batchbuffer",
 					BATCH_SZ, 4096);
    if (intel->has_llc) {
       drm_intel_bo_map(intel->batch.bo, true);

@@ -249,12 +249,11 @@ static void
 gen6_begin_query(struct gl_context *ctx, struct gl_query_object *q)
 {
    struct brw_context *brw = brw_context(ctx);
-   struct intel_context *intel = intel_context(ctx);
    struct brw_query_object *query = (struct brw_query_object *)q;
 
    /* Since we're starting a new query, we need to throw away old results. */
    drm_intel_bo_unreference(query->bo);
-   query->bo = drm_intel_bo_alloc(intel->bufmgr, "query results", 4096, 4096);
+   query->bo = drm_intel_bo_alloc(brw->bufmgr, "query results", 4096, 4096);
 
    switch (query->Base.Target) {
    case GL_TIME_ELAPSED:

@@ -208,7 +208,6 @@ void
 brw_get_scratch_bo(struct brw_context *brw,
 		   drm_intel_bo **scratch_bo, int size)
 {
-   struct intel_context *intel = &brw->intel;
    drm_intel_bo *old_bo = *scratch_bo;
 
    if (old_bo && old_bo->size < size) {
@@ -217,7 +216,7 @@ brw_get_scratch_bo(struct brw_context *brw,
    }
 
    if (!old_bo) {
-      *scratch_bo = drm_intel_bo_alloc(intel->bufmgr, "scratch bo", size, 4096);
+      *scratch_bo = drm_intel_bo_alloc(brw->bufmgr, "scratch bo", size, 4096);
    }
 }
 
@@ -239,10 +238,8 @@ void brwInitFragProgFuncs( struct dd_function_table *functions )
 void
 brw_init_shader_time(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
-
    const int max_entries = 4096;
-   brw->shader_time.bo = drm_intel_bo_alloc(intel->bufmgr, "shader time",
+   brw->shader_time.bo = drm_intel_bo_alloc(brw->bufmgr, "shader time",
                                             max_entries * SHADER_TIME_STRIDE,
                                             4096);
    brw->shader_time.shader_programs = rzalloc_array(brw, struct gl_shader_program *,

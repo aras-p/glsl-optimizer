@@ -148,7 +148,7 @@ intelInitExtensions(struct gl_context *ctx)
       ctx->Extensions.ARB_texture_multisample = true;
 
       /* Test if the kernel has the ioctl. */
-      if (drm_intel_reg_read(intel->bufmgr, TIMESTAMP, &dummy) == 0)
+      if (drm_intel_reg_read(brw->bufmgr, TIMESTAMP, &dummy) == 0)
          ctx->Extensions.ARB_timer_query = true;
    }
 

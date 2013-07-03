@@ -278,7 +278,7 @@ brw_upload_constant_buffer(struct brw_context *brw)
 	 /* Allocate a single page for CURBE entries for this batchbuffer.
 	  * They're generally around 64b.
 	  */
-	 brw->curbe.curbe_bo = drm_intel_bo_alloc(brw->intel.bufmgr, "CURBE",
+	 brw->curbe.curbe_bo = drm_intel_bo_alloc(brw->bufmgr, "CURBE",
 						  4096, 1 << 6);
 	 brw->curbe.curbe_next_offset = 0;
 	 drm_intel_gem_bo_map_gtt(brw->curbe.curbe_bo);
