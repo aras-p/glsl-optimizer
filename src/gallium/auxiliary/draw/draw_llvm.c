@@ -1671,7 +1671,7 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant,
                   gallivm,
                   lp_build_vec_type(gallivm, lp_type_int(32)), "");
             struct lp_build_if_state if_ctx;
-            index_overflowed = LLVMBuildICmp(builder, LLVMIntUGE,
+            index_overflowed = LLVMBuildICmp(builder, LLVMIntUGT,
                                              true_index, fetch_elt_max,
                                              "index_overflowed");
             
