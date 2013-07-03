@@ -809,6 +809,14 @@ struct brw_context
    struct intel_batchbuffer batch;
    bool no_batch_wrap;
 
+   struct {
+      drm_intel_bo *bo;
+      GLuint offset;
+      uint32_t buffer_len;
+      uint32_t buffer_offset;
+      char buffer[4096];
+   } upload;
+
    /**
     * Set if rendering has occured to the drawable's front buffer.
     *

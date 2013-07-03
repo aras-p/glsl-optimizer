@@ -422,32 +422,30 @@ intel_bufferobj_buffer(struct brw_context *brw,
 void
 intel_upload_finish(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
-   if (!intel->upload.bo)
+   if (!brw->upload.bo)
 	   return;
 
-   if (intel->upload.buffer_len) {
-	   drm_intel_bo_subdata(intel->upload.bo,
-				intel->upload.buffer_offset,
-				intel->upload.buffer_len,
-				intel->upload.buffer);
-	   intel->upload.buffer_len = 0;
+   if (brw->upload.buffer_len) {
+	   drm_intel_bo_subdata(brw->upload.bo,
+				brw->upload.buffer_offset,
+				brw->upload.buffer_len,
+				brw->upload.buffer);
+	   brw->upload.buffer_len = 0;
    }
 
-   drm_intel_bo_unreference(intel->upload.bo);
-   intel->upload.bo = NULL;
+   drm_intel_bo_unreference(brw->upload.bo);
+   brw->upload.bo = NULL;
 }
 
 static void wrap_buffers(struct brw_context *brw, GLuint size)
 {
-   struct intel_context *intel = &brw->intel;
    intel_upload_finish(brw);
 
    if (size < INTEL_UPLOAD_SIZE)
       size = INTEL_UPLOAD_SIZE;
 
-   intel->upload.bo = drm_intel_bo_alloc(brw->bufmgr, "upload", size, 0);
-   intel->upload.offset = 0;
+   brw->upload.bo = drm_intel_bo_alloc(brw->bufmgr, "upload", size, 0);
+   brw->upload.offset = 0;
 }
 
 void intel_upload_data(struct brw_context *brw,
@@ -455,79 +453,77 @@ void intel_upload_data(struct brw_context *brw,
 		       drm_intel_bo **return_bo,
 		       GLuint *return_offset)
 {
-   struct intel_context *intel = &brw->intel;
    GLuint base, delta;
 
-   base = (intel->upload.offset + align - 1) / align * align;
-   if (intel->upload.bo == NULL || base + size > intel->upload.bo->size) {
+   base = (brw->upload.offset + align - 1) / align * align;
+   if (brw->upload.bo == NULL || base + size > brw->upload.bo->size) {
       wrap_buffers(brw, size);
       base = 0;
    }
 
-   drm_intel_bo_reference(intel->upload.bo);
-   *return_bo = intel->upload.bo;
+   drm_intel_bo_reference(brw->upload.bo);
+   *return_bo = brw->upload.bo;
    *return_offset = base;
 
-   delta = base - intel->upload.offset;
-   if (intel->upload.buffer_len &&
-       intel->upload.buffer_len + delta + size > sizeof(intel->upload.buffer))
+   delta = base - brw->upload.offset;
+   if (brw->upload.buffer_len &&
+       brw->upload.buffer_len + delta + size > sizeof(brw->upload.buffer))
    {
-      drm_intel_bo_subdata(intel->upload.bo,
-			   intel->upload.buffer_offset,
-			   intel->upload.buffer_len,
-			   intel->upload.buffer);
-      intel->upload.buffer_len = 0;
+      drm_intel_bo_subdata(brw->upload.bo,
+			   brw->upload.buffer_offset,
+			   brw->upload.buffer_len,
+			   brw->upload.buffer);
+      brw->upload.buffer_len = 0;
    }
 
-   if (size < sizeof(intel->upload.buffer))
+   if (size < sizeof(brw->upload.buffer))
    {
-      if (intel->upload.buffer_len == 0)
-	 intel->upload.buffer_offset = base;
+      if (brw->upload.buffer_len == 0)
+	 brw->upload.buffer_offset = base;
       else
-	 intel->upload.buffer_len += delta;
+	 brw->upload.buffer_len += delta;
 
-      memcpy(intel->upload.buffer + intel->upload.buffer_len, ptr, size);
-      intel->upload.buffer_len += size;
+      memcpy(brw->upload.buffer + brw->upload.buffer_len, ptr, size);
+      brw->upload.buffer_len += size;
    }
    else
    {
-      drm_intel_bo_subdata(intel->upload.bo, base, size, ptr);
+      drm_intel_bo_subdata(brw->upload.bo, base, size, ptr);
    }
 
-   intel->upload.offset = base + size;
+   brw->upload.offset = base + size;
 }
 
 void *intel_upload_map(struct brw_context *brw, GLuint size, GLuint align)
 {
-   struct intel_context *intel = &brw->intel;
    GLuint base, delta;
    char *ptr;
 
-   base = (intel->upload.offset + align - 1) / align * align;
-   if (intel->upload.bo == NULL || base + size > intel->upload.bo->size) {
+   base = (brw->upload.offset + align - 1) / align * align;
+   if (brw->upload.bo == NULL || base + size > brw->upload.bo->size) {
       wrap_buffers(brw, size);
       base = 0;
    }
 
-   delta = base - intel->upload.offset;
-   if (intel->upload.buffer_len &&
-       intel->upload.buffer_len + delta + size > sizeof(intel->upload.buffer))
+   delta = base - brw->upload.offset;
+   if (brw->upload.buffer_len &&
+       brw->upload.buffer_len + delta + size > sizeof(brw->upload.buffer))
    {
-      drm_intel_bo_subdata(intel->upload.bo,
-			   intel->upload.buffer_offset,
-			   intel->upload.buffer_len,
-			   intel->upload.buffer);
-      intel->upload.buffer_len = 0;
+      drm_intel_bo_subdata(brw->upload.bo,
+			   brw->upload.buffer_offset,
+			   brw->upload.buffer_len,
+			   brw->upload.buffer);
+      brw->upload.buffer_len = 0;
    }
 
-   if (size <= sizeof(intel->upload.buffer)) {
-      if (intel->upload.buffer_len == 0)
-	 intel->upload.buffer_offset = base;
+   if (size <= sizeof(brw->upload.buffer)) {
+      if (brw->upload.buffer_len == 0)
+	 brw->upload.buffer_offset = base;
       else
-	 intel->upload.buffer_len += delta;
+	 brw->upload.buffer_len += delta;
 
-      ptr = intel->upload.buffer + intel->upload.buffer_len;
-      intel->upload.buffer_len += size;
+      ptr = brw->upload.buffer + brw->upload.buffer_len;
+      brw->upload.buffer_len += size;
    } else
       ptr = malloc(size);
 
@@ -539,20 +535,19 @@ void intel_upload_unmap(struct brw_context *brw,
 			drm_intel_bo **return_bo,
 			GLuint *return_offset)
 {
-   struct intel_context *intel = &brw->intel;
    GLuint base;
 
-   base = (intel->upload.offset + align - 1) / align * align;
-   if (size > sizeof(intel->upload.buffer)) {
-      drm_intel_bo_subdata(intel->upload.bo, base, size, ptr);
+   base = (brw->upload.offset + align - 1) / align * align;
+   if (size > sizeof(brw->upload.buffer)) {
+      drm_intel_bo_subdata(brw->upload.bo, base, size, ptr);
       free((void*)ptr);
    }
 
-   drm_intel_bo_reference(intel->upload.bo);
-   *return_bo = intel->upload.bo;
+   drm_intel_bo_reference(brw->upload.bo);
+   *return_bo = brw->upload.bo;
    *return_offset = base;
 
-   intel->upload.offset = base + size;
+   brw->upload.offset = base + size;
 }
 
 drm_intel_bo *

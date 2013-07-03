@@ -129,14 +129,6 @@ struct intel_context
    bool has_llc;
    bool has_swizzling;
 
-   struct {
-      drm_intel_bo *bo;
-      GLuint offset;
-      uint32_t buffer_len;
-      uint32_t buffer_offset;
-      char buffer[4096];
-   } upload;
-
    int driFd;
 
    __DRIcontext *driContext;
