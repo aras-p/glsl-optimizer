@@ -508,7 +508,7 @@ intelInitContext(struct brw_context *brw,
    memset(&ctx->TextureFormatSupported,
 	  0, sizeof(ctx->TextureFormatSupported));
 
-   driParseConfigFiles(&intel->optionCache, &intelScreen->optionCache,
+   driParseConfigFiles(&brw->optionCache, &intelScreen->optionCache,
                        sPriv->myNum, "i965");
 
    /* Estimate the size of the mappable aperture into the GTT.  There's an
@@ -528,7 +528,7 @@ intelInitContext(struct brw_context *brw,
 
    intel->bufmgr = intelScreen->bufmgr;
 
-   bo_reuse_mode = driQueryOptioni(&intel->optionCache, "bo_reuse");
+   bo_reuse_mode = driQueryOptioni(&brw->optionCache, "bo_reuse");
    switch (bo_reuse_mode) {
    case DRI_CONF_BO_REUSE_DISABLED:
       break;
@@ -579,24 +579,24 @@ intelInitContext(struct brw_context *brw,
 
    intel_fbo_init(brw);
 
-   if (!driQueryOptionb(&intel->optionCache, "hiz")) {
+   if (!driQueryOptionb(&brw->optionCache, "hiz")) {
        intel->has_hiz = false;
        /* On gen6, you can only do separate stencil with HIZ. */
        if (intel->gen == 6)
 	  intel->has_separate_stencil = false;
    }
 
-   if (driQueryOptionb(&intel->optionCache, "always_flush_batch")) {
+   if (driQueryOptionb(&brw->optionCache, "always_flush_batch")) {
       fprintf(stderr, "flushing batchbuffer before/after each draw call\n");
       intel->always_flush_batch = 1;
    }
 
-   if (driQueryOptionb(&intel->optionCache, "always_flush_cache")) {
+   if (driQueryOptionb(&brw->optionCache, "always_flush_cache")) {
       fprintf(stderr, "flushing GPU caches before/after each draw call\n");
       intel->always_flush_cache = 1;
    }
 
-   if (driQueryOptionb(&intel->optionCache, "disable_throttling")) {
+   if (driQueryOptionb(&brw->optionCache, "disable_throttling")) {
       fprintf(stderr, "disabling flush throttling\n");
       intel->disable_throttling = 1;
    }
@@ -638,7 +638,7 @@ intelDestroyContext(__DRIcontext * driContextPriv)
       drm_intel_bo_unreference(intel->first_post_swapbuffers_batch);
       intel->first_post_swapbuffers_batch = NULL;
 
-      driDestroyOptionCache(&intel->optionCache);
+      driDestroyOptionCache(&brw->optionCache);
 
       /* free the Mesa context */
       _mesa_free_context_data(&intel->ctx);

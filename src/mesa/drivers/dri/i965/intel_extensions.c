@@ -39,6 +39,7 @@
 void
 intelInitExtensions(struct gl_context *ctx)
 {
+   struct brw_context *brw = brw_context(ctx);
    struct intel_context *intel = intel_context(ctx);
 
    assert(intel->gen >= 4);
@@ -135,7 +136,7 @@ intelInitExtensions(struct gl_context *ctx)
       ctx->Extensions.EXT_framebuffer_multisample = true;
       ctx->Extensions.EXT_transform_feedback = true;
       ctx->Extensions.EXT_framebuffer_multisample_blit_scaled = true;
-      ctx->Extensions.ARB_blend_func_extended = !driQueryOptionb(&intel->optionCache, "disable_blend_func_extended");
+      ctx->Extensions.ARB_blend_func_extended = !driQueryOptionb(&brw->optionCache, "disable_blend_func_extended");
       ctx->Extensions.ARB_draw_buffers_blend = true;
       ctx->Extensions.ARB_ES3_compatibility = true;
       ctx->Extensions.ARB_uniform_buffer_object = true;
@@ -162,7 +163,7 @@ intelInitExtensions(struct gl_context *ctx)
       ctx->Extensions.ARB_color_buffer_float = true;
 
    if (intel->ctx.Mesa_DXTn
-       || driQueryOptionb(&intel->optionCache, "force_s3tc_enable"))
+       || driQueryOptionb(&brw->optionCache, "force_s3tc_enable"))
       ctx->Extensions.EXT_texture_compression_s3tc = true;
 
    ctx->Extensions.ANGLE_texture_compression_dxt = true;

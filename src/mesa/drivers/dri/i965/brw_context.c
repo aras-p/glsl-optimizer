@@ -243,10 +243,10 @@ brw_initialize_context_constants(struct brw_context *brw)
    ctx->Const.UniformBufferOffsetAlignment = 16;
 
    ctx->Const.ForceGLSLExtensionsWarn =
-      driQueryOptionb(&intel->optionCache, "force_glsl_extensions_warn");
+      driQueryOptionb(&brw->optionCache, "force_glsl_extensions_warn");
 
    ctx->Const.DisableGLSLLineContinuations =
-      driQueryOptionb(&intel->optionCache, "disable_glsl_line_continuations");
+      driQueryOptionb(&brw->optionCache, "disable_glsl_line_continuations");
 
    /* We want the GLSL compiler to emit code that uses condition codes */
    for (int i = 0; i <= MESA_SHADER_FRAGMENT; i++) {
@@ -454,7 +454,7 @@ brwCreateContext(int api,
 
    brw_draw_init( brw );
 
-   brw->precompile = driQueryOptionb(&intel->optionCache, "shader_precompile");
+   brw->precompile = driQueryOptionb(&brw->optionCache, "shader_precompile");
 
    ctx->Const.ContextFlags = 0;
    if ((flags & __DRI_CTX_FLAG_FORWARD_COMPATIBLE) != 0)

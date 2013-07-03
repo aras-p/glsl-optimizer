@@ -762,6 +762,10 @@ struct brw_query_object {
 struct brw_context 
 {
    struct intel_context intel;  /**< base class, must be first field */
+
+   /** drirc option cache */
+   driOptionCache optionCache;
+
    GLuint primitive; /**< Hardware primitive, such as _3DPRIM_TRILIST. */
 
    bool emit_state_always;

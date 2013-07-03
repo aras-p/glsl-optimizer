@@ -232,11 +232,6 @@ struct intel_context
 
    __DRIcontext *driContext;
    struct intel_screen *intelScreen;
-
-   /**
-    * Configuration cache
-    */
-   driOptionCache optionCache;
 };
 
 /**
