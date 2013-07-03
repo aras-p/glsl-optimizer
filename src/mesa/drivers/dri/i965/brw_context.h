@@ -807,6 +807,7 @@ struct brw_context
    drm_intel_context *hw_ctx;
 
    struct intel_batchbuffer batch;
+   bool no_batch_wrap;
 
    /**
     * Set if rendering has occured to the drawable's front buffer.

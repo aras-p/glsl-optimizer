@@ -443,7 +443,7 @@ retry:
        * brw->state.dirty.brw.
        */
       if (brw->state.dirty.brw) {
-	 intel->no_batch_wrap = true;
+	 brw->no_batch_wrap = true;
 	 brw_upload_state(brw);
       }
 
@@ -452,7 +452,7 @@ retry:
       else
 	 brw_emit_prim(brw, &prim[i], brw->primitive);
 
-      intel->no_batch_wrap = false;
+      brw->no_batch_wrap = false;
 
       if (dri_bufmgr_check_aperture_space(&brw->batch.bo, 1)) {
 	 if (!fail_next) {

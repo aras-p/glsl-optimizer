@@ -129,8 +129,6 @@ struct intel_context
    bool has_llc;
    bool has_swizzling;
 
-   bool no_batch_wrap;
-
    /**
     * Set if we're either a debug context or the INTEL_DEBUG=perf environment
     * variable is set, this is the flag indicating to do expensive work that

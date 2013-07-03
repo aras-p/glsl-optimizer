@@ -235,7 +235,6 @@ int
 _intel_batchbuffer_flush(struct brw_context *brw,
 			 const char *file, int line)
 {
-   struct intel_context *intel = &brw->intel;
    int ret;
 
    if (brw->batch.used == 0)
@@ -265,7 +264,7 @@ _intel_batchbuffer_flush(struct brw_context *brw,
    intel_upload_finish(brw);
 
    /* Check that we didn't just wrap our batchbuffer at a bad time. */
-   assert(!intel->no_batch_wrap);
+   assert(!brw->no_batch_wrap);
 
    ret = do_flush_locked(brw);
 
