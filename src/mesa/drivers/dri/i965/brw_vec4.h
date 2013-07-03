@@ -391,8 +391,7 @@ public:
 			       vec4_instruction *pre_rhs_inst,
 			       vec4_instruction *last_rhs_inst);
 
-   bool try_copy_propagation(struct intel_context *intel,
-                             vec4_instruction *inst, int arg,
+   bool try_copy_propagation(vec4_instruction *inst, int arg,
                              src_reg *values[4]);
 
    /** Walks an exec_list of ir_instruction and sends it through this visitor. */

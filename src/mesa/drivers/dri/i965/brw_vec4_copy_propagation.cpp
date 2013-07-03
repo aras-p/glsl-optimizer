@@ -162,8 +162,7 @@ try_constant_propagation(vec4_instruction *inst, int arg, src_reg *values[4])
 }
 
 bool
-vec4_visitor::try_copy_propagation(struct intel_context *intel,
-                                   vec4_instruction *inst, int arg,
+vec4_visitor::try_copy_propagation(vec4_instruction *inst, int arg,
                                    src_reg *values[4])
 {
    /* For constant propagation, we only handle the same constant
@@ -306,7 +305,7 @@ vec4_visitor::opt_copy_propagation()
 	    continue;
 
 	 if (try_constant_propagation(inst, i, values) ||
-	     try_copy_propagation(intel, inst, i, values))
+	     try_copy_propagation(inst, i, values))
 	    progress = true;
       }
 
