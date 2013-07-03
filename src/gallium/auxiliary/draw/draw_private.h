@@ -55,6 +55,10 @@ struct gallivm_state;
 /** Sum of frustum planes and user-defined planes */
 #define DRAW_TOTAL_CLIP_PLANES (6 + PIPE_MAX_CLIP_PLANES)
 
+/**
+ * The largest possible index of a vertex that can be fetched.
+ */
+#define DRAW_MAX_FETCH_IDX 0xffffffff
 
 struct pipe_context;
 struct draw_vertex_shader;
@@ -468,14 +472,13 @@ void
 draw_stats_clipper_primitives(struct draw_context *draw,
                               const struct draw_prim_info *prim_info);
 
-
 /** 
  * Return index i from the index buffer.
  * If the index buffer would overflow we return the
- * index of the first element in the vb.
+ * maximum possible index.
  */
 #define DRAW_GET_IDX(_elts, _i)                   \
-   (((_i) >= draw->pt.user.eltMax) ? 0 : (_elts)[_i])
+   (((_i) >= draw->pt.user.eltMax) ? DRAW_MAX_FETCH_IDX : (_elts)[_i])
 
 /**
  * Return index of the given viewport clamping it
@@ -487,5 +490,20 @@ draw_clamp_viewport_idx(int idx)
    return ((PIPE_MAX_VIEWPORTS > idx || idx < 0) ? idx : 0);
 }
 
+/**
+ * Adds two unsigned integers and if the addition
+ * overflows then it returns the value from
+ * from the overflow_value variable.
+ */
+static INLINE unsigned
+draw_overflow_uadd(unsigned a, unsigned b,
+                   unsigned overflow_value)
+{
+   unsigned res = a + b;
+   if (res < a || res < b) {
+      res = overflow_value;
+   }
+   return res;
+}
 
 #endif /* DRAW_PRIVATE_H */

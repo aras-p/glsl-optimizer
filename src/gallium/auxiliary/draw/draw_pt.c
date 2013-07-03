@@ -345,7 +345,8 @@ draw_print_arrays(struct draw_context *draw, uint prim, int start, uint count)
 /** Helper code for below */
 #define PRIM_RESTART_LOOP(elements) \
    do { \
-      for (i = start; i < end; i++) { \
+      for (j = 0; j < count; j++) {               \
+         i = draw_overflow_uadd(start, j, MAX_LOOP_IDX);  \
          if (i < elt_max && elements[i] == info->restart_index) { \
             if (cur_count > 0) { \
                /* draw elts up to prev pos */ \
@@ -377,9 +378,11 @@ draw_pt_arrays_restart(struct draw_context *draw,
    const unsigned prim = info->mode;
    const unsigned start = info->start;
    const unsigned count = info->count;
-   const unsigned end = start + count;
    const unsigned elt_max = draw->pt.user.eltMax;
-   unsigned i, cur_start, cur_count;
+   unsigned i, j, cur_start, cur_count;
+   /* The largest index within a loop using the i variable as the index.
+    * Used for overflow detection */
+   const unsigned MAX_LOOP_IDX = 0xffffffff;
 
    assert(info->primitive_restart);
 
