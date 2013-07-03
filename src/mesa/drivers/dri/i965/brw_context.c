@@ -107,82 +107,21 @@ static void brwInitDriverFunctions(struct intel_screen *screen,
       functions->GetSamplePosition = gen6_get_sample_position;
 }
 
-bool
-brwCreateContext(int api,
-	         const struct gl_config *mesaVis,
-		 __DRIcontext *driContextPriv,
-                 unsigned major_version,
-                 unsigned minor_version,
-                 uint32_t flags,
-                 unsigned *error,
-	         void *sharedContextPrivate)
+static void
+brw_initialize_context_constants(struct brw_context *brw)
 {
-   __DRIscreen *sPriv = driContextPriv->driScreenPriv;
-   struct intel_screen *screen = sPriv->driverPrivate;
-   struct dd_function_table functions;
-   unsigned i;
-
-   struct brw_context *brw = rzalloc(NULL, struct brw_context);
-   if (!brw) {
-      printf("%s: failed to alloc context\n", __FUNCTION__);
-      *error = __DRI_CTX_ERROR_NO_MEMORY;
-      return false;
-   }
-
-   /* brwInitVtbl needs to know the chipset generation so that it can set the
-    * right pointers.
-    */
-   brw->intel.gen = screen->gen;
-
-   brwInitVtbl( brw );
-
-   brwInitDriverFunctions(screen, &functions);
-
    struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &intel->ctx;
 
-   if (!intelInitContext( intel, api, major_version, minor_version,
-                          mesaVis, driContextPriv,
-			  sharedContextPrivate, &functions,
-			  error)) {
-      ralloc_free(brw);
-      return false;
-   }
-
-   if (intel->gen >= 6) {
-      /* Create a new hardware context.  Using a hardware context means that
-       * our GPU state will be saved/restored on context switch, allowing us
-       * to assume that the GPU is in the same state we left it in.
-       *
-       * This is required for transform feedback buffer offsets, query objects,
-       * and also allows us to reduce how much state we have to emit.
-       */
-      intel->hw_ctx = drm_intel_gem_context_create(intel->bufmgr);
-
-      if (!intel->hw_ctx) {
-         fprintf(stderr, "Gen6+ requires Kernel 3.6 or later.\n");
-         ralloc_free(brw);
-         return false;
-      }
-   }
-
-   brw_init_surface_formats(brw);
-
-   /* Initialize swrast, tnl driver tables: */
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-   if (tnl)
-      tnl->Driver.RunPipeline = _tnl_run_pipeline;
-
-   ctx->DriverFlags.NewTransformFeedback = BRW_NEW_TRANSFORM_FEEDBACK;
-   ctx->DriverFlags.NewRasterizerDiscard = BRW_NEW_RASTERIZER_DISCARD;
-   ctx->DriverFlags.NewUniformBuffer = BRW_NEW_UNIFORM_BUFFER;
+   ctx->Const.QueryCounterBits.Timestamp = 36;
 
    ctx->Const.MaxDualSourceDrawBuffers = 1;
    ctx->Const.MaxDrawBuffers = BRW_MAX_DRAW_BUFFERS;
    ctx->Const.FragmentProgram.MaxTextureImageUnits = BRW_MAX_TEX_UNIT;
    ctx->Const.MaxTextureCoordUnits = 8; /* Mesa limit */
-   ctx->Const.MaxTextureUnits = MIN2(ctx->Const.MaxTextureCoordUnits,
-                                     ctx->Const.FragmentProgram.MaxTextureImageUnits);
+   ctx->Const.MaxTextureUnits =
+      MIN2(ctx->Const.MaxTextureCoordUnits,
+           ctx->Const.FragmentProgram.MaxTextureImageUnits);
    ctx->Const.VertexProgram.MaxTextureImageUnits = BRW_MAX_TEX_UNIT;
    ctx->Const.MaxCombinedTextureImageUnits =
       ctx->Const.VertexProgram.MaxTextureImageUnits +
@@ -190,7 +129,7 @@ brwCreateContext(int api,
 
    ctx->Const.MaxTextureLevels = 14; /* 8192 */
    if (ctx->Const.MaxTextureLevels > MAX_TEXTURE_LEVELS)
-	   ctx->Const.MaxTextureLevels = MAX_TEXTURE_LEVELS;
+      ctx->Const.MaxTextureLevels = MAX_TEXTURE_LEVELS;
    ctx->Const.Max3DTextureLevels = 9;
    ctx->Const.MaxCubeTextureLevels = 12;
 
@@ -199,7 +138,7 @@ brwCreateContext(int api,
    else
       ctx->Const.MaxArrayTextureLayers = 512;
 
-   ctx->Const.MaxTextureRectSize = (1<<12);
+   ctx->Const.MaxTextureRectSize = 1 << 12;
    
    ctx->Const.MaxTextureMaxAnisotropy = 16.0;
 
@@ -228,19 +167,71 @@ brwCreateContext(int api,
       ctx->Const.MaxColorTextureSamples = 4;
       ctx->Const.MaxDepthTextureSamples = 4;
       ctx->Const.MaxIntegerSamples = 4;
-   }
-   else if (intel->gen >= 7) {
+   } else if (intel->gen >= 7) {
       ctx->Const.MaxSamples = 8;
       ctx->Const.MaxColorTextureSamples = 8;
       ctx->Const.MaxDepthTextureSamples = 8;
       ctx->Const.MaxIntegerSamples = 8;
    }
 
-   /* if conformance mode is set, swrast can handle any size AA point */
    ctx->Const.MaxPointSizeAA = 255.0;
 
+   ctx->Const.VertexProgram.MaxNativeInstructions = 16 * 1024;
+   ctx->Const.VertexProgram.MaxAluInstructions = 0;
+   ctx->Const.VertexProgram.MaxTexInstructions = 0;
+   ctx->Const.VertexProgram.MaxTexIndirections = 0;
+   ctx->Const.VertexProgram.MaxNativeAluInstructions = 0;
+   ctx->Const.VertexProgram.MaxNativeTexInstructions = 0;
+   ctx->Const.VertexProgram.MaxNativeTexIndirections = 0;
+   ctx->Const.VertexProgram.MaxNativeAttribs = 16;
+   ctx->Const.VertexProgram.MaxNativeTemps = 256;
+   ctx->Const.VertexProgram.MaxNativeAddressRegs = 1;
+   ctx->Const.VertexProgram.MaxNativeParameters = 1024;
+   ctx->Const.VertexProgram.MaxEnvParams =
+      MIN2(ctx->Const.VertexProgram.MaxNativeParameters,
+	   ctx->Const.VertexProgram.MaxEnvParams);
+
+   ctx->Const.FragmentProgram.MaxNativeInstructions = 1024;
+   ctx->Const.FragmentProgram.MaxNativeAluInstructions = 1024;
+   ctx->Const.FragmentProgram.MaxNativeTexInstructions = 1024;
+   ctx->Const.FragmentProgram.MaxNativeTexIndirections = 1024;
+   ctx->Const.FragmentProgram.MaxNativeAttribs = 12;
+   ctx->Const.FragmentProgram.MaxNativeTemps = 256;
+   ctx->Const.FragmentProgram.MaxNativeAddressRegs = 0;
+   ctx->Const.FragmentProgram.MaxNativeParameters = 1024;
+   ctx->Const.FragmentProgram.MaxEnvParams =
+      MIN2(ctx->Const.FragmentProgram.MaxNativeParameters,
+	   ctx->Const.FragmentProgram.MaxEnvParams);
+
+   /* Fragment shaders use real, 32-bit twos-complement integers for all
+    * integer types.
+    */
+   ctx->Const.FragmentProgram.LowInt.RangeMin = 31;
+   ctx->Const.FragmentProgram.LowInt.RangeMax = 30;
+   ctx->Const.FragmentProgram.LowInt.Precision = 0;
+   ctx->Const.FragmentProgram.HighInt = ctx->Const.FragmentProgram.LowInt;
+   ctx->Const.FragmentProgram.MediumInt = ctx->Const.FragmentProgram.LowInt;
+
+   /* Gen6 converts quads to polygon in beginning of 3D pipeline,
+    * but we're not sure how it's actually done for vertex order,
+    * that affect provoking vertex decision. Always use last vertex
+    * convention for quad primitive which works as expected for now.
+    */
+   if (intel->gen >= 6)
+      ctx->Const.QuadsFollowProvokingVertexConvention = false;
+
+   ctx->Const.NativeIntegers = true;
+   ctx->Const.UniformBooleanTrue = 1;
+   ctx->Const.UniformBufferOffsetAlignment = 16;
+
+   ctx->Const.ForceGLSLExtensionsWarn =
+      driQueryOptionb(&intel->optionCache, "force_glsl_extensions_warn");
+
+   ctx->Const.DisableGLSLLineContinuations =
+      driQueryOptionb(&intel->optionCache, "disable_glsl_line_continuations");
+
    /* We want the GLSL compiler to emit code that uses condition codes */
-   for (i = 0; i <= MESA_SHADER_FRAGMENT; i++) {
+   for (int i = 0; i <= MESA_SHADER_FRAGMENT; i++) {
       ctx->ShaderCompilerOptions[i].MaxIfDepth = intel->gen < 6 ? 16 : UINT_MAX;
       ctx->ShaderCompilerOptions[i].EmitCondCodes = true;
       ctx->ShaderCompilerOptions[i].EmitNoNoise = true;
@@ -256,51 +247,78 @@ brwCreateContext(int api,
    }
 
    ctx->ShaderCompilerOptions[MESA_SHADER_VERTEX].PreferDP4 = true;
+}
 
-   ctx->Const.VertexProgram.MaxNativeInstructions = (16 * 1024);
-   ctx->Const.VertexProgram.MaxAluInstructions = 0;
-   ctx->Const.VertexProgram.MaxTexInstructions = 0;
-   ctx->Const.VertexProgram.MaxTexIndirections = 0;
-   ctx->Const.VertexProgram.MaxNativeAluInstructions = 0;
-   ctx->Const.VertexProgram.MaxNativeTexInstructions = 0;
-   ctx->Const.VertexProgram.MaxNativeTexIndirections = 0;
-   ctx->Const.VertexProgram.MaxNativeAttribs = 16;
-   ctx->Const.VertexProgram.MaxNativeTemps = 256;
-   ctx->Const.VertexProgram.MaxNativeAddressRegs = 1;
-   ctx->Const.VertexProgram.MaxNativeParameters = 1024;
-   ctx->Const.VertexProgram.MaxEnvParams =
-      MIN2(ctx->Const.VertexProgram.MaxNativeParameters,
-	   ctx->Const.VertexProgram.MaxEnvParams);
+bool
+brwCreateContext(int api,
+	         const struct gl_config *mesaVis,
+		 __DRIcontext *driContextPriv,
+                 unsigned major_version,
+                 unsigned minor_version,
+                 uint32_t flags,
+                 unsigned *error,
+	         void *sharedContextPrivate)
+{
+   __DRIscreen *sPriv = driContextPriv->driScreenPriv;
+   struct intel_screen *screen = sPriv->driverPrivate;
+   struct dd_function_table functions;
 
-   ctx->Const.FragmentProgram.MaxNativeInstructions = (1 * 1024);
-   ctx->Const.FragmentProgram.MaxNativeAluInstructions = (1 * 1024);
-   ctx->Const.FragmentProgram.MaxNativeTexInstructions = (1 * 1024);
-   ctx->Const.FragmentProgram.MaxNativeTexIndirections = (1 * 1024);
-   ctx->Const.FragmentProgram.MaxNativeAttribs = 12;
-   ctx->Const.FragmentProgram.MaxNativeTemps = 256;
-   ctx->Const.FragmentProgram.MaxNativeAddressRegs = 0;
-   ctx->Const.FragmentProgram.MaxNativeParameters = 1024;
-   ctx->Const.FragmentProgram.MaxEnvParams =
-      MIN2(ctx->Const.FragmentProgram.MaxNativeParameters,
-	   ctx->Const.FragmentProgram.MaxEnvParams);
+   struct brw_context *brw = rzalloc(NULL, struct brw_context);
+   if (!brw) {
+      printf("%s: failed to alloc context\n", __FUNCTION__);
+      *error = __DRI_CTX_ERROR_NO_MEMORY;
+      return false;
+   }
 
-   /* Fragment shaders use real, 32-bit twos-complement integers for all
-    * integer types.
+   /* brwInitVtbl needs to know the chipset generation so that it can set the
+    * right pointers.
     */
-   ctx->Const.FragmentProgram.LowInt.RangeMin = 31;
-   ctx->Const.FragmentProgram.LowInt.RangeMax = 30;
-   ctx->Const.FragmentProgram.LowInt.Precision = 0;
-   ctx->Const.FragmentProgram.HighInt = ctx->Const.FragmentProgram.MediumInt
-      = ctx->Const.FragmentProgram.LowInt;
+   brw->intel.gen = screen->gen;
 
-   /* Gen6 converts quads to polygon in beginning of 3D pipeline,
-      but we're not sure how it's actually done for vertex order,
-      that affect provoking vertex decision. Always use last vertex
-      convention for quad primitive which works as expected for now. */
-   if (intel->gen >= 6)
-       ctx->Const.QuadsFollowProvokingVertexConvention = false;
+   brwInitVtbl( brw );
 
-   ctx->Const.QueryCounterBits.Timestamp = 36;
+   brwInitDriverFunctions(screen, &functions);
+
+   struct intel_context *intel = &brw->intel;
+   struct gl_context *ctx = &intel->ctx;
+
+   if (!intelInitContext( intel, api, major_version, minor_version,
+                          mesaVis, driContextPriv,
+			  sharedContextPrivate, &functions,
+			  error)) {
+      ralloc_free(brw);
+      return false;
+   }
+
+   brw_initialize_context_constants(brw);
+
+   if (intel->gen >= 6) {
+      /* Create a new hardware context.  Using a hardware context means that
+       * our GPU state will be saved/restored on context switch, allowing us
+       * to assume that the GPU is in the same state we left it in.
+       *
+       * This is required for transform feedback buffer offsets, query objects,
+       * and also allows us to reduce how much state we have to emit.
+       */
+      intel->hw_ctx = drm_intel_gem_context_create(intel->bufmgr);
+
+      if (!intel->hw_ctx) {
+         fprintf(stderr, "Gen6+ requires Kernel 3.6 or later.\n");
+         ralloc_free(brw);
+         return false;
+      }
+   }
+
+   brw_init_surface_formats(brw);
+
+   /* Initialize swrast, tnl driver tables: */
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
+   if (tnl)
+      tnl->Driver.RunPipeline = _tnl_run_pipeline;
+
+   ctx->DriverFlags.NewTransformFeedback = BRW_NEW_TRANSFORM_FEEDBACK;
+   ctx->DriverFlags.NewRasterizerDiscard = BRW_NEW_RASTERIZER_DISCARD;
+   ctx->DriverFlags.NewUniformBuffer = BRW_NEW_UNIFORM_BUFFER;
 
    if (intel->is_g4x || intel->gen >= 5) {
       brw->CMD_VF_STATISTICS = GM45_3DSTATE_VF_STATISTICS;
@@ -416,14 +434,6 @@ brwCreateContext(int api,
    brw_draw_init( brw );
 
    brw->precompile = driQueryOptionb(&intel->optionCache, "shader_precompile");
-
-   ctx->Const.NativeIntegers = true;
-   ctx->Const.UniformBooleanTrue = 1;
-   ctx->Const.UniformBufferOffsetAlignment = 16;
-
-   ctx->Const.ForceGLSLExtensionsWarn = driQueryOptionb(&intel->optionCache, "force_glsl_extensions_warn");
-
-   ctx->Const.DisableGLSLLineContinuations = driQueryOptionb(&intel->optionCache, "disable_glsl_line_continuations");
 
    ctx->Const.ContextFlags = 0;
    if ((flags & __DRI_CTX_FLAG_FORWARD_COMPATIBLE) != 0)
