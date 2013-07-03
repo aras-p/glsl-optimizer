@@ -196,7 +196,7 @@ static void brw_emit_prim(struct brw_context *brw,
     * the besides the draw code.
     */
    if (intel->always_flush_cache) {
-      intel_batchbuffer_emit_mi_flush(intel);
+      intel_batchbuffer_emit_mi_flush(brw);
    }
 
    BEGIN_BATCH(6);
@@ -213,7 +213,7 @@ static void brw_emit_prim(struct brw_context *brw,
    intel->batch.need_workaround_flush = true;
 
    if (intel->always_flush_cache) {
-      intel_batchbuffer_emit_mi_flush(intel);
+      intel_batchbuffer_emit_mi_flush(brw);
    }
 }
 
@@ -253,7 +253,7 @@ static void gen7_emit_prim(struct brw_context *brw,
     * the besides the draw code.
     */
    if (intel->always_flush_cache) {
-      intel_batchbuffer_emit_mi_flush(intel);
+      intel_batchbuffer_emit_mi_flush(brw);
    }
 
    BEGIN_BATCH(7);
@@ -267,7 +267,7 @@ static void gen7_emit_prim(struct brw_context *brw,
    ADVANCE_BATCH();
 
    if (intel->always_flush_cache) {
-      intel_batchbuffer_emit_mi_flush(intel);
+      intel_batchbuffer_emit_mi_flush(brw);
    }
 }
 
@@ -302,14 +302,13 @@ static void
 brw_predraw_resolve_buffers(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->intel.ctx;
-   struct intel_context *intel = &brw->intel;
    struct intel_renderbuffer *depth_irb;
    struct intel_texture_object *tex_obj;
 
    /* Resolve the depth buffer's HiZ buffer. */
    depth_irb = intel_get_renderbuffer(ctx->DrawBuffer, BUFFER_DEPTH);
    if (depth_irb)
-      intel_renderbuffer_resolve_hiz(intel, depth_irb);
+      intel_renderbuffer_resolve_hiz(brw, depth_irb);
 
    /* Resolve depth buffer of each enabled depth texture, and color buffer of
     * each fast-clear-enabled color texture.
@@ -320,8 +319,8 @@ brw_predraw_resolve_buffers(struct brw_context *brw)
       tex_obj = intel_texture_object(ctx->Texture.Unit[i]._Current);
       if (!tex_obj || !tex_obj->mt)
 	 continue;
-      intel_miptree_all_slices_resolve_depth(intel, tex_obj->mt);
-      intel_miptree_resolve_color(intel, tex_obj->mt);
+      intel_miptree_all_slices_resolve_depth(brw, tex_obj->mt);
+      intel_miptree_resolve_color(brw, tex_obj->mt);
    }
 }
 
@@ -384,7 +383,7 @@ static bool brw_try_draw_prims( struct gl_context *ctx,
     */
    brw_validate_textures( brw );
 
-   intel_prepare_render(intel);
+   intel_prepare_render(brw);
 
    /* This workaround has to happen outside of brw_upload_state() because it
     * may flush the batchbuffer for a blit, affecting the state flags.
@@ -423,8 +422,8 @@ static bool brw_try_draw_prims( struct gl_context *ctx,
        * we've got validated state that needs to be in the same batch as the
        * primitives.
        */
-      intel_batchbuffer_require_space(intel, estimated_max_prim_size, false);
-      intel_batchbuffer_save_state(intel);
+      intel_batchbuffer_require_space(brw, estimated_max_prim_size, false);
+      intel_batchbuffer_save_state(brw);
 
       if (brw->num_instances != prim->num_instances) {
          brw->num_instances = prim->num_instances;
@@ -459,12 +458,12 @@ retry:
 
       if (dri_bufmgr_check_aperture_space(&intel->batch.bo, 1)) {
 	 if (!fail_next) {
-	    intel_batchbuffer_reset_to_saved(intel);
-	    intel_batchbuffer_flush(intel);
+	    intel_batchbuffer_reset_to_saved(brw);
+	    intel_batchbuffer_flush(brw);
 	    fail_next = true;
 	    goto retry;
 	 } else {
-	    if (intel_batchbuffer_flush(intel) == -ENOSPC) {
+	    if (intel_batchbuffer_flush(brw) == -ENOSPC) {
 	       static bool warned = false;
 
 	       if (!warned) {
@@ -480,7 +479,7 @@ retry:
    }
 
    if (intel->always_flush_batch)
-      intel_batchbuffer_flush(intel);
+      intel_batchbuffer_flush(brw);
 
    brw_state_cache_check_size(brw);
    brw_postdraw_set_buffers_need_resolve(brw);

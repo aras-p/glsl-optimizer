@@ -115,9 +115,9 @@ struct intel_context
 
    struct
    {
-      void (*destroy) (struct intel_context * intel);
-      void (*finish_batch) (struct intel_context * intel);
-      void (*new_batch) (struct intel_context * intel);
+      void (*destroy) (struct brw_context * brw);
+      void (*finish_batch) (struct brw_context * brw);
+      void (*new_batch) (struct brw_context * brw);
 
       void (*update_texture_surface)(struct gl_context *ctx,
                                      unsigned unit,
@@ -372,7 +372,7 @@ extern int INTEL_DEBUG;
  * intel_context.c:
  */
 
-extern bool intelInitContext(struct intel_context *intel,
+extern bool intelInitContext(struct brw_context *brw,
                              int api,
                              unsigned major_version,
                              unsigned minor_version,
@@ -403,10 +403,10 @@ extern int intel_translate_logic_op(GLenum opcode);
 
 void intel_update_renderbuffers(__DRIcontext *context,
 				__DRIdrawable *drawable);
-void intel_prepare_render(struct intel_context *intel);
+void intel_prepare_render(struct brw_context *brw);
 
 void
-intel_resolve_for_dri2_flush(struct intel_context *intel,
+intel_resolve_for_dri2_flush(struct brw_context *brw,
                              __DRIdrawable *drawable);
 
 extern void

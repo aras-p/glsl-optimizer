@@ -317,7 +317,7 @@ do_vs_prog(struct brw_context *brw,
       prog_data.base.total_scratch
          = brw_get_scratch_size(c.base.last_scratch*REG_SIZE);
 
-      brw_get_scratch_bo(intel, &brw->vs.scratch_bo,
+      brw_get_scratch_bo(brw, &brw->vs.scratch_bo,
 			 prog_data.base.total_scratch * brw->max_vs_threads);
    }
 
@@ -332,8 +332,9 @@ do_vs_prog(struct brw_context *brw,
 }
 
 static bool
-key_debug(struct intel_context *intel, const char *name, int a, int b)
+key_debug(struct brw_context *brw, const char *name, int a, int b)
 {
+   struct intel_context *intel = &brw->intel;
    if (a != b) {
       perf_debug("  %s %d->%d\n", name, a, b);
       return true;
@@ -373,31 +374,31 @@ brw_vs_debug_recompile(struct brw_context *brw,
    }
 
    for (unsigned int i = 0; i < VERT_ATTRIB_MAX; i++) {
-      found |= key_debug(intel, "Vertex attrib w/a flags",
+      found |= key_debug(brw, "Vertex attrib w/a flags",
                          old_key->gl_attrib_wa_flags[i],
                          key->gl_attrib_wa_flags[i]);
    }
 
-   found |= key_debug(intel, "user clip flags",
+   found |= key_debug(brw, "user clip flags",
                       old_key->base.userclip_active, key->base.userclip_active);
 
-   found |= key_debug(intel, "user clipping planes as push constants",
+   found |= key_debug(brw, "user clipping planes as push constants",
                       old_key->base.nr_userclip_plane_consts,
                       key->base.nr_userclip_plane_consts);
 
-   found |= key_debug(intel, "clip distance enable",
+   found |= key_debug(brw, "clip distance enable",
                       old_key->base.uses_clip_distance, key->base.uses_clip_distance);
-   found |= key_debug(intel, "clip plane enable bitfield",
+   found |= key_debug(brw, "clip plane enable bitfield",
                       old_key->base.userclip_planes_enabled_gen_4_5,
                       key->base.userclip_planes_enabled_gen_4_5);
-   found |= key_debug(intel, "copy edgeflag",
+   found |= key_debug(brw, "copy edgeflag",
                       old_key->copy_edgeflag, key->copy_edgeflag);
-   found |= key_debug(intel, "PointCoord replace",
+   found |= key_debug(brw, "PointCoord replace",
                       old_key->point_coord_replace, key->point_coord_replace);
-   found |= key_debug(intel, "vertex color clamping",
+   found |= key_debug(brw, "vertex color clamping",
                       old_key->base.clamp_vertex_color, key->base.clamp_vertex_color);
 
-   found |= brw_debug_recompile_sampler_key(intel, &old_key->base.tex,
+   found |= brw_debug_recompile_sampler_key(brw, &old_key->base.tex,
                                             &key->base.tex);
 
    if (!found) {

@@ -79,9 +79,9 @@ make_annotation(drm_intel_aub_annotation *annotation, uint32_t type,
  * is annotated according to the type of each data structure.
  */
 void
-brw_annotate_aub(struct intel_context *intel)
+brw_annotate_aub(struct brw_context *brw)
 {
-   struct brw_context *brw = brw_context(&intel->ctx);
+   struct intel_context *intel = &brw->intel;
 
    unsigned annotation_count = 2 * brw->state_batch_count + 1;
    drm_intel_aub_annotation annotations[annotation_count];
@@ -135,7 +135,7 @@ brw_state_batch(struct brw_context *brw,
     */
    if (batch->state_batch_offset < size ||
        offset < 4*batch->used + batch->reserved_space) {
-      intel_batchbuffer_flush(&brw->intel);
+      intel_batchbuffer_flush(brw);
       offset = ROUND_DOWN_TO(batch->state_batch_offset - size, alignment);
    }
 

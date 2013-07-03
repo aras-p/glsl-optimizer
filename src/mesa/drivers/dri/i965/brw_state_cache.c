@@ -351,7 +351,6 @@ brw_init_caches(struct brw_context *brw)
 static void
 brw_clear_cache(struct brw_context *brw, struct brw_cache *cache)
 {
-   struct intel_context *intel = &brw->intel;
    struct brw_cache_item *c, *next;
    GLuint i;
 
@@ -383,7 +382,7 @@ brw_clear_cache(struct brw_context *brw, struct brw_cache *cache)
    brw->state.dirty.mesa |= ~0;
    brw->state.dirty.brw |= ~0;
    brw->state.dirty.cache |= ~0;
-   intel_batchbuffer_flush(intel);
+   intel_batchbuffer_flush(brw);
 }
 
 void

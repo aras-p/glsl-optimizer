@@ -30,7 +30,7 @@
  * miptree of that size.
  */
 struct intel_mipmap_tree *
-intel_miptree_create_for_teximage(struct intel_context *intel,
+intel_miptree_create_for_teximage(struct brw_context *brw,
 				  struct intel_texture_object *intelObj,
 				  struct intel_texture_image *intelImage,
 				  bool expect_accelerated_upload)
@@ -91,7 +91,7 @@ intel_miptree_create_for_teximage(struct intel_context *intel,
       }
    }
 
-   return intel_miptree_create(intel,
+   return intel_miptree_create(brw,
 			       intelObj->base.Target,
 			       intelImage->base.Base.TexFormat,
 			       firstLevel,
@@ -114,6 +114,7 @@ try_pbo_upload(struct gl_context *ctx,
 {
    struct intel_texture_image *intelImage = intel_texture_image(image);
    struct intel_context *intel = intel_context(ctx);
+   struct brw_context *brw = brw_context(ctx);
    struct intel_buffer_object *pbo = intel_buffer_object(unpack->BufferObj);
    GLuint src_offset;
    drm_intel_bo *src_buffer;
@@ -150,7 +151,7 @@ try_pbo_upload(struct gl_context *ctx,
       return false;
    }
 
-   src_buffer = intel_bufferobj_source(intel, pbo, 64, &src_offset);
+   src_buffer = intel_bufferobj_source(brw, pbo, 64, &src_offset);
    /* note: potential 64-bit ptr to 32-bit int cast */
    src_offset += (GLuint) (unsigned long) pixels;
 
@@ -158,7 +159,7 @@ try_pbo_upload(struct gl_context *ctx,
       _mesa_image_row_stride(unpack, image->Width, format, type);
 
    struct intel_mipmap_tree *pbo_mt =
-      intel_miptree_create_for_bo(intel,
+      intel_miptree_create_for_bo(brw,
                                   src_buffer,
                                   intelImage->mt->format,
                                   src_offset,
@@ -167,7 +168,7 @@ try_pbo_upload(struct gl_context *ctx,
    if (!pbo_mt)
       return false;
 
-   if (!intel_miptree_blit(intel,
+   if (!intel_miptree_blit(brw,
                            pbo_mt, 0, 0,
                            0, 0, false,
                            intelImage->mt, image->Level, image->Face,
@@ -253,7 +254,7 @@ intel_set_texture_image_region(struct gl_context *ctx,
 
    ctx->Driver.FreeTextureImageBuffer(ctx, image);
 
-   intel_image->mt = intel_miptree_create_layout(intel, target, image->TexFormat,
+   intel_image->mt = intel_miptree_create_layout(brw, target, image->TexFormat,
                                                  0, 0,
                                                  width, height, 1,
                                                  true, 0 /* num_samples */);
@@ -294,7 +295,8 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
 		   __DRIdrawable *dPriv)
 {
    struct gl_framebuffer *fb = dPriv->driverPrivate;
-   struct intel_context *intel = pDRICtx->driverPrivate;
+   struct brw_context *brw = pDRICtx->driverPrivate;
+   struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &intel->ctx;
    struct intel_texture_object *intelObj;
    struct intel_renderbuffer *rb;
@@ -335,7 +337,7 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
 
    _mesa_lock_texture(&intel->ctx, texObj);
    texImage = _mesa_get_tex_image(ctx, texObj, target, level);
-   intel_miptree_make_shareable(intel, rb->mt);
+   intel_miptree_make_shareable(brw, rb->mt);
    intel_set_texture_image_region(ctx, texImage, rb->mt->region, target,
                                   internalFormat, texFormat, 0,
                                   rb->mt->region->width,

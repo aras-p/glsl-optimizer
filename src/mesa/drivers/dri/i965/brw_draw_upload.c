@@ -223,9 +223,10 @@ static GLuint byte_types_scale[5] = {
  * Format will be GL_RGBA or possibly GL_BGRA for GLubyte[4] color arrays.
  */
 static unsigned
-get_surface_type(struct intel_context *intel,
+get_surface_type(struct brw_context *brw,
                  const struct gl_client_array *glarray)
 {
+   struct intel_context *intel = &brw->intel;
    int size = glarray->Size;
 
    if (unlikely(INTEL_DEBUG & DEBUG_VERTS))
@@ -366,7 +367,7 @@ copy_array_to_vbo_array(struct brw_context *brw,
     * to replicate it out.
     */
    if (src_stride == 0) {
-      intel_upload_data(&brw->intel, element->glarray->Ptr,
+      intel_upload_data(brw, element->glarray->Ptr,
                         element->glarray->_ElementSize,
                         element->glarray->_ElementSize,
 			&buffer->bo, &buffer->offset);
@@ -380,10 +381,10 @@ copy_array_to_vbo_array(struct brw_context *brw,
    GLuint size = count * dst_stride;
 
    if (dst_stride == src_stride) {
-      intel_upload_data(&brw->intel, src, size, dst_stride,
+      intel_upload_data(brw, src, size, dst_stride,
 			&buffer->bo, &buffer->offset);
    } else {
-      char * const map = intel_upload_map(&brw->intel, size, dst_stride);
+      char * const map = intel_upload_map(brw, size, dst_stride);
       char *dst = map;
 
       while (count--) {
@@ -391,7 +392,7 @@ copy_array_to_vbo_array(struct brw_context *brw,
 	 src += src_stride;
 	 dst += dst_stride;
       }
-      intel_upload_unmap(&brw->intel, map, size, dst_stride,
+      intel_upload_unmap(brw, map, size, dst_stride,
 			 &buffer->bo, &buffer->offset);
    }
    buffer->stride = dst_stride;
@@ -472,7 +473,7 @@ static void brw_prepare_vertices(struct brw_context *brw)
 	    struct brw_vertex_buffer *buffer = &brw->vb.buffers[j];
 
 	    /* Named buffer object: Just reference its contents directly. */
-            buffer->bo = intel_bufferobj_source(intel,
+            buffer->bo = intel_bufferobj_source(brw,
                                                 intel_buffer, 1,
 						&buffer->offset);
 	    drm_intel_bo_reference(buffer->bo);
@@ -687,7 +688,7 @@ static void brw_emit_vertices(struct brw_context *brw)
    OUT_BATCH((_3DSTATE_VERTEX_ELEMENTS << 16) | (2 * nr_elements - 1));
    for (i = 0; i < brw->vb.nr_enabled; i++) {
       struct brw_vertex_element *input = brw->vb.enabled[i];
-      uint32_t format = get_surface_type(intel, input->glarray);
+      uint32_t format = get_surface_type(brw, input->glarray);
       uint32_t comp0 = BRW_VE1_COMPONENT_STORE_SRC;
       uint32_t comp1 = BRW_VE1_COMPONENT_STORE_SRC;
       uint32_t comp2 = BRW_VE1_COMPONENT_STORE_SRC;
@@ -748,7 +749,7 @@ static void brw_emit_vertices(struct brw_context *brw)
    }
 
    if (intel->gen >= 6 && gen6_edgeflag_input) {
-      uint32_t format = get_surface_type(intel, gen6_edgeflag_input->glarray);
+      uint32_t format = get_surface_type(brw, gen6_edgeflag_input->glarray);
 
       OUT_BATCH((gen6_edgeflag_input->buffer << GEN6_VE0_INDEX_SHIFT) |
                 GEN6_VE0_VALID |
@@ -820,7 +821,7 @@ static void brw_upload_indices(struct brw_context *brw)
 
       /* Get new bufferobj, offset:
        */
-      intel_upload_data(&brw->intel, index_buffer->ptr, ib_size, ib_type_size,
+      intel_upload_data(brw, index_buffer->ptr, ib_size, ib_type_size,
 			&bo, &offset);
       brw->ib.start_vertex_offset = offset / ib_type_size;
    } else {
@@ -839,8 +840,7 @@ static void brw_upload_indices(struct brw_context *brw)
                                                     GL_MAP_READ_BIT,
                                                     bufferobj);
 
-          intel_upload_data(&brw->intel, map, ib_size, ib_type_size,
-                            &bo, &offset);
+          intel_upload_data(brw, map, ib_size, ib_type_size, &bo, &offset);
           brw->ib.start_vertex_offset = offset / ib_type_size;
 
           ctx->Driver.UnmapBuffer(ctx, bufferobj);
@@ -851,7 +851,7 @@ static void brw_upload_indices(struct brw_context *brw)
 	   */
 	  brw->ib.start_vertex_offset = offset / ib_type_size;
 
-	  bo = intel_bufferobj_source(intel,
+	  bo = intel_bufferobj_source(brw,
 				      intel_buffer_object(bufferobj),
 				      ib_type_size,
 				      &offset);

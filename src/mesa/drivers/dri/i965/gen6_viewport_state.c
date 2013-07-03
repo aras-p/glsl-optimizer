@@ -120,8 +120,6 @@ const struct brw_tracked_state gen6_sf_vp = {
 
 static void upload_viewport_state_pointers(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
-
    BEGIN_BATCH(4);
    OUT_BATCH(_3DSTATE_VIEWPORT_STATE_POINTERS << 16 | (4 - 2) |
 	     GEN6_CC_VIEWPORT_MODIFY |

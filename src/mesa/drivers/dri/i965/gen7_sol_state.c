@@ -74,7 +74,7 @@ upload_3dstate_so_buffers(struct brw_context *brw)
 	 continue;
       }
 
-      bo = intel_bufferobj_buffer(intel, bufferobj, INTEL_WRITE_PART);
+      bo = intel_bufferobj_buffer(brw, bufferobj, INTEL_WRITE_PART);
       stride = linked_xfb_info->BufferStride[i] * 4;
 
       start = xfb_obj->Offset[i];
@@ -260,7 +260,7 @@ gen7_begin_transform_feedback(struct gl_context *ctx, GLenum mode,
    struct brw_context *brw = brw_context(ctx);
    struct intel_context *intel = &brw->intel;
 
-   intel_batchbuffer_flush(intel);
+   intel_batchbuffer_flush(brw);
    intel->batch.needs_sol_reset = true;
 }
 
@@ -275,7 +275,6 @@ gen7_end_transform_feedback(struct gl_context *ctx,
     * This also covers any cache flushing required.
     */
    struct brw_context *brw = brw_context(ctx);
-   struct intel_context *intel = &brw->intel;
 
-   intel_batchbuffer_flush(intel);
+   intel_batchbuffer_flush(brw);
 }

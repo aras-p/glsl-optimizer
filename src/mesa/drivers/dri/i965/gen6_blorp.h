@@ -36,7 +36,7 @@ struct intel_mipmap_tree;
 }
 
 void
-gen6_blorp_exec(struct intel_context *intel,
+gen6_blorp_exec(struct brw_context *brw,
                 const brw_blorp_params *params);
 
 #endif

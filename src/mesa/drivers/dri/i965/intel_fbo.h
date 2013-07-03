@@ -139,7 +139,7 @@ intel_create_wrapped_renderbuffer(struct gl_context * ctx,
 				  gl_format format);
 
 extern void
-intel_fbo_init(struct intel_context *intel);
+intel_fbo_init(struct brw_context *brw);
 
 void
 intel_renderbuffer_set_draw_offset(struct intel_renderbuffer *irb);
@@ -175,7 +175,7 @@ intel_renderbuffer_set_needs_depth_resolve(struct intel_renderbuffer *irb);
  * \return false if no resolve was needed
  */
 bool
-intel_renderbuffer_resolve_hiz(struct intel_context *intel,
+intel_renderbuffer_resolve_hiz(struct brw_context *brw,
 			       struct intel_renderbuffer *irb);
 
 /**
@@ -187,10 +187,10 @@ intel_renderbuffer_resolve_hiz(struct intel_context *intel,
  * \return false if no resolve was needed
  */
 bool
-intel_renderbuffer_resolve_depth(struct intel_context *intel,
+intel_renderbuffer_resolve_depth(struct brw_context *brw,
 				 struct intel_renderbuffer *irb);
 
-void intel_renderbuffer_move_to_temp(struct intel_context *intel,
+void intel_renderbuffer_move_to_temp(struct brw_context *brw,
                                      struct intel_renderbuffer *irb,
                                      bool invalidate);
 

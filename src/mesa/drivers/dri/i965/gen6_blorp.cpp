@@ -231,8 +231,6 @@ static void
 gen6_blorp_emit_urb_config(struct brw_context *brw,
                            const brw_blorp_params *params)
 {
-   struct intel_context *intel = &brw->intel;
-
    BEGIN_BATCH(3);
    OUT_BATCH(_3DSTATE_URB << 16 | (3 - 2));
    OUT_BATCH(brw->urb.max_vs_entries << GEN6_URB_VS_ENTRIES_SHIFT);
@@ -351,8 +349,6 @@ gen6_blorp_emit_cc_state_pointers(struct brw_context *brw,
                                   uint32_t depthstencil_offset,
                                   uint32_t cc_state_offset)
 {
-   struct intel_context *intel = &brw->intel;
-
    BEGIN_BATCH(4);
    OUT_BATCH(_3DSTATE_CC_STATE_POINTERS << 16 | (4 - 2));
    OUT_BATCH(cc_blend_state_offset | 1); /* BLEND_STATE offset */
@@ -539,8 +535,6 @@ gen6_blorp_emit_sampler_state_pointers(struct brw_context *brw,
                                        const brw_blorp_params *params,
                                        uint32_t sampler_offset)
 {
-   struct intel_context *intel = &brw->intel;
-
    BEGIN_BATCH(4);
    OUT_BATCH(_3DSTATE_SAMPLER_STATE_POINTERS << 16 |
              VS_SAMPLER_STATE_CHANGE |
@@ -573,7 +567,7 @@ gen6_blorp_emit_vs_disable(struct brw_context *brw,
        *   toggle. Pipeline flush can be executed by sending a PIPE_CONTROL
        *   command with CS stall bit set and a post sync operation.
        */
-      intel_emit_post_sync_nonzero_flush(intel);
+      intel_emit_post_sync_nonzero_flush(brw);
    }
 
    /* Disable the push constant buffers. */
@@ -604,8 +598,6 @@ void
 gen6_blorp_emit_gs_disable(struct brw_context *brw,
                            const brw_blorp_params *params)
 {
-   struct intel_context *intel = &brw->intel;
-
    /* Disable all the constant buffers. */
    BEGIN_BATCH(5);
    OUT_BATCH(_3DSTATE_CONSTANT_GS << 16 | (5 - 2));
@@ -645,8 +637,6 @@ void
 gen6_blorp_emit_clip_disable(struct brw_context *brw,
                              const brw_blorp_params *params)
 {
-   struct intel_context *intel = &brw->intel;
-
    BEGIN_BATCH(4);
    OUT_BATCH(_3DSTATE_CLIP << 16 | (4 - 2));
    OUT_BATCH(0);
@@ -678,8 +668,6 @@ static void
 gen6_blorp_emit_sf_config(struct brw_context *brw,
                           const brw_blorp_params *params)
 {
-   struct intel_context *intel = &brw->intel;
-
    BEGIN_BATCH(20);
    OUT_BATCH(_3DSTATE_SF << 16 | (20 - 2));
    OUT_BATCH((1 - 1) << GEN6_SF_NUM_OUTPUTS_SHIFT | /* only position */
@@ -702,7 +690,6 @@ gen6_blorp_emit_wm_config(struct brw_context *brw,
                           uint32_t prog_offset,
                           brw_blorp_prog_data *prog_data)
 {
-   struct intel_context *intel = &brw->intel;
    uint32_t dw2, dw4, dw5, dw6;
 
    /* Even when thread dispatch is disabled, max threads (dw5.25:31) must be
@@ -774,8 +761,6 @@ gen6_blorp_emit_constant_ps(struct brw_context *brw,
                             const brw_blorp_params *params,
                             uint32_t wm_push_const_offset)
 {
-   struct intel_context *intel = &brw->intel;
-
    /* Make sure the push constants fill an exact integer number of
     * registers.
     */
@@ -800,8 +785,6 @@ static void
 gen6_blorp_emit_constant_ps_disable(struct brw_context *brw,
                                     const brw_blorp_params *params)
 {
-   struct intel_context *intel = &brw->intel;
-
    /* Disable the push constant buffers. */
    BEGIN_BATCH(5);
    OUT_BATCH(_3DSTATE_CONSTANT_PS << 16 | (5 - 2));
@@ -820,8 +803,6 @@ gen6_blorp_emit_binding_table_pointers(struct brw_context *brw,
                                        const brw_blorp_params *params,
                                        uint32_t wm_bind_bo_offset)
 {
-   struct intel_context *intel = &brw->intel;
-
    BEGIN_BATCH(4);
    OUT_BATCH(_3DSTATE_BINDING_TABLE_POINTERS << 16 |
              GEN6_BINDING_TABLE_MODIFY_PS |
@@ -879,8 +860,8 @@ gen6_blorp_emit_depth_stencil_config(struct brw_context *brw,
       tile_x &= ~7;
       tile_y &= ~7;
 
-      intel_emit_post_sync_nonzero_flush(intel);
-      intel_emit_depth_stall_flushes(intel);
+      intel_emit_post_sync_nonzero_flush(brw);
+      intel_emit_depth_stall_flushes(brw);
 
       BEGIN_BATCH(7);
       OUT_BATCH(_3DSTATE_DEPTH_BUFFER << 16 | (7 - 2));
@@ -936,8 +917,6 @@ static void
 gen6_blorp_emit_depth_disable(struct brw_context *brw,
                               const brw_blorp_params *params)
 {
-   struct intel_context *intel = &brw->intel;
-
    BEGIN_BATCH(7);
    OUT_BATCH(_3DSTATE_DEPTH_BUFFER << 16 | (7 - 2));
    OUT_BATCH((BRW_DEPTHFORMAT_D32_FLOAT << 18) |
@@ -961,8 +940,6 @@ static void
 gen6_blorp_emit_clear_params(struct brw_context *brw,
                              const brw_blorp_params *params)
 {
-   struct intel_context *intel = &brw->intel;
-
    BEGIN_BATCH(2);
    OUT_BATCH(_3DSTATE_CLEAR_PARAMS << 16 |
 	     GEN5_DEPTH_CLEAR_VALID |
@@ -977,8 +954,6 @@ void
 gen6_blorp_emit_drawing_rectangle(struct brw_context *brw,
                                   const brw_blorp_params *params)
 {
-   struct intel_context *intel = &brw->intel;
-
    BEGIN_BATCH(4);
    OUT_BATCH(_3DSTATE_DRAWING_RECTANGLE << 16 | (4 - 2));
    OUT_BATCH(0);
@@ -993,7 +968,6 @@ void
 gen6_blorp_emit_viewport_state(struct brw_context *brw,
 			       const brw_blorp_params *params)
 {
-   struct intel_context *intel = &brw->intel;
    struct brw_cc_viewport *ccv;
    uint32_t cc_vp_offset;
 
@@ -1019,8 +993,6 @@ static void
 gen6_blorp_emit_primitive(struct brw_context *brw,
                           const brw_blorp_params *params)
 {
-   struct intel_context *intel = &brw->intel;
-
    BEGIN_BATCH(6);
    OUT_BATCH(CMD_3D_PRIM << 16 | (6 - 2) |
              _3DPRIM_RECTLIST << GEN4_3DPRIM_TOPOLOGY_TYPE_SHIFT |
@@ -1044,11 +1016,9 @@ gen6_blorp_emit_primitive(struct brw_context *brw,
  * This function alters no GL state.
  */
 void
-gen6_blorp_exec(struct intel_context *intel,
+gen6_blorp_exec(struct brw_context *brw,
                 const brw_blorp_params *params)
 {
-   struct gl_context *ctx = &intel->ctx;
-   struct brw_context *brw = brw_context(ctx);
    brw_blorp_prog_data *prog_data = NULL;
    uint32_t cc_blend_state_offset = 0;
    uint32_t cc_state_offset = 0;

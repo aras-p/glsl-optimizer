@@ -51,6 +51,7 @@ intel_blit_texsubimage(struct gl_context * ctx,
 		       GLenum format, GLenum type, const void *pixels,
 		       const struct gl_pixelstore_attrib *packing)
 {
+   struct brw_context *brw = brw_context(ctx);
    struct intel_context *intel = intel_context(ctx);
    struct intel_texture_image *intelImage = intel_texture_image(texImage);
 
@@ -88,14 +89,14 @@ intel_blit_texsubimage(struct gl_context * ctx,
       return false;
 
    struct intel_mipmap_tree *temp_mt =
-      intel_miptree_create(intel, GL_TEXTURE_2D, texImage->TexFormat,
+      intel_miptree_create(brw, GL_TEXTURE_2D, texImage->TexFormat,
                            0, 0,
                            width, height, 1,
                            false, 0, INTEL_MIPTREE_TILING_NONE);
    if (!temp_mt)
       goto err;
 
-   GLubyte *dst = intel_miptree_map_raw(intel, temp_mt);
+   GLubyte *dst = intel_miptree_map_raw(brw, temp_mt);
    if (!dst)
       goto err;
 
@@ -108,11 +109,11 @@ intel_blit_texsubimage(struct gl_context * ctx,
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "intelTexSubImage");
    }
 
-   intel_miptree_unmap_raw(intel, temp_mt);
+   intel_miptree_unmap_raw(brw, temp_mt);
 
    bool ret;
 
-   ret = intel_miptree_blit(intel,
+   ret = intel_miptree_blit(brw,
                             temp_mt, 0, 0,
                             0, 0, false,
                             intelImage->mt, texImage->Level, texImage->Face,
@@ -168,6 +169,7 @@ intel_texsubimage_tiled_memcpy(struct gl_context * ctx,
                                const struct gl_pixelstore_attrib *packing,
                                bool for_glTexImage)
 {
+   struct brw_context *brw = brw_context(ctx);
    struct intel_context *intel = intel_context(ctx);
    struct intel_texture_image *image = intel_texture_image(texImage);
 
@@ -209,13 +211,13 @@ intel_texsubimage_tiled_memcpy(struct gl_context * ctx,
    /* Since we are going to write raw data to the miptree, we need to resolve
     * any pending fast color clears before we start.
     */
-   intel_miptree_resolve_color(intel, image->mt);
+   intel_miptree_resolve_color(brw, image->mt);
 
    bo = image->mt->region->bo;
 
    if (drm_intel_bo_references(intel->batch.bo, bo)) {
       perf_debug("Flushing before mapping a referenced bo.\n");
-      intel_batchbuffer_flush(intel);
+      intel_batchbuffer_flush(brw);
    }
 
    if (unlikely(intel->perf_debug)) {

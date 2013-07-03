@@ -326,10 +326,11 @@ static const uint32_t *subreg_table;
 static const uint32_t *src_index_table;
 
 static bool
-set_control_index(struct intel_context *intel,
+set_control_index(struct brw_context *brw,
                   struct brw_compact_instruction *dst,
                   struct brw_instruction *src)
 {
+   struct intel_context *intel = &brw->intel;
    uint32_t *src_u32 = (uint32_t *)src;
    uint32_t uncompacted = 0;
 
@@ -473,7 +474,7 @@ brw_try_compact_instruction(struct brw_compile *p,
 
    temp.dw0.opcode = src->header.opcode;
    temp.dw0.debug_control = src->header.debug_control;
-   if (!set_control_index(intel, &temp, src))
+   if (!set_control_index(brw, &temp, src))
       return false;
    if (!set_datatype_index(&temp, src))
       return false;
@@ -498,10 +499,11 @@ brw_try_compact_instruction(struct brw_compile *p,
 }
 
 static void
-set_uncompacted_control(struct intel_context *intel,
+set_uncompacted_control(struct brw_context *brw,
                         struct brw_instruction *dst,
                         struct brw_compact_instruction *src)
 {
+   struct intel_context *intel = &brw->intel;
    uint32_t *dst_u32 = (uint32_t *)dst;
    uint32_t uncompacted = control_index_table[src->dw0.control_index];
 
@@ -555,16 +557,17 @@ set_uncompacted_src1(struct brw_instruction *dst,
 }
 
 void
-brw_uncompact_instruction(struct intel_context *intel,
+brw_uncompact_instruction(struct brw_context *brw,
                           struct brw_instruction *dst,
                           struct brw_compact_instruction *src)
 {
+   struct intel_context *intel = &brw->intel;
    memset(dst, 0, sizeof(*dst));
 
    dst->header.opcode = src->dw0.opcode;
    dst->header.debug_control = src->dw0.debug_control;
 
-   set_uncompacted_control(intel, dst, src);
+   set_uncompacted_control(brw, dst, src);
    set_uncompacted_datatype(dst, src);
    set_uncompacted_subreg(dst, src);
    dst->header.acc_wr_control = src->dw0.acc_wr_control;
@@ -578,10 +581,11 @@ brw_uncompact_instruction(struct intel_context *intel,
    dst->bits3.da1.src1_reg_nr = src->dw1.src1_reg_nr;
 }
 
-void brw_debug_compact_uncompact(struct intel_context *intel,
+void brw_debug_compact_uncompact(struct brw_context *brw,
                                  struct brw_instruction *orig,
                                  struct brw_instruction *uncompacted)
 {
+   struct intel_context *intel = &brw->intel;
    fprintf(stderr, "Instruction compact/uncompact changed (gen%d):\n",
            intel->gen);
 
@@ -632,8 +636,9 @@ update_uip_jip(struct brw_instruction *insn, int this_old_ip,
 }
 
 void
-brw_init_compaction_tables(struct intel_context *intel)
+brw_init_compaction_tables(struct brw_context *brw)
 {
+   struct intel_context *intel = &brw->intel;
    assert(gen6_control_index_table[ARRAY_SIZE(gen6_control_index_table) - 1] != 0);
    assert(gen6_datatype_table[ARRAY_SIZE(gen6_datatype_table) - 1] != 0);
    assert(gen6_subreg_table[ARRAY_SIZE(gen6_subreg_table) - 1] != 0);
@@ -697,9 +702,9 @@ brw_compact_instructions(struct brw_compile *p)
 
          if (INTEL_DEBUG) {
             struct brw_instruction uncompacted;
-            brw_uncompact_instruction(intel, &uncompacted, dst);
+            brw_uncompact_instruction(brw, &uncompacted, dst);
             if (memcmp(&saved, &uncompacted, sizeof(uncompacted))) {
-               brw_debug_compact_uncompact(intel, &saved, &uncompacted);
+               brw_debug_compact_uncompact(brw, &saved, &uncompacted);
             }
          }
 

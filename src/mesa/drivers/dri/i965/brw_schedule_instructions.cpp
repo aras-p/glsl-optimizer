@@ -59,8 +59,10 @@ static bool debug = false;
 class schedule_node : public exec_node
 {
 public:
-   schedule_node(backend_instruction *inst, const struct intel_context *intel)
+   schedule_node(backend_instruction *inst, const struct brw_context *brw)
    {
+      const struct intel_context *intel = &brw->intel;
+
       this->inst = inst;
       this->child_array_size = 0;
       this->children = NULL;
@@ -428,7 +430,7 @@ vec4_instruction_scheduler::vec4_instruction_scheduler(vec4_visitor *v,
 void
 instruction_scheduler::add_inst(backend_instruction *inst)
 {
-   schedule_node *n = new(mem_ctx) schedule_node(inst, bv->intel);
+   schedule_node *n = new(mem_ctx) schedule_node(inst, bv->brw);
 
    assert(!inst->is_head_sentinel());
    assert(!inst->is_tail_sentinel());

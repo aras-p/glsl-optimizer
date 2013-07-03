@@ -76,8 +76,6 @@ const struct brw_tracked_state brw_drawing_rect = {
  */
 static void upload_binding_table_pointers(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
-
    BEGIN_BATCH(6);
    OUT_BATCH(_3DSTATE_BINDING_TABLE_POINTERS << 16 | (6 - 2));
    OUT_BATCH(brw->vs.bind_bo_offset);
@@ -110,8 +108,6 @@ const struct brw_tracked_state brw_binding_table_pointers = {
  */
 static void upload_gen6_binding_table_pointers(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
-
    BEGIN_BATCH(4);
    OUT_BATCH(_3DSTATE_BINDING_TABLE_POINTERS << 16 |
 	     GEN6_BINDING_TABLE_MODIFY_VS |
@@ -398,7 +394,7 @@ brw_workaround_depthstencil_alignment(struct brw_context *brw,
          perf_debug("HW workaround: blitting depth level %d to a temporary "
                     "to fix alignment (depth tile offset %d,%d)\n",
                     depth_irb->mt_level, tile_x, tile_y);
-         intel_renderbuffer_move_to_temp(intel, depth_irb, invalidate_depth);
+         intel_renderbuffer_move_to_temp(brw, depth_irb, invalidate_depth);
          /* In the case of stencil_irb being the same packed depth/stencil
           * texture but not the same rb, make it point at our rebased mt, too.
           */
@@ -459,7 +455,7 @@ brw_workaround_depthstencil_alignment(struct brw_context *brw,
                  "to fix alignment (stencil tile offset %d,%d)\n",
                  stencil_irb->mt_level, stencil_tile_x, stencil_tile_y);
 
-      intel_renderbuffer_move_to_temp(intel, stencil_irb, invalidate_stencil);
+      intel_renderbuffer_move_to_temp(brw, stencil_irb, invalidate_stencil);
       stencil_mt = get_stencil_miptree(stencil_irb);
 
       intel_miptree_get_image_offset(stencil_mt,
@@ -483,8 +479,7 @@ brw_workaround_depthstencil_alignment(struct brw_context *brw,
                        tile_x, tile_y,
                        stencil_tile_x, stencil_tile_y);
 
-            intel_renderbuffer_move_to_temp(intel, depth_irb,
-                                            invalidate_depth);
+            intel_renderbuffer_move_to_temp(brw, depth_irb, invalidate_depth);
 
             tile_x = depth_irb->draw_x & tile_mask_x;
             tile_y = depth_irb->draw_y & tile_mask_y;
@@ -675,8 +670,8 @@ brw_emit_depth_stencil_hiz(struct brw_context *brw,
     * non-pipelined state that will need the PIPE_CONTROL workaround.
     */
    if (intel->gen == 6) {
-      intel_emit_post_sync_nonzero_flush(intel);
-      intel_emit_depth_stall_flushes(intel);
+      intel_emit_post_sync_nonzero_flush(brw);
+      intel_emit_depth_stall_flushes(brw);
    }
 
    unsigned int len;
@@ -782,7 +777,7 @@ brw_emit_depth_stencil_hiz(struct brw_context *brw,
     */
    if (intel->gen >= 6 || hiz) {
       if (intel->gen == 6)
-	 intel_emit_post_sync_nonzero_flush(intel);
+	 intel_emit_post_sync_nonzero_flush(brw);
 
       BEGIN_BATCH(2);
       OUT_BATCH(_3DSTATE_CLEAR_PARAMS << 16 |
@@ -819,7 +814,7 @@ static void upload_polygon_stipple(struct brw_context *brw)
       return;
 
    if (intel->gen == 6)
-      intel_emit_post_sync_nonzero_flush(intel);
+      intel_emit_post_sync_nonzero_flush(brw);
 
    BEGIN_BATCH(33);
    OUT_BATCH(_3DSTATE_POLY_STIPPLE_PATTERN << 16 | (33 - 2));
@@ -867,7 +862,7 @@ static void upload_polygon_stipple_offset(struct brw_context *brw)
       return;
 
    if (intel->gen == 6)
-      intel_emit_post_sync_nonzero_flush(intel);
+      intel_emit_post_sync_nonzero_flush(brw);
 
    BEGIN_BATCH(2);
    OUT_BATCH(_3DSTATE_POLY_STIPPLE_OFFSET << 16 | (2-2));
@@ -909,7 +904,7 @@ static void upload_aa_line_parameters(struct brw_context *brw)
       return;
 
    if (intel->gen == 6)
-      intel_emit_post_sync_nonzero_flush(intel);
+      intel_emit_post_sync_nonzero_flush(brw);
 
    OUT_BATCH(_3DSTATE_AA_LINE_PARAMETERS << 16 | (3 - 2));
    /* use legacy aa line coverage computation */
@@ -942,7 +937,7 @@ static void upload_line_stipple(struct brw_context *brw)
       return;
 
    if (intel->gen == 6)
-      intel_emit_post_sync_nonzero_flush(intel);
+      intel_emit_post_sync_nonzero_flush(brw);
 
    BEGIN_BATCH(3);
    OUT_BATCH(_3DSTATE_LINE_STIPPLE_PATTERN << 16 | (3 - 2));
@@ -985,7 +980,7 @@ brw_upload_invariant_state(struct brw_context *brw)
 
    /* 3DSTATE_SIP, 3DSTATE_MULTISAMPLE, etc. are nonpipelined. */
    if (intel->gen == 6)
-      intel_emit_post_sync_nonzero_flush(intel);
+      intel_emit_post_sync_nonzero_flush(brw);
 
    /* Select the 3D pipeline (as opposed to media) */
    BEGIN_BATCH(1);
@@ -1045,7 +1040,7 @@ static void upload_state_base_address( struct brw_context *brw )
 
    if (intel->gen >= 6) {
       if (intel->gen == 6)
-	 intel_emit_post_sync_nonzero_flush(intel);
+	 intel_emit_post_sync_nonzero_flush(brw);
 
        BEGIN_BATCH(10);
        OUT_BATCH(CMD_STATE_BASE_ADDRESS << 16 | (10 - 2));

@@ -66,10 +66,10 @@ dri_bo_release(drm_intel_bo **bo)
 /**
  * called from intelDestroyContext()
  */
-static void brw_destroy_context( struct intel_context *intel )
+static void
+brw_destroy_context(struct brw_context *brw)
 {
-   struct brw_context *brw = brw_context(&intel->ctx);
-
+   struct intel_context *intel = &brw->intel;
    if (INTEL_DEBUG & DEBUG_SHADER_TIME) {
       /* Force a report. */
       brw->shader_time.report_time = 0;
@@ -99,9 +99,9 @@ static void brw_destroy_context( struct intel_context *intel )
  * at the end of a batchbuffer.  If you add more GPU state, increase
  * the BATCH_RESERVED macro.
  */
-static void brw_finish_batch(struct intel_context *intel)
+static void
+brw_finish_batch(struct brw_context *brw)
 {
-   struct brw_context *brw = brw_context(&intel->ctx);
    brw_emit_query_end(brw);
 
    if (brw->curbe.curbe_bo) {
@@ -115,9 +115,10 @@ static void brw_finish_batch(struct intel_context *intel)
 /**
  * called from intelFlushBatchLocked
  */
-static void brw_new_batch( struct intel_context *intel )
+static void
+brw_new_batch(struct brw_context *brw)
 {
-   struct brw_context *brw = brw_context(&intel->ctx);
+   struct intel_context *intel = &brw->intel;
 
    /* If the kernel supports hardware contexts, then most hardware state is
     * preserved between batches; we only need to re-emit state that is required

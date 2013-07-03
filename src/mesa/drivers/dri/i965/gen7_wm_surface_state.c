@@ -306,7 +306,7 @@ gen7_update_texture_surface(struct gl_context *ctx,
                                     8 * 4, 32, &binding_table[surf_index]);
    memset(surf, 0, 8 * 4);
 
-   uint32_t tex_format = translate_tex_format(intel,
+   uint32_t tex_format = translate_tex_format(brw,
                                               mt->format,
                                               tObj->DepthMode,
                                               sampler->sRGBDecode);
@@ -546,7 +546,7 @@ gen7_update_renderbuffer_surface(struct brw_context *brw,
    /* Render targets can't use IMS layout */
    assert(irb->mt->msaa_layout != INTEL_MSAA_LAYOUT_IMS);
 
-   assert(brw_render_target_supported(intel, rb));
+   assert(brw_render_target_supported(brw, rb));
    format = brw->render_target_format[rb_format];
    if (unlikely(!brw->format_supported_as_render_target[rb_format])) {
       _mesa_problem(ctx, "%s: renderbuffer format %s unsupported\n",

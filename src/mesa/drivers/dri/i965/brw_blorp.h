@@ -35,7 +35,7 @@ extern "C" {
 #endif
 
 void
-brw_blorp_blit_miptrees(struct intel_context *intel,
+brw_blorp_blit_miptrees(struct brw_context *brw,
                         struct intel_mipmap_tree *src_mt,
                         unsigned src_level, unsigned src_layer,
                         struct intel_mipmap_tree *dst_mt,
@@ -47,11 +47,11 @@ brw_blorp_blit_miptrees(struct intel_context *intel,
                         bool mirror_x, bool mirror_y);
 
 bool
-brw_blorp_clear_color(struct intel_context *intel, struct gl_framebuffer *fb,
+brw_blorp_clear_color(struct brw_context *brw, struct gl_framebuffer *fb,
                       bool partial_clear);
 
 void
-brw_blorp_resolve_color(struct intel_context *intel,
+brw_blorp_resolve_color(struct brw_context *brw,
                         struct intel_mipmap_tree *mt);
 
 #ifdef __cplusplus
@@ -238,7 +238,7 @@ public:
 
 
 void
-brw_blorp_exec(struct intel_context *intel, const brw_blorp_params *params);
+brw_blorp_exec(struct brw_context *brw, const brw_blorp_params *params);
 
 
 /**

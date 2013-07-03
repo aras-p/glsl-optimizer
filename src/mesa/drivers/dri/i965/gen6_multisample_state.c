@@ -149,8 +149,6 @@ gen6_emit_3dstate_sample_mask(struct brw_context *brw,
                               unsigned num_samples, float coverage,
                               bool coverage_invert, unsigned sample_mask)
 {
-   struct intel_context *intel = &brw->intel;
-
    BEGIN_BATCH(2);
    OUT_BATCH(_3DSTATE_SAMPLE_MASK << 16 | (2 - 2));
    if (num_samples > 1) {
@@ -189,7 +187,7 @@ static void upload_multisample_state(struct brw_context *brw)
    }
 
    /* 3DSTATE_MULTISAMPLE is nonpipelined. */
-   intel_emit_post_sync_nonzero_flush(intel);
+   intel_emit_post_sync_nonzero_flush(brw);
 
    gen6_emit_3dstate_multisample(brw, num_samples);
    gen6_emit_3dstate_sample_mask(brw, num_samples, coverage,

@@ -187,6 +187,5 @@ brw_end_transform_feedback(struct gl_context *ctx,
     * simplicity, just do a full flush.
     */
    struct brw_context *brw = brw_context(ctx);
-   struct intel_context *intel = &brw->intel;
-   intel_batchbuffer_emit_mi_flush(intel);
+   intel_batchbuffer_emit_mi_flush(brw);
 }

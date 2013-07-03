@@ -39,8 +39,9 @@
  * If so, set the intel->front_buffer_dirty field to true.
  */
 void
-intel_check_front_buffer_rendering(struct intel_context *intel)
+intel_check_front_buffer_rendering(struct brw_context *brw)
 {
+   struct intel_context *intel = &brw->intel;
    const struct gl_framebuffer *fb = intel->ctx.DrawBuffer;
    if (_mesa_is_winsys_fbo(fb)) {
       /* drawing to window system buffer */

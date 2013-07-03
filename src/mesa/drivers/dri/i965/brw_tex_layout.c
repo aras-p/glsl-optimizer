@@ -39,9 +39,10 @@
 #define FILE_DEBUG_FLAG DEBUG_MIPTREE
 
 static unsigned int
-intel_horizontal_texture_alignment_unit(struct intel_context *intel,
+intel_horizontal_texture_alignment_unit(struct brw_context *brw,
                                        gl_format format)
 {
+   struct intel_context *intel = &brw->intel;
    /**
     * From the "Alignment Unit Size" section of various specs, namely:
     * - Gen3 Spec: "Memory Data Formats" Volume,         Section 1.20.1.4
@@ -93,9 +94,10 @@ intel_horizontal_texture_alignment_unit(struct intel_context *intel,
 }
 
 static unsigned int
-intel_vertical_texture_alignment_unit(struct intel_context *intel,
+intel_vertical_texture_alignment_unit(struct brw_context *brw,
                                      gl_format format)
 {
+   struct intel_context *intel = &brw->intel;
    /**
     * From the "Alignment Unit Size" section of various specs, namely:
     * - Gen3 Spec: "Memory Data Formats" Volume,         Section 1.20.1.4
@@ -205,9 +207,10 @@ brw_miptree_layout_2d(struct intel_mipmap_tree *mt)
 }
 
 static void
-brw_miptree_layout_texture_array(struct intel_context *intel,
+brw_miptree_layout_texture_array(struct brw_context *brw,
 				 struct intel_mipmap_tree *mt)
 {
+   struct intel_context *intel = &brw->intel;
    unsigned qpitch = 0;
    int h0, h1;
 
@@ -231,7 +234,7 @@ brw_miptree_layout_texture_array(struct intel_context *intel,
 }
 
 static void
-brw_miptree_layout_texture_3d(struct intel_context *intel,
+brw_miptree_layout_texture_3d(struct brw_context *brw,
                               struct intel_mipmap_tree *mt)
 {
    unsigned width  = mt->physical_width0;
@@ -309,39 +312,40 @@ brw_miptree_layout_texture_3d(struct intel_context *intel,
 }
 
 void
-brw_miptree_layout(struct intel_context *intel, struct intel_mipmap_tree *mt)
+brw_miptree_layout(struct brw_context *brw, struct intel_mipmap_tree *mt)
 {
-   mt->align_w = intel_horizontal_texture_alignment_unit(intel, mt->format);
-   mt->align_h = intel_vertical_texture_alignment_unit(intel, mt->format);
+   struct intel_context *intel = &brw->intel;
+   mt->align_w = intel_horizontal_texture_alignment_unit(brw, mt->format);
+   mt->align_h = intel_vertical_texture_alignment_unit(brw, mt->format);
 
    switch (mt->target) {
    case GL_TEXTURE_CUBE_MAP:
       if (intel->gen == 4) {
          /* Gen4 stores cube maps as 3D textures. */
          assert(mt->physical_depth0 == 6);
-         brw_miptree_layout_texture_3d(intel, mt);
+         brw_miptree_layout_texture_3d(brw, mt);
       } else {
          /* All other hardware stores cube maps as 2D arrays. */
-	 brw_miptree_layout_texture_array(intel, mt);
+	 brw_miptree_layout_texture_array(brw, mt);
       }
       break;
 
    case GL_TEXTURE_3D:
-      brw_miptree_layout_texture_3d(intel, mt);
+      brw_miptree_layout_texture_3d(brw, mt);
       break;
 
    case GL_TEXTURE_1D_ARRAY:
    case GL_TEXTURE_2D_ARRAY:
    case GL_TEXTURE_2D_MULTISAMPLE_ARRAY:
    case GL_TEXTURE_CUBE_MAP_ARRAY:
-      brw_miptree_layout_texture_array(intel, mt);
+      brw_miptree_layout_texture_array(brw, mt);
       break;
 
    default:
       switch (mt->msaa_layout) {
       case INTEL_MSAA_LAYOUT_UMS:
       case INTEL_MSAA_LAYOUT_CMS:
-         brw_miptree_layout_texture_array(intel, mt);
+         brw_miptree_layout_texture_array(brw, mt);
          break;
       case INTEL_MSAA_LAYOUT_NONE:
       case INTEL_MSAA_LAYOUT_IMS:

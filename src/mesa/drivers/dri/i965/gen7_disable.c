@@ -29,8 +29,6 @@
 static void
 disable_stages(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
-
    assert(!brw->gs.prog_active);
 
    /* Disable the Geometry Shader (GS) Unit */

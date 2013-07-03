@@ -300,7 +300,7 @@ brwCreateContext(int api,
    struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &intel->ctx;
 
-   if (!intelInitContext( intel, api, major_version, minor_version,
+   if (!intelInitContext( brw, api, major_version, minor_version,
                           mesaVis, driContextPriv,
 			  sharedContextPrivate, &functions,
 			  error)) {

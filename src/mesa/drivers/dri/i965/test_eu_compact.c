@@ -40,9 +40,9 @@ test_compact_instruction(struct brw_compile *p, struct brw_instruction src)
    if (brw_try_compact_instruction(p, &dst, &src)) {
       struct brw_instruction uncompacted;
 
-      brw_uncompact_instruction(intel, &uncompacted, &dst);
+      brw_uncompact_instruction(brw, &uncompacted, &dst);
       if (memcmp(&uncompacted, &src, sizeof(src))) {
-	 brw_debug_compact_uncompact(intel, &src, &uncompacted);
+	 brw_debug_compact_uncompact(brw, &src, &uncompacted);
 	 return false;
       }
    } else {

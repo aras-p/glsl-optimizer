@@ -52,6 +52,7 @@ do_blit_copypixels(struct gl_context * ctx,
                    GLsizei width, GLsizei height,
                    GLint dstx, GLint dsty, GLenum type)
 {
+   struct brw_context *brw = brw_context(ctx);
    struct intel_context *intel = intel_context(ctx);
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    struct gl_framebuffer *read_fb = ctx->ReadBuffer;
@@ -142,7 +143,7 @@ do_blit_copypixels(struct gl_context * ctx,
       return false;
    }
 
-   intel_prepare_render(intel);
+   intel_prepare_render(brw);
 
    intel_flush(&intel->ctx);
 
@@ -168,7 +169,7 @@ do_blit_copypixels(struct gl_context * ctx,
    dstx += srcx - orig_srcx;
    dsty += srcy - orig_srcy;
 
-   if (!intel_miptree_blit(intel,
+   if (!intel_miptree_blit(brw,
                            read_irb->mt, read_irb->mt_level, read_irb->mt_layer,
                            srcx, srcy, _mesa_is_winsys_fbo(read_fb),
                            draw_irb->mt, draw_irb->mt_level, draw_irb->mt_layer,
@@ -184,7 +185,7 @@ do_blit_copypixels(struct gl_context * ctx,
       ctx->Query.CurrentOcclusionObject->Result += width * height;
 
 out:
-   intel_check_front_buffer_rendering(intel);
+   intel_check_front_buffer_rendering(brw);
 
    DBG("%s: success\n", __FUNCTION__);
    return true;

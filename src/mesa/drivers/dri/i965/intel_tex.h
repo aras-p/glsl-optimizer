@@ -48,12 +48,12 @@ void intelSetTexBuffer2(__DRIcontext *pDRICtx,
 			GLint target, GLint format, __DRIdrawable *pDraw);
 
 struct intel_mipmap_tree *
-intel_miptree_create_for_teximage(struct intel_context *intel,
+intel_miptree_create_for_teximage(struct brw_context *brw,
 				  struct intel_texture_object *intelObj,
 				  struct intel_texture_image *intelImage,
 				  bool expect_accelerated_upload);
 
-GLuint intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit);
+GLuint intel_finalize_mipmap_tree(struct brw_context *brw, GLuint unit);
 
 bool
 intel_texsubimage_tiled_memcpy(struct gl_context *ctx,

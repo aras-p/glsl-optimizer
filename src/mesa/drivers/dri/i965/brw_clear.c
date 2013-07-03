@@ -104,6 +104,7 @@ noop_scissor(struct gl_context *ctx, struct gl_framebuffer *fb)
 static bool
 brw_fast_clear_depth(struct gl_context *ctx)
 {
+   struct brw_context *brw = brw_context(ctx);
    struct intel_context *intel = intel_context(ctx);
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    struct intel_renderbuffer *depth_irb =
@@ -167,7 +168,7 @@ brw_fast_clear_depth(struct gl_context *ctx)
     * flags out of the HiZ buffer into the real depth buffer.
     */
    if (mt->depth_clear_value != depth_clear_value) {
-      intel_miptree_all_slices_resolve_depth(intel, mt);
+      intel_miptree_all_slices_resolve_depth(brw, mt);
       mt->depth_clear_value = depth_clear_value;
    }
 
@@ -178,9 +179,9 @@ brw_fast_clear_depth(struct gl_context *ctx)
     *      must be issued before the rectangle primitive used for the depth
     *      buffer clear operation.
     */
-   intel_batchbuffer_emit_mi_flush(intel);
+   intel_batchbuffer_emit_mi_flush(brw);
 
-   intel_hiz_exec(intel, mt, depth_irb->mt_level, depth_irb->mt_layer,
+   intel_hiz_exec(brw, mt, depth_irb->mt_level, depth_irb->mt_layer,
 		  GEN6_HIZ_OP_DEPTH_CLEAR);
 
    if (intel->gen == 6) {
@@ -190,7 +191,7 @@ brw_fast_clear_depth(struct gl_context *ctx)
        *      by a PIPE_CONTROL command with DEPTH_STALL bit set and Then
        *      followed by Depth FLUSH'
       */
-      intel_batchbuffer_emit_mi_flush(intel);
+      intel_batchbuffer_emit_mi_flush(brw);
    }
 
    /* Now, the HiZ buffer contains data that needs to be resolved to the depth
@@ -219,7 +220,7 @@ brw_clear(struct gl_context *ctx, GLbitfield mask)
       intel->front_buffer_dirty = true;
    }
 
-   intel_prepare_render(intel);
+   intel_prepare_render(brw);
    brw_workaround_depthstencil_alignment(brw, partial_clear ? 0 : mask);
 
    if (mask & BUFFER_BIT_DEPTH) {
@@ -232,7 +233,7 @@ brw_clear(struct gl_context *ctx, GLbitfield mask)
    /* BLORP is currently only supported on Gen6+. */
    if (intel->gen >= 6) {
       if (mask & BUFFER_BITS_COLOR) {
-         if (brw_blorp_clear_color(intel, fb, partial_clear)) {
+         if (brw_blorp_clear_color(brw, fb, partial_clear)) {
             debug_mask("blorp color", mask & BUFFER_BITS_COLOR);
             mask &= ~BUFFER_BITS_COLOR;
          }

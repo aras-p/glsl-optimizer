@@ -75,6 +75,7 @@ do_blit_readpixels(struct gl_context * ctx,
                    GLenum format, GLenum type,
                    const struct gl_pixelstore_attrib *pack, GLvoid * pixels)
 {
+   struct brw_context *brw = brw_context(ctx);
    struct intel_context *intel = intel_context(ctx);
    struct intel_buffer_object *dst = intel_buffer_object(pack->BufferObj);
    GLuint dst_offset;
@@ -124,25 +125,25 @@ do_blit_readpixels(struct gl_context * ctx,
    }
 
    dirty = intel->front_buffer_dirty;
-   intel_prepare_render(intel);
+   intel_prepare_render(brw);
    intel->front_buffer_dirty = dirty;
 
    all = (width * height * irb->mt->cpp == dst->Base.Size &&
 	  x == 0 && dst_offset == 0);
 
-   dst_buffer = intel_bufferobj_buffer(intel, dst,
+   dst_buffer = intel_bufferobj_buffer(brw, dst,
 				       all ? INTEL_WRITE_FULL :
 				       INTEL_WRITE_PART);
 
    struct intel_mipmap_tree *pbo_mt =
-      intel_miptree_create_for_bo(intel,
+      intel_miptree_create_for_bo(brw,
                                   dst_buffer,
                                   irb->mt->format,
                                   dst_offset,
                                   width, height,
                                   dst_stride, I915_TILING_NONE);
 
-   if (!intel_miptree_blit(intel,
+   if (!intel_miptree_blit(brw,
                            irb->mt, irb->mt_level, irb->mt_layer,
                            x, y, _mesa_is_winsys_fbo(ctx->ReadBuffer),
                            pbo_mt, 0, 0,
@@ -164,6 +165,7 @@ intelReadPixels(struct gl_context * ctx,
                 GLenum format, GLenum type,
                 const struct gl_pixelstore_attrib *pack, GLvoid * pixels)
 {
+   struct brw_context *brw = brw_context(ctx);
    struct intel_context *intel = intel_context(ctx);
    bool dirty;
 
@@ -182,7 +184,7 @@ intelReadPixels(struct gl_context * ctx,
    /* glReadPixels() wont dirty the front buffer, so reset the dirty
     * flag after calling intel_prepare_render(). */
    dirty = intel->front_buffer_dirty;
-   intel_prepare_render(intel);
+   intel_prepare_render(brw);
    intel->front_buffer_dirty = dirty;
 
    /* Update Mesa state before calling _mesa_readpixels().

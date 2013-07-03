@@ -49,7 +49,6 @@
 static void
 gen6_upload_urb( struct brw_context *brw )
 {
-   struct intel_context *intel = &brw->intel;
    int nr_vs_entries, nr_gs_entries;
    int total_urb_size = brw->urb.size * 1024; /* in bytes */
 
@@ -111,7 +110,7 @@ gen6_upload_urb( struct brw_context *brw )
     * a workaround.
     */
    if (brw->urb.gen6_gs_previously_active && !brw->gs.prog_active)
-      intel_batchbuffer_emit_mi_flush(intel);
+      intel_batchbuffer_emit_mi_flush(brw);
    brw->urb.gen6_gs_previously_active = brw->gs.prog_active;
 }
 

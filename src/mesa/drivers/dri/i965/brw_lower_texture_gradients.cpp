@@ -165,9 +165,10 @@ lower_texture_grad_visitor::visit_leave(ir_texture *ir)
 extern "C" {
 
 bool
-brw_lower_texture_gradients(struct intel_context *intel,
+brw_lower_texture_gradients(struct brw_context *brw,
                             struct exec_list *instructions)
 {
+   struct intel_context *intel = &brw->intel;
    bool has_sample_d_c = intel->gen >= 8 || intel->is_haswell;
    lower_texture_grad_visitor v(has_sample_d_c);
 

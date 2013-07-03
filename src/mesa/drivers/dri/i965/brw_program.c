@@ -205,9 +205,10 @@ brw_get_scratch_size(int size)
 }
 
 void
-brw_get_scratch_bo(struct intel_context *intel,
+brw_get_scratch_bo(struct brw_context *brw,
 		   drm_intel_bo **scratch_bo, int size)
 {
+   struct intel_context *intel = &brw->intel;
    drm_intel_bo *old_bo = *scratch_bo;
 
    if (old_bo && old_bo->size < size) {

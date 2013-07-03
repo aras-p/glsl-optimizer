@@ -124,7 +124,7 @@ find_miptree(GLbitfield buffer_bit, struct intel_renderbuffer *irb)
 }
 
 void
-brw_blorp_blit_miptrees(struct intel_context *intel,
+brw_blorp_blit_miptrees(struct brw_context *brw,
                         struct intel_mipmap_tree *src_mt,
                         unsigned src_level, unsigned src_layer,
                         struct intel_mipmap_tree *dst_mt,
@@ -141,9 +141,9 @@ brw_blorp_blit_miptrees(struct intel_context *intel,
     * to destination color buffers, and the standard render path is
     * fast-color-aware.
     */
-   intel_miptree_resolve_color(intel, src_mt);
-   intel_miptree_slice_resolve_depth(intel, src_mt, src_level, src_layer);
-   intel_miptree_slice_resolve_depth(intel, dst_mt, dst_level, dst_layer);
+   intel_miptree_resolve_color(brw, src_mt);
+   intel_miptree_slice_resolve_depth(brw, src_mt, src_level, src_layer);
+   intel_miptree_slice_resolve_depth(brw, dst_mt, dst_level, dst_layer);
 
    DBG("%s from %s mt %p %d %d (%f,%f) (%f,%f)"
        "to %s mt %p %d %d (%f,%f) (%f,%f) (flip %d,%d)\n",
@@ -154,7 +154,7 @@ brw_blorp_blit_miptrees(struct intel_context *intel,
        dst_level, dst_layer, dst_x0, dst_y0, dst_x1, dst_y1,
        mirror_x, mirror_y);
 
-   brw_blorp_blit_params params(brw_context(&intel->ctx),
+   brw_blorp_blit_params params(brw,
                                 src_mt, src_level, src_layer,
                                 dst_mt, dst_level, dst_layer,
                                 src_x0, src_y0,
@@ -162,13 +162,13 @@ brw_blorp_blit_miptrees(struct intel_context *intel,
                                 dst_x0, dst_y0,
                                 dst_x1, dst_y1,
                                 mirror_x, mirror_y);
-   brw_blorp_exec(intel, &params);
+   brw_blorp_exec(brw, &params);
 
    intel_miptree_slice_set_needs_hiz_resolve(dst_mt, dst_level, dst_layer);
 }
 
 static void
-do_blorp_blit(struct intel_context *intel, GLbitfield buffer_bit,
+do_blorp_blit(struct brw_context *brw, GLbitfield buffer_bit,
               struct intel_renderbuffer *src_irb,
               struct intel_renderbuffer *dst_irb,
               GLfloat srcX0, GLfloat srcY0, GLfloat srcX1, GLfloat srcY1,
@@ -180,7 +180,7 @@ do_blorp_blit(struct intel_context *intel, GLbitfield buffer_bit,
    struct intel_mipmap_tree *dst_mt = find_miptree(buffer_bit, dst_irb);
 
    /* Do the blit */
-   brw_blorp_blit_miptrees(intel,
+   brw_blorp_blit_miptrees(brw,
                            src_mt, src_irb->mt_level, src_irb->mt_layer,
                            dst_mt, dst_irb->mt_level, dst_irb->mt_layer,
                            srcX0, srcY0, srcX1, srcY1,
@@ -223,17 +223,17 @@ formats_match(GLbitfield buffer_bit, struct intel_renderbuffer *src_irb,
 }
 
 static bool
-try_blorp_blit(struct intel_context *intel,
+try_blorp_blit(struct brw_context *brw,
                GLfloat srcX0, GLfloat srcY0, GLfloat srcX1, GLfloat srcY1,
                GLfloat dstX0, GLfloat dstY0, GLfloat dstX1, GLfloat dstY1,
                GLenum filter, GLbitfield buffer_bit)
 {
-   struct gl_context *ctx = &intel->ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
 
    /* Sync up the state of window system buffers.  We need to do this before
     * we go looking for the buffers.
     */
-   intel_prepare_render(intel);
+   intel_prepare_render(brw);
 
    const struct gl_framebuffer *read_fb = ctx->ReadBuffer;
    const struct gl_framebuffer *draw_fb = ctx->DrawBuffer;
@@ -302,7 +302,7 @@ try_blorp_blit(struct intel_context *intel,
       for (unsigned i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers; ++i) {
          dst_irb = intel_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[i]);
 	 if (dst_irb)
-            do_blorp_blit(intel, buffer_bit, src_irb, dst_irb, srcX0, srcY0,
+            do_blorp_blit(brw, buffer_bit, src_irb, dst_irb, srcX0, srcY0,
                           srcX1, srcY1, dstX0, dstY0, dstX1, dstY1,
                           mirror_x, mirror_y);
       }
@@ -314,7 +314,7 @@ try_blorp_blit(struct intel_context *intel,
          intel_renderbuffer(draw_fb->Attachment[BUFFER_DEPTH].Renderbuffer);
       if (!formats_match(buffer_bit, src_irb, dst_irb))
          return false;
-      do_blorp_blit(intel, buffer_bit, src_irb, dst_irb, srcX0, srcY0,
+      do_blorp_blit(brw, buffer_bit, src_irb, dst_irb, srcX0, srcY0,
                     srcX1, srcY1, dstX0, dstY0, dstX1, dstY1,
                     mirror_x, mirror_y);
       break;
@@ -325,7 +325,7 @@ try_blorp_blit(struct intel_context *intel,
          intel_renderbuffer(draw_fb->Attachment[BUFFER_STENCIL].Renderbuffer);
       if (!formats_match(buffer_bit, src_irb, dst_irb))
          return false;
-      do_blorp_blit(intel, buffer_bit, src_irb, dst_irb, srcX0, srcY0,
+      do_blorp_blit(brw, buffer_bit, src_irb, dst_irb, srcX0, srcY0,
                     srcX1, srcY1, dstX0, dstY0, dstX1, dstY1,
                     mirror_x, mirror_y);
       break;
@@ -337,7 +337,7 @@ try_blorp_blit(struct intel_context *intel,
 }
 
 bool
-brw_blorp_copytexsubimage(struct intel_context *intel,
+brw_blorp_copytexsubimage(struct brw_context *brw,
                           struct gl_renderbuffer *src_rb,
                           struct gl_texture_image *dst_image,
                           int slice,
@@ -345,6 +345,7 @@ brw_blorp_copytexsubimage(struct intel_context *intel,
                           int dstX0, int dstY0,
                           int width, int height)
 {
+   struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &intel->ctx;
    struct intel_renderbuffer *src_irb = intel_renderbuffer(src_rb);
    struct intel_texture_image *intel_image = intel_texture_image(dst_image);
@@ -352,7 +353,7 @@ brw_blorp_copytexsubimage(struct intel_context *intel,
    /* Sync up the state of window system buffers.  We need to do this before
     * we go looking at the src renderbuffer's miptree.
     */
-   intel_prepare_render(intel);
+   intel_prepare_render(brw);
 
    struct intel_mipmap_tree *src_mt = src_irb->mt;
    struct intel_mipmap_tree *dst_mt = intel_image->mt;
@@ -391,7 +392,7 @@ brw_blorp_copytexsubimage(struct intel_context *intel,
       mirror_y = true;
    }
 
-   brw_blorp_blit_miptrees(intel,
+   brw_blorp_blit_miptrees(brw,
                            src_mt, src_irb->mt_level, src_irb->mt_layer,
                            dst_mt, dst_image->Level, dst_image->Face + slice,
                            srcX0, srcY0, srcX1, srcY1,
@@ -414,7 +415,7 @@ brw_blorp_copytexsubimage(struct intel_context *intel,
          dst_mt = dst_mt->stencil_mt;
 
       if (src_mt != dst_mt) {
-         brw_blorp_blit_miptrees(intel,
+         brw_blorp_blit_miptrees(brw,
                                  src_mt, src_irb->mt_level, src_irb->mt_layer,
                                  dst_mt, dst_image->Level,
                                  dst_image->Face + slice,
@@ -429,11 +430,13 @@ brw_blorp_copytexsubimage(struct intel_context *intel,
 
 
 GLbitfield
-brw_blorp_framebuffer(struct intel_context *intel,
+brw_blorp_framebuffer(struct brw_context *brw,
                       GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
                       GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
                       GLbitfield mask, GLenum filter)
 {
+   struct intel_context *intel = &brw->intel;
+
    /* BLORP is not supported before Gen6. */
    if (intel->gen < 6)
       return mask;
@@ -446,7 +449,7 @@ brw_blorp_framebuffer(struct intel_context *intel,
 
    for (unsigned int i = 0; i < ARRAY_SIZE(buffer_bits); ++i) {
       if ((mask & buffer_bits[i]) &&
-       try_blorp_blit(intel,
+       try_blorp_blit(brw,
                       srcX0, srcY0, srcX1, srcY1,
                       dstX0, dstY0, dstX1, dstY1,
                       filter, buffer_bits[i])) {

@@ -251,7 +251,6 @@ brw_update_texture_surface(struct gl_context *ctx,
                            uint32_t *binding_table,
                            unsigned surf_index)
 {
-   struct intel_context *intel = intel_context(ctx);
    struct brw_context *brw = brw_context(ctx);
    struct gl_texture_object *tObj = ctx->Texture.Unit[unit]._Current;
    struct intel_texture_object *intelObj = intel_texture_object(tObj);
@@ -272,7 +271,7 @@ brw_update_texture_surface(struct gl_context *ctx,
    surf[0] = (translate_tex_target(tObj->Target) << BRW_SURFACE_TYPE_SHIFT |
 	      BRW_SURFACE_MIPMAPLAYOUT_BELOW << BRW_SURFACE_MIPLAYOUT_SHIFT |
 	      BRW_SURFACE_CUBEFACE_ENABLES |
-	      (translate_tex_format(intel,
+	      (translate_tex_format(brw,
                                     mt->format,
 				    tObj->DepthMode,
 				    sampler->sRGBDecode) <<
@@ -374,8 +373,7 @@ brw_update_sol_surface(struct brw_context *brw,
 {
    struct intel_context *intel = &brw->intel;
    struct intel_buffer_object *intel_bo = intel_buffer_object(buffer_obj);
-   drm_intel_bo *bo =
-      intel_bufferobj_buffer(intel, intel_bo, INTEL_WRITE_PART);
+   drm_intel_bo *bo = intel_bufferobj_buffer(brw, intel_bo, INTEL_WRITE_PART);
    uint32_t *surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE, 6 * 4, 32,
                                     out_offset);
    uint32_t pitch_minus_1 = 4*stride_dwords - 1;
@@ -561,7 +559,7 @@ brw_update_null_renderbuffer_surface(struct brw_context *brw, unsigned int unit)
       unsigned width_in_tiles = ALIGN(fb->Width, 16) / 16;
       unsigned height_in_tiles = ALIGN(fb->Height, 16) / 16;
       unsigned size_needed = (width_in_tiles + height_in_tiles - 1) * 4096;
-      brw_get_scratch_bo(intel, &brw->wm.multisampled_null_render_target_bo,
+      brw_get_scratch_bo(brw, &brw->wm.multisampled_null_render_target_bo,
                          size_needed);
       bo = brw->wm.multisampled_null_render_target_bo;
       surface_type = BRW_SURFACE_2D;
@@ -634,7 +632,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 	  * select the image.  So, instead, we just make a new single-level
 	  * miptree and render into that.
 	  */
-	 intel_renderbuffer_move_to_temp(intel, irb, false);
+	 intel_renderbuffer_move_to_temp(brw, irb, false);
 	 mt = irb->mt;
       }
    }
@@ -831,7 +829,7 @@ brw_upload_ubo_surfaces(struct brw_context *brw,
 
       binding = &ctx->UniformBufferBindings[shader->UniformBlocks[i].Binding];
       intel_bo = intel_buffer_object(binding->BufferObject);
-      drm_intel_bo *bo = intel_bufferobj_buffer(intel, intel_bo, INTEL_READ);
+      drm_intel_bo *bo = intel_bufferobj_buffer(brw, intel_bo, INTEL_READ);
 
       /* Because behavior for referencing outside of the binding's size in the
        * glBindBufferRange case is undefined, we can just bind the whole buffer

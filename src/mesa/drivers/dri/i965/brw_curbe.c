@@ -146,8 +146,6 @@ const struct brw_tracked_state brw_curbe_offsets = {
  */
 void brw_upload_cs_urb_state(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
-
    BEGIN_BATCH(2);
    /* It appears that this is the state packet for the CS unit, ie. the
     * urb entries detailed here are housed in the CS range from the

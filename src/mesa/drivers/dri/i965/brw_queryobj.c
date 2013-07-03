@@ -47,8 +47,9 @@
  * Emit PIPE_CONTROLs to write the current GPU timestamp into a buffer.
  */
 static void
-write_timestamp(struct intel_context *intel, drm_intel_bo *query_bo, int idx)
+write_timestamp(struct brw_context *brw, drm_intel_bo *query_bo, int idx)
 {
+   struct intel_context *intel = &brw->intel;
    if (intel->gen >= 6) {
       /* Emit workaround flushes: */
       if (intel->gen == 6) {
@@ -92,8 +93,9 @@ write_timestamp(struct intel_context *intel, drm_intel_bo *query_bo, int idx)
  * Emit PIPE_CONTROLs to write the PS_DEPTH_COUNT register into a buffer.
  */
 static void
-write_depth_count(struct intel_context *intel, drm_intel_bo *query_bo, int idx)
+write_depth_count(struct brw_context *brw, drm_intel_bo *query_bo, int idx)
 {
+   struct intel_context *intel = &brw->intel;
    assert(intel->gen < 6);
 
    BEGIN_BATCH(4);
@@ -120,6 +122,7 @@ static void
 brw_queryobj_get_results(struct gl_context *ctx,
 			 struct brw_query_object *query)
 {
+   struct brw_context *brw = brw_context(ctx);
    struct intel_context *intel = intel_context(ctx);
 
    int i;
@@ -135,7 +138,7 @@ brw_queryobj_get_results(struct gl_context *ctx,
     * when mapped.
     */
    if (drm_intel_bo_references(intel->batch.bo, query->bo))
-      intel_batchbuffer_flush(intel);
+      intel_batchbuffer_flush(brw);
 
    if (unlikely(intel->perf_debug)) {
       if (drm_intel_bo_busy(query->bo)) {
@@ -270,7 +273,7 @@ brw_begin_query(struct gl_context *ctx, struct gl_query_object *q)
        */
       drm_intel_bo_unreference(query->bo);
       query->bo = drm_intel_bo_alloc(intel->bufmgr, "timer query", 4096, 4096);
-      write_timestamp(intel, query->bo, 0);
+      write_timestamp(brw, query->bo, 0);
       break;
 
    case GL_ANY_SAMPLES_PASSED:
@@ -323,7 +326,7 @@ brw_end_query(struct gl_context *ctx, struct gl_query_object *q)
    switch (query->Base.Target) {
    case GL_TIME_ELAPSED_EXT:
       /* Write the final timestamp. */
-      write_timestamp(intel, query->bo, 1);
+      write_timestamp(brw, query->bo, 1);
       break;
 
    case GL_ANY_SAMPLES_PASSED:
@@ -386,6 +389,7 @@ static void brw_wait_query(struct gl_context *ctx, struct gl_query_object *q)
  */
 static void brw_check_query(struct gl_context *ctx, struct gl_query_object *q)
 {
+   struct brw_context *brw = brw_context(ctx);
    struct intel_context *intel = intel_context(ctx);
    struct brw_query_object *query = (struct brw_query_object *)q;
 
@@ -399,7 +403,7 @@ static void brw_check_query(struct gl_context *ctx, struct gl_query_object *q)
     *      the async query will return true in finite time.
     */
    if (query->bo && drm_intel_bo_references(intel->batch.bo, query->bo))
-      intel_batchbuffer_flush(intel);
+      intel_batchbuffer_flush(brw);
 
    if (query->bo == NULL || !drm_intel_bo_busy(query->bo)) {
       brw_queryobj_get_results(ctx, query);
@@ -473,7 +477,7 @@ brw_emit_query_begin(struct brw_context *brw)
 
    ensure_bo_has_space(ctx, query);
 
-   write_depth_count(intel, query->bo, query->last_index * 2);
+   write_depth_count(brw, query->bo, query->last_index * 2);
 
    brw->query.begin_emitted = true;
 }
@@ -496,7 +500,7 @@ brw_emit_query_end(struct brw_context *brw)
    if (!brw->query.begin_emitted)
       return;
 
-   write_depth_count(intel, query->bo, query->last_index * 2 + 1);
+   write_depth_count(brw, query->bo, query->last_index * 2 + 1);
 
    brw->query.begin_emitted = false;
    query->last_index++;
@@ -512,6 +516,7 @@ brw_emit_query_end(struct brw_context *brw)
 static void
 brw_query_counter(struct gl_context *ctx, struct gl_query_object *q)
 {
+   struct brw_context *brw = brw_context(ctx);
    struct intel_context *intel = intel_context(ctx);
    struct brw_query_object *query = (struct brw_query_object *) q;
 
@@ -519,7 +524,7 @@ brw_query_counter(struct gl_context *ctx, struct gl_query_object *q)
 
    drm_intel_bo_unreference(query->bo);
    query->bo = drm_intel_bo_alloc(intel->bufmgr, "timestamp query", 4096, 4096);
-   write_timestamp(intel, query->bo, 0);
+   write_timestamp(brw, query->bo, 0);
 }
 
 /**

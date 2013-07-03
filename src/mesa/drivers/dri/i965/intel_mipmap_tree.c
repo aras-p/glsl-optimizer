@@ -69,8 +69,9 @@ target_to_target(GLenum target)
  * created, based on the chip generation and the surface type.
  */
 static enum intel_msaa_layout
-compute_msaa_layout(struct intel_context *intel, gl_format format, GLenum target)
+compute_msaa_layout(struct brw_context *brw, gl_format format, GLenum target)
 {
+   struct intel_context *intel = &brw->intel;
    /* Prior to Gen7, all MSAA surfaces used IMS layout. */
    if (intel->gen < 7)
       return INTEL_MSAA_LAYOUT_IMS;
@@ -162,7 +163,7 @@ compute_msaa_layout(struct intel_context *intel, gl_format format, GLenum target
  *   by half the block width, and Y coordinates by half the block height.
  */
 void
-intel_get_non_msrt_mcs_alignment(struct intel_context *intel,
+intel_get_non_msrt_mcs_alignment(struct brw_context *brw,
                                  struct intel_mipmap_tree *mt,
                                  unsigned *width_px, unsigned *height)
 {
@@ -197,10 +198,10 @@ intel_get_non_msrt_mcs_alignment(struct intel_context *intel,
  *       64bpp, and 128bpp.
  */
 bool
-intel_is_non_msrt_mcs_buffer_supported(struct intel_context *intel,
+intel_is_non_msrt_mcs_buffer_supported(struct brw_context *brw,
                                        struct intel_mipmap_tree *mt)
 {
-   struct brw_context *brw = brw_context(&intel->ctx);
+   struct intel_context *intel = &brw->intel;
 
    /* MCS support does not exist prior to Gen7 */
    if (intel->gen < 7)
@@ -240,7 +241,7 @@ intel_is_non_msrt_mcs_buffer_supported(struct intel_context *intel,
  *        \c stencil_mt.
  */
 struct intel_mipmap_tree *
-intel_miptree_create_layout(struct intel_context *intel,
+intel_miptree_create_layout(struct brw_context *brw,
                             GLenum target,
                             gl_format format,
                             GLuint first_level,
@@ -251,6 +252,7 @@ intel_miptree_create_layout(struct intel_context *intel,
                             bool for_bo,
                             GLuint num_samples)
 {
+   struct intel_context *intel = &brw->intel;
    struct intel_mipmap_tree *mt = calloc(sizeof(*mt), 1);
    if (!mt)
       return NULL;
@@ -284,7 +286,7 @@ intel_miptree_create_layout(struct intel_context *intel,
 
    if (num_samples > 1) {
       /* Adjust width/height/depth for MSAA */
-      mt->msaa_layout = compute_msaa_layout(intel, format, mt->target);
+      mt->msaa_layout = compute_msaa_layout(brw, format, mt->target);
       if (mt->msaa_layout == INTEL_MSAA_LAYOUT_IMS) {
          /* In the Sandy Bridge PRM, volume 4, part 1, page 31, it says:
           *
@@ -368,8 +370,8 @@ intel_miptree_create_layout(struct intel_context *intel,
        _mesa_get_format_base_format(format) == GL_DEPTH_STENCIL &&
        (intel->must_use_separate_stencil ||
 	(intel->has_separate_stencil &&
-	 brw_is_hiz_depth_format(intel, format)))) {
-      mt->stencil_mt = intel_miptree_create(intel,
+	 brw_is_hiz_depth_format(brw, format)))) {
+      mt->stencil_mt = intel_miptree_create(brw,
                                             mt->target,
                                             MESA_FORMAT_S8,
                                             mt->first_level,
@@ -399,7 +401,7 @@ intel_miptree_create_layout(struct intel_context *intel,
       }
    }
 
-   brw_miptree_layout(intel, mt);
+   brw_miptree_layout(brw, mt);
 
    return mt;
 }
@@ -408,14 +410,14 @@ intel_miptree_create_layout(struct intel_context *intel,
  * \brief Helper function for intel_miptree_create().
  */
 static uint32_t
-intel_miptree_choose_tiling(struct intel_context *intel,
+intel_miptree_choose_tiling(struct brw_context *brw,
                             gl_format format,
                             uint32_t width0,
                             uint32_t num_samples,
                             enum intel_miptree_tiling_mode requested,
                             struct intel_mipmap_tree *mt)
 {
-
+   struct intel_context *intel = &brw->intel;
    if (format == MESA_FORMAT_S8) {
       /* The stencil buffer is W tiled. However, we request from the kernel a
        * non-tiled buffer because the GTT is incapable of W fencing.
@@ -476,7 +478,7 @@ intel_miptree_choose_tiling(struct intel_context *intel,
 }
 
 struct intel_mipmap_tree *
-intel_miptree_create(struct intel_context *intel,
+intel_miptree_create(struct brw_context *brw,
 		     GLenum target,
 		     gl_format format,
 		     GLuint first_level,
@@ -488,6 +490,7 @@ intel_miptree_create(struct intel_context *intel,
                      GLuint num_samples,
                      enum intel_miptree_tiling_mode requested_tiling)
 {
+   struct intel_context *intel = &brw->intel;
    struct intel_mipmap_tree *mt;
    gl_format tex_format = format;
    gl_format etc_format = MESA_FORMAT_NONE;
@@ -530,7 +533,7 @@ intel_miptree_create(struct intel_context *intel,
 
    etc_format = (format != tex_format) ? tex_format : MESA_FORMAT_NONE;
 
-   mt = intel_miptree_create_layout(intel, target, format,
+   mt = intel_miptree_create_layout(brw, target, format,
 				      first_level, last_level, width0,
 				      height0, depth0,
 				      false, num_samples);
@@ -551,7 +554,7 @@ intel_miptree_create(struct intel_context *intel,
       total_height = ALIGN(total_height, 64);
    }
 
-   uint32_t tiling = intel_miptree_choose_tiling(intel, format, width0,
+   uint32_t tiling = intel_miptree_choose_tiling(brw, format, width0,
                                                  num_samples, requested_tiling,
                                                  mt);
    bool y_or_x = tiling == (I915_TILING_Y | I915_TILING_X);
@@ -593,14 +596,14 @@ intel_miptree_create(struct intel_context *intel,
     * Allocation of the MCS miptree will be deferred until the first fast
     * clear actually occurs.
     */
-   if (intel_is_non_msrt_mcs_buffer_supported(intel, mt))
+   if (intel_is_non_msrt_mcs_buffer_supported(brw, mt))
       mt->mcs_state = INTEL_MCS_STATE_RESOLVED;
 
    return mt;
 }
 
 struct intel_mipmap_tree *
-intel_miptree_create_for_bo(struct intel_context *intel,
+intel_miptree_create_for_bo(struct brw_context *brw,
                             drm_intel_bo *bo,
                             gl_format format,
                             uint32_t offset,
@@ -626,7 +629,7 @@ intel_miptree_create_for_bo(struct intel_context *intel,
     */
    assert(pitch >= 0);
 
-   mt = intel_miptree_create_layout(intel, GL_TEXTURE_2D, format,
+   mt = intel_miptree_create_layout(brw, GL_TEXTURE_2D, format,
                                     0, 0,
                                     width, height, 1,
                                     true, 0 /* num_samples */);
@@ -657,12 +660,13 @@ intel_miptree_create_for_bo(struct intel_context *intel,
  * singlesample miptree is embedded as a child.
  */
 struct intel_mipmap_tree*
-intel_miptree_create_for_dri2_buffer(struct intel_context *intel,
+intel_miptree_create_for_dri2_buffer(struct brw_context *brw,
                                      unsigned dri_attachment,
                                      gl_format format,
                                      uint32_t num_samples,
                                      struct intel_region *region)
 {
+   struct intel_context *intel = &brw->intel;
    struct intel_mipmap_tree *singlesample_mt = NULL;
    struct intel_mipmap_tree *multisample_mt = NULL;
 
@@ -675,7 +679,7 @@ intel_miptree_create_for_dri2_buffer(struct intel_context *intel,
    assert(_mesa_get_format_base_format(format) == GL_RGB ||
           _mesa_get_format_base_format(format) == GL_RGBA);
 
-   singlesample_mt = intel_miptree_create_for_bo(intel,
+   singlesample_mt = intel_miptree_create_for_bo(brw,
                                                  region->bo,
                                                  format,
                                                  0,
@@ -692,13 +696,13 @@ intel_miptree_create_for_dri2_buffer(struct intel_context *intel,
     * Allocation of the MCS miptree will be deferred until the first fast
     * clear actually occurs.
     */
-   if (intel_is_non_msrt_mcs_buffer_supported(intel, singlesample_mt))
+   if (intel_is_non_msrt_mcs_buffer_supported(brw, singlesample_mt))
       singlesample_mt->mcs_state = INTEL_MCS_STATE_RESOLVED;
 
    if (num_samples == 0)
       return singlesample_mt;
 
-   multisample_mt = intel_miptree_create_for_renderbuffer(intel,
+   multisample_mt = intel_miptree_create_for_renderbuffer(brw,
                                                           format,
                                                           region->width,
                                                           region->height,
@@ -714,14 +718,14 @@ intel_miptree_create_for_dri2_buffer(struct intel_context *intel,
    if (intel->is_front_buffer_rendering &&
        (dri_attachment == __DRI_BUFFER_FRONT_LEFT ||
         dri_attachment == __DRI_BUFFER_FAKE_FRONT_LEFT)) {
-      intel_miptree_upsample(intel, multisample_mt);
+      intel_miptree_upsample(brw, multisample_mt);
    }
 
    return multisample_mt;
 }
 
 struct intel_mipmap_tree*
-intel_miptree_create_for_renderbuffer(struct intel_context *intel,
+intel_miptree_create_for_renderbuffer(struct brw_context *brw,
                                       gl_format format,
                                       uint32_t width,
                                       uint32_t height,
@@ -731,20 +735,20 @@ intel_miptree_create_for_renderbuffer(struct intel_context *intel,
    uint32_t depth = 1;
    bool ok;
 
-   mt = intel_miptree_create(intel, GL_TEXTURE_2D, format, 0, 0,
+   mt = intel_miptree_create(brw, GL_TEXTURE_2D, format, 0, 0,
 			     width, height, depth, true, num_samples,
                              INTEL_MIPTREE_TILING_ANY);
    if (!mt)
       goto fail;
 
-   if (brw_is_hiz_depth_format(intel, format)) {
-      ok = intel_miptree_alloc_hiz(intel, mt);
+   if (brw_is_hiz_depth_format(brw, format)) {
+      ok = intel_miptree_alloc_hiz(brw, mt);
       if (!ok)
          goto fail;
    }
 
    if (mt->msaa_layout == INTEL_MSAA_LAYOUT_CMS) {
-      ok = intel_miptree_alloc_mcs(intel, mt, num_samples);
+      ok = intel_miptree_alloc_mcs(brw, mt, num_samples);
       if (!ok)
          goto fail;
    }
@@ -971,7 +975,7 @@ intel_miptree_get_tile_offsets(struct intel_mipmap_tree *mt,
 }
 
 static void
-intel_miptree_copy_slice_sw(struct intel_context *intel,
+intel_miptree_copy_slice_sw(struct brw_context *brw,
                             struct intel_mipmap_tree *dst_mt,
                             struct intel_mipmap_tree *src_mt,
                             int level,
@@ -983,14 +987,14 @@ intel_miptree_copy_slice_sw(struct intel_context *intel,
    int src_stride, dst_stride;
    int cpp = dst_mt->cpp;
 
-   intel_miptree_map(intel, src_mt,
+   intel_miptree_map(brw, src_mt,
                      level, slice,
                      0, 0,
                      width, height,
                      GL_MAP_READ_BIT | BRW_MAP_DIRECT_BIT,
                      &src, &src_stride);
 
-   intel_miptree_map(intel, dst_mt,
+   intel_miptree_map(brw, dst_mt,
                      level, slice,
                      0, 0,
                      width, height,
@@ -1017,8 +1021,8 @@ intel_miptree_copy_slice_sw(struct intel_context *intel,
       }
    }
 
-   intel_miptree_unmap(intel, dst_mt, level, slice);
-   intel_miptree_unmap(intel, src_mt, level, slice);
+   intel_miptree_unmap(brw, dst_mt, level, slice);
+   intel_miptree_unmap(brw, src_mt, level, slice);
 
    /* Don't forget to copy the stencil data over, too.  We could have skipped
     * passing BRW_MAP_DIRECT_BIT, but that would have meant intel_miptree_map
@@ -1027,13 +1031,13 @@ intel_miptree_copy_slice_sw(struct intel_context *intel,
     */
    if (dst_mt->stencil_mt) {
       assert(src_mt->stencil_mt);
-      intel_miptree_copy_slice_sw(intel, dst_mt->stencil_mt, src_mt->stencil_mt,
+      intel_miptree_copy_slice_sw(brw, dst_mt->stencil_mt, src_mt->stencil_mt,
                                   level, slice, width, height);
    }
 }
 
 static void
-intel_miptree_copy_slice(struct intel_context *intel,
+intel_miptree_copy_slice(struct brw_context *brw,
 			 struct intel_mipmap_tree *dst_mt,
 			 struct intel_mipmap_tree *src_mt,
 			 int level,
@@ -1041,6 +1045,7 @@ intel_miptree_copy_slice(struct intel_context *intel,
 			 int depth)
 
 {
+   struct intel_context *intel = &brw->intel;
    gl_format format = src_mt->format;
    uint32_t width = src_mt->level[level].width;
    uint32_t height = src_mt->level[level].height;
@@ -1064,7 +1069,7 @@ intel_miptree_copy_slice(struct intel_context *intel,
     * stencil's W tiling in the blitter.
     */
    if (src_mt->stencil_mt) {
-      intel_miptree_copy_slice_sw(intel,
+      intel_miptree_copy_slice_sw(brw,
                                   dst_mt, src_mt,
                                   level, slice,
                                   width, height);
@@ -1082,14 +1087,14 @@ intel_miptree_copy_slice(struct intel_context *intel,
        dst_mt, dst_x, dst_y, dst_mt->region->pitch,
        width, height);
 
-   if (!intel_miptree_blit(intel,
+   if (!intel_miptree_blit(brw,
                            src_mt, level, slice, 0, 0, false,
                            dst_mt, level, slice, 0, 0, false,
                            width, height, GL_COPY)) {
       perf_debug("miptree validate blit for %s failed\n",
                  _mesa_get_format_name(format));
 
-      intel_miptree_copy_slice_sw(intel, dst_mt, src_mt, level, slice,
+      intel_miptree_copy_slice_sw(brw, dst_mt, src_mt, level, slice,
                                   width, height);
    }
 }
@@ -1103,7 +1108,7 @@ intel_miptree_copy_slice(struct intel_context *intel,
  * is set to true if we're about to clear the image).
  */
 void
-intel_miptree_copy_teximage(struct intel_context *intel,
+intel_miptree_copy_teximage(struct brw_context *brw,
 			    struct intel_texture_image *intelImage,
 			    struct intel_mipmap_tree *dst_mt,
                             bool invalidate)
@@ -1117,7 +1122,7 @@ intel_miptree_copy_teximage(struct intel_context *intel,
 
    if (!invalidate) {
       for (int slice = 0; slice < depth; slice++) {
-         intel_miptree_copy_slice(intel, dst_mt, src_mt, level, face, slice);
+         intel_miptree_copy_slice(brw, dst_mt, src_mt, level, face, slice);
       }
    }
 
@@ -1126,10 +1131,11 @@ intel_miptree_copy_teximage(struct intel_context *intel,
 }
 
 bool
-intel_miptree_alloc_mcs(struct intel_context *intel,
+intel_miptree_alloc_mcs(struct brw_context *brw,
                         struct intel_mipmap_tree *mt,
                         GLuint num_samples)
 {
+   struct intel_context *intel = &brw->intel;
    assert(intel->gen >= 7); /* MCS only used on Gen7+ */
    assert(mt->mcs_mt == NULL);
 
@@ -1162,7 +1168,7 @@ intel_miptree_alloc_mcs(struct intel_context *intel,
     *     "The MCS surface must be stored as Tile Y."
     */
    mt->mcs_state = INTEL_MCS_STATE_MSAA;
-   mt->mcs_mt = intel_miptree_create(intel,
+   mt->mcs_mt = intel_miptree_create(brw,
                                      mt->target,
                                      format,
                                      mt->first_level,
@@ -1184,16 +1190,16 @@ intel_miptree_alloc_mcs(struct intel_context *intel,
     *
     * Note: the clear value for MCS buffers is all 1's, so we memset to 0xff.
     */
-   void *data = intel_miptree_map_raw(intel, mt->mcs_mt);
+   void *data = intel_miptree_map_raw(brw, mt->mcs_mt);
    memset(data, 0xff, mt->mcs_mt->region->bo->size);
-   intel_miptree_unmap_raw(intel, mt->mcs_mt);
+   intel_miptree_unmap_raw(brw, mt->mcs_mt);
 
    return mt->mcs_mt;
 }
 
 
 bool
-intel_miptree_alloc_non_msrt_mcs(struct intel_context *intel,
+intel_miptree_alloc_non_msrt_mcs(struct brw_context *brw,
                                  struct intel_mipmap_tree *mt)
 {
    assert(mt->mcs_mt == NULL);
@@ -1210,7 +1216,7 @@ intel_miptree_alloc_non_msrt_mcs(struct intel_context *intel,
    const gl_format format = MESA_FORMAT_R_UINT32;
    unsigned block_width_px;
    unsigned block_height;
-   intel_get_non_msrt_mcs_alignment(intel, mt, &block_width_px, &block_height);
+   intel_get_non_msrt_mcs_alignment(brw, mt, &block_width_px, &block_height);
    unsigned width_divisor = block_width_px * 4;
    unsigned height_divisor = block_height * 8;
    unsigned mcs_width =
@@ -1218,7 +1224,7 @@ intel_miptree_alloc_non_msrt_mcs(struct intel_context *intel,
    unsigned mcs_height =
       ALIGN(mt->logical_height0, height_divisor) / height_divisor;
    assert(mt->logical_depth0 == 1);
-   mt->mcs_mt = intel_miptree_create(intel,
+   mt->mcs_mt = intel_miptree_create(brw,
                                      mt->target,
                                      format,
                                      mt->first_level,
@@ -1240,11 +1246,12 @@ intel_miptree_alloc_non_msrt_mcs(struct intel_context *intel,
  * \c has_hiz was set.
  */
 static bool
-intel_miptree_slice_enable_hiz(struct intel_context *intel,
+intel_miptree_slice_enable_hiz(struct brw_context *brw,
                                struct intel_mipmap_tree *mt,
                                uint32_t level,
                                uint32_t layer)
 {
+   struct intel_context *intel = &brw->intel;
    assert(mt->hiz_mt);
 
    if (intel->is_haswell) {
@@ -1282,11 +1289,11 @@ intel_miptree_slice_enable_hiz(struct intel_context *intel,
 
 
 bool
-intel_miptree_alloc_hiz(struct intel_context *intel,
+intel_miptree_alloc_hiz(struct brw_context *brw,
 			struct intel_mipmap_tree *mt)
 {
    assert(mt->hiz_mt == NULL);
-   mt->hiz_mt = intel_miptree_create(intel,
+   mt->hiz_mt = intel_miptree_create(brw,
                                      mt->target,
                                      mt->format,
                                      mt->first_level,
@@ -1305,7 +1312,7 @@ intel_miptree_alloc_hiz(struct intel_context *intel,
    struct intel_resolve_map *head = &mt->hiz_map;
    for (int level = mt->first_level; level <= mt->last_level; ++level) {
       for (int layer = 0; layer < mt->level[level].depth; ++layer) {
-         if (!intel_miptree_slice_enable_hiz(intel, mt, level, layer))
+         if (!intel_miptree_slice_enable_hiz(brw, mt, level, layer))
             continue;
 
 	 head->next = malloc(sizeof(*head->next));
@@ -1360,7 +1367,7 @@ intel_miptree_slice_set_needs_depth_resolve(struct intel_mipmap_tree *mt,
 }
 
 static bool
-intel_miptree_slice_resolve(struct intel_context *intel,
+intel_miptree_slice_resolve(struct brw_context *brw,
 			    struct intel_mipmap_tree *mt,
 			    uint32_t level,
 			    uint32_t layer,
@@ -1374,33 +1381,33 @@ intel_miptree_slice_resolve(struct intel_context *intel,
    if (!item || item->need != need)
       return false;
 
-   intel_hiz_exec(intel, mt, level, layer, need);
+   intel_hiz_exec(brw, mt, level, layer, need);
    intel_resolve_map_remove(item);
    return true;
 }
 
 bool
-intel_miptree_slice_resolve_hiz(struct intel_context *intel,
+intel_miptree_slice_resolve_hiz(struct brw_context *brw,
 				struct intel_mipmap_tree *mt,
 				uint32_t level,
 				uint32_t layer)
 {
-   return intel_miptree_slice_resolve(intel, mt, level, layer,
+   return intel_miptree_slice_resolve(brw, mt, level, layer,
 				      GEN6_HIZ_OP_HIZ_RESOLVE);
 }
 
 bool
-intel_miptree_slice_resolve_depth(struct intel_context *intel,
+intel_miptree_slice_resolve_depth(struct brw_context *brw,
 				  struct intel_mipmap_tree *mt,
 				  uint32_t level,
 				  uint32_t layer)
 {
-   return intel_miptree_slice_resolve(intel, mt, level, layer,
+   return intel_miptree_slice_resolve(brw, mt, level, layer,
 				      GEN6_HIZ_OP_DEPTH_RESOLVE);
 }
 
 static bool
-intel_miptree_all_slices_resolve(struct intel_context *intel,
+intel_miptree_all_slices_resolve(struct brw_context *brw,
 				 struct intel_mipmap_tree *mt,
 				 enum gen6_hiz_op need)
 {
@@ -1412,7 +1419,7 @@ intel_miptree_all_slices_resolve(struct intel_context *intel,
       if (i->need != need)
 	 continue;
 
-      intel_hiz_exec(intel, mt, i->level, i->layer, need);
+      intel_hiz_exec(brw, mt, i->level, i->layer, need);
       intel_resolve_map_remove(i);
       did_resolve = true;
    }
@@ -1421,24 +1428,24 @@ intel_miptree_all_slices_resolve(struct intel_context *intel,
 }
 
 bool
-intel_miptree_all_slices_resolve_hiz(struct intel_context *intel,
+intel_miptree_all_slices_resolve_hiz(struct brw_context *brw,
 				     struct intel_mipmap_tree *mt)
 {
-   return intel_miptree_all_slices_resolve(intel, mt,
+   return intel_miptree_all_slices_resolve(brw, mt,
 					   GEN6_HIZ_OP_HIZ_RESOLVE);
 }
 
 bool
-intel_miptree_all_slices_resolve_depth(struct intel_context *intel,
+intel_miptree_all_slices_resolve_depth(struct brw_context *brw,
 				       struct intel_mipmap_tree *mt)
 {
-   return intel_miptree_all_slices_resolve(intel, mt,
+   return intel_miptree_all_slices_resolve(brw, mt,
 					   GEN6_HIZ_OP_DEPTH_RESOLVE);
 }
 
 
 void
-intel_miptree_resolve_color(struct intel_context *intel,
+intel_miptree_resolve_color(struct brw_context *brw,
                             struct intel_mipmap_tree *mt)
 {
    switch (mt->mcs_state) {
@@ -1449,7 +1456,7 @@ intel_miptree_resolve_color(struct intel_context *intel,
       break;
    case INTEL_MCS_STATE_UNRESOLVED:
    case INTEL_MCS_STATE_CLEAR:
-      brw_blorp_resolve_color(intel, mt);
+      brw_blorp_resolve_color(brw, mt);
       break;
    }
 }
@@ -1465,7 +1472,7 @@ intel_miptree_resolve_color(struct intel_context *intel,
  * future.
  */
 void
-intel_miptree_make_shareable(struct intel_context *intel,
+intel_miptree_make_shareable(struct brw_context *brw,
                              struct intel_mipmap_tree *mt)
 {
    /* MCS buffers are also used for multisample buffers, but we can't resolve
@@ -1476,7 +1483,7 @@ intel_miptree_make_shareable(struct intel_context *intel,
    assert(mt->msaa_layout == INTEL_MSAA_LAYOUT_NONE);
 
    if (mt->mcs_mt) {
-      intel_miptree_resolve_color(intel, mt);
+      intel_miptree_resolve_color(brw, mt);
       intel_miptree_release(&mt->mcs_mt);
       mt->mcs_state = INTEL_MCS_STATE_NONE;
    }
@@ -1540,7 +1547,7 @@ intel_offset_S8(uint32_t stride, uint32_t x, uint32_t y, bool swizzled)
 }
 
 static void
-intel_miptree_updownsample(struct intel_context *intel,
+intel_miptree_updownsample(struct brw_context *brw,
                            struct intel_mipmap_tree *src,
                            struct intel_mipmap_tree *dst,
                            unsigned width,
@@ -1551,7 +1558,7 @@ intel_miptree_updownsample(struct intel_context *intel,
    int dst_x0 = 0;
    int dst_y0 = 0;
 
-   brw_blorp_blit_miptrees(intel,
+   brw_blorp_blit_miptrees(brw,
                            src, 0 /* level */, 0 /* layer */,
                            dst, 0 /* level */, 0 /* layer */,
                            src_x0, src_y0,
@@ -1561,7 +1568,7 @@ intel_miptree_updownsample(struct intel_context *intel,
                            false, false /*mirror x, y*/);
 
    if (src->stencil_mt) {
-      brw_blorp_blit_miptrees(intel,
+      brw_blorp_blit_miptrees(brw,
                               src->stencil_mt, 0 /* level */, 0 /* layer */,
                               dst->stencil_mt, 0 /* level */, 0 /* layer */,
                               src_x0, src_y0,
@@ -1586,7 +1593,7 @@ assert_is_flat(struct intel_mipmap_tree *mt)
  * If the miptree needs no downsample, then skip.
  */
 void
-intel_miptree_downsample(struct intel_context *intel,
+intel_miptree_downsample(struct brw_context *brw,
                          struct intel_mipmap_tree *mt)
 {
    /* Only flat, renderbuffer-like miptrees are supported. */
@@ -1594,7 +1601,7 @@ intel_miptree_downsample(struct intel_context *intel,
 
    if (!mt->need_downsample)
       return;
-   intel_miptree_updownsample(intel,
+   intel_miptree_updownsample(brw,
                               mt, mt->singlesample_mt,
                               mt->logical_width0,
                               mt->logical_height0);
@@ -1607,26 +1614,28 @@ intel_miptree_downsample(struct intel_context *intel,
  * The upsample is done unconditionally.
  */
 void
-intel_miptree_upsample(struct intel_context *intel,
+intel_miptree_upsample(struct brw_context *brw,
                        struct intel_mipmap_tree *mt)
 {
    /* Only flat, renderbuffer-like miptrees are supported. */
    assert_is_flat(mt);
    assert(!mt->need_downsample);
 
-   intel_miptree_updownsample(intel,
+   intel_miptree_updownsample(brw,
                               mt->singlesample_mt, mt,
                               mt->logical_width0,
                               mt->logical_height0);
 }
 
 void *
-intel_miptree_map_raw(struct intel_context *intel, struct intel_mipmap_tree *mt)
+intel_miptree_map_raw(struct brw_context *brw, struct intel_mipmap_tree *mt)
 {
+   struct intel_context *intel = &brw->intel;
+   struct gl_context *ctx = &intel->ctx;
    /* CPU accesses to color buffers don't understand fast color clears, so
     * resolve any pending fast color clears before we map.
     */
-   intel_miptree_resolve_color(intel, mt);
+   intel_miptree_resolve_color(brw, mt);
 
    drm_intel_bo *bo = mt->region->bo;
 
@@ -1636,7 +1645,7 @@ intel_miptree_map_raw(struct intel_context *intel, struct intel_mipmap_tree *mt)
       }
    }
 
-   intel_flush(&intel->ctx);
+   intel_flush(ctx);
 
    if (mt->region->tiling != I915_TILING_NONE)
       drm_intel_gem_bo_map_gtt(bo);
@@ -1647,14 +1656,14 @@ intel_miptree_map_raw(struct intel_context *intel, struct intel_mipmap_tree *mt)
 }
 
 void
-intel_miptree_unmap_raw(struct intel_context *intel,
+intel_miptree_unmap_raw(struct brw_context *brw,
                         struct intel_mipmap_tree *mt)
 {
    drm_intel_bo_unmap(mt->region->bo);
 }
 
 static void
-intel_miptree_map_gtt(struct intel_context *intel,
+intel_miptree_map_gtt(struct brw_context *brw,
 		      struct intel_mipmap_tree *mt,
 		      struct intel_miptree_map *map,
 		      unsigned int level, unsigned int slice)
@@ -1673,7 +1682,7 @@ intel_miptree_map_gtt(struct intel_context *intel,
    assert(y % bh == 0);
    y /= bh;
 
-   base = intel_miptree_map_raw(intel, mt) + mt->offset;
+   base = intel_miptree_map_raw(brw, mt) + mt->offset;
 
    if (base == NULL)
       map->ptr = NULL;
@@ -1696,22 +1705,22 @@ intel_miptree_map_gtt(struct intel_context *intel,
 }
 
 static void
-intel_miptree_unmap_gtt(struct intel_context *intel,
+intel_miptree_unmap_gtt(struct brw_context *brw,
 			struct intel_mipmap_tree *mt,
 			struct intel_miptree_map *map,
 			unsigned int level,
 			unsigned int slice)
 {
-   intel_miptree_unmap_raw(intel, mt);
+   intel_miptree_unmap_raw(brw, mt);
 }
 
 static void
-intel_miptree_map_blit(struct intel_context *intel,
+intel_miptree_map_blit(struct brw_context *brw,
 		       struct intel_mipmap_tree *mt,
 		       struct intel_miptree_map *map,
 		       unsigned int level, unsigned int slice)
 {
-   map->mt = intel_miptree_create(intel, GL_TEXTURE_2D, mt->format,
+   map->mt = intel_miptree_create(brw, GL_TEXTURE_2D, mt->format,
                                   0, 0,
                                   map->w, map->h, 1,
                                   false, 0,
@@ -1722,7 +1731,7 @@ intel_miptree_map_blit(struct intel_context *intel,
    }
    map->stride = map->mt->region->pitch;
 
-   if (!intel_miptree_blit(intel,
+   if (!intel_miptree_blit(brw,
                            mt, level, slice,
                            map->x, map->y, false,
                            map->mt, 0, 0,
@@ -1732,8 +1741,8 @@ intel_miptree_map_blit(struct intel_context *intel,
       goto fail;
    }
 
-   intel_batchbuffer_flush(intel);
-   map->ptr = intel_miptree_map_raw(intel, map->mt);
+   intel_batchbuffer_flush(brw);
+   map->ptr = intel_miptree_map_raw(brw, map->mt);
 
    DBG("%s: %d,%d %dx%d from mt %p (%s) %d,%d = %p/%d\n", __FUNCTION__,
        map->x, map->y, map->w, map->h,
@@ -1749,18 +1758,19 @@ fail:
 }
 
 static void
-intel_miptree_unmap_blit(struct intel_context *intel,
+intel_miptree_unmap_blit(struct brw_context *brw,
 			 struct intel_mipmap_tree *mt,
 			 struct intel_miptree_map *map,
 			 unsigned int level,
 			 unsigned int slice)
 {
+   struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &intel->ctx;
 
-   intel_miptree_unmap_raw(intel, map->mt);
+   intel_miptree_unmap_raw(brw, map->mt);
 
    if (map->mode & GL_MAP_WRITE_BIT) {
-      bool ok = intel_miptree_blit(intel,
+      bool ok = intel_miptree_blit(brw,
                                    map->mt, 0, 0,
                                    0, 0, false,
                                    mt, level, slice,
@@ -1773,11 +1783,12 @@ intel_miptree_unmap_blit(struct intel_context *intel,
 }
 
 static void
-intel_miptree_map_s8(struct intel_context *intel,
+intel_miptree_map_s8(struct brw_context *brw,
 		     struct intel_mipmap_tree *mt,
 		     struct intel_miptree_map *map,
 		     unsigned int level, unsigned int slice)
 {
+   struct intel_context *intel = &brw->intel;
    map->stride = map->w;
    map->buffer = map->ptr = malloc(map->stride * map->h);
    if (!map->buffer)
@@ -1790,7 +1801,7 @@ intel_miptree_map_s8(struct intel_context *intel,
     */
    if (!(map->mode & GL_MAP_INVALIDATE_RANGE_BIT)) {
       uint8_t *untiled_s8_map = map->ptr;
-      uint8_t *tiled_s8_map = intel_miptree_map_raw(intel, mt);
+      uint8_t *tiled_s8_map = intel_miptree_map_raw(brw, mt);
       unsigned int image_x, image_y;
 
       intel_miptree_get_image_offset(mt, level, slice, &image_x, &image_y);
@@ -1805,7 +1816,7 @@ intel_miptree_map_s8(struct intel_context *intel,
 	 }
       }
 
-      intel_miptree_unmap_raw(intel, mt);
+      intel_miptree_unmap_raw(brw, mt);
 
       DBG("%s: %d,%d %dx%d from mt %p %d,%d = %p/%d\n", __FUNCTION__,
 	  map->x, map->y, map->w, map->h,
@@ -1818,16 +1829,17 @@ intel_miptree_map_s8(struct intel_context *intel,
 }
 
 static void
-intel_miptree_unmap_s8(struct intel_context *intel,
+intel_miptree_unmap_s8(struct brw_context *brw,
 		       struct intel_mipmap_tree *mt,
 		       struct intel_miptree_map *map,
 		       unsigned int level,
 		       unsigned int slice)
 {
+   struct intel_context *intel = &brw->intel;
    if (map->mode & GL_MAP_WRITE_BIT) {
       unsigned int image_x, image_y;
       uint8_t *untiled_s8_map = map->ptr;
-      uint8_t *tiled_s8_map = intel_miptree_map_raw(intel, mt);
+      uint8_t *tiled_s8_map = intel_miptree_map_raw(brw, mt);
 
       intel_miptree_get_image_offset(mt, level, slice, &image_x, &image_y);
 
@@ -1841,14 +1853,14 @@ intel_miptree_unmap_s8(struct intel_context *intel,
 	 }
       }
 
-      intel_miptree_unmap_raw(intel, mt);
+      intel_miptree_unmap_raw(brw, mt);
    }
 
    free(map->buffer);
 }
 
 static void
-intel_miptree_map_etc(struct intel_context *intel,
+intel_miptree_map_etc(struct brw_context *brw,
                       struct intel_mipmap_tree *mt,
                       struct intel_miptree_map *map,
                       unsigned int level,
@@ -1869,7 +1881,7 @@ intel_miptree_map_etc(struct intel_context *intel,
 }
 
 static void
-intel_miptree_unmap_etc(struct intel_context *intel,
+intel_miptree_unmap_etc(struct brw_context *brw,
                         struct intel_mipmap_tree *mt,
                         struct intel_miptree_map *map,
                         unsigned int level,
@@ -1882,7 +1894,7 @@ intel_miptree_unmap_etc(struct intel_context *intel,
    image_x += map->x;
    image_y += map->y;
 
-   uint8_t *dst = intel_miptree_map_raw(intel, mt)
+   uint8_t *dst = intel_miptree_map_raw(brw, mt)
                 + image_y * mt->region->pitch
                 + image_x * mt->region->cpp;
 
@@ -1895,7 +1907,7 @@ intel_miptree_unmap_etc(struct intel_context *intel,
                                map->ptr, map->stride,
                                map->w, map->h, mt->etc_format);
 
-   intel_miptree_unmap_raw(intel, mt);
+   intel_miptree_unmap_raw(brw, mt);
    free(map->buffer);
 }
 
@@ -1911,11 +1923,12 @@ intel_miptree_unmap_etc(struct intel_context *intel,
  * copying the data between the actual backing store and the temporary.
  */
 static void
-intel_miptree_map_depthstencil(struct intel_context *intel,
+intel_miptree_map_depthstencil(struct brw_context *brw,
 			       struct intel_mipmap_tree *mt,
 			       struct intel_miptree_map *map,
 			       unsigned int level, unsigned int slice)
 {
+   struct intel_context *intel = &brw->intel;
    struct intel_mipmap_tree *z_mt = mt;
    struct intel_mipmap_tree *s_mt = mt->stencil_mt;
    bool map_z32f_x24s8 = mt->format == MESA_FORMAT_Z32_FLOAT;
@@ -1933,8 +1946,8 @@ intel_miptree_map_depthstencil(struct intel_context *intel,
     */
    if (!(map->mode & GL_MAP_INVALIDATE_RANGE_BIT)) {
       uint32_t *packed_map = map->ptr;
-      uint8_t *s_map = intel_miptree_map_raw(intel, s_mt);
-      uint32_t *z_map = intel_miptree_map_raw(intel, z_mt);
+      uint8_t *s_map = intel_miptree_map_raw(brw, s_mt);
+      uint32_t *z_map = intel_miptree_map_raw(brw, z_mt);
       unsigned int s_image_x, s_image_y;
       unsigned int z_image_x, z_image_y;
 
@@ -1965,8 +1978,8 @@ intel_miptree_map_depthstencil(struct intel_context *intel,
 	 }
       }
 
-      intel_miptree_unmap_raw(intel, s_mt);
-      intel_miptree_unmap_raw(intel, z_mt);
+      intel_miptree_unmap_raw(brw, s_mt);
+      intel_miptree_unmap_raw(brw, z_mt);
 
       DBG("%s: %d,%d %dx%d from z mt %p %d,%d, s mt %p %d,%d = %p/%d\n",
 	  __FUNCTION__,
@@ -1982,20 +1995,21 @@ intel_miptree_map_depthstencil(struct intel_context *intel,
 }
 
 static void
-intel_miptree_unmap_depthstencil(struct intel_context *intel,
+intel_miptree_unmap_depthstencil(struct brw_context *brw,
 				 struct intel_mipmap_tree *mt,
 				 struct intel_miptree_map *map,
 				 unsigned int level,
 				 unsigned int slice)
 {
+   struct intel_context *intel = &brw->intel;
    struct intel_mipmap_tree *z_mt = mt;
    struct intel_mipmap_tree *s_mt = mt->stencil_mt;
    bool map_z32f_x24s8 = mt->format == MESA_FORMAT_Z32_FLOAT;
 
    if (map->mode & GL_MAP_WRITE_BIT) {
       uint32_t *packed_map = map->ptr;
-      uint8_t *s_map = intel_miptree_map_raw(intel, s_mt);
-      uint32_t *z_map = intel_miptree_map_raw(intel, z_mt);
+      uint8_t *s_map = intel_miptree_map_raw(brw, s_mt);
+      uint32_t *z_map = intel_miptree_map_raw(brw, z_mt);
       unsigned int s_image_x, s_image_y;
       unsigned int z_image_x, z_image_y;
 
@@ -2025,8 +2039,8 @@ intel_miptree_unmap_depthstencil(struct intel_context *intel,
 	 }
       }
 
-      intel_miptree_unmap_raw(intel, s_mt);
-      intel_miptree_unmap_raw(intel, z_mt);
+      intel_miptree_unmap_raw(brw, s_mt);
+      intel_miptree_unmap_raw(brw, z_mt);
 
       DBG("%s: %d,%d %dx%d from z mt %p (%s) %d,%d, s mt %p %d,%d = %p/%d\n",
 	  __FUNCTION__,
@@ -2087,7 +2101,7 @@ intel_miptree_release_map(struct intel_mipmap_tree *mt,
 }
 
 static void
-intel_miptree_map_singlesample(struct intel_context *intel,
+intel_miptree_map_singlesample(struct brw_context *brw,
                                struct intel_mipmap_tree *mt,
                                unsigned int level,
                                unsigned int slice,
@@ -2099,6 +2113,7 @@ intel_miptree_map_singlesample(struct intel_context *intel,
                                void **out_ptr,
                                int *out_stride)
 {
+   struct intel_context *intel = &brw->intel;
    struct intel_miptree_map *map;
 
    assert(mt->num_samples <= 1);
@@ -2110,18 +2125,18 @@ intel_miptree_map_singlesample(struct intel_context *intel,
       return;
    }
 
-   intel_miptree_slice_resolve_depth(intel, mt, level, slice);
+   intel_miptree_slice_resolve_depth(brw, mt, level, slice);
    if (map->mode & GL_MAP_WRITE_BIT) {
       intel_miptree_slice_set_needs_hiz_resolve(mt, level, slice);
    }
 
    if (mt->format == MESA_FORMAT_S8) {
-      intel_miptree_map_s8(intel, mt, map, level, slice);
+      intel_miptree_map_s8(brw, mt, map, level, slice);
    } else if (mt->etc_format != MESA_FORMAT_NONE &&
               !(mode & BRW_MAP_DIRECT_BIT)) {
-      intel_miptree_map_etc(intel, mt, map, level, slice);
+      intel_miptree_map_etc(brw, mt, map, level, slice);
    } else if (mt->stencil_mt && !(mode & BRW_MAP_DIRECT_BIT)) {
-      intel_miptree_map_depthstencil(intel, mt, map, level, slice);
+      intel_miptree_map_depthstencil(brw, mt, map, level, slice);
    }
    /* See intel_miptree_blit() for details on the 32k pitch limit. */
    else if (intel->has_llc &&
@@ -2130,13 +2145,13 @@ intel_miptree_map_singlesample(struct intel_context *intel,
             (mt->region->tiling == I915_TILING_X ||
              (intel->gen >= 6 && mt->region->tiling == I915_TILING_Y)) &&
             mt->region->pitch < 32768) {
-      intel_miptree_map_blit(intel, mt, map, level, slice);
+      intel_miptree_map_blit(brw, mt, map, level, slice);
    } else if (mt->region->tiling != I915_TILING_NONE &&
               mt->region->bo->size >= intel->max_gtt_map_object_size) {
       assert(mt->region->pitch < 32768);
-      intel_miptree_map_blit(intel, mt, map, level, slice);
+      intel_miptree_map_blit(brw, mt, map, level, slice);
    } else {
-      intel_miptree_map_gtt(intel, mt, map, level, slice);
+      intel_miptree_map_gtt(brw, mt, map, level, slice);
    }
 
    *out_ptr = map->ptr;
@@ -2147,7 +2162,7 @@ intel_miptree_map_singlesample(struct intel_context *intel,
 }
 
 static void
-intel_miptree_unmap_singlesample(struct intel_context *intel,
+intel_miptree_unmap_singlesample(struct brw_context *brw,
                                  struct intel_mipmap_tree *mt,
                                  unsigned int level,
                                  unsigned int slice)
@@ -2163,23 +2178,23 @@ intel_miptree_unmap_singlesample(struct intel_context *intel,
        mt, _mesa_get_format_name(mt->format), level, slice);
 
    if (mt->format == MESA_FORMAT_S8) {
-      intel_miptree_unmap_s8(intel, mt, map, level, slice);
+      intel_miptree_unmap_s8(brw, mt, map, level, slice);
    } else if (mt->etc_format != MESA_FORMAT_NONE &&
               !(map->mode & BRW_MAP_DIRECT_BIT)) {
-      intel_miptree_unmap_etc(intel, mt, map, level, slice);
+      intel_miptree_unmap_etc(brw, mt, map, level, slice);
    } else if (mt->stencil_mt && !(map->mode & BRW_MAP_DIRECT_BIT)) {
-      intel_miptree_unmap_depthstencil(intel, mt, map, level, slice);
+      intel_miptree_unmap_depthstencil(brw, mt, map, level, slice);
    } else if (map->mt) {
-      intel_miptree_unmap_blit(intel, mt, map, level, slice);
+      intel_miptree_unmap_blit(brw, mt, map, level, slice);
    } else {
-      intel_miptree_unmap_gtt(intel, mt, map, level, slice);
+      intel_miptree_unmap_gtt(brw, mt, map, level, slice);
    }
 
    intel_miptree_release_map(mt, level, slice);
 }
 
 static void
-intel_miptree_map_multisample(struct intel_context *intel,
+intel_miptree_map_multisample(struct brw_context *brw,
                               struct intel_mipmap_tree *mt,
                               unsigned int level,
                               unsigned int slice,
@@ -2191,6 +2206,7 @@ intel_miptree_map_multisample(struct intel_context *intel,
                               void **out_ptr,
                               int *out_stride)
 {
+   struct gl_context *ctx = &brw->intel.ctx;
    struct intel_miptree_map *map;
 
    assert(mt->num_samples > 1);
@@ -2199,7 +2215,7 @@ intel_miptree_map_multisample(struct intel_context *intel,
    if (mt->target != GL_TEXTURE_2D ||
        mt->first_level != 0 ||
        mt->last_level != 0) {
-      _mesa_problem(&intel->ctx, "attempt to map a multisample miptree for "
+      _mesa_problem(ctx, "attempt to map a multisample miptree for "
                     "which (target, first_level, last_level != "
                     "(GL_TEXTURE_2D, 0, 0)");
       goto fail;
@@ -2211,7 +2227,7 @@ intel_miptree_map_multisample(struct intel_context *intel,
 
    if (!mt->singlesample_mt) {
       mt->singlesample_mt =
-         intel_miptree_create_for_renderbuffer(intel,
+         intel_miptree_create_for_renderbuffer(brw,
                                                mt->format,
                                                mt->logical_width0,
                                                mt->logical_height0,
@@ -2223,8 +2239,8 @@ intel_miptree_map_multisample(struct intel_context *intel,
       mt->need_downsample = true;
    }
 
-   intel_miptree_downsample(intel, mt);
-   intel_miptree_map_singlesample(intel, mt->singlesample_mt,
+   intel_miptree_downsample(brw, mt);
+   intel_miptree_map_singlesample(brw, mt->singlesample_mt,
                                   level, slice,
                                   x, y, w, h,
                                   mode,
@@ -2238,7 +2254,7 @@ fail:
 }
 
 static void
-intel_miptree_unmap_multisample(struct intel_context *intel,
+intel_miptree_unmap_multisample(struct brw_context *brw,
                                 struct intel_mipmap_tree *mt,
                                 unsigned int level,
                                 unsigned int slice)
@@ -2250,11 +2266,11 @@ intel_miptree_unmap_multisample(struct intel_context *intel,
    if (!map)
       return;
 
-   intel_miptree_unmap_singlesample(intel, mt->singlesample_mt, level, slice);
+   intel_miptree_unmap_singlesample(brw, mt->singlesample_mt, level, slice);
 
    mt->need_downsample = false;
    if (map->mode & GL_MAP_WRITE_BIT)
-      intel_miptree_upsample(intel, mt);
+      intel_miptree_upsample(brw, mt);
 
    if (map->singlesample_mt_is_tmp)
       intel_miptree_release(&mt->singlesample_mt);
@@ -2263,7 +2279,7 @@ intel_miptree_unmap_multisample(struct intel_context *intel,
 }
 
 void
-intel_miptree_map(struct intel_context *intel,
+intel_miptree_map(struct brw_context *brw,
 		  struct intel_mipmap_tree *mt,
 		  unsigned int level,
 		  unsigned int slice,
@@ -2276,13 +2292,13 @@ intel_miptree_map(struct intel_context *intel,
 		  int *out_stride)
 {
    if (mt->num_samples <= 1)
-      intel_miptree_map_singlesample(intel, mt,
+      intel_miptree_map_singlesample(brw, mt,
                                      level, slice,
                                      x, y, w, h,
                                      mode,
                                      out_ptr, out_stride);
    else
-      intel_miptree_map_multisample(intel, mt,
+      intel_miptree_map_multisample(brw, mt,
                                     level, slice,
                                     x, y, w, h,
                                     mode,
@@ -2290,13 +2306,13 @@ intel_miptree_map(struct intel_context *intel,
 }
 
 void
-intel_miptree_unmap(struct intel_context *intel,
+intel_miptree_unmap(struct brw_context *brw,
 		    struct intel_mipmap_tree *mt,
 		    unsigned int level,
 		    unsigned int slice)
 {
    if (mt->num_samples <= 1)
-      intel_miptree_unmap_singlesample(intel, mt, level, slice);
+      intel_miptree_unmap_singlesample(brw, mt, level, slice);
    else
-      intel_miptree_unmap_multisample(intel, mt, level, slice);
+      intel_miptree_unmap_multisample(brw, mt, level, slice);
 }

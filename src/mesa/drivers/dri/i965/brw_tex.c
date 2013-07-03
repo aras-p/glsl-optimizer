@@ -45,14 +45,13 @@
 void brw_validate_textures( struct brw_context *brw )
 {
    struct gl_context *ctx = &brw->intel.ctx;
-   struct intel_context *intel = &brw->intel;
    int i;
 
    for (i = 0; i < BRW_MAX_TEX_UNIT; i++) {
       struct gl_texture_unit *texUnit = &ctx->Texture.Unit[i];
 
       if (texUnit->_ReallyEnabled) {
-	 intel_finalize_mipmap_tree(intel, i);
+	 intel_finalize_mipmap_tree(brw, i);
       }
    }
 }

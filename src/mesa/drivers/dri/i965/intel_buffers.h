@@ -36,7 +36,7 @@
 struct intel_context;
 struct intel_framebuffer;
 
-extern void intel_check_front_buffer_rendering(struct intel_context *intel);
+extern void intel_check_front_buffer_rendering(struct brw_context *brw);
 
 extern void intelInitBufferFuncs(struct dd_function_table *functions);
 

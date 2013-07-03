@@ -160,7 +160,7 @@ void brw_destroy_caches( struct brw_context *brw );
 /***********************************************************************
  * brw_state_batch.c
  */
-#define BRW_BATCH_STRUCT(brw, s) intel_batchbuffer_data(&brw->intel, (s), \
+#define BRW_BATCH_STRUCT(brw, s) intel_batchbuffer_data(brw, (s), \
 							sizeof(*(s)), false)
 
 void *brw_state_batch(struct brw_context *brw,
@@ -178,7 +178,7 @@ uint32_t brw_format_for_mesa_format(gl_format mesa_format);
 
 GLuint translate_tex_target(GLenum target);
 
-GLuint translate_tex_format(struct intel_context *intel,
+GLuint translate_tex_format(struct brw_context *brw,
                             gl_format mesa_format,
 			    GLenum depth_mode,
 			    GLenum srgb_decode);

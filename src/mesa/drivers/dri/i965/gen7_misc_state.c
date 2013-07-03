@@ -42,7 +42,7 @@ gen7_emit_depth_stencil_hiz(struct brw_context *brw,
    struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &intel->ctx;
 
-   intel_emit_depth_stall_flushes(intel);
+   intel_emit_depth_stall_flushes(brw);
 
    /* _NEW_DEPTH, _NEW_STENCIL, _NEW_BUFFERS */
    BEGIN_BATCH(7);

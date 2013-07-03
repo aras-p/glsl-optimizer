@@ -641,9 +641,9 @@ dump_state_batch(struct brw_context *brw)
  * The buffer offsets printed rely on the buffer containing the last offset
  * it was validated at.
  */
-void brw_debug_batch(struct intel_context *intel)
+void brw_debug_batch(struct brw_context *brw)
 {
-   struct brw_context *brw = brw_context(&intel->ctx);
+   struct intel_context *intel = &brw->intel;
 
    drm_intel_bo_map(intel->batch.bo, false);
    dump_state_batch(brw);

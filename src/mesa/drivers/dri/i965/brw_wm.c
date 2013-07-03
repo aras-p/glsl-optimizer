@@ -184,7 +184,7 @@ bool do_wm_prog(struct brw_context *brw,
 
       c->prog_data.total_scratch = brw_get_scratch_size(c->last_scratch);
 
-      brw_get_scratch_bo(intel, &brw->wm.scratch_bo,
+      brw_get_scratch_bo(brw, &brw->wm.scratch_bo,
 			 c->prog_data.total_scratch * brw->max_wm_threads);
    }
 
@@ -203,8 +203,9 @@ bool do_wm_prog(struct brw_context *brw,
 }
 
 static bool
-key_debug(struct intel_context *intel, const char *name, int a, int b)
+key_debug(struct brw_context *brw, const char *name, int a, int b)
 {
+   struct intel_context *intel = &brw->intel;
    if (a != b) {
       perf_debug("  %s %d->%d\n", name, a, b);
       return true;
@@ -214,25 +215,25 @@ key_debug(struct intel_context *intel, const char *name, int a, int b)
 }
 
 bool
-brw_debug_recompile_sampler_key(struct intel_context *intel,
+brw_debug_recompile_sampler_key(struct brw_context *brw,
                                 const struct brw_sampler_prog_key_data *old_key,
                                 const struct brw_sampler_prog_key_data *key)
 {
    bool found = false;
 
    for (unsigned int i = 0; i < MAX_SAMPLERS; i++) {
-      found |= key_debug(intel, "EXT_texture_swizzle or DEPTH_TEXTURE_MODE",
+      found |= key_debug(brw, "EXT_texture_swizzle or DEPTH_TEXTURE_MODE",
                          old_key->swizzles[i], key->swizzles[i]);
    }
-   found |= key_debug(intel, "GL_CLAMP enabled on any texture unit's 1st coordinate",
+   found |= key_debug(brw, "GL_CLAMP enabled on any texture unit's 1st coordinate",
                       old_key->gl_clamp_mask[0], key->gl_clamp_mask[0]);
-   found |= key_debug(intel, "GL_CLAMP enabled on any texture unit's 2nd coordinate",
+   found |= key_debug(brw, "GL_CLAMP enabled on any texture unit's 2nd coordinate",
                       old_key->gl_clamp_mask[1], key->gl_clamp_mask[1]);
-   found |= key_debug(intel, "GL_CLAMP enabled on any texture unit's 3rd coordinate",
+   found |= key_debug(brw, "GL_CLAMP enabled on any texture unit's 3rd coordinate",
                       old_key->gl_clamp_mask[2], key->gl_clamp_mask[2]);
-   found |= key_debug(intel, "GL_MESA_ycbcr texturing\n",
+   found |= key_debug(brw, "GL_MESA_ycbcr texturing\n",
                       old_key->yuvtex_mask, key->yuvtex_mask);
-   found |= key_debug(intel, "GL_MESA_ycbcr UV swapping\n",
+   found |= key_debug(brw, "GL_MESA_ycbcr UV swapping\n",
                       old_key->yuvtex_swap_mask, key->yuvtex_swap_mask);
 
    return found;
@@ -268,29 +269,29 @@ brw_wm_debug_recompile(struct brw_context *brw,
       return;
    }
 
-   found |= key_debug(intel, "alphatest, computed depth, depth test, or "
+   found |= key_debug(brw, "alphatest, computed depth, depth test, or "
                       "depth write",
                       old_key->iz_lookup, key->iz_lookup);
-   found |= key_debug(intel, "depth statistics",
+   found |= key_debug(brw, "depth statistics",
                       old_key->stats_wm, key->stats_wm);
-   found |= key_debug(intel, "flat shading",
+   found |= key_debug(brw, "flat shading",
                       old_key->flat_shade, key->flat_shade);
-   found |= key_debug(intel, "number of color buffers",
+   found |= key_debug(brw, "number of color buffers",
                       old_key->nr_color_regions, key->nr_color_regions);
-   found |= key_debug(intel, "MRT alpha test or alpha-to-coverage",
+   found |= key_debug(brw, "MRT alpha test or alpha-to-coverage",
                       old_key->replicate_alpha, key->replicate_alpha);
-   found |= key_debug(intel, "rendering to FBO",
+   found |= key_debug(brw, "rendering to FBO",
                       old_key->render_to_fbo, key->render_to_fbo);
-   found |= key_debug(intel, "fragment color clamping",
+   found |= key_debug(brw, "fragment color clamping",
                       old_key->clamp_fragment_color, key->clamp_fragment_color);
-   found |= key_debug(intel, "line smoothing",
+   found |= key_debug(brw, "line smoothing",
                       old_key->line_aa, key->line_aa);
-   found |= key_debug(intel, "renderbuffer height",
+   found |= key_debug(brw, "renderbuffer height",
                       old_key->drawable_height, key->drawable_height);
-   found |= key_debug(intel, "input slots valid",
+   found |= key_debug(brw, "input slots valid",
                       old_key->input_slots_valid, key->input_slots_valid);
 
-   found |= brw_debug_recompile_sampler_key(intel, &old_key->tex, &key->tex);
+   found |= brw_debug_recompile_sampler_key(brw, &old_key->tex, &key->tex);
 
    if (!found) {
       perf_debug("  Something else\n");

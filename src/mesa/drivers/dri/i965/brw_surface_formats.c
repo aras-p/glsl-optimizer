@@ -649,10 +649,10 @@ brw_init_surface_formats(struct brw_context *brw)
 }
 
 bool
-brw_render_target_supported(struct intel_context *intel,
+brw_render_target_supported(struct brw_context *brw,
 			    struct gl_renderbuffer *rb)
 {
-   struct brw_context *brw = brw_context(&intel->ctx);
+   struct intel_context *intel = &brw->intel;
    gl_format format = rb->Format;
 
    /* Many integer formats are promoted to RGBA (like XRGB8888 is), which means
@@ -683,12 +683,13 @@ brw_render_target_supported(struct intel_context *intel,
 }
 
 GLuint
-translate_tex_format(struct intel_context *intel,
+translate_tex_format(struct brw_context *brw,
                      gl_format mesa_format,
 		     GLenum depth_mode,
 		     GLenum srgb_decode)
 {
-   struct gl_context *ctx = &intel->ctx;
+   struct intel_context *intel = &brw->intel;
+   struct gl_context *ctx = &brw->intel.ctx;
    if (srgb_decode == GL_SKIP_DECODE_EXT)
       mesa_format = _mesa_get_srgb_format_linear(mesa_format);
 
@@ -732,8 +733,9 @@ translate_tex_format(struct intel_context *intel,
 
 /** Can HiZ be enabled on a depthbuffer of the given format? */
 bool
-brw_is_hiz_depth_format(struct intel_context *intel, gl_format format)
+brw_is_hiz_depth_format(struct brw_context *brw, gl_format format)
 {
+   struct intel_context *intel = &brw->intel;
    if (!intel->has_hiz)
       return false;
 

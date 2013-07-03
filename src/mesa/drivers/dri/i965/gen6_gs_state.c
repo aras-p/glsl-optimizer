@@ -33,8 +33,6 @@
 static void
 upload_gs_state(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
-
    /* Disable all the constant buffers. */
    BEGIN_BATCH(5);
    OUT_BATCH(_3DSTATE_CONSTANT_GS << 16 | (5 - 2));

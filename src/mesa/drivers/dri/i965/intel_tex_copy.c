@@ -46,7 +46,7 @@
 
 
 static bool
-intel_copy_texsubimage(struct intel_context *intel,
+intel_copy_texsubimage(struct brw_context *brw,
                        struct intel_texture_image *intelImage,
                        GLint dstx, GLint dsty, GLint slice,
                        struct intel_renderbuffer *irb,
@@ -54,7 +54,7 @@ intel_copy_texsubimage(struct intel_context *intel,
 {
    const GLenum internalFormat = intelImage->base.Base.InternalFormat;
 
-   intel_prepare_render(intel);
+   intel_prepare_render(brw);
 
    /* glCopyTexSubImage() can be called on a multisampled renderbuffer (if
     * that renderbuffer is associated with the window system framebuffer),
@@ -75,7 +75,7 @@ intel_copy_texsubimage(struct intel_context *intel,
    }
 
    /* blit from src buffer to texture */
-   if (!intel_miptree_blit(intel,
+   if (!intel_miptree_blit(brw,
                            irb->mt, irb->mt_level, irb->mt_layer,
                            x, y, irb->Base.Base.Name == 0,
                            intelImage->mt, intelImage->base.Base.Level,
@@ -97,15 +97,16 @@ intelCopyTexSubImage(struct gl_context *ctx, GLuint dims,
                      GLint x, GLint y,
                      GLsizei width, GLsizei height)
 {
+   struct brw_context *brw = brw_context(ctx);
    struct intel_context *intel = intel_context(ctx);
 
    /* Try BLORP first.  It can handle almost everything. */
-   if (brw_blorp_copytexsubimage(intel, rb, texImage, slice, x, y,
+   if (brw_blorp_copytexsubimage(brw, rb, texImage, slice, x, y,
                                  xoffset, yoffset, width, height))
       return;
 
    /* Next, try the BLT engine. */
-   if (intel_copy_texsubimage(intel,
+   if (intel_copy_texsubimage(brw,
                               intel_texture_image(texImage),
                               xoffset, yoffset, slice,
                               intel_renderbuffer(rb), x, y, width, height)) {

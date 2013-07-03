@@ -99,8 +99,6 @@ const struct brw_tracked_state gen7_sf_clip_viewport = {
 
 static void upload_cc_viewport_state_pointer(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
-
    BEGIN_BATCH(2);
    OUT_BATCH(_3DSTATE_VIEWPORT_STATE_POINTERS_CC << 16 | (2 - 2));
    OUT_BATCH(brw->cc.vp_offset);

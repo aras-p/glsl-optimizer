@@ -100,7 +100,7 @@ gen7_upload_urb(struct brw_context *brw)
    /* GS requirement */
    assert(!brw->gs.prog_active);
 
-   gen7_emit_vs_workaround_flush(intel);
+   gen7_emit_vs_workaround_flush(brw);
    gen7_emit_urb_state(brw, brw->urb.nr_vs_entries, vs_size, brw->urb.vs_start);
 }
 
@@ -108,8 +108,6 @@ void
 gen7_emit_urb_state(struct brw_context *brw, GLuint nr_vs_entries,
                     GLuint vs_size, GLuint vs_start)
 {
-   struct intel_context *intel = &brw->intel;
-
    BEGIN_BATCH(2);
    OUT_BATCH(_3DSTATE_URB_VS << 16 | (2 - 2));
    OUT_BATCH(nr_vs_entries |

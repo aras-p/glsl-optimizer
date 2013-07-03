@@ -476,19 +476,19 @@ enum intel_miptree_tiling_mode {
 };
 
 bool
-intel_is_non_msrt_mcs_buffer_supported(struct intel_context *intel,
+intel_is_non_msrt_mcs_buffer_supported(struct brw_context *brw,
                                        struct intel_mipmap_tree *mt);
 
 void
-intel_get_non_msrt_mcs_alignment(struct intel_context *intel,
+intel_get_non_msrt_mcs_alignment(struct brw_context *brw,
                                  struct intel_mipmap_tree *mt,
                                  unsigned *width_px, unsigned *height);
 
 bool
-intel_miptree_alloc_non_msrt_mcs(struct intel_context *intel,
+intel_miptree_alloc_non_msrt_mcs(struct brw_context *brw,
                                  struct intel_mipmap_tree *mt);
 
-struct intel_mipmap_tree *intel_miptree_create(struct intel_context *intel,
+struct intel_mipmap_tree *intel_miptree_create(struct brw_context *brw,
                                                GLenum target,
 					       gl_format format,
                                                GLuint first_level,
@@ -501,7 +501,7 @@ struct intel_mipmap_tree *intel_miptree_create(struct intel_context *intel,
                                                enum intel_miptree_tiling_mode);
 
 struct intel_mipmap_tree *
-intel_miptree_create_layout(struct intel_context *intel,
+intel_miptree_create_layout(struct brw_context *brw,
                             GLenum target,
                             gl_format format,
                             GLuint first_level,
@@ -513,7 +513,7 @@ intel_miptree_create_layout(struct intel_context *intel,
                             GLuint num_samples);
 
 struct intel_mipmap_tree *
-intel_miptree_create_for_bo(struct intel_context *intel,
+intel_miptree_create_for_bo(struct brw_context *brw,
                             drm_intel_bo *bo,
                             gl_format format,
                             uint32_t offset,
@@ -523,7 +523,7 @@ intel_miptree_create_for_bo(struct intel_context *intel,
                             uint32_t tiling);
 
 struct intel_mipmap_tree*
-intel_miptree_create_for_dri2_buffer(struct intel_context *intel,
+intel_miptree_create_for_dri2_buffer(struct brw_context *brw,
                                      unsigned dri_attachment,
                                      gl_format format,
                                      uint32_t num_samples,
@@ -537,7 +537,7 @@ intel_miptree_create_for_dri2_buffer(struct intel_context *intel,
  *     - Depth is 1.
  */
 struct intel_mipmap_tree*
-intel_miptree_create_for_renderbuffer(struct intel_context *intel,
+intel_miptree_create_for_renderbuffer(struct brw_context *brw,
                                       gl_format format,
                                       uint32_t width,
                                       uint32_t height,
@@ -589,12 +589,12 @@ void intel_miptree_set_image_offset(struct intel_mipmap_tree *mt,
                                     GLuint img, GLuint x, GLuint y);
 
 void
-intel_miptree_copy_teximage(struct intel_context *intel,
+intel_miptree_copy_teximage(struct brw_context *brw,
                             struct intel_texture_image *intelImage,
                             struct intel_mipmap_tree *dst_mt, bool invalidate);
 
 bool
-intel_miptree_alloc_mcs(struct intel_context *intel,
+intel_miptree_alloc_mcs(struct brw_context *brw,
                         struct intel_mipmap_tree *mt,
                         GLuint num_samples);
 
@@ -613,7 +613,7 @@ intel_miptree_alloc_mcs(struct intel_context *intel,
  */
 
 bool
-intel_miptree_alloc_hiz(struct intel_context *intel,
+intel_miptree_alloc_hiz(struct brw_context *brw,
 			struct intel_mipmap_tree *mt);
 
 bool
@@ -634,7 +634,7 @@ intel_miptree_slice_set_needs_depth_resolve(struct intel_mipmap_tree *mt,
  * \return false if no resolve was needed
  */
 bool
-intel_miptree_slice_resolve_hiz(struct intel_context *intel,
+intel_miptree_slice_resolve_hiz(struct brw_context *brw,
 				struct intel_mipmap_tree *mt,
 				unsigned int level,
 				unsigned int depth);
@@ -643,7 +643,7 @@ intel_miptree_slice_resolve_hiz(struct intel_context *intel,
  * \return false if no resolve was needed
  */
 bool
-intel_miptree_slice_resolve_depth(struct intel_context *intel,
+intel_miptree_slice_resolve_depth(struct brw_context *brw,
 				  struct intel_mipmap_tree *mt,
 				  unsigned int level,
 				  unsigned int depth);
@@ -652,14 +652,14 @@ intel_miptree_slice_resolve_depth(struct intel_context *intel,
  * \return false if no resolve was needed
  */
 bool
-intel_miptree_all_slices_resolve_hiz(struct intel_context *intel,
+intel_miptree_all_slices_resolve_hiz(struct brw_context *brw,
 				     struct intel_mipmap_tree *mt);
 
 /**
  * \return false if no resolve was needed
  */
 bool
-intel_miptree_all_slices_resolve_depth(struct intel_context *intel,
+intel_miptree_all_slices_resolve_depth(struct brw_context *brw,
 				       struct intel_mipmap_tree *mt);
 
 /**\}*/
@@ -680,36 +680,31 @@ intel_miptree_used_for_rendering(struct intel_mipmap_tree *mt)
 }
 
 void
-intel_miptree_resolve_color(struct intel_context *intel,
+intel_miptree_resolve_color(struct brw_context *brw,
                             struct intel_mipmap_tree *mt);
 
 void
-intel_miptree_make_shareable(struct intel_context *intel,
+intel_miptree_make_shareable(struct brw_context *brw,
                              struct intel_mipmap_tree *mt);
 
 void
-intel_miptree_downsample(struct intel_context *intel,
+intel_miptree_downsample(struct brw_context *brw,
                          struct intel_mipmap_tree *mt);
 
 void
-intel_miptree_upsample(struct intel_context *intel,
+intel_miptree_upsample(struct brw_context *brw,
                        struct intel_mipmap_tree *mt);
 
-/* i915_mipmap_tree.c:
- */
-void i915_miptree_layout(struct intel_mipmap_tree *mt);
-void i945_miptree_layout(struct intel_mipmap_tree *mt);
-void brw_miptree_layout(struct intel_context *intel,
-			struct intel_mipmap_tree *mt);
+void brw_miptree_layout(struct brw_context *brw, struct intel_mipmap_tree *mt);
 
-void *intel_miptree_map_raw(struct intel_context *intel,
+void *intel_miptree_map_raw(struct brw_context *brw,
                             struct intel_mipmap_tree *mt);
 
-void intel_miptree_unmap_raw(struct intel_context *intel,
+void intel_miptree_unmap_raw(struct brw_context *brw,
                              struct intel_mipmap_tree *mt);
 
 void
-intel_miptree_map(struct intel_context *intel,
+intel_miptree_map(struct brw_context *brw,
 		  struct intel_mipmap_tree *mt,
 		  unsigned int level,
 		  unsigned int slice,
@@ -722,13 +717,13 @@ intel_miptree_map(struct intel_context *intel,
 		  int *out_stride);
 
 void
-intel_miptree_unmap(struct intel_context *intel,
+intel_miptree_unmap(struct brw_context *brw,
 		    struct intel_mipmap_tree *mt,
 		    unsigned int level,
 		    unsigned int slice);
 
 void
-intel_hiz_exec(struct intel_context *intel, struct intel_mipmap_tree *mt,
+intel_hiz_exec(struct brw_context *brw, struct intel_mipmap_tree *mt,
 	       unsigned int level, unsigned int layer, enum gen6_hiz_op op);
 
 #ifdef __cplusplus

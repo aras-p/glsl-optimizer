@@ -33,7 +33,7 @@
 #include "brw_context.h"
 
 static void
-intel_batchbuffer_reset(struct intel_context *intel);
+intel_batchbuffer_reset(struct brw_context *brw);
 
 struct cached_batch_item {
    struct cached_batch_item *next;
@@ -41,8 +41,10 @@ struct cached_batch_item {
    uint16_t size;
 };
 
-static void clear_cache( struct intel_context *intel )
+static void
+clear_cache(struct brw_context *brw)
 {
+   struct intel_context *intel = &brw->intel;
    struct cached_batch_item *item = intel->batch.cached_items;
 
    while (item) {
@@ -55,9 +57,10 @@ static void clear_cache( struct intel_context *intel )
 }
 
 void
-intel_batchbuffer_init(struct intel_context *intel)
+intel_batchbuffer_init(struct brw_context *brw)
 {
-   intel_batchbuffer_reset(intel);
+   struct intel_context *intel = &brw->intel;
+   intel_batchbuffer_reset(brw);
 
    if (intel->gen >= 6) {
       /* We can't just use brw_state_batch to get a chunk of space for
@@ -76,15 +79,16 @@ intel_batchbuffer_init(struct intel_context *intel)
 }
 
 static void
-intel_batchbuffer_reset(struct intel_context *intel)
+intel_batchbuffer_reset(struct brw_context *brw)
 {
+   struct intel_context *intel = &brw->intel;
    if (intel->batch.last_bo != NULL) {
       drm_intel_bo_unreference(intel->batch.last_bo);
       intel->batch.last_bo = NULL;
    }
    intel->batch.last_bo = intel->batch.bo;
 
-   clear_cache(intel);
+   clear_cache(brw);
 
    intel->batch.bo = drm_intel_bo_alloc(intel->bufmgr, "batchbuffer",
 					BATCH_SZ, 4096);
@@ -100,16 +104,18 @@ intel_batchbuffer_reset(struct intel_context *intel)
 }
 
 void
-intel_batchbuffer_save_state(struct intel_context *intel)
+intel_batchbuffer_save_state(struct brw_context *brw)
 {
+   struct intel_context *intel = &brw->intel;
    intel->batch.saved.used = intel->batch.used;
    intel->batch.saved.reloc_count =
       drm_intel_gem_bo_get_reloc_count(intel->batch.bo);
 }
 
 void
-intel_batchbuffer_reset_to_saved(struct intel_context *intel)
+intel_batchbuffer_reset_to_saved(struct brw_context *brw)
 {
+   struct intel_context *intel = &brw->intel;
    drm_intel_gem_bo_clear_relocs(intel->batch.bo, intel->batch.saved.reloc_count);
 
    intel->batch.used = intel->batch.saved.used;
@@ -117,22 +123,24 @@ intel_batchbuffer_reset_to_saved(struct intel_context *intel)
    /* Cached batch state is dead, since we just cleared some unknown part of the
     * batchbuffer.  Assume that the caller resets any other state necessary.
     */
-   clear_cache(intel);
+   clear_cache(brw);
 }
 
 void
-intel_batchbuffer_free(struct intel_context *intel)
+intel_batchbuffer_free(struct brw_context *brw)
 {
+   struct intel_context *intel = &brw->intel;
    free(intel->batch.cpu_map);
    drm_intel_bo_unreference(intel->batch.last_bo);
    drm_intel_bo_unreference(intel->batch.bo);
    drm_intel_bo_unreference(intel->batch.workaround_bo);
-   clear_cache(intel);
+   clear_cache(brw);
 }
 
 static void
-do_batch_dump(struct intel_context *intel)
+do_batch_dump(struct brw_context *brw)
 {
+   struct intel_context *intel = &brw->intel;
    struct drm_intel_decode *decode;
    struct intel_batchbuffer *batch = &intel->batch;
    int ret;
@@ -165,15 +173,16 @@ do_batch_dump(struct intel_context *intel)
    if (ret == 0) {
       drm_intel_bo_unmap(batch->bo);
 
-      brw_debug_batch(intel);
+      brw_debug_batch(brw);
    }
 }
 
 /* TODO: Push this whole function into bufmgr.
  */
 static int
-do_flush_locked(struct intel_context *intel)
+do_flush_locked(struct brw_context *brw)
 {
+   struct intel_context *intel = &brw->intel;
    struct intel_batchbuffer *batch = &intel->batch;
    int ret = 0;
 
@@ -203,7 +212,7 @@ do_flush_locked(struct intel_context *intel)
 
       if (ret == 0) {
          if (unlikely(INTEL_DEBUG & DEBUG_AUB))
-            brw_annotate_aub(intel);
+            brw_annotate_aub(brw);
 	 if (intel->hw_ctx == NULL || batch->is_blit) {
 	    ret = drm_intel_bo_mrb_exec(batch->bo, 4 * batch->used, NULL, 0, 0,
 					flags);
@@ -215,21 +224,22 @@ do_flush_locked(struct intel_context *intel)
    }
 
    if (unlikely(INTEL_DEBUG & DEBUG_BATCH))
-      do_batch_dump(intel);
+      do_batch_dump(brw);
 
    if (ret != 0) {
       fprintf(stderr, "intel_do_flush_locked failed: %s\n", strerror(-ret));
       exit(1);
    }
-   intel->vtbl.new_batch(intel);
+   intel->vtbl.new_batch(brw);
 
    return ret;
 }
 
 int
-_intel_batchbuffer_flush(struct intel_context *intel,
+_intel_batchbuffer_flush(struct brw_context *brw,
 			 const char *file, int line)
 {
+   struct intel_context *intel = &brw->intel;
    int ret;
 
    if (intel->batch.used == 0)
@@ -247,21 +257,21 @@ _intel_batchbuffer_flush(struct intel_context *intel,
    intel->batch.reserved_space = 0;
 
    if (intel->vtbl.finish_batch)
-      intel->vtbl.finish_batch(intel);
+      intel->vtbl.finish_batch(brw);
 
    /* Mark the end of the buffer. */
-   intel_batchbuffer_emit_dword(intel, MI_BATCH_BUFFER_END);
+   intel_batchbuffer_emit_dword(brw, MI_BATCH_BUFFER_END);
    if (intel->batch.used & 1) {
       /* Round batchbuffer usage to 2 DWORDs. */
-      intel_batchbuffer_emit_dword(intel, MI_NOOP);
+      intel_batchbuffer_emit_dword(brw, MI_NOOP);
    }
 
-   intel_upload_finish(intel);
+   intel_upload_finish(brw);
 
    /* Check that we didn't just wrap our batchbuffer at a bad time. */
    assert(!intel->no_batch_wrap);
 
-   ret = do_flush_locked(intel);
+   ret = do_flush_locked(brw);
 
    if (unlikely(INTEL_DEBUG & DEBUG_SYNC)) {
       fprintf(stderr, "waiting for idle\n");
@@ -270,7 +280,7 @@ _intel_batchbuffer_flush(struct intel_context *intel,
 
    /* Reset the buffer:
     */
-   intel_batchbuffer_reset(intel);
+   intel_batchbuffer_reset(brw);
 
    return ret;
 }
@@ -279,11 +289,12 @@ _intel_batchbuffer_flush(struct intel_context *intel,
 /*  This is the only way buffers get added to the validate list.
  */
 bool
-intel_batchbuffer_emit_reloc(struct intel_context *intel,
+intel_batchbuffer_emit_reloc(struct brw_context *brw,
                              drm_intel_bo *buffer,
                              uint32_t read_domains, uint32_t write_domain,
 			     uint32_t delta)
 {
+   struct intel_context *intel = &brw->intel;
    int ret;
 
    ret = drm_intel_bo_emit_reloc(intel->batch.bo, 4*intel->batch.used,
@@ -297,18 +308,19 @@ intel_batchbuffer_emit_reloc(struct intel_context *intel,
     * the buffer doesn't move and we can short-circuit the relocation processing
     * in the kernel
     */
-   intel_batchbuffer_emit_dword(intel, buffer->offset + delta);
+   intel_batchbuffer_emit_dword(brw, buffer->offset + delta);
 
    return true;
 }
 
 bool
-intel_batchbuffer_emit_reloc_fenced(struct intel_context *intel,
+intel_batchbuffer_emit_reloc_fenced(struct brw_context *brw,
 				    drm_intel_bo *buffer,
 				    uint32_t read_domains,
 				    uint32_t write_domain,
 				    uint32_t delta)
 {
+   struct intel_context *intel = &brw->intel;
    int ret;
 
    ret = drm_intel_bo_emit_reloc_fence(intel->batch.bo, 4*intel->batch.used,
@@ -322,24 +334,26 @@ intel_batchbuffer_emit_reloc_fenced(struct intel_context *intel,
     * be, in case the buffer doesn't move and we can short-circuit the
     * relocation processing in the kernel
     */
-   intel_batchbuffer_emit_dword(intel, buffer->offset + delta);
+   intel_batchbuffer_emit_dword(brw, buffer->offset + delta);
 
    return true;
 }
 
 void
-intel_batchbuffer_data(struct intel_context *intel,
+intel_batchbuffer_data(struct brw_context *brw,
                        const void *data, GLuint bytes, bool is_blit)
 {
+   struct intel_context *intel = &brw->intel;
    assert((bytes & 3) == 0);
-   intel_batchbuffer_require_space(intel, bytes, is_blit);
+   intel_batchbuffer_require_space(brw, bytes, is_blit);
    __memcpy(intel->batch.map + intel->batch.used, data, bytes);
    intel->batch.used += bytes >> 2;
 }
 
 void
-intel_batchbuffer_cached_advance(struct intel_context *intel)
+intel_batchbuffer_cached_advance(struct brw_context *brw)
 {
+   struct intel_context *intel = &brw->intel;
    struct cached_batch_item **prev = &intel->batch.cached_items, *item;
    uint32_t sz = (intel->batch.used - intel->batch.emit) * sizeof(uint32_t);
    uint32_t *start = intel->batch.map + intel->batch.emit;
@@ -391,8 +405,9 @@ emit:
  * already flushed (e.g., via a preceding MI_FLUSH).
  */
 void
-intel_emit_depth_stall_flushes(struct intel_context *intel)
+intel_emit_depth_stall_flushes(struct brw_context *brw)
 {
+   struct intel_context *intel = &brw->intel;
    assert(intel->gen >= 6 && intel->gen <= 7);
 
    BEGIN_BATCH(4);
@@ -426,8 +441,9 @@ intel_emit_depth_stall_flushes(struct intel_context *intel)
  *  to be sent before any combination of VS associated 3DSTATE."
  */
 void
-gen7_emit_vs_workaround_flush(struct intel_context *intel)
+gen7_emit_vs_workaround_flush(struct brw_context *brw)
 {
+   struct intel_context *intel = &brw->intel;
    assert(intel->gen == 7);
 
    BEGIN_BATCH(4);
@@ -477,8 +493,9 @@ gen7_emit_vs_workaround_flush(struct intel_context *intel)
  * really our business.  That leaves only stall at scoreboard.
  */
 void
-intel_emit_post_sync_nonzero_flush(struct intel_context *intel)
+intel_emit_post_sync_nonzero_flush(struct brw_context *brw)
 {
+   struct intel_context *intel = &brw->intel;
    if (!intel->batch.need_workaround_flush)
       return;
 
@@ -508,8 +525,9 @@ intel_emit_post_sync_nonzero_flush(struct intel_context *intel)
  * This is also used for the always_flush_cache driconf debug option.
  */
 void
-intel_batchbuffer_emit_mi_flush(struct intel_context *intel)
+intel_batchbuffer_emit_mi_flush(struct brw_context *brw)
 {
+   struct intel_context *intel = &brw->intel;
    if (intel->gen >= 6) {
       if (intel->batch.is_blit) {
 	 BEGIN_BATCH_BLT(4);
@@ -526,7 +544,7 @@ intel_batchbuffer_emit_mi_flush(struct intel_context *intel)
 	     * Flush Enable =1, a PIPE_CONTROL with any non-zero
 	     * post-sync-op is required.
 	     */
-	    intel_emit_post_sync_nonzero_flush(intel);
+	    intel_emit_post_sync_nonzero_flush(brw);
 	 }
 
 	 BEGIN_BATCH(4);

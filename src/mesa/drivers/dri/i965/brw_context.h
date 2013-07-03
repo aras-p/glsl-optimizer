@@ -1157,8 +1157,8 @@ void gen6_init_queryobj_functions(struct dd_function_table *functions);
 /*======================================================================
  * brw_state_dump.c
  */
-void brw_debug_batch(struct intel_context *intel);
-void brw_annotate_aub(struct intel_context *intel);
+void brw_debug_batch(struct brw_context *brw);
+void brw_annotate_aub(struct brw_context *brw);
 
 /*======================================================================
  * brw_tex.c
@@ -1172,7 +1172,7 @@ void brw_validate_textures( struct brw_context *brw );
 void brwInitFragProgFuncs( struct dd_function_table *functions );
 
 int brw_get_scratch_size(int size);
-void brw_get_scratch_bo(struct intel_context *intel,
+void brw_get_scratch_bo(struct brw_context *brw,
 			drm_intel_bo **scratch_bo, int size);
 void brw_init_shader_time(struct brw_context *brw);
 int brw_get_shader_time_index(struct brw_context *brw,
@@ -1212,8 +1212,8 @@ void brw_upload_ubo_surfaces(struct brw_context *brw,
 			     uint32_t *surf_offsets);
 
 /* brw_surface_formats.c */
-bool brw_is_hiz_depth_format(struct intel_context *ctx, gl_format format);
-bool brw_render_target_supported(struct intel_context *intel,
+bool brw_is_hiz_depth_format(struct brw_context *ctx, gl_format format);
+bool brw_render_target_supported(struct brw_context *brw,
                                  struct gl_renderbuffer *rb);
 
 /* gen6_sol.c */
@@ -1234,13 +1234,13 @@ gen7_end_transform_feedback(struct gl_context *ctx,
 
 /* brw_blorp_blit.cpp */
 GLbitfield
-brw_blorp_framebuffer(struct intel_context *intel,
+brw_blorp_framebuffer(struct brw_context *brw,
                       GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
                       GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
                       GLbitfield mask, GLenum filter);
 
 bool
-brw_blorp_copytexsubimage(struct intel_context *intel,
+brw_blorp_copytexsubimage(struct brw_context *brw,
                           struct gl_renderbuffer *src_rb,
                           struct gl_texture_image *dst_image,
                           int slice,
@@ -1338,7 +1338,7 @@ brw_program_reloc(struct brw_context *brw, uint32_t state_offset,
 }
 
 bool brw_do_cubemap_normalize(struct exec_list *instructions);
-bool brw_lower_texture_gradients(struct intel_context *intel,
+bool brw_lower_texture_gradients(struct brw_context *brw,
                                  struct exec_list *instructions);
 
 struct opcode_desc {
