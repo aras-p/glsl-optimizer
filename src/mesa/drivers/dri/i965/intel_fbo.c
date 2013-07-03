@@ -193,7 +193,7 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
 {
    struct brw_context *brw = brw_context(ctx);
    struct intel_context *intel = intel_context(ctx);
-   struct intel_screen *screen = intel->intelScreen;
+   struct intel_screen *screen = brw->intelScreen;
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
    rb->NumSamples = intel_quantize_num_samples(screen, rb->NumSamples);
 
@@ -252,12 +252,11 @@ intel_image_target_renderbuffer_storage(struct gl_context *ctx,
 					void *image_handle)
 {
    struct brw_context *brw = brw_context(ctx);
-   struct intel_context *intel = intel_context(ctx);
    struct intel_renderbuffer *irb;
    __DRIscreen *screen;
    __DRIimage *image;
 
-   screen = intel->intelScreen->driScrnPriv;
+   screen = brw->intelScreen->driScrnPriv;
    image = screen->dri2.image->lookupEGLImage(screen, image_handle,
 					      screen->loaderPrivate);
    if (image == NULL)

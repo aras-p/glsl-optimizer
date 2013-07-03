@@ -61,7 +61,6 @@ intel_alloc_texture_image_buffer(struct gl_context *ctx,
 				 struct gl_texture_image *image)
 {
    struct brw_context *brw = brw_context(ctx);
-   struct intel_context *intel = intel_context(ctx);
    struct intel_texture_image *intel_image = intel_texture_image(image);
    struct gl_texture_object *texobj = image->TexObject;
    struct intel_texture_object *intel_texobj = intel_texture_object(texobj);
@@ -70,7 +69,7 @@ intel_alloc_texture_image_buffer(struct gl_context *ctx,
 
    /* Quantize sample count */
    if (image->NumSamples) {
-      image->NumSamples = intel_quantize_num_samples(intel->intelScreen, image->NumSamples);
+      image->NumSamples = intel_quantize_num_samples(brw->intelScreen, image->NumSamples);
       if (!image->NumSamples)
          return false;
    }

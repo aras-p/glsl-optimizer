@@ -78,7 +78,7 @@ static struct gl_program *brwNewProgram( struct gl_context *ctx,
    case GL_VERTEX_PROGRAM_ARB: {
       struct brw_vertex_program *prog = CALLOC_STRUCT(brw_vertex_program);
       if (prog) {
-	 prog->id = get_new_program_id(brw->intel.intelScreen);
+	 prog->id = get_new_program_id(brw->intelScreen);
 
 	 return _mesa_init_vertex_program( ctx, &prog->program,
 					     target, id );
@@ -90,7 +90,7 @@ static struct gl_program *brwNewProgram( struct gl_context *ctx,
    case GL_FRAGMENT_PROGRAM_ARB: {
       struct brw_fragment_program *prog = CALLOC_STRUCT(brw_fragment_program);
       if (prog) {
-	 prog->id = get_new_program_id(brw->intel.intelScreen);
+	 prog->id = get_new_program_id(brw->intelScreen);
 
 	 return _mesa_init_fragment_program( ctx, &prog->program,
 					     target, id );
@@ -135,7 +135,7 @@ brwProgramStringNotify(struct gl_context *ctx,
 
       if (newFP == curFP)
 	 brw->state.dirty.brw |= BRW_NEW_FRAGMENT_PROGRAM;
-      newFP->id = get_new_program_id(brw->intel.intelScreen);
+      newFP->id = get_new_program_id(brw->intelScreen);
       break;
    }
    case GL_VERTEX_PROGRAM_ARB: {
@@ -149,7 +149,7 @@ brwProgramStringNotify(struct gl_context *ctx,
       if (newVP->program.IsPositionInvariant) {
 	 _mesa_insert_mvp_code(ctx, &newVP->program);
       }
-      newVP->id = get_new_program_id(brw->intel.intelScreen);
+      newVP->id = get_new_program_id(brw->intelScreen);
 
       /* Also tell tnl about it:
        */

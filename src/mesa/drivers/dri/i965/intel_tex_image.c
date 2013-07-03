@@ -361,11 +361,11 @@ intel_image_target_texture_2d(struct gl_context *ctx, GLenum target,
 			      struct gl_texture_image *texImage,
 			      GLeglImageOES image_handle)
 {
-   struct intel_context *intel = intel_context(ctx);
+   struct brw_context *brw = brw_context(ctx);
    __DRIscreen *screen;
    __DRIimage *image;
 
-   screen = intel->intelScreen->driScrnPriv;
+   screen = brw->intelScreen->driScrnPriv;
    image = screen->dri2.image->lookupEGLImage(screen, image_handle,
 					      screen->loaderPrivate);
    if (image == NULL)

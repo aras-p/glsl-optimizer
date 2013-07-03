@@ -136,12 +136,11 @@ intel_batchbuffer_free(struct brw_context *brw)
 static void
 do_batch_dump(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
    struct drm_intel_decode *decode;
    struct intel_batchbuffer *batch = &brw->batch;
    int ret;
 
-   decode = drm_intel_decode_context_alloc(intel->intelScreen->deviceID);
+   decode = drm_intel_decode_context_alloc(brw->intelScreen->deviceID);
    if (!decode)
       return;
 
@@ -194,7 +193,7 @@ do_flush_locked(struct brw_context *brw)
       }
    }
 
-   if (!intel->intelScreen->no_hw) {
+   if (!brw->intelScreen->no_hw) {
       int flags;
 
       if (intel->gen < 6 || !batch->is_blit) {

@@ -1225,6 +1225,7 @@ struct brw_context
    } shader_time;
 
    __DRIcontext *driContext;
+   struct intel_screen *intelScreen;
 };
 
 /*======================================================================

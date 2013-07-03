@@ -126,8 +126,6 @@ struct intel_context
    bool has_hiz;
    bool has_llc;
    bool has_swizzling;
-
-   struct intel_screen *intelScreen;
 };
 
 /**

@@ -560,7 +560,7 @@ intel_miptree_create(struct brw_context *brw,
    bool y_or_x = tiling == (I915_TILING_Y | I915_TILING_X);
 
    mt->etc_format = etc_format;
-   mt->region = intel_region_alloc(intel->intelScreen,
+   mt->region = intel_region_alloc(brw->intelScreen,
 				   y_or_x ? I915_TILING_Y : tiling,
 				   mt->cpp,
 				   total_width,
@@ -576,7 +576,7 @@ intel_miptree_create(struct brw_context *brw,
                  mt->total_width, mt->total_height);
       intel_region_release(&mt->region);
 
-      mt->region = intel_region_alloc(intel->intelScreen,
+      mt->region = intel_region_alloc(brw->intelScreen,
                                       I915_TILING_X,
                                       mt->cpp,
                                       total_width,

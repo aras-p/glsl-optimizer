@@ -63,7 +63,7 @@ int INTEL_DEBUG = (0);
 static const GLubyte *
 intelGetString(struct gl_context * ctx, GLenum name)
 {
-   const struct intel_context *const intel = intel_context(ctx);
+   const struct brw_context *const brw = brw_context(ctx);
    const char *chipset;
    static char buffer[128];
 
@@ -73,7 +73,7 @@ intelGetString(struct gl_context * ctx, GLenum name)
       break;
 
    case GL_RENDERER:
-      switch (intel->intelScreen->deviceID) {
+      switch (brw->intelScreen->deviceID) {
 #undef CHIPSET
 #define CHIPSET(id, symbol, str) case id: chipset = str; break;
 #include "pci_ids/i965_pci_ids.h"
@@ -128,10 +128,9 @@ static void
 intel_flush_front(struct gl_context *ctx)
 {
    struct brw_context *brw = brw_context(ctx);
-   struct intel_context *intel = intel_context(ctx);
     __DRIcontext *driContext = brw->driContext;
     __DRIdrawable *driDrawable = driContext->driDrawablePriv;
-    __DRIscreen *const screen = intel->intelScreen->driScrnPriv;
+    __DRIscreen *const screen = brw->intelScreen->driScrnPriv;
 
     if (brw->front_buffer_dirty && _mesa_is_winsys_fbo(ctx->DrawBuffer)) {
       if (screen->dri2.loader->flushFrontBuffer != NULL &&
@@ -463,7 +462,7 @@ intelInitContext(struct brw_context *brw,
       mesaVis = &visual;
    }
 
-   intel->intelScreen = intelScreen;
+   brw->intelScreen = intelScreen;
 
    if (!_mesa_initialize_context(&intel->ctx, api, mesaVis, shareCtx,
                                  functions)) {
@@ -496,11 +495,11 @@ intelInitContext(struct brw_context *brw,
       intel->is_g4x = true;
    }
 
-   intel->has_separate_stencil = intel->intelScreen->hw_has_separate_stencil;
-   intel->must_use_separate_stencil = intel->intelScreen->hw_must_use_separate_stencil;
+   intel->has_separate_stencil = brw->intelScreen->hw_has_separate_stencil;
+   intel->must_use_separate_stencil = brw->intelScreen->hw_must_use_separate_stencil;
    intel->has_hiz = intel->gen >= 6;
-   intel->has_llc = intel->intelScreen->hw_has_llc;
-   intel->has_swizzling = intel->intelScreen->hw_has_swizzling;
+   intel->has_llc = brw->intelScreen->hw_has_llc;
+   intel->has_swizzling = brw->intelScreen->hw_has_swizzling;
 
    memset(&ctx->TextureFormatSupported,
 	  0, sizeof(ctx->TextureFormatSupported));
@@ -778,7 +777,7 @@ intel_query_dri2_buffers(struct brw_context *brw,
 			 int *buffer_count)
 {
    struct intel_context *intel = &brw->intel;
-   __DRIscreen *screen = intel->intelScreen->driScrnPriv;
+   __DRIscreen *screen = brw->intelScreen->driScrnPriv;
    struct gl_framebuffer *fb = drawable->driverPrivate;
    int i = 0;
    unsigned attachments[8];
@@ -852,7 +851,6 @@ intel_process_dri2_buffer(struct brw_context *brw,
 			  struct intel_renderbuffer *rb,
 			  const char *buffer_name)
 {
-   struct intel_context *intel = &brw->intel;
    struct intel_region *region = NULL;
 
    if (!rb)
@@ -885,7 +883,7 @@ intel_process_dri2_buffer(struct brw_context *brw,
    }
 
    intel_miptree_release(&rb->mt);
-   region = intel_region_alloc_for_handle(intel->intelScreen,
+   region = intel_region_alloc_for_handle(brw->intelScreen,
                                           buffer->cpp,
                                           drawable->w,
                                           drawable->h,
