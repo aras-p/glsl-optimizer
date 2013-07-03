@@ -832,6 +832,8 @@ struct brw_context
 
    GLuint primitive; /**< Hardware primitive, such as _3DPRIM_TRILIST. */
 
+   GLenum reduced_primitive;
+
    bool emit_state_always;
    bool has_surface_tile_offset;
    bool has_compr4;

@@ -144,7 +144,7 @@ brw_upload_clip_prog(struct brw_context *brw)
    /* Populate the key:
     */
    /* BRW_NEW_REDUCED_PRIMITIVE */
-   key.primitive = brw->intel.reduced_primitive;
+   key.primitive = brw->reduced_primitive;
    /* BRW_NEW_VUE_MAP_GEOM_OUT */
    key.attrs = brw->vue_map_geom_out.slots_valid;
    /* _NEW_LIGHT */

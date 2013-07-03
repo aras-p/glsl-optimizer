@@ -114,8 +114,8 @@ static void brw_set_prim(struct brw_context *brw,
       brw->primitive = hw_prim;
       brw->state.dirty.brw |= BRW_NEW_PRIMITIVE;
 
-      if (reduced_prim[prim->mode] != brw->intel.reduced_primitive) {
-	 brw->intel.reduced_primitive = reduced_prim[prim->mode];
+      if (reduced_prim[prim->mode] != brw->reduced_primitive) {
+	 brw->reduced_primitive = reduced_prim[prim->mode];
 	 brw->state.dirty.brw |= BRW_NEW_REDUCED_PRIMITIVE;
       }
    }

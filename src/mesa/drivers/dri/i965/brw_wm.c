@@ -395,10 +395,10 @@ static void brw_wm_populate_key( struct brw_context *brw,
 
    /* _NEW_LINE, _NEW_POLYGON, BRW_NEW_REDUCED_PRIMITIVE */
    if (ctx->Line.SmoothFlag) {
-      if (brw->intel.reduced_primitive == GL_LINES) {
+      if (brw->reduced_primitive == GL_LINES) {
 	 line_aa = AA_ALWAYS;
       }
-      else if (brw->intel.reduced_primitive == GL_TRIANGLES) {
+      else if (brw->reduced_primitive == GL_TRIANGLES) {
 	 if (ctx->Polygon.FrontMode == GL_LINE) {
 	    line_aa = AA_SOMETIMES;
 

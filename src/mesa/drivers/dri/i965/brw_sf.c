@@ -148,7 +148,7 @@ brw_upload_sf_prog(struct brw_context *brw)
    key.attrs = brw->vue_map_geom_out.slots_valid;
 
    /* BRW_NEW_REDUCED_PRIMITIVE */
-   switch (brw->intel.reduced_primitive) {
+   switch (brw->reduced_primitive) {
    case GL_TRIANGLES: 
       /* NOTE: We just use the edgeflag attribute as an indicator that
        * unfilled triangles are active.  We don't actually do the

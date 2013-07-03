@@ -163,8 +163,6 @@ struct intel_context
    bool always_flush_cache;
    bool disable_throttling;
 
-   GLenum reduced_primitive;
-
    int driFd;
 
    __DRIcontext *driContext;
