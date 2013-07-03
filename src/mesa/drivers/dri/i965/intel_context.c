@@ -569,7 +569,7 @@ intelInitContext(struct brw_context *brw,
       INTEL_DEBUG &= ~DEBUG_SHADER_TIME;
    }
    if (INTEL_DEBUG & DEBUG_PERF)
-      intel->perf_debug = true;
+      brw->perf_debug = true;
 
    if (INTEL_DEBUG & DEBUG_AUB)
       drm_intel_bufmgr_gem_set_aub_dump(brw->bufmgr, true);

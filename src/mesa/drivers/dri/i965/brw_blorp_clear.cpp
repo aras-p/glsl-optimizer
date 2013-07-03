@@ -147,7 +147,6 @@ is_color_fast_clear_compatible(struct brw_context *brw,
                                gl_format format,
                                const union gl_color_union *color)
 {
-   struct intel_context *intel = &brw->intel;
    if (_mesa_is_format_integer_color(format))
       return false;
 

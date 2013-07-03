@@ -98,7 +98,6 @@ intelCopyTexSubImage(struct gl_context *ctx, GLuint dims,
                      GLsizei width, GLsizei height)
 {
    struct brw_context *brw = brw_context(ctx);
-   struct intel_context *intel = intel_context(ctx);
 
    /* Try BLORP first.  It can handle almost everything. */
    if (brw_blorp_copytexsubimage(brw, rb, texImage, slice, x, y,

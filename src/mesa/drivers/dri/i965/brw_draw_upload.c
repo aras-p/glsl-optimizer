@@ -800,7 +800,6 @@ const struct brw_tracked_state brw_vertices = {
 static void brw_upload_indices(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->intel.ctx;
-   struct intel_context *intel = &brw->intel;
    const struct _mesa_index_buffer *index_buffer = brw->ib.ib;
    GLuint ib_size;
    drm_intel_bo *bo = NULL;

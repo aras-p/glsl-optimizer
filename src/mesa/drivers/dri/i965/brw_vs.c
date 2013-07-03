@@ -334,7 +334,6 @@ do_vs_prog(struct brw_context *brw,
 static bool
 key_debug(struct brw_context *brw, const char *name, int a, int b)
 {
-   struct intel_context *intel = &brw->intel;
    if (a != b) {
       perf_debug("  %s %d->%d\n", name, a, b);
       return true;
@@ -347,7 +346,6 @@ brw_vs_debug_recompile(struct brw_context *brw,
                        struct gl_shader_program *prog,
                        const struct brw_vs_prog_key *key)
 {
-   struct intel_context *intel = &brw->intel;
    struct brw_cache_item *c = NULL;
    const struct brw_vs_prog_key *old_key = NULL;
    bool found = false;

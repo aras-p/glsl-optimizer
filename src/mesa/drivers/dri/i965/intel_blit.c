@@ -158,7 +158,6 @@ intel_miptree_blit(struct brw_context *brw,
                    uint32_t width, uint32_t height,
                    GLenum logicop)
 {
-   struct intel_context *intel = &brw->intel;
    /* No sRGB decode or encode is done by the hardware blitter, which is
     * consistent with what we want in the callers (glCopyTexSubImage(),
     * glBlitFramebuffer(), texture validation, etc.).

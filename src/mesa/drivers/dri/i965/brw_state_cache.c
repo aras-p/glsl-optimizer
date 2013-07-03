@@ -386,8 +386,6 @@ brw_clear_cache(struct brw_context *brw, struct brw_cache *cache)
 void
 brw_state_cache_check_size(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
-
    /* un-tuned guess.  Each object is generally a page, so 2000 of them is 8 MB of
     * state cache.
     */

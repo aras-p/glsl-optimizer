@@ -129,13 +129,6 @@ struct intel_context
    bool has_llc;
    bool has_swizzling;
 
-   /**
-    * Set if we're either a debug context or the INTEL_DEBUG=perf environment
-    * variable is set, this is the flag indicating to do expensive work that
-    * might lead to a perf_debug() call.
-    */
-   bool perf_debug;
-
    struct {
       drm_intel_bo *bo;
       GLuint offset;
@@ -258,8 +251,8 @@ extern int INTEL_DEBUG;
    static GLuint msg_id = 0;                                    \
    if (unlikely(INTEL_DEBUG & DEBUG_PERF))                      \
       dbg_printf(__VA_ARGS__);                                  \
-   if (intel->perf_debug)                                       \
-      _mesa_gl_debug(&intel->ctx, &msg_id,                      \
+   if (brw->perf_debug)                                         \
+      _mesa_gl_debug(&brw->intel.ctx, &msg_id,                  \
                      MESA_DEBUG_TYPE_PERFORMANCE,               \
                      MESA_DEBUG_SEVERITY_MEDIUM,                \
                      __VA_ARGS__);                              \

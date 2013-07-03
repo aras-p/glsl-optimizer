@@ -165,7 +165,6 @@ intelReadPixels(struct gl_context * ctx,
                 const struct gl_pixelstore_attrib *pack, GLvoid * pixels)
 {
    struct brw_context *brw = brw_context(ctx);
-   struct intel_context *intel = intel_context(ctx);
    bool dirty;
 
    DBG("%s\n", __FUNCTION__);

@@ -162,7 +162,6 @@ intel_bufferobj_subdata(struct gl_context * ctx,
                         const GLvoid * data, struct gl_buffer_object *obj)
 {
    struct brw_context *brw = brw_context(ctx);
-   struct intel_context *intel = intel_context(ctx);
    struct intel_buffer_object *intel_obj = intel_buffer_object(obj);
    bool busy;
 
@@ -246,7 +245,6 @@ intel_bufferobj_map_range(struct gl_context * ctx,
 			  GLbitfield access, struct gl_buffer_object *obj)
 {
    struct brw_context *brw = brw_context(ctx);
-   struct intel_context *intel = intel_context(ctx);
    struct intel_buffer_object *intel_obj = intel_buffer_object(obj);
 
    assert(intel_obj);

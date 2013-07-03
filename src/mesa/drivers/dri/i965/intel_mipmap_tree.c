@@ -1045,7 +1045,6 @@ intel_miptree_copy_slice(struct brw_context *brw,
 			 int depth)
 
 {
-   struct intel_context *intel = &brw->intel;
    gl_format format = src_mt->format;
    uint32_t width = src_mt->level[level].width;
    uint32_t height = src_mt->level[level].height;

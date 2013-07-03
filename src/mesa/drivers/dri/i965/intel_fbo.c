@@ -668,7 +668,6 @@ intel_blit_framebuffer_with_blitter(struct gl_context *ctx,
                                     GLbitfield mask, GLenum filter)
 {
    struct brw_context *brw = brw_context(ctx);
-   struct intel_context *intel = intel_context(ctx);
 
    if (mask & GL_COLOR_BUFFER_BIT) {
       GLint i;

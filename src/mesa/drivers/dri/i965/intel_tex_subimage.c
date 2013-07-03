@@ -220,7 +220,7 @@ intel_texsubimage_tiled_memcpy(struct gl_context * ctx,
       intel_batchbuffer_flush(brw);
    }
 
-   if (unlikely(intel->perf_debug)) {
+   if (unlikely(brw->perf_debug)) {
       if (drm_intel_bo_busy(bo)) {
          perf_debug("Mapping a busy BO, causing a stall on the GPU.\n");
       }

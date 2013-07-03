@@ -177,7 +177,6 @@ do_blit_bitmap( struct gl_context *ctx,
 		const GLubyte *bitmap )
 {
    struct brw_context *brw = brw_context(ctx);
-   struct intel_context *intel = intel_context(ctx);
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    struct intel_renderbuffer *irb;
    GLfloat tmpColor[4];

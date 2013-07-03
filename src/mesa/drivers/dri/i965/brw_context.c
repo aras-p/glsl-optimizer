@@ -464,7 +464,7 @@ brwCreateContext(int api,
       ctx->Const.ContextFlags |= GL_CONTEXT_FLAG_DEBUG_BIT;
 
       /* Turn on some extra GL_ARB_debug_output generation. */
-      intel->perf_debug = true;
+      brw->perf_debug = true;
    }
 
    brw_fs_alloc_reg_sets(brw);

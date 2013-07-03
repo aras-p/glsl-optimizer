@@ -494,7 +494,7 @@ void brw_draw_prims( struct gl_context *ctx,
 		     GLuint max_index,
 		     struct gl_transform_feedback_object *tfb_vertcount )
 {
-   struct intel_context *intel = intel_context(ctx);
+   struct brw_context *brw = brw_context(ctx);
    const struct gl_client_array **arrays = ctx->Array._DrawArrays;
 
    if (!_mesa_check_conditional_render(ctx))

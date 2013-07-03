@@ -157,7 +157,6 @@ gen6_queryobj_get_results(struct gl_context *ctx,
                           struct brw_query_object *query)
 {
    struct brw_context *brw = brw_context(ctx);
-   struct intel_context *intel = intel_context(ctx);
 
    if (query->bo == NULL)
       return;
@@ -169,7 +168,7 @@ gen6_queryobj_get_results(struct gl_context *ctx,
    if (drm_intel_bo_references(brw->batch.bo, query->bo))
       intel_batchbuffer_flush(brw);
 
-   if (unlikely(intel->perf_debug)) {
+   if (unlikely(brw->perf_debug)) {
       if (drm_intel_bo_busy(query->bo)) {
          perf_debug("Stalling on the GPU waiting for a query object.\n");
       }

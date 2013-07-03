@@ -858,6 +858,13 @@ struct brw_context
 
    GLenum reduced_primitive;
 
+   /**
+    * Set if we're either a debug context or the INTEL_DEBUG=perf environment
+    * variable is set, this is the flag indicating to do expensive work that
+    * might lead to a perf_debug() call.
+    */
+   bool perf_debug;
+
    bool emit_state_always;
    bool has_surface_tile_offset;
    bool has_compr4;
