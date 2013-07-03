@@ -127,8 +127,6 @@ struct intel_context
    bool has_llc;
    bool has_swizzling;
 
-   int driFd;
-
    struct intel_screen *intelScreen;
 };
 

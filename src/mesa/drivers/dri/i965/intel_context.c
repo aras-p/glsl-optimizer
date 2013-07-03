@@ -474,7 +474,6 @@ intelInitContext(struct brw_context *brw,
 
    driContextPriv->driverPrivate = brw;
    brw->driContext = driContextPriv;
-   intel->driFd = sPriv->fd;
 
    intel->gen = intelScreen->gen;
 
