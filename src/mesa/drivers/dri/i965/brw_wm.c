@@ -420,7 +420,7 @@ static void brw_wm_populate_key( struct brw_context *brw,
    key->line_aa = line_aa;
 
    if (intel->gen < 6)
-      key->stats_wm = brw->intel.stats_wm;
+      key->stats_wm = brw->stats_wm;
 
    /* _NEW_LIGHT */
    key->flat_shade = (ctx->Light.ShadeModel == GL_FLAT);

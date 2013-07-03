@@ -296,7 +296,7 @@ brw_begin_query(struct gl_context *ctx, struct gl_query_object *q)
        * avoid them when necessary.  They're required for occlusion queries,
        * so turn them on now.
        */
-      intel->stats_wm++;
+      brw->stats_wm++;
       brw->state.dirty.brw |= BRW_NEW_STATS_WM;
       break;
 
@@ -355,7 +355,7 @@ brw_end_query(struct gl_context *ctx, struct gl_query_object *q)
 
       brw->query.obj = NULL;
 
-      intel->stats_wm--;
+      brw->stats_wm--;
       brw->state.dirty.brw |= BRW_NEW_STATS_WM;
       break;
 

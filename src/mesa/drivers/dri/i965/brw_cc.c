@@ -96,7 +96,6 @@ brw_fix_xRGB_alpha(GLenum function)
  */
 static void upload_cc_unit(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &brw->intel.ctx;
    struct brw_cc_unit_state *cc;
 
@@ -211,7 +210,7 @@ static void upload_cc_unit(struct brw_context *brw)
       cc->cc2.depth_write_enable = ctx->Depth.Mask;
    }
 
-   if (intel->stats_wm || unlikely(INTEL_DEBUG & DEBUG_STATS))
+   if (brw->stats_wm || unlikely(INTEL_DEBUG & DEBUG_STATS))
       cc->cc5.statistics_enable = 1;
 
    /* CACHE_NEW_CC_VP */

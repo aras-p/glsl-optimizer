@@ -204,7 +204,7 @@ brw_upload_wm_unit(struct brw_context *brw)
    wm->wm5.line_stipple = ctx->Line.StippleFlag;
 
    /* BRW_NEW_STATS_WM */
-   if (unlikely(INTEL_DEBUG & DEBUG_STATS) || intel->stats_wm)
+   if (unlikely(INTEL_DEBUG & DEBUG_STATS) || brw->stats_wm)
       wm->wm4.stats_enable = 1;
 
    /* Emit scratch space relocation */

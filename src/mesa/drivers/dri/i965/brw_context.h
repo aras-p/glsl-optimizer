@@ -833,6 +833,8 @@ struct brw_context
     */
    bool is_front_buffer_reading;
 
+   GLuint stats_wm;
+
    /**
     * drirc options:
     * @{

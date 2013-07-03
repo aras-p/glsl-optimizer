@@ -150,8 +150,6 @@ struct intel_context
 
    uint32_t max_gtt_map_object_size;
 
-   GLuint stats_wm;
-
    int driFd;
 
    __DRIcontext *driContext;
