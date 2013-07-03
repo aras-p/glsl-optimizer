@@ -44,6 +44,7 @@
  * VARYING_SLOT_TEX0 + i.
  */
 
+#include "main/imports.h" /* for snprintf */
 #include "ir.h"
 #include "ir_rvalue_visitor.h"
 #include "ir_optimization.h"
