@@ -30,6 +30,7 @@
 
 #include "main/mtypes.h"
 
+struct brw_context;
 struct intel_context;
 struct gl_buffer_object;
 

@@ -45,6 +45,7 @@
 extern "C" {
 #endif
 
+struct brw_context;
 struct intel_context;
 struct intel_screen;
 struct intel_buffer_object;
