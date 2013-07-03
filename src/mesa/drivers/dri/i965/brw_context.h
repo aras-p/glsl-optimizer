@@ -876,6 +876,7 @@ struct brw_context
    uint32_t max_gtt_map_object_size;
 
    bool emit_state_always;
+   bool has_swizzling;
    bool has_surface_tile_offset;
    bool has_compr4;
    bool has_negative_rhw_bug;

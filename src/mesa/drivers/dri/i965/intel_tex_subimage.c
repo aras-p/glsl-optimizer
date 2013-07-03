@@ -268,7 +268,7 @@ intel_texsubimage_tiled_memcpy(struct gl_context * ctx,
                                        + (x_pixels % tile_width_pixels) * cpp;
 
          intptr_t offset_bytes = y_offset_bytes + x_offset_bytes;
-         if (intel->has_swizzling) {
+         if (brw->has_swizzling) {
 #if 0
             /* Clear, unoptimized version. */
             bool bit6 = (offset_bytes >> 6) & 1;

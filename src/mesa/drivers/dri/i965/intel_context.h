@@ -125,7 +125,6 @@ struct intel_context
    bool must_use_separate_stencil;
    bool has_hiz;
    bool has_llc;
-   bool has_swizzling;
 };
 
 /**

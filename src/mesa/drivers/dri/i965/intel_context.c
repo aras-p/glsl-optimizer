@@ -499,7 +499,7 @@ intelInitContext(struct brw_context *brw,
    intel->must_use_separate_stencil = brw->intelScreen->hw_must_use_separate_stencil;
    intel->has_hiz = intel->gen >= 6;
    intel->has_llc = brw->intelScreen->hw_has_llc;
-   intel->has_swizzling = brw->intelScreen->hw_has_swizzling;
+   brw->has_swizzling = brw->intelScreen->hw_has_swizzling;
 
    memset(&ctx->TextureFormatSupported,
 	  0, sizeof(ctx->TextureFormatSupported));

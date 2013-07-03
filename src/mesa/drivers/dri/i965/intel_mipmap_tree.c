@@ -1787,7 +1787,6 @@ intel_miptree_map_s8(struct brw_context *brw,
 		     struct intel_miptree_map *map,
 		     unsigned int level, unsigned int slice)
 {
-   struct intel_context *intel = &brw->intel;
    map->stride = map->w;
    map->buffer = map->ptr = malloc(map->stride * map->h);
    if (!map->buffer)
@@ -1810,7 +1809,7 @@ intel_miptree_map_s8(struct brw_context *brw,
 	    ptrdiff_t offset = intel_offset_S8(mt->region->pitch,
 	                                       x + image_x + map->x,
 	                                       y + image_y + map->y,
-					       intel->has_swizzling);
+					       brw->has_swizzling);
 	    untiled_s8_map[y * map->w + x] = tiled_s8_map[offset];
 	 }
       }
@@ -1834,7 +1833,6 @@ intel_miptree_unmap_s8(struct brw_context *brw,
 		       unsigned int level,
 		       unsigned int slice)
 {
-   struct intel_context *intel = &brw->intel;
    if (map->mode & GL_MAP_WRITE_BIT) {
       unsigned int image_x, image_y;
       uint8_t *untiled_s8_map = map->ptr;
@@ -1847,7 +1845,7 @@ intel_miptree_unmap_s8(struct brw_context *brw,
 	    ptrdiff_t offset = intel_offset_S8(mt->region->pitch,
 	                                       x + map->x,
 	                                       y + map->y,
-					       intel->has_swizzling);
+					       brw->has_swizzling);
 	    tiled_s8_map[offset] = untiled_s8_map[y * map->w + x];
 	 }
       }
@@ -1927,7 +1925,6 @@ intel_miptree_map_depthstencil(struct brw_context *brw,
 			       struct intel_miptree_map *map,
 			       unsigned int level, unsigned int slice)
 {
-   struct intel_context *intel = &brw->intel;
    struct intel_mipmap_tree *z_mt = mt;
    struct intel_mipmap_tree *s_mt = mt->stencil_mt;
    bool map_z32f_x24s8 = mt->format == MESA_FORMAT_Z32_FLOAT;
@@ -1961,7 +1958,7 @@ intel_miptree_map_depthstencil(struct brw_context *brw,
 	    ptrdiff_t s_offset = intel_offset_S8(s_mt->region->pitch,
 						 map_x + s_image_x,
 						 map_y + s_image_y,
-						 intel->has_swizzling);
+						 brw->has_swizzling);
 	    ptrdiff_t z_offset = ((map_y + z_image_y) *
                                   (z_mt->region->pitch / 4) +
 				  (map_x + z_image_x));
@@ -2000,7 +1997,6 @@ intel_miptree_unmap_depthstencil(struct brw_context *brw,
 				 unsigned int level,
 				 unsigned int slice)
 {
-   struct intel_context *intel = &brw->intel;
    struct intel_mipmap_tree *z_mt = mt;
    struct intel_mipmap_tree *s_mt = mt->stencil_mt;
    bool map_z32f_x24s8 = mt->format == MESA_FORMAT_Z32_FLOAT;
@@ -2022,7 +2018,7 @@ intel_miptree_unmap_depthstencil(struct brw_context *brw,
 	    ptrdiff_t s_offset = intel_offset_S8(s_mt->region->pitch,
 						 x + s_image_x + map->x,
 						 y + s_image_y + map->y,
-						 intel->has_swizzling);
+						 brw->has_swizzling);
 	    ptrdiff_t z_offset = ((y + z_image_y) *
                                   (z_mt->region->pitch / 4) +
 				  (x + z_image_x));
