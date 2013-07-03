@@ -32,9 +32,9 @@
 #include "main/colormac.h"
 #include "main/fbobject.h"
 
+#include "brw_context.h"
 #include "intel_blit.h"
 #include "intel_buffers.h"
-#include "intel_context.h"
 #include "intel_fbo.h"
 #include "intel_reg.h"
 #include "intel_regions.h"

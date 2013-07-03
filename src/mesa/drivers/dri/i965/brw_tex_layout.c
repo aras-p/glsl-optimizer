@@ -33,7 +33,7 @@
  */
 
 #include "intel_mipmap_tree.h"
-#include "intel_context.h"
+#include "brw_context.h"
 #include "main/macros.h"
 
 #define FILE_DEBUG_FLAG DEBUG_MIPTREE

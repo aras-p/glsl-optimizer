@@ -30,7 +30,7 @@
 
 #include "main/mtypes.h"
 #include "main/formats.h"
-#include "intel_context.h"
+#include "brw_context.h"
 
 struct intel_renderbuffer;
 

@@ -39,7 +39,7 @@
 
 extern "C" {
 #include "main/core.h"
-#include "intel_context.h"
+#include "brw_context.h"
 }
 #include "glsl/ir.h"
 #include "glsl/ir_visitor.h"

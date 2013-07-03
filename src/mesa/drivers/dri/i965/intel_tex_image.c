@@ -15,7 +15,6 @@
 #include "main/teximage.h"
 #include "main/texstore.h"
 
-#include "intel_context.h"
 #include "intel_mipmap_tree.h"
 #include "intel_buffer_objects.h"
 #include "intel_batchbuffer.h"

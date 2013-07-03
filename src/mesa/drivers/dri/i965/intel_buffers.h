@@ -31,7 +31,7 @@
 
 #include "dri_util.h"
 #include "drm.h"
-#include "intel_context.h"
+#include "brw_context.h"
 
 struct intel_context;
 struct intel_framebuffer;

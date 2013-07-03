@@ -32,7 +32,7 @@
 #include "main/context.h"
 #include "swrast/swrast.h"
 
-#include "intel_context.h"
+#include "brw_context.h"
 #include "intel_pixel.h"
 #include "intel_regions.h"
 

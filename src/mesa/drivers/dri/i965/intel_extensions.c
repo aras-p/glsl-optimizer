@@ -27,8 +27,8 @@
 
 #include "main/version.h"
 
+#include "brw_context.h"
 #include "intel_chipset.h"
-#include "intel_context.h"
 #include "intel_reg.h"
 #include "utils.h"
 

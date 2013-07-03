@@ -3,7 +3,7 @@
 #include "main/samplerobj.h"
 #include "main/texobj.h"
 
-#include "intel_context.h"
+#include "brw_context.h"
 #include "intel_mipmap_tree.h"
 #include "intel_blit.h"
 #include "intel_tex.h"

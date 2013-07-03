@@ -34,7 +34,6 @@
 #include "main/mtypes.h"
 #include "main/teximage.h"
 
-#include "intel_context.h"
 #include "intel_regions.h"
 #include "intel_tex.h"
 #include "brw_context.h"

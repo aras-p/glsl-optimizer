@@ -35,7 +35,7 @@
 #include "swrast/swrast.h"
 #include "drivers/common/meta.h"
 
-#include "intel_context.h"
+#include "brw_context.h"
 #include "intel_pixel.h"
 
 void

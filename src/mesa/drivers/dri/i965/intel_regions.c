@@ -43,7 +43,7 @@
 #include <errno.h>
 
 #include "main/hash.h"
-#include "intel_context.h"
+#include "brw_context.h"
 #include "intel_regions.h"
 #include "intel_blit.h"
 #include "intel_buffer_objects.h"

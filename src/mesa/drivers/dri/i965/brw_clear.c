@@ -33,7 +33,6 @@
 #include "drivers/common/meta.h"
 
 #include "intel_batchbuffer.h"
-#include "intel_context.h"
 #include "intel_blit.h"
 #include "intel_fbo.h"
 #include "intel_mipmap_tree.h"

@@ -28,7 +28,7 @@
 #ifndef INTEL_BLIT_H
 #define INTEL_BLIT_H
 
-#include "intel_context.h"
+#include "brw_context.h"
 
 bool
 intelEmitCopyBlit(struct intel_context *intel,
