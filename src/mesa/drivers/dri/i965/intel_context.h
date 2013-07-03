@@ -158,11 +158,6 @@ struct intel_context
 
    GLuint stats_wm;
 
-   bool no_rast;
-   bool always_flush_batch;
-   bool always_flush_cache;
-   bool disable_throttling;
-
    int driFd;
 
    __DRIcontext *driContext;

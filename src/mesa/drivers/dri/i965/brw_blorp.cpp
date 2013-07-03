@@ -206,7 +206,7 @@ brw_blorp_exec(struct brw_context *brw, const brw_blorp_params *params)
       break;
    }
 
-   if (unlikely(intel->always_flush_batch))
+   if (unlikely(brw->always_flush_batch))
       intel_batchbuffer_flush(brw);
 
    /* We've smashed all state compared to what the normal 3D pipeline

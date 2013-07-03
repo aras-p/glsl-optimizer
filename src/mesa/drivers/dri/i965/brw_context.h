@@ -827,8 +827,18 @@ struct brw_context
     */
    bool is_front_buffer_reading;
 
-   /** drirc option cache */
+   /**
+    * drirc options:
+    * @{
+    */
+   bool no_rast;
+   bool always_flush_batch;
+   bool always_flush_cache;
+   bool disable_throttling;
+   bool precompile;
+
    driOptionCache optionCache;
+   /** @} */
 
    GLuint primitive; /**< Hardware primitive, such as _3DPRIM_TRILIST. */
 
@@ -840,7 +850,6 @@ struct brw_context
    bool has_negative_rhw_bug;
    bool has_aa_line_parameters;
    bool has_pln;
-   bool precompile;
 
    /**
     * Some versions of Gen hardware don't do centroid interpolation correctly

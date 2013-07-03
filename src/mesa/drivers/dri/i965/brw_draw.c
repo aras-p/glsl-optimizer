@@ -195,7 +195,7 @@ static void brw_emit_prim(struct brw_context *brw,
     * and missed flushes of the render cache as it heads to other parts of
     * the besides the draw code.
     */
-   if (intel->always_flush_cache) {
+   if (brw->always_flush_cache) {
       intel_batchbuffer_emit_mi_flush(brw);
    }
 
@@ -212,7 +212,7 @@ static void brw_emit_prim(struct brw_context *brw,
 
    intel->batch.need_workaround_flush = true;
 
-   if (intel->always_flush_cache) {
+   if (brw->always_flush_cache) {
       intel_batchbuffer_emit_mi_flush(brw);
    }
 }
@@ -221,7 +221,6 @@ static void gen7_emit_prim(struct brw_context *brw,
 			   const struct _mesa_prim *prim,
 			   uint32_t hw_prim)
 {
-   struct intel_context *intel = &brw->intel;
    int verts_per_instance;
    int vertex_access_type;
    int start_vertex_location;
@@ -252,7 +251,7 @@ static void gen7_emit_prim(struct brw_context *brw,
     * and missed flushes of the render cache as it heads to other parts of
     * the besides the draw code.
     */
-   if (intel->always_flush_cache) {
+   if (brw->always_flush_cache) {
       intel_batchbuffer_emit_mi_flush(brw);
    }
 
@@ -266,7 +265,7 @@ static void gen7_emit_prim(struct brw_context *brw,
    OUT_BATCH(base_vertex_location);
    ADVANCE_BATCH();
 
-   if (intel->always_flush_cache) {
+   if (brw->always_flush_cache) {
       intel_batchbuffer_emit_mi_flush(brw);
    }
 }
@@ -477,7 +476,7 @@ retry:
       }
    }
 
-   if (intel->always_flush_batch)
+   if (brw->always_flush_batch)
       intel_batchbuffer_flush(brw);
 
    brw_state_cache_check_size(brw);
