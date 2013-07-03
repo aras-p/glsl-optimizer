@@ -243,7 +243,7 @@ brw_upload_initial_gpu_state(struct brw_context *brw)
     * right away rather than doing it via state atoms.  This saves a small
     * amount of overhead on every draw call.
     */
-   if (!intel->hw_ctx)
+   if (!brw->hw_ctx)
       return;
 
    brw_upload_invariant_state(brw);

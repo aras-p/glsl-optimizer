@@ -467,7 +467,7 @@ brw_emit_query_begin(struct brw_context *brw)
    struct gl_context *ctx = &intel->ctx;
    struct brw_query_object *query = brw->query.obj;
 
-   if (intel->hw_ctx)
+   if (brw->hw_ctx)
       return;
 
    /* Skip if we're not doing any queries, or we've already recorded the
@@ -492,10 +492,9 @@ brw_emit_query_begin(struct brw_context *brw)
 void
 brw_emit_query_end(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
    struct brw_query_object *query = brw->query.obj;
 
-   if (intel->hw_ctx)
+   if (brw->hw_ctx)
       return;
 
    if (!brw->query.begin_emitted)

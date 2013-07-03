@@ -213,11 +213,11 @@ do_flush_locked(struct brw_context *brw)
       if (ret == 0) {
          if (unlikely(INTEL_DEBUG & DEBUG_AUB))
             brw_annotate_aub(brw);
-	 if (intel->hw_ctx == NULL || batch->is_blit) {
+	 if (brw->hw_ctx == NULL || batch->is_blit) {
 	    ret = drm_intel_bo_mrb_exec(batch->bo, 4 * batch->used, NULL, 0, 0,
 					flags);
 	 } else {
-	    ret = drm_intel_gem_bo_context_exec(batch->bo, intel->hw_ctx,
+	    ret = drm_intel_gem_bo_context_exec(batch->bo, brw->hw_ctx,
 						4 * batch->used, flags);
 	 }
       }

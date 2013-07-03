@@ -69,7 +69,6 @@ dri_bo_release(drm_intel_bo **bo)
 static void
 brw_destroy_context(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
    if (INTEL_DEBUG & DEBUG_SHADER_TIME) {
       /* Force a report. */
       brw->shader_time.report_time = 0;
@@ -88,7 +87,7 @@ brw_destroy_context(struct brw_context *brw)
    free(brw->curbe.last_buf);
    free(brw->curbe.next_buf);
 
-   drm_intel_gem_context_destroy(intel->hw_ctx);
+   drm_intel_gem_context_destroy(brw->hw_ctx);
 }
 
 /**
@@ -126,7 +125,7 @@ brw_new_batch(struct brw_context *brw)
     * would otherwise be stored in the context (which for all intents and
     * purposes means everything).
     */
-   if (intel->hw_ctx == NULL)
+   if (brw->hw_ctx == NULL)
       brw->state.dirty.brw |= BRW_NEW_CONTEXT;
 
    brw->state.dirty.brw |= BRW_NEW_BATCH;

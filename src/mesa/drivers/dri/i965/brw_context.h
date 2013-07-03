@@ -804,6 +804,8 @@ struct brw_context
 
    dri_bufmgr *bufmgr;
 
+   drm_intel_context *hw_ctx;
+
    /**
     * Set if rendering has occured to the drawable's front buffer.
     *
