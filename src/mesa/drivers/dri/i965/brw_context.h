@@ -865,6 +865,8 @@ struct brw_context
     */
    bool perf_debug;
 
+   uint32_t max_gtt_map_object_size;
+
    bool emit_state_always;
    bool has_surface_tile_offset;
    bool has_compr4;

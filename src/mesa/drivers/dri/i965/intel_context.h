@@ -137,8 +137,6 @@ struct intel_context
       char buffer[4096];
    } upload;
 
-   uint32_t max_gtt_map_object_size;
-
    int driFd;
 
    __DRIcontext *driContext;

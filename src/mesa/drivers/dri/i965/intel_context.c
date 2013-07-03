@@ -523,7 +523,7 @@ intelInitContext(struct brw_context *brw,
     * taken up by things like the framebuffer and the ringbuffer and such, so
     * be more conservative.
     */
-   intel->max_gtt_map_object_size = gtt_size / 4;
+   brw->max_gtt_map_object_size = gtt_size / 4;
 
    brw->bufmgr = intelScreen->bufmgr;
 

@@ -571,7 +571,7 @@ intel_miptree_create(struct brw_context *brw,
     * BLT engine to support it.  The BLT paths can't currently handle Y-tiling,
     * so we need to fall back to X.
     */
-   if (y_or_x && mt->region->bo->size >= intel->max_gtt_map_object_size) {
+   if (y_or_x && mt->region->bo->size >= brw->max_gtt_map_object_size) {
       perf_debug("%dx%d miptree larger than aperture; falling back to X-tiled\n",
                  mt->total_width, mt->total_height);
       intel_region_release(&mt->region);
@@ -2146,7 +2146,7 @@ intel_miptree_map_singlesample(struct brw_context *brw,
             mt->region->pitch < 32768) {
       intel_miptree_map_blit(brw, mt, map, level, slice);
    } else if (mt->region->tiling != I915_TILING_NONE &&
-              mt->region->bo->size >= intel->max_gtt_map_object_size) {
+              mt->region->bo->size >= brw->max_gtt_map_object_size) {
       assert(mt->region->pitch < 32768);
       intel_miptree_map_blit(brw, mt, map, level, slice);
    } else {
