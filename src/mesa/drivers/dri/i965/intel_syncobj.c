@@ -69,13 +69,12 @@ intel_fence_sync(struct gl_context *ctx, struct gl_sync_object *s,
 	       GLenum condition, GLbitfield flags)
 {
    struct brw_context *brw = brw_context(ctx);
-   struct intel_context *intel = intel_context(ctx);
    struct intel_sync_object *sync = (struct intel_sync_object *)s;
 
    assert(condition == GL_SYNC_GPU_COMMANDS_COMPLETE);
    intel_batchbuffer_emit_mi_flush(brw);
 
-   sync->bo = intel->batch.bo;
+   sync->bo = brw->batch.bo;
    drm_intel_bo_reference(sync->bo);
 
    intel_flush(ctx);

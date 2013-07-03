@@ -215,7 +215,7 @@ intel_texsubimage_tiled_memcpy(struct gl_context * ctx,
 
    bo = image->mt->region->bo;
 
-   if (drm_intel_bo_references(intel->batch.bo, bo)) {
+   if (drm_intel_bo_references(brw->batch.bo, bo)) {
       perf_debug("Flushing before mapping a referenced bo.\n");
       intel_batchbuffer_flush(brw);
    }

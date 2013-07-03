@@ -341,9 +341,8 @@ void
 _intel_flush(struct gl_context *ctx, const char *file, int line)
 {
    struct brw_context *brw = brw_context(ctx);
-   struct intel_context *intel = intel_context(ctx);
 
-   if (intel->batch.used)
+   if (brw->batch.used)
       _intel_batchbuffer_flush(brw, file, line);
 }
 
@@ -362,13 +361,13 @@ intel_glFlush(struct gl_context *ctx)
 void
 intelFinish(struct gl_context * ctx)
 {
-   struct intel_context *intel = intel_context(ctx);
+   struct brw_context *brw = brw_context(ctx);
 
    intel_flush(ctx);
    intel_flush_front(ctx);
 
-   if (intel->batch.last_bo)
-      drm_intel_bo_wait_rendering(intel->batch.last_bo);
+   if (brw->batch.last_bo)
+      drm_intel_bo_wait_rendering(brw->batch.last_bo);
 }
 
 void

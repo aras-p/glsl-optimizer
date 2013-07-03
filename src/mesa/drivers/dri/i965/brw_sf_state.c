@@ -129,7 +129,7 @@ static void upload_sf_unit( struct brw_context *brw )
    struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &intel->ctx;
    struct brw_sf_unit_state *sf;
-   drm_intel_bo *bo = intel->batch.bo;
+   drm_intel_bo *bo = brw->batch.bo;
    int chipset_max_threads;
    bool render_to_fbo = _mesa_is_user_fbo(brw->intel.ctx.DrawBuffer);
 
@@ -175,7 +175,7 @@ static void upload_sf_unit( struct brw_context *brw )
       sf->thread4.stats_enable = 1;
 
    /* CACHE_NEW_SF_VP */
-   sf->sf5.sf_viewport_state_offset = (intel->batch.bo->offset +
+   sf->sf5.sf_viewport_state_offset = (brw->batch.bo->offset +
 				       brw->sf.vp_offset) >> 5; /* reloc */
 
    sf->sf5.viewport_transform = 1;
@@ -290,7 +290,7 @@ static void upload_sf_unit( struct brw_context *brw )
    /* Emit SF viewport relocation */
    drm_intel_bo_emit_reloc(bo, (brw->sf.state_offset +
 				offsetof(struct brw_sf_unit_state, sf5)),
-			   intel->batch.bo, (brw->sf.vp_offset |
+			   brw->batch.bo, (brw->sf.vp_offset |
 					     sf->sf5.front_winding |
 					     (sf->sf5.viewport_transform << 1)),
 			   I915_GEM_DOMAIN_INSTRUCTION, 0);

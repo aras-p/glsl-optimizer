@@ -258,10 +258,9 @@ gen7_begin_transform_feedback(struct gl_context *ctx, GLenum mode,
                               struct gl_transform_feedback_object *obj)
 {
    struct brw_context *brw = brw_context(ctx);
-   struct intel_context *intel = &brw->intel;
 
    intel_batchbuffer_flush(brw);
-   intel->batch.needs_sol_reset = true;
+   brw->batch.needs_sol_reset = true;
 }
 
 void

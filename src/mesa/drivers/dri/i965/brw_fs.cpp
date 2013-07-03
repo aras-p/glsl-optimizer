@@ -3021,8 +3021,8 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c,
    float start_time = 0;
 
    if (unlikely(intel->perf_debug)) {
-      start_busy = (intel->batch.last_bo &&
-                    drm_intel_bo_busy(intel->batch.last_bo));
+      start_busy = (brw->batch.last_bo &&
+                    drm_intel_bo_busy(brw->batch.last_bo));
       start_time = get_time();
    }
 
@@ -3082,7 +3082,7 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c,
          brw_wm_debug_recompile(brw, prog, &c->key);
       shader->compiled_once = true;
 
-      if (start_busy && !drm_intel_bo_busy(intel->batch.last_bo)) {
+      if (start_busy && !drm_intel_bo_busy(brw->batch.last_bo)) {
          perf_debug("FS compile took %.03f ms and stalled the GPU\n",
                     (get_time() - start_time) * 1000);
       }

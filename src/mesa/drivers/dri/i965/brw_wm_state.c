@@ -142,7 +142,7 @@ brw_upload_wm_unit(struct brw_context *brw)
 
    if (brw->sampler.count) {
       /* reloc */
-      wm->wm4.sampler_state_pointer = (intel->batch.bo->offset +
+      wm->wm4.sampler_state_pointer = (brw->batch.bo->offset +
 				       brw->sampler.offset) >> 5;
    } else {
       wm->wm4.sampler_state_pointer = 0;
@@ -209,7 +209,7 @@ brw_upload_wm_unit(struct brw_context *brw)
 
    /* Emit scratch space relocation */
    if (brw->wm.prog_data->total_scratch != 0) {
-      drm_intel_bo_emit_reloc(intel->batch.bo,
+      drm_intel_bo_emit_reloc(brw->batch.bo,
 			      brw->wm.state_offset +
 			      offsetof(struct brw_wm_unit_state, thread2),
 			      brw->wm.scratch_bo,
@@ -219,10 +219,10 @@ brw_upload_wm_unit(struct brw_context *brw)
 
    /* Emit sampler state relocation */
    if (brw->sampler.count != 0) {
-      drm_intel_bo_emit_reloc(intel->batch.bo,
+      drm_intel_bo_emit_reloc(brw->batch.bo,
 			      brw->wm.state_offset +
 			      offsetof(struct brw_wm_unit_state, wm4),
-			      intel->batch.bo, (brw->sampler.offset |
+			      brw->batch.bo, (brw->sampler.offset |
 						wm->wm4.stats_enable |
 						(wm->wm4.sampler_count << 2)),
 			      I915_GEM_DOMAIN_INSTRUCTION, 0);

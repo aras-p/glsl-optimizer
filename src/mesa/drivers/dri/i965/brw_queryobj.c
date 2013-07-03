@@ -137,7 +137,7 @@ brw_queryobj_get_results(struct gl_context *ctx,
     * still contributing to it, flush it now so the results will be present
     * when mapped.
     */
-   if (drm_intel_bo_references(intel->batch.bo, query->bo))
+   if (drm_intel_bo_references(brw->batch.bo, query->bo))
       intel_batchbuffer_flush(brw);
 
    if (unlikely(intel->perf_debug)) {
@@ -402,7 +402,7 @@ static void brw_check_query(struct gl_context *ctx, struct gl_query_object *q)
     *      not ready yet on the first time it is queried.  This ensures that
     *      the async query will return true in finite time.
     */
-   if (query->bo && drm_intel_bo_references(intel->batch.bo, query->bo))
+   if (query->bo && drm_intel_bo_references(brw->batch.bo, query->bo))
       intel_batchbuffer_flush(brw);
 
    if (query->bo == NULL || !drm_intel_bo_busy(query->bo)) {

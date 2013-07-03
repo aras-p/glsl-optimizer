@@ -74,15 +74,13 @@ void
 gen6_blorp_emit_state_base_address(struct brw_context *brw,
                                    const brw_blorp_params *params)
 {
-   struct intel_context *intel = &brw->intel;
-
    BEGIN_BATCH(10);
    OUT_BATCH(CMD_STATE_BASE_ADDRESS << 16 | (10 - 2));
    OUT_BATCH(1); /* GeneralStateBaseAddressModifyEnable */
    /* SurfaceStateBaseAddress */
-   OUT_RELOC(intel->batch.bo, I915_GEM_DOMAIN_SAMPLER, 0, 1);
+   OUT_RELOC(brw->batch.bo, I915_GEM_DOMAIN_SAMPLER, 0, 1);
    /* DynamicStateBaseAddress */
-   OUT_RELOC(intel->batch.bo, (I915_GEM_DOMAIN_RENDER |
+   OUT_RELOC(brw->batch.bo, (I915_GEM_DOMAIN_RENDER |
                                I915_GEM_DOMAIN_INSTRUCTION), 0, 1);
    OUT_BATCH(1); /* IndirectObjectBaseAddress */
    if (params->use_wm_prog) {
@@ -170,10 +168,10 @@ gen6_blorp_emit_vertices(struct brw_context *brw,
       OUT_BATCH((_3DSTATE_VERTEX_BUFFERS << 16) | (batch_length - 2));
       OUT_BATCH(dw0);
       /* start address */
-      OUT_RELOC(intel->batch.bo, I915_GEM_DOMAIN_VERTEX, 0,
+      OUT_RELOC(brw->batch.bo, I915_GEM_DOMAIN_VERTEX, 0,
 		vertex_offset);
       /* end address */
-      OUT_RELOC(intel->batch.bo, I915_GEM_DOMAIN_VERTEX, 0,
+      OUT_RELOC(brw->batch.bo, I915_GEM_DOMAIN_VERTEX, 0,
 		vertex_offset + GEN6_BLORP_VBO_SIZE - 1);
       OUT_BATCH(0);
       ADVANCE_BATCH();
@@ -438,7 +436,7 @@ gen6_blorp_emit_surface_state(struct brw_context *brw,
                BRW_SURFACE_VERTICAL_ALIGN_ENABLE : 0));
 
    /* Emit relocation to surface contents */
-   drm_intel_bo_emit_reloc(brw->intel.batch.bo,
+   drm_intel_bo_emit_reloc(brw->batch.bo,
                            wm_surf_offset + 4,
                            region->bo,
                            surf[1] - region->bo->offset,

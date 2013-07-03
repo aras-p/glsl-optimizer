@@ -215,7 +215,7 @@ brw_blorp_exec(struct brw_context *brw, const brw_blorp_params *params)
    brw->state.dirty.brw = ~0;
    brw->state.dirty.cache = ~0;
    brw->state_batch_count = 0;
-   intel->batch.need_workaround_flush = true;
+   brw->batch.need_workaround_flush = true;
 
    /* Flush the sampler cache so any texturing from the destination is
     * coherent.

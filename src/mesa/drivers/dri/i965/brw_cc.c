@@ -215,16 +215,16 @@ static void upload_cc_unit(struct brw_context *brw)
       cc->cc5.statistics_enable = 1;
 
    /* CACHE_NEW_CC_VP */
-   cc->cc4.cc_viewport_state_offset = (intel->batch.bo->offset +
+   cc->cc4.cc_viewport_state_offset = (brw->batch.bo->offset +
 				       brw->cc.vp_offset) >> 5; /* reloc */
 
    brw->state.dirty.cache |= CACHE_NEW_CC_UNIT;
 
    /* Emit CC viewport relocation */
-   drm_intel_bo_emit_reloc(brw->intel.batch.bo,
+   drm_intel_bo_emit_reloc(brw->batch.bo,
 			   (brw->cc.state_offset +
 			    offsetof(struct brw_cc_unit_state, cc4)),
-			   intel->batch.bo, brw->cc.vp_offset,
+			   brw->batch.bo, brw->cc.vp_offset,
 			   I915_GEM_DOMAIN_INSTRUCTION, 0);
 }
 

@@ -129,8 +129,6 @@ struct intel_context
    bool has_llc;
    bool has_swizzling;
 
-   struct intel_batchbuffer batch;
-
    drm_intel_bo *first_post_swapbuffers_batch;
    bool need_throttle;
    bool no_batch_wrap;

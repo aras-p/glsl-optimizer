@@ -78,20 +78,18 @@ static INLINE uint32_t float_as_int(float f)
 static INLINE unsigned
 intel_batchbuffer_space(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
-   return (intel->batch.state_batch_offset - intel->batch.reserved_space)
-      - intel->batch.used*4;
+   return (brw->batch.state_batch_offset - brw->batch.reserved_space)
+      - brw->batch.used*4;
 }
 
 
 static INLINE void
 intel_batchbuffer_emit_dword(struct brw_context *brw, GLuint dword)
 {
-   struct intel_context *intel = &brw->intel;
 #ifdef DEBUG
    assert(intel_batchbuffer_space(brw) >= 4);
 #endif
-   intel->batch.map[intel->batch.used++] = dword;
+   brw->batch.map[brw->batch.used++] = dword;
 }
 
 static INLINE void
@@ -105,11 +103,11 @@ intel_batchbuffer_require_space(struct brw_context *brw, GLuint sz, int is_blit)
 {
    struct intel_context *intel = &brw->intel;
    if (intel->gen >= 6 &&
-       intel->batch.is_blit != is_blit && intel->batch.used) {
+       brw->batch.is_blit != is_blit && brw->batch.used) {
       intel_batchbuffer_flush(brw);
    }
 
-   intel->batch.is_blit = is_blit;
+   brw->batch.is_blit = is_blit;
 
 #ifdef DEBUG
    assert(sz < BATCH_SZ - BATCH_RESERVED);
@@ -121,12 +119,11 @@ intel_batchbuffer_require_space(struct brw_context *brw, GLuint sz, int is_blit)
 static INLINE void
 intel_batchbuffer_begin(struct brw_context *brw, int n, bool is_blit)
 {
-   struct intel_context *intel = &brw->intel;
    intel_batchbuffer_require_space(brw, n * 4, is_blit);
 
-   intel->batch.emit = intel->batch.used;
+   brw->batch.emit = brw->batch.used;
 #ifdef DEBUG
-   intel->batch.total = n;
+   brw->batch.total = n;
 #endif
 }
 
@@ -134,8 +131,7 @@ static INLINE void
 intel_batchbuffer_advance(struct brw_context *brw)
 {
 #ifdef DEBUG
-   struct intel_context *intel = &brw->intel;
-   struct intel_batchbuffer *batch = &intel->batch;
+   struct intel_batchbuffer *batch = &brw->batch;
    unsigned int _n = batch->used - batch->emit;
    assert(batch->total != 0);
    if (_n != batch->total) {

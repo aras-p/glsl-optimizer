@@ -210,7 +210,7 @@ static void brw_emit_prim(struct brw_context *brw,
    OUT_BATCH(base_vertex_location);
    ADVANCE_BATCH();
 
-   intel->batch.need_workaround_flush = true;
+   brw->batch.need_workaround_flush = true;
 
    if (brw->always_flush_cache) {
       intel_batchbuffer_emit_mi_flush(brw);
@@ -454,7 +454,7 @@ retry:
 
       intel->no_batch_wrap = false;
 
-      if (dri_bufmgr_check_aperture_space(&intel->batch.bo, 1)) {
+      if (dri_bufmgr_check_aperture_space(&brw->batch.bo, 1)) {
 	 if (!fail_next) {
 	    intel_batchbuffer_reset_to_saved(brw);
 	    intel_batchbuffer_flush(brw);

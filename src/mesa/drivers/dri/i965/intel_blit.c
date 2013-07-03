@@ -302,7 +302,7 @@ intelEmitCopyBlit(struct brw_context *brw,
 
    /* do space check before going any further */
    do {
-       aper_array[0] = intel->batch.bo;
+       aper_array[0] = brw->batch.bo;
        aper_array[1] = dst_buffer;
        aper_array[2] = src_buffer;
 
@@ -537,7 +537,6 @@ intel_miptree_set_alpha_to_one(struct brw_context *brw,
                               struct intel_mipmap_tree *mt,
                               int x, int y, int width, int height)
 {
-   struct intel_context *intel = &brw->intel;
    struct intel_region *region = mt->region;
    uint32_t BR13, CMD;
    int pitch, cpp;
@@ -561,7 +560,7 @@ intel_miptree_set_alpha_to_one(struct brw_context *brw,
    BR13 |= pitch;
 
    /* do space check before going any further */
-   aper_array[0] = intel->batch.bo;
+   aper_array[0] = brw->batch.bo;
    aper_array[1] = region->bo;
 
    if (drm_intel_bufmgr_check_aperture_space(aper_array,

@@ -806,6 +806,8 @@ struct brw_context
 
    drm_intel_context *hw_ctx;
 
+   struct intel_batchbuffer batch;
+
    /**
     * Set if rendering has occured to the drawable's front buffer.
     *
@@ -1411,7 +1413,7 @@ brw_program_reloc(struct brw_context *brw, uint32_t state_offset,
       return prog_offset;
    }
 
-   drm_intel_bo_emit_reloc(intel->batch.bo,
+   drm_intel_bo_emit_reloc(brw->batch.bo,
 			   state_offset,
 			   brw->cache.bo,
 			   prog_offset,

@@ -447,7 +447,7 @@ brwCreateContext(int api,
 
    brw->emit_state_always = 0;
 
-   intel->batch.need_workaround_flush = true;
+   brw->batch.need_workaround_flush = true;
 
    ctx->VertexProgram._MaintainTnlProgram = true;
    ctx->FragmentProgram._MaintainTexEnvProgram = true;

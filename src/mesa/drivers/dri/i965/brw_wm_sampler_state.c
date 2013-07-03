@@ -342,14 +342,14 @@ static void brw_update_sampler_state(struct brw_context *brw,
       sampler->ss2.default_color_pointer = brw->wm.sdc_offset[ss_index] >> 5;
    } else {
       /* reloc */
-      sampler->ss2.default_color_pointer = (intel->batch.bo->offset +
+      sampler->ss2.default_color_pointer = (brw->batch.bo->offset +
 					    brw->wm.sdc_offset[ss_index]) >> 5;
 
-      drm_intel_bo_emit_reloc(intel->batch.bo,
+      drm_intel_bo_emit_reloc(brw->batch.bo,
 			      brw->sampler.offset +
 			      ss_index * sizeof(struct brw_sampler_state) +
 			      offsetof(struct brw_sampler_state, ss2),
-			      intel->batch.bo, brw->wm.sdc_offset[ss_index],
+			      brw->batch.bo, brw->wm.sdc_offset[ss_index],
 			      I915_GEM_DOMAIN_SAMPLER, 0);
    }
 

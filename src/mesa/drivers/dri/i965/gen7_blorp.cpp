@@ -202,7 +202,7 @@ gen7_blorp_emit_surface_state(struct brw_context *brw,
    }
 
    /* Emit relocation to surface contents */
-   drm_intel_bo_emit_reloc(intel->batch.bo,
+   drm_intel_bo_emit_reloc(brw->batch.bo,
                            wm_surf_offset + 4,
                            region->bo,
                            surf[1] - region->bo->offset,

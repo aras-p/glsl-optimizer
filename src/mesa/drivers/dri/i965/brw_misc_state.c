@@ -152,20 +152,20 @@ static void upload_pipelined_state_pointers(struct brw_context *brw )
 
    BEGIN_BATCH(7);
    OUT_BATCH(_3DSTATE_PIPELINED_POINTERS << 16 | (7 - 2));
-   OUT_RELOC(intel->batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
+   OUT_RELOC(brw->batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
 	     brw->vs.state_offset);
    if (brw->gs.prog_active)
-      OUT_RELOC(brw->intel.batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
+      OUT_RELOC(brw->batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
 		brw->gs.state_offset | 1);
    else
       OUT_BATCH(0);
-   OUT_RELOC(brw->intel.batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
+   OUT_RELOC(brw->batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
 	     brw->clip.state_offset | 1);
-   OUT_RELOC(brw->intel.batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
+   OUT_RELOC(brw->batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
 	     brw->sf.state_offset);
-   OUT_RELOC(brw->intel.batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
+   OUT_RELOC(brw->batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
 	     brw->wm.state_offset);
-   OUT_RELOC(brw->intel.batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
+   OUT_RELOC(brw->batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
 	     brw->cc.state_offset);
    ADVANCE_BATCH();
 
@@ -1050,7 +1050,7 @@ static void upload_state_base_address( struct brw_context *brw )
 	* BINDING_TABLE_STATE
 	* SURFACE_STATE
 	*/
-       OUT_RELOC(intel->batch.bo, I915_GEM_DOMAIN_SAMPLER, 0, 1);
+       OUT_RELOC(brw->batch.bo, I915_GEM_DOMAIN_SAMPLER, 0, 1);
         /* Dynamic state base address:
 	 * SAMPLER_STATE
 	 * SAMPLER_BORDER_COLOR_STATE
@@ -1061,7 +1061,7 @@ static void upload_state_base_address( struct brw_context *brw )
 	 * Push constants (when INSTPM: CONSTANT_BUFFER Address Offset
 	 * Disable is clear, which we rely on)
 	 */
-       OUT_RELOC(intel->batch.bo, (I915_GEM_DOMAIN_RENDER |
+       OUT_RELOC(brw->batch.bo, (I915_GEM_DOMAIN_RENDER |
 				   I915_GEM_DOMAIN_INSTRUCTION), 0, 1);
 
        OUT_BATCH(1); /* Indirect object base address: MEDIA_OBJECT data */
@@ -1082,7 +1082,7 @@ static void upload_state_base_address( struct brw_context *brw )
        BEGIN_BATCH(8);
        OUT_BATCH(CMD_STATE_BASE_ADDRESS << 16 | (8 - 2));
        OUT_BATCH(1); /* General state base address */
-       OUT_RELOC(intel->batch.bo, I915_GEM_DOMAIN_SAMPLER, 0,
+       OUT_RELOC(brw->batch.bo, I915_GEM_DOMAIN_SAMPLER, 0,
 		 1); /* Surface state base address */
        OUT_BATCH(1); /* Indirect object base address */
        OUT_RELOC(brw->cache.bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
@@ -1095,7 +1095,7 @@ static void upload_state_base_address( struct brw_context *brw )
        BEGIN_BATCH(6);
        OUT_BATCH(CMD_STATE_BASE_ADDRESS << 16 | (6 - 2));
        OUT_BATCH(1); /* General state base address */
-       OUT_RELOC(intel->batch.bo, I915_GEM_DOMAIN_SAMPLER, 0,
+       OUT_RELOC(brw->batch.bo, I915_GEM_DOMAIN_SAMPLER, 0,
 		 1); /* Surface state base address */
        OUT_BATCH(1); /* Indirect object base address */
        OUT_BATCH(1); /* General state upper bound */

@@ -117,8 +117,6 @@ brw_finish_batch(struct brw_context *brw)
 static void
 brw_new_batch(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
-
    /* If the kernel supports hardware contexts, then most hardware state is
     * preserved between batches; we only need to re-emit state that is required
     * to be in every batch.  Otherwise we need to re-emit all the state that
@@ -133,7 +131,7 @@ brw_new_batch(struct brw_context *brw)
    /* Assume that the last command before the start of our batch was a
     * primitive, for safety.
     */
-   intel->batch.need_workaround_flush = true;
+   brw->batch.need_workaround_flush = true;
 
    brw->state_batch_count = 0;
 

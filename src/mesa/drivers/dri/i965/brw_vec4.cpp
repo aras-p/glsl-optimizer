@@ -1509,8 +1509,8 @@ brw_vs_emit(struct brw_context *brw,
    float start_time = 0;
 
    if (unlikely(intel->perf_debug)) {
-      start_busy = (intel->batch.last_bo &&
-                    drm_intel_bo_busy(intel->batch.last_bo));
+      start_busy = (brw->batch.last_bo &&
+                    drm_intel_bo_busy(brw->batch.last_bo));
       start_time = get_time();
    }
 
@@ -1552,7 +1552,7 @@ brw_vs_emit(struct brw_context *brw,
       if (shader->compiled_once) {
          brw_vs_debug_recompile(brw, prog, &c->key);
       }
-      if (start_busy && !drm_intel_bo_busy(intel->batch.last_bo)) {
+      if (start_busy && !drm_intel_bo_busy(brw->batch.last_bo)) {
          perf_debug("VS compile took %.03f ms and stalled the GPU\n",
                     (get_time() - start_time) * 1000);
       }

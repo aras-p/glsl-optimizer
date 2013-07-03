@@ -226,7 +226,7 @@ brw_update_buffer_texture_surface(struct gl_context *ctx,
       surf[1] = bo->offset; /* reloc */
 
       /* Emit relocation to surface contents. */
-      drm_intel_bo_emit_reloc(brw->intel.batch.bo,
+      drm_intel_bo_emit_reloc(brw->batch.bo,
 			      binding_table[surf_index] + 4,
 			      bo, 0, I915_GEM_DOMAIN_SAMPLER, 0);
 
@@ -303,7 +303,7 @@ brw_update_texture_surface(struct gl_context *ctx,
 	      (mt->align_h == 4 ? BRW_SURFACE_VERTICAL_ALIGN_ENABLE : 0));
 
    /* Emit relocation to surface contents */
-   drm_intel_bo_emit_reloc(brw->intel.batch.bo,
+   drm_intel_bo_emit_reloc(brw->batch.bo,
 			   binding_table[surf_index] + 4,
 			   intelObj->mt->region->bo,
                            surf[1] - intelObj->mt->region->bo->offset,
@@ -353,7 +353,7 @@ brw_create_constant_surface(struct brw_context *brw,
     * bspec ("Data Cache") says that the data cache does not exist as
     * a separate cache and is just the sampler cache.
     */
-   drm_intel_bo_emit_reloc(brw->intel.batch.bo,
+   drm_intel_bo_emit_reloc(brw->batch.bo,
 			   *out_offset + 4,
 			   bo, offset,
 			   I915_GEM_DOMAIN_SAMPLER, 0);
@@ -439,7 +439,7 @@ brw_update_sol_surface(struct brw_context *brw,
    surf[5] = 0;
 
    /* Emit relocation to surface contents. */
-   drm_intel_bo_emit_reloc(brw->intel.batch.bo,
+   drm_intel_bo_emit_reloc(brw->batch.bo,
 			   *out_offset + 4,
 			   bo, offset_bytes,
 			   I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER);
@@ -591,7 +591,7 @@ brw_update_null_renderbuffer_surface(struct brw_context *brw, unsigned int unit)
    surf[5] = 0;
 
    if (bo) {
-      drm_intel_bo_emit_reloc(brw->intel.batch.bo,
+      drm_intel_bo_emit_reloc(brw->batch.bo,
                               brw->wm.surf_offset[unit] + 4,
                               bo, 0,
                               I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER);
@@ -697,7 +697,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
       }
    }
 
-   drm_intel_bo_emit_reloc(brw->intel.batch.bo,
+   drm_intel_bo_emit_reloc(brw->batch.bo,
 			   brw->wm.surf_offset[unit] + 4,
 			   region->bo,
 			   surf[1] - region->bo->offset,

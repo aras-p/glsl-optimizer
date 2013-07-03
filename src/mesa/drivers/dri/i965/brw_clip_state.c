@@ -128,13 +128,13 @@ brw_upload_clip_unit(struct brw_context *brw)
    {
       clip->clip5.guard_band_enable = 1;
       clip->clip6.clipper_viewport_state_ptr =
-         (intel->batch.bo->offset + brw->clip.vp_offset) >> 5;
+         (brw->batch.bo->offset + brw->clip.vp_offset) >> 5;
 
       /* emit clip viewport relocation */
-      drm_intel_bo_emit_reloc(brw->intel.batch.bo,
+      drm_intel_bo_emit_reloc(brw->batch.bo,
                               (brw->clip.state_offset +
                                offsetof(struct brw_clip_unit_state, clip6)),
-                              intel->batch.bo, brw->clip.vp_offset,
+                              brw->batch.bo, brw->clip.vp_offset,
                               I915_GEM_DOMAIN_INSTRUCTION, 0);
    }
 

@@ -147,7 +147,7 @@ brw_upload_vs_unit(struct brw_context *brw)
 
    /* Emit scratch space relocation */
    if (brw->vs.prog_data->base.total_scratch != 0) {
-      drm_intel_bo_emit_reloc(intel->batch.bo,
+      drm_intel_bo_emit_reloc(brw->batch.bo,
 			      brw->vs.state_offset +
 			      offsetof(struct brw_vs_unit_state, thread2),
 			      brw->vs.scratch_bo,

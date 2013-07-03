@@ -164,7 +164,7 @@ intelDRI2Flush(__DRIdrawable *drawable)
    intel_resolve_for_dri2_flush(brw, drawable);
    intel->need_throttle = true;
 
-   if (intel->batch.used)
+   if (brw->batch.used)
       intel_batchbuffer_flush(brw);
 
    if (INTEL_DEBUG & DEBUG_AUB) {

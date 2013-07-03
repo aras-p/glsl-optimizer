@@ -39,8 +39,7 @@ static void
 batch_out(struct brw_context *brw, const char *name, uint32_t offset,
 	  int index, char *fmt, ...)
 {
-   struct intel_context *intel = &brw->intel;
-   uint32_t *data = intel->batch.bo->virtual + offset;
+   uint32_t *data = brw->batch.bo->virtual + offset;
    va_list va;
 
    fprintf(stderr, "0x%08x:      0x%08x: %8s: ",
@@ -79,9 +78,8 @@ get_965_surface_format(unsigned int surface_format)
 
 static void dump_vs_state(struct brw_context *brw, uint32_t offset)
 {
-   struct intel_context *intel = &brw->intel;
    const char *name = "VS_STATE";
-   struct brw_vs_unit_state *vs = intel->batch.bo->virtual + offset;
+   struct brw_vs_unit_state *vs = brw->batch.bo->virtual + offset;
 
    batch_out(brw, name, offset, 0, "thread0\n");
    batch_out(brw, name, offset, 1, "thread1\n");
@@ -95,9 +93,8 @@ static void dump_vs_state(struct brw_context *brw, uint32_t offset)
 
 static void dump_gs_state(struct brw_context *brw, uint32_t offset)
 {
-   struct intel_context *intel = &brw->intel;
    const char *name = "GS_STATE";
-   struct brw_gs_unit_state *gs = intel->batch.bo->virtual + offset;
+   struct brw_gs_unit_state *gs = brw->batch.bo->virtual + offset;
 
    batch_out(brw, name, offset, 0, "thread0\n");
    batch_out(brw, name, offset, 1, "thread1\n");
@@ -111,9 +108,8 @@ static void dump_gs_state(struct brw_context *brw, uint32_t offset)
 
 static void dump_clip_state(struct brw_context *brw, uint32_t offset)
 {
-   struct intel_context *intel = &brw->intel;
    const char *name = "CLIP_STATE";
-   struct brw_clip_unit_state *clip = intel->batch.bo->virtual + offset;
+   struct brw_clip_unit_state *clip = brw->batch.bo->virtual + offset;
 
    batch_out(brw, name, offset, 0, "thread0\n");
    batch_out(brw, name, offset, 1, "thread1\n");
@@ -131,9 +127,8 @@ static void dump_clip_state(struct brw_context *brw, uint32_t offset)
 
 static void dump_sf_state(struct brw_context *brw, uint32_t offset)
 {
-   struct intel_context *intel = &brw->intel;
    const char *name = "SF_STATE";
-   struct brw_sf_unit_state *sf = intel->batch.bo->virtual + offset;
+   struct brw_sf_unit_state *sf = brw->batch.bo->virtual + offset;
 
    batch_out(brw, name, offset, 0, "thread0\n");
    batch_out(brw, name, offset, 1, "thread1\n");
@@ -148,9 +143,8 @@ static void dump_sf_state(struct brw_context *brw, uint32_t offset)
 
 static void dump_wm_state(struct brw_context *brw, uint32_t offset)
 {
-   struct intel_context *intel = &brw->intel;
    const char *name = "WM_STATE";
-   struct brw_wm_unit_state *wm = intel->batch.bo->virtual + offset;
+   struct brw_wm_unit_state *wm = brw->batch.bo->virtual + offset;
 
    batch_out(brw, name, offset, 0, "thread0\n");
    batch_out(brw, name, offset, 1, "thread1\n");
@@ -177,7 +171,7 @@ static void dump_wm_state(struct brw_context *brw, uint32_t offset)
 static void dump_surface_state(struct brw_context *brw, uint32_t offset)
 {
    const char *name = "SURF";
-   uint32_t *surf = brw->intel.batch.bo->virtual + offset;
+   uint32_t *surf = brw->batch.bo->virtual + offset;
 
    batch_out(brw, name, offset, 0, "%s %s\n",
 	     get_965_surfacetype(GET_FIELD(surf[0], BRW_SURFACE_TYPE)),
@@ -201,7 +195,7 @@ static void dump_surface_state(struct brw_context *brw, uint32_t offset)
 static void dump_gen7_surface_state(struct brw_context *brw, uint32_t offset)
 {
    const char *name = "SURF";
-   uint32_t *surf = brw->intel.batch.bo->virtual + offset;
+   uint32_t *surf = brw->batch.bo->virtual + offset;
 
    batch_out(brw, name, offset, 0, "%s %s\n",
              get_965_surfacetype(GET_FIELD(surf[0], BRW_SURFACE_TYPE)),
@@ -228,7 +222,7 @@ dump_sdc(struct brw_context *brw, uint32_t offset)
    struct intel_context *intel = &brw->intel;
 
    if (intel->gen >= 5 && intel->gen <= 6) {
-      struct gen5_sampler_default_color *sdc = (intel->batch.bo->virtual +
+      struct gen5_sampler_default_color *sdc = (brw->batch.bo->virtual +
 						offset);
       batch_out(brw, name, offset, 0, "unorm rgba\n");
       batch_out(brw, name, offset, 1, "r %f\n", sdc->f[0]);
@@ -243,7 +237,7 @@ dump_sdc(struct brw_context *brw, uint32_t offset)
       batch_out(brw, name, offset, 10, "s16 ba\n");
       batch_out(brw, name, offset, 11, "s8 rgba\n");
    } else {
-      struct brw_sampler_default_color *sdc = (intel->batch.bo->virtual +
+      struct brw_sampler_default_color *sdc = (brw->batch.bo->virtual +
 					       offset);
       batch_out(brw, name, offset, 0, "r %f\n", sdc->color[0]);
       batch_out(brw, name, offset, 1, "g %f\n", sdc->color[1]);
@@ -257,7 +251,7 @@ static void dump_sampler_state(struct brw_context *brw,
 {
    struct intel_context *intel = &brw->intel;
    int i;
-   struct brw_sampler_state *samp = intel->batch.bo->virtual + offset;
+   struct brw_sampler_state *samp = brw->batch.bo->virtual + offset;
 
    assert(intel->gen < 7);
 
@@ -279,7 +273,7 @@ static void dump_gen7_sampler_state(struct brw_context *brw,
 				    uint32_t offset, uint32_t size)
 {
    struct intel_context *intel = &brw->intel;
-   struct gen7_sampler_state *samp = intel->batch.bo->virtual + offset;
+   struct gen7_sampler_state *samp = brw->batch.bo->virtual + offset;
    int i;
 
    assert(intel->gen >= 7);
@@ -304,7 +298,7 @@ static void dump_sf_viewport_state(struct brw_context *brw,
 {
    struct intel_context *intel = &brw->intel;
    const char *name = "SF VP";
-   struct brw_sf_viewport *vp = intel->batch.bo->virtual + offset;
+   struct brw_sf_viewport *vp = brw->batch.bo->virtual + offset;
 
    assert(intel->gen < 7);
 
@@ -326,7 +320,7 @@ static void dump_clip_viewport_state(struct brw_context *brw,
 {
    struct intel_context *intel = &brw->intel;
    const char *name = "CLIP VP";
-   struct brw_clipper_viewport *vp = intel->batch.bo->virtual + offset;
+   struct brw_clipper_viewport *vp = brw->batch.bo->virtual + offset;
 
    assert(intel->gen < 7);
 
@@ -341,7 +335,7 @@ static void dump_sf_clip_viewport_state(struct brw_context *brw,
 {
    struct intel_context *intel = &brw->intel;
    const char *name = "SF_CLIP VP";
-   struct gen7_sf_clip_viewport *vp = intel->batch.bo->virtual + offset;
+   struct gen7_sf_clip_viewport *vp = brw->batch.bo->virtual + offset;
 
    assert(intel->gen >= 7);
 
@@ -361,7 +355,7 @@ static void dump_sf_clip_viewport_state(struct brw_context *brw,
 static void dump_cc_viewport_state(struct brw_context *brw, uint32_t offset)
 {
    const char *name = "CC VP";
-   struct brw_cc_viewport *vp = brw->intel.batch.bo->virtual + offset;
+   struct brw_cc_viewport *vp = brw->batch.bo->virtual + offset;
 
    batch_out(brw, name, offset, 0, "min_depth = %f\n", vp->min_depth);
    batch_out(brw, name, offset, 1, "max_depth = %f\n", vp->max_depth);
@@ -370,7 +364,7 @@ static void dump_cc_viewport_state(struct brw_context *brw, uint32_t offset)
 static void dump_depth_stencil_state(struct brw_context *brw, uint32_t offset)
 {
    const char *name = "D_S";
-   struct gen6_depth_stencil_state *ds = brw->intel.batch.bo->virtual + offset;
+   struct gen6_depth_stencil_state *ds = brw->batch.bo->virtual + offset;
 
    batch_out(brw, name, offset, 0,
 	     "stencil %sable, func %d, write %sable\n",
@@ -404,7 +398,7 @@ static void dump_cc_state_gen4(struct brw_context *brw, uint32_t offset)
 static void dump_cc_state_gen6(struct brw_context *brw, uint32_t offset)
 {
    const char *name = "CC";
-   struct gen6_color_calc_state *cc = brw->intel.batch.bo->virtual + offset;
+   struct gen6_color_calc_state *cc = brw->batch.bo->virtual + offset;
 
    batch_out(brw, name, offset, 0,
 	     "alpha test format %s, round disable %d, stencil ref %d, "
@@ -432,8 +426,7 @@ static void
 dump_scissor(struct brw_context *brw, uint32_t offset)
 {
    const char *name = "SCISSOR";
-   struct intel_context *intel = &brw->intel;
-   struct gen6_scissor_rect *scissor = intel->batch.bo->virtual + offset;
+   struct gen6_scissor_rect *scissor = brw->batch.bo->virtual + offset;
 
    batch_out(brw, name, offset, 0, "xmin %d, ymin %d\n",
 	     scissor->xmin, scissor->ymin);
@@ -445,9 +438,8 @@ static void
 dump_vs_constants(struct brw_context *brw, uint32_t offset, uint32_t size)
 {
    const char *name = "VS_CONST";
-   struct intel_context *intel = &brw->intel;
-   uint32_t *as_uint = intel->batch.bo->virtual + offset;
-   float *as_float = intel->batch.bo->virtual + offset;
+   uint32_t *as_uint = brw->batch.bo->virtual + offset;
+   float *as_float = brw->batch.bo->virtual + offset;
    int i;
 
    for (i = 0; i < size / 4; i += 4) {
@@ -462,9 +454,8 @@ static void
 dump_wm_constants(struct brw_context *brw, uint32_t offset, uint32_t size)
 {
    const char *name = "WM_CONST";
-   struct intel_context *intel = &brw->intel;
-   uint32_t *as_uint = intel->batch.bo->virtual + offset;
-   float *as_float = intel->batch.bo->virtual + offset;
+   uint32_t *as_uint = brw->batch.bo->virtual + offset;
+   float *as_float = brw->batch.bo->virtual + offset;
    int i;
 
    for (i = 0; i < size / 4; i += 4) {
@@ -480,7 +471,7 @@ static void dump_binding_table(struct brw_context *brw, uint32_t offset,
 {
    char name[20];
    int i;
-   uint32_t *data = brw->intel.batch.bo->virtual + offset;
+   uint32_t *data = brw->batch.bo->virtual + offset;
 
    for (i = 0; i < size / 4; i++) {
       if (data[i] == 0)
@@ -643,11 +634,9 @@ dump_state_batch(struct brw_context *brw)
  */
 void brw_debug_batch(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
-
-   drm_intel_bo_map(intel->batch.bo, false);
+   drm_intel_bo_map(brw->batch.bo, false);
    dump_state_batch(brw);
-   drm_intel_bo_unmap(intel->batch.bo);
+   drm_intel_bo_unmap(brw->batch.bo);
 
    if (0)
       dump_prog_cache(brw);
