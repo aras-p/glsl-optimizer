@@ -33,6 +33,7 @@
 #include "main/api_exec.h"
 #include "main/imports.h"
 #include "main/macros.h"
+#include "main/points.h"
 #include "main/simple_list.h"
 #include "main/version.h"
 #include "main/vtxfmt.h"
@@ -115,6 +116,8 @@ brw_initialize_context_constants(struct brw_context *brw)
 
    ctx->Const.QueryCounterBits.Timestamp = 36;
 
+   ctx->Const.StripTextureBorder = true;
+
    ctx->Const.MaxDualSourceDrawBuffers = 1;
    ctx->Const.MaxDrawBuffers = BRW_MAX_DRAW_BUFFERS;
    ctx->Const.FragmentProgram.MaxTextureImageUnits = BRW_MAX_TEX_UNIT;
@@ -141,6 +144,8 @@ brw_initialize_context_constants(struct brw_context *brw)
    ctx->Const.MaxTextureRectSize = 1 << 12;
    
    ctx->Const.MaxTextureMaxAnisotropy = 16.0;
+
+   ctx->Const.MaxRenderbufferSize = 8192;
 
    /* Hardware only supports a limited number of transform feedback buffers.
     * So we need to override the Mesa default (which is based only on software
@@ -174,7 +179,20 @@ brw_initialize_context_constants(struct brw_context *brw)
       ctx->Const.MaxIntegerSamples = 8;
    }
 
+   ctx->Const.MinLineWidth = 1.0;
+   ctx->Const.MinLineWidthAA = 1.0;
+   ctx->Const.MaxLineWidth = 5.0;
+   ctx->Const.MaxLineWidthAA = 5.0;
+   ctx->Const.LineWidthGranularity = 0.5;
+
+   ctx->Const.MinPointSize = 1.0;
+   ctx->Const.MinPointSizeAA = 1.0;
+   ctx->Const.MaxPointSize = 255.0;
    ctx->Const.MaxPointSizeAA = 255.0;
+   ctx->Const.PointSizeGranularity = 1.0;
+
+   if (intel->gen >= 6)
+      ctx->Const.MaxClipPlanes = 8;
 
    ctx->Const.VertexProgram.MaxNativeInstructions = 16 * 1024;
    ctx->Const.VertexProgram.MaxAluInstructions = 0;
@@ -291,6 +309,9 @@ brwCreateContext(int api,
    }
 
    brw_initialize_context_constants(brw);
+
+   /* Reinitialize the context point state.  It depends on ctx->Const values. */
+   _mesa_init_point(ctx);
 
    if (intel->gen >= 6) {
       /* Create a new hardware context.  Using a hardware context means that

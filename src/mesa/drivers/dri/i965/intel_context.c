@@ -32,7 +32,6 @@
 #include "main/fbobject.h"
 #include "main/framebuffer.h"
 #include "main/imports.h"
-#include "main/points.h"
 #include "main/renderbuffer.h"
 
 #include "swrast/swrast.h"
@@ -531,30 +530,6 @@ intelInitContext(struct intel_context *intel,
       intel_bufmgr_gem_enable_reuse(intel->bufmgr);
       break;
    }
-
-   ctx->Const.MinLineWidth = 1.0;
-   ctx->Const.MinLineWidthAA = 1.0;
-   ctx->Const.MaxLineWidth = 5.0;
-   ctx->Const.MaxLineWidthAA = 5.0;
-   ctx->Const.LineWidthGranularity = 0.5;
-
-   ctx->Const.MinPointSize = 1.0;
-   ctx->Const.MinPointSizeAA = 1.0;
-   ctx->Const.MaxPointSize = 255.0;
-   ctx->Const.MaxPointSizeAA = 3.0;
-   ctx->Const.PointSizeGranularity = 1.0;
-
-   if (intel->gen >= 6)
-      ctx->Const.MaxClipPlanes = 8;
-
-   ctx->Const.StripTextureBorder = GL_TRUE;
-
-   /* reinitialize the context point state.
-    * It depend on constants in __struct gl_contextRec::Const
-    */
-   _mesa_init_point(ctx);
-
-   ctx->Const.MaxRenderbufferSize = 8192;
 
    /* Initialize the software rasterizer and helper modules.
     *
