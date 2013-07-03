@@ -490,9 +490,9 @@ brw_upload_wm_pull_constants(struct brw_context *brw)
    }
    drm_intel_gem_bo_unmap_gtt(brw->wm.const_bo);
 
-   intel->vtbl.create_constant_surface(brw, brw->wm.const_bo, 0, size,
-				       &brw->wm.surf_offset[surf_index],
-                                       true);
+   brw->vtbl.create_constant_surface(brw, brw->wm.const_bo, 0, size,
+                                     &brw->wm.surf_offset[surf_index],
+                                     true);
 
    brw->state.dirty.brw |= BRW_NEW_SURFACES;
 }
@@ -711,7 +711,6 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 static void
 brw_update_renderbuffer_surfaces(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &brw->intel.ctx;
    GLuint i;
 
@@ -720,14 +719,14 @@ brw_update_renderbuffer_surfaces(struct brw_context *brw)
    if (ctx->DrawBuffer->_NumColorDrawBuffers >= 1) {
       for (i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers; i++) {
 	 if (intel_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[i])) {
-	    intel->vtbl.update_renderbuffer_surface(brw, ctx->DrawBuffer->_ColorDrawBuffers[i],
-	                                            ctx->DrawBuffer->Layered, i);
+	    brw->vtbl.update_renderbuffer_surface(brw, ctx->DrawBuffer->_ColorDrawBuffers[i],
+                                                  ctx->DrawBuffer->Layered, i);
 	 } else {
-	    intel->vtbl.update_null_renderbuffer_surface(brw, i);
+	    brw->vtbl.update_null_renderbuffer_surface(brw, i);
 	 }
       }
    } else {
-      intel->vtbl.update_null_renderbuffer_surface(brw, 0);
+      brw->vtbl.update_null_renderbuffer_surface(brw, 0);
    }
    brw->state.dirty.brw |= BRW_NEW_SURFACES;
 }
@@ -780,9 +779,9 @@ brw_update_texture_surfaces(struct brw_context *brw)
 
          /* _NEW_TEXTURE */
          if (ctx->Texture.Unit[unit]._ReallyEnabled) {
-            intel->vtbl.update_texture_surface(ctx, unit,
-                                               brw->vs.surf_offset,
-                                               SURF_INDEX_VS_TEXTURE(s));
+            brw->vtbl.update_texture_surface(ctx, unit,
+                                             brw->vs.surf_offset,
+                                             SURF_INDEX_VS_TEXTURE(s));
          }
       }
 
@@ -791,9 +790,9 @@ brw_update_texture_surfaces(struct brw_context *brw)
 
          /* _NEW_TEXTURE */
          if (ctx->Texture.Unit[unit]._ReallyEnabled) {
-            intel->vtbl.update_texture_surface(ctx, unit,
-                                               brw->wm.surf_offset,
-                                               SURF_INDEX_TEXTURE(s));
+            brw->vtbl.update_texture_surface(ctx, unit,
+                                             brw->wm.surf_offset,
+                                             SURF_INDEX_TEXTURE(s));
          }
       }
    }
@@ -818,7 +817,6 @@ brw_upload_ubo_surfaces(struct brw_context *brw,
 			uint32_t *surf_offsets)
 {
    struct gl_context *ctx = &brw->intel.ctx;
-   struct intel_context *intel = &brw->intel;
 
    if (!shader)
       return;
@@ -835,10 +833,10 @@ brw_upload_ubo_surfaces(struct brw_context *brw,
        * glBindBufferRange case is undefined, we can just bind the whole buffer
        * glBindBufferBase wants and be a correct implementation.
        */
-      intel->vtbl.create_constant_surface(brw, bo, binding->Offset,
-					  bo->size - binding->Offset,
-					  &surf_offsets[i],
-                                          shader->Type == GL_FRAGMENT_SHADER);
+      brw->vtbl.create_constant_surface(brw, bo, binding->Offset,
+                                        bo->size - binding->Offset,
+                                        &surf_offsets[i],
+                                        shader->Type == GL_FRAGMENT_SHADER);
    }
 
    if (shader->NumUniformBlocks)
@@ -910,11 +908,9 @@ const struct brw_tracked_state brw_wm_binding_table = {
 void
 gen4_init_vtable_surface_functions(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
-
-   intel->vtbl.update_texture_surface = brw_update_texture_surface;
-   intel->vtbl.update_renderbuffer_surface = brw_update_renderbuffer_surface;
-   intel->vtbl.update_null_renderbuffer_surface =
+   brw->vtbl.update_texture_surface = brw_update_texture_surface;
+   brw->vtbl.update_renderbuffer_surface = brw_update_renderbuffer_surface;
+   brw->vtbl.update_null_renderbuffer_surface =
       brw_update_null_renderbuffer_surface;
-   intel->vtbl.create_constant_surface = brw_create_constant_surface;
+   brw->vtbl.create_constant_surface = brw_create_constant_surface;
 }

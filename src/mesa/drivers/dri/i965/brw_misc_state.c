@@ -636,10 +636,10 @@ brw_emit_depthbuffer(struct brw_context *brw)
       height = stencil_irb->Base.Base.Height;
    }
 
-   intel->vtbl.emit_depth_stencil_hiz(brw, depth_mt, depth_offset,
-                                      depthbuffer_format, depth_surface_type,
-                                      stencil_mt, hiz, separate_stencil,
-                                      width, height, tile_x, tile_y);
+   brw->vtbl.emit_depth_stencil_hiz(brw, depth_mt, depth_offset,
+                                    depthbuffer_format, depth_surface_type,
+                                    stencil_mt, hiz, separate_stencil,
+                                    width, height, tile_x, tile_y);
 }
 
 void

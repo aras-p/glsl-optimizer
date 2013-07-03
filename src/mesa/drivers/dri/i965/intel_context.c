@@ -622,7 +622,7 @@ intelDestroyContext(__DRIcontext * driContextPriv)
 
       _mesa_meta_free(&intel->ctx);
 
-      intel->vtbl.destroy(brw);
+      brw->vtbl.destroy(brw);
 
       if (ctx->swrast_context) {
          _swsetup_DestroyContext(&intel->ctx);

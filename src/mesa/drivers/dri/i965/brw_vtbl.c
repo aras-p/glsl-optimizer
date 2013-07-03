@@ -157,16 +157,16 @@ brw_new_batch(struct brw_context *brw)
 
 void brwInitVtbl( struct brw_context *brw )
 {
-   brw->intel.vtbl.new_batch = brw_new_batch;
-   brw->intel.vtbl.finish_batch = brw_finish_batch;
-   brw->intel.vtbl.destroy = brw_destroy_context;
+   brw->vtbl.new_batch = brw_new_batch;
+   brw->vtbl.finish_batch = brw_finish_batch;
+   brw->vtbl.destroy = brw_destroy_context;
 
    assert(brw->intel.gen >= 4);
    if (brw->intel.gen >= 7) {
       gen7_init_vtable_surface_functions(brw);
-      brw->intel.vtbl.emit_depth_stencil_hiz = gen7_emit_depth_stencil_hiz;
+      brw->vtbl.emit_depth_stencil_hiz = gen7_emit_depth_stencil_hiz;
    } else if (brw->intel.gen >= 4) {
       gen4_init_vtable_surface_functions(brw);
-      brw->intel.vtbl.emit_depth_stencil_hiz = brw_emit_depth_stencil_hiz;
+      brw->vtbl.emit_depth_stencil_hiz = brw_emit_depth_stencil_hiz;
    }
 }

@@ -230,7 +230,7 @@ do_flush_locked(struct brw_context *brw)
       fprintf(stderr, "intel_do_flush_locked failed: %s\n", strerror(-ret));
       exit(1);
    }
-   intel->vtbl.new_batch(brw);
+   brw->vtbl.new_batch(brw);
 
    return ret;
 }
@@ -256,8 +256,8 @@ _intel_batchbuffer_flush(struct brw_context *brw,
 
    intel->batch.reserved_space = 0;
 
-   if (intel->vtbl.finish_batch)
-      intel->vtbl.finish_batch(brw);
+   if (brw->vtbl.finish_batch)
+      brw->vtbl.finish_batch(brw);
 
    /* Mark the end of the buffer. */
    intel_batchbuffer_emit_dword(brw, MI_BATCH_BUFFER_END);
