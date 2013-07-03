@@ -335,7 +335,6 @@ brw_predraw_resolve_buffers(struct brw_context *brw)
  */
 static void brw_postdraw_set_buffers_need_resolve(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &brw->intel.ctx;
    struct gl_framebuffer *fb = ctx->DrawBuffer;
 
@@ -343,7 +342,7 @@ static void brw_postdraw_set_buffers_need_resolve(struct brw_context *brw)
    struct intel_renderbuffer *back_irb = intel_get_renderbuffer(fb, BUFFER_BACK_LEFT);
    struct intel_renderbuffer *depth_irb = intel_get_renderbuffer(fb, BUFFER_DEPTH);
 
-   if (intel->is_front_buffer_rendering)
+   if (brw->is_front_buffer_rendering)
       front_irb = intel_get_renderbuffer(fb, BUFFER_FRONT_LEFT);
 
    if (front_irb)

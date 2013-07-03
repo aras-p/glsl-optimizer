@@ -715,7 +715,7 @@ intel_miptree_create_for_dri2_buffer(struct brw_context *brw,
    multisample_mt->singlesample_mt = singlesample_mt;
    multisample_mt->need_downsample = false;
 
-   if (intel->is_front_buffer_rendering &&
+   if (brw->is_front_buffer_rendering &&
        (dri_attachment == __DRI_BUFFER_FRONT_LEFT ||
         dri_attachment == __DRI_BUFFER_FAKE_FRONT_LEFT)) {
       intel_miptree_upsample(brw, multisample_mt);

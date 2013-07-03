@@ -133,7 +133,7 @@ intel_flush_front(struct gl_context *ctx)
     __DRIdrawable *driDrawable = driContext->driDrawablePriv;
     __DRIscreen *const screen = intel->intelScreen->driScrnPriv;
 
-    if (intel->front_buffer_dirty && _mesa_is_winsys_fbo(ctx->DrawBuffer)) {
+    if (brw->front_buffer_dirty && _mesa_is_winsys_fbo(ctx->DrawBuffer)) {
       if (screen->dri2.loader->flushFrontBuffer != NULL &&
           driDrawable &&
           driDrawable->loaderPrivate) {
@@ -153,7 +153,7 @@ intel_flush_front(struct gl_context *ctx)
 	 /* We set the dirty bit in intel_prepare_render() if we're
 	  * front buffer rendering once we get there.
 	  */
-	 intel->front_buffer_dirty = false;
+	 brw->front_buffer_dirty = false;
       }
    }
 }
@@ -265,8 +265,8 @@ intel_prepare_render(struct brw_context *brw)
     * that will happen next will probably dirty the front buffer.  So
     * mark it as dirty here.
     */
-   if (intel->is_front_buffer_rendering)
-      intel->front_buffer_dirty = true;
+   if (brw->is_front_buffer_rendering)
+      brw->front_buffer_dirty = true;
 
    /* Wait for the swapbuffers before the one we just emitted, so we
     * don't get too many swaps outstanding for apps that are GPU-heavy
@@ -350,11 +350,12 @@ _intel_flush(struct gl_context *ctx, const char *file, int line)
 static void
 intel_glFlush(struct gl_context *ctx)
 {
+   struct brw_context *brw = brw_context(ctx);
    struct intel_context *intel = intel_context(ctx);
 
    intel_flush(ctx);
    intel_flush_front(ctx);
-   if (intel->is_front_buffer_rendering)
+   if (brw->is_front_buffer_rendering)
       intel->need_throttle = true;
 }
 
@@ -793,8 +794,8 @@ intel_query_dri2_buffers(struct brw_context *brw,
    back_rb = intel_get_renderbuffer(fb, BUFFER_BACK_LEFT);
 
    memset(attachments, 0, sizeof(attachments));
-   if ((intel->is_front_buffer_rendering ||
-	intel->is_front_buffer_reading ||
+   if ((brw->is_front_buffer_rendering ||
+	brw->is_front_buffer_reading ||
 	!back_rb) && front_rb) {
       /* If a fake front buffer is in use, then querying for
        * __DRI_BUFFER_FRONT_LEFT will cause the server to copy the image from
@@ -807,7 +808,7 @@ intel_query_dri2_buffers(struct brw_context *brw,
 
       attachments[i++] = __DRI_BUFFER_FRONT_LEFT;
       attachments[i++] = intel_bits_per_pixel(front_rb);
-   } else if (front_rb && intel->front_buffer_dirty) {
+   } else if (front_rb && brw->front_buffer_dirty) {
       /* We have pending front buffer rendering, but we aren't querying for a
        * front buffer.  If the front buffer we have is a fake front buffer,
        * the X server is going to throw it away when it processes the query.

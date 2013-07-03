@@ -76,7 +76,6 @@ do_blit_readpixels(struct gl_context * ctx,
                    const struct gl_pixelstore_attrib *pack, GLvoid * pixels)
 {
    struct brw_context *brw = brw_context(ctx);
-   struct intel_context *intel = intel_context(ctx);
    struct intel_buffer_object *dst = intel_buffer_object(pack->BufferObj);
    GLuint dst_offset;
    drm_intel_bo *dst_buffer;
@@ -124,9 +123,9 @@ do_blit_readpixels(struct gl_context * ctx,
       return true;
    }
 
-   dirty = intel->front_buffer_dirty;
+   dirty = brw->front_buffer_dirty;
    intel_prepare_render(brw);
-   intel->front_buffer_dirty = dirty;
+   brw->front_buffer_dirty = dirty;
 
    all = (width * height * irb->mt->cpp == dst->Base.Size &&
 	  x == 0 && dst_offset == 0);
@@ -183,9 +182,9 @@ intelReadPixels(struct gl_context * ctx,
 
    /* glReadPixels() wont dirty the front buffer, so reset the dirty
     * flag after calling intel_prepare_render(). */
-   dirty = intel->front_buffer_dirty;
+   dirty = brw->front_buffer_dirty;
    intel_prepare_render(brw);
-   intel->front_buffer_dirty = dirty;
+   brw->front_buffer_dirty = dirty;
 
    /* Update Mesa state before calling _mesa_readpixels().
     * XXX this may not be needed since ReadPixels no longer uses the
@@ -198,5 +197,5 @@ intelReadPixels(struct gl_context * ctx,
    _mesa_readpixels(ctx, x, y, width, height, format, type, pack, pixels);
 
    /* There's an intel_prepare_render() call in intelSpanRenderStart(). */
-   intel->front_buffer_dirty = dirty;
+   brw->front_buffer_dirty = dirty;
 }

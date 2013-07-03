@@ -165,30 +165,6 @@ struct intel_context
 
    GLenum reduced_primitive;
 
-   /**
-    * Set if rendering has occured to the drawable's front buffer.
-    *
-    * This is used in the DRI2 case to detect that glFlush should also copy
-    * the contents of the fake front buffer to the real front buffer.
-    */
-   bool front_buffer_dirty;
-
-   /**
-    * Track whether front-buffer rendering is currently enabled
-    *
-    * A separate flag is used to track this in order to support MRT more
-    * easily.
-    */
-   bool is_front_buffer_rendering;
-   /**
-    * Track whether front-buffer is the current read target.
-    *
-    * This is closely associated with is_front_buffer_rendering, but may
-    * be set separately.  The DRI2 fake front buffer must be referenced
-    * either way.
-    */
-   bool is_front_buffer_reading;
-
    int driFd;
 
    __DRIcontext *driContext;
