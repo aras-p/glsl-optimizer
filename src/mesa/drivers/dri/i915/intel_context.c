@@ -80,7 +80,6 @@ intelGetString(struct gl_context * ctx, GLenum name)
 #undef CHIPSET
 #define CHIPSET(id, symbol, str) case id: chipset = str; break;
 #include "pci_ids/i915_pci_ids.h"
-#include "pci_ids/i965_pci_ids.h"
       default:
          chipset = "Unknown Intel Chipset";
          break;
