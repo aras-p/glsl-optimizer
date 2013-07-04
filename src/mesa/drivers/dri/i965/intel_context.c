@@ -472,7 +472,7 @@ intelInitContext(struct brw_context *brw,
       return false;
    }
 
-   driContextPriv->driverPrivate = intel;
+   driContextPriv->driverPrivate = brw;
    brw->driContext = driContextPriv;
    intel->driFd = sPriv->fd;
 
