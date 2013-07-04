@@ -72,6 +72,7 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
           procType == TGSI_PROCESSOR_VERTEX ||
           procType == TGSI_PROCESSOR_GEOMETRY ||
           procType == TGSI_PROCESSOR_COMPUTE);
+   info->processor = procType;
 
 
    /**

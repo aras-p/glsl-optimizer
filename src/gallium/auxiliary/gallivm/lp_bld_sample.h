@@ -268,13 +268,13 @@ struct lp_build_sample_context
    struct lp_type texel_type;
    struct lp_build_context texel_bld;
 
-   /** Float per-quad type */
-   struct lp_type perquadf_type;
-   struct lp_build_context perquadf_bld;
+   /** Float level type */
+   struct lp_type levelf_type;
+   struct lp_build_context levelf_bld;
 
-   /** Int per-quad type */
-   struct lp_type perquadi_type;
-   struct lp_build_context perquadi_bld;
+   /** Int level type */
+   struct lp_type leveli_type;
+   struct lp_build_context leveli_bld;
 
    /* Common dynamic state values */
    LLVMValueRef row_stride_array;
@@ -477,6 +477,7 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
                     const struct lp_derivatives *derivs,
                     LLVMValueRef lod_bias,
                     LLVMValueRef explicit_lod,
+                    boolean scalar_lod,
                     LLVMValueRef texel_out[4]);
 
 

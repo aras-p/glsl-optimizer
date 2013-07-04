@@ -238,6 +238,7 @@ draw_llvm_sampler_soa_emit_fetch_texel(const struct lp_build_sampler_soa *base,
                                        const struct lp_derivatives *derivs,
                                        LLVMValueRef lod_bias, /* optional */
                                        LLVMValueRef explicit_lod, /* optional */
+                                       boolean scalar_lod,
                                        LLVMValueRef *texel)
 {
    struct draw_llvm_sampler_soa *sampler = (struct draw_llvm_sampler_soa *)base;
@@ -256,7 +257,7 @@ draw_llvm_sampler_soa_emit_fetch_texel(const struct lp_build_sampler_soa *base,
                        coords,
                        offsets,
                        derivs,
-                       lod_bias, explicit_lod,
+                       lod_bias, explicit_lod, scalar_lod,
                        texel);
 }
 

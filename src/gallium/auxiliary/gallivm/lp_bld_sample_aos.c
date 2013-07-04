@@ -1422,8 +1422,8 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
 
    if (mip_filter == PIPE_TEX_MIPFILTER_LINEAR) {
       LLVMValueRef h16vec_scale = lp_build_const_vec(bld->gallivm,
-                                                     bld->perquadf_bld.type, 256.0);
-      LLVMTypeRef i32vec_type = lp_build_vec_type(bld->gallivm, bld->perquadi_bld.type);
+                                                     bld->levelf_bld.type, 256.0);
+      LLVMTypeRef i32vec_type = bld->leveli_bld.vec_type;
       struct lp_build_if_state if_ctx;
       LLVMValueRef need_lerp;
       unsigned num_quads = bld->coord_bld.type.length / 4;
@@ -1433,9 +1433,9 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
       lod_fpart = LLVMBuildFPToSI(builder, lod_fpart, i32vec_type, "lod_fpart.fixed16");
 
       /* need_lerp = lod_fpart > 0 */
-      if (num_quads == 1) {
+      if (bld->num_lods == 1) {
          need_lerp = LLVMBuildICmp(builder, LLVMIntSGT,
-                                   lod_fpart, bld->perquadi_bld.zero,
+                                   lod_fpart, bld->leveli_bld.zero,
                                    "need_lerp");
       }
       else {
@@ -1450,9 +1450,9 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
           * lod_fpart values have same sign.
           * We can however then skip the greater than comparison.
           */
-         lod_fpart = lp_build_max(&bld->perquadi_bld, lod_fpart,
-                                  bld->perquadi_bld.zero);
-         need_lerp = lp_build_any_true_range(&bld->perquadi_bld, num_quads, lod_fpart);
+         lod_fpart = lp_build_max(&bld->leveli_bld, lod_fpart,
+                                  bld->leveli_bld.zero);
+         need_lerp = lp_build_any_true_range(&bld->leveli_bld, bld->num_lods, lod_fpart);
       }
 
       lp_build_if(&if_ctx, bld->gallivm, need_lerp);
@@ -1462,9 +1462,6 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
          lp_build_context_init(&u8n_bld, bld->gallivm, lp_type_unorm(8, bld->vector_width));
 
          /* sample the second mipmap level */
-         lp_build_mipmap_level_sizes(bld, ilevel1,
-                                     &size1,
-                                     &row_stride1_vec, &img_stride1_vec);
          lp_build_mipmap_level_sizes(bld, ilevel1,
                                      &size1,
                                      &row_stride1_vec, &img_stride1_vec);
@@ -1511,7 +1508,7 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
 
          /* interpolate samples from the two mipmap levels */
 
-         if (num_quads == 1) {
+         if (num_quads == 1 && bld->num_lods == 1) {
             lod_fpart = LLVMBuildTrunc(builder, lod_fpart, u8n_bld.elem_type, "");
             lod_fpart = lp_build_broadcast_scalar(&u8n_bld, lod_fpart);
 
@@ -1526,17 +1523,16 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
 #endif
          }
          else {
-            const unsigned num_chans_per_quad = 4 * 4;
-            LLVMTypeRef tmp_vec_type = LLVMVectorType(u8n_bld.elem_type, bld->perquadi_bld.type.length);
+            unsigned num_chans_per_lod = 4 * bld->coord_type.length / bld->num_lods;
+            LLVMTypeRef tmp_vec_type = LLVMVectorType(u8n_bld.elem_type, bld->leveli_bld.type.length);
             LLVMValueRef shuffle[LP_MAX_VECTOR_LENGTH];
 
             /* Take the LSB of lod_fpart */
             lod_fpart = LLVMBuildTrunc(builder, lod_fpart, tmp_vec_type, "");
 
             /* Broadcast each lod weight into their respective channels */
-            assert(u8n_bld.type.length == num_quads * num_chans_per_quad);
             for (i = 0; i < u8n_bld.type.length; ++i) {
-               shuffle[i] = lp_build_const_int32(bld->gallivm, i / num_chans_per_quad);
+               shuffle[i] = lp_build_const_int32(bld->gallivm, i / num_chans_per_lod);
             }
             lod_fpart = LLVMBuildShuffleVector(builder, lod_fpart, LLVMGetUndef(tmp_vec_type),
                                                LLVMConstVector(shuffle, u8n_bld.type.length), "");

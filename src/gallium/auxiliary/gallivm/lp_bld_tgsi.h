@@ -184,6 +184,7 @@ struct lp_build_sampler_soa
                         const struct lp_derivatives *derivs,
                         LLVMValueRef lod_bias, /* optional */
                         LLVMValueRef explicit_lod, /* optional */
+                        boolean scalar_lod,
                         LLVMValueRef *texel);
 
    void

@@ -1576,6 +1576,7 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
    LLVMValueRef offsets[3] = { NULL };
    struct lp_derivatives derivs;
    struct lp_derivatives *deriv_ptr = NULL;
+   boolean scalar_lod;
    unsigned num_coords, num_derivs, num_offsets;
    unsigned i;
 
@@ -1693,6 +1694,9 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
       }
    }
 
+   /* TODO: use scalar lod if explicit_lod, lod_bias or derivs are broadcasted scalars */
+   scalar_lod = bld->bld_base.info->processor == TGSI_PROCESSOR_FRAGMENT;
+
    bld->sampler->emit_fetch_texel(bld->sampler,
                                   bld->bld_base.base.gallivm,
                                   bld->bld_base.base.type,
@@ -1701,7 +1705,7 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
                                   coords,
                                   offsets,
                                   deriv_ptr,
-                                  lod_bias, explicit_lod,
+                                  lod_bias, explicit_lod, scalar_lod,
                                   texel);
 }
 
@@ -1719,6 +1723,7 @@ emit_sample(struct lp_build_tgsi_soa_context *bld,
    LLVMValueRef offsets[3] = { NULL };
    struct lp_derivatives derivs;
    struct lp_derivatives *deriv_ptr = NULL;
+   boolean scalar_lod;
    unsigned num_coords, num_offsets, num_derivs;
    unsigned i;
 
@@ -1836,6 +1841,9 @@ emit_sample(struct lp_build_tgsi_soa_context *bld,
       }
    }
 
+   /* TODO: use scalar lod if explicit_lod, lod_bias or derivs are broadcasted scalars */
+   scalar_lod = bld->bld_base.info->processor == TGSI_PROCESSOR_FRAGMENT;
+
    bld->sampler->emit_fetch_texel(bld->sampler,
                                   bld->bld_base.base.gallivm,
                                   bld->bld_base.base.type,
@@ -1844,7 +1852,7 @@ emit_sample(struct lp_build_tgsi_soa_context *bld,
                                   coords,
                                   offsets,
                                   deriv_ptr,
-                                  lod_bias, explicit_lod,
+                                  lod_bias, explicit_lod, scalar_lod,
                                   texel);
 }
 
@@ -1859,6 +1867,7 @@ emit_fetch_texels( struct lp_build_tgsi_soa_context *bld,
    LLVMValueRef explicit_lod = NULL;
    LLVMValueRef coords[3];
    LLVMValueRef offsets[3] = { NULL };
+   boolean scalar_lod;
    unsigned num_coords;
    unsigned dims;
    unsigned i;
@@ -1927,6 +1936,9 @@ emit_fetch_texels( struct lp_build_tgsi_soa_context *bld,
       }
    }
 
+   /* TODO: use scalar lod if explicit_lod is broadcasted scalar */
+   scalar_lod = bld->bld_base.info->processor == TGSI_PROCESSOR_FRAGMENT;
+
    bld->sampler->emit_fetch_texel(bld->sampler,
                                   bld->bld_base.base.gallivm,
                                   bld->bld_base.base.type,
@@ -1935,7 +1947,7 @@ emit_fetch_texels( struct lp_build_tgsi_soa_context *bld,
                                   coords,
                                   offsets,
                                   NULL,
-                                  NULL, explicit_lod,
+                                  NULL, explicit_lod, scalar_lod,
                                   texel);
 }
 

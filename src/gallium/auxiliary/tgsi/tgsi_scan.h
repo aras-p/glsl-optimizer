@@ -54,6 +54,8 @@ struct tgsi_shader_info
    ubyte num_system_values;
    ubyte system_value_semantic_name[PIPE_MAX_SHADER_INPUTS];
 
+   ubyte processor;
+
    uint file_mask[TGSI_FILE_COUNT];  /**< bitmask of declared registers */
    uint file_count[TGSI_FILE_COUNT];  /**< number of declared registers */
    int file_max[TGSI_FILE_COUNT];  /**< highest index of declared registers */
