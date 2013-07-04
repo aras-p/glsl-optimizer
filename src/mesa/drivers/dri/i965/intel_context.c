@@ -70,7 +70,7 @@ intelGetString(struct gl_context * ctx, GLenum name)
    case GL_RENDERER:
       switch (brw->intelScreen->deviceID) {
 #undef CHIPSET
-#define CHIPSET(id, symbol, str) case id: chipset = str; break;
+#define CHIPSET(id, str) case id: chipset = str; break;
 #include "pci_ids/i965_pci_ids.h"
       default:
          chipset = "Unknown Intel Chipset";
