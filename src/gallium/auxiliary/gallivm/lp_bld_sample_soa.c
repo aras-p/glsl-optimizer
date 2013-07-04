@@ -1306,7 +1306,6 @@ lp_build_fetch_texel(struct lp_build_sample_context *bld,
    LLVMValueRef width, height, depth, i, j;
    LLVMValueRef offset, out_of_bounds, out1;
 
-   /* XXX just like ordinary sampling, we don't handle per-pixel lod (yet). */
    if (explicit_lod && bld->static_texture_state->target != PIPE_BUFFER) {
       if (bld->num_lods != int_coord_bld->type.length) {
          ilevel = lp_build_pack_aos_scalars(bld->gallivm, int_coord_bld->type,

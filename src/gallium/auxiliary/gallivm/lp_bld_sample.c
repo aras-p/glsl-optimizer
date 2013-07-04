@@ -1121,7 +1121,7 @@ lp_build_mipmap_level_sizes(struct lp_build_sample_context *bld,
          */
          assert(bld->num_lods == bld->coord_bld.type.length);
          if (bld->dims == 1) {
-            assert(bld->int_size_bld.type.length == 1);
+            assert(bld->int_size_in_bld.type.length == 1);
             int_size_vec = lp_build_broadcast_scalar(&bld->int_coord_bld,
                                                      bld->int_size);
             /* vector shift with variable shift count alert... */
