@@ -875,7 +875,7 @@ static void upload_polygon_stipple_offset(struct brw_context *brw)
     * to a user-created FBO then our native pixel coordinate system
     * works just fine, and there's no window system to worry about.
     */
-   if (_mesa_is_winsys_fbo(brw->intel.ctx.DrawBuffer))
+   if (_mesa_is_winsys_fbo(ctx->DrawBuffer))
       OUT_BATCH((32 - (ctx->DrawBuffer->Height & 31)) & 31);
    else
       OUT_BATCH(0);

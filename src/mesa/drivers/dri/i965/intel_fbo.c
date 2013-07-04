@@ -204,9 +204,9 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
        * except they're less useful because you can't texture with
        * them.
        */
-      rb->Format = intel->ctx.Driver.ChooseTextureFormat(ctx, GL_TEXTURE_2D,
-							 internalFormat,
-							 GL_NONE, GL_NONE);
+      rb->Format = ctx->Driver.ChooseTextureFormat(ctx, GL_TEXTURE_2D,
+                                                   internalFormat,
+                                                   GL_NONE, GL_NONE);
       break;
    case GL_STENCIL_INDEX:
    case GL_STENCIL_INDEX1_EXT:
@@ -879,15 +879,15 @@ intel_renderbuffer_move_to_temp(struct brw_context *brw,
 void
 intel_fbo_init(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
-   intel->ctx.Driver.NewFramebuffer = intel_new_framebuffer;
-   intel->ctx.Driver.NewRenderbuffer = intel_new_renderbuffer;
-   intel->ctx.Driver.MapRenderbuffer = intel_map_renderbuffer;
-   intel->ctx.Driver.UnmapRenderbuffer = intel_unmap_renderbuffer;
-   intel->ctx.Driver.RenderTexture = intel_render_texture;
-   intel->ctx.Driver.FinishRenderTexture = intel_finish_render_texture;
-   intel->ctx.Driver.ValidateFramebuffer = intel_validate_framebuffer;
-   intel->ctx.Driver.BlitFramebuffer = intel_blit_framebuffer;
-   intel->ctx.Driver.EGLImageTargetRenderbufferStorage =
+   struct dd_function_table *dd = &brw->intel.ctx.Driver;
+   dd->NewFramebuffer = intel_new_framebuffer;
+   dd->NewRenderbuffer = intel_new_renderbuffer;
+   dd->MapRenderbuffer = intel_map_renderbuffer;
+   dd->UnmapRenderbuffer = intel_unmap_renderbuffer;
+   dd->RenderTexture = intel_render_texture;
+   dd->FinishRenderTexture = intel_finish_render_texture;
+   dd->ValidateFramebuffer = intel_validate_framebuffer;
+   dd->BlitFramebuffer = intel_blit_framebuffer;
+   dd->EGLImageTargetRenderbufferStorage =
       intel_image_target_renderbuffer_storage;
 }

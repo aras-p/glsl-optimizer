@@ -115,7 +115,7 @@ upload_ps_state(struct brw_context *brw)
    struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &intel->ctx;
    uint32_t dw2, dw4, dw5;
-   const int max_threads_shift = brw->intel.is_haswell ?
+   const int max_threads_shift = intel->is_haswell ?
       HSW_PS_MAX_THREADS_SHIFT : IVB_PS_MAX_THREADS_SHIFT;
 
    /* BRW_NEW_PS_BINDING_TABLE */
@@ -169,7 +169,7 @@ upload_ps_state(struct brw_context *brw)
     * rendering, CurrentFragmentProgram is used for this check to
     * differentiate between the GLSL and non-GLSL cases.
     */
-   if (intel->ctx.Shader.CurrentFragmentProgram == NULL)
+   if (ctx->Shader.CurrentFragmentProgram == NULL)
       dw2 |= GEN7_PS_FLOATING_POINT_MODE_ALT;
 
    if (intel->is_haswell)

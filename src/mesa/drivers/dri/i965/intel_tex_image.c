@@ -113,7 +113,6 @@ try_pbo_upload(struct gl_context *ctx,
 	       GLenum format, GLenum type, const void *pixels)
 {
    struct intel_texture_image *intelImage = intel_texture_image(image);
-   struct intel_context *intel = intel_context(ctx);
    struct brw_context *brw = brw_context(ctx);
    struct intel_buffer_object *pbo = intel_buffer_object(unpack->BufferObj);
    GLuint src_offset;
@@ -124,8 +123,7 @@ try_pbo_upload(struct gl_context *ctx,
 
    DBG("trying pbo upload\n");
 
-   if (intel->ctx._ImageTransferState ||
-       unpack->SkipPixels || unpack->SkipRows) {
+   if (ctx->_ImageTransferState || unpack->SkipPixels || unpack->SkipRows) {
       DBG("%s: image transfer\n", __FUNCTION__);
       return false;
    }

@@ -99,7 +99,7 @@ const struct brw_tracked_state gen6_vs_push_constants = {
 static void
 upload_vs_state(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
+   struct gl_context *ctx = &brw->intel.ctx;
    uint32_t floating_point_mode = 0;
 
    /* From the BSpec, Volume 2a, Part 3 "Vertex Shader", Section
@@ -139,7 +139,7 @@ upload_vs_state(struct brw_context *brw)
    /* Use ALT floating point mode for ARB vertex programs, because they
     * require 0^0 == 1.
     */
-   if (intel->ctx.Shader.CurrentVertexProgram == NULL)
+   if (ctx->Shader.CurrentVertexProgram == NULL)
       floating_point_mode = GEN6_VS_FLOATING_POINT_MODE_ALT;
 
    BEGIN_BATCH(6);

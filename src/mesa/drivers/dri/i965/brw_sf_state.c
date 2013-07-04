@@ -131,7 +131,7 @@ static void upload_sf_unit( struct brw_context *brw )
    struct brw_sf_unit_state *sf;
    drm_intel_bo *bo = brw->batch.bo;
    int chipset_max_threads;
-   bool render_to_fbo = _mesa_is_user_fbo(brw->intel.ctx.DrawBuffer);
+   bool render_to_fbo = _mesa_is_user_fbo(ctx->DrawBuffer);
 
    sf = brw_state_batch(brw, AUB_TRACE_SF_STATE,
 			sizeof(*sf), 64, &brw->sf.state_offset);
