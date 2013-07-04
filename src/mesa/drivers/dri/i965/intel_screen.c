@@ -1257,6 +1257,7 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
        return false;
 
    intelScreen->deviceID = drm_intel_bufmgr_gem_get_devid(intelScreen->bufmgr);
+   intelScreen->devinfo = brw_get_device_info(intelScreen->deviceID);
 
    if (IS_GEN7(intelScreen->deviceID)) {
       intelScreen->gen = 7;

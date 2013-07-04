@@ -45,6 +45,7 @@ i965_FILES = \
 	brw_context.c \
 	brw_cubemap_normalize.cpp \
 	brw_curbe.c \
+	brw_device_info.c \
 	brw_disasm.c \
 	brw_draw.c \
 	brw_draw_upload.c \

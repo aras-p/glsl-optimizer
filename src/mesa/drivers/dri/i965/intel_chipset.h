@@ -25,6 +25,9 @@
  *
  */
 
+#pragma once
+#include <stdbool.h>
+
 #define PCI_CHIP_IGD_GM			0xA011
 #define PCI_CHIP_IGD_G			0xA001
 
