@@ -203,8 +203,7 @@ static void brw_gs_emit_vue(struct brw_gs_compile *c,
 /**
  * Send an FF_SYNC message to ensure that all previously spawned GS threads
  * have finished sending primitives down the pipeline, and to allocate a URB
- * entry for the first output vertex.  Only needed when intel->needs_ff_sync
- * is true.
+ * entry for the first output vertex.  Only needed on Ironlake+.
  *
  * This function modifies c->reg.header: in DWORD 1, it stores num_prim (which
  * is needed by the FF_SYNC message), and in DWORD 0, it stores the handle to
@@ -237,7 +236,7 @@ void brw_gs_quads( struct brw_gs_compile *c, struct brw_gs_prog_key *key )
    /* Use polygons for correct edgeflag behaviour. Note that vertex 3
     * is the PV for quads, but vertex 0 for polygons:
     */
-   if (intel->needs_ff_sync)
+   if (intel->gen == 5)
       brw_gs_ff_sync(c, 1);
    brw_gs_overwrite_header_dw2(
       c, ((_3DPRIM_POLYGON << URB_WRITE_PRIM_TYPE_SHIFT)
@@ -273,7 +272,7 @@ void brw_gs_quad_strip( struct brw_gs_compile *c, struct brw_gs_prog_key *key )
    brw_gs_alloc_regs(c, 4, false);
    brw_gs_initialize_header(c);
    
-   if (intel->needs_ff_sync)
+   if (intel->gen == 5)
       brw_gs_ff_sync(c, 1);
    brw_gs_overwrite_header_dw2(
       c, ((_3DPRIM_POLYGON << URB_WRITE_PRIM_TYPE_SHIFT)
@@ -309,7 +308,7 @@ void brw_gs_lines( struct brw_gs_compile *c )
    brw_gs_alloc_regs(c, 2, false);
    brw_gs_initialize_header(c);
 
-   if (intel->needs_ff_sync)
+   if (intel->gen == 5)
       brw_gs_ff_sync(c, 1);
    brw_gs_overwrite_header_dw2(
       c, ((_3DPRIM_LINESTRIP << URB_WRITE_PRIM_TYPE_SHIFT)

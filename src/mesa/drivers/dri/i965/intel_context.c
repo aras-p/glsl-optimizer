@@ -495,10 +495,6 @@ intelInitContext(struct intel_context *intel,
       intel->is_g4x = true;
    }
 
-   if (intel->gen >= 5) {
-      intel->needs_ff_sync = true;
-   }
-
    intel->has_separate_stencil = intel->intelScreen->hw_has_separate_stencil;
    intel->must_use_separate_stencil = intel->intelScreen->hw_must_use_separate_stencil;
    intel->has_hiz = intel->gen >= 6;

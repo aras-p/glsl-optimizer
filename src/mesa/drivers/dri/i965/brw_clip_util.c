@@ -364,7 +364,7 @@ void brw_clip_ff_sync(struct brw_clip_compile *c)
 {
     struct intel_context *intel = &c->func.brw->intel;
 
-    if (intel->needs_ff_sync) {
+    if (intel->gen == 5) {
         struct brw_compile *p = &c->func;
 
         brw_set_conditionalmod(p, BRW_CONDITIONAL_Z);
@@ -389,7 +389,7 @@ void brw_clip_init_ff_sync(struct brw_clip_compile *c)
 {
     struct intel_context *intel = &c->func.brw->intel;
 
-    if (intel->needs_ff_sync) {
+    if (intel->gen == 5) {
 	struct brw_compile *p = &c->func;
         
         brw_MOV(p, c->reg.ff_sync, brw_imm_ud(0));
