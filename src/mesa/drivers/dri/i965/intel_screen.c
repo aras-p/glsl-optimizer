@@ -1008,31 +1008,6 @@ intel_init_bufmgr(struct intel_screen *intelScreen)
    return true;
 }
 
-/**
- * Override intel_screen.hw_has_separate_stencil with environment variable
- * INTEL_SEPARATE_STENCIL.
- *
- * Valid values for INTEL_SEPARATE_STENCIL are "0" and "1". If an invalid
- * valid value is encountered, a warning is emitted and INTEL_SEPARATE_STENCIL
- * is ignored.
- */
-static void
-intel_override_separate_stencil(struct intel_screen *screen)
-{
-   const char *s = getenv("INTEL_SEPARATE_STENCIL");
-   if (!s) {
-      return;
-   } else if (!strncmp("0", s, 2)) {
-      screen->hw_has_separate_stencil = false;
-   } else if (!strncmp("1", s, 2)) {
-      screen->hw_has_separate_stencil = true;
-   } else {
-      fprintf(stderr,
-	      "warning: env variable INTEL_SEPARATE_STENCIL=\"%s\" has "
-	      "invalid value and is ignored", s);
-   }
-}
-
 static bool
 intel_detect_swizzling(struct intel_screen *screen)
 {
@@ -1279,8 +1254,6 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
       intelScreen->hw_has_llc = true;
    else if (!success && intelScreen->gen >= 6)
       intelScreen->hw_has_llc = true;
-
-   intel_override_separate_stencil(intelScreen);
 
    intelScreen->hw_has_swizzling = intel_detect_swizzling(intelScreen);
 
