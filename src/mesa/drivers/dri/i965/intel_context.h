@@ -113,8 +113,6 @@ struct intel_context
 {
    struct gl_context ctx;  /**< base class, must be first field */
 
-   GLuint NewGLState;
- 
    /**
     * Generation number of the hardware: 2 is 8xx, 3 is 9xx pre-965, 4 is 965.
     */

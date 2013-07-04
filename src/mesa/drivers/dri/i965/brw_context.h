@@ -891,6 +891,7 @@ struct brw_context
     */
    bool needs_unlit_centroid_workaround;
 
+   GLuint NewGLState;
    struct {
       struct brw_state_flags dirty;
    } state;

@@ -448,8 +448,8 @@ void brw_upload_state(struct brw_context *brw)
    int i;
    static int dirty_count = 0;
 
-   state->mesa |= brw->intel.NewGLState;
-   brw->intel.NewGLState = 0;
+   state->mesa |= brw->NewGLState;
+   brw->NewGLState = 0;
 
    state->brw |= ctx->NewDriverState;
    ctx->NewDriverState = 0;
