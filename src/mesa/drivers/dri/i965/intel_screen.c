@@ -934,7 +934,7 @@ intelCreateBuffer(__DRIscreen * driScrnPriv,
    if (mesaVis->depthBits == 24) {
       assert(mesaVis->stencilBits == 8);
 
-      if (screen->hw_has_separate_stencil) {
+      if (screen->devinfo->has_hiz_and_separate_stencil) {
          rb = intel_create_private_renderbuffer(MESA_FORMAT_X8_Z24,
                                                 num_samples);
          _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &rb->Base.Base);
@@ -1049,6 +1049,7 @@ intel_screen_make_configs(__DRIscreen *dri_screen)
    static const uint8_t multisample_samples[2]  = {4, 8};
 
    struct intel_screen *screen = dri_screen->driverPrivate;
+   const struct brw_device_info *devinfo = screen->devinfo;
    uint8_t depth_bits[4], stencil_bits[4];
    __DRIconfig **configs = NULL;
 
@@ -1067,7 +1068,7 @@ intel_screen_make_configs(__DRIscreen *dri_screen)
       if (formats[i] == MESA_FORMAT_RGB565) {
          depth_bits[1] = 16;
          stencil_bits[1] = 0;
-         if (screen->gen >= 6) {
+         if (devinfo->gen >= 6) {
              depth_bits[2] = 24;
              stencil_bits[2] = 8;
              num_depth_stencil_bits = 3;
@@ -1123,7 +1124,7 @@ intel_screen_make_configs(__DRIscreen *dri_screen)
     * them.
     */
    for (int i = 0; i < ARRAY_SIZE(formats); i++) {
-      if (screen->gen < 6)
+      if (devinfo->gen < 6)
          break;
 
       __DRIconfig **new_configs;
@@ -1141,9 +1142,9 @@ intel_screen_make_configs(__DRIscreen *dri_screen)
          stencil_bits[1] = 8;
       }
 
-      if (screen->gen >= 7)
+      if (devinfo->gen >= 7)
          num_msaa_modes = 2;
-      else if (screen->gen == 6)
+      else if (devinfo->gen == 6)
          num_msaa_modes = 1;
 
       new_configs = driCreateConfigs(formats[i],
@@ -1171,7 +1172,7 @@ set_max_gl_versions(struct intel_screen *screen)
 {
    __DRIscreen *psp = screen->driScrnPriv;
 
-   switch (screen->gen) {
+   switch (screen->devinfo->gen) {
    case 7:
       psp->max_gl_core_version = 32;
       psp->max_gl_compat_version = 30;
@@ -1234,26 +1235,7 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
    intelScreen->deviceID = drm_intel_bufmgr_gem_get_devid(intelScreen->bufmgr);
    intelScreen->devinfo = brw_get_device_info(intelScreen->deviceID);
 
-   if (IS_GEN7(intelScreen->deviceID)) {
-      intelScreen->gen = 7;
-   } else if (IS_GEN6(intelScreen->deviceID)) {
-      intelScreen->gen = 6;
-   } else if (IS_GEN5(intelScreen->deviceID)) {
-      intelScreen->gen = 5;
-   } else {
-      intelScreen->gen = 4;
-   }
-
-   intelScreen->hw_has_separate_stencil = intelScreen->gen >= 6;
-   intelScreen->hw_must_use_separate_stencil = intelScreen->gen >= 7;
-
-   int has_llc = 0;
-   bool success = intel_get_param(intelScreen->driScrnPriv, I915_PARAM_HAS_LLC,
-				  &has_llc);
-   if (success && has_llc)
-      intelScreen->hw_has_llc = true;
-   else if (!success && intelScreen->gen >= 6)
-      intelScreen->hw_has_llc = true;
+   intelScreen->hw_must_use_separate_stencil = intelScreen->devinfo->gen >= 7;
 
    intelScreen->hw_has_swizzling = intel_detect_swizzling(intelScreen);
 

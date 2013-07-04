@@ -90,14 +90,14 @@ static void brwInitDriverFunctions(struct intel_screen *screen,
 
    brwInitFragProgFuncs( functions );
    brw_init_common_queryobj_functions(functions);
-   if (screen->gen >= 6)
+   if (screen->devinfo->gen >= 6)
       gen6_init_queryobj_functions(functions);
    else
       gen4_init_queryobj_functions(functions);
 
    functions->QuerySamplesForFormat = brw_query_samples_for_format;
 
-   if (screen->gen >= 7) {
+   if (screen->devinfo->gen >= 7) {
       functions->BeginTransformFeedback = gen7_begin_transform_feedback;
       functions->EndTransformFeedback = gen7_end_transform_feedback;
    } else {
@@ -105,7 +105,7 @@ static void brwInitDriverFunctions(struct intel_screen *screen,
       functions->EndTransformFeedback = brw_end_transform_feedback;
    }
 
-   if (screen->gen >= 6)
+   if (screen->devinfo->gen >= 6)
       functions->GetSamplePosition = gen6_get_sample_position;
 }
 
@@ -342,6 +342,7 @@ brwCreateContext(gl_api api,
    __DRIscreen *sPriv = driContextPriv->driScreenPriv;
    struct gl_context *shareCtx = (struct gl_context *) sharedContextPrivate;
    struct intel_screen *screen = sPriv->driverPrivate;
+   const struct brw_device_info *devinfo = screen->devinfo;
    struct dd_function_table functions;
    struct gl_config visual;
 
@@ -356,31 +357,17 @@ brwCreateContext(gl_api api,
    brw->driContext = driContextPriv;
    brw->intelScreen = screen;
    brw->bufmgr = screen->bufmgr;
-   brw->gen = screen->gen;
 
-   const int devID = screen->deviceID;
-   if (IS_SNB_GT1(devID) || IS_IVB_GT1(devID) || IS_HSW_GT1(devID))
-      brw->gt = 1;
-   else if (IS_SNB_GT2(devID) || IS_IVB_GT2(devID) || IS_HSW_GT2(devID))
-      brw->gt = 2;
-   else if (IS_HSW_GT3(devID))
-      brw->gt = 3;
-   else
-      brw->gt = 0;
+   brw->gen = devinfo->gen;
+   brw->gt = devinfo->gt;
+   brw->is_g4x = devinfo->is_g4x;
+   brw->is_baytrail = devinfo->is_baytrail;
+   brw->is_haswell = devinfo->is_haswell;
+   brw->has_llc = devinfo->has_llc;
+   brw->has_hiz = devinfo->has_hiz_and_separate_stencil;
+   brw->has_separate_stencil = devinfo->has_hiz_and_separate_stencil;
 
-   if (IS_HASWELL(devID)) {
-      brw->is_haswell = true;
-   } else if (IS_BAYTRAIL(devID)) {
-      brw->is_baytrail = true;
-      brw->gt = 1;
-   } else if (IS_G4X(devID)) {
-      brw->is_g4x = true;
-   }
-
-   brw->has_separate_stencil = screen->hw_has_separate_stencil;
    brw->must_use_separate_stencil = screen->hw_must_use_separate_stencil;
-   brw->has_hiz = brw->gen >= 6;
-   brw->has_llc = screen->hw_has_llc;
    brw->has_swizzling = screen->hw_has_swizzling;
 
    brwInitVtbl( brw );

@@ -42,21 +42,12 @@ struct intel_screen
    int deviceID;
    const struct brw_device_info *devinfo;
 
-   int gen;
-
    __DRIscreen *driScrnPriv;
 
    bool no_hw;
 
-   /*
-    * The hardware hiz and separate stencil fields are needed in intel_screen,
-    * rather than solely in brw_context, because glXCreatePbuffer and
-    * glXCreatePixmap are not passed a GLXContext.
-    */
-   bool hw_has_separate_stencil;
    bool hw_must_use_separate_stencil;
 
-   bool hw_has_llc;
    bool hw_has_swizzling;
 
    dri_bufmgr *bufmgr;

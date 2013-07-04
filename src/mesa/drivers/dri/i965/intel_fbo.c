@@ -159,7 +159,7 @@ intel_unmap_renderbuffer(struct gl_context *ctx,
 unsigned
 intel_quantize_num_samples(struct intel_screen *intel, unsigned num_samples)
 {
-   switch (intel->gen) {
+   switch (intel->devinfo->gen) {
    case 6:
       /* Gen6 supports only 4x multisampling. */
       if (num_samples > 0)
