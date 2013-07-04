@@ -129,7 +129,6 @@ struct intel_context
 
    int driFd;
 
-   __DRIcontext *driContext;
    struct intel_screen *intelScreen;
 };
 

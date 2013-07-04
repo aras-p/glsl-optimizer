@@ -58,7 +58,6 @@ intelDrawBuffer(struct gl_context * ctx, GLenum mode)
 {
    if (ctx->DrawBuffer && _mesa_is_winsys_fbo(ctx->DrawBuffer)) {
       struct brw_context *const brw = brw_context(ctx);
-      struct intel_context *const intel = intel_context(ctx);
       const bool was_front_buffer_rendering = brw->is_front_buffer_rendering;
 
       brw->is_front_buffer_rendering = (mode == GL_FRONT_LEFT)
@@ -69,7 +68,7 @@ intelDrawBuffer(struct gl_context * ctx, GLenum mode)
        * (including the fake front) before we start rendering again.
        */
       if (!was_front_buffer_rendering && brw->is_front_buffer_rendering)
-	 dri2InvalidateDrawable(intel->driContext->driDrawablePriv);
+	 dri2InvalidateDrawable(brw->driContext->driDrawablePriv);
    }
 }
 
@@ -79,7 +78,6 @@ intelReadBuffer(struct gl_context * ctx, GLenum mode)
 {
    if (ctx->DrawBuffer && _mesa_is_winsys_fbo(ctx->DrawBuffer)) {
       struct brw_context *const brw = brw_context(ctx);
-      struct intel_context *const intel = intel_context(ctx);
       const bool was_front_buffer_reading = brw->is_front_buffer_reading;
 
       brw->is_front_buffer_reading = mode == GL_FRONT_LEFT || mode == GL_FRONT;
@@ -89,7 +87,7 @@ intelReadBuffer(struct gl_context * ctx, GLenum mode)
        * (including the fake front) before we start reading again.
        */
       if (!was_front_buffer_reading && brw->is_front_buffer_reading)
-	 dri2InvalidateDrawable(intel->driContext->driReadablePriv);
+	 dri2InvalidateDrawable(brw->driContext->driReadablePriv);
    }
 }
 

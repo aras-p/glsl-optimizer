@@ -1223,6 +1223,8 @@ struct brw_context
       int max_entries;
       double report_time;
    } shader_time;
+
+   __DRIcontext *driContext;
 };
 
 /*======================================================================

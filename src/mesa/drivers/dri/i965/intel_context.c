@@ -129,7 +129,7 @@ intel_flush_front(struct gl_context *ctx)
 {
    struct brw_context *brw = brw_context(ctx);
    struct intel_context *intel = intel_context(ctx);
-    __DRIcontext *driContext = intel->driContext;
+    __DRIcontext *driContext = brw->driContext;
     __DRIdrawable *driDrawable = driContext->driDrawablePriv;
     __DRIscreen *const screen = intel->intelScreen->driScrnPriv;
 
@@ -243,8 +243,7 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
 void
 intel_prepare_render(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
-   __DRIcontext *driContext = intel->driContext;
+   __DRIcontext *driContext = brw->driContext;
    __DRIdrawable *drawable;
 
    drawable = driContext->driDrawablePriv;
@@ -474,7 +473,7 @@ intelInitContext(struct brw_context *brw,
    }
 
    driContextPriv->driverPrivate = intel;
-   intel->driContext = driContextPriv;
+   brw->driContext = driContextPriv;
    intel->driFd = sPriv->fd;
 
    intel->gen = intelScreen->gen;
