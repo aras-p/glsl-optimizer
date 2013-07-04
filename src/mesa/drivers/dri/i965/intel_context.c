@@ -639,7 +639,7 @@ intelDestroyContext(__DRIcontext * driContextPriv)
       /* free the Mesa context */
       _mesa_free_context_data(&intel->ctx);
 
-      ralloc_free(intel);
+      ralloc_free(brw);
       driContextPriv->driverPrivate = NULL;
    }
 }
