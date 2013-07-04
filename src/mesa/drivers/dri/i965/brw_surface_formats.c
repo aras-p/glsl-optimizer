@@ -735,8 +735,7 @@ translate_tex_format(struct brw_context *brw,
 bool
 brw_is_hiz_depth_format(struct brw_context *brw, gl_format format)
 {
-   struct intel_context *intel = &brw->intel;
-   if (!intel->has_hiz)
+   if (!brw->has_hiz)
       return false;
 
    switch (format) {

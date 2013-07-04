@@ -123,7 +123,6 @@ struct intel_context
    bool is_g4x;
    bool has_separate_stencil;
    bool must_use_separate_stencil;
-   bool has_hiz;
    bool has_llc;
 };
 
