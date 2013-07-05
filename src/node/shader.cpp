@@ -10,10 +10,12 @@ Shader::Shader(Compiler* compiler, int type, const char* source)
 	if (compiler)
 	{
 		_binding = glslopt_optimize(compiler->getBinding(), (glslopt_shader_type)type, source, 0);
+		_compiled = glslopt_get_status(_binding);
 	}
 	else
 	{
 		_binding = 0;
+		_compiled = false;
 	}
 }
 
@@ -32,35 +34,29 @@ void Shader::release()
 	{
 		glslopt_shader_delete(_binding);
 		_binding = 0;
+		_compiled = false;
 	}
-}
-
-//----------------------------------------------------------------------
-
-bool Shader::isCompiled() const
-{
-	return (_binding) ? glslopt_get_status(_binding) : false;
 }
 
 //----------------------------------------------------------------------
 
 const char* Shader::getOutput() const
 {
-	return (_binding) ? glslopt_get_output(_binding) : 0;
+	return (_compiled) ? glslopt_get_output(_binding) : "";
 }
 
 //----------------------------------------------------------------------
 
 const char* Shader::getRawOutput() const
 {
-	return (_binding) ? glslopt_get_raw_output(_binding) : 0;
+	return (_compiled) ? glslopt_get_raw_output(_binding) : "";
 }
 
 //----------------------------------------------------------------------
 
 const char* Shader::getLog() const
 {
-	return (_binding) ? glslopt_get_log(_binding) : 0;
+	return (_compiled) ? glslopt_get_log(_binding) : "";
 }
 
 //----------------------------------------------------------------------

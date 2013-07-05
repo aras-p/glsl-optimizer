@@ -7,7 +7,7 @@ class Shader : public node::ObjectWrap {
 public:
 	static void Init(v8::Handle<v8::Object> exports);
 
-	bool isCompiled() const;
+	inline bool isCompiled() const { return _compiled; }
 	const char* getOutput() const;
 	const char* getRawOutput() const;
 	const char* getLog() const;
@@ -19,6 +19,7 @@ private:
 	~Shader();
 
 	glslopt_shader* _binding;
+	bool _compiled;
 
 	static v8::Handle<v8::Value> New(const v8::Arguments& args);
 	static v8::Handle<v8::Value> Dispose(const v8::Arguments& args);
