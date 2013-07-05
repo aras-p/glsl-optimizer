@@ -1588,7 +1588,8 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
         (!is_fetch && mip_filter != PIPE_TEX_MIPFILTER_NONE)))
       bld.num_lods = type.length;
    /* TODO: for true scalar_lod should only use 1 lod value */
-   else if (!is_fetch && mip_filter != PIPE_TEX_MIPFILTER_NONE) {
+   else if ((is_fetch && explicit_lod && bld.static_texture_state->target != PIPE_BUFFER ) ||
+            (!is_fetch && mip_filter != PIPE_TEX_MIPFILTER_NONE)) {
       bld.num_lods = num_quads;
    }
    else {
