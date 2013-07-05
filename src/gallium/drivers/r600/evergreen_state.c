@@ -3733,6 +3733,7 @@ boolean evergreen_dma_blit(struct pipe_context *ctx,
 	struct r600_texture *rdst = (struct r600_texture*)dst;
 	unsigned dst_pitch, src_pitch, bpp, dst_mode, src_mode, copy_height;
 	unsigned src_w, dst_w;
+	unsigned src_x, src_y;
 
 	if (rctx->rings.dma.cs == NULL) {
 		return FALSE;
@@ -3740,6 +3741,11 @@ boolean evergreen_dma_blit(struct pipe_context *ctx,
 	if (src->format != dst->format) {
 		return FALSE;
 	}
+
+	src_x = util_format_get_nblocksx(src->format, src_box->x);
+	dst_x = util_format_get_nblocksx(src->format, dst_x);
+	src_y = util_format_get_nblocksy(src->format, src_box->y);
+	dst_y = util_format_get_nblocksy(src->format, dst_y);
 
 	bpp = rdst->surface.bpe;
 	dst_pitch = rdst->surface.level[dst_level].pitch_bytes;
@@ -3785,7 +3791,7 @@ boolean evergreen_dma_blit(struct pipe_context *ctx,
 		 */
 		src_offset= rsrc->surface.level[src_level].offset;
 		src_offset += rsrc->surface.level[src_level].slice_size * src_box->z;
-		src_offset += src_box->y * src_pitch + src_box->x * bpp;
+		src_offset += src_y * src_pitch + src_x * bpp;
 		dst_offset = rdst->surface.level[dst_level].offset;
 		dst_offset += rdst->surface.level[dst_level].slice_size * dst_z;
 		dst_offset += dst_y * dst_pitch + dst_x * bpp;
@@ -3793,7 +3799,7 @@ boolean evergreen_dma_blit(struct pipe_context *ctx,
 					src_box->height * src_pitch);
 	} else {
 		evergreen_dma_copy_tile(rctx, dst, dst_level, dst_x, dst_y, dst_z,
-					src, src_level, src_box->x, src_box->y, src_box->z,
+					src, src_level, src_x, src_y, src_box->z,
 					copy_height, dst_pitch, bpp);
 	}
 	return TRUE;
