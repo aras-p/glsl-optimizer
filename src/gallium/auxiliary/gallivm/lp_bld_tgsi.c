@@ -390,11 +390,8 @@ lp_build_emit_fetch_texoffset(
    if (chan_index == LP_CHAN_ALL) {
       swizzle = ~0;
    } else {
+      assert(chan_index < TGSI_SWIZZLE_W);
       swizzle = tgsi_util_get_src_register_swizzle(&reg.Register, chan_index);
-      if (swizzle > 2) {
-         assert(0 && "invalid swizzle in emit_fetch_texoffset()");
-         return bld_base->base.undef;
-      }
    }
 
    assert(off->Index <= bld_base->info->file_max[off->File]);
