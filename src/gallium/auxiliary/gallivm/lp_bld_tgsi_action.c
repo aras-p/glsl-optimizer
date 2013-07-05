@@ -1161,14 +1161,9 @@ iset_emit_cpu(
    struct lp_build_emit_data * emit_data,
    unsigned pipe_func)
 {
-   LLVMValueRef nz = lp_build_const_vec(bld_base->base.gallivm,
-					bld_base->int_bld.type, ~0U);
    LLVMValueRef cond = lp_build_cmp(&bld_base->int_bld, pipe_func,
                                     emit_data->args[0], emit_data->args[1]);
-   emit_data->output[emit_data->chan] = lp_build_select(&bld_base->int_bld,
-                                          cond,
-                                          nz,
-                                          bld_base->int_bld.zero);
+   emit_data->output[emit_data->chan] = cond;
 }
 
 /* TGSI_OPCODE_IMAX (CPU Only) */
@@ -1620,14 +1615,9 @@ uset_emit_cpu(
    struct lp_build_emit_data * emit_data,
    unsigned pipe_func)
 {
-   LLVMValueRef nz = lp_build_const_vec(bld_base->base.gallivm,
-					bld_base->uint_bld.type, ~0U);
    LLVMValueRef cond = lp_build_cmp(&bld_base->uint_bld, pipe_func,
                                     emit_data->args[0], emit_data->args[1]);
-   emit_data->output[emit_data->chan] = lp_build_select(&bld_base->uint_bld,
-                                          cond,
-					  nz,
-                                          bld_base->uint_bld.zero);
+   emit_data->output[emit_data->chan] = cond;
 }
 
 
