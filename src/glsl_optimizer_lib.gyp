@@ -9,6 +9,7 @@
       'include_dirs': [
         'glsl',
         'mesa',
+        '../include',
       ],
       'direct_dependent_settings': {
         'include_dirs': [
@@ -163,7 +164,6 @@
       'conditions': [
         ['OS=="win"', {
           'include_dirs': [
-            '../include',
             '../include/c99',          
           ],
           'defines': [
