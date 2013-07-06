@@ -1048,7 +1048,7 @@ fs_visitor::emit_general_interpolation(ir_variable *ir)
                   inst->predicate = BRW_PREDICATE_NORMAL;
                   inst->predicate_inverse = true;
                }
-               if (brw->gen < 6) {
+               if (brw->gen < 6 && interpolation_mode == INTERP_QUALIFIER_SMOOTH) {
                   emit(BRW_OPCODE_MUL, attr, attr, this->pixel_w);
                }
 	       attr.reg_offset++;

@@ -44,6 +44,15 @@
 
 
 /**
+ * Determine the vue slot corresponding to the given half of the given register.
+ */
+static inline int vert_reg_to_vue_slot(struct brw_sf_compile *c, GLuint reg,
+                                       int half)
+{
+   return (reg + c->urb_entry_read_offset) * 2 + half;
+}
+
+/**
  * Determine the varying corresponding to the given half of the given
  * register.  half=0 means the first half of a register, half=1 means the
  * second half.
@@ -51,8 +60,21 @@
 static inline int vert_reg_to_varying(struct brw_sf_compile *c, GLuint reg,
                                       int half)
 {
-   int vue_slot = (reg + c->urb_entry_read_offset) * 2 + half;
+   int vue_slot = vert_reg_to_vue_slot(c, reg, half);
    return c->vue_map.slot_to_varying[vue_slot];
+}
+
+/**
+ * Determine the register corresponding to the given vue slot
+ */
+static struct brw_reg get_vue_slot(struct brw_sf_compile *c,
+                                   struct brw_reg vert,
+                                   int vue_slot)
+{
+   GLuint off = vue_slot / 2 - c->urb_entry_read_offset;
+   GLuint sub = vue_slot % 2;
+
+   return brw_vec4_grf(vert.nr + off, sub * 4);
 }
 
 /**
@@ -64,10 +86,7 @@ static struct brw_reg get_varying(struct brw_sf_compile *c,
 {
    int vue_slot = c->vue_map.varying_to_slot[varying];
    assert (vue_slot >= c->urb_entry_read_offset);
-   GLuint off = vue_slot / 2 - c->urb_entry_read_offset;
-   GLuint sub = vue_slot % 2;
-
-   return brw_vec4_grf(vert.nr + off, sub * 4);
+   return get_vue_slot(c, vert, vue_slot);
 }
 
 static bool
@@ -105,14 +124,14 @@ static void do_twoside_color( struct brw_sf_compile *c )
    if (c->key.primitive == SF_UNFILLED_TRIS)
       return;
 
-   /* XXX: What happens if BFC isn't present?  This could only happen
-    * for user-supplied vertex programs, as t_vp_build.c always does
-    * the right thing.
+   /* If the vertex shader provides backface color, do the selection. The VS
+    * promises to set up the front color if the backface color is provided, but
+    * it may contain junk if never written to.
     */
    if (!(have_attr(c, VARYING_SLOT_COL0) && have_attr(c, VARYING_SLOT_BFC0)) &&
        !(have_attr(c, VARYING_SLOT_COL1) && have_attr(c, VARYING_SLOT_BFC1)))
       return;
-   
+
    /* Need to use BRW_EXECUTE_4 and also do an 4-wide compare in order
     * to get all channels active inside the IF.  In the clipping code
     * we run with NoMask, so it's not an option and we can use
@@ -138,22 +157,32 @@ static void do_twoside_color( struct brw_sf_compile *c )
  * Flat shading
  */
 
-#define VARYING_SLOT_COLOR_BITS (BITFIELD64_BIT(VARYING_SLOT_COL0) | \
-                                 BITFIELD64_BIT(VARYING_SLOT_COL1))
-
-static void copy_colors( struct brw_sf_compile *c,
-		     struct brw_reg dst,
-		     struct brw_reg src)
+static void copy_flatshaded_attributes(struct brw_sf_compile *c,
+                                       struct brw_reg dst,
+                                       struct brw_reg src)
 {
    struct brw_compile *p = &c->func;
-   GLuint i;
+   int i;
 
-   for (i = VARYING_SLOT_COL0; i <= VARYING_SLOT_COL1; i++) {
-      if (have_attr(c,i))
-	 brw_MOV(p, 
-		 get_varying(c, dst, i),
-		 get_varying(c, src, i));
+   for (i = 0; i < c->vue_map.num_slots; i++) {
+      if (c->key.interpolation_mode.mode[i] == INTERP_QUALIFIER_FLAT) {
+         brw_MOV(p,
+                 get_vue_slot(c, dst, i),
+                 get_vue_slot(c, src, i));
+      }
    }
+}
+
+static int count_flatshaded_attributes(struct brw_sf_compile *c)
+{
+   int i;
+   int count = 0;
+
+   for (i = 0; i < c->vue_map.num_slots; i++)
+      if (c->key.interpolation_mode.mode[i] == INTERP_QUALIFIER_FLAT)
+         count++;
+
+   return count;
 }
 
 
@@ -167,11 +196,8 @@ static void do_flatshade_triangle( struct brw_sf_compile *c )
    struct brw_compile *p = &c->func;
    struct brw_context *brw = p->brw;
    struct brw_reg ip = brw_ip_reg();
-   GLuint nr = _mesa_bitcount_64(c->key.attrs & VARYING_SLOT_COLOR_BITS);
+   GLuint nr;
    GLuint jmpi = 1;
-
-   if (!nr)
-      return;
 
    /* Already done in clip program:
     */
@@ -181,21 +207,23 @@ static void do_flatshade_triangle( struct brw_sf_compile *c )
    if (brw->gen == 5)
        jmpi = 2;
 
+   nr = count_flatshaded_attributes(c);
+
    brw_push_insn_state(p);
-   
+
    brw_MUL(p, c->pv, c->pv, brw_imm_d(jmpi*(nr*2+1)));
    brw_JMPI(p, ip, ip, c->pv);
 
-   copy_colors(c, c->vert[1], c->vert[0]);
-   copy_colors(c, c->vert[2], c->vert[0]);
+   copy_flatshaded_attributes(c, c->vert[1], c->vert[0]);
+   copy_flatshaded_attributes(c, c->vert[2], c->vert[0]);
    brw_JMPI(p, ip, ip, brw_imm_d(jmpi*(nr*4+1)));
 
-   copy_colors(c, c->vert[0], c->vert[1]);
-   copy_colors(c, c->vert[2], c->vert[1]);
+   copy_flatshaded_attributes(c, c->vert[0], c->vert[1]);
+   copy_flatshaded_attributes(c, c->vert[2], c->vert[1]);
    brw_JMPI(p, ip, ip, brw_imm_d(jmpi*nr*2));
 
-   copy_colors(c, c->vert[0], c->vert[2]);
-   copy_colors(c, c->vert[1], c->vert[2]);
+   copy_flatshaded_attributes(c, c->vert[0], c->vert[2]);
+   copy_flatshaded_attributes(c, c->vert[1], c->vert[2]);
 
    brw_pop_insn_state(p);
 }
@@ -206,11 +234,8 @@ static void do_flatshade_line( struct brw_sf_compile *c )
    struct brw_compile *p = &c->func;
    struct brw_context *brw = p->brw;
    struct brw_reg ip = brw_ip_reg();
-   GLuint nr = _mesa_bitcount_64(c->key.attrs & VARYING_SLOT_COLOR_BITS);
+   GLuint nr;
    GLuint jmpi = 1;
-
-   if (!nr)
-      return;
 
    /* Already done in clip program: 
     */
@@ -220,14 +245,16 @@ static void do_flatshade_line( struct brw_sf_compile *c )
    if (brw->gen == 5)
        jmpi = 2;
 
+   nr = count_flatshaded_attributes(c);
+
    brw_push_insn_state(p);
    
    brw_MUL(p, c->pv, c->pv, brw_imm_d(jmpi*(nr+1)));
    brw_JMPI(p, ip, ip, c->pv);
-   copy_colors(c, c->vert[1], c->vert[0]);
+   copy_flatshaded_attributes(c, c->vert[1], c->vert[0]);
 
    brw_JMPI(p, ip, ip, brw_imm_ud(jmpi*nr));
-   copy_colors(c, c->vert[0], c->vert[1]);
+   copy_flatshaded_attributes(c, c->vert[0], c->vert[1]);
 
    brw_pop_insn_state(p);
 }
@@ -324,36 +351,23 @@ static void invert_det( struct brw_sf_compile *c)
 
 static bool
 calculate_masks(struct brw_sf_compile *c,
-	        GLuint reg,
-		GLushort *pc,
-		GLushort *pc_persp,
-		GLushort *pc_linear)
+                GLuint reg,
+                GLushort *pc,
+                GLushort *pc_persp,
+                GLushort *pc_linear)
 {
    bool is_last_attr = (reg == c->nr_setup_regs - 1);
-   GLbitfield64 persp_mask;
-   GLbitfield64 linear_mask;
-
-   if (c->key.do_flat_shading)
-      persp_mask = c->key.attrs & ~(BITFIELD64_BIT(VARYING_SLOT_POS) |
-                                    BITFIELD64_BIT(VARYING_SLOT_COL0) |
-                                    BITFIELD64_BIT(VARYING_SLOT_COL1));
-   else
-      persp_mask = c->key.attrs & ~(BITFIELD64_BIT(VARYING_SLOT_POS));
-
-   if (c->key.do_flat_shading)
-      linear_mask = c->key.attrs & ~(BITFIELD64_BIT(VARYING_SLOT_COL0) |
-                                     BITFIELD64_BIT(VARYING_SLOT_COL1));
-   else
-      linear_mask = c->key.attrs;
+   enum glsl_interp_qualifier interp;
 
    *pc_persp = 0;
    *pc_linear = 0;
    *pc = 0xf;
       
-   if (persp_mask & BITFIELD64_BIT(vert_reg_to_varying(c, reg, 0)))
+   interp = c->key.interpolation_mode.mode[vert_reg_to_vue_slot(c, reg, 0)];
+   if (interp == INTERP_QUALIFIER_SMOOTH) {
+      *pc_linear = 0xf;
       *pc_persp = 0xf;
-
-   if (linear_mask & BITFIELD64_BIT(vert_reg_to_varying(c, reg, 0)))
+   } else if (interp == INTERP_QUALIFIER_NOPERSPECTIVE)
       *pc_linear = 0xf;
 
    /* Maybe only processs one attribute on the final round:
@@ -361,11 +375,12 @@ calculate_masks(struct brw_sf_compile *c,
    if (vert_reg_to_varying(c, reg, 1) != BRW_VARYING_SLOT_COUNT) {
       *pc |= 0xf0;
 
-      if (persp_mask & BITFIELD64_BIT(vert_reg_to_varying(c, reg, 1)))
-	 *pc_persp |= 0xf0;
-
-      if (linear_mask & BITFIELD64_BIT(vert_reg_to_varying(c, reg, 1)))
-	 *pc_linear |= 0xf0;
+      interp = c->key.interpolation_mode.mode[vert_reg_to_vue_slot(c, reg, 1)];
+      if (interp == INTERP_QUALIFIER_SMOOTH) {
+         *pc_linear |= 0xf0;
+         *pc_persp |= 0xf0;
+      } else if (interp == INTERP_QUALIFIER_NOPERSPECTIVE)
+         *pc_linear |= 0xf0;
    }
 
    return is_last_attr;
@@ -418,7 +433,7 @@ void brw_emit_tri_setup(struct brw_sf_compile *c, bool allocate)
    if (c->key.do_twoside_color) 
       do_twoside_color(c);
 
-   if (c->key.do_flat_shading)
+   if (c->has_flat_shading)
       do_flatshade_triangle(c);
       
    
@@ -504,7 +519,7 @@ void brw_emit_line_setup(struct brw_sf_compile *c, bool allocate)
    invert_det(c);
    copy_z_inv_w(c);
 
-   if (c->key.do_flat_shading)
+   if (c->has_flat_shading)
       do_flatshade_line(c);
 
    for (i = 0; i < c->nr_setup_regs; i++)

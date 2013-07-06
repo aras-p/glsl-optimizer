@@ -81,6 +81,7 @@ static void compile_sf_prog( struct brw_context *brw,
 
    c.prog_data.urb_read_length = c.nr_attr_regs;
    c.prog_data.urb_entry_size = c.nr_setup_regs * 2;
+   c.has_flat_shading = brw_any_flat_varyings(&key->interpolation_mode);
 
    /* Which primitive?  Or all three? 
     */
@@ -193,7 +194,6 @@ brw_upload_sf_prog(struct brw_context *brw)
    key.interpolation_mode = brw->interpolation_mode;
 
    /* _NEW_LIGHT | _NEW_PROGRAM */
-   key.do_flat_shading = (ctx->Light.ShadeModel == GL_FLAT);
    key.do_twoside_color = ((ctx->Light.Enabled && ctx->Light.Model.TwoSide) ||
                            ctx->VertexProgram._TwoSideEnabled);
 
