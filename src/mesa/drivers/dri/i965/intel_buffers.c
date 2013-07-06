@@ -41,7 +41,7 @@
 void
 intel_check_front_buffer_rendering(struct brw_context *brw)
 {
-   struct gl_context *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->ctx;
    const struct gl_framebuffer *fb = ctx->DrawBuffer;
    if (_mesa_is_winsys_fbo(fb)) {
       /* drawing to window system buffer */

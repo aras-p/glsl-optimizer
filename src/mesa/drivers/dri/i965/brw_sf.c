@@ -134,7 +134,7 @@ static void compile_sf_prog( struct brw_context *brw,
 static void
 brw_upload_sf_prog(struct brw_context *brw)
 {
-   struct gl_context *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->ctx;
    struct brw_sf_prog_key key;
    /* _NEW_BUFFERS */
    bool render_to_fbo = _mesa_is_user_fbo(ctx->DrawBuffer);

@@ -239,14 +239,13 @@ intel_set_texture_image_region(struct gl_context *ctx,
                                GLuint tile_x,
                                GLuint tile_y)
 {
-   struct intel_context *intel = intel_context(ctx);
    struct brw_context *brw = brw_context(ctx);
    struct intel_texture_image *intel_image = intel_texture_image(image);
    struct gl_texture_object *texobj = image->TexObject;
    struct intel_texture_object *intel_texobj = intel_texture_object(texobj);
    uint32_t draw_x, draw_y;
 
-   _mesa_init_teximage_fields(&intel->ctx, image,
+   _mesa_init_teximage_fields(&brw->ctx, image,
 			      width, height, 1,
 			      0, internalFormat, format);
 
@@ -294,8 +293,7 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
 {
    struct gl_framebuffer *fb = dPriv->driverPrivate;
    struct brw_context *brw = pDRICtx->driverPrivate;
-   struct intel_context *intel = &brw->intel;
-   struct gl_context *ctx = &intel->ctx;
+   struct gl_context *ctx = &brw->ctx;
    struct intel_texture_object *intelObj;
    struct intel_renderbuffer *rb;
    struct gl_texture_object *texObj;
@@ -333,7 +331,7 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
       texFormat = MESA_FORMAT_RGB565;
    }
 
-   _mesa_lock_texture(&intel->ctx, texObj);
+   _mesa_lock_texture(&brw->ctx, texObj);
    texImage = _mesa_get_tex_image(ctx, texObj, target, level);
    intel_miptree_make_shareable(brw, rb->mt);
    intel_set_texture_image_region(ctx, texImage, rb->mt->region, target,
@@ -341,7 +339,7 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
                                   rb->mt->region->width,
                                   rb->mt->region->height,
                                   0, 0);
-   _mesa_unlock_texture(&intel->ctx, texObj);
+   _mesa_unlock_texture(&brw->ctx, texObj);
 }
 
 void

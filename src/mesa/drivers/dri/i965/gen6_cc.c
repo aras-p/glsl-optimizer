@@ -39,7 +39,7 @@ static void
 gen6_upload_blend_state(struct brw_context *brw)
 {
    bool is_buffer_zero_integer_format = false;
-   struct gl_context *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->ctx;
    struct gen6_blend_state *blend;
    int b;
    int nr_draw_buffers = ctx->DrawBuffer->_NumColorDrawBuffers;
@@ -253,7 +253,7 @@ const struct brw_tracked_state gen6_blend_state = {
 static void
 gen6_upload_color_calc_state(struct brw_context *brw)
 {
-   struct gl_context *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->ctx;
    struct gen6_color_calc_state *cc;
 
    cc = brw_state_batch(brw, AUB_TRACE_CC_STATE,

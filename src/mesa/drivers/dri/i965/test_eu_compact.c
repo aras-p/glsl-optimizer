@@ -32,7 +32,6 @@ static bool
 test_compact_instruction(struct brw_compile *p, struct brw_instruction src)
 {
    struct brw_context *brw = p->brw;
-   struct intel_context *intel = &brw->intel;
 
    struct brw_compact_instruction dst;
    memset(&dst, 0xd0, sizeof(dst));
@@ -296,7 +295,6 @@ int
 main(int argc, char **argv)
 {
    struct brw_context *brw = calloc(1, sizeof(*brw));
-   struct intel_context *intel = &brw->intel;
    brw->gen = 6;
    bool fail = false;
 

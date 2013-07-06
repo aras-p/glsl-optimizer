@@ -31,8 +31,7 @@
 static void
 upload_clip_state(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
-   struct gl_context *ctx = &intel->ctx;
+   struct gl_context *ctx = &brw->ctx;
    uint32_t dw1 = 0, dw2 = 0;
 
    /* _NEW_BUFFERS */

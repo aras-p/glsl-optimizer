@@ -52,7 +52,7 @@ brw_upload_vs_pull_constants(struct brw_context *brw)
    /* Updates the ParamaterValues[i] pointers for all parameters of the
     * basic type of PROGRAM_STATE_VAR.
     */
-   _mesa_load_state_parameters(&brw->intel.ctx, vp->program.Base.Parameters);
+   _mesa_load_state_parameters(&brw->ctx, vp->program.Base.Parameters);
 
    /* CACHE_NEW_VS_PROG */
    if (!brw->vs.prog_data->base.nr_pull_params) {
@@ -108,7 +108,7 @@ const struct brw_tracked_state brw_vs_pull_constants = {
 static void
 brw_upload_vs_ubo_surfaces(struct brw_context *brw)
 {
-   struct gl_context *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->ctx;
    /* _NEW_PROGRAM */
    struct gl_shader_program *prog = ctx->Shader.CurrentVertexProgram;
 

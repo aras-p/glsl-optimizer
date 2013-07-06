@@ -3224,8 +3224,7 @@ vec4_visitor::vec4_visitor(struct brw_context *brw,
    : debug_flag(debug_flag)
 {
    this->brw = brw;
-   this->intel = &brw->intel;
-   this->ctx = &intel->ctx;
+   this->ctx = &brw->ctx;
    this->shader_prog = shader_prog;
    this->shader = shader;
 

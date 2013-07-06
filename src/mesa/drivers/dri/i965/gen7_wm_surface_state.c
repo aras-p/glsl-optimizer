@@ -236,7 +236,6 @@ gen7_update_buffer_texture_surface(struct gl_context *ctx,
                                    unsigned surf_index)
 {
    struct brw_context *brw = brw_context(ctx);
-   struct intel_context *intel = &brw->intel;
    struct gl_texture_object *tObj = ctx->Texture.Unit[unit]._Current;
    struct intel_buffer_object *intel_obj =
       intel_buffer_object(tObj->BufferObject);
@@ -289,7 +288,6 @@ gen7_update_texture_surface(struct gl_context *ctx,
                             unsigned surf_index)
 {
    struct brw_context *brw = brw_context(ctx);
-   struct intel_context *intel = &brw->intel;
    struct gl_texture_object *tObj = ctx->Texture.Unit[unit]._Current;
    struct intel_texture_object *intelObj = intel_texture_object(tObj);
    struct intel_mipmap_tree *mt = intelObj->mt;
@@ -388,7 +386,6 @@ gen7_create_constant_surface(struct brw_context *brw,
 			     uint32_t *out_offset,
                              bool dword_pitch)
 {
-   struct intel_context *intel = &brw->intel;
    uint32_t stride = dword_pitch ? 4 : 16;
    uint32_t elements = ALIGN(size, stride) / stride;
    const GLint w = elements - 1;
@@ -435,7 +432,6 @@ gen7_create_constant_surface(struct brw_context *brw,
 void
 gen7_create_shader_time_surface(struct brw_context *brw, uint32_t *out_offset)
 {
-   struct intel_context *intel = &brw->intel;
    const int w = brw->shader_time.bo->size - 1;
 
    uint32_t *surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE,
@@ -488,8 +484,7 @@ gen7_update_null_renderbuffer_surface(struct brw_context *brw, unsigned unit)
     *     depth buffer’s corresponding state for all render target surfaces,
     *     including null.
     */
-   struct intel_context *intel = &brw->intel;
-   struct gl_context *ctx = &intel->ctx;
+   struct gl_context *ctx = &brw->ctx;
 
    /* _NEW_BUFFERS */
    const struct gl_framebuffer *fb = ctx->DrawBuffer;
@@ -523,8 +518,7 @@ gen7_update_renderbuffer_surface(struct brw_context *brw,
 				 bool layered,
 				 unsigned int unit)
 {
-   struct intel_context *intel = &brw->intel;
-   struct gl_context *ctx = &intel->ctx;
+   struct gl_context *ctx = &brw->ctx;
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
    struct intel_region *region = irb->mt->region;
    uint32_t format;

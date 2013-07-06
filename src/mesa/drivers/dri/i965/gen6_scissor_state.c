@@ -34,8 +34,7 @@
 static void
 gen6_upload_scissor_state(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
-   struct gl_context *ctx = &intel->ctx;
+   struct gl_context *ctx = &brw->ctx;
    const bool render_to_fbo = _mesa_is_user_fbo(ctx->DrawBuffer);
    struct gen6_scissor_rect *scissor;
    uint32_t scissor_state_offset;

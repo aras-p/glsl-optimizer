@@ -53,7 +53,6 @@ do_blit_copypixels(struct gl_context * ctx,
                    GLint dstx, GLint dsty, GLenum type)
 {
    struct brw_context *brw = brw_context(ctx);
-   struct intel_context *intel = intel_context(ctx);
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    struct gl_framebuffer *read_fb = ctx->ReadBuffer;
    GLint orig_dstx;
@@ -145,7 +144,7 @@ do_blit_copypixels(struct gl_context * ctx,
 
    intel_prepare_render(brw);
 
-   intel_flush(&intel->ctx);
+   intel_flush(&brw->ctx);
 
    /* Clip to destination buffer. */
    orig_dstx = dstx;

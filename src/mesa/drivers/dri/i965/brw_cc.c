@@ -41,7 +41,7 @@
 static void
 brw_upload_cc_vp(struct brw_context *brw)
 {
-   struct gl_context *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->ctx;
    struct brw_cc_viewport *ccv;
 
    ccv = brw_state_batch(brw, AUB_TRACE_CC_VP_STATE,
@@ -96,7 +96,7 @@ brw_fix_xRGB_alpha(GLenum function)
  */
 static void upload_cc_unit(struct brw_context *brw)
 {
-   struct gl_context *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->ctx;
    struct brw_cc_unit_state *cc;
 
    cc = brw_state_batch(brw, AUB_TRACE_CC_STATE,
@@ -238,8 +238,7 @@ const struct brw_tracked_state brw_cc_unit = {
 
 static void upload_blend_constant_color(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
-   struct gl_context *ctx = &intel->ctx;
+   struct gl_context *ctx = &brw->ctx;
 
    BEGIN_BATCH(5);
    OUT_BATCH(_3DSTATE_BLEND_CONSTANT_COLOR << 16 | (5-2));

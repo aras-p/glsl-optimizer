@@ -183,8 +183,7 @@ brw_blorp_clear_params::brw_blorp_clear_params(struct brw_context *brw,
                                                GLubyte *color_mask,
                                                bool partial_clear)
 {
-   struct intel_context *intel = &brw->intel;
-   struct gl_context *ctx = &intel->ctx;
+   struct gl_context *ctx = &brw->ctx;
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
 
    dst.set(brw, irb->mt, irb->mt_level, irb->mt_layer);
@@ -428,7 +427,7 @@ bool
 brw_blorp_clear_color(struct brw_context *brw, struct gl_framebuffer *fb,
                       bool partial_clear)
 {
-   struct gl_context *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->ctx;
 
    /* The constant color clear code doesn't work for multisampled surfaces, so
     * we need to support falling back to other clear mechanisms.

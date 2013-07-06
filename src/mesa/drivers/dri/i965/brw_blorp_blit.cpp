@@ -228,7 +228,7 @@ try_blorp_blit(struct brw_context *brw,
                GLfloat dstX0, GLfloat dstY0, GLfloat dstX1, GLfloat dstY1,
                GLenum filter, GLbitfield buffer_bit)
 {
-   struct gl_context *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->ctx;
 
    /* Sync up the state of window system buffers.  We need to do this before
     * we go looking for the buffers.
@@ -345,8 +345,7 @@ brw_blorp_copytexsubimage(struct brw_context *brw,
                           int dstX0, int dstY0,
                           int width, int height)
 {
-   struct intel_context *intel = &brw->intel;
-   struct gl_context *ctx = &intel->ctx;
+   struct gl_context *ctx = &brw->ctx;
    struct intel_renderbuffer *src_irb = intel_renderbuffer(src_rb);
    struct intel_texture_image *intel_image = intel_texture_image(dst_image);
 
@@ -2040,7 +2039,7 @@ brw_blorp_blit_params::brw_blorp_blit_params(struct brw_context *brw,
                                              GLfloat dst_x1, GLfloat dst_y1,
                                              bool mirror_x, bool mirror_y)
 {
-   struct gl_context *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->ctx;
    const struct gl_framebuffer *read_fb = ctx->ReadBuffer;
 
    src.set(brw, src_mt, src_level, src_layer);

@@ -757,11 +757,11 @@ struct brw_query_object {
 
 
 /**
- * brw_context is derived from intel_context.
+ * brw_context is derived from gl_context.
  */
 struct brw_context 
 {
-   struct intel_context intel;  /**< base class, must be first field */
+   struct gl_context ctx; /**< base class, must be first field */
 
    struct
    {

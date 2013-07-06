@@ -40,8 +40,7 @@ intel_update_max_level(struct intel_texture_object *intelObj,
 GLuint
 intel_finalize_mipmap_tree(struct brw_context *brw, GLuint unit)
 {
-   struct intel_context *intel = &brw->intel;
-   struct gl_context *ctx = &intel->ctx;
+   struct gl_context *ctx = &brw->ctx;
    struct gl_texture_object *tObj = ctx->Texture.Unit[unit]._Current;
    struct intel_texture_object *intelObj = intel_texture_object(tObj);
    struct gl_sampler_object *sampler = _mesa_get_samplerobj(ctx, unit);

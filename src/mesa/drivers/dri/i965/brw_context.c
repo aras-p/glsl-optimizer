@@ -111,8 +111,7 @@ static void brwInitDriverFunctions(struct intel_screen *screen,
 static void
 brw_initialize_context_constants(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
-   struct gl_context *ctx = &intel->ctx;
+   struct gl_context *ctx = &brw->ctx;
 
    ctx->Const.QueryCounterBits.Timestamp = 36;
 
@@ -297,8 +296,7 @@ brwCreateContext(int api,
 
    brwInitDriverFunctions(screen, &functions);
 
-   struct intel_context *intel = &brw->intel;
-   struct gl_context *ctx = &intel->ctx;
+   struct gl_context *ctx = &brw->ctx;
 
    if (!intelInitContext( brw, api, major_version, minor_version,
                           mesaVis, driContextPriv,

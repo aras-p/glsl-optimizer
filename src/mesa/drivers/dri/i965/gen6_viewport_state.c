@@ -37,7 +37,7 @@
 static void
 gen6_upload_clip_vp(struct brw_context *brw)
 {
-   struct gl_context *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->ctx;
    struct brw_clipper_viewport *vp;
 
    vp = brw_state_batch(brw, AUB_TRACE_CLIP_VP_STATE,
@@ -78,7 +78,7 @@ const struct brw_tracked_state gen6_clip_vp = {
 static void
 gen6_upload_sf_vp(struct brw_context *brw)
 {
-   struct gl_context *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->ctx;
    const GLfloat depth_scale = 1.0F / ctx->DrawBuffer->_DepthMaxF;
    struct brw_sf_viewport *sfv;
    GLfloat y_scale, y_bias;

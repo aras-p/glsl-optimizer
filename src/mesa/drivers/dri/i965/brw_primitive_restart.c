@@ -183,8 +183,7 @@ brw_handle_primitive_restart(struct gl_context *ctx,
 static void
 haswell_upload_cut_index(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
-   struct gl_context *ctx = &intel->ctx;
+   struct gl_context *ctx = &brw->ctx;
 
    /* Don't trigger on Ivybridge */
    if (!brw->is_haswell)

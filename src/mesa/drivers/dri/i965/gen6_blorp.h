@@ -29,7 +29,6 @@
 extern "C" {
 #endif
 
-struct intel_context;
 struct intel_mipmap_tree;
 
 #ifdef __cplusplus

@@ -54,7 +54,6 @@ extern "C" {
 #include "tnl/t_vertex.h"
 
 struct intel_region;
-struct intel_context;
 
 #define INTEL_WRITE_PART  0x1
 #define INTEL_WRITE_FULL  0x2
@@ -104,14 +103,6 @@ struct intel_batchbuffer {
       uint16_t used;
       int reloc_count;
    } saved;
-};
-
-/**
- * intel_context is derived from Mesa's context class: struct gl_context.
- */
-struct intel_context
-{
-   struct gl_context ctx;  /**< base class, must be first field */
 };
 
 /**
@@ -221,7 +212,7 @@ extern int INTEL_DEBUG;
    if (unlikely(INTEL_DEBUG & DEBUG_PERF))                      \
       dbg_printf(__VA_ARGS__);                                  \
    if (brw->perf_debug)                                         \
-      _mesa_gl_debug(&brw->intel.ctx, &msg_id,                  \
+      _mesa_gl_debug(&brw->ctx, &msg_id,                        \
                      MESA_DEBUG_TYPE_PERFORMANCE,               \
                      MESA_DEBUG_SEVERITY_MEDIUM,                \
                      __VA_ARGS__);                              \
@@ -288,16 +279,6 @@ extern void
 intelInitExtensions(struct gl_context *ctx);
 extern void
 intelInitClearFuncs(struct dd_function_table *functions);
-
-/*======================================================================
- * Inline conversion functions.  
- * These are better-typed than the macros used previously:
- */
-static INLINE struct intel_context *
-intel_context(struct gl_context * ctx)
-{
-   return (struct intel_context *) ctx;
-}
 
 static INLINE bool
 is_power_of_two(uint32_t value)

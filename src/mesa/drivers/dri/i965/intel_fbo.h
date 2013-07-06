@@ -40,7 +40,6 @@
 extern "C" {
 #endif
 
-struct intel_context;
 struct intel_mipmap_tree;
 struct intel_texture_image;
 

@@ -36,8 +36,7 @@
 static void
 upload_clip_vp(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
-   struct gl_context *ctx = &intel->ctx;
+   struct gl_context *ctx = &brw->ctx;
    struct brw_clipper_viewport *vp;
 
    vp = brw_state_batch(brw, AUB_TRACE_CLIP_VP_STATE,
@@ -56,8 +55,7 @@ upload_clip_vp(struct brw_context *brw)
 static void
 brw_upload_clip_unit(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
-   struct gl_context *ctx = &intel->ctx;
+   struct gl_context *ctx = &brw->ctx;
    struct brw_clip_unit_state *clip;
 
    /* _NEW_BUFFERS */

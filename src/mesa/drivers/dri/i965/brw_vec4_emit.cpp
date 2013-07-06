@@ -140,8 +140,6 @@ vec4_generator::vec4_generator(struct brw_context *brw,
    : brw(brw), shader_prog(shader_prog), prog(prog), mem_ctx(mem_ctx),
      debug_flag(debug_flag)
 {
-   intel = &brw->intel;
-
    shader = shader_prog ? shader_prog->_LinkedShaders[MESA_SHADER_VERTEX] : NULL;
 
    p = rzalloc(mem_ctx, struct brw_compile);

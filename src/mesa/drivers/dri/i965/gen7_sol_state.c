@@ -38,8 +38,7 @@
 static void
 upload_3dstate_so_buffers(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
-   struct gl_context *ctx = &intel->ctx;
+   struct gl_context *ctx = &brw->ctx;
    /* BRW_NEW_VERTEX_PROGRAM */
    const struct gl_shader_program *vs_prog =
       ctx->Shader.CurrentVertexProgram;
@@ -102,8 +101,7 @@ static void
 upload_3dstate_so_decl_list(struct brw_context *brw,
 			    const struct brw_vue_map *vue_map)
 {
-   struct intel_context *intel = &brw->intel;
-   struct gl_context *ctx = &intel->ctx;
+   struct gl_context *ctx = &brw->ctx;
    /* BRW_NEW_VERTEX_PROGRAM */
    const struct gl_shader_program *vs_prog =
       ctx->Shader.CurrentVertexProgram;
@@ -178,8 +176,7 @@ static void
 upload_3dstate_streamout(struct brw_context *brw, bool active,
 			 const struct brw_vue_map *vue_map)
 {
-   struct intel_context *intel = &brw->intel;
-   struct gl_context *ctx = &intel->ctx;
+   struct gl_context *ctx = &brw->ctx;
    /* BRW_NEW_TRANSFORM_FEEDBACK */
    struct gl_transform_feedback_object *xfb_obj =
       ctx->TransformFeedback.CurrentObject;
@@ -223,8 +220,7 @@ upload_3dstate_streamout(struct brw_context *brw, bool active,
 static void
 upload_sol_state(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
-   struct gl_context *ctx = &intel->ctx;
+   struct gl_context *ctx = &brw->ctx;
    /* BRW_NEW_TRANSFORM_FEEDBACK */
    bool active = _mesa_is_xfb_active_and_unpaused(ctx);
 

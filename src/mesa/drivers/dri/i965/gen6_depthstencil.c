@@ -34,7 +34,7 @@
 static void
 gen6_upload_depth_stencil_state(struct brw_context *brw)
 {
-   struct gl_context *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->ctx;
    struct gen6_depth_stencil_state *ds;
    struct intel_renderbuffer *depth_irb;
 

@@ -451,7 +451,7 @@ brw_update_sol_surface(struct brw_context *brw,
 static void
 brw_upload_wm_pull_constants(struct brw_context *brw)
 {
-   struct gl_context *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->ctx;
    /* BRW_NEW_FRAGMENT_PROGRAM */
    struct brw_fragment_program *fp =
       (struct brw_fragment_program *) brw->fragment_program;
@@ -523,7 +523,7 @@ brw_update_null_renderbuffer_surface(struct brw_context *brw, unsigned int unit)
     *
     *     - Surface Format must be R8G8B8A8_UNORM.
     */
-   struct gl_context *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->ctx;
    uint32_t *surf;
    unsigned surface_type = BRW_SURFACE_NULL;
    drm_intel_bo *bo = NULL;
@@ -604,7 +604,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 				bool layered,
 				unsigned int unit)
 {
-   struct gl_context *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->ctx;
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
    struct intel_mipmap_tree *mt = irb->mt;
    struct intel_region *region;
@@ -705,7 +705,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 static void
 brw_update_renderbuffer_surfaces(struct brw_context *brw)
 {
-   struct gl_context *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->ctx;
    GLuint i;
 
    /* _NEW_BUFFERS | _NEW_COLOR */
@@ -750,7 +750,7 @@ const struct brw_tracked_state gen6_renderbuffer_surfaces = {
 static void
 brw_update_texture_surfaces(struct brw_context *brw)
 {
-   struct gl_context *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->ctx;
 
    /* BRW_NEW_VERTEX_PROGRAM and BRW_NEW_FRAGMENT_PROGRAM:
     * Unfortunately, we're stuck using the gl_program structs until the
@@ -809,7 +809,7 @@ brw_upload_ubo_surfaces(struct brw_context *brw,
 			struct gl_shader *shader,
 			uint32_t *surf_offsets)
 {
-   struct gl_context *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->ctx;
 
    if (!shader)
       return;
@@ -839,7 +839,7 @@ brw_upload_ubo_surfaces(struct brw_context *brw,
 static void
 brw_upload_wm_ubo_surfaces(struct brw_context *brw)
 {
-   struct gl_context *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->ctx;
    /* _NEW_PROGRAM */
    struct gl_shader_program *prog = ctx->Shader._CurrentFragmentProgram;
 

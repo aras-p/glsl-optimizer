@@ -181,7 +181,6 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
    struct gl_framebuffer *fb = drawable->driverPrivate;
    struct intel_renderbuffer *rb;
    struct brw_context *brw = context->driverPrivate;
-   struct intel_context *intel = &brw->intel;
    __DRIbuffer *buffers = NULL;
    int i, count;
    const char *region_name;
@@ -231,7 +230,7 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
        intel_process_dri2_buffer(brw, drawable, &buffers[i], rb, region_name);
    }
 
-   driUpdateFramebufferSize(&intel->ctx, drawable);
+   driUpdateFramebufferSize(&brw->ctx, drawable);
 }
 
 /**
@@ -437,8 +436,7 @@ intelInitContext(struct brw_context *brw,
                  struct dd_function_table *functions,
                  unsigned *dri_ctx_error)
 {
-   struct intel_context *intel = &brw->intel;
-   struct gl_context *ctx = &intel->ctx;
+   struct gl_context *ctx = &brw->ctx;
    struct gl_context *shareCtx = (struct gl_context *) sharedContextPrivate;
    __DRIscreen *sPriv = driContextPriv->driScreenPriv;
    struct intel_screen *intelScreen = sPriv->driverPrivate;
@@ -463,7 +461,7 @@ intelInitContext(struct brw_context *brw,
 
    brw->intelScreen = intelScreen;
 
-   if (!_mesa_initialize_context(&intel->ctx, api, mesaVis, shareCtx,
+   if (!_mesa_initialize_context(&brw->ctx, api, mesaVis, shareCtx,
                                  functions)) {
       *dri_ctx_error = __DRI_CTX_ERROR_NO_MEMORY;
       printf("%s: failed to init mesa context\n", __FUNCTION__);
@@ -604,29 +602,28 @@ intelDestroyContext(__DRIcontext * driContextPriv)
 {
    struct brw_context *brw =
       (struct brw_context *) driContextPriv->driverPrivate;
-   struct intel_context *intel = &brw->intel;
-   struct gl_context *ctx = &intel->ctx;
+   struct gl_context *ctx = &brw->ctx;
 
-   assert(intel);               /* should never be null */
-   if (intel) {
+   assert(brw); /* should never be null */
+   if (brw) {
       /* Dump a final BMP in case the application doesn't call SwapBuffers */
       if (INTEL_DEBUG & DEBUG_AUB) {
          intel_batchbuffer_flush(brw);
-	 aub_dump_bmp(&intel->ctx);
+	 aub_dump_bmp(&brw->ctx);
       }
 
-      _mesa_meta_free(&intel->ctx);
+      _mesa_meta_free(&brw->ctx);
 
       brw->vtbl.destroy(brw);
 
       if (ctx->swrast_context) {
-         _swsetup_DestroyContext(&intel->ctx);
-         _tnl_DestroyContext(&intel->ctx);
+         _swsetup_DestroyContext(&brw->ctx);
+         _tnl_DestroyContext(&brw->ctx);
       }
-      _vbo_DestroyContext(&intel->ctx);
+      _vbo_DestroyContext(&brw->ctx);
 
       if (ctx->swrast_context)
-         _swrast_DestroyContext(&intel->ctx);
+         _swrast_DestroyContext(&brw->ctx);
 
       intel_batchbuffer_free(brw);
 
@@ -636,7 +633,7 @@ intelDestroyContext(__DRIcontext * driContextPriv)
       driDestroyOptionCache(&brw->optionCache);
 
       /* free the Mesa context */
-      _mesa_free_context_data(&intel->ctx);
+      _mesa_free_context_data(&brw->ctx);
 
       ralloc_free(brw);
       driContextPriv->driverPrivate = NULL;
@@ -684,8 +681,7 @@ static void
 intel_gles3_srgb_workaround(struct brw_context *brw,
                             struct gl_framebuffer *fb)
 {
-   struct intel_context *intel = &brw->intel;
-   struct gl_context *ctx = &intel->ctx;
+   struct gl_context *ctx = &brw->ctx;
 
    if (_mesa_is_desktop_gl(ctx) || !fb->Visual.sRGBCapable)
       return;
@@ -723,10 +719,8 @@ intelMakeCurrent(__DRIcontext * driContextPriv,
       _mesa_flush(curCtx);
    }
 
-   struct intel_context *intel = &brw->intel;
-
    if (driContextPriv) {
-      struct gl_context *ctx = &intel->ctx;
+      struct gl_context *ctx = &brw->ctx;
       struct gl_framebuffer *fb, *readFb;
       
       if (driDrawPriv == NULL && driReadPriv == NULL) {
@@ -775,7 +769,6 @@ intel_query_dri2_buffers(struct brw_context *brw,
 			 __DRIbuffer **buffers,
 			 int *buffer_count)
 {
-   struct intel_context *intel = &brw->intel;
    __DRIscreen *screen = brw->intelScreen->driScrnPriv;
    struct gl_framebuffer *fb = drawable->driverPrivate;
    int i = 0;
@@ -797,8 +790,8 @@ intel_query_dri2_buffers(struct brw_context *brw,
        * query, we need to make sure all the pending drawing has landed in the
        * real front buffer.
        */
-      intel_flush(&intel->ctx);
-      intel_flush_front(&intel->ctx);
+      intel_flush(&brw->ctx);
+      intel_flush_front(&brw->ctx);
 
       attachments[i++] = __DRI_BUFFER_FRONT_LEFT;
       attachments[i++] = intel_bits_per_pixel(front_rb);
@@ -809,8 +802,8 @@ intel_query_dri2_buffers(struct brw_context *brw,
        * So before doing the query, make sure all the pending drawing has
        * landed in the real front buffer.
        */
-      intel_flush(&intel->ctx);
-      intel_flush_front(&intel->ctx);
+      intel_flush(&brw->ctx);
+      intel_flush_front(&brw->ctx);
    }
 
    if (back_rb) {

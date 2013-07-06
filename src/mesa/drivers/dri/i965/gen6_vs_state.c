@@ -36,8 +36,7 @@
 static void
 gen6_upload_vs_push_constants(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
-   struct gl_context *ctx = &intel->ctx;
+   struct gl_context *ctx = &brw->ctx;
    /* _BRW_NEW_VERTEX_PROGRAM */
    const struct brw_vertex_program *vp =
       brw_vertex_program_const(brw->vertex_program);
@@ -99,7 +98,7 @@ const struct brw_tracked_state gen6_vs_push_constants = {
 static void
 upload_vs_state(struct brw_context *brw)
 {
-   struct gl_context *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->ctx;
    uint32_t floating_point_mode = 0;
 
    /* From the BSpec, Volume 2a, Part 3 "Vertex Shader", Section

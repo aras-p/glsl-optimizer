@@ -403,7 +403,7 @@ brw_vs_debug_recompile(struct brw_context *brw,
 
 static void brw_upload_vs_prog(struct brw_context *brw)
 {
-   struct gl_context *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->ctx;
    struct brw_vs_prog_key key;
    /* BRW_NEW_VERTEX_PROGRAM */
    struct brw_vertex_program *vp = 

@@ -440,8 +440,7 @@ brw_print_dirty_count(struct dirty_bit_map *bit_map)
  */
 void brw_upload_state(struct brw_context *brw)
 {
-   struct gl_context *ctx = &brw->intel.ctx;
-   struct intel_context *intel = &brw->intel;
+   struct gl_context *ctx = &brw->ctx;
    struct brw_state_flags *state = &brw->state.dirty;
    int i;
    static int dirty_count = 0;

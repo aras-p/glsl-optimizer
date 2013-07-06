@@ -160,7 +160,7 @@ static void populate_key( struct brw_context *brw,
       BRW_SWIZZLE4(3, 3, 3, 3)
    };
 
-   struct gl_context *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->ctx;
 
    memset(key, 0, sizeof(*key));
 

@@ -41,8 +41,7 @@
 
 static void upload_sf_vp(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
-   struct gl_context *ctx = &intel->ctx;
+   struct gl_context *ctx = &brw->ctx;
    const GLfloat depth_scale = 1.0F / ctx->DrawBuffer->_DepthMaxF;
    struct brw_sf_viewport *sfv;
    GLfloat y_scale, y_bias;
@@ -126,8 +125,7 @@ const struct brw_tracked_state brw_sf_vp = {
 
 static void upload_sf_unit( struct brw_context *brw )
 {
-   struct intel_context *intel = &brw->intel;
-   struct gl_context *ctx = &intel->ctx;
+   struct gl_context *ctx = &brw->ctx;
    struct brw_sf_unit_state *sf;
    drm_intel_bo *bo = brw->batch.bo;
    int chipset_max_threads;

@@ -482,8 +482,7 @@ intel_emit_linear_blit(struct brw_context *brw,
 		       unsigned int src_offset,
 		       unsigned int size)
 {
-   struct intel_context *intel = &brw->intel;
-   struct gl_context *ctx = &intel->ctx;
+   struct gl_context *ctx = &brw->ctx;
    GLuint pitch, height;
    bool ok;
 

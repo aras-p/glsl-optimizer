@@ -164,7 +164,7 @@ gen6_emit_3dstate_sample_mask(struct brw_context *brw,
 
 static void upload_multisample_state(struct brw_context *brw)
 {
-   struct gl_context *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->ctx;
    float coverage = 1.0;
    float coverage_invert = false;
    unsigned sample_mask = ~0u;

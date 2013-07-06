@@ -208,7 +208,6 @@ static void
 brw_clear(struct gl_context *ctx, GLbitfield mask)
 {
    struct brw_context *brw = brw_context(ctx);
-   struct intel_context *intel = &brw->intel;
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    bool partial_clear = ctx->Scissor.Enabled && !noop_scissor(ctx, fb);
 
@@ -248,9 +247,9 @@ brw_clear(struct gl_context *ctx, GLbitfield mask)
       mask &= ~tri_mask;
 
       if (ctx->API == API_OPENGLES) {
-         _mesa_meta_Clear(&intel->ctx, tri_mask);
+         _mesa_meta_Clear(&brw->ctx, tri_mask);
       } else {
-         _mesa_meta_glsl_Clear(&intel->ctx, tri_mask);
+         _mesa_meta_glsl_Clear(&brw->ctx, tri_mask);
       }
    }
 

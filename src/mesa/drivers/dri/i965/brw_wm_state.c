@@ -44,7 +44,7 @@
 bool
 brw_color_buffer_write_enabled(struct brw_context *brw)
 {
-   struct gl_context *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->ctx;
    const struct gl_fragment_program *fp = brw->fragment_program;
    int i;
 
@@ -73,8 +73,7 @@ brw_color_buffer_write_enabled(struct brw_context *brw)
 static void
 brw_upload_wm_unit(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
-   struct gl_context *ctx = &intel->ctx;
+   struct gl_context *ctx = &brw->ctx;
    const struct gl_fragment_program *fp = brw->fragment_program;
    struct brw_wm_unit_state *wm;
 

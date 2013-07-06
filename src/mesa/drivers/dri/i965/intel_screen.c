@@ -156,9 +156,8 @@ static void
 intelDRI2Flush(__DRIdrawable *drawable)
 {
    GET_CURRENT_CONTEXT(ctx);
-   struct intel_context *intel = intel_context(ctx);
    struct brw_context *brw = brw_context(ctx);
-   if (intel == NULL)
+   if (brw == NULL)
       return;
 
    intel_resolve_for_dri2_flush(brw, drawable);
@@ -378,7 +377,7 @@ intel_create_image_from_renderbuffer(__DRIcontext *context,
 {
    __DRIimage *image;
    struct brw_context *brw = context->driverPrivate;
-   struct gl_context *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->ctx;
    struct gl_renderbuffer *rb;
    struct intel_renderbuffer *irb;
 
@@ -416,12 +415,11 @@ intel_create_image_from_texture(__DRIcontext *context, int target,
 {
    __DRIimage *image;
    struct brw_context *brw = context->driverPrivate;
-   struct intel_context *intel = &brw->intel;
    struct gl_texture_object *obj;
    struct intel_texture_object *iobj;
    GLuint face = 0;
 
-   obj = _mesa_lookup_texture(&intel->ctx, texture);
+   obj = _mesa_lookup_texture(&brw->ctx, texture);
    if (!obj || obj->Target != target) {
       *error = __DRI_IMAGE_ERROR_BAD_PARAMETER;
       return NULL;
@@ -430,7 +428,7 @@ intel_create_image_from_texture(__DRIcontext *context, int target,
    if (target == GL_TEXTURE_CUBE_MAP)
       face = zoffset;
 
-   _mesa_test_texobj_completeness(&intel->ctx, obj);
+   _mesa_test_texobj_completeness(&brw->ctx, obj);
    iobj = intel_texture_object(obj);
    if (!obj->_BaseComplete || (level > 0 && !obj->_MipmapComplete)) {
       *error = __DRI_IMAGE_ERROR_BAD_PARAMETER;

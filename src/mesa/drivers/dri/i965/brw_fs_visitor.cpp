@@ -2433,8 +2433,7 @@ fs_visitor::fs_visitor(struct brw_context *brw,
    this->brw = brw;
    this->fp = fp;
    this->shader_prog = shader_prog;
-   this->intel = &brw->intel;
-   this->ctx = &intel->ctx;
+   this->ctx = &brw->ctx;
    this->mem_ctx = ralloc_context(NULL);
    if (shader_prog)
       shader = (struct brw_shader *)

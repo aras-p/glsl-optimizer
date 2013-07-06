@@ -456,7 +456,7 @@ ensure_bo_has_space(struct gl_context *ctx, struct brw_query_object *query)
 void
 brw_emit_query_begin(struct brw_context *brw)
 {
-   struct gl_context *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->ctx;
    struct brw_query_object *query = brw->query.obj;
 
    if (brw->hw_ctx)

@@ -569,7 +569,6 @@ private:
    void patch_discard_jumps_to_fb_writes();
 
    struct brw_context *brw;
-   struct intel_context *intel;
    struct gl_context *ctx;
 
    struct brw_compile *p;

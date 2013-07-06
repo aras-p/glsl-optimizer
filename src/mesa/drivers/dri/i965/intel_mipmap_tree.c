@@ -659,7 +659,6 @@ intel_miptree_create_for_dri2_buffer(struct brw_context *brw,
                                      uint32_t num_samples,
                                      struct intel_region *region)
 {
-   struct intel_context *intel = &brw->intel;
    struct intel_mipmap_tree *singlesample_mt = NULL;
    struct intel_mipmap_tree *multisample_mt = NULL;
 
@@ -1620,8 +1619,7 @@ intel_miptree_upsample(struct brw_context *brw,
 void *
 intel_miptree_map_raw(struct brw_context *brw, struct intel_mipmap_tree *mt)
 {
-   struct intel_context *intel = &brw->intel;
-   struct gl_context *ctx = &intel->ctx;
+   struct gl_context *ctx = &brw->ctx;
    /* CPU accesses to color buffers don't understand fast color clears, so
     * resolve any pending fast color clears before we map.
     */
@@ -1754,8 +1752,7 @@ intel_miptree_unmap_blit(struct brw_context *brw,
 			 unsigned int level,
 			 unsigned int slice)
 {
-   struct intel_context *intel = &brw->intel;
-   struct gl_context *ctx = &intel->ctx;
+   struct gl_context *ctx = &brw->ctx;
 
    intel_miptree_unmap_raw(brw, map->mt);
 
@@ -2191,7 +2188,7 @@ intel_miptree_map_multisample(struct brw_context *brw,
                               void **out_ptr,
                               int *out_stride)
 {
-   struct gl_context *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->ctx;
    struct intel_miptree_map *map;
 
    assert(mt->num_samples > 1);

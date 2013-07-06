@@ -487,7 +487,7 @@ brw_get_shader_time_index(struct brw_context *brw,
                           struct gl_program *prog,
                           enum shader_time_shader_type type)
 {
-   struct gl_context *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->ctx;
 
    int shader_time_index = brw->shader_time.num_entries++;
    assert(shader_time_index < brw->shader_time.max_entries);

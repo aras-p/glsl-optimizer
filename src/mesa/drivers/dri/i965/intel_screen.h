@@ -51,7 +51,7 @@ struct intel_screen
 
    /*
     * The hardware hiz and separate stencil fields are needed in intel_screen,
-    * rather than solely in intel_context, because glXCreatePbuffer and
+    * rather than solely in brw_context, because glXCreatePbuffer and
     * glXCreatePixmap are not passed a GLXContext.
     */
    bool hw_has_separate_stencil;

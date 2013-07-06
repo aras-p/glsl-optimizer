@@ -44,8 +44,7 @@ fs_generator::fs_generator(struct brw_context *brw,
 
    : brw(brw), c(c), prog(prog), fp(fp), dual_source_output(dual_source_output)
 {
-   intel = &brw->intel;
-   ctx = &intel->ctx;
+   ctx = &brw->ctx;
 
    shader = prog ? prog->_LinkedShaders[MESA_SHADER_FRAGMENT] : NULL;
 

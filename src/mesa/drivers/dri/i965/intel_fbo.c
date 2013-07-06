@@ -384,7 +384,6 @@ intel_create_private_renderbuffer(gl_format format, unsigned num_samples)
 static struct gl_renderbuffer *
 intel_new_renderbuffer(struct gl_context * ctx, GLuint name)
 {
-   /*struct intel_context *intel = intel_context(ctx); */
    struct intel_renderbuffer *irb;
    struct gl_renderbuffer *rb;
 
@@ -877,7 +876,7 @@ intel_renderbuffer_move_to_temp(struct brw_context *brw,
 void
 intel_fbo_init(struct brw_context *brw)
 {
-   struct dd_function_table *dd = &brw->intel.ctx.Driver;
+   struct dd_function_table *dd = &brw->ctx.Driver;
    dd->NewFramebuffer = intel_new_framebuffer;
    dd->NewRenderbuffer = intel_new_renderbuffer;
    dd->MapRenderbuffer = intel_map_renderbuffer;

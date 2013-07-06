@@ -36,7 +36,7 @@
 static void
 gen6_update_sol_surfaces(struct brw_context *brw)
 {
-   struct gl_context *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->ctx;
    /* BRW_NEW_TRANSFORM_FEEDBACK */
    struct gl_transform_feedback_object *xfb_obj =
       ctx->TransformFeedback.CurrentObject;
@@ -85,7 +85,7 @@ const struct brw_tracked_state gen6_sol_surface = {
 static void
 brw_gs_upload_binding_table(struct brw_context *brw)
 {
-   struct gl_context *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->ctx;
    /* BRW_NEW_VERTEX_PROGRAM */
    const struct gl_shader_program *shaderprog =
       ctx->Shader.CurrentVertexProgram;

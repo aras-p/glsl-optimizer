@@ -82,8 +82,7 @@ void
 upload_default_color(struct brw_context *brw, struct gl_sampler_object *sampler,
 		     int unit, int ss_index)
 {
-   struct intel_context *intel = &brw->intel;
-   struct gl_context *ctx = &intel->ctx;
+   struct gl_context *ctx = &brw->ctx;
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
    struct gl_texture_object *texObj = texUnit->_Current;
    struct gl_texture_image *firstImage = texObj->Image[0][texObj->BaseLevel];
@@ -195,8 +194,7 @@ static void brw_update_sampler_state(struct brw_context *brw,
                                      int ss_index,
 				     struct brw_sampler_state *sampler)
 {
-   struct intel_context *intel = &brw->intel;
-   struct gl_context *ctx = &intel->ctx;
+   struct gl_context *ctx = &brw->ctx;
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
    struct gl_texture_object *texObj = texUnit->_Current;
    struct gl_sampler_object *gl_sampler = _mesa_get_samplerobj(ctx, unit);
@@ -367,7 +365,7 @@ static void brw_update_sampler_state(struct brw_context *brw,
 static void
 brw_upload_samplers(struct brw_context *brw)
 {
-   struct gl_context *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->ctx;
    struct brw_sampler_state *samplers;
 
    /* BRW_NEW_VERTEX_PROGRAM and BRW_NEW_FRAGMENT_PROGRAM */

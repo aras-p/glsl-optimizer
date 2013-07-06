@@ -527,7 +527,7 @@ brw_format_for_mesa_format(gl_format mesa_format)
 void
 brw_init_surface_formats(struct brw_context *brw)
 {
-   struct gl_context *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->ctx;
    int gen;
    gl_format format;
 
@@ -686,7 +686,7 @@ translate_tex_format(struct brw_context *brw,
 		     GLenum depth_mode,
 		     GLenum srgb_decode)
 {
-   struct gl_context *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->ctx;
    if (srgb_decode == GL_SKIP_DECODE_EXT)
       mesa_format = _mesa_get_srgb_format_linear(mesa_format);
 

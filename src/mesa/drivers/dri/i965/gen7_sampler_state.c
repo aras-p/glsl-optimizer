@@ -36,8 +36,7 @@ static void
 gen7_update_sampler_state(struct brw_context *brw, int unit, int ss_index,
 			  struct gen7_sampler_state *sampler)
 {
-   struct intel_context *intel = &brw->intel;
-   struct gl_context *ctx = &intel->ctx;
+   struct gl_context *ctx = &brw->ctx;
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
    struct gl_texture_object *texObj = texUnit->_Current;
    struct gl_sampler_object *gl_sampler = _mesa_get_samplerobj(ctx, unit);
@@ -187,7 +186,7 @@ gen7_update_sampler_state(struct brw_context *brw, int unit, int ss_index,
 static void
 gen7_upload_samplers(struct brw_context *brw)
 {
-   struct gl_context *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->ctx;
    struct gen7_sampler_state *samplers;
 
    /* BRW_NEW_VERTEX_PROGRAM and BRW_NEW_FRAGMENT_PROGRAM */

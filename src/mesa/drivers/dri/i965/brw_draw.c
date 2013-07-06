@@ -90,7 +90,7 @@ static const GLenum reduced_prim[GL_POLYGON+1] = {
 static void brw_set_prim(struct brw_context *brw,
                          const struct _mesa_prim *prim)
 {
-   struct gl_context *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->ctx;
    uint32_t hw_prim = prim_to_hw_prim[prim->mode];
 
    DBG("PRIM: %s\n", _mesa_lookup_enum_by_nr(prim->mode));
@@ -299,7 +299,7 @@ static void brw_merge_inputs( struct brw_context *brw,
 static void
 brw_predraw_resolve_buffers(struct brw_context *brw)
 {
-   struct gl_context *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->ctx;
    struct intel_renderbuffer *depth_irb;
    struct intel_texture_object *tex_obj;
 
@@ -333,7 +333,7 @@ brw_predraw_resolve_buffers(struct brw_context *brw)
  */
 static void brw_postdraw_set_buffers_need_resolve(struct brw_context *brw)
 {
-   struct gl_context *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->ctx;
    struct gl_framebuffer *fb = ctx->DrawBuffer;
 
    struct intel_renderbuffer *front_irb = NULL;
@@ -532,7 +532,7 @@ void brw_draw_prims( struct gl_context *ctx,
 
 void brw_draw_init( struct brw_context *brw )
 {
-   struct gl_context *ctx = &brw->intel.ctx;
+   struct gl_context *ctx = &brw->ctx;
    struct vbo_context *vbo = vbo_context(ctx);
    int i;
 
