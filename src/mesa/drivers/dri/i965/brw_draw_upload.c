@@ -226,7 +226,6 @@ static unsigned
 get_surface_type(struct brw_context *brw,
                  const struct gl_client_array *glarray)
 {
-   struct intel_context *intel = &brw->intel;
    int size = glarray->Size;
 
    if (unlikely(INTEL_DEBUG & DEBUG_VERTS))
@@ -265,7 +264,7 @@ get_surface_type(struct brw_context *brw,
             return ubyte_types_norm[size];
          }
       case GL_FIXED:
-         if (intel->gen >= 8 || brw->is_haswell)
+         if (brw->gen >= 8 || brw->is_haswell)
             return fixed_point_types[size];
 
          /* This produces GL_FIXED inputs as values between INT32_MIN and
@@ -279,7 +278,7 @@ get_surface_type(struct brw_context *brw,
        */
       case GL_INT_2_10_10_10_REV:
          assert(size == 4);
-         if (intel->gen >= 8 || brw->is_haswell) {
+         if (brw->gen >= 8 || brw->is_haswell) {
             return glarray->Format == GL_BGRA
                ? BRW_SURFACEFORMAT_B10G10R10A2_SNORM
                : BRW_SURFACEFORMAT_R10G10B10A2_SNORM;
@@ -287,7 +286,7 @@ get_surface_type(struct brw_context *brw,
          return BRW_SURFACEFORMAT_R10G10B10A2_UINT;
       case GL_UNSIGNED_INT_2_10_10_10_REV:
          assert(size == 4);
-         if (intel->gen >= 8 || brw->is_haswell) {
+         if (brw->gen >= 8 || brw->is_haswell) {
             return glarray->Format == GL_BGRA
                ? BRW_SURFACEFORMAT_B10G10R10A2_UNORM
                : BRW_SURFACEFORMAT_R10G10B10A2_UNORM;
@@ -304,7 +303,7 @@ get_surface_type(struct brw_context *brw,
        */
       if (glarray->Type == GL_INT_2_10_10_10_REV) {
          assert(size == 4);
-         if (intel->gen >= 8 || brw->is_haswell) {
+         if (brw->gen >= 8 || brw->is_haswell) {
             return glarray->Format == GL_BGRA
                ? BRW_SURFACEFORMAT_B10G10R10A2_SSCALED
                : BRW_SURFACEFORMAT_R10G10B10A2_SSCALED;
@@ -312,7 +311,7 @@ get_surface_type(struct brw_context *brw,
          return BRW_SURFACEFORMAT_R10G10B10A2_UINT;
       } else if (glarray->Type == GL_UNSIGNED_INT_2_10_10_10_REV) {
          assert(size == 4);
-         if (intel->gen >= 8 || brw->is_haswell) {
+         if (brw->gen >= 8 || brw->is_haswell) {
             return glarray->Format == GL_BGRA
                ? BRW_SURFACEFORMAT_B10G10R10A2_USCALED
                : BRW_SURFACEFORMAT_R10G10B10A2_USCALED;
@@ -331,7 +330,7 @@ get_surface_type(struct brw_context *brw,
       case GL_UNSIGNED_SHORT: return ushort_types_scale[size];
       case GL_UNSIGNED_BYTE: return ubyte_types_scale[size];
       case GL_FIXED:
-         if (intel->gen >= 8 || brw->is_haswell)
+         if (brw->gen >= 8 || brw->is_haswell)
             return fixed_point_types[size];
 
          /* This produces GL_FIXED inputs as values between INT32_MIN and
@@ -401,7 +400,6 @@ copy_array_to_vbo_array(struct brw_context *brw,
 static void brw_prepare_vertices(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->intel.ctx;
-   struct intel_context *intel = intel_context(ctx);
    /* CACHE_NEW_VS_PROG */
    GLbitfield64 vs_inputs = brw->vs.prog_data->inputs_read;
    const unsigned char *ptr = NULL;
@@ -420,7 +418,7 @@ static void brw_prepare_vertices(struct brw_context *brw)
     * is passed sideband through the fixed function units.  So, we need to
     * prepare the vertex buffer for it, but it's not present in inputs_read.
     */
-   if (intel->gen >= 6 && (ctx->Polygon.FrontMode != GL_FILL ||
+   if (brw->gen >= 6 && (ctx->Polygon.FrontMode != GL_FILL ||
                            ctx->Polygon.BackMode != GL_FILL)) {
       vs_inputs |= VERT_BIT_EDGEFLAG;
    }
@@ -592,8 +590,6 @@ static void brw_prepare_vertices(struct brw_context *brw)
 
 static void brw_emit_vertices(struct brw_context *brw)
 {
-   struct gl_context *ctx = &brw->intel.ctx;
-   struct intel_context *intel = intel_context(ctx);
    GLuint i, nr_elements;
 
    brw_prepare_vertices(brw);
@@ -612,7 +608,7 @@ static void brw_emit_vertices(struct brw_context *brw)
    if (nr_elements == 0) {
       BEGIN_BATCH(3);
       OUT_BATCH((_3DSTATE_VERTEX_ELEMENTS << 16) | 1);
-      if (intel->gen >= 6) {
+      if (brw->gen >= 6) {
 	 OUT_BATCH((0 << GEN6_VE0_INDEX_SHIFT) |
 		   GEN6_VE0_VALID |
 		   (BRW_SURFACEFORMAT_R32G32B32A32_FLOAT << BRW_VE0_FORMAT_SHIFT) |
@@ -635,7 +631,7 @@ static void brw_emit_vertices(struct brw_context *brw)
     */
 
    if (brw->vb.nr_buffers) {
-      if (intel->gen >= 6) {
+      if (brw->gen >= 6) {
 	 assert(brw->vb.nr_buffers <= 33);
       } else {
 	 assert(brw->vb.nr_buffers <= 17);
@@ -647,7 +643,7 @@ static void brw_emit_vertices(struct brw_context *brw)
 	 struct brw_vertex_buffer *buffer = &brw->vb.buffers[i];
 	 uint32_t dw0;
 
-	 if (intel->gen >= 6) {
+	 if (brw->gen >= 6) {
 	    dw0 = buffer->step_rate
 	             ? GEN6_VB0_ACCESS_INSTANCEDATA
 	             : GEN6_VB0_ACCESS_VERTEXDATA;
@@ -659,12 +655,12 @@ static void brw_emit_vertices(struct brw_context *brw)
 	    dw0 |= i << BRW_VB0_INDEX_SHIFT;
 	 }
 
-	 if (intel->gen >= 7)
+	 if (brw->gen >= 7)
 	    dw0 |= GEN7_VB0_ADDRESS_MODIFYENABLE;
 
 	 OUT_BATCH(dw0 | (buffer->stride << BRW_VB0_PITCH_SHIFT));
 	 OUT_RELOC(buffer->bo, I915_GEM_DOMAIN_VERTEX, 0, buffer->offset);
-	 if (intel->gen >= 5) {
+	 if (brw->gen >= 5) {
 	    OUT_RELOC(buffer->bo, I915_GEM_DOMAIN_VERTEX, 0, buffer->bo->size - 1);
 	 } else
 	    OUT_BATCH(0);
@@ -676,7 +672,7 @@ static void brw_emit_vertices(struct brw_context *brw)
    /* The hardware allows one more VERTEX_ELEMENTS than VERTEX_BUFFERS, presumably
     * for VertexID/InstanceID.
     */
-   if (intel->gen >= 6) {
+   if (brw->gen >= 6) {
       assert(nr_elements <= 34);
    } else {
       assert(nr_elements <= 18);
@@ -705,7 +701,7 @@ static void brw_emit_vertices(struct brw_context *brw)
           * of in the VUE.  We have to upload it sideband as the last vertex
           * element according to the B-Spec.
           */
-         if (intel->gen >= 6) {
+         if (brw->gen >= 6) {
             gen6_edgeflag_input = input;
             continue;
          }
@@ -723,7 +719,7 @@ static void brw_emit_vertices(struct brw_context *brw)
 	 break;
       }
 
-      if (intel->gen >= 6) {
+      if (brw->gen >= 6) {
 	 OUT_BATCH((input->buffer << GEN6_VE0_INDEX_SHIFT) |
 		   GEN6_VE0_VALID |
 		   (format << BRW_VE0_FORMAT_SHIFT) |
@@ -735,7 +731,7 @@ static void brw_emit_vertices(struct brw_context *brw)
 		   (input->offset << BRW_VE0_SRC_OFFSET_SHIFT));
       }
 
-      if (intel->gen >= 5)
+      if (brw->gen >= 5)
           OUT_BATCH((comp0 << BRW_VE1_COMPONENT_0_SHIFT) |
                     (comp1 << BRW_VE1_COMPONENT_1_SHIFT) |
                     (comp2 << BRW_VE1_COMPONENT_2_SHIFT) |
@@ -748,7 +744,7 @@ static void brw_emit_vertices(struct brw_context *brw)
                     ((i * 4) << BRW_VE1_DST_OFFSET_SHIFT));
    }
 
-   if (intel->gen >= 6 && gen6_edgeflag_input) {
+   if (brw->gen >= 6 && gen6_edgeflag_input) {
       uint32_t format = get_surface_type(brw, gen6_edgeflag_input->glarray);
 
       OUT_BATCH((gen6_edgeflag_input->buffer << GEN6_VE0_INDEX_SHIFT) |
@@ -770,7 +766,7 @@ static void brw_emit_vertices(struct brw_context *brw)
 	     (BRW_VE1_COMPONENT_STORE_0 << BRW_VE1_COMPONENT_2_SHIFT) |
 	     (BRW_VE1_COMPONENT_STORE_0 << BRW_VE1_COMPONENT_3_SHIFT));
 
-      if (intel->gen >= 6) {
+      if (brw->gen >= 6) {
 	 dw0 |= GEN6_VE0_VALID;
       } else {
 	 dw0 |= BRW_VE0_VALID;

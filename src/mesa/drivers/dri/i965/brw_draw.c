@@ -160,7 +160,6 @@ static void brw_emit_prim(struct brw_context *brw,
 			  const struct _mesa_prim *prim,
 			  uint32_t hw_prim)
 {
-   struct intel_context *intel = &brw->intel;
    int verts_per_instance;
    int vertex_access_type;
    int start_vertex_location;
@@ -181,7 +180,7 @@ static void brw_emit_prim(struct brw_context *brw,
    }
 
    /* We only need to trim the primitive count on pre-Gen6. */
-   if (intel->gen < 6)
+   if (brw->gen < 6)
       verts_per_instance = trim(prim->mode, prim->count);
    else
       verts_per_instance = prim->count;
@@ -363,7 +362,6 @@ static bool brw_try_draw_prims( struct gl_context *ctx,
 				     GLuint min_index,
 				     GLuint max_index )
 {
-   struct intel_context *intel = intel_context(ctx);
    struct brw_context *brw = brw_context(ctx);
    bool retval = true;
    GLuint i;
@@ -431,7 +429,7 @@ static bool brw_try_draw_prims( struct gl_context *ctx,
          brw->basevertex = prim->basevertex;
          brw->state.dirty.brw |= BRW_NEW_VERTICES;
       }
-      if (intel->gen < 6)
+      if (brw->gen < 6)
 	 brw_set_prim(brw, &prim[i]);
       else
 	 gen6_set_prim(brw, &prim[i]);
@@ -447,7 +445,7 @@ retry:
 	 brw_upload_state(brw);
       }
 
-      if (intel->gen >= 7)
+      if (brw->gen >= 7)
 	 gen7_emit_prim(brw, &prim[i], brw->primitive);
       else
 	 brw_emit_prim(brw, &prim[i], brw->primitive);

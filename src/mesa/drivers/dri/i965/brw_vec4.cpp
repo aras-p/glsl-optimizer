@@ -215,7 +215,7 @@ vec4_instruction::is_send_from_grf()
 bool
 vec4_visitor::can_do_source_mods(vec4_instruction *inst)
 {
-   if (intel->gen == 6 && inst->is_math())
+   if (brw->gen == 6 && inst->is_math())
       return false;
 
    if (inst->is_send_from_grf())
@@ -878,7 +878,7 @@ vec4_visitor::opt_register_coalesce()
                if (scan_inst->mlen)
                   break;
 
-               if (intel->gen == 6) {
+               if (brw->gen == 6) {
                   /* gen6 math instructions must have the destination be
                    * GRF, so no compute-to-MRF for them.
                    */
@@ -1248,7 +1248,7 @@ vec4_vs_visitor::setup_attributes(int payload_reg)
    unsigned vue_entries =
       MAX2(nr_attributes, prog_data->vue_map.num_slots);
 
-   if (intel->gen == 6)
+   if (brw->gen == 6)
       prog_data->urb_entry_size = ALIGN(vue_entries, 8) / 8;
    else
       prog_data->urb_entry_size = ALIGN(vue_entries, 4) / 4;
@@ -1262,7 +1262,7 @@ vec4_visitor::setup_uniforms(int reg)
    /* The pre-gen6 VS requires that some push constants get loaded no
     * matter what, or the GPU would hang.
     */
-   if (intel->gen < 6 && this->uniforms == 0) {
+   if (brw->gen < 6 && this->uniforms == 0) {
       this->uniform_vector_size[this->uniforms] = 1;
 
       for (unsigned int i = 0; i < 4; i++) {
@@ -1305,7 +1305,7 @@ vec4_visitor::setup_payload(void)
 src_reg
 vec4_visitor::get_timestamp()
 {
-   assert(intel->gen >= 7);
+   assert(brw->gen >= 7);
 
    src_reg ts = src_reg(brw_reg(BRW_ARCHITECTURE_REGISTER_FILE,
                                 BRW_ARF_TIMESTAMP,

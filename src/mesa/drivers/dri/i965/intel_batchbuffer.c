@@ -58,10 +58,9 @@ clear_cache(struct brw_context *brw)
 void
 intel_batchbuffer_init(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
    intel_batchbuffer_reset(brw);
 
-   if (intel->gen >= 6) {
+   if (brw->gen >= 6) {
       /* We can't just use brw_state_batch to get a chunk of space for
        * the gen6 workaround because it involves actually writing to
        * the buffer, and the kernel doesn't let us write to the batch.
@@ -176,7 +175,6 @@ do_batch_dump(struct brw_context *brw)
 static int
 do_flush_locked(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
    struct intel_batchbuffer *batch = &brw->batch;
    int ret = 0;
 
@@ -195,7 +193,7 @@ do_flush_locked(struct brw_context *brw)
    if (!brw->intelScreen->no_hw) {
       int flags;
 
-      if (intel->gen < 6 || !batch->is_blit) {
+      if (brw->gen < 6 || !batch->is_blit) {
 	 flags = I915_EXEC_RENDER;
       } else {
 	 flags = I915_EXEC_BLT;
@@ -396,8 +394,7 @@ emit:
 void
 intel_emit_depth_stall_flushes(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
-   assert(intel->gen >= 6 && intel->gen <= 7);
+   assert(brw->gen >= 6 && brw->gen <= 7);
 
    BEGIN_BATCH(4);
    OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2));
@@ -432,8 +429,7 @@ intel_emit_depth_stall_flushes(struct brw_context *brw)
 void
 gen7_emit_vs_workaround_flush(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
-   assert(intel->gen == 7);
+   assert(brw->gen == 7);
 
    BEGIN_BATCH(4);
    OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2));
@@ -515,8 +511,7 @@ intel_emit_post_sync_nonzero_flush(struct brw_context *brw)
 void
 intel_batchbuffer_emit_mi_flush(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
-   if (intel->gen >= 6) {
+   if (brw->gen >= 6) {
       if (brw->batch.is_blit) {
 	 BEGIN_BATCH_BLT(4);
 	 OUT_BATCH(MI_FLUSH_DW);
@@ -525,7 +520,7 @@ intel_batchbuffer_emit_mi_flush(struct brw_context *brw)
 	 OUT_BATCH(0);
 	 ADVANCE_BATCH();
       } else {
-	 if (intel->gen == 6) {
+	 if (brw->gen == 6) {
 	    /* Hardware workaround: SNB B-Spec says:
 	     *
 	     * [Dev-SNB{W/A}]: Before a PIPE_CONTROL with Write Cache

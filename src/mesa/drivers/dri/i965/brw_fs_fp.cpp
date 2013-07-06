@@ -500,9 +500,9 @@ fs_visitor::emit_fragment_program_code()
          }
 
          fs_inst *inst;
-         if (intel->gen >= 7) {
+         if (brw->gen >= 7) {
             inst = emit_texture_gen7(ir, dst, coordinate, shadow_c, lod, dpdy, sample_index);
-         } else if (intel->gen >= 5) {
+         } else if (brw->gen >= 5) {
             inst = emit_texture_gen5(ir, dst, coordinate, shadow_c, lod, dpdy, sample_index);
          } else {
             inst = emit_texture_gen4(ir, dst, coordinate, shadow_c, lod, dpdy);

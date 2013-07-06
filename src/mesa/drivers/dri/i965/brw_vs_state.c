@@ -39,7 +39,6 @@
 static void
 brw_upload_vs_unit(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
    struct brw_vs_unit_state *vs;
 
    vs = brw_state_batch(brw, AUB_TRACE_VS_STATE,
@@ -69,7 +68,7 @@ brw_upload_vs_unit(struct brw_context *brw)
     * The most notable and reliably failing application is the Humus
     * demo "CelShading"
    */
-   vs->thread1.single_program_flow = (intel->gen == 5);
+   vs->thread1.single_program_flow = (brw->gen == 5);
 
    vs->thread1.binding_table_entry_count = 0;
 
@@ -93,7 +92,7 @@ brw_upload_vs_unit(struct brw_context *brw)
    vs->thread3.const_urb_entry_read_offset = brw->curbe.vs_start * 2;
 
    /* BRW_NEW_URB_FENCE */
-   if (intel->gen == 5) {
+   if (brw->gen == 5) {
       switch (brw->urb.nr_vs_entries) {
       case 8:
       case 12:

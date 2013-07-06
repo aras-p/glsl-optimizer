@@ -106,7 +106,6 @@ void
 gen6_blorp_emit_vertices(struct brw_context *brw,
                          const brw_blorp_params *params)
 {
-   struct intel_context *intel = &brw->intel;
    uint32_t vertex_offset;
 
    /* Setup VBO for the rectangle primitive..
@@ -161,7 +160,7 @@ gen6_blorp_emit_vertices(struct brw_context *brw,
       uint32_t dw0 = GEN6_VB0_ACCESS_VERTEXDATA |
                      (GEN6_BLORP_NUM_VUE_ELEMS * sizeof(float)) << BRW_VB0_PITCH_SHIFT;
 
-      if (intel->gen >= 7)
+      if (brw->gen >= 7)
          dw0 |= GEN7_VB0_ADDRESS_MODIFYENABLE;
 
       BEGIN_BATCH(batch_length);
@@ -554,9 +553,7 @@ void
 gen6_blorp_emit_vs_disable(struct brw_context *brw,
                            const brw_blorp_params *params)
 {
-   struct intel_context *intel = &brw->intel;
-
-   if (intel->gen == 6) {
+   if (brw->gen == 6) {
       /* From the BSpec, Volume 2a, Part 3 "Vertex Shader", Section
        * 3DSTATE_VS, Dword 5.0 "VS Function Enable":
        *
@@ -816,8 +813,7 @@ static void
 gen6_blorp_emit_depth_stencil_config(struct brw_context *brw,
                                      const brw_blorp_params *params)
 {
-   struct intel_context *intel = &brw->intel;
-   struct gl_context *ctx = &intel->ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    uint32_t draw_x = params->depth.x_offset;
    uint32_t draw_y = params->depth.y_offset;
    uint32_t tile_mask_x, tile_mask_y;

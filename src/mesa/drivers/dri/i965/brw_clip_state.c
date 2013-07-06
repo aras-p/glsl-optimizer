@@ -105,7 +105,7 @@ brw_upload_clip_unit(struct brw_context *brw)
       /* Although up to 16 concurrent Clip threads are allowed on Ironlake,
        * only 2 threads can output VUEs at a time.
        */
-      if (intel->gen == 5)
+      if (brw->gen == 5)
          clip->thread4.max_threads = 16 - 1;
       else
          clip->thread4.max_threads = 2 - 1;

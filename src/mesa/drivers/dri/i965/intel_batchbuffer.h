@@ -101,8 +101,7 @@ intel_batchbuffer_emit_float(struct brw_context *brw, float f)
 static INLINE void
 intel_batchbuffer_require_space(struct brw_context *brw, GLuint sz, int is_blit)
 {
-   struct intel_context *intel = &brw->intel;
-   if (intel->gen >= 6 &&
+   if (brw->gen >= 6 &&
        brw->batch.is_blit != is_blit && brw->batch.used) {
       intel_batchbuffer_flush(brw);
    }

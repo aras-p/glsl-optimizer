@@ -105,13 +105,12 @@ static bool
 brw_fast_clear_depth(struct gl_context *ctx)
 {
    struct brw_context *brw = brw_context(ctx);
-   struct intel_context *intel = intel_context(ctx);
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    struct intel_renderbuffer *depth_irb =
       intel_get_renderbuffer(fb, BUFFER_DEPTH);
    struct intel_mipmap_tree *mt = depth_irb->mt;
 
-   if (intel->gen < 6)
+   if (brw->gen < 6)
       return false;
 
    if (!intel_renderbuffer_has_hiz(depth_irb))
@@ -155,7 +154,7 @@ brw_fast_clear_depth(struct gl_context *ctx)
        *        width of the map (LOD0) is not multiple of 16, fast clear
        *        optimization must be disabled.
        */
-      if (intel->gen == 6 && (mt->level[depth_irb->mt_level].width % 16) != 0)
+      if (brw->gen == 6 && (mt->level[depth_irb->mt_level].width % 16) != 0)
 	 return false;
       /* FALLTHROUGH */
 
@@ -184,7 +183,7 @@ brw_fast_clear_depth(struct gl_context *ctx)
    intel_hiz_exec(brw, mt, depth_irb->mt_level, depth_irb->mt_layer,
 		  GEN6_HIZ_OP_DEPTH_CLEAR);
 
-   if (intel->gen == 6) {
+   if (brw->gen == 6) {
       /* From the Sandy Bridge PRM, volume 2 part 1, page 314:
        *
        *     "DevSNB, DevSNB-B{W/A}]: Depth buffer clear pass must be followed
@@ -231,7 +230,7 @@ brw_clear(struct gl_context *ctx, GLbitfield mask)
    }
 
    /* BLORP is currently only supported on Gen6+. */
-   if (intel->gen >= 6) {
+   if (brw->gen >= 6) {
       if (mask & BUFFER_BITS_COLOR) {
          if (brw_blorp_clear_color(brw, fb, partial_clear)) {
             debug_mask("blorp color", mask & BUFFER_BITS_COLOR);

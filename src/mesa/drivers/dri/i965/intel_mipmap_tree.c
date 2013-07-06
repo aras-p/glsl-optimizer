@@ -71,9 +71,8 @@ target_to_target(GLenum target)
 static enum intel_msaa_layout
 compute_msaa_layout(struct brw_context *brw, gl_format format, GLenum target)
 {
-   struct intel_context *intel = &brw->intel;
    /* Prior to Gen7, all MSAA surfaces used IMS layout. */
-   if (intel->gen < 7)
+   if (brw->gen < 7)
       return INTEL_MSAA_LAYOUT_IMS;
 
    /* In Gen7, IMS layout is only used for depth and stencil buffers. */
@@ -96,7 +95,7 @@ compute_msaa_layout(struct brw_context *brw, gl_format format, GLenum target)
        */
       if (_mesa_get_format_datatype(format) == GL_INT) {
          /* TODO: is this workaround needed for future chipsets? */
-         assert(intel->gen == 7);
+         assert(brw->gen == 7);
          return INTEL_MSAA_LAYOUT_UMS;
       } else {
          /* For now, if we're going to be texturing from this surface,
@@ -201,10 +200,8 @@ bool
 intel_is_non_msrt_mcs_buffer_supported(struct brw_context *brw,
                                        struct intel_mipmap_tree *mt)
 {
-   struct intel_context *intel = &brw->intel;
-
    /* MCS support does not exist prior to Gen7 */
-   if (intel->gen < 7)
+   if (brw->gen < 7)
       return false;
 
    /* MCS is only supported for color buffers */
@@ -415,7 +412,6 @@ intel_miptree_choose_tiling(struct brw_context *brw,
                             enum intel_miptree_tiling_mode requested,
                             struct intel_mipmap_tree *mt)
 {
-   struct intel_context *intel = &brw->intel;
    if (format == MESA_FORMAT_S8) {
       /* The stencil buffer is W tiled. However, we request from the kernel a
        * non-tiled buffer because the GTT is incapable of W fencing.
@@ -469,7 +465,7 @@ intel_miptree_choose_tiling(struct brw_context *brw,
    }
 
    /* Pre-gen6 doesn't have BLORP to handle Y-tiling, so use X-tiling. */
-   if (intel->gen < 6)
+   if (brw->gen < 6)
       return I915_TILING_X;
 
    return I915_TILING_Y | I915_TILING_X;
@@ -1131,8 +1127,7 @@ intel_miptree_alloc_mcs(struct brw_context *brw,
                         struct intel_mipmap_tree *mt,
                         GLuint num_samples)
 {
-   struct intel_context *intel = &brw->intel;
-   assert(intel->gen >= 7); /* MCS only used on Gen7+ */
+   assert(brw->gen >= 7); /* MCS only used on Gen7+ */
    assert(mt->mcs_mt == NULL);
 
    /* Choose the correct format for the MCS buffer.  All that really matters
@@ -2104,7 +2099,6 @@ intel_miptree_map_singlesample(struct brw_context *brw,
                                void **out_ptr,
                                int *out_stride)
 {
-   struct intel_context *intel = &brw->intel;
    struct intel_miptree_map *map;
 
    assert(mt->num_samples <= 1);
@@ -2134,7 +2128,7 @@ intel_miptree_map_singlesample(struct brw_context *brw,
             !(mode & GL_MAP_WRITE_BIT) &&
             !mt->compressed &&
             (mt->region->tiling == I915_TILING_X ||
-             (intel->gen >= 6 && mt->region->tiling == I915_TILING_Y)) &&
+             (brw->gen >= 6 && mt->region->tiling == I915_TILING_Y)) &&
             mt->region->pitch < 32768) {
       intel_miptree_map_blit(brw, mt, map, level, slice);
    } else if (mt->region->tiling != I915_TILING_NONE &&

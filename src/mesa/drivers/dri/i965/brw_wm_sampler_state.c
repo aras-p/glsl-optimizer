@@ -139,7 +139,7 @@ upload_default_color(struct brw_context *brw, struct gl_sampler_object *sampler,
    if (firstImage->_BaseFormat == GL_RGB)
       color[3] = 1.0;
 
-   if (intel->gen == 5 || intel->gen == 6) {
+   if (brw->gen == 5 || brw->gen == 6) {
       struct gen5_sampler_default_color *sdc;
 
       sdc = brw_state_batch(brw, AUB_TRACE_SAMPLER_DEFAULT_COLOR,
@@ -268,7 +268,7 @@ static void brw_update_sampler_state(struct brw_context *brw,
    sampler->ss1.t_wrap_mode = translate_wrap_mode(gl_sampler->WrapT,
 						  using_nearest);
 
-   if (intel->gen >= 6 &&
+   if (brw->gen >= 6 &&
        sampler->ss0.min_filter != sampler->ss0.mag_filter)
 	sampler->ss0.min_mag_neq = 1;
 
@@ -332,13 +332,13 @@ static void brw_update_sampler_state(struct brw_context *brw,
    /* On Gen6+, the sampler can handle non-normalized texture
     * rectangle coordinates natively
     */
-   if (intel->gen >= 6 && texObj->Target == GL_TEXTURE_RECTANGLE) {
+   if (brw->gen >= 6 && texObj->Target == GL_TEXTURE_RECTANGLE) {
       sampler->ss3.non_normalized_coord = 1;
    }
 
    upload_default_color(brw, gl_sampler, unit, ss_index);
 
-   if (intel->gen >= 6) {
+   if (brw->gen >= 6) {
       sampler->ss2.default_color_pointer = brw->wm.sdc_offset[ss_index] >> 5;
    } else {
       /* reloc */

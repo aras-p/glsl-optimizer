@@ -133,7 +133,7 @@ brw_upload_wm_unit(struct brw_context *brw)
    /* BRW_NEW_CURBE_OFFSETS */
    wm->thread3.const_urb_entry_read_offset = brw->curbe.wm_start * 2;
 
-   if (intel->gen == 5)
+   if (brw->gen == 5)
       wm->wm4.sampler_count = 0; /* hardware requirement */
    else {
       /* CACHE_NEW_SAMPLER */

@@ -50,7 +50,7 @@ static void release_tmps( struct brw_clip_compile *c )
 void brw_clip_tri_alloc_regs( struct brw_clip_compile *c, 
 			      GLuint nr_verts )
 {
-   struct intel_context *intel = &c->func.brw->intel;
+   struct brw_context *brw = c->func.brw;
    GLuint i = 0,j;
 
    /* Register usage is static, precompute here:
@@ -122,7 +122,7 @@ void brw_clip_tri_alloc_regs( struct brw_clip_compile *c,
    c->reg.vertex_src_mask = retype(brw_vec1_grf(i, 0), BRW_REGISTER_TYPE_UD);
    i++;
 
-   if (intel->gen == 5) {
+   if (brw->gen == 5) {
       c->reg.ff_sync = retype(brw_vec1_grf(i, 0), BRW_REGISTER_TYPE_UD);
       i++;
    }

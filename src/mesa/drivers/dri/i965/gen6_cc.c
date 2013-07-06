@@ -39,7 +39,6 @@ static void
 gen6_upload_blend_state(struct brw_context *brw)
 {
    bool is_buffer_zero_integer_format = false;
-   struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &brw->intel.ctx;
    struct gen6_blend_state *blend;
    int b;
@@ -216,7 +215,7 @@ gen6_upload_blend_state(struct brw_context *brw)
 	    blend[b].blend1.alpha_to_one =
 	       ctx->Multisample._Enabled && ctx->Multisample.SampleAlphaToOne;
 
-         blend[b].blend1.alpha_to_coverage_dither = (brw->intel.gen >= 7);
+         blend[b].blend1.alpha_to_coverage_dither = (brw->gen >= 7);
       }
       else {
          blend[b].blend1.alpha_to_coverage = false;
@@ -225,7 +224,7 @@ gen6_upload_blend_state(struct brw_context *brw)
    }
 
    /* Point the GPU at the new indirect state. */
-   if (intel->gen == 6) {
+   if (brw->gen == 6) {
       BEGIN_BATCH(4);
       OUT_BATCH(_3DSTATE_CC_STATE_POINTERS << 16 | (4 - 2));
       OUT_BATCH(brw->cc.blend_state_offset | 1);
@@ -255,7 +254,6 @@ static void
 gen6_upload_color_calc_state(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->intel.ctx;
-   struct intel_context *intel = &brw->intel;
    struct gen6_color_calc_state *cc;
 
    cc = brw_state_batch(brw, AUB_TRACE_CC_STATE,
@@ -277,7 +275,7 @@ gen6_upload_color_calc_state(struct brw_context *brw)
    cc->constant_a = ctx->Color.BlendColorUnclamped[3];
 
    /* Point the GPU at the new indirect state. */
-   if (intel->gen == 6) {
+   if (brw->gen == 6) {
       BEGIN_BATCH(4);
       OUT_BATCH(_3DSTATE_CC_STATE_POINTERS << 16 | (4 - 2));
       OUT_BATCH(0);

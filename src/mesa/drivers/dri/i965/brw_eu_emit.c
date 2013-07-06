@@ -63,8 +63,8 @@ gen6_resolve_implied_move(struct brw_compile *p,
 			  struct brw_reg *src,
 			  GLuint msg_reg_nr)
 {
-   struct intel_context *intel = &p->brw->intel;
-   if (intel->gen < 6)
+   struct brw_context *brw = p->brw;
+   if (brw->gen < 6)
       return;
 
    if (src->file == BRW_MESSAGE_REGISTER_FILE)
@@ -92,8 +92,8 @@ gen7_convert_mrf_to_grf(struct brw_compile *p, struct brw_reg *reg)
     * Since we're pretending to have 16 MRFs anyway, we may as well use the
     * registers required for messages with EOT.
     */
-   struct intel_context *intel = &p->brw->intel;
-   if (intel->gen == 7 && reg->file == BRW_MESSAGE_REGISTER_FILE) {
+   struct brw_context *brw = p->brw;
+   if (brw->gen == 7 && reg->file == BRW_MESSAGE_REGISTER_FILE) {
       reg->file = BRW_GENERAL_REGISTER_FILE;
       reg->nr += GEN7_MRF_HACK_START;
    }
@@ -240,14 +240,13 @@ brw_set_src0(struct brw_compile *p, struct brw_instruction *insn,
 	     struct brw_reg reg)
 {
    struct brw_context *brw = p->brw;
-   struct intel_context *intel = &brw->intel;
 
    if (reg.type != BRW_ARCHITECTURE_REGISTER_FILE)
       assert(reg.nr < 128);
 
    gen7_convert_mrf_to_grf(p, &reg);
 
-   if (intel->gen >= 6 && (insn->header.opcode == BRW_OPCODE_SEND ||
+   if (brw->gen >= 6 && (insn->header.opcode == BRW_OPCODE_SEND ||
                            insn->header.opcode == BRW_OPCODE_SENDC)) {
       /* Any source modifiers or regions will be ignored, since this just
        * identifies the MRF/GRF to start reading the message contents from.
@@ -416,17 +415,17 @@ brw_set_message_descriptor(struct brw_compile *p,
 			   bool header_present,
 			   bool end_of_thread)
 {
-   struct intel_context *intel = &p->brw->intel;
+   struct brw_context *brw = p->brw;
 
    brw_set_src1(p, inst, brw_imm_d(0));
 
-   if (intel->gen >= 5) {
+   if (brw->gen >= 5) {
       inst->bits3.generic_gen5.header_present = header_present;
       inst->bits3.generic_gen5.response_length = response_length;
       inst->bits3.generic_gen5.msg_length = msg_length;
       inst->bits3.generic_gen5.end_of_thread = end_of_thread;
 
-      if (intel->gen >= 6) {
+      if (brw->gen >= 6) {
 	 /* On Gen6+ Message target/SFID goes in bits 27:24 of the header */
 	 inst->header.destreg__conditionalmod = sfid;
       } else {
@@ -450,7 +449,6 @@ static void brw_set_math_message( struct brw_compile *p,
 				  GLuint dataType )
 {
    struct brw_context *brw = p->brw;
-   struct intel_context *intel = &brw->intel;
    unsigned msg_length;
    unsigned response_length;
 
@@ -481,7 +479,7 @@ static void brw_set_math_message( struct brw_compile *p,
 
    brw_set_message_descriptor(p, insn, BRW_SFID_MATH,
 			      msg_length, response_length, false, false);
-   if (intel->gen == 5) {
+   if (brw->gen == 5) {
       insn->bits3.math_gen5.function = function;
       insn->bits3.math_gen5.int_type = integer_type;
       insn->bits3.math_gen5.precision = low_precision;
@@ -527,11 +525,10 @@ static void brw_set_urb_message( struct brw_compile *p,
 				 GLuint swizzle_control )
 {
    struct brw_context *brw = p->brw;
-   struct intel_context *intel = &brw->intel;
 
    brw_set_message_descriptor(p, insn, BRW_SFID_URB,
 			      msg_length, response_length, true, end_of_thread);
-   if (intel->gen == 7) {
+   if (brw->gen == 7) {
       insn->bits3.urb_gen7.opcode = 0;	/* URB_WRITE_HWORD */
       insn->bits3.urb_gen7.offset = offset;
       assert(swizzle_control != BRW_URB_SWIZZLE_TRANSPOSE);
@@ -539,7 +536,7 @@ static void brw_set_urb_message( struct brw_compile *p,
       /* per_slot_offset = 0 makes it ignore offsets in message header */
       insn->bits3.urb_gen7.per_slot_offset = 0;
       insn->bits3.urb_gen7.complete = complete;
-   } else if (intel->gen >= 5) {
+   } else if (brw->gen >= 5) {
       insn->bits3.urb_gen5.opcode = 0;	/* URB_WRITE */
       insn->bits3.urb_gen5.offset = offset;
       insn->bits3.urb_gen5.swizzle_control = swizzle_control;
@@ -570,16 +567,15 @@ brw_set_dp_write_message(struct brw_compile *p,
 			 GLuint send_commit_msg)
 {
    struct brw_context *brw = p->brw;
-   struct intel_context *intel = &brw->intel;
    unsigned sfid;
 
-   if (intel->gen >= 7) {
+   if (brw->gen >= 7) {
       /* Use the Render Cache for RT writes; otherwise use the Data Cache */
       if (msg_type == GEN6_DATAPORT_WRITE_MESSAGE_RENDER_TARGET_WRITE)
 	 sfid = GEN6_SFID_DATAPORT_RENDER_CACHE;
       else
 	 sfid = GEN7_SFID_DATAPORT_DATA_CACHE;
-   } else if (intel->gen == 6) {
+   } else if (brw->gen == 6) {
       /* Use the render cache for all write messages. */
       sfid = GEN6_SFID_DATAPORT_RENDER_CACHE;
    } else {
@@ -589,18 +585,18 @@ brw_set_dp_write_message(struct brw_compile *p,
    brw_set_message_descriptor(p, insn, sfid, msg_length, response_length,
 			      header_present, end_of_thread);
 
-   if (intel->gen >= 7) {
+   if (brw->gen >= 7) {
       insn->bits3.gen7_dp.binding_table_index = binding_table_index;
       insn->bits3.gen7_dp.msg_control = msg_control;
       insn->bits3.gen7_dp.last_render_target = last_render_target;
       insn->bits3.gen7_dp.msg_type = msg_type;
-   } else if (intel->gen == 6) {
+   } else if (brw->gen == 6) {
       insn->bits3.gen6_dp.binding_table_index = binding_table_index;
       insn->bits3.gen6_dp.msg_control = msg_control;
       insn->bits3.gen6_dp.last_render_target = last_render_target;
       insn->bits3.gen6_dp.msg_type = msg_type;
       insn->bits3.gen6_dp.send_commit_msg = send_commit_msg;
-   } else if (intel->gen == 5) {
+   } else if (brw->gen == 5) {
       insn->bits3.dp_write_gen5.binding_table_index = binding_table_index;
       insn->bits3.dp_write_gen5.msg_control = msg_control;
       insn->bits3.dp_write_gen5.last_render_target = last_render_target;
@@ -627,12 +623,11 @@ brw_set_dp_read_message(struct brw_compile *p,
 			GLuint response_length)
 {
    struct brw_context *brw = p->brw;
-   struct intel_context *intel = &brw->intel;
    unsigned sfid;
 
-   if (intel->gen >= 7) {
+   if (brw->gen >= 7) {
       sfid = GEN7_SFID_DATAPORT_DATA_CACHE;
-   } else if (intel->gen == 6) {
+   } else if (brw->gen == 6) {
       if (target_cache == BRW_DATAPORT_READ_TARGET_RENDER_CACHE)
 	 sfid = GEN6_SFID_DATAPORT_RENDER_CACHE;
       else
@@ -644,18 +639,18 @@ brw_set_dp_read_message(struct brw_compile *p,
    brw_set_message_descriptor(p, insn, sfid, msg_length, response_length,
 			      header_present, false);
 
-   if (intel->gen >= 7) {
+   if (brw->gen >= 7) {
       insn->bits3.gen7_dp.binding_table_index = binding_table_index;
       insn->bits3.gen7_dp.msg_control = msg_control;
       insn->bits3.gen7_dp.last_render_target = 0;
       insn->bits3.gen7_dp.msg_type = msg_type;
-   } else if (intel->gen == 6) {
+   } else if (brw->gen == 6) {
       insn->bits3.gen6_dp.binding_table_index = binding_table_index;
       insn->bits3.gen6_dp.msg_control = msg_control;
       insn->bits3.gen6_dp.last_render_target = 0;
       insn->bits3.gen6_dp.msg_type = msg_type;
       insn->bits3.gen6_dp.send_commit_msg = 0;
-   } else if (intel->gen == 5) {
+   } else if (brw->gen == 5) {
       insn->bits3.dp_read_gen5.binding_table_index = binding_table_index;
       insn->bits3.dp_read_gen5.msg_control = msg_control;
       insn->bits3.dp_read_gen5.msg_type = msg_type;
@@ -686,17 +681,16 @@ brw_set_sampler_message(struct brw_compile *p,
                         GLuint return_format)
 {
    struct brw_context *brw = p->brw;
-   struct intel_context *intel = &brw->intel;
 
    brw_set_message_descriptor(p, insn, BRW_SFID_SAMPLER, msg_length,
 			      response_length, header_present, false);
 
-   if (intel->gen >= 7) {
+   if (brw->gen >= 7) {
       insn->bits3.sampler_gen7.binding_table_index = binding_table_index;
       insn->bits3.sampler_gen7.sampler = sampler;
       insn->bits3.sampler_gen7.msg_type = msg_type;
       insn->bits3.sampler_gen7.simd_mode = simd_mode;
-   } else if (intel->gen >= 5) {
+   } else if (brw->gen >= 5) {
       insn->bits3.sampler_gen5.binding_table_index = binding_table_index;
       insn->bits3.sampler_gen5.sampler = sampler;
       insn->bits3.sampler_gen5.msg_type = msg_type;
@@ -788,7 +782,7 @@ static struct brw_instruction *brw_alu3(struct brw_compile *p,
 					struct brw_reg src1,
 					struct brw_reg src2)
 {
-   struct intel_context *intel = &p->brw->intel;
+   struct brw_context *brw = p->brw;
    struct brw_instruction *insn = next_insn(p, opcode);
 
    gen7_convert_mrf_to_grf(p, &dest);
@@ -839,7 +833,7 @@ static struct brw_instruction *brw_alu3(struct brw_compile *p,
    insn->bits1.da3src.src2_abs = src2.abs;
    insn->bits1.da3src.src2_negate = src2.negate;
 
-   if (intel->gen >= 7) {
+   if (brw->gen >= 7) {
       /* Set both the source and destination types based on dest.type,
        * ignoring the source register types.  The MAD and LRP emitters ensure
        * that all four types are float.  The BFE and BFI2 emitters, however,
@@ -927,7 +921,7 @@ void brw_##OP(struct brw_compile *p,					      \
    brw_set_dest(p, rnd, dest);						      \
    brw_set_src0(p, rnd, src);						      \
 									      \
-   if (p->brw->intel.gen < 6) {						      \
+   if (p->brw->gen < 6) {						      \
       /* turn on round-increments */					      \
       rnd->header.destreg__conditionalmod = BRW_CONDITIONAL_R;		      \
       add = brw_ADD(p, dest, dest, brw_imm_f(1.0f));			      \
@@ -1145,18 +1139,18 @@ get_inner_do_insn(struct brw_compile *p)
 struct brw_instruction *
 brw_IF(struct brw_compile *p, GLuint execute_size)
 {
-   struct intel_context *intel = &p->brw->intel;
+   struct brw_context *brw = p->brw;
    struct brw_instruction *insn;
 
    insn = next_insn(p, BRW_OPCODE_IF);
 
    /* Override the defaults for this instruction:
     */
-   if (intel->gen < 6) {
+   if (brw->gen < 6) {
       brw_set_dest(p, insn, brw_ip_reg());
       brw_set_src0(p, insn, brw_ip_reg());
       brw_set_src1(p, insn, brw_imm_d(0x0));
-   } else if (intel->gen == 6) {
+   } else if (brw->gen == 6) {
       brw_set_dest(p, insn, brw_imm_w(0));
       insn->bits1.branch_gen6.jump_count = 0;
       brw_set_src0(p, insn, vec1(retype(brw_null_reg(), BRW_REGISTER_TYPE_D)));
@@ -1264,7 +1258,7 @@ patch_IF_ELSE(struct brw_compile *p,
 	      struct brw_instruction *else_inst,
 	      struct brw_instruction *endif_inst)
 {
-   struct intel_context *intel = &p->brw->intel;
+   struct brw_context *brw = p->brw;
 
    /* We shouldn't be patching IF and ELSE instructions in single program flow
     * mode when gen < 6, because in single program flow mode on those
@@ -1278,7 +1272,7 @@ patch_IF_ELSE(struct brw_compile *p,
     * instructions to conditional ADDs.  So we do patch IF and ELSE
     * instructions in single program flow mode on those platforms.
     */
-   if (intel->gen < 6)
+   if (brw->gen < 6)
       assert(!p->single_program_flow);
 
    assert(if_inst != NULL && if_inst->header.opcode == BRW_OPCODE_IF);
@@ -1289,7 +1283,7 @@ patch_IF_ELSE(struct brw_compile *p,
    /* Jump count is for 64bit data chunk each, so one 128bit instruction
     * requires 2 chunks.
     */
-   if (intel->gen >= 5)
+   if (brw->gen >= 5)
       br = 2;
 
    assert(endif_inst->header.opcode == BRW_OPCODE_ENDIF);
@@ -1297,7 +1291,7 @@ patch_IF_ELSE(struct brw_compile *p,
 
    if (else_inst == NULL) {
       /* Patch IF -> ENDIF */
-      if (intel->gen < 6) {
+      if (brw->gen < 6) {
 	 /* Turn it into an IFF, which means no mask stack operations for
 	  * all-false and jumping past the ENDIF.
 	  */
@@ -1305,7 +1299,7 @@ patch_IF_ELSE(struct brw_compile *p,
 	 if_inst->bits3.if_else.jump_count = br * (endif_inst - if_inst + 1);
 	 if_inst->bits3.if_else.pop_count = 0;
 	 if_inst->bits3.if_else.pad0 = 0;
-      } else if (intel->gen == 6) {
+      } else if (brw->gen == 6) {
 	 /* As of gen6, there is no IFF and IF must point to the ENDIF. */
 	 if_inst->bits1.branch_gen6.jump_count = br * (endif_inst - if_inst);
       } else {
@@ -1316,23 +1310,23 @@ patch_IF_ELSE(struct brw_compile *p,
       else_inst->header.execution_size = if_inst->header.execution_size;
 
       /* Patch IF -> ELSE */
-      if (intel->gen < 6) {
+      if (brw->gen < 6) {
 	 if_inst->bits3.if_else.jump_count = br * (else_inst - if_inst);
 	 if_inst->bits3.if_else.pop_count = 0;
 	 if_inst->bits3.if_else.pad0 = 0;
-      } else if (intel->gen == 6) {
+      } else if (brw->gen == 6) {
 	 if_inst->bits1.branch_gen6.jump_count = br * (else_inst - if_inst + 1);
       }
 
       /* Patch ELSE -> ENDIF */
-      if (intel->gen < 6) {
+      if (brw->gen < 6) {
 	 /* BRW_OPCODE_ELSE pre-gen6 should point just past the
 	  * matching ENDIF.
 	  */
 	 else_inst->bits3.if_else.jump_count = br*(endif_inst - else_inst + 1);
 	 else_inst->bits3.if_else.pop_count = 1;
 	 else_inst->bits3.if_else.pad0 = 0;
-      } else if (intel->gen == 6) {
+      } else if (brw->gen == 6) {
 	 /* BRW_OPCODE_ELSE on gen6 should point to the matching ENDIF. */
 	 else_inst->bits1.branch_gen6.jump_count = br*(endif_inst - else_inst);
       } else {
@@ -1348,16 +1342,16 @@ patch_IF_ELSE(struct brw_compile *p,
 void
 brw_ELSE(struct brw_compile *p)
 {
-   struct intel_context *intel = &p->brw->intel;
+   struct brw_context *brw = p->brw;
    struct brw_instruction *insn;
 
    insn = next_insn(p, BRW_OPCODE_ELSE);
 
-   if (intel->gen < 6) {
+   if (brw->gen < 6) {
       brw_set_dest(p, insn, brw_ip_reg());
       brw_set_src0(p, insn, brw_ip_reg());
       brw_set_src1(p, insn, brw_imm_d(0x0));
-   } else if (intel->gen == 6) {
+   } else if (brw->gen == 6) {
       brw_set_dest(p, insn, brw_imm_w(0));
       insn->bits1.branch_gen6.jump_count = 0;
       brw_set_src0(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
@@ -1381,7 +1375,7 @@ brw_ELSE(struct brw_compile *p)
 void
 brw_ENDIF(struct brw_compile *p)
 {
-   struct intel_context *intel = &p->brw->intel;
+   struct brw_context *brw = p->brw;
    struct brw_instruction *insn = NULL;
    struct brw_instruction *else_inst = NULL;
    struct brw_instruction *if_inst = NULL;
@@ -1400,7 +1394,7 @@ brw_ENDIF(struct brw_compile *p)
     * instructions to conditional ADDs.  So we only do this trick on Gen4 and
     * Gen5.
     */
-   if (intel->gen < 6 && p->single_program_flow)
+   if (brw->gen < 6 && p->single_program_flow)
       emit_endif = false;
 
    /*
@@ -1426,11 +1420,11 @@ brw_ENDIF(struct brw_compile *p)
       return;
    }
 
-   if (intel->gen < 6) {
+   if (brw->gen < 6) {
       brw_set_dest(p, insn, retype(brw_vec4_grf(0,0), BRW_REGISTER_TYPE_UD));
       brw_set_src0(p, insn, retype(brw_vec4_grf(0,0), BRW_REGISTER_TYPE_UD));
       brw_set_src1(p, insn, brw_imm_d(0x0));
-   } else if (intel->gen == 6) {
+   } else if (brw->gen == 6) {
       brw_set_dest(p, insn, brw_imm_w(0));
       brw_set_src0(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
       brw_set_src1(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
@@ -1445,11 +1439,11 @@ brw_ENDIF(struct brw_compile *p)
    insn->header.thread_control = BRW_THREAD_SWITCH;
 
    /* Also pop item off the stack in the endif instruction: */
-   if (intel->gen < 6) {
+   if (brw->gen < 6) {
       insn->bits3.if_else.jump_count = 0;
       insn->bits3.if_else.pop_count = 1;
       insn->bits3.if_else.pad0 = 0;
-   } else if (intel->gen == 6) {
+   } else if (brw->gen == 6) {
       insn->bits1.branch_gen6.jump_count = 2;
    } else {
       insn->bits3.break_cont.jip = 2;
@@ -1459,11 +1453,11 @@ brw_ENDIF(struct brw_compile *p)
 
 struct brw_instruction *brw_BREAK(struct brw_compile *p)
 {
-   struct intel_context *intel = &p->brw->intel;
+   struct brw_context *brw = p->brw;
    struct brw_instruction *insn;
 
    insn = next_insn(p, BRW_OPCODE_BREAK);
-   if (intel->gen >= 6) {
+   if (brw->gen >= 6) {
       brw_set_dest(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
       brw_set_src0(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
       brw_set_src1(p, insn, brw_imm_d(0x0));
@@ -1547,9 +1541,9 @@ struct brw_instruction *gen6_HALT(struct brw_compile *p)
  */
 struct brw_instruction *brw_DO(struct brw_compile *p, GLuint execute_size)
 {
-   struct intel_context *intel = &p->brw->intel;
+   struct brw_context *brw = p->brw;
 
-   if (intel->gen >= 6 || p->single_program_flow) {
+   if (brw->gen >= 6 || p->single_program_flow) {
       push_loop_stack(p, &p->store[p->nr_insn]);
       return &p->store[p->nr_insn];
    } else {
@@ -1583,10 +1577,10 @@ struct brw_instruction *brw_DO(struct brw_compile *p, GLuint execute_size)
 static void
 brw_patch_break_cont(struct brw_compile *p, struct brw_instruction *while_inst)
 {
-   struct intel_context *intel = &p->brw->intel;
+   struct brw_context *brw = p->brw;
    struct brw_instruction *do_inst = get_inner_do_insn(p);
    struct brw_instruction *inst;
-   int br = (intel->gen == 5) ? 2 : 1;
+   int br = (brw->gen == 5) ? 2 : 1;
 
    for (inst = while_inst - 1; inst != do_inst; inst--) {
       /* If the jump count is != 0, that means that this instruction has already
@@ -1605,14 +1599,14 @@ brw_patch_break_cont(struct brw_compile *p, struct brw_instruction *while_inst)
 
 struct brw_instruction *brw_WHILE(struct brw_compile *p)
 {
-   struct intel_context *intel = &p->brw->intel;
+   struct brw_context *brw = p->brw;
    struct brw_instruction *insn, *do_insn;
    GLuint br = 1;
 
-   if (intel->gen >= 5)
+   if (brw->gen >= 5)
       br = 2;
 
-   if (intel->gen >= 7) {
+   if (brw->gen >= 7) {
       insn = next_insn(p, BRW_OPCODE_WHILE);
       do_insn = get_inner_do_insn(p);
 
@@ -1622,7 +1616,7 @@ struct brw_instruction *brw_WHILE(struct brw_compile *p)
       insn->bits3.break_cont.jip = br * (do_insn - insn);
 
       insn->header.execution_size = BRW_EXECUTE_8;
-   } else if (intel->gen == 6) {
+   } else if (brw->gen == 6) {
       insn = next_insn(p, BRW_OPCODE_WHILE);
       do_insn = get_inner_do_insn(p);
 
@@ -1672,11 +1666,11 @@ struct brw_instruction *brw_WHILE(struct brw_compile *p)
  */
 void brw_land_fwd_jump(struct brw_compile *p, int jmp_insn_idx)
 {
-   struct intel_context *intel = &p->brw->intel;
+   struct brw_context *brw = p->brw;
    struct brw_instruction *jmp_insn = &p->store[jmp_insn_idx];
    GLuint jmpi = 1;
 
-   if (intel->gen >= 5)
+   if (brw->gen >= 5)
       jmpi = 2;
 
    assert(jmp_insn->header.opcode == BRW_OPCODE_JMPI);
@@ -1697,7 +1691,7 @@ void brw_CMP(struct brw_compile *p,
 	     struct brw_reg src0,
 	     struct brw_reg src1)
 {
-   struct intel_context *intel = &p->brw->intel;
+   struct brw_context *brw = p->brw;
    struct brw_instruction *insn = next_insn(p, BRW_OPCODE_CMP);
 
    insn->header.destreg__conditionalmod = conditional;
@@ -1725,7 +1719,7 @@ void brw_CMP(struct brw_compile *p,
     * It also applies to other Gen7 platforms (IVB, BYT) even though it isn't
     * mentioned on their work-arounds pages.
     */
-   if (intel->gen == 7) {
+   if (brw->gen == 7) {
       if (dest.file == BRW_ARCHITECTURE_REGISTER_FILE &&
           dest.nr == BRW_ARF_NULL) {
          insn->header.thread_control = BRW_THREAD_SWITCH;
@@ -1763,21 +1757,21 @@ void brw_math( struct brw_compile *p,
 	       GLuint data_type,
 	       GLuint precision )
 {
-   struct intel_context *intel = &p->brw->intel;
+   struct brw_context *brw = p->brw;
 
-   if (intel->gen >= 6) {
+   if (brw->gen >= 6) {
       struct brw_instruction *insn = next_insn(p, BRW_OPCODE_MATH);
 
       assert(dest.file == BRW_GENERAL_REGISTER_FILE ||
-             (intel->gen >= 7 && dest.file == BRW_MESSAGE_REGISTER_FILE));
+             (brw->gen >= 7 && dest.file == BRW_MESSAGE_REGISTER_FILE));
       assert(src.file == BRW_GENERAL_REGISTER_FILE);
 
       assert(dest.hstride == BRW_HORIZONTAL_STRIDE_1);
-      if (intel->gen == 6)
+      if (brw->gen == 6)
 	 assert(src.hstride == BRW_HORIZONTAL_STRIDE_1);
 
       /* Source modifiers are ignored for extended math instructions on Gen6. */
-      if (intel->gen == 6) {
+      if (brw->gen == 6) {
 	 assert(!src.negate);
 	 assert(!src.abs);
       }
@@ -1826,20 +1820,16 @@ void brw_math2(struct brw_compile *p,
 	       struct brw_reg src0,
 	       struct brw_reg src1)
 {
-   struct intel_context *intel = &p->brw->intel;
+   struct brw_context *brw = p->brw;
    struct brw_instruction *insn = next_insn(p, BRW_OPCODE_MATH);
 
-   assert(intel->gen >= 6);
-   (void) intel;
-
-
    assert(dest.file == BRW_GENERAL_REGISTER_FILE ||
-          (intel->gen >= 7 && dest.file == BRW_MESSAGE_REGISTER_FILE));
+          (brw->gen >= 7 && dest.file == BRW_MESSAGE_REGISTER_FILE));
    assert(src0.file == BRW_GENERAL_REGISTER_FILE);
    assert(src1.file == BRW_GENERAL_REGISTER_FILE);
 
    assert(dest.hstride == BRW_HORIZONTAL_STRIDE_1);
-   if (intel->gen == 6) {
+   if (brw->gen == 6) {
       assert(src0.hstride == BRW_HORIZONTAL_STRIDE_1);
       assert(src1.hstride == BRW_HORIZONTAL_STRIDE_1);
    }
@@ -1855,7 +1845,7 @@ void brw_math2(struct brw_compile *p,
    }
 
    /* Source modifiers are ignored for extended math instructions on Gen6. */
-   if (intel->gen == 6) {
+   if (brw->gen == 6) {
       assert(!src0.negate);
       assert(!src0.abs);
       assert(!src1.negate);
@@ -1885,11 +1875,11 @@ void brw_oword_block_write_scratch(struct brw_compile *p,
 				   int num_regs,
 				   GLuint offset)
 {
-   struct intel_context *intel = &p->brw->intel;
+   struct brw_context *brw = p->brw;
    uint32_t msg_control, msg_type;
    int mlen;
 
-   if (intel->gen >= 6)
+   if (brw->gen >= 6)
       offset /= 16;
 
    mrf = retype(mrf, BRW_REGISTER_TYPE_UD);
@@ -1948,7 +1938,7 @@ void brw_oword_block_write_scratch(struct brw_compile *p,
        * protection.  Our use of DP writes is all about register
        * spilling within a thread.
        */
-      if (intel->gen >= 6) {
+      if (brw->gen >= 6) {
 	 dest = retype(vec16(brw_null_reg()), BRW_REGISTER_TYPE_UW);
 	 send_commit_msg = 0;
       } else {
@@ -1957,13 +1947,13 @@ void brw_oword_block_write_scratch(struct brw_compile *p,
       }
 
       brw_set_dest(p, insn, dest);
-      if (intel->gen >= 6) {
+      if (brw->gen >= 6) {
 	 brw_set_src0(p, insn, mrf);
       } else {
 	 brw_set_src0(p, insn, brw_null_reg());
       }
 
-      if (intel->gen >= 6)
+      if (brw->gen >= 6)
 	 msg_type = GEN6_DATAPORT_WRITE_MESSAGE_OWORD_BLOCK_WRITE;
       else
 	 msg_type = BRW_DATAPORT_WRITE_MESSAGE_OWORD_BLOCK_WRITE;
@@ -1997,11 +1987,11 @@ brw_oword_block_read_scratch(struct brw_compile *p,
 			     int num_regs,
 			     GLuint offset)
 {
-   struct intel_context *intel = &p->brw->intel;
+   struct brw_context *brw = p->brw;
    uint32_t msg_control;
    int rlen;
 
-   if (intel->gen >= 6)
+   if (brw->gen >= 6)
       offset /= 16;
 
    mrf = retype(mrf, BRW_REGISTER_TYPE_UD);
@@ -2040,7 +2030,7 @@ brw_oword_block_read_scratch(struct brw_compile *p,
       insn->header.destreg__conditionalmod = mrf.nr;
 
       brw_set_dest(p, insn, dest);	/* UW? */
-      if (intel->gen >= 6) {
+      if (brw->gen >= 6) {
 	 brw_set_src0(p, insn, mrf);
       } else {
 	 brw_set_src0(p, insn, brw_null_reg());
@@ -2069,10 +2059,10 @@ void brw_oword_block_read(struct brw_compile *p,
 			  uint32_t offset,
 			  uint32_t bind_table_index)
 {
-   struct intel_context *intel = &p->brw->intel;
+   struct brw_context *brw = p->brw;
 
    /* On newer hardware, offset is in units of owords. */
-   if (intel->gen >= 6)
+   if (brw->gen >= 6)
       offset /= 16;
 
    mrf = retype(mrf, BRW_REGISTER_TYPE_UD);
@@ -2098,7 +2088,7 @@ void brw_oword_block_read(struct brw_compile *p,
    dest = retype(vec8(dest), BRW_REGISTER_TYPE_UW);
 
    brw_set_dest(p, insn, dest);
-   if (intel->gen >= 6) {
+   if (brw->gen >= 6) {
       brw_set_src0(p, insn, mrf);
    } else {
       brw_set_src0(p, insn, brw_null_reg());
@@ -2129,7 +2119,7 @@ void brw_fb_WRITE(struct brw_compile *p,
                   bool eot,
                   bool header_present)
 {
-   struct intel_context *intel = &p->brw->intel;
+   struct brw_context *brw = p->brw;
    struct brw_instruction *insn;
    GLuint msg_type;
    struct brw_reg dest;
@@ -2139,7 +2129,7 @@ void brw_fb_WRITE(struct brw_compile *p,
    else
       dest = retype(vec8(brw_null_reg()), BRW_REGISTER_TYPE_UW);
 
-   if (intel->gen >= 6) {
+   if (brw->gen >= 6) {
       insn = next_insn(p, BRW_OPCODE_SENDC);
    } else {
       insn = next_insn(p, BRW_OPCODE_SEND);
@@ -2148,7 +2138,7 @@ void brw_fb_WRITE(struct brw_compile *p,
    insn->header.predicate_control = 0;
    insn->header.compression_control = BRW_COMPRESSION_NONE;
 
-   if (intel->gen >= 6) {
+   if (brw->gen >= 6) {
       /* headerless version, just submit color payload */
       src0 = brw_message_reg(msg_reg_nr);
 
@@ -2193,7 +2183,7 @@ void brw_SAMPLE(struct brw_compile *p,
 		GLuint simd_mode,
 		GLuint return_format)
 {
-   struct intel_context *intel = &p->brw->intel;
+   struct brw_context *brw = p->brw;
    struct brw_instruction *insn;
 
    gen6_resolve_implied_move(p, &src0, msg_reg_nr);
@@ -2201,7 +2191,7 @@ void brw_SAMPLE(struct brw_compile *p,
    insn = next_insn(p, BRW_OPCODE_SEND);
    insn->header.predicate_control = 0; /* XXX */
    insn->header.compression_control = BRW_COMPRESSION_NONE;
-   if (intel->gen < 6)
+   if (brw->gen < 6)
       insn->header.destreg__conditionalmod = msg_reg_nr;
 
    brw_set_dest(p, insn, dest);
@@ -2234,12 +2224,12 @@ void brw_urb_WRITE(struct brw_compile *p,
 		   GLuint offset,
 		   GLuint swizzle)
 {
-   struct intel_context *intel = &p->brw->intel;
+   struct brw_context *brw = p->brw;
    struct brw_instruction *insn;
 
    gen6_resolve_implied_move(p, &src0, msg_reg_nr);
 
-   if (intel->gen == 7) {
+   if (brw->gen == 7) {
       /* Enable Channel Masks in the URB_WRITE_HWORD message header */
       brw_push_insn_state(p);
       brw_set_access_mode(p, BRW_ALIGN_1);
@@ -2259,7 +2249,7 @@ void brw_urb_WRITE(struct brw_compile *p,
    brw_set_src0(p, insn, src0);
    brw_set_src1(p, insn, brw_imm_d(0));
 
-   if (intel->gen < 6)
+   if (brw->gen < 6)
       insn->header.destreg__conditionalmod = msg_reg_nr;
 
    brw_set_urb_message(p,
@@ -2313,7 +2303,7 @@ brw_find_next_block_end(struct brw_compile *p, int start)
 static int
 brw_find_loop_end(struct brw_compile *p, int start)
 {
-   struct intel_context *intel = &p->brw->intel;
+   struct brw_context *brw = p->brw;
    int ip;
    int scale = 8;
    void *store = p->store;
@@ -2325,7 +2315,7 @@ brw_find_loop_end(struct brw_compile *p, int start)
       struct brw_instruction *insn = store + ip;
 
       if (insn->header.opcode == BRW_OPCODE_WHILE) {
-	 int jip = intel->gen == 6 ? insn->bits1.branch_gen6.jump_count
+	 int jip = brw->gen == 6 ? insn->bits1.branch_gen6.jump_count
 				   : insn->bits3.break_cont.jip;
 	 if (ip + jip * scale <= start)
 	    return ip;
@@ -2341,12 +2331,12 @@ brw_find_loop_end(struct brw_compile *p, int start)
 void
 brw_set_uip_jip(struct brw_compile *p)
 {
-   struct intel_context *intel = &p->brw->intel;
+   struct brw_context *brw = p->brw;
    int ip;
    int scale = 8;
    void *store = p->store;
 
-   if (intel->gen < 6)
+   if (brw->gen < 6)
       return;
 
    for (ip = 0; ip < p->next_insn_offset; ip = next_ip(p, ip)) {
@@ -2368,7 +2358,7 @@ brw_set_uip_jip(struct brw_compile *p)
 	 /* Gen7 UIP points to WHILE; Gen6 points just after it */
 	 insn->bits3.break_cont.uip =
 	    (brw_find_loop_end(p, ip) - ip +
-             (intel->gen == 6 ? 16 : 0)) / scale;
+             (brw->gen == 6 ? 16 : 0)) / scale;
 	 break;
       case BRW_OPCODE_CONTINUE:
          assert(block_end_ip != 0);
@@ -2419,7 +2409,7 @@ void brw_ff_sync(struct brw_compile *p,
 		   GLuint response_length,
 		   bool eot)
 {
-   struct intel_context *intel = &p->brw->intel;
+   struct brw_context *brw = p->brw;
    struct brw_instruction *insn;
 
    gen6_resolve_implied_move(p, &src0, msg_reg_nr);
@@ -2429,7 +2419,7 @@ void brw_ff_sync(struct brw_compile *p,
    brw_set_src0(p, insn, src0);
    brw_set_src1(p, insn, brw_imm_d(0));
 
-   if (intel->gen < 6)
+   if (brw->gen < 6)
       insn->header.destreg__conditionalmod = msg_reg_nr;
 
    brw_set_ff_sync_message(p,
@@ -2499,8 +2489,7 @@ void brw_shader_time_add(struct brw_compile *p,
                          uint32_t surf_index)
 {
    struct brw_context *brw = p->brw;
-   struct intel_context *intel = &p->brw->intel;
-   assert(intel->gen >= 7);
+   assert(brw->gen >= 7);
 
    brw_push_insn_state(p);
    brw_set_access_mode(p, BRW_ALIGN_1);

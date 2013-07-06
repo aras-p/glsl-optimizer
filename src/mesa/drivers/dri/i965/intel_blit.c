@@ -104,8 +104,7 @@ static void
 set_blitter_tiling(struct brw_context *brw,
                    bool dst_y_tiled, bool src_y_tiled)
 {
-   struct intel_context *intel = &brw->intel;
-   assert(intel->gen >= 6);
+   assert(brw->gen >= 6);
 
    /* Idle the blitter before we update how tiling is interpreted. */
    OUT_BATCH(MI_FLUSH_DW);
@@ -279,7 +278,6 @@ intelEmitCopyBlit(struct brw_context *brw,
 		  GLshort w, GLshort h,
 		  GLenum logic_op)
 {
-   struct intel_context *intel = &brw->intel;
    GLuint CMD, BR13, pass = 0;
    int dst_y2 = dst_y + h;
    int dst_x2 = dst_x + w;
@@ -296,7 +294,7 @@ intelEmitCopyBlit(struct brw_context *brw,
       if (src_offset & 4095)
 	 return false;
    }
-   if ((dst_y_tiled || src_y_tiled) && intel->gen < 6)
+   if ((dst_y_tiled || src_y_tiled) && brw->gen < 6)
       return false;
 
    /* do space check before going any further */

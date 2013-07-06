@@ -349,7 +349,6 @@ static void brw_wm_populate_key( struct brw_context *brw,
 				 struct brw_wm_prog_key *key )
 {
    struct gl_context *ctx = &brw->intel.ctx;
-   struct intel_context *intel = &brw->intel;
    /* BRW_NEW_FRAGMENT_PROGRAM */
    const struct brw_fragment_program *fp = 
       (struct brw_fragment_program *)brw->fragment_program;
@@ -362,7 +361,7 @@ static void brw_wm_populate_key( struct brw_context *brw,
 
    /* Build the index for table lookup
     */
-   if (intel->gen < 6) {
+   if (brw->gen < 6) {
       /* _NEW_COLOR */
       if (fp->program.UsesKill || ctx->Color.AlphaEnabled)
 	 lookup |= IZ_PS_KILL_ALPHATEST_BIT;
@@ -416,7 +415,7 @@ static void brw_wm_populate_key( struct brw_context *brw,
 
    key->line_aa = line_aa;
 
-   if (intel->gen < 6)
+   if (brw->gen < 6)
       key->stats_wm = brw->stats_wm;
 
    /* _NEW_LIGHT */
@@ -465,7 +464,7 @@ static void brw_wm_populate_key( struct brw_context *brw,
       (ctx->Multisample.SampleAlphaToCoverage || ctx->Color.AlphaEnabled);
 
    /* BRW_NEW_VUE_MAP_GEOM_OUT */
-   if (intel->gen < 6)
+   if (brw->gen < 6)
       key->input_slots_valid = brw->vue_map_geom_out.slots_valid;
 
    /* The unique fragment program ID */

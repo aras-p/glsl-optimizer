@@ -111,7 +111,7 @@ vec4_vs_visitor::emit_program_code()
          break;
 
       case OPCODE_ARL:
-         if (intel->gen >= 6) {
+         if (brw->gen >= 6) {
             dst.writemask = WRITEMASK_X;
             dst_reg dst_f = dst;
             dst_f.type = BRW_REGISTER_TYPE_F;
@@ -547,7 +547,7 @@ vec4_vs_visitor::get_vp_src_reg(const prog_src_register &src)
          dst_reladdr.writemask = WRITEMASK_X;
          emit(ADD(dst_reladdr, this->vp_addr_reg, src_reg(src.Index)));
 
-         if (intel->gen < 6)
+         if (brw->gen < 6)
             emit(MUL(dst_reladdr, reladdr, src_reg(16)));
 
       #if 0

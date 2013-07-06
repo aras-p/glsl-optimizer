@@ -198,7 +198,6 @@ brw_update_buffer_texture_surface(struct gl_context *ctx,
                                   unsigned surf_index)
 {
    struct brw_context *brw = brw_context(ctx);
-   struct intel_context *intel = &brw->intel;
    struct gl_texture_object *tObj = ctx->Texture.Unit[unit]._Current;
    uint32_t *surf;
    struct intel_buffer_object *intel_obj =
@@ -219,7 +218,7 @@ brw_update_buffer_texture_surface(struct gl_context *ctx,
    surf[0] = (BRW_SURFACE_BUFFER << BRW_SURFACE_TYPE_SHIFT |
 	      (brw_format_for_mesa_format(format) << BRW_SURFACE_FORMAT_SHIFT));
 
-   if (intel->gen >= 6)
+   if (brw->gen >= 6)
       surf[0] |= BRW_SURFACE_RC_READ_WRITE;
 
    if (bo) {
@@ -322,7 +321,6 @@ brw_create_constant_surface(struct brw_context *brw,
 			    uint32_t *out_offset,
                             bool dword_pitch)
 {
-   struct intel_context *intel = &brw->intel;
    uint32_t stride = dword_pitch ? 4 : 16;
    uint32_t elements = ALIGN(size, stride) / stride;
    const GLint w = elements - 1;
@@ -335,7 +333,7 @@ brw_create_constant_surface(struct brw_context *brw,
 	      BRW_SURFACE_MIPMAPLAYOUT_BELOW << BRW_SURFACE_MIPLAYOUT_SHIFT |
 	      BRW_SURFACEFORMAT_R32G32B32A32_FLOAT << BRW_SURFACE_FORMAT_SHIFT);
 
-   if (intel->gen >= 6)
+   if (brw->gen >= 6)
       surf[0] |= BRW_SURFACE_RC_READ_WRITE;
 
    surf[1] = bo->offset + offset; /* reloc */
@@ -371,7 +369,6 @@ brw_update_sol_surface(struct brw_context *brw,
                        uint32_t *out_offset, unsigned num_vector_components,
                        unsigned stride_dwords, unsigned offset_dwords)
 {
-   struct intel_context *intel = &brw->intel;
    struct intel_buffer_object *intel_bo = intel_buffer_object(buffer_obj);
    drm_intel_bo *bo = intel_bufferobj_buffer(brw, intel_bo, INTEL_WRITE_PART);
    uint32_t *surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE, 6 * 4, 32,
@@ -455,7 +452,6 @@ static void
 brw_upload_wm_pull_constants(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->intel.ctx;
-   struct intel_context *intel = &brw->intel;
    /* BRW_NEW_FRAGMENT_PROGRAM */
    struct brw_fragment_program *fp =
       (struct brw_fragment_program *) brw->fragment_program;
@@ -527,8 +523,7 @@ brw_update_null_renderbuffer_surface(struct brw_context *brw, unsigned int unit)
     *
     *     - Surface Format must be R8G8B8A8_UNORM.
     */
-   struct intel_context *intel = &brw->intel;
-   struct gl_context *ctx = &intel->ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    uint32_t *surf;
    unsigned surface_type = BRW_SURFACE_NULL;
    drm_intel_bo *bo = NULL;
@@ -570,7 +565,7 @@ brw_update_null_renderbuffer_surface(struct brw_context *brw, unsigned int unit)
 
    surf[0] = (surface_type << BRW_SURFACE_TYPE_SHIFT |
 	      BRW_SURFACEFORMAT_B8G8R8A8_UNORM << BRW_SURFACE_FORMAT_SHIFT);
-   if (intel->gen < 6) {
+   if (brw->gen < 6) {
       surf[0] |= (1 << BRW_SURFACE_WRITEDISABLE_R_SHIFT |
 		  1 << BRW_SURFACE_WRITEDISABLE_G_SHIFT |
 		  1 << BRW_SURFACE_WRITEDISABLE_B_SHIFT |
@@ -609,8 +604,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 				bool layered,
 				unsigned int unit)
 {
-   struct intel_context *intel = &brw->intel;
-   struct gl_context *ctx = &intel->ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
    struct intel_mipmap_tree *mt = irb->mt;
    struct intel_region *region;
@@ -675,7 +669,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 	      (tile_y / 2) << BRW_SURFACE_Y_OFFSET_SHIFT |
 	      (mt->align_h == 4 ? BRW_SURFACE_VERTICAL_ALIGN_ENABLE : 0));
 
-   if (intel->gen < 6) {
+   if (brw->gen < 6) {
       /* _NEW_COLOR */
       if (!ctx->Color.ColorLogicOpEnabled &&
 	  (ctx->Color.BlendEnabled & (1 << unit)))
@@ -756,8 +750,7 @@ const struct brw_tracked_state gen6_renderbuffer_surfaces = {
 static void
 brw_update_texture_surfaces(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
-   struct gl_context *ctx = &intel->ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
 
    /* BRW_NEW_VERTEX_PROGRAM and BRW_NEW_FRAGMENT_PROGRAM:
     * Unfortunately, we're stuck using the gl_program structs until the

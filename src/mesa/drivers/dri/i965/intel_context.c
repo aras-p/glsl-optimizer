@@ -94,8 +94,7 @@ void
 intel_resolve_for_dri2_flush(struct brw_context *brw,
                              __DRIdrawable *drawable)
 {
-   struct intel_context *intel = &brw->intel;
-   if (intel->gen < 6) {
+   if (brw->gen < 6) {
       /* MSAA and fast color clear are not supported, so don't waste time
        * checking whether a resolve is needed.
        */
@@ -474,30 +473,30 @@ intelInitContext(struct brw_context *brw,
    driContextPriv->driverPrivate = brw;
    brw->driContext = driContextPriv;
 
-   intel->gen = intelScreen->gen;
+   brw->gen = intelScreen->gen;
 
    const int devID = intelScreen->deviceID;
    if (IS_SNB_GT1(devID) || IS_IVB_GT1(devID) || IS_HSW_GT1(devID))
-      intel->gt = 1;
+      brw->gt = 1;
    else if (IS_SNB_GT2(devID) || IS_IVB_GT2(devID) || IS_HSW_GT2(devID))
-      intel->gt = 2;
+      brw->gt = 2;
    else if (IS_HSW_GT3(devID))
-      intel->gt = 3;
+      brw->gt = 3;
    else
-      intel->gt = 0;
+      brw->gt = 0;
 
    if (IS_HASWELL(devID)) {
       brw->is_haswell = true;
    } else if (IS_BAYTRAIL(devID)) {
       brw->is_baytrail = true;
-      intel->gt = 1;
+      brw->gt = 1;
    } else if (IS_G4X(devID)) {
       brw->is_g4x = true;
    }
 
    brw->has_separate_stencil = brw->intelScreen->hw_has_separate_stencil;
    brw->must_use_separate_stencil = brw->intelScreen->hw_must_use_separate_stencil;
-   brw->has_hiz = intel->gen >= 6;
+   brw->has_hiz = brw->gen >= 6;
    brw->has_llc = brw->intelScreen->hw_has_llc;
    brw->has_swizzling = brw->intelScreen->hw_has_swizzling;
 
@@ -560,7 +559,7 @@ intelInitContext(struct brw_context *brw,
    INTEL_DEBUG = driParseDebugString(getenv("INTEL_DEBUG"), debug_control);
    if (INTEL_DEBUG & DEBUG_BUFMGR)
       dri_bufmgr_set_debug(brw->bufmgr, true);
-   if ((INTEL_DEBUG & DEBUG_SHADER_TIME) && intel->gen < 7) {
+   if ((INTEL_DEBUG & DEBUG_SHADER_TIME) && brw->gen < 7) {
       fprintf(stderr,
               "shader_time debugging requires gen7 (Ivybridge) or better.\n");
       INTEL_DEBUG &= ~DEBUG_SHADER_TIME;
@@ -578,7 +577,7 @@ intelInitContext(struct brw_context *brw,
    if (!driQueryOptionb(&brw->optionCache, "hiz")) {
        brw->has_hiz = false;
        /* On gen6, you can only do separate stencil with HIZ. */
-       if (intel->gen == 6)
+       if (brw->gen == 6)
 	  brw->has_separate_stencil = false;
    }
 

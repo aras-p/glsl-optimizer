@@ -50,7 +50,6 @@
 static void compile_sf_prog( struct brw_context *brw,
 			     struct brw_sf_prog_key *key )
 {
-   struct intel_context *intel = &brw->intel;
    struct brw_sf_compile c;
    const GLuint *program;
    void *mem_ctx;
@@ -118,7 +117,7 @@ static void compile_sf_prog( struct brw_context *brw,
       printf("sf:\n");
       for (i = 0; i < program_size / sizeof(struct brw_instruction); i++)
 	 brw_disasm(stdout, &((struct brw_instruction *)program)[i],
-		    intel->gen);
+		    brw->gen);
       printf("\n");
    }
 

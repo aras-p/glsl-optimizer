@@ -107,7 +107,7 @@ void register_coalesce_test::SetUp()
 
    _mesa_init_vertex_program(ctx, &vp->program, GL_VERTEX_SHADER, 0);
 
-   intel->gen = 4;
+   brw->gen = 4;
 }
 
 static void

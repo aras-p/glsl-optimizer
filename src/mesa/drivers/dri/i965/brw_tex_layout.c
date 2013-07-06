@@ -42,7 +42,6 @@ static unsigned int
 intel_horizontal_texture_alignment_unit(struct brw_context *brw,
                                        gl_format format)
 {
-   struct intel_context *intel = &brw->intel;
    /**
     * From the "Alignment Unit Size" section of various specs, namely:
     * - Gen3 Spec: "Memory Data Formats" Volume,         Section 1.20.1.4
@@ -86,7 +85,7 @@ intel_horizontal_texture_alignment_unit(struct brw_context *brw,
     * offset workaround blits we do, align the X to 8, which depth texturing
     * can handle (sadly, it can't handle 8 in the Y direction).
     */
-   if (intel->gen >= 7 &&
+   if (brw->gen >= 7 &&
        _mesa_get_format_base_format(format) == GL_DEPTH_COMPONENT)
       return 8;
 
@@ -97,7 +96,6 @@ static unsigned int
 intel_vertical_texture_alignment_unit(struct brw_context *brw,
                                      gl_format format)
 {
-   struct intel_context *intel = &brw->intel;
    /**
     * From the "Alignment Unit Size" section of various specs, namely:
     * - Gen3 Spec: "Memory Data Formats" Volume,         Section 1.20.1.4
@@ -127,11 +125,11 @@ intel_vertical_texture_alignment_unit(struct brw_context *brw,
       return 4;
 
    if (format == MESA_FORMAT_S8)
-      return intel->gen >= 7 ? 8 : 4;
+      return brw->gen >= 7 ? 8 : 4;
 
    GLenum base_format = _mesa_get_format_base_format(format);
 
-   if (intel->gen >= 6 &&
+   if (brw->gen >= 6 &&
        (base_format == GL_DEPTH_COMPONENT ||
 	base_format == GL_DEPTH_STENCIL)) {
       return 4;
@@ -210,7 +208,6 @@ static void
 brw_miptree_layout_texture_array(struct brw_context *brw,
 				 struct intel_mipmap_tree *mt)
 {
-   struct intel_context *intel = &brw->intel;
    unsigned qpitch = 0;
    int h0, h1;
 
@@ -219,7 +216,7 @@ brw_miptree_layout_texture_array(struct brw_context *brw,
    if (mt->array_spacing_lod0)
       qpitch = h0;
    else
-      qpitch = (h0 + h1 + (intel->gen >= 7 ? 12 : 11) * mt->align_h);
+      qpitch = (h0 + h1 + (brw->gen >= 7 ? 12 : 11) * mt->align_h);
    if (mt->compressed)
       qpitch /= 4;
 
@@ -314,13 +311,12 @@ brw_miptree_layout_texture_3d(struct brw_context *brw,
 void
 brw_miptree_layout(struct brw_context *brw, struct intel_mipmap_tree *mt)
 {
-   struct intel_context *intel = &brw->intel;
    mt->align_w = intel_horizontal_texture_alignment_unit(brw, mt->format);
    mt->align_h = intel_vertical_texture_alignment_unit(brw, mt->format);
 
    switch (mt->target) {
    case GL_TEXTURE_CUBE_MAP:
-      if (intel->gen == 4) {
+      if (brw->gen == 4) {
          /* Gen4 stores cube maps as 3D textures. */
          assert(mt->physical_depth0 == 6);
          brw_miptree_layout_texture_3d(brw, mt);

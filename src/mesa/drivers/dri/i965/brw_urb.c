@@ -114,7 +114,6 @@ static bool check_urb_layout(struct brw_context *brw)
  */
 static void recalculate_urb_fence( struct brw_context *brw )
 {
-   struct intel_context *intel = &brw->intel;
    GLuint csize = brw->curbe.total_size;
    GLuint vsize = brw->vs.prog_data->base.urb_entry_size;
    GLuint sfsize = brw->sf.prog_data->urb_entry_size;
@@ -148,7 +147,7 @@ static void recalculate_urb_fence( struct brw_context *brw )
 
       brw->urb.constrained = 0;
 
-      if (intel->gen == 5) {
+      if (brw->gen == 5) {
          brw->urb.nr_vs_entries = 128;
          brw->urb.nr_sf_entries = 48;
          if (check_urb_layout(brw)) {

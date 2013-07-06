@@ -35,7 +35,6 @@ static void
 gen6_upload_depth_stencil_state(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->intel.ctx;
-   struct intel_context *intel = &brw->intel;
    struct gen6_depth_stencil_state *ds;
    struct intel_renderbuffer *depth_irb;
 
@@ -88,7 +87,7 @@ gen6_upload_depth_stencil_state(struct brw_context *brw)
    }
 
    /* Point the GPU at the new indirect state. */
-   if (intel->gen == 6) {
+   if (brw->gen == 6) {
       BEGIN_BATCH(4);
       OUT_BATCH(_3DSTATE_CC_STATE_POINTERS << 16 | (4 - 2));
       OUT_BATCH(0);

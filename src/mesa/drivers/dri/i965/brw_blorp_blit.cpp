@@ -359,7 +359,7 @@ brw_blorp_copytexsubimage(struct brw_context *brw,
    struct intel_mipmap_tree *dst_mt = intel_image->mt;
 
    /* BLORP is not supported before Gen6. */
-   if (intel->gen < 6)
+   if (brw->gen < 6)
       return false;
 
    if (!color_formats_match(src_mt->format, dst_mt->format)) {
@@ -435,10 +435,8 @@ brw_blorp_framebuffer(struct brw_context *brw,
                       GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
                       GLbitfield mask, GLenum filter)
 {
-   struct intel_context *intel = &brw->intel;
-
    /* BLORP is not supported before Gen6. */
-   if (intel->gen < 6)
+   if (brw->gen < 6)
       return mask;
 
    static GLbitfield buffer_bits[] = {
@@ -844,7 +842,7 @@ brw_blorp_blit_program::compile(struct brw_context *brw,
     * irrelevant, because we are going to fetch all samples.
     */
    if (key->blend && !key->blit_scaled) {
-      if (brw->intel.gen == 6) {
+      if (brw->gen == 6) {
          /* Gen6 hardware an automatically blend using the SAMPLE message */
          single_to_blend();
          sample(texture_data[0]);
@@ -1802,7 +1800,7 @@ brw_blorp_blit_program::texel_fetch(struct brw_reg dst)
       SAMPLER_MESSAGE_ARG_V_INT
    };
 
-   switch (brw->intel.gen) {
+   switch (brw->gen) {
    case 6:
       texture_lookup(dst, GEN5_SAMPLER_MESSAGE_SAMPLE_LD, gen6_args,
                      s_is_zero ? 2 : 5);
@@ -2023,7 +2021,7 @@ compute_msaa_layout_for_pipeline(struct brw_context *brw, unsigned num_samples,
    }
 
    /* Prior to Gen7, all MSAA surfaces use IMS layout. */
-   if (brw->intel.gen == 6) {
+   if (brw->gen == 6) {
       assert(true_layout == INTEL_MSAA_LAYOUT_IMS);
    }
 
@@ -2078,7 +2076,7 @@ brw_blorp_blit_params::brw_blorp_blit_params(struct brw_context *brw,
       break;
    }
 
-   if (brw->intel.gen > 6) {
+   if (brw->gen > 6) {
       /* Gen7's rendering hardware only supports the IMS layout for depth and
        * stencil render targets.  Blorp always maps its destination surface as
        * a color render target (even if it's actually a depth or stencil

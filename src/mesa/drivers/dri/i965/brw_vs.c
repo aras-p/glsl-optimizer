@@ -61,8 +61,6 @@ void
 brw_compute_vue_map(struct brw_context *brw, struct brw_vue_map *vue_map,
                     GLbitfield64 slots_valid, bool userclip_active)
 {
-   const struct intel_context *intel = &brw->intel;
-
    vue_map->slots_valid = slots_valid;
    int i;
 
@@ -83,7 +81,7 @@ brw_compute_vue_map(struct brw_context *brw, struct brw_vue_map *vue_map,
    /* VUE header: format depends on chip generation and whether clipping is
     * enabled.
     */
-   switch (intel->gen) {
+   switch (brw->gen) {
    case 4:
    case 5:
       /* There are 8 dwords in VUE header pre-Ironlake:
@@ -220,7 +218,6 @@ do_vs_prog(struct brw_context *brw,
 	   struct brw_vertex_program *vp,
 	   struct brw_vs_prog_key *key)
 {
-   struct intel_context *intel = &brw->intel;
    GLuint program_size;
    const GLuint *program;
    struct brw_vs_compile c;
@@ -269,7 +266,7 @@ do_vs_prog(struct brw_context *brw,
       prog_data.inputs_read |= VERT_BIT_EDGEFLAG;
    }
 
-   if (intel->gen < 6) {
+   if (brw->gen < 6) {
       /* Put dummy slots into the VUE for the SF to put the replaced
        * point sprite coords in.  We shouldn't need these dummy slots,
        * which take up precious URB space, but it would mean that the SF
@@ -406,8 +403,7 @@ brw_vs_debug_recompile(struct brw_context *brw,
 
 static void brw_upload_vs_prog(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
-   struct gl_context *ctx = &intel->ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    struct brw_vs_prog_key key;
    /* BRW_NEW_VERTEX_PROGRAM */
    struct brw_vertex_program *vp = 
@@ -424,7 +420,7 @@ static void brw_upload_vs_prog(struct brw_context *brw)
    key.base.userclip_active = (ctx->Transform.ClipPlanesEnabled != 0);
    key.base.uses_clip_distance = vp->program.UsesClipDistance;
    if (key.base.userclip_active && !key.base.uses_clip_distance) {
-      if (intel->gen < 6) {
+      if (brw->gen < 6) {
          key.base.nr_userclip_plane_consts
             = _mesa_bitcount_64(ctx->Transform.ClipPlanesEnabled);
          key.base.userclip_planes_enabled_gen_4_5
@@ -436,7 +432,7 @@ static void brw_upload_vs_prog(struct brw_context *brw)
    }
 
    /* _NEW_POLYGON */
-   if (intel->gen < 6) {
+   if (brw->gen < 6) {
       key.copy_edgeflag = (ctx->Polygon.FrontMode != GL_FILL ||
                            ctx->Polygon.BackMode != GL_FILL);
    }
@@ -445,7 +441,7 @@ static void brw_upload_vs_prog(struct brw_context *brw)
    key.base.clamp_vertex_color = ctx->Light._ClampVertexColor;
 
    /* _NEW_POINT */
-   if (intel->gen < 6 && ctx->Point.PointSprite) {
+   if (brw->gen < 6 && ctx->Point.PointSprite) {
       for (i = 0; i < 8; i++) {
 	 if (ctx->Point.CoordReplace[i])
 	    key.point_coord_replace |= (1 << i);
@@ -456,7 +452,7 @@ static void brw_upload_vs_prog(struct brw_context *brw)
    brw_populate_sampler_prog_key_data(ctx, prog, &key.base.tex);
 
    /* BRW_NEW_VERTICES */
-   if (intel->gen < 8 && !brw->is_haswell) {
+   if (brw->gen < 8 && !brw->is_haswell) {
       /* Prior to Haswell, the hardware can't natively support GL_FIXED or
        * 2_10_10_10_REV vertex formats.  Set appropriate workaround flags.
        */

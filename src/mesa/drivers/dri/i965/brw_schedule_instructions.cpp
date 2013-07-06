@@ -61,8 +61,6 @@ class schedule_node : public exec_node
 public:
    schedule_node(backend_instruction *inst, const struct brw_context *brw)
    {
-      const struct intel_context *intel = &brw->intel;
-
       this->inst = inst;
       this->child_array_size = 0;
       this->children = NULL;
@@ -74,7 +72,7 @@ public:
       /* We can't measure Gen6 timings directly but expect them to be much
        * closer to Gen7 than Gen4.
        */
-      if (intel->gen >= 6)
+      if (brw->gen >= 6)
          set_latency_gen7(brw->is_haswell);
       else
          set_latency_gen4();

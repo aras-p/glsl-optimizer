@@ -62,11 +62,11 @@ static size_t
 brw_query_samples_for_format(struct gl_context *ctx, GLenum target,
                              GLenum internalFormat, int samples[16])
 {
-   struct intel_context *intel = intel_context(ctx);
+   struct brw_context *brw = brw_context(ctx);
 
    (void) target;
 
-   switch (intel->gen) {
+   switch (brw->gen) {
    case 7:
       samples[0] = 8;
       samples[1] = 4;
@@ -136,7 +136,7 @@ brw_initialize_context_constants(struct brw_context *brw)
    ctx->Const.Max3DTextureLevels = 9;
    ctx->Const.MaxCubeTextureLevels = 12;
 
-   if (intel->gen >= 7)
+   if (brw->gen >= 7)
       ctx->Const.MaxArrayTextureLayers = 2048;
    else
       ctx->Const.MaxArrayTextureLayers = 512;
@@ -167,12 +167,12 @@ brw_initialize_context_constants(struct brw_context *brw)
    ctx->Const.MaxTransformFeedbackSeparateComponents =
       BRW_MAX_SOL_BINDINGS / BRW_MAX_SOL_BUFFERS;
 
-   if (intel->gen == 6) {
+   if (brw->gen == 6) {
       ctx->Const.MaxSamples = 4;
       ctx->Const.MaxColorTextureSamples = 4;
       ctx->Const.MaxDepthTextureSamples = 4;
       ctx->Const.MaxIntegerSamples = 4;
-   } else if (intel->gen >= 7) {
+   } else if (brw->gen >= 7) {
       ctx->Const.MaxSamples = 8;
       ctx->Const.MaxColorTextureSamples = 8;
       ctx->Const.MaxDepthTextureSamples = 8;
@@ -191,7 +191,7 @@ brw_initialize_context_constants(struct brw_context *brw)
    ctx->Const.MaxPointSizeAA = 255.0;
    ctx->Const.PointSizeGranularity = 1.0;
 
-   if (intel->gen >= 6)
+   if (brw->gen >= 6)
       ctx->Const.MaxClipPlanes = 8;
 
    ctx->Const.VertexProgram.MaxNativeInstructions = 16 * 1024;
@@ -235,7 +235,7 @@ brw_initialize_context_constants(struct brw_context *brw)
     * that affect provoking vertex decision. Always use last vertex
     * convention for quad primitive which works as expected for now.
     */
-   if (intel->gen >= 6)
+   if (brw->gen >= 6)
       ctx->Const.QuadsFollowProvokingVertexConvention = false;
 
    ctx->Const.NativeIntegers = true;
@@ -250,7 +250,7 @@ brw_initialize_context_constants(struct brw_context *brw)
 
    /* We want the GLSL compiler to emit code that uses condition codes */
    for (int i = 0; i <= MESA_SHADER_FRAGMENT; i++) {
-      ctx->ShaderCompilerOptions[i].MaxIfDepth = intel->gen < 6 ? 16 : UINT_MAX;
+      ctx->ShaderCompilerOptions[i].MaxIfDepth = brw->gen < 6 ? 16 : UINT_MAX;
       ctx->ShaderCompilerOptions[i].EmitCondCodes = true;
       ctx->ShaderCompilerOptions[i].EmitNoNoise = true;
       ctx->ShaderCompilerOptions[i].EmitNoMainReturn = true;
@@ -291,7 +291,7 @@ brwCreateContext(int api,
    /* brwInitVtbl needs to know the chipset generation so that it can set the
     * right pointers.
     */
-   brw->intel.gen = screen->gen;
+   brw->gen = screen->gen;
 
    brwInitVtbl( brw );
 
@@ -313,7 +313,7 @@ brwCreateContext(int api,
    /* Reinitialize the context point state.  It depends on ctx->Const values. */
    _mesa_init_point(ctx);
 
-   if (intel->gen >= 6) {
+   if (brw->gen >= 6) {
       /* Create a new hardware context.  Using a hardware context means that
        * our GPU state will be saved/restored on context switch, allowing us
        * to assume that the GPU is in the same state we left it in.
@@ -341,11 +341,11 @@ brwCreateContext(int api,
    ctx->DriverFlags.NewRasterizerDiscard = BRW_NEW_RASTERIZER_DISCARD;
    ctx->DriverFlags.NewUniformBuffer = BRW_NEW_UNIFORM_BUFFER;
 
-   if (brw->is_g4x || intel->gen >= 5) {
+   if (brw->is_g4x || brw->gen >= 5) {
       brw->CMD_VF_STATISTICS = GM45_3DSTATE_VF_STATISTICS;
       brw->CMD_PIPELINE_SELECT = CMD_PIPELINE_SELECT_GM45;
       brw->has_surface_tile_offset = true;
-      if (intel->gen < 6)
+      if (brw->gen < 6)
 	  brw->has_compr4 = true;
       brw->has_aa_line_parameters = true;
       brw->has_pln = true;
@@ -355,37 +355,37 @@ brwCreateContext(int api,
    }
 
    /* WM maximum threads is number of EUs times number of threads per EU. */
-   assert(intel->gen <= 7);
+   assert(brw->gen <= 7);
 
    if (brw->is_haswell) {
-      if (intel->gt == 1) {
+      if (brw->gt == 1) {
 	 brw->max_wm_threads = 102;
 	 brw->max_vs_threads = 70;
 	 brw->urb.size = 128;
 	 brw->urb.max_vs_entries = 640;
 	 brw->urb.max_gs_entries = 256;
-      } else if (intel->gt == 2) {
+      } else if (brw->gt == 2) {
 	 brw->max_wm_threads = 204;
 	 brw->max_vs_threads = 280;
 	 brw->urb.size = 256;
 	 brw->urb.max_vs_entries = 1664;
 	 brw->urb.max_gs_entries = 640;
-      } else if (intel->gt == 3) {
+      } else if (brw->gt == 3) {
 	 brw->max_wm_threads = 408;
 	 brw->max_vs_threads = 280;
 	 brw->urb.size = 512;
 	 brw->urb.max_vs_entries = 1664;
 	 brw->urb.max_gs_entries = 640;
       }
-   } else if (intel->gen == 7) {
-      if (intel->gt == 1) {
+   } else if (brw->gen == 7) {
+      if (brw->gt == 1) {
 	 brw->max_wm_threads = 48;
 	 brw->max_vs_threads = 36;
 	 brw->max_gs_threads = 36;
 	 brw->urb.size = 128;
 	 brw->urb.max_vs_entries = 512;
 	 brw->urb.max_gs_entries = 192;
-      } else if (intel->gt == 2) {
+      } else if (brw->gt == 2) {
 	 brw->max_wm_threads = 172;
 	 brw->max_vs_threads = 128;
 	 brw->max_gs_threads = 128;
@@ -395,8 +395,8 @@ brwCreateContext(int api,
       } else {
 	 assert(!"Unknown gen7 device.");
       }
-   } else if (intel->gen == 6) {
-      if (intel->gt == 2) {
+   } else if (brw->gen == 6) {
+      if (brw->gt == 2) {
 	 brw->max_wm_threads = 80;
 	 brw->max_vs_threads = 60;
 	 brw->max_gs_threads = 60;
@@ -412,7 +412,7 @@ brwCreateContext(int api,
 	 brw->urb.max_gs_entries = 256;
       }
       brw->urb.gen6_gs_previously_active = false;
-   } else if (intel->gen == 5) {
+   } else if (brw->gen == 5) {
       brw->urb.size = 1024;
       brw->max_vs_threads = 72;
       brw->max_gs_threads = 32;
@@ -422,7 +422,7 @@ brwCreateContext(int api,
       brw->max_vs_threads = 32;
       brw->max_gs_threads = 2;
       brw->max_wm_threads = 10 * 5;
-   } else if (intel->gen < 6) {
+   } else if (brw->gen < 6) {
       brw->urb.size = 256;
       brw->max_vs_threads = 16;
       brw->max_gs_threads = 2;
@@ -430,7 +430,7 @@ brwCreateContext(int api,
       brw->has_negative_rhw_bug = true;
    }
 
-   if (intel->gen <= 7) {
+   if (brw->gen <= 7) {
       brw->needs_unlit_centroid_workaround = true;
    }
 

@@ -237,8 +237,6 @@ static const struct brw_tracked_state *gen7_atoms[] =
 static void
 brw_upload_initial_gpu_state(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
-
    /* On platforms with hardware contexts, we can set our initial GPU state
     * right away rather than doing it via state atoms.  This saves a small
     * amount of overhead on every draw call.
@@ -248,7 +246,7 @@ brw_upload_initial_gpu_state(struct brw_context *brw)
 
    brw_upload_invariant_state(brw);
 
-   if (intel->gen >= 7) {
+   if (brw->gen >= 7) {
       gen7_allocate_push_constants(brw);
    }
 }
@@ -260,10 +258,10 @@ void brw_init_state( struct brw_context *brw )
 
    brw_init_caches(brw);
 
-   if (brw->intel.gen >= 7) {
+   if (brw->gen >= 7) {
       atoms = gen7_atoms;
       num_atoms = ARRAY_SIZE(gen7_atoms);
-   } else if (brw->intel.gen == 6) {
+   } else if (brw->gen == 6) {
       atoms = gen6_atoms;
       num_atoms = ARRAY_SIZE(gen6_atoms);
    } else {

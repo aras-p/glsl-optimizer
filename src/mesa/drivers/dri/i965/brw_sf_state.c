@@ -162,7 +162,7 @@ static void upload_sf_unit( struct brw_context *brw )
    /* Each SF thread produces 1 PUE, and there can be up to 24 (Pre-Ironlake) or
     * 48 (Ironlake) threads.
     */
-   if (intel->gen == 5)
+   if (brw->gen == 5)
       chipset_max_threads = 48;
    else
       chipset_max_threads = 24;

@@ -527,12 +527,11 @@ brw_format_for_mesa_format(gl_format mesa_format)
 void
 brw_init_surface_formats(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
-   struct gl_context *ctx = &intel->ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    int gen;
    gl_format format;
 
-   gen = intel->gen * 10;
+   gen = brw->gen * 10;
    if (brw->is_g4x)
       gen += 5;
 
@@ -652,7 +651,6 @@ bool
 brw_render_target_supported(struct brw_context *brw,
 			    struct gl_renderbuffer *rb)
 {
-   struct intel_context *intel = &brw->intel;
    gl_format format = rb->Format;
 
    /* Many integer formats are promoted to RGBA (like XRGB8888 is), which means
@@ -671,7 +669,7 @@ brw_render_target_supported(struct brw_context *brw,
     */
    if (rb->NumSamples > 0 && _mesa_get_format_bytes(format) > 8) {
       /* Gen6: MSAA on >64 bit formats is unsupported. */
-      if (intel->gen <= 6)
+      if (brw->gen <= 6)
          return false;
 
       /* Gen7: 8x MSAA on >64 bit formats is unsupported. */
@@ -688,7 +686,6 @@ translate_tex_format(struct brw_context *brw,
 		     GLenum depth_mode,
 		     GLenum srgb_decode)
 {
-   struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &brw->intel.ctx;
    if (srgb_decode == GL_SKIP_DECODE_EXT)
       mesa_format = _mesa_get_srgb_format_linear(mesa_format);
@@ -715,7 +712,7 @@ translate_tex_format(struct brw_context *brw,
       return BRW_SURFACEFORMAT_R32G32B32A32_FLOAT;
 
    case MESA_FORMAT_SRGB_DXT1:
-      if (intel->gen == 4 && !brw->is_g4x) {
+      if (brw->gen == 4 && !brw->is_g4x) {
          /* Work around missing SRGB DXT1 support on original gen4 by just
           * skipping SRGB decode.  It's not worth not supporting sRGB in
           * general to prevent this.

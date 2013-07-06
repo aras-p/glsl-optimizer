@@ -62,7 +62,7 @@ fs_generator::~fs_generator()
 void
 fs_generator::patch_discard_jumps_to_fb_writes()
 {
-   if (intel->gen < 6 || this->discard_halt_patches.is_empty())
+   if (brw->gen < 6 || this->discard_halt_patches.is_empty())
       return;
 
    /* There is a somewhat strange undocumented requirement of using
@@ -111,7 +111,7 @@ fs_generator::generate_fb_write(fs_inst *inst)
    if (fp->UsesKill) {
       struct brw_reg pixel_mask;
 
-      if (intel->gen >= 6)
+      if (brw->gen >= 6)
          pixel_mask = retype(brw_vec1_grf(1, 7), BRW_REGISTER_TYPE_UW);
       else
          pixel_mask = retype(brw_vec1_grf(0, 0), BRW_REGISTER_TYPE_UW);
@@ -120,7 +120,7 @@ fs_generator::generate_fb_write(fs_inst *inst)
    }
 
    if (inst->header_present) {
-      if (intel->gen >= 6) {
+      if (brw->gen >= 6) {
 	 brw_set_compression_control(p, BRW_COMPRESSION_COMPRESSED);
 	 brw_MOV(p,
 		 retype(brw_message_reg(inst->base_mrf), BRW_REGISTER_TYPE_UD),
@@ -222,7 +222,7 @@ fs_generator::generate_linterp(fs_inst *inst,
 
    if (brw->has_pln &&
        delta_y.nr == delta_x.nr + 1 &&
-       (intel->gen >= 6 || (delta_x.nr & 1) == 0)) {
+       (brw->gen >= 6 || (delta_x.nr & 1) == 0)) {
       brw_PLN(p, dst, interp, delta_x);
    } else {
       brw_LINE(p, brw_null_reg(), interp, delta_x);
@@ -374,7 +374,7 @@ fs_generator::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src
    if (dispatch_width == 16)
       simd_mode = BRW_SAMPLER_SIMD_MODE_SIMD16;
 
-   if (intel->gen >= 5) {
+   if (brw->gen >= 5) {
       switch (inst->opcode) {
       case SHADER_OPCODE_TEX:
 	 if (inst->shadow_compare) {
@@ -413,7 +413,7 @@ fs_generator::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src
 	 msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_LD;
 	 break;
       case SHADER_OPCODE_TXF_MS:
-         if (intel->gen >= 7)
+         if (brw->gen >= 7)
             msg_type = GEN7_SAMPLER_MESSAGE_SAMPLE_LD2DMS;
          else
             msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_LD;
@@ -596,7 +596,7 @@ fs_generator::generate_ddy(fs_inst *inst, struct brw_reg dst, struct brw_reg src
 void
 fs_generator::generate_discard_jump(fs_inst *inst)
 {
-   assert(intel->gen >= 6);
+   assert(brw->gen >= 6);
 
    /* This HALT will be patched up at FB write time to point UIP at the end of
     * the program, and at brw_uip_jip() JIP will be set to the end of the
@@ -697,7 +697,7 @@ fs_generator::generate_varying_pull_constant_load(fs_inst *inst,
                                                   struct brw_reg index,
                                                   struct brw_reg offset)
 {
-   assert(intel->gen < 7); /* Should use the gen7 variant. */
+   assert(brw->gen < 7); /* Should use the gen7 variant. */
    assert(inst->header_present);
    assert(inst->mlen);
 
@@ -714,7 +714,7 @@ fs_generator::generate_varying_pull_constant_load(fs_inst *inst,
       rlen = 4;
    }
 
-   if (intel->gen >= 5)
+   if (brw->gen >= 5)
       msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_LD;
    else {
       /* We always use the SIMD16 message so that we only have to load U, and
@@ -738,7 +738,7 @@ fs_generator::generate_varying_pull_constant_load(fs_inst *inst,
    send->header.compression_control = BRW_COMPRESSION_NONE;
    brw_set_dest(p, send, dst);
    brw_set_src0(p, send, header);
-   if (intel->gen < 6)
+   if (brw->gen < 6)
       send->header.destreg__conditionalmod = inst->base_mrf;
 
    /* Our surface is set up as floats, regardless of what actual data is
@@ -762,7 +762,7 @@ fs_generator::generate_varying_pull_constant_load_gen7(fs_inst *inst,
                                                        struct brw_reg index,
                                                        struct brw_reg offset)
 {
-   assert(intel->gen >= 7);
+   assert(brw->gen >= 7);
    /* Varying-offset pull constant loads are treated as a normal expression on
     * gen7, so the fact that it's a send message is hidden at the IR level.
     */
@@ -810,7 +810,7 @@ fs_generator::generate_mov_dispatch_to_flags(fs_inst *inst)
    struct brw_reg flags = brw_flag_reg(0, inst->flag_subreg);
    struct brw_reg dispatch_mask;
 
-   if (intel->gen >= 6)
+   if (brw->gen >= 6)
       dispatch_mask = retype(brw_vec1_grf(1, 7), BRW_REGISTER_TYPE_UW);
    else
       dispatch_mask = retype(brw_vec1_grf(0, 0), BRW_REGISTER_TYPE_UW);
@@ -946,7 +946,7 @@ fs_generator::generate_pack_half_2x16_split(fs_inst *inst,
                                             struct brw_reg x,
                                             struct brw_reg y)
 {
-   assert(intel->gen >= 7);
+   assert(brw->gen >= 7);
    assert(dst.type == BRW_REGISTER_TYPE_UD);
    assert(x.type == BRW_REGISTER_TYPE_F);
    assert(y.type == BRW_REGISTER_TYPE_F);
@@ -984,7 +984,7 @@ fs_generator::generate_unpack_half_2x16_split(fs_inst *inst,
                                               struct brw_reg dst,
                                               struct brw_reg src)
 {
-   assert(intel->gen >= 7);
+   assert(brw->gen >= 7);
    assert(dst.type == BRW_REGISTER_TYPE_F);
    assert(src.type == BRW_REGISTER_TYPE_UD);
 
@@ -1014,7 +1014,7 @@ fs_generator::generate_shader_time_add(fs_inst *inst,
                                        struct brw_reg offset,
                                        struct brw_reg value)
 {
-   assert(intel->gen >= 7);
+   assert(brw->gen >= 7);
    brw_push_insn_state(p);
    brw_set_mask_control(p, true);
 
@@ -1281,7 +1281,7 @@ fs_generator::generate_code(exec_list *instructions)
       case BRW_OPCODE_IF:
 	 if (inst->src[0].file != BAD_FILE) {
 	    /* The instruction has an embedded compare (only allowed on gen6) */
-	    assert(intel->gen == 6);
+	    assert(brw->gen == 6);
 	    gen6_IF(p, inst->conditional_mod, src[0], src[1]);
 	 } else {
 	    brw_IF(p, dispatch_width == 16 ? BRW_EXECUTE_16 : BRW_EXECUTE_8);
@@ -1305,7 +1305,7 @@ fs_generator::generate_code(exec_list *instructions)
 	 break;
       case BRW_OPCODE_CONTINUE:
 	 /* FINISHME: We need to write the loop instruction support still. */
-	 if (intel->gen >= 6)
+	 if (brw->gen >= 6)
 	    gen6_CONT(p);
 	 else
 	    brw_CONT(p);
@@ -1323,11 +1323,11 @@ fs_generator::generate_code(exec_list *instructions)
       case SHADER_OPCODE_LOG2:
       case SHADER_OPCODE_SIN:
       case SHADER_OPCODE_COS:
-	 if (intel->gen >= 7) {
+	 if (brw->gen >= 7) {
 	    generate_math1_gen7(inst, dst, src[0]);
-	 } else if (intel->gen == 6) {
+	 } else if (brw->gen == 6) {
 	    generate_math1_gen6(inst, dst, src[0]);
-	 } else if (intel->gen == 5 || brw->is_g4x) {
+	 } else if (brw->gen == 5 || brw->is_g4x) {
 	    generate_math_g45(inst, dst, src[0]);
 	 } else {
 	    generate_math_gen4(inst, dst, src[0]);
@@ -1336,9 +1336,9 @@ fs_generator::generate_code(exec_list *instructions)
       case SHADER_OPCODE_INT_QUOTIENT:
       case SHADER_OPCODE_INT_REMAINDER:
       case SHADER_OPCODE_POW:
-	 if (intel->gen >= 7) {
+	 if (brw->gen >= 7) {
 	    generate_math2_gen7(inst, dst, src[0], src[1]);
-	 } else if (intel->gen == 6) {
+	 } else if (brw->gen == 6) {
 	    generate_math2_gen6(inst, dst, src[0], src[1]);
 	 } else {
 	    generate_math_gen4(inst, dst, src[0]);

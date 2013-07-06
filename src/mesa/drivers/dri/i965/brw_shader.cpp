@@ -89,7 +89,7 @@ brw_lower_packing_builtins(struct brw_context *brw,
            | LOWER_PACK_UNORM_4x8
            | LOWER_UNPACK_UNORM_4x8;
 
-   if (brw->intel.gen >= 7) {
+   if (brw->gen >= 7) {
       /* Gen7 introduced the f32to16 and f16to32 instructions, which can be
        * used to execute packHalf2x16 and unpackHalf2x16. For AOS code, no
        * lowering is needed. For SOA code, the Half2x16 ops must be
@@ -111,7 +111,6 @@ GLboolean
 brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
 {
    struct brw_context *brw = brw_context(ctx);
-   struct intel_context *intel = &brw->intel;
    unsigned int stage;
 
    for (stage = 0; stage < ARRAY_SIZE(shProg->_LinkedShaders); stage++) {
@@ -146,10 +145,10 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
        */
       brw_lower_packing_builtins(brw, (gl_shader_type) stage, shader->ir);
       do_mat_op_to_vec(shader->ir);
-      const int bitfield_insert = intel->gen >= 7
+      const int bitfield_insert = brw->gen >= 7
                                   ? BITFIELD_INSERT_TO_BFM_BFI
                                   : 0;
-      const int lrp_to_arith = intel->gen < 6 ? LRP_TO_ARITH : 0;
+      const int lrp_to_arith = brw->gen < 6 ? LRP_TO_ARITH : 0;
       lower_instructions(shader->ir,
 			 MOD_TO_FRACT |
 			 DIV_TO_MUL_RCP |
@@ -162,7 +161,7 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
       /* Pre-gen6 HW can only nest if-statements 16 deep.  Beyond this,
        * if-statements need to be flattened.
        */
-      if (intel->gen < 6)
+      if (brw->gen < 6)
 	 lower_if_to_cond_assign(shader->ir, 16);
 
       do_lower_texture_projection(shader->ir);

@@ -877,6 +877,9 @@ struct brw_context
 
    bool emit_state_always;
 
+   int gen;
+   int gt;
+
    bool is_g4x;
    bool is_baytrail;
    bool is_haswell;
@@ -1445,9 +1448,7 @@ static inline uint32_t
 brw_program_reloc(struct brw_context *brw, uint32_t state_offset,
 		  uint32_t prog_offset)
 {
-   struct intel_context *intel = &brw->intel;
-
-   if (intel->gen >= 5) {
+   if (brw->gen >= 5) {
       /* Using state base address. */
       return prog_offset;
    }

@@ -73,7 +73,6 @@ fs_visitor::assign_regs_trivial()
 static void
 brw_alloc_reg_set(struct brw_context *brw, int reg_width)
 {
-   struct intel_context *intel = &brw->intel;
    int base_reg_count = BRW_MAX_GRF / reg_width;
    int index = reg_width - 1;
 
@@ -107,7 +106,7 @@ brw_alloc_reg_set(struct brw_context *brw, int reg_width)
 
    uint8_t *ra_reg_to_grf = ralloc_array(brw, uint8_t, ra_reg_count);
    struct ra_regs *regs = ra_alloc_reg_set(brw, ra_reg_count);
-   if (intel->gen >= 6)
+   if (brw->gen >= 6)
       ra_set_allocate_round_robin(regs);
    int *classes = ralloc_array(brw, int, class_count);
    int aligned_pairs_class = -1;
@@ -147,7 +146,7 @@ brw_alloc_reg_set(struct brw_context *brw, int reg_width)
    /* Add a special class for aligned pairs, which we'll put delta_x/y
     * in on gen5 so that we can do PLN.
     */
-   if (brw->has_pln && reg_width == 1 && intel->gen < 6) {
+   if (brw->has_pln && reg_width == 1 && brw->gen < 6) {
       aligned_pairs_class = ra_alloc_reg_class(regs);
 
       for (int i = 0; i < pairs_reg_count; i++) {
@@ -285,7 +284,7 @@ fs_visitor::setup_payload_interference(struct ra_graph *g,
           * two in the arguments (1 node).  Pre-gen6, the deltas are computed
           * in normal VGRFs.
           */
-         if (intel->gen >= 6) {
+         if (brw->gen >= 6) {
             int delta_x_arg = 0;
             if (inst->src[delta_x_arg].file == HW_REG &&
                 inst->src[delta_x_arg].fixed_hw_reg.file ==
@@ -406,7 +405,7 @@ fs_visitor::assign_regs()
    int first_payload_node = node_count;
    node_count += payload_node_count;
    int first_mrf_hack_node = node_count;
-   if (intel->gen >= 7)
+   if (brw->gen >= 7)
       node_count += BRW_MAX_GRF - GEN7_MRF_HACK_START;
    struct ra_graph *g = ra_alloc_interference_graph(brw->wm.reg_sets[rsi].regs,
                                                     node_count);
@@ -448,7 +447,7 @@ fs_visitor::assign_regs()
    }
 
    setup_payload_interference(g, payload_node_count, first_payload_node);
-   if (intel->gen >= 7)
+   if (brw->gen >= 7)
       setup_mrf_hack_interference(g, first_mrf_hack_node);
 
    if (!ra_allocate_no_spills(g)) {

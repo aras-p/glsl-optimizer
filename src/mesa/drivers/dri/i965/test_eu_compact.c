@@ -52,7 +52,7 @@ test_compact_instruction(struct brw_compile *p, struct brw_instruction src)
       if (memcmp(&unchanged, &dst, sizeof(dst))) {
 	 fprintf(stderr, "Failed to compact, but dst changed\n");
 	 fprintf(stderr, "  Instruction: ");
-	 brw_disasm(stderr, &src, intel->gen);
+	 brw_disasm(stderr, &src, brw->gen);
 	 return false;
       }
    }
@@ -297,10 +297,10 @@ main(int argc, char **argv)
 {
    struct brw_context *brw = calloc(1, sizeof(*brw));
    struct intel_context *intel = &brw->intel;
-   intel->gen = 6;
+   brw->gen = 6;
    bool fail = false;
 
-   for (intel->gen = 6; intel->gen <= 7; intel->gen++) {
+   for (brw->gen = 6; brw->gen <= 7; brw->gen++) {
       fail |= run_tests(brw);
    }
 

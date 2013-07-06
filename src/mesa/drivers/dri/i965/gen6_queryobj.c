@@ -45,9 +45,8 @@
 static void
 write_timestamp(struct brw_context *brw, drm_intel_bo *query_bo, int idx)
 {
-   struct intel_context *intel = &brw->intel;
    /* Emit workaround flushes: */
-   if (intel->gen == 6) {
+   if (brw->gen == 6) {
       /* The timestamp write below is a non-zero post-sync op, which on
        * Gen6 necessitates a CS stall.  CS stalls need stall at scoreboard
        * set.  See the comments for intel_emit_post_sync_nonzero_flush().
@@ -78,9 +77,8 @@ write_timestamp(struct brw_context *brw, drm_intel_bo *query_bo, int idx)
 static void
 write_depth_count(struct brw_context *brw, drm_intel_bo *query_bo, int idx)
 {
-   struct intel_context *intel = &brw->intel;
    /* Emit Sandybridge workaround flush: */
-   if (intel->gen == 6)
+   if (brw->gen == 6)
       intel_emit_post_sync_nonzero_flush(brw);
 
    BEGIN_BATCH(5);
@@ -107,8 +105,7 @@ static void
 write_reg(struct brw_context *brw,
           drm_intel_bo *query_bo, uint32_t reg, int idx)
 {
-   struct intel_context *intel = &brw->intel;
-   assert(intel->gen >= 6);
+   assert(brw->gen >= 6);
 
    intel_batchbuffer_emit_mi_flush(brw);
 
@@ -141,8 +138,7 @@ static void
 write_xfb_primitives_written(struct brw_context *brw,
                              drm_intel_bo *query_bo, int idx)
 {
-   struct intel_context *intel = &brw->intel;
-   if (intel->gen >= 7) {
+   if (brw->gen >= 7) {
       write_reg(brw, query_bo, SO_NUM_PRIMS_WRITTEN0_IVB, idx);
    } else {
       write_reg(brw, query_bo, SO_NUM_PRIMS_WRITTEN, idx);

@@ -49,10 +49,9 @@
 static void
 write_timestamp(struct brw_context *brw, drm_intel_bo *query_bo, int idx)
 {
-   struct intel_context *intel = &brw->intel;
-   if (intel->gen >= 6) {
+   if (brw->gen >= 6) {
       /* Emit workaround flushes: */
-      if (intel->gen == 6) {
+      if (brw->gen == 6) {
          /* The timestamp write below is a non-zero post-sync op, which on
           * Gen6 necessitates a CS stall.  CS stalls need stall at scoreboard
           * set.  See the comments for intel_emit_post_sync_nonzero_flush().
@@ -95,8 +94,7 @@ write_timestamp(struct brw_context *brw, drm_intel_bo *query_bo, int idx)
 static void
 write_depth_count(struct brw_context *brw, drm_intel_bo *query_bo, int idx)
 {
-   struct intel_context *intel = &brw->intel;
-   assert(intel->gen < 6);
+   assert(brw->gen < 6);
 
    BEGIN_BATCH(4);
    OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2) |
@@ -123,12 +121,11 @@ brw_queryobj_get_results(struct gl_context *ctx,
 			 struct brw_query_object *query)
 {
    struct brw_context *brw = brw_context(ctx);
-   struct intel_context *intel = intel_context(ctx);
 
    int i;
    uint64_t *results;
 
-   assert(intel->gen < 6);
+   assert(brw->gen < 6);
 
    if (query->bo == NULL)
       return;
@@ -245,10 +242,9 @@ static void
 brw_begin_query(struct gl_context *ctx, struct gl_query_object *q)
 {
    struct brw_context *brw = brw_context(ctx);
-   struct intel_context *intel = intel_context(ctx);
    struct brw_query_object *query = (struct brw_query_object *)q;
 
-   assert(intel->gen < 6);
+   assert(brw->gen < 6);
 
    switch (query->Base.Target) {
    case GL_TIME_ELAPSED_EXT:
@@ -318,10 +314,9 @@ static void
 brw_end_query(struct gl_context *ctx, struct gl_query_object *q)
 {
    struct brw_context *brw = brw_context(ctx);
-   struct intel_context *intel = intel_context(ctx);
    struct brw_query_object *query = (struct brw_query_object *)q;
 
-   assert(intel->gen < 6);
+   assert(brw->gen < 6);
 
    switch (query->Base.Target) {
    case GL_TIME_ELAPSED_EXT:
@@ -375,7 +370,7 @@ static void brw_wait_query(struct gl_context *ctx, struct gl_query_object *q)
 {
    struct brw_query_object *query = (struct brw_query_object *)q;
 
-   assert(intel_context(ctx)->gen < 6);
+   assert(brw_context(ctx)->gen < 6);
 
    brw_queryobj_get_results(ctx, query);
    query->Base.Ready = true;
@@ -390,10 +385,9 @@ static void brw_wait_query(struct gl_context *ctx, struct gl_query_object *q)
 static void brw_check_query(struct gl_context *ctx, struct gl_query_object *q)
 {
    struct brw_context *brw = brw_context(ctx);
-   struct intel_context *intel = intel_context(ctx);
    struct brw_query_object *query = (struct brw_query_object *)q;
 
-   assert(intel->gen < 6);
+   assert(brw->gen < 6);
 
    /* From the GL_ARB_occlusion_query spec:
     *
@@ -421,9 +415,8 @@ static void
 ensure_bo_has_space(struct gl_context *ctx, struct brw_query_object *query)
 {
    struct brw_context *brw = brw_context(ctx);
-   struct intel_context *intel = intel_context(ctx);
 
-   assert(intel->gen < 6);
+   assert(brw->gen < 6);
 
    if (!query->bo || query->last_index * 2 + 1 >= 4096 / sizeof(uint64_t)) {
 
@@ -463,8 +456,7 @@ ensure_bo_has_space(struct gl_context *ctx, struct brw_query_object *query)
 void
 brw_emit_query_begin(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
-   struct gl_context *ctx = &intel->ctx;
+   struct gl_context *ctx = &brw->intel.ctx;
    struct brw_query_object *query = brw->query.obj;
 
    if (brw->hw_ctx)

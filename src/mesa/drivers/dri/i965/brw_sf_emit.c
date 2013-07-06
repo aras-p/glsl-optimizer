@@ -165,7 +165,7 @@ static void copy_colors( struct brw_sf_compile *c,
 static void do_flatshade_triangle( struct brw_sf_compile *c )
 {
    struct brw_compile *p = &c->func;
-   struct intel_context *intel = &p->brw->intel;
+   struct brw_context *brw = p->brw;
    struct brw_reg ip = brw_ip_reg();
    GLuint nr = _mesa_bitcount_64(c->key.attrs & VARYING_SLOT_COLOR_BITS);
    GLuint jmpi = 1;
@@ -178,7 +178,7 @@ static void do_flatshade_triangle( struct brw_sf_compile *c )
    if (c->key.primitive == SF_UNFILLED_TRIS)
       return;
 
-   if (intel->gen == 5)
+   if (brw->gen == 5)
        jmpi = 2;
 
    brw_push_insn_state(p);
@@ -204,7 +204,7 @@ static void do_flatshade_triangle( struct brw_sf_compile *c )
 static void do_flatshade_line( struct brw_sf_compile *c )
 {
    struct brw_compile *p = &c->func;
-   struct intel_context *intel = &p->brw->intel;
+   struct brw_context *brw = p->brw;
    struct brw_reg ip = brw_ip_reg();
    GLuint nr = _mesa_bitcount_64(c->key.attrs & VARYING_SLOT_COLOR_BITS);
    GLuint jmpi = 1;
@@ -217,7 +217,7 @@ static void do_flatshade_line( struct brw_sf_compile *c )
    if (c->key.primitive == SF_UNFILLED_TRIS)
       return;
 
-   if (intel->gen == 5)
+   if (brw->gen == 5)
        jmpi = 2;
 
    brw_push_insn_state(p);

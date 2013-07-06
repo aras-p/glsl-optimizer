@@ -51,7 +51,6 @@
 static void compile_clip_prog( struct brw_context *brw,
 			     struct brw_clip_prog_key *key )
 {
-   struct intel_context *intel = &brw->intel;
    struct brw_clip_compile c;
    const GLuint *program;
    void *mem_ctx;
@@ -117,7 +116,7 @@ static void compile_clip_prog( struct brw_context *brw,
       printf("clip:\n");
       for (i = 0; i < program_size / sizeof(struct brw_instruction); i++)
 	 brw_disasm(stdout, &((struct brw_instruction *)program)[i],
-		    intel->gen);
+		    brw->gen);
       printf("\n");
    }
 
@@ -153,7 +152,7 @@ brw_upload_clip_prog(struct brw_context *brw)
    /* _NEW_TRANSFORM (also part of VUE map)*/
    key.nr_userclip = _mesa_bitcount_64(ctx->Transform.ClipPlanesEnabled);
 
-   if (intel->gen == 5)
+   if (brw->gen == 5)
        key.clip_mode = BRW_CLIPMODE_KERNEL_CLIP;
    else
        key.clip_mode = BRW_CLIPMODE_NORMAL;

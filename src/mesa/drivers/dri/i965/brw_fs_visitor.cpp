@@ -200,7 +200,7 @@ fs_visitor::visit(ir_dereference_array *ir)
 void
 fs_visitor::emit_lrp(fs_reg dst, fs_reg x, fs_reg y, fs_reg a)
 {
-   if (intel->gen < 6 ||
+   if (brw->gen < 6 ||
        !x.is_valid_3src() ||
        !y.is_valid_3src() ||
        !a.is_valid_3src()) {
@@ -230,7 +230,7 @@ fs_visitor::emit_minmax(uint32_t conditionalmod, fs_reg dst,
 {
    fs_inst *inst;
 
-   if (intel->gen >= 6) {
+   if (brw->gen >= 6) {
       inst = emit(BRW_OPCODE_SEL, dst, src0, src1);
       inst->conditional_mod = conditionalmod;
    } else {
@@ -280,7 +280,7 @@ bool
 fs_visitor::try_emit_mad(ir_expression *ir, int mul_arg)
 {
    /* 3-src instructions were introduced in gen6. */
-   if (intel->gen < 6)
+   if (brw->gen < 6)
       return false;
 
    /* MAD can only handle floating-point data. */
@@ -429,7 +429,7 @@ fs_visitor::visit(ir_expression *ir)
 	  * FINISHME: Emit just the MUL if we know an operand is small
 	  * enough.
 	  */
-	 if (intel->gen >= 7 && dispatch_width == 16)
+	 if (brw->gen >= 7 && dispatch_width == 16)
 	    fail("16-wide explicit accumulator operands unsupported\n");
 
 	 struct brw_reg acc = retype(brw_acc_reg(), BRW_REGISTER_TYPE_D);
@@ -1321,8 +1321,8 @@ fs_visitor::rescale_texcoord(ir_texture *ir, fs_reg coordinate,
     * tracking to get the scaling factor.
     */
    if (is_rect &&
-       (intel->gen < 6 ||
-	(intel->gen >= 6 && (c->key.tex.gl_clamp_mask[0] & (1 << sampler) ||
+       (brw->gen < 6 ||
+	(brw->gen >= 6 && (c->key.tex.gl_clamp_mask[0] & (1 << sampler) ||
 			     c->key.tex.gl_clamp_mask[1] & (1 << sampler))))) {
       struct gl_program_parameter_list *params = fp->Base.Parameters;
       int tokens[STATE_LENGTH] = {
@@ -1353,7 +1353,7 @@ fs_visitor::rescale_texcoord(ir_texture *ir, fs_reg coordinate,
     * texture coordinates.  We use the program parameter state
     * tracking to get the scaling factor.
     */
-   if (intel->gen < 6 && is_rect) {
+   if (brw->gen < 6 && is_rect) {
       fs_reg dst = fs_reg(this, ir->coordinate->type);
       fs_reg src = coordinate;
       coordinate = dst;
@@ -1478,10 +1478,10 @@ fs_visitor::visit(ir_texture *ir)
     */
    fs_reg dst = fs_reg(this, glsl_type::get_instance(ir->type->base_type, 4, 1));
 
-   if (intel->gen >= 7) {
+   if (brw->gen >= 7) {
       inst = emit_texture_gen7(ir, dst, coordinate, shadow_comparitor,
                                lod, lod2, sample_index);
-   } else if (intel->gen >= 5) {
+   } else if (brw->gen >= 5) {
       inst = emit_texture_gen5(ir, dst, coordinate, shadow_comparitor,
                                lod, lod2, sample_index);
    } else {
@@ -1607,7 +1607,7 @@ fs_visitor::visit(ir_discard *ir)
    cmp->predicate = BRW_PREDICATE_NORMAL;
    cmp->flag_subreg = 1;
 
-   if (intel->gen >= 6) {
+   if (brw->gen >= 6) {
       /* For performance, after a discard, jump to the end of the shader.
        * However, many people will do foliage by discarding based on a
        * texture's alpha mask, and then continue on to texture with the
@@ -1722,7 +1722,7 @@ fs_visitor::emit_bool_to_cond_code(ir_rvalue *ir)
 	 goto out;
 
       case ir_unop_f2b:
-	 if (intel->gen >= 6) {
+	 if (brw->gen >= 6) {
 	    emit(CMP(reg_null_d, op[0], fs_reg(0.0f), BRW_CONDITIONAL_NZ));
 	 } else {
 	    inst = emit(MOV(reg_null_f, op[0]));
@@ -1731,7 +1731,7 @@ fs_visitor::emit_bool_to_cond_code(ir_rvalue *ir)
 	 break;
 
       case ir_unop_i2b:
-	 if (intel->gen >= 6) {
+	 if (brw->gen >= 6) {
 	    emit(CMP(reg_null_d, op[0], fs_reg(0), BRW_CONDITIONAL_NZ));
 	 } else {
 	    inst = emit(MOV(reg_null_d, op[0]));
@@ -1841,7 +1841,7 @@ fs_visitor::emit_if_gen6(ir_if *ir)
 void
 fs_visitor::visit(ir_if *ir)
 {
-   if (intel->gen < 6 && dispatch_width == 16) {
+   if (brw->gen < 6 && dispatch_width == 16) {
       fail("Can't support (non-uniform) control flow on 16-wide\n");
    }
 
@@ -1850,7 +1850,7 @@ fs_visitor::visit(ir_if *ir)
     */
    this->base_ir = ir->condition;
 
-   if (intel->gen == 6) {
+   if (brw->gen == 6) {
       emit_if_gen6(ir);
    } else {
       emit_bool_to_cond_code(ir->condition);
@@ -1884,7 +1884,7 @@ fs_visitor::visit(ir_loop *ir)
 {
    fs_reg counter = reg_undef;
 
-   if (intel->gen < 6 && dispatch_width == 16) {
+   if (brw->gen < 6 && dispatch_width == 16) {
       fail("Can't support (non-uniform) control flow on 16-wide\n");
    }
 
@@ -2158,7 +2158,7 @@ fs_visitor::emit_color_write(int target, int index, int first_color_mrf)
 
    color.reg_offset += index;
 
-   if (dispatch_width == 8 || intel->gen >= 6) {
+   if (dispatch_width == 8 || brw->gen >= 6) {
       /* SIMD8 write looks like:
        * m + 0: r0
        * m + 1: r1
@@ -2244,7 +2244,7 @@ fs_visitor::emit_fb_writes()
     *      dispatched. This field is only required for the end-of-
     *      thread message and on all dual-source messages."
     */
-   if (intel->gen >= 6 &&
+   if (brw->gen >= 6 &&
        !this->fp->UsesKill &&
        !do_dual_src &&
        c->key.nr_color_regions == 1) {
@@ -2252,7 +2252,7 @@ fs_visitor::emit_fb_writes()
    }
 
    if (header_present) {
-      src0_alpha_to_render_target = intel->gen >= 6 &&
+      src0_alpha_to_render_target = brw->gen >= 6 &&
 				    !do_dual_src &&
                                     c->key.replicate_alpha;
       /* m2, m3 header */
@@ -2275,7 +2275,7 @@ fs_visitor::emit_fb_writes()
       nr += reg_width;
 
    if (c->source_depth_to_render_target) {
-      if (intel->gen == 6 && dispatch_width == 16) {
+      if (brw->gen == 6 && dispatch_width == 16) {
 	 /* For outputting oDepth on gen6, SIMD8 writes have to be
 	  * used.  This would require 8-wide moves of each half to
 	  * message regs, kind of like pre-gen5 SIMD16 FB writes.
@@ -2449,7 +2449,7 @@ fs_visitor::fs_visitor(struct brw_context *brw,
    memset(this->outputs, 0, sizeof(this->outputs));
    memset(this->output_components, 0, sizeof(this->output_components));
    this->first_non_payload_grf = 0;
-   this->max_grf = intel->gen >= 7 ? GEN7_MRF_HACK_START : BRW_MAX_GRF;
+   this->max_grf = brw->gen >= 7 ? GEN7_MRF_HACK_START : BRW_MAX_GRF;
 
    this->current_annotation = NULL;
    this->base_ir = NULL;

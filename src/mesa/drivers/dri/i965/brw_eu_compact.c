@@ -330,7 +330,6 @@ set_control_index(struct brw_context *brw,
                   struct brw_compact_instruction *dst,
                   struct brw_instruction *src)
 {
-   struct intel_context *intel = &brw->intel;
    uint32_t *src_u32 = (uint32_t *)src;
    uint32_t uncompacted = 0;
 
@@ -339,7 +338,7 @@ set_control_index(struct brw_context *brw,
    /* On gen7, the flag register number gets integrated into the control
     * index.
     */
-   if (intel->gen >= 7)
+   if (brw->gen >= 7)
       uncompacted |= ((src_u32[2] >> 25) & 0x3) << 17;
 
    for (int i = 0; i < 32; i++) {
@@ -450,7 +449,6 @@ brw_try_compact_instruction(struct brw_compile *p,
                             struct brw_instruction *src)
 {
    struct brw_context *brw = p->brw;
-   struct intel_context *intel = &brw->intel;
    struct brw_compact_instruction temp;
 
    if (src->header.opcode == BRW_OPCODE_IF ||
@@ -482,7 +480,7 @@ brw_try_compact_instruction(struct brw_compile *p,
       return false;
    temp.dw0.acc_wr_control = src->header.acc_wr_control;
    temp.dw0.conditionalmod = src->header.destreg__conditionalmod;
-   if (intel->gen <= 6)
+   if (brw->gen <= 6)
       temp.dw0.flag_subreg_nr = src->bits2.da1.flag_subreg_nr;
    temp.dw0.cmpt_ctrl = 1;
    if (!set_src0_index(&temp, src))
@@ -503,14 +501,13 @@ set_uncompacted_control(struct brw_context *brw,
                         struct brw_instruction *dst,
                         struct brw_compact_instruction *src)
 {
-   struct intel_context *intel = &brw->intel;
    uint32_t *dst_u32 = (uint32_t *)dst;
    uint32_t uncompacted = control_index_table[src->dw0.control_index];
 
    dst_u32[0] |= ((uncompacted >> 0) & 0xffff) << 8;
    dst_u32[0] |= ((uncompacted >> 16) & 0x1) << 31;
 
-   if (intel->gen >= 7)
+   if (brw->gen >= 7)
       dst_u32[2] |= ((uncompacted >> 17) & 0x3) << 25;
 }
 
@@ -561,7 +558,6 @@ brw_uncompact_instruction(struct brw_context *brw,
                           struct brw_instruction *dst,
                           struct brw_compact_instruction *src)
 {
-   struct intel_context *intel = &brw->intel;
    memset(dst, 0, sizeof(*dst));
 
    dst->header.opcode = src->dw0.opcode;
@@ -572,7 +568,7 @@ brw_uncompact_instruction(struct brw_context *brw,
    set_uncompacted_subreg(dst, src);
    dst->header.acc_wr_control = src->dw0.acc_wr_control;
    dst->header.destreg__conditionalmod = src->dw0.conditionalmod;
-   if (intel->gen <= 6)
+   if (brw->gen <= 6)
       dst->bits2.da1.flag_subreg_nr = src->dw0.flag_subreg_nr;
    set_uncompacted_src0(dst, src);
    set_uncompacted_src1(dst, src);
@@ -585,15 +581,14 @@ void brw_debug_compact_uncompact(struct brw_context *brw,
                                  struct brw_instruction *orig,
                                  struct brw_instruction *uncompacted)
 {
-   struct intel_context *intel = &brw->intel;
    fprintf(stderr, "Instruction compact/uncompact changed (gen%d):\n",
-           intel->gen);
+           brw->gen);
 
    fprintf(stderr, "  before: ");
-   brw_disasm(stderr, orig, intel->gen);
+   brw_disasm(stderr, orig, brw->gen);
 
    fprintf(stderr, "  after:  ");
-   brw_disasm(stderr, uncompacted, intel->gen);
+   brw_disasm(stderr, uncompacted, brw->gen);
 
    uint32_t *before_bits = (uint32_t *)orig;
    uint32_t *after_bits = (uint32_t *)uncompacted;
@@ -638,7 +633,6 @@ update_uip_jip(struct brw_instruction *insn, int this_old_ip,
 void
 brw_init_compaction_tables(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
    assert(gen6_control_index_table[ARRAY_SIZE(gen6_control_index_table) - 1] != 0);
    assert(gen6_datatype_table[ARRAY_SIZE(gen6_datatype_table) - 1] != 0);
    assert(gen6_subreg_table[ARRAY_SIZE(gen6_subreg_table) - 1] != 0);
@@ -648,7 +642,7 @@ brw_init_compaction_tables(struct brw_context *brw)
    assert(gen7_subreg_table[ARRAY_SIZE(gen6_subreg_table) - 1] != 0);
    assert(gen7_src_index_table[ARRAY_SIZE(gen6_src_index_table) - 1] != 0);
 
-   switch (intel->gen) {
+   switch (brw->gen) {
    case 7:
       control_index_table = gen7_control_index_table;
       datatype_table = gen7_datatype_table;
@@ -670,7 +664,6 @@ void
 brw_compact_instructions(struct brw_compile *p)
 {
    struct brw_context *brw = p->brw;
-   struct intel_context *intel = &brw->intel;
    void *store = p->store;
    /* For an instruction at byte offset 8*i before compaction, this is the number
     * of compacted instructions that preceded it.
@@ -681,7 +674,7 @@ brw_compact_instructions(struct brw_compile *p)
     */
    int old_ip[p->next_insn_offset / 8];
 
-   if (intel->gen < 6)
+   if (brw->gen < 6)
       return;
 
    int src_offset;
@@ -759,7 +752,7 @@ brw_compact_instructions(struct brw_compile *p)
       case BRW_OPCODE_ELSE:
       case BRW_OPCODE_ENDIF:
       case BRW_OPCODE_WHILE:
-         if (intel->gen == 6) {
+         if (brw->gen == 6) {
             target_old_ip = this_old_ip + insn->bits1.branch_gen6.jump_count;
             target_compacted_count = compacted_counts[target_old_ip];
             insn->bits1.branch_gen6.jump_count -= (target_compacted_count -

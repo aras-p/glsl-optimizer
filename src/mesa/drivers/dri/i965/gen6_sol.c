@@ -137,7 +137,6 @@ brw_begin_transform_feedback(struct gl_context *ctx, GLenum mode,
 			     struct gl_transform_feedback_object *obj)
 {
    struct brw_context *brw = brw_context(ctx);
-   struct intel_context *intel = &brw->intel;
    const struct gl_shader_program *vs_prog =
       ctx->Shader.CurrentVertexProgram;
    const struct gl_transform_feedback_info *linked_xfb_info =
@@ -145,7 +144,7 @@ brw_begin_transform_feedback(struct gl_context *ctx, GLenum mode,
    struct gl_transform_feedback_object *xfb_obj =
       ctx->TransformFeedback.CurrentObject;
 
-   assert(intel->gen == 6);
+   assert(brw->gen == 6);
 
    /* Compute the maximum number of vertices that we can write without
     * overflowing any of the buffers currently being used for feedback.

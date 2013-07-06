@@ -550,7 +550,6 @@ static void
 intel_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
 {
    struct brw_context *brw = brw_context(ctx);
-   struct intel_context *intel = intel_context(ctx);
    struct intel_renderbuffer *depthRb =
       intel_get_renderbuffer(fb, BUFFER_DEPTH);
    struct intel_renderbuffer *stencilRb =
@@ -596,7 +595,7 @@ intel_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
                            "instead of S8\n",
                            _mesa_get_format_name(stencil_mt->format));
 	 }
-	 if (intel->gen < 7 && !intel_renderbuffer_has_hiz(depthRb)) {
+	 if (brw->gen < 7 && !intel_renderbuffer_has_hiz(depthRb)) {
 	    /* Before Gen7, separate depth and stencil buffers can be used
 	     * only if HiZ is enabled. From the Sandybridge PRM, Volume 2,
 	     * Part 1, Bit 3DSTATE_DEPTH_BUFFER.SeparateStencilBufferEnable:

@@ -52,7 +52,6 @@ intel_blit_texsubimage(struct gl_context * ctx,
 		       const struct gl_pixelstore_attrib *packing)
 {
    struct brw_context *brw = brw_context(ctx);
-   struct intel_context *intel = intel_context(ctx);
    struct intel_texture_image *intelImage = intel_texture_image(texImage);
 
    /* Try to do a blit upload of the subimage if the texture is
@@ -71,7 +70,7 @@ intel_blit_texsubimage(struct gl_context * ctx,
    /* On gen6, it's probably not worth swapping to the blit ring to do
     * this because of all the overhead involved.
     */
-   if (intel->gen >= 6)
+   if (brw->gen >= 6)
       return false;
 
    if (!drm_intel_bo_busy(intelImage->mt->region->bo))

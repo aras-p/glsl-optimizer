@@ -193,7 +193,7 @@ fs_visitor::IF(uint32_t predicate)
 fs_inst *
 fs_visitor::IF(fs_reg src0, fs_reg src1, uint32_t condition)
 {
-   assert(intel->gen >= 6);
+   assert(brw->gen >= 6);
    fs_inst *inst = new(mem_ctx) fs_inst(BRW_OPCODE_IF,
                                         reg_null_d, src0, src1);
    inst->conditional_mod = condition;
@@ -222,7 +222,7 @@ fs_visitor::CMP(fs_reg dst, fs_reg src0, fs_reg src1, uint32_t condition)
     * mostly work out for float-interpreted-as-int since our comparisons are
     * for >0, =0, <0.
     */
-   if (intel->gen == 4) {
+   if (brw->gen == 4) {
       dst.type = src0.type;
       if (dst.file == HW_REG)
 	 dst.fixed_hw_reg.type = dst.type;
@@ -261,7 +261,7 @@ fs_visitor::VARYING_PULL_CONSTANT_LOAD(fs_reg dst, fs_reg surf_index,
                               varying_offset, const_offset & ~3));
 
    int scale = 1;
-   if (intel->gen == 4 && dispatch_width == 8) {
+   if (brw->gen == 4 && dispatch_width == 8) {
       /* Pre-gen5, we can either use a SIMD8 message that requires (header,
        * u, v, r) as parameters, or we can just use the SIMD16 message
        * consisting of (header, u).  We choose the second, at the cost of a
@@ -271,7 +271,7 @@ fs_visitor::VARYING_PULL_CONSTANT_LOAD(fs_reg dst, fs_reg surf_index,
    }
 
    enum opcode op;
-   if (intel->gen >= 7)
+   if (brw->gen >= 7)
       op = FS_OPCODE_VARYING_PULL_CONSTANT_LOAD_GEN7;
    else
       op = FS_OPCODE_VARYING_PULL_CONSTANT_LOAD;
@@ -280,10 +280,10 @@ fs_visitor::VARYING_PULL_CONSTANT_LOAD(fs_reg dst, fs_reg surf_index,
    inst->regs_written = 4 * scale;
    instructions.push_tail(inst);
 
-   if (intel->gen < 7) {
+   if (brw->gen < 7) {
       inst->base_mrf = 13;
       inst->header_present = true;
-      if (intel->gen == 4)
+      if (brw->gen == 4)
          inst->mlen = 3;
       else
          inst->mlen = 1 + dispatch_width / 8;
@@ -357,7 +357,7 @@ fs_inst::is_send_from_grf()
 bool
 fs_visitor::can_do_source_mods(fs_inst *inst)
 {
-   if (intel->gen == 6 && inst->is_math())
+   if (brw->gen == 6 && inst->is_math())
       return false;
 
    if (inst->is_send_from_grf())
@@ -493,7 +493,7 @@ fs_visitor::type_size(const struct glsl_type *type)
 fs_reg
 fs_visitor::get_timestamp()
 {
-   assert(intel->gen >= 7);
+   assert(brw->gen >= 7);
 
    fs_reg ts = fs_reg(retype(brw_vec1_reg(BRW_ARCHITECTURE_REGISTER_FILE,
                                           BRW_ARF_TIMESTAMP,
@@ -930,7 +930,7 @@ fs_visitor::emit_fragcoord_interpolation(ir_variable *ir)
    wpos.reg_offset++;
 
    /* gl_FragCoord.z */
-   if (intel->gen >= 6) {
+   if (brw->gen >= 6) {
       emit(MOV(wpos, fs_reg(brw_vec8_grf(c->source_depth_reg, 0))));
    } else {
       emit(FS_OPCODE_LINTERP, wpos,
@@ -952,7 +952,7 @@ fs_visitor::emit_linterp(const fs_reg &attr, const fs_reg &interp,
                          bool is_centroid)
 {
    brw_wm_barycentric_interp_mode barycoord_mode;
-   if (intel->gen >= 6) {
+   if (brw->gen >= 6) {
       if (is_centroid) {
          if (interpolation_mode == INTERP_QUALIFIER_SMOOTH)
             barycoord_mode = BRW_WM_PERSPECTIVE_CENTROID_BARYCENTRIC;
@@ -1048,7 +1048,7 @@ fs_visitor::emit_general_interpolation(ir_variable *ir)
                   inst->predicate = BRW_PREDICATE_NORMAL;
                   inst->predicate_inverse = true;
                }
-               if (intel->gen < 6) {
+               if (brw->gen < 6) {
                   emit(BRW_OPCODE_MUL, attr, attr, this->pixel_w);
                }
 	       attr.reg_offset++;
@@ -1068,7 +1068,7 @@ fs_visitor::emit_frontfacing_interpolation(ir_variable *ir)
    fs_reg *reg = new(this->mem_ctx) fs_reg(this, ir->type);
 
    /* The frontfacing comes in as a bit in the thread payload. */
-   if (intel->gen >= 6) {
+   if (brw->gen >= 6) {
       emit(BRW_OPCODE_ASR, *reg,
 	   fs_reg(retype(brw_vec1_grf(0, 0), BRW_REGISTER_TYPE_D)),
 	   fs_reg(15));
@@ -1097,14 +1097,14 @@ fs_visitor::fix_math_operand(fs_reg src)
     * The hardware ignores source modifiers (negate and abs) on math
     * instructions, so we also move to a temp to set those up.
     */
-   if (intel->gen == 6 && src.file != UNIFORM && src.file != IMM &&
+   if (brw->gen == 6 && src.file != UNIFORM && src.file != IMM &&
        !src.abs && !src.negate)
       return src;
 
    /* Gen7 relaxes most of the above restrictions, but still can't use IMM
     * operands to math
     */
-   if (intel->gen >= 7 && src.file != IMM)
+   if (brw->gen >= 7 && src.file != IMM)
       return src;
 
    fs_reg expanded = fs_reg(this, glsl_type::float_type);
@@ -1138,12 +1138,12 @@ fs_visitor::emit_math(enum opcode opcode, fs_reg dst, fs_reg src)
     * Gen 6 hardware ignores source modifiers (negate and abs) on math
     * instructions, so we also move to a temp to set those up.
     */
-   if (intel->gen >= 6)
+   if (brw->gen >= 6)
       src = fix_math_operand(src);
 
    fs_inst *inst = emit(opcode, dst, src);
 
-   if (intel->gen < 6) {
+   if (brw->gen < 6) {
       inst->base_mrf = 2;
       inst->mlen = dispatch_width / 8;
    }
@@ -1160,7 +1160,7 @@ fs_visitor::emit_math(enum opcode opcode, fs_reg dst, fs_reg src0, fs_reg src1)
    switch (opcode) {
    case SHADER_OPCODE_INT_QUOTIENT:
    case SHADER_OPCODE_INT_REMAINDER:
-      if (intel->gen >= 7 && dispatch_width == 16)
+      if (brw->gen >= 7 && dispatch_width == 16)
 	 fail("16-wide INTDIV unsupported\n");
       break;
    case SHADER_OPCODE_POW:
@@ -1170,7 +1170,7 @@ fs_visitor::emit_math(enum opcode opcode, fs_reg dst, fs_reg src0, fs_reg src1)
       return NULL;
    }
 
-   if (intel->gen >= 6) {
+   if (brw->gen >= 6) {
       src0 = fix_math_operand(src0);
       src1 = fix_math_operand(src1);
 
@@ -1235,7 +1235,7 @@ fs_visitor::calculate_urb_setup()
 
    int urb_next = 0;
    /* Figure out where each of the incoming setup attributes lands. */
-   if (intel->gen >= 6) {
+   if (brw->gen >= 6) {
       for (unsigned int i = 0; i < VARYING_SLOT_MAX; i++) {
 	 if (fp->Base.InputsRead & BITFIELD64_BIT(i)) {
 	    urb_setup[i] = urb_next++;
@@ -2248,7 +2248,7 @@ fs_visitor::compute_to_mrf()
 	    if (scan_inst->mlen)
 	       break;
 
-	    if (intel->gen == 6) {
+	    if (brw->gen == 6) {
 	       /* gen6 math instructions must have the destination be
 		* GRF, so no compute-to-MRF for them.
 		*/
@@ -2599,7 +2599,7 @@ fs_visitor::insert_gen4_post_send_dependency_workarounds(fs_inst *inst)
 void
 fs_visitor::insert_gen4_send_dependency_workarounds()
 {
-   if (intel->gen != 4 || brw->is_g4x)
+   if (brw->gen != 4 || brw->is_g4x)
       return;
 
    /* Note that we're done with register allocation, so GRF fs_regs always
@@ -2641,7 +2641,7 @@ fs_visitor::lower_uniform_pull_constant_loads()
       if (inst->opcode != FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD)
          continue;
 
-      if (intel->gen >= 7) {
+      if (brw->gen >= 7) {
          /* The offset arg before was a vec4-aligned byte offset.  We need to
           * turn it into a dword offset.
           */
@@ -2701,7 +2701,7 @@ fs_visitor::dump_instruction(backend_instruction *be_inst)
    if (inst->conditional_mod) {
       printf(".cmod");
       if (!inst->predicate &&
-          (intel->gen < 5 || (inst->opcode != BRW_OPCODE_SEL &&
+          (brw->gen < 5 || (inst->opcode != BRW_OPCODE_SEL &&
                               inst->opcode != BRW_OPCODE_IF &&
                               inst->opcode != BRW_OPCODE_WHILE))) {
          printf(".f0.%d\n", inst->flag_subreg);
@@ -2826,7 +2826,7 @@ fs_visitor::setup_payload_gen6()
       (fp->Base.InputsRead & (1 << VARYING_SLOT_POS)) != 0;
    unsigned barycentric_interp_modes = c->prog_data.barycentric_interp_modes;
 
-   assert(intel->gen >= 6);
+   assert(brw->gen >= 6);
 
    /* R0-1: masks, pixel X/Y coordinates. */
    c->nr_payload_regs = 2;
@@ -2882,7 +2882,7 @@ fs_visitor::run()
    sanity_param_count = fp->Base.Parameters->NumParameters;
    uint32_t orig_nr_params = c->prog_data.nr_params;
 
-   if (intel->gen >= 6)
+   if (brw->gen >= 6)
       setup_payload_gen6();
    else
       setup_payload_gen4();
@@ -2894,7 +2894,7 @@ fs_visitor::run()
          emit_shader_time_begin();
 
       calculate_urb_setup();
-      if (intel->gen < 6)
+      if (brw->gen < 6)
 	 emit_interpolation_setup_gen4();
       else
 	 emit_interpolation_setup_gen6();
@@ -3016,7 +3016,6 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c,
                struct gl_shader_program *prog,
                unsigned *final_assembly_size)
 {
-   struct intel_context *intel = &brw->intel;
    bool start_busy = false;
    float start_time = 0;
 
@@ -3060,7 +3059,7 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c,
    exec_list *simd16_instructions = NULL;
    fs_visitor v2(brw, c, prog, fp, 16);
    bool no16 = INTEL_DEBUG & DEBUG_NO16;
-   if (intel->gen >= 5 && c->prog_data.nr_pull_params == 0 && likely(!no16)) {
+   if (brw->gen >= 5 && c->prog_data.nr_pull_params == 0 && likely(!no16)) {
       v2.import_uniforms(&v);
       if (!v2.run()) {
          perf_debug("16-wide shader failed to compile, falling back to "
@@ -3095,7 +3094,6 @@ bool
 brw_fs_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
 {
    struct brw_context *brw = brw_context(ctx);
-   struct intel_context *intel = &brw->intel;
    struct brw_wm_prog_key key;
 
    if (!prog->_LinkedShaders[MESA_SHADER_FRAGMENT])
@@ -3108,7 +3106,7 @@ brw_fs_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
 
    memset(&key, 0, sizeof(key));
 
-   if (intel->gen < 6) {
+   if (brw->gen < 6) {
       if (fp->UsesKill)
          key.iz_lookup |= IZ_PS_KILL_ALPHATEST_BIT;
 
@@ -3120,14 +3118,14 @@ brw_fs_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
       key.iz_lookup |= IZ_DEPTH_WRITE_ENABLE_BIT;
    }
 
-   if (intel->gen < 6)
+   if (brw->gen < 6)
       key.input_slots_valid |= BITFIELD64_BIT(VARYING_SLOT_POS);
 
    for (int i = 0; i < VARYING_SLOT_MAX; i++) {
       if (!(fp->Base.InputsRead & BITFIELD64_BIT(i)))
 	 continue;
 
-      if (intel->gen < 6) {
+      if (brw->gen < 6) {
          if (_mesa_varying_slot_in_fs((gl_varying_slot) i))
             key.input_slots_valid |= BITFIELD64_BIT(i);
       }

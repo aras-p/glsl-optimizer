@@ -362,11 +362,10 @@ void brw_clip_init_clipmask( struct brw_clip_compile *c )
 
 void brw_clip_ff_sync(struct brw_clip_compile *c)
 {
-    struct intel_context *intel = &c->func.brw->intel;
+    struct brw_compile *p = &c->func;
+    struct brw_context *brw = p->brw;
 
-    if (intel->gen == 5) {
-        struct brw_compile *p = &c->func;
-
+    if (brw->gen == 5) {
         brw_set_conditionalmod(p, BRW_CONDITIONAL_Z);
         brw_AND(p, brw_null_reg(), c->reg.ff_sync, brw_imm_ud(0x1));
         brw_IF(p, BRW_EXECUTE_1);
@@ -387,9 +386,9 @@ void brw_clip_ff_sync(struct brw_clip_compile *c)
 
 void brw_clip_init_ff_sync(struct brw_clip_compile *c)
 {
-    struct intel_context *intel = &c->func.brw->intel;
+    struct brw_context *brw = c->func.brw;
 
-    if (intel->gen == 5) {
+    if (brw->gen == 5) {
 	struct brw_compile *p = &c->func;
         
         brw_MOV(p, c->reg.ff_sync, brw_imm_ud(0));

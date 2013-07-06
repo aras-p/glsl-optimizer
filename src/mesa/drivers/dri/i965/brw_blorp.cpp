@@ -191,9 +191,7 @@ intel_hiz_exec(struct brw_context *brw, struct intel_mipmap_tree *mt,
 void
 brw_blorp_exec(struct brw_context *brw, const brw_blorp_params *params)
 {
-   struct intel_context *intel = &brw->intel;
-
-   switch (intel->gen) {
+   switch (brw->gen) {
    case 6:
       gen6_blorp_exec(brw, params);
       break;

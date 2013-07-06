@@ -219,9 +219,8 @@ static void
 dump_sdc(struct brw_context *brw, uint32_t offset)
 {
    const char *name = "SDC";
-   struct intel_context *intel = &brw->intel;
 
-   if (intel->gen >= 5 && intel->gen <= 6) {
+   if (brw->gen >= 5 && brw->gen <= 6) {
       struct gen5_sampler_default_color *sdc = (brw->batch.bo->virtual +
 						offset);
       batch_out(brw, name, offset, 0, "unorm rgba\n");
@@ -249,11 +248,10 @@ dump_sdc(struct brw_context *brw, uint32_t offset)
 static void dump_sampler_state(struct brw_context *brw,
 			       uint32_t offset, uint32_t size)
 {
-   struct intel_context *intel = &brw->intel;
    int i;
    struct brw_sampler_state *samp = brw->batch.bo->virtual + offset;
 
-   assert(intel->gen < 7);
+   assert(brw->gen < 7);
 
    for (i = 0; i < size / sizeof(*samp); i++) {
       char name[20];
@@ -272,11 +270,10 @@ static void dump_sampler_state(struct brw_context *brw,
 static void dump_gen7_sampler_state(struct brw_context *brw,
 				    uint32_t offset, uint32_t size)
 {
-   struct intel_context *intel = &brw->intel;
    struct gen7_sampler_state *samp = brw->batch.bo->virtual + offset;
    int i;
 
-   assert(intel->gen >= 7);
+   assert(brw->gen >= 7);
 
    for (i = 0; i < size / sizeof(*samp); i++) {
       char name[20];
@@ -296,11 +293,10 @@ static void dump_gen7_sampler_state(struct brw_context *brw,
 static void dump_sf_viewport_state(struct brw_context *brw,
 				   uint32_t offset)
 {
-   struct intel_context *intel = &brw->intel;
    const char *name = "SF VP";
    struct brw_sf_viewport *vp = brw->batch.bo->virtual + offset;
 
-   assert(intel->gen < 7);
+   assert(brw->gen < 7);
 
    batch_out(brw, name, offset, 0, "m00 = %f\n", vp->viewport.m00);
    batch_out(brw, name, offset, 1, "m11 = %f\n", vp->viewport.m11);
@@ -318,11 +314,10 @@ static void dump_sf_viewport_state(struct brw_context *brw,
 static void dump_clip_viewport_state(struct brw_context *brw,
 				     uint32_t offset)
 {
-   struct intel_context *intel = &brw->intel;
    const char *name = "CLIP VP";
    struct brw_clipper_viewport *vp = brw->batch.bo->virtual + offset;
 
-   assert(intel->gen < 7);
+   assert(brw->gen < 7);
 
    batch_out(brw, name, offset, 0, "xmin = %f\n", vp->xmin);
    batch_out(brw, name, offset, 1, "xmax = %f\n", vp->xmax);
@@ -333,11 +328,10 @@ static void dump_clip_viewport_state(struct brw_context *brw,
 static void dump_sf_clip_viewport_state(struct brw_context *brw,
 					uint32_t offset)
 {
-   struct intel_context *intel = &brw->intel;
    const char *name = "SF_CLIP VP";
    struct gen7_sf_clip_viewport *vp = brw->batch.bo->virtual + offset;
 
-   assert(intel->gen >= 7);
+   assert(brw->gen >= 7);
 
    batch_out(brw, name, offset, 0, "m00 = %f\n", vp->viewport.m00);
    batch_out(brw, name, offset, 1, "m11 = %f\n", vp->viewport.m11);
@@ -485,7 +479,6 @@ static void dump_binding_table(struct brw_context *brw, uint32_t offset,
 static void
 dump_prog_cache(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
    struct brw_cache *cache = &brw->cache;
    unsigned int b, i;
    uint32_t *data;
@@ -528,7 +521,7 @@ dump_prog_cache(struct brw_context *brw)
 		    name,
 		    data[i * 4], data[i * 4 + 1], data[i * 4 + 2], data[i * 4 + 3]);
 
-	    brw_disasm(stderr, (void *)(data + i * 4), intel->gen);
+	    brw_disasm(stderr, (void *)(data + i * 4), brw->gen);
 	 }
       }
    }
@@ -539,7 +532,6 @@ dump_prog_cache(struct brw_context *brw)
 static void
 dump_state_batch(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
    int i;
 
    for (i = 0; i < brw->state_batch_count; i++) {
@@ -566,7 +558,7 @@ dump_state_batch(struct brw_context *brw)
 	 dump_clip_viewport_state(brw, offset);
 	 break;
       case AUB_TRACE_SF_VP_STATE:
-	 if (intel->gen >= 7) {
+	 if (brw->gen >= 7) {
 	    dump_sf_clip_viewport_state(brw, offset);
 	 } else {
 	    dump_sf_viewport_state(brw, offset);
@@ -579,7 +571,7 @@ dump_state_batch(struct brw_context *brw)
 	 dump_depth_stencil_state(brw, offset);
 	 break;
       case AUB_TRACE_CC_STATE:
-	 if (intel->gen >= 6)
+	 if (brw->gen >= 6)
 	    dump_cc_state_gen6(brw, offset);
 	 else
 	    dump_cc_state_gen4(brw, offset);
@@ -591,14 +583,14 @@ dump_state_batch(struct brw_context *brw)
 	 dump_binding_table(brw, offset, size);
 	 break;
       case AUB_TRACE_SURFACE_STATE:
-	 if (intel->gen < 7) {
+	 if (brw->gen < 7) {
 	    dump_surface_state(brw, offset);
 	 } else {
 	    dump_gen7_surface_state(brw, offset);
 	 }
 	 break;
       case AUB_TRACE_SAMPLER_STATE:
-	 if (intel->gen < 7) {
+	 if (brw->gen < 7) {
 	    dump_sampler_state(brw, offset, size);
 	 } else {
 	    dump_gen7_sampler_state(brw, offset, size);

@@ -80,10 +80,9 @@ can_cut_index_handle_prims(struct gl_context *ctx,
                            const struct _mesa_index_buffer *ib)
 {
    struct brw_context *brw = brw_context(ctx);
-   struct intel_context *intel = intel_context(ctx);
 
    /* Otherwise Haswell can do it all. */
-   if (intel->gen >= 8 || brw->is_haswell)
+   if (brw->gen >= 8 || brw->is_haswell)
       return true;
 
    if (!can_cut_index_handle_restart_index(ctx, ib)) {

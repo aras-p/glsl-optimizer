@@ -40,9 +40,8 @@ void
 intelInitExtensions(struct gl_context *ctx)
 {
    struct brw_context *brw = brw_context(ctx);
-   struct intel_context *intel = intel_context(ctx);
 
-   assert(intel->gen >= 4);
+   assert(brw->gen >= 4);
 
    ctx->Extensions.ARB_depth_buffer_float = true;
    ctx->Extensions.ARB_depth_clamp = true;
@@ -124,13 +123,13 @@ intelInitExtensions(struct gl_context *ctx)
    ctx->Extensions.OES_draw_texture = true;
    ctx->Extensions.OES_standard_derivatives = true;
 
-   if (intel->gen >= 6)
+   if (brw->gen >= 6)
       ctx->Const.GLSLVersion = 140;
    else
       ctx->Const.GLSLVersion = 120;
    _mesa_override_glsl_version(ctx);
 
-   if (intel->gen >= 6) {
+   if (brw->gen >= 6) {
       uint64_t dummy;
 
       ctx->Extensions.EXT_framebuffer_multisample = true;
@@ -152,7 +151,7 @@ intelInitExtensions(struct gl_context *ctx)
          ctx->Extensions.ARB_timer_query = true;
    }
 
-   if (intel->gen >= 5) {
+   if (brw->gen >= 5) {
       ctx->Extensions.ARB_texture_query_lod = true;
       ctx->Extensions.EXT_timer_query = true;
    }

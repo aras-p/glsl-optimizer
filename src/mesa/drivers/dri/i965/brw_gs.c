@@ -48,7 +48,6 @@
 static void compile_gs_prog( struct brw_context *brw,
 			     struct brw_gs_prog_key *key )
 {
-   struct intel_context *intel = &brw->intel;
    struct brw_gs_compile c;
    const GLuint *program;
    void *mem_ctx;
@@ -73,7 +72,7 @@ static void compile_gs_prog( struct brw_context *brw,
     */
    brw_set_mask_control(&c.func, BRW_MASK_DISABLE);
 
-   if (intel->gen >= 6) {
+   if (brw->gen >= 6) {
       unsigned num_verts;
       bool check_edge_flag;
       /* On Sandybridge, we use the GS for implementing transform feedback
@@ -139,7 +138,7 @@ static void compile_gs_prog( struct brw_context *brw,
       printf("gs:\n");
       for (i = 0; i < program_size / sizeof(struct brw_instruction); i++)
 	 brw_disasm(stdout, &((struct brw_instruction *)program)[i],
-		    intel->gen);
+		    brw->gen);
       printf("\n");
     }
 
@@ -162,7 +161,6 @@ static void populate_key( struct brw_context *brw,
    };
 
    struct gl_context *ctx = &brw->intel.ctx;
-   struct intel_context *intel = &brw->intel;
 
    memset(key, 0, sizeof(*key));
 
@@ -181,10 +179,10 @@ static void populate_key( struct brw_context *brw,
       key->pv_first = true;
    }
 
-   if (intel->gen >= 7) {
+   if (brw->gen >= 7) {
       /* On Gen7 and later, we don't use GS (yet). */
       key->need_gs_prog = false;
-   } else if (intel->gen == 6) {
+   } else if (brw->gen == 6) {
       /* On Gen6, GS is used for transform feedback. */
       /* BRW_NEW_TRANSFORM_FEEDBACK */
       if (_mesa_is_xfb_active_and_unpaused(ctx)) {

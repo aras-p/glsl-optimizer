@@ -268,7 +268,7 @@ vec4_generator::generate_tex(vec4_instruction *inst,
 {
    int msg_type = -1;
 
-   if (intel->gen >= 5) {
+   if (brw->gen >= 5) {
       switch (inst->opcode) {
       case SHADER_OPCODE_TEX:
       case SHADER_OPCODE_TXL:
@@ -291,7 +291,7 @@ vec4_generator::generate_tex(vec4_instruction *inst,
 	 msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_LD;
 	 break;
       case SHADER_OPCODE_TXF_MS:
-         if (intel->gen >= 7)
+         if (brw->gen >= 7)
             msg_type = GEN7_SAMPLER_MESSAGE_SAMPLE_LD2DMS;
          else
             msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_LD;
@@ -410,7 +410,7 @@ vec4_generator::generate_oword_dual_block_offsets(struct brw_reg m1,
 {
    int second_vertex_offset;
 
-   if (intel->gen >= 6)
+   if (brw->gen >= 6)
       second_vertex_offset = 1;
    else
       second_vertex_offset = 16;
@@ -455,9 +455,9 @@ vec4_generator::generate_scratch_read(vec4_instruction *inst,
 
    uint32_t msg_type;
 
-   if (intel->gen >= 6)
+   if (brw->gen >= 6)
       msg_type = GEN6_DATAPORT_READ_MESSAGE_OWORD_DUAL_BLOCK_READ;
-   else if (intel->gen == 5 || brw->is_g4x)
+   else if (brw->gen == 5 || brw->is_g4x)
       msg_type = G45_DATAPORT_READ_MESSAGE_OWORD_DUAL_BLOCK_READ;
    else
       msg_type = BRW_DATAPORT_READ_MESSAGE_OWORD_DUAL_BLOCK_READ;
@@ -468,7 +468,7 @@ vec4_generator::generate_scratch_read(vec4_instruction *inst,
    struct brw_instruction *send = brw_next_insn(p, BRW_OPCODE_SEND);
    brw_set_dest(p, send, dst);
    brw_set_src0(p, send, header);
-   if (intel->gen < 6)
+   if (brw->gen < 6)
       send->header.destreg__conditionalmod = inst->base_mrf;
    brw_set_dp_read_message(p, send,
 			   255, /* binding table index: stateless access */
@@ -505,9 +505,9 @@ vec4_generator::generate_scratch_write(vec4_instruction *inst,
 
    uint32_t msg_type;
 
-   if (intel->gen >= 7)
+   if (brw->gen >= 7)
       msg_type = GEN7_DATAPORT_WRITE_MESSAGE_OWORD_DUAL_BLOCK_WRITE;
-   else if (intel->gen == 6)
+   else if (brw->gen == 6)
       msg_type = GEN6_DATAPORT_WRITE_MESSAGE_OWORD_DUAL_BLOCK_WRITE;
    else
       msg_type = BRW_DATAPORT_WRITE_MESSAGE_OWORD_DUAL_BLOCK_WRITE;
@@ -519,7 +519,7 @@ vec4_generator::generate_scratch_write(vec4_instruction *inst,
     * guaranteed and write commits only matter for inter-thread
     * synchronization.
     */
-   if (intel->gen >= 6) {
+   if (brw->gen >= 6) {
       write_commit = false;
    } else {
       /* The visitor set up our destination register to be g0.  This
@@ -539,7 +539,7 @@ vec4_generator::generate_scratch_write(vec4_instruction *inst,
    struct brw_instruction *send = brw_next_insn(p, BRW_OPCODE_SEND);
    brw_set_dest(p, send, dst);
    brw_set_src0(p, send, header);
-   if (intel->gen < 6)
+   if (brw->gen < 6)
       send->header.destreg__conditionalmod = inst->base_mrf;
    brw_set_dp_write_message(p, send,
 			    255, /* binding table index: stateless access */
@@ -559,7 +559,7 @@ vec4_generator::generate_pull_constant_load(vec4_instruction *inst,
                                             struct brw_reg index,
                                             struct brw_reg offset)
 {
-   assert(intel->gen <= 7);
+   assert(brw->gen <= 7);
    assert(index.file == BRW_IMMEDIATE_VALUE &&
 	  index.type == BRW_REGISTER_TYPE_UD);
    uint32_t surf_index = index.dw1.ud;
@@ -573,9 +573,9 @@ vec4_generator::generate_pull_constant_load(vec4_instruction *inst,
 
    uint32_t msg_type;
 
-   if (intel->gen >= 6)
+   if (brw->gen >= 6)
       msg_type = GEN6_DATAPORT_READ_MESSAGE_OWORD_DUAL_BLOCK_READ;
-   else if (intel->gen == 5 || brw->is_g4x)
+   else if (brw->gen == 5 || brw->is_g4x)
       msg_type = G45_DATAPORT_READ_MESSAGE_OWORD_DUAL_BLOCK_READ;
    else
       msg_type = BRW_DATAPORT_READ_MESSAGE_OWORD_DUAL_BLOCK_READ;
@@ -586,7 +586,7 @@ vec4_generator::generate_pull_constant_load(vec4_instruction *inst,
    struct brw_instruction *send = brw_next_insn(p, BRW_OPCODE_SEND);
    brw_set_dest(p, send, dst);
    brw_set_src0(p, send, header);
-   if (intel->gen < 6)
+   if (brw->gen < 6)
       send->header.destreg__conditionalmod = inst->base_mrf;
    brw_set_dp_read_message(p, send,
 			   surf_index,
@@ -757,7 +757,7 @@ vec4_generator::generate_vec4_instruction(vec4_instruction *instruction,
    case BRW_OPCODE_IF:
       if (inst->src[0].file != BAD_FILE) {
          /* The instruction has an embedded compare (only allowed on gen6) */
-         assert(intel->gen == 6);
+         assert(brw->gen == 6);
          gen6_IF(p, inst->conditional_mod, src[0], src[1]);
       } else {
          struct brw_instruction *brw_inst = brw_IF(p, BRW_EXECUTE_8);
@@ -782,7 +782,7 @@ vec4_generator::generate_vec4_instruction(vec4_instruction *instruction,
       break;
    case BRW_OPCODE_CONTINUE:
       /* FINISHME: We need to write the loop instruction support still. */
-      if (intel->gen >= 6)
+      if (brw->gen >= 6)
          gen6_CONT(p);
       else
          brw_CONT(p);
@@ -800,7 +800,7 @@ vec4_generator::generate_vec4_instruction(vec4_instruction *instruction,
    case SHADER_OPCODE_LOG2:
    case SHADER_OPCODE_SIN:
    case SHADER_OPCODE_COS:
-      if (intel->gen == 6) {
+      if (brw->gen == 6) {
 	 generate_math1_gen6(inst, dst, src[0]);
       } else {
 	 /* Also works for Gen7. */
@@ -811,9 +811,9 @@ vec4_generator::generate_vec4_instruction(vec4_instruction *instruction,
    case SHADER_OPCODE_POW:
    case SHADER_OPCODE_INT_QUOTIENT:
    case SHADER_OPCODE_INT_REMAINDER:
-      if (intel->gen >= 7) {
+      if (brw->gen >= 7) {
 	 generate_math2_gen7(inst, dst, src[0], src[1]);
-      } else if (intel->gen == 6) {
+      } else if (brw->gen == 6) {
 	 generate_math2_gen6(inst, dst, src[0], src[1]);
       } else {
 	 generate_math2_gen4(inst, dst, src[0], src[1]);
