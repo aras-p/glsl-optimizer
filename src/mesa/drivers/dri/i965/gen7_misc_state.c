@@ -94,7 +94,7 @@ gen7_emit_depth_stencil_hiz(struct brw_context *brw,
       OUT_BATCH(0);
       ADVANCE_BATCH();
    } else {
-      const int enabled = intel->is_haswell ? HSW_STENCIL_ENABLED : 0;
+      const int enabled = brw->is_haswell ? HSW_STENCIL_ENABLED : 0;
 
       BEGIN_BATCH(3);
       OUT_BATCH(GEN7_3DSTATE_STENCIL_BUFFER << 16 | (3 - 2));

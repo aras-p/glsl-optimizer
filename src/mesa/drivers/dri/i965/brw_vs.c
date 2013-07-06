@@ -456,7 +456,7 @@ static void brw_upload_vs_prog(struct brw_context *brw)
    brw_populate_sampler_prog_key_data(ctx, prog, &key.base.tex);
 
    /* BRW_NEW_VERTICES */
-   if (intel->gen < 8 && !intel->is_haswell) {
+   if (intel->gen < 8 && !brw->is_haswell) {
       /* Prior to Haswell, the hardware can't natively support GL_FIXED or
        * 2_10_10_10_REV vertex formats.  Set appropriate workaround flags.
        */

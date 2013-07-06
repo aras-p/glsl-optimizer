@@ -192,7 +192,6 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
                                  GLuint width, GLuint height)
 {
    struct brw_context *brw = brw_context(ctx);
-   struct intel_context *intel = intel_context(ctx);
    struct intel_screen *screen = brw->intelScreen;
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
    rb->NumSamples = intel_quantize_num_samples(screen, rb->NumSamples);

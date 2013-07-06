@@ -158,7 +158,7 @@ static void recalculate_urb_fence( struct brw_context *brw )
             brw->urb.nr_vs_entries = limits[VS].preferred_nr_entries;
             brw->urb.nr_sf_entries = limits[SF].preferred_nr_entries;
          }
-      } else if (intel->is_g4x) {
+      } else if (brw->is_g4x) {
 	 brw->urb.nr_vs_entries = 64;
 	 if (check_urb_layout(brw)) {
 	    goto done;

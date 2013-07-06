@@ -533,7 +533,7 @@ brw_init_surface_formats(struct brw_context *brw)
    gl_format format;
 
    gen = intel->gen * 10;
-   if (intel->is_g4x)
+   if (brw->is_g4x)
       gen += 5;
 
    for (format = MESA_FORMAT_NONE + 1; format < MESA_FORMAT_COUNT; format++) {
@@ -715,7 +715,7 @@ translate_tex_format(struct brw_context *brw,
       return BRW_SURFACEFORMAT_R32G32B32A32_FLOAT;
 
    case MESA_FORMAT_SRGB_DXT1:
-      if (intel->gen == 4 && !intel->is_g4x) {
+      if (intel->gen == 4 && !brw->is_g4x) {
          /* Work around missing SRGB DXT1 support on original gen4 by just
           * skipping SRGB decode.  It's not worth not supporting sRGB in
           * general to prevent this.

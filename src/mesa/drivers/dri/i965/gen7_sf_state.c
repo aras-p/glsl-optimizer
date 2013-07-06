@@ -258,7 +258,7 @@ upload_sf_state(struct brw_context *brw)
       dw2 |= GEN6_SF_LINE_AA_ENABLE;
       dw2 |= GEN6_SF_LINE_END_CAP_WIDTH_1_0;
    }
-   if (ctx->Line.StippleFlag && intel->is_haswell) {
+   if (ctx->Line.StippleFlag && brw->is_haswell) {
       dw2 |= HSW_SF_LINE_STIPPLE_ENABLE;
    }
    /* _NEW_MULTISAMPLE */

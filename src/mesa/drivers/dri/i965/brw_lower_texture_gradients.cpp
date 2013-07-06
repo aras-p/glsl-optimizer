@@ -169,7 +169,7 @@ brw_lower_texture_gradients(struct brw_context *brw,
                             struct exec_list *instructions)
 {
    struct intel_context *intel = &brw->intel;
-   bool has_sample_d_c = intel->gen >= 8 || intel->is_haswell;
+   bool has_sample_d_c = intel->gen >= 8 || brw->is_haswell;
    lower_texture_grad_visitor v(has_sample_d_c);
 
    visit_list_elements(&v, instructions);

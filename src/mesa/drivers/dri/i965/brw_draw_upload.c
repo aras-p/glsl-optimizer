@@ -265,7 +265,7 @@ get_surface_type(struct brw_context *brw,
             return ubyte_types_norm[size];
          }
       case GL_FIXED:
-         if (intel->gen >= 8 || intel->is_haswell)
+         if (intel->gen >= 8 || brw->is_haswell)
             return fixed_point_types[size];
 
          /* This produces GL_FIXED inputs as values between INT32_MIN and
@@ -279,7 +279,7 @@ get_surface_type(struct brw_context *brw,
        */
       case GL_INT_2_10_10_10_REV:
          assert(size == 4);
-         if (intel->gen >= 8 || intel->is_haswell) {
+         if (intel->gen >= 8 || brw->is_haswell) {
             return glarray->Format == GL_BGRA
                ? BRW_SURFACEFORMAT_B10G10R10A2_SNORM
                : BRW_SURFACEFORMAT_R10G10B10A2_SNORM;
@@ -287,7 +287,7 @@ get_surface_type(struct brw_context *brw,
          return BRW_SURFACEFORMAT_R10G10B10A2_UINT;
       case GL_UNSIGNED_INT_2_10_10_10_REV:
          assert(size == 4);
-         if (intel->gen >= 8 || intel->is_haswell) {
+         if (intel->gen >= 8 || brw->is_haswell) {
             return glarray->Format == GL_BGRA
                ? BRW_SURFACEFORMAT_B10G10R10A2_UNORM
                : BRW_SURFACEFORMAT_R10G10B10A2_UNORM;
@@ -304,7 +304,7 @@ get_surface_type(struct brw_context *brw,
        */
       if (glarray->Type == GL_INT_2_10_10_10_REV) {
          assert(size == 4);
-         if (intel->gen >= 8 || intel->is_haswell) {
+         if (intel->gen >= 8 || brw->is_haswell) {
             return glarray->Format == GL_BGRA
                ? BRW_SURFACEFORMAT_B10G10R10A2_SSCALED
                : BRW_SURFACEFORMAT_R10G10B10A2_SSCALED;
@@ -312,7 +312,7 @@ get_surface_type(struct brw_context *brw,
          return BRW_SURFACEFORMAT_R10G10B10A2_UINT;
       } else if (glarray->Type == GL_UNSIGNED_INT_2_10_10_10_REV) {
          assert(size == 4);
-         if (intel->gen >= 8 || intel->is_haswell) {
+         if (intel->gen >= 8 || brw->is_haswell) {
             return glarray->Format == GL_BGRA
                ? BRW_SURFACEFORMAT_B10G10R10A2_USCALED
                : BRW_SURFACEFORMAT_R10G10B10A2_USCALED;
@@ -331,7 +331,7 @@ get_surface_type(struct brw_context *brw,
       case GL_UNSIGNED_SHORT: return ushort_types_scale[size];
       case GL_UNSIGNED_BYTE: return ubyte_types_scale[size];
       case GL_FIXED:
-         if (intel->gen >= 8 || intel->is_haswell)
+         if (intel->gen >= 8 || brw->is_haswell)
             return fixed_point_types[size];
 
          /* This produces GL_FIXED inputs as values between INT32_MIN and
@@ -886,14 +886,13 @@ const struct brw_tracked_state brw_indices = {
 
 static void brw_emit_index_buffer(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
    const struct _mesa_index_buffer *index_buffer = brw->ib.ib;
    GLuint cut_index_setting;
 
    if (index_buffer == NULL)
       return;
 
-   if (brw->prim_restart.enable_cut_index && !intel->is_haswell) {
+   if (brw->prim_restart.enable_cut_index && !brw->is_haswell) {
       cut_index_setting = BRW_CUT_INDEX_ENABLE;
    } else {
       cut_index_setting = 0;

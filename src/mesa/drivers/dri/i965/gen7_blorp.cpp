@@ -132,8 +132,6 @@ gen7_blorp_emit_surface_state(struct brw_context *brw,
                               uint32_t read_domains, uint32_t write_domain,
                               bool is_render_target)
 {
-   struct intel_context *intel = &brw->intel;
-
    uint32_t wm_surf_offset;
    uint32_t width = surface->width;
    uint32_t height = surface->height;
@@ -194,7 +192,7 @@ gen7_blorp_emit_surface_state(struct brw_context *brw,
 
    surf[7] = surface->mt->fast_clear_color_value;
 
-   if (intel->is_haswell) {
+   if (brw->is_haswell) {
       surf[7] |= (SET_FIELD(HSW_SCS_RED,   GEN7_SURFACE_SCS_R) |
                   SET_FIELD(HSW_SCS_GREEN, GEN7_SURFACE_SCS_G) |
                   SET_FIELD(HSW_SCS_BLUE,  GEN7_SURFACE_SCS_B) |
@@ -539,9 +537,8 @@ gen7_blorp_emit_ps_config(struct brw_context *brw,
                           uint32_t prog_offset,
                           brw_blorp_prog_data *prog_data)
 {
-   struct intel_context *intel = &brw->intel;
    uint32_t dw2, dw4, dw5;
-   const int max_threads_shift = brw->intel.is_haswell ?
+   const int max_threads_shift = brw->is_haswell ?
       HSW_PS_MAX_THREADS_SHIFT : IVB_PS_MAX_THREADS_SHIFT;
 
    dw2 = dw4 = dw5 = 0;
@@ -555,7 +552,7 @@ gen7_blorp_emit_ps_config(struct brw_context *brw,
     */
    dw4 |= GEN7_PS_16_DISPATCH_ENABLE;
 
-   if (intel->is_haswell)
+   if (brw->is_haswell)
       dw4 |= SET_FIELD(1, HSW_PS_SAMPLE_MASK); /* 1 sample for now */
    if (params->use_wm_prog) {
       dw2 |= 1 << GEN7_PS_SAMPLER_COUNT_SHIFT; /* Up to 4 samplers */

@@ -487,12 +487,12 @@ intelInitContext(struct brw_context *brw,
       intel->gt = 0;
 
    if (IS_HASWELL(devID)) {
-      intel->is_haswell = true;
+      brw->is_haswell = true;
    } else if (IS_BAYTRAIL(devID)) {
-      intel->is_baytrail = true;
+      brw->is_baytrail = true;
       intel->gt = 1;
    } else if (IS_G4X(devID)) {
-      intel->is_g4x = true;
+      brw->is_g4x = true;
    }
 
    brw->has_separate_stencil = brw->intelScreen->hw_has_separate_stencil;

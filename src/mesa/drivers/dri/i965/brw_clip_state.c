@@ -146,7 +146,7 @@ brw_upload_clip_unit(struct brw_context *brw)
    clip->clip5.api_mode = BRW_CLIP_API_OGL;
    clip->clip5.clip_mode = brw->clip.prog_data->clip_mode;
 
-   if (intel->is_g4x)
+   if (brw->is_g4x)
       clip->clip5.negative_w_clip_test = 1;
 
    clip->viewport_xmin = -1;

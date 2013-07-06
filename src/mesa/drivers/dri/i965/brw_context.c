@@ -341,7 +341,7 @@ brwCreateContext(int api,
    ctx->DriverFlags.NewRasterizerDiscard = BRW_NEW_RASTERIZER_DISCARD;
    ctx->DriverFlags.NewUniformBuffer = BRW_NEW_UNIFORM_BUFFER;
 
-   if (intel->is_g4x || intel->gen >= 5) {
+   if (brw->is_g4x || intel->gen >= 5) {
       brw->CMD_VF_STATISTICS = GM45_3DSTATE_VF_STATISTICS;
       brw->CMD_PIPELINE_SELECT = CMD_PIPELINE_SELECT_GM45;
       brw->has_surface_tile_offset = true;
@@ -357,7 +357,7 @@ brwCreateContext(int api,
    /* WM maximum threads is number of EUs times number of threads per EU. */
    assert(intel->gen <= 7);
 
-   if (intel->is_haswell) {
+   if (brw->is_haswell) {
       if (intel->gt == 1) {
 	 brw->max_wm_threads = 102;
 	 brw->max_vs_threads = 70;
@@ -417,7 +417,7 @@ brwCreateContext(int api,
       brw->max_vs_threads = 72;
       brw->max_gs_threads = 32;
       brw->max_wm_threads = 12 * 6;
-   } else if (intel->is_g4x) {
+   } else if (brw->is_g4x) {
       brw->urb.size = 384;
       brw->max_vs_threads = 32;
       brw->max_gs_threads = 2;

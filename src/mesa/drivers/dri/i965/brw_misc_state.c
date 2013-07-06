@@ -385,7 +385,7 @@ brw_workaround_depthstencil_alignment(struct brw_context *brw,
          rebase_depth = true;
 
       /* We didn't even have intra-tile offsets before g45. */
-      if (intel->gen == 4 && !intel->is_g4x) {
+      if (intel->gen == 4 && !brw->is_g4x) {
          if (tile_x || tile_y)
             rebase_depth = true;
       }
@@ -444,7 +444,7 @@ brw_workaround_depthstencil_alignment(struct brw_context *brw,
       if (stencil_tile_x & 7 || stencil_tile_y & 7)
          rebase_stencil = true;
 
-      if (intel->gen == 4 && !intel->is_g4x) {
+      if (intel->gen == 4 && !brw->is_g4x) {
          if (stencil_tile_x || stencil_tile_y)
             rebase_stencil = true;
       }
@@ -677,7 +677,7 @@ brw_emit_depth_stencil_hiz(struct brw_context *brw,
    unsigned int len;
    if (intel->gen >= 6)
       len = 7;
-   else if (intel->is_g4x || intel->gen == 5)
+   else if (brw->is_g4x || intel->gen == 5)
       len = 6;
    else
       len = 5;
@@ -705,7 +705,7 @@ brw_emit_depth_stencil_hiz(struct brw_context *brw,
              ((height + tile_y - 1) << 19));
    OUT_BATCH(0);
 
-   if (intel->is_g4x || intel->gen >= 5)
+   if (brw->is_g4x || intel->gen >= 5)
       OUT_BATCH(tile_x | (tile_y << 16));
    else
       assert(tile_x == 0 && tile_y == 0);

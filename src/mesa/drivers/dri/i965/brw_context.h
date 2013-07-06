@@ -876,6 +876,11 @@ struct brw_context
    uint32_t max_gtt_map_object_size;
 
    bool emit_state_always;
+
+   bool is_g4x;
+   bool is_baytrail;
+   bool is_haswell;
+
    bool has_hiz;
    bool has_separate_stencil;
    bool must_use_separate_stencil;

@@ -119,7 +119,7 @@ brw_upload_vs_unit(struct brw_context *brw)
       case 32:
 	 break;
       case 64:
-	 assert(intel->is_g4x);
+	 assert(brw->is_g4x);
 	 break;
       default:
 	 assert(0);

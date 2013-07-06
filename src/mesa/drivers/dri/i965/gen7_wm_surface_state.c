@@ -347,7 +347,7 @@ gen7_update_texture_surface(struct gl_context *ctx,
               /* mip count */
               (intelObj->_MaxLevel - tObj->BaseLevel));
 
-   if (intel->is_haswell) {
+   if (brw->is_haswell) {
       /* Handling GL_ALPHA as a surface format override breaks 1.30+ style
        * texturing functions that return a float, as our code generation always
        * selects the .x channel (which would always be 0).
@@ -410,7 +410,7 @@ gen7_create_constant_surface(struct brw_context *brw,
    surf[3] = SET_FIELD((w >> 21) & 0x3f, BRW_SURFACE_DEPTH) |
              (stride - 1);
 
-   if (intel->is_haswell) {
+   if (brw->is_haswell) {
       surf[7] = SET_FIELD(HSW_SCS_RED,   GEN7_SURFACE_SCS_R) |
                 SET_FIELD(HSW_SCS_GREEN, GEN7_SURFACE_SCS_G) |
                 SET_FIELD(HSW_SCS_BLUE,  GEN7_SURFACE_SCS_B) |
@@ -612,7 +612,7 @@ gen7_update_renderbuffer_surface(struct brw_context *brw,
 
    surf[7] = irb->mt->fast_clear_color_value;
 
-   if (intel->is_haswell) {
+   if (brw->is_haswell) {
       surf[7] |= (SET_FIELD(HSW_SCS_RED,   GEN7_SURFACE_SCS_R) |
                   SET_FIELD(HSW_SCS_GREEN, GEN7_SURFACE_SCS_G) |
                   SET_FIELD(HSW_SCS_BLUE,  GEN7_SURFACE_SCS_B) |

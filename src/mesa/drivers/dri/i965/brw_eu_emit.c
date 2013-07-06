@@ -660,7 +660,7 @@ brw_set_dp_read_message(struct brw_compile *p,
       insn->bits3.dp_read_gen5.msg_control = msg_control;
       insn->bits3.dp_read_gen5.msg_type = msg_type;
       insn->bits3.dp_read_gen5.target_cache = target_cache;
-   } else if (intel->is_g4x) {
+   } else if (brw->is_g4x) {
       insn->bits3.dp_read_g4x.binding_table_index = binding_table_index; /*0:7*/
       insn->bits3.dp_read_g4x.msg_control = msg_control;  /*8:10*/
       insn->bits3.dp_read_g4x.msg_type = msg_type;  /*11:13*/
@@ -701,7 +701,7 @@ brw_set_sampler_message(struct brw_compile *p,
       insn->bits3.sampler_gen5.sampler = sampler;
       insn->bits3.sampler_gen5.msg_type = msg_type;
       insn->bits3.sampler_gen5.simd_mode = simd_mode;
-   } else if (intel->is_g4x) {
+   } else if (brw->is_g4x) {
       insn->bits3.sampler_g4x.binding_table_index = binding_table_index;
       insn->bits3.sampler_g4x.sampler = sampler;
       insn->bits3.sampler_g4x.msg_type = msg_type;
@@ -2498,6 +2498,7 @@ void brw_shader_time_add(struct brw_compile *p,
                          struct brw_reg payload,
                          uint32_t surf_index)
 {
+   struct brw_context *brw = p->brw;
    struct intel_context *intel = &p->brw->intel;
    assert(intel->gen >= 7);
 
@@ -2516,7 +2517,7 @@ void brw_shader_time_add(struct brw_compile *p,
                                       payload.nr, 0));
 
    uint32_t sfid, msg_type;
-   if (intel->is_haswell) {
+   if (brw->is_haswell) {
       sfid = HSW_SFID_DATAPORT_DATA_CACHE_1;
       msg_type = HSW_DATAPORT_DC_PORT1_UNTYPED_ATOMIC_OP;
    } else {

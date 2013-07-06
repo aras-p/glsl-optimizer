@@ -59,7 +59,7 @@ gen7_allocate_push_constants(struct brw_context *brw)
    struct intel_context *intel = &brw->intel;
 
    unsigned size = 8;
-   if (intel->is_haswell && intel->gt == 3)
+   if (brw->is_haswell && intel->gt == 3)
       size = 16;
 
    BEGIN_BATCH(2);
@@ -77,7 +77,7 @@ static void
 gen7_upload_urb(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
-   const int push_size_kB = intel->is_haswell && intel->gt == 3 ? 32 : 16;
+   const int push_size_kB = brw->is_haswell && intel->gt == 3 ? 32 : 16;
 
    /* Total space for entries is URB size - 16kB for push constants */
    int handle_region_size = (brw->urb.size - push_size_kB) * 1024; /* bytes */

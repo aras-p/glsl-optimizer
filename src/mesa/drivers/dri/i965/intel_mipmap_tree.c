@@ -488,13 +488,12 @@ intel_miptree_create(struct brw_context *brw,
                      GLuint num_samples,
                      enum intel_miptree_tiling_mode requested_tiling)
 {
-   struct intel_context *intel = &brw->intel;
    struct intel_mipmap_tree *mt;
    gl_format tex_format = format;
    gl_format etc_format = MESA_FORMAT_NONE;
    GLuint total_width, total_height;
 
-   if (!intel->is_baytrail) {
+   if (!brw->is_baytrail) {
       switch (format) {
       case MESA_FORMAT_ETC1_RGB8:
          format = MESA_FORMAT_RGBX8888_REV;
@@ -1248,10 +1247,9 @@ intel_miptree_slice_enable_hiz(struct brw_context *brw,
                                uint32_t level,
                                uint32_t layer)
 {
-   struct intel_context *intel = &brw->intel;
    assert(mt->hiz_mt);
 
-   if (intel->is_haswell) {
+   if (brw->is_haswell) {
       /* Disable HiZ for some slices to work around a hardware bug.
        *
        * Haswell hardware fails to respect

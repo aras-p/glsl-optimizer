@@ -300,7 +300,7 @@ brw_populate_sampler_prog_key_data(struct gl_context *ctx,
 				   const struct gl_program *prog,
 				   struct brw_sampler_prog_key_data *key)
 {
-   struct intel_context *intel = intel_context(ctx);
+   struct brw_context *brw = brw_context(ctx);
 
    for (int s = 0; s < MAX_SAMPLERS; s++) {
       key->swizzles[s] = SWIZZLE_NOOP;
@@ -323,7 +323,7 @@ brw_populate_sampler_prog_key_data(struct gl_context *ctx,
          /* Haswell handles texture swizzling as surface format overrides
           * (except for GL_ALPHA); all other platforms need MOVs in the shader.
           */
-         if (!intel->is_haswell || alpha_depth)
+         if (!brw->is_haswell || alpha_depth)
             key->swizzles[s] = brw_get_texture_swizzle(ctx, t);
 
 	 if (img->InternalFormat == GL_YCBCR_MESA) {

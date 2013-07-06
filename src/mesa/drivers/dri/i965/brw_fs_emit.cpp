@@ -403,7 +403,7 @@ fs_generator::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src
       case SHADER_OPCODE_TXD:
          if (inst->shadow_compare) {
             /* Gen7.5+.  Otherwise, lowered by brw_lower_texture_gradients(). */
-            assert(intel->is_haswell);
+            assert(brw->is_haswell);
             msg_type = HSW_SAMPLER_MESSAGE_SAMPLE_DERIV_COMPARE;
          } else {
             msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_DERIVS;
@@ -1327,7 +1327,7 @@ fs_generator::generate_code(exec_list *instructions)
 	    generate_math1_gen7(inst, dst, src[0]);
 	 } else if (intel->gen == 6) {
 	    generate_math1_gen6(inst, dst, src[0]);
-	 } else if (intel->gen == 5 || intel->is_g4x) {
+	 } else if (intel->gen == 5 || brw->is_g4x) {
 	    generate_math_g45(inst, dst, src[0]);
 	 } else {
 	    generate_math_gen4(inst, dst, src[0]);

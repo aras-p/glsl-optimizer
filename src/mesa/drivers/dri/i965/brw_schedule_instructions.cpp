@@ -75,7 +75,7 @@ public:
        * closer to Gen7 than Gen4.
        */
       if (intel->gen >= 6)
-         set_latency_gen7(intel->is_haswell);
+         set_latency_gen7(brw->is_haswell);
       else
          set_latency_gen4();
    }

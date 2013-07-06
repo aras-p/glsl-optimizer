@@ -281,7 +281,7 @@ vec4_generator::generate_tex(vec4_instruction *inst,
       case SHADER_OPCODE_TXD:
          if (inst->shadow_compare) {
             /* Gen7.5+.  Otherwise, lowered by brw_lower_texture_gradients(). */
-            assert(intel->is_haswell);
+            assert(brw->is_haswell);
             msg_type = HSW_SAMPLER_MESSAGE_SAMPLE_DERIV_COMPARE;
          } else {
             msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_DERIVS;
@@ -457,7 +457,7 @@ vec4_generator::generate_scratch_read(vec4_instruction *inst,
 
    if (intel->gen >= 6)
       msg_type = GEN6_DATAPORT_READ_MESSAGE_OWORD_DUAL_BLOCK_READ;
-   else if (intel->gen == 5 || intel->is_g4x)
+   else if (intel->gen == 5 || brw->is_g4x)
       msg_type = G45_DATAPORT_READ_MESSAGE_OWORD_DUAL_BLOCK_READ;
    else
       msg_type = BRW_DATAPORT_READ_MESSAGE_OWORD_DUAL_BLOCK_READ;
@@ -575,7 +575,7 @@ vec4_generator::generate_pull_constant_load(vec4_instruction *inst,
 
    if (intel->gen >= 6)
       msg_type = GEN6_DATAPORT_READ_MESSAGE_OWORD_DUAL_BLOCK_READ;
-   else if (intel->gen == 5 || intel->is_g4x)
+   else if (intel->gen == 5 || brw->is_g4x)
       msg_type = G45_DATAPORT_READ_MESSAGE_OWORD_DUAL_BLOCK_READ;
    else
       msg_type = BRW_DATAPORT_READ_MESSAGE_OWORD_DUAL_BLOCK_READ;

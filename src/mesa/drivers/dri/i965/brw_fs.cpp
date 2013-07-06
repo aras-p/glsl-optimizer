@@ -2599,7 +2599,7 @@ fs_visitor::insert_gen4_post_send_dependency_workarounds(fs_inst *inst)
 void
 fs_visitor::insert_gen4_send_dependency_workarounds()
 {
-   if (intel->gen != 4 || intel->is_g4x)
+   if (intel->gen != 4 || brw->is_g4x)
       return;
 
    /* Note that we're done with register allocation, so GRF fs_regs always
