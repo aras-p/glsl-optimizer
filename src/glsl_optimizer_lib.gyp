@@ -9,12 +9,10 @@
       'include_dirs': [
         'glsl',
         'mesa',
-        '../include',
-        '../include/c99',
       ],
       'direct_dependent_settings': {
         'include_dirs': [
-          'glsl'
+          'glsl',
         ],
       },
       'sources': [
@@ -164,6 +162,10 @@
       ],
       'conditions': [
         ['OS=="win"', {
+          'include_dirs': [
+            '../include',
+            '../include/c99',          
+          ],
           'defines': [
             '_LIB',
             'NOMINMAX',
