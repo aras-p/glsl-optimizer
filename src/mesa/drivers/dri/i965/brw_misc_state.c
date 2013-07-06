@@ -629,7 +629,7 @@ brw_emit_depthbuffer(struct brw_context *brw)
        * Section 7.5.5.1.1 3DSTATE_DEPTH_BUFFER, Bit 1.27 Tiled Surface:
        *     [DevGT+]: This field must be set to TRUE.
        */
-      assert(intel->has_separate_stencil);
+      assert(brw->has_separate_stencil);
 
       depth_surface_type = BRW_SURFACE_2D;
       width = stencil_irb->Base.Base.Width;

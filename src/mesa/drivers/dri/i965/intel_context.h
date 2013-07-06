@@ -121,8 +121,6 @@ struct intel_context
    bool is_haswell;
    bool is_baytrail;
    bool is_g4x;
-   bool has_separate_stencil;
-   bool must_use_separate_stencil;
    bool has_llc;
 };
 

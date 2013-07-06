@@ -252,7 +252,6 @@ intel_miptree_create_layout(struct brw_context *brw,
                             bool for_bo,
                             GLuint num_samples)
 {
-   struct intel_context *intel = &brw->intel;
    struct intel_mipmap_tree *mt = calloc(sizeof(*mt), 1);
    if (!mt)
       return NULL;
@@ -368,9 +367,8 @@ intel_miptree_create_layout(struct brw_context *brw,
 
    if (!for_bo &&
        _mesa_get_format_base_format(format) == GL_DEPTH_STENCIL &&
-       (intel->must_use_separate_stencil ||
-	(intel->has_separate_stencil &&
-	 brw_is_hiz_depth_format(brw, format)))) {
+       (brw->must_use_separate_stencil ||
+	(brw->has_separate_stencil && brw_is_hiz_depth_format(brw, format)))) {
       mt->stencil_mt = intel_miptree_create(brw,
                                             mt->target,
                                             MESA_FORMAT_S8,
