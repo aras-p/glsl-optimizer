@@ -170,7 +170,6 @@ intel_texsubimage_tiled_memcpy(struct gl_context * ctx,
                                bool for_glTexImage)
 {
    struct brw_context *brw = brw_context(ctx);
-   struct intel_context *intel = intel_context(ctx);
    struct intel_texture_image *image = intel_texture_image(texImage);
 
    /* The miptree's buffer. */
@@ -182,7 +181,7 @@ intel_texsubimage_tiled_memcpy(struct gl_context * ctx,
     * a 2D BGRA texture. It could be generalized to support more types by
     * varying the arithmetic loop below.
     */
-   if (!intel->has_llc ||
+   if (!brw->has_llc ||
        format != GL_BGRA ||
        type != GL_UNSIGNED_BYTE ||
        texImage->TexFormat != MESA_FORMAT_ARGB8888 ||

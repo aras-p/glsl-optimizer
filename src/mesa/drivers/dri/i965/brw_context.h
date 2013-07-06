@@ -884,6 +884,7 @@ struct brw_context
    bool has_hiz;
    bool has_separate_stencil;
    bool must_use_separate_stencil;
+   bool has_llc;
    bool has_swizzling;
    bool has_surface_tile_offset;
    bool has_compr4;

@@ -71,7 +71,7 @@ intel_batchbuffer_init(struct brw_context *brw)
 						      4096, 4096);
    }
 
-   if (!intel->has_llc) {
+   if (!brw->has_llc) {
       brw->batch.cpu_map = malloc(BATCH_SZ);
       brw->batch.map = brw->batch.cpu_map;
    }
@@ -80,7 +80,6 @@ intel_batchbuffer_init(struct brw_context *brw)
 static void
 intel_batchbuffer_reset(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
    if (brw->batch.last_bo != NULL) {
       drm_intel_bo_unreference(brw->batch.last_bo);
       brw->batch.last_bo = NULL;
@@ -91,7 +90,7 @@ intel_batchbuffer_reset(struct brw_context *brw)
 
    brw->batch.bo = drm_intel_bo_alloc(brw->bufmgr, "batchbuffer",
 					BATCH_SZ, 4096);
-   if (intel->has_llc) {
+   if (brw->has_llc) {
       drm_intel_bo_map(brw->batch.bo, true);
       brw->batch.map = brw->batch.bo->virtual;
    }
@@ -181,7 +180,7 @@ do_flush_locked(struct brw_context *brw)
    struct intel_batchbuffer *batch = &brw->batch;
    int ret = 0;
 
-   if (intel->has_llc) {
+   if (brw->has_llc) {
       drm_intel_bo_unmap(batch->bo);
    } else {
       ret = drm_intel_bo_subdata(batch->bo, 0, 4*batch->used, batch->map);

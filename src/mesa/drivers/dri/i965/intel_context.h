@@ -118,7 +118,6 @@ struct intel_context
     */
    int gen;
    int gt;
-   bool has_llc;
 };
 
 /**

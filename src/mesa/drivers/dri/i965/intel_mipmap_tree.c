@@ -2130,7 +2130,7 @@ intel_miptree_map_singlesample(struct brw_context *brw,
       intel_miptree_map_depthstencil(brw, mt, map, level, slice);
    }
    /* See intel_miptree_blit() for details on the 32k pitch limit. */
-   else if (intel->has_llc &&
+   else if (brw->has_llc &&
             !(mode & GL_MAP_WRITE_BIT) &&
             !mt->compressed &&
             (mt->region->tiling == I915_TILING_X ||
