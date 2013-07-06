@@ -43,6 +43,7 @@
  */
 struct brw_clip_prog_key {
    GLbitfield64 attrs;
+   struct interpolation_mode_map interpolation_mode;
    GLuint primitive:4;
    GLuint nr_userclip:4;
    GLuint do_flat_shading:1;

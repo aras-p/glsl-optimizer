@@ -141,6 +141,10 @@ brw_upload_clip_prog(struct brw_context *brw)
 
    /* Populate the key:
     */
+
+   /* BRW_NEW_INTERPOLATION_MAP */
+   key.interpolation_mode = brw->interpolation_mode;
+
    /* BRW_NEW_REDUCED_PRIMITIVE */
    key.primitive = brw->reduced_primitive;
    /* BRW_NEW_VUE_MAP_GEOM_OUT */
@@ -256,7 +260,9 @@ const struct brw_tracked_state brw_clip_prog = {
 		_NEW_TRANSFORM |
 		_NEW_POLYGON | 
 		_NEW_BUFFERS),
-      .brw   = (BRW_NEW_REDUCED_PRIMITIVE | BRW_NEW_VUE_MAP_GEOM_OUT)
+      .brw   = (BRW_NEW_REDUCED_PRIMITIVE |
+                BRW_NEW_VUE_MAP_GEOM_OUT |
+                BRW_NEW_INTERPOLATION_MAP)
    },
    .emit = brw_upload_clip_prog
 };

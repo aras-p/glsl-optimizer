@@ -62,6 +62,7 @@ i965_FILES = \
 	brw_gs.c \
 	brw_gs_emit.c \
 	brw_gs_state.c \
+	brw_interpolation_map.c \
 	brw_lower_texture_gradients.cpp \
 	brw_misc_state.c \
 	brw_program.c \

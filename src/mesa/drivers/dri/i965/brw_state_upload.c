@@ -41,6 +41,9 @@ static const struct brw_tracked_state *gen4_atoms[] =
 {
    &brw_vs_prog, /* must do before GS prog, state base address. */
    &brw_gs_prog, /* must do before state base address */
+
+   &brw_interpolation_map,
+
    &brw_clip_prog, /* must do before state base address */
    &brw_sf_prog, /* must do before state base address */
    &brw_wm_prog, /* must do before state base address */

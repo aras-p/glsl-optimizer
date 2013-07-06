@@ -46,6 +46,7 @@
 
 struct brw_sf_prog_key {
    GLbitfield64 attrs;
+   struct interpolation_mode_map interpolation_mode;
    uint8_t point_sprite_coord_replace;
    GLuint primitive:2;
    GLuint do_twoside_color:1;

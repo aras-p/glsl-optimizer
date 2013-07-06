@@ -189,6 +189,9 @@ brw_upload_sf_prog(struct brw_context *brw)
    if ((ctx->Point.SpriteOrigin == GL_LOWER_LEFT) != render_to_fbo)
       key.sprite_origin_lower_left = true;
 
+   /* BRW_NEW_INTERPOLATION_MAP */
+   key.interpolation_mode = brw->interpolation_mode;
+
    /* _NEW_LIGHT | _NEW_PROGRAM */
    key.do_flat_shading = (ctx->Light.ShadeModel == GL_FLAT);
    key.do_twoside_color = ((ctx->Light.Enabled && ctx->Light.Model.TwoSide) ||
@@ -215,7 +218,9 @@ const struct brw_tracked_state brw_sf_prog = {
    .dirty = {
       .mesa  = (_NEW_HINT | _NEW_LIGHT | _NEW_POLYGON | _NEW_POINT |
                 _NEW_TRANSFORM | _NEW_BUFFERS | _NEW_PROGRAM),
-      .brw   = (BRW_NEW_REDUCED_PRIMITIVE | BRW_NEW_VUE_MAP_GEOM_OUT)
+      .brw   = (BRW_NEW_REDUCED_PRIMITIVE |
+                BRW_NEW_VUE_MAP_GEOM_OUT |
+                BRW_NEW_INTERPOLATION_MAP)
    },
    .emit = brw_upload_sf_prog
 };

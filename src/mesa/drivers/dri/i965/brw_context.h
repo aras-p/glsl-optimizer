@@ -154,6 +154,7 @@ enum brw_state_id {
    BRW_STATE_STATS_WM,
    BRW_STATE_UNIFORM_BUFFER,
    BRW_STATE_META_IN_PROGRESS,
+   BRW_STATE_INTERPOLATION_MAP,
 };
 
 #define BRW_NEW_URB_FENCE               (1 << BRW_STATE_URB_FENCE)
@@ -186,6 +187,7 @@ enum brw_state_id {
 #define BRW_NEW_STATS_WM		(1 << BRW_STATE_STATS_WM)
 #define BRW_NEW_UNIFORM_BUFFER          (1 << BRW_STATE_UNIFORM_BUFFER)
 #define BRW_NEW_META_IN_PROGRESS        (1 << BRW_STATE_META_IN_PROGRESS)
+#define BRW_NEW_INTERPOLATION_MAP       (1 << BRW_STATE_INTERPOLATION_MAP)
 
 struct brw_state_flags {
    /** State update flags signalled by mesa internals */
@@ -409,6 +411,14 @@ static inline GLuint brw_varying_to_offset(struct brw_vue_map *vue_map,
 
 void brw_compute_vue_map(struct brw_context *brw, struct brw_vue_map *vue_map,
                          GLbitfield64 slots_valid, bool userclip_active);
+
+
+/*
+ * Mapping of VUE map slots to interpolation modes.
+ */
+struct interpolation_mode_map {
+   unsigned char mode[BRW_VARYING_SLOT_COUNT];
+};
 
 
 struct brw_sf_prog_data {
@@ -1202,6 +1212,11 @@ struct brw_context
 
    uint32_t render_target_format[MESA_FORMAT_COUNT];
    bool format_supported_as_render_target[MESA_FORMAT_COUNT];
+
+   /* Interpolation modes, one byte per vue slot.
+    * Used Gen4/5 by the clip|sf|wm stages. Ignored on Gen6+.
+    */
+   struct interpolation_mode_map interpolation_mode;
 
    /* PrimitiveRestart */
    struct {
