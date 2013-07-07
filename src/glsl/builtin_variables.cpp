@@ -533,7 +533,7 @@ generate_common_ES_uniforms(exec_list *instructions,
    add_builtin_constant(instructions, symtab, "gl_MaxVertexAttribs",
 			state->Const.MaxVertexAttribs);
    add_builtin_constant(instructions, symtab, "gl_MaxVertexUniformVectors",
-			state->Const.MaxVertexUniformComponents);
+			state->Const.MaxVertexUniformComponents / 4);
    add_builtin_constant(instructions, symtab, "gl_MaxVertexTextureImageUnits",
 			state->Const.MaxVertexTextureImageUnits);
    add_builtin_constant(instructions, symtab, "gl_MaxCombinedTextureImageUnits",
