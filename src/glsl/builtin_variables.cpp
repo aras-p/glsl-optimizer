@@ -748,20 +748,22 @@ generate_110_vs_variables(exec_list *instructions,
    }
    generate_110_uniforms(instructions, state, add_deprecated);
 
-   /* From page 54 (page 60 of the PDF) of the GLSL 1.20 spec:
-    *
-    *     "As with all arrays, indices used to subscript gl_TexCoord must
-    *     either be an integral constant expressions, or this array must be
-    *     re-declared by the shader with a size. The size can be at most
-    *     gl_MaxTextureCoords. Using indexes close to 0 may aid the
-    *     implementation in preserving varying resources."
-    */
-   const glsl_type *const vec4_array_type =
-      glsl_type::get_array_instance(glsl_type::vec4_type, 0);
+   if (add_deprecated) {
+      /* From page 54 (page 60 of the PDF) of the GLSL 1.20 spec:
+       *
+       *     "As with all arrays, indices used to subscript gl_TexCoord must
+       *     either be an integral constant expressions, or this array must be
+       *     re-declared by the shader with a size. The size can be at most
+       *     gl_MaxTextureCoords. Using indexes close to 0 may aid the
+       *     implementation in preserving varying resources."
+       */
+      const glsl_type *const vec4_array_type =
+         glsl_type::get_array_instance(glsl_type::vec4_type, 0);
 
-   add_variable(instructions, state->symbols,
-		"gl_TexCoord", vec4_array_type, ir_var_shader_out,
-                VARYING_SLOT_TEX0);
+      add_variable(instructions, state->symbols,
+                   "gl_TexCoord", vec4_array_type, ir_var_shader_out,
+                   VARYING_SLOT_TEX0);
+   }
 
    generate_ARB_draw_buffers_variables(instructions, state, false,
 				       vertex_shader);
@@ -944,20 +946,22 @@ generate_110_fs_variables(exec_list *instructions,
 
    generate_110_uniforms(instructions, state, add_deprecated);
 
-   /* From page 54 (page 60 of the PDF) of the GLSL 1.20 spec:
-    *
-    *     "As with all arrays, indices used to subscript gl_TexCoord must
-    *     either be an integral constant expressions, or this array must be
-    *     re-declared by the shader with a size. The size can be at most
-    *     gl_MaxTextureCoords. Using indexes close to 0 may aid the
-    *     implementation in preserving varying resources."
-    */
-   const glsl_type *const vec4_array_type =
-      glsl_type::get_array_instance(glsl_type::vec4_type, 0);
+   if (add_deprecated) {
+      /* From page 54 (page 60 of the PDF) of the GLSL 1.20 spec:
+       *
+       *     "As with all arrays, indices used to subscript gl_TexCoord must
+       *     either be an integral constant expressions, or this array must be
+       *     re-declared by the shader with a size. The size can be at most
+       *     gl_MaxTextureCoords. Using indexes close to 0 may aid the
+       *     implementation in preserving varying resources."
+       */
+      const glsl_type *const vec4_array_type =
+         glsl_type::get_array_instance(glsl_type::vec4_type, 0);
 
-   add_variable(instructions, state->symbols,
-		"gl_TexCoord", vec4_array_type, ir_var_shader_in,
-                VARYING_SLOT_TEX0);
+      add_variable(instructions, state->symbols,
+                   "gl_TexCoord", vec4_array_type, ir_var_shader_in,
+                   VARYING_SLOT_TEX0);
+   }
 
    generate_ARB_draw_buffers_variables(instructions, state, false,
 				       fragment_shader);
