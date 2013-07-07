@@ -283,6 +283,11 @@ do_vs_prog(struct brw_context *brw,
          outputs_written |= BITFIELD64_BIT(VARYING_SLOT_COL0);
       if (outputs_written & BITFIELD64_BIT(VARYING_SLOT_BFC1))
          outputs_written |= BITFIELD64_BIT(VARYING_SLOT_COL1);
+
+      if (c.key.base.userclip_active) {
+         outputs_written |= BITFIELD64_BIT(VARYING_SLOT_CLIP_DIST0);
+         outputs_written |= BITFIELD64_BIT(VARYING_SLOT_CLIP_DIST1);
+      }
    }
 
    brw_compute_vue_map(brw, &prog_data.base.vue_map, outputs_written,
