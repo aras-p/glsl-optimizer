@@ -72,6 +72,8 @@ static void compile_clip_prog( struct brw_context *brw,
 
    c.has_flat_shading =
       brw_any_flat_varyings(&key->interpolation_mode);
+   c.has_noperspective_shading =
+      brw_any_noperspective_varyings(&key->interpolation_mode);
 
    /* nr_regs is the number of registers filled by reading data from the VUE.
     * This program accesses the entire VUE, so nr_regs needs to be the size of

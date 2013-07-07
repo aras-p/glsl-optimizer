@@ -128,6 +128,8 @@ static void brw_clip_project_vertex( struct brw_clip_compile *c,
 
 /* Interpolate between two vertices and put the result into a0.0.  
  * Increment a0.0 accordingly.
+ *
+ * Beware that dest_ptr can be equal to v0_ptr!
  */
 void brw_clip_interp_vertex( struct brw_clip_compile *c,
 			     struct brw_indirect dest_ptr,
@@ -137,7 +139,7 @@ void brw_clip_interp_vertex( struct brw_clip_compile *c,
 			     bool force_edgeflag)
 {
    struct brw_compile *p = &c->func;
-   struct brw_reg tmp = get_tmp(c);
+   struct brw_reg t_nopersp, v0_ndc_copy;
    GLuint slot;
 
    /* Just copy the vertex header:
@@ -148,11 +150,106 @@ void brw_clip_interp_vertex( struct brw_clip_compile *c,
     */
    brw_copy_indirect_to_indirect(p, dest_ptr, v0_ptr, 1);
       
-   /* Iterate over each attribute (could be done in pairs?)
+
+   /* First handle the 3D and NDC interpolation, in case we
+    * need noperspective interpolation. Doing it early has no
+    * performance impact in any case.
+    */
+
+   /* Take a copy of the v0 NDC coordinates, in case dest == v0. */
+   if (c->has_noperspective_shading) {
+      GLuint offset = brw_varying_to_offset(&c->vue_map,
+                                                 BRW_VARYING_SLOT_NDC);
+      v0_ndc_copy = get_tmp(c);
+      brw_MOV(p, v0_ndc_copy, deref_4f(v0_ptr, offset));
+   }
+
+   /* Compute the new 3D position
+    *
+    * dest_hpos = v0_hpos * (1 - t0) + v1_hpos * t0
+    */
+   {
+      GLuint delta = brw_varying_to_offset(&c->vue_map, VARYING_SLOT_POS);
+      struct brw_reg tmp = get_tmp(c);
+      brw_MUL(p, vec4(brw_null_reg()), deref_4f(v1_ptr, delta), t0);
+      brw_MAC(p, tmp, negate(deref_4f(v0_ptr, delta)), t0);
+      brw_ADD(p, deref_4f(dest_ptr, delta), deref_4f(v0_ptr, delta), tmp);
+      release_tmp(c, tmp);
+   }
+
+   /* Recreate the projected (NDC) coordinate in the new vertex header */
+   brw_clip_project_vertex(c, dest_ptr);
+
+   /* If we have noperspective attributes,
+    * we need to compute the screen-space t
+    */
+   if (c->has_noperspective_shading) {
+      GLuint delta = brw_varying_to_offset(&c->vue_map,
+                                                BRW_VARYING_SLOT_NDC);
+      struct brw_reg tmp = get_tmp(c);
+      t_nopersp = get_tmp(c);
+
+      /* t_nopersp = vec4(v1.xy, dest.xy) */
+      brw_MOV(p, t_nopersp, deref_4f(v1_ptr, delta));
+      brw_MOV(p, tmp, deref_4f(dest_ptr, delta));
+      brw_set_access_mode(p, BRW_ALIGN_16);
+      brw_MOV(p,
+              brw_writemask(t_nopersp, WRITEMASK_ZW),
+              brw_swizzle(tmp, 0, 1, 0, 1));
+
+      /* t_nopersp = vec4(v1.xy, dest.xy) - v0.xyxy */
+      brw_ADD(p, t_nopersp, t_nopersp,
+              negate(brw_swizzle(v0_ndc_copy, 0, 1, 0, 1)));
+
+      /* Add the absolute values of the X and Y deltas so that if
+       * the points aren't in the same place on the screen we get
+       * nonzero values to divide.
+       *
+       * After that, we have vert1 - vert0 in t_nopersp.x and
+       * vertnew - vert0 in t_nopersp.y
+       *
+       * t_nopersp = vec2(|v1.x  -v0.x| + |v1.y  -v0.y|,
+       *                  |dest.x-v0.x| + |dest.y-v0.y|)
+       */
+      brw_ADD(p,
+              brw_writemask(t_nopersp, WRITEMASK_XY),
+              brw_abs(brw_swizzle(t_nopersp, 0, 2, 0, 0)),
+              brw_abs(brw_swizzle(t_nopersp, 1, 3, 0, 0)));
+      brw_set_access_mode(p, BRW_ALIGN_1);
+
+      /* If the points are in the same place, just substitute a
+       * value to avoid divide-by-zero
+       */
+      brw_CMP(p, vec1(brw_null_reg()), BRW_CONDITIONAL_EQ,
+              vec1(t_nopersp),
+              brw_imm_f(0));
+      brw_IF(p, BRW_EXECUTE_1);
+      brw_MOV(p, t_nopersp, brw_imm_vf4(VF_ONE, VF_ZERO, VF_ZERO, VF_ZERO));
+      brw_ENDIF(p);
+
+      /* Now compute t_nopersp = t_nopersp.y/t_nopersp.x and broadcast it. */
+      brw_math_invert(p, get_element(t_nopersp, 0), get_element(t_nopersp, 0));
+      brw_MUL(p, vec1(t_nopersp), vec1(t_nopersp),
+            vec1(suboffset(t_nopersp, 1)));
+      brw_set_access_mode(p, BRW_ALIGN_16);
+      brw_MOV(p, t_nopersp, brw_swizzle(t_nopersp, 0, 0, 0, 0));
+      brw_set_access_mode(p, BRW_ALIGN_1);
+
+      release_tmp(c, tmp);
+      release_tmp(c, v0_ndc_copy);
+   }
+
+   /* Now we can iterate over each attribute
+    * (could be done in pairs?)
     */
    for (slot = 0; slot < c->vue_map.num_slots; slot++) {
       int varying = c->vue_map.slot_to_varying[slot];
       GLuint delta = brw_vue_slot_to_offset(slot);
+
+      /* HPOS, NDC already handled above */
+      if (varying == VARYING_SLOT_POS || varying == BRW_VARYING_SLOT_NDC)
+         continue;
+
 
       if (varying == VARYING_SLOT_EDGE) {
 	 if (force_edgeflag) 
@@ -173,20 +270,27 @@ void brw_clip_interp_vertex( struct brw_clip_compile *c,
 	  *
 	  *        New = attr0 + t*attr1 - t*attr0
 	  */
+         struct brw_reg tmp = get_tmp(c);
+         struct brw_reg t =
+            c->key.interpolation_mode.mode[slot] == INTERP_QUALIFIER_NOPERSPECTIVE ?
+            t_nopersp : t0;
+
 	 brw_MUL(p, 
 		 vec4(brw_null_reg()),
 		 deref_4f(v1_ptr, delta),
-		 t0);
+		 t);
 
 	 brw_MAC(p, 
 		 tmp,	      
 		 negate(deref_4f(v0_ptr, delta)),
-		 t0); 
+		 t); 
 	      
 	 brw_ADD(p,
 		 deref_4f(dest_ptr, delta), 
 		 deref_4f(v0_ptr, delta),
 		 tmp);
+
+         release_tmp(c, tmp);
       }
    }
 
@@ -196,12 +300,8 @@ void brw_clip_interp_vertex( struct brw_clip_compile *c,
       brw_MOV(p, deref_4f(dest_ptr, delta), brw_imm_f(0));
    }
 
-   release_tmp(c, tmp);
-
-   /* Recreate the projected (NDC) coordinate in the new vertex
-    * header:
-    */
-   brw_clip_project_vertex(c, dest_ptr );
+   if (c->has_noperspective_shading)
+      release_tmp(c, t_nopersp);
 }
 
 void brw_clip_emit_vue(struct brw_clip_compile *c, 

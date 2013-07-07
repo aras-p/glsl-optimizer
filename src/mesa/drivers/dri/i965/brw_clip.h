@@ -122,6 +122,7 @@ struct brw_clip_compile {
    struct brw_vue_map vue_map;
 
    bool has_flat_shading;
+   bool has_noperspective_shading;
 };
 
 /**
