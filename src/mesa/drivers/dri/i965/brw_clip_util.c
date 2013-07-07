@@ -269,28 +269,39 @@ void brw_clip_interp_vertex( struct brw_clip_compile *c,
 	  * header), so interpolate:
 	  *
 	  *        New = attr0 + t*attr1 - t*attr0
+          *
+          * Unless the attribute is flat shaded -- in which case just copy
+          * from one of the sources (doesn't matter which; already copied from pv)
 	  */
-         struct brw_reg tmp = get_tmp(c);
-         struct brw_reg t =
-            c->key.interpolation_mode.mode[slot] == INTERP_QUALIFIER_NOPERSPECTIVE ?
-            t_nopersp : t0;
+         GLuint interp = c->key.interpolation_mode.mode[slot];
 
-	 brw_MUL(p, 
-		 vec4(brw_null_reg()),
-		 deref_4f(v1_ptr, delta),
-		 t);
+         if (interp != INTERP_QUALIFIER_FLAT) {
+            struct brw_reg tmp = get_tmp(c);
+            struct brw_reg t =
+               interp == INTERP_QUALIFIER_NOPERSPECTIVE ? t_nopersp : t0;
 
-	 brw_MAC(p, 
-		 tmp,	      
-		 negate(deref_4f(v0_ptr, delta)),
-		 t); 
-	      
-	 brw_ADD(p,
-		 deref_4f(dest_ptr, delta), 
-		 deref_4f(v0_ptr, delta),
-		 tmp);
+            brw_MUL(p,
+                  vec4(brw_null_reg()),
+                  deref_4f(v1_ptr, delta),
+                  t);
 
-         release_tmp(c, tmp);
+            brw_MAC(p,
+                  tmp,
+                  negate(deref_4f(v0_ptr, delta)),
+                  t);
+
+            brw_ADD(p,
+                  deref_4f(dest_ptr, delta),
+                  deref_4f(v0_ptr, delta),
+                  tmp);
+
+            release_tmp(c, tmp);
+         }
+         else {
+            brw_MOV(p,
+                  deref_4f(dest_ptr, delta),
+                  deref_4f(v0_ptr, delta));
+         }
       }
    }
 
