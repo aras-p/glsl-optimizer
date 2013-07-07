@@ -277,6 +277,12 @@ do_vs_prog(struct brw_context *brw,
          if (c.key.point_coord_replace & (1 << i))
             outputs_written |= BITFIELD64_BIT(VARYING_SLOT_TEX0 + i);
       }
+
+      /* if back colors are written, allocate slots for front colors too */
+      if (outputs_written & BITFIELD64_BIT(VARYING_SLOT_BFC0))
+         outputs_written |= BITFIELD64_BIT(VARYING_SLOT_COL0);
+      if (outputs_written & BITFIELD64_BIT(VARYING_SLOT_BFC1))
+         outputs_written |= BITFIELD64_BIT(VARYING_SLOT_COL1);
    }
 
    brw_compute_vue_map(brw, &prog_data.base.vue_map, outputs_written,
