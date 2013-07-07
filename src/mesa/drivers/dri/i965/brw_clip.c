@@ -158,7 +158,8 @@ brw_upload_clip_prog(struct brw_context *brw)
    /* _NEW_LIGHT */
    key.pv_first = (ctx->Light.ProvokingVertex == GL_FIRST_VERTEX_CONVENTION);
    /* _NEW_TRANSFORM (also part of VUE map)*/
-   key.nr_userclip = _mesa_bitcount_64(ctx->Transform.ClipPlanesEnabled);
+   if (ctx->Transform.ClipPlanesEnabled)
+      key.nr_userclip = _mesa_logbase2(ctx->Transform.ClipPlanesEnabled) + 1;
 
    if (brw->gen == 5)
        key.clip_mode = BRW_CLIPMODE_KERNEL_CLIP;

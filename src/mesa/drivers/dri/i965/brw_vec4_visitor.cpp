@@ -662,40 +662,14 @@ vec4_visitor::setup_uniform_clipplane_values()
 {
    gl_clip_plane *clip_planes = brw_select_clip_planes(ctx);
 
-   if (brw->gen < 6) {
-      /* Pre-Gen6, we compact clip planes.  For example, if the user
-       * enables just clip planes 0, 1, and 3, we will enable clip planes
-       * 0, 1, and 2 in the hardware, and we'll move clip plane 3 to clip
-       * plane 2.  This simplifies the implementation of the Gen6 clip
-       * thread.
-       */
-      int compacted_clipplane_index = 0;
-      for (int i = 0; i < MAX_CLIP_PLANES; ++i) {
-	 if (!(key->userclip_planes_enabled_gen_4_5 & (1 << i)))
-	    continue;
-
-	 this->uniform_vector_size[this->uniforms] = 4;
-	 this->userplane[compacted_clipplane_index] = dst_reg(UNIFORM, this->uniforms);
-	 this->userplane[compacted_clipplane_index].type = BRW_REGISTER_TYPE_F;
-	 for (int j = 0; j < 4; ++j) {
-	    prog_data->param[this->uniforms * 4 + j] = &clip_planes[i][j];
-	 }
-	 ++compacted_clipplane_index;
-	 ++this->uniforms;
+   for (int i = 0; i < key->nr_userclip_plane_consts; ++i) {
+      this->uniform_vector_size[this->uniforms] = 4;
+      this->userplane[i] = dst_reg(UNIFORM, this->uniforms);
+      this->userplane[i].type = BRW_REGISTER_TYPE_F;
+      for (int j = 0; j < 4; ++j) {
+         prog_data->param[this->uniforms * 4 + j] = &clip_planes[i][j];
       }
-   } else {
-      /* In Gen6 and later, we don't compact clip planes, because this
-       * simplifies the implementation of gl_ClipDistance.
-       */
-      for (int i = 0; i < key->nr_userclip_plane_consts; ++i) {
-	 this->uniform_vector_size[this->uniforms] = 4;
-	 this->userplane[i] = dst_reg(UNIFORM, this->uniforms);
-	 this->userplane[i].type = BRW_REGISTER_TYPE_F;
-	 for (int j = 0; j < 4; ++j) {
-	    prog_data->param[this->uniforms * 4 + j] = &clip_planes[i][j];
-	 }
-	 ++this->uniforms;
-      }
+      ++this->uniforms;
    }
 }
 

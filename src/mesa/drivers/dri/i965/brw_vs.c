@@ -394,9 +394,6 @@ brw_vs_debug_recompile(struct brw_context *brw,
 
    found |= key_debug(brw, "clip distance enable",
                       old_key->base.uses_clip_distance, key->base.uses_clip_distance);
-   found |= key_debug(brw, "clip plane enable bitfield",
-                      old_key->base.userclip_planes_enabled_gen_4_5,
-                      key->base.userclip_planes_enabled_gen_4_5);
    found |= key_debug(brw, "copy edgeflag",
                       old_key->copy_edgeflag, key->copy_edgeflag);
    found |= key_debug(brw, "PointCoord replace",
@@ -431,15 +428,8 @@ static void brw_upload_vs_prog(struct brw_context *brw)
    key.base.userclip_active = (ctx->Transform.ClipPlanesEnabled != 0);
    key.base.uses_clip_distance = vp->program.UsesClipDistance;
    if (key.base.userclip_active && !key.base.uses_clip_distance) {
-      if (brw->gen < 6) {
-         key.base.nr_userclip_plane_consts
-            = _mesa_bitcount_64(ctx->Transform.ClipPlanesEnabled);
-         key.base.userclip_planes_enabled_gen_4_5
-            = ctx->Transform.ClipPlanesEnabled;
-      } else {
-         key.base.nr_userclip_plane_consts
-            = _mesa_logbase2(ctx->Transform.ClipPlanesEnabled) + 1;
-      }
+      key.base.nr_userclip_plane_consts
+         = _mesa_logbase2(ctx->Transform.ClipPlanesEnabled) + 1;
    }
 
    /* _NEW_POLYGON */

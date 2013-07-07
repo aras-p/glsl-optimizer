@@ -71,15 +71,6 @@ struct brw_vec4_prog_key {
     */
    GLuint uses_clip_distance:1;
 
-   /**
-    * For pre-Gen6 hardware, a bitfield indicating which clipping planes are
-    * enabled.  This is used to compact clip planes.
-    *
-    * For Gen6 and later hardware, clip planes are not compacted, so this
-    * value is zero to avoid provoking unnecessary shader recompiles.
-    */
-   GLuint userclip_planes_enabled_gen_4_5:MAX_CLIP_PLANES;
-
    GLuint clamp_vertex_color:1;
 
    struct brw_sampler_prog_key_data tex;
