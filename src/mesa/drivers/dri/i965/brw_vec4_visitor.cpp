@@ -2688,16 +2688,8 @@ vec4_visitor::emit_psiz_and_flags(struct brw_reg reg)
 }
 
 void
-vec4_visitor::emit_clip_distances(struct brw_reg reg, int offset)
+vec4_visitor::emit_clip_distances(dst_reg reg, int offset)
 {
-   if (brw->gen < 6) {
-      /* Clip distance slots are set aside in gen5, but they are not used.  It
-       * is not clear whether we actually need to set aside space for them,
-       * but the performance cost is negligible.
-       */
-      return;
-   }
-
    /* From the GLSL 1.30 spec, section 7.1 (Vertex Shader Special Variables):
     *
     *     "If a linked set of shaders forming the vertex stage contains no
@@ -2717,7 +2709,8 @@ vec4_visitor::emit_clip_distances(struct brw_reg reg, int offset)
 
    for (int i = 0; i + offset < key->nr_userclip_plane_consts && i < 4;
         ++i) {
-      emit(DP4(dst_reg(brw_writemask(reg, 1 << i)),
+      reg.writemask = 1 << i;
+      emit(DP4(reg,
                src_reg(output_reg[clip_vertex]),
                src_reg(this->userplane[i + offset])));
    }
@@ -2761,15 +2754,6 @@ vec4_visitor::emit_urb_slot(int mrf, int varying)
    case VARYING_SLOT_POS:
       current_annotation = "gl_Position";
       emit(MOV(reg, src_reg(output_reg[VARYING_SLOT_POS])));
-      break;
-   case VARYING_SLOT_CLIP_DIST0:
-   case VARYING_SLOT_CLIP_DIST1:
-      if (this->key->uses_clip_distance) {
-         emit_generic_urb_slot(reg, varying);
-      } else {
-         current_annotation = "user clip distances";
-         emit_clip_distances(hw_reg, (varying - VARYING_SLOT_CLIP_DIST0) * 4);
-      }
       break;
    case VARYING_SLOT_EDGE:
       /* This is present when doing unfilled polygons.  We're supposed to copy
@@ -2867,6 +2851,17 @@ vec4_visitor::emit_vertex()
 
    if (brw->gen < 6) {
       emit_ndc_computation();
+   }
+
+   /* Lower legacy ff and ClipVertex clipping to clip distances */
+   if (key->userclip_active && !key->uses_clip_distance) {
+      current_annotation = "user clip distances";
+
+      output_reg[VARYING_SLOT_CLIP_DIST0] = dst_reg(this, glsl_type::vec4_type);
+      output_reg[VARYING_SLOT_CLIP_DIST1] = dst_reg(this, glsl_type::vec4_type);
+
+      emit_clip_distances(output_reg[VARYING_SLOT_CLIP_DIST0], 0);
+      emit_clip_distances(output_reg[VARYING_SLOT_CLIP_DIST1], 4);
    }
 
    /* Set up the VUE data for the first URB write */

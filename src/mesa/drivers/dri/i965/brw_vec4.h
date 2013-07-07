@@ -444,7 +444,7 @@ public:
 
    void emit_ndc_computation();
    void emit_psiz_and_flags(struct brw_reg reg);
-   void emit_clip_distances(struct brw_reg reg, int offset);
+   void emit_clip_distances(dst_reg reg, int offset);
    void emit_generic_urb_slot(dst_reg reg, int varying);
    void emit_urb_slot(int mrf, int varying);
 
