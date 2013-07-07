@@ -36,7 +36,11 @@
 #include "brw_context.h"
 #include "brw_eu.h"
 
-#define MAX_VERTS (3+6+6)	
+/* Initial 3 verts, plus at most 6 additional verts from intersections
+ * with fixed planes, plus at most 8 additional verts from intersections
+ * with user clip planes
+ */
+#define MAX_VERTS (3+6+8)
 
 /* Note that if unfilled primitives are being emitted, we have to fix
  * up polygon offset and flatshading at this point:

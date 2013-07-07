@@ -420,6 +420,7 @@ void brw_clip_init_clipmask( struct brw_clip_compile *c )
 {
    struct brw_compile *p = &c->func;
    struct brw_reg incoming = get_element_ud(c->reg.R0, 2);
+   struct brw_context *brw = p->brw;
    
    /* Shift so that lowest outcode bit is rightmost: 
     */
@@ -431,7 +432,11 @@ void brw_clip_init_clipmask( struct brw_clip_compile *c )
       /* Rearrange userclip outcodes so that they come directly after
        * the fixed plane bits.
        */
-      brw_AND(p, tmp, incoming, brw_imm_ud(0x3f<<14));
+      if (brw->gen == 5 || brw->is_g4x)
+         brw_AND(p, tmp, incoming, brw_imm_ud(0xff<<14));
+      else
+         brw_AND(p, tmp, incoming, brw_imm_ud(0x3f<<14));
+
       brw_SHR(p, tmp, tmp, brw_imm_ud(8));
       brw_OR(p, c->reg.planemask, c->reg.planemask, tmp);
       

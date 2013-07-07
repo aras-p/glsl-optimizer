@@ -190,7 +190,7 @@ brw_initialize_context_constants(struct brw_context *brw)
    ctx->Const.MaxPointSizeAA = 255.0;
    ctx->Const.PointSizeGranularity = 1.0;
 
-   if (brw->gen >= 6)
+   if (brw->gen >= 5 || brw->is_g4x)
       ctx->Const.MaxClipPlanes = 8;
 
    ctx->Const.VertexProgram.MaxNativeInstructions = 16 * 1024;

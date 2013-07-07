@@ -115,7 +115,13 @@ brw_upload_clip_unit(struct brw_context *brw)
    if (unlikely(INTEL_DEBUG & DEBUG_STATS))
       clip->thread4.stats_enable = 1;
 
-   clip->clip5.userclip_enable_flags = 0x7f;
+   /* _NEW_TRANSFORM */
+   if (brw->gen == 5 || brw->is_g4x)
+      clip->clip5.userclip_enable_flags = ctx->Transform.ClipPlanesEnabled;
+   else
+      /* Up to 6 actual clip flags, plus the 7th for negative RHW workaround. */
+      clip->clip5.userclip_enable_flags = (ctx->Transform.ClipPlanesEnabled & 0x3f) | 0x40;
+
    clip->clip5.userclip_must_clip = 1;
 
    /* enable guardband clipping if we can */
