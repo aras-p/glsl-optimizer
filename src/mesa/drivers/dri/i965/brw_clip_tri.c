@@ -190,8 +190,8 @@ void brw_clip_tri_flat_shade( struct brw_clip_compile *c )
 
    brw_IF(p, BRW_EXECUTE_1);
    {
-      brw_clip_copy_colors(c, 1, 0);
-      brw_clip_copy_colors(c, 2, 0);
+      brw_clip_copy_flatshaded_attributes(c, 1, 0);
+      brw_clip_copy_flatshaded_attributes(c, 2, 0);
    }
    brw_ELSE(p);
    {
@@ -203,19 +203,19 @@ void brw_clip_tri_flat_shade( struct brw_clip_compile *c )
 		 brw_imm_ud(_3DPRIM_TRIFAN));
 	 brw_IF(p, BRW_EXECUTE_1);
 	 {
-	    brw_clip_copy_colors(c, 0, 1);
-	    brw_clip_copy_colors(c, 2, 1);
+	    brw_clip_copy_flatshaded_attributes(c, 0, 1);
+	    brw_clip_copy_flatshaded_attributes(c, 2, 1);
 	 }
 	 brw_ELSE(p);
 	 {
-	    brw_clip_copy_colors(c, 1, 0);
-	    brw_clip_copy_colors(c, 2, 0);
+	    brw_clip_copy_flatshaded_attributes(c, 1, 0);
+	    brw_clip_copy_flatshaded_attributes(c, 2, 0);
 	 }
 	 brw_ENDIF(p);
       }
       else {
-         brw_clip_copy_colors(c, 0, 2);
-         brw_clip_copy_colors(c, 1, 2);
+         brw_clip_copy_flatshaded_attributes(c, 0, 2);
+         brw_clip_copy_flatshaded_attributes(c, 1, 2);
       }
    }
    brw_ENDIF(p);
@@ -645,7 +645,7 @@ void brw_emit_tri_clip( struct brw_clip_compile *c )
     * flatshading, need to apply the flatshade here because we don't
     * respect the PV when converting to trifan for emit:
     */
-   if (c->key.do_flat_shading) 
+   if (c->has_flat_shading)
       brw_clip_tri_flat_shade(c); 
       
    if ((c->key.clip_mode == BRW_CLIPMODE_NORMAL) ||

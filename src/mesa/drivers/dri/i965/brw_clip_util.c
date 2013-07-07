@@ -290,49 +290,21 @@ struct brw_reg brw_clip_plane_stride( struct brw_clip_compile *c )
 }
 
 
-/* If flatshading, distribute color from provoking vertex prior to
+/* Distribute flatshaded attributes from provoking vertex prior to
  * clipping.
  */
-void brw_clip_copy_colors( struct brw_clip_compile *c,
+void brw_clip_copy_flatshaded_attributes( struct brw_clip_compile *c,
 			   GLuint to, GLuint from )
 {
    struct brw_compile *p = &c->func;
 
-   if (brw_clip_have_varying(c, VARYING_SLOT_COL0))
-      brw_MOV(p, 
-	      byte_offset(c->reg.vertex[to],
-                          brw_varying_to_offset(&c->vue_map,
-                                                VARYING_SLOT_COL0)),
-	      byte_offset(c->reg.vertex[from],
-                          brw_varying_to_offset(&c->vue_map,
-                                                VARYING_SLOT_COL0)));
-
-   if (brw_clip_have_varying(c, VARYING_SLOT_COL1))
-      brw_MOV(p, 
-	      byte_offset(c->reg.vertex[to],
-                          brw_varying_to_offset(&c->vue_map,
-                                                VARYING_SLOT_COL1)),
-	      byte_offset(c->reg.vertex[from],
-                          brw_varying_to_offset(&c->vue_map,
-                                                VARYING_SLOT_COL1)));
-
-   if (brw_clip_have_varying(c, VARYING_SLOT_BFC0))
-      brw_MOV(p, 
-	      byte_offset(c->reg.vertex[to],
-                          brw_varying_to_offset(&c->vue_map,
-                                                VARYING_SLOT_BFC0)),
-	      byte_offset(c->reg.vertex[from],
-                          brw_varying_to_offset(&c->vue_map,
-                                                VARYING_SLOT_BFC0)));
-
-   if (brw_clip_have_varying(c, VARYING_SLOT_BFC1))
-      brw_MOV(p, 
-	      byte_offset(c->reg.vertex[to],
-                          brw_varying_to_offset(&c->vue_map,
-                                                VARYING_SLOT_BFC1)),
-	      byte_offset(c->reg.vertex[from],
-                          brw_varying_to_offset(&c->vue_map,
-                                                VARYING_SLOT_BFC1)));
+   for (int i = 0; i < c->vue_map.num_slots; i++) {
+      if (c->key.interpolation_mode.mode[i] == INTERP_QUALIFIER_FLAT) {
+         brw_MOV(p,
+                 byte_offset(c->reg.vertex[to], brw_vue_slot_to_offset(i)),
+                 byte_offset(c->reg.vertex[from], brw_vue_slot_to_offset(i)));
+      }
+   }
 }
 
 
