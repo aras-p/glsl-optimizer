@@ -110,8 +110,8 @@ entry_is_present(const struct hash_table *ht, struct hash_entry *entry)
 
 struct hash_table *
 _mesa_hash_table_create(void *mem_ctx,
-                        bool key_equals_function(const void *a,
-                                                 const void *b))
+                        bool (*key_equals_function)(const void *a,
+                                                    const void *b))
 {
    struct hash_table *ht;
 
