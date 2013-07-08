@@ -285,7 +285,7 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
          if (procType == TGSI_PROCESSOR_GEOMETRY) {
             unsigned input_primitive = info->properties[i].data[0];
             int num_verts = u_vertices_per_prim(input_primitive);
-            unsigned j;
+            int j;
             info->file_count[TGSI_FILE_INPUT] = num_verts;
             info->file_max[TGSI_FILE_INPUT] =
                MAX2(info->file_max[TGSI_FILE_INPUT], num_verts - 1);
