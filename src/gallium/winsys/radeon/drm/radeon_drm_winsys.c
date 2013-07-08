@@ -97,8 +97,16 @@
 #define RADEON_INFO_RING_WORKING 0x15
 #endif
 
+#ifndef RADEON_INFO_VCE_FW_VERSION
+#define RADEON_INFO_VCE_FW_VERSION 0x1b
+#endif
+
 #ifndef RADEON_CS_RING_UVD
 #define RADEON_CS_RING_UVD	3
+#endif
+
+#ifndef RADEON_CS_RING_VCE
+#define RADEON_CS_RING_VCE	4
 #endif
 
 static struct util_hash_table *fd_tab = NULL;
@@ -341,13 +349,23 @@ static boolean do_winsys_init(struct radeon_drm_winsys *ws)
         ws->info.r600_has_dma = TRUE;
     }
 
-    /* Check for UVD */
+    /* Check for UVD and VCE */
     ws->info.has_uvd = FALSE;
+    ws->info.vce_fw_version = 0x00000000;
     if (ws->info.drm_minor >= 32) {
 	uint32_t value = RADEON_CS_RING_UVD;
         if (radeon_get_drm_value(ws->fd, RADEON_INFO_RING_WORKING,
                                  "UVD Ring working", &value))
             ws->info.has_uvd = value;
+
+        value = RADEON_CS_RING_VCE;
+        if (radeon_get_drm_value(ws->fd, RADEON_INFO_RING_WORKING,
+                                 NULL, &value) && value) {
+
+            if (radeon_get_drm_value(ws->fd, RADEON_INFO_VCE_FW_VERSION,
+                                     "VCE FW version", &value))
+                ws->info.vce_fw_version = value;
+	}
     }
 
     /* Get GEM info. */

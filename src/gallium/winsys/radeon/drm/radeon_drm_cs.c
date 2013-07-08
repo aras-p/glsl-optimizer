@@ -99,6 +99,10 @@
 #define RADEON_CS_RING_UVD          3
 #endif
 
+#ifndef RADEON_CS_RING_VCE
+#define RADEON_CS_RING_VCE          4
+#endif
+
 #ifndef RADEON_CS_END_OF_FRAME
 #define RADEON_CS_END_OF_FRAME      0x04
 #endif
@@ -535,6 +539,12 @@ static void radeon_drm_cs_flush(struct radeon_winsys_cs *rcs, unsigned flags, ui
         case RING_UVD:
             cs->cst->flags[0] = 0;
             cs->cst->flags[1] = RADEON_CS_RING_UVD;
+            cs->cst->cs.num_chunks = 3;
+            break;
+
+        case RING_VCE:
+            cs->cst->flags[0] = 0;
+            cs->cst->flags[1] = RADEON_CS_RING_VCE;
             cs->cst->cs.num_chunks = 3;
             break;
 
