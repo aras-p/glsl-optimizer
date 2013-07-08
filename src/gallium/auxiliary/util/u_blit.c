@@ -596,10 +596,10 @@ util_blit_pixels(struct blit_state *ctx,
          t1 = 1.0f;
       }
       else {
-         s0 = 0;
-         s1 = srcW;
-         t0 = 0;
-         t1 = srcH;
+         s0 = 0.0f;
+         s1 = (float) srcW;
+         t0 = 0.0f;
+         t1 = (float) srcH;
       }
 
       u_sampler_view_default_template(&sv_templ, tex, tex->format);
@@ -630,10 +630,10 @@ util_blit_pixels(struct blit_state *ctx,
          return;
       }
 
-      s0 = srcX0;
-      s1 = srcX1;
-      t0 = srcY0;
-      t1 = srcY1;
+      s0 = (float) srcX0;
+      s1 = (float) srcX1;
+      t0 = (float) srcY0;
+      t1 = (float) srcY1;
       normalized = sampler_view->texture->target != PIPE_TEXTURE_RECT;
       if(normalized)
       {
@@ -685,8 +685,8 @@ util_blit_pixels(struct blit_state *ctx,
    ctx->sampler.normalized_coords = normalized;
    ctx->sampler.min_img_filter = filter;
    ctx->sampler.mag_img_filter = filter;
-   ctx->sampler.min_lod = src_level;
-   ctx->sampler.max_lod = src_level;
+   ctx->sampler.min_lod = (float) src_level;
+   ctx->sampler.max_lod = (float) src_level;
 
    /* Depth stencil state, fragment shader and sampler setup depending on what
     * we blit.
@@ -839,10 +839,10 @@ util_blit_pixels_tex(struct blit_state *ctx,
    assert(tex->width0 != 0);
    assert(tex->height0 != 0);
 
-   s0 = srcX0;
-   s1 = srcX1;
-   t0 = srcY0;
-   t1 = srcY1;
+   s0 = (float) srcX0;
+   s1 = (float) srcX1;
+   t0 = (float) srcY0;
+   t1 = (float) srcY1;
 
    if(normalized)
    {
