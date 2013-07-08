@@ -185,7 +185,7 @@ int r600_uvd_get_video_param(struct pipe_screen *screen,
 	struct r600_screen *rscreen = (struct r600_screen *)screen;
 
 	/* No support for MPEG4 on UVD 2.x */
-	if (param == PIPE_VIDEO_CAP_SUPPORTED && rscreen->family < CHIP_CEDAR &&
+	if (param == PIPE_VIDEO_CAP_SUPPORTED && rscreen->family < CHIP_PALM &&
 	    u_reduce_video_profile(profile) == PIPE_VIDEO_CODEC_MPEG4)
 		return false;
 
