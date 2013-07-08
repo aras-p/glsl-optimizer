@@ -72,7 +72,7 @@
 
     <function name="DebugMessageCallbackARB" offset="assign">
         <param name="callback" type="GLDEBUGPROCARB"/>
-        <param name="userParam" type="GLvoid *"/>
+        <param name="userParam" type="const GLvoid *"/>
     </function>
 
     <function name="GetDebugMessageLogARB" offset="assign">

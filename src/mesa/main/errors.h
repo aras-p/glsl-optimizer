@@ -101,7 +101,7 @@ _mesa_DebugMessageControlARB(GLenum source, GLenum type, GLenum severity,
                              GLboolean enabled);
 void GLAPIENTRY
 _mesa_DebugMessageCallbackARB(GLDEBUGPROCARB callback,
-                              GLvoid *userParam);
+                              const void *userParam);
 
 #ifdef __cplusplus
 }

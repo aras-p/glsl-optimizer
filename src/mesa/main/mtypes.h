@@ -3330,7 +3330,7 @@ struct gl_debug_namespace
 struct gl_debug_state
 {
    GLDEBUGPROCARB Callback;
-   GLvoid *CallbackData;
+   const void *CallbackData;
    GLboolean SyncOutput;
    GLboolean Defaults[MESA_DEBUG_SEVERITY_COUNT][MESA_DEBUG_SOURCE_COUNT][MESA_DEBUG_TYPE_COUNT];
    struct gl_debug_namespace Namespaces[MESA_DEBUG_SOURCE_COUNT][MESA_DEBUG_TYPE_COUNT];

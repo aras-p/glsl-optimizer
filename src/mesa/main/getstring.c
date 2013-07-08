@@ -262,7 +262,7 @@ _mesa_GetPointerv( GLenum pname, GLvoid **params )
       case GL_DEBUG_CALLBACK_USER_PARAM_ARB:
          if (!_mesa_is_desktop_gl(ctx))
             goto invalid_pname;
-         *params = ctx->Debug.CallbackData;
+         *params = (GLvoid *) ctx->Debug.CallbackData;
          break;
       default:
          goto invalid_pname;
