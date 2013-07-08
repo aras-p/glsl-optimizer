@@ -81,8 +81,10 @@ matrix_flipper::visit_enter(ir_expression *ir)
 
    if (mvp_transpose &&
        strcmp(mat_var->name, "gl_ModelViewProjectionMatrix") == 0) {
+#ifndef NDEBUG
       ir_dereference_variable *deref = ir->operands[0]->as_dereference_variable();
       assert(deref && deref->var == mat_var);
+#endif
 
       void *mem_ctx = ralloc_parent(ir);
 
