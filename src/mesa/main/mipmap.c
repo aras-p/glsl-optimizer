@@ -1885,7 +1885,7 @@ generate_mipmap_uncompressed(struct gl_context *ctx, GLenum target,
 			     const struct gl_texture_image *srcImage,
 			     GLuint maxLevel)
 {
-   GLint level;
+   GLuint level;
    GLenum datatype;
    GLuint comps;
 
@@ -2017,7 +2017,7 @@ generate_mipmap_compressed(struct gl_context *ctx, GLenum target,
 			   struct gl_texture_image *srcImage,
 			   GLuint maxLevel)
 {
-   GLint level;
+   GLuint level;
    gl_format temp_format;
    GLint components;
    GLuint temp_src_stride; /* in bytes */
