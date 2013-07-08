@@ -72,3 +72,5 @@ glslopt
 glsl_compiler
 .settings/
 .pydevproject
+
+build
