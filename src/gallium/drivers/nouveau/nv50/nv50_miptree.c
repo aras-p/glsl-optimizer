@@ -404,6 +404,8 @@ nv50_miptree_from_handle(struct pipe_screen *pscreen,
    mt->level[0].offset = 0;
    mt->level[0].tile_mode = mt->base.bo->config.nv50.tile_mode;
 
+   NOUVEAU_DRV_STAT(nouveau_screen(pscreen), tex_obj_current_count, 1);
+
    /* no need to adjust bo reference count */
    return &mt->base.base;
 }
