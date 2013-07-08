@@ -832,7 +832,7 @@ _mesa_get_uniform_name(const struct gl_uniform_storage *uni,
     * harm in always appending "[0]" to uniform array names.
     */
    if (uni->array_elements != 0) {
-      unsigned i;
+      int i;
 
       /* The comparison is strange because *length does *NOT* include the
        * terminating NUL, but maxLength does.
