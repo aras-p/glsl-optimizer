@@ -144,10 +144,6 @@ intel_batchbuffer_advance(struct brw_context *brw)
 
 void intel_batchbuffer_cached_advance(struct brw_context *brw);
 
-/* Here are the crusty old macros, to be removed:
- */
-#define BATCH_LOCALS
-
 #define BEGIN_BATCH(n) intel_batchbuffer_begin(brw, n, false)
 #define BEGIN_BATCH_BLT(n) intel_batchbuffer_begin(brw, n, true)
 #define OUT_BATCH(d) intel_batchbuffer_emit_dword(brw, d)

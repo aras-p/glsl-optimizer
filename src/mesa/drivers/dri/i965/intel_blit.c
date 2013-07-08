@@ -284,7 +284,6 @@ intelEmitCopyBlit(struct brw_context *brw,
    drm_intel_bo *aper_array[3];
    bool dst_y_tiled = dst_tiling == I915_TILING_Y;
    bool src_y_tiled = src_tiling == I915_TILING_Y;
-   BATCH_LOCALS;
 
    if (dst_tiling != I915_TILING_NONE) {
       if (dst_offset & 4095)
@@ -537,7 +536,6 @@ intel_miptree_set_alpha_to_one(struct brw_context *brw,
    uint32_t BR13, CMD;
    int pitch, cpp;
    drm_intel_bo *aper_array[2];
-   BATCH_LOCALS;
 
    pitch = region->pitch;
    cpp = region->cpp;
