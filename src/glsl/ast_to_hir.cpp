@@ -4229,6 +4229,8 @@ ast_interface_block::hir(exec_list *instructions,
       var_mode = ir_var_uniform;
       iface_type_name = "uniform";
    } else {
+      var_mode = ir_var_auto;
+      iface_type_name = "UNKNOWN";
       assert(!"interface block layout qualifier not found!");
    }
 
