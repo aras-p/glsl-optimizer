@@ -44,6 +44,7 @@ extern "C" {
 #include "intel_bufmgr.h"
 
 #include "intel_screen.h"
+#include "intel_debug.h"
 #include "intel_tex_obj.h"
 #include "i915_drm.h"
 
@@ -158,82 +159,6 @@ static INLINE void * __memcpy(void * to, const void * from, size_t n)
 #define __memcpy(a,b,c) memcpy(a,b,c)
 #endif
 
-
-/* ================================================================
- * Debugging:
- */
-extern int INTEL_DEBUG;
-
-#define DEBUG_TEXTURE	0x1
-#define DEBUG_STATE	0x2
-#define DEBUG_IOCTL	0x4
-#define DEBUG_BLIT	0x8
-#define DEBUG_MIPTREE   0x10
-#define DEBUG_PERF	0x20
-#define DEBUG_BATCH     0x80
-#define DEBUG_PIXEL     0x100
-#define DEBUG_BUFMGR    0x200
-#define DEBUG_REGION    0x400
-#define DEBUG_FBO       0x800
-#define DEBUG_GS        0x1000
-#define DEBUG_SYNC	0x2000
-#define DEBUG_PRIMS	0x4000
-#define DEBUG_VERTS	0x8000
-#define DEBUG_DRI       0x10000
-#define DEBUG_SF        0x20000
-#define DEBUG_STATS     0x100000
-#define DEBUG_WM        0x400000
-#define DEBUG_URB       0x800000
-#define DEBUG_VS        0x1000000
-#define DEBUG_CLIP      0x2000000
-#define DEBUG_AUB       0x4000000
-#define DEBUG_SHADER_TIME 0x8000000
-#define DEBUG_BLORP     0x10000000
-#define DEBUG_NO16      0x20000000
-#define DEBUG_VUE       0x40000000
-
-#ifdef HAVE_ANDROID_PLATFORM
-#define LOG_TAG "INTEL-MESA"
-#include <cutils/log.h>
-#ifndef ALOGW
-#define ALOGW LOGW
-#endif
-#define dbg_printf(...)	ALOGW(__VA_ARGS__)
-#else
-#define dbg_printf(...)	printf(__VA_ARGS__)
-#endif /* HAVE_ANDROID_PLATFORM */
-
-#define DBG(...) do {						\
-	if (unlikely(INTEL_DEBUG & FILE_DEBUG_FLAG))		\
-		dbg_printf(__VA_ARGS__);			\
-} while(0)
-
-#define perf_debug(...) do {					\
-   static GLuint msg_id = 0;                                    \
-   if (unlikely(INTEL_DEBUG & DEBUG_PERF))                      \
-      dbg_printf(__VA_ARGS__);                                  \
-   if (brw->perf_debug)                                         \
-      _mesa_gl_debug(&brw->ctx, &msg_id,                        \
-                     MESA_DEBUG_TYPE_PERFORMANCE,               \
-                     MESA_DEBUG_SEVERITY_MEDIUM,                \
-                     __VA_ARGS__);                              \
-} while(0)
-
-#define WARN_ONCE(cond, fmt...) do {                            \
-   if (unlikely(cond)) {                                        \
-      static bool _warned = false;                              \
-      static GLuint msg_id = 0;                                 \
-      if (!_warned) {                                           \
-         fprintf(stderr, "WARNING: ");                          \
-         fprintf(stderr, fmt);                                  \
-         _warned = true;                                        \
-                                                                \
-         _mesa_gl_debug(ctx, &msg_id,                           \
-                        MESA_DEBUG_TYPE_OTHER,                  \
-                        MESA_DEBUG_SEVERITY_HIGH, fmt);         \
-      }                                                         \
-   }                                                            \
-} while (0)
 
 /* ================================================================
  * intel_context.c:

@@ -8,6 +8,7 @@ i965_FILES = \
 	intel_buffer_objects.c \
 	intel_buffers.c \
 	intel_context.c \
+	intel_debug.c \
 	intel_extensions.c \
 	intel_fbo.c \
 	intel_mipmap_tree.c \

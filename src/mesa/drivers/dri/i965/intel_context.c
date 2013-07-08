@@ -55,11 +55,6 @@
 #include "utils.h"
 #include "../glsl/ralloc.h"
 
-#ifndef INTEL_DEBUG
-int INTEL_DEBUG = (0);
-#endif
-
-
 static const GLubyte *
 intelGetString(struct gl_context * ctx, GLenum name)
 {
@@ -304,40 +299,6 @@ intel_viewport(struct gl_context *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
     }
 }
 
-static const struct dri_debug_control debug_control[] = {
-   { "tex",   DEBUG_TEXTURE},
-   { "state", DEBUG_STATE},
-   { "ioctl", DEBUG_IOCTL},
-   { "blit",  DEBUG_BLIT},
-   { "mip",   DEBUG_MIPTREE},
-   { "fall",  DEBUG_PERF},
-   { "perf",  DEBUG_PERF},
-   { "bat",   DEBUG_BATCH},
-   { "pix",   DEBUG_PIXEL},
-   { "buf",   DEBUG_BUFMGR},
-   { "reg",   DEBUG_REGION},
-   { "fbo",   DEBUG_FBO},
-   { "fs",    DEBUG_WM },
-   { "gs",    DEBUG_GS},
-   { "sync",  DEBUG_SYNC},
-   { "prim",  DEBUG_PRIMS },
-   { "vert",  DEBUG_VERTS },
-   { "dri",   DEBUG_DRI },
-   { "sf",    DEBUG_SF },
-   { "stats", DEBUG_STATS },
-   { "wm",    DEBUG_WM },
-   { "urb",   DEBUG_URB },
-   { "vs",    DEBUG_VS },
-   { "clip",  DEBUG_CLIP },
-   { "aub",   DEBUG_AUB },
-   { "shader_time", DEBUG_SHADER_TIME },
-   { "no16",  DEBUG_NO16 },
-   { "blorp", DEBUG_BLORP },
-   { "vue",   DEBUG_VUE },
-   { NULL,    0 }
-};
-
-
 static void
 intelInvalidateState(struct gl_context * ctx, GLuint new_state)
 {
@@ -517,19 +478,7 @@ intelInitContext(struct brw_context *brw,
 
    intelInitExtensions(ctx);
 
-   INTEL_DEBUG = driParseDebugString(getenv("INTEL_DEBUG"), debug_control);
-   if (INTEL_DEBUG & DEBUG_BUFMGR)
-      dri_bufmgr_set_debug(brw->bufmgr, true);
-   if ((INTEL_DEBUG & DEBUG_SHADER_TIME) && brw->gen < 7) {
-      fprintf(stderr,
-              "shader_time debugging requires gen7 (Ivybridge) or better.\n");
-      INTEL_DEBUG &= ~DEBUG_SHADER_TIME;
-   }
-   if (INTEL_DEBUG & DEBUG_PERF)
-      brw->perf_debug = true;
-
-   if (INTEL_DEBUG & DEBUG_AUB)
-      drm_intel_bufmgr_gem_set_aub_dump(brw->bufmgr, true);
+   brw_process_intel_debug_variable(brw);
 
    intel_batchbuffer_init(brw);
 
