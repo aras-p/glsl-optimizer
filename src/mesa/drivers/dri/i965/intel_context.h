@@ -106,32 +106,6 @@ struct intel_batchbuffer {
    } saved;
 };
 
-/**
- * Align a value down to an alignment value
- *
- * If \c value is not already aligned to the requested alignment value, it
- * will be rounded down.
- *
- * \param value  Value to be rounded
- * \param alignment  Alignment value to be used.  This must be a power of two.
- *
- * \sa ALIGN()
- */
-#define ROUND_DOWN_TO(value, alignment) ((value) & ~(alignment - 1))
-
-static INLINE uint32_t
-U_FIXED(float value, uint32_t frac_bits)
-{
-   value *= (1 << frac_bits);
-   return value < 0 ? 0 : value;
-}
-
-static INLINE uint32_t
-S_FIXED(float value, uint32_t frac_bits)
-{
-   return value * (1 << frac_bits);
-}
-
 /* ================================================================
  * From linux kernel i386 header files, copes with odd sizes better
  * than COPY_DWORDS would:

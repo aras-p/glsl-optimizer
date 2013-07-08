@@ -293,19 +293,6 @@ extern char *__progname;
 #define SUBPIXEL_X 0.125
 #define SUBPIXEL_Y 0.125
 
-static INLINE uint32_t
-U_FIXED(float value, uint32_t frac_bits)
-{
-   value *= (1 << frac_bits);
-   return value < 0 ? 0 : value;
-}
-
-static INLINE uint32_t
-S_FIXED(float value, uint32_t frac_bits)
-{
-   return value * (1 << frac_bits);
-}
-
 #define INTEL_FIREVERTICES(intel)		\
 do {						\
    if ((intel)->prim.flush)			\
