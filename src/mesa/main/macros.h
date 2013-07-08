@@ -675,6 +675,18 @@ minify(unsigned value, unsigned levels)
  */
 #define ALIGN(value, alignment)  (((value) + (alignment) - 1) & ~((alignment) - 1))
 
+/**
+ * Align a value down to an alignment value
+ *
+ * If \c value is not already aligned to the requested alignment value, it
+ * will be rounded down.
+ *
+ * \param value  Value to be rounded
+ * \param alignment  Alignment value to be used.  This must be a power of two.
+ *
+ * \sa ALIGN()
+ */
+#define ROUND_DOWN_TO(value, alignment) ((value) & ~(alignment - 1))
 
 
 /** Cross product of two 3-element vectors */

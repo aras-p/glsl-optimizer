@@ -293,19 +293,6 @@ extern char *__progname;
 #define SUBPIXEL_X 0.125
 #define SUBPIXEL_Y 0.125
 
-/**
- * Align a value down to an alignment value
- *
- * If \c value is not already aligned to the requested alignment value, it
- * will be rounded down.
- *
- * \param value  Value to be rounded
- * \param alignment  Alignment value to be used.  This must be a power of two.
- *
- * \sa ALIGN()
- */
-#define ROUND_DOWN_TO(value, alignment) ((value) & ~(alignment - 1))
-
 static INLINE uint32_t
 U_FIXED(float value, uint32_t frac_bits)
 {
