@@ -80,7 +80,7 @@ _mesa_GetMultisamplefv(GLenum pname, GLuint index, GLfloat * val)
 
    switch (pname) {
    case GL_SAMPLE_POSITION: {
-      if (index >= ctx->DrawBuffer->Visual.samples) {
+      if ((int) index >= ctx->DrawBuffer->Visual.samples) {
          _mesa_error( ctx, GL_INVALID_VALUE, "glGetMultisamplefv(index)" );
          return;
       }
@@ -197,5 +197,6 @@ _mesa_check_sample_count(struct gl_context *ctx, GLenum target,
     * "... or if samples is greater than MAX_SAMPLES, then the error
     * INVALID_VALUE is generated"
     */
-   return samples > ctx->Const.MaxSamples ? GL_INVALID_VALUE : GL_NO_ERROR;
+   return (GLuint) samples > ctx->Const.MaxSamples
+      ? GL_INVALID_VALUE : GL_NO_ERROR;
 }
