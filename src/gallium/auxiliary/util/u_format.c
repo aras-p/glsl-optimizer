@@ -297,7 +297,7 @@ util_format_read_4ui(enum pipe_format format,
 {
    const struct util_format_description *format_desc;
    const uint8_t *src_row;
-   unsigned *dst_row;
+   uint32_t *dst_row;
 
    format_desc = util_format_description(format);
 
@@ -318,7 +318,7 @@ util_format_write_4ui(enum pipe_format format,
 {
    const struct util_format_description *format_desc;
    uint8_t *dst_row;
-   const unsigned *src_row;
+   const uint32_t *src_row;
 
    format_desc = util_format_description(format);
 
@@ -339,7 +339,7 @@ util_format_read_4i(enum pipe_format format,
 {
    const struct util_format_description *format_desc;
    const uint8_t *src_row;
-   int *dst_row;
+   int32_t *dst_row;
 
    format_desc = util_format_description(format);
 
@@ -360,7 +360,7 @@ util_format_write_4i(enum pipe_format format,
 {
    const struct util_format_description *format_desc;
    uint8_t *dst_row;
-   const int *src_row;
+   const int32_t *src_row;
 
    format_desc = util_format_description(format);
 

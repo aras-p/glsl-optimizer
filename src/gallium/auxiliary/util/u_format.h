@@ -361,13 +361,13 @@ struct util_format_description
     * Only defined for INT formats.
     */
    void
-   (*unpack_rgba_uint)(unsigned *dst, unsigned dst_stride,
+   (*unpack_rgba_uint)(uint32_t *dst, unsigned dst_stride,
                        const uint8_t *src, unsigned src_stride,
                        unsigned width, unsigned height);
 
    void
    (*pack_rgba_uint)(uint8_t *dst, unsigned dst_stride,
-                     const unsigned *src, unsigned src_stride,
+                     const uint32_t *src, unsigned src_stride,
                      unsigned width, unsigned height);
 
   /**
@@ -377,13 +377,13 @@ struct util_format_description
     * Only defined for INT formats.
     */
    void
-   (*unpack_rgba_sint)(signed *dst, unsigned dst_stride,
+   (*unpack_rgba_sint)(int32_t *dst, unsigned dst_stride,
                        const uint8_t *src, unsigned src_stride,
                        unsigned width, unsigned height);
 
    void
    (*pack_rgba_sint)(uint8_t *dst, unsigned dst_stride,
-                     const int *src, unsigned src_stride,
+                     const int32_t *src, unsigned src_stride,
                      unsigned width, unsigned height);
 
    /**
