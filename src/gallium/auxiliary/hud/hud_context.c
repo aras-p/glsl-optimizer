@@ -407,8 +407,8 @@ hud_draw(struct hud_context *hud, struct pipe_resource *tex)
 
    hud->fb_width = tex->width0;
    hud->fb_height = tex->height0;
-   hud->constants.two_div_fb_width = 2.0 / hud->fb_width;
-   hud->constants.two_div_fb_height = 2.0 / hud->fb_height;
+   hud->constants.two_div_fb_width = 2.0f / hud->fb_width;
+   hud->constants.two_div_fb_height = 2.0f / hud->fb_height;
 
    cso_save_framebuffer(cso);
    cso_save_sample_mask(cso);
@@ -488,7 +488,7 @@ hud_draw(struct hud_context *hud, struct pipe_resource *tex)
       hud->constants.color[0] = 0;
       hud->constants.color[1] = 0;
       hud->constants.color[2] = 0;
-      hud->constants.color[3] = 0.666;
+      hud->constants.color[3] = 0.666f;
       hud->constants.translate[0] = 0;
       hud->constants.translate[1] = 0;
       hud->constants.scale[0] = 1;
@@ -564,7 +564,7 @@ void
 hud_pane_set_max_value(struct hud_pane *pane, uint64_t value)
 {
    pane->max_value = value;
-   pane->yscale = -(int)pane->inner_height / (double)pane->max_value;
+   pane->yscale = -(int)pane->inner_height / (float)pane->max_value;
 }
 
 static struct hud_pane *
@@ -636,8 +636,8 @@ hud_graph_add_value(struct hud_graph *gr, uint64_t value)
       gr->vertices[1] = gr->vertices[(gr->index-1)*2+1];
       gr->index = 1;
    }
-   gr->vertices[(gr->index)*2+0] = gr->index*2;
-   gr->vertices[(gr->index)*2+1] = value;
+   gr->vertices[(gr->index)*2+0] = (float) (gr->index * 2);
+   gr->vertices[(gr->index)*2+1] = (float) value;
    gr->index++;
 
    if (gr->num_vertices < gr->pane->max_num_vertices) {
@@ -717,8 +717,8 @@ hud_parse_env_var(struct hud_context *hud, const char *env)
     */
    period_env = getenv("GALLIUM_HUD_PERIOD");
    if (period_env) {
-      float p = atof(period_env);
-      if (p >= 0.0) {
+      float p = (float) atof(period_env);
+      if (p >= 0.0f) {
          period = (unsigned) (p * 1000 * 1000);
       }
    }
