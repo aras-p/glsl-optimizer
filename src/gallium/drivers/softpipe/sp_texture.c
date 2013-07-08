@@ -362,23 +362,23 @@ softpipe_transfer_map(struct pipe_context *pipe,
    assert(level <= resource->last_level);
 
    /* make sure the requested region is in the image bounds */
-   assert(box->x + box->width <= u_minify(resource->width0, level));
+   assert(box->x + box->width <= (int) u_minify(resource->width0, level));
    if (resource->target == PIPE_TEXTURE_1D_ARRAY) {
-      assert(box->y + box->height <= resource->array_size);
+      assert(box->y + box->height <= (int) resource->array_size);
    }
    else {
-      assert(box->y + box->height <= u_minify(resource->height0, level));
+      assert(box->y + box->height <= (int) u_minify(resource->height0, level));
       if (resource->target == PIPE_TEXTURE_2D_ARRAY) {
-         assert(box->z + box->depth <= resource->array_size);
+         assert(box->z + box->depth <= (int) resource->array_size);
       }
       else if (resource->target == PIPE_TEXTURE_CUBE) {
          assert(box->z < 6);
       }
       else if (resource->target == PIPE_TEXTURE_CUBE_ARRAY) {
-         assert(box->z <= resource->array_size);
+         assert(box->z <= (int) resource->array_size);
       }
       else {
-         assert(box->z + box->depth <= (u_minify(resource->depth0, level)));
+         assert(box->z + box->depth <= (int) u_minify(resource->depth0, level));
       }
    }
 

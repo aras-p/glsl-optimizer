@@ -917,8 +917,8 @@ img_filter_2d_linear_repeat_POT(struct sp_sampler_view *sp_sview,
 {
    unsigned xpot = pot_level_size(sp_sview->xpot, level);
    unsigned ypot = pot_level_size(sp_sview->ypot, level);
-   unsigned xmax = (xpot - 1) & (TEX_TILE_SIZE - 1); /* MIN2(TEX_TILE_SIZE, xpot) - 1; */
-   unsigned ymax = (ypot - 1) & (TEX_TILE_SIZE - 1); /* MIN2(TEX_TILE_SIZE, ypot) - 1; */
+   int xmax = (xpot - 1) & (TEX_TILE_SIZE - 1); /* MIN2(TEX_TILE_SIZE, xpot) - 1; */
+   int ymax = (ypot - 1) & (TEX_TILE_SIZE - 1); /* MIN2(TEX_TILE_SIZE, ypot) - 1; */
    union tex_tile_address addr;
    int c;
 
@@ -1028,13 +1028,13 @@ img_filter_2d_nearest_clamp_POT(struct sp_sampler_view *sp_sview,
    x0 = util_ifloor(u);
    if (x0 < 0) 
       x0 = 0;
-   else if (x0 > xpot - 1)
+   else if (x0 > (int) xpot - 1)
       x0 = xpot - 1;
 
    y0 = util_ifloor(v);
    if (y0 < 0) 
       y0 = 0;
-   else if (y0 > ypot - 1)
+   else if (y0 > (int) ypot - 1)
       y0 = ypot - 1;
    
    out = get_texel_2d_no_border(sp_sview, addr, x0, y0);
@@ -1771,7 +1771,7 @@ mip_filter_linear(struct sp_sampler_view *sp_sview,
                     sp_sview->base.u.tex.first_level,
                     sp_sview->faces[j], &rgba[0][j]);
 
-      else if (level0 >= texture->last_level)
+      else if (level0 >= (int) texture->last_level)
          min_filter(sp_sview, sp_samp, s[j], t[j], p[j], texture->last_level,
                     sp_sview->faces[j], &rgba[0][j]);
 
@@ -1827,7 +1827,7 @@ mip_filter_nearest(struct sp_sampler_view *sp_sview,
                     sp_sview->base.u.tex.first_level,
                     sp_sview->faces[j], &rgba[0][j]);
       else {
-         float level = sp_sview->base.u.tex.first_level + (int)(lod[j] + 0.5F) ;
+         int level = sp_sview->base.u.tex.first_level + (int)(lod[j] + 0.5F);
          level = MIN2(level, (int)texture->last_level);
          min_filter(sp_sview, sp_samp, s[j], t[j], p[j],
                     level, sp_sview->faces[j], &rgba[0][j]);
@@ -1966,8 +1966,8 @@ img_filter_2d_ewa(struct sp_sampler_view *sp_sview,
 
    /* Compute the ellipse's (u,v) bounding box in texture space */
    float d = -B*B+4.0f*C*A;
-   float box_u = 2.0f / d * sqrt(d*C*F); /* box_u -> half of bbox with   */
-   float box_v = 2.0f / d * sqrt(A*d*F); /* box_v -> half of bbox height */
+   float box_u = 2.0f / d * sqrtf(d*C*F); /* box_u -> half of bbox with   */
+   float box_v = 2.0f / d * sqrtf(A*d*F); /* box_v -> half of bbox height */
 
    float rgba_temp[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE];
    float s_buffer[TGSI_QUAD_SIZE];
