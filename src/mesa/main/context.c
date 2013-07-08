@@ -636,8 +636,10 @@ _mesa_init_constants(struct gl_context *ctx)
    ctx->Const.MaxTransformFeedbackInterleavedComponents = 4 * MAX_FEEDBACK_ATTRIBS;
    ctx->Const.MaxVertexStreams = 1;
 
-   /* GL 3.2: hard-coded for now: */
-   ctx->Const.ProfileMask = GL_CONTEXT_COMPATIBILITY_PROFILE_BIT;
+   /* GL 3.2  */
+   ctx->Const.ProfileMask = ctx->API == API_OPENGL_CORE
+                          ? GL_CONTEXT_CORE_PROFILE_BIT
+                          : GL_CONTEXT_COMPATIBILITY_PROFILE_BIT;
 
    /** GL_EXT_gpu_shader4 */
    ctx->Const.MinProgramTexelOffset = -8;
