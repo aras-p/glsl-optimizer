@@ -4143,7 +4143,7 @@ _mesa_store_compressed_texsubimage(struct gl_context *ctx, GLuint dims,
    const GLubyte *src;
    const gl_format texFormat = texImage->TexFormat;
    GLuint bw, bh;
-   GLuint slice;
+   GLint slice;
 
    if (dims == 1) {
       _mesa_problem(ctx, "Unexpected 1D compressed texsubimage call");
