@@ -781,6 +781,7 @@ gen6_blorp_emit_depth_stencil_config(struct brw_context *brw,
    uint32_t draw_y = params->depth.y_offset;
    uint32_t tile_mask_x, tile_mask_y;
    uint32_t surftype;
+   unsigned int depth = MAX2(params->depth.mt->logical_depth0, 1);
    GLenum gl_target = params->depth.mt->target;
 
    switch (gl_target) {
@@ -792,6 +793,7 @@ gen6_blorp_emit_depth_stencil_config(struct brw_context *brw,
        * equivalent.
        */
       surftype = BRW_SURFACE_2D;
+      depth *= 6;
       break;
    default:
       surftype = translate_tex_target(gl_target);
