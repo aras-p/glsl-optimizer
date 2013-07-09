@@ -21,6 +21,7 @@
  * IN THE SOFTWARE.
  */
 
+#include "main/mtypes.h"
 #include "intel_batchbuffer.h"
 #include "intel_mipmap_tree.h"
 #include "intel_regions.h"
@@ -41,8 +42,38 @@ gen7_emit_depth_stencil_hiz(struct brw_context *brw,
 {
    struct gl_context *ctx = &brw->ctx;
    uint8_t mocs = brw->is_haswell ? GEN7_MOCS_L3 : 0;
+   struct gl_framebuffer *fb = ctx->DrawBuffer;
+   uint32_t surftype;
+   GLenum gl_target = GL_TEXTURE_2D;
+   const struct intel_renderbuffer *irb = NULL;
+   const struct gl_renderbuffer *rb = NULL;
 
    intel_emit_depth_stall_flushes(brw);
+
+   irb = intel_get_renderbuffer(fb, BUFFER_DEPTH);
+   if (!irb)
+      irb = intel_get_renderbuffer(fb, BUFFER_STENCIL);
+   rb = (struct gl_renderbuffer*) irb;
+
+   if (rb) {
+      if (rb->TexImage)
+         gl_target = rb->TexImage->TexObject->Target;
+   }
+
+   switch (gl_target) {
+   case GL_TEXTURE_CUBE_MAP_ARRAY:
+   case GL_TEXTURE_CUBE_MAP:
+      /* The PRM claims that we should use BRW_SURFACE_CUBE for this
+       * situation, but experiments show that gl_Layer doesn't work when we do
+       * this.  So we use BRW_SURFACE_2D, since for rendering purposes this is
+       * equivalent.
+       */
+      surftype = BRW_SURFACE_2D;
+      break;
+   default:
+      surftype = translate_tex_target(gl_target);
+      break;
+   }
 
    /* _NEW_DEPTH, _NEW_STENCIL, _NEW_BUFFERS */
    BEGIN_BATCH(7);
