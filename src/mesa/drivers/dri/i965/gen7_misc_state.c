@@ -44,6 +44,7 @@ gen7_emit_depth_stencil_hiz(struct brw_context *brw,
    uint8_t mocs = brw->is_haswell ? GEN7_MOCS_L3 : 0;
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    uint32_t surftype;
+   unsigned int depth = 1;
    GLenum gl_target = GL_TEXTURE_2D;
    const struct intel_renderbuffer *irb = NULL;
    const struct gl_renderbuffer *rb = NULL;
@@ -56,6 +57,7 @@ gen7_emit_depth_stencil_hiz(struct brw_context *brw,
    rb = (struct gl_renderbuffer*) irb;
 
    if (rb) {
+      depth = MAX2(rb->Depth, 1);
       if (rb->TexImage)
          gl_target = rb->TexImage->TexObject->Target;
    }
@@ -69,6 +71,7 @@ gen7_emit_depth_stencil_hiz(struct brw_context *brw,
        * equivalent.
        */
       surftype = BRW_SURFACE_2D;
+      depth *= 6;
       break;
    default:
       surftype = translate_tex_target(gl_target);
