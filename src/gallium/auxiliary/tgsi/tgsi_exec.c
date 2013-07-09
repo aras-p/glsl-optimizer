@@ -2521,7 +2521,7 @@ exec_scalar_binary(struct tgsi_exec_machine *mach,
    union tgsi_exec_channel dst;
 
    fetch_source(mach, &src[0], &inst->Src[0], TGSI_CHAN_X, src_datatype);
-   fetch_source(mach, &src[1], &inst->Src[1], TGSI_CHAN_Y, src_datatype);
+   fetch_source(mach, &src[1], &inst->Src[1], TGSI_CHAN_X, src_datatype);
    op(&dst, &src[0], &src[1]);
    for (chan = 0; chan < TGSI_NUM_CHANNELS; chan++) {
       if (inst->Dst[0].Register.WriteMask & (1 << chan)) {
