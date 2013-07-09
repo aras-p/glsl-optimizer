@@ -50,6 +50,7 @@ gen6_emit_depth_stencil_hiz(struct brw_context *brw,
    unsigned int depth = 1;
    GLenum gl_target = GL_TEXTURE_2D;
    unsigned int lod;
+   const struct intel_mipmap_tree *mt = depth_mt ? depth_mt : stencil_mt;
    const struct intel_renderbuffer *irb = NULL;
    const struct gl_renderbuffer *rb = NULL;
 
@@ -102,8 +103,16 @@ gen6_emit_depth_stencil_hiz(struct brw_context *brw,
 
    lod = irb ? irb->mt_level - irb->mt->first_level : 0;
 
+   if (mt) {
+      width = mt->logical_width0;
+      height = mt->logical_height0;
+   }
+
    BEGIN_BATCH(7);
+   /* 3DSTATE_DEPTH_BUFFER dw0 */
    OUT_BATCH(_3DSTATE_DEPTH_BUFFER << 16 | (7 - 2));
+
+   /* 3DSTATE_DEPTH_BUFFER dw1 */
    OUT_BATCH((depth_mt ? depth_mt->pitch - 1 : 0) |
              (depthbuffer_format << 18) |
              ((enable_hiz_ss ? 1 : 0) << 21) | /* separate stencil enable */
@@ -111,22 +120,32 @@ gen6_emit_depth_stencil_hiz(struct brw_context *brw,
              (BRW_TILEWALK_YMAJOR << 26) |
              ((depth_mt ? depth_mt->tiling != I915_TILING_NONE : 1)
               << 27) |
-             (depth_surface_type << 29));
+             (surftype << 29));
 
+   /* 3DSTATE_DEPTH_BUFFER dw2 */
    if (depth_mt) {
       OUT_RELOC(depth_mt->bo,
 		I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
-		depth_offset);
+		0);
    } else {
       OUT_BATCH(0);
    }
 
-   OUT_BATCH(((width + tile_x - 1) << 6) |
-             ((height + tile_y - 1) << 19));
+   /* 3DSTATE_DEPTH_BUFFER dw3 */
+   OUT_BATCH(((width - 1) << 6) |
+             ((height - 1) << 19) |
+             lod << 2);
+
+   /* 3DSTATE_DEPTH_BUFFER dw4 */
+   OUT_BATCH((depth - 1) << 21 |
+             min_array_element << 10 |
+             (depth - 1) << 1);
+
+   /* 3DSTATE_DEPTH_BUFFER dw5 */
    OUT_BATCH(0);
+   assert(tile_x == 0 && tile_y == 0);
 
-   OUT_BATCH(tile_x | (tile_y << 16));
-
+   /* 3DSTATE_DEPTH_BUFFER dw6 */
    OUT_BATCH(0);
 
    ADVANCE_BATCH();
@@ -148,7 +167,7 @@ gen6_emit_depth_stencil_hiz(struct brw_context *brw,
 	 OUT_BATCH(hiz_mt->pitch - 1);
 	 OUT_RELOC(hiz_mt->bo,
 		   I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
-		   brw->depthstencil.hiz_offset);
+		   0);
 	 ADVANCE_BATCH();
       } else {
 	 BEGIN_BATCH(3);
@@ -170,7 +189,7 @@ gen6_emit_depth_stencil_hiz(struct brw_context *brw,
 	 OUT_BATCH(2 * stencil_mt->pitch - 1);
 	 OUT_RELOC(stencil_mt->bo,
 		   I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
-		   brw->depthstencil.stencil_offset);
+		   0);
 	 ADVANCE_BATCH();
       } else {
 	 BEGIN_BATCH(3);

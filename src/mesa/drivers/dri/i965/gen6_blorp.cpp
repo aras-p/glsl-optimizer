@@ -776,10 +776,6 @@ static void
 gen6_blorp_emit_depth_stencil_config(struct brw_context *brw,
                                      const brw_blorp_params *params)
 {
-   struct gl_context *ctx = &brw->ctx;
-   uint32_t draw_x = params->depth.x_offset;
-   uint32_t draw_y = params->depth.y_offset;
-   uint32_t tile_mask_x, tile_mask_y;
    uint32_t surfwidth, surfheight;
    uint32_t surftype;
    unsigned int depth = MAX2(params->depth.mt->logical_depth0, 1);
@@ -802,12 +798,6 @@ gen6_blorp_emit_depth_stencil_config(struct brw_context *brw,
       break;
    }
 
-   brw_get_depthstencil_tile_masks(params->depth.mt,
-                                   params->depth.level,
-                                   params->depth.layer,
-                                   NULL,
-                                   &tile_mask_x, &tile_mask_y);
-
    const unsigned min_array_element = params->depth.layer;
 
    lod = params->depth.level - params->depth.mt->first_level;
@@ -826,55 +816,42 @@ gen6_blorp_emit_depth_stencil_config(struct brw_context *brw,
 
    /* 3DSTATE_DEPTH_BUFFER */
    {
-      uint32_t tile_x = draw_x & tile_mask_x;
-      uint32_t tile_y = draw_y & tile_mask_y;
-      uint32_t offset =
-         intel_miptree_get_aligned_offset(params->depth.mt,
-                                          draw_x & ~tile_mask_x,
-                                          draw_y & ~tile_mask_y, false);
-
-      /* According to the Sandy Bridge PRM, volume 2 part 1, pp326-327
-       * (3DSTATE_DEPTH_BUFFER dw5), in the documentation for "Depth
-       * Coordinate Offset X/Y":
-       *
-       *   "The 3 LSBs of both offsets must be zero to ensure correct
-       *   alignment"
-       *
-       * We have no guarantee that tile_x and tile_y are correctly aligned,
-       * since they are determined by the mipmap layout, which is only aligned
-       * to multiples of 4.
-       *
-       * So, to avoid hanging the GPU, just smash the low order 3 bits of
-       * tile_x and tile_y to 0.  This is a temporary workaround until we come
-       * up with a better solution.
-       */
-      WARN_ONCE((tile_x & 7) || (tile_y & 7),
-                "Depth/stencil buffer needs alignment to 8-pixel boundaries.\n"
-                "Truncating offset, bad rendering may occur.\n");
-      tile_x &= ~7;
-      tile_y &= ~7;
-
       intel_emit_post_sync_nonzero_flush(brw);
       intel_emit_depth_stall_flushes(brw);
 
       BEGIN_BATCH(7);
+      /* 3DSTATE_DEPTH_BUFFER dw0 */
       OUT_BATCH(_3DSTATE_DEPTH_BUFFER << 16 | (7 - 2));
+
+      /* 3DSTATE_DEPTH_BUFFER dw1 */
       OUT_BATCH((params->depth.mt->pitch - 1) |
                 params->depth_format << 18 |
                 1 << 21 | /* separate stencil enable */
                 1 << 22 | /* hiz enable */
                 BRW_TILEWALK_YMAJOR << 26 |
                 1 << 27 | /* y-tiled */
-                BRW_SURFACE_2D << 29);
+                surftype << 29);
+
+      /* 3DSTATE_DEPTH_BUFFER dw2 */
       OUT_RELOC(params->depth.mt->bo,
                 I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
-                offset);
+                0);
+
+      /* 3DSTATE_DEPTH_BUFFER dw3 */
       OUT_BATCH(BRW_SURFACE_MIPMAPLAYOUT_BELOW << 1 |
-                (params->depth.width + tile_x - 1) << 6 |
-                (params->depth.height + tile_y - 1) << 19);
+                (surfwidth - 1) << 6 |
+                (surfheight - 1) << 19 |
+                lod << 2);
+
+      /* 3DSTATE_DEPTH_BUFFER dw4 */
+      OUT_BATCH((depth - 1) << 21 |
+                min_array_element << 10 |
+                (depth - 1) << 1);
+
+      /* 3DSTATE_DEPTH_BUFFER dw5 */
       OUT_BATCH(0);
-      OUT_BATCH(tile_x |
-                tile_y << 16);
+
+      /* 3DSTATE_DEPTH_BUFFER dw6 */
       OUT_BATCH(0);
       ADVANCE_BATCH();
    }
@@ -882,17 +859,13 @@ gen6_blorp_emit_depth_stencil_config(struct brw_context *brw,
    /* 3DSTATE_HIER_DEPTH_BUFFER */
    {
       struct intel_mipmap_tree *hiz_mt = params->depth.mt->hiz_mt;
-      uint32_t hiz_offset =
-         intel_miptree_get_aligned_offset(hiz_mt,
-                                          draw_x & ~tile_mask_x,
-                                          (draw_y & ~tile_mask_y) / 2, false);
 
       BEGIN_BATCH(3);
       OUT_BATCH((_3DSTATE_HIER_DEPTH_BUFFER << 16) | (3 - 2));
       OUT_BATCH(hiz_mt->pitch - 1);
       OUT_RELOC(hiz_mt->bo,
                 I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
-                hiz_offset);
+                0);
       ADVANCE_BATCH();
    }
 

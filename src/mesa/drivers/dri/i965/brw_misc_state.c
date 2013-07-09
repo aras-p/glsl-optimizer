@@ -261,10 +261,10 @@ brw_workaround_depthstencil_alignment(struct brw_context *brw,
    if (stencil_irb)
       brw->depthstencil.stencil_mt = get_stencil_miptree(stencil_irb);
 
-   /* Gen7+ doesn't require the workarounds, since we always program the
+   /* Gen6+ doesn't require the workarounds, since we always program the
     * surface state at the start of the whole surface.
     */
-   if (brw->gen >= 7)
+   if (brw->gen >= 6)
       return;
 
    /* Check if depth buffer is in depth/stencil format.  If so, then it's only
