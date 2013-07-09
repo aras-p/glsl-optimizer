@@ -260,10 +260,25 @@ brw_blorp_clear_params::brw_blorp_clear_params(struct brw_context *brw,
       intel_get_non_msrt_mcs_alignment(brw, irb->mt, &x_align, &y_align);
       x_align *= 16;
       y_align *= 32;
-      x0 = ROUND_DOWN_TO(x0, x_align);
-      y0 = ROUND_DOWN_TO(y0, y_align);
-      x1 = ALIGN(x1, x_align);
-      y1 = ALIGN(y1, y_align);
+
+      if (brw->is_haswell && brw->gt == 3) {
+         /* From BSpec: 3D-Media-GPGPU Engine > 3D Pipeline > Pixel > Pixel
+          * Backend > MCS Buffer for Render Target(s) [DevIVB+]:
+          * [DevHSW:GT3]: Clear rectangle must be aligned to two times the
+          * number of pixels in the table shown below...
+          * x_align, y_align values computed above are the relevant entries
+          * in the referred table.
+          */
+         x0 = ROUND_DOWN_TO(x0, 2 * x_align);
+         y0 = ROUND_DOWN_TO(y0, 2 * y_align);
+         x1 = ALIGN(x1, 2 * x_align);
+         y1 = ALIGN(y1, 2 * y_align);
+      } else {
+         x0 = ROUND_DOWN_TO(x0,  x_align);
+         y0 = ROUND_DOWN_TO(y0, y_align);
+         x1 = ALIGN(x1, x_align);
+         y1 = ALIGN(y1, y_align);
+      }
 
       /* From the Ivy Bridge PRM, Vol2 Part1 11.7 "MCS Buffer for Render
        * Target(s)", beneath the "Fast Color Clear" bullet (p327):
