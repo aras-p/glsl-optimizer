@@ -30,6 +30,7 @@
 #include "brw_state.h"
 #include "brw_defines.h"
 
+#include "main/mtypes.h"
 #include "main/fbobject.h"
 #include "main/glformats.h"
 
@@ -43,6 +44,13 @@ gen6_emit_depth_stencil_hiz(struct brw_context *brw,
                             uint32_t width, uint32_t height,
                             uint32_t tile_x, uint32_t tile_y)
 {
+   struct gl_context *ctx = &brw->ctx;
+   struct gl_framebuffer *fb = ctx->DrawBuffer;
+   uint32_t surftype;
+   GLenum gl_target = GL_TEXTURE_2D;
+   const struct intel_renderbuffer *irb = NULL;
+   const struct gl_renderbuffer *rb = NULL;
+
    /* Enable the hiz bit if we're doing separate stencil, because it and the
     * separate stencil bit must have the same value. From Section 2.11.5.6.1.1
     * 3DSTATE_DEPTH_BUFFER, Bit 1.21 "Separate Stencil Enable":
@@ -60,6 +68,31 @@ gen6_emit_depth_stencil_hiz(struct brw_context *brw,
     */
    intel_emit_post_sync_nonzero_flush(brw);
    intel_emit_depth_stall_flushes(brw);
+
+   irb = intel_get_renderbuffer(fb, BUFFER_DEPTH);
+   if (!irb)
+      irb = intel_get_renderbuffer(fb, BUFFER_STENCIL);
+   rb = (struct gl_renderbuffer*) irb;
+
+   if (rb) {
+      if (rb->TexImage)
+         gl_target = rb->TexImage->TexObject->Target;
+   }
+
+   switch (gl_target) {
+   case GL_TEXTURE_CUBE_MAP_ARRAY:
+   case GL_TEXTURE_CUBE_MAP:
+      /* The PRM claims that we should use BRW_SURFACE_CUBE for this
+       * situation, but experiments show that gl_Layer doesn't work when we do
+       * this.  So we use BRW_SURFACE_2D, since for rendering purposes this is
+       * equivalent.
+       */
+      surftype = BRW_SURFACE_2D;
+      break;
+   default:
+      surftype = translate_tex_target(gl_target);
+      break;
+   }
 
    BEGIN_BATCH(7);
    OUT_BATCH(_3DSTATE_DEPTH_BUFFER << 16 | (7 - 2));

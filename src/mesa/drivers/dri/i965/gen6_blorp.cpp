@@ -780,6 +780,23 @@ gen6_blorp_emit_depth_stencil_config(struct brw_context *brw,
    uint32_t draw_x = params->depth.x_offset;
    uint32_t draw_y = params->depth.y_offset;
    uint32_t tile_mask_x, tile_mask_y;
+   uint32_t surftype;
+   GLenum gl_target = params->depth.mt->target;
+
+   switch (gl_target) {
+   case GL_TEXTURE_CUBE_MAP_ARRAY:
+   case GL_TEXTURE_CUBE_MAP:
+      /* The PRM claims that we should use BRW_SURFACE_CUBE for this
+       * situation, but experiments show that gl_Layer doesn't work when we do
+       * this.  So we use BRW_SURFACE_2D, since for rendering purposes this is
+       * equivalent.
+       */
+      surftype = BRW_SURFACE_2D;
+      break;
+   default:
+      surftype = translate_tex_target(gl_target);
+      break;
+   }
 
    brw_get_depthstencil_tile_masks(params->depth.mt,
                                    params->depth.level,
