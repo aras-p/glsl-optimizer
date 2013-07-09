@@ -666,6 +666,7 @@ gen7_blorp_emit_depth_stencil_config(struct brw_context *brw,
    uint32_t surftype;
    unsigned int depth = MAX2(params->depth.mt->logical_depth0, 1);
    GLenum gl_target = params->depth.mt->target;
+   unsigned int lod;
 
    brw_get_depthstencil_tile_masks(params->depth.mt,
                                    params->depth.level,
@@ -687,6 +688,8 @@ gen7_blorp_emit_depth_stencil_config(struct brw_context *brw,
       surftype = translate_tex_target(gl_target);
       break;
    }
+
+   lod = params->depth.level - params->depth.mt->first_level;
 
    /* 3DSTATE_DEPTH_BUFFER */
    {
