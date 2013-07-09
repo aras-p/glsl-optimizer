@@ -45,6 +45,7 @@ gen7_emit_depth_stencil_hiz(struct brw_context *brw,
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    uint32_t surftype;
    unsigned int depth = 1;
+   unsigned int min_array_element;
    GLenum gl_target = GL_TEXTURE_2D;
    unsigned int lod;
    const struct intel_renderbuffer *irb = NULL;
@@ -77,6 +78,15 @@ gen7_emit_depth_stencil_hiz(struct brw_context *brw,
    default:
       surftype = translate_tex_target(gl_target);
       break;
+   }
+
+   if (fb->Layered || !irb) {
+      min_array_element = 0;
+   } else if (irb->mt->num_samples > 1) {
+      /* Convert physical layer to logical layer. */
+      min_array_element = irb->mt_layer / irb->mt->num_samples;
+   } else {
+      min_array_element = irb->mt_layer;
    }
 
    lod = irb ? irb->mt_level - irb->mt->first_level : 0;

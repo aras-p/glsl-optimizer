@@ -665,6 +665,7 @@ gen7_blorp_emit_depth_stencil_config(struct brw_context *brw,
    uint8_t mocs = brw->is_haswell ? GEN7_MOCS_L3 : 0;
    uint32_t surftype;
    unsigned int depth = MAX2(params->depth.mt->logical_depth0, 1);
+   unsigned int min_array_element;
    GLenum gl_target = params->depth.mt->target;
    unsigned int lod;
 
@@ -687,6 +688,12 @@ gen7_blorp_emit_depth_stencil_config(struct brw_context *brw,
    default:
       surftype = translate_tex_target(gl_target);
       break;
+   }
+
+   min_array_element = params->depth.layer;
+   if (params->depth.mt->num_samples > 1) {
+      /* Convert physical layer to logical layer. */
+      min_array_element /= params->depth.mt->num_samples;
    }
 
    lod = params->depth.level - params->depth.mt->first_level;
