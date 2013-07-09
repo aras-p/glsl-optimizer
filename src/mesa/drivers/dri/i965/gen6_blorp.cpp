@@ -807,6 +807,8 @@ gen6_blorp_emit_depth_stencil_config(struct brw_context *brw,
                                    NULL,
                                    &tile_mask_x, &tile_mask_y);
 
+   const unsigned min_array_element = params->depth.layer;
+
    lod = params->depth.level - params->depth.mt->first_level;
 
    /* 3DSTATE_DEPTH_BUFFER */

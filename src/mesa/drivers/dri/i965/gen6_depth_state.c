@@ -98,6 +98,8 @@ gen6_emit_depth_stencil_hiz(struct brw_context *brw,
       break;
    }
 
+   const unsigned min_array_element = irb ? irb->mt_layer : 0;
+
    lod = irb ? irb->mt_level - irb->mt->first_level : 0;
 
    BEGIN_BATCH(7);
