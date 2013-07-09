@@ -298,11 +298,12 @@ brw_wm_debug_recompile(struct brw_context *brw,
 void
 brw_populate_sampler_prog_key_data(struct gl_context *ctx,
 				   const struct gl_program *prog,
+                                   unsigned sampler_count,
 				   struct brw_sampler_prog_key_data *key)
 {
    struct brw_context *brw = brw_context(ctx);
 
-   for (int s = 0; s < MAX_SAMPLERS; s++) {
+   for (int s = 0; s < sampler_count; s++) {
       key->swizzles[s] = SWIZZLE_NOOP;
 
       if (!(prog->SamplersUsed & (1 << s)))
@@ -425,7 +426,8 @@ static void brw_wm_populate_key( struct brw_context *brw,
    key->clamp_fragment_color = ctx->Color._ClampFragmentColor;
 
    /* _NEW_TEXTURE */
-   brw_populate_sampler_prog_key_data(ctx, prog, &key->tex);
+   brw_populate_sampler_prog_key_data(ctx, prog, brw->wm.sampler_count,
+                                      &key->tex);
 
    /* _NEW_BUFFERS */
    /*

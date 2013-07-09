@@ -450,7 +450,8 @@ static void brw_upload_vs_prog(struct brw_context *brw)
    }
 
    /* _NEW_TEXTURE */
-   brw_populate_sampler_prog_key_data(ctx, prog, &key.base.tex);
+   brw_populate_sampler_prog_key_data(ctx, prog, brw->vs.sampler_count,
+                                      &key.base.tex);
 
    /* BRW_NEW_VERTICES */
    if (brw->gen < 8 && !brw->is_haswell) {
