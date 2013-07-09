@@ -62,6 +62,7 @@
 #include "lp_bld_debug.h"
 #include "lp_bld_bitarit.h"
 #include "lp_bld_arit.h"
+#include "lp_bld_flow.h"
 
 
 #define EXP_POLY_DEGREE 5

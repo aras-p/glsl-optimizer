@@ -370,6 +370,11 @@ int main(int argc, char **argv)
    unsigned i;
    boolean success;
    boolean single = FALSE;
+   unsigned fpstate;
+
+   util_cpu_detect();
+   fpstate = util_fpstate_get();
+   util_fpstate_set_denorms_to_zero(fpstate);
 
    for(i = 1; i < argc; ++i) {
       if(strcmp(argv[i], "-v") == 0)

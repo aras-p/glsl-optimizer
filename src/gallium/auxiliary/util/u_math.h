@@ -763,6 +763,13 @@ static INLINE int32_t util_signed_fixed(float value, unsigned frac_bits)
    return (int32_t)(value * (1<<frac_bits));
 }
 
+unsigned
+util_fpstate_get(void);
+unsigned
+util_fpstate_set_denorms_to_zero(unsigned current_fpstate);
+void
+util_fpstate_set(unsigned fpstate);
+
 
 
 #ifdef __cplusplus

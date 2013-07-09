@@ -751,6 +751,12 @@ static PIPE_THREAD_ROUTINE( thread_function, init_data )
    struct lp_rasterizer_task *task = (struct lp_rasterizer_task *) init_data;
    struct lp_rasterizer *rast = task->rast;
    boolean debug = false;
+   unsigned fpstate = util_fpstate_get();
+
+   /* Make sure that denorms are treated like zeros. This is 
+    * the behavior required by D3D10. OpenGL doesn't care.
+    */
+   util_fpstate_set_denorms_to_zero(fpstate);
 
    while (1) {
       /* wait for work */

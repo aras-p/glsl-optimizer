@@ -459,7 +459,13 @@ draw_vbo(struct draw_context *draw,
    unsigned instance;
    unsigned index_limit;
    unsigned count;
+   unsigned fpstate = util_fpstate_get();
    struct pipe_draw_info resolved_info;
+
+   /* Make sure that denorms are treated like zeros. This is 
+    * the behavior required by D3D10. OpenGL doesn't care.
+    */
+   util_fpstate_set_denorms_to_zero(fpstate);
 
    resolve_draw_info(info, &resolved_info);
    info = &resolved_info;
@@ -518,6 +524,7 @@ draw_vbo(struct draw_context *draw,
       if (index_limit == 0) {
       /* one of the buffers is too small to do any valid drawing */
          debug_warning("draw: VBO too small to draw anything\n");
+         util_fpstate_set(fpstate);
          return;
       }
    }
@@ -558,4 +565,5 @@ draw_vbo(struct draw_context *draw,
    if (draw->collect_statistics) {
       draw->render->pipeline_statistics(draw->render, &draw->statistics);
    }
+   util_fpstate_set(fpstate);
 }
