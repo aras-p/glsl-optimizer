@@ -153,7 +153,7 @@ is_color_fast_clear_compatible(struct intel_context *intel,
    for (int i = 0; i < 4; i++) {
       if (color->f[i] != 0.0 && color->f[i] != 1.0) {
          perf_debug("Clear color unsupported by fast color clear.  "
-                    "Falling back to slow clear.");
+                    "Falling back to slow clear.\n");
          return false;
       }
    }
