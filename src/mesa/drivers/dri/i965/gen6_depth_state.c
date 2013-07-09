@@ -49,6 +49,7 @@ gen6_emit_depth_stencil_hiz(struct brw_context *brw,
    uint32_t surftype;
    unsigned int depth = 1;
    GLenum gl_target = GL_TEXTURE_2D;
+   unsigned int lod;
    const struct intel_renderbuffer *irb = NULL;
    const struct gl_renderbuffer *rb = NULL;
 
@@ -96,6 +97,8 @@ gen6_emit_depth_stencil_hiz(struct brw_context *brw,
       surftype = translate_tex_target(gl_target);
       break;
    }
+
+   lod = irb ? irb->mt_level - irb->mt->first_level : 0;
 
    BEGIN_BATCH(7);
    OUT_BATCH(_3DSTATE_DEPTH_BUFFER << 16 | (7 - 2));

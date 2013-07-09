@@ -783,6 +783,7 @@ gen6_blorp_emit_depth_stencil_config(struct brw_context *brw,
    uint32_t surftype;
    unsigned int depth = MAX2(params->depth.mt->logical_depth0, 1);
    GLenum gl_target = params->depth.mt->target;
+   unsigned int lod;
 
    switch (gl_target) {
    case GL_TEXTURE_CUBE_MAP_ARRAY:
@@ -805,6 +806,8 @@ gen6_blorp_emit_depth_stencil_config(struct brw_context *brw,
                                    params->depth.layer,
                                    NULL,
                                    &tile_mask_x, &tile_mask_y);
+
+   lod = params->depth.level - params->depth.mt->first_level;
 
    /* 3DSTATE_DEPTH_BUFFER */
    {
