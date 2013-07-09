@@ -341,6 +341,20 @@ brw_workaround_depthstencil_alignment(struct brw_context *brw,
    if (depth_irb)
       depth_mt = depth_irb->mt;
 
+   /* Initialize brw->depthstencil to 'nop' workaround state.
+    */
+   brw->depthstencil.tile_x = 0;
+   brw->depthstencil.tile_y = 0;
+   brw->depthstencil.depth_offset = 0;
+   brw->depthstencil.stencil_offset = 0;
+   brw->depthstencil.hiz_offset = 0;
+   brw->depthstencil.depth_mt = NULL;
+   brw->depthstencil.stencil_mt = NULL;
+   if (depth_irb)
+      brw->depthstencil.depth_mt = depth_mt;
+   if (stencil_irb)
+      brw->depthstencil.stencil_mt = get_stencil_miptree(stencil_irb);
+
    /* Check if depth buffer is in depth/stencil format.  If so, then it's only
     * safe to invalidate it if we're also clearing stencil, and both depth_irb
     * and stencil_irb point to the same miptree.
@@ -515,11 +529,6 @@ brw_workaround_depthstencil_alignment(struct brw_context *brw,
     */
    brw->depthstencil.tile_x = tile_x;
    brw->depthstencil.tile_y = tile_y;
-   brw->depthstencil.depth_offset = 0;
-   brw->depthstencil.stencil_offset = 0;
-   brw->depthstencil.hiz_offset = 0;
-   brw->depthstencil.depth_mt = NULL;
-   brw->depthstencil.stencil_mt = NULL;
    if (depth_irb) {
       depth_mt = depth_irb->mt;
       brw->depthstencil.depth_mt = depth_mt;
