@@ -663,6 +663,7 @@ gen7_blorp_emit_depth_stencil_config(struct brw_context *brw,
    uint32_t draw_y = params->depth.y_offset;
    uint32_t tile_mask_x, tile_mask_y;
    uint8_t mocs = brw->is_haswell ? GEN7_MOCS_L3 : 0;
+   uint32_t surfwidth, surfheight;
    uint32_t surftype;
    unsigned int depth = MAX2(params->depth.mt->logical_depth0, 1);
    unsigned int min_array_element;
@@ -697,6 +698,18 @@ gen7_blorp_emit_depth_stencil_config(struct brw_context *brw,
    }
 
    lod = params->depth.level - params->depth.mt->first_level;
+
+   if (params->hiz_op != GEN6_HIZ_OP_NONE && lod == 0) {
+      /* HIZ ops for lod 0 may set the width & height a little
+       * larger to allow the fast depth clear to fit the hardware
+       * alignment requirements. (8x4)
+       */
+      surfwidth = params->depth.width;
+      surfheight = params->depth.height;
+   } else {
+      surfwidth = params->depth.mt->physical_width0;
+      surfheight = params->depth.mt->physical_height0;
+   }
 
    /* 3DSTATE_DEPTH_BUFFER */
    {
