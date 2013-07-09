@@ -187,7 +187,7 @@ gen7_update_sampler_state(struct brw_context *brw, int unit, int ss_index,
 static void
 gen7_upload_sampler_state_table(struct brw_context *brw,
                                 struct gl_program *prog,
-                                uint32_t *sampler_count,
+                                uint32_t sampler_count,
                                 uint32_t *sst_offset,
                                 uint32_t *sdc_offset)
 {
@@ -196,17 +196,15 @@ gen7_upload_sampler_state_table(struct brw_context *brw,
 
    GLbitfield SamplersUsed = prog->SamplersUsed;
 
-   *sampler_count = _mesa_fls(SamplersUsed);
-
-   if (*sampler_count == 0)
+   if (sampler_count == 0)
       return;
 
    samplers = brw_state_batch(brw, AUB_TRACE_SAMPLER_STATE,
-			      *sampler_count * sizeof(*samplers),
+			      sampler_count * sizeof(*samplers),
 			      32, sst_offset);
-   memset(samplers, 0, *sampler_count * sizeof(*samplers));
+   memset(samplers, 0, sampler_count * sizeof(*samplers));
 
-   for (unsigned s = 0; s < *sampler_count; s++) {
+   for (unsigned s = 0; s < sampler_count; s++) {
       if (SamplersUsed & (1 << s)) {
          const unsigned unit = prog->SamplerUnits[s];
          if (ctx->Texture.Unit[unit]._ReallyEnabled)

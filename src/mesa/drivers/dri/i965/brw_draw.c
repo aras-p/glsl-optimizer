@@ -371,6 +371,13 @@ static bool brw_try_draw_prims( struct gl_context *ctx,
    if (ctx->NewState)
       _mesa_update_state( ctx );
 
+   /* Find the highest sampler unit used by each shader program.  A bit-count
+    * won't work since ARB programs use the texture unit number as the sampler
+    * index.
+    */
+   brw->wm.sampler_count = _mesa_fls(ctx->FragmentProgram._Current->Base.SamplersUsed);
+   brw->vs.sampler_count = _mesa_fls(ctx->VertexProgram._Current->Base.SamplersUsed);
+
    /* We have to validate the textures *before* checking for fallbacks;
     * otherwise, the software fallback won't be able to rely on the
     * texture state, the firstLevel and lastLevel fields won't be
