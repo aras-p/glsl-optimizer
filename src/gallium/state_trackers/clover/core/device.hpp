@@ -66,6 +66,7 @@ public:
    std::string vendor_name() const;
    enum pipe_shader_ir ir_format() const;
    std::string ir_target() const;
+   enum pipe_endian endianness() const;
 
    friend struct _cl_command_queue;
    friend class clover::root_resource;

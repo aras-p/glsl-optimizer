@@ -192,7 +192,8 @@ clGetDeviceInfo(cl_device_id dev, cl_device_info param,
       return scalar_property<size_t>(buf, size, size_ret, 0);
 
    case CL_DEVICE_ENDIAN_LITTLE:
-      return scalar_property<cl_bool>(buf, size, size_ret, CL_TRUE);
+      return scalar_property<cl_bool>(buf, size, size_ret,
+                                      dev->endianness() == PIPE_ENDIAN_LITTLE);
 
    case CL_DEVICE_AVAILABLE:
    case CL_DEVICE_COMPILER_AVAILABLE:

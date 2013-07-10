@@ -192,3 +192,8 @@ _cl_device_id::ir_target() const {
                                                     PIPE_COMPUTE_CAP_IR_TARGET);
    return { target.data() };
 }
+
+enum pipe_endian
+_cl_device_id::endianness() const {
+   return (enum pipe_endian)pipe->get_param(pipe, PIPE_CAP_ENDIANNESS);
+}
