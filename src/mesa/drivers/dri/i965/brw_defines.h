@@ -911,8 +911,7 @@ enum opcode {
  * In particular, see the following tables:
  * - G45 PRM, Volume 4, Table 14-15 "Message Descriptor Definition"
  * - Sandybridge PRM, Volume 4 Part 2, Table 8-16 "Extended Message Descriptor"
- * - BSpec, Volume 1a (GPU Overview) / Graphics Processing Engine (GPE) /
- *   Overview / GPE Function IDs
+ * - Ivybridge PRM, Volume 1 Part 1, section 3.2.7 "GPE Function IDs"
  */
 enum brw_message_target {
    BRW_SFID_NULL                     = 0,
