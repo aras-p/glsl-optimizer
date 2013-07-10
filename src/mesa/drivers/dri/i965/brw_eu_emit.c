@@ -84,7 +84,7 @@ gen6_resolve_implied_move(struct brw_compile *p,
 static void
 gen7_convert_mrf_to_grf(struct brw_compile *p, struct brw_reg *reg)
 {
-   /* From the BSpec / ISA Reference / send - [DevIVB+]:
+   /* From the Ivybridge PRM, Volume 4 Part 3, page 218 ("send"):
     * "The send with EOT should use register space R112-R127 for <src>. This is
     *  to enable loading of a new thread into the same slot while the message
     *  with EOT for current thread is pending dispatch."
