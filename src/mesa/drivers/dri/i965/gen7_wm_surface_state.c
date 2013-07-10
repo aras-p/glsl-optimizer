@@ -259,10 +259,6 @@ gen7_update_buffer_texture_surface(struct gl_context *ctx,
    if (bo) {
       surf[1] = bo->offset; /* reloc */
 
-      /* Emit relocation to surface contents.  Section 5.1.1 of the gen4
-       * bspec ("Data Cache") says that the data cache does not exist as
-       * a separate cache and is just the sampler cache.
-       */
       drm_intel_bo_emit_reloc(brw->batch.bo,
 			      binding_table[surf_index] + 4,
 			      bo, 0,
@@ -414,10 +410,6 @@ gen7_create_constant_surface(struct brw_context *brw,
                 SET_FIELD(HSW_SCS_ALPHA, GEN7_SURFACE_SCS_A);
    }
 
-   /* Emit relocation to surface contents.  Section 5.1.1 of the gen4
-    * bspec ("Data Cache") says that the data cache does not exist as
-    * a separate cache and is just the sampler cache.
-    */
    drm_intel_bo_emit_reloc(brw->batch.bo,
 			   *out_offset + 4,
 			   bo, offset,
@@ -454,10 +446,6 @@ gen7_create_shader_time_surface(struct brw_context *brw, uint32_t *out_offset)
     * overrides.
     */
 
-   /* Emit relocation to surface contents.  Section 5.1.1 of the gen4
-    * bspec ("Data Cache") says that the data cache does not exist as
-    * a separate cache and is just the sampler cache.
-    */
    drm_intel_bo_emit_reloc(brw->batch.bo,
                            *out_offset + 4,
                            brw->shader_time.bo, 0,
