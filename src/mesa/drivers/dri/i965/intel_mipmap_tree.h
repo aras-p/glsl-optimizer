@@ -292,8 +292,8 @@ struct intel_mipmap_tree
    gl_format etc_format;
 
    /**
-    * The X offset of each image in the miptree must be aligned to this. See
-    * the "Alignment Unit Size" section of the BSpec.
+    * The X offset of each image in the miptree must be aligned to this.
+    * See the comments in brw_tex_layout.c.
     */
    unsigned int align_w;
    unsigned int align_h; /**< \see align_w */
