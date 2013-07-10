@@ -40,8 +40,9 @@
  * 3DSTATE_URB_DS
  * 3DSTATE_URB_GS
  *
- * If the 3DSTATE_URB_VS is emitted, than the others must be also. From the
- * BSpec, Volume 2a "3D Pipeline Overview", Section 1.7.1 3DSTATE_URB_VS:
+ * If the 3DSTATE_URB_VS is emitted, than the others must be also.
+ * From the Ivybridge PRM, Volume 2 Part 1, section 1.7.1 3DSTATE_URB_VS:
+ *
  *     3DSTATE_URB_HS, 3DSTATE_URB_DS, and 3DSTATE_URB_GS must also be
  *     programmed in order for the programming of this state to be
  *     valid.
