@@ -101,12 +101,16 @@ upload_vs_state(struct brw_context *brw)
    struct gl_context *ctx = &brw->ctx;
    uint32_t floating_point_mode = 0;
 
-   /* From the BSpec, Volume 2a, Part 3 "Vertex Shader", Section
+   /* From the BSpec, 3D Pipeline > Geometry > Vertex Shader > State,
     * 3DSTATE_VS, Dword 5.0 "VS Function Enable":
+    *
     *   [DevSNB] A pipeline flush must be programmed prior to a 3DSTATE_VS
     *   command that causes the VS Function Enable to toggle. Pipeline
     *   flush can be executed by sending a PIPE_CONTROL command with CS
     *   stall bit set and a post sync operation.
+    *
+    * Although we don't disable the VS during normal drawing, BLORP sometimes
+    * disables it.  To be safe, do the flush here just in case.
     */
    intel_emit_post_sync_nonzero_flush(brw);
 

@@ -554,7 +554,7 @@ gen6_blorp_emit_vs_disable(struct brw_context *brw,
                            const brw_blorp_params *params)
 {
    if (brw->gen == 6) {
-      /* From the BSpec, Volume 2a, Part 3 "Vertex Shader", Section
+      /* From the BSpec, 3D Pipeline > Geometry > Vertex Shader > State,
        * 3DSTATE_VS, Dword 5.0 "VS Function Enable":
        *
        *   [DevSNB] A pipeline flush must be programmed prior to a
