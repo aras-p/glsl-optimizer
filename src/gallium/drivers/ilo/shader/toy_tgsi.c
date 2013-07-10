@@ -2136,11 +2136,21 @@ ra_get_src(struct toy_tgsi *tgsi,
                struct toy_dst dst = tdst_from(src);
                dst.writemask = TOY_WRITEMASK_XYZW;
 
-               /*
-                * Always initialize registers.  Otherwise, if the random value
-                * ends up in a VUE, FS may fail to interpolate correctly.
-                */
-               tc_MOV(tgsi->tc, dst, tsrc_type(tsrc_imm_d(0), type));
+               /* always initialize registers before use */
+               if (tgsi->aos) {
+                  tc_MOV(tgsi->tc, dst, tsrc_type(tsrc_imm_d(0), type));
+               }
+               else {
+                  struct toy_dst tdst[4];
+                  int i;
+
+                  tdst_transpose(dst, tdst);
+
+                  for (i = 0; i < 4; i++) {
+                     tc_MOV(tgsi->tc, tdst[i],
+                           tsrc_type(tsrc_imm_d(0), type));
+                  }
+               }
             }
             break;
          default:
