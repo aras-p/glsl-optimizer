@@ -762,9 +762,9 @@ gen7_blorp_emit_depth_disable(struct brw_context *brw,
 
 /* 3DSTATE_CLEAR_PARAMS
  *
- * From the BSpec, Volume 2a.11 Windower, Section 1.5.6.3.2
+ * From the Ivybridge PRM, Volume 2 Part 1, Section 11.5.5.4
  * 3DSTATE_CLEAR_PARAMS:
- *    [DevIVB] 3DSTATE_CLEAR_PARAMS must always be programmed in the along
+ *    3DSTATE_CLEAR_PARAMS must always be programmed in the along
  *    with the other Depth/Stencil state commands(i.e.  3DSTATE_DEPTH_BUFFER,
  *    3DSTATE_STENCIL_BUFFER, or 3DSTATE_HIER_DEPTH_BUFFER).
  */
