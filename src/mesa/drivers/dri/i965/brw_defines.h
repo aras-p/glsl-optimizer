@@ -1730,6 +1730,32 @@ enum brw_wm_barycentric_interp_mode {
  */
 #define BRW_MAX_NUM_BUFFER_ENTRIES	(1 << 27)
 
+/* Memory Object Control State:
+ * Specifying zero for L3 means "uncached in L3", at least on Haswell
+ * and Baytrail, since there are no PTE flags for setting L3 cacheability.
+ * On Ivybridge, the PTEs do have a cache-in-L3 bit, so setting MOCS to 0
+ * may still respect that.
+ */
+#define GEN7_MOCS_L3                    1
+
+/* Ivybridge only: cache in LLC.
+ * Specifying zero here means to use the PTE values set by the kernel;
+ * non-zero overrides the PTE values.
+ */
+#define IVB_MOCS_LLC                    (1 << 1)
+
+/* Baytrail only: snoop in CPU cache */
+#define BYT_MOCS_SNOOP                  (1 << 1)
+
+/* Haswell only: LLC/eLLC controls (write-back or uncached).
+ * Specifying zero here means to use the PTE values set by the kernel,
+ * which is useful since it offers additional control (write-through
+ * cacheing and age).  Non-zero overrides the PTE values.
+ */
+#define HSW_MOCS_UC_LLC_UC_ELLC         (1 << 1)
+#define HSW_MOCS_WB_LLC_WB_ELLC         (2 << 1)
+#define HSW_MOCS_UC_LLC_WB_ELLC         (3 << 1)
+
 #include "intel_chipset.h"
 
 #endif
