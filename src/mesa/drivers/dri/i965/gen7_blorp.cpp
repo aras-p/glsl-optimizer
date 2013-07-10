@@ -526,8 +526,8 @@ gen7_blorp_emit_wm_config(struct brw_context *brw,
  *
  * Pixel shader dispatch is disabled above in 3DSTATE_WM, dw1.29. Despite
  * that, thread dispatch info must still be specified.
- *     - Maximum Number of Threads (dw4.24:31) must be nonzero, as the BSpec
- *       states that the valid range for this field is [0x3, 0x2f].
+ *     - Maximum Number of Threads (dw4.24:31) must be nonzero, as the
+ *       valid range for this field is [0x3, 0x2f].
  *     - A dispatch mode must be given; that is, at least one of the
  *       "N Pixel Dispatch Enable" (N=8,16,32) fields must be set. This was
  *       discovered through simulator error messages.

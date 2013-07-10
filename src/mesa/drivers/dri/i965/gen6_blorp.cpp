@@ -688,9 +688,9 @@ gen6_blorp_emit_wm_config(struct brw_context *brw,
    uint32_t dw2, dw4, dw5, dw6;
 
    /* Even when thread dispatch is disabled, max threads (dw5.25:31) must be
-    * nonzero to prevent the GPU from hanging. See the valid ranges in the
-    * BSpec, Volume 2a.11 Windower, Section 3DSTATE_WM, Dword 5.25:31
-    * "Maximum Number Of Threads".
+    * nonzero to prevent the GPU from hanging.  While the documentation doesn't
+    * mention this explicitly, it notes that the valid range for the field is
+    * [1,39] = [2,40] threads, which excludes zero.
     *
     * To be safe (and to minimize extraneous code) we go ahead and fully
     * configure the WM state whether or not there is a WM program.
