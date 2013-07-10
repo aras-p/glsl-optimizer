@@ -1358,10 +1358,10 @@ struct brw_instruction
       /**
        * Message for any of the Gen7 Data Port caches.
        *
-       * Most fields are defined in BSpec volume 5c.2 Data Port / Messages /
-       * Data Port Messages / Message Descriptor.  Once again, "Slot Group
+       * Most fields are defined in the Ivybridge PRM, Volume 4 Part 1,
+       * section 3.9.2.1.1 "Message Descriptor".  Once again, "Slot Group
        * Select" and "Last Render Target" are part of the 6-bit message
-       * control for Render Target Writes.
+       * control for Render Target Writes (section 3.9.11.2).
        */
       struct {
 	 GLuint binding_table_index:8;
