@@ -419,8 +419,8 @@ intel_emit_depth_stall_flushes(struct brw_context *brw)
 }
 
 /**
- * From the BSpec, volume 2a.03: VS Stage Input / State:
- * "[DevIVB] A PIPE_CONTROL with Post-Sync Operation set to 1h and a depth
+ * From the Ivybridge PRM, Volume 2 Part 1, Section 3.2 (VS Stage Input):
+ * "A PIPE_CONTROL with Post-Sync Operation set to 1h and a depth
  *  stall needs to be sent just prior to any 3DSTATE_VS, 3DSTATE_URB_VS,
  *  3DSTATE_CONSTANT_VS, 3DSTATE_BINDING_TABLE_POINTER_VS,
  *  3DSTATE_SAMPLER_STATE_POINTER_VS command.  Only one PIPE_CONTROL needs
