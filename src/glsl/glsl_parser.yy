@@ -1177,9 +1177,6 @@ layout_qualifier_id:
 	   memset(& $$, 0, sizeof($$));
 
 	   if (state->ARB_explicit_attrib_location_enable) {
-	      /* FINISHME: Handle 'index' once GL_ARB_blend_func_exteneded and
-	       * FINISHME: GLSL 1.30 (or later) are supported.
-	       */
 	      if (strcmp("location", $1) == 0) {
 		 $$.flags.q.explicit_location = 1;
 
