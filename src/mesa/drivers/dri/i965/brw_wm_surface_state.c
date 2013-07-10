@@ -347,9 +347,9 @@ brw_create_constant_surface(struct brw_context *brw,
    surf[4] = 0;
    surf[5] = 0;
 
-   /* Emit relocation to surface contents.  Section 5.1.1 of the gen4
-    * bspec ("Data Cache") says that the data cache does not exist as
-    * a separate cache and is just the sampler cache.
+   /* Emit relocation to surface contents.  The 965 PRM, Volume 4, section
+    * 5.1.2 "Data Cache" says: "the data cache does not exist as a separate
+    * physical cache.  It is mapped in hardware to the sampler cache."
     */
    drm_intel_bo_emit_reloc(brw->batch.bo,
 			   *out_offset + 4,
