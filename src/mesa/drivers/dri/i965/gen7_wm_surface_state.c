@@ -148,9 +148,8 @@ gen7_check_surface_setup(uint32_t *surf, bool is_render_target)
 
    (void) surface_array_spacing;
 
-   /* From the Graphics BSpec: vol5c Shared Functions [SNB+] > State >
-    * SURFACE_STATE > SURFACE_STATE for most messages [DevIVB]: Surface Array
-    * Spacing:
+   /* From the Ivybridge PRM, Volume 4 Part 1, page 66 (RENDER_SURFACE_STATE
+    * dword 0 bit 10 "Surface Array Spacing" Programming Notes):
     *
     *   If Multisampled Surface Storage Format is MSFMT_MSS and Number of
     *   Multisamples is not MULTISAMPLECOUNT_1, this field must be set to
@@ -160,9 +159,8 @@ gen7_check_surface_setup(uint32_t *surf, bool is_render_target)
        && is_multisampled)
       assert(surface_array_spacing == GEN7_SURFACE_ARYSPC_LOD0);
 
-   /* From the Graphics BSpec: vol5c Shared Functions [SNB+] > State >
-    * SURFACE_STATE > SURFACE_STATE for most messages [DevIVB]: Multisampled
-    * Surface Storage Format:
+   /* From the Ivybridge PRM, Volume 4 Part 1, page 72 (RENDER_SURFACE_STATE
+    * dword 4 bit 6 "Multisampled Surface Storage" Programming Notes):
     *
     *   All multisampled render target surfaces must have this field set to
     *   MSFMT_MSS.
@@ -175,9 +173,8 @@ gen7_check_surface_setup(uint32_t *surf, bool is_render_target)
       assert(multisampled_surface_storage_format == GEN7_SURFACE_MSFMT_MSS);
    }
 
-   /* From the Graphics BSpec: vol5c Shared Functions [SNB+] > State >
-    * SURFACE_STATE > SURFACE_STATE for most messages [DevIVB]: Multisampled
-    * Surface Storage Format:
+   /* From the Ivybridge PRM, Volume 4 Part 1, page 72 (RENDER_SURFACE_STATE
+    * dword 4 bit 6 "Multisampled Surface Storage Format" Errata):
     *
     *   If the surface’s Number of Multisamples is MULTISAMPLECOUNT_8, Width
     *   is >= 8192 (meaning the actual surface width is >= 8193 pixels), this
@@ -188,9 +185,8 @@ gen7_check_surface_setup(uint32_t *surf, bool is_render_target)
       assert(multisampled_surface_storage_format == GEN7_SURFACE_MSFMT_MSS);
    }
 
-   /* From the Graphics BSpec: vol5c Shared Functions [SNB+] > State >
-    * SURFACE_STATE > SURFACE_STATE for most messages [DevIVB]: Multisampled
-    * Surface Storage Format:
+   /* From the Ivybridge PRM, Volume 4 Part 1, page 72 (RENDER_SURFACE_STATE
+    * dword 4 bit 6 "Multisampled Surface Storage Format" Errata):
     *
     *   If the surface’s Number of Multisamples is MULTISAMPLECOUNT_8,
     *   ((Depth+1) * (Height+1)) is > 4,194,304, OR if the surface’s Number of
@@ -200,7 +196,7 @@ gen7_check_surface_setup(uint32_t *surf, bool is_render_target)
     *   following: I24X8_UNORM, L24X8_UNORM, A24X8_UNORM, or
     *   R24_UNORM_X8_TYPELESS.
     *
-    * But also:
+    * But also (from the Programming Notes):
     *
     *   This field is ignored if Number of Multisamples is MULTISAMPLECOUNT_1.
     */
