@@ -828,13 +828,16 @@ struct pipe_video_decoder *ruvd_create_decoder(struct pipe_context *context,
 					       ruvd_set_dtb set_dtb)
 {
 	unsigned dpb_size = calc_dpb_size(profile, width, height, max_references);
+	struct radeon_info info;
 	struct ruvd_decoder *dec;
 	struct ruvd_msg msg;
 	int i;
 
+	ws->query_info(ws, &info);
+
 	switch(u_reduce_video_profile(profile)) {
 	case PIPE_VIDEO_CODEC_MPEG12:
-		if (entrypoint > PIPE_VIDEO_ENTRYPOINT_BITSTREAM)
+		if (entrypoint > PIPE_VIDEO_ENTRYPOINT_BITSTREAM || info.family < CHIP_PALM)
 			return vl_create_mpeg12_decoder(context, profile, entrypoint,
 							chroma_format, width,
 							height, max_references, expect_chunked_decode);
