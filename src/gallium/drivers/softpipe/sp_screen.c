@@ -183,6 +183,8 @@ softpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
       return 0;
    case PIPE_CAP_MAX_VIEWPORTS:
       return 1;
+   case PIPE_CAP_ENDIANNESS:
+      return PIPE_ENDIAN_NATIVE;
    }
    /* should only get here on unhandled cases */
    debug_printf("Unexpected PIPE_CAP %d query\n", param);

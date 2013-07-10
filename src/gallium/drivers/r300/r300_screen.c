@@ -190,6 +190,8 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
         /* Render targets. */
         case PIPE_CAP_MAX_RENDER_TARGETS:
             return 4;
+	case PIPE_CAP_ENDIANNESS:
+            return PIPE_ENDIAN_LITTLE;
     }
     return 0;
 }

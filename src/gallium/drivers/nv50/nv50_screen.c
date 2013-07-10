@@ -189,6 +189,8 @@ nv50_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
       return 0;
    case PIPE_CAP_TEXTURE_BORDER_COLOR_QUIRK:
       return PIPE_QUIRK_TEXTURE_BORDER_COLOR_SWIZZLE_NV50;
+   case PIPE_CAP_ENDIANNESS:
+      return PIPE_ENDIAN_LITTLE;
    default:
       NOUVEAU_ERR("unknown PIPE_CAP %d\n", param);
       return 0;

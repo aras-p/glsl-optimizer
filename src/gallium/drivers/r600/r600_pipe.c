@@ -679,6 +679,8 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 
 	case PIPE_CAP_TEXTURE_BORDER_COLOR_QUIRK:
 		return PIPE_QUIRK_TEXTURE_BORDER_COLOR_SWIZZLE_R600;
+	case PIPE_CAP_ENDIANNESS:
+		return PIPE_ENDIAN_LITTLE;
 	}
 	return 0;
 }

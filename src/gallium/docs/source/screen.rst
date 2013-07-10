@@ -168,6 +168,8 @@ The integer capabilities:
   since they are linked) a driver can support. Returning 0 is equivalent
   to returning 1 because every driver has to support at least a single
   viewport/scissor combination.  
+* ''PIPE_CAP_ENDIANNESS``:: The endianness of the device.  Either
+  PIPE_ENDIAN_BIG or PIPE_ENDIAN_LITTLE.
 
 
 .. _pipe_capf:
