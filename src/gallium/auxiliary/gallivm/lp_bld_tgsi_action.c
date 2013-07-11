@@ -633,8 +633,6 @@ rsq_emit(
    struct lp_build_tgsi_context * bld_base,
    struct lp_build_emit_data * emit_data)
 {
-   emit_data->args[0] = lp_build_emit_llvm_unary(bld_base, TGSI_OPCODE_ABS,
-                                               emit_data->args[0]);
    if (bld_base->rsq_action.emit) {
       bld_base->rsq_action.emit(&bld_base->rsq_action, bld_base, emit_data);
    } else {
@@ -1349,9 +1347,6 @@ rcp_emit_cpu(
 }
 
 /* Reciprical squareroot (CPU Only) */
-
-/* This is not the same as TGSI_OPCODE_RSQ, which requres the argument to be
- * greater than or equal to 0 */
 static void
 recip_sqrt_emit_cpu(
    const struct lp_build_tgsi_action * action,

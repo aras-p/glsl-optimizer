@@ -615,8 +615,6 @@ translate_opcode( unsigned op )
       return TGSI_OPCODE_RCP;
    case OPCODE_RET:
       return TGSI_OPCODE_RET;
-   case OPCODE_RSQ:
-      return TGSI_OPCODE_RSQ;
    case OPCODE_SCS:
       return TGSI_OPCODE_SCS;
    case OPCODE_SEQ:
@@ -754,6 +752,10 @@ compile_instruction(
 		 
    case OPCODE_DDY:
       emit_ddy( t, dst[0], &inst->SrcReg[0] );
+      break;
+
+   case OPCODE_RSQ:
+      ureg_RSQ( ureg, dst[0], ureg_abs(src[0]) );
       break;
 
    default:

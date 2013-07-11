@@ -94,16 +94,16 @@ This instruction replicates its result.
 
 .. opcode:: RSQ - Reciprocal Square Root
 
-This instruction replicates its result.
+This instruction replicates its result. The results are undefined for src <= 0.
 
 .. math::
 
-  dst = \frac{1}{\sqrt{|src.x|}}
+  dst = \frac{1}{\sqrt{src.x}}
 
 
 .. opcode:: SQRT - Square Root
 
-This instruction replicates its result.
+This instruction replicates its result. The results are undefined for src < 0.
 
 .. math::
 

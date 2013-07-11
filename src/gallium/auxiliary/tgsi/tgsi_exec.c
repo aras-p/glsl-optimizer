@@ -339,20 +339,20 @@ micro_rsq(union tgsi_exec_channel *dst,
    assert(src->f[2] != 0.0f);
    assert(src->f[3] != 0.0f);
 #endif
-   dst->f[0] = 1.0f / sqrtf(fabsf(src->f[0]));
-   dst->f[1] = 1.0f / sqrtf(fabsf(src->f[1]));
-   dst->f[2] = 1.0f / sqrtf(fabsf(src->f[2]));
-   dst->f[3] = 1.0f / sqrtf(fabsf(src->f[3]));
+   dst->f[0] = 1.0f / sqrtf(src->f[0]);
+   dst->f[1] = 1.0f / sqrtf(src->f[1]);
+   dst->f[2] = 1.0f / sqrtf(src->f[2]);
+   dst->f[3] = 1.0f / sqrtf(src->f[3]);
 }
 
 static void
 micro_sqrt(union tgsi_exec_channel *dst,
            const union tgsi_exec_channel *src)
 {
-   dst->f[0] = sqrtf(fabsf(src->f[0]));
-   dst->f[1] = sqrtf(fabsf(src->f[1]));
-   dst->f[2] = sqrtf(fabsf(src->f[2]));
-   dst->f[3] = sqrtf(fabsf(src->f[3]));
+   dst->f[0] = sqrtf(src->f[0]);
+   dst->f[1] = sqrtf(src->f[1]);
+   dst->f[2] = sqrtf(src->f[2]);
+   dst->f[3] = sqrtf(src->f[3]);
 }
 
 static void
