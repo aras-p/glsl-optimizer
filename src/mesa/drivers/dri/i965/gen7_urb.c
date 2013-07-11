@@ -60,12 +60,10 @@ gen7_allocate_push_constants(struct brw_context *brw)
    if (brw->is_haswell && brw->gt == 3)
       size = 16;
 
-   BEGIN_BATCH(2);
+   BEGIN_BATCH(4);
    OUT_BATCH(_3DSTATE_PUSH_CONSTANT_ALLOC_VS << 16 | (2 - 2));
    OUT_BATCH(size);
-   ADVANCE_BATCH();
 
-   BEGIN_BATCH(2);
    OUT_BATCH(_3DSTATE_PUSH_CONSTANT_ALLOC_PS << 16 | (2 - 2));
    OUT_BATCH(size | size << GEN7_PUSH_CONSTANT_BUFFER_OFFSET_SHIFT);
    ADVANCE_BATCH();
@@ -105,27 +103,21 @@ void
 gen7_emit_urb_state(struct brw_context *brw, GLuint nr_vs_entries,
                     GLuint vs_size, GLuint vs_start)
 {
-   BEGIN_BATCH(2);
+   BEGIN_BATCH(8);
    OUT_BATCH(_3DSTATE_URB_VS << 16 | (2 - 2));
    OUT_BATCH(nr_vs_entries |
              ((vs_size - 1) << GEN7_URB_ENTRY_SIZE_SHIFT) |
              (vs_start << GEN7_URB_STARTING_ADDRESS_SHIFT));
-   ADVANCE_BATCH();
 
    /* Allocate the GS, HS, and DS zero space - we don't use them. */
-   BEGIN_BATCH(2);
    OUT_BATCH(_3DSTATE_URB_GS << 16 | (2 - 2));
    OUT_BATCH((0 << GEN7_URB_ENTRY_SIZE_SHIFT) |
              (vs_start << GEN7_URB_STARTING_ADDRESS_SHIFT));
-   ADVANCE_BATCH();
 
-   BEGIN_BATCH(2);
    OUT_BATCH(_3DSTATE_URB_HS << 16 | (2 - 2));
    OUT_BATCH((0 << GEN7_URB_ENTRY_SIZE_SHIFT) |
              (vs_start << GEN7_URB_STARTING_ADDRESS_SHIFT));
-   ADVANCE_BATCH();
 
-   BEGIN_BATCH(2);
    OUT_BATCH(_3DSTATE_URB_DS << 16 | (2 - 2));
    OUT_BATCH((0 << GEN7_URB_ENTRY_SIZE_SHIFT) |
              (vs_start << GEN7_URB_STARTING_ADDRESS_SHIFT));
