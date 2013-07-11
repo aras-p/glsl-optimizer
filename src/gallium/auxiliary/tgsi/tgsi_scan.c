@@ -263,8 +263,8 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
       }
    }
 
-   info->uses_kill = (info->opcode_count[TGSI_OPCODE_KIL] ||
-                      info->opcode_count[TGSI_OPCODE_KILP]);
+   info->uses_kill = (info->opcode_count[TGSI_OPCODE_KILL_IF] ||
+                      info->opcode_count[TGSI_OPCODE_KILL]);
 
    /* extract simple properties */
    for (i = 0; i < info->num_properties; ++i) {

@@ -75,7 +75,7 @@ util_pstipple_update_stipple_texture(struct pipe_context *pipe,
    /*
     * Load alpha texture.
     * Note: 0 means keep the fragment, 255 means kill it.
-    * We'll negate the texel value and use KILP which kills if value
+    * We'll negate the texel value and use KILL_IF which kills if value
     * is negative.
     */
    for (i = 0; i < 32; i++) {
@@ -252,7 +252,7 @@ free_bit(uint bitfield)
  *   declare new registers
  *   MUL texTemp, INPUT[wincoord], 1/32;
  *   TEX texTemp, texTemp, sampler;
- *   KIL -texTemp;   # if -texTemp < 0, KILL fragment
+ *   KILL_IF -texTemp;   # if -texTemp < 0, kill fragment
  *   [...original code...]
  */
 static void
@@ -340,7 +340,7 @@ pstip_transform_inst(struct tgsi_transform_context *ctx,
 
 
       /* 
-       * Insert new MUL/TEX/KILP instructions at start of program
+       * Insert new MUL/TEX/KILL_IF instructions at start of program
        * Take gl_FragCoord, divide by 32 (stipple size), sample the
        * texture and kill fragment if needed.
        *
@@ -379,9 +379,9 @@ pstip_transform_inst(struct tgsi_transform_context *ctx,
       newInst.Src[1].Register.Index = pctx->freeSampler;
       ctx->emit_instruction(ctx, &newInst);
 
-      /* KIL -texTemp;   # if -texTemp < 0, KILL fragment */
+      /* KILL_IF -texTemp;   # if -texTemp < 0, kill fragment */
       newInst = tgsi_default_full_instruction();
-      newInst.Instruction.Opcode = TGSI_OPCODE_KIL;
+      newInst.Instruction.Opcode = TGSI_OPCODE_KILL_IF;
       newInst.Instruction.NumDstRegs = 0;
       newInst.Instruction.NumSrcRegs = 1;
       newInst.Src[0].Register.File = TGSI_FILE_TEMPORARY;

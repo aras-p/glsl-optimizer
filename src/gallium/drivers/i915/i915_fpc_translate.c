@@ -662,7 +662,7 @@ i915_translate_instruction(struct i915_fp_compile *p,
       emit_simple_arith(p, inst, A0_FRC, 1, fs);
       break;
 
-   case TGSI_OPCODE_KIL:
+   case TGSI_OPCODE_KILL_IF:
       /* kill if src[0].x < 0 || src[0].y < 0 ... */
       src0 = src_vector(p, &inst->Src[0], fs);
       tmp = i915_get_utemp(p);
@@ -676,10 +676,8 @@ i915_translate_instruction(struct i915_fp_compile *p,
                       1);                    /* num_coord */
       break;
 
-   case TGSI_OPCODE_KILP:
-      /* We emit an unconditional kill; we may want to revisit
-       * if we ever implement conditionals.
-       */
+   case TGSI_OPCODE_KILL:
+      /* unconditional kill */
       tmp = i915_get_utemp(p);
 
       i915_emit_texld(p,

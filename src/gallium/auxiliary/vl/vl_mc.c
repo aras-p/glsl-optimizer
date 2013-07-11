@@ -340,7 +340,7 @@ create_ycbcr_frag_shader(struct vl_mc *r, float scale, bool invert,
 
    ureg_IF(shader, ureg_scalar(ureg_src(tmp), TGSI_SWIZZLE_Y), &label);
 
-      ureg_KILP(shader);
+      ureg_KILL(shader);
 
    ureg_fixup_label(shader, label, ureg_get_instruction_number(shader));
    ureg_ELSE(shader, &label);

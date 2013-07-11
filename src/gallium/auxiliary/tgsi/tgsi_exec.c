@@ -1578,8 +1578,8 @@ store_dest(struct tgsi_exec_machine *mach,
  * Kill fragment if any of the four values is less than zero.
  */
 static void
-exec_kil(struct tgsi_exec_machine *mach,
-         const struct tgsi_full_instruction *inst)
+exec_kill_if(struct tgsi_exec_machine *mach,
+             const struct tgsi_full_instruction *inst)
 {
    uint uniquemask;
    uint chan_index;
@@ -1617,7 +1617,7 @@ exec_kil(struct tgsi_exec_machine *mach,
  * Unconditional fragment kill/discard.
  */
 static void
-exec_kilp(struct tgsi_exec_machine *mach,
+exec_kill(struct tgsi_exec_machine *mach,
           const struct tgsi_full_instruction *inst)
 {
    uint kilmask; /* bit 0 = pixel 0, bit 1 = pixel 1, etc */
@@ -3624,12 +3624,12 @@ exec_instruction(
       exec_vector_unary(mach, inst, micro_ddy, TGSI_EXEC_DATA_FLOAT, TGSI_EXEC_DATA_FLOAT);
       break;
 
-   case TGSI_OPCODE_KILP:
-      exec_kilp (mach, inst);
+   case TGSI_OPCODE_KILL:
+      exec_kill (mach, inst);
       break;
 
-   case TGSI_OPCODE_KIL:
-      exec_kil (mach, inst);
+   case TGSI_OPCODE_KILL_IF:
+      exec_kill_if (mach, inst);
       break;
 
    case TGSI_OPCODE_PK2H:

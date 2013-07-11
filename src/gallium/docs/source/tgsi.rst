@@ -741,7 +741,9 @@ This instruction replicates its result.
   dst.w = (src0.w < 0) ? src1.w : src2.w
 
 
-.. opcode:: KIL - Conditional Discard
+.. opcode:: KILL_IF - Conditional Discard
+
+  Conditional discard.  Allowed in fragment shaders only.
 
 .. math::
 
@@ -750,7 +752,7 @@ This instruction replicates its result.
   endif
 
 
-.. opcode:: KILP - Discard
+.. opcode:: KILL - Discard
 
   Unconditional discard.  Allowed in fragment shaders only.
 

@@ -228,7 +228,7 @@ unsigned int Instruction::srcMask(unsigned int s) const
       return 0x7;
    case TGSI_OPCODE_DP4:
    case TGSI_OPCODE_DPH:
-   case TGSI_OPCODE_KIL: /* WriteMask ignored */
+   case TGSI_OPCODE_KILL_IF: /* WriteMask ignored */
       return 0xf;
    case TGSI_OPCODE_DST:
       return mask & (s ? 0xa : 0x6);
@@ -512,7 +512,7 @@ static nv50_ir::operation translateOpcode(uint opcode)
    NV50_IR_OPCODE_CASE(COS, COS);
    NV50_IR_OPCODE_CASE(DDX, DFDX);
    NV50_IR_OPCODE_CASE(DDY, DFDY);
-   NV50_IR_OPCODE_CASE(KILP, DISCARD);
+   NV50_IR_OPCODE_CASE(KILL, DISCARD);
 
    NV50_IR_OPCODE_CASE(SEQ, SET);
    NV50_IR_OPCODE_CASE(SFL, SET);
@@ -553,7 +553,7 @@ static nv50_ir::operation translateOpcode(uint opcode)
    NV50_IR_OPCODE_CASE(EMIT, EMIT);
    NV50_IR_OPCODE_CASE(ENDPRIM, RESTART);
 
-   NV50_IR_OPCODE_CASE(KIL, DISCARD);
+   NV50_IR_OPCODE_CASE(KILL_IF, DISCARD);
 
    NV50_IR_OPCODE_CASE(F2I, CVT);
    NV50_IR_OPCODE_CASE(IDIV, DIV);
@@ -2366,14 +2366,14 @@ Converter::handleInstruction(const struct tgsi_full_instruction *insn)
          mkCmp(op, tgsi.getSetCond(), dstTy, dst0[c], src0, src1);
       }
       break;
-   case TGSI_OPCODE_KIL:
+   case TGSI_OPCODE_KILL_IF:
       val0 = new_LValue(func, FILE_PREDICATE);
       for (c = 0; c < 4; ++c) {
          mkCmp(OP_SET, CC_LT, TYPE_F32, val0, fetchSrc(0, c), zero);
          mkOp(OP_DISCARD, TYPE_NONE, NULL)->setPredicate(CC_P, val0);
       }
       break;
-   case TGSI_OPCODE_KILP:
+   case TGSI_OPCODE_KILL:
       mkOp(OP_DISCARD, TYPE_NONE, NULL);
       break;
    case TGSI_OPCODE_TEX:

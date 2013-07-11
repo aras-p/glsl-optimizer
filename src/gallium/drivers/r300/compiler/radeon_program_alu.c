@@ -1209,14 +1209,14 @@ int radeonTransformDeriv(struct radeon_compiler* c,
 /**
  * IF Temp[0].x -> IF Temp[0].x
  * ...          -> ...
- * KILP         -> KIL -abs(Temp[0].x)
+ * KILL         -> KIL -abs(Temp[0].x)
  * ...          -> ...
  * ENDIF        -> ENDIF
  *
  * === OR ===
  *
  * IF Temp[0].x -\
- * KILP         - > KIL -abs(Temp[0].x)
+ * KILL         - > KIL -abs(Temp[0].x)
  * ENDIF        -/
  *
  * === OR ===
@@ -1225,18 +1225,18 @@ int radeonTransformDeriv(struct radeon_compiler* c,
  * ...          -> ...
  * ELSE         -> ELSE
  * ...	        -> ...
- * KILP	        -> KIL -abs(Temp[0].x)
+ * KILL	        -> KIL -abs(Temp[0].x)
  * ...          -> ...
  * ENDIF        -> ENDIF
  *
  * === OR ===
  *
- * KILP         -> KIL -none.1111
+ * KILL         -> KIL -none.1111
  *
  * This needs to be done in its own pass, because it might modify the
- * instructions before and after KILP.
+ * instructions before and after KILL.
  */
-void rc_transform_KILP(struct radeon_compiler * c, void *user)
+void rc_transform_KILL(struct radeon_compiler * c, void *user)
 {
 	struct rc_instruction * inst;
 	for (inst = c->Program.Instructions.Next;

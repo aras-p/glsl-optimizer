@@ -188,7 +188,7 @@ lp_build_mask_value(struct lp_build_mask_context *mask)
 /**
  * Update boolean mask with given value (bitwise AND).
  * Typically used to update the quad's pixel alive/killed mask
- * after depth testing, alpha testing, TGSI_OPCODE_KIL, etc.
+ * after depth testing, alpha testing, TGSI_OPCODE_KILL_IF, etc.
  */
 void
 lp_build_mask_update(struct lp_build_mask_context *mask,

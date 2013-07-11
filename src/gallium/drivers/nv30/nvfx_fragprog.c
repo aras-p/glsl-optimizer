@@ -197,7 +197,7 @@ nvfx_fp_emit(struct nvfx_fpc *fpc, struct nvfx_insn insn)
    hw = &fp->insn[fpc->inst_offset];
    memset(hw, 0, sizeof(uint32_t) * 4);
 
-   if (insn.op == NVFX_FP_OP_OPCODE_KIL)
+   if (insn.op == NVFX_FP_OP_OPCODE_KILL_IF)
       fp->fp_control |= NV30_3D_FP_CONTROL_USES_KIL;
    hw[0] |= (insn.op << NVFX_FP_OP_OPCODE_SHIFT);
    hw[0] |= (insn.mask << NVFX_FP_OP_OUTMASK_SHIFT);
@@ -605,10 +605,10 @@ nvfx_fragprog_parse_instruction(struct nv30_context* nvfx, struct nvfx_fpc *fpc,
    case TGSI_OPCODE_FRC:
       nvfx_fp_emit(fpc, arith(sat, FRC, dst, mask, src[0], none, none));
       break;
-   case TGSI_OPCODE_KILP:
+   case TGSI_OPCODE_KILL:
       nvfx_fp_emit(fpc, arith(0, KIL, none.reg, 0, none, none, none));
       break;
-   case TGSI_OPCODE_KIL:
+   case TGSI_OPCODE_KILL_IF:
       insn = arith(0, MOV, none.reg, NVFX_FP_MASK_ALL, src[0], none, none);
       insn.cc_update = 1;
       nvfx_fp_emit(fpc, insn);

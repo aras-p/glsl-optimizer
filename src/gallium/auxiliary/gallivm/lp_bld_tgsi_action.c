@@ -396,7 +396,7 @@ frc_emit(
                                        TGSI_OPCODE_SUB, emit_data->args[0], tmp);
 }
 
-/* TGSI_OPCODE_KIL */
+/* TGSI_OPCODE_KILL_IF */
 
 static void
 kil_fetch_args(
@@ -419,7 +419,7 @@ kil_fetch_args(
    emit_data->dst_type = LLVMVoidTypeInContext(bld_base->base.gallivm->context);
 }
 
-/* TGSI_OPCODE_KILP */
+/* TGSI_OPCODE_KILL */
 
 static void
 kilp_fetch_args(
@@ -871,8 +871,8 @@ lp_set_default_actions(struct lp_build_tgsi_context * bld_base)
    bld_base->op_actions[TGSI_OPCODE_EX2].fetch_args = scalar_unary_fetch_args;
    bld_base->op_actions[TGSI_OPCODE_IF].fetch_args = scalar_unary_fetch_args;
    bld_base->op_actions[TGSI_OPCODE_UIF].fetch_args = scalar_unary_fetch_args;
-   bld_base->op_actions[TGSI_OPCODE_KIL].fetch_args = kil_fetch_args;
-   bld_base->op_actions[TGSI_OPCODE_KILP].fetch_args = kilp_fetch_args;
+   bld_base->op_actions[TGSI_OPCODE_KILL_IF].fetch_args = kil_fetch_args;
+   bld_base->op_actions[TGSI_OPCODE_KILL].fetch_args = kilp_fetch_args;
    bld_base->op_actions[TGSI_OPCODE_RCP].fetch_args = scalar_unary_fetch_args;
    bld_base->op_actions[TGSI_OPCODE_SIN].fetch_args = scalar_unary_fetch_args;
    bld_base->op_actions[TGSI_OPCODE_LG2].fetch_args = scalar_unary_fetch_args;

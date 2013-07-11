@@ -2043,7 +2043,7 @@ near_end_of_shader(struct lp_build_tgsi_soa_context *bld,
  * Kill fragment if any of the src register values are negative.
  */
 static void
-emit_kil(
+emit_kill_if(
    struct lp_build_tgsi_soa_context *bld,
    const struct tgsi_full_instruction *inst,
    int pc)
@@ -2101,7 +2101,7 @@ emit_kil(
  * we're inside a loop or conditional.
  */
 static void
-emit_kilp(struct lp_build_tgsi_soa_context *bld,
+emit_kill(struct lp_build_tgsi_soa_context *bld,
           int pc)
 {
    LLVMBuilderRef builder = bld->bld_base.base.gallivm->builder;
@@ -2319,25 +2319,25 @@ ddy_emit(
 }
 
 static void
-kilp_emit(
+kill_emit(
    const struct lp_build_tgsi_action * action,
    struct lp_build_tgsi_context * bld_base,
    struct lp_build_emit_data * emit_data)
 {
    struct lp_build_tgsi_soa_context * bld = lp_soa_context(bld_base);
 
-   emit_kilp(bld, bld_base->pc - 1);
+   emit_kill(bld, bld_base->pc - 1);
 }
 
 static void
-kil_emit(
+kill_if_emit(
    const struct lp_build_tgsi_action * action,
    struct lp_build_tgsi_context * bld_base,
    struct lp_build_emit_data * emit_data)
 {
    struct lp_build_tgsi_soa_context * bld = lp_soa_context(bld_base);
 
-   emit_kil(bld, emit_data->inst, bld_base->pc - 1);
+   emit_kill_if(bld, emit_data->inst, bld_base->pc - 1);
 }
 
 static void
@@ -3168,8 +3168,8 @@ lp_build_tgsi_soa(struct gallivm_state *gallivm,
    bld.bld_base.op_actions[TGSI_OPCODE_ENDSWITCH].emit = endswitch_emit;
    bld.bld_base.op_actions[TGSI_OPCODE_IF].emit = if_emit;
    bld.bld_base.op_actions[TGSI_OPCODE_UIF].emit = uif_emit;
-   bld.bld_base.op_actions[TGSI_OPCODE_KIL].emit = kil_emit;
-   bld.bld_base.op_actions[TGSI_OPCODE_KILP].emit = kilp_emit;
+   bld.bld_base.op_actions[TGSI_OPCODE_KILL_IF].emit = kill_if_emit;
+   bld.bld_base.op_actions[TGSI_OPCODE_KILL].emit = kill_emit;
    bld.bld_base.op_actions[TGSI_OPCODE_NRM].emit = nrm_emit;
    bld.bld_base.op_actions[TGSI_OPCODE_NRM4].emit = nrm_emit;
    bld.bld_base.op_actions[TGSI_OPCODE_RET].emit = ret_emit;

@@ -657,12 +657,10 @@ lp_emit_instruction_aos(
    case TGSI_OPCODE_DDY:
       return FALSE;
 
-   case TGSI_OPCODE_KILP:
-      /* predicated kill */
+   case TGSI_OPCODE_KILL:
       return FALSE;
 
-   case TGSI_OPCODE_KIL:
-      /* conditional kill */
+   case TGSI_OPCODE_KILL_IF:
       return FALSE;
 
    case TGSI_OPCODE_PK2H:

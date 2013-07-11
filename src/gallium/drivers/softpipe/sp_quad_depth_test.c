@@ -708,7 +708,7 @@ ALPHATEST( NOTEQUAL, != )
 ALPHATEST( GEQUAL,   >= )
 
 
-/* XXX: Incorporate into shader using KILP.
+/* XXX: Incorporate into shader using KILL_IF.
  */
 static unsigned
 alpha_test_quads(struct quad_stage *qs, 

@@ -76,7 +76,7 @@ static const struct tgsi_opcode_info opcode_info[TGSI_OPCODE_LAST] =
    { 1, 1, 0, 0, 0, 0, REPL, "COS", TGSI_OPCODE_COS },
    { 1, 1, 0, 0, 0, 0, COMP, "DDX", TGSI_OPCODE_DDX },
    { 1, 1, 0, 0, 0, 0, COMP, "DDY", TGSI_OPCODE_DDY },
-   { 0, 0, 0, 0, 0, 0, NONE, "KILP", TGSI_OPCODE_KILP },
+   { 0, 0, 0, 0, 0, 0, NONE, "KILL", TGSI_OPCODE_KILL },
    { 1, 1, 0, 0, 0, 0, COMP, "PK2H", TGSI_OPCODE_PK2H },
    { 1, 1, 0, 0, 0, 0, COMP, "PK2US", TGSI_OPCODE_PK2US },
    { 1, 1, 0, 0, 0, 0, COMP, "PK4B", TGSI_OPCODE_PK4B },
@@ -153,7 +153,7 @@ static const struct tgsi_opcode_info opcode_info[TGSI_OPCODE_LAST] =
    { 0, 1, 0, 0, 0, 0, NONE, "CALLNZ", TGSI_OPCODE_CALLNZ },
    { 0, 1, 0, 0, 0, 0, NONE, "", 114 },     /* removed */
    { 0, 1, 0, 0, 0, 0, NONE, "BREAKC", TGSI_OPCODE_BREAKC },
-   { 0, 1, 0, 0, 0, 0, NONE, "KIL", TGSI_OPCODE_KIL },
+   { 0, 1, 0, 0, 0, 0, NONE, "KILL_IF", TGSI_OPCODE_KILL_IF },
    { 0, 0, 0, 0, 0, 0, NONE, "END", TGSI_OPCODE_END },
    { 0, 0, 0, 0, 0, 0, NONE, "", 118 },     /* removed */
    { 1, 1, 0, 0, 0, 0, COMP, "F2I", TGSI_OPCODE_F2I },

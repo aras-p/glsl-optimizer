@@ -65,8 +65,8 @@ static boolean same_src_reg(struct i915_full_src_register* d1, struct i915_full_
 static boolean has_destination(unsigned opcode)
 {
    return (opcode != TGSI_OPCODE_NOP &&
-           opcode != TGSI_OPCODE_KIL &&
-           opcode != TGSI_OPCODE_KILP &&
+           opcode != TGSI_OPCODE_KILL_IF &&
+           opcode != TGSI_OPCODE_KILL &&
            opcode != TGSI_OPCODE_END &&
            opcode != TGSI_OPCODE_RET);
 }

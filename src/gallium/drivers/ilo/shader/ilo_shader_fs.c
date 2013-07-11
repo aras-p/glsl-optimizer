@@ -1191,7 +1191,7 @@ fs_lower_opcode_kil(struct toy_compiler *tc, struct toy_inst *inst)
 
    f0 = tsrc_rect(tsrc_uw(tsrc(TOY_FILE_ARF, BRW_ARF_FLAG, 0)), TOY_RECT_010);
 
-   /* KILP or KIL */
+   /* KILL or KILL_IF */
    if (tsrc_is_null(inst->src[0])) {
       struct toy_src dummy = tsrc_uw(tsrc(TOY_FILE_GRF, 0, 0));
       struct toy_dst f0_dst = tdst_uw(tdst(TOY_FILE_ARF, BRW_ARF_FLAG, 0));

@@ -2976,10 +2976,10 @@ glsl_to_tgsi_visitor::visit(ir_discard *ir)
    if (ir->condition) {
       ir->condition->accept(this);
       this->result.negate = ~this->result.negate;
-      emit(ir, TGSI_OPCODE_KIL, undef_dst, this->result);
+      emit(ir, TGSI_OPCODE_KILL_IF, undef_dst, this->result);
    } else {
       /* unconditional kil */
-      emit(ir, TGSI_OPCODE_KILP);
+      emit(ir, TGSI_OPCODE_KILL);
    }
 }
 
@@ -4010,7 +4010,7 @@ get_bitmap_visitor(struct st_fragment_program *fp,
    src0.negate = NEGATE_XYZW;
    if (st->bitmap.tex_format == PIPE_FORMAT_L8_UNORM)
       src0.swizzle = SWIZZLE_XXXX;
-   inst = v->emit(NULL, TGSI_OPCODE_KIL, undef_dst, src0);
+   inst = v->emit(NULL, TGSI_OPCODE_KILL_IF, undef_dst, src0);
 
    /* Now copy the instructions from the original glsl_to_tgsi_visitor into the
     * new visitor. */

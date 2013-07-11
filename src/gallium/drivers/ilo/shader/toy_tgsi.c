@@ -61,7 +61,7 @@ static const struct {
    [TGSI_OPCODE_ABS]          = { BRW_OPCODE_MOV,                 1, 1 },
    [TGSI_OPCODE_DPH]          = { BRW_OPCODE_DPH,                 1, 2 },
    [TGSI_OPCODE_COS]          = { TOY_OPCODE_COS,                 1, 1 },
-   [TGSI_OPCODE_KILP]         = { TOY_OPCODE_KIL,                 0, 0 },
+   [TGSI_OPCODE_KILL]         = { TOY_OPCODE_KIL,                 0, 0 },
    [TGSI_OPCODE_SIN]          = { TOY_OPCODE_SIN,                 1, 1 },
    [TGSI_OPCODE_ARR]          = { BRW_OPCODE_RNDZ,                1, 1 },
    [TGSI_OPCODE_DP2]          = { BRW_OPCODE_DP2,                 1, 2 },
@@ -80,7 +80,7 @@ static const struct {
    [TGSI_OPCODE_EMIT]         = { TOY_OPCODE_EMIT,                0, 0 },
    [TGSI_OPCODE_ENDPRIM]      = { TOY_OPCODE_ENDPRIM,             0, 0 },
    [TGSI_OPCODE_NOP]          = { BRW_OPCODE_NOP,                 0, 0 },
-   [TGSI_OPCODE_KIL]          = { TOY_OPCODE_KIL,                 0, 1 },
+   [TGSI_OPCODE_KILL_IF]      = { TOY_OPCODE_KIL,                 0, 1 },
    [TGSI_OPCODE_END]          = { BRW_OPCODE_NOP,                 0, 0 },
    [TGSI_OPCODE_F2I]          = { BRW_OPCODE_MOV,                 1, 1 },
    [TGSI_OPCODE_IDIV]         = { TOY_OPCODE_INT_DIV_QUOTIENT,    1, 2 },
@@ -866,7 +866,7 @@ static const toy_tgsi_translate aos_translate_table[TGSI_OPCODE_LAST] = {
    [TGSI_OPCODE_COS]          = aos_simple,
    [TGSI_OPCODE_DDX]          = aos_unsupported,
    [TGSI_OPCODE_DDY]          = aos_unsupported,
-   [TGSI_OPCODE_KILP]         = aos_simple,
+   [TGSI_OPCODE_KILL]         = aos_simple,
    [TGSI_OPCODE_PK2H]         = aos_PK2H,
    [TGSI_OPCODE_PK2US]        = aos_unsupported,
    [TGSI_OPCODE_PK4B]         = aos_unsupported,
@@ -942,7 +942,7 @@ static const toy_tgsi_translate aos_translate_table[TGSI_OPCODE_LAST] = {
    [TGSI_OPCODE_NRM4]         = aos_NRM4,
    [TGSI_OPCODE_CALLNZ]       = aos_unsupported,
    [TGSI_OPCODE_BREAKC]       = aos_unsupported,
-   [TGSI_OPCODE_KIL]          = aos_simple,
+   [TGSI_OPCODE_KILL_IF]      = aos_simple,
    [TGSI_OPCODE_END]          = aos_simple,
    [118]                      = aos_unsupported,
    [TGSI_OPCODE_F2I]          = aos_simple,
@@ -1482,7 +1482,7 @@ static const toy_tgsi_translate soa_translate_table[TGSI_OPCODE_LAST] = {
    [TGSI_OPCODE_COS]          = soa_scalar_replicate,
    [TGSI_OPCODE_DDX]          = soa_partial_derivative,
    [TGSI_OPCODE_DDY]          = soa_partial_derivative,
-   [TGSI_OPCODE_KILP]         = soa_passthrough,
+   [TGSI_OPCODE_KILL]         = soa_passthrough,
    [TGSI_OPCODE_PK2H]         = soa_PK2H,
    [TGSI_OPCODE_PK2US]        = soa_unsupported,
    [TGSI_OPCODE_PK4B]         = soa_unsupported,
@@ -1558,7 +1558,7 @@ static const toy_tgsi_translate soa_translate_table[TGSI_OPCODE_LAST] = {
    [TGSI_OPCODE_NRM4]         = soa_NRM4,
    [TGSI_OPCODE_CALLNZ]       = soa_unsupported,
    [TGSI_OPCODE_BREAKC]       = soa_unsupported,
-   [TGSI_OPCODE_KIL]          = soa_passthrough,
+   [TGSI_OPCODE_KILL_IF]          = soa_passthrough,
    [TGSI_OPCODE_END]          = soa_passthrough,
    [118]                      = soa_unsupported,
    [TGSI_OPCODE_F2I]          = soa_per_channel,
@@ -2238,8 +2238,8 @@ parse_instruction(struct toy_tgsi *tgsi,
    }
 
    switch (tgsi_inst->Instruction.Opcode) {
-   case TGSI_OPCODE_KIL:
-   case TGSI_OPCODE_KILP:
+   case TGSI_OPCODE_KILL_IF:
+   case TGSI_OPCODE_KILL:
       tgsi->uses_kill = true;
       break;
    }

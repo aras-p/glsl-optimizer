@@ -1382,8 +1382,8 @@ emit_sub(struct svga_shader_emitter *emit,
 
 
 static boolean
-emit_kil(struct svga_shader_emitter *emit,
-         const struct tgsi_full_instruction *insn)
+emit_kill_if(struct svga_shader_emitter *emit,
+             const struct tgsi_full_instruction *insn)
 {
    const struct tgsi_full_src_register *reg = &insn->Src[0];
    struct src_register src0, srcIn;
@@ -1439,10 +1439,10 @@ emit_kil(struct svga_shader_emitter *emit,
 
 
 /**
- * mesa state tracker always emits kilp as an unconditional kil
+ * unconditional kill
  */
 static boolean
-emit_kilp(struct svga_shader_emitter *emit,
+emit_kill(struct svga_shader_emitter *emit,
           const struct tgsi_full_instruction *insn)
 {
    SVGA3dShaderDestToken temp;
@@ -2843,8 +2843,8 @@ svga_emit_instruction(struct svga_shader_emitter *emit,
       /* TGSI always finishes the main func with an END */
       return emit_end( emit );
 
-   case TGSI_OPCODE_KIL:
-      return emit_kil( emit, insn );
+   case TGSI_OPCODE_KILL_IF:
+      return emit_kill_if( emit, insn );
 
       /* Selection opcodes.  The underlying language is fairly
        * non-orthogonal about these.
@@ -2929,8 +2929,8 @@ svga_emit_instruction(struct svga_shader_emitter *emit,
    case TGSI_OPCODE_XPD:
       return emit_xpd( emit, insn );
 
-   case TGSI_OPCODE_KILP:
-      return emit_kilp( emit, insn );
+   case TGSI_OPCODE_KILL:
+      return emit_kill( emit, insn );
 
    case TGSI_OPCODE_DST:
       return emit_dst_insn( emit, insn );
@@ -3420,7 +3420,7 @@ needs_to_create_zero( struct svga_shader_emitter *emit )
        emit->info.opcode_count[TGSI_OPCODE_EXP] >= 1 ||
        emit->info.opcode_count[TGSI_OPCODE_LOG] >= 1 ||
        emit->info.opcode_count[TGSI_OPCODE_XPD] >= 1 ||
-       emit->info.opcode_count[TGSI_OPCODE_KILP] >= 1)
+       emit->info.opcode_count[TGSI_OPCODE_KILL] >= 1)
       return TRUE;
 
    return FALSE;

@@ -1251,10 +1251,10 @@ void radeon_llvm_context_init(struct radeon_llvm_context * ctx)
 	bld_base->op_actions[TGSI_OPCODE_ISLT].emit = emit_icmp;
 	bld_base->op_actions[TGSI_OPCODE_ISSG].emit = emit_ssg;
 	bld_base->op_actions[TGSI_OPCODE_I2F].emit = emit_i2f;
-	bld_base->op_actions[TGSI_OPCODE_KIL].emit = kil_emit;
-	bld_base->op_actions[TGSI_OPCODE_KIL].intr_name = "llvm.AMDGPU.kill";
-	bld_base->op_actions[TGSI_OPCODE_KILP].emit = lp_build_tgsi_intrinsic;
-	bld_base->op_actions[TGSI_OPCODE_KILP].intr_name = "llvm.AMDGPU.kilp";
+	bld_base->op_actions[TGSI_OPCODE_KILL_IF].emit = kil_emit;
+	bld_base->op_actions[TGSI_OPCODE_KILL_IF].intr_name = "llvm.AMDGPU.kill";
+	bld_base->op_actions[TGSI_OPCODE_KILL].emit = lp_build_tgsi_intrinsic;
+	bld_base->op_actions[TGSI_OPCODE_KILL].intr_name = "llvm.AMDGPU.kilp";
 	bld_base->op_actions[TGSI_OPCODE_LG2].emit = build_tgsi_intrinsic_readonly;
 	bld_base->op_actions[TGSI_OPCODE_LG2].intr_name = "llvm.log2.f32";
 	bld_base->op_actions[TGSI_OPCODE_LRP].emit = build_tgsi_intrinsic_nomem;

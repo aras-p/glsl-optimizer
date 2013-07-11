@@ -302,7 +302,7 @@ struct tgsi_property_data {
 #define TGSI_OPCODE_COS                 36
 #define TGSI_OPCODE_DDX                 37
 #define TGSI_OPCODE_DDY                 38
-#define TGSI_OPCODE_KILP                39  /* predicated kill */
+#define TGSI_OPCODE_KILL                39 /* unconditional */
 #define TGSI_OPCODE_PK2H                40
 #define TGSI_OPCODE_PK2US               41
 #define TGSI_OPCODE_PK4B                42
@@ -372,7 +372,7 @@ struct tgsi_property_data {
 #define TGSI_OPCODE_CALLNZ              113
                                 /* gap */
 #define TGSI_OPCODE_BREAKC              115
-#define TGSI_OPCODE_KIL                 116  /* conditional kill */
+#define TGSI_OPCODE_KILL_IF             116  /* conditional kill */
 #define TGSI_OPCODE_END                 117  /* aka HALT */
                                 /* gap */
 #define TGSI_OPCODE_F2I                 119

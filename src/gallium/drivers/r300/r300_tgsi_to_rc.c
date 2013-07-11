@@ -69,7 +69,7 @@ static unsigned translate_opcode(unsigned opcode)
         case TGSI_OPCODE_COS: return RC_OPCODE_COS;
         case TGSI_OPCODE_DDX: return RC_OPCODE_DDX;
         case TGSI_OPCODE_DDY: return RC_OPCODE_DDY;
-        case TGSI_OPCODE_KILP: return RC_OPCODE_KILP;
+        case TGSI_OPCODE_KILL: return RC_OPCODE_KILP;
      /* case TGSI_OPCODE_PK2H: return RC_OPCODE_PK2H; */
      /* case TGSI_OPCODE_PK2US: return RC_OPCODE_PK2US; */
      /* case TGSI_OPCODE_PK4B: return RC_OPCODE_PK4B; */
@@ -136,7 +136,7 @@ static unsigned translate_opcode(unsigned opcode)
      /* case TGSI_OPCODE_NRM4: return RC_OPCODE_NRM4; */
      /* case TGSI_OPCODE_CALLNZ: return RC_OPCODE_CALLNZ; */
      /* case TGSI_OPCODE_BREAKC: return RC_OPCODE_BREAKC; */
-        case TGSI_OPCODE_KIL: return RC_OPCODE_KIL;
+        case TGSI_OPCODE_KILL_IF: return RC_OPCODE_KIL;
     }
 
     fprintf(stderr, "r300: Unknown TGSI/RC opcode: %s\n", tgsi_get_opcode_name(opcode));

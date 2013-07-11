@@ -308,9 +308,9 @@ aa_transform_inst(struct tgsi_transform_context *ctx,
       newInst.Src[1].Register.SwizzleY = TGSI_SWIZZLE_W;
       ctx->emit_instruction(ctx, &newInst);
 
-      /* KIL -tmp0.yyyy;   # if -tmp0.y < 0, KILL */
+      /* KILL_IF -tmp0.yyyy;   # if -tmp0.y < 0, KILL */
       newInst = tgsi_default_full_instruction();
-      newInst.Instruction.Opcode = TGSI_OPCODE_KIL;
+      newInst.Instruction.Opcode = TGSI_OPCODE_KILL_IF;
       newInst.Instruction.NumDstRegs = 0;
       newInst.Instruction.NumSrcRegs = 1;
       newInst.Src[0].Register.File = TGSI_FILE_TEMPORARY;
