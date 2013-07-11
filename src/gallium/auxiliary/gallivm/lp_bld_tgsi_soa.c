@@ -2096,8 +2096,7 @@ emit_kil(
 
 
 /**
- * Predicated fragment kill.
- * XXX Actually, we do an unconditional kill (as in tgsi_exec.c).
+ * Unconditional fragment kill.
  * The only predication is the execution mask which will apply if
  * we're inside a loop or conditional.
  */

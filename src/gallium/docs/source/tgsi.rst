@@ -471,11 +471,6 @@ This instruction replicates its result.
   dst.w = partialy(src.w)
 
 
-.. opcode:: KILP - Predicated Discard
-
-  Not really predicated, just unconditional discard
-
-
 .. opcode:: PK2H - Pack Two 16-bit Floats
 
   TBD
@@ -753,6 +748,11 @@ This instruction replicates its result.
   if (src.x < 0 || src.y < 0 || src.z < 0 || src.w < 0)
     discard
   endif
+
+
+.. opcode:: KILP - Discard
+
+  Unconditional discard.  Allowed in fragment shaders only.
 
 
 .. opcode:: SCS - Sine Cosine

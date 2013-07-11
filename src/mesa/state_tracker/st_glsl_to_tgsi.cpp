@@ -2978,6 +2978,7 @@ glsl_to_tgsi_visitor::visit(ir_discard *ir)
       this->result.negate = ~this->result.negate;
       emit(ir, TGSI_OPCODE_KIL, undef_dst, this->result);
    } else {
+      /* unconditional kil */
       emit(ir, TGSI_OPCODE_KILP);
    }
 }

@@ -1614,8 +1614,7 @@ exec_kil(struct tgsi_exec_machine *mach,
 }
 
 /**
- * Execute NVIDIA-style KIL which is predicated by a condition code.
- * Kill fragment if the condition code is TRUE.
+ * Unconditional fragment kill/discard.
  */
 static void
 exec_kilp(struct tgsi_exec_machine *mach,
@@ -1623,7 +1622,7 @@ exec_kilp(struct tgsi_exec_machine *mach,
 {
    uint kilmask; /* bit 0 = pixel 0, bit 1 = pixel 1, etc */
 
-   /* "unconditional" kil */
+   /* kill fragment for all fragments currently executing */
    kilmask = mach->ExecMask;
    mach->Temps[TEMP_KILMASK_I].xyzw[TEMP_KILMASK_C].u[0] |= kilmask;
 }
