@@ -2707,7 +2707,7 @@ ast_declarator_list::hir(exec_list *instructions,
 	    }
 
 	    if (!error_emitted && var->type->is_array() &&
-                !state->check_version(140, 0, &loc,
+                !state->check_version(150, 0, &loc,
                                       "vertex shader input / attribute "
                                       "cannot have array type")) {
 	       error_emitted = true;
