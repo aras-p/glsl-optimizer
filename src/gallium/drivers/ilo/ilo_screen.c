@@ -312,13 +312,14 @@ ilo_get_param(struct pipe_screen *screen, enum pipe_cap param)
        *
        * For 3D textures, we have to set the maximum number of levels to 9,
        * which has at most 2^24 pixels.  For 2D textures, we set it to 14,
-       * which has at most 2^26 pixels.
+       * which has at most 2^26 pixels.  And for cube textures, we has to set
+       * it to 12.
        */
       return 14;
    case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
       return 9;
    case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
-      return 14;
+      return 12;
    case PIPE_CAP_TEXTURE_MIRROR_CLAMP:
       return false;
    case PIPE_CAP_BLEND_EQUATION_SEPARATE:
