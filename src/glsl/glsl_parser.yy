@@ -1155,6 +1155,12 @@ layout_qualifier_id:
 	         $$.flags.q.shared = 1;
 	      } else if (strcmp($1, "column_major") == 0) {
 	         $$.flags.q.column_major = 1;
+	      /* "row_major" is a reserved word in GLSL 1.30+. Its token is parsed
+	       * below in the interface_block_layout_qualifier rule.
+	       *
+	       * It is not a reserved word in GLSL ES 3.00, so it's handled here as
+	       * an identifier.
+	       */
 	      } else if (strcmp($1, "row_major") == 0) {
 	         $$.flags.q.row_major = 1;
 	      }
