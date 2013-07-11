@@ -26,7 +26,8 @@ include $(top_srcdir)/src/gallium/Automake.inc
 
 AM_CFLAGS = \
 	$(GALLIUM_CFLAGS) \
-	$(INTEL_CFLAGS)
+	$(INTEL_CFLAGS) \
+	$(VISIBILITY_CFLAGS)
 
 noinst_LTLIBRARIES = libintelwinsys.la
 
