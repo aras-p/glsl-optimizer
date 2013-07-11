@@ -26,7 +26,8 @@ AM_CFLAGS = \
 	-I $(top_srcdir)/src/mesa \
 	-I $(GLSL_SRCDIR) \
 	-I $(GLSL_SRCDIR)/glcpp \
-	-I $(GLSL_BUILDDIR)
+	-I $(GLSL_BUILDDIR) \
+	$(VISIBILITY_CFLAGS)
 
 if CROSS_COMPILING
 proxyCC = @CC_FOR_BUILD@
