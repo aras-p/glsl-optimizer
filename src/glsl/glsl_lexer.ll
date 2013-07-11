@@ -72,7 +72,7 @@ static int classify_identifier(struct _mesa_glsl_parse_state *, const char *);
                          alt_expr, token)				\
    do {									\
       if (yyextra->is_version(allowed_glsl, allowed_glsl_es)		\
-          || alt_expr) {						\
+          || (alt_expr)) {						\
 	 return token;							\
       } else if (yyextra->is_version(reserved_glsl,			\
                                      reserved_glsl_es)) {		\
@@ -522,7 +522,7 @@ image2DArrayShadow KEYWORD(130, 300, 0, 0, IMAGE2DARRAYSHADOW);
 imageBuffer	KEYWORD(130, 300, 0, 0, IMAGEBUFFER);
 iimageBuffer	KEYWORD(130, 300, 0, 0, IIMAGEBUFFER);
 uimageBuffer	KEYWORD(130, 300, 0, 0, UIMAGEBUFFER);
-row_major	KEYWORD_WITH_ALT(130, 0, 140, 0, yyextra->ARB_uniform_buffer_object_enable, ROW_MAJOR);
+row_major	KEYWORD_WITH_ALT(130, 0, 140, 0, yyextra->ARB_uniform_buffer_object_enable && !yyextra->es_shader, ROW_MAJOR);
 
     /* Additional reserved words in GLSL 1.40 */
 isampler2DRect	KEYWORD(140, 300, 140, 0, ISAMPLER2DRECT);
