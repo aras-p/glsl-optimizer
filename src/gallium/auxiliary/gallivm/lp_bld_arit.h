@@ -231,6 +231,13 @@ LLVMValueRef
 lp_build_rsqrt(struct lp_build_context *bld,
                LLVMValueRef a);
 
+boolean
+lp_build_fast_rsqrt_available(struct lp_type type);
+
+LLVMValueRef
+lp_build_fast_rsqrt(struct lp_build_context *bld,
+                    LLVMValueRef a);
+
 LLVMValueRef
 lp_build_cos(struct lp_build_context *bld,
              LLVMValueRef a);

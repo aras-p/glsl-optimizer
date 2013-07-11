@@ -2306,19 +2306,14 @@ lp_build_rsqrt(struct lp_build_context *bld,
    /*
     * This should be faster but all denormals will end up as infinity.
     */
-   if (0 && ((util_cpu_caps.has_sse && type.width == 32 && type.length == 4) ||
-        (util_cpu_caps.has_avx && type.width == 32 && type.length == 8))) {
+   if (0 && lp_build_fast_rsqrt_available(type)) {
       const unsigned num_iterations = 1;
       LLVMValueRef res;
       unsigned i;
-      const char *intrinsic = NULL;
 
-      if (type.length == 4) {
-         intrinsic = "llvm.x86.sse.rsqrt.ps";
-      }
-      else {
-         intrinsic = "llvm.x86.avx.rsqrt.ps.256";
-      }
+      /* rsqrt(1.0) != 1.0 here */
+      res = lp_build_fast_rsqrt(bld, a);
+
       if (num_iterations) {
          /*
           * Newton-Raphson will result in NaN instead of infinity for zero,
@@ -2338,8 +2333,6 @@ lp_build_rsqrt(struct lp_build_context *bld,
 
          inf = LLVMBuildBitCast(builder, inf, lp_build_vec_type(bld->gallivm, type), "");
 
-         res = lp_build_intrinsic_unary(builder, intrinsic, bld->vec_type, a);
-
          for (i = 0; i < num_iterations; ++i) {
             res = lp_build_rsqrt_refine(bld, a, res);
          }
@@ -2350,15 +2343,62 @@ lp_build_rsqrt(struct lp_build_context *bld,
          cmp = lp_build_compare(bld->gallivm, type, PIPE_FUNC_EQUAL, a, bld->one);
          res = lp_build_select(bld, cmp, bld->one, res);
       }
-      else {
-         /* rsqrt(1.0) != 1.0 here */
-         res = lp_build_intrinsic_unary(builder, intrinsic, bld->vec_type, a);
-
-      }
 
       return res;
    }
 
+   return lp_build_rcp(bld, lp_build_sqrt(bld, a));
+}
+
+/**
+ * If there's a fast (inaccurate) rsqrt instruction available
+ * (caller may want to avoid to call rsqrt_fast if it's not available,
+ * i.e. for calculating x^0.5 it may do rsqrt_fast(x) * x but if
+ * unavailable it would result in sqrt/div/mul so obviously
+ * much better to just call sqrt, skipping both div and mul).
+ */
+boolean
+lp_build_fast_rsqrt_available(struct lp_type type)
+{
+   assert(type.floating);
+
+   if ((util_cpu_caps.has_sse && type.width == 32 && type.length == 4) ||
+       (util_cpu_caps.has_avx && type.width == 32 && type.length == 8)) {
+      return true;
+   }
+   return false;
+}
+
+
+/**
+ * Generate 1/sqrt(a).
+ * Result is undefined for values < 0, infinity for +0.
+ * Precision is limited, only ~10 bits guaranteed
+ * (rsqrt 1.0 may not be 1.0, denorms may be flushed to 0).
+ */
+LLVMValueRef
+lp_build_fast_rsqrt(struct lp_build_context *bld,
+                    LLVMValueRef a)
+{
+   LLVMBuilderRef builder = bld->gallivm->builder;
+   const struct lp_type type = bld->type;
+
+   assert(lp_check_value(type, a));
+
+   if (lp_build_fast_rsqrt_available(type)) {
+      const char *intrinsic = NULL;
+
+      if (type.length == 4) {
+         intrinsic = "llvm.x86.sse.rsqrt.ps";
+      }
+      else {
+         intrinsic = "llvm.x86.avx.rsqrt.ps.256";
+      }
+      return lp_build_intrinsic_unary(builder, intrinsic, bld->vec_type, a);
+   }
+   else {
+      debug_printf("%s: emulating fast rsqrt with rcp/sqrt\n", __FUNCTION__);
+   }
    return lp_build_rcp(bld, lp_build_sqrt(bld, a));
 }
 
