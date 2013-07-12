@@ -1351,12 +1351,9 @@ gen6_pipeline_end(struct ilo_3d_pipeline *p,
                   const struct ilo_context *ilo,
                   struct gen6_pipeline_session *session)
 {
-   int used, estimate;
-
    /* sanity check size estimation */
-   used = session->init_cp_space - ilo_cp_space(p->cp);
-   estimate = ilo_3d_pipeline_estimate_size(p, ILO_3D_PIPELINE_DRAW, ilo);
-   assert(used <= estimate);
+   assert(session->init_cp_space - ilo_cp_space(p->cp) <=
+         ilo_3d_pipeline_estimate_size(p, ILO_3D_PIPELINE_DRAW, ilo));
 
    p->state.reduced_prim = session->reduced_prim;
    p->state.primitive_restart = ilo->draw->primitive_restart;
