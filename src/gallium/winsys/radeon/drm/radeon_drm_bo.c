@@ -458,7 +458,7 @@ static void *radeon_bo_map(struct radeon_winsys_cs_handle *buf,
                  * (neither one is changing it).
                  *
                  * Only check whether the buffer is being used for write. */
-                if (radeon_bo_is_referenced_by_cs_for_write(cs, bo)) {
+                if (cs && radeon_bo_is_referenced_by_cs_for_write(cs, bo)) {
                     cs->flush_cs(cs->flush_data, RADEON_FLUSH_ASYNC);
                     return NULL;
                 }
@@ -468,7 +468,7 @@ static void *radeon_bo_map(struct radeon_winsys_cs_handle *buf,
                     return NULL;
                 }
             } else {
-                if (radeon_bo_is_referenced_by_cs(cs, bo)) {
+                if (cs && radeon_bo_is_referenced_by_cs(cs, bo)) {
                     cs->flush_cs(cs->flush_data, RADEON_FLUSH_ASYNC);
                     return NULL;
                 }
@@ -489,19 +489,21 @@ static void *radeon_bo_map(struct radeon_winsys_cs_handle *buf,
                  * (neither one is changing it).
                  *
                  * Only check whether the buffer is being used for write. */
-                if (radeon_bo_is_referenced_by_cs_for_write(cs, bo)) {
+                if (cs && radeon_bo_is_referenced_by_cs_for_write(cs, bo)) {
                     cs->flush_cs(cs->flush_data, 0);
                 }
                 radeon_bo_wait((struct pb_buffer*)bo,
                                RADEON_USAGE_WRITE);
             } else {
                 /* Mapping for write. */
-                if (radeon_bo_is_referenced_by_cs(cs, bo)) {
-                    cs->flush_cs(cs->flush_data, 0);
-                } else {
-                    /* Try to avoid busy-waiting in radeon_bo_wait. */
-                    if (p_atomic_read(&bo->num_active_ioctls))
-                        radeon_drm_cs_sync_flush(rcs);
+                if (cs) {
+                    if (radeon_bo_is_referenced_by_cs(cs, bo)) {
+                        cs->flush_cs(cs->flush_data, 0);
+                    } else {
+                        /* Try to avoid busy-waiting in radeon_bo_wait. */
+                        if (p_atomic_read(&bo->num_active_ioctls))
+                            radeon_drm_cs_sync_flush(rcs);
+                    }
                 }
 
                 radeon_bo_wait((struct pb_buffer*)bo, RADEON_USAGE_READWRITE);
