@@ -246,13 +246,21 @@ void r600_flush_emit(struct r600_context *rctx)
 		cp_coher_cntl |= S_0085F0_TC_ACTION_ENA(1);
 	}
 
-	if (rctx->flags & R600_CONTEXT_FLUSH_AND_INV_DB) {
+	/* Don't use the DB CP COHER logic on r6xx.
+	 * There are hw bugs.
+	 */
+	if (rctx->chip_class >= R700 &&
+	    (rctx->flags & R600_CONTEXT_FLUSH_AND_INV_DB)) {
 		cp_coher_cntl |= S_0085F0_DB_ACTION_ENA(1) |
 				S_0085F0_DB_DEST_BASE_ENA(1) |
 				S_0085F0_SMX_ACTION_ENA(1);
 	}
 
-	if (rctx->flags & R600_CONTEXT_FLUSH_AND_INV_CB) {
+	/* Don't use the CB CP COHER logic on r6xx.
+	 * There are hw bugs.
+	 */
+	if (rctx->chip_class >= R700 &&
+	    (rctx->flags & R600_CONTEXT_FLUSH_AND_INV_CB)) {
 		cp_coher_cntl |= S_0085F0_CB_ACTION_ENA(1) |
 				S_0085F0_CB0_DEST_BASE_ENA(1) |
 				S_0085F0_CB1_DEST_BASE_ENA(1) |
