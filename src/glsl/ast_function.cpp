@@ -1707,6 +1707,11 @@ ast_aggregate_initializer::hir(exec_list *instructions,
    void *ctx = state;
    YYLTYPE loc = this->get_location();
    const char *name;
+
+   if (!this->constructor_type) {
+      _mesa_glsl_error(&loc, state, "type of C-style initializer unknown");
+      return ir_rvalue::error_value(ctx);
+   }
    const glsl_type *const constructor_type =
       this->constructor_type->glsl_type(&name, state);
 
