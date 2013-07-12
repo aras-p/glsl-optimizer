@@ -197,7 +197,7 @@ nvfx_fp_emit(struct nvfx_fpc *fpc, struct nvfx_insn insn)
    hw = &fp->insn[fpc->inst_offset];
    memset(hw, 0, sizeof(uint32_t) * 4);
 
-   if (insn.op == NVFX_FP_OP_OPCODE_KILL_IF)
+   if (insn.op == NVFX_FP_OP_OPCODE_KIL)
       fp->fp_control |= NV30_3D_FP_CONTROL_USES_KIL;
    hw[0] |= (insn.op << NVFX_FP_OP_OPCODE_SHIFT);
    hw[0] |= (insn.mask << NVFX_FP_OP_OUTMASK_SHIFT);
