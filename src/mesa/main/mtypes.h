@@ -272,8 +272,6 @@ typedef enum
 /*@}*/
 
 
-/*********************************************/
-
 /**
  * Determine if the given gl_varying_slot appears in the fragment shader.
  */
@@ -673,7 +671,7 @@ struct gl_colorbuffer_attrib
    GLboolean _ClampFragmentColor; /** < with GL_FIXED_ONLY_ARB resolved */
    GLenum ClampReadColor;     /**< GL_TRUE, GL_FALSE or GL_FIXED_ONLY_ARB */
 
-   GLboolean sRGBEnabled;	/**< Framebuffer sRGB blending/updating requested */
+   GLboolean sRGBEnabled;    /**< Framebuffer sRGB blending/updating requested */
 };
 
 
@@ -874,9 +872,8 @@ struct gl_multisample_attrib
 
    /* ARB_texture_multisample / GL3.2 additions */
    GLboolean SampleMask;
-   GLbitfield SampleMaskValue; /* GL spec defines this as an array but >32x MSAA is
-                                * madness
-                                */
+   /** The GL spec defines this as an array but >32x MSAA is madness */
+   GLbitfield SampleMaskValue;
 };
 
 
@@ -1103,8 +1100,8 @@ struct gl_texture_image
    GLuint Face;
 
    /** GL_ARB_texture_multisample */
-   GLuint NumSamples;               /**< Sample count, or 0 for non-multisample */
-   GLboolean FixedSampleLocations;  /**< Same sample locations for all pixels? */
+   GLuint NumSamples;            /**< Sample count, or 0 for non-multisample */
+   GLboolean FixedSampleLocations; /**< Same sample locations for all pixels? */
 };
 
 
@@ -1546,7 +1543,8 @@ struct gl_array_attrib
 
    /**
     * Vertex arrays as consumed by a driver.
-    * The array pointer is set up only by the VBO module. */
+    * The array pointer is set up only by the VBO module.
+    */
    const struct gl_client_array **_DrawArrays; /**< 0..VERT_ATTRIB_MAX-1 */
 };
 
@@ -2102,7 +2100,10 @@ struct gl_sl_pragmas
  */
 struct gl_shader
 {
-   GLenum Type;  /**< GL_FRAGMENT_SHADER || GL_VERTEX_SHADER || GL_GEOMETRY_SHADER_ARB (first field!) */
+   /** GL_FRAGMENT_SHADER || GL_VERTEX_SHADER || GL_GEOMETRY_SHADER_ARB.
+    * Must be the first field.
+    */
+   GLenum Type;
    GLuint Name;  /**< AKA the handle */
    GLint RefCount;  /**< Reference count */
    GLboolean DeletePending;
@@ -2186,6 +2187,7 @@ typedef enum
    MESA_SHADER_TYPES = 3
 } gl_shader_type;
 
+
 struct gl_uniform_buffer_variable
 {
    char *Name;
@@ -2207,11 +2209,14 @@ struct gl_uniform_buffer_variable
    GLboolean RowMajor;
 };
 
-enum gl_uniform_block_packing {
+
+enum gl_uniform_block_packing
+{
    ubo_packing_std140,
    ubo_packing_shared,
    ubo_packing_packed
 };
+
 
 struct gl_uniform_block
 {
@@ -2243,6 +2248,7 @@ struct gl_uniform_block
     */
    enum gl_uniform_block_packing _Packing;
 };
+
 
 /**
  * A GLSL program object.
@@ -2793,7 +2799,7 @@ struct gl_constants
    GLuint MaxTextureRectSize;    /**< Max rectangle texture size, in pixes */
    GLuint MaxTextureCoordUnits;
    GLuint MaxCombinedTextureImageUnits;
-   GLuint MaxTextureUnits;           /**< = MIN(CoordUnits, FragmentProgram.ImageUnits) */
+   GLuint MaxTextureUnits; /**< = MIN(CoordUnits, FragmentProgram.ImageUnits) */
    GLfloat MaxTextureMaxAnisotropy;  /**< GL_EXT_texture_filter_anisotropic */
    GLfloat MaxTextureLodBias;        /**< GL_EXT_texture_lod_bias */
    GLuint MaxTextureBufferSize;      /**< GL_ARB_texture_buffer_object */
