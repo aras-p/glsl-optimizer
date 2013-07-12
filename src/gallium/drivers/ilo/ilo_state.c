@@ -489,6 +489,10 @@ ilo_bind_gs_state(struct pipe_context *pipe, void *state)
 {
    struct ilo_context *ilo = ilo_context(pipe);
 
+   /* util_blitter may set this unnecessarily */
+   if (ilo->gs == state)
+      return;
+
    ilo->gs = state;
 
    ilo->dirty |= ILO_DIRTY_GS;
@@ -555,6 +559,10 @@ ilo_set_stencil_ref(struct pipe_context *pipe,
 {
    struct ilo_context *ilo = ilo_context(pipe);
 
+   /* util_blitter may set this unnecessarily */
+   if (!memcpy(&ilo->stencil_ref, state, sizeof(*state)))
+      return;
+
    ilo->stencil_ref = *state;
 
    ilo->dirty |= ILO_DIRTY_STENCIL_REF;
@@ -565,6 +573,10 @@ ilo_set_sample_mask(struct pipe_context *pipe,
                     unsigned sample_mask)
 {
    struct ilo_context *ilo = ilo_context(pipe);
+
+   /* util_blitter may set this unnecessarily */
+   if (ilo->sample_mask == sample_mask)
+      return;
 
    ilo->sample_mask = sample_mask;
 
@@ -953,6 +965,10 @@ ilo_set_stream_output_targets(struct pipe_context *pipe,
 
    if (!targets)
       num_targets = 0;
+
+   /* util_blitter may set this unnecessarily */
+   if (!ilo->so.count && !num_targets)
+      return;
 
    for (i = 0; i < num_targets; i++)
       pipe_so_target_reference(&ilo->so.states[i], targets[i]);
