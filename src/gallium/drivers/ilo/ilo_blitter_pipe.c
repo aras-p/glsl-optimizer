@@ -41,38 +41,38 @@ enum ilo_blitter_pipe_op {
 
 static void
 ilo_blitter_pipe_begin(struct ilo_blitter *blitter,
-                       enum ilo_blitter_pipe_op op)
+                       enum ilo_blitter_pipe_op op,
+                       bool scissor_enable)
 {
    struct blitter_context *b = blitter->pipe_blitter;
    struct ilo_context *ilo = blitter->ilo;
 
-   /* as documented in util/u_blitter.h */
+   /* vertex states */
    util_blitter_save_vertex_buffer_slot(b, ilo->vb.states);
    util_blitter_save_vertex_elements(b, (void *) ilo->ve);
    util_blitter_save_vertex_shader(b, ilo->vs);
    util_blitter_save_geometry_shader(b, ilo->gs);
    util_blitter_save_so_targets(b, ilo->so.count, ilo->so.states);
+   util_blitter_save_rasterizer(b, (void *) ilo->rasterizer);
 
+   /* fragment states */
    util_blitter_save_fragment_shader(b, ilo->fs);
    util_blitter_save_depth_stencil_alpha(b, (void *) ilo->dsa);
    util_blitter_save_blend(b, (void *) ilo->blend);
-
-   /* undocumented? */
-   util_blitter_save_viewport(b, &ilo->viewport.viewport0);
-   util_blitter_save_stencil_ref(b, &ilo->stencil_ref);
    util_blitter_save_sample_mask(b, ilo->sample_mask);
+   util_blitter_save_stencil_ref(b, &ilo->stencil_ref);
+   util_blitter_save_viewport(b, &ilo->viewport.viewport0);
+
+   if (scissor_enable)
+      util_blitter_save_scissor(b, &ilo->scissor.scissor0);
 
    switch (op) {
    case ILO_BLITTER_PIPE_BLIT:
    case ILO_BLITTER_PIPE_COPY:
-      util_blitter_save_rasterizer(b, (void *) ilo->rasterizer);
-      util_blitter_save_framebuffer(b, &ilo->fb.state);
-
-      util_blitter_save_render_condition(b,
-            ilo->hw3d->render_condition.query,
-            ilo->hw3d->render_condition.cond,
-            ilo->hw3d->render_condition.mode);
-
+      /*
+       * we are about to call util_blitter_blit() or
+       * util_blitter_copy_texture()
+       */
       util_blitter_save_fragment_sampler_states(b,
             ilo->sampler[PIPE_SHADER_FRAGMENT].count,
             (void **) ilo->sampler[PIPE_SHADER_FRAGMENT].cso);
@@ -81,16 +81,23 @@ ilo_blitter_pipe_begin(struct ilo_blitter *blitter,
             ilo->view[PIPE_SHADER_FRAGMENT].count,
             ilo->view[PIPE_SHADER_FRAGMENT].states);
 
-      /* disable render condition? */
-      break;
-   case ILO_BLITTER_PIPE_CLEAR:
-      util_blitter_save_rasterizer(b, (void *) ilo->rasterizer);
       util_blitter_save_framebuffer(b, &ilo->fb.state);
 
-      /* disable render condition? */
+      /* resource_copy_region() or blit() does not honor render condition */
+      util_blitter_save_render_condition(b,
+            ilo->hw3d->render_condition.query,
+            ilo->hw3d->render_condition.cond,
+            ilo->hw3d->render_condition.mode);
+      break;
+   case ILO_BLITTER_PIPE_CLEAR:
+      /*
+       * we are about to call util_blitter_clear_render_target() or
+       * util_blitter_clear_depth_stencil()
+       */
+      util_blitter_save_framebuffer(b, &ilo->fb.state);
       break;
    case ILO_BLITTER_PIPE_CLEAR_FB:
-      util_blitter_save_rasterizer(b, (void *) ilo->rasterizer);
+      /* we are about to call util_blitter_clear() */
       break;
    default:
       break;
@@ -131,7 +138,8 @@ ilo_blitter_pipe_blit(struct ilo_blitter *blitter,
       }
    }
 
-   ilo_blitter_pipe_begin(blitter, ILO_BLITTER_PIPE_BLIT);
+   ilo_blitter_pipe_begin(blitter, ILO_BLITTER_PIPE_BLIT,
+         info->scissor_enable);
    util_blitter_blit(b, info);
    ilo_blitter_pipe_end(blitter);
 
@@ -155,7 +163,7 @@ ilo_blitter_pipe_copy_resource(struct ilo_blitter *blitter,
    if (!util_blitter_is_copy_supported(blitter->pipe_blitter, dst, src, mask))
       return false;
 
-   ilo_blitter_pipe_begin(blitter, ILO_BLITTER_PIPE_COPY);
+   ilo_blitter_pipe_begin(blitter, ILO_BLITTER_PIPE_COPY, false);
 
    util_blitter_copy_texture(blitter->pipe_blitter,
          dst, dst_level, dst_x, dst_y, dst_z,
@@ -174,7 +182,7 @@ ilo_blitter_pipe_clear_rt(struct ilo_blitter *blitter,
                           unsigned x, unsigned y,
                           unsigned width, unsigned height)
 {
-   ilo_blitter_pipe_begin(blitter, ILO_BLITTER_PIPE_CLEAR);
+   ilo_blitter_pipe_begin(blitter, ILO_BLITTER_PIPE_CLEAR, false);
 
    util_blitter_clear_render_target(blitter->pipe_blitter,
          rt, color, x, y, width, height);
@@ -192,7 +200,7 @@ ilo_blitter_pipe_clear_zs(struct ilo_blitter *blitter,
                           unsigned x, unsigned y,
                           unsigned width, unsigned height)
 {
-   ilo_blitter_pipe_begin(blitter, ILO_BLITTER_PIPE_CLEAR);
+   ilo_blitter_pipe_begin(blitter, ILO_BLITTER_PIPE_CLEAR, false);
 
    util_blitter_clear_depth_stencil(blitter->pipe_blitter,
          zs, clear_flags, depth, stencil, x, y, width, height);
@@ -209,7 +217,7 @@ ilo_blitter_pipe_clear_fb(struct ilo_blitter *blitter,
                           double depth, unsigned stencil)
 {
    /* TODO we should pause/resume some queries */
-   ilo_blitter_pipe_begin(blitter, ILO_BLITTER_PIPE_CLEAR_FB);
+   ilo_blitter_pipe_begin(blitter, ILO_BLITTER_PIPE_CLEAR_FB, false);
 
    util_blitter_clear(blitter->pipe_blitter,
          blitter->ilo->fb.state.width, blitter->ilo->fb.state.height,

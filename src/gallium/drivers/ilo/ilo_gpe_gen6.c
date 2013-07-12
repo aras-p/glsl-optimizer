@@ -3811,10 +3811,12 @@ ilo_gpe_set_scissor(const struct ilo_dev_info *dev,
          max_y = 0;
       }
 
-      scissor->payload[start_slot * 2 + 0] = min_y << 16 | min_x;
-      scissor->payload[start_slot * 2 + 1] = max_y << 16 | max_x;
-      start_slot++;
+      scissor->payload[(start_slot + i) * 2 + 0] = min_y << 16 | min_x;
+      scissor->payload[(start_slot + i) * 2 + 1] = max_y << 16 | max_x;
    }
+
+   if (!start_slot && num_states)
+      scissor->scissor0 = states[0];
 }
 
 void

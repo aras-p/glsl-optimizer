@@ -113,6 +113,8 @@ struct ilo_viewport_state {
 struct ilo_scissor_state {
    /* SCISSOR_RECT */
    uint32_t payload[ILO_MAX_VIEWPORTS * 2];
+
+   struct pipe_scissor_state scissor0;
 };
 
 struct ilo_rasterizer_clip {
