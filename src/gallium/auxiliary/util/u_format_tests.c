@@ -883,8 +883,13 @@ util_format_test_cases[] =
    /* Minimum positive normal */
    {PIPE_FORMAT_R16_FLOAT, PACKED_1x16(0xffff), PACKED_1x16(0x0400), UNPACKED_1x1( 6.10352E-5, 0.0, 0.0, 1.0)},
 
+   /* XXX: Now that we disable denormals this test cases fails, except on
+    * IvyBridge processors which have intrinsics dedicated to half-float
+    * packing/unpacking. */
+#if 0
    /* Max denormal */
    {PIPE_FORMAT_R16_FLOAT, PACKED_1x16(0xffff), PACKED_1x16(0x03FF), UNPACKED_1x1( 6.09756E-5, 0.0, 0.0, 1.0)},
+#endif
 
    /* Minimum positive denormal */
    {PIPE_FORMAT_R16_FLOAT, PACKED_1x16(0xffff), PACKED_1x16(0x0001), UNPACKED_1x1( 5.96046E-8, 0.0, 0.0, 1.0)},
