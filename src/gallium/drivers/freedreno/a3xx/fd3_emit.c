@@ -279,9 +279,9 @@ fd3_emit_gmem_restore_tex(struct fd_ringbuffer *ring, struct pipe_surface *psurf
 			CP_LOAD_STATE_1_EXT_SRC_ADDR(0));
 	OUT_RING(ring, A3XX_TEX_CONST_0_FMT(fd3_pipe2tex(psurf->format)) |
 			0x40000000 | // XXX
-			fd3_tex_swiz(psurf->format,  PIPE_SWIZZLE_BLUE, PIPE_SWIZZLE_GREEN,
-					PIPE_SWIZZLE_RED, PIPE_SWIZZLE_ALPHA));
-	OUT_RING(ring, A3XX_TEX_CONST_1_FETCHSIZE(fd3_pipe2fetchsize(psurf->format)) |
+			fd3_tex_swiz(psurf->format,  PIPE_SWIZZLE_RED, PIPE_SWIZZLE_GREEN,
+					PIPE_SWIZZLE_BLUE, PIPE_SWIZZLE_ALPHA));
+	OUT_RING(ring, A3XX_TEX_CONST_1_FETCHSIZE(TFETCH_DISABLE) |
 			A3XX_TEX_CONST_1_WIDTH(psurf->width) |
 			A3XX_TEX_CONST_1_HEIGHT(psurf->height));
 	OUT_RING(ring, A3XX_TEX_CONST_2_PITCH(rsc->pitch * rsc->cpp) |
