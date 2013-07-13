@@ -248,6 +248,8 @@ static void yyerror(YYLTYPE *loc, _mesa_glsl_parse_state *st, const char *msg)
 %type <node> for_init_statement
 %type <for_rest_statement> for_rest_statement
 %type <n> integer_constant
+
+%right THEN ELSE
 %%
 
 translation_unit: 
@@ -1738,7 +1740,7 @@ selection_rest_statement:
 	   $$.then_statement = $1;
 	   $$.else_statement = $3;
 	}
-	| statement
+	| statement %prec THEN
 	{
 	   $$.then_statement = $1;
 	   $$.else_statement = NULL;
