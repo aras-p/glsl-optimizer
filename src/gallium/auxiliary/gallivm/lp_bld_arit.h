@@ -239,6 +239,12 @@ lp_build_fast_rsqrt(struct lp_build_context *bld,
                     LLVMValueRef a);
 
 LLVMValueRef
+lp_build_polynomial(struct lp_build_context *bld,
+                    LLVMValueRef x,
+                    const double *coeffs,
+                    unsigned num_coeffs);
+
+LLVMValueRef
 lp_build_cos(struct lp_build_context *bld,
              LLVMValueRef a);
 
