@@ -60,10 +60,9 @@ protected:
       return NULL;
    }
 
-   virtual int setup_attributes(int payload_reg)
+   virtual void setup_payload()
    {
       assert(!"Not reached");
-      return 0;
    }
 
    virtual void emit_prolog()

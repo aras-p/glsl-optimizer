@@ -367,7 +367,6 @@ public:
    void setup_uniform_values(ir_variable *ir);
    void setup_builtin_uniform_values(ir_variable *ir);
    int setup_uniforms(int payload_reg);
-   void setup_payload();
    bool reg_allocate_trivial();
    bool reg_allocate();
    void evaluate_spill_costs(float *spill_costs, bool *no_spill);
@@ -539,7 +538,7 @@ protected:
    void emit_vertex();
    void lower_attributes_to_hw_regs(const int *attribute_map);
    virtual dst_reg *make_reg_for_system_value(ir_variable *ir) = 0;
-   virtual int setup_attributes(int payload_reg) = 0;
+   virtual void setup_payload() = 0;
    virtual void emit_prolog() = 0;
    virtual void emit_program_code() = 0;
    virtual void emit_thread_end() = 0;
@@ -562,7 +561,7 @@ public:
 
 protected:
    virtual dst_reg *make_reg_for_system_value(ir_variable *ir);
-   virtual int setup_attributes(int payload_reg);
+   virtual void setup_payload();
    virtual void emit_prolog();
    virtual void emit_program_code();
    virtual void emit_thread_end();
@@ -570,6 +569,7 @@ protected:
    virtual vec4_instruction *emit_urb_write_opcode(bool complete);
 
 private:
+   int setup_attributes(int payload_reg);
    void setup_vp_regs();
    dst_reg get_vp_dst_reg(const prog_dst_register &dst);
    src_reg get_vp_src_reg(const prog_src_register &src);

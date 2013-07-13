@@ -1288,7 +1288,7 @@ vec4_visitor::setup_uniforms(int reg)
 }
 
 void
-vec4_visitor::setup_payload(void)
+vec4_vs_visitor::setup_payload(void)
 {
    int reg = 0;
 
