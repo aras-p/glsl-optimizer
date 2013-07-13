@@ -1260,6 +1260,8 @@ vec4_vs_visitor::setup_attributes(int payload_reg)
 int
 vec4_visitor::setup_uniforms(int reg)
 {
+   prog_data->dispatch_grf_start_reg = reg;
+
    /* The pre-gen6 VS requires that some push constants get loaded no
     * matter what, or the GPU would hang.
     */
@@ -1280,7 +1282,7 @@ vec4_visitor::setup_uniforms(int reg)
 
    prog_data->nr_params = this->uniforms * 4;
 
-   prog_data->curb_read_length = reg - 1;
+   prog_data->curb_read_length = reg - prog_data->dispatch_grf_start_reg;
 
    return reg;
 }

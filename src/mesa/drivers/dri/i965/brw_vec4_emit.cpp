@@ -66,7 +66,7 @@ vec4_instruction::get_dst(void)
 }
 
 struct brw_reg
-vec4_instruction::get_src(int i)
+vec4_instruction::get_src(const struct brw_vec4_prog_data *prog_data, int i)
 {
    struct brw_reg brw_reg;
 
@@ -100,7 +100,8 @@ vec4_instruction::get_src(int i)
       break;
 
    case UNIFORM:
-      brw_reg = stride(brw_vec4_grf(1 + (src[i].reg + src[i].reg_offset) / 2,
+      brw_reg = stride(brw_vec4_grf(prog_data->dispatch_grf_start_reg +
+                                    (src[i].reg + src[i].reg_offset) / 2,
 				    ((src[i].reg + src[i].reg_offset) % 2) * 4),
 		       0, 4, 1);
       brw_reg = retype(brw_reg, src[i].type);
@@ -946,7 +947,7 @@ vec4_generator::generate_code(exec_list *instructions)
       }
 
       for (unsigned int i = 0; i < 3; i++) {
-	 src[i] = inst->get_src(i);
+	 src[i] = inst->get_src(this->prog_data, i);
       }
       dst = inst->get_dst();
 

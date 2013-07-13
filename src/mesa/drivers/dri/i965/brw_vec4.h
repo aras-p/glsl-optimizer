@@ -206,7 +206,7 @@ public:
 		    src_reg src2 = src_reg());
 
    struct brw_reg get_dst(void);
-   struct brw_reg get_src(int i);
+   struct brw_reg get_src(const struct brw_vec4_prog_data *prog_data, int i);
 
    dst_reg dst;
    src_reg src[3];

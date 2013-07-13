@@ -480,6 +480,12 @@ struct brw_gs_prog_data {
 struct brw_vec4_prog_data {
    struct brw_vue_map vue_map;
 
+   /**
+    * Register where the thread expects to find input data from the URB
+    * (typically uniforms, followed by per-vertex inputs).
+    */
+   unsigned dispatch_grf_start_reg;
+
    GLuint curb_read_length;
    GLuint urb_read_length;
    GLuint total_grf;
