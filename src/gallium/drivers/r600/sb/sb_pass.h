@@ -457,7 +457,7 @@ class ra_checker : public pass {
 
 public:
 
-	ra_checker(shader &sh) : pass(sh) {}
+	ra_checker(shader &sh) : pass(sh), rm_stk_level(0), prev_dst() {}
 
 	virtual int run();
 
