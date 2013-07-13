@@ -113,7 +113,7 @@ typedef std::vector<ra_chunk*> chunk_vector;
 
 class ra_constraint {
 public:
-	ra_constraint(constraint_kind kind) : kind(kind) {}
+	ra_constraint(constraint_kind kind) : kind(kind), cost(0) {}
 
 	constraint_kind kind;
 	vvec values;
