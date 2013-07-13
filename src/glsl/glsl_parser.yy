@@ -41,6 +41,8 @@ static void yyerror(YYLTYPE *loc, _mesa_glsl_parse_state *st, const char *msg)
 }
 %}
 
+%expect 0
+
 %pure-parser
 %error-verbose
 
