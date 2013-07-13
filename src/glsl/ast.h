@@ -307,7 +307,8 @@ private:
 class ast_aggregate_initializer : public ast_expression {
 public:
    ast_aggregate_initializer()
-      : ast_expression(ast_aggregate, NULL, NULL, NULL)
+      : ast_expression(ast_aggregate, NULL, NULL, NULL),
+        constructor_type(NULL)
    {
       /* empty */
    }
