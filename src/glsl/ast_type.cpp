@@ -74,6 +74,17 @@ ast_type_qualifier::has_layout() const
           || this->flags.q.explicit_index;
 }
 
+bool
+ast_type_qualifier::has_storage() const
+{
+   return this->flags.q.constant
+          || this->flags.q.attribute
+          || this->flags.q.varying
+          || this->flags.q.in
+          || this->flags.q.out
+          || this->flags.q.uniform;
+}
+
 const char*
 ast_type_qualifier::interpolation_string() const
 {
