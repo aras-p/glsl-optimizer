@@ -156,6 +156,23 @@ vec4_gs_visitor::emit_prolog()
       }
    }
 
+   /* If the geometry shader uses the gl_PointSize input, we need to fix it up
+    * to account for the fact that the vertex shader stored it in the w
+    * component of VARYING_SLOT_PSIZ.
+    */
+   if (c->gp->program.Base.InputsRead & VARYING_BIT_PSIZ) {
+      this->current_annotation = "swizzle gl_PointSize input";
+      for (int vertex = 0; vertex < c->gp->program.VerticesIn; vertex++) {
+         dst_reg dst(ATTR,
+                     BRW_VARYING_SLOT_COUNT * vertex + VARYING_SLOT_PSIZ);
+         dst.type = BRW_REGISTER_TYPE_F;
+         src_reg src(dst);
+         dst.writemask = WRITEMASK_X;
+         src.swizzle = BRW_SWIZZLE_WWWW;
+         emit(MOV(dst, src));
+      }
+   }
+
    this->current_annotation = NULL;
 }
 
