@@ -458,6 +458,11 @@ struct ast_type_qualifier {
    bool has_interpolation() const;
 
    /**
+    * Return whether a layout qualifier is present.
+    */
+   bool has_layout() const;
+
+   /**
     * \brief Return string representation of interpolation qualifier.
     *
     * If an interpolation qualifier is present, then return that qualifier's

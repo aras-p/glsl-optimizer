@@ -56,6 +56,24 @@ bool ast_type_qualifier::has_interpolation() const
           || this->flags.q.noperspective;
 }
 
+bool
+ast_type_qualifier::has_layout() const
+{
+   return this->flags.q.origin_upper_left
+          || this->flags.q.pixel_center_integer
+          || this->flags.q.depth_any
+          || this->flags.q.depth_greater
+          || this->flags.q.depth_less
+          || this->flags.q.depth_unchanged
+          || this->flags.q.std140
+          || this->flags.q.shared
+          || this->flags.q.column_major
+          || this->flags.q.row_major
+          || this->flags.q.packed
+          || this->flags.q.explicit_location
+          || this->flags.q.explicit_index;
+}
+
 const char*
 ast_type_qualifier::interpolation_string() const
 {
