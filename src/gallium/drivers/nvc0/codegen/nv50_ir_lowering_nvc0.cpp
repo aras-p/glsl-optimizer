@@ -162,7 +162,9 @@ private:
 };
 
 NVC0LegalizePostRA::NVC0LegalizePostRA(const Program *prog)
-   : needTexBar(prog->getTarget()->getChipset() >= 0xe0)
+   : rZero(NULL),
+     carry(NULL),
+     needTexBar(prog->getTarget()->getChipset() >= 0xe0)
 {
 }
 
