@@ -128,39 +128,53 @@ finalize_constant_buffers(struct ilo_context *ilo)
 static void
 finalize_index_buffer(struct ilo_context *ilo)
 {
-   struct pipe_resource *res;
-   unsigned offset, size;
-   bool uploaded = false;
+   const struct pipe_resource *current_hw_res = ilo->ib.hw_resource;
+   const bool need_upload = (ilo->draw->indexed &&
+         (ilo->ib.user_buffer || ilo->ib.offset % ilo->ib.index_size));
 
-   if (!ilo->draw->indexed)
+   if (!(ilo->dirty & ILO_DIRTY_IB) && !need_upload)
       return;
 
-   res = ilo->ib.resource;
-   offset = ilo->ib.state.index_size * ilo->draw->start;
-   size = ilo->ib.state.index_size * ilo->draw->count;
+   if (need_upload) {
+      const unsigned offset = ilo->ib.index_size * ilo->draw->start;
+      const unsigned size = ilo->ib.index_size * ilo->draw->count;
+      unsigned hw_offset;
 
-   if (ilo->ib.state.user_buffer) {
-      u_upload_data(ilo->uploader, 0, size,
-            ilo->ib.state.user_buffer + offset, &offset, &res);
-      uploaded = true;
-   }
-   else if (unlikely(ilo->ib.state.offset % ilo->ib.state.index_size)) {
-      u_upload_buffer(ilo->uploader, 0, ilo->ib.state.offset + offset, size,
-            ilo->ib.state.buffer, &offset, &res);
-      uploaded = true;
-   }
+      if (ilo->ib.user_buffer) {
+         u_upload_data(ilo->uploader, 0, size,
+               ilo->ib.user_buffer + offset, &hw_offset, &ilo->ib.hw_resource);
+      }
+      else {
+         u_upload_buffer(ilo->uploader, 0, ilo->ib.offset + offset, size,
+               ilo->ib.buffer, &hw_offset, &ilo->ib.hw_resource);
+      }
 
-   if (uploaded) {
-      ilo->ib.resource = res;
+      /* the HW offset should be aligned */
+      assert(hw_offset % ilo->ib.index_size == 0);
+      ilo->ib.draw_start_offset = hw_offset / ilo->ib.index_size;
 
-      assert(offset % ilo->ib.state.index_size == 0);
-      ilo->ib.draw_start_offset = offset / ilo->ib.state.index_size;
-
-      /* could be negative */
+      /*
+       * INDEX[ilo->draw->start] in the original buffer is INDEX[0] in the HW
+       * resource
+       */
       ilo->ib.draw_start_offset -= ilo->draw->start;
-
-      ilo->dirty |= ILO_DIRTY_IB;
    }
+   else {
+      pipe_resource_reference(&ilo->ib.hw_resource, ilo->ib.buffer);
+
+      /* note that index size may be zero when the draw is not indexed */
+      if (ilo->draw->indexed)
+         ilo->ib.draw_start_offset = ilo->ib.offset / ilo->ib.index_size;
+      else
+         ilo->ib.draw_start_offset = 0;
+   }
+
+   /* treat the IB as clean if the HW states do not change */
+   if (ilo->ib.hw_resource == current_hw_res &&
+       ilo->ib.hw_index_size == ilo->ib.index_size)
+      ilo->dirty &= ~ILO_DIRTY_IB;
+   else
+      ilo->ib.hw_index_size = ilo->ib.index_size;
 }
 
 /**
@@ -906,28 +920,16 @@ ilo_set_index_buffer(struct pipe_context *pipe,
    struct ilo_context *ilo = ilo_context(pipe);
 
    if (state) {
-      pipe_resource_reference(&ilo->ib.state.buffer, state->buffer);
-      ilo->ib.state.offset = state->offset;
-      ilo->ib.state.index_size = state->index_size;
-
-      /* state->offset does not apply for user buffer */
-      ilo->ib.state.user_buffer = state->user_buffer;
-
-      /*
-       * when there is no state->buffer or state->offset is misaligned,
-       * ilo_finalize_3d_states() will set these to the valid values
-       */
-      pipe_resource_reference(&ilo->ib.resource, state->buffer);
-      ilo->ib.draw_start_offset = state->offset / state->index_size;
+      pipe_resource_reference(&ilo->ib.buffer, state->buffer);
+      ilo->ib.user_buffer = state->user_buffer;
+      ilo->ib.offset = state->offset;
+      ilo->ib.index_size = state->index_size;
    }
    else {
-      pipe_resource_reference(&ilo->ib.state.buffer, NULL);
-      ilo->ib.state.offset = 0;
-      ilo->ib.state.index_size = 0;
-      ilo->ib.state.user_buffer = NULL;
-
-      pipe_resource_reference(&ilo->ib.resource, NULL);
-      ilo->ib.draw_start_offset = 0;
+      pipe_resource_reference(&ilo->ib.buffer, NULL);
+      ilo->ib.user_buffer = NULL;
+      ilo->ib.offset = 0;
+      ilo->ib.index_size = 0;
    }
 
    ilo->dirty |= ILO_DIRTY_IB;
@@ -1302,8 +1304,8 @@ ilo_cleanup_states(struct ilo_context *ilo)
          pipe_resource_reference(&ilo->vb.states[i].buffer, NULL);
    }
 
-   pipe_resource_reference(&ilo->ib.state.buffer, NULL);
-   pipe_resource_reference(&ilo->ib.resource, NULL);
+   pipe_resource_reference(&ilo->ib.buffer, NULL);
+   pipe_resource_reference(&ilo->ib.hw_resource, NULL);
 
    for (i = 0; i < ilo->so.count; i++)
       pipe_so_target_reference(&ilo->so.states[i], NULL);
@@ -1358,8 +1360,18 @@ ilo_mark_states_with_resource_dirty(struct ilo_context *ilo,
          }
       }
 
-      if (ilo->ib.state.buffer == res)
+      if (ilo->ib.buffer == res) {
          states |= ILO_DIRTY_IB;
+
+         /*
+          * finalize_index_buffer() has an optimization that clears
+          * ILO_DIRTY_IB when the HW states do not change.  However, it fails
+          * to flush the VF cache when the HW states do not change, but the
+          * contents of the IB has changed.  Here, we set the index size to an
+          * invalid value to avoid the optimization.
+          */
+         ilo->ib.hw_index_size = 0;
+      }
 
       for (i = 0; i < ilo->so.count; i++) {
          if (ilo->so.states[i]->buffer == res) {

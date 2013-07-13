@@ -1033,7 +1033,7 @@ gen6_emit_3DSTATE_INDEX_BUFFER(const struct ilo_dev_info *dev,
 {
    const uint32_t cmd = ILO_GPE_CMD(0x3, 0x0, 0x0a);
    const uint8_t cmd_len = 3;
-   const struct ilo_buffer *buf = ilo_buffer(ib->resource);
+   struct ilo_buffer *buf = ilo_buffer(ib->hw_resource);
    uint32_t start_offset, end_offset;
    int format;
 
@@ -1042,7 +1042,7 @@ gen6_emit_3DSTATE_INDEX_BUFFER(const struct ilo_dev_info *dev,
    if (!buf)
       return;
 
-   format = gen6_translate_index_size(ib->state.index_size);
+   format = gen6_translate_index_size(ib->hw_index_size);
 
    /*
     * set start_offset to 0 here and adjust pipe_draw_info::start with
@@ -1052,7 +1052,7 @@ gen6_emit_3DSTATE_INDEX_BUFFER(const struct ilo_dev_info *dev,
    end_offset = buf->bo_size;
 
    /* end_offset must also be aligned and is inclusive */
-   end_offset -= (end_offset % ib->state.index_size);
+   end_offset -= (end_offset % ib->hw_index_size);
    end_offset--;
 
    ilo_cp_begin(cp, cmd_len);

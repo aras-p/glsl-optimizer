@@ -536,7 +536,7 @@ ilo_check_restart_index(const struct ilo_context *ilo, unsigned restart_index)
       return true;
 
    /* Note: indices must be unsigned byte, unsigned short or unsigned int */
-   switch (ilo->ib.state.index_size) {
+   switch (ilo->ib.index_size) {
    case 1:
       return ((restart_index & 0xff) == 0xff);
       break;
@@ -605,21 +605,21 @@ ilo_draw_vbo_with_sw_restart(struct pipe_context *pipe,
       return;
    }
 
-   if (ilo->ib.state.buffer) {
+   if (ilo->ib.buffer) {
       struct pipe_transfer *transfer;
       const void *map;
 
-      map = pipe_buffer_map(pipe, ilo->ib.state.buffer,
+      map = pipe_buffer_map(pipe, ilo->ib.buffer,
             PIPE_TRANSFER_READ, &transfer);
 
-      sub_prim_count = ilo_find_sub_primitives(map + ilo->ib.state.offset,
-            ilo->ib.state.index_size, info, restart_info);
+      sub_prim_count = ilo_find_sub_primitives(map + ilo->ib.offset,
+            ilo->ib.index_size, info, restart_info);
 
       pipe_buffer_unmap(pipe, transfer);
    }
    else {
-      sub_prim_count = ilo_find_sub_primitives(ilo->ib.state.user_buffer,
-            ilo->ib.state.index_size, info, restart_info);
+      sub_prim_count = ilo_find_sub_primitives(ilo->ib.user_buffer,
+               ilo->ib.index_size, info, restart_info);
    }
 
    info = restart_info;
