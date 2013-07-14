@@ -468,6 +468,11 @@ struct ast_type_qualifier {
    bool has_storage() const;
 
    /**
+    * Return whether an auxiliary storage qualifier is present.
+    */
+   bool has_auxiliary_storage() const;
+
+   /**
     * \brief Return string representation of interpolation qualifier.
     *
     * If an interpolation qualifier is present, then return that qualifier's

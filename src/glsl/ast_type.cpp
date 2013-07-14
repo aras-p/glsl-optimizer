@@ -85,6 +85,12 @@ ast_type_qualifier::has_storage() const
           || this->flags.q.uniform;
 }
 
+bool
+ast_type_qualifier::has_auxiliary_storage() const
+{
+   return this->flags.q.centroid;
+}
+
 const char*
 ast_type_qualifier::interpolation_string() const
 {
