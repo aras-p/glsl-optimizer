@@ -170,6 +170,8 @@ lp_build_linear_to_srgb(struct gallivm_state *gallivm,
        */
 
       float exp_f = 2.0f / 3.0f;
+      /* some compilers can't do exp2f, so this is exp2f(127.0f/exp_f - 127.0f) */
+      float exp2f_c = 1.30438178253e+19f;
       float coeff_f = 0.62996f;
       LLVMValueRef pow_approx, coeff, x2, exponent, pow_1, pow_2;
       struct lp_type int_type = lp_int_type(src_type);
@@ -179,8 +181,7 @@ lp_build_linear_to_srgb(struct gallivm_state *gallivm,
        */
       exponent = lp_build_const_vec(gallivm, src_type, exp_f);
       coeff = lp_build_const_vec(gallivm, src_type,
-                                 exp2f(127.0f / exp_f - 127.0f) *
-                                 powf(coeff_f, 1.0f / exp_f));
+                                 exp2f_c * powf(coeff_f, 1.0f / exp_f));
 
       /* premultiply src */
       tmp = lp_build_mul(&f32_bld, coeff, src);
