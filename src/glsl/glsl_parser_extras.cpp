@@ -1225,6 +1225,7 @@ ast_jump_statement::print(void) const
 
 
 ast_jump_statement::ast_jump_statement(int mode, ast_expression *return_value)
+   : opt_return_value(NULL)
 {
    this->mode = ast_jump_modes(mode);
 
