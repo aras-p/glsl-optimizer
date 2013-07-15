@@ -243,16 +243,16 @@ static void next_buffer(struct ruvd_decoder *dec)
 static uint32_t profile2stream_type(enum pipe_video_profile profile)
 {
 	switch (u_reduce_video_profile(profile)) {
-	case PIPE_VIDEO_CODEC_MPEG4_AVC:
+	case PIPE_VIDEO_FORMAT_MPEG4_AVC:
 		return RUVD_CODEC_H264;
 
-	case PIPE_VIDEO_CODEC_VC1:
+	case PIPE_VIDEO_FORMAT_VC1:
 		return RUVD_CODEC_VC1;
 
-	case PIPE_VIDEO_CODEC_MPEG12:
+	case PIPE_VIDEO_FORMAT_MPEG12:
 		return RUVD_CODEC_MPEG2;
 
-	case PIPE_VIDEO_CODEC_MPEG4:
+	case PIPE_VIDEO_FORMAT_MPEG4:
 		return RUVD_CODEC_MPEG4;
 
 	default:
@@ -283,7 +283,7 @@ static unsigned calc_dpb_size(const struct pipe_video_decoder *templ)
 	height_in_mb = align(height / VL_MACROBLOCK_HEIGHT, 2);
 
 	switch (u_reduce_video_profile(templ->profile)) {
-	case PIPE_VIDEO_CODEC_MPEG4_AVC:
+	case PIPE_VIDEO_FORMAT_MPEG4_AVC:
 		// the firmware seems to allways assume a minimum of ref frames
 		max_references = MAX2(NUM_H264_REFS, max_references);
 
@@ -297,7 +297,7 @@ static unsigned calc_dpb_size(const struct pipe_video_decoder *templ)
 		dpb_size += width_in_mb * height_in_mb * 32;
 		break;
 
-	case PIPE_VIDEO_CODEC_VC1:
+	case PIPE_VIDEO_FORMAT_VC1:
 		// reference picture buffer
 		dpb_size = image_size * max_references;
 
@@ -314,12 +314,12 @@ static unsigned calc_dpb_size(const struct pipe_video_decoder *templ)
 		dpb_size += align(MAX2(width_in_mb, height_in_mb) * 7 * 16, 64);
 		break;
 
-	case PIPE_VIDEO_CODEC_MPEG12:
+	case PIPE_VIDEO_FORMAT_MPEG12:
 		// reference picture buffer, must be big enough for all frames
 		dpb_size = image_size * NUM_MPEG2_REFS;
 		break;
 
-	case PIPE_VIDEO_CODEC_MPEG4:
+	case PIPE_VIDEO_FORMAT_MPEG4:
 		// reference picture buffer
 		dpb_size = image_size * max_references;
 
@@ -767,19 +767,19 @@ static void ruvd_end_frame(struct pipe_video_decoder *decoder,
 	dt = dec->set_dtb(&msg, (struct vl_video_buffer *)target);
 
 	switch (u_reduce_video_profile(picture->profile)) {
-	case PIPE_VIDEO_CODEC_MPEG4_AVC:
+	case PIPE_VIDEO_FORMAT_MPEG4_AVC:
 		msg.body.decode.codec.h264 = get_h264_msg(dec, (struct pipe_h264_picture_desc*)picture);
 		break;
 
-	case PIPE_VIDEO_CODEC_VC1:
+	case PIPE_VIDEO_FORMAT_VC1:
 		msg.body.decode.codec.vc1 = get_vc1_msg((struct pipe_vc1_picture_desc*)picture);
 		break;
 
-	case PIPE_VIDEO_CODEC_MPEG12:
+	case PIPE_VIDEO_FORMAT_MPEG12:
 		msg.body.decode.codec.mpeg2 = get_mpeg2_msg(dec, (struct pipe_mpeg12_picture_desc*)picture);
 		break;
 
-	case PIPE_VIDEO_CODEC_MPEG4:
+	case PIPE_VIDEO_FORMAT_MPEG4:
 		msg.body.decode.codec.mpeg4 = get_mpeg4_msg(dec, (struct pipe_mpeg4_picture_desc*)picture);
 		break;
 
@@ -831,13 +831,13 @@ struct pipe_video_decoder *ruvd_create_decoder(struct pipe_context *context,
 	ws->query_info(ws, &info);
 
 	switch(u_reduce_video_profile(templ->profile)) {
-	case PIPE_VIDEO_CODEC_MPEG12:
+	case PIPE_VIDEO_FORMAT_MPEG12:
 		if (templ->entrypoint > PIPE_VIDEO_ENTRYPOINT_BITSTREAM || info.family < CHIP_PALM)
 			return vl_create_mpeg12_decoder(context, templ);
 
 		/* fall through */
-	case PIPE_VIDEO_CODEC_MPEG4:
-	case PIPE_VIDEO_CODEC_MPEG4_AVC:
+	case PIPE_VIDEO_FORMAT_MPEG4:
+	case PIPE_VIDEO_FORMAT_MPEG4_AVC:
 		width = align(width, VL_MACROBLOCK_WIDTH);
 		height = align(height, VL_MACROBLOCK_HEIGHT);
 		break;
@@ -1080,10 +1080,10 @@ int ruvd_get_video_param(struct pipe_screen *screen,
 	switch (param) {
 	case PIPE_VIDEO_CAP_SUPPORTED:
 		switch (u_reduce_video_profile(profile)) {
-		case PIPE_VIDEO_CODEC_MPEG12:
-		case PIPE_VIDEO_CODEC_MPEG4:
-		case PIPE_VIDEO_CODEC_MPEG4_AVC:
-		case PIPE_VIDEO_CODEC_VC1:
+		case PIPE_VIDEO_FORMAT_MPEG12:
+		case PIPE_VIDEO_FORMAT_MPEG4:
+		case PIPE_VIDEO_FORMAT_MPEG4_AVC:
+		case PIPE_VIDEO_FORMAT_VC1:
 			return true;
 		default:
 			return false;

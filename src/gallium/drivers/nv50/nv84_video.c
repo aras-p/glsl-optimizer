@@ -274,8 +274,8 @@ nv84_create_decoder(struct pipe_context *context,
    union pipe_color_union color;
    struct nv04_fifo nv04_data = { .vram = 0xbeef0201, .gart = 0xbeef0202 };
    int ret, i;
-   int is_h264 = u_reduce_video_profile(templ->profile) == PIPE_VIDEO_CODEC_MPEG4_AVC;
-   int is_mpeg12 = u_reduce_video_profile(templ->profile) == PIPE_VIDEO_CODEC_MPEG12;
+   int is_h264 = u_reduce_video_profile(templ->profile) == PIPE_VIDEO_FORMAT_MPEG4_AVC;
+   int is_mpeg12 = u_reduce_video_profile(templ->profile) == PIPE_VIDEO_FORMAT_MPEG12;
 
    if (getenv("XVMC_VL"))
       return vl_create_decoder(context, templ);
@@ -748,8 +748,8 @@ nv84_screen_get_video_param(struct pipe_screen *pscreen,
 {
    switch (param) {
    case PIPE_VIDEO_CAP_SUPPORTED:
-      return u_reduce_video_profile(profile) == PIPE_VIDEO_CODEC_MPEG4_AVC ||
-         u_reduce_video_profile(profile) == PIPE_VIDEO_CODEC_MPEG12;
+      return u_reduce_video_profile(profile) == PIPE_VIDEO_FORMAT_MPEG4_AVC ||
+         u_reduce_video_profile(profile) == PIPE_VIDEO_FORMAT_MPEG12;
    case PIPE_VIDEO_CAP_NPOT_TEXTURES:
       return 1;
    case PIPE_VIDEO_CAP_MAX_WIDTH:

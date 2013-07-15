@@ -515,7 +515,7 @@ nouveau_create_decoder(struct pipe_context *context,
 
    if (getenv("XVMC_VL"))
       goto vl;
-   if (u_reduce_video_profile(templ->profile) != PIPE_VIDEO_CODEC_MPEG12)
+   if (u_reduce_video_profile(templ->profile) != PIPE_VIDEO_FORMAT_MPEG12)
       goto vl;
    if (screen->device->chipset >= 0x98 && screen->device->chipset != 0xa0)
       goto vl;

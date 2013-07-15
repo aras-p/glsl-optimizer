@@ -582,7 +582,7 @@ vl_mpeg12_decode_macroblock(struct pipe_video_decoder *decoder,
    unsigned i, j, mv_weights[2];
 
    assert(dec && target && picture);
-   assert(macroblocks && macroblocks->codec == PIPE_VIDEO_CODEC_MPEG12);
+   assert(macroblocks && macroblocks->codec == PIPE_VIDEO_FORMAT_MPEG12);
 
    buf = vl_mpeg12_get_decode_buffer(dec, target);
    assert(buf);
@@ -1024,7 +1024,7 @@ vl_create_mpeg12_decoder(struct pipe_context *context,
    const struct format_config *format_config;
    struct vl_mpeg12_decoder *dec;
 
-   assert(u_reduce_video_profile(templat->profile) == PIPE_VIDEO_CODEC_MPEG12);
+   assert(u_reduce_video_profile(templat->profile) == PIPE_VIDEO_FORMAT_MPEG12);
 
    dec = CALLOC_STRUCT(vl_mpeg12_decoder);
 

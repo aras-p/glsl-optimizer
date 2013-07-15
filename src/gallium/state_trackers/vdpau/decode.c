@@ -495,18 +495,18 @@ vlVdpDecoderRender(VdpDecoder decoder,
    memset(&desc, 0, sizeof(desc));
    desc.base.profile = dec->profile;
    switch (u_reduce_video_profile(dec->profile)) {
-   case PIPE_VIDEO_CODEC_MPEG12:
+   case PIPE_VIDEO_FORMAT_MPEG12:
       ret = vlVdpDecoderRenderMpeg12(&desc.mpeg12, (VdpPictureInfoMPEG1Or2 *)picture_info);
       break;
-   case PIPE_VIDEO_CODEC_MPEG4:
+   case PIPE_VIDEO_FORMAT_MPEG4:
       ret = vlVdpDecoderRenderMpeg4(&desc.mpeg4, (VdpPictureInfoMPEG4Part2 *)picture_info);
       break;
-   case PIPE_VIDEO_CODEC_VC1:
+   case PIPE_VIDEO_FORMAT_VC1:
       if (dec->profile == PIPE_VIDEO_PROFILE_VC1_ADVANCED)
          vlVdpDecoderFixVC1Startcode(&bitstream_buffer_count, buffers, sizes);
       ret = vlVdpDecoderRenderVC1(&desc.vc1, (VdpPictureInfoVC1 *)picture_info);
       break;
-   case PIPE_VIDEO_CODEC_MPEG4_AVC:
+   case PIPE_VIDEO_FORMAT_MPEG4_AVC:
       ret = vlVdpDecoderRenderH264(&desc.h264, (VdpPictureInfoH264 *)picture_info);
       break;
    default:

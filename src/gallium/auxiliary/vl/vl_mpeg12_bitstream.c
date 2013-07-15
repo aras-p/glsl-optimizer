@@ -814,7 +814,7 @@ decode_slice(struct vl_mpg12_bs *bs, struct pipe_video_buffer *target)
    signed x = -1;
 
    memset(&mb, 0, sizeof(mb));
-   mb.base.codec = PIPE_VIDEO_CODEC_MPEG12;
+   mb.base.codec = PIPE_VIDEO_FORMAT_MPEG12;
    mb.y = vl_vlc_get_uimsbf(&bs->vlc, 8) - 1;
    mb.blocks = dct_blocks;
 

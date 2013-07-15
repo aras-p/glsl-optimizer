@@ -37,7 +37,7 @@ vl_profile_supported(struct pipe_screen *screen, enum pipe_video_profile profile
 {
    assert(screen);
    switch (u_reduce_video_profile(profile)) {
-      case PIPE_VIDEO_CODEC_MPEG12:
+      case PIPE_VIDEO_FORMAT_MPEG12:
          return true;
       default:
          return false;
@@ -82,7 +82,7 @@ vl_create_decoder(struct pipe_context *pipe,
    temp.height = pot_buffers ? util_next_power_of_two(height) : align(height, VL_MACROBLOCK_HEIGHT);
 
    switch (u_reduce_video_profile(temp.profile)) {
-      case PIPE_VIDEO_CODEC_MPEG12:
+      case PIPE_VIDEO_FORMAT_MPEG12:
          return vl_create_mpeg12_decoder(pipe, &temp);
 
       default:

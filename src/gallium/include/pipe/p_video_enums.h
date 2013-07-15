@@ -28,6 +28,15 @@
 #ifndef PIPE_VIDEO_ENUMS_H
 #define PIPE_VIDEO_ENUMS_H
 
+enum pipe_video_format
+{
+   PIPE_VIDEO_FORMAT_UNKNOWN = 0,
+   PIPE_VIDEO_FORMAT_MPEG12,   /**< MPEG1, MPEG2 */
+   PIPE_VIDEO_FORMAT_MPEG4,    /**< DIVX, XVID */
+   PIPE_VIDEO_FORMAT_VC1,      /**< WMV */
+   PIPE_VIDEO_FORMAT_MPEG4_AVC /**< H.264 */
+};
+
 enum pipe_video_profile
 {
    PIPE_VIDEO_PROFILE_UNKNOWN,
@@ -56,15 +65,6 @@ enum pipe_video_cap
    PIPE_VIDEO_CAP_SUPPORTS_PROGRESSIVE = 6,
    PIPE_VIDEO_CAP_SUPPORTS_INTERLACED = 7,
    PIPE_VIDEO_CAP_MAX_LEVEL = 8
-};
-
-enum pipe_video_codec
-{
-   PIPE_VIDEO_CODEC_UNKNOWN = 0,
-   PIPE_VIDEO_CODEC_MPEG12,   /**< MPEG1, MPEG2 */
-   PIPE_VIDEO_CODEC_MPEG4,    /**< DIVX, XVID */
-   PIPE_VIDEO_CODEC_VC1,      /**< WMV */
-   PIPE_VIDEO_CODEC_MPEG4_AVC /**< H.264 */
 };
 
 enum pipe_video_entrypoint

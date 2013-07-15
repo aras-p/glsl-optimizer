@@ -57,7 +57,7 @@ MacroBlocksToPipe(XvMCContextPrivate *context,
    assert(num_macroblocks);
 
    for (; num_macroblocks > 0; --num_macroblocks) {
-      mb->base.codec = PIPE_VIDEO_CODEC_MPEG12;
+      mb->base.codec = PIPE_VIDEO_FORMAT_MPEG12;
       mb->x = xvmc_mb->x;
       mb->y = xvmc_mb->y;
       mb->macroblock_type = xvmc_mb->macroblock_type;

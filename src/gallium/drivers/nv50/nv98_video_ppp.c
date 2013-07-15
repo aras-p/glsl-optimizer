@@ -90,7 +90,7 @@ nv98_decoder_vc1_ppp(struct nouveau_vp3_decoder *dec, struct pipe_vc1_picture_de
 
 void
 nv98_decoder_ppp(struct nouveau_vp3_decoder *dec, union pipe_desc desc, struct nouveau_vp3_video_buffer *target, unsigned comm_seq) {
-   enum pipe_video_codec codec = u_reduce_video_profile(dec->base.profile);
+   enum pipe_video_format codec = u_reduce_video_profile(dec->base.profile);
    struct nouveau_pushbuf *push = dec->pushbuf[2];
    unsigned ppp_caps = 0x10;
    unsigned fence_extra = 0;
@@ -99,17 +99,17 @@ nv98_decoder_ppp(struct nouveau_vp3_decoder *dec, union pipe_desc desc, struct n
    fence_extra = 4;
 #endif
 
-   nouveau_pushbuf_space(push, 11 + (codec == PIPE_VIDEO_CODEC_VC1 ? 2 : 0) + 3 + fence_extra + 2, 4, 0);
+   nouveau_pushbuf_space(push, 11 + (codec == PIPE_VIDEO_FORMAT_VC1 ? 2 : 0) + 3 + fence_extra + 2, 4, 0);
 
    switch (codec) {
-   case PIPE_VIDEO_CODEC_MPEG12: {
+   case PIPE_VIDEO_FORMAT_MPEG12: {
       unsigned mpeg2 = dec->base.profile != PIPE_VIDEO_PROFILE_MPEG1;
       nv98_decoder_setup_ppp(dec, target, 0x1410 | mpeg2);
       break;
    }
-   case PIPE_VIDEO_CODEC_MPEG4: nv98_decoder_setup_ppp(dec, target, 0x1414); break;
-   case PIPE_VIDEO_CODEC_VC1: ppp_caps = nv98_decoder_vc1_ppp(dec, desc.vc1, target); break;
-   case PIPE_VIDEO_CODEC_MPEG4_AVC: nv98_decoder_setup_ppp(dec, target, 0x1413); break;
+   case PIPE_VIDEO_FORMAT_MPEG4: nv98_decoder_setup_ppp(dec, target, 0x1414); break;
+   case PIPE_VIDEO_FORMAT_VC1: ppp_caps = nv98_decoder_vc1_ppp(dec, desc.vc1, target); break;
+   case PIPE_VIDEO_FORMAT_MPEG4_AVC: nv98_decoder_setup_ppp(dec, target, 0x1413); break;
    default: assert(0);
    }
    BEGIN_NV04(push, SUBC_PPP(0x734), 2);

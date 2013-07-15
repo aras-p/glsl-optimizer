@@ -184,24 +184,24 @@ nvc0_create_decoder(struct pipe_context *context,
       goto fail;
 
    switch (u_reduce_video_profile(templ->profile)) {
-   case PIPE_VIDEO_CODEC_MPEG12: {
+   case PIPE_VIDEO_FORMAT_MPEG12: {
       codec = 1;
       assert(templ->max_references <= 2);
       break;
    }
-   case PIPE_VIDEO_CODEC_MPEG4: {
+   case PIPE_VIDEO_FORMAT_MPEG4: {
       codec = 4;
       tmp_size = mb(templ->height)*16 * mb(templ->width)*16;
       assert(templ->max_references <= 2);
       break;
    }
-   case PIPE_VIDEO_CODEC_VC1: {
+   case PIPE_VIDEO_FORMAT_VC1: {
       ppp_codec = codec = 2;
       tmp_size = mb(templ->height)*16 * mb(templ->width)*16;
       assert(templ->max_references <= 2);
       break;
    }
-   case PIPE_VIDEO_CODEC_MPEG4_AVC: {
+   case PIPE_VIDEO_FORMAT_MPEG4_AVC: {
       codec = 3;
       dec->tmp_stride = 16 * mb_half(templ->width) * nouveau_vp3_video_align(templ->height) * 3 / 2;
       tmp_size = dec->tmp_stride * (templ->max_references + 1);

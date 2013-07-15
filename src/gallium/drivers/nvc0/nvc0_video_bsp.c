@@ -40,7 +40,7 @@ nvc0_decoder_bsp(struct nouveau_vp3_decoder *dec, union pipe_desc desc,
                  struct nouveau_vp3_video_buffer *refs[16])
 {
    struct nouveau_pushbuf *push = dec->pushbuf[0];
-   enum pipe_video_codec codec = u_reduce_video_profile(dec->base.profile);
+   enum pipe_video_format codec = u_reduce_video_profile(dec->base.profile);
    uint32_t bsp_addr, comm_addr, inter_addr;
    uint32_t slice_size, bucket_size, ring_size;
    uint32_t caps;
@@ -76,7 +76,7 @@ nvc0_decoder_bsp(struct nouveau_vp3_decoder *dec, union pipe_desc desc,
 
    nouveau_vp3_vp_caps(dec, desc, target, comm_seq, vp_caps, is_ref, refs);
 
-   nouveau_pushbuf_space(push, 6 + (codec == PIPE_VIDEO_CODEC_MPEG4_AVC ? 9 : 7) + fence_extra + 2, num_refs, 0);
+   nouveau_pushbuf_space(push, 6 + (codec == PIPE_VIDEO_FORMAT_MPEG4_AVC ? 9 : 7) + fence_extra + 2, num_refs, 0);
    nouveau_pushbuf_refn(push, bo_refs, num_refs);
 
    bsp_addr = bsp_bo->offset >> 8;
@@ -96,7 +96,7 @@ nvc0_decoder_bsp(struct nouveau_vp3_decoder *dec, union pipe_desc desc,
    PUSH_DATA (push, comm_addr); // 70c comm
    PUSH_DATA (push, comm_seq); // 710 seq
 
-   if (codec != PIPE_VIDEO_CODEC_MPEG4_AVC) {
+   if (codec != PIPE_VIDEO_FORMAT_MPEG4_AVC) {
       u32 bitplane_addr;
 
       bitplane_addr = dec->bitplane_bo->offset >> 8;

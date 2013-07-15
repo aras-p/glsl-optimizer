@@ -234,15 +234,15 @@ nouveau_vp3_decoder_init_common(struct pipe_video_decoder *dec)
 static void vp3_getpath(enum pipe_video_profile profile, char *path)
 {
    switch (u_reduce_video_profile(profile)) {
-      case PIPE_VIDEO_CODEC_MPEG12: {
+      case PIPE_VIDEO_FORMAT_MPEG12: {
          sprintf(path, "/lib/firmware/nouveau/vuc-vp3-mpeg12-0");
          break;
       }
-      case PIPE_VIDEO_CODEC_VC1: {
+      case PIPE_VIDEO_FORMAT_VC1: {
          sprintf(path, "/lib/firmware/nouveau/vuc-vp3-vc1-0");
          break;
       }
-      case PIPE_VIDEO_CODEC_MPEG4_AVC: {
+      case PIPE_VIDEO_FORMAT_MPEG4_AVC: {
          sprintf(path, "/lib/firmware/nouveau/vuc-vp3-h264-0");
          break;
       }
@@ -253,19 +253,19 @@ static void vp3_getpath(enum pipe_video_profile profile, char *path)
 static void vp4_getpath(enum pipe_video_profile profile, char *path)
 {
    switch (u_reduce_video_profile(profile)) {
-      case PIPE_VIDEO_CODEC_MPEG12: {
+      case PIPE_VIDEO_FORMAT_MPEG12: {
          sprintf(path, "/lib/firmware/nouveau/vuc-mpeg12-0");
          break;
       }
-      case PIPE_VIDEO_CODEC_MPEG4: {
+      case PIPE_VIDEO_FORMAT_MPEG4: {
          sprintf(path, "/lib/firmware/nouveau/vuc-mpeg4-0");
          break;
       }
-      case PIPE_VIDEO_CODEC_VC1: {
+      case PIPE_VIDEO_FORMAT_VC1: {
          sprintf(path, "/lib/firmware/nouveau/vuc-vc1-0");
          break;
       }
-      case PIPE_VIDEO_CODEC_MPEG4_AVC: {
+      case PIPE_VIDEO_FORMAT_MPEG4_AVC: {
          sprintf(path, "/lib/firmware/nouveau/vuc-h264-0");
          break;
       }
@@ -322,22 +322,22 @@ nouveau_vp3_load_firmware(struct nouveau_vp3_decoder *dec,
    r = (intptr_t)end - (intptr_t)dec->fw_bo->map + 4;
 
    switch (u_reduce_video_profile(profile)) {
-      case PIPE_VIDEO_CODEC_MPEG12: {
+      case PIPE_VIDEO_FORMAT_MPEG12: {
          assert((r & 0xff) == 0xe0);
          dec->fw_sizes = (0x2e0<<16) | (r - 0x2e0);
          break;
       }
-      case PIPE_VIDEO_CODEC_MPEG4: {
+      case PIPE_VIDEO_FORMAT_MPEG4: {
          assert((r & 0xff) == 0xe0);
          dec->fw_sizes = (0x2e0<<16) | (r - 0x2e0);
          break;
       }
-      case PIPE_VIDEO_CODEC_VC1: {
+      case PIPE_VIDEO_FORMAT_VC1: {
          assert((r & 0xff) == 0xac);
          dec->fw_sizes = (0x3ac<<16) | (r - 0x3ac);
          break;
       }
-      case PIPE_VIDEO_CODEC_MPEG4_AVC: {
+      case PIPE_VIDEO_FORMAT_MPEG4_AVC: {
          assert((r & 0xff) == 0x70);
          dec->fw_sizes = (0x370<<16) | (r - 0x370);
          break;
@@ -358,17 +358,17 @@ nouveau_vp3_screen_get_video_param(struct pipe_screen *pscreen,
    int chipset = nouveau_screen(pscreen)->device->chipset;
    int vp3 = chipset < 0xa3 || chipset == 0xaa || chipset == 0xac;
    int vp5 = chipset >= 0xd0;
-   enum pipe_video_codec codec = u_reduce_video_profile(profile);
+   enum pipe_video_format codec = u_reduce_video_profile(profile);
    switch (param) {
    case PIPE_VIDEO_CAP_SUPPORTED:
       /* For now, h264 and mpeg4 don't work on pre-nvc0. */
       if (chipset < 0xc0)
-         return codec == PIPE_VIDEO_CODEC_MPEG12 ||
-            codec == PIPE_VIDEO_CODEC_VC1;
+         return codec == PIPE_VIDEO_FORMAT_MPEG12 ||
+            codec == PIPE_VIDEO_FORMAT_VC1;
       /* In the general case, this should work, once the pre-nvc0 problems are
        * resolved. */
       return profile >= PIPE_VIDEO_PROFILE_MPEG1 && (
-            !vp3 || codec != PIPE_VIDEO_CODEC_MPEG4);
+            !vp3 || codec != PIPE_VIDEO_FORMAT_MPEG4);
    case PIPE_VIDEO_CAP_NPOT_TEXTURES:
       return 1;
    case PIPE_VIDEO_CAP_MAX_WIDTH:

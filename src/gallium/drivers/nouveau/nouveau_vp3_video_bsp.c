@@ -236,7 +236,7 @@ nouveau_vp3_bsp(struct nouveau_vp3_decoder *dec,  union pipe_desc desc,
                 unsigned comm_seq, unsigned num_buffers,
                 const void *const *data, const unsigned *num_bytes)
 {
-   enum pipe_video_codec codec = u_reduce_video_profile(dec->base.profile);
+   enum pipe_video_format codec = u_reduce_video_profile(dec->base.profile);
    struct nouveau_bo *bsp_bo = dec->bsp_bo[comm_seq % NOUVEAU_VP3_VIDEO_QDEPTH];
    char *bsp;
    uint32_t endmarker, caps;
@@ -252,20 +252,20 @@ nouveau_vp3_bsp(struct nouveau_vp3_decoder *dec,  union pipe_desc desc,
     */
 
    switch (codec){
-   case PIPE_VIDEO_CODEC_MPEG12:
+   case PIPE_VIDEO_FORMAT_MPEG12:
       endmarker = 0xb7010000;
       caps = nouveau_vp3_fill_picparm_mpeg12_bsp(dec, desc.mpeg12, bsp);
       break;
-   case PIPE_VIDEO_CODEC_MPEG4:
+   case PIPE_VIDEO_FORMAT_MPEG4:
       endmarker = 0xb1010000;
       caps = nouveau_vp3_fill_picparm_mpeg4_bsp(dec, desc.mpeg4, bsp);
       break;
-   case PIPE_VIDEO_CODEC_VC1: {
+   case PIPE_VIDEO_FORMAT_VC1: {
       endmarker = 0x0a010000;
       caps = nouveau_vp3_fill_picparm_vc1_bsp(dec, desc.vc1, bsp);
       break;
    }
-   case PIPE_VIDEO_CODEC_MPEG4_AVC: {
+   case PIPE_VIDEO_FORMAT_MPEG4_AVC: {
       endmarker = 0x0b010000;
       caps = nouveau_vp3_fill_picparm_h264_bsp(dec, desc.h264, bsp);
       break;

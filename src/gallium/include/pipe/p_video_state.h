@@ -108,12 +108,12 @@ struct pipe_picture_desc
 
 struct pipe_quant_matrix
 {
-   enum pipe_video_codec codec;
+   enum pipe_video_format codec;
 };
 
 struct pipe_macroblock
 {
-   enum pipe_video_codec codec;
+   enum pipe_video_format codec;
 };
 
 struct pipe_mpeg12_picture_desc

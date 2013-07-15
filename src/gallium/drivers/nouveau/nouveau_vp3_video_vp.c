@@ -171,7 +171,7 @@ struct h264_picparm_vp { // 700..a00
 static void
 nouveau_vp3_handle_references(struct nouveau_vp3_decoder *dec, struct nouveau_vp3_video_buffer *refs[16], unsigned seq, struct nouveau_vp3_video_buffer *target)
 {
-   unsigned h264 = u_reduce_video_profile(dec->base.profile) == PIPE_VIDEO_CODEC_MPEG4_AVC;
+   unsigned h264 = u_reduce_video_profile(dec->base.profile) == PIPE_VIDEO_FORMAT_MPEG4_AVC;
    unsigned i, idx, empty_spot = dec->base.max_references + 1;
    for (i = 0; i < dec->base.max_references; ++i) {
       if (!refs[i])
@@ -457,24 +457,24 @@ void nouveau_vp3_vp_caps(struct nouveau_vp3_decoder *dec, union pipe_desc desc,
                          struct nouveau_vp3_video_buffer *refs[16])
 {
    struct nouveau_bo *bsp_bo = dec->bsp_bo[comm_seq % NOUVEAU_VP3_VIDEO_QDEPTH];
-   enum pipe_video_codec codec = u_reduce_video_profile(dec->base.profile);
+   enum pipe_video_format codec = u_reduce_video_profile(dec->base.profile);
    char *vp = bsp_bo->map + VP_OFFSET;
 
    switch (codec){
-   case PIPE_VIDEO_CODEC_MPEG12:
+   case PIPE_VIDEO_FORMAT_MPEG12:
       *caps = nouveau_vp3_fill_picparm_mpeg12_vp(dec, desc.mpeg12, refs, is_ref, vp);
       nouveau_vp3_handle_references(dec, refs, dec->fence_seq, target);
       return;
-   case PIPE_VIDEO_CODEC_MPEG4:
+   case PIPE_VIDEO_FORMAT_MPEG4:
       *caps = nouveau_vp3_fill_picparm_mpeg4_vp(dec, desc.mpeg4, refs, is_ref, vp);
       nouveau_vp3_handle_references(dec, refs, dec->fence_seq, target);
       return;
-   case PIPE_VIDEO_CODEC_VC1: {
+   case PIPE_VIDEO_FORMAT_VC1: {
       *caps = nouveau_vp3_fill_picparm_vc1_vp(dec, desc.vc1, refs, is_ref, vp);
       nouveau_vp3_handle_references(dec, refs, dec->fence_seq, target);
       return;
    }
-   case PIPE_VIDEO_CODEC_MPEG4_AVC: {
+   case PIPE_VIDEO_FORMAT_MPEG4_AVC: {
       *caps = nouveau_vp3_fill_picparm_h264_vp(dec, desc.h264, refs, is_ref, vp);
       nouveau_vp3_handle_references(dec, refs, dec->fence_seq, target);
       nouveau_vp3_fill_picparm_h264_vp_refs(dec, desc.h264, refs, target, vp);

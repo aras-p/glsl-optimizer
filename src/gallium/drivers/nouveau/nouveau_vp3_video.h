@@ -185,7 +185,7 @@ nouveau_vp3_inter_sizes(struct nouveau_vp3_decoder *dec, uint32_t slice_count,
                         uint32_t *ring_size)
 {
    *slice_size = (SLICE_SIZE * slice_count)>>8;
-   if (u_reduce_video_profile(dec->base.profile) == PIPE_VIDEO_CODEC_MPEG12)
+   if (u_reduce_video_profile(dec->base.profile) == PIPE_VIDEO_FORMAT_MPEG12)
       *bucket_size = 0;
    else
       *bucket_size = mb(dec->base.width) * 3;

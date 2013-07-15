@@ -39,7 +39,7 @@ extern "C" {
 #include "pipe/p_compiler.h"
 #include "util/u_debug.h"
 
-static INLINE enum pipe_video_codec
+static INLINE enum pipe_video_format
 u_reduce_video_profile(enum pipe_video_profile profile)
 {
    switch (profile)
@@ -47,24 +47,24 @@ u_reduce_video_profile(enum pipe_video_profile profile)
       case PIPE_VIDEO_PROFILE_MPEG1:
       case PIPE_VIDEO_PROFILE_MPEG2_SIMPLE:
       case PIPE_VIDEO_PROFILE_MPEG2_MAIN:
-         return PIPE_VIDEO_CODEC_MPEG12;
+         return PIPE_VIDEO_FORMAT_MPEG12;
 
       case PIPE_VIDEO_PROFILE_MPEG4_SIMPLE:
       case PIPE_VIDEO_PROFILE_MPEG4_ADVANCED_SIMPLE:
-         return PIPE_VIDEO_CODEC_MPEG4;
+         return PIPE_VIDEO_FORMAT_MPEG4;
 
       case PIPE_VIDEO_PROFILE_VC1_SIMPLE:
       case PIPE_VIDEO_PROFILE_VC1_MAIN:
       case PIPE_VIDEO_PROFILE_VC1_ADVANCED:
-         return PIPE_VIDEO_CODEC_VC1;
+         return PIPE_VIDEO_FORMAT_VC1;
 
       case PIPE_VIDEO_PROFILE_MPEG4_AVC_BASELINE:
       case PIPE_VIDEO_PROFILE_MPEG4_AVC_MAIN:
       case PIPE_VIDEO_PROFILE_MPEG4_AVC_HIGH:
-         return PIPE_VIDEO_CODEC_MPEG4_AVC;
+         return PIPE_VIDEO_FORMAT_MPEG4_AVC;
 
       default:
-         return PIPE_VIDEO_CODEC_UNKNOWN;
+         return PIPE_VIDEO_FORMAT_UNKNOWN;
    }
 }
 
