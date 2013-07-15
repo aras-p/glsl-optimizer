@@ -181,7 +181,6 @@ static void yyerror(YYLTYPE *loc, _mesa_glsl_parse_state *st, const char *msg)
 %type <parameter_declarator> parameter_declaration
 %type <type_qualifier> parameter_qualifier
 %type <type_qualifier> parameter_direction_qualifier
-%type <type_qualifier> parameter_type_qualifier
 %type <type_specifier> parameter_type_specifier
 %type <function_definition> function_definition
 %type <compound_statement> compound_statement_no_new_scope
@@ -865,28 +864,10 @@ parameter_declarator:
    ;
 
 parameter_declaration:
-   parameter_type_qualifier parameter_qualifier parameter_declarator
-   {
-      $1.flags.i |= $2.flags.i;
-
-      $$ = $3;
-      $$->type->qualifier = $1;
-   }
-   | parameter_qualifier parameter_declarator
+   parameter_qualifier parameter_declarator
    {
       $$ = $2;
       $$->type->qualifier = $1;
-   }
-   | parameter_type_qualifier parameter_qualifier parameter_type_specifier
-   {
-      void *ctx = state;
-      $1.flags.i |= $2.flags.i;
-
-      $$ = new(ctx) ast_parameter_declarator();
-      $$->set_location(yylloc);
-      $$->type = new(ctx) ast_fully_specified_type();
-      $$->type->qualifier = $1;
-      $$->type->specifier = $3;
    }
    | parameter_qualifier parameter_type_specifier
    {
@@ -904,10 +885,22 @@ parameter_qualifier:
    {
       memset(& $$, 0, sizeof($$));
    }
+   | CONST_TOK parameter_qualifier
+   {
+      if ($2.flags.q.constant)
+         _mesa_glsl_error(&@1, state, "duplicate const qualifier.\n");
+
+      $$ = $2;
+      $$.flags.q.constant = 1;
+   }
    | parameter_direction_qualifier parameter_qualifier
    {
       if (($1.flags.q.in || $1.flags.q.out) && ($2.flags.q.in || $2.flags.q.out))
-         _mesa_glsl_error(&@1, state, "duplicate in/out/inout qualifier");
+         _mesa_glsl_error(&@1, state, "duplicate in/out/inout qualifier\n");
+
+      if ($2.flags.q.constant)
+         _mesa_glsl_error(&@1, state, "const must be specified before "
+                          "in/out/inout.\n");
 
       $$ = $1;
       $$.merge_qualifier(&@1, state, $2);
@@ -1313,14 +1306,6 @@ interpolation_qualifier:
    {
       memset(& $$, 0, sizeof($$));
       $$.flags.q.noperspective = 1;
-   }
-   ;
-
-parameter_type_qualifier:
-   CONST_TOK
-   {
-      memset(& $$, 0, sizeof($$));
-      $$.flags.q.constant = 1;
    }
    ;
 
