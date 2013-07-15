@@ -49,7 +49,7 @@
  *   - MC-JIT supports limited OSes (MacOSX and Linux)
  * - standard JIT in LLVM 3.1, with backports
  */
-#if defined(PIPE_ARCH_PPC_64) || defined(PIPE_ARCH_S390)
+#if defined(PIPE_ARCH_PPC_64) || defined(PIPE_ARCH_S390) || defined(PIPE_ARCH_ARM) || defined(PIPE_ARCH_AARCH64)
 #  define USE_MCJIT 1
 #  define HAVE_AVX 0
 #elif HAVE_LLVM >= 0x0302 || (HAVE_LLVM == 0x0301 && defined(HAVE_JIT_AVX_SUPPORT))
