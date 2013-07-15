@@ -1005,60 +1005,45 @@ static void r300_render_draw_elements(struct vbuf_render* render,
 {
     struct r300_render* r300render = r300_render(render);
     struct r300_context* r300 = r300render->r300;
-    struct radeon_winsys_cs *cs = r300->cs;
-    unsigned end_cs_dwords;
     unsigned max_index = (r300->vbo->size - r300->draw_vbo_offset) /
                          (r300render->r300->vertex_info.size * 4) - 1;
-    unsigned short_count;
-    unsigned free_dwords;
+    struct pipe_resource *index_buffer = NULL;
+    unsigned index_buffer_offset;
 
     CS_LOCALS(r300);
     DBG(r300, DBG_DRAW, "r300: render_draw_elements (count: %d)\n", count);
 
-    if (!r300_prepare_for_rendering(r300,
-                                    PREP_EMIT_STATES |
-                                    PREP_EMIT_VARRAYS_SWTCL | PREP_INDEXED,
-                                    NULL, 256, 0, 0, -1)) {
+    u_upload_data(r300->uploader, 0, count * 2, indices,
+                  &index_buffer_offset, &index_buffer);
+    if (!index_buffer) {
         return;
     }
 
-    /* Below we manage the CS space manually because there may be more
-     * indices than it can fit in CS. */
-
-    end_cs_dwords = r300_get_num_cs_end_dwords(r300);
-
-    while (count) {
-        free_dwords =
-            RADEON_MAX_CMDBUF_DWORDS - r300->cs->cdw - end_cs_dwords - 6;
-
-        short_count = MIN2(count, free_dwords * 2);
-
-        BEGIN_CS(6);
-        OUT_CS_REG(R300_GA_COLOR_CONTROL,
-                r300_provoking_vertex_fixes(r300, r300render->prim));
-        OUT_CS_REG(R300_VAP_VF_MAX_VTX_INDX, max_index);
-        OUT_CS_PKT3(R300_PACKET3_3D_DRAW_INDX_2, (short_count+1)/2);
-        OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (short_count << 16) |
-               r300render->hwprim);
-        END_CS;
-
-        memcpy(cs->buf+cs->cdw, indices, short_count * 2);
-        cs->cdw += (short_count + 1) / 2;
-
-        /* OK now subtract the emitted indices and see if we need to emit
-         * another draw packet. */
-        indices += short_count;
-        count -= short_count;
-
-        if (count) {
-            if (!r300_prepare_for_rendering(r300,
-                    PREP_EMIT_VARRAYS_SWTCL | PREP_INDEXED,
-                    NULL, 256, 0, 0, -1))
-                return;
-
-            end_cs_dwords = r300_get_num_cs_end_dwords(r300);
-        }
+    if (!r300_prepare_for_rendering(r300,
+                                    PREP_EMIT_STATES |
+                                    PREP_EMIT_VARRAYS_SWTCL | PREP_INDEXED,
+                                    index_buffer, 12, 0, 0, -1)) {
+        pipe_resource_reference(&index_buffer, NULL);
+        return;
     }
+
+    BEGIN_CS(12);
+    OUT_CS_REG(R300_GA_COLOR_CONTROL,
+               r300_provoking_vertex_fixes(r300, r300render->prim));
+    OUT_CS_REG(R300_VAP_VF_MAX_VTX_INDX, max_index);
+
+    OUT_CS_PKT3(R300_PACKET3_3D_DRAW_INDX_2, 0);
+    OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (count << 16) |
+           r300render->hwprim);
+
+    OUT_CS_PKT3(R300_PACKET3_INDX_BUFFER, 2);
+    OUT_CS(R300_INDX_BUFFER_ONE_REG_WR | (R300_VAP_PORT_IDX0 >> 2));
+    OUT_CS(index_buffer_offset);
+    OUT_CS((count + 1) / 2);
+    OUT_CS_RELOC(r300_resource(index_buffer));
+    END_CS;
+
+    pipe_resource_reference(&index_buffer, NULL);
 }
 
 static void r300_render_destroy(struct vbuf_render* render)

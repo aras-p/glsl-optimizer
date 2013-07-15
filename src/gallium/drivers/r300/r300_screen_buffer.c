@@ -172,9 +172,12 @@ struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
     rbuf->buf = NULL;
     rbuf->malloced_buffer = NULL;
 
-    /* Alloc constant buffers and SWTCL buffers in RAM. */
+    /* Allocate constant buffers and SWTCL vertex and index buffers in RAM.
+     * Note that uploaded index buffers use the flag PIPE_BIND_CUSTOM, so that
+     * we can distinguish them from user-created buffers.
+     */
     if (templ->bind & PIPE_BIND_CONSTANT_BUFFER ||
-        !r300screen->caps.has_tcl) {
+        (!r300screen->caps.has_tcl && !(templ->bind & PIPE_BIND_CUSTOM))) {
         rbuf->malloced_buffer = align_malloc(templ->width0, 64);
         return &rbuf->b.b;
     }
