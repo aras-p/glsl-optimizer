@@ -793,7 +793,7 @@ declaration:
    | PRECISION precision_qualifier type_specifier_no_prec ';'
    {
       $3->precision = $2;
-      $3->is_precision_statement = true;
+      $3->default_precision = $2;
       $$ = $3;
    }
    | interface_block

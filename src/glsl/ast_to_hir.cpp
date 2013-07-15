@@ -3958,7 +3958,7 @@ ir_rvalue *
 ast_type_specifier::hir(exec_list *instructions,
 			  struct _mesa_glsl_parse_state *state)
 {
-   if (!this->is_precision_statement && this->structure == NULL)
+   if (this->default_precision == ast_precision_none && this->structure == NULL)
       return NULL;
 
    YYLTYPE loc = this->get_location();
@@ -3984,7 +3984,7 @@ ast_type_specifier::hir(exec_list *instructions,
     *    field can be either int or float [...].  Any other types or
     *    qualifiers will result in an error.
     */
-   if (this->is_precision_statement) {
+   if (this->default_precision != ast_precision_none) {
       assert(this->precision != ast_precision_none);
       assert(this->structure == NULL); /* The check for structures was
                                         * performed above. */
