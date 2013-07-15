@@ -1122,6 +1122,13 @@ void r300_blitter_draw_rectangle(struct blitter_context *blitter,
     static const union pipe_color_union zeros;
     CS_LOCALS(r300);
 
+    /* XXX workaround for a lockup in MSAA resolve on SWTCL chipsets, this
+     * function most probably doesn't handle type=NONE correctly */
+    if (!r300->screen->caps.has_tcl && type == UTIL_BLITTER_ATTRIB_NONE) {
+        util_blitter_draw_rectangle(blitter, x1, y1, x2, y2, depth, type, attrib);
+        return;
+    }
+
     if (r300->skip_rendering)
         return;
 
