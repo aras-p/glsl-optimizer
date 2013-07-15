@@ -1369,7 +1369,7 @@ type_qualifier:
                           "with layout(...).\n");
       }
 
-      if ($2.flags.q.invariant) {
+      if (!state->ARB_shading_language_420pack_enable && $2.flags.q.invariant) {
          _mesa_glsl_error(&@1, state, "Interpolation qualifiers must come "
                           "after \"invariant\".\n");
       }
@@ -1409,7 +1409,8 @@ type_qualifier:
       if ($2.has_storage())
          _mesa_glsl_error(&@1, state, "Duplicate storage qualifier.\n");
 
-      if ($2.flags.q.invariant || $2.has_interpolation() || $2.has_layout()) {
+      if (!state->ARB_shading_language_420pack_enable &&
+          ($2.flags.q.invariant || $2.has_interpolation() || $2.has_layout())) {
          _mesa_glsl_error(&@1, state, "Storage qualifiers must come after "
                           "invariant, interpolation, and layout qualifiers.\n");
       }
