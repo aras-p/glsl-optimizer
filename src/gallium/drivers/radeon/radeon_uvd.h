@@ -345,10 +345,10 @@ typedef struct radeon_winsys_cs_handle* (*ruvd_set_dtb)
 (struct ruvd_msg* msg, struct vl_video_buffer *vb);
 
 /* create an UVD decode */
-struct pipe_video_decoder *ruvd_create_decoder(struct pipe_context *context,
-					       const struct pipe_video_decoder *templat,
-					       struct radeon_winsys* ws,
-					       ruvd_set_dtb set_dtb);
+struct pipe_video_codec *ruvd_create_decoder(struct pipe_context *context,
+					     const struct pipe_video_codec *templat,
+					     struct radeon_winsys* ws,
+					     ruvd_set_dtb set_dtb);
 
 /* join surfaces into the same buffer with identical tiling params
    sumup their sizes and replace the backend buffers with a single bo */

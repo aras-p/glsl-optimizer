@@ -290,9 +290,9 @@ void nv50_vertex_arrays_validate(struct nv50_context *nv50);
 void nv50_push_vbo(struct nv50_context *, const struct pipe_draw_info *);
 
 /* nv84_video.c */
-struct pipe_video_decoder *
+struct pipe_video_codec *
 nv84_create_decoder(struct pipe_context *context,
-                    const struct pipe_video_decoder *templ);
+                    const struct pipe_video_codec *templ);
 
 struct pipe_video_buffer *
 nv84_video_buffer_create(struct pipe_context *pipe,
@@ -309,9 +309,9 @@ nv84_screen_video_supported(struct pipe_screen *screen,
                             enum pipe_video_profile profile);
 
 /* nv98_video.c */
-struct pipe_video_decoder *
+struct pipe_video_codec *
 nv98_create_decoder(struct pipe_context *context,
-                    const struct pipe_video_decoder *templ);
+                    const struct pipe_video_codec *templ);
 
 struct pipe_video_buffer *
 nv98_video_buffer_create(struct pipe_context *pipe,

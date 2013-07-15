@@ -169,26 +169,26 @@ error:
 }
 
 static void
-nouveau_vp3_decoder_flush(struct pipe_video_decoder *decoder)
+nouveau_vp3_decoder_flush(struct pipe_video_codec *decoder)
 {
 }
 
 static void
-nouveau_vp3_decoder_begin_frame(struct pipe_video_decoder *decoder,
+nouveau_vp3_decoder_begin_frame(struct pipe_video_codec *decoder,
                                 struct pipe_video_buffer *target,
                                 struct pipe_picture_desc *picture)
 {
 }
 
 static void
-nouveau_vp3_decoder_end_frame(struct pipe_video_decoder *decoder,
+nouveau_vp3_decoder_end_frame(struct pipe_video_codec *decoder,
                               struct pipe_video_buffer *target,
                               struct pipe_picture_desc *picture)
 {
 }
 
 static void
-nouveau_vp3_decoder_destroy(struct pipe_video_decoder *decoder)
+nouveau_vp3_decoder_destroy(struct pipe_video_codec *decoder)
 {
    struct nouveau_vp3_decoder *dec = (struct nouveau_vp3_decoder *)decoder;
    int i;
@@ -223,7 +223,7 @@ nouveau_vp3_decoder_destroy(struct pipe_video_decoder *decoder)
 }
 
 void
-nouveau_vp3_decoder_init_common(struct pipe_video_decoder *dec)
+nouveau_vp3_decoder_init_common(struct pipe_video_codec *dec)
 {
    dec->destroy = nouveau_vp3_decoder_destroy;
    dec->flush = nouveau_vp3_decoder_flush;

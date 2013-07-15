@@ -30,7 +30,7 @@
 
 #include <X11/Xlibint.h>
 
-#include "pipe/p_video_decoder.h"
+#include "pipe/p_video_codec.h"
 #include "pipe/p_video_state.h"
 #include "pipe/p_state.h"
 
@@ -215,7 +215,7 @@ Status XvMCRenderSurface(Display *dpy, XvMCContext *context, unsigned int pictur
 )
 {
    struct pipe_mpeg12_macroblock mb[num_macroblocks];
-   struct pipe_video_decoder *decoder;
+   struct pipe_video_codec *decoder;
    struct pipe_mpeg12_picture_desc desc;
 
    XvMCContextPrivate *context_priv;

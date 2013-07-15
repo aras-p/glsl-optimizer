@@ -60,7 +60,7 @@ union pipe_desc {
 };
 
 struct nouveau_vp3_decoder {
-   struct pipe_video_decoder base;
+   struct pipe_video_codec base;
    struct nouveau_client *client;
    struct nouveau_object *channel[3], *bsp, *vp, *ppp;
    struct nouveau_pushbuf *pushbuf[3];
@@ -198,7 +198,7 @@ nouveau_vp3_video_buffer_create(struct pipe_context *pipe,
                                 int flags);
 
 void
-nouveau_vp3_decoder_init_common(struct pipe_video_decoder *decoder);
+nouveau_vp3_decoder_init_common(struct pipe_video_codec *decoder);
 
 int
 nouveau_vp3_load_firmware(struct nouveau_vp3_decoder *dec,

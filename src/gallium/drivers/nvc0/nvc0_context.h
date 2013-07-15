@@ -333,9 +333,9 @@ void nvc0_vertex_arrays_validate(struct nvc0_context *);
 void nvc0_idxbuf_validate(struct nvc0_context *);
 
 /* nvc0_video.c */
-struct pipe_video_decoder *
+struct pipe_video_codec *
 nvc0_create_decoder(struct pipe_context *context,
-                    const struct pipe_video_decoder *templ);
+                    const struct pipe_video_codec *templ);
 
 struct pipe_video_buffer *
 nvc0_video_buffer_create(struct pipe_context *pipe,

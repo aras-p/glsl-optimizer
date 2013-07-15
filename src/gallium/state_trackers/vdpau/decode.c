@@ -44,7 +44,7 @@ vlVdpDecoderCreate(VdpDevice device,
                    uint32_t max_references,
                    VdpDecoder *decoder)
 {
-   struct pipe_video_decoder templat = {};
+   struct pipe_video_codec templat = {};
    struct pipe_context *pipe;
    struct pipe_screen *screen;
    vlVdpDevice *dev;
@@ -97,7 +97,7 @@ vlVdpDecoderCreate(VdpDevice device,
    templat.height = height;
    templat.max_references = max_references;
 
-   vldecoder->decoder = pipe->create_video_decoder(pipe, &templat);
+   vldecoder->decoder = pipe->create_video_codec(pipe, &templat);
 
    if (!vldecoder->decoder) {
       ret = VDP_STATUS_ERROR;
@@ -426,7 +426,7 @@ vlVdpDecoderRender(VdpDecoder decoder,
    vlVdpSurface *vlsurf;
    VdpStatus ret;
    struct pipe_screen *screen;
-   struct pipe_video_decoder *dec;
+   struct pipe_video_codec *dec;
    bool buffer_support[2];
    unsigned i;
    union {

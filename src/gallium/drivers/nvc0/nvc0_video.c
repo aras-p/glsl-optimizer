@@ -26,7 +26,7 @@
 #include "util/u_format.h"
 
 static void
-nvc0_decoder_decode_bitstream(struct pipe_video_decoder *decoder,
+nvc0_decoder_decode_bitstream(struct pipe_video_codec *decoder,
                               struct pipe_video_buffer *video_target,
                               struct pipe_picture_desc *picture,
                               unsigned num_buffers,
@@ -56,9 +56,9 @@ nvc0_decoder_decode_bitstream(struct pipe_video_decoder *decoder,
    nvc0_decoder_ppp(dec, desc, target, comm_seq);
 }
 
-struct pipe_video_decoder *
+struct pipe_video_codec *
 nvc0_create_decoder(struct pipe_context *context,
-                    const struct pipe_video_decoder *templ)
+                    const struct pipe_video_codec *templ)
 {
    struct nouveau_screen *screen = &((struct nvc0_context *)context)->screen->base;
    struct nouveau_vp3_decoder *dec;

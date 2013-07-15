@@ -403,14 +403,14 @@ nouveau_decoder_surface_index(struct nouveau_decoder *dec,
 }
 
 static void
-nouveau_decoder_begin_frame(struct pipe_video_decoder *decoder,
+nouveau_decoder_begin_frame(struct pipe_video_codec *decoder,
                             struct pipe_video_buffer *target,
                             struct pipe_picture_desc *picture)
 {
 }
 
 static void
-nouveau_decoder_decode_macroblock(struct pipe_video_decoder *decoder,
+nouveau_decoder_decode_macroblock(struct pipe_video_codec *decoder,
                                   struct pipe_video_buffer *target,
                                   struct pipe_picture_desc *picture,
                                   const struct pipe_macroblock *pipe_mb,
@@ -457,14 +457,14 @@ nouveau_decoder_decode_macroblock(struct pipe_video_decoder *decoder,
 }
 
 static void
-nouveau_decoder_end_frame(struct pipe_video_decoder *decoder,
+nouveau_decoder_end_frame(struct pipe_video_codec *decoder,
                           struct pipe_video_buffer *target,
                           struct pipe_picture_desc *picture)
 {
 }
 
 static void
-nouveau_decoder_flush(struct pipe_video_decoder *decoder)
+nouveau_decoder_flush(struct pipe_video_codec *decoder)
 {
    struct nouveau_decoder *dec = (struct nouveau_decoder *)decoder;
    if (dec->ofs)
@@ -472,7 +472,7 @@ nouveau_decoder_flush(struct pipe_video_decoder *decoder)
 }
 
 static void
-nouveau_decoder_destroy(struct pipe_video_decoder *decoder)
+nouveau_decoder_destroy(struct pipe_video_codec *decoder)
 {
    struct nouveau_decoder *dec = (struct nouveau_decoder*)decoder;
 
@@ -497,9 +497,9 @@ nouveau_decoder_destroy(struct pipe_video_decoder *decoder)
    FREE(dec);
 }
 
-static struct pipe_video_decoder *
+static struct pipe_video_codec *
 nouveau_create_decoder(struct pipe_context *context,
-                       const struct pipe_video_decoder *templ,
+                       const struct pipe_video_codec *templ,
                        struct nouveau_screen *screen)
 {
    struct nv04_fifo nv04_data = { .vram = 0xbeef0201, .gart = 0xbeef0202 };
@@ -867,9 +867,9 @@ nouveau_screen_init_vdec(struct nouveau_screen *screen)
    screen->base.is_video_format_supported = vl_video_buffer_is_format_supported;
 }
 
-static struct pipe_video_decoder *
+static struct pipe_video_codec *
 nouveau_context_create_decoder(struct pipe_context *context,
-                               const struct pipe_video_decoder *templ)
+                               const struct pipe_video_codec *templ)
 {
    struct nouveau_screen *screen = nouveau_context(context)->screen;
    return nouveau_create_decoder(context, templ, screen);
@@ -886,6 +886,6 @@ nouveau_context_video_buffer_create(struct pipe_context *pipe,
 void
 nouveau_context_init_vdec(struct nouveau_context *nv)
 {
-   nv->pipe.create_video_decoder = nouveau_context_create_decoder;
+   nv->pipe.create_video_codec = nouveau_context_create_decoder;
    nv->pipe.create_video_buffer = nouveau_context_video_buffer_create;
 }

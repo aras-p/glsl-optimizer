@@ -400,10 +400,10 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	r600_init_surface_functions(rctx);
 
 	if (rscreen->info.has_uvd) {
-		rctx->context.create_video_decoder = r600_uvd_create_decoder;
+		rctx->context.create_video_codec = r600_uvd_create_decoder;
 		rctx->context.create_video_buffer = r600_video_buffer_create;
 	} else {
-		rctx->context.create_video_decoder = vl_create_decoder;
+		rctx->context.create_video_codec = vl_create_decoder;
 		rctx->context.create_video_buffer = vl_video_buffer_create;
 	}
 

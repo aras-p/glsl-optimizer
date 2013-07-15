@@ -36,7 +36,7 @@
 #include <errno.h>
 #include <unistd.h>
 
-#include "pipe/p_video_decoder.h"
+#include "pipe/p_video_codec.h"
 
 #include "util/u_memory.h"
 #include "util/u_video.h"
@@ -146,8 +146,8 @@ static struct radeon_winsys_cs_handle* radeonsi_uvd_set_dtb(struct ruvd_msg *msg
 /**
  * creates an UVD compatible decoder
  */
-struct pipe_video_decoder *radeonsi_uvd_create_decoder(struct pipe_context *context,
-						       const struct pipe_video_decoder *templ)
+struct pipe_video_codec *radeonsi_uvd_create_decoder(struct pipe_context *context,
+						     const struct pipe_video_codec *templ)
 {
 	struct r600_context *ctx = (struct r600_context *)context;
 

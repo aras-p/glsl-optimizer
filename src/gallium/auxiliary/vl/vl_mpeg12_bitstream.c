@@ -26,7 +26,7 @@
  *
  **************************************************************************/
 
-#include "pipe/p_video_decoder.h"
+#include "pipe/p_video_codec.h"
 #include "util/u_memory.h"
 
 #include "vl_vlc.h"
@@ -965,7 +965,7 @@ decode_slice(struct vl_mpg12_bs *bs, struct pipe_video_buffer *target)
 }
 
 void
-vl_mpg12_bs_init(struct vl_mpg12_bs *bs, struct pipe_video_decoder *decoder)
+vl_mpg12_bs_init(struct vl_mpg12_bs *bs, struct pipe_video_codec *decoder)
 {
    static bool tables_initialized = false;
 

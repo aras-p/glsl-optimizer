@@ -121,7 +121,7 @@ nv84_load_vp_firmware_mpeg(struct nouveau_device *dev, struct nv84_decoder *dec)
 }
 
 static void
-nv84_decoder_decode_bitstream_h264(struct pipe_video_decoder *decoder,
+nv84_decoder_decode_bitstream_h264(struct pipe_video_codec *decoder,
                                    struct pipe_video_buffer *video_target,
                                    struct pipe_picture_desc *picture,
                                    unsigned num_buffers,
@@ -140,26 +140,26 @@ nv84_decoder_decode_bitstream_h264(struct pipe_video_decoder *decoder,
 }
 
 static void
-nv84_decoder_flush(struct pipe_video_decoder *decoder)
+nv84_decoder_flush(struct pipe_video_codec *decoder)
 {
 }
 
 static void
-nv84_decoder_begin_frame_h264(struct pipe_video_decoder *decoder,
+nv84_decoder_begin_frame_h264(struct pipe_video_codec *decoder,
                               struct pipe_video_buffer *target,
                               struct pipe_picture_desc *picture)
 {
 }
 
 static void
-nv84_decoder_end_frame_h264(struct pipe_video_decoder *decoder,
+nv84_decoder_end_frame_h264(struct pipe_video_codec *decoder,
                             struct pipe_video_buffer *target,
                             struct pipe_picture_desc *picture)
 {
 }
 
 static void
-nv84_decoder_decode_bitstream_mpeg12(struct pipe_video_decoder *decoder,
+nv84_decoder_decode_bitstream_mpeg12(struct pipe_video_codec *decoder,
                                      struct pipe_video_buffer *video_target,
                                      struct pipe_picture_desc *picture,
                                      unsigned num_buffers,
@@ -179,7 +179,7 @@ nv84_decoder_decode_bitstream_mpeg12(struct pipe_video_decoder *decoder,
 }
 
 static void
-nv84_decoder_begin_frame_mpeg12(struct pipe_video_decoder *decoder,
+nv84_decoder_begin_frame_mpeg12(struct pipe_video_codec *decoder,
                               struct pipe_video_buffer *target,
                               struct pipe_picture_desc *picture)
 {
@@ -202,7 +202,7 @@ nv84_decoder_begin_frame_mpeg12(struct pipe_video_decoder *decoder,
 }
 
 static void
-nv84_decoder_end_frame_mpeg12(struct pipe_video_decoder *decoder,
+nv84_decoder_end_frame_mpeg12(struct pipe_video_codec *decoder,
                               struct pipe_video_buffer *target,
                               struct pipe_picture_desc *picture)
 {
@@ -213,7 +213,7 @@ nv84_decoder_end_frame_mpeg12(struct pipe_video_decoder *decoder,
 }
 
 static void
-nv84_decoder_decode_macroblock(struct pipe_video_decoder *decoder,
+nv84_decoder_decode_macroblock(struct pipe_video_codec *decoder,
                                struct pipe_video_buffer *target,
                                struct pipe_picture_desc *picture,
                                const struct pipe_macroblock *macroblocks,
@@ -229,7 +229,7 @@ nv84_decoder_decode_macroblock(struct pipe_video_decoder *decoder,
 }
 
 static void
-nv84_decoder_destroy(struct pipe_video_decoder *decoder)
+nv84_decoder_destroy(struct pipe_video_codec *decoder)
 {
    struct nv84_decoder *dec = (struct nv84_decoder *)decoder;
 
@@ -261,9 +261,9 @@ nv84_decoder_destroy(struct pipe_video_decoder *decoder)
    FREE(dec);
 }
 
-struct pipe_video_decoder *
+struct pipe_video_codec *
 nv84_create_decoder(struct pipe_context *context,
-                    const struct pipe_video_decoder *templ)
+                    const struct pipe_video_codec *templ)
 {
    struct nv50_context *nv50 = (struct nv50_context *)context;
    struct nouveau_screen *screen = &nv50->screen->base;

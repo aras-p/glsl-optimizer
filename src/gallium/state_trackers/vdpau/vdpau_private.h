@@ -34,7 +34,7 @@
 #include <vdpau/vdpau_x11.h>
 
 #include "pipe/p_compiler.h"
-#include "pipe/p_video_decoder.h"
+#include "pipe/p_video_codec.h"
 
 #include "util/u_debug.h"
 #include "util/u_rect.h"
@@ -387,7 +387,7 @@ typedef struct
 typedef struct
 {
    vlVdpDevice *device;
-   struct pipe_video_decoder *decoder;
+   struct pipe_video_codec *decoder;
 } vlVdpDecoder;
 
 typedef uint32_t vlHandle;

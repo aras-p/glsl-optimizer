@@ -31,7 +31,7 @@
 #include <X11/extensions/XvMClib.h>
 
 #include "pipe/p_screen.h"
-#include "pipe/p_video_decoder.h"
+#include "pipe/p_video_codec.h"
 #include "pipe/p_state.h"
 
 #include "util/u_memory.h"

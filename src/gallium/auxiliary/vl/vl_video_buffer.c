@@ -186,11 +186,11 @@ vl_video_buffer_max_size(struct pipe_screen *screen)
 
 void
 vl_video_buffer_set_associated_data(struct pipe_video_buffer *vbuf,
-                                    struct pipe_video_decoder *vdec,
+                                    struct pipe_video_codec *vcodec,
                                     void *associated_data,
                                     void (*destroy_associated_data)(void *))
 {
-   vbuf->decoder = vdec;
+   vbuf->codec = vcodec;
 
    if (vbuf->associated_data == associated_data)
       return;
@@ -204,9 +204,9 @@ vl_video_buffer_set_associated_data(struct pipe_video_buffer *vbuf,
 
 void *
 vl_video_buffer_get_associated_data(struct pipe_video_buffer *vbuf,
-                                    struct pipe_video_decoder *vdec)
+                                    struct pipe_video_codec *vcodec)
 {
-   if (vbuf->decoder == vdec)
+   if (vbuf->codec == vcodec)
       return vbuf->associated_data;
    else
       return NULL;

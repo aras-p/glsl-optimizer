@@ -25,7 +25,7 @@
  *
  **************************************************************************/
 
-#include "pipe/p_video_decoder.h"
+#include "pipe/p_video_codec.h"
 
 #include "util/u_video.h"
 
@@ -59,12 +59,12 @@ vl_level_supported(struct pipe_screen *screen, enum pipe_video_profile profile)
    }
 }
 
-struct pipe_video_decoder *
+struct pipe_video_codec *
 vl_create_decoder(struct pipe_context *pipe,
-                  const struct pipe_video_decoder *templat)
+                  const struct pipe_video_codec *templat)
 {
    unsigned width = templat->width, height = templat->height;
-   struct pipe_video_decoder temp;
+   struct pipe_video_codec temp;
    bool pot_buffers;
 
    assert(pipe);

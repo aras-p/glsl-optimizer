@@ -890,8 +890,8 @@ unsigned r600_tex_compare(unsigned compare);
 bool sampler_state_needs_border_color(const struct pipe_sampler_state *state);
 
 /* r600_uvd.c */
-struct pipe_video_decoder *r600_uvd_create_decoder(struct pipe_context *context,
-						   const struct pipe_video_decoder *decoder);
+struct pipe_video_codec *r600_uvd_create_decoder(struct pipe_context *context,
+						   const struct pipe_video_codec *decoder);
 
 struct pipe_video_buffer *r600_video_buffer_create(struct pipe_context *pipe,
 						   const struct pipe_video_buffer *tmpl);

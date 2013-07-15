@@ -17,7 +17,7 @@ struct nouveau_video_buffer {
 };
 
 struct nouveau_decoder {
-   struct pipe_video_decoder base;
+   struct pipe_video_codec base;
    struct nouveau_screen *screen;
    struct nouveau_pushbuf *push;
    struct nouveau_object *chan;

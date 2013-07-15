@@ -265,11 +265,11 @@ nv50_create(struct pipe_screen *pscreen, void *priv)
    } else if (screen->base.device->chipset < 0x98 ||
               screen->base.device->chipset == 0xa0) {
       /* VP2 */
-      pipe->create_video_decoder = nv84_create_decoder;
+      pipe->create_video_codec = nv84_create_decoder;
       pipe->create_video_buffer = nv84_video_buffer_create;
    } else {
       /* VP3/4 */
-      pipe->create_video_decoder = nv98_create_decoder;
+      pipe->create_video_codec = nv98_create_decoder;
       pipe->create_video_buffer = nv98_video_buffer_create;
    }
 

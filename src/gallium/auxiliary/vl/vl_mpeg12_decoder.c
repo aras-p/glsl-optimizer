@@ -399,7 +399,7 @@ vl_mpeg12_destroy_buffer(void *buffer)
 }
 
 static void
-vl_mpeg12_destroy(struct pipe_video_decoder *decoder)
+vl_mpeg12_destroy(struct pipe_video_codec *decoder)
 {
    struct vl_mpeg12_decoder *dec = (struct vl_mpeg12_decoder*)decoder;
    unsigned i;
@@ -503,7 +503,7 @@ error_vertex_buffer:
 }
 
 static void
-vl_mpeg12_begin_frame(struct pipe_video_decoder *decoder,
+vl_mpeg12_begin_frame(struct pipe_video_codec *decoder,
                       struct pipe_video_buffer *target,
                       struct pipe_picture_desc *picture)
 {
@@ -568,7 +568,7 @@ vl_mpeg12_begin_frame(struct pipe_video_decoder *decoder,
 }
 
 static void
-vl_mpeg12_decode_macroblock(struct pipe_video_decoder *decoder,
+vl_mpeg12_decode_macroblock(struct pipe_video_codec *decoder,
                             struct pipe_video_buffer *target,
                             struct pipe_picture_desc *picture,
                             const struct pipe_macroblock *macroblocks,
@@ -638,7 +638,7 @@ vl_mpeg12_decode_macroblock(struct pipe_video_decoder *decoder,
 }
 
 static void
-vl_mpeg12_decode_bitstream(struct pipe_video_decoder *decoder,
+vl_mpeg12_decode_bitstream(struct pipe_video_codec *decoder,
                            struct pipe_video_buffer *target,
                            struct pipe_picture_desc *picture,
                            unsigned num_buffers,
@@ -664,7 +664,7 @@ vl_mpeg12_decode_bitstream(struct pipe_video_decoder *decoder,
 }
 
 static void
-vl_mpeg12_end_frame(struct pipe_video_decoder *decoder,
+vl_mpeg12_end_frame(struct pipe_video_codec *decoder,
                     struct pipe_video_buffer *target,
                     struct pipe_picture_desc *picture)
 {
@@ -757,7 +757,7 @@ vl_mpeg12_end_frame(struct pipe_video_decoder *decoder,
 }
 
 static void
-vl_mpeg12_flush(struct pipe_video_decoder *decoder)
+vl_mpeg12_flush(struct pipe_video_codec *decoder)
 {
    assert(decoder);
 
@@ -1016,9 +1016,9 @@ mc_frag_shader_callback(void *priv, struct vl_mc *mc,
    }
 }
 
-struct pipe_video_decoder *
+struct pipe_video_codec *
 vl_create_mpeg12_decoder(struct pipe_context *context,
-                         const struct pipe_video_decoder *templat)
+                         const struct pipe_video_codec *templat)
 {
    const unsigned block_size_pixels = VL_BLOCK_WIDTH * VL_BLOCK_HEIGHT;
    const struct format_config *format_config;

@@ -409,7 +409,7 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300_init_render_functions(r300);
     r300_init_states(&r300->context);
 
-    r300->context.create_video_decoder = vl_create_decoder;
+    r300->context.create_video_codec = vl_create_decoder;
     r300->context.create_video_buffer = vl_video_buffer_create;
 
     r300->uploader = u_upload_create(&r300->context, 256 * 1024, 4,

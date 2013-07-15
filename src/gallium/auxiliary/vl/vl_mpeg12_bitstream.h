@@ -33,7 +33,7 @@
 
 struct vl_mpg12_bs
 {
-   struct pipe_video_decoder *decoder;
+   struct pipe_video_codec *decoder;
 
    struct pipe_mpeg12_picture_desc *desc;
    struct dct_coeff *intra_dct_tbl;
@@ -43,7 +43,7 @@ struct vl_mpg12_bs
 };
 
 void
-vl_mpg12_bs_init(struct vl_mpg12_bs *bs, struct pipe_video_decoder *decoder);
+vl_mpg12_bs_init(struct vl_mpg12_bs *bs, struct pipe_video_codec *decoder);
 
 void
 vl_mpg12_bs_decode(struct vl_mpg12_bs *bs,

@@ -58,7 +58,7 @@ struct nv84_video_buffer {
 };
 
 struct nv84_decoder {
-   struct pipe_video_decoder base;
+   struct pipe_video_codec base;
    struct nouveau_client *client;
    struct nouveau_object *bsp_channel, *vp_channel, *bsp, *vp;
    struct nouveau_pushbuf *bsp_pushbuf, *vp_pushbuf;

@@ -230,10 +230,10 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	si_init_compute_functions(rctx);
 
 	if (rscreen->info.has_uvd) {
-		rctx->context.create_video_decoder = radeonsi_uvd_create_decoder;
+		rctx->context.create_video_codec = radeonsi_uvd_create_decoder;
 		rctx->context.create_video_buffer = radeonsi_video_buffer_create;
 	} else {
-		rctx->context.create_video_decoder = vl_create_decoder;
+		rctx->context.create_video_codec = vl_create_decoder;
 		rctx->context.create_video_buffer = vl_video_buffer_create;
 	}
 

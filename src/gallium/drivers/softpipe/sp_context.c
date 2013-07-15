@@ -228,7 +228,7 @@ softpipe_create_context( struct pipe_screen *screen,
 
    softpipe->pipe.render_condition = softpipe_render_condition;
    
-   softpipe->pipe.create_video_decoder = vl_create_decoder;
+   softpipe->pipe.create_video_codec = vl_create_decoder;
    softpipe->pipe.create_video_buffer = vl_video_buffer_create;
 
    /*

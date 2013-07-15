@@ -28,7 +28,7 @@
 #ifndef vl_mpeg12_decoder_h
 #define vl_mpeg12_decoder_h
 
-#include "pipe/p_video_decoder.h"
+#include "pipe/p_video_codec.h"
 
 #include "vl_mpeg12_bitstream.h"
 #include "vl_zscan.h"
@@ -43,7 +43,7 @@ struct pipe_context;
 
 struct vl_mpeg12_decoder
 {
-   struct pipe_video_decoder base;
+   struct pipe_video_codec base;
 
    unsigned chroma_width, chroma_height;
 
@@ -102,8 +102,8 @@ struct vl_mpeg12_buffer
 /**
  * creates a shader based mpeg12 decoder
  */
-struct pipe_video_decoder *
+struct pipe_video_codec *
 vl_create_mpeg12_decoder(struct pipe_context *pipe,
-                         const struct pipe_video_decoder *templat);
+                         const struct pipe_video_codec *templat);
 
 #endif /* vl_mpeg12_decoder_h */

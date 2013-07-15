@@ -42,7 +42,7 @@
 #define BLOCK_SIZE_SAMPLES 64
 #define BLOCK_SIZE_BYTES (BLOCK_SIZE_SAMPLES * 2)
 
-struct pipe_video_decoder;
+struct pipe_video_codec;
 struct pipe_video_buffer;
 
 struct pipe_sampler_view;
@@ -52,7 +52,7 @@ typedef struct
 {
    struct vl_screen *vscreen;
    struct pipe_context *pipe;
-   struct pipe_video_decoder *decoder;
+   struct pipe_video_codec *decoder;
 
    enum VL_CSC_COLOR_STANDARD color_standard;
    struct vl_procamp procamp;

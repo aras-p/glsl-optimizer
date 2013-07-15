@@ -37,7 +37,7 @@
 #include <unistd.h>
 #include <stdio.h>
 
-#include "pipe/p_video_decoder.h"
+#include "pipe/p_video_codec.h"
 
 #include "util/u_memory.h"
 #include "util/u_video.h"
@@ -65,7 +65,7 @@ struct ruvd_buffer
 
 /* UVD decoder representation */
 struct ruvd_decoder {
-	struct pipe_video_decoder	base;
+	struct pipe_video_codec		base;
 
 	ruvd_set_dtb			set_dtb;
 
@@ -262,7 +262,7 @@ static uint32_t profile2stream_type(enum pipe_video_profile profile)
 }
 
 /* calculate size of reference picture buffer */
-static unsigned calc_dpb_size(const struct pipe_video_decoder *templ)
+static unsigned calc_dpb_size(const struct pipe_video_codec *templ)
 {
 	unsigned width_in_mb, height_in_mb, image_size, dpb_size;
 
@@ -613,7 +613,7 @@ static struct ruvd_mpeg4 get_mpeg4_msg(struct ruvd_decoder *dec,
 /**
  * destroy this video decoder
  */
-static void ruvd_destroy(struct pipe_video_decoder *decoder)
+static void ruvd_destroy(struct pipe_video_codec *decoder)
 {
 	struct ruvd_decoder *dec = (struct ruvd_decoder*)decoder;
 	struct ruvd_msg msg;
@@ -650,7 +650,7 @@ static void ruvd_destroy_associated_data(void *data)
 /**
  * start decoding of a new frame
  */
-static void ruvd_begin_frame(struct pipe_video_decoder *decoder,
+static void ruvd_begin_frame(struct pipe_video_codec *decoder,
 			     struct pipe_video_buffer *target,
 			     struct pipe_picture_desc *picture)
 {
@@ -672,7 +672,7 @@ static void ruvd_begin_frame(struct pipe_video_decoder *decoder,
 /**
  * decode a macroblock
  */
-static void ruvd_decode_macroblock(struct pipe_video_decoder *decoder,
+static void ruvd_decode_macroblock(struct pipe_video_codec *decoder,
 				   struct pipe_video_buffer *target,
 				   struct pipe_picture_desc *picture,
 				   const struct pipe_macroblock *macroblocks,
@@ -685,7 +685,7 @@ static void ruvd_decode_macroblock(struct pipe_video_decoder *decoder,
 /**
  * decode a bitstream
  */
-static void ruvd_decode_bitstream(struct pipe_video_decoder *decoder,
+static void ruvd_decode_bitstream(struct pipe_video_codec *decoder,
 				  struct pipe_video_buffer *target,
 				  struct pipe_picture_desc *picture,
 				  unsigned num_buffers,
@@ -728,7 +728,7 @@ static void ruvd_decode_bitstream(struct pipe_video_decoder *decoder,
 /**
  * end decoding of the current frame
  */
-static void ruvd_end_frame(struct pipe_video_decoder *decoder,
+static void ruvd_end_frame(struct pipe_video_codec *decoder,
 			   struct pipe_video_buffer *target,
 			   struct pipe_picture_desc *picture)
 {
@@ -809,17 +809,17 @@ static void ruvd_end_frame(struct pipe_video_decoder *decoder,
 /**
  * flush any outstanding command buffers to the hardware
  */
-static void ruvd_flush(struct pipe_video_decoder *decoder)
+static void ruvd_flush(struct pipe_video_codec *decoder)
 {
 }
 
 /**
  * create and UVD decoder
  */
-struct pipe_video_decoder *ruvd_create_decoder(struct pipe_context *context,
-					       const struct pipe_video_decoder *templ,
-					       struct radeon_winsys* ws,
-					       ruvd_set_dtb set_dtb)
+struct pipe_video_codec *ruvd_create_decoder(struct pipe_context *context,
+					     const struct pipe_video_codec *templ,
+					     struct radeon_winsys* ws,
+					     ruvd_set_dtb set_dtb)
 {
 	unsigned dpb_size = calc_dpb_size(templ);
 	unsigned width = templ->width, height = templ->height;

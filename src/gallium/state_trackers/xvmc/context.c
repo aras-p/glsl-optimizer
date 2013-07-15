@@ -31,7 +31,7 @@
 #include <X11/extensions/XvMClib.h>
 
 #include "pipe/p_screen.h"
-#include "pipe/p_video_decoder.h"
+#include "pipe/p_video_codec.h"
 #include "pipe/p_video_state.h"
 #include "pipe/p_state.h"
 
@@ -191,7 +191,7 @@ Status XvMCCreateContext(Display *dpy, XvPortID port, int surface_type_id,
    Status ret;
    struct vl_screen *vscreen;
    struct pipe_context *pipe;
-   struct pipe_video_decoder templat = {};
+   struct pipe_video_codec templat = {};
    XvMCContextPrivate *context_priv;
    vl_csc_matrix csc;
 
@@ -253,7 +253,7 @@ Status XvMCCreateContext(Display *dpy, XvPortID port, int surface_type_id,
    templat.max_references = 2;
    templat.expect_chunked_decode = true;
 
-   context_priv->decoder = pipe->create_video_decoder(pipe, &templat);
+   context_priv->decoder = pipe->create_video_codec(pipe, &templat);
 
    if (!context_priv->decoder) {
       XVMC_MSG(XVMC_ERR, "[XvMC] Could not create VL decoder.\n");
