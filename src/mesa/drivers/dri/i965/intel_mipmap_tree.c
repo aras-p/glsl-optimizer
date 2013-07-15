@@ -1244,31 +1244,7 @@ intel_miptree_slice_enable_hiz(struct brw_context *brw,
    assert(mt->hiz_mt);
 
    if (brw->is_haswell) {
-      /* Disable HiZ for some slices to work around a hardware bug.
-       *
-       * Haswell hardware fails to respect
-       * 3DSTATE_DEPTH_BUFFER.Depth_Coordinate_Offset_X/Y when during HiZ
-       * ambiguate operations.  The failure is inconsistent and affected by
-       * other GPU contexts. Running a heavy GPU workload in a separate
-       * process causes the failure rate to drop to nearly 0.
-       *
-       * To workaround the bug, we enable HiZ only when we can guarantee that
-       * the Depth Coordinate Offset fields will be set to 0. The function
-       * brw_get_depthstencil_tile_masks() is used to calculate the fields,
-       * and the function is sometimes called in such a way that the presence
-       * of an attached stencil buffer changes the fuction's return value.
-       *
-       * The largest tile size considered by brw_get_depthstencil_tile_masks()
-       * is that of the stencil buffer. Therefore, if this hiz slice's
-       * corresponding depth slice has an offset that is aligned to the
-       * stencil buffer tile size, 64x64 pixels, then
-       * 3DSTATE_DEPTH_BUFFER.Depth_Coordinate_Offset_X/Y is set to 0.
-       */
       const struct intel_mipmap_level *l = &mt->level[level];
-      const struct intel_mipmap_slice *s = &l->slice[layer];
-      if ((s->x_offset & 63) || (s->y_offset & 63)) {
-         return false;
-      }
 
       /* Disable HiZ for LOD > 0 unless the width is 8 aligned
        * and the height is 4 aligned. This allows our HiZ support
