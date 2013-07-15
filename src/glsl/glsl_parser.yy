@@ -180,6 +180,7 @@ static void yyerror(YYLTYPE *loc, _mesa_glsl_parse_state *st, const char *msg)
 %type <parameter_declarator> parameter_declarator
 %type <parameter_declarator> parameter_declaration
 %type <type_qualifier> parameter_qualifier
+%type <type_qualifier> parameter_direction_qualifier
 %type <type_qualifier> parameter_type_qualifier
 %type <type_specifier> parameter_type_specifier
 %type <function_definition> function_definition
@@ -903,7 +904,17 @@ parameter_qualifier:
    {
       memset(& $$, 0, sizeof($$));
    }
-   | IN_TOK
+   | parameter_direction_qualifier parameter_qualifier
+   {
+      if (($1.flags.q.in || $1.flags.q.out) && ($2.flags.q.in || $2.flags.q.out))
+         _mesa_glsl_error(&@1, state, "duplicate in/out/inout qualifier");
+
+      $$ = $1;
+      $$.merge_qualifier(&@1, state, $2);
+   }
+
+parameter_direction_qualifier:
+   IN_TOK
    {
       memset(& $$, 0, sizeof($$));
       $$.flags.q.in = 1;
