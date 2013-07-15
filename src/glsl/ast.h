@@ -437,6 +437,9 @@ struct ast_type_qualifier {
       unsigned i;
    } flags;
 
+   /** Precision of the type (highp/medium/lowp). */
+   unsigned precision:2;
+
    /**
     * Location specified via GL_ARB_explicit_attrib_location layout
     *
@@ -533,7 +536,7 @@ public:
    ast_type_specifier(const ast_type_specifier *that, bool is_array,
                       ast_expression *array_size)
       : ast_node(), type_name(that->type_name), structure(that->structure),
-        is_array(is_array), array_size(array_size), precision(that->precision),
+        is_array(is_array), array_size(array_size),
         default_precision(that->default_precision)
    {
       /* empty */
@@ -542,7 +545,7 @@ public:
    /** Construct a type specifier from a type name */
    ast_type_specifier(const char *name) 
       : type_name(name), structure(NULL),
-	is_array(false), array_size(NULL), precision(ast_precision_none),
+	is_array(false), array_size(NULL),
 	default_precision(ast_precision_none)
    {
       /* empty */
@@ -551,7 +554,7 @@ public:
    /** Construct a type specifier from a structure definition */
    ast_type_specifier(ast_struct_specifier *s)
       : type_name(s->name), structure(s),
-	is_array(false), array_size(NULL), precision(ast_precision_none),
+	is_array(false), array_size(NULL),
 	default_precision(ast_precision_none)
    {
       /* empty */
@@ -570,8 +573,6 @@ public:
 
    bool is_array;
    ast_expression *array_size;
-
-   unsigned precision:2;
 
    /** For precision statements, this is the given precision; otherwise none. */
    unsigned default_precision:2;

@@ -2544,6 +2544,12 @@ ast_declarator_list::hir(exec_list *instructions,
 			     type_name);
 	 }
       }
+
+      if (this->type->qualifier.precision != ast_precision_none &&
+          this->type->specifier->structure != NULL) {
+         _mesa_glsl_error(&loc, state, "Precision qualifiers can't be applied "
+                          "to structures.\n");
+      }
    }
 
    foreach_list_typed (ast_declaration, decl, link, &this->declarations) {
@@ -2846,7 +2852,7 @@ ast_declarator_list::hir(exec_list *instructions,
 
       /* Precision qualifiers exists only in GLSL versions 1.00 and >= 1.30.
        */
-      if (this->type->specifier->precision != ast_precision_none) {
+      if (this->type->qualifier.precision != ast_precision_none) {
          state->check_precision_qualifiers_allowed(&loc);
       }
 
@@ -2864,9 +2870,10 @@ ast_declarator_list::hir(exec_list *instructions,
        * From page 87 of the GLSL ES spec:
        *    "RESOLUTION: Allow sampler types to take a precision qualifier."
        */
-      if (this->type->specifier->precision != ast_precision_none
+      if (this->type->qualifier.precision != ast_precision_none
           && !var->type->is_float()
           && !var->type->is_integer()
+          && !var->type->is_record()
           && !(var->type->is_sampler() && state->es_shader)
           && !(var->type->is_array()
                && (var->type->fields.array->is_float()
@@ -3963,17 +3970,6 @@ ast_type_specifier::hir(exec_list *instructions,
 
    YYLTYPE loc = this->get_location();
 
-   if (this->precision != ast_precision_none
-       && !state->check_precision_qualifiers_allowed(&loc)) {
-      return NULL;
-   }
-   if (this->precision != ast_precision_none
-       && this->structure != NULL) {
-      _mesa_glsl_error(&loc, state,
-                       "precision qualifiers do not apply to structures");
-      return NULL;
-   }
-
    /* If this is a precision statement, check that the type to which it is
     * applied is either float or int.
     *
@@ -3985,9 +3981,15 @@ ast_type_specifier::hir(exec_list *instructions,
     *    qualifiers will result in an error.
     */
    if (this->default_precision != ast_precision_none) {
-      assert(this->precision != ast_precision_none);
-      assert(this->structure == NULL); /* The check for structures was
-                                        * performed above. */
+      if (!state->check_precision_qualifiers_allowed(&loc))
+         return NULL;
+
+      if (this->structure != NULL) {
+         _mesa_glsl_error(&loc, state,
+                          "precision qualifiers do not apply to structures");
+         return NULL;
+      }
+
       if (this->is_array) {
          _mesa_glsl_error(&loc, state,
                           "default precision statements do not apply to "

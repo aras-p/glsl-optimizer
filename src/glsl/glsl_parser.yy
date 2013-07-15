@@ -169,7 +169,6 @@ static void yyerror(YYLTYPE *loc, _mesa_glsl_parse_state *st, const char *msg)
 %type <type_qualifier> interface_block_layout_qualifier
 %type <type_qualifier> interface_qualifier
 %type <type_specifier> type_specifier
-%type <type_specifier> type_specifier_no_prec
 %type <type_specifier> type_specifier_nonarray
 %type <identifier> basic_type_specifier_nonarray
 %type <fully_specified_type> fully_specified_type
@@ -790,9 +789,8 @@ declaration:
    {
       $$ = $1;
    }
-   | PRECISION precision_qualifier type_specifier_no_prec ';'
+   | PRECISION precision_qualifier type_specifier ';'
    {
-      $3->precision = $2;
       $3->default_precision = $2;
       $$ = $3;
    }
@@ -904,6 +902,17 @@ parameter_qualifier:
 
       $$ = $1;
       $$.merge_qualifier(&@1, state, $2);
+   }
+   | precision_qualifier parameter_qualifier
+   {
+      if ($2.precision != ast_precision_none)
+         _mesa_glsl_error(&@1, state, "Duplicate precision qualifier.\n");
+
+      if ($2.flags.i != 0)
+         _mesa_glsl_error(&@1, state, "Precision qualifiers must come last.\n");
+
+      $$ = $2;
+      $$.precision = $1;
    }
 
 parameter_direction_qualifier:
@@ -1319,6 +1328,11 @@ type_qualifier:
    | storage_qualifier
    | interpolation_qualifier
    | layout_qualifier
+   | precision_qualifier
+   {
+      memset(&$$, 0, sizeof($$));
+      $$.precision = $1;
+   }
 
    /* Multiple qualifiers:
     * In GLSL 4.20, these can be specified in any order.  In earlier versions,
@@ -1414,6 +1428,17 @@ type_qualifier:
       $$ = $1;
       $$.merge_qualifier(&@1, state, $2);
    }
+   | precision_qualifier type_qualifier
+   {
+      if ($2.precision != ast_precision_none)
+         _mesa_glsl_error(&@1, state, "Duplicate precision qualifier.\n");
+
+      if ($2.flags.i != 0)
+         _mesa_glsl_error(&@1, state, "Precision qualifiers must come last.\n");
+
+      $$ = $2;
+      $$.precision = $1;
+   }
    ;
 
 storage_qualifier:
@@ -1466,18 +1491,6 @@ storage_qualifier:
    ;
 
 type_specifier:
-   type_specifier_no_prec
-   {
-      $$ = $1;
-   }
-   | precision_qualifier type_specifier_no_prec
-   {
-      $$ = $2;
-      $$->precision = $1;
-   }
-   ;
-
-type_specifier_no_prec:
    type_specifier_nonarray
    | type_specifier_nonarray '[' ']'
    {
