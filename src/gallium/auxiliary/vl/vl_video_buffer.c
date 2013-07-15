@@ -406,6 +406,7 @@ vl_video_buffer_create(struct pipe_context *pipe,
    (
       pipe->screen,
       PIPE_VIDEO_PROFILE_UNKNOWN,
+      PIPE_VIDEO_ENTRYPOINT_UNKNOWN,
       PIPE_VIDEO_CAP_NPOT_TEXTURES
    );
 

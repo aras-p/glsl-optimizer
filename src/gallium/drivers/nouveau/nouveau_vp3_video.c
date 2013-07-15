@@ -353,6 +353,7 @@ nouveau_vp3_load_firmware(struct nouveau_vp3_decoder *dec,
 int
 nouveau_vp3_screen_get_video_param(struct pipe_screen *pscreen,
                                    enum pipe_video_profile profile,
+                                   enum pipe_video_entrypoint entrypoint,
                                    enum pipe_video_cap param)
 {
    int chipset = nouveau_screen(pscreen)->device->chipset;

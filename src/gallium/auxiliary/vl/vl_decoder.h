@@ -35,7 +35,8 @@
  * check if a given profile is supported with shader based decoding
  */
 bool
-vl_profile_supported(struct pipe_screen *screen, enum pipe_video_profile profile);
+vl_profile_supported(struct pipe_screen *screen, enum pipe_video_profile profile,
+                     enum pipe_video_entrypoint entrypoint);
 
 /**
  * get the maximum supported level for the given profile with shader based decoding

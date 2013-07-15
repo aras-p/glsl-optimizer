@@ -75,6 +75,7 @@ vlVdpVideoSurfaceCreate(VdpDevice device, VdpChromaType chroma_type,
    (
       pipe->screen,
       PIPE_VIDEO_PROFILE_UNKNOWN,
+      PIPE_VIDEO_ENTRYPOINT_BITSTREAM,
       PIPE_VIDEO_CAP_PREFERED_FORMAT
    );
    p_surf->templat.chroma_format = ChromaToPipe(chroma_type);
@@ -84,6 +85,7 @@ vlVdpVideoSurfaceCreate(VdpDevice device, VdpChromaType chroma_type,
    (
       pipe->screen,
       PIPE_VIDEO_PROFILE_UNKNOWN,
+      PIPE_VIDEO_ENTRYPOINT_BITSTREAM,
       PIPE_VIDEO_CAP_PREFERS_INTERLACED
    );
    p_surf->video_buffer = pipe->create_video_buffer(pipe, &p_surf->templat);

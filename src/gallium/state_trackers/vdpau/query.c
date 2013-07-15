@@ -178,11 +178,15 @@ vlVdpDecoderQueryCapabilities(VdpDevice device, VdpDecoderProfile profile,
    }
 
    pipe_mutex_lock(dev->mutex);
-   *is_supported = pscreen->get_video_param(pscreen, p_profile, PIPE_VIDEO_CAP_SUPPORTED);
+   *is_supported = pscreen->get_video_param(pscreen, p_profile, PIPE_VIDEO_ENTRYPOINT_BITSTREAM,
+                                            PIPE_VIDEO_CAP_SUPPORTED);
    if (*is_supported) {
-      *max_width = pscreen->get_video_param(pscreen, p_profile, PIPE_VIDEO_CAP_MAX_WIDTH); 
-      *max_height = pscreen->get_video_param(pscreen, p_profile, PIPE_VIDEO_CAP_MAX_HEIGHT);
-      *max_level = pscreen->get_video_param(pscreen, p_profile, PIPE_VIDEO_CAP_MAX_LEVEL);
+      *max_width = pscreen->get_video_param(pscreen, p_profile, PIPE_VIDEO_ENTRYPOINT_BITSTREAM,
+                                            PIPE_VIDEO_CAP_MAX_WIDTH);
+      *max_height = pscreen->get_video_param(pscreen, p_profile, PIPE_VIDEO_ENTRYPOINT_BITSTREAM,
+                                             PIPE_VIDEO_CAP_MAX_HEIGHT);
+      *max_level = pscreen->get_video_param(pscreen, p_profile, PIPE_VIDEO_ENTRYPOINT_BITSTREAM,
+                                            PIPE_VIDEO_CAP_MAX_LEVEL);
       *max_macroblocks = (*max_width/16)*(*max_height/16);
    } else {
       *max_width = 0;
@@ -512,11 +516,13 @@ vlVdpVideoMixerQueryParameterValueRange(VdpDevice device, VdpVideoMixerParameter
    switch (parameter) {
    case VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_WIDTH:
       *(uint32_t*)min_value = 48;
-      *(uint32_t*)max_value = screen->get_video_param(screen, prof, PIPE_VIDEO_CAP_MAX_WIDTH);
+      *(uint32_t*)max_value = screen->get_video_param(screen, prof, PIPE_VIDEO_ENTRYPOINT_BITSTREAM,
+                                                      PIPE_VIDEO_CAP_MAX_WIDTH);
       break;
    case VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_HEIGHT:
       *(uint32_t*)min_value = 48;
-      *(uint32_t*)max_value = screen->get_video_param(screen, prof, PIPE_VIDEO_CAP_MAX_HEIGHT);
+      *(uint32_t*)max_value = screen->get_video_param(screen, prof, PIPE_VIDEO_ENTRYPOINT_BITSTREAM,
+                                                      PIPE_VIDEO_CAP_MAX_HEIGHT);
       break;
 
    case VDP_VIDEO_MIXER_PARAMETER_LAYERS:

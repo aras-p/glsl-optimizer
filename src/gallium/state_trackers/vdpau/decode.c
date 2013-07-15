@@ -76,6 +76,7 @@ vlVdpDecoderCreate(VdpDevice device,
    (
       screen,
       templat.profile,
+      PIPE_VIDEO_ENTRYPOINT_BITSTREAM,
       PIPE_VIDEO_CAP_SUPPORTED
    );
    if (!supported) {
@@ -459,8 +460,10 @@ vlVdpDecoderRender(VdpDecoder decoder,
 
    pipe_mutex_lock(vlsurf->device->mutex);
 
-   buffer_support[0] = screen->get_video_param(screen, dec->profile, PIPE_VIDEO_CAP_SUPPORTS_PROGRESSIVE);
-   buffer_support[1] = screen->get_video_param(screen, dec->profile, PIPE_VIDEO_CAP_SUPPORTS_INTERLACED);
+   buffer_support[0] = screen->get_video_param(screen, dec->profile, PIPE_VIDEO_ENTRYPOINT_BITSTREAM,
+                                               PIPE_VIDEO_CAP_SUPPORTS_PROGRESSIVE);
+   buffer_support[1] = screen->get_video_param(screen, dec->profile, PIPE_VIDEO_ENTRYPOINT_BITSTREAM,
+                                               PIPE_VIDEO_CAP_SUPPORTS_INTERLACED);
 
    if (vlsurf->video_buffer == NULL ||
        !screen->is_video_format_supported(screen, vlsurf->video_buffer->buffer_format, dec->profile) ||
@@ -471,10 +474,12 @@ vlVdpDecoderRender(VdpDecoder decoder,
          vlsurf->video_buffer->destroy(vlsurf->video_buffer);
 
       /* set the buffer format to the prefered one */
-      vlsurf->templat.buffer_format = screen->get_video_param(screen, dec->profile, PIPE_VIDEO_CAP_PREFERED_FORMAT);
+      vlsurf->templat.buffer_format = screen->get_video_param(screen, dec->profile, PIPE_VIDEO_ENTRYPOINT_BITSTREAM,
+                                                              PIPE_VIDEO_CAP_PREFERED_FORMAT);
 
       /* also set interlacing to decoders preferences */
-      vlsurf->templat.interlaced = screen->get_video_param(screen, dec->profile, PIPE_VIDEO_CAP_PREFERS_INTERLACED);
+      vlsurf->templat.interlaced = screen->get_video_param(screen, dec->profile, PIPE_VIDEO_ENTRYPOINT_BITSTREAM,
+                                                           PIPE_VIDEO_CAP_PREFERS_INTERLACED);
 
       /* and recreate the video buffer */
       vlsurf->video_buffer = dec->context->create_video_buffer(dec->context, &vlsurf->templat);

@@ -33,7 +33,8 @@
 #include "vl_mpeg12_decoder.h"
 
 bool
-vl_profile_supported(struct pipe_screen *screen, enum pipe_video_profile profile)
+vl_profile_supported(struct pipe_screen *screen, enum pipe_video_profile profile,
+                     enum pipe_video_entrypoint entrypoint)
 {
    assert(screen);
    switch (u_reduce_video_profile(profile)) {
@@ -74,6 +75,7 @@ vl_create_decoder(struct pipe_context *pipe,
    (
       pipe->screen,
       templat->profile,
+      templat->entrypoint,
       PIPE_VIDEO_CAP_NPOT_TEXTURES
    );
 

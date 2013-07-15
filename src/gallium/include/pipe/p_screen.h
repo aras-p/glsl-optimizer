@@ -94,6 +94,7 @@ struct pipe_screen {
     */
    int (*get_video_param)( struct pipe_screen *,
 			   enum pipe_video_profile profile,
+			   enum pipe_video_entrypoint entrypoint,
 			   enum pipe_video_cap param );
 
    /**

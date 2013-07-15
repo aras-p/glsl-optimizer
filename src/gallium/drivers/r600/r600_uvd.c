@@ -174,6 +174,7 @@ struct pipe_video_codec *r600_uvd_create_decoder(struct pipe_context *context,
 
 int r600_uvd_get_video_param(struct pipe_screen *screen,
 			     enum pipe_video_profile profile,
+			     enum pipe_video_entrypoint entrypoint,
 			     enum pipe_video_cap param)
 {
 	struct r600_screen *rscreen = (struct r600_screen *)screen;
@@ -194,5 +195,5 @@ int r600_uvd_get_video_param(struct pipe_screen *screen,
 		}
 	}
 
-	return ruvd_get_video_param(screen, profile, param);
+	return ruvd_get_video_param(screen, profile, entrypoint, param);
 }

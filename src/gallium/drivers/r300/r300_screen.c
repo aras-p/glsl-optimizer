@@ -341,11 +341,12 @@ static float r300_get_paramf(struct pipe_screen* pscreen,
 
 static int r300_get_video_param(struct pipe_screen *screen,
 				enum pipe_video_profile profile,
+				enum pipe_video_entrypoint entrypoint,
 				enum pipe_video_cap param)
 {
    switch (param) {
       case PIPE_VIDEO_CAP_SUPPORTED:
-         return vl_profile_supported(screen, profile);
+         return vl_profile_supported(screen, profile, entrypoint);
       case PIPE_VIDEO_CAP_NPOT_TEXTURES:
          return 0;
       case PIPE_VIDEO_CAP_MAX_WIDTH:

@@ -177,7 +177,8 @@ Status XvMCCreateSurface(Display *dpy, XvMCContext *context, XvMCSurface *surfac
    tmpl.buffer_format = pipe->screen->get_video_param
    (
       pipe->screen,
-      PIPE_VIDEO_PROFILE_MPEG2_MAIN,
+      context_priv->decoder->profile,
+      context_priv->decoder->entrypoint,
       PIPE_VIDEO_CAP_PREFERED_FORMAT
    );
    tmpl.chroma_format = context_priv->decoder->chroma_format;
@@ -186,7 +187,8 @@ Status XvMCCreateSurface(Display *dpy, XvMCContext *context, XvMCSurface *surfac
    tmpl.interlaced = pipe->screen->get_video_param
    (
       pipe->screen,
-      PIPE_VIDEO_PROFILE_MPEG2_MAIN,
+      context_priv->decoder->profile,
+      context_priv->decoder->entrypoint,
       PIPE_VIDEO_CAP_PREFERS_INTERLACED
    );
 

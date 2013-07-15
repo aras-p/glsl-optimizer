@@ -898,6 +898,7 @@ struct pipe_video_buffer *r600_video_buffer_create(struct pipe_context *pipe,
 
 int r600_uvd_get_video_param(struct pipe_screen *screen,
 			     enum pipe_video_profile profile,
+			     enum pipe_video_entrypoint entrypoint,
 			     enum pipe_video_cap param);
 
 /*

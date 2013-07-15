@@ -1075,6 +1075,7 @@ void ruvd_set_dt_surfaces(struct ruvd_msg *msg, struct radeon_surface *luma,
 
 int ruvd_get_video_param(struct pipe_screen *screen,
 			 enum pipe_video_profile profile,
+			 enum pipe_video_entrypoint entrypoint,
 			 enum pipe_video_cap param)
 {
 	switch (param) {

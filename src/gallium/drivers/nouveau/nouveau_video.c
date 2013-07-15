@@ -834,11 +834,12 @@ error:
 static int
 nouveau_screen_get_video_param(struct pipe_screen *pscreen,
                                enum pipe_video_profile profile,
+			       enum pipe_video_entrypoint entrypoint,
                                enum pipe_video_cap param)
 {
    switch (param) {
    case PIPE_VIDEO_CAP_SUPPORTED:
-      return vl_profile_supported(pscreen, profile);
+      return vl_profile_supported(pscreen, profile, entrypoint);
    case PIPE_VIDEO_CAP_NPOT_TEXTURES:
       return 1;
    case PIPE_VIDEO_CAP_MAX_WIDTH:

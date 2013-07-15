@@ -220,6 +220,7 @@ nouveau_vp3_vp_caps(struct nouveau_vp3_decoder *dec, union pipe_desc desc,
 int
 nouveau_vp3_screen_get_video_param(struct pipe_screen *pscreen,
                                    enum pipe_video_profile profile,
+                                   enum pipe_video_entrypoint entrypoint,
                                    enum pipe_video_cap param);
 
 boolean

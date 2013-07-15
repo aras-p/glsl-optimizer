@@ -744,6 +744,7 @@ error:
 int
 nv84_screen_get_video_param(struct pipe_screen *pscreen,
                             enum pipe_video_profile profile,
+                            enum pipe_video_entrypoint entrypoint,
                             enum pipe_video_cap param)
 {
    switch (param) {
