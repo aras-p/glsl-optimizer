@@ -136,7 +136,8 @@ struct pipe_screen {
     */
    boolean (*is_video_format_supported)( struct pipe_screen *,
                                          enum pipe_format format,
-                                         enum pipe_video_profile profile );
+                                         enum pipe_video_profile profile,
+                                         enum pipe_video_entrypoint entrypoint );
 
    /**
     * Check if we can actually create the given resource (test the dimension,

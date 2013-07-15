@@ -141,7 +141,8 @@ vlVdpVideoSurfaceQueryGetPutBitsYCbCrCapabilities(VdpDevice device, VdpChromaTyp
    (
       pscreen,
       FormatYCBCRToPipe(bits_ycbcr_format),
-      PIPE_VIDEO_PROFILE_UNKNOWN
+      PIPE_VIDEO_PROFILE_UNKNOWN,
+      PIPE_VIDEO_ENTRYPOINT_BITSTREAM
    );
    pipe_mutex_unlock(dev->mutex);
 
@@ -391,7 +392,8 @@ vlVdpOutputSurfaceQueryPutBitsYCbCrCapabilities(VdpDevice device, VdpRGBAFormat 
    *is_supported &= pscreen->is_video_format_supported
    (
       pscreen, ycbcr_format,
-      PIPE_VIDEO_PROFILE_UNKNOWN
+      PIPE_VIDEO_PROFILE_UNKNOWN,
+      PIPE_VIDEO_ENTRYPOINT_BITSTREAM
    );
    pipe_mutex_unlock(dev->mutex);
 

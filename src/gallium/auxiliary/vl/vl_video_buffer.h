@@ -73,7 +73,8 @@ vl_video_buffer_max_size(struct pipe_screen *screen);
 boolean
 vl_video_buffer_is_format_supported(struct pipe_screen *screen,
                                     enum pipe_format format,
-                                    enum pipe_video_profile profile);
+                                    enum pipe_video_profile profile,
+                                    enum pipe_video_entrypoint entrypoint);
 
 /*
  * set the associated data for the given video buffer

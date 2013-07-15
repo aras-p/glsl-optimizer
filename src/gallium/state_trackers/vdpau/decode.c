@@ -466,7 +466,8 @@ vlVdpDecoderRender(VdpDecoder decoder,
                                                PIPE_VIDEO_CAP_SUPPORTS_INTERLACED);
 
    if (vlsurf->video_buffer == NULL ||
-       !screen->is_video_format_supported(screen, vlsurf->video_buffer->buffer_format, dec->profile) ||
+       !screen->is_video_format_supported(screen, vlsurf->video_buffer->buffer_format,
+                                          dec->profile, PIPE_VIDEO_ENTRYPOINT_BITSTREAM) ||
        !buffer_support[vlsurf->video_buffer->interlaced]) {
 
       /* destroy the old one */

@@ -147,7 +147,8 @@ vl_video_buffer_surface_format(enum pipe_format format)
 boolean
 vl_video_buffer_is_format_supported(struct pipe_screen *screen,
                                     enum pipe_format format,
-                                    enum pipe_video_profile profile)
+                                    enum pipe_video_profile profile,
+                                    enum pipe_video_entrypoint entrypoint)
 {
    const enum pipe_format *resource_formats;
    unsigned i;

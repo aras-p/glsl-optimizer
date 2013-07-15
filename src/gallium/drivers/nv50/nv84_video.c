@@ -787,10 +787,11 @@ nv84_screen_get_video_param(struct pipe_screen *pscreen,
 boolean
 nv84_screen_video_supported(struct pipe_screen *screen,
                             enum pipe_format format,
-                            enum pipe_video_profile profile)
+                            enum pipe_video_profile profile,
+                            enum pipe_video_entrypoint entrypoint)
 {
    if (profile != PIPE_VIDEO_PROFILE_UNKNOWN)
       return format == PIPE_FORMAT_NV12;
 
-   return vl_video_buffer_is_format_supported(screen, format, profile);
+   return vl_video_buffer_is_format_supported(screen, format, profile, entrypoint);
 }

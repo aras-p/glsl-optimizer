@@ -226,4 +226,5 @@ nouveau_vp3_screen_get_video_param(struct pipe_screen *pscreen,
 boolean
 nouveau_vp3_screen_video_supported(struct pipe_screen *screen,
                                    enum pipe_format format,
-                                   enum pipe_video_profile profile);
+                                   enum pipe_video_profile profile,
+                                   enum pipe_video_entrypoint entrypoint);

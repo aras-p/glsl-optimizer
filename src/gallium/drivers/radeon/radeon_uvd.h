@@ -369,6 +369,7 @@ int ruvd_get_video_param(struct pipe_screen *screen,
 /* the hardware only supports NV12 */
 boolean ruvd_is_format_supported(struct pipe_screen *screen,
 				 enum pipe_format format,
-				 enum pipe_video_profile profile);
+				 enum pipe_video_profile profile,
+				 enum pipe_video_entrypoint entrypoint);
 
 #endif
