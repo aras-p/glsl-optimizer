@@ -349,6 +349,7 @@ static void r300_setup_hyperz_properties(struct r300_screen *screen,
     static unsigned hiz_align_y[4] = {8, 8, 8, 32};
 
     if (util_format_is_depth_or_stencil(tex->b.b.format) &&
+        util_format_get_blocksizebits(tex->b.b.format) == 32 &&
         tex->tex.microtile) {
         unsigned i, pipes;
 
