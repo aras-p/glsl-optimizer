@@ -233,10 +233,11 @@ int rvid_get_video_param(struct pipe_screen *screen,
 		case PIPE_VIDEO_FORMAT_MPEG12:
 		case PIPE_VIDEO_FORMAT_MPEG4:
 		case PIPE_VIDEO_FORMAT_MPEG4_AVC:
-			return true;
+			return entrypoint != PIPE_VIDEO_ENTRYPOINT_ENCODE;
 		case PIPE_VIDEO_FORMAT_VC1:
 			/* FIXME: VC-1 simple/main profile is broken */
-			return profile == PIPE_VIDEO_PROFILE_VC1_ADVANCED;
+			return profile == PIPE_VIDEO_PROFILE_VC1_ADVANCED &&
+			       entrypoint != PIPE_VIDEO_ENTRYPOINT_ENCODE;
 		default:
 			return false;
 		}

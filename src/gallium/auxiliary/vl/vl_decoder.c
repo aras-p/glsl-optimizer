@@ -39,7 +39,7 @@ vl_profile_supported(struct pipe_screen *screen, enum pipe_video_profile profile
    assert(screen);
    switch (u_reduce_video_profile(profile)) {
       case PIPE_VIDEO_FORMAT_MPEG12:
-         return true;
+         return entrypoint != PIPE_VIDEO_ENTRYPOINT_ENCODE;
       default:
          return false;
    }

@@ -110,6 +110,24 @@ enum pipe_h264_slice_type
    PIPE_H264_SLICE_TYPE_SI = 0x4
 };
 
+enum pipe_h264_enc_picture_type
+{
+   PIPE_H264_ENC_PICTURE_TYPE_P = 0x00,
+   PIPE_H264_ENC_PICTURE_TYPE_B = 0x01,
+   PIPE_H264_ENC_PICTURE_TYPE_I = 0x02,
+   PIPE_H264_ENC_PICTURE_TYPE_IDR = 0x03,
+   PIPE_H264_ENC_PICTURE_TYPE_SKIP = 0x04
+};
+
+enum pipe_h264_enc_rate_control_method
+{
+   PIPE_H264_ENC_RATE_CONTROL_METHOD_DISABLE = 0x00,
+   PIPE_H264_ENC_RATE_CONTROL_METHOD_CONSTANT_SKIP = 0x01,
+   PIPE_H264_ENC_RATE_CONTROL_METHOD_VARIABLE_SKIP = 0x02,
+   PIPE_H264_ENC_RATE_CONTROL_METHOD_CONSTANT = 0x03,
+   PIPE_H264_ENC_RATE_CONTROL_METHOD_VARIABLE = 0x04
+};
+
 struct pipe_picture_desc
 {
    enum pipe_video_profile profile;
@@ -323,6 +341,33 @@ struct pipe_h264_picture_desc
    uint32_t frame_num_list[16];
 
    struct pipe_video_buffer *ref[16];
+};
+
+struct pipe_h264_enc_rate_control
+{
+   enum pipe_h264_enc_rate_control_method rate_ctrl_method;
+   unsigned target_bitrate;
+   unsigned peak_bitrate;
+   unsigned frame_rate_num;
+   unsigned frame_rate_den;
+   unsigned vbv_buffer_size;
+   unsigned target_bits_picture;
+   unsigned peak_bits_picture_integer;
+   unsigned peak_bits_picture_fraction;
+};
+
+struct pipe_h264_enc_picture_desc
+{
+   struct pipe_picture_desc base;
+
+   struct pipe_h264_enc_rate_control rate_ctrl;
+
+   unsigned quant_i_frames;
+   unsigned quant_p_frames;
+   unsigned quant_b_frames;
+
+   enum pipe_h264_enc_picture_type picture_type;
+   unsigned frame_num;
 };
 
 #ifdef __cplusplus

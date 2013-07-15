@@ -87,6 +87,14 @@ struct pipe_video_codec
                             const unsigned *sizes);
 
    /**
+    * encode to a bitstream
+    */
+   void (*encode_bitstream)(struct pipe_video_codec *codec,
+                            struct pipe_video_buffer *source,
+                            struct pipe_resource *destination,
+                            void **feedback);
+
+   /**
     * end decoding of the current frame
     */
    void (*end_frame)(struct pipe_video_codec *codec,
@@ -98,6 +106,11 @@ struct pipe_video_codec
     * should be called before a video_buffer is acessed by the state tracker again
     */
    void (*flush)(struct pipe_video_codec *codec);
+
+   /**
+    * get encoder feedback
+    */
+   void (*get_feedback)(struct pipe_video_codec *codec, void *feedback, unsigned *size);
 };
 
 /**
