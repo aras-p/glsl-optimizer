@@ -233,8 +233,8 @@ get_tex_rgba_compressed(struct gl_context *ctx, GLuint dimensions,
    const GLuint width = texImage->Width;
    const GLuint height = texImage->Height;
    const GLuint depth = texImage->Depth;
-   GLfloat *tempImage, *srcRow;
-   GLuint row;
+   GLfloat *tempImage, *tempSlice, *srcRow;
+   GLuint row, slice;
 
    /* Decompress into temp float buffer, then pack into user buffer */
    tempImage = malloc(width * height * depth
@@ -244,20 +244,22 @@ get_tex_rgba_compressed(struct gl_context *ctx, GLuint dimensions,
       return;
    }
 
-   /* Decompress the texture image - results in 'tempImage' */
-   {
+   /* Decompress the texture image slices - results in 'tempImage' */
+   for (slice = 0; slice < depth; slice++) {
       GLubyte *srcMap;
       GLint srcRowStride;
 
-      ctx->Driver.MapTextureImage(ctx, texImage, 0,
+      tempSlice = tempImage + slice * 4 * width * height;
+
+      ctx->Driver.MapTextureImage(ctx, texImage, slice,
                                   0, 0, width, height,
                                   GL_MAP_READ_BIT,
                                   &srcMap, &srcRowStride);
       if (srcMap) {
          _mesa_decompress_image(texFormat, width, height,
-                                srcMap, srcRowStride, tempImage);
+                                srcMap, srcRowStride, tempSlice);
 
-         ctx->Driver.UnmapTextureImage(ctx, texImage, 0);
+         ctx->Driver.UnmapTextureImage(ctx, texImage, slice);
       }
       else {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glGetTexImage");
@@ -294,15 +296,19 @@ get_tex_rgba_compressed(struct gl_context *ctx, GLuint dimensions,
                               rebaseFormat);
    }
 
-   srcRow = tempImage;
-   for (row = 0; row < height; row++) {
-      void *dest = _mesa_image_address(dimensions, &ctx->Pack, pixels,
-                                       width, height, format, type,
-                                       0, row, 0);
+   tempSlice = tempImage;
+   for (slice = 0; slice < depth; slice++) {
+      srcRow = tempSlice;
+      for (row = 0; row < height; row++) {
+         void *dest = _mesa_image_address(dimensions, &ctx->Pack, pixels,
+                                          width, height, format, type,
+                                          slice, row, 0);
 
-      _mesa_pack_rgba_span_float(ctx, width, (GLfloat (*)[4]) srcRow,
-                                 format, type, dest, &ctx->Pack, transferOps);
-      srcRow += width * 4;
+         _mesa_pack_rgba_span_float(ctx, width, (GLfloat (*)[4]) srcRow,
+                                    format, type, dest, &ctx->Pack, transferOps);
+         srcRow += 4 * width;
+      }
+      tempSlice += 4 * width * height;
    }
 
    free(tempImage);
@@ -616,18 +622,8 @@ _mesa_get_teximage(struct gl_context *ctx,
                    GLenum format, GLenum type, GLvoid *pixels,
                    struct gl_texture_image *texImage)
 {
-   GLuint dimensions;
-
-   switch (texImage->TexObject->Target) {
-   case GL_TEXTURE_1D:
-      dimensions = 1;
-      break;
-   case GL_TEXTURE_3D:
-      dimensions = 3;
-      break;
-   default:
-      dimensions = 2;
-   }
+   const GLuint dimensions =
+      _mesa_get_texture_dimensions(texImage->TexObject->Target);
 
    /* map dest buffer, if PBO */
    if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
