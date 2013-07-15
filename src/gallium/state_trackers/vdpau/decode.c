@@ -44,7 +44,7 @@ vlVdpDecoderCreate(VdpDevice device,
                    uint32_t max_references,
                    VdpDecoder *decoder)
 {
-   enum pipe_video_profile p_profile;
+   struct pipe_video_decoder templat = {};
    struct pipe_context *pipe;
    struct pipe_screen *screen;
    vlVdpDevice *dev;
@@ -59,8 +59,8 @@ vlVdpDecoderCreate(VdpDevice device,
    if (!(width && height))
       return VDP_STATUS_INVALID_VALUE;
 
-   p_profile = ProfileToPipe(profile);
-   if (p_profile == PIPE_VIDEO_PROFILE_UNKNOWN)
+   templat.profile = ProfileToPipe(profile);
+   if (templat.profile == PIPE_VIDEO_PROFILE_UNKNOWN)
       return VDP_STATUS_INVALID_DECODER_PROFILE;
 
    dev = vlGetDataHTAB(device);
@@ -75,7 +75,7 @@ vlVdpDecoderCreate(VdpDevice device,
    supported = screen->get_video_param
    (
       screen,
-      p_profile,
+      templat.profile,
       PIPE_VIDEO_CAP_SUPPORTED
    );
    if (!supported) {
@@ -91,14 +91,13 @@ vlVdpDecoderCreate(VdpDevice device,
 
    vldecoder->device = dev;
 
-   vldecoder->decoder = pipe->create_video_decoder
-   (
-      pipe, p_profile,
-      PIPE_VIDEO_ENTRYPOINT_BITSTREAM,
-      PIPE_VIDEO_CHROMA_FORMAT_420,
-      width, height, max_references,
-      false
-   );
+   templat.entrypoint = PIPE_VIDEO_ENTRYPOINT_BITSTREAM;
+   templat.chroma_format = PIPE_VIDEO_CHROMA_FORMAT_420;
+   templat.width = width;
+   templat.height = height;
+   templat.max_references = max_references;
+
+   vldecoder->decoder = pipe->create_video_decoder(pipe, &templat);
 
    if (!vldecoder->decoder) {
       ret = VDP_STATUS_ERROR;

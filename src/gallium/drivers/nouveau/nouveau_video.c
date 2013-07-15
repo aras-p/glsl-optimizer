@@ -499,26 +499,23 @@ nouveau_decoder_destroy(struct pipe_video_decoder *decoder)
 
 static struct pipe_video_decoder *
 nouveau_create_decoder(struct pipe_context *context,
-                       struct nouveau_screen *screen,
-                       enum pipe_video_profile profile,
-                       enum pipe_video_entrypoint entrypoint,
-                       enum pipe_video_chroma_format chroma_format,
-                       unsigned width, unsigned height,
-                       unsigned max_references, bool expect_chunked_decode)
+                       const struct pipe_video_decoder *templ,
+                       struct nouveau_screen *screen)
 {
    struct nv04_fifo nv04_data = { .vram = 0xbeef0201, .gart = 0xbeef0202 };
+   unsigned width = templ->width, height = templ->height;
    struct nouveau_object *mpeg = NULL;
    struct nouveau_decoder *dec;
    struct nouveau_pushbuf *push;
    int ret;
    bool is8274 = screen->device->chipset > 0x80;
 
-   debug_printf("Acceleration level: %s\n", entrypoint <= PIPE_VIDEO_ENTRYPOINT_BITSTREAM ? "bit":
-                                            entrypoint == PIPE_VIDEO_ENTRYPOINT_IDCT ? "IDCT" : "MC");
+   debug_printf("Acceleration level: %s\n", templ->entrypoint <= PIPE_VIDEO_ENTRYPOINT_BITSTREAM ? "bit":
+                                            templ->entrypoint == PIPE_VIDEO_ENTRYPOINT_IDCT ? "IDCT" : "MC");
 
    if (getenv("XVMC_VL"))
       goto vl;
-   if (u_reduce_video_profile(profile) != PIPE_VIDEO_CODEC_MPEG12)
+   if (u_reduce_video_profile(templ->profile) != PIPE_VIDEO_CODEC_MPEG12)
       goto vl;
    if (screen->device->chipset >= 0x98 && screen->device->chipset != 0xa0)
       goto vl;
@@ -560,13 +557,10 @@ nouveau_create_decoder(struct pipe_context *context,
    }
 
    dec->mpeg = mpeg;
+   dec->base = *templ;
    dec->base.context = context;
-   dec->base.profile = profile;
-   dec->base.entrypoint = entrypoint;
-   dec->base.chroma_format = chroma_format;
    dec->base.width = width;
    dec->base.height = height;
-   dec->base.max_references = max_references;
    dec->base.destroy = nouveau_decoder_destroy;
    dec->base.begin_frame = nouveau_decoder_begin_frame;
    dec->base.decode_macroblock = nouveau_decoder_decode_macroblock;
@@ -616,7 +610,7 @@ nouveau_create_decoder(struct pipe_context *context,
 
    BEGIN_NV04(push, NV31_MPEG(FORMAT), 2);
    PUSH_DATA (push, 0);
-   switch (entrypoint) {
+   switch (templ->entrypoint) {
       case PIPE_VIDEO_ENTRYPOINT_BITSTREAM: PUSH_DATA (push, 0x100); break;
       case PIPE_VIDEO_ENTRYPOINT_IDCT: PUSH_DATA (push, 1); break;
       case PIPE_VIDEO_ENTRYPOINT_MC: PUSH_DATA (push, 0); break;
@@ -645,9 +639,7 @@ fail:
 
 vl:
    debug_printf("Using g3dvl renderer\n");
-   return vl_create_decoder(context, profile, entrypoint,
-                            chroma_format, width, height,
-                            max_references, expect_chunked_decode);
+   return vl_create_decoder(context, templ);
 }
 
 static struct pipe_sampler_view **
@@ -877,16 +869,10 @@ nouveau_screen_init_vdec(struct nouveau_screen *screen)
 
 static struct pipe_video_decoder *
 nouveau_context_create_decoder(struct pipe_context *context,
-                               enum pipe_video_profile profile,
-                               enum pipe_video_entrypoint entrypoint,
-                               enum pipe_video_chroma_format chroma_format,
-                               unsigned width, unsigned height,
-                               unsigned max_references, bool expect_chunked_decode)
+                               const struct pipe_video_decoder *templ)
 {
    struct nouveau_screen *screen = nouveau_context(context)->screen;
-   return nouveau_create_decoder(context, screen, profile, entrypoint,
-                                 chroma_format, width, height,
-                                 max_references, expect_chunked_decode);
+   return nouveau_create_decoder(context, templ, screen);
 }
 
 static struct pipe_video_buffer *

@@ -263,12 +263,7 @@ nv84_decoder_destroy(struct pipe_video_decoder *decoder)
 
 struct pipe_video_decoder *
 nv84_create_decoder(struct pipe_context *context,
-                    enum pipe_video_profile profile,
-                    enum pipe_video_entrypoint entrypoint,
-                    enum pipe_video_chroma_format chroma_format,
-                    unsigned width, unsigned height,
-                    unsigned max_references,
-                    bool chunked_decode)
+                    const struct pipe_video_decoder *templ)
 {
    struct nv50_context *nv50 = (struct nv50_context *)context;
    struct nouveau_screen *screen = &nv50->screen->base;
@@ -279,22 +274,20 @@ nv84_create_decoder(struct pipe_context *context,
    union pipe_color_union color;
    struct nv04_fifo nv04_data = { .vram = 0xbeef0201, .gart = 0xbeef0202 };
    int ret, i;
-   int is_h264 = u_reduce_video_profile(profile) == PIPE_VIDEO_CODEC_MPEG4_AVC;
-   int is_mpeg12 = u_reduce_video_profile(profile) == PIPE_VIDEO_CODEC_MPEG12;
+   int is_h264 = u_reduce_video_profile(templ->profile) == PIPE_VIDEO_CODEC_MPEG4_AVC;
+   int is_mpeg12 = u_reduce_video_profile(templ->profile) == PIPE_VIDEO_CODEC_MPEG12;
 
    if (getenv("XVMC_VL"))
-      return vl_create_decoder(context, profile, entrypoint,
-                               chroma_format, width, height,
-                               max_references, chunked_decode);
+      return vl_create_decoder(context, templ);
 
-   if ((is_h264 && entrypoint != PIPE_VIDEO_ENTRYPOINT_BITSTREAM) ||
-       (is_mpeg12 && entrypoint > PIPE_VIDEO_ENTRYPOINT_IDCT)) {
-      debug_printf("%x\n", entrypoint);
+   if ((is_h264 && templ->entrypoint != PIPE_VIDEO_ENTRYPOINT_BITSTREAM) ||
+       (is_mpeg12 && templ->entrypoint > PIPE_VIDEO_ENTRYPOINT_IDCT)) {
+      debug_printf("%x\n", templ->entrypoint);
       return NULL;
    }
 
    if (!is_h264 && !is_mpeg12) {
-      debug_printf("invalid profile: %x\n", profile);
+      debug_printf("invalid profile: %x\n", templ->profile);
       return NULL;
    }
 
@@ -302,13 +295,8 @@ nv84_create_decoder(struct pipe_context *context,
    if (!dec)
       return NULL;
 
+   dec->base = *templ;
    dec->base.context = context;
-   dec->base.profile = profile;
-   dec->base.entrypoint = entrypoint;
-   dec->base.chroma_format = chroma_format;
-   dec->base.width = width;
-   dec->base.height = height;
-   dec->base.max_references = max_references;
    dec->base.destroy = nv84_decoder_destroy;
    dec->base.flush = nv84_decoder_flush;
    if (is_h264) {
@@ -326,7 +314,7 @@ nv84_create_decoder(struct pipe_context *context,
       dec->base.begin_frame = nv84_decoder_begin_frame_mpeg12;
       dec->base.end_frame = nv84_decoder_end_frame_mpeg12;
 
-      if (entrypoint == PIPE_VIDEO_ENTRYPOINT_BITSTREAM) {
+      if (templ->entrypoint == PIPE_VIDEO_ENTRYPOINT_BITSTREAM) {
          dec->mpeg12_bs = CALLOC_STRUCT(vl_mpg12_bs);
          if (!dec->mpeg12_bs)
             goto fail;
@@ -409,7 +397,7 @@ nv84_create_decoder(struct pipe_context *context,
          goto fail;
       ret = nouveau_bo_new(screen->device, NOUVEAU_BO_VRAM | NOUVEAU_BO_NOSNOOP,
                            0,
-                           (max_references + 1) * dec->frame_mbs * 0x40 +
+                           (templ->max_references + 1) * dec->frame_mbs * 0x40 +
                            dec->frame_size + 0x2000,
                            NULL, &dec->mbring);
       if (ret)
@@ -433,8 +421,8 @@ nv84_create_decoder(struct pipe_context *context,
    if (is_mpeg12) {
       ret = nouveau_bo_new(screen->device, NOUVEAU_BO_GART,
                            0,
-                           align(0x20 * mb(width) * mb(height), 0x100) +
-                           (6 * 64 * 8) * mb(width) * mb(height) + 0x100,
+                           align(0x20 * mb(templ->width) * mb(templ->height), 0x100) +
+                           (6 * 64 * 8) * mb(templ->width) * mb(templ->height) + 0x100,
                            NULL, &dec->mpeg12_bo);
       if (ret)
          goto fail;
@@ -485,7 +473,7 @@ nv84_create_decoder(struct pipe_context *context,
       color.f[0] = color.f[1] = color.f[2] = color.f[3] = 0;
       surf.offset = dec->frame_size;
       surf.width = 64;
-      surf.height = (max_references + 1) * dec->frame_mbs / 4;
+      surf.height = (templ->max_references + 1) * dec->frame_mbs / 4;
       surf.depth = 1;
       surf.base.format = PIPE_FORMAT_B8G8R8A8_UNORM;
       surf.base.u.tex.level = 0;

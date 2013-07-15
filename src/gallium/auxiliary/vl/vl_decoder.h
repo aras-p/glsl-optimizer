@@ -48,10 +48,6 @@ vl_level_supported(struct pipe_screen *screen, enum pipe_video_profile profile);
  */
 struct pipe_video_decoder *
 vl_create_decoder(struct pipe_context *pipe,
-                  enum pipe_video_profile profile,
-                  enum pipe_video_entrypoint entrypoint,
-                  enum pipe_video_chroma_format chroma_format,
-                  unsigned width, unsigned height, unsigned max_references,
-                  bool expect_chunked_decode);
+                  const struct pipe_video_decoder *templat);
 
 #endif /* vl_decoder_h */

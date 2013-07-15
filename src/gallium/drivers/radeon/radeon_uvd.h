@@ -346,11 +346,7 @@ typedef struct radeon_winsys_cs_handle* (*ruvd_set_dtb)
 
 /* create an UVD decode */
 struct pipe_video_decoder *ruvd_create_decoder(struct pipe_context *context,
-					       enum pipe_video_profile profile,
-					       enum pipe_video_entrypoint entrypoint,
-					       enum pipe_video_chroma_format chroma_format,
-					       unsigned width, unsigned height,
-					       unsigned max_references, bool expect_chunked_decode,
+					       const struct pipe_video_decoder *templat,
 					       struct radeon_winsys* ws,
 					       ruvd_set_dtb set_dtb);
 

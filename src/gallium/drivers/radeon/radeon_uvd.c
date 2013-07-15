@@ -262,18 +262,16 @@ static uint32_t profile2stream_type(enum pipe_video_profile profile)
 }
 
 /* calculate size of reference picture buffer */
-static unsigned calc_dpb_size(enum pipe_video_profile profile,
-			      unsigned width, unsigned height,
-			      unsigned max_references)
+static unsigned calc_dpb_size(const struct pipe_video_decoder *templ)
 {
 	unsigned width_in_mb, height_in_mb, image_size, dpb_size;
 
 	// always align them to MB size for dpb calculation
-	width = align(width, VL_MACROBLOCK_WIDTH);
-	height = align(height, VL_MACROBLOCK_HEIGHT);
+	unsigned width = align(templ->width, VL_MACROBLOCK_WIDTH);
+	unsigned height = align(templ->height, VL_MACROBLOCK_HEIGHT);
 
 	// always one more for currently decoded picture
-	max_references += 1;
+	unsigned max_references = templ->max_references + 1;
 
 	// aligned size of a single frame
 	image_size = width * height;
@@ -284,7 +282,7 @@ static unsigned calc_dpb_size(enum pipe_video_profile profile,
 	width_in_mb = width / VL_MACROBLOCK_WIDTH;
 	height_in_mb = align(height / VL_MACROBLOCK_HEIGHT, 2);
 
-	switch (u_reduce_video_profile(profile)) {
+	switch (u_reduce_video_profile(templ->profile)) {
 	case PIPE_VIDEO_CODEC_MPEG4_AVC:
 		// the firmware seems to allways assume a minimum of ref frames
 		max_references = MAX2(NUM_H264_REFS, max_references);
@@ -819,15 +817,12 @@ static void ruvd_flush(struct pipe_video_decoder *decoder)
  * create and UVD decoder
  */
 struct pipe_video_decoder *ruvd_create_decoder(struct pipe_context *context,
-					       enum pipe_video_profile profile,
-					       enum pipe_video_entrypoint entrypoint,
-					       enum pipe_video_chroma_format chroma_format,
-					       unsigned width, unsigned height,
-					       unsigned max_references, bool expect_chunked_decode,
+					       const struct pipe_video_decoder *templ,
 					       struct radeon_winsys* ws,
 					       ruvd_set_dtb set_dtb)
 {
-	unsigned dpb_size = calc_dpb_size(profile, width, height, max_references);
+	unsigned dpb_size = calc_dpb_size(templ);
+	unsigned width = templ->width, height = templ->height;
 	struct radeon_info info;
 	struct ruvd_decoder *dec;
 	struct ruvd_msg msg;
@@ -835,12 +830,10 @@ struct pipe_video_decoder *ruvd_create_decoder(struct pipe_context *context,
 
 	ws->query_info(ws, &info);
 
-	switch(u_reduce_video_profile(profile)) {
+	switch(u_reduce_video_profile(templ->profile)) {
 	case PIPE_VIDEO_CODEC_MPEG12:
-		if (entrypoint > PIPE_VIDEO_ENTRYPOINT_BITSTREAM || info.family < CHIP_PALM)
-			return vl_create_mpeg12_decoder(context, profile, entrypoint,
-							chroma_format, width,
-							height, max_references, expect_chunked_decode);
+		if (templ->entrypoint > PIPE_VIDEO_ENTRYPOINT_BITSTREAM || info.family < CHIP_PALM)
+			return vl_create_mpeg12_decoder(context, templ);
 
 		/* fall through */
 	case PIPE_VIDEO_CODEC_MPEG4:
@@ -859,12 +852,8 @@ struct pipe_video_decoder *ruvd_create_decoder(struct pipe_context *context,
 	if (!dec)
 		return NULL;
 
+	dec->base = *templ;
 	dec->base.context = context;
-	dec->base.profile = profile;
-	dec->base.entrypoint = entrypoint;
-	dec->base.chroma_format = chroma_format;
-	dec->base.width = width;
-	dec->base.height = height;
 
 	dec->base.destroy = ruvd_destroy;
 	dec->base.begin_frame = ruvd_begin_frame;

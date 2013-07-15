@@ -50,7 +50,6 @@ struct vl_mpeg12_decoder
    unsigned blocks_per_line;
    unsigned num_blocks;
    unsigned width_in_macroblocks;
-   bool expect_chunked_decode;
 
    enum pipe_format zscan_source_format;
 
@@ -105,10 +104,6 @@ struct vl_mpeg12_buffer
  */
 struct pipe_video_decoder *
 vl_create_mpeg12_decoder(struct pipe_context *pipe,
-                         enum pipe_video_profile profile,
-                         enum pipe_video_entrypoint entrypoint,
-                         enum pipe_video_chroma_format chroma_format,
-                         unsigned width, unsigned height, unsigned max_references,
-                         bool expect_chunked_decode);
+                         const struct pipe_video_decoder *templat);
 
 #endif /* vl_mpeg12_decoder_h */

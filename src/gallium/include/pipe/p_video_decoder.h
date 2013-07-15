@@ -53,6 +53,7 @@ struct pipe_video_decoder
    unsigned width;
    unsigned height;
    unsigned max_references;
+   bool expect_chunked_decode;
 
    /**
     * destroy this video decoder

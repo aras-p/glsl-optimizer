@@ -191,6 +191,7 @@ Status XvMCCreateContext(Display *dpy, XvPortID port, int surface_type_id,
    Status ret;
    struct vl_screen *vscreen;
    struct pipe_context *pipe;
+   struct pipe_video_decoder templat = {};
    XvMCContextPrivate *context_priv;
    vl_csc_matrix csc;
 
@@ -244,14 +245,15 @@ Status XvMCCreateContext(Display *dpy, XvPortID port, int surface_type_id,
       return BadAlloc;
    }
 
-   context_priv->decoder = pipe->create_video_decoder
-   (
-      pipe, ProfileToPipe(mc_type),
-      (mc_type & XVMC_IDCT) ? PIPE_VIDEO_ENTRYPOINT_IDCT : PIPE_VIDEO_ENTRYPOINT_MC,
-      FormatToPipe(chroma_format),
-      width, height, 2,
-      true
-   );
+   templat.profile = ProfileToPipe(mc_type);
+   templat.entrypoint = (mc_type & XVMC_IDCT) ? PIPE_VIDEO_ENTRYPOINT_IDCT : PIPE_VIDEO_ENTRYPOINT_MC;
+   templat.chroma_format = FormatToPipe(chroma_format);
+   templat.width = width;
+   templat.height = height;
+   templat.max_references = 2;
+   templat.expect_chunked_decode = true;
+
+   context_priv->decoder = pipe->create_video_decoder(pipe, &templat);
 
    if (!context_priv->decoder) {
       XVMC_MSG(XVMC_ERR, "[XvMC] Could not create VL decoder.\n");

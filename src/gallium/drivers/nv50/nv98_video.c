@@ -58,11 +58,7 @@ nv98_decoder_decode_bitstream(struct pipe_video_decoder *decoder,
 
 struct pipe_video_decoder *
 nv98_create_decoder(struct pipe_context *context,
-                    enum pipe_video_profile profile,
-                    enum pipe_video_entrypoint entrypoint,
-                    enum pipe_video_chroma_format chroma_format,
-                    unsigned width, unsigned height, unsigned max_references,
-                    bool chunked_decode)
+                    const struct pipe_video_decoder *templ)
 {
    struct nouveau_screen *screen = &((struct nv50_context *)context)->screen->base;
    struct nouveau_vp3_decoder *dec;
@@ -79,12 +75,10 @@ nv98_create_decoder(struct pipe_context *context,
    u32 tmp_size = 0;
 
    if (getenv("XVMC_VL"))
-       return vl_create_decoder(context, profile, entrypoint,
-                                chroma_format, width, height,
-                                max_references, chunked_decode);
+       return vl_create_decoder(context, templ);
 
-   if (entrypoint != PIPE_VIDEO_ENTRYPOINT_BITSTREAM) {
-      debug_printf("%x\n", entrypoint);
+   if (templ->entrypoint != PIPE_VIDEO_ENTRYPOINT_BITSTREAM) {
+      debug_printf("%x\n", templ->entrypoint);
       return NULL;
    }
 
@@ -142,13 +136,8 @@ nv98_create_decoder(struct pipe_context *context,
    for (i = 0; i < 5; i++)
       PUSH_DATA (push[2], nv04_data.vram);
 
+   dec->base = *templ;
    dec->base.context = context;
-   dec->base.profile = profile;
-   dec->base.entrypoint = entrypoint;
-   dec->base.chroma_format = chroma_format;
-   dec->base.width = width;
-   dec->base.height = height;
-   dec->base.max_references = max_references;
    dec->base.decode_bitstream = nv98_decoder_decode_bitstream;
 
    for (i = 0; i < NOUVEAU_VP3_VIDEO_QDEPTH && !ret; ++i)
@@ -162,29 +151,29 @@ nv98_create_decoder(struct pipe_context *context,
    if (ret)
       goto fail;
 
-   switch (u_reduce_video_profile(profile)) {
+   switch (u_reduce_video_profile(templ->profile)) {
    case PIPE_VIDEO_CODEC_MPEG12: {
       codec = 1;
-      assert(max_references <= 2);
+      assert(templ->max_references <= 2);
       break;
    }
    case PIPE_VIDEO_CODEC_MPEG4: {
       codec = 4;
-      tmp_size = mb(height)*16 * mb(width)*16;
-      assert(max_references <= 2);
+      tmp_size = mb(templ->height)*16 * mb(templ->width)*16;
+      assert(templ->max_references <= 2);
       break;
    }
    case PIPE_VIDEO_CODEC_VC1: {
       ppp_codec = codec = 2;
-      tmp_size = mb(height)*16 * mb(width)*16;
-      assert(max_references <= 2);
+      tmp_size = mb(templ->height)*16 * mb(templ->width)*16;
+      assert(templ->max_references <= 2);
       break;
    }
    case PIPE_VIDEO_CODEC_MPEG4_AVC: {
       codec = 3;
-      dec->tmp_stride = 16 * mb_half(width) * nouveau_vp3_video_align(height) * 3 / 2;
-      tmp_size = dec->tmp_stride * (max_references + 1);
-      assert(max_references <= 16);
+      dec->tmp_stride = 16 * mb_half(templ->width) * nouveau_vp3_video_align(templ->height) * 3 / 2;
+      tmp_size = dec->tmp_stride * (templ->max_references + 1);
+      assert(templ->max_references <= 16);
       break;
    }
    default:
@@ -197,7 +186,7 @@ nv98_create_decoder(struct pipe_context *context,
    if (ret)
       goto fail;
 
-   ret = nouveau_vp3_load_firmware(dec, profile, screen->device->chipset);
+   ret = nouveau_vp3_load_firmware(dec, templ->profile, screen->device->chipset);
    if (ret)
       goto fw_fail;
 
@@ -208,9 +197,9 @@ nv98_create_decoder(struct pipe_context *context,
          goto fail;
    }
 
-   dec->ref_stride = mb(width)*16 * (mb_half(height)*32 + nouveau_vp3_video_align(height)/2);
+   dec->ref_stride = mb(templ->width)*16 * (mb_half(templ->height)*32 + nouveau_vp3_video_align(templ->height)/2);
    ret = nouveau_bo_new(screen->device, NOUVEAU_BO_VRAM, 0,
-                        dec->ref_stride * (max_references+2) + tmp_size,
+                        dec->ref_stride * (templ->max_references+2) + tmp_size,
                         &cfg, &dec->ref_bo);
    if (ret)
       goto fail;

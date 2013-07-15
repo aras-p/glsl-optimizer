@@ -292,12 +292,7 @@ void nv50_push_vbo(struct nv50_context *, const struct pipe_draw_info *);
 /* nv84_video.c */
 struct pipe_video_decoder *
 nv84_create_decoder(struct pipe_context *context,
-                    enum pipe_video_profile profile,
-                    enum pipe_video_entrypoint entrypoint,
-                    enum pipe_video_chroma_format chroma_format,
-                    unsigned width, unsigned height,
-                    unsigned max_references,
-                    bool expect_chunked_decode);
+                    const struct pipe_video_decoder *templ);
 
 struct pipe_video_buffer *
 nv84_video_buffer_create(struct pipe_context *pipe,
@@ -316,12 +311,7 @@ nv84_screen_video_supported(struct pipe_screen *screen,
 /* nv98_video.c */
 struct pipe_video_decoder *
 nv98_create_decoder(struct pipe_context *context,
-                    enum pipe_video_profile profile,
-                    enum pipe_video_entrypoint entrypoint,
-                    enum pipe_video_chroma_format chroma_format,
-                    unsigned width, unsigned height,
-                    unsigned max_references,
-                    bool expect_chunked_decode);
+                    const struct pipe_video_decoder *templ);
 
 struct pipe_video_buffer *
 nv98_video_buffer_create(struct pipe_context *pipe,

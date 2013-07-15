@@ -480,7 +480,7 @@ vl_mpeg12_get_decode_buffer(struct vl_mpeg12_decoder *dec, struct pipe_video_buf
    if (dec->base.entrypoint == PIPE_VIDEO_ENTRYPOINT_BITSTREAM)
       vl_mpg12_bs_init(&buffer->bs, &dec->base);
 
-   if (dec->expect_chunked_decode)
+   if (dec->base.expect_chunked_decode)
       vl_video_buffer_set_associated_data(target, &dec->base,
                                           buffer, vl_mpeg12_destroy_buffer);
    else
@@ -1018,30 +1018,21 @@ mc_frag_shader_callback(void *priv, struct vl_mc *mc,
 
 struct pipe_video_decoder *
 vl_create_mpeg12_decoder(struct pipe_context *context,
-                         enum pipe_video_profile profile,
-                         enum pipe_video_entrypoint entrypoint,
-                         enum pipe_video_chroma_format chroma_format,
-                         unsigned width, unsigned height, unsigned max_references,
-                         bool expect_chunked_decode)
+                         const struct pipe_video_decoder *templat)
 {
    const unsigned block_size_pixels = VL_BLOCK_WIDTH * VL_BLOCK_HEIGHT;
    const struct format_config *format_config;
    struct vl_mpeg12_decoder *dec;
 
-   assert(u_reduce_video_profile(profile) == PIPE_VIDEO_CODEC_MPEG12);
+   assert(u_reduce_video_profile(templat->profile) == PIPE_VIDEO_CODEC_MPEG12);
 
    dec = CALLOC_STRUCT(vl_mpeg12_decoder);
 
    if (!dec)
       return NULL;
 
+   dec->base = *templat;
    dec->base.context = context;
-   dec->base.profile = profile;
-   dec->base.entrypoint = entrypoint;
-   dec->base.chroma_format = chroma_format;
-   dec->base.width = width;
-   dec->base.height = height;
-   dec->base.max_references = max_references;
 
    dec->base.destroy = vl_mpeg12_destroy;
    dec->base.begin_frame = vl_mpeg12_begin_frame;
@@ -1053,7 +1044,6 @@ vl_create_mpeg12_decoder(struct pipe_context *context,
    dec->blocks_per_line = MAX2(util_next_power_of_two(dec->base.width) / block_size_pixels, 4);
    dec->num_blocks = (dec->base.width * dec->base.height) / block_size_pixels;
    dec->width_in_macroblocks = align(dec->base.width, VL_MACROBLOCK_WIDTH) / VL_MACROBLOCK_WIDTH;
-   dec->expect_chunked_decode = expect_chunked_decode;
 
    /* TODO: Implement 422, 444 */
    assert(dec->base.chroma_format == PIPE_VIDEO_CHROMA_FORMAT_420);
@@ -1082,7 +1072,7 @@ vl_create_mpeg12_decoder(struct pipe_context *context,
    dec->ves_ycbcr = vl_vb_get_ves_ycbcr(dec->base.context);
    dec->ves_mv = vl_vb_get_ves_mv(dec->base.context);
 
-   switch (entrypoint) {
+   switch (templat->entrypoint) {
    case PIPE_VIDEO_ENTRYPOINT_BITSTREAM:
       format_config = find_format_config(dec, bitstream_format_config, num_bitstream_format_configs);
       break;
@@ -1109,7 +1099,7 @@ vl_create_mpeg12_decoder(struct pipe_context *context,
    if (!init_zscan(dec, format_config))
       goto error_zscan;
 
-   if (entrypoint <= PIPE_VIDEO_ENTRYPOINT_IDCT) {
+   if (templat->entrypoint <= PIPE_VIDEO_ENTRYPOINT_IDCT) {
       if (!init_idct(dec, format_config))
          goto error_sources;
    } else {
@@ -1140,7 +1130,7 @@ error_mc_c:
    vl_mc_cleanup(&dec->mc_y);
 
 error_mc_y:
-   if (entrypoint <= PIPE_VIDEO_ENTRYPOINT_IDCT) {
+   if (templat->entrypoint <= PIPE_VIDEO_ENTRYPOINT_IDCT) {
       vl_idct_cleanup(&dec->idct_y);
       vl_idct_cleanup(&dec->idct_c);
       dec->idct_source->destroy(dec->idct_source);

@@ -147,15 +147,9 @@ static struct radeon_winsys_cs_handle* radeonsi_uvd_set_dtb(struct ruvd_msg *msg
  * creates an UVD compatible decoder
  */
 struct pipe_video_decoder *radeonsi_uvd_create_decoder(struct pipe_context *context,
-						       enum pipe_video_profile profile,
-						       enum pipe_video_entrypoint entrypoint,
-						       enum pipe_video_chroma_format chroma_format,
-						       unsigned width, unsigned height,
-						       unsigned max_references, bool expect_chunked_decode)
+						       const struct pipe_video_decoder *templ)
 {
 	struct r600_context *ctx = (struct r600_context *)context;
 
-	return ruvd_create_decoder(context, profile, entrypoint, chroma_format,
-				   width, height, max_references, expect_chunked_decode,
-				   ctx->ws, radeonsi_uvd_set_dtb);
+	return ruvd_create_decoder(context, templ, ctx->ws, radeonsi_uvd_set_dtb);
 }

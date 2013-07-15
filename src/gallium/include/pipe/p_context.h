@@ -433,11 +433,7 @@ struct pipe_context {
     * Creates a video decoder for a specific video codec/profile
     */
    struct pipe_video_decoder *(*create_video_decoder)( struct pipe_context *context,
-                                                       enum pipe_video_profile profile,
-                                                       enum pipe_video_entrypoint entrypoint,
-                                                       enum pipe_video_chroma_format chroma_format,
-                                                       unsigned width, unsigned height, unsigned max_references,
-                                                       bool expect_chunked_decode);
+                                                       const struct pipe_video_decoder *templat );
 
    /**
     * Creates a video buffer as decoding target

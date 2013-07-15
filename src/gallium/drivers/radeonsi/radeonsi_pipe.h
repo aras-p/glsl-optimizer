@@ -278,11 +278,7 @@ void si_init_compute_functions(struct r600_context *rctx);
 
 /* radeonsi_uvd.c */
 struct pipe_video_decoder *radeonsi_uvd_create_decoder(struct pipe_context *context,
-						       enum pipe_video_profile profile,
-						       enum pipe_video_entrypoint entrypoint,
-						       enum pipe_video_chroma_format chroma_format,
-						       unsigned width, unsigned height,
-						       unsigned max_references, bool expect_chunked_decode);
+                                                       const struct pipe_video_decoder *templ);
 
 struct pipe_video_buffer *radeonsi_video_buffer_create(struct pipe_context *pipe,
 						       const struct pipe_video_buffer *tmpl);

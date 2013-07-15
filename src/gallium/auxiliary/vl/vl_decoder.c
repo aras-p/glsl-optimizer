@@ -61,13 +61,10 @@ vl_level_supported(struct pipe_screen *screen, enum pipe_video_profile profile)
 
 struct pipe_video_decoder *
 vl_create_decoder(struct pipe_context *pipe,
-                  enum pipe_video_profile profile,
-                  enum pipe_video_entrypoint entrypoint,
-                  enum pipe_video_chroma_format chroma_format,
-                  unsigned width, unsigned height, unsigned max_references,
-                  bool expect_chunked_decode)
+                  const struct pipe_video_decoder *templat)
 {
-   unsigned buffer_width, buffer_height;
+   unsigned width = templat->width, height = templat->height;
+   struct pipe_video_decoder temp;
    bool pot_buffers;
 
    assert(pipe);
@@ -76,18 +73,18 @@ vl_create_decoder(struct pipe_context *pipe,
    pot_buffers = !pipe->screen->get_video_param
    (
       pipe->screen,
-      profile,
+      templat->profile,
       PIPE_VIDEO_CAP_NPOT_TEXTURES
    );
 
-   buffer_width = pot_buffers ? util_next_power_of_two(width) : align(width, VL_MACROBLOCK_WIDTH);
-   buffer_height = pot_buffers ? util_next_power_of_two(height) : align(height, VL_MACROBLOCK_HEIGHT);
+   temp = *templat;
+   temp.width = pot_buffers ? util_next_power_of_two(width) : align(width, VL_MACROBLOCK_WIDTH);
+   temp.height = pot_buffers ? util_next_power_of_two(height) : align(height, VL_MACROBLOCK_HEIGHT);
 
-   switch (u_reduce_video_profile(profile)) {
+   switch (u_reduce_video_profile(temp.profile)) {
       case PIPE_VIDEO_CODEC_MPEG12:
-         return vl_create_mpeg12_decoder(pipe, profile, entrypoint, chroma_format,
-                                         buffer_width, buffer_height, max_references,
-                                         expect_chunked_decode);
+         return vl_create_mpeg12_decoder(pipe, &temp);
+
       default:
          return NULL;
    }
