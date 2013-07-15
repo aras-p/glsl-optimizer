@@ -1375,7 +1375,7 @@ type_qualifier:
       }
 
       $$ = $1;
-      $$.flags.i |= $2.flags.i;
+      $$.merge_qualifier(&@1, state, $2);
    }
    | layout_qualifier type_qualifier
    {
@@ -1398,7 +1398,7 @@ type_qualifier:
       }
 
       $$ = $1;
-      $$.flags.i |= $2.flags.i;
+      $$.merge_qualifier(&@1, state, $2);
    }
    | storage_qualifier type_qualifier
    {
@@ -1416,7 +1416,7 @@ type_qualifier:
       }
 
       $$ = $1;
-      $$.flags.i |= $2.flags.i;
+      $$.merge_qualifier(&@1, state, $2);
    }
    ;
 
