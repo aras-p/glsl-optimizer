@@ -328,12 +328,17 @@ llvmpipe_is_format_supported( struct pipe_screen *_screen,
       return FALSE;
 
    if (bind & PIPE_BIND_RENDER_TARGET) {
-      if (format_desc->colorspace != UTIL_FORMAT_COLORSPACE_RGB)
+      if (format_desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB) {
+         if (format_desc->nr_channels < 3)
+            return FALSE;
+      }
+      else if (format_desc->colorspace != UTIL_FORMAT_COLORSPACE_RGB)
          return FALSE;
 
       if (format_desc->layout != UTIL_FORMAT_LAYOUT_PLAIN &&
           format != PIPE_FORMAT_R11G11B10_FLOAT)
          return FALSE;
+
       assert(format_desc->block.width == 1);
       assert(format_desc->block.height == 1);
 

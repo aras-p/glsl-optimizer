@@ -159,9 +159,10 @@ lp_build_rgb9e5_to_float(struct gallivm_state *gallivm,
                          LLVMValueRef *dst);
 
 LLVMValueRef
-lp_build_linear_to_srgb(struct gallivm_state *gallivm,
-                        struct lp_type src_type,
-                        LLVMValueRef src);
+lp_build_float_to_srgb_packed(struct gallivm_state *gallivm,
+                              const struct util_format_description *dst_fmt,
+                              struct lp_type src_type,
+                              LLVMValueRef *src);
 
 LLVMValueRef
 lp_build_srgb_to_linear(struct gallivm_state *gallivm,

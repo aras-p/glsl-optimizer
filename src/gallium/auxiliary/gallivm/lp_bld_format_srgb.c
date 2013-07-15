@@ -147,7 +147,7 @@ lp_build_srgb_to_linear(struct gallivm_state *gallivm,
  *
  * @param src   float (vector) value(s) to convert.
  */
-LLVMValueRef
+static LLVMValueRef
 lp_build_linear_to_srgb(struct gallivm_state *gallivm,
                         struct lp_type src_type,
                         LLVMValueRef src)
@@ -292,4 +292,53 @@ lp_build_linear_to_srgb(struct gallivm_state *gallivm,
 
    f32_bld.type.sign = 0;
    return lp_build_iround(&f32_bld, tmp);
+}
+
+
+/**
+ * Convert linear float soa values to packed srgb AoS values.
+ * This only handles packed formats which are 4x8bit in size
+ * (rgba and rgbx plus swizzles).
+ *
+ * @param src   float SoA (vector) values to convert.
+ */
+LLVMValueRef
+lp_build_float_to_srgb_packed(struct gallivm_state *gallivm,
+                              const struct util_format_description *dst_fmt,
+                              struct lp_type src_type,
+                              LLVMValueRef *src)
+{
+   LLVMBuilderRef builder = gallivm->builder;
+   unsigned chan;
+   struct lp_build_context f32_bld;
+   struct lp_type int32_type = lp_int_type(src_type);
+   LLVMValueRef tmpsrgb[4], alpha, dst;
+
+   lp_build_context_init(&f32_bld, gallivm, src_type);
+
+   /* rgb is subject to linear->srgb conversion, alpha is not */
+   for (chan = 0; chan < 3; chan++) {
+      tmpsrgb[chan] = lp_build_linear_to_srgb(gallivm, src_type, src[chan]);
+   }
+   /*
+    * can't use lp_build_conv since we want to keep values as 32bit
+    * here so we can interleave with rgb to go from SoA->AoS.
+    */
+   alpha = lp_build_clamp(&f32_bld, src[3], f32_bld.zero, f32_bld.one);
+   alpha = lp_build_mul(&f32_bld, alpha,
+                        lp_build_const_vec(gallivm, src_type, 255.0f));
+   tmpsrgb[3] = lp_build_iround(&f32_bld, alpha);
+
+   dst = lp_build_zero(gallivm, int32_type);
+   for (chan = 0; chan < dst_fmt->nr_channels; chan++) {
+      if (dst_fmt->swizzle[chan] <= UTIL_FORMAT_SWIZZLE_W) {
+         unsigned ls;
+         LLVMValueRef shifted, shift_val;
+         ls = dst_fmt->channel[dst_fmt->swizzle[chan]].shift;
+         shift_val = lp_build_const_int_vec(gallivm, int32_type, ls);
+         shifted = LLVMBuildShl(builder, tmpsrgb[chan], shift_val, "");
+         dst = LLVMBuildOr(builder, dst, shifted, "");
+      }
+   }
+   return dst;
 }

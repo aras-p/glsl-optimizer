@@ -753,6 +753,22 @@ is_arithmetic_format(const struct util_format_description *format_desc)
 
 
 /**
+ * Checks if this format requires special handling due to required expansion
+ * to floats for blending, and furthermore has "natural" packed AoS -> unpacked
+ * SoA conversion.
+ */
+static INLINE boolean
+format_expands_to_float_soa(const struct util_format_description *format_desc)
+{
+   if (format_desc->format == PIPE_FORMAT_R11G11B10_FLOAT ||
+       format_desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB) {
+      return true;
+   }
+   return false;
+}
+
+
+/**
  * Retrieves the type representing the memory layout for a format
  *
  * e.g. RGBA16F = 4x half-float and R3G3B2 = 1x byte
@@ -764,7 +780,7 @@ lp_mem_type_from_format_desc(const struct util_format_description *format_desc,
    unsigned i;
    unsigned chan;
 
-   if (format_desc->format == PIPE_FORMAT_R11G11B10_FLOAT) {
+   if (format_expands_to_float_soa(format_desc)) {
       /* just make this a 32bit uint */
       type->floating = false;
       type->fixed = false;
@@ -812,7 +828,7 @@ lp_blend_type_from_format_desc(const struct util_format_description *format_desc
    unsigned i;
    unsigned chan;
 
-   if (format_desc->format == PIPE_FORMAT_R11G11B10_FLOAT) {
+   if (format_expands_to_float_soa(format_desc)) {
       /* always use ordinary floats for blending */
       type->floating = true;
       type->fixed = false;
@@ -938,10 +954,12 @@ convert_to_blend_type(struct gallivm_state *gallivm,
    bool is_arith;
 
    /*
-    * full custom path for packed floats - none of the later functions would do
-    * anything useful, and given the lp_type representation they can't be fixed.
+    * full custom path for packed floats and srgb formats - none of the later
+    * functions would do anything useful, and given the lp_type representation they
+    * can't be fixed. Should really have some SoA blend path for these kind of
+    * formats rather than hacking them in here.
     */
-   if (src_fmt->format == PIPE_FORMAT_R11G11B10_FLOAT) {
+   if (format_expands_to_float_soa(src_fmt)) {
       LLVMValueRef tmpsrc[4];
       /*
        * This is pretty suboptimal for this case blending in SoA would be much
@@ -975,7 +993,12 @@ convert_to_blend_type(struct gallivm_state *gallivm,
             tmps = LLVMBuildShuffleVector(builder, tmps, tmps,
                                           LLVMConstVector(shuffles, 8), "");
          }
-         lp_build_r11g11b10_to_float(gallivm, tmps, tmpsoa);
+         if (src_fmt->format == PIPE_FORMAT_R11G11B10_FLOAT) {
+            lp_build_r11g11b10_to_float(gallivm, tmps, tmpsoa);
+         }
+         else {
+            lp_build_unpack_rgba_soa(gallivm, src_fmt, dst_type, tmps, tmpsoa);
+         }
          lp_build_transpose_aos(gallivm, dst_type, tmpsoa, &src[i * 4]);
       }
       return;
@@ -1089,10 +1112,12 @@ convert_from_blend_type(struct gallivm_state *gallivm,
    bool is_arith;
 
    /*
-    * full custom path for packed floats - none of the later functions would do
-    * anything useful, and given the lp_type representation they can't be fixed.
+    * full custom path for packed floats and srgb formats - none of the later
+    * functions would do anything useful, and given the lp_type representation they
+    * can't be fixed. Should really have some SoA blend path for these kind of
+    * formats rather than hacking them in here.
     */
-   if (src_fmt->format == PIPE_FORMAT_R11G11B10_FLOAT) {
+   if (format_expands_to_float_soa(src_fmt)) {
       /*
        * This is pretty suboptimal for this case blending in SoA would be much
        * better - we need to transpose the AoS values back to SoA values for
@@ -1106,7 +1131,16 @@ convert_from_blend_type(struct gallivm_state *gallivm,
       for (i = 0; i < num_srcs / 4; i++) {
          LLVMValueRef tmpsoa[4], tmpdst;
          lp_build_transpose_aos(gallivm, src_type, &src[i * 4], tmpsoa);
-         tmpdst = lp_build_float_to_r11g11b10(gallivm, tmpsoa);
+         /* really really need SoA here */
+
+         if (src_fmt->format == PIPE_FORMAT_R11G11B10_FLOAT) {
+            tmpdst = lp_build_float_to_r11g11b10(gallivm, tmpsoa);
+         }
+         else {
+            tmpdst = lp_build_float_to_srgb_packed(gallivm, src_fmt,
+                                                   src_type, tmpsoa);
+         }
+
          if (src_type.length == 8) {
             LLVMValueRef tmpaos, shuffles[8];
             unsigned j;
@@ -1453,8 +1487,12 @@ generate_unswizzled_blend(struct gallivm_state *gallivm,
       }
    }
 
-   if (out_format == PIPE_FORMAT_R11G11B10_FLOAT) {
-      /* the code above can't work for layout_other */
+   if (format_expands_to_float_soa(out_format_desc)) {
+      /*
+       * the code above can't work for layout_other
+       * for srgb it would sort of work but we short-circuit swizzles, etc.
+       * as that is done as part of unpack / pack.
+       */
       dst_channels = 4; /* HACK: this is fake 4 really but need it due to transpose stuff later */
       has_alpha = true;
       swizzle[0] = 0;
@@ -1716,7 +1754,7 @@ generate_unswizzled_blend(struct gallivm_state *gallivm,
 
    dst_type.length *= block_size / dst_count;
 
-   if (out_format == PIPE_FORMAT_R11G11B10_FLOAT) {
+   if (format_expands_to_float_soa(out_format_desc)) {
       /*
        * we need multiple values at once for the conversion, so can as well
        * load them vectorized here too instead of concatenating later.
