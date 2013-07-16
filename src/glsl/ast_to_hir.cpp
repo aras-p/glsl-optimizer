@@ -1850,6 +1850,84 @@ validate_matrix_layout_for_type(struct _mesa_glsl_parse_state *state,
    }
 }
 
+static bool
+validate_binding_qualifier(struct _mesa_glsl_parse_state *state,
+                           YYLTYPE *loc,
+                           ir_variable *var,
+                           const ast_type_qualifier *qual)
+{
+   if (var->mode != ir_var_uniform) {
+      _mesa_glsl_error(loc, state,
+                       "the \"binding\" qualifier only applies to uniforms.\n");
+      return false;
+   }
+
+   if (qual->binding < 0) {
+      _mesa_glsl_error(loc, state, "binding values must be >= 0.\n");
+      return false;
+   }
+
+   const struct gl_context *const ctx = state->ctx;
+   unsigned elements = var->type->is_array() ? var->type->length : 1;
+   unsigned max_index = qual->binding + elements - 1;
+
+   if (var->type->is_interface()) {
+      /* UBOs.  From page 60 of the GLSL 4.20 specification:
+       * "If the binding point for any uniform block instance is less than zero,
+       *  or greater than or equal to the implementation-dependent maximum
+       *  number of uniform buffer bindings, a compilation error will occur.
+       *  When the binding identifier is used with a uniform block instanced as
+       *  an array of size N, all elements of the array from binding through
+       *  binding + N – 1 must be within this range."
+       *
+       * The implementation-dependent maximum is GL_MAX_UNIFORM_BUFFER_BINDINGS.
+       */
+      if (max_index >= ctx->Const.MaxUniformBufferBindings) {
+         _mesa_glsl_error(loc, state, "layout(binding = %d) for %d UBOs exceeds "
+                          "the maximum number of UBO binding points (%d).\n",
+                          qual->binding, elements,
+                          ctx->Const.MaxUniformBufferBindings);
+         return false;
+      }
+   } else if (var->type->is_sampler() ||
+              (var->type->is_array() && var->type->fields.array->is_sampler())) {
+      /* Samplers.  From page 63 of the GLSL 4.20 specification:
+       * "If the binding is less than zero, or greater than or equal to the
+       *  implementation-dependent maximum supported number of units, a
+       *  compilation error will occur. When the binding identifier is used
+       *  with an array of size N, all elements of the array from binding
+       *  through binding + N - 1 must be within this range."
+       */
+      unsigned limit;
+      switch (state->target) {
+      case vertex_shader:
+         limit = ctx->Const.VertexProgram.MaxTextureImageUnits;
+         break;
+      case geometry_shader:
+         limit = ctx->Const.GeometryProgram.MaxTextureImageUnits;
+         break;
+      case fragment_shader:
+         limit = ctx->Const.FragmentProgram.MaxTextureImageUnits;
+         break;
+      }
+
+      if (max_index >= limit) {
+         _mesa_glsl_error(loc, state, "layout(binding = %d) for %d samplers "
+                          "exceeds the maximum number of texture image units "
+                          "(%d).\n", qual->binding, elements, limit);
+
+         return false;
+      }
+   } else {
+      _mesa_glsl_error(loc, state,
+                       "the \"binding\" qualifier only applies to uniform "
+                       "blocks, samplers, or arrays of samplers.\n");
+      return false;
+   }
+
+   return true;
+}
+
 static void
 apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
 				 ir_variable *var,
@@ -2079,6 +2157,9 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
 	 _mesa_glsl_error(loc, state,
 			  "explicit index requires explicit location\n");
    }
+
+   if (qual->flags.q.explicit_binding)
+      validate_binding_qualifier(state, loc, var, qual);
 
    /* Does the declaration use the deprecated 'attribute' or 'varying'
     * keywords?
