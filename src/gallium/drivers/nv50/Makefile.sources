@@ -13,7 +13,10 @@ C_SOURCES := \
 	nv50_program.c \
 	nv50_shader_state.c \
 	nv50_push.c \
-	nv50_query.c
+	nv50_query.c \
+	nv84_video.c \
+	nv84_video_bsp.c \
+	nv84_video_vp.c
 
 CODEGEN_NV50_SOURCES := \
 	codegen/nv50_ir.cpp \

@@ -60,6 +60,10 @@ PUSH_REFN(struct nouveau_pushbuf *push, struct nouveau_bo *bo, uint32_t flags)
 #define SUBC_COMPUTE(m) 6, (m)
 #define NV50_COMPUTE(n) SUBC_COMPUTE(NV50_COMPUTE_##n)
 
+/* These are expected to be on their own pushbufs */
+#define SUBC_BSP(m) 2, (m)
+#define SUBC_VP(m) 2, (m)
+
 
 static INLINE uint32_t
 NV50_FIFO_PKHDR(int subc, int mthd, unsigned size)

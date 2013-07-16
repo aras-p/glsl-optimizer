@@ -645,7 +645,18 @@ nv50_screen_create(struct nouveau_device *dev)
 
    nv50_screen_init_resource_functions(pscreen);
 
-   nouveau_screen_init_vdec(&screen->base);
+   if (screen->base.device->chipset < 0x84) {
+      /* PMPEG */
+      nouveau_screen_init_vdec(&screen->base);
+   } else if (screen->base.device->chipset < 0x98 ||
+              screen->base.device->chipset == 0xa0) {
+      /* VP2 */
+      screen->base.base.get_video_param = nv84_screen_get_video_param;
+      screen->base.base.is_video_format_supported = nv84_screen_video_supported;
+   } else {
+      /* Unsupported, but need to init pointers. */
+      nouveau_screen_init_vdec(&screen->base);
+   }
 
    ret = nouveau_bo_new(dev, NOUVEAU_BO_GART | NOUVEAU_BO_MAP, 0, 4096,
                         NULL, &screen->fence.bo);

@@ -239,6 +239,28 @@ nv50_miptree_init_layout_linear(struct nv50_miptree *mt, unsigned pitch_align)
 }
 
 static void
+nv50_miptree_init_layout_video(struct nv50_miptree *mt)
+{
+   const struct pipe_resource *pt = &mt->base.base;
+   const unsigned blocksize = util_format_get_blocksize(pt->format);
+
+   assert(pt->last_level == 0);
+   assert(mt->ms_x == 0 && mt->ms_y == 0);
+   assert(!util_format_is_compressed(pt->format));
+
+   mt->layout_3d = pt->target == PIPE_TEXTURE_3D;
+
+   mt->level[0].tile_mode = 0x20;
+   mt->level[0].pitch = align(pt->width0 * blocksize, 64);
+   mt->total_size = align(pt->height0, 16) * mt->level[0].pitch * (mt->layout_3d ? pt->depth0 : 1);
+
+   if (pt->array_size > 1) {
+      mt->layer_stride = align(mt->total_size, NV50_TILE_SIZE(0x20));
+      mt->total_size = mt->layer_stride * pt->array_size;
+   }
+}
+
+static void
 nv50_miptree_init_layout_tiled(struct nv50_miptree *mt)
 {
    struct pipe_resource *pt = &mt->base.base;
@@ -311,6 +333,11 @@ nv50_miptree_create(struct pipe_screen *pscreen,
       return NULL;
    }
 
+   if (unlikely(pt->flags & NV50_RESOURCE_FLAG_VIDEO)) {
+      nv50_miptree_init_layout_video(mt);
+      /* BO allocation done by client */
+      return pt;
+   } else
    if (bo_config.nv50.memtype != 0) {
       nv50_miptree_init_layout_tiled(mt);
    } else

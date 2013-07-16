@@ -16,6 +16,7 @@ nv50_init_resource_functions(struct pipe_context *pcontext);
 void
 nv50_screen_init_resource_functions(struct pipe_screen *pscreen);
 
+#define NV50_RESOURCE_FLAG_VIDEO (NOUVEAU_RESOURCE_FLAG_DRV_PRIV << 0)
 
 #define NV50_TILE_SHIFT_X(m) 6
 #define NV50_TILE_SHIFT_Y(m) ((((m) >> 4) & 0xf) + 2)
