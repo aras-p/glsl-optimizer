@@ -64,6 +64,12 @@ lp_build_cmp(struct lp_build_context *bld,
              LLVMValueRef b);
 
 LLVMValueRef
+lp_build_cmp_ordered(struct lp_build_context *bld,
+                     unsigned func,
+                     LLVMValueRef a,
+                     LLVMValueRef b);
+
+LLVMValueRef
 lp_build_select_bitwise(struct lp_build_context *bld,
                         LLVMValueRef mask,
                         LLVMValueRef a,

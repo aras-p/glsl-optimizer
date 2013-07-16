@@ -131,6 +131,20 @@ lp_build_lerp_3d(struct lp_build_context *bld,
                  LLVMValueRef v111,
                  unsigned flags);
 
+/**
+ * Specifies floating point NaN behavior.
+ */
+enum gallivm_nan_behavior {
+   /* Results are undefined with NaN. Results in fastest code */
+   GALLIVM_NAN_BEHAVIOR_UNDEFINED,
+   /* If input is NaN, NaN is returned */
+   GALLIVM_NAN_RETURN_NAN,
+   /* If one of the inputs is NaN, the other operand is returned */
+   GALLIVM_NAN_RETURN_OTHER,
+   /* If one of the inputs is NaN, the second operand is returned.
+    * In min/max it will be as fast as undefined with sse opcodes */
+   GALLIVM_NAN_RETURN_SECOND
+};
 
 LLVMValueRef
 lp_build_min(struct lp_build_context *bld,
@@ -138,9 +152,21 @@ lp_build_min(struct lp_build_context *bld,
              LLVMValueRef b);
 
 LLVMValueRef
+lp_build_min_ext(struct lp_build_context *bld,
+                 LLVMValueRef a,
+                 LLVMValueRef b,
+                 enum gallivm_nan_behavior nan_behavior);
+
+LLVMValueRef
 lp_build_max(struct lp_build_context *bld,
              LLVMValueRef a,
              LLVMValueRef b);
+
+LLVMValueRef
+lp_build_max_ext(struct lp_build_context *bld,
+                 LLVMValueRef a,
+                 LLVMValueRef b,
+                 enum gallivm_nan_behavior nan_behavior);
 
 LLVMValueRef
 lp_build_clamp(struct lp_build_context *bld,
@@ -308,5 +334,9 @@ LLVMValueRef
 lp_build_mod(struct lp_build_context *bld,
              LLVMValueRef x,
              LLVMValueRef y);
+
+LLVMValueRef
+lp_build_isnan(struct lp_build_context *bld,
+               LLVMValueRef x);
 
 #endif /* !LP_BLD_ARIT_H */

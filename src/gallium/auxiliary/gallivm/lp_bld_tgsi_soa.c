@@ -1396,16 +1396,21 @@ emit_store_chan(
       assert(dtype == TGSI_TYPE_FLOAT ||
              dtype == TGSI_TYPE_UNTYPED);
       value = LLVMBuildBitCast(builder, value, float_bld->vec_type, "");
-      value = lp_build_max(float_bld, value, float_bld->zero);
-      value = lp_build_min(float_bld, value, float_bld->one);
+      value = lp_build_max_ext(float_bld, value, float_bld->zero,
+                               GALLIVM_NAN_RETURN_SECOND);
+      value = lp_build_min_ext(float_bld, value, float_bld->one,
+                               GALLIVM_NAN_BEHAVIOR_UNDEFINED);
       break;
 
    case TGSI_SAT_MINUS_PLUS_ONE:
       assert(dtype == TGSI_TYPE_FLOAT ||
              dtype == TGSI_TYPE_UNTYPED);
       value = LLVMBuildBitCast(builder, value, float_bld->vec_type, "");
-      value = lp_build_max(float_bld, value, lp_build_const_vec(gallivm, float_bld->type, -1.0));
-      value = lp_build_min(float_bld, value, float_bld->one);
+      value = lp_build_max_ext(float_bld, value,
+                               lp_build_const_vec(gallivm, float_bld->type, -1.0),
+                               GALLIVM_NAN_RETURN_SECOND);
+      value = lp_build_min_ext(float_bld, value, float_bld->one,
+                               GALLIVM_NAN_BEHAVIOR_UNDEFINED);
       break;
 
    default:

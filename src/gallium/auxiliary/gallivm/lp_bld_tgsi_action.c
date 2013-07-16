@@ -1274,8 +1274,10 @@ max_emit_cpu(
    struct lp_build_tgsi_context * bld_base,
    struct lp_build_emit_data * emit_data)
 {
-   emit_data->output[emit_data->chan] = lp_build_max(&bld_base->base,
-                                   emit_data->args[0], emit_data->args[1]);
+   emit_data->output[emit_data->chan] =
+      lp_build_max_ext(&bld_base->base,
+                       emit_data->args[0], emit_data->args[1],
+                       GALLIVM_NAN_RETURN_OTHER);
 }
 
 /* TGSI_OPCODE_MIN (CPU Only) */
@@ -1285,8 +1287,10 @@ min_emit_cpu(
    struct lp_build_tgsi_context * bld_base,
    struct lp_build_emit_data * emit_data)
 {
-   emit_data->output[emit_data->chan] = lp_build_min(&bld_base->base,
-                                   emit_data->args[0], emit_data->args[1]);
+   emit_data->output[emit_data->chan] =
+      lp_build_min_ext(&bld_base->base,
+                       emit_data->args[0], emit_data->args[1],
+                       GALLIVM_NAN_RETURN_OTHER);
 }
 
 /* TGSI_OPCODE_MOD (CPU Only) */
