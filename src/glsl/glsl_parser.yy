@@ -908,7 +908,7 @@ parameter_qualifier:
       if ($2.precision != ast_precision_none)
          _mesa_glsl_error(&@1, state, "Duplicate precision qualifier.\n");
 
-      if ($2.flags.i != 0)
+      if (!state->ARB_shading_language_420pack_enable && $2.flags.i != 0)
          _mesa_glsl_error(&@1, state, "Precision qualifiers must come last.\n");
 
       $$ = $2;
@@ -1433,7 +1433,7 @@ type_qualifier:
       if ($2.precision != ast_precision_none)
          _mesa_glsl_error(&@1, state, "Duplicate precision qualifier.\n");
 
-      if ($2.flags.i != 0)
+      if (!state->ARB_shading_language_420pack_enable && $2.flags.i != 0)
          _mesa_glsl_error(&@1, state, "Precision qualifiers must come last.\n");
 
       $$ = $2;
