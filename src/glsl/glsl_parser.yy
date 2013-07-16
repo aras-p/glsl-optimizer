@@ -1419,7 +1419,8 @@ type_qualifier:
                           "Duplicate auxiliary storage qualifier (centroid).\n");
       }
 
-      if ($2.flags.q.invariant || $2.has_interpolation() || $2.has_layout()) {
+      if (!state->ARB_shading_language_420pack_enable &&
+          ($2.flags.q.invariant || $2.has_interpolation() || $2.has_layout())) {
          _mesa_glsl_error(&@1, state, "Auxiliary storage qualifiers must come "
                           "just before storage qualifiers.\n");
       }
