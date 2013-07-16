@@ -1254,6 +1254,12 @@ layout_qualifier_id:
          }
       }
 
+      if (state->ARB_shading_language_420pack_enable &&
+          strcmp("binding", $1) == 0) {
+         $$.flags.q.explicit_binding = 1;
+         $$.binding = $3;
+      }
+
       /* If the identifier didn't match any known layout identifiers,
        * emit an error.
        */

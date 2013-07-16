@@ -71,7 +71,8 @@ ast_type_qualifier::has_layout() const
           || this->flags.q.row_major
           || this->flags.q.packed
           || this->flags.q.explicit_location
-          || this->flags.q.explicit_index;
+          || this->flags.q.explicit_index
+          || this->flags.q.explicit_binding;
 }
 
 bool
@@ -144,6 +145,9 @@ ast_type_qualifier::merge_qualifier(YYLTYPE *loc,
 
    if (q.flags.q.explicit_index)
       this->index = q.index;
+
+   if (q.flags.q.explicit_binding)
+      this->binding = q.binding;
 
    return true;
 }

@@ -413,6 +413,12 @@ struct ast_type_qualifier {
 	  */
 	 unsigned explicit_index:1;
 
+         /**
+          * Flag set if GL_ARB_shading_language_420pack "binding" layout
+          * qualifier is used.
+          */
+         unsigned explicit_binding:1;
+
          /** \name Layout qualifiers for GL_AMD_conservative_depth */
          /** \{ */
          unsigned depth_any:1;
@@ -454,6 +460,14 @@ struct ast_type_qualifier {
     * This field is only valid if \c explicit_index is set.
     */
    int index;
+
+   /**
+    * Binding specified via GL_ARB_shading_language_420pack's "binding" keyword.
+    *
+    * \note
+    * This field is only valid if \c explicit_binding is set.
+    */
+   int binding;
 
    /**
     * Return true if and only if an interpolation qualifier is present.
