@@ -4095,10 +4095,29 @@ _mesa_meta_GetTexImage(struct gl_context *ctx,
        _mesa_get_format_datatype(texImage->TexFormat)
        == GL_UNSIGNED_NORMALIZED) {
       struct gl_texture_object *texObj = texImage->TexObject;
-      const GLuint slice = 0; /* only 2D compressed textures for now */
+      GLuint slice;
       /* Need to unlock the texture here to prevent deadlock... */
       _mesa_unlock_texture(ctx, texObj);
-      decompress_texture_image(ctx, texImage, slice, format, type, pixels);
+      for (slice = 0; slice < texImage->Depth; slice++) {
+         void *dst;
+         if (texImage->TexObject->Target == GL_TEXTURE_2D_ARRAY) {
+            /* Setup pixel packing.  SkipPixels and SkipRows will be applied
+             * in the decompress_texture_image() function's call to
+             * glReadPixels but we need to compute the dest slice's address
+             * here (according to SkipImages and ImageHeight).
+             */
+            struct gl_pixelstore_attrib packing = ctx->Pack;
+            packing.SkipPixels = 0;
+            packing.SkipRows = 0;
+            dst = _mesa_image_address3d(&packing, pixels, texImage->Width,
+                                        texImage->Height, format, type,
+                                        slice, 0, 0);
+         }
+         else {
+            dst = pixels;
+         }
+         decompress_texture_image(ctx, texImage, slice, format, type, dst);
+      }
       /* ... and relock it */
       _mesa_lock_texture(ctx, texObj);
    }
