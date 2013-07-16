@@ -1155,6 +1155,13 @@ _mesa_BindRenderbuffer(GLenum target, GLuint renderbuffer)
 }
 
 
+void GLAPIENTRY
+_mesa_BindRenderbufferEXT(GLenum target, GLuint renderbuffer)
+{
+    _mesa_BindRenderbuffer(target, renderbuffer);
+}
+
+
 /**
  * If the given renderbuffer is anywhere attached to the framebuffer, detach
  * the renderbuffer.
@@ -2024,6 +2031,13 @@ _mesa_BindFramebuffer(GLenum target, GLuint framebuffer)
       ctx->Driver.BindFramebuffer(ctx, target, newDrawFb, newReadFb);
    }
 }
+
+void GLAPIENTRY
+_mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
+{
+    _mesa_BindFramebuffer(target, framebuffer);
+}
+
 
 
 void GLAPIENTRY

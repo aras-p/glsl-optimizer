@@ -120,6 +120,9 @@ extern void GLAPIENTRY
 _mesa_BindRenderbuffer(GLenum target, GLuint renderbuffer);
 
 extern void GLAPIENTRY
+_mesa_BindRenderbufferEXT(GLenum target, GLuint renderbuffer);
+
+extern void GLAPIENTRY
 _mesa_DeleteRenderbuffers(GLsizei n, const GLuint *renderbuffers);
 
 extern void GLAPIENTRY
@@ -150,6 +153,9 @@ _mesa_IsFramebuffer(GLuint framebuffer);
 
 extern void GLAPIENTRY
 _mesa_BindFramebuffer(GLenum target, GLuint framebuffer);
+
+extern void GLAPIENTRY
+_mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer);
 
 extern void GLAPIENTRY
 _mesa_DeleteFramebuffers(GLsizei n, const GLuint *framebuffers);

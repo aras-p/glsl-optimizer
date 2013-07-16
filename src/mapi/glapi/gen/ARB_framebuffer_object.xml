@@ -149,7 +149,7 @@
     <function name="BindRenderbuffer" es2="2.0" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="renderbuffer" type="GLuint"/>
-	<glx rop="4316"/>
+        <glx rop="235"/>
     </function>
 
     <function name="DeleteRenderbuffers"
@@ -199,7 +199,7 @@
     <function name="BindFramebuffer" es2="2.0" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="framebuffer" type="GLuint"/>
-	<glx rop="4319"/>
+        <glx rop="236"/>
     </function>
 
     <function name="DeleteFramebuffers"

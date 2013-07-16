@@ -683,6 +683,8 @@ void __indirect_glProgramNamedParameter4dvNV(void) { }
 void __indirect_glProgramNamedParameter4fNV(void) { }
 void __indirect_glProgramNamedParameter4fvNV(void) { }
 void __indirect_glBlendEquationSeparate(void) { }
+void __indirect_glBindFramebufferEXT(void) { }
+void __indirect_glBindRenderbufferEXT(void) { }
 void __indirect_glBindFramebuffer(void) { }
 void __indirect_glBindRenderbuffer(void) { }
 void __indirect_glCheckFramebufferStatus(void) { }
@@ -1488,8 +1490,10 @@ TEST_F(IndirectAPI, EXT_blend_equation_separate)
 
 TEST_F(IndirectAPI, EXT_framebuffer_object)
 {
-   EXPECT_EQ((_glapi_proc) __indirect_glBindFramebuffer, table[_glapi_get_proc_offset("glBindFramebufferEXT")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glBindRenderbuffer, table[_glapi_get_proc_offset("glBindRenderbufferEXT")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glBindFramebufferEXT, table[_glapi_get_proc_offset("glBindFramebufferEXT")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glBindRenderbufferEXT, table[_glapi_get_proc_offset("glBindRenderbufferEXT")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glBindFramebuffer, table[_glapi_get_proc_offset("glBindFramebuffer")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glBindRenderbuffer, table[_glapi_get_proc_offset("glBindRenderbuffer")]);
    EXPECT_EQ((_glapi_proc) __indirect_glCheckFramebufferStatus, table[_glapi_get_proc_offset("glCheckFramebufferStatusEXT")]);
    EXPECT_EQ((_glapi_proc) __indirect_glDeleteFramebuffers, table[_glapi_get_proc_offset("glDeleteFramebuffersEXT")]);
    EXPECT_EQ((_glapi_proc) __indirect_glDeleteRenderbuffers, table[_glapi_get_proc_offset("glDeleteRenderbuffersEXT")]);

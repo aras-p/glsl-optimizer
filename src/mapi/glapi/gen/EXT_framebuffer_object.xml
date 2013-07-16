@@ -78,9 +78,10 @@
 	<return type="GLboolean"/>
     </function>
 
-    <function name="BindRenderbufferEXT" alias="BindRenderbuffer">
+    <function name="BindRenderbufferEXT" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="renderbuffer" type="GLuint"/>
+        <glx rop="4316"/>
     </function>
 
     <function name="DeleteRenderbuffersEXT" alias="DeleteRenderbuffers">
@@ -111,9 +112,10 @@
 	<return type="GLboolean"/>
     </function>
 
-    <function name="BindFramebufferEXT" alias="BindFramebuffer">
+    <function name="BindFramebufferEXT" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="framebuffer" type="GLuint"/>
+        <glx rop="4319"/>
     </function>
 
     <function name="DeleteFramebuffersEXT" alias="DeleteFramebuffers">
