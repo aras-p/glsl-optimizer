@@ -1264,9 +1264,19 @@ intel_miptree_slice_enable_hiz(struct brw_context *brw,
        * stencil buffer tile size, 64x64 pixels, then
        * 3DSTATE_DEPTH_BUFFER.Depth_Coordinate_Offset_X/Y is set to 0.
        */
-      uint32_t depth_x_offset = mt->level[level].slice[layer].x_offset;
-      uint32_t depth_y_offset = mt->level[level].slice[layer].y_offset;
-      if ((depth_x_offset & 63) || (depth_y_offset & 63)) {
+      const struct intel_mipmap_level *l = &mt->level[level];
+      const struct intel_mipmap_slice *s = &l->slice[layer];
+      if ((s->x_offset & 63) || (s->y_offset & 63)) {
+         return false;
+      }
+
+      /* Disable HiZ for LOD > 0 unless the width is 8 aligned
+       * and the height is 4 aligned. This allows our HiZ support
+       * to fulfill Haswell restrictions for HiZ ops. For LOD == 0,
+       * we can grow the width & height to allow the HiZ op to
+       * force the proper size alignments.
+       */
+      if (level > 0 && ((l->width & 7) || (l->height & 3))) {
          return false;
       }
    }
