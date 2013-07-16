@@ -683,6 +683,9 @@ public:
 		return ((sel >= 128 && sel < 192) || (sel >= 256 && sel < 320));
 	}
 
+	const char * get_hw_class_name();
+	const char * get_hw_chip_name();
+
 };
 
 #define SB_DUMP_STAT(a) do { if (sb_context::dump_stat) { a } } while (0)

@@ -426,59 +426,10 @@ cf_node* shader::create_cf(unsigned op) {
 std::string shader::get_full_target_name() {
 	std::string s = get_shader_target_name();
 	s += "/";
-	s += get_hw_chip_name();
+	s += ctx.get_hw_chip_name();
 	s += "/";
-	s += get_hw_class_name();
+	s += ctx.get_hw_class_name();
 	return s;
-}
-
-const char* shader::get_hw_class_name() {
-	switch (ctx.hw_class) {
-#define TRANSLATE_HW_CLASS(c) case HW_CLASS_##c: return #c
-		TRANSLATE_HW_CLASS(R600);
-		TRANSLATE_HW_CLASS(R700);
-		TRANSLATE_HW_CLASS(EVERGREEN);
-		TRANSLATE_HW_CLASS(CAYMAN);
-#undef TRANSLATE_HW_CLASS
-		default:
-			return "INVALID_CHIP_CLASS";
-	}
-}
-
-const char* shader::get_hw_chip_name() {
-	switch (ctx.hw_chip) {
-#define TRANSLATE_CHIP(c) case HW_CHIP_##c: return #c
-		TRANSLATE_CHIP(R600);
-		TRANSLATE_CHIP(RV610);
-		TRANSLATE_CHIP(RV630);
-		TRANSLATE_CHIP(RV670);
-		TRANSLATE_CHIP(RV620);
-		TRANSLATE_CHIP(RV635);
-		TRANSLATE_CHIP(RS780);
-		TRANSLATE_CHIP(RS880);
-		TRANSLATE_CHIP(RV770);
-		TRANSLATE_CHIP(RV730);
-		TRANSLATE_CHIP(RV710);
-		TRANSLATE_CHIP(RV740);
-		TRANSLATE_CHIP(CEDAR);
-		TRANSLATE_CHIP(REDWOOD);
-		TRANSLATE_CHIP(JUNIPER);
-		TRANSLATE_CHIP(CYPRESS);
-		TRANSLATE_CHIP(HEMLOCK);
-		TRANSLATE_CHIP(PALM);
-		TRANSLATE_CHIP(SUMO);
-		TRANSLATE_CHIP(SUMO2);
-		TRANSLATE_CHIP(BARTS);
-		TRANSLATE_CHIP(TURKS);
-		TRANSLATE_CHIP(CAICOS);
-		TRANSLATE_CHIP(CAYMAN);
-		TRANSLATE_CHIP(ARUBA);
-#undef TRANSLATE_CHIP
-
-		default:
-			assert(!"unknown chip");
-			return "INVALID_CHIP";
-	}
 }
 
 const char* shader::get_shader_target_name() {

@@ -83,4 +83,54 @@ int sb_context::init(r600_isa *isa, sb_hw_chip chip, sb_hw_class cclass) {
 	return 0;
 }
 
+const char* sb_context::get_hw_class_name() {
+	switch (hw_class) {
+#define TRANSLATE_HW_CLASS(c) case HW_CLASS_##c: return #c
+		TRANSLATE_HW_CLASS(R600);
+		TRANSLATE_HW_CLASS(R700);
+		TRANSLATE_HW_CLASS(EVERGREEN);
+		TRANSLATE_HW_CLASS(CAYMAN);
+#undef TRANSLATE_HW_CLASS
+		default:
+			assert(!"unknown chip class");
+			return "INVALID_CHIP_CLASS";
+	}
 }
+
+const char* sb_context::get_hw_chip_name() {
+	switch (hw_chip) {
+#define TRANSLATE_CHIP(c) case HW_CHIP_##c: return #c
+		TRANSLATE_CHIP(R600);
+		TRANSLATE_CHIP(RV610);
+		TRANSLATE_CHIP(RV630);
+		TRANSLATE_CHIP(RV670);
+		TRANSLATE_CHIP(RV620);
+		TRANSLATE_CHIP(RV635);
+		TRANSLATE_CHIP(RS780);
+		TRANSLATE_CHIP(RS880);
+		TRANSLATE_CHIP(RV770);
+		TRANSLATE_CHIP(RV730);
+		TRANSLATE_CHIP(RV710);
+		TRANSLATE_CHIP(RV740);
+		TRANSLATE_CHIP(CEDAR);
+		TRANSLATE_CHIP(REDWOOD);
+		TRANSLATE_CHIP(JUNIPER);
+		TRANSLATE_CHIP(CYPRESS);
+		TRANSLATE_CHIP(HEMLOCK);
+		TRANSLATE_CHIP(PALM);
+		TRANSLATE_CHIP(SUMO);
+		TRANSLATE_CHIP(SUMO2);
+		TRANSLATE_CHIP(BARTS);
+		TRANSLATE_CHIP(TURKS);
+		TRANSLATE_CHIP(CAICOS);
+		TRANSLATE_CHIP(CAYMAN);
+		TRANSLATE_CHIP(ARUBA);
+#undef TRANSLATE_CHIP
+
+		default:
+			assert(!"unknown chip");
+			return "INVALID_CHIP";
+	}
+}
+
+} // namespace r600_sb

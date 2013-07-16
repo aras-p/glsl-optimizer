@@ -367,8 +367,6 @@ public:
 	alu_node* create_mov(value* dst, value* src);
 	alu_node* create_copy_mov(value *dst, value *src, unsigned affcost = 1);
 
-	const char * get_hw_class_name();
-	const char * get_hw_chip_name();
 	const char * get_shader_target_name();
 
 	std::string get_full_target_name();
