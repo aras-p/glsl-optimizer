@@ -2080,12 +2080,6 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
 			  "explicit index requires explicit location\n");
    }
 
-   /* Does the declaration use the 'layout' keyword?
-    */
-   const bool uses_layout = qual->flags.q.pixel_center_integer
-      || qual->flags.q.origin_upper_left
-      || qual->flags.q.explicit_location; /* no need for index since it relies on location */
-
    /* Does the declaration use the deprecated 'attribute' or 'varying'
     * keywords?
     */
@@ -2115,7 +2109,7 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
    const bool relaxed_layout_qualifier_checking =
       state->ARB_fragment_coord_conventions_enable;
 
-   if (uses_layout && uses_deprecated_qualifier) {
+   if (qual->has_layout() && uses_deprecated_qualifier) {
       if (relaxed_layout_qualifier_checking) {
 	 _mesa_glsl_warning(loc, state,
 			    "`layout' qualifier may not be used with "
