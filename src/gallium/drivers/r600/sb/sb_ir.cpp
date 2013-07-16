@@ -51,7 +51,7 @@ bool alu_packed_node::accept(vpass& p, bool enter) {
 	return p.visit(*this, enter);
 }
 
-void alu_packed_node::init_args() {
+void alu_packed_node::init_args(bool repl) {
 	alu_node *p = static_cast<alu_node*>(first);
 	assert(p->is_valid());
 	while (p) {
@@ -60,8 +60,6 @@ void alu_packed_node::init_args() {
 		p = static_cast<alu_node*>(p->next);
 	}
 
-	// if it's packed then it's always multislot, no need to check slot flags
-	bool repl = (op_ptr()->flags & AF_REPL);
 	value *replicated_value = NULL;
 
 	for (vvec::iterator I = dst.begin(), E = dst.end(); I != E; ++I) {

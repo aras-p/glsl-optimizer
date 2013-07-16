@@ -218,7 +218,10 @@ bool ssa_rename::visit(alu_packed_node& n, bool enter) {
 			I->accept(*this, false);
 		}
 
-		n.init_args();
+		bool repl = (n.op_ptr()->flags & AF_REPL) ||
+				(ctx.is_cayman() && (n.first->alu_op_slot_flags() & AF_S));
+
+		n.init_args(repl);
 	}
 	return false;
 }

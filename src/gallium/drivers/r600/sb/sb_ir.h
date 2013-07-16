@@ -1014,7 +1014,7 @@ public:
 		return static_cast<alu_node*>(first)->bc.op_ptr;
 	}
 	unsigned op() { return static_cast<alu_node*>(first)->bc.op; }
-	void init_args();
+	void init_args(bool repl);
 
 	virtual bool is_valid() { return subtype == NST_ALU_PACKED_INST; }
 	virtual bool accept(vpass &p, bool enter);
