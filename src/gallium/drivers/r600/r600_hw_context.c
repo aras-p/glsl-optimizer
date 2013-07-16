@@ -636,6 +636,7 @@ void r600_cp_dma_copy_buffer(struct r600_context *rctx,
 	/* Flush the caches where the resources are bound. */
 	r600_flag_resource_cache_flush(rctx, src);
 	r600_flag_resource_cache_flush(rctx, dst);
+        rctx->flags |= R600_CONTEXT_WAIT_3D_IDLE;
 
 	/* There are differences between R700 and EG in CP DMA,
 	 * but we only use the common bits here. */

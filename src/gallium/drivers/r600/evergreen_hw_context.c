@@ -123,6 +123,7 @@ void evergreen_cp_dma_clear_buffer(struct r600_context *rctx,
 
 	/* Flush the cache where the resource is bound. */
 	r600_flag_resource_cache_flush(rctx, dst);
+        rctx->flags |= R600_CONTEXT_WAIT_3D_IDLE;
 
 	while (size) {
 		unsigned sync = 0;
