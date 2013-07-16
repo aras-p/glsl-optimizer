@@ -309,6 +309,10 @@ lp_build_log2(struct lp_build_context *bld,
               LLVMValueRef a);
 
 LLVMValueRef
+lp_build_log2_safe(struct lp_build_context *bld,
+                   LLVMValueRef a);
+
+LLVMValueRef
 lp_build_fast_log2(struct lp_build_context *bld,
                    LLVMValueRef a);
 
@@ -328,7 +332,8 @@ lp_build_log2_approx(struct lp_build_context *bld,
                      LLVMValueRef x,
                      LLVMValueRef *p_exp,
                      LLVMValueRef *p_floor_log2,
-                     LLVMValueRef *p_log2);
+                     LLVMValueRef *p_log2,
+                     boolean handle_nans);
 
 LLVMValueRef
 lp_build_mod(struct lp_build_context *bld,

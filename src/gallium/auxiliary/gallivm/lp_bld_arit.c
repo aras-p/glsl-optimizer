@@ -3349,13 +3349,25 @@ const double lp_build_log2_polynomial[] = {
  * See http://www.devmaster.net/forums/showthread.php?p=43580
  * http://en.wikipedia.org/wiki/Logarithm#Calculation
  * http://www.nezumi.demon.co.uk/consult/logx.htm
+ *
+ * If handle_edge_cases is true the function will perform computations
+ * to match the required D3D10+ behavior for each of the edge cases.
+ * That means that if input is:
+ * - less than zero (to and including -inf) then NaN will be returned
+ * - equal to zero (-denorm, -0, +0 or +denorm), then -inf will be returned
+ * - +infinity, then +infinity will be returned
+ * - NaN, then NaN will be returned
+ *
+ * Those checks are fairly expensive so if you don't need them make sure
+ * handle_edge_cases is false.
  */
 void
 lp_build_log2_approx(struct lp_build_context *bld,
                      LLVMValueRef x,
                      LLVMValueRef *p_exp,
                      LLVMValueRef *p_floor_log2,
-                     LLVMValueRef *p_log2)
+                     LLVMValueRef *p_log2,
+                     boolean handle_edge_cases)
 {
    LLVMBuilderRef builder = bld->gallivm->builder;
    const struct lp_type type = bld->type;
@@ -3428,6 +3440,29 @@ lp_build_log2_approx(struct lp_build_context *bld,
       logmant = lp_build_mul(bld, y, logmant);
 
       res = lp_build_add(bld, logmant, logexp);
+
+      if (type.floating && handle_edge_cases) {
+         LLVMValueRef negmask, infmask,  zmask;
+         negmask = lp_build_cmp(bld, PIPE_FUNC_LESS, x,
+                                lp_build_const_vec(bld->gallivm, type,  0.0f));
+         zmask = lp_build_cmp(bld, PIPE_FUNC_EQUAL, x,
+                              lp_build_const_vec(bld->gallivm, type,  0.0f));
+         infmask = lp_build_cmp(bld, PIPE_FUNC_GEQUAL, x,
+                                lp_build_const_vec(bld->gallivm, type,  INFINITY));
+
+         /* If x is qual to inf make sure we return inf */
+         res = lp_build_select(bld, infmask,
+                               lp_build_const_vec(bld->gallivm, type,  INFINITY),
+                               res);
+         /* If x is qual to 0, return -inf */
+         res = lp_build_select(bld, zmask,
+                               lp_build_const_vec(bld->gallivm, type,  -INFINITY),
+                               res);
+         /* If x is nan or less than 0, return nan */
+         res = lp_build_select(bld, negmask,
+                               lp_build_const_vec(bld->gallivm, type,  NAN),
+                               res);
+      }
    }
 
    if(p_exp) {
@@ -3443,12 +3478,31 @@ lp_build_log2_approx(struct lp_build_context *bld,
 }
 
 
+/*
+ * log2 implementation which doesn't have special code to
+ * handle edge cases (-inf, 0, inf, NaN). It's faster but
+ * the results for those cases are undefined.
+ */
 LLVMValueRef
 lp_build_log2(struct lp_build_context *bld,
               LLVMValueRef x)
 {
    LLVMValueRef res;
-   lp_build_log2_approx(bld, x, NULL, NULL, &res);
+   lp_build_log2_approx(bld, x, NULL, NULL, &res, FALSE);
+   return res;
+}
+
+/*
+ * Version of log2 which handles all edge cases.
+ * Look at documentation of lp_build_log2_approx for
+ * description of the behavior for each of the edge cases.
+ */
+LLVMValueRef
+lp_build_log2_safe(struct lp_build_context *bld,
+                   LLVMValueRef x)
+{
+   LLVMValueRef res;
+   lp_build_log2_approx(bld, x, NULL, NULL, &res, TRUE);
    return res;
 }
 

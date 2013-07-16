@@ -1236,8 +1236,8 @@ lg2_emit_cpu(
    struct lp_build_tgsi_context * bld_base,
    struct lp_build_emit_data * emit_data)
 {
-   emit_data->output[emit_data->chan] = lp_build_log2(&bld_base->base,
-                                                        emit_data->args[0]);
+   emit_data->output[emit_data->chan] = lp_build_log2_safe(&bld_base->base,
+                                                           emit_data->args[0]);
 }
 
 /* TGSI_OPCODE_LOG (CPU Only) */
@@ -1253,7 +1253,7 @@ log_emit_cpu(
    LLVMValueRef src0 = emit_data->args[0];
 
    lp_build_log2_approx(&bld_base->base, src0,
-                        &p_exp, &p_floor_log2, &p_log2);
+                        &p_exp, &p_floor_log2, &p_log2, FALSE);
 
    emit_data->output[TGSI_CHAN_X] = p_floor_log2;
 
