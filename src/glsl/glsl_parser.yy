@@ -898,7 +898,7 @@ parameter_qualifier:
       if (($1.flags.q.in || $1.flags.q.out) && ($2.flags.q.in || $2.flags.q.out))
          _mesa_glsl_error(&@1, state, "duplicate in/out/inout qualifier\n");
 
-      if ($2.flags.q.constant)
+      if (!state->ARB_shading_language_420pack_enable && $2.flags.q.constant)
          _mesa_glsl_error(&@1, state, "const must be specified before "
                           "in/out/inout.\n");
 
