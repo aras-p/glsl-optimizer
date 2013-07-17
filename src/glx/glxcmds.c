@@ -373,7 +373,32 @@ glXCreateContext(Display * dpy, XVisualInfo * vis,
       return None;
    }
 
-   renderType = config->rgbMode ? GLX_RGBA_TYPE : GLX_COLOR_INDEX_TYPE;
+   /* Choose the context render type based on DRI config values.  It is
+    * unusual to set this type from config, but we have no other choice, as
+    * this old API does not provide renderType parameter.
+    */
+   if (config->renderType & GLX_RGBA_FLOAT_BIT_ARB) {
+       renderType = GLX_RGBA_FLOAT_TYPE_ARB;
+   } else if (config->renderType & GLX_RGBA_UNSIGNED_FLOAT_BIT_EXT) {
+       renderType = GLX_RGBA_UNSIGNED_FLOAT_TYPE_EXT;
+   } else if (config->renderType & GLX_RGBA_BIT) {
+       renderType = GLX_RGBA_TYPE;
+   } else if (config->renderType & GLX_COLOR_INDEX_BIT) {
+       renderType = GLX_COLOR_INDEX_TYPE;
+   } else if (config->rgbMode) {
+       /* If we're here, then renderType is not set correctly.  Let's use a
+        * safeguard - any TrueColor or DirectColor mode is RGB mode.  Such
+        * default value is needed by old DRI drivers, which didn't set
+        * renderType correctly as the value was just ignored.
+        */
+       renderType = GLX_RGBA_TYPE;
+   } else {
+       /* Safeguard - only one option left, all non-RGB modes are indexed
+        * modes.  Again, this allows drivers with invalid renderType to work
+        * properly.
+        */
+       renderType = GLX_COLOR_INDEX_TYPE;
+   }
 #endif
 
    return CreateContext(dpy, vis->visualid, config, shareList, allowDirect,
@@ -876,9 +901,8 @@ init_fbconfig_for_chooser(struct glx_config * config,
    config->transparentAlpha = GLX_DONT_CARE;
    config->transparentIndex = GLX_DONT_CARE;
 
-   config->drawableType = GLX_WINDOW_BIT;
-   config->renderType =
-      (config->rgbMode) ? GLX_RGBA_BIT : GLX_COLOR_INDEX_BIT;
+   /* Set GLX_RENDER_TYPE property to not expect any flags by default. */
+   config->renderType = 0;
    config->xRenderable = GLX_DONT_CARE;
    config->fbconfigID = (GLXFBConfigID) (GLX_DONT_CARE);
 
