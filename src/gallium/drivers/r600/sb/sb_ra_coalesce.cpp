@@ -593,6 +593,7 @@ int coalescer::color_reg_constraint(ra_constraint *c) {
 
 		color_chunk(cc, color);
 		cc->fix();
+		cc->set_prealloc();
 	}
 
 	return 0;
