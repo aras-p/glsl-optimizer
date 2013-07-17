@@ -306,6 +306,32 @@ fs_lower_opcode_tgsi_indirect_const(struct fs_compile_context *fcc,
    }
 }
 
+static bool
+fs_lower_opcode_tgsi_const_pcb(struct fs_compile_context *fcc,
+                               struct toy_dst dst, int dim,
+                               struct toy_src idx)
+{
+   const int grf = fcc->first_const_grf + idx.val32 / 2;
+   const int grf_subreg = (idx.val32 & 1) * 16;
+   struct toy_src src;
+   struct toy_dst real_dst[4];
+   int i;
+
+   if (!fcc->variant->use_pcb || dim != 0 || idx.file != TOY_FILE_IMM ||
+       grf >= fcc->first_attr_grf)
+      return false;
+
+   src = tsrc_rect(tsrc(TOY_FILE_GRF, grf, grf_subreg), TOY_RECT_010);
+
+   tdst_transpose(dst, real_dst);
+   for (i = 0; i < 4; i++) {
+      /* cast to type D to make sure these are raw moves */
+      tc_MOV(&fcc->tc, tdst_d(real_dst[i]), tsrc_d(tsrc_offset(src, 0, i)));
+   }
+
+   return true;
+}
+
 static void
 fs_lower_opcode_tgsi_const_gen6(struct fs_compile_context *fcc,
                                 struct toy_dst dst, int dim, struct toy_src idx)
@@ -321,6 +347,9 @@ fs_lower_opcode_tgsi_const_gen6(struct fs_compile_context *fcc,
    struct toy_src desc;
    struct toy_dst tmp, real_dst[4];
    int i;
+
+   if (fs_lower_opcode_tgsi_const_pcb(fcc, dst, dim, idx))
+      return;
 
    /* set message header */
    inst = tc_MOV(tc, header, r0);
@@ -364,6 +393,9 @@ fs_lower_opcode_tgsi_const_gen7(struct fs_compile_context *fcc,
    struct toy_inst *inst;
    struct toy_dst tmp, real_dst[4];
    int i;
+
+   if (fs_lower_opcode_tgsi_const_pcb(fcc, dst, dim, idx))
+      return;
 
    /*
     * In 4c1fdae0a01b3f92ec03b61aac1d3df500d51fc6, pull constant load was
@@ -1743,8 +1775,28 @@ fs_setup(struct fs_compile_context *fcc,
    fs_setup_shader_in(fcc->shader, &fcc->tgsi, fcc->variant->u.fs.flatshade);
    fs_setup_shader_out(fcc->shader, &fcc->tgsi);
 
-   /* we do not make use of push constant buffers yet */
-   num_consts = 0;
+   if (fcc->variant->use_pcb && !fcc->tgsi.const_indirect) {
+      num_consts = (fcc->tgsi.const_count + 1) / 2;
+
+      /*
+       * From the Sandy Bridge PRM, volume 2 part 1, page 287:
+       *
+       *     "The sum of all four read length fields (each incremented to
+       *      represent the actual read length) must be less than or equal to
+       *      64"
+       *
+       * Since we are usually under a high register pressure, do not allow
+       * for more than 8.
+       */
+      if (num_consts > 8)
+         num_consts = 0;
+   }
+   else {
+      num_consts = 0;
+   }
+
+   fcc->shader->skip_cbuf0_upload = (!fcc->tgsi.const_count || num_consts);
+   fcc->shader->pcb.cbuf0_size = num_consts * (sizeof(float) * 8);
 
    fcc->first_const_grf = fs_setup_payloads(fcc);
    fcc->first_attr_grf = fcc->first_const_grf + num_consts;

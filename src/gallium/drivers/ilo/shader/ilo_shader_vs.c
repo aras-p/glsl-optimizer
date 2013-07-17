@@ -47,6 +47,7 @@ struct vs_compile_context {
 
    int num_grf_per_vrf;
    int first_const_grf;
+   int first_ucp_grf;
    int first_vue_grf;
    int first_free_grf;
    int last_free_grf;
@@ -79,6 +80,27 @@ vs_lower_opcode_tgsi_in(struct vs_compile_context *vcc,
    }
 }
 
+static bool
+vs_lower_opcode_tgsi_const_pcb(struct vs_compile_context *vcc,
+                               struct toy_dst dst, int dim,
+                               struct toy_src idx)
+{
+   const int i = idx.val32;
+   const int grf = vcc->first_const_grf + i / 2;
+   const int grf_subreg = (i & 1) * 16;
+   struct toy_src src;
+
+   if (!vcc->variant->use_pcb || dim != 0 || idx.file != TOY_FILE_IMM ||
+       grf >= vcc->first_ucp_grf)
+      return false;
+
+
+   src = tsrc_rect(tsrc(TOY_FILE_GRF, grf, grf_subreg), TOY_RECT_041);
+   tc_MOV(&vcc->tc, dst, src);
+
+   return true;
+}
+
 static void
 vs_lower_opcode_tgsi_const_gen6(struct vs_compile_context *vcc,
                                 struct toy_dst dst, int dim,
@@ -93,6 +115,9 @@ vs_lower_opcode_tgsi_const_gen6(struct vs_compile_context *vcc,
    unsigned msg_type, msg_ctrl, msg_len;
    struct toy_inst *inst;
    struct toy_src desc;
+
+   if (vs_lower_opcode_tgsi_const_pcb(vcc, dst, dim, idx))
+      return;
 
    /* set message header */
    inst = tc_MOV(tc, header, r0);
@@ -120,6 +145,9 @@ vs_lower_opcode_tgsi_const_gen7(struct vs_compile_context *vcc,
    const struct toy_dst offset =
       tdst_ud(tdst(TOY_FILE_MRF, vcc->first_free_mrf, 0));
    struct toy_src desc;
+
+   if (vs_lower_opcode_tgsi_const_pcb(vcc, dst, dim, idx))
+      return;
 
    /*
     * In 259b65e2e7938de4aab323033cfe2b33369ddb07, pull constant load was
@@ -835,7 +863,7 @@ vs_collect_outputs(struct vs_compile_context *vcc, struct toy_src *outs)
                }
 
                for (j = first_ucp; j <= last_ucp; j++) {
-                  const int plane_grf = vcc->first_const_grf + j / 2;
+                  const int plane_grf = vcc->first_ucp_grf + j / 2;
                   const int plane_subreg = (j & 1) * 16;
                   const struct toy_src plane = tsrc_rect(tsrc(TOY_FILE_GRF,
                            plane_grf, plane_subreg), TOY_RECT_041);
@@ -1199,12 +1227,34 @@ vs_setup(struct vs_compile_context *vcc,
    vs_setup_shader_out(vcc->shader, &vcc->tgsi,
          (vcc->variant->u.vs.num_ucps > 0), vcc->output_map);
 
-   /* fit each pair of user clip planes into a register */
-   num_consts = (vcc->variant->u.vs.num_ucps + 1) / 2;
+   if (vcc->variant->use_pcb && !vcc->tgsi.const_indirect) {
+      num_consts = (vcc->tgsi.const_count + 1) / 2;
+
+      /*
+       * From the Sandy Bridge PRM, volume 2 part 1, page 138:
+       *
+       *     "The sum of all four read length fields (each incremented to
+       *      represent the actual read length) must be less than or equal to
+       *      32"
+       */
+      if (num_consts > 32)
+         num_consts = 0;
+   }
+   else {
+      num_consts = 0;
+   }
+
+   vcc->shader->skip_cbuf0_upload = (!vcc->tgsi.const_count || num_consts);
+   vcc->shader->pcb.cbuf0_size = num_consts * (sizeof(float) * 8);
 
    /* r0 is reserved for payload header */
    vcc->first_const_grf = 1;
-   vcc->first_vue_grf = vcc->first_const_grf + num_consts;
+   vcc->first_ucp_grf = vcc->first_const_grf + num_consts;
+
+   /* fit each pair of user clip planes into a register */
+   vcc->first_vue_grf = vcc->first_ucp_grf +
+      (vcc->variant->u.vs.num_ucps + 1) / 2;
+
    vcc->first_free_grf = vcc->first_vue_grf + vcc->shader->in.count;
    vcc->last_free_grf = 127;
 

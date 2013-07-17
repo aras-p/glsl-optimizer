@@ -59,6 +59,8 @@ struct ilo_shader_variant {
       } fs;
    } u;
 
+   bool use_pcb;
+
    int num_sampler_views;
    struct {
       unsigned r:3;
@@ -102,6 +104,8 @@ struct ilo_shader {
       bool has_pos;
    } out;
 
+   bool skip_cbuf0_upload;
+
    bool has_kill;
    bool dispatch_16;
 
@@ -124,6 +128,7 @@ struct ilo_shader {
 
    /* what does the push constant buffer consist of? */
    struct {
+      int cbuf0_size;
       int clip_state_size;
    } pcb;
 

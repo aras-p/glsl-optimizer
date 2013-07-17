@@ -2244,6 +2244,12 @@ parse_instruction(struct toy_tgsi *tgsi,
       break;
    }
 
+   for (i = 0; i < tgsi_inst->Instruction.NumSrcRegs; i++) {
+      const struct tgsi_full_src_register *s = &tgsi_inst->Src[i];
+      if (s->Register.File == TGSI_FILE_CONSTANT && s->Register.Indirect)
+         tgsi->const_indirect = true;
+   }
+
    /* remember channels written */
    for (i = 0; i < tgsi_inst->Instruction.NumDstRegs; i++) {
       const struct tgsi_full_dst_register *d = &tgsi_inst->Dst[i];
@@ -2398,8 +2404,11 @@ parse_declaration(struct toy_tgsi *tgsi,
       /* immediates should be declared with TGSI_TOKEN_TYPE_IMMEDIATE */
       assert(!"unexpected immediate declaration");
       break;
-   case TGSI_FILE_NULL:
    case TGSI_FILE_CONSTANT:
+      if (tgsi->const_count <= decl->Range.Last)
+         tgsi->const_count = decl->Range.Last + 1;
+      break;
+   case TGSI_FILE_NULL:
    case TGSI_FILE_TEMPORARY:
    case TGSI_FILE_SAMPLER:
    case TGSI_FILE_PREDICATE:

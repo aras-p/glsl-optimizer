@@ -273,6 +273,13 @@ ilo_shader_variant_init(struct ilo_shader_variant *variant,
       break;
    }
 
+   /* use PCB unless constant buffer 0 is not in user buffer  */
+   if ((ilo->cbuf[info->type].enabled_mask & 0x1) &&
+       !ilo->cbuf[info->type].cso[0].user_buffer)
+      variant->use_pcb = false;
+   else
+      variant->use_pcb = true;
+
    num_views = ilo->view[info->type].count;
    assert(info->num_samplers <= num_views);
 
@@ -340,6 +347,8 @@ ilo_shader_variant_guess(struct ilo_shader_variant *variant,
       assert(!"unknown shader type");
       break;
    }
+
+   variant->use_pcb = true;
 
    variant->num_sampler_views = info->num_samplers;
    for (i = 0; i < info->num_samplers; i++) {
@@ -747,7 +756,8 @@ ilo_shader_create_vs(const struct ilo_dev_info *dev,
 
    /* states used in ilo_shader_variant_init() */
    shader->info.non_orthogonal_states = ILO_DIRTY_VIEW_VS |
-                                        ILO_DIRTY_RASTERIZER;
+                                        ILO_DIRTY_RASTERIZER |
+                                        ILO_DIRTY_CBUF;
 
    return shader;
 }
@@ -764,7 +774,8 @@ ilo_shader_create_gs(const struct ilo_dev_info *dev,
    /* states used in ilo_shader_variant_init() */
    shader->info.non_orthogonal_states = ILO_DIRTY_VIEW_GS |
                                         ILO_DIRTY_VS |
-                                        ILO_DIRTY_RASTERIZER;
+                                        ILO_DIRTY_RASTERIZER |
+                                        ILO_DIRTY_CBUF;
 
    return shader;
 }
@@ -781,7 +792,8 @@ ilo_shader_create_fs(const struct ilo_dev_info *dev,
    /* states used in ilo_shader_variant_init() */
    shader->info.non_orthogonal_states = ILO_DIRTY_VIEW_FS |
                                         ILO_DIRTY_RASTERIZER |
-                                        ILO_DIRTY_FB;
+                                        ILO_DIRTY_FB |
+                                        ILO_DIRTY_CBUF;
 
    return shader;
 }
@@ -1061,10 +1073,10 @@ ilo_shader_get_kernel_param(const struct ilo_shader_state *shader,
       val = kernel->in.start_grf;
       break;
    case ILO_KERNEL_SKIP_CBUF0_UPLOAD:
-      val = false;
+      val = kernel->skip_cbuf0_upload;
       break;
    case ILO_KERNEL_PCB_CBUF0_SIZE:
-      val = 0;
+      val = kernel->pcb.cbuf0_size;
       break;
 
    case ILO_KERNEL_VS_INPUT_INSTANCEID:
