@@ -136,20 +136,6 @@ set_uniform_initializer(void *mem_ctx, gl_shader_program *prog,
 
 	 idx += elements;
       }
-
-      if (base_type == GLSL_TYPE_SAMPLER) {
-         for (int sh = 0; sh < MESA_SHADER_TYPES; sh++) {
-            gl_shader *shader = prog->_LinkedShaders[sh];
-
-            if (shader && storage->sampler[sh].active) {
-               for (unsigned i = 0; i < storage->array_elements; i++) {
-                  unsigned index = storage->sampler[sh].index + i;
-
-                  shader->SamplerUnits[index] = storage->storage[i].i;
-               }
-            }
-	 }
-      }
    } else {
       copy_constant_to_storage(storage->storage,
 			       val,
