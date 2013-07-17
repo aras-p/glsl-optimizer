@@ -85,44 +85,46 @@ finalize_shader_states(struct ilo_context *ilo)
 }
 
 static void
+finalize_cbuf_state(struct ilo_context *ilo,
+                    struct ilo_cbuf_state *cbuf,
+                    const struct ilo_shader_state *sh)
+{
+   uint32_t upload_mask = cbuf->enabled_mask;
+
+   /* skip CBUF0 if the kernel does not need it */
+   upload_mask &=
+      ~ilo_shader_get_kernel_param(sh, ILO_KERNEL_SKIP_CBUF0_UPLOAD);
+
+   while (upload_mask) {
+      const enum pipe_format elem_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
+      unsigned offset, i;
+
+      i = u_bit_scan(&upload_mask);
+      /* no need to upload */
+      if (cbuf->cso[i].resource)
+         continue;
+
+      u_upload_data(ilo->uploader, 0, cbuf->cso[i].user_buffer_size,
+            cbuf->cso[i].user_buffer, &offset, &cbuf->cso[i].resource);
+
+      ilo_gpe_init_view_surface_for_buffer(ilo->dev,
+            ilo_buffer(cbuf->cso[i].resource),
+            offset, cbuf->cso[i].user_buffer_size,
+            util_format_get_blocksize(elem_format), elem_format,
+            false, false, &cbuf->cso[i].surface);
+
+      ilo->dirty |= ILO_DIRTY_CBUF;
+   }
+}
+
+static void
 finalize_constant_buffers(struct ilo_context *ilo)
 {
-   int sh;
+   if (ilo->dirty & (ILO_DIRTY_CBUF | ILO_DIRTY_VS))
+      finalize_cbuf_state(ilo, &ilo->cbuf[PIPE_SHADER_VERTEX], ilo->vs);
 
-   if (!(ilo->dirty & ILO_DIRTY_CBUF))
-      return;
-
-   /* TODO push constants? */
-   for (sh = 0; sh < PIPE_SHADER_TYPES; sh++) {
-      unsigned enabled_mask = ilo->cbuf[sh].enabled_mask;
-
-      while (enabled_mask) {
-         struct ilo_cbuf_cso *cbuf;
-         int i;
-
-         i = u_bit_scan(&enabled_mask);
-         cbuf = &ilo->cbuf[sh].cso[i];
-
-         /* upload user buffer */
-         if (cbuf->user_buffer) {
-            const enum pipe_format elem_format =
-               PIPE_FORMAT_R32G32B32A32_FLOAT;
-            unsigned offset;
-
-            u_upload_data(ilo->uploader, 0, cbuf->user_buffer_size,
-                  cbuf->user_buffer, &offset, &cbuf->resource);
-
-            ilo_gpe_init_view_surface_for_buffer(ilo->dev,
-                  ilo_buffer(cbuf->resource),
-                  offset, cbuf->user_buffer_size,
-                  util_format_get_blocksize(elem_format), elem_format,
-                  false, false, &cbuf->surface);
-
-            cbuf->user_buffer = NULL;
-            cbuf->user_buffer_size = 0;
-         }
-      }
-   }
+   if (ilo->dirty & (ILO_DIRTY_CBUF | ILO_DIRTY_FS))
+      finalize_cbuf_state(ilo, &ilo->cbuf[PIPE_SHADER_FRAGMENT], ilo->fs);
 }
 
 static void

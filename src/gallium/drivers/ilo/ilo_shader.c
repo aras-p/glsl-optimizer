@@ -1060,6 +1060,9 @@ ilo_shader_get_kernel_param(const struct ilo_shader_state *shader,
    case ILO_KERNEL_URB_DATA_START_REG:
       val = kernel->in.start_grf;
       break;
+   case ILO_KERNEL_SKIP_CBUF0_UPLOAD:
+      val = false;
+      break;
 
    case ILO_KERNEL_VS_INPUT_INSTANCEID:
       val = shader->info.has_instanceid;
