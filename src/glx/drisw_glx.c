@@ -447,8 +447,8 @@ drisw_create_context_attribs(struct glx_screen *base,
    /* Remap the GLX tokens to DRI2 tokens.
     */
    if (!dri2_convert_glx_attribs(num_attribs, attribs,
-				 &major_ver, &minor_ver, &flags, &api, &reset,
-				 error))
+                                 &major_ver, &minor_ver, &renderType, &flags,
+                                 &api, &reset, error))
       return NULL;
 
    if (reset != __DRI_CTX_RESET_NO_NOTIFICATION)

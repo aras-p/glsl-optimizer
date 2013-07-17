@@ -273,8 +273,8 @@ dri2_create_context_attribs(struct glx_screen *base,
    /* Remap the GLX tokens to DRI2 tokens.
     */
    if (!dri2_convert_glx_attribs(num_attribs, attribs,
-				 &major_ver, &minor_ver, &flags, &api, &reset,
-                                 error))
+                                 &major_ver, &minor_ver, &renderType, &flags,
+                                 &api, &reset, error))
       goto error_exit;
 
    if (shareList) {

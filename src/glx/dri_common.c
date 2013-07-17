@@ -456,14 +456,13 @@ driReleaseDrawables(struct glx_context *gc)
 
 _X_HIDDEN bool
 dri2_convert_glx_attribs(unsigned num_attribs, const uint32_t *attribs,
-			 unsigned *major_ver, unsigned *minor_ver,
-			 uint32_t *flags, unsigned *api, int *reset,
-                         unsigned *error)
+                         unsigned *major_ver, unsigned *minor_ver,
+                         uint32_t *render_type, uint32_t *flags, unsigned *api,
+                         int *reset, unsigned *error)
 {
    unsigned i;
    bool got_profile = false;
    uint32_t profile;
-   int render_type = GLX_RGBA_TYPE;
 
    if (num_attribs == 0) {
       *api = __DRI_API_OPENGL;
@@ -479,6 +478,7 @@ dri2_convert_glx_attribs(unsigned num_attribs, const uint32_t *attribs,
 
    *major_ver = 1;
    *minor_ver = 0;
+   *render_type = GLX_RGBA_TYPE;
    *reset = __DRI_CTX_RESET_NO_NOTIFICATION;
 
    for (i = 0; i < num_attribs; i++) {
@@ -497,7 +497,7 @@ dri2_convert_glx_attribs(unsigned num_attribs, const uint32_t *attribs,
 	 got_profile = true;
 	 break;
       case GLX_RENDER_TYPE:
-	 render_type = attribs[i * 2 + 1];
+         *render_type = attribs[i * 2 + 1];
 	 break;
       case GLX_CONTEXT_RESET_NOTIFICATION_STRATEGY_ARB:
          switch (attribs[i * 2 + 1]) {
@@ -568,7 +568,7 @@ dri2_convert_glx_attribs(unsigned num_attribs, const uint32_t *attribs,
       return false;
    }
 
-   if (*major_ver >= 3 && render_type == GLX_COLOR_INDEX_TYPE) {
+   if (*major_ver >= 3 && *render_type == GLX_COLOR_INDEX_TYPE) {
       *error = __DRI_CTX_ERROR_BAD_FLAG;
       return false;
    }
