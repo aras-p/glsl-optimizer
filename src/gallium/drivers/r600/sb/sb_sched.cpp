@@ -348,7 +348,8 @@ void alu_group_tracker::discard_slots(unsigned slot_mask,
                                     container_node &removed_nodes) {
 
 	PSC_DUMP(
-		sblog << "discard_slots : packed_ops : " << packed_ops.size() << "\n";
+		sblog << "discard_slots : packed_ops : "
+			<< (unsigned)packed_ops.size() << "\n";
 	);
 
 	for (node_vec::iterator N, I = packed_ops.begin();
@@ -1848,9 +1849,9 @@ void literal_tracker::init_group_literals(alu_group_node* g) {
 		g->literals.push_back(lt[i]);
 
 		PSC_DUMP(
-			sblog << "literal emitted: " << lt[i].f
-				<< "  0x" << std::hex << lt[i].u
-				<< std::dec << "   " << lt[i].i << "\n";
+			sblog << "literal emitted: " << lt[i].f;
+			sblog.print_zw_hex(lt[i].u, 8);
+			sblog << "   " << lt[i].i << "\n";
 		);
 	}
 }
