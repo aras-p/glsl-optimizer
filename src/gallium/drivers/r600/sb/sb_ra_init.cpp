@@ -72,6 +72,7 @@ public:
 
 	sel_chan find_free_bit();
 	sel_chan find_free_chans(unsigned mask);
+	sel_chan find_free_chan_by_mask(unsigned mask);
 	sel_chan find_free_array(unsigned size, unsigned mask);
 
 	void dump();
@@ -86,7 +87,7 @@ void regbits::dump() {
 			sblog << "\n";
 
 		if (!(i & 3)) {
-			sblog.print_wl(i / 4, 7);
+			sblog.print_w(i / 4, 7);
 			sblog << " ";
 		}
 
@@ -186,34 +187,64 @@ sel_chan regbits::find_free_chans(unsigned mask) {
 	unsigned elt = 0;
 	unsigned bit = 0;
 
-	basetype cd = dta[elt] >> bit;
+	assert (!(mask & ~0xF));
+	basetype cd = dta[elt];
 
 	do {
-
 		if (!cd) {
-			if (++elt < size)
+			if (++elt < size) {
 				cd = dta[elt];
-			else
+				bit = 0;
+				continue;
+			} else
 				return 0;
-
-			bit = 0;
 		}
 
 		unsigned p = __builtin_ctz(cd) & ~(basetype)3u;
 
-		if (p > bt_bits - bit) {
-			if (++elt < size)
-				cd = dta[elt];
-			else
-				return 0;
-			bit = 0;
-		}
-
+		assert (p <= bt_bits - bit);
 		bit += p;
 		cd >>= p;
 
 		if ((cd & mask) == mask) {
 			return ((elt << bt_index_shift) | bit) + 1;
+		}
+
+		bit += 4;
+		cd >>= 4;
+
+	} while (1);
+
+	return 0;
+}
+
+sel_chan regbits::find_free_chan_by_mask(unsigned mask) {
+	unsigned elt = 0;
+	unsigned bit = 0;
+
+	assert (!(mask & ~0xF));
+	basetype cd = dta[elt];
+
+	do {
+		if (!cd) {
+			if (++elt < size) {
+				cd = dta[elt];
+				bit = 0;
+				continue;
+			} else
+				return 0;
+		}
+
+		unsigned p = __builtin_ctz(cd) & ~(basetype)3u;
+
+		assert (p <= bt_bits - bit);
+		bit += p;
+		cd >>= p;
+
+		if (cd & mask) {
+			unsigned nb = __builtin_ctz(cd & mask);
+			unsigned ofs = ((elt << bt_index_shift) | bit);
+			return nb + ofs + 1;
 		}
 
 		bit += 4;
@@ -476,7 +507,9 @@ void ra_init::color(value* v) {
 		unsigned mask = 1 << v->pin_gpr.chan();
 		c = rb.find_free_chans(mask) + v->pin_gpr.chan();
 	} else {
-		c = rb.find_free_bit();
+		unsigned cm = get_preferable_chan_mask();
+		RA_DUMP( sblog << "pref chan mask: " << cm << "\n"; );
+		c = rb.find_free_chan_by_mask(cm);
 	}
 
 	assert(c && c.sel() < 128 - ctx.alu_temp_gprs && "color failed");
@@ -484,6 +517,7 @@ void ra_init::color(value* v) {
 }
 
 void ra_init::assign_color(value* v, sel_chan c) {
+	add_prev_chan(c.chan());
 	v->gpr = c;
 	RA_DUMP(
 		sblog << "colored ";
@@ -788,6 +822,22 @@ void ra_split::split_vector_inst(node* n) {
 			}
 		}
 	}
+}
+
+void ra_init::add_prev_chan(unsigned chan) {
+	prev_chans = (prev_chans << 4) | (1 << chan);
+}
+
+unsigned ra_init::get_preferable_chan_mask() {
+	unsigned i, used_chans = 0;
+	unsigned chans = prev_chans;
+
+	for (i = 0; i < ra_tune; ++i) {
+		used_chans |= chans;
+		chans >>= 4;
+	}
+
+	return (~used_chans) & 0xF;
 }
 
 } // namespace r600_sb

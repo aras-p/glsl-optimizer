@@ -507,11 +507,35 @@ class ra_init : public pass {
 
 public:
 
-	ra_init(shader &sh) : pass(sh) {}
+	ra_init(shader &sh) : pass(sh), prev_chans() {
+
+		// The parameter below affects register channels distribution.
+		// For cayman (VLIW-4) we're trying to distribute the channels
+		// uniformly, this means significantly better alu slots utilization
+		// at the expense of higher gpr usage. Hopefully this will improve
+		// performance, though it has to be proven with real benchmarks yet.
+		// For VLIW-5 this method could also slightly improve slots
+		// utilization, but increased register pressure seems more significant
+		// and overall performance effect is negative according to some
+		// benchmarks, so it's not used currently. Basically, VLIW-5 doesn't
+		// really need it because trans slot (unrestricted by register write
+		// channel) allows to consume most deviations from uniform channel
+		// distribution.
+		// Value 3 means that for new allocation we'll use channel that differs
+		// from 3 last used channels. 0 for VLIW-5 effectively turns this off.
+
+		ra_tune = sh.get_ctx().is_cayman() ? 3 : 0;
+	}
 
 	virtual int run();
 
 private:
+
+	unsigned prev_chans;
+	unsigned ra_tune;
+
+	void add_prev_chan(unsigned chan);
+	unsigned get_preferable_chan_mask();
 
 	void ra_node(container_node *c);
 	void process_op(node *n);
