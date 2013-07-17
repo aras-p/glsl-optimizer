@@ -614,6 +614,11 @@ dump_3d_state(struct ilo_3d_pipeline *p)
    else
       dump_gen7_sampler_state(&brw, p->state.wm.SAMPLER_STATE, num_states * 16);
 
+   if (p->state.wm.PUSH_CONSTANT_BUFFER_size) {
+      dump_wm_constants(&brw, p->state.wm.PUSH_CONSTANT_BUFFER,
+            p->state.wm.PUSH_CONSTANT_BUFFER_size);
+   }
+
    dump_scissor(&brw, p->state.SCISSOR_RECT);
 
    (void) dump_vs_state;
@@ -622,7 +627,6 @@ dump_3d_state(struct ilo_3d_pipeline *p)
    (void) dump_sf_state;
    (void) dump_wm_state;
    (void) dump_cc_state_gen4;
-   (void) dump_wm_constants;
 }
 
 /**
