@@ -93,6 +93,31 @@ set_uniform_binding(void *mem_ctx, gl_shader_program *prog,
       return;
    }
 
+   if (storage->type->is_sampler()) {
+      unsigned elements = MAX2(storage->array_elements, 1);
+
+      /* From section 4.4.4 of the GLSL 4.20 specification:
+       * "If the binding identifier is used with an array, the first element
+       *  of the array takes the specified unit and each subsequent element
+       *  takes the next consecutive unit."
+       */
+      for (unsigned int i = 0; i < elements; i++) {
+         storage->storage[i].i = binding + i;
+      }
+
+      for (int sh = 0; sh < MESA_SHADER_TYPES; sh++) {
+         gl_shader *shader = prog->_LinkedShaders[sh];
+
+         if (shader && storage->sampler[sh].active) {
+            for (unsigned i = 0; i < elements; i++) {
+               unsigned index = storage->sampler[sh].index + i;
+
+               shader->SamplerUnits[index] = storage->storage[i].i;
+            }
+         }
+      }
+   }
+
    storage->initialized = true;
 }
 
