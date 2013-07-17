@@ -344,4 +344,9 @@ LLVMValueRef
 lp_build_isnan(struct lp_build_context *bld,
                LLVMValueRef x);
 
+LLVMValueRef
+lp_build_isfinite(struct lp_build_context *bld,
+                  LLVMValueRef x);
+
+
 #endif /* !LP_BLD_ARIT_H */

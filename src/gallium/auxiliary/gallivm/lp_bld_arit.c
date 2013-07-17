@@ -2803,6 +2803,15 @@ lp_build_sin(struct lp_build_context *bld,
     */
    LLVMValueRef y_sign = LLVMBuildXor(b, y_combine, sign_bit_1, "y_sin");
    LLVMValueRef y_result = LLVMBuildBitCast(b, y_sign, bld->vec_type, "y_result");
+   LLVMValueRef isfinite = lp_build_isfinite(bld, a);
+
+   /* clamp output to be within [-1, 1] */
+   y_result = lp_build_clamp(bld, y_result,
+                             lp_build_const_vec(bld->gallivm, bld->type,  -1.f),
+                             lp_build_const_vec(bld->gallivm, bld->type,  1.f));
+   /* If a is -inf, inf or NaN then return NaN */
+   y_result = lp_build_select(bld, isfinite, y_result,
+                              lp_build_const_vec(bld->gallivm, bld->type,  NAN));
    return y_result;
 }
 
@@ -3020,6 +3029,15 @@ lp_build_cos(struct lp_build_context *bld,
     */
    LLVMValueRef y_sign = LLVMBuildXor(b, y_combine, sign_bit, "y_sin");
    LLVMValueRef y_result = LLVMBuildBitCast(b, y_sign, bld->vec_type, "y_result");
+   LLVMValueRef isfinite = lp_build_isfinite(bld, a);
+
+   /* clamp output to be within [-1, 1] */
+   y_result = lp_build_clamp(bld, y_result,
+                             lp_build_const_vec(bld->gallivm, bld->type,  -1.f),
+                             lp_build_const_vec(bld->gallivm, bld->type,  1.f));
+   /* If a is -inf, inf or NaN then return NaN */
+   y_result = lp_build_select(bld, isfinite, y_result,
+                              lp_build_const_vec(bld->gallivm, bld->type,  NAN));
    return y_result;
 }
 
@@ -3609,4 +3627,30 @@ lp_build_isnan(struct lp_build_context *bld,
    mask = LLVMBuildNot(bld->gallivm->builder, mask, "");
    mask = LLVMBuildSExt(bld->gallivm->builder, mask, int_vec_type, "isnan");
    return mask;
+}
+
+/* Returns all 1's for floating point numbers that are
+ * finite numbers and returns all zeros for -inf,
+ * inf and nan's */
+LLVMValueRef
+lp_build_isfinite(struct lp_build_context *bld,
+                  LLVMValueRef x)
+{
+   LLVMBuilderRef builder = bld->gallivm->builder;
+   LLVMTypeRef int_vec_type = lp_build_int_vec_type(bld->gallivm, bld->type);
+   struct lp_type int_type = lp_int_type(bld->type);
+   LLVMValueRef intx = LLVMBuildBitCast(builder, x, int_vec_type, "");
+   LLVMValueRef infornan32 = lp_build_const_int_vec(bld->gallivm, bld->type,
+                                                    0x7f800000);
+
+   if (!bld->type.floating) {
+      return lp_build_const_int_vec(bld->gallivm, bld->type, 0);
+   }
+   assert(bld->type.floating);
+   assert(lp_check_value(bld->type, x));
+   assert(bld->type.width == 32);
+
+   intx = LLVMBuildAnd(builder, intx, infornan32, "");
+   return lp_build_compare(bld->gallivm, int_type, PIPE_FUNC_NOTEQUAL,
+                           intx, infornan32);
 }
