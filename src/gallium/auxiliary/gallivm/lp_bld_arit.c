@@ -2602,15 +2602,14 @@ lp_build_sin(struct lp_build_context *bld,
     * xmm3 = poly_mask;
     * y2 = _mm_and_ps(xmm3, y2); //, xmm3);
     * y = _mm_andnot_ps(xmm3, y);
-    * y = _mm_add_ps(y,y2);
+    * y = _mm_or_ps(y,y2);
     */
    LLVMValueRef y2_i = LLVMBuildBitCast(b, y2_9, bld->int_vec_type, "y2_i");
    LLVMValueRef y_i = LLVMBuildBitCast(b, y_10, bld->int_vec_type, "y_i");
    LLVMValueRef y2_and = LLVMBuildAnd(b, y2_i, poly_mask, "y2_and");
-   LLVMValueRef inv = lp_build_const_int_vec(gallivm, bld->type, ~0);
-   LLVMValueRef poly_mask_inv = LLVMBuildXor(b, poly_mask, inv, "poly_mask_inv");
+   LLVMValueRef poly_mask_inv = LLVMBuildNot(b, poly_mask, "poly_mask_inv");
    LLVMValueRef y_and = LLVMBuildAnd(b, y_i, poly_mask_inv, "y_and");
-   LLVMValueRef y_combine = LLVMBuildAdd(b, y_and, y2_and, "y_combine");
+   LLVMValueRef y_combine = LLVMBuildOr(b, y_and, y2_and, "y_combine");
 
    /*
     * update the sign
@@ -2820,14 +2819,14 @@ lp_build_cos(struct lp_build_context *bld,
     * xmm3 = poly_mask;
     * y2 = _mm_and_ps(xmm3, y2); //, xmm3);
     * y = _mm_andnot_ps(xmm3, y);
-    * y = _mm_add_ps(y,y2);
+    * y = _mm_or_ps(y,y2);
     */
    LLVMValueRef y2_i = LLVMBuildBitCast(b, y2_9, bld->int_vec_type, "y2_i");
    LLVMValueRef y_i = LLVMBuildBitCast(b, y_10, bld->int_vec_type, "y_i");
    LLVMValueRef y2_and = LLVMBuildAnd(b, y2_i, poly_mask, "y2_and");
-   LLVMValueRef poly_mask_inv = LLVMBuildXor(b, poly_mask, inv, "poly_mask_inv");
+   LLVMValueRef poly_mask_inv = LLVMBuildNot(b, poly_mask, "poly_mask_inv");
    LLVMValueRef y_and = LLVMBuildAnd(b, y_i, poly_mask_inv, "y_and");
-   LLVMValueRef y_combine = LLVMBuildAdd(b, y_and, y2_and, "y_combine");
+   LLVMValueRef y_combine = LLVMBuildOr(b, y_and, y2_and, "y_combine");
 
    /*
     * update the sign
