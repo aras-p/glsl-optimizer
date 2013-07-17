@@ -83,6 +83,11 @@ util_format_srgb_8unorm_to_linear_float(uint8_t x)
 }
 
 
+/*
+ * XXX These 2 functions probably don't make a lot of sense (but lots
+ * of potential callers which most likely all don't make sense neither)
+ */
+
 /**
  * Convert a 8bit normalized value from linear to srgb.
  */
