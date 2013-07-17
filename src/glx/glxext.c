@@ -337,6 +337,7 @@ __glXInitializeVisualConfigFromTags(struct glx_config * config, int count,
                                     Bool fbconfig_style_tags)
 {
    int i;
+   GLint renderType = 0;
 
    if (!tagged_only) {
       /* Copy in the first set of properties */
@@ -471,8 +472,8 @@ __glXInitializeVisualConfigFromTags(struct glx_config * config, int count,
          config->drawableType |= GLX_WINDOW_BIT | GLX_PIXMAP_BIT | GLX_PBUFFER_BIT;              
 #endif
          break;
-      case GLX_RENDER_TYPE:
-         config->renderType = *bp++;
+      case GLX_RENDER_TYPE: /* fbconfig render type bits */
+         renderType = *bp++;
          break;
       case GLX_X_RENDERABLE:
          config->xRenderable = *bp++;
@@ -555,8 +556,27 @@ __glXInitializeVisualConfigFromTags(struct glx_config * config, int count,
       }
    }
 
-   config->renderType =
-      (config->rgbMode) ? GLX_RGBA_BIT : GLX_COLOR_INDEX_BIT;
+   if (renderType != 0 && renderType != GLX_DONT_CARE) {
+      config->renderType = renderType;
+      config->floatMode = (renderType &
+         (GLX_RGBA_FLOAT_BIT_ARB|GLX_RGBA_UNSIGNED_FLOAT_BIT_EXT)) != 0;
+   } else {
+      /* If there wasn't GLX_RENDER_TYPE property, set it based on
+       * config->rgbMode.  The only way to communicate that the config is
+       * floating-point is via GLX_RENDER_TYPE, so this cannot be a float
+       * config.
+       */
+      config->renderType =
+         (config->rgbMode) ? GLX_RGBA_BIT : GLX_COLOR_INDEX_BIT;
+   }
+
+   /* The GLX_ARB_fbconfig_float spec says:
+    *
+    *     "Note that floating point rendering is only supported for
+    *     GLXPbuffer drawables."
+    */
+   if (config->floatMode)
+      config->drawableType &= ~(GLX_WINDOW_BIT|GLX_PIXMAP_BIT);
 }
 
 static struct glx_config *
