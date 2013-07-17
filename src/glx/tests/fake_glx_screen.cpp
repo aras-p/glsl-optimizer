@@ -24,7 +24,7 @@
 
 struct glx_screen_vtable fake_glx_screen::vt = {
    indirect_create_context,
-   fake_glx_context::create_attribs
+   indirect_create_context_attribs
 };
 
 struct glx_screen_vtable fake_glx_screen_direct::vt = {
@@ -54,4 +54,19 @@ indirect_create_context(struct glx_screen *psc, struct glx_config *mode,
    (void) renderType;
 
    return new fake_glx_context(psc, mode);
+}
+
+extern "C" struct glx_context *
+indirect_create_context_attribs(struct glx_screen *base,
+				struct glx_config *config_base,
+				struct glx_context *shareList,
+				unsigned num_attribs,
+				const uint32_t *attribs,
+				unsigned *error)
+{
+   (void) num_attribs;
+   (void) attribs;
+   (void) error;
+
+   return indirect_create_context(base, config_base, shareList, 0);
 }

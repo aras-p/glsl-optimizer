@@ -84,7 +84,9 @@ glXCreateContextAttribsARB(Display *dpy, GLXFBConfig config,
 #ifdef GLX_USE_APPLEGL
       gc = applegl_create_context(psc, cfg, share, 0);
 #else
-      gc = indirect_create_context(psc, cfg, share, 0);
+      gc = indirect_create_context_attribs(psc, cfg, share, num_attribs,
+              (const uint32_t *) attrib_list,
+              &dummy_err);
 #endif
    }
 

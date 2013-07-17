@@ -817,5 +817,12 @@ extern struct glx_context *
 indirect_create_context(struct glx_screen *psc,
 			struct glx_config *mode,
 			struct glx_context *shareList, int renderType);
+extern struct glx_context *
+indirect_create_context_attribs(struct glx_screen *base,
+                                struct glx_config *config_base,
+                                struct glx_context *shareList,
+                                unsigned num_attribs,
+                                const uint32_t *attribs,
+                                unsigned *error);
 
 #endif /* !__GLX_client_h__ */
