@@ -653,8 +653,12 @@ gen6_pipeline_wm(struct ilo_3d_pipeline *p,
                  struct gen6_pipeline_session *session)
 {
    /* 3DSTATE_CONSTANT_PS */
-   if (session->pcb_state_fs_changed)
-      gen6_emit_3DSTATE_CONSTANT_PS(p->dev, NULL, NULL, 0, p->cp);
+   if (session->pcb_state_fs_changed) {
+      gen6_emit_3DSTATE_CONSTANT_PS(p->dev,
+            &p->state.wm.PUSH_CONSTANT_BUFFER,
+            &p->state.wm.PUSH_CONSTANT_BUFFER_size,
+            1, p->cp);
+   }
 
    /* 3DSTATE_WM */
    if (DIRTY(FS) || DIRTY(SAMPLER_FS) || DIRTY(BLEND) || DIRTY(DSA) ||
@@ -1189,27 +1193,83 @@ gen6_pipeline_state_pcb(struct ilo_3d_pipeline *p,
                         struct gen6_pipeline_session *session)
 {
    /* push constant buffer for VS */
-   if (DIRTY(VS) || DIRTY(CLIP)) {
+   if (DIRTY(VS) || DIRTY(CBUF) || DIRTY(CLIP)) {
+      const int cbuf0_size = (ilo->vs) ?
+            ilo_shader_get_kernel_param(ilo->vs,
+                  ILO_KERNEL_PCB_CBUF0_SIZE) : 0;
       const int clip_state_size = (ilo->vs) ?
             ilo_shader_get_kernel_param(ilo->vs,
                   ILO_KERNEL_VS_PCB_UCP_SIZE) : 0;
+      const int total_size = cbuf0_size + clip_state_size;
 
-      if (clip_state_size) {
+      if (total_size) {
          void *pcb;
 
-         p->state.vs.PUSH_CONSTANT_BUFFER_size = clip_state_size;
          p->state.vs.PUSH_CONSTANT_BUFFER =
-            gen6_emit_push_constant_buffer(p->dev,
-                  p->state.vs.PUSH_CONSTANT_BUFFER_size, &pcb, p->cp);
+            gen6_emit_push_constant_buffer(p->dev, total_size, &pcb, p->cp);
+         p->state.vs.PUSH_CONSTANT_BUFFER_size = total_size;
 
-         memcpy(pcb, &ilo->clip, clip_state_size);
+         if (cbuf0_size) {
+            const struct ilo_cbuf_state *cbuf =
+               &ilo->cbuf[PIPE_SHADER_VERTEX];
+
+            if (cbuf0_size <= cbuf->cso[0].user_buffer_size) {
+               memcpy(pcb, cbuf->cso[0].user_buffer, cbuf0_size);
+            }
+            else {
+               memcpy(pcb, cbuf->cso[0].user_buffer,
+                     cbuf->cso[0].user_buffer_size);
+               memset(pcb + cbuf->cso[0].user_buffer_size, 0,
+                     cbuf0_size - cbuf->cso[0].user_buffer_size);
+            }
+
+            pcb += cbuf0_size;
+         }
+
+         if (clip_state_size)
+            memcpy(pcb, &ilo->clip, clip_state_size);
+
+         session->pcb_state_vs_changed = true;
       }
-      else {
-         p->state.vs.PUSH_CONSTANT_BUFFER_size = 0;
+      else if (p->state.vs.PUSH_CONSTANT_BUFFER_size) {
          p->state.vs.PUSH_CONSTANT_BUFFER = 0;
-      }
+         p->state.vs.PUSH_CONSTANT_BUFFER_size = 0;
 
-      session->pcb_state_vs_changed = true;
+         session->pcb_state_vs_changed = true;
+      }
+   }
+
+   /* push constant buffer for FS */
+   if (DIRTY(FS) || DIRTY(CBUF)) {
+      const int cbuf0_size = (ilo->fs) ?
+         ilo_shader_get_kernel_param(ilo->fs, ILO_KERNEL_PCB_CBUF0_SIZE) : 0;
+
+      if (cbuf0_size) {
+         const struct ilo_cbuf_state *cbuf = &ilo->cbuf[PIPE_SHADER_FRAGMENT];
+         void *pcb;
+
+         p->state.wm.PUSH_CONSTANT_BUFFER =
+            gen6_emit_push_constant_buffer(p->dev, cbuf0_size, &pcb, p->cp);
+         p->state.wm.PUSH_CONSTANT_BUFFER_size = cbuf0_size;
+
+         if (cbuf0_size <= cbuf->cso[0].user_buffer_size) {
+            memcpy(pcb, cbuf->cso[0].user_buffer, cbuf0_size);
+         }
+         else {
+            memcpy(pcb, cbuf->cso[0].user_buffer,
+                  cbuf->cso[0].user_buffer_size);
+            memset(pcb + cbuf->cso[0].user_buffer_size, 0,
+                  cbuf0_size - cbuf->cso[0].user_buffer_size);
+         }
+
+         session->pcb_state_fs_changed = true;
+      }
+      else if (p->state.wm.PUSH_CONSTANT_BUFFER_size) {
+         p->state.wm.PUSH_CONSTANT_BUFFER = 0;
+         p->state.wm.PUSH_CONSTANT_BUFFER_size = 0;
+
+         session->pcb_state_fs_changed = true;
+      }
    }
 }
 
@@ -1551,13 +1611,23 @@ gen6_pipeline_estimate_states(const struct ilo_3d_pipeline *p,
    }
 
    /* pcb (vs) */
-   if (ilo->vs &&
-       ilo_shader_get_kernel_param(ilo->vs, ILO_KERNEL_VS_PCB_UCP_SIZE)) {
-      const int pcb_size =
+   if (ilo->vs) {
+      const int cbuf0_size =
+         ilo_shader_get_kernel_param(ilo->vs, ILO_KERNEL_PCB_CBUF0_SIZE);
+      const int ucp_size =
          ilo_shader_get_kernel_param(ilo->vs, ILO_KERNEL_VS_PCB_UCP_SIZE);
 
       size += ilo_gpe_gen6_estimate_state_size(p->dev,
-            ILO_GPE_GEN6_PUSH_CONSTANT_BUFFER, pcb_size);
+            ILO_GPE_GEN6_PUSH_CONSTANT_BUFFER, cbuf0_size + ucp_size);
+   }
+
+   /* pcb (fs) */
+   if (ilo->fs) {
+      const int cbuf0_size =
+         ilo_shader_get_kernel_param(ilo->fs, ILO_KERNEL_PCB_CBUF0_SIZE);
+
+      size += ilo_gpe_gen6_estimate_state_size(p->dev,
+            ILO_GPE_GEN6_PUSH_CONSTANT_BUFFER, cbuf0_size);
    }
 
    return size;

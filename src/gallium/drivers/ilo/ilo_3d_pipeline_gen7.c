@@ -754,13 +754,23 @@ gen7_pipeline_estimate_states(const struct ilo_3d_pipeline *p,
    }
 
    /* pcb (vs) */
-   if (ilo->vs &&
-       ilo_shader_get_kernel_param(ilo->vs, ILO_KERNEL_VS_PCB_UCP_SIZE)) {
-      const int pcb_size =
+   if (ilo->vs) {
+      const int cbuf0_size =
+         ilo_shader_get_kernel_param(ilo->vs, ILO_KERNEL_PCB_CBUF0_SIZE);
+      const int ucp_size =
          ilo_shader_get_kernel_param(ilo->vs, ILO_KERNEL_VS_PCB_UCP_SIZE);
 
       size += ilo_gpe_gen7_estimate_state_size(p->dev,
-            ILO_GPE_GEN7_PUSH_CONSTANT_BUFFER, pcb_size);
+            ILO_GPE_GEN7_PUSH_CONSTANT_BUFFER, cbuf0_size + ucp_size);
+   }
+
+   /* pcb (fs) */
+   if (ilo->fs) {
+      const int cbuf0_size =
+         ilo_shader_get_kernel_param(ilo->fs, ILO_KERNEL_PCB_CBUF0_SIZE);
+
+      size += ilo_gpe_gen7_estimate_state_size(p->dev,
+            ILO_GPE_GEN7_PUSH_CONSTANT_BUFFER, cbuf0_size);
    }
 
    return size;

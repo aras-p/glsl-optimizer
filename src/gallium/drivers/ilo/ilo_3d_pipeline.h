@@ -125,6 +125,8 @@ struct ilo_3d_pipeline {
          uint32_t SURFACE_STATE[ILO_MAX_WM_SURFACES];
          uint32_t SAMPLER_STATE;
          uint32_t SAMPLER_BORDER_COLOR_STATE[ILO_MAX_SAMPLERS];
+         uint32_t PUSH_CONSTANT_BUFFER;
+         int PUSH_CONSTANT_BUFFER_size;
       } wm;
    } state;
 };
