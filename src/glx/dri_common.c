@@ -285,8 +285,14 @@ driConfigEqual(const __DRIcoreExtension *core,
          if (value & __DRI_ATTRIB_RGBA_BIT) {
             glxValue |= GLX_RGBA_BIT;
          }
-         else if (value & __DRI_ATTRIB_COLOR_INDEX_BIT) {
+         if (value & __DRI_ATTRIB_COLOR_INDEX_BIT) {
             glxValue |= GLX_COLOR_INDEX_BIT;
+         }
+         if (value & __DRI_ATTRIB_FLOAT_BIT) {
+            glxValue |= GLX_RGBA_FLOAT_BIT_ARB;
+         }
+         if (value & __DRI_ATTRIB_UNSIGNED_FLOAT_BIT) {
+            glxValue |= GLX_RGBA_UNSIGNED_FLOAT_BIT_EXT;
          }
          if (glxValue != config->renderType)
             return GL_FALSE;

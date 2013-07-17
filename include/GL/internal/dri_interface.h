@@ -552,6 +552,8 @@ struct __DRIuseInvalidateExtensionRec {
 #define __DRI_ATTRIB_RGBA_BIT			0x01	
 #define __DRI_ATTRIB_COLOR_INDEX_BIT		0x02
 #define __DRI_ATTRIB_LUMINANCE_BIT		0x04
+#define __DRI_ATTRIB_FLOAT_BIT			0x08
+#define __DRI_ATTRIB_UNSIGNED_FLOAT_BIT		0x10
 
 /* __DRI_ATTRIB_CONFIG_CAVEAT */
 #define __DRI_ATTRIB_SLOW_BIT			0x01

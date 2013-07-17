@@ -75,7 +75,7 @@ EGLint dri2_to_egl_attribute_map[] = {
    0,				/* __DRI_ATTRIB_TRANSPARENT_GREEN_VALUE */
    0,				/* __DRI_ATTRIB_TRANSPARENT_BLUE_VALUE */
    0,				/* __DRI_ATTRIB_TRANSPARENT_ALPHA_VALUE */
-   0,				/* __DRI_ATTRIB_FLOAT_MODE */
+   0,				/* __DRI_ATTRIB_FLOAT_MODE (deprecated) */
    0,				/* __DRI_ATTRIB_RED_MASK */
    0,				/* __DRI_ATTRIB_GREEN_MASK */
    0,				/* __DRI_ATTRIB_BLUE_MASK */
