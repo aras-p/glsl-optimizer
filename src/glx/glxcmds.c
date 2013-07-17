@@ -911,12 +911,17 @@ init_fbconfig_for_chooser(struct glx_config * config,
    config->visualID = (XID) GLX_DONT_CARE;
    config->visualType = GLX_DONT_CARE;
 
-   /* glXChooseFBConfig specifies different defaults for these two than
+   /* glXChooseFBConfig specifies different defaults for these properties than
     * glXChooseVisual.
     */
    if (fbconfig_style_tags) {
       config->rgbMode = GL_TRUE;
       config->doubleBufferMode = GLX_DONT_CARE;
+      /* allow any kind of drawable, including those for off-screen buffers */
+      config->drawableType = 0;
+   } else {
+       /* allow configs which support on-screen drawing */
+       config->drawableType = GLX_WINDOW_BIT;
    }
 
    config->visualRating = GLX_DONT_CARE;
