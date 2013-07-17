@@ -401,6 +401,8 @@ drisw_create_context(struct glx_screen *base,
       return NULL;
    }
 
+   pcp->base.renderType = renderType;
+
    pcp->driContext =
       (*psc->core->createNewContext) (psc->driScreen,
 				      config->driConfig, shared, pcp);
@@ -429,6 +431,7 @@ drisw_create_context_attribs(struct glx_screen *base,
 
    uint32_t minor_ver = 1;
    uint32_t major_ver = 0;
+   uint32_t renderType = GLX_RGBA_TYPE;
    uint32_t flags = 0;
    unsigned api;
    int reset = __DRI_CTX_RESET_NO_NOTIFICATION;
@@ -478,6 +481,8 @@ drisw_create_context_attribs(struct glx_screen *base,
        */
       ctx_attribs[num_ctx_attribs++] = flags;
    }
+
+   pcp->base.renderType = renderType;
 
    pcp->driContext =
       (*psc->swrast->createContextAttribs) (psc->driScreen,

@@ -602,6 +602,8 @@ dri_create_context(struct glx_screen *base,
       return NULL;
    }
 
+   pcp->base.renderType = renderType;
+
    if (!XF86DRICreateContextWithConfig(psc->base.dpy, psc->base.scr,
                                        config->base.visualID,
                                        &pcp->hwContextID, &hwContext)) {

@@ -354,7 +354,7 @@ glXCreateContext(Display * dpy, XVisualInfo * vis,
                  GLXContext shareList, Bool allowDirect)
 {
    struct glx_config *config = NULL;
-   int renderType = 0;
+   int renderType = GLX_RGBA_TYPE;
 
 #if defined(GLX_DIRECT_RENDERING) || defined(GLX_USE_APPLEGL)
    struct glx_screen *const psc = GetGLXScreenConfigs(dpy, vis->screen);
@@ -1441,7 +1441,7 @@ glXImportContextEXT(Display *dpy, GLXContextID contextID)
    numProps = nPropListBytes / (2 * sizeof(propList[0]));
    share = None;
    mode = NULL;
-   renderType = 0;
+   renderType = GLX_RGBA_TYPE; /* By default, assume RGBA context */
    pProp = propList;
 
    for (i = 0, pProp = propList; i < numProps; i++, pProp += 2)

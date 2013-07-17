@@ -226,6 +226,8 @@ dri2_create_context(struct glx_screen *base,
       return NULL;
    }
 
+   pcp->base.renderType = renderType;
+
    pcp->driContext =
       (*psc->dri2->createNewContext) (psc->driScreen,
                                       config->driConfig, shared, pcp);
@@ -256,6 +258,7 @@ dri2_create_context_attribs(struct glx_screen *base,
 
    uint32_t minor_ver = 1;
    uint32_t major_ver = 2;
+   uint32_t renderType = GLX_RGBA_TYPE;
    uint32_t flags = 0;
    unsigned api;
    int reset = __DRI_CTX_RESET_NO_NOTIFICATION;
@@ -310,6 +313,11 @@ dri2_create_context_attribs(struct glx_screen *base,
        */
       ctx_attribs[num_ctx_attribs++] = flags;
    }
+
+   /* The renderType is retrieved from attribs, or set to default
+    *  of GLX_RGBA_TYPE.
+    */
+   pcp->base.renderType = renderType;
 
    pcp->driContext =
       (*psc->dri2->createContextAttribs) (psc->driScreen,
