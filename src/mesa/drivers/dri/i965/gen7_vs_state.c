@@ -63,6 +63,8 @@ upload_vs_state(struct brw_context *brw)
       OUT_BATCH(0);
       ADVANCE_BATCH();
    } else {
+      uint8_t mocs = brw->is_haswell ? GEN7_MOCS_L3 : 0;
+
       BEGIN_BATCH(7);
       OUT_BATCH(_3DSTATE_CONSTANT_VS << 16 | (7 - 2));
       OUT_BATCH(brw->vs.push_const_size);
@@ -70,7 +72,7 @@ upload_vs_state(struct brw_context *brw)
       /* Pointer to the VS constant buffer.  Covered by the set of
        * state flags from gen6_prepare_wm_contants
        */
-      OUT_BATCH(brw->vs.push_const_offset);
+      OUT_BATCH(brw->vs.push_const_offset | mocs);
       OUT_BATCH(0);
       OUT_BATCH(0);
       OUT_BATCH(0);

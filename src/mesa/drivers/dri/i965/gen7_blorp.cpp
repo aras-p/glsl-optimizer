@@ -616,6 +616,8 @@ gen7_blorp_emit_constant_ps(struct brw_context *brw,
                             const brw_blorp_params *params,
                             uint32_t wm_push_const_offset)
 {
+   uint8_t mocs = brw->is_haswell ? GEN7_MOCS_L3 : 0;
+
    /* Make sure the push constants fill an exact integer number of
     * registers.
     */
@@ -630,7 +632,7 @@ gen7_blorp_emit_constant_ps(struct brw_context *brw,
              (7 - 2));
    OUT_BATCH(BRW_BLORP_NUM_PUSH_CONST_REGS);
    OUT_BATCH(0);
-   OUT_BATCH(wm_push_const_offset);
+   OUT_BATCH(wm_push_const_offset | mocs);
    OUT_BATCH(0);
    OUT_BATCH(0);
    OUT_BATCH(0);
