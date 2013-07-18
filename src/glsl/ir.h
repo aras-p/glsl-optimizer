@@ -471,6 +471,14 @@ public:
    unsigned explicit_index:1;
 
    /**
+    * Was an initial binding explicitly set in the shader?
+    *
+    * If so, constant_value contains an integer ir_constant representing the
+    * initial binding point.
+    */
+   unsigned explicit_binding:1;
+
+   /**
     * Does this variable have an initializer?
     *
     * This is used by the linker to cross-validiate initializers of global
@@ -526,6 +534,13 @@ public:
     * output index for dual source blending.
     */
    int index;
+
+   /**
+    * Initial binding point for a sampler or UBO.
+    *
+    * For array types, this represents the binding point for the first element.
+    */
+   int binding;
 
    /**
     * Built-in state that backs this uniform
