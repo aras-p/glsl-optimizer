@@ -615,6 +615,7 @@ void st_init_extensions(struct st_context *st)
       ctx->Extensions.ARB_shader_bit_encoding = GL_TRUE;
       ctx->Extensions.ARB_shading_language_packing = GL_TRUE;
       ctx->Extensions.OES_depth_texture_cube_map = GL_TRUE;
+      ctx->Extensions.ARB_shading_language_420pack = GL_TRUE;
    } else {
       /* Optional integer support for GLSL 1.2. */
       if (screen->get_shader_param(screen, PIPE_SHADER_VERTEX,
