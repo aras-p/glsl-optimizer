@@ -4387,6 +4387,13 @@ ast_interface_block::hir(exec_list *instructions,
                                    var_mode);
          var->interface_type = block_type;
 
+         /* Propagate the "binding" keyword into this UBO's fields;
+          * the UBO declaration itself doesn't get an ir_variable unless it
+          * has an instance name.  This is ugly.
+          */
+         var->explicit_binding = this->layout.flags.q.explicit_binding;
+         var->binding = this->layout.binding;
+
          state->symbols->add_variable(var);
          instructions->push_tail(var);
       }
