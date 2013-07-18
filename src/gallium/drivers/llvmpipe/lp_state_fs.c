@@ -1671,6 +1671,35 @@ generate_unswizzled_blend(struct gallivm_state *gallivm,
    /* Convert */
    lp_build_conv(gallivm, fs_type, blend_type, &blend_color, 1, &blend_color, 1);
 
+   if (out_format_desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB) {
+      /*
+       * since blending is done with floats, there was no conversion.
+       * However, the rules according to fixed point renderbuffers still
+       * apply, that is we must clamp inputs to 0.0/1.0.
+       * (This would apply to separate alpha conversion too but we currently
+       * force has_alpha to be true.)
+       * TODO: should skip this with "fake" blend, since post-blend conversion
+       * will clamp anyway.
+       * TODO: could also skip this if fragment color clamping is enabled. We
+       * don't support it natively so it gets baked into the shader however, so
+       * can't really tell here.
+       */
+      struct lp_build_context f32_bld;
+      assert(row_type.floating);
+      lp_build_context_init(&f32_bld, gallivm, row_type);
+      for (i = 0; i < src_count; i++) {
+         src[i] = lp_build_clamp(&f32_bld, src[i], f32_bld.zero, f32_bld.one);
+      }
+      if (dual_source_blend) {
+         for (i = 0; i < src_count; i++) {
+            src1[i] = lp_build_clamp(&f32_bld, src1[i], f32_bld.zero, f32_bld.one);
+         }
+      }
+      /* probably can't be different than row_type but better safe than sorry... */
+      lp_build_context_init(&f32_bld, gallivm, blend_type);
+      blend_color = lp_build_clamp(&f32_bld, blend_color, f32_bld.zero, f32_bld.one);
+   }
+
    /* Extract alpha */
    blend_alpha = lp_build_extract_broadcast(gallivm, blend_type, row_type, blend_color, lp_build_const_int32(gallivm, 3));
 
@@ -1827,6 +1856,12 @@ generate_unswizzled_blend(struct gallivm_state *gallivm,
     */
    convert_to_blend_type(gallivm, block_size, out_format_desc, dst_type, row_type, dst, src_count);
 
+   /*
+    * FIXME: Really should get logic ops / masks out of generic blend / row
+    * format. Logic ops will definitely not work on the blend float format
+    * used for SRGB here and I think OpenGL expects this to work as expected
+    * (that is incoming values converted to srgb then logic op applied).
+    */
    for (i = 0; i < src_count; ++i) {
       dst[i] = lp_build_blend_aos(gallivm,
                                   &variant->key.blend,
