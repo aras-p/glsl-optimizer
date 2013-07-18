@@ -2158,8 +2158,11 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
 			  "explicit index requires explicit location\n");
    }
 
-   if (qual->flags.q.explicit_binding)
-      validate_binding_qualifier(state, loc, var, qual);
+   if (qual->flags.q.explicit_binding &&
+       validate_binding_qualifier(state, loc, var, qual)) {
+      var->explicit_binding = true;
+      var->binding = qual->binding;
+   }
 
    /* Does the declaration use the deprecated 'attribute' or 'varying'
     * keywords?
