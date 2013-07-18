@@ -662,11 +662,9 @@ private:
    struct brw_reg dst_x1;
    struct brw_reg dst_y0;
    struct brw_reg dst_y1;
-   /* Top right coordinates of the rectangular sample grid used for
-    * multisample scaled blitting.
-    */
-   struct brw_reg sample_grid_x1;
-   struct brw_reg sample_grid_y1;
+   /* Top right coordinates of the rectangular grid used for scaled blitting */
+   struct brw_reg rect_grid_x1;
+   struct brw_reg rect_grid_y1;
    struct {
       struct brw_reg multiplier;
       struct brw_reg offset;
@@ -910,8 +908,8 @@ brw_blorp_blit_program::alloc_push_const_regs(int base_reg)
    ALLOC_REG(dst_x1);
    ALLOC_REG(dst_y0);
    ALLOC_REG(dst_y1);
-   ALLOC_REG(sample_grid_x1);
-   ALLOC_REG(sample_grid_y1);
+   ALLOC_REG(rect_grid_x1);
+   ALLOC_REG(rect_grid_y1);
    ALLOC_REG(x_transform.multiplier);
    ALLOC_REG(x_transform.offset);
    ALLOC_REG(y_transform.multiplier);
@@ -1433,8 +1431,8 @@ brw_blorp_blit_program::translate_dst_to_src()
       brw_set_predicate_control(&func, BRW_PREDICATE_NONE);
 
       brw_CMP(&func, vec16(brw_null_reg()), BRW_CONDITIONAL_GE,
-              X_f, sample_grid_x1);
-      brw_MOV(&func, X_f, sample_grid_x1);
+              X_f, rect_grid_x1);
+      brw_MOV(&func, X_f, rect_grid_x1);
       brw_set_predicate_control(&func, BRW_PREDICATE_NONE);
 
       brw_CMP(&func, vec16(brw_null_reg()), BRW_CONDITIONAL_L,
@@ -1443,8 +1441,8 @@ brw_blorp_blit_program::translate_dst_to_src()
       brw_set_predicate_control(&func, BRW_PREDICATE_NONE);
 
       brw_CMP(&func, vec16(brw_null_reg()), BRW_CONDITIONAL_GE,
-              Y_f, sample_grid_y1);
-      brw_MOV(&func, Y_f, sample_grid_y1);
+              Y_f, rect_grid_y1);
+      brw_MOV(&func, Y_f, rect_grid_y1);
       brw_set_predicate_control(&func, BRW_PREDICATE_NONE);
 
       /* Store the fractional parts to be used as bilinear interpolation
@@ -2159,8 +2157,8 @@ brw_blorp_blit_params::brw_blorp_blit_params(struct brw_context *brw,
    y0 = wm_push_consts.dst_y0 = dst_y0;
    x1 = wm_push_consts.dst_x1 = dst_x1;
    y1 = wm_push_consts.dst_y1 = dst_y1;
-   wm_push_consts.sample_grid_x1 = read_fb->Width * wm_prog_key.x_scale - 1.0;
-   wm_push_consts.sample_grid_y1 = read_fb->Height * wm_prog_key.y_scale - 1.0;
+   wm_push_consts.rect_grid_x1 = read_fb->Width * wm_prog_key.x_scale - 1.0;
+   wm_push_consts.rect_grid_y1 = read_fb->Height * wm_prog_key.y_scale - 1.0;
 
    wm_push_consts.x_transform.setup(src_x0, src_x1, dst_x0, dst_x1, mirror_x);
    wm_push_consts.y_transform.setup(src_y0, src_y1, dst_y0, dst_y1, mirror_y);

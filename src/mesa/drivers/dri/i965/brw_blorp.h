@@ -178,11 +178,9 @@ struct brw_blorp_wm_push_constants
    uint32_t dst_x1;
    uint32_t dst_y0;
    uint32_t dst_y1;
-   /* Top right coordinates of the rectangular sample grid used for
-    * multisample scaled blitting.
-    */
-   float sample_grid_x1;
-   float sample_grid_y1;
+   /* Top right coordinates of the rectangular grid used for scaled blitting */
+   float rect_grid_x1;
+   float rect_grid_y1;
    brw_blorp_coord_transform_params x_transform;
    brw_blorp_coord_transform_params y_transform;
    /* Pad out to an integral number of registers */
