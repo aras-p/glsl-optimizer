@@ -116,6 +116,16 @@ set_uniform_binding(void *mem_ctx, gl_shader_program *prog,
             }
          }
       }
+   } else if (storage->block_index != -1) {
+      /* This is a field of a UBO.  val is the binding index. */
+      for (int i = 0; i < MESA_SHADER_TYPES; i++) {
+         int stage_index = prog->UniformBlockStageIndex[i][storage->block_index];
+
+         if (stage_index != -1) {
+            struct gl_shader *sh = prog->_LinkedShaders[i];
+            sh->UniformBlocks[stage_index].Binding = binding;
+         }
+      }
    }
 
    storage->initialized = true;
