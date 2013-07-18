@@ -82,6 +82,21 @@ copy_constant_to_storage(union gl_constant_value *storage,
 }
 
 void
+set_uniform_binding(void *mem_ctx, gl_shader_program *prog,
+                    const char *name, const glsl_type *type, int binding)
+{
+   struct gl_uniform_storage *const storage =
+      get_storage(prog->UniformStorage, prog->NumUserUniformStorage, name);
+
+   if (storage == NULL) {
+      assert(storage != NULL);
+      return;
+   }
+
+   storage->initialized = true;
+}
+
+void
 set_uniform_initializer(void *mem_ctx, gl_shader_program *prog,
 			const char *name, const glsl_type *type,
 			ir_constant *val)
@@ -173,14 +188,19 @@ link_set_uniform_initializers(struct gl_shader_program *prog)
       foreach_list(node, shader->ir) {
 	 ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
-	 if (!var || var->mode != ir_var_uniform || !var->constant_value)
+	 if (!var || var->mode != ir_var_uniform)
 	    continue;
 
 	 if (!mem_ctx)
 	    mem_ctx = ralloc_context(NULL);
 
-	 linker::set_uniform_initializer(mem_ctx, prog, var->name,
-					 var->type, var->constant_value);
+         if (var->explicit_binding) {
+            linker::set_uniform_binding(mem_ctx, prog, var->name,
+                                        var->type, var->binding);
+         } else if (var->constant_value) {
+            linker::set_uniform_initializer(mem_ctx, prog, var->name,
+                                            var->type, var->constant_value);
+         }
       }
    }
 
