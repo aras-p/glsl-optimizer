@@ -114,10 +114,20 @@ lp_build_blend_factor_unswizzled(struct lp_build_blend_aos_context *bld,
       if(alpha)
          return bld->base.one;
       else {
-         if(!bld->inv_dst)
-            bld->inv_dst = lp_build_comp(&bld->base, bld->dst);
-         if(!bld->saturate)
-            bld->saturate = lp_build_min(&bld->base, src_alpha, bld->inv_dst);
+         /*
+          * if there's separate src_alpha there's no dst alpha hence the complement
+          * is zero but for unclamped float inputs min can be non-zero (negative).
+          */
+         if (bld->src_alpha) {
+            if (!bld->saturate)
+               bld->saturate = lp_build_min(&bld->base, src_alpha, bld->base.zero);
+         }
+         else {
+            if(!bld->inv_dst)
+               bld->inv_dst = lp_build_comp(&bld->base, bld->dst);
+            if(!bld->saturate)
+               bld->saturate = lp_build_min(&bld->base, src_alpha, bld->inv_dst);
+         }
          return bld->saturate;
       }
    case PIPE_BLENDFACTOR_CONST_COLOR:

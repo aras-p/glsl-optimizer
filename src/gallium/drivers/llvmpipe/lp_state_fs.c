@@ -2607,7 +2607,7 @@ llvmpipe_set_constant_buffer(struct pipe_context *pipe,
  * Return the blend factor equivalent to a destination alpha of one.
  */
 static INLINE unsigned
-force_dst_alpha_one(unsigned factor)
+force_dst_alpha_one(unsigned factor, boolean clamped_zero)
 {
    switch(factor) {
    case PIPE_BLENDFACTOR_DST_ALPHA:
@@ -2615,7 +2615,10 @@ force_dst_alpha_one(unsigned factor)
    case PIPE_BLENDFACTOR_INV_DST_ALPHA:
       return PIPE_BLENDFACTOR_ZERO;
    case PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE:
-      return PIPE_BLENDFACTOR_ZERO;
+      if (clamped_zero)
+         return PIPE_BLENDFACTOR_ZERO;
+      else
+         return PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE;
    }
 
    return factor;
@@ -2735,8 +2738,13 @@ make_variant_key(struct llvmpipe_context *lp,
        */
       if (format_desc->swizzle[3] > UTIL_FORMAT_SWIZZLE_W ||
           format_desc->swizzle[3] == format_desc->swizzle[0]) {
-         blend_rt->rgb_src_factor   = force_dst_alpha_one(blend_rt->rgb_src_factor);
-         blend_rt->rgb_dst_factor   = force_dst_alpha_one(blend_rt->rgb_dst_factor);
+         /* Doesn't cover mixed snorm/unorm but can't render to them anyway */
+         boolean clamped_zero = !util_format_is_float(format) &&
+                                !util_format_is_snorm(format);
+         blend_rt->rgb_src_factor   = force_dst_alpha_one(blend_rt->rgb_src_factor,
+                                                          clamped_zero);
+         blend_rt->rgb_dst_factor   = force_dst_alpha_one(blend_rt->rgb_dst_factor,
+                                                          clamped_zero);
          blend_rt->alpha_func       = blend_rt->rgb_func;
          blend_rt->alpha_src_factor = blend_rt->rgb_src_factor;
          blend_rt->alpha_dst_factor = blend_rt->rgb_dst_factor;
