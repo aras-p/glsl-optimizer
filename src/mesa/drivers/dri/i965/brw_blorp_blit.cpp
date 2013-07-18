@@ -631,6 +631,9 @@ private:
    void decode_msaa(unsigned num_samples, intel_msaa_layout layout);
    void kill_if_outside_dst_rect();
    void translate_dst_to_src();
+   void clamp_tex_coords(struct brw_reg regX, struct brw_reg regY,
+                         struct brw_reg clampX0, struct brw_reg clampY0,
+                         struct brw_reg clampX1, struct brw_reg clampY1);
    void single_to_blend();
    void manual_blend_average(unsigned num_samples);
    void manual_blend_bilinear(unsigned num_samples);
@@ -1389,6 +1392,10 @@ brw_blorp_blit_program::kill_if_outside_dst_rect()
    brw_pop_insn_state(&func);
 }
 
+#define X_f retype(X, BRW_REGISTER_TYPE_F)
+#define Y_f retype(Y, BRW_REGISTER_TYPE_F)
+#define Xp_f retype(Xp, BRW_REGISTER_TYPE_F)
+#define Yp_f retype(Yp, BRW_REGISTER_TYPE_F)
 /**
  * Emit code to translate from destination (X, Y) coordinates to source (X, Y)
  * coordinates.
@@ -1396,11 +1403,6 @@ brw_blorp_blit_program::kill_if_outside_dst_rect()
 void
 brw_blorp_blit_program::translate_dst_to_src()
 {
-   struct brw_reg X_f = retype(X, BRW_REGISTER_TYPE_F);
-   struct brw_reg Y_f = retype(Y, BRW_REGISTER_TYPE_F);
-   struct brw_reg Xp_f = retype(Xp, BRW_REGISTER_TYPE_F);
-   struct brw_reg Yp_f = retype(Yp, BRW_REGISTER_TYPE_F);
-
    brw_set_compression_control(&func, BRW_COMPRESSION_COMPRESSED);
    /* Move the UD coordinates to float registers. */
    brw_MOV(&func, Xp_f, X);
@@ -1425,25 +1427,9 @@ brw_blorp_blit_program::translate_dst_to_src()
       /* Clamp the X, Y texture coordinates to properly handle the sampling of
        *  texels on texture edges.
        */
-      brw_CMP(&func, vec16(brw_null_reg()), BRW_CONDITIONAL_L,
-              X_f, brw_imm_f(0.0));
-      brw_MOV(&func, X_f, brw_imm_f(0.0));
-      brw_set_predicate_control(&func, BRW_PREDICATE_NONE);
-
-      brw_CMP(&func, vec16(brw_null_reg()), BRW_CONDITIONAL_GE,
-              X_f, rect_grid_x1);
-      brw_MOV(&func, X_f, rect_grid_x1);
-      brw_set_predicate_control(&func, BRW_PREDICATE_NONE);
-
-      brw_CMP(&func, vec16(brw_null_reg()), BRW_CONDITIONAL_L,
-              Y_f, brw_imm_f(0.0));
-      brw_MOV(&func, Y_f, brw_imm_f(0.0));
-      brw_set_predicate_control(&func, BRW_PREDICATE_NONE);
-
-      brw_CMP(&func, vec16(brw_null_reg()), BRW_CONDITIONAL_GE,
-              Y_f, rect_grid_y1);
-      brw_MOV(&func, Y_f, rect_grid_y1);
-      brw_set_predicate_control(&func, BRW_PREDICATE_NONE);
+      clamp_tex_coords(X_f, Y_f,
+                       brw_imm_f(0.0), brw_imm_f(0.0),
+                       rect_grid_x1, rect_grid_y1);
 
       /* Store the fractional parts to be used as bilinear interpolation
        *  coefficients.
@@ -1466,6 +1452,35 @@ brw_blorp_blit_program::translate_dst_to_src()
    SWAP_XY_AND_XPYP();
    brw_set_compression_control(&func, BRW_COMPRESSION_NONE);
 }
+
+void
+brw_blorp_blit_program::clamp_tex_coords(struct brw_reg regX,
+                                         struct brw_reg regY,
+                                         struct brw_reg clampX0,
+                                         struct brw_reg clampY0,
+                                         struct brw_reg clampX1,
+                                         struct brw_reg clampY1)
+{
+   brw_CMP(&func, vec16(brw_null_reg()), BRW_CONDITIONAL_L, regX, clampX0);
+   brw_MOV(&func, regX, clampX0);
+   brw_set_predicate_control(&func, BRW_PREDICATE_NONE);
+
+   brw_CMP(&func, vec16(brw_null_reg()), BRW_CONDITIONAL_G, regX, clampX1);
+   brw_MOV(&func, regX, clampX1);
+   brw_set_predicate_control(&func, BRW_PREDICATE_NONE);
+
+   brw_CMP(&func, vec16(brw_null_reg()), BRW_CONDITIONAL_L, regY, clampY0);
+   brw_MOV(&func, regY, clampY0);
+   brw_set_predicate_control(&func, BRW_PREDICATE_NONE);
+
+   brw_CMP(&func, vec16(brw_null_reg()), BRW_CONDITIONAL_G, regY, clampY1);
+   brw_MOV(&func, regY, clampY1);
+   brw_set_predicate_control(&func, BRW_PREDICATE_NONE);
+}
+#undef X_f
+#undef Y_f
+#undef Xp_f
+#undef Yp_f
 
 /**
  * Emit code to transform the X and Y coordinates as needed for blending
