@@ -1561,7 +1561,7 @@ intel_miptree_updownsample(struct brw_context *brw,
                            width, height,
                            dst_x0, dst_y0,
                            width, height,
-                           false, false /*mirror x, y*/);
+                           GL_NEAREST, false, false /*mirror x, y*/);
 
    if (src->stencil_mt) {
       brw_blorp_blit_miptrees(brw,
@@ -1571,7 +1571,7 @@ intel_miptree_updownsample(struct brw_context *brw,
                               width, height,
                               dst_x0, dst_y0,
                               width, height,
-                              false, false /*mirror x, y*/);
+                              GL_NEAREST, false, false /*mirror x, y*/);
    }
 }
 
