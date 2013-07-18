@@ -292,6 +292,10 @@ lp_build_log(struct lp_build_context *bld,
              LLVMValueRef a);
 
 LLVMValueRef
+lp_build_log_safe(struct lp_build_context *bld,
+                  LLVMValueRef a);
+
+LLVMValueRef
 lp_build_exp2(struct lp_build_context *bld,
               LLVMValueRef a);
 

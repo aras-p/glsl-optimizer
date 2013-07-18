@@ -3080,6 +3080,7 @@ lp_build_exp(struct lp_build_context *bld,
 
 /**
  * Generate log(x)
+ * Behavior is undefined with infs, 0s and nans
  */
 LLVMValueRef
 lp_build_log(struct lp_build_context *bld,
@@ -3092,6 +3093,22 @@ lp_build_log(struct lp_build_context *bld,
    assert(lp_check_value(bld->type, x));
 
    return lp_build_mul(bld, log2, lp_build_log2(bld, x));
+}
+
+/**
+ * Generate log(x) that handles edge cases (infs, 0s and nans)
+ */
+LLVMValueRef
+lp_build_log_safe(struct lp_build_context *bld,
+                  LLVMValueRef x)
+{
+   /* log(2) */
+   LLVMValueRef log2 = lp_build_const_vec(bld->gallivm, bld->type,
+                                          0.69314718055994529);
+
+   assert(lp_check_value(bld->type, x));
+
+   return lp_build_mul(bld, log2, lp_build_log2_safe(bld, x));
 }
 
 
