@@ -41,7 +41,7 @@
  */
 
 #include "pipebuffer/pb_buffer.h"
-#include "libdrm/radeon_surface.h"
+#include "radeon_surface.h"
 
 #define RADEON_MAX_CMDBUF_DWORDS (16 * 1024)
 
