@@ -803,6 +803,9 @@ extern int
 applegl_create_display(struct glx_display *display);
 #endif
 
+extern Bool validate_renderType_against_config(const struct glx_config *config,
+                                               int renderType);
+
 
 extern struct glx_drawable *GetGLXDrawable(Display *dpy, GLXDrawable drawable);
 extern int InitGLXDrawable(Display *dpy, struct glx_drawable *glxDraw,

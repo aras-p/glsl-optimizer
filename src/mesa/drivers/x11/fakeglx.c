@@ -2325,7 +2325,10 @@ Fake_glXCreateNewContext( Display *dpy, GLXFBConfig config,
    XMesaVisual xmvis = (XMesaVisual) config;
 
    if (!dpy || !config ||
-       (renderType != GLX_RGBA_TYPE && renderType != GLX_COLOR_INDEX_TYPE))
+       (renderType != GLX_RGBA_TYPE &&
+        renderType != GLX_COLOR_INDEX_TYPE &&
+        renderType != GLX_RGBA_FLOAT_TYPE_ARB &&
+        renderType != GLX_RGBA_UNSIGNED_FLOAT_TYPE_EXT))
       return 0;
 
    glxCtx = CALLOC_STRUCT(fake_glx_context);

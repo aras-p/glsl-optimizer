@@ -380,6 +380,10 @@ drisw_create_context(struct glx_screen *base,
    if (!psc->base.driScreen)
       return NULL;
 
+   /* Check the renderType value */
+   if (!validate_renderType_against_config(config_base, renderType))
+       return NULL;
+
    if (shareList) {
       /* If the shareList context is not a DRISW context, we cannot possibly
        * create a DRISW context that shares it.
@@ -450,6 +454,11 @@ drisw_create_context_attribs(struct glx_screen *base,
                                  &major_ver, &minor_ver, &renderType, &flags,
                                  &api, &reset, error))
       return NULL;
+
+   /* Check the renderType value */
+   if (!validate_renderType_against_config(config_base, renderType)) {
+       return NULL;
+   }
 
    if (reset != __DRI_CTX_RESET_NO_NOTIFICATION)
       return NULL;

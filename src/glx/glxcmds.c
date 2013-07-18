@@ -224,6 +224,33 @@ ValidateGLXFBConfig(Display * dpy, GLXFBConfig fbconfig)
    return NULL;
 }
 
+/**
+ * Verifies context's GLX_RENDER_TYPE value with config.
+ *
+ * \param config GLX FBConfig which will support the returned renderType.
+ * \param renderType The context render type to be verified.
+ * \return True if the value of context renderType was approved, or 0 if no
+ * valid value was found.
+ */
+Bool
+validate_renderType_against_config(const struct glx_config *config,
+                                   int renderType)
+{
+    switch (renderType) {
+    case GLX_RGBA_TYPE:
+        return (config->renderType & GLX_RGBA_BIT) != 0;
+    case GLX_COLOR_INDEX_TYPE:
+        return (config->renderType & GLX_COLOR_INDEX_BIT) != 0;
+    case GLX_RGBA_FLOAT_TYPE_ARB:
+        return (config->renderType & GLX_RGBA_FLOAT_BIT_ARB) != 0;
+    case GLX_RGBA_UNSIGNED_FLOAT_TYPE_EXT:
+        return (config->renderType & GLX_RGBA_UNSIGNED_FLOAT_BIT_EXT) != 0;
+    default:
+        break;
+    }
+    return 0;
+}
+
 _X_HIDDEN Bool
 glx_context_init(struct glx_context *gc,
 		 struct glx_screen *psc, struct glx_config *config)

@@ -581,6 +581,10 @@ dri_create_context(struct glx_screen *base,
    if (!psc->base.driScreen)
       return NULL;
 
+   /* Check the renderType value */
+   if (!validate_renderType_against_config(config_base, renderType))
+       return NULL;
+
    if (shareList) {
       /* If the shareList context is not a DRI context, we cannot possibly
        * create a DRI context that shares it.

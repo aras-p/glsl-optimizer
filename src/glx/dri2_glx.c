@@ -205,6 +205,10 @@ dri2_create_context(struct glx_screen *base,
    __GLXDRIconfigPrivate *config = (__GLXDRIconfigPrivate *) config_base;
    __DRIcontext *shared = NULL;
 
+   /* Check the renderType value */
+   if (!validate_renderType_against_config(config_base, renderType))
+       return NULL;
+
    if (shareList) {
       /* If the shareList context is not a DRI2 context, we cannot possibly
        * create a DRI2 context that shares it.
@@ -276,6 +280,10 @@ dri2_create_context_attribs(struct glx_screen *base,
                                  &major_ver, &minor_ver, &renderType, &flags,
                                  &api, &reset, error))
       goto error_exit;
+
+   /* Check the renderType value */
+   if (!validate_renderType_against_config(config_base, renderType))
+       goto error_exit;
 
    if (shareList) {
       pcp_shared = (struct dri2_context *) shareList;

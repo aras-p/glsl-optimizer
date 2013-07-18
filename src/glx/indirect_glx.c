@@ -335,6 +335,10 @@ static const struct glx_context_vtable indirect_context_vtable = {
  * \todo Eliminate \c __glXInitVertexArrayState.  Replace it with a new
  * function called \c __glXAllocateClientState that allocates the memory and
  * does all the initialization (including the pixel pack / unpack).
+ *
+ * \note
+ * This function is \b not the place to validate the context creation
+ * parameters.  It is just the allocator for the \c glx_context.
  */
 _X_HIDDEN struct glx_context *
 indirect_create_context(struct glx_screen *psc,
