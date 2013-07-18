@@ -141,7 +141,7 @@ dri2_add_config(_EGLDisplay *disp, const __DRIconfig *dri_config, int id,
 	 else if (value & __DRI_ATTRIB_LUMINANCE_BIT)
 	    value = EGL_LUMINANCE_BUFFER;
 	 else
-	    /* not valid */;
+	    return NULL;
 	 _eglSetConfigKey(&base, EGL_COLOR_BUFFER_TYPE, value);
 	 break;	 
 
