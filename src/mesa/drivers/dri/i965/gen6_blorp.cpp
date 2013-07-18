@@ -163,6 +163,9 @@ gen6_blorp_emit_vertices(struct brw_context *brw,
       if (brw->gen >= 7)
          dw0 |= GEN7_VB0_ADDRESS_MODIFYENABLE;
 
+      if (brw->is_haswell)
+         dw0 |= GEN7_MOCS_L3 << 16;
+
       BEGIN_BATCH(batch_length);
       OUT_BATCH((_3DSTATE_VERTEX_BUFFERS << 16) | (batch_length - 2));
       OUT_BATCH(dw0);
