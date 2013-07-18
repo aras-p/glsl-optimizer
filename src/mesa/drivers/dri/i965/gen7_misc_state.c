@@ -40,6 +40,7 @@ gen7_emit_depth_stencil_hiz(struct brw_context *brw,
                             uint32_t tile_x, uint32_t tile_y)
 {
    struct gl_context *ctx = &brw->ctx;
+   uint8_t mocs = brw->is_haswell ? GEN7_MOCS_L3 : 0;
 
    intel_emit_depth_stall_flushes(brw);
 
@@ -63,7 +64,7 @@ gen7_emit_depth_stencil_hiz(struct brw_context *brw,
 
    OUT_BATCH(((width + tile_x - 1) << 4) |
              ((height + tile_y - 1) << 18));
-   OUT_BATCH(0);
+   OUT_BATCH(mocs);
    OUT_BATCH(tile_x | (tile_y << 16));
    OUT_BATCH(0);
    ADVANCE_BATCH();
@@ -78,7 +79,8 @@ gen7_emit_depth_stencil_hiz(struct brw_context *brw,
       struct intel_mipmap_tree *hiz_mt = depth_mt->hiz_mt;
       BEGIN_BATCH(3);
       OUT_BATCH(GEN7_3DSTATE_HIER_DEPTH_BUFFER << 16 | (3 - 2));
-      OUT_BATCH(hiz_mt->region->pitch - 1);
+      OUT_BATCH((mocs << 25) |
+                (hiz_mt->region->pitch - 1));
       OUT_RELOC(hiz_mt->region->bo,
                 I915_GEM_DOMAIN_RENDER,
                 I915_GEM_DOMAIN_RENDER,
@@ -108,6 +110,7 @@ gen7_emit_depth_stencil_hiz(struct brw_context *brw,
        * same text, and experiments indicate that this is necessary.
        */
       OUT_BATCH(enabled |
+                mocs << 25 |
 	        (2 * stencil_mt->region->pitch - 1));
       OUT_RELOC(stencil_mt->region->bo,
 	        I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,

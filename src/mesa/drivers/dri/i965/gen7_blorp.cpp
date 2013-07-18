@@ -662,6 +662,7 @@ gen7_blorp_emit_depth_stencil_config(struct brw_context *brw,
    uint32_t draw_x = params->depth.x_offset;
    uint32_t draw_y = params->depth.y_offset;
    uint32_t tile_mask_x, tile_mask_y;
+   uint8_t mocs = brw->is_haswell ? GEN7_MOCS_L3 : 0;
 
    brw_get_depthstencil_tile_masks(params->depth.mt,
                                    params->depth.level,
@@ -713,7 +714,7 @@ gen7_blorp_emit_depth_stencil_config(struct brw_context *brw,
                 offset);
       OUT_BATCH((params->depth.width + tile_x - 1) << 4 |
                 (params->depth.height + tile_y - 1) << 18);
-      OUT_BATCH(0);
+      OUT_BATCH(mocs);
       OUT_BATCH(tile_x |
                 tile_y << 16);
       OUT_BATCH(0);
@@ -730,7 +731,8 @@ gen7_blorp_emit_depth_stencil_config(struct brw_context *brw,
 
       BEGIN_BATCH(3);
       OUT_BATCH((GEN7_3DSTATE_HIER_DEPTH_BUFFER << 16) | (3 - 2));
-      OUT_BATCH(hiz_region->pitch - 1);
+      OUT_BATCH((mocs << 25) |
+                (hiz_region->pitch - 1));
       OUT_RELOC(hiz_region->bo,
                 I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
                 hiz_offset);
