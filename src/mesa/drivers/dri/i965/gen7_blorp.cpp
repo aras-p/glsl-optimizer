@@ -143,6 +143,7 @@ gen7_blorp_emit_surface_state(struct brw_context *brw,
     */
    struct intel_region *region = surface->mt->region;
    uint32_t tile_x, tile_y;
+   uint8_t mocs = brw->is_haswell ? GEN7_MOCS_L3 : 0;
 
    uint32_t tiling = surface->map_stencil_as_y_tiled
       ? I915_TILING_Y : region->tiling;
@@ -175,7 +176,8 @@ gen7_blorp_emit_surface_state(struct brw_context *brw,
    assert(tile_x % 4 == 0);
    assert(tile_y % 2 == 0);
    surf[5] = SET_FIELD(tile_x / 4, BRW_SURFACE_X_OFFSET) |
-             SET_FIELD(tile_y / 2, BRW_SURFACE_Y_OFFSET);
+             SET_FIELD(tile_y / 2, BRW_SURFACE_Y_OFFSET) |
+             SET_FIELD(mocs, GEN7_SURFACE_MOCS);
 
    surf[2] = SET_FIELD(width - 1, GEN7_SURFACE_WIDTH) |
              SET_FIELD(height - 1, GEN7_SURFACE_HEIGHT);
