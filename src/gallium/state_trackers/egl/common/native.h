@@ -245,7 +245,7 @@ struct native_display {
 
    const struct native_display_buffer *buffer;
    const struct native_display_modeset *modeset;
-   const struct native_display_wayland_bufmgr *wayland_bufmgr;
+   struct native_display_wayland_bufmgr *wayland_bufmgr;
 };
 
 /**

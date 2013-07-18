@@ -40,7 +40,7 @@
 #include "wayland-drm-client-protocol.h"
 #include "wayland-egl-priv.h"
 
-#include "common/native_wayland_drm_bufmgr_helper.h"
+#include "common/native_wayland_drm_bufmgr.h"
 
 #include <xf86drm.h>
 #include <sys/types.h>
@@ -53,7 +53,6 @@ struct wayland_drm_display {
    const struct native_event_handler *event_handler;
 
    struct wl_drm *wl_drm;
-   struct wl_drm *wl_server_drm; /* for EGL_WL_bind_wayland_display */
    int fd;
    char *device_name;
    boolean authenticated;
@@ -76,6 +75,8 @@ wayland_drm_display_destroy(struct native_display *ndpy)
    FREE(drmdpy->base.configs);
    if (drmdpy->base.own_dpy)
       wl_display_disconnect(drmdpy->base.dpy);
+
+   wayland_drm_bufmgr_destroy(ndpy->wayland_bufmgr);
 
    ndpy_uninit(ndpy);
 
@@ -195,6 +196,24 @@ static const struct wl_registry_listener registry_listener = {
        registry_handle_global
 };
 
+static int
+wayland_drm_display_authenticate(void *user_data, uint32_t magic)
+{
+   struct native_display *ndpy = user_data;
+   struct wayland_drm_display *drmdpy = wayland_drm_display(ndpy);
+   boolean current_authenticate, authenticated;
+
+   current_authenticate = drmdpy->authenticated;
+
+   wl_drm_authenticate(drmdpy->wl_drm, magic);
+   wl_display_roundtrip(drmdpy->base.dpy);
+   authenticated = drmdpy->authenticated;
+
+   drmdpy->authenticated = current_authenticate;
+
+   return authenticated ? 0 : -1;
+}
+
 static boolean
 wayland_drm_display_init_screen(struct native_display *ndpy)
 {
@@ -226,6 +245,9 @@ wayland_drm_display_init_screen(struct native_display *ndpy)
       return FALSE;
    }
 
+   drmdpy->base.base.wayland_bufmgr = wayland_drm_bufmgr_create(
+          wayland_drm_display_authenticate, drmdpy, drmdpy->device_name);
+
    return TRUE;
 }
 
@@ -234,72 +256,6 @@ static struct native_display_buffer wayland_drm_display_buffer = {
    drm_display_import_native_buffer,
    drm_display_export_native_buffer
 };
-
-static int
-wayland_drm_display_authenticate(void *user_data, uint32_t magic)
-{
-   struct native_display *ndpy = user_data;
-   struct wayland_drm_display *drmdpy = wayland_drm_display(ndpy);
-   boolean current_authenticate, authenticated;
-
-   current_authenticate = drmdpy->authenticated;
-
-   wl_drm_authenticate(drmdpy->wl_drm, magic);
-   wl_display_roundtrip(drmdpy->base.dpy);
-   authenticated = drmdpy->authenticated;
-
-   drmdpy->authenticated = current_authenticate;
-
-   return authenticated ? 0 : -1;
-}
-
-static struct wayland_drm_callbacks wl_drm_callbacks = {
-   wayland_drm_display_authenticate,
-   egl_g3d_wl_drm_helper_reference_buffer,
-   egl_g3d_wl_drm_helper_unreference_buffer
-};
-
-static boolean
-wayland_drm_display_bind_wayland_display(struct native_display *ndpy,
-                                         struct wl_display *wl_dpy)
-{
-   struct wayland_drm_display *drmdpy = wayland_drm_display(ndpy);
-
-   if (drmdpy->wl_server_drm)
-      return FALSE;
-
-   drmdpy->wl_server_drm =
-      wayland_drm_init(wl_dpy, drmdpy->device_name,
-                       &wl_drm_callbacks, ndpy, 0);
-
-   if (!drmdpy->wl_server_drm)
-      return FALSE;
-   
-   return TRUE;
-}
-
-static boolean
-wayland_drm_display_unbind_wayland_display(struct native_display *ndpy,
-                                           struct wl_display *wl_dpy)
-{
-   struct wayland_drm_display *drmdpy = wayland_drm_display(ndpy);
-
-   if (!drmdpy->wl_server_drm)
-      return FALSE;
-
-   wayland_drm_uninit(drmdpy->wl_server_drm);
-   drmdpy->wl_server_drm = NULL;
-
-   return TRUE;
-}
-
-static struct native_display_wayland_bufmgr wayland_drm_display_wayland_bufmgr = {
-   wayland_drm_display_bind_wayland_display,
-   wayland_drm_display_unbind_wayland_display,
-   egl_g3d_wl_drm_common_wl_buffer_get_resource,
-   egl_g3d_wl_drm_common_query_buffer
-};
-
 
 struct wayland_display *
 wayland_create_drm_display(struct wl_display *dpy,
@@ -322,7 +278,6 @@ wayland_create_drm_display(struct wl_display *dpy,
    drmdpy->base.base.init_screen = wayland_drm_display_init_screen;
    drmdpy->base.base.destroy = wayland_drm_display_destroy;
    drmdpy->base.base.buffer = &wayland_drm_display_buffer;
-   drmdpy->base.base.wayland_bufmgr = &wayland_drm_display_wayland_bufmgr;
 
    drmdpy->base.create_buffer = wayland_create_drm_buffer;
 

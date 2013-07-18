@@ -132,6 +132,8 @@ drm_display_destroy(struct native_display *ndpy)
 
    FREE(drmdpy->device_name);
 
+   wayland_drm_bufmgr_destroy(ndpy->wayland_bufmgr);
+
    if (drmdpy->own_gbm) {
       gbm_device_destroy(&drmdpy->gbmdrm->base.base);
       if (drmdpy->fd >= 0)
@@ -195,53 +197,6 @@ drm_display_authenticate(void *user_data, uint32_t magic)
    return drmAuthMagic(drmdpy->fd, magic);
 }
 
-static struct wayland_drm_callbacks wl_drm_callbacks = {
-   drm_display_authenticate,
-   egl_g3d_wl_drm_helper_reference_buffer,
-   egl_g3d_wl_drm_helper_unreference_buffer
-};
-
-static boolean
-drm_display_bind_wayland_display(struct native_display *ndpy,
-                                  struct wl_display *wl_dpy)
-{
-   struct drm_display *drmdpy = drm_display(ndpy);
-
-   if (drmdpy->wl_server_drm)
-      return FALSE;
-
-   drmdpy->wl_server_drm = wayland_drm_init(wl_dpy,
-         drmdpy->device_name,
-         &wl_drm_callbacks, ndpy, 0);
-
-   if (!drmdpy->wl_server_drm)
-      return FALSE;
-   
-   return TRUE;
-}
-
-static boolean
-drm_display_unbind_wayland_display(struct native_display *ndpy,
-                                    struct wl_display *wl_dpy)
-{
-   struct drm_display *drmdpy = drm_display(ndpy);
-
-   if (!drmdpy->wl_server_drm)
-      return FALSE;
-
-   wayland_drm_uninit(drmdpy->wl_server_drm);
-   drmdpy->wl_server_drm = NULL;
-
-   return TRUE;
-}
-
-static struct native_display_wayland_bufmgr drm_display_wayland_bufmgr = {
-   drm_display_bind_wayland_display,
-   drm_display_unbind_wayland_display,
-   egl_g3d_wl_drm_common_wl_buffer_get_resource,
-   egl_g3d_wl_drm_common_query_buffer
-};
-
 #endif /* HAVE_WAYLAND_BACKEND */
 
 static struct native_surface *
@@ -293,7 +248,8 @@ drm_create_display(struct gbm_gallium_drm_device *gbmdrm, int own_gbm,
    drmdpy->base.buffer = &drm_display_buffer;
 #ifdef HAVE_WAYLAND_BACKEND
    if (drmdpy->device_name)
-      drmdpy->base.wayland_bufmgr = &drm_display_wayland_bufmgr;
+      drmdpy->base.wayland_bufmgr = wayland_drm_bufmgr_create(
+             drm_display_authenticate, drmdpy, drmdpy->device_name);
 #endif
    drm_display_init_modeset(&drmdpy->base);
 

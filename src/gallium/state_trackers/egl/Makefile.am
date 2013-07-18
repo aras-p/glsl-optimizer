@@ -38,7 +38,7 @@ libegl_la_SOURCES = \
 	common/egl_g3d_st.c \
 	common/egl_g3d_sync.c \
 	common/native_helper.c \
-	common/native_wayland_drm_bufmgr_helper.c
+	common/native_wayland_drm_bufmgr.c
 
 if HAVE_EGL_PLATFORM_X11
 libegl_la_SOURCES += \
