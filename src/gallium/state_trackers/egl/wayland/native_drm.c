@@ -227,7 +227,6 @@ wayland_drm_display_init_screen(struct native_display *ndpy)
    if (wayland_roundtrip(&drmdpy->base) < 0 || drmdpy->wl_drm == NULL)
       return FALSE;
 
-   wl_drm_add_listener(drmdpy->wl_drm, &drm_listener, drmdpy);
    if (wayland_roundtrip(&drmdpy->base) < 0 || drmdpy->fd == -1)
       return FALSE;
 
