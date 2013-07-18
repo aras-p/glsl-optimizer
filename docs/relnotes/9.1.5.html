@@ -1,0 +1,138 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <title>Mesa Release Notes</title>
+  <link rel="stylesheet" type="text/css" href="../mesa.css">
+</head>
+<body>
+
+<div class="header">
+  <h1>The Mesa 3D Graphics Library</h1>
+</div>
+
+<iframe src="../contents.html"></iframe>
+<div class="content">
+
+<h1>Mesa 9.1.5 Release Notes / July 17, 2013</h1>
+
+<p>
+Mesa 9.1.5 is a bug fix release which fixes bugs found since the 9.1.4 release.
+</p>
+<p>
+Mesa 9.1 implements the OpenGL 3.1 API, but the version reported by
+glGetString(GL_VERSION) or glGetIntegerv(GL_MAJOR_VERSION) /
+glGetIntegerv(GL_MINOR_VERSION) depends on the particular driver being used.
+Some drivers don't support all the features required in OpenGL 3.1.  OpenGL
+3.1 is <strong>only</strong> available if requested at context creation
+because GL_ARB_compatibility is not supported.
+</p>
+
+<h2>MD5 checksums</h2>
+<pre>
+TBD
+</pre>
+
+<h2>New features</h2>
+<p>None.</p>
+
+<h2>Bug fixes</h2>
+
+<p>This list is likely incomplete.</p>
+
+<ul>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=58384">Bug 58384</a> - [i965 Bisected]Oglc max_values(advanced.fragmentProgram.GL_MAX_PROGRAM_ENV_PARAMETERS_ARB) segfault</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=62647">Bug 62647</a> - Wrong rendering of Dota 2 on Wine (apitrace attached) - Intel IVB HD4000</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=63674">Bug 63674</a> - [IVB]frozen at the first frame when run Unigine-heaven 4.0</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=65910">Bug 65910</a> - Killing weston-launch causes segv in desktop-shell</li>
+
+</ul>
+
+<h2>Changes</h2>
+<p>The full set of changes can be viewed by using the following GIT command:</p>
+
+<pre>
+  git log mesa-9.1.4..mesa-9.1.5
+</pre>
+
+<p>Anuj Phogat (1):</p>
+<ul>
+  <li>mesa: Return ZeroVec/dummyReg instead of NULL pointer</li>
+</ul>
+
+<p>Brian Paul (1):</p>
+<ul>
+  <li>svga: check for NaN shader immediates</li>
+</ul>
+
+<p>Carl Worth (3):</p>
+<ul>
+  <li>cherry-ignore: Ignore previously backported patch</li>
+  <li>cherry-ignore: Drop two patches which we've decided not to include</li>
+  <li>mesa: Bump version to 9.1.5</li>
+</ul>
+
+<p>Chris Forbes (1):</p>
+<ul>
+  <li>i965: fix alpha test for MRT</li>
+</ul>
+
+<p>Christoph Bumiller (1):</p>
+<ul>
+  <li>r600g: x/y coordinates must be divided by block dim in dma blit</li>
+</ul>
+
+<p>Eric Anholt (1):</p>
+<ul>
+  <li>ra: Fix register spilling.</li>
+</ul>
+
+<p>Ian Romanick (6):</p>
+<ul>
+  <li>docs: Add 9.1.4 release md5sums</li>
+  <li>glsl: Add a gl_shader_program parameter to _mesa_uniform_{merge,split}_location_offset</li>
+  <li>glsl: Add gl_shader_program::UniformLocationBaseScale</li>
+  <li>glsl: Generate smaller values for uniform locations</li>
+  <li>i965: Be more careful with the interleaved user array upload optimization</li>
+  <li>glsl: Move all var decls to the front of the IR list in reverse order</li>
+</ul>
+
+<p>Kenneth Graunke (1):</p>
+<ul>
+  <li>glsl/builtins: Fix ARB_texture_cube_map_array built-in availability.</li>
+</ul>
+
+<p>Kristian Høgsberg (1):</p>
+<ul>
+  <li>wayland: Handle global_remove event as well</li>
+</ul>
+
+<p>Matt Turner (1):</p>
+<ul>
+  <li>register_allocate: Fix the type of best_benefit.</li>
+</ul>
+
+<p>Paul Berry (1):</p>
+<ul>
+  <li>glsl ES: Fix magnitude of gl_MaxVertexUniformVectors.</li>
+</ul>
+
+<p>Richard Sandiford (3):</p>
+<ul>
+  <li>st/xlib Fix XIMage bytes-per-pixel calculation</li>
+  <li>st/xlib: Fix XImage stride calculation</li>
+  <li>st/dri/sw: Fix pitch calculation in drisw_update_tex_buffer</li>
+</ul>
+
+<p>Vinson Lee (1):</p>
+<ul>
+  <li>swrast: Fix memory leak.</li>
+</ul>
+
+</div>
+</body>
+</html>
