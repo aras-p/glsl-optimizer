@@ -1385,7 +1385,7 @@ type_qualifier:
        * appear to be any text indicating that it must come before the storage
        * qualifier, but always seems to in examples.
        */
-      if ($2.has_layout())
+      if (!state->ARB_shading_language_420pack_enable && $2.has_layout())
          _mesa_glsl_error(&@1, state, "Duplicate layout(...) qualifiers.\n");
 
       if ($2.flags.q.invariant)
