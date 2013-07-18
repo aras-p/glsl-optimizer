@@ -17,7 +17,7 @@ Status
 
 Version
 
-    Version 1, March 1, 2011
+    Version 5, July 16, 2013
 
 Number
 
@@ -57,7 +57,7 @@ New Procedures and Functions
                                          struct wl_display *display);
 
     EGLBoolean eglQueryWaylandBufferWL(EGLDisplay dpy,
-                                       struct wl_buffer *buffer,
+                                       struct wl_resource *buffer,
                                        EGLint attribute, EGLint *value);
 
 New Tokens
@@ -173,3 +173,7 @@ Revision History
         Use EGL_TEXTURE_FORMAT, EGL_TEXTURE_RGB, and EGL_TEXTURE_RGBA,
         and just define the new YUV texture formats.  Add support for
         EGL_WIDTH and EGL_HEIGHT in the query attributes (Kristian Høgsberg)
+    Version 5, July 16, 2013
+        Change eglQueryWaylandBufferWL to take a resource pointer to the
+        buffer instead of a pointer to a struct wl_buffer, as the latter has
+        been deprecated. (Ander Conselvan de Oliveira)

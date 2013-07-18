@@ -183,7 +183,7 @@ egl_g3d_reference_drm_buffer(_EGLDisplay *dpy, EGLint name,
 #ifdef EGL_WL_bind_wayland_display
 
 static struct pipe_resource *
-egl_g3d_reference_wl_buffer(_EGLDisplay *dpy, struct wl_buffer *buffer,
+egl_g3d_reference_wl_buffer(_EGLDisplay *dpy, struct wl_resource *buffer,
                             _EGLImage *img, const EGLint *attribs)
 {
    struct egl_g3d_display *gdpy = egl_g3d_display(dpy);
@@ -253,7 +253,7 @@ egl_g3d_create_image(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx,
 #ifdef EGL_WL_bind_wayland_display
    case EGL_WAYLAND_BUFFER_WL:
       ptex = egl_g3d_reference_wl_buffer(dpy,
-            (struct wl_buffer *) buffer, &gimg->base, attribs);
+            (struct wl_resource *) buffer, &gimg->base, attribs);
       break;
 #endif
 #ifdef EGL_ANDROID_image_native_buffer

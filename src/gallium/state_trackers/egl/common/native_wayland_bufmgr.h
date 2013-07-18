@@ -27,7 +27,7 @@
 
 struct native_display;
 struct wl_display;
-struct wl_buffer;
+struct wl_resource;
 struct pipe_resource;
 
 struct native_display_wayland_bufmgr {
@@ -38,11 +38,11 @@ struct native_display_wayland_bufmgr {
                              struct wl_display *wl_dpy);
 
    struct pipe_resource *(*buffer_get_resource)(struct native_display *ndpy,
-                                                struct wl_buffer *buffer);
+                                                struct wl_resource *buffer);
                              
 
    boolean (*query_buffer)(struct native_display *ndpy,
-                           struct wl_buffer *buffer,
+                           struct wl_resource *buffer,
                            int attribute, int *value);
 };
 

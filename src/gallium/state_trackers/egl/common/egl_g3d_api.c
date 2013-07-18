@@ -874,7 +874,7 @@ egl_g3d_unbind_wayland_display_wl(_EGLDriver *drv, _EGLDisplay *dpy,
 
 static EGLBoolean
 egl_g3d_query_wayland_buffer_wl(_EGLDriver *drv, _EGLDisplay *dpy,
-                                struct wl_buffer *buffer,
+                                struct wl_resource *buffer,
                                 EGLint attribute, EGLint *value)
 {
    struct egl_g3d_display *gdpy = egl_g3d_display(dpy);

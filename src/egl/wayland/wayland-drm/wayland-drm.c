@@ -37,6 +37,8 @@
 #include "wayland-drm.h"
 #include "wayland-drm-server-protocol.h"
 
+#define MIN(x,y) (((x)<(y))?(x):(y))
+
 struct wl_drm {
 	struct wl_display *display;
 
@@ -86,8 +88,8 @@ create_buffer(struct wl_client *client, struct wl_resource *resource,
 	}
 
 	buffer->drm = drm;
-	buffer->buffer.width = width;
-	buffer->buffer.height = height;
+	buffer->width = width;
+	buffer->height = height;
 	buffer->format = format;
 	buffer->offset[0] = offset0;
 	buffer->stride[0] = stride0;
@@ -104,16 +106,17 @@ create_buffer(struct wl_client *client, struct wl_resource *resource,
 		return;
 	}
 
-	buffer->buffer.resource.object.id = id;
-	buffer->buffer.resource.object.interface = &wl_buffer_interface;
-	buffer->buffer.resource.object.implementation =
-		(void (**)(void)) &drm_buffer_interface;
-	buffer->buffer.resource.data = buffer;
+	buffer->resource =
+		wl_resource_create(client, &wl_buffer_interface, 1, id);
+	if (!buffer->resource) {
+		wl_resource_post_no_memory(resource);
+		free(buffer);
+		return;
+	}
 
-	buffer->buffer.resource.destroy = destroy_buffer;
-	buffer->buffer.resource.client = resource->client;
-
-	wl_client_add_resource(resource->client, &buffer->buffer.resource);
+	wl_resource_set_implementation(buffer->resource,
+				       (void (**)(void)) &drm_buffer_interface,
+				       buffer, destroy_buffer);
 }
 
 static void
@@ -208,8 +211,15 @@ bind_drm(struct wl_client *client, void *data, uint32_t version, uint32_t id)
 	struct wl_resource *resource;
         uint32_t capabilities;
 
-	resource = wl_client_add_object(client, &wl_drm_interface,
-					&drm_interface, id, data);
+	resource = wl_resource_create(client, &wl_drm_interface,
+				      MIN(version, 2), id);
+	if (!resource) {
+		wl_client_post_no_memory(client);
+		return;
+	}
+
+	wl_resource_set_implementation(resource, &drm_interface, data, NULL);
+
 	wl_resource_post_event(resource, WL_DRM_DEVICE, drm->device_name);
 	wl_resource_post_event(resource, WL_DRM_FORMAT,
 			       WL_DRM_FORMAT_ARGB8888);
@@ -232,6 +242,19 @@ bind_drm(struct wl_client *client, void *data, uint32_t version, uint32_t id)
            wl_resource_post_event(resource, WL_DRM_CAPABILITIES, capabilities);
 }
 
+struct wl_drm_buffer *
+wayland_drm_buffer_get(struct wl_resource *resource)
+{
+	if (resource == NULL)
+		return NULL;
+
+	if (wl_resource_instance_of(resource, &wl_buffer_interface,
+				    &drm_buffer_interface))
+		return wl_resource_get_user_data(resource);
+	else
+		return NULL;
+}
+
 struct wl_drm *
 wayland_drm_init(struct wl_display *display, char *device_name,
                  struct wayland_drm_callbacks *callbacks, void *user_data,
@@ -247,7 +270,7 @@ wayland_drm_init(struct wl_display *display, char *device_name,
 	drm->user_data = user_data;
         drm->flags = flags;
 
-	wl_display_add_global(display, &wl_drm_interface, drm, bind_drm);
+	wl_global_create(display, &wl_drm_interface, 2, drm, bind_drm);
 
 	return drm;
 }
@@ -262,25 +285,14 @@ wayland_drm_uninit(struct wl_drm *drm)
 	free(drm);
 }
 
-int
-wayland_buffer_is_drm(struct wl_buffer *buffer)
-{
-	return buffer->resource.object.implementation == 
-		(void (**)(void)) &drm_buffer_interface;
-}
-
 uint32_t
-wayland_drm_buffer_get_format(struct wl_buffer *buffer_base)
+wayland_drm_buffer_get_format(struct wl_drm_buffer *buffer)
 {
-	struct wl_drm_buffer *buffer = (struct wl_drm_buffer *) buffer_base;
-
 	return buffer->format;
 }
 
 void *
-wayland_drm_buffer_get_buffer(struct wl_buffer *buffer_base)
+wayland_drm_buffer_get_buffer(struct wl_drm_buffer *buffer)
 {
-	struct wl_drm_buffer *buffer = (struct wl_drm_buffer *) buffer_base;
-
 	return buffer->driver_buffer;
 }

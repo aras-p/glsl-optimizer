@@ -1576,7 +1576,7 @@ eglUnbindWaylandDisplayWL(EGLDisplay dpy, struct wl_display *display)
 }
 
 EGLBoolean EGLAPIENTRY
-eglQueryWaylandBufferWL(EGLDisplay dpy,struct wl_buffer *buffer,
+eglQueryWaylandBufferWL(EGLDisplay dpy, struct wl_resource *buffer,
                         EGLint attribute, EGLint *value)
 {
    _EGLDisplay *disp = _eglLockDisplay(dpy);

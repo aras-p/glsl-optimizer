@@ -37,7 +37,6 @@
 
 #ifdef HAVE_WAYLAND_PLATFORM
 #include <wayland-client.h>
-#include "wayland-drm.h"
 #include "wayland-egl-priv.h"
 #endif
 

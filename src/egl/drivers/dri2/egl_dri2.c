@@ -42,6 +42,10 @@
 
 #include "egl_dri2.h"
 
+#ifdef HAVE_WAYLAND_PLATFORM
+#include "wayland-drm.h"
+#endif
+
 const __DRIuseInvalidateExtension use_invalidate = {
    { __DRI_USE_INVALIDATE, 1 }
 };
@@ -1200,7 +1204,7 @@ dri2_create_image_wayland_wl_buffer(_EGLDisplay *disp, _EGLContext *ctx,
 				    EGLClientBuffer _buffer,
 				    const EGLint *attr_list)
 {
-   struct wl_drm_buffer *buffer = (struct wl_drm_buffer *) _buffer;
+   struct wl_drm_buffer *buffer;
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    const struct wl_drm_components_descriptor *f;
    __DRIimage *dri_image;
@@ -1208,7 +1212,8 @@ dri2_create_image_wayland_wl_buffer(_EGLDisplay *disp, _EGLContext *ctx,
    EGLint err;
    int32_t plane;
 
-   if (!wayland_buffer_is_drm(&buffer->buffer))
+   buffer = wayland_drm_buffer_get((struct wl_resource *) _buffer);
+   if (!buffer)
        return NULL;
 
    err = _eglParseImageAttribList(&attrs, disp, attr_list);
@@ -1770,8 +1775,8 @@ dri2_wl_reference_buffer(void *user_data, uint32_t name, int fd,
 
    if (fd == -1)
       img = dri2_dpy->image->createImageFromNames(dri2_dpy->dri_screen,
-                                                  buffer->buffer.width,
-                                                  buffer->buffer.height,
+                                                  buffer->width,
+                                                  buffer->height,
                                                   buffer->format,
                                                   (int*)&name, 1,
                                                   buffer->stride,
@@ -1779,8 +1784,8 @@ dri2_wl_reference_buffer(void *user_data, uint32_t name, int fd,
                                                   NULL);
    else
       img = dri2_dpy->image->createImageFromFds(dri2_dpy->dri_screen,
-                                                buffer->buffer.width,
-                                                buffer->buffer.height,
+                                                buffer->width,
+                                                buffer->height,
                                                 buffer->format,
                                                 &fd, 1,
                                                 buffer->stride,
@@ -1869,13 +1874,14 @@ dri2_unbind_wayland_display_wl(_EGLDriver *drv, _EGLDisplay *disp,
 
 static EGLBoolean
 dri2_query_wayland_buffer_wl(_EGLDriver *drv, _EGLDisplay *disp,
-                             struct wl_buffer *_buffer,
+                             struct wl_resource *buffer_resource,
                              EGLint attribute, EGLint *value)
 {
-   struct wl_drm_buffer *buffer = (struct wl_drm_buffer *) _buffer;
+   struct wl_drm_buffer *buffer;
    const struct wl_drm_components_descriptor *format;
 
-   if (!wayland_buffer_is_drm(&buffer->buffer))
+   buffer = wayland_drm_buffer_get(buffer_resource);
+   if (!buffer)
       return EGL_FALSE;
 
    format = buffer->driver_format;
@@ -1884,10 +1890,10 @@ dri2_query_wayland_buffer_wl(_EGLDriver *drv, _EGLDisplay *disp,
       *value = format->components;
       return EGL_TRUE;
    case EGL_WIDTH:
-      *value = buffer->buffer.width;
+      *value = buffer->width;
       return EGL_TRUE;
    case EGL_HEIGHT:
-      *value = buffer->buffer.height;
+      *value = buffer->height;
       return EGL_TRUE;
    }
 
