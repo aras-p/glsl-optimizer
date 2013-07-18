@@ -3141,7 +3141,7 @@ lp_build_polynomial(struct lp_build_context *bld,
  */
 const double lp_build_exp2_polynomial[] = {
 #if EXP_POLY_DEGREE == 5
-   0.999999925063526176901,
+   1.000000000000000000000, /*XXX: was 0.999999925063526176901, recompute others */
    0.693153073200168932794,
    0.240153617044375388211,
    0.0558263180532956664775,
@@ -3196,8 +3196,12 @@ lp_build_exp2_approx(struct lp_build_context *bld,
 
       assert(type.floating && type.width == 32);
 
-      x = lp_build_min(bld, x, lp_build_const_vec(bld->gallivm, type,  129.0));
-      x = lp_build_max(bld, x, lp_build_const_vec(bld->gallivm, type, -126.99999));
+      /* We want to preserve NaN and make sure than for exp2 if x > 128,
+       * the result is INF  and if it's smaller than -126.9 the result is 0 */
+      x = lp_build_min_ext(bld, lp_build_const_vec(bld->gallivm, type,  128.0), x,
+                           GALLIVM_NAN_RETURN_SECOND);
+      x = lp_build_max_ext(bld, lp_build_const_vec(bld->gallivm, type, -126.99999), x,
+                           GALLIVM_NAN_RETURN_SECOND);
 
       /* ipart = floor(x) */
       /* fpart = x - ipart */
