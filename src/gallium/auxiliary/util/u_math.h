@@ -48,6 +48,7 @@ extern "C" {
 
 
 #include <math.h>
+#include <float.h>
 #include <stdarg.h>
 
 #ifdef PIPE_OS_UNIX
@@ -132,6 +133,9 @@ roundf(float x)
 {
    return x >= 0.0f ? floorf(x + 0.5f) : ceilf(x - 0.5f);
 }
+
+#define INFINITY (DBL_MAX + DBL_MAX)
+#define NAN (INFINITY - INFINITY)
 
 #endif /* _MSC_VER */
 
