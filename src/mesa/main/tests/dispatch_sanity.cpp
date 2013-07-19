@@ -529,7 +529,6 @@ const struct function gl_core_functions_possible[] = {
 
    /* GL_EXT_framebuffer_object */
    { "glBindFramebufferEXT", 31, -1 },
-   { "glBindRenderbufferEXT", 31, -1 },
 
    /* GL 3.2 */
    { "glGetInteger64i_v", 32, -1 },

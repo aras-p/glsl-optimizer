@@ -78,7 +78,7 @@
 	<return type="GLboolean"/>
     </function>
 
-    <function name="BindRenderbufferEXT" offset="assign">
+    <function name="BindRenderbufferEXT" offset="assign" deprecated="3.1">
         <param name="target" type="GLenum"/>
         <param name="renderbuffer" type="GLuint"/>
         <glx rop="4316"/>

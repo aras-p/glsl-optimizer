@@ -1104,8 +1104,8 @@ _mesa_IsRenderbuffer(GLuint renderbuffer)
 }
 
 
-void GLAPIENTRY
-_mesa_BindRenderbuffer(GLenum target, GLuint renderbuffer)
+static void
+bind_renderbuffer(GLenum target, GLuint renderbuffer, bool allow_user_names)
 {
    struct gl_renderbuffer *newRb;
    GET_CURRENT_CONTEXT(ctx);
@@ -1125,9 +1125,7 @@ _mesa_BindRenderbuffer(GLenum target, GLuint renderbuffer)
          /* ID was reserved, but no real renderbuffer object made yet */
          newRb = NULL;
       }
-      else if (!newRb
-               && _mesa_is_desktop_gl(ctx)
-               && ctx->Extensions.ARB_framebuffer_object) {
+      else if (!newRb && !allow_user_names) {
          /* All RB IDs must be Gen'd */
          _mesa_error(ctx, GL_INVALID_OPERATION, "glBindRenderbuffer(buffer)");
          return;
@@ -1154,11 +1152,25 @@ _mesa_BindRenderbuffer(GLenum target, GLuint renderbuffer)
    _mesa_reference_renderbuffer(&ctx->CurrentRenderbuffer, newRb);
 }
 
+void GLAPIENTRY
+_mesa_BindRenderbuffer(GLenum target, GLuint renderbuffer)
+{
+   GET_CURRENT_CONTEXT(ctx);
+
+   /* OpenGL ES glBindRenderbuffer and glBindRenderbufferOES use this same
+    * entry point, but they allow the use of user-generated names.
+    */
+   bind_renderbuffer(target, renderbuffer, _mesa_is_gles(ctx));
+}
 
 void GLAPIENTRY
 _mesa_BindRenderbufferEXT(GLenum target, GLuint renderbuffer)
 {
-    _mesa_BindRenderbuffer(target, renderbuffer);
+   /* This function should not be in the dispatch table for core profile /
+    * OpenGL 3.1, so execution should never get here in those cases -- no
+    * need for an explicit test.
+    */
+   bind_renderbuffer(target, renderbuffer, true);
 }
 
 
