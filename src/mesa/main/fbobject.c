@@ -1918,8 +1918,8 @@ check_end_texture_render(struct gl_context *ctx, struct gl_framebuffer *fb)
 }
 
 
-void GLAPIENTRY
-_mesa_BindFramebuffer(GLenum target, GLuint framebuffer)
+static void
+bind_framebuffer(GLenum target, GLuint framebuffer, bool allow_user_names)
 {
    struct gl_framebuffer *newDrawFb, *newReadFb;
    struct gl_framebuffer *oldDrawFb, *oldReadFb;
@@ -1965,9 +1965,7 @@ _mesa_BindFramebuffer(GLenum target, GLuint framebuffer)
          /* ID was reserved, but no real framebuffer object made yet */
          newDrawFb = NULL;
       }
-      else if (!newDrawFb
-               && _mesa_is_desktop_gl(ctx)
-               && ctx->Extensions.ARB_framebuffer_object) {
+      else if (!newDrawFb && !allow_user_names) {
          /* All FBO IDs must be Gen'd */
          _mesa_error(ctx, GL_INVALID_OPERATION, "glBindFramebuffer(buffer)");
          return;
@@ -2045,12 +2043,25 @@ _mesa_BindFramebuffer(GLenum target, GLuint framebuffer)
 }
 
 void GLAPIENTRY
-_mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
+_mesa_BindFramebuffer(GLenum target, GLuint framebuffer)
 {
-    _mesa_BindFramebuffer(target, framebuffer);
+   GET_CURRENT_CONTEXT(ctx);
+
+   /* OpenGL ES glBindFramebuffer and glBindFramebufferOES use this same entry
+    * point, but they allow the use of user-generated names.
+    */
+   bind_framebuffer(target, framebuffer, _mesa_is_gles(ctx));
 }
 
-
+void GLAPIENTRY
+_mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
+{
+   /* This function should not be in the dispatch table for core profile /
+    * OpenGL 3.1, so execution should never get here in those cases -- no
+    * need for an explicit test.
+    */
+   bind_framebuffer(target, framebuffer, true);
+}
 
 void GLAPIENTRY
 _mesa_DeleteFramebuffers(GLsizei n, const GLuint *framebuffers)
