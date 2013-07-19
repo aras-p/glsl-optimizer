@@ -583,6 +583,22 @@ intel_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
    }
 
    if (depth_mt && stencil_mt) {
+      if (brw->gen >= 7) {
+         /* For gen >= 7, we are using the lod/minimum-array-element fields
+          * and supportting layered rendering. This means that we must restrict
+          * the depth & stencil attachments to match in various more retrictive
+          * ways. (width, height, depth, LOD and layer)
+          */
+	 if (depth_mt->physical_width0 != stencil_mt->physical_width0 ||
+             depth_mt->physical_height0 != stencil_mt->physical_height0 ||
+             depth_mt->physical_depth0 != stencil_mt->physical_depth0 ||
+             depthRb->mt_level != stencilRb->mt_level ||
+	     depthRb->mt_layer != stencilRb->mt_layer) {
+	    fbo_incomplete(fb,
+                           "FBO incomplete: depth and stencil must match in"
+                           "width, height, depth, LOD and layer\n");
+	 }
+      }
       if (depth_mt == stencil_mt) {
 	 /* For true packed depth/stencil (not faked on prefers-separate-stencil
 	  * hardware) we need to be sure they're the same level/layer, since
