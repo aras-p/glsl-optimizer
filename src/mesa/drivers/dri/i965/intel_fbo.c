@@ -673,9 +673,9 @@ intel_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
    }
 
    if (depth_mt && stencil_mt) {
-      if (brw->gen >= 7) {
-         /* For gen >= 7, we are using the lod/minimum-array-element fields
-          * and supportting layered rendering. This means that we must restrict
+      if (brw->gen >= 6) {
+         /* For gen >= 6, we are using the lod/minimum-array-element fields
+          * and supporting layered rendering. This means that we must restrict
           * the depth & stencil attachments to match in various more retrictive
           * ways. (width, height, depth, LOD and layer)
           */
