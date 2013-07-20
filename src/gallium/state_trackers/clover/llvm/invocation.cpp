@@ -317,6 +317,7 @@ namespace {
                TD.getSmallestLegalIntType(mod->getContext(), arg_size * 8) :
                arg_type;
             unsigned target_size = TD.getTypeStoreSize(target_type);
+            unsigned target_align = TD.getABITypeAlignment(target_type);
 
             if (llvm::isa<llvm::PointerType>(arg_type) && arg.hasByValAttr()) {
                arg_type =
@@ -332,7 +333,7 @@ namespace {
                   default:
                      args.push_back(
                         module::argument(module::argument::global, arg_size,
-                                         target_size, 0,
+                                         target_size, target_align,
                                          module::argument::zero_ext));
                      break;
                }
@@ -347,7 +348,7 @@ namespace {
 
                args.push_back(
                   module::argument(module::argument::scalar, arg_size,
-                                   target_size, 0, ext_type));
+                                   target_size, target_align, ext_type));
             }
          }
 

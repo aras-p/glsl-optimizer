@@ -22,6 +22,7 @@
 
 #include "core/kernel.hpp"
 #include "core/resource.hpp"
+#include "util/u_math.h"
 #include "pipe/p_context.h"
 
 using namespace clover;
@@ -197,6 +198,15 @@ namespace {
          std::reverse(v.begin(), v.end());
    }
 
+   ///
+   /// Pad buffer \a v to the next multiple of \a n.
+   ///
+   template<typename T>
+   void
+   align(T &v, size_t n) {
+      v.resize(util_align_npot(v.size(), n));
+   }
+
    bool
    msb(const std::vector<uint8_t> &s) {
       if (PIPE_ENDIAN_NATIVE == PIPE_ENDIAN_LITTLE)
@@ -278,6 +288,7 @@ _cl_kernel::scalar_argument::bind(exec_context &ctx,
 
    extend(w, marg.ext_type, marg.target_size);
    byteswap(w, ctx.q->dev.endianness());
+   align(ctx.input, marg.target_align);
    insert(ctx.input, w);
 }
 
@@ -300,6 +311,7 @@ _cl_kernel::global_argument::set(size_t size, const void *value) {
 void
 _cl_kernel::global_argument::bind(exec_context &ctx,
                                   const clover::module::argument &marg) {
+   align(ctx.input, marg.target_align);
    ctx.g_handles.push_back(allocate(ctx.input, marg.target_size));
    ctx.g_buffers.push_back(obj->resource(ctx.q).pipe);
 }
@@ -329,6 +341,7 @@ _cl_kernel::local_argument::bind(exec_context &ctx,
 
    extend(v, module::argument::zero_ext, marg.target_size);
    byteswap(v, ctx.q->dev.endianness());
+   align(ctx.input, marg.target_align);
    insert(ctx.input, v);
 
    ctx.mem_local += __storage;
@@ -357,6 +370,7 @@ _cl_kernel::constant_argument::bind(exec_context &ctx,
 
    extend(v, module::argument::zero_ext, marg.target_size);
    byteswap(v, ctx.q->dev.endianness());
+   align(ctx.input, marg.target_align);
    insert(ctx.input, v);
 
    st = obj->resource(ctx.q).bind_surface(*ctx.q, false);
@@ -387,6 +401,7 @@ _cl_kernel::image_rd_argument::bind(exec_context &ctx,
 
    extend(v, module::argument::zero_ext, marg.target_size);
    byteswap(v, ctx.q->dev.endianness());
+   align(ctx.input, marg.target_align);
    insert(ctx.input, v);
 
    st = obj->resource(ctx.q).bind_sampler_view(*ctx.q);
@@ -417,6 +432,7 @@ _cl_kernel::image_wr_argument::bind(exec_context &ctx,
 
    extend(v, module::argument::zero_ext, marg.target_size);
    byteswap(v, ctx.q->dev.endianness());
+   align(ctx.input, marg.target_align);
    insert(ctx.input, v);
 
    st = obj->resource(ctx.q).bind_surface(*ctx.q, true);
