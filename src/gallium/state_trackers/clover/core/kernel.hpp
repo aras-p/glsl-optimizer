@@ -68,13 +68,10 @@ private:
 public:
    class argument {
    public:
-      argument(size_t size);
+      argument();
 
       /// \a true if the argument has been set.
       bool set() const;
-
-      /// Argument size in the input buffer.
-      size_t size() const;
 
       /// Storage space required for the referenced object.
       virtual size_t storage() const;
@@ -84,19 +81,19 @@ public:
 
       /// Allocate the necessary resources to bind the specified
       /// object to this argument, and update \a ctx accordingly.
-      virtual void bind(exec_context &ctx) = 0;
+      virtual void bind(exec_context &ctx,
+                        const clover::module::argument &marg) = 0;
 
       /// Free any resources that were allocated in bind().
       virtual void unbind(exec_context &ctx) = 0;
 
    protected:
-      size_t __size;
       bool __set;
    };
 
    _cl_kernel(clover::program &prog,
               const std::string &name,
-              const std::vector<clover::module::argument> &args);
+              const std::vector<clover::module::argument> &margs);
 
    void launch(clover::command_queue &q,
                const std::vector<size_t> &grid_offset,
@@ -122,19 +119,20 @@ private:
       scalar_argument(size_t size);
 
       virtual void set(size_t size, const void *value);
-      virtual void bind(exec_context &ctx);
+      virtual void bind(exec_context &ctx,
+                        const clover::module::argument &marg);
       virtual void unbind(exec_context &ctx);
 
    private:
+      size_t size;
       std::vector<uint8_t> v;
    };
 
    class global_argument : public argument {
    public:
-      global_argument(size_t size);
-
       virtual void set(size_t size, const void *value);
-      virtual void bind(exec_context &ctx);
+      virtual void bind(exec_context &ctx,
+                        const clover::module::argument &marg);
       virtual void unbind(exec_context &ctx);
 
    private:
@@ -143,12 +141,11 @@ private:
 
    class local_argument : public argument {
    public:
-      local_argument();
-
       virtual size_t storage() const;
 
       virtual void set(size_t size, const void *value);
-      virtual void bind(exec_context &ctx);
+      virtual void bind(exec_context &ctx,
+                        const clover::module::argument &marg);
       virtual void unbind(exec_context &ctx);
 
    private:
@@ -157,10 +154,9 @@ private:
 
    class constant_argument : public argument {
    public:
-      constant_argument();
-
       virtual void set(size_t size, const void *value);
-      virtual void bind(exec_context &ctx);
+      virtual void bind(exec_context &ctx,
+                        const clover::module::argument &marg);
       virtual void unbind(exec_context &ctx);
 
    private:
@@ -170,10 +166,9 @@ private:
 
    class image_rd_argument : public argument {
    public:
-      image_rd_argument();
-
       virtual void set(size_t size, const void *value);
-      virtual void bind(exec_context &ctx);
+      virtual void bind(exec_context &ctx,
+                        const clover::module::argument &marg);
       virtual void unbind(exec_context &ctx);
 
    private:
@@ -183,10 +178,9 @@ private:
 
    class image_wr_argument : public argument {
    public:
-      image_wr_argument();
-
       virtual void set(size_t size, const void *value);
-      virtual void bind(exec_context &ctx);
+      virtual void bind(exec_context &ctx,
+                        const clover::module::argument &marg);
       virtual void unbind(exec_context &ctx);
 
    private:
@@ -196,10 +190,9 @@ private:
 
    class sampler_argument : public argument {
    public:
-      sampler_argument();
-
       virtual void set(size_t size, const void *value);
-      virtual void bind(exec_context &ctx);
+      virtual void bind(exec_context &ctx,
+                        const clover::module::argument &marg);
       virtual void unbind(exec_context &ctx);
 
    private:

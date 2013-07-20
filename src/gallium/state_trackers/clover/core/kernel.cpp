@@ -28,25 +28,25 @@ using namespace clover;
 
 _cl_kernel::_cl_kernel(clover::program &prog,
                        const std::string &name,
-                       const std::vector<clover::module::argument> &args) :
+                       const std::vector<clover::module::argument> &margs) :
    prog(prog), __name(name), exec(*this) {
-   for (auto arg : args) {
-      if (arg.type == module::argument::scalar)
-         this->args.emplace_back(new scalar_argument(arg.size));
-      else if (arg.type == module::argument::global)
-         this->args.emplace_back(new global_argument(arg.size));
-      else if (arg.type == module::argument::local)
-         this->args.emplace_back(new local_argument());
-      else if (arg.type == module::argument::constant)
-         this->args.emplace_back(new constant_argument());
-      else if (arg.type == module::argument::image2d_rd ||
-               arg.type == module::argument::image3d_rd)
-         this->args.emplace_back(new image_rd_argument());
-      else if (arg.type == module::argument::image2d_wr ||
-               arg.type == module::argument::image3d_wr)
-         this->args.emplace_back(new image_wr_argument());
-      else if (arg.type == module::argument::sampler)
-         this->args.emplace_back(new sampler_argument());
+   for (auto marg : margs) {
+      if (marg.type == module::argument::scalar)
+         args.emplace_back(new scalar_argument(marg.size));
+      else if (marg.type == module::argument::global)
+         args.emplace_back(new global_argument);
+      else if (marg.type == module::argument::local)
+         args.emplace_back(new local_argument);
+      else if (marg.type == module::argument::constant)
+         args.emplace_back(new constant_argument);
+      else if (marg.type == module::argument::image2d_rd ||
+               marg.type == module::argument::image3d_rd)
+         args.emplace_back(new image_rd_argument);
+      else if (marg.type == module::argument::image2d_wr ||
+               marg.type == module::argument::image3d_wr)
+         args.emplace_back(new image_wr_argument);
+      else if (marg.type == module::argument::sampler)
+         args.emplace_back(new sampler_argument);
       else
          throw error(CL_INVALID_KERNEL_DEFINITION);
    }
@@ -129,7 +129,6 @@ _cl_kernel::module(const clover::command_queue &q) const {
    return prog.binaries().find(&q.dev)->second;
 }
 
-
 _cl_kernel::exec_context::exec_context(clover::kernel &kern) :
    kern(kern), q(NULL), mem_local(0), st(NULL) {
 }
@@ -143,8 +142,12 @@ void *
 _cl_kernel::exec_context::bind(clover::command_queue *__q) {
    std::swap(q, __q);
 
-   for (auto &arg : kern.args)
-      arg->bind(*this);
+   // Bind kernel arguments.
+   auto margs = kern.module(*q).sym(kern.name()).args;
+   for_each([=](std::unique_ptr<kernel::argument> &karg,
+                const module::argument &marg) {
+         karg->bind(*this, marg);
+      }, kern.args.begin(), kern.args.end(), margs.begin());
 
    // Create a new compute state if anything changed.
    if (!st || q != __q ||
@@ -176,8 +179,7 @@ _cl_kernel::exec_context::unbind() {
    mem_local = 0;
 }
 
-_cl_kernel::argument::argument(size_t size) :
-   __size(size), __set(false) {
+_cl_kernel::argument::argument() : __set(false) {
 }
 
 bool
@@ -190,13 +192,12 @@ _cl_kernel::argument::storage() const {
    return 0;
 }
 
-_cl_kernel::scalar_argument::scalar_argument(size_t size) :
-   argument(size) {
+_cl_kernel::scalar_argument::scalar_argument(size_t size) : size(size) {
 }
 
 void
 _cl_kernel::scalar_argument::set(size_t size, const void *value) {
-   if (size != __size)
+   if (size != this->size)
       throw error(CL_INVALID_ARG_SIZE);
 
    v = { (uint8_t *)value, (uint8_t *)value + size };
@@ -204,16 +205,13 @@ _cl_kernel::scalar_argument::set(size_t size, const void *value) {
 }
 
 void
-_cl_kernel::scalar_argument::bind(exec_context &ctx) {
+_cl_kernel::scalar_argument::bind(exec_context &ctx,
+                                  const clover::module::argument &marg) {
    ctx.input.insert(ctx.input.end(), v.begin(), v.end());
 }
 
 void
 _cl_kernel::scalar_argument::unbind(exec_context &ctx) {
-}
-
-_cl_kernel::global_argument::global_argument(size_t size) :
-   argument(size) {
 }
 
 void
@@ -229,11 +227,12 @@ _cl_kernel::global_argument::set(size_t size, const void *value) {
 }
 
 void
-_cl_kernel::global_argument::bind(exec_context &ctx) {
+_cl_kernel::global_argument::bind(exec_context &ctx,
+                                  const clover::module::argument &marg) {
    size_t offset = ctx.input.size();
    size_t idx = ctx.g_buffers.size();
 
-   ctx.input.resize(offset + __size);
+   ctx.input.resize(offset + marg.size);
 
    ctx.g_buffers.resize(idx + 1);
    ctx.g_buffers[idx] = obj->resource(ctx.q).pipe;
@@ -244,10 +243,6 @@ _cl_kernel::global_argument::bind(exec_context &ctx) {
 
 void
 _cl_kernel::global_argument::unbind(exec_context &ctx) {
-}
-
-_cl_kernel::local_argument::local_argument() :
-   argument(sizeof(uint32_t)) {
 }
 
 size_t
@@ -265,7 +260,8 @@ _cl_kernel::local_argument::set(size_t size, const void *value) {
 }
 
 void
-_cl_kernel::local_argument::bind(exec_context &ctx) {
+_cl_kernel::local_argument::bind(exec_context &ctx,
+                                 const clover::module::argument &marg) {
    size_t offset = ctx.input.size();
    size_t ptr = ctx.mem_local;
 
@@ -277,10 +273,6 @@ _cl_kernel::local_argument::bind(exec_context &ctx) {
 
 void
 _cl_kernel::local_argument::unbind(exec_context &ctx) {
-}
-
-_cl_kernel::constant_argument::constant_argument() :
-   argument(sizeof(uint32_t)) {
 }
 
 void
@@ -296,7 +288,8 @@ _cl_kernel::constant_argument::set(size_t size, const void *value) {
 }
 
 void
-_cl_kernel::constant_argument::bind(exec_context &ctx) {
+_cl_kernel::constant_argument::bind(exec_context &ctx,
+                                    const clover::module::argument &marg) {
    size_t offset = ctx.input.size();
    size_t idx = ctx.resources.size();
 
@@ -312,10 +305,6 @@ _cl_kernel::constant_argument::unbind(exec_context &ctx) {
    obj->resource(ctx.q).unbind_surface(*ctx.q, st);
 }
 
-_cl_kernel::image_rd_argument::image_rd_argument() :
-   argument(sizeof(uint32_t)) {
-}
-
 void
 _cl_kernel::image_rd_argument::set(size_t size, const void *value) {
    if (size != sizeof(cl_mem))
@@ -329,7 +318,8 @@ _cl_kernel::image_rd_argument::set(size_t size, const void *value) {
 }
 
 void
-_cl_kernel::image_rd_argument::bind(exec_context &ctx) {
+_cl_kernel::image_rd_argument::bind(exec_context &ctx,
+                                    const clover::module::argument &marg) {
    size_t offset = ctx.input.size();
    size_t idx = ctx.sviews.size();
 
@@ -345,10 +335,6 @@ _cl_kernel::image_rd_argument::unbind(exec_context &ctx) {
    obj->resource(ctx.q).unbind_sampler_view(*ctx.q, st);
 }
 
-_cl_kernel::image_wr_argument::image_wr_argument() :
-   argument(sizeof(uint32_t)) {
-}
-
 void
 _cl_kernel::image_wr_argument::set(size_t size, const void *value) {
    if (size != sizeof(cl_mem))
@@ -362,7 +348,8 @@ _cl_kernel::image_wr_argument::set(size_t size, const void *value) {
 }
 
 void
-_cl_kernel::image_wr_argument::bind(exec_context &ctx) {
+_cl_kernel::image_wr_argument::bind(exec_context &ctx,
+                                    const clover::module::argument &marg) {
    size_t offset = ctx.input.size();
    size_t idx = ctx.resources.size();
 
@@ -378,10 +365,6 @@ _cl_kernel::image_wr_argument::unbind(exec_context &ctx) {
    obj->resource(ctx.q).unbind_surface(*ctx.q, st);
 }
 
-_cl_kernel::sampler_argument::sampler_argument() :
-   argument(0) {
-}
-
 void
 _cl_kernel::sampler_argument::set(size_t size, const void *value) {
    if (size != sizeof(cl_sampler))
@@ -392,7 +375,8 @@ _cl_kernel::sampler_argument::set(size_t size, const void *value) {
 }
 
 void
-_cl_kernel::sampler_argument::bind(exec_context &ctx) {
+_cl_kernel::sampler_argument::bind(exec_context &ctx,
+                                   const clover::module::argument &marg) {
    size_t idx = ctx.samplers.size();
 
    ctx.samplers.resize(idx + 1);
