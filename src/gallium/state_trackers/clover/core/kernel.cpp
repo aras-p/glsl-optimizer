@@ -179,6 +179,45 @@ _cl_kernel::exec_context::unbind() {
    mem_local = 0;
 }
 
+namespace {
+   template<typename T>
+   std::vector<uint8_t>
+   bytes(const T& x) {
+      return { (uint8_t *)&x, (uint8_t *)&x + sizeof(x) };
+   }
+
+   ///
+   /// Transform buffer \a v from the native byte order into the byte
+   /// order specified by \a e.
+   ///
+   template<typename T>
+   void
+   byteswap(T &v, pipe_endian e) {
+      if (PIPE_ENDIAN_NATIVE != e)
+         std::reverse(v.begin(), v.end());
+   }
+
+   ///
+   /// Append buffer \a w to \a v.
+   ///
+   template<typename T>
+   void
+   insert(T &v, const T &w) {
+      v.insert(v.end(), w.begin(), w.end());
+   }
+
+   ///
+   /// Append \a n elements to the end of buffer \a v.
+   ///
+   template<typename T>
+   size_t
+   allocate(T &v, size_t n) {
+      size_t pos = v.size();
+      v.resize(pos + n);
+      return pos;
+   }
+}
+
 _cl_kernel::argument::argument() : __set(false) {
 }
 
@@ -207,7 +246,10 @@ _cl_kernel::scalar_argument::set(size_t size, const void *value) {
 void
 _cl_kernel::scalar_argument::bind(exec_context &ctx,
                                   const clover::module::argument &marg) {
-   ctx.input.insert(ctx.input.end(), v.begin(), v.end());
+   auto w = v;
+
+   byteswap(w, ctx.q->dev.endianness());
+   insert(ctx.input, w);
 }
 
 void
@@ -229,16 +271,8 @@ _cl_kernel::global_argument::set(size_t size, const void *value) {
 void
 _cl_kernel::global_argument::bind(exec_context &ctx,
                                   const clover::module::argument &marg) {
-   size_t offset = ctx.input.size();
-   size_t idx = ctx.g_buffers.size();
-
-   ctx.input.resize(offset + marg.size);
-
-   ctx.g_buffers.resize(idx + 1);
-   ctx.g_buffers[idx] = obj->resource(ctx.q).pipe;
-
-   ctx.g_handles.resize(idx + 1);
-   ctx.g_handles[idx] = offset;
+   ctx.g_handles.push_back(allocate(ctx.input, marg.size));
+   ctx.g_buffers.push_back(obj->resource(ctx.q).pipe);
 }
 
 void
@@ -262,11 +296,10 @@ _cl_kernel::local_argument::set(size_t size, const void *value) {
 void
 _cl_kernel::local_argument::bind(exec_context &ctx,
                                  const clover::module::argument &marg) {
-   size_t offset = ctx.input.size();
-   size_t ptr = ctx.mem_local;
+   auto v = bytes(ctx.mem_local);
 
-   ctx.input.resize(offset + sizeof(uint32_t));
-   *(uint32_t *)&ctx.input[offset] = ptr;
+   byteswap(v, ctx.q->dev.endianness());
+   insert(ctx.input, v);
 
    ctx.mem_local += __storage;
 }
@@ -290,14 +323,13 @@ _cl_kernel::constant_argument::set(size_t size, const void *value) {
 void
 _cl_kernel::constant_argument::bind(exec_context &ctx,
                                     const clover::module::argument &marg) {
-   size_t offset = ctx.input.size();
-   size_t idx = ctx.resources.size();
+   auto v = bytes(ctx.resources.size() << 24);
 
-   ctx.input.resize(offset + sizeof(uint32_t));
-   *(uint32_t *)&ctx.input[offset] = idx << 24;
+   byteswap(v, ctx.q->dev.endianness());
+   insert(ctx.input, v);
 
-   ctx.resources.resize(idx + 1);
-   ctx.resources[idx] = st = obj->resource(ctx.q).bind_surface(*ctx.q, false);
+   st = obj->resource(ctx.q).bind_surface(*ctx.q, false);
+   ctx.resources.push_back(st);
 }
 
 void
@@ -320,14 +352,13 @@ _cl_kernel::image_rd_argument::set(size_t size, const void *value) {
 void
 _cl_kernel::image_rd_argument::bind(exec_context &ctx,
                                     const clover::module::argument &marg) {
-   size_t offset = ctx.input.size();
-   size_t idx = ctx.sviews.size();
+   auto v = bytes(ctx.sviews.size());
 
-   ctx.input.resize(offset + sizeof(uint32_t));
-   *(uint32_t *)&ctx.input[offset] = idx;
+   byteswap(v, ctx.q->dev.endianness());
+   insert(ctx.input, v);
 
-   ctx.sviews.resize(idx + 1);
-   ctx.sviews[idx] = st = obj->resource(ctx.q).bind_sampler_view(*ctx.q);
+   st = obj->resource(ctx.q).bind_sampler_view(*ctx.q);
+   ctx.sviews.push_back(st);
 }
 
 void
@@ -350,14 +381,13 @@ _cl_kernel::image_wr_argument::set(size_t size, const void *value) {
 void
 _cl_kernel::image_wr_argument::bind(exec_context &ctx,
                                     const clover::module::argument &marg) {
-   size_t offset = ctx.input.size();
-   size_t idx = ctx.resources.size();
+   auto v = bytes(ctx.resources.size());
 
-   ctx.input.resize(offset + sizeof(uint32_t));
-   *(uint32_t *)&ctx.input[offset] = idx;
+   byteswap(v, ctx.q->dev.endianness());
+   insert(ctx.input, v);
 
-   ctx.resources.resize(idx + 1);
-   ctx.resources[idx] = st = obj->resource(ctx.q).bind_surface(*ctx.q, true);
+   st = obj->resource(ctx.q).bind_surface(*ctx.q, true);
+   ctx.resources.push_back(st);
 }
 
 void
@@ -377,10 +407,8 @@ _cl_kernel::sampler_argument::set(size_t size, const void *value) {
 void
 _cl_kernel::sampler_argument::bind(exec_context &ctx,
                                    const clover::module::argument &marg) {
-   size_t idx = ctx.samplers.size();
-
-   ctx.samplers.resize(idx + 1);
-   ctx.samplers[idx] = st = obj->bind(*ctx.q);
+   st = obj->bind(*ctx.q);
+   ctx.samplers.push_back(st);
 }
 
 void
