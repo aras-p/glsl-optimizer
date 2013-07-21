@@ -100,12 +100,6 @@ lp_build_compare_ext(struct gallivm_state *gallivm,
    if(type.floating) {
       LLVMRealPredicate op;
       switch(func) {
-      case PIPE_FUNC_NEVER:
-         op = LLVMRealPredicateFalse;
-         break;
-      case PIPE_FUNC_ALWAYS:
-         op = LLVMRealPredicateTrue;
-         break;
       case PIPE_FUNC_EQUAL:
          op = ordered ? LLVMRealOEQ : LLVMRealUEQ;
          break;
