@@ -32,7 +32,8 @@ sources = [
 ]
 
 # Disallow undefined symbols
-env.Append(SHLINKFLAGS = ['-Wl,-z,defs'])
+if env['platform'] != 'darwin':
+    env.Append(SHLINKFLAGS = ['-Wl,-z,defs'])
 
 # libGL.so.1.6
 libgl_1_6 = env.SharedLibrary(
