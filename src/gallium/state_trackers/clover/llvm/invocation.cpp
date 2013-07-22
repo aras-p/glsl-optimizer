@@ -304,13 +304,19 @@ namespace {
          for (llvm::Function::arg_iterator I = kernel_func->arg_begin(),
                                       E = kernel_func->arg_end(); I != E; ++I) {
             llvm::Argument &arg = *I;
-            llvm::Type *arg_type = arg.getType();
 #if HAVE_LLVM < 0x0302
             llvm::TargetData TD(kernel_func->getParent());
 #else
             llvm::DataLayout TD(kernel_func->getParent()->getDataLayout());
 #endif
+
+            llvm::Type *arg_type = arg.getType();
             unsigned arg_size = TD.getTypeStoreSize(arg_type);
+
+            llvm::Type *target_type = arg_type->isIntegerTy() ?
+               TD.getSmallestLegalIntType(mod->getContext(), arg_size * 8) :
+               arg_type;
+            unsigned target_size = TD.getTypeStoreSize(target_type);
 
             if (llvm::isa<llvm::PointerType>(arg_type) && arg.hasByValAttr()) {
                arg_type =
@@ -324,11 +330,24 @@ namespace {
                unsigned address_space = llvm::cast<llvm::PointerType>(arg_type)->getAddressSpace();
                switch (address_space) {
                   default:
-                     args.push_back(module::argument(module::argument::global, arg_size));
+                     args.push_back(
+                        module::argument(module::argument::global, arg_size,
+                                         target_size, 0,
+                                         module::argument::zero_ext));
                      break;
                }
+
             } else {
-               args.push_back(module::argument(module::argument::scalar, arg_size));
+               llvm::AttributeSet attrs = kernel_func->getAttributes();
+               enum module::argument::ext_type ext_type =
+                  (attrs.hasAttribute(arg.getArgNo() + 1,
+                                     llvm::Attribute::SExt) ?
+                   module::argument::sign_ext :
+                   module::argument::zero_ext);
+
+               args.push_back(
+                  module::argument(module::argument::scalar, arg_size,
+                                   target_size, 0, ext_type));
             }
          }
 

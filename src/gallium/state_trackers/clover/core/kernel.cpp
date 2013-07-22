@@ -197,6 +197,34 @@ namespace {
          std::reverse(v.begin(), v.end());
    }
 
+   bool
+   msb(const std::vector<uint8_t> &s) {
+      if (PIPE_ENDIAN_NATIVE == PIPE_ENDIAN_LITTLE)
+         return s.back() & 0x80;
+      else
+         return s.front() & 0x80;
+   }
+
+   ///
+   /// Resize buffer \a v to size \a n using sign or zero extension
+   /// according to \a ext.
+   ///
+   template<typename T>
+   void
+   extend(T &v, enum clover::module::argument::ext_type ext, size_t n) {
+      const size_t m = std::min(v.size(), n);
+      const bool sign_ext = (ext == module::argument::sign_ext);
+      const uint8_t fill = (sign_ext && msb(v) ? ~0 : 0);
+      T w(n, fill);
+
+      if (PIPE_ENDIAN_NATIVE == PIPE_ENDIAN_LITTLE)
+         std::copy_n(v.begin(), m, w.begin());
+      else
+         std::copy_n(v.end() - m, m, w.end() - m);
+
+      std::swap(v, w);
+   }
+
    ///
    /// Append buffer \a w to \a v.
    ///
@@ -248,6 +276,7 @@ _cl_kernel::scalar_argument::bind(exec_context &ctx,
                                   const clover::module::argument &marg) {
    auto w = v;
 
+   extend(w, marg.ext_type, marg.target_size);
    byteswap(w, ctx.q->dev.endianness());
    insert(ctx.input, w);
 }
@@ -271,7 +300,7 @@ _cl_kernel::global_argument::set(size_t size, const void *value) {
 void
 _cl_kernel::global_argument::bind(exec_context &ctx,
                                   const clover::module::argument &marg) {
-   ctx.g_handles.push_back(allocate(ctx.input, marg.size));
+   ctx.g_handles.push_back(allocate(ctx.input, marg.target_size));
    ctx.g_buffers.push_back(obj->resource(ctx.q).pipe);
 }
 
@@ -298,6 +327,7 @@ _cl_kernel::local_argument::bind(exec_context &ctx,
                                  const clover::module::argument &marg) {
    auto v = bytes(ctx.mem_local);
 
+   extend(v, module::argument::zero_ext, marg.target_size);
    byteswap(v, ctx.q->dev.endianness());
    insert(ctx.input, v);
 
@@ -325,6 +355,7 @@ _cl_kernel::constant_argument::bind(exec_context &ctx,
                                     const clover::module::argument &marg) {
    auto v = bytes(ctx.resources.size() << 24);
 
+   extend(v, module::argument::zero_ext, marg.target_size);
    byteswap(v, ctx.q->dev.endianness());
    insert(ctx.input, v);
 
@@ -354,6 +385,7 @@ _cl_kernel::image_rd_argument::bind(exec_context &ctx,
                                     const clover::module::argument &marg) {
    auto v = bytes(ctx.sviews.size());
 
+   extend(v, module::argument::zero_ext, marg.target_size);
    byteswap(v, ctx.q->dev.endianness());
    insert(ctx.input, v);
 
@@ -383,6 +415,7 @@ _cl_kernel::image_wr_argument::bind(exec_context &ctx,
                                     const clover::module::argument &marg) {
    auto v = bytes(ctx.resources.size());
 
+   extend(v, module::argument::zero_ext, marg.target_size);
    byteswap(v, ctx.q->dev.endianness());
    insert(ctx.input, v);
 
