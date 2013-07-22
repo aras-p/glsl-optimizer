@@ -129,9 +129,9 @@ flatten_named_interface_blocks_declarations::run(exec_list *instructions)
                                             iface_field_name);
          if (!found_var) {
             ir_variable *new_var;
+            char *var_name =
+               ralloc_strdup(mem_ctx, iface_t->fields.structure[i].name);
             if (array_t == NULL) {
-               char *var_name =
-                  ralloc_strdup(mem_ctx, iface_t->fields.structure[i].name);
                new_var =
                   new(mem_ctx) ir_variable(iface_t->fields.structure[i].type,
                                            var_name,
@@ -141,10 +141,6 @@ flatten_named_interface_blocks_declarations::run(exec_list *instructions)
                   glsl_type::get_array_instance(
                      iface_t->fields.structure[i].type,
                      array_t->length);
-               char *var_name =
-                  ralloc_asprintf(mem_ctx, "%s[%d]",
-                                  iface_t->fields.structure[i].name,
-                                  array_t->length);
                new_var =
                   new(mem_ctx) ir_variable(new_array_type,
                                            var_name,
