@@ -117,7 +117,8 @@ _mesa_ast_array_index_to_hir(void *mem_ctx,
    } else if (const_index == NULL && array->type->is_array()) {
       if (array->type->array_size() == 0) {
 	 _mesa_glsl_error(&loc, state, "unsized array index must be constant");
-      } else if (array->type->fields.array->is_interface()) {
+      } else if (array->type->fields.array->is_interface()
+                 && array->variable_referenced()->mode == ir_var_uniform) {
 	 /* Page 46 in section 4.3.7 of the OpenGL ES 3.00 spec says:
 	  *
 	  *     "All indexes used to index a uniform block array must be
