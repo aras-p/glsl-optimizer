@@ -909,11 +909,3 @@ void lp_rast_destroy( struct lp_rasterizer *rast )
 }
 
 
-/** Return number of rasterization threads */
-unsigned
-lp_rast_get_num_threads( struct lp_rasterizer *rast )
-{
-   return rast->num_threads;
-}
-
-

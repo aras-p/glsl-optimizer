@@ -139,9 +139,6 @@ lp_rast_create( unsigned num_threads );
 void
 lp_rast_destroy( struct lp_rasterizer * );
 
-unsigned
-lp_rast_get_num_threads( struct lp_rasterizer * );
-
 void 
 lp_rast_queue_scene( struct lp_rasterizer *rast,
                      struct lp_scene *scene );
