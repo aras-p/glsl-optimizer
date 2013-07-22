@@ -37,9 +37,9 @@ static void TAG(fetch_texel_rgtc)(unsigned srcRowStride, const TYPE *pixdata,
    const TYPE alpha0 = blksrc[0];
    const TYPE alpha1 = blksrc[1];
    const char bit_pos = ((j&3) * 4 + (i&3)) * 3;
-   const TYPE acodelow = blksrc[2 + bit_pos / 8];
-   const TYPE acodehigh = (3 + bit_pos / 8) < 8 ? blksrc[3 + bit_pos / 8] : 0;
-   const TYPE code = (acodelow >> (bit_pos & 0x7) |
+   const unsigned char acodelow = blksrc[2 + bit_pos / 8];
+   const unsigned char acodehigh = (3 + bit_pos / 8) < 8 ? blksrc[3 + bit_pos / 8] : 0;
+   const unsigned char code = (acodelow >> (bit_pos & 0x7) |
       (acodehigh  << (8 - (bit_pos & 0x7)))) & 0x7;
 
    if (code == 0)
