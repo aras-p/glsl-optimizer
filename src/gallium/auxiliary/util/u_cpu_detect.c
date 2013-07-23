@@ -67,7 +67,7 @@
 
 #if defined(PIPE_OS_WINDOWS)
 #include <windows.h>
-#if defined(MSVC)
+#if defined(PIPE_CC_MSVC)
 #include <intrin.h>
 #endif
 #endif
@@ -211,6 +211,27 @@ cpuid(uint32_t ax, uint32_t *p)
    p[3] = 0;
 #endif
 }
+
+static INLINE uint64_t xgetbv(void)
+{
+#if defined(PIPE_CC_GCC)
+   uint32_t eax, edx;
+
+   __asm __volatile (
+     ".byte 0x0f, 0x01, 0xd0" // xgetbv isn't supported on gcc < 4.4
+     : "=a"(eax),
+       "=d"(edx)
+     : "c"(0)
+   );
+
+   return ((uint64_t)edx << 32) | eax;
+#elif defined(PIPE_CC_MSVC) && defined(_MSC_FULL_VER) && defined(_XCR_XFEATURE_ENABLED_MASK)
+   return _xgetbv(_XCR_XFEATURE_ENABLED_MASK);
+#else
+   return 0;
+#endif
+
+}
 #endif /* X86 or X86_64 */
 
 void
@@ -284,7 +305,9 @@ util_cpu_detect(void)
          util_cpu_caps.has_sse4_1 = (regs2[2] >> 19) & 1;
          util_cpu_caps.has_sse4_2 = (regs2[2] >> 20) & 1;
          util_cpu_caps.has_popcnt = (regs2[2] >> 23) & 1;
-         util_cpu_caps.has_avx    = (regs2[2] >> 28) & 1;
+         util_cpu_caps.has_avx    = ((regs2[2] >> 28) & 1) && // AVX
+                                    ((regs2[2] >> 27) & 1) && // OSXSAVE
+                                    ((xgetbv() & 6) == 6);    // XMM & YMM
          util_cpu_caps.has_f16c   = (regs2[2] >> 29) & 1;
          util_cpu_caps.has_mmx2   = util_cpu_caps.has_sse; /* SSE cpus supports mmxext too */
 
