@@ -58,7 +58,7 @@ draw_get_option_use_llvm(void)
 
 #ifdef PIPE_ARCH_X86
       util_cpu_detect();
-      /* require SSE2 due to LLVM PR6960. */
+      /* require SSE2 due to LLVM PR6960. XXX Might be fixed by now? */
       if (!util_cpu_caps.has_sse2)
          value = FALSE;
 #endif
@@ -77,6 +77,9 @@ draw_create_context(struct pipe_context *pipe, boolean try_llvm)
    struct draw_context *draw = CALLOC_STRUCT( draw_context );
    if (draw == NULL)
       goto err_out;
+
+   /* we need correct cpu caps for disabling denorms in draw_vbo() */
+   util_cpu_detect();
 
 #if HAVE_LLVM
    if (try_llvm && draw_get_option_use_llvm()) {
