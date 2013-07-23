@@ -1486,7 +1486,7 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant,
    struct gallivm_state *gallivm = variant->gallivm;
    LLVMContextRef context = gallivm->context;
    LLVMTypeRef int32_type = LLVMInt32TypeInContext(context);
-   LLVMTypeRef arg_types[9];
+   LLVMTypeRef arg_types[10];
    unsigned num_arg_types =
       elts ? Elements(arg_types) : Elements(arg_types) - 1;
    LLVMTypeRef func_type;
@@ -1496,6 +1496,7 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant,
    struct lp_type vs_type;
    LLVMValueRef end, start;
    LLVMValueRef count, fetch_elts, fetch_elt_max, fetch_count;
+   LLVMValueRef vertex_id_offset;
    LLVMValueRef stride, step, io_itr;
    LLVMValueRef io_ptr, vbuffers_ptr, vb_ptr;
    LLVMValueRef zero = lp_build_const_int32(gallivm, 0);
@@ -1541,6 +1542,7 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant,
    arg_types[i++] = int32_type;                     /* stride */
    arg_types[i++] = get_vb_ptr_type(variant);       /* pipe_vertex_buffer's */
    arg_types[i++] = int32_type;                     /* instance_id */
+   arg_types[i++] = int32_type;                     /* vertex_id_offset */
 
    func_type = LLVMFunctionType(int32_type, arg_types, num_arg_types, 0);
 
@@ -1565,6 +1567,7 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant,
    stride                    = LLVMGetParam(variant_func, 5 + (elts ? 1 : 0));
    vb_ptr                    = LLVMGetParam(variant_func, 6 + (elts ? 1 : 0));
    system_values.instance_id = LLVMGetParam(variant_func, 7 + (elts ? 1 : 0));
+   vertex_id_offset          = LLVMGetParam(variant_func, 8 + (elts ? 1 : 0));
 
    lp_build_name(context_ptr, "context");
    lp_build_name(io_ptr, "io");
@@ -1572,6 +1575,7 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant,
    lp_build_name(stride, "stride");
    lp_build_name(vb_ptr, "vb");
    lp_build_name(system_values.instance_id, "instance_id");
+   lp_build_name(vertex_id_offset, "vertex_id_offset");
 
    if (elts) {
       fetch_elts    = LLVMGetParam(variant_func, 3);
@@ -1646,21 +1650,18 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant,
 #endif
       system_values.vertex_id = lp_build_zero(gallivm, lp_type_uint_vec(32, 32*vector_length));
       for (i = 0; i < vector_length; ++i) {
-         LLVMValueRef true_index =
+         LLVMValueRef vert_index =
             LLVMBuildAdd(builder,
                          lp_loop.counter,
                          lp_build_const_int32(gallivm, i), "");
-         true_index = LLVMBuildAdd(builder, start, true_index, "");
+         LLVMValueRef true_index =
+            LLVMBuildAdd(builder, start, vert_index, "");
+         LLVMValueRef vertex_id;
 
          /* make sure we're not out of bounds which can happen
           * if fetch_count % 4 != 0, because on the last iteration
           * a few of the 4 vertex fetches will be out of bounds */
          true_index = lp_build_min(&bld, true_index, fetch_max);
-
-         system_values.vertex_id = LLVMBuildInsertElement(
-            gallivm->builder,
-            system_values.vertex_id, true_index,
-            lp_build_const_int32(gallivm, i), "");
 
          if (elts) {
             LLVMValueRef fetch_ptr;
@@ -1673,7 +1674,7 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant,
             index_overflowed = LLVMBuildICmp(builder, LLVMIntUGT,
                                              true_index, fetch_elt_max,
                                              "index_overflowed");
-            
+
             lp_build_if(&if_ctx, gallivm, index_overflowed);
             {
                /* Generate maximum possible index so that
@@ -1698,6 +1699,23 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant,
             lp_build_endif(&if_ctx);
             true_index = LLVMBuildLoad(builder, index_ptr, "true_index");
          }
+         /* in the paths with elts vertex id has to be unaffected by the
+          * index bias and because indices inside our elements array have
+          * already had index bias applied we need to subtract it here to
+          * get back to the original index.
+          * in the linear paths vertex id has to be unaffected by the
+          * original start index and because we abuse the 'start' variable
+          * to either represent the actual start index or the index at which
+          * the primitive was split (we split rendering into chunks of at
+          * most 4095-vertices) we need to back out the original start
+          * index out of our vertex id here.
+          */
+         vertex_id = LLVMBuildSub(builder, true_index, vertex_id_offset, "");
+
+         system_values.vertex_id = LLVMBuildInsertElement(
+            gallivm->builder,
+            system_values.vertex_id, vertex_id,
+            lp_build_const_int32(gallivm, i), "");
 
          for (j = 0; j < draw->pt.nr_vertex_elements; ++j) {
             struct pipe_vertex_element *velem = &draw->pt.vertex_element[j];

@@ -263,7 +263,8 @@ typedef int
                       unsigned count,
                       unsigned stride,
                       struct pipe_vertex_buffer *vertex_buffers,
-                      unsigned instance_id);
+                      unsigned instance_id,
+                      unsigned vertex_id_offset);
 
 
 typedef int
@@ -275,7 +276,8 @@ typedef int
                            unsigned fetch_count,
                            unsigned stride,
                            struct pipe_vertex_buffer *vertex_buffers,
-                           unsigned instance_id);
+                           unsigned instance_id,
+                           unsigned vertex_id_offset);
 
 
 typedef int

@@ -535,6 +535,7 @@ draw_vbo(struct draw_context *draw,
    }
 
    draw->pt.max_index = index_limit - 1;
+   draw->start_index = info->start;
 
    /*
     * TODO: We could use draw->pt.max_index to further narrow

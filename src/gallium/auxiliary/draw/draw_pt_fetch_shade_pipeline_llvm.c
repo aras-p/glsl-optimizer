@@ -353,7 +353,8 @@ llvm_pipeline_generic( struct draw_pt_middle_end *middle,
                                        fetch_info->count,
                                        fpme->vertex_size,
                                        draw->pt.vertex_buffer,
-                                       draw->instance_id);
+                                       draw->instance_id,
+                                       draw->start_index);
    else
       clipped = fpme->current_variant->jit_func_elts( &fpme->llvm->jit_context,
                                             llvm_vert_info.verts,
@@ -363,7 +364,8 @@ llvm_pipeline_generic( struct draw_pt_middle_end *middle,
                                             fetch_info->count,
                                             fpme->vertex_size,
                                             draw->pt.vertex_buffer,
-                                            draw->instance_id);
+                                            draw->instance_id,
+                                            draw->pt.user.eltBias);
 
    /* Finished with fetch and vs:
     */

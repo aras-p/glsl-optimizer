@@ -311,6 +311,7 @@ struct draw_context
 
    unsigned instance_id;
    unsigned start_instance;
+   unsigned start_index;
 
 #ifdef HAVE_LLVM
    struct draw_llvm *llvm;
