@@ -625,8 +625,7 @@ static ALWAYS_INLINE void PIPE_CDECL generic_run_one( struct translate_generic *
 
          if (tg->attrib[attr].instance_divisor) {
             index = start_instance;
-            index += (instance_id - start_instance) /
-               tg->attrib[attr].instance_divisor;
+            index += (instance_id  / tg->attrib[attr].instance_divisor);
             /* XXX we need to clamp the index here too, but to a
              * per-array max value, not the draw->pt.max_index value
              * that's being given to us via translate->set_buffer().

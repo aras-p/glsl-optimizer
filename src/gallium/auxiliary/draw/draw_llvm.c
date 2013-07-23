@@ -707,15 +707,14 @@ generate_fetch(struct gallivm_state *gallivm,
    if (velem->instance_divisor) {
       /* Index is equal to the start instance plus the number of current 
        * instance divided by the divisor. In this case we compute it as:
-       * index = start_instance + ((instance_id - start_instance) / divisor)
+       * index = start_instance + (instance_id  / divisor)
        */
       LLVMValueRef current_instance;
       index = lp_build_const_int32(gallivm, draw->start_instance);
-      current_instance = LLVMBuildSub(builder, instance_id, index, "");
-      current_instance = LLVMBuildUDiv(builder, current_instance,
+      current_instance = LLVMBuildUDiv(builder, instance_id,
                                        lp_build_const_int32(gallivm, velem->instance_divisor),
                                        "instance_divisor");
-      index = LLVMBuildAdd(builder, index, current_instance, "instance");
+      index = lp_build_uadd_overflow(gallivm, index, current_instance, &ofbit);
    }
 
    stride = lp_build_umul_overflow(gallivm, vb_stride, index, &ofbit);

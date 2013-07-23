@@ -1094,10 +1094,6 @@ static boolean init_inputs( struct translate_sse *p,
                struct x86_reg tmp_EDX = p->tmp2_EDX;
                struct x86_reg tmp_ECX = p->src_ECX;
 
-               /* instance_num = instance_id - start_instance */
-               x86_mov(p->func, tmp_EDX, start_instance);
-               x86_sub(p->func, tmp_EAX, tmp_EDX);
-
                /* TODO: Add x86_shr() to rtasm and use it whenever
                 *       instance divisor is power of two.
                 */
