@@ -240,7 +240,7 @@ vl_video_buffer_template(struct pipe_resource *templ,
          templ->width0 /= 2;
          templ->height0 /= 2;
       } else if (tmpl->chroma_format == PIPE_VIDEO_CHROMA_FORMAT_422) {
-         templ->height0 /= 2;
+         templ->width0 /= 2;
       }
    }
 }

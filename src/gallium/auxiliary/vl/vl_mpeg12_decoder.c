@@ -1053,8 +1053,8 @@ vl_create_mpeg12_decoder(struct pipe_context *context,
       dec->chroma_height = dec->base.height / 2;
       dec->num_blocks = dec->num_blocks * 2;
    } else if (dec->base.chroma_format == PIPE_VIDEO_CHROMA_FORMAT_422) {
-      dec->chroma_width = dec->base.width;
-      dec->chroma_height = dec->base.height / 2;
+      dec->chroma_width = dec->base.width / 2;
+      dec->chroma_height = dec->base.height;
       dec->num_blocks = dec->num_blocks * 2 + dec->num_blocks;
    } else {
       dec->chroma_width = dec->base.width;

@@ -174,7 +174,7 @@ vlVdpVideoSurfaceSize(vlVdpSurface *p_surf, int component,
          *width /= 2;
          *height /= 2;
       } else if (p_surf->templat.chroma_format == PIPE_VIDEO_CHROMA_FORMAT_422) {
-         *height /= 2;
+         *width /= 2;
       }
    }
    if (p_surf->templat.interlaced)
