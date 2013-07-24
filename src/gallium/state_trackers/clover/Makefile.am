@@ -19,13 +19,15 @@ endif
 noinst_LTLIBRARIES = libclover.la libcltgsi.la libclllvm.la
 
 libcltgsi_la_CXXFLAGS = \
-	-std=c++0x
+	-std=c++0x \
+	$(VISIBILITY_CFLAGS)
 
 libcltgsi_la_SOURCES = \
 	tgsi/compiler.cpp
 
 libclllvm_la_CXXFLAGS = \
 	-std=c++98 \
+	$(VISIBILITY_CFLAGS) \
 	$(LLVM_CPPFLAGS) \
 	$(DEFINES) \
 	-DLIBCLC_INCLUDEDIR=\"$(LIBCLC_INCLUDEDIR)/\" \
@@ -36,7 +38,8 @@ libclllvm_la_SOURCES = \
 	llvm/invocation.cpp
 
 libclover_la_CXXFLAGS = \
-	-std=c++0x
+	-std=c++0x \
+	$(VISIBILITY_CFLAGS)
 
 libclover_la_LIBADD = \
 	libcltgsi.la libclllvm.la
