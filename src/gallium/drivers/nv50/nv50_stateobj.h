@@ -40,7 +40,7 @@ struct nv50_constbuf {
       const uint8_t *data;
    } u;
    uint32_t size; /* max 65536 */
-   uint16_t offset;
+   uint32_t offset;
    boolean user; /* should only be TRUE if u.data is valid and non-NULL */
 };
 

@@ -38,7 +38,7 @@ struct nvc0_constbuf {
       const void *data;
    } u;
    uint32_t size;
-   uint16_t offset;
+   uint32_t offset;
    boolean user; /* should only be TRUE if u.data is valid and non-NULL */
 };
 
