@@ -2280,7 +2280,7 @@ uint32_t
 brw_blorp_blit_params::get_wm_prog(struct brw_context *brw,
                                    brw_blorp_prog_data **prog_data) const
 {
-   uint32_t prog_offset;
+   uint32_t prog_offset = 0;
    if (!brw_search_cache(&brw->cache, BRW_BLORP_BLIT_PROG,
                          &this->wm_prog_key, sizeof(this->wm_prog_key),
                          &prog_offset, prog_data)) {
