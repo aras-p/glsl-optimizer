@@ -2243,25 +2243,22 @@ instance_name_opt:
    /* empty */
    {
       $$ = new(state) ast_interface_block(*state->default_uniform_qualifier,
-                                          NULL, NULL);
+                                          NULL, false, NULL);
    }
    | NEW_IDENTIFIER
    {
       $$ = new(state) ast_interface_block(*state->default_uniform_qualifier,
-                                          $1, NULL);
+                                          $1, false, NULL);
    }
    | NEW_IDENTIFIER '[' constant_expression ']'
    {
       $$ = new(state) ast_interface_block(*state->default_uniform_qualifier,
-                                          $1, $3);
+                                          $1, true, $3);
    }
    | NEW_IDENTIFIER '[' ']'
    {
-      _mesa_glsl_error(& @1, state,
-                       "instance block arrays must be explicitly sized");
-
       $$ = new(state) ast_interface_block(*state->default_uniform_qualifier,
-                                          $1, NULL);
+                                          $1, true, NULL);
    }
    ;
 

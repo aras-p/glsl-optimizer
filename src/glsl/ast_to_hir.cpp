@@ -4409,7 +4409,34 @@ ast_interface_block::hir(exec_list *instructions,
    if (this->instance_name) {
       ir_variable *var;
 
-      if (this->array_size != NULL) {
+      if (this->is_array) {
+         /* Section 4.3.7 (Interface Blocks) of the GLSL 1.50 spec says:
+          *
+          *     For uniform blocks declared an array, each individual array
+          *     element corresponds to a separate buffer object backing one
+          *     instance of the block. As the array size indicates the number
+          *     of buffer objects needed, uniform block array declarations
+          *     must specify an array size.
+          *
+          * And a few paragraphs later:
+          *
+          *     Geometry shader input blocks must be declared as arrays and
+          *     follow the array declaration and linking rules for all
+          *     geometry shader inputs. All other input and output block
+          *     arrays must specify an array size.
+          *
+          * The upshot of this is that the only circumstance where an
+          * interface array size *doesn't* need to be specified is on a
+          * geometry shader input.
+          */
+         if (this->array_size == NULL &&
+             (state->target != geometry_shader || !this->layout.flags.q.in)) {
+            _mesa_glsl_error(&loc, state,
+                             "only geometry shader inputs may be unsized "
+                             "instance block arrays");
+
+         }
+
          const glsl_type *block_array_type =
             process_array_type(&loc, block_type, this->array_size, state);
 
@@ -4429,7 +4456,7 @@ ast_interface_block::hir(exec_list *instructions,
       /* In order to have an array size, the block must also be declared with
        * an instane name.
        */
-      assert(this->array_size == NULL);
+      assert(!this->is_array);
 
       for (unsigned i = 0; i < num_variables; i++) {
          ir_variable *var =

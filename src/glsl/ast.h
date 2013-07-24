@@ -907,12 +907,14 @@ public:
 class ast_interface_block : public ast_node {
 public:
    ast_interface_block(ast_type_qualifier layout,
-                     const char *instance_name,
-		     ast_expression *array_size)
+                       const char *instance_name,
+                       bool is_array,
+                       ast_expression *array_size)
    : layout(layout), block_name(NULL), instance_name(instance_name),
-     array_size(array_size)
+     is_array(is_array), array_size(array_size)
    {
-      /* empty */
+      if (!is_array)
+         assert(array_size == NULL);
    }
 
    virtual ir_rvalue *hir(exec_list *instructions,
@@ -933,13 +935,19 @@ public:
    exec_list declarations;
 
    /**
-    * Declared array size of the block instance
-    *
-    * If the block is not declared as an array, this field will be \c NULL.
+    * True if the block is declared as an array
     *
     * \note
     * A block can only be an array if it also has an instance name.  If this
-    * field is not \c NULL, ::instance_name must also not be \c NULL.
+    * field is true, ::instance_name must also not be \c NULL.
+    */
+   bool is_array;
+
+   /**
+    * Declared array size of the block instance
+    *
+    * If the block is not declared as an array or if the block instance array
+    * is unsized, this field will be \c NULL.
     */
    ast_expression *array_size;
 };
