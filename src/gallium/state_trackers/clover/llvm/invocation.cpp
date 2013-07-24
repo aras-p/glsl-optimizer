@@ -26,6 +26,7 @@
 #include <clang/Frontend/TextDiagnosticBuffer.h>
 #include <clang/Frontend/TextDiagnosticPrinter.h>
 #include <clang/CodeGen/CodeGenAction.h>
+#include <clang/Basic/TargetInfo.h>
 #include <llvm/Bitcode/BitstreamWriter.h>
 #include <llvm/Bitcode/ReaderWriter.h>
 #include <llvm/Linker.h>
@@ -113,7 +114,7 @@ namespace {
    llvm::Module *
    compile(const std::string &source, const std::string &name,
            const std::string &triple, const std::string &processor,
-           const std::string &opts) {
+           const std::string &opts, clang::LangAS::Map& address_spaces) {
 
       clang::CompilerInstance c;
       clang::CompilerInvocation invocation;
@@ -205,6 +206,10 @@ namespace {
       if (!c.ExecuteAction(act))
          throw build_error(log);
 
+      // Get address spaces map to be able to find kernel argument address space
+      memcpy(address_spaces, c.getTarget().getAddressSpaceMap(), 
+                                                        sizeof(address_spaces));
+
       return act.takeModule();
    }
 
@@ -283,7 +288,8 @@ namespace {
 
    module
    build_module_llvm(llvm::Module *mod,
-                     const std::vector<llvm::Function *> &kernels) {
+                     const std::vector<llvm::Function *> &kernels,
+                     clang::LangAS::Map& address_spaces) {
 
       module m;
       struct pipe_llvm_program_header header;
@@ -326,18 +332,26 @@ namespace {
             }
 
             if (arg_type->isPointerTy()) {
-               // XXX: Figure out LLVM->OpenCL address space mappings for each
-               // target.  I think we need to ask clang what these are.  For now,
-               // pretend everything is in the global address space.
                unsigned address_space = llvm::cast<llvm::PointerType>(arg_type)->getAddressSpace();
-               switch (address_space) {
-                  default:
-                     args.push_back(
-                        module::argument(module::argument::global, arg_size,
-                                         target_size, target_align,
-                                         module::argument::zero_ext));
-                     break;
-               }
+               if (address_space == address_spaces[clang::LangAS::opencl_local
+                                                     - clang::LangAS::Offset]) {
+                  args.push_back(module::argument(module::argument::local,
+                                                  arg_size, target_size,
+                                                  target_align,
+                                                  module::argument::zero_ext));
+               } else {
+                  // XXX: Correctly handle constant address space.  There is no
+                  // way for r600g to pass a handle for constant buffers back
+                  // to clover like it can for global buffers, so
+                  // creating constant arguements will break r600g.  For now,
+                  // continue treating constant buffers as global buffers
+                  // until we can come up with a way to create handles for
+                  // constant buffers.
+                  args.push_back(module::argument(module::argument::global,
+                                                  arg_size, target_size,
+                                                  target_align,
+                                                  module::argument::zero_ext));
+              }
 
             } else {
                llvm::AttributeSet attrs = kernel_func->getAttributes();
@@ -379,10 +393,12 @@ clover::compile_program_llvm(const compat::string &source,
    std::string processor(target.begin(), 0, processor_str_len);
    std::string triple(target.begin(), processor_str_len + 1,
                       target.size() - processor_str_len - 1);
+   clang::LangAS::Map address_spaces;
 
    // The input file name must have the .cl extension in order for the
    // CompilerInvocation class to recognize it as an OpenCL source file.
-   llvm::Module *mod = compile(source, "input.cl", triple, processor, opts);
+   llvm::Module *mod = compile(source, "input.cl", triple, processor, opts,
+                                                                address_spaces);
 
    find_kernels(mod, kernels);
 
@@ -395,6 +411,6 @@ clover::compile_program_llvm(const compat::string &source,
          assert(0);
          return module();
       default:
-         return build_module_llvm(mod, kernels);
+         return build_module_llvm(mod, kernels, address_spaces);
    }
 }
