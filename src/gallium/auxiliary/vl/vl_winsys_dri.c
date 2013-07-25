@@ -32,8 +32,10 @@
 #include <fcntl.h>
 
 #include <X11/Xlib-xcb.h>
+#include <X11/extensions/dri2tokens.h>
 #include <xcb/dri2.h>
 #include <xf86drm.h>
+#include <errno.h>
 
 #include "pipe/p_screen.h"
 #include "pipe/p_context.h"
@@ -305,6 +307,7 @@ vl_screen_create(Display *display, int screen)
    xcb_generic_error_t *error = NULL;
    char *device_name;
    int fd, device_name_length;
+   unsigned int driverType;
 
    drm_magic_t magic;
 
@@ -332,7 +335,22 @@ vl_screen_create(Display *display, int screen)
    s = xcb_setup_roots_iterator(xcb_get_setup(scrn->conn));
    while (screen--)
 	xcb_screen_next(&s);
-   connect_cookie = xcb_dri2_connect_unchecked(scrn->conn, s.data->root, XCB_DRI2_DRIVER_TYPE_DRI);
+   driverType = XCB_DRI2_DRIVER_TYPE_DRI;
+#ifdef DRI2DriverPrimeShift
+   {
+      char *prime = getenv("DRI_PRIME");
+      if (prime) {
+         unsigned int primeid;
+         errno = 0;
+         primeid = strtoul(prime, NULL, 0);
+         if (errno == 0)
+            driverType |=
+               ((primeid & DRI2DriverPrimeMask) << DRI2DriverPrimeShift);
+      }
+   }
+#endif
+
+   connect_cookie = xcb_dri2_connect_unchecked(scrn->conn, s.data->root, driverType);
    connect = xcb_dri2_connect_reply(scrn->conn, connect_cookie, NULL);
    if (connect == NULL || connect->driver_name_length + connect->device_name_length == 0)
       goto free_screen;
