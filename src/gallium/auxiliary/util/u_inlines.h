@@ -498,9 +498,13 @@ pipe_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
 }
 
 
-static INLINE boolean util_get_offset( 
-   const struct pipe_rasterizer_state *templ,
-   unsigned fill_mode)
+/**
+ * Get the polygon offset enable/disable flag for the given polygon fill mode.
+ * \param fill_mode  one of PIPE_POLYGON_MODE_POINT/LINE/FILL
+ */
+static INLINE boolean
+util_get_offset(const struct pipe_rasterizer_state *templ,
+                unsigned fill_mode)
 {
    switch(fill_mode) {
    case PIPE_POLYGON_MODE_POINT:
