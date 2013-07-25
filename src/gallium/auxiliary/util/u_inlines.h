@@ -227,6 +227,12 @@ pipe_surface_equal(struct pipe_surface *s1, struct pipe_surface *s2)
  * Convenience wrappers for screen buffer functions.
  */
 
+
+/**
+ * Create a new resource.
+ * \param bind  bitmask of PIPE_BIND_x flags
+ * \param usage  bitmask of PIPE_USAGE_x flags
+ */
 static INLINE struct pipe_resource *
 pipe_buffer_create( struct pipe_screen *screen,
 		    unsigned bind,
@@ -247,12 +253,20 @@ pipe_buffer_create( struct pipe_screen *screen,
    return screen->resource_create(screen, &buffer);
 }
 
+
+/**
+ * Map a range of a resource.
+ * \param offset  start of region, in bytes 
+ * \param length  size of region, in bytes 
+ * \param access  bitmask of PIPE_TRANSFER_x flags
+ * \param transfer  returns a transfer object
+ */
 static INLINE void *
 pipe_buffer_map_range(struct pipe_context *pipe,
 		      struct pipe_resource *buffer,
 		      unsigned offset,
 		      unsigned length,
-		      unsigned usage,
+		      unsigned access,
 		      struct pipe_transfer **transfer)
 {
    struct pipe_box box;
@@ -264,7 +278,7 @@ pipe_buffer_map_range(struct pipe_context *pipe,
 
    u_box_1d(offset, length, &box);
 
-   map = pipe->transfer_map(pipe, buffer, 0, usage, &box, transfer);
+   map = pipe->transfer_map(pipe, buffer, 0, access, &box, transfer);
    if (map == NULL) {
       return NULL;
    }
@@ -273,13 +287,18 @@ pipe_buffer_map_range(struct pipe_context *pipe,
 }
 
 
+/**
+ * Map whole resource.
+ * \param access  bitmask of PIPE_TRANSFER_x flags
+ * \param transfer  returns a transfer object
+ */
 static INLINE void *
 pipe_buffer_map(struct pipe_context *pipe,
                 struct pipe_resource *buffer,
-                unsigned usage,
+                unsigned access,
                 struct pipe_transfer **transfer)
 {
-   return pipe_buffer_map_range(pipe, buffer, 0, buffer->width0, usage, transfer);
+   return pipe_buffer_map_range(pipe, buffer, 0, buffer->width0, access, transfer);
 }
 
 
@@ -322,12 +341,12 @@ pipe_buffer_write(struct pipe_context *pipe,
                   const void *data)
 {
    struct pipe_box box;
-   unsigned usage = PIPE_TRANSFER_WRITE;
+   unsigned access = PIPE_TRANSFER_WRITE;
 
    if (offset == 0 && size == buf->width0) {
-      usage |= PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE;
+      access |= PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE;
    } else {
-      usage |= PIPE_TRANSFER_DISCARD_RANGE;
+      access |= PIPE_TRANSFER_DISCARD_RANGE;
    }
 
    u_box_1d(offset, size, &box);
@@ -335,7 +354,7 @@ pipe_buffer_write(struct pipe_context *pipe,
    pipe->transfer_inline_write( pipe,
                                 buf,
                                 0,
-                                usage,
+                                access,
                                 &box,
                                 data,
                                 size,
@@ -368,12 +387,18 @@ pipe_buffer_write_nooverlap(struct pipe_context *pipe,
                                0, 0);
 }
 
+
+/**
+ * Create a new resource and immediately put data into it
+ * \param bind  bitmask of PIPE_BIND_x flags
+ * \param usage  bitmask of PIPE_USAGE_x flags
+ */
 static INLINE struct pipe_resource *
 pipe_buffer_create_with_data(struct pipe_context *pipe,
                              unsigned bind,
                              unsigned usage,
                              unsigned size,
-                             void *ptr)
+                             const void *ptr)
 {
    struct pipe_resource *res = pipe_buffer_create(pipe->screen,
                                                   bind, usage, size);
@@ -403,11 +428,16 @@ pipe_buffer_read(struct pipe_context *pipe,
    pipe_buffer_unmap(pipe, src_transfer);
 }
 
+
+/**
+ * Map a resource for reading/writing.
+ * \param access  bitmask of PIPE_TRANSFER_x flags
+ */
 static INLINE void *
 pipe_transfer_map(struct pipe_context *context,
                   struct pipe_resource *resource,
                   unsigned level, unsigned layer,
-                  enum pipe_transfer_usage usage,
+                  unsigned access,
                   unsigned x, unsigned y,
                   unsigned w, unsigned h,
                   struct pipe_transfer **transfer)
@@ -417,15 +447,20 @@ pipe_transfer_map(struct pipe_context *context,
    return context->transfer_map(context,
                                 resource,
                                 level,
-                                usage,
+                                access,
                                 &box, transfer);
 }
 
+
+/**
+ * Map a 3D (texture) resource for reading/writing.
+ * \param access  bitmask of PIPE_TRANSFER_x flags
+ */
 static INLINE void *
 pipe_transfer_map_3d(struct pipe_context *context,
                      struct pipe_resource *resource,
                      unsigned level,
-                     enum pipe_transfer_usage usage,
+                     unsigned access,
                      unsigned x, unsigned y, unsigned z,
                      unsigned w, unsigned h, unsigned d,
                      struct pipe_transfer **transfer)
@@ -435,7 +470,7 @@ pipe_transfer_map_3d(struct pipe_context *context,
    return context->transfer_map(context,
                                 resource,
                                 level,
-                                usage,
+                                access,
                                 &box, transfer);
 }
 
