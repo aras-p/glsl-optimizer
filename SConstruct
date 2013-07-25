@@ -70,7 +70,7 @@ if env['gles']:
 # Environment setup
 
 env.Append(CPPDEFINES = [
-    ('PACKAGE_VERSION', '\\"9.2.0-devel\\"'),
+    ('PACKAGE_VERSION', '\\"9.3.0-devel\\"'),
     ('PACKAGE_BUGREPORT', '\\"https://bugs.freedesktop.org/enter_bug.cgi?product=Mesa\\"'),
 ])
 
