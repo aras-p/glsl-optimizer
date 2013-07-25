@@ -557,7 +557,7 @@ intelInitContext(struct brw_context *brw,
     * software fallbacks (which we have to support on legacy GL to do weird
     * glDrawPixels(), glBitmap(), and other functions).
     */
-   if (api != API_OPENGL_CORE) {
+   if (api != API_OPENGL_CORE && api != API_OPENGLES2) {
       _swrast_CreateContext(ctx);
    }
 
