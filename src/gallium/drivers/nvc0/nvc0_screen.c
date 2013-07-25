@@ -512,6 +512,7 @@ nvc0_screen_resize_tls_area(struct nvc0_screen *screen,
    }
 
    size *= (screen->base.device->chipset >= 0xe0) ? 64 : 48; /* max warps */
+   size  = align(size, 0x8000);
    size *= screen->mp_count;
 
    size = align(size, 1 << 17);

@@ -78,11 +78,11 @@ nve4_screen_compute_setup(struct nvc0_screen *screen,
     */
    BEGIN_NVC0(push, NVE4_COMPUTE(MP_TEMP_SIZE_HIGH(0)), 3);
    PUSH_DATAh(push, screen->tls->size / screen->mp_count);
-   PUSH_DATA (push, screen->tls->size / screen->mp_count);
+   PUSH_DATA (push, (screen->tls->size / screen->mp_count) & ~0x7fff);
    PUSH_DATA (push, 0xff);
    BEGIN_NVC0(push, NVE4_COMPUTE(MP_TEMP_SIZE_HIGH(1)), 3);
    PUSH_DATAh(push, screen->tls->size / screen->mp_count);
-   PUSH_DATA (push, screen->tls->size / screen->mp_count);
+   PUSH_DATA (push, (screen->tls->size / screen->mp_count) & ~0x7fff);
    PUSH_DATA (push, 0xff);
 
    /* Unified address space ? Who needs that ? Certainly not OpenCL.
