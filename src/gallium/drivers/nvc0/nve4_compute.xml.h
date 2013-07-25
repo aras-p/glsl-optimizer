@@ -8,13 +8,13 @@ http://0x04.net/cgit/index.cgi/rules-ng-ng
 git clone git://0x04.net/rules-ng-ng
 
 The rules-ng-ng source files this header was generated from are:
-- nve4_compute.xml (  10168 bytes, from 2013-03-31 20:05:20)
-- copyright.xml    (   6452 bytes, from 2011-08-11 18:25:12)
-- nvchipsets.xml   (   3954 bytes, from 2013-03-26 01:26:43)
-- nv_object.xml    (  14395 bytes, from 2013-03-31 20:05:20)
-- nv_defs.xml      (   4437 bytes, from 2011-08-11 18:25:12)
-- nv50_defs.xml    (   9613 bytes, from 2013-03-28 11:02:04)
-- nve4_p2mf.xml    (   2373 bytes, from 2013-03-31 20:05:20)
+- nve4_compute.xml (  10168 bytes, from 2013-06-04 13:57:02)
+- copyright.xml    (   6452 bytes, from 2012-04-16 22:51:01)
+- nvchipsets.xml   (   3954 bytes, from 2013-06-04 13:57:02)
+- nv_object.xml    (  14395 bytes, from 2013-06-04 13:57:02)
+- nv_defs.xml      (   4437 bytes, from 2012-04-16 22:51:01)
+- nv50_defs.xml    (  16877 bytes, from 2013-07-17 09:10:01)
+- nve4_p2mf.xml    (   2373 bytes, from 2013-06-04 13:57:02)
 
 Copyright (C) 2006-2013 by the following authors:
 - Artur Huillet <arthur.huillet@free.fr> (ahuillet)
@@ -303,6 +303,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define NVE4_COMPUTE_MP_PM_B_SIGSEL__LEN			0x00000004
 #define NVE4_COMPUTE_MP_PM_B_SIGSEL_NONE			0x00000000
 #define NVE4_COMPUTE_MP_PM_B_SIGSEL_WARP			0x00000002
+#define NVE4_COMPUTE_MP_PM_B_SIGSEL_REPLAY			0x00000008
+#define NVE4_COMPUTE_MP_PM_B_SIGSEL_TRANSACTION			0x0000000e
 #define NVE4_COMPUTE_MP_PM_B_SIGSEL_L1				0x00000010
 #define NVE4_COMPUTE_MP_PM_B_SIGSEL_MEM				0x00000011
 
