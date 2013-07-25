@@ -23,6 +23,7 @@
  */
 
 #include "nvc0_context.h"
+#include "nvc0_compute.h"
 #include "nve4_compute.h"
 
 #include "nv50/codegen/nv50_ir_driver.h"
@@ -298,38 +299,9 @@ nve4_compute_set_tex_handles(struct nvc0_context *nvc0)
 
 
 static boolean
-nve4_compute_validate_program(struct nvc0_context *nvc0)
-{
-   struct nvc0_program *prog = nvc0->compprog;
-
-   if (prog->mem)
-      return TRUE;
-
-   if (!prog->translated) {
-      prog->translated = nvc0_program_translate(
-         prog, nvc0->screen->base.device->chipset);
-      if (!prog->translated)
-         return FALSE;
-   }
-   if (unlikely(!prog->code_size))
-      return FALSE;
-
-   if (likely(prog->code_size)) {
-      if (nvc0_program_upload_code(nvc0, prog)) {
-         struct nouveau_pushbuf *push = nvc0->base.pushbuf;
-         BEGIN_NVC0(push, NVE4_COMPUTE(FLUSH), 1);
-         PUSH_DATA (push, NVE4_COMPUTE_FLUSH_CODE);
-         return TRUE;
-      }
-   }
-   return FALSE;
-}
-
-
-static boolean
 nve4_compute_state_validate(struct nvc0_context *nvc0)
 {
-   if (!nve4_compute_validate_program(nvc0))
+   if (!nvc0_compute_validate_program(nvc0))
       return FALSE;
    if (nvc0->dirty_cp & NVC0_NEW_CP_TEXTURES)
       nve4_compute_validate_textures(nvc0);

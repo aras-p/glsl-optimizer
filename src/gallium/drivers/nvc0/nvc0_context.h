@@ -358,4 +358,8 @@ void nvc0_push_vbo(struct nvc0_context *, const struct pipe_draw_info *);
 void nve4_launch_grid(struct pipe_context *,
                       const uint *, const uint *, uint32_t, const void *);
 
+/* nvc0_compute.c */
+void nvc0_launch_grid(struct pipe_context *,
+                      const uint *, const uint *, uint32_t, const void *);
+
 #endif

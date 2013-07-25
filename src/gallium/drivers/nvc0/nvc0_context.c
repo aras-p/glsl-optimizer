@@ -258,8 +258,8 @@ nvc0_create(struct pipe_screen *pscreen, void *priv)
 
    pipe->draw_vbo = nvc0_draw_vbo;
    pipe->clear = nvc0_clear;
-   if (nvc0->screen->base.class_3d >= NVE4_3D_CLASS)
-      pipe->launch_grid = nve4_launch_grid;
+   pipe->launch_grid = (nvc0->screen->base.class_3d >= NVE4_3D_CLASS) ?
+      nve4_launch_grid : nvc0_launch_grid;
 
    pipe->flush = nvc0_flush;
    pipe->texture_barrier = nvc0_texture_barrier;

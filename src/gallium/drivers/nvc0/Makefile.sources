@@ -1,4 +1,5 @@
 C_SOURCES := \
+	nvc0_compute.c \
 	nvc0_context.c \
 	nvc0_formats.c \
 	nvc0_miptree.c \

@@ -215,6 +215,7 @@ int nvc0_screen_tic_alloc(struct nvc0_screen *, void *);
 int nvc0_screen_tsc_alloc(struct nvc0_screen *, void *);
 
 int nve4_screen_compute_setup(struct nvc0_screen *, struct nouveau_pushbuf *);
+int nvc0_screen_compute_setup(struct nvc0_screen *, struct nouveau_pushbuf *);
 
 boolean nvc0_screen_resize_tls_area(struct nvc0_screen *, uint32_t lpos,
                                     uint32_t lneg, uint32_t cstack);
