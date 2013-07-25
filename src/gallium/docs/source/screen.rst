@@ -104,7 +104,8 @@ The integer capabilities:
   the flatshade_first setting in ``pipe_rasterizer_state``.
 * ``PIPE_CAP_USER_VERTEX_BUFFERS``: Whether the driver supports user vertex
   buffers.  If not, the state tracker must upload all data which is not in hw
-  resources.
+  resources.  If user-space buffers are supported, the driver must also still
+  accept HW resource buffers.
 * ``PIPE_CAP_VERTEX_BUFFER_OFFSET_4BYTE_ALIGNED_ONLY``: This CAP describes a hw
   limitation.  If true, pipe_vertex_buffer::buffer_offset must always be aligned
   to 4.  If false, there are no restrictions on the offset.
@@ -118,10 +119,12 @@ The integer capabilities:
   compute entry points defined in pipe_context and pipe_screen.
 * ``PIPE_CAP_USER_INDEX_BUFFERS``: Whether user index buffers are supported.
   If not, the state tracker must upload all indices which are not in hw
-  resources.
-* ``PIPE_CAP_USER_CONSTANT_BUFFERS``: Whether user constant buffers are
-  supported. If not, the state tracker must upload constants which are not in hw
-  resources.
+  resources.  If user-space buffers are supported, the driver must also still
+  accept HW resource buffers.
+* ``PIPE_CAP_USER_CONSTANT_BUFFERS``: Whether user-space constant buffers
+  are supported.  If not, the state tracker must put constants into HW
+  resources/buffers.  If user-space constant buffers are supported, the
+  driver must still accept HW constant buffers also.
 * ``PIPE_CAP_CONSTANT_BUFFER_OFFSET_ALIGNMENT``: Describes the required
   alignment of pipe_constant_buffer::buffer_offset.
 * ``PIPE_CAP_START_INSTANCE``: Whether the driver supports
