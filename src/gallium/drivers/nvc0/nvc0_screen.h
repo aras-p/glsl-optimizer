@@ -160,6 +160,41 @@ nvc0_screen(struct pipe_screen *screen)
 ...
 */
 
+#define NVC0_PM_QUERY_COUNT 31
+#define NVC0_PM_QUERY(i)    (PIPE_QUERY_DRIVER_SPECIFIC + 2048 + (i))
+#define NVC0_PM_QUERY_LAST   NVC0_PM_QUERY(NVC0_PM_QUERY_COUNT - 1)
+#define NVC0_PM_QUERY_INST_EXECUTED             0
+#define NVC0_PM_QUERY_BRANCH                    1
+#define NVC0_PM_QUERY_BRANCH_DIVERGENT          2
+#define NVC0_PM_QUERY_ACTIVE_WARPS              3
+#define NVC0_PM_QUERY_ACTIVE_CYCLES             4
+#define NVC0_PM_QUERY_LAUNCHED_WARPS            5
+#define NVC0_PM_QUERY_LAUNCHED_THREADS          6
+#define NVC0_PM_QUERY_LD_SHARED                 7
+#define NVC0_PM_QUERY_ST_SHARED                 8
+#define NVC0_PM_QUERY_LD_LOCAL                  9
+#define NVC0_PM_QUERY_ST_LOCAL                  10
+#define NVC0_PM_QUERY_GRED_COUNT                11
+#define NVC0_PM_QUERY_ATOM_COUNT                12
+#define NVC0_PM_QUERY_GLD_REQUEST               13
+#define NVC0_PM_QUERY_GST_REQUEST               14
+#define NVC0_PM_QUERY_INST_ISSUED1_0            15
+#define NVC0_PM_QUERY_INST_ISSUED1_1            16
+#define NVC0_PM_QUERY_INST_ISSUED2_0            17
+#define NVC0_PM_QUERY_INST_ISSUED2_1            18
+#define NVC0_PM_QUERY_TH_INST_EXECUTED_0        19
+#define NVC0_PM_QUERY_TH_INST_EXECUTED_1        20
+#define NVC0_PM_QUERY_TH_INST_EXECUTED_2        21
+#define NVC0_PM_QUERY_TH_INST_EXECUTED_3        22
+#define NVC0_PM_QUERY_PROF_TRIGGER_0            23
+#define NVC0_PM_QUERY_PROF_TRIGGER_1            24
+#define NVC0_PM_QUERY_PROF_TRIGGER_2            25
+#define NVC0_PM_QUERY_PROF_TRIGGER_3            26
+#define NVC0_PM_QUERY_PROF_TRIGGER_4            27
+#define NVC0_PM_QUERY_PROF_TRIGGER_5            28
+#define NVC0_PM_QUERY_PROF_TRIGGER_6            29
+#define NVC0_PM_QUERY_PROF_TRIGGER_7            30
+
 /* Driver statistics queries:
  */
 #ifdef NOUVEAU_ENABLE_DRIVER_STATISTICS

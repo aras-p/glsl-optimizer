@@ -27,6 +27,7 @@
 #include "nvc0_context.h"
 #include "nouveau/nv_object.xml.h"
 #include "nve4_compute.xml.h"
+#include "nvc0_compute.xml.h"
 
 #define NVC0_QUERY_STATE_READY   0
 #define NVC0_QUERY_STATE_ACTIVE  1
@@ -55,9 +56,9 @@ struct nvc0_query {
 
 #define NVC0_QUERY_ALLOC_SPACE 256
 
-static void nve4_mp_pm_query_begin(struct nvc0_context *, struct nvc0_query *);
-static void nve4_mp_pm_query_end(struct nvc0_context *, struct nvc0_query *);
-static boolean nve4_mp_pm_query_result(struct nvc0_context *,
+static void nvc0_mp_pm_query_begin(struct nvc0_context *, struct nvc0_query *);
+static void nvc0_mp_pm_query_end(struct nvc0_context *, struct nvc0_query *);
+static boolean nvc0_mp_pm_query_result(struct nvc0_context *,
                                        struct nvc0_query *, void *, boolean);
 
 static INLINE struct nvc0_query *
@@ -155,20 +156,18 @@ nvc0_query_create(struct pipe_context *pipe, unsigned type)
          break;
       } else
 #endif
-      if (nvc0->screen->base.class_3d >= NVE4_3D_CLASS &&
-          nvc0->screen->base.device->drm_version >= 0x01000101) {
-         if (type >= NVE4_PM_QUERY(0) &&
-             type <= NVE4_PM_QUERY_LAST) {
+      if (nvc0->screen->base.device->drm_version >= 0x01000101) {
+         if (type >= NVE4_PM_QUERY(0) && type <= NVE4_PM_QUERY_LAST) {
             /* for each MP:
              * [00] = WS0.C0
              * [04] = WS0.C1
              * [08] = WS0.C2
              * [0c] = WS0.C3
-             * [10] = WS0.C0
+             * [10] = WS1.C0
              * [14] = WS1.C1
              * [18] = WS1.C2
              * [1c] = WS1.C3
-             * [20] = WS1.C0
+             * [20] = WS2.C0
              * [24] = WS2.C1
              * [28] = WS2.C2
              * [2c] = WS2.C3
@@ -186,6 +185,21 @@ nvc0_query_create(struct pipe_context *pipe, unsigned type)
              * [5c] = WS3.sequence
              */
             space = (4 * 4 + 4 + 4) * nvc0->screen->mp_count * sizeof(uint32_t);
+            break;
+         } else
+         if (type >= NVC0_PM_QUERY(0) && type <= NVC0_PM_QUERY_LAST) {
+            /* for each MP:
+             * [00] = MP.C0
+             * [04] = MP.C1
+             * [08] = MP.C2
+             * [0c] = MP.C3
+             * [10] = MP.C4
+             * [14] = MP.C5
+             * [18] = MP.C6
+             * [1c] = MP.C7
+             * [20] = MP.sequence
+             */
+            space = (8 + 1) * nvc0->screen->mp_count * sizeof(uint32_t);
             break;
          }
       }
@@ -310,8 +324,9 @@ nvc0_query_begin(struct pipe_context *pipe, struct pipe_query *pq)
             q->u.value = 0;
       } else
 #endif
-      if (q->type >= NVE4_PM_QUERY(0) && q->type <= NVE4_PM_QUERY_LAST) {
-         nve4_mp_pm_query_begin(nvc0, q);
+      if ((q->type >= NVE4_PM_QUERY(0) && q->type <= NVE4_PM_QUERY_LAST) ||
+          (q->type >= NVC0_PM_QUERY(0) && q->type <= NVC0_PM_QUERY_LAST)) {
+         nvc0_mp_pm_query_begin(nvc0, q);
       }
       break;
    }
@@ -389,8 +404,10 @@ nvc0_query_end(struct pipe_context *pipe, struct pipe_query *pq)
          return;
       } else
 #endif
-      if (q->type >= NVE4_PM_QUERY(0) && q->type <= NVE4_PM_QUERY_LAST)
-         nve4_mp_pm_query_end(nvc0, q);
+      if ((q->type >= NVE4_PM_QUERY(0) && q->type <= NVE4_PM_QUERY_LAST) ||
+          (q->type >= NVC0_PM_QUERY(0) && q->type <= NVC0_PM_QUERY_LAST)) {
+         nvc0_mp_pm_query_end(nvc0, q);
+      }
       break;
    }
    if (q->is64bit)
@@ -428,8 +445,9 @@ nvc0_query_result(struct pipe_context *pipe, struct pipe_query *pq,
       return TRUE;
    } else
 #endif
-   if (q->type >= NVE4_PM_QUERY(0) && q->type <= NVE4_PM_QUERY_LAST) {
-      return nve4_mp_pm_query_result(nvc0, q, result, wait);
+   if ((q->type >= NVE4_PM_QUERY(0) && q->type <= NVE4_PM_QUERY_LAST) ||
+       (q->type >= NVC0_PM_QUERY(0) && q->type <= NVC0_PM_QUERY_LAST)) {
+      return nvc0_mp_pm_query_result(nvc0, q, result, wait);
    }
 
    if (q->state != NVC0_QUERY_STATE_READY)
@@ -649,7 +667,7 @@ static const char *nvc0_drv_stat_names[] =
 #endif /* NOUVEAU_ENABLE_DRIVER_STATISTICS */
 
 
-/* === PERFORMANCE MONITORING COUNTERS === */
+/* === PERFORMANCE MONITORING COUNTERS for NVE4+ === */
 
 /* Code to read out MP counters: They are accessible via mmio, too, but let's
  * just avoid mapping registers in userspace. We'd have to know which MPs are
@@ -799,46 +817,46 @@ static const char *nve4_pm_query_names[] =
  * a problem because such queries don't make much sense ... (unless someone is
  * really creative).
  */
-struct nve4_mp_counter_cfg
+struct nvc0_mp_counter_cfg
 {
    uint32_t func    : 16; /* mask or 4-bit logic op (depending on mode) */
    uint32_t mode    : 4;  /* LOGOP,B6,LOGOP_B6(_PULSE) */
-   uint32_t pad     : 3;
+   uint32_t num_src : 3;  /* number of sources (1 - 6, only for NVC0:NVE4) */
    uint32_t sig_dom : 1;  /* if 0, MP_PM_A (per warp-sched), if 1, MP_PM_B */
    uint32_t sig_sel : 8;  /* signal group */
-   uint32_t src_sel : 32; /* signal selection for up to 5 sources */
+   uint64_t src_sel;      /* signal selection for up to 6 sources (48 bit) */
 };
 
-#define NVE4_COUNTER_OPn_SUM            0
-#define NVE4_COUNTER_OPn_OR             1
-#define NVE4_COUNTER_OPn_AND            2
-#define NVE4_COUNTER_OP2_REL_SUM_MM     3 /* (sum(ctr0) - sum(ctr1)) / sum(ctr0) */
-#define NVE4_COUNTER_OP2_DIV_SUM_M0     4 /* sum(ctr0) / ctr1 of MP[0]) */
-#define NVE4_COUNTER_OP2_AVG_DIV_MM     5 /* avg(ctr0 / ctr1) */
-#define NVE4_COUNTER_OP2_AVG_DIV_M0     6 /* avg(ctr0) / ctr1 of MP[0]) */
+#define NVC0_COUNTER_OPn_SUM            0
+#define NVC0_COUNTER_OPn_OR             1
+#define NVC0_COUNTER_OPn_AND            2
+#define NVC0_COUNTER_OP2_REL_SUM_MM     3 /* (sum(ctr0) - sum(ctr1)) / sum(ctr0) */
+#define NVC0_COUNTER_OP2_DIV_SUM_M0     4 /* sum(ctr0) / ctr1 of MP[0]) */
+#define NVC0_COUNTER_OP2_AVG_DIV_MM     5 /* avg(ctr0 / ctr1) */
+#define NVC0_COUNTER_OP2_AVG_DIV_M0     6 /* avg(ctr0) / ctr1 of MP[0]) */
 
-struct nve4_mp_pm_query_cfg
+struct nvc0_mp_pm_query_cfg
 {
-   struct nve4_mp_counter_cfg ctr[4];
+   struct nvc0_mp_counter_cfg ctr[4];
    uint8_t num_counters;
    uint8_t op;
    uint8_t norm[2]; /* normalization num,denom */
 };
 
-#define _Q1A(n, f, m, g, s, nu, dn) [NVE4_PM_QUERY_##n] = { { { f, NVE4_COMPUTE_MP_PM_FUNC_MODE_##m, 0, 0, NVE4_COMPUTE_MP_PM_A_SIGSEL_##g, s }, {}, {}, {} }, 1, NVE4_COUNTER_OPn_SUM, { nu, dn } }
-#define _Q1B(n, f, m, g, s, nu, dn) [NVE4_PM_QUERY_##n] = { { { f, NVE4_COMPUTE_MP_PM_FUNC_MODE_##m, 0, 1, NVE4_COMPUTE_MP_PM_B_SIGSEL_##g, s }, {}, {}, {} }, 1, NVE4_COUNTER_OPn_SUM, { nu, dn } }
+#define _Q1A(n, f, m, g, s, nu, dn) [NVE4_PM_QUERY_##n] = { { { f, NVE4_COMPUTE_MP_PM_FUNC_MODE_##m, 0, 0, NVE4_COMPUTE_MP_PM_A_SIGSEL_##g, s }, {}, {}, {} }, 1, NVC0_COUNTER_OPn_SUM, { nu, dn } }
+#define _Q1B(n, f, m, g, s, nu, dn) [NVE4_PM_QUERY_##n] = { { { f, NVE4_COMPUTE_MP_PM_FUNC_MODE_##m, 0, 1, NVE4_COMPUTE_MP_PM_B_SIGSEL_##g, s }, {}, {}, {} }, 1, NVC0_COUNTER_OPn_SUM, { nu, dn } }
 #define _M2A(n, f0, m0, g0, s0, f1, m1, g1, s1, o, nu, dn) [NVE4_PM_QUERY_METRIC_##n] = { { \
    { f0, NVE4_COMPUTE_MP_PM_FUNC_MODE_##m0, 0, 0, NVE4_COMPUTE_MP_PM_A_SIGSEL_##g0, s0 }, \
    { f1, NVE4_COMPUTE_MP_PM_FUNC_MODE_##m1, 0, 0, NVE4_COMPUTE_MP_PM_A_SIGSEL_##g1, s1 }, \
-   {}, {}, }, 2, NVE4_COUNTER_OP2_##o, { nu, dn } }
+   {}, {}, }, 2, NVC0_COUNTER_OP2_##o, { nu, dn } }
 #define _M2B(n, f0, m0, g0, s0, f1, m1, g1, s1, o, nu, dn) [NVE4_PM_QUERY_METRIC_##n] = { { \
    { f0, NVE4_COMPUTE_MP_PM_FUNC_MODE_##m0, 0, 1, NVE4_COMPUTE_MP_PM_B_SIGSEL_##g0, s0 }, \
    { f1, NVE4_COMPUTE_MP_PM_FUNC_MODE_##m1, 0, 1, NVE4_COMPUTE_MP_PM_B_SIGSEL_##g1, s1 }, \
-   {}, {}, }, 2, NVE4_COUNTER_OP2_##o, { nu, dn } }
+   {}, {}, }, 2, NVC0_COUNTER_OP2_##o, { nu, dn } }
 #define _M2AB(n, f0, m0, g0, s0, f1, m1, g1, s1, o, nu, dn) [NVE4_PM_QUERY_METRIC_##n] = { { \
    { f0, NVE4_COMPUTE_MP_PM_FUNC_MODE_##m0, 0, 0, NVE4_COMPUTE_MP_PM_A_SIGSEL_##g0, s0 }, \
    { f1, NVE4_COMPUTE_MP_PM_FUNC_MODE_##m1, 0, 1, NVE4_COMPUTE_MP_PM_B_SIGSEL_##g1, s1 }, \
-   {}, {}, }, 2, NVE4_COUNTER_OP2_##o, { nu, dn } }
+   {}, {}, }, 2, NVC0_COUNTER_OP2_##o, { nu, dn } }
 
 /* NOTES:
  * active_warps: bit 0 alternates btw 0 and 1 for odd nr of warps
@@ -846,7 +864,7 @@ struct nve4_mp_pm_query_cfg
  * metric-ipXc: we simply multiply by 4 to account for the 4 warp schedulers;
  *  this is inaccurate !
  */
-static const struct nve4_mp_pm_query_cfg nve4_mp_pm_queries[] =
+static const struct nvc0_mp_pm_query_cfg nve4_mp_pm_queries[] =
 {
    _Q1A(PROF_TRIGGER_0, 0x0001, B6, USER, 0x00000000, 1, 1),
    _Q1A(PROF_TRIGGER_1, 0x0001, B6, USER, 0x00000004, 1, 1),
@@ -904,16 +922,152 @@ static const struct nve4_mp_pm_query_cfg nve4_mp_pm_queries[] =
 #undef _M2A
 #undef _M2B
 
+/* === PERFORMANCE MONITORING COUNTERS for NVC0:NVE4 === */
+static const uint64_t nvc0_read_mp_pm_counters_code[] =
+{
+   /* mov b32 $r8 $tidx
+    * mov b32 $r9 $physid
+    * mov b32 $r0 $pm0
+    * mov b32 $r1 $pm1
+    * mov b32 $r2 $pm2
+    * mov b32 $r3 $pm3
+    * mov b32 $r4 $pm4
+    * mov b32 $r5 $pm5
+    * mov b32 $r6 $pm6
+    * mov b32 $r7 $pm7
+    * set $p0 0x1 eq u32 $r8 0x0
+    * mov b32 $r10 c0[0x0]
+    * mov b32 $r11 c0[0x4]
+    * ext u32 $r8 $r9 0x414
+    * (not $p0) exit
+    * mul $r8 u32 $r8 u32 36
+    * add b32 $r10 $c $r10 $r8
+    * add b32 $r11 $r11 0x0 $c
+    * mov b32 $r8 c0[0x8]
+    * st b128 wt g[$r10d+0x00] $r0q
+    * st b128 wt g[$r10d+0x10] $r4q
+    * st b32 wt g[$r10d+0x20] $r8
+    * exit */
+   0x2c00000084021c04ULL,
+   0x2c0000000c025c04ULL,
+   0x2c00000010001c04ULL,
+   0x2c00000014005c04ULL,
+   0x2c00000018009c04ULL,
+   0x2c0000001c00dc04ULL,
+   0x2c00000020011c04ULL,
+   0x2c00000024015c04ULL,
+   0x2c00000028019c04ULL,
+   0x2c0000002c01dc04ULL,
+   0x190e0000fc81dc03ULL,
+   0x2800400000029de4ULL,
+   0x280040001002dde4ULL,
+   0x7000c01050921c03ULL,
+   0x80000000000021e7ULL,
+   0x1000000090821c02ULL,
+   0x4801000020a29c03ULL,
+   0x0800000000b2dc42ULL,
+   0x2800400020021de4ULL,
+   0x9400000000a01fc5ULL,
+   0x9400000040a11fc5ULL,
+   0x9400000080a21f85ULL,
+   0x8000000000001de7ULL
+};
+
+static const char *nvc0_pm_query_names[] =
+{
+   /* MP counters */
+   "inst_executed",
+   "branch",
+   "divergent_branch",
+   "active_warps",
+   "active_cycles",
+   "warps_launched",
+   "threads_launched",
+   "shared_load",
+   "shared_store",
+   "local_load",
+   "local_store",
+   "gred_count",
+   "atom_count",
+   "gld_request",
+   "gst_request",
+   "inst_issued1_0",
+   "inst_issued1_1",
+   "inst_issued2_0",
+   "inst_issued2_1",
+   "thread_inst_executed_0",
+   "thread_inst_executed_1",
+   "thread_inst_executed_2",
+   "thread_inst_executed_3",
+   "prof_trigger_00",
+   "prof_trigger_01",
+   "prof_trigger_02",
+   "prof_trigger_03",
+   "prof_trigger_04",
+   "prof_trigger_05",
+   "prof_trigger_06",
+   "prof_trigger_07",
+};
+
+#define _Q(n, f, m, g, c, s0, s1, s2, s3, s4, s5) [NVC0_PM_QUERY_##n] = { { { f, NVC0_COMPUTE_MP_PM_OP_MODE_##m, c, 0, g, s0|(s1 << 8)|(s2 << 16)|(s3 << 24)|(s4##ULL << 32)|(s5##ULL << 40) }, {}, {}, {} }, 1, NVC0_COUNTER_OPn_SUM, { 1, 1 } }
+
+static const struct nvc0_mp_pm_query_cfg nvc0_mp_pm_queries[] =
+{
+   _Q(INST_EXECUTED,       0xaaaa, LOGOP, 0x2d, 3, 0x00, 0x11, 0x22, 0x00, 0x00, 0x00),
+   _Q(BRANCH,              0xaaaa, LOGOP, 0x1a, 2, 0x00, 0x11, 0x00, 0x00, 0x00, 0x00),
+   _Q(BRANCH_DIVERGENT,    0xaaaa, LOGOP, 0x19, 2, 0x20, 0x31, 0x00, 0x00, 0x00, 0x00),
+   _Q(ACTIVE_WARPS,        0xaaaa, LOGOP, 0x24, 6, 0x10, 0x21, 0x32, 0x43, 0x54, 0x65),
+   _Q(ACTIVE_CYCLES,       0xaaaa, LOGOP, 0x11, 1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00),
+   _Q(LAUNCHED_WARPS,      0xaaaa, LOGOP, 0x26, 1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00),
+   _Q(LAUNCHED_THREADS,    0xaaaa, LOGOP, 0x26, 6, 0x10, 0x21, 0x32, 0x43, 0x54, 0x65),
+   _Q(LD_SHARED,           0xaaaa, LOGOP, 0x64, 1, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00),
+   _Q(ST_SHARED,           0xaaaa, LOGOP, 0x64, 1, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00),
+   _Q(LD_LOCAL,            0xaaaa, LOGOP, 0x64, 1, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00),
+   _Q(ST_LOCAL,            0xaaaa, LOGOP, 0x64, 1, 0x50, 0x00, 0x00, 0x00, 0x00, 0x00),
+   _Q(GRED_COUNT,          0xaaaa, LOGOP, 0x63, 1, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00),
+   _Q(ATOM_COUNT,          0xaaaa, LOGOP, 0x63, 1, 0x30, 0x00, 0x00, 0x00, 0x00, 0x00),
+   _Q(GLD_REQUEST,         0xaaaa, LOGOP, 0x64, 1, 0x30, 0x00, 0x00, 0x00, 0x00, 0x00),
+   _Q(GST_REQUEST,         0xaaaa, LOGOP, 0x64, 1, 0x60, 0x00, 0x00, 0x00, 0x00, 0x00),
+   _Q(INST_ISSUED1_0,      0xaaaa, LOGOP, 0x7e, 1, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00),
+   _Q(INST_ISSUED1_1,      0xaaaa, LOGOP, 0x7e, 1, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00),
+   _Q(INST_ISSUED2_0,      0xaaaa, LOGOP, 0x7e, 1, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00),
+   _Q(INST_ISSUED2_1,      0xaaaa, LOGOP, 0x7e, 1, 0x50, 0x00, 0x00, 0x00, 0x00, 0x00),
+   _Q(TH_INST_EXECUTED_0,  0xaaaa, LOGOP, 0xa3, 6, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55),
+   _Q(TH_INST_EXECUTED_1,  0xaaaa, LOGOP, 0xa5, 6, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55),
+   _Q(TH_INST_EXECUTED_2,  0xaaaa, LOGOP, 0xa4, 6, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55),
+   _Q(TH_INST_EXECUTED_3,  0xaaaa, LOGOP, 0xa6, 6, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55),
+   _Q(PROF_TRIGGER_0,      0xaaaa, LOGOP, 0x01, 1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00),
+   _Q(PROF_TRIGGER_1,      0xaaaa, LOGOP, 0x01, 1, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00),
+   _Q(PROF_TRIGGER_2,      0xaaaa, LOGOP, 0x01, 1, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00),
+   _Q(PROF_TRIGGER_3,      0xaaaa, LOGOP, 0x01, 1, 0x30, 0x00, 0x00, 0x00, 0x00, 0x00),
+   _Q(PROF_TRIGGER_4,      0xaaaa, LOGOP, 0x01, 1, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00),
+   _Q(PROF_TRIGGER_5,      0xaaaa, LOGOP, 0x01, 1, 0x50, 0x00, 0x00, 0x00, 0x00, 0x00),
+   _Q(PROF_TRIGGER_6,      0xaaaa, LOGOP, 0x01, 1, 0x60, 0x00, 0x00, 0x00, 0x00, 0x00),
+   _Q(PROF_TRIGGER_7,      0xaaaa, LOGOP, 0x01, 1, 0x70, 0x00, 0x00, 0x00, 0x00, 0x00),
+};
+
+#undef _Q
+
+static const struct nvc0_mp_pm_query_cfg *
+nvc0_mp_pm_query_get_cfg(struct nvc0_context *nvc0, struct nvc0_query *q)
+{
+   struct nvc0_screen *screen = nvc0->screen;
+
+   if (screen->base.class_3d >= NVE4_3D_CLASS)
+      return &nve4_mp_pm_queries[q->type - PIPE_QUERY_DRIVER_SPECIFIC];
+   return &nvc0_mp_pm_queries[q->type - NVC0_PM_QUERY(0)];
+}
+
 void
-nve4_mp_pm_query_begin(struct nvc0_context *nvc0, struct nvc0_query *q)
+nvc0_mp_pm_query_begin(struct nvc0_context *nvc0, struct nvc0_query *q)
 {
    struct nvc0_screen *screen = nvc0->screen;
    struct nouveau_pushbuf *push = nvc0->base.pushbuf;
-   const struct nve4_mp_pm_query_cfg *cfg;
+   const struct nvc0_mp_pm_query_cfg *cfg;
    unsigned i, c;
    unsigned num_ab[2] = { 0, 0 };
 
-   cfg = &nve4_mp_pm_queries[q->type - PIPE_QUERY_DRIVER_SPECIFIC];
+   cfg = nvc0_mp_pm_query_get_cfg(nvc0, q);
 
    /* check if we have enough free counter slots */
    for (i = 0; i < cfg->num_counters; ++i)
@@ -960,51 +1114,77 @@ nve4_mp_pm_query_begin(struct nvc0_context *nvc0, struct nvc0_query *q)
       assert(c <= (d * 4 + 3)); /* must succeed, already checked for space */
 
       /* configure and reset the counter(s) */
-      if (d == 0)
-         BEGIN_NVC0(push, NVE4_COMPUTE(MP_PM_A_SIGSEL(c & 3)), 1);
-      else
-         BEGIN_NVC0(push, NVE4_COMPUTE(MP_PM_B_SIGSEL(c & 3)), 1);
-      PUSH_DATA (push, cfg->ctr[i].sig_sel);
-      BEGIN_NVC0(push, NVE4_COMPUTE(MP_PM_SRCSEL(c)), 1);
-      PUSH_DATA (push, cfg->ctr[i].src_sel + 0x2108421 * (c & 3));
-      BEGIN_NVC0(push, NVE4_COMPUTE(MP_PM_FUNC(c)), 1);
-      PUSH_DATA (push, (cfg->ctr[i].func << 4) | cfg->ctr[i].mode);
-      BEGIN_NVC0(push, NVE4_COMPUTE(MP_PM_SET(c)), 1);
-      PUSH_DATA (push, 0);
+      if (screen->base.class_3d >= NVE4_3D_CLASS) {
+         if (d == 0)
+            BEGIN_NVC0(push, NVE4_COMPUTE(MP_PM_A_SIGSEL(c & 3)), 1);
+         else
+            BEGIN_NVC0(push, NVE4_COMPUTE(MP_PM_B_SIGSEL(c & 3)), 1);
+         PUSH_DATA (push, cfg->ctr[i].sig_sel);
+         BEGIN_NVC0(push, NVE4_COMPUTE(MP_PM_SRCSEL(c)), 1);
+         PUSH_DATA (push, cfg->ctr[i].src_sel + 0x2108421 * (c & 3));
+         BEGIN_NVC0(push, NVE4_COMPUTE(MP_PM_FUNC(c)), 1);
+         PUSH_DATA (push, (cfg->ctr[i].func << 4) | cfg->ctr[i].mode);
+         BEGIN_NVC0(push, NVE4_COMPUTE(MP_PM_SET(c)), 1);
+         PUSH_DATA (push, 0);
+      } else {
+         unsigned s;
+
+         for (s = 0; s < cfg->ctr[i].num_src; s++) {
+            BEGIN_NVC0(push, NVC0_COMPUTE(MP_PM_SIGSEL(s)), 1);
+            PUSH_DATA (push, cfg->ctr[i].sig_sel);
+            BEGIN_NVC0(push, NVC0_COMPUTE(MP_PM_SRCSEL(s)), 1);
+            PUSH_DATA (push, (cfg->ctr[i].src_sel >> (s * 8)) & 0xff);
+            BEGIN_NVC0(push, NVC0_COMPUTE(MP_PM_OP(s)), 1);
+            PUSH_DATA (push, (cfg->ctr[i].func << 4) | cfg->ctr[i].mode);
+            BEGIN_NVC0(push, NVC0_COMPUTE(MP_PM_SET(s)), 1);
+            PUSH_DATA (push, 0);
+         }
+      }
    }
 }
 
 static void
-nve4_mp_pm_query_end(struct nvc0_context *nvc0, struct nvc0_query *q)
+nvc0_mp_pm_query_end(struct nvc0_context *nvc0, struct nvc0_query *q)
 {
    struct nvc0_screen *screen = nvc0->screen;
    struct pipe_context *pipe = &nvc0->base.pipe;
    struct nouveau_pushbuf *push = nvc0->base.pushbuf;
+   const boolean is_nve4 = screen->base.class_3d >= NVE4_3D_CLASS;
    uint32_t mask;
    uint32_t input[3];
-   const uint block[3] = { 32, 4, 1 };
+   const uint block[3] = { 32, is_nve4 ? 4 : 1, 1 };
    const uint grid[3] = { screen->mp_count, 1, 1 };
    unsigned c;
-   const struct nve4_mp_pm_query_cfg *cfg;
+   const struct nvc0_mp_pm_query_cfg *cfg;
 
-   cfg = &nve4_mp_pm_queries[q->type - PIPE_QUERY_DRIVER_SPECIFIC];
+   cfg = nvc0_mp_pm_query_get_cfg(nvc0, q);
 
    if (unlikely(!screen->pm.prog)) {
       struct nvc0_program *prog = CALLOC_STRUCT(nvc0_program);
       prog->type = PIPE_SHADER_COMPUTE;
       prog->translated = TRUE;
       prog->num_gprs = 14;
-      prog->code = (uint32_t *)nve4_read_mp_pm_counters_code;
-      prog->code_size = sizeof(nve4_read_mp_pm_counters_code);
       prog->parm_size = 12;
+      if (is_nve4) {
+         prog->code = (uint32_t *)nve4_read_mp_pm_counters_code;
+         prog->code_size = sizeof(nve4_read_mp_pm_counters_code);
+      } else {
+         prog->code = (uint32_t *)nvc0_read_mp_pm_counters_code;
+         prog->code_size = sizeof(nvc0_read_mp_pm_counters_code);
+      }
       screen->pm.prog = prog;
    }
 
    /* disable all counting */
    PUSH_SPACE(push, 8);
    for (c = 0; c < 8; ++c)
-      if (screen->pm.mp_counter[c])
-         IMMED_NVC0(push, NVE4_COMPUTE(MP_PM_FUNC(c)), 0);
+      if (screen->pm.mp_counter[c]) {
+         if (is_nve4) {
+            IMMED_NVC0(push, NVE4_COMPUTE(MP_PM_FUNC(c)), 0);
+         } else {
+            IMMED_NVC0(push, NVC0_COMPUTE(MP_PM_OP(c)), 0);
+         }
+      }
    /* release counters for this query */
    for (c = 0; c < 8; ++c) {
       if (nvc0_query(screen->pm.mp_counter[c]) == q) {
@@ -1035,39 +1215,54 @@ nve4_mp_pm_query_end(struct nvc0_context *nvc0, struct nvc0_query *q)
       q = nvc0_query(screen->pm.mp_counter[c]);
       if (!q)
          continue;
-      cfg = &nve4_mp_pm_queries[q->type - PIPE_QUERY_DRIVER_SPECIFIC];
+      cfg = nvc0_mp_pm_query_get_cfg(nvc0, q);
       for (i = 0; i < cfg->num_counters; ++i) {
          if (mask & (1 << q->ctr[i]))
             break;
          mask |= 1 << q->ctr[i];
-         BEGIN_NVC0(push, NVE4_COMPUTE(MP_PM_FUNC(q->ctr[i])), 1);
+         if (is_nve4) {
+            BEGIN_NVC0(push, NVE4_COMPUTE(MP_PM_FUNC(q->ctr[i])), 1);
+         } else {
+            BEGIN_NVC0(push, NVC0_COMPUTE(MP_PM_OP(q->ctr[i])), 1);
+         }
          PUSH_DATA (push, (cfg->ctr[i].func << 4) | cfg->ctr[i].mode);
       }
    }
 }
 
-/* Metric calculations:
- * sum(x) ... sum of x over all MPs
- * avg(x) ... average of x over all MPs
- *
- * IPC              : sum(inst_executed) / clock
- * INST_REPLAY_OHEAD: (sum(inst_issued) - sum(inst_executed)) / sum(inst_issued)
- * MP_OCCUPANCY     : avg((active_warps / 64) / active_cycles)
- * MP_EFFICIENCY    : avg(active_cycles / clock)
- *
- * NOTE: Interpretation of IPC requires knowledge of MP count.
- */
-static boolean
-nve4_mp_pm_query_result(struct nvc0_context *nvc0, struct nvc0_query *q,
-                        void *result, boolean wait)
+static INLINE boolean
+nvc0_mp_pm_query_read_data(uint32_t count[32][4],
+                           struct nvc0_context *nvc0, boolean wait,
+                           struct nvc0_query *q,
+                           const struct nvc0_mp_pm_query_cfg *cfg,
+                           unsigned mp_count)
 {
-   uint32_t count[32][4];
-   uint64_t value = 0;
-   unsigned mp_count = MIN2(nvc0->screen->mp_count_compute, 32);
-   unsigned p, c, d;
-   const struct nve4_mp_pm_query_cfg *cfg;
+   unsigned p, c;
 
-   cfg = &nve4_mp_pm_queries[q->type - PIPE_QUERY_DRIVER_SPECIFIC];
+   for (p = 0; p < mp_count; ++p) {
+      const unsigned b = (0x24 / 4) * p;
+
+      for (c = 0; c < cfg->num_counters; ++c) {
+         if (q->data[b + 8] != q->sequence) {
+            if (!wait)
+               return FALSE;
+            if (nouveau_bo_wait(q->bo, NOUVEAU_BO_RD, nvc0->base.client))
+               return FALSE;
+         }
+         count[p][c] = q->data[b + q->ctr[c]];
+      }
+   }
+   return TRUE;
+}
+
+static INLINE boolean
+nve4_mp_pm_query_read_data(uint32_t count[32][4],
+                           struct nvc0_context *nvc0, boolean wait,
+                           struct nvc0_query *q,
+                           const struct nvc0_mp_pm_query_cfg *cfg,
+                           unsigned mp_count)
+{
+   unsigned p, c, d;
 
    for (p = 0; p < mp_count; ++p) {
       const unsigned b = (0x60 / 4) * p;
@@ -1088,28 +1283,61 @@ nve4_mp_pm_query_result(struct nvc0_context *nvc0, struct nvc0_query *q,
          }
       }
    }
+   return TRUE;
+}
 
-   if (cfg->op == NVE4_COUNTER_OPn_SUM) {
+/* Metric calculations:
+ * sum(x) ... sum of x over all MPs
+ * avg(x) ... average of x over all MPs
+ *
+ * IPC              : sum(inst_executed) / clock
+ * INST_REPLAY_OHEAD: (sum(inst_issued) - sum(inst_executed)) / sum(inst_issued)
+ * MP_OCCUPANCY     : avg((active_warps / 64) / active_cycles)
+ * MP_EFFICIENCY    : avg(active_cycles / clock)
+ *
+ * NOTE: Interpretation of IPC requires knowledge of MP count.
+ */
+static boolean
+nvc0_mp_pm_query_result(struct nvc0_context *nvc0, struct nvc0_query *q,
+                        void *result, boolean wait)
+{
+   uint32_t count[32][4];
+   uint64_t value = 0;
+   unsigned mp_count = MIN2(nvc0->screen->mp_count_compute, 32);
+   unsigned p, c;
+   const struct nvc0_mp_pm_query_cfg *cfg;
+   boolean ret;
+
+   cfg = nvc0_mp_pm_query_get_cfg(nvc0, q);
+
+   if (nvc0->screen->base.class_3d >= NVE4_3D_CLASS)
+      ret = nve4_mp_pm_query_read_data(count, nvc0, wait, q, cfg, mp_count);
+   else
+      ret = nvc0_mp_pm_query_read_data(count, nvc0, wait, q, cfg, mp_count);
+   if (!ret)
+      return FALSE;
+
+   if (cfg->op == NVC0_COUNTER_OPn_SUM) {
       for (c = 0; c < cfg->num_counters; ++c)
          for (p = 0; p < mp_count; ++p)
             value += count[p][c];
       value = (value * cfg->norm[0]) / cfg->norm[1];
    } else
-   if (cfg->op == NVE4_COUNTER_OPn_OR) {
+   if (cfg->op == NVC0_COUNTER_OPn_OR) {
       uint32_t v = 0;
       for (c = 0; c < cfg->num_counters; ++c)
          for (p = 0; p < mp_count; ++p)
             v |= count[p][c];
       value = (v * cfg->norm[0]) / cfg->norm[1];
    } else
-   if (cfg->op == NVE4_COUNTER_OPn_AND) {
+   if (cfg->op == NVC0_COUNTER_OPn_AND) {
       uint32_t v = ~0;
       for (c = 0; c < cfg->num_counters; ++c)
          for (p = 0; p < mp_count; ++p)
             v &= count[p][c];
       value = (v * cfg->norm[0]) / cfg->norm[1];
    } else
-   if (cfg->op == NVE4_COUNTER_OP2_REL_SUM_MM) {
+   if (cfg->op == NVC0_COUNTER_OP2_REL_SUM_MM) {
       uint64_t v[2] = { 0, 0 };
       for (p = 0; p < mp_count; ++p) {
          v[0] += count[p][0];
@@ -1118,7 +1346,7 @@ nve4_mp_pm_query_result(struct nvc0_context *nvc0, struct nvc0_query *q,
       if (v[0])
          value = ((v[0] - v[1]) * cfg->norm[0]) / (v[0] * cfg->norm[1]);
    } else
-   if (cfg->op == NVE4_COUNTER_OP2_DIV_SUM_M0) {
+   if (cfg->op == NVC0_COUNTER_OP2_DIV_SUM_M0) {
       for (p = 0; p < mp_count; ++p)
          value += count[p][0];
       if (count[0][1])
@@ -1126,7 +1354,7 @@ nve4_mp_pm_query_result(struct nvc0_context *nvc0, struct nvc0_query *q,
       else
          value = 0;
    } else
-   if (cfg->op == NVE4_COUNTER_OP2_AVG_DIV_MM) {
+   if (cfg->op == NVC0_COUNTER_OP2_AVG_DIV_MM) {
       unsigned mp_used = 0;
       for (p = 0; p < mp_count; ++p, mp_used += !!count[p][0])
          if (count[p][1])
@@ -1134,7 +1362,7 @@ nve4_mp_pm_query_result(struct nvc0_context *nvc0, struct nvc0_query *q,
       if (mp_used)
          value /= mp_used * cfg->norm[1];
    } else
-   if (cfg->op == NVE4_COUNTER_OP2_AVG_DIV_M0) {
+   if (cfg->op == NVC0_COUNTER_OP2_AVG_DIV_M0) {
       unsigned mp_used = 0;
       for (p = 0; p < mp_count; ++p, mp_used += !!count[p][0])
          value += count[p][0];
@@ -1160,10 +1388,15 @@ nvc0_screen_get_driver_query_info(struct pipe_screen *pscreen,
 
    count += NVC0_QUERY_DRV_STAT_COUNT;
 
-   if (screen->base.class_3d >= NVE4_3D_CLASS) {
-      if (screen->base.device->drm_version >= 0x01000101)
+   if (screen->base.device->drm_version >= 0x01000101) {
+      if (screen->base.class_3d >= NVE4_3D_CLASS) {
          count += NVE4_PM_QUERY_COUNT;
+      } else
+      if (screen->compute) {
+         count += NVC0_PM_QUERY_COUNT; /* NVC0_COMPUTE is not always enabled */
+      }
    }
+
    if (!info)
       return count;
 
@@ -1177,12 +1410,21 @@ nvc0_screen_get_driver_query_info(struct pipe_screen *pscreen,
    } else
 #endif
    if (id < count) {
-      info->name = nve4_pm_query_names[id - NVC0_QUERY_DRV_STAT_COUNT];
-      info->query_type = NVE4_PM_QUERY(id - NVC0_QUERY_DRV_STAT_COUNT);
-      info->max_value = (id < NVE4_PM_QUERY_METRIC_MP_OCCUPANCY) ?
-         ~0ULL : 100;
-      info->uses_byte_units = FALSE;
-      return 1;
+      if (screen->base.class_3d >= NVE4_3D_CLASS) {
+         info->name = nve4_pm_query_names[id - NVC0_QUERY_DRV_STAT_COUNT];
+         info->query_type = NVE4_PM_QUERY(id - NVC0_QUERY_DRV_STAT_COUNT);
+         info->max_value = (id < NVE4_PM_QUERY_METRIC_MP_OCCUPANCY) ?
+            ~0ULL : 100;
+         info->uses_byte_units = FALSE;
+         return 1;
+      } else
+      if (screen->compute) {
+         info->name = nvc0_pm_query_names[id - NVC0_QUERY_DRV_STAT_COUNT];
+         info->query_type = NVC0_PM_QUERY(id - NVC0_QUERY_DRV_STAT_COUNT);
+         info->max_value = ~0ULL;
+         info->uses_byte_units = FALSE;
+         return 1;
+      }
    }
    /* user asked for info about non-existing query */
    info->name = "this_is_not_the_query_you_are_looking_for";
