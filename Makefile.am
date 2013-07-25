@@ -36,6 +36,7 @@ PACKAGE_NAME = MesaLib-$(PACKAGE_VERSION)
 EXTRA_FILES = \
 	aclocal.m4					\
 	configure					\
+	VERSION					\
 	bin/ar-lib					\
 	bin/compile					\
 	bin/config.sub					\

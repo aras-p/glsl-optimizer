@@ -33,9 +33,10 @@ endif
 LOCAL_C_INCLUDES += \
 	$(MESA_TOP)/include
 
+MESA_VERSION=$(shell cat $(MESA_TOP)/VERSION)
 # define ANDROID_VERSION (e.g., 4.0.x => 0x0400)
 LOCAL_CFLAGS += \
-	-DPACKAGE_VERSION=\"9.3.0-devel\" \
+	-DPACKAGE_VERSION=\"$(MESA_VERSION)\" \
 	-DPACKAGE_BUGREPORT=\"https://bugs.freedesktop.org/enter_bug.cgi?product=Mesa\" \
 	-DANDROID_VERSION=0x0$(MESA_ANDROID_MAJOR_VERSION)0$(MESA_ANDROID_MINOR_VERSION)
 
