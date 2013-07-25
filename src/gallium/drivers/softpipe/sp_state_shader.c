@@ -347,6 +347,8 @@ softpipe_set_constant_buffer(struct pipe_context *pipe,
    unsigned size;
    const void *data;
 
+   assert(shader < PIPE_SHADER_TYPES);
+
    if (cb && cb->user_buffer) {
       constants = softpipe_user_buffer_create(pipe->screen,
                                               (void *) cb->user_buffer,
@@ -354,10 +356,10 @@ softpipe_set_constant_buffer(struct pipe_context *pipe,
                                               PIPE_BIND_CONSTANT_BUFFER);
    }
 
-   size = constants ? constants->width0 : 0;
+   size = cb ? cb->buffer_size : 0;
    data = constants ? softpipe_resource(constants)->data : NULL;
-
-   assert(shader < PIPE_SHADER_TYPES);
+   if (data)
+      data = (const char *) data + cb->buffer_offset;
 
    draw_flush(softpipe->draw);
 
