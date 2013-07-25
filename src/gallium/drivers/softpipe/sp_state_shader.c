@@ -357,7 +357,7 @@ softpipe_set_constant_buffer(struct pipe_context *pipe,
    }
 
    size = cb ? cb->buffer_size : 0;
-   data = constants ? softpipe_resource(constants)->data : NULL;
+   data = constants ? softpipe_resource_data(constants) : NULL;
    if (data)
       data = (const char *) data + cb->buffer_offset;
 

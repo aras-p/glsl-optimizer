@@ -93,6 +93,22 @@ softpipe_transfer(struct pipe_transfer *pt)
 }
 
 
+/**
+ * Return pointer to a resource's actual data.
+ * This is a short-cut instead of using map()/unmap(), which should
+ * probably be fixed.
+ */
+static INLINE void *
+softpipe_resource_data(struct pipe_resource *pt)
+{
+   if (!pt)
+      return NULL;
+
+   assert(softpipe_resource(pt)->dt == NULL);
+   return softpipe_resource(pt)->data;
+}
+
+
 extern void
 softpipe_init_screen_texture_funcs(struct pipe_screen *screen);
 
