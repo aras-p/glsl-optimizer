@@ -281,7 +281,9 @@ lp_build_create_jit_compiler_for_module(LLVMExecutionEngineRef *OutJIT,
 #endif
 
 #if defined(DEBUG) || defined(PROFILE)
+#if HAVE_LLVM < 0x0304
    options.NoFramePointerElimNonLeaf = true;
+#endif
    options.NoFramePointerElim = true;
 #endif
 
