@@ -73,6 +73,17 @@ is_expression(const fs_inst *const inst)
    case FS_OPCODE_CINTERP:
    case FS_OPCODE_LINTERP:
       return true;
+   case SHADER_OPCODE_RCP:
+   case SHADER_OPCODE_RSQ:
+   case SHADER_OPCODE_SQRT:
+   case SHADER_OPCODE_EXP2:
+   case SHADER_OPCODE_LOG2:
+   case SHADER_OPCODE_POW:
+   case SHADER_OPCODE_INT_QUOTIENT:
+   case SHADER_OPCODE_INT_REMAINDER:
+   case SHADER_OPCODE_SIN:
+   case SHADER_OPCODE_COS:
+      return inst->mlen == 0;
    default:
       return false;
    }
