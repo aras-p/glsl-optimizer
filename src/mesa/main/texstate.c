@@ -594,8 +594,8 @@ update_texture_state( struct gl_context *ctx )
 
       /* Look for the highest priority texture target that's enabled (or used
        * by the vert/frag shaders) and "complete".  That's the one we'll use
-       * for texturing.  If we're using vert/frag program we're guaranteed
-       * that bitcount(enabledBits) <= 1.
+       * for texturing.
+       *
        * Note that the TEXTURE_x_INDEX values are in high to low priority.
        */
       for (texIndex = 0; texIndex < NUM_TEXTURE_TARGETS; texIndex++) {
@@ -623,8 +623,6 @@ update_texture_state( struct gl_context *ctx )
              */
             struct gl_texture_object *texObj;
             gl_texture_index texTarget;
-
-            assert(_mesa_bitcount(enabledTargets) == 1);
 
             texTarget = (gl_texture_index) (ffs(enabledTargets) - 1);
             texObj = _mesa_get_fallback_texture(ctx, texTarget);
