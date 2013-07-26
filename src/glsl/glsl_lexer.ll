@@ -324,30 +324,11 @@ sampler2DMSArray   KEYWORD_WITH_ALT(150, 300, 150, 0, yyextra->ARB_texture_multi
 isampler2DMSArray  KEYWORD_WITH_ALT(150, 300, 150, 0, yyextra->ARB_texture_multisample_enable, ISAMPLER2DMSARRAY);
 usampler2DMSArray  KEYWORD_WITH_ALT(150, 300, 150, 0, yyextra->ARB_texture_multisample_enable, USAMPLER2DMSARRAY);
 
-samplerCubeArray	{
-			  if (yyextra->ARB_texture_cube_map_array_enable)
-			     return SAMPLERCUBEARRAY;
-			  else
-			     return IDENTIFIER;
-		}
-isamplerCubeArray	{
-			  if (yyextra->ARB_texture_cube_map_array_enable)
-			     return ISAMPLERCUBEARRAY;
-			  else
-			     return IDENTIFIER;
-		}
-usamplerCubeArray	{
-			  if (yyextra->ARB_texture_cube_map_array_enable)
-			     return USAMPLERCUBEARRAY;
-			  else
-			     return IDENTIFIER;
-		}
-samplerCubeArrayShadow	{
-			  if (yyextra->ARB_texture_cube_map_array_enable)
-			     return SAMPLERCUBEARRAYSHADOW;
-			  else
-			     return IDENTIFIER;
-		}
+   /* keywords available with ARB_texture_cube_map_array_enable extension on desktop GLSL */
+samplerCubeArray   KEYWORD_WITH_ALT(400, 0, 400, 0, yyextra->ARB_texture_cube_map_array_enable, SAMPLERCUBEARRAY);
+isamplerCubeArray KEYWORD_WITH_ALT(400, 0, 400, 0, yyextra->ARB_texture_cube_map_array_enable, ISAMPLERCUBEARRAY);
+usamplerCubeArray KEYWORD_WITH_ALT(400, 0, 400, 0, yyextra->ARB_texture_cube_map_array_enable, USAMPLERCUBEARRAY);
+samplerCubeArrayShadow   KEYWORD_WITH_ALT(400, 0, 400, 0, yyextra->ARB_texture_cube_map_array_enable, SAMPLERCUBEARRAYSHADOW);
 
 samplerExternalOES		{
 			  if (yyextra->OES_EGL_image_external_enable)
