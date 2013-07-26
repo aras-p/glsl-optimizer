@@ -275,6 +275,7 @@ static const struct extension extension_table[] = {
    { "GL_OES_stencil4",                            o(dummy_false),                     DISABLE,                2005 },
    { "GL_OES_stencil8",                            o(dummy_true),                                   ES1 | ES2, 2005 },
    { "GL_OES_stencil_wrap",                        o(dummy_true),                                   ES1,       2002 },
+   { "GL_OES_surfaceless_context",                 o(dummy_true),                                   ES1 | ES2, 2012 },
    { "GL_OES_texture_3D",                          o(EXT_texture3D),                                      ES2, 2005 },
    { "GL_OES_texture_cube_map",                    o(ARB_texture_cube_map),                         ES1,       2007 },
    { "GL_OES_texture_env_crossbar",                o(ARB_texture_env_crossbar),                     ES1,       2005 },
