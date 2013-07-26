@@ -2024,7 +2024,7 @@ generate_mipmap_compressed(struct gl_context *ctx, GLenum target,
    GLubyte *temp_src = NULL, *temp_dst = NULL;
    GLenum temp_datatype;
    GLenum temp_base_format;
-   GLubyte **temp_src_slices, **temp_dst_slices;
+   GLubyte **temp_src_slices = NULL, **temp_dst_slices = NULL;
 
    /* only two types of compressed textures at this time */
    assert(texObj->Target == GL_TEXTURE_2D ||
@@ -2063,11 +2063,8 @@ generate_mipmap_compressed(struct gl_context *ctx, GLenum target,
    temp_dst_slices = malloc(srcImage->Depth * sizeof(GLubyte *));
 
    if (!temp_src || !temp_src_slices || !temp_dst_slices) {
-      free(temp_src);
-      free(temp_src_slices);
-      free(temp_dst_slices);
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "generate mipmaps");
-      return;
+      goto end;
    }
 
    /* decompress base image to the temporary src buffer */
@@ -2119,7 +2116,7 @@ generate_mipmap_compressed(struct gl_context *ctx, GLenum target,
 	 temp_dst = malloc(temp_dst_img_stride * dstDepth);
 	 if (!temp_dst) {
 	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "generate mipmaps");
-	    break;
+            goto end;
 	 }
       }
 
@@ -2127,8 +2124,7 @@ generate_mipmap_compressed(struct gl_context *ctx, GLenum target,
       dstImage = _mesa_get_tex_image(ctx, texObj, target, level + 1);
       if (!dstImage) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "generating mipmaps");
-         free(temp_dst);
-         return;
+         goto end;
       }
 
       /* for 2D arrays, setup array[depth] of slice pointers */
@@ -2153,8 +2149,8 @@ generate_mipmap_compressed(struct gl_context *ctx, GLenum target,
                                       dstWidth, dstHeight, dstDepth,
                                       border, srcImage->InternalFormat,
                                       srcImage->TexFormat)) {
-         free(temp_dst);
-         return;
+         /* all done */
+         goto end;
       }
 
       /* The image space was allocated above so use glTexSubImage now */
@@ -2173,6 +2169,7 @@ generate_mipmap_compressed(struct gl_context *ctx, GLenum target,
       }
    } /* loop over mipmap levels */
 
+end:
    free(temp_src);
    free(temp_dst);
    free(temp_src_slices);
