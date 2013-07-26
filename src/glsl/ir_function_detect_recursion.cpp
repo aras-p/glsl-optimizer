@@ -298,7 +298,7 @@ emit_errors_unlinked(const void *key, void *data, void *closure)
 
    memset(&loc, 0, sizeof(loc));
    _mesa_glsl_error(&loc, state,
-		    "function `%s' has static recursion.",
+		    "function `%s' has static recursion",
 		    proto);
    ralloc_free(proto);
 }

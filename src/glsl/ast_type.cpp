@@ -129,7 +129,7 @@ ast_type_qualifier::merge_qualifier(YYLTYPE *loc,
    if ((this->flags.i & q.flags.i & ~(ubo_mat_mask.flags.i |
 				      ubo_layout_mask.flags.i)) != 0) {
       _mesa_glsl_error(loc, state,
-		       "duplicate layout qualifiers used\n");
+		       "duplicate layout qualifiers used");
       return false;
    }
 

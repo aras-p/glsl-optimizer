@@ -204,7 +204,7 @@ _mesa_glsl_parse_state::check_version(unsigned required_glsl_version,
       requirement_string = ralloc_asprintf(this, " (%s required)",
                                            glsl_es_version_string);
    }
-   _mesa_glsl_error(locp, this, "%s in %s%s.",
+   _mesa_glsl_error(locp, this, "%s in %s%s",
                     problem, this->get_version_string(),
                     requirement_string);
 
@@ -234,15 +234,15 @@ _mesa_glsl_parse_state::process_version_directive(YYLTYPE *locp, int version,
              */
          } else if (strcmp(ident, "compatibility") == 0) {
             _mesa_glsl_error(locp, this,
-                             "The compatibility profile is not supported.\n");
+                             "the compatibility profile is not supported");
          } else {
             _mesa_glsl_error(locp, this,
                              "\"%s\" is not a valid shading language profile; "
-                             "if present, it must be \"core\".\n", ident);
+                             "if present, it must be \"core\"", ident);
          }
       } else {
          _mesa_glsl_error(locp, this,
-                          "Illegal text following version number\n");
+                          "illegal text following version number");
       }
    }
 
@@ -251,7 +251,7 @@ _mesa_glsl_parse_state::process_version_directive(YYLTYPE *locp, int version,
       if (es_token_present) {
          _mesa_glsl_error(locp, this,
                           "GLSL 1.00 ES should be selected using "
-                          "`#version 100'\n");
+                          "`#version 100'");
       } else {
          this->es_shader = true;
       }
@@ -270,7 +270,7 @@ _mesa_glsl_parse_state::process_version_directive(YYLTYPE *locp, int version,
 
    if (!supported) {
       _mesa_glsl_error(locp, this, "%s is not supported. "
-                       "Supported versions are: %s\n",
+                       "Supported versions are: %s",
                        this->get_version_string(),
                        this->supported_version_string);
 
@@ -621,14 +621,14 @@ _mesa_glsl_process_extension(const char *name, YYLTYPE *name_locp,
       behavior = extension_disable;
    } else {
       _mesa_glsl_error(behavior_locp, state,
-		       "Unknown extension behavior `%s'",
+		       "unknown extension behavior `%s'",
 		       behavior_string);
       return false;
    }
 
    if (strcmp(name, "all") == 0) {
       if ((behavior == extension_enable) || (behavior == extension_require)) {
-	 _mesa_glsl_error(name_locp, state, "Cannot %s all extensions",
+	 _mesa_glsl_error(name_locp, state, "cannot %s all extensions",
 			  (behavior == extension_enable)
 			  ? "enable" : "require");
 	 return false;

@@ -626,7 +626,7 @@ process_vec_mat_constructor(exec_list *instructions,
     *      int i = { 1 }; // illegal, i is not an aggregate"
     */
    if (constructor_type->vector_elements <= 1) {
-      _mesa_glsl_error(loc, state, "Aggregates can only initialize vectors, "
+      _mesa_glsl_error(loc, state, "aggregates can only initialize vectors, "
                        "matrices, arrays, and structs");
       return ir_rvalue::error_value(ctx);
    }

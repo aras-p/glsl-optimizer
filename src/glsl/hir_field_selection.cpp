@@ -53,13 +53,13 @@ _mesa_ast_field_selection_to_hir(const ast_expression *expr,
 					      expr->primary_expression.identifier);
 
       if (result->type->is_error()) {
-	 _mesa_glsl_error(& loc, state, "Cannot access field `%s' of "
+	 _mesa_glsl_error(& loc, state, "cannot access field `%s' of "
 			  "structure",
 			  expr->primary_expression.identifier);
       }
    } else if (expr->subexpressions[1] != NULL) {
       /* Handle "method calls" in GLSL 1.20 - namely, array.length() */
-      state->check_version(120, 300, &loc, "Methods not supported");
+      state->check_version(120, 300, &loc, "methods not supported");
 
       ast_expression *call = expr->subexpressions[1];
       assert(call->oper == ast_function_call);
@@ -69,11 +69,11 @@ _mesa_ast_field_selection_to_hir(const ast_expression *expr,
 
       if (strcmp(method, "length") == 0) {
          if (!call->expressions.is_empty())
-            _mesa_glsl_error(&loc, state, "length method takes no arguments.");
+            _mesa_glsl_error(&loc, state, "length method takes no arguments");
 
          if (op->type->is_array()) {
             if (op->type->array_size() == 0)
-               _mesa_glsl_error(&loc, state, "length called on unsized array.");
+               _mesa_glsl_error(&loc, state, "length called on unsized array");
 
             result = new(ctx) ir_constant(op->type->array_size());
          } else if (op->type->is_vector()) {
@@ -82,7 +82,7 @@ _mesa_ast_field_selection_to_hir(const ast_expression *expr,
                result = new(ctx) ir_constant((int) op->type->vector_elements);
             } else {
                _mesa_glsl_error(&loc, state, "length method on matrix only available"
-                                             "with ARB_shading_language_420pack.");
+                                             "with ARB_shading_language_420pack");
             }
          } else if (op->type->is_matrix()) {
             if (state->ARB_shading_language_420pack_enable) {
@@ -90,11 +90,11 @@ _mesa_ast_field_selection_to_hir(const ast_expression *expr,
                result = new(ctx) ir_constant((int) op->type->matrix_columns);
             } else {
                _mesa_glsl_error(&loc, state, "length method on matrix only available"
-                                             "with ARB_shading_language_420pack.");
+                                             "with ARB_shading_language_420pack");
             }
          }
       } else {
-	 _mesa_glsl_error(&loc, state, "Unknown method: `%s'.", method);
+	 _mesa_glsl_error(&loc, state, "unknown method: `%s'", method);
       }
    } else if (op->type->is_vector() ||
               (state->ARB_shading_language_420pack_enable &&
@@ -109,12 +109,12 @@ _mesa_ast_field_selection_to_hir(const ast_expression *expr,
 	  * FINISHME: ir_swizzle::create.  This allows the generation of more
 	  * FINISHME: specific error messages.
 	  */
-	 _mesa_glsl_error(& loc, state, "Invalid swizzle / mask `%s'",
+	 _mesa_glsl_error(& loc, state, "invalid swizzle / mask `%s'",
 			  expr->primary_expression.identifier);
       }
    } else {
-      _mesa_glsl_error(& loc, state, "Cannot access field `%s' of "
-		       "non-structure / non-vector.",
+      _mesa_glsl_error(& loc, state, "cannot access field `%s' of "
+		       "non-structure / non-vector",
 		       expr->primary_expression.identifier);
    }
 
