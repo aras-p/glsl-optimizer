@@ -219,6 +219,16 @@ struct _mesa_glsl_parse_state {
       /* 3.00 ES */
       int MinProgramTexelOffset;
       int MaxProgramTexelOffset;
+
+      /* 1.50 */
+      unsigned MaxVertexOutputComponents;
+      unsigned MaxGeometryInputComponents;
+      unsigned MaxGeometryOutputComponents;
+      unsigned MaxFragmentInputComponents;
+      unsigned MaxGeometryTextureImageUnits;
+      unsigned MaxGeometryOutputVertices;
+      unsigned MaxGeometryTotalOutputComponents;
+      unsigned MaxGeometryUniformComponents;
    } Const;
 
    /**

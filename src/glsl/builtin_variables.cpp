@@ -583,6 +583,37 @@ builtin_variable_generator::generate_constants()
       add_const("gl_MaxVaryingComponents", state->ctx->Const.MaxVarying * 4);
    }
 
+   if (state->is_version(150, 0)) {
+      add_const("gl_MaxVertexOutputComponents",
+                state->Const.MaxVertexOutputComponents);
+      add_const("gl_MaxGeometryInputComponents",
+                state->Const.MaxGeometryInputComponents);
+      add_const("gl_MaxGeometryOutputComponents",
+                state->Const.MaxGeometryOutputComponents);
+      add_const("gl_MaxFragmentInputComponents",
+                state->Const.MaxFragmentInputComponents);
+      add_const("gl_MaxGeometryTextureImageUnits",
+                state->Const.MaxGeometryTextureImageUnits);
+      add_const("gl_MaxGeometryOutputVertices",
+                state->Const.MaxGeometryOutputVertices);
+      add_const("gl_MaxGeometryTotalOutputComponents",
+                state->Const.MaxGeometryTotalOutputComponents);
+      add_const("gl_MaxGeometryUniformComponents",
+                state->Const.MaxGeometryUniformComponents);
+
+      /* Note: the GLSL 1.50-4.40 specs require
+       * gl_MaxGeometryVaryingComponents to be present, and to be at least 64.
+       * But they do not define what it means (and there does not appear to be
+       * any corresponding constant in the GL specs).  However,
+       * ARB_geometry_shader4 defines MAX_GEOMETRY_VARYING_COMPONENTS_ARB to
+       * be the maximum number of components available for use as geometry
+       * outputs.  So we assume this is a synonym for
+       * gl_MaxGeometryOutputComponents.
+       */
+      add_const("gl_MaxGeometryVaryingComponents",
+                state->Const.MaxGeometryOutputComponents);
+   }
+
    if (compatibility) {
       /* Note: gl_MaxLights stopped being listed as an explicit constant in
        * GLSL 1.30, however it continues to be referred to (as a minimum size
