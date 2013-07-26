@@ -170,10 +170,10 @@ struct glsl_type {
     * Convenience accessors for vector types (shorter than get_instance()).
     * @{
     */
-   static const glsl_type *const vec(unsigned components);
-   static const glsl_type *const ivec(unsigned components);
-   static const glsl_type *const uvec(unsigned components);
-   static const glsl_type *const bvec(unsigned components);
+   static const glsl_type *vec(unsigned components);
+   static const glsl_type *ivec(unsigned components);
+   static const glsl_type *uvec(unsigned components);
+   static const glsl_type *bvec(unsigned components);
    /**@}*/
 
    /**

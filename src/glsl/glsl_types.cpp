@@ -281,7 +281,7 @@ glsl_type::glsl_type(const glsl_type *array, unsigned length) :
 }
 
 
-const glsl_type *const
+const glsl_type *
 glsl_type::vec(unsigned components)
 {
    if (components == 0 || components > 4)
@@ -294,7 +294,7 @@ glsl_type::vec(unsigned components)
 }
 
 
-const glsl_type *const
+const glsl_type *
 glsl_type::ivec(unsigned components)
 {
    if (components == 0 || components > 4)
@@ -307,7 +307,7 @@ glsl_type::ivec(unsigned components)
 }
 
 
-const glsl_type *const
+const glsl_type *
 glsl_type::uvec(unsigned components)
 {
    if (components == 0 || components > 4)
@@ -320,7 +320,7 @@ glsl_type::uvec(unsigned components)
 }
 
 
-const glsl_type *const
+const glsl_type *
 glsl_type::bvec(unsigned components)
 {
    if (components == 0 || components > 4)
