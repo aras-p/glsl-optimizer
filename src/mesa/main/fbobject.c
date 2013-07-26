@@ -2141,8 +2141,12 @@ _mesa_CheckFramebufferStatus(GLenum target)
    }
 
    if (_mesa_is_winsys_fbo(buffer)) {
-      /* The window system / default framebuffer is always complete */
-      return GL_FRAMEBUFFER_COMPLETE_EXT;
+      /* EGL_KHR_surfaceless_context allows the winsys FBO to be incomplete. */
+      if (buffer != &IncompleteFramebuffer) {
+         return GL_FRAMEBUFFER_COMPLETE_EXT;
+      } else {
+         return GL_FRAMEBUFFER_UNDEFINED;
+      }
    }
 
    /* No need to flush here */
