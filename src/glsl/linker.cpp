@@ -960,7 +960,8 @@ link_intrastage_shaders(void *mem_ctx,
 
    /* Check that interface blocks defined in multiple shaders are consistent.
     */
-   if (!validate_intrastage_interface_blocks((const gl_shader **)shader_list,
+   if (!validate_intrastage_interface_blocks(prog,
+                                             (const gl_shader **)shader_list,
                                              num_shaders))
       return NULL;
 

@@ -61,7 +61,8 @@ link_uniform_blocks(void *mem_ctx,
                     struct gl_uniform_block **blocks_ret);
 
 bool
-validate_intrastage_interface_blocks(const gl_shader **shader_list,
+validate_intrastage_interface_blocks(struct gl_shader_program *prog,
+                                     const gl_shader **shader_list,
                                      unsigned num_shaders);
 
 bool

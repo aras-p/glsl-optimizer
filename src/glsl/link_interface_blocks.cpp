@@ -32,7 +32,8 @@
 #include "main/macros.h"
 
 bool
-validate_intrastage_interface_blocks(const gl_shader **shader_list,
+validate_intrastage_interface_blocks(struct gl_shader_program *prog,
+                                     const gl_shader **shader_list,
                                      unsigned num_shaders)
 {
    glsl_symbol_table interfaces;
@@ -62,6 +63,8 @@ validate_intrastage_interface_blocks(const gl_shader **shader_list,
             interfaces.add_interface(iface_type->name, iface_type,
                                      (enum ir_variable_mode) var->mode);
          } else if (old_iface_type != iface_type) {
+            linker_error(prog, "definitions of interface block `%s' do not"
+                         " match\n", iface_type->name);
             return false;
          }
       }
