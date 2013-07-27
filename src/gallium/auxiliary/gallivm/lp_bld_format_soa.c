@@ -39,6 +39,7 @@
 #include "lp_bld_gather.h"
 #include "lp_bld_debug.h"
 #include "lp_bld_format.h"
+#include "lp_bld_arit.h"
 
 
 void
@@ -221,6 +222,11 @@ lp_build_unpack_rgba_soa(struct gallivm_state *gallivm,
                double scale = 1.0 / ((1 << (format_desc->channel[chan].size - 1)) - 1);
                LLVMValueRef scale_val = lp_build_const_vec(gallivm, type, scale);
                input = LLVMBuildFMul(builder, input, scale_val, "");
+               /* the formula above will produce value below -1.0 for most negative
+                * value but everything seems happy with that hence disable for now */
+               if (0)
+                  input = lp_build_max(&bld, input,
+                                       lp_build_const_vec(gallivm, type, -1.0f));
             }
          }
          else if (format_desc->channel[chan].pure_integer) {

@@ -257,6 +257,7 @@ lp_build_clamped_float_to_unsigned_norm(struct gallivm_state *gallivm,
       bias = (double)(1ULL << (mantissa - dst_width));
 
       res = LLVMBuildFMul(builder, src, lp_build_const_vec(gallivm, src_type, scale), "");
+      /* instead of fadd/and could (with sse2) just use lp_build_iround */
       res = LLVMBuildFAdd(builder, res, lp_build_const_vec(gallivm, src_type, bias), "");
       res = LLVMBuildBitCast(builder, res, int_vec_type, "");
       res = LLVMBuildAnd(builder, res,
@@ -742,7 +743,6 @@ lp_build_conv(struct gallivm_state *gallivm,
       }
       else {
          double dst_scale = lp_const_scale(dst_type);
-         LLVMTypeRef tmp_vec_type;
 
          if (dst_scale != 1.0) {
             LLVMValueRef scale = lp_build_const_vec(gallivm, tmp_type, dst_scale);
@@ -750,19 +750,37 @@ lp_build_conv(struct gallivm_state *gallivm,
                tmp[i] = LLVMBuildFMul(builder, tmp[i], scale, "");
          }
 
-         /* Use an equally sized integer for intermediate computations */
-         tmp_type.floating = FALSE;
-         tmp_vec_type = lp_build_vec_type(gallivm, tmp_type);
-         for(i = 0; i < num_tmps; ++i) {
+         /*
+          * these functions will use fptosi in some form which won't work
+          * with 32bit uint dst.
+          */
+         assert(dst_type.sign || dst_type.width < 32);
+
+         if (dst_type.sign && dst_type.norm && !dst_type.fixed) {
+            struct lp_build_context bld;
+
+            lp_build_context_init(&bld, gallivm, tmp_type);
+            for(i = 0; i < num_tmps; ++i) {
+               tmp[i] = lp_build_iround(&bld, tmp[i]);
+            }
+            tmp_type.floating = FALSE;
+         }
+         else {
+            LLVMTypeRef tmp_vec_type;
+
+            tmp_type.floating = FALSE;
+            tmp_vec_type = lp_build_vec_type(gallivm, tmp_type);
+            for(i = 0; i < num_tmps; ++i) {
 #if 0
-            if(dst_type.sign)
-               tmp[i] = LLVMBuildFPToSI(builder, tmp[i], tmp_vec_type, "");
-            else
-               tmp[i] = LLVMBuildFPToUI(builder, tmp[i], tmp_vec_type, "");
+               if(dst_type.sign)
+                  tmp[i] = LLVMBuildFPToSI(builder, tmp[i], tmp_vec_type, "");
+               else
+                  tmp[i] = LLVMBuildFPToUI(builder, tmp[i], tmp_vec_type, "");
 #else
-           /* FIXME: there is no SSE counterpart for LLVMBuildFPToUI */
-            tmp[i] = LLVMBuildFPToSI(builder, tmp[i], tmp_vec_type, "");
+              /* FIXME: there is no SSE counterpart for LLVMBuildFPToUI */
+               tmp[i] = LLVMBuildFPToSI(builder, tmp[i], tmp_vec_type, "");
 #endif
+            }
          }
       }
    }
@@ -859,6 +877,18 @@ lp_build_conv(struct gallivm_state *gallivm,
              LLVMValueRef scale = lp_build_const_vec(gallivm, tmp_type, 1.0/src_scale);
              for(i = 0; i < num_tmps; ++i)
                 tmp[i] = LLVMBuildFMul(builder, tmp[i], scale, "");
+          }
+
+          /* the formula above will produce value below -1.0 for most negative
+           * value but everything seems happy with that hence disable for now */
+          if (0 && !src_type.fixed && src_type.norm && src_type.sign) {
+             struct lp_build_context bld;
+
+             lp_build_context_init(&bld, gallivm, dst_type);
+             for(i = 0; i < num_tmps; ++i) {
+                tmp[i] = lp_build_max(&bld, tmp[i],
+                                      lp_build_const_vec(gallivm, dst_type, -1.0f));
+             }
           }
       }
     }
