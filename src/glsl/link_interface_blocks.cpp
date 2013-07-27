@@ -105,7 +105,8 @@ validate_interstage_interface_blocks(struct gl_shader_program *prog,
          continue;
 
       if (var->interface_type != expected_type) {
-         linker_error(prog, "interface block mismatch between shader stages\n");
+         linker_error(prog, "definitions of interface block `%s' do not "
+                      "match\n", var->interface_type->name);
          return;
       }
    }
