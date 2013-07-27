@@ -2927,6 +2927,20 @@ ast_declarator_list::hir(exec_list *instructions,
                           "'centroid in' cannot be used in a vertex shader");
       }
 
+      /* Section 4.3.6 of the GLSL 1.30 specification states:
+       * "It is an error to use centroid out in a fragment shader."
+       *
+       * The GL_ARB_shading_language_420pack extension specification states:
+       * "It is an error to use auxiliary storage qualifiers or interpolation
+       *  qualifiers on an output in a fragment shader."
+       */
+      if (state->target == fragment_shader &&
+          this->type->qualifier.flags.q.out &&
+          this->type->qualifier.has_auxiliary_storage()) {
+         _mesa_glsl_error(&loc, state,
+                          "auxiliary storage qualifiers cannot be used on "
+                          "fragment shader outputs");
+      }
 
       /* Precision qualifiers exists only in GLSL versions 1.00 and >= 1.30.
        */
