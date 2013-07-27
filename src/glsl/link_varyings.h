@@ -214,7 +214,7 @@ private:
 };
 
 
-bool
+void
 cross_validate_outputs_to_inputs(struct gl_shader_program *prog,
 				 gl_shader *producer, gl_shader *consumer);
 

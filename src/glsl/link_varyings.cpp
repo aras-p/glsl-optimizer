@@ -43,7 +43,7 @@
 /**
  * Validate that outputs from one stage match inputs of another
  */
-bool
+void
 cross_validate_outputs_to_inputs(struct gl_shader_program *prog,
 				 gl_shader *producer, gl_shader *consumer)
 {
@@ -106,7 +106,7 @@ cross_validate_outputs_to_inputs(struct gl_shader_program *prog,
 			    producer_stage, output->name,
 			    output->type->name,
 			    consumer_stage, input->type->name);
-	       return false;
+	       return;
 	    }
 	 }
 
@@ -121,7 +121,7 @@ cross_validate_outputs_to_inputs(struct gl_shader_program *prog,
 			 (output->centroid) ? "has" : "lacks",
 			 consumer_stage,
 			 (input->centroid) ? "has" : "lacks");
-	    return false;
+	    return;
 	 }
 
 	 if (input->invariant != output->invariant) {
@@ -133,7 +133,7 @@ cross_validate_outputs_to_inputs(struct gl_shader_program *prog,
 			 (output->invariant) ? "has" : "lacks",
 			 consumer_stage,
 			 (input->invariant) ? "has" : "lacks");
-	    return false;
+	    return;
 	 }
 
 	 if (input->interpolation != output->interpolation) {
@@ -147,12 +147,10 @@ cross_validate_outputs_to_inputs(struct gl_shader_program *prog,
 			 output->interpolation_string(),
 			 consumer_stage,
 			 input->interpolation_string());
-	    return false;
+	    return;
 	 }
       }
    }
-
-   return true;
 }
 
 

@@ -31,7 +31,7 @@
 #include "linker.h"
 #include "main/macros.h"
 
-bool
+void
 validate_intrastage_interface_blocks(struct gl_shader_program *prog,
                                      const gl_shader **shader_list,
                                      unsigned num_shaders)
@@ -65,16 +65,15 @@ validate_intrastage_interface_blocks(struct gl_shader_program *prog,
          } else if (old_iface_type != iface_type) {
             linker_error(prog, "definitions of interface block `%s' do not"
                          " match\n", iface_type->name);
-            return false;
+            return;
          }
       }
    }
-
-   return true;
 }
 
-bool
-validate_interstage_interface_blocks(const gl_shader *producer,
+void
+validate_interstage_interface_blocks(struct gl_shader_program *prog,
+                                     const gl_shader *producer,
                                      const gl_shader *consumer)
 {
    glsl_symbol_table interfaces;
@@ -105,9 +104,9 @@ validate_interstage_interface_blocks(const gl_shader *producer,
       if (expected_type == NULL)
          continue;
 
-      if (var->interface_type != expected_type)
-         return false;
+      if (var->interface_type != expected_type) {
+         linker_error(prog, "interface block mismatch between shader stages\n");
+         return;
+      }
    }
-
-   return true;
 }
