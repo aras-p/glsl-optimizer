@@ -124,7 +124,7 @@ GL_ARB_transform_feedback_instanced                  DONE
 GL_ARB_base_instance                                 DONE (i965, nv50, nvc0, r600, radeonsi)
 GL_ARB_shader_image_load_store                       not started
 GL_ARB_conservative_depth                            DONE (softpipe)
-GL_ARB_shading_language_420pack                      started (Todd)
+GL_ARB_shading_language_420pack                      DONE (i965, gallium)
 GL_ARB_internalformat_query                          DONE (i965, gallium)
 GL_ARB_map_buffer_alignment                          DONE (r300, r600, radeonsi)
 
