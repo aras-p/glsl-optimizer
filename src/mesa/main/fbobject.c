@@ -729,10 +729,36 @@ test_attachment_completeness(const struct gl_context *ctx, GLenum format,
          att->Complete = GL_FALSE;
          return;
       }
-      if (texObj->Target == GL_TEXTURE_3D && att->Zoffset >= texImage->Depth) {
-         att_incomplete("bad z offset");
-         att->Complete = GL_FALSE;
-         return;
+
+      switch (texObj->Target) {
+      case GL_TEXTURE_3D:
+         if (att->Zoffset >= texImage->Depth) {
+            att_incomplete("bad z offset");
+            att->Complete = GL_FALSE;
+            return;
+         }
+         break;
+      case GL_TEXTURE_1D_ARRAY:
+         if (att->Zoffset >= texImage->Height) {
+            att_incomplete("bad 1D-array layer");
+            att->Complete = GL_FALSE;
+            return;
+         }
+         break;
+      case GL_TEXTURE_2D_ARRAY:
+         if (att->Zoffset >= texImage->Depth) {
+            att_incomplete("bad 2D-array layer");
+            att->Complete = GL_FALSE;
+            return;
+         }
+         break;
+      case GL_TEXTURE_CUBE_MAP_ARRAY:
+         if (att->Zoffset >= texImage->Depth) {
+            att_incomplete("bad cube-array layer");
+            att->Complete = GL_FALSE;
+            return;
+         }
+         break;
       }
 
       baseFormat = _mesa_get_format_base_format(texImage->TexFormat);
