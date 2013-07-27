@@ -1859,6 +1859,19 @@ emit_sample(struct lp_build_tgsi_soa_context *bld,
                                   deriv_ptr,
                                   lod_bias, explicit_lod, scalar_lod,
                                   texel);
+
+   if (inst->Src[1].Register.SwizzleX != PIPE_SWIZZLE_RED ||
+       inst->Src[1].Register.SwizzleY != PIPE_SWIZZLE_GREEN ||
+       inst->Src[1].Register.SwizzleZ != PIPE_SWIZZLE_BLUE ||
+       inst->Src[1].Register.SwizzleW != PIPE_SWIZZLE_ALPHA) {
+      unsigned char swizzles[4];
+      swizzles[0] = inst->Src[1].Register.SwizzleX;
+      swizzles[1] = inst->Src[1].Register.SwizzleY;
+      swizzles[2] = inst->Src[1].Register.SwizzleZ;
+      swizzles[3] = inst->Src[1].Register.SwizzleW;
+
+      lp_build_swizzle_soa_inplace(&bld->bld_base.base, texel, swizzles);
+   }
 }
 
 static void
@@ -1954,6 +1967,20 @@ emit_fetch_texels( struct lp_build_tgsi_soa_context *bld,
                                   NULL,
                                   NULL, explicit_lod, scalar_lod,
                                   texel);
+
+   if (is_samplei &&
+       (inst->Src[1].Register.SwizzleX != PIPE_SWIZZLE_RED ||
+        inst->Src[1].Register.SwizzleY != PIPE_SWIZZLE_GREEN ||
+        inst->Src[1].Register.SwizzleZ != PIPE_SWIZZLE_BLUE ||
+        inst->Src[1].Register.SwizzleW != PIPE_SWIZZLE_ALPHA)) {
+      unsigned char swizzles[4];
+      swizzles[0] = inst->Src[1].Register.SwizzleX;
+      swizzles[1] = inst->Src[1].Register.SwizzleY;
+      swizzles[2] = inst->Src[1].Register.SwizzleZ;
+      swizzles[3] = inst->Src[1].Register.SwizzleW;
+
+      lp_build_swizzle_soa_inplace(&bld->bld_base.base, texel, swizzles);
+   }
 }
 
 static void

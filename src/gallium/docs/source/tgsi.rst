@@ -1730,6 +1730,8 @@ Resource Sampling Opcodes
 
 Those opcodes follow very closely semantics of the respective Direct3D
 instructions. If in doubt double check Direct3D documentation.
+Note that the swizzle on SVIEW (src1) determines texel swizzling
+after lookup.
 
 .. opcode:: SAMPLE - Using provided address, sample data from the
                specified texture using the filtering mode identified
