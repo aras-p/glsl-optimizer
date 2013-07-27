@@ -75,9 +75,17 @@ util_float_to_half(float f)
       f32.f  *= magic.f;
       f32.ui -= round_mask;
 
-      /* Clamp to infinity if overflowed */
+      /*
+       * Clamp to max finite value if overflowed.
+       * OpenGL has completely undefined rounding behavior for float to
+       * half-float conversions, and this matches what is mandated for float
+       * to fp11/fp10, which recommend round-to-nearest-finite too.
+       * (d3d10 is deeply unhappy about flushing such values to infinity, and
+       * while it also mandates round-to-zero it doesn't care nearly as much
+       * about that.)
+       */
       if (f32.ui > f16inf)
-         f32.ui = f16inf;
+         f32.ui = f16inf - 1;
 
       f16 = f32.ui >> 13;
    }

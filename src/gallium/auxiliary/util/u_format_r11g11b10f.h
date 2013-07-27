@@ -69,10 +69,10 @@ static INLINE unsigned f32_to_uf11(float val)
        */
       uf11 = UF11_MAX_EXPONENT;
       if (mantissa) {
-	 uf11 |= 1; /* NaN */
+         uf11 |= 1; /* NaN */
       } else {
-	 if (sign)
-	    uf11 = 0; /* 0.0 */
+         if (sign)
+            uf11 = 0; /* 0.0 */
       }
    } else if (sign) {
       return 0;
@@ -155,14 +155,14 @@ static INLINE unsigned f32_to_uf10(float val)
        */
       uf10 = UF10_MAX_EXPONENT;
       if (mantissa) {
-	 uf10 |= 1; /* NaN */
+         uf10 |= 1; /* NaN */
       } else {
-	 if (sign)
-	    uf10 = 0; /* 0.0 */
+         if (sign)
+            uf10 = 0; /* 0.0 */
       }
    } else if (sign) {
       return 0;
-   } else if (val > 64512.0f) { /* Overflow - flush to Infinity */
+   } else if (val > 64512.0f) {
       /* From the GL_EXT_packed_float spec:
        *
        *     "Likewise, finite positive values greater than 64512 (the maximum
