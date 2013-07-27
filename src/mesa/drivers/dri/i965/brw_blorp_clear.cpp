@@ -127,6 +127,8 @@ brw_blorp_const_color_program::brw_blorp_const_color_program(
      clear_rgba(),
      base_mrf(0)
 {
+   prog_data.first_curbe_grf = 0;
+   prog_data.persample_msaa_dispatch = false;
    brw_init_compile(brw, &func, mem_ctx);
 }
 
