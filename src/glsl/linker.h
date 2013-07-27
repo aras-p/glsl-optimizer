@@ -53,7 +53,7 @@ extern bool
 link_uniform_blocks_are_compatible(const gl_uniform_block *a,
 				   const gl_uniform_block *b);
 
-extern int
+extern unsigned
 link_uniform_blocks(void *mem_ctx,
                     struct gl_shader_program *prog,
                     struct gl_shader **shader_list,

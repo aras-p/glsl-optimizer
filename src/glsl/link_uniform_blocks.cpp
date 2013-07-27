@@ -137,7 +137,7 @@ struct block {
    bool has_instance_name;
 };
 
-int
+unsigned
 link_uniform_blocks(void *mem_ctx,
                     struct gl_shader_program *prog,
                     struct gl_shader **shader_list,

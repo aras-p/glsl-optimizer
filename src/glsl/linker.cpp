@@ -964,12 +964,10 @@ link_intrastage_shaders(void *mem_ctx,
                                              num_shaders))
       return NULL;
 
-   /* Check that uniform blocks between shaders for a stage agree. */
-   const int num_uniform_blocks =
+   /* Link up uniform blocks defined within this stage. */
+   const unsigned num_uniform_blocks =
       link_uniform_blocks(mem_ctx, prog, shader_list, num_shaders,
                           &uniform_blocks);
-   if (num_uniform_blocks < 0)
-      return NULL;
 
    /* Check that there is only a single definition of each function signature
     * across all shaders.
