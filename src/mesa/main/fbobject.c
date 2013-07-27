@@ -703,8 +703,6 @@ test_attachment_completeness(const struct gl_context *ctx, GLenum format,
       }
       if (texImage->Width < 1 || texImage->Height < 1) {
          att_incomplete("teximage width/height=0");
-         printf("texobj = %u\n", texObj->Name);
-         printf("level = %d\n", att->TextureLevel);
          att->Complete = GL_FALSE;
          return;
       }
