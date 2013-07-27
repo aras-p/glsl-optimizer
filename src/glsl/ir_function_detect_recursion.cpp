@@ -319,7 +319,6 @@ emit_errors_linked(const void *key, void *data, void *closure)
 
    linker_error(prog, "function `%s' has static recursion.\n", proto);
    ralloc_free(proto);
-   prog->LinkStatus = false;
 }
 
 

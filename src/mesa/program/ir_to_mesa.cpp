@@ -3108,7 +3108,6 @@ _mesa_glsl_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
    for (i = 0; i < prog->NumShaders; i++) {
       if (!prog->Shaders[i]->CompileStatus) {
 	 linker_error(prog, "linking with uncompiled shader");
-	 prog->LinkStatus = GL_FALSE;
       }
    }
 
