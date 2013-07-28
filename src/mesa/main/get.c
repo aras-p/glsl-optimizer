@@ -989,7 +989,7 @@ check_extra(struct gl_context *ctx, const char *func, const struct value_desc *d
       case EXTRA_EXT_UBO_GS4:
          api_check = GL_TRUE;
          api_found = (ctx->Extensions.ARB_uniform_buffer_object &&
-                      ctx->Extensions.ARB_geometry_shader4);
+                      _mesa_has_geometry_shaders(ctx));
          break;
       case EXTRA_END:
 	 break;

@@ -179,7 +179,7 @@ validate_shader_target(const struct gl_context *ctx, GLenum type)
    case GL_VERTEX_SHADER:
       return ctx->Extensions.ARB_vertex_shader;
    case GL_GEOMETRY_SHADER_ARB:
-      return _mesa_is_desktop_gl(ctx) && ctx->Extensions.ARB_geometry_shader4;
+      return _mesa_has_geometry_shaders(ctx);
    default:
       return false;
    }
@@ -478,8 +478,7 @@ get_programiv(struct gl_context *ctx, GLuint program, GLenum pname, GLint *param
 
    /* Are geometry shaders available in this context?
     */
-   const bool has_gs =
-      _mesa_is_desktop_gl(ctx) && ctx->Extensions.ARB_geometry_shader4;
+   const bool has_gs = _mesa_has_geometry_shaders(ctx);
 
    /* Are uniform buffer objects available in this context?
     */

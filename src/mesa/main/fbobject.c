@@ -2476,7 +2476,7 @@ _mesa_FramebufferTexture(GLenum target, GLenum attachment,
 {
    GET_CURRENT_CONTEXT(ctx);
 
-   if (ctx->Version >= 32 || ctx->Extensions.ARB_geometry_shader4) {
+   if (_mesa_has_geometry_shaders(ctx)) {
       framebuffer_texture(ctx, "Layer", target, attachment, 0, texture,
                           level, 0, GL_TRUE);
    } else {

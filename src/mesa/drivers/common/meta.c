@@ -956,7 +956,7 @@ _mesa_meta_end(struct gl_context *ctx)
       if (ctx->Extensions.ARB_vertex_shader)
 	 _mesa_use_shader_program(ctx, GL_VERTEX_SHADER, save->VertexShader);
 
-      if (ctx->Extensions.ARB_geometry_shader4)
+      if (_mesa_has_geometry_shaders(ctx))
 	 _mesa_use_shader_program(ctx, GL_GEOMETRY_SHADER_ARB,
 				  save->GeometryShader);
 

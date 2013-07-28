@@ -222,7 +222,7 @@ _mesa_is_valid_prim_mode(struct gl_context *ctx, GLenum mode)
    case GL_LINE_STRIP_ADJACENCY:
    case GL_TRIANGLES_ADJACENCY:
    case GL_TRIANGLE_STRIP_ADJACENCY:
-      return _mesa_is_desktop_gl(ctx) && ctx->Extensions.ARB_geometry_shader4;
+      return _mesa_has_geometry_shaders(ctx);
    default:
       return false;
    }

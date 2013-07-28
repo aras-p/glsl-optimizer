@@ -312,6 +312,17 @@ _mesa_is_gles3(const struct gl_context *ctx)
 }
 
 
+/**
+ * Checks if the context supports geometry shaders.
+ */
+static inline GLboolean
+_mesa_has_geometry_shaders(const struct gl_context *ctx)
+{
+   return _mesa_is_desktop_gl(ctx) &&
+      (ctx->Version >= 32 || ctx->Extensions.ARB_geometry_shader4);
+}
+
+
 #ifdef __cplusplus
 }
 #endif

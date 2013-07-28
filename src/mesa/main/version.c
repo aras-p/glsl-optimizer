@@ -262,7 +262,6 @@ compute_version(struct gl_context *ctx)
                               ctx->Extensions.ARB_depth_clamp &&
                               ctx->Extensions.ARB_draw_elements_base_vertex &&
                               ctx->Extensions.ARB_fragment_coord_conventions &&
-                              ctx->Extensions.ARB_geometry_shader4 &&
                               ctx->Extensions.EXT_provoking_vertex &&
                               ctx->Extensions.ARB_seamless_cube_map &&
                               ctx->Extensions.ARB_sync &&
