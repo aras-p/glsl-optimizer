@@ -153,7 +153,7 @@ static void nvc0_video_getpath(enum pipe_video_profile profile, char *path)
          break;
       }
       case PIPE_VIDEO_CODEC_VC1: {
-         sprintf(path, "/lib/firmware/nouveau/vuc-vc1-%u", profile - PIPE_VIDEO_PROFILE_VC1_SIMPLE);
+         sprintf(path, "/lib/firmware/nouveau/vuc-vc1-0");
          break;
       }
       case PIPE_VIDEO_CODEC_MPEG4_AVC: {
