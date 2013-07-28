@@ -385,8 +385,6 @@ _mesa_update_texture_renderbuffer(struct gl_context *ctx,
    struct gl_renderbuffer *rb;
 
    texImage = att->Texture->Image[att->CubeMapFace][att->TextureLevel];
-   if (!texImage)
-      return;
 
    rb = att->Renderbuffer;
    if (!rb) {
@@ -404,6 +402,9 @@ _mesa_update_texture_renderbuffer(struct gl_context *ctx,
 
       rb->NeedsFinishRenderTexture = ctx->Driver.FinishRenderTexture != NULL;
    }
+
+   if (!texImage)
+      return;
 
    rb->_BaseFormat = texImage->_BaseFormat;
    rb->Format = texImage->TexFormat;
