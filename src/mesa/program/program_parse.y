@@ -113,15 +113,13 @@ static struct asm_instruction *asm_instruction_copy_ctor(
 	    + (Current).first_column;					\
       }									\
    } while(YYID(0))
-
-#define YYLEX_PARAM state->scanner
 %}
 
 %pure-parser
 %locations
+%lex-param   { struct asm_parser_state *state }
 %parse-param { struct asm_parser_state *state }
 %error-verbose
-%lex-param { void *scanner }
 
 %union {
    struct asm_instruction *inst;
@@ -274,9 +272,10 @@ _mesa_program_lexer_lex(YYSTYPE *yylval_param, YYLTYPE *yylloc_param,
                         void *yyscanner);
 
 static int
-yylex(YYSTYPE *yylval_param, YYLTYPE *yylloc_param, void *yyscanner)
+yylex(YYSTYPE *yylval_param, YYLTYPE *yylloc_param,
+      struct asm_parser_state *state)
 {
-   return _mesa_program_lexer_lex(yylval_param, yylloc_param, yyscanner);
+   return _mesa_program_lexer_lex(yylval_param, yylloc_param, state->scanner);
 }
 %}
 
