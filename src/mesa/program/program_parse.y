@@ -269,8 +269,15 @@ static struct asm_instruction *asm_instruction_copy_ctor(
 %type <negate> optionalSign
 
 %{
-extern int yylex(YYSTYPE *yylval_param, YYLTYPE *yylloc_param,
-    void *yyscanner);
+extern int
+_mesa_program_lexer_lex(YYSTYPE *yylval_param, YYLTYPE *yylloc_param,
+                        void *yyscanner);
+
+static int
+yylex(YYSTYPE *yylval_param, YYLTYPE *yylloc_param, void *yyscanner)
+{
+   return _mesa_program_lexer_lex(yylval_param, yylloc_param, yyscanner);
+}
 %}
 
 %%
