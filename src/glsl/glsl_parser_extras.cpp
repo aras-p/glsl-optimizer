@@ -430,15 +430,6 @@ struct _mesa_glsl_extension {
     */
    const char *name;
 
-   /** True if this extension is available to vertex shaders */
-   bool avail_in_VS;
-
-   /** True if this extension is available to geometry shaders */
-   bool avail_in_GS;
-
-   /** True if this extension is available to fragment shaders */
-   bool avail_in_FS;
-
    /** True if this extension is available to desktop GL shaders */
    bool avail_in_GL;
 
@@ -485,9 +476,9 @@ struct _mesa_glsl_extension {
    void set_flags(_mesa_glsl_parse_state *state, ext_behavior behavior) const;
 };
 
-#define EXT(NAME, VS, GS, FS, GL, ES, SUPPORTED_FLAG)                   \
-   { "GL_" #NAME, VS, GS, FS, GL, ES, &gl_extensions::SUPPORTED_FLAG,   \
-         &_mesa_glsl_parse_state::NAME##_enable,                        \
+#define EXT(NAME, GL, ES, SUPPORTED_FLAG)                   \
+   { "GL_" #NAME, GL, ES, &gl_extensions::SUPPORTED_FLAG,   \
+         &_mesa_glsl_parse_state::NAME##_enable,            \
          &_mesa_glsl_parse_state::NAME##_warn }
 
 /**
@@ -495,31 +486,31 @@ struct _mesa_glsl_extension {
  * and the conditions under which they are supported.
  */
 static const _mesa_glsl_extension _mesa_glsl_supported_extensions[] = {
-   /*                                  target availability  API availability */
-   /* name                             VS     GS     FS     GL     ES         supported flag */
-   EXT(ARB_conservative_depth,         false, false, true,  true,  false,     ARB_conservative_depth),
-   EXT(ARB_draw_buffers,               false, false, true,  true,  false,     dummy_true),
-   EXT(ARB_draw_instanced,             true,  false, false, true,  false,     ARB_draw_instanced),
-   EXT(ARB_explicit_attrib_location,   true,  false, true,  true,  false,     ARB_explicit_attrib_location),
-   EXT(ARB_fragment_coord_conventions, true,  false, true,  true,  false,     ARB_fragment_coord_conventions),
-   EXT(ARB_texture_rectangle,          true,  false, true,  true,  false,     dummy_true),
-   EXT(EXT_texture_array,              true,  false, true,  true,  false,     EXT_texture_array),
-   EXT(ARB_shader_texture_lod,         true,  false, true,  true,  false,     ARB_shader_texture_lod),
-   EXT(ARB_shader_stencil_export,      false, false, true,  true,  false,     ARB_shader_stencil_export),
-   EXT(AMD_conservative_depth,         false, false, true,  true,  false,     ARB_conservative_depth),
-   EXT(AMD_shader_stencil_export,      false, false, true,  true,  false,     ARB_shader_stencil_export),
-   EXT(OES_texture_3D,                 true,  false, true,  false, true,      EXT_texture3D),
-   EXT(OES_EGL_image_external,         true,  false, true,  false, true,      OES_EGL_image_external),
-   EXT(ARB_shader_bit_encoding,        true,  true,  true,  true,  false,     ARB_shader_bit_encoding),
-   EXT(ARB_uniform_buffer_object,      true,  false, true,  true,  false,     ARB_uniform_buffer_object),
-   EXT(OES_standard_derivatives,       false, false, true,  false,  true,     OES_standard_derivatives),
-   EXT(ARB_texture_cube_map_array,     true,  false, true,  true,  false,     ARB_texture_cube_map_array),
-   EXT(ARB_shading_language_packing,   true,  false, true,  true,  false,     ARB_shading_language_packing),
-   EXT(ARB_shading_language_420pack,   true,  true,  true,  true,  false,     ARB_shading_language_420pack),
-   EXT(ARB_texture_multisample,        true,  false, true,  true,  false,     ARB_texture_multisample),
-   EXT(ARB_texture_query_lod,          false, false, true,  true,  false,     ARB_texture_query_lod),
-   EXT(ARB_gpu_shader5,                true,  true,  true,  true,  false,     ARB_gpu_shader5),
-   EXT(AMD_vertex_shader_layer,        true,  false, false, true,  false,     AMD_vertex_shader_layer),
+   /*                                  API availability */
+   /* name                             GL     ES         supported flag */
+   EXT(ARB_conservative_depth,         true,  false,     ARB_conservative_depth),
+   EXT(ARB_draw_buffers,               true,  false,     dummy_true),
+   EXT(ARB_draw_instanced,             true,  false,     ARB_draw_instanced),
+   EXT(ARB_explicit_attrib_location,   true,  false,     ARB_explicit_attrib_location),
+   EXT(ARB_fragment_coord_conventions, true,  false,     ARB_fragment_coord_conventions),
+   EXT(ARB_texture_rectangle,          true,  false,     dummy_true),
+   EXT(EXT_texture_array,              true,  false,     EXT_texture_array),
+   EXT(ARB_shader_texture_lod,         true,  false,     ARB_shader_texture_lod),
+   EXT(ARB_shader_stencil_export,      true,  false,     ARB_shader_stencil_export),
+   EXT(AMD_conservative_depth,         true,  false,     ARB_conservative_depth),
+   EXT(AMD_shader_stencil_export,      true,  false,     ARB_shader_stencil_export),
+   EXT(OES_texture_3D,                 false, true,      EXT_texture3D),
+   EXT(OES_EGL_image_external,         false, true,      OES_EGL_image_external),
+   EXT(ARB_shader_bit_encoding,        true,  false,     ARB_shader_bit_encoding),
+   EXT(ARB_uniform_buffer_object,      true,  false,     ARB_uniform_buffer_object),
+   EXT(OES_standard_derivatives,       false,  true,     OES_standard_derivatives),
+   EXT(ARB_texture_cube_map_array,     true,  false,     ARB_texture_cube_map_array),
+   EXT(ARB_shading_language_packing,   true,  false,     ARB_shading_language_packing),
+   EXT(ARB_shading_language_420pack,   true,  false,     ARB_shading_language_420pack),
+   EXT(ARB_texture_multisample,        true,  false,     ARB_texture_multisample),
+   EXT(ARB_texture_query_lod,          true,  false,     ARB_texture_query_lod),
+   EXT(ARB_gpu_shader5,                true,  false,     ARB_gpu_shader5),
+   EXT(AMD_vertex_shader_layer,        true,  false,     AMD_vertex_shader_layer),
 };
 
 #undef EXT
@@ -532,30 +523,6 @@ static const _mesa_glsl_extension _mesa_glsl_supported_extensions[] = {
 bool _mesa_glsl_extension::compatible_with_state(const _mesa_glsl_parse_state *
                                                  state) const
 {
-   /* Check that this extension matches the type of shader we are
-    * compiling to.
-    */
-   switch (state->target) {
-   case vertex_shader:
-      if (!this->avail_in_VS) {
-         return false;
-      }
-      break;
-   case geometry_shader:
-      if (!this->avail_in_GS) {
-         return false;
-      }
-      break;
-   case fragment_shader:
-      if (!this->avail_in_FS) {
-         return false;
-      }
-      break;
-   default:
-      assert (!"Unrecognized shader target");
-      return false;
-   }
-
    /* Check that this extension matches whether we are compiling
     * for desktop GL or GLES.
     */
