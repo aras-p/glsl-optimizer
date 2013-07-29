@@ -821,26 +821,6 @@ intel_renderbuffer_has_hiz(struct intel_renderbuffer *irb)
    return intel_miptree_slice_has_hiz(irb->mt, irb->mt_level, irb->mt_layer);
 }
 
-void
-intel_renderbuffer_set_needs_hiz_resolve(struct intel_renderbuffer *irb)
-{
-   if (irb->mt) {
-      intel_miptree_slice_set_needs_hiz_resolve(irb->mt,
-                                                irb->mt_level,
-                                                irb->mt_layer);
-   }
-}
-
-void
-intel_renderbuffer_set_needs_depth_resolve(struct intel_renderbuffer *irb)
-{
-   if (irb->mt) {
-      intel_miptree_slice_set_needs_depth_resolve(irb->mt,
-                                                  irb->mt_level,
-                                                  irb->mt_layer);
-   }
-}
-
 bool
 intel_renderbuffer_resolve_hiz(struct brw_context *brw,
 			       struct intel_renderbuffer *irb)

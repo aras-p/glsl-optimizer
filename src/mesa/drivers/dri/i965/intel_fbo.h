@@ -159,12 +159,6 @@ bool
 intel_renderbuffer_has_hiz(struct intel_renderbuffer *irb);
 
 void
-intel_renderbuffer_set_needs_hiz_resolve(struct intel_renderbuffer *irb);
-
-void
-intel_renderbuffer_set_needs_depth_resolve(struct intel_renderbuffer *irb);
-
-void
 intel_renderbuffer_att_set_needs_depth_resolve(struct gl_renderbuffer_attachment *att);
 
 
