@@ -149,7 +149,7 @@ literal_integer(char *text, int len, struct _mesa_glsl_parse_state *state,
 %option bison-bridge bison-locations reentrant noyywrap
 %option nounput noyy_top_state
 %option never-interactive
-%option prefix="_mesa_glsl_"
+%option prefix="_mesa_glsl_lexer_"
 %option extra-type="struct _mesa_glsl_parse_state *"
 
 %x PP PRAGMA

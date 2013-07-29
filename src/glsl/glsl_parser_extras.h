@@ -337,8 +337,8 @@ extern void _mesa_glsl_lexer_ctor(struct _mesa_glsl_parse_state *state,
 extern void _mesa_glsl_lexer_dtor(struct _mesa_glsl_parse_state *state);
 
 union YYSTYPE;
-extern int _mesa_glsl_lex(union YYSTYPE *yylval, YYLTYPE *yylloc, 
-			  void *scanner);
+extern int _mesa_glsl_lexer_lex(union YYSTYPE *yylval, YYLTYPE *yylloc,
+                                void *scanner);
 
 extern int _mesa_glsl_parse(struct _mesa_glsl_parse_state *);
 

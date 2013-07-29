@@ -39,6 +39,12 @@ static void yyerror(YYLTYPE *loc, _mesa_glsl_parse_state *st, const char *msg)
 {
    _mesa_glsl_error(loc, st, "%s", msg);
 }
+
+static int
+_mesa_glsl_lex(YYSTYPE *val, YYLTYPE *loc, void *scanner)
+{
+   return _mesa_glsl_lexer_lex(val, loc, scanner);
+}
 %}
 
 %expect 0
