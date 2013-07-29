@@ -1341,6 +1341,18 @@ intel_miptree_slice_set_needs_depth_resolve(struct intel_mipmap_tree *mt,
 			 level, layer, GEN6_HIZ_OP_DEPTH_RESOLVE);
 }
 
+void
+intel_miptree_set_all_slices_need_depth_resolve(struct intel_mipmap_tree *mt,
+                                                uint32_t level)
+{
+   uint32_t layer;
+   uint32_t end_layer = mt->level[level].depth;
+
+   for (layer = 0; layer < end_layer; layer++) {
+      intel_miptree_slice_set_needs_depth_resolve(mt, level, layer);
+   }
+}
+
 static bool
 intel_miptree_slice_resolve(struct brw_context *brw,
 			    struct intel_mipmap_tree *mt,

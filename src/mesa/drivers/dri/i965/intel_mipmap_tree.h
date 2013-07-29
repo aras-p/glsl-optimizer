@@ -630,6 +630,10 @@ intel_miptree_slice_set_needs_depth_resolve(struct intel_mipmap_tree *mt,
                                             uint32_t level,
 					    uint32_t depth);
 
+void
+intel_miptree_set_all_slices_need_depth_resolve(struct intel_mipmap_tree *mt,
+                                                uint32_t level);
+
 /**
  * \return false if no resolve was needed
  */
