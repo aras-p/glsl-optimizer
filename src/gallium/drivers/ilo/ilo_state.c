@@ -1452,3 +1452,55 @@ ilo_mark_states_with_resource_dirty(struct ilo_context *ilo,
 
    ilo->dirty |= states;
 }
+
+void
+ilo_dump_dirty_flags(uint32_t dirty)
+{
+   static const char *state_names[ILO_STATE_COUNT] = {
+      [ILO_STATE_VB]              = "VB",
+      [ILO_STATE_VE]              = "VE",
+      [ILO_STATE_IB]              = "IB",
+      [ILO_STATE_VS]              = "VS",
+      [ILO_STATE_GS]              = "GS",
+      [ILO_STATE_SO]              = "SO",
+      [ILO_STATE_CLIP]            = "CLIP",
+      [ILO_STATE_VIEWPORT]        = "VIEWPORT",
+      [ILO_STATE_SCISSOR]         = "SCISSOR",
+      [ILO_STATE_RASTERIZER]      = "RASTERIZER",
+      [ILO_STATE_POLY_STIPPLE]    = "POLY_STIPPLE",
+      [ILO_STATE_SAMPLE_MASK]     = "SAMPLE_MASK",
+      [ILO_STATE_FS]              = "FS",
+      [ILO_STATE_DSA]             = "DSA",
+      [ILO_STATE_STENCIL_REF]     = "STENCIL_REF",
+      [ILO_STATE_BLEND]           = "BLEND",
+      [ILO_STATE_BLEND_COLOR]     = "BLEND_COLOR",
+      [ILO_STATE_FB]              = "FB",
+      [ILO_STATE_SAMPLER_VS]      = "SAMPLER_VS",
+      [ILO_STATE_SAMPLER_GS]      = "SAMPLER_GS",
+      [ILO_STATE_SAMPLER_FS]      = "SAMPLER_FS",
+      [ILO_STATE_SAMPLER_CS]      = "SAMPLER_CS",
+      [ILO_STATE_VIEW_VS]         = "VIEW_VS",
+      [ILO_STATE_VIEW_GS]         = "VIEW_GS",
+      [ILO_STATE_VIEW_FS]         = "VIEW_FS",
+      [ILO_STATE_VIEW_CS]         = "VIEW_CS",
+      [ILO_STATE_CBUF]            = "CBUF",
+      [ILO_STATE_RESOURCE]        = "RESOURCE",
+      [ILO_STATE_CS]              = "CS",
+      [ILO_STATE_CS_RESOURCE]     = "CS_RESOURCE",
+      [ILO_STATE_GLOBAL_BINDING]  = "GLOBAL_BINDING",
+   };
+
+   if (!dirty) {
+      ilo_printf("no state is dirty\n");
+      return;
+   }
+
+   dirty &= (1U << ILO_STATE_COUNT) - 1;
+
+   ilo_printf("%2d states are dirty:", util_bitcount(dirty));
+   while (dirty) {
+      const enum ilo_state state = u_bit_scan(&dirty);
+      ilo_printf(" %s", state_names[state]);
+   }
+   ilo_printf("\n");
+}

@@ -46,6 +46,7 @@ static const struct debug_named_value ilo_debug_flags[] = {
    { "gs",        ILO_DEBUG_GS,       "Dump geometry shaders" },
    { "fs",        ILO_DEBUG_FS,       "Dump fragment shaders" },
    { "cs",        ILO_DEBUG_CS,       "Dump compute shaders" },
+   { "draw",      ILO_DEBUG_DRAW,     "Show draw information" },
    { "nohw",      ILO_DEBUG_NOHW,     "Do not send commands to HW" },
    { "nocache",   ILO_DEBUG_NOCACHE,  "Always invalidate HW caches" },
    DEBUG_NAMED_VALUE_END

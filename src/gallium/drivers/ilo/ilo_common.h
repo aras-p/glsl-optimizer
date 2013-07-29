@@ -43,15 +43,24 @@
 #define ILO_GEN(gen) ((int) (gen * 100))
 #define ILO_GEN_GET_MAJOR(gen) (gen / 100)
 
+/* enable debug flags affecting hot pathes only with debug builds */
+#ifdef DEBUG
+#define ILO_DEBUG_HOT 1
+#else
+#define ILO_DEBUG_HOT 0
+#endif
+
 enum ilo_debug {
    ILO_DEBUG_3D        = 1 << 0,
    ILO_DEBUG_VS        = 1 << 1,
    ILO_DEBUG_GS        = 1 << 2,
    ILO_DEBUG_FS        = 1 << 3,
    ILO_DEBUG_CS        = 1 << 4,
+   ILO_DEBUG_DRAW      = ILO_DEBUG_HOT << 5,
 
-   ILO_DEBUG_NOHW      = 1 << 8,
-   ILO_DEBUG_NOCACHE   = 1 << 9,
+   /* flags that affect the behaviors of the driver */
+   ILO_DEBUG_NOHW      = 1 << 20,
+   ILO_DEBUG_NOCACHE   = 1 << 21,
 };
 
 struct ilo_dev_info {
