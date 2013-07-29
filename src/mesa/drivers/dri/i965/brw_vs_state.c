@@ -138,11 +138,13 @@ brw_upload_vs_unit(struct brw_context *brw)
    vs->thread4.max_threads = CLAMP(brw->urb.nr_vs_entries / 2,
 				   1, brw->max_vs_threads) - 1;
 
-   /* No samplers for ARB_vp programs:
-    */
-   /* It has to be set to 0 for Ironlake
-    */
-   vs->vs5.sampler_count = 0;
+   if (brw->gen == 5)
+      vs->vs5.sampler_count = 0; /* hardware requirement */
+   else {
+      /* CACHE_NEW_SAMPLER */
+      vs->vs5.sampler_count = (brw->sampler.count + 3) / 4;
+   }
+
 
    if (unlikely(INTEL_DEBUG & DEBUG_STATS))
       vs->thread4.stats_enable = 1;
@@ -150,6 +152,19 @@ brw_upload_vs_unit(struct brw_context *brw)
    /* Vertex program always enabled:
     */
    vs->vs6.vs_enable = 1;
+
+   /* Set the sampler state pointer, and its reloc
+    */
+   if (brw->sampler.count) {
+      vs->vs5.sampler_state_pointer =
+         (brw->batch.bo->offset + brw->sampler.offset) >> 5;
+      drm_intel_bo_emit_reloc(brw->batch.bo,
+                              brw->vs.state_offset +
+                              offsetof(struct brw_vs_unit_state, vs5),
+                              brw->batch.bo,
+                              brw->sampler.offset | vs->vs5.sampler_count,
+                              I915_GEM_DOMAIN_INSTRUCTION, 0);
+   }
 
    /* Emit scratch space relocation */
    if (brw->vs.prog_data->base.total_scratch != 0) {
@@ -172,7 +187,7 @@ const struct brw_tracked_state brw_vs_unit = {
 		BRW_NEW_CURBE_OFFSETS |
 		BRW_NEW_URB_FENCE |
                 BRW_NEW_VERTEX_PROGRAM),
-      .cache = CACHE_NEW_VS_PROG
+      .cache = CACHE_NEW_VS_PROG | CACHE_NEW_SAMPLER
    },
    .emit = brw_upload_vs_unit,
 };
