@@ -854,6 +854,21 @@ intel_renderbuffer_resolve_hiz(struct brw_context *brw,
    return false;
 }
 
+void
+intel_renderbuffer_att_set_needs_depth_resolve(struct gl_renderbuffer_attachment *att)
+{
+   struct intel_renderbuffer *irb = intel_renderbuffer(att->Renderbuffer);
+   if (irb->mt) {
+      if (att->Layered) {
+         intel_miptree_set_all_slices_need_depth_resolve(irb->mt, irb->mt_level);
+      } else {
+         intel_miptree_slice_set_needs_depth_resolve(irb->mt,
+                                                     irb->mt_level,
+                                                     irb->mt_layer);
+      }
+   }
+}
+
 bool
 intel_renderbuffer_resolve_depth(struct brw_context *brw,
 				 struct intel_renderbuffer *irb)
