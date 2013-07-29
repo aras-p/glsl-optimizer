@@ -109,6 +109,7 @@ brw_fast_clear_depth(struct gl_context *ctx)
    struct intel_renderbuffer *depth_irb =
       intel_get_renderbuffer(fb, BUFFER_DEPTH);
    struct intel_mipmap_tree *mt = depth_irb->mt;
+   struct gl_renderbuffer_attachment *depth_att = &fb->Attachment[BUFFER_DEPTH];
 
    if (brw->gen < 6)
       return false;
@@ -196,7 +197,7 @@ brw_fast_clear_depth(struct gl_context *ctx)
    /* Now, the HiZ buffer contains data that needs to be resolved to the depth
     * buffer.
     */
-   intel_renderbuffer_set_needs_depth_resolve(depth_irb);
+   intel_renderbuffer_att_set_needs_depth_resolve(depth_att);
 
    return true;
 }
