@@ -647,7 +647,8 @@ nv50_screen_create(struct nouveau_device *dev)
 
    nv50_screen_init_resource_functions(pscreen);
 
-   if (screen->base.device->chipset < 0x84) {
+   if (screen->base.device->chipset < 0x84 ||
+       debug_get_bool_option("NOUVEAU_PMPEG", FALSE)) {
       /* PMPEG */
       nouveau_screen_init_vdec(&screen->base);
    } else if (screen->base.device->chipset < 0x98 ||

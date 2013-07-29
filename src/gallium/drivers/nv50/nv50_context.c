@@ -258,7 +258,8 @@ nv50_create(struct pipe_screen *pscreen, void *priv)
    draw_set_rasterize_stage(nv50->draw, nv50_draw_render_stage(nv50));
 #endif
 
-   if (screen->base.device->chipset < 0x84) {
+   if (screen->base.device->chipset < 0x84 ||
+       debug_get_bool_option("NOUVEAU_PMPEG", FALSE)) {
       /* PMPEG */
       nouveau_context_init_vdec(&nv50->base);
    } else if (screen->base.device->chipset < 0x98 ||
