@@ -1203,8 +1203,12 @@ ishr_emit_cpu(
    struct lp_build_tgsi_context * bld_base,
    struct lp_build_emit_data * emit_data)
 {
-   emit_data->output[emit_data->chan] = lp_build_shr(&bld_base->int_bld,
-                                   emit_data->args[0], emit_data->args[1]);
+   struct lp_build_context *int_bld = &bld_base->int_bld;
+   LLVMValueRef mask = lp_build_const_vec(int_bld->gallivm, int_bld->type,
+                                          int_bld->type.width - 1);
+   LLVMValueRef masked_count = lp_build_and(int_bld, emit_data->args[1], mask);
+   emit_data->output[emit_data->chan] = lp_build_shr(int_bld, emit_data->args[0],
+                                                     masked_count);
 }
 
 /* TGSI_OPCODE_ISLT (CPU Only) */
@@ -1439,8 +1443,12 @@ shl_emit_cpu(
    struct lp_build_tgsi_context * bld_base,
    struct lp_build_emit_data * emit_data)
 {
-   emit_data->output[emit_data->chan] = lp_build_shl(&bld_base->uint_bld,
-                                   emit_data->args[0], emit_data->args[1]);
+   struct lp_build_context *uint_bld = &bld_base->uint_bld;
+   LLVMValueRef mask = lp_build_const_vec(uint_bld->gallivm, uint_bld->type,
+                                          uint_bld->type.width - 1);
+   LLVMValueRef masked_count = lp_build_and(uint_bld, emit_data->args[1], mask);
+   emit_data->output[emit_data->chan] = lp_build_shl(uint_bld, emit_data->args[0],
+                                                     masked_count);
 }
 
 /* TGSI_OPCODE_SIN (CPU Only) */
@@ -1647,8 +1655,12 @@ ushr_emit_cpu(
    struct lp_build_tgsi_context * bld_base,
    struct lp_build_emit_data * emit_data)
 {
-   emit_data->output[emit_data->chan] = lp_build_shr(&bld_base->uint_bld,
-                                   emit_data->args[0], emit_data->args[1]);
+   struct lp_build_context *uint_bld = &bld_base->uint_bld;
+   LLVMValueRef mask = lp_build_const_vec(uint_bld->gallivm, uint_bld->type,
+                                          uint_bld->type.width - 1);
+   LLVMValueRef masked_count = lp_build_and(uint_bld, emit_data->args[1], mask);
+   emit_data->output[emit_data->chan] = lp_build_shr(uint_bld, emit_data->args[0],
+                                                     masked_count);
 }
 
 /* TGSI_OPCODE_ISLT (CPU Only) */

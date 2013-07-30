@@ -168,6 +168,7 @@ lp_build_not(struct lp_build_context *bld, LLVMValueRef a)
 
 /**
  * Shift left.
+ * Result is undefined if the shift count is not smaller than the type width.
  */
 LLVMValueRef
 lp_build_shl(struct lp_build_context *bld, LLVMValueRef a, LLVMValueRef b)
@@ -189,6 +190,7 @@ lp_build_shl(struct lp_build_context *bld, LLVMValueRef a, LLVMValueRef b)
 
 /**
  * Shift right.
+ * Result is undefined if the shift count is not smaller than the type width.
  */
 LLVMValueRef
 lp_build_shr(struct lp_build_context *bld, LLVMValueRef a, LLVMValueRef b)
@@ -214,23 +216,25 @@ lp_build_shr(struct lp_build_context *bld, LLVMValueRef a, LLVMValueRef b)
 
 /**
  * Shift left with immediate.
+ * The immediate shift count must be smaller than the type width.
  */
 LLVMValueRef
 lp_build_shl_imm(struct lp_build_context *bld, LLVMValueRef a, unsigned imm)
 {
    LLVMValueRef b = lp_build_const_int_vec(bld->gallivm, bld->type, imm);
-   assert(imm <= bld->type.width);
+   assert(imm < bld->type.width);
    return lp_build_shl(bld, a, b);
 }
 
 
 /**
  * Shift right with immediate.
+ * The immediate shift count must be smaller than the type width.
  */
 LLVMValueRef
 lp_build_shr_imm(struct lp_build_context *bld, LLVMValueRef a, unsigned imm)
 {
    LLVMValueRef b = lp_build_const_int_vec(bld->gallivm, bld->type, imm);
-   assert(imm <= bld->type.width);
+   assert(imm < bld->type.width);
    return lp_build_shr(bld, a, b);
 }
