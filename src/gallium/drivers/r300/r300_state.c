@@ -1333,8 +1333,7 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
 
     if (r300_screen(pipe->screen)->caps.has_tcl) {
        vap_clip_cntl = (state->clip_plane_enable & 63) |
-                       R300_PS_UCP_MODE_CLIP_AS_TRIFAN |
-                       (state->depth_clip ? 0 : R300_CLIP_DISABLE);
+                       R300_PS_UCP_MODE_CLIP_AS_TRIFAN;
     } else {
        vap_clip_cntl = R300_CLIP_DISABLE;
     }
