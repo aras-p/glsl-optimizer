@@ -242,6 +242,7 @@ struct st_config_options
    boolean force_glsl_extensions_warn;
    boolean disable_glsl_line_continuations;
    boolean disable_blend_func_extended;
+   boolean force_s3tc_enable;
 };
 
 /**

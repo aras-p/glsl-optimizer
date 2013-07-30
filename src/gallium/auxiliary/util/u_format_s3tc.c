@@ -111,7 +111,6 @@ util_format_s3tc_init(void)
    util_dl_proc fetch_2d_texel_rgba_dxt3;
    util_dl_proc fetch_2d_texel_rgba_dxt5;
    util_dl_proc tx_compress_dxtn;
-   char *force_s3tc_enable;
 
    if (!first_time)
       return;
@@ -122,15 +121,8 @@ util_format_s3tc_init(void)
 
    library = util_dl_open(DXTN_LIBNAME);
    if (!library) {
-      if ((force_s3tc_enable = getenv("force_s3tc_enable")) &&
-          !strcmp(force_s3tc_enable, "true")) {
-         debug_printf("couldn't open " DXTN_LIBNAME ", enabling DXTn due to "
-            "force_s3tc_enable=true environment variable\n");
-         util_format_s3tc_enabled = TRUE;
-      } else {
-         debug_printf("couldn't open " DXTN_LIBNAME ", software DXTn "
-            "compression/decompression unavailable\n");
-      }
+      debug_printf("couldn't open " DXTN_LIBNAME ", software DXTn "
+                   "compression/decompression unavailable\n");
       return;
    }
 

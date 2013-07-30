@@ -289,14 +289,6 @@ void st_init_limits(struct st_context *st)
 }
 
 
-static GLboolean st_get_s3tc_override(void)
-{
-   const char *override = _mesa_getenv("force_s3tc_enable");
-   if (override && !strcmp(override, "true"))
-      return GL_TRUE;
-   return GL_FALSE;
-}
-
 /**
  * Given a member \c x of struct gl_extensions, return offset of
  * \c x in bytes.
@@ -628,7 +620,7 @@ void st_init_extensions(struct st_context *st)
 
    /* Below are the cases which cannot be moved into tables easily. */
 
-   if (!ctx->Mesa_DXTn && !st_get_s3tc_override()) {
+   if (!ctx->Mesa_DXTn && !st->options.force_s3tc_enable) {
       ctx->Extensions.EXT_texture_compression_s3tc = GL_FALSE;
       ctx->Extensions.ANGLE_texture_compression_dxt = GL_FALSE;
    }

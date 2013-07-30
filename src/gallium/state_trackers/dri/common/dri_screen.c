@@ -41,6 +41,7 @@
 #include "state_tracker/drm_driver.h"
 
 #include "util/u_debug.h"
+#include "util/u_format_s3tc.h"
 
 #define MSAA_VISUAL_MAX_SAMPLES 32
 
@@ -54,7 +55,7 @@ PUBLIC const char __driConfigOptions[] =
       DRI_CONF_SECTION_END
 
       DRI_CONF_SECTION_QUALITY
-/*       DRI_CONF_FORCE_S3TC_ENABLE("false") */
+         DRI_CONF_FORCE_S3TC_ENABLE("false")
          DRI_CONF_PP_CELSHADE(0)
          DRI_CONF_PP_NORED(0)
          DRI_CONF_PP_NOGREEN(0)
@@ -76,7 +77,7 @@ PUBLIC const char __driConfigOptions[] =
 
 #define false 0
 
-static const uint __driNConfigOptions = 12;
+static const uint __driNConfigOptions = 13;
 
 static const __DRIconfig **
 dri_fill_in_modes(struct dri_screen *screen)
@@ -415,6 +416,20 @@ dri_init_screen_helper(struct dri_screen *screen,
 		       &screen->optionCacheDefaults,
                        screen->sPriv->myNum,
                        driver_descriptor.name);
+
+   /* Handle force_s3tc_enable. */
+   if (!util_format_s3tc_enabled &&
+       driQueryOptionb(&screen->optionCache, "force_s3tc_enable")) {
+      /* Ensure libtxc_dxtn has been loaded if available.
+       * Forcing S3TC on before calling this would prevent loading
+       * the library.
+       * This is just a precaution, the driver should have called it
+       * already.
+       */
+      util_format_s3tc_init();
+
+      util_format_s3tc_enabled = TRUE;
+   }
 
    return dri_fill_in_modes(screen);
 }
