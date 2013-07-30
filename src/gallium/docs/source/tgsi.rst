@@ -1254,41 +1254,47 @@ Support for these opcodes indicated by PIPE_SHADER_CAP_INTEGERS (all of them?)
 
 .. opcode:: SHL - Shift Left
 
+   The shift count is masked with 0x1f before the shift is applied.
+
 .. math::
 
-  dst.x = src0.x << src1.x
+  dst.x = src0.x << (0x1f & src1.x)
 
-  dst.y = src0.y << src1.x
+  dst.y = src0.y << (0x1f & src1.y)
 
-  dst.z = src0.z << src1.x
+  dst.z = src0.z << (0x1f & src1.z)
 
-  dst.w = src0.w << src1.x
+  dst.w = src0.w << (0x1f & src1.w)
 
 
 .. opcode:: ISHR - Arithmetic Shift Right (of Signed Integer)
 
+   The shift count is masked with 0x1f before the shift is applied.
+
 .. math::
 
-  dst.x = src0.x >> src1.x
+  dst.x = src0.x >> (0x1f & src1.x)
 
-  dst.y = src0.y >> src1.x
+  dst.y = src0.y >> (0x1f & src1.y)
 
-  dst.z = src0.z >> src1.x
+  dst.z = src0.z >> (0x1f & src1.z)
 
-  dst.w = src0.w >> src1.x
+  dst.w = src0.w >> (0x1f & src1.w)
 
 
 .. opcode:: USHR - Logical Shift Right
 
+   The shift count is masked with 0x1f before the shift is applied.
+
 .. math::
 
-  dst.x = src0.x >> (unsigned) src1.x
+  dst.x = src0.x >> (unsigned) (0x1f & src1.x)
 
-  dst.y = src0.y >> (unsigned) src1.x
+  dst.y = src0.y >> (unsigned) (0x1f & src1.y)
 
-  dst.z = src0.z >> (unsigned) src1.x
+  dst.z = src0.z >> (unsigned) (0x1f & src1.z)
 
-  dst.w = src0.w >> (unsigned) src1.x
+  dst.w = src0.w >> (unsigned) (0x1f & src1.w)
 
 
 .. opcode:: UCMP - Integer Conditional Move
