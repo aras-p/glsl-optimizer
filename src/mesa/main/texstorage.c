@@ -342,7 +342,7 @@ tex_storage_error_check(struct gl_context *ctx, GLuint dims, GLenum target,
    }
 
    /* Check if texObj->Immutable is set */
-   if (texObj->Immutable) {
+   if (!_mesa_is_proxy_texture(target) && texObj->Immutable) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glTexStorage%uD(immutable)",
                   dims);
       return GL_TRUE;
