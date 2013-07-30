@@ -154,6 +154,7 @@ struct r600_context {
 	struct si_vertex_element	*vertex_elements;
 	struct pipe_framebuffer_state	framebuffer;
 	unsigned			fb_log_samples;
+	unsigned			fb_cb0_is_integer;
 	unsigned			pa_sc_line_stipple;
 	unsigned			pa_su_sc_mode_cntl;
 	/* for saving when using blitter */

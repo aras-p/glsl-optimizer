@@ -561,6 +561,17 @@ static void si_alpha_test(struct lp_build_tgsi_context *bld_base,
 	}
 }
 
+static void si_alpha_to_one(struct lp_build_tgsi_context *bld_base,
+			    unsigned index)
+{
+	struct si_shader_context *si_shader_ctx = si_shader_context(bld_base);
+
+	/* set alpha to one */
+	LLVMBuildStore(bld_base->base.gallivm->builder,
+		       bld_base->base.one,
+		       si_shader_ctx->radeon_bld.soa.outputs[index][3]);
+}
+
 static void si_llvm_emit_clipvertex(struct lp_build_tgsi_context * bld_base,
 				    LLVMValueRef (*pos)[9], unsigned index)
 {
@@ -707,6 +718,9 @@ handle_semantic:
 					param_count++;
 				} else {
 					target = V_008DFC_SQ_EXP_MRT + color_count;
+					if (si_shader_ctx->shader->key.ps.alpha_to_one) {
+						si_alpha_to_one(bld_base, index);
+					}
 					if (color_count == 0 &&
 					    si_shader_ctx->shader->key.ps.alpha_func != PIPE_FUNC_ALWAYS)
 						si_alpha_test(bld_base, index);

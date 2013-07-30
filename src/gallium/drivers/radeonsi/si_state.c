@@ -255,6 +255,8 @@ static void *si_create_blend_state_mode(struct pipe_context *ctx,
 	if (blend == NULL)
 		return NULL;
 
+	blend->alpha_to_one = state->alpha_to_one;
+
 	color_control = S_028808_MODE(mode);
 	if (state->logicop_enable) {
 		color_control |= S_028808_ROP3(state->logicop_func | (state->logicop_func << 4));
@@ -520,6 +522,7 @@ static void *si_create_rs_state(struct pipe_context *ctx,
 	}
 
 	rs->two_side = state->light_twoside;
+	rs->multisample_enable = state->multisample;
 	rs->clip_plane_enable = state->clip_plane_enable;
 
 	polygon_dual_mode = (state->fill_front != PIPE_POLYGON_MODE_FILL ||
@@ -2247,6 +2250,8 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 
 	si_set_msaa_state(rctx, pm4, nr_samples);
 	rctx->fb_log_samples = util_logbase2(nr_samples);
+	rctx->fb_cb0_is_integer = state->nr_cbufs &&
+				  util_format_is_pure_integer(state->cbufs[0]->format);
 
 	si_pm4_set_state(rctx, framebuffer, pm4);
 	si_update_fb_rs_state(rctx);
@@ -2281,9 +2286,16 @@ static INLINE void si_shader_selector_key(struct pipe_context *ctx,
 		if (sel->fs_write_all)
 			key->ps.nr_cbufs = rctx->framebuffer.nr_cbufs;
 		key->ps.export_16bpc = rctx->export_16bpc;
+
 		if (rctx->queued.named.rasterizer) {
 			key->ps.color_two_side = rctx->queued.named.rasterizer->two_side;
 			key->ps.flatshade = rctx->queued.named.rasterizer->flatshade;
+
+			if (rctx->queued.named.blend) {
+				key->ps.alpha_to_one = rctx->queued.named.blend->alpha_to_one &&
+						       rctx->queued.named.rasterizer->multisample_enable &&
+						       !rctx->fb_cb0_is_integer;
+			}
 		}
 		if (rctx->queued.named.dsa) {
 			key->ps.alpha_func = rctx->queued.named.dsa->alpha_func;
