@@ -50,8 +50,6 @@ struct dri_context
    __DRIdrawable *dPriv;
    __DRIdrawable *rPriv;
 
-   driOptionCache optionCache;
-
    unsigned int bind_count;
 
    /* gallium */

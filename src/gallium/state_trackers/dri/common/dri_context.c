@@ -109,11 +109,7 @@ dri_create_context(gl_api api, const struct gl_config * visual,
    ctx->cPriv = cPriv;
    ctx->sPriv = sPriv;
 
-   driParseConfigFiles(&ctx->optionCache,
-		       &screen->optionCacheDefaults,
-                       sPriv->myNum, driver_descriptor.name);
-
-   dri_fill_st_options(&attribs.options, &ctx->optionCache);
+   dri_fill_st_options(&attribs.options, &screen->optionCache);
    dri_fill_st_visual(&attribs.visual, screen, visual);
    ctx->st = stapi->create_context(stapi, &screen->base, &attribs, &ctx_err,
 				   st_share);
@@ -170,12 +166,6 @@ dri_destroy_context(__DRIcontext * cPriv)
    if (ctx->hud) {
       hud_destroy(ctx->hud);
    }
-
-   /* note: we are freeing values and nothing more because
-    * driParseConfigFiles allocated values only - the rest
-    * is owned by screen optionCacheDefaults.
-    */
-   free(ctx->optionCache.values);
 
    /* No particular reason to wait for command completion before
     * destroying a context, but we flush the context here
