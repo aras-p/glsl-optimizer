@@ -1097,24 +1097,34 @@ _mesa_get_tex_max_num_levels(GLenum target, GLsizei width, GLsizei height,
    switch (target) {
    case GL_TEXTURE_1D:
    case GL_TEXTURE_1D_ARRAY:
+   case GL_PROXY_TEXTURE_1D:
+   case GL_PROXY_TEXTURE_1D_ARRAY:
       size = width;
       break;
    case GL_TEXTURE_CUBE_MAP:
    case GL_TEXTURE_CUBE_MAP_ARRAY:
+   case GL_PROXY_TEXTURE_CUBE_MAP:
+   case GL_PROXY_TEXTURE_CUBE_MAP_ARRAY:
       ASSERT(width == height);
       size = width;
       break;
    case GL_TEXTURE_2D:
    case GL_TEXTURE_2D_ARRAY:
+   case GL_PROXY_TEXTURE_2D:
+   case GL_PROXY_TEXTURE_2D_ARRAY:
       size = MAX2(width, height);
       break;
    case GL_TEXTURE_3D:
+   case GL_PROXY_TEXTURE_3D:
       size = MAX3(width, height, depth);
       break;
    case GL_TEXTURE_RECTANGLE:
    case GL_TEXTURE_EXTERNAL_OES:
    case GL_TEXTURE_2D_MULTISAMPLE:
    case GL_TEXTURE_2D_MULTISAMPLE_ARRAY:
+   case GL_PROXY_TEXTURE_RECTANGLE:
+   case GL_PROXY_TEXTURE_2D_MULTISAMPLE:
+   case GL_PROXY_TEXTURE_2D_MULTISAMPLE_ARRAY:
       return 1;
    default:
       assert(0);
