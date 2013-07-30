@@ -1782,6 +1782,13 @@ st_QuerySamplesForFormat(struct gl_context *ctx, GLenum target,
    else
       bind = PIPE_BIND_RENDER_TARGET;
 
+   /* If an sRGB framebuffer is unsupported, sRGB formats behave like linear
+    * formats.
+    */
+   if (!ctx->Extensions.EXT_framebuffer_sRGB) {
+      internalFormat = _mesa_get_linear_internalformat(internalFormat);
+   }
+
    /* Set sample counts in descending order. */
    for (i = 16; i > 1; i--) {
       format = st_choose_format(st, internalFormat, GL_NONE, GL_NONE,

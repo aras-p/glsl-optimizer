@@ -37,6 +37,7 @@
 #include "main/context.h"
 #include "main/fbobject.h"
 #include "main/framebuffer.h"
+#include "main/glformats.h"
 #include "main/macros.h"
 #include "main/renderbuffer.h"
 
@@ -131,6 +132,13 @@ st_renderbuffer_alloc_storage(struct gl_context * ctx,
     */
    pipe_surface_reference( &strb->surface, NULL );
    pipe_resource_reference( &strb->texture, NULL );
+
+   /* If an sRGB framebuffer is unsupported, sRGB formats behave like linear
+    * formats.
+    */
+   if (!ctx->Extensions.EXT_framebuffer_sRGB) {
+      internalFormat = _mesa_get_linear_internalformat(internalFormat);
+   }
 
    /* Handle multisample renderbuffers first.
     *
