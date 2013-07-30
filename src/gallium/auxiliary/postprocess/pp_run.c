@@ -218,8 +218,8 @@ pp_tgsi_to_state(struct pipe_context *pipe, const char *text, bool isvs,
       return NULL;
    }
 
-   if (tgsi_text_translate(text, tokens, Elements(tokens)) == FALSE) {
-      pp_debug("Failed to translate %s\n", name);
+   if (tgsi_text_translate(text, tokens, PP_MAX_TOKENS) == FALSE) {
+      _debug_printf("pp: Failed to translate a shader for %s\n", name);
       return NULL;
    }
 
