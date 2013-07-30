@@ -812,7 +812,9 @@ static void parseOptConfAttr (struct OptConfData *data, const XML_Char **attr) {
 	driOptionCache *cache = data->cache;
 	GLuint opt = findOption (cache, name);
 	if (cache->info[opt].name == NULL)
-	    XML_WARNING ("undefined option: %s.", name);
+            /* don't use XML_WARNING, drirc defines options for all drivers,
+             * but not all drivers support them */
+            return;
 	else if (getenv (cache->info[opt].name))
 	  /* don't use XML_WARNING, we want the user to see this! */
 	    fprintf (stderr, "ATTENTION: option value of option %s ignored.\n",

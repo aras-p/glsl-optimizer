@@ -1,5 +1,7 @@
 <driconf>
-    <device screen="0" driver="i965">
+    <!-- Please always enable app-specific workarounds for all drivers and
+         screens. -->
+    <device>
         <application name="Unigine Sanctuary" executable="Sanctuary">
             <option name="force_glsl_extensions_warn" value="true" />
             <option name="disable_blend_func_extended" value="true" />
