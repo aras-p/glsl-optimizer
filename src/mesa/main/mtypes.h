@@ -2402,6 +2402,7 @@ struct gl_shader_program
 #define GLSL_NOP_FRAG 0x40  /**< Force no-op fragment shaders */
 #define GLSL_USE_PROG 0x80  /**< Log glUseProgram calls */
 #define GLSL_REPORT_ERRORS 0x100  /**< Print compilation errors */
+#define GLSL_DUMP_ON_ERROR 0x200 /**< Dump shaders to stderr on compile error */
 
 
 /**

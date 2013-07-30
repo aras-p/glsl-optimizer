@@ -71,7 +71,9 @@ get_shader_flags(void)
    const char *env = _mesa_getenv("MESA_GLSL");
 
    if (env) {
-      if (strstr(env, "dump"))
+      if (strstr(env, "dump_on_error"))
+         flags |= GLSL_DUMP_ON_ERROR;
+      else if (strstr(env, "dump"))
          flags |= GLSL_DUMP;
       if (strstr(env, "log"))
          flags |= GLSL_LOG;
@@ -783,10 +785,17 @@ compile_shader(struct gl_context *ctx, GLuint shaderObj)
 
    }
 
-   if (sh->CompileStatus == GL_FALSE && 
-       (ctx->Shader.Flags & GLSL_REPORT_ERRORS)) {
-      _mesa_debug(ctx, "Error compiling shader %u:\n%s\n",
-                  sh->Name, sh->InfoLog);
+   if (!sh->CompileStatus) {
+      if (ctx->Shader.Flags & GLSL_DUMP_ON_ERROR) {
+         fprintf(stderr, "GLSL source for %s shader %d:\n",
+                 _mesa_glsl_shader_target_name(sh->Type), sh->Name);
+         fprintf(stderr, "%s\n", sh->Source);
+      }
+
+      if (ctx->Shader.Flags & GLSL_REPORT_ERRORS) {
+         _mesa_debug(ctx, "Error compiling shader %u:\n%s\n",
+                     sh->Name, sh->InfoLog);
+      }
    }
 }
 
