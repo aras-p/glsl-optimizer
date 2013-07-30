@@ -368,7 +368,9 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
         case PIPE_CAP_PREFER_BLIT_BASED_TEXTURE_TRANSFER:
 	case PIPE_CAP_TGSI_INSTANCEID:
 	case PIPE_CAP_COMPUTE:
+	case PIPE_CAP_TEXTURE_MULTISAMPLE:
 		return 1;
+
 	case PIPE_CAP_TGSI_TEXCOORD:
 		return 0;
 
@@ -390,7 +392,6 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_VERTEX_COLOR_CLAMPED:
 	case PIPE_CAP_QUADS_FOLLOW_PROVOKING_VERTEX_CONVENTION:
 	case PIPE_CAP_USER_VERTEX_BUFFERS:
-	case PIPE_CAP_TEXTURE_MULTISAMPLE:
 	case PIPE_CAP_QUERY_TIMESTAMP:
 	case PIPE_CAP_QUERY_PIPELINE_STATISTICS:
 	case PIPE_CAP_CUBE_MAP_ARRAY:

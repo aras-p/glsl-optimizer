@@ -1555,7 +1555,7 @@ static unsigned si_tex_compare(unsigned compare)
 	}
 }
 
-static unsigned si_tex_dim(unsigned dim)
+static unsigned si_tex_dim(unsigned dim, unsigned nr_samples)
 {
 	switch (dim) {
 	default:
@@ -1565,9 +1565,11 @@ static unsigned si_tex_dim(unsigned dim)
 		return V_008F1C_SQ_RSRC_IMG_1D_ARRAY;
 	case PIPE_TEXTURE_2D:
 	case PIPE_TEXTURE_RECT:
-		return V_008F1C_SQ_RSRC_IMG_2D;
+		return nr_samples > 1 ? V_008F1C_SQ_RSRC_IMG_2D_MSAA :
+					V_008F1C_SQ_RSRC_IMG_2D;
 	case PIPE_TEXTURE_2D_ARRAY:
-		return V_008F1C_SQ_RSRC_IMG_2D_ARRAY;
+		return nr_samples > 1 ? V_008F1C_SQ_RSRC_IMG_2D_MSAA_ARRAY :
+					V_008F1C_SQ_RSRC_IMG_2D_ARRAY;
 	case PIPE_TEXTURE_3D:
 		return V_008F1C_SQ_RSRC_IMG_3D;
 	case PIPE_TEXTURE_CUBE:
@@ -2653,11 +2655,14 @@ static struct pipe_sampler_view *si_create_sampler_view(struct pipe_context *ctx
 			  S_008F1C_DST_SEL_Y(si_map_swizzle(swizzle[1])) |
 			  S_008F1C_DST_SEL_Z(si_map_swizzle(swizzle[2])) |
 			  S_008F1C_DST_SEL_W(si_map_swizzle(swizzle[3])) |
-			  S_008F1C_BASE_LEVEL(state->u.tex.first_level) |
-			  S_008F1C_LAST_LEVEL(state->u.tex.last_level) |
+			  S_008F1C_BASE_LEVEL(texture->nr_samples > 1 ?
+						      0 : state->u.tex.first_level) |
+			  S_008F1C_LAST_LEVEL(texture->nr_samples > 1 ?
+						      util_logbase2(texture->nr_samples) :
+						      state->u.tex.last_level) |
 			  S_008F1C_TILING_INDEX(si_tile_mode_index(tmp, 0, false)) |
 			  S_008F1C_POW2_PAD(texture->last_level > 0) |
-			  S_008F1C_TYPE(si_tex_dim(texture->target)));
+			  S_008F1C_TYPE(si_tex_dim(texture->target, texture->nr_samples)));
 	view->state[4] = (S_008F20_DEPTH(depth - 1) | S_008F20_PITCH(pitch - 1));
 	view->state[5] = (S_008F24_BASE_ARRAY(state->u.tex.first_layer) |
 			  S_008F24_LAST_ARRAY(state->u.tex.last_layer));
