@@ -155,8 +155,8 @@ _mesa_initialize_texture_object( struct gl_context *ctx,
    obj->Swizzle[3] = GL_ALPHA;
    obj->_Swizzle = SWIZZLE_NOOP;
    obj->Sampler.sRGBDecode = GL_DECODE_EXT;
-   obj->BufferObjectFormat = GL_LUMINANCE8;
-   obj->_BufferObjectFormat = MESA_FORMAT_L8;
+   obj->BufferObjectFormat = GL_R8;
+   obj->_BufferObjectFormat = MESA_FORMAT_R8;
 }
 
 
