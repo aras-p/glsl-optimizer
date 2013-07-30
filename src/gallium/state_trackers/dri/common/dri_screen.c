@@ -55,7 +55,6 @@ PUBLIC const char __driConfigOptions[] =
 
       DRI_CONF_SECTION_QUALITY
 /*       DRI_CONF_FORCE_S3TC_ENABLE("false") */
-         DRI_CONF_ALLOW_LARGE_TEXTURES(1)
          DRI_CONF_PP_CELSHADE(0)
          DRI_CONF_PP_NORED(0)
          DRI_CONF_PP_NOGREEN(0)
@@ -77,7 +76,7 @@ PUBLIC const char __driConfigOptions[] =
 
 #define false 0
 
-static const uint __driNConfigOptions = 13;
+static const uint __driNConfigOptions = 12;
 
 static const __DRIconfig **
 dri_fill_in_modes(struct dri_screen *screen)
