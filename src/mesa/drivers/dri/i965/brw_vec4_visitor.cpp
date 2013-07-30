@@ -2427,7 +2427,7 @@ vec4_visitor::visit(ir_texture *ir)
 	    }
 	 } else /* brw->gen == 4 */ {
 	    mrf = param_base;
-	    writemask = WRITEMASK_Z;
+	    writemask = WRITEMASK_W;
 	 }
 	 emit(MOV(dst_reg(MRF, mrf, lod_type, writemask), lod));
       } else if (ir->op == ir_txf) {
