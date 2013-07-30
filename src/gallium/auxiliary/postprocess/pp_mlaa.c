@@ -43,7 +43,6 @@
 #include "postprocess/postprocess.h"
 #include "postprocess/pp_mlaa.h"
 #include "postprocess/pp_filters.h"
-#include "util/u_blit.h"
 #include "util/u_box.h"
 #include "util/u_sampler.h"
 #include "util/u_inlines.h"
@@ -191,10 +190,9 @@ pp_jimenezmlaa_run(struct pp_queue_t *ppq, struct pipe_resource *in,
    pp_filter_set_fb(p);
 
    /* Blit the input to the output */
-   util_blit_pixels(p->blitctx, in, 0, 0, 0,
-                    w, h, 0, p->framebuffer.cbufs[0],
-                    0, 0, w, h, 0, PIPE_TEX_MIPFILTER_NEAREST,
-                    TGSI_WRITEMASK_XYZW, 0);
+   pp_blit(p->pipe, in, 0, 0,
+           w, h, 0, p->framebuffer.cbufs[0],
+           0, 0, w, h);
 
    u_sampler_view_default_template(&v_tmp, in, in->format);
    arr[0] = p->pipe->create_sampler_view(p->pipe, in, &v_tmp);

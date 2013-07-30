@@ -31,7 +31,6 @@
 
 #include "pipe/p_screen.h"
 #include "util/u_inlines.h"
-#include "util/u_blit.h"
 #include "util/u_math.h"
 #include "util/u_debug.h"
 #include "util/u_memory.h"
@@ -111,13 +110,6 @@ pp_init(struct pipe_context *pipe, const unsigned int *enabled,
       }
    }
 
-   ppq->p->blitctx = util_create_blit(ppq->p->pipe, cso);
-
-   if (ppq->p->blitctx == NULL) {
-      pp_debug("Unable to create a blit context.\n");
-      goto error;
-   }
-
    ppq->n_filters = curpos;
    ppq->n_tmp = (curpos > 2 ? 2 : 1);
    ppq->n_inner_tmp = tmp_req;
@@ -180,11 +172,6 @@ pp_free(struct pp_queue_t *ppq)
    pp_free_fbos(ppq);
 
    if (ppq && ppq->p) {
-      /* Only destroy created contexts. */
-      if (ppq->p->blitctx) {
-         util_destroy_blit(ppq->p->blitctx);
-      }
-
       if (ppq->p->pipe && ppq->filters && ppq->shaders) {
          for (i = 0; i < ppq->n_filters; i++) {
             unsigned int filter = ppq->filters[i];

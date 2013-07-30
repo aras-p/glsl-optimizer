@@ -56,8 +56,6 @@ struct program
    struct pipe_resource *vbuf;
    struct pipe_surface surf;
    struct pipe_sampler_view *view;
-
-   struct blit_state *blitctx;
 };
 
 
