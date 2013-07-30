@@ -102,8 +102,9 @@ static int r600_init_surface(struct r600_screen *rscreen,
 		}
 	}
 
-	surface->nsamples = 1;
+	surface->nsamples = ptex->nr_samples ? ptex->nr_samples : 1;
 	surface->flags = 0;
+
 	switch (array_mode) {
 	case V_009910_ARRAY_1D_TILED_THIN1:
 		surface->flags |= RADEON_SURF_SET(RADEON_SURF_MODE_1D, MODE);
@@ -529,7 +530,9 @@ struct pipe_resource *si_texture_create(struct pipe_screen *screen,
 
 	if (!(templ->flags & R600_RESOURCE_FLAG_TRANSFER) &&
 	    !(templ->bind & PIPE_BIND_SCANOUT)) {
-		if (util_format_is_compressed(templ->format)) {
+		if (templ->flags & R600_RESOURCE_FLAG_FORCE_TILING) {
+			array_mode = V_009910_ARRAY_2D_TILED_THIN1;
+		} else if (util_format_is_compressed(templ->format)) {
 			array_mode = V_009910_ARRAY_1D_TILED_THIN1;
 		} else {
 			if (rscreen->chip_class >= CIK)

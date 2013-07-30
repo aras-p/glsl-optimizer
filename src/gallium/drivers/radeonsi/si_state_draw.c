@@ -606,7 +606,8 @@ static void si_state_draw(struct r600_context *rctx,
 		struct si_state_dsa *dsa = rctx->queued.named.dsa;
 
 		si_pm4_set_reg(pm4, R_028004_DB_COUNT_CONTROL,
-			       S_028004_PERFECT_ZPASS_COUNTS(1));
+			       S_028004_PERFECT_ZPASS_COUNTS(1) |
+			       S_028004_SAMPLE_RATE(rctx->fb_log_samples));
 		si_pm4_set_reg(pm4, R_02800C_DB_RENDER_OVERRIDE,
 			       dsa->db_render_override |
 			       S_02800C_NOOP_CULL_DISABLE(1));

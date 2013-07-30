@@ -43,6 +43,8 @@ enum r600_blitter_op /* bitmask */
 			     R600_DISABLE_RENDER_COND,
 
 	R600_DECOMPRESS    = R600_SAVE_FRAMEBUFFER | R600_DISABLE_RENDER_COND,
+
+	R600_COLOR_RESOLVE = R600_SAVE_FRAMEBUFFER | R600_DISABLE_RENDER_COND
 };
 
 static void r600_blitter_begin(struct pipe_context *ctx, enum r600_blitter_op op)
@@ -463,21 +465,145 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 		r600_reset_blittable_to_orig(dst, dst_level, &orig_info[1]);
 }
 
+static boolean is_simple_msaa_resolve(const struct pipe_blit_info *info)
+{
+	unsigned dst_width = u_minify(info->dst.resource->width0, info->dst.level);
+	unsigned dst_height = u_minify(info->dst.resource->height0, info->dst.level);
+	struct r600_texture *dst = (struct r600_texture*)info->dst.resource;
+	unsigned dst_tile_mode = dst->surface.level[info->dst.level].mode;
+
+	return info->dst.resource->format == info->src.resource->format &&
+		info->dst.resource->format == info->dst.format &&
+		info->src.resource->format == info->src.format &&
+		!info->scissor_enable &&
+		info->mask == PIPE_MASK_RGBA &&
+		dst_width == info->src.resource->width0 &&
+		dst_height == info->src.resource->height0 &&
+		info->dst.box.x == 0 &&
+		info->dst.box.y == 0 &&
+		info->dst.box.width == dst_width &&
+		info->dst.box.height == dst_height &&
+		info->src.box.x == 0 &&
+		info->src.box.y == 0 &&
+		info->src.box.width == dst_width &&
+		info->src.box.height == dst_height &&
+		/* Dst must be tiled. If it's not, we have to use a temporary
+		 * resource which is tiled. */
+		dst_tile_mode >= RADEON_SURF_MODE_1D;
+}
+
+/* For MSAA integer resolving to work, we change the format to NORM using this function. */
+static enum pipe_format int_to_norm_format(enum pipe_format format)
+{
+	switch (format) {
+#define REPLACE_FORMAT_SIGN(format,sign) \
+	case PIPE_FORMAT_##format##_##sign##INT: \
+		return PIPE_FORMAT_##format##_##sign##NORM
+#define REPLACE_FORMAT(format) \
+		REPLACE_FORMAT_SIGN(format, U); \
+		REPLACE_FORMAT_SIGN(format, S)
+
+	REPLACE_FORMAT_SIGN(B10G10R10A2, U);
+	REPLACE_FORMAT(R8);
+	REPLACE_FORMAT(R8G8);
+	REPLACE_FORMAT(R8G8B8X8);
+	REPLACE_FORMAT(R8G8B8A8);
+	REPLACE_FORMAT(A8);
+	REPLACE_FORMAT(I8);
+	REPLACE_FORMAT(L8);
+	REPLACE_FORMAT(L8A8);
+	REPLACE_FORMAT(R16);
+	REPLACE_FORMAT(R16G16);
+	REPLACE_FORMAT(R16G16B16X16);
+	REPLACE_FORMAT(R16G16B16A16);
+	REPLACE_FORMAT(A16);
+	REPLACE_FORMAT(I16);
+	REPLACE_FORMAT(L16);
+	REPLACE_FORMAT(L16A16);
+
+#undef REPLACE_FORMAT
+#undef REPLACE_FORMAT_SIGN
+	default:
+		return format;
+	}
+}
+
+static void si_msaa_color_resolve(struct pipe_context *ctx,
+				  const struct pipe_blit_info *info)
+{
+	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct pipe_screen *screen = ctx->screen;
+	struct pipe_resource *tmp, templ;
+	struct pipe_blit_info blit;
+	unsigned sample_mask = ~0;
+
+	assert(info->src.level == 0);
+	assert(info->src.box.depth == 1);
+	assert(info->dst.box.depth == 1);
+
+	if (is_simple_msaa_resolve(info)) {
+		r600_blitter_begin(ctx, R600_COLOR_RESOLVE);
+		util_blitter_custom_resolve_color(rctx->blitter,
+						  info->dst.resource, info->dst.level,
+						  info->dst.box.z,
+						  info->src.resource, info->src.box.z,
+						  sample_mask, rctx->custom_blend_resolve,
+                                                  int_to_norm_format(info->dst.format));
+		r600_blitter_end(ctx);
+		return;
+	}
+
+	/* resolve into a temporary texture, then blit */
+	templ.target = PIPE_TEXTURE_2D;
+	templ.format = info->src.resource->format;
+	templ.width0 = info->src.resource->width0;
+	templ.height0 = info->src.resource->height0;
+	templ.depth0 = 1;
+	templ.array_size = 1;
+	templ.last_level = 0;
+	templ.nr_samples = 0;
+	templ.usage = PIPE_USAGE_STATIC;
+	templ.bind = PIPE_BIND_RENDER_TARGET | PIPE_BIND_SAMPLER_VIEW;
+	templ.flags = R600_RESOURCE_FLAG_FORCE_TILING; /* dst must not have a linear layout */
+
+	tmp = screen->resource_create(screen, &templ);
+
+	/* resolve */
+	r600_blitter_begin(ctx, R600_COLOR_RESOLVE);
+	util_blitter_custom_resolve_color(rctx->blitter,
+					  tmp, 0, 0,
+					  info->src.resource, info->src.box.z,
+					  sample_mask, rctx->custom_blend_resolve,
+                                          int_to_norm_format(tmp->format));
+	r600_blitter_end(ctx);
+
+	/* blit */
+	blit = *info;
+	blit.src.resource = tmp;
+	blit.src.box.z = 0;
+
+	r600_blitter_begin(ctx, R600_BLIT);
+	util_blitter_blit(rctx->blitter, &blit);
+	r600_blitter_end(ctx);
+
+	pipe_resource_reference(&tmp, NULL);
+}
+
 static void si_blit(struct pipe_context *ctx,
                       const struct pipe_blit_info *info)
 {
 	struct r600_context *rctx = (struct r600_context*)ctx;
 	struct r600_texture *rsrc = (struct r600_texture*)info->src.resource;
 
-	assert(util_blitter_is_blit_supported(rctx->blitter, info));
-
 	if (info->src.resource->nr_samples > 1 &&
 	    info->dst.resource->nr_samples <= 1 &&
 	    !util_format_is_depth_or_stencil(info->src.resource->format) &&
 	    !util_format_is_pure_integer(info->src.resource->format)) {
-		debug_printf("radeonsi: color resolve is unimplemented\n");
+		si_msaa_color_resolve(ctx, info);
 		return;
 	}
+
+	assert(util_blitter_is_blit_supported(rctx->blitter, info));
 
 	if (rsrc->is_depth && !rsrc->is_flushing_texture) {
 		si_blit_decompress_depth_in_place(rctx, rsrc,

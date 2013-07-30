@@ -140,6 +140,7 @@ struct r600_context {
 	void				*custom_dsa_flush_depth;
 	void				*custom_dsa_flush_stencil;
 	void				*custom_dsa_flush_inplace;
+	void				*custom_blend_resolve;
 	struct r600_screen		*screen;
 	struct radeon_winsys		*ws;
 
@@ -152,6 +153,7 @@ struct r600_context {
 
 	struct si_vertex_element	*vertex_elements;
 	struct pipe_framebuffer_state	framebuffer;
+	unsigned			fb_log_samples;
 	unsigned			pa_sc_line_stipple;
 	unsigned			pa_su_sc_mode_cntl;
 	/* for saving when using blitter */

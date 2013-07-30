@@ -6600,6 +6600,16 @@
 #define   G_028800_DISABLE_COLOR_WRITES_ON_DEPTH_PASS(x)              (((x) >> 31) & 0x1)
 #define   C_028800_DISABLE_COLOR_WRITES_ON_DEPTH_PASS                 0x7FFFFFFF
 #define R_028804_DB_EQAA                                                0x028804
+#define   S_028804_MAX_ANCHOR_SAMPLES(x)		(((x) & 0x7) << 0)
+#define   S_028804_PS_ITER_SAMPLES(x)			(((x) & 0x7) << 4)
+#define   S_028804_MASK_EXPORT_NUM_SAMPLES(x)		(((x) & 0x7) << 8)
+#define   S_028804_ALPHA_TO_MASK_NUM_SAMPLES(x)		(((x) & 0x7) << 12)
+#define   S_028804_HIGH_QUALITY_INTERSECTIONS(x)	(((x) & 0x1) << 16)
+#define   S_028804_INCOHERENT_EQAA_READS(x)		(((x) & 0x1) << 17)
+#define   S_028804_INTERPOLATE_COMP_Z(x)		(((x) & 0x1) << 18)
+#define   S_028804_INTERPOLATE_SRC_Z(x)			(((x) & 0x1) << 19)
+#define   S_028804_STATIC_ANCHOR_ASSOCIATIONS(x)	(((x) & 0x1) << 20)
+#define   S_028804_ALPHA_TO_MASK_EQAA_DISABLE(x)	(((x) & 0x1) << 21)
 #define R_028808_CB_COLOR_CONTROL                                       0x028808
 #define   S_028808_DEGAMMA_ENABLE(x)                                  (((x) & 0x1) << 3)
 #define   G_028808_DEGAMMA_ENABLE(x)                                  (((x) >> 3) & 0x1)
