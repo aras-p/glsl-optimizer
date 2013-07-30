@@ -710,6 +710,7 @@ void st_init_extensions(struct st_context *st)
    }
    else if (ctx->Const.MaxSamples >= 2) {
       ctx->Extensions.EXT_framebuffer_multisample = GL_TRUE;
+      ctx->Extensions.EXT_framebuffer_multisample_blit_scaled = GL_TRUE;
    }
 
    if (ctx->Const.MaxDualSourceDrawBuffers > 0)
