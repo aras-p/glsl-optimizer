@@ -335,7 +335,7 @@ tex_storage_error_check(struct gl_context *ctx, GLuint dims, GLenum target,
 
    /* non-default texture object check */
    texObj = _mesa_get_current_tex_object(ctx, target);
-   if (!texObj || (texObj->Name == 0)) {
+   if (!_mesa_is_proxy_texture(target) && (!texObj || (texObj->Name == 0))) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glTexStorage%uD(texture object 0)", dims);
       return GL_TRUE;
