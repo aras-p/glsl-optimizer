@@ -50,7 +50,8 @@ extern struct gl_texture_object *
 _mesa_new_texture_object( struct gl_context *ctx, GLuint name, GLenum target );
 
 extern void
-_mesa_initialize_texture_object( struct gl_texture_object *obj,
+_mesa_initialize_texture_object( struct gl_context *ctx,
+                                 struct gl_texture_object *obj,
                                  GLuint name, GLenum target );
 
 extern void

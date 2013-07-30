@@ -410,7 +410,7 @@ radeonNewTextureObject( struct gl_context *ctx, GLuint name, GLenum target )
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
    radeonTexObj* t = CALLOC_STRUCT(radeon_tex_obj);
 
-   _mesa_initialize_texture_object(&t->base, name, target);
+   _mesa_initialize_texture_object(ctx, &t->base, name, target);
    t->base.Sampler.MaxAnisotropy = rmesa->radeon.initialMaxAnisotropy;
 
    t->border_fallback = GL_FALSE;

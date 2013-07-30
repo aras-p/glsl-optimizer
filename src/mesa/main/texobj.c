@@ -83,7 +83,7 @@ _mesa_new_texture_object( struct gl_context *ctx, GLuint name, GLenum target )
    struct gl_texture_object *obj;
    (void) ctx;
    obj = MALLOC_STRUCT(gl_texture_object);
-   _mesa_initialize_texture_object(obj, name, target);
+   _mesa_initialize_texture_object(ctx, obj, name, target);
    return obj;
 }
 
@@ -95,7 +95,8 @@ _mesa_new_texture_object( struct gl_context *ctx, GLuint name, GLenum target )
  * \param target  the texture target
  */
 void
-_mesa_initialize_texture_object( struct gl_texture_object *obj,
+_mesa_initialize_texture_object( struct gl_context *ctx,
+                                 struct gl_texture_object *obj,
                                  GLuint name, GLenum target )
 {
    ASSERT(target == 0 ||
@@ -146,7 +147,7 @@ _mesa_initialize_texture_object( struct gl_texture_object *obj,
    obj->Sampler.MaxAnisotropy = 1.0;
    obj->Sampler.CompareMode = GL_NONE;         /* ARB_shadow */
    obj->Sampler.CompareFunc = GL_LEQUAL;       /* ARB_shadow */
-   obj->DepthMode = GL_LUMINANCE;
+   obj->DepthMode = ctx->API == API_OPENGL_CORE ? GL_RED : GL_LUMINANCE;
    obj->Sampler.CubeMapSeamless = GL_FALSE;
    obj->Swizzle[0] = GL_RED;
    obj->Swizzle[1] = GL_GREEN;

@@ -476,7 +476,7 @@ static struct gl_texture_object *r200NewTextureObject(struct gl_context * ctx,
 	   __FUNCTION__, ctx,
 	   _mesa_lookup_enum_by_nr(target), t);
 
-   _mesa_initialize_texture_object(&t->base, name, target);
+   _mesa_initialize_texture_object(ctx, &t->base, name, target);
    t->base.Sampler.MaxAnisotropy = rmesa->radeon.initialMaxAnisotropy;
 
    /* Initialize hardware state */

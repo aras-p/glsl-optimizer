@@ -39,7 +39,7 @@ intelNewTextureObject(struct gl_context * ctx, GLuint name, GLenum target)
    if (obj == NULL)
       return NULL;
 
-   _mesa_initialize_texture_object(&obj->base, name, target);
+   _mesa_initialize_texture_object(ctx, &obj->base, name, target);
 
    obj->needs_validate = true;
 

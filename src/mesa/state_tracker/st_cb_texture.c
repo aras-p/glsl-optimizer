@@ -141,7 +141,7 @@ st_NewTextureObject(struct gl_context * ctx, GLuint name, GLenum target)
    struct st_texture_object *obj = ST_CALLOC_STRUCT(st_texture_object);
 
    DBG("%s\n", __FUNCTION__);
-   _mesa_initialize_texture_object(&obj->base, name, target);
+   _mesa_initialize_texture_object(ctx, &obj->base, name, target);
 
    return &obj->base;
 }

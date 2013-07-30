@@ -46,7 +46,7 @@ nouveau_texture_new(struct gl_context *ctx, GLuint name, GLenum target)
 {
 	struct nouveau_texture *nt = CALLOC_STRUCT(nouveau_texture);
 
-	_mesa_initialize_texture_object(&nt->base, name, target);
+	_mesa_initialize_texture_object(ctx, &nt->base, name, target);
 
 	return &nt->base;
 }
