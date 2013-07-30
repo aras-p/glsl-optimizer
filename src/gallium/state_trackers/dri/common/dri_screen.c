@@ -49,11 +49,6 @@
 
 PUBLIC const char __driConfigOptions[] =
    DRI_CONF_BEGIN
-      DRI_CONF_SECTION_PERFORMANCE
-         DRI_CONF_FTHROTTLE_MODE(DRI_CONF_FTHROTTLE_IRQS)
-         DRI_CONF_VBLANK_MODE(DRI_CONF_VBLANK_DEF_INTERVAL_0)
-      DRI_CONF_SECTION_END
-
       DRI_CONF_SECTION_QUALITY
          DRI_CONF_FORCE_S3TC_ENABLE("false")
          DRI_CONF_PP_CELSHADE(0)
@@ -77,7 +72,7 @@ PUBLIC const char __driConfigOptions[] =
 
 #define false 0
 
-static const uint __driNConfigOptions = 13;
+static const uint __driNConfigOptions = 11;
 
 static const __DRIconfig **
 dri_fill_in_modes(struct dri_screen *screen)
