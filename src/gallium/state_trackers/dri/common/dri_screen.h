@@ -39,6 +39,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
 #include "state_tracker/st_api.h"
+#include "postprocess/filters.h"
 
 struct dri_context;
 struct dri_drawable;
@@ -62,6 +63,9 @@ struct dri_screen
 
    /** The screen's effective configuration options */
    driOptionCache optionCache;
+
+   /* Which postprocessing filters are enabled. */
+   unsigned pp_enabled[PP_FILTERS];
 
    /* drm */
    int fd;

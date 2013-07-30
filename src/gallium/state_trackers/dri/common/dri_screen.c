@@ -382,6 +382,17 @@ dri_destroy_screen(__DRIscreen * sPriv)
    sPriv->extensions = NULL;
 }
 
+static void
+dri_postprocessing_init(struct dri_screen *screen)
+{
+   unsigned i;
+
+   for (i = 0; i < PP_FILTERS; i++) {
+      screen->pp_enabled[i] = driQueryOptioni(&screen->optionCache,
+                                              pp_filters[i].name);
+   }
+}
+
 const __DRIconfig **
 dri_init_screen_helper(struct dri_screen *screen,
                        struct pipe_screen *pscreen)
@@ -425,6 +436,8 @@ dri_init_screen_helper(struct dri_screen *screen,
 
       util_format_s3tc_enabled = TRUE;
    }
+
+   dri_postprocessing_init(screen);
 
    return dri_fill_in_modes(screen);
 }

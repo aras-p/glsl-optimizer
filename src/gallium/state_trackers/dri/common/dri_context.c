@@ -39,16 +39,6 @@
 #include "pipe/p_context.h"
 #include "state_tracker/st_context.h"
 
-static void
-dri_pp_query(struct dri_context *ctx)
-{
-   unsigned int i;
-
-   for (i = 0; i < PP_FILTERS; i++) {
-      ctx->pp_enabled[i] = driQueryOptioni(&ctx->optionCache, pp_filters[i].name);
-   }
-}
-
 static void dri_fill_st_options(struct st_config_options *options,
                                 const struct driOptionCache * optionCache)
 {
@@ -156,11 +146,8 @@ dri_create_context(gl_api api, const struct gl_config * visual,
    ctx->st->st_manager_private = (void *) ctx;
    ctx->stapi = stapi;
 
-   // Context successfully created. See if post-processing is requested.
-   dri_pp_query(ctx);
-
    if (ctx->st->cso_context) {
-      ctx->pp = pp_init(ctx->st->pipe, ctx->pp_enabled, ctx->st->cso_context);
+      ctx->pp = pp_init(ctx->st->pipe, screen->pp_enabled, ctx->st->cso_context);
       ctx->hud = hud_create(ctx->st->pipe, ctx->st->cso_context);
    }
 
