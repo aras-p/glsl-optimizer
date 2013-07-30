@@ -713,7 +713,8 @@ void st_init_extensions(struct st_context *st)
       ctx->Extensions.EXT_framebuffer_multisample_blit_scaled = GL_TRUE;
    }
 
-   if (ctx->Const.MaxDualSourceDrawBuffers > 0)
+   if (ctx->Const.MaxDualSourceDrawBuffers > 0 &&
+       !st->options.disable_blend_func_extended)
       ctx->Extensions.ARB_blend_func_extended = GL_TRUE;
 
    st->has_time_elapsed =

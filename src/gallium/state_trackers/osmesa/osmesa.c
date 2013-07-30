@@ -543,6 +543,7 @@ OSMesaCreateContextExt(GLenum format, GLint depthBits, GLint stencilBits,
    attribs.minor = 1;
    attribs.flags = 0;  /* ST_CONTEXT_FLAG_x */
    attribs.options.force_glsl_extensions_warn = FALSE;
+   attribs.options.disable_blend_func_extended = FALSE;
    attribs.options.disable_glsl_line_continuations = FALSE;
 
    osmesa_init_st_visual(&attribs.visual,
