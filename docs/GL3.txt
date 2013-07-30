@@ -7,6 +7,14 @@ infrastructure is complete but it may be the case that few (if any) drivers
 implement the features.
 
 
+OpenGL Core and Compatibility context support
+
+OpenGL 3.1 and later versions are only supported with the Core profile.
+There are no plans to support GL_ARB_compatibility. The last supported OpenGL
+version with all deprecated features is 3.0. Some of the later GL features
+are exposed in the 3.0 context as extensions.
+
+
 Feature                                               Status
 ----------------------------------------------------- ------------------------
 
