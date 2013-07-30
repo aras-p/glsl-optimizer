@@ -18,6 +18,10 @@ Application bugs worked around in this file:
   fails to compile with GLSL 1.10.
   Adding "#version 130" fixes this.
 
+* Unigine Heaven 3.0 with ARB_shader_bit_encoding uses a "uint & int"
+  expression, which fails (and should fail) to compile with any GLSL version.
+  Disabling ARB_shader_bit_encoding fixes this.
+
 TODO: document the other workarounds.
 
 -->
@@ -40,12 +44,14 @@ TODO: document the other workarounds.
             <option name="force_glsl_extensions_warn" value="true" />
             <option name="disable_blend_func_extended" value="true" />
             <option name="force_glsl_version" value="130" />
+            <option name="disable_shader_bit_encoding" value="true" />
 	</application>
 
         <application name="Unigine Heaven (64-bit)" executable="heaven_x64">
             <option name="force_glsl_extensions_warn" value="true" />
             <option name="disable_blend_func_extended" value="true" />
             <option name="force_glsl_version" value="130" />
+            <option name="disable_shader_bit_encoding" value="true" />
 	</application>
 
         <application name="Unigine OilRush (32-bit)" executable="OilRush_x86">

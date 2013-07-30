@@ -241,6 +241,7 @@ struct st_config_options
 {
    boolean disable_blend_func_extended;
    boolean disable_glsl_line_continuations;
+   boolean disable_shader_bit_encoding;
    boolean force_glsl_extensions_warn;
    unsigned force_glsl_version;
    boolean force_s3tc_enable;

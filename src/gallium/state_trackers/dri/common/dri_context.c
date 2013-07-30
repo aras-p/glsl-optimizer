@@ -46,6 +46,8 @@ static void dri_fill_st_options(struct st_config_options *options,
       driQueryOptionb(optionCache, "disable_blend_func_extended");
    options->disable_glsl_line_continuations =
       driQueryOptionb(optionCache, "disable_glsl_line_continuations");
+   options->disable_shader_bit_encoding =
+      driQueryOptionb(optionCache, "disable_shader_bit_encoding");
    options->force_glsl_extensions_warn =
       driQueryOptionb(optionCache, "force_glsl_extensions_warn");
    options->force_glsl_version =

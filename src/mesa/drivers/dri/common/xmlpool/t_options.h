@@ -95,6 +95,11 @@ DRI_CONF_OPT_BEGIN_B(disable_glsl_line_continuations, def) \
         DRI_CONF_DESC(en,gettext("Disable backslash-based line continuations in GLSL source")) \
 DRI_CONF_OPT_END
 
+#define DRI_CONF_DISABLE_SHADER_BIT_ENCODING(def) \
+DRI_CONF_OPT_BEGIN_B(disable_shader_bit_encoding, def) \
+        DRI_CONF_DESC(en,gettext("Disable GL_ARB_shader_bit_encoding")) \
+DRI_CONF_OPT_END
+
 #define DRI_CONF_FORCE_GLSL_VERSION(def) \
 DRI_CONF_OPT_BEGIN_V(force_glsl_version, int, def, "0:999") \
         DRI_CONF_DESC(en,gettext("Force a default GLSL version for shaders that lack an explicit #version line")) \
