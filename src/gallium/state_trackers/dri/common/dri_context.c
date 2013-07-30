@@ -42,12 +42,14 @@
 static void dri_fill_st_options(struct st_config_options *options,
                                 const struct driOptionCache * optionCache)
 {
-   options->force_glsl_extensions_warn =
-      driQueryOptionb(optionCache, "force_glsl_extensions_warn");
-   options->disable_glsl_line_continuations =
-      driQueryOptionb(optionCache, "disable_glsl_line_continuations");
    options->disable_blend_func_extended =
       driQueryOptionb(optionCache, "disable_blend_func_extended");
+   options->disable_glsl_line_continuations =
+      driQueryOptionb(optionCache, "disable_glsl_line_continuations");
+   options->force_glsl_extensions_warn =
+      driQueryOptionb(optionCache, "force_glsl_extensions_warn");
+   options->force_glsl_version =
+      driQueryOptioni(optionCache, "force_glsl_version");
    options->force_s3tc_enable =
       driQueryOptionb(optionCache, "force_s3tc_enable");
 }

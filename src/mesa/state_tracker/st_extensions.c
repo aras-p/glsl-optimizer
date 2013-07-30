@@ -598,6 +598,11 @@ void st_init_extensions(struct st_context *st)
 
    _mesa_override_glsl_version(st->ctx);
 
+   if (st->options.force_glsl_version > 0 &&
+       st->options.force_glsl_version <= ctx->Const.GLSLVersion) {
+      ctx->Const.ForceGLSLVersion = st->options.force_glsl_version;
+   }
+
    if (ctx->Const.GLSLVersion >= 130) {
       ctx->Const.NativeIntegers = GL_TRUE;
       ctx->Const.MaxClipPlanes = 8;

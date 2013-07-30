@@ -63,6 +63,7 @@ PUBLIC const char __driConfigOptions[] =
          DRI_CONF_FORCE_GLSL_EXTENSIONS_WARN("false")
          DRI_CONF_DISABLE_GLSL_LINE_CONTINUATIONS("false")
          DRI_CONF_DISABLE_BLEND_FUNC_EXTENDED("false")
+         DRI_CONF_FORCE_GLSL_VERSION(0)
       DRI_CONF_SECTION_END
 
       DRI_CONF_SECTION_MISCELLANEOUS
@@ -72,7 +73,7 @@ PUBLIC const char __driConfigOptions[] =
 
 #define false 0
 
-static const uint __driNConfigOptions = 11;
+static const uint __driNConfigOptions = 12;
 
 static const __DRIconfig **
 dri_fill_in_modes(struct dri_screen *screen)
