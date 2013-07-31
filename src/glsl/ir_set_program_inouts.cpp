@@ -171,13 +171,34 @@ ir_set_program_inouts_visitor::try_mark_partial_variable(ir_variable *var,
    if (!index_as_constant)
       return false;
 
-   int width = 1;
-   if (type->is_array() && type->fields.array->is_matrix()) {
-      width = type->fields.array->matrix_columns;
+   unsigned elem_width;
+   unsigned num_elems;
+   if (type->is_array()) {
+      num_elems = type->length;
+      if (type->fields.array->is_matrix())
+         elem_width = type->fields.array->matrix_columns;
+      else
+         elem_width = 1;
+   } else {
+      num_elems = type->matrix_columns;
+      elem_width = 1;
    }
 
-   mark(this->prog, var, index_as_constant->value.u[0] * width, width,
-        this->shader_type == GL_FRAGMENT_SHADER);
+   if (index_as_constant->value.u[0] >= num_elems) {
+      /* Constant index outside the bounds of the matrix/array.  This could
+       * arise as a result of constant folding of a legal GLSL program.
+       *
+       * Even though the spec says that indexing outside the bounds of a
+       * matrix/array results in undefined behaviour, we don't want to pass
+       * out-of-range values to mark() (since this could result in slots that
+       * don't exist being marked as used), so just let the caller mark the
+       * whole variable as used.
+       */
+      return false;
+   }
+
+   mark(this->prog, var, index_as_constant->value.u[0] * elem_width,
+        elem_width, this->shader_type == GL_FRAGMENT_SHADER);
    return true;
 }
 
