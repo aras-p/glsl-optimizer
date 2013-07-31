@@ -1152,31 +1152,32 @@ struct gl_sampler_object
  */
 struct gl_texture_object
 {
-   _glthread_Mutex Mutex;	/**< for thread safety */
-   GLint RefCount;		/**< reference count */
-   GLuint Name;			/**< the user-visible texture object ID */
-   GLenum Target;               /**< GL_TEXTURE_1D, GL_TEXTURE_2D, etc. */
+   _glthread_Mutex Mutex;      /**< for thread safety */
+   GLint RefCount;             /**< reference count */
+   GLuint Name;                /**< the user-visible texture object ID */
+   GLenum Target;              /**< GL_TEXTURE_1D, GL_TEXTURE_2D, etc. */
 
    struct gl_sampler_object Sampler;
 
-   GLenum DepthMode;		/**< GL_ARB_depth_texture */
+   GLenum DepthMode;           /**< GL_ARB_depth_texture */
 
-   GLfloat Priority;		/**< in [0,1] */
-   GLint BaseLevel;		/**< min mipmap level, OpenGL 1.2 */
-   GLint MaxLevel;		/**< max mipmap level, OpenGL 1.2 */
-   GLint ImmutableLevels;       /**< ES 3.0 / ARB_texture_view */
-   GLint _MaxLevel;		/**< actual max mipmap level (q in the spec) */
-   GLfloat _MaxLambda;		/**< = _MaxLevel - BaseLevel (q - b in spec) */
-   GLint CropRect[4];           /**< GL_OES_draw_texture */
-   GLenum Swizzle[4];           /**< GL_EXT_texture_swizzle */
-   GLuint _Swizzle;             /**< same as Swizzle, but SWIZZLE_* format */
-   GLboolean GenerateMipmap;    /**< GL_SGIS_generate_mipmap */
-   GLboolean _BaseComplete;     /**< Is the base texture level valid? */
-   GLboolean _MipmapComplete;   /**< Is the whole mipmap valid? */
-   GLboolean _IsIntegerFormat;  /**< Does the texture store integer values? */
-   GLboolean _RenderToTexture;  /**< Any rendering to this texture? */
-   GLboolean Purgeable;         /**< Is the buffer purgeable under memory pressure? */
-   GLboolean Immutable;         /**< GL_ARB_texture_storage */
+   GLfloat Priority;           /**< in [0,1] */
+   GLint BaseLevel;            /**< min mipmap level, OpenGL 1.2 */
+   GLint MaxLevel;             /**< max mipmap level, OpenGL 1.2 */
+   GLint ImmutableLevels;      /**< ES 3.0 / ARB_texture_view */
+   GLint _MaxLevel;            /**< actual max mipmap level (q in the spec) */
+   GLfloat _MaxLambda;         /**< = _MaxLevel - BaseLevel (q - b in spec) */
+   GLint CropRect[4];          /**< GL_OES_draw_texture */
+   GLenum Swizzle[4];          /**< GL_EXT_texture_swizzle */
+   GLuint _Swizzle;            /**< same as Swizzle, but SWIZZLE_* format */
+   GLboolean GenerateMipmap;   /**< GL_SGIS_generate_mipmap */
+   GLboolean _BaseComplete;    /**< Is the base texture level valid? */
+   GLboolean _MipmapComplete;  /**< Is the whole mipmap valid? */
+   GLboolean _IsIntegerFormat; /**< Does the texture store integer values? */
+   GLboolean _RenderToTexture; /**< Any rendering to this texture? */
+   GLboolean Purgeable;        /**< Is the buffer purgeable under memory
+                                    pressure? */
+   GLboolean Immutable;        /**< GL_ARB_texture_storage */
 
    /** Actual texture images, indexed by [cube face] and [mipmap level] */
    struct gl_texture_image *Image[MAX_FACES][MAX_TEXTURE_LEVELS];
