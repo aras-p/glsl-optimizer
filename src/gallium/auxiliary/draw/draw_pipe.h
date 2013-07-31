@@ -103,6 +103,9 @@ void draw_pipe_passthrough_line(struct draw_stage *stage, struct prim_header *he
 void draw_pipe_passthrough_point(struct draw_stage *stage, struct prim_header *header);
 
 
+void draw_unfilled_prepare_outputs(struct draw_context *context,
+                                   struct draw_stage *stage);
+
 
 /**
  * Get a writeable copy of a vertex.

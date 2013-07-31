@@ -67,6 +67,8 @@ static void calculate_vertex_layout(struct i915_context *i915)
    colors[0] = colors[1] = fog = needW = face = FALSE;
    memset(&vinfo, 0, sizeof(vinfo));
 
+   draw_prepare_shader_outputs(i915->draw);
+
    /* Determine which fragment program inputs are needed.  Setup HW vertex
     * layout below, in the HW-specific attribute order.
     */

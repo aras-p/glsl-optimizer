@@ -162,6 +162,7 @@ svga_swtnl_update_vdecl( struct svga_context *svga )
    memset(vinfo, 0, sizeof(*vinfo));
    memset(vdecl, 0, sizeof(vdecl));
 
+   draw_prepare_shader_outputs(draw);
    /* always add position */
    src = draw_find_shader_output(draw, TGSI_SEMANTIC_POSITION, 0);
    draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_LINEAR, src);

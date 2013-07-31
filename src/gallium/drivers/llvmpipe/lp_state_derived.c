@@ -53,6 +53,8 @@ compute_vertex_info(struct llvmpipe_context *llvmpipe)
    int vs_index;
    uint i;
 
+   draw_prepare_shader_outputs(llvmpipe->draw);
+
    llvmpipe->color_slot[0] = -1;
    llvmpipe->color_slot[1] = -1;
    llvmpipe->bcolor_slot[0] = -1;
@@ -138,6 +140,13 @@ compute_vertex_info(struct llvmpipe_context *llvmpipe)
       llvmpipe->layer_slot = 0;
    }
 
+   /* Check for a fake front face for unfilled primitives*/
+   vs_index = draw_find_shader_output(llvmpipe->draw,
+                                      TGSI_SEMANTIC_FACE, 0);
+   if (vs_index >= 0) {
+      llvmpipe->face_slot = vinfo->num_attribs;
+      draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_CONSTANT, vs_index);
+   }
 
    draw_compute_vertex_size(vinfo);
    lp_setup_set_vertex_info(llvmpipe->setup, vinfo);

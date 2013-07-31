@@ -122,6 +122,9 @@ struct llvmpipe_context {
    /** Which geometry shader output slot contains layer */
    int layer_slot;
 
+   /** A fake frontface output for unfilled primitives */
+   int face_slot;
+
    /**< minimum resolvable depth value, for polygon offset */   
    double mrd;
    

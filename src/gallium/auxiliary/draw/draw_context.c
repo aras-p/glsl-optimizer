@@ -39,6 +39,7 @@
 #include "util/u_helpers.h"
 #include "util/u_prim.h"
 #include "draw_context.h"
+#include "draw_pipe.h"
 #include "draw_vs.h"
 #include "draw_gs.h"
 
@@ -540,6 +541,22 @@ draw_get_shader_info(const struct draw_context *draw)
    }
 }
 
+/**
+ * Prepare outputs slots from the draw module
+ *
+ * Certain parts of the draw module can emit additional
+ * outputs that can be quite useful to the backends, a good
+ * example of it is the process of decomposing primitives
+ * into wireframes (aka. lines) which normally would lose
+ * the face-side information, but using this method we can
+ * inject another shader output which passes the original
+ * face side information to the backend.
+ */
+void
+draw_prepare_shader_outputs(struct draw_context *draw)
+{
+   draw_unfilled_prepare_outputs(draw, draw->pipeline.unfilled);
+}
 
 /**
  * Ask the draw module for the location/slot of the given vertex attribute in
@@ -1006,4 +1023,30 @@ draw_stats_clipper_primitives(struct draw_context *draw,
                                             prim_info->primitive_lengths[i]);
       }
    }
+}
+
+
+/**
+ * Returns true if the draw module will inject the frontface
+ * info into the outputs.
+ *
+ * Given the specified primitive and rasterizer state
+ * the function will figure out if the draw module
+ * will inject the front-face information into shader
+ * outputs. This is done to preserve the front-facing
+ * info when decomposing primitives into wireframes.
+ */
+boolean
+draw_will_inject_frontface(const struct draw_context *draw)
+{
+   unsigned reduced_prim = u_reduced_prim(draw->pt.prim);
+   const struct pipe_rasterizer_state *rast = draw->rasterizer;
+
+   if (reduced_prim != PIPE_PRIM_TRIANGLES) {
+      return FALSE;
+   }
+
+   return (rast &&
+           (rast->fill_front != PIPE_POLYGON_MODE_FILL ||
+            rast->fill_back != PIPE_POLYGON_MODE_FILL));
 }

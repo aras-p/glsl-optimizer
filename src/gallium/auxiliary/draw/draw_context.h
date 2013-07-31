@@ -126,9 +126,15 @@ draw_install_pstipple_stage(struct draw_context *draw, struct pipe_context *pipe
 struct tgsi_shader_info *
 draw_get_shader_info(const struct draw_context *draw);
 
+void
+draw_prepare_shader_outputs(struct draw_context *draw);
+
 int
 draw_find_shader_output(const struct draw_context *draw,
                         uint semantic_name, uint semantic_index);
+
+boolean
+draw_will_inject_frontface(const struct draw_context *draw);
 
 uint
 draw_num_shader_outputs(const struct draw_context *draw);

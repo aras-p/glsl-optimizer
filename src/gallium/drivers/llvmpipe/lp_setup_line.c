@@ -37,6 +37,7 @@
 #include "lp_state_fs.h"
 #include "lp_state_setup.h"
 #include "lp_context.h"
+#include "draw/draw_context.h"
 
 #define NUM_CHANNELS 4
 
@@ -45,6 +46,7 @@ struct lp_line_info {
    float dx;
    float dy;
    float oneoverarea;
+   boolean frontfacing;
 
    const float (*v1)[4];
    const float (*v2)[4];
@@ -214,7 +216,8 @@ static void setup_line_coefficients( struct lp_setup_context *setup,
       case LP_INTERP_FACING:
          for (i = 0; i < NUM_CHANNELS; i++)
             if (usage_mask & (1 << i))
-               constant_coef(setup, info, slot+1, 1.0, i);
+               constant_coef(setup, info, slot+1,
+                             info->frontfacing ? 1.0f : -1.0f, i);
          break;
 
       default:
@@ -613,15 +616,22 @@ try_setup_line( struct lp_setup_context *setup,
    plane[2].dcdx = y[2] - y[3];
    plane[3].dcdx = y[3] - y[0];
 
+   if (draw_will_inject_frontface(lp_context->draw) &&
+       setup->face_slot > 0) {
+      line->inputs.frontfacing = v1[setup->face_slot][0];
+   } else {
+      line->inputs.frontfacing = TRUE;
+   }
+   
 
    /* Setup parameter interpolants:
     */
    info.a0 = GET_A0(&line->inputs);
    info.dadx = GET_DADX(&line->inputs);
    info.dady = GET_DADY(&line->inputs);
+   info.frontfacing = line->inputs.frontfacing;
    setup_line_coefficients(setup, &info); 
 
-   line->inputs.frontfacing = TRUE;
    line->inputs.disable = FALSE;
    line->inputs.opaque = FALSE;
    line->inputs.layer = layer;
