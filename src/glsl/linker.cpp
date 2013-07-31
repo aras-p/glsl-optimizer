@@ -1615,8 +1615,9 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
    unsigned num_frag_shaders = 0;
 
    vert_shader_list = (struct gl_shader **)
-      calloc(2 * prog->NumShaders, sizeof(struct gl_shader *));
-   frag_shader_list =  &vert_shader_list[prog->NumShaders];
+      calloc(prog->NumShaders, sizeof(struct gl_shader *));
+   frag_shader_list = (struct gl_shader **)
+      calloc(prog->NumShaders, sizeof(struct gl_shader *));
 
    unsigned min_version = UINT_MAX;
    unsigned max_version = 0;
@@ -1948,6 +1949,7 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
 
 done:
    free(vert_shader_list);
+   free(frag_shader_list);
 
    for (unsigned i = 0; i < MESA_SHADER_TYPES; i++) {
       if (prog->_LinkedShaders[i] == NULL)
