@@ -266,17 +266,19 @@ lp_build_clamped_float_to_unsigned_norm(struct gallivm_state *gallivm,
    else if (dst_width == (mantissa + 1)) {
       /*
        * The destination width matches exactly what can be represented in
-       * floating point (i.e., mantissa + 1 bits). So do a straight
-       * multiplication followed by casting. No further rounding is necessary.
+       * floating point (i.e., mantissa + 1 bits). Even so correct rounding
+       * still needs to be applied (only for numbers in [0.5-1.0] would
+       * conversion using truncation after scaling be sufficient).
        */
-
       double scale;
+      struct lp_build_context uf32_bld;
 
+      lp_build_context_init(&uf32_bld, gallivm, src_type);
       scale = (double)((1ULL << dst_width) - 1);
 
       res = LLVMBuildFMul(builder, src,
                           lp_build_const_vec(gallivm, src_type, scale), "");
-      res = LLVMBuildFPToSI(builder, res, int_vec_type, "");
+      res = lp_build_iround(&uf32_bld, res);
    }
    else {
       /*
