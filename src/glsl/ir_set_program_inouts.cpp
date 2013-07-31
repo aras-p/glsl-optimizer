@@ -114,7 +114,13 @@ mark(struct gl_program *prog, ir_variable *var, int offset, int len,
 void
 ir_set_program_inouts_visitor::mark_whole_variable(ir_variable *var)
 {
-   mark(this->prog, var, 0, var->type->count_attribute_slots(),
+   const glsl_type *type = var->type;
+   if (this->shader_type == GL_GEOMETRY_SHADER &&
+       var->mode == ir_var_shader_in && type->is_array()) {
+      type = type->fields.array;
+   }
+
+   mark(this->prog, var, 0, type->count_attribute_slots(),
         this->shader_type == GL_FRAGMENT_SHADER);
 }
 
@@ -133,7 +139,11 @@ ir_set_program_inouts_visitor::visit(ir_dereference_variable *ir)
 /**
  * Try to mark a portion of the given variable as used.  Caller must ensure
  * that the variable represents a shader input or output which can be indexed
- * into in array fashion (an array or matrix).
+ * into in array fashion (an array or matrix).  For the purpose of geometry
+ * shader inputs (which are always arrays*), this means that the array element
+ * must be something that can be indexed into in array fashion.
+ *
+ * *Except gl_PrimitiveIDIn, as noted below.
  *
  * If the index can't be interpreted as a constant, or some other problem
  * occurs, then nothing will be marked and false will be returned.
@@ -143,6 +153,16 @@ ir_set_program_inouts_visitor::try_mark_partial_variable(ir_variable *var,
                                                          ir_rvalue *index)
 {
    const glsl_type *type = var->type;
+
+   if (this->shader_type == GL_GEOMETRY_SHADER &&
+       var->mode == ir_var_shader_in) {
+      /* The only geometry shader input that is not an array is
+       * gl_PrimitiveIDIn, and in that case, this code will never be reached,
+       * because gl_PrimitiveIDIn can't be indexed into in array fashion.
+       */
+      assert(type->is_array());
+      type = type->fields.array;
+   }
 
    /* The code below only handles:
     *
@@ -205,17 +225,60 @@ ir_set_program_inouts_visitor::try_mark_partial_variable(ir_variable *var,
 ir_visitor_status
 ir_set_program_inouts_visitor::visit_enter(ir_dereference_array *ir)
 {
-   ir_dereference_variable *deref_var;
-   deref_var = ir->array->as_dereference_variable();
-   ir_variable *var = deref_var ? deref_var->var : NULL;
+   /* Note: for geometry shader inputs, lower_named_interface_blocks may
+    * create 2D arrays, so we need to be able to handle those.  2D arrays
+    * shouldn't be able to crop up for any other reason.
+    */
+   if (ir_dereference_array * const inner_array =
+       ir->array->as_dereference_array()) {
+      /*          ir => foo[i][j]
+       * inner_array => foo[i]
+       */
+      if (ir_dereference_variable * const deref_var =
+          inner_array->as_dereference_variable()) {
+         if (this->shader_type == GL_GEOMETRY_SHADER &&
+             deref_var->var->mode == ir_var_shader_in) {
+            /* foo is a geometry shader input, so i is the vertex, and j the
+             * part of the input we're accessing.
+             */
+            if (try_mark_partial_variable(deref_var->var, ir->array_index))
+            {
+               /* We've now taken care of foo and j, but i might contain a
+                * subexpression that accesses shader inputs.  So manually
+                * visit i and then continue with the parent.
+                */
+               inner_array->array_index->accept(this);
+               return visit_continue_with_parent;
+            }
+         }
+      }
+   } else if (ir_dereference_variable * const deref_var =
+              ir->as_dereference_variable()) {
+      /* ir => foo[i], where foo is a variable. */
+      if (this->shader_type == GL_GEOMETRY_SHADER &&
+          deref_var->var->mode == ir_var_shader_in) {
+         /* foo is a geometry shader input, so i is the vertex, and we're
+          * accessing the entire input.
+          */
+         mark_whole_variable(deref_var->var);
+         /* We've now taken care of foo, but i might contain a subexpression
+          * that accesses shader inputs.  So manually visit i and then
+          * continue with the parent.
+          */
+         ir->array_index->accept(this);
+         return visit_continue_with_parent;
+      } else if (is_shader_inout(deref_var->var)) {
+         /* foo is a shader input/output, but not a geometry shader input,
+          * so i is the part of the input we're accessing.
+          */
+         if (try_mark_partial_variable(deref_var->var, ir->array_index))
+            return visit_continue_with_parent;
+      }
+   }
 
-   /* Check that we're dereferencing a shader in or out */
-   if (!var || !is_shader_inout(var))
-      return visit_continue;
-
-   if (try_mark_partial_variable(var, ir->array_index))
-      return visit_continue_with_parent;
-
+   /* The expression is something we don't recognize.  Just visit its
+    * subexpressions.
+    */
    return visit_continue;
 }
 
