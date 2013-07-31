@@ -110,14 +110,8 @@ ir_set_program_inouts_visitor::visit(ir_dereference_variable *ir)
    if (!is_shader_inout(ir->var))
       return visit_continue;
 
-   if (ir->type->is_array()) {
-      mark(this->prog, ir->var, 0,
-	   ir->type->length * ir->type->fields.array->matrix_columns,
-           this->shader_type == GL_FRAGMENT_SHADER);
-   } else {
-      mark(this->prog, ir->var, 0, ir->type->matrix_columns,
-           this->shader_type == GL_FRAGMENT_SHADER);
-   }
+   mark(this->prog, ir->var, 0, ir->type->count_attribute_slots(),
+        this->shader_type == GL_FRAGMENT_SHADER);
 
    return visit_continue;
 }
