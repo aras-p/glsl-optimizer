@@ -266,12 +266,16 @@ void trace_dump_shader_state(const struct pipe_shader_state *state)
       return;
    }
 
-   tgsi_dump_str(state->tokens, 0, str, sizeof(str));
 
    trace_dump_struct_begin("pipe_shader_state");
 
    trace_dump_member_begin("tokens");
-   trace_dump_string(str);
+   if (state->tokens) {
+      tgsi_dump_str(state->tokens, 0, str, sizeof(str));
+      trace_dump_string(str);
+   } else {
+      trace_dump_null();
+   }
    trace_dump_member_end();
 
    trace_dump_member_begin("stream_output");
