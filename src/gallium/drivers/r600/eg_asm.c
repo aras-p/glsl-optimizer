@@ -86,11 +86,11 @@ int eg_bytecode_cf_build(struct r600_bytecode *bc, struct r600_bytecode_cf *cf)
 					S_SQ_CF_ALLOC_EXPORT_WORD1_SWIZ_SEL_Y(cf->output.swizzle_y) |
 					S_SQ_CF_ALLOC_EXPORT_WORD1_SWIZ_SEL_Z(cf->output.swizzle_z) |
 					S_SQ_CF_ALLOC_EXPORT_WORD1_SWIZ_SEL_W(cf->output.swizzle_w) |
-					S_SQ_CF_ALLOC_EXPORT_WORD1_BARRIER(cf->output.barrier) |
+					S_SQ_CF_ALLOC_EXPORT_WORD1_BARRIER(cf->barrier) |
 					S_SQ_CF_ALLOC_EXPORT_WORD1_CF_INST(opcode);
 
 			if (bc->chip_class == EVERGREEN) /* no EOP on cayman */
-				bc->bytecode[id] |= S_SQ_CF_ALLOC_EXPORT_WORD1_END_OF_PROGRAM(cf->output.end_of_program);
+				bc->bytecode[id] |= S_SQ_CF_ALLOC_EXPORT_WORD1_END_OF_PROGRAM(cf->end_of_program);
 			id++;
 		} else if (cfop->flags & CF_STRM) {
 			/* MEM_STREAM instructions */
@@ -99,12 +99,12 @@ int eg_bytecode_cf_build(struct r600_bytecode *bc, struct r600_bytecode_cf *cf)
 					S_SQ_CF_ALLOC_EXPORT_WORD0_ARRAY_BASE(cf->output.array_base) |
 					S_SQ_CF_ALLOC_EXPORT_WORD0_TYPE(cf->output.type);
 			bc->bytecode[id] = S_SQ_CF_ALLOC_EXPORT_WORD1_BURST_COUNT(cf->output.burst_count - 1) |
-					S_SQ_CF_ALLOC_EXPORT_WORD1_BARRIER(cf->output.barrier) |
+					S_SQ_CF_ALLOC_EXPORT_WORD1_BARRIER(cf->barrier) |
 					S_SQ_CF_ALLOC_EXPORT_WORD1_CF_INST(opcode) |
 					S_SQ_CF_ALLOC_EXPORT_WORD1_BUF_COMP_MASK(cf->output.comp_mask) |
 					S_SQ_CF_ALLOC_EXPORT_WORD1_BUF_ARRAY_SIZE(cf->output.array_size);
 			if (bc->chip_class == EVERGREEN) /* no EOP on cayman */
-				bc->bytecode[id] |= S_SQ_CF_ALLOC_EXPORT_WORD1_END_OF_PROGRAM(cf->output.end_of_program);
+				bc->bytecode[id] |= S_SQ_CF_ALLOC_EXPORT_WORD1_END_OF_PROGRAM(cf->end_of_program);
 			id++;
 		} else {
 			/* branch, loop, call, return instructions */
@@ -118,6 +118,7 @@ int eg_bytecode_cf_build(struct r600_bytecode *bc, struct r600_bytecode_cf *cf)
 	return 0;
 }
 
+#if 0
 void eg_bytecode_export_read(struct r600_bytecode *bc,
 		struct r600_bytecode_output *output, uint32_t word0, uint32_t word1)
 {
@@ -138,3 +139,4 @@ void eg_bytecode_export_read(struct r600_bytecode *bc,
 	output->array_size = G_SQ_CF_ALLOC_EXPORT_WORD1_BUF_ARRAY_SIZE(word1);
 	output->comp_mask = G_SQ_CF_ALLOC_EXPORT_WORD1_BUF_COMP_MASK(word1);
 }
+#endif

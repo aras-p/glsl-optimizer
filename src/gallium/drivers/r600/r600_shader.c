@@ -939,7 +939,6 @@ static int emit_streamout(struct r600_shader_ctx *ctx, struct pipe_stream_output
 		output.array_base = so->output[i].dst_offset - so->output[i].start_component;
 		output.type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_WRITE;
 		output.burst_count = 1;
-		output.barrier = 1;
 		/* array_size is an upper limit for the burst_count
 		 * with MEM_STREAM instructions */
 		output.array_size = 0xFFF;
@@ -1384,7 +1383,6 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 		output[j].swizzle_z = 2;
 		output[j].swizzle_w = 3;
 		output[j].burst_count = 1;
-		output[j].barrier = 1;
 		output[j].type = -1;
 		output[j].op = CF_OP_EXPORT;
 		switch (ctx.type) {
@@ -1445,7 +1443,6 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 						output[j].swizzle_z = 2;
 						output[j].swizzle_w = key.alpha_to_one ? 5 : 3;
 						output[j].burst_count = 1;
-						output[j].barrier = 1;
 						output[j].array_base = k;
 						output[j].op = CF_OP_EXPORT;
 						output[j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PIXEL;
@@ -1492,7 +1489,6 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 			output[j].swizzle_z = 7;
 			output[j].swizzle_w = 7;
 			output[j].burst_count = 1;
-			output[j].barrier = 1;
 			output[j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_POS;
 			output[j].array_base = next_pos_base;
 			output[j].op = CF_OP_EXPORT;
@@ -1509,7 +1505,6 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 			output[j].swizzle_z = 7;
 			output[j].swizzle_w = 7;
 			output[j].burst_count = 1;
-			output[j].barrier = 1;
 			output[j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PARAM;
 			output[j].array_base = 0;
 			output[j].op = CF_OP_EXPORT;
@@ -1526,7 +1521,6 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 		output[j].swizzle_z = 7;
 		output[j].swizzle_w = 7;
 		output[j].burst_count = 1;
-		output[j].barrier = 1;
 		output[j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PIXEL;
 		output[j].array_base = 0;
 		output[j].op = CF_OP_EXPORT;
@@ -1537,11 +1531,6 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 
 	/* set export done on last export of each type */
 	for (i = noutput - 1, output_done = 0; i >= 0; i--) {
-		if (ctx.bc->chip_class < CAYMAN) {
-			if (i == (noutput - 1)) {
-				output[i].end_of_program = 1;
-			}
-		}
 		if (!(output_done & (1 << output[i].type))) {
 			output_done |= (1 << output[i].type);
 			output[i].op = CF_OP_EXPORT_DONE;
@@ -1555,9 +1544,20 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 				goto out_err;
 		}
 	}
+
 	/* add program end */
-	if (!use_llvm && ctx.bc->chip_class == CAYMAN)
-		cm_bytecode_add_cf_end(ctx.bc);
+	if (!use_llvm) {
+		if (ctx.bc->chip_class == CAYMAN)
+			cm_bytecode_add_cf_end(ctx.bc);
+		else {
+			const struct cf_op_info *last = r600_isa_cf(ctx.bc->cf_last->op);
+
+			if (last->flags & CF_CLAUSE)
+				r600_bytecode_add_cfinst(ctx.bc, CF_OP_NOP);
+
+			ctx.bc->cf_last->end_of_program = 1;
+		}
+	}
 
 	/* check GPR limit - we have 124 = 128 - 4
 	 * (4 are reserved as alu clause temporary registers) */

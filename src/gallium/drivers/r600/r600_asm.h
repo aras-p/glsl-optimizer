@@ -115,7 +115,6 @@ struct r600_bytecode_output {
 	unsigned			array_size;
 	unsigned			comp_mask;
 	unsigned			type;
-	unsigned			end_of_program;
 
 	unsigned			op;
 
@@ -126,7 +125,6 @@ struct r600_bytecode_output {
 	unsigned			swizzle_z;
 	unsigned			swizzle_w;
 	unsigned			burst_count;
-	unsigned			barrier;
 };
 
 struct r600_bytecode_kcache {
@@ -148,6 +146,8 @@ struct r600_bytecode_cf {
 	struct r600_bytecode_kcache		kcache[4];
 	unsigned			r6xx_uses_waterfall;
 	unsigned			eg_alu_extended;
+	unsigned			barrier;
+	unsigned			end_of_program;
 	struct list_head		alu;
 	struct list_head		tex;
 	struct list_head		vtx;
