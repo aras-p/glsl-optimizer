@@ -386,7 +386,13 @@ set_tex_parameteri(struct gl_context *ctx,
          return GL_FALSE;
       }
       incomplete(ctx, texObj);
-      texObj->BaseLevel = params[0];
+
+      /** See note about ARB_texture_storage below */
+      if (texObj->Immutable)
+         texObj->BaseLevel = MIN2(texObj->ImmutableLevels - 1, params[0]);
+      else
+         texObj->BaseLevel = params[0];
+
       return GL_TRUE;
 
    case GL_TEXTURE_MAX_LEVEL:
@@ -399,7 +405,19 @@ set_tex_parameteri(struct gl_context *ctx,
          return GL_FALSE;
       }
       incomplete(ctx, texObj);
-      texObj->MaxLevel = params[0];
+
+      /** From ARB_texture_storage:
+       * However, if TEXTURE_IMMUTABLE_FORMAT is TRUE, then level_base is
+       * clamped to the range [0, <levels> - 1] and level_max is then clamped to
+       * the range [level_base, <levels> - 1], where <levels> is the parameter
+       * passed the call to TexStorage* for the texture object.
+       */
+      if (texObj->Immutable)
+          texObj->MaxLevel = CLAMP(params[0], texObj->BaseLevel,
+                                   texObj->ImmutableLevels - 1);
+      else
+         texObj->MaxLevel = params[0];
+
       return GL_TRUE;
 
    case GL_GENERATE_MIPMAP_SGIS:
