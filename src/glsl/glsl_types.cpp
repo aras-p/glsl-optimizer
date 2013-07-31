@@ -846,13 +846,40 @@ glsl_type::count_attribute_slots() const
     * should be safe to assume the total number of slots consumed by an array
     * is the number of entries in the array multiplied by the number of slots
     * consumed by a single element of the array.
+    *
+    * The spec says nothing about how structs are counted, because vertex
+    * attributes are not allowed to be (or contain) structs.  However, Mesa
+    * allows varying structs, the number of varying slots taken up by a
+    * varying struct is simply equal to the sum of the number of slots taken
+    * up by each element.
     */
-
-   if (this->is_array())
-      return this->array_size() * this->element_type()->count_attribute_slots();
-
-   if (this->is_matrix())
+   switch (this->base_type) {
+   case GLSL_TYPE_UINT:
+   case GLSL_TYPE_INT:
+   case GLSL_TYPE_FLOAT:
+   case GLSL_TYPE_BOOL:
       return this->matrix_columns;
 
-   return 1;
+   case GLSL_TYPE_STRUCT:
+   case GLSL_TYPE_INTERFACE: {
+      unsigned size = 0;
+
+      for (unsigned i = 0; i < this->length; i++)
+         size += this->fields.structure[i].type->count_attribute_slots();
+
+      return size;
+   }
+
+   case GLSL_TYPE_ARRAY:
+      return this->length * this->fields.array->count_attribute_slots();
+
+   case GLSL_TYPE_SAMPLER:
+   case GLSL_TYPE_VOID:
+   case GLSL_TYPE_ERROR:
+      break;
+   }
+
+   assert(!"Unexpected type in count_attribute_slots()");
+
+   return 0;
 }
