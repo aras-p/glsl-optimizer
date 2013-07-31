@@ -1829,7 +1829,6 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 		rctx->db_misc_state.atom.dirty = true;
 	}
 
-	evergreen_update_db_shader_control(rctx);
 
 	/* Calculate the CS size. */
 	rctx->framebuffer.atom.num_dw = 4; /* SCISSOR */

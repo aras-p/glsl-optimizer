@@ -1667,8 +1667,6 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 		rctx->alphatest_state.atom.dirty = true;
 	}
 
-	r600_update_db_shader_control(rctx);
-
 	/* Calculate the CS size. */
 	rctx->framebuffer.atom.num_dw =
 		10 /*COLOR_INFO*/ + 4 /*SCISSOR*/ + 3 /*SHADER_CONTROL*/ + 8 /*MSAA*/;

@@ -301,11 +301,6 @@ static void r600_bind_dsa_state(struct pipe_context *ctx, void *state)
 		rctx->alphatest_state.sx_alpha_test_control = dsa->sx_alpha_test_control;
 		rctx->alphatest_state.sx_alpha_ref = dsa->alpha_ref;
 		rctx->alphatest_state.atom.dirty = true;
-		if (rctx->b.chip_class >= EVERGREEN) {
-			evergreen_update_db_shader_control(rctx);
-		} else {
-			r600_update_db_shader_control(rctx);
-		}
 	}
 }
 
@@ -709,7 +704,6 @@ static int r600_shader_select(struct pipe_context *ctx,
         bool *dirty)
 {
 	struct r600_shader_key key;
-	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_shader * shader = NULL;
 	int r;
 
@@ -771,11 +765,6 @@ static int r600_shader_select(struct pipe_context *ctx,
 	shader->next_variant = sel->current;
 	sel->current = shader;
 
-	if (rctx->ps_shader &&
-	    rctx->cb_misc_state.nr_ps_color_outputs != rctx->ps_shader->current->nr_ps_color_outputs) {
-		rctx->cb_misc_state.nr_ps_color_outputs = rctx->ps_shader->current->nr_ps_color_outputs;
-		rctx->cb_misc_state.atom.dirty = true;
-	}
 	return 0;
 }
 
@@ -784,16 +773,10 @@ static void *r600_create_shader_state(struct pipe_context *ctx,
 			       unsigned pipe_shader_type)
 {
 	struct r600_pipe_shader_selector *sel = CALLOC_STRUCT(r600_pipe_shader_selector);
-	int r;
 
 	sel->type = pipe_shader_type;
 	sel->tokens = tgsi_dup_tokens(state->tokens);
 	sel->so = state->stream_output;
-
-	r = r600_shader_select(ctx, sel, NULL);
-	if (r)
-	    return NULL;
-
 	return sel;
 }
 
@@ -816,31 +799,7 @@ static void r600_bind_ps_state(struct pipe_context *ctx, void *state)
 	if (!state)
 		state = rctx->dummy_pixel_shader;
 
-	rctx->pixel_shader.shader = rctx->ps_shader = (struct r600_pipe_shader_selector *)state;
-	rctx->pixel_shader.atom.num_dw = rctx->ps_shader->current->command_buffer.num_dw;
-	rctx->pixel_shader.atom.dirty = true;
-
-	r600_context_add_resource_size(ctx, (struct pipe_resource *)rctx->ps_shader->current->bo);
-
-	if (rctx->b.chip_class <= R700) {
-		bool multiwrite = rctx->ps_shader->current->shader.fs_write_all;
-
-		if (rctx->cb_misc_state.multiwrite != multiwrite) {
-			rctx->cb_misc_state.multiwrite = multiwrite;
-			rctx->cb_misc_state.atom.dirty = true;
-		}
-	}
-
-	if (rctx->cb_misc_state.nr_ps_color_outputs != rctx->ps_shader->current->nr_ps_color_outputs) {
-		rctx->cb_misc_state.nr_ps_color_outputs = rctx->ps_shader->current->nr_ps_color_outputs;
-		rctx->cb_misc_state.atom.dirty = true;
-	}
-
-	if (rctx->b.chip_class >= EVERGREEN) {
-		evergreen_update_db_shader_control(rctx);
-	} else {
-		r600_update_db_shader_control(rctx);
-	}
+	rctx->ps_shader = (struct r600_pipe_shader_selector *)state;
 }
 
 static void r600_bind_vs_state(struct pipe_context *ctx, void *state)
@@ -850,19 +809,8 @@ static void r600_bind_vs_state(struct pipe_context *ctx, void *state)
 	if (!state)
 		return;
 
-	rctx->vertex_shader.shader = rctx->vs_shader = (struct r600_pipe_shader_selector *)state;
-	rctx->vertex_shader.atom.dirty = true;
+	rctx->vs_shader = (struct r600_pipe_shader_selector *)state;
 	rctx->b.streamout.stride_in_dw = rctx->vs_shader->so.stride;
-
-	r600_context_add_resource_size(ctx, (struct pipe_resource *)rctx->vs_shader->current->bo);
-
-	/* Update clip misc state. */
-	if (rctx->vs_shader->current->pa_cl_vs_out_cntl != rctx->clip_misc_state.pa_cl_vs_out_cntl ||
-	    rctx->vs_shader->current->shader.clip_dist_write != rctx->clip_misc_state.clip_dist_write) {
-		rctx->clip_misc_state.pa_cl_vs_out_cntl = rctx->vs_shader->current->pa_cl_vs_out_cntl;
-		rctx->clip_misc_state.clip_dist_write = rctx->vs_shader->current->shader.clip_dist_write;
-		rctx->clip_misc_state.atom.dirty = true;
-	}
 }
 
 static void r600_delete_shader_selector(struct pipe_context *ctx,
@@ -1101,7 +1049,7 @@ static void r600_setup_txq_cube_array_constants(struct r600_context *rctx, int s
 static bool r600_update_derived_state(struct r600_context *rctx)
 {
 	struct pipe_context * ctx = (struct pipe_context*)rctx;
-	bool ps_dirty = false;
+	bool ps_dirty = false, vs_dirty = false;
 	bool blend_disable;
 
 	if (!rctx->blitter->running) {
@@ -1119,23 +1067,66 @@ static bool r600_update_derived_state(struct r600_context *rctx)
 		}
 	}
 
-	r600_shader_select(ctx, rctx->ps_shader, &ps_dirty);
+	if (unlikely(rctx->vertex_shader.shader != rctx->vs_shader)) {
+		r600_shader_select(ctx, rctx->vs_shader, &vs_dirty);
 
-	if (rctx->ps_shader && rctx->rasterizer &&
-	    ((rctx->rasterizer->sprite_coord_enable != rctx->ps_shader->current->sprite_coord_enable) ||
-	     (rctx->rasterizer->flatshade != rctx->ps_shader->current->flatshade))) {
+		if (unlikely(!rctx->vs_shader->current))
+			return false;
 
-		if (rctx->b.chip_class >= EVERGREEN)
-			evergreen_update_ps_state(ctx, rctx->ps_shader->current);
-		else
-			r600_update_ps_state(ctx, rctx->ps_shader->current);
+		rctx->vertex_shader.shader = rctx->vs_shader;
+		rctx->vertex_shader.atom.dirty = true;
+		r600_context_add_resource_size(ctx, (struct pipe_resource *)rctx->vs_shader->current->bo);
 
-		ps_dirty = true;
+		/* Update clip misc state. */
+		if (rctx->vs_shader->current->pa_cl_vs_out_cntl != rctx->clip_misc_state.pa_cl_vs_out_cntl ||
+				rctx->vs_shader->current->shader.clip_dist_write != rctx->clip_misc_state.clip_dist_write) {
+			rctx->clip_misc_state.pa_cl_vs_out_cntl = rctx->vs_shader->current->pa_cl_vs_out_cntl;
+			rctx->clip_misc_state.clip_dist_write = rctx->vs_shader->current->shader.clip_dist_write;
+			rctx->clip_misc_state.atom.dirty = true;
+		}
 	}
 
-	if (ps_dirty) {
+	r600_shader_select(ctx, rctx->ps_shader, &ps_dirty);
+	if (unlikely(!rctx->ps_shader->current))
+		return false;
+
+	if (unlikely(ps_dirty || rctx->pixel_shader.shader != rctx->ps_shader)) {
+
+		if (rctx->cb_misc_state.nr_ps_color_outputs != rctx->ps_shader->current->nr_ps_color_outputs) {
+			rctx->cb_misc_state.nr_ps_color_outputs = rctx->ps_shader->current->nr_ps_color_outputs;
+			rctx->cb_misc_state.atom.dirty = true;
+		}
+
+		if (rctx->b.chip_class <= R700) {
+			bool multiwrite = rctx->ps_shader->current->shader.fs_write_all;
+
+			if (rctx->cb_misc_state.multiwrite != multiwrite) {
+				rctx->cb_misc_state.multiwrite = multiwrite;
+				rctx->cb_misc_state.atom.dirty = true;
+			}
+		}
+
+		if (rctx->b.chip_class >= EVERGREEN) {
+			evergreen_update_db_shader_control(rctx);
+		} else {
+			r600_update_db_shader_control(rctx);
+		}
+
+		if (!ps_dirty && rctx->ps_shader && rctx->rasterizer &&
+				((rctx->rasterizer->sprite_coord_enable != rctx->ps_shader->current->sprite_coord_enable) ||
+						(rctx->rasterizer->flatshade != rctx->ps_shader->current->flatshade))) {
+
+			if (rctx->b.chip_class >= EVERGREEN)
+				evergreen_update_ps_state(ctx, rctx->ps_shader->current);
+			else
+				r600_update_ps_state(ctx, rctx->ps_shader->current);
+		}
+
+		rctx->pixel_shader.shader = rctx->ps_shader;
 		rctx->pixel_shader.atom.num_dw = rctx->ps_shader->current->command_buffer.num_dw;
 		rctx->pixel_shader.atom.dirty = true;
+		r600_context_add_resource_size(ctx,
+		                               (struct pipe_resource *)rctx->ps_shader->current->bo);
 	}
 
 	/* on R600 we stuff masks + txq info into one constant buffer */
@@ -1227,7 +1218,7 @@ static void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info 
 		return;
 	}
 
-	if (!rctx->vs_shader) {
+	if (!rctx->vs_shader || !rctx->ps_shader) {
 		assert(0);
 		return;
 	}
