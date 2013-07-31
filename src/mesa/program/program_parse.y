@@ -98,7 +98,7 @@ static struct asm_instruction *asm_instruction_copy_ctor(
 
 #define YYLLOC_DEFAULT(Current, Rhs, N)					\
    do {									\
-      if (YYID(N)) {							\
+      if (N) {							\
 	 (Current).first_line = YYRHSLOC(Rhs, 1).first_line;		\
 	 (Current).first_column = YYRHSLOC(Rhs, 1).first_column;	\
 	 (Current).position = YYRHSLOC(Rhs, 1).position;		\
@@ -112,7 +112,7 @@ static struct asm_instruction *asm_instruction_copy_ctor(
 	 (Current).position = YYRHSLOC(Rhs, 0).position			\
 	    + (Current).first_column;					\
       }									\
-   } while(YYID(0))
+   } while(0)
 %}
 
 %pure-parser
