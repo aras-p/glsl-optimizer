@@ -59,6 +59,10 @@ public:
    virtual ir_visitor_status visit_enter(ir_discard *);
    virtual ir_visitor_status visit(ir_dereference_variable *);
 
+private:
+   void mark_whole_variable(ir_variable *var);
+   bool try_mark_partial_variable(ir_variable *var, ir_rvalue *index);
+
    struct gl_program *prog;
    GLenum shader_type;
 };
@@ -103,6 +107,17 @@ mark(struct gl_program *prog, ir_variable *var, int offset, int len,
    }
 }
 
+/**
+ * Mark an entire variable as used.  Caller must ensure that the variable
+ * represents a shader input or output.
+ */
+void
+ir_set_program_inouts_visitor::mark_whole_variable(ir_variable *var)
+{
+   mark(this->prog, var, 0, var->type->count_attribute_slots(),
+        this->shader_type == GL_FRAGMENT_SHADER);
+}
+
 /* Default handler: Mark all the locations in the variable as used. */
 ir_visitor_status
 ir_set_program_inouts_visitor::visit(ir_dereference_variable *ir)
@@ -110,17 +125,43 @@ ir_set_program_inouts_visitor::visit(ir_dereference_variable *ir)
    if (!is_shader_inout(ir->var))
       return visit_continue;
 
-   mark(this->prog, ir->var, 0, ir->type->count_attribute_slots(),
-        this->shader_type == GL_FRAGMENT_SHADER);
+   mark_whole_variable(ir->var);
 
    return visit_continue;
+}
+
+/**
+ * Try to mark a portion of the given variable as used.  Caller must ensure
+ * that the variable represents a shader input or output which can be indexed
+ * into in array fashion (an array or matrix).
+ *
+ * If the index can't be interpreted as a constant, or some other problem
+ * occurs, then nothing will be marked and false will be returned.
+ */
+bool
+ir_set_program_inouts_visitor::try_mark_partial_variable(ir_variable *var,
+                                                         ir_rvalue *index)
+{
+   const glsl_type *type = var->type;
+
+   ir_constant *index_as_constant = index->as_constant();
+   if (!index_as_constant)
+      return false;
+
+   int width = 1;
+   if (type->is_array() && type->fields.array->is_matrix()) {
+      width = type->fields.array->matrix_columns;
+   }
+
+   mark(this->prog, var, index_as_constant->value.u[0] * width, width,
+        this->shader_type == GL_FRAGMENT_SHADER);
+   return true;
 }
 
 ir_visitor_status
 ir_set_program_inouts_visitor::visit_enter(ir_dereference_array *ir)
 {
    ir_dereference_variable *deref_var;
-   ir_constant *index = ir->array_index->as_constant();
    deref_var = ir->array->as_dereference_variable();
    ir_variable *var = deref_var ? deref_var->var : NULL;
 
@@ -128,18 +169,8 @@ ir_set_program_inouts_visitor::visit_enter(ir_dereference_array *ir)
    if (!var || !is_shader_inout(var))
       return visit_continue;
 
-   if (index) {
-      int width = 1;
-
-      if (deref_var->type->is_array() &&
-	  deref_var->type->fields.array->is_matrix()) {
-	 width = deref_var->type->fields.array->matrix_columns;
-      }
-
-      mark(this->prog, var, index->value.i[0] * width, width,
-           this->shader_type == GL_FRAGMENT_SHADER);
+   if (try_mark_partial_variable(var, ir->array_index))
       return visit_continue_with_parent;
-   }
 
    return visit_continue;
 }
