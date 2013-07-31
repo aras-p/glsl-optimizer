@@ -420,6 +420,24 @@ struct interpolation_mode_map {
    unsigned char mode[BRW_VARYING_SLOT_COUNT];
 };
 
+static inline bool brw_any_flat_varyings(struct interpolation_mode_map *map)
+{
+   for (int i = 0; i < BRW_VARYING_SLOT_COUNT; i++)
+      if (map->mode[i] == INTERP_QUALIFIER_FLAT)
+         return true;
+
+   return false;
+}
+
+static inline bool brw_any_noperspective_varyings(struct interpolation_mode_map *map)
+{
+   for (int i = 0; i < BRW_VARYING_SLOT_COUNT; i++)
+      if (map->mode[i] == INTERP_QUALIFIER_NOPERSPECTIVE)
+         return true;
+
+   return false;
+}
+
 
 struct brw_sf_prog_data {
    GLuint urb_read_length;
