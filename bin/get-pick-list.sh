@@ -14,7 +14,7 @@ git log --reverse --grep="cherry picked from commit" origin/master..HEAD |\
 	sed -e 's/^[[:space:]]*(cherry picked from commit[[:space:]]*//' -e 's/)//' > already_picked
 
 # Grep for commits that were marked as a candidate for the stable tree.
-git log --reverse --pretty=%H -i --grep='^\([[:space:]]*NOTE: .*[Cc]andidate\|CC:[[:space:]]*mesa-stable\)' HEAD..origin/master |\
+git log --reverse --pretty=%H -i --grep='^\([[:space:]]*NOTE: .*[Cc]andidate\|CC:.*mesa-stable\)' HEAD..origin/master |\
 while read sha
 do
 	# Check to see whether the patch is on the ignore list.
