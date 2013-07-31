@@ -298,41 +298,6 @@ link_invalidate_variable_locations(gl_shader *sh, int input_base,
 
 
 /**
- * Determine the number of attribute slots required for a particular type
- *
- * This code is here because it implements the language rules of a specific
- * GLSL version.  Since it's a property of the language and not a property of
- * types in general, it doesn't really belong in glsl_type.
- */
-unsigned
-count_attribute_slots(const glsl_type *t)
-{
-   /* From page 31 (page 37 of the PDF) of the GLSL 1.50 spec:
-    *
-    *     "A scalar input counts the same amount against this limit as a vec4,
-    *     so applications may want to consider packing groups of four
-    *     unrelated float inputs together into a vector to better utilize the
-    *     capabilities of the underlying hardware. A matrix input will use up
-    *     multiple locations.  The number of locations used will equal the
-    *     number of columns in the matrix."
-    *
-    * The spec does not explicitly say how arrays are counted.  However, it
-    * should be safe to assume the total number of slots consumed by an array
-    * is the number of entries in the array multiplied by the number of slots
-    * consumed by a single element of the array.
-    */
-
-   if (t->is_array())
-      return t->array_size() * count_attribute_slots(t->element_type());
-
-   if (t->is_matrix())
-      return t->matrix_columns;
-
-   return 1;
-}
-
-
-/**
  * Verify that a vertex shader executable meets all semantic requirements.
  *
  * Also sets prog->Vert.UsesClipDistance and prog->Vert.ClipDistanceArraySize
@@ -1334,7 +1299,7 @@ assign_attribute_or_color_locations(gl_shader_program *prog,
        * that it doesn't collide with other assigned locations.  Otherwise,
        * add it to the list of variables that need linker-assigned locations.
        */
-      const unsigned slots = count_attribute_slots(var->type);
+      const unsigned slots = var->type->count_attribute_slots();
       if (var->location != -1) {
 	 if (var->location >= generic_base && var->index < 1) {
 	    /* From page 61 of the OpenGL 4.0 spec:

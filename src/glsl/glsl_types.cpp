@@ -828,3 +828,31 @@ glsl_type::std140_size(bool row_major) const
    assert(!"not reached");
    return -1;
 }
+
+
+unsigned
+glsl_type::count_attribute_slots() const
+{
+   /* From page 31 (page 37 of the PDF) of the GLSL 1.50 spec:
+    *
+    *     "A scalar input counts the same amount against this limit as a vec4,
+    *     so applications may want to consider packing groups of four
+    *     unrelated float inputs together into a vector to better utilize the
+    *     capabilities of the underlying hardware. A matrix input will use up
+    *     multiple locations.  The number of locations used will equal the
+    *     number of columns in the matrix."
+    *
+    * The spec does not explicitly say how arrays are counted.  However, it
+    * should be safe to assume the total number of slots consumed by an array
+    * is the number of entries in the array multiplied by the number of slots
+    * consumed by a single element of the array.
+    */
+
+   if (this->is_array())
+      return this->array_size() * this->element_type()->count_attribute_slots();
+
+   if (this->is_matrix())
+      return this->matrix_columns;
+
+   return 1;
+}

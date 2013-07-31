@@ -1164,7 +1164,7 @@ check_against_varying_limit(struct gl_context *ctx,
          /* The packing rules used for vertex shader inputs are also
           * used for fragment shader inputs.
           */
-         varying_vectors += count_attribute_slots(var->type);
+         varying_vectors += var->type->count_attribute_slots();
       }
    }
 
