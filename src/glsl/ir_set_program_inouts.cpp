@@ -144,6 +144,29 @@ ir_set_program_inouts_visitor::try_mark_partial_variable(ir_variable *var,
 {
    const glsl_type *type = var->type;
 
+   /* The code below only handles:
+    *
+    * - Indexing into matrices
+    * - Indexing into arrays of (matrices, vectors, or scalars)
+    *
+    * All other possibilities are either prohibited by GLSL (vertex inputs and
+    * fragment outputs can't be structs) or should have been eliminated by
+    * lowering passes (do_vec_index_to_swizzle() gets rid of indexing into
+    * vectors, and lower_packed_varyings() gets rid of structs that occur in
+    * varyings).
+    */
+   if (!(type->is_matrix() ||
+        (type->is_array() &&
+         (type->fields.array->is_numeric() ||
+          type->fields.array->is_boolean())))) {
+      assert(!"Unexpected indexing in ir_set_program_inouts");
+
+      /* For safety in release builds, in case we ever encounter unexpected
+       * indexing, give up and let the caller mark the whole variable as used.
+       */
+      return false;
+   }
+
    ir_constant *index_as_constant = index->as_constant();
    if (!index_as_constant)
       return false;
