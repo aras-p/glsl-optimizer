@@ -2523,6 +2523,73 @@ process_initializer(ir_variable *var, ast_declaration *decl,
    return result;
 }
 
+
+/**
+ * Do additional processing necessary for geometry shader input array
+ * declarations (this covers both interface blocks arrays and input variable
+ * arrays).
+ */
+static void
+handle_geometry_shader_input_decl(struct _mesa_glsl_parse_state *state,
+                                  YYLTYPE loc, ir_variable *var)
+{
+   unsigned num_vertices = 0;
+   if (state->gs_input_prim_type_specified) {
+      num_vertices = vertices_per_prim(state->gs_input_prim_type);
+   }
+
+   assert(var->type->is_array());
+   if (var->type->length == 0) {
+      /* Section 4.3.8.1 (Input Layout Qualifiers) of the GLSL 1.50 spec says:
+       *
+       *   All geometry shader input unsized array declarations will be
+       *   sized by an earlier input layout qualifier, when present, as per
+       *   the following table.
+       *
+       * Followed by a table mapping each allowed input layout qualifier to
+       * the corresponding input length.
+       */
+      if (num_vertices != 0)
+         var->type = glsl_type::get_array_instance(var->type->fields.array,
+                                                   num_vertices);
+   } else {
+      /* Section 4.3.8.1 (Input Layout Qualifiers) of the GLSL 1.50 spec
+       * includes the following examples of compile-time errors:
+       *
+       *   // code sequence within one shader...
+       *   in vec4 Color1[];    // size unknown
+       *   ...Color1.length()...// illegal, length() unknown
+       *   in vec4 Color2[2];   // size is 2
+       *   ...Color1.length()...// illegal, Color1 still has no size
+       *   in vec4 Color3[3];   // illegal, input sizes are inconsistent
+       *   layout(lines) in;    // legal, input size is 2, matching
+       *   in vec4 Color4[3];   // illegal, contradicts layout
+       *   ...
+       *
+       * To detect the case illustrated by Color3, we verify that the size of
+       * an explicitly-sized array matches the size of any previously declared
+       * explicitly-sized array.  To detect the case illustrated by Color4, we
+       * verify that the size of an explicitly-sized array is consistent with
+       * any previously declared input layout.
+       */
+      if (num_vertices != 0 && var->type->length != num_vertices) {
+         _mesa_glsl_error(&loc, state,
+                          "geometry shader input size contradicts previously"
+                          " declared layout (size is %u, but layout requires a"
+                          " size of %u)", var->type->length, num_vertices);
+      } else if (state->gs_input_size != 0 &&
+                 var->type->length != state->gs_input_size) {
+         _mesa_glsl_error(&loc, state,
+                          "geometry shader input sizes are "
+                          "inconsistent (size is %u, but a previous "
+                          "declaration has size %u)",
+                          var->type->length, state->gs_input_size);
+      } else {
+         state->gs_input_size = var->type->length;
+      }
+   }
+}
+
 ir_rvalue *
 ast_declarator_list::hir(exec_list *instructions,
 			 struct _mesa_glsl_parse_state *state)
@@ -2833,6 +2900,8 @@ ast_declarator_list::hir(exec_list *instructions,
                _mesa_glsl_error(&loc, state,
                                 "geometry shader inputs must be arrays");
             }
+
+            handle_geometry_shader_input_decl(state, loc, var);
          }
       }
 
@@ -4450,6 +4519,8 @@ ast_interface_block::hir(exec_list *instructions,
       }
 
       var->interface_type = block_type;
+      if (state->target == geometry_shader)
+         handle_geometry_shader_input_decl(state, loc, var);
       state->symbols->add_variable(var);
       instructions->push_tail(var);
    } else {
@@ -4498,8 +4569,49 @@ ast_gs_input_layout::hir(exec_list *instructions,
       return NULL;
    }
 
+   /* If any shader inputs occurred before this declaration and specified an
+    * array size, make sure the size they specified is consistent with the
+    * primitive type.
+    */
+   unsigned num_vertices = vertices_per_prim(this->prim_type);
+   if (state->gs_input_size != 0 && state->gs_input_size != num_vertices) {
+      _mesa_glsl_error(&loc, state,
+                       "this geometry shader input layout implies %u vertices"
+                       " per primitive, but a previous input is declared"
+                       " with size %u", num_vertices, state->gs_input_size);
+      return NULL;
+   }
+
    state->gs_input_prim_type_specified = true;
    state->gs_input_prim_type = this->prim_type;
+
+   /* If any shader inputs occurred before this declaration and did not
+    * specify an array size, their size is determined now.
+    */
+   foreach_list (node, instructions) {
+      ir_variable *var = ((ir_instruction *) node)->as_variable();
+      if (var == NULL || var->mode != ir_var_shader_in)
+         continue;
+
+      /* Note: gl_PrimitiveIDIn has mode ir_var_shader_in, but it's not an
+       * array; skip it.
+       */
+      if (!var->type->is_array())
+         continue;
+
+      if (var->type->length == 0) {
+         if (var->max_array_access >= num_vertices) {
+            _mesa_glsl_error(&loc, state,
+                             "this geometry shader input layout implies %u"
+                             " vertices, but an access to element %u of input"
+                             " `%s' already exists", num_vertices,
+                             var->max_array_access, var->name);
+         } else {
+            var->type = glsl_type::get_array_instance(var->type->fields.array,
+                                                      num_vertices);
+         }
+      }
+   }
 
    return NULL;
 }

@@ -316,6 +316,15 @@ struct _mesa_glsl_parse_state {
    /** Shaders containing built-in functions that are used for linking. */
    struct gl_shader *builtins_to_link[16];
    unsigned num_builtins_to_link;
+
+   /**
+    * For geometry shaders, size of the most recently seen input declaration
+    * that was a sized array, or 0 if no sized input array declarations have
+    * been seen.
+    *
+    * Unused for other shader types.
+    */
+   unsigned gs_input_size;
 };
 
 # define YYLLOC_DEFAULT(Current, Rhs, N)			\

@@ -178,6 +178,77 @@ private:
 };
 
 
+class geom_array_resize_visitor : public ir_hierarchical_visitor {
+public:
+   unsigned num_vertices;
+   gl_shader_program *prog;
+
+   geom_array_resize_visitor(unsigned num_vertices, gl_shader_program *prog)
+   {
+      this->num_vertices = num_vertices;
+      this->prog = prog;
+   }
+
+   virtual ~geom_array_resize_visitor()
+   {
+      /* empty */
+   }
+
+   virtual ir_visitor_status visit(ir_variable *var)
+   {
+      if (!var->type->is_array() || var->mode != ir_var_shader_in)
+         return visit_continue;
+
+      unsigned size = var->type->length;
+
+      /* Generate a link error if the shader has declared this array with an
+       * incorrect size.
+       */
+      if (size && size != this->num_vertices) {
+         linker_error(this->prog, "size of array %s declared as %u, "
+                      "but number of input vertices is %u\n",
+                      var->name, size, this->num_vertices);
+         return visit_continue;
+      }
+
+      /* Generate a link error if the shader attempts to access an input
+       * array using an index too large for its actual size assigned at link
+       * time.
+       */
+      if (var->max_array_access >= this->num_vertices) {
+         linker_error(this->prog, "geometry shader accesses element %i of "
+                      "%s, but only %i input vertices\n",
+                      var->max_array_access, var->name, this->num_vertices);
+         return visit_continue;
+      }
+
+      var->type = glsl_type::get_array_instance(var->type->element_type(),
+                                                this->num_vertices);
+      var->max_array_access = this->num_vertices - 1;
+
+      return visit_continue;
+   }
+
+   /* Dereferences of input variables need to be updated so that their type
+    * matches the newly assigned type of the variable they are accessing. */
+   virtual ir_visitor_status visit(ir_dereference_variable *ir)
+   {
+      ir->type = ir->var->type;
+      return visit_continue;
+   }
+
+   /* Dereferences of 2D input arrays need to be updated so that their type
+    * matches the newly assigned type of the array they are accessing. */
+   virtual ir_visitor_status visit_leave(ir_dereference_array *ir)
+   {
+      const glsl_type *const vt = ir->array->type;
+      if (vt->is_array())
+         ir->type = vt->element_type();
+      return visit_continue;
+   }
+};
+
+
 void
 linker_error(gl_shader_program *prog, const char *fmt, ...)
 {
@@ -1172,6 +1243,16 @@ link_intrastage_shaders(void *mem_ctx,
     */
    if (linked)
       validate_ir_tree(linked->ir);
+
+   /* Set the size of geometry shader input arrays */
+   if (linked->Type == GL_GEOMETRY_SHADER) {
+      unsigned num_vertices = vertices_per_prim(prog->Geom.InputType);
+      geom_array_resize_visitor input_resize_visitor(num_vertices, prog);
+      foreach_iter(exec_list_iterator, iter, *linked->ir) {
+         ir_instruction *ir = (ir_instruction *)iter.get();
+         ir->accept(&input_resize_visitor);
+      }
+   }
 
    /* Make a pass over all variable declarations to ensure that arrays with
     * unspecified sizes have a size specified.  The size is inferred from the
