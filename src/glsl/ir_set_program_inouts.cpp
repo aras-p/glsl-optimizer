@@ -44,11 +44,10 @@
 
 class ir_set_program_inouts_visitor : public ir_hierarchical_visitor {
 public:
-   ir_set_program_inouts_visitor(struct gl_program *prog,
-                                 bool is_fragment_shader)
+   ir_set_program_inouts_visitor(struct gl_program *prog, GLenum shader_type)
    {
       this->prog = prog;
-      this->is_fragment_shader = is_fragment_shader;
+      this->shader_type = shader_type;
    }
    ~ir_set_program_inouts_visitor()
    {
@@ -61,7 +60,7 @@ public:
    virtual ir_visitor_status visit(ir_dereference_variable *);
 
    struct gl_program *prog;
-   bool is_fragment_shader;
+   GLenum shader_type;
 };
 
 static inline bool
@@ -114,10 +113,10 @@ ir_set_program_inouts_visitor::visit(ir_dereference_variable *ir)
    if (ir->type->is_array()) {
       mark(this->prog, ir->var, 0,
 	   ir->type->length * ir->type->fields.array->matrix_columns,
-           this->is_fragment_shader);
+           this->shader_type == GL_FRAGMENT_SHADER);
    } else {
       mark(this->prog, ir->var, 0, ir->type->matrix_columns,
-           this->is_fragment_shader);
+           this->shader_type == GL_FRAGMENT_SHADER);
    }
 
    return visit_continue;
@@ -144,7 +143,7 @@ ir_set_program_inouts_visitor::visit_enter(ir_dereference_array *ir)
       }
 
       mark(this->prog, var, index->value.i[0] * width, width,
-           this->is_fragment_shader);
+           this->shader_type == GL_FRAGMENT_SHADER);
       return visit_continue_with_parent;
    }
 
@@ -164,7 +163,8 @@ ir_set_program_inouts_visitor::visit_enter(ir_function_signature *ir)
 ir_visitor_status
 ir_set_program_inouts_visitor::visit_enter(ir_expression *ir)
 {
-   if (is_fragment_shader && ir->operation == ir_unop_dFdy) {
+   if (this->shader_type == GL_FRAGMENT_SHADER &&
+       ir->operation == ir_unop_dFdy) {
       gl_fragment_program *fprog = (gl_fragment_program *) prog;
       fprog->UsesDFdy = true;
    }
@@ -175,7 +175,7 @@ ir_visitor_status
 ir_set_program_inouts_visitor::visit_enter(ir_discard *)
 {
    /* discards are only allowed in fragment shaders. */
-   assert(is_fragment_shader);
+   assert(this->shader_type == GL_FRAGMENT_SHADER);
 
    gl_fragment_program *fprog = (gl_fragment_program *) prog;
    fprog->UsesKill = true;
@@ -185,14 +185,14 @@ ir_set_program_inouts_visitor::visit_enter(ir_discard *)
 
 void
 do_set_program_inouts(exec_list *instructions, struct gl_program *prog,
-                      bool is_fragment_shader)
+                      GLenum shader_type)
 {
-   ir_set_program_inouts_visitor v(prog, is_fragment_shader);
+   ir_set_program_inouts_visitor v(prog, shader_type);
 
    prog->InputsRead = 0;
    prog->OutputsWritten = 0;
    prog->SystemValuesRead = 0;
-   if (is_fragment_shader) {
+   if (shader_type == GL_FRAGMENT_SHADER) {
       gl_fragment_program *fprog = (gl_fragment_program *) prog;
       memset(fprog->InterpQualifier, 0, sizeof(fprog->InterpQualifier));
       fprog->IsCentroid = 0;
