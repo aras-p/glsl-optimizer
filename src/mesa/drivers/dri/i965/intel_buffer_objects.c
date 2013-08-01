@@ -25,6 +25,11 @@
  * 
  **************************************************************************/
 
+/**
+ * @file intel_buffer_objects.c
+ *
+ * This provides core GL buffer object functionality.
+ */
 
 #include "main/imports.h"
 #include "main/mtypes.h"
@@ -61,6 +66,10 @@ release_buffer(struct intel_buffer_object *intel_obj)
 }
 
 /**
+ * The NewBufferObject() driver hook.
+ *
+ * Allocates a new intel_buffer_object structure and initializes it.
+ *
  * There is some duplication between mesa's bufferobjects and our
  * bufmgr buffers.  Both have an integer handle and a hashtable to
  * lookup an opaque structure.  It would be nice if the handles and
@@ -79,8 +88,9 @@ intel_bufferobj_alloc(struct gl_context * ctx, GLuint name, GLenum target)
 }
 
 /**
- * Deallocate/free a vertex/pixel buffer object.
- * Called via glDeleteBuffersARB().
+ * The DeleteBuffer() driver hook.
+ *
+ * Deletes a single OpenGL buffer object.  Used by glDeleteBuffers().
  */
 static void
 intel_bufferobj_free(struct gl_context * ctx, struct gl_buffer_object *obj)
@@ -101,12 +111,14 @@ intel_bufferobj_free(struct gl_context * ctx, struct gl_buffer_object *obj)
 }
 
 
-
 /**
- * Allocate space for and store data in a buffer object.  Any data that was
- * previously stored in the buffer object is lost.  If data is NULL,
- * memory will be allocated, but no copy will occur.
- * Called via ctx->Driver.BufferData().
+ * The BufferData() driver hook.
+ *
+ * Implements glBufferData(), which recreates a buffer object's data store
+ * and populates it with the given data, if present.
+ *
+ * Any data that was previously stored in the buffer object is lost.
+ *
  * \return true for success, false if out of memory
  */
 static GLboolean
@@ -145,10 +157,13 @@ intel_bufferobj_data(struct gl_context * ctx,
 
 
 /**
- * Replace data in a subrange of buffer object.  If the data range
- * specified by size + offset extends beyond the end of the buffer or
- * if data is NULL, no copy is performed.
- * Called via glBufferSubDataARB().
+ * The BufferSubData() driver hook.
+ *
+ * Implements glBufferSubData(), which replaces a portion of the data in a
+ * buffer object.
+ *
+ * If the data range specified by (size + offset) extends beyond the end of
+ * the buffer or if data is NULL, no copy is performed.
  */
 static void
 intel_bufferobj_subdata(struct gl_context * ctx,
@@ -198,7 +213,10 @@ intel_bufferobj_subdata(struct gl_context * ctx,
 
 
 /**
- * Called via glGetBufferSubDataARB().
+ * The GetBufferSubData() driver hook.
+ *
+ * Implements glGetBufferSubData(), which copies a subrange of a buffer
+ * object into user memory.
  */
 static void
 intel_bufferobj_get_subdata(struct gl_context * ctx,
@@ -217,9 +235,10 @@ intel_bufferobj_get_subdata(struct gl_context * ctx,
 }
 
 
-
 /**
- * Called via glMapBufferRange and glMapBuffer
+ * The MapBufferRange() driver hook.
+ *
+ * This implements both glMapBufferRange() and glMapBuffer().
  *
  * The goal of this extension is to allow apps to accumulate their rendering
  * at the same time as they accumulate their buffer object.  Without it,
@@ -318,7 +337,15 @@ intel_bufferobj_map_range(struct gl_context * ctx,
    return obj->Pointer;
 }
 
-/* Ideally we'd use a BO to avoid taking up cache space for the temporary
+/**
+ * The FlushMappedBufferRange() driver hook.
+ *
+ * Implements glFlushMappedBufferRange(), which signifies that modifications
+ * have been made to a range of a mapped buffer, and it should be flushed.
+ *
+ * This is only used for buffers mapped with GL_MAP_FLUSH_EXPLICIT_BIT.
+ *
+ * Ideally we'd use a BO to avoid taking up cache space for the temporary
  * data, but FlushMappedBufferRange may be followed by further writes to
  * the pointer, so we would have to re-map after emitting our blit, which
  * would defeat the point.
@@ -355,7 +382,9 @@ intel_bufferobj_flush_mapped_range(struct gl_context *ctx,
 
 
 /**
- * Called via glUnmapBuffer().
+ * The UnmapBuffer() driver hook.
+ *
+ * Implements glUnmapBuffer().
  */
 static GLboolean
 intel_bufferobj_unmap(struct gl_context * ctx, struct gl_buffer_object *obj)
@@ -421,6 +450,13 @@ intel_bufferobj_source(struct brw_context *brw,
    return intel_obj->buffer;
 }
 
+/**
+ * The CopyBufferSubData() driver hook.
+ *
+ * Implements glCopyBufferSubData(), which copies a portion of one buffer
+ * object's data to another.  Independent source and destination offsets
+ * are allowed.
+ */
 static void
 intel_bufferobj_copy_subdata(struct gl_context *ctx,
 			     struct gl_buffer_object *src,
