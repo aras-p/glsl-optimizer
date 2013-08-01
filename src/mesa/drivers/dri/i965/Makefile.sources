@@ -26,6 +26,7 @@ i965_FILES = \
 	intel_tex_image.c \
 	intel_tex_subimage.c \
 	intel_tex_validate.c \
+	intel_upload.c \
 	brw_blorp.cpp \
 	brw_blorp_blit.cpp \
 	brw_blorp_clear.cpp \
