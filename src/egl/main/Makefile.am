@@ -27,6 +27,7 @@ AM_CFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/src/gbm/main \
 	$(DEFINES) \
+	$(VISIBILITY_CFLAGS) \
 	$(EGL_CFLAGS) \
 	-D_EGL_NATIVE_PLATFORM=$(EGL_NATIVE_PLATFORM) \
 	-D_EGL_DRIVER_SEARCH_DIR=\"$(EGL_DRIVER_INSTALL_DIR)\" \

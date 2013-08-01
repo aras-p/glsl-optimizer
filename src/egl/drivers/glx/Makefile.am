@@ -22,6 +22,7 @@
 AM_CFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/src/egl/main \
+	$(VISIBILITY_CFLAGS) \
 	$(X11_CFLAGS) \
 	$(DEFINES)
 

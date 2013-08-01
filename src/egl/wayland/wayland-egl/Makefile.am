@@ -2,6 +2,7 @@ pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = wayland-egl.pc
 
 AM_CFLAGS = $(DEFINES) \
+	    $(VISIBILITY_CFLAGS) \
 	    $(WAYLAND_CFLAGS)
 
 lib_LTLIBRARIES = libwayland-egl.la
