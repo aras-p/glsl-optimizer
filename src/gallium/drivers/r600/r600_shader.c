@@ -917,7 +917,7 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 	unsigned output_done, noutput;
 	unsigned opcode;
 	int i, j, k, r = 0;
-	int next_pixel_base = 0, next_pos_base = 60, next_param_base = 0;
+	int next_pos_base = 60, next_param_base = 0;
 	/* Declarations used by llvm code */
 	bool use_llvm = false;
 	bool indirect_gprs;
@@ -1440,13 +1440,13 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 		case TGSI_PROCESSOR_FRAGMENT:
 			if (shader->output[i].name == TGSI_SEMANTIC_COLOR) {
 				/* never export more colors than the number of CBs */
-				if (next_pixel_base && next_pixel_base >= key.nr_cbufs) {
+				if (shader->output[i].sid >= key.nr_cbufs) {
 					/* skip export */
 					j--;
 					continue;
 				}
 				output[j].swizzle_w = key.alpha_to_one ? 5 : 3;
-				output[j].array_base = next_pixel_base++;
+				output[j].array_base = shader->output[i].sid;
 				output[j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PIXEL;
 				shader->nr_ps_color_exports++;
 				if (shader->fs_write_all && (rscreen->chip_class >= EVERGREEN)) {
@@ -1461,7 +1461,7 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 						output[j].swizzle_w = key.alpha_to_one ? 5 : 3;
 						output[j].burst_count = 1;
 						output[j].barrier = 1;
-						output[j].array_base = next_pixel_base++;
+						output[j].array_base = k;
 						output[j].op = CF_OP_EXPORT;
 						output[j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PIXEL;
 						shader->nr_ps_color_exports++;
@@ -1532,7 +1532,7 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 	}
 
 	/* add fake pixel export */
-	if (ctx.type == TGSI_PROCESSOR_FRAGMENT && next_pixel_base == 0) {
+	if (ctx.type == TGSI_PROCESSOR_FRAGMENT && shader->nr_ps_color_exports == 0) {
 		memset(&output[j], 0, sizeof(struct r600_bytecode_output));
 		output[j].gpr = 0;
 		output[j].elem_size = 3;
