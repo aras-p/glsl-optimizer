@@ -39,10 +39,10 @@ struct h264_iparm1 {
    uint32_t h1; // 1fc
    uint32_t h2; // 200
    uint32_t h3; // 204
-   uint32_t unk208;
-   uint32_t field_pic_flag;
-   uint32_t format;
-   uint32_t unk214;
+   uint32_t mb_adaptive_frame_field_flag; // 208
+   uint32_t field_pic_flag; // 20c
+   uint32_t format; // 210
+   uint32_t unk214; // 214
 };
 
 struct h264_iparm2 {
@@ -56,7 +56,7 @@ struct h264_iparm2 {
    uint32_t h2; // 1c
    uint32_t h3; // 20
    uint32_t unk24;
-   uint32_t unk28;
+   uint32_t mb_adaptive_frame_field_flag; // 28
    uint32_t top; // 2c
    uint32_t bottom; // 30
    uint32_t is_reference; // 34
@@ -100,6 +100,7 @@ nv84_decoder_vp_h264(struct nv84_decoder *dec,
    param1.height = param1.h2 = height;
    param1.h1 = param1.h3 = align(height, 32);
    param1.format = 0x3231564e; /* 'NV12' */
+   param1.mb_adaptive_frame_field_flag = desc->mb_adaptive_frame_field_flag;
    param1.field_pic_flag = desc->field_pic_flag;
 
    param2.width = width;
@@ -115,6 +116,7 @@ nv84_decoder_vp_h264(struct nv84_decoder *dec,
       param2.top = desc->bottom_field_flag ? 2 : 1;
       param2.bottom = desc->bottom_field_flag;
    }
+   param2.mb_adaptive_frame_field_flag = desc->mb_adaptive_frame_field_flag;
    param2.is_reference = desc->is_reference;
 
    PUSH_SPACE(push, 5 + 16 + 3 + 2 + 6 + (is_ref ? 2 : 0) + 3 + 2 + 4 + 2);

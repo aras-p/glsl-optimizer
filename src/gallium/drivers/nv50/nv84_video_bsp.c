@@ -136,12 +136,11 @@ nv84_decoder_bsp(struct nv84_decoder *dec,
    params.iseqparm.chroma_format_idc = 1;
 
    params.iseqparm.pic_width_in_mbs_minus1 = mb(dec->base.width) - 1;
-   if (desc->field_pic_flag)
+   if (desc->field_pic_flag || desc->mb_adaptive_frame_field_flag)
       params.iseqparm.pic_height_in_map_units_minus1 = mb_half(dec->base.height) - 1;
    else
       params.iseqparm.pic_height_in_map_units_minus1 = mb(dec->base.height) - 1;
 
-   /* TODO: interlaced still doesn't work, maybe due to ref frame management. */
    if (desc->bottom_field_flag)
       params.ipicparm.curr_pic_order_cnt = desc->field_order_cnt[1];
    else
