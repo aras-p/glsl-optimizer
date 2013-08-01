@@ -400,6 +400,7 @@ intelInitDriverFunctions(struct dd_function_table *functions)
    intelInitPixelFuncs(functions);
    intelInitBufferObjectFuncs(functions);
    intel_init_syncobj_functions(functions);
+   brw_init_object_purgeable_functions(functions);
 }
 
 static bool

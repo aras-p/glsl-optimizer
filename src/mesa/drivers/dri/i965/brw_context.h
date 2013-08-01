@@ -1305,6 +1305,9 @@ void brw_get_depthstencil_tile_masks(struct intel_mipmap_tree *depth_mt,
 void brw_workaround_depthstencil_alignment(struct brw_context *brw,
                                            GLbitfield clear_mask);
 
+/* brw_object_purgeable.c */
+void brw_init_object_purgeable_functions(struct dd_function_table *functions);
+
 /*======================================================================
  * brw_queryobj.c
  */

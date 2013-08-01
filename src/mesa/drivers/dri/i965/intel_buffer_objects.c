@@ -35,11 +35,6 @@
 #include "intel_blit.h"
 #include "intel_buffer_objects.h"
 #include "intel_batchbuffer.h"
-#include "intel_fbo.h"
-#include "intel_mipmap_tree.h"
-#include "intel_regions.h"
-
-#include "brw_context.h"
 
 static GLboolean
 intel_bufferobj_unmap(struct gl_context * ctx, struct gl_buffer_object *obj);
@@ -590,129 +585,6 @@ intel_bufferobj_copy_subdata(struct gl_context *ctx,
    intel_batchbuffer_emit_mi_flush(brw);
 }
 
-static GLenum
-intel_buffer_purgeable(drm_intel_bo *buffer)
-{
-   int retained = 0;
-
-   if (buffer != NULL)
-      retained = drm_intel_bo_madvise (buffer, I915_MADV_DONTNEED);
-
-   return retained ? GL_VOLATILE_APPLE : GL_RELEASED_APPLE;
-}
-
-static GLenum
-intel_buffer_object_purgeable(struct gl_context * ctx,
-                              struct gl_buffer_object *obj,
-                              GLenum option)
-{
-   struct intel_buffer_object *intel_obj = intel_buffer_object (obj);
-
-   if (intel_obj->buffer != NULL)
-      return intel_buffer_purgeable(intel_obj->buffer);
-
-   if (option == GL_RELEASED_APPLE) {
-      return GL_RELEASED_APPLE;
-   } else {
-      /* XXX Create the buffer and madvise(MADV_DONTNEED)? */
-      struct brw_context *brw = brw_context(ctx);
-      drm_intel_bo *bo = intel_bufferobj_buffer(brw, intel_obj, INTEL_READ);
-
-      return intel_buffer_purgeable(bo);
-   }
-}
-
-static GLenum
-intel_texture_object_purgeable(struct gl_context * ctx,
-                               struct gl_texture_object *obj,
-                               GLenum option)
-{
-   struct intel_texture_object *intel;
-
-   (void) ctx;
-   (void) option;
-
-   intel = intel_texture_object(obj);
-   if (intel->mt == NULL || intel->mt->region == NULL)
-      return GL_RELEASED_APPLE;
-
-   return intel_buffer_purgeable(intel->mt->region->bo);
-}
-
-static GLenum
-intel_render_object_purgeable(struct gl_context * ctx,
-                              struct gl_renderbuffer *obj,
-                              GLenum option)
-{
-   struct intel_renderbuffer *intel;
-
-   (void) ctx;
-   (void) option;
-
-   intel = intel_renderbuffer(obj);
-   if (intel->mt == NULL)
-      return GL_RELEASED_APPLE;
-
-   return intel_buffer_purgeable(intel->mt->region->bo);
-}
-
-static GLenum
-intel_buffer_unpurgeable(drm_intel_bo *buffer)
-{
-   int retained;
-
-   retained = 0;
-   if (buffer != NULL)
-      retained = drm_intel_bo_madvise (buffer, I915_MADV_WILLNEED);
-
-   return retained ? GL_RETAINED_APPLE : GL_UNDEFINED_APPLE;
-}
-
-static GLenum
-intel_buffer_object_unpurgeable(struct gl_context * ctx,
-                                struct gl_buffer_object *obj,
-                                GLenum option)
-{
-   (void) ctx;
-   (void) option;
-
-   return intel_buffer_unpurgeable(intel_buffer_object (obj)->buffer);
-}
-
-static GLenum
-intel_texture_object_unpurgeable(struct gl_context * ctx,
-                                 struct gl_texture_object *obj,
-                                 GLenum option)
-{
-   struct intel_texture_object *intel;
-
-   (void) ctx;
-   (void) option;
-
-   intel = intel_texture_object(obj);
-   if (intel->mt == NULL || intel->mt->region == NULL)
-      return GL_UNDEFINED_APPLE;
-
-   return intel_buffer_unpurgeable(intel->mt->region->bo);
-}
-
-static GLenum
-intel_render_object_unpurgeable(struct gl_context * ctx,
-                                struct gl_renderbuffer *obj,
-                                GLenum option)
-{
-   struct intel_renderbuffer *intel;
-
-   (void) ctx;
-   (void) option;
-
-   intel = intel_renderbuffer(obj);
-   if (intel->mt == NULL)
-      return GL_UNDEFINED_APPLE;
-
-   return intel_buffer_unpurgeable(intel->mt->region->bo);
-}
-
 void
 intelInitBufferObjectFuncs(struct dd_function_table *functions)
 {
@@ -725,12 +597,4 @@ intelInitBufferObjectFuncs(struct dd_function_table *functions)
    functions->FlushMappedBufferRange = intel_bufferobj_flush_mapped_range;
    functions->UnmapBuffer = intel_bufferobj_unmap;
    functions->CopyBufferSubData = intel_bufferobj_copy_subdata;
-
-   functions->BufferObjectPurgeable = intel_buffer_object_purgeable;
-   functions->TextureObjectPurgeable = intel_texture_object_purgeable;
-   functions->RenderObjectPurgeable = intel_render_object_purgeable;
-
-   functions->BufferObjectUnpurgeable = intel_buffer_object_unpurgeable;
-   functions->TextureObjectUnpurgeable = intel_texture_object_unpurgeable;
-   functions->RenderObjectUnpurgeable = intel_render_object_unpurgeable;
 }

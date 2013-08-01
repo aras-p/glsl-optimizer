@@ -65,6 +65,7 @@ i965_FILES = \
 	brw_interpolation_map.c \
 	brw_lower_texture_gradients.cpp \
 	brw_misc_state.c \
+	brw_object_purgeable.c \
 	brw_program.c \
 	brw_primitive_restart.c \
 	brw_queryobj.c \
