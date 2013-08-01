@@ -83,6 +83,7 @@ struct si_vertex_element
 union si_state {
 	struct {
 		struct si_pm4_state		*sync;
+		struct si_pm4_state		*flush_and_inv_cb_meta;
 		struct si_pm4_state		*init;
 		struct si_state_blend		*blend;
 		struct si_pm4_state		*blend_color;
@@ -229,5 +230,6 @@ void si_cmd_draw_index_2(struct si_pm4_state *pm4, uint32_t max_size,
 void si_cmd_draw_index_auto(struct si_pm4_state *pm4, uint32_t count,
 			    uint32_t initiator, bool predicate);
 void si_cmd_surface_sync(struct si_pm4_state *pm4, uint32_t cp_coher_cntl);
+void si_cmd_flush_and_inv_cb_meta(struct si_pm4_state *pm4);
 
 #endif

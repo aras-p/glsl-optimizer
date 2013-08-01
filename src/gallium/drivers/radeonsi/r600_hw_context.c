@@ -184,10 +184,13 @@ static void r600_flush_framebuffer(struct r600_context *ctx)
 				S_0085F0_CB7_DEST_BASE_ENA(1) |
 				S_0085F0_DB_ACTION_ENA(1) |
 				S_0085F0_DB_DEST_BASE_ENA(1));
+	si_cmd_flush_and_inv_cb_meta(pm4);
+
 	si_pm4_emit(ctx, pm4);
 	si_pm4_free_state(ctx, pm4, ~0);
 
 	ctx->flags &= ~R600_CONTEXT_DST_CACHES_DIRTY;
+	ctx->flush_and_inv_cb_meta = false;
 }
 
 void si_context_flush(struct r600_context *ctx, unsigned flags)

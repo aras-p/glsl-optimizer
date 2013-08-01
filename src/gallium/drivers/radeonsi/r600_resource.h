@@ -40,6 +40,22 @@ struct r600_transfer {
 	struct pipe_resource		*staging;
 };
 
+struct r600_fmask_info {
+	unsigned offset;
+	unsigned size;
+	unsigned alignment;
+	unsigned bank_height;
+	unsigned slice_tile_max;
+	unsigned tile_mode_index;
+};
+
+struct r600_cmask_info {
+	unsigned offset;
+	unsigned size;
+	unsigned alignment;
+	unsigned slice_tile_max;
+};
+
 struct r600_texture {
 	struct si_resource		resource;
 
@@ -48,12 +64,17 @@ struct r600_texture {
 	 * for the stencil buffer below. */
 	enum pipe_format		real_format;
 
+	unsigned			size;
 	unsigned			pitch_override;
 	unsigned			is_depth;
 	unsigned			dirty_level_mask; /* each bit says if that miplevel is dirty */
 	struct r600_texture		*flushed_depth_texture;
 	boolean				is_flushing_texture;
 	struct radeon_surface		surface;
+
+	/* Colorbuffer compression and fast clear. */
+	struct r600_fmask_info		fmask;
+	struct r600_cmask_info		cmask;
 };
 
 struct r600_surface {

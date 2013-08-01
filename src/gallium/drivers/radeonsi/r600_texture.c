@@ -173,6 +173,9 @@ static int r600_setup_surface(struct pipe_screen *screen,
 	if (r) {
 		return r;
 	}
+
+	rtex->size = rtex->surface.bo_size;
+
 	if (pitch_in_bytes_override && pitch_in_bytes_override != rtex->surface.level[0].pitch_bytes) {
 		/* old ddx on evergreen over estimate alignment for 1d, only 1 level
 		 * for those
@@ -419,6 +422,116 @@ static const struct u_resource_vtbl r600_texture_vtbl =
 
 DEBUG_GET_ONCE_BOOL_OPTION(print_texdepth, "RADEON_PRINT_TEXDEPTH", FALSE);
 
+/* The number of samples can be specified independently of the texture. */
+static void r600_texture_get_fmask_info(struct r600_screen *rscreen,
+					struct r600_texture *rtex,
+					unsigned nr_samples,
+					struct r600_fmask_info *out)
+{
+	/* FMASK is allocated like an ordinary texture. */
+	struct radeon_surface fmask = rtex->surface;
+
+	memset(out, 0, sizeof(*out));
+
+	fmask.bo_alignment = 0;
+	fmask.bo_size = 0;
+	fmask.nsamples = 1;
+	fmask.flags |= RADEON_SURF_FMASK | RADEON_SURF_HAS_TILE_MODE_INDEX;
+
+	switch (nr_samples) {
+	case 2:
+	case 4:
+		fmask.bpe = 1;
+		break;
+	case 8:
+		fmask.bpe = 4;
+		break;
+	default:
+		R600_ERR("Invalid sample count for FMASK allocation.\n");
+		return;
+	}
+
+	if (rscreen->ws->surface_init(rscreen->ws, &fmask)) {
+		R600_ERR("Got error in surface_init while allocating FMASK.\n");
+		return;
+	}
+
+	assert(fmask.level[0].mode == RADEON_SURF_MODE_2D);
+
+	out->slice_tile_max = (fmask.level[0].nblk_x * fmask.level[0].nblk_y) / 64;
+	if (out->slice_tile_max)
+		out->slice_tile_max -= 1;
+
+	out->tile_mode_index = fmask.tiling_index[0];
+	out->bank_height = fmask.bankh;
+	out->alignment = MAX2(256, fmask.bo_alignment);
+	out->size = fmask.bo_size;
+}
+
+static void r600_texture_allocate_fmask(struct r600_screen *rscreen,
+					struct r600_texture *rtex)
+{
+	r600_texture_get_fmask_info(rscreen, rtex,
+				    rtex->resource.b.b.nr_samples, &rtex->fmask);
+
+	rtex->fmask.offset = align(rtex->size, rtex->fmask.alignment);
+	rtex->size = rtex->fmask.offset + rtex->fmask.size;
+}
+
+static void si_texture_get_cmask_info(struct r600_screen *rscreen,
+				      struct r600_texture *rtex,
+				      struct r600_cmask_info *out)
+{
+	unsigned pipe_interleave_bytes = rscreen->tiling_info.group_bytes;
+	unsigned num_pipes = rscreen->tiling_info.num_channels;
+	unsigned cl_width, cl_height;
+
+	switch (num_pipes) {
+	case 2:
+		cl_width = 32;
+		cl_height = 16;
+		break;
+	case 4:
+		cl_width = 32;
+		cl_height = 32;
+		break;
+	case 8:
+		cl_width = 64;
+		cl_height = 32;
+		break;
+	default:
+		assert(0);
+		return;
+	}
+
+	unsigned base_align = num_pipes * pipe_interleave_bytes;
+
+	unsigned width = align(rtex->surface.npix_x, cl_width*8);
+	unsigned height = align(rtex->surface.npix_y, cl_height*8);
+	unsigned slice_elements = (width * height) / (8*8);
+
+	/* Each element of CMASK is a nibble. */
+	unsigned slice_bytes = slice_elements / 2;
+
+	out->slice_tile_max = (width * height) / (128*128);
+	if (out->slice_tile_max)
+		out->slice_tile_max -= 1;
+
+	out->alignment = MAX2(256, base_align);
+	out->size = rtex->surface.array_size * align(slice_bytes, base_align);
+}
+
+static void r600_texture_allocate_cmask(struct r600_screen *rscreen,
+					struct r600_texture *rtex)
+{
+	si_texture_get_cmask_info(rscreen, rtex, &rtex->cmask);
+
+	if (rtex->cmask.size) {
+		rtex->cmask.offset = align(rtex->size, rtex->cmask.alignment);
+		rtex->size = rtex->cmask.offset + rtex->cmask.size;
+	}
+}
+
 static struct r600_texture *
 r600_texture_create_object(struct pipe_screen *screen,
 			   const struct pipe_resource *base,
@@ -456,13 +569,23 @@ r600_texture_create_object(struct pipe_screen *screen,
 		return NULL;
 	}
 
+	if (base->nr_samples > 1 && !rtex->is_depth && !buf) {
+		r600_texture_allocate_fmask(rscreen, rtex);
+		r600_texture_allocate_cmask(rscreen, rtex);
+	}
+
+	if (!rtex->is_depth && base->nr_samples > 1 &&
+	    (!rtex->fmask.size || !rtex->cmask.size)) {
+		FREE(rtex);
+		return NULL;
+	}
+
 	/* Now create the backing buffer. */
 	if (!buf && alloc_bo) {
 		unsigned base_align = rtex->surface.bo_alignment;
-		unsigned size = rtex->surface.bo_size;
 
 		base_align = rtex->surface.bo_alignment;
-		if (!si_init_resource(rscreen, resource, size, base_align, FALSE, base->usage)) {
+		if (!si_init_resource(rscreen, resource, rtex->size, base_align, FALSE, base->usage)) {
 			FREE(rtex);
 			return NULL;
 		}
@@ -470,6 +593,12 @@ r600_texture_create_object(struct pipe_screen *screen,
 		resource->buf = buf;
 		resource->cs_buf = rscreen->ws->buffer_get_cs_handle(buf);
 		resource->domains = RADEON_DOMAIN_GTT | RADEON_DOMAIN_VRAM;
+	}
+
+	if (rtex->cmask.size) {
+		/* Initialize the cmask to 0xCC (= compressed state). */
+		char *map = rscreen->ws->buffer_map(resource->cs_buf, NULL, PIPE_TRANSFER_WRITE);
+		memset(map + rtex->cmask.offset, 0xCC, rtex->cmask.size);
 	}
 
 	if (debug_get_option_print_texdepth() && rtex->is_depth) {

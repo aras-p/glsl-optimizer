@@ -8521,6 +8521,7 @@
 #define   S_028C74_FMASK_TILE_MODE_INDEX(x)                           (((x) & 0x1F) << 5)
 #define   G_028C74_FMASK_TILE_MODE_INDEX(x)                           (((x) >> 5) & 0x1F)
 #define   C_028C74_FMASK_TILE_MODE_INDEX                              0xFFFFFC1F
+#define   S_028C74_FMASK_BANK_HEIGHT(x)				      (((x) & 0x3) << 10) /* SI errata */
 #define   S_028C74_NUM_SAMPLES(x)                                     (((x) & 0x07) << 12)
 #define   G_028C74_NUM_SAMPLES(x)                                     (((x) >> 12) & 0x07)
 #define   C_028C74_NUM_SAMPLES                                        0xFFFF8FFF

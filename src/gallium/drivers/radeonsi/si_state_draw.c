@@ -706,6 +706,17 @@ void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 		si_pm4_set_state(rctx, sync, pm4);
 	}
 
+	if (rctx->flush_and_inv_cb_meta) {
+		struct si_pm4_state *pm4 = si_pm4_alloc_state(rctx);
+
+		if (pm4 == NULL)
+			return;
+
+		si_cmd_flush_and_inv_cb_meta(pm4);
+		si_pm4_set_state(rctx, flush_and_inv_cb_meta, pm4);
+		rctx->flush_and_inv_cb_meta = false;
+	}
+
 	/* Emit states. */
 	rctx->pm4_dirty_cdwords += si_pm4_dirty_dw(rctx);
 

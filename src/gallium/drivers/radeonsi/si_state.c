@@ -1852,8 +1852,22 @@ static void si_cb(struct r600_context *rctx, struct si_pm4_state *pm4,
 
 	if (rtex->resource.b.b.nr_samples > 1) {
 		unsigned log_samples = util_logbase2(rtex->resource.b.b.nr_samples);
+
 		color_attrib |= S_028C74_NUM_SAMPLES(log_samples) |
 				S_028C74_NUM_FRAGMENTS(log_samples);
+
+		if (rtex->fmask.size) {
+			color_info |= S_028C70_COMPRESSION(1);
+			unsigned fmask_bankh = util_logbase2(rtex->fmask.bank_height);
+
+			/* due to a bug in the hw, FMASK_BANK_HEIGHT must be set on SI too */
+			color_attrib |= S_028C74_FMASK_TILE_MODE_INDEX(rtex->fmask.tile_mode_index) |
+					S_028C74_FMASK_BANK_HEIGHT(fmask_bankh);
+		}
+	}
+
+	if (rtex->cmask.size) {
+		color_info |= S_028C70_FAST_CLEAR(1);
 	}
 
 	offset += r600_resource_va(rctx->context.screen, state->cbufs[cb]->texture);
@@ -1874,6 +1888,19 @@ static void si_cb(struct r600_context *rctx, struct si_pm4_state *pm4,
 	}
 	si_pm4_set_reg(pm4, R_028C70_CB_COLOR0_INFO + cb * 0x3C, color_info);
 	si_pm4_set_reg(pm4, R_028C74_CB_COLOR0_ATTRIB + cb * 0x3C, color_attrib);
+
+	if (rtex->cmask.size) {
+		si_pm4_set_reg(pm4, R_028C7C_CB_COLOR0_CMASK + cb * 0x3C,
+			       offset + (rtex->cmask.offset >> 8));
+		si_pm4_set_reg(pm4, R_028C80_CB_COLOR0_CMASK_SLICE + cb * 0x3C,
+			       S_028C80_TILE_MAX(rtex->cmask.slice_tile_max));
+	}
+	if (rtex->fmask.size) {
+		si_pm4_set_reg(pm4, R_028C84_CB_COLOR0_FMASK + cb * 0x3C,
+			       offset + (rtex->fmask.offset >> 8));
+		si_pm4_set_reg(pm4, R_028C88_CB_COLOR0_FMASK_SLICE + cb * 0x3C,
+			       S_028C88_TILE_MAX(rtex->fmask.slice_tile_max));
+	}
 
 	/* set CB_COLOR1_INFO for possible dual-src blending */
 	if (state->nr_cbufs == 1) {
@@ -2210,6 +2237,7 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 		return;
 
 	si_pm4_inval_fb_cache(pm4, state->nr_cbufs);
+	rctx->flush_and_inv_cb_meta = true;
 
 	if (state->zsbuf)
 		si_pm4_inval_zsbuf_cache(pm4);

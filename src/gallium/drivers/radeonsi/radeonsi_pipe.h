@@ -217,6 +217,8 @@ struct r600_context {
 	/* SI state handling */
 	union si_state	queued;
 	union si_state	emitted;
+
+	bool flush_and_inv_cb_meta;
 };
 
 /* r600_blit.c */
