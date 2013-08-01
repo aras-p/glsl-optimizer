@@ -1,0 +1,166 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <title>Mesa Release Notes</title>
+  <link rel="stylesheet" type="text/css" href="../mesa.css">
+</head>
+<body>
+
+<div class="header">
+  <h1>The Mesa 3D Graphics Library</h1>
+</div>
+
+<iframe src="../contents.html"></iframe>
+<div class="content">
+
+<h1>Mesa 9.1.6 Release Notes / August 1, 2013</h1>
+
+<p>
+Mesa 9.1.6 is a bug fix release which fixes bugs found since the 9.1.5 release.
+</p>
+<p>
+Mesa 9.1 implements the OpenGL 3.1 API, but the version reported by
+glGetString(GL_VERSION) or glGetIntegerv(GL_MAJOR_VERSION) /
+glGetIntegerv(GL_MINOR_VERSION) depends on the particular driver being used.
+Some drivers don't support all the features required in OpenGL 3.1.  OpenGL
+3.1 is <strong>only</strong> available if requested at context creation
+because GL_ARB_compatibility is not supported.
+</p>
+
+<h2>MD5 checksums</h2>
+<pre>
+TBD
+</pre>
+
+<h2>New features</h2>
+<p>None.</p>
+
+<h2>Bug fixes</h2>
+
+<p>This list is likely incomplete.</p>
+
+<ul>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=47824">Bug 47824</a> - osmesa using --enable-shared-glapi depends on libgl</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=62362">Bug 62362</a> - Crash when using Wayland EGL platform</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=63435">Bug 63435</a> - [Regression since 9.0] Flickering in EGL OpenGL full-screen window with swap interval 1</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=64087">Bug 64087</a> - Webgl conformance shader-with-non-reserved-words crash when mesa is compiled without --enable-debug</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=64330">Bug 64330</a> - WebGL snake demo crash in loop_analysis.cpp:506: bool is_loop_terminator(ir_if*): assertion „inst != __null“ failed.</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=65236">Bug 65236</a> - [i965] Rendering artifacts in VDrift/GL2</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=66558">Bug 66558</a> - RS690: 3D artifacts when playing SuperTuxKart</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=66847">Bug 66847</a> - compilation broken with llvm 3.3</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=66850">Bug 66850</a> - glGenerateMipmap crashes when using GL_TEXTURE_2D_ARRAY with compressed internal format</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=66921">Bug 66921</a> - [r300g] Heroes of Newerth: HiZ related corruption</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=67283">Bug 67283</a> - VDPAU doesn't work on hybrid laptop through DRI_PRIME</li>
+
+</ul>
+
+<h2>Changes</h2>
+<p>The full set of changes can be viewed by using the following GIT command:</p>
+
+<pre>
+  git log mesa-9.1.4..mesa-9.1.5
+</pre>
+
+<p>Andreas Boll (1):</p>
+<ul>
+  <li>configure.ac: Require llvm-3.2 for r600g/radeonsi llvm backends</li>
+</ul>
+
+<p>Brian Paul (4):</p>
+<ul>
+  <li>mesa: handle 2D texture arrays in get_tex_rgba_compressed()</li>
+  <li>meta: handle 2D texture arrays in decompress_texture_image()</li>
+  <li>mesa: implement mipmap generation for compressed 2D array textures</li>
+  <li>mesa: improve free() cleanup in generate_mipmap_compressed()</li>
+</ul>
+
+<p>Carl Worth (7):</p>
+<ul>
+  <li>docs: Add 9.1.5 release md5sums</li>
+  <li>Merge 'origin/9.1' into stable</li>
+  <li>cherry-ignore: Drop 13 patches from the pick list</li>
+  <li>get-pick-list.sh: Include commits mentionining "CC: mesa-stable..." in pick list</li>
+  <li>get-pick-list: Allow for non-whitespace between "CC:" and "mesa-stable"</li>
+  <li>get-pick-list: Ignore commits which CC mesa-stable unless they say "9.1"</li>
+  <li>Bump version to 9.1.6</li>
+</ul>
+
+<p>Chris Forbes (5):</p>
+<ul>
+  <li>i965/Gen4: Zero extra coordinates for ir_tex</li>
+  <li>i965/vs: Fix flaky texture swizzling</li>
+  <li>i965/vs: set up sampler state pointer for Gen4/5.</li>
+  <li>i965/vs: Put lod parameter in the correct place for Gen4</li>
+  <li>i965/vs: Gen4/5: enable front colors if back colors are written</li>
+</ul>
+
+<p>Christoph Bumiller (1):</p>
+<ul>
+  <li>nv50,nvc0: s/uint16/uint32 for constant buffer offset</li>
+</ul>
+
+<p>Dave Airlie (1):</p>
+<ul>
+  <li>gallium/vl: add prime support</li>
+</ul>
+
+<p>Eric Anholt (1):</p>
+<ul>
+  <li>egl: Restore "bogus" DRI2 invalidate event code.</li>
+</ul>
+
+<p>Jeremy Huddleston Sequoia (1):</p>
+<ul>
+  <li>Apple: glFlush() is not needed with CGLFlushDrawable()</li>
+</ul>
+
+<p>Kenneth Graunke (1):</p>
+<ul>
+  <li>glsl: Classify "layout" like other identifiers.</li>
+</ul>
+
+<p>Kristian Høgsberg (1):</p>
+<ul>
+  <li>egl-wayland: Fix left-over wl_display_roundtrip() usage</li>
+</ul>
+
+<p>Maarten Lankhorst (2):</p>
+<ul>
+  <li>osmesa: link against static libglapi library too to get the gl exports</li>
+  <li>nvc0: force use of correct firmware file</li>
+</ul>
+
+<p>Marek Olšák (4):</p>
+<ul>
+  <li>r300g/swtcl: fix geometry corruption by uploading indices to a buffer</li>
+  <li>r300g/swtcl: fix a lockup in MSAA resolve</li>
+  <li>Revert "r300g: allow HiZ with a 16-bit zbuffer"</li>
+  <li>r600g: increase array size for shader inputs and outputs</li>
+</ul>
+
+<p>Matt Turner (2):</p>
+<ul>
+  <li>i965: NULL check prog on shader compilation failure.</li>
+  <li>i965/vs: Print error if vertex shader fails to compile.</li>
+</ul>
+
+<p>Paul Berry (1):</p>
+<ul>
+  <li>glsl: Handle empty if statement encountered during loop analysis.</li>
+</ul>
+
+</div>
+</body>
+</html>
