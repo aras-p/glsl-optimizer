@@ -553,7 +553,7 @@ _mesa_test_texobj_completeness( const struct gl_context *ctx,
    t->_MaxLevel = MIN2(t->_MaxLevel, t->MaxLevel);
    t->_MaxLevel = MIN2(t->_MaxLevel, maxLevels - 1); /* 'q' in the GL spec */
 
-   /* Compute _MaxLambda = q - b (see the 1.2 spec) used during mipmapping */
+   /* Compute _MaxLambda = q - p in the spec used during mipmapping */
    t->_MaxLambda = (GLfloat) (t->_MaxLevel - baseLevel);
 
    if (t->Immutable) {

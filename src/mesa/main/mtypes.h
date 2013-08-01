@@ -1166,7 +1166,7 @@ struct gl_texture_object
    GLint MaxLevel;             /**< max mipmap level, OpenGL 1.2 */
    GLint ImmutableLevels;      /**< ES 3.0 / ARB_texture_view */
    GLint _MaxLevel;            /**< actual max mipmap level (q in the spec) */
-   GLfloat _MaxLambda;         /**< = _MaxLevel - BaseLevel (q - b in spec) */
+   GLfloat _MaxLambda;         /**< = _MaxLevel - BaseLevel (q - p in spec) */
    GLint CropRect[4];          /**< GL_OES_draw_texture */
    GLenum Swizzle[4];          /**< GL_EXT_texture_swizzle */
    GLuint _Swizzle;            /**< same as Swizzle, but SWIZZLE_* format */
