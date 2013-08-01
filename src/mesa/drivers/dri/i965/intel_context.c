@@ -481,6 +481,7 @@ intelInitContext(struct brw_context *brw,
    }
 
    brw->intelScreen = intelScreen;
+   brw->bufmgr = intelScreen->bufmgr;
 
    if (!_mesa_initialize_context(&brw->ctx, api, mesaVis, shareCtx,
                                  functions)) {
@@ -539,8 +540,6 @@ intelInitContext(struct brw_context *brw,
     * be more conservative.
     */
    brw->max_gtt_map_object_size = gtt_size / 4;
-
-   brw->bufmgr = intelScreen->bufmgr;
 
    bo_reuse_mode = driQueryOptioni(&brw->optionCache, "bo_reuse");
    switch (bo_reuse_mode) {
