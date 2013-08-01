@@ -139,9 +139,9 @@ write_xfb_primitives_written(struct brw_context *brw,
                              drm_intel_bo *query_bo, int idx)
 {
    if (brw->gen >= 7) {
-      write_reg(brw, query_bo, SO_NUM_PRIMS_WRITTEN0_IVB, idx);
+      write_reg(brw, query_bo, GEN7_SO_NUM_PRIMS_WRITTEN(0), idx);
    } else {
-      write_reg(brw, query_bo, SO_NUM_PRIMS_WRITTEN, idx);
+      write_reg(brw, query_bo, GEN6_SO_NUM_PRIMS_WRITTEN, idx);
    }
 }
 
