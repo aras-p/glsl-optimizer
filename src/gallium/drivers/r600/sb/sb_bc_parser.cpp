@@ -58,7 +58,10 @@ int bc_parser::decode() {
 	if (pshader) {
 		switch (bc->type) {
 		case TGSI_PROCESSOR_FRAGMENT: t = TARGET_PS; break;
-		case TGSI_PROCESSOR_VERTEX: t = TARGET_VS; break;
+		case TGSI_PROCESSOR_VERTEX:
+			t = pshader->vs_as_es ? TARGET_ES : TARGET_VS;
+			break;
+		case TGSI_PROCESSOR_GEOMETRY: t = TARGET_GS; break;
 		case TGSI_PROCESSOR_COMPUTE: t = TARGET_COMPUTE; break;
 		default: assert(!"unknown shader target"); return -1; break;
 		}
@@ -134,8 +137,12 @@ int bc_parser::parse_decls() {
 		}
 	}
 
-	if (sh->target == TARGET_VS)
+	if (sh->target == TARGET_VS || sh->target == TARGET_ES)
 		sh->add_input(0, 1, 0x0F);
+	else if (sh->target == TARGET_GS) {
+		sh->add_input(0, 1, 0x0F);
+		sh->add_input(1, 1, 0x0F);
+	}
 
 	bool ps_interp = ctx.hw_class >= HW_CLASS_EVERGREEN
 			&& sh->target == TARGET_PS;

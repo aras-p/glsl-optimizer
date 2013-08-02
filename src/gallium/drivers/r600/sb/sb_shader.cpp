@@ -215,7 +215,7 @@ void shader::init() {
 void shader::init_call_fs(cf_node* cf) {
 	unsigned gpr = 0;
 
-	assert(target == TARGET_VS);
+	assert(target == TARGET_VS || target == TARGET_ES);
 
 	for(inputs_vec::const_iterator I = inputs.begin(),
 			E = inputs.end(); I != E; ++I, ++gpr) {
@@ -433,6 +433,7 @@ std::string shader::get_full_target_name() {
 const char* shader::get_shader_target_name() {
 	switch (target) {
 		case TARGET_VS: return "VS";
+		case TARGET_ES: return "ES";
 		case TARGET_PS: return "PS";
 		case TARGET_GS: return "GS";
 		case TARGET_COMPUTE: return "COMPUTE";

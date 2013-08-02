@@ -93,8 +93,8 @@ int eg_bytecode_cf_build(struct r600_bytecode *bc, struct r600_bytecode_cf *cf)
 			if (bc->chip_class == EVERGREEN) /* no EOP on cayman */
 				bc->bytecode[id] |= S_SQ_CF_ALLOC_EXPORT_WORD1_END_OF_PROGRAM(cf->end_of_program);
 			id++;
-		} else if (cfop->flags & CF_STRM) {
-			/* MEM_STREAM instructions */
+		} else if (cfop->flags & CF_MEM) {
+			/* MEM_STREAM, MEM_RING instructions */
 			bc->bytecode[id++] = S_SQ_CF_ALLOC_EXPORT_WORD0_RW_GPR(cf->output.gpr) |
 					S_SQ_CF_ALLOC_EXPORT_WORD0_ELEM_SIZE(cf->output.elem_size) |
 					S_SQ_CF_ALLOC_EXPORT_WORD0_ARRAY_BASE(cf->output.array_base) |
@@ -109,12 +109,13 @@ int eg_bytecode_cf_build(struct r600_bytecode *bc, struct r600_bytecode_cf *cf)
 				bc->bytecode[id] |= S_SQ_CF_ALLOC_EXPORT_WORD1_END_OF_PROGRAM(cf->end_of_program);
 			id++;
 		} else {
-			/* branch, loop, call, return instructions */
+			/* other instructions */
 			bc->bytecode[id++] = S_SQ_CF_WORD0_ADDR(cf->cf_addr >> 1);
 			bc->bytecode[id++] =  S_SQ_CF_WORD1_CF_INST(opcode)|
 					S_SQ_CF_WORD1_BARRIER(1) |
 					S_SQ_CF_WORD1_COND(cf->cond) |
-					S_SQ_CF_WORD1_POP_COUNT(cf->pop_count);
+					S_SQ_CF_WORD1_POP_COUNT(cf->pop_count) |
+					S_SQ_CF_WORD1_END_OF_PROGRAM(cf->end_of_program);
 		}
 	}
 	return 0;

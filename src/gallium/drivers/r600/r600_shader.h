@@ -37,6 +37,7 @@ struct r600_shader_io {
 	unsigned		lds_pos; /* for evergreen */
 	unsigned		back_color_input;
 	unsigned		write_mask;
+	int				ring_offset;
 };
 
 struct r600_shader {
@@ -64,9 +65,17 @@ struct r600_shader {
 	boolean			has_txq_cube_array_z_comp;
 	boolean			uses_tex_buffers;
 
+	/* geometry shader properties */
+	unsigned		gs_input_prim;
+	unsigned		gs_output_prim;
+	unsigned		gs_max_out_vertices;
+	/* size in bytes of a data item in the ring (single vertex data) */
+	unsigned		ring_item_size;
+
 	unsigned		indirect_files;
 	unsigned		max_arrays;
 	unsigned		num_arrays;
+	unsigned		vs_as_es;
 	struct r600_shader_array * arrays;
 };
 
@@ -74,6 +83,7 @@ struct r600_shader_key {
 	unsigned color_two_side:1;
 	unsigned alpha_to_one:1;
 	unsigned nr_cbufs:4;
+	unsigned vs_as_es:1;
 };
 
 struct r600_shader_array {
@@ -85,6 +95,8 @@ struct r600_shader_array {
 struct r600_pipe_shader {
 	struct r600_pipe_shader_selector *selector;
 	struct r600_pipe_shader	*next_variant;
+	/* for GS - corresponding copy shader (installed as VS) */
+	struct r600_pipe_shader *gs_copy_shader;
 	struct r600_shader	shader;
 	struct r600_command_buffer command_buffer; /* register writes */
 	struct r600_resource	*bo;

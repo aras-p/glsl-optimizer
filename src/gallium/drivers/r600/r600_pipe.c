@@ -447,15 +447,18 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 
 static int r600_get_shader_param(struct pipe_screen* pscreen, unsigned shader, enum pipe_shader_cap param)
 {
+	struct r600_screen *rscreen = (struct r600_screen *)pscreen;
+
 	switch(shader)
 	{
 	case PIPE_SHADER_FRAGMENT:
 	case PIPE_SHADER_VERTEX:
-        case PIPE_SHADER_COMPUTE:
+	case PIPE_SHADER_COMPUTE:
 		break;
 	case PIPE_SHADER_GEOMETRY:
-		/* XXX: support and enable geometry programs */
-		return 0;
+		if (rscreen->b.chip_class < EVERGREEN)
+			return 0;
+		break;
 	default:
 		/* XXX: support tessellation on Evergreen */
 		return 0;

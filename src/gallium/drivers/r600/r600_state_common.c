@@ -693,6 +693,8 @@ static INLINE struct r600_shader_key r600_shader_selector_key(struct pipe_contex
 		/* Dual-source blending only makes sense with nr_cbufs == 1. */
 		if (key.nr_cbufs == 1 && rctx->dual_src_blend)
 			key.nr_cbufs = 2;
+	} else if (sel->type == PIPE_SHADER_VERTEX) {
+		key.vs_as_es = (rctx->gs_shader != NULL);
 	}
 	return key;
 }
@@ -792,6 +794,12 @@ static void *r600_create_vs_state(struct pipe_context *ctx,
 	return r600_create_shader_state(ctx, state, PIPE_SHADER_VERTEX);
 }
 
+static void *r600_create_gs_state(struct pipe_context *ctx,
+					 const struct pipe_shader_state *state)
+{
+	return r600_create_shader_state(ctx, state, PIPE_SHADER_GEOMETRY);
+}
+
 static void r600_bind_ps_state(struct pipe_context *ctx, void *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
@@ -811,6 +819,13 @@ static void r600_bind_vs_state(struct pipe_context *ctx, void *state)
 
 	rctx->vs_shader = (struct r600_pipe_shader_selector *)state;
 	rctx->b.streamout.stride_in_dw = rctx->vs_shader->so.stride;
+}
+
+static void r600_bind_gs_state(struct pipe_context *ctx, void *state)
+{
+	struct r600_context *rctx = (struct r600_context *)ctx;
+
+	rctx->gs_shader = (struct r600_pipe_shader_selector *)state;
 }
 
 static void r600_delete_shader_selector(struct pipe_context *ctx,
@@ -852,6 +867,20 @@ static void r600_delete_vs_state(struct pipe_context *ctx, void *state)
 
 	r600_delete_shader_selector(ctx, sel);
 }
+
+
+static void r600_delete_gs_state(struct pipe_context *ctx, void *state)
+{
+	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct r600_pipe_shader_selector *sel = (struct r600_pipe_shader_selector *)state;
+
+	if (rctx->gs_shader == sel) {
+		rctx->gs_shader = NULL;
+	}
+
+	r600_delete_shader_selector(ctx, sel);
+}
+
 
 void r600_constant_buffers_dirty(struct r600_context *rctx, struct r600_constbuf_state *state)
 {
@@ -1046,10 +1075,65 @@ static void r600_setup_txq_cube_array_constants(struct r600_context *rctx, int s
 	pipe_resource_reference(&cb.buffer, NULL);
 }
 
+static void update_shader_atom(struct pipe_context *ctx,
+			       struct r600_shader_state *state,
+			       struct r600_pipe_shader *shader)
+{
+	state->shader = shader;
+	if (shader) {
+		state->atom.num_dw = shader->command_buffer.num_dw;
+		state->atom.dirty = true;
+		r600_context_add_resource_size(ctx, (struct pipe_resource *)shader->bo);
+	} else {
+		state->atom.num_dw = 0;
+		state->atom.dirty = false;
+	}
+}
+
+static void update_gs_block_state(struct r600_context *rctx, unsigned enable)
+{
+	if (rctx->shader_stages.geom_enable != enable) {
+		rctx->shader_stages.geom_enable = enable;
+		rctx->shader_stages.atom.dirty = true;
+	}
+
+	if (rctx->gs_rings.enable != enable) {
+		rctx->gs_rings.enable = enable;
+		rctx->gs_rings.atom.dirty = true;
+
+		if (enable && !rctx->gs_rings.esgs_ring.buffer) {
+			unsigned size = 0x1C000;
+			rctx->gs_rings.esgs_ring.buffer =
+					pipe_buffer_create(rctx->b.b.screen, PIPE_BIND_CUSTOM,
+							PIPE_USAGE_STATIC, size);
+			rctx->gs_rings.esgs_ring.buffer_size = size;
+
+			size = 0x4000000;
+
+			rctx->gs_rings.gsvs_ring.buffer =
+					pipe_buffer_create(rctx->b.b.screen, PIPE_BIND_CUSTOM,
+							PIPE_USAGE_STATIC, size);
+			rctx->gs_rings.gsvs_ring.buffer_size = size;
+		}
+
+		if (enable) {
+			r600_set_constant_buffer(&rctx->b.b, PIPE_SHADER_GEOMETRY,
+					R600_GS_RING_CONST_BUFFER, &rctx->gs_rings.esgs_ring);
+			r600_set_constant_buffer(&rctx->b.b, PIPE_SHADER_VERTEX,
+					R600_GS_RING_CONST_BUFFER, &rctx->gs_rings.gsvs_ring);
+		} else {
+			r600_set_constant_buffer(&rctx->b.b, PIPE_SHADER_GEOMETRY,
+					R600_GS_RING_CONST_BUFFER, NULL);
+			r600_set_constant_buffer(&rctx->b.b, PIPE_SHADER_VERTEX,
+					R600_GS_RING_CONST_BUFFER, NULL);
+		}
+	}
+}
+
 static bool r600_update_derived_state(struct r600_context *rctx)
 {
 	struct pipe_context * ctx = (struct pipe_context*)rctx;
-	bool ps_dirty = false, vs_dirty = false;
+	bool ps_dirty = false, vs_dirty = false, gs_dirty = false;
 	bool blend_disable;
 
 	if (!rctx->blitter->running) {
@@ -1067,22 +1151,54 @@ static bool r600_update_derived_state(struct r600_context *rctx)
 		}
 	}
 
-	if (unlikely(rctx->vertex_shader.shader != rctx->vs_shader)) {
-		r600_shader_select(ctx, rctx->vs_shader, &vs_dirty);
+	update_gs_block_state(rctx, rctx->gs_shader != NULL);
 
+	if (rctx->gs_shader) {
+		r600_shader_select(ctx, rctx->gs_shader, &gs_dirty);
+		if (unlikely(!rctx->gs_shader->current))
+			return false;
+
+		if (rctx->b.chip_class >= EVERGREEN && !rctx->shader_stages.geom_enable) {
+			rctx->shader_stages.geom_enable = true;
+			rctx->shader_stages.atom.dirty = true;
+		}
+
+		/* gs_shader provides GS and VS (copy shader) */
+		if (unlikely(rctx->geometry_shader.shader != rctx->gs_shader->current)) {
+			update_shader_atom(ctx, &rctx->geometry_shader, rctx->gs_shader->current);
+			update_shader_atom(ctx, &rctx->vertex_shader, rctx->gs_shader->current->gs_copy_shader);
+		}
+
+		r600_shader_select(ctx, rctx->vs_shader, &vs_dirty);
 		if (unlikely(!rctx->vs_shader->current))
 			return false;
 
-		rctx->vertex_shader.shader = rctx->vs_shader;
-		rctx->vertex_shader.atom.dirty = true;
-		r600_context_add_resource_size(ctx, (struct pipe_resource *)rctx->vs_shader->current->bo);
+		/* vs_shader is used as ES */
+		if (unlikely(vs_dirty || rctx->export_shader.shader != rctx->vs_shader->current)) {
+			update_shader_atom(ctx, &rctx->export_shader, rctx->vs_shader->current);
+		}
+	} else {
+		if (unlikely(rctx->geometry_shader.shader)) {
+			update_shader_atom(ctx, &rctx->geometry_shader, NULL);
+			update_shader_atom(ctx, &rctx->export_shader, NULL);
+			rctx->shader_stages.geom_enable = false;
+			rctx->shader_stages.atom.dirty = true;
+		}
 
-		/* Update clip misc state. */
-		if (rctx->vs_shader->current->pa_cl_vs_out_cntl != rctx->clip_misc_state.pa_cl_vs_out_cntl ||
-				rctx->vs_shader->current->shader.clip_dist_write != rctx->clip_misc_state.clip_dist_write) {
-			rctx->clip_misc_state.pa_cl_vs_out_cntl = rctx->vs_shader->current->pa_cl_vs_out_cntl;
-			rctx->clip_misc_state.clip_dist_write = rctx->vs_shader->current->shader.clip_dist_write;
-			rctx->clip_misc_state.atom.dirty = true;
+		r600_shader_select(ctx, rctx->vs_shader, &vs_dirty);
+		if (unlikely(!rctx->vs_shader->current))
+			return false;
+
+		if (unlikely(vs_dirty || rctx->vertex_shader.shader != rctx->vs_shader->current)) {
+			update_shader_atom(ctx, &rctx->vertex_shader, rctx->vs_shader->current);
+
+			/* Update clip misc state. */
+			if (rctx->vs_shader->current->pa_cl_vs_out_cntl != rctx->clip_misc_state.pa_cl_vs_out_cntl ||
+					rctx->vs_shader->current->shader.clip_dist_write != rctx->clip_misc_state.clip_dist_write) {
+				rctx->clip_misc_state.pa_cl_vs_out_cntl = rctx->vs_shader->current->pa_cl_vs_out_cntl;
+				rctx->clip_misc_state.clip_dist_write = rctx->vs_shader->current->shader.clip_dist_write;
+				rctx->clip_misc_state.atom.dirty = true;
+			}
 		}
 	}
 
@@ -1090,7 +1206,7 @@ static bool r600_update_derived_state(struct r600_context *rctx)
 	if (unlikely(!rctx->ps_shader->current))
 		return false;
 
-	if (unlikely(ps_dirty || rctx->pixel_shader.shader != rctx->ps_shader)) {
+	if (unlikely(ps_dirty || rctx->pixel_shader.shader != rctx->ps_shader->current)) {
 
 		if (rctx->cb_misc_state.nr_ps_color_outputs != rctx->ps_shader->current->nr_ps_color_outputs) {
 			rctx->cb_misc_state.nr_ps_color_outputs = rctx->ps_shader->current->nr_ps_color_outputs;
@@ -1112,9 +1228,9 @@ static bool r600_update_derived_state(struct r600_context *rctx)
 			r600_update_db_shader_control(rctx);
 		}
 
-		if (!ps_dirty && rctx->ps_shader && rctx->rasterizer &&
+		if (unlikely(!ps_dirty && rctx->ps_shader && rctx->rasterizer &&
 				((rctx->rasterizer->sprite_coord_enable != rctx->ps_shader->current->sprite_coord_enable) ||
-						(rctx->rasterizer->flatshade != rctx->ps_shader->current->flatshade))) {
+						(rctx->rasterizer->flatshade != rctx->ps_shader->current->flatshade)))) {
 
 			if (rctx->b.chip_class >= EVERGREEN)
 				evergreen_update_ps_state(ctx, rctx->ps_shader->current);
@@ -1122,11 +1238,7 @@ static bool r600_update_derived_state(struct r600_context *rctx)
 				r600_update_ps_state(ctx, rctx->ps_shader->current);
 		}
 
-		rctx->pixel_shader.shader = rctx->ps_shader;
-		rctx->pixel_shader.atom.num_dw = rctx->ps_shader->current->command_buffer.num_dw;
-		rctx->pixel_shader.atom.dirty = true;
-		r600_context_add_resource_size(ctx,
-		                               (struct pipe_resource *)rctx->ps_shader->current->bo);
+		update_shader_atom(ctx, &rctx->pixel_shader, rctx->ps_shader->current);
 	}
 
 	/* on R600 we stuff masks + txq info into one constant buffer */
@@ -1165,6 +1277,7 @@ static bool r600_update_derived_state(struct r600_context *rctx)
 					       rctx->blend_state.cso,
 					       blend_disable);
 	}
+
 	return true;
 }
 
@@ -1606,11 +1719,14 @@ bool sampler_state_needs_border_color(const struct pipe_sampler_state *state)
 
 void r600_emit_shader(struct r600_context *rctx, struct r600_atom *a)
 {
+
 	struct radeon_winsys_cs *cs = rctx->b.rings.gfx.cs;
-	struct r600_pipe_shader *shader = ((struct r600_shader_state*)a)->shader->current;
+	struct r600_pipe_shader *shader = ((struct r600_shader_state*)a)->shader;
+
+	if (!shader)
+		return;
 
 	r600_emit_command_buffer(cs, &shader->command_buffer);
-
 	radeon_emit(cs, PKT3(PKT3_NOP, 0, 0));
 	radeon_emit(cs, r600_context_bo_reloc(&rctx->b, &rctx->b.rings.gfx, shader->bo, RADEON_USAGE_READ));
 }
@@ -2139,6 +2255,7 @@ void r600_init_common_state_functions(struct r600_context *rctx)
 {
 	rctx->b.b.create_fs_state = r600_create_ps_state;
 	rctx->b.b.create_vs_state = r600_create_vs_state;
+	rctx->b.b.create_gs_state = r600_create_gs_state;
 	rctx->b.b.create_vertex_elements_state = r600_create_vertex_fetch_shader;
 	rctx->b.b.bind_blend_state = r600_bind_blend_state;
 	rctx->b.b.bind_depth_stencil_alpha_state = r600_bind_dsa_state;
@@ -2147,6 +2264,7 @@ void r600_init_common_state_functions(struct r600_context *rctx)
 	rctx->b.b.bind_rasterizer_state = r600_bind_rs_state;
 	rctx->b.b.bind_vertex_elements_state = r600_bind_vertex_elements;
 	rctx->b.b.bind_vs_state = r600_bind_vs_state;
+	rctx->b.b.bind_gs_state = r600_bind_gs_state;
 	rctx->b.b.delete_blend_state = r600_delete_blend_state;
 	rctx->b.b.delete_depth_stencil_alpha_state = r600_delete_dsa_state;
 	rctx->b.b.delete_fs_state = r600_delete_ps_state;
@@ -2154,6 +2272,7 @@ void r600_init_common_state_functions(struct r600_context *rctx)
 	rctx->b.b.delete_sampler_state = r600_delete_sampler_state;
 	rctx->b.b.delete_vertex_elements_state = r600_delete_vertex_elements;
 	rctx->b.b.delete_vs_state = r600_delete_vs_state;
+	rctx->b.b.delete_gs_state = r600_delete_gs_state;
 	rctx->b.b.set_blend_color = r600_set_blend_color;
 	rctx->b.b.set_clip_state = r600_set_clip_state;
 	rctx->b.b.set_constant_buffer = r600_set_constant_buffer;

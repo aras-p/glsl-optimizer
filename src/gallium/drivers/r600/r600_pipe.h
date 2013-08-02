@@ -38,7 +38,7 @@
 #include "util/u_double_list.h"
 #include "util/u_transfer.h"
 
-#define R600_NUM_ATOMS 41
+#define R600_NUM_ATOMS 42
 
 /* the number of CS dwords for flushing and drawing */
 #define R600_MAX_FLUSH_CS_DWORDS	16
@@ -46,13 +46,14 @@
 #define R600_TRACE_CS_DWORDS		7
 
 #define R600_MAX_USER_CONST_BUFFERS 13
-#define R600_MAX_DRIVER_CONST_BUFFERS 3
+#define R600_MAX_DRIVER_CONST_BUFFERS 4
 #define R600_MAX_CONST_BUFFERS (R600_MAX_USER_CONST_BUFFERS + R600_MAX_DRIVER_CONST_BUFFERS)
 
 /* start driver buffers after user buffers */
 #define R600_UCP_CONST_BUFFER (R600_MAX_USER_CONST_BUFFERS)
 #define R600_TXQ_CONST_BUFFER (R600_MAX_USER_CONST_BUFFERS + 1)
 #define R600_BUFFER_INFO_CONST_BUFFER (R600_MAX_USER_CONST_BUFFERS + 2)
+#define R600_GS_RING_CONST_BUFFER (R600_MAX_USER_CONST_BUFFERS + 3)
 
 #define R600_MAX_CONST_BUFFER_SIZE 4096
 
@@ -177,6 +178,18 @@ struct r600_stencil_ref_state {
 struct r600_viewport_state {
 	struct r600_atom atom;
 	struct pipe_viewport_state state;
+};
+
+struct r600_shader_stages_state {
+	struct r600_atom atom;
+	unsigned geom_enable;
+};
+
+struct r600_gs_rings_state {
+	struct r600_atom atom;
+	unsigned enable;
+	struct pipe_constant_buffer esgs_ring;
+	struct pipe_constant_buffer gsvs_ring;
 };
 
 /* This must start from 16. */
@@ -353,7 +366,7 @@ struct r600_fetch_shader {
 
 struct r600_shader_state {
 	struct r600_atom		atom;
-	struct r600_pipe_shader_selector *shader;
+	struct r600_pipe_shader *shader;
 };
 
 struct r600_context {
@@ -415,7 +428,11 @@ struct r600_context {
 	struct r600_cso_state		vertex_fetch_shader;
 	struct r600_shader_state	vertex_shader;
 	struct r600_shader_state	pixel_shader;
+	struct r600_shader_state	geometry_shader;
+	struct r600_shader_state	export_shader;
 	struct r600_cs_shader_state	cs_shader_state;
+	struct r600_shader_stages_state shader_stages;
+	struct r600_gs_rings_state	gs_rings;
 	struct r600_constbuf_state	constbuf_state[PIPE_SHADER_TYPES];
 	struct r600_textures_info	samplers[PIPE_SHADER_TYPES];
 	/** Vertex buffers for fetch shaders */
@@ -427,6 +444,7 @@ struct r600_context {
 	unsigned			compute_cb_target_mask;
 	struct r600_pipe_shader_selector *ps_shader;
 	struct r600_pipe_shader_selector *vs_shader;
+	struct r600_pipe_shader_selector *gs_shader;
 	struct r600_rasterizer_state	*rasterizer;
 	bool				alpha_to_one;
 	bool				force_blend_disable;
@@ -506,6 +524,8 @@ void cayman_init_common_regs(struct r600_command_buffer *cb,
 void evergreen_init_state_functions(struct r600_context *rctx);
 void evergreen_init_atom_start_cs(struct r600_context *rctx);
 void evergreen_update_ps_state(struct pipe_context *ctx, struct r600_pipe_shader *shader);
+void evergreen_update_es_state(struct pipe_context *ctx, struct r600_pipe_shader *shader);
+void evergreen_update_gs_state(struct pipe_context *ctx, struct r600_pipe_shader *shader);
 void evergreen_update_vs_state(struct pipe_context *ctx, struct r600_pipe_shader *shader);
 void *evergreen_create_db_flush_dsa(struct r600_context *rctx);
 void *evergreen_create_resolve_blend(struct r600_context *rctx);

@@ -1939,7 +1939,7 @@ void r600_bytecode_disasm(struct r600_bytecode *bc)
 				if (cf->end_of_program)
 					fprintf(stderr, "EOP ");
 				fprintf(stderr, "\n");
-			} else if (r600_isa_cf(cf->op)->flags & CF_STRM) {
+			} else if (r600_isa_cf(cf->op)->flags & CF_MEM) {
 				int o = 0;
 				const char *exp_type[] = {"WRITE", "WRITE_IND", "WRITE_ACK",
 						"WRITE_IND_ACK"};

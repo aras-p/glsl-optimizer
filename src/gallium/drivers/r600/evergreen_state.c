@@ -2518,6 +2518,7 @@ static void evergreen_emit_constant_buffers(struct r600_context *rctx,
 		struct r600_resource *rbuffer;
 		uint64_t va;
 		unsigned buffer_index = ffs(dirty_mask) - 1;
+		unsigned gs_ring_buffer = (buffer_index == R600_GS_RING_CONST_BUFFER);
 
 		cb = &state->cb[buffer_index];
 		rbuffer = (struct r600_resource*)cb->buffer;
@@ -2526,10 +2527,12 @@ static void evergreen_emit_constant_buffers(struct r600_context *rctx,
 		va = r600_resource_va(&rctx->screen->b.b, &rbuffer->b.b);
 		va += cb->buffer_offset;
 
-		r600_write_context_reg_flag(cs, reg_alu_constbuf_size + buffer_index * 4,
-				       ALIGN_DIVUP(cb->buffer_size >> 4, 16), pkt_flags);
-		r600_write_context_reg_flag(cs, reg_alu_const_cache + buffer_index * 4, va >> 8,
-						pkt_flags);
+		if (!gs_ring_buffer) {
+			r600_write_context_reg_flag(cs, reg_alu_constbuf_size + buffer_index * 4,
+						    ALIGN_DIVUP(cb->buffer_size >> 4, 16), pkt_flags);
+			r600_write_context_reg_flag(cs, reg_alu_const_cache + buffer_index * 4, va >> 8,
+						    pkt_flags);
+		}
 
 		radeon_emit(cs, PKT3(PKT3_NOP, 0, 0) | pkt_flags);
 		radeon_emit(cs, r600_context_bo_reloc(&rctx->b, &rctx->b.rings.gfx, rbuffer, RADEON_USAGE_READ));
@@ -2539,10 +2542,12 @@ static void evergreen_emit_constant_buffers(struct r600_context *rctx,
 		radeon_emit(cs, va); /* RESOURCEi_WORD0 */
 		radeon_emit(cs, rbuffer->buf->size - cb->buffer_offset - 1); /* RESOURCEi_WORD1 */
 		radeon_emit(cs, /* RESOURCEi_WORD2 */
-				 S_030008_ENDIAN_SWAP(r600_endian_swap(32)) |
-				 S_030008_STRIDE(16) |
-				 S_030008_BASE_ADDRESS_HI(va >> 32UL));
+			    S_030008_ENDIAN_SWAP(gs_ring_buffer ? ENDIAN_NONE : r600_endian_swap(32)) |
+			    S_030008_STRIDE(gs_ring_buffer ? 4 : 16) |
+			    S_030008_BASE_ADDRESS_HI(va >> 32UL) |
+			    S_030008_DATA_FORMAT(FMT_32_32_32_32_FLOAT));
 		radeon_emit(cs, /* RESOURCEi_WORD3 */
+			         S_03000C_UNCACHED(gs_ring_buffer ? 1 : 0) |
 				 S_03000C_DST_SEL_X(V_03000C_SQ_SEL_X) |
 				 S_03000C_DST_SEL_Y(V_03000C_SQ_SEL_Y) |
 				 S_03000C_DST_SEL_Z(V_03000C_SQ_SEL_Z) |
@@ -2550,7 +2555,8 @@ static void evergreen_emit_constant_buffers(struct r600_context *rctx,
 		radeon_emit(cs, 0); /* RESOURCEi_WORD4 */
 		radeon_emit(cs, 0); /* RESOURCEi_WORD5 */
 		radeon_emit(cs, 0); /* RESOURCEi_WORD6 */
-		radeon_emit(cs, 0xc0000000); /* RESOURCEi_WORD7 */
+		radeon_emit(cs, /* RESOURCEi_WORD7 */
+			    S_03001C_TYPE(V_03001C_SQ_TEX_VTX_VALID_BUFFER));
 
 		radeon_emit(cs, PKT3(PKT3_NOP, 0, 0) | pkt_flags);
 		radeon_emit(cs, r600_context_bo_reloc(&rctx->b, &rctx->b.rings.gfx, rbuffer, RADEON_USAGE_READ));
@@ -2712,6 +2718,63 @@ static void evergreen_emit_vertex_fetch_shader(struct r600_context *rctx, struct
 			       (r600_resource_va(rctx->b.b.screen, &shader->buffer->b.b) + shader->offset) >> 8);
 	radeon_emit(cs, PKT3(PKT3_NOP, 0, 0));
 	radeon_emit(cs, r600_context_bo_reloc(&rctx->b, &rctx->b.rings.gfx, shader->buffer, RADEON_USAGE_READ));
+}
+
+static void evergreen_emit_shader_stages(struct r600_context *rctx, struct r600_atom *a)
+{
+	struct radeon_winsys_cs *cs = rctx->b.rings.gfx.cs;
+	struct r600_shader_stages_state *state = (struct r600_shader_stages_state*)a;
+
+	uint32_t v = 0, v2 = 0;
+
+	if (state->geom_enable) {
+		v = S_028B54_ES_EN(V_028B54_ES_STAGE_REAL) |
+			S_028B54_GS_EN(1) |
+			S_028B54_VS_EN(V_028B54_VS_STAGE_COPY_SHADER);
+
+		v2 = S_028A40_MODE(V_028A40_GS_SCENARIO_G) |
+			S_028A40_CUT_MODE(V_028A40_GS_CUT_128);
+	}
+
+	r600_write_context_reg(cs, R_028B54_VGT_SHADER_STAGES_EN, v);
+	r600_write_context_reg(cs, R_028A40_VGT_GS_MODE, v2);
+}
+
+static void evergreen_emit_gs_rings(struct r600_context *rctx, struct r600_atom *a)
+{
+	struct pipe_screen *screen = rctx->b.b.screen;
+	struct radeon_winsys_cs *cs = rctx->b.rings.gfx.cs;
+	struct r600_gs_rings_state *state = (struct r600_gs_rings_state*)a;
+	struct r600_resource *rbuffer;
+
+	r600_write_config_reg(cs, R_008040_WAIT_UNTIL, S_008040_WAIT_3D_IDLE(1));
+	radeon_emit(cs, PKT3(PKT3_EVENT_WRITE, 0, 0));
+	radeon_emit(cs, EVENT_TYPE(EVENT_TYPE_VGT_FLUSH));
+
+	if (state->enable) {
+		rbuffer =(struct r600_resource*)state->esgs_ring.buffer;
+		r600_write_config_reg(cs, R_008C40_SQ_ESGS_RING_BASE,
+				(r600_resource_va(screen, &rbuffer->b.b)) >> 8);
+		radeon_emit(cs, PKT3(PKT3_NOP, 0, 0));
+		radeon_emit(cs, r600_context_bo_reloc(&rctx->b, &rctx->b.rings.gfx, rbuffer, RADEON_USAGE_READWRITE));
+		r600_write_config_reg(cs, R_008C44_SQ_ESGS_RING_SIZE,
+				state->esgs_ring.buffer_size >> 8);
+
+		rbuffer =(struct r600_resource*)state->gsvs_ring.buffer;
+		r600_write_config_reg(cs, R_008C48_SQ_GSVS_RING_BASE,
+				(r600_resource_va(screen, &rbuffer->b.b)) >> 8);
+		radeon_emit(cs, PKT3(PKT3_NOP, 0, 0));
+		radeon_emit(cs, r600_context_bo_reloc(&rctx->b, &rctx->b.rings.gfx, rbuffer, RADEON_USAGE_READWRITE));
+		r600_write_config_reg(cs, R_008C4C_SQ_GSVS_RING_SIZE,
+				state->gsvs_ring.buffer_size >> 8);
+	} else {
+		r600_write_config_reg(cs, R_008C44_SQ_ESGS_RING_SIZE, 0);
+		r600_write_config_reg(cs, R_008C4C_SQ_GSVS_RING_SIZE, 0);
+	}
+
+	r600_write_config_reg(cs, R_008040_WAIT_UNTIL, S_008040_WAIT_3D_IDLE(1));
+	radeon_emit(cs, PKT3(PKT3_EVENT_WRITE, 0, 0));
+	radeon_emit(cs, EVENT_TYPE(EVENT_TYPE_VGT_FLUSH));
 }
 
 void cayman_init_common_regs(struct r600_command_buffer *cb,
@@ -3509,6 +3572,77 @@ void evergreen_update_ps_state(struct pipe_context *ctx, struct r600_pipe_shader
 		shader->flatshade = rctx->rasterizer->flatshade;
 }
 
+void evergreen_update_es_state(struct pipe_context *ctx, struct r600_pipe_shader *shader)
+{
+	struct r600_command_buffer *cb = &shader->command_buffer;
+	struct r600_shader *rshader = &shader->shader;
+
+	r600_init_command_buffer(cb, 32);
+
+	r600_store_context_reg(cb, R_028890_SQ_PGM_RESOURCES_ES,
+			       S_028890_NUM_GPRS(rshader->bc.ngpr) |
+			       S_028890_STACK_SIZE(rshader->bc.nstack));
+	r600_store_context_reg(cb, R_02888C_SQ_PGM_START_ES,
+			       r600_resource_va(ctx->screen, (void *)shader->bo) >> 8);
+	/* After that, the NOP relocation packet must be emitted (shader->bo, RADEON_USAGE_READ). */
+}
+
+void evergreen_update_gs_state(struct pipe_context *ctx, struct r600_pipe_shader *shader)
+{
+	struct r600_command_buffer *cb = &shader->command_buffer;
+	struct r600_shader *rshader = &shader->shader;
+	struct r600_shader *cp_shader = &shader->gs_copy_shader->shader;
+	unsigned gsvs_itemsize =
+			(cp_shader->ring_item_size * rshader->gs_max_out_vertices) >> 2;
+
+	r600_init_command_buffer(cb, 64);
+
+	/* VGT_GS_OUT_PRIM_TYPE is written by r6000_draw_vbo */
+	/* VGT_GS_MODE is written by evergreen_emit_shader_stages */
+
+	r600_store_context_reg(cb, R_028AB8_VGT_VTX_CNT_EN, 1);
+
+	r600_store_context_reg(cb, R_028B38_VGT_GS_MAX_VERT_OUT,
+			       S_028B38_MAX_VERT_OUT(rshader->gs_max_out_vertices));
+
+
+/* XXX kernel checker fails
+	r600_store_context_reg(cb, R_028B90_VGT_GS_INSTANCE_CNT,
+             S_028B90_CNT(0) |
+	               S_028B90_ENABLE(0));
+*/
+	r600_store_context_reg_seq(cb, R_02891C_SQ_GS_VERT_ITEMSIZE, 4);
+	r600_store_value(cb, cp_shader->ring_item_size >> 2);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+
+	r600_store_context_reg(cb, R_028900_SQ_ESGS_RING_ITEMSIZE,
+			       (rshader->ring_item_size) >> 2);
+
+	r600_store_context_reg(cb, R_028904_SQ_GSVS_RING_ITEMSIZE,
+			       gsvs_itemsize);
+
+	r600_store_context_reg_seq(cb, R_02892C_SQ_GSVS_RING_OFFSET_1, 3);
+	r600_store_value(cb, gsvs_itemsize);
+	r600_store_value(cb, gsvs_itemsize);
+	r600_store_value(cb, gsvs_itemsize);
+
+	/* FIXME calculate these values somehow ??? */
+	r600_store_context_reg_seq(cb, R_028A54_GS_PER_ES, 3);
+	r600_store_value(cb, 0x80); /* GS_PER_ES */
+	r600_store_value(cb, 0x100); /* ES_PER_GS */
+	r600_store_value(cb, 0x2); /* GS_PER_VS */
+
+	r600_store_context_reg(cb, R_028878_SQ_PGM_RESOURCES_GS,
+			       S_028878_NUM_GPRS(rshader->bc.ngpr) |
+			       S_028878_STACK_SIZE(rshader->bc.nstack));
+	r600_store_context_reg(cb, R_028874_SQ_PGM_START_GS,
+			       r600_resource_va(ctx->screen, (void *)shader->bo) >> 8);
+	/* After that, the NOP relocation packet must be emitted (shader->bo, RADEON_USAGE_READ). */
+}
+
+
 void evergreen_update_vs_state(struct pipe_context *ctx, struct r600_pipe_shader *shader)
 {
 	struct r600_command_buffer *cb = &shader->command_buffer;
@@ -3918,6 +4052,10 @@ void evergreen_init_state_functions(struct r600_context *rctx)
 	rctx->atoms[id++] = &rctx->b.streamout.begin_atom;
 	r600_init_atom(rctx, &rctx->vertex_shader.atom, id++, r600_emit_shader, 23);
 	r600_init_atom(rctx, &rctx->pixel_shader.atom, id++, r600_emit_shader, 0);
+	r600_init_atom(rctx, &rctx->geometry_shader.atom, id++, r600_emit_shader, 0);
+	r600_init_atom(rctx, &rctx->export_shader.atom, id++, r600_emit_shader, 0);
+	r600_init_atom(rctx, &rctx->shader_stages.atom, id++, evergreen_emit_shader_stages, 6);
+	r600_init_atom(rctx, &rctx->gs_rings.atom, id++, evergreen_emit_gs_rings, 26);
 
 	rctx->b.b.create_blend_state = evergreen_create_blend_state;
 	rctx->b.b.create_depth_stencil_alpha_state = evergreen_create_dsa_state;
