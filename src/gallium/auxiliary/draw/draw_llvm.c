@@ -977,6 +977,12 @@ convert_to_aos(struct gallivm_state *gallivm,
                             LLVMConstInt(LLVMInt32TypeInContext(gallivm->context),
                                          chan, 0));
             lp_build_print_value(gallivm, "val = ", out);
+            {
+               LLVMValueRef iv =
+                  LLVMBuildBitCast(builder, out, lp_build_int_vec_type(gallivm, soa_type), "");
+               
+               lp_build_print_value(gallivm, "  ival = ", iv);
+            }
 #endif
             soa[chan] = out;
          }
