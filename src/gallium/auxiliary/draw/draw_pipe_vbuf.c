@@ -250,7 +250,7 @@ vbuf_start_prim( struct vbuf_stage *vbuf, uint prim )
    }
 
    hw_key.nr_elements = vbuf->vinfo->num_attribs;
-   hw_key.output_stride = vbuf->vinfo->size * 4;
+   hw_key.output_stride = vbuf->vertex_size;
 
    /* Don't bother with caching at this stage:
     */
