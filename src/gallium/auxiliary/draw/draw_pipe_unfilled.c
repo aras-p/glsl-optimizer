@@ -37,6 +37,7 @@
 #include "pipe/p_defines.h"
 #include "draw_private.h"
 #include "draw_pipe.h"
+#include "draw_fs.h"
 
 
 struct unfilled_stage {
@@ -67,18 +68,20 @@ inject_front_face_info(struct draw_stage *stage,
       (stage->draw->rasterizer->front_ccw && ccw) ||
       (!stage->draw->rasterizer->front_ccw && !ccw));
    unsigned slot = unfilled->face_slot;
-   struct vertex_header *v0 = header->v[0];
-   struct vertex_header *v1 = header->v[1];
-   struct vertex_header *v2 = header->v[2];
+   unsigned i;
 
    /* In case the backend doesn't care about it */
    if (slot < 0) {
       return;
    }
 
-   v0->data[slot][0] = is_front_face;
-   v1->data[slot][0] = is_front_face;
-   v2->data[slot][0] = is_front_face;
+   for (i = 0; i < 3; ++i) {
+      struct vertex_header *v = header->v[i];
+      v->data[slot][0] = is_front_face;
+      v->data[slot][1] = is_front_face;
+      v->data[slot][2] = is_front_face;
+      v->data[slot][3] = is_front_face;
+   }
 }
 
    
@@ -231,9 +234,12 @@ draw_unfilled_prepare_outputs( struct draw_context *draw,
 {
    struct unfilled_stage *unfilled = unfilled_stage(stage);
    const struct pipe_rasterizer_state *rast = draw ? draw->rasterizer : 0;
-   if (rast &&
-       (rast->fill_front != PIPE_POLYGON_MODE_FILL ||
-        rast->fill_back != PIPE_POLYGON_MODE_FILL)) {
+   boolean is_unfilled = (rast &&
+                          (rast->fill_front != PIPE_POLYGON_MODE_FILL ||
+                           rast->fill_back != PIPE_POLYGON_MODE_FILL));
+   const struct draw_fragment_shader *fs = draw->fs.fragment_shader;
+
+   if (is_unfilled && fs && fs->info.uses_frontface)  {
       unfilled->face_slot = draw_alloc_extra_vertex_attrib(
          stage->draw, TGSI_SEMANTIC_FACE, 0);
    } else {
