@@ -359,18 +359,21 @@ brwCreateContext(int api,
       if (brw->gt == 1) {
 	 brw->max_wm_threads = 102;
 	 brw->max_vs_threads = 70;
+	 brw->max_gs_threads = 70;
 	 brw->urb.size = 128;
 	 brw->urb.max_vs_entries = 640;
 	 brw->urb.max_gs_entries = 256;
       } else if (brw->gt == 2) {
 	 brw->max_wm_threads = 204;
 	 brw->max_vs_threads = 280;
+	 brw->max_gs_threads = 256;
 	 brw->urb.size = 256;
 	 brw->urb.max_vs_entries = 1664;
 	 brw->urb.max_gs_entries = 640;
       } else if (brw->gt == 3) {
 	 brw->max_wm_threads = 408;
 	 brw->max_vs_threads = 280;
+	 brw->max_gs_threads = 256;
 	 brw->urb.size = 512;
 	 brw->urb.max_vs_entries = 1664;
 	 brw->urb.max_gs_entries = 640;
