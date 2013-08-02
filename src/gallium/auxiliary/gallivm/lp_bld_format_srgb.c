@@ -242,8 +242,10 @@ lp_build_linear_to_srgb(struct gallivm_state *gallivm,
        * error metric if you'd want to tweak them, they also MUST fit with
        * the crappy polynomial above for srgb->linear since it is required
        * that each srgb value maps back to the same value).
-       * This function has an error of max +-0.17 (and we'd only require +-0.6),
-       * for the approximated srgb->linear values the error is naturally larger
+       * This function has an error of max +-0.17. Not sure this is actually
+       * enough, we require +-0.6 but that may include the +-0.5 from integer
+       * conversion. Seems to pass all relevant tests though...
+       * For the approximated srgb->linear values the error is naturally larger
        * (+-0.42) but still accurate enough (required +-0.5 essentially).
        * All in all (including min/max clamp, conversion) 15 instructions.
        * FMA would help (minus 2 instructions).
