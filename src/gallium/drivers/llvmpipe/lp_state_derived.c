@@ -69,8 +69,8 @@ compute_vertex_info(struct llvmpipe_context *llvmpipe)
    vinfo->num_attribs = 0;
 
    vs_index = draw_find_shader_output(llvmpipe->draw,
-                                       TGSI_SEMANTIC_POSITION,
-                                       0);
+                                      TGSI_SEMANTIC_POSITION,
+                                      0);
 
    draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE, vs_index);
 
@@ -89,12 +89,18 @@ compute_vertex_info(struct llvmpipe_context *llvmpipe)
          llvmpipe->color_slot[idx] = (int)vinfo->num_attribs;
       }
 
-      /*
-       * Emit the requested fs attribute for all but position.
-       */
-      draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE, vs_index);
+      if (lpfs->info.base.input_semantic_name[i] == TGSI_SEMANTIC_FACE) {
+         llvmpipe->face_slot = vinfo->num_attribs;
+         draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_CONSTANT, vs_index);
+      } else if (lpfs->info.base.input_semantic_name[i] == TGSI_SEMANTIC_PRIMID) {
+         draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_CONSTANT, vs_index);
+      } else {
+         /*
+          * Emit the requested fs attribute for all but position.
+          */
+         draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE, vs_index);
+      }
    }
-
    /* Figure out if we need bcolor as well.
     */
    for (i = 0; i < 2; i++) {
@@ -138,14 +144,6 @@ compute_vertex_info(struct llvmpipe_context *llvmpipe)
       draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_CONSTANT, vs_index);
    } else {
       llvmpipe->layer_slot = 0;
-   }
-
-   /* Check for a fake front face for unfilled primitives*/
-   vs_index = draw_find_shader_output(llvmpipe->draw,
-                                      TGSI_SEMANTIC_FACE, 0);
-   if (vs_index >= 0) {
-      llvmpipe->face_slot = vinfo->num_attribs;
-      draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_CONSTANT, vs_index);
    }
 
    draw_compute_vertex_size(vinfo);
