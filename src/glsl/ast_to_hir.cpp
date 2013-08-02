@@ -2059,13 +2059,24 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
    else
       var->interpolation = INTERP_QUALIFIER_NONE;
 
-   if (var->interpolation != INTERP_QUALIFIER_NONE &&
-       ((state->target == vertex_shader && var->mode == ir_var_shader_in) ||
-        (state->target == fragment_shader && var->mode == ir_var_shader_out))) {
-      _mesa_glsl_error(loc, state,
-                       "interpolation qualifier `%s' cannot be applied to "
-                       "vertex shader inputs or fragment shader outputs",
-                       var->interpolation_string());
+   if (var->interpolation != INTERP_QUALIFIER_NONE) {
+      ir_variable_mode mode = (ir_variable_mode) var->mode;
+
+      if (mode != ir_var_shader_in && mode != ir_var_shader_out) {
+         _mesa_glsl_error(loc, state,
+                          "interpolation qualifier `%s' can only be applied to "
+                          "shader inputs or outputs.",
+                          var->interpolation_string());
+
+      }
+
+      if ((state->target == vertex_shader && mode == ir_var_shader_in) ||
+          (state->target == fragment_shader && mode == ir_var_shader_out)) {
+         _mesa_glsl_error(loc, state,
+                          "interpolation qualifier `%s' cannot be applied to "
+                          "vertex shader inputs or fragment shader outputs",
+                          var->interpolation_string());
+      }
    }
 
    var->pixel_center_integer = qual->flags.q.pixel_center_integer;
