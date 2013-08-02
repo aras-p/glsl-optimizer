@@ -136,7 +136,7 @@ static void interp( const struct clip_stage *clip,
 		    const struct vertex_header *in,
                     unsigned viewport_index )
 {
-   const unsigned nr_attrs = draw_current_shader_outputs(clip->stage.draw);
+   const unsigned nr_attrs = draw_num_shader_outputs(clip->stage.draw);
    const unsigned pos_attr = draw_current_shader_position_output(clip->stage.draw);
    const unsigned clip_attr = draw_current_shader_clipvertex_output(clip->stage.draw);
    unsigned j;
@@ -264,7 +264,6 @@ static void emit_poly( struct draw_stage *stage,
          header.flags |= edge_last;
 
       if (DEBUG_CLIP) {
-         const struct draw_vertex_shader *vs = stage->draw->vs.vertex_shader;
          uint j, k;
          debug_printf("Clipped tri: (flat-shade-first = %d)\n",
                       stage->draw->rasterizer->flatshade_first);
@@ -274,7 +273,7 @@ static void emit_poly( struct draw_stage *stage,
                          header.v[j]->clip[1],
                          header.v[j]->clip[2],
                          header.v[j]->clip[3]);
-            for (k = 0; k < vs->info.num_outputs; k++) {
+            for (k = 0; k < draw_num_shader_outputs(stage->draw); k++) {
                debug_printf("  Vert %d: Attr %d:  %f %f %f %f\n", j, k,
                             header.v[j]->data[k][0],
                             header.v[j]->data[k][1],
@@ -283,7 +282,6 @@ static void emit_poly( struct draw_stage *stage,
             }
          }
       }
-
       stage->next->tri( stage->next, &header );
    }
 }
@@ -609,6 +607,35 @@ clip_tri( struct draw_stage *stage,
 }
 
 
+static int
+find_interp(const struct draw_fragment_shader *fs, int *indexed_interp,
+            uint semantic_name, uint semantic_index)
+{
+   int interp;
+   /* If it's gl_{Front,Back}{,Secondary}Color, pick up the mode
+    * from the array we've filled before. */
+   if (semantic_name == TGSI_SEMANTIC_COLOR ||
+       semantic_name == TGSI_SEMANTIC_BCOLOR) {
+      interp = indexed_interp[semantic_index];
+   } else {
+      /* Otherwise, search in the FS inputs, with a decent default
+       * if we don't find it.
+       */
+      uint j;
+      interp = TGSI_INTERPOLATE_PERSPECTIVE;
+      if (fs) {
+         for (j = 0; j < fs->info.num_inputs; j++) {
+            if (semantic_name == fs->info.input_semantic_name[j] &&
+                semantic_index == fs->info.input_semantic_index[j]) {
+               interp = fs->info.input_interpolate[j];
+               break;
+            }
+         }
+      }
+   }
+   return interp;
+}
+
 /* Update state.  Could further delay this until we hit the first
  * primitive that really requires clipping.
  */
@@ -616,11 +643,9 @@ static void
 clip_init_state( struct draw_stage *stage )
 {
    struct clip_stage *clipper = clip_stage( stage );
-   const struct draw_vertex_shader *vs = stage->draw->vs.vertex_shader;
-   const struct draw_geometry_shader *gs = stage->draw->gs.geometry_shader;
    const struct draw_fragment_shader *fs = stage->draw->fs.fragment_shader;
-   uint i;
-   const struct tgsi_shader_info *vs_info = gs ? &gs->info : &vs->info;
+   uint i, j;
+   const struct tgsi_shader_info *info = draw_get_shader_info(stage->draw);
 
    /* We need to know for each attribute what kind of interpolation is
     * done on it (flat, smooth or noperspective).  But the information
@@ -663,41 +688,35 @@ clip_init_state( struct draw_stage *stage )
 
    clipper->num_flat_attribs = 0;
    memset(clipper->noperspective_attribs, 0, sizeof(clipper->noperspective_attribs));
-   for (i = 0; i < vs_info->num_outputs; i++) {
-      /* Find the interpolation mode for a specific attribute
-       */
-      int interp;
-
-      /* If it's gl_{Front,Back}{,Secondary}Color, pick up the mode
-       * from the array we've filled before. */
-      if (vs_info->output_semantic_name[i] == TGSI_SEMANTIC_COLOR ||
-          vs_info->output_semantic_name[i] == TGSI_SEMANTIC_BCOLOR) {
-         interp = indexed_interp[vs_info->output_semantic_index[i]];
-      } else {
-         /* Otherwise, search in the FS inputs, with a decent default
-          * if we don't find it.
-          */
-         uint j;
-         interp = TGSI_INTERPOLATE_PERSPECTIVE;
-         if (fs) {
-            for (j = 0; j < fs->info.num_inputs; j++) {
-               if (vs_info->output_semantic_name[i] == fs->info.input_semantic_name[j] &&
-                   vs_info->output_semantic_index[i] == fs->info.input_semantic_index[j]) {
-                  interp = fs->info.input_interpolate[j];
-                  break;
-               }
-            }
-         }
-      }
-
+   for (i = 0; i < info->num_outputs; i++) {
+      /* Find the interpolation mode for a specific attribute */
+      int interp = find_interp(fs, indexed_interp,
+                               info->output_semantic_name[i],
+                               info->output_semantic_index[i]);
       /* If it's flat, add it to the flat vector.  Otherwise update
        * the noperspective mask.
        */
+
       if (interp == TGSI_INTERPOLATE_CONSTANT) {
          clipper->flat_attribs[clipper->num_flat_attribs] = i;
          clipper->num_flat_attribs++;
       } else
          clipper->noperspective_attribs[i] = interp == TGSI_INTERPOLATE_LINEAR;
+   }
+   /* Search the extra vertex attributes */
+   for (j = 0; j < stage->draw->extra_shader_outputs.num; j++) {
+      /* Find the interpolation mode for a specific attribute */
+      int interp = find_interp(fs, indexed_interp,
+                               stage->draw->extra_shader_outputs.semantic_name[j],
+                               stage->draw->extra_shader_outputs.semantic_index[j]);
+      /* If it's flat, add it to the flat vector.  Otherwise update
+       * the noperspective mask.
+       */
+      if (interp == TGSI_INTERPOLATE_CONSTANT) {
+         clipper->flat_attribs[clipper->num_flat_attribs] = i + j;
+         clipper->num_flat_attribs++;
+      } else
+         clipper->noperspective_attribs[i + j] = interp == TGSI_INTERPOLATE_LINEAR;
    }
    
    stage->tri = clip_tri;
