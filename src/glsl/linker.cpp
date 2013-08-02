@@ -1233,7 +1233,8 @@ link_intrastage_shaders(void *mem_ctx,
    if (!link_function_calls(prog, linked, linking_shaders,
 			    num_linking_shaders)) {
       ctx->Driver.DeleteShader(ctx, linked);
-      linked = NULL;
+      free(linking_shaders);
+      return NULL;
    }
 
    free(linking_shaders);
@@ -1241,8 +1242,7 @@ link_intrastage_shaders(void *mem_ctx,
    /* At this point linked should contain all of the linked IR, so
     * validate it to make sure nothing went wrong.
     */
-   if (linked)
-      validate_ir_tree(linked->ir);
+   validate_ir_tree(linked->ir);
 
    /* Set the size of geometry shader input arrays */
    if (linked->Type == GL_GEOMETRY_SHADER) {
@@ -1258,11 +1258,8 @@ link_intrastage_shaders(void *mem_ctx,
     * unspecified sizes have a size specified.  The size is inferred from the
     * max_array_access field.
     */
-   if (linked != NULL) {
-      array_sizing_visitor v;
-
-      v.run(linked->ir);
-   }
+   array_sizing_visitor v;
+   v.run(linked->ir);
 
    return linked;
 }
