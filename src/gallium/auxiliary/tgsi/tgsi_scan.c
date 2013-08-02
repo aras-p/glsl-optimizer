@@ -114,7 +114,6 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                   }
 
                   if (procType == TGSI_PROCESSOR_FRAGMENT &&
-                      src->Register.File == TGSI_FILE_INPUT &&
                       info->reads_position &&
                       src->Register.Index == 0 &&
                       (src->Register.SwizzleX == TGSI_SWIZZLE_Z ||
