@@ -91,7 +91,10 @@ extern struct draw_stage *draw_stipple_stage( struct draw_context *context );
 extern struct draw_stage *draw_wide_line_stage( struct draw_context *context );
 extern struct draw_stage *draw_wide_point_stage( struct draw_context *context );
 extern struct draw_stage *draw_validate_stage( struct draw_context *context );
+extern struct draw_stage *draw_ia_stage(struct draw_context *context);
 
+boolean draw_ia_stage_required(const struct draw_context *context,
+                               unsigned prim);
 
 extern void draw_free_temp_verts( struct draw_stage *stage );
 extern boolean draw_alloc_temp_verts( struct draw_stage *stage, unsigned nr );
@@ -105,6 +108,8 @@ void draw_pipe_passthrough_point(struct draw_stage *stage, struct prim_header *h
 
 void draw_unfilled_prepare_outputs(struct draw_context *context,
                                    struct draw_stage *stage);
+void draw_ia_prepare_outputs(struct draw_context *context,
+                             struct draw_stage *stage);
 
 
 /**

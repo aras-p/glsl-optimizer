@@ -130,6 +130,7 @@ struct draw_context
       struct draw_stage *wide_line;
       struct draw_stage *wide_point;
       struct draw_stage *rasterize;
+      struct draw_stage *ia;
 
       float wide_point_threshold; /**< convert pnts to tris if larger than this */
       float wide_line_threshold;  /**< convert lines to tris if wider than this */

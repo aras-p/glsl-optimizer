@@ -76,6 +76,14 @@ draw_need_pipeline(const struct draw_context *draw,
                                           prim );
    }
 
+   /* If we need to decompose the primitives or inject
+    * primitive id information then we have to run
+    * the pipeline.
+    */
+   if (draw_ia_stage_required(draw, prim)) {
+      return TRUE;
+   }
+
    /* Don't have to worry about triangles turning into lines/points
     * and triggering the pipeline, because we have to trigger the
     * pipeline *anyway* if unfilled mode is active.
@@ -280,7 +288,12 @@ static struct draw_stage *validate_pipeline( struct draw_stage *stage )
       next = draw->pipeline.clip;
    }
 
-   
+   /* Input assembler */
+   if (draw_ia_stage_required(draw, draw->pt.prim)) {
+      draw->pipeline.ia->next = next;
+      next = draw->pipeline.ia;
+   }
+
    draw->pipeline.first = next;
 
    if (0) {
