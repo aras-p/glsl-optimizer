@@ -144,6 +144,7 @@ ALU3(BFI2)
 ALU1(FBH)
 ALU1(FBL)
 ALU1(CBIT)
+ALU3(MAD)
 
 /** Gen4 predicated IF. */
 vec4_instruction *
@@ -1709,6 +1710,16 @@ vec4_visitor::visit(ir_expression *ir)
 
    case ir_binop_vector_extract:
       assert(!"should have been lowered by vec_index_to_cond_assign");
+      break;
+
+   case ir_triop_fma:
+      op[0] = fix_3src_operand(op[0]);
+      op[1] = fix_3src_operand(op[1]);
+      op[2] = fix_3src_operand(op[2]);
+      /* Note that the instruction's argument order is reversed from GLSL
+       * and the IR.
+       */
+      emit(MAD(result_dst, op[2], op[1], op[0]));
       break;
 
    case ir_triop_lrp:
