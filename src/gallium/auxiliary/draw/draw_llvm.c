@@ -1833,6 +1833,7 @@ draw_llvm_make_variant_key(struct draw_llvm *llvm, char *store)
    key->need_edgeflags = (llvm->draw->vs.edgeflag_output ? TRUE : FALSE);
    key->ucp_enable = llvm->draw->rasterizer->clip_plane_enable;
    key->has_gs = llvm->draw->gs.geometry_shader != NULL;
+   key->num_outputs = draw_total_vs_outputs(llvm->draw);
    key->pad1 = 0;
 
    /* All variants of this shader will have the same value for
@@ -2269,6 +2270,8 @@ draw_gs_llvm_make_variant_key(struct draw_llvm *llvm, char *store)
    struct draw_sampler_static_state *draw_sampler;
 
    key = (struct draw_gs_llvm_variant_key *)store;
+
+   key->num_outputs = draw_total_gs_outputs(llvm->draw);
 
    /* All variants of this shader will have the same value for
     * nr_samplers.  Not yet trying to compact away holes in the

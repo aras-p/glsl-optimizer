@@ -35,6 +35,7 @@
 
 #include "pipe/p_compiler.h"
 #include "draw_private.h"       /* for sizeof(vertex_header) */
+#include "draw_context.h"
 
 
 /**
@@ -117,7 +118,7 @@ dup_vert( struct draw_stage *stage,
 {   
    struct vertex_header *tmp = stage->tmp[idx];
    const uint vsize = sizeof(struct vertex_header)
-      + stage->draw->vs.num_vs_outputs * 4 * sizeof(float);
+      + draw_num_shader_outputs(stage->draw) * 4 * sizeof(float);
    memcpy(tmp, vert, vsize);
    tmp->vertex_id = UNDEFINED_VERTEX_ID;
    return tmp;

@@ -72,12 +72,8 @@ static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
 
    const unsigned gs_out_prim = (gs ? gs->output_primitive :
                                  u_assembled_prim(prim));
-
-   /* Add one to num_outputs because the pipeline occasionally tags on
-    * an additional texcoord, eg for AA lines.
-    */
    unsigned nr = MAX2( vs->info.num_inputs,
-		       vs->info.num_outputs + 1 );
+		       draw_total_vs_outputs(draw) );
 
    if (gs) {
       nr = MAX2(nr, gs->info.num_outputs + 1);

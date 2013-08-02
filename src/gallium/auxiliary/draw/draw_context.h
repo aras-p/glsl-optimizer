@@ -133,6 +133,11 @@ draw_find_shader_output(const struct draw_context *draw,
 uint
 draw_num_shader_outputs(const struct draw_context *draw);
 
+uint
+draw_total_vs_outputs(const struct draw_context *draw);
+
+uint
+draw_total_gs_outputs(const struct draw_context *draw);
 
 void
 draw_texture_sampler(struct draw_context *draw,

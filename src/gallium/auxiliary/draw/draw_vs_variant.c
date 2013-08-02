@@ -315,7 +315,7 @@ draw_vs_create_variant_generic( struct draw_vertex_shader *vs,
    vsvg->draw = vs->draw;
 
    vsvg->temp_vertex_stride = MAX2(key->nr_inputs,
-                                   vsvg->base.vs->info.num_outputs) * 4 * sizeof(float);
+                                   draw_total_vs_outputs(vs->draw)) * 4 * sizeof(float);
 
    /* Build free-standing fetch and emit functions:
     */

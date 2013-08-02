@@ -141,12 +141,8 @@ llvm_middle_end_prepare( struct draw_pt_middle_end *middle,
    struct draw_geometry_shader *gs = draw->gs.geometry_shader;
    const unsigned out_prim = gs ? gs->output_primitive :
       u_assembled_prim(in_prim);
-
-   /* Add one to num_outputs because the pipeline occasionally tags on
-    * an additional texcoord, eg for AA lines.
-    */
-   const unsigned nr = MAX2( vs->info.num_inputs,
-                             vs->info.num_outputs + 1 );
+   const unsigned nr = MAX2(vs->info.num_inputs,
+                            draw_total_vs_outputs(draw));
 
    fpme->input_prim = in_prim;
    fpme->opt = opt;

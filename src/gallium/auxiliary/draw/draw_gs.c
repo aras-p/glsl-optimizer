@@ -534,7 +534,7 @@ int draw_geometry_shader_run(struct draw_geometry_shader *shader,
 {
    const float (*input)[4] = (const float (*)[4])input_verts->verts->data;
    unsigned input_stride = input_verts->vertex_size;
-   unsigned num_outputs = shader->info.num_outputs;
+   unsigned num_outputs = draw_total_gs_outputs(shader->draw);
    unsigned vertex_size = sizeof(struct vertex_header) + num_outputs * 4 * sizeof(float);
    unsigned num_input_verts = input_prim->linear ?
       input_verts->count :

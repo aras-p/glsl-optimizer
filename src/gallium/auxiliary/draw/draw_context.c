@@ -605,6 +605,40 @@ draw_num_shader_outputs(const struct draw_context *draw)
 
 
 /**
+ * Return total number of the vertex shader outputs.  This function
+ * also counts any extra vertex output attributes that may
+ * be filled in by some draw stages (such as AA point, AA line,
+ * front face).
+ */
+uint
+draw_total_vs_outputs(const struct draw_context *draw)
+{
+   const struct tgsi_shader_info *info = &draw->vs.vertex_shader->info;
+
+   return info->num_outputs + draw->extra_shader_outputs.num;;
+}
+
+/**
+ * Return total number of the geometry shader outputs. This function
+ * also counts any extra geometry output attributes that may
+ * be filled in by some draw stages (such as AA point, AA line, front
+ * face).
+ */
+uint
+draw_total_gs_outputs(const struct draw_context *draw)
+{   
+   const struct tgsi_shader_info *info;
+
+   if (!draw->gs.geometry_shader)
+      return 0;
+
+   info = &draw->gs.geometry_shader->info;
+
+   return info->num_outputs + draw->extra_shader_outputs.num;
+}
+
+
+/**
  * Provide TGSI sampler objects for vertex/geometry shaders that use
  * texture fetches.  This state only needs to be set once per context.
  * This might only be used by software drivers for the time being.
