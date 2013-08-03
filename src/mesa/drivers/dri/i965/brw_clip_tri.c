@@ -120,6 +120,7 @@ void brw_clip_tri_alloc_regs( struct brw_clip_compile *c,
    }
 
    c->reg.vertex_src_mask = retype(brw_vec1_grf(i, 0), BRW_REGISTER_TYPE_UD);
+   c->reg.clipdistance_offset = retype(brw_vec1_grf(i, 1), BRW_REGISTER_TYPE_W);
    i++;
 
    if (brw->gen == 5) {
@@ -264,6 +265,9 @@ void brw_clip_tri( struct brw_clip_compile *c )
    GLuint clipvert_offset = brw_clip_have_varying(c, VARYING_SLOT_CLIP_VERTEX)
       ? brw_varying_to_offset(&c->vue_map, VARYING_SLOT_CLIP_VERTEX)
       : hpos_offset;
+   GLint clipdist0_offset = c->key.nr_userclip
+      ? brw_varying_to_offset(&c->vue_map, VARYING_SLOT_CLIP_DIST0)
+      : 0;
 
    brw_MOV(p, get_addr_reg(vtxPrev),     brw_address(c->reg.vertex[2]) );
    brw_MOV(p, get_addr_reg(plane_ptr),   brw_clip_plane0_address(c));
@@ -276,6 +280,10 @@ void brw_clip_tri( struct brw_clip_compile *c )
     * of the view volume; the next 6 planes are the user clipping planes.
     */
    brw_MOV(p, c->reg.vertex_src_mask, brw_imm_ud(0xfc0));
+
+   /* Set the initial clipdistance offset to be 6 floats before gl_ClipDistance[0].
+    * We'll increment 6 times before we start hitting actual user clipping. */
+   brw_MOV(p, c->reg.clipdistance_offset, brw_imm_d(clipdist0_offset - 6*sizeof(float)));
 
    brw_DO(p, BRW_EXECUTE_1);
    {
@@ -432,6 +440,7 @@ void brw_clip_tri( struct brw_clip_compile *c )
       brw_set_conditionalmod(p, BRW_CONDITIONAL_NZ);
       brw_SHR(p, c->reg.planemask, c->reg.planemask, brw_imm_ud(1));
       brw_SHR(p, c->reg.vertex_src_mask, c->reg.vertex_src_mask, brw_imm_ud(1));
+      brw_ADD(p, c->reg.clipdistance_offset, c->reg.clipdistance_offset, brw_imm_w(sizeof(float)));
    }
    brw_WHILE(p);
 }
