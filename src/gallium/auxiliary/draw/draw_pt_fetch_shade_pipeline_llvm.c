@@ -33,6 +33,7 @@
 #include "draw/draw_vbuf.h"
 #include "draw/draw_vertex.h"
 #include "draw/draw_pt.h"
+#include "draw/draw_prim_assembler.h"
 #include "draw/draw_vs.h"
 #include "draw/draw_llvm.h"
 #include "gallivm/lp_bld_init.h"
@@ -315,6 +316,8 @@ llvm_pipeline_generic( struct draw_pt_middle_end *middle,
    struct draw_vertex_info llvm_vert_info;
    struct draw_vertex_info gs_vert_info;
    struct draw_vertex_info *vert_info;
+   struct draw_prim_info ia_prim_info;
+   struct draw_vertex_info ia_vert_info;
    const struct draw_prim_info *prim_info = in_prim_info;
    boolean free_prim_info = FALSE;
    unsigned opt = fpme->opt;
@@ -380,10 +383,21 @@ llvm_pipeline_generic( struct draw_pt_middle_end *middle,
       FREE(vert_info->verts);
       vert_info = &gs_vert_info;
       prim_info = &gs_prim_info;
-   }
+   } else {
+      if (draw_prim_assembler_is_required(draw, prim_info, vert_info)) {
+         draw_prim_assembler_run(draw, prim_info, vert_info,
+                                 &ia_prim_info, &ia_vert_info);
 
+         if (ia_vert_info.count) {
+            FREE(vert_info->verts);
+            vert_info = &ia_vert_info;
+            prim_info = &ia_prim_info;
+            free_prim_info = TRUE;
+         }
+      }
+   }
    if (prim_info->count == 0) {
-      debug_printf("GS didn't emit any vertices!\n");
+      debug_printf("GS/IA didn't emit any vertices!\n");
       
       FREE(vert_info->verts);
       if (free_prim_info) {

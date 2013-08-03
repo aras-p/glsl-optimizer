@@ -24,6 +24,7 @@ C_SOURCES := \
 	draw/draw_pipe_vbuf.c \
 	draw/draw_pipe_wide_line.c \
 	draw/draw_pipe_wide_point.c \
+	draw/draw_prim_assembler.c \
 	draw/draw_pt.c \
 	draw/draw_pt_emit.c \
 	draw/draw_pt_fetch.c \
