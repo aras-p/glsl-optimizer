@@ -151,9 +151,13 @@ ir_expression *lshift(operand a, operand b);
 ir_expression *rshift(operand a, operand b);
 
 ir_expression *f2i(operand a);
+ir_expression *bitcast_f2i(operand a);
 ir_expression *i2f(operand a);
+ir_expression *bitcast_i2f(operand a);
 ir_expression *f2u(operand a);
+ir_expression *bitcast_f2u(operand a);
 ir_expression *u2f(operand a);
+ir_expression *bitcast_u2f(operand a);
 ir_expression *i2u(operand a);
 ir_expression *u2i(operand a);
 

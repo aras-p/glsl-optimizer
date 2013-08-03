@@ -304,9 +304,21 @@ f2i(operand a)
 }
 
 ir_expression*
+bitcast_f2i(operand a)
+{
+   return expr(ir_unop_bitcast_f2i, a);
+}
+
+ir_expression*
 i2f(operand a)
 {
    return expr(ir_unop_i2f, a);
+}
+
+ir_expression*
+bitcast_i2f(operand a)
+{
+   return expr(ir_unop_bitcast_i2f, a);
 }
 
 ir_expression*
@@ -328,9 +340,21 @@ f2u(operand a)
 }
 
 ir_expression*
+bitcast_f2u(operand a)
+{
+   return expr(ir_unop_bitcast_f2u, a);
+}
+
+ir_expression*
 u2f(operand a)
 {
    return expr(ir_unop_u2f, a);
+}
+
+ir_expression*
+bitcast_u2f(operand a)
+{
+   return expr(ir_unop_bitcast_u2f, a);
 }
 
 ir_if*
