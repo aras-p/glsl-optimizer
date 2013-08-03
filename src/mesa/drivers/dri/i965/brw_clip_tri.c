@@ -223,18 +223,23 @@ void brw_clip_tri_flat_shade( struct brw_clip_compile *c )
 }
 
 
+/**
+ * Loads the clip distance for a vertex into `dst`, and ends with
+ * a comparison of it to zero with the condition `cond`.
+ *
+ * - If using a fixed plane, the distance is dot(hpos, plane).
+ * - If using a user clip plane, the distance is dot(clipvertex, plane).
+ *     Elsewhere we arrange for clipvertex to be mapped to hpos if no
+ *     explicit clipvertex value was provided by the previous shader.
+ */
 static inline void
-load_vertex_pos(struct brw_clip_compile *c, struct brw_indirect vtx,
-                struct brw_reg dst,
-                GLuint hpos_offset, GLuint clip_offset)
+load_clip_distance(struct brw_clip_compile *c, struct brw_indirect vtx,
+                struct brw_reg dst, GLuint hpos_offset, GLuint clip_offset,
+                int cond)
 {
    struct brw_compile *p = &c->func;
 
-   /*
-    * Roughly:
-    * dst = (vertex_src_mask & 1) ? src.hpos : src.clipvertex;
-    */
-
+   dst = vec4(dst);
    brw_set_conditionalmod(p, BRW_CONDITIONAL_NZ);
    brw_AND(p, vec1(brw_null_reg()), c->reg.vertex_src_mask, brw_imm_ud(1));
    brw_IF(p, BRW_EXECUTE_1);
@@ -246,6 +251,9 @@ load_vertex_pos(struct brw_clip_compile *c, struct brw_indirect vtx,
       brw_MOV(p, dst, deref_4f(vtx, hpos_offset));
    }
    brw_ENDIF(p);
+
+   brw_set_conditionalmod(p, cond);
+   brw_DP4(p, dst, dst, c->reg.plane_equation);
 }
 
 
@@ -313,17 +321,15 @@ void brw_clip_tri( struct brw_clip_compile *c )
 	     */
 	    brw_MOV(p, get_addr_reg(vtx), deref_1uw(inlist_ptr, 0));
 
-            load_vertex_pos(c, vtxPrev, vec4(c->reg.dpPrev), hpos_offset, clipvert_offset);
+            load_clip_distance(c, vtxPrev, c->reg.dpPrev, hpos_offset, clipvert_offset,
+                  BRW_CONDITIONAL_L);
 	    /* IS_NEGATIVE(prev) */
-	    brw_set_conditionalmod(p, BRW_CONDITIONAL_L);
-	    brw_DP4(p, vec4(c->reg.dpPrev), vec4(c->reg.dpPrev), c->reg.plane_equation);
 	    brw_IF(p, BRW_EXECUTE_1);
 	    {
-               load_vertex_pos(c, vtx, vec4(c->reg.dp), hpos_offset, clipvert_offset);
+               load_clip_distance(c, vtx, c->reg.dp, hpos_offset, clipvert_offset,
+                     BRW_CONDITIONAL_GE);
 	       /* IS_POSITIVE(next)
 		*/
-	       brw_set_conditionalmod(p, BRW_CONDITIONAL_GE);
-	       brw_DP4(p, vec4(c->reg.dp), vec4(c->reg.dp), c->reg.plane_equation);
 	       brw_IF(p, BRW_EXECUTE_1);
 	       {
 
@@ -362,11 +368,10 @@ void brw_clip_tri( struct brw_clip_compile *c )
 	       brw_ADD(p, get_addr_reg(outlist_ptr), get_addr_reg(outlist_ptr), brw_imm_uw(sizeof(short)));
 	       brw_ADD(p, c->reg.nr_verts, c->reg.nr_verts, brw_imm_ud(1));
 
-               load_vertex_pos(c, vtx, vec4(c->reg.dp), hpos_offset, clipvert_offset);
+               load_clip_distance(c, vtx, c->reg.dp, hpos_offset, clipvert_offset,
+                     BRW_CONDITIONAL_L);
 	       /* IS_NEGATIVE(next)
 		*/
-	       brw_set_conditionalmod(p, BRW_CONDITIONAL_L);
-	       brw_DP4(p, vec4(c->reg.dp), vec4(c->reg.dp), c->reg.plane_equation);
 	       brw_IF(p, BRW_EXECUTE_1);
 	       {
 		  /* Going out of bounds.  Avoid division by zero as we
