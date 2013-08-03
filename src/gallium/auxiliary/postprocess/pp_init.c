@@ -169,7 +169,9 @@ pp_free(struct pp_queue_t *ppq)
 {
    unsigned int i, j;
 
-   pp_free_fbos(ppq);
+   if (ppq) {
+      pp_free_fbos(ppq);
+   }
 
    if (ppq && ppq->p) {
       if (ppq->p->pipe && ppq->filters && ppq->shaders) {
