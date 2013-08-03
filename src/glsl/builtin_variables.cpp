@@ -358,6 +358,17 @@ private:
    const glsl_type * const vec4_t;
    const glsl_type * const mat3_t;
    const glsl_type * const mat4_t;
+
+   /**
+    * Array where the contents of the gl_PerVertex interface instance are
+    * accumulated.
+    */
+   glsl_struct_field per_vertex_fields[10];
+
+   /**
+    * Number of elements of per_vertex_fields which have been populated.
+    */
+   unsigned num_per_vertex_fields;
 };
 
 
@@ -368,7 +379,8 @@ builtin_variable_generator::builtin_variable_generator(
      bool_t(glsl_type::bool_type), int_t(glsl_type::int_type),
      float_t(glsl_type::float_type), vec2_t(glsl_type::vec2_type),
      vec3_t(glsl_type::vec3_type), vec4_t(glsl_type::vec4_type),
-     mat3_t(glsl_type::mat3_type), mat4_t(glsl_type::mat4_type)
+     mat3_t(glsl_type::mat3_type), mat4_t(glsl_type::mat4_type),
+     num_per_vertex_fields(0)
 {
 }
 
@@ -757,7 +769,13 @@ builtin_variable_generator::add_varying(int slot, const glsl_type *type,
 {
    switch (state->target) {
    case geometry_shader:
-      add_input(slot, array(type, 0), name_as_gs_input);
+      assert(this->num_per_vertex_fields <
+             ARRAY_SIZE(this->per_vertex_fields));
+      this->per_vertex_fields[this->num_per_vertex_fields].type = type;
+      this->per_vertex_fields[this->num_per_vertex_fields].name = name;
+      this->per_vertex_fields[this->num_per_vertex_fields].row_major = false;
+      this->per_vertex_fields[this->num_per_vertex_fields].location = slot;
+      this->num_per_vertex_fields++;
       /* FALLTHROUGH */
    case vertex_shader:
       add_output(slot, type, name);
@@ -803,6 +821,17 @@ builtin_variable_generator::generate_varyings()
          ADD_VARYING(VARYING_SLOT_COL1, vec4_t, "gl_FrontSecondaryColor");
          ADD_VARYING(VARYING_SLOT_BFC1, vec4_t, "gl_BackSecondaryColor");
       }
+   }
+
+   if (state->target == geometry_shader) {
+      const glsl_type *per_vertex_type =
+         glsl_type::get_interface_instance(this->per_vertex_fields,
+                                           this->num_per_vertex_fields,
+                                           GLSL_INTERFACE_PACKING_STD140,
+                                           "gl_in");
+      ir_variable *var = add_variable("gl_in", array(per_vertex_type, 0),
+                                      ir_var_shader_in, 0);
+      var->interface_type = per_vertex_type;
    }
 }
 
