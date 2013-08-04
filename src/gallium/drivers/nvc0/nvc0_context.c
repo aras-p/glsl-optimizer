@@ -394,6 +394,7 @@ nvc0_context_get_sample_position(struct pipe_context *pipe,
    case 8: ptr = ms8; break;
    default:
       assert(0);
+      ptr = ms1;
       break;
    }
    xy[0] = ptr[sample_index][0] * 0.0625f;
