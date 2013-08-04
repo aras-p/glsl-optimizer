@@ -3058,14 +3058,18 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c,
 
    exec_list *simd16_instructions = NULL;
    fs_visitor v2(brw, c, prog, fp, 16);
-   bool no16 = INTEL_DEBUG & DEBUG_NO16;
-   if (brw->gen >= 5 && c->prog_data.nr_pull_params == 0 && likely(!no16)) {
-      v2.import_uniforms(&v);
-      if (!v2.run()) {
-         perf_debug("16-wide shader failed to compile, falling back to "
-                    "8-wide at a 10-20%% performance cost: %s", v2.fail_msg);
+   if (brw->gen >= 5 && likely(!(INTEL_DEBUG & DEBUG_NO16))) {
+      if (c->prog_data.nr_pull_params == 0) {
+         /* Try a 16-wide compile */
+         v2.import_uniforms(&v);
+         if (!v2.run()) {
+            perf_debug("16-wide shader failed to compile, falling back to "
+                       "8-wide at a 10-20%% performance cost: %s", v2.fail_msg);
+         } else {
+            simd16_instructions = &v2.instructions;
+         }
       } else {
-         simd16_instructions = &v2.instructions;
+         perf_debug("Skipping 16-wide due to pull parameters.\n");
       }
    }
 
