@@ -85,6 +85,10 @@ static void brw_clip_line_alloc_regs( struct brw_clip_compile *c )
       i++;
    }
 
+   c->reg.vertex_src_mask = retype(brw_vec1_grf(i, 0), BRW_REGISTER_TYPE_UD);
+   c->reg.clipdistance_offset = retype(brw_vec1_grf(i, 1), BRW_REGISTER_TYPE_W);
+   i++;
+
    if (brw->gen == 5) {
       c->reg.ff_sync = retype(brw_vec1_grf(i, 0), BRW_REGISTER_TYPE_UD);
       i++;
@@ -96,7 +100,6 @@ static void brw_clip_line_alloc_regs( struct brw_clip_compile *c )
    c->prog_data.urb_read_length = c->nr_regs; /* ? */
    c->prog_data.total_grf = i;
 }
-
 
 
 /* Line clipping, more or less following the following algorithm:
@@ -125,8 +128,6 @@ static void brw_clip_line_alloc_regs( struct brw_clip_compile *c )
  */
 static void clip_and_emit_line( struct brw_clip_compile *c )
 {
-   /* FIXME: use VARYING_SLOT_CLIP_VERTEX if available for user clip planes. */
-
    struct brw_compile *p = &c->func;
    struct brw_context *brw = p->brw;
    struct brw_indirect vtx0     = brw_indirect(0, 0);
@@ -136,6 +137,9 @@ static void clip_and_emit_line( struct brw_clip_compile *c )
    struct brw_indirect plane_ptr = brw_indirect(4, 0);
    struct brw_reg v1_null_ud = retype(vec1(brw_null_reg()), BRW_REGISTER_TYPE_UD);
    GLuint hpos_offset = brw_varying_to_offset(&c->vue_map, VARYING_SLOT_POS);
+   GLint clipdist0_offset = c->key.nr_userclip
+      ? brw_varying_to_offset(&c->vue_map, VARYING_SLOT_CLIP_DIST0)
+      : 0;
 
    brw_MOV(p, get_addr_reg(vtx0),      brw_address(c->reg.vertex[0]));
    brw_MOV(p, get_addr_reg(vtx1),      brw_address(c->reg.vertex[1]));
@@ -160,30 +164,52 @@ static void clip_and_emit_line( struct brw_clip_compile *c )
 
    brw_set_predicate_control(p, BRW_PREDICATE_NONE);
 
+   /* Set the initial vertex source mask: The first 6 planes are the bounds
+    * of the view volume; the next 8 planes are the user clipping planes.
+    */
+   brw_MOV(p, c->reg.vertex_src_mask, brw_imm_ud(0x3fc0));
+
+   /* Set the initial clipdistance offset to be 6 floats before gl_ClipDistance[0].
+    * We'll increment 6 times before we start hitting actual user clipping. */
+   brw_MOV(p, c->reg.clipdistance_offset, brw_imm_d(clipdist0_offset - 6*sizeof(float)));
+
    brw_DO(p, BRW_EXECUTE_1);
    {
       /* if (planemask & 1)
        */
       brw_set_conditionalmod(p, BRW_CONDITIONAL_NZ);
       brw_AND(p, v1_null_ud, c->reg.planemask, brw_imm_ud(1));
-      
+
       brw_IF(p, BRW_EXECUTE_1);
       {
-	 if (c->key.nr_userclip)
-	    brw_MOV(p, c->reg.plane_equation, deref_4f(plane_ptr, 0));
-	 else
-	    brw_MOV(p, c->reg.plane_equation, deref_4b(plane_ptr, 0));
+         brw_set_conditionalmod(p, BRW_CONDITIONAL_NZ);
+         brw_AND(p, v1_null_ud, c->reg.vertex_src_mask, brw_imm_ud(1));
+         brw_IF(p, BRW_EXECUTE_1);
+         {
+            /* user clip distance: just fetch the correct float from each vertex */
+            struct brw_indirect temp_ptr = brw_indirect(7, 0);
+            brw_ADD(p, get_addr_reg(temp_ptr), get_addr_reg(vtx0), c->reg.clipdistance_offset);
+            brw_MOV(p, c->reg.dp0, deref_1f(temp_ptr, 0));
+            brw_ADD(p, get_addr_reg(temp_ptr), get_addr_reg(vtx1), c->reg.clipdistance_offset);
+            brw_MOV(p, c->reg.dp1, deref_1f(temp_ptr, 0));
+         }
+         brw_ELSE(p);
+         {
+            /* fixed plane: fetch the hpos, dp4 against the plane. */
+            if (c->key.nr_userclip)
+               brw_MOV(p, c->reg.plane_equation, deref_4f(plane_ptr, 0));
+            else
+               brw_MOV(p, c->reg.plane_equation, deref_4b(plane_ptr, 0));
 
-	 /* dp = DP4(vtx->position, plane) 
-	  */
-	 brw_DP4(p, vec4(c->reg.dp0), deref_4f(vtx0, hpos_offset), c->reg.plane_equation);
+            brw_DP4(p, vec4(c->reg.dp0), deref_4f(vtx0, hpos_offset), c->reg.plane_equation);
+            brw_DP4(p, vec4(c->reg.dp1), deref_4f(vtx1, hpos_offset), c->reg.plane_equation);
+         }
+         brw_ENDIF(p);
 
-	 /* if (IS_NEGATIVE(dp1)) 
-	  */
-	 brw_set_conditionalmod(p, BRW_CONDITIONAL_L);
-	 brw_DP4(p, vec4(c->reg.dp1), deref_4f(vtx1, hpos_offset), c->reg.plane_equation);
-	 brw_IF(p, BRW_EXECUTE_1);
-	 {
+         brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_L, vec1(c->reg.dp1), brw_imm_f(0.0f));
+
+         brw_IF(p, BRW_EXECUTE_1);
+         {
              /*
               * Both can be negative on GM965/G965 due to RHW workaround
               * if so, this object should be rejected.
@@ -244,6 +270,8 @@ static void clip_and_emit_line( struct brw_clip_compile *c )
        */
       brw_set_conditionalmod(p, BRW_CONDITIONAL_NZ);
       brw_SHR(p, c->reg.planemask, c->reg.planemask, brw_imm_ud(1));
+      brw_SHR(p, c->reg.vertex_src_mask, c->reg.vertex_src_mask, brw_imm_ud(1));
+      brw_ADD(p, c->reg.clipdistance_offset, c->reg.clipdistance_offset, brw_imm_w(sizeof(float)));
    }
    brw_WHILE(p);
 
