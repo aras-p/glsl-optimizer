@@ -23,6 +23,17 @@
 
 #include "brw_state.h"
 
+static char const *get_qual_name(int mode)
+{
+   switch (mode) {
+      case INTERP_QUALIFIER_NONE:          return "none";
+      case INTERP_QUALIFIER_FLAT:          return "flat";
+      case INTERP_QUALIFIER_SMOOTH:        return "smooth";
+      case INTERP_QUALIFIER_NOPERSPECTIVE: return "nopersp";
+      default:                             return "???";
+   }
+}
+
 
 /* Set up interpolation modes for every element in the VUE */
 static void
@@ -71,6 +82,22 @@ brw_setup_vue_interpolation(struct brw_context *brw)
       }
 
       brw->interpolation_mode.mode[i] = mode;
+   }
+
+   if (unlikely(INTEL_DEBUG & DEBUG_VUE)) {
+      printf("VUE map:\n");
+      for (int i = 0; i < vue_map->num_slots; i++) {
+         int varying = vue_map->slot_to_varying[i];
+         if (varying == -1) {
+            printf("%d: --\n", i);
+            continue;
+         }
+
+         printf("%d: %d %s ofs %d\n",
+               i, varying,
+               get_qual_name(brw->interpolation_mode.mode[i]),
+               brw_vue_slot_to_offset(i));
+      }
    }
 }
 
