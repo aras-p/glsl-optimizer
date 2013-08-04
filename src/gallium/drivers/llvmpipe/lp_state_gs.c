@@ -100,8 +100,11 @@ llvmpipe_delete_gs_state(struct pipe_context *pipe, void *gs)
    struct lp_geometry_shader *state =
       (struct lp_geometry_shader *)gs;
 
-   draw_delete_geometry_shader(llvmpipe->draw,
-                               (state) ? state->draw_data : 0);
+   if (!state) {
+      return;
+   }
+
+   draw_delete_geometry_shader(llvmpipe->draw, state->draw_data);
    FREE( (void *)state->shader.tokens );
    FREE(state);
 }
