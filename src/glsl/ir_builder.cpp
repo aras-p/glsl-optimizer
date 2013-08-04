@@ -232,6 +232,12 @@ equal(operand a, operand b)
 }
 
 ir_expression*
+nequal(operand a, operand b)
+{
+   return expr(ir_binop_nequal, a, b);
+}
+
+ir_expression*
 less(operand a, operand b)
 {
    return expr(ir_binop_less, a, b);
