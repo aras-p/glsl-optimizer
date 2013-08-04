@@ -219,6 +219,12 @@ saturate(operand a)
 	       new(mem_ctx) ir_constant(0.0f));
 }
 
+ir_expression *
+abs(operand a)
+{
+   return expr(ir_unop_abs, a);
+}
+
 ir_expression*
 equal(operand a, operand b)
 {
