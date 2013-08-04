@@ -1842,6 +1842,82 @@ fs_visitor::emit_if_gen6(ir_if *ir)
    inst->predicate = BRW_PREDICATE_NORMAL;
 }
 
+/**
+ * Try to replace IF/MOV/ELSE/MOV/ENDIF with SEL.
+ *
+ * Many GLSL shaders contain the following pattern:
+ *
+ *    x = condition ? foo : bar
+ *
+ * The compiler emits an ir_if tree for this, since each subexpression might be
+ * a complex tree that could have side-effects or short-circuit logic.
+ *
+ * However, the common case is to simply select one of two constants or
+ * variable values---which is exactly what SEL is for.  In this case, the
+ * assembly looks like:
+ *
+ *    (+f0) IF
+ *    MOV dst src0
+ *    ELSE
+ *    MOV dst src1
+ *    ENDIF
+ *
+ * which can be easily translated into:
+ *
+ *    (+f0) SEL dst src0 src1
+ *
+ * If src0 is an immediate value, we promote it to a temporary GRF.
+ */
+void
+fs_visitor::try_replace_with_sel()
+{
+   fs_inst *endif_inst = (fs_inst *) instructions.get_tail();
+   assert(endif_inst->opcode == BRW_OPCODE_ENDIF);
+
+   /* Pattern match in reverse: IF, MOV, ELSE, MOV, ENDIF. */
+   int opcodes[] = {
+      BRW_OPCODE_IF, BRW_OPCODE_MOV, BRW_OPCODE_ELSE, BRW_OPCODE_MOV,
+   };
+
+   fs_inst *match = (fs_inst *) endif_inst->prev;
+   for (int i = 0; i < 4; i++) {
+      if (match->is_head_sentinel() || match->opcode != opcodes[4-i-1])
+         return;
+      match = (fs_inst *) match->prev;
+   }
+
+   /* The opcodes match; it looks like the right sequence of instructions. */
+   fs_inst *else_mov = (fs_inst *) endif_inst->prev;
+   fs_inst *then_mov = (fs_inst *) else_mov->prev->prev;
+   fs_inst *if_inst = (fs_inst *) then_mov->prev;
+
+   /* Check that the MOVs are the right form. */
+   if (then_mov->dst.equals(else_mov->dst) &&
+       !then_mov->is_partial_write() &&
+       !else_mov->is_partial_write()) {
+
+      /* Remove the matched instructions; we'll emit a SEL to replace them. */
+      while (!if_inst->next->is_tail_sentinel())
+         if_inst->next->remove();
+      if_inst->remove();
+
+      /* Only the last source register can be a constant, so if the MOV in
+       * the "then" clause uses a constant, we need to put it in a temporary.
+       */
+      fs_reg src0(then_mov->src[0]);
+      if (src0.file == IMM) {
+         src0 = fs_reg(this, glsl_type::float_type);
+         src0.type = then_mov->src[0].type;
+         emit(MOV(src0, then_mov->src[0]));
+      }
+
+      fs_inst *sel = emit(BRW_OPCODE_SEL, then_mov->dst, src0, else_mov->src[0]);
+      sel->predicate = if_inst->predicate;
+      sel->predicate_inverse = if_inst->predicate_inverse;
+      sel->conditional_mod = if_inst->conditional_mod;
+   }
+}
+
 void
 fs_visitor::visit(ir_if *ir)
 {
@@ -1881,6 +1957,8 @@ fs_visitor::visit(ir_if *ir)
    }
 
    emit(BRW_OPCODE_ENDIF);
+
+   try_replace_with_sel();
 }
 
 void
