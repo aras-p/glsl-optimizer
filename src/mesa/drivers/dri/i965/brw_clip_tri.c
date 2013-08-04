@@ -232,8 +232,7 @@ void brw_clip_tri_flat_shade( struct brw_clip_compile *c )
  */
 static inline void
 load_clip_distance(struct brw_clip_compile *c, struct brw_indirect vtx,
-                struct brw_reg dst, GLuint hpos_offset, GLuint clip_offset,
-                int cond)
+                struct brw_reg dst, GLuint hpos_offset, int cond)
 {
    struct brw_compile *p = &c->func;
 
@@ -271,9 +270,6 @@ void brw_clip_tri( struct brw_clip_compile *c )
    struct brw_indirect outlist_ptr = brw_indirect(5, 0);
    struct brw_indirect freelist_ptr = brw_indirect(6, 0);
    GLuint hpos_offset = brw_varying_to_offset(&c->vue_map, VARYING_SLOT_POS);
-   GLuint clipvert_offset = brw_clip_have_varying(c, VARYING_SLOT_CLIP_VERTEX)
-      ? brw_varying_to_offset(&c->vue_map, VARYING_SLOT_CLIP_VERTEX)
-      : hpos_offset;
    GLint clipdist0_offset = c->key.nr_userclip
       ? brw_varying_to_offset(&c->vue_map, VARYING_SLOT_CLIP_DIST0)
       : 0;
@@ -322,13 +318,11 @@ void brw_clip_tri( struct brw_clip_compile *c )
 	     */
 	    brw_MOV(p, get_addr_reg(vtx), deref_1uw(inlist_ptr, 0));
 
-            load_clip_distance(c, vtxPrev, c->reg.dpPrev, hpos_offset, clipvert_offset,
-                  BRW_CONDITIONAL_L);
+            load_clip_distance(c, vtxPrev, c->reg.dpPrev, hpos_offset, BRW_CONDITIONAL_L);
 	    /* IS_NEGATIVE(prev) */
 	    brw_IF(p, BRW_EXECUTE_1);
 	    {
-               load_clip_distance(c, vtx, c->reg.dp, hpos_offset, clipvert_offset,
-                     BRW_CONDITIONAL_GE);
+               load_clip_distance(c, vtx, c->reg.dp, hpos_offset, BRW_CONDITIONAL_GE);
 	       /* IS_POSITIVE(next)
 		*/
 	       brw_IF(p, BRW_EXECUTE_1);
@@ -369,8 +363,7 @@ void brw_clip_tri( struct brw_clip_compile *c )
 	       brw_ADD(p, get_addr_reg(outlist_ptr), get_addr_reg(outlist_ptr), brw_imm_uw(sizeof(short)));
 	       brw_ADD(p, c->reg.nr_verts, c->reg.nr_verts, brw_imm_ud(1));
 
-               load_clip_distance(c, vtx, c->reg.dp, hpos_offset, clipvert_offset,
-                     BRW_CONDITIONAL_L);
+               load_clip_distance(c, vtx, c->reg.dp, hpos_offset, BRW_CONDITIONAL_L);
 	       /* IS_NEGATIVE(next)
 		*/
 	       brw_IF(p, BRW_EXECUTE_1);
