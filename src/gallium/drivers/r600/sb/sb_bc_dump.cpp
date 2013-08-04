@@ -174,7 +174,7 @@ void bc_dump::dump(cf_node& n) {
 		}
 
 		if (n.bc.cond)
-			s << " CND:" << n.bc.pop_count;
+			s << " CND:" << n.bc.cond;
 
 		if (n.bc.pop_count)
 			s << " POP:" << n.bc.pop_count;
