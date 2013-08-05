@@ -659,7 +659,7 @@ bool r600_init_flushed_depth_texture(struct pipe_context *ctx,
 	if (staging)
 		resource.flags |= R600_RESOURCE_FLAG_TRANSFER;
 	else
-		rtex->dirty_db_mask = (1 << (resource.last_level+1)) - 1;
+		rtex->dirty_level_mask = (1 << (resource.last_level+1)) - 1;
 
 	*flushed_depth_texture = (struct r600_texture *)ctx->screen->resource_create(ctx->screen, &resource);
 	if (*flushed_depth_texture == NULL) {

@@ -49,7 +49,7 @@ struct r600_texture {
 
 	unsigned			pitch_override;
 	unsigned			is_depth;
-	unsigned			dirty_db_mask; /* each bit says if that miplevel is dirty */
+	unsigned			dirty_level_mask; /* each bit says if that miplevel is dirty */
 	struct r600_texture		*flushed_depth_texture;
 	boolean				is_flushing_texture;
 	struct radeon_surface		surface;

@@ -114,7 +114,7 @@ void si_blit_uncompress_depth(struct pipe_context *ctx,
 	struct r600_texture *flushed_depth_texture = staging ?
 			staging : texture->flushed_depth_texture;
 
-	if (!staging && !texture->dirty_db_mask)
+	if (!staging && !texture->dirty_level_mask)
 		return;
 
 	desc = util_format_description(flushed_depth_texture->resource.b.b.format);
@@ -133,7 +133,7 @@ void si_blit_uncompress_depth(struct pipe_context *ctx,
 	}
 
 	for (level = first_level; level <= last_level; level++) {
-		if (!staging && !(texture->dirty_db_mask & (1 << level)))
+		if (!staging && !(texture->dirty_level_mask & (1 << level)))
 			continue;
 
 		/* The smaller the mipmap level, the less layers there are
@@ -166,7 +166,7 @@ void si_blit_uncompress_depth(struct pipe_context *ctx,
 		/* The texture will always be dirty if some layers aren't flushed.
 		 * I don't think this case can occur though. */
 		if (!staging && first_layer == 0 && last_layer == max_layer) {
-			texture->dirty_db_mask &= ~(1 << level);
+			texture->dirty_level_mask &= ~(1 << level);
 		}
 	}
 }
@@ -182,7 +182,7 @@ static void si_blit_decompress_depth_in_place(struct r600_context *rctx,
 	surf_tmpl.format = texture->resource.b.b.format;
 
 	for (level = first_level; level <= last_level; level++) {
-		if (!(texture->dirty_db_mask & (1 << level)))
+		if (!(texture->dirty_level_mask & (1 << level)))
 			continue;
 
 		surf_tmpl.u.tex.level = level;
@@ -210,7 +210,7 @@ static void si_blit_decompress_depth_in_place(struct r600_context *rctx,
 		/* The texture will always be dirty if some layers aren't flushed.
 		 * I don't think this case occurs often though. */
 		if (first_layer == 0 && last_layer == max_layer) {
-			texture->dirty_db_mask &= ~(1 << level);
+			texture->dirty_level_mask &= ~(1 << level);
 		}
 	}
 }

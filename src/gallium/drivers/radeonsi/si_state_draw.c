@@ -726,7 +726,7 @@ void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 		struct pipe_surface *surf = rctx->framebuffer.zsbuf;
 		struct r600_texture *rtex = (struct r600_texture *)surf->texture;
 
-		rtex->dirty_db_mask |= 1 << surf->u.tex.level;
+		rtex->dirty_level_mask |= 1 << surf->u.tex.level;
 	}
 
 	pipe_resource_reference(&ib.buffer, NULL);
