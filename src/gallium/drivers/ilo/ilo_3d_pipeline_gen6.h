@@ -114,11 +114,6 @@ gen6_pipeline_vf_statistics(struct ilo_3d_pipeline *p,
                             struct gen6_pipeline_session *session);
 
 void
-gen6_pipeline_vf_draw(struct ilo_3d_pipeline *p,
-                      const struct ilo_context *ilo,
-                      struct gen6_pipeline_session *session);
-
-void
 gen6_pipeline_vs(struct ilo_3d_pipeline *p,
                  const struct ilo_context *ilo,
                  struct gen6_pipeline_session *session);
