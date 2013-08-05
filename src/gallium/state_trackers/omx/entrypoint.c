@@ -41,6 +41,7 @@
 
 #include "entrypoint.h"
 #include "vid_dec.h"
+#include "vid_enc.h"
 
 pipe_static_mutex(omx_lock);
 static Display *omx_display = NULL;
@@ -52,13 +53,19 @@ int omx_component_library_Setup(stLoaderComponentType **stComponents)
    OMX_ERRORTYPE r;
 
    if (stComponents == NULL)
-      return 1;
+      return 2;
 
+   /* component 0 - video decoder */
    r = vid_dec_LoaderComponent(stComponents[0]);
    if (r != OMX_ErrorNone)
       return r;
 
-   return 1;
+   /* component 1 - video encoder */
+   r = vid_enc_LoaderComponent(stComponents[1]);
+   if (r != OMX_ErrorNone)
+      return r;
+
+   return 2;
 }
 
 struct vl_screen *omx_get_screen(void)

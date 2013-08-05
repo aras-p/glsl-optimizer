@@ -33,4 +33,5 @@ libomxtracker_la_SOURCES = \
 	entrypoint.c \
 	vid_dec.c \
 	vid_dec_mpeg12.c \
-	vid_dec_h264.c
+	vid_dec_h264.c \
+	vid_enc.c

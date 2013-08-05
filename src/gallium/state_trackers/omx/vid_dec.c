@@ -533,7 +533,6 @@ static void vid_dec_FillOutput(vid_dec_PrivateType *priv, struct pipe_video_buff
    struct pipe_sampler_view **views;
    struct pipe_transfer *transfer;
    struct pipe_box box = { };
-
    uint8_t *src, *dst;
 
    views = buf->get_sampler_view_planes(buf);
@@ -560,8 +559,6 @@ static void vid_dec_FillOutput(vid_dec_PrivateType *priv, struct pipe_video_buff
    util_copy_rect(dst, views[1]->texture->format, def->nStride, 0, 0,
                   box.width, box.height, src, transfer->stride, 0, 0);
    pipe_transfer_unmap(priv->pipe, transfer);
-
-   output->nFilledLen = output->nAllocLen;
 }
 
 static void vid_dec_FrameDecoded(OMX_COMPONENTTYPE *comp, OMX_BUFFERHEADERTYPE* input,
@@ -573,8 +570,16 @@ static void vid_dec_FrameDecoded(OMX_COMPONENTTYPE *comp, OMX_BUFFERHEADERTYPE* 
    if (!input->pInputPortPrivate)
       input->pInputPortPrivate = priv->Flush(priv);
 
-   if (input->pInputPortPrivate)
-      vid_dec_FillOutput(priv, input->pInputPortPrivate, output);
+   if (input->pInputPortPrivate) {
+      if (output->pInputPortPrivate) {
+         struct pipe_video_buffer *tmp = output->pOutputPortPrivate;
+         output->pOutputPortPrivate = input->pInputPortPrivate;
+         input->pInputPortPrivate = tmp;
+      } else {
+         vid_dec_FillOutput(priv, input->pInputPortPrivate, output);
+      }
+      output->nFilledLen = output->nAllocLen;
+   }
 
    if (eos && input->pInputPortPrivate)
       vid_dec_FreeInputPortPrivate(input);
