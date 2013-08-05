@@ -2934,6 +2934,7 @@ fs_visitor::fs_visitor(struct brw_context *brw,
    this->virtual_grf_start = NULL;
    this->virtual_grf_end = NULL;
    this->live_intervals = NULL;
+   this->regs_live_at_ip = NULL;
 
    this->params_remap = NULL;
    this->nr_params_remap = 0;

@@ -3229,6 +3229,24 @@ fs_visitor::assign_binding_table_offsets()
    assign_common_binding_table_offsets(next_binding_table_offset);
 }
 
+void
+fs_visitor::calculate_register_pressure()
+{
+   calculate_live_intervals();
+
+   int num_instructions = 0;
+   foreach_list(node, &this->instructions) {
+      ++num_instructions;
+   }
+
+   regs_live_at_ip = rzalloc_array(mem_ctx, int, num_instructions);
+
+   for (int reg = 0; reg < virtual_grf_count; reg++) {
+      for (int ip = virtual_grf_start[reg]; ip <= virtual_grf_end[reg]; ip++)
+         regs_live_at_ip[ip] += virtual_grf_sizes[reg];
+   }
+}
+
 bool
 fs_visitor::run()
 {
