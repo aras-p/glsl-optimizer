@@ -432,6 +432,7 @@ public:
    void setup_builtin_uniform_values(ir_variable *ir);
    int implied_mrf_writes(fs_inst *inst);
 
+   virtual void dump_instructions();
    void dump_instruction(backend_instruction *inst);
 
    void visit_atomic_counter_intrinsic(ir_call *ir);

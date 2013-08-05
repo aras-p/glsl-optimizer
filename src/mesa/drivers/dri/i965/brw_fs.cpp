@@ -2942,6 +2942,20 @@ fs_visitor::lower_uniform_pull_constant_loads()
 }
 
 void
+fs_visitor::dump_instructions()
+{
+   calculate_register_pressure();
+
+   int ip = 0;
+   foreach_list(node, &this->instructions) {
+      backend_instruction *inst = (backend_instruction *)node;
+      printf("{%3d} %4d: ", regs_live_at_ip[ip], ip);
+      dump_instruction(inst);
+      ++ip;
+   }
+}
+
+void
 fs_visitor::dump_instruction(backend_instruction *be_inst)
 {
    fs_inst *inst = (fs_inst *)be_inst;
