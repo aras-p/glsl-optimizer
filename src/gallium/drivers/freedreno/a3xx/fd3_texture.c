@@ -87,6 +87,7 @@ fd3_sampler_state_create(struct pipe_context *pctx,
 	so->base = *cso;
 
 	so->texsamp0 =
+			COND(!cso->normalized_coords, A3XX_TEX_SAMP_0_UNNORM_COORDS) |
 			A3XX_TEX_SAMP_0_XY_MAG(tex_filter(cso->mag_img_filter)) |
 			A3XX_TEX_SAMP_0_XY_MIN(tex_filter(cso->min_img_filter)) |
 			A3XX_TEX_SAMP_0_WRAP_S(tex_clamp(cso->wrap_s)) |
@@ -95,6 +96,28 @@ fd3_sampler_state_create(struct pipe_context *pctx,
 	so->texsamp1 = 0x00000000;  /* ??? */
 
 	return so;
+}
+
+static enum a3xx_tex_type
+tex_type(unsigned target)
+{
+	switch (target) {
+	default:
+		assert(0);
+	case PIPE_BUFFER:
+	case PIPE_TEXTURE_1D:
+	case PIPE_TEXTURE_1D_ARRAY:
+		return A3XX_TEX_1D;
+	case PIPE_TEXTURE_RECT:
+	case PIPE_TEXTURE_2D:
+	case PIPE_TEXTURE_2D_ARRAY:
+		return A3XX_TEX_2D;
+	case PIPE_TEXTURE_3D:
+		return A3XX_TEX_3D;
+	case PIPE_TEXTURE_CUBE:
+	case PIPE_TEXTURE_CUBE_ARRAY:
+		return A3XX_TEX_CUBE;
+	}
 }
 
 static struct pipe_sampler_view *
@@ -116,7 +139,7 @@ fd3_sampler_view_create(struct pipe_context *pctx, struct pipe_resource *prsc,
 	so->tex_resource =  rsc;
 
 	so->texconst0 =
-			0x40000000 | /* ??? */
+			A3XX_TEX_CONST_0_TYPE(tex_type(prsc->target)) |
 			A3XX_TEX_CONST_0_FMT(fd3_pipe2tex(cso->format)) |
 			fd3_tex_swiz(cso->format, cso->swizzle_r, cso->swizzle_g,
 						cso->swizzle_b, cso->swizzle_a);
