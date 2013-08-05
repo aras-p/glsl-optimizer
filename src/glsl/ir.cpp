@@ -619,42 +619,54 @@ ir_constant::ir_constant(const struct glsl_type *type,
    memcpy(& this->value, data, sizeof(this->value));
 }
 
-ir_constant::ir_constant(float f)
+ir_constant::ir_constant(float f, unsigned vector_elements)
 {
+   assert(vector_elements <= 4);
    this->ir_type = ir_type_constant;
-   this->type = glsl_type::float_type;
-   this->value.f[0] = f;
-   for (int i = 1; i < 16; i++)  {
+   this->type = glsl_type::get_instance(GLSL_TYPE_FLOAT, vector_elements, 1);
+   for (unsigned i = 0; i < vector_elements; i++) {
+      this->value.f[i] = f;
+   }
+   for (unsigned i = vector_elements; i < 16; i++)  {
       this->value.f[i] = 0;
    }
 }
 
-ir_constant::ir_constant(unsigned int u)
+ir_constant::ir_constant(unsigned int u, unsigned vector_elements)
 {
+   assert(vector_elements <= 4);
    this->ir_type = ir_type_constant;
-   this->type = glsl_type::uint_type;
-   this->value.u[0] = u;
-   for (int i = 1; i < 16; i++) {
+   this->type = glsl_type::get_instance(GLSL_TYPE_UINT, vector_elements, 1);
+   for (unsigned i = 0; i < vector_elements; i++) {
+      this->value.u[i] = u;
+   }
+   for (unsigned i = vector_elements; i < 16; i++) {
       this->value.u[i] = 0;
    }
 }
 
-ir_constant::ir_constant(int i)
+ir_constant::ir_constant(int integer, unsigned vector_elements)
 {
+   assert(vector_elements <= 4);
    this->ir_type = ir_type_constant;
-   this->type = glsl_type::int_type;
-   this->value.i[0] = i;
-   for (int i = 1; i < 16; i++) {
+   this->type = glsl_type::get_instance(GLSL_TYPE_INT, vector_elements, 1);
+   for (unsigned i = 0; i < vector_elements; i++) {
+      this->value.i[i] = integer;
+   }
+   for (unsigned i = vector_elements; i < 16; i++) {
       this->value.i[i] = 0;
    }
 }
 
-ir_constant::ir_constant(bool b)
+ir_constant::ir_constant(bool b, unsigned vector_elements)
 {
+   assert(vector_elements <= 4);
    this->ir_type = ir_type_constant;
-   this->type = glsl_type::bool_type;
-   this->value.b[0] = b;
-   for (int i = 1; i < 16; i++) {
+   this->type = glsl_type::get_instance(GLSL_TYPE_BOOL, vector_elements, 1);
+   for (unsigned i = 0; i < vector_elements; i++) {
+      this->value.b[i] = b;
+   }
+   for (unsigned i = vector_elements; i < 16; i++) {
       this->value.b[i] = false;
    }
 }

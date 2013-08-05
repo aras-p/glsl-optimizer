@@ -348,9 +348,9 @@ private:
     */
    ir_variable *in_var(const glsl_type *type, const char *name);
    ir_variable *out_var(const glsl_type *type, const char *name);
-   ir_constant *imm(float f);
-   ir_constant *imm(int i);
-   ir_constant *imm(unsigned u);
+   ir_constant *imm(float f, unsigned vector_elements=1);
+   ir_constant *imm(int i, unsigned vector_elements=1);
+   ir_constant *imm(unsigned u, unsigned vector_elements=1);
    ir_constant *imm(const glsl_type *type, const ir_constant_data &);
    ir_dereference_variable *var_ref(ir_variable *var);
    ir_dereference_array *array_ref(ir_variable *var, int i);
@@ -1878,21 +1878,21 @@ builtin_builder::out_var(const glsl_type *type, const char *name)
 }
 
 ir_constant *
-builtin_builder::imm(float f)
+builtin_builder::imm(float f, unsigned vector_elements)
 {
-   return new(mem_ctx) ir_constant(f);
+   return new(mem_ctx) ir_constant(f, vector_elements);
 }
 
 ir_constant *
-builtin_builder::imm(int i)
+builtin_builder::imm(int i, unsigned vector_elements)
 {
-   return new(mem_ctx) ir_constant(i);
+   return new(mem_ctx) ir_constant(i, vector_elements);
 }
 
 ir_constant *
-builtin_builder::imm(unsigned u)
+builtin_builder::imm(unsigned u, unsigned vector_elements)
 {
-   return new(mem_ctx) ir_constant(u);
+   return new(mem_ctx) ir_constant(u, vector_elements);
 }
 
 ir_constant *
