@@ -62,7 +62,8 @@ _mesa_LineWidth( GLfloat width )
     */
    if (ctx->API == API_OPENGL_CORE
        && ((ctx->Const.ContextFlags & GL_CONTEXT_FLAG_FORWARD_COMPATIBLE_BIT)
-           != 0)) {
+           != 0)
+       && width > 1.0) {
       _mesa_error( ctx, GL_INVALID_VALUE, "glLineWidth" );
       return;
    }
