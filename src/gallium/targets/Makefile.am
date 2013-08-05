@@ -84,6 +84,10 @@ endif
 if HAVE_ST_VDPAU
 SUBDIRS += r600/vdpau
 endif
+
+if HAVE_ST_OMX
+SUBDIRS += r600/omx
+endif
 endif
 
 if HAVE_GALLIUM_RADEONSI
@@ -93,6 +97,10 @@ endif
 
 if HAVE_ST_VDPAU
 SUBDIRS += radeonsi/vdpau
+endif
+
+if HAVE_ST_OMX
+SUBDIRS += radeonsi/omx
 endif
 endif
 
