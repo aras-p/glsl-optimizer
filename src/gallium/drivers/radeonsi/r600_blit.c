@@ -101,8 +101,8 @@ static void r600_blitter_end(struct pipe_context *ctx)
 }
 
 void si_blit_uncompress_depth(struct pipe_context *ctx,
-		struct r600_resource_texture *texture,
-		struct r600_resource_texture *staging,
+		struct r600_texture *texture,
+		struct r600_texture *staging,
 		unsigned first_level, unsigned last_level,
 		unsigned first_layer, unsigned last_layer)
 {
@@ -111,7 +111,7 @@ void si_blit_uncompress_depth(struct pipe_context *ctx,
 	float depth = 1.0f;
 	const struct util_format_description *desc;
 	void *custom_dsa;
-	struct r600_resource_texture *flushed_depth_texture = staging ?
+	struct r600_texture *flushed_depth_texture = staging ?
 			staging : texture->flushed_depth_texture;
 
 	if (!staging && !texture->dirty_db_mask)
@@ -172,7 +172,7 @@ void si_blit_uncompress_depth(struct pipe_context *ctx,
 }
 
 static void si_blit_decompress_depth_in_place(struct r600_context *rctx,
-                                              struct r600_resource_texture *texture,
+                                              struct r600_texture *texture,
                                               unsigned first_level, unsigned last_level,
                                               unsigned first_layer, unsigned last_layer)
 {
@@ -222,12 +222,12 @@ void si_flush_depth_textures(struct r600_context *rctx,
 
 	for (i = 0; i < textures->n_views; ++i) {
 		struct pipe_sampler_view *view;
-		struct r600_resource_texture *tex;
+		struct r600_texture *tex;
 
 		view = &textures->views[i]->base;
 		if (!view) continue;
 
-		tex = (struct r600_resource_texture *)view->texture;
+		tex = (struct r600_texture *)view->texture;
 		if (!tex->is_depth || tex->is_flushing_texture)
 			continue;
 
@@ -294,7 +294,7 @@ static void r600_compressed_to_blittable(struct pipe_resource *tex,
 				   unsigned level,
 				   struct texture_orig_info *orig)
 {
-	struct r600_resource_texture *rtex = (struct r600_resource_texture*)tex;
+	struct r600_texture *rtex = (struct r600_texture*)tex;
 	unsigned pixsize = util_format_get_blocksize(rtex->real_format);
 	int new_format;
 	int new_height, new_width;
@@ -329,7 +329,7 @@ static void r600_change_format(struct pipe_resource *tex,
 			       struct texture_orig_info *orig,
 			       enum pipe_format format)
 {
-	struct r600_resource_texture *rtex = (struct r600_resource_texture*)tex;
+	struct r600_texture *rtex = (struct r600_texture*)tex;
 
 	orig->format = tex->format;
 	orig->width0 = tex->width0;
@@ -346,7 +346,7 @@ static void r600_reset_blittable_to_orig(struct pipe_resource *tex,
 					 unsigned level,
 					 struct texture_orig_info *orig)
 {
-	struct r600_resource_texture *rtex = (struct r600_resource_texture*)tex;
+	struct r600_texture *rtex = (struct r600_texture*)tex;
 
 	tex->format = orig->format;
 	tex->width0 = orig->width0;
@@ -366,7 +366,7 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 				      const struct pipe_box *src_box)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_resource_texture *rsrc = (struct r600_resource_texture*)src;
+	struct r600_texture *rsrc = (struct r600_texture*)src;
 	struct texture_orig_info orig_info[2];
 	struct pipe_box sbox;
 	const struct pipe_box *psbox = src_box;
@@ -467,7 +467,7 @@ static void si_blit(struct pipe_context *ctx,
                       const struct pipe_blit_info *info)
 {
 	struct r600_context *rctx = (struct r600_context*)ctx;
-	struct r600_resource_texture *rsrc = (struct r600_resource_texture*)info->src.resource;
+	struct r600_texture *rsrc = (struct r600_texture*)info->src.resource;
 
 	assert(util_blitter_is_blit_supported(rctx->blitter, info));
 

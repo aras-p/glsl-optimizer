@@ -1709,7 +1709,7 @@ boolean si_is_format_supported(struct pipe_screen *screen,
 	return retval == usage;
 }
 
-static unsigned si_tile_mode_index(struct r600_resource_texture *rtex, unsigned level, bool stencil)
+static unsigned si_tile_mode_index(struct r600_texture *rtex, unsigned level, bool stencil)
 {
 	unsigned tile_mode_index = 0;
 
@@ -1728,7 +1728,7 @@ static unsigned si_tile_mode_index(struct r600_resource_texture *rtex, unsigned 
 static void si_cb(struct r600_context *rctx, struct si_pm4_state *pm4,
 		  const struct pipe_framebuffer_state *state, int cb)
 {
-	struct r600_resource_texture *rtex;
+	struct r600_texture *rtex;
 	struct r600_surface *surf;
 	unsigned level = state->cbufs[cb]->u.tex.level;
 	unsigned pitch, slice;
@@ -1742,7 +1742,7 @@ static void si_cb(struct r600_context *rctx, struct si_pm4_state *pm4,
 	unsigned max_comp_size;
 
 	surf = (struct r600_surface *)state->cbufs[cb];
-	rtex = (struct r600_resource_texture*)state->cbufs[cb]->texture;
+	rtex = (struct r600_texture*)state->cbufs[cb]->texture;
 
 	offset = rtex->surface.level[level].offset;
 	if (rtex->surface.level[level].mode < RADEON_SURF_MODE_1D) {
@@ -1865,7 +1865,7 @@ static void si_db(struct r600_context *rctx, struct si_pm4_state *pm4,
 		  const struct pipe_framebuffer_state *state)
 {
 	struct r600_screen *rscreen = rctx->screen;
-	struct r600_resource_texture *rtex;
+	struct r600_texture *rtex;
 	struct r600_surface *surf;
 	unsigned level, pitch, slice, format, tile_mode_index, array_mode;
 	unsigned macro_aspect, tile_split, stile_split, bankh, bankw, nbanks, pipe_config;
@@ -1880,7 +1880,7 @@ static void si_db(struct r600_context *rctx, struct si_pm4_state *pm4,
 
 	surf = (struct r600_surface *)state->zsbuf;
 	level = surf->base.u.tex.level;
-	rtex = (struct r600_resource_texture*)surf->base.texture;
+	rtex = (struct r600_texture*)surf->base.texture;
 
 	format = si_translate_dbformat(rtex->real_format);
 
@@ -2243,7 +2243,7 @@ static struct pipe_sampler_view *si_create_sampler_view(struct pipe_context *ctx
 							const struct pipe_sampler_view *state)
 {
 	struct si_pipe_sampler_view *view = CALLOC_STRUCT(si_pipe_sampler_view);
-	struct r600_resource_texture *tmp = (struct r600_resource_texture*)texture;
+	struct r600_texture *tmp = (struct r600_texture*)texture;
 	const struct util_format_description *desc;
 	unsigned format, num_format;
 	uint32_t pitch = 0;
@@ -2510,8 +2510,8 @@ static struct si_pm4_state *si_set_sampler_view(struct r600_context *rctx,
 			views[i]);
 
 		if (views[i]) {
-			struct r600_resource_texture *rtex =
-				(struct r600_resource_texture*)views[i]->texture;
+			struct r600_texture *rtex =
+				(struct r600_texture*)views[i]->texture;
 
 			if (rtex->is_depth && !rtex->is_flushing_texture) {
 				samplers->depth_texture_mask |= 1 << i;

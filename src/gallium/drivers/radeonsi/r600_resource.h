@@ -39,7 +39,7 @@ struct r600_transfer {
 	struct pipe_resource		*staging;
 };
 
-struct r600_resource_texture {
+struct r600_texture {
 	struct si_resource		resource;
 
 	/* If this resource is a depth-stencil buffer on evergreen, this contains
@@ -50,7 +50,7 @@ struct r600_resource_texture {
 	unsigned			pitch_override;
 	unsigned			is_depth;
 	unsigned			dirty_db_mask; /* each bit says if that miplevel is dirty */
-	struct r600_resource_texture	*flushed_depth_texture;
+	struct r600_texture		*flushed_depth_texture;
 	boolean				is_flushing_texture;
 	struct radeon_surface		surface;
 };
@@ -70,7 +70,7 @@ struct pipe_resource *si_texture_from_handle(struct pipe_screen *screen,
 
 bool r600_init_flushed_depth_texture(struct pipe_context *ctx,
 				     struct pipe_resource *texture,
-				     struct r600_resource_texture **staging);
+				     struct r600_texture **staging);
 
 
 struct r600_context;

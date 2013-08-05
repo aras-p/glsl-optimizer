@@ -724,7 +724,7 @@ void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 	/* Set the depth buffer as dirty. */
 	if (rctx->framebuffer.zsbuf) {
 		struct pipe_surface *surf = rctx->framebuffer.zsbuf;
-		struct r600_resource_texture *rtex = (struct r600_resource_texture *)surf->texture;
+		struct r600_texture *rtex = (struct r600_texture *)surf->texture;
 
 		rtex->dirty_db_mask |= 1 << surf->u.tex.level;
 	}
