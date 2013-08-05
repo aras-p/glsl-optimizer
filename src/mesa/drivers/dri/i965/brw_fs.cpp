@@ -689,7 +689,7 @@ fs_visitor::pop_force_sechalf()
 bool
 fs_inst::is_partial_write()
 {
-   return (this->predicate ||
+   return ((this->predicate && this->opcode != BRW_OPCODE_SEL) ||
            this->force_uncompressed ||
            this->force_sechalf);
 }
