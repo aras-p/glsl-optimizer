@@ -2704,7 +2704,7 @@ fs_visitor::dump_instruction(backend_instruction *be_inst)
           (brw->gen < 5 || (inst->opcode != BRW_OPCODE_SEL &&
                               inst->opcode != BRW_OPCODE_IF &&
                               inst->opcode != BRW_OPCODE_WHILE))) {
-         printf(".f0.%d\n", inst->flag_subreg);
+         printf(".f0.%d", inst->flag_subreg);
       }
    }
    printf(" ");
