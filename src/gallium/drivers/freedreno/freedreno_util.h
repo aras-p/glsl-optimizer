@@ -35,6 +35,7 @@
 #include "pipe/p_format.h"
 #include "util/u_debug.h"
 #include "util/u_math.h"
+#include "util/u_half.h"
 
 #include "adreno_common.xml.h"
 #include "adreno_pm4.xml.h"

@@ -306,10 +306,11 @@ fd3_pipe2swap(enum pipe_format format)
 	case PIPE_FORMAT_B8G8R8A8_UNORM:
 	case PIPE_FORMAT_B8G8R8X8_UNORM:
 		return WXYZ;
+
+	case PIPE_FORMAT_R8G8B8A8_UNORM:
+	case PIPE_FORMAT_R8G8B8X8_UNORM:
 	case PIPE_FORMAT_Z24X8_UNORM:
 	case PIPE_FORMAT_Z24_UNORM_S8_UINT:
-		return WZYX;
-
 	default:
 		return WZYX;
 	}

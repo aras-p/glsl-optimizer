@@ -8,10 +8,12 @@ http://0x04.net/cgit/index.cgi/rules-ng-ng
 git clone git://0x04.net/rules-ng-ng
 
 The rules-ng-ng source files this header was generated from are:
-- /home/robclark/src/freedreno/envytools/rnndb/a2xx.xml                (  30127 bytes, from 2013-05-05 18:29:35)
+- /home/robclark/src/freedreno/envytools/rnndb/adreno.xml              (    327 bytes, from 2013-07-05 19:21:12)
 - /home/robclark/src/freedreno/envytools/rnndb/freedreno_copyright.xml (   1453 bytes, from 2013-03-31 16:51:27)
-- /home/robclark/src/freedreno/envytools/rnndb/adreno_common.xml       (   3094 bytes, from 2013-05-05 18:29:22)
+- /home/robclark/src/freedreno/envytools/rnndb/a2xx/a2xx.xml           (  30005 bytes, from 2013-07-19 21:30:48)
+- /home/robclark/src/freedreno/envytools/rnndb/adreno_common.xml       (   8983 bytes, from 2013-07-24 01:38:36)
 - /home/robclark/src/freedreno/envytools/rnndb/adreno_pm4.xml          (   9712 bytes, from 2013-05-26 15:22:37)
+- /home/robclark/src/freedreno/envytools/rnndb/a3xx/a3xx.xml           (  51415 bytes, from 2013-08-03 14:26:05)
 
 Copyright (C) 2013 by the following authors:
 - Rob Clark <robdclark@gmail.com> (robclark)
@@ -236,56 +238,6 @@ enum sq_tex_filter {
 
 #define REG_A2XX_CP_PFP_UCODE_DATA				0x000000c1
 
-#define REG_A2XX_CP_RB_BASE					0x000001c0
-
-#define REG_A2XX_CP_RB_CNTL					0x000001c1
-
-#define REG_A2XX_CP_RB_RPTR_ADDR				0x000001c3
-
-#define REG_A2XX_CP_RB_RPTR					0x000001c4
-
-#define REG_A2XX_CP_RB_WPTR					0x000001c5
-
-#define REG_A2XX_CP_RB_WPTR_DELAY				0x000001c6
-
-#define REG_A2XX_CP_RB_RPTR_WR					0x000001c7
-
-#define REG_A2XX_CP_RB_WPTR_BASE				0x000001c8
-
-#define REG_A2XX_CP_QUEUE_THRESHOLDS				0x000001d5
-
-#define REG_A2XX_SCRATCH_UMSK					0x000001dc
-
-#define REG_A2XX_SCRATCH_ADDR					0x000001dd
-
-#define REG_A2XX_CP_STATE_DEBUG_INDEX				0x000001ec
-
-#define REG_A2XX_CP_STATE_DEBUG_DATA				0x000001ed
-
-#define REG_A2XX_CP_INT_CNTL					0x000001f2
-
-#define REG_A2XX_CP_INT_STATUS					0x000001f3
-
-#define REG_A2XX_CP_INT_ACK					0x000001f4
-
-#define REG_A2XX_CP_ME_CNTL					0x000001f6
-
-#define REG_A2XX_CP_ME_STATUS					0x000001f7
-
-#define REG_A2XX_CP_ME_RAM_WADDR				0x000001f8
-
-#define REG_A2XX_CP_ME_RAM_RADDR				0x000001f9
-
-#define REG_A2XX_CP_ME_RAM_DATA					0x000001fa
-
-#define REG_A2XX_CP_DEBUG					0x000001fc
-
-#define REG_A2XX_CP_CSQ_RB_STAT					0x000001fd
-
-#define REG_A2XX_CP_CSQ_IB1_STAT				0x000001fe
-
-#define REG_A2XX_CP_CSQ_IB2_STAT				0x000001ff
-
 #define REG_A2XX_RBBM_PERFCOUNTER1_SELECT			0x00000395
 
 #define REG_A2XX_RBBM_PERFCOUNTER1_LO				0x00000397
@@ -338,11 +290,32 @@ enum sq_tex_filter {
 
 #define REG_A2XX_CP_STAT					0x0000047f
 
-#define REG_A2XX_SCRATCH_REG0					0x00000578
-
-#define REG_A2XX_SCRATCH_REG2					0x0000057a
-
 #define REG_A2XX_RBBM_STATUS					0x000005d0
+#define A2XX_RBBM_STATUS_CMDFIFO_AVAIL__MASK			0x0000001f
+#define A2XX_RBBM_STATUS_CMDFIFO_AVAIL__SHIFT			0
+static inline uint32_t A2XX_RBBM_STATUS_CMDFIFO_AVAIL(uint32_t val)
+{
+	return ((val) << A2XX_RBBM_STATUS_CMDFIFO_AVAIL__SHIFT) & A2XX_RBBM_STATUS_CMDFIFO_AVAIL__MASK;
+}
+#define A2XX_RBBM_STATUS_TC_BUSY				0x00000020
+#define A2XX_RBBM_STATUS_HIRQ_PENDING				0x00000100
+#define A2XX_RBBM_STATUS_CPRQ_PENDING				0x00000200
+#define A2XX_RBBM_STATUS_CFRQ_PENDING				0x00000400
+#define A2XX_RBBM_STATUS_PFRQ_PENDING				0x00000800
+#define A2XX_RBBM_STATUS_VGT_BUSY_NO_DMA			0x00001000
+#define A2XX_RBBM_STATUS_RBBM_WU_BUSY				0x00004000
+#define A2XX_RBBM_STATUS_CP_NRT_BUSY				0x00010000
+#define A2XX_RBBM_STATUS_MH_BUSY				0x00040000
+#define A2XX_RBBM_STATUS_MH_COHERENCY_BUSY			0x00080000
+#define A2XX_RBBM_STATUS_SX_BUSY				0x00200000
+#define A2XX_RBBM_STATUS_TPC_BUSY				0x00400000
+#define A2XX_RBBM_STATUS_SC_CNTX_BUSY				0x01000000
+#define A2XX_RBBM_STATUS_PA_BUSY				0x02000000
+#define A2XX_RBBM_STATUS_VGT_BUSY				0x04000000
+#define A2XX_RBBM_STATUS_SQ_CNTX17_BUSY				0x08000000
+#define A2XX_RBBM_STATUS_SQ_CNTX0_BUSY				0x10000000
+#define A2XX_RBBM_STATUS_RB_CNTX_BUSY				0x40000000
+#define A2XX_RBBM_STATUS_GUI_ACTIVE				0x80000000
 
 #define REG_A2XX_A220_VSC_BIN_SIZE				0x00000c01
 #define A2XX_A220_VSC_BIN_SIZE_WIDTH__MASK			0x0000001f
@@ -358,13 +331,13 @@ static inline uint32_t A2XX_A220_VSC_BIN_SIZE_HEIGHT(uint32_t val)
 	return ((val >> 5) << A2XX_A220_VSC_BIN_SIZE_HEIGHT__SHIFT) & A2XX_A220_VSC_BIN_SIZE_HEIGHT__MASK;
 }
 
-#define REG_A2XX_VSC_PIPE(i0)				       (0x00000c06 + 0x3*(i0))
+static inline uint32_t REG_A2XX_VSC_PIPE(uint32_t i0) { return 0x00000c06 + 0x3*i0; }
 
-#define REG_A2XX_VSC_PIPE_CONFIG(i0)			       (0x00000c06 + 0x3*(i0))
+static inline uint32_t REG_A2XX_VSC_PIPE_CONFIG(uint32_t i0) { return 0x00000c06 + 0x3*i0; }
 
-#define REG_A2XX_VSC_PIPE_DATA_ADDRESS(i0)		       (0x00000c07 + 0x3*(i0))
+static inline uint32_t REG_A2XX_VSC_PIPE_DATA_ADDRESS(uint32_t i0) { return 0x00000c07 + 0x3*i0; }
 
-#define REG_A2XX_VSC_PIPE_DATA_LENGTH(i0)		       (0x00000c08 + 0x3*(i0))
+static inline uint32_t REG_A2XX_VSC_PIPE_DATA_LENGTH(uint32_t i0) { return 0x00000c08 + 0x3*i0; }
 
 #define REG_A2XX_PC_DEBUG_CNTL					0x00000c38
 

@@ -249,7 +249,7 @@ fd3_program_emit(struct fd_ringbuffer *ring,
 	 */
 	for (i = 0; i < 6; i++) {
 		OUT_PKT0(ring, REG_A3XX_SP_PERFCOUNTER0_SELECT, 1);
-		OUT_RING(ring, 0x00000000);    /* SP_PERFCOUNTER4_SELECT */
+		OUT_RING(ring, 0x00000000);    /* SP_PERFCOUNTER0_SELECT */
 
 		OUT_PKT0(ring, REG_A3XX_SP_PERFCOUNTER4_SELECT, 1);
 		OUT_RING(ring, 0x00000000);    /* SP_PERFCOUNTER4_SELECT */
