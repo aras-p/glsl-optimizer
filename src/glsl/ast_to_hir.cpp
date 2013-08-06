@@ -2332,7 +2332,8 @@ get_variable_being_redeclared(ir_variable *var, ast_declaration *decl,
       earlier->type = var->type;
       delete var;
       var = NULL;
-   } else if (state->ARB_fragment_coord_conventions_enable
+   } else if ((state->ARB_fragment_coord_conventions_enable ||
+               state->is_version(150, 0))
 	      && strcmp(var->name, "gl_FragCoord") == 0
 	      && earlier->type == var->type
 	      && earlier->mode == var->mode) {

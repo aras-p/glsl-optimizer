@@ -1158,7 +1158,8 @@ layout_qualifier_id:
       memset(& $$, 0, sizeof($$));
 
       /* Layout qualifiers for ARB_fragment_coord_conventions. */
-      if (!$$.flags.i && state->ARB_fragment_coord_conventions_enable) {
+      if (!$$.flags.i && (state->ARB_fragment_coord_conventions_enable ||
+                          state->is_version(150, 0))) {
          if (strcmp($1, "origin_upper_left") == 0) {
             $$.flags.q.origin_upper_left = 1;
          } else if (strcmp($1, "pixel_center_integer") == 0) {
