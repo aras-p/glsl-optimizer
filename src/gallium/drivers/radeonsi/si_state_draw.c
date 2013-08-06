@@ -91,10 +91,10 @@ static void si_pipe_shader_vs(struct pipe_context *ctx, struct si_pipe_shader *s
 
 	num_user_sgprs = SI_VS_NUM_USER_SGPR;
 	num_sgprs = shader->num_sgprs;
-	if (num_user_sgprs > num_sgprs)
-		num_sgprs = num_user_sgprs;
-	/* Last 2 reserved SGPRs are used for VCC */
-	num_sgprs += 2;
+	if (num_user_sgprs > num_sgprs) {
+		/* Last 2 reserved SGPRs are used for VCC */
+		num_sgprs = num_user_sgprs + 2;
+	}
 	assert(num_sgprs <= 104);
 
 	vgpr_comp_cnt = shader->shader.uses_instanceid ? 3 : 0;
@@ -235,10 +235,10 @@ static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *s
 
 	num_user_sgprs = SI_PS_NUM_USER_SGPR;
 	num_sgprs = shader->num_sgprs;
-	if (num_user_sgprs > num_sgprs)
-		num_sgprs = num_user_sgprs;
-	/* Last 2 reserved SGPRs are used for VCC */
-	num_sgprs += 2;
+	if (num_user_sgprs > num_sgprs) {
+		/* Last 2 reserved SGPRs are used for VCC */
+		num_sgprs = num_user_sgprs + 2;
+	}
 	assert(num_sgprs <= 104);
 
 	si_pm4_set_reg(pm4, R_00B028_SPI_SHADER_PGM_RSRC1_PS,
