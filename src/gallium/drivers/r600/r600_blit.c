@@ -171,9 +171,6 @@ void r600_blit_decompress_depth(struct pipe_context *ctx,
 				zsurf = ctx->create_surface(ctx, &texture->resource.b.b, &surf_tmpl);
 
 				surf_tmpl.format = flushed_depth_texture->resource.b.b.format;
-				surf_tmpl.u.tex.level = level;
-				surf_tmpl.u.tex.first_layer = layer;
-				surf_tmpl.u.tex.last_layer = layer;
 				cbsurf = ctx->create_surface(ctx,
 						&flushed_depth_texture->resource.b.b, &surf_tmpl);
 

@@ -102,22 +102,30 @@ static void r600_blitter_end(struct pipe_context *ctx)
 	r600_context_queries_resume(rctx);
 }
 
-void si_blit_uncompress_depth(struct pipe_context *ctx,
+static unsigned u_max_sample(struct pipe_resource *r)
+{
+	return r->nr_samples ? r->nr_samples - 1 : 0;
+}
+
+void r600_blit_decompress_depth(struct pipe_context *ctx,
 		struct r600_texture *texture,
 		struct r600_texture *staging,
 		unsigned first_level, unsigned last_level,
-		unsigned first_layer, unsigned last_layer)
+		unsigned first_layer, unsigned last_layer,
+		unsigned first_sample, unsigned last_sample)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	unsigned layer, level, checked_last_layer, max_layer;
+	unsigned layer, level, sample, checked_last_layer, max_layer, max_sample;
 	float depth = 1.0f;
 	const struct util_format_description *desc;
-	void *custom_dsa;
+	void **custom_dsa;
 	struct r600_texture *flushed_depth_texture = staging ?
 			staging : texture->flushed_depth_texture;
 
 	if (!staging && !texture->dirty_level_mask)
 		return;
+
+	max_sample = u_max_sample(&texture->resource.b.b);
 
 	desc = util_format_description(flushed_depth_texture->resource.b.b.format);
 	switch (util_format_has_depth(desc) | util_format_has_stencil(desc) << 1) {
@@ -144,30 +152,35 @@ void si_blit_uncompress_depth(struct pipe_context *ctx,
 		checked_last_layer = last_layer < max_layer ? last_layer : max_layer;
 
 		for (layer = first_layer; layer <= checked_last_layer; layer++) {
-			struct pipe_surface *zsurf, *cbsurf, surf_tmpl;
+			for (sample = first_sample; sample <= last_sample; sample++) {
+				struct pipe_surface *zsurf, *cbsurf, surf_tmpl;
 
-			surf_tmpl.format = texture->real_format;
-			surf_tmpl.u.tex.level = level;
-			surf_tmpl.u.tex.first_layer = layer;
-			surf_tmpl.u.tex.last_layer = layer;
+				surf_tmpl.format = texture->resource.b.b.format;
+				surf_tmpl.u.tex.level = level;
+				surf_tmpl.u.tex.first_layer = layer;
+				surf_tmpl.u.tex.last_layer = layer;
 
-			zsurf = ctx->create_surface(ctx, &texture->resource.b.b, &surf_tmpl);
+				zsurf = ctx->create_surface(ctx, &texture->resource.b.b, &surf_tmpl);
 
-			surf_tmpl.format = flushed_depth_texture->real_format;
-			cbsurf = ctx->create_surface(ctx,
-					(struct pipe_resource*)flushed_depth_texture, &surf_tmpl);
+				surf_tmpl.format = flushed_depth_texture->resource.b.b.format;
+				cbsurf = ctx->create_surface(ctx,
+						(struct pipe_resource*)flushed_depth_texture, &surf_tmpl);
 
-			r600_blitter_begin(ctx, R600_DECOMPRESS);
-			util_blitter_custom_depth_stencil(rctx->blitter, zsurf, cbsurf, ~0, custom_dsa, depth);
-			r600_blitter_end(ctx);
+				r600_blitter_begin(ctx, R600_DECOMPRESS);
+				util_blitter_custom_depth_stencil(rctx->blitter, zsurf, cbsurf, 1 << sample,
+								  custom_dsa[sample], depth);
+				r600_blitter_end(ctx);
 
-			pipe_surface_reference(&zsurf, NULL);
-			pipe_surface_reference(&cbsurf, NULL);
+				pipe_surface_reference(&zsurf, NULL);
+				pipe_surface_reference(&cbsurf, NULL);
+			}
 		}
 
 		/* The texture will always be dirty if some layers aren't flushed.
 		 * I don't think this case can occur though. */
-		if (!staging && first_layer == 0 && last_layer == max_layer) {
+		if (!staging &&
+		    first_layer == 0 && last_layer == max_layer &&
+		    first_sample == 0 && last_sample == max_sample) {
 			texture->dirty_level_mask &= ~(1 << level);
 		}
 	}
@@ -388,7 +401,7 @@ static void r600_compressed_to_blittable(struct pipe_resource *tex,
 				   struct texture_orig_info *orig)
 {
 	struct r600_texture *rtex = (struct r600_texture*)tex;
-	unsigned pixsize = util_format_get_blocksize(rtex->real_format);
+	unsigned pixsize = util_format_get_blocksize(rtex->resource.b.b.format);
 	int new_format;
 	int new_height, new_width;
 

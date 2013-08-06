@@ -788,7 +788,7 @@ static void si_delete_dsa_state(struct pipe_context *ctx, void *state)
 }
 
 static void *si_create_db_flush_dsa(struct r600_context *rctx, bool copy_depth,
-				    bool copy_stencil)
+				    bool copy_stencil, int sample)
 {
 	struct pipe_depth_stencil_alpha_state dsa;
         struct si_state_dsa *state;
@@ -800,7 +800,8 @@ static void *si_create_db_flush_dsa(struct r600_context *rctx, bool copy_depth,
 		si_pm4_set_reg(&state->pm4, R_028000_DB_RENDER_CONTROL,
 			       S_028000_DEPTH_COPY(copy_depth) |
 			       S_028000_STENCIL_COPY(copy_stencil) |
-			       S_028000_COPY_CENTROID(1));
+			       S_028000_COPY_CENTROID(1) |
+			       S_028000_COPY_SAMPLE(sample));
 	} else {
 		si_pm4_set_reg(&state->pm4, R_028000_DB_RENDER_CONTROL,
 			       S_028000_DEPTH_COMPRESS_DISABLE(1) |
@@ -1942,10 +1943,10 @@ static void si_db(struct r600_context *rctx, struct si_pm4_state *pm4,
 	level = surf->base.u.tex.level;
 	rtex = (struct r600_texture*)surf->base.texture;
 
-	format = si_translate_dbformat(rtex->real_format);
+	format = si_translate_dbformat(rtex->resource.b.b.format);
 
 	if (format == V_028040_Z_INVALID) {
-		R600_ERR("Invalid DB format: %d, disabling DB.\n", rtex->real_format);
+		R600_ERR("Invalid DB format: %d, disabling DB.\n", rtex->resource.b.b.format);
 	}
 	assert(format != V_028040_Z_INVALID);
 
@@ -3182,6 +3183,8 @@ static void *si_create_blend_custom(struct r600_context *rctx, unsigned mode)
 
 void si_init_state_functions(struct r600_context *rctx)
 {
+	int i;
+
 	rctx->context.create_blend_state = si_create_blend_state;
 	rctx->context.bind_blend_state = si_bind_blend_state;
 	rctx->context.delete_blend_state = si_delete_blend_state;
@@ -3195,10 +3198,12 @@ void si_init_state_functions(struct r600_context *rctx)
 	rctx->context.bind_depth_stencil_alpha_state = si_bind_dsa_state;
 	rctx->context.delete_depth_stencil_alpha_state = si_delete_dsa_state;
 
-	rctx->custom_dsa_flush_depth_stencil = si_create_db_flush_dsa(rctx, true, true);
-	rctx->custom_dsa_flush_depth = si_create_db_flush_dsa(rctx, true, false);
-	rctx->custom_dsa_flush_stencil = si_create_db_flush_dsa(rctx, false, true);
-	rctx->custom_dsa_flush_inplace = si_create_db_flush_dsa(rctx, false, false);
+	for (i = 0; i < 8; i++) {
+		rctx->custom_dsa_flush_depth_stencil[i] = si_create_db_flush_dsa(rctx, true, true, i);
+		rctx->custom_dsa_flush_depth[i] = si_create_db_flush_dsa(rctx, true, false, i);
+		rctx->custom_dsa_flush_stencil[i] = si_create_db_flush_dsa(rctx, false, true, i);
+	}
+	rctx->custom_dsa_flush_inplace = si_create_db_flush_dsa(rctx, false, false, 0);
 	rctx->custom_blend_resolve = si_create_blend_custom(rctx, V_028808_CB_RESOLVE);
 	rctx->custom_blend_decompress = si_create_blend_custom(rctx, V_028808_CB_FMASK_DECOMPRESS);
 

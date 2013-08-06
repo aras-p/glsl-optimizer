@@ -458,8 +458,7 @@ r600_texture_create_object(struct pipe_screen *screen,
 	rtex->is_depth = util_format_has_depth(util_format_description(rtex->resource.b.b.format));
 
 	rtex->surface = *surface;
-	r = r600_setup_surface(screen, rtex,
-			       pitch_in_bytes_override);
+	r = r600_setup_surface(screen, rtex, pitch_in_bytes_override);
 	if (r) {
 		FREE(rtex);
 		return NULL;

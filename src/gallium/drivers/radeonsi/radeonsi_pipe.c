@@ -185,9 +185,11 @@ static void r600_destroy_context(struct pipe_context *context)
 	if (rctx->dummy_pixel_shader) {
 		rctx->context.delete_fs_state(&rctx->context, rctx->dummy_pixel_shader);
 	}
-	rctx->context.delete_depth_stencil_alpha_state(&rctx->context, rctx->custom_dsa_flush_depth_stencil);
-	rctx->context.delete_depth_stencil_alpha_state(&rctx->context, rctx->custom_dsa_flush_depth);
-	rctx->context.delete_depth_stencil_alpha_state(&rctx->context, rctx->custom_dsa_flush_stencil);
+	for (int i = 0; i < 8; i++) {
+		rctx->context.delete_depth_stencil_alpha_state(&rctx->context, rctx->custom_dsa_flush_depth_stencil[i]);
+		rctx->context.delete_depth_stencil_alpha_state(&rctx->context, rctx->custom_dsa_flush_depth[i]);
+		rctx->context.delete_depth_stencil_alpha_state(&rctx->context, rctx->custom_dsa_flush_stencil[i]);
+	}
 	rctx->context.delete_depth_stencil_alpha_state(&rctx->context, rctx->custom_dsa_flush_inplace);
 	rctx->context.delete_blend_state(&rctx->context, rctx->custom_blend_resolve);
 	rctx->context.delete_blend_state(&rctx->context, rctx->custom_blend_decompress);

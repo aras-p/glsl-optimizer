@@ -138,9 +138,9 @@ struct r600_context {
 	struct blitter_context		*blitter;
 	enum radeon_family		family;
 	enum chip_class			chip_class;
-	void				*custom_dsa_flush_depth_stencil;
-	void				*custom_dsa_flush_depth;
-	void				*custom_dsa_flush_stencil;
+	void				*custom_dsa_flush_depth_stencil[8];
+	void				*custom_dsa_flush_depth[8];
+	void				*custom_dsa_flush_stencil[8];
 	void				*custom_dsa_flush_inplace;
 	void				*custom_blend_resolve;
 	void				*custom_blend_decompress;
@@ -227,11 +227,12 @@ struct r600_context {
 
 /* r600_blit.c */
 void si_init_blit_functions(struct r600_context *rctx);
-void si_blit_uncompress_depth(struct pipe_context *ctx,
+void r600_blit_decompress_depth(struct pipe_context *ctx,
 		struct r600_texture *texture,
 		struct r600_texture *staging,
 		unsigned first_level, unsigned last_level,
-		unsigned first_layer, unsigned last_layer);
+		unsigned first_layer, unsigned last_layer,
+		unsigned first_sample, unsigned last_sample);
 void si_flush_depth_textures(struct r600_context *rctx,
 			     struct r600_textures_info *textures);
 void r600_decompress_color_textures(struct r600_context *rctx,

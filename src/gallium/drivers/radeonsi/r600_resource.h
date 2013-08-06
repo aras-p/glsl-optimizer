@@ -37,7 +37,7 @@ struct r600_transfer {
 	/* Buffer transfer. */
 	struct pipe_transfer		*buffer_transfer;
 	unsigned			offset;
-	struct pipe_resource		*staging;
+	struct si_resource		*staging;
 };
 
 struct r600_fmask_info {
@@ -59,11 +59,6 @@ struct r600_cmask_info {
 
 struct r600_texture {
 	struct si_resource		resource;
-
-	/* If this resource is a depth-stencil buffer on evergreen, this contains
-	 * the depth part of the format. There is a separate stencil resource
-	 * for the stencil buffer below. */
-	enum pipe_format		real_format;
 
 	unsigned			size;
 	unsigned			pitch_override;
