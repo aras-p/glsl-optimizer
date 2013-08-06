@@ -1055,22 +1055,36 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
 
 
 /**
- * Clamp layer coord to valid values.
+ * Build (per-coord) layer value.
+ * Either clamp layer to valid values or fill in optional out_of_bounds
+ * value and just return value unclamped.
  */
 static LLVMValueRef
 lp_build_layer_coord(struct lp_build_sample_context *bld,
                      unsigned texture_unit,
-                     LLVMValueRef layer)
+                     LLVMValueRef layer,
+                     LLVMValueRef *out_of_bounds)
 {
-   LLVMValueRef maxlayer;
+   LLVMValueRef num_layers;
+   struct lp_build_context *int_coord_bld = &bld->int_coord_bld;
 
-   maxlayer = bld->dynamic_state->depth(bld->dynamic_state,
-                                        bld->gallivm, texture_unit);
-   maxlayer = lp_build_sub(&bld->int_bld, maxlayer, bld->int_bld.one);
-   maxlayer = lp_build_broadcast_scalar(&bld->int_coord_bld, maxlayer);
-   return lp_build_clamp(&bld->int_coord_bld, layer,
-                         bld->int_coord_bld.zero, maxlayer);
+   num_layers = bld->dynamic_state->depth(bld->dynamic_state,
+                                          bld->gallivm, texture_unit);
 
+   if (out_of_bounds) {
+      LLVMValueRef out1, out;
+      num_layers = lp_build_broadcast_scalar(int_coord_bld, num_layers);
+      out = lp_build_cmp(int_coord_bld, PIPE_FUNC_LESS, layer, int_coord_bld->zero);
+      out1 = lp_build_cmp(int_coord_bld, PIPE_FUNC_GEQUAL, layer, num_layers);
+      *out_of_bounds = lp_build_or(int_coord_bld, out, out1);
+      return layer;
+   }
+   else {
+      LLVMValueRef maxlayer;
+      maxlayer = lp_build_sub(&bld->int_bld, num_layers, bld->int_bld.one);
+      maxlayer = lp_build_broadcast_scalar(int_coord_bld, maxlayer);
+      return lp_build_clamp(int_coord_bld, layer, int_coord_bld->zero, maxlayer);
+   }
 }
 
 
@@ -1123,11 +1137,11 @@ lp_build_sample_common(struct lp_build_sample_context *bld,
    }
    else if (target == PIPE_TEXTURE_1D_ARRAY) {
       *r = lp_build_iround(&bld->coord_bld, *t);
-      *r = lp_build_layer_coord(bld, texture_index, *r);
+      *r = lp_build_layer_coord(bld, texture_index, *r, NULL);
    }
    else if (target == PIPE_TEXTURE_2D_ARRAY) {
       *r = lp_build_iround(&bld->coord_bld, *r);
-      *r = lp_build_layer_coord(bld, texture_index, *r);
+      *r = lp_build_layer_coord(bld, texture_index, *r, NULL);
    }
 
    /*
@@ -1162,7 +1176,7 @@ lp_build_sample_common(struct lp_build_sample_context *bld,
           * bad x86 code to be emitted.
           */
          assert(*lod_ipart);
-         lp_build_nearest_mip_level(bld, texture_index, *lod_ipart, ilevel0);
+         lp_build_nearest_mip_level(bld, texture_index, *lod_ipart, ilevel0, NULL);
       }
       else {
          first_level = bld->dynamic_state->first_level(bld->dynamic_state,
@@ -1173,7 +1187,7 @@ lp_build_sample_common(struct lp_build_sample_context *bld,
       break;
    case PIPE_TEX_MIPFILTER_NEAREST:
       assert(*lod_ipart);
-      lp_build_nearest_mip_level(bld, texture_index, *lod_ipart, ilevel0);
+      lp_build_nearest_mip_level(bld, texture_index, *lod_ipart, ilevel0, NULL);
       break;
    case PIPE_TEX_MIPFILTER_LINEAR:
       assert(*lod_ipart);
@@ -1300,11 +1314,14 @@ lp_build_fetch_texel(struct lp_build_sample_context *bld,
    struct lp_build_context *int_coord_bld = &bld->int_coord_bld;
    unsigned dims = bld->dims, chan;
    unsigned target = bld->static_texture_state->target;
+   boolean out_of_bound_ret_zero = TRUE;
    LLVMValueRef size, ilevel;
    LLVMValueRef row_stride_vec = NULL, img_stride_vec = NULL;
    LLVMValueRef x = coords[0], y = coords[1], z = coords[2];
    LLVMValueRef width, height, depth, i, j;
    LLVMValueRef offset, out_of_bounds, out1;
+
+   out_of_bounds = int_coord_bld->zero;
 
    if (explicit_lod && bld->static_texture_state->target != PIPE_BUFFER) {
       if (bld->num_lods != int_coord_bld->type.length) {
@@ -1314,11 +1331,18 @@ lp_build_fetch_texel(struct lp_build_sample_context *bld,
       else {
          ilevel = explicit_lod;
       }
-      lp_build_nearest_mip_level(bld, texture_unit, ilevel, &ilevel);
+      lp_build_nearest_mip_level(bld, texture_unit, ilevel, &ilevel,
+                                 out_of_bound_ret_zero ? &out_of_bounds : NULL);
    }
    else {
-      bld->num_lods = 1;
-      ilevel = lp_build_const_int32(bld->gallivm, 0);
+      assert(bld->num_lods == 1);
+      if (bld->static_texture_state->target != PIPE_BUFFER) {
+         ilevel = bld->dynamic_state->first_level(bld->dynamic_state,
+                                                  bld->gallivm, texture_unit);
+      }
+      else {
+         ilevel = lp_build_const_int32(bld->gallivm, 0);
+      }
    }
    lp_build_mipmap_level_sizes(bld, ilevel,
                                &size,
@@ -1329,19 +1353,27 @@ lp_build_fetch_texel(struct lp_build_sample_context *bld,
    if (target == PIPE_TEXTURE_1D_ARRAY ||
        target == PIPE_TEXTURE_2D_ARRAY) {
       if (target == PIPE_TEXTURE_1D_ARRAY) {
-         z = lp_build_layer_coord(bld, texture_unit, y);
+         z = y;
+      }
+      if (out_of_bound_ret_zero) {
+         z = lp_build_layer_coord(bld, texture_unit, z, &out1);
+         out_of_bounds = lp_build_or(int_coord_bld, out_of_bounds, out1);
       }
       else {
-         z = lp_build_layer_coord(bld, texture_unit, z);
+         z = lp_build_layer_coord(bld, texture_unit, z, NULL);
       }
    }
 
    /* This is a lot like border sampling */
    if (offsets[0]) {
-      /* XXX coords are really unsigned, offsets are signed */
+      /*
+       * coords are really unsigned, offsets are signed, but I don't think
+       * exceeding 31 bits is possible
+       */
       x = lp_build_add(int_coord_bld, x, offsets[0]);
    }
-   out_of_bounds = lp_build_cmp(int_coord_bld, PIPE_FUNC_LESS, x, int_coord_bld->zero);
+   out1 = lp_build_cmp(int_coord_bld, PIPE_FUNC_LESS, x, int_coord_bld->zero);
+   out_of_bounds = lp_build_or(int_coord_bld, out_of_bounds, out1);
    out1 = lp_build_cmp(int_coord_bld, PIPE_FUNC_GEQUAL, x, width);
    out_of_bounds = lp_build_or(int_coord_bld, out_of_bounds, out1);
 
@@ -1384,11 +1416,10 @@ lp_build_fetch_texel(struct lp_build_sample_context *bld,
                            i, j,
                            colors_out);
 
-   if (0) {
+   if (out_of_bound_ret_zero) {
       /*
-       * Not needed except for ARB_robust_buffer_access_behavior.
+       * Only needed for ARB_robust_buffer_access_behavior and d3d10.
        * Could use min/max above instead of out-of-bounds comparisons
-       * (in fact cast to unsigned and min only is sufficient)
        * if we don't care about the result returned for out-of-bounds.
        */
       for (chan = 0; chan < 4; chan++) {

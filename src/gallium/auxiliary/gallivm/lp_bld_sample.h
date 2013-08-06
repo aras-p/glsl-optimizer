@@ -382,7 +382,8 @@ void
 lp_build_nearest_mip_level(struct lp_build_sample_context *bld,
                            unsigned texture_unit,
                            LLVMValueRef lod,
-                           LLVMValueRef *level_out);
+                           LLVMValueRef *level_out,
+                           LLVMValueRef *out_of_bounds);
 
 void
 lp_build_linear_mip_levels(struct lp_build_sample_context *bld,

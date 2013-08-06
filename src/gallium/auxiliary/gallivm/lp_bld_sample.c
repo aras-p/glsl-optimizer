@@ -47,6 +47,7 @@
 #include "lp_bld_logic.h"
 #include "lp_bld_pack.h"
 #include "lp_bld_quad.h"
+#include "lp_bld_bitarit.h"
 
 
 /*
@@ -777,17 +778,19 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
 
 
 /**
- * For PIPE_TEX_MIPFILTER_NEAREST, convert float LOD to integer
- * mipmap level index.
+ * For PIPE_TEX_MIPFILTER_NEAREST, convert int part of lod
+ * to actual mip level.
  * Note: this is all scalar per quad code.
  * \param lod_ipart  int texture level of detail
- * \param level_out  returns integer 
+ * \param level_out  returns integer
+ * \param out_of_bounds returns per coord out_of_bounds mask if provided
  */
 void
 lp_build_nearest_mip_level(struct lp_build_sample_context *bld,
                            unsigned texture_unit,
                            LLVMValueRef lod_ipart,
-                           LLVMValueRef *level_out)
+                           LLVMValueRef *level_out,
+                           LLVMValueRef *out_of_bounds)
 {
    struct lp_build_context *leveli_bld = &bld->leveli_bld;
    LLVMValueRef first_level, last_level, level;
@@ -801,8 +804,31 @@ lp_build_nearest_mip_level(struct lp_build_sample_context *bld,
 
    level = lp_build_add(leveli_bld, lod_ipart, first_level);
 
-   /* clamp level to legal range of levels */
-   *level_out = lp_build_clamp(leveli_bld, level, first_level, last_level);
+   if (out_of_bounds) {
+      LLVMValueRef out, out1;
+      out = lp_build_cmp(leveli_bld, PIPE_FUNC_LESS, level, first_level);
+      out1 = lp_build_cmp(leveli_bld, PIPE_FUNC_GREATER, level, last_level);
+      out = lp_build_or(leveli_bld, out, out1);
+      if (bld->num_lods == bld->coord_bld.type.length) {
+         *out_of_bounds = out;
+      }
+      else if (bld->num_lods == 1) {
+         *out_of_bounds = lp_build_broadcast_scalar(&bld->int_coord_bld, out);
+      }
+      else {
+         assert(bld->num_lods == bld->coord_bld.type.length / 4);
+         *out_of_bounds = lp_build_unpack_broadcast_aos_scalars(bld->gallivm,
+                                                                leveli_bld->type,
+                                                                bld->int_coord_bld.type,
+                                                                out);
+      }
+      *level_out = level;
+   }
+   else {
+      /* clamp level to legal range of levels */
+      *level_out = lp_build_clamp(leveli_bld, level, first_level, last_level);
+
+   }
 }
 
 
