@@ -523,7 +523,7 @@ struct pipe_resource *si_texture_create(struct pipe_screen *screen,
 					const struct pipe_resource *templ)
 {
 	struct r600_screen *rscreen = (struct r600_screen*)screen;
-	struct radeon_surface surface;
+	struct radeon_surface surface = {0};
 	unsigned array_mode = V_009910_ARRAY_LINEAR_ALIGNED;
 	int r;
 
