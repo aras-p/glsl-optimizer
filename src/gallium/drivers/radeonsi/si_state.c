@@ -2232,7 +2232,7 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct si_pm4_state *pm4 = si_pm4_alloc_state(rctx);
 	uint32_t tl, br;
-	int tl_x, tl_y, br_x, br_y, nr_samples;
+	int tl_x, tl_y, br_x, br_y, nr_samples, i;
 
 	if (pm4 == NULL)
 		return;
@@ -2248,7 +2248,7 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 	/* build states */
 	rctx->export_16bpc = 0;
 	rctx->fb_compressed_cb_mask = 0;
-	for (int i = 0; i < state->nr_cbufs; i++) {
+	for (i = 0; i < state->nr_cbufs; i++) {
 		struct r600_texture *rtex =
 			(struct r600_texture*)state->cbufs[i]->texture;
 
@@ -2258,6 +2258,11 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 			rctx->fb_compressed_cb_mask |= 1 << i;
 		}
 	}
+	for (; i < 8; i++) {
+		si_pm4_set_reg(pm4, R_028C70_CB_COLOR0_INFO + i * 0x3C,
+			       S_028C70_FORMAT(V_028C70_COLOR_INVALID));
+	}
+
 	assert(!(rctx->export_16bpc & ~0xff));
 	si_db(rctx, pm4, state);
 
