@@ -695,6 +695,11 @@ intel_blit_framebuffer_with_blitter(struct gl_context *ctx,
 {
    struct brw_context *brw = brw_context(ctx);
 
+   /* Sync up the state of window system buffers.  We need to do this before
+    * we go looking for the buffers.
+    */
+   intel_prepare_render(brw);
+
    if (mask & GL_COLOR_BUFFER_BIT) {
       GLint i;
       const struct gl_framebuffer *drawFb = ctx->DrawBuffer;
