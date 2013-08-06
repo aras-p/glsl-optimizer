@@ -915,6 +915,12 @@ handle_semantic:
 /*		ctx->shader->output[i].spi_sid = r600_spi_sid(&ctx->shader->output[i]);*/
 }
 
+static const struct lp_build_tgsi_action txf_action;
+
+static void build_tex_intrinsic(const struct lp_build_tgsi_action * action,
+				struct lp_build_tgsi_context * bld_base,
+				struct lp_build_emit_data * emit_data);
+
 static void tex_fetch_args(
 	struct lp_build_tgsi_context * bld_base,
 	struct lp_build_emit_data * emit_data)
@@ -924,9 +930,11 @@ static void tex_fetch_args(
 	const struct tgsi_full_instruction * inst = emit_data->inst;
 	unsigned opcode = inst->Instruction.Opcode;
 	unsigned target = inst->Texture.Texture;
-	unsigned sampler_src;
+	unsigned sampler_src, sampler_index;
 	LLVMValueRef coords[4];
 	LLVMValueRef address[16];
+	LLVMValueRef sample_index_rewrite = NULL;
+	LLVMValueRef sample_chan = NULL;
 	int ref_pos;
 	unsigned num_coords = tgsi_util_get_texture_coord_dim(target, &ref_pos);
 	unsigned count = 0;
@@ -1021,9 +1029,99 @@ static void tex_fetch_args(
 	}
 
 	sampler_src = emit_data->inst->Instruction.NumSrcRegs - 1;
+	sampler_index = emit_data->inst->Src[sampler_src].Register.Index;
+
+	/* Adjust the sample index according to FMASK.
+	 *
+	 * For uncompressed MSAA surfaces, FMASK should return 0x76543210,
+	 * which is the identity mapping. Each nibble says which physical sample
+	 * should be fetched to get that sample.
+	 *
+	 * For example, 0x11111100 means there are only 2 samples stored and
+	 * the second sample covers 3/4 of the pixel. When reading samples 0
+	 * and 1, return physical sample 0 (determined by the first two 0s
+	 * in FMASK), otherwise return physical sample 1.
+	 *
+	 * The sample index should be adjusted as follows:
+	 *   sample_index = (fmask >> (sample_index * 4)) & 0xF;
+	 */
+	if (target == TGSI_TEXTURE_2D_MSAA ||
+	    target == TGSI_TEXTURE_2D_ARRAY_MSAA) {
+		struct lp_build_context *uint_bld = &bld_base->uint_bld;
+		struct lp_build_emit_data txf_emit_data = *emit_data;
+		LLVMValueRef txf_address[16];
+		unsigned txf_count = count;
+
+		memcpy(txf_address, address, sizeof(address));
+
+		/* Pad to a power-of-two size. */
+		while (txf_count < util_next_power_of_two(txf_count))
+			txf_address[txf_count++] = LLVMGetUndef(LLVMInt32TypeInContext(gallivm->context));
+
+		/* Read FMASK using TXF. */
+		txf_emit_data.chan = 0;
+		txf_emit_data.dst_type = LLVMVectorType(
+			LLVMInt32TypeInContext(bld_base->base.gallivm->context), 4);
+		txf_emit_data.args[0] = lp_build_gather_values(gallivm, txf_address, txf_count);
+		txf_emit_data.args[1] = si_shader_ctx->resources[FMASK_TEX_OFFSET + sampler_index];
+		txf_emit_data.args[2] = lp_build_const_int32(bld_base->base.gallivm, target);
+		txf_emit_data.arg_count = 3;
+
+		build_tex_intrinsic(&txf_action, bld_base, &txf_emit_data);
+
+		/* Initialize some constants. */
+		if (target == TGSI_TEXTURE_2D_MSAA) {
+			sample_chan = LLVMConstInt(uint_bld->elem_type, 2, 0);
+		} else {
+			sample_chan = LLVMConstInt(uint_bld->elem_type, 3, 0);
+		}
+
+		LLVMValueRef four = LLVMConstInt(uint_bld->elem_type, 4, 0);
+		LLVMValueRef F = LLVMConstInt(uint_bld->elem_type, 0xF, 0);
+
+		/* Apply the formula. */
+		LLVMValueRef fmask =
+			LLVMBuildExtractElement(gallivm->builder,
+						txf_emit_data.output[0],
+						uint_bld->zero, "");
+
+		LLVMValueRef sample_index =
+			LLVMBuildExtractElement(gallivm->builder,
+						txf_emit_data.args[0],
+						sample_chan, "");
+
+		LLVMValueRef sample_index4 =
+			LLVMBuildMul(gallivm->builder, sample_index, four, "");
+
+		LLVMValueRef shifted_fmask =
+			LLVMBuildLShr(gallivm->builder, fmask, sample_index4, "");
+
+		LLVMValueRef final_sample =
+			LLVMBuildAnd(gallivm->builder, shifted_fmask, F, "");
+
+		/* Don't rewrite the sample index if WORD1.DATA_FORMAT of the FMASK
+		 * resource descriptor is 0 (invalid),
+		 */
+		LLVMValueRef fmask_desc =
+			LLVMBuildBitCast(gallivm->builder,
+					 si_shader_ctx->resources[FMASK_TEX_OFFSET + sampler_index],
+					 LLVMVectorType(uint_bld->elem_type, 8), "");
+
+		LLVMValueRef fmask_word1 =
+			LLVMBuildExtractElement(gallivm->builder, fmask_desc,
+						uint_bld->one, "");
+
+		LLVMValueRef word1_is_nonzero =
+			LLVMBuildICmp(gallivm->builder, LLVMIntNE,
+				      fmask_word1, uint_bld->zero, "");
+
+		sample_index_rewrite =
+			LLVMBuildSelect(gallivm->builder, word1_is_nonzero,
+					final_sample, sample_index, "");
+	}
 
 	/* Resource */
-	emit_data->args[1] = si_shader_ctx->resources[emit_data->inst->Src[sampler_src].Register.Index];
+	emit_data->args[1] = si_shader_ctx->resources[sampler_index];
 
 	if (opcode == TGSI_OPCODE_TXF) {
 		/* add tex offsets */
@@ -1054,7 +1152,7 @@ static void tex_fetch_args(
 		emit_data->arg_count = 3;
 	} else {
 		/* Sampler */
-		emit_data->args[2] = si_shader_ctx->samplers[emit_data->inst->Src[sampler_src].Register.Index];
+		emit_data->args[2] = si_shader_ctx->samplers[sampler_index];
 
 		emit_data->dst_type = LLVMVectorType(
 			LLVMFloatTypeInContext(bld_base->base.gallivm->context),
@@ -1072,6 +1170,13 @@ static void tex_fetch_args(
 		address[count++] = LLVMGetUndef(LLVMInt32TypeInContext(gallivm->context));
 
 	emit_data->args[0] = lp_build_gather_values(gallivm, address, count);
+
+	/* Replace the MSAA sample index if needed. */
+	if (sample_index_rewrite) {
+		emit_data->args[0] =
+			LLVMBuildInsertElement(gallivm->builder, emit_data->args[0],
+					       sample_index_rewrite, sample_chan, "");
+	}
 }
 
 static void build_tex_intrinsic(const struct lp_build_tgsi_action * action,
@@ -1352,7 +1457,7 @@ static void preload_samplers(struct si_shader_context *si_shader_ctx)
 		return;
 
 	/* Allocate space for the values */
-	si_shader_ctx->resources = CALLOC(num_samplers, sizeof(LLVMValueRef));
+	si_shader_ctx->resources = CALLOC(NUM_SAMPLER_VIEWS, sizeof(LLVMValueRef));
 	si_shader_ctx->samplers = CALLOC(num_samplers, sizeof(LLVMValueRef));
 
 	res_ptr = LLVMGetParam(si_shader_ctx->radeon_bld.main_fn, SI_PARAM_RESOURCE);
@@ -1360,7 +1465,6 @@ static void preload_samplers(struct si_shader_context *si_shader_ctx)
 
 	/* Load the resources and samplers, we rely on the code sinking to do the rest */
 	for (i = 0; i < num_samplers; ++i) {
-
 		/* Resource */
 		offset = lp_build_const_int32(gallivm, i);
 		si_shader_ctx->resources[i] = build_indexed_load(si_shader_ctx, res_ptr, offset);
@@ -1368,6 +1472,13 @@ static void preload_samplers(struct si_shader_context *si_shader_ctx)
 		/* Sampler */
 		offset = lp_build_const_int32(gallivm, i);
 		si_shader_ctx->samplers[i] = build_indexed_load(si_shader_ctx, samp_ptr, offset);
+
+		/* FMASK resource */
+		if (info->is_msaa_sampler[i]) {
+			offset = lp_build_const_int32(gallivm, FMASK_TEX_OFFSET + i);
+			si_shader_ctx->resources[FMASK_TEX_OFFSET + i] =
+				build_indexed_load(si_shader_ctx, res_ptr, offset);
+		}
 	}
 }
 
