@@ -233,12 +233,6 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 
 	switch (rctx->chip_class) {
 	case SI:
-		si_init_state_functions(rctx);
-		LIST_INITHEAD(&rctx->active_query_list);
-		rctx->cs = rctx->ws->cs_create(rctx->ws, RING_GFX, NULL);
-		rctx->max_db = 8;
-		si_init_config(rctx);
-		break;
 	case CIK:
 		si_init_state_functions(rctx);
 		LIST_INITHEAD(&rctx->active_query_list);
