@@ -67,7 +67,7 @@ inject_front_face_info(struct draw_stage *stage,
    boolean is_front_face = (
       (stage->draw->rasterizer->front_ccw && ccw) ||
       (!stage->draw->rasterizer->front_ccw && !ccw));
-   unsigned slot = unfilled->face_slot;
+   int slot = unfilled->face_slot;
    unsigned i;
 
    /* In case the backend doesn't care about it */
