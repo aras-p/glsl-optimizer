@@ -34,7 +34,7 @@
  * e     3
  */
 static uint32_t
-sample_positions_4x[] = { 0xae2ae662 };
+brw_multisample_positions_4x[] = { 0xae2ae662 };
 /* Sample positions are based on a solution to the "8 queens" puzzle.
  * Rationale: in a solution to the 8 queens puzzle, no two queens share
  * a row, column, or diagonal.  This is a desirable property for samples
@@ -69,7 +69,7 @@ sample_positions_4x[] = { 0xae2ae662 };
  * f   7
  */
 static uint32_t
-sample_positions_8x[] = { 0xdbb39d79, 0x3ff55117 };
+brw_multisample_positions_8x[] = { 0xdbb39d79, 0x3ff55117 };
 
 
 void
@@ -82,13 +82,13 @@ gen6_get_sample_position(struct gl_context *ctx,
       result[0] = result[1] = 0.5f;
       break;
    case 4: {
-      uint8_t val = (uint8_t)(sample_positions_4x[0] >> (8*index));
+      uint8_t val = (uint8_t)(brw_multisample_positions_4x[0] >> (8*index));
       result[0] = ((val >> 4) & 0xf) / 16.0f;
       result[1] = (val & 0xf) / 16.0f;
       break;
    }
    case 8: {
-      uint8_t val = (uint8_t)(sample_positions_8x[index>>2] >> (8*(index & 3)));
+      uint8_t val = (uint8_t)(brw_multisample_positions_8x[index>>2] >> (8*(index & 3)));
       result[0] = ((val >> 4) & 0xf) / 16.0f;
       result[1] = (val & 0xf) / 16.0f;
       break;
@@ -116,12 +116,12 @@ gen6_emit_3dstate_multisample(struct brw_context *brw,
       break;
    case 4:
       number_of_multisamples = MS_NUMSAMPLES_4;
-      sample_positions_3210 = sample_positions_4x[0];
+      sample_positions_3210 = brw_multisample_positions_4x[0];
       break;
    case 8:
       number_of_multisamples = MS_NUMSAMPLES_8;
-      sample_positions_3210 = sample_positions_8x[0];
-      sample_positions_7654 = sample_positions_8x[1];
+      sample_positions_3210 = brw_multisample_positions_8x[0];
+      sample_positions_7654 = brw_multisample_positions_8x[1];
       break;
    default:
       assert(!"Unrecognized num_samples in gen6_emit_3dstate_multisample");
