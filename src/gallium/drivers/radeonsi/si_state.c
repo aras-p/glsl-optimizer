@@ -2488,11 +2488,11 @@ static void *si_create_sampler_state(struct pipe_context *ctx,
 	return rstate;
 }
 
-static struct si_pm4_state *si_set_sampler_view(struct r600_context *rctx,
-						unsigned count,
-						struct pipe_sampler_view **views,
-						struct r600_textures_info *samplers,
-						unsigned user_data_reg)
+static struct si_pm4_state *si_set_sampler_views(struct r600_context *rctx,
+						 unsigned count,
+						 struct pipe_sampler_view **views,
+						 struct r600_textures_info *samplers,
+						 unsigned user_data_reg)
 {
 	struct si_pipe_sampler_view **resource = (struct si_pipe_sampler_view **)views;
 	struct si_pm4_state *pm4 = si_pm4_alloc_state(rctx);
@@ -2541,32 +2541,32 @@ out:
 	return pm4;
 }
 
-static void si_set_vs_sampler_view(struct pipe_context *ctx, unsigned count,
-				   struct pipe_sampler_view **views)
+static void si_set_vs_sampler_views(struct pipe_context *ctx, unsigned count,
+				    struct pipe_sampler_view **views)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct si_pm4_state *pm4;
 
-	pm4 = si_set_sampler_view(rctx, count, views, &rctx->vs_samplers,
+	pm4 = si_set_sampler_views(rctx, count, views, &rctx->vs_samplers,
 			    R_00B130_SPI_SHADER_USER_DATA_VS_0);
 	si_pm4_set_state(rctx, vs_sampler_views, pm4);
 }
 
-static void si_set_ps_sampler_view(struct pipe_context *ctx, unsigned count,
-				   struct pipe_sampler_view **views)
+static void si_set_ps_sampler_views(struct pipe_context *ctx, unsigned count,
+				    struct pipe_sampler_view **views)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct si_pm4_state *pm4;
 
-	pm4 = si_set_sampler_view(rctx, count, views, &rctx->ps_samplers,
+	pm4 = si_set_sampler_views(rctx, count, views, &rctx->ps_samplers,
 				  R_00B030_SPI_SHADER_USER_DATA_PS_0);
 	si_pm4_set_state(rctx, ps_sampler_views, pm4);
 }
 
-static struct si_pm4_state *si_bind_sampler(struct r600_context *rctx, unsigned count,
-					    void **states,
-					    struct r600_textures_info *samplers,
-					    unsigned user_data_reg)
+static struct si_pm4_state *si_bind_sampler_states(struct r600_context *rctx, unsigned count,
+						   void **states,
+						   struct r600_textures_info *samplers,
+						   unsigned user_data_reg)
 {
 	struct si_pipe_sampler_state **rstates = (struct si_pipe_sampler_state **)states;
 	struct si_pm4_state *pm4 = si_pm4_alloc_state(rctx);
@@ -2637,22 +2637,22 @@ out:
 	return pm4;
 }
 
-static void si_bind_vs_sampler(struct pipe_context *ctx, unsigned count, void **states)
+static void si_bind_vs_sampler_states(struct pipe_context *ctx, unsigned count, void **states)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct si_pm4_state *pm4;
 
-	pm4 = si_bind_sampler(rctx, count, states, &rctx->vs_samplers,
+	pm4 = si_bind_sampler_states(rctx, count, states, &rctx->vs_samplers,
 			      R_00B130_SPI_SHADER_USER_DATA_VS_0);
 	si_pm4_set_state(rctx, vs_sampler, pm4);
 }
 
-static void si_bind_ps_sampler(struct pipe_context *ctx, unsigned count, void **states)
+static void si_bind_ps_sampler_states(struct pipe_context *ctx, unsigned count, void **states)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct si_pm4_state *pm4;
 
-	pm4 = si_bind_sampler(rctx, count, states, &rctx->ps_samplers,
+	pm4 = si_bind_sampler_states(rctx, count, states, &rctx->ps_samplers,
 			      R_00B030_SPI_SHADER_USER_DATA_PS_0);
 	si_pm4_set_state(rctx, ps_sampler, pm4);
 }
@@ -2862,13 +2862,13 @@ void si_init_state_functions(struct r600_context *rctx)
 	rctx->context.delete_fs_state = si_delete_ps_shader;
 
 	rctx->context.create_sampler_state = si_create_sampler_state;
-	rctx->context.bind_vertex_sampler_states = si_bind_vs_sampler;
-	rctx->context.bind_fragment_sampler_states = si_bind_ps_sampler;
+	rctx->context.bind_vertex_sampler_states = si_bind_vs_sampler_states;
+	rctx->context.bind_fragment_sampler_states = si_bind_ps_sampler_states;
 	rctx->context.delete_sampler_state = si_delete_sampler_state;
 
 	rctx->context.create_sampler_view = si_create_sampler_view;
-	rctx->context.set_vertex_sampler_views = si_set_vs_sampler_view;
-	rctx->context.set_fragment_sampler_views = si_set_ps_sampler_view;
+	rctx->context.set_vertex_sampler_views = si_set_vs_sampler_views;
+	rctx->context.set_fragment_sampler_views = si_set_ps_sampler_views;
 	rctx->context.sampler_view_destroy = si_sampler_view_destroy;
 
 	rctx->context.set_sample_mask = si_set_sample_mask;
