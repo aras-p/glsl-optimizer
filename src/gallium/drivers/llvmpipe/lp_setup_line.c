@@ -622,7 +622,6 @@ try_setup_line( struct lp_setup_context *setup,
    } else {
       line->inputs.frontfacing = TRUE;
    }
-   
 
    /* Setup parameter interpolants:
     */
