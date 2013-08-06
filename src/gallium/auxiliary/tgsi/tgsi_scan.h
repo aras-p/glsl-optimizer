@@ -80,6 +80,7 @@ struct tgsi_shader_info
    boolean color0_writes_all_cbufs;
    boolean writes_viewport_index;
    boolean writes_layer;
+   boolean is_msaa_sampler[PIPE_MAX_SAMPLERS];
 
    unsigned num_written_culldistance;
    unsigned num_written_clipdistance;

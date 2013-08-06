@@ -36,6 +36,7 @@
 
 #include "util/u_debug.h"
 #include "util/u_math.h"
+#include "util/u_memory.h"
 #include "util/u_prim.h"
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_util.h"
@@ -127,6 +128,18 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                /* check for indirect register reads */
                if (src->Register.Indirect) {
                   info->indirect_files |= (1 << src->Register.File);
+               }
+
+               /* MSAA samplers */
+               if (src->Register.File == TGSI_FILE_SAMPLER) {
+                  assert(fullinst->Instruction.Texture);
+                  assert(src->Register.Index < Elements(info->is_msaa_sampler));
+
+                  if (fullinst->Instruction.Texture &&
+                      (fullinst->Texture.Texture == TGSI_TEXTURE_2D_MSAA ||
+                       fullinst->Texture.Texture == TGSI_TEXTURE_2D_ARRAY_MSAA)) {
+                     info->is_msaa_sampler[src->Register.Index] = TRUE;
+                  }
                }
             }
 
