@@ -65,7 +65,7 @@ public:
    cfg_t *cfg;
    void *mem_ctx;
 
-   int num_vars;
+   int num_vgrfs;
    int bitset_words;
 
    /** Per-basic-block information on live variables */

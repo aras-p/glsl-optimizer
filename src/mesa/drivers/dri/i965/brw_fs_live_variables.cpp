@@ -138,7 +138,7 @@ fs_live_variables::fs_live_variables(fs_visitor *v, cfg_t *cfg)
 {
    mem_ctx = ralloc_context(cfg->mem_ctx);
 
-   num_vars = v->virtual_grf_count;
+   num_vgrfs = v->virtual_grf_count;
    bd = rzalloc_array(mem_ctx, struct block_data, cfg->num_blocks);
 
    bitset_words = BITSET_WORDS(v->virtual_grf_count);
@@ -163,19 +163,18 @@ fs_live_variables::~fs_live_variables()
 void
 fs_visitor::calculate_live_intervals()
 {
-   int num_vars = this->virtual_grf_count;
-
    if (this->live_intervals_valid)
       return;
 
-   int *start = ralloc_array(mem_ctx, int, num_vars);
-   int *end = ralloc_array(mem_ctx, int, num_vars);
+   int num_vgrfs = this->virtual_grf_count;
+   int *start = ralloc_array(mem_ctx, int, num_vgrfs);
+   int *end = ralloc_array(mem_ctx, int, num_vgrfs);
    ralloc_free(this->virtual_grf_start);
    ralloc_free(this->virtual_grf_end);
    this->virtual_grf_start = start;
    this->virtual_grf_end = end;
 
-   for (int i = 0; i < num_vars; i++) {
+   for (int i = 0; i < num_vgrfs; i++) {
       start[i] = MAX_INSTRUCTION;
       end[i] = -1;
    }
@@ -243,7 +242,7 @@ fs_visitor::calculate_live_intervals()
    fs_live_variables livevars(this, &cfg);
 
    for (int b = 0; b < cfg.num_blocks; b++) {
-      for (int i = 0; i < num_vars; i++) {
+      for (int i = 0; i < num_vgrfs; i++) {
 	 if (BITSET_TEST(livevars.bd[b].livein, i)) {
 	    start[i] = MIN2(start[i], cfg.blocks[b]->start_ip);
 	    end[i] = MAX2(end[i], cfg.blocks[b]->start_ip);
