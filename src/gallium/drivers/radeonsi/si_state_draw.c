@@ -419,6 +419,9 @@ static void si_update_derived_state(struct r600_context *rctx)
 			if (rctx->samplers[i].depth_texture_mask) {
 				si_flush_depth_textures(rctx, &rctx->samplers[i]);
 			}
+			if (rctx->samplers[i].compressed_colortex_mask) {
+				r600_decompress_color_textures(rctx, &rctx->samplers[i]);
+			}
 		}
 	}
 
@@ -754,6 +757,19 @@ void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 		struct r600_texture *rtex = (struct r600_texture *)surf->texture;
 
 		rtex->dirty_level_mask |= 1 << surf->u.tex.level;
+	}
+	if (rctx->fb_compressed_cb_mask) {
+		struct pipe_surface *surf;
+		struct r600_texture *rtex;
+		unsigned mask = rctx->fb_compressed_cb_mask;
+
+		do {
+			unsigned i = u_bit_scan(&mask);
+			surf = rctx->framebuffer.cbufs[i];
+			rtex = (struct r600_texture*)surf->texture;
+
+			rtex->dirty_level_mask |= 1 << surf->u.tex.level;
+		} while (mask);
 	}
 
 	pipe_resource_reference(&ib.buffer, NULL);

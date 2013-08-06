@@ -190,6 +190,7 @@ static void r600_destroy_context(struct pipe_context *context)
 	rctx->context.delete_depth_stencil_alpha_state(&rctx->context, rctx->custom_dsa_flush_stencil);
 	rctx->context.delete_depth_stencil_alpha_state(&rctx->context, rctx->custom_dsa_flush_inplace);
 	rctx->context.delete_blend_state(&rctx->context, rctx->custom_blend_resolve);
+	rctx->context.delete_blend_state(&rctx->context, rctx->custom_blend_decompress);
 	util_unreference_framebuffer_state(&rctx->framebuffer);
 
 	util_blitter_destroy(rctx->blitter);

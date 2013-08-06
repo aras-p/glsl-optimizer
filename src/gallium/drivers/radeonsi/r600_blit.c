@@ -239,6 +239,75 @@ void si_flush_depth_textures(struct r600_context *rctx,
 	}
 }
 
+static void r600_blit_decompress_color(struct pipe_context *ctx,
+		struct r600_texture *rtex,
+		unsigned first_level, unsigned last_level,
+		unsigned first_layer, unsigned last_layer)
+{
+	struct r600_context *rctx = (struct r600_context *)ctx;
+	unsigned layer, level, checked_last_layer, max_layer;
+
+	if (!rtex->dirty_level_mask)
+		return;
+
+	for (level = first_level; level <= last_level; level++) {
+		if (!(rtex->dirty_level_mask & (1 << level)))
+			continue;
+
+		/* The smaller the mipmap level, the less layers there are
+		 * as far as 3D textures are concerned. */
+		max_layer = util_max_layer(&rtex->resource.b.b, level);
+		checked_last_layer = last_layer < max_layer ? last_layer : max_layer;
+
+		for (layer = first_layer; layer <= checked_last_layer; layer++) {
+			struct pipe_surface *cbsurf, surf_tmpl;
+
+			surf_tmpl.format = rtex->resource.b.b.format;
+			surf_tmpl.u.tex.level = level;
+			surf_tmpl.u.tex.first_layer = layer;
+			surf_tmpl.u.tex.last_layer = layer;
+			cbsurf = ctx->create_surface(ctx, &rtex->resource.b.b, &surf_tmpl);
+
+			r600_blitter_begin(ctx, R600_DECOMPRESS);
+			util_blitter_custom_color(rctx->blitter, cbsurf,
+						  rctx->custom_blend_decompress);
+			r600_blitter_end(ctx);
+
+			pipe_surface_reference(&cbsurf, NULL);
+		}
+
+		/* The texture will always be dirty if some layers aren't flushed.
+		 * I don't think this case occurs often though. */
+		if (first_layer == 0 && last_layer == max_layer) {
+			rtex->dirty_level_mask &= ~(1 << level);
+		}
+	}
+}
+
+void r600_decompress_color_textures(struct r600_context *rctx,
+				    struct r600_textures_info *textures)
+{
+	unsigned i;
+	unsigned mask = textures->compressed_colortex_mask;
+
+	while (mask) {
+		struct pipe_sampler_view *view;
+		struct r600_texture *tex;
+
+		i = u_bit_scan(&mask);
+
+		view = textures->views.views[i];
+		assert(view);
+
+		tex = (struct r600_texture *)view->texture;
+		assert(tex->cmask.size || tex->fmask.size);
+
+		r600_blit_decompress_color(&rctx->context, tex,
+					   view->u.tex.first_level, view->u.tex.last_level,
+					   0, util_max_layer(&tex->resource.b.b, view->u.tex.first_level));
+	}
+}
+
 static void r600_clear(struct pipe_context *ctx, unsigned buffers,
 		       const union pipe_color_union *color,
 		       double depth, unsigned stencil)
@@ -280,6 +349,28 @@ static void r600_clear_depth_stencil(struct pipe_context *ctx,
 	util_blitter_clear_depth_stencil(rctx->blitter, dst, clear_flags, depth, stencil,
 					 dstx, dsty, width, height);
 	r600_blitter_end(ctx);
+}
+
+/* Helper for decompressing a portion of a color or depth resource before
+ * blitting if any decompression is needed.
+ * The driver doesn't decompress resources automatically while u_blitter is
+ * rendering. */
+static void r600_decompress_subresource(struct pipe_context *ctx,
+					struct pipe_resource *tex,
+					unsigned level,
+					unsigned first_layer, unsigned last_layer)
+{
+	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct r600_texture *rtex = (struct r600_texture*)tex;
+
+	if (rtex->is_depth && !rtex->is_flushing_texture) {
+		si_blit_decompress_depth_in_place(rctx, rtex,
+						  level, level,
+						  first_layer, last_layer);
+	} else if (rtex->fmask.size || rtex->cmask.size) {
+		r600_blit_decompress_color(ctx, rtex, level, level,
+					   first_layer, last_layer);
+	}
 }
 
 struct texture_orig_info {
@@ -368,7 +459,6 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 				      const struct pipe_box *src_box)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_texture *rsrc = (struct r600_texture*)src;
 	struct texture_orig_info orig_info[2];
 	struct pipe_box sbox;
 	const struct pipe_box *psbox = src_box;
@@ -383,12 +473,10 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 		return;
 	}
 
-	/* This must be done before entering u_blitter to avoid recursion. */
-	if (rsrc->is_depth && !rsrc->is_flushing_texture) {
-		si_blit_decompress_depth_in_place(rctx, rsrc,
-						  src_level, src_level,
-						  src_box->z, src_box->z + src_box->depth - 1);
-	}
+	/* The driver doesn't decompress resources automatically while
+	 * u_blitter is rendering. */
+	r600_decompress_subresource(ctx, src, src_level,
+				    src_box->z, src_box->z + src_box->depth - 1);
 
 	restore_orig[0] = restore_orig[1] = FALSE;
 
@@ -595,7 +683,6 @@ static void si_blit(struct pipe_context *ctx,
                       const struct pipe_blit_info *info)
 {
 	struct r600_context *rctx = (struct r600_context*)ctx;
-	struct r600_texture *rsrc = (struct r600_texture*)info->src.resource;
 
 	if (info->src.resource->nr_samples > 1 &&
 	    info->dst.resource->nr_samples <= 1 &&
@@ -607,12 +694,11 @@ static void si_blit(struct pipe_context *ctx,
 
 	assert(util_blitter_is_blit_supported(rctx->blitter, info));
 
-	if (rsrc->is_depth && !rsrc->is_flushing_texture) {
-		si_blit_decompress_depth_in_place(rctx, rsrc,
-						  info->src.level, info->src.level,
-						  info->src.box.z,
-						  info->src.box.z + info->src.box.depth - 1);
-	}
+	/* The driver doesn't decompress resources automatically while
+	 * u_blitter is rendering. */
+	r600_decompress_subresource(ctx, info->src.resource, info->src.level,
+				    info->src.box.z,
+				    info->src.box.z + info->src.box.depth - 1);
 
 	r600_blitter_begin(ctx, R600_BLIT);
 	util_blitter_blit(rctx->blitter, info);

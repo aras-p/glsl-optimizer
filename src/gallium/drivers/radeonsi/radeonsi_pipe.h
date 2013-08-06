@@ -99,6 +99,7 @@ struct r600_textures_info {
 	struct si_pipe_sampler_state	*samplers[NUM_TEX_UNITS];
 	unsigned			n_views;
 	uint32_t			depth_texture_mask; /* which textures are depth */
+	uint32_t			compressed_colortex_mask;
 	unsigned			n_samplers;
 	bool				samplers_dirty;
 	bool				is_array_sampler[NUM_TEX_UNITS];
@@ -141,6 +142,7 @@ struct r600_context {
 	void				*custom_dsa_flush_stencil;
 	void				*custom_dsa_flush_inplace;
 	void				*custom_blend_resolve;
+	void				*custom_blend_decompress;
 	struct r600_screen		*screen;
 	struct radeon_winsys		*ws;
 
@@ -155,6 +157,7 @@ struct r600_context {
 	struct pipe_framebuffer_state	framebuffer;
 	unsigned			fb_log_samples;
 	unsigned			fb_cb0_is_integer;
+	unsigned			fb_compressed_cb_mask;
 	unsigned			pa_sc_line_stipple;
 	unsigned			pa_su_sc_mode_cntl;
 	/* for saving when using blitter */
@@ -230,6 +233,8 @@ void si_blit_uncompress_depth(struct pipe_context *ctx,
 		unsigned first_layer, unsigned last_layer);
 void si_flush_depth_textures(struct r600_context *rctx,
 			     struct r600_textures_info *textures);
+void r600_decompress_color_textures(struct r600_context *rctx,
+				    struct r600_textures_info *textures);
 
 /* r600_buffer.c */
 bool si_init_resource(struct r600_screen *rscreen,

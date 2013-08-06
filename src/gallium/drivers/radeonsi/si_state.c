@@ -2246,8 +2246,16 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 
 	/* build states */
 	rctx->export_16bpc = 0;
+	rctx->fb_compressed_cb_mask = 0;
 	for (int i = 0; i < state->nr_cbufs; i++) {
+		struct r600_texture *rtex =
+			(struct r600_texture*)state->cbufs[i]->texture;
+
 		si_cb(rctx, pm4, state, i);
+
+		if (rtex->fmask.size || rtex->cmask.size) {
+			rctx->fb_compressed_cb_mask |= 1 << i;
+		}
 	}
 	assert(!(rctx->export_16bpc & ~0xff));
 	si_db(rctx, pm4, state);
@@ -2791,14 +2799,22 @@ static struct si_pm4_state *si_set_sampler_views(struct r600_context *rctx,
 			} else {
 				samplers->depth_texture_mask &= ~(1 << i);
 			}
+			if (rtex->cmask.size || rtex->fmask.size) {
+				samplers->compressed_colortex_mask |= 1 << i;
+			} else {
+				samplers->compressed_colortex_mask &= ~(1 << i);
+			}
 
 			si_set_sampler_view(rctx, shader, i, views[i], rviews[i]->state);
 		} else {
 			samplers->depth_texture_mask &= ~(1 << i);
+			samplers->compressed_colortex_mask &= ~(1 << i);
 			si_set_sampler_view(rctx, shader, i, NULL, NULL);
 		}
 	}
 	for (; i < samplers->n_views; i++) {
+		samplers->depth_texture_mask &= ~(1 << i);
+		samplers->compressed_colortex_mask &= ~(1 << i);
 		si_set_sampler_view(rctx, shader, i, NULL, NULL);
 	}
 
@@ -3102,14 +3118,14 @@ static void si_texture_barrier(struct pipe_context *ctx)
 	si_pm4_set_state(rctx, texture_barrier, pm4);
 }
 
-static void *si_create_resolve_blend(struct r600_context *rctx)
+static void *si_create_blend_custom(struct r600_context *rctx, unsigned mode)
 {
 	struct pipe_blend_state blend;
 
 	memset(&blend, 0, sizeof(blend));
 	blend.independent_blend_enable = true;
 	blend.rt[0].colormask = 0xf;
-	return si_create_blend_state_mode(&rctx->context, &blend, V_028808_CB_RESOLVE);
+	return si_create_blend_state_mode(&rctx->context, &blend, mode);
 }
 
 void si_init_state_functions(struct r600_context *rctx)
@@ -3131,7 +3147,8 @@ void si_init_state_functions(struct r600_context *rctx)
 	rctx->custom_dsa_flush_depth = si_create_db_flush_dsa(rctx, true, false);
 	rctx->custom_dsa_flush_stencil = si_create_db_flush_dsa(rctx, false, true);
 	rctx->custom_dsa_flush_inplace = si_create_db_flush_dsa(rctx, false, false);
-	rctx->custom_blend_resolve = si_create_resolve_blend(rctx);
+	rctx->custom_blend_resolve = si_create_blend_custom(rctx, V_028808_CB_RESOLVE);
+	rctx->custom_blend_decompress = si_create_blend_custom(rctx, V_028808_CB_FMASK_DECOMPRESS);
 
 	rctx->context.set_clip_state = si_set_clip_state;
 	rctx->context.set_scissor_states = si_set_scissor_states;
