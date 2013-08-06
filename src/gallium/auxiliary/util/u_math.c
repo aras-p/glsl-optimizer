@@ -111,7 +111,7 @@ util_fpstate_set_denorms_to_zero(unsigned current_mxcsr)
    if (util_cpu_caps.has_sse) {
       /* Enable flush to zero mode */
       current_mxcsr |= _MM_FLUSH_ZERO_MASK;
-      if (util_cpu_caps.has_sse3) {
+      if (util_cpu_caps.has_daz) {
          /* Enable denormals are zero mode */
          current_mxcsr |= _MM_DENORMALS_ZERO_MASK;
       }

@@ -230,8 +230,28 @@ static INLINE uint64_t xgetbv(void)
 #else
    return 0;
 #endif
-
 }
+
+
+#if defined(PIPE_ARCH_X86)
+static INLINE boolean sse2_has_daz(void)
+{
+   struct {
+      uint32_t pad1[7];
+      uint32_t mxcsr_mask;
+      uint32_t pad2[128-8];
+   } PIPE_ALIGN_VAR(16) fxarea;
+
+   fxarea.mxcsr_mask = 0;
+#if (defined(PIPE_CC_GCC) || defined(PIPE_CC_SUNPRO))
+   asm volatile ("fxsave %0" :: "m" (fxarea));
+#elif (defined(PIPE_CC_MSVC) || defined(PIPE_CC_ICL))
+   _fxsave(fxarea);
+#endif
+   return !!(fxarea.mxcsr_mask & (1 << 6));
+}
+#endif
+
 #endif /* X86 or X86_64 */
 
 void
@@ -310,6 +330,12 @@ util_cpu_detect(void)
                                     ((xgetbv() & 6) == 6);    // XMM & YMM
          util_cpu_caps.has_f16c   = (regs2[2] >> 29) & 1;
          util_cpu_caps.has_mmx2   = util_cpu_caps.has_sse; /* SSE cpus supports mmxext too */
+#if defined(PIPE_ARCH_X86_64)
+         util_cpu_caps.has_daz = 1;
+#else
+         util_cpu_caps.has_daz = util_cpu_caps.has_sse3 ||
+            (util_cpu_caps.has_sse2 && sse2_has_daz());
+#endif
 
          cacheline = ((regs2[1] >> 8) & 0xFF) * 8;
          if (cacheline > 0)
@@ -368,9 +394,12 @@ util_cpu_detect(void)
       debug_printf("util_cpu_caps.has_sse4_1 = %u\n", util_cpu_caps.has_sse4_1);
       debug_printf("util_cpu_caps.has_sse4_2 = %u\n", util_cpu_caps.has_sse4_2);
       debug_printf("util_cpu_caps.has_avx = %u\n", util_cpu_caps.has_avx);
+      debug_printf("util_cpu_caps.has_f16c = %u\n", util_cpu_caps.has_f16c);
+      debug_printf("util_cpu_caps.has_popcnt = %u\n", util_cpu_caps.has_popcnt);
       debug_printf("util_cpu_caps.has_3dnow = %u\n", util_cpu_caps.has_3dnow);
       debug_printf("util_cpu_caps.has_3dnow_ext = %u\n", util_cpu_caps.has_3dnow_ext);
       debug_printf("util_cpu_caps.has_altivec = %u\n", util_cpu_caps.has_altivec);
+      debug_printf("util_cpu_caps.has_daz = %u\n", util_cpu_caps.has_daz);
    }
 #endif
 

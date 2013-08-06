@@ -68,6 +68,7 @@ struct util_cpu_caps {
    unsigned has_3dnow:1;
    unsigned has_3dnow_ext:1;
    unsigned has_altivec:1;
+   unsigned has_daz:1;
 };
 
 extern struct util_cpu_caps
