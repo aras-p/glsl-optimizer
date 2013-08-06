@@ -97,7 +97,9 @@ fs_visitor::opt_cse_local(bblock_t *block, exec_list *aeb)
 	inst = (fs_inst *) inst->next) {
 
       /* Skip some cases. */
-      if (is_expression(inst) && !inst->is_partial_write() &&
+      if (is_expression(inst) &&
+          !inst->predicate &&
+          !inst->is_partial_write() &&
           !inst->conditional_mod)
       {
 	 bool found = false;
