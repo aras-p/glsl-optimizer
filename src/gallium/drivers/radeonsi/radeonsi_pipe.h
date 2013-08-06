@@ -83,6 +83,7 @@ struct si_pipe_sampler_view {
 	struct pipe_sampler_view	base;
 	struct si_resource		*resource;
 	uint32_t			state[8];
+	uint32_t			fmask_state[8];
 };
 
 struct si_pipe_sampler_state {

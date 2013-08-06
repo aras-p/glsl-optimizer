@@ -115,6 +115,9 @@ static void si_init_descriptors(struct r600_context *rctx,
 {
 	uint64_t va;
 
+	assert(num_elements <= sizeof(desc->enabled_mask)*8);
+	assert(num_elements <= sizeof(desc->dirty_mask)*8);
+
 	desc->atom.emit = emit_func;
 	desc->shader_userdata_reg = shader_userdata_reg;
 	desc->element_dw_size = element_dw_size;
@@ -263,7 +266,7 @@ static void si_init_sampler_views(struct r600_context *rctx,
 	si_init_descriptors(rctx, &views->desc,
 			    si_get_shader_user_data_base(shader) +
 			    SI_SGPR_RESOURCE * 4,
-			    8, 16, si_emit_sampler_views);
+			    8, NUM_SAMPLER_VIEWS, si_emit_sampler_views);
 }
 
 static void si_release_sampler_views(struct si_sampler_views *views)

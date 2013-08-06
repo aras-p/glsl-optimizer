@@ -463,6 +463,7 @@ static void r600_texture_get_fmask_info(struct r600_screen *rscreen,
 		out->slice_tile_max -= 1;
 
 	out->tile_mode_index = fmask.tiling_index[0];
+	out->pitch = fmask.level[0].nblk_x;
 	out->bank_height = fmask.bankh;
 	out->alignment = MAX2(256, fmask.bo_alignment);
 	out->size = fmask.bo_size;

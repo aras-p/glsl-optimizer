@@ -2705,6 +2705,44 @@ static struct pipe_sampler_view *si_create_sampler_view(struct pipe_context *ctx
 	view->state[6] = 0;
 	view->state[7] = 0;
 
+	/* Initialize the sampler view for FMASK. */
+	if (tmp->fmask.size) {
+		uint64_t va = r600_resource_va(ctx->screen, texture) + tmp->fmask.offset;
+		uint32_t fmask_format;
+
+		switch (texture->nr_samples) {
+		case 2:
+			fmask_format = V_008F14_IMG_DATA_FORMAT_FMASK8_S2_F2;
+			break;
+		case 4:
+			fmask_format = V_008F14_IMG_DATA_FORMAT_FMASK8_S4_F4;
+			break;
+		case 8:
+			fmask_format = V_008F14_IMG_DATA_FORMAT_FMASK32_S8_F8;
+			break;
+		default:
+			assert(0);
+		}
+
+		view->fmask_state[0] = va >> 8;
+		view->fmask_state[1] = S_008F14_BASE_ADDRESS_HI(va >> 40) |
+				       S_008F14_DATA_FORMAT(fmask_format) |
+				       S_008F14_NUM_FORMAT(V_008F14_IMG_NUM_FORMAT_UINT);
+		view->fmask_state[2] = S_008F18_WIDTH(width - 1) |
+				       S_008F18_HEIGHT(height - 1);
+		view->fmask_state[3] = S_008F1C_DST_SEL_X(V_008F1C_SQ_SEL_X) |
+				       S_008F1C_DST_SEL_Y(V_008F1C_SQ_SEL_X) |
+				       S_008F1C_DST_SEL_Z(V_008F1C_SQ_SEL_X) |
+				       S_008F1C_DST_SEL_W(V_008F1C_SQ_SEL_X) |
+				       S_008F1C_TILING_INDEX(tmp->fmask.tile_mode_index) |
+				       S_008F1C_TYPE(si_tex_dim(texture->target, 0));
+		view->fmask_state[4] = S_008F20_PITCH(tmp->fmask.pitch - 1);
+		view->fmask_state[5] = S_008F24_BASE_ARRAY(state->u.tex.first_layer) |
+				       S_008F24_LAST_ARRAY(state->u.tex.last_layer);
+		view->fmask_state[6] = 0;
+		view->fmask_state[7] = 0;
+	}
+
 	return &view->base;
 }
 
@@ -2778,6 +2816,8 @@ static void *si_create_sampler_state(struct pipe_context *ctx,
 	return rstate;
 }
 
+/* XXX consider moving this function to si_descriptors.c for gcc to inline
+ *     the si_set_sampler_view calls. LTO might help too. */
 static struct si_pm4_state *si_set_sampler_views(struct r600_context *rctx,
 						 unsigned shader, unsigned count,
 						 struct pipe_sampler_view **views)
@@ -2806,16 +2846,28 @@ static struct si_pm4_state *si_set_sampler_views(struct r600_context *rctx,
 			}
 
 			si_set_sampler_view(rctx, shader, i, views[i], rviews[i]->state);
+
+			if (rtex->fmask.size) {
+				si_set_sampler_view(rctx, shader, FMASK_TEX_OFFSET + i,
+						    views[i], rviews[i]->fmask_state);
+			} else {
+				si_set_sampler_view(rctx, shader, FMASK_TEX_OFFSET + i,
+						    NULL, NULL);
+			}
 		} else {
 			samplers->depth_texture_mask &= ~(1 << i);
 			samplers->compressed_colortex_mask &= ~(1 << i);
 			si_set_sampler_view(rctx, shader, i, NULL, NULL);
+			si_set_sampler_view(rctx, shader, FMASK_TEX_OFFSET + i,
+					    NULL, NULL);
 		}
 	}
 	for (; i < samplers->n_views; i++) {
 		samplers->depth_texture_mask &= ~(1 << i);
 		samplers->compressed_colortex_mask &= ~(1 << i);
 		si_set_sampler_view(rctx, shader, i, NULL, NULL);
+		si_set_sampler_view(rctx, shader, FMASK_TEX_OFFSET + i,
+				    NULL, NULL);
 	}
 
 	samplers->n_views = count;

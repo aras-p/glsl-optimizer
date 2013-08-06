@@ -116,6 +116,12 @@ union si_state {
 
 #define NUM_TEX_UNITS 16
 
+/* User sampler views:   0..15
+ * FMASK sampler views: 16..31 (no sampler states)
+ */
+#define FMASK_TEX_OFFSET	NUM_TEX_UNITS
+#define NUM_SAMPLER_VIEWS	(FMASK_TEX_OFFSET+NUM_TEX_UNITS)
+
 /* This represents resource descriptors in memory, such as buffer resources,
  * image resources, and sampler states.
  */
@@ -150,8 +156,8 @@ struct si_descriptors {
 
 struct si_sampler_views {
 	struct si_descriptors		desc;
-	struct pipe_sampler_view	*views[NUM_TEX_UNITS];
-	const uint32_t			*desc_data[NUM_TEX_UNITS];
+	struct pipe_sampler_view	*views[NUM_SAMPLER_VIEWS];
+	const uint32_t			*desc_data[NUM_SAMPLER_VIEWS];
 };
 
 #define si_pm4_block_idx(member) \
