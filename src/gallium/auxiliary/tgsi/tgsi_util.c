@@ -444,9 +444,11 @@ tgsi_util_get_texture_coord_dim(int tgsi_tex, int *shadow_or_sample)
       case TGSI_TEXTURE_SHADOW1D_ARRAY:
       case TGSI_TEXTURE_SHADOW2D_ARRAY:
       case TGSI_TEXTURE_SHADOWCUBE_ARRAY:
+         *shadow_or_sample = dim;
+         break;
       case TGSI_TEXTURE_2D_MSAA:
       case TGSI_TEXTURE_2D_ARRAY_MSAA:
-         *shadow_or_sample = dim;
+         *shadow_or_sample = 3;
          break;
       default:
          /* no shadow nor sample */
