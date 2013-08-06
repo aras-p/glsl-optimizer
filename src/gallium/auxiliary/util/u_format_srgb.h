@@ -39,6 +39,7 @@
 
 
 #include "pipe/p_compiler.h"
+#include "u_pack_color.h"
 #include "u_math.h"
 
 
@@ -51,23 +52,58 @@ util_format_srgb_to_linear_8unorm_table[256];
 extern const uint8_t
 util_format_linear_to_srgb_8unorm_table[256];
 
+extern const unsigned
+util_format_linear_to_srgb_helper_table[104];
+
 
 /**
  * Convert a unclamped linear float to srgb value in the [0,255].
- * XXX this hasn't been tested (render to srgb surface).
- * XXX this needs optimization.
  */
 static INLINE uint8_t
 util_format_linear_float_to_srgb_8unorm(float x)
 {
-   if (x >= 1.0f)
-      return 255;
-   else if (x >= 0.0031308f)
-      return float_to_ubyte(1.055f * powf(x, 0.41666f) - 0.055f);
-   else if (x > 0.0f)
-      return float_to_ubyte(12.92f * x);
-   else
-      return 0;
+   /* this would be exact but (probably much) slower */
+   if (0) {
+      if (x >= 1.0f)
+         return 255;
+      else if (x >= 0.0031308f)
+         return float_to_ubyte(1.055f * powf(x, 0.41666666f) - 0.055f);
+      else if (x > 0.0f)
+         return float_to_ubyte(12.92f * x);
+      else
+         return 0;
+   }
+   else {
+      /*
+       * This is taken from https://gist.github.com/rygorous/2203834
+       * Use LUT and do linear interpolation.
+       */
+      union fi almostone, minval, f;
+      unsigned tab, bias, scale, t;
+
+      almostone.ui = 0x3f7fffff;
+      minval.ui = (127-13) << 23;
+
+      /*
+       * Clamp to [2^(-13), 1-eps]; these two values map to 0 and 1, respectively.
+       * The tests are carefully written so that NaNs map to 0, same as in the
+       * reference implementation.
+       */
+      if (!(x > minval.f))
+         x = minval.f;
+      if (x > almostone.f)
+         x = almostone.f;
+
+      /* Do the table lookup and unpack bias, scale */
+      f.f = x;
+      tab = util_format_linear_to_srgb_helper_table[(f.ui - minval.ui) >> 20];
+      bias = (tab >> 16) << 9;
+      scale = tab & 0xffff;
+
+      /* Grab next-highest mantissa bits and perform linear interpolation */
+      t = (f.ui >> 12) & 0xff;
+      return (uint8_t) ((bias + scale*t) >> 16);
+   }
 }
 
 
