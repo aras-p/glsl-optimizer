@@ -2493,26 +2493,17 @@ static void *si_create_sampler_state(struct pipe_context *ctx,
 }
 
 static struct si_pm4_state *si_set_sampler_views(struct r600_context *rctx,
-						 unsigned count,
-						 struct pipe_sampler_view **views,
-						 struct r600_textures_info *samplers,
-						 unsigned user_data_reg)
+						 unsigned shader, unsigned count,
+						 struct pipe_sampler_view **views)
 {
-	struct si_pipe_sampler_view **resource = (struct si_pipe_sampler_view **)views;
+	struct r600_textures_info *samplers = &rctx->samplers[shader];
+	struct si_pipe_sampler_view **rviews = (struct si_pipe_sampler_view **)views;
 	struct si_pm4_state *pm4 = si_pm4_alloc_state(rctx);
-	int i, j;
-
-	if (!count)
-		goto out;
+	int i;
 
 	si_pm4_inval_texture_cache(pm4);
 
-	si_pm4_sh_data_begin(pm4);
 	for (i = 0; i < count; i++) {
-		pipe_sampler_view_reference(
-			(struct pipe_sampler_view **)&samplers->views[i],
-			views[i]);
-
 		if (views[i]) {
 			struct r600_texture *rtex =
 				(struct r600_texture*)views[i]->texture;
@@ -2523,25 +2514,17 @@ static struct si_pm4_state *si_set_sampler_views(struct r600_context *rctx,
 				samplers->depth_texture_mask &= ~(1 << i);
 			}
 
-			si_pm4_add_bo(pm4, resource[i]->resource, RADEON_USAGE_READ);
+			si_set_sampler_view(rctx, shader, i, views[i], rviews[i]->state);
 		} else {
 			samplers->depth_texture_mask &= ~(1 << i);
-		}
-
-		for (j = 0; j < Elements(resource[i]->state); ++j) {
-			si_pm4_sh_data_add(pm4, resource[i] ? resource[i]->state[j] : 0);
+			si_set_sampler_view(rctx, shader, i, NULL, NULL);
 		}
 	}
-
-	for (i = count; i < NUM_TEX_UNITS; i++) {
-		if (samplers->views[i])
-			pipe_sampler_view_reference((struct pipe_sampler_view **)&samplers->views[i], NULL);
+	for (; i < samplers->n_views; i++) {
+		si_set_sampler_view(rctx, shader, i, NULL, NULL);
 	}
 
-	si_pm4_sh_data_end(pm4, user_data_reg, SI_SGPR_RESOURCE);
-
-out:
-	rctx->ps_samplers.n_views = count;
+	samplers->n_views = count;
 	return pm4;
 }
 
@@ -2551,8 +2534,7 @@ static void si_set_vs_sampler_views(struct pipe_context *ctx, unsigned count,
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct si_pm4_state *pm4;
 
-	pm4 = si_set_sampler_views(rctx, count, views, &rctx->vs_samplers,
-			    R_00B130_SPI_SHADER_USER_DATA_VS_0);
+	pm4 = si_set_sampler_views(rctx, PIPE_SHADER_VERTEX, count, views);
 	si_pm4_set_state(rctx, vs_sampler_views, pm4);
 }
 
@@ -2562,8 +2544,7 @@ static void si_set_ps_sampler_views(struct pipe_context *ctx, unsigned count,
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct si_pm4_state *pm4;
 
-	pm4 = si_set_sampler_views(rctx, count, views, &rctx->ps_samplers,
-				  R_00B030_SPI_SHADER_USER_DATA_PS_0);
+	pm4 = si_set_sampler_views(rctx, PIPE_SHADER_FRAGMENT, count, views);
 	si_pm4_set_state(rctx, ps_sampler_views, pm4);
 }
 
@@ -2646,7 +2627,7 @@ static void si_bind_vs_sampler_states(struct pipe_context *ctx, unsigned count, 
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct si_pm4_state *pm4;
 
-	pm4 = si_bind_sampler_states(rctx, count, states, &rctx->vs_samplers,
+	pm4 = si_bind_sampler_states(rctx, count, states, &rctx->samplers[PIPE_SHADER_VERTEX],
 			      R_00B130_SPI_SHADER_USER_DATA_VS_0);
 	si_pm4_set_state(rctx, vs_sampler, pm4);
 }
@@ -2656,7 +2637,7 @@ static void si_bind_ps_sampler_states(struct pipe_context *ctx, unsigned count, 
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct si_pm4_state *pm4;
 
-	pm4 = si_bind_sampler_states(rctx, count, states, &rctx->ps_samplers,
+	pm4 = si_bind_sampler_states(rctx, count, states, &rctx->samplers[PIPE_SHADER_FRAGMENT],
 			      R_00B030_SPI_SHADER_USER_DATA_PS_0);
 	si_pm4_set_state(rctx, ps_sampler, pm4);
 }

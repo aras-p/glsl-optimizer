@@ -94,11 +94,8 @@ struct si_cs_shader_state {
 	struct si_pipe_compute		*program;
 };
 
-/* needed for blitter save */
-#define NUM_TEX_UNITS 16
-
 struct r600_textures_info {
-	struct si_pipe_sampler_view	*views[NUM_TEX_UNITS];
+	struct si_sampler_views		views;
 	struct si_pipe_sampler_state	*samplers[NUM_TEX_UNITS];
 	unsigned			n_views;
 	uint32_t			depth_texture_mask; /* which textures are depth */
@@ -131,6 +128,9 @@ struct r600_constbuf_state
 	uint32_t			dirty_mask;
 };
 
+#define SI_NUM_ATOMS(rctx) (sizeof((rctx)->atoms)/sizeof((rctx)->atoms.array[0]))
+#define SI_NUM_SHADERS (PIPE_SHADER_FRAGMENT+1)
+
 struct r600_context {
 	struct pipe_context		context;
 	struct blitter_context		*blitter;
@@ -142,6 +142,14 @@ struct r600_context {
 	void				*custom_dsa_flush_inplace;
 	struct r600_screen		*screen;
 	struct radeon_winsys		*ws;
+
+	union {
+		struct {
+			struct si_atom *sampler_views[SI_NUM_SHADERS];
+		};
+		struct si_atom *array[0];
+	} atoms;
+
 	struct si_vertex_element	*vertex_elements;
 	struct pipe_framebuffer_state	framebuffer;
 	unsigned			pa_sc_line_stipple;
@@ -161,8 +169,7 @@ struct r600_context {
 	unsigned			sprite_coord_enable;
 	unsigned			export_16bpc;
 	struct r600_constbuf_state	constbuf_state[PIPE_SHADER_TYPES];
-	struct r600_textures_info	vs_samplers;
-	struct r600_textures_info	ps_samplers;
+	struct r600_textures_info	samplers[SI_NUM_SHADERS];
 	struct si_resource		*border_color_table;
 	unsigned			border_color_offset;
 

@@ -70,12 +70,12 @@ static void r600_blitter_begin(struct pipe_context *ctx, enum r600_blitter_op op
 
 	if (op & R600_SAVE_TEXTURES) {
 		util_blitter_save_fragment_sampler_states(
-			rctx->blitter, rctx->ps_samplers.n_samplers,
-			(void**)rctx->ps_samplers.samplers);
+			rctx->blitter, rctx->samplers[PIPE_SHADER_FRAGMENT].n_samplers,
+			(void**)rctx->samplers[PIPE_SHADER_FRAGMENT].samplers);
 
-		util_blitter_save_fragment_sampler_views(
-			rctx->blitter, rctx->ps_samplers.n_views,
-			(struct pipe_sampler_view**)rctx->ps_samplers.views);
+		util_blitter_save_fragment_sampler_views(rctx->blitter,
+			util_last_bit(rctx->samplers[PIPE_SHADER_FRAGMENT].views.desc.enabled_mask),
+			rctx->samplers[PIPE_SHADER_FRAGMENT].views.views);
 	}
 
 	if ((op & R600_DISABLE_RENDER_COND) && rctx->current_render_cond) {
@@ -224,7 +224,7 @@ void si_flush_depth_textures(struct r600_context *rctx,
 		struct pipe_sampler_view *view;
 		struct r600_texture *tex;
 
-		view = &textures->views[i]->base;
+		view = textures->views.views[i];
 		if (!view) continue;
 
 		tex = (struct r600_texture *)view->texture;

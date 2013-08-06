@@ -501,4 +501,16 @@ struct radeon_winsys {
                             enum radeon_value_id value);
 };
 
+static INLINE void radeon_emit(struct radeon_winsys_cs *cs, uint32_t value)
+{
+    cs->buf[cs->cdw++] = value;
+}
+
+static INLINE void radeon_emit_array(struct radeon_winsys_cs *cs,
+				     const uint32_t *values, unsigned count)
+{
+    memcpy(cs->buf+cs->cdw, values, count * 4);
+    cs->cdw += count;
+}
+
 #endif

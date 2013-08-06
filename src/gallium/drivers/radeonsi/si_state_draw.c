@@ -412,11 +412,10 @@ static void si_update_derived_state(struct r600_context *rctx)
 
 	if (!rctx->blitter->running) {
 		/* Flush depth textures which need to be flushed. */
-		if (rctx->vs_samplers.depth_texture_mask) {
-			si_flush_depth_textures(rctx, &rctx->vs_samplers);
-		}
-		if (rctx->ps_samplers.depth_texture_mask) {
-			si_flush_depth_textures(rctx, &rctx->ps_samplers);
+		for (int i = 0; i < SI_NUM_SHADERS; i++) {
+			if (rctx->samplers[i].depth_texture_mask) {
+				si_flush_depth_textures(rctx, &rctx->samplers[i]);
+			}
 		}
 	}
 
@@ -651,7 +650,7 @@ void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct pipe_index_buffer ib = {};
-	uint32_t cp_coher_cntl;
+	uint32_t cp_coher_cntl, i;
 
 	if (!info->count && (info->indexed || !info->count_from_stream_output))
 		return;
@@ -703,6 +702,13 @@ void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 	rctx->pm4_dirty_cdwords += si_pm4_dirty_dw(rctx);
 
 	si_need_cs_space(rctx, 0, TRUE);
+
+	for (i = 0; i < SI_NUM_ATOMS(rctx); i++) {
+		if (rctx->atoms.array[i]->dirty) {
+			rctx->atoms.array[i]->emit(rctx, rctx->atoms.array[i]);
+			rctx->atoms.array[i]->dirty = false;
+		}
+	}
 
 	si_pm4_emit_dirty(rctx);
 	rctx->pm4_dirty_cdwords = 0;

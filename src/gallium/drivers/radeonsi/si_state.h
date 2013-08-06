@@ -29,6 +29,14 @@
 
 #include "radeonsi_pm4.h"
 
+/* This encapsulates a state or an operation which can emitted into the GPU
+ * command stream. */
+struct si_atom {
+	void (*emit)(struct r600_context *ctx, struct si_atom *state);
+	unsigned		num_dw;
+	bool			dirty;
+};
+
 struct si_state_blend {
 	struct si_pm4_state	pm4;
 	uint32_t		cb_target_mask;
@@ -103,6 +111,46 @@ union si_state {
 	struct si_pm4_state	*array[0];
 };
 
+#define NUM_TEX_UNITS 16
+
+/* This represents resource descriptors in memory, such as buffer resources,
+ * image resources, and sampler states.
+ */
+struct si_descriptors {
+	struct si_atom atom;
+
+	/* The size of one resource descriptor. */
+	unsigned element_dw_size;
+	/* The maximum number of resource descriptors. */
+	unsigned num_elements;
+
+	/* The buffer where resource descriptors are stored. */
+	struct si_resource *buffer;
+
+	/* The i-th bit is set if that element is dirty (changed but not emitted). */
+	unsigned dirty_mask;
+	/* The i-th bit is set if that element is enabled (non-NULL resource). */
+	unsigned enabled_mask;
+
+	/* We can't update descriptors directly because the GPU might be
+	 * reading them at the same time, so we have to update them
+	 * in a copy-on-write manner. Each such copy is called a context,
+	 * which is just another array descriptors in the same buffer. */
+	unsigned current_context_id;
+	/* The size of a context, should be equal to 4*element_dw_size*num_elements. */
+	unsigned context_size;
+
+	/* The shader userdata register where the 64-bit pointer to the descriptor
+	 * array will be stored. */
+	unsigned shader_userdata_reg;
+};
+
+struct si_sampler_views {
+	struct si_descriptors		desc;
+	struct pipe_sampler_view	*views[NUM_TEX_UNITS];
+	const uint32_t			*desc_data[NUM_TEX_UNITS];
+};
+
 #define si_pm4_block_idx(member) \
 	(offsetof(union si_state, named.member) / sizeof(struct si_pm4_state *))
 
@@ -132,6 +180,14 @@ union si_state {
 			(rctx)->queued.named.member = (value); \
 		} \
 	} while(0)
+
+/* si_descriptors.c */
+void si_set_sampler_view(struct r600_context *rctx, unsigned shader,
+			 unsigned slot, struct pipe_sampler_view *view,
+			 unsigned *view_desc);
+void si_init_all_descriptors(struct r600_context *rctx);
+void si_release_all_descriptors(struct r600_context *rctx);
+void si_all_descriptors_begin_new_cs(struct r600_context *rctx);
 
 /* si_state.c */
 struct si_pipe_shader_selector;

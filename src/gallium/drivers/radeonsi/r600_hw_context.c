@@ -114,8 +114,16 @@ err:
 void si_need_cs_space(struct r600_context *ctx, unsigned num_dw,
 			boolean count_draw_in)
 {
+	int i;
+
 	/* The number of dwords we already used in the CS so far. */
 	num_dw += ctx->cs->cdw;
+
+	for (i = 0; i < SI_NUM_ATOMS(ctx); i++) {
+		if (ctx->atoms.array[i]->dirty) {
+			num_dw += ctx->atoms.array[i]->num_dw;
+		}
+	}
 
 	if (count_draw_in) {
 		/* The number of dwords all the dirty states would take. */
@@ -254,6 +262,15 @@ void si_context_flush(struct r600_context *ctx, unsigned flags)
 	ctx->pm4_dirty_cdwords = 0;
 	ctx->flags = 0;
 
+	/* set all valid group as dirty so they get reemited on
+	 * next draw command
+	 */
+	si_pm4_reset_emitted(ctx);
+
+	/* The CS initialization should be emitted before everything else. */
+	si_pm4_emit(ctx, ctx->queued.named.init);
+	ctx->emitted.named.init = ctx->queued.named.init;
+
 #if 0
 	if (streamout_suspended) {
 		ctx->streamout_start = TRUE;
@@ -266,10 +283,7 @@ void si_context_flush(struct r600_context *ctx, unsigned flags)
 		r600_context_queries_resume(ctx);
 	}
 
-	/* set all valid group as dirty so they get reemited on
-	 * next draw command
-	 */
-	si_pm4_reset_emitted(ctx);
+	si_all_descriptors_begin_new_cs(ctx);
 }
 
 void si_context_emit_fence(struct r600_context *ctx, struct si_resource *fence_bo, unsigned offset, unsigned value)

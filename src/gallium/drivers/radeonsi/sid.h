@@ -134,6 +134,60 @@
 #define PKT0(index, count) (PKT_TYPE_S(0) | PKT0_BASE_INDEX_S(index) | PKT_COUNT_S(count))
 #define PKT3(op, count, predicate) (PKT_TYPE_S(3) | PKT3_IT_OPCODE_S(op) | PKT_COUNT_S(count) | PKT3_PREDICATE(predicate))
 
+#define PKT3_CP_DMA					0x41
+/* 1. header
+ * 2. SRC_ADDR_LO [31:0] or DATA [31:0]
+ * 3. CP_SYNC [31] | SRC_SEL [30:29] | ENGINE [27] | DST_SEL [21:20] | SRC_ADDR_HI [15:0]
+ * 4. DST_ADDR_LO [31:0]
+ * 5. DST_ADDR_HI [15:0]
+ * 6. COMMAND [29:22] | BYTE_COUNT [20:0]
+ */
+#define PKT3_CP_DMA_CP_SYNC       (1 << 31)
+#define PKT3_CP_DMA_SRC_SEL(x)       ((x) << 29)
+/* 0 - SRC_ADDR
+ * 1 - GDS (program SAS to 1 as well)
+ * 2 - DATA
+ */
+#define PKT3_CP_DMA_DST_SEL(x)       ((x) << 20)
+/* 0 - DST_ADDR
+ * 1 - GDS (program DAS to 1 as well)
+ */
+/* COMMAND */
+#define PKT3_CP_DMA_CMD_SRC_SWAP(x) ((x) << 23)
+/* 0 - none
+ * 1 - 8 in 16
+ * 2 - 8 in 32
+ * 3 - 8 in 64
+ */
+#define PKT3_CP_DMA_CMD_DST_SWAP(x) ((x) << 24)
+/* 0 - none
+ * 1 - 8 in 16
+ * 2 - 8 in 32
+ * 3 - 8 in 64
+ */
+#define PKT3_CP_DMA_CMD_SAS       (1 << 26)
+/* 0 - memory
+ * 1 - register
+ */
+#define PKT3_CP_DMA_CMD_DAS       (1 << 27)
+/* 0 - memory
+ * 1 - register
+ */
+#define PKT3_CP_DMA_CMD_SAIC      (1 << 28)
+#define PKT3_CP_DMA_CMD_DAIC      (1 << 29)
+#define PKT3_CP_DMA_CMD_RAW_WAIT  (1 << 30)
+
+#define PKT3_DMA_DATA					0x50 /* new for CIK */
+/* 1. header
+ * 2. CP_SYNC [31] | SRC_SEL [30:29] | DST_SEL [21:20] | ENGINE [0]
+ * 2. SRC_ADDR_LO [31:0] or DATA [31:0]
+ * 3. SRC_ADDR_HI [31:0]
+ * 4. DST_ADDR_LO [31:0]
+ * 5. DST_ADDR_HI [31:0]
+ * 6. COMMAND [29:22] | BYTE_COUNT [20:0]
+ */
+
+
 #define R_0084FC_CP_STRMOUT_CNTL		                        0x0084FC
 #define   S_0084FC_OFFSET_UPDATE_DONE(x)		              (((x) & 0x1) << 0)
 #define R_0085F0_CP_COHER_CNTL                                          0x0085F0

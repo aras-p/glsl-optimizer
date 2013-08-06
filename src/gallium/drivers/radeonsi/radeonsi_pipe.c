@@ -178,6 +178,8 @@ static void r600_destroy_context(struct pipe_context *context)
 {
 	struct r600_context *rctx = (struct r600_context *)context;
 
+	si_release_all_descriptors(rctx);
+
 	si_resource_reference(&rctx->border_color_table, NULL);
 
 	if (rctx->dummy_pixel_shader) {
@@ -231,12 +233,15 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 		rctx->context.create_video_buffer = vl_video_buffer_create;
 	}
 
+	rctx->cs = rctx->ws->cs_create(rctx->ws, RING_GFX, NULL);
+
+	si_init_all_descriptors(rctx);
+
 	switch (rctx->chip_class) {
 	case SI:
 	case CIK:
 		si_init_state_functions(rctx);
 		LIST_INITHEAD(&rctx->active_query_list);
-		rctx->cs = rctx->ws->cs_create(rctx->ws, RING_GFX, NULL);
 		rctx->max_db = 8;
 		si_init_config(rctx);
 		break;
