@@ -64,12 +64,13 @@ fs_live_variables::setup_def_use()
 
 	 /* Set use[] for this instruction */
 	 for (unsigned int i = 0; i < 3; i++) {
-	    if (inst->src[i].file == GRF) {
-	       int reg = inst->src[i].reg;
+	    if (inst->src[i].file != GRF)
+               continue;
 
-	       if (!BITSET_TEST(bd[b].def, reg))
-		  BITSET_SET(bd[b].use, reg);
-	    }
+            int reg = inst->src[i].reg;
+
+            if (!BITSET_TEST(bd[b].def, reg))
+               BITSET_SET(bd[b].use, reg);
 	 }
 
 	 /* Check for unconditional writes to whole registers. These
