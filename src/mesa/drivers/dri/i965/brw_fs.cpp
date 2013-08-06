@@ -1443,7 +1443,7 @@ fs_visitor::split_virtual_grfs()
 	 }
       }
    }
-   this->live_intervals_valid = false;
+   invalidate_live_intervals();
 }
 
 /**
@@ -1868,7 +1868,7 @@ fs_visitor::dead_code_eliminate()
    }
 
    if (progress)
-      live_intervals_valid = false;
+      invalidate_live_intervals();
 
    return progress;
 }
@@ -2026,7 +2026,7 @@ fs_visitor::dead_code_eliminate_local()
    _mesa_hash_table_destroy(ht, NULL);
 
    if (progress)
-      live_intervals_valid = false;
+      invalidate_live_intervals();
 
    return progress;
 }
@@ -2085,9 +2085,8 @@ fs_visitor::register_coalesce_2()
       inst->remove();
 
       /* We don't need to recalculate live intervals inside the loop despite
-       * flagging live_intervals_valid because we only use live intervals for
-       * the interferes test, and we must have had a situation where the
-       * intervals were:
+       * invalidating them; we only use them for the interferes test, and we
+       * must have had a situation where the intervals were:
        *
        *  from  to
        *  ^
@@ -2103,7 +2102,7 @@ fs_visitor::register_coalesce_2()
        * otherwise it will conflict with "to" when we try to coalesce "to"
        * into Rw anyway.
        */
-      live_intervals_valid = false;
+      invalidate_live_intervals();
 
       progress = true;
       continue;
@@ -2244,7 +2243,7 @@ fs_visitor::register_coalesce()
    }
 
    if (progress)
-      live_intervals_valid = false;
+      invalidate_live_intervals();
 
    return progress;
 }
@@ -2407,7 +2406,7 @@ fs_visitor::compute_to_mrf()
    }
 
    if (progress)
-      live_intervals_valid = false;
+      invalidate_live_intervals();
 
    return progress;
 }
@@ -2478,7 +2477,7 @@ fs_visitor::remove_duplicate_mrf_writes()
    }
 
    if (progress)
-      live_intervals_valid = false;
+      invalidate_live_intervals();
 
    return progress;
 }
@@ -2745,7 +2744,7 @@ fs_visitor::lower_uniform_pull_constant_loads()
          inst->opcode = FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD_GEN7;
          inst->src[1] = payload;
 
-         this->live_intervals_valid = false;
+         invalidate_live_intervals();
       } else {
          /* Before register allocation, we didn't tell the scheduler about the
           * MRF we use.  We know it's safe to use this MRF because nothing

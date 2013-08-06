@@ -562,7 +562,7 @@ fs_visitor::opt_copy_propagate()
    ralloc_free(mem_ctx);
 
    if (progress)
-      live_intervals_valid = false;
+      invalidate_live_intervals();
 
    return progress;
 }

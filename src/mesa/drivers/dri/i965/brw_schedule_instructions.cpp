@@ -1138,7 +1138,7 @@ fs_visitor::schedule_instructions(bool post_reg_alloc)
              dispatch_width, sched.time);
    }
 
-   this->live_intervals_valid = false;
+   invalidate_live_intervals();
 }
 
 void

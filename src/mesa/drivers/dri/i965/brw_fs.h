@@ -290,6 +290,7 @@ public:
    void compact_virtual_grfs();
    void move_uniform_array_access_to_pull_constants();
    void setup_pull_constants();
+   void invalidate_live_intervals();
    void calculate_live_intervals();
    bool opt_algebraic();
    bool opt_cse();

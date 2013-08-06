@@ -209,7 +209,7 @@ fs_visitor::opt_cse_local(bblock_t *block, exec_list *aeb)
    ralloc_free(mem_ctx);
 
    if (progress)
-      this->live_intervals_valid = false;
+      invalidate_live_intervals();
 
    return progress;
 }

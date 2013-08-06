@@ -197,6 +197,12 @@ fs_live_variables::~fs_live_variables()
 
 #define MAX_INSTRUCTION (1 << 30)
 
+void
+fs_visitor::invalidate_live_intervals()
+{
+   this->live_intervals_valid = false;
+}
+
 /**
  * Compute the live intervals for each virtual GRF.
  *
