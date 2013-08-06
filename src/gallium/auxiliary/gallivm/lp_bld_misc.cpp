@@ -273,7 +273,9 @@ lp_build_create_jit_compiler_for_module(LLVMExecutionEngineRef *OutJIT,
    TargetOptions options;
 #if defined(PIPE_ARCH_X86)
    options.StackAlignmentOverride = 4;
+#if HAVE_LLVM < 0x0304
    options.RealignStack = true;
+#endif
 #endif
 
 #if defined(DEBUG)
