@@ -562,12 +562,11 @@ static void si_alpha_test(struct lp_build_tgsi_context *bld_base,
 }
 
 static void si_llvm_emit_clipvertex(struct lp_build_tgsi_context * bld_base,
-				    unsigned index)
+				    LLVMValueRef (*pos)[9], unsigned index)
 {
 	struct si_shader_context *si_shader_ctx = si_shader_context(bld_base);
 	struct lp_build_context *base = &bld_base->base;
 	struct lp_build_context *uint = &si_shader_ctx->radeon_bld.soa.bld_base.uint_bld;
-	LLVMValueRef args[9];
 	unsigned reg_index;
 	unsigned chan;
 	unsigned const_chan;
@@ -582,6 +581,8 @@ static void si_llvm_emit_clipvertex(struct lp_build_tgsi_context * bld_base,
 	}
 
 	for (reg_index = 0; reg_index < 2; reg_index ++) {
+		LLVMValueRef *args = pos[2 + reg_index];
+
 		args[5] =
 		args[6] =
 		args[7] =
@@ -612,10 +613,6 @@ static void si_llvm_emit_clipvertex(struct lp_build_tgsi_context * bld_base,
 		args[3] = lp_build_const_int32(base->gallivm,
 					       V_008DFC_SQ_EXP_POS + 2 + reg_index);
 		args[4] = uint->zero;
-		lp_build_intrinsic(base->gallivm->builder,
-				   "llvm.SI.export",
-				   LLVMVoidTypeInContext(base->gallivm->context),
-				   args, 9);
 	}
 }
 
@@ -630,17 +627,18 @@ static void si_llvm_emit_epilogue(struct lp_build_tgsi_context * bld_base)
 	struct tgsi_parse_context *parse = &si_shader_ctx->parse;
 	LLVMValueRef args[9];
 	LLVMValueRef last_args[9] = { 0 };
+	LLVMValueRef pos_args[4][9] = { { 0 } };
 	unsigned semantic_name;
 	unsigned color_count = 0;
 	unsigned param_count = 0;
 	int depth_index = -1, stencil_index = -1;
+	int i;
 
 	while (!tgsi_parse_end_of_tokens(parse)) {
 		struct tgsi_full_declaration *d =
 					&parse->FullToken.FullDeclaration;
 		unsigned target;
 		unsigned index;
-		int i;
 
 		tgsi_parse_token(parse);
 
@@ -716,7 +714,7 @@ handle_semantic:
 				target = V_008DFC_SQ_EXP_POS + 2 + d->Semantic.Index;
 				break;
 			case TGSI_SEMANTIC_CLIPVERTEX:
-				si_llvm_emit_clipvertex(bld_base, index);
+				si_llvm_emit_clipvertex(bld_base, pos_args, index);
 				shader->clip_dist_write = 0xFF;
 				continue;
 			case TGSI_SEMANTIC_FOG:
@@ -734,9 +732,13 @@ handle_semantic:
 
 			si_llvm_init_export_args(bld_base, d, index, target, args);
 
-			if (si_shader_ctx->type == TGSI_PROCESSOR_VERTEX ?
-			    (semantic_name == TGSI_SEMANTIC_POSITION) :
-			    (semantic_name == TGSI_SEMANTIC_COLOR)) {
+			if (si_shader_ctx->type == TGSI_PROCESSOR_VERTEX &&
+			    target >= V_008DFC_SQ_EXP_POS &&
+			    target <= (V_008DFC_SQ_EXP_POS + 3)) {
+				memcpy(pos_args[target - V_008DFC_SQ_EXP_POS],
+				       args, sizeof(args));
+			} else if (si_shader_ctx->type == TGSI_PROCESSOR_FRAGMENT &&
+				   semantic_name == TGSI_SEMANTIC_COLOR) {
 				if (last_args[0]) {
 					lp_build_intrinsic(base->gallivm->builder,
 							   "llvm.SI.export",
@@ -806,66 +808,87 @@ handle_semantic:
 			memcpy(last_args, args, sizeof(args));
 	}
 
-	if (!last_args[0]) {
-		assert(si_shader_ctx->type == TGSI_PROCESSOR_FRAGMENT);
+	if (si_shader_ctx->type == TGSI_PROCESSOR_VERTEX) {
+		unsigned pos_idx = 0;
 
-		/* Specify which components to enable */
-		last_args[0] = lp_build_const_int32(base->gallivm, 0x0);
+		for (i = 0; i < 4; i++)
+			if (pos_args[i][0])
+				shader->nr_pos_exports++;
 
-		/* Specify the target we are exporting */
-		last_args[3] = lp_build_const_int32(base->gallivm, V_008DFC_SQ_EXP_MRT);
+		for (i = 0; i < 4; i++) {
+			if (!pos_args[i][0])
+				continue;
 
-		/* Set COMPR flag to zero to export data as 32-bit */
-		last_args[4] = uint->zero;
-
-		/* dummy bits */
-		last_args[5]= uint->zero;
-		last_args[6]= uint->zero;
-		last_args[7]= uint->zero;
-		last_args[8]= uint->zero;
-
-		si_shader_ctx->shader->spi_shader_col_format |=
-			V_028714_SPI_SHADER_32_ABGR;
-		si_shader_ctx->shader->cb_shader_mask |= S_02823C_OUTPUT0_ENABLE(0xf);
-	}
-
-	/* Specify whether the EXEC mask represents the valid mask */
-	last_args[1] = lp_build_const_int32(base->gallivm,
-					    si_shader_ctx->type == TGSI_PROCESSOR_FRAGMENT);
-
-	if (shader->fs_write_all && shader->nr_cbufs > 1) {
-		int i;
-
-		/* Specify that this is not yet the last export */
-		last_args[2] = lp_build_const_int32(base->gallivm, 0);
-
-		for (i = 1; i < shader->nr_cbufs; i++) {
 			/* Specify the target we are exporting */
-			last_args[3] = lp_build_const_int32(base->gallivm,
-							    V_008DFC_SQ_EXP_MRT + i);
+			pos_args[i][3] = lp_build_const_int32(base->gallivm, V_008DFC_SQ_EXP_POS + pos_idx++);
+
+			if (pos_idx == shader->nr_pos_exports)
+				/* Specify that this is the last export */
+				pos_args[i][2] = uint->one;
 
 			lp_build_intrinsic(base->gallivm->builder,
 					   "llvm.SI.export",
 					   LLVMVoidTypeInContext(base->gallivm->context),
-					   last_args, 9);
+					   pos_args[i], 9);
+		}
+	} else {
+		if (!last_args[0]) {
+			/* Specify which components to enable */
+			last_args[0] = lp_build_const_int32(base->gallivm, 0x0);
+
+			/* Specify the target we are exporting */
+			last_args[3] = lp_build_const_int32(base->gallivm, V_008DFC_SQ_EXP_MRT);
+
+			/* Set COMPR flag to zero to export data as 32-bit */
+			last_args[4] = uint->zero;
+
+			/* dummy bits */
+			last_args[5]= uint->zero;
+			last_args[6]= uint->zero;
+			last_args[7]= uint->zero;
+			last_args[8]= uint->zero;
 
 			si_shader_ctx->shader->spi_shader_col_format |=
-				si_shader_ctx->shader->spi_shader_col_format << 4;
-			si_shader_ctx->shader->cb_shader_mask |=
-				si_shader_ctx->shader->cb_shader_mask << 4;
+				V_028714_SPI_SHADER_32_ABGR;
+			si_shader_ctx->shader->cb_shader_mask |= S_02823C_OUTPUT0_ENABLE(0xf);
 		}
 
-		last_args[3] = lp_build_const_int32(base->gallivm, V_008DFC_SQ_EXP_MRT);
+		/* Specify whether the EXEC mask represents the valid mask */
+		last_args[1] = uint->one;
+
+		if (shader->fs_write_all && shader->nr_cbufs > 1) {
+			int i;
+
+			/* Specify that this is not yet the last export */
+			last_args[2] = lp_build_const_int32(base->gallivm, 0);
+
+			for (i = 1; i < shader->nr_cbufs; i++) {
+				/* Specify the target we are exporting */
+				last_args[3] = lp_build_const_int32(base->gallivm,
+								    V_008DFC_SQ_EXP_MRT + i);
+
+				lp_build_intrinsic(base->gallivm->builder,
+						   "llvm.SI.export",
+						   LLVMVoidTypeInContext(base->gallivm->context),
+						   last_args, 9);
+
+				si_shader_ctx->shader->spi_shader_col_format |=
+					si_shader_ctx->shader->spi_shader_col_format << 4;
+				si_shader_ctx->shader->cb_shader_mask |=
+					si_shader_ctx->shader->cb_shader_mask << 4;
+			}
+
+			last_args[3] = lp_build_const_int32(base->gallivm, V_008DFC_SQ_EXP_MRT);
+		}
+
+		/* Specify that this is the last export */
+		last_args[2] = lp_build_const_int32(base->gallivm, 1);
+
+		lp_build_intrinsic(base->gallivm->builder,
+				   "llvm.SI.export",
+				   LLVMVoidTypeInContext(base->gallivm->context),
+				   last_args, 9);
 	}
-
-	/* Specify that this is the last export */
-	last_args[2] = lp_build_const_int32(base->gallivm, 1);
-
-	lp_build_intrinsic(base->gallivm->builder,
-			   "llvm.SI.export",
-			   LLVMVoidTypeInContext(base->gallivm->context),
-			   last_args, 9);
-
 /* XXX: Look up what this function does */
 /*		ctx->shader->output[i].spi_sid = r600_spi_sid(&ctx->shader->output[i]);*/
 }
