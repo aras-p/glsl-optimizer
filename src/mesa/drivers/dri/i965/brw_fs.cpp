@@ -1501,10 +1501,7 @@ fs_visitor::compact_virtual_grfs()
       if (remap_table[i] != -1) {
          remap_table[i] = new_index;
          virtual_grf_sizes[new_index] = virtual_grf_sizes[i];
-         if (live_intervals_valid) {
-            virtual_grf_start[new_index] = virtual_grf_start[i];
-            virtual_grf_end[new_index] = virtual_grf_end[i];
-         }
+         invalidate_live_intervals();
          ++new_index;
       }
    }
