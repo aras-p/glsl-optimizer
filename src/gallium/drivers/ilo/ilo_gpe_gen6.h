@@ -195,9 +195,8 @@ typedef void
 
 typedef void
 (*ilo_gpe_gen6_3DSTATE_VERTEX_BUFFERS)(const struct ilo_dev_info *dev,
-                                       const struct pipe_vertex_buffer *vbuffers,
-                                       uint64_t vbuffer_mask,
                                        const struct ilo_ve_state *ve,
+                                       const struct ilo_vb_state *vb,
                                        struct ilo_cp *cp);
 
 typedef void

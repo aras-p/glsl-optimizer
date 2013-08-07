@@ -711,9 +711,8 @@ gen6_emit_3DSTATE_URB(const struct ilo_dev_info *dev,
 
 static void
 gen6_emit_3DSTATE_VERTEX_BUFFERS(const struct ilo_dev_info *dev,
-                                 const struct pipe_vertex_buffer *vbuffers,
-                                 uint64_t vbuffer_mask,
                                  const struct ilo_ve_state *ve,
+                                 const struct ilo_vb_state *vb,
                                  struct ilo_cp *cp)
 {
    const uint32_t cmd = ILO_GPE_CMD(0x3, 0x0, 0x08);
@@ -727,19 +726,12 @@ gen6_emit_3DSTATE_VERTEX_BUFFERS(const struct ilo_dev_info *dev,
     *
     *     "From 1 to 33 VBs can be specified..."
     */
-   assert(vbuffer_mask <= (1UL << 33));
+   assert(ve->vb_count <= 33);
 
-   if (!vbuffer_mask)
+   if (!ve->vb_count)
       return;
 
-   cmd_len = 1;
-
-   for (hw_idx = 0; hw_idx < ve->vb_count; hw_idx++) {
-      const unsigned pipe_idx = ve->vb_mapping[hw_idx];
-
-      if (vbuffer_mask & (1 << pipe_idx))
-         cmd_len += 4;
-   }
+   cmd_len = 1 + 4 * ve->vb_count;
 
    ilo_cp_begin(cp, cmd_len);
    ilo_cp_write(cp, cmd | (cmd_len - 2));
@@ -747,11 +739,8 @@ gen6_emit_3DSTATE_VERTEX_BUFFERS(const struct ilo_dev_info *dev,
    for (hw_idx = 0; hw_idx < ve->vb_count; hw_idx++) {
       const unsigned instance_divisor = ve->instance_divisors[hw_idx];
       const unsigned pipe_idx = ve->vb_mapping[hw_idx];
-      const struct pipe_vertex_buffer *vb = &vbuffers[pipe_idx];
+      const struct pipe_vertex_buffer *cso = &vb->states[pipe_idx];
       uint32_t dw;
-
-      if (!(vbuffer_mask & (1 << pipe_idx)))
-         continue;
 
       dw = hw_idx << GEN6_VB0_INDEX_SHIFT;
 
@@ -764,9 +753,9 @@ gen6_emit_3DSTATE_VERTEX_BUFFERS(const struct ilo_dev_info *dev,
          dw |= GEN7_VB0_ADDRESS_MODIFYENABLE;
 
       /* use null vb if there is no buffer or the stride is out of range */
-      if (vb->buffer && vb->stride <= 2048) {
-         const struct ilo_buffer *buf = ilo_buffer(vb->buffer);
-         const uint32_t start_offset = vb->buffer_offset;
+      if (cso->buffer && cso->stride <= 2048) {
+         const struct ilo_buffer *buf = ilo_buffer(cso->buffer);
+         const uint32_t start_offset = cso->buffer_offset;
          /*
           * As noted in ilo_translate_format(), we treat some 3-component
           * formats as 4-component formats to work around hardware
@@ -782,7 +771,7 @@ gen6_emit_3DSTATE_VERTEX_BUFFERS(const struct ilo_dev_info *dev,
           */
          const uint32_t end_offset = intel_bo_get_size(buf->bo) - 1;
 
-         dw |= vb->stride << BRW_VB0_PITCH_SHIFT;
+         dw |= cso->stride << BRW_VB0_PITCH_SHIFT;
 
          ilo_cp_write(cp, dw);
          ilo_cp_write_bo(cp, start_offset, buf->bo, INTEL_DOMAIN_VERTEX, 0);

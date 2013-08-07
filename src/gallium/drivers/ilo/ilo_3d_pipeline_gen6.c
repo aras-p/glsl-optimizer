@@ -406,10 +406,8 @@ gen6_pipeline_vf(struct ilo_3d_pipeline *p,
    }
 
    /* 3DSTATE_VERTEX_BUFFERS */
-   if (DIRTY(VB) || DIRTY(VE) || session->batch_bo_changed) {
-      p->gen6_3DSTATE_VERTEX_BUFFERS(p->dev,
-            ilo->vb.states, ilo->vb.enabled_mask, ilo->ve, p->cp);
-   }
+   if (DIRTY(VB) || DIRTY(VE) || session->batch_bo_changed)
+      p->gen6_3DSTATE_VERTEX_BUFFERS(p->dev, ilo->ve, &ilo->vb, p->cp);
 
    /* 3DSTATE_VERTEX_ELEMENTS */
    if (DIRTY(VE) || DIRTY(VS)) {
