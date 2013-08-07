@@ -1484,12 +1484,26 @@ lp_build_sample_compare(struct lp_build_sample_context *bld,
     * should be converted to the depth format (quantization!) and comparison
     * then done in texture format.
     */
+
    /* result = (p FUNC texel) ? 1 : 0 */
-   res = lp_build_cmp(texel_bld, bld->static_sampler_state->compare_func,
-                      p, texel[chan]);
+   /*
+    * honor d3d10 floating point rules here, which state that comparisons
+    * are ordered except NOT_EQUAL which is unordered.
+    */
+   if (bld->static_sampler_state->compare_func != PIPE_FUNC_NOTEQUAL) {
+      res = lp_build_cmp_ordered(texel_bld, bld->static_sampler_state->compare_func,
+                                 p, texel[chan]);
+   }
+   else {
+      res = lp_build_cmp(texel_bld, bld->static_sampler_state->compare_func,
+                         p, texel[chan]);
+   }
    res = lp_build_select(texel_bld, res, texel_bld->one, texel_bld->zero);
 
-   /* XXX returning result for default GL_DEPTH_TEXTURE_MODE = GL_LUMINANCE */
+   /*
+    * returning result for default GL_DEPTH_TEXTURE_MODE = GL_LUMINANCE.
+    * This should be ok because sampler swizzle is applied on top of it.
+    */
    texel[0] =
    texel[1] =
    texel[2] = res;
