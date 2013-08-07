@@ -59,6 +59,7 @@ static void si_pipe_shader_vs(struct pipe_context *ctx, struct si_pipe_shader *s
 	 */
 	for (nparams = 0, i = 0 ; i < shader->shader.noutput; i++) {
 		switch (shader->shader.output[i].name) {
+		case TGSI_SEMANTIC_CLIPVERTEX:
 		case TGSI_SEMANTIC_POSITION:
 		case TGSI_SEMANTIC_PSIZE:
 			break;
