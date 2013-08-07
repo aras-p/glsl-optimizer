@@ -68,6 +68,15 @@ inject_primid(struct draw_stage *stage,
 
    for (i = 0; i < num_verts; ++i) {
       struct vertex_header *v = header->v[i];
+      /* We have to reset the vertex_id because it's used by
+       * vbuf to figure out if the vertex had already been
+       * emitted. For line/tri strips the first vertex of
+       * subsequent primitives would already be emitted,
+       * but since we're changing the primitive id on the vertex
+       * we want to make sure it's reemitted with the correct
+       * data.
+       */
+      v->vertex_id = UNDEFINED_VERTEX_ID;
       memcpy(&v->data[slot][0], &primid, sizeof(primid));
       memcpy(&v->data[slot][1], &primid, sizeof(primid));
       memcpy(&v->data[slot][2], &primid, sizeof(primid));
