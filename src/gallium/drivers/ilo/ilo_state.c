@@ -250,25 +250,6 @@ ilo_bind_sampler_states(struct pipe_context *pipe, unsigned shader,
 
    assert(start + count <= Elements(dst->cso));
 
-   if (likely(shader != PIPE_SHADER_COMPUTE)) {
-      if (!samplers) {
-         start = 0;
-         count = 0;
-      }
-
-      /* samplers not in range are also unbound */
-      for (i = 0; i < start; i++)
-         dst->cso[i] = NULL;
-      for (; i < start + count; i++)
-         dst->cso[i] = samplers[i - start];
-      for (; i < dst->count; i++)
-         dst->cso[i] = NULL;
-
-      dst->count = start + count;
-
-      return;
-   }
-
    if (samplers) {
       for (i = 0; i < count; i++)
          dst->cso[start + i] = samplers[i];
@@ -301,6 +282,11 @@ ilo_bind_fragment_sampler_states(struct pipe_context *pipe,
    ilo_bind_sampler_states(pipe, PIPE_SHADER_FRAGMENT,
          0, num_samplers, samplers);
 
+   if (ilo->sampler[PIPE_SHADER_FRAGMENT].count > num_samplers) {
+      ilo_bind_sampler_states(pipe, PIPE_SHADER_FRAGMENT, num_samplers,
+            ilo->sampler[PIPE_SHADER_FRAGMENT].count - num_samplers, NULL);
+   }
+
    ilo->dirty |= ILO_DIRTY_SAMPLER_FS;
 }
 
@@ -314,6 +300,11 @@ ilo_bind_vertex_sampler_states(struct pipe_context *pipe,
    ilo_bind_sampler_states(pipe, PIPE_SHADER_VERTEX,
          0, num_samplers, samplers);
 
+   if (ilo->sampler[PIPE_SHADER_VERTEX].count > num_samplers) {
+      ilo_bind_sampler_states(pipe, PIPE_SHADER_VERTEX, num_samplers,
+            ilo->sampler[PIPE_SHADER_VERTEX].count - num_samplers, NULL);
+   }
+
    ilo->dirty |= ILO_DIRTY_SAMPLER_VS;
 }
 
@@ -326,6 +317,11 @@ ilo_bind_geometry_sampler_states(struct pipe_context *pipe,
 
    ilo_bind_sampler_states(pipe, PIPE_SHADER_GEOMETRY,
          0, num_samplers, samplers);
+
+   if (ilo->sampler[PIPE_SHADER_GEOMETRY].count > num_samplers) {
+      ilo_bind_sampler_states(pipe, PIPE_SHADER_GEOMETRY, num_samplers,
+            ilo->sampler[PIPE_SHADER_GEOMETRY].count - num_samplers, NULL);
+   }
 
    ilo->dirty |= ILO_DIRTY_SAMPLER_GS;
 }
@@ -765,25 +761,6 @@ ilo_set_sampler_views(struct pipe_context *pipe, unsigned shader,
 
    assert(start + count <= Elements(dst->states));
 
-   if (likely(shader != PIPE_SHADER_COMPUTE)) {
-      if (!views) {
-         start = 0;
-         count = 0;
-      }
-
-      /* views not in range are also unbound */
-      for (i = 0; i < start; i++)
-         pipe_sampler_view_reference(&dst->states[i], NULL);
-      for (; i < start + count; i++)
-         pipe_sampler_view_reference(&dst->states[i], views[i - start]);
-      for (; i < dst->count; i++)
-         pipe_sampler_view_reference(&dst->states[i], NULL);
-
-      dst->count = start + count;
-
-      return;
-   }
-
    if (views) {
       for (i = 0; i < count; i++)
          pipe_sampler_view_reference(&dst->states[start + i], views[i]);
@@ -813,8 +790,12 @@ ilo_set_fragment_sampler_views(struct pipe_context *pipe,
 {
    struct ilo_context *ilo = ilo_context(pipe);
 
-   ilo_set_sampler_views(pipe, PIPE_SHADER_FRAGMENT,
-         0, num_views, views);
+   ilo_set_sampler_views(pipe, PIPE_SHADER_FRAGMENT, 0, num_views, views);
+
+   if (ilo->view[PIPE_SHADER_FRAGMENT].count > num_views) {
+      ilo_set_sampler_views(pipe, PIPE_SHADER_FRAGMENT, num_views,
+            ilo->view[PIPE_SHADER_FRAGMENT].count - num_views, NULL);
+   }
 
    ilo->dirty |= ILO_DIRTY_VIEW_FS;
 }
@@ -826,8 +807,12 @@ ilo_set_vertex_sampler_views(struct pipe_context *pipe,
 {
    struct ilo_context *ilo = ilo_context(pipe);
 
-   ilo_set_sampler_views(pipe, PIPE_SHADER_VERTEX,
-         0, num_views, views);
+   ilo_set_sampler_views(pipe, PIPE_SHADER_VERTEX, 0, num_views, views);
+
+   if (ilo->view[PIPE_SHADER_VERTEX].count > num_views) {
+      ilo_set_sampler_views(pipe, PIPE_SHADER_VERTEX, num_views,
+            ilo->view[PIPE_SHADER_VERTEX].count - num_views, NULL);
+   }
 
    ilo->dirty |= ILO_DIRTY_VIEW_VS;
 }
@@ -839,8 +824,12 @@ ilo_set_geometry_sampler_views(struct pipe_context *pipe,
 {
    struct ilo_context *ilo = ilo_context(pipe);
 
-   ilo_set_sampler_views(pipe, PIPE_SHADER_GEOMETRY,
-         0, num_views, views);
+   ilo_set_sampler_views(pipe, PIPE_SHADER_GEOMETRY, 0, num_views, views);
+
+   if (ilo->view[PIPE_SHADER_GEOMETRY].count > num_views) {
+      ilo_set_sampler_views(pipe, PIPE_SHADER_GEOMETRY, num_views,
+            ilo->view[PIPE_SHADER_GEOMETRY].count - num_views, NULL);
+   }
 
    ilo->dirty |= ILO_DIRTY_VIEW_GS;
 }
