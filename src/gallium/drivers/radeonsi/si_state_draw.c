@@ -136,7 +136,9 @@ static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *s
 
 	si_pm4_inval_shader_cache(pm4);
 
-	db_shader_control = S_02880C_Z_ORDER(V_02880C_EARLY_Z_THEN_LATE_Z);
+	db_shader_control = S_02880C_Z_ORDER(V_02880C_EARLY_Z_THEN_LATE_Z) |
+			    S_02880C_ALPHA_TO_MASK_DISABLE(rctx->fb_cb0_is_integer);
+
 	for (i = 0; i < shader->shader.ninput; i++) {
 		switch (shader->shader.input[i].name) {
 		case TGSI_SEMANTIC_POSITION:
@@ -256,6 +258,7 @@ static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *s
 
 	si_pm4_set_reg(pm4, R_02880C_DB_SHADER_CONTROL, db_shader_control);
 
+	shader->cb0_is_integer = rctx->fb_cb0_is_integer;
 	shader->sprite_coord_enable = rctx->sprite_coord_enable;
 	si_pm4_bind_state(rctx, ps, shader->pm4);
 }
@@ -444,6 +447,10 @@ static void si_update_derived_state(struct r600_context *rctx)
 			si_pm4_bind_state(rctx, vs, rctx->dummy_pixel_shader->pm4);
 
 		ps_dirty = 0;
+	}
+	if (rctx->ps_shader->current->cb0_is_integer != rctx->fb_cb0_is_integer) {
+		si_pipe_shader_ps(ctx, rctx->ps_shader->current);
+		ps_dirty = 1;
 	}
 
 	if (ps_dirty) {
