@@ -1868,7 +1868,15 @@ after lookup.
                the mipmap level selected by the src_mip_level and
                are in the number of texels.
                For 1d texture array width is in dst.x, array size
-               is in dst.y and dst.zw are always 0.
+               is in dst.y and dst.z is 0. The number of mipmaps
+               is still in dst.w.
+               In contrast to d3d10 resinfo, there's no way in the
+               tgsi instruction encoding to specify the return type
+               (float/rcpfloat/uint), hence always using uint. Also,
+               unlike the SAMPLE instructions, the swizzle on src1
+               resinfo allowing swizzling dst values is ignored (due
+               to the interaction with rcpfloat modifier which requires
+               some swizzle handling in the state tracker anyway).
 
 .. opcode:: SAMPLE_POS - query the position of a given sample.
                dst receives float4 (x, y, 0, 0) indicated where the
