@@ -188,7 +188,7 @@ public:
 
    bool depends_on_flags()
    {
-      return predicate;
+      return predicate || opcode == VS_OPCODE_UNPACK_FLAGS_SIMD4X2;
    }
 };
 
@@ -592,6 +592,8 @@ private:
                                          struct brw_reg dst,
                                          struct brw_reg surf_index,
                                          struct brw_reg offset);
+   void generate_unpack_flags(vec4_instruction *inst,
+                              struct brw_reg dst);
 
    struct brw_context *brw;
    struct gl_context *ctx;

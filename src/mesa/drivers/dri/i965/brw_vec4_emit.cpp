@@ -440,6 +440,25 @@ vec4_generator::generate_oword_dual_block_offsets(struct brw_reg m1,
 }
 
 void
+vec4_generator::generate_unpack_flags(vec4_instruction *inst,
+                                      struct brw_reg dst)
+{
+   brw_push_insn_state(p);
+   brw_set_mask_control(p, BRW_MASK_DISABLE);
+   brw_set_access_mode(p, BRW_ALIGN_1);
+
+   struct brw_reg flags = brw_flag_reg(0, 0);
+   struct brw_reg dst_0 = suboffset(vec1(dst), 0);
+   struct brw_reg dst_4 = suboffset(vec1(dst), 4);
+
+   brw_AND(p, dst_0, flags, brw_imm_ud(0x0f));
+   brw_AND(p, dst_4, flags, brw_imm_ud(0xf0));
+   brw_SHR(p, dst_4, dst_4, brw_imm_ud(4));
+
+   brw_pop_insn_state(p);
+}
+
+void
 vec4_generator::generate_scratch_read(vec4_instruction *inst,
                                       struct brw_reg dst,
                                       struct brw_reg index)
@@ -849,6 +868,10 @@ vec4_generator::generate_vec4_instruction(vec4_instruction *instruction,
 
    case SHADER_OPCODE_SHADER_TIME_ADD:
       brw_shader_time_add(p, src[0], SURF_INDEX_VS_SHADER_TIME);
+      break;
+
+   case VS_OPCODE_UNPACK_FLAGS_SIMD4X2:
+      generate_unpack_flags(inst, dst);
       break;
 
    default:
