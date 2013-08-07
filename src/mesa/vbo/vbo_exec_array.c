@@ -442,41 +442,77 @@ recalculate_input_bindings(struct gl_context *ctx)
       break;
 
    case VP_ARB:
-      /* GL_ARB_vertex_program or GLSL vertex shader - Only the generic[0]
+      /* There are no shaders in OpenGL ES 1.x, so this code path should be
+       * impossible to reach.  The meta code is careful to not use shaders in
+       * ES1.
+       */
+      assert(ctx->API != API_OPENGLES);
+
+      /* In the compatibility profile of desktop OpenGL, the generic[0]
        * attribute array aliases and overrides the legacy position array.  
-       *
        * Otherwise, legacy attributes available in the legacy slots,
        * generic attributes in the generic slots and materials are not
        * available as per-vertex attributes.
+       *
+       * In all other APIs, only the generic attributes exist, and none of the
+       * slots are considered "magic."
        */
-      if (vertexAttrib[VERT_ATTRIB_GENERIC0].Enabled)
-	 inputs[0] = &vertexAttrib[VERT_ATTRIB_GENERIC0];
-      else if (vertexAttrib[VERT_ATTRIB_POS].Enabled)
-	 inputs[0] = &vertexAttrib[VERT_ATTRIB_POS];
-      else {
-	 inputs[0] = &vbo->currval[VBO_ATTRIB_POS];
-         const_inputs |= VERT_BIT_POS;
-      }
+      if (ctx->API == API_OPENGL_COMPAT) {
+         if (vertexAttrib[VERT_ATTRIB_GENERIC0].Enabled)
+            inputs[0] = &vertexAttrib[VERT_ATTRIB_GENERIC0];
+         else if (vertexAttrib[VERT_ATTRIB_POS].Enabled)
+            inputs[0] = &vertexAttrib[VERT_ATTRIB_POS];
+         else {
+            inputs[0] = &vbo->currval[VBO_ATTRIB_POS];
+            const_inputs |= VERT_BIT_POS;
+         }
 
-      for (i = 1; i < VERT_ATTRIB_FF_MAX; i++) {
-	 if (vertexAttrib[VERT_ATTRIB_FF(i)].Enabled)
-	    inputs[i] = &vertexAttrib[VERT_ATTRIB_FF(i)];
-	 else {
-	    inputs[i] = &vbo->currval[VBO_ATTRIB_POS+i];
+         for (i = 1; i < VERT_ATTRIB_FF_MAX; i++) {
+            if (vertexAttrib[VERT_ATTRIB_FF(i)].Enabled)
+               inputs[i] = &vertexAttrib[VERT_ATTRIB_FF(i)];
+            else {
+               inputs[i] = &vbo->currval[VBO_ATTRIB_POS+i];
+               const_inputs |= VERT_BIT_FF(i);
+            }
+         }
+
+         for (i = 1; i < VERT_ATTRIB_GENERIC_MAX; i++) {
+            if (vertexAttrib[VERT_ATTRIB_GENERIC(i)].Enabled)
+               inputs[VERT_ATTRIB_GENERIC(i)] =
+                  &vertexAttrib[VERT_ATTRIB_GENERIC(i)];
+            else {
+               inputs[VERT_ATTRIB_GENERIC(i)] =
+                  &vbo->currval[VBO_ATTRIB_GENERIC0+i];
+               const_inputs |= VERT_BIT_GENERIC(i);
+            }
+         }
+
+         inputs[VERT_ATTRIB_GENERIC0] = inputs[0];
+      } else {
+         /* Other parts of the code assume that inputs[0] through
+          * inputs[VERT_ATTRIB_FF_MAX] will be non-NULL.  However, in OpenGL
+          * ES 2.0+ or OpenGL core profile, none of these arrays should ever
+          * be enabled.
+          */
+         for (i = 0; i < VERT_ATTRIB_FF_MAX; i++) {
+            assert(!vertexAttrib[VERT_ATTRIB_FF(i)].Enabled);
+
+            inputs[i] = &vbo->currval[VBO_ATTRIB_POS+i];
             const_inputs |= VERT_BIT_FF(i);
          }
-      }
 
-      for (i = 1; i < VERT_ATTRIB_GENERIC_MAX; i++) {
-	 if (vertexAttrib[VERT_ATTRIB_GENERIC(i)].Enabled)
-	    inputs[VERT_ATTRIB_GENERIC(i)] = &vertexAttrib[VERT_ATTRIB_GENERIC(i)];
-	 else {
-	    inputs[VERT_ATTRIB_GENERIC(i)] = &vbo->currval[VBO_ATTRIB_GENERIC0+i];
-            const_inputs |= VERT_BIT_GENERIC(i);
+         for (i = 0; i < VERT_ATTRIB_GENERIC_MAX; i++) {
+            if (vertexAttrib[VERT_ATTRIB_GENERIC(i)].Enabled)
+               inputs[VERT_ATTRIB_GENERIC(i)] =
+                  &vertexAttrib[VERT_ATTRIB_GENERIC(i)];
+            else {
+               inputs[VERT_ATTRIB_GENERIC(i)] =
+                  &vbo->currval[VBO_ATTRIB_GENERIC0+i];
+               const_inputs |= VERT_BIT_GENERIC(i);
+            }
          }
       }
 
-      inputs[VERT_ATTRIB_GENERIC0] = inputs[0];
       break;
    }
 
