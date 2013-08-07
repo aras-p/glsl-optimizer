@@ -67,10 +67,6 @@ struct drm_display {
    struct drm_surface **shown_surfaces;
    /* save the original settings of the CRTCs */
    struct drm_crtc *saved_crtcs;
-
-#ifdef HAVE_WAYLAND_BACKEND
-   struct wl_drm *wl_server_drm; /* for EGL_WL_bind_wayland_display */
-#endif
 };
 
 struct drm_config {

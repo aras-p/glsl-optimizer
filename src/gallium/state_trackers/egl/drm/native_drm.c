@@ -132,7 +132,9 @@ drm_display_destroy(struct native_display *ndpy)
 
    FREE(drmdpy->device_name);
 
+#ifdef HAVE_WAYLAND_BACKEND
    wayland_drm_bufmgr_destroy(ndpy->wayland_bufmgr);
+#endif
 
    if (drmdpy->own_gbm) {
       gbm_device_destroy(&drmdpy->gbmdrm->base.base);

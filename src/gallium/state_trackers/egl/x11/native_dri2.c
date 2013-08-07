@@ -60,9 +60,6 @@ struct dri2_display {
    int num_configs;
 
    struct util_hash_table *surfaces;
-#ifdef HAVE_WAYLAND_BACKEND
-   struct wl_drm *wl_server_drm; /* for EGL_WL_bind_wayland_display */
-#endif
 };
 
 struct dri2_surface {
@@ -757,7 +754,9 @@ dri2_display_destroy(struct native_display *ndpy)
    if (dri2dpy->surfaces)
       util_hash_table_destroy(dri2dpy->surfaces);
 
+#ifdef HAVE_WAYLAND_BACKEND
    wayland_drm_bufmgr_destroy(ndpy->wayland_bufmgr);
+#endif
 
    if (dri2dpy->xscr)
       x11_screen_destroy(dri2dpy->xscr);
