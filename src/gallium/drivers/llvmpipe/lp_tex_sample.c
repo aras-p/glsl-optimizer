@@ -281,6 +281,7 @@ lp_llvm_sampler_soa_emit_size_query(const struct lp_build_sampler_soa *base,
                                     struct lp_type type,
                                     unsigned texture_unit,
                                     boolean need_nr_mips,
+                                    boolean scalar_lod,
                                     LLVMValueRef explicit_lod, /* optional */
                                     LLVMValueRef *sizes_out)
 {
@@ -294,6 +295,7 @@ lp_llvm_sampler_soa_emit_size_query(const struct lp_build_sampler_soa *base,
                            type,
                            texture_unit,
                            need_nr_mips,
+                           scalar_lod,
                            explicit_lod,
                            sizes_out);
 }

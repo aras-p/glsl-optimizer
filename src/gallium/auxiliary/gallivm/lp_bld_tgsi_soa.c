@@ -1990,6 +1990,7 @@ emit_size_query( struct lp_build_tgsi_soa_context *bld,
                  boolean is_sviewinfo)
 {
    LLVMValueRef explicit_lod;
+   boolean scalar_lod;
    unsigned has_lod;
    unsigned i;
    unsigned unit = inst->Src[1].Register.Index;
@@ -2024,11 +2025,15 @@ emit_size_query( struct lp_build_tgsi_soa_context *bld,
    else
       explicit_lod = NULL;
 
+   /* TODO: use scalar lod if explicit_lod is broadcasted scalar */
+   scalar_lod = bld->bld_base.info->processor == TGSI_PROCESSOR_FRAGMENT;
+
    bld->sampler->emit_size_query(bld->sampler,
                                  bld->bld_base.base.gallivm,
                                  bld->bld_base.int_bld.type,
                                  unit,
                                  is_sviewinfo,
+                                 scalar_lod,
                                  explicit_lod,
                                  sizes_out);
 }

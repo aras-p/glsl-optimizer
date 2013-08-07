@@ -193,6 +193,7 @@ struct lp_build_sampler_soa
                        struct lp_type type,
                        unsigned unit,
                        boolean need_nr_mips,
+                       boolean scalar_lod,
                        LLVMValueRef explicit_lod, /* optional */
                        LLVMValueRef *sizes_out);
 };
