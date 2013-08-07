@@ -574,7 +574,7 @@ ilo_set_stencil_ref(struct pipe_context *pipe,
    struct ilo_context *ilo = ilo_context(pipe);
 
    /* util_blitter may set this unnecessarily */
-   if (!memcpy(&ilo->stencil_ref, state, sizeof(*state)))
+   if (!memcmp(&ilo->stencil_ref, state, sizeof(*state)))
       return;
 
    ilo->stencil_ref = *state;
