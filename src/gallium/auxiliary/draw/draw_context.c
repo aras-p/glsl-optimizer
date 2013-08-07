@@ -555,6 +555,7 @@ draw_get_shader_info(const struct draw_context *draw)
 void
 draw_prepare_shader_outputs(struct draw_context *draw)
 {
+   draw_remove_extra_vertex_attribs(draw);
    draw_ia_prepare_outputs(draw, draw->pipeline.ia);
    draw_unfilled_prepare_outputs(draw, draw->pipeline.unfilled);
 }
