@@ -240,19 +240,31 @@ ilo_create_sampler_state(struct pipe_context *pipe,
    return sampler;
 }
 
-static void
+static bool
 ilo_bind_sampler_states(struct pipe_context *pipe, unsigned shader,
                         unsigned start, unsigned count, void **samplers)
 {
    struct ilo_context *ilo = ilo_context(pipe);
    struct ilo_sampler_state *dst = &ilo->sampler[shader];
+   bool changed = false;
    unsigned i;
 
    assert(start + count <= Elements(dst->cso));
 
    if (samplers) {
-      for (i = 0; i < count; i++)
-         dst->cso[start + i] = samplers[i];
+      for (i = 0; i < count; i++) {
+         if (dst->cso[start + i] != samplers[i]) {
+            dst->cso[start + i] = samplers[i];
+
+            /*
+             * This function is sometimes called to reduce the number of bound
+             * samplers.  Do not consider that as a state change (and create a
+             * new array of SAMPLER_STATE).
+             */
+            if (samplers[i])
+               changed = true;
+         }
+      }
    }
    else {
       for (i = 0; i < count; i++)
@@ -270,6 +282,8 @@ ilo_bind_sampler_states(struct pipe_context *pipe, unsigned shader,
 
       dst->count = count;
    }
+
+   return changed;
 }
 
 static void
@@ -279,15 +293,14 @@ ilo_bind_fragment_sampler_states(struct pipe_context *pipe,
 {
    struct ilo_context *ilo = ilo_context(pipe);
 
-   ilo_bind_sampler_states(pipe, PIPE_SHADER_FRAGMENT,
-         0, num_samplers, samplers);
+   if (ilo_bind_sampler_states(pipe, PIPE_SHADER_FRAGMENT,
+         0, num_samplers, samplers))
+      ilo->dirty |= ILO_DIRTY_SAMPLER_FS;
 
    if (ilo->sampler[PIPE_SHADER_FRAGMENT].count > num_samplers) {
       ilo_bind_sampler_states(pipe, PIPE_SHADER_FRAGMENT, num_samplers,
             ilo->sampler[PIPE_SHADER_FRAGMENT].count - num_samplers, NULL);
    }
-
-   ilo->dirty |= ILO_DIRTY_SAMPLER_FS;
 }
 
 static void
@@ -297,15 +310,14 @@ ilo_bind_vertex_sampler_states(struct pipe_context *pipe,
 {
    struct ilo_context *ilo = ilo_context(pipe);
 
-   ilo_bind_sampler_states(pipe, PIPE_SHADER_VERTEX,
-         0, num_samplers, samplers);
+   if (ilo_bind_sampler_states(pipe, PIPE_SHADER_VERTEX,
+         0, num_samplers, samplers))
+      ilo->dirty |= ILO_DIRTY_SAMPLER_VS;
 
    if (ilo->sampler[PIPE_SHADER_VERTEX].count > num_samplers) {
       ilo_bind_sampler_states(pipe, PIPE_SHADER_VERTEX, num_samplers,
             ilo->sampler[PIPE_SHADER_VERTEX].count - num_samplers, NULL);
    }
-
-   ilo->dirty |= ILO_DIRTY_SAMPLER_VS;
 }
 
 static void
@@ -315,15 +327,14 @@ ilo_bind_geometry_sampler_states(struct pipe_context *pipe,
 {
    struct ilo_context *ilo = ilo_context(pipe);
 
-   ilo_bind_sampler_states(pipe, PIPE_SHADER_GEOMETRY,
-         0, num_samplers, samplers);
+   if (ilo_bind_sampler_states(pipe, PIPE_SHADER_GEOMETRY,
+            0, num_samplers, samplers))
+      ilo->dirty |= ILO_DIRTY_SAMPLER_GS;
 
    if (ilo->sampler[PIPE_SHADER_GEOMETRY].count > num_samplers) {
       ilo_bind_sampler_states(pipe, PIPE_SHADER_GEOMETRY, num_samplers,
             ilo->sampler[PIPE_SHADER_GEOMETRY].count - num_samplers, NULL);
    }
-
-   ilo->dirty |= ILO_DIRTY_SAMPLER_GS;
 }
 
 static void
@@ -334,10 +345,9 @@ ilo_bind_compute_sampler_states(struct pipe_context *pipe,
 {
    struct ilo_context *ilo = ilo_context(pipe);
 
-   ilo_bind_sampler_states(pipe, PIPE_SHADER_COMPUTE,
-         start_slot, num_samplers, samplers);
-
-   ilo->dirty |= ILO_DIRTY_SAMPLER_CS;
+   if (ilo_bind_sampler_states(pipe, PIPE_SHADER_COMPUTE,
+            start_slot, num_samplers, samplers))
+      ilo->dirty |= ILO_DIRTY_SAMPLER_CS;
 }
 
 static void
