@@ -994,24 +994,6 @@ static void tex_fetch_args(
 	if (num_coords > 2)
 		address[count++] = coords[2];
 
-	/* Pack array slice */
-	switch (target) {
-	case TGSI_TEXTURE_1D_ARRAY:
-		address[count++] = coords[1];
-	}
-	switch (target) {
-	case TGSI_TEXTURE_2D_ARRAY:
-	case TGSI_TEXTURE_2D_ARRAY_MSAA:
-	case TGSI_TEXTURE_SHADOW2D_ARRAY:
-		address[count++] = coords[2];
-	}
-	switch (target) {
-	case TGSI_TEXTURE_CUBE_ARRAY:
-	case TGSI_TEXTURE_SHADOW1D_ARRAY:
-	case TGSI_TEXTURE_SHADOWCUBE_ARRAY:
-		address[count++] = coords[3];
-	}
-
 	/* Pack LOD */
 	if (opcode == TGSI_OPCODE_TXL || opcode == TGSI_OPCODE_TXF)
 		address[count++] = coords[3];
