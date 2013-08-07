@@ -369,6 +369,18 @@ bitcast_u2f(operand a)
    return expr(ir_unop_bitcast_u2f, a);
 }
 
+ir_expression*
+i2b(operand a)
+{
+   return expr(ir_unop_i2b, a);
+}
+
+ir_expression*
+b2i(operand a)
+{
+   return expr(ir_unop_b2i, a);
+}
+
 ir_if*
 if_tree(operand condition,
         ir_instruction *then_branch)

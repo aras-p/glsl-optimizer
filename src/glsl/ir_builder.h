@@ -162,6 +162,8 @@ ir_expression *u2f(operand a);
 ir_expression *bitcast_u2f(operand a);
 ir_expression *i2u(operand a);
 ir_expression *u2i(operand a);
+ir_expression *b2i(operand a);
+ir_expression *i2b(operand a);
 
 /**
  * Swizzle away later components, but preserve the ordering.
