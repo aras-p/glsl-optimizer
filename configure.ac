@@ -1617,6 +1617,10 @@ if test "x$enable_gallium_llvm" = xyes; then
             if $LLVM_CONFIG --components | grep -qw 'irreader'; then
                 LLVM_COMPONENTS="${LLVM_COMPONENTS} irreader"
             fi
+            # LLVM 3.4 requires Option
+            if $LLVM_CONFIG --components | grep -qw 'option'; then
+                LLVM_COMPONENTS="${LLVM_COMPONENTS} option"
+            fi
         fi
         DEFINES="${DEFINES} -DHAVE_LLVM=0x0$LLVM_VERSION_INT"
         MESA_LLVM=1
