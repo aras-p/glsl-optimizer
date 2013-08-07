@@ -1445,6 +1445,8 @@ lp_build_sample_compare(struct lp_build_sample_context *bld,
    LLVMBuilderRef builder = bld->gallivm->builder;
    LLVMValueRef res, p;
    const unsigned chan = 0;
+   unsigned chan_type;
+   const struct util_format_description *format_desc;
 
    if (bld->static_sampler_state->compare_mode == PIPE_TEX_COMPARE_NONE)
       return;
@@ -1466,11 +1468,22 @@ lp_build_sample_compare(struct lp_build_sample_context *bld,
                       coord, tex);
    }
 
-   /* Clamp p coords to [0,1] */
-   p = lp_build_clamp(&bld->coord_bld, p,
-                      bld->coord_bld.zero,
-                      bld->coord_bld.one);
+   /* Clamp p coords to [0,1] for fixed function depth texture format */
+   format_desc = util_format_description(bld->static_texture_state->format);
+   /* not entirely sure we couldn't end up with non-valid swizzle here */
+   chan_type = format_desc->swizzle[0] <= UTIL_FORMAT_SWIZZLE_W ?
+                  format_desc->channel[format_desc->swizzle[0]].type :
+                  UTIL_FORMAT_TYPE_FLOAT;
+   if (chan_type != UTIL_FORMAT_TYPE_FLOAT) {
+      p = lp_build_clamp(&bld->coord_bld, p,
+                         bld->coord_bld.zero, bld->coord_bld.one);
+   }
 
+   /*
+    * technically this is not entirely correct for unorm depth as the ref value
+    * should be converted to the depth format (quantization!) and comparison
+    * then done in texture format.
+    */
    /* result = (p FUNC texel) ? 1 : 0 */
    res = lp_build_cmp(texel_bld, bld->static_sampler_state->compare_func,
                       p, texel[chan]);
