@@ -29,9 +29,7 @@
 #define ILO_3D_PIPELINE_H
 
 #include "ilo_common.h"
-#include "ilo_context.h"
-#include "ilo_gpe_gen6.h"
-#include "ilo_gpe_gen7.h"
+#include "ilo_gpe.h"
 
 struct intel_bo;
 struct ilo_cp;

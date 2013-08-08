@@ -33,6 +33,7 @@
 #include "ilo_context.h"
 #include "ilo_cp.h"
 #include "ilo_gpe_gen6.h"
+#include "ilo_gpe_gen7.h"
 #include "ilo_shader.h"
 #include "ilo_state.h"
 #include "ilo_3d_pipeline.h"

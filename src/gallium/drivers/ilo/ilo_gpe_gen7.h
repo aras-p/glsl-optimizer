@@ -28,7 +28,12 @@
 #ifndef ILO_GPE_GEN7_H
 #define ILO_GPE_GEN7_H
 
+#include "intel_winsys.h"
+
 #include "ilo_common.h"
+#include "ilo_cp.h"
+#include "ilo_resource.h"
+#include "ilo_shader.h"
 #include "ilo_gpe_gen6.h"
 
 /**

@@ -28,10 +28,9 @@
 #ifndef ILO_GPE_GEN6_H
 #define ILO_GPE_GEN6_H
 
-#include "util/u_dual_blend.h"
-#include "util/u_half.h"
 #include "brw_defines.h"
 #include "intel_reg.h"
+#include "intel_winsys.h"
 
 #include "ilo_common.h"
 #include "ilo_cp.h"
@@ -115,13 +114,6 @@ enum ilo_gpe_gen6_state {
 
    ILO_GPE_GEN6_STATE_COUNT,
 };
-
-enum intel_tiling_mode;
-
-struct intel_bo;
-struct ilo_cp;
-struct ilo_texture;
-struct ilo_shader;
 
 /**
  * GEN6 graphics processing engine
