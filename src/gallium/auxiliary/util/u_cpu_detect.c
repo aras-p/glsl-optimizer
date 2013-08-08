@@ -246,7 +246,7 @@ static INLINE boolean sse2_has_daz(void)
 #if (defined(PIPE_CC_GCC) || defined(PIPE_CC_SUNPRO))
    asm volatile ("fxsave %0" :: "m" (fxarea));
 #elif (defined(PIPE_CC_MSVC) || defined(PIPE_CC_ICL))
-   _fxsave(fxarea);
+   _fxsave(&fxarea);
 #endif
    return !!(fxarea.mxcsr_mask & (1 << 6));
 }
