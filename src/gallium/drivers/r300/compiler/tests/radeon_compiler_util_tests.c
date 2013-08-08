@@ -96,7 +96,7 @@ static void test_runner_rc_inst_can_use_presub(struct test_result * result)
 
 unsigned radeon_compiler_util_run_tests()
 {
-	struct test tests[] = {
+	static struct test tests[] = {
 		{"rc_inst_can_use_presub()", test_runner_rc_inst_can_use_presub},
 		{NULL, NULL}
 	};

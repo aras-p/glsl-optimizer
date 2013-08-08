@@ -91,8 +91,8 @@ static void tex_1d_swizzle(struct test_result *result)
 
 unsigned radeon_compiler_regalloc_run_tests()
 {
-	struct test tests[] = {
-		{"rc_pair_regalloc() => TEX 1D Swizzle - r300", tex_1d_swizzle},
+	static struct test tests[] = {
+		{"rc_pair_regalloc() => TEX 1D Swizzle - r300", tex_1d_swizzle },
 		{NULL, NULL}
 	};
 	return run_tests(tests);

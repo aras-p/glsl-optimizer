@@ -80,7 +80,7 @@ static void test_runner_rc_optimize(struct test_result * result)
 
 unsigned radeon_compiler_optimize_run_tests()
 {
-	struct test tests[] = {
+	static struct test tests[] = {
 		{"rc_optimize() => peephole_mul_omod()", test_runner_rc_optimize},
 		{NULL, NULL}
 	};
