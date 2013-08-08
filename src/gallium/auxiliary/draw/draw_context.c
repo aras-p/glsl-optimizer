@@ -40,6 +40,7 @@
 #include "util/u_prim.h"
 #include "draw_context.h"
 #include "draw_pipe.h"
+#include "draw_prim_assembler.h"
 #include "draw_vs.h"
 #include "draw_gs.h"
 
@@ -93,6 +94,10 @@ draw_create_context(struct pipe_context *pipe, boolean try_llvm)
    draw->pipe = pipe;
 
    if (!draw_init(draw))
+      goto err_destroy;
+
+   draw->ia = draw_prim_assembler_create(draw);
+   if (!draw->ia)
       goto err_destroy;
 
    return draw;
@@ -206,6 +211,7 @@ void draw_destroy( struct draw_context *draw )
       draw->render->destroy( draw->render );
    */
 
+   draw_prim_assembler_destroy(draw->ia);
    draw_pipeline_destroy( draw );
    draw_pt_destroy( draw );
    draw_vs_destroy( draw );
@@ -556,7 +562,7 @@ void
 draw_prepare_shader_outputs(struct draw_context *draw)
 {
    draw_remove_extra_vertex_attribs(draw);
-   draw_ia_prepare_outputs(draw, draw->pipeline.ia);
+   draw_prim_assembler_prepare_outputs(draw->ia);
    draw_unfilled_prepare_outputs(draw, draw->pipeline.unfilled);
 }
 

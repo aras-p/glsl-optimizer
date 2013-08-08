@@ -27,6 +27,9 @@
 
 #include "draw_prim_assembler.h"
 
+#include "draw_fs.h"
+#include "draw_gs.h"
+
 #include "util/u_debug.h"
 #include "util/u_memory.h"
 #include "util/u_prim.h"
@@ -42,7 +45,27 @@ struct draw_assembler
 
    const struct draw_prim_info *input_prims;
    const struct draw_vertex_info *input_verts;
+
+   boolean needs_primid;
+   int primid_slot;
+   unsigned primid;
+
+   boolean is_strip;
+   boolean is_first_prim;
+   unsigned num_prims;
 };
+
+
+static boolean
+needs_primid(const struct draw_context *draw)
+{
+   const struct draw_fragment_shader *fs = draw->fs.fragment_shader;
+   const struct draw_geometry_shader *gs = draw->gs.geometry_shader;
+   if (fs && fs->info.uses_primid) {
+      return !gs || !gs->info.uses_primid;
+   }
+   return FALSE;
+}
 
 boolean
 draw_prim_assembler_is_required(const struct draw_context *draw,
@@ -56,7 +79,7 @@ draw_prim_assembler_is_required(const struct draw_context *draw,
    case PIPE_PRIM_TRIANGLE_STRIP_ADJACENCY:
       return TRUE;
    default:
-      return FALSE;
+      return needs_primid(draw);
    }
 }
 
@@ -84,7 +107,31 @@ copy_verts(struct draw_assembler *asmblr,
              asmblr->input_verts->vertex_size);
       asmblr->output_verts->count += 1;
    }
+   ++asmblr->num_prims;
 }
+
+
+static void
+inject_primid(struct draw_assembler *asmblr,
+                      unsigned idx,
+                      unsigned primid)
+{
+   int slot = asmblr->primid_slot;
+   char *input = (char*)asmblr->input_verts->verts;
+   unsigned input_offset = asmblr->input_verts->stride * idx;
+   struct vertex_header *v = (struct vertex_header*)(input + input_offset);
+
+   /* In case the backend doesn't care about it */
+   if (slot < 0) {
+      return;
+   }
+
+   memcpy(&v->data[slot][0], &primid, sizeof(primid));
+   memcpy(&v->data[slot][1], &primid, sizeof(primid));
+   memcpy(&v->data[slot][2], &primid, sizeof(primid));
+   memcpy(&v->data[slot][3], &primid, sizeof(primid));
+}
+
 
 static void
 prim_point(struct draw_assembler *asmblr,
@@ -92,8 +139,11 @@ prim_point(struct draw_assembler *asmblr,
 {
    unsigned indices[1];
 
+   if (asmblr->needs_primid) {
+      inject_primid(asmblr, idx, asmblr->primid++);
+   }
    indices[0] = idx;
-
+   
    copy_verts(asmblr, indices, 1);
 }
 
@@ -103,6 +153,18 @@ prim_line(struct draw_assembler *asmblr,
 {
    unsigned indices[2];
 
+   if (asmblr->needs_primid) {
+      if (asmblr->is_strip && asmblr->is_first_prim) {
+         inject_primid(asmblr, i0, asmblr->primid++);
+         inject_primid(asmblr, i1, asmblr->primid++);
+         asmblr->is_first_prim = FALSE;
+      } else if (asmblr->is_strip) {
+            inject_primid(asmblr, i1, asmblr->primid++);
+      } else {
+         inject_primid(asmblr, i0, asmblr->primid);
+         inject_primid(asmblr, i1, asmblr->primid++);
+      }
+   }
    indices[0] = i0;
    indices[1] = i1;
 
@@ -114,6 +176,19 @@ prim_line_adj(struct draw_assembler *asmblr,
               unsigned i0, unsigned i1, unsigned i2, unsigned i3)
 {
    unsigned indices[2];
+
+   if (asmblr->needs_primid) {
+      if (asmblr->is_strip && asmblr->is_first_prim) {
+         inject_primid(asmblr, i1, asmblr->primid++);
+         inject_primid(asmblr, i2, asmblr->primid++);
+         asmblr->is_first_prim = FALSE;
+      } else if (asmblr->is_strip) {
+         inject_primid(asmblr, i2, asmblr->primid++);
+      } else {
+         inject_primid(asmblr, i1, asmblr->primid);
+         inject_primid(asmblr, i2, asmblr->primid++);
+      }
+   }
 
    indices[0] = i1;
    indices[1] = i2;
@@ -127,6 +202,24 @@ prim_tri(struct draw_assembler *asmblr,
 {
    unsigned indices[3];
 
+   if (asmblr->needs_primid) {
+      if (asmblr->is_strip && asmblr->is_first_prim) {
+         inject_primid(asmblr, i0, asmblr->primid++);
+         inject_primid(asmblr, i1, asmblr->primid++);
+         inject_primid(asmblr, i2, asmblr->primid++);
+         asmblr->is_first_prim = FALSE;
+      } else if (asmblr->is_strip) {
+         if (asmblr->num_prims & 1) {
+            inject_primid(asmblr, i1, asmblr->primid++);
+         } else {
+            inject_primid(asmblr, i2, asmblr->primid++);
+         }
+      } else {
+         inject_primid(asmblr, i0, asmblr->primid);
+         inject_primid(asmblr, i1, asmblr->primid);
+         inject_primid(asmblr, i2, asmblr->primid++);
+      }
+   }
    indices[0] = i0;
    indices[1] = i1;
    indices[2] = i2;
@@ -141,6 +234,25 @@ prim_tri_adj(struct draw_assembler *asmblr,
 {
    unsigned indices[3];
 
+   if (asmblr->needs_primid) {
+      if (asmblr->is_strip && asmblr->is_first_prim) {
+         inject_primid(asmblr, i0, asmblr->primid++);
+         inject_primid(asmblr, i2, asmblr->primid++);
+         inject_primid(asmblr, i4, asmblr->primid++);
+         asmblr->is_first_prim = FALSE;
+      } else if (asmblr->is_strip) {
+         if (asmblr->num_prims & 1) {
+            inject_primid(asmblr, i2, asmblr->primid++);
+         } else {
+            inject_primid(asmblr, i4, asmblr->primid++);
+         }
+      } else {
+         inject_primid(asmblr, i0, asmblr->primid);
+         inject_primid(asmblr, i2, asmblr->primid);
+         inject_primid(asmblr, i4, asmblr->primid);
+         asmblr->primid++;
+      }
+   }
    indices[0] = i0;
    indices[1] = i2;
    indices[2] = i4;
@@ -148,6 +260,18 @@ prim_tri_adj(struct draw_assembler *asmblr,
    copy_verts(asmblr, indices, 3);
 }
 
+void
+draw_prim_assembler_prepare_outputs(struct draw_assembler *ia)
+{
+   struct draw_context *draw = ia->draw;
+   if (needs_primid(draw)) {
+      ia->primid_slot = draw_alloc_extra_vertex_attrib(
+         ia->draw, TGSI_SEMANTIC_PRIMID, 0);
+   } else {
+      ia->primid_slot = -1;
+   }
+   ia->primid = 0;
+}
 
 
 #define FUNC assembler_run_linear
@@ -178,18 +302,26 @@ draw_prim_assembler_run(struct draw_context *draw,
                         struct draw_prim_info *output_prims,
                         struct draw_vertex_info *output_verts)
 {
-   struct draw_assembler asmblr;
+   struct draw_assembler *asmblr = draw->ia;
    unsigned start, i;
    unsigned assembled_prim = u_assembled_prim(input_prims->prim);
    unsigned max_primitives = u_decomposed_prims_for_vertices(
       input_prims->prim, input_prims->count);
    unsigned max_verts = u_vertices_per_prim(assembled_prim) * max_primitives;
 
-   asmblr.draw = draw;
-   asmblr.output_prims = output_prims;
-   asmblr.output_verts = output_verts;
-   asmblr.input_prims = input_prims;
-   asmblr.input_verts = input_verts;
+   asmblr->output_prims = output_prims;
+   asmblr->output_verts = output_verts;
+   asmblr->input_prims = input_prims;
+   asmblr->input_verts = input_verts;
+   asmblr->is_strip =
+      (input_prims->prim == PIPE_PRIM_TRIANGLE_STRIP ||
+       input_prims->prim == PIPE_PRIM_TRIANGLE_STRIP_ADJACENCY) ||
+      (input_prims->prim == PIPE_PRIM_LINE_STRIP ||
+       input_prims->prim == PIPE_PRIM_LINE_STRIP_ADJACENCY);
+   asmblr->needs_primid = needs_primid(asmblr->draw);
+   asmblr->is_first_prim = asmblr->is_strip;
+   asmblr->primid = 0;
+   asmblr->num_prims = 0;
 
    output_prims->linear = TRUE;
    output_prims->elts = NULL;
@@ -212,14 +344,30 @@ draw_prim_assembler_run(struct draw_context *draw,
    {
       unsigned count = input_prims->primitive_lengths[i];
       if (input_prims->linear) {
-         assembler_run_linear(&asmblr, input_prims, input_verts,
+         assembler_run_linear(asmblr, input_prims, input_verts,
                               start, count);
       } else {
-         assembler_run_elts(&asmblr, input_prims, input_verts,
+         assembler_run_elts(asmblr, input_prims, input_verts,
                             start, count);
       }
    }
 
    output_prims->primitive_lengths[0] = output_verts->count;
    output_prims->count = output_verts->count;
+}
+
+struct draw_assembler *
+draw_prim_assembler_create(struct draw_context *draw)
+{
+   struct draw_assembler *ia = CALLOC_STRUCT( draw_assembler );
+
+   ia->draw = draw;
+
+   return ia;
+}
+
+void
+draw_prim_assembler_destroy(struct draw_assembler *ia)
+{
+   FREE(ia);
 }

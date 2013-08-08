@@ -46,6 +46,14 @@
 
 #include "draw/draw_private.h"
 
+struct draw_assembler;
+
+struct draw_assembler *
+draw_prim_assembler_create(struct draw_context *draw);
+
+void
+draw_prim_assembler_destroy(struct draw_assembler *ia);
+
 boolean
 draw_prim_assembler_is_required(const struct draw_context *draw,
                                 const struct draw_prim_info *prim_info,
@@ -57,6 +65,10 @@ draw_prim_assembler_run(struct draw_context *draw,
                         const struct draw_vertex_info *in_vert_info,
                         struct draw_prim_info *out_prim_info,
                         struct draw_vertex_info *out_vert_info);
+
+
+void
+draw_prim_assembler_prepare_outputs(struct draw_assembler *ia);
 
 
 #endif

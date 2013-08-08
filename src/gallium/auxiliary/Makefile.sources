@@ -13,7 +13,6 @@ C_SOURCES := \
 	draw/draw_pipe_clip.c \
 	draw/draw_pipe_cull.c \
 	draw/draw_pipe_flatshade.c \
-        draw/draw_pipe_ia.c \
 	draw/draw_pipe_offset.c \
 	draw/draw_pipe_pstipple.c \
 	draw/draw_pipe_stipple.c \
