@@ -930,22 +930,6 @@ gen6_emit_3DSTATE_VERTEX_ELEMENTS(const struct ilo_dev_info *dev,
    ilo_cp_end(cp);
 }
 
-/**
- * Translate an index size to the matching hardware index format.
- */
-static inline int
-gen6_translate_index_size(int size)
-{
-   switch (size) {
-   case 4: return BRW_INDEX_DWORD;
-   case 2: return BRW_INDEX_WORD;
-   case 1: return BRW_INDEX_BYTE;
-   default:
-      assert(!"unknown index size");
-      return BRW_INDEX_BYTE;
-   }
-}
-
 static inline void
 gen6_emit_3DSTATE_INDEX_BUFFER(const struct ilo_dev_info *dev,
                                const struct ilo_ib_state *ib,
@@ -963,7 +947,21 @@ gen6_emit_3DSTATE_INDEX_BUFFER(const struct ilo_dev_info *dev,
    if (!buf)
       return;
 
-   format = gen6_translate_index_size(ib->hw_index_size);
+   switch (ib->hw_index_size) {
+   case 4:
+      format = BRW_INDEX_DWORD;
+      break;
+   case 2:
+      format = BRW_INDEX_WORD;
+      break;
+   case 1:
+      format = BRW_INDEX_BYTE;
+      break;
+   default:
+      assert(!"unknown index size");
+      format = BRW_INDEX_BYTE;
+      break;
+   }
 
    /*
     * set start_offset to 0 here and adjust pipe_draw_info::start with
