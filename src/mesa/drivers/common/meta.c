@@ -704,9 +704,14 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
       _mesa_LoadIdentity();
       _mesa_MatrixMode(GL_PROJECTION);
       _mesa_LoadIdentity();
-      _mesa_Ortho(0.0, ctx->DrawBuffer->Width,
-                  0.0, ctx->DrawBuffer->Height,
-                  -1.0, 1.0);
+
+      /* glOrtho with width = 0 or height = 0 generates GL_INVALID_VALUE.
+       * This can occur when there is no draw buffer.
+       */
+      if (ctx->DrawBuffer->Width != 0 && ctx->DrawBuffer->Height != 0)
+         _mesa_Ortho(0.0, ctx->DrawBuffer->Width,
+                     0.0, ctx->DrawBuffer->Height,
+                     -1.0, 1.0);
    }
 
    if (state & MESA_META_CLIP) {
