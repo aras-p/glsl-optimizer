@@ -2040,6 +2040,10 @@ static INLINE void si_shader_selector_key(struct pipe_context *ctx,
 		for (i = 0; i < rctx->vertex_elements->count; ++i)
 			key->vs.instance_divisors[i] = rctx->vertex_elements->elements[i].instance_divisor;
 
+		if (rctx->queued.named.rasterizer->clip_plane_enable & 0xf0)
+			key->vs.ucps_enabled |= 0x2;
+		if (rctx->queued.named.rasterizer->clip_plane_enable & 0xf)
+			key->vs.ucps_enabled |= 0x1;
 	} else if (sel->type == PIPE_SHADER_FRAGMENT) {
 		if (sel->fs_write_all)
 			key->ps.nr_cbufs = rctx->framebuffer.nr_cbufs;

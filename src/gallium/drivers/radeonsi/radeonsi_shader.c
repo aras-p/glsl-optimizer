@@ -565,6 +565,7 @@ static void si_llvm_emit_clipvertex(struct lp_build_tgsi_context * bld_base,
 				    LLVMValueRef (*pos)[9], unsigned index)
 {
 	struct si_shader_context *si_shader_ctx = si_shader_context(bld_base);
+	struct si_pipe_shader *shader = si_shader_ctx->shader;
 	struct lp_build_context *base = &bld_base->base;
 	struct lp_build_context *uint = &si_shader_ctx->radeon_bld.soa.bld_base.uint_bld;
 	unsigned reg_index;
@@ -582,6 +583,11 @@ static void si_llvm_emit_clipvertex(struct lp_build_tgsi_context * bld_base,
 
 	for (reg_index = 0; reg_index < 2; reg_index ++) {
 		LLVMValueRef *args = pos[2 + reg_index];
+
+		if (!(shader->key.vs.ucps_enabled & (1 << reg_index)))
+			continue;
+
+		shader->shader.clip_dist_write |= 0xf << (4 * reg_index);
 
 		args[5] =
 		args[6] =
@@ -709,13 +715,15 @@ handle_semantic:
 				}
 				break;
 			case TGSI_SEMANTIC_CLIPDIST:
+				if (!(si_shader_ctx->shader->key.vs.ucps_enabled &
+				      (1 << d->Semantic.Index)))
+					continue;
 				shader->clip_dist_write |=
 					d->Declaration.UsageMask << (d->Semantic.Index << 2);
 				target = V_008DFC_SQ_EXP_POS + 2 + d->Semantic.Index;
 				break;
 			case TGSI_SEMANTIC_CLIPVERTEX:
 				si_llvm_emit_clipvertex(bld_base, pos_args, index);
-				shader->clip_dist_write = 0xFF;
 				continue;
 			case TGSI_SEMANTIC_FOG:
 			case TGSI_SEMANTIC_GENERIC:

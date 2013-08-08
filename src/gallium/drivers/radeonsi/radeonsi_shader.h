@@ -128,6 +128,7 @@ union si_shader_key {
 	} ps;
 	struct {
 		unsigned	instance_divisors[PIPE_MAX_ATTRIBS];
+		unsigned	ucps_enabled:2;
 	} vs;
 };
 
