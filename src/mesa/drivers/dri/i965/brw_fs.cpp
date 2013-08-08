@@ -2118,6 +2118,20 @@ fs_visitor::register_coalesce()
 	    }
 	 }
 
+         if (has_source_modifiers) {
+            for (int i = 0; i < 3; i++) {
+               if (scan_inst->src[i].file == GRF &&
+                   scan_inst->src[i].reg == inst->dst.reg &&
+                   scan_inst->src[i].reg_offset == inst->dst.reg_offset &&
+                   inst->dst.type != scan_inst->src[i].type)
+               {
+                 interfered = true;
+                 break;
+               }
+            }
+         }
+
+
 	 /* The gen6 MATH instruction can't handle source modifiers or
 	  * unusual register regions, so avoid coalescing those for
 	  * now.  We should do something more specific.

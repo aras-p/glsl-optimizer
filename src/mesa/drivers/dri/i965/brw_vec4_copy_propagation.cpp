@@ -206,14 +206,16 @@ vec4_visitor::try_copy_propagation(vec4_instruction *inst, int arg,
    if (inst->src[arg].negate)
       value.negate = !value.negate;
 
-   bool has_source_modifiers = (value.negate || value.abs ||
-                                value.swizzle != BRW_SWIZZLE_XYZW ||
-                                value.file == UNIFORM);
+   bool has_source_modifiers = value.negate || value.abs;
 
    /* gen6 math and gen7+ SENDs from GRFs ignore source modifiers on
     * instructions.
     */
-   if (has_source_modifiers && !can_do_source_mods(inst))
+   if ((has_source_modifiers || value.file == UNIFORM ||
+        value.swizzle != BRW_SWIZZLE_XYZW) && !can_do_source_mods(inst))
+      return false;
+
+   if (has_source_modifiers && value.type != inst->src[arg].type)
       return false;
 
    bool is_3src_inst = (inst->opcode == BRW_OPCODE_LRP ||

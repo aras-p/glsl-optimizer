@@ -221,6 +221,9 @@ fs_visitor::try_copy_propagate(fs_inst *inst, int arg, acp_entry *entry)
         entry->src.smear != -1) && !can_do_source_mods(inst))
       return false;
 
+   if (has_source_modifiers && entry->dst.type != inst->src[arg].type)
+      return false;
+
    inst->src[arg].file = entry->src.file;
    inst->src[arg].reg = entry->src.reg;
    inst->src[arg].reg_offset = entry->src.reg_offset;
