@@ -145,29 +145,6 @@ ilo_gpe_gen6_get(void);
 /* Below are helpers for other GENs */
 
 /**
- * Translate a depth/stencil pipe format to the matching hardware
- * format.  Return -1 on errors.
- */
-static inline int
-gen6_translate_depth_format(enum pipe_format format)
-{
-   switch (format) {
-   case PIPE_FORMAT_Z16_UNORM:
-      return BRW_DEPTHFORMAT_D16_UNORM;
-   case PIPE_FORMAT_Z32_FLOAT:
-      return BRW_DEPTHFORMAT_D32_FLOAT;
-   case PIPE_FORMAT_Z24X8_UNORM:
-      return BRW_DEPTHFORMAT_D24_UNORM_X8_UINT;
-   case PIPE_FORMAT_Z24_UNORM_S8_UINT:
-      return BRW_DEPTHFORMAT_D24_UNORM_S8_UINT;
-   case PIPE_FORMAT_Z32_FLOAT_S8X24_UINT:
-      return BRW_DEPTHFORMAT_D32_FLOAT_S8X24_UINT;
-   default:
-      return -1;
-   }
-}
-
-/**
  * Translate winsys tiling to hardware tiling.
  */
 static inline int
@@ -266,23 +243,22 @@ ilo_gpe_gen6_fill_3dstate_sf_raster(const struct ilo_dev_info *dev,
 
          /* separate stencil */
          switch (depth_format) {
-         case PIPE_FORMAT_Z24_UNORM_S8_UINT:
-            depth_format = PIPE_FORMAT_Z24X8_UNORM;
+         case PIPE_FORMAT_Z16_UNORM:
+            format = BRW_DEPTHFORMAT_D16_UNORM;
             break;
+         case PIPE_FORMAT_Z32_FLOAT:
          case PIPE_FORMAT_Z32_FLOAT_S8X24_UINT:
-            depth_format = PIPE_FORMAT_Z32_FLOAT;;
+            format = BRW_DEPTHFORMAT_D32_FLOAT;
             break;
-         case PIPE_FORMAT_S8_UINT:
-            depth_format = PIPE_FORMAT_NONE;
+         case PIPE_FORMAT_Z24X8_UNORM:
+         case PIPE_FORMAT_Z24_UNORM_S8_UINT:
+            format = BRW_DEPTHFORMAT_D24_UNORM_X8_UINT;
             break;
          default:
+            /* FLOAT surface is assumed when there is no depth buffer */
+            format = BRW_DEPTHFORMAT_D32_FLOAT;
             break;
          }
-
-         format = gen6_translate_depth_format(depth_format);
-         /* FLOAT surface is assumed when there is no depth buffer */
-         if (format < 0)
-            format = BRW_DEPTHFORMAT_D32_FLOAT;
 
          payload[0] |= format << GEN7_SF_DEPTH_BUFFER_SURFACE_FORMAT_SHIFT;
       }
