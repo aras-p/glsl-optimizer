@@ -155,7 +155,8 @@ struct ilo_dsa_state {
    /* DEPTH_STENCIL_STATE */
    uint32_t payload[3];
 
-   struct pipe_alpha_state alpha;
+   uint32_t dw_alpha;
+   ubyte alpha_ref;
 };
 
 struct ilo_blend_cso {

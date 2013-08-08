@@ -660,7 +660,7 @@ gen6_pipeline_wm(struct ilo_3d_pipeline *p,
        DIRTY(RASTERIZER) || session->kernel_bo_changed) {
       const int num_samplers = ilo->sampler[PIPE_SHADER_FRAGMENT].count;
       const bool dual_blend = ilo->blend->dual_blend;
-      const bool cc_may_kill = (ilo->dsa->alpha.enabled ||
+      const bool cc_may_kill = (ilo->dsa->dw_alpha ||
                                 ilo->blend->alpha_to_coverage);
 
       if (p->dev->gen == ILO_GEN(6) && session->hw_ctx_changed)
@@ -803,7 +803,7 @@ gen6_pipeline_state_cc(struct ilo_3d_pipeline *p,
    /* BLEND_STATE */
    if (DIRTY(BLEND) || DIRTY(FB) || DIRTY(DSA)) {
       p->state.BLEND_STATE = gen6_emit_BLEND_STATE(p->dev,
-            ilo->blend, &ilo->fb, &ilo->dsa->alpha, p->cp);
+            ilo->blend, &ilo->fb, ilo->dsa, p->cp);
 
       session->cc_state_blend_changed = true;
    }
@@ -812,7 +812,7 @@ gen6_pipeline_state_cc(struct ilo_3d_pipeline *p,
    if (DIRTY(DSA) || DIRTY(STENCIL_REF) || DIRTY(BLEND_COLOR)) {
       p->state.COLOR_CALC_STATE =
          gen6_emit_COLOR_CALC_STATE(p->dev, &ilo->stencil_ref,
-               ilo->dsa->alpha.ref_value, &ilo->blend_color, p->cp);
+               ilo->dsa->alpha_ref, &ilo->blend_color, p->cp);
 
       session->cc_state_cc_changed = true;
    }

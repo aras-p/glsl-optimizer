@@ -470,7 +470,7 @@ gen7_pipeline_wm(struct ilo_3d_pipeline *p,
 {
    /* 3DSTATE_WM */
    if (DIRTY(FS) || DIRTY(BLEND) || DIRTY(DSA) || DIRTY(RASTERIZER)) {
-      const bool cc_may_kill = (ilo->dsa->alpha.enabled ||
+      const bool cc_may_kill = (ilo->dsa->dw_alpha ||
                                 ilo->blend->alpha_to_coverage);
 
       if (p->dev->gen == ILO_GEN(7) && session->hw_ctx_changed)

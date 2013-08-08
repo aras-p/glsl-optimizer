@@ -2031,7 +2031,7 @@ gen6_emit_CC_VIEWPORT(const struct ilo_dev_info *dev,
 static inline uint32_t
 gen6_emit_COLOR_CALC_STATE(const struct ilo_dev_info *dev,
                            const struct pipe_stencil_ref *stencil_ref,
-                           float alpha_ref,
+                           ubyte alpha_ref,
                            const struct pipe_blend_color *blend_color,
                            struct ilo_cp *cp)
 {
@@ -2047,7 +2047,7 @@ gen6_emit_COLOR_CALC_STATE(const struct ilo_dev_info *dev,
    dw[0] = stencil_ref->ref_value[0] << 24 |
            stencil_ref->ref_value[1] << 16 |
            BRW_ALPHATEST_FORMAT_UNORM8;
-   dw[1] = float_to_ubyte(alpha_ref);
+   dw[1] = alpha_ref;
    dw[2] = fui(blend_color->color[0]);
    dw[3] = fui(blend_color->color[1]);
    dw[4] = fui(blend_color->color[2]);
@@ -2056,33 +2056,11 @@ gen6_emit_COLOR_CALC_STATE(const struct ilo_dev_info *dev,
    return state_offset;
 }
 
-/**
- * Translate a pipe DSA test function to the matching hardware compare
- * function.
- */
-static int
-gen6_translate_dsa_func(unsigned func)
-{
-   switch (func) {
-   case PIPE_FUNC_NEVER:      return BRW_COMPAREFUNCTION_NEVER;
-   case PIPE_FUNC_LESS:       return BRW_COMPAREFUNCTION_LESS;
-   case PIPE_FUNC_EQUAL:      return BRW_COMPAREFUNCTION_EQUAL;
-   case PIPE_FUNC_LEQUAL:     return BRW_COMPAREFUNCTION_LEQUAL;
-   case PIPE_FUNC_GREATER:    return BRW_COMPAREFUNCTION_GREATER;
-   case PIPE_FUNC_NOTEQUAL:   return BRW_COMPAREFUNCTION_NOTEQUAL;
-   case PIPE_FUNC_GEQUAL:     return BRW_COMPAREFUNCTION_GEQUAL;
-   case PIPE_FUNC_ALWAYS:     return BRW_COMPAREFUNCTION_ALWAYS;
-   default:
-      assert(!"unknown depth/stencil/alpha test function");
-      return BRW_COMPAREFUNCTION_NEVER;
-   }
-}
-
 static inline uint32_t
 gen6_emit_BLEND_STATE(const struct ilo_dev_info *dev,
                       const struct ilo_blend_state *blend,
                       const struct ilo_fb_state *fb,
-                      const struct pipe_alpha_state *alpha,
+                      const struct ilo_dsa_state *dsa,
                       struct ilo_cp *cp)
 {
    const int state_align = 64 / 4;
@@ -2101,7 +2079,7 @@ gen6_emit_BLEND_STATE(const struct ilo_dev_info *dev,
    assert(num_targets <= 8);
 
    if (!num_targets) {
-      if (!alpha->enabled)
+      if (!dsa->dw_alpha)
          return 0;
       /* to be able to reference alpha func */
       num_targets = 1;
@@ -2195,10 +2173,8 @@ gen6_emit_BLEND_STATE(const struct ilo_dev_info *dev,
        *     "Alpha Test can only be enabled if Pixel Shader outputs a float
        *      alpha value."
        */
-      if (alpha->enabled && !rt_is_pure_integer) {
-         dw[1] |= 1 << 16 |
-                  gen6_translate_dsa_func(alpha->func) << 13;
-      }
+      if (!rt_is_pure_integer)
+         dw[1] |= dsa->dw_alpha;
 
       dw += 2;
    }

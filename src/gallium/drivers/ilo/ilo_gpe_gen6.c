@@ -226,6 +226,28 @@ gen6_translate_shadow_func(unsigned func)
    }
 }
 
+/**
+ * Translate a pipe DSA test function to the matching hardware compare
+ * function.
+ */
+static int
+gen6_translate_dsa_func(unsigned func)
+{
+   switch (func) {
+   case PIPE_FUNC_NEVER:      return BRW_COMPAREFUNCTION_NEVER;
+   case PIPE_FUNC_LESS:       return BRW_COMPAREFUNCTION_LESS;
+   case PIPE_FUNC_EQUAL:      return BRW_COMPAREFUNCTION_EQUAL;
+   case PIPE_FUNC_LEQUAL:     return BRW_COMPAREFUNCTION_LEQUAL;
+   case PIPE_FUNC_GREATER:    return BRW_COMPAREFUNCTION_GREATER;
+   case PIPE_FUNC_NOTEQUAL:   return BRW_COMPAREFUNCTION_NOTEQUAL;
+   case PIPE_FUNC_GEQUAL:     return BRW_COMPAREFUNCTION_GEQUAL;
+   case PIPE_FUNC_ALWAYS:     return BRW_COMPAREFUNCTION_ALWAYS;
+   default:
+      assert(!"unknown depth/stencil/alpha test function");
+      return BRW_COMPAREFUNCTION_NEVER;
+   }
+}
+
 static void
 ve_init_cso(const struct ilo_dev_info *dev,
             const struct pipe_vertex_element *state,
@@ -1585,12 +1607,10 @@ ilo_gpe_init_dsa(const struct ilo_dev_info *dev,
    const struct pipe_depth_state *depth = &state->depth;
    const struct pipe_stencil_state *stencil0 = &state->stencil[0];
    const struct pipe_stencil_state *stencil1 = &state->stencil[1];
+   const struct pipe_alpha_state *alpha = &state->alpha;
    uint32_t *dw;
 
    ILO_GPE_VALID_GEN(dev, 6, 7);
-
-   /* copy alpha state for later use */
-   dsa->alpha = state->alpha;
 
    STATIC_ASSERT(Elements(dsa->payload) >= 3);
    dw = dsa->payload;
@@ -1658,6 +1678,17 @@ ilo_gpe_init_dsa(const struct ilo_dev_info *dev,
       dw[2] |= gen6_translate_dsa_func(depth->func) << 27;
    else
       dw[2] |= BRW_COMPAREFUNCTION_ALWAYS << 27;
+
+   /* dw_alpha will be ORed to BLEND_STATE */
+   if (alpha->enabled) {
+      dsa->dw_alpha = 1 << 16 |
+                      gen6_translate_dsa_func(alpha->func) << 13;
+   }
+   else {
+      dsa->dw_alpha = 0;
+   }
+
+   dsa->alpha_ref = float_to_ubyte(alpha->ref_value);
 }
 
 void
