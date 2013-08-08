@@ -650,10 +650,10 @@ ilo_gpe_init_view_surface_for_texture_gen7(const struct ilo_dev_info *dev,
    surf->bo = tex->bo;
 }
 
-static int
-gen7_estimate_command_size(const struct ilo_dev_info *dev,
-                           enum ilo_gpe_gen7_command cmd,
-                           int arg)
+int
+ilo_gpe_gen7_estimate_command_size(const struct ilo_dev_info *dev,
+                                   enum ilo_gpe_gen7_command cmd,
+                                   int arg)
 {
    static const struct {
       int header;
@@ -738,10 +738,10 @@ gen7_estimate_command_size(const struct ilo_dev_info *dev,
    return (likely(count)) ? header + body * count : 0;
 }
 
-static int
-gen7_estimate_state_size(const struct ilo_dev_info *dev,
-                         enum ilo_gpe_gen7_state state,
-                         int arg)
+int
+ilo_gpe_gen7_estimate_state_size(const struct ilo_dev_info *dev,
+                                 enum ilo_gpe_gen7_state state,
+                                 int arg)
 {
    static const struct {
       int alignment;
@@ -786,22 +786,4 @@ gen7_estimate_state_size(const struct ilo_dev_info *dev,
    }
 
    return estimate;
-}
-
-static void
-gen7_init(struct ilo_gpe_gen7 *gen7)
-{
-   gen7->estimate_command_size = gen7_estimate_command_size;
-   gen7->estimate_state_size = gen7_estimate_state_size;
-}
-
-static struct ilo_gpe_gen7 gen7_gpe;
-
-const struct ilo_gpe_gen7 *
-ilo_gpe_gen7_get(void)
-{
-   if (!gen7_gpe.estimate_command_size)
-      gen7_init(&gen7_gpe);
-
-   return &gen7_gpe;
 }

@@ -132,23 +132,15 @@ enum ilo_gpe_gen7_state {
    ILO_GPE_GEN7_STATE_COUNT,
 };
 
-/**
- * GEN7 graphics processing engine
- *
- * \see ilo_gpe_gen6
- */
-struct ilo_gpe_gen7 {
-   int (*estimate_command_size)(const struct ilo_dev_info *dev,
-                                enum ilo_gpe_gen7_command cmd,
-                                int arg);
+int
+ilo_gpe_gen7_estimate_command_size(const struct ilo_dev_info *dev,
+                                   enum ilo_gpe_gen7_command cmd,
+                                   int arg);
 
-   int (*estimate_state_size)(const struct ilo_dev_info *dev,
-                              enum ilo_gpe_gen7_state state,
-                              int arg);
-};
-
-const struct ilo_gpe_gen7 *
-ilo_gpe_gen7_get(void);
+int
+ilo_gpe_gen7_estimate_state_size(const struct ilo_dev_info *dev,
+                                 enum ilo_gpe_gen7_state state,
+                                 int arg);
 
 static inline void
 gen7_emit_GPGPU_WALKER(const struct ilo_dev_info *dev,

@@ -2456,10 +2456,10 @@ ilo_gpe_init_sampler_cso(const struct ilo_dev_info *dev,
    }
 }
 
-static int
-gen6_estimate_command_size(const struct ilo_dev_info *dev,
-                           enum ilo_gpe_gen6_command cmd,
-                           int arg)
+int
+ilo_gpe_gen6_estimate_command_size(const struct ilo_dev_info *dev,
+                                   enum ilo_gpe_gen6_command cmd,
+                                   int arg)
 {
    static const struct {
       int header;
@@ -2517,10 +2517,10 @@ gen6_estimate_command_size(const struct ilo_dev_info *dev,
    return (likely(count)) ? header + body * count : 0;
 }
 
-static int
-gen6_estimate_state_size(const struct ilo_dev_info *dev,
-                         enum ilo_gpe_gen6_state state,
-                         int arg)
+int
+ilo_gpe_gen6_estimate_state_size(const struct ilo_dev_info *dev,
+                                 enum ilo_gpe_gen6_state state,
+                                 int arg)
 {
    static const struct {
       int alignment;
@@ -2566,15 +2566,4 @@ gen6_estimate_state_size(const struct ilo_dev_info *dev,
    }
 
    return estimate;
-}
-
-static const struct ilo_gpe_gen6 gen6_gpe = {
-   .estimate_command_size = gen6_estimate_command_size,
-   .estimate_state_size = gen6_estimate_state_size,
-};
-
-const struct ilo_gpe_gen6 *
-ilo_gpe_gen6_get(void)
-{
-   return &gen6_gpe;
 }

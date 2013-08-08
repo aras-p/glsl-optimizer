@@ -641,7 +641,6 @@ ilo_3d_pipeline_emit_draw_gen7(struct ilo_3d_pipeline *p,
 
 static int
 gen7_pipeline_estimate_commands(const struct ilo_3d_pipeline *p,
-                                const struct ilo_gpe_gen7 *gen7,
                                 const struct ilo_context *ilo)
 {
    static int size;
@@ -682,7 +681,7 @@ gen7_pipeline_estimate_commands(const struct ilo_3d_pipeline *p,
       }
 
       if (count) {
-         size += gen7->estimate_command_size(p->dev,
+         size += ilo_gpe_gen7_estimate_command_size(p->dev,
                cmd, count);
       }
    }
@@ -692,7 +691,6 @@ gen7_pipeline_estimate_commands(const struct ilo_3d_pipeline *p,
 
 static int
 gen7_pipeline_estimate_states(const struct ilo_3d_pipeline *p,
-                              const struct ilo_gpe_gen7 *gen7,
                               const struct ilo_context *ilo)
 {
    static int static_size;
@@ -720,7 +718,7 @@ gen7_pipeline_estimate_states(const struct ilo_3d_pipeline *p,
       int i;
 
       for (i = 0; i < Elements(static_states); i++) {
-         static_size += gen7->estimate_state_size(p->dev,
+         static_size += ilo_gpe_gen7_estimate_state_size(p->dev,
                static_states[i].state,
                static_states[i].count);
       }
@@ -740,7 +738,7 @@ gen7_pipeline_estimate_states(const struct ilo_3d_pipeline *p,
    }
 
    if (count) {
-      size += gen7->estimate_state_size(p->dev,
+      size += ilo_gpe_gen7_estimate_state_size(p->dev,
             ILO_GPE_GEN7_SURFACE_STATE, count);
    }
 
@@ -748,9 +746,9 @@ gen7_pipeline_estimate_states(const struct ilo_3d_pipeline *p,
    for (shader_type = 0; shader_type < PIPE_SHADER_TYPES; shader_type++) {
       count = ilo->sampler[shader_type].count;
       if (count) {
-         size += gen7->estimate_state_size(p->dev,
+         size += ilo_gpe_gen7_estimate_state_size(p->dev,
                ILO_GPE_GEN7_SAMPLER_BORDER_COLOR_STATE, count);
-         size += gen7->estimate_state_size(p->dev,
+         size += ilo_gpe_gen7_estimate_state_size(p->dev,
                ILO_GPE_GEN7_SAMPLER_STATE, count);
       }
    }
@@ -761,7 +759,7 @@ gen7_pipeline_estimate_states(const struct ilo_3d_pipeline *p,
       const int pcb_size =
          ilo_shader_get_kernel_param(ilo->vs, ILO_KERNEL_VS_PCB_UCP_SIZE);
 
-      size += gen7->estimate_state_size(p->dev,
+      size += ilo_gpe_gen7_estimate_state_size(p->dev,
             ILO_GPE_GEN7_PUSH_CONSTANT_BUFFER, pcb_size);
    }
 
@@ -773,7 +771,6 @@ ilo_3d_pipeline_estimate_size_gen7(struct ilo_3d_pipeline *p,
                                    enum ilo_3d_pipeline_action action,
                                    const void *arg)
 {
-   const struct ilo_gpe_gen7 *gen7 = ilo_gpe_gen7_get();
    int size;
 
    switch (action) {
@@ -781,14 +778,14 @@ ilo_3d_pipeline_estimate_size_gen7(struct ilo_3d_pipeline *p,
       {
          const struct ilo_context *ilo = arg;
 
-         size = gen7_pipeline_estimate_commands(p, gen7, ilo) +
-            gen7_pipeline_estimate_states(p, gen7, ilo);
+         size = gen7_pipeline_estimate_commands(p, ilo) +
+            gen7_pipeline_estimate_states(p, ilo);
       }
       break;
    case ILO_3D_PIPELINE_FLUSH:
    case ILO_3D_PIPELINE_WRITE_TIMESTAMP:
    case ILO_3D_PIPELINE_WRITE_DEPTH_COUNT:
-      size = gen7->estimate_command_size(p->dev,
+      size = ilo_gpe_gen7_estimate_command_size(p->dev,
             ILO_GPE_GEN7_PIPE_CONTROL, 1);
       break;
    default:

@@ -115,26 +115,15 @@ enum ilo_gpe_gen6_state {
    ILO_GPE_GEN6_STATE_COUNT,
 };
 
-/**
- * GEN6 graphics processing engine
- *
- * This is a low-level interface.  It does not handle the interdependencies
- * between states.
- */
-struct ilo_gpe_gen6 {
-   int (*estimate_command_size)(const struct ilo_dev_info *dev,
-                                enum ilo_gpe_gen6_command cmd,
-                                int arg);
+int
+ilo_gpe_gen6_estimate_command_size(const struct ilo_dev_info *dev,
+                                   enum ilo_gpe_gen6_command cmd,
+                                   int arg);
 
-   int (*estimate_state_size)(const struct ilo_dev_info *dev,
-                              enum ilo_gpe_gen6_state state,
-                              int arg);
-};
-
-const struct ilo_gpe_gen6 *
-ilo_gpe_gen6_get(void);
-
-/* Below are helpers for other GENs */
+int
+ilo_gpe_gen6_estimate_state_size(const struct ilo_dev_info *dev,
+                                 enum ilo_gpe_gen6_state state,
+                                 int arg);
 
 /**
  * Translate winsys tiling to hardware tiling.
