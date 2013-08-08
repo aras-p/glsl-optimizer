@@ -1223,10 +1223,8 @@ _mesa_BindRenderbufferEXT(GLenum target, GLuint renderbuffer)
 
 
 /**
- * If the given renderbuffer is anywhere attached to the framebuffer, detach
- * the renderbuffer.
- * This is used when a renderbuffer object is deleted.
- * The spec calls for unbinding.
+ * Remove the specified renderbuffer or texture from any attachment point in
+ * the framebuffer.
  *
  * \returns
  * \c true if the renderbuffer was detached from an attachment point.  \c
@@ -1241,7 +1239,8 @@ _mesa_detach_renderbuffer(struct gl_context *ctx,
    bool progress = false;
 
    for (i = 0; i < BUFFER_COUNT; i++) {
-      if (fb->Attachment[i].Renderbuffer == att) {
+      if (fb->Attachment[i].Texture == att
+          || fb->Attachment[i].Renderbuffer == att) {
          _mesa_remove_attachment(ctx, &fb->Attachment[i]);
          progress = true;
       }
@@ -1286,6 +1285,23 @@ _mesa_DeleteRenderbuffers(GLsizei n, const GLuint *renderbuffers)
                _mesa_BindRenderbuffer(GL_RENDERBUFFER_EXT, 0);
             }
 
+            /* Section 4.4.2 (Attaching Images to Framebuffer Objects),
+             * subsection "Attaching Renderbuffer Images to a Framebuffer," of
+             * the OpenGL 3.1 spec says:
+             *
+             *     "If a renderbuffer object is deleted while its image is
+             *     attached to one or more attachment points in the currently
+             *     bound framebuffer, then it is as if FramebufferRenderbuffer
+             *     had been called, with a renderbuffer of 0, for each
+             *     attachment point to which this image was attached in the
+             *     currently bound framebuffer. In other words, this
+             *     renderbuffer image is first detached from all attachment
+             *     points in the currently bound framebuffer. Note that the
+             *     renderbuffer image is specifically not detached from any
+             *     non-bound framebuffers. Detaching the image from any
+             *     non-bound framebuffers is the responsibility of the
+             *     application.
+             */
             if (_mesa_is_user_fbo(ctx->DrawBuffer)) {
                _mesa_detach_renderbuffer(ctx, ctx->DrawBuffer, rb);
             }

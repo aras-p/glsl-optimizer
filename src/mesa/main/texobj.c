@@ -1041,23 +1041,35 @@ static void
 unbind_texobj_from_fbo(struct gl_context *ctx,
                        struct gl_texture_object *texObj)
 {
-   const GLuint n = (ctx->DrawBuffer == ctx->ReadBuffer) ? 1 : 2;
-   GLuint i;
+   bool progress = false;
 
-   for (i = 0; i < n; i++) {
-      struct gl_framebuffer *fb = (i == 0) ? ctx->DrawBuffer : ctx->ReadBuffer;
-      if (_mesa_is_user_fbo(fb)) {
-         GLuint j;
-         for (j = 0; j < BUFFER_COUNT; j++) {
-            if (fb->Attachment[j].Type == GL_TEXTURE &&
-                fb->Attachment[j].Texture == texObj) {
-	       /* Vertices are already flushed by _mesa_DeleteTextures */
-	       ctx->NewState |= _NEW_BUFFERS;
-               _mesa_remove_attachment(ctx, fb->Attachment + j);         
-            }
-         }
-      }
+   /* Section 4.4.2 (Attaching Images to Framebuffer Objects), subsection
+    * "Attaching Texture Images to a Framebuffer," of the OpenGL 3.1 spec
+    * says:
+    *
+    *     "If a texture object is deleted while its image is attached to one
+    *     or more attachment points in the currently bound framebuffer, then
+    *     it is as if FramebufferTexture* had been called, with a texture of
+    *     zero, for each attachment point to which this image was attached in
+    *     the currently bound framebuffer. In other words, this texture image
+    *     is first detached from all attachment points in the currently bound
+    *     framebuffer. Note that the texture image is specifically not
+    *     detached from any other framebuffer objects. Detaching the texture
+    *     image from any other framebuffer objects is the responsibility of
+    *     the application."
+    */
+   if (_mesa_is_user_fbo(ctx->DrawBuffer)) {
+      progress = _mesa_detach_renderbuffer(ctx, ctx->DrawBuffer, texObj);
    }
+   if (_mesa_is_user_fbo(ctx->ReadBuffer)
+       && ctx->ReadBuffer != ctx->DrawBuffer) {
+      progress = _mesa_detach_renderbuffer(ctx, ctx->ReadBuffer, texObj)
+         || progress;
+   }
+
+   if (progress)
+      /* Vertices are already flushed by _mesa_DeleteTextures */
+      ctx->NewState |= _NEW_BUFFERS;
 }
 
 
