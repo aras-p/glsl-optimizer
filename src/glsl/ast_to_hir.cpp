@@ -1967,6 +1967,21 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
 		       _mesa_glsl_shader_target_name(state->target));
    }
 
+   /* Section 6.1.1 (Function Calling Conventions) of the GLSL 1.10 spec says:
+    *
+    *     "However, the const qualifier cannot be used with out or inout."
+    *
+    * The same section of the GLSL 4.40 spec further clarifies this saying:
+    *
+    *     "The const qualifier cannot be used with out or inout, or a
+    *     compile-time error results."
+    */
+   if (is_parameter && qual->flags.q.constant && qual->flags.q.out) {
+      _mesa_glsl_error(loc, state,
+                       "`const' may not be applied to `out' or `inout' "
+                       "function parameters");
+   }
+
    /* If there is no qualifier that changes the mode of the variable, leave
     * the setting alone.
     */
