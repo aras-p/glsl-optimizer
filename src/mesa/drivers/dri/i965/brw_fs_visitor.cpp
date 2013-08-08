@@ -361,12 +361,12 @@ fs_visitor::visit(ir_expression *ir)
       break;
    case ir_unop_neg:
       op[0].negate = !op[0].negate;
-      this->result = op[0];
+      emit(MOV(this->result, op[0]));
       break;
    case ir_unop_abs:
       op[0].abs = true;
       op[0].negate = false;
-      this->result = op[0];
+      emit(MOV(this->result, op[0]));
       break;
    case ir_unop_sign:
       temp = fs_reg(this, ir->type);
