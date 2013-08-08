@@ -1943,6 +1943,7 @@ lp_build_size_query_soa(struct gallivm_state *gallivm,
                         struct lp_sampler_dynamic_state *dynamic_state,
                         struct lp_type int_type,
                         unsigned texture_unit,
+                        unsigned target,
                         boolean need_nr_mips,
                         boolean scalar_lod,
                         LLVMValueRef explicit_lod,
@@ -1955,9 +1956,36 @@ lp_build_size_query_soa(struct gallivm_state *gallivm,
    unsigned num_lods = 1;
    struct lp_build_context bld_int_vec;
 
-   dims = texture_dims(static_state->target);
+   /*
+    * Do some sanity verification about bound texture and shader dcl target.
+    * Not entirely sure what's possible but assume array/non-array
+    * always compatible (probably not ok for OpenGL but d3d10 has no
+    * distinction of arrays at the resource level).
+    * Everything else looks bogus (though not entirely sure about rect/2d).
+    * Currently disabled because it causes assertion failures if there's
+    * nothing bound (or rather a dummy texture, not that this case would
+    * return the right values).
+    */
+   if (0 && static_state->target != target) {
+      if (static_state->target == PIPE_TEXTURE_1D)
+         assert(target == PIPE_TEXTURE_1D_ARRAY);
+      else if (static_state->target == PIPE_TEXTURE_1D_ARRAY)
+         assert(target == PIPE_TEXTURE_1D);
+      else if (static_state->target == PIPE_TEXTURE_2D)
+         assert(target == PIPE_TEXTURE_2D_ARRAY);
+      else if (static_state->target == PIPE_TEXTURE_2D_ARRAY)
+         assert(target == PIPE_TEXTURE_2D);
+      else if (static_state->target == PIPE_TEXTURE_CUBE)
+         assert(target == PIPE_TEXTURE_CUBE_ARRAY);
+      else if (static_state->target == PIPE_TEXTURE_CUBE_ARRAY)
+         assert(target == PIPE_TEXTURE_CUBE);
+      else
+         assert(0);
+   }
 
-   switch (static_state->target) {
+   dims = texture_dims(target);
+
+   switch (target) {
    case PIPE_TEXTURE_1D_ARRAY:
    case PIPE_TEXTURE_2D_ARRAY:
       has_array = TRUE;

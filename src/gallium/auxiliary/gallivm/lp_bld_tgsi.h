@@ -192,6 +192,7 @@ struct lp_build_sampler_soa
                        struct gallivm_state *gallivm,
                        struct lp_type type,
                        unsigned unit,
+                       unsigned target,
                        boolean need_nr_mips,
                        boolean scalar_lod,
                        LLVMValueRef explicit_lod, /* optional */

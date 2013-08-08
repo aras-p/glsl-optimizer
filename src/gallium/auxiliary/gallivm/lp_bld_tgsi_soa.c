@@ -1564,6 +1564,43 @@ emit_store(
    }
 }
 
+static unsigned
+tgsi_to_pipe_tex_target(unsigned tgsi_target)
+{
+   switch (tgsi_target) {
+   case TGSI_TEXTURE_BUFFER:
+      return PIPE_BUFFER;
+   case TGSI_TEXTURE_1D:
+   case TGSI_TEXTURE_SHADOW1D:
+      return PIPE_TEXTURE_1D;
+   case TGSI_TEXTURE_2D:
+   case TGSI_TEXTURE_SHADOW2D:
+   case TGSI_TEXTURE_2D_MSAA:
+      return PIPE_TEXTURE_2D;
+   case TGSI_TEXTURE_3D:
+      return PIPE_TEXTURE_3D;
+   case TGSI_TEXTURE_CUBE:
+   case TGSI_TEXTURE_SHADOWCUBE:
+      return PIPE_TEXTURE_CUBE;
+   case TGSI_TEXTURE_RECT:
+   case TGSI_TEXTURE_SHADOWRECT:
+      return PIPE_TEXTURE_RECT;
+   case TGSI_TEXTURE_1D_ARRAY:
+   case TGSI_TEXTURE_SHADOW1D_ARRAY:
+      return PIPE_TEXTURE_1D_ARRAY;
+   case TGSI_TEXTURE_2D_ARRAY:
+   case TGSI_TEXTURE_SHADOW2D_ARRAY:
+   case TGSI_TEXTURE_2D_ARRAY_MSAA:
+      return PIPE_TEXTURE_2D_ARRAY;
+   case TGSI_TEXTURE_CUBE_ARRAY:
+   case TGSI_TEXTURE_SHADOWCUBE_ARRAY:
+      return PIPE_TEXTURE_CUBE_ARRAY;
+   default:
+      assert(0);
+      return PIPE_BUFFER;
+   }
+}
+
 /**
  * High-level instruction translators.
  */
@@ -1994,7 +2031,7 @@ emit_size_query( struct lp_build_tgsi_soa_context *bld,
    unsigned has_lod;
    unsigned i;
    unsigned unit = inst->Src[1].Register.Index;
-   unsigned target;
+   unsigned target, pipe_target;
 
    if (is_sviewinfo) {
       target = bld->sv[unit].Resource;
@@ -2025,13 +2062,15 @@ emit_size_query( struct lp_build_tgsi_soa_context *bld,
    else
       explicit_lod = NULL;
 
+   pipe_target = tgsi_to_pipe_tex_target(target);
+
    /* TODO: use scalar lod if explicit_lod is broadcasted scalar */
    scalar_lod = bld->bld_base.info->processor == TGSI_PROCESSOR_FRAGMENT;
 
    bld->sampler->emit_size_query(bld->sampler,
                                  bld->bld_base.base.gallivm,
                                  bld->bld_base.int_bld.type,
-                                 unit,
+                                 unit, pipe_target,
                                  is_sviewinfo,
                                  scalar_lod,
                                  explicit_lod,
