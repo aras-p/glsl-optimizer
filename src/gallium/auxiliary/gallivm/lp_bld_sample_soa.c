@@ -1948,11 +1948,11 @@ lp_build_size_query_soa(struct gallivm_state *gallivm,
                         LLVMValueRef explicit_lod,
                         LLVMValueRef *sizes_out)
 {
-   LLVMValueRef lod;
-   LLVMValueRef size;
+   LLVMValueRef lod, level, size;
    LLVMValueRef first_level = NULL;
    int dims, i;
    boolean has_array;
+   unsigned num_lods = 1;
    struct lp_build_context bld_int_vec;
 
    dims = texture_dims(static_state->target);
@@ -1975,9 +1975,8 @@ lp_build_size_query_soa(struct gallivm_state *gallivm,
       /* FIXME: this needs to honor per-element lod */
       lod = LLVMBuildExtractElement(gallivm->builder, explicit_lod, lp_build_const_int32(gallivm, 0), "");
       first_level = dynamic_state->first_level(dynamic_state, gallivm, texture_unit);
-      lod = lp_build_broadcast_scalar(&bld_int_vec,
-                                      LLVMBuildAdd(gallivm->builder, lod, first_level, "lod"));
-
+      level = LLVMBuildAdd(gallivm->builder, lod, first_level, "level");
+      lod = lp_build_broadcast_scalar(&bld_int_vec, level);
    } else {
       lod = bld_int_vec.zero;
    }
@@ -2013,10 +2012,30 @@ lp_build_size_query_soa(struct gallivm_state *gallivm,
                                     lp_build_const_int32(gallivm, dims), "");
 
    /*
-    * XXX for out-of-bounds lod, should set size to zero vector here
-    * (for dx10-style only, i.e. need_nr_mips)
+    * d3d10 requires zero for x/y/z values (but not w, i.e. mip levels)
+    * if level is out of bounds (note this can't cover unbound texture
+    * here, which also requires returning zero).
     */
+   if (explicit_lod && need_nr_mips) {
+      LLVMValueRef last_level, out, out1;
+      struct lp_build_context leveli_bld;
 
+      /* everything is scalar for now */
+      lp_build_context_init(&leveli_bld, gallivm, lp_type_int_vec(32, 32));
+      last_level = dynamic_state->last_level(dynamic_state, gallivm, texture_unit);
+
+      out = lp_build_cmp(&leveli_bld, PIPE_FUNC_LESS, level, first_level);
+      out1 = lp_build_cmp(&leveli_bld, PIPE_FUNC_GREATER, level, last_level);
+      out = lp_build_or(&leveli_bld, out, out1);
+      if (num_lods == 1) {
+         out = lp_build_broadcast_scalar(&bld_int_vec, out);
+      }
+      else {
+         /* TODO */
+         assert(0);
+      }
+      size = lp_build_andnot(&bld_int_vec, size, out);
+   }
    for (i = 0; i < dims + (has_array ? 1 : 0); i++) {
       sizes_out[i] = lp_build_extract_broadcast(gallivm, bld_int_vec.type, int_type,
                                                 size,
