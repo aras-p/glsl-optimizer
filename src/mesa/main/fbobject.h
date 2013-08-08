@@ -28,6 +28,7 @@
 
 #include "compiler.h"
 #include "glheader.h"
+#include <stdbool.h>
 
 struct gl_context;
 struct gl_texture_object;
@@ -112,6 +113,11 @@ _mesa_is_legal_color_format(const struct gl_context *ctx, GLenum baseFormat);
 
 extern GLenum
 _mesa_base_fbo_format(struct gl_context *ctx, GLenum internalFormat);
+
+extern bool
+_mesa_detach_renderbuffer(struct gl_context *ctx,
+                          struct gl_framebuffer *fb,
+                          const void *att);
 
 extern GLboolean GLAPIENTRY
 _mesa_IsRenderbuffer(GLuint renderbuffer);

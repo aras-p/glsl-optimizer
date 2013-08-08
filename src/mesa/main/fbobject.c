@@ -1227,19 +1227,42 @@ _mesa_BindRenderbufferEXT(GLenum target, GLuint renderbuffer)
  * the renderbuffer.
  * This is used when a renderbuffer object is deleted.
  * The spec calls for unbinding.
+ *
+ * \returns
+ * \c true if the renderbuffer was detached from an attachment point.  \c
+ * false otherwise.
  */
-static void
-detach_renderbuffer(struct gl_context *ctx,
-                    struct gl_framebuffer *fb,
-                    struct gl_renderbuffer *rb)
+bool
+_mesa_detach_renderbuffer(struct gl_context *ctx,
+                          struct gl_framebuffer *fb,
+                          const void *att)
 {
-   GLuint i;
+   unsigned i;
+   bool progress = false;
+
    for (i = 0; i < BUFFER_COUNT; i++) {
-      if (fb->Attachment[i].Renderbuffer == rb) {
+      if (fb->Attachment[i].Renderbuffer == att) {
          _mesa_remove_attachment(ctx, &fb->Attachment[i]);
+         progress = true;
       }
    }
-   invalidate_framebuffer(fb);
+
+   /* Section 4.4.4 (Framebuffer Completeness), subsection "Whole Framebuffer
+    * Completeness," of the OpenGL 3.1 spec says:
+    *
+    *     "Performing any of the following actions may change whether the
+    *     framebuffer is considered complete or incomplete:
+    *
+    *     ...
+    *
+    *        - Deleting, with DeleteTextures or DeleteRenderbuffers, an object
+    *          containing an image that is attached to a framebuffer object
+    *          that is bound to the framebuffer."
+    */
+   if (progress)
+      invalidate_framebuffer(fb);
+
+   return progress;
 }
 
 
@@ -1264,11 +1287,11 @@ _mesa_DeleteRenderbuffers(GLsizei n, const GLuint *renderbuffers)
             }
 
             if (_mesa_is_user_fbo(ctx->DrawBuffer)) {
-               detach_renderbuffer(ctx, ctx->DrawBuffer, rb);
+               _mesa_detach_renderbuffer(ctx, ctx->DrawBuffer, rb);
             }
             if (_mesa_is_user_fbo(ctx->ReadBuffer)
                 && ctx->ReadBuffer != ctx->DrawBuffer) {
-               detach_renderbuffer(ctx, ctx->ReadBuffer, rb);
+               _mesa_detach_renderbuffer(ctx, ctx->ReadBuffer, rb);
             }
 
 	    /* Remove from hash table immediately, to free the ID.
