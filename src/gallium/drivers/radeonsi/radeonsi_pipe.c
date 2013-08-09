@@ -611,7 +611,20 @@ static int r600_get_compute_param(struct pipe_screen *screen,
 			*max_global_size = 2000000000;
 		}
 		return sizeof(uint64_t);
-
+	case PIPE_COMPUTE_CAP_MAX_LOCAL_SIZE:
+		if (ret) {
+			uint64_t *max_local_size = ret;
+			/* Value reported by the closed source driver. */
+			*max_local_size = 32768;
+		}
+		return sizeof(uint64_t);
+	case PIPE_COMPUTE_CAP_MAX_INPUT_SIZE:
+		if (ret) {
+			uint64_t *max_input_size = ret;
+			/* Value reported by the closed source driver. */
+			*max_input_size = 1024;
+		}
+		return sizeof(uint64_t);
 	case PIPE_COMPUTE_CAP_MAX_MEM_ALLOC_SIZE:
 		if (ret) {
 			uint64_t max_global_size;
