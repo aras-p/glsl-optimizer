@@ -788,6 +788,14 @@ static int r600_init_tiling(struct r600_screen *rscreen)
 	return evergreen_interpret_tiling(rscreen, tiling_config);
 }
 
+static uint64_t r600_get_timestamp(struct pipe_screen *screen)
+{
+	struct r600_screen *rscreen = (struct r600_screen*)screen;
+
+	return 1000000 * rscreen->ws->query_value(rscreen->ws, RADEON_TIMESTAMP) /
+		rscreen->info.r600_clock_crystal_freq;
+}
+
 static unsigned radeon_family_from_device(unsigned device)
 {
 	switch (device) {
@@ -839,6 +847,7 @@ struct pipe_screen *radeonsi_screen_create(struct radeon_winsys *ws)
 	rscreen->screen.get_shader_param = r600_get_shader_param;
 	rscreen->screen.get_paramf = r600_get_paramf;
 	rscreen->screen.get_compute_param = r600_get_compute_param;
+	rscreen->screen.get_timestamp = r600_get_timestamp;
 	rscreen->screen.is_format_supported = si_is_format_supported;
 	rscreen->screen.context_create = r600_create_context;
 	rscreen->screen.fence_reference = r600_fence_reference;
