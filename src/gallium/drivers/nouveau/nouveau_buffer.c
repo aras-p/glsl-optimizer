@@ -289,6 +289,7 @@ nouveau_buffer_cache(struct nouveau_context *nv, struct nv04_resource *buf)
    tx.base.box.x = 0;
    tx.base.box.width = buf->base.width0;
    tx.bo = NULL;
+   tx.map = NULL;
 
    if (!buf->data)
       if (!nouveau_buffer_malloc(buf))
@@ -690,6 +691,7 @@ nouveau_buffer_migrate(struct nouveau_context *nv,
       tx.base.box.x = 0;
       tx.base.box.width = buf->base.width0;
       tx.bo = NULL;
+      tx.map = NULL;
       if (!nouveau_transfer_staging(nv, &tx, FALSE))
          return FALSE;
       nouveau_transfer_write(nv, &tx, 0, tx.base.box.width);
