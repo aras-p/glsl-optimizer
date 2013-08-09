@@ -1,4 +1,5 @@
 #version 300 es
+precision highp float;
 
 /* texture - bias variants */
  vec4 texture( sampler2D sampler, vec2 P, float bias);
