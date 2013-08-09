@@ -65,8 +65,6 @@ softpipe_get_vertex_info(struct softpipe_context *softpipe)
 {
    struct vertex_info *vinfo = &softpipe->vertex_info;
 
-   draw_prepare_shader_outputs(softpipe->draw);
-
    if (vinfo->num_attribs == 0) {
       /* compute vertex layout now */
       const struct tgsi_shader_info *fsInfo = &softpipe->fs_variant->info;
