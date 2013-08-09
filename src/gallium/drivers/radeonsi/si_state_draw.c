@@ -236,9 +236,10 @@ static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *s
 
 	num_user_sgprs = SI_PS_NUM_USER_SGPR;
 	num_sgprs = shader->num_sgprs;
-	if (num_user_sgprs > num_sgprs) {
+	/* One SGPR after user SGPRs is pre-loaded with {prim_mask, lds_offset} */
+	if ((num_user_sgprs + 1) > num_sgprs) {
 		/* Last 2 reserved SGPRs are used for VCC */
-		num_sgprs = num_user_sgprs + 2;
+		num_sgprs = num_user_sgprs + 1 + 2;
 	}
 	assert(num_sgprs <= 104);
 
