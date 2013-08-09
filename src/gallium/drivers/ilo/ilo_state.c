@@ -128,12 +128,14 @@ finalize_constant_buffers(struct ilo_context *ilo)
 static void
 finalize_index_buffer(struct ilo_context *ilo)
 {
-   const struct pipe_resource *current_hw_res = ilo->ib.hw_resource;
    const bool need_upload = (ilo->draw->indexed &&
          (ilo->ib.user_buffer || ilo->ib.offset % ilo->ib.index_size));
+   struct pipe_resource *current_hw_res = NULL;
 
    if (!(ilo->dirty & ILO_DIRTY_IB) && !need_upload)
       return;
+
+   pipe_resource_reference(&current_hw_res, ilo->ib.hw_resource);
 
    if (need_upload) {
       const unsigned offset = ilo->ib.index_size * ilo->draw->start;
@@ -175,6 +177,8 @@ finalize_index_buffer(struct ilo_context *ilo)
       ilo->dirty &= ~ILO_DIRTY_IB;
    else
       ilo->ib.hw_index_size = ilo->ib.index_size;
+
+   pipe_resource_reference(&current_hw_res, NULL);
 }
 
 /**
