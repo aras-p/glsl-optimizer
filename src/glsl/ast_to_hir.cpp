@@ -4225,10 +4225,8 @@ ast_iteration_statement::hir(exec_list *instructions,
  * version.
  */
 static bool
-is_valid_default_precision_type(const struct _mesa_glsl_parse_state *state,
-                                const char *type_name)
+is_valid_default_precision_type(const struct glsl_type *const type)
 {
-   const struct glsl_type *type = state->symbols->get_type(type_name);
    if (type == NULL)
       return false;
 
@@ -4280,7 +4278,10 @@ ast_type_specifier::hir(exec_list *instructions,
                           "arrays");
          return NULL;
       }
-      if (!is_valid_default_precision_type(state, this->type_name)) {
+
+      const struct glsl_type *const type =
+         state->symbols->get_type(this->type_name);
+      if (!is_valid_default_precision_type(type)) {
          _mesa_glsl_error(&loc, state,
                           "default precision statements apply only to "
                           "float, int, and sampler types");
