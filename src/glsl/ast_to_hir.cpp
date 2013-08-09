@@ -4282,7 +4282,7 @@ ast_type_specifier::hir(exec_list *instructions,
       }
       if (!is_valid_default_precision_type(state, this->type_name)) {
          _mesa_glsl_error(&loc, state,
-                          "default precision statements apply only to types "
+                          "default precision statements apply only to "
                           "float, int, and sampler types");
          return NULL;
       }
