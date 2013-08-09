@@ -2091,7 +2091,7 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
             goto done;
       }
 
-      do_dead_builtin_varyings(ctx, sh->ir, NULL,
+      do_dead_builtin_varyings(ctx, sh, NULL,
                                num_tfeedback_decls, tfeedback_decls);
 
       demote_shader_inputs_and_outputs(sh, ir_var_shader_out);
@@ -2106,7 +2106,7 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
        */
       gl_shader *const sh = prog->_LinkedShaders[first];
 
-      do_dead_builtin_varyings(ctx, NULL, sh->ir,
+      do_dead_builtin_varyings(ctx, NULL, sh,
                                num_tfeedback_decls, tfeedback_decls);
 
       demote_shader_inputs_and_outputs(sh, ir_var_shader_in);
@@ -2130,7 +2130,7 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
                 tfeedback_decls, gs_input_vertices))
          goto done;
 
-      do_dead_builtin_varyings(ctx, sh_i->ir, sh_next->ir,
+      do_dead_builtin_varyings(ctx, sh_i, sh_next,
                 next == MESA_SHADER_FRAGMENT ? num_tfeedback_decls : 0,
                 tfeedback_decls);
 

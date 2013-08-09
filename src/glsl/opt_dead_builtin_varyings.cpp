@@ -409,7 +409,7 @@ lower_texcoord_array(exec_list *ir, const varying_info_visitor *info)
 
 void
 do_dead_builtin_varyings(struct gl_context *ctx,
-                         exec_list *producer, exec_list *consumer,
+                         gl_shader *producer, gl_shader *consumer,
                          unsigned num_tfeedback_decls,
                          tfeedback_decl *tfeedback_decls)
 {
@@ -431,44 +431,55 @@ do_dead_builtin_varyings(struct gl_context *ctx,
    varying_info_visitor consumer_info(ir_var_shader_in);
 
    if (producer) {
-      producer_info.get(producer, num_tfeedback_decls, tfeedback_decls);
+      producer_info.get(producer->ir, num_tfeedback_decls, tfeedback_decls);
 
       if (!consumer) {
          /* At least eliminate unused gl_TexCoord elements. */
          if (producer_info.lower_texcoord_array) {
-            lower_texcoord_array(producer, &producer_info);
+            lower_texcoord_array(producer->ir, &producer_info);
          }
          return;
       }
    }
 
    if (consumer) {
-      consumer_info.get(consumer, 0, NULL);
+      consumer_info.get(consumer->ir, 0, NULL);
 
       if (!producer) {
          /* At least eliminate unused gl_TexCoord elements. */
          if (consumer_info.lower_texcoord_array) {
-            lower_texcoord_array(consumer, &consumer_info);
+            lower_texcoord_array(consumer->ir, &consumer_info);
          }
          return;
       }
    }
 
-   /* Eliminate the varyings unused by the other shader. */
+   /* Eliminate the outputs unused by the consumer. */
    if (producer_info.lower_texcoord_array ||
        producer_info.color_usage ||
        producer_info.has_fog) {
-      replace_varyings_visitor(producer,
+      replace_varyings_visitor(producer->ir,
                                &producer_info,
                                consumer_info.texcoord_usage,
                                consumer_info.color_usage,
                                consumer_info.has_fog);
    }
 
+   /* The gl_TexCoord fragment shader inputs can be initialized
+    * by GL_COORD_REPLACE, so we can't eliminate them.
+    *
+    * This doesn't prevent elimination of the gl_TexCoord elements which
+    * are not read by the fragment shader. We want to eliminate those anyway.
+    */
+   if (consumer->Type == GL_FRAGMENT_SHADER) {
+      producer_info.texcoord_usage = (1 << MAX_TEXTURE_COORD_UNITS) - 1;
+   }
+
+   /* Eliminate the inputs uninitialized by the producer. */
    if (consumer_info.lower_texcoord_array ||
        consumer_info.color_usage ||
        consumer_info.has_fog) {
-      replace_varyings_visitor(consumer,
+      replace_varyings_visitor(consumer->ir,
                                &consumer_info,
                                producer_info.texcoord_usage,
                                producer_info.color_usage,
