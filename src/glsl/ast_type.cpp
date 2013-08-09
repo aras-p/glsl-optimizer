@@ -168,6 +168,9 @@ ast_type_qualifier::merge_qualifier(YYLTYPE *loc,
    if (q.flags.q.explicit_binding)
       this->binding = q.binding;
 
+   if (q.precision != ast_precision_none)
+      this->precision = q.precision;
+
    return true;
 }
 
