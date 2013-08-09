@@ -217,7 +217,31 @@ clEnqueueWaitForEvents(cl_command_queue q, cl_uint num_evs,
 PUBLIC cl_int
 clGetEventProfilingInfo(cl_event ev, cl_profiling_info param,
                         size_t size, void *buf, size_t *size_ret) {
-   return CL_PROFILING_INFO_NOT_AVAILABLE;
+   hard_event *hev = dynamic_cast<hard_event *>(ev);
+   soft_event *sev = dynamic_cast<soft_event *>(ev);
+
+   if (!hev && !sev)
+      return CL_INVALID_EVENT;
+   if (!hev || !(hev->queue()->props() & CL_QUEUE_PROFILING_ENABLE) ||
+       hev->status() != CL_COMPLETE)
+      return CL_PROFILING_INFO_NOT_AVAILABLE;
+
+   switch (param) {
+   case CL_PROFILING_COMMAND_QUEUED:
+      return scalar_property<cl_ulong>(buf, size, size_ret, hev->ts_queued());
+
+   case CL_PROFILING_COMMAND_SUBMIT:
+      return scalar_property<cl_ulong>(buf, size, size_ret, hev->ts_submit());
+
+   case CL_PROFILING_COMMAND_START:
+      return scalar_property<cl_ulong>(buf, size, size_ret, hev->ts_start());
+
+   case CL_PROFILING_COMMAND_END:
+      return scalar_property<cl_ulong>(buf, size, size_ret, hev->ts_end());
+
+   default:
+      return CL_INVALID_VALUE;
+   }
 }
 
 PUBLIC cl_int

@@ -57,7 +57,7 @@ public:
              action action_ok, action action_fail);
    virtual ~_cl_event();
 
-   void trigger();
+   virtual void trigger() = 0;
    void abort(cl_int status);
    bool signalled() const;
 
@@ -72,12 +72,10 @@ protected:
    void chain(clover::event *ev);
 
    cl_int __status;
-   std::vector<clover::ref_ptr<clover::event>> deps;
-
-private:
    unsigned wait_count;
    action action_ok;
    action action_fail;
+   std::vector<clover::ref_ptr<clover::event>> deps;
    std::vector<clover::ref_ptr<clover::event>> __chain;
 };
 
@@ -101,10 +99,18 @@ namespace clover {
                  action action = [](event &){});
       ~hard_event();
 
+      virtual void trigger();
+
       virtual cl_int status() const;
       virtual cl_command_queue queue() const;
       virtual cl_command_type command() const;
       virtual void wait() const;
+
+      cl_ulong ts_queued() const;
+      cl_ulong ts_submit() const;
+      cl_ulong ts_start();
+      cl_ulong ts_end();
+      void get_query_results();
 
       friend class ::_cl_command_queue;
 
@@ -114,6 +120,8 @@ namespace clover {
       clover::command_queue &__queue;
       cl_command_type __command;
       pipe_fence_handle *__fence;
+      cl_ulong __ts_queued, __ts_submit, __ts_start, __ts_end;
+      struct pipe_query *__query_start, *__query_end;
    };
 
    ///
@@ -127,6 +135,8 @@ namespace clover {
    public:
       soft_event(clover::context &ctx, std::vector<clover::event *> deps,
                  bool trigger, action action = [](event &){});
+
+      virtual void trigger();
 
       virtual cl_int status() const;
       virtual cl_command_queue queue() const;
