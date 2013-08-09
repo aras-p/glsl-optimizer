@@ -102,6 +102,7 @@ void si_context_emit_fence(struct r600_context *ctx, struct si_resource *fence,
                            unsigned offset, unsigned value);
 
 void r600_context_draw_opaque_count(struct r600_context *ctx, struct r600_so_target *t);
+bool si_query_needs_begin(unsigned type);
 void si_need_cs_space(struct r600_context *ctx, unsigned num_dw, boolean count_draw_in);
 
 int si_context_init(struct r600_context *ctx);

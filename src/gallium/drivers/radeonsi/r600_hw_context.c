@@ -110,6 +110,11 @@ err:
 	return;
 }
 
+bool si_query_needs_begin(unsigned type)
+{
+	return type != PIPE_QUERY_TIMESTAMP;
+}
+
 /* initialize */
 void si_need_cs_space(struct r600_context *ctx, unsigned num_dw,
 			boolean count_draw_in)
@@ -357,6 +362,12 @@ static boolean r600_query_result(struct r600_context *ctx, struct r600_query *qu
 			results_base = (results_base + 16) % query->buffer->b.b.width0;
 		}
 		break;
+	case PIPE_QUERY_TIMESTAMP:
+	{
+		uint32_t *current_result = (uint32_t*)map;
+		query->result.u64 = (uint64_t)current_result[0] | (uint64_t)current_result[1] << 32;
+		break;
+	}
 	case PIPE_QUERY_TIME_ELAPSED:
 		while (results_base != query->results_end) {
 			query->result.u64 +=
@@ -502,6 +513,19 @@ void r600_query_end(struct r600_context *ctx, struct r600_query *query)
 {
 	struct radeon_winsys_cs *cs = ctx->cs;
 	uint64_t va;
+	unsigned new_results_end;
+
+	/* The queries which need begin already called this in begin_query. */
+	if (!si_query_needs_begin(query->type)) {
+		si_need_cs_space(ctx, query->num_cs_dw, TRUE);
+
+		new_results_end = (query->results_end + query->result_size) % query->buffer->b.b.width0;
+
+		/* collect current results if query buffer is full */
+		if (new_results_end == query->results_start) {
+		r600_query_result(ctx, query, TRUE);
+		}
+	}
 
 	va = r600_resource_va(&ctx->screen->screen, (void*)query->buffer);
 	/* emit end query */
@@ -525,6 +549,8 @@ void r600_query_end(struct r600_context *ctx, struct r600_query *query)
 		break;
 	case PIPE_QUERY_TIME_ELAPSED:
 		va += query->results_end + query->result_size/2;
+		/* fall through */
+	case PIPE_QUERY_TIMESTAMP:
 		cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE_EOP, 4, 0);
 		cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_TS_EVENT) | EVENT_INDEX(5);
 		cs->buf[cs->cdw++] = va;
@@ -602,6 +628,10 @@ struct r600_query *r600_context_query_create(struct r600_context *ctx, unsigned 
 		query->result_size = 16 * ctx->max_db;
 		query->num_cs_dw = 6;
 		break;
+	case PIPE_QUERY_TIMESTAMP:
+		query->result_size = 8;
+		query->num_cs_dw = 8;
+		break;
 	case PIPE_QUERY_TIME_ELAPSED:
 		query->result_size = 16;
 		query->num_cs_dw = 8;
@@ -665,6 +695,7 @@ boolean r600_context_query_result(struct r600_context *ctx,
 	case PIPE_QUERY_SO_OVERFLOW_PREDICATE:
 		*result_b = query->result.b;
 		break;
+	case PIPE_QUERY_TIMESTAMP:
 	case PIPE_QUERY_TIME_ELAPSED:
 		*result_u64 = (1000000 * query->result.u64) / ctx->screen->info.r600_clock_crystal_freq;
 		break;
