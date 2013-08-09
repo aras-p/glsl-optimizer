@@ -58,8 +58,8 @@ _cl_event::chain(clover::event *ev) {
    if (wait_count) {
       ev->wait_count++;
       __chain.push_back(ev);
-      ev->deps.push_back(this);
    }
+   ev->deps.push_back(this);
 }
 
 hard_event::hard_event(clover::command_queue &q, cl_command_type command,
