@@ -2705,6 +2705,11 @@ ast_declarator_list::hir(exec_list *instructions,
        *   name of a known structure type.  This is both invalid and weird.
        *   Emit an error.
        *
+       * - The program text contained something like 'mediump float;'
+       *   when the programmer probably meant 'precision mediump
+       *   float;' Emit a warning with a description of what they
+       *   probably meant to do.
+       *
        * Note that if decl_type is NULL and there is a structure involved,
        * there must have been some sort of error with the structure.  In this
        * case we assume that an error was already generated on this line of
@@ -2713,20 +2718,33 @@ ast_declarator_list::hir(exec_list *instructions,
        */
       assert(this->type->specifier->structure == NULL || decl_type != NULL
 	     || state->error);
-      if (this->type->specifier->structure == NULL) {
-	 if (decl_type != NULL) {
-	    _mesa_glsl_warning(&loc, state, "empty declaration");
-	 } else {
-	    _mesa_glsl_error(&loc, state,
-			     "invalid type `%s' in empty declaration",
-			     type_name);
-	 }
-      }
 
-      if (this->type->qualifier.precision != ast_precision_none &&
-          this->type->specifier->structure != NULL) {
-         _mesa_glsl_error(&loc, state, "precision qualifiers can't be applied "
-                          "to structures");
+      if (decl_type == NULL) {
+         _mesa_glsl_error(&loc, state,
+                          "invalid type `%s' in empty declaration",
+                          type_name);
+      } else if (this->type->qualifier.precision != ast_precision_none) {
+         if (this->type->specifier->structure != NULL) {
+            _mesa_glsl_error(&loc, state,
+                             "precision qualifiers can't be applied "
+                             "to structures");
+         } else {
+            static const char *const precision_names[] = {
+               "highp",
+               "highp",
+               "mediump",
+               "lowp"
+            };
+
+            _mesa_glsl_warning(&loc, state,
+                               "empty declaration with precision qualifier, "
+                               "to set the default precision, use "
+                               "`precision %s %s;'",
+                               precision_names[this->type->qualifier.precision],
+                               type_name);
+         }
+      } else {
+         _mesa_glsl_warning(&loc, state, "empty declaration");
       }
    }
 
