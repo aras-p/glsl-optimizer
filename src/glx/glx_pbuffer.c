@@ -40,8 +40,9 @@
 #ifdef GLX_USE_APPLEGL
 #include <pthread.h>
 #include "apple_glx_drawable.h"
-#include "glx_error.h"
 #endif
+
+#include "glx_error.h"
 
 #define WARN_ONCE_GLX_1_3(a, b) {		\
 		static int warned=1;		\
@@ -279,7 +280,16 @@ GetDrawableAttribute(Display * dpy, GLXDrawable drawable,
    unsigned int num_attributes;
    GLboolean use_glx_1_3;
 
-   if ((dpy == NULL) || (drawable == 0)) {
+   if (dpy == NULL)
+      return 0;
+
+   /* Page 38 (page 52 of the PDF) of glxencode1.3.pdf says:
+    *
+    *     "If drawable is not a valid GLX drawable, a GLXBadDrawable error is
+    *     generated."
+    */
+   if (drawable == 0) {
+      __glXSendError(dpy, GLXBadDrawable, 0, X_GLXGetDrawableAttributes, false);
       return 0;
    }
 
