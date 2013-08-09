@@ -268,6 +268,8 @@ struct draw_stage *draw_unfilled_stage( struct draw_context *draw )
    unfilled->stage.reset_stipple_counter = unfilled_reset_stipple_counter;
    unfilled->stage.destroy = unfilled_destroy;
 
+   unfilled->face_slot = -1;
+
    if (!draw_alloc_temp_verts( &unfilled->stage, 0 ))
       goto fail;
 

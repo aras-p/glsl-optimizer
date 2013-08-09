@@ -564,6 +564,8 @@ draw_prepare_shader_outputs(struct draw_context *draw)
    draw_remove_extra_vertex_attribs(draw);
    draw_prim_assembler_prepare_outputs(draw->ia);
    draw_unfilled_prepare_outputs(draw, draw->pipeline.unfilled);
+   draw_aapoint_prepare_outputs(draw, draw->pipeline.aapoint);
+   draw_aaline_prepare_outputs(draw, draw->pipeline.aaline);
 }
 
 /**

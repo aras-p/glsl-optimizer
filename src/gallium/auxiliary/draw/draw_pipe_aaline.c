@@ -692,13 +692,7 @@ aaline_first_line(struct draw_stage *stage, struct prim_header *header)
       return;
    }
 
-   /* update vertex attrib info */
-   aaline->pos_slot = draw_current_shader_position_output(draw);;
-
-   /* allocate the extra post-transformed vertex attribute */
-   aaline->tex_slot = draw_alloc_extra_vertex_attrib(draw,
-                                                     TGSI_SEMANTIC_GENERIC,
-                                                     aaline->fs->generic_attrib);
+   draw_aaline_prepare_outputs(draw, draw->pipeline.aaline);
 
    /* how many samplers? */
    /* we'll use sampler/texture[pstip->sampler_unit] for the stipple */
@@ -952,6 +946,25 @@ aaline_set_sampler_views(struct pipe_context *pipe,
    aaline->driver_set_sampler_views(pipe, num, views);
 }
 
+
+void
+draw_aaline_prepare_outputs(struct draw_context *draw,
+                            struct draw_stage *stage)
+{
+   struct aaline_stage *aaline = aaline_stage(stage);
+   const struct pipe_rasterizer_state *rast = draw->rasterizer;
+
+   /* update vertex attrib info */
+   aaline->pos_slot = draw_current_shader_position_output(draw);;
+
+   if (!rast->line_smooth)
+      return;
+
+   /* allocate the extra post-transformed vertex attribute */
+   aaline->tex_slot = draw_alloc_extra_vertex_attrib(draw,
+                                                     TGSI_SEMANTIC_GENERIC,
+                                                     aaline->fs->generic_attrib);
+}
 
 /**
  * Called by drivers that want to install this AA line prim stage

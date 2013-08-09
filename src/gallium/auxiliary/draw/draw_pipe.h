@@ -101,7 +101,10 @@ void draw_pipe_passthrough_tri(struct draw_stage *stage, struct prim_header *hea
 void draw_pipe_passthrough_line(struct draw_stage *stage, struct prim_header *header);
 void draw_pipe_passthrough_point(struct draw_stage *stage, struct prim_header *header);
 
-
+void draw_aapoint_prepare_outputs(struct draw_context *context,
+                                  struct draw_stage *stage);
+void draw_aaline_prepare_outputs(struct draw_context *context,
+                                 struct draw_stage *stage);
 void draw_unfilled_prepare_outputs(struct draw_context *context,
                                    struct draw_stage *stage);
 
