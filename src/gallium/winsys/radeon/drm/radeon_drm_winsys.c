@@ -404,7 +404,7 @@ static boolean do_winsys_init(struct radeon_drm_winsys *ws)
                                       &ws->info.r600_ib_vm_max_size))
                 ws->info.r600_virtual_address = FALSE;
         }
-	if (ws->gen == DRV_R600 && !debug_get_bool_option("RADEON_VA", TRUE))
+	if (ws->gen == DRV_R600 && !debug_get_bool_option("RADEON_VA", FALSE))
 		ws->info.r600_virtual_address = FALSE;
     }
 
