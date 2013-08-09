@@ -235,7 +235,7 @@ ir_set_program_inouts_visitor::visit_enter(ir_dereference_array *ir)
        * inner_array => foo[i]
        */
       if (ir_dereference_variable * const deref_var =
-          inner_array->as_dereference_variable()) {
+          inner_array->array->as_dereference_variable()) {
          if (this->shader_type == GL_GEOMETRY_SHADER &&
              deref_var->var->mode == ir_var_shader_in) {
             /* foo is a geometry shader input, so i is the vertex, and j the
@@ -253,7 +253,7 @@ ir_set_program_inouts_visitor::visit_enter(ir_dereference_array *ir)
          }
       }
    } else if (ir_dereference_variable * const deref_var =
-              ir->as_dereference_variable()) {
+              ir->array->as_dereference_variable()) {
       /* ir => foo[i], where foo is a variable. */
       if (this->shader_type == GL_GEOMETRY_SHADER &&
           deref_var->var->mode == ir_var_shader_in) {
