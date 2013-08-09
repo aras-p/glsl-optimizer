@@ -123,9 +123,7 @@ static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *s
 	struct si_pm4_state *pm4;
 	unsigned i, exports_ps, num_cout, spi_ps_in_control, db_shader_control;
 	unsigned num_sgprs, num_user_sgprs;
-	boolean have_linear = FALSE, have_centroid = FALSE, have_perspective = FALSE;
-	unsigned fragcoord_interp_mode = 0;
-	unsigned spi_baryc_cntl, spi_ps_input_ena, spi_shader_z_format;
+	unsigned spi_baryc_cntl = 0, spi_ps_input_ena, spi_shader_z_format;
 	uint64_t va;
 
 	si_pm4_delete_state(rctx, ps, shader->pm4);
@@ -143,27 +141,19 @@ static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *s
 		switch (shader->shader.input[i].name) {
 		case TGSI_SEMANTIC_POSITION:
 			if (shader->shader.input[i].centroid) {
-				/* fragcoord_interp_mode will be written to
-				 * SPI_BARYC_CNTL.POS_FLOAT_LOCATION
+				/* SPI_BARYC_CNTL.POS_FLOAT_LOCATION
 				 * Possible vaules:
 				 * 0 -> Position = pixel center (default)
 				 * 1 -> Position = pixel centroid
 				 * 2 -> Position = iterated sample number XXX:
 				 *                        What does this mean?
 			 	 */
-				fragcoord_interp_mode = 1;
+				spi_baryc_cntl |= S_0286E0_POS_FLOAT_LOCATION(1);
 			}
 			/* Fall through */
 		case TGSI_SEMANTIC_FACE:
 			continue;
 		}
-
-		if (shader->shader.input[i].interpolate == TGSI_INTERPOLATE_LINEAR)
-			have_linear = TRUE;
-		if (shader->shader.input[i].interpolate == TGSI_INTERPOLATE_PERSPECTIVE)
-			have_perspective = TRUE;
-		if (shader->shader.input[i].centroid)
-			have_centroid = TRUE;
 	}
 
 	for (i = 0; i < shader->shader.noutput; i++) {
@@ -194,15 +184,6 @@ static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *s
 	}
 
 	spi_ps_in_control = S_0286D8_NUM_INTERP(shader->shader.ninterp);
-
-	spi_baryc_cntl = 0;
-	if (have_perspective)
-		spi_baryc_cntl |= have_centroid ?
-			S_0286E0_PERSP_CENTROID_CNTL(1) : S_0286E0_PERSP_CENTER_CNTL(1);
-	if (have_linear)
-		spi_baryc_cntl |= have_centroid ?
-			S_0286E0_LINEAR_CENTROID_CNTL(1) : S_0286E0_LINEAR_CENTER_CNTL(1);
-	spi_baryc_cntl |= S_0286E0_POS_FLOAT_LOCATION(fragcoord_interp_mode);
 
 	si_pm4_set_reg(pm4, R_0286E0_SPI_BARYC_CNTL, spi_baryc_cntl);
 	spi_ps_input_ena = shader->spi_ps_input_ena;
