@@ -498,7 +498,7 @@ lp_build_size_query_soa(struct gallivm_state *gallivm,
                         struct lp_type int_type,
                         unsigned texture_unit,
                         unsigned target,
-                        boolean is_viewinfo,
+                        boolean is_sviewinfo,
                         boolean scalar_lod,
                         LLVMValueRef explicit_lod,
                         LLVMValueRef *sizes_out);
