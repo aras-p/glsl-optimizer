@@ -3477,6 +3477,18 @@ ast_function::hir(exec_list *instructions,
 		       "function `%s' return type has qualifiers", name);
    }
 
+   /* Section 6.1 (Function Definitions) of the GLSL 1.20 spec says:
+    *
+    *     "Arrays are allowed as arguments and as the return type. In both
+    *     cases, the array must be explicitly sized."
+    */
+   if (return_type->is_array() && return_type->length == 0) {
+      YYLTYPE loc = this->get_location();
+      _mesa_glsl_error(& loc, state,
+		       "function `%s' return type array must be explicitly "
+		       "sized", name);
+   }
+
    /* From page 17 (page 23 of the PDF) of the GLSL 1.20 spec:
     *
     *    "[Sampler types] can only be declared as function parameters
