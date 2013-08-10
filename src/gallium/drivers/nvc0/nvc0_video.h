@@ -33,9 +33,9 @@
 #define VP_OFFSET 0x200
 #define COMM_OFFSET 0x500
 
-//#define NVC0_DEBUG_FENCE 1
+#define NVC0_DEBUG_FENCE 0
 
-#ifdef NVC0_DEBUG_FENCE
+#if NVC0_DEBUG_FENCE
 # define NVC0_VIDEO_QDEPTH 1
 #else
 # define NVC0_VIDEO_QDEPTH 2
@@ -59,7 +59,7 @@ struct nvc0_decoder {
    struct nouveau_object *channel[3], *bsp, *vp, *ppp;
    struct nouveau_pushbuf *pushbuf[3];
 
-#ifdef NVC0_DEBUG_FENCE
+#if NVC0_DEBUG_FENCE
    /* dump fence and comm, as needed.. */
    unsigned *fence_map;
    struct comm *comm;

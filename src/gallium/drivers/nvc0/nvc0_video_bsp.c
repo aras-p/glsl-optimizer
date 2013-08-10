@@ -261,7 +261,7 @@ nvc0_decoder_bsp(struct nvc0_decoder *dec, union pipe_desc desc,
    struct nouveau_pushbuf_refn bo_refs[] = {
       { bsp_bo, NOUVEAU_BO_RD | NOUVEAU_BO_VRAM },
       { inter_bo, NOUVEAU_BO_WR | NOUVEAU_BO_VRAM },
-#ifdef NVC0_DEBUG_FENCE
+#if NVC0_DEBUG_FENCE
       { dec->fence_bo, NOUVEAU_BO_WR | NOUVEAU_BO_GART },
 #endif
       { dec->bitplane_bo, NOUVEAU_BO_RDWR | NOUVEAU_BO_VRAM },
@@ -271,7 +271,7 @@ nvc0_decoder_bsp(struct nvc0_decoder *dec, union pipe_desc desc,
    if (!dec->bitplane_bo)
       num_refs--;
 
-#ifdef NVC0_DEBUG_FENCE
+#if NVC0_DEBUG_FENCE
    fence_extra = 4;
 #endif
 

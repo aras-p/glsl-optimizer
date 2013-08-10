@@ -141,7 +141,7 @@ nvc0_decoder_destroy(struct pipe_video_decoder *decoder)
    nouveau_bo_ref(NULL, &dec->bitplane_bo);
    nouveau_bo_ref(NULL, &dec->inter_bo[0]);
    nouveau_bo_ref(NULL, &dec->inter_bo[1]);
-#ifdef NVC0_DEBUG_FENCE
+#if NVC0_DEBUG_FENCE
    nouveau_bo_ref(NULL, &dec->fence_bo);
 #endif
    nouveau_bo_ref(NULL, &dec->fw_bo);

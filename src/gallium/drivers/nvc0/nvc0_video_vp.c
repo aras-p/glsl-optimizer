@@ -543,7 +543,7 @@ nvc0_decoder_vp(struct nvc0_decoder *dec, union pipe_desc desc,
       { inter_bo, NOUVEAU_BO_WR | NOUVEAU_BO_VRAM },
       { dec->ref_bo, NOUVEAU_BO_WR | NOUVEAU_BO_VRAM },
       { bsp_bo, NOUVEAU_BO_RD | NOUVEAU_BO_VRAM },
-#ifdef NVC0_DEBUG_FENCE
+#if NVC0_DEBUG_FENCE
       { dec->fence_bo, NOUVEAU_BO_WR | NOUVEAU_BO_GART },
 #endif
       { dec->fw_bo, NOUVEAU_BO_RD | NOUVEAU_BO_VRAM },

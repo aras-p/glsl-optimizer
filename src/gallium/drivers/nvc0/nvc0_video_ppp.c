@@ -36,7 +36,7 @@ nvc0_decoder_setup_ppp(struct nvc0_decoder *dec, struct nouveau_vp3_video_buffer
       { NULL, NOUVEAU_BO_WR | NOUVEAU_BO_VRAM },
       { NULL, NOUVEAU_BO_WR | NOUVEAU_BO_VRAM },
       { dec->ref_bo, NOUVEAU_BO_RD | NOUVEAU_BO_VRAM },
-#ifdef NVC0_DEBUG_FENCE
+#if NVC0_DEBUG_FENCE
       { dec->fence_bo, NOUVEAU_BO_WR | NOUVEAU_BO_GART },
 #endif
    };
