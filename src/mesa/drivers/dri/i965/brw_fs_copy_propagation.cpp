@@ -162,10 +162,10 @@ fs_copy_prop_dataflow::setup_kills()
 void
 fs_copy_prop_dataflow::run()
 {
-   bool cont;
+   bool progress;
 
    do {
-      cont = false;
+      progress = false;
 
       for (int b = 0; b < cfg->num_blocks; b++) {
          for (int i = 0; i < bitset_words; i++) {
@@ -174,7 +174,7 @@ fs_copy_prop_dataflow::run()
                                        ~bd[b].liveout[i]);
             if (new_liveout) {
                bd[b].liveout[i] |= new_liveout;
-               cont = true;
+               progress = true;
             }
 
             /* Update livein: if it's live at the end of all parents, it's
@@ -190,11 +190,11 @@ fs_copy_prop_dataflow::run()
             }
             if (new_livein) {
                bd[b].livein[i] |= new_livein;
-               cont = true;
+               progress = true;
             }
          }
       }
-   } while (cont);
+   } while (progress);
 }
 
 bool
