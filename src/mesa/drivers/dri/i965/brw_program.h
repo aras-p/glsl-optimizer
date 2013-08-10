@@ -40,6 +40,11 @@ struct brw_sampler_prog_key_data {
     */
    uint16_t yuvtex_mask;
    uint16_t yuvtex_swap_mask; /**< UV swaped */
+
+   /**
+    * For RG32F, gather4's channel select is broken.
+    */
+   uint16_t gather_channel_quirk_mask;
 };
 
 #ifdef __cplusplus

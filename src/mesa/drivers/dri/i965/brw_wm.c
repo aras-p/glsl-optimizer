@@ -32,6 +32,7 @@
 #include "brw_context.h"
 #include "brw_wm.h"
 #include "brw_state.h"
+#include "main/enums.h"
 #include "main/formats.h"
 #include "main/fbobject.h"
 #include "main/samplerobj.h"
@@ -233,6 +234,8 @@ brw_debug_recompile_sampler_key(struct brw_context *brw,
                       old_key->yuvtex_mask, key->yuvtex_mask);
    found |= key_debug(brw, "GL_MESA_ycbcr UV swapping\n",
                       old_key->yuvtex_swap_mask, key->yuvtex_swap_mask);
+   found |= key_debug(brw, "gather channel quirk on any texture unit",
+                      old_key->gather_channel_quirk_mask, key->gather_channel_quirk_mask);
 
    return found;
 }
@@ -342,6 +345,12 @@ brw_populate_sampler_prog_key_data(struct gl_context *ctx,
 	    if (sampler->WrapR == GL_CLAMP)
 	       key->gl_clamp_mask[2] |= 1 << s;
 	 }
+
+         /* gather4's channel select for green from RG32F is broken */
+         if (brw->gen >= 7 && prog->UsesGather) {
+            if (img->InternalFormat == GL_RG32F && GET_SWZ(t->_Swizzle, 0) == 1)
+               key->gather_channel_quirk_mask |= 1 << s;
+         }
       }
    }
 }

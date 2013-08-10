@@ -2392,6 +2392,10 @@ uint32_t
 vec4_visitor::gather_channel(ir_texture *ir, int sampler)
 {
    int swiz = GET_SWZ(key->tex.swizzles[sampler], 0 /* red */);
+   if (key->tex.gather_channel_quirk_mask & (1<<sampler))
+      return 2;   /* gather4 sampler is broken for green channel on RG32F --
+                   * we must ask for blue instead.
+                   */
    switch (swiz) {
       case SWIZZLE_X: return 0;
       case SWIZZLE_Y: return 1;
