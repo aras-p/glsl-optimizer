@@ -20,6 +20,10 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <sys/mman.h>
+#include <stdio.h>
+#include <fcntl.h>
+
 #include "nouveau_screen.h"
 #include "nouveau_context.h"
 #include "nouveau_vp3_video.h"
@@ -225,4 +229,101 @@ nouveau_vp3_decoder_init_common(struct pipe_video_decoder *dec)
    dec->flush = nouveau_vp3_decoder_flush;
    dec->begin_frame = nouveau_vp3_decoder_begin_frame;
    dec->end_frame = nouveau_vp3_decoder_end_frame;
+}
+
+static void vp4_getpath(enum pipe_video_profile profile, char *path)
+{
+   switch (u_reduce_video_profile(profile)) {
+      case PIPE_VIDEO_CODEC_MPEG12: {
+         sprintf(path, "/lib/firmware/nouveau/vuc-mpeg12-0");
+         break;
+      }
+      case PIPE_VIDEO_CODEC_MPEG4: {
+         sprintf(path, "/lib/firmware/nouveau/vuc-mpeg4-0");
+         break;
+      }
+      case PIPE_VIDEO_CODEC_VC1: {
+         sprintf(path, "/lib/firmware/nouveau/vuc-vc1-0");
+         break;
+      }
+      case PIPE_VIDEO_CODEC_MPEG4_AVC: {
+         sprintf(path, "/lib/firmware/nouveau/vuc-h264-0");
+         break;
+      }
+      default: assert(0);
+   }
+}
+
+int
+nouveau_vp3_load_firmware(struct nouveau_vp3_decoder *dec,
+                          enum pipe_video_profile profile,
+                          unsigned chipset)
+{
+   int fd;
+   char path[PATH_MAX];
+   ssize_t r;
+   uint32_t *end, endval;
+
+   vp4_getpath(profile, path);
+
+   if (nouveau_bo_map(dec->fw_bo, NOUVEAU_BO_WR, dec->client))
+      return 1;
+
+   fd = open(path, O_RDONLY | O_CLOEXEC);
+   if (fd < 0) {
+      fprintf(stderr, "opening firmware file %s failed: %m\n", path);
+      return 1;
+   }
+   r = read(fd, dec->fw_bo->map, 0x4000);
+   close(fd);
+
+   if (r < 0) {
+      fprintf(stderr, "reading firmware file %s failed: %m\n", path);
+      return 1;
+   }
+
+   if (r == 0x4000) {
+      fprintf(stderr, "firmware file %s too large!\n", path);
+      return 1;
+   }
+
+   if (r & 0xff) {
+      fprintf(stderr, "firmware file %s wrong size!\n", path);
+      return 1;
+   }
+
+   end = dec->fw_bo->map + r - 4;
+   endval = *end;
+   while (endval == *end)
+      end--;
+
+   r = (intptr_t)end - (intptr_t)dec->fw_bo->map + 4;
+
+   switch (u_reduce_video_profile(profile)) {
+      case PIPE_VIDEO_CODEC_MPEG12: {
+         assert((r & 0xff) == 0xe0);
+         dec->fw_sizes = (0x2e0<<16) | (r - 0x2e0);
+         break;
+      }
+      case PIPE_VIDEO_CODEC_MPEG4: {
+         assert((r & 0xff) == 0xe0);
+         dec->fw_sizes = (0x2e0<<16) | (r - 0x2e0);
+         break;
+      }
+      case PIPE_VIDEO_CODEC_VC1: {
+         assert((r & 0xff) == 0xac);
+         dec->fw_sizes = (0x3ac<<16) | (r - 0x3ac);
+         break;
+      }
+      case PIPE_VIDEO_CODEC_MPEG4_AVC: {
+         assert((r & 0xff) == 0x70);
+         dec->fw_sizes = (0x370<<16) | (r - 0x370);
+         break;
+      }
+      default:
+         return 1;
+   }
+   munmap(dec->fw_bo->map, dec->fw_bo->size);
+   dec->fw_bo->map = NULL;
+   return 0;
 }

@@ -25,9 +25,6 @@
 #include "util/u_sampler.h"
 #include "util/u_format.h"
 
-#include <sys/mman.h>
-#include <fcntl.h>
-
 int
 nvc0_screen_get_video_param(struct pipe_screen *pscreen,
                             enum pipe_video_profile profile,
@@ -108,29 +105,6 @@ nvc0_decoder_decode_bitstream(struct pipe_video_decoder *decoder,
 
    nvc0_decoder_vp(dec, desc, target, comm_seq, vp_caps, is_ref, refs);
    nvc0_decoder_ppp(dec, desc, target, comm_seq);
-}
-
-static void nvc0_video_getpath(enum pipe_video_profile profile, char *path)
-{
-   switch (u_reduce_video_profile(profile)) {
-      case PIPE_VIDEO_CODEC_MPEG12: {
-         sprintf(path, "/lib/firmware/nouveau/vuc-mpeg12-0");
-         break;
-      }
-      case PIPE_VIDEO_CODEC_MPEG4: {
-         sprintf(path, "/lib/firmware/nouveau/vuc-mpeg4-0");
-         break;
-      }
-      case PIPE_VIDEO_CODEC_VC1: {
-         sprintf(path, "/lib/firmware/nouveau/vuc-vc1-0");
-         break;
-      }
-      case PIPE_VIDEO_CODEC_MPEG4_AVC: {
-         sprintf(path, "/lib/firmware/nouveau/vuc-h264-0");
-         break;
-      }
-      default: assert(0);
-   }
 }
 
 struct pipe_video_decoder *
@@ -302,76 +276,14 @@ nvc0_create_decoder(struct pipe_context *context,
    }
 
    if (screen->device->chipset < 0xd0) {
-      int fd;
-      char path[PATH_MAX];
-      ssize_t r;
-      uint32_t *end, endval;
-
       ret = nouveau_bo_new(screen->device, NOUVEAU_BO_VRAM, 0,
                            0x4000, &cfg, &dec->fw_bo);
-      if (!ret)
-         ret = nouveau_bo_map(dec->fw_bo, NOUVEAU_BO_WR, dec->client);
       if (ret)
          goto fail;
 
-      nvc0_video_getpath(profile, path);
-
-      fd = open(path, O_RDONLY | O_CLOEXEC);
-      if (fd < 0) {
-         fprintf(stderr, "opening firmware file %s failed: %m\n", path);
+      ret = nouveau_vp3_load_firmware(dec, profile, screen->device->chipset);
+      if (ret)
          goto fw_fail;
-      }
-      r = read(fd, dec->fw_bo->map, 0x4000);
-      close(fd);
-
-      if (r < 0) {
-         fprintf(stderr, "reading firmware file %s failed: %m\n", path);
-         goto fw_fail;
-      }
-
-      if (r == 0x4000) {
-         fprintf(stderr, "firmware file %s too large!\n", path);
-         goto fw_fail;
-      }
-
-      if (r & 0xff) {
-         fprintf(stderr, "firmware file %s wrong size!\n", path);
-         goto fw_fail;
-      }
-
-      end = dec->fw_bo->map + r - 4;
-      endval = *end;
-      while (endval == *end)
-         end--;
-
-      r = (intptr_t)end - (intptr_t)dec->fw_bo->map + 4;
-
-      switch (u_reduce_video_profile(profile)) {
-      case PIPE_VIDEO_CODEC_MPEG12: {
-         assert((r & 0xff) == 0xe0);
-         dec->fw_sizes = (0x2e0<<16) | (r - 0x2e0);
-         break;
-      }
-      case PIPE_VIDEO_CODEC_MPEG4: {
-         assert((r & 0xff) == 0xe0);
-         dec->fw_sizes = (0x2e0<<16) | (r - 0x2e0);
-         break;
-      }
-      case PIPE_VIDEO_CODEC_VC1: {
-         assert((r & 0xff) == 0xac);
-         dec->fw_sizes = (0x3ac<<16) | (r - 0x3ac);
-         break;
-      }
-      case PIPE_VIDEO_CODEC_MPEG4_AVC: {
-         assert((r & 0xff) == 0x70);
-         dec->fw_sizes = (0x370<<16) | (r - 0x370);
-         break;
-      }
-      default:
-         goto fw_fail;
-      }
-      munmap(dec->fw_bo->map, dec->fw_bo->size);
-      dec->fw_bo->map = NULL;
    }
 
    if (codec != 3) {

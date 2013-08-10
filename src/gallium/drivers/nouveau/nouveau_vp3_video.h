@@ -200,6 +200,11 @@ nouveau_vp3_video_buffer_create(struct pipe_context *pipe,
 void
 nouveau_vp3_decoder_init_common(struct pipe_video_decoder *decoder);
 
+int
+nouveau_vp3_load_firmware(struct nouveau_vp3_decoder *dec,
+                          enum pipe_video_profile profile,
+                          unsigned chipset);
+
 uint32_t
 nouveau_vp3_bsp(struct nouveau_vp3_decoder *dec,  union pipe_desc desc,
                 struct nouveau_vp3_video_buffer *target,
