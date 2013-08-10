@@ -186,13 +186,12 @@ fs_copy_prop_dataflow::run()
       /* Update liveout for all blocks. */
       for (int b = 0; b < cfg->num_blocks; b++) {
          for (int i = 0; i < bitset_words; i++) {
-            BITSET_WORD new_liveout = (bd[b].livein[i] &
-                                       ~bd[b].kill[i] &
-                                       ~bd[b].liveout[i]);
-            if (new_liveout) {
-               bd[b].liveout[i] |= new_liveout;
+            const BITSET_WORD old_liveout = bd[b].liveout[i];
+
+            bd[b].liveout[i] |= bd[b].livein[i] & ~bd[b].kill[i];
+
+            if (old_liveout != bd[b].liveout[i])
                progress = true;
-            }
          }
       }
 
