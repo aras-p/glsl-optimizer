@@ -162,9 +162,9 @@ fs_copy_prop_dataflow::setup_kills()
 void
 fs_copy_prop_dataflow::run()
 {
-   bool cont = true;
+   bool cont;
 
-   while (cont) {
+   do {
       cont = false;
 
       for (int b = 0; b < cfg->num_blocks; b++) {
@@ -194,7 +194,7 @@ fs_copy_prop_dataflow::run()
             }
          }
       }
-   }
+   } while (cont);
 }
 
 bool
