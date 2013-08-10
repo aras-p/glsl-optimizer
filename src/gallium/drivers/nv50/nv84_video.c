@@ -669,7 +669,7 @@ nv84_video_buffer_create(struct pipe_context *pipe,
    templ.format = PIPE_FORMAT_R8_UNORM;
    templ.width0 = align(template->width, 2);
    templ.height0 = align(template->height, 4) / 2;
-   templ.flags = NV50_RESOURCE_FLAG_VIDEO;
+   templ.flags = NV50_RESOURCE_FLAG_VIDEO | NV50_RESOURCE_FLAG_NOALLOC;
    templ.array_size = 2;
 
    cfg.nv50.tile_mode = 0x20;

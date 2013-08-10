@@ -335,8 +335,10 @@ nv50_miptree_create(struct pipe_screen *pscreen,
 
    if (unlikely(pt->flags & NV50_RESOURCE_FLAG_VIDEO)) {
       nv50_miptree_init_layout_video(mt);
-      /* BO allocation done by client */
-      return pt;
+      if (pt->flags & NV50_RESOURCE_FLAG_NOALLOC) {
+         /* BO allocation done by client */
+         return pt;
+      }
    } else
    if (bo_config.nv50.memtype != 0) {
       nv50_miptree_init_layout_tiled(mt);
