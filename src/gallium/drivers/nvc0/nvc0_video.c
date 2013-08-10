@@ -25,57 +25,6 @@
 #include "util/u_sampler.h"
 #include "util/u_format.h"
 
-int
-nvc0_screen_get_video_param(struct pipe_screen *pscreen,
-                            enum pipe_video_profile profile,
-                            enum pipe_video_cap param)
-{
-   switch (param) {
-   case PIPE_VIDEO_CAP_SUPPORTED:
-      return profile >= PIPE_VIDEO_PROFILE_MPEG1;
-   case PIPE_VIDEO_CAP_NPOT_TEXTURES:
-      return 1;
-   case PIPE_VIDEO_CAP_MAX_WIDTH:
-   case PIPE_VIDEO_CAP_MAX_HEIGHT:
-      return nouveau_screen(pscreen)->device->chipset < 0xd0 ? 2048 : 4096;
-   case PIPE_VIDEO_CAP_PREFERED_FORMAT:
-      return PIPE_FORMAT_NV12;
-   case PIPE_VIDEO_CAP_SUPPORTS_INTERLACED:
-   case PIPE_VIDEO_CAP_PREFERS_INTERLACED:
-      return true;
-   case PIPE_VIDEO_CAP_SUPPORTS_PROGRESSIVE:
-      return false;
-   case PIPE_VIDEO_CAP_MAX_LEVEL:
-      switch (profile) {
-      case PIPE_VIDEO_PROFILE_MPEG1:
-         return 0;
-      case PIPE_VIDEO_PROFILE_MPEG2_SIMPLE:
-      case PIPE_VIDEO_PROFILE_MPEG2_MAIN:
-         return 3;
-      case PIPE_VIDEO_PROFILE_MPEG4_SIMPLE:
-         return 3;
-      case PIPE_VIDEO_PROFILE_MPEG4_ADVANCED_SIMPLE:
-         return 5;
-      case PIPE_VIDEO_PROFILE_VC1_SIMPLE:
-         return 1;
-      case PIPE_VIDEO_PROFILE_VC1_MAIN:
-         return 2;
-      case PIPE_VIDEO_PROFILE_VC1_ADVANCED:
-         return 4;
-      case PIPE_VIDEO_PROFILE_MPEG4_AVC_BASELINE:
-      case PIPE_VIDEO_PROFILE_MPEG4_AVC_MAIN:
-      case PIPE_VIDEO_PROFILE_MPEG4_AVC_HIGH:
-         return 41;
-      default:
-         debug_printf("unknown video profile: %d\n", profile);
-         return 0;
-      }
-   default:
-      debug_printf("unknown video param: %d\n", param);
-      return 0;
-   }
-}
-
 static void
 nvc0_decoder_decode_bitstream(struct pipe_video_decoder *decoder,
                               struct pipe_video_buffer *video_target,

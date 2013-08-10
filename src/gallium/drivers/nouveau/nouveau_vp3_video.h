@@ -216,3 +216,13 @@ nouveau_vp3_vp_caps(struct nouveau_vp3_decoder *dec, union pipe_desc desc,
                     struct nouveau_vp3_video_buffer *target, unsigned comm_seq,
                     unsigned *caps, unsigned *is_ref,
                     struct nouveau_vp3_video_buffer *refs[16]);
+
+int
+nouveau_vp3_screen_get_video_param(struct pipe_screen *pscreen,
+                                   enum pipe_video_profile profile,
+                                   enum pipe_video_cap param);
+
+boolean
+nouveau_vp3_screen_video_supported(struct pipe_screen *screen,
+                                   enum pipe_format format,
+                                   enum pipe_video_profile profile);
