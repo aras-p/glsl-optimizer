@@ -1490,7 +1490,8 @@ unsigned post_scheduler::try_add_instruction(node *n) {
 
 		// FIXME workaround for some problems with MULADD in trans slot on r700,
 		// (is it really needed on r600?)
-		if (a->bc.op == ALU_OP3_MULADD && !ctx.is_egcm()) {
+		if ((a->bc.op == ALU_OP3_MULADD || a->bc.op == ALU_OP3_MULADD_IEEE) &&
+				!ctx.is_egcm()) {
 			allowed_slots &= 0x0F;
 		}
 
