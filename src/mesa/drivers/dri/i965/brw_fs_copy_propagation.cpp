@@ -227,18 +227,17 @@ fs_copy_prop_dataflow::run()
             continue;
 
          for (int i = 0; i < bitset_words; i++) {
-            BITSET_WORD new_livein = ~bd[b].livein[i];
+            const BITSET_WORD old_livein = bd[b].livein[i];
+
+            bd[b].livein[i] = ~0u;
             foreach_list(block_node, &cfg->blocks[b]->parents) {
                bblock_link *link = (bblock_link *)block_node;
                bblock_t *block = link->block;
-               new_livein &= bd[block->block_num].liveout[i];
-               if (!new_livein)
-                  break;
+               bd[b].livein[i] &= bd[block->block_num].liveout[i];
             }
-            if (new_livein) {
-               bd[b].livein[i] |= new_livein;
+
+            if (old_livein != bd[b].livein[i])
                progress = true;
-            }
          }
       }
    } while (progress);
