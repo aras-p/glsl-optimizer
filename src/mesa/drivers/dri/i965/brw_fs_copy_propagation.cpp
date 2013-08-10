@@ -151,6 +151,7 @@ fs_copy_prop_dataflow::fs_copy_prop_dataflow(void *mem_ctx, cfg_t *cfg,
 void
 fs_copy_prop_dataflow::setup_initial_values()
 {
+   /* Initialize the COPY and KILL sets. */
    for (int b = 0; b < cfg->num_blocks; b++) {
       bblock_t *block = cfg->blocks[b];
 
@@ -166,6 +167,26 @@ fs_copy_prop_dataflow::setup_initial_values()
                 inst->overwrites_reg(acp[i]->src)) {
                BITSET_SET(bd[b].kill, i);
             }
+         }
+      }
+   }
+
+   /* Populate the initial values for the livein and liveout sets.  For the
+    * block at the start of the program, livein = 0 and liveout = copy.
+    * For the others, set liveout to 0 (the empty set) and livein to ~0
+    * (the universal set).
+    */
+   for (int b = 0; b < cfg->num_blocks; b++) {
+      bblock_t *block = cfg->blocks[b];
+      if (block->parents.is_empty()) {
+         for (int i = 0; i < bitset_words; i++) {
+            bd[b].livein[i] = 0u;
+            bd[b].liveout[i] = bd[b].copy[i];
+         }
+      } else {
+         for (int i = 0; i < bitset_words; i++) {
+            bd[b].liveout[i] = 0u;
+            bd[b].livein[i] = ~0u;
          }
       }
    }
