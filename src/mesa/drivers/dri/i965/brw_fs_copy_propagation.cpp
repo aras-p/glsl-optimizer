@@ -188,7 +188,8 @@ fs_copy_prop_dataflow::run()
          for (int i = 0; i < bitset_words; i++) {
             const BITSET_WORD old_liveout = bd[b].liveout[i];
 
-            bd[b].liveout[i] |= bd[b].livein[i] & ~bd[b].kill[i];
+            bd[b].liveout[i] |=
+               bd[b].copy[i] | (bd[b].livein[i] & ~bd[b].kill[i]);
 
             if (old_liveout != bd[b].liveout[i])
                progress = true;
