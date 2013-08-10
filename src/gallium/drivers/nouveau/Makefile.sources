@@ -5,4 +5,5 @@ C_SOURCES := \
 	nouveau_buffer.c \
 	nouveau_heap.c \
 	nouveau_video.c \
-	nouveau_vp3_video.c
+	nouveau_vp3_video.c \
+	nouveau_vp3_video_bsp.c

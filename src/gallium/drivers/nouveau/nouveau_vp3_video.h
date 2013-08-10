@@ -20,10 +20,10 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <libdrm/nouveau.h>
+
 #include "pipe/p_defines.h"
-
 #include "vl/vl_video_buffer.h"
-
 #include "util/u_video.h"
 
 struct nouveau_vp3_video_buffer {
@@ -196,3 +196,9 @@ struct pipe_video_buffer *
 nouveau_vp3_video_buffer_create(struct pipe_context *pipe,
                                 const struct pipe_video_buffer *templat,
                                 int flags);
+
+uint32_t
+nouveau_vp3_bsp(struct nouveau_vp3_decoder *dec,  union pipe_desc desc,
+                struct nouveau_vp3_video_buffer *target,
+                unsigned comm_seq, unsigned num_buffers,
+                const void *const *data, const unsigned *num_bytes);
