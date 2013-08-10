@@ -810,6 +810,7 @@ nouveau_video_buffer_create(struct pipe_context *pipe,
    buffer->base.get_sampler_view_components = nouveau_video_buffer_sampler_view_components;
    buffer->base.get_surfaces = nouveau_video_buffer_surfaces;
    buffer->base.chroma_format = templat->chroma_format;
+   buffer->base.buffer_format = templat->buffer_format;
    buffer->base.width = width;
    buffer->base.height = height;
    buffer->num_planes = 2;
