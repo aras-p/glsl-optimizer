@@ -205,6 +205,9 @@ fs_copy_prop_dataflow::run()
 
       /* Update liveout for all blocks. */
       for (int b = 0; b < cfg->num_blocks; b++) {
+         if (cfg->blocks[b]->parents.is_empty())
+            continue;
+
          for (int i = 0; i < bitset_words; i++) {
             const BITSET_WORD old_liveout = bd[b].liveout[i];
 
@@ -220,6 +223,9 @@ fs_copy_prop_dataflow::run()
        * blocks, it's live coming in to this block.
        */
       for (int b = 0; b < cfg->num_blocks; b++) {
+         if (cfg->blocks[b]->parents.is_empty())
+            continue;
+
          for (int i = 0; i < bitset_words; i++) {
             BITSET_WORD new_livein = ~bd[b].livein[i];
             foreach_list(block_node, &cfg->blocks[b]->parents) {
