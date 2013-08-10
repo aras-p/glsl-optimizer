@@ -2177,6 +2177,11 @@ draw_gs_llvm_generate(struct draw_llvm *llvm,
       system_values.prim_id = LLVMBuildLoad(builder, prim_id_ptr, "prim_id");;
    }
 
+   if (gallivm_debug & (GALLIVM_DEBUG_TGSI | GALLIVM_DEBUG_IR)) {
+      tgsi_dump(tokens, 0);
+      draw_gs_llvm_dump_variant_key(&variant->key);
+   }
+
    lp_build_tgsi_soa(variant->gallivm,
                      tokens,
                      gs_type,
