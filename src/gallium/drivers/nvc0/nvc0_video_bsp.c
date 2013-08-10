@@ -110,7 +110,7 @@ struct h264_picparm_bsp {
 };
 
 static uint32_t
-nvc0_decoder_fill_picparm_mpeg12_bsp(struct nvc0_decoder *dec,
+nvc0_decoder_fill_picparm_mpeg12_bsp(struct nouveau_vp3_decoder *dec,
                                      struct pipe_mpeg12_picture_desc *desc,
                                      char *map)
 {
@@ -132,7 +132,7 @@ nvc0_decoder_fill_picparm_mpeg12_bsp(struct nvc0_decoder *dec,
 }
 
 static uint32_t
-nvc0_decoder_fill_picparm_mpeg4_bsp(struct nvc0_decoder *dec,
+nvc0_decoder_fill_picparm_mpeg4_bsp(struct nouveau_vp3_decoder *dec,
                                     struct pipe_mpeg4_picture_desc *desc,
                                     char *map)
 {
@@ -157,7 +157,7 @@ nvc0_decoder_fill_picparm_mpeg4_bsp(struct nvc0_decoder *dec,
 }
 
 static uint32_t
-nvc0_decoder_fill_picparm_vc1_bsp(struct nvc0_decoder *dec,
+nvc0_decoder_fill_picparm_vc1_bsp(struct nouveau_vp3_decoder *dec,
                                   struct pipe_vc1_picture_desc *d,
                                   char *map)
 {
@@ -189,7 +189,7 @@ nvc0_decoder_fill_picparm_vc1_bsp(struct nvc0_decoder *dec,
 }
 
 static uint32_t
-nvc0_decoder_fill_picparm_h264_bsp(struct nvc0_decoder *dec,
+nvc0_decoder_fill_picparm_h264_bsp(struct nouveau_vp3_decoder *dec,
                                    struct pipe_h264_picture_desc *d,
                                    char *map)
 {
@@ -230,7 +230,7 @@ nvc0_decoder_fill_picparm_h264_bsp(struct nvc0_decoder *dec,
    return caps | 3;
 }
 
-#if NVC0_DEBUG_FENCE
+#if NOUVEAU_VP3_DEBUG_FENCE
 static void dump_comm_bsp(struct comm *comm)
 {
    unsigned idx = comm->bsp_cur_index & 0xf;
@@ -240,7 +240,7 @@ static void dump_comm_bsp(struct comm *comm)
 #endif
 
 unsigned
-nvc0_decoder_bsp(struct nvc0_decoder *dec, union pipe_desc desc,
+nvc0_decoder_bsp(struct nouveau_vp3_decoder *dec, union pipe_desc desc,
                  struct nouveau_vp3_video_buffer *target,
                  unsigned comm_seq, unsigned num_buffers,
                  const void *const *data, const unsigned *num_bytes,
@@ -255,13 +255,13 @@ nvc0_decoder_bsp(struct nvc0_decoder *dec, union pipe_desc desc,
    uint32_t endmarker, caps;
    struct strparm_bsp *str_bsp;
    int ret, i;
-   struct nouveau_bo *bsp_bo = dec->bsp_bo[comm_seq % NVC0_VIDEO_QDEPTH];
+   struct nouveau_bo *bsp_bo = dec->bsp_bo[comm_seq % NOUVEAU_VP3_VIDEO_QDEPTH];
    struct nouveau_bo *inter_bo = dec->inter_bo[comm_seq & 1];
    unsigned fence_extra = 0;
    struct nouveau_pushbuf_refn bo_refs[] = {
       { bsp_bo, NOUVEAU_BO_RD | NOUVEAU_BO_VRAM },
       { inter_bo, NOUVEAU_BO_WR | NOUVEAU_BO_VRAM },
-#if NVC0_DEBUG_FENCE
+#if NOUVEAU_VP3_DEBUG_FENCE
       { dec->fence_bo, NOUVEAU_BO_WR | NOUVEAU_BO_GART },
 #endif
       { dec->bitplane_bo, NOUVEAU_BO_RDWR | NOUVEAU_BO_VRAM },
@@ -271,7 +271,7 @@ nvc0_decoder_bsp(struct nvc0_decoder *dec, union pipe_desc desc,
    if (!dec->bitplane_bo)
       num_refs--;
 
-#if NVC0_DEBUG_FENCE
+#if NOUVEAU_VP3_DEBUG_FENCE
    fence_extra = 4;
 #endif
 
@@ -329,7 +329,7 @@ nvc0_decoder_bsp(struct nvc0_decoder *dec, union pipe_desc desc,
    /* Reserved for picparm_vp */
    bsp += 0x300;
    /* Reserved for comm */
-#if !NVC0_DEBUG_FENCE
+#if !NOUVEAU_VP3_DEBUG_FENCE
    memset(bsp, 0, 0x200);
 #endif
    bsp += 0x200;
@@ -351,7 +351,7 @@ nvc0_decoder_bsp(struct nvc0_decoder *dec, union pipe_desc desc,
    bsp_addr = bsp_bo->offset >> 8;
    inter_addr = inter_bo->offset >> 8;
 
-#if NVC0_DEBUG_FENCE
+#if NOUVEAU_VP3_DEBUG_FENCE
    memset(dec->comm, 0, 0x200);
    comm_addr = (dec->fence_bo->offset + COMM_OFFSET) >> 8;
 #else
@@ -370,7 +370,7 @@ nvc0_decoder_bsp(struct nvc0_decoder *dec, union pipe_desc desc,
 
       bitplane_addr = dec->bitplane_bo->offset >> 8;
 
-      nvc0_decoder_inter_sizes(dec, 1, &slice_size, &bucket_size, &ring_size);
+      nouveau_vp3_inter_sizes(dec, 1, &slice_size, &bucket_size, &ring_size);
       BEGIN_NVC0(push, SUBC_BSP(0x400), 6);
       PUSH_DATA (push, bsp_addr); // 400 picparm addr
       PUSH_DATA (push, inter_addr); // 404 interparm addr
@@ -379,7 +379,7 @@ nvc0_decoder_bsp(struct nvc0_decoder *dec, union pipe_desc desc,
       PUSH_DATA (push, bitplane_addr); // 410 BITPLANE_DATA
       PUSH_DATA (push, 0x400); // 414 BITPLANE_DATA_SIZE
    } else {
-      nvc0_decoder_inter_sizes(dec, desc.h264->slice_count, &slice_size, &bucket_size, &ring_size);
+      nouveau_vp3_inter_sizes(dec, desc.h264->slice_count, &slice_size, &bucket_size, &ring_size);
       BEGIN_NVC0(push, SUBC_BSP(0x400), 8);
       PUSH_DATA (push, bsp_addr); // 400 picparm addr
       PUSH_DATA (push, inter_addr); // 404 interparm addr
@@ -392,7 +392,7 @@ nvc0_decoder_bsp(struct nvc0_decoder *dec, union pipe_desc desc,
       // TODO: Double check 414 / 418 with nvidia trace
    }
 
-#if NVC0_DEBUG_FENCE
+#if NOUVEAU_VP3_DEBUG_FENCE
    BEGIN_NVC0(push, SUBC_BSP(0x240), 3);
    PUSH_DATAh(push, dec->fence_bo->offset);
    PUSH_DATA (push, dec->fence_bo->offset);

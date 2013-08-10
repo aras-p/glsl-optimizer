@@ -23,7 +23,7 @@
 #include "nvc0_video.h"
 
 static void
-nvc0_decoder_setup_ppp(struct nvc0_decoder *dec, struct nouveau_vp3_video_buffer *target, uint32_t low700) {
+nvc0_decoder_setup_ppp(struct nouveau_vp3_decoder *dec, struct nouveau_vp3_video_buffer *target, uint32_t low700) {
    struct nouveau_pushbuf *push = dec->pushbuf[2];
 
    uint32_t stride_in = mb(dec->base.width);
@@ -36,7 +36,7 @@ nvc0_decoder_setup_ppp(struct nvc0_decoder *dec, struct nouveau_vp3_video_buffer
       { NULL, NOUVEAU_BO_WR | NOUVEAU_BO_VRAM },
       { NULL, NOUVEAU_BO_WR | NOUVEAU_BO_VRAM },
       { dec->ref_bo, NOUVEAU_BO_RD | NOUVEAU_BO_VRAM },
-#if NVC0_DEBUG_FENCE
+#if NOUVEAU_VP3_DEBUG_FENCE
       { dec->fence_bo, NOUVEAU_BO_WR | NOUVEAU_BO_GART },
 #endif
    };
@@ -48,10 +48,10 @@ nvc0_decoder_setup_ppp(struct nvc0_decoder *dec, struct nouveau_vp3_video_buffer
    }
 
    nouveau_pushbuf_refn(push, bo_refs, num_refs);
-   nvc0_decoder_ycbcr_offsets(dec, &y2, &cbcr, &cbcr2);
+   nouveau_vp3_ycbcr_offsets(dec, &y2, &cbcr, &cbcr2);
 
    BEGIN_NVC0(push, SUBC_PPP(0x700), 10);
-   in_addr = nvc0_video_addr(dec, target) >> 8;
+   in_addr = nouveau_vp3_video_addr(dec, target) >> 8;
 
    PUSH_DATA (push, (stride_out << 24) | (stride_out << 16) | low700); // 700
    PUSH_DATA (push, (stride_in << 24) | (stride_in << 16) | (dec_h << 8) | dec_w); // 704
@@ -73,7 +73,7 @@ nvc0_decoder_setup_ppp(struct nvc0_decoder *dec, struct nouveau_vp3_video_buffer
 }
 
 static uint32_t
-nvc0_decoder_vc1_ppp(struct nvc0_decoder *dec, struct pipe_vc1_picture_desc *desc, struct nouveau_vp3_video_buffer *target) {
+nvc0_decoder_vc1_ppp(struct nouveau_vp3_decoder *dec, struct pipe_vc1_picture_desc *desc, struct nouveau_vp3_video_buffer *target) {
    struct nouveau_pushbuf *push = dec->pushbuf[2];
 
    nvc0_decoder_setup_ppp(dec, target, 0x1412);
@@ -89,13 +89,13 @@ nvc0_decoder_vc1_ppp(struct nvc0_decoder *dec, struct pipe_vc1_picture_desc *des
 }
 
 void
-nvc0_decoder_ppp(struct nvc0_decoder *dec, union pipe_desc desc, struct nouveau_vp3_video_buffer *target, unsigned comm_seq) {
+nvc0_decoder_ppp(struct nouveau_vp3_decoder *dec, union pipe_desc desc, struct nouveau_vp3_video_buffer *target, unsigned comm_seq) {
    enum pipe_video_codec codec = u_reduce_video_profile(dec->base.profile);
    struct nouveau_pushbuf *push = dec->pushbuf[2];
    unsigned ppp_caps = 0x10;
    unsigned fence_extra = 0;
 
-#if NVC0_DEBUG_FENCE
+#if NOUVEAU_VP3_DEBUG_FENCE
    fence_extra = 4;
 #endif
 
@@ -116,7 +116,7 @@ nvc0_decoder_ppp(struct nvc0_decoder *dec, union pipe_desc desc, struct nouveau_
    PUSH_DATA (push, comm_seq);
    PUSH_DATA (push, ppp_caps);
 
-#if NVC0_DEBUG_FENCE
+#if NOUVEAU_VP3_DEBUG_FENCE
    BEGIN_NVC0(push, SUBC_PPP(0x240), 3);
    PUSH_DATAh(push, (dec->fence_bo->offset + 0x20));
    PUSH_DATA (push, (dec->fence_bo->offset + 0x20));

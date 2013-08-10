@@ -170,7 +170,7 @@ struct h264_picparm_vp { // 700..a00
 };
 
 static void
-nvc0_decoder_handle_references(struct nvc0_decoder *dec, struct nouveau_vp3_video_buffer *refs[16], unsigned seq, struct nouveau_vp3_video_buffer *target)
+nvc0_decoder_handle_references(struct nouveau_vp3_decoder *dec, struct nouveau_vp3_video_buffer *refs[16], unsigned seq, struct nouveau_vp3_video_buffer *target)
 {
    unsigned h264 = u_reduce_video_profile(dec->base.profile) == PIPE_VIDEO_CODEC_MPEG4_AVC;
    unsigned i, idx, empty_spot = dec->base.max_references + 1;
@@ -221,7 +221,7 @@ nvc0_decoder_handle_references(struct nvc0_decoder *dec, struct nouveau_vp3_vide
 }
 
 static void
-nvc0_decoder_kick_ref(struct nvc0_decoder *dec, struct nouveau_vp3_video_buffer *target)
+nvc0_decoder_kick_ref(struct nouveau_vp3_decoder *dec, struct nouveau_vp3_video_buffer *target)
 {
    dec->refs[target->valid_ref].vidbuf = NULL;
    dec->refs[target->valid_ref].last_used = 0;
@@ -229,7 +229,7 @@ nvc0_decoder_kick_ref(struct nvc0_decoder *dec, struct nouveau_vp3_video_buffer 
 }
 
 static uint32_t
-nvc0_decoder_fill_picparm_mpeg12_vp(struct nvc0_decoder *dec,
+nvc0_decoder_fill_picparm_mpeg12_vp(struct nouveau_vp3_decoder *dec,
                                     struct pipe_mpeg12_picture_desc *desc,
                                     struct nouveau_vp3_video_buffer *refs[16],
                                     unsigned *is_ref,
@@ -252,10 +252,10 @@ nvc0_decoder_fill_picparm_mpeg12_vp(struct nvc0_decoder *dec,
    pic_vp->height = mb(dec->base.height);
    pic_vp->unk08 = pic_vp->unk04 = (dec->base.width+0xf)&~0xf; // Stride
 
-   nvc0_decoder_ycbcr_offsets(dec, &pic_vp->ofs[1], &pic_vp->ofs[3], &pic_vp->ofs[4]);
+   nouveau_vp3_ycbcr_offsets(dec, &pic_vp->ofs[1], &pic_vp->ofs[3], &pic_vp->ofs[4]);
    pic_vp->ofs[5] = pic_vp->ofs[3];
    pic_vp->ofs[0] = pic_vp->ofs[2] = 0;
-   nvc0_decoder_inter_sizes(dec, 1, &ring, &pic_vp->bucket_size, &pic_vp->inter_ring_data_size);
+   nouveau_vp3_inter_sizes(dec, 1, &ring, &pic_vp->bucket_size, &pic_vp->inter_ring_data_size);
 
    pic_vp->alternate_scan = desc->alternate_scan;
    pic_vp->pad2[0] = pic_vp->pad2[1] = pic_vp->pad2[2] = 0;
@@ -278,7 +278,7 @@ nvc0_decoder_fill_picparm_mpeg12_vp(struct nvc0_decoder *dec,
 }
 
 static uint32_t
-nvc0_decoder_fill_picparm_mpeg4_vp(struct nvc0_decoder *dec,
+nvc0_decoder_fill_picparm_mpeg4_vp(struct nouveau_vp3_decoder *dec,
                                    struct pipe_mpeg4_picture_desc *desc,
                                    struct nouveau_vp3_video_buffer *refs[16],
                                    unsigned *is_ref,
@@ -293,11 +293,11 @@ nvc0_decoder_fill_picparm_mpeg4_vp(struct nvc0_decoder *dec,
    pic_vp->height = mb(dec->base.height)<<4;
    pic_vp->unk0c = pic_vp->unk08 = mb(dec->base.width)<<4; // Stride
 
-   nvc0_decoder_ycbcr_offsets(dec, &pic_vp->ofs[1], &pic_vp->ofs[3], &pic_vp->ofs[4]);
+   nouveau_vp3_ycbcr_offsets(dec, &pic_vp->ofs[1], &pic_vp->ofs[3], &pic_vp->ofs[4]);
    pic_vp->ofs[5] = pic_vp->ofs[3];
    pic_vp->ofs[0] = pic_vp->ofs[2] = 0;
    pic_vp->pad1 = pic_vp->pad2 = 0;
-   nvc0_decoder_inter_sizes(dec, 1, &ring, &pic_vp->bucket_size, &pic_vp->inter_ring_data_size);
+   nouveau_vp3_inter_sizes(dec, 1, &ring, &pic_vp->bucket_size, &pic_vp->inter_ring_data_size);
 
    pic_vp->trd[0] = desc->trd[0];
    pic_vp->trd[1] = desc->trd[1];
@@ -326,7 +326,7 @@ nvc0_decoder_fill_picparm_mpeg4_vp(struct nvc0_decoder *dec,
 }
 
 static uint32_t
-nvc0_decoder_fill_picparm_h264_vp(struct nvc0_decoder *dec,
+nvc0_decoder_fill_picparm_h264_vp(struct nouveau_vp3_decoder *dec,
                                   const struct pipe_h264_picture_desc *d,
                                   struct nouveau_vp3_video_buffer *refs[16],
                                   unsigned *is_ref,
@@ -341,12 +341,12 @@ nvc0_decoder_fill_picparm_h264_vp(struct nvc0_decoder *dec,
    h->width = mb(dec->base.width);
    h->height = mb(dec->base.height);
    h->stride1 = h->stride2 = mb(dec->base.width)*16;
-   nvc0_decoder_ycbcr_offsets(dec, &h->ofs[1], &h->ofs[3], &h->ofs[4]);
+   nouveau_vp3_ycbcr_offsets(dec, &h->ofs[1], &h->ofs[3], &h->ofs[4]);
    h->ofs[5] = h->ofs[3];
    h->ofs[0] = h->ofs[2] = 0;
    h->u24 = dec->tmp_stride >> 8;
    assert(h->u24);
-   nvc0_decoder_inter_sizes(dec, 1, &ring, &h->bucket_size, &h->inter_ring_data_size);
+   nouveau_vp3_inter_sizes(dec, 1, &ring, &h->bucket_size, &h->inter_ring_data_size);
 
    h->u220 = 0;
    h->f0 = d->mb_adaptive_frame_field_flag;
@@ -410,7 +410,7 @@ nvc0_decoder_fill_picparm_h264_vp(struct nvc0_decoder *dec,
 }
 
 static void
-nvc0_decoder_fill_picparm_h264_vp_refs(struct nvc0_decoder *dec,
+nvc0_decoder_fill_picparm_h264_vp_refs(struct nouveau_vp3_decoder *dec,
                                        struct pipe_h264_picture_desc *d,
                                        struct nouveau_vp3_video_buffer *refs[16],
                                        struct nouveau_vp3_video_buffer *target,
@@ -429,7 +429,7 @@ nvc0_decoder_fill_picparm_h264_vp_refs(struct nvc0_decoder *dec,
 }
 
 static uint32_t
-nvc0_decoder_fill_picparm_vc1_vp(struct nvc0_decoder *dec,
+nvc0_decoder_fill_picparm_vc1_vp(struct nouveau_vp3_decoder *dec,
                                  struct pipe_vc1_picture_desc *d,
                                  struct nouveau_vp3_video_buffer *refs[16],
                                  unsigned *is_ref,
@@ -440,14 +440,14 @@ nvc0_decoder_fill_picparm_vc1_vp(struct nvc0_decoder *dec,
    assert(dec->base.profile != PIPE_VIDEO_PROFILE_VC1_SIMPLE);
    *is_ref = d->picture_type <= 1;
 
-   nvc0_decoder_ycbcr_offsets(dec, &vc->ofs[1], &vc->ofs[3], &vc->ofs[4]);
+   nouveau_vp3_ycbcr_offsets(dec, &vc->ofs[1], &vc->ofs[3], &vc->ofs[4]);
    vc->ofs[5] = vc->ofs[3];
    vc->ofs[0] = vc->ofs[2] = 0;
    vc->width = dec->base.width;
    vc->height = mb(dec->base.height)<<4;
    vc->unk0c = vc->unk10 = mb(dec->base.width)<<4; // Stride
    vc->pad = vc->pad2 = 0;
-   nvc0_decoder_inter_sizes(dec, 1, &ring, &vc->bucket_size, &vc->inter_ring_data_size);
+   nouveau_vp3_inter_sizes(dec, 1, &ring, &vc->bucket_size, &vc->inter_ring_data_size);
    vc->profile = dec->base.profile - PIPE_VIDEO_PROFILE_VC1_SIMPLE;
    vc->loopfilter = d->loopfilter;
    vc->fastuvmc = d->fastuvmc;
@@ -460,8 +460,8 @@ nvc0_decoder_fill_picparm_vc1_vp(struct nvc0_decoder *dec,
    return 0x12;
 }
 
-#if NVC0_DEBUG_FENCE
-static void dump_comm_vp(struct nvc0_decoder *dec, struct comm *comm, u32 comm_seq,
+#if NOUVEAU_VP3_DEBUG_FENCE
+static void dump_comm_vp(struct nouveau_vp3_decoder *dec, struct comm *comm, u32 comm_seq,
                          struct nouveau_bo *inter_bo, unsigned slice_size)
 {
 	unsigned i, idx = comm->pvp_cur_index & 0xf;
@@ -493,12 +493,12 @@ static void dump_comm_vp(struct nvc0_decoder *dec, struct comm *comm, u32 comm_s
 }
 #endif
 
-void nvc0_decoder_vp_caps(struct nvc0_decoder *dec, union pipe_desc desc,
+void nvc0_decoder_vp_caps(struct nouveau_vp3_decoder *dec, union pipe_desc desc,
                           struct nouveau_vp3_video_buffer *target, unsigned comm_seq,
                           unsigned *caps, unsigned *is_ref,
                           struct nouveau_vp3_video_buffer *refs[16])
 {
-   struct nouveau_bo *bsp_bo = dec->bsp_bo[comm_seq % NVC0_VIDEO_QDEPTH];
+   struct nouveau_bo *bsp_bo = dec->bsp_bo[comm_seq % NOUVEAU_VP3_VIDEO_QDEPTH];
    enum pipe_video_codec codec = u_reduce_video_profile(dec->base.profile);
    char *vp = bsp_bo->map + VP_OFFSET;
 
@@ -527,7 +527,7 @@ void nvc0_decoder_vp_caps(struct nvc0_decoder *dec, union pipe_desc desc,
 }
 
 void
-nvc0_decoder_vp(struct nvc0_decoder *dec, union pipe_desc desc,
+nvc0_decoder_vp(struct nouveau_vp3_decoder *dec, union pipe_desc desc,
                 struct nouveau_vp3_video_buffer *target, unsigned comm_seq,
                 unsigned caps, unsigned is_ref,
                 struct nouveau_vp3_video_buffer *refs[16])
@@ -536,41 +536,41 @@ nvc0_decoder_vp(struct nvc0_decoder *dec, union pipe_desc desc,
    uint32_t bsp_addr, comm_addr, inter_addr, ucode_addr, pic_addr[17], last_addr, null_addr;
    uint32_t slice_size, bucket_size, ring_size, i;
    enum pipe_video_codec codec = u_reduce_video_profile(dec->base.profile);
-   struct nouveau_bo *bsp_bo = dec->bsp_bo[comm_seq % NVC0_VIDEO_QDEPTH];
+   struct nouveau_bo *bsp_bo = dec->bsp_bo[comm_seq % NOUVEAU_VP3_VIDEO_QDEPTH];
    struct nouveau_bo *inter_bo = dec->inter_bo[comm_seq & 1];
    u32 fence_extra = 0, codec_extra = 0;
    struct nouveau_pushbuf_refn bo_refs[] = {
       { inter_bo, NOUVEAU_BO_WR | NOUVEAU_BO_VRAM },
       { dec->ref_bo, NOUVEAU_BO_WR | NOUVEAU_BO_VRAM },
       { bsp_bo, NOUVEAU_BO_RD | NOUVEAU_BO_VRAM },
-#if NVC0_DEBUG_FENCE
+#if NOUVEAU_VP3_DEBUG_FENCE
       { dec->fence_bo, NOUVEAU_BO_WR | NOUVEAU_BO_GART },
 #endif
       { dec->fw_bo, NOUVEAU_BO_RD | NOUVEAU_BO_VRAM },
    };
    int num_refs = sizeof(bo_refs)/sizeof(*bo_refs) - !dec->fw_bo;
 
-#if NVC0_DEBUG_FENCE
+#if NOUVEAU_VP3_DEBUG_FENCE
    fence_extra = 4;
 #endif
 
    if (codec == PIPE_VIDEO_CODEC_MPEG4_AVC) {
-      nvc0_decoder_inter_sizes(dec, desc.h264->slice_count, &slice_size, &bucket_size, &ring_size);
+      nouveau_vp3_inter_sizes(dec, desc.h264->slice_count, &slice_size, &bucket_size, &ring_size);
       codec_extra += 2;
    } else
-      nvc0_decoder_inter_sizes(dec, 1, &slice_size, &bucket_size, &ring_size);
+      nouveau_vp3_inter_sizes(dec, 1, &slice_size, &bucket_size, &ring_size);
 
    if (dec->base.max_references > 2)
       codec_extra += 1 + (dec->base.max_references - 2);
 
-   pic_addr[16] = nvc0_video_addr(dec, target) >> 8;
-   last_addr = null_addr = nvc0_video_addr(dec, NULL) >> 8;
+   pic_addr[16] = nouveau_vp3_video_addr(dec, target) >> 8;
+   last_addr = null_addr = nouveau_vp3_video_addr(dec, NULL) >> 8;
 
    for (i = 0; i < dec->base.max_references; ++i) {
       if (!refs[i])
          pic_addr[i] = last_addr;
       else if (dec->refs[refs[i]->valid_ref].vidbuf == refs[i])
-         last_addr = pic_addr[i] = nvc0_video_addr(dec, refs[i]) >> 8;
+         last_addr = pic_addr[i] = nouveau_vp3_video_addr(dec, refs[i]) >> 8;
       else
          pic_addr[i] = null_addr;
    }
@@ -583,7 +583,7 @@ nvc0_decoder_vp(struct nvc0_decoder *dec, union pipe_desc desc,
    nouveau_pushbuf_refn(push, bo_refs, num_refs);
 
    bsp_addr = bsp_bo->offset >> 8;
-#if NVC0_DEBUG_FENCE
+#if NOUVEAU_VP3_DEBUG_FENCE
    comm_addr = (dec->fence_bo->offset + COMM_OFFSET)>>8;
 #else
    comm_addr = bsp_addr + (COMM_OFFSET>>8);
@@ -635,7 +635,7 @@ nvc0_decoder_vp(struct nvc0_decoder *dec, union pipe_desc desc,
 
    //debug_printf("Decoding %08lx with %08lx and %08lx\n", pic_addr[16], pic_addr[0], pic_addr[1]);
 
-#if NVC0_DEBUG_FENCE
+#if NOUVEAU_VP3_DEBUG_FENCE
    BEGIN_NVC0(push, SUBC_VP(0x240), 3);
    PUSH_DATAh(push, (dec->fence_bo->offset + 0x10));
    PUSH_DATA (push, (dec->fence_bo->offset + 0x10));

@@ -87,7 +87,7 @@ nvc0_decoder_decode_bitstream(struct pipe_video_decoder *decoder,
                               const void *const *data,
                               const unsigned *num_bytes)
 {
-   struct nvc0_decoder *dec = (struct nvc0_decoder *)decoder;
+   struct nouveau_vp3_decoder *dec = (struct nouveau_vp3_decoder *)decoder;
    struct nouveau_vp3_video_buffer *target = (struct nouveau_vp3_video_buffer *)video_target;
    uint32_t comm_seq = ++dec->fence_seq;
    union pipe_desc desc;
@@ -113,7 +113,7 @@ nvc0_decoder_decode_bitstream(struct pipe_video_decoder *decoder,
 static void
 nvc0_decoder_flush(struct pipe_video_decoder *decoder)
 {
-   struct nvc0_decoder *dec = (struct nvc0_decoder *)decoder;
+   struct nouveau_vp3_decoder *dec = (struct nouveau_vp3_decoder *)decoder;
    (void)dec;
 }
 
@@ -134,19 +134,19 @@ nvc0_decoder_end_frame(struct pipe_video_decoder *decoder,
 static void
 nvc0_decoder_destroy(struct pipe_video_decoder *decoder)
 {
-   struct nvc0_decoder *dec = (struct nvc0_decoder *)decoder;
+   struct nouveau_vp3_decoder *dec = (struct nouveau_vp3_decoder *)decoder;
    int i;
 
    nouveau_bo_ref(NULL, &dec->ref_bo);
    nouveau_bo_ref(NULL, &dec->bitplane_bo);
    nouveau_bo_ref(NULL, &dec->inter_bo[0]);
    nouveau_bo_ref(NULL, &dec->inter_bo[1]);
-#if NVC0_DEBUG_FENCE
+#if NOUVEAU_VP3_DEBUG_FENCE
    nouveau_bo_ref(NULL, &dec->fence_bo);
 #endif
    nouveau_bo_ref(NULL, &dec->fw_bo);
 
-   for (i = 0; i < NVC0_VIDEO_QDEPTH; ++i)
+   for (i = 0; i < NOUVEAU_VP3_VIDEO_QDEPTH; ++i)
       nouveau_bo_ref(NULL, &dec->bsp_bo[i]);
 
    nouveau_object_del(&dec->bsp);
@@ -198,7 +198,7 @@ nvc0_create_decoder(struct pipe_context *context,
                     bool chunked_decode)
 {
    struct nouveau_screen *screen = &((struct nvc0_context *)context)->screen->base;
-   struct nvc0_decoder *dec;
+   struct nouveau_vp3_decoder *dec;
    struct nouveau_pushbuf **push;
    union nouveau_bo_config cfg;
    bool kepler = screen->device->chipset >= 0xe0;
@@ -221,7 +221,7 @@ nvc0_create_decoder(struct pipe_context *context,
       return NULL;
    }
 
-   dec = CALLOC_STRUCT(nvc0_decoder);
+   dec = CALLOC_STRUCT(nouveau_vp3_decoder);
    if (!dec)
       return NULL;
    dec->client = screen->client;
@@ -313,7 +313,7 @@ nvc0_create_decoder(struct pipe_context *context,
    dec->base.begin_frame = nvc0_decoder_begin_frame;
    dec->base.end_frame = nvc0_decoder_end_frame;
 
-   for (i = 0; i < NVC0_VIDEO_QDEPTH && !ret; ++i)
+   for (i = 0; i < NOUVEAU_VP3_VIDEO_QDEPTH && !ret; ++i)
       ret = nouveau_bo_new(screen->device, NOUVEAU_BO_VRAM,
                            0, 1 << 20, &cfg, &dec->bsp_bo[i]);
    if (!ret)
@@ -350,7 +350,7 @@ nvc0_create_decoder(struct pipe_context *context,
    }
    case PIPE_VIDEO_CODEC_MPEG4_AVC: {
       codec = 3;
-      dec->tmp_stride = 16 * mb_half(width) * nvc0_video_align(height) * 3 / 2;
+      dec->tmp_stride = 16 * mb_half(width) * nouveau_vp3_video_align(height) * 3 / 2;
       tmp_size = dec->tmp_stride * (max_references + 1);
       assert(max_references <= 16);
       break;
@@ -440,7 +440,7 @@ nvc0_create_decoder(struct pipe_context *context,
          goto fail;
    }
 
-   dec->ref_stride = mb(width)*16 * (mb_half(height)*32 + nvc0_video_align(height)/2);
+   dec->ref_stride = mb(width)*16 * (mb_half(height)*32 + nouveau_vp3_video_align(height)/2);
    ret = nouveau_bo_new(screen->device, NOUVEAU_BO_VRAM, 0,
                         dec->ref_stride * (max_references+2) + tmp_size,
                         &cfg, &dec->ref_bo);
@@ -463,7 +463,7 @@ nvc0_create_decoder(struct pipe_context *context,
 
    ++dec->fence_seq;
 
-#if NVC0_DEBUG_FENCE
+#if NOUVEAU_VP3_DEBUG_FENCE
    ret = nouveau_bo_new(screen->device, NOUVEAU_BO_GART|NOUVEAU_BO_MAP,
                         0, 0x1000, NULL, &dec->fence_bo);
    if (ret)
