@@ -471,6 +471,7 @@ static boolean is_simple_msaa_resolve(const struct pipe_blit_info *info)
 	unsigned dst_height = u_minify(info->dst.resource->height0, info->dst.level);
 	struct r600_texture *dst = (struct r600_texture*)info->dst.resource;
 	unsigned dst_tile_mode = dst->surface.level[info->dst.level].mode;
+	bool dst_is_scanout = (dst->surface.flags & RADEON_SURF_SCANOUT) != 0;
 
 	return info->dst.resource->format == info->src.resource->format &&
 		info->dst.resource->format == info->dst.format &&
@@ -489,7 +490,8 @@ static boolean is_simple_msaa_resolve(const struct pipe_blit_info *info)
 		info->src.box.height == dst_height &&
 		/* Dst must be tiled. If it's not, we have to use a temporary
 		 * resource which is tiled. */
-		dst_tile_mode >= RADEON_SURF_MODE_1D;
+		dst_tile_mode >= RADEON_SURF_MODE_1D &&
+		!dst_is_scanout;
 }
 
 /* For MSAA integer resolving to work, we change the format to NORM using this function. */
