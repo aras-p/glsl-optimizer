@@ -202,3 +202,9 @@ nouveau_vp3_bsp(struct nouveau_vp3_decoder *dec,  union pipe_desc desc,
                 struct nouveau_vp3_video_buffer *target,
                 unsigned comm_seq, unsigned num_buffers,
                 const void *const *data, const unsigned *num_bytes);
+
+void
+nouveau_vp3_vp_caps(struct nouveau_vp3_decoder *dec, union pipe_desc desc,
+                    struct nouveau_vp3_video_buffer *target, unsigned comm_seq,
+                    unsigned *caps, unsigned *is_ref,
+                    struct nouveau_vp3_video_buffer *refs[16]);

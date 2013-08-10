@@ -37,13 +37,6 @@ nvc0_decoder_bsp(struct nouveau_vp3_decoder *dec, union pipe_desc desc,
                  unsigned *vp_caps, unsigned *is_ref,
                  struct nouveau_vp3_video_buffer *refs[16]);
 
-extern void nvc0_decoder_vp_caps(struct nouveau_vp3_decoder *dec,
-                                 union pipe_desc desc,
-                                 struct nouveau_vp3_video_buffer *target,
-                                 unsigned comm_seq,
-                                 unsigned *caps, unsigned *is_ref,
-                                 struct nouveau_vp3_video_buffer *refs[16]);
-
 extern void
 nvc0_decoder_vp(struct nouveau_vp3_decoder *dec, union pipe_desc desc,
                 struct nouveau_vp3_video_buffer *target, unsigned comm_seq,

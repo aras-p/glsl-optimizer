@@ -74,7 +74,7 @@ nvc0_decoder_bsp(struct nouveau_vp3_decoder *dec, union pipe_desc desc,
    caps = nouveau_vp3_bsp(dec, desc, target, comm_seq,
                           num_buffers, data, num_bytes);
 
-   nvc0_decoder_vp_caps(dec, desc, target, comm_seq, vp_caps, is_ref, refs);
+   nouveau_vp3_vp_caps(dec, desc, target, comm_seq, vp_caps, is_ref, refs);
 
    nouveau_pushbuf_space(push, 6 + (codec == PIPE_VIDEO_CODEC_MPEG4_AVC ? 9 : 7) + fence_extra + 2, num_refs, 0);
    nouveau_pushbuf_refn(push, bo_refs, num_refs);

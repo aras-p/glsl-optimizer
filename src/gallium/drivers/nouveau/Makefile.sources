@@ -6,4 +6,5 @@ C_SOURCES := \
 	nouveau_heap.c \
 	nouveau_video.c \
 	nouveau_vp3_video.c \
-	nouveau_vp3_video_bsp.c
+	nouveau_vp3_video_bsp.c \
+	nouveau_vp3_video_vp.c
