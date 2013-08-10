@@ -167,6 +167,7 @@ fs_copy_prop_dataflow::run()
    do {
       progress = false;
 
+      /* Update liveout for all blocks. */
       for (int b = 0; b < cfg->num_blocks; b++) {
          for (int i = 0; i < bitset_words; i++) {
             BITSET_WORD new_liveout = (bd[b].livein[i] &
@@ -176,10 +177,14 @@ fs_copy_prop_dataflow::run()
                bd[b].liveout[i] |= new_liveout;
                progress = true;
             }
+         }
+      }
 
-            /* Update livein: if it's live at the end of all parents, it's
-             * live at our start.
-             */
+      /* Update livein for all blocks.  If a copy is live out of all parent
+       * blocks, it's live coming in to this block.
+       */
+      for (int b = 0; b < cfg->num_blocks; b++) {
+         for (int i = 0; i < bitset_words; i++) {
             BITSET_WORD new_livein = ~bd[b].livein[i];
             foreach_list(block_node, &cfg->blocks[b]->parents) {
                bblock_link *link = (bblock_link *)block_node;
