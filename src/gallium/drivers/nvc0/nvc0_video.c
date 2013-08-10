@@ -110,62 +110,6 @@ nvc0_decoder_decode_bitstream(struct pipe_video_decoder *decoder,
    nvc0_decoder_ppp(dec, desc, target, comm_seq);
 }
 
-static void
-nvc0_decoder_flush(struct pipe_video_decoder *decoder)
-{
-   struct nouveau_vp3_decoder *dec = (struct nouveau_vp3_decoder *)decoder;
-   (void)dec;
-}
-
-static void
-nvc0_decoder_begin_frame(struct pipe_video_decoder *decoder,
-                         struct pipe_video_buffer *target,
-                         struct pipe_picture_desc *picture)
-{
-}
-
-static void
-nvc0_decoder_end_frame(struct pipe_video_decoder *decoder,
-                       struct pipe_video_buffer *target,
-                       struct pipe_picture_desc *picture)
-{
-}
-
-static void
-nvc0_decoder_destroy(struct pipe_video_decoder *decoder)
-{
-   struct nouveau_vp3_decoder *dec = (struct nouveau_vp3_decoder *)decoder;
-   int i;
-
-   nouveau_bo_ref(NULL, &dec->ref_bo);
-   nouveau_bo_ref(NULL, &dec->bitplane_bo);
-   nouveau_bo_ref(NULL, &dec->inter_bo[0]);
-   nouveau_bo_ref(NULL, &dec->inter_bo[1]);
-#if NOUVEAU_VP3_DEBUG_FENCE
-   nouveau_bo_ref(NULL, &dec->fence_bo);
-#endif
-   nouveau_bo_ref(NULL, &dec->fw_bo);
-
-   for (i = 0; i < NOUVEAU_VP3_VIDEO_QDEPTH; ++i)
-      nouveau_bo_ref(NULL, &dec->bsp_bo[i]);
-
-   nouveau_object_del(&dec->bsp);
-   nouveau_object_del(&dec->vp);
-   nouveau_object_del(&dec->ppp);
-
-   if (dec->channel[0] != dec->channel[1]) {
-      for (i = 0; i < 3; ++i) {
-         nouveau_pushbuf_del(&dec->pushbuf[i]);
-         nouveau_object_del(&dec->channel[i]);
-      }
-   } else {
-      nouveau_pushbuf_del(dec->pushbuf);
-      nouveau_object_del(dec->channel);
-   }
-
-   FREE(dec);
-}
-
 static void nvc0_video_getpath(enum pipe_video_profile profile, char *path)
 {
    switch (u_reduce_video_profile(profile)) {
@@ -225,6 +169,7 @@ nvc0_create_decoder(struct pipe_context *context,
    if (!dec)
       return NULL;
    dec->client = screen->client;
+   nouveau_vp3_decoder_init_common(&dec->base);
 
    if (!kepler) {
       dec->bsp_idx = 5;
@@ -307,11 +252,7 @@ nvc0_create_decoder(struct pipe_context *context,
    dec->base.width = width;
    dec->base.height = height;
    dec->base.max_references = max_references;
-   dec->base.destroy = nvc0_decoder_destroy;
-   dec->base.flush = nvc0_decoder_flush;
    dec->base.decode_bitstream = nvc0_decoder_decode_bitstream;
-   dec->base.begin_frame = nvc0_decoder_begin_frame;
-   dec->base.end_frame = nvc0_decoder_end_frame;
 
    for (i = 0; i < NOUVEAU_VP3_VIDEO_QDEPTH && !ret; ++i)
       ret = nouveau_bo_new(screen->device, NOUVEAU_BO_VRAM,
@@ -522,12 +463,12 @@ nvc0_create_decoder(struct pipe_context *context,
 
 fw_fail:
    debug_printf("Cannot create decoder without firmware..\n");
-   nvc0_decoder_destroy(&dec->base);
+   dec->base.destroy(&dec->base);
    return NULL;
 
 fail:
    debug_printf("Creation failed: %s (%i)\n", strerror(-ret), ret);
-   nvc0_decoder_destroy(&dec->base);
+   dec->base.destroy(&dec->base);
    return NULL;
 }
 

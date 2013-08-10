@@ -197,6 +197,9 @@ nouveau_vp3_video_buffer_create(struct pipe_context *pipe,
                                 const struct pipe_video_buffer *templat,
                                 int flags);
 
+void
+nouveau_vp3_decoder_init_common(struct pipe_video_decoder *decoder);
+
 uint32_t
 nouveau_vp3_bsp(struct nouveau_vp3_decoder *dec,  union pipe_desc desc,
                 struct nouveau_vp3_video_buffer *target,

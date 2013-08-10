@@ -163,3 +163,66 @@ error:
    nouveau_vp3_video_buffer_destroy(&buffer->base);
    return NULL;
 }
+
+static void
+nouveau_vp3_decoder_flush(struct pipe_video_decoder *decoder)
+{
+}
+
+static void
+nouveau_vp3_decoder_begin_frame(struct pipe_video_decoder *decoder,
+                                struct pipe_video_buffer *target,
+                                struct pipe_picture_desc *picture)
+{
+}
+
+static void
+nouveau_vp3_decoder_end_frame(struct pipe_video_decoder *decoder,
+                              struct pipe_video_buffer *target,
+                              struct pipe_picture_desc *picture)
+{
+}
+
+static void
+nouveau_vp3_decoder_destroy(struct pipe_video_decoder *decoder)
+{
+   struct nouveau_vp3_decoder *dec = (struct nouveau_vp3_decoder *)decoder;
+   int i;
+
+   nouveau_bo_ref(NULL, &dec->ref_bo);
+   nouveau_bo_ref(NULL, &dec->bitplane_bo);
+   nouveau_bo_ref(NULL, &dec->inter_bo[0]);
+   nouveau_bo_ref(NULL, &dec->inter_bo[1]);
+#if NOUVEAU_VP3_DEBUG_FENCE
+   nouveau_bo_ref(NULL, &dec->fence_bo);
+#endif
+   nouveau_bo_ref(NULL, &dec->fw_bo);
+
+   for (i = 0; i < NOUVEAU_VP3_VIDEO_QDEPTH; ++i)
+      nouveau_bo_ref(NULL, &dec->bsp_bo[i]);
+
+   nouveau_object_del(&dec->bsp);
+   nouveau_object_del(&dec->vp);
+   nouveau_object_del(&dec->ppp);
+
+   if (dec->channel[0] != dec->channel[1]) {
+      for (i = 0; i < 3; ++i) {
+         nouveau_pushbuf_del(&dec->pushbuf[i]);
+         nouveau_object_del(&dec->channel[i]);
+      }
+   } else {
+      nouveau_pushbuf_del(dec->pushbuf);
+      nouveau_object_del(dec->channel);
+   }
+
+   FREE(dec);
+}
+
+void
+nouveau_vp3_decoder_init_common(struct pipe_video_decoder *dec)
+{
+   dec->destroy = nouveau_vp3_decoder_destroy;
+   dec->flush = nouveau_vp3_decoder_flush;
+   dec->begin_frame = nouveau_vp3_decoder_begin_frame;
+   dec->end_frame = nouveau_vp3_decoder_end_frame;
+}
