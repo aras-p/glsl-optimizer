@@ -241,11 +241,11 @@ static void dump_comm_bsp(struct comm *comm)
 
 unsigned
 nvc0_decoder_bsp(struct nvc0_decoder *dec, union pipe_desc desc,
-                 struct nvc0_video_buffer *target,
+                 struct nouveau_vp3_video_buffer *target,
                  unsigned comm_seq, unsigned num_buffers,
                  const void *const *data, const unsigned *num_bytes,
                  unsigned *vp_caps, unsigned *is_ref,
-                 struct nvc0_video_buffer *refs[16])
+                 struct nouveau_vp3_video_buffer *refs[16])
 {
    struct nouveau_pushbuf *push = dec->pushbuf[0];
    enum pipe_video_codec codec = u_reduce_video_profile(dec->base.profile);

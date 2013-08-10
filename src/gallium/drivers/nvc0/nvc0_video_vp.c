@@ -170,7 +170,7 @@ struct h264_picparm_vp { // 700..a00
 };
 
 static void
-nvc0_decoder_handle_references(struct nvc0_decoder *dec, struct nvc0_video_buffer *refs[16], unsigned seq, struct nvc0_video_buffer *target)
+nvc0_decoder_handle_references(struct nvc0_decoder *dec, struct nouveau_vp3_video_buffer *refs[16], unsigned seq, struct nouveau_vp3_video_buffer *target)
 {
    unsigned h264 = u_reduce_video_profile(dec->base.profile) == PIPE_VIDEO_CODEC_MPEG4_AVC;
    unsigned i, idx, empty_spot = dec->base.max_references + 1;
@@ -221,7 +221,7 @@ nvc0_decoder_handle_references(struct nvc0_decoder *dec, struct nvc0_video_buffe
 }
 
 static void
-nvc0_decoder_kick_ref(struct nvc0_decoder *dec, struct nvc0_video_buffer *target)
+nvc0_decoder_kick_ref(struct nvc0_decoder *dec, struct nouveau_vp3_video_buffer *target)
 {
    dec->refs[target->valid_ref].vidbuf = NULL;
    dec->refs[target->valid_ref].last_used = 0;
@@ -231,7 +231,7 @@ nvc0_decoder_kick_ref(struct nvc0_decoder *dec, struct nvc0_video_buffer *target
 static uint32_t
 nvc0_decoder_fill_picparm_mpeg12_vp(struct nvc0_decoder *dec,
                                     struct pipe_mpeg12_picture_desc *desc,
-                                    struct nvc0_video_buffer *refs[16],
+                                    struct nouveau_vp3_video_buffer *refs[16],
                                     unsigned *is_ref,
                                     char *map)
 {
@@ -272,15 +272,15 @@ nvc0_decoder_fill_picparm_mpeg12_vp(struct nvc0_decoder *dec,
    memcpy(pic_vp->intra_quantizer_matrix, desc->intra_matrix, 0x40);
    memcpy(pic_vp->non_intra_quantizer_matrix, desc->non_intra_matrix, 0x40);
    memcpy(map, pic_vp, sizeof(*pic_vp));
-   refs[0] = (struct nvc0_video_buffer *)desc->ref[0];
-   refs[!!refs[0]] = (struct nvc0_video_buffer *)desc->ref[1];
+   refs[0] = (struct nouveau_vp3_video_buffer *)desc->ref[0];
+   refs[!!refs[0]] = (struct nouveau_vp3_video_buffer *)desc->ref[1];
    return ret | (dec->base.profile != PIPE_VIDEO_PROFILE_MPEG1);
 }
 
 static uint32_t
 nvc0_decoder_fill_picparm_mpeg4_vp(struct nvc0_decoder *dec,
                                    struct pipe_mpeg4_picture_desc *desc,
-                                   struct nvc0_video_buffer *refs[16],
+                                   struct nouveau_vp3_video_buffer *refs[16],
                                    unsigned *is_ref,
                                    char *map)
 {
@@ -320,15 +320,15 @@ nvc0_decoder_fill_picparm_mpeg4_vp(struct nvc0_decoder *dec,
    memcpy(pic_vp->intra, desc->intra_matrix, 0x40);
    memcpy(pic_vp->non_intra, desc->non_intra_matrix, 0x40);
    memcpy(map, pic_vp, sizeof(*pic_vp));
-   refs[0] = (struct nvc0_video_buffer *)desc->ref[0];
-   refs[!!refs[0]] = (struct nvc0_video_buffer *)desc->ref[1];
+   refs[0] = (struct nouveau_vp3_video_buffer *)desc->ref[0];
+   refs[!!refs[0]] = (struct nouveau_vp3_video_buffer *)desc->ref[1];
    return ret;
 }
 
 static uint32_t
 nvc0_decoder_fill_picparm_h264_vp(struct nvc0_decoder *dec,
                                   const struct pipe_h264_picture_desc *d,
-                                  struct nvc0_video_buffer *refs[16],
+                                  struct nouveau_vp3_video_buffer *refs[16],
                                   unsigned *is_ref,
                                   char *map)
 {
@@ -377,7 +377,7 @@ nvc0_decoder_fill_picparm_h264_vp(struct nvc0_decoder *dec,
    for (i = 0; i < d->num_ref_frames; ++i) {
       if (!d->ref[i])
          break;
-      refs[j] = (struct nvc0_video_buffer *)d->ref[i];
+      refs[j] = (struct nouveau_vp3_video_buffer *)d->ref[i];
       h->refs[j].fifo_idx = j + 1;
       h->refs[j].tmp_idx = refs[j]->valid_ref;
       h->refs[j].field_order_cnt[0] = d->field_order_cnt_list[i][0];
@@ -412,8 +412,8 @@ nvc0_decoder_fill_picparm_h264_vp(struct nvc0_decoder *dec,
 static void
 nvc0_decoder_fill_picparm_h264_vp_refs(struct nvc0_decoder *dec,
                                        struct pipe_h264_picture_desc *d,
-                                       struct nvc0_video_buffer *refs[16],
-                                       struct nvc0_video_buffer *target,
+                                       struct nouveau_vp3_video_buffer *refs[16],
+                                       struct nouveau_vp3_video_buffer *target,
                                        char *map)
 {
    struct h264_picparm_vp *h = (struct h264_picparm_vp *)map;
@@ -431,7 +431,7 @@ nvc0_decoder_fill_picparm_h264_vp_refs(struct nvc0_decoder *dec,
 static uint32_t
 nvc0_decoder_fill_picparm_vc1_vp(struct nvc0_decoder *dec,
                                  struct pipe_vc1_picture_desc *d,
-                                 struct nvc0_video_buffer *refs[16],
+                                 struct nouveau_vp3_video_buffer *refs[16],
                                  unsigned *is_ref,
                                  char *map)
 {
@@ -455,8 +455,8 @@ nvc0_decoder_fill_picparm_vc1_vp(struct nvc0_decoder *dec,
    vc->overlap = d->overlap;
    vc->quantizer = d->quantizer;
    vc->u36 = 0; // ? No idea what this one is..
-   refs[0] = (struct nvc0_video_buffer *)d->ref[0];
-   refs[!!refs[0]] = (struct nvc0_video_buffer *)d->ref[1];
+   refs[0] = (struct nouveau_vp3_video_buffer *)d->ref[0];
+   refs[!!refs[0]] = (struct nouveau_vp3_video_buffer *)d->ref[1];
    return 0x12;
 }
 
@@ -494,9 +494,9 @@ static void dump_comm_vp(struct nvc0_decoder *dec, struct comm *comm, u32 comm_s
 #endif
 
 void nvc0_decoder_vp_caps(struct nvc0_decoder *dec, union pipe_desc desc,
-                          struct nvc0_video_buffer *target, unsigned comm_seq,
+                          struct nouveau_vp3_video_buffer *target, unsigned comm_seq,
                           unsigned *caps, unsigned *is_ref,
-                          struct nvc0_video_buffer *refs[16])
+                          struct nouveau_vp3_video_buffer *refs[16])
 {
    struct nouveau_bo *bsp_bo = dec->bsp_bo[comm_seq % NVC0_VIDEO_QDEPTH];
    enum pipe_video_codec codec = u_reduce_video_profile(dec->base.profile);
@@ -528,9 +528,9 @@ void nvc0_decoder_vp_caps(struct nvc0_decoder *dec, union pipe_desc desc,
 
 void
 nvc0_decoder_vp(struct nvc0_decoder *dec, union pipe_desc desc,
-                struct nvc0_video_buffer *target, unsigned comm_seq,
+                struct nouveau_vp3_video_buffer *target, unsigned comm_seq,
                 unsigned caps, unsigned is_ref,
-                struct nvc0_video_buffer *refs[16])
+                struct nouveau_vp3_video_buffer *refs[16])
 {
    struct nouveau_pushbuf *push = dec->pushbuf[1];
    uint32_t bsp_addr, comm_addr, inter_addr, ucode_addr, pic_addr[17], last_addr, null_addr;

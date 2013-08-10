@@ -23,7 +23,7 @@
 #include "nvc0_video.h"
 
 static void
-nvc0_decoder_setup_ppp(struct nvc0_decoder *dec, struct nvc0_video_buffer *target, uint32_t low700) {
+nvc0_decoder_setup_ppp(struct nvc0_decoder *dec, struct nouveau_vp3_video_buffer *target, uint32_t low700) {
    struct nouveau_pushbuf *push = dec->pushbuf[2];
 
    uint32_t stride_in = mb(dec->base.width);
@@ -73,7 +73,7 @@ nvc0_decoder_setup_ppp(struct nvc0_decoder *dec, struct nvc0_video_buffer *targe
 }
 
 static uint32_t
-nvc0_decoder_vc1_ppp(struct nvc0_decoder *dec, struct pipe_vc1_picture_desc *desc, struct nvc0_video_buffer *target) {
+nvc0_decoder_vc1_ppp(struct nvc0_decoder *dec, struct pipe_vc1_picture_desc *desc, struct nouveau_vp3_video_buffer *target) {
    struct nouveau_pushbuf *push = dec->pushbuf[2];
 
    nvc0_decoder_setup_ppp(dec, target, 0x1412);
@@ -89,7 +89,7 @@ nvc0_decoder_vc1_ppp(struct nvc0_decoder *dec, struct pipe_vc1_picture_desc *des
 }
 
 void
-nvc0_decoder_ppp(struct nvc0_decoder *dec, union pipe_desc desc, struct nvc0_video_buffer *target, unsigned comm_seq) {
+nvc0_decoder_ppp(struct nvc0_decoder *dec, union pipe_desc desc, struct nouveau_vp3_video_buffer *target, unsigned comm_seq) {
    enum pipe_video_codec codec = u_reduce_video_profile(dec->base.profile);
    struct nouveau_pushbuf *push = dec->pushbuf[2];
    unsigned ppp_caps = 0x10;

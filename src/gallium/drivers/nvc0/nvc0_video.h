@@ -22,9 +22,9 @@
 
 #include "nvc0_context.h"
 #include "nvc0_screen.h"
+#include "nouveau/nouveau_vp3_video.h"
 
 #include "vl/vl_decoder.h"
-#include "vl/vl_video_buffer.h"
 #include "vl/vl_types.h"
 
 #include "util/u_video.h"
@@ -51,15 +51,6 @@ union pipe_desc {
    struct pipe_mpeg4_picture_desc *mpeg4;
    struct pipe_vc1_picture_desc *vc1;
    struct pipe_h264_picture_desc *h264;
-};
-
-struct nvc0_video_buffer {
-   struct pipe_video_buffer base;
-   unsigned num_planes, valid_ref;
-   struct pipe_resource *resources[VL_NUM_COMPONENTS];
-   struct pipe_sampler_view *sampler_view_planes[VL_NUM_COMPONENTS];
-   struct pipe_sampler_view *sampler_view_components[VL_NUM_COMPONENTS];
-   struct pipe_surface *surfaces[VL_NUM_COMPONENTS * 2];
 };
 
 struct nvc0_decoder {
@@ -105,7 +96,7 @@ struct nvc0_decoder {
    // and give shaders a chance to run as well.
 
    struct {
-      struct nvc0_video_buffer *vidbuf;
+      struct nouveau_vp3_video_buffer *vidbuf;
       unsigned last_used;
       unsigned field_pic_flag : 1;
       unsigned decoded_top : 1;
@@ -151,7 +142,7 @@ static INLINE uint32_t mb_half(uint32_t coord)
 }
 
 static INLINE uint64_t
-nvc0_video_addr(struct nvc0_decoder *dec, struct nvc0_video_buffer *target)
+nvc0_video_addr(struct nvc0_decoder *dec, struct nouveau_vp3_video_buffer *target)
 {
    uint64_t ret;
    if (target)
@@ -197,25 +188,25 @@ nvc0_decoder_inter_sizes(struct nvc0_decoder *dec, uint32_t slice_count,
 
 extern unsigned
 nvc0_decoder_bsp(struct nvc0_decoder *dec, union pipe_desc desc,
-                 struct nvc0_video_buffer *target,
+                 struct nouveau_vp3_video_buffer *target,
                  unsigned comm_seq, unsigned num_buffers,
                  const void *const *data, const unsigned *num_bytes,
                  unsigned *vp_caps, unsigned *is_ref,
-                 struct nvc0_video_buffer *refs[16]);
+                 struct nouveau_vp3_video_buffer *refs[16]);
 
 extern void nvc0_decoder_vp_caps(struct nvc0_decoder *dec,
                                  union pipe_desc desc,
-                                 struct nvc0_video_buffer *target,
+                                 struct nouveau_vp3_video_buffer *target,
                                  unsigned comm_seq,
                                  unsigned *caps, unsigned *is_ref,
-                                 struct nvc0_video_buffer *refs[16]);
+                                 struct nouveau_vp3_video_buffer *refs[16]);
 
 extern void
 nvc0_decoder_vp(struct nvc0_decoder *dec, union pipe_desc desc,
-                struct nvc0_video_buffer *target, unsigned comm_seq,
+                struct nouveau_vp3_video_buffer *target, unsigned comm_seq,
                 unsigned caps, unsigned is_ref,
-                struct nvc0_video_buffer *refs[16]);
+                struct nouveau_vp3_video_buffer *refs[16]);
 
 extern void
 nvc0_decoder_ppp(struct nvc0_decoder *dec, union pipe_desc desc,
-                 struct nvc0_video_buffer *target, unsigned comm_seq);
+                 struct nouveau_vp3_video_buffer *target, unsigned comm_seq);
