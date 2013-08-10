@@ -73,7 +73,7 @@ public:
    fs_copy_prop_dataflow(void *mem_ctx, cfg_t *cfg,
                          exec_list *out_acp[ACP_HASH_SIZE]);
 
-   void setup_kills();
+   void setup_initial_values();
    void run();
 
    void *mem_ctx;
@@ -125,16 +125,16 @@ fs_copy_prop_dataflow::fs_copy_prop_dataflow(void *mem_ctx, cfg_t *cfg,
 
    assert(next_acp == num_acp);
 
-   setup_kills();
+   setup_initial_values();
    run();
 }
 
 /**
- * Walk the set of instructions in the block, marking which entries in the acp
- * are killed by the block.
+ * Set up initial values for each of the data flow sets, prior to running
+ * the fixed-point algorithm.
  */
 void
-fs_copy_prop_dataflow::setup_kills()
+fs_copy_prop_dataflow::setup_initial_values()
 {
    for (int b = 0; b < cfg->num_blocks; b++) {
       bblock_t *block = cfg->blocks[b];
@@ -145,6 +145,7 @@ fs_copy_prop_dataflow::setup_kills()
          if (inst->dst.file != GRF)
             continue;
 
+         /* Mark ACP entries which are killed by this instruction. */
          for (int i = 0; i < num_acp; i++) {
             if (inst->overwrites_reg(acp[i]->dst) ||
                 inst->overwrites_reg(acp[i]->src)) {
