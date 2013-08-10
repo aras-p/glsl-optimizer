@@ -448,6 +448,7 @@ fs_visitor::opt_copy_propagate()
                                           out_acp[b]) || progress;
    }
 
+   #if 0
    /* Do dataflow analysis for those available copies. */
    fs_copy_prop_dataflow dataflow(mem_ctx, &cfg, out_acp);
 
@@ -467,6 +468,7 @@ fs_visitor::opt_copy_propagate()
 
       progress = opt_copy_propagate_local(mem_ctx, block, in_acp) || progress;
    }
+   #endif
 
    for (int i = 0; i < cfg.num_blocks; i++)
       delete [] out_acp[i];
