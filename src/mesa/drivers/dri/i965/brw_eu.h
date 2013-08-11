@@ -258,6 +258,12 @@ enum brw_urb_write_flags {
    BRW_URB_WRITE_PER_SLOT_OFFSET = 0x10,
 
    /**
+    * Indicates that the channel masks in the URB_WRITE message header should
+    * not be overridden to 0xff (gen == 7).
+    */
+   BRW_URB_WRITE_USE_CHANNEL_MASKS = 0x20,
+
+   /**
     * Convenient combination of flags: end the thread while simultaneously
     * marking the given URB entry as complete.
     */

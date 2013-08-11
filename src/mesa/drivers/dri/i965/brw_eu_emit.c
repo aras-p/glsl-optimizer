@@ -2224,7 +2224,7 @@ void brw_urb_WRITE(struct brw_compile *p,
 
    gen6_resolve_implied_move(p, &src0, msg_reg_nr);
 
-   if (brw->gen == 7) {
+   if (brw->gen == 7 && !(flags & BRW_URB_WRITE_USE_CHANNEL_MASKS)) {
       /* Enable Channel Masks in the URB_WRITE_HWORD message header */
       brw_push_insn_state(p);
       brw_set_access_mode(p, BRW_ALIGN_1);
