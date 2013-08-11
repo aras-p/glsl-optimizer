@@ -84,6 +84,7 @@ void r300_parse_chipset(uint32_t pci_id, struct r300_capabilities* caps)
     caps->num_vert_fpus = 0;
     caps->hiz_ram = 0;
     caps->zmask_ram = 0;
+    caps->has_cmask = FALSE;
 
 
     switch (caps->family) {
@@ -91,6 +92,7 @@ void r300_parse_chipset(uint32_t pci_id, struct r300_capabilities* caps)
     case CHIP_R350:
         caps->high_second_pipe = TRUE;
         caps->num_vert_fpus = 4;
+        caps->has_cmask = TRUE; /* guessed because there is also HiZ */
         caps->hiz_ram = R300_HIZ_LIMIT;
         caps->zmask_ram = PIPE_ZMASK_SIZE;
         break;
@@ -105,6 +107,7 @@ void r300_parse_chipset(uint32_t pci_id, struct r300_capabilities* caps)
     case CHIP_RV380:
         caps->high_second_pipe = TRUE;
         caps->num_vert_fpus = 2;
+        caps->has_cmask = TRUE; /* guessed because there is also HiZ */
         caps->hiz_ram = R300_HIZ_LIMIT;
         caps->zmask_ram = RV3xx_ZMASK_SIZE;
         break;
@@ -127,24 +130,28 @@ void r300_parse_chipset(uint32_t pci_id, struct r300_capabilities* caps)
     case CHIP_R481:
     case CHIP_RV410:
         caps->num_vert_fpus = 6;
+        caps->has_cmask = TRUE; /* guessed because there is also HiZ */
         caps->hiz_ram = R300_HIZ_LIMIT;
         caps->zmask_ram = PIPE_ZMASK_SIZE;
         break;
 
     case CHIP_R520:
         caps->num_vert_fpus = 8;
+        caps->has_cmask = TRUE;
         caps->hiz_ram = R300_HIZ_LIMIT;
         caps->zmask_ram = PIPE_ZMASK_SIZE;
         break;
 
     case CHIP_RV515:
         caps->num_vert_fpus = 2;
+        caps->has_cmask = TRUE;
         caps->hiz_ram = R300_HIZ_LIMIT;
         caps->zmask_ram = PIPE_ZMASK_SIZE;
         break;
 
     case CHIP_RV530:
         caps->num_vert_fpus = 5;
+        caps->has_cmask = TRUE;
         caps->hiz_ram = RV530_HIZ_LIMIT;
         caps->zmask_ram = PIPE_ZMASK_SIZE;
         break;
@@ -153,6 +160,7 @@ void r300_parse_chipset(uint32_t pci_id, struct r300_capabilities* caps)
     case CHIP_RV560:
     case CHIP_RV570:
         caps->num_vert_fpus = 8;
+        caps->has_cmask = TRUE;
         caps->hiz_ram = RV530_HIZ_LIMIT;
         caps->zmask_ram = PIPE_ZMASK_SIZE;
         break;

@@ -417,6 +417,10 @@ static void r300_setup_cmask_properties(struct r300_screen *screen,
     static unsigned cmask_align_y[4] = {16, 16, 16, 32};
     unsigned pipes, stride, cmask_num_dw, cmask_max_size;
 
+    if (!screen->caps.has_cmask) {
+        return;
+    }
+
     /* We need an AA colorbuffer, no mipmaps. */
     if (tex->b.b.nr_samples <= 1 ||
         tex->b.b.last_level > 0 ||

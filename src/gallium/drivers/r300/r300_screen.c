@@ -444,11 +444,6 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
             if (!drm_2_8_0) {
                 return FALSE;
             }
-            /* Only support R500, because I didn't test older chipsets,
-             * but MSAA should work there too. */
-            if (!is_r500 && !debug_get_bool_option("RADEON_MSAA", FALSE)) {
-                return FALSE;
-            }
             /* No texturing and scanout. */
             if (usage & (PIPE_BIND_SAMPLER_VIEW |
                          PIPE_BIND_DISPLAY_TARGET |

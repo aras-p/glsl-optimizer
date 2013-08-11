@@ -55,6 +55,8 @@ struct r300_capabilities {
     int hiz_ram;
     /* Some chipsets have zmask ram per pipe some don't. */
     int zmask_ram;
+    /* CMASK is for MSAA colorbuffer compression and fast clear. */
+    boolean has_cmask;
     /* Compression mode for ZMASK. */
     enum r300_zmask_compression z_compress;
     /* Whether or not this is RV350 or newer, including all r400 and r500
