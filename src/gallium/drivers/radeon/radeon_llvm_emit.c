@@ -124,7 +124,7 @@ unsigned radeon_llvm_compile(LLVMModuleRef M, struct radeon_llvm_binary *binary,
 	r = LLVMTargetMachineEmitToMemoryBuffer(tm, M, LLVMObjectFile, &err,
 								 &out_buffer);
 	if (r) {
-		fprintf(stderr, err);
+		fprintf(stderr, "%s", err);
 		FREE(err);
 		return 1;
 	}
