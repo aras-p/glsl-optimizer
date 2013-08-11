@@ -27,6 +27,8 @@
 #include "nv50_context.h"
 #include "nv50_screen.h"
 
+#include "nouveau/nouveau_vp3_video.h"
+
 #include "nouveau/nv_object.xml.h"
 #include <errno.h>
 
@@ -657,8 +659,9 @@ nv50_screen_create(struct nouveau_device *dev)
       screen->base.base.get_video_param = nv84_screen_get_video_param;
       screen->base.base.is_video_format_supported = nv84_screen_video_supported;
    } else {
-      /* Unsupported, but need to init pointers. */
-      nouveau_screen_init_vdec(&screen->base);
+      /* VP3/4 */
+      screen->base.base.get_video_param = nouveau_vp3_screen_get_video_param;
+      screen->base.base.is_video_format_supported = nouveau_vp3_screen_video_supported;
    }
 
    ret = nouveau_bo_new(dev, NOUVEAU_BO_GART | NOUVEAU_BO_MAP, 0, 4096,

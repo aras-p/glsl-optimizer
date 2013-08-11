@@ -33,6 +33,10 @@
 
 #include "nv50_context.h"
 
+/* These are expected to be on their own pushbufs */
+#define SUBC_BSP(m) 2, (m)
+#define SUBC_VP(m) 2, (m)
+
 union pipe_desc {
    struct pipe_picture_desc *base;
    struct pipe_mpeg12_picture_desc *mpeg12;

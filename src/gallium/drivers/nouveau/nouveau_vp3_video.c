@@ -231,6 +231,25 @@ nouveau_vp3_decoder_init_common(struct pipe_video_decoder *dec)
    dec->end_frame = nouveau_vp3_decoder_end_frame;
 }
 
+static void vp3_getpath(enum pipe_video_profile profile, char *path)
+{
+   switch (u_reduce_video_profile(profile)) {
+      case PIPE_VIDEO_CODEC_MPEG12: {
+         sprintf(path, "/lib/firmware/nouveau/vuc-vp3-mpeg12-0");
+         break;
+      }
+      case PIPE_VIDEO_CODEC_VC1: {
+         sprintf(path, "/lib/firmware/nouveau/vuc-vp3-vc1-0");
+         break;
+      }
+      case PIPE_VIDEO_CODEC_MPEG4_AVC: {
+         sprintf(path, "/lib/firmware/nouveau/vuc-vp3-h264-0");
+         break;
+      }
+      default: assert(0);
+   }
+}
+
 static void vp4_getpath(enum pipe_video_profile profile, char *path)
 {
    switch (u_reduce_video_profile(profile)) {
@@ -264,7 +283,10 @@ nouveau_vp3_load_firmware(struct nouveau_vp3_decoder *dec,
    ssize_t r;
    uint32_t *end, endval;
 
-   vp4_getpath(profile, path);
+   if (chipset >= 0xa3 && chipset != 0xaa && chipset != 0xac)
+      vp4_getpath(profile, path);
+   else
+      vp3_getpath(profile, path);
 
    if (nouveau_bo_map(dec->fw_bo, NOUVEAU_BO_WR, dec->client))
       return 1;
@@ -333,14 +355,25 @@ nouveau_vp3_screen_get_video_param(struct pipe_screen *pscreen,
                                    enum pipe_video_profile profile,
                                    enum pipe_video_cap param)
 {
+   int chipset = nouveau_screen(pscreen)->device->chipset;
+   int vp3 = chipset < 0xa3 || chipset == 0xaa || chipset == 0xac;
+   int vp5 = chipset >= 0xd0;
+   enum pipe_video_codec codec = u_reduce_video_profile(profile);
    switch (param) {
    case PIPE_VIDEO_CAP_SUPPORTED:
-      return profile >= PIPE_VIDEO_PROFILE_MPEG1;
+      /* For now, h264 and mpeg4 don't work on pre-nvc0. */
+      if (chipset < 0xc0)
+         return codec == PIPE_VIDEO_CODEC_MPEG12 ||
+            codec == PIPE_VIDEO_CODEC_VC1;
+      /* In the general case, this should work, once the pre-nvc0 problems are
+       * resolved. */
+      return profile >= PIPE_VIDEO_PROFILE_MPEG1 && (
+            !vp3 || codec != PIPE_VIDEO_CODEC_MPEG4);
    case PIPE_VIDEO_CAP_NPOT_TEXTURES:
       return 1;
    case PIPE_VIDEO_CAP_MAX_WIDTH:
    case PIPE_VIDEO_CAP_MAX_HEIGHT:
-      return nouveau_screen(pscreen)->device->chipset < 0xd0 ? 2048 : 4096;
+      return vp5 ? 4096 : 2048;
    case PIPE_VIDEO_CAP_PREFERED_FORMAT:
       return PIPE_FORMAT_NV12;
    case PIPE_VIDEO_CAP_SUPPORTS_INTERLACED:

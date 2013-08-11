@@ -313,4 +313,18 @@ nv84_screen_video_supported(struct pipe_screen *screen,
                             enum pipe_format format,
                             enum pipe_video_profile profile);
 
+/* nv98_video.c */
+struct pipe_video_decoder *
+nv98_create_decoder(struct pipe_context *context,
+                    enum pipe_video_profile profile,
+                    enum pipe_video_entrypoint entrypoint,
+                    enum pipe_video_chroma_format chroma_format,
+                    unsigned width, unsigned height,
+                    unsigned max_references,
+                    bool expect_chunked_decode);
+
+struct pipe_video_buffer *
+nv98_video_buffer_create(struct pipe_context *pipe,
+                         const struct pipe_video_buffer *template);
+
 #endif

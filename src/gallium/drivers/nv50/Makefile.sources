@@ -16,7 +16,11 @@ C_SOURCES := \
 	nv50_query.c \
 	nv84_video.c \
 	nv84_video_bsp.c \
-	nv84_video_vp.c
+	nv84_video_vp.c \
+	nv98_video.c \
+	nv98_video_bsp.c \
+	nv98_video_vp.c \
+	nv98_video_ppp.c
 
 CODEGEN_NV50_SOURCES := \
 	codegen/nv50_ir.cpp \
