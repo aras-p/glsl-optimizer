@@ -39,9 +39,6 @@
 #include "ilo_shader.h"
 #include "ilo_gpe.h"
 
-#define ILO_GPE_VALID_GEN(dev, min_gen, max_gen) \
-   assert((dev)->gen >= ILO_GEN(min_gen) && (dev)->gen <= ILO_GEN(max_gen))
-
 #define ILO_GPE_CMD(pipeline, op, subop) \
    (0x3 << 29 | (pipeline) << 27 | (op) << 24 | (subop) << 16)
 

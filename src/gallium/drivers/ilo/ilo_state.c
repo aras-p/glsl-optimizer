@@ -105,18 +105,13 @@ finalize_constant_buffers(struct ilo_context *ilo)
 
          /* upload user buffer */
          if (cbuf->user_buffer) {
-            const enum pipe_format elem_format =
-               PIPE_FORMAT_R32G32B32A32_FLOAT;
             unsigned offset;
 
             u_upload_data(ilo->uploader, 0, cbuf->user_buffer_size,
                   cbuf->user_buffer, &offset, &cbuf->resource);
 
-            ilo_gpe_init_view_surface_for_buffer(ilo->dev,
-                  ilo_buffer(cbuf->resource),
-                  offset, cbuf->user_buffer_size,
-                  util_format_get_blocksize(elem_format), elem_format,
-                  false, false, &cbuf->surface);
+            ilo_gpe_set_view_surface_bo(ilo->dev,
+                  ilo_buffer(cbuf->resource)->bo, offset, &cbuf->surface);
 
             cbuf->user_buffer = NULL;
             cbuf->user_buffer_size = 0;
@@ -633,31 +628,29 @@ ilo_set_constant_buffer(struct pipe_context *pipe,
 
    if (buf) {
       for (i = 0; i < count; i++) {
+         const enum pipe_format elem_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
          struct ilo_cbuf_cso *cso = &cbuf->cso[index + i];
 
          pipe_resource_reference(&cso->resource, buf[i].buffer);
 
-         if (buf[i].buffer) {
-            const enum pipe_format elem_format =
-               PIPE_FORMAT_R32G32B32A32_FLOAT;
+         ilo_gpe_init_view_surface_for_buffer(ilo->dev,
+               ilo_buffer(buf[i].buffer),
+               buf[i].buffer_offset, buf[i].buffer_size,
+               util_format_get_blocksize(elem_format), elem_format,
+               false, false, &cso->surface);
 
-            ilo_gpe_init_view_surface_for_buffer(ilo->dev,
-                  ilo_buffer(buf[i].buffer),
-                  buf[i].buffer_offset, buf[i].buffer_size,
-                  util_format_get_blocksize(elem_format), elem_format,
-                  false, false, &cso->surface);
-
-            cso->user_buffer = NULL;
-            cso->user_buffer_size = 0;
-
-            cbuf->enabled_mask |= 1 << (index + i);
-         }
-         else if (buf[i].user_buffer) {
+         if (buf[i].user_buffer) {
             cso->surface.bo = NULL;
 
             /* buffer_offset does not apply for user buffer */
             cso->user_buffer = buf[i].user_buffer;
             cso->user_buffer_size = buf[i].buffer_size;
+
+            cbuf->enabled_mask |= 1 << (index + i);
+         }
+         else if (buf[i].buffer) {
+            cso->user_buffer = NULL;
+            cso->user_buffer_size = 0;
 
             cbuf->enabled_mask |= 1 << (index + i);
          }
