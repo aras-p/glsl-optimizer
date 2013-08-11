@@ -491,12 +491,9 @@ void brw_emit_tri_setup(struct brw_sf_compile *c, bool allocate)
 		       brw_null_reg(),
 		       0,
 		       brw_vec8_grf(0, 0), /* r0, will be copied to m0 */
-		       0, 	/* allocate */
-		       1,	/* used */
+                       last ? BRW_URB_WRITE_EOT_COMPLETE : 0,
 		       4, 	/* msg len */
 		       0,	/* response len */
-		       last,	/* eot */
-		       last, 	/* writes complete */
 		       i*4,	/* offset */
 		       BRW_URB_SWIZZLE_TRANSPOSE); /* XXX: Swizzle control "SF to windower" */
       }
@@ -565,12 +562,9 @@ void brw_emit_line_setup(struct brw_sf_compile *c, bool allocate)
 		       brw_null_reg(),
 		       0,
 		       brw_vec8_grf(0, 0),
-		       0, 	/* allocate */
-		       1, 	/* used */
+                       last ? BRW_URB_WRITE_EOT_COMPLETE : 0,
 		       4, 	/* msg len */
 		       0,	/* response len */
-		       last, 	/* eot */
-		       last, 	/* writes complete */
 		       i*4,	/* urb destination offset */
 		       BRW_URB_SWIZZLE_TRANSPOSE); 
       }
@@ -655,12 +649,9 @@ void brw_emit_point_sprite_setup(struct brw_sf_compile *c, bool allocate)
 		    brw_null_reg(),
 		    0,
 		    brw_vec8_grf(0, 0),
-		    0, 	/* allocate */
-		    1,	/* used */
+                    last ? BRW_URB_WRITE_EOT_COMPLETE : 0,
 		    4, 	/* msg len */
 		    0,	/* response len */
-		    last, 	/* eot */
-		    last, 	/* writes complete */
 		    i*4,	/* urb destination offset */
 		    BRW_URB_SWIZZLE_TRANSPOSE);
    }
@@ -715,12 +706,9 @@ void brw_emit_point_setup(struct brw_sf_compile *c, bool allocate)
 		       brw_null_reg(),
 		       0,
 		       brw_vec8_grf(0, 0),
-		       0, 	/* allocate */
-		       1,	/* used */
+                       last ? BRW_URB_WRITE_EOT_COMPLETE : 0,
 		       4, 	/* msg len */
 		       0,	/* response len */
-		       last, 	/* eot */
-		       last, 	/* writes complete */
 		       i*4,	/* urb destination offset */
 		       BRW_URB_SWIZZLE_TRANSPOSE);
       }

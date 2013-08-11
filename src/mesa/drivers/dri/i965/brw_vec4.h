@@ -222,7 +222,7 @@ public:
    int target; /**< MRT target. */
    bool shadow_compare;
 
-   bool eot;
+   unsigned urb_write_flags;
    bool header_present;
    int mlen; /**< SEND message length */
    int base_mrf; /**< First MRF in the SEND message, if mlen is nonzero. */

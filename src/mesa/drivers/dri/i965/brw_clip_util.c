@@ -313,15 +313,18 @@ void brw_clip_interp_vertex( struct brw_clip_compile *c,
 
 void brw_clip_emit_vue(struct brw_clip_compile *c, 
 		       struct brw_indirect vert,
-		       bool allocate,
-		       bool eot,
+                       unsigned flags,
 		       GLuint header)
 {
    struct brw_compile *p = &c->func;
+   bool allocate = flags & BRW_URB_WRITE_ALLOCATE;
 
    brw_clip_ff_sync(c);
 
-   assert(!(allocate && eot));
+   /* Any URB entry that is allocated must subsequently be used or discarded,
+    * so it doesn't make sense to mark EOT and ALLOCATE at the same time.
+    */
+   assert(!(allocate && (flags & BRW_URB_WRITE_EOT)));
 
    /* Copy the vertex from vertn into m1..mN+1:
     */
@@ -343,12 +346,9 @@ void brw_clip_emit_vue(struct brw_clip_compile *c,
 		 allocate ? c->reg.R0 : retype(brw_null_reg(), BRW_REGISTER_TYPE_UD),
 		 0,
 		 c->reg.R0,
-		 allocate,
-		 1,		/* used */
+                 flags,
 		 c->nr_regs + 1, /* msg length */
 		 allocate ? 1 : 0, /* response_length */ 
-		 eot,		/* eot */
-		 1,		/* writes_complete */
 		 0,		/* urb offset */
 		 BRW_URB_SWIZZLE_NONE);
 }
@@ -367,12 +367,9 @@ void brw_clip_kill_thread(struct brw_clip_compile *c)
 		 retype(brw_null_reg(), BRW_REGISTER_TYPE_UD),
 		 0,
 		 c->reg.R0,
-		 0,		/* allocate */
-		 0,		/* used */
+                 BRW_URB_WRITE_UNUSED | BRW_URB_WRITE_EOT_COMPLETE,
 		 1, 		/* msg len */
 		 0, 		/* response len */
-		 1, 		/* eot */
-		 1,		/* writes complete */
 		 0,
 		 BRW_URB_SWIZZLE_NONE);
 }

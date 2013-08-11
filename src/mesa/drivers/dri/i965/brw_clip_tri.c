@@ -466,7 +466,7 @@ void brw_clip_tri_emit_polygon(struct brw_clip_compile *c)
       brw_MOV(p, get_addr_reg(vptr), brw_address(c->reg.inlist));
       brw_MOV(p, get_addr_reg(v0), deref_1uw(vptr, 0));
 
-      brw_clip_emit_vue(c, v0, 1, 0,
+      brw_clip_emit_vue(c, v0, BRW_URB_WRITE_ALLOCATE_COMPLETE,
                         ((_3DPRIM_TRIFAN << URB_WRITE_PRIM_TYPE_SHIFT)
                          | URB_WRITE_PRIM_START));
       
@@ -475,7 +475,7 @@ void brw_clip_tri_emit_polygon(struct brw_clip_compile *c)
 
       brw_DO(p, BRW_EXECUTE_1);
       {
-	 brw_clip_emit_vue(c, v0, 1, 0,
+	 brw_clip_emit_vue(c, v0, BRW_URB_WRITE_ALLOCATE_COMPLETE,
                            (_3DPRIM_TRIFAN << URB_WRITE_PRIM_TYPE_SHIFT));
   
 	 brw_ADD(p, get_addr_reg(vptr), get_addr_reg(vptr), brw_imm_uw(2));
@@ -486,7 +486,7 @@ void brw_clip_tri_emit_polygon(struct brw_clip_compile *c)
       }
       brw_WHILE(p);
 
-      brw_clip_emit_vue(c, v0, 0, 1,
+      brw_clip_emit_vue(c, v0, BRW_URB_WRITE_EOT_COMPLETE,
                         ((_3DPRIM_TRIFAN << URB_WRITE_PRIM_TYPE_SHIFT)
                          | URB_WRITE_PRIM_END));
    }

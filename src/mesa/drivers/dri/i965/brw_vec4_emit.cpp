@@ -405,12 +405,9 @@ vec4_generator::generate_urb_write(vec4_instruction *inst)
 		 brw_null_reg(), /* dest */
 		 inst->base_mrf, /* starting mrf reg nr */
 		 brw_vec8_grf(0, 0), /* src */
-		 false,		/* allocate */
-		 true,		/* used */
+                 inst->urb_write_flags,
 		 inst->mlen,
 		 0,		/* response len */
-		 inst->eot,	/* eot */
-		 inst->eot,	/* writes complete */
 		 inst->offset,	/* urb destination offset */
 		 BRW_URB_SWIZZLE_INTERLEAVE);
 }

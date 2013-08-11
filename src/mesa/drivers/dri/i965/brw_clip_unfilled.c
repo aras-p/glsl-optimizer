@@ -319,10 +319,10 @@ static void emit_lines(struct brw_clip_compile *c,
 	      brw_imm_f(0));
       brw_IF(p, BRW_EXECUTE_1);
       {
-	 brw_clip_emit_vue(c, v0, 1, 0,
+	 brw_clip_emit_vue(c, v0, BRW_URB_WRITE_ALLOCATE_COMPLETE,
                            (_3DPRIM_LINESTRIP << URB_WRITE_PRIM_TYPE_SHIFT)
                            | URB_WRITE_PRIM_START);
-	 brw_clip_emit_vue(c, v1, 1, 0,
+	 brw_clip_emit_vue(c, v1, BRW_URB_WRITE_ALLOCATE_COMPLETE,
                            (_3DPRIM_LINESTRIP << URB_WRITE_PRIM_TYPE_SHIFT)
                            | URB_WRITE_PRIM_END);
       }
@@ -364,7 +364,7 @@ static void emit_points(struct brw_clip_compile *c,
 	 if (do_offset)
 	    apply_one_offset(c, v0);
 
-	 brw_clip_emit_vue(c, v0, 1, 0,
+	 brw_clip_emit_vue(c, v0, BRW_URB_WRITE_ALLOCATE_COMPLETE,
                            (_3DPRIM_POINTLIST << URB_WRITE_PRIM_TYPE_SHIFT)
                            | URB_WRITE_PRIM_START | URB_WRITE_PRIM_END);
       }

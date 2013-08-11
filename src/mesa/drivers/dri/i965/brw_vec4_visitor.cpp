@@ -2788,7 +2788,7 @@ vec4_vs_visitor::emit_urb_write_opcode(bool complete)
    }
 
    vec4_instruction *inst = emit(VS_OPCODE_URB_WRITE);
-   inst->eot = complete;
+   inst->urb_write_flags = complete ? BRW_URB_WRITE_EOT_COMPLETE : 0;
 
    return inst;
 }

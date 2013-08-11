@@ -515,19 +515,17 @@ static void brw_set_ff_sync_message(struct brw_compile *p,
 
 static void brw_set_urb_message( struct brw_compile *p,
 				 struct brw_instruction *insn,
-				 bool allocate,
-				 bool used,
+                                 unsigned flags,
 				 GLuint msg_length,
 				 GLuint response_length,
-				 bool end_of_thread,
-				 bool complete,
 				 GLuint offset,
 				 GLuint swizzle_control )
 {
    struct brw_context *brw = p->brw;
 
    brw_set_message_descriptor(p, insn, BRW_SFID_URB,
-			      msg_length, response_length, true, end_of_thread);
+			      msg_length, response_length, true,
+                              flags & BRW_URB_WRITE_EOT);
    if (brw->gen == 7) {
       insn->bits3.urb_gen7.opcode = 0;	/* URB_WRITE_HWORD */
       insn->bits3.urb_gen7.offset = offset;
@@ -535,21 +533,21 @@ static void brw_set_urb_message( struct brw_compile *p,
       insn->bits3.urb_gen7.swizzle_control = swizzle_control;
       /* per_slot_offset = 0 makes it ignore offsets in message header */
       insn->bits3.urb_gen7.per_slot_offset = 0;
-      insn->bits3.urb_gen7.complete = complete;
+      insn->bits3.urb_gen7.complete = flags & BRW_URB_WRITE_COMPLETE ? 1 : 0;
    } else if (brw->gen >= 5) {
       insn->bits3.urb_gen5.opcode = 0;	/* URB_WRITE */
       insn->bits3.urb_gen5.offset = offset;
       insn->bits3.urb_gen5.swizzle_control = swizzle_control;
-      insn->bits3.urb_gen5.allocate = allocate;
-      insn->bits3.urb_gen5.used = used;	/* ? */
-      insn->bits3.urb_gen5.complete = complete;
+      insn->bits3.urb_gen5.allocate = flags & BRW_URB_WRITE_ALLOCATE ? 1 : 0;
+      insn->bits3.urb_gen5.used = flags & BRW_URB_WRITE_UNUSED ? 0 : 1;
+      insn->bits3.urb_gen5.complete = flags & BRW_URB_WRITE_COMPLETE ? 1 : 0;
    } else {
       insn->bits3.urb.opcode = 0;	/* ? */
       insn->bits3.urb.offset = offset;
       insn->bits3.urb.swizzle_control = swizzle_control;
-      insn->bits3.urb.allocate = allocate;
-      insn->bits3.urb.used = used;	/* ? */
-      insn->bits3.urb.complete = complete;
+      insn->bits3.urb.allocate = flags & BRW_URB_WRITE_ALLOCATE ? 1 : 0;
+      insn->bits3.urb.used = flags & BRW_URB_WRITE_UNUSED ? 0 : 1;
+      insn->bits3.urb.complete = flags & BRW_URB_WRITE_COMPLETE ? 1 : 0;
    }
 }
 
@@ -2215,12 +2213,9 @@ void brw_urb_WRITE(struct brw_compile *p,
 		   struct brw_reg dest,
 		   GLuint msg_reg_nr,
 		   struct brw_reg src0,
-		   bool allocate,
-		   bool used,
+                   unsigned flags,
 		   GLuint msg_length,
 		   GLuint response_length,
-		   bool eot,
-		   bool writes_complete,
 		   GLuint offset,
 		   GLuint swizzle)
 {
@@ -2254,12 +2249,9 @@ void brw_urb_WRITE(struct brw_compile *p,
 
    brw_set_urb_message(p,
 		       insn,
-		       allocate,
-		       used,
+		       flags,
 		       msg_length,
 		       response_length, 
-		       eot, 
-		       writes_complete, 
 		       offset,
 		       swizzle);
 }

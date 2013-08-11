@@ -185,12 +185,10 @@ static void brw_gs_emit_vue(struct brw_gs_compile *c,
                           : retype(brw_null_reg(), BRW_REGISTER_TYPE_UD),
 		 0,
 		 c->reg.header,
-		 allocate,
-		 1,		/* used */
+		 allocate ? BRW_URB_WRITE_ALLOCATE_COMPLETE
+                          : BRW_URB_WRITE_EOT_COMPLETE,
 		 c->nr_regs + 1, /* msg length */
 		 allocate ? 1 : 0, /* response length */
-		 allocate ? 0 : 1, /* eot */
-		 1,		/* writes_complete */
 		 0,		/* urb offset */
 		 BRW_URB_SWIZZLE_NONE);
 

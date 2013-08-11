@@ -173,8 +173,7 @@ void brw_clip_init_planes( struct brw_clip_compile *c );
 
 void brw_clip_emit_vue(struct brw_clip_compile *c, 
 		       struct brw_indirect vert,
-		       bool allocate,
-		       bool eot,
+                       unsigned flags,
 		       GLuint header);
 
 void brw_clip_kill_thread(struct brw_clip_compile *c);
