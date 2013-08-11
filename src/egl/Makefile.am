@@ -21,8 +21,4 @@
 
 SUBDIRS=
 
-if HAVE_EGL_PLATFORM_WAYLAND
-SUBDIRS += wayland
-endif
-
 SUBDIRS += drivers main

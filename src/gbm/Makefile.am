@@ -24,6 +24,7 @@ libgbm_la_LIBADD = $(LIBUDEV_LIBS) $(LIBKMS_LIBS) $(DLOPEN_LIBS)
 if HAVE_EGL_PLATFORM_WAYLAND
 AM_CPPFLAGS = -DHAVE_WAYLAND_PLATFORM
 AM_CFLAGS += $(WAYLAND_CFLAGS)
+libgbm_la_LIBADD += $(top_builddir)/src/egl/wayland/wayland-drm/libwayland-drm.la $(WAYLAND_LIBS)
 endif
 
 if HAVE_DRI
@@ -38,7 +39,7 @@ libgbm_dri_la_CFLAGS = \
 	$(LIBDRM_CFLAGS)
 
 libgbm_la_LIBADD += \
-	libgbm_dri.la $(top_builddir)/src/mapi/shared-glapi/libglapi.la
+	libgbm_dri.la $(top_builddir)/src/mapi/shared-glapi/libglapi.la $(LIBDRM_LIBS)
 endif
 
 all-local: libgbm.la

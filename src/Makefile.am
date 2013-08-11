@@ -29,6 +29,10 @@ if HAVE_DRI_GLX
 SUBDIRS += glx
 endif
 
+if HAVE_EGL_PLATFORM_WAYLAND
+SUBDIRS += egl/wayland
+endif
+
 if HAVE_GBM
 SUBDIRS += gbm
 endif
