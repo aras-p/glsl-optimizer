@@ -659,7 +659,7 @@ static void brw_emit_vertices(struct brw_context *brw)
 	 if (brw->gen >= 7)
 	    dw0 |= GEN7_VB0_ADDRESS_MODIFYENABLE;
 
-	 if (brw->is_haswell)
+         if (brw->gen == 7)
 	    dw0 |= GEN7_MOCS_L3 << 16;
 
 	 OUT_BATCH(dw0 | (buffer->stride << BRW_VB0_PITCH_SHIFT));

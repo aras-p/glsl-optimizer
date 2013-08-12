@@ -286,7 +286,6 @@ gen7_update_texture_surface(struct gl_context *ctx,
    struct gl_texture_image *firstImage = tObj->Image[0][tObj->BaseLevel];
    struct gl_sampler_object *sampler = _mesa_get_samplerobj(ctx, unit);
    uint32_t tile_x, tile_y;
-   uint8_t mocs = brw->is_haswell ? GEN7_MOCS_L3 : 0;
 
    if (tObj->Target == GL_TEXTURE_BUFFER) {
       gen7_update_buffer_texture_surface(ctx, unit, binding_table, surf_index);
@@ -335,7 +334,7 @@ gen7_update_texture_surface(struct gl_context *ctx,
     */
    surf[5] = ((tile_x / 4) << BRW_SURFACE_X_OFFSET_SHIFT |
               (tile_y / 2) << BRW_SURFACE_Y_OFFSET_SHIFT |
-              SET_FIELD(mocs, GEN7_SURFACE_MOCS) |
+              SET_FIELD(GEN7_MOCS_L3, GEN7_SURFACE_MOCS) |
               /* mip count */
               (intelObj->_MaxLevel - tObj->BaseLevel));
 
@@ -514,7 +513,7 @@ gen7_update_renderbuffer_surface(struct brw_context *brw,
    bool is_array = false;
    int depth = MAX2(rb->Depth, 1);
    int min_array_element;
-   uint8_t mocs = brw->is_haswell ? GEN7_MOCS_L3 : 0;
+   const uint8_t mocs = GEN7_MOCS_L3;
    GLenum gl_target = rb->TexImage ?
                          rb->TexImage->TexObject->Target : GL_TEXTURE_2D;
 

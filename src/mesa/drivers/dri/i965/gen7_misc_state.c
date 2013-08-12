@@ -41,7 +41,7 @@ gen7_emit_depth_stencil_hiz(struct brw_context *brw,
                             uint32_t tile_x, uint32_t tile_y)
 {
    struct gl_context *ctx = &brw->ctx;
-   uint8_t mocs = brw->is_haswell ? GEN7_MOCS_L3 : 0;
+   const uint8_t mocs = GEN7_MOCS_L3;
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    uint32_t surftype;
    unsigned int depth = 1;

@@ -1038,7 +1038,7 @@ static void upload_state_base_address( struct brw_context *brw )
     */
 
    if (brw->gen >= 6) {
-      uint8_t mocs = brw->is_haswell ? GEN7_MOCS_L3 : 0;
+      uint8_t mocs = brw->gen == 7 ? GEN7_MOCS_L3 : 0;
 
       if (brw->gen == 6)
 	 intel_emit_post_sync_nonzero_flush(brw);

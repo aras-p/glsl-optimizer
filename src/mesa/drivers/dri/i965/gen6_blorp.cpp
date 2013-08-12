@@ -74,7 +74,7 @@ void
 gen6_blorp_emit_state_base_address(struct brw_context *brw,
                                    const brw_blorp_params *params)
 {
-   uint8_t mocs = brw->is_haswell ? GEN7_MOCS_L3 : 0;
+   uint8_t mocs = brw->gen == 7 ? GEN7_MOCS_L3 : 0;
 
    BEGIN_BATCH(10);
    OUT_BATCH(CMD_STATE_BASE_ADDRESS << 16 | (10 - 2));
@@ -168,7 +168,7 @@ gen6_blorp_emit_vertices(struct brw_context *brw,
       if (brw->gen >= 7)
          dw0 |= GEN7_VB0_ADDRESS_MODIFYENABLE;
 
-      if (brw->is_haswell)
+      if (brw->gen == 7)
          dw0 |= GEN7_MOCS_L3 << 16;
 
       BEGIN_BATCH(batch_length);

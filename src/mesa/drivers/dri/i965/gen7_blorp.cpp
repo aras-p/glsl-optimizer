@@ -143,7 +143,7 @@ gen7_blorp_emit_surface_state(struct brw_context *brw,
     */
    struct intel_region *region = surface->mt->region;
    uint32_t tile_x, tile_y;
-   uint8_t mocs = brw->is_haswell ? GEN7_MOCS_L3 : 0;
+   const uint8_t mocs = GEN7_MOCS_L3;
 
    uint32_t tiling = surface->map_stencil_as_y_tiled
       ? I915_TILING_Y : region->tiling;
@@ -616,7 +616,7 @@ gen7_blorp_emit_constant_ps(struct brw_context *brw,
                             const brw_blorp_params *params,
                             uint32_t wm_push_const_offset)
 {
-   uint8_t mocs = brw->is_haswell ? GEN7_MOCS_L3 : 0;
+   const uint8_t mocs = GEN7_MOCS_L3;
 
    /* Make sure the push constants fill an exact integer number of
     * registers.
@@ -658,7 +658,7 @@ static void
 gen7_blorp_emit_depth_stencil_config(struct brw_context *brw,
                                      const brw_blorp_params *params)
 {
-   uint8_t mocs = brw->is_haswell ? GEN7_MOCS_L3 : 0;
+   const uint8_t mocs = GEN7_MOCS_L3;
    uint32_t surfwidth, surfheight;
    uint32_t surftype;
    unsigned int depth = MAX2(params->depth.mt->logical_depth0, 1);
