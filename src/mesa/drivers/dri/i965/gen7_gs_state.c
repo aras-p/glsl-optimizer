@@ -111,6 +111,8 @@ upload_gs_state(struct brw_context *brw)
           GEN7_GS_CONTROL_DATA_HEADER_SIZE_SHIFT) |
          GEN7_GS_DISPATCH_MODE_DUAL_OBJECT |
          GEN6_GS_STATISTICS_ENABLE |
+         (brw->gs.prog_data->include_primitive_id ?
+          GEN7_GS_INCLUDE_PRIMITIVE_ID : 0) |
          GEN7_GS_ENABLE;
 
       if (brw->is_haswell) {

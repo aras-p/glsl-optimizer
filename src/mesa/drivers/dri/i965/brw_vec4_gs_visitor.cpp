@@ -102,6 +102,10 @@ vec4_gs_visitor::setup_payload()
     */
    reg++;
 
+   /* If the shader uses gl_PrimitiveIDIn, that goes in r1. */
+   if (c->prog_data.include_primitive_id)
+      attribute_map[VARYING_SLOT_PRIMITIVE_ID] = reg++;
+
    reg = setup_uniforms(reg);
 
    reg = setup_varying_inputs(reg, attribute_map);

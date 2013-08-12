@@ -588,6 +588,8 @@ struct brw_gs_prog_data
     * Ignored if control_data_header_size is 0.
     */
    unsigned control_data_format;
+
+   bool include_primitive_id;
 };
 
 /** Number of texture sampler units */
