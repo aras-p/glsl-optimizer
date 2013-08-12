@@ -74,9 +74,14 @@ void
 gen6_blorp_emit_state_base_address(struct brw_context *brw,
                                    const brw_blorp_params *params)
 {
+   uint8_t mocs = brw->is_haswell ? GEN7_MOCS_L3 : 0;
+
    BEGIN_BATCH(10);
    OUT_BATCH(CMD_STATE_BASE_ADDRESS << 16 | (10 - 2));
-   OUT_BATCH(1); /* GeneralStateBaseAddressModifyEnable */
+   OUT_BATCH(mocs << 8 | /* GeneralStateMemoryObjectControlState */
+             mocs << 4 | /* StatelessDataPortAccessMemoryObjectControlState */
+             1); /* GeneralStateBaseAddressModifyEnable */
+
    /* SurfaceStateBaseAddress */
    OUT_RELOC(brw->batch.bo, I915_GEM_DOMAIN_SAMPLER, 0, 1);
    /* DynamicStateBaseAddress */

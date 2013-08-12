@@ -1038,13 +1038,16 @@ static void upload_state_base_address( struct brw_context *brw )
     */
 
    if (brw->gen >= 6) {
+      uint8_t mocs = brw->is_haswell ? GEN7_MOCS_L3 : 0;
+
       if (brw->gen == 6)
 	 intel_emit_post_sync_nonzero_flush(brw);
 
        BEGIN_BATCH(10);
        OUT_BATCH(CMD_STATE_BASE_ADDRESS << 16 | (10 - 2));
-       /* General state base address: stateless DP read/write requests */
-       OUT_BATCH(1);
+       OUT_BATCH(mocs << 8 | /* General State Memory Object Control State */
+                 mocs << 4 | /* Stateless Data Port Access Memory Object Control State */
+                 1); /* General State Base Address Modify Enable */
        /* Surface state base address:
 	* BINDING_TABLE_STATE
 	* SURFACE_STATE
