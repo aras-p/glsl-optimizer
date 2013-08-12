@@ -2546,9 +2546,8 @@ process_initializer(ir_variable *var, ast_declaration *decl,
 
 
 /**
- * Do additional processing necessary for geometry shader input array
- * declarations (this covers both interface blocks arrays and input variable
- * arrays).
+ * Do additional processing necessary for geometry shader input declarations
+ * (this covers both interface blocks arrays and bare input variables).
  */
 static void
 handle_geometry_shader_input_decl(struct _mesa_glsl_parse_state *state,
@@ -2559,7 +2558,16 @@ handle_geometry_shader_input_decl(struct _mesa_glsl_parse_state *state,
       num_vertices = vertices_per_prim(state->gs_input_prim_type);
    }
 
-   assert(var->type->is_array());
+   /* Geometry shader input variables must be arrays.  Caller should have
+    * reported an error for this.
+    */
+   if (!var->type->is_array()) {
+      assert(state->error);
+
+      /* To avoid cascading failures, short circuit the checks below. */
+      return;
+   }
+
    if (var->type->length == 0) {
       /* Section 4.3.8.1 (Input Layout Qualifiers) of the GLSL 1.50 spec says:
        *
