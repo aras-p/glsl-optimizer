@@ -264,6 +264,14 @@ enum brw_urb_write_flags {
    BRW_URB_WRITE_USE_CHANNEL_MASKS = 0x20,
 
    /**
+    * Indicates that the data should be sent to the URB using the
+    * URB_WRITE_OWORD message rather than URB_WRITE_HWORD (gen == 7).  This
+    * causes offsets to be interpreted as multiples of an OWORD instead of an
+    * HWORD, and only allows one OWORD to be written.
+    */
+   BRW_URB_WRITE_OWORD = 0x40,
+
+   /**
     * Convenient combination of flags: end the thread while simultaneously
     * marking the given URB entry as complete.
     */

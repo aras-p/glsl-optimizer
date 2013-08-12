@@ -1172,7 +1172,8 @@ enum brw_message_target {
 #define BRW_MATH_DATA_VECTOR  0
 #define BRW_MATH_DATA_SCALAR  1
 
-#define BRW_URB_OPCODE_WRITE  0
+#define BRW_URB_OPCODE_WRITE_HWORD  0
+#define BRW_URB_OPCODE_WRITE_OWORD  1
 
 #define BRW_URB_SWIZZLE_NONE          0
 #define BRW_URB_SWIZZLE_INTERLEAVE    1

@@ -529,7 +529,12 @@ static void brw_set_urb_message( struct brw_compile *p,
 			      msg_length, response_length, true,
                               flags & BRW_URB_WRITE_EOT);
    if (brw->gen == 7) {
-      insn->bits3.urb_gen7.opcode = 0;	/* URB_WRITE_HWORD */
+      if (flags & BRW_URB_WRITE_OWORD) {
+         assert(msg_length == 2); /* header + one OWORD of data */
+         insn->bits3.urb_gen7.opcode = BRW_URB_OPCODE_WRITE_OWORD;
+      } else {
+         insn->bits3.urb_gen7.opcode = BRW_URB_OPCODE_WRITE_HWORD;
+      }
       insn->bits3.urb_gen7.offset = offset;
       assert(swizzle_control != BRW_URB_SWIZZLE_TRANSPOSE);
       insn->bits3.urb_gen7.swizzle_control = swizzle_control;
