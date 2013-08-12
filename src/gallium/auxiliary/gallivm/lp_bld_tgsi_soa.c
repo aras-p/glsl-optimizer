@@ -2592,19 +2592,17 @@ sviewinfo_emit(
 }
 
 static LLVMValueRef
-mask_to_one_vec(struct lp_build_tgsi_context *bld_base)
+mask_vec(struct lp_build_tgsi_context *bld_base)
 {
    struct lp_build_tgsi_soa_context * bld = lp_soa_context(bld_base);
    LLVMBuilderRef builder = bld->bld_base.base.gallivm->builder;
-   LLVMValueRef one_vec = bld_base->int_bld.one;
    struct lp_exec_mask *exec_mask = &bld->exec_mask;
 
-   if (exec_mask->has_mask) {
-      one_vec = LLVMBuildAnd(builder, one_vec, exec_mask->exec_mask, "");
+   if (!exec_mask->has_mask) {
+      return lp_build_mask_value(bld->mask);
    }
-   one_vec = LLVMBuildAnd(builder, one_vec,
-                          lp_build_mask_value(bld->mask), "");
-   return one_vec;
+   return LLVMBuildAnd(builder, lp_build_mask_value(bld->mask),
+                       exec_mask->exec_mask, "");
 }
 
 static void
@@ -2613,11 +2611,10 @@ increment_vec_ptr_by_mask(struct lp_build_tgsi_context * bld_base,
                           LLVMValueRef mask)
 {
    LLVMBuilderRef builder = bld_base->base.gallivm->builder;
-
    LLVMValueRef current_vec = LLVMBuildLoad(builder, ptr, "");
-   
-   current_vec = LLVMBuildAdd(builder, current_vec, mask, "");
-   
+
+   current_vec = LLVMBuildSub(builder, current_vec, mask, "");
+
    LLVMBuildStore(builder, current_vec, ptr);
 }
 
@@ -2627,18 +2624,13 @@ clear_uint_vec_ptr_from_mask(struct lp_build_tgsi_context * bld_base,
                              LLVMValueRef mask)
 {
    LLVMBuilderRef builder = bld_base->base.gallivm->builder;
-
    LLVMValueRef current_vec = LLVMBuildLoad(builder, ptr, "");
-   LLVMValueRef full_mask = lp_build_cmp(&bld_base->uint_bld,
-                                         PIPE_FUNC_NOTEQUAL,
-                                         mask,
-                                         bld_base->uint_bld.zero);
 
    current_vec = lp_build_select(&bld_base->uint_bld,
-                                 full_mask,
+                                 mask,
                                  bld_base->uint_bld.zero,
                                  current_vec);
-   
+
    LLVMBuildStore(builder, current_vec, ptr);
 }
 
@@ -2648,8 +2640,8 @@ clamp_mask_to_max_output_vertices(struct lp_build_tgsi_soa_context * bld,
                                   LLVMValueRef total_emitted_vertices_vec)
 {
    LLVMBuilderRef builder = bld->bld_base.base.gallivm->builder;
-   struct lp_build_context *uint_bld = &bld->bld_base.uint_bld;
-   LLVMValueRef max_mask = lp_build_cmp(uint_bld, PIPE_FUNC_LESS,
+   struct lp_build_context *int_bld = &bld->bld_base.int_bld;
+   LLVMValueRef max_mask = lp_build_cmp(int_bld, PIPE_FUNC_LESS,
                                         total_emitted_vertices_vec,
                                         bld->max_output_vertices_vec);
 
@@ -2666,23 +2658,23 @@ emit_vertex(
    LLVMBuilderRef builder = bld->bld_base.base.gallivm->builder;
 
    if (bld->gs_iface->emit_vertex) {
-      LLVMValueRef masked_ones = mask_to_one_vec(bld_base);
+      LLVMValueRef mask = mask_vec(bld_base);
       LLVMValueRef total_emitted_vertices_vec =
          LLVMBuildLoad(builder, bld->total_emitted_vertices_vec_ptr, "");
-      masked_ones = clamp_mask_to_max_output_vertices(bld, masked_ones,
-                                                      total_emitted_vertices_vec);
+      mask = clamp_mask_to_max_output_vertices(bld, mask,
+                                               total_emitted_vertices_vec);
       gather_outputs(bld);
       bld->gs_iface->emit_vertex(bld->gs_iface, &bld->bld_base,
                                  bld->outputs,
                                  total_emitted_vertices_vec);
       increment_vec_ptr_by_mask(bld_base, bld->emitted_vertices_vec_ptr,
-                                masked_ones);
+                                mask);
       increment_vec_ptr_by_mask(bld_base, bld->total_emitted_vertices_vec_ptr,
-                                masked_ones);
+                                mask);
 #if DUMP_GS_EMITS
       lp_build_print_value(bld->bld_base.base.gallivm,
                            " +++ emit vertex masked ones = ",
-                           masked_ones);
+                           mask);
       lp_build_print_value(bld->bld_base.base.gallivm,
                            " +++ emit vertex emitted = ",
                            total_emitted_vertices_vec);
@@ -2693,7 +2685,7 @@ emit_vertex(
 
 static void
 end_primitive_masked(struct lp_build_tgsi_context * bld_base,
-                     LLVMValueRef masked_ones)
+                     LLVMValueRef mask)
 {
    struct lp_build_tgsi_soa_context * bld = lp_soa_context(bld_base);
    LLVMBuilderRef builder = bld->bld_base.base.gallivm->builder;
@@ -2703,7 +2695,7 @@ end_primitive_masked(struct lp_build_tgsi_context * bld_base,
          LLVMBuildLoad(builder, bld->emitted_vertices_vec_ptr, "");
       LLVMValueRef emitted_prims_vec =
          LLVMBuildLoad(builder, bld->emitted_prims_vec_ptr, "");
-      
+
       bld->gs_iface->end_primitive(bld->gs_iface, &bld->bld_base,
                                    emitted_vertices_vec,
                                    emitted_prims_vec);
@@ -2711,7 +2703,7 @@ end_primitive_masked(struct lp_build_tgsi_context * bld_base,
 #if DUMP_GS_EMITS
       lp_build_print_value(bld->bld_base.base.gallivm,
                            " +++ end prim masked ones = ",
-                           masked_ones);
+                           mask);
       lp_build_print_value(bld->bld_base.base.gallivm,
                            " +++ end prim emitted verts1 = ",
                            emitted_vertices_vec);
@@ -2721,9 +2713,9 @@ end_primitive_masked(struct lp_build_tgsi_context * bld_base,
                                          bld->emitted_prims_vec_ptr, ""));
 #endif
       increment_vec_ptr_by_mask(bld_base, bld->emitted_prims_vec_ptr,
-                                masked_ones);
+                                mask);
       clear_uint_vec_ptr_from_mask(bld_base, bld->emitted_vertices_vec_ptr,
-                                   masked_ones);
+                                   mask);
 #if DUMP_GS_EMITS
       lp_build_print_value(bld->bld_base.base.gallivm,
                            " +++ end prim emitted verts2 = ",
@@ -2744,7 +2736,7 @@ end_primitive(
 
    if (bld->gs_iface->end_primitive) {
       LLVMBuilderRef builder = bld_base->base.gallivm->builder;
-      LLVMValueRef masked_ones = mask_to_one_vec(bld_base);
+      LLVMValueRef mask = mask_vec(bld_base);
       struct lp_build_context *uint_bld = &bld_base->uint_bld;
       LLVMValueRef emitted_verts = LLVMBuildLoad(
          builder, bld->emitted_vertices_vec_ptr, "");
@@ -2755,9 +2747,9 @@ end_primitive(
          telling us which, if any, execution slots actually have
          unemitted primitives, this way we make sure that end_primitives
          executes only on the paths that have unflushed vertices */
-      masked_ones = LLVMBuildAnd(builder, masked_ones, emitted_mask, "");
-      
-      end_primitive_masked(bld_base, masked_ones);
+      mask = LLVMBuildAnd(builder, mask, emitted_mask, "");
+
+      end_primitive_masked(bld_base, mask);
    }
 }
 
@@ -3289,7 +3281,7 @@ lp_build_tgsi_soa(struct gallivm_state *gallivm,
          }
       }
       bld.max_output_vertices_vec =
-         lp_build_const_int_vec(gallivm, bld.bld_base.uint_bld.type,
+         lp_build_const_int_vec(gallivm, bld.bld_base.int_bld.type,
                                 max_output_vertices);
    }
 
