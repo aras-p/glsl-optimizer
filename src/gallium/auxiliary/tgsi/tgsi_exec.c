@@ -3264,6 +3264,50 @@ micro_f2i(union tgsi_exec_channel *dst,
 }
 
 static void
+micro_fseq(union tgsi_exec_channel *dst,
+           const union tgsi_exec_channel *src0,
+           const union tgsi_exec_channel *src1)
+{
+   dst->u[0] = src0->f[0] == src1->f[0] ? ~0 : 0;
+   dst->u[1] = src0->f[1] == src1->f[1] ? ~0 : 0;
+   dst->u[2] = src0->f[2] == src1->f[2] ? ~0 : 0;
+   dst->u[3] = src0->f[3] == src1->f[3] ? ~0 : 0;
+}
+
+static void
+micro_fsge(union tgsi_exec_channel *dst,
+           const union tgsi_exec_channel *src0,
+           const union tgsi_exec_channel *src1)
+{
+   dst->u[0] = src0->f[0] >= src1->f[0] ? ~0 : 0;
+   dst->u[1] = src0->f[1] >= src1->f[1] ? ~0 : 0;
+   dst->u[2] = src0->f[2] >= src1->f[2] ? ~0 : 0;
+   dst->u[3] = src0->f[3] >= src1->f[3] ? ~0 : 0;
+}
+
+static void
+micro_fslt(union tgsi_exec_channel *dst,
+           const union tgsi_exec_channel *src0,
+           const union tgsi_exec_channel *src1)
+{
+   dst->u[0] = src0->f[0] < src1->f[0] ? ~0 : 0;
+   dst->u[1] = src0->f[1] < src1->f[1] ? ~0 : 0;
+   dst->u[2] = src0->f[2] < src1->f[2] ? ~0 : 0;
+   dst->u[3] = src0->f[3] < src1->f[3] ? ~0 : 0;
+}
+
+static void
+micro_fsne(union tgsi_exec_channel *dst,
+           const union tgsi_exec_channel *src0,
+           const union tgsi_exec_channel *src1)
+{
+   dst->u[0] = src0->f[0] != src1->f[0] ? ~0 : 0;
+   dst->u[1] = src0->f[1] != src1->f[1] ? ~0 : 0;
+   dst->u[2] = src0->f[2] != src1->f[2] ? ~0 : 0;
+   dst->u[3] = src0->f[3] != src1->f[3] ? ~0 : 0;
+}
+
+static void
 micro_idiv(union tgsi_exec_channel *dst,
            const union tgsi_exec_channel *src0,
            const union tgsi_exec_channel *src1)
@@ -4150,6 +4194,22 @@ exec_instruction(
 
    case TGSI_OPCODE_F2I:
       exec_vector_unary(mach, inst, micro_f2i, TGSI_EXEC_DATA_INT, TGSI_EXEC_DATA_FLOAT);
+      break;
+
+   case TGSI_OPCODE_FSEQ:
+      exec_vector_binary(mach, inst, micro_fseq, TGSI_EXEC_DATA_UINT, TGSI_EXEC_DATA_FLOAT);
+      break;
+
+   case TGSI_OPCODE_FSGE:
+      exec_vector_binary(mach, inst, micro_fsge, TGSI_EXEC_DATA_UINT, TGSI_EXEC_DATA_FLOAT);
+      break;
+
+   case TGSI_OPCODE_FSLT:
+      exec_vector_binary(mach, inst, micro_fslt, TGSI_EXEC_DATA_UINT, TGSI_EXEC_DATA_FLOAT);
+      break;
+
+   case TGSI_OPCODE_FSNE:
+      exec_vector_binary(mach, inst, micro_fsne, TGSI_EXEC_DATA_UINT, TGSI_EXEC_DATA_FLOAT);
       break;
 
    case TGSI_OPCODE_IDIV:

@@ -145,10 +145,10 @@ static const struct tgsi_opcode_info opcode_info[TGSI_OPCODE_LAST] =
    { 0, 0, 0, 0, 0, 0, NONE, "", 105 },     /* removed */
    { 0, 0, 0, 0, 0, 0, NONE, "", 106 },     /* removed */
    { 0, 0, 0, 0, 0, 0, NONE, "NOP", TGSI_OPCODE_NOP },
-   { 0, 0, 0, 0, 0, 0, NONE, "", 108 },     /* removed */
-   { 0, 0, 0, 0, 0, 0, NONE, "", 109 },     /* removed */
-   { 0, 0, 0, 0, 0, 0, NONE, "", 110 },     /* removed */
-   { 0, 0, 0, 0, 0, 0, NONE, "", 111 },     /* removed */
+   { 1, 2, 0, 0, 0, 0, COMP, "FSEQ", TGSI_OPCODE_FSEQ },
+   { 1, 2, 0, 0, 0, 0, COMP, "FSGE", TGSI_OPCODE_FSGE },
+   { 1, 2, 0, 0, 0, 0, COMP, "FSLT", TGSI_OPCODE_FSLT },
+   { 1, 2, 0, 0, 0, 0, COMP, "FSNE", TGSI_OPCODE_FSNE },
    { 1, 1, 0, 0, 0, 0, REPL, "NRM4", TGSI_OPCODE_NRM4 },
    { 0, 1, 0, 0, 0, 0, NONE, "CALLNZ", TGSI_OPCODE_CALLNZ },
    { 0, 1, 0, 0, 0, 0, NONE, "", 114 },     /* removed */
@@ -302,6 +302,10 @@ tgsi_opcode_infer_type( uint opcode )
    case TGSI_OPCODE_ARR:
    case TGSI_OPCODE_MOD:
    case TGSI_OPCODE_F2I:
+   case TGSI_OPCODE_FSEQ:
+   case TGSI_OPCODE_FSGE:
+   case TGSI_OPCODE_FSLT:
+   case TGSI_OPCODE_FSNE:
    case TGSI_OPCODE_IDIV:
    case TGSI_OPCODE_IMAX:
    case TGSI_OPCODE_IMIN:
@@ -343,6 +347,10 @@ tgsi_opcode_infer_src_type( uint opcode )
    case TGSI_OPCODE_TXQ_LZ:
    case TGSI_OPCODE_F2I:
    case TGSI_OPCODE_F2U:
+   case TGSI_OPCODE_FSEQ:
+   case TGSI_OPCODE_FSGE:
+   case TGSI_OPCODE_FSLT:
+   case TGSI_OPCODE_FSNE:
    case TGSI_OPCODE_UCMP:
       return TGSI_TYPE_FLOAT;
    default:

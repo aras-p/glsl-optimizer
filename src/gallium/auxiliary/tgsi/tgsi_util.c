@@ -217,6 +217,32 @@ tgsi_util_get_inst_usage_mask(const struct tgsi_full_instruction *inst,
    case TGSI_OPCODE_OR:
    case TGSI_OPCODE_XOR:
    case TGSI_OPCODE_SAD:
+   case TGSI_OPCODE_FSEQ:
+   case TGSI_OPCODE_FSGE:
+   case TGSI_OPCODE_FSLT:
+   case TGSI_OPCODE_FSNE:
+   case TGSI_OPCODE_F2I:
+   case TGSI_OPCODE_IDIV:
+   case TGSI_OPCODE_IMAX:
+   case TGSI_OPCODE_IMIN:
+   case TGSI_OPCODE_INEG:
+   case TGSI_OPCODE_ISGE:
+   case TGSI_OPCODE_ISHR:
+   case TGSI_OPCODE_ISLT:
+   case TGSI_OPCODE_F2U:
+   case TGSI_OPCODE_U2F:
+   case TGSI_OPCODE_UADD:
+   case TGSI_OPCODE_UDIV:
+   case TGSI_OPCODE_UMAD:
+   case TGSI_OPCODE_UMAX:
+   case TGSI_OPCODE_UMIN:
+   case TGSI_OPCODE_UMOD:
+   case TGSI_OPCODE_UMUL:
+   case TGSI_OPCODE_USEQ:
+   case TGSI_OPCODE_USGE:
+   case TGSI_OPCODE_USHR:
+   case TGSI_OPCODE_USLT:
+   case TGSI_OPCODE_USNE:
       /* Channel-wise operations */
       read_mask = write_mask;
       break;
