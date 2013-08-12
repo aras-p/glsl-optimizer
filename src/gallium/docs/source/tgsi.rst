@@ -512,13 +512,13 @@ This instruction replicates its result.
 
 .. math::
 
-  dst.x = (src0.x == src1.x) ? 1 : 0
+  dst.x = (src0.x == src1.x) ? 1.0F : 0.0F
 
-  dst.y = (src0.y == src1.y) ? 1 : 0
+  dst.y = (src0.y == src1.y) ? 1.0F : 0.0F
 
-  dst.z = (src0.z == src1.z) ? 1 : 0
+  dst.z = (src0.z == src1.z) ? 1.0F : 0.0F
 
-  dst.w = (src0.w == src1.w) ? 1 : 0
+  dst.w = (src0.w == src1.w) ? 1.0F : 0.0F
 
 
 .. opcode:: SFL - Set On False
@@ -538,13 +538,13 @@ This instruction replicates its result.
 
 .. math::
 
-  dst.x = (src0.x > src1.x) ? 1 : 0
+  dst.x = (src0.x > src1.x) ? 1.0F : 0.0F
 
-  dst.y = (src0.y > src1.y) ? 1 : 0
+  dst.y = (src0.y > src1.y) ? 1.0F : 0.0F
 
-  dst.z = (src0.z > src1.z) ? 1 : 0
+  dst.z = (src0.z > src1.z) ? 1.0F : 0.0F
 
-  dst.w = (src0.w > src1.w) ? 1 : 0
+  dst.w = (src0.w > src1.w) ? 1.0F : 0.0F
 
 
 .. opcode:: SIN - Sine
@@ -560,26 +560,26 @@ This instruction replicates its result.
 
 .. math::
 
-  dst.x = (src0.x <= src1.x) ? 1 : 0
+  dst.x = (src0.x <= src1.x) ? 1.0F : 0.0F
 
-  dst.y = (src0.y <= src1.y) ? 1 : 0
+  dst.y = (src0.y <= src1.y) ? 1.0F : 0.0F
 
-  dst.z = (src0.z <= src1.z) ? 1 : 0
+  dst.z = (src0.z <= src1.z) ? 1.0F : 0.0F
 
-  dst.w = (src0.w <= src1.w) ? 1 : 0
+  dst.w = (src0.w <= src1.w) ? 1.0F : 0.0F
 
 
 .. opcode:: SNE - Set On Not Equal
 
 .. math::
 
-  dst.x = (src0.x != src1.x) ? 1 : 0
+  dst.x = (src0.x != src1.x) ? 1.0F : 0.0F
 
-  dst.y = (src0.y != src1.y) ? 1 : 0
+  dst.y = (src0.y != src1.y) ? 1.0F : 0.0F
 
-  dst.z = (src0.z != src1.z) ? 1 : 0
+  dst.z = (src0.z != src1.z) ? 1.0F : 0.0F
 
-  dst.w = (src0.w != src1.w) ? 1 : 0
+  dst.w = (src0.w != src1.w) ? 1.0F : 0.0F
 
 
 .. opcode:: STR - Set On True
@@ -1325,6 +1325,21 @@ Support for these opcodes indicated by PIPE_SHADER_CAP_INTEGERS (all of them?)
 
 
 
+.. opcode:: FSLT - Float Set On Less Than (ordered)
+
+   Same comparison as SLT but returns integer instead of 1.0/0.0 float
+
+.. math::
+
+  dst.x = (src0.x < src1.x) ? ~0 : 0
+
+  dst.y = (src0.y < src1.y) ? ~0 : 0
+
+  dst.z = (src0.z < src1.z) ? ~0 : 0
+
+  dst.w = (src0.w < src1.w) ? ~0 : 0
+
+
 .. opcode:: ISLT - Signed Integer Set On Less Than
 
 .. math::
@@ -1349,6 +1364,21 @@ Support for these opcodes indicated by PIPE_SHADER_CAP_INTEGERS (all of them?)
   dst.z = (src0.z < src1.z) ? ~0 : 0
 
   dst.w = (src0.w < src1.w) ? ~0 : 0
+
+
+.. opcode:: FSGE - Float Set On Greater Equal Than (ordered)
+
+   Same comparison as SGE but returns integer instead of 1.0/0.0 float
+
+.. math::
+
+  dst.x = (src0.x >= src1.x) ? ~0 : 0
+
+  dst.y = (src0.y >= src1.y) ? ~0 : 0
+
+  dst.z = (src0.z >= src1.z) ? ~0 : 0
+
+  dst.w = (src0.w >= src1.w) ? ~0 : 0
 
 
 .. opcode:: ISGE - Signed Integer Set On Greater Equal Than
@@ -1377,6 +1407,21 @@ Support for these opcodes indicated by PIPE_SHADER_CAP_INTEGERS (all of them?)
   dst.w = (src0.w >= src1.w) ? ~0 : 0
 
 
+.. opcode:: FSEQ - Float Set On Equal (ordered)
+
+   Same comparison as SEQ but returns integer instead of 1.0/0.0 float
+
+.. math::
+
+  dst.x = (src0.x == src1.x) ? ~0 : 0
+
+  dst.y = (src0.y == src1.y) ? ~0 : 0
+
+  dst.z = (src0.z == src1.z) ? ~0 : 0
+
+  dst.w = (src0.w == src1.w) ? ~0 : 0
+
+
 .. opcode:: USEQ - Integer Set On Equal
 
 .. math::
@@ -1388,6 +1433,21 @@ Support for these opcodes indicated by PIPE_SHADER_CAP_INTEGERS (all of them?)
   dst.z = (src0.z == src1.z) ? ~0 : 0
 
   dst.w = (src0.w == src1.w) ? ~0 : 0
+
+
+.. opcode:: FSNE - Float Set On Not Equal (unordered)
+
+   Same comparison as SNE but returns integer instead of 1.0/0.0 float
+
+.. math::
+
+  dst.x = (src0.x != src1.x) ? ~0 : 0
+
+  dst.y = (src0.y != src1.y) ? ~0 : 0
+
+  dst.z = (src0.z != src1.z) ? ~0 : 0
+
+  dst.w = (src0.w != src1.w) ? ~0 : 0
 
 
 .. opcode:: USNE - Integer Set On Not Equal
