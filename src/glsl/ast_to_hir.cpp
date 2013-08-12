@@ -4528,6 +4528,19 @@ ast_interface_block::hir(exec_list *instructions,
     */
    assert(declared_variables.is_empty());
 
+   /* From section 4.3.4 (Inputs) of the GLSL 1.50 spec:
+    *
+    *     Geometry shader input variables get the per-vertex values written
+    *     out by vertex shader output variables of the same names. Since a
+    *     geometry shader operates on a set of vertices, each input varying
+    *     variable (or input block, see interface blocks below) needs to be
+    *     declared as an array.
+    */
+   if (state->target == geometry_shader && !this->is_array &&
+       var_mode == ir_var_shader_in) {
+      _mesa_glsl_error(&loc, state, "geometry shader inputs must be arrays");
+   }
+
    /* Page 39 (page 45 of the PDF) of section 4.3.7 in the GLSL ES 3.00 spec
     * says:
     *
