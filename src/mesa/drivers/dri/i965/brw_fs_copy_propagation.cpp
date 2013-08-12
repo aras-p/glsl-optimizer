@@ -132,7 +132,6 @@ fs_copy_prop_dataflow::fs_copy_prop_dataflow(void *mem_ctx, cfg_t *cfg,
              */
             BITSET_SET(bd[b].copy, next_acp);
 
-            BITSET_SET(bd[b].liveout, next_acp);
             next_acp++;
          }
       }
