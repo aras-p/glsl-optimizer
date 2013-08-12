@@ -1094,6 +1094,70 @@ f2u_emit_cpu(
                                                         emit_data->args[0]);
 }
 
+/* TGSI_OPCODE_FSET Helper (CPU Only) */
+static void
+fset_emit_cpu(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data,
+   unsigned pipe_func)
+{
+   LLVMValueRef cond;
+
+   if (pipe_func != PIPE_FUNC_NOTEQUAL) {
+      cond = lp_build_cmp_ordered(&bld_base->base, pipe_func,
+                                  emit_data->args[0], emit_data->args[1]);
+   }
+   else {
+      cond = lp_build_cmp(&bld_base->base, pipe_func,
+                          emit_data->args[0], emit_data->args[1]);
+
+   }
+   emit_data->output[emit_data->chan] = cond;
+}
+
+
+/* TGSI_OPCODE_FSEQ (CPU Only) */
+static void
+fseq_emit_cpu(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   fset_emit_cpu(action, bld_base, emit_data, PIPE_FUNC_EQUAL);
+}
+
+/* TGSI_OPCODE_ISGE (CPU Only) */
+static void
+fsge_emit_cpu(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   fset_emit_cpu(action, bld_base, emit_data, PIPE_FUNC_GEQUAL);
+}
+
+/* TGSI_OPCODE_ISLT (CPU Only) */
+static void
+fslt_emit_cpu(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   fset_emit_cpu(action, bld_base, emit_data, PIPE_FUNC_LESS);
+}
+
+/* TGSI_OPCODE_USNE (CPU Only) */
+
+static void
+fsne_emit_cpu(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   fset_emit_cpu(action, bld_base, emit_data, PIPE_FUNC_NOTEQUAL);
+}
+
 /* TGSI_OPCODE_FLR (CPU Only) */
 
 static void
@@ -1396,8 +1460,17 @@ set_emit_cpu(
    struct lp_build_emit_data * emit_data,
    unsigned pipe_func)
 {
-   LLVMValueRef cond = lp_build_cmp(&bld_base->base, pipe_func,
-                                    emit_data->args[0], emit_data->args[1]);
+   LLVMValueRef cond;
+
+   if (pipe_func != PIPE_FUNC_NOTEQUAL) {
+      cond = lp_build_cmp_ordered(&bld_base->base, pipe_func,
+                                  emit_data->args[0], emit_data->args[1]);
+   }
+   else {
+      cond = lp_build_cmp(&bld_base->base, pipe_func,
+                          emit_data->args[0], emit_data->args[1]);
+
+   }
    emit_data->output[emit_data->chan] = lp_build_select(&bld_base->base,
                                           cond,
                                           bld_base->base.one,
@@ -1716,6 +1789,10 @@ lp_set_default_actions_cpu(
    bld_base->op_actions[TGSI_OPCODE_F2I].emit = f2i_emit_cpu;
    bld_base->op_actions[TGSI_OPCODE_F2U].emit = f2u_emit_cpu;
    bld_base->op_actions[TGSI_OPCODE_FLR].emit = flr_emit_cpu;
+   bld_base->op_actions[TGSI_OPCODE_FSEQ].emit = fseq_emit_cpu;
+   bld_base->op_actions[TGSI_OPCODE_FSGE].emit = fsge_emit_cpu;
+   bld_base->op_actions[TGSI_OPCODE_FSLT].emit = fslt_emit_cpu;
+   bld_base->op_actions[TGSI_OPCODE_FSNE].emit = fsne_emit_cpu;
 
    bld_base->op_actions[TGSI_OPCODE_I2F].emit = i2f_emit_cpu;
    bld_base->op_actions[TGSI_OPCODE_IABS].emit = iabs_emit_cpu;
