@@ -2691,10 +2691,20 @@ end_primitive_masked(struct lp_build_tgsi_context * bld_base,
    LLVMBuilderRef builder = bld->bld_base.base.gallivm->builder;
 
    if (bld->gs_iface->end_primitive) {
+      struct lp_build_context *uint_bld = &bld_base->uint_bld;
       LLVMValueRef emitted_vertices_vec =
          LLVMBuildLoad(builder, bld->emitted_vertices_vec_ptr, "");
       LLVMValueRef emitted_prims_vec =
          LLVMBuildLoad(builder, bld->emitted_prims_vec_ptr, "");
+
+      LLVMValueRef emitted_mask = lp_build_cmp(uint_bld, PIPE_FUNC_NOTEQUAL,
+                                               emitted_vertices_vec,
+                                               uint_bld->zero);
+      /* We need to combine the current execution mask with the mask
+         telling us which, if any, execution slots actually have
+         unemitted primitives, this way we make sure that end_primitives
+         executes only on the paths that have unflushed vertices */
+      mask = LLVMBuildAnd(builder, mask, emitted_mask, "");
 
       bld->gs_iface->end_primitive(bld->gs_iface, &bld->bld_base,
                                    emitted_vertices_vec,
@@ -2735,20 +2745,7 @@ end_primitive(
    struct lp_build_tgsi_soa_context * bld = lp_soa_context(bld_base);
 
    if (bld->gs_iface->end_primitive) {
-      LLVMBuilderRef builder = bld_base->base.gallivm->builder;
       LLVMValueRef mask = mask_vec(bld_base);
-      struct lp_build_context *uint_bld = &bld_base->uint_bld;
-      LLVMValueRef emitted_verts = LLVMBuildLoad(
-         builder, bld->emitted_vertices_vec_ptr, "");
-      LLVMValueRef emitted_mask = lp_build_cmp(uint_bld, PIPE_FUNC_NOTEQUAL,
-                                               emitted_verts,
-                                               uint_bld->zero);
-      /* We need to combine the current execution mask with the mask
-         telling us which, if any, execution slots actually have
-         unemitted primitives, this way we make sure that end_primitives
-         executes only on the paths that have unflushed vertices */
-      mask = LLVMBuildAnd(builder, mask, emitted_mask, "");
-
       end_primitive_masked(bld_base, mask);
    }
 }
@@ -3148,8 +3145,9 @@ static void emit_epilogue(struct lp_build_tgsi_context * bld_base)
       LLVMValueRef total_emitted_vertices_vec;
       LLVMValueRef emitted_prims_vec;
       /* implicit end_primitives, needed in case there are any unflushed
-         vertices in the cache */
-      end_primitive(NULL, bld_base, NULL);
+         vertices in the cache. Note must not call end_primitive here
+         since the exec_mask is not valid at this point. */
+      end_primitive_masked(bld_base, lp_build_mask_value(bld->mask));
       
       total_emitted_vertices_vec =
          LLVMBuildLoad(builder, bld->total_emitted_vertices_vec_ptr, "");

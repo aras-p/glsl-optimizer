@@ -466,7 +466,7 @@ lp_build_tgsi_llvm(
 
    while (bld_base->pc != -1) {
       struct tgsi_full_instruction *instr = bld_base->instructions +
-							bld_base->pc;
+                                               bld_base->pc;
       const struct tgsi_opcode_info *opcode_info =
          tgsi_get_opcode_info(instr->Instruction.Opcode);
       if (!lp_build_tgsi_inst_llvm(bld_base, instr)) {
