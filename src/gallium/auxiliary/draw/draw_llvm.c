@@ -2040,31 +2040,19 @@ generate_mask_value(struct draw_gs_llvm_variant *variant,
 {
    struct gallivm_state *gallivm = variant->gallivm;
    LLVMBuilderRef builder = gallivm->builder;
-   LLVMValueRef bits[16];
-   struct lp_type  mask_type = lp_int_type(gs_type);
-   struct lp_type mask_elem_type = lp_elem_type(mask_type);
-   LLVMValueRef mask_val = lp_build_const_vec(gallivm,
-                                              mask_type,
-                                              0);
+   struct lp_type mask_type = lp_int_type(gs_type);
+   LLVMValueRef num_prims;
+   LLVMValueRef mask_val = lp_build_const_vec(gallivm, mask_type, 0);
    unsigned i;
 
-   assert(gs_type.length <= Elements(bits));
-
-   for (i = gs_type.length; i >= 1; --i) {
-      int idx = i - 1;
-      LLVMValueRef ind = lp_build_const_int32(gallivm, i);
-      bits[idx] = lp_build_compare(gallivm,
-                                   mask_elem_type, PIPE_FUNC_GEQUAL,
-                                   variant->num_prims, ind);
+   num_prims = lp_build_broadcast(gallivm, lp_build_vec_type(gallivm, mask_type),
+                                  variant->num_prims);
+   for (i = 0; i <= gs_type.length; i++) {
+      LLVMValueRef idx = lp_build_const_int32(gallivm, i);
+      mask_val = LLVMBuildInsertElement(builder, mask_val, idx, idx, "");
    }
-   for (i = 0; i < gs_type.length; ++i) {
-      LLVMValueRef ind = lp_build_const_int32(gallivm, i);
-      mask_val = LLVMBuildInsertElement(builder, mask_val, bits[i], ind, "");
-   }
-   mask_val = lp_build_compare(gallivm,
-                               mask_type, PIPE_FUNC_NOTEQUAL,
-                               mask_val,
-                               lp_build_const_int_vec(gallivm, mask_type, 0));
+   mask_val = lp_build_compare(gallivm, mask_type,
+                               PIPE_FUNC_GREATER, num_prims, mask_val);
 
    return mask_val;
 }
