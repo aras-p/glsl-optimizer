@@ -4600,7 +4600,7 @@ ast_interface_block::hir(exec_list *instructions,
       }
 
       var->interface_type = block_type;
-      if (state->target == geometry_shader)
+      if (state->target == geometry_shader && var_mode == ir_var_shader_in)
          handle_geometry_shader_input_decl(state, loc, var);
       state->symbols->add_variable(var);
       instructions->push_tail(var);
