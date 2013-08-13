@@ -914,6 +914,9 @@ static void
 gen6_blorp_emit_depth_disable(struct brw_context *brw,
                               const brw_blorp_params *params)
 {
+   intel_emit_post_sync_nonzero_flush(brw);
+   intel_emit_depth_stall_flushes(brw);
+
    BEGIN_BATCH(7);
    OUT_BATCH(_3DSTATE_DEPTH_BUFFER << 16 | (7 - 2));
    OUT_BATCH((BRW_DEPTHFORMAT_D32_FLOAT << 18) |
