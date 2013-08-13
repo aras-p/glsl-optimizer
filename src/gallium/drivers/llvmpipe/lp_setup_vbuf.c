@@ -565,8 +565,12 @@ lp_setup_pipeline_statistics(
       stats->gs_invocations;
    llvmpipe->pipeline_statistics.gs_primitives +=
       stats->gs_primitives;
-   llvmpipe->pipeline_statistics.c_invocations +=
-      stats->c_invocations;
+   if (!llvmpipe_rasterization_disabled(llvmpipe)) {
+      llvmpipe->pipeline_statistics.c_invocations +=
+         stats->c_invocations;
+   } else {
+      llvmpipe->pipeline_statistics.c_invocations = 0;
+   }
 }
 
 /**

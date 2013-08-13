@@ -340,7 +340,8 @@ do_triangle_ccw(struct lp_setup_context *setup,
 
    LP_COUNT(nr_tris);
 
-   if (lp_context->active_statistics_queries) {
+   if (lp_context->active_statistics_queries &&
+       !llvmpipe_rasterization_disabled(lp_context)) {
       lp_context->pipeline_statistics.c_primitives++;
    }
 

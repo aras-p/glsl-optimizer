@@ -2361,7 +2361,14 @@ generate_variant(struct llvmpipe_context *lp,
          !key->alpha.enabled &&
          !key->depth.enabled &&
          !shader->info.base.uses_kill
-         ? TRUE : FALSE;
+      ? TRUE : FALSE;
+
+   if ((!shader || shader->info.base.num_tokens <= 1) &&
+       !key->depth.enabled && !key->stencil[0].enabled) {
+      variant->ps_inv_multiplier = 0;
+   } else {
+      variant->ps_inv_multiplier = 1;
+   }
 
    if ((LP_DEBUG & DEBUG_FS) || (gallivm_debug & GALLIVM_DEBUG_IR)) {
       lp_debug_fs_variant(variant);
@@ -2939,4 +2946,19 @@ llvmpipe_init_fs_funcs(struct llvmpipe_context *llvmpipe)
    llvmpipe->pipe.delete_fs_state = llvmpipe_delete_fs_state;
 
    llvmpipe->pipe.set_constant_buffer = llvmpipe_set_constant_buffer;
+}
+
+/*
+ * Rasterization is disabled if there is no pixel shader and
+ * both depth and stencil testing are disabled:
+ * http://msdn.microsoft.com/en-us/library/windows/desktop/bb205125
+ */
+boolean
+llvmpipe_rasterization_disabled(struct llvmpipe_context *lp)
+{
+   boolean null_fs = !lp->fs || lp->fs->info.base.num_tokens <= 1;
+
+   return (null_fs &&
+           !lp->depth_stencil->depth.enabled &&
+           !lp->depth_stencil->stencil[0].enabled);
 }

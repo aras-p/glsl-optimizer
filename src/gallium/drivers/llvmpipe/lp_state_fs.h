@@ -97,6 +97,7 @@ struct lp_fragment_shader_variant
    struct lp_fragment_shader_variant_key key;
 
    boolean opaque;
+   uint8_t ps_inv_multiplier;
 
    struct gallivm_state *gallivm;
 
@@ -147,6 +148,9 @@ lp_debug_fs_variant(const struct lp_fragment_shader_variant *variant);
 void
 llvmpipe_remove_shader_variant(struct llvmpipe_context *lp,
                                struct lp_fragment_shader_variant *variant);
+
+boolean
+llvmpipe_rasterization_disabled(struct llvmpipe_context *lp);
 
 
 #endif /* LP_STATE_FS_H_ */

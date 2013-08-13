@@ -100,6 +100,7 @@ struct lp_rasterizer_task
    /* occlude counter for visible pixels */
    struct lp_jit_thread_data thread_data;
    uint64_t ps_invocations;
+   uint8_t ps_inv_multiplier;
 
    pipe_semaphore work_ready;
    pipe_semaphore work_done;
@@ -308,7 +309,7 @@ lp_rast_shade_quads_all( struct lp_rasterizer_task *task,
    if ((x % TILE_SIZE) < task->width && (y % TILE_SIZE) < task->height) {
       /* not very accurate would need a popcount on the mask */
       /* always count this not worth bothering? */
-      task->ps_invocations++;
+      task->ps_invocations += 1 * variant->ps_inv_multiplier;
 
       /* run shader on 4x4 block */
       BEGIN_JIT_CALL(state, task);
