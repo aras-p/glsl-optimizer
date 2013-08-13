@@ -53,9 +53,6 @@
 #define ILO_WM_CONST_SURFACE(i)    (ILO_MAX_DRAW_BUFFERS + i)
 #define ILO_WM_TEXTURE_SURFACE(i)  (ILO_MAX_DRAW_BUFFERS + ILO_MAX_CONST_BUFFERS  + i)
 
-#define ILO_GPE_VALID_GEN(dev, min_gen, max_gen) \
-   assert((dev)->gen >= ILO_GEN(min_gen) && (dev)->gen <= ILO_GEN(max_gen))
-
 struct ilo_buffer;
 struct ilo_texture;
 struct ilo_shader_state;
@@ -468,18 +465,6 @@ ilo_gpe_init_view_surface_for_texture(const struct ilo_dev_info *dev,
             first_level, num_levels, first_layer, num_layers,
             is_rt, render_cache_rw, surf);
    }
-}
-
-static inline void
-ilo_gpe_set_view_surface_bo(const struct ilo_dev_info *dev,
-                            struct intel_bo *bo, unsigned offset,
-                            struct ilo_view_surface *surf)
-{
-   ILO_GPE_VALID_GEN(dev, 6, 7);
-
-   /* do not increment reference count */
-   surf->bo = bo;
-   surf->payload[1] = offset;
 }
 
 void

@@ -1873,7 +1873,7 @@ ilo_gpe_init_view_surface_for_buffer_gen6(const struct ilo_dev_info *dev,
    if (render_cache_rw)
       dw[0] |= BRW_SURFACE_RC_READ_WRITE;
 
-   dw[1] = (buf) ? offset : 0;
+   dw[1] = offset;
 
    dw[2] = height << BRW_SURFACE_HEIGHT_SHIFT |
            width << BRW_SURFACE_WIDTH_SHIFT;
@@ -1885,7 +1885,7 @@ ilo_gpe_init_view_surface_for_buffer_gen6(const struct ilo_dev_info *dev,
    dw[5] = 0;
 
    /* do not increment reference count */
-   surf->bo = (buf) ? buf->bo : NULL;
+   surf->bo = buf->bo;
 }
 
 void
