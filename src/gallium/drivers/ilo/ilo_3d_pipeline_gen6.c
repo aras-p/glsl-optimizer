@@ -1005,40 +1005,34 @@ gen6_pipeline_state_surfaces_const(struct ilo_3d_pipeline *p,
 {
    const struct ilo_cbuf_state *cbuf = &ilo->cbuf[shader_type];
    uint32_t *surface_state;
+   bool *binding_table_changed;
    int offset, count, i;
-   bool skip = false;
+
+   if (!DIRTY(CBUF))
+      return;
 
    /* SURFACE_STATEs for constant buffers */
    switch (shader_type) {
    case PIPE_SHADER_VERTEX:
-      if (DIRTY(CBUF)) {
-         offset = ILO_VS_CONST_SURFACE(0);
-         surface_state = &p->state.vs.SURFACE_STATE[offset];
-
-         session->binding_table_vs_changed = true;
-      }
-      else {
-         skip = true;
-      }
+      offset = ILO_VS_CONST_SURFACE(0);
+      surface_state = &p->state.vs.SURFACE_STATE[offset];
+      binding_table_changed = &session->binding_table_vs_changed;
       break;
    case PIPE_SHADER_FRAGMENT:
-      if (DIRTY(CBUF)) {
-         offset = ILO_WM_CONST_SURFACE(0);
-         surface_state = &p->state.wm.SURFACE_STATE[offset];
-
-         session->binding_table_fs_changed = true;
-      }
-      else {
-         skip = true;
-      }
+      offset = ILO_WM_CONST_SURFACE(0);
+      surface_state = &p->state.wm.SURFACE_STATE[offset];
+      binding_table_changed = &session->binding_table_fs_changed;
       break;
    default:
-      skip = true;
+      return;
       break;
    }
 
-   if (skip)
+   /* constants are pushed via PCB */
+   if (cbuf->enabled_mask == 0x1 && !cbuf->cso[0].resource) {
+      memset(surface_state, 0, ILO_MAX_CONST_BUFFERS * 4);
       return;
+   }
 
    count = util_last_bit(cbuf->enabled_mask);
    for (i = 0; i < count; i++) {
@@ -1055,6 +1049,8 @@ gen6_pipeline_state_surfaces_const(struct ilo_3d_pipeline *p,
 
    if (count && session->num_surfaces[shader_type] < offset + count)
       session->num_surfaces[shader_type] = offset + count;
+
+   *binding_table_changed = true;
 }
 
 static void
