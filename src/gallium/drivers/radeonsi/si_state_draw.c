@@ -658,8 +658,6 @@ void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 		}
 	}
 
-	rctx->vs_shader_so_strides = rctx->vs_shader->current->so_strides;
-
 	if (!si_update_draw_info_state(rctx, info))
 		return;
 
@@ -687,14 +685,6 @@ void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 #if R600_TRACE_CS
 	if (rctx->screen->trace_bo) {
 		r600_trace_emit(rctx);
-	}
-#endif
-
-#if 0
-	/* Enable stream out if needed. */
-	if (rctx->streamout_start) {
-		r600_context_streamout_begin(rctx);
-		rctx->streamout_start = FALSE;
 	}
 #endif
 

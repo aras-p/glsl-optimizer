@@ -248,6 +248,8 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	rctx->cache_flush = si_atom_cache_flush;
 	rctx->atoms.cache_flush = &rctx->cache_flush;
 
+	rctx->atoms.streamout_begin = &rctx->b.streamout.begin_atom;
+
 	switch (rctx->b.chip_class) {
 	case SI:
 	case CIK:

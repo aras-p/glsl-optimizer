@@ -2471,10 +2471,12 @@ static void si_bind_vs_shader(struct pipe_context *ctx, void *state)
 
 	rctx->vs_shader = sel;
 
-	if (sel && sel->current)
+	if (sel && sel->current) {
 		si_pm4_bind_state(rctx, vs, sel->current->pm4);
-	else
+		rctx->b.streamout.stride_in_dw = sel->so.stride;
+	} else {
 		si_pm4_bind_state(rctx, vs, rctx->dummy_pixel_shader->pm4);
+	}
 
 	rctx->b.flags |= R600_CONTEXT_INV_SHADER_CACHE;
 }

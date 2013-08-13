@@ -149,7 +149,9 @@ void si_need_cs_space(struct r600_context *ctx, unsigned num_dw,
 	num_dw += ctx->num_cs_dw_nontimer_queries_suspend;
 
 	/* Count in streamout_end at the end of CS. */
-	num_dw += ctx->num_cs_dw_streamout_end;
+	if (ctx->b.streamout.begin_emitted) {
+		num_dw += ctx->b.streamout.num_dw_for_end;
+	}
 
 	/* Count in render_condition(NULL) at the end of CS. */
 	if (ctx->predicate_drawing) {
@@ -179,10 +181,6 @@ void si_context_flush(struct r600_context *ctx, unsigned flags)
 	struct radeon_winsys_cs *cs = ctx->b.rings.gfx.cs;
 	bool queries_suspended = false;
 
-#if 0
-	bool streamout_suspended = false;
-#endif
-
 	if (!cs->cdw)
 		return;
 
@@ -192,12 +190,12 @@ void si_context_flush(struct r600_context *ctx, unsigned flags)
 		queries_suspended = true;
 	}
 
-#if 0
-	if (ctx->num_cs_dw_streamout_end) {
-		r600_context_streamout_end(ctx);
-		streamout_suspended = true;
+	ctx->b.streamout.suspended = false;
+
+	if (ctx->b.streamout.begin_emitted) {
+		r600_emit_streamout_end(&ctx->b);
+		ctx->b.streamout.suspended = true;
 	}
-#endif
 
 	ctx->b.flags |= R600_CONTEXT_FLUSH_AND_INV_CB |
 			R600_CONTEXT_FLUSH_AND_INV_CB_META |
@@ -263,12 +261,10 @@ void si_context_flush(struct r600_context *ctx, unsigned flags)
 	si_pm4_emit(ctx, ctx->queued.named.init);
 	ctx->emitted.named.init = ctx->queued.named.init;
 
-#if 0
-	if (streamout_suspended) {
-		ctx->streamout_start = TRUE;
-		ctx->streamout_append_bitmask = ~0;
+	if (ctx->b.streamout.suspended) {
+		ctx->b.streamout.append_bitmask = ctx->b.streamout.enabled_mask;
+		r600_streamout_buffers_dirty(&ctx->b);
 	}
-#endif
 
 	/* resume queries */
 	if (queries_suspended) {

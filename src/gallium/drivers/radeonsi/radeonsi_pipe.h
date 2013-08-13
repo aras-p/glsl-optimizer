@@ -137,6 +137,7 @@ struct r600_context {
 			/* Caches must be flushed after resource descriptors are
 			 * updated in memory. */
 			struct r600_atom *cache_flush;
+			struct r600_atom *streamout_begin;
 		};
 		struct r600_atom *array[0];
 	} atoms;
@@ -179,18 +180,10 @@ struct r600_context {
 	/* The list of active queries. Only one query of each type can be active. */
 	struct list_head	active_nontimer_query_list;
 	unsigned		num_cs_dw_nontimer_queries_suspend;
-	unsigned		num_cs_dw_streamout_end;
 
 	unsigned		backend_mask;
 	unsigned                max_db; /* for OQ */
 	boolean                 predicate_drawing;
-
-	unsigned		num_so_targets;
-	struct r600_so_target	*so_targets[PIPE_MAX_SO_BUFFERS];
-	boolean			streamout_start;
-	unsigned		streamout_append_bitmask;
-	unsigned		*vs_so_stride_in_dw;
-	unsigned		*vs_shader_so_strides;
 
 	/* Vertex and index buffers. */
 	bool			vertex_buffers_dirty;
