@@ -4455,6 +4455,34 @@ ast_struct_specifier::hir(exec_list *instructions,
 			  struct _mesa_glsl_parse_state *state)
 {
    YYLTYPE loc = this->get_location();
+
+   /* Section 4.1.8 (Structures) of the GLSL 1.10 spec says:
+    *
+    *     "Anonymous structures are not supported; so embedded structures must
+    *     have a declarator. A name given to an embedded struct is scoped at
+    *     the same level as the struct it is embedded in."
+    *
+    * The same section of the  GLSL 1.20 spec says:
+    *
+    *     "Anonymous structures are not supported. Embedded structures are not
+    *     supported.
+    *
+    *         struct S { float f; };
+    *         struct T {
+    *             S;              // Error: anonymous structures disallowed
+    *             struct { ... }; // Error: embedded structures disallowed
+    *             S s;            // Okay: nested structures with name are allowed
+    *         };"
+    *
+    * The GLSL ES 1.00 and 3.00 specs have similar langauge and examples.  So,
+    * we allow embedded structures in 1.10 only.
+    */
+   if (state->language_version != 110 && state->struct_specifier_depth != 0)
+      _mesa_glsl_error(&loc, state,
+		       "embedded structure declartions are not allowed");
+
+   state->struct_specifier_depth++;
+
    glsl_struct_field *fields;
    unsigned decl_count =
       ast_process_structure_or_interface_block(instructions,
@@ -4480,6 +4508,8 @@ ast_struct_specifier::hir(exec_list *instructions,
 	 state->num_user_structures++;
       }
    }
+
+   state->struct_specifier_depth--;
 
    /* Structure type definitions do not have r-values.
     */

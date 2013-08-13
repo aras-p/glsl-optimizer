@@ -159,6 +159,13 @@ struct _mesa_glsl_parse_state {
    enum _mesa_glsl_parser_targets target;
 
    /**
+    * Number of nested struct_specifier levels
+    *
+    * Outside a struct_specifer, this is zero.
+    */
+   unsigned struct_specifier_depth;
+
+   /**
     * Default uniform layout qualifiers tracked during parsing.
     * Currently affects uniform blocks and uniform buffer variables in
     * those blocks.
