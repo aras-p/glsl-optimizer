@@ -1911,10 +1911,19 @@ fs_visitor::try_replace_with_sel()
          emit(MOV(src0, then_mov->src[0]));
       }
 
-      fs_inst *sel = emit(BRW_OPCODE_SEL, then_mov->dst, src0, else_mov->src[0]);
-      sel->predicate = if_inst->predicate;
-      sel->predicate_inverse = if_inst->predicate_inverse;
-      sel->conditional_mod = if_inst->conditional_mod;
+      fs_inst *sel;
+      if (if_inst->conditional_mod) {
+         /* Sandybridge-specific IF with embedded comparison */
+         emit(CMP(reg_null_d, if_inst->src[0], if_inst->src[1],
+                  if_inst->conditional_mod));
+         sel = emit(BRW_OPCODE_SEL, then_mov->dst, src0, else_mov->src[0]);
+         sel->predicate = BRW_PREDICATE_NORMAL;
+      } else {
+         /* Separate CMP and IF instructions */
+         sel = emit(BRW_OPCODE_SEL, then_mov->dst, src0, else_mov->src[0]);
+         sel->predicate = if_inst->predicate;
+         sel->predicate_inverse = if_inst->predicate_inverse;
+      }
    }
 }
 
