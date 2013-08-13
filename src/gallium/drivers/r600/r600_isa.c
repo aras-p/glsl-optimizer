@@ -30,8 +30,8 @@
 int r600_isa_init(struct r600_context *ctx, struct r600_isa *isa) {
 	unsigned i;
 
-	assert(ctx->chip_class >= R600 && ctx->chip_class <= CAYMAN);
-	isa->hw_class = ctx->chip_class - R600;
+	assert(ctx->b.chip_class >= R600 && ctx->b.chip_class <= CAYMAN);
+	isa->hw_class = ctx->b.chip_class - R600;
 
 	/* reverse lookup maps are required for bytecode parsing */
 

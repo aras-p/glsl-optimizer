@@ -58,8 +58,8 @@ static void r600_blitter_begin(struct pipe_context *ctx, enum r600_blitter_op op
 	util_blitter_save_vertex_buffer_slot(rctx->blitter, rctx->vertex_buffer_state.vb);
 	util_blitter_save_vertex_elements(rctx->blitter, rctx->vertex_fetch_shader.cso);
 	util_blitter_save_vertex_shader(rctx->blitter, rctx->vs_shader);
-	util_blitter_save_so_targets(rctx->blitter, rctx->streamout.num_targets,
-				     (struct pipe_stream_output_target**)rctx->streamout.targets);
+	util_blitter_save_so_targets(rctx->blitter, rctx->b.streamout.num_targets,
+				     (struct pipe_stream_output_target**)rctx->b.streamout.targets);
 	util_blitter_save_rasterizer(rctx->blitter, rctx->rasterizer_state.cso);
 
 	if (op & R600_SAVE_FRAGMENT_STATE) {
@@ -127,13 +127,13 @@ void r600_blit_decompress_depth(struct pipe_context *ctx,
 	/* XXX Decompressing MSAA depth textures is broken on R6xx.
 	 * There is also a hardlock if CMASK and FMASK are not present.
 	 * Just skip this until we find out how to fix it. */
-	if (rctx->chip_class == R600 && max_sample > 0) {
+	if (rctx->b.chip_class == R600 && max_sample > 0) {
 		texture->dirty_level_mask = 0;
 		return;
 	}
 
-	if (rctx->family == CHIP_RV610 || rctx->family == CHIP_RV630 ||
-	    rctx->family == CHIP_RV620 || rctx->family == CHIP_RV635)
+	if (rctx->b.family == CHIP_RV610 || rctx->b.family == CHIP_RV630 ||
+	    rctx->b.family == CHIP_RV620 || rctx->b.family == CHIP_RV635)
 		depth = 0.0f;
 	else
 		depth = 1.0f;
@@ -227,12 +227,12 @@ static void r600_blit_decompress_depth_in_place(struct r600_context *rctx,
 			surf_tmpl.u.tex.first_layer = layer;
 			surf_tmpl.u.tex.last_layer = layer;
 
-			zsurf = rctx->context.create_surface(&rctx->context, &texture->resource.b.b, &surf_tmpl);
+			zsurf = rctx->b.b.create_surface(&rctx->b.b, &texture->resource.b.b, &surf_tmpl);
 
-			r600_blitter_begin(&rctx->context, R600_DECOMPRESS);
+			r600_blitter_begin(&rctx->b.b, R600_DECOMPRESS);
 			util_blitter_custom_depth_stencil(rctx->blitter, zsurf, NULL, ~0,
 							  rctx->custom_dsa_flush, 1.0f);
-			r600_blitter_end(&rctx->context);
+			r600_blitter_end(&rctx->b.b);
 
 			pipe_surface_reference(&zsurf, NULL);
 		}
@@ -267,13 +267,13 @@ void r600_decompress_depth_textures(struct r600_context *rctx,
 		tex = (struct r600_texture *)view->texture;
 		assert(tex->is_depth && !tex->is_flushing_texture);
 
-		if (rctx->chip_class >= EVERGREEN ||
+		if (rctx->b.chip_class >= EVERGREEN ||
 		    r600_can_read_depth(tex)) {
 			r600_blit_decompress_depth_in_place(rctx, tex,
 						   view->u.tex.first_level, view->u.tex.last_level,
 						   0, util_max_layer(&tex->resource.b.b, view->u.tex.first_level));
 		} else {
-			r600_blit_decompress_depth(&rctx->context, tex, NULL,
+			r600_blit_decompress_depth(&rctx->b.b, tex, NULL,
 						   view->u.tex.first_level, view->u.tex.last_level,
 						   0, util_max_layer(&tex->resource.b.b, view->u.tex.first_level),
 						   0, u_max_sample(&tex->resource.b.b));
@@ -343,7 +343,7 @@ void r600_decompress_color_textures(struct r600_context *rctx,
 		tex = (struct r600_texture *)view->texture;
 		assert(tex->cmask_size && tex->fmask_size);
 
-		r600_blit_decompress_color(&rctx->context, tex,
+		r600_blit_decompress_color(&rctx->b.b, tex,
 					   view->u.tex.first_level, view->u.tex.last_level,
 					   0, util_max_layer(&tex->resource.b.b, view->u.tex.first_level));
 	}
@@ -362,7 +362,7 @@ static bool r600_decompress_subresource(struct pipe_context *ctx,
 	struct r600_texture *rtex = (struct r600_texture*)tex;
 
 	if (rtex->is_depth && !rtex->is_flushing_texture) {
-		if (rctx->chip_class >= EVERGREEN ||
+		if (rctx->b.chip_class >= EVERGREEN ||
 		    r600_can_read_depth(rtex)) {
 			r600_blit_decompress_depth_in_place(rctx, rtex,
 						   level, level,
@@ -438,7 +438,7 @@ static bool can_fast_clear_color(struct pipe_context *ctx)
 	struct pipe_framebuffer_state *fb = &rctx->framebuffer.state;
 	int i;
 
-	if (rctx->chip_class < EVERGREEN) {
+	if (rctx->b.chip_class < EVERGREEN) {
 		return false;
 	}
 
@@ -589,7 +589,7 @@ static void r600_clear_buffer(struct pipe_context *ctx, struct pipe_resource *ds
 	uint32_t v = value;
 
 	if (rctx->screen->has_cp_dma &&
-	    rctx->chip_class >= EVERGREEN &&
+	    rctx->b.chip_class >= EVERGREEN &&
 	    offset % 4 == 0 && size % 4 == 0) {
 		uint32_t clear_value = v | (v << 8) | (v << 16) | (v << 24);
 
@@ -750,7 +750,7 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 
 	dst_view = r600_create_surface_custom(ctx, dst, &dst_templ, dst_width, dst_height);
 
-	if (rctx->chip_class >= EVERGREEN) {
+	if (rctx->b.chip_class >= EVERGREEN) {
 		src_view = evergreen_create_sampler_view_custom(ctx, src, &src_templ,
 								src_width0, src_height0);
 	} else {
@@ -817,7 +817,7 @@ static void r600_msaa_color_resolve(struct pipe_context *ctx,
 	struct pipe_resource *tmp, templ;
 	struct pipe_blit_info blit;
 	unsigned sample_mask =
-		rctx->chip_class == CAYMAN ? ~0 :
+		rctx->b.chip_class == CAYMAN ? ~0 :
 		((1ull << MAX2(1, info->src.resource->nr_samples)) - 1);
 
 	assert(info->src.level == 0);
@@ -902,9 +902,9 @@ static void r600_blit(struct pipe_context *ctx,
 
 void r600_init_blit_functions(struct r600_context *rctx)
 {
-	rctx->context.clear = r600_clear;
-	rctx->context.clear_render_target = r600_clear_render_target;
-	rctx->context.clear_depth_stencil = r600_clear_depth_stencil;
-	rctx->context.resource_copy_region = r600_resource_copy_region;
-	rctx->context.blit = r600_blit;
+	rctx->b.b.clear = r600_clear;
+	rctx->b.b.clear_render_target = r600_clear_render_target;
+	rctx->b.b.clear_depth_stencil = r600_clear_depth_stencil;
+	rctx->b.b.resource_copy_region = r600_resource_copy_region;
+	rctx->b.b.blit = r600_blit;
 }

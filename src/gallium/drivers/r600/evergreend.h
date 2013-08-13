@@ -161,7 +161,7 @@
 #define PKT3_CP_DMA_CMD_DAIC      (1 << 29)
 
 /* Registers */
-#define R_0084FC_CP_STRMOUT_CNTL		     0x000084FC
+#define R_0084FC_CP_STRMOUT_CNTL		     0x0084FC
 #define   S_0084FC_OFFSET_UPDATE_DONE(x)		(((x) & 0x1) << 0)
 #define R_008960_VGT_STRMOUT_BUFFER_FILLED_SIZE_0    0x008960 /* read-only */
 #define R_008964_VGT_STRMOUT_BUFFER_FILLED_SIZE_1    0x008964 /* read-only */
@@ -1997,17 +1997,17 @@
 #define   S_028B8C_OFFSET(x)                           (((x) & 0xFFFFFFFF) << 0)
 #define   G_028B8C_OFFSET(x)                           (((x) >> 0) & 0xFFFFFFFF)
 #define   C_028B8C_OFFSET                              0x00000000
-#define R_028B94_VGT_STRMOUT_CONFIG                  0x00028B94
+#define R_028B94_VGT_STRMOUT_CONFIG                  0x028B94
 #define   S_028B94_STREAMOUT_0_EN(x)			(((x) & 0x1) << 0)
 #define   S_028B94_STREAMOUT_1_EN(x)			(((x) & 0x1) << 1)
 #define   S_028B94_STREAMOUT_2_EN(x)			(((x) & 0x1) << 2)
 #define   S_028B94_STREAMOUT_3_EN(x)			(((x) & 0x1) << 3)
-#define   S_028B94_RAST_STREAM(x)			(((x) & 0x7) << 4)
-#define R_028B98_VGT_STRMOUT_BUFFER_CONFIG           0x00028B98
-#define   S_028B98_STREAM_0_BUFFER_EN(x)		(((x) & 0xf) << 0)
-#define   S_028B98_STREAM_1_BUFFER_EN(x)		(((x) & 0xf) << 4)
-#define   S_028B98_STREAM_2_BUFFER_EN(x)		(((x) & 0xf) << 8)
-#define   S_028B98_STREAM_3_BUFFER_EN(x)		(((x) & 0xf) << 12)
+#define   S_028B94_RAST_STREAM(x)			(((x) & 0x07) << 4)
+#define R_028B98_VGT_STRMOUT_BUFFER_CONFIG           0x028B98
+#define   S_028B98_STREAM_0_BUFFER_EN(x)		(((x) & 0x0F) << 0)
+#define   S_028B98_STREAM_1_BUFFER_EN(x)		(((x) & 0x0F) << 4)
+#define   S_028B98_STREAM_2_BUFFER_EN(x)		(((x) & 0x0F) << 8)
+#define   S_028B98_STREAM_3_BUFFER_EN(x)		(((x) & 0x0F) << 12)
 #define R_028C00_PA_SC_LINE_CNTL                     0x00028C00
 #define   S_028C00_EXPAND_LINE_WIDTH(x)                (((x) & 0x1) << 9)
 #define   G_028C00_EXPAND_LINE_WIDTH(x)                (((x) >> 9) & 0x1)

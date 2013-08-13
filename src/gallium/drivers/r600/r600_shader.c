@@ -199,20 +199,20 @@ int r600_pipe_shader_create(struct pipe_context *ctx,
 		} else {
 			memcpy(ptr, shader->shader.bc.bytecode, shader->shader.bc.ndw * sizeof(*ptr));
 		}
-		rctx->ws->buffer_unmap(shader->bo->cs_buf);
+		rctx->b.ws->buffer_unmap(shader->bo->cs_buf);
 	}
 
 	/* Build state. */
 	switch (shader->shader.processor_type) {
 	case TGSI_PROCESSOR_VERTEX:
-		if (rctx->chip_class >= EVERGREEN) {
+		if (rctx->b.chip_class >= EVERGREEN) {
 			evergreen_update_vs_state(ctx, shader);
 		} else {
 			r600_update_vs_state(ctx, shader);
 		}
 		break;
 	case TGSI_PROCESSOR_FRAGMENT:
-		if (rctx->chip_class >= EVERGREEN) {
+		if (rctx->b.chip_class >= EVERGREEN) {
 			evergreen_update_ps_state(ctx, shader);
 		} else {
 			r600_update_ps_state(ctx, shader);
@@ -930,7 +930,7 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 	ctx.shader = shader;
 	ctx.native_integers = true;
 
-	r600_bytecode_init(ctx.bc, rscreen->chip_class, rscreen->family,
+	r600_bytecode_init(ctx.bc, rscreen->b.chip_class, rscreen->b.family,
 			   rscreen->has_compressed_msaa_texturing);
 	ctx.tokens = tokens;
 	tgsi_scan_shader(tokens, &ctx.info);
@@ -1133,14 +1133,14 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 		radeon_llvm_ctx.r600_outputs = ctx.shader->output;
 		radeon_llvm_ctx.color_buffer_count = max_color_exports;
 		radeon_llvm_ctx.chip_class = ctx.bc->chip_class;
-		radeon_llvm_ctx.fs_color_all = shader->fs_write_all && (rscreen->chip_class >= EVERGREEN);
+		radeon_llvm_ctx.fs_color_all = shader->fs_write_all && (rscreen->b.chip_class >= EVERGREEN);
 		radeon_llvm_ctx.stream_outputs = &so;
 		radeon_llvm_ctx.clip_vertex = ctx.cv_output;
 		radeon_llvm_ctx.alpha_to_one = key.alpha_to_one;
 		mod = r600_tgsi_llvm(&radeon_llvm_ctx, tokens);
 		ctx.shader->has_txq_cube_array_z_comp = radeon_llvm_ctx.has_txq_cube_array_z_comp;
 
-		if (r600_llvm_compile(mod, rscreen->family, ctx.bc, &use_kill, dump)) {
+		if (r600_llvm_compile(mod, rscreen->b.family, ctx.bc, &use_kill, dump)) {
 			radeon_llvm_dispose(&radeon_llvm_ctx);
 			use_llvm = 0;
 			fprintf(stderr, "R600 LLVM backend failed to compile "
@@ -1156,7 +1156,7 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 #endif
 /* End of LLVM backend setup */
 
-	if (shader->fs_write_all && rscreen->chip_class >= EVERGREEN)
+	if (shader->fs_write_all && rscreen->b.chip_class >= EVERGREEN)
 		shader->nr_ps_max_color_exports = 8;
 
 	if (!use_llvm) {
@@ -1450,7 +1450,7 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 				output[j].array_base = shader->output[i].sid;
 				output[j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PIXEL;
 				shader->nr_ps_color_exports++;
-				if (shader->fs_write_all && (rscreen->chip_class >= EVERGREEN)) {
+				if (shader->fs_write_all && (rscreen->b.chip_class >= EVERGREEN)) {
 					for (k = 1; k < max_color_exports; k++) {
 						j++;
 						memset(&output[j], 0, sizeof(struct r600_bytecode_output));

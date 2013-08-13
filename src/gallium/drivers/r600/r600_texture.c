@@ -149,7 +149,7 @@ static int r600_init_surface(struct r600_screen *rscreen,
 	surface->array_size = 1;
 	surface->last_level = ptex->last_level;
 
-	if (rscreen->chip_class >= EVERGREEN && !is_flushed_depth &&
+	if (rscreen->b.chip_class >= EVERGREEN && !is_flushed_depth &&
 	    ptex->format == PIPE_FORMAT_Z32_FLOAT_S8X24_UINT) {
 		surface->bpe = 4; /* stencil is allocated separately on evergreen */
 	} else {
@@ -229,7 +229,7 @@ static int r600_setup_surface(struct pipe_screen *screen,
 	unsigned i;
 	int r;
 
-	r = rscreen->ws->surface_init(rscreen->ws, &rtex->surface);
+	r = rscreen->b.ws->surface_init(rscreen->b.ws, &rtex->surface);
 	if (r) {
 		return r;
 	}
@@ -275,7 +275,7 @@ static boolean r600_texture_get_handle(struct pipe_screen* screen,
 	struct radeon_surface *surface = &rtex->surface;
 	struct r600_screen *rscreen = (struct r600_screen*)screen;
 
-	rscreen->ws->buffer_set_tiling(resource->buf,
+	rscreen->b.ws->buffer_set_tiling(resource->buf,
 				       NULL,
 				       surface->level[0].mode >= RADEON_SURF_MODE_1D ?
 				       RADEON_LAYOUT_TILED : RADEON_LAYOUT_LINEAR,
@@ -287,7 +287,7 @@ static boolean r600_texture_get_handle(struct pipe_screen* screen,
 				       surface->mtilea,
 				       rtex->surface.level[0].pitch_bytes);
 
-	return rscreen->ws->buffer_get_handle(resource->buf,
+	return rscreen->b.ws->buffer_get_handle(resource->buf,
 					      rtex->surface.level[0].pitch_bytes, whandle);
 }
 
@@ -340,11 +340,11 @@ void r600_texture_get_fmask_info(struct r600_screen *rscreen,
 	/* Overallocate FMASK on R600-R700 to fix colorbuffer corruption.
 	 * This can be fixed by writing a separate FMASK allocator specifically
 	 * for R600-R700 asics. */
-	if (rscreen->chip_class <= R700) {
+	if (rscreen->b.chip_class <= R700) {
 		fmask.bpe *= 2;
 	}
 
-	if (rscreen->ws->surface_init(rscreen->ws, &fmask)) {
+	if (rscreen->b.ws->surface_init(rscreen->b.ws, &fmask)) {
 		R600_ERR("Got error in surface_init while allocating FMASK.\n");
 		return;
 	}
@@ -485,7 +485,7 @@ r600_texture_create_object(struct pipe_screen *screen,
 	rtex->htile = NULL;
 	if (!(base->flags & (R600_RESOURCE_FLAG_TRANSFER | R600_RESOURCE_FLAG_FLUSHED_DEPTH)) &&
 	    util_format_is_depth_or_stencil(base->format) &&
-	    rscreen->info.drm_minor >= 26 &&
+	    rscreen->b.info.drm_minor >= 26 &&
 	    !(rscreen->debug_flags & DBG_NO_HYPERZ) &&
 	    base->target == PIPE_TEXTURE_2D &&
 	    rtex->surface.level[0].nblk_x >= 32 &&
@@ -493,7 +493,7 @@ r600_texture_create_object(struct pipe_screen *screen,
 		unsigned sw = rtex->surface.level[0].nblk_x * rtex->surface.blk_w;
 		unsigned sh = rtex->surface.level[0].nblk_y * rtex->surface.blk_h;
 		unsigned htile_size;
-		unsigned npipes = rscreen->info.r600_num_tile_pipes;
+		unsigned npipes = rscreen->b.info.r600_num_tile_pipes;
 
 		/* this alignment and htile size only apply to linear htile buffer */
 		sw = align(sw, 16 << 3);
@@ -502,7 +502,7 @@ r600_texture_create_object(struct pipe_screen *screen,
 		/* must be aligned with 2K * npipes */
 		htile_size = align(htile_size, (2 << 10) * npipes);
 
-		rtex->htile = (struct r600_resource*)pipe_buffer_create(&rscreen->screen, PIPE_BIND_CUSTOM,
+		rtex->htile = (struct r600_resource*)pipe_buffer_create(&rscreen->b.b, PIPE_BIND_CUSTOM,
 									PIPE_USAGE_STATIC, htile_size);
 		if (rtex->htile == NULL) {
 			/* this is not a fatal error as we can still keep rendering
@@ -526,7 +526,7 @@ r600_texture_create_object(struct pipe_screen *screen,
 	} else {
 		/* This is usually the window framebuffer. We want it in VRAM, always. */
 		resource->buf = buf;
-		resource->cs_buf = rscreen->ws->buffer_get_cs_handle(buf);
+		resource->cs_buf = rscreen->b.ws->buffer_get_cs_handle(buf);
 		resource->domains = RADEON_DOMAIN_VRAM;
 	}
 
@@ -628,7 +628,7 @@ struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
 	if (r) {
 		return NULL;
 	}
-	r = rscreen->ws->surface_best(rscreen->ws, &surface);
+	r = rscreen->b.ws->surface_best(rscreen->b.ws, &surface);
 	if (r) {
 		return NULL;
 	}
@@ -696,11 +696,11 @@ struct pipe_resource *r600_texture_from_handle(struct pipe_screen *screen,
 	      templ->depth0 != 1 || templ->last_level != 0)
 		return NULL;
 
-	buf = rscreen->ws->buffer_from_handle(rscreen->ws, whandle, &stride);
+	buf = rscreen->b.ws->buffer_from_handle(rscreen->b.ws, whandle, &stride);
 	if (!buf)
 		return NULL;
 
-	rscreen->ws->buffer_get_tiling(buf, &micro, &macro,
+	rscreen->b.ws->buffer_get_tiling(buf, &micro, &macro,
 				       &surface.bankw, &surface.bankh,
 				       &surface.tile_split,
 				       &surface.stencil_tile_split,
@@ -830,7 +830,7 @@ static void *r600_texture_transfer_map(struct pipe_context *ctx,
 	/* Use a staging texture for uploads if the underlying BO is busy. */
 	if (!(usage & PIPE_TRANSFER_READ) &&
 	    (r600_rings_is_buffer_referenced(rctx, rtex->resource.cs_buf, RADEON_USAGE_READWRITE) ||
-	     rctx->ws->buffer_is_busy(rtex->resource.buf, RADEON_USAGE_READWRITE))) {
+	     rctx->b.ws->buffer_is_busy(rtex->resource.buf, RADEON_USAGE_READWRITE))) {
 		use_staging_texture = TRUE;
 	}
 
@@ -964,7 +964,7 @@ static void r600_texture_transfer_unmap(struct pipe_context *ctx,
 	} else {
 		buf = ((struct r600_resource *)transfer->resource)->cs_buf;
 	}
-	rctx->ws->buffer_unmap(buf);
+	rctx->b.ws->buffer_unmap(buf);
 
 	if ((transfer->usage & PIPE_TRANSFER_WRITE) && rtransfer->staging) {
 		if (rtex->is_depth && rtex->resource.b.b.nr_samples <= 1) {
@@ -985,8 +985,8 @@ static void r600_texture_transfer_unmap(struct pipe_context *ctx,
 
 void r600_init_surface_functions(struct r600_context *r600)
 {
-	r600->context.create_surface = r600_create_surface;
-	r600->context.surface_destroy = r600_surface_destroy;
+	r600->b.b.create_surface = r600_create_surface;
+	r600->b.b.surface_destroy = r600_surface_destroy;
 }
 
 unsigned r600_get_swizzle_combined(const unsigned char *swizzle_format,
@@ -1051,7 +1051,7 @@ uint32_t r600_translate_texformat(struct pipe_screen *screen,
 	uint32_t result = 0, word4 = 0, yuv_format = 0;
 	const struct util_format_description *desc;
 	boolean uniform = TRUE;
-	bool enable_s3tc = rscreen->info.drm_minor >= 9;
+	bool enable_s3tc = rscreen->b.info.drm_minor >= 9;
 	bool is_srgb_valid = FALSE;
 	const unsigned char swizzle_xxxx[4] = {0, 0, 0, 0};
 	const unsigned char swizzle_yyyy[4] = {1, 1, 1, 1};
@@ -1087,7 +1087,7 @@ uint32_t r600_translate_texformat(struct pipe_screen *screen,
 			goto out_word4;
 		case PIPE_FORMAT_X8Z24_UNORM:
 		case PIPE_FORMAT_S8_UINT_Z24_UNORM:
-			if (rscreen->chip_class < EVERGREEN)
+			if (rscreen->b.chip_class < EVERGREEN)
 				goto out_unknown;
 			word4 |= r600_get_swizzle_combined(swizzle_yyyy, swizzle_view, FALSE);
 			result = FMT_24_8;
@@ -1112,7 +1112,7 @@ uint32_t r600_translate_texformat(struct pipe_screen *screen,
 			result = FMT_8_24;
 			goto out_word4;
 		case PIPE_FORMAT_S8X24_UINT:
-			if (rscreen->chip_class < EVERGREEN)
+			if (rscreen->b.chip_class < EVERGREEN)
 				goto out_unknown;
 			word4 |= S_038010_NUM_FORMAT_ALL(V_038010_SQ_NUM_FORMAT_INT);
 			word4 |= r600_get_swizzle_combined(swizzle_xxxx, swizzle_view, FALSE);

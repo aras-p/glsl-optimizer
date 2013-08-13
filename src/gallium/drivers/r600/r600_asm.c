@@ -2276,7 +2276,7 @@ void *r600_create_vertex_fetch_shader(struct pipe_context *ctx,
 	struct r600_bytecode bc;
 	struct r600_bytecode_vtx vtx;
 	const struct util_format_description *desc;
-	unsigned fetch_resource_start = rctx->chip_class >= EVERGREEN ? 0 : 160;
+	unsigned fetch_resource_start = rctx->b.chip_class >= EVERGREEN ? 0 : 160;
 	unsigned format, num_format, format_comp, endian;
 	uint32_t *bytecode;
 	int i, j, r, fs_size;
@@ -2287,14 +2287,14 @@ void *r600_create_vertex_fetch_shader(struct pipe_context *ctx,
 	assert(count < 32);
 
 	memset(&bc, 0, sizeof(bc));
-	r600_bytecode_init(&bc, rctx->chip_class, rctx->family,
+	r600_bytecode_init(&bc, rctx->b.chip_class, rctx->b.family,
 			   rctx->screen->has_compressed_msaa_texturing);
 
 	bc.isa = rctx->isa;
 
 	for (i = 0; i < count; i++) {
 		if (elements[i].instance_divisor > 1) {
-			if (rctx->chip_class == CAYMAN) {
+			if (rctx->b.chip_class == CAYMAN) {
 				for (j = 0; j < 4; j++) {
 					struct r600_bytecode_alu alu;
 					memset(&alu, 0, sizeof(alu));
@@ -2425,7 +2425,7 @@ void *r600_create_vertex_fetch_shader(struct pipe_context *ctx,
 	} else {
 		memcpy(bytecode, bc.bytecode, fs_size);
 	}
-	rctx->ws->buffer_unmap(shader->buffer->cs_buf);
+	rctx->b.ws->buffer_unmap(shader->buffer->cs_buf);
 
 	r600_bytecode_clear(&bc);
 	return shader;

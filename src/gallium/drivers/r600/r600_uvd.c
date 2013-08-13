@@ -76,7 +76,7 @@ struct pipe_video_buffer *r600_video_buffer_create(struct pipe_context *pipe,
 	template.height = align(tmpl->height / array_size, VL_MACROBLOCK_HEIGHT);
 
 	vl_video_buffer_template(&templ, &template, resource_formats[0], 1, array_size, PIPE_USAGE_STATIC, 0);
-	if (ctx->chip_class < EVERGREEN || tmpl->interlaced)
+	if (ctx->b.chip_class < EVERGREEN || tmpl->interlaced)
 		templ.flags = R600_RESOURCE_FLAG_TRANSFER;
 	resources[0] = (struct r600_texture *)
 		pipe->screen->resource_create(pipe->screen, &templ);
@@ -85,7 +85,7 @@ struct pipe_video_buffer *r600_video_buffer_create(struct pipe_context *pipe,
 
 	if (resource_formats[1] != PIPE_FORMAT_NONE) {
 		vl_video_buffer_template(&templ, &template, resource_formats[1], 1, array_size, PIPE_USAGE_STATIC, 1);
-		if (ctx->chip_class < EVERGREEN || tmpl->interlaced)
+		if (ctx->b.chip_class < EVERGREEN || tmpl->interlaced)
 			templ.flags = R600_RESOURCE_FLAG_TRANSFER;
 		resources[1] = (struct r600_texture *)
 			pipe->screen->resource_create(pipe->screen, &templ);
@@ -95,7 +95,7 @@ struct pipe_video_buffer *r600_video_buffer_create(struct pipe_context *pipe,
 
 	if (resource_formats[2] != PIPE_FORMAT_NONE) {
 		vl_video_buffer_template(&templ, &template, resource_formats[2], 1, array_size, PIPE_USAGE_STATIC, 2);
-		if (ctx->chip_class < EVERGREEN || tmpl->interlaced)
+		if (ctx->b.chip_class < EVERGREEN || tmpl->interlaced)
 			templ.flags = R600_RESOURCE_FLAG_TRANSFER;
 		resources[2] = (struct r600_texture *)
 			pipe->screen->resource_create(pipe->screen, &templ);
@@ -111,14 +111,14 @@ struct pipe_video_buffer *r600_video_buffer_create(struct pipe_context *pipe,
 		surfaces[i] = &resources[i]->surface;
 	}
 
-	ruvd_join_surfaces(ctx->ws, templ.bind, pbs, surfaces);
+	ruvd_join_surfaces(ctx->b.ws, templ.bind, pbs, surfaces);
 
 	for (i = 0; i < VL_NUM_COMPONENTS; ++i) {
 		if (!resources[i])
 			continue;
 
 		/* recreate the CS handle */
-		resources[i]->resource.cs_buf = ctx->ws->buffer_get_cs_handle(
+		resources[i]->resource.cs_buf = ctx->b.ws->buffer_get_cs_handle(
 			resources[i]->resource.buf);
 	}
 
@@ -169,7 +169,7 @@ struct pipe_video_codec *r600_uvd_create_decoder(struct pipe_context *context,
 {
 	struct r600_context *ctx = (struct r600_context *)context;
 
-	return ruvd_create_decoder(context, templat, ctx->ws, r600_uvd_set_dtb);
+	return ruvd_create_decoder(context, templat, ctx->b.ws, r600_uvd_set_dtb);
 }
 
 int r600_uvd_get_video_param(struct pipe_screen *screen,
@@ -180,7 +180,7 @@ int r600_uvd_get_video_param(struct pipe_screen *screen,
 	struct r600_screen *rscreen = (struct r600_screen *)screen;
 
 	/* UVD 2.x limits */
-	if (rscreen->family < CHIP_PALM) {
+	if (rscreen->b.family < CHIP_PALM) {
 		enum pipe_video_format codec = u_reduce_video_profile(profile);
 		switch (param) {
 		case PIPE_VIDEO_CAP_SUPPORTED:

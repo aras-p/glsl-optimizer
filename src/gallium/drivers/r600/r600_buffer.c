@@ -113,7 +113,7 @@ static void *r600_buffer_transfer_map(struct pipe_context *ctx,
 
 		/* Check if mapping this buffer would cause waiting for the GPU. */
 		if (r600_rings_is_buffer_referenced(rctx, rbuffer->cs_buf, RADEON_USAGE_READWRITE) ||
-		    rctx->ws->buffer_is_busy(rbuffer->buf, RADEON_USAGE_READWRITE)) {
+		    rctx->b.ws->buffer_is_busy(rbuffer->buf, RADEON_USAGE_READWRITE)) {
 			unsigned i, mask;
 
 			/* Discard the buffer. */
@@ -135,13 +135,13 @@ static void *r600_buffer_transfer_map(struct pipe_context *ctx,
 				}
 			}
 			/* Streamout buffers. */
-			for (i = 0; i < rctx->streamout.num_targets; i++) {
-				if (rctx->streamout.targets[i]->b.buffer == &rbuffer->b.b) {
-					if (rctx->streamout.begin_emitted) {
-						r600_emit_streamout_end(rctx);
+			for (i = 0; i < rctx->b.streamout.num_targets; i++) {
+				if (rctx->b.streamout.targets[i]->b.buffer == &rbuffer->b.b) {
+					if (rctx->b.streamout.begin_emitted) {
+						r600_emit_streamout_end(&rctx->b);
 					}
-					rctx->streamout.append_bitmask = rctx->streamout.enabled_mask;
-					r600_streamout_buffers_dirty(rctx);
+					rctx->b.streamout.append_bitmask = rctx->b.streamout.enabled_mask;
+					r600_streamout_buffers_dirty(&rctx->b);
 				}
 			}
 			/* Constant buffers. */
@@ -159,7 +159,7 @@ static void *r600_buffer_transfer_map(struct pipe_context *ctx,
 
 		/* Check if mapping this buffer would cause waiting for the GPU. */
 		if (r600_rings_is_buffer_referenced(rctx, rbuffer->cs_buf, RADEON_USAGE_READWRITE) ||
-		    rctx->ws->buffer_is_busy(rbuffer->buf, RADEON_USAGE_READWRITE)) {
+		    rctx->b.ws->buffer_is_busy(rbuffer->buf, RADEON_USAGE_READWRITE)) {
 			/* Do a wait-free write-only transfer using a temporary buffer. */
 			unsigned offset;
 			struct r600_resource *staging = NULL;
@@ -203,8 +203,8 @@ static void r600_buffer_transfer_unmap(struct pipe_context *pipe,
 		doffset = transfer->box.x;
 		soffset = rtransfer->offset + transfer->box.x % R600_MAP_BUFFER_ALIGNMENT;
 		/* Copy the staging buffer into the original one. */
-		if (rctx->rings.dma.cs && !(size % 4) && !(doffset % 4) && !(soffset % 4)) {
-			if (rctx->screen->chip_class >= EVERGREEN) {
+		if (rctx->b.rings.dma.cs && !(size % 4) && !(doffset % 4) && !(soffset % 4)) {
+			if (rctx->screen->b.chip_class >= EVERGREEN) {
 				evergreen_dma_copy(rctx, dst, src, doffset, soffset, size);
 			} else {
 				r600_dma_copy(rctx, dst, src, doffset, soffset, size);
@@ -269,21 +269,21 @@ bool r600_init_resource(struct r600_screen *rscreen,
 		break;
 	}
 
-	res->buf = rscreen->ws->buffer_create(rscreen->ws, size, alignment,
+	res->buf = rscreen->b.ws->buffer_create(rscreen->b.ws, size, alignment,
                                               use_reusable_pool,
                                               initial_domain);
 	if (!res->buf) {
 		return false;
 	}
 
-	res->cs_buf = rscreen->ws->buffer_get_cs_handle(res->buf);
+	res->cs_buf = rscreen->b.ws->buffer_get_cs_handle(res->buf);
 	res->domains = domains;
 	util_range_set_empty(&res->valid_buffer_range);
 
 	if (rscreen->debug_flags & DBG_VM && res->b.b.target == PIPE_BUFFER) {
 		fprintf(stderr, "VM start=0x%llX  end=0x%llX | Buffer %u bytes\n",
-			r600_resource_va(&rscreen->screen, &res->b.b),
-			r600_resource_va(&rscreen->screen, &res->b.b) + res->buf->size,
+			r600_resource_va(&rscreen->b.b, &res->b.b),
+			r600_resource_va(&rscreen->b.b, &res->b.b) + res->buf->size,
 			res->buf->size);
 	}
 	return true;

@@ -24,7 +24,7 @@
 #define R600_RESOURCE_H
 
 #include "../../winsys/radeon/drm/radeon_winsys.h"
-#include "util/u_range.h"
+#include "../radeon/r600_pipe_common.h"
 
 struct r600_screen;
 
@@ -32,27 +32,6 @@ struct r600_screen;
 #define R600_RESOURCE_FLAG_TRANSFER		PIPE_RESOURCE_FLAG_DRV_PRIV
 #define R600_RESOURCE_FLAG_FLUSHED_DEPTH	(PIPE_RESOURCE_FLAG_DRV_PRIV << 1)
 #define R600_RESOURCE_FLAG_FORCE_TILING		(PIPE_RESOURCE_FLAG_DRV_PRIV << 2)
-
-struct r600_resource {
-	struct u_resource		b;
-
-	/* Winsys objects. */
-	struct pb_buffer		*buf;
-	struct radeon_winsys_cs_handle	*cs_buf;
-
-	/* Resource state. */
-	enum radeon_bo_domain		domains;
-
-	/* The buffer range which is initialized (with a write transfer,
-	 * streamout, DMA, or as a random access target). The rest of
-	 * the buffer is considered invalid and can be mapped unsynchronized.
-	 *
-	 * This allows unsychronized mapping of a buffer range which hasn't
-	 * been used yet. It's for applications which forget to use
-	 * the unsynchronized map flag and expect the driver to figure it out.
-         */
-	struct util_range		valid_buffer_range;
-};
 
 struct r600_transfer {
 	struct pipe_transfer		transfer;
@@ -178,11 +157,6 @@ struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
 struct pipe_resource *r600_texture_from_handle(struct pipe_screen *screen,
 						const struct pipe_resource *base,
 						struct winsys_handle *whandle);
-
-static INLINE struct r600_resource *r600_resource(struct pipe_resource *r)
-{
-	return (struct r600_resource*)r;
-}
 
 bool r600_init_flushed_depth_texture(struct pipe_context *ctx,
 				     struct pipe_resource *texture,

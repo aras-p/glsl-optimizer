@@ -51,8 +51,8 @@ sb_context *r600_sb_context_create(struct r600_context *rctx) {
 
 	sb_context *sctx = new sb_context();
 
-	if (sctx->init(rctx->isa, translate_chip(rctx->family),
-			translate_chip_class(rctx->chip_class))) {
+	if (sctx->init(rctx->isa, translate_chip(rctx->b.family),
+			translate_chip_class(rctx->b.chip_class))) {
 		delete sctx;
 		sctx = NULL;
 	}

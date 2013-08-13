@@ -69,8 +69,8 @@ void r600_init_screen_resource_functions(struct pipe_screen *screen)
 
 void r600_init_context_resource_functions(struct r600_context *r600)
 {
-	r600->context.transfer_map = u_transfer_map_vtbl;
-	r600->context.transfer_flush_region = u_default_transfer_flush_region;
-	r600->context.transfer_unmap = u_transfer_unmap_vtbl;
-	r600->context.transfer_inline_write = u_default_transfer_inline_write;
+	r600->b.b.transfer_map = u_transfer_map_vtbl;
+	r600->b.b.transfer_flush_region = u_default_transfer_flush_region;
+	r600->b.b.transfer_unmap = u_transfer_unmap_vtbl;
+	r600->b.b.transfer_inline_write = u_default_transfer_inline_write;
 }

@@ -26,14 +26,18 @@
 #ifndef R600_PIPE_H
 #define R600_PIPE_H
 
+#include "../radeon/r600_pipe_common.h"
+#include "../radeon/r600_cs.h"
+
+#include "r600_llvm.h"
+#include "r600_public.h"
+#include "r600_resource.h"
+
 #include "util/u_blitter.h"
 #include "util/u_slab.h"
 #include "util/u_suballoc.h"
 #include "util/u_double_list.h"
 #include "util/u_transfer.h"
-#include "r600_llvm.h"
-#include "r600_public.h"
-#include "r600_resource.h"
 
 #define R600_NUM_ATOMS 41
 
@@ -64,22 +68,6 @@
 #define R600_ERR(fmt, args...) \
 	fprintf(stderr, "EE %s:%d %s - "fmt, __FILE__, __LINE__, __func__, ##args)
 
-/* read caches */
-#define R600_CONTEXT_INV_VERTEX_CACHE		(1 << 0)
-#define R600_CONTEXT_INV_TEX_CACHE		(1 << 1)
-#define R600_CONTEXT_INV_CONST_CACHE		(1 << 2)
-/* read-write caches */
-#define R600_CONTEXT_STREAMOUT_FLUSH		(1 << 8)
-#define R600_CONTEXT_FLUSH_AND_INV		(1 << 9)
-#define R600_CONTEXT_FLUSH_AND_INV_CB_META	(1 << 10)
-#define R600_CONTEXT_FLUSH_AND_INV_DB_META	(1 << 11)
-#define R600_CONTEXT_FLUSH_AND_INV_DB		(1 << 12)
-#define R600_CONTEXT_FLUSH_AND_INV_CB		(1 << 13)
-/* engine synchronization */
-#define R600_CONTEXT_PS_PARTIAL_FLUSH		(1 << 16)
-#define R600_CONTEXT_WAIT_3D_IDLE		(1 << 17)
-#define R600_CONTEXT_WAIT_CP_DMA_IDLE		(1 << 18)
-
 #define R600_QUERY_DRAW_CALLS		(PIPE_QUERY_DRIVER_SPECIFIC + 0)
 #define R600_QUERY_REQUESTED_VRAM	(PIPE_QUERY_DRIVER_SPECIFIC + 1)
 #define R600_QUERY_REQUESTED_GTT	(PIPE_QUERY_DRIVER_SPECIFIC + 2)
@@ -88,16 +76,6 @@
 struct r600_context;
 struct r600_bytecode;
 struct r600_shader_key;
-
-/* This encapsulates a state or an operation which can emitted into the GPU
- * command stream. It's not limited to states only, it can be used for anything
- * that wants to write commands into the CS (e.g. cache flushes). */
-struct r600_atom {
-	void (*emit)(struct r600_context *ctx, struct r600_atom *state);
-	unsigned		id;
-	unsigned		num_dw;
-	bool			dirty;
-};
 
 /* This is an atom containing GPU commands that never change.
  * This is supposed to be copied directly into the CS. */
@@ -265,12 +243,8 @@ struct r600_tiling_info {
 };
 
 struct r600_screen {
-	struct pipe_screen		screen;
-	struct radeon_winsys		*ws;
+	struct r600_common_screen	b;
 	unsigned			debug_flags;
-	unsigned			family;
-	enum chip_class			chip_class;
-	struct radeon_info		info;
 	bool				has_streamout;
 	bool				has_msaa;
 	bool				has_cp_dma;
@@ -486,66 +460,22 @@ struct r600_query {
 	uint64_t end_result;
 };
 
-struct r600_so_target {
-	struct pipe_stream_output_target b;
-
-	/* The buffer where BUFFER_FILLED_SIZE is stored. */
-	struct r600_resource	*buf_filled_size;
-	unsigned		buf_filled_size_offset;
-
-	unsigned		stride_in_dw;
-	unsigned		so_index;
-};
-
-struct r600_streamout {
-	struct r600_atom		begin_atom;
-	bool				begin_emitted;
-	unsigned			num_dw_for_end;
-
-	unsigned			enabled_mask;
-	unsigned			num_targets;
-	struct r600_so_target		*targets[PIPE_MAX_SO_BUFFERS];
-
-	unsigned			append_bitmask;
-	bool				suspended;
-};
-
-struct r600_ring {
-	struct radeon_winsys_cs		*cs;
-	bool				flushing;
-	void (*flush)(void *ctx, unsigned flags);
-};
-
-struct r600_rings {
-	struct r600_ring		gfx;
-	struct r600_ring		dma;
-};
-
 struct r600_context {
-	struct pipe_context		context;
+	struct r600_common_context	b;
 	struct r600_screen		*screen;
-	struct radeon_winsys		*ws;
-	struct r600_rings		rings;
 	struct blitter_context		*blitter;
 	struct u_upload_mgr		*uploader;
-	struct u_suballocator		*allocator_so_filled_size;
 	struct u_suballocator		*allocator_fetch_shader;
 	struct util_slab_mempool	pool_transfers;
 	unsigned			initial_gfx_cs_size;
 
 	/* Hardware info. */
-	enum radeon_family		family;
-	enum chip_class			chip_class;
 	boolean				has_vertex_cache;
 	boolean				keep_tiling_flags;
 	unsigned			default_ps_gprs, default_vs_gprs;
 	unsigned			r6xx_num_clause_temp_gprs;
 	unsigned			backend_mask;
 	unsigned			max_db; /* for OQ */
-
-	/* current unaccounted memory usage */
-	uint64_t			vram;
-	uint64_t			gtt;
 
 	/* Miscellaneous state objects. */
 	void				*custom_dsa_flush;
@@ -599,10 +529,8 @@ struct r600_context {
 	struct r600_vertexbuf_state	vertex_buffer_state;
 	/** Vertex buffers for compute shaders */
 	struct r600_vertexbuf_state	cs_vertex_buffer_state;
-	struct r600_streamout		streamout;
 
 	/* Additional context states. */
-	unsigned			flags;
 	unsigned			compute_cb_target_mask;
 	struct r600_pipe_shader_selector *ps_shader;
 	struct r600_pipe_shader_selector *vs_shader;
@@ -654,7 +582,7 @@ void r600_trace_emit(struct r600_context *rctx);
 
 static INLINE void r600_emit_atom(struct r600_context *rctx, struct r600_atom *atom)
 {
-	atom->emit(rctx, atom);
+	atom->emit(&rctx->b, atom);
 	atom->dirty = false;
 	if (rctx->screen->trace_bo) {
 		r600_trace_emit(rctx);
@@ -831,16 +759,12 @@ boolean r600_dma_blit(struct pipe_context *ctx,
 			struct pipe_resource *src,
 			unsigned src_level,
 			const struct pipe_box *src_box);
-void r600_emit_streamout_begin(struct r600_context *ctx, struct r600_atom *atom);
-void r600_emit_streamout_end(struct r600_context *ctx);
 void r600_flag_resource_cache_flush(struct r600_context *rctx,
 				    struct pipe_resource *res);
 
 /*
  * evergreen_hw_context.c
  */
-void evergreen_flush_vgt_streamout(struct r600_context *ctx);
-void evergreen_set_streamout_enable(struct r600_context *ctx, unsigned buffer_enable_bit);
 void evergreen_dma_copy(struct r600_context *rctx,
 		struct pipe_resource *dst,
 		struct pipe_resource *src,
@@ -874,7 +798,6 @@ void r600_sampler_views_dirty(struct r600_context *rctx,
 void r600_sampler_states_dirty(struct r600_context *rctx,
 			       struct r600_sampler_states *state);
 void r600_constant_buffers_dirty(struct r600_context *rctx, struct r600_constbuf_state *state);
-void r600_streamout_buffers_dirty(struct r600_context *rctx);
 void r600_draw_rectangle(struct blitter_context *blitter,
 			 int x1, int y1, int x2, int y2, float depth,
 			 enum blitter_attrib_type type, const union pipe_color_union *attrib);
@@ -1021,60 +944,6 @@ static INLINE void eg_store_loop_const(struct r600_command_buffer *cb, unsigned 
 void r600_init_command_buffer(struct r600_command_buffer *cb, unsigned num_dw);
 void r600_release_command_buffer(struct r600_command_buffer *cb);
 
-/*
- * Helpers for emitting state into a command stream directly.
- */
-static INLINE unsigned r600_context_bo_reloc(struct r600_context *ctx,
-					     struct r600_ring *ring,
-					     struct r600_resource *rbo,
-					     enum radeon_bo_usage usage)
-{
-	assert(usage);
-	/* make sure that all previous ring use are flushed so everything
-	 * look serialized from driver pov
-	 */
-	if (!ring->flushing) {
-		if (ring == &ctx->rings.gfx) {
-			if (ctx->rings.dma.cs) {
-				/* flush dma ring */
-				ctx->rings.dma.flush(ctx, RADEON_FLUSH_ASYNC);
-			}
-		} else {
-			/* flush gfx ring */
-			ctx->rings.gfx.flush(ctx, RADEON_FLUSH_ASYNC);
-		}
-	}
-	return ctx->ws->cs_add_reloc(ring->cs, rbo->cs_buf, usage, rbo->domains) * 4;
-}
-
-static INLINE void r600_write_value(struct radeon_winsys_cs *cs, unsigned value)
-{
-	cs->buf[cs->cdw++] = value;
-}
-
-static INLINE void r600_write_array(struct radeon_winsys_cs *cs, unsigned num, unsigned *ptr)
-{
-	assert(cs->cdw+num <= RADEON_MAX_CMDBUF_DWORDS);
-	memcpy(&cs->buf[cs->cdw], ptr, num * sizeof(ptr[0]));
-	cs->cdw += num;
-}
-
-static INLINE void r600_write_config_reg_seq(struct radeon_winsys_cs *cs, unsigned reg, unsigned num)
-{
-	assert(reg < R600_CONTEXT_REG_OFFSET);
-	assert(cs->cdw+2+num <= RADEON_MAX_CMDBUF_DWORDS);
-	cs->buf[cs->cdw++] = PKT3(PKT3_SET_CONFIG_REG, num, 0);
-	cs->buf[cs->cdw++] = (reg - R600_CONFIG_REG_OFFSET) >> 2;
-}
-
-static INLINE void r600_write_context_reg_seq(struct radeon_winsys_cs *cs, unsigned reg, unsigned num)
-{
-	assert(reg >= R600_CONTEXT_REG_OFFSET && reg < R600_CTL_CONST_OFFSET);
-	assert(cs->cdw+2+num <= RADEON_MAX_CMDBUF_DWORDS);
-	cs->buf[cs->cdw++] = PKT3(PKT3_SET_CONTEXT_REG, num, 0);
-	cs->buf[cs->cdw++] = (reg - R600_CONTEXT_REG_OFFSET) >> 2;
-}
-
 static INLINE void r600_write_compute_context_reg_seq(struct radeon_winsys_cs *cs, unsigned reg, unsigned num)
 {
 	r600_write_context_reg_seq(cs, reg, num);
@@ -1090,22 +959,10 @@ static INLINE void r600_write_ctl_const_seq(struct radeon_winsys_cs *cs, unsigne
 	cs->buf[cs->cdw++] = (reg - R600_CTL_CONST_OFFSET) >> 2;
 }
 
-static INLINE void r600_write_config_reg(struct radeon_winsys_cs *cs, unsigned reg, unsigned value)
-{
-	r600_write_config_reg_seq(cs, reg, 1);
-	r600_write_value(cs, value);
-}
-
-static INLINE void r600_write_context_reg(struct radeon_winsys_cs *cs, unsigned reg, unsigned value)
-{
-	r600_write_context_reg_seq(cs, reg, 1);
-	r600_write_value(cs, value);
-}
-
 static INLINE void r600_write_compute_context_reg(struct radeon_winsys_cs *cs, unsigned reg, unsigned value)
 {
 	r600_write_compute_context_reg_seq(cs, reg, 1);
-	r600_write_value(cs, value);
+	radeon_emit(cs, value);
 }
 
 static INLINE void r600_write_context_reg_flag(struct radeon_winsys_cs *cs, unsigned reg, unsigned value, unsigned flag)
@@ -1115,12 +972,12 @@ static INLINE void r600_write_context_reg_flag(struct radeon_winsys_cs *cs, unsi
 	} else {
 		r600_write_context_reg(cs, reg, value);
 	}
-
 }
+
 static INLINE void r600_write_ctl_const(struct radeon_winsys_cs *cs, unsigned reg, unsigned value)
 {
 	r600_write_ctl_const_seq(cs, reg, 1);
-	r600_write_value(cs, value);
+	radeon_emit(cs, value);
 }
 
 /*
@@ -1146,38 +1003,6 @@ static INLINE unsigned r600_pack_float_12p4(float x)
 {
 	return x <= 0    ? 0 :
 	       x >= 4096 ? 0xffff : x * 16;
-}
-
-static INLINE uint64_t r600_resource_va(struct pipe_screen *screen, struct pipe_resource *resource)
-{
-	struct r600_screen *rscreen = (struct r600_screen*)screen;
-	struct r600_resource *rresource = (struct r600_resource*)resource;
-
-	return rscreen->ws->buffer_get_virtual_address(rresource->cs_buf);
-}
-
-static INLINE void r600_context_add_resource_size(struct pipe_context *ctx, struct pipe_resource *r)
-{
-	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_resource *rr = (struct r600_resource *)r;
-
-	if (r == NULL) {
-		return;
-	}
-
-	/*
-	 * The idea is to compute a gross estimate of memory requirement of
-	 * each draw call. After each draw call, memory will be precisely
-	 * accounted. So the uncertainty is only on the current draw call.
-	 * In practice this gave very good estimate (+/- 10% of the target
-	 * memory limit).
-	 */
-	if (rr->domains & RADEON_DOMAIN_GTT) {
-		rctx->gtt += rr->buf->size;
-	}
-	if (rr->domains & RADEON_DOMAIN_VRAM) {
-		rctx->vram += rr->buf->size;
-	}
 }
 
 #endif
