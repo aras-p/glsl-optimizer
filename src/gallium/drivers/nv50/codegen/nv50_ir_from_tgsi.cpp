@@ -440,6 +440,11 @@ nv50_ir::DataType Instruction::inferDstType() const
    switch (getOpcode()) {
    case TGSI_OPCODE_F2U: return nv50_ir::TYPE_U32;
    case TGSI_OPCODE_F2I: return nv50_ir::TYPE_S32;
+   case TGSI_OPCODE_FSEQ:
+   case TGSI_OPCODE_FSGE:
+   case TGSI_OPCODE_FSLT:
+   case TGSI_OPCODE_FSNE:
+      return nv50_ir::TYPE_U32;
    case TGSI_OPCODE_I2F:
    case TGSI_OPCODE_U2F:
       return nv50_ir::TYPE_F32;
@@ -456,19 +461,23 @@ nv50_ir::CondCode Instruction::getSetCond() const
    case TGSI_OPCODE_SLT:
    case TGSI_OPCODE_ISLT:
    case TGSI_OPCODE_USLT:
+   case TGSI_OPCODE_FSLT:
       return CC_LT;
    case TGSI_OPCODE_SLE:
       return CC_LE;
    case TGSI_OPCODE_SGE:
    case TGSI_OPCODE_ISGE:
    case TGSI_OPCODE_USGE:
+   case TGSI_OPCODE_FSGE:
       return CC_GE;
    case TGSI_OPCODE_SGT:
       return CC_GT;
    case TGSI_OPCODE_SEQ:
    case TGSI_OPCODE_USEQ:
+   case TGSI_OPCODE_FSEQ:
       return CC_EQ;
    case TGSI_OPCODE_SNE:
+   case TGSI_OPCODE_FSNE:
       return CC_NEU;
    case TGSI_OPCODE_USNE:
       return CC_NE;
@@ -556,6 +565,10 @@ static nv50_ir::operation translateOpcode(uint opcode)
    NV50_IR_OPCODE_CASE(KILL_IF, DISCARD);
 
    NV50_IR_OPCODE_CASE(F2I, CVT);
+   NV50_IR_OPCODE_CASE(FSEQ, SET);
+   NV50_IR_OPCODE_CASE(FSGE, SET);
+   NV50_IR_OPCODE_CASE(FSLT, SET);
+   NV50_IR_OPCODE_CASE(FSNE, SET);
    NV50_IR_OPCODE_CASE(IDIV, DIV);
    NV50_IR_OPCODE_CASE(IMAX, MAX);
    NV50_IR_OPCODE_CASE(IMIN, MIN);
@@ -2354,6 +2367,10 @@ Converter::handleInstruction(const struct tgsi_full_instruction *insn)
    case TGSI_OPCODE_SLE:
    case TGSI_OPCODE_SNE:
    case TGSI_OPCODE_STR:
+   case TGSI_OPCODE_FSEQ:
+   case TGSI_OPCODE_FSGE:
+   case TGSI_OPCODE_FSLT:
+   case TGSI_OPCODE_FSNE:
    case TGSI_OPCODE_ISGE:
    case TGSI_OPCODE_ISLT:
    case TGSI_OPCODE_USEQ:
