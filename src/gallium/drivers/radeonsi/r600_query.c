@@ -136,12 +136,12 @@ static void r600_render_condition(struct pipe_context *ctx,
 
 void r600_init_query_functions(struct r600_context *rctx)
 {
-	rctx->context.create_query = r600_create_query;
-	rctx->context.destroy_query = r600_destroy_query;
-	rctx->context.begin_query = r600_begin_query;
-	rctx->context.end_query = r600_end_query;
-	rctx->context.get_query_result = r600_get_query_result;
+	rctx->b.b.create_query = r600_create_query;
+	rctx->b.b.destroy_query = r600_destroy_query;
+	rctx->b.b.begin_query = r600_begin_query;
+	rctx->b.b.end_query = r600_end_query;
+	rctx->b.b.get_query_result = r600_get_query_result;
 
-	if (rctx->screen->info.r600_num_backends > 0)
-	    rctx->context.render_condition = r600_render_condition;
+	if (rctx->screen->b.info.r600_num_backends > 0)
+	    rctx->b.b.render_condition = r600_render_condition;
 }

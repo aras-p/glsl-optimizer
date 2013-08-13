@@ -176,4 +176,11 @@ static INLINE struct r600_resource *r600_resource(struct pipe_resource *r)
 	return (struct r600_resource*)r;
 }
 
+static INLINE void
+r600_resource_reference(struct r600_resource **ptr, struct r600_resource *res)
+{
+	pipe_resource_reference((struct pipe_resource **)ptr,
+				(struct pipe_resource *)res);
+}
+
 #endif

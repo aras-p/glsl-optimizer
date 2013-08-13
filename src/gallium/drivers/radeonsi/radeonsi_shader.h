@@ -138,7 +138,7 @@ struct si_pipe_shader {
 	struct si_pipe_shader		*next_variant;
 	struct si_shader		shader;
 	struct si_pm4_state		*pm4;
-	struct si_resource		*bo;
+	struct r600_resource		*bo;
 	unsigned			num_sgprs;
 	unsigned			num_vgprs;
 	unsigned			lds_size;

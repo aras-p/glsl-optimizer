@@ -62,20 +62,11 @@ struct r600_query {
 	/* The buffer where query results are stored. It's used as a ring,
 	 * data blocks for current query are stored sequentially from
 	 * results_start to results_end, with wrapping on the buffer end */
-	struct si_resource			*buffer;
+	struct r600_resource			*buffer;
 	/* The number of dwords for begin_query or end_query. */
 	unsigned				num_cs_dw;
 	/* linked list of queries */
 	struct list_head			list;
-};
-
-struct r600_so_target {
-	struct pipe_stream_output_target b;
-
-	/* The buffer where BUFFER_FILLED_SIZE is stored. */
-	struct si_resource	*filled_size;
-	unsigned		stride;
-	unsigned		so_index;
 };
 
 #define R600_CONTEXT_DST_CACHES_DIRTY	(1 << 1)
@@ -98,10 +89,9 @@ void r600_context_queries_suspend(struct r600_context *ctx);
 void r600_context_queries_resume(struct r600_context *ctx);
 void r600_query_predication(struct r600_context *ctx, struct r600_query *query, int operation,
 			    int flag_wait);
-void si_context_emit_fence(struct r600_context *ctx, struct si_resource *fence,
+void si_context_emit_fence(struct r600_context *ctx, struct r600_resource *fence,
                            unsigned offset, unsigned value);
 
-void r600_context_draw_opaque_count(struct r600_context *ctx, struct r600_so_target *t);
 bool si_is_timer_query(unsigned type);
 bool si_query_needs_begin(unsigned type);
 void si_need_cs_space(struct r600_context *ctx, unsigned num_dw, boolean count_draw_in);

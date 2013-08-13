@@ -36,6 +36,7 @@
 #include "radeonsi_pipe.h"
 #include "radeonsi_shader.h"
 #include "si_state.h"
+#include "../radeon/r600_cs.h"
 #include "sid.h"
 
 static uint32_t cik_num_banks(uint32_t nbanks)
@@ -795,7 +796,7 @@ static void *si_create_db_flush_dsa(struct r600_context *rctx, bool copy_depth,
 
 	memset(&dsa, 0, sizeof(dsa));
 
-	state = rctx->context.create_depth_stencil_alpha_state(&rctx->context, &dsa);
+	state = rctx->b.b.create_depth_stencil_alpha_state(&rctx->b.b, &dsa);
 	if (copy_depth || copy_stencil) {
 		si_pm4_set_reg(&state->pm4, R_028000_DB_RENDER_CONTROL,
 			       S_028000_DEPTH_COPY(copy_depth) |
@@ -1302,7 +1303,7 @@ static uint32_t si_translate_texformat(struct pipe_screen *screen,
 				       int first_non_void)
 {
 	struct r600_screen *rscreen = (struct r600_screen*)screen;
-	bool enable_s3tc = rscreen->info.drm_minor >= 31;
+	bool enable_s3tc = rscreen->b.info.drm_minor >= 31;
 	boolean uniform = TRUE;
 	int i;
 
@@ -1689,7 +1690,7 @@ boolean si_is_format_supported(struct pipe_screen *screen,
 		return FALSE;
 
 	if (sample_count > 1) {
-		if (HAVE_LLVM < 0x0304 || rscreen->chip_class != SI)
+		if (HAVE_LLVM < 0x0304 || rscreen->b.chip_class != SI)
 			return FALSE;
 
 		switch (sample_count) {
@@ -1871,7 +1872,7 @@ static void si_cb(struct r600_context *rctx, struct si_pm4_state *pm4,
 		color_info |= S_028C70_FAST_CLEAR(1);
 	}
 
-	offset += r600_resource_va(rctx->context.screen, state->cbufs[cb]->texture);
+	offset += r600_resource_va(rctx->b.b.screen, state->cbufs[cb]->texture);
 	offset >>= 8;
 
 	/* FIXME handle enabling of CB beyond BASE8 which has different offset */
@@ -1950,7 +1951,7 @@ static void si_db(struct r600_context *rctx, struct si_pm4_state *pm4,
 	}
 	assert(format != V_028040_Z_INVALID);
 
-	s_offs = z_offs = r600_resource_va(rctx->context.screen, surf->base.texture);
+	s_offs = z_offs = r600_resource_va(rctx->b.b.screen, surf->base.texture);
 	z_offs += rtex->surface.level[level].offset;
 	s_offs += rtex->surface.stencil_level[level].offset;
 
@@ -1975,7 +1976,7 @@ static void si_db(struct r600_context *rctx, struct si_pm4_state *pm4,
 	else
 		s_info = S_028044_FORMAT(V_028044_STENCIL_INVALID);
 
-	if (rctx->chip_class >= CIK) {
+	if (rctx->b.chip_class >= CIK) {
 		switch (rtex->surface.level[level].mode) {
 		case RADEON_SURF_MODE_2D:
 			array_mode = V_02803C_ARRAY_2D_TILED_THIN1;
@@ -1998,8 +1999,8 @@ static void si_db(struct r600_context *rctx, struct si_pm4_state *pm4,
 		bankw = cik_bank_wh(bankw);
 		bankh = cik_bank_wh(bankh);
 		nbanks = cik_num_banks(rscreen->tiling_info.num_banks);
-		pipe_config = cik_db_pipe_config(rscreen->info.r600_num_tile_pipes,
-						 rscreen->info.r600_num_backends);
+		pipe_config = cik_db_pipe_config(rscreen->b.info.r600_num_tile_pipes,
+						 rscreen->b.info.r600_num_backends);
 
 		db_depth_info |= S_02803C_ARRAY_MODE(array_mode) |
 			S_02803C_PIPE_CONFIG(pipe_config) |
@@ -2924,19 +2925,19 @@ static struct si_pm4_state *si_bind_sampler_states(struct r600_context *rctx, un
 			if (!rctx->border_color_table ||
 			    ((rctx->border_color_offset + count - i) &
 			     C_008F3C_BORDER_COLOR_PTR)) {
-				si_resource_reference(&rctx->border_color_table, NULL);
+				r600_resource_reference(&rctx->border_color_table, NULL);
 				rctx->border_color_offset = 0;
 
 				rctx->border_color_table =
-					si_resource_create_custom(&rctx->screen->screen,
+					r600_resource_create_custom(&rctx->screen->b.b,
 								  PIPE_USAGE_STAGING,
 								  4096 * 4 * 4);
 			}
 
 			if (!border_color_table) {
 			        border_color_table =
-					rctx->ws->buffer_map(rctx->border_color_table->cs_buf,
-							     rctx->cs,
+					rctx->b.ws->buffer_map(rctx->border_color_table->cs_buf,
+							     rctx->b.rings.gfx.cs,
 							     PIPE_TRANSFER_WRITE |
 							     PIPE_TRANSFER_UNSYNCHRONIZED);
 			}
@@ -2958,13 +2959,13 @@ static struct si_pm4_state *si_bind_sampler_states(struct r600_context *rctx, un
 
 	if (border_color_table) {
 		uint64_t va_offset =
-			r600_resource_va(&rctx->screen->screen,
+			r600_resource_va(&rctx->screen->b.b,
 					 (void*)rctx->border_color_table);
 
 		si_pm4_set_reg(pm4, R_028080_TA_BC_BASE_ADDR, va_offset >> 8);
-		if (rctx->chip_class >= CIK)
+		if (rctx->b.chip_class >= CIK)
 			si_pm4_set_reg(pm4, R_028084_TA_BC_BASE_ADDR_HI, va_offset >> 40);
-		rctx->ws->buffer_unmap(rctx->border_color_table->cs_buf);
+		rctx->b.ws->buffer_unmap(rctx->border_color_table->cs_buf);
 		si_pm4_add_bo(pm4, rctx->border_color_table, RADEON_USAGE_READ);
 	}
 
@@ -3043,7 +3044,7 @@ static void si_set_constant_buffer(struct pipe_context *ctx, uint shader, uint i
 
 	if (ptr) {
 		r600_upload_const_buffer(rctx,
-				(struct si_resource**)&cb->buffer, ptr,
+				(struct r600_resource**)&cb->buffer, ptr,
 				cb->buffer_size, &cb->buffer_offset);
 	} else {
 		/* Setup the hw buffer. */
@@ -3184,25 +3185,25 @@ static void *si_create_blend_custom(struct r600_context *rctx, unsigned mode)
 	memset(&blend, 0, sizeof(blend));
 	blend.independent_blend_enable = true;
 	blend.rt[0].colormask = 0xf;
-	return si_create_blend_state_mode(&rctx->context, &blend, mode);
+	return si_create_blend_state_mode(&rctx->b.b, &blend, mode);
 }
 
 void si_init_state_functions(struct r600_context *rctx)
 {
 	int i;
 
-	rctx->context.create_blend_state = si_create_blend_state;
-	rctx->context.bind_blend_state = si_bind_blend_state;
-	rctx->context.delete_blend_state = si_delete_blend_state;
-	rctx->context.set_blend_color = si_set_blend_color;
+	rctx->b.b.create_blend_state = si_create_blend_state;
+	rctx->b.b.bind_blend_state = si_bind_blend_state;
+	rctx->b.b.delete_blend_state = si_delete_blend_state;
+	rctx->b.b.set_blend_color = si_set_blend_color;
 
-	rctx->context.create_rasterizer_state = si_create_rs_state;
-	rctx->context.bind_rasterizer_state = si_bind_rs_state;
-	rctx->context.delete_rasterizer_state = si_delete_rs_state;
+	rctx->b.b.create_rasterizer_state = si_create_rs_state;
+	rctx->b.b.bind_rasterizer_state = si_bind_rs_state;
+	rctx->b.b.delete_rasterizer_state = si_delete_rs_state;
 
-	rctx->context.create_depth_stencil_alpha_state = si_create_dsa_state;
-	rctx->context.bind_depth_stencil_alpha_state = si_bind_dsa_state;
-	rctx->context.delete_depth_stencil_alpha_state = si_delete_dsa_state;
+	rctx->b.b.create_depth_stencil_alpha_state = si_create_dsa_state;
+	rctx->b.b.bind_depth_stencil_alpha_state = si_bind_dsa_state;
+	rctx->b.b.delete_depth_stencil_alpha_state = si_delete_dsa_state;
 
 	for (i = 0; i < 8; i++) {
 		rctx->custom_dsa_flush_depth_stencil[i] = si_create_db_flush_dsa(rctx, true, true, i);
@@ -3213,49 +3214,45 @@ void si_init_state_functions(struct r600_context *rctx)
 	rctx->custom_blend_resolve = si_create_blend_custom(rctx, V_028808_CB_RESOLVE);
 	rctx->custom_blend_decompress = si_create_blend_custom(rctx, V_028808_CB_FMASK_DECOMPRESS);
 
-	rctx->context.set_clip_state = si_set_clip_state;
-	rctx->context.set_scissor_states = si_set_scissor_states;
-	rctx->context.set_viewport_states = si_set_viewport_states;
-	rctx->context.set_stencil_ref = si_set_pipe_stencil_ref;
+	rctx->b.b.set_clip_state = si_set_clip_state;
+	rctx->b.b.set_scissor_states = si_set_scissor_states;
+	rctx->b.b.set_viewport_states = si_set_viewport_states;
+	rctx->b.b.set_stencil_ref = si_set_pipe_stencil_ref;
 
-	rctx->context.set_framebuffer_state = si_set_framebuffer_state;
-	rctx->context.get_sample_position = si_get_sample_position;
+	rctx->b.b.set_framebuffer_state = si_set_framebuffer_state;
+	rctx->b.b.get_sample_position = si_get_sample_position;
 
-	rctx->context.create_vs_state = si_create_vs_state;
-	rctx->context.create_fs_state = si_create_fs_state;
-	rctx->context.bind_vs_state = si_bind_vs_shader;
-	rctx->context.bind_fs_state = si_bind_ps_shader;
-	rctx->context.delete_vs_state = si_delete_vs_shader;
-	rctx->context.delete_fs_state = si_delete_ps_shader;
+	rctx->b.b.create_vs_state = si_create_vs_state;
+	rctx->b.b.create_fs_state = si_create_fs_state;
+	rctx->b.b.bind_vs_state = si_bind_vs_shader;
+	rctx->b.b.bind_fs_state = si_bind_ps_shader;
+	rctx->b.b.delete_vs_state = si_delete_vs_shader;
+	rctx->b.b.delete_fs_state = si_delete_ps_shader;
 
-	rctx->context.create_sampler_state = si_create_sampler_state;
-	rctx->context.bind_vertex_sampler_states = si_bind_vs_sampler_states;
-	rctx->context.bind_fragment_sampler_states = si_bind_ps_sampler_states;
-	rctx->context.delete_sampler_state = si_delete_sampler_state;
+	rctx->b.b.create_sampler_state = si_create_sampler_state;
+	rctx->b.b.bind_vertex_sampler_states = si_bind_vs_sampler_states;
+	rctx->b.b.bind_fragment_sampler_states = si_bind_ps_sampler_states;
+	rctx->b.b.delete_sampler_state = si_delete_sampler_state;
 
-	rctx->context.create_sampler_view = si_create_sampler_view;
-	rctx->context.set_vertex_sampler_views = si_set_vs_sampler_views;
-	rctx->context.set_fragment_sampler_views = si_set_ps_sampler_views;
-	rctx->context.sampler_view_destroy = si_sampler_view_destroy;
+	rctx->b.b.create_sampler_view = si_create_sampler_view;
+	rctx->b.b.set_vertex_sampler_views = si_set_vs_sampler_views;
+	rctx->b.b.set_fragment_sampler_views = si_set_ps_sampler_views;
+	rctx->b.b.sampler_view_destroy = si_sampler_view_destroy;
 
-	rctx->context.set_sample_mask = si_set_sample_mask;
+	rctx->b.b.set_sample_mask = si_set_sample_mask;
 
-	rctx->context.set_constant_buffer = si_set_constant_buffer;
+	rctx->b.b.set_constant_buffer = si_set_constant_buffer;
 
-	rctx->context.create_vertex_elements_state = si_create_vertex_elements;
-	rctx->context.bind_vertex_elements_state = si_bind_vertex_elements;
-	rctx->context.delete_vertex_elements_state = si_delete_vertex_element;
-	rctx->context.set_vertex_buffers = si_set_vertex_buffers;
-	rctx->context.set_index_buffer = si_set_index_buffer;
+	rctx->b.b.create_vertex_elements_state = si_create_vertex_elements;
+	rctx->b.b.bind_vertex_elements_state = si_bind_vertex_elements;
+	rctx->b.b.delete_vertex_elements_state = si_delete_vertex_element;
+	rctx->b.b.set_vertex_buffers = si_set_vertex_buffers;
+	rctx->b.b.set_index_buffer = si_set_index_buffer;
 
-	rctx->context.create_stream_output_target = si_create_so_target;
-	rctx->context.stream_output_target_destroy = si_so_target_destroy;
-	rctx->context.set_stream_output_targets = si_set_so_targets;
+	rctx->b.b.texture_barrier = si_texture_barrier;
+	rctx->b.b.set_polygon_stipple = si_set_polygon_stipple;
 
-	rctx->context.texture_barrier = si_texture_barrier;
-	rctx->context.set_polygon_stipple = si_set_polygon_stipple;
-
-	rctx->context.draw_vbo = si_draw_vbo;
+	rctx->b.b.draw_vbo = si_draw_vbo;
 }
 
 void si_init_config(struct r600_context *rctx)
@@ -3292,7 +3289,7 @@ void si_init_config(struct r600_context *rctx)
 		       S_028AA8_PRIMGROUP_SIZE(63));
 	si_pm4_set_reg(pm4, R_028AB4_VGT_REUSE_OFF, 0x00000000);
 	si_pm4_set_reg(pm4, R_028AB8_VGT_VTX_CNT_EN, 0x0);
-	if (rctx->chip_class < CIK)
+	if (rctx->b.chip_class < CIK)
 		si_pm4_set_reg(pm4, R_008A14_PA_CL_ENHANCE, S_008A14_NUM_CLIP_SEQ(3) |
 			       S_008A14_CLIP_VTX_REORDER_ENA(1));
 
@@ -3302,8 +3299,8 @@ void si_init_config(struct r600_context *rctx)
 
 	si_pm4_set_reg(pm4, R_02882C_PA_SU_PRIM_FILTER_CNTL, 0);
 
-	if (rctx->chip_class >= CIK) {
-		switch (rctx->screen->family) {
+	if (rctx->b.chip_class >= CIK) {
+		switch (rctx->screen->b.family) {
 		case CHIP_BONAIRE:
 			si_pm4_set_reg(pm4, R_028350_PA_SC_RASTER_CONFIG, 0x16000012);
 			si_pm4_set_reg(pm4, R_028354_PA_SC_RASTER_CONFIG_1, 0x00000000);
@@ -3318,7 +3315,7 @@ void si_init_config(struct r600_context *rctx)
 			break;
 		}
 	} else {
-		switch (rctx->screen->family) {
+		switch (rctx->screen->b.family) {
 		case CHIP_TAHITI:
 		case CHIP_PITCAIRN:
 			si_pm4_set_reg(pm4, R_028350_PA_SC_RASTER_CONFIG, 0x2a00126a);

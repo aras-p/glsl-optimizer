@@ -1503,7 +1503,7 @@ int si_compile_llvm(struct r600_context *rctx, struct si_pipe_shader *shader,
 
 	memset(&binary, 0, sizeof(binary));
 	radeon_llvm_compile(mod, &binary,
-		r600_get_llvm_processor_name(rctx->screen->family), dump);
+		r600_get_llvm_processor_name(rctx->screen->b.family), dump);
 	if (dump) {
 		fprintf(stderr, "SI CODE:\n");
 		for (i = 0; i < binary.code_size; i+=4 ) {
@@ -1544,14 +1544,14 @@ int si_compile_llvm(struct r600_context *rctx, struct si_pipe_shader *shader,
 	}
 
 	/* copy new shader */
-	si_resource_reference(&shader->bo, NULL);
-	shader->bo = si_resource_create_custom(rctx->context.screen, PIPE_USAGE_IMMUTABLE,
+	r600_resource_reference(&shader->bo, NULL);
+	shader->bo = r600_resource_create_custom(rctx->b.b.screen, PIPE_USAGE_IMMUTABLE,
 					       binary.code_size);
 	if (shader->bo == NULL) {
 		return -ENOMEM;
 	}
 
-	ptr = (uint32_t*)rctx->ws->buffer_map(shader->bo->cs_buf, rctx->cs, PIPE_TRANSFER_WRITE);
+	ptr = (uint32_t*)rctx->b.ws->buffer_map(shader->bo->cs_buf, rctx->b.rings.gfx.cs, PIPE_TRANSFER_WRITE);
 	if (0 /*R600_BIG_ENDIAN*/) {
 		for (i = 0; i < binary.code_size / 4; ++i) {
 			ptr[i] = util_bswap32(*(uint32_t*)(binary.code + i*4));
@@ -1559,7 +1559,7 @@ int si_compile_llvm(struct r600_context *rctx, struct si_pipe_shader *shader,
 	} else {
 		memcpy(ptr, binary.code, binary.code_size);
 	}
-	rctx->ws->buffer_unmap(shader->bo->cs_buf);
+	rctx->b.ws->buffer_unmap(shader->bo->cs_buf);
 
 	free(binary.code);
 	free(binary.config);
@@ -1658,5 +1658,5 @@ int si_pipe_shader_create(
 
 void si_pipe_shader_destroy(struct pipe_context *ctx, struct si_pipe_shader *shader)
 {
-	si_resource_reference(&shader->bo, NULL);
+	r600_resource_reference(&shader->bo, NULL);
 }

@@ -31,6 +31,7 @@
 #include "radeonsi_pipe.h"
 #include "radeonsi_shader.h"
 #include "si_state.h"
+#include "../radeon/r600_cs.h"
 #include "sid.h"
 
 /*
@@ -107,7 +108,7 @@ static void si_pipe_shader_vs(struct pipe_context *ctx, struct si_pipe_shader *s
 	si_pm4_set_reg(pm4, R_00B12C_SPI_SHADER_PGM_RSRC2_VS,
 		       S_00B12C_USER_SGPR(num_user_sgprs));
 
-	if (rctx->chip_class >= CIK) {
+	if (rctx->b.chip_class >= CIK) {
 		si_pm4_set_reg(pm4, R_00B118_SPI_SHADER_PGM_RSRC3_VS,
 			       S_00B118_CU_EN(0xffff));
 		si_pm4_set_reg(pm4, R_00B11C_SPI_SHADER_LATE_ALLOC_VS,
@@ -233,7 +234,7 @@ static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *s
 	si_pm4_set_reg(pm4, R_00B02C_SPI_SHADER_PGM_RSRC2_PS,
 		       S_00B02C_EXTRA_LDS_SIZE(shader->lds_size) |
 		       S_00B02C_USER_SGPR(num_user_sgprs));
-	if (rctx->chip_class >= CIK) {
+	if (rctx->b.chip_class >= CIK) {
 		si_pm4_set_reg(pm4, R_00B01C_SPI_SHADER_PGM_RSRC3_PS,
 			       S_00B01C_CU_EN(0xffff));
 	}
@@ -290,7 +291,7 @@ static bool si_update_draw_info_state(struct r600_context *rctx,
 		return false;
 	}
 
-	if (rctx->chip_class >= CIK)
+	if (rctx->b.chip_class >= CIK)
 		si_pm4_set_reg(pm4, R_030908_VGT_PRIMITIVE_TYPE, prim);
 	else
 		si_pm4_set_reg(pm4, R_008958_VGT_PRIMITIVE_TYPE, prim);
@@ -454,7 +455,7 @@ static void si_update_derived_state(struct r600_context *rctx)
 
 static void si_constant_buffer_update(struct r600_context *rctx)
 {
-	struct pipe_context *ctx = &rctx->context;
+	struct pipe_context *ctx = &rctx->b.b;
 	struct si_pm4_state *pm4;
 	unsigned shader, i;
 	uint64_t va;
@@ -476,7 +477,7 @@ static void si_constant_buffer_update(struct r600_context *rctx)
 		for (i = 0; i < 2; i++) {
 			if (state->enabled_mask & (1 << i)) {
 				struct pipe_constant_buffer *cb = &state->cb[i];
-				struct si_resource *rbuffer = si_resource(cb->buffer);
+				struct r600_resource *rbuffer = r600_resource(cb->buffer);
 
 				va = r600_resource_va(ctx->screen, (void*)rbuffer);
 				va += cb->buffer_offset;
@@ -526,7 +527,7 @@ static void si_constant_buffer_update(struct r600_context *rctx)
 
 static void si_vertex_buffer_update(struct r600_context *rctx)
 {
-	struct pipe_context *ctx = &rctx->context;
+	struct pipe_context *ctx = &rctx->b.b;
 	struct si_pm4_state *pm4 = si_pm4_alloc_state(rctx);
 	bool bound[PIPE_MAX_ATTRIBS] = {};
 	unsigned i, count;
@@ -542,14 +543,14 @@ static void si_vertex_buffer_update(struct r600_context *rctx)
 	for (i = 0 ; i < count; i++) {
 		struct pipe_vertex_element *ve = &rctx->vertex_elements->elements[i];
 		struct pipe_vertex_buffer *vb;
-		struct si_resource *rbuffer;
+		struct r600_resource *rbuffer;
 		unsigned offset;
 
 		if (ve->vertex_buffer_index >= rctx->nr_vertex_buffers)
 			continue;
 
 		vb = &rctx->vertex_buffer[ve->vertex_buffer_index];
-		rbuffer = (struct si_resource*)vb->buffer;
+		rbuffer = (struct r600_resource*)vb->buffer;
 		if (rbuffer == NULL)
 			continue;
 
@@ -624,10 +625,10 @@ static void si_state_draw(struct r600_context *rctx,
 		uint32_t max_size = (ib->buffer->width0 - ib->offset) /
 				 rctx->index_buffer.index_size;
 		uint64_t va;
-		va = r600_resource_va(&rctx->screen->screen, ib->buffer);
+		va = r600_resource_va(&rctx->screen->b.b, ib->buffer);
 		va += ib->offset;
 
-		si_pm4_add_bo(pm4, (struct si_resource *)ib->buffer, RADEON_USAGE_READ);
+		si_pm4_add_bo(pm4, (struct r600_resource *)ib->buffer, RADEON_USAGE_READ);
 		si_cmd_draw_index_2(pm4, max_size, va, info->count,
 				    V_0287F0_DI_SRC_SEL_DMA,
 				    rctx->predicate_drawing);
@@ -668,9 +669,6 @@ void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 		if (ib.user_buffer && !ib.buffer) {
 			r600_upload_index_buffer(rctx, &ib, info->count);
 		}
-
-	} else if (info->count_from_stream_output) {
-		r600_context_draw_opaque_count(rctx, (struct r600_so_target*)info->count_from_stream_output);
 	}
 
 	rctx->vs_shader_so_strides = rctx->vs_shader->current->so_strides;
@@ -709,7 +707,7 @@ void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 
 	for (i = 0; i < SI_NUM_ATOMS(rctx); i++) {
 		if (rctx->atoms.array[i]->dirty) {
-			rctx->atoms.array[i]->emit(rctx, rctx->atoms.array[i]);
+			rctx->atoms.array[i]->emit(&rctx->b, rctx->atoms.array[i]);
 			rctx->atoms.array[i]->dirty = false;
 		}
 	}

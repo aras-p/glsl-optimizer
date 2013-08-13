@@ -24,11 +24,11 @@
  *      Christian König <christian.koenig@amd.com>
  */
 
+#include "../radeon/r600_cs.h"
 #include "util/u_memory.h"
 #include "radeonsi_pipe.h"
 #include "radeonsi_pm4.h"
 #include "sid.h"
-#include "r600_hw_context_priv.h"
 
 #define NUMBER_OF_STATES (sizeof(union si_state) / sizeof(struct si_pm4_state *))
 
@@ -92,13 +92,13 @@ void si_pm4_set_reg(struct si_pm4_state *state, unsigned reg, uint32_t val)
 }
 
 void si_pm4_add_bo(struct si_pm4_state *state,
-                   struct si_resource *bo,
+                   struct r600_resource *bo,
                    enum radeon_bo_usage usage)
 {
 	unsigned idx = state->nbo++;
 	assert(idx < SI_PM4_MAX_BO);
 
-	si_resource_reference(&state->bo[idx], bo);
+	r600_resource_reference(&state->bo[idx], bo);
 	state->bo_usage[idx] = usage;
 }
 
@@ -168,7 +168,7 @@ void si_pm4_free_state(struct r600_context *rctx,
 	}
 
 	for (int i = 0; i < state->nbo; ++i) {
-		si_resource_reference(&state->bo[i], NULL);
+		r600_resource_reference(&state->bo[i], NULL);
 	}
 	FREE(state);
 }
@@ -180,7 +180,7 @@ struct si_pm4_state * si_pm4_alloc_state(struct r600_context *rctx)
         if (pm4 == NULL)
                 return NULL;
 
-	pm4->chip_class = rctx->chip_class;
+	pm4->chip_class = rctx->b.chip_class;
 
 	return pm4;
 }
@@ -224,9 +224,9 @@ unsigned si_pm4_dirty_dw(struct r600_context *rctx)
 
 void si_pm4_emit(struct r600_context *rctx, struct si_pm4_state *state)
 {
-	struct radeon_winsys_cs *cs = rctx->cs;
+	struct radeon_winsys_cs *cs = rctx->b.rings.gfx.cs;
 	for (int i = 0; i < state->nbo; ++i) {
-		r600_context_bo_reloc(rctx, state->bo[i],
+		r600_context_bo_reloc(&rctx->b, &rctx->b.rings.gfx, state->bo[i],
 				      state->bo_usage[i]);
 	}
 

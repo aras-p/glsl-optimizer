@@ -84,7 +84,7 @@ static void r600_blitter_begin(struct pipe_context *ctx, enum r600_blitter_op op
 		rctx->saved_render_cond = rctx->current_render_cond;
 		rctx->saved_render_cond_cond = rctx->current_render_cond_cond;
 		rctx->saved_render_cond_mode = rctx->current_render_cond_mode;
-		rctx->context.render_condition(&rctx->context, NULL, FALSE, 0);
+		rctx->b.b.render_condition(&rctx->b.b, NULL, FALSE, 0);
 	}
 
 }
@@ -93,7 +93,7 @@ static void r600_blitter_end(struct pipe_context *ctx)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	if (rctx->saved_render_cond) {
-		rctx->context.render_condition(&rctx->context,
+		rctx->b.b.render_condition(&rctx->b.b,
 					       rctx->saved_render_cond,
 					       rctx->saved_render_cond_cond,
 					       rctx->saved_render_cond_mode);
@@ -212,13 +212,13 @@ static void si_blit_decompress_depth_in_place(struct r600_context *rctx,
 			surf_tmpl.u.tex.first_layer = layer;
 			surf_tmpl.u.tex.last_layer = layer;
 
-			zsurf = rctx->context.create_surface(&rctx->context, &texture->resource.b.b, &surf_tmpl);
+			zsurf = rctx->b.b.create_surface(&rctx->b.b, &texture->resource.b.b, &surf_tmpl);
 
-			r600_blitter_begin(&rctx->context, R600_DECOMPRESS);
+			r600_blitter_begin(&rctx->b.b, R600_DECOMPRESS);
 			util_blitter_custom_depth_stencil(rctx->blitter, zsurf, NULL, ~0,
 							  rctx->custom_dsa_flush_inplace,
 							  1.0f);
-			r600_blitter_end(&rctx->context);
+			r600_blitter_end(&rctx->b.b);
 
 			pipe_surface_reference(&zsurf, NULL);
 		}
@@ -316,7 +316,7 @@ void r600_decompress_color_textures(struct r600_context *rctx,
 		tex = (struct r600_texture *)view->texture;
 		assert(tex->cmask.size || tex->fmask.size);
 
-		r600_blit_decompress_color(&rctx->context, tex,
+		r600_blit_decompress_color(&rctx->b.b, tex,
 					   view->u.tex.first_level, view->u.tex.last_level,
 					   0, util_max_layer(&tex->resource.b.b, view->u.tex.first_level));
 	}
@@ -721,9 +721,9 @@ static void si_blit(struct pipe_context *ctx,
 
 void si_init_blit_functions(struct r600_context *rctx)
 {
-	rctx->context.clear = r600_clear;
-	rctx->context.clear_render_target = r600_clear_render_target;
-	rctx->context.clear_depth_stencil = r600_clear_depth_stencil;
-	rctx->context.resource_copy_region = r600_resource_copy_region;
-	rctx->context.blit = si_blit;
+	rctx->b.b.clear = r600_clear;
+	rctx->b.b.clear_render_target = r600_clear_render_target;
+	rctx->b.b.clear_depth_stencil = r600_clear_depth_stencil;
+	rctx->b.b.resource_copy_region = r600_resource_copy_region;
+	rctx->b.b.blit = si_blit;
 }

@@ -55,7 +55,7 @@ struct si_pm4_state
 
 	/* BO's referenced by this state */
 	unsigned		nbo;
-	struct si_resource	*bo[SI_PM4_MAX_BO];
+	struct r600_resource	*bo[SI_PM4_MAX_BO];
 	enum radeon_bo_usage	bo_usage[SI_PM4_MAX_BO];
 
 	/* relocs for shader data */
@@ -71,7 +71,7 @@ void si_pm4_cmd_end(struct si_pm4_state *state, bool predicate);
 
 void si_pm4_set_reg(struct si_pm4_state *state, unsigned reg, uint32_t val);
 void si_pm4_add_bo(struct si_pm4_state *state,
-		   struct si_resource *bo,
+		   struct r600_resource *bo,
 		   enum radeon_bo_usage usage);
 
 void si_pm4_sh_data_begin(struct si_pm4_state *state);

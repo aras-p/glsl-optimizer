@@ -37,7 +37,7 @@ struct r600_transfer {
 	/* Buffer transfer. */
 	struct pipe_transfer		*buffer_transfer;
 	unsigned			offset;
-	struct si_resource		*staging;
+	struct r600_resource		*staging;
 };
 
 struct r600_fmask_info {
@@ -58,7 +58,7 @@ struct r600_cmask_info {
 };
 
 struct r600_texture {
-	struct si_resource		resource;
+	struct r600_resource		resource;
 
 	unsigned			size;
 	unsigned			pitch_override;
@@ -93,7 +93,7 @@ bool r600_init_flushed_depth_texture(struct pipe_context *ctx,
 
 struct r600_context;
 
-void r600_upload_const_buffer(struct r600_context *rctx, struct si_resource **rbuffer,
+void r600_upload_const_buffer(struct r600_context *rctx, struct r600_resource **rbuffer,
 			      const uint8_t *ptr, unsigned size,
 			      uint32_t *const_offset);
 

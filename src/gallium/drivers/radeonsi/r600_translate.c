@@ -42,7 +42,7 @@ void r600_translate_index_buffer(struct r600_context *r600,
 			       &out_offset, &out_buffer, &ptr);
 
 		util_shorten_ubyte_elts_to_userptr(
-				&r600->context, ib, 0, ib->offset, count, ptr);
+				&r600->b.b, ib, 0, ib->offset, count, ptr);
 
 		pipe_resource_reference(&ib->buffer, NULL);
 		ib->buffer = out_buffer;

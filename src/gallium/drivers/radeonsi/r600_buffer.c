@@ -38,7 +38,7 @@
 static void r600_buffer_destroy(struct pipe_screen *screen,
 				struct pipe_resource *buf)
 {
-	struct si_resource *rbuffer = si_resource(buf);
+	struct r600_resource *rbuffer = r600_resource(buf);
 
 	pb_reference(&rbuffer->buf, NULL);
 	FREE(rbuffer);
@@ -53,10 +53,10 @@ static void *r600_buffer_transfer_map(struct pipe_context *ctx,
 {
 	struct r600_context *rctx = (struct r600_context*)ctx;
 	struct pipe_transfer *transfer;
-        struct si_resource *rbuffer = si_resource(resource);
+        struct r600_resource *rbuffer = r600_resource(resource);
         uint8_t *data;
 
-	data = rctx->ws->buffer_map(rbuffer->cs_buf, rctx->cs, usage);
+	data = rctx->b.ws->buffer_map(rbuffer->cs_buf, rctx->b.rings.gfx.cs, usage);
         if (!data) {
 		return NULL;
         }
@@ -97,7 +97,7 @@ static const struct u_resource_vtbl r600_buffer_vtbl =
 };
 
 bool si_init_resource(struct r600_screen *rscreen,
-			struct si_resource *res,
+			struct r600_resource *res,
 			unsigned size, unsigned alignment,
 			boolean use_reusable_pool, unsigned usage)
 {
@@ -128,14 +128,14 @@ bool si_init_resource(struct r600_screen *rscreen,
 		}
 	}
 
-	res->buf = rscreen->ws->buffer_create(rscreen->ws, size, alignment,
+	res->buf = rscreen->b.ws->buffer_create(rscreen->b.ws, size, alignment,
                                               use_reusable_pool,
                                               initial_domain);
 	if (!res->buf) {
 		return false;
 	}
 
-	res->cs_buf = rscreen->ws->buffer_get_cs_handle(res->buf);
+	res->cs_buf = rscreen->b.ws->buffer_get_cs_handle(res->buf);
 	res->domains = domains;
 	return true;
 }
@@ -144,16 +144,17 @@ struct pipe_resource *si_buffer_create(struct pipe_screen *screen,
 				       const struct pipe_resource *templ)
 {
 	struct r600_screen *rscreen = (struct r600_screen*)screen;
-	struct si_resource *rbuffer;
+	struct r600_resource *rbuffer;
 	/* XXX We probably want a different alignment for buffers and textures. */
 	unsigned alignment = 4096;
 
-	rbuffer = MALLOC_STRUCT(si_resource);
+	rbuffer = MALLOC_STRUCT(r600_resource);
 
 	rbuffer->b.b = *templ;
 	pipe_reference_init(&rbuffer->b.b.reference, 1);
 	rbuffer->b.b.screen = screen;
 	rbuffer->b.vtbl = &r600_buffer_vtbl;
+	util_range_init(&rbuffer->valid_buffer_range);
 
 	if (!si_init_resource(rscreen, rbuffer, templ->width0, alignment, TRUE, templ->usage)) {
 		FREE(rbuffer);
@@ -169,7 +170,7 @@ void r600_upload_index_buffer(struct r600_context *rctx,
 		      ib->user_buffer, &ib->offset, &ib->buffer);
 }
 
-void r600_upload_const_buffer(struct r600_context *rctx, struct si_resource **rbuffer,
+void r600_upload_const_buffer(struct r600_context *rctx, struct r600_resource **rbuffer,
 			const uint8_t *ptr, unsigned size,
 			uint32_t *const_offset)
 {

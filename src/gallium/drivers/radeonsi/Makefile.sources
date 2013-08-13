@@ -12,7 +12,6 @@ C_SOURCES := \
 	radeonsi_compute.c \
 	si_descriptors.c \
 	si_state.c \
-	si_state_streamout.c \
 	si_state_draw.c \
 	si_commands.c \
 	radeonsi_uvd.c

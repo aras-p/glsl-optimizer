@@ -23,7 +23,7 @@
  * Authors:
  *      Jerome Glisse
  */
-#include "r600_hw_context_priv.h"
+#include "../radeon/r600_cs.h"
 #include "radeonsi_pm4.h"
 #include "radeonsi_pipe.h"
 #include "sid.h"
@@ -35,16 +35,16 @@
 /* Get backends mask */
 void si_get_backend_mask(struct r600_context *ctx)
 {
-	struct radeon_winsys_cs *cs = ctx->cs;
-	struct si_resource *buffer;
+	struct radeon_winsys_cs *cs = ctx->b.rings.gfx.cs;
+	struct r600_resource *buffer;
 	uint32_t *results;
-	unsigned num_backends = ctx->screen->info.r600_num_backends;
+	unsigned num_backends = ctx->screen->b.info.r600_num_backends;
 	unsigned i, mask = 0;
 
 	/* if backend_map query is supported by the kernel */
-	if (ctx->screen->info.r600_backend_map_valid) {
-		unsigned num_tile_pipes = ctx->screen->info.r600_num_tile_pipes;
-		unsigned backend_map = ctx->screen->info.r600_backend_map;
+	if (ctx->screen->b.info.r600_backend_map_valid) {
+		unsigned num_tile_pipes = ctx->screen->b.info.r600_num_tile_pipes;
+		unsigned backend_map = ctx->screen->b.info.r600_backend_map;
 		unsigned item_width = 4, item_mask = 0x7;
 
 		while(num_tile_pipes--) {
@@ -61,43 +61,43 @@ void si_get_backend_mask(struct r600_context *ctx)
 	/* otherwise backup path for older kernels */
 
 	/* create buffer for event data */
-	buffer = si_resource_create_custom(&ctx->screen->screen,
+	buffer = r600_resource_create_custom(&ctx->screen->b.b,
 					   PIPE_USAGE_STAGING,
 					   ctx->max_db*16);
 	if (!buffer)
 		goto err;
 
 	/* initialize buffer with zeroes */
-	results = ctx->ws->buffer_map(buffer->cs_buf, ctx->cs, PIPE_TRANSFER_WRITE);
+	results = ctx->b.ws->buffer_map(buffer->cs_buf, ctx->b.rings.gfx.cs, PIPE_TRANSFER_WRITE);
 	if (results) {
 		uint64_t va = 0;
 
 		memset(results, 0, ctx->max_db * 4 * 4);
-		ctx->ws->buffer_unmap(buffer->cs_buf);
+		ctx->b.ws->buffer_unmap(buffer->cs_buf);
 
 		/* emit EVENT_WRITE for ZPASS_DONE */
-		va = r600_resource_va(&ctx->screen->screen, (void *)buffer);
+		va = r600_resource_va(&ctx->screen->b.b, (void *)buffer);
 		cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 2, 0);
 		cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_ZPASS_DONE) | EVENT_INDEX(1);
 		cs->buf[cs->cdw++] = va;
 		cs->buf[cs->cdw++] = va >> 32;
 
 		cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
-		cs->buf[cs->cdw++] = r600_context_bo_reloc(ctx, buffer, RADEON_USAGE_WRITE);
+		cs->buf[cs->cdw++] = r600_context_bo_reloc(&ctx->b, &ctx->b.rings.gfx, buffer, RADEON_USAGE_WRITE);
 
 		/* analyze results */
-		results = ctx->ws->buffer_map(buffer->cs_buf, ctx->cs, PIPE_TRANSFER_READ);
+		results = ctx->b.ws->buffer_map(buffer->cs_buf, ctx->b.rings.gfx.cs, PIPE_TRANSFER_READ);
 		if (results) {
 			for(i = 0; i < ctx->max_db; i++) {
 				/* at least highest bit will be set if backend is used */
 				if (results[i*4 + 1])
 					mask |= (1<<i);
 			}
-			ctx->ws->buffer_unmap(buffer->cs_buf);
+			ctx->b.ws->buffer_unmap(buffer->cs_buf);
 		}
 	}
 
-	si_resource_reference(&buffer, NULL);
+	r600_resource_reference(&buffer, NULL);
 
 	if (mask != 0) {
 		ctx->backend_mask = mask;
@@ -129,7 +129,7 @@ void si_need_cs_space(struct r600_context *ctx, unsigned num_dw,
 	int i;
 
 	/* The number of dwords we already used in the CS so far. */
-	num_dw += ctx->cs->cdw;
+	num_dw += ctx->b.rings.gfx.cs->cdw;
 
 	for (i = 0; i < SI_NUM_ATOMS(ctx); i++) {
 		if (ctx->atoms.array[i]->dirty) {
@@ -170,7 +170,7 @@ void si_need_cs_space(struct r600_context *ctx, unsigned num_dw,
 
 	/* Flush if there's not enough space. */
 	if (num_dw > RADEON_MAX_CMDBUF_DWORDS) {
-		radeonsi_flush(&ctx->context, NULL, RADEON_FLUSH_ASYNC);
+		radeonsi_flush(&ctx->b.b, NULL, RADEON_FLUSH_ASYNC);
 	}
 }
 
@@ -207,7 +207,7 @@ static void r600_flush_framebuffer(struct r600_context *ctx)
 
 void si_context_flush(struct r600_context *ctx, unsigned flags)
 {
-	struct radeon_winsys_cs *cs = ctx->cs;
+	struct radeon_winsys_cs *cs = ctx->b.rings.gfx.cs;
 	bool queries_suspended = false;
 
 #if 0
@@ -252,7 +252,7 @@ void si_context_flush(struct r600_context *ctx, unsigned flags)
 #endif
 
 	/* Flush the CS. */
-	ctx->ws->cs_flush(ctx->cs, flags, 0);
+	ctx->b.ws->cs_flush(ctx->b.rings.gfx.cs, flags, 0);
 
 #if R600_TRACE_CS
 	if (ctx->screen->trace_bo) {
@@ -301,14 +301,14 @@ void si_context_flush(struct r600_context *ctx, unsigned flags)
 	si_all_descriptors_begin_new_cs(ctx);
 }
 
-void si_context_emit_fence(struct r600_context *ctx, struct si_resource *fence_bo, unsigned offset, unsigned value)
+void si_context_emit_fence(struct r600_context *ctx, struct r600_resource *fence_bo, unsigned offset, unsigned value)
 {
-	struct radeon_winsys_cs *cs = ctx->cs;
+	struct radeon_winsys_cs *cs = ctx->b.rings.gfx.cs;
 	uint64_t va;
 
 	si_need_cs_space(ctx, 10, FALSE);
 
-	va = r600_resource_va(&ctx->screen->screen, (void*)fence_bo);
+	va = r600_resource_va(&ctx->screen->b.b, (void*)fence_bo);
 	va = va + (offset << 2);
 
 	cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
@@ -321,7 +321,7 @@ void si_context_emit_fence(struct r600_context *ctx, struct si_resource *fence_b
 	cs->buf[cs->cdw++] = value;                   /* DATA_LO */
 	cs->buf[cs->cdw++] = 0;                       /* DATA_HI */
 	cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
-	cs->buf[cs->cdw++] = r600_context_bo_reloc(ctx, fence_bo, RADEON_USAGE_WRITE);
+	cs->buf[cs->cdw++] = r600_context_bo_reloc(&ctx->b, &ctx->b.rings.gfx, fence_bo, RADEON_USAGE_WRITE);
 }
 
 static unsigned r600_query_read_result(char *map, unsigned start_index, unsigned end_index,
@@ -347,7 +347,7 @@ static boolean r600_query_result(struct r600_context *ctx, struct r600_query *qu
 	unsigned results_base = query->results_start;
 	char *map;
 
-	map = ctx->ws->buffer_map(query->buffer->cs_buf, ctx->cs,
+	map = ctx->b.ws->buffer_map(query->buffer->cs_buf, ctx->b.rings.gfx.cs,
 				  PIPE_TRANSFER_READ |
 				  (wait ? 0 : PIPE_TRANSFER_DONTBLOCK));
 	if (!map)
@@ -425,13 +425,13 @@ static boolean r600_query_result(struct r600_context *ctx, struct r600_query *qu
 	}
 
 	query->results_start = query->results_end;
-	ctx->ws->buffer_unmap(query->buffer->cs_buf);
+	ctx->b.ws->buffer_unmap(query->buffer->cs_buf);
 	return TRUE;
 }
 
 void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 {
-	struct radeon_winsys_cs *cs = ctx->cs;
+	struct radeon_winsys_cs *cs = ctx->b.rings.gfx.cs;
 	unsigned new_results_end, i;
 	uint32_t *results;
 	uint64_t va;
@@ -448,7 +448,7 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 	switch (query->type) {
 	case PIPE_QUERY_OCCLUSION_COUNTER:
 	case PIPE_QUERY_OCCLUSION_PREDICATE:
-		results = ctx->ws->buffer_map(query->buffer->cs_buf, ctx->cs, PIPE_TRANSFER_WRITE);
+		results = ctx->b.ws->buffer_map(query->buffer->cs_buf, ctx->b.rings.gfx.cs, PIPE_TRANSFER_WRITE);
 		if (results) {
 			results = (uint32_t*)((char*)results + query->results_end);
 			memset(results, 0, query->result_size);
@@ -460,7 +460,7 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 					results[(i * 4)+3] = 0x80000000;
 				}
 			}
-			ctx->ws->buffer_unmap(query->buffer->cs_buf);
+			ctx->b.ws->buffer_unmap(query->buffer->cs_buf);
 		}
 		break;
 	case PIPE_QUERY_TIME_ELAPSED:
@@ -469,17 +469,17 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 	case PIPE_QUERY_PRIMITIVES_GENERATED:
 	case PIPE_QUERY_SO_STATISTICS:
 	case PIPE_QUERY_SO_OVERFLOW_PREDICATE:
-		results = ctx->ws->buffer_map(query->buffer->cs_buf, ctx->cs, PIPE_TRANSFER_WRITE);
+		results = ctx->b.ws->buffer_map(query->buffer->cs_buf, ctx->b.rings.gfx.cs, PIPE_TRANSFER_WRITE);
 		results = (uint32_t*)((char*)results + query->results_end);
 		memset(results, 0, query->result_size);
-		ctx->ws->buffer_unmap(query->buffer->cs_buf);
+		ctx->b.ws->buffer_unmap(query->buffer->cs_buf);
 		break;
 	default:
 		assert(0);
 	}
 
 	/* emit begin query */
-	va = r600_resource_va(&ctx->screen->screen, (void*)query->buffer);
+	va = r600_resource_va(&ctx->screen->b.b, (void*)query->buffer);
 	va += query->results_end;
 
 	switch (query->type) {
@@ -511,7 +511,7 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 		assert(0);
 	}
 	cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
-	cs->buf[cs->cdw++] = r600_context_bo_reloc(ctx, query->buffer, RADEON_USAGE_WRITE);
+	cs->buf[cs->cdw++] = r600_context_bo_reloc(&ctx->b, &ctx->b.rings.gfx, query->buffer, RADEON_USAGE_WRITE);
 
 	if (!si_is_timer_query(query->type)) {
 		ctx->num_cs_dw_nontimer_queries_suspend += query->num_cs_dw;
@@ -520,7 +520,7 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 
 void r600_query_end(struct r600_context *ctx, struct r600_query *query)
 {
-	struct radeon_winsys_cs *cs = ctx->cs;
+	struct radeon_winsys_cs *cs = ctx->b.rings.gfx.cs;
 	uint64_t va;
 	unsigned new_results_end;
 
@@ -536,7 +536,7 @@ void r600_query_end(struct r600_context *ctx, struct r600_query *query)
 		}
 	}
 
-	va = r600_resource_va(&ctx->screen->screen, (void*)query->buffer);
+	va = r600_resource_va(&ctx->screen->b.b, (void*)query->buffer);
 	/* emit end query */
 	switch (query->type) {
 	case PIPE_QUERY_OCCLUSION_COUNTER:
@@ -571,7 +571,7 @@ void r600_query_end(struct r600_context *ctx, struct r600_query *query)
 		assert(0);
 	}
 	cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
-	cs->buf[cs->cdw++] = r600_context_bo_reloc(ctx, query->buffer, RADEON_USAGE_WRITE);
+	cs->buf[cs->cdw++] = r600_context_bo_reloc(&ctx->b, &ctx->b.rings.gfx, query->buffer, RADEON_USAGE_WRITE);
 
 	query->results_end = (query->results_end + query->result_size) % query->buffer->b.b.width0;
 
@@ -583,7 +583,7 @@ void r600_query_end(struct r600_context *ctx, struct r600_query *query)
 void r600_query_predication(struct r600_context *ctx, struct r600_query *query, int operation,
 			    int flag_wait)
 {
-	struct radeon_winsys_cs *cs = ctx->cs;
+	struct radeon_winsys_cs *cs = ctx->b.rings.gfx.cs;
 	uint64_t va;
 
 	if (operation == PREDICATION_OP_CLEAR) {
@@ -605,7 +605,7 @@ void r600_query_predication(struct r600_context *ctx, struct r600_query *query, 
 
 		op = PRED_OP(operation) | PREDICATION_DRAW_VISIBLE |
 				(flag_wait ? PREDICATION_HINT_WAIT : PREDICATION_HINT_NOWAIT_DRAW);
-		va = r600_resource_va(&ctx->screen->screen, (void*)query->buffer);
+		va = r600_resource_va(&ctx->screen->b.b, (void*)query->buffer);
 
 		/* emit predicate packets for all data blocks */
 		while (results_base != query->results_end) {
@@ -613,8 +613,8 @@ void r600_query_predication(struct r600_context *ctx, struct r600_query *query, 
 			cs->buf[cs->cdw++] = (va + results_base) & 0xFFFFFFFFUL;
 			cs->buf[cs->cdw++] = op | (((va + results_base) >> 32UL) & 0xFF);
 			cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
-			cs->buf[cs->cdw++] = r600_context_bo_reloc(ctx, query->buffer,
-									     RADEON_USAGE_READ);
+			cs->buf[cs->cdw++] = r600_context_bo_reloc(&ctx->b, &ctx->b.rings.gfx,
+								   query->buffer, RADEON_USAGE_READ);
 			results_base = (results_base + query->result_size) % query->buffer->b.b.width0;
 
 			/* set CONTINUE bit for all packets except the first */
@@ -669,7 +669,7 @@ struct r600_query *r600_context_query_create(struct r600_context *ctx, unsigned 
 	 * being written by the gpu, hence staging is probably a good
 	 * usage pattern.
 	 */
-	query->buffer = si_resource_create_custom(&ctx->screen->screen,
+	query->buffer = r600_resource_create_custom(&ctx->screen->b.b,
 						  PIPE_USAGE_STAGING,
 						  buffer_size);
 	if (!query->buffer) {
@@ -681,7 +681,7 @@ struct r600_query *r600_context_query_create(struct r600_context *ctx, unsigned 
 
 void r600_context_query_destroy(struct r600_context *ctx, struct r600_query *query)
 {
-	si_resource_reference(&query->buffer, NULL);
+	r600_resource_reference(&query->buffer, NULL);
 	free(query);
 }
 
@@ -709,7 +709,7 @@ boolean r600_context_query_result(struct r600_context *ctx,
 		break;
 	case PIPE_QUERY_TIMESTAMP:
 	case PIPE_QUERY_TIME_ELAPSED:
-		*result_u64 = (1000000 * query->result.u64) / ctx->screen->info.r600_clock_crystal_freq;
+		*result_u64 = (1000000 * query->result.u64) / ctx->screen->b.info.r600_clock_crystal_freq;
 		break;
 	case PIPE_QUERY_SO_STATISTICS:
 		*result_so = query->result.so;
@@ -739,33 +739,6 @@ void r600_context_queries_resume(struct r600_context *ctx)
 	LIST_FOR_EACH_ENTRY(query, &ctx->active_nontimer_query_list, list) {
 		r600_query_begin(ctx, query);
 	}
-}
-
-void r600_context_draw_opaque_count(struct r600_context *ctx, struct r600_so_target *t)
-{
-	struct radeon_winsys_cs *cs = ctx->cs;
-	si_need_cs_space(ctx, 14 + 21, TRUE);
-
-	cs->buf[cs->cdw++] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
-	cs->buf[cs->cdw++] = (R_028B28_VGT_STRMOUT_DRAW_OPAQUE_OFFSET - SI_CONTEXT_REG_OFFSET) >> 2;
-	cs->buf[cs->cdw++] = 0;
-
-	cs->buf[cs->cdw++] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
-	cs->buf[cs->cdw++] = (R_028B30_VGT_STRMOUT_DRAW_OPAQUE_VERTEX_STRIDE - SI_CONTEXT_REG_OFFSET) >> 2;
-	cs->buf[cs->cdw++] = t->stride >> 2;
-
-#if 0
-	cs->buf[cs->cdw++] = PKT3(PKT3_COPY_DW, 4, 0);
-	cs->buf[cs->cdw++] = COPY_DW_SRC_IS_MEM | COPY_DW_DST_IS_REG;
-	cs->buf[cs->cdw++] = 0; /* src address lo */
-	cs->buf[cs->cdw++] = 0; /* src address hi */
-	cs->buf[cs->cdw++] = R_028B2C_VGT_STRMOUT_DRAW_OPAQUE_BUFFER_FILLED_SIZE >> 2; /* dst register */
-	cs->buf[cs->cdw++] = 0; /* unused */
-#endif
-
-	cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
-	cs->buf[cs->cdw++] = r600_context_bo_reloc(ctx, t->filled_size, RADEON_USAGE_READ);
-
 }
 
 #if R600_TRACE_CS

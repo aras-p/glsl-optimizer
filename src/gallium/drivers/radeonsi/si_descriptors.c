@@ -23,11 +23,10 @@
  * Authors:
  *      Marek Olšák <marek.olsak@amd.com>
  */
-
+#include "../radeon/r600_cs.h"
 #include "radeonsi_pipe.h"
 #include "radeonsi_resource.h"
 #include "radeonsi_shader.h"
-#include "r600_hw_context_priv.h"
 
 #include "util/u_memory.h"
 
@@ -51,14 +50,14 @@ static void si_emit_cp_dma_copy_buffer(struct r600_context *rctx,
 				       uint64_t dst_va, uint64_t src_va,
 				       unsigned size, unsigned flags)
 {
-	struct radeon_winsys_cs *cs = rctx->cs;
+	struct radeon_winsys_cs *cs = rctx->b.rings.gfx.cs;
 	uint32_t sync_flag = flags & R600_CP_DMA_SYNC ? PKT3_CP_DMA_CP_SYNC : 0;
 	uint32_t raw_wait = flags & SI_CP_DMA_RAW_WAIT ? PKT3_CP_DMA_CMD_RAW_WAIT : 0;
 
 	assert(size);
 	assert((size & ((1<<21)-1)) == size);
 
-	if (rctx->chip_class >= CIK) {
+	if (rctx->b.chip_class >= CIK) {
 		radeon_emit(cs, PKT3(PKT3_DMA_DATA, 5, 0));
 		radeon_emit(cs, sync_flag);		/* CP_SYNC [31] */
 		radeon_emit(cs, src_va);		/* SRC_ADDR_LO [31:0] */
@@ -81,14 +80,14 @@ static void si_emit_cp_dma_clear_buffer(struct r600_context *rctx,
 					uint64_t dst_va, unsigned size,
 					uint32_t clear_value, unsigned flags)
 {
-	struct radeon_winsys_cs *cs = rctx->cs;
+	struct radeon_winsys_cs *cs = rctx->b.rings.gfx.cs;
 	uint32_t sync_flag = flags & R600_CP_DMA_SYNC ? PKT3_CP_DMA_CP_SYNC : 0;
 	uint32_t raw_wait = flags & SI_CP_DMA_RAW_WAIT ? PKT3_CP_DMA_CMD_RAW_WAIT : 0;
 
 	assert(size);
 	assert((size & ((1<<21)-1)) == size);
 
-	if (rctx->chip_class >= CIK) {
+	if (rctx->b.chip_class >= CIK) {
 		radeon_emit(cs, PKT3(PKT3_DMA_DATA, 5, 0));
 		radeon_emit(cs, sync_flag | PKT3_CP_DMA_SRC_SEL(2)); /* CP_SYNC [31] | SRC_SEL[30:29] */
 		radeon_emit(cs, clear_value);		/* DATA [31:0] */
@@ -111,26 +110,26 @@ static void si_init_descriptors(struct r600_context *rctx,
 				unsigned shader_userdata_reg,
 				unsigned element_dw_size,
 				unsigned num_elements,
-				void (*emit_func)(struct r600_context *ctx, struct si_atom *state))
+				void (*emit_func)(struct r600_context *ctx, struct r600_atom *state))
 {
 	uint64_t va;
 
 	assert(num_elements <= sizeof(desc->enabled_mask)*8);
 	assert(num_elements <= sizeof(desc->dirty_mask)*8);
 
-	desc->atom.emit = emit_func;
+	desc->atom.emit = (void*)emit_func;
 	desc->shader_userdata_reg = shader_userdata_reg;
 	desc->element_dw_size = element_dw_size;
 	desc->num_elements = num_elements;
 	desc->context_size = num_elements * element_dw_size * 4;
 
-	desc->buffer = (struct si_resource*)
-		pipe_buffer_create(rctx->context.screen, PIPE_BIND_CUSTOM,
+	desc->buffer = (struct r600_resource*)
+		pipe_buffer_create(rctx->b.b.screen, PIPE_BIND_CUSTOM,
 				   PIPE_USAGE_STATIC,
 				   SI_NUM_CONTEXTS * desc->context_size);
 
-	r600_context_bo_reloc(rctx, desc->buffer, RADEON_USAGE_READWRITE);
-	va = r600_resource_va(rctx->context.screen, &desc->buffer->b.b);
+	r600_context_bo_reloc(&rctx->b, &rctx->b.rings.gfx, desc->buffer, RADEON_USAGE_READWRITE);
+	va = r600_resource_va(rctx->b.b.screen, &desc->buffer->b.b);
 
 	/* We don't check for CS space here, because this should be called
 	 * only once at context initialization. */
@@ -159,8 +158,8 @@ static void si_update_descriptors(struct si_descriptors *desc)
 static void si_emit_shader_pointer(struct r600_context *rctx,
 				   struct si_descriptors *desc)
 {
-	struct radeon_winsys_cs *cs = rctx->cs;
-	uint64_t va = r600_resource_va(rctx->context.screen, &desc->buffer->b.b) +
+	struct radeon_winsys_cs *cs = rctx->b.rings.gfx.cs;
+	uint64_t va = r600_resource_va(rctx->b.b.screen, &desc->buffer->b.b) +
 		      desc->current_context_id * desc->context_size;
 
 	radeon_emit(cs, PKT3(PKT3_SET_SH_REG, 2, 0));
@@ -173,7 +172,7 @@ static void si_emit_descriptors(struct r600_context *rctx,
 				struct si_descriptors *desc,
 				const uint32_t **descriptors)
 {
-	struct radeon_winsys_cs *cs = rctx->cs;
+	struct radeon_winsys_cs *cs = rctx->b.rings.gfx.cs;
 	uint64_t va_base;
 	int packet_start;
 	int packet_size = 0;
@@ -183,7 +182,7 @@ static void si_emit_descriptors(struct r600_context *rctx,
 
 	assert(dirty_mask);
 
-	va_base = r600_resource_va(rctx->context.screen, &desc->buffer->b.b);
+	va_base = r600_resource_va(rctx->b.b.screen, &desc->buffer->b.b);
 
 	/* Copy the descriptors to a new context slot. */
 	si_emit_cp_dma_copy_buffer(rctx,
@@ -252,7 +251,7 @@ static unsigned si_get_shader_user_data_base(unsigned shader)
 
 /* SAMPLER VIEWS */
 
-static void si_emit_sampler_views(struct r600_context *rctx, struct si_atom *atom)
+static void si_emit_sampler_views(struct r600_context *rctx, struct r600_atom *atom)
 {
 	struct si_sampler_views *views = (struct si_sampler_views*)atom;
 
@@ -290,10 +289,10 @@ static void si_sampler_views_begin_new_cs(struct r600_context *rctx,
 		struct si_pipe_sampler_view *rview =
 			(struct si_pipe_sampler_view*)views->views[i];
 
-		r600_context_bo_reloc(rctx, rview->resource, RADEON_USAGE_READ);
+		r600_context_bo_reloc(&rctx->b, &rctx->b.rings.gfx, rview->resource, RADEON_USAGE_READ);
 	}
 
-	r600_context_bo_reloc(rctx, views->desc.buffer, RADEON_USAGE_READWRITE);
+	r600_context_bo_reloc(&rctx->b, &rctx->b.rings.gfx, views->desc.buffer, RADEON_USAGE_READWRITE);
 
 	si_emit_shader_pointer(rctx, &views->desc);
 }
@@ -311,7 +310,7 @@ void si_set_sampler_view(struct r600_context *rctx, unsigned shader,
 		struct si_pipe_sampler_view *rview =
 			(struct si_pipe_sampler_view*)view;
 
-		r600_context_bo_reloc(rctx, rview->resource, RADEON_USAGE_READ);
+		r600_context_bo_reloc(&rctx->b, &rctx->b.rings.gfx, rview->resource, RADEON_USAGE_READ);
 
 		pipe_sampler_view_reference(&views->views[slot], view);
 		views->desc_data[slot] = view_desc;

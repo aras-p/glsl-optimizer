@@ -132,7 +132,7 @@
 #define PKT3_PREDICATE(x)               (((x) >> 0) & 0x1)
 #define PKT3_SHADER_TYPE_S(x)           (((x) & 0x1) << 1)
 #define PKT0(index, count) (PKT_TYPE_S(0) | PKT0_BASE_INDEX_S(index) | PKT_COUNT_S(count))
-#define PKT3(op, count, predicate) (PKT_TYPE_S(3) | PKT3_IT_OPCODE_S(op) | PKT_COUNT_S(count) | PKT3_PREDICATE(predicate))
+#define PKT3(op, count, predicate) (PKT_TYPE_S(3) | PKT_COUNT_S(count) | PKT3_IT_OPCODE_S(op) | PKT3_PREDICATE(predicate))
 
 #define PKT3_CP_DMA					0x41
 /* 1. header

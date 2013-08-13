@@ -219,7 +219,7 @@ static int r600_setup_surface(struct pipe_screen *screen,
 	struct r600_screen *rscreen = (struct r600_screen*)screen;
 	int r;
 
-	r = rscreen->ws->surface_init(rscreen->ws, &rtex->surface);
+	r = rscreen->b.ws->surface_init(rscreen->b.ws, &rtex->surface);
 	if (r) {
 		return r;
 	}
@@ -246,11 +246,11 @@ static boolean r600_texture_get_handle(struct pipe_screen* screen,
 					struct winsys_handle *whandle)
 {
 	struct r600_texture *rtex = (struct r600_texture*)ptex;
-	struct si_resource *resource = &rtex->resource;
+	struct r600_resource *resource = &rtex->resource;
 	struct radeon_surface *surface = &rtex->surface;
 	struct r600_screen *rscreen = (struct r600_screen*)screen;
 
-	rscreen->ws->buffer_set_tiling(resource->buf,
+	rscreen->b.ws->buffer_set_tiling(resource->buf,
 				       NULL,
 				       surface->level[0].mode >= RADEON_SURF_MODE_1D ?
 				       RADEON_LAYOUT_TILED : RADEON_LAYOUT_LINEAR,
@@ -262,7 +262,7 @@ static boolean r600_texture_get_handle(struct pipe_screen* screen,
 				       surface->mtilea,
 				       surface->level[0].pitch_bytes);
 
-	return rscreen->ws->buffer_get_handle(resource->buf,
+	return rscreen->b.ws->buffer_get_handle(resource->buf,
 					      surface->level[0].pitch_bytes, whandle);
 }
 
@@ -270,10 +270,10 @@ static void r600_texture_destroy(struct pipe_screen *screen,
 				 struct pipe_resource *ptex)
 {
 	struct r600_texture *rtex = (struct r600_texture*)ptex;
-	struct si_resource *resource = &rtex->resource;
+	struct r600_resource *resource = &rtex->resource;
 
 	if (rtex->flushed_depth_texture)
-		si_resource_reference((struct si_resource **)&rtex->flushed_depth_texture, NULL);
+		r600_resource_reference((struct r600_resource **)&rtex->flushed_depth_texture, NULL);
 
 	pb_reference(&resource->buf, NULL);
 	FREE(rtex);
@@ -312,7 +312,7 @@ static void r600_texture_get_fmask_info(struct r600_screen *rscreen,
 		return;
 	}
 
-	if (rscreen->ws->surface_init(rscreen->ws, &fmask)) {
+	if (rscreen->b.ws->surface_init(rscreen->b.ws, &fmask)) {
 		R600_ERR("Got error in surface_init while allocating FMASK.\n");
 		return;
 	}
@@ -402,7 +402,7 @@ r600_texture_create_object(struct pipe_screen *screen,
 			   struct radeon_surface *surface)
 {
 	struct r600_texture *rtex;
-	struct si_resource *resource;
+	struct r600_resource *resource;
 	struct r600_screen *rscreen = (struct r600_screen*)screen;
 	int r;
 
@@ -448,13 +448,13 @@ r600_texture_create_object(struct pipe_screen *screen,
 		}
 	} else if (buf) {
 		resource->buf = buf;
-		resource->cs_buf = rscreen->ws->buffer_get_cs_handle(buf);
+		resource->cs_buf = rscreen->b.ws->buffer_get_cs_handle(buf);
 		resource->domains = RADEON_DOMAIN_GTT | RADEON_DOMAIN_VRAM;
 	}
 
 	if (rtex->cmask.size) {
 		/* Initialize the cmask to 0xCC (= compressed state). */
-		char *map = rscreen->ws->buffer_map(resource->cs_buf, NULL, PIPE_TRANSFER_WRITE);
+		char *map = rscreen->b.ws->buffer_map(resource->cs_buf, NULL, PIPE_TRANSFER_WRITE);
 		memset(map + rtex->cmask.offset, 0xCC, rtex->cmask.size);
 	}
 
@@ -526,7 +526,7 @@ struct pipe_resource *si_texture_create(struct pipe_screen *screen,
 			   templ->target != PIPE_TEXTURE_1D &&
 			   templ->target != PIPE_TEXTURE_1D_ARRAY &&
 			   templ->height0 > 3 &&
-			   rscreen->chip_class < CIK /* XXX fix me */) {
+			   rscreen->b.chip_class < CIK /* XXX fix me */) {
 			array_mode = V_009910_ARRAY_2D_TILED_THIN1;
 		} else {
 			array_mode = V_009910_ARRAY_1D_TILED_THIN1;
@@ -538,7 +538,7 @@ struct pipe_resource *si_texture_create(struct pipe_screen *screen,
 	if (r) {
 		return NULL;
 	}
-	r = rscreen->ws->surface_best(rscreen->ws, &surface);
+	r = rscreen->b.ws->surface_best(rscreen->b.ws, &surface);
 	if (r) {
 		return NULL;
 	}
@@ -599,11 +599,11 @@ struct pipe_resource *si_texture_from_handle(struct pipe_screen *screen,
 	      templ->depth0 != 1 || templ->last_level != 0)
 		return NULL;
 
-	buf = rscreen->ws->buffer_from_handle(rscreen->ws, whandle, &stride);
+	buf = rscreen->b.ws->buffer_from_handle(rscreen->b.ws, whandle, &stride);
 	if (!buf)
 		return NULL;
 
-	rscreen->ws->buffer_get_tiling(buf, &micro, &macro,
+	rscreen->b.ws->buffer_get_tiling(buf, &micro, &macro,
 				       &surface.bankw, &surface.bankh,
 				       &surface.tile_split,
 				       &surface.stencil_tile_split,
@@ -731,8 +731,8 @@ static void *si_texture_transfer_map(struct pipe_context *ctx,
 
 	/* Use a staging texture for uploads if the underlying BO is busy. */
 	if (!(usage & PIPE_TRANSFER_READ) &&
-	    (rctx->ws->cs_is_buffer_referenced(rctx->cs, rtex->resource.cs_buf, RADEON_USAGE_READWRITE) ||
-	     rctx->ws->buffer_is_busy(rtex->resource.buf, RADEON_USAGE_READWRITE))) {
+	    (rctx->b.ws->cs_is_buffer_referenced(rctx->b.rings.gfx.cs, rtex->resource.cs_buf, RADEON_USAGE_READWRITE) ||
+	     rctx->b.ws->buffer_is_busy(rtex->resource.buf, RADEON_USAGE_READWRITE))) {
 		use_staging_texture = TRUE;
 	}
 
@@ -804,7 +804,7 @@ static void *si_texture_transfer_map(struct pipe_context *ctx,
 
 		trans->transfer.stride = staging_depth->surface.level[level].pitch_bytes;
 		trans->transfer.layer_stride = staging_depth->surface.level[level].slice_size;
-		trans->staging = (struct si_resource*)staging_depth;
+		trans->staging = (struct r600_resource*)staging_depth;
 	} else if (use_staging_texture) {
 		struct pipe_resource resource;
 		struct r600_texture *staging;
@@ -838,7 +838,7 @@ static void *si_texture_transfer_map(struct pipe_context *ctx,
 		buf = rtex->resource.cs_buf;
 	}
 
-	if (!(map = rctx->ws->buffer_map(buf, rctx->cs, usage))) {
+	if (!(map = rctx->b.ws->buffer_map(buf, rctx->b.rings.gfx.cs, usage))) {
 		pipe_resource_reference((struct pipe_resource**)&trans->staging, NULL);
 		FREE(trans);
 		return NULL;
@@ -860,9 +860,9 @@ static void si_texture_transfer_unmap(struct pipe_context *ctx,
 	if (rtransfer->staging) {
 		buf = rtransfer->staging->cs_buf;
 	} else {
-		buf = si_resource(transfer->resource)->cs_buf;
+		buf = r600_resource(transfer->resource)->cs_buf;
 	}
-	rctx->ws->buffer_unmap(buf);
+	rctx->b.ws->buffer_unmap(buf);
 
 	if ((transfer->usage & PIPE_TRANSFER_WRITE) && rtransfer->staging) {
 		if (rtex->is_depth && rtex->resource.b.b.nr_samples <= 1) {
@@ -883,8 +883,8 @@ static void si_texture_transfer_unmap(struct pipe_context *ctx,
 
 void si_init_surface_functions(struct r600_context *r600)
 {
-	r600->context.create_surface = r600_create_surface;
-	r600->context.surface_destroy = r600_surface_destroy;
+	r600->b.b.create_surface = r600_create_surface;
+	r600->b.b.surface_destroy = r600_surface_destroy;
 }
 
 static const struct u_resource_vtbl r600_texture_vtbl =

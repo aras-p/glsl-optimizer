@@ -27,40 +27,16 @@
 #ifndef RADEONSI_RESOURCE_H
 #define RADEONSI_RESOURCE_H
 
-#include "../../winsys/radeon/drm/radeon_winsys.h"
+#include "../radeon/r600_pipe_common.h"
 #include "util/u_transfer.h"
 #include "util/u_inlines.h"
 
-struct si_resource {
-	struct u_resource		b;
-
-	/* Winsys objects. */
-	struct pb_buffer		*buf;
-	struct radeon_winsys_cs_handle	*cs_buf;
-
-	/* Resource state. */
-	unsigned			domains;
-};
-
-static INLINE void
-si_resource_reference(struct si_resource **ptr, struct si_resource *res)
-{
-	pipe_resource_reference((struct pipe_resource **)ptr,
-				(struct pipe_resource *)res);
-}
-
-static INLINE struct si_resource *
-si_resource(struct pipe_resource *r)
-{
-        return (struct si_resource*)r;
-}
-
-static INLINE struct si_resource *
-si_resource_create_custom(struct pipe_screen *screen,
-			  unsigned usage, unsigned size)
+static INLINE struct r600_resource *
+r600_resource_create_custom(struct pipe_screen *screen,
+			    unsigned usage, unsigned size)
 {
 	assert(size);
-	return si_resource(pipe_buffer_create(screen,
+	return r600_resource(pipe_buffer_create(screen,
 		PIPE_BIND_CUSTOM, usage, size));
 }
 

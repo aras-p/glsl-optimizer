@@ -29,14 +29,6 @@
 
 #include "radeonsi_pm4.h"
 
-/* This encapsulates a state or an operation which can emitted into the GPU
- * command stream. */
-struct si_atom {
-	void (*emit)(struct r600_context *ctx, struct si_atom *state);
-	unsigned		num_dw;
-	bool			dirty;
-};
-
 struct si_state_blend {
 	struct si_pm4_state	pm4;
 	uint32_t		cb_target_mask;
@@ -126,7 +118,7 @@ union si_state {
  * image resources, and sampler states.
  */
 struct si_descriptors {
-	struct si_atom atom;
+	struct r600_atom atom;
 
 	/* The size of one resource descriptor. */
 	unsigned element_dw_size;
@@ -134,7 +126,7 @@ struct si_descriptors {
 	unsigned num_elements;
 
 	/* The buffer where resource descriptors are stored. */
-	struct si_resource *buffer;
+	struct r600_resource *buffer;
 
 	/* The i-th bit is set if that element is dirty (changed but not emitted). */
 	unsigned dirty_mask;
@@ -211,19 +203,6 @@ int si_shader_select(struct pipe_context *ctx,
 		     unsigned *dirty);
 void si_init_state_functions(struct r600_context *rctx);
 void si_init_config(struct r600_context *rctx);
-
-/* si_state_streamout.c */
-struct pipe_stream_output_target *
-si_create_so_target(struct pipe_context *ctx,
-		    struct pipe_resource *buffer,
-		    unsigned buffer_offset,
-		    unsigned buffer_size);
-void si_so_target_destroy(struct pipe_context *ctx,
-			  struct pipe_stream_output_target *target);
-void si_set_so_targets(struct pipe_context *ctx,
-		       unsigned num_targets,
-		       struct pipe_stream_output_target **targets,
-		       unsigned append_bitmask);
 
 /* si_state_draw.c */
 void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo);

@@ -109,14 +109,14 @@ struct pipe_video_buffer *radeonsi_video_buffer_create(struct pipe_context *pipe
 		pbs[i] = &resources[i]->resource.buf;
 	}
 
-	ruvd_join_surfaces(ctx->ws, templ.bind, pbs, surfaces);
+	ruvd_join_surfaces(ctx->b.ws, templ.bind, pbs, surfaces);
 
 	for (i = 0; i < VL_NUM_COMPONENTS; ++i) {
 		if (!resources[i])
 			continue;
 
 		/* recreate the CS handle */
-		resources[i]->resource.cs_buf = ctx->ws->buffer_get_cs_handle(
+		resources[i]->resource.cs_buf = ctx->b.ws->buffer_get_cs_handle(
 			resources[i]->resource.buf);
 	}
 
@@ -151,5 +151,5 @@ struct pipe_video_codec *radeonsi_uvd_create_decoder(struct pipe_context *contex
 {
 	struct r600_context *ctx = (struct r600_context *)context;
 
-	return ruvd_create_decoder(context, templ, ctx->ws, radeonsi_uvd_set_dtb);
+	return ruvd_create_decoder(context, templ, ctx->b.ws, radeonsi_uvd_set_dtb);
 }

@@ -1,5 +1,6 @@
 #include "util/u_memory.h"
 
+#include "../radeon/r600_cs.h"
 #include "radeonsi_pipe.h"
 #include "radeonsi_shader.h"
 
@@ -91,7 +92,7 @@ static void radeonsi_launch_grid(
 	struct r600_context *rctx = (struct r600_context*)ctx;
 	struct si_pipe_compute *program = rctx->cs_shader_state.program;
 	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
-	struct si_resource *kernel_args_buffer = NULL;
+	struct r600_resource *kernel_args_buffer = NULL;
 	unsigned kernel_args_size;
 	unsigned num_work_size_bytes = 36;
 	uint32_t kernel_args_offset = 0;
@@ -152,8 +153,8 @@ static void radeonsi_launch_grid(
 
 	/* Global buffers */
 	for (i = 0; i < MAX_GLOBAL_BUFFERS; i++) {
-		struct si_resource *buffer =
-				(struct si_resource*)program->global_buffers[i];
+		struct r600_resource *buffer =
+				(struct r600_resource*)program->global_buffers[i];
 		if (!buffer) {
 			continue;
 		}
@@ -250,13 +251,13 @@ static void si_bind_compute_sampler_states(
 	void **samplers_) { }
 void si_init_compute_functions(struct r600_context *rctx)
 {
-	rctx->context.create_compute_state = radeonsi_create_compute_state;
-	rctx->context.delete_compute_state = si_delete_compute_state;
-	rctx->context.bind_compute_state = radeonsi_bind_compute_state;
+	rctx->b.b.create_compute_state = radeonsi_create_compute_state;
+	rctx->b.b.delete_compute_state = si_delete_compute_state;
+	rctx->b.b.bind_compute_state = radeonsi_bind_compute_state;
 /*	 ctx->context.create_sampler_view = evergreen_compute_create_sampler_view; */
-	rctx->context.set_compute_resources = si_set_compute_resources;
-	rctx->context.set_compute_sampler_views = si_set_cs_sampler_view;
-	rctx->context.bind_compute_sampler_states = si_bind_compute_sampler_states;
-	rctx->context.set_global_binding = radeonsi_set_global_binding;
-	rctx->context.launch_grid = radeonsi_launch_grid;
+	rctx->b.b.set_compute_resources = si_set_compute_resources;
+	rctx->b.b.set_compute_sampler_views = si_set_cs_sampler_view;
+	rctx->b.b.bind_compute_sampler_states = si_bind_compute_sampler_states;
+	rctx->b.b.set_global_binding = radeonsi_set_global_binding;
+	rctx->b.b.launch_grid = radeonsi_launch_grid;
 }

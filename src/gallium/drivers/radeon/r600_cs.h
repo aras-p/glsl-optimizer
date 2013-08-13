@@ -30,7 +30,7 @@
 #ifndef R600_CS_H
 #define R600_CS_H
 
-#include "../../winsys/radeon/drm/radeon_winsys.h"
+#include "r600_pipe_common.h"
 #include "r600d_common.h"
 
 static INLINE uint64_t r600_resource_va(struct pipe_screen *screen,
