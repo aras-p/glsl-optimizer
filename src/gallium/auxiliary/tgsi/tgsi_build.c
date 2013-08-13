@@ -876,8 +876,8 @@ static struct tgsi_ind_register
 tgsi_build_ind_register(
    unsigned file,
    unsigned swizzle,
-   unsigned arrayid,
    int index,
+   unsigned arrayid,
    struct tgsi_instruction *instruction,
    struct tgsi_header *header )
 {
