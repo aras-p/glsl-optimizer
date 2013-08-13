@@ -850,18 +850,16 @@ static void emit_cmp(
 	LLVMRealPredicate pred;
 	LLVMValueRef cond;
 
-	/* XXX I'm not sure whether to do unordered or ordered comparisons,
-	 * but llvmpipe uses unordered comparisons, so for consistency we use
-	 * unordered.  (The authors of llvmpipe aren't sure about using
-	 * unordered vs ordered comparisons either.
+	/* Use ordered for everything but NE (which is usual for
+	 * float comparisons)
 	 */
 	switch (emit_data->inst->Instruction.Opcode) {
-	case TGSI_OPCODE_SGE: pred = LLVMRealUGE; break;
-	case TGSI_OPCODE_SEQ: pred = LLVMRealUEQ; break;
-	case TGSI_OPCODE_SLE: pred = LLVMRealULE; break;
-	case TGSI_OPCODE_SLT: pred = LLVMRealULT; break;
+	case TGSI_OPCODE_SGE: pred = LLVMRealOGE; break;
+	case TGSI_OPCODE_SEQ: pred = LLVMRealOEQ; break;
+	case TGSI_OPCODE_SLE: pred = LLVMRealOLE; break;
+	case TGSI_OPCODE_SLT: pred = LLVMRealOLT; break;
 	case TGSI_OPCODE_SNE: pred = LLVMRealUNE; break;
-	case TGSI_OPCODE_SGT: pred = LLVMRealUGT; break;
+	case TGSI_OPCODE_SGT: pred = LLVMRealOGT; break;
 	default: assert(!"unknown instruction"); pred = 0; break;
 	}
 
@@ -870,6 +868,35 @@ static void emit_cmp(
 
 	emit_data->output[emit_data->chan] = LLVMBuildSelect(builder,
 		cond, bld_base->base.one, bld_base->base.zero, "");
+}
+
+static void emit_fcmp(
+		const struct lp_build_tgsi_action *action,
+		struct lp_build_tgsi_context * bld_base,
+		struct lp_build_emit_data * emit_data)
+{
+	LLVMBuilderRef builder = bld_base->base.gallivm->builder;
+	LLVMContextRef context = bld_base->base.gallivm->context;
+	LLVMRealPredicate pred;
+
+	/* Use ordered for everything but NE (which is usual for
+	 * float comparisons)
+	 */
+	switch (emit_data->inst->Instruction.Opcode) {
+	case TGSI_OPCODE_FSEQ: pred = LLVMRealOEQ; break;
+	case TGSI_OPCODE_FSGE: pred = LLVMRealOGE; break;
+	case TGSI_OPCODE_FSLT: pred = LLVMRealOLT; break;
+	case TGSI_OPCODE_FSNE: pred = LLVMRealUNE; break;
+	default: assert(!"unknown instruction"); pred = 0; break;
+	}
+
+	LLVMValueRef v = LLVMBuildFCmp(builder, pred,
+			emit_data->args[0], emit_data->args[1],"");
+
+	v = LLVMBuildSExtOrBitCast(builder, v,
+			LLVMInt32TypeInContext(context), "");
+
+	emit_data->output[emit_data->chan] = v;
 }
 
 static void emit_not(
@@ -1236,6 +1263,10 @@ void radeon_llvm_context_init(struct radeon_llvm_context * ctx)
 	bld_base->op_actions[TGSI_OPCODE_FRC].intr_name = "llvm.AMDIL.fraction.";
 	bld_base->op_actions[TGSI_OPCODE_F2I].emit = emit_f2i;
 	bld_base->op_actions[TGSI_OPCODE_F2U].emit = emit_f2u;
+	bld_base->op_actions[TGSI_OPCODE_FSEQ].emit = emit_fcmp;
+	bld_base->op_actions[TGSI_OPCODE_FSGE].emit = emit_fcmp;
+	bld_base->op_actions[TGSI_OPCODE_FSLT].emit = emit_fcmp;
+	bld_base->op_actions[TGSI_OPCODE_FSNE].emit = emit_fcmp;
 	bld_base->op_actions[TGSI_OPCODE_IABS].emit = build_tgsi_intrinsic_nomem;
 	bld_base->op_actions[TGSI_OPCODE_IABS].intr_name = "llvm.AMDIL.abs.";
 	bld_base->op_actions[TGSI_OPCODE_IDIV].emit = emit_idiv;
