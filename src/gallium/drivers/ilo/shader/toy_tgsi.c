@@ -209,15 +209,18 @@ aos_set_on_cond(struct toy_compiler *tc,
    case TGSI_OPCODE_SLT:
    case TGSI_OPCODE_ISLT:
    case TGSI_OPCODE_USLT:
+   case TGSI_OPCODE_FSLT:
       cond = BRW_CONDITIONAL_L;
       break;
    case TGSI_OPCODE_SGE:
    case TGSI_OPCODE_ISGE:
    case TGSI_OPCODE_USGE:
+   case TGSI_OPCODE_FSGE:
       cond = BRW_CONDITIONAL_GE;
       break;
    case TGSI_OPCODE_SEQ:
    case TGSI_OPCODE_USEQ:
+   case TGSI_OPCODE_FSEQ:
       cond = BRW_CONDITIONAL_EQ;
       break;
    case TGSI_OPCODE_SGT:
@@ -228,6 +231,7 @@ aos_set_on_cond(struct toy_compiler *tc,
       break;
    case TGSI_OPCODE_SNE:
    case TGSI_OPCODE_USNE:
+   case TGSI_OPCODE_FSNE:
       cond = BRW_CONDITIONAL_NEQ;
       break;
    default:
@@ -935,10 +939,10 @@ static const toy_tgsi_translate aos_translate_table[TGSI_OPCODE_LAST] = {
    [105]                      = aos_unsupported,
    [106]                      = aos_unsupported,
    [TGSI_OPCODE_NOP]          = aos_simple,
-   [108]                      = aos_unsupported,
-   [109]                      = aos_unsupported,
-   [110]                      = aos_unsupported,
-   [111]                      = aos_unsupported,
+   [TGSI_OPCODE_FSEQ]         = aos_set_on_cond,
+   [TGSI_OPCODE_FSGE]         = aos_set_on_cond,
+   [TGSI_OPCODE_FSLT]         = aos_set_on_cond,
+   [TGSI_OPCODE_FSNE]         = aos_set_on_cond,
    [TGSI_OPCODE_NRM4]         = aos_NRM4,
    [TGSI_OPCODE_CALLNZ]       = aos_unsupported,
    [TGSI_OPCODE_BREAKC]       = aos_unsupported,
@@ -1551,10 +1555,10 @@ static const toy_tgsi_translate soa_translate_table[TGSI_OPCODE_LAST] = {
    [105]                      = soa_unsupported,
    [106]                      = soa_unsupported,
    [TGSI_OPCODE_NOP]          = soa_passthrough,
-   [108]                      = soa_unsupported,
-   [109]                      = soa_unsupported,
-   [110]                      = soa_unsupported,
-   [111]                      = soa_unsupported,
+   [TGSI_OPCODE_FSEQ]         = soa_per_channel,
+   [TGSI_OPCODE_FSGE]         = soa_per_channel,
+   [TGSI_OPCODE_FSLT]         = soa_per_channel,
+   [TGSI_OPCODE_FSNE]         = soa_per_channel,
    [TGSI_OPCODE_NRM4]         = soa_NRM4,
    [TGSI_OPCODE_CALLNZ]       = soa_unsupported,
    [TGSI_OPCODE_BREAKC]       = soa_unsupported,
