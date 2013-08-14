@@ -335,6 +335,7 @@ texture_dims(enum pipe_texture_target tex)
    case PIPE_TEXTURE_2D_ARRAY:
    case PIPE_TEXTURE_RECT:
    case PIPE_TEXTURE_CUBE:
+   case PIPE_TEXTURE_CUBE_ARRAY:
       return 2;
    case PIPE_TEXTURE_3D:
       return 3;
@@ -431,13 +432,8 @@ lp_build_unnormalized_coords(struct lp_build_sample_context *bld,
 
 void
 lp_build_cube_lookup(struct lp_build_sample_context *bld,
-                     LLVMValueRef s,
-                     LLVMValueRef t,
-                     LLVMValueRef r,
+                     LLVMValueRef *coords,
                      const struct lp_derivatives *derivs, /* optional */
-                     LLVMValueRef *face,
-                     LLVMValueRef *face_s,
-                     LLVMValueRef *face_t,
                      LLVMValueRef *rho,
                      boolean need_derivs);
 

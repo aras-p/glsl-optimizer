@@ -1380,13 +1380,8 @@ lp_build_cube_face(struct lp_build_sample_context *bld,
  */
 void
 lp_build_cube_lookup(struct lp_build_sample_context *bld,
-                     LLVMValueRef s,
-                     LLVMValueRef t,
-                     LLVMValueRef r,
+                     LLVMValueRef *coords,
                      const struct lp_derivatives *derivs, /* optional */
-                     LLVMValueRef *face,
-                     LLVMValueRef *face_s,
-                     LLVMValueRef *face_t,
                      LLVMValueRef *rho,
                      boolean need_derivs)
 {
@@ -1416,7 +1411,7 @@ lp_build_cube_lookup(struct lp_build_sample_context *bld,
       struct lp_build_context *cint_bld = &bld->int_coord_bld;
       struct lp_type intctype = cint_bld->type;
       LLVMValueRef signs, signt, signr, signma;
-      LLVMValueRef as, at, ar;
+      LLVMValueRef as, at, ar, face, face_s, face_t;
       LLVMValueRef as_ge_at, maxasat, ar_ge_as_at;
       LLVMValueRef snewx, tnewx, snewy, tnewy, snewz, tnewz;
       LLVMValueRef tnegi, rnegi;
@@ -1429,6 +1424,9 @@ lp_build_cube_lookup(struct lp_build_sample_context *bld,
       LLVMValueRef facex = lp_build_const_int_vec(gallivm, intctype, PIPE_TEX_FACE_POS_X);
       LLVMValueRef facey = lp_build_const_int_vec(gallivm, intctype, PIPE_TEX_FACE_POS_Y);
       LLVMValueRef facez = lp_build_const_int_vec(gallivm, intctype, PIPE_TEX_FACE_POS_Z);
+      LLVMValueRef s = coords[0];
+      LLVMValueRef t = coords[1];
+      LLVMValueRef r = coords[2];
 
       assert(PIPE_TEX_FACE_NEG_X == PIPE_TEX_FACE_POS_X + 1);
       assert(PIPE_TEX_FACE_NEG_Y == PIPE_TEX_FACE_POS_Y + 1);
@@ -1566,20 +1564,20 @@ lp_build_cube_lookup(struct lp_build_sample_context *bld,
       if (!need_derivs) {
          ma = lp_build_select(coord_bld, as_ge_at, s, t);
       }
-      *face_s = lp_build_select(cint_bld, as_ge_at, snewx, snewy);
-      *face_t = lp_build_select(cint_bld, as_ge_at, tnewx, tnewy);
-      *face = lp_build_select(cint_bld, as_ge_at, facex, facey);
+      face_s = lp_build_select(cint_bld, as_ge_at, snewx, snewy);
+      face_t = lp_build_select(cint_bld, as_ge_at, tnewx, tnewy);
+      face = lp_build_select(cint_bld, as_ge_at, facex, facey);
 
       if (!need_derivs) {
          ma = lp_build_select(coord_bld, ar_ge_as_at, r, ma);
       }
-      *face_s = lp_build_select(cint_bld, ar_ge_as_at, snewz, *face_s);
-      *face_t = lp_build_select(cint_bld, ar_ge_as_at, tnewz, *face_t);
-      *face = lp_build_select(cint_bld, ar_ge_as_at, facez, *face);
+      face_s = lp_build_select(cint_bld, ar_ge_as_at, snewz, face_s);
+      face_t = lp_build_select(cint_bld, ar_ge_as_at, tnewz, face_t);
+      face = lp_build_select(cint_bld, ar_ge_as_at, facez, face);
 
-      *face_s = LLVMBuildBitCast(builder, *face_s,
+      face_s = LLVMBuildBitCast(builder, face_s,
                                lp_build_vec_type(gallivm, coord_bld->type), "");
-      *face_t = LLVMBuildBitCast(builder, *face_t,
+      face_t = LLVMBuildBitCast(builder, face_t,
                                lp_build_vec_type(gallivm, coord_bld->type), "");
 
       /* add +1 for neg face */
@@ -1589,17 +1587,17 @@ lp_build_cube_lookup(struct lp_build_sample_context *bld,
        */
       mai = LLVMBuildBitCast(builder, ma, lp_build_vec_type(gallivm, intctype), "");
       signma = LLVMBuildLShr(builder, mai, signshift, "");
-      *face = LLVMBuildOr(builder, *face, signma, "face");
+      coords[2] = LLVMBuildOr(builder, face, signma, "face");
 
       /* project coords */
       if (!need_derivs) {
          ima = lp_build_cube_imapos(coord_bld, ma);
-         *face_s = lp_build_mul(coord_bld, *face_s, ima);
-         *face_t = lp_build_mul(coord_bld, *face_t, ima);
+         face_s = lp_build_mul(coord_bld, face_s, ima);
+         face_t = lp_build_mul(coord_bld, face_t, ima);
       }
 
-      *face_s = lp_build_add(coord_bld, *face_s, posHalf);
-      *face_t = lp_build_add(coord_bld, *face_t, posHalf);
+      coords[0] = lp_build_add(coord_bld, face_s, posHalf);
+      coords[1] = lp_build_add(coord_bld, face_t, posHalf);
    }
 
    else {
@@ -1613,12 +1611,13 @@ lp_build_cube_lookup(struct lp_build_sample_context *bld,
       LLVMValueRef arxyxy, aryxzz, arxyxy_ge_aryxzz;
       LLVMValueRef tmp[4], rxyz, arxyz;
       struct lp_build_context *float_bld = &bld->float_bld;
+      LLVMValueRef s, t, r, face, face_s, face_t;
 
       assert(bld->coord_bld.type.length == 4);
 
-      tmp[0] = s;
-      tmp[1] = t;
-      tmp[2] = r;
+      tmp[0] = s = coords[0];
+      tmp[1] = t = coords[1];
+      tmp[2] = r = coords[2];
       rxyz = lp_build_hadd_partial4(&bld->coord_bld, tmp, 3);
       arxyz = lp_build_abs(&bld->coord_bld, rxyz);
 
@@ -1665,14 +1664,14 @@ lp_build_cube_lookup(struct lp_build_sample_context *bld,
          /* +/- X face */
          sign = lp_build_sgn(float_bld, si);
          ima = lp_build_cube_imaneg(coord_bld, s);
-         *face_s = lp_build_cube_coord(coord_bld, sign, +1, r, ima);
-         *face_t = lp_build_cube_coord(coord_bld, NULL, +1, t, ima);
-         *face = lp_build_cube_face(bld, si,
+         face_s = lp_build_cube_coord(coord_bld, sign, +1, r, ima);
+         face_t = lp_build_cube_coord(coord_bld, NULL, +1, t, ima);
+         face = lp_build_cube_face(bld, si,
                                     PIPE_TEX_FACE_POS_X,
                                     PIPE_TEX_FACE_NEG_X);
-         LLVMBuildStore(builder, *face_s, face_s_var);
-         LLVMBuildStore(builder, *face_t, face_t_var);
-         LLVMBuildStore(builder, *face, face_var);
+         LLVMBuildStore(builder, face_s, face_s_var);
+         LLVMBuildStore(builder, face_t, face_t_var);
+         LLVMBuildStore(builder, face, face_var);
       }
       lp_build_else(&if_ctx);
       {
@@ -1686,14 +1685,14 @@ lp_build_cube_lookup(struct lp_build_sample_context *bld,
                                          lp_build_const_int32(gallivm, 1), "");
             sign = lp_build_sgn(float_bld, ti);
             ima = lp_build_cube_imaneg(coord_bld, t);
-            *face_s = lp_build_cube_coord(coord_bld, NULL, -1, s, ima);
-            *face_t = lp_build_cube_coord(coord_bld, sign, -1, r, ima);
-            *face = lp_build_cube_face(bld, ti,
+            face_s = lp_build_cube_coord(coord_bld, NULL, -1, s, ima);
+            face_t = lp_build_cube_coord(coord_bld, sign, -1, r, ima);
+            face = lp_build_cube_face(bld, ti,
                                        PIPE_TEX_FACE_POS_Y,
                                        PIPE_TEX_FACE_NEG_Y);
-            LLVMBuildStore(builder, *face_s, face_s_var);
-            LLVMBuildStore(builder, *face_t, face_t_var);
-            LLVMBuildStore(builder, *face, face_var);
+            LLVMBuildStore(builder, face_s, face_s_var);
+            LLVMBuildStore(builder, face_t, face_t_var);
+            LLVMBuildStore(builder, face, face_var);
          }
          lp_build_else(&if_ctx2);
          {
@@ -1703,24 +1702,24 @@ lp_build_cube_lookup(struct lp_build_sample_context *bld,
                                          lp_build_const_int32(gallivm, 2), "");
             sign = lp_build_sgn(float_bld, ri);
             ima = lp_build_cube_imaneg(coord_bld, r);
-            *face_s = lp_build_cube_coord(coord_bld, sign, -1, s, ima);
-            *face_t = lp_build_cube_coord(coord_bld, NULL, +1, t, ima);
-            *face = lp_build_cube_face(bld, ri,
+            face_s = lp_build_cube_coord(coord_bld, sign, -1, s, ima);
+            face_t = lp_build_cube_coord(coord_bld, NULL, +1, t, ima);
+            face = lp_build_cube_face(bld, ri,
                                        PIPE_TEX_FACE_POS_Z,
                                        PIPE_TEX_FACE_NEG_Z);
-            LLVMBuildStore(builder, *face_s, face_s_var);
-            LLVMBuildStore(builder, *face_t, face_t_var);
-            LLVMBuildStore(builder, *face, face_var);
+            LLVMBuildStore(builder, face_s, face_s_var);
+            LLVMBuildStore(builder, face_t, face_t_var);
+            LLVMBuildStore(builder, face, face_var);
          }
          lp_build_endif(&if_ctx2);
       }
 
       lp_build_endif(&if_ctx);
 
-      *face_s = LLVMBuildLoad(builder, face_s_var, "face_s");
-      *face_t = LLVMBuildLoad(builder, face_t_var, "face_t");
-      *face   = LLVMBuildLoad(builder, face_var, "face");
-      *face   = lp_build_broadcast_scalar(&bld->int_coord_bld, *face);
+      coords[0] = LLVMBuildLoad(builder, face_s_var, "face_s");
+      coords[1] = LLVMBuildLoad(builder, face_t_var, "face_t");
+      face   = LLVMBuildLoad(builder, face_var, "face");
+      coords[2]   = lp_build_broadcast_scalar(&bld->int_coord_bld, face);
    }
 }
 
