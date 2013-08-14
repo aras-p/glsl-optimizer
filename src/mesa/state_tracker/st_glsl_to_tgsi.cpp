@@ -420,8 +420,6 @@ public:
    void emit_scalar(ir_instruction *ir, unsigned op,
         	    st_dst_reg dst, st_src_reg src0, st_src_reg src1);
 
-   void try_emit_float_set(ir_instruction *ir, unsigned op, st_dst_reg dst);
-
    void emit_arl(ir_instruction *ir, st_dst_reg dst, st_src_reg src0);
 
    void emit_scs(ir_instruction *ir, unsigned op,
@@ -594,9 +592,6 @@ glsl_to_tgsi_visitor::emit(ir_instruction *ir, unsigned op,
 
    this->instructions.push_tail(inst);
 
-   if (native_integers)
-      try_emit_float_set(ir, op, dst);
-
    return inst;
 }
 
@@ -622,25 +617,6 @@ glsl_to_tgsi_visitor::emit(ir_instruction *ir, unsigned op)
    return emit(ir, op, undef_dst, undef_src, undef_src, undef_src);
 }
 
- /**
- * Emits the code to convert the result of float SET instructions to integers.
- */
-void
-glsl_to_tgsi_visitor::try_emit_float_set(ir_instruction *ir, unsigned op,
-        		 st_dst_reg dst)
-{
-   if ((op == TGSI_OPCODE_SEQ ||
-        op == TGSI_OPCODE_SNE ||
-        op == TGSI_OPCODE_SGE ||
-        op == TGSI_OPCODE_SLT))
-   {
-      st_src_reg src = st_src_reg(dst);
-      src.negate = ~src.negate;
-      dst.type = GLSL_TYPE_FLOAT;
-      emit(ir, TGSI_OPCODE_F2I, dst, src);
-   }
-}
-
 /**
  * Determines whether to use an integer, unsigned integer, or float opcode 
  * based on the operands and input opcode, then emits the result.
@@ -664,14 +640,30 @@ glsl_to_tgsi_visitor::get_opcode(ir_instruction *ir, unsigned op,
 
 #define case4(c, f, i, u) \
    case TGSI_OPCODE_##c: \
-      if (type == GLSL_TYPE_INT) op = TGSI_OPCODE_##i; \
-      else if (type == GLSL_TYPE_UINT) op = TGSI_OPCODE_##u; \
-      else op = TGSI_OPCODE_##f; \
+      if (type == GLSL_TYPE_INT) \
+         op = TGSI_OPCODE_##i; \
+      else if (type == GLSL_TYPE_UINT) \
+         op = TGSI_OPCODE_##u; \
+      else \
+         op = TGSI_OPCODE_##f; \
       break;
+
 #define case3(f, i, u)  case4(f, f, i, u)
 #define case2fi(f, i)   case4(f, f, i, i)
 #define case2iu(i, u)   case4(i, LAST, i, u)
-   
+
+#define casecomp(c, f, i, u) \
+   case TGSI_OPCODE_##c: \
+      if (type == GLSL_TYPE_INT) \
+         op = TGSI_OPCODE_##i; \
+      else if (type == GLSL_TYPE_UINT) \
+         op = TGSI_OPCODE_##u; \
+      else if (native_integers) \
+         op = TGSI_OPCODE_##f; \
+      else \
+         op = TGSI_OPCODE_##c; \
+      break;
+
    switch(op) {
       case2fi(ADD, UADD);
       case2fi(MUL, UMUL);
@@ -680,12 +672,12 @@ glsl_to_tgsi_visitor::get_opcode(ir_instruction *ir, unsigned op,
       case3(MAX, IMAX, UMAX);
       case3(MIN, IMIN, UMIN);
       case2iu(MOD, UMOD);
-      
-      case2fi(SEQ, USEQ);
-      case2fi(SNE, USNE);
-      case3(SGE, ISGE, USGE);
-      case3(SLT, ISLT, USLT);
-      
+
+      casecomp(SEQ, FSEQ, USEQ, USEQ);
+      casecomp(SNE, FSNE, USNE, USNE);
+      casecomp(SGE, FSGE, ISGE, USGE);
+      casecomp(SLT, FSLT, ISLT, USLT);
+
       case2iu(ISHR, USHR);
 
       case2fi(SSG, ISSG);
