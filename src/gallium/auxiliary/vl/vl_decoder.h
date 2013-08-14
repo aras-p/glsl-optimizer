@@ -38,6 +38,12 @@ bool
 vl_profile_supported(struct pipe_screen *screen, enum pipe_video_profile profile);
 
 /**
+ * get the maximum supported level for the given profile with shader based decoding
+ */
+int
+vl_level_supported(struct pipe_screen *screen, enum pipe_video_profile profile);
+
+/**
  * standard implementation of pipe->create_video_decoder
  */
 struct pipe_video_decoder *

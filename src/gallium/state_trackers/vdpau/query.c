@@ -176,13 +176,13 @@ vlVdpDecoderQueryCapabilities(VdpDevice device, VdpDecoderProfile profile,
       *is_supported = false;
       return VDP_STATUS_OK;
    }
-   
+
    pipe_mutex_lock(dev->mutex);
    *is_supported = pscreen->get_video_param(pscreen, p_profile, PIPE_VIDEO_CAP_SUPPORTED);
    if (*is_supported) {
       *max_width = pscreen->get_video_param(pscreen, p_profile, PIPE_VIDEO_CAP_MAX_WIDTH); 
       *max_height = pscreen->get_video_param(pscreen, p_profile, PIPE_VIDEO_CAP_MAX_HEIGHT);
-      *max_level = 16;
+      *max_level = pscreen->get_video_param(pscreen, p_profile, PIPE_VIDEO_CAP_MAX_LEVEL);
       *max_macroblocks = (*max_width/16)*(*max_height/16);
    } else {
       *max_width = 0;

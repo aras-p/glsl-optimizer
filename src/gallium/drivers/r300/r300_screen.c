@@ -359,6 +359,8 @@ static int r300_get_video_param(struct pipe_screen *screen,
          return false;
       case PIPE_VIDEO_CAP_SUPPORTS_PROGRESSIVE:
          return true;
+      case PIPE_VIDEO_CAP_MAX_LEVEL:
+         return vl_level_supported(screen, profile);
       default:
          return 0;
    }

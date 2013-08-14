@@ -44,6 +44,21 @@ vl_profile_supported(struct pipe_screen *screen, enum pipe_video_profile profile
    }
 }
 
+int
+vl_level_supported(struct pipe_screen *screen, enum pipe_video_profile profile)
+{
+   assert(screen);
+   switch (profile) {
+      case PIPE_VIDEO_PROFILE_MPEG1:
+         return 0;
+      case PIPE_VIDEO_PROFILE_MPEG2_SIMPLE:
+      case PIPE_VIDEO_PROFILE_MPEG2_MAIN:
+         return 3;
+      default:
+         return 0;
+   }
+}
+
 struct pipe_video_decoder *
 vl_create_decoder(struct pipe_context *pipe,
                   enum pipe_video_profile profile,

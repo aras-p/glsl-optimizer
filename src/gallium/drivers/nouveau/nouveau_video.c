@@ -862,6 +862,8 @@ nouveau_screen_get_video_param(struct pipe_screen *pscreen,
       return false;
    case PIPE_VIDEO_CAP_SUPPORTS_PROGRESSIVE:
       return true;
+   case PIPE_VIDEO_CAP_MAX_LEVEL:
+      return vl_level_supported(screen, profile);
    default:
       debug_printf("unknown video param: %d\n", param);
       return 0;

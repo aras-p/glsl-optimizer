@@ -170,7 +170,8 @@ ilo_get_video_param(struct pipe_screen *screen,
       return 1;
    case PIPE_VIDEO_CAP_SUPPORTS_INTERLACED:
       return 0;
-
+   case PIPE_VIDEO_CAP_MAX_LEVEL:
+      return vl_level_supported(screen, profile);
    default:
       return 0;
    }
