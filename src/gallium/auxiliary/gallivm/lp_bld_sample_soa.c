@@ -179,24 +179,64 @@ lp_build_sample_texel_soa(struct lp_build_sample_context *bld,
     */
 
    if (use_border) {
-      /* select texel color or border color depending on use_border */
-      LLVMValueRef border_color_ptr = 
+      /* select texel color or border color depending on use_border. */
+     LLVMValueRef border_color_ptr =
          bld->dynamic_state->border_color(bld->dynamic_state,
                                           bld->gallivm, sampler_unit);
+      const struct util_format_description *format_desc;
       int chan;
+      format_desc = util_format_description(bld->static_texture_state->format);
+      /*
+       * Only replace channels which are actually present. The others should
+       * get optimized away eventually by sampler_view swizzle anyway but it's
+       * easier too as we'd need some extra logic for channels where we can't
+       * determine the format directly otherwise.
+       */
       for (chan = 0; chan < 4; chan++) {
-         LLVMValueRef border_chan =
-            lp_build_array_get(bld->gallivm, border_color_ptr,
-                               lp_build_const_int32(bld->gallivm, chan));
-         LLVMValueRef border_chan_vec =
-            lp_build_broadcast_scalar(&bld->float_vec_bld, border_chan);
-
-         if (!bld->texel_type.floating) {
-            border_chan_vec = LLVMBuildBitCast(builder, border_chan_vec,
-                                               bld->texel_bld.vec_type, "");
+         unsigned chan_s;
+         /* reverse-map channel... */
+         for (chan_s = 0; chan_s < 4; chan_s++) {
+            if (chan_s == format_desc->swizzle[chan]) {
+               break;
+            }
          }
-         texel_out[chan] = lp_build_select(&bld->texel_bld, use_border,
-                                           border_chan_vec, texel_out[chan]);
+         if (chan_s <= 3) {
+            LLVMValueRef border_chan =
+               lp_build_array_get(bld->gallivm, border_color_ptr,
+                                  lp_build_const_int32(bld->gallivm, chan));
+            LLVMValueRef border_chan_vec =
+               lp_build_broadcast_scalar(&bld->float_vec_bld, border_chan);
+
+            if (!bld->texel_type.floating) {
+               border_chan_vec = LLVMBuildBitCast(builder, border_chan_vec,
+                                                  bld->texel_bld.vec_type, "");
+            }
+            else {
+               /*
+                * For normalized format need to clamp border color (technically
+                * probably should also quantize the data). Really sucks doing this
+                * here but can't avoid at least for now since this is part of
+                * sampler state and texture format is part of sampler_view state.
+                */
+               unsigned chan_type = format_desc->channel[chan_s].type;
+               unsigned chan_norm = format_desc->channel[chan_s].normalized;
+               if (chan_type == UTIL_FORMAT_TYPE_SIGNED && chan_norm) {
+                  LLVMValueRef clamp_min;
+                  clamp_min = lp_build_const_vec(bld->gallivm, bld->texel_type, -1.0F);
+                  border_chan_vec = lp_build_clamp(&bld->texel_bld, border_chan_vec,
+                                                   clamp_min,
+                                                   bld->texel_bld.one);
+               }
+               else if (chan_type == UTIL_FORMAT_TYPE_UNSIGNED && chan_norm) {
+                  border_chan_vec = lp_build_clamp(&bld->texel_bld, border_chan_vec,
+                                                   bld->texel_bld.zero,
+                                                   bld->texel_bld.one);
+               }
+               /* not exactly sure about all others but I think should be ok? */
+            }
+            texel_out[chan] = lp_build_select(&bld->texel_bld, use_border,
+                                              border_chan_vec, texel_out[chan]);
+         }
       }
    }
 }
