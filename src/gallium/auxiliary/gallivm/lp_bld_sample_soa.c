@@ -1574,7 +1574,7 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
    unsigned target = static_texture_state->target;
    unsigned dims = texture_dims(target);
    unsigned num_quads = type.length / 4;
-   unsigned mip_filter;
+   unsigned mip_filter, i;
    struct lp_build_sample_context bld;
    struct lp_static_sampler_state derived_sampler_state = *static_sampler_state;
    LLVMTypeRef i32t = LLVMInt32TypeInContext(gallivm->context);
@@ -1726,30 +1726,8 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
       }
    }
 
-   /*
-    * always use the same coords for layer, shadow cmp, should probably
-    * put that into gallivm sampler interface I get real tired shuffling
-    * coordinates.
-    */
-   newcoords[0] = coords[0]; /* 1st coord */
-   newcoords[1] = coords[1]; /* 2nd coord */
-   newcoords[2] = coords[2]; /* 3rd coord (for cube, 3d and layer) */
-   newcoords[3] = coords[3]; /* 4th coord (intended for cube array layer) */
-   newcoords[4] = coords[2]; /* shadow cmp coord */
-   if (target == PIPE_TEXTURE_1D_ARRAY) {
-      newcoords[2] = coords[1]; /* layer coord */
-      /* FIXME: shadow cmp coord can be wrong if we don't take target from shader decl. */
-   }
-   else if (target == PIPE_TEXTURE_2D_ARRAY) {
-      newcoords[2] = coords[2];
-      newcoords[4] = coords[3];
-   }
-   else if (target == PIPE_TEXTURE_CUBE) {
-      newcoords[4] = coords[3];
-   }
-   else if (target == PIPE_TEXTURE_CUBE_ARRAY) {
-      assert(0); /* not handled */
-      // layer coord is ok but shadow coord is impossible */
+   for (i = 0; i < 5; i++) {
+      newcoords[i] = coords[i];
    }
 
    if (0) {

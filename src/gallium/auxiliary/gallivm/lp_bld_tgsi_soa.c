@@ -1614,13 +1614,14 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
    unsigned unit;
    LLVMValueRef lod_bias, explicit_lod;
    LLVMValueRef oow = NULL;
-   LLVMValueRef coords[4];
+   LLVMValueRef coords[5];
    LLVMValueRef offsets[3] = { NULL };
    struct lp_derivatives derivs;
    struct lp_derivatives *deriv_ptr = NULL;
    boolean scalar_lod;
-   unsigned num_coords, num_derivs, num_offsets;
-   unsigned i;
+   unsigned num_derivs, num_offsets, i;
+   unsigned shadow_coord = 0;
+   unsigned layer_coord = 0;
 
    if (!bld->sampler) {
       _debug_printf("warning: found texture instruction but no sampler generator supplied\n");
@@ -1631,55 +1632,58 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
    }
 
    switch (inst->Texture.Texture) {
-   case TGSI_TEXTURE_1D:
-      num_coords = 1;
-      num_offsets = 1;
-      num_derivs = 1;
-      break;
    case TGSI_TEXTURE_1D_ARRAY:
-      num_coords = 2;
+      layer_coord = 1;
+      /* fallthrough */
+   case TGSI_TEXTURE_1D:
       num_offsets = 1;
       num_derivs = 1;
       break;
+   case TGSI_TEXTURE_2D_ARRAY:
+      layer_coord = 2;
+      /* fallthrough */
    case TGSI_TEXTURE_2D:
    case TGSI_TEXTURE_RECT:
-      num_coords = 2;
       num_offsets = 2;
       num_derivs = 2;
       break;
-   case TGSI_TEXTURE_SHADOW1D:
    case TGSI_TEXTURE_SHADOW1D_ARRAY:
-      num_coords = 3;
+      layer_coord = 1;
+      /* fallthrough */
+   case TGSI_TEXTURE_SHADOW1D:
+      shadow_coord = 2;
       num_offsets = 1;
       num_derivs = 1;
       break;
+   case TGSI_TEXTURE_SHADOW2D_ARRAY:
+      layer_coord = 2;
+      shadow_coord = 3;
+      num_offsets = 2;
+      num_derivs = 2;
+      break;
    case TGSI_TEXTURE_SHADOW2D:
    case TGSI_TEXTURE_SHADOWRECT:
-   case TGSI_TEXTURE_2D_ARRAY:
-      num_coords = 3;
+      shadow_coord = 2;
       num_offsets = 2;
       num_derivs = 2;
       break;
    case TGSI_TEXTURE_CUBE:
-      num_coords = 3;
       num_offsets = 2;
       num_derivs = 3;
       break;
    case TGSI_TEXTURE_3D:
-      num_coords = 3;
       num_offsets = 3;
       num_derivs = 3;
       break;
-   case TGSI_TEXTURE_SHADOW2D_ARRAY:
-      num_coords = 4;
-      num_offsets = 2;
-      num_derivs = 2;
-      break;
    case TGSI_TEXTURE_SHADOWCUBE:
-      num_coords = 4;
+      shadow_coord = 3;
       num_offsets = 2;
       num_derivs = 3;
       break;
+   case TGSI_TEXTURE_CUBE_ARRAY:
+   case TGSI_TEXTURE_SHADOWCUBE_ARRAY:
+   case TGSI_TEXTURE_2D_MSAA:
+   case TGSI_TEXTURE_2D_ARRAY_MSAA:
    default:
       assert(0);
       return;
@@ -1687,14 +1691,12 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
 
    /* Note lod and especially projected are illegal in a LOT of cases */
    if (modifier == LP_BLD_TEX_MODIFIER_LOD_BIAS) {
-      assert(num_coords < 4);
-      lod_bias = lp_build_emit_fetch( &bld->bld_base, inst, 0, 3 );
+      lod_bias = lp_build_emit_fetch(&bld->bld_base, inst, 0, 3);
       explicit_lod = NULL;
    }
    else if (modifier == LP_BLD_TEX_MODIFIER_EXPLICIT_LOD) {
-      assert(num_coords < 4);
       lod_bias = NULL;
-      explicit_lod = lp_build_emit_fetch( &bld->bld_base, inst, 0, 3 );
+      explicit_lod = lp_build_emit_fetch(&bld->bld_base, inst, 0, 3);
    }
    else {
       lod_bias = NULL;
@@ -1702,25 +1704,37 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
    }
 
    if (modifier == LP_BLD_TEX_MODIFIER_PROJECTED) {
-      assert(num_coords < 4);
-      oow = lp_build_emit_fetch( &bld->bld_base, inst, 0, 3 );
+      oow = lp_build_emit_fetch(&bld->bld_base, inst, 0, 3);
       oow = lp_build_rcp(&bld->bld_base.base, oow);
    }
 
-   for (i = 0; i < num_coords; i++) {
-      coords[i] = lp_build_emit_fetch( &bld->bld_base, inst, 0, i );
+   for (i = 0; i < num_derivs; i++) {
+      coords[i] = lp_build_emit_fetch(&bld->bld_base, inst, 0, i);
       if (modifier == LP_BLD_TEX_MODIFIER_PROJECTED)
          coords[i] = lp_build_mul(&bld->bld_base.base, coords[i], oow);
    }
-   for (i = num_coords; i < 4; i++) {
+   for (i = num_derivs; i < 5; i++) {
       coords[i] = bld->bld_base.base.undef;
+   }
+
+   /* Layer coord always goes into 3rd slot, except for cube map arrays */
+   if (layer_coord) {
+      coords[2] = lp_build_emit_fetch(&bld->bld_base, inst, 0, layer_coord);
+      if (modifier == LP_BLD_TEX_MODIFIER_PROJECTED)
+         coords[2] = lp_build_mul(&bld->bld_base.base, coords[2], oow);
+   }
+   /* Shadow coord occupies always 5th slot. */
+   if (shadow_coord) {
+      coords[4] = lp_build_emit_fetch(&bld->bld_base, inst, 0, shadow_coord);
+      if (modifier == LP_BLD_TEX_MODIFIER_PROJECTED)
+         coords[4] = lp_build_mul(&bld->bld_base.base, coords[4], oow);
    }
 
    if (modifier == LP_BLD_TEX_MODIFIER_EXPLICIT_DERIV) {
       unsigned dim;
       for (dim = 0; dim < num_derivs; ++dim) {
-         derivs.ddx[dim] = lp_build_emit_fetch( &bld->bld_base, inst, 1, dim );
-         derivs.ddy[dim] = lp_build_emit_fetch( &bld->bld_base, inst, 2, dim );
+         derivs.ddx[dim] = lp_build_emit_fetch(&bld->bld_base, inst, 1, dim);
+         derivs.ddy[dim] = lp_build_emit_fetch(&bld->bld_base, inst, 2, dim);
       }
       deriv_ptr = &derivs;
       unit = inst->Src[3].Register.Index;
@@ -1732,7 +1746,7 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
    if (inst->Texture.NumOffsets == 1) {
       unsigned dim;
       for (dim = 0; dim < num_offsets; dim++) {
-         offsets[dim] = lp_build_emit_fetch_texoffset(&bld->bld_base, inst, 0, dim );
+         offsets[dim] = lp_build_emit_fetch_texoffset(&bld->bld_base, inst, 0, dim);
       }
    }
 
@@ -1761,13 +1775,13 @@ emit_sample(struct lp_build_tgsi_soa_context *bld,
    struct gallivm_state *gallivm = bld->bld_base.base.gallivm;
    unsigned texture_unit, sampler_unit;
    LLVMValueRef lod_bias, explicit_lod;
-   LLVMValueRef coords[4];
+   LLVMValueRef coords[5];
    LLVMValueRef offsets[3] = { NULL };
    struct lp_derivatives derivs;
    struct lp_derivatives *deriv_ptr = NULL;
    boolean scalar_lod;
-   unsigned num_coords, num_offsets, num_derivs;
-   unsigned i;
+   unsigned num_offsets, num_derivs, i;
+   unsigned layer_coord = 0;
 
    if (!bld->sampler) {
       _debug_printf("warning: found texture instruction but no sampler generator supplied\n");
@@ -1791,38 +1805,34 @@ emit_sample(struct lp_build_tgsi_soa_context *bld,
     */
    switch (bld->sv[texture_unit].Resource) {
    case TGSI_TEXTURE_1D:
-      num_coords = 1;
       num_offsets = 1;
       num_derivs = 1;
       break;
    case TGSI_TEXTURE_1D_ARRAY:
-      num_coords = 2;
+      layer_coord = 1;
       num_offsets = 1;
       num_derivs = 1;
       break;
    case TGSI_TEXTURE_2D:
    case TGSI_TEXTURE_RECT:
-      num_coords = 2;
       num_offsets = 2;
       num_derivs = 2;
       break;
    case TGSI_TEXTURE_2D_ARRAY:
-      num_coords = 3;
+      layer_coord = 2;
       num_offsets = 2;
       num_derivs = 2;
       break;
    case TGSI_TEXTURE_CUBE:
-      num_coords = 3;
       num_offsets = 2;
       num_derivs = 3;
       break;
    case TGSI_TEXTURE_3D:
-      num_coords = 3;
       num_offsets = 3;
       num_derivs = 3;
       break;
    case TGSI_TEXTURE_CUBE_ARRAY:
-      num_coords = 4;
+      layer_coord = 3;
       num_offsets = 2;
       num_derivs = 3;
       break;
@@ -1832,12 +1842,12 @@ emit_sample(struct lp_build_tgsi_soa_context *bld,
    }
 
    if (modifier == LP_BLD_TEX_MODIFIER_LOD_BIAS) {
-      lod_bias = lp_build_emit_fetch( &bld->bld_base, inst, 3, 0 );
+      lod_bias = lp_build_emit_fetch(&bld->bld_base, inst, 3, 0);
       explicit_lod = NULL;
    }
    else if (modifier == LP_BLD_TEX_MODIFIER_EXPLICIT_LOD) {
       lod_bias = NULL;
-      explicit_lod = lp_build_emit_fetch( &bld->bld_base, inst, 3, 0 );
+      explicit_lod = lp_build_emit_fetch(&bld->bld_base, inst, 3, 0);
    }
    else if (modifier == LP_BLD_TEX_MODIFIER_LOD_ZERO) {
       lod_bias = NULL;
@@ -1849,28 +1859,30 @@ emit_sample(struct lp_build_tgsi_soa_context *bld,
       explicit_lod = NULL;
    }
 
-   for (i = 0; i < num_coords; i++) {
-      coords[i] = lp_build_emit_fetch( &bld->bld_base, inst, 0, i );
+   for (i = 0; i < num_derivs; i++) {
+      coords[i] = lp_build_emit_fetch(&bld->bld_base, inst, 0, i);
    }
-   for (i = num_coords; i < 4; i++) {
+   for (i = num_derivs; i < 5; i++) {
       coords[i] = bld->bld_base.base.undef;
    }
-   /*
-    * XXX: whack shadow comparison value into place.
-    * Should probably fix the interface for separate value
-    * (it will not work for cube arrays if it is part of coords).
-    */
+
+   /* Layer coord always goes into 3rd slot, except for cube map arrays */
+   if (layer_coord) {
+      if (layer_coord == 3)
+         coords[3] = lp_build_emit_fetch(&bld->bld_base, inst, 0, layer_coord);
+      else
+         coords[2] = lp_build_emit_fetch(&bld->bld_base, inst, 0, layer_coord);
+   }
+   /* Shadow coord occupies always 5th slot. */
    if (compare) {
-      unsigned c_coord = num_coords > 2 ? 3 : 2;
-      assert(num_coords < 4);
-      coords[c_coord] = lp_build_emit_fetch( &bld->bld_base, inst, 3, 0 );
+      coords[4] = lp_build_emit_fetch(&bld->bld_base, inst, 3, 0);
    }
 
    if (modifier == LP_BLD_TEX_MODIFIER_EXPLICIT_DERIV) {
       unsigned dim;
       for (dim = 0; dim < num_derivs; ++dim) {
-         derivs.ddx[dim] = lp_build_emit_fetch( &bld->bld_base, inst, 3, dim );
-         derivs.ddy[dim] = lp_build_emit_fetch( &bld->bld_base, inst, 4, dim );
+         derivs.ddx[dim] = lp_build_emit_fetch(&bld->bld_base, inst, 3, dim);
+         derivs.ddy[dim] = lp_build_emit_fetch(&bld->bld_base, inst, 4, dim);
       }
       deriv_ptr = &derivs;
    }
@@ -1879,12 +1891,13 @@ emit_sample(struct lp_build_tgsi_soa_context *bld,
    if (inst->Texture.NumOffsets == 1) {
       unsigned dim;
       for (dim = 0; dim < num_offsets; dim++) {
-         offsets[dim] = lp_build_emit_fetch_texoffset(&bld->bld_base, inst, 0, dim );
+         offsets[dim] = lp_build_emit_fetch_texoffset(&bld->bld_base, inst, 0, dim);
       }
    }
 
    /* TODO: use scalar lod if explicit_lod, lod_bias or derivs are broadcasted scalars */
-   scalar_lod = bld->bld_base.info->processor == TGSI_PROCESSOR_FRAGMENT;
+   scalar_lod = bld->bld_base.info->processor == TGSI_PROCESSOR_FRAGMENT ||
+                modifier == LP_BLD_TEX_MODIFIER_LOD_ZERO;
 
    bld->sampler->emit_fetch_texel(bld->sampler,
                                   bld->bld_base.base.gallivm,
@@ -1923,9 +1936,8 @@ emit_fetch_texels( struct lp_build_tgsi_soa_context *bld,
    LLVMValueRef coords[3];
    LLVMValueRef offsets[3] = { NULL };
    boolean scalar_lod;
-   unsigned num_coords;
-   unsigned dims;
-   unsigned i;
+   unsigned dims, i;
+   unsigned layer_coord = 0;
 
    if (!bld->sampler) {
       _debug_printf("warning: found texture instruction but no sampler generator supplied\n");
@@ -1947,24 +1959,21 @@ emit_fetch_texels( struct lp_build_tgsi_soa_context *bld,
    switch (target) {
    case TGSI_TEXTURE_1D:
    case TGSI_TEXTURE_BUFFER:
-      num_coords = 1;
       dims = 1;
       break;
    case TGSI_TEXTURE_1D_ARRAY:
-      num_coords = 2;
+      layer_coord = 1;
       dims = 1;
       break;
    case TGSI_TEXTURE_2D:
    case TGSI_TEXTURE_RECT:
-      num_coords = 2;
       dims = 2;
       break;
    case TGSI_TEXTURE_2D_ARRAY:
-      num_coords = 3;
+      layer_coord = 2;
       dims = 2;
       break;
    case TGSI_TEXTURE_3D:
-      num_coords = 3;
       dims = 3;
       break;
    default:
@@ -1974,20 +1983,22 @@ emit_fetch_texels( struct lp_build_tgsi_soa_context *bld,
 
    /* always have lod except for buffers ? */
    if (target != TGSI_TEXTURE_BUFFER) {
-      explicit_lod = lp_build_emit_fetch( &bld->bld_base, inst, 0, 3 );
+      explicit_lod = lp_build_emit_fetch(&bld->bld_base, inst, 0, 3);
    }
 
-   for (i = 0; i < num_coords; i++) {
-      coords[i] = lp_build_emit_fetch( &bld->bld_base, inst, 0, i );
+   for (i = 0; i < dims; i++) {
+      coords[i] = lp_build_emit_fetch(&bld->bld_base, inst, 0, i);
    }
-   for (i = num_coords; i < 3; i++) {
+   for (i = dims; i < 3; i++) {
       coords[i] = coord_undef;
    }
+   if (layer_coord)
+      coords[2] = lp_build_emit_fetch(&bld->bld_base, inst, 0, layer_coord);
 
    if (inst->Texture.NumOffsets == 1) {
       unsigned dim;
       for (dim = 0; dim < dims; dim++) {
-         offsets[dim] = lp_build_emit_fetch_texoffset(&bld->bld_base, inst, 0, dim );
+         offsets[dim] = lp_build_emit_fetch_texoffset(&bld->bld_base, inst, 0, dim);
       }
    }
 

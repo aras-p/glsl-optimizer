@@ -335,7 +335,9 @@ texture_dims(enum pipe_texture_target tex)
    case PIPE_TEXTURE_2D_ARRAY:
    case PIPE_TEXTURE_RECT:
    case PIPE_TEXTURE_CUBE:
+      return 2;
    case PIPE_TEXTURE_CUBE_ARRAY:
+      assert(0);
       return 2;
    case PIPE_TEXTURE_3D:
       return 3;
