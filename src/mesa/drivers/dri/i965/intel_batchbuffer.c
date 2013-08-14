@@ -241,9 +241,16 @@ _intel_batchbuffer_flush(struct brw_context *brw,
       drm_intel_bo_reference(brw->first_post_swapbuffers_batch);
    }
 
-   if (unlikely(INTEL_DEBUG & DEBUG_BATCH))
-      fprintf(stderr, "%s:%d: Batchbuffer flush with %db used\n", file, line,
-	      4*brw->batch.used);
+   if (unlikely(INTEL_DEBUG & DEBUG_BATCH)) {
+      int bytes_for_commands = 4 * brw->batch.used;
+      int bytes_for_state = brw->batch.bo->size - brw->batch.state_batch_offset;
+      int total_bytes = bytes_for_commands + bytes_for_state;
+      fprintf(stderr, "%s:%d: Batchbuffer flush with %4db (pkt) + "
+              "%4db (state) = %4db (%0.1f%%)\n", file, line,
+              bytes_for_commands, bytes_for_state,
+              total_bytes,
+              100.0f * total_bytes / BATCH_SZ);
+   }
 
    brw->batch.reserved_space = 0;
 
