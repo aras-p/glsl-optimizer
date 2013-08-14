@@ -227,7 +227,7 @@ upload_sol_state(struct brw_context *brw)
    if (active) {
       upload_3dstate_so_buffers(brw);
       /* BRW_NEW_VUE_MAP_GEOM_OUT */
-      upload_3dstate_so_decl_list(brw, &brw->vue_map_geom_out);
+      gen7_upload_3dstate_so_decl_list(brw, &brw->vue_map_geom_out);
    }
 
    /* Finally, set up the SOL stage.  This command must always follow updates to
