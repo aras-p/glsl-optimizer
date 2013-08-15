@@ -569,6 +569,8 @@ private:
                                  struct brw_reg offset,
                                  struct brw_reg value);
 
+   void mark_surface_used(unsigned surf_index);
+
    void patch_discard_jumps_to_fb_writes();
 
    struct brw_context *brw;

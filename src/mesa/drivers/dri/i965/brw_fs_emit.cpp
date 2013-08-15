@@ -59,6 +59,15 @@ fs_generator::~fs_generator()
 }
 
 void
+fs_generator::mark_surface_used(unsigned surf_index)
+{
+   assert(surf_index < BRW_MAX_WM_SURFACES);
+
+   c->prog_data.binding_table_size =
+      MAX2(c->prog_data.binding_table_size, surf_index + 1);
+}
+
+void
 fs_generator::patch_discard_jumps_to_fb_writes()
 {
    if (brw->gen < 6 || this->discard_halt_patches.is_empty())
@@ -175,6 +184,8 @@ fs_generator::generate_fb_write(fs_inst *inst)
 		0,
 		eot,
 		inst->header_present);
+
+   mark_surface_used(SURF_INDEX_DRAW(inst->target));
 }
 
 /* Computes the integer pixel x,y values from the origin.
@@ -519,6 +530,8 @@ fs_generator::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src
 	      inst->header_present,
 	      simd_mode,
 	      return_format);
+
+   mark_surface_used(SURF_INDEX_TEXTURE(inst->sampler));
 }
 
 
@@ -648,6 +661,8 @@ fs_generator::generate_uniform_pull_constant_load(fs_inst *inst,
 
    brw_oword_block_read(p, dst, brw_message_reg(inst->base_mrf),
 			read_offset, surf_index);
+
+   mark_surface_used(surf_index);
 }
 
 void
@@ -688,6 +703,8 @@ fs_generator::generate_uniform_pull_constant_load_gen7(fs_inst *inst,
                            false, /* no header */
                            BRW_SAMPLER_SIMD_MODE_SIMD4X2,
                            0);
+
+   mark_surface_used(surf_index);
 }
 
 void
@@ -753,6 +770,8 @@ fs_generator::generate_varying_pull_constant_load(fs_inst *inst,
                            inst->header_present,
                            simd_mode,
                            return_format);
+
+   mark_surface_used(surf_index);
 }
 
 void
@@ -795,6 +814,8 @@ fs_generator::generate_varying_pull_constant_load_gen7(fs_inst *inst,
                            false, /* no header */
                            simd_mode,
                            0);
+
+   mark_surface_used(surf_index);
 }
 
 /**
@@ -1040,6 +1061,8 @@ fs_generator::generate_shader_time_add(fs_inst *inst,
    brw_MOV(p, payload_value, value);
    brw_shader_time_add(p, payload, SURF_INDEX_WM_SHADER_TIME);
    brw_pop_insn_state(p);
+
+   mark_surface_used(SURF_INDEX_WM_SHADER_TIME);
 }
 
 void

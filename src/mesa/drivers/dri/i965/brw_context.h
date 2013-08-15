@@ -306,6 +306,8 @@ struct brw_wm_prog_data {
    GLuint reg_blocks_16;
    GLuint total_scratch;
 
+   unsigned binding_table_size;
+
    GLuint nr_params;       /**< number of float params/constants */
    GLuint nr_pull_params;
    bool dual_src_blend;
