@@ -1411,19 +1411,8 @@ lp_build_clamp(struct lp_build_context *bld,
    assert(lp_check_value(bld->type, min));
    assert(lp_check_value(bld->type, max));
 
-   /*
-    * XXX dark magic warning: The order of min/max here matters (!).
-    * The reason is a typical use case is clamp(a, 0.0, 1.0)
-    * (for example for float->unorm conversion) and on x86 sse2
-    * this will give 0.0 for NaNs, whereas doing min first will
-    * give 1.0 for NaN which makes d3d10 angry...
-    * This is very much not guaranteed behavior though which just
-    * happens to work x86 sse2 (and up), and obviously won't do anything
-    * for other non-zero clamps (say -1.0/1.0 in a SNORM conversion) neither,
-    * so need to fix this for real...
-    */
-   a = lp_build_max(bld, a, min);
    a = lp_build_min(bld, a, max);
+   a = lp_build_max(bld, a, min);
    return a;
 }
 
