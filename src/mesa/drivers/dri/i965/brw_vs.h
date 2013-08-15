@@ -36,7 +36,7 @@
 
 #include "brw_context.h"
 #include "brw_eu.h"
-#include "brw_program.h"
+#include "brw_vec4.h"
 #include "program/program.h"
 
 /**
@@ -49,33 +49,6 @@
 #define BRW_ATTRIB_WA_BGRA          16  /* swap r/b channels in shader */
 #define BRW_ATTRIB_WA_SIGN          32  /* interpret as signed in shader */
 #define BRW_ATTRIB_WA_SCALE         64  /* interpret as scaled in shader */
-
-struct brw_vec4_prog_key {
-   GLuint program_string_id;
-
-   /**
-    * True if at least one clip flag is enabled, regardless of whether the
-    * shader uses clip planes or gl_ClipDistance.
-    */
-   GLuint userclip_active:1;
-
-   /**
-    * How many user clipping planes are being uploaded to the vertex shader as
-    * push constants.
-    */
-   GLuint nr_userclip_plane_consts:4;
-
-   /**
-    * True if the shader uses gl_ClipDistance, regardless of whether any clip
-    * flags are enabled.
-    */
-   GLuint uses_clip_distance:1;
-
-   GLuint clamp_vertex_color:1;
-
-   struct brw_sampler_prog_key_data tex;
-};
-
 
 struct brw_vs_prog_key {
    struct brw_vec4_prog_key base;
@@ -96,11 +69,6 @@ struct brw_vs_prog_key {
     * the VUE, even if they aren't written by the vertex shader.
     */
    GLuint point_coord_replace:8;
-};
-
-
-struct brw_vec4_compile {
-   GLuint last_scratch; /**< measured in 32-byte (register size) units */
 };
 
 
@@ -125,11 +93,8 @@ bool brw_vs_precompile(struct gl_context *ctx, struct gl_shader_program *prog);
 void brw_vs_debug_recompile(struct brw_context *brw,
                             struct gl_shader_program *prog,
                             const struct brw_vs_prog_key *key);
-bool brw_vec4_prog_data_compare(const struct brw_vec4_prog_data *a,
-                                const struct brw_vec4_prog_data *b);
 bool brw_vs_prog_data_compare(const void *a, const void *b,
                               int aux_size, const void *key);
-void brw_vec4_prog_data_free(const struct brw_vec4_prog_data *prog_data);
 void brw_vs_prog_data_free(const void *in_prog_data);
 
 #ifdef __cplusplus

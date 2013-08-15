@@ -174,24 +174,6 @@ gl_clip_plane *brw_select_clip_planes(struct gl_context *ctx)
 
 
 bool
-brw_vec4_prog_data_compare(const struct brw_vec4_prog_data *a,
-                           const struct brw_vec4_prog_data *b)
-{
-   /* Compare all the struct up to the pointers. */
-   if (memcmp(a, b, offsetof(struct brw_vec4_prog_data, param)))
-      return false;
-
-   if (memcmp(a->param, b->param, a->nr_params * sizeof(void *)))
-      return false;
-
-   if (memcmp(a->pull_param, b->pull_param, a->nr_pull_params * sizeof(void *)))
-      return false;
-
-   return true;
-}
-
-
-bool
 brw_vs_prog_data_compare(const void *in_a, const void *in_b,
                          int aux_size, const void *in_key)
 {
@@ -548,14 +530,6 @@ brw_vs_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
    brw->vs.prog_data = old_prog_data;
 
    return success;
-}
-
-
-void
-brw_vec4_prog_data_free(const struct brw_vec4_prog_data *prog_data)
-{
-   ralloc_free((void *)prog_data->param);
-   ralloc_free((void *)prog_data->pull_param);
 }
 
 

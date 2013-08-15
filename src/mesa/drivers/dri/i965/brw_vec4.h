@@ -28,6 +28,7 @@
 #include "brw_shader.h"
 #include "main/compiler.h"
 #include "program/hash_table.h"
+#include "brw_program.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -42,11 +43,52 @@ extern "C" {
 
 #include "glsl/ir.h"
 
-struct brw_vec4_compile;
 struct brw_vs_compile;
-struct brw_vec4_prog_key;
+
+
+struct brw_vec4_compile {
+   GLuint last_scratch; /**< measured in 32-byte (register size) units */
+};
+
+
+struct brw_vec4_prog_key {
+   GLuint program_string_id;
+
+   /**
+    * True if at least one clip flag is enabled, regardless of whether the
+    * shader uses clip planes or gl_ClipDistance.
+    */
+   GLuint userclip_active:1;
+
+   /**
+    * How many user clipping planes are being uploaded to the vertex shader as
+    * push constants.
+    */
+   GLuint nr_userclip_plane_consts:4;
+
+   /**
+    * True if the shader uses gl_ClipDistance, regardless of whether any clip
+    * flags are enabled.
+    */
+   GLuint uses_clip_distance:1;
+
+   GLuint clamp_vertex_color:1;
+
+   struct brw_sampler_prog_key_data tex;
+};
+
 
 #ifdef __cplusplus
+extern "C" {
+#endif
+
+bool brw_vec4_prog_data_compare(const struct brw_vec4_prog_data *a,
+                                const struct brw_vec4_prog_data *b);
+void brw_vec4_prog_data_free(const struct brw_vec4_prog_data *prog_data);
+
+#ifdef __cplusplus
+} /* extern "C" */
+
 namespace brw {
 
 class dst_reg;
