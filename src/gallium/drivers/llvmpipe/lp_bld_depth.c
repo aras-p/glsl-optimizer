@@ -836,7 +836,7 @@ lp_build_depth_stencil_test(struct gallivm_state *gallivm,
    LLVMValueRef stencil_vals = NULL;
    LLVMValueRef z_bitmask = NULL, stencil_shift = NULL;
    LLVMValueRef z_pass = NULL, s_pass_mask = NULL;
-   LLVMValueRef orig_mask = lp_build_mask_value(mask);
+   LLVMValueRef current_mask = lp_build_mask_value(mask);
    LLVMValueRef front_facing = NULL;
    boolean have_z, have_s;
 
@@ -984,7 +984,7 @@ lp_build_depth_stencil_test(struct gallivm_state *gallivm,
 
       /* apply stencil-fail operator */
       {
-         LLVMValueRef s_fail_mask = lp_build_andnot(&s_bld, orig_mask, s_pass_mask);
+         LLVMValueRef s_fail_mask = lp_build_andnot(&s_bld, current_mask, s_pass_mask);
          stencil_vals = lp_build_stencil_op(&s_bld, stencil, S_FAIL_OP,
                                             stencil_refs, stencil_vals,
                                             s_fail_mask, front_facing);
@@ -1032,6 +1032,11 @@ lp_build_depth_stencil_test(struct gallivm_state *gallivm,
       /* compare src Z to dst Z, returning 'pass' mask */
       z_pass = lp_build_cmp(&z_bld, depth->func, z_src, z_dst);
 
+      /* mask off bits that failed stencil test */
+      if (s_pass_mask) {
+         current_mask = LLVMBuildAnd(builder, current_mask, s_pass_mask, "");
+      }
+
       if (!stencil[0].enabled) {
          /* We can potentially skip all remaining operations here, but only
           * if stencil is disabled because we still need to update the stencil
@@ -1041,25 +1046,19 @@ lp_build_depth_stencil_test(struct gallivm_state *gallivm,
 
          if (do_branch) {
             lp_build_mask_check(mask);
-            do_branch = FALSE;
          }
       }
 
       if (depth->writemask) {
-         LLVMValueRef zselectmask;
+         LLVMValueRef z_pass_mask;
 
          /* mask off bits that failed Z test */
-         zselectmask = LLVMBuildAnd(builder, orig_mask, z_pass, "");
-
-         /* mask off bits that failed stencil test */
-         if (s_pass_mask) {
-            zselectmask = LLVMBuildAnd(builder, zselectmask, s_pass_mask, "");
-         }
+         z_pass_mask = LLVMBuildAnd(builder, current_mask, z_pass, "");
 
          /* Mix the old and new Z buffer values.
           * z_dst[i] = zselectmask[i] ? z_src[i] : z_dst[i]
           */
-         z_dst = lp_build_select(&z_bld, zselectmask, z_src, z_dst);
+         z_dst = lp_build_select(&z_bld, z_pass_mask, z_src, z_dst);
       }
 
       if (stencil[0].enabled) {
@@ -1067,13 +1066,13 @@ lp_build_depth_stencil_test(struct gallivm_state *gallivm,
          LLVMValueRef z_fail_mask, z_pass_mask;
 
          /* apply Z-fail operator */
-         z_fail_mask = lp_build_andnot(&s_bld, orig_mask, z_pass);
+         z_fail_mask = lp_build_andnot(&s_bld, current_mask, z_pass);
          stencil_vals = lp_build_stencil_op(&s_bld, stencil, Z_FAIL_OP,
                                             stencil_refs, stencil_vals,
                                             z_fail_mask, front_facing);
 
          /* apply Z-pass operator */
-         z_pass_mask = LLVMBuildAnd(builder, orig_mask, z_pass, "");
+         z_pass_mask = LLVMBuildAnd(builder, current_mask, z_pass, "");
          stencil_vals = lp_build_stencil_op(&s_bld, stencil, Z_PASS_OP,
                                             stencil_refs, stencil_vals,
                                             z_pass_mask, front_facing);
@@ -1083,7 +1082,7 @@ lp_build_depth_stencil_test(struct gallivm_state *gallivm,
       /* No depth test: apply Z-pass operator to stencil buffer values which
        * passed the stencil test.
        */
-      s_pass_mask = LLVMBuildAnd(builder, orig_mask, s_pass_mask, "");
+      s_pass_mask = LLVMBuildAnd(builder, current_mask, s_pass_mask, "");
       stencil_vals = lp_build_stencil_op(&s_bld, stencil, Z_PASS_OP,
                                          stencil_refs, stencil_vals,
                                          s_pass_mask, front_facing);
