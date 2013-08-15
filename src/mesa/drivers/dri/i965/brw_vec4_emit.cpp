@@ -152,6 +152,15 @@ vec4_generator::~vec4_generator()
 }
 
 void
+vec4_generator::mark_surface_used(unsigned surf_index)
+{
+   assert(surf_index < BRW_MAX_VS_SURFACES);
+
+   prog_data->binding_table_size = MAX2(prog_data->binding_table_size,
+                                        surf_index + 1);
+}
+
+void
 vec4_generator::generate_math1_gen4(vec4_instruction *inst,
                                     struct brw_reg dst,
                                     struct brw_reg src)
@@ -384,6 +393,8 @@ vec4_generator::generate_tex(vec4_instruction *inst,
 	      inst->header_present,
 	      BRW_SAMPLER_SIMD_MODE_SIMD4X2,
 	      return_format);
+
+   mark_surface_used(SURF_INDEX_VS_TEXTURE(inst->sampler));
 }
 
 void
@@ -614,6 +625,8 @@ vec4_generator::generate_pull_constant_load(vec4_instruction *inst,
 			   2, /* mlen */
                            true, /* header_present */
 			   1 /* rlen */);
+
+   mark_surface_used(surf_index);
 }
 
 void
@@ -637,6 +650,8 @@ vec4_generator::generate_pull_constant_load_gen7(vec4_instruction *inst,
                            false, /* no header */
                            BRW_SAMPLER_SIMD_MODE_SIMD4X2,
                            0);
+
+   mark_surface_used(surf_index.dw1.ud);
 }
 
 /**
@@ -869,6 +884,7 @@ vec4_generator::generate_vec4_instruction(vec4_instruction *instruction,
 
    case SHADER_OPCODE_SHADER_TIME_ADD:
       brw_shader_time_add(p, src[0], SURF_INDEX_VS_SHADER_TIME);
+      mark_surface_used(SURF_INDEX_VS_SHADER_TIME);
       break;
 
    case VS_OPCODE_UNPACK_FLAGS_SIMD4X2:

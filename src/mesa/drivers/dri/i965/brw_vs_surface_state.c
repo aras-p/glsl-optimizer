@@ -140,16 +140,12 @@ brw_vs_upload_binding_table(struct brw_context *brw)
 
    if (INTEL_DEBUG & DEBUG_SHADER_TIME) {
       gen7_create_shader_time_surface(brw, &brw->vs.surf_offset[SURF_INDEX_VS_SHADER_TIME]);
-
-      assert(brw->vs.prog_data->base.num_surfaces
-             <= SURF_INDEX_VS_SHADER_TIME);
-      brw->vs.prog_data->base.num_surfaces = SURF_INDEX_VS_SHADER_TIME;
    }
 
    /* CACHE_NEW_VS_PROG: Skip making a binding table if we don't use textures or
     * pull constants.
     */
-   if (brw->vs.prog_data->base.num_surfaces == 0) {
+   if (brw->vs.prog_data->base.binding_table_size == 0) {
       if (brw->vs.bind_bo_offset != 0) {
 	 brw->state.dirty.brw |= BRW_NEW_VS_BINDING_TABLE;
 	 brw->vs.bind_bo_offset = 0;

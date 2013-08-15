@@ -596,6 +596,8 @@ private:
    void generate_unpack_flags(vec4_instruction *inst,
                               struct brw_reg dst);
 
+   void mark_surface_used(unsigned surf_index);
+
    struct brw_context *brw;
    struct gl_context *ctx;
 

@@ -306,16 +306,6 @@ do_vs_prog(struct brw_context *brw,
       return false;
    }
 
-   if (prog_data.base.nr_pull_params)
-      prog_data.base.num_surfaces = 1;
-   if (c.vp->program.Base.SamplersUsed)
-      prog_data.base.num_surfaces = SURF_INDEX_VS_TEXTURE(BRW_MAX_TEX_UNIT);
-   if (prog &&
-       prog->_LinkedShaders[MESA_SHADER_VERTEX]->NumUniformBlocks) {
-      prog_data.base.num_surfaces =
-	 SURF_INDEX_VS_UBO(prog->_LinkedShaders[MESA_SHADER_VERTEX]->NumUniformBlocks);
-   }
-
    /* Scratch space is used for register spilling */
    if (c.base.last_scratch) {
       perf_debug("Vertex shader triggered register spilling.  "

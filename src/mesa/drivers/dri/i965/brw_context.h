@@ -493,7 +493,7 @@ struct brw_vec4_prog_data {
     */
    GLuint urb_entry_size;
 
-   int num_surfaces;
+   unsigned binding_table_size;
 
    /* These pointers must appear last.  See brw_vec4_prog_data_compare(). */
    const float **param;
