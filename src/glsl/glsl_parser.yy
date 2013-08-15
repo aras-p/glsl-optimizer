@@ -2295,7 +2295,6 @@ member_declaration:
 
       $$ = new(ctx) ast_declarator_list(type);
       $$->set_location(yylloc);
-      $$->ubo_qualifiers_allowed = true;
 
       $$->declarations.push_degenerate_list_at_head(& $2->link);
    }
