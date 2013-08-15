@@ -12,8 +12,12 @@ i915_resource_create(struct pipe_screen *screen,
    if (template->target == PIPE_BUFFER)
       return i915_buffer_create(screen, template);
    else
-      return i915_texture_create(screen, template, FALSE);
-
+   {
+      if (!(template->bind & PIPE_BIND_LINEAR))
+         return i915_texture_create(screen, template, FALSE);
+      else
+         return i915_texture_create(screen, template, TRUE);
+   }
 }
 
 static struct pipe_resource *

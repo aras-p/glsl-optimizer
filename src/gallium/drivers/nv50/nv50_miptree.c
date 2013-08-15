@@ -326,6 +326,9 @@ nv50_miptree_create(struct pipe_screen *pscreen,
    pipe_reference_init(&pt->reference, 1);
    pt->screen = pscreen;
 
+   if (pt->bind & PIPE_BIND_LINEAR)
+      pt->flags |= NOUVEAU_RESOURCE_FLAG_LINEAR;
+
    bo_config.nv50.memtype = nv50_mt_choose_storage_type(mt, TRUE);
 
    if (!nv50_miptree_init_ms_mode(mt)) {

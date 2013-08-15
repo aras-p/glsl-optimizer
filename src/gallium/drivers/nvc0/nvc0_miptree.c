@@ -274,6 +274,9 @@ nvc0_miptree_create(struct pipe_screen *pscreen,
       }
    }
 
+   if (pt->bind & PIPE_BIND_LINEAR)
+      pt->flags |= NOUVEAU_RESOURCE_FLAG_LINEAR;
+
    bo_config.nvc0.memtype = nvc0_mt_choose_storage_type(mt, compressed);
 
    if (!nvc0_miptree_init_ms_mode(mt)) {

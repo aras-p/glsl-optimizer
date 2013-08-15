@@ -473,7 +473,7 @@ tex_layout_init_tiling(struct tex_layout *layout)
     *     "The cursor surface address must be 4K byte aligned. The cursor must
     *      be in linear memory, it cannot be tiled."
     */
-   if (unlikely(templ->bind & PIPE_BIND_CURSOR))
+   if (unlikely(templ->bind & (PIPE_BIND_CURSOR | PIPE_BIND_LINEAR)))
       valid_tilings &= tile_none;
 
    /*

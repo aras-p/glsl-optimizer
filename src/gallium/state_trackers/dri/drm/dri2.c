@@ -628,6 +628,8 @@ dri2_create_image(__DRIscreen *_screen,
       tex_usage |= PIPE_BIND_SCANOUT;
    if (use & __DRI_IMAGE_USE_SHARE)
       tex_usage |= PIPE_BIND_SHARED;
+   if (use & __DRI_IMAGE_USE_LINEAR)
+      tex_usage |= PIPE_BIND_LINEAR;
    if (use & __DRI_IMAGE_USE_CURSOR) {
       if (width != 64 || height != 64)
          return NULL;

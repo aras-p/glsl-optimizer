@@ -330,9 +330,13 @@ enum pipe_flush_flags {
  * The shared flag is quite underspecified, but certainly isn't a
  * binding flag - it seems more like a message to the winsys to create
  * a shareable allocation.
+ * 
+ * The third flag has been added to be able to force textures to be created
+ * in linear mode (no tiling).
  */
 #define PIPE_BIND_SCANOUT     (1 << 14) /*  */
 #define PIPE_BIND_SHARED      (1 << 15) /* get_texture_handle ??? */
+#define PIPE_BIND_LINEAR      (1 << 21)
 
 
 /* Flags for the driver about resource behaviour:

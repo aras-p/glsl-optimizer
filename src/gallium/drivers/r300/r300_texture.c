@@ -1079,7 +1079,7 @@ struct pipe_resource *r300_texture_create(struct pipe_screen *screen,
     enum radeon_bo_layout microtile, macrotile;
 
     if ((base->flags & R300_RESOURCE_FLAG_TRANSFER) ||
-        (base->bind & PIPE_BIND_SCANOUT)) {
+        (base->bind & (PIPE_BIND_SCANOUT | PIPE_BIND_LINEAR))) {
         microtile = RADEON_LAYOUT_LINEAR;
         macrotile = RADEON_LAYOUT_LINEAR;
     } else {

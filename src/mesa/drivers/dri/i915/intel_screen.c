@@ -482,6 +482,9 @@ intel_create_image(__DRIscreen *screen,
       tiling = I915_TILING_NONE;
    }
 
+   if (use & __DRI_IMAGE_USE_LINEAR)
+      tiling = I915_TILING_NONE;
+
    image = intel_allocate_image(format, loaderPrivate);
    if (image == NULL)
       return NULL;

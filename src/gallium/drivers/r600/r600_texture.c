@@ -608,7 +608,8 @@ struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
 	 * because 422 formats are used for videos, which prefer linear buffers
 	 * for fast uploads anyway. */
 	if (!(templ->flags & R600_RESOURCE_FLAG_TRANSFER) &&
-	    desc->layout != UTIL_FORMAT_LAYOUT_SUBSAMPLED) {
+	    (desc->layout != UTIL_FORMAT_LAYOUT_SUBSAMPLED) &&
+	    !(templ->bind & PIPE_BIND_LINEAR)) {
 		if (templ->flags & R600_RESOURCE_FLAG_FORCE_TILING) {
 			array_mode = V_038000_ARRAY_2D_TILED_THIN1;
 		} else if (!(templ->bind & PIPE_BIND_SCANOUT) &&
