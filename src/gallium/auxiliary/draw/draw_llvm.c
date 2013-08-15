@@ -1261,6 +1261,7 @@ generate_clipmask(struct draw_llvm *llvm,
    if (clip_user) {
       LLVMValueRef planes_ptr = draw_jit_context_planes(gallivm, context_ptr);
       LLVMValueRef indices[3];
+      LLVMValueRef is_nan_or_inf;
 
       /* userclip planes */
       while (ucp_enable) {
@@ -1280,6 +1281,8 @@ generate_clipmask(struct draw_llvm *llvm,
                clipdist = LLVMBuildLoad(builder, outputs[cd[1]][i-4], "");
             }
             test = lp_build_compare(gallivm, f32_type, PIPE_FUNC_GREATER, zero, clipdist);
+            is_nan_or_inf = lp_build_is_inf_or_nan(gallivm, vs_type, clipdist);
+            test = LLVMBuildOr(builder, test, is_nan_or_inf, "");
             temp = lp_build_const_int_vec(gallivm, i32_type, 1 << plane_idx);
             test = LLVMBuildAnd(builder, test, temp, "");
             mask = LLVMBuildOr(builder, mask, test, "");

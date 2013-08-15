@@ -104,7 +104,7 @@ static void interp_attr( float dst[4],
 			 float t,
 			 const float in[4],
 			 const float out[4] )
-{  
+{
    dst[0] = LINTERP( t, out[0], in[0] );
    dst[1] = LINTERP( t, out[1], in[1] );
    dst[2] = LINTERP( t, out[2], in[2] );
@@ -380,6 +380,9 @@ do_clip_tri( struct draw_stage *stage,
       dp_prev = getclipdist(clipper, vert_prev, plane_idx);
       clipmask &= ~(1<<plane_idx);
 
+      if (util_is_inf_or_nan(dp_prev))
+         return; //discard nan
+
       assert(n < MAX_CLIPPED_VERTICES);
       if (n >= MAX_CLIPPED_VERTICES)
          return;
@@ -391,6 +394,9 @@ do_clip_tri( struct draw_stage *stage,
          boolean *edge = &inEdges[i];
 
          float dp = getclipdist(clipper, vert, plane_idx);
+
+         if (util_is_inf_or_nan(dp))
+            return; //discard nan
 
 	 if (!IS_NEGATIVE(dp_prev)) {
             assert(outcount < MAX_CLIPPED_VERTICES);
@@ -522,6 +528,9 @@ do_clip_line( struct draw_stage *stage,
       const float dp0 = getclipdist(clipper, v0, plane_idx);
       const float dp1 = getclipdist(clipper, v1, plane_idx);
 
+      if (util_is_inf_or_nan(dp0) || util_is_inf_or_nan(dp1))
+         return; //discard nan
+
       if (dp1 < 0.0F) {
 	 float t = dp1 / (dp1 - dp0);
          t1 = MAX2(t1, t);
@@ -574,7 +583,7 @@ clip_line( struct draw_stage *stage,
 {
    unsigned clipmask = (header->v[0]->clipmask | 
                         header->v[1]->clipmask);
-   
+
    if (clipmask == 0) {
       /* no clipping needed */
       stage->next->line( stage->next, header );
@@ -594,7 +603,7 @@ clip_tri( struct draw_stage *stage,
    unsigned clipmask = (header->v[0]->clipmask | 
                         header->v[1]->clipmask | 
                         header->v[2]->clipmask);
-   
+
    if (clipmask == 0) {
       /* no clipping needed */
       stage->next->tri( stage->next, header );

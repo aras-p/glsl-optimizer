@@ -140,7 +140,7 @@ static boolean TAG(do_cliptest)( struct pt_post_vs *pvs,
                      clipdist = out->data[cd[0]][i];
                   else
                      clipdist = out->data[cd[1]][i-4];
-                  if (clipdist < 0)
+                  if (clipdist < 0 || util_is_inf_or_nan(clipdist))
                      mask |= 1 << plane_idx;
                } else {
                   if (dot4(clipvertex, plane[plane_idx]) < 0)

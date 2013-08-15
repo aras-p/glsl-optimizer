@@ -42,6 +42,7 @@
 
 struct lp_type;
 struct lp_build_context;
+struct gallivm_state;
 
 
 /**
@@ -352,5 +353,10 @@ LLVMValueRef
 lp_build_isfinite(struct lp_build_context *bld,
                   LLVMValueRef x);
 
+
+LLVMValueRef
+lp_build_is_inf_or_nan(struct gallivm_state *gallivm,
+                       const struct lp_type type,
+                       LLVMValueRef x);
 
 #endif /* !LP_BLD_ARIT_H */

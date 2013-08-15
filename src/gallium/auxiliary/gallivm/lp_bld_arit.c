@@ -3671,3 +3671,29 @@ lp_build_isfinite(struct lp_build_context *bld,
    return lp_build_compare(bld->gallivm, int_type, PIPE_FUNC_NOTEQUAL,
                            intx, infornan32);
 }
+
+/*
+ * Returns true if the number is nan or inf and false otherwise.
+ * The input has to be a floating point vector.
+ */
+LLVMValueRef
+lp_build_is_inf_or_nan(struct gallivm_state *gallivm,
+                       const struct lp_type type,
+                       LLVMValueRef x)
+{
+   LLVMBuilderRef builder = gallivm->builder;
+   struct lp_type int_type = lp_int_type(type);
+   LLVMValueRef const0 = lp_build_const_int_vec(gallivm, int_type,
+                                                0x7f800000);
+   LLVMValueRef ret;
+
+   assert(type.floating);
+
+   ret = LLVMBuildBitCast(builder, x, lp_build_vec_type(gallivm, int_type), "");
+   ret = LLVMBuildAnd(builder, ret, const0, "");
+   ret = lp_build_compare(gallivm, int_type, PIPE_FUNC_EQUAL,
+                          ret, const0);
+
+   return ret;
+}
+
