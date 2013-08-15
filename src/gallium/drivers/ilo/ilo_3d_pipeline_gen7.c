@@ -493,8 +493,12 @@ gen7_pipeline_wm(struct ilo_3d_pipeline *p,
    }
 
    /* 3DSTATE_CONSTANT_PS */
-   if (session->pcb_state_fs_changed)
-      gen7_emit_3DSTATE_CONSTANT_PS(p->dev, NULL, NULL, 0, p->cp);
+   if (session->pcb_state_fs_changed) {
+      gen7_emit_3DSTATE_CONSTANT_PS(p->dev,
+            &p->state.wm.PUSH_CONSTANT_BUFFER,
+            &p->state.wm.PUSH_CONSTANT_BUFFER_size,
+            1, p->cp);
+   }
 
    /* 3DSTATE_PS */
    if (DIRTY(FS) || DIRTY(SAMPLER_FS) || DIRTY(BLEND) ||

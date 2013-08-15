@@ -143,7 +143,7 @@ ilo_gpe_init_fs_cso_gen7(const struct ilo_dev_info *dev,
    dw4 = (max_threads - 1) << IVB_PS_MAX_THREADS_SHIFT |
          GEN7_PS_POSOFFSET_NONE;
 
-   if (false)
+   if (ilo_shader_get_kernel_param(fs, ILO_KERNEL_PCB_CBUF0_SIZE))
       dw4 |= GEN7_PS_PUSH_CONSTANT_ENABLE;
 
    if (ilo_shader_get_kernel_param(fs, ILO_KERNEL_INPUT_COUNT))
