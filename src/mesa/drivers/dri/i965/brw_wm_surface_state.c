@@ -873,15 +873,14 @@ brw_upload_wm_binding_table(struct brw_context *brw)
       gen7_create_shader_time_surface(brw, &brw->wm.surf_offset[SURF_INDEX_WM_SHADER_TIME]);
    }
 
-   /* Might want to calculate nr_surfaces first, to avoid taking up so much
-    * space for the binding table.
-    */
+   /* CACHE_NEW_WM_PROG */
+   unsigned entries = brw->wm.prog_data->binding_table_size;
    bind = brw_state_batch(brw, AUB_TRACE_BINDING_TABLE,
-			  sizeof(uint32_t) * BRW_MAX_WM_SURFACES,
+			  sizeof(uint32_t) * entries,
 			  32, &brw->wm.bind_bo_offset);
 
    /* BRW_NEW_SURFACES */
-   for (i = 0; i < BRW_MAX_WM_SURFACES; i++) {
+   for (i = 0; i < entries; i++) {
       bind[i] = brw->wm.surf_offset[i];
    }
 
@@ -893,7 +892,7 @@ const struct brw_tracked_state brw_wm_binding_table = {
       .mesa = 0,
       .brw = (BRW_NEW_BATCH |
 	      BRW_NEW_SURFACES),
-      .cache = 0
+      .cache = CACHE_NEW_WM_PROG
    },
    .emit = brw_upload_wm_binding_table,
 };
