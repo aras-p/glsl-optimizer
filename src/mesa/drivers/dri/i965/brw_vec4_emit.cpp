@@ -135,10 +135,11 @@ vec4_instruction::get_src(int i)
 vec4_generator::vec4_generator(struct brw_context *brw,
                                struct gl_shader_program *shader_prog,
                                struct gl_program *prog,
+                               struct brw_vec4_prog_data *prog_data,
                                void *mem_ctx,
                                bool debug_flag)
-   : brw(brw), shader_prog(shader_prog), prog(prog), mem_ctx(mem_ctx),
-     debug_flag(debug_flag)
+   : brw(brw), shader_prog(shader_prog), prog(prog), prog_data(prog_data),
+     mem_ctx(mem_ctx), debug_flag(debug_flag)
 {
    shader = shader_prog ? shader_prog->_LinkedShaders[MESA_SHADER_VERTEX] : NULL;
 
