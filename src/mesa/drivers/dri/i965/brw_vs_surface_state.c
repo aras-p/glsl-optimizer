@@ -145,7 +145,8 @@ brw_vs_upload_binding_table(struct brw_context *brw)
    /* CACHE_NEW_VS_PROG: Skip making a binding table if we don't use textures or
     * pull constants.
     */
-   if (brw->vs.prog_data->base.binding_table_size == 0) {
+   const unsigned entries = brw->vs.prog_data->base.binding_table_size;
+   if (entries == 0) {
       if (brw->vs.bind_bo_offset != 0) {
 	 brw->state.dirty.brw |= BRW_NEW_VS_BINDING_TABLE;
 	 brw->vs.bind_bo_offset = 0;
@@ -157,11 +158,11 @@ brw_vs_upload_binding_table(struct brw_context *brw)
     * space for the binding table.
     */
    bind = brw_state_batch(brw, AUB_TRACE_BINDING_TABLE,
-			  sizeof(uint32_t) * BRW_MAX_VS_SURFACES,
+			  sizeof(uint32_t) * entries,
 			  32, &brw->vs.bind_bo_offset);
 
    /* BRW_NEW_SURFACES and BRW_NEW_VS_CONSTBUF */
-   for (i = 0; i < BRW_MAX_VS_SURFACES; i++) {
+   for (i = 0; i < entries; i++) {
       bind[i] = brw->vs.surf_offset[i];
    }
 
