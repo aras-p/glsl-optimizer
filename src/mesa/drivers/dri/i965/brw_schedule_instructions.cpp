@@ -821,7 +821,7 @@ vec4_instruction_scheduler::calculate_deps()
          add_dep(last_mrf_write[inst->base_mrf + i], n);
       }
 
-      if (inst->predicate) {
+      if (inst->depends_on_flags()) {
          assert(last_conditional_mod);
          add_dep(last_conditional_mod, n);
       }
@@ -892,7 +892,7 @@ vec4_instruction_scheduler::calculate_deps()
          add_dep(n, last_mrf_write[inst->base_mrf + i], 2);
       }
 
-      if (inst->predicate) {
+      if (inst->depends_on_flags()) {
          add_dep(n, last_conditional_mod);
       }
 

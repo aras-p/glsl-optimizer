@@ -185,6 +185,11 @@ public:
    bool is_send_from_grf();
    bool can_reswizzle_dst(int dst_writemask, int swizzle, int swizzle_mask);
    void reswizzle_dst(int dst_writemask, int swizzle);
+
+   bool depends_on_flags()
+   {
+      return predicate;
+   }
 };
 
 /**
