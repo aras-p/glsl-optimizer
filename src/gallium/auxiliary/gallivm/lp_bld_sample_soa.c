@@ -682,6 +682,41 @@ lp_build_sample_wrap_nearest(struct lp_build_sample_context *bld,
 
 
 /**
+ * Do shadow test/comparison.
+ * \param p shadow ref value
+ * \param texel  the texel to compare against
+ */
+static LLVMValueRef
+lp_build_sample_comparefunc(struct lp_build_sample_context *bld,
+                            LLVMValueRef p,
+                            LLVMValueRef texel)
+{
+   struct lp_build_context *texel_bld = &bld->texel_bld;
+   LLVMValueRef res;
+
+   if (0) {
+      //lp_build_print_value(bld->gallivm, "shadow cmp coord", p);
+      lp_build_print_value(bld->gallivm, "shadow cmp texel", texel);
+   }
+
+   /* result = (p FUNC texel) ? 1 : 0 */
+   /*
+    * honor d3d10 floating point rules here, which state that comparisons
+    * are ordered except NOT_EQUAL which is unordered.
+    */
+   if (bld->static_sampler_state->compare_func != PIPE_FUNC_NOTEQUAL) {
+      res = lp_build_cmp_ordered(texel_bld, bld->static_sampler_state->compare_func,
+                                 p, texel);
+   }
+   else {
+      res = lp_build_cmp(texel_bld, bld->static_sampler_state->compare_func,
+                         p, texel);
+   }
+   return res;
+}
+
+
+/**
  * Generate code to sample a mipmap level with nearest filtering.
  * If sampling a cube texture, r = cube face in [0,5].
  */
@@ -760,8 +795,60 @@ lp_build_sample_image_nearest(struct lp_build_sample_context *bld,
                              x, y, z,
                              row_stride_vec, img_stride_vec,
                              data_ptr, mipoffsets, colors_out);
+
+   if (bld->static_sampler_state->compare_mode != PIPE_TEX_COMPARE_NONE) {
+      LLVMValueRef cmpval;
+      cmpval = lp_build_sample_comparefunc(bld, coords[4], colors_out[0]);
+      /* this is really just a AND 1.0, cmpval but llvm is clever enough */
+      colors_out[0] = lp_build_select(&bld->texel_bld, cmpval,
+                                      bld->texel_bld.one, bld->texel_bld.zero);
+      colors_out[1] = colors_out[2] = colors_out[3] = colors_out[0];
+   }
+
 }
 
+
+/**
+ * Like a lerp, but inputs are 0/~0 masks, so can simplify slightly.
+ */
+static LLVMValueRef
+lp_build_masklerp(struct lp_build_context *bld,
+                 LLVMValueRef weight,
+                 LLVMValueRef mask0,
+                 LLVMValueRef mask1)
+{
+   struct gallivm_state *gallivm = bld->gallivm;
+   LLVMBuilderRef builder = gallivm->builder;
+   LLVMValueRef weight2;
+
+   weight2 = lp_build_sub(bld, bld->one, weight);
+   weight = LLVMBuildBitCast(builder, weight,
+                              lp_build_int_vec_type(gallivm, bld->type), "");
+   weight2 = LLVMBuildBitCast(builder, weight2,
+                              lp_build_int_vec_type(gallivm, bld->type), "");
+   weight = LLVMBuildAnd(builder, weight, mask1, "");
+   weight2 = LLVMBuildAnd(builder, weight2, mask0, "");
+   weight = LLVMBuildBitCast(builder, weight, bld->vec_type, "");
+   weight2 = LLVMBuildBitCast(builder, weight2, bld->vec_type, "");
+   return lp_build_add(bld, weight, weight2);
+}
+
+/**
+ * Like a 2d lerp, but inputs are 0/~0 masks, so can simplify slightly.
+ */
+static LLVMValueRef
+lp_build_masklerp2d(struct lp_build_context *bld,
+                    LLVMValueRef weight0,
+                    LLVMValueRef weight1,
+                    LLVMValueRef mask00,
+                    LLVMValueRef mask01,
+                    LLVMValueRef mask10,
+                    LLVMValueRef mask11)
+{
+   LLVMValueRef val0 = lp_build_masklerp(bld, weight0, mask00, mask01);
+   LLVMValueRef val1 = lp_build_masklerp(bld, weight0, mask10, mask11);
+   return lp_build_lerp(bld, weight1, val0, val1, 0);
+}
 
 /**
  * Generate code to sample a mipmap level with linear filtering.
@@ -861,12 +948,23 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
                              data_ptr, mipoffsets, neighbors[0][1]);
 
    if (dims == 1) {
-      /* Interpolate two samples from 1D image to produce one color */
-      for (chan = 0; chan < 4; chan++) {
-         colors_out[chan] = lp_build_lerp(&bld->texel_bld, s_fpart,
-                                          neighbors[0][0][chan],
-                                          neighbors[0][1][chan],
-                                          0);
+      if (bld->static_sampler_state->compare_mode == PIPE_TEX_COMPARE_NONE) {
+         /* Interpolate two samples from 1D image to produce one color */
+         for (chan = 0; chan < 4; chan++) {
+            colors_out[chan] = lp_build_lerp(&bld->texel_bld, s_fpart,
+                                             neighbors[0][0][chan],
+                                             neighbors[0][1][chan],
+                                             0);
+         }
+      }
+      else {
+         LLVMValueRef cmpval0, cmpval1;
+         cmpval0 = lp_build_sample_comparefunc(bld, coords[4], neighbors[0][0][0]);
+         cmpval1 = lp_build_sample_comparefunc(bld, coords[4], neighbors[0][1][0]);
+         /* simplified lerp, AND mask with weight and add */
+         colors_out[0] = lp_build_masklerp(&bld->texel_bld, s_fpart,
+                                           cmpval0, cmpval1);
+         colors_out[1] = colors_out[2] = colors_out[3] = colors_out[0];
       }
    }
    else {
@@ -885,15 +983,27 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
                                 row_stride_vec, img_stride_vec,
                                 data_ptr, mipoffsets, neighbors[1][1]);
 
-      /* Bilinear interpolate the four samples from the 2D image / 3D slice */
-      for (chan = 0; chan < 4; chan++) {
-         colors0[chan] = lp_build_lerp_2d(&bld->texel_bld,
-                                          s_fpart, t_fpart,
-                                          neighbors[0][0][chan],
-                                          neighbors[0][1][chan],
-                                          neighbors[1][0][chan],
-                                          neighbors[1][1][chan],
-                                          0);
+      if (bld->static_sampler_state->compare_mode == PIPE_TEX_COMPARE_NONE) {
+         /* Bilinear interpolate the four samples from the 2D image / 3D slice */
+         for (chan = 0; chan < 4; chan++) {
+            colors0[chan] = lp_build_lerp_2d(&bld->texel_bld,
+                                             s_fpart, t_fpart,
+                                             neighbors[0][0][chan],
+                                             neighbors[0][1][chan],
+                                             neighbors[1][0][chan],
+                                             neighbors[1][1][chan],
+                                             0);
+         }
+      }
+      else {
+         LLVMValueRef cmpval00, cmpval01, cmpval10, cmpval11;
+         cmpval00 = lp_build_sample_comparefunc(bld, coords[4], neighbors[0][0][0]);
+         cmpval01 = lp_build_sample_comparefunc(bld, coords[4], neighbors[0][1][0]);
+         cmpval10 = lp_build_sample_comparefunc(bld, coords[4], neighbors[1][0][0]);
+         cmpval11 = lp_build_sample_comparefunc(bld, coords[4], neighbors[1][1][0]);
+         colors0[0] = lp_build_masklerp2d(&bld->texel_bld, s_fpart, t_fpart,
+                                          cmpval00, cmpval01, cmpval10, cmpval11);
+         colors0[1] = colors0[2] = colors0[3] = colors0[0];
       }
 
       if (dims == 3) {
@@ -922,23 +1032,39 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
                                    row_stride_vec, img_stride_vec,
                                    data_ptr, mipoffsets, neighbors1[1][1]);
 
-         /* Bilinear interpolate the four samples from the second Z slice */
-         for (chan = 0; chan < 4; chan++) {
-            colors1[chan] = lp_build_lerp_2d(&bld->texel_bld,
-                                             s_fpart, t_fpart,
-                                             neighbors1[0][0][chan],
-                                             neighbors1[0][1][chan],
-                                             neighbors1[1][0][chan],
-                                             neighbors1[1][1][chan],
-                                             0);
+         if (bld->static_sampler_state->compare_mode == PIPE_TEX_COMPARE_NONE) {
+            /* Bilinear interpolate the four samples from the second Z slice */
+            for (chan = 0; chan < 4; chan++) {
+               colors1[chan] = lp_build_lerp_2d(&bld->texel_bld,
+                                                s_fpart, t_fpart,
+                                                neighbors1[0][0][chan],
+                                                neighbors1[0][1][chan],
+                                                neighbors1[1][0][chan],
+                                                neighbors1[1][1][chan],
+                                                0);
+            }
+            /* Linearly interpolate the two samples from the two 3D slices */
+            for (chan = 0; chan < 4; chan++) {
+               colors_out[chan] = lp_build_lerp(&bld->texel_bld,
+                                                r_fpart,
+                                                colors0[chan], colors1[chan],
+                                                0);
+            }
          }
-
-         /* Linearly interpolate the two samples from the two 3D slices */
-         for (chan = 0; chan < 4; chan++) {
-            colors_out[chan] = lp_build_lerp(&bld->texel_bld,
+         else {
+            LLVMValueRef cmpval00, cmpval01, cmpval10, cmpval11;
+            cmpval00 = lp_build_sample_comparefunc(bld, coords[4], neighbors[0][0][0]);
+            cmpval01 = lp_build_sample_comparefunc(bld, coords[4], neighbors[0][1][0]);
+            cmpval10 = lp_build_sample_comparefunc(bld, coords[4], neighbors[1][0][0]);
+            cmpval11 = lp_build_sample_comparefunc(bld, coords[4], neighbors[1][1][0]);
+            colors1[0] = lp_build_masklerp2d(&bld->texel_bld, s_fpart, t_fpart,
+                                             cmpval00, cmpval01, cmpval10, cmpval11);
+            /* Linearly interpolate the two samples from the two 3D slices */
+            colors_out[0] = lp_build_lerp(&bld->texel_bld,
                                              r_fpart,
-                                             colors0[chan], colors1[chan],
+                                             colors0[0], colors1[0],
                                              0);
+            colors_out[1] = colors_out[2] = colors_out[3] = colors_out[0];
          }
       }
       else {
@@ -1171,6 +1297,31 @@ lp_build_sample_common(struct lp_build_sample_context *bld,
             target == PIPE_TEXTURE_2D_ARRAY) {
       coords[2] = lp_build_iround(&bld->coord_bld, coords[2]);
       coords[2] = lp_build_layer_coord(bld, texture_index, coords[2], NULL);
+   }
+
+   if (bld->static_sampler_state->compare_mode != PIPE_TEX_COMPARE_NONE) {
+      /*
+       * Clamp p coords to [0,1] for fixed function depth texture format here.
+       * Technically this is not entirely correct for unorm depth as the ref value
+       * should be converted to the depth format (quantization!) and comparison
+       * then done in texture format. This would actually help performance (since
+       * only need to do it once and could save the per-sample conversion of texels
+       * to floats instead), but it would need more messy code (would need to push
+       * at least some bits down to actual fetch so conversion could be skipped,
+       * and would have ugly interaction with border color, would need to convert
+       * border color to that format too or do some other tricks to make it work).
+       */
+      const struct util_format_description *format_desc;
+      unsigned chan_type;
+      format_desc = util_format_description(bld->static_texture_state->format);
+      /* not entirely sure we couldn't end up with non-valid swizzle here */
+      chan_type = format_desc->swizzle[0] <= UTIL_FORMAT_SWIZZLE_W ?
+                     format_desc->channel[format_desc->swizzle[0]].type :
+                     UTIL_FORMAT_TYPE_FLOAT;
+      if (chan_type != UTIL_FORMAT_TYPE_FLOAT) {
+         coords[4] = lp_build_clamp(&bld->coord_bld, coords[4],
+                                    bld->coord_bld.zero, bld->coord_bld.one);
+      }
    }
 
    /*
@@ -1455,79 +1606,6 @@ lp_build_fetch_texel(struct lp_build_sample_context *bld,
 
 
 /**
- * Do shadow test/comparison.
- * \param coords  incoming texcoords
- * \param texel  the texel to compare against (use the X channel)
- * Ideally this should really be done per-sample.
- */
-static void
-lp_build_sample_compare(struct lp_build_sample_context *bld,
-                        LLVMValueRef p,
-                        LLVMValueRef texel[4])
-{
-   struct lp_build_context *texel_bld = &bld->texel_bld;
-   LLVMBuilderRef builder = bld->gallivm->builder;
-   LLVMValueRef res;
-   const unsigned chan = 0;
-   unsigned chan_type;
-   const struct util_format_description *format_desc;
-
-   if (bld->static_sampler_state->compare_mode == PIPE_TEX_COMPARE_NONE)
-      return;
-
-   /* debug code */
-   if (0) {
-      LLVMValueRef indx = lp_build_const_int32(bld->gallivm, 0);
-      LLVMValueRef coord = LLVMBuildExtractElement(builder, p, indx, "");
-      LLVMValueRef tex = LLVMBuildExtractElement(builder, texel[chan], indx, "");
-      lp_build_printf(bld->gallivm, "shadow compare coord %f to texture %f\n",
-                      coord, tex);
-   }
-
-   /* Clamp p coords to [0,1] for fixed function depth texture format */
-   format_desc = util_format_description(bld->static_texture_state->format);
-   /* not entirely sure we couldn't end up with non-valid swizzle here */
-   chan_type = format_desc->swizzle[0] <= UTIL_FORMAT_SWIZZLE_W ?
-                  format_desc->channel[format_desc->swizzle[0]].type :
-                  UTIL_FORMAT_TYPE_FLOAT;
-   if (chan_type != UTIL_FORMAT_TYPE_FLOAT) {
-      p = lp_build_clamp(&bld->coord_bld, p,
-                         bld->coord_bld.zero, bld->coord_bld.one);
-   }
-
-   /*
-    * technically this is not entirely correct for unorm depth as the ref value
-    * should be converted to the depth format (quantization!) and comparison
-    * then done in texture format.
-    */
-
-   /* result = (p FUNC texel) ? 1 : 0 */
-   /*
-    * honor d3d10 floating point rules here, which state that comparisons
-    * are ordered except NOT_EQUAL which is unordered.
-    */
-   if (bld->static_sampler_state->compare_func != PIPE_FUNC_NOTEQUAL) {
-      res = lp_build_cmp_ordered(texel_bld, bld->static_sampler_state->compare_func,
-                                 p, texel[chan]);
-   }
-   else {
-      res = lp_build_cmp(texel_bld, bld->static_sampler_state->compare_func,
-                         p, texel[chan]);
-   }
-   res = lp_build_select(texel_bld, res, texel_bld->one, texel_bld->zero);
-
-   /*
-    * returning result for default GL_DEPTH_TEXTURE_MODE = GL_LUMINANCE.
-    * This should be ok because sampler swizzle is applied on top of it.
-    */
-   texel[0] =
-   texel[1] =
-   texel[2] = res;
-   texel[3] = texel_bld->one;
-}
-
-
-/**
  * Just set texels to white instead of actually sampling the texture.
  * For debugging.
  */
@@ -1749,7 +1827,9 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
       LLVMValueRef ilevel0 = NULL, ilevel1 = NULL;
       boolean use_aos = util_format_fits_8unorm(bld.format_desc) &&
                         lp_is_simple_wrap_mode(static_sampler_state->wrap_s) &&
-                        lp_is_simple_wrap_mode(static_sampler_state->wrap_t);
+                        lp_is_simple_wrap_mode(static_sampler_state->wrap_t) &&
+                        /* not sure this is strictly needed or simply impossible */
+                        static_sampler_state->compare_mode == PIPE_TEX_COMPARE_NONE;
 
       if ((gallivm_debug & GALLIVM_DEBUG_PERF) &&
           !use_aos && util_format_fits_8unorm(bld.format_desc)) {
@@ -1939,8 +2019,6 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
             texel_out[j] = lp_build_concat(gallivm, texelouttmp[j], type4, num_quads);
          }
       }
-
-      lp_build_sample_compare(&bld, newcoords[4], texel_out);
    }
 
    if (target != PIPE_BUFFER) {
