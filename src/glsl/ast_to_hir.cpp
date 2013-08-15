@@ -1851,11 +1851,17 @@ validate_matrix_layout_for_type(struct _mesa_glsl_parse_state *state,
 				YYLTYPE *loc,
 				const glsl_type *type)
 {
-   if (!type->is_matrix() && !type->is_record()) {
-      _mesa_glsl_error(loc, state,
-                       "uniform block layout qualifiers row_major and "
-                       "column_major can only be applied to matrix and "
-                       "structure types");
+   if (!type->is_matrix()) {
+      /* The OpenGL ES 3.0 conformance tests did not originally allow
+       * matrix layout qualifiers on non-matrices.  However, the OpenGL
+       * 4.4 and OpenGL ES 3.0 (revision TBD) specifications were
+       * amended to specifically allow these layouts on all types.  Emit
+       * a warning so that people know their code may not be portable.
+       */
+      _mesa_glsl_warning(loc, state,
+                         "uniform block layout qualifiers row_major and "
+                         "column_major applied to non-matrix types may "
+                         "be rejected by older compilers");
    } else if (type->is_record()) {
       /* We allow 'layout(row_major)' on structure types because it's the only
        * way to get row-major layouts on matrices contained in structures.
@@ -1863,7 +1869,7 @@ validate_matrix_layout_for_type(struct _mesa_glsl_parse_state *state,
       _mesa_glsl_warning(loc, state,
                          "uniform block layout qualifiers row_major and "
                          "column_major applied to structure types is not "
-                         "strictly conformant and my be rejected by other "
+                         "strictly conformant and may be rejected by other "
                          "compilers");
    }
 }
