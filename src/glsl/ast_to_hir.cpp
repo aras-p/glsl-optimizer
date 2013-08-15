@@ -1951,7 +1951,7 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
 				 ir_variable *var,
 				 struct _mesa_glsl_parse_state *state,
 				 YYLTYPE *loc,
-				 bool ubo_qualifiers_valid,
+				 bool ubo_qualifiers_allowed,
                                  bool is_parameter)
 {
    STATIC_ASSERT(sizeof(qual->flags.q) <= sizeof(qual->flags.i));
@@ -2297,7 +2297,7 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
    }
 
    if (qual->flags.q.row_major || qual->flags.q.column_major) {
-      if (!ubo_qualifiers_valid) {
+      if (!ubo_qualifiers_allowed) {
 	 _mesa_glsl_error(loc, state,
 			  "uniform block layout qualifiers row_major and "
 			  "column_major can only be applied to uniform block "
@@ -2852,7 +2852,7 @@ ast_declarator_list::hir(exec_list *instructions,
       }
 
       apply_type_qualifier_to_variable(& this->type->qualifier, var, state,
-				       & loc, this->ubo_qualifiers_valid, false);
+				       & loc, this->ubo_qualifiers_allowed, false);
 
       if (this->type->qualifier.flags.q.invariant) {
 	 if ((state->target == vertex_shader) &&

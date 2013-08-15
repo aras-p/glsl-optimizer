@@ -644,7 +644,7 @@ public:
     * Flag indicating that these declarators are in a uniform block,
     * allowing UBO type qualifiers.
     */
-   bool ubo_qualifiers_valid;
+   bool ubo_qualifiers_allowed;
 };
 
 
