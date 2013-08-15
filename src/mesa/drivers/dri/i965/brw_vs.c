@@ -530,7 +530,8 @@ brw_vs_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
    key.base.program_string_id = bvp->id;
    key.base.clamp_vertex_color = ctx->API == API_OPENGL_COMPAT;
 
-   for (int i = 0; i < MAX_SAMPLERS; i++) {
+   unsigned sampler_count = _mesa_fls(vp->Base.SamplersUsed);
+   for (unsigned i = 0; i < sampler_count; i++) {
       if (vp->Base.ShadowSamplers & (1 << i)) {
          /* Assume DEPTH_TEXTURE_MODE is the default: X, X, X, 1 */
          key.base.tex.swizzles[i] =

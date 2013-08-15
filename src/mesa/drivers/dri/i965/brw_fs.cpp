@@ -3157,7 +3157,8 @@ brw_fs_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
 
    key.clamp_fragment_color = ctx->API == API_OPENGL_COMPAT;
 
-   for (int i = 0; i < MAX_SAMPLERS; i++) {
+   unsigned sampler_count = _mesa_fls(fp->Base.SamplersUsed);
+   for (unsigned i = 0; i < sampler_count; i++) {
       if (fp->Base.ShadowSamplers & (1 << i)) {
          /* Assume DEPTH_TEXTURE_MODE is the default: X, X, X, 1 */
          key.tex.swizzles[i] =
