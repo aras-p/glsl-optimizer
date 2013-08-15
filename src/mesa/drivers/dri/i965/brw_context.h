@@ -603,10 +603,6 @@ struct brw_vs_prog_data {
  *    |   : |     :                   |
  *    |  63 | SOL Binding 63          |
  *    +-----+-------------------------+
- *
- * Note that nothing actually uses the SURF_INDEX_DRAW macro, so it has to be
- * the identity function or things will break.  We do want to keep draw buffers
- * first so we can use headerless render target writes for RT 0.
  */
 #define SURF_INDEX_DRAW(d)           (d)
 #define SURF_INDEX_FRAG_CONST_BUFFER (BRW_MAX_DRAW_BUFFERS + 1)

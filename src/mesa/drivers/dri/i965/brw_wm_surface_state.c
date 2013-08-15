@@ -533,8 +533,8 @@ brw_update_null_renderbuffer_surface(struct brw_context *brw, unsigned int unit)
    /* _NEW_BUFFERS */
    const struct gl_framebuffer *fb = ctx->DrawBuffer;
 
-   surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE,
-			  6 * 4, 32, &brw->wm.surf_offset[unit]);
+   surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE, 6 * 4, 32,
+                          &brw->wm.surf_offset[SURF_INDEX_DRAW(unit)]);
 
    if (fb->Visual.samples > 1) {
       /* On Gen6, null render targets seem to cause GPU hangs when
@@ -587,7 +587,7 @@ brw_update_null_renderbuffer_surface(struct brw_context *brw, unsigned int unit)
 
    if (bo) {
       drm_intel_bo_emit_reloc(brw->batch.bo,
-                              brw->wm.surf_offset[unit] + 4,
+                              brw->wm.surf_offset[SURF_INDEX_DRAW(unit)] + 4,
                               bo, 0,
                               I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER);
    }
@@ -635,8 +635,8 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 
    region = irb->mt->region;
 
-   surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE,
-			  6 * 4, 32, &brw->wm.surf_offset[unit]);
+   surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE, 6 * 4, 32,
+                          &brw->wm.surf_offset[SURF_INDEX_DRAW(unit)]);
 
    format = brw->render_target_format[rb_format];
    if (unlikely(!brw->format_supported_as_render_target[rb_format])) {
@@ -692,7 +692,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
    }
 
    drm_intel_bo_emit_reloc(brw->batch.bo,
-			   brw->wm.surf_offset[unit] + 4,
+			   brw->wm.surf_offset[SURF_INDEX_DRAW(unit)] + 4,
 			   region->bo,
 			   surf[1] - region->bo->offset,
 			   I915_GEM_DOMAIN_RENDER,

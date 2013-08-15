@@ -170,7 +170,7 @@ fs_generator::generate_fb_write(fs_inst *inst)
 		inst->base_mrf,
 		implied_header,
 		msg_control,
-		inst->target,
+		SURF_INDEX_DRAW(inst->target),
 		inst->mlen,
 		0,
 		eot,
