@@ -230,9 +230,6 @@ static void radeonsi_launch_grid(
 	}
 #endif
 
-	rctx->ws->cs_flush(rctx->cs, RADEON_FLUSH_COMPUTE, 0);
-	rctx->ws->buffer_wait(shader->bo->buf, 0);
-
 	FREE(pm4);
 	FREE(kernel_args);
 }
