@@ -1689,7 +1689,7 @@ boolean si_is_format_supported(struct pipe_screen *screen,
 		return FALSE;
 
 	if (sample_count > 1) {
-		if (rscreen->chip_class >= CIK)
+		if (HAVE_LLVM < 0x0304 || rscreen->chip_class != SI)
 			return FALSE;
 
 		switch (sample_count) {
