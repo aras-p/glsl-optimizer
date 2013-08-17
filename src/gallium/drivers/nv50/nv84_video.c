@@ -624,15 +624,11 @@ nv84_video_buffer_create(struct pipe_context *pipe,
    union nouveau_bo_config cfg;
    unsigned bo_size;
 
-   if (getenv("XVMC_VL"))
+   if (getenv("XVMC_VL") || template->buffer_format != PIPE_FORMAT_NV12)
       return vl_video_buffer_create(pipe, template);
 
    if (!template->interlaced) {
       debug_printf("Require interlaced video buffers\n");
-      return NULL;
-   }
-   if (template->buffer_format != PIPE_FORMAT_NV12) {
-      debug_printf("Must use NV12 format\n");
       return NULL;
    }
    if (template->chroma_format != PIPE_VIDEO_CHROMA_FORMAT_420) {
