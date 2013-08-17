@@ -59,6 +59,15 @@ private:
    virtual void visit_field(const glsl_type *type, const char *name,
                             bool row_major)
    {
+      (void) type;
+      (void) name;
+      (void) row_major;
+      assert(!"Should not get here.");
+   }
+
+   virtual void visit_field(const glsl_type *type, const char *name,
+                            bool row_major, const glsl_type *record_type)
+   {
       assert(this->index < this->num_variables);
 
       gl_uniform_buffer_variable *v = &this->variables[this->index++];
@@ -85,7 +94,9 @@ private:
          v->IndexName = v->Name;
       }
 
-      unsigned alignment = type->std140_base_alignment(v->RowMajor);
+      const unsigned alignment = record_type
+	 ? record_type->std140_base_alignment(v->RowMajor)
+	 : type->std140_base_alignment(v->RowMajor);
       unsigned size = type->std140_size(v->RowMajor);
 
       this->offset = glsl_align(this->offset, alignment);
@@ -107,6 +118,10 @@ private:
 
    virtual void visit_field(const glsl_struct_field *field)
    {
+      /* FINISHME: When support for doubles (dvec4, etc.) is added to the
+       * FINISHME: compiler, this may be incorrect for a structure in a UBO
+       * FINISHME: like struct s { struct { float f } s1; dvec4 v; };.
+       */
       this->offset = glsl_align(this->offset,
                                 field->type->std140_base_alignment(false));
    }

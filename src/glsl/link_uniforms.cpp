@@ -402,6 +402,15 @@ private:
    virtual void visit_field(const glsl_type *type, const char *name,
                             bool row_major)
    {
+      (void) type;
+      (void) name;
+      (void) row_major;
+      assert(!"Should not get here.");
+   }
+
+   virtual void visit_field(const glsl_type *type, const char *name,
+                            bool row_major, const glsl_type *record_type)
+   {
       assert(!type->is_record());
       assert(!(type->is_array() && type->fields.array->is_record()));
       assert(!type->is_interface());
@@ -446,7 +455,9 @@ private:
       if (this->ubo_block_index != -1) {
 	 this->uniforms[id].block_index = this->ubo_block_index;
 
-	 unsigned alignment = type->std140_base_alignment(ubo_row_major);
+	 const unsigned alignment = record_type
+	    ? record_type->std140_base_alignment(ubo_row_major)
+	    : type->std140_base_alignment(ubo_row_major);
 	 this->ubo_byte_offset = glsl_align(this->ubo_byte_offset, alignment);
 	 this->uniforms[id].offset = this->ubo_byte_offset;
 	 this->ubo_byte_offset += type->std140_size(ubo_row_major);
