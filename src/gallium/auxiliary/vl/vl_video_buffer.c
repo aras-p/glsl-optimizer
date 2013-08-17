@@ -259,7 +259,7 @@ vl_video_buffer_destroy(struct pipe_video_buffer *buffer)
       pipe_resource_reference(&buf->resources[i], NULL);
    }
 
-   for (i = 0; i < VL_NUM_COMPONENTS * 2; ++i)
+   for (i = 0; i < VL_MAX_SURFACES; ++i)
       pipe_surface_reference(&buf->surfaces[i], NULL);
 
    vl_video_buffer_set_associated_data(buffer, NULL, NULL, NULL);
@@ -365,7 +365,7 @@ vl_video_buffer_surfaces(struct pipe_video_buffer *buffer)
    array_size = buffer->interlaced ? 2 : 1;
    for (i = 0, surf = 0; i < VL_NUM_COMPONENTS; ++i) {
       for (j = 0; j < array_size; ++j, ++surf) {
-         assert(surf < (VL_NUM_COMPONENTS * 2));
+         assert(surf < VL_MAX_SURFACES);
 
          if (!buf->resources[i]) {
             pipe_surface_reference(&buf->surfaces[surf], NULL);
@@ -386,7 +386,7 @@ vl_video_buffer_surfaces(struct pipe_video_buffer *buffer)
    return buf->surfaces;
 
 error:
-   for (i = 0; i < (VL_NUM_COMPONENTS * 2); ++i )
+   for (i = 0; i < VL_MAX_SURFACES; ++i )
       pipe_surface_reference(&buf->surfaces[i], NULL);
 
    return NULL;
