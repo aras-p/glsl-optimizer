@@ -492,6 +492,8 @@ vl_video_buffer_create_ex2(struct pipe_context *pipe,
    unsigned i;
 
    buffer = CALLOC_STRUCT(vl_video_buffer);
+   if (!buffer)
+      return NULL;
 
    buffer->base = *tmpl;
    buffer->base.context = pipe;
