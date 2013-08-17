@@ -417,9 +417,6 @@ struct r600_fence_block {
 	struct list_head		head;
 };
 
-#define R600_CONSTANT_ARRAY_SIZE 256
-#define R600_RESOURCE_ARRAY_SIZE 160
-
 struct r600_constbuf_state
 {
 	struct r600_atom		atom;

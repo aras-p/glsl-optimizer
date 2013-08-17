@@ -102,8 +102,6 @@ struct r600_textures_info {
 	uint32_t			depth_texture_mask; /* which textures are depth */
 	uint32_t			compressed_colortex_mask;
 	unsigned			n_samplers;
-	bool				samplers_dirty;
-	bool				is_array_sampler[NUM_TEX_UNITS];
 };
 
 struct r600_fence {
@@ -119,9 +117,6 @@ struct r600_fence_block {
 	struct r600_fence		fences[FENCE_BLOCK_SIZE];
 	struct list_head		head;
 };
-
-#define R600_CONSTANT_ARRAY_SIZE 256
-#define R600_RESOURCE_ARRAY_SIZE 160
 
 struct r600_constbuf_state
 {
