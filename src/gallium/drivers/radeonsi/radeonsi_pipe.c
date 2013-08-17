@@ -371,6 +371,7 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
         case PIPE_CAP_PREFER_BLIT_BASED_TEXTURE_TRANSFER:
 	case PIPE_CAP_TGSI_INSTANCEID:
 	case PIPE_CAP_COMPUTE:
+		return 1;
 
 	case PIPE_CAP_TEXTURE_MULTISAMPLE:
 		return HAVE_LLVM >= 0x0304 && rscreen->chip_class == SI;
