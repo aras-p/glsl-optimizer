@@ -363,7 +363,8 @@ nouveau_vp3_fill_picparm_h264_vp(struct nouveau_vp3_decoder *dec,
    h->field_order_cnt[0] = d->field_order_cnt[0];
    h->field_order_cnt[1] = d->field_order_cnt[1];
    memset(h->refs, 0, sizeof(h->refs));
-   memcpy(h->m4x4, d->scaling_lists_4x4, sizeof(h->m4x4) + sizeof(h->m8x8));
+   memcpy(h->m4x4, d->scaling_lists_4x4, sizeof(h->m4x4));
+   memcpy(h->m8x8, d->scaling_lists_8x8, sizeof(h->m8x8));
    h->u220 = 0;
    for (i = 0; i < d->num_ref_frames; ++i) {
       if (!d->ref[i])
