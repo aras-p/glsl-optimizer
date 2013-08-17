@@ -126,6 +126,19 @@ protected:
     * \param type  Type of the field.
     * \param name  Fully qualified name of the field.
     * \param row_major  For a matrix type, is it stored row-major.
+    * \param record_type  Type of the record containing the field.
+    *
+    * The default implementation just calls the other \c visit_field method.
+    */
+   virtual void visit_field(const glsl_type *type, const char *name,
+                            bool row_major, const glsl_type *record_type);
+
+   /**
+    * Method invoked for each leaf of the variable
+    *
+    * \param type  Type of the field.
+    * \param name  Fully qualified name of the field.
+    * \param row_major  For a matrix type, is it stored row-major.
     */
    virtual void visit_field(const glsl_type *type, const char *name,
                             bool row_major) = 0;
@@ -146,7 +159,7 @@ private:
     *                     terminating \c NUL character.
     */
    void recursion(const glsl_type *t, char **name, size_t name_length,
-                  bool row_major);
+                  bool row_major, const glsl_type *record_type);
 };
 
 void
