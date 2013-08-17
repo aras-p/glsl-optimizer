@@ -3017,46 +3017,6 @@ static void si_delete_sampler_state(struct pipe_context *ctx, void *state)
 }
 
 /*
- * Constants
- */
-static void si_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
-				   struct pipe_constant_buffer *input)
-{
-	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_constbuf_state *state = &rctx->constbuf_state[shader];
-	struct pipe_constant_buffer *cb;
-	const uint8_t *ptr;
-
-	/* Note that the state tracker can unbind constant buffers by
-	 * passing NULL here.
-	 */
-	if (unlikely(!input || (!input->buffer && !input->user_buffer))) {
-		state->enabled_mask &= ~(1 << index);
-		state->dirty_mask &= ~(1 << index);
-		pipe_resource_reference(&state->cb[index].buffer, NULL);
-		return;
-	}
-
-	cb = &state->cb[index];
-	cb->buffer_size = input->buffer_size;
-
-	ptr = input->user_buffer;
-
-	if (ptr) {
-		r600_upload_const_buffer(rctx,
-				(struct r600_resource**)&cb->buffer, ptr,
-				cb->buffer_size, &cb->buffer_offset);
-	} else {
-		/* Setup the hw buffer. */
-		cb->buffer_offset = input->buffer_offset;
-		pipe_resource_reference(&cb->buffer, input->buffer);
-	}
-
-	state->enabled_mask |= 1 << index;
-	state->dirty_mask |= 1 << index;
-}
-
-/*
  * Vertex elements & buffers
  */
 
@@ -3240,8 +3200,6 @@ void si_init_state_functions(struct r600_context *rctx)
 	rctx->b.b.sampler_view_destroy = si_sampler_view_destroy;
 
 	rctx->b.b.set_sample_mask = si_set_sample_mask;
-
-	rctx->b.b.set_constant_buffer = si_set_constant_buffer;
 
 	rctx->b.b.create_vertex_elements_state = si_create_vertex_elements;
 	rctx->b.b.bind_vertex_elements_state = si_bind_vertex_elements;

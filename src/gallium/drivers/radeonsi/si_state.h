@@ -92,11 +92,9 @@ union si_state {
 		struct si_pm4_state		*vs;
 		struct si_pm4_state		*vs_sampler_views;
 		struct si_pm4_state		*vs_sampler;
-		struct si_pm4_state		*vs_const;
 		struct si_pm4_state		*ps;
 		struct si_pm4_state		*ps_sampler_views;
 		struct si_pm4_state		*ps_sampler;
-		struct si_pm4_state		*ps_const;
 		struct si_pm4_state		*spi;
 		struct si_pm4_state		*vertex_buffers;
 		struct si_pm4_state		*texture_barrier;
@@ -113,6 +111,8 @@ union si_state {
  */
 #define FMASK_TEX_OFFSET	NUM_TEX_UNITS
 #define NUM_SAMPLER_VIEWS	(FMASK_TEX_OFFSET+NUM_TEX_UNITS)
+
+#define NUM_CONST_BUFFERS 2
 
 /* This represents resource descriptors in memory, such as buffer resources,
  * image resources, and sampler states.
@@ -149,7 +149,16 @@ struct si_descriptors {
 struct si_sampler_views {
 	struct si_descriptors		desc;
 	struct pipe_sampler_view	*views[NUM_SAMPLER_VIEWS];
-	const uint32_t			*desc_data[NUM_SAMPLER_VIEWS];
+	uint32_t			*desc_data[NUM_SAMPLER_VIEWS];
+};
+
+struct si_buffer_resources {
+	struct si_descriptors		desc;
+	unsigned			num_buffers;
+	enum radeon_bo_usage		shader_usage; /* READ, WRITE, or READWRITE */
+	struct pipe_resource		**buffers; /* this has num_buffers elements */
+	uint32_t			*desc_storage; /* this has num_buffers*4 elements */
+	uint32_t			**desc_data; /* an array of pointers pointing to desc_storage */
 };
 
 #define si_pm4_block_idx(member) \

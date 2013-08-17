@@ -32,7 +32,7 @@
 
 #define SI_NUM_CONTEXTS 256
 
-static const uint32_t null_desc[8]; /* zeros */
+static uint32_t null_desc[8]; /* zeros */
 
 /* Set this if you want the 3D engine to wait until CP DMA is done.
  * It should be set on the last CP DMA packet. */
@@ -170,7 +170,7 @@ static void si_emit_shader_pointer(struct r600_context *rctx,
 
 static void si_emit_descriptors(struct r600_context *rctx,
 				struct si_descriptors *desc,
-				const uint32_t **descriptors)
+				uint32_t **descriptors)
 {
 	struct radeon_winsys_cs *cs = rctx->b.rings.gfx.cs;
 	uint64_t va_base;
@@ -325,6 +325,135 @@ void si_set_sampler_view(struct r600_context *rctx, unsigned shader,
 	si_update_descriptors(&views->desc);
 }
 
+/* BUFFER RESOURCES */
+
+static void si_emit_buffer_resources(struct r600_context *rctx, struct r600_atom *atom)
+{
+	struct si_buffer_resources *buffers = (struct si_buffer_resources*)atom;
+
+	si_emit_descriptors(rctx, &buffers->desc, buffers->desc_data);
+}
+
+static void si_init_buffer_resources(struct r600_context *rctx,
+				     struct si_buffer_resources *buffers,
+				     unsigned num_buffers, unsigned shader,
+				     unsigned shader_userdata_index,
+				     enum radeon_bo_usage shader_usage)
+{
+	int i;
+
+	buffers->num_buffers = num_buffers;
+	buffers->shader_usage = shader_usage;
+	buffers->buffers = CALLOC(num_buffers, sizeof(struct pipe_resource*));
+	buffers->desc_storage = CALLOC(num_buffers, sizeof(uint32_t) * 4);
+
+	/* si_emit_descriptors only accepts an array of arrays.
+	 * This adds such an array. */
+	buffers->desc_data = CALLOC(num_buffers, sizeof(uint32_t*));
+	for (i = 0; i < num_buffers; i++) {
+		buffers->desc_data[i] = &buffers->desc_storage[i*4];
+	}
+
+	si_init_descriptors(rctx, &buffers->desc,
+			    si_get_shader_user_data_base(shader) +
+			    shader_userdata_index*4, 4, num_buffers,
+			    si_emit_buffer_resources);
+}
+
+static void si_release_buffer_resources(struct si_buffer_resources *buffers)
+{
+	int i;
+
+	for (i = 0; i < Elements(buffers->buffers); i++) {
+		pipe_resource_reference(&buffers->buffers[i], NULL);
+	}
+
+	FREE(buffers->buffers);
+	FREE(buffers->desc_storage);
+	FREE(buffers->desc_data);
+	si_release_descriptors(&buffers->desc);
+}
+
+static void si_buffer_resources_begin_new_cs(struct r600_context *rctx,
+					     struct si_buffer_resources *buffers)
+{
+	unsigned mask = buffers->desc.enabled_mask;
+
+	/* Add relocations to the CS. */
+	while (mask) {
+		int i = u_bit_scan(&mask);
+
+		r600_context_bo_reloc(&rctx->b, &rctx->b.rings.gfx,
+				      (struct r600_resource*)buffers->buffers[i],
+				      buffers->shader_usage);
+	}
+
+	r600_context_bo_reloc(&rctx->b, &rctx->b.rings.gfx,
+			      buffers->desc.buffer, RADEON_USAGE_READWRITE);
+
+	si_emit_shader_pointer(rctx, &buffers->desc);
+}
+
+/* CONSTANT BUFFERS */
+
+static void si_set_constant_buffer(struct pipe_context *ctx, uint shader, uint slot,
+				   struct pipe_constant_buffer *input)
+{
+	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_buffer_resources *buffers = &rctx->const_buffers[shader];
+
+	if (shader >= SI_NUM_SHADERS)
+		return;
+
+	rctx->b.flags |= R600_CONTEXT_INV_CONST_CACHE;
+
+	assert(slot < buffers->num_buffers);
+	pipe_resource_reference(&buffers->buffers[slot], NULL);
+
+	if (input && (input->buffer || input->user_buffer)) {
+		struct pipe_resource *buffer = NULL;
+		uint64_t va;
+
+		/* Upload the user buffer if needed. */
+		if (input->user_buffer) {
+			unsigned buffer_offset;
+
+			r600_upload_const_buffer(rctx,
+						 (struct r600_resource**)&buffer, input->user_buffer,
+						 input->buffer_size, &buffer_offset);
+			va = r600_resource_va(ctx->screen, buffer) + buffer_offset;
+		} else {
+			pipe_resource_reference(&buffer, input->buffer);
+			va = r600_resource_va(ctx->screen, buffer) + input->buffer_offset;
+		}
+
+		/* Set the descriptor. */
+		uint32_t *desc = buffers->desc_data[slot];
+		desc[0] = va;
+		desc[1] = S_008F04_BASE_ADDRESS_HI(va >> 32) |
+			  S_008F04_STRIDE(0);
+		desc[2] = input->buffer_size;
+		desc[3] = S_008F0C_DST_SEL_X(V_008F0C_SQ_SEL_X) |
+			  S_008F0C_DST_SEL_Y(V_008F0C_SQ_SEL_Y) |
+			  S_008F0C_DST_SEL_Z(V_008F0C_SQ_SEL_Z) |
+			  S_008F0C_DST_SEL_W(V_008F0C_SQ_SEL_W) |
+			  S_008F0C_NUM_FORMAT(V_008F0C_BUF_NUM_FORMAT_FLOAT) |
+			  S_008F0C_DATA_FORMAT(V_008F0C_BUF_DATA_FORMAT_32);
+
+		buffers->buffers[slot] = buffer;
+		r600_context_bo_reloc(&rctx->b, &rctx->b.rings.gfx,
+				      (struct r600_resource*)buffer, buffers->shader_usage);
+		buffers->desc.enabled_mask |= 1 << slot;
+	} else {
+		/* Clear the descriptor. */
+		memset(buffers->desc_data[slot], 0, sizeof(uint32_t) * 4);
+		buffers->desc.enabled_mask &= ~(1 << slot);
+	}
+
+	buffers->desc.dirty_mask |= 1 << slot;
+	si_update_descriptors(&buffers->desc);
+}
+
 /* INIT/DEINIT */
 
 void si_init_all_descriptors(struct r600_context *rctx)
@@ -332,10 +461,18 @@ void si_init_all_descriptors(struct r600_context *rctx)
 	int i;
 
 	for (i = 0; i < SI_NUM_SHADERS; i++) {
+		si_init_buffer_resources(rctx, &rctx->const_buffers[i],
+					 NUM_CONST_BUFFERS, i, SI_SGPR_CONST,
+					 RADEON_USAGE_READ);
+
 		si_init_sampler_views(rctx, &rctx->samplers[i].views, i);
 
+		rctx->atoms.const_buffers[i] = &rctx->const_buffers[i].desc.atom;
 		rctx->atoms.sampler_views[i] = &rctx->samplers[i].views.desc.atom;
 	}
+
+	/* Set pipe_context functions. */
+	rctx->b.b.set_constant_buffer = si_set_constant_buffer;
 }
 
 void si_release_all_descriptors(struct r600_context *rctx)
@@ -343,6 +480,7 @@ void si_release_all_descriptors(struct r600_context *rctx)
 	int i;
 
 	for (i = 0; i < SI_NUM_SHADERS; i++) {
+		si_release_buffer_resources(&rctx->const_buffers[i]);
 		si_release_sampler_views(&rctx->samplers[i].views);
 	}
 }
@@ -352,6 +490,7 @@ void si_all_descriptors_begin_new_cs(struct r600_context *rctx)
 	int i;
 
 	for (i = 0; i < SI_NUM_SHADERS; i++) {
+		si_buffer_resources_begin_new_cs(rctx, &rctx->const_buffers[i]);
 		si_sampler_views_begin_new_cs(rctx, &rctx->samplers[i].views);
 	}
 }

@@ -115,13 +115,6 @@ struct r600_fence_block {
 	struct list_head		head;
 };
 
-struct r600_constbuf_state
-{
-	struct pipe_constant_buffer	cb[2];
-	uint32_t			enabled_mask;
-	uint32_t			dirty_mask;
-};
-
 #define SI_NUM_ATOMS(rctx) (sizeof((rctx)->atoms)/sizeof((rctx)->atoms.array[0]))
 #define SI_NUM_SHADERS (PIPE_SHADER_FRAGMENT+1)
 
@@ -138,6 +131,7 @@ struct r600_context {
 
 	union {
 		struct {
+			struct r600_atom *const_buffers[SI_NUM_SHADERS];
 			struct r600_atom *sampler_views[SI_NUM_SHADERS];
 		};
 		struct r600_atom *array[0];
@@ -164,7 +158,7 @@ struct r600_context {
 	/* shader information */
 	unsigned			sprite_coord_enable;
 	unsigned			export_16bpc;
-	struct r600_constbuf_state	constbuf_state[PIPE_SHADER_TYPES];
+	struct si_buffer_resources	const_buffers[SI_NUM_SHADERS];
 	struct r600_textures_info	samplers[SI_NUM_SHADERS];
 	struct r600_resource		*border_color_table;
 	unsigned			border_color_offset;
