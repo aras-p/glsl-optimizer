@@ -198,7 +198,7 @@ cleanup_idct_buffer(struct vl_mpeg12_buffer *buf)
    assert(buf);
 
    for (i = 0; i < 3; ++i)
-      vl_idct_cleanup_buffer(&buf->idct[0]);
+      vl_idct_cleanup_buffer(&buf->idct[i]);
 }
 
 static bool
