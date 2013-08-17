@@ -1349,7 +1349,7 @@ static void create_function(struct si_shader_context *si_shader_ctx)
 	struct lp_build_tgsi_context *bld_base = &si_shader_ctx->radeon_bld.soa.bld_base;
 	struct gallivm_state *gallivm = bld_base->base.gallivm;
 	LLVMTypeRef params[20], f32, i8, i32, v2i32, v3i32;
-	unsigned i;
+	unsigned i, last_sgpr, num_params;
 
 	i8 = LLVMInt8TypeInContext(gallivm->context);
 	i32 = LLVMInt32TypeInContext(gallivm->context);
@@ -1361,17 +1361,21 @@ static void create_function(struct si_shader_context *si_shader_ctx)
 	params[SI_PARAM_SAMPLER] = params[SI_PARAM_CONST];
 	params[SI_PARAM_RESOURCE] = LLVMPointerType(LLVMVectorType(i8, 32), CONST_ADDR_SPACE);
 
-	if (si_shader_ctx->type == TGSI_PROCESSOR_VERTEX) {
-		params[SI_PARAM_VERTEX_BUFFER] = params[SI_PARAM_SAMPLER];
+	switch (si_shader_ctx->type) {
+	case TGSI_PROCESSOR_VERTEX:
+		params[SI_PARAM_VERTEX_BUFFER] = params[SI_PARAM_CONST];
 		params[SI_PARAM_START_INSTANCE] = i32;
+		last_sgpr = SI_PARAM_START_INSTANCE;
 		params[SI_PARAM_VERTEX_ID] = i32;
 		params[SI_PARAM_DUMMY_0] = i32;
 		params[SI_PARAM_DUMMY_1] = i32;
 		params[SI_PARAM_INSTANCE_ID] = i32;
-		radeon_llvm_create_func(&si_shader_ctx->radeon_bld, params, 9);
+		num_params = SI_PARAM_INSTANCE_ID+1;
+		break;
 
-	} else {
+	case TGSI_PROCESSOR_FRAGMENT:
 		params[SI_PARAM_PRIM_MASK] = i32;
+		last_sgpr = SI_PARAM_PRIM_MASK;
 		params[SI_PARAM_PERSP_SAMPLE] = v2i32;
 		params[SI_PARAM_PERSP_CENTER] = v2i32;
 		params[SI_PARAM_PERSP_CENTROID] = v2i32;
@@ -1388,18 +1392,20 @@ static void create_function(struct si_shader_context *si_shader_ctx)
 		params[SI_PARAM_ANCILLARY] = f32;
 		params[SI_PARAM_SAMPLE_COVERAGE] = f32;
 		params[SI_PARAM_POS_FIXED_PT] = f32;
-		radeon_llvm_create_func(&si_shader_ctx->radeon_bld, params, 20);
+		num_params = SI_PARAM_POS_FIXED_PT+1;
+		break;
+
+	default:
+		assert(0 && "unimplemented shader");
+		return;
 	}
 
+	assert(num_params <= Elements(params));
+	radeon_llvm_create_func(&si_shader_ctx->radeon_bld, params, num_params);
 	radeon_llvm_shader_type(si_shader_ctx->radeon_bld.main_fn, si_shader_ctx->type);
-	for (i = SI_PARAM_CONST; i <= SI_PARAM_VERTEX_BUFFER; ++i) {
-		LLVMValueRef P = LLVMGetParam(si_shader_ctx->radeon_bld.main_fn, i);
-		LLVMAddAttribute(P, LLVMInRegAttribute);
-	}
 
-	if (si_shader_ctx->type == TGSI_PROCESSOR_VERTEX) {
-		LLVMValueRef P = LLVMGetParam(si_shader_ctx->radeon_bld.main_fn,
-					      SI_PARAM_START_INSTANCE);
+	for (i = 0; i <= last_sgpr; ++i) {
+		LLVMValueRef P = LLVMGetParam(si_shader_ctx->radeon_bld.main_fn, i);
 		LLVMAddAttribute(P, LLVMInRegAttribute);
 	}
 
