@@ -193,6 +193,10 @@ Status XvMCCreateSurface(Display *dpy, XvMCContext *context, XvMCSurface *surfac
    );
 
    surface_priv->video_buffer = pipe->create_video_buffer(pipe, &tmpl);
+   if (!surface_priv->video_buffer) {
+      FREE(surface_priv);
+      return BadAlloc;
+   }
    surface_priv->context = context;
 
    surface->surface_id = XAllocID(dpy);
