@@ -2728,6 +2728,7 @@ static struct pipe_sampler_view *si_create_sampler_view(struct pipe_context *ctx
 			break;
 		default:
 			assert(0);
+			fmask_format = V_008F14_IMG_DATA_FORMAT_INVALID;
 		}
 
 		view->fmask_state[0] = va >> 8;
