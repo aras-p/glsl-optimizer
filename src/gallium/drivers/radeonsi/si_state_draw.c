@@ -273,12 +273,36 @@ static unsigned si_conv_pipe_prim(unsigned pprim)
 	return result;
 }
 
+static unsigned r600_conv_prim_to_gs_out(unsigned mode)
+{
+	static const int prim_conv[] = {
+		[PIPE_PRIM_POINTS]			= V_028A6C_OUTPRIM_TYPE_POINTLIST,
+		[PIPE_PRIM_LINES]			= V_028A6C_OUTPRIM_TYPE_LINESTRIP,
+		[PIPE_PRIM_LINE_LOOP]			= V_028A6C_OUTPRIM_TYPE_LINESTRIP,
+		[PIPE_PRIM_LINE_STRIP]			= V_028A6C_OUTPRIM_TYPE_LINESTRIP,
+		[PIPE_PRIM_TRIANGLES]			= V_028A6C_OUTPRIM_TYPE_TRISTRIP,
+		[PIPE_PRIM_TRIANGLE_STRIP]		= V_028A6C_OUTPRIM_TYPE_TRISTRIP,
+		[PIPE_PRIM_TRIANGLE_FAN]		= V_028A6C_OUTPRIM_TYPE_TRISTRIP,
+		[PIPE_PRIM_QUADS]			= V_028A6C_OUTPRIM_TYPE_TRISTRIP,
+		[PIPE_PRIM_QUAD_STRIP]			= V_028A6C_OUTPRIM_TYPE_TRISTRIP,
+		[PIPE_PRIM_POLYGON]			= V_028A6C_OUTPRIM_TYPE_TRISTRIP,
+		[PIPE_PRIM_LINES_ADJACENCY]		= V_028A6C_OUTPRIM_TYPE_LINESTRIP,
+		[PIPE_PRIM_LINE_STRIP_ADJACENCY]	= V_028A6C_OUTPRIM_TYPE_LINESTRIP,
+		[PIPE_PRIM_TRIANGLES_ADJACENCY]		= V_028A6C_OUTPRIM_TYPE_TRISTRIP,
+		[PIPE_PRIM_TRIANGLE_STRIP_ADJACENCY]	= V_028A6C_OUTPRIM_TYPE_TRISTRIP
+	};
+	assert(mode < Elements(prim_conv));
+
+	return prim_conv[mode];
+}
+
 static bool si_update_draw_info_state(struct r600_context *rctx,
 			       const struct pipe_draw_info *info)
 {
 	struct si_pm4_state *pm4 = si_pm4_alloc_state(rctx);
 	struct si_shader *vs = &rctx->vs_shader->current->shader;
 	unsigned prim = si_conv_pipe_prim(info->mode);
+	unsigned gs_out_prim = r600_conv_prim_to_gs_out(info->mode);
 	unsigned ls_mask = 0;
 
 	if (pm4 == NULL)
@@ -291,8 +315,10 @@ static bool si_update_draw_info_state(struct r600_context *rctx,
 
 	if (rctx->b.chip_class >= CIK)
 		si_pm4_set_reg(pm4, R_030908_VGT_PRIMITIVE_TYPE, prim);
-	else
+	else {
 		si_pm4_set_reg(pm4, R_008958_VGT_PRIMITIVE_TYPE, prim);
+		si_pm4_set_reg(pm4, R_028A6C_VGT_GS_OUT_PRIM_TYPE, gs_out_prim);
+	}
 	si_pm4_set_reg(pm4, R_028400_VGT_MAX_VTX_INDX, ~0);
 	si_pm4_set_reg(pm4, R_028404_VGT_MIN_VTX_INDX, 0);
 	si_pm4_set_reg(pm4, R_028408_VGT_INDX_OFFSET,

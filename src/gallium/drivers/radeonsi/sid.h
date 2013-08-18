@@ -7423,6 +7423,9 @@
 #define   S_028A6C_OUTPRIM_TYPE(x)                                    (((x) & 0x3F) << 0)
 #define   G_028A6C_OUTPRIM_TYPE(x)                                    (((x) >> 0) & 0x3F)
 #define   C_028A6C_OUTPRIM_TYPE                                       0xFFFFFFC0
+#define     V_028A6C_OUTPRIM_TYPE_POINTLIST            0
+#define     V_028A6C_OUTPRIM_TYPE_LINESTRIP            1
+#define     V_028A6C_OUTPRIM_TYPE_TRISTRIP             2
 #define   S_028A6C_OUTPRIM_TYPE_1(x)                                  (((x) & 0x3F) << 8)
 #define   G_028A6C_OUTPRIM_TYPE_1(x)                                  (((x) >> 8) & 0x3F)
 #define   C_028A6C_OUTPRIM_TYPE_1                                     0xFFFFC0FF
