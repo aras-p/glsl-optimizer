@@ -342,6 +342,7 @@ static const char* r600_get_name(struct pipe_screen* pscreen)
 static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 {
 	struct r600_screen *rscreen = (struct r600_screen *)pscreen;
+	bool has_streamout = HAVE_LLVM >= 0x0304 && rscreen->b.chip_class == SI;
 
 	switch (param) {
 	/* Supported features (boolean caps). */
@@ -414,20 +415,13 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 		return 0;
 
 	/* Stream output. */
-#if 0
 	case PIPE_CAP_MAX_STREAM_OUTPUT_BUFFERS:
-		return debug_get_bool_option("R600_STREAMOUT", FALSE) ? 4 : 0;
+		return has_streamout ? 4 : 0;
 	case PIPE_CAP_STREAM_OUTPUT_PAUSE_RESUME:
-		return debug_get_bool_option("R600_STREAMOUT", FALSE) ? 1 : 0;
+		return has_streamout ? 1 : 0;
 	case PIPE_CAP_MAX_STREAM_OUTPUT_SEPARATE_COMPONENTS:
 	case PIPE_CAP_MAX_STREAM_OUTPUT_INTERLEAVED_COMPONENTS:
-		return 16*4;
-#endif
-	case PIPE_CAP_MAX_STREAM_OUTPUT_BUFFERS:
-	case PIPE_CAP_STREAM_OUTPUT_PAUSE_RESUME:
-	case PIPE_CAP_MAX_STREAM_OUTPUT_SEPARATE_COMPONENTS:
-	case PIPE_CAP_MAX_STREAM_OUTPUT_INTERLEAVED_COMPONENTS:
-		return 0;
+		return has_streamout ? 32*4 : 0;
 
 	/* Texturing. */
 	case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
