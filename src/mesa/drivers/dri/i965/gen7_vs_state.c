@@ -116,7 +116,8 @@ const struct brw_tracked_state gen7_vs_state = {
       .brw   = (BRW_NEW_CONTEXT |
 		BRW_NEW_VERTEX_PROGRAM |
 		BRW_NEW_VS_BINDING_TABLE |
-		BRW_NEW_BATCH),
+		BRW_NEW_BATCH |
+                BRW_NEW_PUSH_CONSTANT_ALLOCATION),
       .cache = CACHE_NEW_VS_PROG | CACHE_NEW_SAMPLER
    },
    .emit = upload_vs_state,

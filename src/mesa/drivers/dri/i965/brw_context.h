@@ -158,6 +158,7 @@ enum brw_state_id {
    BRW_STATE_UNIFORM_BUFFER,
    BRW_STATE_META_IN_PROGRESS,
    BRW_STATE_INTERPOLATION_MAP,
+   BRW_STATE_PUSH_CONSTANT_ALLOCATION,
    BRW_NUM_STATE_BITS
 };
 
@@ -194,6 +195,7 @@ enum brw_state_id {
 #define BRW_NEW_UNIFORM_BUFFER          (1 << BRW_STATE_UNIFORM_BUFFER)
 #define BRW_NEW_META_IN_PROGRESS        (1 << BRW_STATE_META_IN_PROGRESS)
 #define BRW_NEW_INTERPOLATION_MAP       (1 << BRW_STATE_INTERPOLATION_MAP)
+#define BRW_NEW_PUSH_CONSTANT_ALLOCATION (1 << BRW_STATE_PUSH_CONSTANT_ALLOCATION)
 
 struct brw_state_flags {
    /** State update flags signalled by mesa internals */

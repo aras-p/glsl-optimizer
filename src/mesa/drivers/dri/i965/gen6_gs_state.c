@@ -81,7 +81,7 @@ upload_gs_state(struct brw_context *brw)
 const struct brw_tracked_state gen6_gs_state = {
    .dirty = {
       .mesa  = _NEW_TRANSFORM,
-      .brw   = BRW_NEW_CONTEXT,
+      .brw   = BRW_NEW_CONTEXT | BRW_NEW_PUSH_CONSTANT_ALLOCATION,
       .cache = CACHE_NEW_FF_GS_PROG
    },
    .emit = upload_gs_state,

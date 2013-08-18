@@ -81,6 +81,19 @@ gen7_allocate_push_constants(struct brw_context *brw)
 
    gen7_emit_push_constant_state(brw, multiplier * vs_size,
                                  multiplier * gs_size, multiplier * fs_size);
+
+   /* From p115 of the Ivy Bridge PRM (3.2.1.4 3DSTATE_PUSH_CONSTANT_ALLOC_VS):
+    *
+    *     Programming Restriction:
+    *
+    *     The 3DSTATE_CONSTANT_VS must be reprogrammed prior to the next
+    *     3DPRIMITIVE command after programming the
+    *     3DSTATE_PUSH_CONSTANT_ALLOC_VS.
+    *
+    * Similar text exists for the other 3DSTATE_PUSH_CONSTANT_ALLOC_*
+    * commands.
+    */
+   brw->state.dirty.brw |= BRW_NEW_PUSH_CONSTANT_ALLOCATION;
 }
 
 void

@@ -206,7 +206,8 @@ const struct brw_tracked_state gen6_vs_state = {
       .mesa  = _NEW_TRANSFORM | _NEW_PROGRAM_CONSTANTS,
       .brw   = (BRW_NEW_CONTEXT |
 		BRW_NEW_VERTEX_PROGRAM |
-		BRW_NEW_BATCH),
+		BRW_NEW_BATCH |
+                BRW_NEW_PUSH_CONSTANT_ALLOCATION),
       .cache = CACHE_NEW_VS_PROG | CACHE_NEW_SAMPLER
    },
    .emit = upload_vs_state,
