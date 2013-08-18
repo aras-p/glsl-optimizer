@@ -34,10 +34,11 @@
 #define SI_SGPR_CONST		0
 #define SI_SGPR_SAMPLER		2
 #define SI_SGPR_RESOURCE	4
-#define SI_SGPR_VERTEX_BUFFER	6
-#define SI_SGPR_START_INSTANCE	8
+#define SI_SGPR_VERTEX_BUFFER	6  /* VS only */
+#define SI_SGPR_SO_BUFFER	8  /* VS only, stream-out */
+#define SI_SGPR_START_INSTANCE	10 /* VS only */
 
-#define SI_VS_NUM_USER_SGPR	9
+#define SI_VS_NUM_USER_SGPR	11
 #define SI_PS_NUM_USER_SGPR	6
 
 /* LLVM function parameter indices */
@@ -47,11 +48,12 @@
 
 /* VS only parameters */
 #define SI_PARAM_VERTEX_BUFFER	3
-#define SI_PARAM_START_INSTANCE	4
-#define SI_PARAM_VERTEX_ID	5
-#define SI_PARAM_DUMMY_0	6
-#define SI_PARAM_DUMMY_1	7
-#define SI_PARAM_INSTANCE_ID	8
+#define SI_PARAM_SO_BUFFER	4
+#define SI_PARAM_START_INSTANCE	5
+#define SI_PARAM_VERTEX_ID	6
+#define SI_PARAM_DUMMY_0	7
+#define SI_PARAM_DUMMY_1	8
+#define SI_PARAM_INSTANCE_ID	9
 
 /* PS only parameters */
 #define SI_PARAM_PRIM_MASK		3

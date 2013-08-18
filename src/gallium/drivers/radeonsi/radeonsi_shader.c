@@ -1364,6 +1364,7 @@ static void create_function(struct si_shader_context *si_shader_ctx)
 	switch (si_shader_ctx->type) {
 	case TGSI_PROCESSOR_VERTEX:
 		params[SI_PARAM_VERTEX_BUFFER] = params[SI_PARAM_CONST];
+		params[SI_PARAM_SO_BUFFER] = params[SI_PARAM_CONST];
 		params[SI_PARAM_START_INSTANCE] = i32;
 		last_sgpr = SI_PARAM_START_INSTANCE;
 		params[SI_PARAM_VERTEX_ID] = i32;

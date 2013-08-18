@@ -456,6 +456,67 @@ static void si_set_constant_buffer(struct pipe_context *ctx, uint shader, uint s
 	si_update_descriptors(rctx, &buffers->desc);
 }
 
+/* STREAMOUT BUFFERS */
+
+static void si_set_streamout_targets(struct pipe_context *ctx,
+				     unsigned num_targets,
+				     struct pipe_stream_output_target **targets,
+				     unsigned append_bitmask)
+{
+	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_buffer_resources *buffers = &rctx->streamout_buffers;
+	unsigned old_num_targets = rctx->b.streamout.num_targets;
+	unsigned i;
+
+	/* Streamout buffers must be bound in 2 places:
+	 * 1) in VGT by setting the VGT_STRMOUT registers
+	 * 2) as shader resources
+	 */
+
+	/* Set the VGT regs. */
+	r600_set_streamout_targets(ctx, num_targets, targets, append_bitmask);
+
+	/* Set the shader resources.*/
+	for (i = 0; i < num_targets; i++) {
+		if (targets[i]) {
+			struct pipe_resource *buffer = targets[i]->buffer;
+			uint64_t va = r600_resource_va(ctx->screen, buffer);
+
+			/* Set the descriptor. */
+			uint32_t *desc = buffers->desc_data[i];
+			desc[0] = va;
+			desc[1] = S_008F04_BASE_ADDRESS_HI(va >> 32);
+			desc[2] = 0xffffffff;
+			desc[3] = S_008F0C_DST_SEL_X(V_008F0C_SQ_SEL_X) |
+				  S_008F0C_DST_SEL_Y(V_008F0C_SQ_SEL_Y) |
+				  S_008F0C_DST_SEL_Z(V_008F0C_SQ_SEL_Z) |
+				  S_008F0C_DST_SEL_W(V_008F0C_SQ_SEL_W);
+
+			/* Set the resource. */
+			pipe_resource_reference(&buffers->buffers[i], buffer);
+			r600_context_bo_reloc(&rctx->b, &rctx->b.rings.gfx,
+					      (struct r600_resource*)buffer,
+					      buffers->shader_usage);
+			buffers->desc.enabled_mask |= 1 << i;
+		} else {
+			/* Clear the descriptor and unset the resource. */
+			memset(buffers->desc_data[i], 0, sizeof(uint32_t) * 4);
+			pipe_resource_reference(&buffers->buffers[i], NULL);
+			buffers->desc.enabled_mask &= ~(1 << i);
+		}
+		buffers->desc.dirty_mask |= 1 << i;
+	}
+	for (; i < old_num_targets; i++) {
+		/* Clear the descriptor and unset the resource. */
+		memset(buffers->desc_data[i], 0, sizeof(uint32_t) * 4);
+		pipe_resource_reference(&buffers->buffers[i], NULL);
+		buffers->desc.enabled_mask &= ~(1 << i);
+		buffers->desc.dirty_mask |= 1 << i;
+	}
+
+	si_update_descriptors(rctx, &buffers->desc);
+}
+
 /* INIT/DEINIT */
 
 void si_init_all_descriptors(struct r600_context *rctx)
@@ -473,8 +534,13 @@ void si_init_all_descriptors(struct r600_context *rctx)
 		rctx->atoms.sampler_views[i] = &rctx->samplers[i].views.desc.atom;
 	}
 
+	si_init_buffer_resources(rctx, &rctx->streamout_buffers, 4, PIPE_SHADER_VERTEX,
+				 SI_SGPR_SO_BUFFER, RADEON_USAGE_WRITE);
+	rctx->atoms.streamout_buffers = &rctx->streamout_buffers.desc.atom;
+
 	/* Set pipe_context functions. */
 	rctx->b.b.set_constant_buffer = si_set_constant_buffer;
+	rctx->b.b.set_stream_output_targets = si_set_streamout_targets;
 }
 
 void si_release_all_descriptors(struct r600_context *rctx)
@@ -485,6 +551,7 @@ void si_release_all_descriptors(struct r600_context *rctx)
 		si_release_buffer_resources(&rctx->const_buffers[i]);
 		si_release_sampler_views(&rctx->samplers[i].views);
 	}
+	si_release_buffer_resources(&rctx->streamout_buffers);
 }
 
 void si_all_descriptors_begin_new_cs(struct r600_context *rctx)
@@ -495,4 +562,5 @@ void si_all_descriptors_begin_new_cs(struct r600_context *rctx)
 		si_buffer_resources_begin_new_cs(rctx, &rctx->const_buffers[i]);
 		si_sampler_views_begin_new_cs(rctx, &rctx->samplers[i].views);
 	}
+	si_buffer_resources_begin_new_cs(rctx, &rctx->streamout_buffers);
 }

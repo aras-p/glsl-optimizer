@@ -134,6 +134,7 @@ struct r600_context {
 			/* The order matters. */
 			struct r600_atom *const_buffers[SI_NUM_SHADERS];
 			struct r600_atom *sampler_views[SI_NUM_SHADERS];
+			struct r600_atom *streamout_buffers;
 			/* Caches must be flushed after resource descriptors are
 			 * updated in memory. */
 			struct r600_atom *cache_flush;
@@ -164,6 +165,7 @@ struct r600_context {
 	unsigned			sprite_coord_enable;
 	unsigned			export_16bpc;
 	struct si_buffer_resources	const_buffers[SI_NUM_SHADERS];
+	struct si_buffer_resources	streamout_buffers;
 	struct r600_textures_info	samplers[SI_NUM_SHADERS];
 	struct r600_resource		*border_color_table;
 	unsigned			border_color_offset;
