@@ -506,7 +506,6 @@ vlVdpVideoMixerQueryParameterValueRange(VdpDevice device, VdpVideoMixerParameter
 {
    vlVdpDevice *dev = vlGetDataHTAB(device);
    struct pipe_screen *screen;
-   enum pipe_video_profile prof = PIPE_VIDEO_PROFILE_UNKNOWN;
 
    if (!dev)
       return VDP_STATUS_INVALID_HANDLE;
@@ -518,12 +517,14 @@ vlVdpVideoMixerQueryParameterValueRange(VdpDevice device, VdpVideoMixerParameter
    switch (parameter) {
    case VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_WIDTH:
       *(uint32_t*)min_value = 48;
-      *(uint32_t*)max_value = screen->get_video_param(screen, prof, PIPE_VIDEO_ENTRYPOINT_BITSTREAM,
+      *(uint32_t*)max_value = screen->get_video_param(screen, PIPE_VIDEO_PROFILE_UNKNOWN,
+                                                      PIPE_VIDEO_ENTRYPOINT_BITSTREAM,
                                                       PIPE_VIDEO_CAP_MAX_WIDTH);
       break;
    case VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_HEIGHT:
       *(uint32_t*)min_value = 48;
-      *(uint32_t*)max_value = screen->get_video_param(screen, prof, PIPE_VIDEO_ENTRYPOINT_BITSTREAM,
+      *(uint32_t*)max_value = screen->get_video_param(screen, PIPE_VIDEO_PROFILE_UNKNOWN,
+                                                      PIPE_VIDEO_ENTRYPOINT_BITSTREAM,
                                                       PIPE_VIDEO_CAP_MAX_HEIGHT);
       break;
 

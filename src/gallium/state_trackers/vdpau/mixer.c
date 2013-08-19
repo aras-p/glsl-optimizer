@@ -50,7 +50,6 @@ vlVdpVideoMixerCreate(VdpDevice device,
    VdpStatus ret;
    struct pipe_screen *screen;
    unsigned max_width, max_height, i;
-   enum pipe_video_profile prof = PIPE_VIDEO_PROFILE_UNKNOWN;
 
    vlVdpDevice *dev = vlGetDataHTAB(device);
    if (!dev)
@@ -132,8 +131,10 @@ vlVdpVideoMixerCreate(VdpDevice device,
       VDPAU_MSG(VDPAU_WARN, "[VDPAU] Max layers > 4 not supported\n", vmixer->max_layers);
       goto no_params;
    }
-   max_width = screen->get_video_param(screen, prof, PIPE_VIDEO_ENTRYPOINT_BITSTREAM, PIPE_VIDEO_CAP_MAX_WIDTH);
-   max_height = screen->get_video_param(screen, prof, PIPE_VIDEO_ENTRYPOINT_BITSTREAM, PIPE_VIDEO_CAP_MAX_HEIGHT);
+   max_width = screen->get_video_param(screen, PIPE_VIDEO_PROFILE_UNKNOWN,
+                                       PIPE_VIDEO_ENTRYPOINT_BITSTREAM, PIPE_VIDEO_CAP_MAX_WIDTH);
+   max_height = screen->get_video_param(screen, PIPE_VIDEO_PROFILE_UNKNOWN,
+                                        PIPE_VIDEO_ENTRYPOINT_BITSTREAM, PIPE_VIDEO_CAP_MAX_HEIGHT);
    if (vmixer->video_width < 48 ||
        vmixer->video_width > max_width) {
       VDPAU_MSG(VDPAU_WARN, "[VDPAU] 48 < %u < %u not valid for width\n", vmixer->video_width, max_width);
