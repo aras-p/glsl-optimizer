@@ -249,6 +249,33 @@ public:
 };
 
 
+/**
+ * Visitor that determines whether or not a shader uses ir_end_primitive.
+ */
+class find_end_primitive_visitor : public ir_hierarchical_visitor {
+public:
+   find_end_primitive_visitor()
+      : found(false)
+   {
+      /* empty */
+   }
+
+   virtual ir_visitor_status visit(ir_end_primitive *)
+   {
+      found = true;
+      return visit_stop;
+   }
+
+   bool end_primitive_found()
+   {
+      return found;
+   }
+
+private:
+   bool found;
+};
+
+
 void
 linker_error(gl_shader_program *prog, const char *fmt, ...)
 {
@@ -517,6 +544,10 @@ validate_geometry_shader_executable(struct gl_shader_program *prog,
 
    analyze_clip_usage("geometry", prog, shader, &prog->Geom.UsesClipDistance,
                       &prog->Geom.ClipDistanceArraySize);
+
+   find_end_primitive_visitor end_primitive;
+   end_primitive.run(shader->ir);
+   prog->Geom.UsesEndPrimitive = end_primitive.end_primitive_found();
 }
 
 
