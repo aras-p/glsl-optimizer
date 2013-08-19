@@ -83,6 +83,8 @@ public:
    void setup_initial_values();
    void run();
 
+   void dump_block_data() const;
+
    void *mem_ctx;
    cfg_t *cfg;
 
@@ -241,6 +243,34 @@ fs_copy_prop_dataflow::run()
          }
       }
    } while (progress);
+}
+
+void
+fs_copy_prop_dataflow::dump_block_data() const
+{
+   for (int b = 0; b < cfg->num_blocks; b++) {
+      bblock_t *block = cfg->blocks[b];
+      printf("Block %d [%d, %d] (parents ", block->block_num,
+             block->start_ip, block->end_ip);
+      foreach_list(block_node, &block->parents) {
+         bblock_t *parent = ((bblock_link *) block_node)->block;
+         printf("%d ", parent->block_num);
+      }
+      printf("):\n");
+      printf("       livein = 0x");
+      for (int i = 0; i < bitset_words; i++)
+         printf("%08x", bd[b].livein[i]);
+      printf(", liveout = 0x");
+      for (int i = 0; i < bitset_words; i++)
+         printf("%08x", bd[b].liveout[i]);
+      printf(",\n       copy   = 0x");
+      for (int i = 0; i < bitset_words; i++)
+         printf("%08x", bd[b].copy[i]);
+      printf(", kill    = 0x");
+      for (int i = 0; i < bitset_words; i++)
+         printf("%08x", bd[b].kill[i]);
+      printf("\n");
+   }
 }
 
 bool
