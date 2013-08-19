@@ -529,6 +529,13 @@ ir_validate::visit_leave(ir_expression *ir)
       assert(ir->operands[2]->type == ir->operands[0]->type || ir->operands[2]->type == glsl_type::float_type);
       break;
 
+   case ir_triop_csel:
+      assert(ir->operands[0]->type->base_type == GLSL_TYPE_BOOL);
+      assert(ir->type->vector_elements == ir->operands[0]->type->vector_elements);
+      assert(ir->type == ir->operands[1]->type);
+      assert(ir->type == ir->operands[2]->type);
+      break;
+
    case ir_triop_bfi:
       assert(ir->operands[0]->type->is_integer());
       assert(ir->operands[1]->type == ir->operands[2]->type);

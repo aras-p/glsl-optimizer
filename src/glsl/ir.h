@@ -1197,6 +1197,18 @@ enum ir_expression_operation {
    ir_triop_lrp,
 
    /**
+    * \name Conditional Select
+    *
+    * A vector conditional select instruction (like ?:, but operating per-
+    * component on vectors).
+    *
+    * \see lower_instructions_visitor::ldexp_to_arith
+    */
+   /*@{*/
+   ir_triop_csel,
+   /*@}*/
+
+   /**
     * \name Second half of a lowered bitfieldInsert() operation.
     *
     * \see lower_instructions::bitfield_insert_to_bfm_bfi

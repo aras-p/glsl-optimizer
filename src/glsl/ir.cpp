@@ -436,6 +436,7 @@ ir_expression::ir_expression(int op, ir_rvalue *op0, ir_rvalue *op1,
       break;
 
    case ir_triop_bfi:
+   case ir_triop_csel:
       this->type = op1->type;
       break;
 
@@ -553,6 +554,7 @@ static const char *const operator_strs[] = {
    "vector_extract",
    "fma",
    "lrp",
+   "csel",
    "bfi",
    "bitfield_extract",
    "vector_insert",

@@ -493,6 +493,12 @@ lrp(operand x, operand y, operand a)
 }
 
 ir_expression *
+csel(operand a, operand b, operand c)
+{
+   return expr(ir_triop_csel, a, b, c);
+}
+
+ir_expression *
 bitfield_insert(operand a, operand b, operand c, operand d)
 {
    void *mem_ctx = ralloc_parent(a.val);

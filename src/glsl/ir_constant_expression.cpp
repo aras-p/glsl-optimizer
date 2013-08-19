@@ -395,6 +395,7 @@ ir_expression::constant_expression_value(struct hash_table *variable_context)
       case ir_binop_lshift:
       case ir_binop_rshift:
       case ir_binop_vector_extract:
+      case ir_triop_csel:
       case ir_triop_bitfield_extract:
          break;
 
@@ -1398,6 +1399,13 @@ ir_expression::constant_expression_value(struct hash_table *variable_context)
       }
       break;
    }
+
+   case ir_triop_csel:
+      for (unsigned c = 0; c < components; c++) {
+         data.u[c] = op[0]->value.b[c] ? op[1]->value.u[c]
+                                       : op[2]->value.u[c];
+      }
+      break;
 
    case ir_triop_vector_insert: {
       const unsigned idx = op[2]->value.u[0];
