@@ -62,6 +62,38 @@ do_gs_prog(struct brw_context *brw,
    c.prog_data.base.param = rzalloc_array(NULL, const float *, param_count);
    c.prog_data.base.pull_param = rzalloc_array(NULL, const float *, param_count);
 
+   if (gp->program.OutputType == GL_POINTS) {
+      /* When the output type is points, the geometry shader may output data
+       * to multiple streams, and EndPrimitive() has no effect.  So we
+       * configure the hardware to interpret the control data as stream ID.
+       */
+      c.prog_data.control_data_format = GEN7_GS_CONTROL_DATA_FORMAT_GSCTL_SID;
+
+      /* However, StreamID is not yet supported, so we output zero bits of
+       * control data per vertex.
+       */
+      c.control_data_bits_per_vertex = 0;
+   } else {
+      /* When the output type is triangle_strip or line_strip, EndPrimitive()
+       * may be used to terminate the current strip and start a new one
+       * (similar to primitive restart), and outputting data to multiple
+       * streams is not supported.  So we configure the hardware to interpret
+       * the control data as EndPrimitive information (a.k.a. "cut bits").
+       */
+      c.prog_data.control_data_format = GEN7_GS_CONTROL_DATA_FORMAT_GSCTL_CUT;
+
+      /* We only need to output control data if the shader actually calls
+       * EndPrimitive().
+       */
+      c.control_data_bits_per_vertex = gp->program.UsesEndPrimitive ? 1 : 0;
+   }
+   c.control_data_header_size_bits =
+      gp->program.VerticesOut * c.control_data_bits_per_vertex;
+
+   /* 1 HWORD = 32 bytes = 256 bits */
+   c.prog_data.control_data_header_size_hwords =
+      ALIGN(c.control_data_header_size_bits, 256) / 256;
+
    brw_compute_vue_map(brw, &c.prog_data.base.vue_map,
                        gp->program.Base.OutputsWritten,
                        c.key.base.userclip_active);
@@ -148,6 +180,7 @@ do_gs_prog(struct brw_context *brw,
     */
    unsigned output_size_bytes =
       c.prog_data.output_vertex_size_hwords * 32 * gp->program.VerticesOut;
+   output_size_bytes += 32 * c.prog_data.control_data_header_size_hwords;
 
    assert(output_size_bytes >= 1);
    if (output_size_bytes > GEN7_MAX_GS_URB_ENTRY_SIZE_BYTES)

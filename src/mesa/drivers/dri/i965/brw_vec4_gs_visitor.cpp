@@ -200,6 +200,7 @@ vec4_gs_visitor::emit_urb_write_opcode(bool complete)
    (void) complete;
 
    vec4_instruction *inst = emit(GS_OPCODE_URB_WRITE);
+   inst->offset = c->prog_data.control_data_header_size_hwords;
    inst->urb_write_flags = BRW_URB_WRITE_PER_SLOT_OFFSET;
    return inst;
 }

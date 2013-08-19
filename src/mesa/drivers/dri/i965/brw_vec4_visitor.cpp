@@ -2727,7 +2727,7 @@ vec4_visitor::emit_vertex()
        * URB row increments, and each of our MRFs is half of one of
        * those, since we're doing interleaved writes.
        */
-      inst->offset = (max_usable_mrf - base_mrf) / 2;
+      inst->offset += (max_usable_mrf - base_mrf) / 2;
    }
 }
 
