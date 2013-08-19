@@ -1601,6 +1601,56 @@ tgsi_to_pipe_tex_target(unsigned tgsi_target)
    }
 }
 
+
+static enum lp_sampler_lod_property
+lp_build_lod_property(
+   struct lp_build_tgsi_context *bld_base,
+   const struct tgsi_full_instruction *inst,
+   unsigned src_op)
+{
+   const struct tgsi_full_src_register *reg = &inst->Src[src_op];
+   enum lp_sampler_lod_property lod_property;
+
+   /*
+    * Not much we can do here. We could try catching inputs declared
+    * with constant interpolation but not sure it's worth it - since for
+    * TEX opcodes as well as FETCH/LD the lod comes from same reg as
+    * the coords, so it could only work for SAMPLE/TXQ/SVIEWINFO), just
+    * like the constant/immediate recognition below.
+    * What seems to be of more value would be to recognize temps holding
+    * broadcasted scalars but no way we can do it.
+    * Tried asking llvm but without any success (using LLVMIsConstant
+    * even though this isn't exactly what we'd need), even as simple as
+    * IMM[0] UINT32 (0,-1,0,0)
+    * MOV TEMP[0] IMM[0].yyyy
+    * SVIEWINFO TEMP[1], TEMP[0].xxxx, SVIEWINFO[0]
+    * doesn't work.
+    * This means there's ZERO chance this will ever catch a scalar lod
+    * with traditional tex opcodes as well as texel fetches, since the lod
+    * comes from the same reg as coords (except some test shaders using
+    * constant coords maybe).
+    * There's at least hope for sample opcodes as well as size queries.
+    */
+   if (reg->Register.File == TGSI_FILE_CONSTANT ||
+       reg->Register.File == TGSI_FILE_IMMEDIATE) {
+      lod_property = LP_SAMPLER_LOD_SCALAR;
+   }
+   else if (bld_base->info->processor == TGSI_PROCESSOR_FRAGMENT) {
+      if (gallivm_debug & GALLIVM_DEBUG_NO_QUAD_LOD) {
+         lod_property = LP_SAMPLER_LOD_PER_ELEMENT;
+      }
+      else {
+         lod_property = LP_SAMPLER_LOD_PER_QUAD;
+      }
+   }
+   else {
+      /* never use scalar (per-quad) lod the results are just too wrong. */
+      lod_property = LP_SAMPLER_LOD_PER_ELEMENT;
+   }
+   return lod_property;
+}
+
+
 /**
  * High-level instruction translators.
  */
@@ -1618,7 +1668,7 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
    LLVMValueRef offsets[3] = { NULL };
    struct lp_derivatives derivs;
    struct lp_derivatives *deriv_ptr = NULL;
-   boolean scalar_lod;
+   enum lp_sampler_lod_property lod_property = LP_SAMPLER_LOD_SCALAR;
    unsigned num_derivs, num_offsets, i;
    unsigned shadow_coord = 0;
    unsigned layer_coord = 0;
@@ -1690,13 +1740,18 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
    }
 
    /* Note lod and especially projected are illegal in a LOT of cases */
-   if (modifier == LP_BLD_TEX_MODIFIER_LOD_BIAS) {
-      lod_bias = lp_build_emit_fetch(&bld->bld_base, inst, 0, 3);
-      explicit_lod = NULL;
-   }
-   else if (modifier == LP_BLD_TEX_MODIFIER_EXPLICIT_LOD) {
-      lod_bias = NULL;
-      explicit_lod = lp_build_emit_fetch(&bld->bld_base, inst, 0, 3);
+   if (modifier == LP_BLD_TEX_MODIFIER_LOD_BIAS ||
+       modifier == LP_BLD_TEX_MODIFIER_EXPLICIT_LOD) {
+      LLVMValueRef lod = lp_build_emit_fetch(&bld->bld_base, inst, 0, 3);
+      if (modifier == LP_BLD_TEX_MODIFIER_LOD_BIAS) {
+         lod_bias = lod;
+         explicit_lod = NULL;
+      }
+      else if (modifier == LP_BLD_TEX_MODIFIER_EXPLICIT_LOD) {
+         lod_bias = NULL;
+         explicit_lod = lod;
+      }
+      lod_property = lp_build_lod_property(&bld->bld_base, inst, 0);
    }
    else {
       lod_bias = NULL;
@@ -1738,6 +1793,21 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
       }
       deriv_ptr = &derivs;
       unit = inst->Src[3].Register.Index;
+      /*
+       * could also check all src regs if constant but I doubt such
+       * cases exist in practice.
+       */
+      if (bld->bld_base.info->processor == TGSI_PROCESSOR_FRAGMENT) {
+         if (gallivm_debug & GALLIVM_DEBUG_NO_QUAD_LOD) {
+            lod_property = LP_SAMPLER_LOD_PER_ELEMENT;
+         }
+         else {
+            lod_property = LP_SAMPLER_LOD_PER_QUAD;
+         }
+      }
+      else {
+         lod_property = LP_SAMPLER_LOD_PER_ELEMENT;
+      }
    } else {
       unit = inst->Src[1].Register.Index;
    }
@@ -1750,9 +1820,6 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
       }
    }
 
-   /* TODO: use scalar lod if explicit_lod, lod_bias or derivs are broadcasted scalars */
-   scalar_lod = bld->bld_base.info->processor == TGSI_PROCESSOR_FRAGMENT;
-
    bld->sampler->emit_fetch_texel(bld->sampler,
                                   bld->bld_base.base.gallivm,
                                   bld->bld_base.base.type,
@@ -1761,7 +1828,7 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
                                   coords,
                                   offsets,
                                   deriv_ptr,
-                                  lod_bias, explicit_lod, scalar_lod,
+                                  lod_bias, explicit_lod, lod_property,
                                   texel);
 }
 
@@ -1779,7 +1846,8 @@ emit_sample(struct lp_build_tgsi_soa_context *bld,
    LLVMValueRef offsets[3] = { NULL };
    struct lp_derivatives derivs;
    struct lp_derivatives *deriv_ptr = NULL;
-   boolean scalar_lod;
+   enum lp_sampler_lod_property lod_property = LP_SAMPLER_LOD_SCALAR;
+
    unsigned num_offsets, num_derivs, i;
    unsigned layer_coord = 0;
 
@@ -1841,13 +1909,18 @@ emit_sample(struct lp_build_tgsi_soa_context *bld,
       return;
    }
 
-   if (modifier == LP_BLD_TEX_MODIFIER_LOD_BIAS) {
-      lod_bias = lp_build_emit_fetch(&bld->bld_base, inst, 3, 0);
-      explicit_lod = NULL;
-   }
-   else if (modifier == LP_BLD_TEX_MODIFIER_EXPLICIT_LOD) {
-      lod_bias = NULL;
-      explicit_lod = lp_build_emit_fetch(&bld->bld_base, inst, 3, 0);
+   if (modifier == LP_BLD_TEX_MODIFIER_LOD_BIAS ||
+       modifier == LP_BLD_TEX_MODIFIER_EXPLICIT_LOD) {
+      LLVMValueRef lod = lp_build_emit_fetch(&bld->bld_base, inst, 3, 0);
+      if (modifier == LP_BLD_TEX_MODIFIER_LOD_BIAS) {
+         lod_bias = lod;
+         explicit_lod = NULL;
+      }
+      else if (modifier == LP_BLD_TEX_MODIFIER_EXPLICIT_LOD) {
+         lod_bias = NULL;
+         explicit_lod = lod;
+      }
+      lod_property = lp_build_lod_property(&bld->bld_base, inst, 0);
    }
    else if (modifier == LP_BLD_TEX_MODIFIER_LOD_ZERO) {
       lod_bias = NULL;
@@ -1885,6 +1958,21 @@ emit_sample(struct lp_build_tgsi_soa_context *bld,
          derivs.ddy[dim] = lp_build_emit_fetch(&bld->bld_base, inst, 4, dim);
       }
       deriv_ptr = &derivs;
+      /*
+       * could also check all src regs if constant but I doubt such
+       * cases exist in practice.
+       */
+      if (bld->bld_base.info->processor == TGSI_PROCESSOR_FRAGMENT) {
+         if (gallivm_debug & GALLIVM_DEBUG_NO_QUAD_LOD) {
+            lod_property = LP_SAMPLER_LOD_PER_ELEMENT;
+         }
+         else {
+            lod_property = LP_SAMPLER_LOD_PER_QUAD;
+         }
+      }
+      else {
+         lod_property = LP_SAMPLER_LOD_PER_ELEMENT;
+      }
    }
 
    /* some advanced gather instructions (txgo) would require 4 offsets */
@@ -1895,10 +1983,6 @@ emit_sample(struct lp_build_tgsi_soa_context *bld,
       }
    }
 
-   /* TODO: use scalar lod if explicit_lod, lod_bias or derivs are broadcasted scalars */
-   scalar_lod = bld->bld_base.info->processor == TGSI_PROCESSOR_FRAGMENT ||
-                modifier == LP_BLD_TEX_MODIFIER_LOD_ZERO;
-
    bld->sampler->emit_fetch_texel(bld->sampler,
                                   bld->bld_base.base.gallivm,
                                   bld->bld_base.base.type,
@@ -1907,7 +1991,7 @@ emit_sample(struct lp_build_tgsi_soa_context *bld,
                                   coords,
                                   offsets,
                                   deriv_ptr,
-                                  lod_bias, explicit_lod, scalar_lod,
+                                  lod_bias, explicit_lod, lod_property,
                                   texel);
 
    if (inst->Src[1].Register.SwizzleX != PIPE_SWIZZLE_RED ||
@@ -1935,7 +2019,7 @@ emit_fetch_texels( struct lp_build_tgsi_soa_context *bld,
    LLVMValueRef explicit_lod = NULL;
    LLVMValueRef coords[3];
    LLVMValueRef offsets[3] = { NULL };
-   boolean scalar_lod;
+   enum lp_sampler_lod_property lod_property = LP_SAMPLER_LOD_SCALAR;
    unsigned dims, i;
    unsigned layer_coord = 0;
 
@@ -1984,6 +2068,7 @@ emit_fetch_texels( struct lp_build_tgsi_soa_context *bld,
    /* always have lod except for buffers ? */
    if (target != TGSI_TEXTURE_BUFFER) {
       explicit_lod = lp_build_emit_fetch(&bld->bld_base, inst, 0, 3);
+      lod_property = lp_build_lod_property(&bld->bld_base, inst, 0);
    }
 
    for (i = 0; i < dims; i++) {
@@ -2002,9 +2087,6 @@ emit_fetch_texels( struct lp_build_tgsi_soa_context *bld,
       }
    }
 
-   /* TODO: use scalar lod if explicit_lod is broadcasted scalar */
-   scalar_lod = bld->bld_base.info->processor == TGSI_PROCESSOR_FRAGMENT;
-
    bld->sampler->emit_fetch_texel(bld->sampler,
                                   bld->bld_base.base.gallivm,
                                   bld->bld_base.base.type,
@@ -2013,7 +2095,7 @@ emit_fetch_texels( struct lp_build_tgsi_soa_context *bld,
                                   coords,
                                   offsets,
                                   NULL,
-                                  NULL, explicit_lod, scalar_lod,
+                                  NULL, explicit_lod, lod_property,
                                   texel);
 
    if (is_samplei &&
@@ -2038,7 +2120,7 @@ emit_size_query( struct lp_build_tgsi_soa_context *bld,
                  boolean is_sviewinfo)
 {
    LLVMValueRef explicit_lod;
-   boolean scalar_lod;
+   enum lp_sampler_lod_property lod_property;
    unsigned has_lod;
    unsigned i;
    unsigned unit = inst->Src[1].Register.Index;
@@ -2068,22 +2150,24 @@ emit_size_query( struct lp_build_tgsi_soa_context *bld,
       return;
    }
 
-   if (has_lod)
-      explicit_lod = lp_build_emit_fetch( &bld->bld_base, inst, 0, 0 );
-   else
+   if (has_lod) {
+      explicit_lod = lp_build_emit_fetch(&bld->bld_base, inst, 0, 0);
+      lod_property = lp_build_lod_property(&bld->bld_base, inst, 0);
+   }
+   else {
       explicit_lod = NULL;
+      lod_property = LP_SAMPLER_LOD_SCALAR;
+   }
+
 
    pipe_target = tgsi_to_pipe_tex_target(target);
-
-   /* TODO: use scalar lod if explicit_lod is broadcasted scalar */
-   scalar_lod = bld->bld_base.info->processor == TGSI_PROCESSOR_FRAGMENT;
 
    bld->sampler->emit_size_query(bld->sampler,
                                  bld->bld_base.base.gallivm,
                                  bld->bld_base.int_bld.type,
                                  unit, pipe_target,
                                  is_sviewinfo,
-                                 scalar_lod,
+                                 lod_property,
                                  explicit_lod,
                                  sizes_out);
 }

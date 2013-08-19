@@ -43,7 +43,8 @@
 #define GALLIVM_DEBUG_PERF          (1 << 4)
 #define GALLIVM_DEBUG_NO_BRILINEAR  (1 << 5)
 #define GALLIVM_DEBUG_NO_RHO_APPROX (1 << 6)
-#define GALLIVM_DEBUG_GC            (1 << 7)
+#define GALLIVM_DEBUG_NO_QUAD_LOD   (1 << 7)
+#define GALLIVM_DEBUG_GC            (1 << 8)
 
 
 #ifdef __cplusplus

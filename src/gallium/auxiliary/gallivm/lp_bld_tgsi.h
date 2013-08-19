@@ -40,6 +40,7 @@
 #include "gallivm/lp_bld.h"
 #include "gallivm/lp_bld_tgsi_action.h"
 #include "gallivm/lp_bld_limits.h"
+#include "gallivm/lp_bld_sample.h"
 #include "lp_bld_type.h"
 #include "pipe/p_compiler.h"
 #include "pipe/p_state.h"
@@ -184,7 +185,7 @@ struct lp_build_sampler_soa
                         const struct lp_derivatives *derivs,
                         LLVMValueRef lod_bias, /* optional */
                         LLVMValueRef explicit_lod, /* optional */
-                        boolean scalar_lod,
+                        enum lp_sampler_lod_property,
                         LLVMValueRef *texel);
 
    void
@@ -194,7 +195,7 @@ struct lp_build_sampler_soa
                        unsigned unit,
                        unsigned target,
                        boolean need_nr_mips,
-                       boolean scalar_lod,
+                       enum lp_sampler_lod_property,
                        LLVMValueRef explicit_lod, /* optional */
                        LLVMValueRef *sizes_out);
 };

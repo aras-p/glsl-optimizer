@@ -244,7 +244,7 @@ lp_llvm_sampler_soa_emit_fetch_texel(const struct lp_build_sampler_soa *base,
                                      const struct lp_derivatives *derivs,
                                      LLVMValueRef lod_bias, /* optional */
                                      LLVMValueRef explicit_lod, /* optional */
-                                     boolean scalar_lod,
+                                     enum lp_sampler_lod_property lod_property,
                                      LLVMValueRef *texel)
 {
    struct lp_llvm_sampler_soa *sampler = (struct lp_llvm_sampler_soa *)base;
@@ -268,7 +268,7 @@ lp_llvm_sampler_soa_emit_fetch_texel(const struct lp_build_sampler_soa *base,
                        coords,
                        offsets,
                        derivs,
-                       lod_bias, explicit_lod, scalar_lod,
+                       lod_bias, explicit_lod, lod_property,
                        texel);
 }
 
@@ -282,7 +282,7 @@ lp_llvm_sampler_soa_emit_size_query(const struct lp_build_sampler_soa *base,
                                     unsigned texture_unit,
                                     unsigned target,
                                     boolean is_sviewinfo,
-                                    boolean scalar_lod,
+                                    enum lp_sampler_lod_property lod_property,
                                     LLVMValueRef explicit_lod, /* optional */
                                     LLVMValueRef *sizes_out)
 {
@@ -297,7 +297,7 @@ lp_llvm_sampler_soa_emit_size_query(const struct lp_build_sampler_soa *base,
                            texture_unit,
                            target,
                            is_sviewinfo,
-                           scalar_lod,
+                           lod_property,
                            explicit_lod,
                            sizes_out);
 }

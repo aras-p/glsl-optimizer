@@ -1646,7 +1646,7 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
                     const struct lp_derivatives *derivs, /* optional */
                     LLVMValueRef lod_bias, /* optional */
                     LLVMValueRef explicit_lod, /* optional */
-                    boolean scalar_lod,
+                    enum lp_sampler_lod_property lod_property,
                     LLVMValueRef texel_out[4])
 {
    unsigned target = static_texture_state->target;
@@ -1733,7 +1733,7 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
     * There are other situations where at least the multiple int lods could be
     * avoided like min and max lod being equal.
     */
-   if (explicit_lod && !scalar_lod &&
+   if (explicit_lod && lod_property == LP_SAMPLER_LOD_PER_ELEMENT &&
        ((is_fetch && target != PIPE_BUFFER) ||
         (!is_fetch && mip_filter != PIPE_TEX_MIPFILTER_NONE)))
       bld.num_lods = type.length;
@@ -1925,7 +1925,7 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
          bld4.levelf_type.length = 1;
          bld4.leveli_type = lp_int_type(bld4.levelf_type);
 
-         if (explicit_lod && !scalar_lod &&
+         if (explicit_lod && lod_property == LP_SAMPLER_LOD_PER_ELEMENT &&
              ((is_fetch && target != PIPE_BUFFER) ||
               (!is_fetch && mip_filter != PIPE_TEX_MIPFILTER_NONE)))
             bld4.num_lods = type4.length;
@@ -2046,7 +2046,7 @@ lp_build_size_query_soa(struct gallivm_state *gallivm,
                         unsigned texture_unit,
                         unsigned target,
                         boolean is_sviewinfo,
-                        boolean scalar_lod,
+                        enum lp_sampler_lod_property lod_property,
                         LLVMValueRef explicit_lod,
                         LLVMValueRef *sizes_out)
 {

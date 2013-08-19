@@ -61,6 +61,13 @@ struct lp_derivatives
 };
 
 
+enum lp_sampler_lod_property {
+   LP_SAMPLER_LOD_SCALAR,
+   LP_SAMPLER_LOD_PER_ELEMENT,
+   LP_SAMPLER_LOD_PER_QUAD
+};
+
+
 /**
  * Texture static state.
  *
@@ -476,7 +483,7 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
                     const struct lp_derivatives *derivs,
                     LLVMValueRef lod_bias,
                     LLVMValueRef explicit_lod,
-                    boolean scalar_lod,
+                    enum lp_sampler_lod_property lod_property,
                     LLVMValueRef texel_out[4]);
 
 
@@ -497,7 +504,7 @@ lp_build_size_query_soa(struct gallivm_state *gallivm,
                         unsigned texture_unit,
                         unsigned target,
                         boolean is_sviewinfo,
-                        boolean scalar_lod,
+                        enum lp_sampler_lod_property lod_property,
                         LLVMValueRef explicit_lod,
                         LLVMValueRef *sizes_out);
 
