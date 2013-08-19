@@ -728,6 +728,12 @@ fs_visitor::visit(ir_expression *ir)
    case ir_triop_lrp:
       emit_lrp(this->result, op[0], op[1], op[2]);
       break;
+
+   case ir_triop_csel:
+      emit(CMP(reg_null_d, op[0], fs_reg(0), BRW_CONDITIONAL_NZ));
+      inst = emit(BRW_OPCODE_SEL, this->result, op[1], op[2]);
+      inst->predicate = BRW_PREDICATE_NORMAL;
+      break;
    }
 }
 

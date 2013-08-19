@@ -362,6 +362,7 @@ ir_channel_expressions_visitor::visit_leave(ir_assignment *ir)
 
    case ir_triop_fma:
    case ir_triop_lrp:
+   case ir_triop_csel:
    case ir_triop_bitfield_extract:
       for (i = 0; i < vector_elements; i++) {
 	 ir_rvalue *op0 = get_element(op_var[0], i);

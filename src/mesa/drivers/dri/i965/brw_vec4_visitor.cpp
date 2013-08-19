@@ -1588,6 +1588,12 @@ vec4_visitor::visit(ir_expression *ir)
       emit(LRP(result_dst, op[2], op[1], op[0]));
       break;
 
+   case ir_triop_csel:
+      emit(CMP(dst_null_d(), op[0], src_reg(0), BRW_CONDITIONAL_NZ));
+      inst = emit(BRW_OPCODE_SEL, result_dst, op[1], op[2]);
+      inst->predicate = BRW_PREDICATE_NORMAL;
+      break;
+
    case ir_triop_bfi:
       op[0] = fix_3src_operand(op[0]);
       op[1] = fix_3src_operand(op[1]);
