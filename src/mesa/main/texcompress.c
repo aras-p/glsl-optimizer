@@ -277,7 +277,15 @@ _mesa_get_compressed_formats(struct gl_context *ctx, GLint *formats)
       }
    }
 
-   if (ctx->Extensions.OES_compressed_ETC1_RGB8_texture) {
+   /* The GL_OES_compressed_ETC1_RGB8_texture spec says:
+    *
+    *     "New State
+    *
+    *         The queries for NUM_COMPRESSED_TEXTURE_FORMATS and
+    *         COMPRESSED_TEXTURE_FORMATS include ETC1_RGB8_OES."
+    */
+   if (_mesa_is_gles(ctx)
+       && ctx->Extensions.OES_compressed_ETC1_RGB8_texture) {
       if (formats) {
          formats[n++] = GL_ETC1_RGB8_OES;
       }
