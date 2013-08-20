@@ -84,7 +84,8 @@ ilo_flush(struct pipe_context *pipe,
       *f = (struct pipe_fence_handle *) fence;
    }
 
-   ilo_cp_flush(ilo->cp);
+   ilo_cp_flush(ilo->cp,
+         (flags & PIPE_FLUSH_END_OF_FRAME) ? "frame end" : "user request");
 }
 
 static void

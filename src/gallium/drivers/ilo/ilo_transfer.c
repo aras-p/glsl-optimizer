@@ -165,7 +165,7 @@ choose_transfer_method(struct ilo_context *ilo, struct ilo_transfer *xfer)
 
          /* flush to make bo busy (so that map() stalls as it should be) */
          if (need_flush)
-            ilo_cp_flush(ilo->cp);
+            ilo_cp_flush(ilo->cp, "syncing for transfers");
       }
    }
 
@@ -938,7 +938,7 @@ buf_pwrite(struct ilo_context *ilo, struct ilo_buffer *buf,
 
       /* flush to make bo busy (so that pwrite() stalls as it should be) */
       if (will_stall && need_flush)
-         ilo_cp_flush(ilo->cp);
+         ilo_cp_flush(ilo->cp, "syncing for pwrites");
    }
 
    intel_bo_pwrite(buf->bo, offset, size, data);

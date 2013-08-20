@@ -402,7 +402,7 @@ draw_vbo(struct ilo_3d *hw3d, const struct ilo_context *ilo,
    }
 
    if (max_len > ilo_cp_space(hw3d->cp)) {
-      ilo_cp_flush(hw3d->cp);
+      ilo_cp_flush(hw3d->cp, "out of space");
       need_flush = false;
       assert(max_len <= ilo_cp_space(hw3d->cp));
    }
@@ -782,7 +782,7 @@ ilo_texture_barrier(struct pipe_context *pipe)
 
    /* don't know why */
    if (ilo->dev->gen >= ILO_GEN(7))
-      ilo_cp_flush(hw3d->cp);
+      ilo_cp_flush(hw3d->cp, "texture barrier");
 }
 
 static void

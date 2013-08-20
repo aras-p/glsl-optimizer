@@ -349,7 +349,7 @@ ilo_blitter_blt_begin(struct ilo_blitter *blitter, int max_cmd_size,
    }
 
    if (intel_winsys_check_aperture_space(ilo->winsys, aper_check, count))
-      ilo_cp_flush(ilo->cp);
+      ilo_cp_flush(ilo->cp, "out of aperture");
 
    /* set BCS_SWCTRL */
    swctrl = 0x0;
@@ -371,7 +371,7 @@ ilo_blitter_blt_begin(struct ilo_blitter *blitter, int max_cmd_size,
        * batch buffer.
        */
       if (ilo_cp_space(ilo->cp) < (4 + 3) * 2 + max_cmd_size)
-         ilo_cp_flush(ilo->cp);
+         ilo_cp_flush(ilo->cp, "out of space");
 
       ilo_cp_assert_no_implicit_flush(ilo->cp, true);
 

@@ -91,7 +91,21 @@ void
 ilo_cp_destroy(struct ilo_cp *cp);
 
 void
-ilo_cp_flush(struct ilo_cp *cp);
+ilo_cp_flush_internal(struct ilo_cp *cp);
+
+static inline void
+ilo_cp_flush(struct ilo_cp *cp, const char *reason)
+{
+   if (ilo_debug & ILO_DEBUG_FLUSH) {
+      ilo_printf("cp flushed for %s with %d+%d DWords (%.1f%%) because of %s\n",
+            (cp->ring == ILO_CP_RING_RENDER) ? "render" : "blt",
+             cp->used, cp->stolen,
+             (float) (100 * (cp->used + cp->stolen)) / cp->bo_size,
+             reason);
+   }
+
+   ilo_cp_flush_internal(cp);
+}
 
 void
 ilo_cp_dump(struct ilo_cp *cp);
@@ -132,7 +146,7 @@ ilo_cp_implicit_flush(struct ilo_cp *cp)
       cp->used = 0;
    }
 
-   ilo_cp_flush(cp);
+   ilo_cp_flush(cp, "out of space (implicit)");
 }
 
 /**

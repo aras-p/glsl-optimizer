@@ -220,7 +220,7 @@ ilo_cp_exec_bo(struct ilo_cp *cp)
  * is empty, the callback is not invoked.
  */
 void
-ilo_cp_flush(struct ilo_cp *cp)
+ilo_cp_flush_internal(struct ilo_cp *cp)
 {
    int err;
 

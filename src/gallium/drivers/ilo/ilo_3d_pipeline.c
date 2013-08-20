@@ -198,7 +198,7 @@ ilo_3d_pipeline_emit_draw(struct ilo_3d_pipeline *p,
       }
       else {
          /* flush and try again */
-         ilo_cp_flush(p->cp);
+         ilo_cp_flush(p->cp, "out of aperture");
       }
    }
 

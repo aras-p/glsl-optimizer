@@ -169,7 +169,7 @@ ilo_get_query_result(struct pipe_context *pipe, struct pipe_query *query,
 
    if (q->bo) {
       if (intel_bo_references(ilo->cp->bo, q->bo))
-         ilo_cp_flush(ilo->cp);
+         ilo_cp_flush(ilo->cp, "syncing for queries");
 
       if (!wait && intel_bo_is_busy(q->bo))
          return false;
