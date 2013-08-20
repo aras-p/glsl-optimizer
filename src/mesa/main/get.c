@@ -709,7 +709,7 @@ find_custom_value(struct gl_context *ctx, const struct value_desc *d, union valu
    case GL_COMPRESSED_TEXTURE_FORMATS_ARB:
       v->value_int_n.n = 
 	 _mesa_get_compressed_formats(ctx, v->value_int_n.ints);
-      ASSERT(v->value_int_n.n <= 100);
+      ASSERT(v->value_int_n.n <= ARRAY_SIZE(v->value_int_n.ints));
       break;
 
    case GL_MAX_VARYING_FLOATS_ARB:
