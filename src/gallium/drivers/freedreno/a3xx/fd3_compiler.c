@@ -790,13 +790,13 @@ trans_cmp(const struct instr_translater *t,
 	instr = ir3_instr_create(ctx->ir, 2, OPC_ADD_S);
 	instr->repeat = 3;
 	add_dst_reg(ctx, instr, &tmp_dst, 0);
-	add_src_reg(ctx, instr, &tmp_src, 0);
+	add_src_reg(ctx, instr, &tmp_src, 0)->flags |= IR3_REG_R;
 	ir3_reg_create(instr, 0, IR3_REG_IMMED)->iim_val = -1;
 
 	/* sel.{f32,f16} dst, src2, tmp, src1 */
 	instr = ir3_instr_create(ctx->ir, 3, ctx->so->half_precision ?
 			OPC_SEL_F16 : OPC_SEL_F32);
-	vectorize(ctx, instr, &inst->Dst[0].Register, 3,
+	vectorize(ctx, instr, dst, 3,
 			&inst->Src[2].Register, 0,
 			&tmp_src, 0,
 			&inst->Src[1].Register, 0);
