@@ -291,6 +291,8 @@ struct lp_build_sample_context
 
    /** Integer vector with texture width, height, depth */
    LLVMValueRef int_size;
+
+   LLVMValueRef border_color_clamped;
 };
 
 

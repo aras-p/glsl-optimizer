@@ -42,6 +42,7 @@
 #include "util/u_math.h"
 #include "util/u_format.h"
 #include "util/u_cpu_detect.h"
+#include "util/u_format_rgb9e5.h"
 #include "lp_bld_debug.h"
 #include "lp_bld_type.h"
 #include "lp_bld_const.h"
@@ -180,17 +181,14 @@ lp_build_sample_texel_soa(struct lp_build_sample_context *bld,
 
    if (use_border) {
       /* select texel color or border color depending on use_border. */
-     LLVMValueRef border_color_ptr =
-         bld->dynamic_state->border_color(bld->dynamic_state,
-                                          bld->gallivm, sampler_unit);
-      const struct util_format_description *format_desc;
+      const struct util_format_description *format_desc = bld->format_desc;
       int chan;
-      format_desc = util_format_description(bld->static_texture_state->format);
+      struct lp_type border_type = bld->texel_type;
+      border_type.length = 4;
       /*
        * Only replace channels which are actually present. The others should
        * get optimized away eventually by sampler_view swizzle anyway but it's
-       * easier too as we'd need some extra logic for channels where we can't
-       * determine the format directly otherwise.
+       * easier too.
        */
       for (chan = 0; chan < 4; chan++) {
          unsigned chan_s;
@@ -201,41 +199,17 @@ lp_build_sample_texel_soa(struct lp_build_sample_context *bld,
             }
          }
          if (chan_s <= 3) {
-            LLVMValueRef border_chan =
-               lp_build_array_get(bld->gallivm, border_color_ptr,
-                                  lp_build_const_int32(bld->gallivm, chan));
-            LLVMValueRef border_chan_vec =
-               lp_build_broadcast_scalar(&bld->float_vec_bld, border_chan);
+            /* use the already clamped color */
+            LLVMValueRef idx = lp_build_const_int32(bld->gallivm, chan);
+            LLVMValueRef border_chan;
 
-            if (!bld->texel_type.floating) {
-               border_chan_vec = LLVMBuildBitCast(builder, border_chan_vec,
-                                                  bld->texel_bld.vec_type, "");
-            }
-            else {
-               /*
-                * For normalized format need to clamp border color (technically
-                * probably should also quantize the data). Really sucks doing this
-                * here but can't avoid at least for now since this is part of
-                * sampler state and texture format is part of sampler_view state.
-                */
-               unsigned chan_type = format_desc->channel[chan_s].type;
-               unsigned chan_norm = format_desc->channel[chan_s].normalized;
-               if (chan_type == UTIL_FORMAT_TYPE_SIGNED && chan_norm) {
-                  LLVMValueRef clamp_min;
-                  clamp_min = lp_build_const_vec(bld->gallivm, bld->texel_type, -1.0F);
-                  border_chan_vec = lp_build_clamp(&bld->texel_bld, border_chan_vec,
-                                                   clamp_min,
-                                                   bld->texel_bld.one);
-               }
-               else if (chan_type == UTIL_FORMAT_TYPE_UNSIGNED && chan_norm) {
-                  border_chan_vec = lp_build_clamp(&bld->texel_bld, border_chan_vec,
-                                                   bld->texel_bld.zero,
-                                                   bld->texel_bld.one);
-               }
-               /* not exactly sure about all others but I think should be ok? */
-            }
+            border_chan = lp_build_extract_broadcast(bld->gallivm,
+                                                     border_type,
+                                                     bld->texel_type,
+                                                     bld->border_color_clamped,
+                                                     idx);
             texel_out[chan] = lp_build_select(&bld->texel_bld, use_border,
-                                              border_chan_vec, texel_out[chan]);
+                                              border_chan, texel_out[chan]);
          }
       }
    }
@@ -1311,9 +1285,8 @@ lp_build_sample_common(struct lp_build_sample_context *bld,
        * and would have ugly interaction with border color, would need to convert
        * border color to that format too or do some other tricks to make it work).
        */
-      const struct util_format_description *format_desc;
+      const struct util_format_description *format_desc = bld->format_desc;
       unsigned chan_type;
-      format_desc = util_format_description(bld->static_texture_state->format);
       /* not entirely sure we couldn't end up with non-valid swizzle here */
       chan_type = format_desc->swizzle[0] <= UTIL_FORMAT_SWIZZLE_W ?
                      format_desc->channel[format_desc->swizzle[0]].type :
@@ -1379,6 +1352,224 @@ lp_build_sample_common(struct lp_build_sample_context *bld,
    }
 }
 
+static void
+lp_build_clamp_border_color(struct lp_build_sample_context *bld,
+                            unsigned sampler_unit)
+{
+   struct gallivm_state *gallivm = bld->gallivm;
+   LLVMBuilderRef builder = gallivm->builder;
+   LLVMValueRef border_color_ptr =
+      bld->dynamic_state->border_color(bld->dynamic_state,
+                                        gallivm, sampler_unit);
+   LLVMValueRef border_color;
+   const struct util_format_description *format_desc = bld->format_desc;
+   struct lp_type vec4_type = bld->texel_type;
+   struct lp_build_context vec4_bld;
+   LLVMValueRef min_clamp = NULL;
+   LLVMValueRef max_clamp = NULL;
+
+   /*
+    * For normalized format need to clamp border color (technically
+    * probably should also quantize the data). Really sucks doing this
+    * here but can't avoid at least for now since this is part of
+    * sampler state and texture format is part of sampler_view state.
+    * GL expects also expects clamping for uint/sint formats too so
+    * do that as well (d3d10 can't end up here with uint/sint since it
+    * only supports them with ld).
+    */
+   vec4_type.length = 4;
+   lp_build_context_init(&vec4_bld, gallivm, vec4_type);
+
+   /*
+    * Vectorized clamping of border color. Loading is a bit of a hack since
+    * we just cast the pointer to float array to pointer to vec4
+    * (int or float).
+    */
+   border_color_ptr = lp_build_array_get_ptr(gallivm, border_color_ptr,
+                                             lp_build_const_int32(gallivm, 0));
+   border_color_ptr = LLVMBuildBitCast(builder, border_color_ptr,
+                                       LLVMPointerType(vec4_bld.vec_type, 0), "");
+   border_color = LLVMBuildLoad(builder, border_color_ptr, "");
+   /* we don't have aligned type in the dynamic state unfortunately */
+   lp_set_load_alignment(border_color, 4);
+
+   /*
+    * Instead of having some incredibly complex logic which will try to figure out
+    * clamping necessary for each channel, simply use the first channel, and treat
+    * mixed signed/unsigned normalized formats specially.
+    * (Mixed non-normalized, which wouldn't work at all here, do not exist for a
+    * good reason.)
+    */
+   if (format_desc->layout == UTIL_FORMAT_LAYOUT_PLAIN) {
+      int chan;
+      /* d/s needs special handling because both present means just sampling depth */
+      if (util_format_is_depth_and_stencil(format_desc->format)) {
+         chan = format_desc->swizzle[0];
+      }
+      else {
+         chan = util_format_get_first_non_void_channel(format_desc->format);
+      }
+      if (chan >= 0 && chan <= UTIL_FORMAT_SWIZZLE_W) {
+         unsigned chan_type = format_desc->channel[chan].type;
+         unsigned chan_norm = format_desc->channel[chan].normalized;
+         unsigned chan_pure = format_desc->channel[chan].pure_integer;
+         if (chan_type == UTIL_FORMAT_TYPE_SIGNED) {
+            if (chan_norm) {
+               min_clamp = lp_build_const_vec(gallivm, vec4_type, -1.0F);
+               max_clamp = vec4_bld.one;
+            }
+            else if (chan_pure) {
+               /*
+                * Border color was stored as int, hence need min/max clamp
+                * only if chan has less than 32 bits..
+                */
+               unsigned chan_size = format_desc->channel[chan].size < 32;
+               if (chan_size < 32) {
+                  min_clamp = lp_build_const_int_vec(gallivm, vec4_type,
+                                                     0 - (1 << (chan_size - 1)));
+                  max_clamp = lp_build_const_int_vec(gallivm, vec4_type,
+                                                     (1 << (chan_size - 1)) - 1);
+               }
+            }
+            /* TODO: no idea about non-pure, non-normalized! */
+         }
+         else if (chan_type == UTIL_FORMAT_TYPE_UNSIGNED) {
+            if (chan_norm) {
+               min_clamp = vec4_bld.zero;
+               max_clamp = vec4_bld.one;
+            }
+            /*
+             * Need a ugly hack here, because we don't have Z32_FLOAT_X8X24
+             * we use Z32_FLOAT_S8X24 to imply sampling depth component
+             * and ignoring stencil, which will blow up here if we try to
+             * do a uint clamp in a float texel build...
+             * And even if we had that format, mesa st also thinks using z24s8
+             * means depth sampling ignoring stencil.
+             */
+            else if (chan_pure) {
+               /*
+                * Border color was stored as uint, hence never need min
+                * clamp, and only need max clamp if chan has less than 32 bits.
+                */
+               unsigned chan_size = format_desc->channel[chan].size < 32;
+               if (chan_size < 32) {
+                  max_clamp = lp_build_const_int_vec(gallivm, vec4_type,
+                                                     (1 << chan_size) - 1);
+               }
+               /* TODO: no idea about non-pure, non-normalized! */
+            }
+         }
+         else if (chan_type == UTIL_FORMAT_TYPE_FIXED) {
+            /* TODO: I have no idea what clamp this would need if any! */
+         }
+      }
+      /* mixed plain formats (or different pure size) */
+      switch (format_desc->format) {
+      case PIPE_FORMAT_B10G10R10A2_UINT:
+      {
+         unsigned max10 = (1 << 10) - 1;
+         max_clamp = lp_build_const_aos(gallivm, vec4_type, max10, max10,
+                                        max10, (1 << 2) - 1, NULL);
+      }
+         break;
+      case PIPE_FORMAT_R10SG10SB10SA2U_NORM:
+         min_clamp = lp_build_const_aos(gallivm, vec4_type, -1.0F, -1.0F,
+                                        -1.0F, 0.0F, NULL);
+         max_clamp = vec4_bld.one;
+         break;
+      case PIPE_FORMAT_R8SG8SB8UX8U_NORM:
+      case PIPE_FORMAT_R5SG5SB6U_NORM:
+         min_clamp = lp_build_const_aos(gallivm, vec4_type, -1.0F, -1.0F,
+                                        0.0F, 0.0F, NULL);
+         max_clamp = vec4_bld.one;
+         break;
+      default:
+         break;
+      }
+   }
+   else {
+      /* cannot figure this out from format description */
+      if (format_desc->layout == UTIL_FORMAT_LAYOUT_S3TC) {
+         /* s3tc formats are always unorm */
+         min_clamp = vec4_bld.zero;
+         max_clamp = vec4_bld.one;
+      }
+      else if (format_desc->layout == UTIL_FORMAT_LAYOUT_RGTC ||
+               format_desc->layout == UTIL_FORMAT_LAYOUT_ETC) {
+         switch (format_desc->format) {
+         case PIPE_FORMAT_RGTC1_UNORM:
+         case PIPE_FORMAT_RGTC2_UNORM:
+         case PIPE_FORMAT_LATC1_UNORM:
+         case PIPE_FORMAT_LATC2_UNORM:
+         case PIPE_FORMAT_ETC1_RGB8:
+            min_clamp = vec4_bld.zero;
+            max_clamp = vec4_bld.one;
+            break;
+         case PIPE_FORMAT_RGTC1_SNORM:
+         case PIPE_FORMAT_RGTC2_SNORM:
+         case PIPE_FORMAT_LATC1_SNORM:
+         case PIPE_FORMAT_LATC2_SNORM:
+            min_clamp = lp_build_const_vec(gallivm, vec4_type, -1.0F);
+            max_clamp = vec4_bld.one;
+            break;
+         default:
+            assert(0);
+            break;
+         }
+      }
+      /*
+       * all others from subsampled/other group, though we don't care
+       * about yuv (and should not have any from zs here)
+       */
+      else if (format_desc->colorspace != UTIL_FORMAT_COLORSPACE_YUV){
+         switch (format_desc->format) {
+         case PIPE_FORMAT_R8G8_B8G8_UNORM:
+         case PIPE_FORMAT_G8R8_G8B8_UNORM:
+         case PIPE_FORMAT_G8R8_B8R8_UNORM:
+         case PIPE_FORMAT_R8G8_R8B8_UNORM:
+         case PIPE_FORMAT_R1_UNORM: /* doesn't make sense but ah well */
+            min_clamp = vec4_bld.zero;
+            max_clamp = vec4_bld.one;
+            break;
+         case PIPE_FORMAT_R8G8Bx_SNORM:
+            min_clamp = lp_build_const_vec(gallivm, vec4_type, -1.0F);
+            max_clamp = vec4_bld.one;
+            break;
+            /*
+             * Note smallfloat formats usually don't need clamping
+             * (they still have infinite range) however this is not
+             * true for r11g11b10 and r9g9b9e5, which can't represent
+             * negative numbers (and additionally r9g9b9e5 can't represent
+             * very large numbers). d3d10 seems happy without clamping in
+             * this case, but gl spec is pretty clear: "for floating
+             * point and integer formats, border values are clamped to
+             * the representable range of the format" so do that here.
+             */
+         case PIPE_FORMAT_R11G11B10_FLOAT:
+            min_clamp = vec4_bld.zero;
+            break;
+         case PIPE_FORMAT_R9G9B9E5_FLOAT:
+            min_clamp = vec4_bld.zero;
+            max_clamp = lp_build_const_vec(gallivm, vec4_type, MAX_RGB9E5);
+            break;
+         default:
+            assert(0);
+            break;
+         }
+      }
+   }
+
+   if (min_clamp) {
+      border_color = lp_build_max(&vec4_bld, border_color, min_clamp);
+   }
+   if (max_clamp) {
+      border_color = lp_build_min(&vec4_bld, border_color, max_clamp);
+   }
+
+   bld->border_color_clamped = border_color;
+}
+
+
 /**
  * General texture sampling codegen.
  * This function handles texture sampling for all texture targets (1D,
@@ -1397,11 +1588,28 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
 {
    struct lp_build_context *int_bld = &bld->int_bld;
    LLVMBuilderRef builder = bld->gallivm->builder;
-   const unsigned mip_filter = bld->static_sampler_state->min_mip_filter;
-   const unsigned min_filter = bld->static_sampler_state->min_img_filter;
-   const unsigned mag_filter = bld->static_sampler_state->mag_img_filter;
+   const struct lp_static_sampler_state *sampler_state = bld->static_sampler_state;
+   const unsigned mip_filter = sampler_state->min_mip_filter;
+   const unsigned min_filter = sampler_state->min_img_filter;
+   const unsigned mag_filter = sampler_state->mag_img_filter;
    LLVMValueRef texels[4];
    unsigned chan;
+
+   /* if we need border color, (potentially) clamp it now */
+   if (lp_sampler_wrap_mode_uses_border_color(sampler_state->wrap_s,
+                                              min_filter,
+                                              mag_filter) ||
+       (bld->dims > 1 &&
+           lp_sampler_wrap_mode_uses_border_color(sampler_state->wrap_t,
+                                                  min_filter,
+                                                  mag_filter)) ||
+       (bld->dims > 2 &&
+           lp_sampler_wrap_mode_uses_border_color(sampler_state->wrap_r,
+                                                  min_filter,
+                                                  mag_filter))) {
+      lp_build_clamp_border_color(bld, sampler_unit);
+   }
+
 
    /*
     * Get/interpolate texture colors.
