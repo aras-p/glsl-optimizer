@@ -25,7 +25,7 @@ if HAVE_X11_DRIVER
 SUBDIRS += glx
 endif
 
-if HAVE_OSMESA
+if HAVE_GALLIUM_OSMESA
 SUBDIRS += osmesa
 endif
 
