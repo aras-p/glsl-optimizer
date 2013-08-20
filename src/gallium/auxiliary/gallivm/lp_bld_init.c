@@ -461,12 +461,15 @@ lp_build_init(void)
                                                  lp_native_vector_width);
 
    if (lp_native_vector_width <= 128) {
-      /* Hide AVX support, as often LLVM AVX instrinsics are only guarded by
+      /* Hide AVX support, as often LLVM AVX intrinsics are only guarded by
        * "util_cpu_caps.has_avx" predicate, and lack the
        * "lp_native_vector_width > 128" predicate. And also to ensure a more
        * consistent behavior, allowing one to test SSE2 on AVX machines.
+       * XXX: should not play games with util_cpu_caps directly as it might
+       * get used for other things outside llvm too.
        */
       util_cpu_caps.has_avx = 0;
+      util_cpu_caps.has_avx2 = 0;
    }
 
    if (!HAVE_AVX) {
@@ -476,13 +479,17 @@ lp_build_init(void)
        * omit it unnecessarily on amd cpus, see above).
        */
       util_cpu_caps.has_f16c = 0;
+      util_cpu_caps.has_xop = 0;
    }
 
 #ifdef PIPE_ARCH_PPC_64
    /* Set the NJ bit in VSCR to 0 so denormalized values are handled as
-    * specified by IEEE standard (PowerISA 2.06 - Section 6.3). This garantees
+    * specified by IEEE standard (PowerISA 2.06 - Section 6.3). This guarantees
     * that some rounding and half-float to float handling does not round
     * incorrectly to 0.
+    * XXX: should eventually follow same logic on all platforms.
+    * Right now denorms get explicitly disabled (but elsewhere) for x86,
+    * whereas ppc64 explicitly enables them...
     */
    if (util_cpu_caps.has_altivec) {
       unsigned short mask[] = { 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF,

@@ -212,6 +212,44 @@ cpuid(uint32_t ax, uint32_t *p)
 #endif
 }
 
+/**
+ * @sa cpuid.h included in gcc-4.4 onwards.
+ * @sa http://msdn.microsoft.com/en-us/library/hskdteyh%28v=vs.90%29.aspx
+ */
+static INLINE void
+cpuid_count(uint32_t ax, uint32_t cx, uint32_t *p)
+{
+#if (defined(PIPE_CC_GCC) || defined(PIPE_CC_SUNPRO)) && defined(PIPE_ARCH_X86)
+   __asm __volatile (
+     "xchgl %%ebx, %1\n\t"
+     "cpuid\n\t"
+     "xchgl %%ebx, %1"
+     : "=a" (p[0]),
+       "=S" (p[1]),
+       "=c" (p[2]),
+       "=d" (p[3])
+     : "0" (ax), "2" (cx)
+   );
+#elif (defined(PIPE_CC_GCC) || defined(PIPE_CC_SUNPRO)) && defined(PIPE_ARCH_X86_64)
+   __asm __volatile (
+     "cpuid\n\t"
+     : "=a" (p[0]),
+       "=b" (p[1]),
+       "=c" (p[2]),
+       "=d" (p[3])
+     : "0" (ax), "2" (cx)
+   );
+#elif defined(PIPE_CC_MSVC)
+   __cpuidex(p, ax, cx);
+#else
+   p[0] = 0;
+   p[1] = 0;
+   p[2] = 0;
+   p[3] = 0;
+#endif
+}
+
+
 static INLINE uint64_t xgetbv(void)
 {
 #if defined(PIPE_CC_GCC)
@@ -341,6 +379,11 @@ util_cpu_detect(void)
          if (cacheline > 0)
             util_cpu_caps.cacheline = cacheline;
       }
+      if (util_cpu_caps.has_avx && regs[0] >= 0x00000007) {
+         uint32_t regs7[4];
+         cpuid_count(0x00000007, 0x00000000, regs7);
+         util_cpu_caps.has_avx2 = (regs7[1] >> 5) & 1;
+      }
 
       if (regs[1] == 0x756e6547 && regs[2] == 0x6c65746e && regs[3] == 0x49656e69) {
          /* GenuineIntel */
@@ -357,6 +400,9 @@ util_cpu_detect(void)
          util_cpu_caps.has_mmx2 |= (regs2[3] >> 22) & 1;
          util_cpu_caps.has_3dnow = (regs2[3] >> 31) & 1;
          util_cpu_caps.has_3dnow_ext = (regs2[3] >> 30) & 1;
+
+         util_cpu_caps.has_xop = util_cpu_caps.has_avx &&
+                                 ((regs2[2] >> 11) & 1);
       }
 
       if (regs[0] >= 0x80000006) {
@@ -394,10 +440,12 @@ util_cpu_detect(void)
       debug_printf("util_cpu_caps.has_sse4_1 = %u\n", util_cpu_caps.has_sse4_1);
       debug_printf("util_cpu_caps.has_sse4_2 = %u\n", util_cpu_caps.has_sse4_2);
       debug_printf("util_cpu_caps.has_avx = %u\n", util_cpu_caps.has_avx);
+      debug_printf("util_cpu_caps.has_avx2 = %u\n", util_cpu_caps.has_avx2);
       debug_printf("util_cpu_caps.has_f16c = %u\n", util_cpu_caps.has_f16c);
       debug_printf("util_cpu_caps.has_popcnt = %u\n", util_cpu_caps.has_popcnt);
       debug_printf("util_cpu_caps.has_3dnow = %u\n", util_cpu_caps.has_3dnow);
       debug_printf("util_cpu_caps.has_3dnow_ext = %u\n", util_cpu_caps.has_3dnow_ext);
+      debug_printf("util_cpu_caps.has_xop = %u\n", util_cpu_caps.has_xop);
       debug_printf("util_cpu_caps.has_altivec = %u\n", util_cpu_caps.has_altivec);
       debug_printf("util_cpu_caps.has_daz = %u\n", util_cpu_caps.has_daz);
    }
