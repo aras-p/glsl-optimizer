@@ -131,6 +131,11 @@ struct fd3_compile_context {
 	struct tgsi_src_register tmp_src;
 };
 
+
+static void vectorize(struct fd3_compile_context *ctx,
+		struct ir3_instruction *instr, struct tgsi_dst_register *dst,
+		int nsrcs, ...);
+
 static unsigned
 compile_init(struct fd3_compile_context *ctx, struct fd3_shader_stateobj *so,
 		const struct tgsi_token *tokens)
@@ -234,6 +239,10 @@ add_src_reg(struct fd3_compile_context *ctx, struct ir3_instruction *instr,
 		flags |= IR3_REG_CONST;
 		num = src->Index + ctx->base_reg[src->File];
 		break;
+	case TGSI_FILE_OUTPUT:
+		/* NOTE: we should only end up w/ OUTPUT file for things like
+		 * clamp()'ing saturated dst instructions
+		 */
 	case TGSI_FILE_INPUT:
 	case TGSI_FILE_TEMPORARY:
 		num = src->Index + ctx->base_reg[src->File];
@@ -405,6 +414,35 @@ create_mov(struct fd3_compile_context *ctx, struct tgsi_dst_register *dst,
 		}
 	}
 
+}
+
+static void
+create_clamp(struct fd3_compile_context *ctx, struct tgsi_dst_register *dst,
+		struct tgsi_src_register *minval, struct tgsi_src_register *maxval)
+{
+	struct ir3_instruction *instr;
+	struct tgsi_src_register src;
+
+	src_from_dst(&src, dst);
+
+	instr = ir3_instr_create(ctx->ir, 2, OPC_MAX_F);
+	vectorize(ctx, instr, dst, 2, &src, 0, minval, 0);
+
+	instr = ir3_instr_create(ctx->ir, 2, OPC_MIN_F);
+	vectorize(ctx, instr, dst, 2, &src, 0, maxval, 0);
+}
+
+static void
+create_clamp_imm(struct fd3_compile_context *ctx,
+		struct tgsi_dst_register *dst,
+		uint32_t minval, uint32_t maxval)
+{
+	struct tgsi_src_register minconst, maxconst;
+
+	get_immediate(ctx, &minconst, minval);
+	get_immediate(ctx, &maxconst, maxval);
+
+	create_clamp(ctx, dst, &minconst, &maxconst);
 }
 
 static struct tgsi_dst_register *
@@ -1227,6 +1265,17 @@ compile_instructions(struct fd3_compile_context *ctx)
 						tgsi_get_opcode_name(opc));
 				tgsi_dump(ctx->tokens, 0);
 				assert(0);
+			}
+
+			switch (inst->Instruction.Saturate) {
+			case TGSI_SAT_ZERO_ONE:
+				create_clamp_imm(ctx, &inst->Dst[0].Register,
+						fui(0.0), fui(1.0));
+				break;
+			case TGSI_SAT_MINUS_PLUS_ONE:
+				create_clamp_imm(ctx, &inst->Dst[0].Register,
+						fui(-1.0), fui(1.0));
+				break;
 			}
 
 			break;
