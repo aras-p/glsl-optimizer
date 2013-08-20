@@ -2034,21 +2034,27 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
       LLVMValueRef lod_ipart = NULL, lod_fpart = NULL;
       LLVMValueRef ilevel0 = NULL, ilevel1 = NULL;
       boolean use_aos = util_format_fits_8unorm(bld.format_desc) &&
-                        lp_is_simple_wrap_mode(static_sampler_state->wrap_s) &&
-                        lp_is_simple_wrap_mode(static_sampler_state->wrap_t) &&
                         /* not sure this is strictly needed or simply impossible */
-                        static_sampler_state->compare_mode == PIPE_TEX_COMPARE_NONE;
+                        static_sampler_state->compare_mode == PIPE_TEX_COMPARE_NONE &&
+                        lp_is_simple_wrap_mode(static_sampler_state->wrap_s);
+      if (dims > 1) {
+         use_aos &= lp_is_simple_wrap_mode(static_sampler_state->wrap_t);
+         if (dims > 2) {
+            use_aos &= lp_is_simple_wrap_mode(static_sampler_state->wrap_r);
+         }
+      }
 
       if ((gallivm_debug & GALLIVM_DEBUG_PERF) &&
           !use_aos && util_format_fits_8unorm(bld.format_desc)) {
          debug_printf("%s: using floating point linear filtering for %s\n",
                       __FUNCTION__, bld.format_desc->short_name);
-         debug_printf("  min_img %d  mag_img %d  mip %d  wraps %d  wrapt %d\n",
+         debug_printf("  min_img %d  mag_img %d  mip %d  wraps %d  wrapt %d  wrapr %d\n",
                       static_sampler_state->min_img_filter,
                       static_sampler_state->mag_img_filter,
                       static_sampler_state->min_mip_filter,
                       static_sampler_state->wrap_s,
-                      static_sampler_state->wrap_t);
+                      static_sampler_state->wrap_t,
+                      static_sampler_state->wrap_r);
       }
 
       lp_build_sample_common(&bld, texture_index, sampler_index,
