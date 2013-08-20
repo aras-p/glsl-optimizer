@@ -69,9 +69,6 @@ nodist_EXTRA_pipe_nouveau_la_SOURCES = dummy.cpp
 pipe_nouveau_la_LIBADD = \
 	$(PIPE_LIBS) \
 	$(top_builddir)/src/gallium/winsys/nouveau/drm/libnouveaudrm.la \
-	$(top_builddir)/src/gallium/drivers/nv30/libnv30.la \
-	$(top_builddir)/src/gallium/drivers/nv50/libnv50.la \
-	$(top_builddir)/src/gallium/drivers/nvc0/libnvc0.la \
 	$(top_builddir)/src/gallium/drivers/nouveau/libnouveau.la \
 	$(NOUVEAU_LIBS)
 pipe_nouveau_la_LDFLAGS = -no-undefined -avoid-version -module

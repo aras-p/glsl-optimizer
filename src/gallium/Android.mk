@@ -48,10 +48,7 @@ endif
 ifneq ($(filter nouveau, $(MESA_GPU_DRIVERS)),)
 SUBDIRS += \
 	winsys/nouveau/drm \
-	drivers/nouveau \
-	drivers/nvfx \
-	drivers/nv50 \
-	drivers/nvc0
+	drivers/nouveau
 endif
 
 # r300g/r600g/radeonsi

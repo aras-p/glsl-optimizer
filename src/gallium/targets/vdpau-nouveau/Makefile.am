@@ -48,9 +48,6 @@ libvdpau_nouveau_la_LIBADD = \
 	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
 	$(top_builddir)/src/gallium/state_trackers/vdpau/libvdpautracker.la \
 	$(top_builddir)/src/gallium/winsys/nouveau/drm/libnouveaudrm.la \
-	$(top_builddir)/src/gallium/drivers/nv30/libnv30.la \
-	$(top_builddir)/src/gallium/drivers/nv50/libnv50.la \
-	$(top_builddir)/src/gallium/drivers/nvc0/libnvc0.la \
 	$(top_builddir)/src/gallium/drivers/nouveau/libnouveau.la \
 	$(top_builddir)/src/gallium/drivers/trace/libtrace.la \
 	$(GALLIUM_DRI_LIB_DEPS) \

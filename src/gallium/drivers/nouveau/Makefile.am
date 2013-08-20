@@ -27,9 +27,15 @@ noinst_LTLIBRARIES = libnouveau.la
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/gallium/drivers/nouveau/include \
-	-I$(top_srcdir)/src/gallium/drivers \
-	-I$(top_srcdir)/include \
 	$(GALLIUM_CFLAGS) \
-	$(LIBDRM_CFLAGS)
+	$(LIBDRM_CFLAGS) \
+	$(NOUVEAU_CFLAGS) \
+	$(VISIBILITY_CFLAGS)
 
-libnouveau_la_SOURCES = $(C_SOURCES)
+libnouveau_la_SOURCES = \
+	$(C_SOURCES) \
+	$(NV30_C_SOURCES) \
+	$(NV50_CODEGEN_SOURCES) \
+	$(NV50_C_SOURCES) \
+	$(NVC0_CODEGEN_SOURCES) \
+	$(NVC0_C_SOURCES)

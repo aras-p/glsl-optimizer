@@ -296,4 +296,3 @@ nouveau_mm_destroy(struct nouveau_mman *cache)
 
    FREE(cache);
 }
-

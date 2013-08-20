@@ -27,7 +27,7 @@
 #include "nouveau_context.h"
 #include "nouveau_video.h"
 
-#include "nouveau/nouveau_buffer.h"
+#include "nouveau_buffer.h"
 #include "util/u_video.h"
 #include "util/u_format.h"
 #include "util/u_sampler.h"

@@ -85,7 +85,7 @@ nouveau_screen_bo_from_handle(struct pipe_screen *pscreen,
 	struct nouveau_device *dev = nouveau_screen(pscreen)->device;
 	struct nouveau_bo *bo = 0;
 	int ret;
- 
+
 	ret = nouveau_bo_name_ref(dev, whandle->handle, &bo);
 	if (ret) {
 		debug_printf("%s: ref name 0x%08x failed with %d\n",
@@ -106,7 +106,7 @@ nouveau_screen_bo_get_handle(struct pipe_screen *pscreen,
 {
 	whandle->stride = stride;
 
-	if (whandle->type == DRM_API_HANDLE_TYPE_SHARED) { 
+	if (whandle->type == DRM_API_HANDLE_TYPE_SHARED) {
 		return nouveau_bo_name_get(bo, &whandle->handle) == 0;
 	} else if (whandle->type == DRM_API_HANDLE_TYPE_KMS) {
 		whandle->handle = bo->handle;

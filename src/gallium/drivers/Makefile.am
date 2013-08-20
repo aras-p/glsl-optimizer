@@ -86,7 +86,7 @@ endif
 
 if HAVE_GALLIUM_NOUVEAU
 
-SUBDIRS += nouveau nv30 nv50 nvc0
+SUBDIRS += nouveau
 
 endif
 

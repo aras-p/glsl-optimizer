@@ -170,9 +170,6 @@ if HAVE_GALLIUM_NOUVEAU
 AM_CPPFLAGS += -D_EGL_PIPE_NOUVEAU=1
 egl_gallium_la_LIBADD += \
 	$(top_builddir)/src/gallium/winsys/nouveau/drm/libnouveaudrm.la \
-	$(top_builddir)/src/gallium/drivers/nv30/libnv30.la \
-	$(top_builddir)/src/gallium/drivers/nv50/libnv50.la \
-	$(top_builddir)/src/gallium/drivers/nvc0/libnvc0.la \
 	$(top_builddir)/src/gallium/drivers/nouveau/libnouveau.la \
 	$(NOUVEAU_LIBS)
 endif
