@@ -42,13 +42,13 @@ static enum pipe_error
 emit_hw_vs_vdecl(struct svga_context *svga, unsigned dirty)
 {
    const struct pipe_vertex_element *ve = svga->curr.velems->velem;
-   SVGA3dVertexDecl decl;
    unsigned i;
    unsigned neg_bias = 0;
 
    assert(svga->curr.velems->count >=
           svga->curr.vs->base.info.file_count[TGSI_FILE_INPUT]);
 
+   /* specify number of vertex element declarations to come */
    svga_hwtnl_reset_vdecl( svga->hwtnl,
                            svga->curr.velems->count );
 
@@ -70,16 +70,15 @@ emit_hw_vs_vdecl(struct svga_context *svga, unsigned dirty)
    for (i = 0; i < svga->curr.velems->count; i++) {
       const struct pipe_vertex_buffer *vb =
          &svga->curr.vb[ve[i].vertex_buffer_index];
-      struct svga_buffer *buffer;
+      const struct svga_buffer *buffer;
       unsigned int offset = vb->buffer_offset + ve[i].src_offset;
-      unsigned tmp_neg_bias = 0;
 
       if (!vb->buffer)
          continue;
 
       buffer = svga_buffer(vb->buffer);
       if (buffer->uploaded.start > offset) {
-         tmp_neg_bias = buffer->uploaded.start - offset;
+         unsigned tmp_neg_bias = buffer->uploaded.start - offset;
          if (vb->stride)
             tmp_neg_bias = (tmp_neg_bias + vb->stride - 1) / vb->stride;
          neg_bias = MAX2(neg_bias, tmp_neg_bias);
@@ -90,12 +89,13 @@ emit_hw_vs_vdecl(struct svga_context *svga, unsigned dirty)
       const struct pipe_vertex_buffer *vb =
          &svga->curr.vb[ve[i].vertex_buffer_index];
       unsigned usage, index;
-      struct svga_buffer *buffer;
+      const struct svga_buffer *buffer;
+      SVGA3dVertexDecl decl;
 
       if (!vb->buffer)
          continue;
 
-      buffer= svga_buffer(vb->buffer);
+      buffer = svga_buffer(vb->buffer);
       svga_generate_vdecl_semantics( i, &usage, &index );
 
       /* SVGA_NEW_VELEMENT
