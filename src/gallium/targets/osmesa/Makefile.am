@@ -40,10 +40,9 @@ lib@OSMESA_LIB@_la_SOURCES = target.c
 
 lib@OSMESA_LIB@_la_LDFLAGS = -module -version-number @OSMESA_VERSION@ -no-undefined
 
-if HAVE_SHARED_GLAPI
-GLAPI_LIB = $(top_builddir)/src/mapi/shared-glapi/libglapi.la
-else
 GLAPI_LIB = $(top_builddir)/src/mapi/glapi/libglapi.la
+if HAVE_SHARED_GLAPI
+GLAPI_LIB += $(top_builddir)/src/mapi/shared-glapi/libglapi.la
 endif
 
 lib@OSMESA_LIB@_la_LIBADD = \
