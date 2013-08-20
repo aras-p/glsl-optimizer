@@ -135,6 +135,8 @@ struct fd3_compile_context {
 static void vectorize(struct fd3_compile_context *ctx,
 		struct ir3_instruction *instr, struct tgsi_dst_register *dst,
 		int nsrcs, ...);
+static void create_mov(struct fd3_compile_context *ctx,
+		struct tgsi_dst_register *dst, struct tgsi_src_register *src);
 
 static unsigned
 compile_init(struct fd3_compile_context *ctx, struct fd3_shader_stateobj *so,
@@ -372,6 +374,23 @@ get_immediate(struct fd3_compile_context *ctx,
 	reg->SwizzleY  = swiz2tgsi[swiz];
 	reg->SwizzleZ  = swiz2tgsi[swiz];
 	reg->SwizzleW  = swiz2tgsi[swiz];
+}
+
+/* for instructions that cannot take a const register as src, if needed
+ * generate a move to temporary gpr:
+ */
+static struct tgsi_src_register *
+get_unconst(struct fd3_compile_context *ctx, struct tgsi_src_register *src,
+		struct tgsi_src_register *tmp_src)
+{
+	static struct tgsi_dst_register tmp_dst;
+	if ((src->File == TGSI_FILE_CONSTANT) ||
+			(src->File == TGSI_FILE_IMMEDIATE)) {
+		get_internal_temp(ctx, &tmp_dst, tmp_src);
+		create_mov(ctx, &tmp_dst, src);
+		src = tmp_src;
+	}
+	return src;
 }
 
 static type_t
@@ -1027,8 +1046,7 @@ instr_cat3(const struct instr_translater *t,
 		struct tgsi_full_instruction *inst)
 {
 	struct tgsi_dst_register *dst = get_dst(ctx, inst);
-	struct tgsi_src_register *src1 = &inst->Src[1].Register;
-	struct tgsi_dst_register tmp_dst;
+	struct tgsi_src_register *src1;
 	struct tgsi_src_register tmp_src;
 	struct ir3_instruction *instr;
 
@@ -1038,12 +1056,7 @@ instr_cat3(const struct instr_translater *t,
 	 * const.  Not sure if this is a hw bug, or simply that the
 	 * disassembler lies.
 	 */
-	if ((src1->File == TGSI_FILE_CONSTANT) ||
-			(src1->File == TGSI_FILE_IMMEDIATE)) {
-		get_internal_temp(ctx, &tmp_dst, &tmp_src);
-		create_mov(ctx, &tmp_dst, src1);
-		src1 = &tmp_src;
-	}
+	src1 = get_unconst(ctx, &inst->Src[1].Register, &tmp_src);
 
 	instr = ir3_instr_create(ctx->ir, 3,
 			ctx->so->half_precision ? t->hopc : t->opc);
@@ -1060,13 +1073,17 @@ instr_cat4(const struct instr_translater *t,
 		struct tgsi_full_instruction *inst)
 {
 	struct tgsi_dst_register *dst = get_dst(ctx, inst);
+	struct tgsi_src_register *src;
+	struct tgsi_src_register tmp_src;
 	struct ir3_instruction *instr;
+
+	/* seems like blob compiler avoids const as src.. */
+	src = get_unconst(ctx, &inst->Src[0].Register, &tmp_src);
 
 	ir3_instr_create(ctx->ir, 0, OPC_NOP)->repeat = 5;
 	instr = ir3_instr_create(ctx->ir, 4, t->opc);
 
-	vectorize(ctx, instr, dst, 1,
-			&inst->Src[0].Register, 0);
+	vectorize(ctx, instr, dst, 1, src, 0);
 
 	regmask_set(ctx->needs_ss, instr->regs[0]);
 
