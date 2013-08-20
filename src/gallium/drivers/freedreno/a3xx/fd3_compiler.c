@@ -159,19 +159,19 @@ compile_init(struct fd3_compile_context *ctx, struct fd3_shader_stateobj *so,
 	/* Immediates go after constants: */
 	ctx->base_reg[TGSI_FILE_CONSTANT]  = 0;
 	ctx->base_reg[TGSI_FILE_IMMEDIATE] =
-			ctx->info.file_count[TGSI_FILE_CONSTANT];
+			ctx->info.file_max[TGSI_FILE_CONSTANT] + 1;
 
 	/* Temporaries after outputs after inputs: */
 	ctx->base_reg[TGSI_FILE_INPUT]     = 0;
 	ctx->base_reg[TGSI_FILE_OUTPUT]    =
-			ctx->info.file_count[TGSI_FILE_INPUT];
+			ctx->info.file_max[TGSI_FILE_INPUT] + 1;
 	ctx->base_reg[TGSI_FILE_TEMPORARY] =
-			ctx->info.file_count[TGSI_FILE_INPUT] +
-			ctx->info.file_count[TGSI_FILE_OUTPUT];
+			ctx->info.file_max[TGSI_FILE_INPUT] + 1 +
+			ctx->info.file_max[TGSI_FILE_OUTPUT] + 1;
 
 	so->first_immediate = ctx->base_reg[TGSI_FILE_IMMEDIATE];
-	ctx->immediate_idx = 4 * (ctx->info.file_count[TGSI_FILE_CONSTANT] +
-			ctx->info.file_count[TGSI_FILE_IMMEDIATE]);
+	ctx->immediate_idx = 4 * (ctx->info.file_max[TGSI_FILE_CONSTANT] + 1 +
+			ctx->info.file_max[TGSI_FILE_IMMEDIATE] + 1);
 
 	ret = tgsi_parse_init(&ctx->parser, tokens);
 	if (ret != TGSI_PARSE_OK)
@@ -309,7 +309,7 @@ get_internal_temp(struct fd3_compile_context *ctx,
 	/* assign next temporary: */
 	n = ctx->num_internal_temps++;
 
-	tmp_dst->Index = ctx->info.file_count[TGSI_FILE_TEMPORARY] + n;
+	tmp_dst->Index = ctx->info.file_max[TGSI_FILE_TEMPORARY] + n + 1;
 
 	src_from_dst(tmp_src, tmp_dst);
 }
