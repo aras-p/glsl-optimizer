@@ -616,10 +616,11 @@ OSMesaMakeCurrent(OSMesaContext osmesa, void *buffer, GLenum type,
    struct osmesa_buffer *osbuffer;
    enum pipe_format color_format;
 
-   if (osmesa->format == OSMESA_RGB_565 && type != GL_UNSIGNED_SHORT_5_6_5) {
+   if (!osmesa || !buffer || width < 1 || height < 1) {
       return GL_FALSE;
    }
-   if (width < 1 || height < 1) {
+
+   if (osmesa->format == OSMESA_RGB_565 && type != GL_UNSIGNED_SHORT_5_6_5) {
       return GL_FALSE;
    }
 
