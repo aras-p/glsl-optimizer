@@ -395,7 +395,7 @@ lp_build_rho(struct lp_build_sample_context *bld,
 
          if (dims < 2) {
             rho_xvec = lp_build_swizzle_aos(coord_bld, ddx_ddy[0], swizzle0);
-            rho_yvec = lp_build_swizzle_aos(coord_bld, ddx_ddy[0], swizzle1);
+            rho_yvec = lp_build_swizzle_aos(coord_bld, ddx_ddy[0], swizzle2);
          }
          else if (dims == 2) {
             static const unsigned char swizzle02[] = {
