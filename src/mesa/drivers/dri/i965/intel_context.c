@@ -755,11 +755,15 @@ intelMakeCurrent(__DRIcontext * driContextPriv,
 	 driContextPriv->dri2.read_stamp = driReadPriv->dri2.stamp - 1;
       }
 
+      /* The sRGB workaround changes the renderbuffer's format. We must change
+       * the format before the renderbuffer's miptree get's allocated, otherwise
+       * the formats of the renderbuffer and its miptree will differ.
+       */
+      intel_gles3_srgb_workaround(brw, fb);
+      intel_gles3_srgb_workaround(brw, readFb);
+
       intel_prepare_render(brw);
       _mesa_make_current(ctx, fb, readFb);
-
-      intel_gles3_srgb_workaround(brw, ctx->WinSysDrawBuffer);
-      intel_gles3_srgb_workaround(brw, ctx->WinSysReadBuffer);
    }
    else {
       _mesa_make_current(NULL, NULL, NULL);
