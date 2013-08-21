@@ -33,6 +33,7 @@
 #include <freedreno_ringbuffer.h>
 
 #include "pipe/p_format.h"
+#include "pipe/p_state.h"
 #include "util/u_debug.h"
 #include "util/u_math.h"
 #include "util/u_half.h"
@@ -77,6 +78,15 @@ static inline uint32_t DRAW(enum pc_di_primtype prim_type,
 			((index_size >> 1) << 13) |
 			(vis_cull_mode     << 9) |
 			(1                 << 14);
+}
+
+
+static inline enum pipe_format
+pipe_surface_format(struct pipe_surface *psurf)
+{
+	if (!psurf)
+		return PIPE_FORMAT_NONE;
+	return psurf->format;
 }
 
 #define LOG_DWORDS 0

@@ -337,7 +337,7 @@ fd2_emit_tile_init(struct fd_context *ctx)
 	struct fd_ringbuffer *ring = ctx->ring;
 	struct pipe_framebuffer_state *pfb = &ctx->framebuffer;
 	struct fd_gmem_stateobj *gmem = &ctx->gmem;
-	enum pipe_format format = pfb->cbufs[0]->format;
+	enum pipe_format format = pipe_surface_format(pfb->cbufs[0]);
 	uint32_t reg;
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 4);
@@ -358,7 +358,7 @@ fd2_emit_tile_prep(struct fd_context *ctx, uint32_t xoff, uint32_t yoff,
 {
 	struct fd_ringbuffer *ring = ctx->ring;
 	struct pipe_framebuffer_state *pfb = &ctx->framebuffer;
-	enum pipe_format format = pfb->cbufs[0]->format;
+	enum pipe_format format = pipe_surface_format(pfb->cbufs[0]);
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
 	OUT_RING(ring, CP_REG(REG_A2XX_RB_COLOR_INFO));
@@ -379,7 +379,7 @@ fd2_emit_tile_renderprep(struct fd_context *ctx, uint32_t xoff, uint32_t yoff,
 {
 	struct fd_ringbuffer *ring = ctx->ring;
 	struct pipe_framebuffer_state *pfb = &ctx->framebuffer;
-	enum pipe_format format = pfb->cbufs[0]->format;
+	enum pipe_format format = pipe_surface_format(pfb->cbufs[0]);
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
 	OUT_RING(ring, CP_REG(REG_A2XX_RB_COLOR_INFO));

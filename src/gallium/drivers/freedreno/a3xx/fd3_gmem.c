@@ -214,8 +214,12 @@ fd3_emit_tile_gmem2mem(struct fd_context *ctx, uint32_t xoff, uint32_t yoff,
 		}, 1);
 
 	if (ctx->resolve & (FD_BUFFER_DEPTH | FD_BUFFER_STENCIL)) {
-		uint32_t base = depth_base(&ctx->gmem) *
-				fd_resource(pfb->cbufs[0]->texture)->cpp;
+		uint32_t base = 0;
+		if (pfb->cbufs[0]) {
+			struct fd_resource *rsc =
+					fd_resource(pfb->cbufs[0]->texture);
+			base = depth_base(&ctx->gmem) * rsc->cpp;
+		}
 		emit_gmem2mem_surf(ring, RB_COPY_DEPTH_STENCIL, base, pfb->zsbuf);
 	}
 
@@ -410,8 +414,11 @@ static void
 fd3_emit_sysmem_prep(struct fd_context *ctx)
 {
 	struct pipe_framebuffer_state *pfb = &ctx->framebuffer;
-	struct fd_resource *rsc = fd_resource(pfb->cbufs[0]->texture);
 	struct fd_ringbuffer *ring = ctx->ring;
+	uint32_t pitch = 0;
+
+	if (pfb->cbufs[0])
+		pitch = fd_resource(pfb->cbufs[0]->texture)->pitch;
 
 	fd3_emit_restore(ctx);
 
@@ -422,7 +429,7 @@ fd3_emit_sysmem_prep(struct fd_context *ctx)
 	emit_mrt(ring, pfb->nr_cbufs, pfb->cbufs, NULL, 0);
 
 	fd3_emit_rbrc_tile_state(ring,
-			A3XX_RB_RENDER_CONTROL_BIN_WIDTH(rsc->pitch));
+			A3XX_RB_RENDER_CONTROL_BIN_WIDTH(pitch));
 
 	/* setup scissor/offset for current tile: */
 	OUT_PKT0(ring, REG_A3XX_PA_SC_WINDOW_OFFSET, 1);
