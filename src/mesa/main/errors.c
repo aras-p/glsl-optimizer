@@ -609,11 +609,6 @@ control_app_messages(struct gl_context *ctx, GLenum esource, GLenum etype,
    enum mesa_debug_type type = gl_enum_to_debug_type(etype);
    enum mesa_debug_severity severity = gl_enum_to_debug_severity(eseverity);
 
-   if (count)
-      assert(severity == MESA_DEBUG_SEVERITY_COUNT
-             && type != MESA_DEBUG_TYPE_COUNT
-             && source != MESA_DEBUG_SOURCE_COUNT);
-
    for (i = 0; i < count; i++)
       set_message_state(ctx, source, type, ids[i], enabled);
 
@@ -629,9 +624,6 @@ _mesa_DebugMessageControlARB(GLenum gl_source, GLenum gl_type,
                              GLsizei count, const GLuint *ids,
                              GLboolean enabled)
 {
-   enum mesa_debug_source source;
-   enum mesa_debug_type type;
-   enum mesa_debug_severity severity;
    GET_CURRENT_CONTEXT(ctx);
 
    if (count < 0) {
@@ -651,11 +643,8 @@ _mesa_DebugMessageControlARB(GLenum gl_source, GLenum gl_type,
       return;
    }
 
-   source = gl_enum_to_debug_source(gl_source);
-   type = gl_enum_to_debug_type(gl_type);
-   severity = gl_enum_to_debug_severity(gl_severity);
-
-   control_app_messages(ctx, source, type, severity, count, ids, enabled);
+   control_app_messages(ctx, gl_source, gl_type, gl_severity,
+                        count, ids, enabled);
 }
 
 void GLAPIENTRY
