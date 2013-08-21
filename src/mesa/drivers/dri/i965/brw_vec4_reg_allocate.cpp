@@ -97,11 +97,15 @@ vec4_visitor::reg_allocate_trivial()
 }
 
 static void
-brw_alloc_reg_set_for_classes(struct brw_context *brw,
-			      int *class_sizes,
-			      int class_count,
-			      int base_reg_count)
+brw_alloc_reg_set(struct brw_context *brw, int base_reg_count)
 {
+   /* After running split_virtual_grfs(), almost all VGRFs will be of size 1.
+    * SEND-from-GRF sources cannot be split, so we also need classes for each
+    * potential message length.
+    */
+   const int class_count = 2;
+   const int class_sizes[class_count] = {1, 2};
+
    /* Compute the total number of registers across all classes. */
    int ra_reg_count = 0;
    for (int i = 0; i < class_count; i++) {
@@ -150,8 +154,6 @@ vec4_visitor::reg_allocate()
    unsigned int hw_reg_mapping[virtual_grf_count];
    int first_assigned_grf = this->first_non_payload_grf;
    int base_reg_count = max_grf - first_assigned_grf;
-   int class_sizes[base_reg_count];
-   int class_count = 0;
 
    /* Using the trivial allocator can be useful in debugging undefined
     * register access as a result of broken optimization passes.
@@ -161,42 +163,16 @@ vec4_visitor::reg_allocate()
 
    calculate_live_intervals();
 
-   /* Set up the register classes.
-    *
-    * The base registers store a vec4.  However, we'll need larger
-    * storage for arrays, structures, and matrices, which will be sets
-    * of contiguous registers.
-    */
-   class_sizes[class_count++] = 1;
-
-   for (int r = 0; r < virtual_grf_count; r++) {
-      int i;
-
-      for (i = 0; i < class_count; i++) {
-	 if (class_sizes[i] == this->virtual_grf_sizes[r])
-	    break;
-      }
-      if (i == class_count) {
-	 if (this->virtual_grf_sizes[r] >= base_reg_count) {
-	    fail("Object too large to register allocate.\n");
-	 }
-
-	 class_sizes[class_count++] = this->virtual_grf_sizes[r];
-      }
-   }
-
-   brw_alloc_reg_set_for_classes(brw, class_sizes, class_count, base_reg_count);
+   brw_alloc_reg_set(brw, base_reg_count);
 
    struct ra_graph *g = ra_alloc_interference_graph(brw->vs.regs,
 						    virtual_grf_count);
 
    for (int i = 0; i < virtual_grf_count; i++) {
-      for (int c = 0; c < class_count; c++) {
-	 if (class_sizes[c] == this->virtual_grf_sizes[i]) {
-	    ra_set_node_class(g, i, brw->vs.classes[c]);
-	    break;
-	 }
-      }
+      int size = this->virtual_grf_sizes[i];
+      assert(size >= 1 && size <= 2 &&
+             "Register allocation relies on split_virtual_grfs().");
+      ra_set_node_class(g, i, brw->vs.classes[size - 1]);
 
       for (int j = 0; j < i; j++) {
 	 if (virtual_grf_interferes(i, j)) {
