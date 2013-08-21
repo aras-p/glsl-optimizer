@@ -122,6 +122,11 @@ vlVdpVideoSurfaceQueryGetPutBitsYCbCrCapabilities(VdpDevice device, VdpChromaTyp
    pipe_mutex_lock(dev->mutex);
 
    switch(bits_ycbcr_format) {
+   case VDP_YCBCR_FORMAT_NV12:
+   case VDP_YCBCR_FORMAT_YV12:
+      *is_supported = surface_chroma_type == VDP_CHROMA_TYPE_420;
+      break;
+
    case VDP_YCBCR_FORMAT_UYVY:
    case VDP_YCBCR_FORMAT_YUYV:
       *is_supported = surface_chroma_type == VDP_CHROMA_TYPE_422;
@@ -133,7 +138,7 @@ vlVdpVideoSurfaceQueryGetPutBitsYCbCrCapabilities(VdpDevice device, VdpChromaTyp
       break;
 
    default:
-      *is_supported = true;
+      *is_supported = false;
       break;
    }
 
