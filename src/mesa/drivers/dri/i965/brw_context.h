@@ -1413,6 +1413,9 @@ void brw_upload_cs_urb_state(struct brw_context *brw);
  */
 void brw_fs_alloc_reg_sets(struct brw_context *brw);
 
+/* brw_vec4_reg_allocate.cpp */
+void brw_vec4_alloc_reg_set(struct brw_context *brw);
+
 /* brw_disasm.c */
 int brw_disasm (FILE *file, struct brw_instruction *inst, int gen);
 

@@ -96,8 +96,8 @@ vec4_visitor::reg_allocate_trivial()
    return true;
 }
 
-static void
-brw_alloc_reg_set(struct brw_context *brw)
+extern "C" void
+brw_vec4_alloc_reg_set(struct brw_context *brw)
 {
    int base_reg_count = brw->gen >= 7 ? GEN7_MRF_HACK_START : BRW_MAX_GRF;
 
@@ -187,8 +187,6 @@ vec4_visitor::reg_allocate()
       return reg_allocate_trivial();
 
    calculate_live_intervals();
-
-   brw_alloc_reg_set(brw);
 
    int node_count = virtual_grf_count;
    int first_payload_node = node_count;
