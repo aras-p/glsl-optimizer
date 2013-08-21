@@ -18,10 +18,10 @@ XORG_INDENT_FLAGS = -linux -bad -bap -blf -bli0 -cbi0 -cdw -nce -cs -i4 -lc80 -p
     -T _XFUNCPROTOBEGIN -T _XFUNCPROTOEND -T _X_EXPORT
 
 
-MESA_DIR = $(top_srcdir)/src/mesa
-MESA_GLAPI_DIR = $(top_srcdir)/src/mapi/glapi
-MESA_MAPI_DIR = $(top_srcdir)/src/mapi
-MESA_GLX_DIR = $(top_srcdir)/src/glx
+MESA_DIR = $(top_builddir)/src/mesa
+MESA_GLAPI_DIR = $(top_builddir)/src/mapi/glapi
+MESA_MAPI_DIR = $(top_builddir)/src/mapi
+MESA_GLX_DIR = $(top_builddir)/src/glx
 
 MESA_GLAPI_OUTPUTS = \
 	$(MESA_GLAPI_DIR)/glapi_mapi_tmp.h \
