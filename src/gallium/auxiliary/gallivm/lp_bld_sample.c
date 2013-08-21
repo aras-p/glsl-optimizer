@@ -701,7 +701,7 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
             if (mip_filter == PIPE_TEX_MIPFILTER_NONE ||
                 mip_filter == PIPE_TEX_MIPFILTER_NEAREST) {
                /*
-                * XXX: this is not entirely correct, as out_lod_ipart is used
+                * FIXME: this is not entirely correct, as out_lod_ipart is used
                 * both for mip level determination as well as mag/min switchover
                 * point (if different min/mag filters are used). In particular,
                 * lod values between [-0.5,0] (rho between [sqrt(2), 1.0]) will
