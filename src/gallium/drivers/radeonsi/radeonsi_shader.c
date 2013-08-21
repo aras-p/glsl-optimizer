@@ -198,6 +198,8 @@ static void declare_input_fs(
 	struct si_shader *shader = &si_shader_ctx->shader->shader;
 	struct lp_build_context * base =
 				&si_shader_ctx->radeon_bld.soa.bld_base.base;
+	struct lp_build_context *uint =
+				&si_shader_ctx->radeon_bld.soa.bld_base.uint_bld;
 	struct gallivm_state * gallivm = base->gallivm;
 	LLVMTypeRef input_type = LLVMFloatTypeInContext(gallivm->context);
 	LLVMValueRef main_fn = si_shader_ctx->radeon_bld.main_fn;
@@ -341,6 +343,22 @@ static void declare_input_fs(
 		}
 
 		shader->ninterp++;
+	} else if (decl->Semantic.Name == TGSI_SEMANTIC_FOG) {
+		LLVMValueRef args[4];
+
+		args[0] = uint->zero;
+		args[1] = attr_number;
+		args[2] = params;
+		args[3] = interp_param;
+		si_shader_ctx->radeon_bld.inputs[radeon_llvm_reg_index_soa(input_index, 0)] =
+			build_intrinsic(base->gallivm->builder, intr_name,
+						input_type, args, args[3] ? 4 : 3,
+						LLVMReadNoneAttribute | LLVMNoUnwindAttribute);
+		si_shader_ctx->radeon_bld.inputs[radeon_llvm_reg_index_soa(input_index, 1)] =
+		si_shader_ctx->radeon_bld.inputs[radeon_llvm_reg_index_soa(input_index, 2)] =
+			lp_build_const_float(gallivm, 0.0f);
+		si_shader_ctx->radeon_bld.inputs[radeon_llvm_reg_index_soa(input_index, 3)] =
+			lp_build_const_float(gallivm, 1.0f);
 	} else {
 		for (chan = 0; chan < TGSI_NUM_CHANNELS; chan++) {
 			LLVMValueRef args[4];
