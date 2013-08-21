@@ -146,7 +146,7 @@ vlVdpDecoderDestroy(VdpDecoder decoder)
 }
 
 /**
- * Retrieve the parameters used to create a VdpBitmapSurface.
+ * Retrieve the parameters used to create a VdpDecoder.
  */
 VdpStatus
 vlVdpDecoderGetParameters(VdpDecoder decoder,
