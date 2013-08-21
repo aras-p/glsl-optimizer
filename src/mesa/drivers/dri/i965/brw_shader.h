@@ -38,6 +38,8 @@ enum register_file {
    UNIFORM, /* prog_data->params[reg] */
 };
 
+#ifdef __cplusplus
+
 class backend_instruction : public exec_node {
 public:
    bool is_tex();
@@ -71,8 +73,11 @@ public:
    void dump_instructions();
 };
 
+uint32_t brw_texture_offset(ir_constant *offset);
+
+#endif /* __cplusplus */
+
 int brw_type_for_base_type(const struct glsl_type *type);
 uint32_t brw_conditional_for_comparison(unsigned int op);
 uint32_t brw_math_function(enum opcode op);
-uint32_t brw_texture_offset(ir_constant *offset);
 const char *brw_instruction_name(enum opcode op);
