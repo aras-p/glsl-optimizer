@@ -372,3 +372,4 @@ PIPE_FORMAT_R16A16_UINT             , plain, 1, 1, up16 , up16 ,     ,     , x00
 PIPE_FORMAT_R16A16_SINT             , plain, 1, 1, sp16 , sp16 ,     ,     , x00y, rgb
 PIPE_FORMAT_R32A32_UINT             , plain, 1, 1, up32 , up32 ,     ,     , x00y, rgb
 PIPE_FORMAT_R32A32_SINT             , plain, 1, 1, sp32 , sp32 ,     ,     , x00y, rgb
+PIPE_FORMAT_R10G10B10A2_UINT        , plain, 1, 1, up10 , up10 , up10, up2 , xyzw, rgb

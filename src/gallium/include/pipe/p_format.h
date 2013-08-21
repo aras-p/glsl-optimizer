@@ -340,6 +340,7 @@ enum pipe_format {
    PIPE_FORMAT_R16A16_SINT             = 250,
    PIPE_FORMAT_R32A32_UINT             = 251,
    PIPE_FORMAT_R32A32_SINT             = 252,
+   PIPE_FORMAT_R10G10B10A2_UINT        = 253,
 
    PIPE_FORMAT_COUNT
 };

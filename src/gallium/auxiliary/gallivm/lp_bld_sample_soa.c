@@ -1466,6 +1466,7 @@ lp_build_clamp_border_color(struct lp_build_sample_context *bld,
       /* mixed plain formats (or different pure size) */
       switch (format_desc->format) {
       case PIPE_FORMAT_B10G10R10A2_UINT:
+      case PIPE_FORMAT_R10G10B10A2_UINT:
       {
          unsigned max10 = (1 << 10) - 1;
          max_clamp = lp_build_const_aos(gallivm, vec4_type, max10, max10,
