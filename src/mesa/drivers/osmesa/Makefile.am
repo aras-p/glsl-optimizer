@@ -56,6 +56,7 @@ all-local: lib@OSMESA_LIB@.la
 	$(MKDIR_P) $(top_builddir)/$(LIB_DIR);
 	ln -f .libs/lib@OSMESA_LIB@.so $(top_builddir)/$(LIB_DIR)/lib@OSMESA_LIB@.so;
 	ln -f .libs/lib@OSMESA_LIB@.so.@OSMESA_VERSION@ $(top_builddir)/$(LIB_DIR)/lib@OSMESA_LIB@.so.@OSMESA_VERSION@;
+	ln -f .libs/lib@OSMESA_LIB@.so.@OSMESA_VERSION@.0.0 $(top_builddir)/$(LIB_DIR)/
 endif
 
 pkgconfigdir = $(libdir)/pkgconfig
