@@ -1636,7 +1636,7 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
       LLVMValueRef minify;
 
       /*
-       * XXX this should to all lods into account, if some are min
+       * XXX this should take all lods into account, if some are min
        * some max probably could hack up the coords/weights in the linear
        * path with selects to work for nearest.
        * If that's just two quads sitting next to each other it seems
