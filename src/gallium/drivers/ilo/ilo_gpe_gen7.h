@@ -580,7 +580,6 @@ static inline void
 gen7_emit_3DSTATE_SBE(const struct ilo_dev_info *dev,
                       const struct ilo_rasterizer_state *rasterizer,
                       const struct ilo_shader_state *fs,
-                      const struct ilo_shader_state *last_sh,
                       struct ilo_cp *cp)
 {
    const uint32_t cmd = ILO_GPE_CMD(0x3, 0x0, 0x1f);
@@ -589,8 +588,7 @@ gen7_emit_3DSTATE_SBE(const struct ilo_dev_info *dev,
 
    ILO_GPE_VALID_GEN(dev, 7, 7);
 
-   ilo_gpe_gen6_fill_3dstate_sf_sbe(dev, rasterizer,
-         fs, last_sh, dw, Elements(dw));
+   ilo_gpe_gen6_fill_3dstate_sf_sbe(dev, rasterizer, fs, dw, Elements(dw));
 
    ilo_cp_begin(cp, cmd_len);
    ilo_cp_write(cp, cmd | (cmd_len - 2));

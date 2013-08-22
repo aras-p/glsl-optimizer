@@ -261,7 +261,6 @@ static inline void
 ilo_gpe_gen6_fill_3dstate_sf_sbe(const struct ilo_dev_info *dev,
                                  const struct ilo_rasterizer_state *rasterizer,
                                  const struct ilo_shader_state *fs,
-                                 const struct ilo_shader_state *last_sh,
                                  uint32_t *dw, int num_dwords)
 {
    int output_count, vue_offset, vue_len;
@@ -1187,7 +1186,6 @@ static inline void
 gen6_emit_3DSTATE_SF(const struct ilo_dev_info *dev,
                      const struct ilo_rasterizer_state *rasterizer,
                      const struct ilo_shader_state *fs,
-                     const struct ilo_shader_state *last_sh,
                      struct ilo_cp *cp)
 {
    const uint32_t cmd = ILO_GPE_CMD(0x3, 0x0, 0x13);
@@ -1199,7 +1197,7 @@ gen6_emit_3DSTATE_SF(const struct ilo_dev_info *dev,
    ilo_gpe_gen6_fill_3dstate_sf_raster(dev, rasterizer,
          1, PIPE_FORMAT_NONE, payload_raster, Elements(payload_raster));
    ilo_gpe_gen6_fill_3dstate_sf_sbe(dev, rasterizer,
-         fs, last_sh, payload_sbe, Elements(payload_sbe));
+         fs, payload_sbe, Elements(payload_sbe));
 
    ilo_cp_begin(cp, cmd_len);
    ilo_cp_write(cp, cmd | (cmd_len - 2));

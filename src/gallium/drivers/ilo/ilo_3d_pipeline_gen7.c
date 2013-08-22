@@ -451,10 +451,8 @@ gen7_pipeline_sf(struct ilo_3d_pipeline *p,
                  struct gen6_pipeline_session *session)
 {
    /* 3DSTATE_SBE */
-   if (DIRTY(RASTERIZER) || DIRTY(VS) || DIRTY(GS) || DIRTY(FS)) {
-      gen7_emit_3DSTATE_SBE(p->dev, ilo->rasterizer, ilo->fs,
-            (ilo->gs) ? ilo->gs : ilo->vs, ilo->cp);
-   }
+   if (DIRTY(RASTERIZER) || DIRTY(FS))
+      gen7_emit_3DSTATE_SBE(p->dev, ilo->rasterizer, ilo->fs, ilo->cp);
 
    /* 3DSTATE_SF */
    if (DIRTY(RASTERIZER) || DIRTY(FB)) {

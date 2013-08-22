@@ -626,10 +626,8 @@ gen6_pipeline_sf(struct ilo_3d_pipeline *p,
                  struct gen6_pipeline_session *session)
 {
    /* 3DSTATE_SF */
-   if (DIRTY(RASTERIZER) || DIRTY(VS) || DIRTY(GS) || DIRTY(FS)) {
-      gen6_emit_3DSTATE_SF(p->dev, ilo->rasterizer, ilo->fs,
-            (ilo->gs) ? ilo->gs : ilo->vs, p->cp);
-   }
+   if (DIRTY(RASTERIZER) || DIRTY(FS))
+      gen6_emit_3DSTATE_SF(p->dev, ilo->rasterizer, ilo->fs, p->cp);
 }
 
 void
