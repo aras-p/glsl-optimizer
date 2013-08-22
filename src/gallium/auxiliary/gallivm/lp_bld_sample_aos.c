@@ -1141,7 +1141,7 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
 
    if (dims >= 3) {
       lp_build_sample_wrap_linear_int(bld,
-                                      bld->format_desc->block.height,
+                                      1, /* block length (depth) */
                                       r_ipart, &r_fpart, r_float,
                                       depth_vec, z_stride, offsets[2],
                                       bld->static_texture_state->pot_depth,
@@ -1233,7 +1233,7 @@ lp_build_sample_image_linear_afloat(struct lp_build_sample_context *bld,
 
       if (dims >= 3) {
          lp_build_sample_wrap_linear_float(bld,
-                                           bld->format_desc->block.height,
+                                           1, /* block length (depth) */
                                            r, depth_vec, offsets[2],
                                            bld->static_texture_state->pot_depth,
                                            bld->static_sampler_state->wrap_r,
