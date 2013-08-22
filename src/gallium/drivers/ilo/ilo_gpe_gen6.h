@@ -432,8 +432,8 @@ gen6_emit_STATE_SIP(const struct ilo_dev_info *dev,
 
    ILO_GPE_VALID_GEN(dev, 6, 7);
 
-   ilo_cp_begin(cp, cmd_len | (cmd_len - 2));
-   ilo_cp_write(cp, cmd);
+   ilo_cp_begin(cp, cmd_len);
+   ilo_cp_write(cp, cmd | (cmd_len - 2));
    ilo_cp_write(cp, sip);
    ilo_cp_end(cp);
 }
