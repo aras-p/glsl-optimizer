@@ -103,6 +103,7 @@ static void radeonsi_launch_grid(
 	unsigned arg_user_sgpr_count = 2;
 	unsigned i;
 	struct si_pipe_shader *shader = &program->kernels[pc];
+	unsigned lds_blocks;
 
 	pm4->compute_pkt = true;
 	si_cmd_context_control(pm4);
@@ -194,6 +195,20 @@ static void radeonsi_launch_grid(
 		                        shader->num_sgprs)) - 1) / 8))
 		;
 
+	lds_blocks = shader->lds_size;
+	/* XXX: We are over allocating LDS.  For SI, the shader reports LDS in
+	 * blocks of 256 bytes, so if there are 4 bytes lds allocated in
+	 * the shader and 4 bytes allocated by the state tracker, then
+	 * we will set LDS_SIZE to 512 bytes rather than 256.
+	 */
+	if (rctx->b.chip_class <= SI) {
+		lds_blocks += align(program->local_size, 256) >> 8;
+	} else {
+		lds_blocks += align(program->local_size, 512) >> 9;
+	}
+
+	assert(lds_blocks <= 0xFF);
+
 	si_pm4_set_reg(pm4, R_00B84C_COMPUTE_PGM_RSRC2,
 		S_00B84C_SCRATCH_EN(0)
 		| S_00B84C_USER_SGPR(arg_user_sgpr_count)
@@ -202,7 +217,7 @@ static void radeonsi_launch_grid(
 		| S_00B84C_TGID_Z_EN(1)
 		| S_00B84C_TG_SIZE_EN(1)
 		| S_00B84C_TIDIG_COMP_CNT(2)
-		| S_00B84C_LDS_SIZE(shader->lds_size)
+		| S_00B84C_LDS_SIZE(lds_blocks)
 		| S_00B84C_EXCP_EN(0))
 		;
 	si_pm4_set_reg(pm4, R_00B854_COMPUTE_RESOURCE_LIMITS, 0);
