@@ -4022,6 +4022,11 @@ decompress_texture_image(struct gl_context *ctx,
    verts[3].x = 0.0F;
    verts[3].y = height;
 
+   _mesa_MatrixMode(GL_PROJECTION);
+   _mesa_LoadIdentity();
+   _mesa_Ortho(0.0, width, 0.0, height, -1.0, 1.0);
+   _mesa_set_viewport(ctx, 0, 0, width, height);
+
    /* upload new vertex data */
    _mesa_BufferSubData(GL_ARRAY_BUFFER_ARB, 0, sizeof(verts), verts);
 
