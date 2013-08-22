@@ -1175,6 +1175,13 @@ enum ir_expression_operation {
    ir_binop_ubo_load,
 
    /**
+    * \name Multiplies a number by two to a power, part of ARB_gpu_shader5.
+    */
+   /*@{*/
+   ir_binop_ldexp,
+   /*@}*/
+
+   /**
     * Extract a scalar from a vector
     *
     * operand0 is the vector

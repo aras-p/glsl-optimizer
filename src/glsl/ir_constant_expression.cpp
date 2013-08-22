@@ -394,6 +394,7 @@ ir_expression::constant_expression_value(struct hash_table *variable_context)
       switch (this->operation) {
       case ir_binop_lshift:
       case ir_binop_rshift:
+      case ir_binop_ldexp:
       case ir_binop_vector_extract:
       case ir_triop_csel:
       case ir_triop_bitfield_extract:
@@ -1375,6 +1376,15 @@ ir_expression::constant_expression_value(struct hash_table *variable_context)
       }
       break;
    }
+
+   case ir_binop_ldexp:
+      for (unsigned c = 0; c < components; c++) {
+         data.f[c] = ldexp(op[0]->value.f[c], op[1]->value.i[c]);
+         /* Flush subnormal values to zero. */
+         if (!isnormal(data.f[c]))
+            data.f[c] = copysign(0.0, op[0]->value.f[c]);
+      }
+      break;
 
    case ir_triop_fma:
       assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);

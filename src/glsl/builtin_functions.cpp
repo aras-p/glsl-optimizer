@@ -510,6 +510,7 @@ private:
    B1(findLSB)
    B1(findMSB)
    B1(fma)
+   B2(ldexp)
 #undef B0
 #undef B1
 #undef B2
@@ -1822,6 +1823,13 @@ builtin_builder::create_builtins()
    IU(findLSB)
    IU(findMSB)
    F(fma)
+
+   add_function("ldexp",
+                _ldexp(glsl_type::float_type, glsl_type::int_type),
+                _ldexp(glsl_type::vec2_type,  glsl_type::ivec2_type),
+                _ldexp(glsl_type::vec3_type,  glsl_type::ivec3_type),
+                _ldexp(glsl_type::vec4_type,  glsl_type::ivec4_type),
+                NULL);
 #undef F
 #undef FI
 #undef FIU
@@ -3513,6 +3521,12 @@ builtin_builder::_fma(const glsl_type *type)
    body.emit(ret(fma(a, b, c)));
 
    return sig;
+}
+
+ir_function_signature *
+builtin_builder::_ldexp(const glsl_type *x_type, const glsl_type *exp_type)
+{
+   return binop(ir_binop_ldexp, gpu_shader5, x_type, x_type, exp_type);
 }
 /** @} */
 

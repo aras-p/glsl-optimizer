@@ -401,6 +401,7 @@ ir_expression::ir_expression(int op, ir_rvalue *op0, ir_rvalue *op1)
    case ir_binop_lshift:
    case ir_binop_rshift:
    case ir_binop_bfm:
+   case ir_binop_ldexp:
       this->type = op0->type;
       break;
 
@@ -551,6 +552,7 @@ static const char *const operator_strs[] = {
    "packHalf2x16_split",
    "bfm",
    "ubo_load",
+   "ldexp",
    "vector_extract",
    "fma",
    "lrp",

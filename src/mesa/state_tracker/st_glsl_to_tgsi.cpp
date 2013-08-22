@@ -1979,6 +1979,7 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
    case ir_quadop_vector:
    case ir_binop_vector_extract:
    case ir_triop_vector_insert:
+   case ir_binop_ldexp:
    case ir_triop_csel:
       /* This operation is not supported, or should have already been handled.
        */

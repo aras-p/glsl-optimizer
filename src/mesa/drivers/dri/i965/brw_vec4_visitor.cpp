@@ -1651,6 +1651,9 @@ vec4_visitor::visit(ir_expression *ir)
    case ir_binop_pack_half_2x16_split:
       assert(!"not reached: should not occur in vertex shader");
       break;
+   case ir_binop_ldexp:
+      assert(!"not reached: should be handled by ldexp_to_arith()");
+      break;
    }
 }
 

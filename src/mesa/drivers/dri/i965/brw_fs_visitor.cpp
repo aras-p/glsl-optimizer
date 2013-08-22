@@ -501,6 +501,10 @@ fs_visitor::visit(ir_expression *ir)
       assert(!"not reached: should be handled by lower_vector_insert()");
       break;
 
+   case ir_binop_ldexp:
+      assert(!"not reached: should be handled by ldexp_to_arith()");
+      break;
+
    case ir_unop_sqrt:
       emit_math(SHADER_OPCODE_SQRT, this->result, op[0]);
       break;
