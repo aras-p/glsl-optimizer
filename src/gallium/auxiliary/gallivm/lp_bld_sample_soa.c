@@ -1423,7 +1423,7 @@ lp_build_clamp_border_color(struct lp_build_sample_context *bld,
                 * Border color was stored as int, hence need min/max clamp
                 * only if chan has less than 32 bits..
                 */
-               unsigned chan_size = format_desc->channel[chan].size < 32;
+               unsigned chan_size = format_desc->channel[chan].size;
                if (chan_size < 32) {
                   min_clamp = lp_build_const_int_vec(gallivm, vec4_type,
                                                      0 - (1 << (chan_size - 1)));
@@ -1451,7 +1451,7 @@ lp_build_clamp_border_color(struct lp_build_sample_context *bld,
                 * Border color was stored as uint, hence never need min
                 * clamp, and only need max clamp if chan has less than 32 bits.
                 */
-               unsigned chan_size = format_desc->channel[chan].size < 32;
+               unsigned chan_size = format_desc->channel[chan].size;
                if (chan_size < 32) {
                   max_clamp = lp_build_const_int_vec(gallivm, vec4_type,
                                                      (1 << chan_size) - 1);
