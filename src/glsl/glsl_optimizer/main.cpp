@@ -7,7 +7,7 @@
 
 static void usage()
 {
-	std::cerr << "Usage: glsl_optimizer (--vertex|--fragment) [--opengl-es] SHADER_FILE";
+	std::cerr << "Usage: glsl_optimizer (--vertex|--fragment) [--opengl-es] SHADER_FILE" << std::endl;
 }
 
 
@@ -62,8 +62,8 @@ int main(int argc, char* argv[])
 	}
 
 	shaderFile.seekg(0);
-	shaderSource.resize(fileLength);
-	shaderFile.read(&shaderSource[0], fileLength);
+	shaderSource.resize((size_t)fileLength);
+	shaderFile.read(&shaderSource[0], (std::streamsize)fileLength);
 	if (shaderFile.gcount() != fileLength)
 	{
 		std::cerr << "Failed to read complete shader file (" << shaderFilePath << ")";
