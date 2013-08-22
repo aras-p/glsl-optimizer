@@ -200,7 +200,7 @@ lp_sampler_static_sampler_state(struct lp_static_sampler_state *state,
  * Generate code to compute coordinate gradient (rho).
  * \param derivs  partial derivatives of (s, t, r, q) with respect to X and Y
  *
- * The resulting rho is scalar per quad.
+ * The resulting rho has bld->levelf format (per quad or per element).
  */
 static LLVMValueRef
 lp_build_rho(struct lp_build_sample_context *bld,
@@ -230,13 +230,17 @@ lp_build_rho(struct lp_build_sample_context *bld,
    LLVMValueRef first_level, first_level_vec;
    unsigned length = coord_bld->type.length;
    unsigned num_quads = length / 4;
+   boolean rho_per_quad = levelf_bld->type.length != length;
    unsigned i;
    LLVMValueRef i32undef = LLVMGetUndef(LLVMInt32TypeInContext(gallivm->context));
    LLVMValueRef rho_xvec, rho_yvec;
 
    /* Note that all simplified calculations will only work for isotropic filtering */
 
-   assert(bld->num_lods != length);
+   /*
+    * rho calcs are always per quad except for explicit derivs (excluding
+    * the messy cube maps for now) when requested.
+    */
 
    first_level = bld->dynamic_state->first_level(bld->dynamic_state,
                                                  bld->gallivm, texture_unit);
@@ -247,11 +251,18 @@ lp_build_rho(struct lp_build_sample_context *bld,
    if (cube_rho) {
       LLVMValueRef cubesize;
       LLVMValueRef index0 = lp_build_const_int32(gallivm, 0);
+
       /*
        * Cube map code did already everything except size mul and per-quad extraction.
+       * Luckily cube maps are always quadratic!
        */
-      rho = lp_build_pack_aos_scalars(bld->gallivm, coord_bld->type,
-                                      levelf_bld->type, cube_rho, 0);
+      if (rho_per_quad) {
+         rho = lp_build_pack_aos_scalars(bld->gallivm, coord_bld->type,
+                                         levelf_bld->type, cube_rho, 0);
+      }
+      else {
+         rho = lp_build_swizzle_scalar_aos(coord_bld, cube_rho, 0, 4);
+      }
       if (gallivm_debug & GALLIVM_DEBUG_NO_RHO_APPROX) {
          rho = lp_build_sqrt(levelf_bld, rho);
       }
@@ -290,29 +301,35 @@ lp_build_rho(struct lp_build_sample_context *bld,
             rho_xvec = lp_build_add(coord_bld, rho_xvec, ddx[2]);
             rho_yvec = lp_build_add(coord_bld, rho_yvec, ddy[2]);
          }
-         rho_vec = lp_build_max(coord_bld, rho_xvec, rho_yvec);
-         rho = lp_build_pack_aos_scalars(bld->gallivm, coord_bld->type,
-                                         levelf_bld->type, rho_vec, 0);
-         /*
-          * note that as long as we don't care about per-pixel lod could reduce math
-          * more (at some shuffle cost), but for now only do sqrt after packing.
-          */
+         rho = lp_build_max(coord_bld, rho_xvec, rho_yvec);
+
+         if (rho_per_quad) {
+            /*
+             * note for this case without per-pixel lod could reduce math more
+             * (at some shuffle cost), but for now only do sqrt after packing,
+             * otherwise would also need different code to per-pixel lod case.
+             */
+            rho = lp_build_pack_aos_scalars(bld->gallivm, coord_bld->type,
+                                            levelf_bld->type, rho, 0);
+         }
          rho = lp_build_sqrt(levelf_bld, rho);
+
       }
       else {
-         rho_vec = ddmax[0];
+         rho = ddmax[0];
          if (dims > 1) {
-            rho_vec = lp_build_max(coord_bld, rho_vec, ddmax[1]);
+            rho = lp_build_max(coord_bld, rho, ddmax[1]);
             if (dims > 2) {
-               rho_vec = lp_build_max(coord_bld, rho_vec, ddmax[2]);
+               rho = lp_build_max(coord_bld, rho, ddmax[2]);
             }
          }
-         /*
-          * rho_vec now still contains per-pixel rho, convert to scalar per quad
-          * since we can't handle per-pixel rho/lod from now on (TODO).
-          */
-         rho = lp_build_pack_aos_scalars(bld->gallivm, coord_bld->type,
-                                         levelf_bld->type, rho_vec, 0);
+         if (rho_per_quad) {
+            /*
+             * rho_vec contains per-pixel rho, convert to scalar per quad.
+             */
+            rho = lp_build_pack_aos_scalars(bld->gallivm, coord_bld->type,
+                                            levelf_bld->type, rho, 0);
+         }
       }
    }
    else {
@@ -379,12 +396,25 @@ lp_build_rho(struct lp_build_sample_context *bld,
             ddx_ddy[1] = lp_build_swizzle_aos(coord_bld, ddx_ddy[1], swizzle02);
             rho_vec = lp_build_add(coord_bld, rho_vec, ddx_ddy[1]);
          }
+
          rho_xvec = lp_build_swizzle_aos(coord_bld, rho_vec, swizzle0);
          rho_yvec = lp_build_swizzle_aos(coord_bld, rho_vec, swizzle1);
-         rho_vec = lp_build_max(coord_bld, rho_xvec, rho_yvec);
+         rho = lp_build_max(coord_bld, rho_xvec, rho_yvec);
 
-         rho = lp_build_pack_aos_scalars(bld->gallivm, coord_bld->type,
-                                         levelf_bld->type, rho_vec, 0);
+         if (rho_per_quad) {
+            rho = lp_build_pack_aos_scalars(bld->gallivm, coord_bld->type,
+                                            levelf_bld->type, rho, 0);
+         }
+         else {
+            /*
+             * on some cpus with half-speed 8-wide sqrt (e.g. SNB but not IVB)
+             * doing pack/sqrt/unpack/swizzle might be better for 8-wide case,
+             * same is true for cpus having faster scalars than 4-wide vecs
+             * for 4-wide case (where pack/unpack would be no-ops anyway).
+             * (Same is true really for cube_rho case above.)
+             */
+            rho = lp_build_swizzle_scalar_aos(coord_bld, rho, 0, 4);
+         }
          rho = lp_build_sqrt(levelf_bld, rho);
       }
       else {
@@ -464,8 +494,13 @@ lp_build_rho(struct lp_build_sample_context *bld,
                   }
                }
             }
-            rho = lp_build_pack_aos_scalars(bld->gallivm, coord_bld->type,
-                                            levelf_bld->type, rho, 0);
+            if (rho_per_quad) {
+               rho = lp_build_pack_aos_scalars(bld->gallivm, coord_bld->type,
+                                               levelf_bld->type, rho, 0);
+            }
+            else {
+               rho = lp_build_swizzle_scalar_aos(coord_bld, rho, 0, 4);
+            }
          }
          else {
             if (dims <= 1) {
@@ -490,6 +525,9 @@ lp_build_rho(struct lp_build_sample_context *bld,
                      rho = lp_build_max(float_bld, rho, rho_r);
                   }
                }
+            }
+            if (!rho_per_quad) {
+               rho = lp_build_broadcast_scalar(levelf_bld, rho);
             }
          }
       }
@@ -729,8 +767,9 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
 
          /* add shader lod bias */
          if (lod_bias) {
-            lod_bias = lp_build_pack_aos_scalars(bld->gallivm, bld->coord_bld.type,
-                  levelf_bld->type, lod_bias, 0);
+            if (bld->num_lods != bld->coord_type.length)
+               lod_bias = lp_build_pack_aos_scalars(bld->gallivm, bld->coord_bld.type,
+                                                    levelf_bld->type, lod_bias, 0);
             lod = LLVMBuildFAdd(builder, lod, lod_bias, "shader_lod_bias");
          }
       }

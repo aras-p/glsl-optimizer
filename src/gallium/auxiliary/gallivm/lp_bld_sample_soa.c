@@ -1942,7 +1942,9 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
     * There are other situations where at least the multiple int lods could be
     * avoided like min and max lod being equal.
     */
-   if (explicit_lod && lod_property == LP_SAMPLER_LOD_PER_ELEMENT &&
+   if (lod_property == LP_SAMPLER_LOD_PER_ELEMENT &&
+       (explicit_lod || lod_bias ||
+        (derivs && static_texture_state->target != PIPE_TEXTURE_CUBE)) &&
        ((is_fetch && target != PIPE_BUFFER) ||
         (!is_fetch && mip_filter != PIPE_TEX_MIPFILTER_NONE)))
       bld.num_lods = type.length;
@@ -2140,9 +2142,11 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
          bld4.levelf_type.length = 1;
          bld4.leveli_type = lp_int_type(bld4.levelf_type);
 
-         if (explicit_lod && lod_property == LP_SAMPLER_LOD_PER_ELEMENT &&
-             ((is_fetch && target != PIPE_BUFFER) ||
-              (!is_fetch && mip_filter != PIPE_TEX_MIPFILTER_NONE)))
+         if (lod_property == LP_SAMPLER_LOD_PER_ELEMENT &&
+               (explicit_lod || lod_bias ||
+                (derivs && static_texture_state->target != PIPE_TEXTURE_CUBE)) &&
+               ((is_fetch && target != PIPE_BUFFER) ||
+                (!is_fetch && mip_filter != PIPE_TEX_MIPFILTER_NONE)))
             bld4.num_lods = type4.length;
          else
             bld4.num_lods = 1;
