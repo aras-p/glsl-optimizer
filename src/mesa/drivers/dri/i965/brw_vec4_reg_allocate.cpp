@@ -97,8 +97,10 @@ vec4_visitor::reg_allocate_trivial()
 }
 
 static void
-brw_alloc_reg_set(struct brw_context *brw, int base_reg_count)
+brw_alloc_reg_set(struct brw_context *brw)
 {
+   int base_reg_count = brw->gen >= 7 ? GEN7_MRF_HACK_START : BRW_MAX_GRF;
+
    /* After running split_virtual_grfs(), almost all VGRFs will be of size 1.
     * SEND-from-GRF sources cannot be split, so we also need classes for each
     * potential message length.
@@ -177,7 +179,6 @@ vec4_visitor::reg_allocate()
 {
    unsigned int hw_reg_mapping[virtual_grf_count];
    int payload_reg_count = this->first_non_payload_grf;
-   int base_reg_count = max_grf;
 
    /* Using the trivial allocator can be useful in debugging undefined
     * register access as a result of broken optimization passes.
@@ -187,7 +188,7 @@ vec4_visitor::reg_allocate()
 
    calculate_live_intervals();
 
-   brw_alloc_reg_set(brw, base_reg_count);
+   brw_alloc_reg_set(brw);
 
    int node_count = virtual_grf_count;
    int first_payload_node = node_count;
