@@ -537,6 +537,8 @@ public:
 protected:
    void emit_vertex();
    void lower_attributes_to_hw_regs(const int *attribute_map);
+   void setup_payload_interference(struct ra_graph *g, int first_payload_node,
+                                   int reg_node_count);
    virtual dst_reg *make_reg_for_system_value(ir_variable *ir) = 0;
    virtual void setup_payload() = 0;
    virtual void emit_prolog() = 0;

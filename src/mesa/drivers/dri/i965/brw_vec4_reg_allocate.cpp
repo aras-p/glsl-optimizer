@@ -148,12 +148,36 @@ brw_alloc_reg_set(struct brw_context *brw, int base_reg_count)
    ra_set_finalize(brw->vs.regs, NULL);
 }
 
+void
+vec4_visitor::setup_payload_interference(struct ra_graph *g,
+                                         int first_payload_node,
+                                         int reg_node_count)
+{
+   int payload_node_count = this->first_non_payload_grf;
+
+   for (int i = 0; i < payload_node_count; i++) {
+      /* Mark each payload reg node as being allocated to its physical register.
+       *
+       * The alternative would be to have per-physical register classes, which
+       * would just be silly.
+       */
+      ra_set_node_reg(g, first_payload_node + i, i);
+
+      /* For now, just mark each payload node as interfering with every other
+       * node to be allocated.
+       */
+      for (int j = 0; j < reg_node_count; j++) {
+         ra_add_node_interference(g, first_payload_node + i, j);
+      }
+   }
+}
+
 bool
 vec4_visitor::reg_allocate()
 {
    unsigned int hw_reg_mapping[virtual_grf_count];
-   int first_assigned_grf = this->first_non_payload_grf;
-   int base_reg_count = max_grf - first_assigned_grf;
+   int payload_reg_count = this->first_non_payload_grf;
+   int base_reg_count = max_grf;
 
    /* Using the trivial allocator can be useful in debugging undefined
     * register access as a result of broken optimization passes.
@@ -165,8 +189,10 @@ vec4_visitor::reg_allocate()
 
    brw_alloc_reg_set(brw, base_reg_count);
 
-   struct ra_graph *g = ra_alloc_interference_graph(brw->vs.regs,
-						    virtual_grf_count);
+   int node_count = virtual_grf_count;
+   int first_payload_node = node_count;
+   node_count += payload_reg_count;
+   struct ra_graph *g = ra_alloc_interference_graph(brw->vs.regs, node_count);
 
    for (int i = 0; i < virtual_grf_count; i++) {
       int size = this->virtual_grf_sizes[i];
@@ -180,6 +206,8 @@ vec4_visitor::reg_allocate()
 	 }
       }
    }
+
+   setup_payload_interference(g, first_payload_node, node_count);
 
    if (!ra_allocate_no_spills(g)) {
       /* Failed to allocate registers.  Spill a reg, and the caller will
@@ -199,11 +227,11 @@ vec4_visitor::reg_allocate()
     * regs in the register classes back down to real hardware reg
     * numbers.
     */
-   prog_data->total_grf = first_assigned_grf;
+   prog_data->total_grf = payload_reg_count;
    for (int i = 0; i < virtual_grf_count; i++) {
       int reg = ra_get_node_reg(g, i);
 
-      hw_reg_mapping[i] = first_assigned_grf + brw->vs.ra_reg_to_grf[reg];
+      hw_reg_mapping[i] = brw->vs.ra_reg_to_grf[reg];
       prog_data->total_grf = MAX2(prog_data->total_grf,
 				  hw_reg_mapping[i] + virtual_grf_sizes[i]);
    }
