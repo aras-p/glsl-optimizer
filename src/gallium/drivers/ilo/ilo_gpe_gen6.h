@@ -1146,6 +1146,8 @@ gen6_emit_3DSTATE_CLIP(const struct ilo_dev_info *dev,
    const uint8_t cmd_len = 4;
    uint32_t dw1, dw2, dw3;
 
+   ILO_GPE_VALID_GEN(dev, 6, 7);
+
    if (rasterizer) {
       int interps;
 
