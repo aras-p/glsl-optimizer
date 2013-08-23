@@ -485,6 +485,7 @@ _mesa_QueryCounter(GLuint id, GLenum target)
    q->Target = target;
    q->Result = 0;
    q->Ready = GL_FALSE;
+   q->EverBound = GL_TRUE;
 
    if (ctx->Driver.QueryCounter) {
       ctx->Driver.QueryCounter(ctx, q);
