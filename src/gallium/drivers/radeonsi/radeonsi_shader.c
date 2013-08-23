@@ -826,7 +826,10 @@ handle_semantic:
 			args[7] =
 			args[8] =
 			args[6] = LLVMBuildLoad(base->gallivm->builder, out_ptr, "");
-			mask |= 0x2;
+			/* Only setting the stencil component bit (0x2) here
+			 * breaks some stencil piglit tests
+			 */
+			mask |= 0x3;
 
 			if (depth_index < 0)
 				args[5] = args[6];
