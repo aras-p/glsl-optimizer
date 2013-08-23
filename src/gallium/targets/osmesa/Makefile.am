@@ -85,6 +85,5 @@ all-local: lib@OSMESA_LIB@.la
 	cp .libs/lib@OSMESA_LIB@.so.@OSMESA_VERSION@.0.0 $(top_builddir)/$(LIB_DIR)/gallium/
 endif
 
-# XXX fix-up?
-#pkgconfigdir = $(libdir)/pkgconfig
-#pkgconfig_DATA = osmesa.pc
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = osmesa.pc

@@ -2066,6 +2066,7 @@ AC_CONFIG_FILES([Makefile
 		src/gallium/targets/gbm/Makefile
 		src/gallium/targets/opencl/Makefile
 		src/gallium/targets/osmesa/Makefile
+		src/gallium/targets/osmesa/osmesa.pc
 		src/gallium/targets/pipe-loader/Makefile
 		src/gallium/targets/libgl-xlib/Makefile
 		src/gallium/targets/vdpau-nouveau/Makefile
