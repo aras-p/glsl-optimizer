@@ -491,7 +491,8 @@ void brw_emit_tri_setup(struct brw_sf_compile *c, bool allocate)
 		       brw_null_reg(),
 		       0,
 		       brw_vec8_grf(0, 0), /* r0, will be copied to m0 */
-                       last ? BRW_URB_WRITE_EOT_COMPLETE : 0,
+                       last ? BRW_URB_WRITE_EOT_COMPLETE
+                       : BRW_URB_WRITE_NO_FLAGS,
 		       4, 	/* msg len */
 		       0,	/* response len */
 		       i*4,	/* offset */
@@ -562,7 +563,8 @@ void brw_emit_line_setup(struct brw_sf_compile *c, bool allocate)
 		       brw_null_reg(),
 		       0,
 		       brw_vec8_grf(0, 0),
-                       last ? BRW_URB_WRITE_EOT_COMPLETE : 0,
+                       last ? BRW_URB_WRITE_EOT_COMPLETE
+                       : BRW_URB_WRITE_NO_FLAGS,
 		       4, 	/* msg len */
 		       0,	/* response len */
 		       i*4,	/* urb destination offset */
@@ -649,7 +651,8 @@ void brw_emit_point_sprite_setup(struct brw_sf_compile *c, bool allocate)
 		    brw_null_reg(),
 		    0,
 		    brw_vec8_grf(0, 0),
-                    last ? BRW_URB_WRITE_EOT_COMPLETE : 0,
+                    last ? BRW_URB_WRITE_EOT_COMPLETE
+                    : BRW_URB_WRITE_NO_FLAGS,
 		    4, 	/* msg len */
 		    0,	/* response len */
 		    i*4,	/* urb destination offset */
@@ -706,7 +709,8 @@ void brw_emit_point_setup(struct brw_sf_compile *c, bool allocate)
 		       brw_null_reg(),
 		       0,
 		       brw_vec8_grf(0, 0),
-                       last ? BRW_URB_WRITE_EOT_COMPLETE : 0,
+                       last ? BRW_URB_WRITE_EOT_COMPLETE
+                       : BRW_URB_WRITE_NO_FLAGS,
 		       4, 	/* msg len */
 		       0,	/* response len */
 		       i*4,	/* urb destination offset */

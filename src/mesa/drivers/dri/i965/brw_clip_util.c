@@ -313,7 +313,7 @@ void brw_clip_interp_vertex( struct brw_clip_compile *c,
 
 void brw_clip_emit_vue(struct brw_clip_compile *c, 
 		       struct brw_indirect vert,
-                       unsigned flags,
+                       enum brw_urb_write_flags flags,
 		       GLuint header)
 {
    struct brw_compile *p = &c->func;

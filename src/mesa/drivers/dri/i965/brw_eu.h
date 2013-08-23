@@ -229,6 +229,8 @@ void brw_set_dp_write_message(struct brw_compile *p,
 			      GLuint send_commit_msg);
 
 enum brw_urb_write_flags {
+   BRW_URB_WRITE_NO_FLAGS = 0,
+
    /**
     * Causes a new URB entry to be allocated, and its address stored in the
     * destination register (gen < 7).
@@ -271,11 +273,23 @@ enum brw_urb_write_flags {
       BRW_URB_WRITE_ALLOCATE | BRW_URB_WRITE_COMPLETE,
 };
 
+#ifdef __cplusplus
+/**
+ * Allow brw_urb_write_flags enums to be ORed together.
+ */
+inline brw_urb_write_flags
+operator|(brw_urb_write_flags x, brw_urb_write_flags y)
+{
+   return static_cast<brw_urb_write_flags>(static_cast<int>(x) |
+                                           static_cast<int>(y));
+}
+#endif
+
 void brw_urb_WRITE(struct brw_compile *p,
 		   struct brw_reg dest,
 		   GLuint msg_reg_nr,
 		   struct brw_reg src0,
-                   unsigned flags,
+                   enum brw_urb_write_flags flags,
 		   GLuint msg_length,
 		   GLuint response_length,
 		   GLuint offset,
