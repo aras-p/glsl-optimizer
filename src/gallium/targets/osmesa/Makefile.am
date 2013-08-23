@@ -75,7 +75,7 @@ all-local: lib@OSMESA_LIB@.la
 	$(MKDIR_P) $(top_builddir)/$(LIB_DIR)/gallium;
 	ln -f .libs/lib@OSMESA_LIB@.so $(top_builddir)/$(LIB_DIR)/gallium/lib@OSMESA_LIB@.so;
 	ln -f .libs/lib@OSMESA_LIB@.so.@OSMESA_VERSION@ $(top_builddir)/$(LIB_DIR)/gallium/lib@OSMESA_LIB@.so.@OSMESA_VERSION@;
-	cp .libs/lib@OSMESA_LIB@.so.@OSMESA_VERSION@.0.0 $(top_builddir)/$(LIB_DIR)/gallium/
+	ln -f .libs/lib@OSMESA_LIB@.so.@OSMESA_VERSION@.0.0 $(top_builddir)/$(LIB_DIR)/gallium/
 endif
 
 pkgconfigdir = $(libdir)/pkgconfig
