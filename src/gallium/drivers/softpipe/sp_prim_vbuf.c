@@ -595,7 +595,7 @@ sp_vbuf_so_info(struct vbuf_render *vbr, uint primitives, uint vertices,
    struct softpipe_context *softpipe = cvbr->softpipe;
 
    softpipe->so_stats.num_primitives_written += primitives;
-   softpipe->so_stats.primitives_storage_needed =
+   softpipe->so_stats.primitives_storage_needed +=
       vertices * 4 /*sizeof(float|int32)*/ * 4 /*x,y,z,w*/;
    softpipe->num_primitives_generated += prim_generated;
 }
