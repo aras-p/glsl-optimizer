@@ -1239,7 +1239,7 @@ lp_build_sample_common(struct lp_build_sample_context *bld,
                        const struct lp_derivatives *derivs, /* optional */
                        LLVMValueRef lod_bias, /* optional */
                        LLVMValueRef explicit_lod, /* optional */
-                       LLVMValueRef *lod_ipart,
+                       LLVMValueRef *lod_pos_or_zero,
                        LLVMValueRef *lod_fpart,
                        LLVMValueRef *ilevel0,
                        LLVMValueRef *ilevel1)
@@ -1249,6 +1249,7 @@ lp_build_sample_common(struct lp_build_sample_context *bld,
    const unsigned mag_filter = bld->static_sampler_state->mag_img_filter;
    const unsigned target = bld->static_texture_state->target;
    LLVMValueRef first_level, cube_rho = NULL;
+   LLVMValueRef lod_ipart = NULL;
 
    /*
    printf("%s mip %d  min %d  mag %d\n", __FUNCTION__,
@@ -1309,9 +1310,10 @@ lp_build_sample_common(struct lp_build_sample_context *bld,
                             coords[0], coords[1], coords[2], cube_rho,
                             derivs, lod_bias, explicit_lod,
                             mip_filter,
-                            lod_ipart, lod_fpart);
+                            &lod_ipart, lod_fpart, lod_pos_or_zero);
    } else {
-      *lod_ipart = bld->leveli_bld.zero;
+      lod_ipart = bld->leveli_bld.zero;
+      *lod_pos_or_zero = bld->leveli_bld.zero;
    }
 
    /*
@@ -1328,8 +1330,8 @@ lp_build_sample_common(struct lp_build_sample_context *bld,
           * We should be able to set ilevel0 = const(0) but that causes
           * bad x86 code to be emitted.
           */
-         assert(*lod_ipart);
-         lp_build_nearest_mip_level(bld, texture_index, *lod_ipart, ilevel0, NULL);
+         assert(lod_ipart);
+         lp_build_nearest_mip_level(bld, texture_index, lod_ipart, ilevel0, NULL);
       }
       else {
          first_level = bld->dynamic_state->first_level(bld->dynamic_state,
@@ -1339,14 +1341,14 @@ lp_build_sample_common(struct lp_build_sample_context *bld,
       }
       break;
    case PIPE_TEX_MIPFILTER_NEAREST:
-      assert(*lod_ipart);
-      lp_build_nearest_mip_level(bld, texture_index, *lod_ipart, ilevel0, NULL);
+      assert(lod_ipart);
+      lp_build_nearest_mip_level(bld, texture_index, lod_ipart, ilevel0, NULL);
       break;
    case PIPE_TEX_MIPFILTER_LINEAR:
-      assert(*lod_ipart);
+      assert(lod_ipart);
       assert(*lod_fpart);
       lp_build_linear_mip_levels(bld, texture_index,
-                                 *lod_ipart, lod_fpart,
+                                 lod_ipart, lod_fpart,
                                  ilevel0, ilevel1);
       break;
    }
@@ -1581,13 +1583,12 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
                         unsigned sampler_unit,
                         LLVMValueRef *coords,
                         const LLVMValueRef *offsets,
-                        LLVMValueRef lod_ipart,
+                        LLVMValueRef lod_positive,
                         LLVMValueRef lod_fpart,
                         LLVMValueRef ilevel0,
                         LLVMValueRef ilevel1,
                         LLVMValueRef *colors_out)
 {
-   struct lp_build_context *int_bld = &bld->int_bld;
    LLVMBuilderRef builder = bld->gallivm->builder;
    const struct lp_static_sampler_state *sampler_state = bld->static_sampler_state;
    const unsigned mip_filter = sampler_state->min_mip_filter;
@@ -1634,26 +1635,20 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
        * depending on the lod being > 0 or <= 0, respectively.
        */
       struct lp_build_if_state if_ctx;
-      LLVMValueRef minify;
 
       /*
-       * XXX this should take all lods into account, if some are min
-       * some max probably could hack up the coords/weights in the linear
+       * FIXME this should take all lods into account, if some are min
+       * some max probably could hack up the weights in the linear
        * path with selects to work for nearest.
-       * If that's just two quads sitting next to each other it seems
-       * quite ok to do the same filtering method on both though, at
-       * least unless we have explicit lod (and who uses different
-       * min/mag filter with that?)
        */
-      if (bld->num_lods > 1)
-         lod_ipart = LLVMBuildExtractElement(builder, lod_ipart,
-                                             lp_build_const_int32(bld->gallivm, 0), "");
+      if (bld->leveli_bld.type.length > 1)
+         lod_positive = LLVMBuildExtractElement(builder, lod_positive,
+                                                lp_build_const_int32(bld->gallivm, 0), "");
 
-      /* minify = lod >= 0.0 */
-      minify = LLVMBuildICmp(builder, LLVMIntSGE,
-                             lod_ipart, int_bld->zero, "");
+      lod_positive = LLVMBuildTrunc(builder, lod_positive,
+                                    LLVMInt1TypeInContext(bld->gallivm->context), "");
 
-      lp_build_if(&if_ctx, bld->gallivm, minify);
+      lp_build_if(&if_ctx, bld->gallivm, lod_positive);
       {
          /* Use the minification filter */
          lp_build_sample_mipmap(bld, sampler_unit,
@@ -1941,6 +1936,10 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
    /*
     * There are other situations where at least the multiple int lods could be
     * avoided like min and max lod being equal.
+    * XXX if num_lods == 1 (for multiple quads) the level bld contexts will still
+    * have length 4. Because lod_selector is always using per quad calcs in this
+    * case, but minification etc. don't need to bother. This is very brittle though
+    * e.g. num_lods might be 1 but still have multiple positive_lod values!
     */
    if (lod_property == LP_SAMPLER_LOD_PER_ELEMENT &&
        (explicit_lod || lod_bias ||
@@ -2034,7 +2033,7 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
    }
 
    else {
-      LLVMValueRef lod_ipart = NULL, lod_fpart = NULL;
+      LLVMValueRef lod_fpart = NULL, lod_positive = NULL;
       LLVMValueRef ilevel0 = NULL, ilevel1 = NULL;
       boolean use_aos = util_format_fits_8unorm(bld.format_desc) &&
                         /* not sure this is strictly needed or simply impossible */
@@ -2063,7 +2062,7 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
       lp_build_sample_common(&bld, texture_index, sampler_index,
                              newcoords,
                              derivs, lod_bias, explicit_lod,
-                             &lod_ipart, &lod_fpart,
+                             &lod_positive, &lod_fpart,
                              &ilevel0, &ilevel1);
 
       /*
@@ -2077,10 +2076,8 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
             if (mip_filter == PIPE_TEX_MIPFILTER_NONE) {
                LLVMValueRef index0 = lp_build_const_int32(gallivm, 0);
                /*
-                * These parameters are the same for all quads,
-                * could probably simplify.
+                * This parameter is the same for all quads could probably simplify.
                 */
-               lod_ipart = LLVMBuildExtractElement(builder, lod_ipart, index0, "");
                ilevel0 = LLVMBuildExtractElement(builder, ilevel0, index0, "");
             }
          }
@@ -2089,7 +2086,7 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
             lp_build_sample_aos(&bld, sampler_index,
                                 newcoords[0], newcoords[1],
                                 newcoords[2],
-                                offsets, lod_ipart, lod_fpart,
+                                offsets, lod_positive, lod_fpart,
                                 ilevel0, ilevel1,
                                 texel_out);
          }
@@ -2097,7 +2094,7 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
          else {
             lp_build_sample_general(&bld, sampler_index,
                                     newcoords, offsets,
-                                    lod_ipart, lod_fpart,
+                                    lod_positive, lod_fpart,
                                     ilevel0, ilevel1,
                                     texel_out);
          }
@@ -2180,7 +2177,7 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
 
          for (i = 0; i < num_quads; i++) {
             LLVMValueRef s4, t4, r4;
-            LLVMValueRef lod_ipart4, lod_fpart4 = NULL;
+            LLVMValueRef lod_positive4, lod_fpart4 = NULL;
             LLVMValueRef ilevel04, ilevel14 = NULL;
             LLVMValueRef offsets4[4] = { NULL };
             unsigned num_lods = bld4.num_lods;
@@ -2198,7 +2195,7 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
                   }
                }
             }
-            lod_ipart4 = lp_build_extract_range(gallivm, lod_ipart, num_lods * i, num_lods);
+            lod_positive4 = lp_build_extract_range(gallivm, lod_positive, num_lods * i, num_lods);
             ilevel04 = lp_build_extract_range(gallivm, ilevel0, num_lods * i, num_lods);
             if (mip_filter == PIPE_TEX_MIPFILTER_LINEAR) {
                ilevel14 = lp_build_extract_range(gallivm, ilevel1, num_lods * i, num_lods);
@@ -2209,7 +2206,7 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
                /* do sampling/filtering with fixed pt arithmetic */
                lp_build_sample_aos(&bld4, sampler_index,
                                    s4, t4, r4, offsets4,
-                                   lod_ipart4, lod_fpart4,
+                                   lod_positive4, lod_fpart4,
                                    ilevel04, ilevel14,
                                    texelout4);
             }
@@ -2225,7 +2222,7 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
 
                lp_build_sample_general(&bld4, sampler_index,
                                        newcoords4, offsets4,
-                                       lod_ipart4, lod_fpart4,
+                                       lod_positive4, lod_fpart4,
                                        ilevel04, ilevel14,
                                        texelout4);
             }

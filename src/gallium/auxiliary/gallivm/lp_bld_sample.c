@@ -162,7 +162,8 @@ lp_sampler_static_sampler_state(struct lp_static_sampler_state *state,
       state->min_mip_filter = PIPE_TEX_MIPFILTER_NONE;
    }
 
-   if (state->min_mip_filter != PIPE_TEX_MIPFILTER_NONE) {
+   if (state->min_mip_filter != PIPE_TEX_MIPFILTER_NONE ||
+       state->min_img_filter != state->mag_img_filter) {
       if (sampler->lod_bias != 0.0f) {
          state->lod_bias_non_zero = 1;
       }
@@ -669,9 +670,10 @@ lp_build_brilinear_rho(struct lp_build_context *bld,
  * \param derivs  partial derivatives of (s, t, r, q) with respect to X and Y
  * \param lod_bias  optional float vector with the shader lod bias
  * \param explicit_lod  optional float vector with the explicit lod
- * \param width  scalar int texture width
- * \param height  scalar int texture height
- * \param depth  scalar int texture depth
+ * \param cube_rho  rho calculated by cube coord mapping (optional)
+ * \param out_lod_ipart  integer part of lod
+ * \param out_lod_fpart  float part of lod (never larger than 1 but may be negative)
+ * \param out_lod_positive  (mask) if lod is positive (i.e. texture is minified)
  *
  * The resulting lod is scalar per quad, so only the first value per quad
  * passed in from lod_bias, explicit_lod is used.
@@ -689,7 +691,8 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
                       LLVMValueRef explicit_lod, /* optional */
                       unsigned mip_filter,
                       LLVMValueRef *out_lod_ipart,
-                      LLVMValueRef *out_lod_fpart)
+                      LLVMValueRef *out_lod_fpart,
+                      LLVMValueRef *out_lod_positive)
 
 {
    LLVMBuilderRef builder = bld->gallivm->builder;
@@ -697,7 +700,26 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
    LLVMValueRef lod;
 
    *out_lod_ipart = bld->leveli_bld.zero;
+   *out_lod_positive = bld->leveli_bld.zero;
    *out_lod_fpart = levelf_bld->zero;
+
+   /*
+    * For determining min/mag, we follow GL 4.1 spec, 3.9.12 Texture Magnification:
+    * "Implementations may either unconditionally assume c = 0 for the minification
+    * vs. magnification switch-over point, or may choose to make c depend on the
+    * combination of minification and magnification modes as follows: if the
+    * magnification filter is given by LINEAR and the minification filter is given
+    * by NEAREST_MIPMAP_NEAREST or NEAREST_MIPMAP_LINEAR, then c = 0.5. This is
+    * done to ensure that a minified texture does not appear "sharper" than a
+    * magnified texture. Otherwise c = 0."
+    * And 3.9.11 Texture Minification:
+    * "If lod is less than or equal to the constant c (see section 3.9.12) the
+    * texture is said to be magnified; if it is greater, the texture is minified."
+    * So, using 0 as switchover point always, and using magnification for lod == 0.
+    * Note that the always c = 0 behavior is new (first appearing in GL 3.1 spec),
+    * old GL versions required 0.5 for the modes listed above.
+    * I have no clue about the (undocumented) wishes of d3d9/d3d10 here!
+    */
 
    if (bld->static_sampler_state->min_max_lod_equal) {
       /* User is forcing sampling from a particular mipmap level.
@@ -739,21 +761,20 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
             if (mip_filter == PIPE_TEX_MIPFILTER_NONE ||
                 mip_filter == PIPE_TEX_MIPFILTER_NEAREST) {
                /*
-                * FIXME: this is not entirely correct, as out_lod_ipart is used
-                * both for mip level determination as well as mag/min switchover
-                * point (if different min/mag filters are used). In particular,
-                * lod values between [-0.5,0] (rho between [sqrt(2), 1.0]) will
-                * incorrectly use min filter instead of mag (the non-optimized
-                * calculation further down has exactly the same problem).
+                * Don't actually need both all the time, ipart is needed
+                * for nearest mipfilter, pos_or_zero if min != mag.
                 */
                *out_lod_ipart = lp_build_ilog2(levelf_bld, rho);
-               *out_lod_fpart = levelf_bld->zero;
+               *out_lod_positive = lp_build_cmp(levelf_bld, PIPE_FUNC_GREATER,
+                                                rho, levelf_bld->one);
                return;
             }
             if (mip_filter == PIPE_TEX_MIPFILTER_LINEAR &&
                 !(gallivm_debug & GALLIVM_DEBUG_NO_BRILINEAR)) {
                lp_build_brilinear_rho(levelf_bld, rho, BRILINEAR_FACTOR,
                                       out_lod_ipart, out_lod_fpart);
+               *out_lod_positive = lp_build_cmp(levelf_bld, PIPE_FUNC_GREATER,
+                                                rho, levelf_bld->one);
                return;
             }
          }
@@ -802,6 +823,9 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
          lod = lp_build_max(levelf_bld, lod, min_lod);
       }
    }
+
+   *out_lod_positive = lp_build_cmp(levelf_bld, PIPE_FUNC_GREATER,
+                                    lod, levelf_bld->zero);
 
    if (mip_filter == PIPE_TEX_MIPFILTER_LINEAR) {
       if (!(gallivm_debug & GALLIVM_DEBUG_NO_BRILINEAR)) {

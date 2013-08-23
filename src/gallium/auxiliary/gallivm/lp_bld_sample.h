@@ -388,7 +388,8 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
                       LLVMValueRef explicit_lod, /* optional */
                       unsigned mip_filter,
                       LLVMValueRef *out_lod_ipart,
-                      LLVMValueRef *out_lod_fpart);
+                      LLVMValueRef *out_lod_fpart,
+                      LLVMValueRef *out_lod_positive);
 
 void
 lp_build_nearest_mip_level(struct lp_build_sample_context *bld,

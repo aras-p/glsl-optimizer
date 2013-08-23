@@ -1562,13 +1562,12 @@ lp_build_sample_aos(struct lp_build_sample_context *bld,
                     LLVMValueRef t,
                     LLVMValueRef r,
                     const LLVMValueRef *offsets,
-                    LLVMValueRef lod_ipart,
+                    LLVMValueRef lod_positive,
                     LLVMValueRef lod_fpart,
                     LLVMValueRef ilevel0,
                     LLVMValueRef ilevel1,
                     LLVMValueRef texel_out[4])
 {
-   struct lp_build_context *int_bld = &bld->int_bld;
    LLVMBuilderRef builder = bld->gallivm->builder;
    const unsigned mip_filter = bld->static_sampler_state->min_mip_filter;
    const unsigned min_filter = bld->static_sampler_state->min_img_filter;
@@ -1608,26 +1607,20 @@ lp_build_sample_aos(struct lp_build_sample_context *bld,
        * depending on the lod being > 0 or <= 0, respectively.
        */
       struct lp_build_if_state if_ctx;
-      LLVMValueRef minify;
 
       /*
-       * XXX this should take all lods into account, if some are min
-       * some max probably could hack up the coords/weights in the linear
+       * FIXME this should take all lods into account, if some are min
+       * some max probably could hack up the weights in the linear
        * path with selects to work for nearest.
-       * If that's just two quads sitting next to each other it seems
-       * quite ok to do the same filtering method on both though, at
-       * least unless we have explicit lod (and who uses different
-       * min/mag filter with that?)
        */
-      if (bld->num_lods > 1)
-         lod_ipart = LLVMBuildExtractElement(builder, lod_ipart,
-                                              lp_build_const_int32(bld->gallivm, 0), "");
+      if (bld->leveli_bld.type.length > 1)
+         lod_positive = LLVMBuildExtractElement(builder, lod_positive,
+                                                lp_build_const_int32(bld->gallivm, 0), "");
 
-      /* minify = lod >= 0.0 */
-      minify = LLVMBuildICmp(builder, LLVMIntSGE,
-                             lod_ipart, int_bld->zero, "");
+      lod_positive = LLVMBuildTrunc(builder, lod_positive,
+                                    LLVMInt1TypeInContext(bld->gallivm->context), "");
 
-      lp_build_if(&if_ctx, bld->gallivm, minify);
+      lp_build_if(&if_ctx, bld->gallivm, lod_positive);
       {
          /* Use the minification filter */
          lp_build_sample_mipmap(bld,
