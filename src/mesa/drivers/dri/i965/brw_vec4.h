@@ -659,7 +659,6 @@ private:
    void mark_surface_used(unsigned surf_index);
 
    struct brw_context *brw;
-   struct gl_context *ctx;
 
    struct brw_compile *p;
 

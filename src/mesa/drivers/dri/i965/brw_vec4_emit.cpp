@@ -1014,10 +1014,10 @@ vec4_generator::generate_vec4_instruction(vec4_instruction *instruction,
 
    default:
       if (inst->opcode < (int) ARRAY_SIZE(opcode_descs)) {
-         _mesa_problem(ctx, "Unsupported opcode in `%s' in VS\n",
+         _mesa_problem(&brw->ctx, "Unsupported opcode in `%s' in VS\n",
                        opcode_descs[inst->opcode].name);
       } else {
-         _mesa_problem(ctx, "Unsupported opcode %d in VS", inst->opcode);
+         _mesa_problem(&brw->ctx, "Unsupported opcode %d in VS", inst->opcode);
       }
       abort();
    }
