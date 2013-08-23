@@ -2281,7 +2281,8 @@ void *r600_create_vertex_fetch_shader(struct pipe_context *ctx,
 	uint32_t *bytecode;
 	int i, j, r, fs_size;
 	struct r600_fetch_shader *shader;
-	unsigned sb_disasm = rctx->screen->debug_flags & (DBG_SB_DISASM | DBG_SB);
+	unsigned no_sb = rctx->screen->debug_flags & DBG_NO_SB;
+	unsigned sb_disasm = !no_sb || (rctx->screen->debug_flags & DBG_SB_DISASM);
 
 	assert(count < 32);
 

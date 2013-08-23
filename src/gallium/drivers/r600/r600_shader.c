@@ -140,7 +140,7 @@ int r600_pipe_shader_create(struct pipe_context *ctx,
 	int r, i;
 	uint32_t *ptr;
 	bool dump = r600_can_dump_shader(rctx->screen, tgsi_get_processor_type(sel->tokens));
-	unsigned use_sb = rctx->screen->debug_flags & DBG_SB;
+	unsigned use_sb = !(rctx->screen->debug_flags & DBG_NO_SB);
 	unsigned sb_disasm = use_sb || (rctx->screen->debug_flags & DBG_SB_DISASM);
 
 	shader->shader.bc.isa = rctx->isa;

@@ -67,8 +67,8 @@ static const struct debug_named_value debug_options[] = {
 	{ "noinvalrange", DBG_NO_DISCARD_RANGE, "Disable handling of INVALIDATE_RANGE map flags" },
 
 	/* shader backend */
-	{ "sb", DBG_SB, "Enable optimization of graphics shaders" },
-	{ "sbcl", DBG_SB_CS, "Enable optimization of compute shaders" },
+	{ "nosb", DBG_NO_SB, "Disable sb backend for graphics shaders" },
+	{ "sbcl", DBG_SB_CS, "Enable sb backend for compute shaders" },
 	{ "sbdry", DBG_SB_DRY_RUN, "Don't use optimized bytecode (just print the dumps)" },
 	{ "sbstat", DBG_SB_STAT, "Print optimization statistics for shaders" },
 	{ "sbdump", DBG_SB_DUMP, "Print IR dumps after some optimization passes" },
