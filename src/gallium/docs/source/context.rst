@@ -350,6 +350,8 @@ the result of
 ``PIPE_QUERY_PRIMITIVES_EMITTED`` and
 the number of primitives that would have been written to stream output buffers
 if they had infinite space available (primitives_storage_needed), in this order.
+XXX the 2nd value is equivalent to ``PIPE_QUERY_PRIMITIVES_GENERATED`` but it is
+unclear if it should be increased if stream output is not active.
 
 ``PIPE_QUERY_SO_OVERFLOW_PREDICATE`` returns a boolean value indicating
 whether the stream output targets have overflowed as a result of the

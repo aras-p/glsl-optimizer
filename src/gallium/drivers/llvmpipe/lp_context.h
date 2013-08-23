@@ -92,7 +92,6 @@ struct llvmpipe_context {
    struct draw_so_target *so_targets[PIPE_MAX_SO_BUFFERS];
    int num_so_targets;
    struct pipe_query_data_so_statistics so_stats;
-   unsigned num_primitives_generated;
 
    struct pipe_query_data_pipeline_statistics pipeline_statistics;
    unsigned active_statistics_queries;

@@ -48,7 +48,6 @@ struct pt_so_emit {
    boolean use_pre_clip_pos;
    int pos_idx;
    unsigned emitted_primitives;
-   unsigned emitted_vertices;
    unsigned generated_primitives;
 };
 
@@ -214,7 +213,6 @@ static void so_emit_prim(struct pt_so_emit *so,
          }
       }
    }
-   so->emitted_vertices += num_vertices;
    ++so->emitted_primitives;
 }
 
@@ -274,7 +272,6 @@ void draw_pt_so_emit( struct pt_so_emit *emit,
    if (!draw->so.num_targets)
       return;
 
-   emit->emitted_vertices = 0;
    emit->emitted_primitives = 0;
    emit->generated_primitives = 0;
    emit->input_vertex_stride = input_verts->stride;
@@ -302,7 +299,6 @@ void draw_pt_so_emit( struct pt_so_emit *emit,
 
    render->set_stream_output_info(render,
                                   emit->emitted_primitives,
-                                  emit->emitted_vertices,
                                   emit->generated_primitives);
 }
 

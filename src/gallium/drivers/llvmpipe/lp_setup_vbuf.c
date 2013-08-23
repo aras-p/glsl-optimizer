@@ -534,17 +534,23 @@ lp_setup_vbuf_destroy(struct vbuf_render *vbr)
    lp_setup_destroy(setup);
 }
 
+/*
+ * FIXME: it is unclear if primitives_storage_needed (which is generally
+ * the same as pipe query num_primitives_generated) should increase
+ * if SO is disabled for d3d10, but for GL we definitely need to
+ * increase num_primitives_generated and this is only called for active
+ * SO. If it must not increase for d3d10 need to disambiguate the counters
+ * in the driver and do some work for getting correct values, if it should
+ * increase too should call this from outside streamout code.
+ */
 static void
-lp_setup_so_info(struct vbuf_render *vbr, uint primitives, uint vertices,
-                uint prim_generated)
+lp_setup_so_info(struct vbuf_render *vbr, uint primitives, uint prim_generated)
 {
    struct lp_setup_context *setup = lp_setup_context(vbr);
    struct llvmpipe_context *lp = llvmpipe_context(setup->pipe);
 
    lp->so_stats.num_primitives_written += primitives;
-   lp->so_stats.primitives_storage_needed +=
-      vertices * 4 /*sizeof(float|int32)*/ * 4 /*x,y,z,w*/;
-   lp->num_primitives_generated += prim_generated;
+   lp->so_stats.primitives_storage_needed += prim_generated;
 }
 
 static void
