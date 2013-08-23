@@ -607,7 +607,8 @@ COPY_CLEAN_4V_TYPE_AS_FLOAT(GLfloat dst[4], int sz, const GLfloat src[4],
                      UINT_AS_FLT(0), UINT_AS_FLT(1));
       break;
    default:
-      ASSERT(0);
+      ASSIGN_4V(dst, 0.0f, 0.0f, 0.0f, 1.0f); /* silence warnings */
+      ASSERT(!"Unexpected type in COPY_CLEAN_4V_TYPE_AS_FLOAT macro");
    }
    COPY_SZ_4V(dst, sz, src);
 }
