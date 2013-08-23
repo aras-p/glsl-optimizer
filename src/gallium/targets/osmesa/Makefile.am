@@ -57,19 +57,12 @@ lib@OSMESA_LIB@_la_LIBADD = \
 	$(CLOCK_LIB)
 
 
+nodist_EXTRA_lib@OSMESA_LIB@_la_SOURCES = dummy.cpp
 
 if HAVE_MESA_LLVM
-lib@OSMESA_LIB@_la_LINK = $(CXXLINK) $(lib@OSMESA_LIB@_la_LDFLAGS)
-# Mention a dummy pure C++ file to trigger generation of the $(LINK) variable
-nodist_EXTRA_lib@OSMESA_LIB@_la_SOURCES = dummy-cpp.cpp
-
-lib@OSMESA_LIB@_la_LIBADD += $(top_builddir)/src/gallium/drivers/llvmpipe/libllvmpipe.la $(LLVM_LIBS)
 AM_CPPFLAGS += -DGALLIUM_LLVMPIPE
 lib@OSMESA_LIB@_la_LDFLAGS += $(LLVM_LDFLAGS)
-else
-lib@OSMESA_LIB@_la_LINK = $(CXXLINK) $(lib@OSMESA_LIB@_la_LDFLAGS)
-# Mention a dummy pure C file to trigger generation of the $(LINK) variable
-nodist_EXTRA_lib@OSMESA_LIB@_la_SOURCES = dummy-c.c
+lib@OSMESA_LIB@_la_LIBADD += $(top_builddir)/src/gallium/drivers/llvmpipe/libllvmpipe.la $(LLVM_LIBS)
 endif
 
 
