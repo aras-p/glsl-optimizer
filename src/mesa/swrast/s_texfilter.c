@@ -274,6 +274,7 @@ linear_texel_locations(GLenum wrapMode,
       break;
    default:
       _mesa_problem(NULL, "Bad wrap mode");
+      *i0 = *i1 = 0;
       u = 0.0F;
       break;
    }
