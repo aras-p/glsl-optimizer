@@ -1922,7 +1922,7 @@ validate_binding_qualifier(struct _mesa_glsl_parse_state *state,
        *  with an array of size N, all elements of the array from binding
        *  through binding + N - 1 must be within this range."
        */
-      unsigned limit;
+      unsigned limit = 0;
       switch (state->target) {
       case vertex_shader:
          limit = ctx->Const.VertexProgram.MaxTextureImageUnits;
