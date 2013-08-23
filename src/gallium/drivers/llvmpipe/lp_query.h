@@ -48,7 +48,6 @@ struct llvmpipe_query {
    unsigned type;                   /* PIPE_QUERY_* */
    unsigned num_primitives_generated;
    unsigned num_primitives_written;
-   boolean so_has_overflown;
 
    struct pipe_query_data_pipeline_statistics stats;
 };

@@ -542,7 +542,7 @@ lp_setup_so_info(struct vbuf_render *vbr, uint primitives, uint vertices,
    struct llvmpipe_context *lp = llvmpipe_context(setup->pipe);
 
    lp->so_stats.num_primitives_written += primitives;
-   lp->so_stats.primitives_storage_needed =
+   lp->so_stats.primitives_storage_needed +=
       vertices * 4 /*sizeof(float|int32)*/ * 4 /*x,y,z,w*/;
    lp->num_primitives_generated += prim_generated;
 }
