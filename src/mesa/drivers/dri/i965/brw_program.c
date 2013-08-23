@@ -114,7 +114,8 @@ static struct gl_program *brwNewProgram( struct gl_context *ctx,
    }
 
    default:
-      return _mesa_new_program(ctx, target, id);
+      assert(!"Unsupported target in brwNewProgram()");
+      return NULL;
    }
 }
 
