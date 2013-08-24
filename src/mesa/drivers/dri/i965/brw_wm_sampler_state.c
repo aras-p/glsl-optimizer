@@ -421,12 +421,14 @@ const struct brw_tracked_state brw_fs_samplers = {
 static void
 brw_upload_vs_samplers(struct brw_context *brw)
 {
+   struct brw_stage_state *stage_state = &brw->vs.base;
+
    /* BRW_NEW_VERTEX_PROGRAM */
    struct gl_program *vs = (struct gl_program *) brw->vertex_program;
    brw->vtbl.upload_sampler_state_table(brw, vs,
-                                        brw->vs.sampler_count,
-                                        &brw->vs.sampler_offset,
-                                        brw->vs.sdc_offset);
+                                        stage_state->sampler_count,
+                                        &stage_state->sampler_offset,
+                                        stage_state->sdc_offset);
 }
 
 

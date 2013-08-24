@@ -77,7 +77,7 @@ static void upload_binding_table_pointers(struct brw_context *brw)
 {
    BEGIN_BATCH(6);
    OUT_BATCH(_3DSTATE_BINDING_TABLE_POINTERS << 16 | (6 - 2));
-   OUT_BATCH(brw->vs.bind_bo_offset);
+   OUT_BATCH(brw->vs.base.bind_bo_offset);
    OUT_BATCH(0); /* gs */
    OUT_BATCH(0); /* clip */
    OUT_BATCH(0); /* sf */
@@ -113,7 +113,7 @@ static void upload_gen6_binding_table_pointers(struct brw_context *brw)
 	     GEN6_BINDING_TABLE_MODIFY_GS |
 	     GEN6_BINDING_TABLE_MODIFY_PS |
 	     (4 - 2));
-   OUT_BATCH(brw->vs.bind_bo_offset); /* vs */
+   OUT_BATCH(brw->vs.base.bind_bo_offset); /* vs */
    OUT_BATCH(brw->ff_gs.bind_bo_offset); /* gs */
    OUT_BATCH(brw->wm.bind_bo_offset); /* wm/ps */
    ADVANCE_BATCH();
@@ -150,7 +150,7 @@ static void upload_pipelined_state_pointers(struct brw_context *brw )
    BEGIN_BATCH(7);
    OUT_BATCH(_3DSTATE_PIPELINED_POINTERS << 16 | (7 - 2));
    OUT_RELOC(brw->batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
-	     brw->vs.state_offset);
+	     brw->vs.base.state_offset);
    if (brw->ff_gs.prog_active)
       OUT_RELOC(brw->batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
 		brw->ff_gs.state_offset | 1);

@@ -376,7 +376,8 @@ static bool brw_try_draw_prims( struct gl_context *ctx,
     * index.
     */
    brw->wm.sampler_count = _mesa_fls(ctx->FragmentProgram._Current->Base.SamplersUsed);
-   brw->vs.sampler_count = _mesa_fls(ctx->VertexProgram._Current->Base.SamplersUsed);
+   brw->vs.base.sampler_count =
+      _mesa_fls(ctx->VertexProgram._Current->Base.SamplersUsed);
 
    /* We have to validate the textures *before* checking for fallbacks;
     * otherwise, the software fallback won't be able to rely on the

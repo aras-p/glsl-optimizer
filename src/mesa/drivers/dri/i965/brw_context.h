@@ -818,6 +818,32 @@ struct brw_query_object {
 
 
 /**
+ * Data shared between brw_context::vs and brw_context::gs
+ */
+struct brw_stage_state
+{
+   drm_intel_bo *scratch_bo;
+   drm_intel_bo *const_bo;
+   /** Offset in the program cache to the program */
+   uint32_t prog_offset;
+   uint32_t state_offset;
+
+   uint32_t push_const_offset; /* Offset in the batchbuffer */
+   int push_const_size; /* in 256-bit register increments */
+
+   uint32_t bind_bo_offset;
+   uint32_t surf_offset[BRW_MAX_VEC4_SURFACES];
+
+   /** SAMPLER_STATE count and table offset */
+   uint32_t sampler_count;
+   uint32_t sampler_offset;
+
+   /** Offsets in the batch to sampler default colors (texture border color) */
+   uint32_t sdc_offset[BRW_MAX_TEX_UNIT];
+};
+
+
+/**
  * brw_context is derived from gl_context.
  */
 struct brw_context 
@@ -1141,27 +1167,8 @@ struct brw_context
    } vec4;
 
    struct {
+      struct brw_stage_state base;
       struct brw_vs_prog_data *prog_data;
-
-      drm_intel_bo *scratch_bo;
-      drm_intel_bo *const_bo;
-      /** Offset in the program cache to the VS program */
-      uint32_t prog_offset;
-      uint32_t state_offset;
-
-      uint32_t push_const_offset; /* Offset in the batchbuffer */
-      int push_const_size; /* in 256-bit register increments */
-
-      uint32_t bind_bo_offset;
-      uint32_t surf_offset[BRW_MAX_VEC4_SURFACES];
-
-      /** SAMPLER_STATE count and table offset */
-      uint32_t sampler_count;
-      uint32_t sampler_offset;
-
-      /** Offsets in the batch to sampler default colors (texture border color)
-       */
-      uint32_t sdc_offset[BRW_MAX_TEX_UNIT];
    } vs;
 
    struct {

@@ -37,6 +37,8 @@ static void
 gen6_upload_vs_push_constants(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->ctx;
+   struct brw_stage_state *stage_state = &brw->vs.base;
+
    /* _BRW_NEW_VERTEX_PROGRAM */
    const struct brw_vertex_program *vp =
       brw_vertex_program_const(brw->vertex_program);
@@ -49,7 +51,7 @@ gen6_upload_vs_push_constants(struct brw_context *brw)
 
    /* CACHE_NEW_VS_PROG */
    if (brw->vs.prog_data->base.nr_params == 0) {
-      brw->vs.push_const_size = 0;
+      stage_state->push_const_size = 0;
    } else {
       int params_uploaded;
       float *param;
@@ -57,7 +59,7 @@ gen6_upload_vs_push_constants(struct brw_context *brw)
 
       param = brw_state_batch(brw, AUB_TRACE_VS_CONSTANTS,
 			      brw->vs.prog_data->base.nr_params * sizeof(float),
-			      32, &brw->vs.push_const_offset);
+			      32, &stage_state->push_const_offset);
 
       /* _NEW_PROGRAM_CONSTANTS
        *
@@ -79,9 +81,9 @@ gen6_upload_vs_push_constants(struct brw_context *brw)
 	 }
       }
 
-      brw->vs.push_const_size = (params_uploaded + 1) / 2;
+      stage_state->push_const_size = (params_uploaded + 1) / 2;
       /* We can only push 32 registers of constants at a time. */
-      assert(brw->vs.push_const_size <= 32);
+      assert(stage_state->push_const_size <= 32);
    }
 }
 
@@ -99,6 +101,7 @@ static void
 upload_vs_state(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->ctx;
+   const struct brw_stage_state *stage_state = &brw->vs.base;
    uint32_t floating_point_mode = 0;
 
    /* From the BSpec, 3D Pipeline > Geometry > Vertex Shader > State,
@@ -114,7 +117,7 @@ upload_vs_state(struct brw_context *brw)
     */
    intel_emit_post_sync_nonzero_flush(brw);
 
-   if (brw->vs.push_const_size == 0) {
+   if (stage_state->push_const_size == 0) {
       /* Disable the push constant buffers. */
       BEGIN_BATCH(5);
       OUT_BATCH(_3DSTATE_CONSTANT_VS << 16 | (5 - 2));
@@ -131,8 +134,8 @@ upload_vs_state(struct brw_context *brw)
       /* Pointer to the VS constant buffer.  Covered by the set of
        * state flags from gen6_upload_vs_constants
        */
-      OUT_BATCH(brw->vs.push_const_offset +
-		brw->vs.push_const_size - 1);
+      OUT_BATCH(stage_state->push_const_offset +
+		stage_state->push_const_size - 1);
       OUT_BATCH(0);
       OUT_BATCH(0);
       OUT_BATCH(0);
@@ -147,12 +150,12 @@ upload_vs_state(struct brw_context *brw)
 
    BEGIN_BATCH(6);
    OUT_BATCH(_3DSTATE_VS << 16 | (6 - 2));
-   OUT_BATCH(brw->vs.prog_offset);
+   OUT_BATCH(stage_state->prog_offset);
    OUT_BATCH(floating_point_mode |
-	     ((ALIGN(brw->vs.sampler_count, 4)/4) << GEN6_VS_SAMPLER_COUNT_SHIFT));
+	     ((ALIGN(stage_state->sampler_count, 4)/4) << GEN6_VS_SAMPLER_COUNT_SHIFT));
 
    if (brw->vs.prog_data->base.total_scratch) {
-      OUT_RELOC(brw->vs.scratch_bo,
+      OUT_RELOC(stage_state->scratch_bo,
 		I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
 		ffs(brw->vs.prog_data->base.total_scratch) - 11);
    } else {

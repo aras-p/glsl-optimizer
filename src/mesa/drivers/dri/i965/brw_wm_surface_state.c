@@ -754,7 +754,7 @@ brw_update_texture_surfaces(struct brw_context *brw)
    unsigned num_samplers = _mesa_fls(vs->SamplersUsed | fs->SamplersUsed);
 
    for (unsigned s = 0; s < num_samplers; s++) {
-      brw->vs.surf_offset[SURF_INDEX_VEC4_TEXTURE(s)] = 0;
+      brw->vs.base.surf_offset[SURF_INDEX_VEC4_TEXTURE(s)] = 0;
       brw->wm.surf_offset[SURF_INDEX_TEXTURE(s)] = 0;
 
       if (vs->SamplersUsed & (1 << s)) {
@@ -763,7 +763,7 @@ brw_update_texture_surfaces(struct brw_context *brw)
          /* _NEW_TEXTURE */
          if (ctx->Texture.Unit[unit]._ReallyEnabled) {
             brw->vtbl.update_texture_surface(ctx, unit,
-                                             brw->vs.surf_offset,
+                                             brw->vs.base.surf_offset,
                                              SURF_INDEX_VEC4_TEXTURE(s));
          }
       }

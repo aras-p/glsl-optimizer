@@ -44,6 +44,8 @@
 static void
 brw_upload_vs_pull_constants(struct brw_context *brw)
 {
+   struct brw_stage_state *stage_state = &brw->vs.base;
+
    /* BRW_NEW_VERTEX_PROGRAM */
    struct brw_vertex_program *vp =
       (struct brw_vertex_program *) brw->vertex_program;
@@ -56,24 +58,24 @@ brw_upload_vs_pull_constants(struct brw_context *brw)
 
    /* CACHE_NEW_VS_PROG */
    if (!brw->vs.prog_data->base.nr_pull_params) {
-      if (brw->vs.const_bo) {
-	 drm_intel_bo_unreference(brw->vs.const_bo);
-	 brw->vs.const_bo = NULL;
-	 brw->vs.surf_offset[SURF_INDEX_VEC4_CONST_BUFFER] = 0;
+      if (stage_state->const_bo) {
+	 drm_intel_bo_unreference(stage_state->const_bo);
+	 stage_state->const_bo = NULL;
+	 stage_state->surf_offset[SURF_INDEX_VEC4_CONST_BUFFER] = 0;
 	 brw->state.dirty.brw |= BRW_NEW_VS_CONSTBUF;
       }
       return;
    }
 
    /* _NEW_PROGRAM_CONSTANTS */
-   drm_intel_bo_unreference(brw->vs.const_bo);
+   drm_intel_bo_unreference(stage_state->const_bo);
    uint32_t size = brw->vs.prog_data->base.nr_pull_params * 4;
-   brw->vs.const_bo = drm_intel_bo_alloc(brw->bufmgr, "vp_const_buffer",
-					 size, 64);
+   stage_state->const_bo = drm_intel_bo_alloc(brw->bufmgr, "vp_const_buffer",
+                                              size, 64);
 
-   drm_intel_gem_bo_map_gtt(brw->vs.const_bo);
+   drm_intel_gem_bo_map_gtt(stage_state->const_bo);
    for (i = 0; i < brw->vs.prog_data->base.nr_pull_params; i++) {
-      memcpy(brw->vs.const_bo->virtual + i * 4,
+      memcpy(stage_state->const_bo->virtual + i * 4,
 	     brw->vs.prog_data->base.pull_param[i],
 	     4);
    }
@@ -81,17 +83,17 @@ brw_upload_vs_pull_constants(struct brw_context *brw)
    if (0) {
       for (i = 0; i < ALIGN(brw->vs.prog_data->base.nr_pull_params, 4) / 4;
            i++) {
-	 float *row = (float *)brw->vs.const_bo->virtual + i * 4;
+	 float *row = (float *)stage_state->const_bo->virtual + i * 4;
 	 printf("vs const surface %3d: %4.3f %4.3f %4.3f %4.3f\n",
 		i, row[0], row[1], row[2], row[3]);
       }
    }
 
-   drm_intel_gem_bo_unmap_gtt(brw->vs.const_bo);
+   drm_intel_gem_bo_unmap_gtt(stage_state->const_bo);
 
    const int surf = SURF_INDEX_VEC4_CONST_BUFFER;
-   brw->vtbl.create_constant_surface(brw, brw->vs.const_bo, 0, size,
-                                     &brw->vs.surf_offset[surf], false);
+   brw->vtbl.create_constant_surface(brw, stage_state->const_bo, 0, size,
+                                     &stage_state->surf_offset[surf], false);
 
    brw->state.dirty.brw |= BRW_NEW_VS_CONSTBUF;
 }
@@ -108,6 +110,8 @@ const struct brw_tracked_state brw_vs_pull_constants = {
 static void
 brw_upload_vs_ubo_surfaces(struct brw_context *brw)
 {
+   struct brw_stage_state *stage_state = &brw->vs.base;
+
    struct gl_context *ctx = &brw->ctx;
    /* _NEW_PROGRAM */
    struct gl_shader_program *prog = ctx->Shader.CurrentVertexProgram;
@@ -116,7 +120,7 @@ brw_upload_vs_ubo_surfaces(struct brw_context *brw)
       return;
 
    brw_upload_ubo_surfaces(brw, prog->_LinkedShaders[MESA_SHADER_VERTEX],
-			   &brw->vs.surf_offset[SURF_INDEX_VEC4_UBO(0)]);
+			   &stage_state->surf_offset[SURF_INDEX_VEC4_UBO(0)]);
 }
 
 const struct brw_tracked_state brw_vs_ubo_surfaces = {
@@ -135,11 +139,12 @@ const struct brw_tracked_state brw_vs_ubo_surfaces = {
 static void
 brw_vs_upload_binding_table(struct brw_context *brw)
 {
+   struct brw_stage_state *stage_state = &brw->vs.base;
    uint32_t *bind;
    int i;
 
    if (INTEL_DEBUG & DEBUG_SHADER_TIME) {
-      gen7_create_shader_time_surface(brw, &brw->vs.surf_offset[SURF_INDEX_VEC4_SHADER_TIME]);
+      gen7_create_shader_time_surface(brw, &stage_state->surf_offset[SURF_INDEX_VEC4_SHADER_TIME]);
    }
 
    /* CACHE_NEW_VS_PROG: Skip making a binding table if we don't use textures or
@@ -147,9 +152,9 @@ brw_vs_upload_binding_table(struct brw_context *brw)
     */
    const unsigned entries = brw->vs.prog_data->base.binding_table_size;
    if (entries == 0) {
-      if (brw->vs.bind_bo_offset != 0) {
+      if (stage_state->bind_bo_offset != 0) {
 	 brw->state.dirty.brw |= BRW_NEW_VS_BINDING_TABLE;
-	 brw->vs.bind_bo_offset = 0;
+	 stage_state->bind_bo_offset = 0;
       }
       return;
    }
@@ -159,11 +164,11 @@ brw_vs_upload_binding_table(struct brw_context *brw)
     */
    bind = brw_state_batch(brw, AUB_TRACE_BINDING_TABLE,
 			  sizeof(uint32_t) * entries,
-			  32, &brw->vs.bind_bo_offset);
+			  32, &stage_state->bind_bo_offset);
 
    /* BRW_NEW_SURFACES and BRW_NEW_VS_CONSTBUF */
    for (i = 0; i < entries; i++) {
-      bind[i] = brw->vs.surf_offset[i];
+      bind[i] = stage_state->surf_offset[i];
    }
 
    brw->state.dirty.brw |= BRW_NEW_VS_BINDING_TABLE;
