@@ -1120,20 +1120,11 @@ struct brw_context
     */
    struct brw_vue_map vue_map_geom_out;
 
+   /**
+    * Data structures used by all vec4 program compiles (not specific to any
+    * particular program).
+    */
    struct {
-      struct brw_vs_prog_data *prog_data;
-
-      drm_intel_bo *scratch_bo;
-      drm_intel_bo *const_bo;
-      /** Offset in the program cache to the VS program */
-      uint32_t prog_offset;
-      uint32_t state_offset;
-
-      uint32_t push_const_offset; /* Offset in the batchbuffer */
-      int push_const_size; /* in 256-bit register increments */
-
-      /** @{ register allocator */
-
       struct ra_regs *regs;
 
       /**
@@ -1147,7 +1138,19 @@ struct brw_context
        * GRF for that object.
       */
       uint8_t *ra_reg_to_grf;
-      /** @} */
+   } vec4;
+
+   struct {
+      struct brw_vs_prog_data *prog_data;
+
+      drm_intel_bo *scratch_bo;
+      drm_intel_bo *const_bo;
+      /** Offset in the program cache to the VS program */
+      uint32_t prog_offset;
+      uint32_t state_offset;
+
+      uint32_t push_const_offset; /* Offset in the batchbuffer */
+      int push_const_size; /* in 256-bit register increments */
 
       uint32_t bind_bo_offset;
       uint32_t surf_offset[BRW_MAX_VS_SURFACES];

@@ -114,14 +114,14 @@ brw_vec4_alloc_reg_set(struct brw_context *brw)
       ra_reg_count += base_reg_count - (class_sizes[i] - 1);
    }
 
-   ralloc_free(brw->vs.ra_reg_to_grf);
-   brw->vs.ra_reg_to_grf = ralloc_array(brw, uint8_t, ra_reg_count);
-   ralloc_free(brw->vs.regs);
-   brw->vs.regs = ra_alloc_reg_set(brw, ra_reg_count);
+   ralloc_free(brw->vec4.ra_reg_to_grf);
+   brw->vec4.ra_reg_to_grf = ralloc_array(brw, uint8_t, ra_reg_count);
+   ralloc_free(brw->vec4.regs);
+   brw->vec4.regs = ra_alloc_reg_set(brw, ra_reg_count);
    if (brw->gen >= 6)
-      ra_set_allocate_round_robin(brw->vs.regs);
-   ralloc_free(brw->vs.classes);
-   brw->vs.classes = ralloc_array(brw, int, class_count + 1);
+      ra_set_allocate_round_robin(brw->vec4.regs);
+   ralloc_free(brw->vec4.classes);
+   brw->vec4.classes = ralloc_array(brw, int, class_count + 1);
 
    /* Now, add the registers to their classes, and add the conflicts
     * between them and the base GRF registers (and also each other).
@@ -129,17 +129,17 @@ brw_vec4_alloc_reg_set(struct brw_context *brw)
    int reg = 0;
    for (int i = 0; i < class_count; i++) {
       int class_reg_count = base_reg_count - (class_sizes[i] - 1);
-      brw->vs.classes[i] = ra_alloc_reg_class(brw->vs.regs);
+      brw->vec4.classes[i] = ra_alloc_reg_class(brw->vec4.regs);
 
       for (int j = 0; j < class_reg_count; j++) {
-	 ra_class_add_reg(brw->vs.regs, brw->vs.classes[i], reg);
+	 ra_class_add_reg(brw->vec4.regs, brw->vec4.classes[i], reg);
 
-	 brw->vs.ra_reg_to_grf[reg] = j;
+	 brw->vec4.ra_reg_to_grf[reg] = j;
 
 	 for (int base_reg = j;
 	      base_reg < j + class_sizes[i];
 	      base_reg++) {
-	    ra_add_transitive_reg_conflict(brw->vs.regs, base_reg, reg);
+	    ra_add_transitive_reg_conflict(brw->vec4.regs, base_reg, reg);
 	 }
 
 	 reg++;
@@ -147,7 +147,7 @@ brw_vec4_alloc_reg_set(struct brw_context *brw)
    }
    assert(reg == ra_reg_count);
 
-   ra_set_finalize(brw->vs.regs, NULL);
+   ra_set_finalize(brw->vec4.regs, NULL);
 }
 
 void
@@ -191,13 +191,14 @@ vec4_visitor::reg_allocate()
    int node_count = virtual_grf_count;
    int first_payload_node = node_count;
    node_count += payload_reg_count;
-   struct ra_graph *g = ra_alloc_interference_graph(brw->vs.regs, node_count);
+   struct ra_graph *g =
+      ra_alloc_interference_graph(brw->vec4.regs, node_count);
 
    for (int i = 0; i < virtual_grf_count; i++) {
       int size = this->virtual_grf_sizes[i];
       assert(size >= 1 && size <= 2 &&
              "Register allocation relies on split_virtual_grfs().");
-      ra_set_node_class(g, i, brw->vs.classes[size - 1]);
+      ra_set_node_class(g, i, brw->vec4.classes[size - 1]);
 
       for (int j = 0; j < i; j++) {
 	 if (virtual_grf_interferes(i, j)) {
@@ -230,7 +231,7 @@ vec4_visitor::reg_allocate()
    for (int i = 0; i < virtual_grf_count; i++) {
       int reg = ra_get_node_reg(g, i);
 
-      hw_reg_mapping[i] = brw->vs.ra_reg_to_grf[reg];
+      hw_reg_mapping[i] = brw->vec4.ra_reg_to_grf[reg];
       prog_data->total_grf = MAX2(prog_data->total_grf,
 				  hw_reg_mapping[i] + virtual_grf_sizes[i]);
    }
