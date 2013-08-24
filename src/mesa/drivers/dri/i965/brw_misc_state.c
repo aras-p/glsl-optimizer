@@ -114,7 +114,7 @@ static void upload_gen6_binding_table_pointers(struct brw_context *brw)
 	     GEN6_BINDING_TABLE_MODIFY_PS |
 	     (4 - 2));
    OUT_BATCH(brw->vs.bind_bo_offset); /* vs */
-   OUT_BATCH(brw->gs.bind_bo_offset); /* gs */
+   OUT_BATCH(brw->ff_gs.bind_bo_offset); /* gs */
    OUT_BATCH(brw->wm.bind_bo_offset); /* wm/ps */
    ADVANCE_BATCH();
 }
@@ -151,9 +151,9 @@ static void upload_pipelined_state_pointers(struct brw_context *brw )
    OUT_BATCH(_3DSTATE_PIPELINED_POINTERS << 16 | (7 - 2));
    OUT_RELOC(brw->batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
 	     brw->vs.state_offset);
-   if (brw->gs.prog_active)
+   if (brw->ff_gs.prog_active)
       OUT_RELOC(brw->batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
-		brw->gs.state_offset | 1);
+		brw->ff_gs.state_offset | 1);
    else
       OUT_BATCH(0);
    OUT_RELOC(brw->batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
@@ -183,8 +183,8 @@ const struct brw_tracked_state brw_psp_urb_cbs = {
 	      BRW_NEW_BATCH |
 	      BRW_NEW_STATE_BASE_ADDRESS),
       .cache = (CACHE_NEW_VS_UNIT | 
-		CACHE_NEW_GS_UNIT | 
-		CACHE_NEW_GS_PROG | 
+		CACHE_NEW_FF_GS_UNIT | 
+		CACHE_NEW_FF_GS_PROG | 
 		CACHE_NEW_CLIP_UNIT | 
 		CACHE_NEW_SF_UNIT | 
 		CACHE_NEW_WM_UNIT | 

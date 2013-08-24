@@ -29,7 +29,7 @@
 static void
 disable_stages(struct brw_context *brw)
 {
-   assert(!brw->gs.prog_active);
+   assert(!brw->ff_gs.prog_active);
 
    /* Disable the Geometry Shader (GS) Unit */
    BEGIN_BATCH(7);

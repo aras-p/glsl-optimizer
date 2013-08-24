@@ -93,7 +93,7 @@ gen7_upload_urb(struct brw_context *brw)
    assert(brw->urb.nr_vs_entries % 8 == 0);
    assert(brw->urb.nr_gs_entries % 8 == 0);
    /* GS requirement */
-   assert(!brw->gs.prog_active);
+   assert(!brw->ff_gs.prog_active);
 
    gen7_emit_vs_workaround_flush(brw);
    gen7_emit_urb_state(brw, brw->urb.nr_vs_entries, vs_size, brw->urb.vs_start);
@@ -128,7 +128,7 @@ const struct brw_tracked_state gen7_urb = {
    .dirty = {
       .mesa = 0,
       .brw = BRW_NEW_CONTEXT,
-      .cache = (CACHE_NEW_VS_PROG | CACHE_NEW_GS_PROG),
+      .cache = (CACHE_NEW_VS_PROG | CACHE_NEW_FF_GS_PROG),
    },
    .emit = gen7_upload_urb,
 };

@@ -56,11 +56,11 @@ gen6_update_sol_surfaces(struct brw_context *brw)
             xfb_obj->Offset[buffer] / 4 +
             linked_xfb_info->Outputs[i].DstOffset;
          brw_update_sol_surface(
-            brw, xfb_obj->Buffers[buffer], &brw->gs.surf_offset[surf_index],
+            brw, xfb_obj->Buffers[buffer], &brw->ff_gs.surf_offset[surf_index],
             linked_xfb_info->Outputs[i].NumComponents,
             linked_xfb_info->BufferStride[buffer], buffer_offset);
       } else {
-         brw->gs.surf_offset[surf_index] = 0;
+         brw->ff_gs.surf_offset[surf_index] = 0;
       }
    }
 
@@ -101,9 +101,9 @@ brw_gs_upload_binding_table(struct brw_context *brw)
 
    /* Skip making a binding table if we don't have anything to put in it. */
    if (!has_surfaces) {
-      if (brw->gs.bind_bo_offset != 0) {
+      if (brw->ff_gs.bind_bo_offset != 0) {
 	 brw->state.dirty.brw |= BRW_NEW_GS_BINDING_TABLE;
-	 brw->gs.bind_bo_offset = 0;
+	 brw->ff_gs.bind_bo_offset = 0;
       }
       return;
    }
@@ -113,10 +113,10 @@ brw_gs_upload_binding_table(struct brw_context *brw)
     */
    bind = brw_state_batch(brw, AUB_TRACE_BINDING_TABLE,
 			  sizeof(uint32_t) * BRW_MAX_GS_SURFACES,
-			  32, &brw->gs.bind_bo_offset);
+			  32, &brw->ff_gs.bind_bo_offset);
 
    /* BRW_NEW_SURFACES */
-   memcpy(bind, brw->gs.surf_offset, BRW_MAX_GS_SURFACES * sizeof(uint32_t));
+   memcpy(bind, brw->ff_gs.surf_offset, BRW_MAX_GS_SURFACES * sizeof(uint32_t));
 
    brw->state.dirty.brw |= BRW_NEW_GS_BINDING_TABLE;
 }

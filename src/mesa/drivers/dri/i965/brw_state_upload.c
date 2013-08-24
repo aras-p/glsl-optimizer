@@ -40,7 +40,7 @@
 static const struct brw_tracked_state *gen4_atoms[] =
 {
    &brw_vs_prog, /* must do before GS prog, state base address. */
-   &brw_gs_prog, /* must do before state base address */
+   &brw_ff_gs_prog, /* must do before state base address */
 
    &brw_interpolation_map,
 
@@ -108,7 +108,7 @@ static const struct brw_tracked_state *gen4_atoms[] =
 static const struct brw_tracked_state *gen6_atoms[] =
 {
    &brw_vs_prog, /* must do before state base address */
-   &brw_gs_prog, /* must do before state base address */
+   &brw_ff_gs_prog, /* must do before state base address */
    &brw_wm_prog, /* must do before state base address */
 
    &gen6_clip_vp,
@@ -405,8 +405,8 @@ static struct dirty_bit_map cache_bits[] = {
    DEFINE_BIT(CACHE_NEW_SF_UNIT),
    DEFINE_BIT(CACHE_NEW_VS_UNIT),
    DEFINE_BIT(CACHE_NEW_VS_PROG),
-   DEFINE_BIT(CACHE_NEW_GS_UNIT),
-   DEFINE_BIT(CACHE_NEW_GS_PROG),
+   DEFINE_BIT(CACHE_NEW_FF_GS_UNIT),
+   DEFINE_BIT(CACHE_NEW_FF_GS_PROG),
    DEFINE_BIT(CACHE_NEW_CLIP_VP),
    DEFINE_BIT(CACHE_NEW_CLIP_UNIT),
    DEFINE_BIT(CACHE_NEW_CLIP_PROG),

@@ -41,20 +41,20 @@ brw_upload_gs_unit(struct brw_context *brw)
    struct brw_gs_unit_state *gs;
 
    gs = brw_state_batch(brw, AUB_TRACE_GS_STATE,
-			sizeof(*gs), 32, &brw->gs.state_offset);
+			sizeof(*gs), 32, &brw->ff_gs.state_offset);
 
    memset(gs, 0, sizeof(*gs));
 
    /* BRW_NEW_PROGRAM_CACHE | CACHE_NEW_GS_PROG */
-   if (brw->gs.prog_active) {
-      gs->thread0.grf_reg_count = (ALIGN(brw->gs.prog_data->total_grf, 16) /
+   if (brw->ff_gs.prog_active) {
+      gs->thread0.grf_reg_count = (ALIGN(brw->ff_gs.prog_data->total_grf, 16) /
 				   16 - 1);
 
       gs->thread0.kernel_start_pointer =
 	 brw_program_reloc(brw,
-			   brw->gs.state_offset +
+			   brw->ff_gs.state_offset +
 			   offsetof(struct brw_gs_unit_state, thread0),
-			   brw->gs.prog_offset +
+			   brw->ff_gs.prog_offset +
 			   (gs->thread0.grf_reg_count << 1)) >> 6;
 
       gs->thread1.floating_point_mode = BRW_FLOATING_POINT_NON_IEEE_754;
@@ -64,7 +64,8 @@ brw_upload_gs_unit(struct brw_context *brw)
       gs->thread3.const_urb_entry_read_offset = 0;
       gs->thread3.const_urb_entry_read_length = 0;
       gs->thread3.urb_entry_read_offset = 0;
-      gs->thread3.urb_entry_read_length = brw->gs.prog_data->urb_read_length;
+      gs->thread3.urb_entry_read_length =
+         brw->ff_gs.prog_data->urb_read_length;
 
       /* BRW_NEW_URB_FENCE */
       gs->thread4.nr_urb_entries = brw->urb.nr_gs_entries;
@@ -82,7 +83,7 @@ brw_upload_gs_unit(struct brw_context *brw)
    if (unlikely(INTEL_DEBUG & DEBUG_STATS))
       gs->thread4.stats_enable = 1;
 
-   brw->state.dirty.cache |= CACHE_NEW_GS_UNIT;
+   brw->state.dirty.cache |= CACHE_NEW_FF_GS_UNIT;
 }
 
 const struct brw_tracked_state brw_gs_unit = {
@@ -92,7 +93,7 @@ const struct brw_tracked_state brw_gs_unit = {
 		BRW_NEW_PROGRAM_CACHE |
 		BRW_NEW_CURBE_OFFSETS |
 		BRW_NEW_URB_FENCE),
-      .cache = CACHE_NEW_GS_PROG
+      .cache = CACHE_NEW_FF_GS_PROG
    },
    .emit = brw_upload_gs_unit,
 };

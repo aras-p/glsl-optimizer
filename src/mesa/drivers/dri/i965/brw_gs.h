@@ -39,7 +39,7 @@
 
 #define MAX_GS_VERTS (4)	     
 
-struct brw_gs_prog_key {
+struct brw_ff_gs_prog_key {
    GLbitfield64 attrs;
 
    /**
@@ -70,10 +70,10 @@ struct brw_gs_prog_key {
    unsigned char transform_feedback_swizzles[BRW_MAX_SOL_BINDINGS];
 };
 
-struct brw_gs_compile {
+struct brw_ff_gs_compile {
    struct brw_compile func;
-   struct brw_gs_prog_key key;
-   struct brw_gs_prog_data prog_data;
+   struct brw_ff_gs_prog_key key;
+   struct brw_ff_gs_prog_data prog_data;
    
    struct {
       struct brw_reg R0;
@@ -102,10 +102,13 @@ struct brw_gs_compile {
    struct brw_vue_map vue_map;
 };
 
-void brw_gs_quads( struct brw_gs_compile *c, struct brw_gs_prog_key *key );
-void brw_gs_quad_strip( struct brw_gs_compile *c, struct brw_gs_prog_key *key );
-void brw_gs_lines( struct brw_gs_compile *c );
-void gen6_sol_program(struct brw_gs_compile *c, struct brw_gs_prog_key *key,
+void brw_ff_gs_quads(struct brw_ff_gs_compile *c,
+                     struct brw_ff_gs_prog_key *key);
+void brw_ff_gs_quad_strip(struct brw_ff_gs_compile *c,
+                          struct brw_ff_gs_prog_key *key);
+void brw_ff_gs_lines(struct brw_ff_gs_compile *c);
+void gen6_sol_program(struct brw_ff_gs_compile *c,
+                      struct brw_ff_gs_prog_key *key,
                       unsigned num_verts, bool check_edge_flag);
 
 #endif

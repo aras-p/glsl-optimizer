@@ -45,10 +45,10 @@
 
 #include "glsl/ralloc.h"
 
-static void compile_gs_prog( struct brw_context *brw,
-			     struct brw_gs_prog_key *key )
+static void compile_ff_gs_prog(struct brw_context *brw,
+                               struct brw_ff_gs_prog_key *key)
 {
-   struct brw_gs_compile c;
+   struct brw_ff_gs_compile c;
    const GLuint *program;
    void *mem_ctx;
    GLuint program_size;
@@ -114,13 +114,13 @@ static void compile_gs_prog( struct brw_context *brw,
        */
       switch (key->primitive) {
       case _3DPRIM_QUADLIST:
-	 brw_gs_quads( &c, key );
+	 brw_ff_gs_quads( &c, key );
 	 break;
       case _3DPRIM_QUADSTRIP:
-	 brw_gs_quad_strip( &c, key );
+	 brw_ff_gs_quad_strip( &c, key );
 	 break;
       case _3DPRIM_LINELOOP:
-	 brw_gs_lines( &c );
+	 brw_ff_gs_lines( &c );
 	 break;
       default:
 	 ralloc_free(mem_ctx);
@@ -142,16 +142,16 @@ static void compile_gs_prog( struct brw_context *brw,
       printf("\n");
     }
 
-   brw_upload_cache(&brw->cache, BRW_GS_PROG,
+   brw_upload_cache(&brw->cache, BRW_FF_GS_PROG,
 		    &c.key, sizeof(c.key),
 		    program, program_size,
 		    &c.prog_data, sizeof(c.prog_data),
-		    &brw->gs.prog_offset, &brw->gs.prog_data);
+		    &brw->ff_gs.prog_offset, &brw->ff_gs.prog_data);
    ralloc_free(mem_ctx);
 }
 
-static void populate_key( struct brw_context *brw,
-			  struct brw_gs_prog_key *key )
+static void populate_key(struct brw_context *brw,
+                         struct brw_ff_gs_prog_key *key)
 {
    static const unsigned swizzle_for_offset[4] = {
       BRW_SWIZZLE4(0, 1, 2, 3),
@@ -225,34 +225,34 @@ static void populate_key( struct brw_context *brw,
 /* Calculate interpolants for triangle and line rasterization.
  */
 static void
-brw_upload_gs_prog(struct brw_context *brw)
+brw_upload_ff_gs_prog(struct brw_context *brw)
 {
-   struct brw_gs_prog_key key;
+   struct brw_ff_gs_prog_key key;
    /* Populate the key:
     */
    populate_key(brw, &key);
 
-   if (brw->gs.prog_active != key.need_gs_prog) {
-      brw->state.dirty.cache |= CACHE_NEW_GS_PROG;
-      brw->gs.prog_active = key.need_gs_prog;
+   if (brw->ff_gs.prog_active != key.need_gs_prog) {
+      brw->state.dirty.cache |= CACHE_NEW_FF_GS_PROG;
+      brw->ff_gs.prog_active = key.need_gs_prog;
    }
 
-   if (brw->gs.prog_active) {
-      if (!brw_search_cache(&brw->cache, BRW_GS_PROG,
+   if (brw->ff_gs.prog_active) {
+      if (!brw_search_cache(&brw->cache, BRW_FF_GS_PROG,
 			    &key, sizeof(key),
-			    &brw->gs.prog_offset, &brw->gs.prog_data)) {
-	 compile_gs_prog( brw, &key );
+			    &brw->ff_gs.prog_offset, &brw->ff_gs.prog_data)) {
+	 compile_ff_gs_prog( brw, &key );
       }
    }
 }
 
 
-const struct brw_tracked_state brw_gs_prog = {
+const struct brw_tracked_state brw_ff_gs_prog = {
    .dirty = {
       .mesa  = (_NEW_LIGHT),
       .brw   = (BRW_NEW_PRIMITIVE |
                 BRW_NEW_TRANSFORM_FEEDBACK),
       .cache = CACHE_NEW_VS_PROG
    },
-   .emit = brw_upload_gs_prog
+   .emit = brw_upload_ff_gs_prog
 };

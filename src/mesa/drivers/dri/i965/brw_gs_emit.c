@@ -52,9 +52,9 @@
  *
  * - The thread will need to use the destination_indices register.
  */
-static void brw_gs_alloc_regs( struct brw_gs_compile *c,
-			       GLuint nr_verts,
-                               bool sol_program )
+static void brw_ff_gs_alloc_regs(struct brw_ff_gs_compile *c,
+                                 GLuint nr_verts,
+                                 bool sol_program)
 {
    GLuint i = 0,j;
 
@@ -100,7 +100,7 @@ static void brw_gs_alloc_regs( struct brw_gs_compile *c,
  * This function sets up the above data by copying by copying the contents of
  * R0 to the header register.
  */
-static void brw_gs_initialize_header(struct brw_gs_compile *c)
+static void brw_ff_gs_initialize_header(struct brw_ff_gs_compile *c)
 {
    struct brw_compile *p = &c->func;
    brw_MOV(p, c->reg.header, c->reg.R0);
@@ -113,8 +113,8 @@ static void brw_gs_initialize_header(struct brw_gs_compile *c)
  * PrimEnd, Increment CL_INVOCATIONS, and SONumPrimsWritten, many of which we
  * need to be able to update on a per-vertex basis.
  */
-static void brw_gs_overwrite_header_dw2(struct brw_gs_compile *c,
-                                        unsigned dw2)
+static void brw_ff_gs_overwrite_header_dw2(struct brw_ff_gs_compile *c,
+                                           unsigned dw2)
 {
    struct brw_compile *p = &c->func;
    brw_MOV(p, get_element_ud(c->reg.header, 2), brw_imm_ud(dw2));
@@ -128,7 +128,7 @@ static void brw_gs_overwrite_header_dw2(struct brw_gs_compile *c,
  * DWORD 2.  So this function extracts the primitive type field, bitshifts it
  * appropriately, and stores it in c->reg.header.
  */
-static void brw_gs_overwrite_header_dw2_from_r0(struct brw_gs_compile *c)
+static void brw_ff_gs_overwrite_header_dw2_from_r0(struct brw_ff_gs_compile *c)
 {
    struct brw_compile *p = &c->func;
    brw_AND(p, get_element_ud(c->reg.header, 2), get_element_ud(c->reg.R0, 2),
@@ -143,7 +143,8 @@ static void brw_gs_overwrite_header_dw2_from_r0(struct brw_gs_compile *c)
  * This is used to set/unset the "PrimStart" and "PrimEnd" flags appropriately
  * for each vertex.
  */
-static void brw_gs_offset_header_dw2(struct brw_gs_compile *c, int offset)
+static void brw_ff_gs_offset_header_dw2(struct brw_ff_gs_compile *c,
+                                        int offset)
 {
    struct brw_compile *p = &c->func;
    brw_ADD(p, get_element_d(c->reg.header, 2), get_element_d(c->reg.header, 2),
@@ -163,9 +164,9 @@ static void brw_gs_offset_header_dw2(struct brw_gs_compile *c, int offset)
  * will be stored in DWORD 0 of c->reg.header for use in the next URB_WRITE
  * message.
  */
-static void brw_gs_emit_vue(struct brw_gs_compile *c, 
-			    struct brw_reg vert,
-			    bool last)
+static void brw_ff_gs_emit_vue(struct brw_ff_gs_compile *c, 
+                               struct brw_reg vert,
+                               bool last)
 {
    struct brw_compile *p = &c->func;
    bool allocate = !last;
@@ -208,7 +209,7 @@ static void brw_gs_emit_vue(struct brw_gs_compile *c,
  * the allocated URB entry (which will be needed by the URB_WRITE meesage that
  * follows).
  */
-static void brw_gs_ff_sync(struct brw_gs_compile *c, int num_prim)
+static void brw_ff_gs_ff_sync(struct brw_ff_gs_compile *c, int num_prim)
 {
    struct brw_compile *p = &c->func;
 
@@ -225,97 +226,100 @@ static void brw_gs_ff_sync(struct brw_gs_compile *c, int num_prim)
 }
 
 
-void brw_gs_quads( struct brw_gs_compile *c, struct brw_gs_prog_key *key )
+void
+brw_ff_gs_quads(struct brw_ff_gs_compile *c, struct brw_ff_gs_prog_key *key)
 {
    struct brw_context *brw = c->func.brw;
 
-   brw_gs_alloc_regs(c, 4, false);
-   brw_gs_initialize_header(c);
+   brw_ff_gs_alloc_regs(c, 4, false);
+   brw_ff_gs_initialize_header(c);
    /* Use polygons for correct edgeflag behaviour. Note that vertex 3
     * is the PV for quads, but vertex 0 for polygons:
     */
    if (brw->gen == 5)
-      brw_gs_ff_sync(c, 1);
-   brw_gs_overwrite_header_dw2(
+      brw_ff_gs_ff_sync(c, 1);
+   brw_ff_gs_overwrite_header_dw2(
       c, ((_3DPRIM_POLYGON << URB_WRITE_PRIM_TYPE_SHIFT)
           | URB_WRITE_PRIM_START));
    if (key->pv_first) {
-      brw_gs_emit_vue(c, c->reg.vertex[0], 0);
-      brw_gs_overwrite_header_dw2(
+      brw_ff_gs_emit_vue(c, c->reg.vertex[0], 0);
+      brw_ff_gs_overwrite_header_dw2(
          c, _3DPRIM_POLYGON << URB_WRITE_PRIM_TYPE_SHIFT);
-      brw_gs_emit_vue(c, c->reg.vertex[1], 0);
-      brw_gs_emit_vue(c, c->reg.vertex[2], 0);
-      brw_gs_overwrite_header_dw2(
+      brw_ff_gs_emit_vue(c, c->reg.vertex[1], 0);
+      brw_ff_gs_emit_vue(c, c->reg.vertex[2], 0);
+      brw_ff_gs_overwrite_header_dw2(
          c, ((_3DPRIM_POLYGON << URB_WRITE_PRIM_TYPE_SHIFT)
              | URB_WRITE_PRIM_END));
-      brw_gs_emit_vue(c, c->reg.vertex[3], 1);
+      brw_ff_gs_emit_vue(c, c->reg.vertex[3], 1);
    }
    else {
-      brw_gs_emit_vue(c, c->reg.vertex[3], 0);
-      brw_gs_overwrite_header_dw2(
+      brw_ff_gs_emit_vue(c, c->reg.vertex[3], 0);
+      brw_ff_gs_overwrite_header_dw2(
          c, _3DPRIM_POLYGON << URB_WRITE_PRIM_TYPE_SHIFT);
-      brw_gs_emit_vue(c, c->reg.vertex[0], 0);
-      brw_gs_emit_vue(c, c->reg.vertex[1], 0);
-      brw_gs_overwrite_header_dw2(
+      brw_ff_gs_emit_vue(c, c->reg.vertex[0], 0);
+      brw_ff_gs_emit_vue(c, c->reg.vertex[1], 0);
+      brw_ff_gs_overwrite_header_dw2(
          c, ((_3DPRIM_POLYGON << URB_WRITE_PRIM_TYPE_SHIFT)
              | URB_WRITE_PRIM_END));
-      brw_gs_emit_vue(c, c->reg.vertex[2], 1);
+      brw_ff_gs_emit_vue(c, c->reg.vertex[2], 1);
    }
 }
 
-void brw_gs_quad_strip( struct brw_gs_compile *c, struct brw_gs_prog_key *key )
+void
+brw_ff_gs_quad_strip(struct brw_ff_gs_compile *c,
+                     struct brw_ff_gs_prog_key *key)
 {
    struct brw_context *brw = c->func.brw;
 
-   brw_gs_alloc_regs(c, 4, false);
-   brw_gs_initialize_header(c);
+   brw_ff_gs_alloc_regs(c, 4, false);
+   brw_ff_gs_initialize_header(c);
    
    if (brw->gen == 5)
-      brw_gs_ff_sync(c, 1);
-   brw_gs_overwrite_header_dw2(
+      brw_ff_gs_ff_sync(c, 1);
+   brw_ff_gs_overwrite_header_dw2(
       c, ((_3DPRIM_POLYGON << URB_WRITE_PRIM_TYPE_SHIFT)
           | URB_WRITE_PRIM_START));
    if (key->pv_first) {
-      brw_gs_emit_vue(c, c->reg.vertex[0], 0);
-      brw_gs_overwrite_header_dw2(
+      brw_ff_gs_emit_vue(c, c->reg.vertex[0], 0);
+      brw_ff_gs_overwrite_header_dw2(
          c, _3DPRIM_POLYGON << URB_WRITE_PRIM_TYPE_SHIFT);
-      brw_gs_emit_vue(c, c->reg.vertex[1], 0);
-      brw_gs_emit_vue(c, c->reg.vertex[2], 0);
-      brw_gs_overwrite_header_dw2(
+      brw_ff_gs_emit_vue(c, c->reg.vertex[1], 0);
+      brw_ff_gs_emit_vue(c, c->reg.vertex[2], 0);
+      brw_ff_gs_overwrite_header_dw2(
          c, ((_3DPRIM_POLYGON << URB_WRITE_PRIM_TYPE_SHIFT)
              | URB_WRITE_PRIM_END));
-      brw_gs_emit_vue(c, c->reg.vertex[3], 1);
+      brw_ff_gs_emit_vue(c, c->reg.vertex[3], 1);
    }
    else {
-      brw_gs_emit_vue(c, c->reg.vertex[2], 0);
-      brw_gs_overwrite_header_dw2(
+      brw_ff_gs_emit_vue(c, c->reg.vertex[2], 0);
+      brw_ff_gs_overwrite_header_dw2(
          c, _3DPRIM_POLYGON << URB_WRITE_PRIM_TYPE_SHIFT);
-      brw_gs_emit_vue(c, c->reg.vertex[3], 0);
-      brw_gs_emit_vue(c, c->reg.vertex[0], 0);
-      brw_gs_overwrite_header_dw2(
+      brw_ff_gs_emit_vue(c, c->reg.vertex[3], 0);
+      brw_ff_gs_emit_vue(c, c->reg.vertex[0], 0);
+      brw_ff_gs_overwrite_header_dw2(
          c, ((_3DPRIM_POLYGON << URB_WRITE_PRIM_TYPE_SHIFT)
              | URB_WRITE_PRIM_END));
-      brw_gs_emit_vue(c, c->reg.vertex[1], 1);
+      brw_ff_gs_emit_vue(c, c->reg.vertex[1], 1);
    }
 }
 
-void brw_gs_lines( struct brw_gs_compile *c )
+void brw_ff_gs_lines(struct brw_ff_gs_compile *c)
 {
    struct brw_context *brw = c->func.brw;
 
-   brw_gs_alloc_regs(c, 2, false);
-   brw_gs_initialize_header(c);
+   brw_ff_gs_alloc_regs(c, 2, false);
+   brw_ff_gs_initialize_header(c);
 
    if (brw->gen == 5)
-      brw_gs_ff_sync(c, 1);
-   brw_gs_overwrite_header_dw2(
+      brw_ff_gs_ff_sync(c, 1);
+   brw_ff_gs_overwrite_header_dw2(
       c, ((_3DPRIM_LINESTRIP << URB_WRITE_PRIM_TYPE_SHIFT)
           | URB_WRITE_PRIM_START));
-   brw_gs_emit_vue(c, c->reg.vertex[0], 0);
-   brw_gs_overwrite_header_dw2(
+   brw_ff_gs_emit_vue(c, c->reg.vertex[0], 0);
+   brw_ff_gs_overwrite_header_dw2(
       c, ((_3DPRIM_LINESTRIP << URB_WRITE_PRIM_TYPE_SHIFT)
           | URB_WRITE_PRIM_END));
-   brw_gs_emit_vue(c, c->reg.vertex[1], 1);
+   brw_ff_gs_emit_vue(c, c->reg.vertex[1], 1);
 }
 
 /**
@@ -323,14 +327,14 @@ void brw_gs_lines( struct brw_gs_compile *c )
  * (transform feedback).
  */
 void
-gen6_sol_program(struct brw_gs_compile *c, struct brw_gs_prog_key *key,
+gen6_sol_program(struct brw_ff_gs_compile *c, struct brw_ff_gs_prog_key *key,
 	         unsigned num_verts, bool check_edge_flags)
 {
    struct brw_compile *p = &c->func;
    c->prog_data.svbi_postincrement_value = num_verts;
 
-   brw_gs_alloc_regs(c, num_verts, true);
-   brw_gs_initialize_header(c);
+   brw_ff_gs_alloc_regs(c, num_verts, true);
+   brw_ff_gs_initialize_header(c);
 
    if (key->num_transform_feedback_bindings > 0) {
       unsigned vertex, binding;
@@ -442,7 +446,7 @@ gen6_sol_program(struct brw_gs_compile *c, struct brw_gs_prog_key *key,
        * the register that we overwrote while streaming out transform feedback
        * data.
        */
-      brw_gs_initialize_header(c);
+      brw_ff_gs_initialize_header(c);
 
       /* Finally, wait for the write commit to occur so that we can proceed to
        * other things safely.
@@ -457,19 +461,21 @@ gen6_sol_program(struct brw_gs_compile *c, struct brw_gs_prog_key *key,
       brw_MOV(p, c->reg.temp, c->reg.temp);
    }
 
-   brw_gs_ff_sync(c, 1);
+   brw_ff_gs_ff_sync(c, 1);
 
-   brw_gs_overwrite_header_dw2_from_r0(c);
+   brw_ff_gs_overwrite_header_dw2_from_r0(c);
    switch (num_verts) {
    case 1:
-      brw_gs_offset_header_dw2(c, URB_WRITE_PRIM_START | URB_WRITE_PRIM_END);
-      brw_gs_emit_vue(c, c->reg.vertex[0], true);
+      brw_ff_gs_offset_header_dw2(c,
+                                  URB_WRITE_PRIM_START | URB_WRITE_PRIM_END);
+      brw_ff_gs_emit_vue(c, c->reg.vertex[0], true);
       break;
    case 2:
-      brw_gs_offset_header_dw2(c, URB_WRITE_PRIM_START);
-      brw_gs_emit_vue(c, c->reg.vertex[0], false);
-      brw_gs_offset_header_dw2(c, URB_WRITE_PRIM_END - URB_WRITE_PRIM_START);
-      brw_gs_emit_vue(c, c->reg.vertex[1], true);
+      brw_ff_gs_offset_header_dw2(c, URB_WRITE_PRIM_START);
+      brw_ff_gs_emit_vue(c, c->reg.vertex[0], false);
+      brw_ff_gs_offset_header_dw2(c,
+                                  URB_WRITE_PRIM_END - URB_WRITE_PRIM_START);
+      brw_ff_gs_emit_vue(c, c->reg.vertex[1], true);
       break;
    case 3:
       if (check_edge_flags) {
@@ -482,10 +488,10 @@ gen6_sol_program(struct brw_gs_compile *c, struct brw_gs_prog_key *key,
                  brw_imm_ud(BRW_GS_EDGE_INDICATOR_0));
          brw_IF(p, BRW_EXECUTE_1);
       }
-      brw_gs_offset_header_dw2(c, URB_WRITE_PRIM_START);
-      brw_gs_emit_vue(c, c->reg.vertex[0], false);
-      brw_gs_offset_header_dw2(c, -URB_WRITE_PRIM_START);
-      brw_gs_emit_vue(c, c->reg.vertex[1], false);
+      brw_ff_gs_offset_header_dw2(c, URB_WRITE_PRIM_START);
+      brw_ff_gs_emit_vue(c, c->reg.vertex[0], false);
+      brw_ff_gs_offset_header_dw2(c, -URB_WRITE_PRIM_START);
+      brw_ff_gs_emit_vue(c, c->reg.vertex[1], false);
       if (check_edge_flags) {
          brw_ENDIF(p);
          /* Only emit vertex 2 in PRIM_END mode if this is the last triangle
@@ -498,9 +504,9 @@ gen6_sol_program(struct brw_gs_compile *c, struct brw_gs_prog_key *key,
                  brw_imm_ud(BRW_GS_EDGE_INDICATOR_1));
          brw_set_predicate_control(p, BRW_PREDICATE_NORMAL);
       }
-      brw_gs_offset_header_dw2(c, URB_WRITE_PRIM_END);
+      brw_ff_gs_offset_header_dw2(c, URB_WRITE_PRIM_END);
       brw_set_predicate_control(p, BRW_PREDICATE_NONE);
-      brw_gs_emit_vue(c, c->reg.vertex[2], true);
+      brw_ff_gs_emit_vue(c, c->reg.vertex[2], true);
       break;
    }
 }
