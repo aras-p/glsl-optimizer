@@ -355,20 +355,47 @@ is_const(struct tgsi_src_register *src)
 			(src->File == TGSI_FILE_IMMEDIATE);
 }
 
+static type_t
+get_ftype(struct fd3_compile_context *ctx)
+{
+	return ctx->so->half_precision ? TYPE_F16 : TYPE_F32;
+}
+
+static type_t
+get_utype(struct fd3_compile_context *ctx)
+{
+	return ctx->so->half_precision ? TYPE_U16 : TYPE_U32;
+}
+
+static unsigned
+src_swiz(struct tgsi_src_register *src, int chan)
+{
+	switch (chan) {
+	case 0: return src->SwizzleX;
+	case 1: return src->SwizzleY;
+	case 2: return src->SwizzleZ;
+	case 3: return src->SwizzleW;
+	}
+	assert(0);
+	return 0;
+}
+
 /* for instructions that cannot take a const register as src, if needed
  * generate a move to temporary gpr:
  */
 static struct tgsi_src_register *
 get_unconst(struct fd3_compile_context *ctx, struct tgsi_src_register *src)
 {
-	if (is_const(src)) {
-		static struct tgsi_dst_register tmp_dst;
-		struct tgsi_src_register *tmp_src =
-				get_internal_temp(ctx, &tmp_dst);
-		create_mov(ctx, &tmp_dst, src);
-		src = tmp_src;
-	}
-	return src;
+	struct tgsi_dst_register tmp_dst;
+	struct tgsi_src_register *tmp_src;
+
+	compile_assert(ctx, is_const(src));
+
+	tmp_src = get_internal_temp(ctx, &tmp_dst);
+
+	create_mov(ctx, &tmp_dst, src);
+
+	return tmp_src;
 }
 
 static void
@@ -418,31 +445,6 @@ get_immediate(struct fd3_compile_context *ctx,
 	reg->SwizzleW  = swiz2tgsi[swiz];
 }
 
-static type_t
-get_ftype(struct fd3_compile_context *ctx)
-{
-	return ctx->so->half_precision ? TYPE_F16 : TYPE_F32;
-}
-
-static type_t
-get_utype(struct fd3_compile_context *ctx)
-{
-	return ctx->so->half_precision ? TYPE_U16 : TYPE_U32;
-}
-
-static unsigned
-src_swiz(struct tgsi_src_register *src, int chan)
-{
-	switch (chan) {
-	case 0: return src->SwizzleX;
-	case 1: return src->SwizzleY;
-	case 2: return src->SwizzleZ;
-	case 3: return src->SwizzleW;
-	}
-	assert(0);
-	return 0;
-}
-
 static void
 create_mov(struct fd3_compile_context *ctx, struct tgsi_dst_register *dst,
 		struct tgsi_src_register *src)
@@ -463,7 +465,6 @@ create_mov(struct fd3_compile_context *ctx, struct tgsi_dst_register *dst,
 			ir3_instr_create(ctx->ir, 0, OPC_NOP);
 		}
 	}
-
 }
 
 static void
@@ -584,6 +585,15 @@ vectorize(struct fd3_compile_context *ctx, struct ir3_instruction *instr,
  * native instructions:
  */
 
+static inline void
+get_swiz(unsigned *swiz, struct tgsi_src_register *src)
+{
+	swiz[0] = src->SwizzleX;
+	swiz[1] = src->SwizzleY;
+	swiz[2] = src->SwizzleZ;
+	swiz[3] = src->SwizzleW;
+}
+
 static void
 trans_dotp(const struct instr_translater *t,
 		struct fd3_compile_context *ctx,
@@ -595,33 +605,30 @@ trans_dotp(const struct instr_translater *t,
 	struct tgsi_dst_register *dst  = &inst->Dst[0].Register;
 	struct tgsi_src_register *src0 = &inst->Src[0].Register;
 	struct tgsi_src_register *src1 = &inst->Src[1].Register;
-	unsigned swiz0[] = { src0->SwizzleX, src0->SwizzleY, src0->SwizzleZ, src0->SwizzleW };
-	unsigned swiz1[] = { src1->SwizzleX, src1->SwizzleY, src1->SwizzleZ, src1->SwizzleW };
+	unsigned swiz0[4];
+	unsigned swiz1[4];
 	opc_t opc_mad    = ctx->so->half_precision ? OPC_MAD_F16 : OPC_MAD_F32;
 	unsigned n = t->arg;     /* number of components */
-	unsigned i;
+	unsigned i, swapped = 0;
 
 	tmp_src = get_internal_temp_repl(ctx, &tmp_dst);
 
-	/* Blob compiler never seems to use a const in src1 position for
-	 * mad.*, although there does seem (according to disassembler
-	 * hidden in libllvm-a3xx.so) to be a bit to indicate that src1
-	 * is a const.  Not sure if this is a hw bug, or simply that the
-	 * disassembler lies.
+	/* in particular, can't handle const for src1 for cat3/mad:
 	 */
 	if (is_const(src1)) {
-
-		/* the mov to tmp unswizzles src1, so now we have tmp.xyzw:
-		 */
-		for (i = 0; i < 4; i++)
-			swiz1[i] = i;
-
-		/* the first mul.f will clobber tmp.x, but that is ok
-		 * because after that point we no longer need tmp.x:
-		 */
-		create_mov(ctx, &tmp_dst, src1);
-		src1 = tmp_src;
+		if (!is_const(src0)) {
+			struct tgsi_src_register *tmp;
+			tmp = src0;
+			src0 = src1;
+			src1 = tmp;
+			swapped = 1;
+		} else {
+			src0 = get_unconst(ctx, src0);
+		}
 	}
+
+	get_swiz(swiz0, src0);
+	get_swiz(swiz1, src1);
 
 	instr = ir3_instr_create(ctx->ir, 2, OPC_MUL_F);
 	add_dst_reg(ctx, instr, &tmp_dst, 0);
@@ -640,22 +647,20 @@ trans_dotp(const struct instr_translater *t,
 
 	/* DPH(a,b) = (a.x * b.x) + (a.y * b.y) + (a.z * b.z) + b.w */
 	if (t->tgsi_opc == TGSI_OPCODE_DPH) {
-		ir3_instr_create(ctx->ir, 0, OPC_NOP);
+		ir3_instr_create(ctx->ir, 0, OPC_NOP)->repeat = 1;
 
 		instr = ir3_instr_create(ctx->ir, 2, OPC_ADD_F);
 		add_dst_reg(ctx, instr, &tmp_dst, 0);
-		add_src_reg(ctx, instr, src1, swiz1[i]);
+		if (swapped)
+			add_src_reg(ctx, instr, src0, swiz0[i]);
+		else
+			add_src_reg(ctx, instr, src1, swiz1[i]);
 		add_src_reg(ctx, instr, tmp_src, 0);
 
 		n++;
 	}
 
-	ir3_instr_create(ctx->ir, 0, OPC_NOP);
-
-	/* pad out to multiple of 4 scalar instructions: */
-	for (i = 2 * n; i % 4; i++) {
-		ir3_instr_create(ctx->ir, 0, OPC_NOP);
-	}
+	ir3_instr_create(ctx->ir, 0, OPC_NOP)->repeat = 2;
 
 	create_mov(ctx, dst, tmp_src);
 }
@@ -670,6 +675,11 @@ trans_lrp(const struct instr_translater *t,
 	struct tgsi_dst_register tmp_dst1, tmp_dst2;
 	struct tgsi_src_register *tmp_src1, *tmp_src2;
 	struct tgsi_src_register tmp_const;
+	struct tgsi_src_register *src0 = &inst->Src[0].Register;
+	struct tgsi_src_register *src1 = &inst->Src[1].Register;
+
+	if (is_const(src0) && is_const(src1))
+		src0 = get_unconst(ctx, src0);
 
 	tmp_src1 = get_internal_temp(ctx, &tmp_dst1);
 	tmp_src2 = get_internal_temp(ctx, &tmp_dst2);
@@ -678,15 +688,12 @@ trans_lrp(const struct instr_translater *t,
 
 	/* tmp1 = (a * b) */
 	instr = ir3_instr_create(ctx->ir, 2, OPC_MUL_F);
-	vectorize(ctx, instr, &tmp_dst1, 2,
-			&inst->Src[0].Register, 0,
-			&inst->Src[1].Register, 0);
+	vectorize(ctx, instr, &tmp_dst1, 2, src0, 0, src1, 0);
 
 	/* tmp2 = (1 - a) */
 	instr = ir3_instr_create(ctx->ir, 2, OPC_ADD_F);
-	vectorize(ctx, instr, &tmp_dst2, 2,
-			&tmp_const, 0,
-			&inst->Src[0].Register, IR3_REG_NEGATE);
+	vectorize(ctx, instr, &tmp_dst2, 2, &tmp_const, 0,
+			src0, IR3_REG_NEGATE);
 
 	/* tmp2 = tmp2 * c */
 	instr = ir3_instr_create(ctx->ir, 2, OPC_MUL_F);
@@ -930,10 +937,6 @@ trans_cmp(const struct instr_translater *t,
 		return;
 	}
 
-	/* NOTE: seems blob compiler will move a const to a gpr if both
-	 * src args to cmps.f are const.  Need to check if this applies
-	 * to other instructions..
-	 */
 	if (is_const(a0) && is_const(a1))
 		a0 = get_unconst(ctx, a0);
 
@@ -1041,6 +1044,9 @@ trans_if(const struct instr_translater *t,
 
 	get_immediate(ctx, &constval, fui(0.0));
 
+	if (is_const(src))
+		src = get_unconst(ctx, src);
+
 	instr = ir3_instr_create(ctx->ir, 2, OPC_CMPS_F);
 	ir3_reg_create(instr, regid(REG_P0, 0), 0);
 	add_src_reg(ctx, instr, src, src->SwizzleX);
@@ -1122,10 +1128,10 @@ instr_cat2(const struct instr_translater *t,
 		struct tgsi_full_instruction *inst)
 {
 	struct tgsi_dst_register *dst = get_dst(ctx, inst);
+	struct tgsi_src_register *src0 = &inst->Src[0].Register;
+	struct tgsi_src_register *src1 = &inst->Src[1].Register;
 	struct ir3_instruction *instr;
 	unsigned src0_flags = 0;
-
-	instr = ir3_instr_create(ctx->ir, 2, t->opc);
 
 	switch (t->tgsi_opc) {
 	case TGSI_OPCODE_ABS:
@@ -1149,17 +1155,36 @@ instr_cat2(const struct instr_translater *t,
 	case OPC_SETRM:
 	case OPC_CBITS_B:
 		/* these only have one src reg */
-		vectorize(ctx, instr, dst, 1,
-				&inst->Src[0].Register, src0_flags);
+		instr = ir3_instr_create(ctx->ir, 2, t->opc);
+		vectorize(ctx, instr, dst, 1, src0, src0_flags);
 		break;
 	default:
-		vectorize(ctx, instr, dst, 2,
-				&inst->Src[0].Register, src0_flags,
-				&inst->Src[1].Register, 0);
+		if (is_const(src0) && is_const(src1))
+			src0 = get_unconst(ctx, src0);
+
+		instr = ir3_instr_create(ctx->ir, 2, t->opc);
+		vectorize(ctx, instr, dst, 2, src0, src0_flags, src1, 0);
 		break;
 	}
 
 	put_dst(ctx, inst, dst);
+}
+
+static bool is_mad(opc_t opc)
+{
+	switch (opc) {
+	case OPC_MAD_U16:
+	case OPC_MADSH_U16:
+	case OPC_MAD_S16:
+	case OPC_MADSH_M16:
+	case OPC_MAD_U24:
+	case OPC_MAD_S24:
+	case OPC_MAD_F16:
+	case OPC_MAD_F32:
+		return true;
+	default:
+		return false;
+	}
 }
 
 static void
@@ -1168,22 +1193,27 @@ instr_cat3(const struct instr_translater *t,
 		struct tgsi_full_instruction *inst)
 {
 	struct tgsi_dst_register *dst = get_dst(ctx, inst);
-	struct tgsi_src_register *src1;
+	struct tgsi_src_register *src0 = &inst->Src[0].Register;
+	struct tgsi_src_register *src1 = &inst->Src[1].Register;
 	struct ir3_instruction *instr;
 
-	/* Blob compiler never seems to use a const in src1 position..
-	 * although there does seem (according to disassembler hidden
-	 * in libllvm-a3xx.so) to be a bit to indicate that src1 is a
-	 * const.  Not sure if this is a hw bug, or simply that the
-	 * disassembler lies.
+	/* in particular, can't handle const for src1 for cat3..
+	 * for mad, we can swap first two src's if needed:
 	 */
-	src1 = get_unconst(ctx, &inst->Src[1].Register);
+	if (is_const(src1)) {
+		if (is_mad(t->opc) && !is_const(src0)) {
+			struct tgsi_src_register *tmp;
+			tmp = src0;
+			src0 = src1;
+			src1 = tmp;
+		} else {
+			src0 = get_unconst(ctx, src0);
+		}
+	}
 
 	instr = ir3_instr_create(ctx->ir, 3,
 			ctx->so->half_precision ? t->hopc : t->opc);
-	vectorize(ctx, instr, dst, 3,
-			&inst->Src[0].Register, 0,
-			src1, 0,
+	vectorize(ctx, instr, dst, 3, src0, 0, src1, 0,
 			&inst->Src[2].Register, 0);
 	put_dst(ctx, inst, dst);
 }
@@ -1194,11 +1224,12 @@ instr_cat4(const struct instr_translater *t,
 		struct tgsi_full_instruction *inst)
 {
 	struct tgsi_dst_register *dst = get_dst(ctx, inst);
-	struct tgsi_src_register *src;
+	struct tgsi_src_register *src = &inst->Src[0].Register;
 	struct ir3_instruction *instr;
 
 	/* seems like blob compiler avoids const as src.. */
-	src = get_unconst(ctx, &inst->Src[0].Register);
+	if (is_const(src))
+		src = get_unconst(ctx, src);
 
 	ir3_instr_create(ctx->ir, 0, OPC_NOP)->repeat = 5;
 	instr = ir3_instr_create(ctx->ir, 4, t->opc);
