@@ -531,10 +531,10 @@ struct brw_vs_prog_data {
 };
 
 
-/* Note: brw_vec4_gs_prog_data_compare() must be updated when adding fields to
+/* Note: brw_gs_prog_data_compare() must be updated when adding fields to
  * this struct!
  */
-struct brw_vec4_gs_prog_data
+struct brw_gs_prog_data
 {
    struct brw_vec4_prog_data base;
 

@@ -34,7 +34,7 @@ const unsigned MAX_GS_INPUT_VERTICES = 6;
 namespace brw {
 
 vec4_gs_visitor::vec4_gs_visitor(struct brw_context *brw,
-                                 struct brw_vec4_gs_compile *c,
+                                 struct brw_gs_compile *c,
                                  struct gl_shader_program *prog,
                                  struct brw_shader *shader,
                                  void *mem_ctx)

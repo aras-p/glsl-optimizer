@@ -33,7 +33,7 @@
 #include "brw_vec4.h"
 
 
-struct brw_vec4_gs_prog_key
+struct brw_gs_prog_key
 {
    struct brw_vec4_prog_key base;
 
@@ -44,11 +44,11 @@ struct brw_vec4_gs_prog_key
 /**
  * Scratch data used when compiling a GLSL geometry shader.
  */
-struct brw_vec4_gs_compile
+struct brw_gs_compile
 {
    struct brw_vec4_compile base;
-   struct brw_vec4_gs_prog_key key;
-   struct brw_vec4_gs_prog_data prog_data;
+   struct brw_gs_prog_key key;
+   struct brw_gs_prog_data prog_data;
 
    struct brw_geometry_program *gp;
 };
@@ -61,7 +61,7 @@ class vec4_gs_visitor : public vec4_visitor
 {
 public:
    vec4_gs_visitor(struct brw_context *brw,
-                   struct brw_vec4_gs_compile *c,
+                   struct brw_gs_compile *c,
                    struct gl_shader_program *prog,
                    struct brw_shader *shader,
                    void *mem_ctx);
@@ -82,7 +82,7 @@ private:
    int setup_varying_inputs(int payload_reg, int *attribute_map);
 
    src_reg vertex_count;
-   const struct brw_vec4_gs_compile * const c;
+   const struct brw_gs_compile * const c;
 };
 
 } /* namespace brw */
