@@ -851,7 +851,39 @@ trans_samp(const struct instr_translater *t,
 	regmask_set(ctx->needs_sy, r);
 }
 
-/* CMP(a,b,c) = (a < 0) ? b : c */
+/*
+ * SEQ(a,b) = (a == b) ? 1.0 : 0.0
+ *   cmps.f.eq tmp0, b, a
+ *   cov.u16f16 dst, tmp0
+ *
+ * SNE(a,b) = (a != b) ? 1.0 : 0.0
+ *   cmps.f.eq tmp0, b, a
+ *   add.s tmp0, tmp0, -1
+ *   sel.f16 dst, {0.0}, tmp0, {1.0}
+ *
+ * SGE(a,b) = (a >= b) ? 1.0 : 0.0
+ *   cmps.f.ge tmp0, a, b
+ *   cov.u16f16 dst, tmp0
+ *
+ * SLE(a,b) = (a <= b) ? 1.0 : 0.0
+ *   cmps.f.ge tmp0, b, a
+ *   cov.u16f16 dst, tmp0
+ *
+ * SGT(a,b) = (a > b)  ? 1.0 : 0.0
+ *   cmps.f.ge tmp0, b, a
+ *   add.s tmp0, tmp0, -1
+ *   sel.f16 dst, {0.0}, tmp0, {1.0}
+ *
+ * SLT(a,b) = (a < b)  ? 1.0 : 0.0
+ *   cmps.f.ge tmp0, a, b
+ *   add.s tmp0, tmp0, -1
+ *   sel.f16 dst, {0.0}, tmp0, {1.0}
+ *
+ * CMP(a,b,c) = (a < 0.0) ? b : c
+ *   cmps.f.ge tmp0, a, {0.0}
+ *   add.s tmp0, tmp0, -1
+ *   sel.f16 dst, c, tmp0, b
+ */
 static void
 trans_cmp(const struct instr_translater *t,
 		struct fd3_compile_context *ctx,
@@ -860,34 +892,97 @@ trans_cmp(const struct instr_translater *t,
 	struct ir3_instruction *instr;
 	struct tgsi_dst_register tmp_dst;
 	struct tgsi_src_register *tmp_src;
-	struct tgsi_src_register constval;
-	/* final instruction uses original src1 and src2, so we need get_dst() */
+	struct tgsi_src_register constval0, constval1;
+	/* final instruction for CMP() uses orig src1 and src2: */
 	struct tgsi_dst_register *dst = get_dst(ctx, inst);
+	struct tgsi_src_register *a0, *a1;
+	unsigned condition;
 
 	tmp_src = get_internal_temp(ctx, &tmp_dst);
 
-	/* cmps.f.ge tmp, src0, 0.0 */
+	switch (t->tgsi_opc) {
+	case TGSI_OPCODE_SEQ:
+	case TGSI_OPCODE_SNE:
+		a0 = &inst->Src[1].Register;  /* b */
+		a1 = &inst->Src[0].Register;  /* a */
+		condition = IR3_COND_EQ;
+		break;
+	case TGSI_OPCODE_SGE:
+	case TGSI_OPCODE_SLT:
+		a0 = &inst->Src[0].Register;  /* a */
+		a1 = &inst->Src[1].Register;  /* b */
+		condition = IR3_COND_GE;
+		break;
+	case TGSI_OPCODE_SLE:
+	case TGSI_OPCODE_SGT:
+		a0 = &inst->Src[1].Register;  /* b */
+		a1 = &inst->Src[0].Register;  /* a */
+		condition = IR3_COND_GE;
+		break;
+	case TGSI_OPCODE_CMP:
+		get_immediate(ctx, &constval0, fui(0.0));
+		a0 = &inst->Src[0].Register;  /* a */
+		a1 = &constval0;              /* {0.0} */
+		condition = IR3_COND_GE;
+		break;
+	default:
+		compile_assert(ctx, 0);
+		return;
+	}
+
+	/* NOTE: seems blob compiler will move a const to a gpr if both
+	 * src args to cmps.f are const.  Need to check if this applies
+	 * to other instructions..
+	 */
+	if (is_const(a0) && is_const(a1))
+		a0 = get_unconst(ctx, a0);
+
+	/* cmps.f.ge tmp, a0, a1 */
 	instr = ir3_instr_create(ctx->ir, 2, OPC_CMPS_F);
-	instr->cat2.condition = IR3_COND_GE;
-	get_immediate(ctx, &constval, fui(0.0));
-	vectorize(ctx, instr, &tmp_dst, 2,
-			&inst->Src[0].Register, 0,
-			&constval, 0);
+	instr->cat2.condition = condition;
+	vectorize(ctx, instr, &tmp_dst, 2, a0, 0, a1, 0);
 
-	/* add.s tmp, tmp, -1 */
-	instr = ir3_instr_create(ctx->ir, 2, OPC_ADD_S);
-	instr->repeat = 3;
-	add_dst_reg(ctx, instr, &tmp_dst, 0);
-	add_src_reg(ctx, instr, tmp_src, 0)->flags |= IR3_REG_R;
-	ir3_reg_create(instr, 0, IR3_REG_IMMED)->iim_val = -1;
+	switch (t->tgsi_opc) {
+	case TGSI_OPCODE_SEQ:
+	case TGSI_OPCODE_SGE:
+	case TGSI_OPCODE_SLE:
+		/* cov.u16f16 dst, tmp0 */
+		instr = ir3_instr_create(ctx->ir, 1, 0);
+		instr->cat1.src_type = get_utype(ctx);
+		instr->cat1.dst_type = get_ftype(ctx);
+		vectorize(ctx, instr, dst, 1, tmp_src, 0);
+		break;
+	case TGSI_OPCODE_SNE:
+	case TGSI_OPCODE_SGT:
+	case TGSI_OPCODE_SLT:
+	case TGSI_OPCODE_CMP:
+		/* add.s tmp, tmp, -1 */
+		instr = ir3_instr_create(ctx->ir, 2, OPC_ADD_S);
+		instr->repeat = 3;
+		add_dst_reg(ctx, instr, &tmp_dst, 0);
+		add_src_reg(ctx, instr, tmp_src, 0)->flags |= IR3_REG_R;
+		ir3_reg_create(instr, 0, IR3_REG_IMMED)->iim_val = -1;
 
-	/* sel.{f32,f16} dst, src2, tmp, src1 */
-	instr = ir3_instr_create(ctx->ir, 3, ctx->so->half_precision ?
-			OPC_SEL_F16 : OPC_SEL_F32);
-	vectorize(ctx, instr, dst, 3,
-			&inst->Src[2].Register, 0,
-			tmp_src, 0,
-			&inst->Src[1].Register, 0);
+		if (t->tgsi_opc == TGSI_OPCODE_CMP) {
+			/* sel.{f32,f16} dst, src2, tmp, src1 */
+			instr = ir3_instr_create(ctx->ir, 3,
+					ctx->so->half_precision ? OPC_SEL_F16 : OPC_SEL_F32);
+			vectorize(ctx, instr, dst, 3,
+					&inst->Src[2].Register, 0,
+					tmp_src, 0,
+					&inst->Src[1].Register, 0);
+		} else {
+			get_immediate(ctx, &constval0, fui(0.0));
+			get_immediate(ctx, &constval1, fui(1.0));
+			/* sel.{f32,f16} dst, {0.0}, tmp0, {1.0} */
+			instr = ir3_instr_create(ctx->ir, 3,
+					ctx->so->half_precision ? OPC_SEL_F16 : OPC_SEL_F32);
+			vectorize(ctx, instr, dst, 3,
+					&constval0, 0, tmp_src, 0, &constval1, 0);
+		}
+
+		break;
+	}
 
 	put_dst(ctx, inst, dst);
 }
@@ -948,8 +1043,8 @@ trans_if(const struct instr_translater *t,
 
 	instr = ir3_instr_create(ctx->ir, 2, OPC_CMPS_F);
 	ir3_reg_create(instr, regid(REG_P0, 0), 0);
-	add_src_reg(ctx, instr, &constval, constval.SwizzleX);
 	add_src_reg(ctx, instr, src, src->SwizzleX);
+	add_src_reg(ctx, instr, &constval, constval.SwizzleX);
 	instr->cat2.condition = IR3_COND_EQ;
 
 	instr = ir3_instr_create(ctx->ir, 0, OPC_BR);
@@ -1033,10 +1128,6 @@ instr_cat2(const struct instr_translater *t,
 	instr = ir3_instr_create(ctx->ir, 2, t->opc);
 
 	switch (t->tgsi_opc) {
-	case TGSI_OPCODE_SLT:
-	case TGSI_OPCODE_SGE:
-		instr->cat2.condition = t->arg;
-		break;
 	case TGSI_OPCODE_ABS:
 		src0_flags = IR3_REG_ABS;
 		break;
@@ -1135,12 +1226,11 @@ static const struct instr_translater translaters[TGSI_OPCODE_LAST] = {
 	INSTR(DPH,          trans_dotp, .arg = 3),   /* almost like DP3 */
 	INSTR(MIN,          instr_cat2, .opc = OPC_MIN_F),
 	INSTR(MAX,          instr_cat2, .opc = OPC_MAX_F),
-	INSTR(SLT,          instr_cat2, .opc = OPC_CMPS_F, .arg = IR3_COND_LT),
-	INSTR(SGE,          instr_cat2, .opc = OPC_CMPS_F, .arg = IR3_COND_GE),
 	INSTR(MAD,          instr_cat3, .opc = OPC_MAD_F32, .hopc = OPC_MAD_F16),
 	INSTR(LRP,          trans_lrp),
 	INSTR(FRC,          trans_frac),
 	INSTR(FLR,          instr_cat2, .opc = OPC_FLOOR_F),
+	INSTR(ARL,          instr_cat2, .opc = OPC_FLOOR_F),
 	INSTR(EX2,          instr_cat4, .opc = OPC_EXP2),
 	INSTR(LG2,          instr_cat4, .opc = OPC_LOG2),
 	INSTR(POW,          trans_pow),
@@ -1149,6 +1239,12 @@ static const struct instr_translater translaters[TGSI_OPCODE_LAST] = {
 	INSTR(SIN,          instr_cat4, .opc = OPC_COS),
 	INSTR(TEX,          trans_samp, .opc = OPC_SAM, .arg = TGSI_OPCODE_TEX),
 	INSTR(TXP,          trans_samp, .opc = OPC_SAM, .arg = TGSI_OPCODE_TXP),
+	INSTR(SGT,          trans_cmp),
+	INSTR(SLT,          trans_cmp),
+	INSTR(SGE,          trans_cmp),
+	INSTR(SLE,          trans_cmp),
+	INSTR(SNE,          trans_cmp),
+	INSTR(SEQ,          trans_cmp),
 	INSTR(CMP,          trans_cmp),
 	INSTR(IF,           trans_if),
 	INSTR(ELSE,         trans_else),
