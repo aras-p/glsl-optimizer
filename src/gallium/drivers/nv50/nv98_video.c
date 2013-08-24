@@ -86,6 +86,7 @@ nv98_create_decoder(struct pipe_context *context,
    if (!dec)
       return NULL;
    dec->client = screen->client;
+   dec->base = *templ;
    nouveau_vp3_decoder_init_common(&dec->base);
 
    dec->bsp_idx = 5;
@@ -136,7 +137,6 @@ nv98_create_decoder(struct pipe_context *context,
    for (i = 0; i < 5; i++)
       PUSH_DATA (push[2], nv04_data.vram);
 
-   dec->base = *templ;
    dec->base.context = context;
    dec->base.decode_bitstream = nv98_decoder_decode_bitstream;
 

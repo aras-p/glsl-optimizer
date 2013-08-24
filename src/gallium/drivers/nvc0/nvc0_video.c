@@ -86,6 +86,7 @@ nvc0_create_decoder(struct pipe_context *context,
    if (!dec)
       return NULL;
    dec->client = screen->client;
+   dec->base = *templ;
    nouveau_vp3_decoder_init_common(&dec->base);
 
    if (!kepler) {
@@ -162,7 +163,6 @@ nvc0_create_decoder(struct pipe_context *context,
    BEGIN_NVC0(push[2], SUBC_PPP(NV01_SUBCHAN_OBJECT), 1);
    PUSH_DATA (push[2], dec->ppp->handle);
 
-   dec->base = *templ;
    dec->base.context = context;
    dec->base.decode_bitstream = nvc0_decoder_decode_bitstream;
 
