@@ -35,6 +35,63 @@
 #include "brw_context.h"
 #include "brw_state.h"
 
+
+void
+brw_upload_vec4_pull_constants(struct brw_context *brw,
+                               GLbitfield brw_new_constbuf,
+                               const struct gl_program *prog,
+                               struct brw_stage_state *stage_state,
+                               const struct brw_vec4_prog_data *prog_data)
+{
+   int i;
+
+   /* Updates the ParamaterValues[i] pointers for all parameters of the
+    * basic type of PROGRAM_STATE_VAR.
+    */
+   _mesa_load_state_parameters(&brw->ctx, prog->Parameters);
+
+   if (!prog_data->nr_pull_params) {
+      if (stage_state->const_bo) {
+	 drm_intel_bo_unreference(stage_state->const_bo);
+	 stage_state->const_bo = NULL;
+	 stage_state->surf_offset[SURF_INDEX_VEC4_CONST_BUFFER] = 0;
+	 brw->state.dirty.brw |= brw_new_constbuf;
+      }
+      return;
+   }
+
+   /* _NEW_PROGRAM_CONSTANTS */
+   drm_intel_bo_unreference(stage_state->const_bo);
+   uint32_t size = prog_data->nr_pull_params * 4;
+   stage_state->const_bo = drm_intel_bo_alloc(brw->bufmgr, "vec4_const_buffer",
+                                           size, 64);
+
+   drm_intel_gem_bo_map_gtt(stage_state->const_bo);
+
+   for (i = 0; i < prog_data->nr_pull_params; i++) {
+      memcpy(stage_state->const_bo->virtual + i * 4,
+	     prog_data->pull_param[i],
+	     4);
+   }
+
+   if (0) {
+      for (i = 0; i < ALIGN(prog_data->nr_pull_params, 4) / 4; i++) {
+	 float *row = (float *)stage_state->const_bo->virtual + i * 4;
+	 printf("const surface %3d: %4.3f %4.3f %4.3f %4.3f\n",
+		i, row[0], row[1], row[2], row[3]);
+      }
+   }
+
+   drm_intel_gem_bo_unmap_gtt(stage_state->const_bo);
+
+   const int surf = SURF_INDEX_VEC4_CONST_BUFFER;
+   brw->vtbl.create_constant_surface(brw, stage_state->const_bo, 0, size,
+                                     &stage_state->surf_offset[surf], false);
+
+   brw->state.dirty.brw |= brw_new_constbuf;
+}
+
+
 /* Creates a new VS constant buffer reflecting the current VS program's
  * constants, if needed by the VS program.
  *
@@ -49,53 +106,13 @@ brw_upload_vs_pull_constants(struct brw_context *brw)
    /* BRW_NEW_VERTEX_PROGRAM */
    struct brw_vertex_program *vp =
       (struct brw_vertex_program *) brw->vertex_program;
-   int i;
-
-   /* Updates the ParamaterValues[i] pointers for all parameters of the
-    * basic type of PROGRAM_STATE_VAR.
-    */
-   _mesa_load_state_parameters(&brw->ctx, vp->program.Base.Parameters);
 
    /* CACHE_NEW_VS_PROG */
-   if (!brw->vs.prog_data->base.nr_pull_params) {
-      if (stage_state->const_bo) {
-	 drm_intel_bo_unreference(stage_state->const_bo);
-	 stage_state->const_bo = NULL;
-	 stage_state->surf_offset[SURF_INDEX_VEC4_CONST_BUFFER] = 0;
-	 brw->state.dirty.brw |= BRW_NEW_VS_CONSTBUF;
-      }
-      return;
-   }
+   const struct brw_vec4_prog_data *prog_data = &brw->vs.prog_data->base;
 
    /* _NEW_PROGRAM_CONSTANTS */
-   drm_intel_bo_unreference(stage_state->const_bo);
-   uint32_t size = brw->vs.prog_data->base.nr_pull_params * 4;
-   stage_state->const_bo = drm_intel_bo_alloc(brw->bufmgr, "vp_const_buffer",
-                                              size, 64);
-
-   drm_intel_gem_bo_map_gtt(stage_state->const_bo);
-   for (i = 0; i < brw->vs.prog_data->base.nr_pull_params; i++) {
-      memcpy(stage_state->const_bo->virtual + i * 4,
-	     brw->vs.prog_data->base.pull_param[i],
-	     4);
-   }
-
-   if (0) {
-      for (i = 0; i < ALIGN(brw->vs.prog_data->base.nr_pull_params, 4) / 4;
-           i++) {
-	 float *row = (float *)stage_state->const_bo->virtual + i * 4;
-	 printf("vs const surface %3d: %4.3f %4.3f %4.3f %4.3f\n",
-		i, row[0], row[1], row[2], row[3]);
-      }
-   }
-
-   drm_intel_gem_bo_unmap_gtt(stage_state->const_bo);
-
-   const int surf = SURF_INDEX_VEC4_CONST_BUFFER;
-   brw->vtbl.create_constant_surface(brw, stage_state->const_bo, 0, size,
-                                     &stage_state->surf_offset[surf], false);
-
-   brw->state.dirty.brw |= BRW_NEW_VS_CONSTBUF;
+   brw_upload_vec4_pull_constants(brw, BRW_NEW_VS_CONSTBUF, &vp->program.Base,
+                                  stage_state, prog_data);
 }
 
 const struct brw_tracked_state brw_vs_pull_constants = {

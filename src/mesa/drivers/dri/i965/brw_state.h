@@ -221,6 +221,14 @@ uint32_t
 get_attr_override(const struct brw_vue_map *vue_map, int urb_entry_read_offset,
                   int fs_attr, bool two_side_color, uint32_t *max_source_attr);
 
+/* brw_vs_surface_state.c */
+void
+brw_upload_vec4_pull_constants(struct brw_context *brw,
+                               GLbitfield brw_new_constbuf,
+                               const struct gl_program *prog,
+                               struct brw_stage_state *stage_state,
+                               const struct brw_vec4_prog_data *prog_data);
+
 #ifdef __cplusplus
 }
 #endif
