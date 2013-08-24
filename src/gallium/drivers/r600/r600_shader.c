@@ -6128,10 +6128,10 @@ static struct r600_shader_tgsi_instruction cm_shader_tgsi_instruction[] = {
 	{106,			0, ALU_OP0_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_NOP,	0, ALU_OP0_NOP, tgsi_unsupported},
 	/* gap */
-	{108,			0, ALU_OP0_NOP, tgsi_unsupported},
-	{109,			0, ALU_OP0_NOP, tgsi_unsupported},
-	{110,			0, ALU_OP0_NOP, tgsi_unsupported},
-	{111,			0, ALU_OP0_NOP, tgsi_unsupported},
+	{TGSI_OPCODE_FSEQ,	0, ALU_OP2_SETE_DX10, tgsi_op2},
+	{TGSI_OPCODE_FSGE,	0, ALU_OP2_SETGE_DX10, tgsi_op2},
+	{TGSI_OPCODE_FSLT,	0, ALU_OP2_SETGT_DX10, tgsi_op2_swap},
+	{TGSI_OPCODE_FSNE,	0, ALU_OP2_SETNE_DX10, tgsi_op2_swap},
 	{TGSI_OPCODE_NRM4,	0, ALU_OP0_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_CALLNZ,	0, ALU_OP0_NOP, tgsi_unsupported},
 	/* gap */
