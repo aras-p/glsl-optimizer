@@ -185,6 +185,21 @@ compile_init(struct fd3_compile_context *ctx, struct fd3_shader_stateobj *so,
 }
 
 static void
+compile_error(struct fd3_compile_context *ctx, const char *format, ...)
+{
+	va_list ap;
+	va_start(ap, format);
+	_debug_vprintf(format, ap);
+	va_end(ap);
+	tgsi_dump(ctx->tokens, 0);
+	assert(0);
+}
+
+#define compile_assert(ctx, cond) do { \
+		if (!(cond)) compile_error((ctx), "failed assert: "#cond"\n"); \
+	} while (0)
+
+static void
 compile_free(struct fd3_compile_context *ctx)
 {
 	tgsi_parse_free(&ctx->parser);
@@ -212,9 +227,8 @@ add_dst_reg(struct fd3_compile_context *ctx, struct ir3_instruction *instr,
 		num = dst->Index + ctx->base_reg[dst->File];
 		break;
 	default:
-		DBG("unsupported dst register file: %s",
+		compile_error(ctx, "unsupported dst register file: %s\n",
 			tgsi_file_name(dst->File));
-		assert(0);
 		break;
 	}
 
@@ -250,9 +264,8 @@ add_src_reg(struct fd3_compile_context *ctx, struct ir3_instruction *instr,
 		num = src->Index + ctx->base_reg[src->File];
 		break;
 	default:
-		DBG("unsupported src register file: %s",
+		compile_error(ctx, "unsupported src register file: %s\n",
 			tgsi_file_name(src->File));
-		assert(0);
 		break;
 	}
 
@@ -327,6 +340,13 @@ get_internal_temp_repl(struct fd3_compile_context *ctx,
 	get_internal_temp(ctx, tmp_dst, tmp_src);
 	tmp_src->SwizzleX = tmp_src->SwizzleY =
 		tmp_src->SwizzleZ = tmp_src->SwizzleW = TGSI_SWIZZLE_X;
+}
+
+static inline bool
+is_const(struct tgsi_src_register *src)
+{
+	return (src->File == TGSI_FILE_CONSTANT) ||
+			(src->File == TGSI_FILE_IMMEDIATE);
 }
 
 static void
@@ -578,8 +598,7 @@ trans_dotp(const struct instr_translater *t,
 	 * is a const.  Not sure if this is a hw bug, or simply that the
 	 * disassembler lies.
 	 */
-	if ((src1->File == TGSI_FILE_IMMEDIATE) ||
-			(src1->File == TGSI_FILE_CONSTANT)) {
+	if (is_const(src1)) {
 
 		/* the mov to tmp unswizzles src1, so now we have tmp.xyzw:
 		 */
@@ -768,7 +787,7 @@ trans_samp(const struct instr_translater *t,
 		flags |= IR3_INSTR_P;
 		break;
 	default:
-		assert(0);
+		compile_assert(ctx, 0);
 		break;
 	}
 
@@ -1187,7 +1206,7 @@ decl_out(struct fd3_compile_context *ctx, struct tgsi_full_declaration *decl)
 	unsigned name = decl->Semantic.Name;
 	unsigned i;
 
-	assert(decl->Declaration.Semantic);  // TODO is this ever not true?
+	compile_assert(ctx, decl->Declaration.Semantic);  // TODO is this ever not true?
 
 	DBG("decl out[%d] -> r%d", name, decl->Range.First + base);   // XXX
 
@@ -1207,9 +1226,8 @@ decl_out(struct fd3_compile_context *ctx, struct tgsi_full_declaration *decl)
 				so->outputs[so->outputs_count++].regid = regid(i + base, 0);
 			break;
 		default:
-			DBG("unknown VS semantic name: %s",
+			compile_error(ctx, "unknown VS semantic name: %s\n",
 					tgsi_semantic_names[name]);
-			assert(0);
 		}
 	} else {
 		switch (name) {
@@ -1217,9 +1235,8 @@ decl_out(struct fd3_compile_context *ctx, struct tgsi_full_declaration *decl)
 			so->color_regid = regid(decl->Range.First + base, 0);
 			break;
 		default:
-			DBG("unknown VS semantic name: %s",
+			compile_error(ctx, "unknown VS semantic name: %s\n",
 					tgsi_semantic_names[name]);
-			assert(0);
 		}
 	}
 }
@@ -1278,10 +1295,8 @@ compile_instructions(struct fd3_compile_context *ctx)
 				t->fxn(t, ctx, inst);
 				ctx->num_internal_temps = 0;
 			} else {
-				debug_printf("unknown TGSI opc: %s\n",
+				compile_error(ctx, "unknown TGSI opc: %s\n",
 						tgsi_get_opcode_name(opc));
-				tgsi_dump(ctx->tokens, 0);
-				assert(0);
 			}
 
 			switch (inst->Instruction.Saturate) {
@@ -1318,6 +1333,8 @@ fd3_compile_shader(struct fd3_shader_stateobj *so,
 	assert(!so->ir);
 
 	so->ir = ir3_shader_create();
+
+	assert(so->ir);
 
 	so->color_regid = regid(63,0);
 	so->pos_regid   = regid(63,0);

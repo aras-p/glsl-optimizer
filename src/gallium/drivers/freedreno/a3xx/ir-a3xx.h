@@ -166,8 +166,7 @@ struct ir3_instruction {
 	};
 };
 
-/* this is just large to cope w/ the large test *.asm: */
-#define MAX_INSTRS 10240
+#define MAX_INSTRS 1024
 
 struct ir3_shader {
 	unsigned instrs_count;
