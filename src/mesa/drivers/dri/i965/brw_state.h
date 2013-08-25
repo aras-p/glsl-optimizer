@@ -122,6 +122,7 @@ extern const struct brw_tracked_state gen7_vs_state;
 extern const struct brw_tracked_state gen7_wm_state;
 extern const struct brw_tracked_state haswell_cut_index;
 
+
 /* brw_misc_state.c */
 void brw_upload_invariant_state(struct brw_context *brw);
 uint32_t
@@ -228,6 +229,11 @@ brw_upload_vec4_pull_constants(struct brw_context *brw,
                                const struct gl_program *prog,
                                struct brw_stage_state *stage_state,
                                const struct brw_vec4_prog_data *prog_data);
+void
+brw_vec4_upload_binding_table(struct brw_context *brw,
+                              GLbitfield brw_new_binding_table,
+                              struct brw_stage_state *stage_state,
+                              const struct brw_vec4_prog_data *prog_data);
 
 #ifdef __cplusplus
 }

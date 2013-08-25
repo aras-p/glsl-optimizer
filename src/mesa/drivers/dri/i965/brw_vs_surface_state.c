@@ -149,14 +149,13 @@ const struct brw_tracked_state brw_vs_ubo_surfaces = {
    .emit = brw_upload_vs_ubo_surfaces,
 };
 
-/**
- * Constructs the binding table for the WM surface state, which maps unit
- * numbers to surface state objects.
- */
-static void
-brw_vs_upload_binding_table(struct brw_context *brw)
+
+void
+brw_vec4_upload_binding_table(struct brw_context *brw,
+                              GLbitfield brw_new_binding_table,
+                              struct brw_stage_state *stage_state,
+                              const struct brw_vec4_prog_data *prog_data)
 {
-   struct brw_stage_state *stage_state = &brw->vs.base;
    uint32_t *bind;
    int i;
 
@@ -164,13 +163,13 @@ brw_vs_upload_binding_table(struct brw_context *brw)
       gen7_create_shader_time_surface(brw, &stage_state->surf_offset[SURF_INDEX_VEC4_SHADER_TIME]);
    }
 
-   /* CACHE_NEW_VS_PROG: Skip making a binding table if we don't use textures or
-    * pull constants.
+   /* Skip making a binding table if we don't use textures or pull
+    * constants.
     */
-   const unsigned entries = brw->vs.prog_data->base.binding_table_size;
+   const unsigned entries = prog_data->binding_table_size;
    if (entries == 0) {
       if (stage_state->bind_bo_offset != 0) {
-	 brw->state.dirty.brw |= BRW_NEW_VS_BINDING_TABLE;
+	 brw->state.dirty.brw |= brw_new_binding_table;
 	 stage_state->bind_bo_offset = 0;
       }
       return;
@@ -183,12 +182,29 @@ brw_vs_upload_binding_table(struct brw_context *brw)
 			  sizeof(uint32_t) * entries,
 			  32, &stage_state->bind_bo_offset);
 
-   /* BRW_NEW_SURFACES and BRW_NEW_VS_CONSTBUF */
+   /* BRW_NEW_SURFACES and BRW_NEW_*_CONSTBUF */
    for (i = 0; i < entries; i++) {
       bind[i] = stage_state->surf_offset[i];
    }
 
-   brw->state.dirty.brw |= BRW_NEW_VS_BINDING_TABLE;
+   brw->state.dirty.brw |= brw_new_binding_table;
+}
+
+
+/**
+ * Constructs the binding table for the WM surface state, which maps unit
+ * numbers to surface state objects.
+ */
+static void
+brw_vs_upload_binding_table(struct brw_context *brw)
+{
+   struct brw_stage_state *stage_state = &brw->vs.base;
+   /* CACHE_NEW_VS_PROG */
+   const struct brw_vec4_prog_data *prog_data = &brw->vs.prog_data->base;
+
+   /* BRW_NEW_SURFACES and BRW_NEW_VS_CONSTBUF */
+   brw_vec4_upload_binding_table(brw, BRW_NEW_VS_BINDING_TABLE, stage_state,
+                                 prog_data);
 }
 
 const struct brw_tracked_state brw_vs_binding_table = {
