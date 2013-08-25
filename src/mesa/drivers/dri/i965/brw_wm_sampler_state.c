@@ -443,6 +443,34 @@ const struct brw_tracked_state brw_vs_samplers = {
 };
 
 
+static void
+brw_upload_gs_samplers(struct brw_context *brw)
+{
+   struct brw_stage_state *stage_state = &brw->gs.base;
+
+   /* BRW_NEW_GEOMETRY_PROGRAM */
+   struct gl_program *gs = (struct gl_program *) brw->geometry_program;
+   if (!gs)
+      return;
+
+   brw->vtbl.upload_sampler_state_table(brw, gs,
+                                        stage_state->sampler_count,
+                                        &stage_state->sampler_offset,
+                                        stage_state->sdc_offset);
+}
+
+
+const struct brw_tracked_state brw_gs_samplers = {
+   .dirty = {
+      .mesa = _NEW_TEXTURE,
+      .brw = BRW_NEW_BATCH |
+             BRW_NEW_GEOMETRY_PROGRAM,
+      .cache = 0
+   },
+   .emit = brw_upload_gs_samplers,
+};
+
+
 void
 gen4_init_vtable_sampler_functions(struct brw_context *brw)
 {
