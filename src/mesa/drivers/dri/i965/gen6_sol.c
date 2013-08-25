@@ -48,7 +48,7 @@ gen6_update_sol_surfaces(struct brw_context *brw)
    int i;
 
    for (i = 0; i < BRW_MAX_SOL_BINDINGS; ++i) {
-      const int surf_index = SURF_INDEX_SOL_BINDING(i);
+      const int surf_index = SURF_INDEX_GEN6_SOL_BINDING(i);
       if (_mesa_is_xfb_active_and_unpaused(ctx) &&
           i < linked_xfb_info->NumOutputs) {
          unsigned buffer = linked_xfb_info->Outputs[i].OutputBuffer;
@@ -112,11 +112,11 @@ brw_gs_upload_binding_table(struct brw_context *brw)
     * space for the binding table.
     */
    bind = brw_state_batch(brw, AUB_TRACE_BINDING_TABLE,
-			  sizeof(uint32_t) * BRW_MAX_GS_SURFACES,
+			  sizeof(uint32_t) * BRW_MAX_GEN6_GS_SURFACES,
 			  32, &brw->ff_gs.bind_bo_offset);
 
    /* BRW_NEW_SURFACES */
-   memcpy(bind, brw->ff_gs.surf_offset, BRW_MAX_GS_SURFACES * sizeof(uint32_t));
+   memcpy(bind, brw->ff_gs.surf_offset, BRW_MAX_GEN6_GS_SURFACES * sizeof(uint32_t));
 
    brw->state.dirty.brw |= BRW_NEW_GS_BINDING_TABLE;
 }

@@ -615,10 +615,10 @@ struct brw_gs_prog_data
  *    |  36 | UBO 11                  |
  *    +-------------------------------+
  *
- * Our VS binding tables are programmed as follows:
+ * Our VS (and Gen7 GS) binding tables are programmed as follows:
  *
  *    +-----+-------------------------+
- *    |   0 | VS Pull Constant Buffer |
+ *    |   0 | Pull Constant Buffer    |
  *    +-----+-------------------------+
  *    |   1 | Texture 0               |
  *    |   . |     .                   |
@@ -648,14 +648,14 @@ struct brw_gs_prog_data
 /** Maximum size of the binding table. */
 #define BRW_MAX_WM_SURFACES          (SURF_INDEX_WM_SHADER_TIME + 1)
 
-#define SURF_INDEX_VERT_CONST_BUFFER (0)
-#define SURF_INDEX_VS_TEXTURE(t)     (SURF_INDEX_VERT_CONST_BUFFER + 1 + (t))
-#define SURF_INDEX_VS_UBO(u)         (SURF_INDEX_VS_TEXTURE(BRW_MAX_TEX_UNIT) + u)
-#define SURF_INDEX_VS_SHADER_TIME    (SURF_INDEX_VS_UBO(12))
-#define BRW_MAX_VS_SURFACES          (SURF_INDEX_VS_SHADER_TIME + 1)
+#define SURF_INDEX_VEC4_CONST_BUFFER (0)
+#define SURF_INDEX_VEC4_TEXTURE(t)   (SURF_INDEX_VEC4_CONST_BUFFER + 1 + (t))
+#define SURF_INDEX_VEC4_UBO(u)       (SURF_INDEX_VEC4_TEXTURE(BRW_MAX_TEX_UNIT) + u)
+#define SURF_INDEX_VEC4_SHADER_TIME  (SURF_INDEX_VEC4_UBO(12))
+#define BRW_MAX_VEC4_SURFACES        (SURF_INDEX_VEC4_SHADER_TIME + 1)
 
-#define SURF_INDEX_SOL_BINDING(t)    ((t))
-#define BRW_MAX_GS_SURFACES          SURF_INDEX_SOL_BINDING(BRW_MAX_SOL_BINDINGS)
+#define SURF_INDEX_GEN6_SOL_BINDING(t) (t)
+#define BRW_MAX_GEN6_GS_SURFACES       SURF_INDEX_GEN6_SOL_BINDING(BRW_MAX_SOL_BINDINGS)
 
 /**
  * Stride in bytes between shader_time entries.
@@ -1153,7 +1153,7 @@ struct brw_context
       int push_const_size; /* in 256-bit register increments */
 
       uint32_t bind_bo_offset;
-      uint32_t surf_offset[BRW_MAX_VS_SURFACES];
+      uint32_t surf_offset[BRW_MAX_VEC4_SURFACES];
 
       /** SAMPLER_STATE count and table offset */
       uint32_t sampler_count;
@@ -1173,7 +1173,7 @@ struct brw_context
       uint32_t state_offset;
 
       uint32_t bind_bo_offset;
-      uint32_t surf_offset[BRW_MAX_GS_SURFACES];
+      uint32_t surf_offset[BRW_MAX_GEN6_GS_SURFACES];
    } ff_gs;
 
    struct {

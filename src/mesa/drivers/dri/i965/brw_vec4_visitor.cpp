@@ -1675,7 +1675,7 @@ vec4_visitor::visit(ir_expression *ir)
       src_reg packed_consts = src_reg(this, glsl_type::vec4_type);
       packed_consts.type = result.type;
       src_reg surf_index =
-         src_reg(SURF_INDEX_VS_UBO(uniform_block->value.u[0]));
+         src_reg(SURF_INDEX_VEC4_UBO(uniform_block->value.u[0]));
       if (const_offset_ir) {
          offset = src_reg(const_offset / 16);
       } else {
@@ -3099,7 +3099,7 @@ vec4_visitor::emit_pull_constant_load(vec4_instruction *inst,
 				      int base_offset)
 {
    int reg_offset = base_offset + orig_src.reg_offset;
-   src_reg index = src_reg((unsigned)SURF_INDEX_VERT_CONST_BUFFER);
+   src_reg index = src_reg((unsigned)SURF_INDEX_VEC4_CONST_BUFFER);
    src_reg offset = get_pull_constant_offset(inst, orig_src.reladdr, reg_offset);
    vec4_instruction *load;
 

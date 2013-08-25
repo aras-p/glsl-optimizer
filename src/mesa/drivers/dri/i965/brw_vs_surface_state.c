@@ -59,7 +59,7 @@ brw_upload_vs_pull_constants(struct brw_context *brw)
       if (brw->vs.const_bo) {
 	 drm_intel_bo_unreference(brw->vs.const_bo);
 	 brw->vs.const_bo = NULL;
-	 brw->vs.surf_offset[SURF_INDEX_VERT_CONST_BUFFER] = 0;
+	 brw->vs.surf_offset[SURF_INDEX_VEC4_CONST_BUFFER] = 0;
 	 brw->state.dirty.brw |= BRW_NEW_VS_CONSTBUF;
       }
       return;
@@ -89,7 +89,7 @@ brw_upload_vs_pull_constants(struct brw_context *brw)
 
    drm_intel_gem_bo_unmap_gtt(brw->vs.const_bo);
 
-   const int surf = SURF_INDEX_VERT_CONST_BUFFER;
+   const int surf = SURF_INDEX_VEC4_CONST_BUFFER;
    brw->vtbl.create_constant_surface(brw, brw->vs.const_bo, 0, size,
                                      &brw->vs.surf_offset[surf], false);
 
@@ -116,7 +116,7 @@ brw_upload_vs_ubo_surfaces(struct brw_context *brw)
       return;
 
    brw_upload_ubo_surfaces(brw, prog->_LinkedShaders[MESA_SHADER_VERTEX],
-			   &brw->vs.surf_offset[SURF_INDEX_VS_UBO(0)]);
+			   &brw->vs.surf_offset[SURF_INDEX_VEC4_UBO(0)]);
 }
 
 const struct brw_tracked_state brw_vs_ubo_surfaces = {
@@ -139,7 +139,7 @@ brw_vs_upload_binding_table(struct brw_context *brw)
    int i;
 
    if (INTEL_DEBUG & DEBUG_SHADER_TIME) {
-      gen7_create_shader_time_surface(brw, &brw->vs.surf_offset[SURF_INDEX_VS_SHADER_TIME]);
+      gen7_create_shader_time_surface(brw, &brw->vs.surf_offset[SURF_INDEX_VEC4_SHADER_TIME]);
    }
 
    /* CACHE_NEW_VS_PROG: Skip making a binding table if we don't use textures or
