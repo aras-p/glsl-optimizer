@@ -864,8 +864,7 @@ struct brw_context
 
       void (*update_texture_surface)(struct gl_context *ctx,
                                      unsigned unit,
-                                     uint32_t *binding_table,
-                                     unsigned surf_index);
+                                     uint32_t *surf_offset);
       void (*update_renderbuffer_surface)(struct brw_context *brw,
 					  struct gl_renderbuffer *rb,
 					  bool layered,

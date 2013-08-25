@@ -228,8 +228,7 @@ gen7_check_surface_setup(uint32_t *surf, bool is_render_target)
 static void
 gen7_update_buffer_texture_surface(struct gl_context *ctx,
                                    unsigned unit,
-                                   uint32_t *binding_table,
-                                   unsigned surf_index)
+                                   uint32_t *surf_offset)
 {
    struct brw_context *brw = brw_context(ctx);
    struct gl_texture_object *tObj = ctx->Texture.Unit[unit]._Current;
@@ -239,7 +238,7 @@ gen7_update_buffer_texture_surface(struct gl_context *ctx,
    gl_format format = tObj->_BufferObjectFormat;
 
    uint32_t *surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE,
-                                    8 * 4, 32, &binding_table[surf_index]);
+                                    8 * 4, 32, surf_offset);
    memset(surf, 0, 8 * 4);
 
    uint32_t surface_format = brw_format_for_mesa_format(format);
@@ -256,7 +255,7 @@ gen7_update_buffer_texture_surface(struct gl_context *ctx,
       surf[1] = bo->offset; /* reloc */
 
       drm_intel_bo_emit_reloc(brw->batch.bo,
-			      binding_table[surf_index] + 4,
+			      *surf_offset + 4,
 			      bo, 0,
 			      I915_GEM_DOMAIN_SAMPLER, 0);
 
@@ -276,8 +275,7 @@ gen7_update_buffer_texture_surface(struct gl_context *ctx,
 static void
 gen7_update_texture_surface(struct gl_context *ctx,
                             unsigned unit,
-                            uint32_t *binding_table,
-                            unsigned surf_index)
+                            uint32_t *surf_offset)
 {
    struct brw_context *brw = brw_context(ctx);
    struct gl_texture_object *tObj = ctx->Texture.Unit[unit]._Current;
@@ -288,12 +286,12 @@ gen7_update_texture_surface(struct gl_context *ctx,
    struct gl_sampler_object *sampler = _mesa_get_samplerobj(ctx, unit);
 
    if (tObj->Target == GL_TEXTURE_BUFFER) {
-      gen7_update_buffer_texture_surface(ctx, unit, binding_table, surf_index);
+      gen7_update_buffer_texture_surface(ctx, unit, surf_offset);
       return;
    }
 
    uint32_t *surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE,
-                                    8 * 4, 32, &binding_table[surf_index]);
+                                    8 * 4, 32, surf_offset);
    memset(surf, 0, 8 * 4);
 
    uint32_t tex_format = translate_tex_format(brw,
@@ -351,7 +349,7 @@ gen7_update_texture_surface(struct gl_context *ctx,
 
    /* Emit relocation to surface contents */
    drm_intel_bo_emit_reloc(brw->batch.bo,
-			   binding_table[surf_index] + 4,
+			   *surf_offset + 4,
 			   intelObj->mt->region->bo,
                            surf[1] - intelObj->mt->region->bo->offset,
 			   I915_GEM_DOMAIN_SAMPLER, 0);
