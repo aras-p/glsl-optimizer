@@ -918,6 +918,7 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 	unsigned opcode;
 	int i, j, k, r = 0;
 	int next_pos_base = 60, next_param_base = 0;
+	int max_color_exports = MAX2(key.nr_cbufs, 1);
 	/* Declarations used by llvm code */
 	bool use_llvm = false;
 	bool indirect_gprs;
@@ -1130,7 +1131,7 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 		radeon_llvm_ctx.face_gpr = ctx.face_gpr;
 		radeon_llvm_ctx.r600_inputs = ctx.shader->input;
 		radeon_llvm_ctx.r600_outputs = ctx.shader->output;
-		radeon_llvm_ctx.color_buffer_count = MAX2(key.nr_cbufs , 1);
+		radeon_llvm_ctx.color_buffer_count = max_color_exports;
 		radeon_llvm_ctx.chip_class = ctx.bc->chip_class;
 		radeon_llvm_ctx.fs_color_all = shader->fs_write_all && (rscreen->chip_class >= EVERGREEN);
 		radeon_llvm_ctx.stream_outputs = &so;
@@ -1440,7 +1441,7 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 		case TGSI_PROCESSOR_FRAGMENT:
 			if (shader->output[i].name == TGSI_SEMANTIC_COLOR) {
 				/* never export more colors than the number of CBs */
-				if (shader->output[i].sid >= key.nr_cbufs) {
+				if (shader->output[i].sid >= max_color_exports) {
 					/* skip export */
 					j--;
 					continue;
@@ -1450,7 +1451,7 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 				output[j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PIXEL;
 				shader->nr_ps_color_exports++;
 				if (shader->fs_write_all && (rscreen->chip_class >= EVERGREEN)) {
-					for (k = 1; k < key.nr_cbufs; k++) {
+					for (k = 1; k < max_color_exports; k++) {
 						j++;
 						memset(&output[j], 0, sizeof(struct r600_bytecode_output));
 						output[j].gpr = shader->output[i].gpr;
