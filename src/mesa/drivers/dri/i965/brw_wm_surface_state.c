@@ -769,12 +769,18 @@ brw_update_texture_surfaces(struct brw_context *brw)
    /* BRW_NEW_VERTEX_PROGRAM */
    struct gl_program *vs = (struct gl_program *) brw->vertex_program;
 
+   /* BRW_NEW_GEOMETRY_PROGRAM */
+   struct gl_program *gs = (struct gl_program *) brw->geometry_program;
+
    /* BRW_NEW_FRAGMENT_PROGRAM */
    struct gl_program *fs = (struct gl_program *) brw->fragment_program;
 
    /* _NEW_TEXTURE */
    update_stage_texture_surfaces(brw, vs,
                                  brw->vs.base.surf_offset +
+                                 SURF_INDEX_VEC4_TEXTURE(0));
+   update_stage_texture_surfaces(brw, gs,
+                                 brw->gs.base.surf_offset +
                                  SURF_INDEX_VEC4_TEXTURE(0));
    update_stage_texture_surfaces(brw, fs,
                                  brw->wm.surf_offset +
@@ -788,6 +794,7 @@ const struct brw_tracked_state brw_texture_surfaces = {
       .mesa = _NEW_TEXTURE,
       .brw = BRW_NEW_BATCH |
              BRW_NEW_VERTEX_PROGRAM |
+             BRW_NEW_GEOMETRY_PROGRAM |
              BRW_NEW_FRAGMENT_PROGRAM,
       .cache = 0
    },
