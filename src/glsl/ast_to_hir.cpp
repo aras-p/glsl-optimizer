@@ -1849,9 +1849,18 @@ is_varying_var(ir_variable *var, _mesa_glsl_parser_targets target)
 static void
 validate_matrix_layout_for_type(struct _mesa_glsl_parse_state *state,
 				YYLTYPE *loc,
-				const glsl_type *type)
+                                const glsl_type *type,
+                                ir_variable *var)
 {
-   if (!type->is_matrix()) {
+   if (var && !var->is_in_uniform_block()) {
+      /* Layout qualifiers may only apply to interface blocks and fields in
+       * them.
+       */
+      _mesa_glsl_error(loc, state,
+                       "uniform block layout qualifiers row_major and "
+                       "column_major may not be applied to variables "
+                       "outside of uniform blocks");
+   } else if (!type->is_matrix()) {
       /* The OpenGL ES 3.0 conformance tests did not originally allow
        * matrix layout qualifiers on non-matrices.  However, the OpenGL
        * 4.4 and OpenGL ES 3.0 (revision TBD) specifications were
@@ -2302,7 +2311,7 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
    }
 
    if (qual->flags.q.row_major || qual->flags.q.column_major) {
-      validate_matrix_layout_for_type(state, loc, var->type);
+      validate_matrix_layout_for_type(state, loc, var->type, var);
    }
 }
 
@@ -4476,7 +4485,7 @@ ast_process_structure_or_interface_block(exec_list *instructions,
                                 "row_major and column_major can only be "
                                 "applied to uniform interface blocks");
             } else
-               validate_matrix_layout_for_type(state, &loc, field_type);
+               validate_matrix_layout_for_type(state, &loc, field_type, NULL);
          }
 
          if (qual->flags.q.uniform && qual->has_interpolation()) {
