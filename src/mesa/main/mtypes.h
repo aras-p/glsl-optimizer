@@ -1129,6 +1129,7 @@ struct gl_sampler_object
 {
    GLuint Name;
    GLint RefCount;
+   GLchar *Label;               /**< GL_KHR_debug */
 
    GLenum WrapS;		/**< S-axis texture image wrap mode */
    GLenum WrapT;		/**< T-axis texture image wrap mode */
@@ -1156,6 +1157,7 @@ struct gl_texture_object
    _glthread_Mutex Mutex;      /**< for thread safety */
    GLint RefCount;             /**< reference count */
    GLuint Name;                /**< the user-visible texture object ID */
+   GLchar *Label;               /**< GL_KHR_debug */
    GLenum Target;              /**< GL_TEXTURE_1D, GL_TEXTURE_2D, etc. */
 
    struct gl_sampler_object Sampler;
@@ -1404,6 +1406,7 @@ struct gl_buffer_object
    _glthread_Mutex Mutex;
    GLint RefCount;
    GLuint Name;
+   GLchar *Label;       /**< GL_KHR_debug */
    GLenum Usage;        /**< GL_STREAM_DRAW_ARB, GL_STREAM_READ_ARB, etc. */
    GLsizeiptrARB Size;  /**< Size of buffer storage in bytes */
    GLubyte *Data;       /**< Location of storage either in RAM or VRAM. */
@@ -1468,6 +1471,7 @@ struct gl_array_object
 {
    /** Name of the array object as received from glGenVertexArrayAPPLE. */
    GLuint Name;
+   GLchar *Label;       /**< GL_KHR_debug */
 
    GLint RefCount;
    _glthread_Mutex Mutex;
@@ -1705,6 +1709,7 @@ struct gl_transform_feedback_info
 struct gl_transform_feedback_object
 {
    GLuint Name;  /**< AKA the object ID */
+   GLchar *Label;     /**< GL_KHR_debug */
    GLint RefCount;
    GLboolean Active;  /**< Is transform feedback enabled? */
    GLboolean Paused;  /**< Is transform feedback paused? */
@@ -2109,6 +2114,7 @@ struct gl_shader
     */
    GLenum Type;
    GLuint Name;  /**< AKA the handle */
+   GLchar *Label;   /**< GL_KHR_debug */
    GLint RefCount;  /**< Reference count */
    GLboolean DeletePending;
    GLboolean CompileStatus;
@@ -2280,6 +2286,7 @@ struct gl_shader_program
 {
    GLenum Type;  /**< Always GL_SHADER_PROGRAM (internal token) */
    GLuint Name;  /**< aka handle or ID */
+   GLchar *Label;   /**< GL_KHR_debug */
    GLint RefCount;  /**< Reference count */
    GLboolean DeletePending;
 
@@ -2516,6 +2523,7 @@ struct gl_query_object
 {
    GLenum Target;      /**< The query target, when active */
    GLuint Id;          /**< hash table ID/name */
+   GLchar *Label;       /**< GL_KHR_debug */
    GLuint64EXT Result; /**< the counter */
    GLboolean Active;   /**< inside Begin/EndQuery */
    GLboolean Ready;    /**< result is ready? */
@@ -2551,6 +2559,7 @@ struct gl_sync_object
 {
    GLenum Type;               /**< GL_SYNC_FENCE */
    GLuint Name;               /**< Fence name */
+   GLchar *Label;             /**< GL_KHR_debug */
    GLint RefCount;            /**< Reference count */
    GLboolean DeletePending;   /**< Object was deleted while there were still
 			       * live references (e.g., sync not yet finished)
@@ -2633,6 +2642,7 @@ struct gl_renderbuffer
    _glthread_Mutex Mutex; /**< for thread safety */
    GLuint ClassID;        /**< Useful for drivers */
    GLuint Name;
+   GLchar *Label;         /**< GL_KHR_debug */
    GLint RefCount;
    GLuint Width, Height;
    GLuint Depth;
@@ -2716,6 +2726,7 @@ struct gl_framebuffer
     * polygon face orientation, and polygon stipple will have to be inverted.
     */
    GLuint Name;
+   GLchar *Label;       /**< GL_KHR_debug */
 
    GLint RefCount;
    GLboolean DeletePending;
@@ -3281,6 +3292,7 @@ union gl_dlist_node;
 struct gl_display_list
 {
    GLuint Name;
+   GLchar *Label;     /**< GL_KHR_debug */
    GLbitfield Flags;  /**< DLIST_x flags */
    /** The dlist commands are in a linked list of nodes */
    union gl_dlist_node *Head;
