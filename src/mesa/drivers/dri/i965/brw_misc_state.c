@@ -778,7 +778,7 @@ static void upload_polygon_stipple(struct brw_context *brw)
       for (i = 0; i < 32; i++)
 	 OUT_BATCH(ctx->PolygonStipple[i]);
    }
-   CACHED_BATCH();
+   ADVANCE_BATCH();
 }
 
 const struct brw_tracked_state brw_polygon_stipple = {
@@ -822,7 +822,7 @@ static void upload_polygon_stipple_offset(struct brw_context *brw)
       OUT_BATCH((32 - (ctx->DrawBuffer->Height & 31)) & 31);
    else
       OUT_BATCH(0);
-   CACHED_BATCH();
+   ADVANCE_BATCH();
 }
 
 const struct brw_tracked_state brw_polygon_stipple_offset = {
@@ -852,11 +852,12 @@ static void upload_aa_line_parameters(struct brw_context *brw)
    if (brw->gen == 6)
       intel_emit_post_sync_nonzero_flush(brw);
 
+   BEGIN_BATCH(3);
    OUT_BATCH(_3DSTATE_AA_LINE_PARAMETERS << 16 | (3 - 2));
    /* use legacy aa line coverage computation */
    OUT_BATCH(0);
    OUT_BATCH(0);
-   CACHED_BATCH();
+   ADVANCE_BATCH();
 }
 
 const struct brw_tracked_state brw_aa_line_parameters = {
@@ -901,7 +902,7 @@ static void upload_line_stipple(struct brw_context *brw)
       OUT_BATCH(tmpi << 16 | ctx->Line.StippleFactor);
    }
 
-   CACHED_BATCH();
+   ADVANCE_BATCH();
 }
 
 const struct brw_tracked_state brw_line_stipple = {

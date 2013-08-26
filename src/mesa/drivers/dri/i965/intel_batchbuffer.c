@@ -432,48 +432,6 @@ intel_batchbuffer_data(struct brw_context *brw,
    brw->batch.used += bytes >> 2;
 }
 
-void
-intel_batchbuffer_cached_advance(struct brw_context *brw)
-{
-   struct cached_batch_item **prev = &brw->batch.cached_items, *item;
-   uint32_t sz = (brw->batch.used - brw->batch.emit) * sizeof(uint32_t);
-   uint32_t *start = brw->batch.map + brw->batch.emit;
-   uint16_t op = *start >> 16;
-
-   while (*prev) {
-      uint32_t *old;
-
-      item = *prev;
-      old = brw->batch.map + item->header;
-      if (op == *old >> 16) {
-	 if (item->size == sz && memcmp(old, start, sz) == 0) {
-	    if (prev != &brw->batch.cached_items) {
-	       *prev = item->next;
-	       item->next = brw->batch.cached_items;
-	       brw->batch.cached_items = item;
-	    }
-	    brw->batch.used = brw->batch.emit;
-            assert(brw->batch.used > 0);
-	    return;
-	 }
-
-	 goto emit;
-      }
-      prev = &item->next;
-   }
-
-   item = malloc(sizeof(struct cached_batch_item));
-   if (item == NULL)
-      return;
-
-   item->next = brw->batch.cached_items;
-   brw->batch.cached_items = item;
-
-emit:
-   item->size = sz;
-   item->header = brw->batch.emit;
-}
-
 /**
  * Restriction [DevSNB, DevIVB]:
  *

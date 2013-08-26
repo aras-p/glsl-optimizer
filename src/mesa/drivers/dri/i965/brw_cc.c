@@ -247,7 +247,7 @@ static void upload_blend_constant_color(struct brw_context *brw)
    OUT_BATCH_F(ctx->Color.BlendColorUnclamped[1]);
    OUT_BATCH_F(ctx->Color.BlendColorUnclamped[2]);
    OUT_BATCH_F(ctx->Color.BlendColorUnclamped[3]);
-   CACHED_BATCH();
+   ADVANCE_BATCH();
 }
 
 const struct brw_tracked_state brw_blend_constant_color = {

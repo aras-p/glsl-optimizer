@@ -163,8 +163,6 @@ intel_batchbuffer_advance(struct brw_context *brw)
 #endif
 }
 
-void intel_batchbuffer_cached_advance(struct brw_context *brw);
-
 #define BEGIN_BATCH(n) intel_batchbuffer_begin(brw, n, RENDER_RING)
 #define BEGIN_BATCH_BLT(n) intel_batchbuffer_begin(brw, n, BLT_RING)
 #define OUT_BATCH(d) intel_batchbuffer_emit_dword(brw, d)
@@ -175,7 +173,6 @@ void intel_batchbuffer_cached_advance(struct brw_context *brw);
 } while (0)
 
 #define ADVANCE_BATCH() intel_batchbuffer_advance(brw);
-#define CACHED_BATCH() intel_batchbuffer_cached_advance(brw);
 
 #ifdef __cplusplus
 }
