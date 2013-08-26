@@ -283,6 +283,9 @@ static const struct extension extension_table[] = {
    { "GL_OES_texture_npot",                        o(ARB_texture_non_power_of_two),                 ES1 | ES2, 2005 },
    { "GL_OES_vertex_array_object",                 o(dummy_true),                                   ES1 | ES2, 2010 },
 
+   /* KHR extensions */
+   { "GL_KHR_debug",                               o(dummy_true),                              GL,             2012 },
+
    /* Vendor extensions */
    { "GL_3DFX_texture_compression_FXT1",           o(TDFX_texture_compression_FXT1),           GL,             1999 },
    { "GL_AMD_conservative_depth",                  o(ARB_conservative_depth),                  GL,             2009 },
