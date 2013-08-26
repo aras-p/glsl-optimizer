@@ -164,7 +164,7 @@ update_tss_binding(struct svga_context *svga,
 
    svga->rebind.texture_samplers = FALSE;
 
-   return 0;
+   return PIPE_OK;
 
 fail:
    return PIPE_ERROR_OUT_OF_MEMORY;

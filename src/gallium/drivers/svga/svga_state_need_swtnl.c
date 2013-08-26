@@ -74,7 +74,7 @@ update_need_swvfetch(struct svga_context *svga, unsigned dirty)
 
    if (!svga->curr.velems) {
       /* No vertex elements bound. */
-      return 0;
+      return PIPE_OK;
    }
 
    for (i = 0; i < svga->curr.velems->count; i++) {
