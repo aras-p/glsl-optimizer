@@ -94,6 +94,7 @@ main_sources = [
     'main/mipmap.c',
     'main/mm.c',
     'main/multisample.c',
+    'main/objectlabel.c',
     'main/pack.c',
     'main/pbo.c',
     'main/pixel.c',
