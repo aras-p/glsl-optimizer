@@ -249,12 +249,17 @@
 #define MAX_GEOMETRY_TOTAL_OUTPUT_COMPONENTS         1024
 /*@}*/
 
-/** For GL_ARB_debug_output */
+/** For GL_ARB_debug_output and GL_KHR_debug */
 /*@{*/
 #define MAX_DEBUG_LOGGED_MESSAGES   10
 #define MAX_DEBUG_MESSAGE_LENGTH    4096
 /*@}*/
 
+/** For GL_KHR_debug */
+/*@{*/
+#define MAX_LABEL_LENGTH 256
+#define MAX_DEBUG_GROUP_STACK_DEPTH 64
+/*@}*/
 
 /*
  * Color channel component order

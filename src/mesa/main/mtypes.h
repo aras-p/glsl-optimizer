@@ -3316,8 +3316,8 @@ struct gl_dlist_state
 
 /** @{
  *
- * These are a mapping of the GL_ARB_debug_output enums to small enums
- * suitable for use as an array index.
+ * These are a mapping of the GL_ARB_debug_output/GL_KHR_debug enums
+ * to small enums suitable for use as an array index.
  */
 
 enum mesa_debug_source {
@@ -3337,6 +3337,9 @@ enum mesa_debug_type {
    MESA_DEBUG_TYPE_PORTABILITY,
    MESA_DEBUG_TYPE_PERFORMANCE,
    MESA_DEBUG_TYPE_OTHER,
+   MESA_DEBUG_TYPE_MARKER,
+   MESA_DEBUG_TYPE_PUSH_GROUP,
+   MESA_DEBUG_TYPE_POP_GROUP,
    MESA_DEBUG_TYPE_COUNT
 };
 
@@ -3344,6 +3347,7 @@ enum mesa_debug_severity {
    MESA_DEBUG_SEVERITY_LOW,
    MESA_DEBUG_SEVERITY_MEDIUM,
    MESA_DEBUG_SEVERITY_HIGH,
+   MESA_DEBUG_SEVERITY_NOTIFICATION,
    MESA_DEBUG_SEVERITY_COUNT
 };
 
@@ -3351,7 +3355,7 @@ enum mesa_debug_severity {
 
 /**
  * An error, warning, or other piece of debug information for an application
- * to consume via GL_ARB_debug_output.
+ * to consume via GL_ARB_debug_output/GL_KHR_debug.
  */
 struct gl_debug_msg
 {
@@ -3373,12 +3377,13 @@ struct gl_debug_namespace
 
 struct gl_debug_state
 {
-   GLDEBUGPROCARB Callback;
+   GLDEBUGPROC Callback;
    const void *CallbackData;
    GLboolean SyncOutput;
    GLboolean Defaults[MESA_DEBUG_SEVERITY_COUNT][MESA_DEBUG_SOURCE_COUNT][MESA_DEBUG_TYPE_COUNT];
    struct gl_debug_namespace Namespaces[MESA_DEBUG_SOURCE_COUNT][MESA_DEBUG_TYPE_COUNT];
    struct gl_debug_msg Log[MAX_DEBUG_LOGGED_MESSAGES];
+   GLint GroupStackDepth;
    GLint NumMessages;
    GLint NextMsg;
    GLint NextMsgLength; /* redundant, but copied here from Log[NextMsg].length
@@ -3625,7 +3630,7 @@ struct gl_context
    const char *ErrorDebugFmtString;
    GLuint ErrorDebugCount;
 
-   /* GL_ARB_debug_output */
+   /* GL_ARB_debug_output/GL_KHR_debug */
    struct gl_debug_state Debug;
 
    GLenum RenderMode;        /**< either GL_RENDER, GL_SELECT, GL_FEEDBACK */

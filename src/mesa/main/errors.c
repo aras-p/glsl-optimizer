@@ -66,12 +66,16 @@ static const GLenum debug_type_enums[] = {
    GL_DEBUG_TYPE_PORTABILITY,
    GL_DEBUG_TYPE_PERFORMANCE,
    GL_DEBUG_TYPE_OTHER,
+   GL_DEBUG_TYPE_MARKER,
+   GL_DEBUG_TYPE_PUSH_GROUP,
+   GL_DEBUG_TYPE_POP_GROUP,
 };
 
 static const GLenum debug_severity_enums[] = {
    GL_DEBUG_SEVERITY_LOW,
    GL_DEBUG_SEVERITY_MEDIUM,
    GL_DEBUG_SEVERITY_HIGH,
+   GL_DEBUG_SEVERITY_NOTIFICATION,
 };
 
 static enum mesa_debug_source
