@@ -189,8 +189,9 @@ should_log(struct gl_context *ctx,
            GLuint id,
            enum mesa_debug_severity severity)
 {
+   GLint gstack = ctx->Debug.GroupStackDepth;
    struct gl_debug_namespace *nspace =
-         &ctx->Debug.Namespaces[source][type];
+         &ctx->Debug.Namespaces[gstack][source][type];
    uintptr_t state;
 
    /* In addition to not being able to store zero as a value, HashTable also
@@ -206,7 +207,7 @@ should_log(struct gl_context *ctx,
       struct gl_debug_severity *entry;
 
       if (state == NOT_FOUND) {
-         if (ctx->Debug.Defaults[severity][source][type])
+         if (ctx->Debug.Defaults[gstack][severity][source][type])
             state = ENABLED;
          else
             state = DISABLED;
@@ -240,8 +241,9 @@ set_message_state(struct gl_context *ctx,
                   enum mesa_debug_type type,
                   GLuint id, GLboolean enabled)
 {
+   GLint gstack = ctx->Debug.GroupStackDepth;
    struct gl_debug_namespace *nspace =
-         &ctx->Debug.Namespaces[source][type];
+         &ctx->Debug.Namespaces[gstack][source][type];
    uintptr_t state;
 
    /* In addition to not being able to store zero as a value, HashTable also
@@ -264,6 +266,39 @@ set_message_state(struct gl_context *ctx,
       _mesa_HashInsert(nspace->IDs, id, (void*)state);
    else
       nspace->ZeroID = state;
+}
+
+static void
+store_message_details(struct gl_debug_msg *emptySlot,
+                      enum mesa_debug_source source,
+                      enum mesa_debug_type type, GLuint id,
+                      enum mesa_debug_severity severity, GLint len,
+                      const char *buf)
+{
+   assert(!emptySlot->message && !emptySlot->length);
+
+   emptySlot->message = malloc(len+1);
+   if (emptySlot->message) {
+      (void) strncpy(emptySlot->message, buf, (size_t)len);
+      emptySlot->message[len] = '\0';
+
+      emptySlot->length = len+1;
+      emptySlot->source = source;
+      emptySlot->type = type;
+      emptySlot->id = id;
+      emptySlot->severity = severity;
+   } else {
+      static GLuint oom_msg_id = 0;
+      debug_get_id(&oom_msg_id);
+
+      /* malloc failed! */
+      emptySlot->message = out_of_memory;
+      emptySlot->length = strlen(out_of_memory)+1;
+      emptySlot->source = MESA_DEBUG_SOURCE_OTHER;
+      emptySlot->type = MESA_DEBUG_TYPE_ERROR;
+      emptySlot->id = oom_msg_id;
+      emptySlot->severity = MESA_DEBUG_SEVERITY_HIGH;
+   }
 }
 
 /**
@@ -301,30 +336,7 @@ _mesa_log_msg(struct gl_context *ctx, enum mesa_debug_source source,
                           % MAX_DEBUG_LOGGED_MESSAGES;
    emptySlot = &ctx->Debug.Log[nextEmpty];
 
-   assert(!emptySlot->message && !emptySlot->length);
-
-   emptySlot->message = malloc(len+1);
-   if (emptySlot->message) {
-      (void) strncpy(emptySlot->message, buf, (size_t)len);
-      emptySlot->message[len] = '\0';
-
-      emptySlot->length = len+1;
-      emptySlot->source = source;
-      emptySlot->type = type;
-      emptySlot->id = id;
-      emptySlot->severity = severity;
-   } else {
-      static GLuint oom_msg_id = 0;
-      debug_get_id(&oom_msg_id);
-
-      /* malloc failed! */
-      emptySlot->message = out_of_memory;
-      emptySlot->length = strlen(out_of_memory)+1;
-      emptySlot->source = MESA_DEBUG_SOURCE_OTHER;
-      emptySlot->type = MESA_DEBUG_TYPE_ERROR;
-      emptySlot->id = oom_msg_id;
-      emptySlot->severity = MESA_DEBUG_SEVERITY_HIGH;
-   }
+   store_message_details(emptySlot, source, type, id, severity, len, buf);
 
    if (ctx->Debug.NumMessages == 0)
       ctx->Debug.NextMsgLength = ctx->Debug.Log[ctx->Debug.NextMsg].length;
@@ -486,6 +498,7 @@ control_messages(struct gl_context *ctx,
                  GLboolean enabled)
 {
    int s, t, sev, smax, tmax, sevmax;
+   GLint gstack = ctx->Debug.GroupStackDepth;
 
    if (source == MESA_DEBUG_SOURCE_COUNT) {
       source = 0;
@@ -515,10 +528,10 @@ control_messages(struct gl_context *ctx,
             struct gl_debug_severity *entry;
 
             /* change the default for IDs we've never seen before. */
-            ctx->Debug.Defaults[sev][s][t] = enabled;
+            ctx->Debug.Defaults[gstack][sev][s][t] = enabled;
 
             /* Now change the state of IDs we *have* seen... */
-            foreach(node, &ctx->Debug.Namespaces[s][t].Severity[sev]) {
+            foreach(node, &ctx->Debug.Namespaces[gstack][s][t].Severity[sev]) {
                entry = (struct gl_debug_severity *)node;
                set_message_state(ctx, s, t, entry->ID, enabled);
             }
@@ -594,18 +607,16 @@ message_control(GLenum gl_source, GLenum gl_type,
 }
 
 /**
- * This is a generic message insert function for use by both
- * glDebugMessageInsertARB and glDebugMessageInsert.
+ * This is a generic message insert function.
+ * Validation of source, type and severity parameters should be done
+ * before calling this funtion.
  */
 static void
 message_insert(GLenum source, GLenum type, GLuint id,
                GLenum severity, GLint length, const GLchar* buf,
-               unsigned caller, const char *callerstr)
+               const char *callerstr)
 {
    GET_CURRENT_CONTEXT(ctx);
-
-   if (!validate_params(ctx, caller, callerstr, source, type, severity))
-      return; /* GL_INVALID_ENUM */
 
    if (length < 0)
       length = strlen(buf);
@@ -677,6 +688,37 @@ get_message_log(GLuint count, GLsizei logSize, GLenum* sources,
    return ret;
 }
 
+static void
+do_nothing(GLuint key, void *data, void *userData)
+{
+}
+
+static void
+free_errors_data(struct gl_context *ctx, GLint gstack)
+{
+   enum mesa_debug_type t;
+   enum mesa_debug_source s;
+   enum mesa_debug_severity sev;
+
+   /* Tear down state for filtering debug messages. */
+   for (s = 0; s < MESA_DEBUG_SOURCE_COUNT; s++)
+      for (t = 0; t < MESA_DEBUG_TYPE_COUNT; t++) {
+         _mesa_HashDeleteAll(ctx->Debug.Namespaces[gstack][s][t].IDs,
+                             do_nothing, NULL);
+         _mesa_DeleteHashTable(ctx->Debug.Namespaces[gstack][s][t].IDs);
+         for (sev = 0; sev < MESA_DEBUG_SEVERITY_COUNT; sev++) {
+            struct simple_node *node, *tmp;
+            struct gl_debug_severity *entry;
+
+            foreach_s(node, tmp,
+                      &ctx->Debug.Namespaces[gstack][s][t].Severity[sev]) {
+               entry = (struct gl_debug_severity *)node;
+               free(entry);
+            }
+         }
+      }
+}
+
 void GLAPIENTRY
 _mesa_DebugMessageInsert(GLenum source, GLenum type, GLuint id,
                          GLenum severity, GLint length,
@@ -684,8 +726,13 @@ _mesa_DebugMessageInsert(GLenum source, GLenum type, GLuint id,
 {
    const char *callerstr = "glDebugMessageInsert";
 
+   GET_CURRENT_CONTEXT(ctx);
+
+   if (!validate_params(ctx, INSERT, callerstr, source, type, severity))
+      return; /* GL_INVALID_ENUM */
+
    message_insert(source, type, id, severity, length, buf,
-                  INSERT, callerstr);
+                  callerstr);
 }
 
 GLuint GLAPIENTRY
@@ -722,13 +769,112 @@ void GLAPIENTRY
 _mesa_PushDebugGroup(GLenum source, GLuint id, GLsizei length,
                      const GLchar *message)
 {
+   const char *callerstr = "glPushDebugGroup";
+   int s, t, sev;
+   GLint prevStackDepth;
+   GLint currStackDepth;
+   struct gl_debug_msg *emptySlot;
 
+   GET_CURRENT_CONTEXT(ctx);
+
+   if (ctx->Debug.GroupStackDepth >= MAX_DEBUG_GROUP_STACK_DEPTH-1) {
+      _mesa_error(ctx, GL_STACK_OVERFLOW, "%s", callerstr);
+      return;
+   }
+
+   switch(source) {
+   case GL_DEBUG_SOURCE_APPLICATION:
+   case GL_DEBUG_SOURCE_THIRD_PARTY:
+      break;
+   default:
+      _mesa_error(ctx, GL_INVALID_ENUM, "bad value passed to %s"
+                  "(source=0x%x)", callerstr, source);
+      return;
+   }
+
+   message_insert(source, GL_DEBUG_TYPE_PUSH_GROUP, id,
+                  GL_DEBUG_SEVERITY_NOTIFICATION, length,
+                  message, callerstr);
+
+   prevStackDepth = ctx->Debug.GroupStackDepth;
+   ctx->Debug.GroupStackDepth++;
+   currStackDepth = ctx->Debug.GroupStackDepth;
+
+   /* pop reuses the message details from push so we store this */
+   if (length < 0)
+      length = strlen(message);
+   emptySlot = &ctx->Debug.DebugGroupMsgs[ctx->Debug.GroupStackDepth];
+   store_message_details(emptySlot, gl_enum_to_debug_source(source),
+                         gl_enum_to_debug_source(GL_DEBUG_TYPE_PUSH_GROUP),
+                         id,
+                   gl_enum_to_debug_severity(GL_DEBUG_SEVERITY_NOTIFICATION),
+                         length, message);
+
+   /* inherit the control volume of the debug group previously residing on
+    * the top of the debug group stack
+    */
+   for (s = 0; s < MESA_DEBUG_SOURCE_COUNT; s++)
+      for (t = 0; t < MESA_DEBUG_TYPE_COUNT; t++) {
+         /* copy id settings */
+         ctx->Debug.Namespaces[currStackDepth][s][t].IDs =
+            _mesa_HashClone(ctx->Debug.Namespaces[prevStackDepth][s][t].IDs);
+
+         for (sev = 0; sev < MESA_DEBUG_SEVERITY_COUNT; sev++) {
+            struct gl_debug_severity *entry, *prevEntry;
+            struct simple_node *node;
+
+            /* copy default settings for unknown ids */
+            ctx->Debug.Defaults[currStackDepth][sev][s][t] = ctx->Debug.Defaults[prevStackDepth][sev][s][t];
+
+            /* copy known id severity settings */
+            make_empty_list(&ctx->Debug.Namespaces[currStackDepth][s][t].Severity[sev]);
+            foreach(node, &ctx->Debug.Namespaces[prevStackDepth][s][t].Severity[sev]) {
+               prevEntry = (struct gl_debug_severity *)node;
+               entry = malloc(sizeof *entry);
+               if (!entry)
+                  return;
+
+               entry->ID = prevEntry->ID;
+               insert_at_tail(&ctx->Debug.Namespaces[currStackDepth][s][t].Severity[sev], &entry->link);
+            }
+         }
+      }
 }
 
 void GLAPIENTRY
 _mesa_PopDebugGroup()
 {
+   const char *callerstr = "glPopDebugGroup";
+   struct gl_debug_msg *gdmessage;
+   GLint prevStackDepth;
 
+   GET_CURRENT_CONTEXT(ctx);
+
+   if (ctx->Debug.GroupStackDepth <= 0) {
+      _mesa_error(ctx, GL_STACK_UNDERFLOW, "%s", callerstr);
+      return;
+   }
+
+   prevStackDepth = ctx->Debug.GroupStackDepth;
+   ctx->Debug.GroupStackDepth--;
+
+   gdmessage = &ctx->Debug.DebugGroupMsgs[prevStackDepth];
+   /* using _mesa_log_msg() directly here as verification of parameters
+    * already done in push
+    */
+   _mesa_log_msg(ctx, gdmessage->source,
+                 gl_enum_to_debug_type(GL_DEBUG_TYPE_POP_GROUP),
+                 gdmessage->id,
+                 gl_enum_to_debug_severity(GL_DEBUG_SEVERITY_NOTIFICATION),
+                 gdmessage->length, gdmessage->message);
+
+   if (gdmessage->message != (char*)out_of_memory)
+      free(gdmessage->message);
+   gdmessage->message = NULL;
+   gdmessage->length = 0;
+
+   /* free popped debug group data */
+   free_errors_data(ctx, prevStackDepth);
 }
 
 void GLAPIENTRY
@@ -738,8 +884,13 @@ _mesa_DebugMessageInsertARB(GLenum source, GLenum type, GLuint id,
 {
    const char *callerstr = "glDebugMessageInsertARB";
 
+   GET_CURRENT_CONTEXT(ctx);
+
+   if (!validate_params(ctx, INSERT_ARB, callerstr, source, type, severity))
+      return; /* GL_INVALID_ENUM */
+
    message_insert(source, type, id, severity, length, buf,
-                  INSERT_ARB, callerstr);
+                  callerstr);
 }
 
 GLuint GLAPIENTRY
@@ -784,53 +935,39 @@ _mesa_init_errors(struct gl_context *ctx)
    ctx->Debug.NumMessages = 0;
    ctx->Debug.NextMsg = 0;
    ctx->Debug.NextMsgLength = 0;
+   ctx->Debug.GroupStackDepth = 0;
 
    /* Enable all the messages with severity HIGH or MEDIUM by default. */
-   memset(ctx->Debug.Defaults[MESA_DEBUG_SEVERITY_HIGH], GL_TRUE,
-          sizeof ctx->Debug.Defaults[MESA_DEBUG_SEVERITY_HIGH]);
-   memset(ctx->Debug.Defaults[MESA_DEBUG_SEVERITY_MEDIUM], GL_TRUE,
-          sizeof ctx->Debug.Defaults[MESA_DEBUG_SEVERITY_MEDIUM]);
-   memset(ctx->Debug.Defaults[MESA_DEBUG_SEVERITY_LOW], GL_FALSE,
-          sizeof ctx->Debug.Defaults[MESA_DEBUG_SEVERITY_LOW]);
+   memset(ctx->Debug.Defaults[0][MESA_DEBUG_SEVERITY_HIGH], GL_TRUE,
+          sizeof ctx->Debug.Defaults[0][MESA_DEBUG_SEVERITY_HIGH]);
+   memset(ctx->Debug.Defaults[0][MESA_DEBUG_SEVERITY_MEDIUM], GL_TRUE,
+          sizeof ctx->Debug.Defaults[0][MESA_DEBUG_SEVERITY_MEDIUM]);
+   memset(ctx->Debug.Defaults[0][MESA_DEBUG_SEVERITY_LOW], GL_FALSE,
+          sizeof ctx->Debug.Defaults[0][MESA_DEBUG_SEVERITY_LOW]);
 
    /* Initialize state for filtering known debug messages. */
    for (s = 0; s < MESA_DEBUG_SOURCE_COUNT; s++)
       for (t = 0; t < MESA_DEBUG_TYPE_COUNT; t++) {
-         ctx->Debug.Namespaces[s][t].IDs = _mesa_NewHashTable();
-         assert(ctx->Debug.Namespaces[s][t].IDs);
+         ctx->Debug.Namespaces[0][s][t].IDs = _mesa_NewHashTable();
+         assert(ctx->Debug.Namespaces[0][s][t].IDs);
 
          for (sev = 0; sev < MESA_DEBUG_SEVERITY_COUNT; sev++)
-            make_empty_list(&ctx->Debug.Namespaces[s][t].Severity[sev]);
+            make_empty_list(&ctx->Debug.Namespaces[0][s][t].Severity[sev]);
       }
 }
 
-static void
-do_nothing(GLuint key, void *data, void *userData)
-{
-}
-
+/**
+ * Loop through debug group stack tearing down states for
+ * filtering debug messages.
+ */
 void
 _mesa_free_errors_data(struct gl_context *ctx)
 {
-   enum mesa_debug_type t;
-   enum mesa_debug_source s;
-   enum mesa_debug_severity sev;
+   GLint i;
 
-   /* Tear down state for filtering debug messages. */
-   for (s = 0; s < MESA_DEBUG_SOURCE_COUNT; s++)
-      for (t = 0; t < MESA_DEBUG_TYPE_COUNT; t++) {
-         _mesa_HashDeleteAll(ctx->Debug.Namespaces[s][t].IDs, do_nothing, NULL);
-         _mesa_DeleteHashTable(ctx->Debug.Namespaces[s][t].IDs);
-         for (sev = 0; sev < MESA_DEBUG_SEVERITY_COUNT; sev++) {
-            struct simple_node *node, *tmp;
-            struct gl_debug_severity *entry;
-
-            foreach_s(node, tmp, &ctx->Debug.Namespaces[s][t].Severity[sev]) {
-               entry = (struct gl_debug_severity *)node;
-               free(entry);
-            }
-         }
-      }
+   for (i = 0; i <= ctx->Debug.GroupStackDepth; i++) {
+      free_errors_data(ctx, i);
+   }
 }
 
 /**********************************************************************/
