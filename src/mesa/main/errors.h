@@ -102,6 +102,21 @@ _mesa_DebugMessageControlARB(GLenum source, GLenum type, GLenum severity,
 void GLAPIENTRY
 _mesa_DebugMessageCallbackARB(GLDEBUGPROCARB callback,
                               const void *userParam);
+void GLAPIENTRY
+_mesa_DebugMessageInsert(GLenum source, GLenum type, GLuint id,
+                         GLenum severity, GLint length,
+                         const GLchar* buf);
+GLuint GLAPIENTRY
+_mesa_GetDebugMessageLog(GLuint count, GLsizei logSize, GLenum* sources,
+                         GLenum* types, GLenum* ids, GLenum* severities,
+                         GLsizei* lengths, GLchar* messageLog);
+void GLAPIENTRY
+_mesa_DebugMessageControl(GLenum source, GLenum type, GLenum severity,
+                          GLsizei count, const GLuint *ids,
+                          GLboolean enabled);
+void GLAPIENTRY
+_mesa_DebugMessageCallback(GLDEBUGPROC callback,
+                           const void *userParam);
 
 #ifdef __cplusplus
 }
