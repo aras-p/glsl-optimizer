@@ -103,6 +103,12 @@
 #define		WAIT_REG_MEM_EQUAL		3
 #define PKT3_MEM_WRITE                         0x3D /* not on CIK */
 #define PKT3_INDIRECT_BUFFER                   0x32
+#define PKT3_COPY_DATA			       0x40
+#define		COPY_DATA_SRC_SEL(x)		((x) & 0xf)
+#define			COPY_DATA_REG		0
+#define			COPY_DATA_MEM		1
+#define		COPY_DATA_DST_SEL(x)		(((x) & 0xf) << 8)
+#define		COPY_DATA_WR_CONFIRM		(1 << 20)
 #define PKT3_SURFACE_SYNC                      0x43 /* deprecated on CIK, use ACQUIRE_MEM */
 #define PKT3_ME_INITIALIZE                     0x44 /* not on CIK */
 #define PKT3_COND_WRITE                        0x45

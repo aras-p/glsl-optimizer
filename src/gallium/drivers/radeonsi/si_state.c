@@ -3241,6 +3241,7 @@ void si_init_config(struct r600_context *rctx)
 	si_pm4_set_reg(pm4, R_028A40_VGT_GS_MODE, 0x0);
 	si_pm4_set_reg(pm4, R_028A84_VGT_PRIMITIVEID_EN, 0x0);
 	si_pm4_set_reg(pm4, R_028A8C_VGT_PRIMITIVEID_RESET, 0x0);
+	si_pm4_set_reg(pm4, R_028B28_VGT_STRMOUT_DRAW_OPAQUE_OFFSET, 0);
 	si_pm4_set_reg(pm4, R_028B94_VGT_STRMOUT_CONFIG, 0x0);
 	si_pm4_set_reg(pm4, R_028B98_VGT_STRMOUT_BUFFER_CONFIG, 0x0);
 	si_pm4_set_reg(pm4, R_028AA8_IA_MULTI_VGT_PARAM,

@@ -557,6 +557,29 @@ static void si_state_draw(struct r600_context *rctx,
 			       S_02800C_NOOP_CULL_DISABLE(1));
 	}
 
+	if (info->count_from_stream_output) {
+		struct r600_so_target *t =
+			(struct r600_so_target*)info->count_from_stream_output;
+		uint64_t va = r600_resource_va(&rctx->screen->b.b,
+					       &t->buf_filled_size->b.b);
+		va += t->buf_filled_size_offset;
+
+		si_pm4_set_reg(pm4, R_028B30_VGT_STRMOUT_DRAW_OPAQUE_VERTEX_STRIDE,
+			       t->stride_in_dw);
+
+		si_pm4_cmd_begin(pm4, PKT3_COPY_DATA);
+		si_pm4_cmd_add(pm4,
+			       COPY_DATA_SRC_SEL(COPY_DATA_MEM) |
+			       COPY_DATA_DST_SEL(COPY_DATA_REG) |
+			       COPY_DATA_WR_CONFIRM);
+		si_pm4_cmd_add(pm4, va);     /* src address lo */
+		si_pm4_cmd_add(pm4, va >> 32UL); /* src address hi */
+		si_pm4_cmd_add(pm4, R_028B2C_VGT_STRMOUT_DRAW_OPAQUE_BUFFER_FILLED_SIZE >> 2);
+		si_pm4_cmd_add(pm4, 0); /* unused */
+		si_pm4_add_bo(pm4, t->buf_filled_size, RADEON_USAGE_READ);
+		si_pm4_cmd_end(pm4, true);
+	}
+
 	/* draw packet */
 	si_pm4_cmd_begin(pm4, PKT3_INDEX_TYPE);
 	if (ib->index_size == 4) {
