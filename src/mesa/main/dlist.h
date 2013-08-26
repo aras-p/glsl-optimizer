@@ -53,6 +53,8 @@ _mesa_CallLists( GLsizei n, GLenum type, const GLvoid *lists );
 void GLAPIENTRY
 _mesa_ListBase(GLuint base);
 
+extern struct gl_display_list *
+_mesa_lookup_list(struct gl_context *ctx, GLuint list);
 
 extern void _mesa_compile_error( struct gl_context *ctx, GLenum error, const char *s );
 

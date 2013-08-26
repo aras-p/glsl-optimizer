@@ -561,8 +561,8 @@ make_list(GLuint name, GLuint count)
 /**
  * Lookup function to just encapsulate casting.
  */
-static inline struct gl_display_list *
-lookup_list(struct gl_context *ctx, GLuint list)
+struct gl_display_list *
+_mesa_lookup_list(struct gl_context *ctx, GLuint list)
 {
    return (struct gl_display_list *)
       _mesa_HashLookup(ctx->Shared->DisplayList, list);
@@ -785,7 +785,7 @@ destroy_list(struct gl_context *ctx, GLuint list)
    if (list == 0)
       return;
 
-   dlist = lookup_list(ctx, list);
+   dlist = _mesa_lookup_list(ctx, list);
    if (!dlist)
       return;
 
@@ -7278,7 +7278,7 @@ _mesa_compile_error(struct gl_context *ctx, GLenum error, const char *s)
 static GLboolean
 islist(struct gl_context *ctx, GLuint list)
 {
-   if (list > 0 && lookup_list(ctx, list)) {
+   if (list > 0 && _mesa_lookup_list(ctx, list)) {
       return GL_TRUE;
    }
    else {
@@ -7314,7 +7314,7 @@ execute_list(struct gl_context *ctx, GLuint list)
       return;
    }
 
-   dlist = lookup_list(ctx, list);
+   dlist = _mesa_lookup_list(ctx, list);
    if (!dlist)
       return;
 
@@ -9309,7 +9309,7 @@ print_list(struct gl_context *ctx, GLuint list)
       return;
    }
 
-   dlist = lookup_list(ctx, list);
+   dlist = _mesa_lookup_list(ctx, list);
    if (!dlist)
       return;
 
