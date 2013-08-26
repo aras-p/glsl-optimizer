@@ -364,6 +364,11 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          FLUSH_VERTICES(ctx, _NEW_DEPTH);
          ctx->Depth.Test = state;
          break;
+      case GL_DEBUG_OUTPUT:
+         if (!_mesa_is_desktop_gl(ctx))
+            goto invalid_enum_error;
+         ctx->Debug.DebugOutput = state;
+         break;
       case GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB:
          if (!_mesa_is_desktop_gl(ctx))
             goto invalid_enum_error;
@@ -1201,6 +1206,10 @@ _mesa_IsEnabled( GLenum cap )
 	 return ctx->Light.ColorMaterialEnabled;
       case GL_CULL_FACE:
          return ctx->Polygon.CullFlag;
+      case GL_DEBUG_OUTPUT:
+         if (!_mesa_is_desktop_gl(ctx))
+            goto invalid_enum_error;
+         return ctx->Debug.DebugOutput;
       case GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB:
          if (!_mesa_is_desktop_gl(ctx))
             goto invalid_enum_error;

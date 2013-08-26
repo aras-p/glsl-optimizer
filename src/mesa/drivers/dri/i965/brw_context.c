@@ -468,8 +468,10 @@ brwCreateContext(int api,
    if ((flags & __DRI_CTX_FLAG_FORWARD_COMPATIBLE) != 0)
       ctx->Const.ContextFlags |= GL_CONTEXT_FLAG_FORWARD_COMPATIBLE_BIT;
 
+   ctx->Debug.DebugOutput = GL_FALSE;
    if ((flags & __DRI_CTX_FLAG_DEBUG) != 0) {
       ctx->Const.ContextFlags |= GL_CONTEXT_FLAG_DEBUG_BIT;
+      ctx->Debug.DebugOutput = GL_TRUE;
 
       /* Turn on some extra GL_ARB_debug_output generation. */
       brw->perf_debug = true;

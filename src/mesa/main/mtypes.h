@@ -3392,6 +3392,7 @@ struct gl_debug_state
    GLDEBUGPROC Callback;
    const void *CallbackData;
    GLboolean SyncOutput;
+   GLboolean DebugOutput;
    GLboolean Defaults[MAX_DEBUG_GROUP_STACK_DEPTH][MESA_DEBUG_SEVERITY_COUNT][MESA_DEBUG_SOURCE_COUNT][MESA_DEBUG_TYPE_COUNT];
    struct gl_debug_namespace Namespaces[MAX_DEBUG_GROUP_STACK_DEPTH][MESA_DEBUG_SOURCE_COUNT][MESA_DEBUG_TYPE_COUNT];
    struct gl_debug_msg Log[MAX_DEBUG_LOGGED_MESSAGES];

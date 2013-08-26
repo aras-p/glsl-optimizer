@@ -194,6 +194,9 @@ should_log(struct gl_context *ctx,
          &ctx->Debug.Namespaces[gstack][source][type];
    uintptr_t state;
 
+   if (!ctx->Debug.DebugOutput)
+      return GL_FALSE;
+
    /* In addition to not being able to store zero as a value, HashTable also
       can't use zero as a key. */
    if (id)
