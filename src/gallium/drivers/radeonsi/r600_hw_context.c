@@ -157,7 +157,7 @@ void si_need_cs_space(struct r600_context *ctx, unsigned num_dw,
 	}
 
 	/* Count in framebuffer cache flushes at the end of CS. */
-	num_dw += 7; /* one SURFACE_SYNC and CACHE_FLUSH_AND_INV (r6xx-only) */
+	num_dw += ctx->atoms.cache_flush->num_dw;
 
 	/* Save 16 dwords for the fence mechanism. */
 	num_dw += 16;
@@ -172,37 +172,6 @@ void si_need_cs_space(struct r600_context *ctx, unsigned num_dw,
 	if (num_dw > RADEON_MAX_CMDBUF_DWORDS) {
 		radeonsi_flush(&ctx->b.b, NULL, RADEON_FLUSH_ASYNC);
 	}
-}
-
-static void r600_flush_framebuffer(struct r600_context *ctx)
-{
-	struct si_pm4_state *pm4;
-
-	if (!(ctx->flags & R600_CONTEXT_DST_CACHES_DIRTY))
-		return;
-
-	pm4 = si_pm4_alloc_state(ctx);
-
-	if (pm4 == NULL)
-		return;
-
-	si_cmd_surface_sync(pm4, S_0085F0_CB0_DEST_BASE_ENA(1) |
-				S_0085F0_CB1_DEST_BASE_ENA(1) |
-				S_0085F0_CB2_DEST_BASE_ENA(1) |
-				S_0085F0_CB3_DEST_BASE_ENA(1) |
-				S_0085F0_CB4_DEST_BASE_ENA(1) |
-				S_0085F0_CB5_DEST_BASE_ENA(1) |
-				S_0085F0_CB6_DEST_BASE_ENA(1) |
-				S_0085F0_CB7_DEST_BASE_ENA(1) |
-				S_0085F0_DB_ACTION_ENA(1) |
-				S_0085F0_DB_DEST_BASE_ENA(1));
-	si_cmd_flush_and_inv_cb_meta(pm4);
-
-	si_pm4_emit(ctx, pm4);
-	si_pm4_free_state(ctx, pm4, ~0);
-
-	ctx->flags &= ~R600_CONTEXT_DST_CACHES_DIRTY;
-	ctx->flush_and_inv_cb_meta = false;
 }
 
 void si_context_flush(struct r600_context *ctx, unsigned flags)
@@ -230,7 +199,11 @@ void si_context_flush(struct r600_context *ctx, unsigned flags)
 	}
 #endif
 
-	r600_flush_framebuffer(ctx);
+	ctx->b.flags |= R600_CONTEXT_FLUSH_AND_INV_CB |
+			R600_CONTEXT_FLUSH_AND_INV_CB_META |
+			R600_CONTEXT_FLUSH_AND_INV_DB |
+			R600_CONTEXT_INV_TEX_CACHE;
+	si_emit_cache_flush(&ctx->b, NULL);
 
 	/* partial flush is needed to avoid lockups on some chips with user fences */
 	cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
@@ -275,7 +248,11 @@ void si_context_flush(struct r600_context *ctx, unsigned flags)
 #endif
 
 	ctx->pm4_dirty_cdwords = 0;
-	ctx->flags = 0;
+
+	/* Flush read caches at the beginning of CS. */
+	ctx->b.flags |= R600_CONTEXT_INV_TEX_CACHE |
+			R600_CONTEXT_INV_CONST_CACHE |
+			R600_CONTEXT_INV_SHADER_CACHE;
 
 	/* set all valid group as dirty so they get reemited on
 	 * next draw command

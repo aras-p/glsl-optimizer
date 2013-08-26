@@ -28,6 +28,7 @@
 #define SI_STATE_H
 
 #include "radeonsi_pm4.h"
+#include "../radeon/r600_pipe_common.h"
 
 struct si_state_blend {
 	struct si_pm4_state	pm4;
@@ -74,8 +75,6 @@ struct si_vertex_element
 
 union si_state {
 	struct {
-		struct si_pm4_state		*sync;
-		struct si_pm4_state		*flush_and_inv_cb_meta;
 		struct si_pm4_state		*init;
 		struct si_state_blend		*blend;
 		struct si_pm4_state		*blend_color;
@@ -90,14 +89,11 @@ union si_state {
 		struct si_pm4_state		*fb_blend;
 		struct si_pm4_state		*dsa_stencil_ref;
 		struct si_pm4_state		*vs;
-		struct si_pm4_state		*vs_sampler_views;
 		struct si_pm4_state		*vs_sampler;
 		struct si_pm4_state		*ps;
-		struct si_pm4_state		*ps_sampler_views;
 		struct si_pm4_state		*ps_sampler;
 		struct si_pm4_state		*spi;
 		struct si_pm4_state		*vertex_buffers;
-		struct si_pm4_state		*texture_barrier;
 		struct si_pm4_state		*draw_info;
 		struct si_pm4_state		*draw;
 	} named;
@@ -214,6 +210,8 @@ void si_init_state_functions(struct r600_context *rctx);
 void si_init_config(struct r600_context *rctx);
 
 /* si_state_draw.c */
+extern const struct r600_atom si_atom_cache_flush;
+void si_emit_cache_flush(struct r600_common_context *rctx, struct r600_atom *atom);
 void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo);
 
 /* si_commands.c */
@@ -224,6 +222,5 @@ void si_cmd_draw_index_2(struct si_pm4_state *pm4, uint32_t max_size,
 void si_cmd_draw_index_auto(struct si_pm4_state *pm4, uint32_t count,
 			    uint32_t initiator, bool predicate);
 void si_cmd_surface_sync(struct si_pm4_state *pm4, uint32_t cp_coher_cntl);
-void si_cmd_flush_and_inv_cb_meta(struct si_pm4_state *pm4);
 
 #endif

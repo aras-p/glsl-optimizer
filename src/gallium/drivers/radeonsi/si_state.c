@@ -2238,11 +2238,13 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 	if (pm4 == NULL)
 		return;
 
-	si_pm4_inval_fb_cache(pm4, state->nr_cbufs);
-	rctx->flush_and_inv_cb_meta = true;
-
-	if (state->zsbuf)
-		si_pm4_inval_zsbuf_cache(pm4);
+	if (rctx->framebuffer.nr_cbufs) {
+		rctx->b.flags |= R600_CONTEXT_FLUSH_AND_INV_CB |
+				 R600_CONTEXT_FLUSH_AND_INV_CB_META;
+	}
+	if (rctx->framebuffer.zsbuf) {
+		rctx->b.flags |= R600_CONTEXT_FLUSH_AND_INV_DB;
+	}
 
 	util_copy_framebuffer_state(&rctx->framebuffer, state);
 
@@ -2468,6 +2470,8 @@ static void si_bind_vs_shader(struct pipe_context *ctx, void *state)
 		si_pm4_bind_state(rctx, vs, sel->current->pm4);
 	else
 		si_pm4_bind_state(rctx, vs, rctx->dummy_pixel_shader->pm4);
+
+	rctx->b.flags |= R600_CONTEXT_INV_SHADER_CACHE;
 }
 
 static void si_bind_ps_shader(struct pipe_context *ctx, void *state)
@@ -2484,6 +2488,8 @@ static void si_bind_ps_shader(struct pipe_context *ctx, void *state)
 		si_pm4_bind_state(rctx, ps, sel->current->pm4);
 	else
 		si_pm4_bind_state(rctx, ps, rctx->dummy_pixel_shader->pm4);
+
+	rctx->b.flags |= R600_CONTEXT_INV_SHADER_CACHE;
 }
 
 static void si_delete_shader_selector(struct pipe_context *ctx,
@@ -2826,16 +2832,13 @@ static void *si_create_sampler_state(struct pipe_context *ctx,
 
 /* XXX consider moving this function to si_descriptors.c for gcc to inline
  *     the si_set_sampler_view calls. LTO might help too. */
-static struct si_pm4_state *si_set_sampler_views(struct r600_context *rctx,
-						 unsigned shader, unsigned count,
-						 struct pipe_sampler_view **views)
+static void si_set_sampler_views(struct r600_context *rctx,
+				 unsigned shader, unsigned count,
+				 struct pipe_sampler_view **views)
 {
 	struct r600_textures_info *samplers = &rctx->samplers[shader];
 	struct si_pipe_sampler_view **rviews = (struct si_pipe_sampler_view **)views;
-	struct si_pm4_state *pm4 = si_pm4_alloc_state(rctx);
 	int i;
-
-	si_pm4_inval_texture_cache(pm4);
 
 	for (i = 0; i < count; i++) {
 		if (views[i]) {
@@ -2879,27 +2882,23 @@ static struct si_pm4_state *si_set_sampler_views(struct r600_context *rctx,
 	}
 
 	samplers->n_views = count;
-	return pm4;
+	rctx->b.flags |= R600_CONTEXT_INV_TEX_CACHE;
 }
 
 static void si_set_vs_sampler_views(struct pipe_context *ctx, unsigned count,
 				    struct pipe_sampler_view **views)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct si_pm4_state *pm4;
 
-	pm4 = si_set_sampler_views(rctx, PIPE_SHADER_VERTEX, count, views);
-	si_pm4_set_state(rctx, vs_sampler_views, pm4);
+	si_set_sampler_views(rctx, PIPE_SHADER_VERTEX, count, views);
 }
 
 static void si_set_ps_sampler_views(struct pipe_context *ctx, unsigned count,
 				    struct pipe_sampler_view **views)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct si_pm4_state *pm4;
 
-	pm4 = si_set_sampler_views(rctx, PIPE_SHADER_FRAGMENT, count, views);
-	si_pm4_set_state(rctx, ps_sampler_views, pm4);
+	si_set_sampler_views(rctx, PIPE_SHADER_FRAGMENT, count, views);
 }
 
 static struct si_pm4_state *si_bind_sampler_states(struct r600_context *rctx, unsigned count,
@@ -2915,7 +2914,7 @@ static struct si_pm4_state *si_bind_sampler_states(struct r600_context *rctx, un
 	if (!count)
 		goto out;
 
-	si_pm4_inval_texture_cache(pm4);
+	rctx->b.flags |= R600_CONTEXT_INV_TEX_CACHE;
 
 	si_pm4_sh_data_begin(pm4);
 	for (i = 0; i < count; i++) {
@@ -3128,14 +3127,9 @@ static void si_set_polygon_stipple(struct pipe_context *ctx,
 static void si_texture_barrier(struct pipe_context *ctx)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct si_pm4_state *pm4 = si_pm4_alloc_state(rctx);
 
-	if (pm4 == NULL)
-		return;
-
-	si_pm4_inval_texture_cache(pm4);
-	si_pm4_inval_fb_cache(pm4, rctx->framebuffer.nr_cbufs);
-	si_pm4_set_state(rctx, texture_barrier, pm4);
+	rctx->b.flags |= R600_CONTEXT_INV_TEX_CACHE |
+			 R600_CONTEXT_FLUSH_AND_INV_CB;
 }
 
 static void *si_create_blend_custom(struct r600_context *rctx, unsigned mode)

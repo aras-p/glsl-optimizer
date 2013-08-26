@@ -52,8 +52,6 @@ static void si_pipe_shader_vs(struct pipe_context *ctx, struct si_pipe_shader *s
 	if (pm4 == NULL)
 		return;
 
-	si_pm4_inval_shader_cache(pm4);
-
 	/* Certain attributes (position, psize, etc.) don't count as params.
 	 * VS is required to export at least one param and r600_shader_from_tgsi()
 	 * takes care of adding a dummy export.
@@ -116,6 +114,7 @@ static void si_pipe_shader_vs(struct pipe_context *ctx, struct si_pipe_shader *s
 	}
 
 	si_pm4_bind_state(rctx, vs, shader->pm4);
+	rctx->b.flags |= R600_CONTEXT_INV_SHADER_CACHE;
 }
 
 static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *shader)
@@ -132,8 +131,6 @@ static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *s
 
 	if (pm4 == NULL)
 		return;
-
-	si_pm4_inval_shader_cache(pm4);
 
 	db_shader_control = S_02880C_Z_ORDER(V_02880C_EARLY_Z_THEN_LATE_Z) |
 			    S_02880C_ALPHA_TO_MASK_DISABLE(rctx->fb_cb0_is_integer);
@@ -244,6 +241,7 @@ static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *s
 	shader->cb0_is_integer = rctx->fb_cb0_is_integer;
 	shader->sprite_coord_enable = rctx->sprite_coord_enable;
 	si_pm4_bind_state(rctx, ps, shader->pm4);
+	rctx->b.flags |= R600_CONTEXT_INV_SHADER_CACHE;
 }
 
 /*
@@ -461,9 +459,8 @@ static void si_vertex_buffer_update(struct r600_context *rctx)
 	unsigned i, count;
 	uint64_t va;
 
-	si_pm4_inval_texture_cache(pm4);
+	rctx->b.flags |= R600_CONTEXT_INV_TEX_CACHE;
 
-	/* bind vertex buffer once */
 	count = rctx->vertex_elements->count;
 	assert(count <= 256 / 4);
 
@@ -568,11 +565,74 @@ static void si_state_draw(struct r600_context *rctx,
 	si_pm4_set_state(rctx, draw, pm4);
 }
 
+void si_emit_cache_flush(struct r600_common_context *rctx, struct r600_atom *atom)
+{
+	struct radeon_winsys_cs *cs = rctx->rings.gfx.cs;
+	uint32_t cp_coher_cntl = 0;
+
+	/* XXX SI flushes both ICACHE and KCACHE if either flag is set.
+	 * XXX CIK shouldn't have this issue. Test CIK before separating the flags
+	 * XXX to ensure there is no regression. Also find out if there is another
+	 * XXX way to flush either ICACHE or KCACHE but not both for SI. */
+	if (rctx->flags & (R600_CONTEXT_INV_SHADER_CACHE |
+			   R600_CONTEXT_INV_CONST_CACHE)) {
+		cp_coher_cntl |= S_0085F0_SH_ICACHE_ACTION_ENA(1) |
+				 S_0085F0_SH_KCACHE_ACTION_ENA(1);
+	}
+	if (rctx->flags & (R600_CONTEXT_INV_TEX_CACHE |
+			   R600_CONTEXT_STREAMOUT_FLUSH)) {
+		cp_coher_cntl |= S_0085F0_TC_ACTION_ENA(1) |
+				 S_0085F0_TCL1_ACTION_ENA(1);
+	}
+	if (rctx->flags & R600_CONTEXT_FLUSH_AND_INV_CB) {
+		cp_coher_cntl |= S_0085F0_CB_ACTION_ENA(1) |
+				 S_0085F0_CB0_DEST_BASE_ENA(1) |
+			         S_0085F0_CB1_DEST_BASE_ENA(1) |
+			         S_0085F0_CB2_DEST_BASE_ENA(1) |
+			         S_0085F0_CB3_DEST_BASE_ENA(1) |
+			         S_0085F0_CB4_DEST_BASE_ENA(1) |
+			         S_0085F0_CB5_DEST_BASE_ENA(1) |
+			         S_0085F0_CB6_DEST_BASE_ENA(1) |
+			         S_0085F0_CB7_DEST_BASE_ENA(1);
+	}
+	if (rctx->flags & R600_CONTEXT_FLUSH_AND_INV_DB) {
+		cp_coher_cntl |= S_0085F0_DB_ACTION_ENA(1) |
+				 S_0085F0_DB_DEST_BASE_ENA(1);
+	}
+
+	if (cp_coher_cntl) {
+		if (rctx->chip_class >= CIK) {
+			radeon_emit(cs, PKT3(PKT3_ACQUIRE_MEM, 5, 0));
+			radeon_emit(cs, cp_coher_cntl);   /* CP_COHER_CNTL */
+			radeon_emit(cs, 0xffffffff);      /* CP_COHER_SIZE */
+			radeon_emit(cs, 0xff);            /* CP_COHER_SIZE_HI */
+			radeon_emit(cs, 0);               /* CP_COHER_BASE */
+			radeon_emit(cs, 0);               /* CP_COHER_BASE_HI */
+			radeon_emit(cs, 0x0000000A);      /* POLL_INTERVAL */
+		} else {
+			radeon_emit(cs, PKT3(PKT3_SURFACE_SYNC, 3, 0));
+			radeon_emit(cs, cp_coher_cntl);   /* CP_COHER_CNTL */
+			radeon_emit(cs, 0xffffffff);      /* CP_COHER_SIZE */
+			radeon_emit(cs, 0);               /* CP_COHER_BASE */
+			radeon_emit(cs, 0x0000000A);      /* POLL_INTERVAL */
+		}
+	}
+
+	if (rctx->flags & R600_CONTEXT_FLUSH_AND_INV_CB_META) {
+		radeon_emit(cs, PKT3(PKT3_EVENT_WRITE, 0, 0));
+		radeon_emit(cs, EVENT_TYPE(V_028A90_FLUSH_AND_INV_CB_META) | EVENT_INDEX(0));
+	}
+
+	rctx->flags = 0;
+}
+
+const struct r600_atom si_atom_cache_flush = { si_emit_cache_flush, 9 }; /* number of CS dwords */
+
 void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct pipe_index_buffer ib = {};
-	uint32_t cp_coher_cntl, i;
+	uint32_t i;
 
 	if (!info->count && (info->indexed || !info->count_from_stream_output))
 		return;
@@ -605,40 +665,15 @@ void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 
 	si_state_draw(rctx, info, &ib);
 
-	/* Cache flushing via CP_COHER_CNTL. */
-	cp_coher_cntl = si_pm4_sync_flags(rctx);
-
-	if (rctx->b.flags & R600_CONTEXT_INV_CONST_CACHE) {
-		cp_coher_cntl |= S_0085F0_SH_ICACHE_ACTION_ENA(1) |
-				 S_0085F0_SH_KCACHE_ACTION_ENA(1);
-	}
-
-	if (cp_coher_cntl) {
-		struct si_pm4_state *pm4 = si_pm4_alloc_state(rctx);
-
-		if (pm4 == NULL)
-			return;
-
-		si_cmd_surface_sync(pm4, cp_coher_cntl);
-		si_pm4_set_state(rctx, sync, pm4);
-	}
-
-	if (rctx->flush_and_inv_cb_meta) {
-		struct si_pm4_state *pm4 = si_pm4_alloc_state(rctx);
-
-		if (pm4 == NULL)
-			return;
-
-		si_cmd_flush_and_inv_cb_meta(pm4);
-		si_pm4_set_state(rctx, flush_and_inv_cb_meta, pm4);
-		rctx->flush_and_inv_cb_meta = false;
-	}
-
-	/* Emit states. */
 	rctx->pm4_dirty_cdwords += si_pm4_dirty_dw(rctx);
+
+	/* Check flush flags. */
+	if (rctx->b.flags)
+		rctx->atoms.cache_flush->dirty = true;
 
 	si_need_cs_space(rctx, 0, TRUE);
 
+	/* Emit states. */
 	for (i = 0; i < SI_NUM_ATOMS(rctx); i++) {
 		if (rctx->atoms.array[i]->dirty) {
 			rctx->atoms.array[i]->emit(&rctx->b, rctx->atoms.array[i]);
@@ -662,8 +697,6 @@ void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 		rctx->streamout_start = FALSE;
 	}
 #endif
-
-	rctx->flags |= R600_CONTEXT_DST_CACHES_DIRTY;
 
 	/* Set the depth buffer as dirty. */
 	if (rctx->framebuffer.zsbuf) {

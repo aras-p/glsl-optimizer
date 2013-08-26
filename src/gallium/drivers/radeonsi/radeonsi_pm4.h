@@ -80,8 +80,6 @@ void si_pm4_sh_data_end(struct si_pm4_state *state, unsigned base, unsigned idx)
 
 void si_pm4_inval_shader_cache(struct si_pm4_state *state);
 void si_pm4_inval_texture_cache(struct si_pm4_state *state);
-void si_pm4_inval_fb_cache(struct si_pm4_state *state, unsigned nr_cbufs);
-void si_pm4_inval_zsbuf_cache(struct si_pm4_state *state);
 
 void si_pm4_free_state(struct r600_context *rctx,
 		       struct si_pm4_state *state,

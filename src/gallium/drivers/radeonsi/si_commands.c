@@ -78,12 +78,3 @@ void si_cmd_surface_sync(struct si_pm4_state *pm4, uint32_t cp_coher_cntl)
 		si_pm4_cmd_end(pm4, false);
 	}
 }
-
-void si_cmd_flush_and_inv_cb_meta(struct si_pm4_state *pm4)
-{
-	si_pm4_cmd_begin(pm4, PKT3_EVENT_WRITE);
-	si_pm4_cmd_add(pm4,
-		       EVENT_TYPE(V_028A90_FLUSH_AND_INV_CB_META) |
-		       EVENT_INDEX(0));
-	si_pm4_cmd_end(pm4, false);
-}

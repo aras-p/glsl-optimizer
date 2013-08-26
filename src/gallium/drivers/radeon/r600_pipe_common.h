@@ -42,6 +42,7 @@
 #define R600_CONTEXT_INV_VERTEX_CACHE		(1 << 0)
 #define R600_CONTEXT_INV_TEX_CACHE		(1 << 1)
 #define R600_CONTEXT_INV_CONST_CACHE		(1 << 2)
+#define R600_CONTEXT_INV_SHADER_CACHE		(1 << 3)
 /* read-write caches */
 #define R600_CONTEXT_STREAMOUT_FLUSH		(1 << 8)
 #define R600_CONTEXT_FLUSH_AND_INV		(1 << 9)

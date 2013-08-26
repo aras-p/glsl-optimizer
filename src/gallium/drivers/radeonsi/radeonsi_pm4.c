@@ -145,17 +145,6 @@ void si_pm4_inval_texture_cache(struct si_pm4_state *state)
 	state->cp_coher_cntl |= S_0085F0_TCL1_ACTION_ENA(1);
 }
 
-void si_pm4_inval_fb_cache(struct si_pm4_state *state, unsigned nr_cbufs)
-{
-	state->cp_coher_cntl |= S_0085F0_CB_ACTION_ENA(1);
-	state->cp_coher_cntl |= ((1 << nr_cbufs) - 1) << S_0085F0_CB0_DEST_BASE_ENA_SHIFT;
-}
-
-void si_pm4_inval_zsbuf_cache(struct si_pm4_state *state)
-{
-	state->cp_coher_cntl |= S_0085F0_DB_ACTION_ENA(1) | S_0085F0_DB_DEST_BASE_ENA(1);
-}
-
 void si_pm4_free_state(struct r600_context *rctx,
 		       struct si_pm4_state *state,
 		       unsigned idx)

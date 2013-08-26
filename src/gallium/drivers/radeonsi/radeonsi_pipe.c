@@ -244,6 +244,10 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 
 	si_init_all_descriptors(rctx);
 
+	/* Initialize cache_flush. */
+	rctx->cache_flush = si_atom_cache_flush;
+	rctx->atoms.cache_flush = &rctx->cache_flush;
+
 	switch (rctx->b.chip_class) {
 	case SI:
 	case CIK:

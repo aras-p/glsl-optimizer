@@ -131,8 +131,12 @@ struct r600_context {
 
 	union {
 		struct {
+			/* The order matters. */
 			struct r600_atom *const_buffers[SI_NUM_SHADERS];
 			struct r600_atom *sampler_views[SI_NUM_SHADERS];
+			/* Caches must be flushed after resource descriptors are
+			 * updated in memory. */
+			struct r600_atom *cache_flush;
 		};
 		struct r600_atom *array[0];
 	} atoms;
@@ -179,7 +183,6 @@ struct r600_context {
 
 	unsigned		backend_mask;
 	unsigned                max_db; /* for OQ */
-	unsigned		flags;
 	boolean                 predicate_drawing;
 
 	unsigned		num_so_targets;
@@ -198,12 +201,11 @@ struct r600_context {
 	/* With rasterizer discard, there doesn't have to be a pixel shader.
 	 * In that case, we bind this one: */
 	struct si_pipe_shader	*dummy_pixel_shader;
+	struct r600_atom	cache_flush;
 
 	/* SI state handling */
 	union si_state	queued;
 	union si_state	emitted;
-
-	bool flush_and_inv_cb_meta;
 };
 
 /* r600_blit.c */

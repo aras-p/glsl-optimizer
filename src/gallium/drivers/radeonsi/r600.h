@@ -69,9 +69,6 @@ struct r600_query {
 	struct list_head			list;
 };
 
-#define R600_CONTEXT_DST_CACHES_DIRTY	(1 << 1)
-#define R600_CONTEXT_CHECK_EVENT_FLUSH	(1 << 2)
-
 struct r600_context;
 struct r600_screen;
 

@@ -30,7 +30,7 @@
 
 #include "util/u_memory.h"
 
-#define SI_NUM_CONTEXTS 256
+#define SI_NUM_CONTEXTS 16
 
 static uint32_t null_desc[8]; /* zeros */
 
@@ -142,7 +142,8 @@ static void si_release_descriptors(struct si_descriptors *desc)
 	pipe_resource_reference((struct pipe_resource**)&desc->buffer, NULL);
 }
 
-static void si_update_descriptors(struct si_descriptors *desc)
+static void si_update_descriptors(struct r600_context *rctx,
+				  struct si_descriptors *desc)
 {
 	if (desc->dirty_mask) {
 		desc->atom.num_dw =
@@ -150,6 +151,8 @@ static void si_update_descriptors(struct si_descriptors *desc)
 			(4 + desc->element_dw_size) * util_bitcount(desc->dirty_mask) + /* update */
 			4; /* pointer update */
 		desc->atom.dirty = true;
+		/* The descriptors are read with the K cache. */
+		rctx->b.flags |= R600_CONTEXT_INV_CONST_CACHE;
 	} else {
 		desc->atom.dirty = false;
 	}
@@ -185,6 +188,7 @@ static void si_emit_descriptors(struct r600_context *rctx,
 	va_base = r600_resource_va(rctx->b.b.screen, &desc->buffer->b.b);
 
 	/* Copy the descriptors to a new context slot. */
+	/* XXX Consider using TC or L2 for this copy on CIK. */
 	si_emit_cp_dma_copy_buffer(rctx,
 				   va_base + new_context_id * desc->context_size,
 				   va_base + desc->current_context_id * desc->context_size,
@@ -215,7 +219,7 @@ static void si_emit_descriptors(struct r600_context *rctx,
 			packet_size = 2 + desc->element_dw_size;
 
 			radeon_emit(cs, PKT3(PKT3_WRITE_DATA, packet_size, 0));
-			radeon_emit(cs, PKT3_WRITE_DATA_DST_SEL(PKT3_WRITE_DATA_DST_SEL_MEM_SYNC) |
+			radeon_emit(cs, PKT3_WRITE_DATA_DST_SEL(PKT3_WRITE_DATA_DST_SEL_TC_OR_L2) |
 					     PKT3_WRITE_DATA_WR_CONFIRM |
 					     PKT3_WRITE_DATA_ENGINE_SEL(PKT3_WRITE_DATA_ENGINE_SEL_ME));
 			radeon_emit(cs, va & 0xFFFFFFFFUL);
@@ -322,7 +326,7 @@ void si_set_sampler_view(struct r600_context *rctx, unsigned shader,
 	}
 
 	views->desc.dirty_mask |= 1 << slot;
-	si_update_descriptors(&views->desc);
+	si_update_descriptors(rctx, &views->desc);
 }
 
 /* BUFFER RESOURCES */
@@ -405,8 +409,6 @@ static void si_set_constant_buffer(struct pipe_context *ctx, uint shader, uint s
 	if (shader >= SI_NUM_SHADERS)
 		return;
 
-	rctx->b.flags |= R600_CONTEXT_INV_CONST_CACHE;
-
 	assert(slot < buffers->num_buffers);
 	pipe_resource_reference(&buffers->buffers[slot], NULL);
 
@@ -451,7 +453,7 @@ static void si_set_constant_buffer(struct pipe_context *ctx, uint shader, uint s
 	}
 
 	buffers->desc.dirty_mask |= 1 << slot;
-	si_update_descriptors(&buffers->desc);
+	si_update_descriptors(rctx, &buffers->desc);
 }
 
 /* INIT/DEINIT */
