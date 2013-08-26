@@ -81,6 +81,7 @@ header = """/**
 #include "main/lines.h"
 #include "main/matrix.h"
 #include "main/multisample.h"
+#include "main/objectlabel.h"
 #include "main/pixel.h"
 #include "main/pixelstore.h"
 #include "main/points.h"
