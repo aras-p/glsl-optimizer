@@ -125,6 +125,7 @@ static void
 _mesa_delete_shader(struct gl_context *ctx, struct gl_shader *sh)
 {
    free((void *)sh->Source);
+   free(sh->Label);
    _mesa_reference_program(ctx, &sh->Program, NULL);
    ralloc_free(sh);
 }
@@ -351,6 +352,8 @@ _mesa_free_shader_program_data(struct gl_context *ctx,
 	 shProg->_LinkedShaders[sh] = NULL;
       }
    }
+
+   free(shProg->Label);
 }
 
 

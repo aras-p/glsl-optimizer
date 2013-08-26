@@ -265,6 +265,7 @@ _mesa_delete_buffer_object(struct gl_context *ctx,
    bufObj->Name = ~0;
 
    _glthread_DESTROY_MUTEX(bufObj->Mutex);
+   free(bufObj->Label);
    free(bufObj);
 }
 

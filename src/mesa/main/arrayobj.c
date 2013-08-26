@@ -115,6 +115,7 @@ _mesa_delete_array_object( struct gl_context *ctx, struct gl_array_object *obj )
    unbind_array_object_vbos(ctx, obj);
    _mesa_reference_buffer_object(ctx, &obj->ElementArrayBufferObj, NULL);
    _glthread_DESTROY_MUTEX(obj->Mutex);
+   free(obj->Label);
    free(obj);
 }
 

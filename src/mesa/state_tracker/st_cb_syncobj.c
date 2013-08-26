@@ -60,6 +60,7 @@ static void st_delete_sync_object(struct gl_context *ctx,
    struct st_sync_object *so = (struct st_sync_object*)obj;
 
    screen->fence_reference(screen, &so->fence, NULL);
+   free(so->b.Label);
    free(so);
 }
 

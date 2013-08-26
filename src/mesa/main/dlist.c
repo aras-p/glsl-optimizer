@@ -769,6 +769,7 @@ _mesa_delete_list(struct gl_context *ctx, struct gl_display_list *dlist)
       }
    }
 
+   free(dlist->Label);
    free(dlist);
 }
 

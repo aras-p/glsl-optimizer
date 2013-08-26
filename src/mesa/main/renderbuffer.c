@@ -84,6 +84,7 @@ void
 _mesa_delete_renderbuffer(struct gl_context *ctx, struct gl_renderbuffer *rb)
 {
    _glthread_DESTROY_MUTEX(rb->Mutex);
+   free(rb->Label);
    free(rb);
 }
 

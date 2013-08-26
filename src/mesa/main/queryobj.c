@@ -126,6 +126,7 @@ _mesa_check_query(struct gl_context *ctx, struct gl_query_object *q)
 static void
 _mesa_delete_query(struct gl_context *ctx, struct gl_query_object *q)
 {
+   free(q->Label);
    free(q);
 }
 

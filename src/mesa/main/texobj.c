@@ -238,6 +238,8 @@ _mesa_delete_texture_object(struct gl_context *ctx,
    /* destroy the mutex -- it may have allocated memory (eg on bsd) */
    _glthread_DESTROY_MUTEX(texObj->Mutex);
 
+   free(texObj->Label);
+
    /* free this object */
    free(texObj);
 }
