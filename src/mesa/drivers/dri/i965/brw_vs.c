@@ -234,8 +234,10 @@ do_vs_prog(struct brw_context *brw,
    } else {
       param_count = vp->program.Base.Parameters->NumParameters * 4;
    }
-   /* We also upload clip plane data as uniforms */
-   param_count += MAX_CLIP_PLANES * 4;
+   /* vec4_visitor::setup_uniform_clipplane_values() also uploads user clip
+    * planes as uniforms.
+    */
+   param_count += c.key.base.nr_userclip_plane_consts * 4;
 
    prog_data.base.param = rzalloc_array(NULL, const float *, param_count);
    prog_data.base.pull_param = rzalloc_array(NULL, const float *, param_count);
