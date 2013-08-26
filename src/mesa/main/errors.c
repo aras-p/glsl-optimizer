@@ -39,6 +39,9 @@
 #include "hash_table.h"
 #include "glapi/glthread.h"
 
+#define MESSAGE_LOG 1
+#define MESSAGE_LOG_ARB 2
+
 _glthread_DECLARE_STATIC_MUTEX(DynamicIDMutex);
 static GLuint NextDynamicID = 1;
 
@@ -304,6 +307,38 @@ store_message_details(struct gl_debug_msg *emptySlot,
    }
 }
 
+ /**
+ * Remap any type exclusive to KHR_debug to something suitable
+ * for ARB_debug_output
+ */
+inline static int
+remap_type(GLenum type) {
+
+   switch(type) {
+   case GL_DEBUG_TYPE_MARKER:
+   case GL_DEBUG_TYPE_PUSH_GROUP:
+   case GL_DEBUG_TYPE_POP_GROUP:
+      type = GL_DEBUG_TYPE_OTHER;
+   default:
+      ;
+   }
+
+  return type;
+}
+
+/**
+ * Remap severity exclusive to KHR_debug to something suitable
+ * for ARB_debug_output
+ */
+inline static int
+remap_severity(GLenum severity) {
+
+   if (GL_DEBUG_SEVERITY_NOTIFICATION == severity)
+      severity = GL_DEBUG_SEVERITY_LOW;
+
+   return severity;
+}
+
 /**
  * 'buf' is not necessarily a null-terminated string. When logging, copy
  * 'len' characters from it, store them in a new, null-terminated string,
@@ -324,10 +359,17 @@ _mesa_log_msg(struct gl_context *ctx, enum mesa_debug_source source,
       return;
 
    if (ctx->Debug.Callback) {
+       GLenum gl_type = debug_type_enums[type];
+       GLenum gl_severity = debug_severity_enums[severity];
+
+       if (ctx->Debug.ARBCallback) {
+          gl_severity = remap_severity(gl_severity);
+          gl_type = remap_type(gl_type);
+      }
       ctx->Debug.Callback(debug_source_enums[source],
-                          debug_type_enums[type],
+                          gl_type,
                           id,
-                          debug_severity_enums[severity],
+                          gl_severity,
                           len, buf, ctx->Debug.CallbackData);
       return;
    }
@@ -359,7 +401,8 @@ _mesa_log_msg(struct gl_context *ctx, enum mesa_debug_source source,
  */
 static GLsizei
 _mesa_get_msg(struct gl_context *ctx, GLenum *source, GLenum *type,
-              GLuint *id, GLenum *severity, GLsizei bufSize, char *buf)
+              GLuint *id, GLenum *severity, GLsizei bufSize, char *buf,
+              unsigned caller)
 {
    struct gl_debug_msg *msg;
    GLsizei length;
@@ -375,12 +418,18 @@ _mesa_get_msg(struct gl_context *ctx, GLenum *source, GLenum *type,
    if (bufSize < length && buf != NULL)
       return 0;
 
-   if (severity)
+   if (severity) {
       *severity = debug_severity_enums[msg->severity];
+      if (caller == MESSAGE_LOG_ARB)
+         *severity = remap_severity(*severity);
+   }
    if (source)
       *source = debug_source_enums[msg->source];
-   if (type)
+   if (type) {
       *type = debug_type_enums[msg->type];
+      if (caller == MESSAGE_LOG_ARB)
+         *type = remap_type(*type);
+   }
    if (id)
       *id = msg->id;
 
@@ -648,8 +697,6 @@ get_message_log(GLuint count, GLsizei logSize, GLenum* sources,
                 GLsizei* lengths, GLchar* messageLog,
                 unsigned caller, const char *callerstr)
 {
-#define MESSAGE_LOG 1
-#define MESSAGE_LOG_ARB 2
    GET_CURRENT_CONTEXT(ctx);
    GLuint ret;
 
@@ -665,7 +712,7 @@ get_message_log(GLuint count, GLsizei logSize, GLenum* sources,
 
    for (ret = 0; ret < count; ret++) {
       GLsizei written = _mesa_get_msg(ctx, sources, types, ids, severities,
-                                      logSize, messageLog);
+                                      logSize, messageLog, caller);
       if (!written)
          break;
 
@@ -766,6 +813,7 @@ _mesa_DebugMessageCallback(GLDEBUGPROC callback, const void *userParam)
    GET_CURRENT_CONTEXT(ctx);
    ctx->Debug.Callback = callback;
    ctx->Debug.CallbackData = userParam;
+   ctx->Debug.ARBCallback = GL_FALSE;
 }
 
 void GLAPIENTRY
@@ -925,6 +973,7 @@ _mesa_DebugMessageCallbackARB(GLDEBUGPROCARB callback, const void *userParam)
    GET_CURRENT_CONTEXT(ctx);
    ctx->Debug.Callback = callback;
    ctx->Debug.CallbackData = userParam;
+   ctx->Debug.ARBCallback = GL_TRUE;
 }
 
 void
