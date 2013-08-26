@@ -337,14 +337,9 @@ void compute_memory_finalize_pending(struct compute_memory_pool* pool,
 				}
 			} else {
 				/* Add item to the front of the list */
-				item->next = pool->item_list->next;
-				if (pool->item_list->next) {
-					pool->item_list->next->prev = item;
-				}
+				item->next = pool->item_list;
 				item->prev = pool->item_list->prev;
-				if (pool->item_list->prev) {
-					pool->item_list->prev->next = item;
-				}
+				pool->item_list->prev = item;
 				pool->item_list = item;
 			}
 		}
