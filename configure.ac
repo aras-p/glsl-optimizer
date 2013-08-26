@@ -1925,8 +1925,8 @@ AM_CONDITIONAL(NEED_GALLIUM_SOFTPIPE_DRIVER, test "x$HAVE_GALLIUM_SVGA" = xyes -
                                                   "x$HAVE_GALLIUM_I915" = xyes -o \
                                                   "x$HAVE_GALLIUM_SOFTPIPE" = xyes)
 AM_CONDITIONAL(NEED_GALLIUM_LLVMPIPE_DRIVER, test "x$HAVE_GALLIUM_I915" = xyes -o \
-                                                  "x$HAVE_GALLIUM_SOFTPIPE" = xyes -a \
-                                                  "x$MESA_LLVM" = x1)
+                                                  "x$HAVE_GALLIUM_SOFTPIPE" = xyes \
+                                                  && test "x$MESA_LLVM" = x1)
 
 if test "x$enable_gallium_loader" = xyes; then
     GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS sw/null"
