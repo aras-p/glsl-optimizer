@@ -1635,7 +1635,7 @@ intel_miptree_map_raw(struct brw_context *brw, struct intel_mipmap_tree *mt)
 
    if (unlikely(INTEL_DEBUG & DEBUG_PERF)) {
       if (drm_intel_bo_busy(bo)) {
-         perf_debug("Mapping a busy BO, causing a stall on the GPU.\n");
+         perf_debug("Mapping a busy miptree, causing a stall on the GPU.\n");
       }
    }
 
