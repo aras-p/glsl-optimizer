@@ -479,7 +479,7 @@ static void brw_upload_vs_prog(struct brw_context *brw)
 			 &brw->vs.prog_offset, &brw->vs.prog_data)) {
       bool success = do_vs_prog(brw, ctx->Shader.CurrentVertexProgram,
 				vp, &key);
-
+      (void) success;
       assert(success);
    }
    if (memcmp(&brw->vs.prog_data->base.vue_map, &brw->vue_map_geom_out,
