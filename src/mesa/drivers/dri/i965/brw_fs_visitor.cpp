@@ -336,6 +336,7 @@ fs_visitor::visit(ir_expression *ir)
 	 ir->operands[operand]->print();
          printf("\n");
       }
+      assert(this->result.is_valid_3src());
       op[operand] = this->result;
 
       /* Matrix expression operands should have been broken down to vector
