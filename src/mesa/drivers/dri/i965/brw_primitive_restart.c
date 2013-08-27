@@ -99,6 +99,10 @@ can_cut_index_handle_prims(struct gl_context *ctx,
       case GL_LINE_STRIP:
       case GL_TRIANGLES:
       case GL_TRIANGLE_STRIP:
+      case GL_LINES_ADJACENCY:
+      case GL_LINE_STRIP_ADJACENCY:
+      case GL_TRIANGLES_ADJACENCY:
+      case GL_TRIANGLE_STRIP_ADJACENCY:
          /* Cut index supports these primitive types */
          break;
       default:
