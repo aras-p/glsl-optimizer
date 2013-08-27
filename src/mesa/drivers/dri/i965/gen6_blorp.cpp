@@ -49,12 +49,10 @@ void
 gen6_blorp_emit_batch_head(struct brw_context *brw,
                            const brw_blorp_params *params)
 {
-   struct gl_context *ctx = &brw->ctx;
-
    /* To ensure that the batch contains only the resolve, flush the batch
     * before beginning and after finishing emitting the resolve packets.
     */
-   intel_flush(ctx);
+   intel_batchbuffer_flush(brw);
 }
 
 

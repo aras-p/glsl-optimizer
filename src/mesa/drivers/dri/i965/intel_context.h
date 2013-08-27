@@ -250,9 +250,6 @@ extern bool intelInitContext(struct brw_context *brw,
                              unsigned *dri_ctx_error);
 
 extern void intelFinish(struct gl_context * ctx);
-extern void _intel_flush(struct gl_context * ctx, const char *file, int line);
-
-#define intel_flush(ctx) _intel_flush(ctx, __FILE__, __LINE__)
 
 extern void intelInitDriverFunctions(struct dd_function_table *functions);
 

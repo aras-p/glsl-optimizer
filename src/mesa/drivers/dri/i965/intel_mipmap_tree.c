@@ -1626,7 +1626,6 @@ intel_miptree_upsample(struct brw_context *brw,
 void *
 intel_miptree_map_raw(struct brw_context *brw, struct intel_mipmap_tree *mt)
 {
-   struct gl_context *ctx = &brw->ctx;
    /* CPU accesses to color buffers don't understand fast color clears, so
     * resolve any pending fast color clears before we map.
     */
@@ -1640,7 +1639,7 @@ intel_miptree_map_raw(struct brw_context *brw, struct intel_mipmap_tree *mt)
       }
    }
 
-   intel_flush(ctx);
+   intel_batchbuffer_flush(brw);
 
    if (mt->region->tiling != I915_TILING_NONE)
       drm_intel_gem_bo_map_gtt(bo);

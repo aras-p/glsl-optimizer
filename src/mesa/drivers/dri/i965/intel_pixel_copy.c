@@ -40,6 +40,7 @@
 #include "intel_pixel.h"
 #include "intel_fbo.h"
 #include "intel_blit.h"
+#include "intel_batchbuffer.h"
 
 #define FILE_DEBUG_FLAG DEBUG_PIXEL
 
@@ -144,7 +145,7 @@ do_blit_copypixels(struct gl_context * ctx,
 
    intel_prepare_render(brw);
 
-   intel_flush(&brw->ctx);
+   intel_batchbuffer_flush(brw);
 
    /* Clip to destination buffer. */
    orig_dstx = dstx;

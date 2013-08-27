@@ -349,21 +349,12 @@ intelInvalidateState(struct gl_context * ctx, GLuint new_state)
    brw->NewGLState |= new_state;
 }
 
-void
-_intel_flush(struct gl_context *ctx, const char *file, int line)
-{
-   struct brw_context *brw = brw_context(ctx);
-
-   if (brw->batch.used)
-      _intel_batchbuffer_flush(brw, file, line);
-}
-
 static void
 intel_glFlush(struct gl_context *ctx)
 {
    struct brw_context *brw = brw_context(ctx);
 
-   intel_flush(ctx);
+   intel_batchbuffer_flush(brw);
    intel_flush_front(ctx);
    if (brw->is_front_buffer_rendering)
       brw->need_throttle = true;
@@ -374,7 +365,7 @@ intelFinish(struct gl_context * ctx)
 {
    struct brw_context *brw = brw_context(ctx);
 
-   intel_flush(ctx);
+   intel_batchbuffer_flush(brw);
    intel_flush_front(ctx);
 
    if (brw->batch.last_bo)
@@ -816,7 +807,7 @@ intel_query_dri2_buffers(struct brw_context *brw,
        * query, we need to make sure all the pending drawing has landed in the
        * real front buffer.
        */
-      intel_flush(&brw->ctx);
+      intel_batchbuffer_flush(brw);
       intel_flush_front(&brw->ctx);
 
       attachments[i++] = __DRI_BUFFER_FRONT_LEFT;
@@ -828,7 +819,7 @@ intel_query_dri2_buffers(struct brw_context *brw,
        * So before doing the query, make sure all the pending drawing has
        * landed in the real front buffer.
        */
-      intel_flush(&brw->ctx);
+      intel_batchbuffer_flush(brw);
       intel_flush_front(&brw->ctx);
    }
 
