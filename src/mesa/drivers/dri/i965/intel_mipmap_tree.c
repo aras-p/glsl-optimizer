@@ -1735,7 +1735,6 @@ intel_miptree_map_blit(struct brw_context *brw,
       goto fail;
    }
 
-   intel_batchbuffer_flush(brw);
    map->ptr = intel_miptree_map_raw(brw, map->mt);
 
    DBG("%s: %d,%d %dx%d from mt %p (%s) %d,%d = %p/%d\n", __FUNCTION__,
