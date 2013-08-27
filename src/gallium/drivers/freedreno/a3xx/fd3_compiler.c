@@ -62,10 +62,16 @@ static unsigned regmask_idx(struct ir3_register *reg)
 	return num;
 }
 
-static void regmask_set(regmask_t regmask, struct ir3_register *reg)
+static void regmask_set(regmask_t regmask, struct ir3_register *reg,
+		unsigned wrmask)
 {
-	unsigned idx = regmask_idx(reg);
-	regmask[idx / 8] |= 1 << (idx % 8);
+	unsigned i;
+	for (i = 0; i < 4; i++) {
+		if (wrmask & (1 << i)) {
+			unsigned idx = regmask_idx(reg) + i;
+			regmask[idx / 8] |= 1 << (idx % 8);
+		}
+	}
 }
 
 static unsigned regmask_get(regmask_t regmask, struct ir3_register *reg)
@@ -216,6 +222,24 @@ struct instr_translater {
 	unsigned arg;
 };
 
+static unsigned
+src_flags(struct fd3_compile_context *ctx, struct ir3_register *reg)
+{
+	unsigned flags = 0;
+
+	if (regmask_get(ctx->needs_ss, reg)) {
+		flags |= IR3_INSTR_SS;
+		memset(ctx->needs_ss, 0, sizeof(ctx->needs_ss));
+	}
+
+	if (regmask_get(ctx->needs_sy, reg)) {
+		flags |= IR3_INSTR_SY;
+		memset(ctx->needs_sy, 0, sizeof(ctx->needs_sy));
+	}
+
+	return flags;
+}
+
 static struct ir3_register *
 add_dst_reg(struct fd3_compile_context *ctx, struct ir3_instruction *instr,
 		const struct tgsi_dst_register *dst, unsigned chan)
@@ -279,15 +303,7 @@ add_src_reg(struct fd3_compile_context *ctx, struct ir3_instruction *instr,
 
 	reg = ir3_reg_create(instr, regid(num, chan), flags);
 
-	if (regmask_get(ctx->needs_ss, reg)) {
-		instr->flags |= IR3_INSTR_SS;
-		memset(ctx->needs_ss, 0, sizeof(ctx->needs_ss));
-	}
-
-	if (regmask_get(ctx->needs_sy, reg)) {
-		instr->flags |= IR3_INSTR_SY;
-		memset(ctx->needs_sy, 0, sizeof(ctx->needs_sy));
-	}
+	instr->flags |= src_flags(ctx, reg);
 
 	return reg;
 }
@@ -567,6 +583,7 @@ vectorize(struct fd3_compile_context *ctx, struct ir3_instruction *instr,
 				cur->regs[j+1]->num =
 					regid(cur->regs[j+1]->num >> 2,
 						src_swiz(src, i));
+				cur->flags |= src_flags(ctx, cur->regs[j+1]);
 			}
 			va_end(ap);
 		}
@@ -753,7 +770,7 @@ trans_pow(const struct instr_translater *t,
 	instr = ir3_instr_create(ctx->ir, 4, OPC_LOG2);
 	r = add_dst_reg(ctx, instr, &tmp_dst, 0);
 	add_src_reg(ctx, instr, src0, src0->SwizzleX);
-	regmask_set(ctx->needs_ss, r);
+	regmask_set(ctx->needs_ss, r, TGSI_WRITEMASK_X);
 
 	/* mul.f Rtmp, Rtmp, Rsrc1 */
 	instr = ir3_instr_create(ctx->ir, 2, OPC_MUL_F);
@@ -771,7 +788,7 @@ trans_pow(const struct instr_translater *t,
 	instr = ir3_instr_create(ctx->ir, 4, OPC_EXP2);
 	r = add_dst_reg(ctx, instr, &tmp_dst, 0);
 	add_src_reg(ctx, instr, tmp_src, 0);
-	regmask_set(ctx->needs_ss, r);
+	regmask_set(ctx->needs_ss, r, TGSI_WRITEMASK_X);
 
 	create_mov(ctx, dst, tmp_src);
 }
@@ -855,7 +872,7 @@ trans_samp(const struct instr_translater *t,
 
 	add_src_reg(ctx, instr, coord, coord->SwizzleX);
 
-	regmask_set(ctx->needs_sy, r);
+	regmask_set(ctx->needs_sy, r, r->wrmask);
 }
 
 /*
@@ -1236,7 +1253,8 @@ instr_cat4(const struct instr_translater *t,
 
 	vectorize(ctx, instr, dst, 1, src, 0);
 
-	regmask_set(ctx->needs_ss, instr->regs[0]);
+	regmask_set(ctx->needs_ss, instr->regs[0],
+			inst->Dst[0].Register.WriteMask);
 
 	put_dst(ctx, inst, dst);
 }
