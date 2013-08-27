@@ -3132,32 +3132,45 @@ ast_declarator_list::hir(exec_list *instructions,
       }
 
 
-      /* Precision qualifiers only apply to floating point and integer types.
+      /* Precision qualifiers apply to floating point, integer and sampler
+       * types.
        *
-       * From section 4.5.2 of the GLSL 1.30 spec:
+       * Section 4.5.2 (Precision Qualifiers) of the GLSL 1.30 spec says:
        *    "Any floating point or any integer declaration can have the type
        *    preceded by one of these precision qualifiers [...] Literal
        *    constants do not have precision qualifiers. Neither do Boolean
        *    variables.
        *
-       * In GLSL ES, sampler types are also allowed.
+       * Section 4.5 (Precision and Precision Qualifiers) of the GLSL 1.30
+       * spec also says:
        *
-       * From page 87 of the GLSL ES spec:
-       *    "RESOLUTION: Allow sampler types to take a precision qualifier."
+       *     "Precision qualifiers are added for code portability with OpenGL
+       *     ES, not for functionality. They have the same syntax as in OpenGL
+       *     ES."
+       *
+       * Section 8 (Built-In Functions) of the GLSL ES 1.00 spec says:
+       *
+       *     "uniform lowp sampler2D sampler;
+       *     highp vec2 coord;
+       *     ...
+       *     lowp vec4 col = texture2D (sampler, coord);
+       *                                            // texture2D returns lowp"
+       *
+       * From this, we infer that GLSL 1.30 (and later) should allow precision
+       * qualifiers on sampler types just like float and integer types.
        */
       if (this->type->qualifier.precision != ast_precision_none
           && !var->type->is_float()
           && !var->type->is_integer()
           && !var->type->is_record()
-          && !(var->type->is_sampler() && state->es_shader)
+          && !var->type->is_sampler()
           && !(var->type->is_array()
                && (var->type->fields.array->is_float()
                    || var->type->fields.array->is_integer()))) {
 
          _mesa_glsl_error(&loc, state,
                           "precision qualifiers apply only to floating point"
-                          "%s types", state->es_shader ? ", integer, and sampler"
-						       : "and integer");
+                          ", integer and sampler types");
       }
 
       /* From page 17 (page 23 of the PDF) of the GLSL 1.20 spec:
