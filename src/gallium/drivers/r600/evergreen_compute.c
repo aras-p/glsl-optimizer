@@ -473,6 +473,7 @@ static void compute_emit_cs(struct r600_context *ctx, const uint *block_layout,
 		      R600_CONTEXT_INV_VERTEX_CACHE |
 	              R600_CONTEXT_INV_TEX_CACHE;
 	r600_flush_emit(ctx);
+	ctx->b.flags = 0;
 
 #if 0
 	COMPUTE_DBG(ctx->screen, "cdw: %i\n", cs->cdw);
@@ -481,16 +482,6 @@ static void compute_emit_cs(struct r600_context *ctx, const uint *block_layout,
 	}
 #endif
 
-	flush_flags = RADEON_FLUSH_ASYNC | RADEON_FLUSH_COMPUTE;
-	if (ctx->keep_tiling_flags) {
-		flush_flags |= RADEON_FLUSH_KEEP_TILING_FLAGS;
-	}
-
-	ctx->b.ws->cs_flush(ctx->b.rings.gfx.cs, flush_flags, ctx->screen->cs_count++);
-
-	ctx->b.flags = 0;
-
-	COMPUTE_DBG(ctx->screen, "shader started\n");
 }
 
 
