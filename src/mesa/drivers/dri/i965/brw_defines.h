@@ -1381,6 +1381,7 @@ enum brw_message_target {
 # define GEN6_GS_SO_STATISTICS_ENABLE			(1 << 9)
 # define GEN6_GS_RENDERING_ENABLE			(1 << 8)
 # define GEN7_GS_INCLUDE_PRIMITIVE_ID			(1 << 4)
+# define GEN7_GS_REORDER_TRAILING			(1 << 2)
 # define GEN7_GS_ENABLE					(1 << 0)
 /* DW6 */
 # define HSW_GS_CONTROL_DATA_FORMAT_SHIFT		31
