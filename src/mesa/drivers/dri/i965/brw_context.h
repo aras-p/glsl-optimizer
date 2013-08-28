@@ -786,13 +786,6 @@ struct brw_cached_batch_item {
    struct brw_cached_batch_item *next;
 };
    
-
-
-/* Protect against a future where VERT_ATTRIB_MAX > 32.  Wouldn't life
- * be easier if C allowed arrays of packed elements?
- */
-#define ATTRIB_BIT_DWORDS  ((VERT_ATTRIB_MAX+31)/32)
-
 struct brw_vertex_buffer {
    /** Buffer object containing the uploaded vertex data */
    drm_intel_bo *bo;
