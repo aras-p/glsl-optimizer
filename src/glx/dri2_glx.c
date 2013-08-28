@@ -95,7 +95,7 @@ struct dri2_screen {
    void *driver;
    int fd;
 
-   Bool show_fps;
+   int show_fps_interval;
 };
 
 struct dri2_context
@@ -764,6 +764,8 @@ unsigned dri2GetSwapEventType(Display* dpy, XID drawable)
 
 static void show_fps(struct dri2_drawable *draw)
 {
+   const int interval =
+      ((struct dri2_screen *) draw->base.psc)->show_fps_interval;
    struct timeval tv;
    uint64_t current_time;
 
@@ -772,7 +774,7 @@ static void show_fps(struct dri2_drawable *draw)
 
    draw->frames++;
 
-   if (draw->previous_time + 1000000 <= current_time) {
+   if (draw->previous_time + interval * 1000000 <= current_time) {
       if (draw->previous_time) {
          fprintf(stderr, "libGL: FPS = %.1f\n",
                  ((uint64_t)draw->frames * 1000000) /
@@ -859,7 +861,7 @@ dri2SwapBuffers(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
                                 target_msc, divisor, remainder);
     }
 
-    if (psc->show_fps) {
+    if (psc->show_fps_interval) {
        show_fps(priv);
     }
 
@@ -1283,7 +1285,9 @@ dri2CreateScreen(int screen, struct glx_display * priv)
    free(deviceName);
 
    tmp = getenv("LIBGL_SHOW_FPS");
-   psc->show_fps = tmp && strcmp(tmp, "1") == 0;
+   psc->show_fps_interval = (tmp) ? atoi(tmp) : 0;
+   if (psc->show_fps_interval < 0)
+      psc->show_fps_interval = 0;
 
    return &psc->base;
 
