@@ -493,8 +493,8 @@ uint8_t 	pquant
 /* extract the frame number from a referenced video buffer */
 static uint32_t get_ref_pic_idx(struct ruvd_decoder *dec, struct pipe_video_buffer *ref)
 {
-	uint32_t min = dec->frame_number - NUM_MPEG2_REFS;
-	uint32_t max = dec->frame_number - 1;
+	uint32_t min = MAX2(dec->frame_number, NUM_MPEG2_REFS) - NUM_MPEG2_REFS;
+	uint32_t max = MAX2(dec->frame_number, 1) - 1;
 	uintptr_t frame;
 
 	/* seems to be the most sane fallback */
