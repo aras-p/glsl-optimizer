@@ -149,6 +149,18 @@ vbo_count_tessellated_primitives(GLenum mode, GLuint count,
    case GL_QUADS:
       num_primitives = (count / 4) * 2;
       break;
+   case GL_LINES_ADJACENCY:
+      num_primitives = count / 4;
+      break;
+   case GL_LINE_STRIP_ADJACENCY:
+      num_primitives = count >= 4 ? count - 3 : 0;
+      break;
+   case GL_TRIANGLES_ADJACENCY:
+      num_primitives = count / 6;
+      break;
+   case GL_TRIANGLE_STRIP_ADJACENCY:
+      num_primitives = count >= 6 ? (count - 4) / 2 : 0;
+      break;
    default:
       assert(!"Unexpected primitive type in count_tessellated_primitives");
       num_primitives = 0;
