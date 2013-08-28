@@ -33,6 +33,7 @@
 #include "brw_context.h"
 #include "brw_state.h"
 #include "brw_defines.h"
+#include "intel_mipmap_tree.h"
 
 #include "main/macros.h"
 #include "main/samplerobj.h"
@@ -201,6 +202,8 @@ static void brw_update_sampler_state(struct brw_context *brw,
    struct gl_context *ctx = &brw->ctx;
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
    struct gl_texture_object *texObj = texUnit->_Current;
+   struct intel_texture_image *intel_image =
+      intel_texture_image(texObj->Image[0][texObj->BaseLevel]);
    struct gl_sampler_object *gl_sampler = _mesa_get_samplerobj(ctx, unit);
    bool using_nearest = false;
 
@@ -319,17 +322,13 @@ static void brw_update_sampler_state(struct brw_context *brw,
    sampler->ss0.lod_preclamp = 1; /* OpenGL mode */
    sampler->ss0.default_color_mode = 0; /* OpenGL/DX10 mode */
 
-   /* Set BaseMipLevel, MaxLOD, MinLOD: 
-    *
-    * XXX: I don't think that using firstLevel, lastLevel works,
-    * because we always setup the surface state as if firstLevel ==
-    * level zero.  Probably have to subtract firstLevel from each of
-    * these:
-    */
-   sampler->ss0.base_level = U_FIXED(0, 1);
+   int baselevel = texObj->BaseLevel - intel_image->mt->first_level;
+   sampler->ss0.base_level = U_FIXED(baselevel, 1);
 
-   sampler->ss1.max_lod = U_FIXED(CLAMP(gl_sampler->MaxLod, 0, 13), 6);
-   sampler->ss1.min_lod = U_FIXED(CLAMP(gl_sampler->MinLod, 0, 13), 6);
+   sampler->ss1.max_lod = U_FIXED(CLAMP(baselevel +
+                                        gl_sampler->MaxLod, 0, 13), 6);
+   sampler->ss1.min_lod = U_FIXED(CLAMP(baselevel +
+                                        gl_sampler->MinLod, 0, 13), 6);
 
    /* On Gen6+, the sampler can handle non-normalized texture
     * rectangle coordinates natively
