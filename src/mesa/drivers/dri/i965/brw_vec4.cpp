@@ -1034,10 +1034,14 @@ vec4_visitor::split_virtual_grfs()
       vec4_instruction *inst = (vec4_instruction *)node;
 
       /* If there's a SEND message loading from a GRF on gen7+, it needs to be
-       * contiguous.  Assume that the GRF for the SEND is always in src[0].
+       * contiguous.
        */
       if (inst->is_send_from_grf()) {
-         split_grf[inst->src[0].reg] = false;
+         for (int i = 0; i < 3; i++) {
+            if (inst->src[i].file == GRF) {
+               split_grf[inst->src[i].reg] = false;
+            }
+         }
       }
    }
 
