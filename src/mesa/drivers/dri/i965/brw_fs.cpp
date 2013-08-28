@@ -1359,7 +1359,11 @@ fs_visitor::split_virtual_grfs()
        * the send is reading the whole thing.
        */
       if (inst->is_send_from_grf()) {
-         split_grf[inst->src[0].reg] = false;
+         for (int i = 0; i < 3; i++) {
+            if (inst->src[i].file == GRF) {
+               split_grf[inst->src[i].reg] = false;
+            }
+         }
       }
    }
 
