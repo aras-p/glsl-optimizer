@@ -315,7 +315,7 @@ static void brw_postdraw_set_buffers_need_resolve(struct brw_context *brw)
  */
 static bool brw_try_draw_prims( struct gl_context *ctx,
 				     const struct gl_client_array *arrays[],
-				     const struct _mesa_prim *prim,
+				     const struct _mesa_prim *prims,
 				     GLuint nr_prims,
 				     const struct _mesa_index_buffer *ib,
 				     GLuint min_index,
@@ -390,18 +390,18 @@ static bool brw_try_draw_prims( struct gl_context *ctx,
       intel_batchbuffer_require_space(brw, estimated_max_prim_size, false);
       intel_batchbuffer_save_state(brw);
 
-      if (brw->num_instances != prim[i].num_instances) {
-         brw->num_instances = prim[i].num_instances;
+      if (brw->num_instances != prims[i].num_instances) {
+         brw->num_instances = prims[i].num_instances;
          brw->state.dirty.brw |= BRW_NEW_VERTICES;
       }
-      if (brw->basevertex != prim[i].basevertex) {
-         brw->basevertex = prim[i].basevertex;
+      if (brw->basevertex != prims[i].basevertex) {
+         brw->basevertex = prims[i].basevertex;
          brw->state.dirty.brw |= BRW_NEW_VERTICES;
       }
       if (brw->gen < 6)
-	 brw_set_prim(brw, &prim[i]);
+	 brw_set_prim(brw, &prims[i]);
       else
-	 gen6_set_prim(brw, &prim[i]);
+	 gen6_set_prim(brw, &prims[i]);
 
 retry:
       /* Note that before the loop, brw->state.dirty.brw was set to != 0, and
@@ -414,7 +414,7 @@ retry:
 	 brw_upload_state(brw);
       }
 
-      brw_emit_prim(brw, &prim[i], brw->primitive);
+      brw_emit_prim(brw, &prims[i], brw->primitive);
 
       brw->no_batch_wrap = false;
 
@@ -450,7 +450,7 @@ retry:
 }
 
 void brw_draw_prims( struct gl_context *ctx,
-		     const struct _mesa_prim *prim,
+		     const struct _mesa_prim *prims,
 		     GLuint nr_prims,
 		     const struct _mesa_index_buffer *ib,
 		     GLboolean index_bounds_valid,
@@ -465,7 +465,7 @@ void brw_draw_prims( struct gl_context *ctx,
       return;
 
    /* Handle primitive restart if needed */
-   if (brw_handle_primitive_restart(ctx, prim, nr_prims, ib)) {
+   if (brw_handle_primitive_restart(ctx, prims, nr_prims, ib)) {
       /* The draw was handled, so we can exit now */
       return;
    }
@@ -475,7 +475,7 @@ void brw_draw_prims( struct gl_context *ctx,
     * to upload.
     */
    if (!vbo_all_varyings_in_vbos(arrays) && !index_bounds_valid)
-      vbo_get_minmax_indices(ctx, prim, ib, &min_index, &max_index, nr_prims);
+      vbo_get_minmax_indices(ctx, prims, ib, &min_index, &max_index, nr_prims);
 
    /* Do GL_SELECT and GL_FEEDBACK rendering using swrast, even though it
     * won't support all the extensions we support.
@@ -485,7 +485,7 @@ void brw_draw_prims( struct gl_context *ctx,
                  _mesa_lookup_enum_by_nr(ctx->RenderMode));
       _swsetup_Wakeup(ctx);
       _tnl_wakeup(ctx);
-      _tnl_draw_prims(ctx, arrays, prim, nr_prims, ib, min_index, max_index);
+      _tnl_draw_prims(ctx, arrays, prims, nr_prims, ib, min_index, max_index);
       return;
    }
 
@@ -493,7 +493,7 @@ void brw_draw_prims( struct gl_context *ctx,
     * manage it.  swrast doesn't support our featureset, so we can't fall back
     * to it.
     */
-   brw_try_draw_prims(ctx, arrays, prim, nr_prims, ib, min_index, max_index);
+   brw_try_draw_prims(ctx, arrays, prims, nr_prims, ib, min_index, max_index);
 }
 
 void brw_draw_init( struct brw_context *brw )

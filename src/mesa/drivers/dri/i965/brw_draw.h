@@ -49,7 +49,7 @@ void brw_draw_destroy( struct brw_context *brw );
 /* brw_primitive_restart.c */
 GLboolean
 brw_handle_primitive_restart(struct gl_context *ctx,
-                             const struct _mesa_prim *prim,
+                             const struct _mesa_prim *prims,
                              GLuint nr_prims,
                              const struct _mesa_index_buffer *ib);
 
