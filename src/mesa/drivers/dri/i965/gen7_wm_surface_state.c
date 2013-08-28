@@ -284,8 +284,8 @@ gen7_update_texture_surface(struct gl_context *ctx,
    struct intel_texture_object *intelObj = intel_texture_object(tObj);
    struct intel_mipmap_tree *mt = intelObj->mt;
    struct gl_texture_image *firstImage = tObj->Image[0][tObj->BaseLevel];
+   struct intel_texture_image *intel_image = intel_texture_image(firstImage);
    struct gl_sampler_object *sampler = _mesa_get_samplerobj(ctx, unit);
-   uint32_t tile_x, tile_y;
 
    if (tObj->Target == GL_TEXTURE_BUFFER) {
       gen7_update_buffer_texture_surface(ctx, unit, binding_table, surf_index);
@@ -318,8 +318,6 @@ gen7_update_texture_surface(struct gl_context *ctx,
       surf[0] |= GEN7_SURFACE_ARYSPC_LOD0;
 
    surf[1] = mt->region->bo->offset + mt->offset; /* reloc */
-   surf[1] += intel_miptree_get_tile_offsets(intelObj->mt, firstImage->Level, 0,
-                                             &tile_x, &tile_y);
 
    surf[2] = SET_FIELD(mt->logical_width0 - 1, GEN7_SURFACE_WIDTH) |
              SET_FIELD(mt->logical_height0 - 1, GEN7_SURFACE_HEIGHT);
@@ -328,15 +326,9 @@ gen7_update_texture_surface(struct gl_context *ctx,
 
    surf[4] = gen7_surface_msaa_bits(mt->num_samples, mt->msaa_layout);
 
-   assert(brw->has_surface_tile_offset || (tile_x == 0 && tile_y == 0));
-   /* Note that the low bits of these fields are missing, so
-    * there's the possibility of getting in trouble.
-    */
-   surf[5] = ((tile_x / 4) << BRW_SURFACE_X_OFFSET_SHIFT |
-              (tile_y / 2) << BRW_SURFACE_Y_OFFSET_SHIFT |
-              SET_FIELD(GEN7_MOCS_L3, GEN7_SURFACE_MOCS) |
+   surf[5] = (SET_FIELD(GEN7_MOCS_L3, GEN7_SURFACE_MOCS) |
               /* mip count */
-              (intelObj->_MaxLevel - tObj->BaseLevel));
+              (intelObj->_MaxLevel - intel_image->mt->first_level));
 
    if (brw->is_haswell) {
       /* Handling GL_ALPHA as a surface format override breaks 1.30+ style
