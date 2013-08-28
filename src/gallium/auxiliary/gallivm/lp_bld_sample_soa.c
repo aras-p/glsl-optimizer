@@ -1087,7 +1087,7 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
    lp_build_mipmap_level_sizes(bld, ilevel0,
                                &size0,
                                &row_stride0_vec, &img_stride0_vec);
-   if (bld->num_lods == 1) {
+   if (bld->num_mips == 1) {
       data_ptr0 = lp_build_get_mipmap_level(bld, ilevel0);
    }
    else {
@@ -1123,7 +1123,7 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
       /* need_lerp = lod_fpart > 0 */
       if (bld->num_lods == 1) {
          need_lerp = LLVMBuildFCmp(builder, LLVMRealUGT,
-                                   lod_fpart, bld->levelf_bld.zero,
+                                   lod_fpart, bld->lodf_bld.zero,
                                    "need_lerp");
       }
       else {
@@ -1138,12 +1138,12 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
           * negative values which would screw up filtering if not all
           * lod_fpart values have same sign.
           */
-         lod_fpart = lp_build_max(&bld->levelf_bld, lod_fpart,
-                                  bld->levelf_bld.zero);
-         need_lerp = lp_build_compare(bld->gallivm, bld->levelf_bld.type,
+         lod_fpart = lp_build_max(&bld->lodf_bld, lod_fpart,
+                                  bld->lodf_bld.zero);
+         need_lerp = lp_build_compare(bld->gallivm, bld->lodf_bld.type,
                                       PIPE_FUNC_GREATER,
-                                      lod_fpart, bld->levelf_bld.zero);
-         need_lerp = lp_build_any_true_range(&bld->leveli_bld, bld->num_lods, need_lerp);
+                                      lod_fpart, bld->lodf_bld.zero);
+         need_lerp = lp_build_any_true_range(&bld->lodi_bld, bld->num_lods, need_lerp);
       }
 
       lp_build_if(&if_ctx, bld->gallivm, need_lerp);
@@ -1152,7 +1152,7 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
          lp_build_mipmap_level_sizes(bld, ilevel1,
                                      &size1,
                                      &row_stride1_vec, &img_stride1_vec);
-         if (bld->num_lods == 1) {
+         if (bld->num_mips == 1) {
             data_ptr1 = lp_build_get_mipmap_level(bld, ilevel1);
          }
          else {
@@ -1178,7 +1178,7 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
 
          if (bld->num_lods != bld->coord_type.length)
             lod_fpart = lp_build_unpack_broadcast_aos_scalars(bld->gallivm,
-                                                              bld->levelf_bld.type,
+                                                              bld->lodf_bld.type,
                                                               bld->texel_bld.type,
                                                               lod_fpart);
 
@@ -1312,8 +1312,14 @@ lp_build_sample_common(struct lp_build_sample_context *bld,
                             mip_filter,
                             &lod_ipart, lod_fpart, lod_pos_or_zero);
    } else {
-      lod_ipart = bld->leveli_bld.zero;
-      *lod_pos_or_zero = bld->leveli_bld.zero;
+      lod_ipart = bld->lodi_bld.zero;
+      *lod_pos_or_zero = bld->lodi_bld.zero;
+   }
+
+   if (bld->num_lods != bld->num_mips) {
+      /* only makes sense if there's just a single mip level */
+      assert(bld->num_mips == 1);
+      lod_ipart = lp_build_extract_range(bld->gallivm, lod_ipart, 0, 1);
    }
 
    /*
@@ -1641,7 +1647,7 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
        * some max probably could hack up the weights in the linear
        * path with selects to work for nearest.
        */
-      if (bld->leveli_bld.type.length > 1)
+      if (bld->num_lods > 1)
          lod_positive = LLVMBuildExtractElement(builder, lod_positive,
                                                 lp_build_const_int32(bld->gallivm, 0), "");
 
@@ -1692,7 +1698,7 @@ lp_build_fetch_texel(struct lp_build_sample_context *bld,
                      const LLVMValueRef *offsets,
                      LLVMValueRef *colors_out)
 {
-   struct lp_build_context *perquadi_bld = &bld->leveli_bld;
+   struct lp_build_context *perquadi_bld = &bld->lodi_bld;
    struct lp_build_context *int_coord_bld = &bld->int_coord_bld;
    unsigned dims = bld->dims, chan;
    unsigned target = bld->static_texture_state->target;
@@ -1706,7 +1712,7 @@ lp_build_fetch_texel(struct lp_build_sample_context *bld,
    out_of_bounds = int_coord_bld->zero;
 
    if (explicit_lod && bld->static_texture_state->target != PIPE_BUFFER) {
-      if (bld->num_lods != int_coord_bld->type.length) {
+      if (bld->num_mips != int_coord_bld->type.length) {
          ilevel = lp_build_pack_aos_scalars(bld->gallivm, int_coord_bld->type,
                                             perquadi_bld->type, explicit_lod, 0);
       }
@@ -1717,7 +1723,7 @@ lp_build_fetch_texel(struct lp_build_sample_context *bld,
                                  out_of_bound_ret_zero ? &out_of_bounds : NULL);
    }
    else {
-      assert(bld->num_lods == 1);
+      assert(bld->num_mips == 1);
       if (bld->static_texture_state->target != PIPE_BUFFER) {
          ilevel = bld->dynamic_state->first_level(bld->dynamic_state,
                                                   bld->gallivm, texture_unit);
@@ -1856,7 +1862,7 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
    unsigned target = static_texture_state->target;
    unsigned dims = texture_dims(target);
    unsigned num_quads = type.length / 4;
-   unsigned mip_filter, i;
+   unsigned mip_filter, min_img_filter, mag_img_filter, i;
    struct lp_build_sample_context bld;
    struct lp_static_sampler_state derived_sampler_state = *static_sampler_state;
    LLVMTypeRef i32t = LLVMInt32TypeInContext(gallivm->context);
@@ -1919,6 +1925,10 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
       debug_printf("  .min_mip_filter = %u\n", derived_sampler_state.min_mip_filter);
    }
 
+   min_img_filter = static_sampler_state->min_img_filter;
+   mag_img_filter = static_sampler_state->mag_img_filter;
+
+
    /*
     * This is all a bit complicated different paths are chosen for performance
     * reasons.
@@ -1936,38 +1946,51 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
    /*
     * There are other situations where at least the multiple int lods could be
     * avoided like min and max lod being equal.
-    * XXX if num_lods == 1 (for multiple quads) the level bld contexts will still
-    * have length 4. Because lod_selector is always using per quad calcs in this
-    * case, but minification etc. don't need to bother. This is very brittle though
-    * e.g. num_lods might be 1 but still have multiple positive_lod values!
     */
+   bld.num_mips = bld.num_lods = 1;
    if (lod_property == LP_SAMPLER_LOD_PER_ELEMENT &&
        (explicit_lod || lod_bias ||
-        (derivs && static_texture_state->target != PIPE_TEXTURE_CUBE)) &&
-       ((is_fetch && target != PIPE_BUFFER) ||
-        (!is_fetch && mip_filter != PIPE_TEX_MIPFILTER_NONE)))
-      bld.num_lods = type.length;
+        (derivs && static_texture_state->target != PIPE_TEXTURE_CUBE))) {
+      if ((is_fetch && target != PIPE_BUFFER) ||
+          (!is_fetch && mip_filter != PIPE_TEX_MIPFILTER_NONE)) {
+         bld.num_mips = type.length;
+         bld.num_lods = type.length;
+      }
+      else if (!is_fetch && min_img_filter != mag_img_filter) {
+         bld.num_mips = 1;
+         bld.num_lods = type.length;
+      }
+   }
    /* TODO: for true scalar_lod should only use 1 lod value */
-   else if ((is_fetch && explicit_lod && target != PIPE_BUFFER ) ||
+   else if ((is_fetch && explicit_lod && target != PIPE_BUFFER) ||
             (!is_fetch && mip_filter != PIPE_TEX_MIPFILTER_NONE)) {
+      bld.num_mips = num_quads;
       bld.num_lods = num_quads;
    }
-   else {
-      bld.num_lods = 1;
+   else if (!is_fetch && min_img_filter != mag_img_filter) {
+      bld.num_mips = 1;
+      bld.num_lods = num_quads;
    }
 
-   bld.levelf_type = type;
+
+   bld.lodf_type = type;
    /* we want native vector size to be able to use our intrinsics */
    if (bld.num_lods != type.length) {
-      bld.levelf_type.length = type.length > 4 ? ((type.length + 15) / 16) * 4 : 1;
+      /* TODO: this currently always has to be per-quad or per-element */
+      bld.lodf_type.length = type.length > 4 ? ((type.length + 15) / 16) * 4 : 1;
+   }
+   bld.lodi_type = lp_int_type(bld.lodf_type);
+   bld.levelf_type = bld.lodf_type;
+   if (bld.num_mips == 1) {
+      bld.levelf_type.length = 1;
    }
    bld.leveli_type = lp_int_type(bld.levelf_type);
    bld.float_size_type = bld.float_size_in_type;
    /* Note: size vectors may not be native. They contain minified w/h/d/_ values,
     * with per-element lod that is w0/h0/d0/_/w1/h1/d1_/... so up to 8x4f32 */
-   if (bld.num_lods > 1) {
-      bld.float_size_type.length = bld.num_lods == type.length ?
-                                      bld.num_lods * bld.float_size_in_type.length :
+   if (bld.num_mips > 1) {
+      bld.float_size_type.length = bld.num_mips == type.length ?
+                                      bld.num_mips * bld.float_size_in_type.length :
                                       type.length;
    }
    bld.int_size_type = lp_int_type(bld.float_size_type);
@@ -1984,6 +2007,8 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
    lp_build_context_init(&bld.texel_bld, gallivm, bld.texel_type);
    lp_build_context_init(&bld.levelf_bld, gallivm, bld.levelf_type);
    lp_build_context_init(&bld.leveli_bld, gallivm, bld.leveli_type);
+   lp_build_context_init(&bld.lodf_bld, gallivm, bld.lodf_type);
+   lp_build_context_init(&bld.lodi_bld, gallivm, bld.lodi_type);
 
    /* Get the dynamic state */
    tex_width = dynamic_state->width(dynamic_state, gallivm, texture_index);
@@ -2071,16 +2096,6 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
        * (It should be faster if we'd support avx2)
        */
       if (num_quads == 1 || !use_aos) {
-
-         if (num_quads > 1) {
-            if (mip_filter == PIPE_TEX_MIPFILTER_NONE) {
-               LLVMValueRef index0 = lp_build_const_int32(gallivm, 0);
-               /*
-                * This parameter is the same for all quads could probably simplify.
-                */
-               ilevel0 = LLVMBuildExtractElement(builder, ilevel0, index0, "");
-            }
-         }
          if (use_aos) {
             /* do sampling/filtering with fixed pt arithmetic */
             lp_build_sample_aos(&bld, sampler_index,
@@ -2134,30 +2149,37 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
          bld4.int_size_in_type = lp_int_type(bld4.float_size_in_type);
          bld4.texel_type = bld.texel_type;
          bld4.texel_type.length = 4;
-         bld4.levelf_type = type4;
-         /* we want native vector size to be able to use our intrinsics */
-         bld4.levelf_type.length = 1;
-         bld4.leveli_type = lp_int_type(bld4.levelf_type);
 
+         bld4.num_mips = bld4.num_lods = 1;
          if (lod_property == LP_SAMPLER_LOD_PER_ELEMENT &&
-               (explicit_lod || lod_bias ||
-                (derivs && static_texture_state->target != PIPE_TEXTURE_CUBE)) &&
-               ((is_fetch && target != PIPE_BUFFER) ||
-                (!is_fetch && mip_filter != PIPE_TEX_MIPFILTER_NONE)))
-            bld4.num_lods = type4.length;
-         else
-            bld4.num_lods = 1;
+             (explicit_lod || lod_bias ||
+              (derivs && static_texture_state->target != PIPE_TEXTURE_CUBE))) {
+            if ((is_fetch && target != PIPE_BUFFER) ||
+                (!is_fetch && mip_filter != PIPE_TEX_MIPFILTER_NONE)) {
+               bld4.num_mips = type4.length;
+               bld4.num_lods = type4.length;
+            }
+            else if (!is_fetch && min_img_filter != mag_img_filter) {
+               bld4.num_mips = 1;
+               bld4.num_lods = type4.length;
+            }
+         }
 
-         bld4.levelf_type = type4;
          /* we want native vector size to be able to use our intrinsics */
+         bld4.lodf_type = type4;
          if (bld4.num_lods != type4.length) {
+            bld4.lodf_type.length = 1;
+         }
+         bld4.lodi_type = lp_int_type(bld4.lodf_type);
+         bld4.levelf_type = type4;
+         if (bld4.num_mips != type4.length) {
             bld4.levelf_type.length = 1;
          }
          bld4.leveli_type = lp_int_type(bld4.levelf_type);
          bld4.float_size_type = bld4.float_size_in_type;
-         if (bld4.num_lods > 1) {
-            bld4.float_size_type.length = bld4.num_lods == type4.length ?
-                                            bld4.num_lods * bld4.float_size_in_type.length :
+         if (bld4.num_mips > 1) {
+            bld4.float_size_type.length = bld4.num_mips == type4.length ?
+                                            bld4.num_mips * bld4.float_size_in_type.length :
                                             type4.length;
          }
          bld4.int_size_type = lp_int_type(bld4.float_size_type);
@@ -2174,6 +2196,8 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
          lp_build_context_init(&bld4.texel_bld, gallivm, bld4.texel_type);
          lp_build_context_init(&bld4.levelf_bld, gallivm, bld4.levelf_type);
          lp_build_context_init(&bld4.leveli_bld, gallivm, bld4.leveli_type);
+         lp_build_context_init(&bld4.lodf_bld, gallivm, bld4.lodf_type);
+         lp_build_context_init(&bld4.lodi_bld, gallivm, bld4.lodi_type);
 
          for (i = 0; i < num_quads; i++) {
             LLVMValueRef s4, t4, r4;
@@ -2196,7 +2220,8 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
                }
             }
             lod_positive4 = lp_build_extract_range(gallivm, lod_positive, num_lods * i, num_lods);
-            ilevel04 = lp_build_extract_range(gallivm, ilevel0, num_lods * i, num_lods);
+            ilevel04 = bld.num_mips == 1 ? ilevel0 :
+                          lp_build_extract_range(gallivm, ilevel0, num_lods * i, num_lods);
             if (mip_filter == PIPE_TEX_MIPFILTER_LINEAR) {
                ilevel14 = lp_build_extract_range(gallivm, ilevel1, num_lods * i, num_lods);
                lod_fpart4 = lp_build_extract_range(gallivm, lod_fpart, num_lods * i, num_lods);

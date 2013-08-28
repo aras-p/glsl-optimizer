@@ -233,7 +233,10 @@ struct lp_build_sample_context
    /** SIMD vector width */
    unsigned vector_width;
 
-   /** number of lod values (valid are 1, length/4, length) */
+   /** number of mipmaps (valid are 1, length/4, length) */
+   unsigned num_mips;
+
+   /** number of lod values (valid are 1, length/4, length) */
    unsigned num_lods;
 
    /** regular scalar float type */
@@ -282,6 +285,14 @@ struct lp_build_sample_context
    /** Int level type */
    struct lp_type leveli_type;
    struct lp_build_context leveli_bld;
+
+   /** Float lod type */
+   struct lp_type lodf_type;
+   struct lp_build_context lodf_bld;
+
+   /** Int lod type */
+   struct lp_type lodi_type;
+   struct lp_build_context lodi_bld;
 
    /* Common dynamic state values */
    LLVMValueRef row_stride_array;

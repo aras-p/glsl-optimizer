@@ -217,7 +217,7 @@ lp_build_rho(struct lp_build_sample_context *bld,
    struct lp_build_context *float_size_bld = &bld->float_size_in_bld;
    struct lp_build_context *float_bld = &bld->float_bld;
    struct lp_build_context *coord_bld = &bld->coord_bld;
-   struct lp_build_context *levelf_bld = &bld->levelf_bld;
+   struct lp_build_context *rho_bld = &bld->lodf_bld;
    const unsigned dims = bld->dims;
    LLVMValueRef ddx_ddy[2];
    LLVMBuilderRef builder = bld->gallivm->builder;
@@ -231,7 +231,7 @@ lp_build_rho(struct lp_build_sample_context *bld,
    LLVMValueRef first_level, first_level_vec;
    unsigned length = coord_bld->type.length;
    unsigned num_quads = length / 4;
-   boolean rho_per_quad = levelf_bld->type.length != length;
+   boolean rho_per_quad = rho_bld->type.length != length;
    unsigned i;
    LLVMValueRef i32undef = LLVMGetUndef(LLVMInt32TypeInContext(gallivm->context));
    LLVMValueRef rho_xvec, rho_yvec;
@@ -259,18 +259,18 @@ lp_build_rho(struct lp_build_sample_context *bld,
        */
       if (rho_per_quad) {
          rho = lp_build_pack_aos_scalars(bld->gallivm, coord_bld->type,
-                                         levelf_bld->type, cube_rho, 0);
+                                         rho_bld->type, cube_rho, 0);
       }
       else {
          rho = lp_build_swizzle_scalar_aos(coord_bld, cube_rho, 0, 4);
       }
       if (gallivm_debug & GALLIVM_DEBUG_NO_RHO_APPROX) {
-         rho = lp_build_sqrt(levelf_bld, rho);
+         rho = lp_build_sqrt(rho_bld, rho);
       }
       /* Could optimize this for single quad just skip the broadcast */
       cubesize = lp_build_extract_broadcast(gallivm, bld->float_size_in_type,
-                                            levelf_bld->type, float_size, index0);
-      rho = lp_build_mul(levelf_bld, cubesize, rho);
+                                            rho_bld->type, float_size, index0);
+      rho = lp_build_mul(rho_bld, cubesize, rho);
    }
    else if (derivs && !(bld->static_texture_state->target == PIPE_TEXTURE_CUBE)) {
       LLVMValueRef ddmax[3], ddx[3], ddy[3];
@@ -311,9 +311,9 @@ lp_build_rho(struct lp_build_sample_context *bld,
              * otherwise would also need different code to per-pixel lod case.
              */
             rho = lp_build_pack_aos_scalars(bld->gallivm, coord_bld->type,
-                                            levelf_bld->type, rho, 0);
+                                            rho_bld->type, rho, 0);
          }
-         rho = lp_build_sqrt(levelf_bld, rho);
+         rho = lp_build_sqrt(rho_bld, rho);
 
       }
       else {
@@ -329,7 +329,7 @@ lp_build_rho(struct lp_build_sample_context *bld,
              * rho_vec contains per-pixel rho, convert to scalar per quad.
              */
             rho = lp_build_pack_aos_scalars(bld->gallivm, coord_bld->type,
-                                            levelf_bld->type, rho, 0);
+                                            rho_bld->type, rho, 0);
          }
       }
    }
@@ -404,7 +404,7 @@ lp_build_rho(struct lp_build_sample_context *bld,
 
          if (rho_per_quad) {
             rho = lp_build_pack_aos_scalars(bld->gallivm, coord_bld->type,
-                                            levelf_bld->type, rho, 0);
+                                            rho_bld->type, rho, 0);
          }
          else {
             /*
@@ -416,7 +416,7 @@ lp_build_rho(struct lp_build_sample_context *bld,
              */
             rho = lp_build_swizzle_scalar_aos(coord_bld, rho, 0, 4);
          }
-         rho = lp_build_sqrt(levelf_bld, rho);
+         rho = lp_build_sqrt(rho_bld, rho);
       }
       else {
          ddx_ddy[0] = lp_build_abs(coord_bld, ddx_ddy[0]);
@@ -497,7 +497,7 @@ lp_build_rho(struct lp_build_sample_context *bld,
             }
             if (rho_per_quad) {
                rho = lp_build_pack_aos_scalars(bld->gallivm, coord_bld->type,
-                                               levelf_bld->type, rho, 0);
+                                               rho_bld->type, rho, 0);
             }
             else {
                rho = lp_build_swizzle_scalar_aos(coord_bld, rho, 0, 4);
@@ -528,7 +528,7 @@ lp_build_rho(struct lp_build_sample_context *bld,
                }
             }
             if (!rho_per_quad) {
-               rho = lp_build_broadcast_scalar(levelf_bld, rho);
+               rho = lp_build_broadcast_scalar(rho_bld, rho);
             }
          }
       }
@@ -675,8 +675,7 @@ lp_build_brilinear_rho(struct lp_build_context *bld,
  * \param out_lod_fpart  float part of lod (never larger than 1 but may be negative)
  * \param out_lod_positive  (mask) if lod is positive (i.e. texture is minified)
  *
- * The resulting lod is scalar per quad, so only the first value per quad
- * passed in from lod_bias, explicit_lod is used.
+ * The resulting lod can be scalar per quad or be per element.
  */
 void
 lp_build_lod_selector(struct lp_build_sample_context *bld,
@@ -696,12 +695,12 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
 
 {
    LLVMBuilderRef builder = bld->gallivm->builder;
-   struct lp_build_context *levelf_bld = &bld->levelf_bld;
+   struct lp_build_context *lodf_bld = &bld->lodf_bld;
    LLVMValueRef lod;
 
-   *out_lod_ipart = bld->leveli_bld.zero;
-   *out_lod_positive = bld->leveli_bld.zero;
-   *out_lod_fpart = levelf_bld->zero;
+   *out_lod_ipart = bld->lodi_bld.zero;
+   *out_lod_positive = bld->lodi_bld.zero;
+   *out_lod_fpart = lodf_bld->zero;
 
    /*
     * For determining min/mag, we follow GL 4.1 spec, 3.9.12 Texture Magnification:
@@ -729,13 +728,13 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
          bld->dynamic_state->min_lod(bld->dynamic_state,
                                      bld->gallivm, sampler_unit);
 
-      lod = lp_build_broadcast_scalar(levelf_bld, min_lod);
+      lod = lp_build_broadcast_scalar(lodf_bld, min_lod);
    }
    else {
       if (explicit_lod) {
          if (bld->num_lods != bld->coord_type.length)
             lod = lp_build_pack_aos_scalars(bld->gallivm, bld->coord_bld.type,
-                                            levelf_bld->type, explicit_lod, 0);
+                                            lodf_bld->type, explicit_lod, 0);
          else
             lod = explicit_lod;
       }
@@ -764,33 +763,33 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
                 * Don't actually need both all the time, ipart is needed
                 * for nearest mipfilter, pos_or_zero if min != mag.
                 */
-               *out_lod_ipart = lp_build_ilog2(levelf_bld, rho);
-               *out_lod_positive = lp_build_cmp(levelf_bld, PIPE_FUNC_GREATER,
-                                                rho, levelf_bld->one);
+               *out_lod_ipart = lp_build_ilog2(lodf_bld, rho);
+               *out_lod_positive = lp_build_cmp(lodf_bld, PIPE_FUNC_GREATER,
+                                                rho, lodf_bld->one);
                return;
             }
             if (mip_filter == PIPE_TEX_MIPFILTER_LINEAR &&
                 !(gallivm_debug & GALLIVM_DEBUG_NO_BRILINEAR)) {
-               lp_build_brilinear_rho(levelf_bld, rho, BRILINEAR_FACTOR,
+               lp_build_brilinear_rho(lodf_bld, rho, BRILINEAR_FACTOR,
                                       out_lod_ipart, out_lod_fpart);
-               *out_lod_positive = lp_build_cmp(levelf_bld, PIPE_FUNC_GREATER,
-                                                rho, levelf_bld->one);
+               *out_lod_positive = lp_build_cmp(lodf_bld, PIPE_FUNC_GREATER,
+                                                rho, lodf_bld->one);
                return;
             }
          }
 
          if (0) {
-            lod = lp_build_log2(levelf_bld, rho);
+            lod = lp_build_log2(lodf_bld, rho);
          }
          else {
-            lod = lp_build_fast_log2(levelf_bld, rho);
+            lod = lp_build_fast_log2(lodf_bld, rho);
          }
 
          /* add shader lod bias */
          if (lod_bias) {
             if (bld->num_lods != bld->coord_type.length)
                lod_bias = lp_build_pack_aos_scalars(bld->gallivm, bld->coord_bld.type,
-                                                    levelf_bld->type, lod_bias, 0);
+                                                    lodf_bld->type, lod_bias, 0);
             lod = LLVMBuildFAdd(builder, lod, lod_bias, "shader_lod_bias");
          }
       }
@@ -800,7 +799,7 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
          LLVMValueRef sampler_lod_bias =
             bld->dynamic_state->lod_bias(bld->dynamic_state,
                                          bld->gallivm, sampler_unit);
-         sampler_lod_bias = lp_build_broadcast_scalar(levelf_bld,
+         sampler_lod_bias = lp_build_broadcast_scalar(lodf_bld,
                                                       sampler_lod_bias);
          lod = LLVMBuildFAdd(builder, lod, sampler_lod_bias, "sampler_lod_bias");
       }
@@ -810,36 +809,36 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
          LLVMValueRef max_lod =
             bld->dynamic_state->max_lod(bld->dynamic_state,
                                         bld->gallivm, sampler_unit);
-         max_lod = lp_build_broadcast_scalar(levelf_bld, max_lod);
+         max_lod = lp_build_broadcast_scalar(lodf_bld, max_lod);
 
-         lod = lp_build_min(levelf_bld, lod, max_lod);
+         lod = lp_build_min(lodf_bld, lod, max_lod);
       }
       if (bld->static_sampler_state->apply_min_lod) {
          LLVMValueRef min_lod =
             bld->dynamic_state->min_lod(bld->dynamic_state,
                                         bld->gallivm, sampler_unit);
-         min_lod = lp_build_broadcast_scalar(levelf_bld, min_lod);
+         min_lod = lp_build_broadcast_scalar(lodf_bld, min_lod);
 
-         lod = lp_build_max(levelf_bld, lod, min_lod);
+         lod = lp_build_max(lodf_bld, lod, min_lod);
       }
    }
 
-   *out_lod_positive = lp_build_cmp(levelf_bld, PIPE_FUNC_GREATER,
-                                    lod, levelf_bld->zero);
+   *out_lod_positive = lp_build_cmp(lodf_bld, PIPE_FUNC_GREATER,
+                                    lod, lodf_bld->zero);
 
    if (mip_filter == PIPE_TEX_MIPFILTER_LINEAR) {
       if (!(gallivm_debug & GALLIVM_DEBUG_NO_BRILINEAR)) {
-         lp_build_brilinear_lod(levelf_bld, lod, BRILINEAR_FACTOR,
+         lp_build_brilinear_lod(lodf_bld, lod, BRILINEAR_FACTOR,
                                 out_lod_ipart, out_lod_fpart);
       }
       else {
-         lp_build_ifloor_fract(levelf_bld, lod, out_lod_ipart, out_lod_fpart);
+         lp_build_ifloor_fract(lodf_bld, lod, out_lod_ipart, out_lod_fpart);
       }
 
       lp_build_name(*out_lod_fpart, "lod_fpart");
    }
    else {
-      *out_lod_ipart = lp_build_iround(levelf_bld, lod);
+      *out_lod_ipart = lp_build_iround(lodf_bld, lod);
    }
 
    lp_build_name(*out_lod_ipart, "lod_ipart");
@@ -880,14 +879,14 @@ lp_build_nearest_mip_level(struct lp_build_sample_context *bld,
       out = lp_build_cmp(leveli_bld, PIPE_FUNC_LESS, level, first_level);
       out1 = lp_build_cmp(leveli_bld, PIPE_FUNC_GREATER, level, last_level);
       out = lp_build_or(leveli_bld, out, out1);
-      if (bld->num_lods == bld->coord_bld.type.length) {
+      if (bld->num_mips == bld->coord_bld.type.length) {
          *out_of_bounds = out;
       }
-      else if (bld->num_lods == 1) {
+      else if (bld->num_mips == 1) {
          *out_of_bounds = lp_build_broadcast_scalar(&bld->int_coord_bld, out);
       }
       else {
-         assert(bld->num_lods == bld->coord_bld.type.length / 4);
+         assert(bld->num_mips == bld->coord_bld.type.length / 4);
          *out_of_bounds = lp_build_unpack_broadcast_aos_scalars(bld->gallivm,
                                                                 leveli_bld->type,
                                                                 bld->int_coord_bld.type,
@@ -904,8 +903,9 @@ lp_build_nearest_mip_level(struct lp_build_sample_context *bld,
 
 
 /**
- * For PIPE_TEX_MIPFILTER_LINEAR, convert per-quad int LOD(s) to two (per-quad)
- * (adjacent) mipmap level indexes, and fix up float lod part accordingly.
+ * For PIPE_TEX_MIPFILTER_LINEAR, convert per-quad (or per element) int LOD(s)
+ * to two (per-quad) (adjacent) mipmap level indexes, and fix up float lod
+ * part accordingly.
  * Later, we'll sample from those two mipmap levels and interpolate between them.
  */
 void
@@ -922,6 +922,8 @@ lp_build_linear_mip_levels(struct lp_build_sample_context *bld,
    LLVMValueRef first_level, last_level;
    LLVMValueRef clamp_min;
    LLVMValueRef clamp_max;
+
+   assert(bld->num_lods == bld->num_mips);
 
    first_level = bld->dynamic_state->first_level(bld->dynamic_state,
                                                  bld->gallivm, texture_unit);
@@ -1013,17 +1015,17 @@ lp_build_get_mip_offsets(struct lp_build_sample_context *bld,
    LLVMValueRef indexes[2], offsets, offset1;
 
    indexes[0] = lp_build_const_int32(bld->gallivm, 0);
-   if (bld->num_lods == 1) {
+   if (bld->num_mips == 1) {
       indexes[1] = level;
       offset1 = LLVMBuildGEP(builder, bld->mip_offsets, indexes, 2, "");
       offset1 = LLVMBuildLoad(builder, offset1, "");
       offsets = lp_build_broadcast_scalar(&bld->int_coord_bld, offset1);
    }
-   else if (bld->num_lods == bld->coord_bld.type.length / 4) {
+   else if (bld->num_mips == bld->coord_bld.type.length / 4) {
       unsigned i;
 
       offsets = bld->int_coord_bld.undef;
-      for (i = 0; i < bld->num_lods; i++) {
+      for (i = 0; i < bld->num_mips; i++) {
          LLVMValueRef indexi = lp_build_const_int32(bld->gallivm, i);
          LLVMValueRef indexo = lp_build_const_int32(bld->gallivm, 4 * i);
          indexes[1] = LLVMBuildExtractElement(builder, level, indexi, "");
@@ -1036,10 +1038,10 @@ lp_build_get_mip_offsets(struct lp_build_sample_context *bld,
    else {
       unsigned i;
 
-      assert (bld->num_lods == bld->coord_bld.type.length);
+      assert (bld->num_mips == bld->coord_bld.type.length);
 
       offsets = bld->int_coord_bld.undef;
-      for (i = 0; i < bld->num_lods; i++) {
+      for (i = 0; i < bld->num_mips; i++) {
          LLVMValueRef indexi = lp_build_const_int32(bld->gallivm, i);
          indexes[1] = LLVMBuildExtractElement(builder, level, indexi, "");
          offset1 = LLVMBuildGEP(builder, bld->mip_offsets, indexes, 2, "");
@@ -1089,18 +1091,18 @@ lp_build_get_level_stride_vec(struct lp_build_sample_context *bld,
    LLVMBuilderRef builder = bld->gallivm->builder;
    LLVMValueRef indexes[2], stride, stride1;
    indexes[0] = lp_build_const_int32(bld->gallivm, 0);
-   if (bld->num_lods == 1) {
+   if (bld->num_mips == 1) {
       indexes[1] = level;
       stride1 = LLVMBuildGEP(builder, stride_array, indexes, 2, "");
       stride1 = LLVMBuildLoad(builder, stride1, "");
       stride = lp_build_broadcast_scalar(&bld->int_coord_bld, stride1);
    }
-   else if (bld->num_lods == bld->coord_bld.type.length / 4) {
+   else if (bld->num_mips == bld->coord_bld.type.length / 4) {
       LLVMValueRef stride1;
       unsigned i;
 
       stride = bld->int_coord_bld.undef;
-      for (i = 0; i < bld->num_lods; i++) {
+      for (i = 0; i < bld->num_mips; i++) {
          LLVMValueRef indexi = lp_build_const_int32(bld->gallivm, i);
          LLVMValueRef indexo = lp_build_const_int32(bld->gallivm, 4 * i);
          indexes[1] = LLVMBuildExtractElement(builder, level, indexi, "");
@@ -1114,7 +1116,7 @@ lp_build_get_level_stride_vec(struct lp_build_sample_context *bld,
       LLVMValueRef stride1;
       unsigned i;
 
-      assert (bld->num_lods == bld->coord_bld.type.length);
+      assert (bld->num_mips == bld->coord_bld.type.length);
 
       stride = bld->int_coord_bld.undef;
       for (i = 0; i < bld->coord_bld.type.length; i++) {
@@ -1147,7 +1149,7 @@ lp_build_mipmap_level_sizes(struct lp_build_sample_context *bld,
    /*
     * Compute width, height, depth at mipmap level 'ilevel'
     */
-   if (bld->num_lods == 1) {
+   if (bld->num_mips == 1) {
       ilevel_vec = lp_build_broadcast_scalar(&bld->int_size_bld, ilevel);
       *out_size = lp_build_minify(&bld->int_size_bld, bld->int_size, ilevel_vec);
    }
@@ -1157,7 +1159,7 @@ lp_build_mipmap_level_sizes(struct lp_build_sample_context *bld,
       unsigned num_quads = bld->coord_bld.type.length / 4;
       unsigned i;
 
-      if (bld->num_lods == num_quads) {
+      if (bld->num_mips == num_quads) {
          /*
           * XXX: this should be #ifndef SANE_INSTRUCTION_SET.
           * intel "forgot" the variable shift count instruction until avx2.
@@ -1216,7 +1218,7 @@ lp_build_mipmap_level_sizes(struct lp_build_sample_context *bld,
          * For dims == 1 this will create [w0, w1, w2, w3, ...] vector.
          * For dims > 1 this will create [w0, h0, d0, _, w1, h1, d1, _, ...] vector.
          */
-         assert(bld->num_lods == bld->coord_bld.type.length);
+         assert(bld->num_mips == bld->coord_bld.type.length);
          if (bld->dims == 1) {
             assert(bld->int_size_in_bld.type.length == 1);
             int_size_vec = lp_build_broadcast_scalar(&bld->int_coord_bld,
@@ -1226,7 +1228,7 @@ lp_build_mipmap_level_sizes(struct lp_build_sample_context *bld,
          }
          else {
             LLVMValueRef ilevel1;
-            for (i = 0; i < bld->num_lods; i++) {
+            for (i = 0; i < bld->num_mips; i++) {
                LLVMValueRef indexi = lp_build_const_int32(bld->gallivm, i);
                ilevel1 = lp_build_extract_broadcast(bld->gallivm, bld->int_coord_type,
                                                     bld->int_size_in_bld.type, ilevel, indexi);
@@ -1235,7 +1237,7 @@ lp_build_mipmap_level_sizes(struct lp_build_sample_context *bld,
             }
             *out_size = lp_build_concat(bld->gallivm, tmp,
                                         bld->int_size_in_bld.type,
-                                        bld->num_lods);
+                                        bld->num_mips);
          }
       }
    }
@@ -1278,7 +1280,7 @@ lp_build_extract_image_sizes(struct lp_build_sample_context *bld,
    LLVMTypeRef i32t = LLVMInt32TypeInContext(bld->gallivm->context);
    struct lp_type size_type = size_bld->type;
 
-   if (bld->num_lods == 1) {
+   if (bld->num_mips == 1) {
       *out_width = lp_build_extract_broadcast(bld->gallivm,
                                               size_type,
                                               coord_type,
@@ -1305,7 +1307,7 @@ lp_build_extract_image_sizes(struct lp_build_sample_context *bld,
       if (dims == 1) {
          *out_width = size;
       }
-      else if (bld->num_lods == num_quads) {
+      else if (bld->num_mips == num_quads) {
          *out_width = lp_build_swizzle_scalar_aos(size_bld, size, 0, 4);
          if (dims >= 2) {
             *out_height = lp_build_swizzle_scalar_aos(size_bld, size, 1, 4);
@@ -1315,7 +1317,7 @@ lp_build_extract_image_sizes(struct lp_build_sample_context *bld,
          }
       }
       else {
-         assert(bld->num_lods == bld->coord_type.length);
+         assert(bld->num_mips == bld->coord_type.length);
          *out_width = lp_build_pack_aos_scalars(bld->gallivm, size_type,
                                                 coord_type, size, 0);
          if (dims >= 2) {
