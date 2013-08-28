@@ -30,28 +30,13 @@
 
 #include "util/u_memory.h"
 #include "util/u_math.h"
+#include "util/u_prim.h"
 #include "pipe/p_defines.h"
 #include "draw_private.h"
 #include "draw_pipe.h"
 #include "draw_context.h"
 #include "draw_vbuf.h"
 
-static boolean points( unsigned prim )
-{
-   return (prim == PIPE_PRIM_POINTS);
-}
-
-static boolean lines( unsigned prim )
-{
-   return (prim == PIPE_PRIM_LINES ||
-           prim == PIPE_PRIM_LINE_STRIP ||
-           prim == PIPE_PRIM_LINE_LOOP);
-}
-
-static boolean triangles( unsigned prim )
-{
-   return prim >= PIPE_PRIM_TRIANGLES;
-}
 
 /**
  * Default version of a function to check if we need any special
@@ -66,6 +51,8 @@ draw_need_pipeline(const struct draw_context *draw,
                    const struct pipe_rasterizer_state *rasterizer,
                    unsigned int prim )
 {
+   unsigned reduced_prim = u_reduced_prim(prim);
+
    /* If the driver has overridden this, use that version: 
     */
    if (draw->render &&
@@ -80,8 +67,7 @@ draw_need_pipeline(const struct draw_context *draw,
     * and triggering the pipeline, because we have to trigger the
     * pipeline *anyway* if unfilled mode is active.
     */
-   if (lines(prim)) 
-   {
+   if (reduced_prim == PIPE_PRIM_LINES) {
       /* line stipple */
       if (rasterizer->line_stipple_enable && draw->pipeline.line_stipple)
          return TRUE;
@@ -97,9 +83,7 @@ draw_need_pipeline(const struct draw_context *draw,
       if (draw_current_shader_num_written_culldistances(draw))
          return TRUE;
    }
-
-   if (points(prim))
-   {
+   else if (reduced_prim == PIPE_PRIM_POINTS) {
       /* large points */
       if (rasterizer->point_size > draw->pipeline.wide_point_threshold)
          return TRUE;
@@ -117,10 +101,7 @@ draw_need_pipeline(const struct draw_context *draw,
       if (rasterizer->sprite_coord_enable && draw->pipeline.point_sprite)
          return TRUE;
    }
-
-
-   if (triangles(prim)) 
-   {
+   else if (reduced_prim == PIPE_PRIM_TRIANGLES) {
       /* polygon stipple */
       if (rasterizer->poly_stipple_enable && draw->pipeline.pstipple)
          return TRUE;
