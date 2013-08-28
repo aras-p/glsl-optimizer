@@ -302,6 +302,34 @@ _mesa_HashDeleteAll(struct _mesa_HashTable *table,
 
 
 /**
+ * Clone all entries in a hash table, into a new table.
+ *
+ * \param table  the hash table to clone
+ */
+struct _mesa_HashTable *
+_mesa_HashClone(const struct _mesa_HashTable *table)
+{
+   /* cast-away const */
+   struct _mesa_HashTable *table2 = (struct _mesa_HashTable *) table;
+   struct hash_entry *entry;
+   struct _mesa_HashTable *clonetable;
+
+   ASSERT(table);
+   _glthread_LOCK_MUTEX(table2->Mutex);
+
+   clonetable = _mesa_NewHashTable();
+   assert(clonetable);
+   hash_table_foreach(table->ht, entry) {
+      _mesa_HashInsert(clonetable, (GLint)(uintptr_t)entry->key, entry->data);
+   }
+
+   _glthread_UNLOCK_MUTEX(table2->Mutex);
+
+   return clonetable;
+}
+
+
+/**
  * Walk over all entries in a hash table, calling callback function for each.
  * Note: we use a separate mutex in this function to avoid a recursive
  * locking deadlock (in case the callback calls _mesa_HashRemove()) and to
