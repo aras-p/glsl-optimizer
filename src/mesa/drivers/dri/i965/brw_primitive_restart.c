@@ -92,8 +92,8 @@ can_cut_index_handle_prims(struct gl_context *ctx,
       return false;
    }
 
-   for ( ; nr_prims > 0; nr_prims--) {
-      switch(prim->mode) {
+   for (int i = 0; i < nr_prims; i++) {
+      switch (prim[i].mode) {
       case GL_POINTS:
       case GL_LINES:
       case GL_LINE_STRIP:
