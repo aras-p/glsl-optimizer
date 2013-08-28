@@ -245,7 +245,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	case SI:
 	case CIK:
 		si_init_state_functions(rctx);
-		LIST_INITHEAD(&rctx->active_query_list);
+		LIST_INITHEAD(&rctx->active_nontimer_query_list);
 		rctx->max_db = 8;
 		si_init_config(rctx);
 		break;

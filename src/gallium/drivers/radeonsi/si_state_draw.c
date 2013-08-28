@@ -594,7 +594,7 @@ static void si_state_draw(struct r600_context *rctx,
 
 	/* queries need some special values
 	 * (this is non-zero if any query is active) */
-	if (rctx->num_cs_dw_queries_suspend) {
+	if (rctx->num_cs_dw_nontimer_queries_suspend) {
 		struct si_state_dsa *dsa = rctx->queued.named.dsa;
 
 		si_pm4_set_reg(pm4, R_028004_DB_COUNT_CONTROL,

@@ -50,7 +50,10 @@ static void r600_begin_query(struct pipe_context *ctx, struct pipe_query *query)
 	memset(&rquery->result, 0, sizeof(rquery->result));
 	rquery->results_start = rquery->results_end;
 	r600_query_begin(rctx, (struct r600_query *)query);
-	LIST_ADDTAIL(&rquery->list, &rctx->active_query_list);
+
+	if (!si_is_timer_query(rquery->type)) {
+		LIST_ADDTAIL(&rquery->list, &rctx->active_nontimer_query_list);
+	}
 }
 
 static void r600_end_query(struct pipe_context *ctx, struct pipe_query *query)
@@ -64,7 +67,7 @@ static void r600_end_query(struct pipe_context *ctx, struct pipe_query *query)
 
 	r600_query_end(rctx, rquery);
 
-	if (si_query_needs_begin(rquery->type)) {
+	if (si_query_needs_begin(rquery->type) && !si_is_timer_query(rquery->type)) {
 		LIST_DELINIT(&rquery->list);
 	}
 }

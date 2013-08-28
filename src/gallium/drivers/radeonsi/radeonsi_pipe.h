@@ -192,8 +192,8 @@ struct r600_context {
 	unsigned		pm4_dirty_cdwords;
 
 	/* The list of active queries. Only one query of each type can be active. */
-	struct list_head	active_query_list;
-	unsigned		num_cs_dw_queries_suspend;
+	struct list_head	active_nontimer_query_list;
+	unsigned		num_cs_dw_nontimer_queries_suspend;
 	unsigned		num_cs_dw_streamout_end;
 
 	unsigned		backend_mask;

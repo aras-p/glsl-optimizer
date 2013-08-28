@@ -110,6 +110,13 @@ err:
 	return;
 }
 
+bool si_is_timer_query(unsigned type)
+{
+	return type == PIPE_QUERY_TIME_ELAPSED ||
+		type == PIPE_QUERY_TIMESTAMP ||
+		type == PIPE_QUERY_TIMESTAMP_DISJOINT;
+}
+
 bool si_query_needs_begin(unsigned type)
 {
 	return type != PIPE_QUERY_TIMESTAMP;
@@ -139,7 +146,7 @@ void si_need_cs_space(struct r600_context *ctx, unsigned num_dw,
 	}
 
 	/* Count in queries_suspend. */
-	num_dw += ctx->num_cs_dw_queries_suspend;
+	num_dw += ctx->num_cs_dw_nontimer_queries_suspend;
 
 	/* Count in streamout_end at the end of CS. */
 	num_dw += ctx->num_cs_dw_streamout_end;
@@ -211,7 +218,7 @@ void si_context_flush(struct r600_context *ctx, unsigned flags)
 		return;
 
 	/* suspend queries */
-	if (ctx->num_cs_dw_queries_suspend) {
+	if (ctx->num_cs_dw_nontimer_queries_suspend) {
 		r600_context_queries_suspend(ctx);
 		queries_suspended = true;
 	}
@@ -506,7 +513,9 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 	cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
 	cs->buf[cs->cdw++] = r600_context_bo_reloc(ctx, query->buffer, RADEON_USAGE_WRITE);
 
-	ctx->num_cs_dw_queries_suspend += query->num_cs_dw;
+	if (!si_is_timer_query(query->type)) {
+		ctx->num_cs_dw_nontimer_queries_suspend += query->num_cs_dw;
+	}
 }
 
 void r600_query_end(struct r600_context *ctx, struct r600_query *query)
@@ -565,7 +574,10 @@ void r600_query_end(struct r600_context *ctx, struct r600_query *query)
 	cs->buf[cs->cdw++] = r600_context_bo_reloc(ctx, query->buffer, RADEON_USAGE_WRITE);
 
 	query->results_end = (query->results_end + query->result_size) % query->buffer->b.b.width0;
-	ctx->num_cs_dw_queries_suspend -= query->num_cs_dw;
+
+	if (si_query_needs_begin(query->type) && !si_is_timer_query(query->type)) {
+		ctx->num_cs_dw_nontimer_queries_suspend -= query->num_cs_dw;
+	}
 }
 
 void r600_query_predication(struct r600_context *ctx, struct r600_query *query, int operation,
@@ -712,19 +724,19 @@ void r600_context_queries_suspend(struct r600_context *ctx)
 {
 	struct r600_query *query;
 
-	LIST_FOR_EACH_ENTRY(query, &ctx->active_query_list, list) {
+	LIST_FOR_EACH_ENTRY(query, &ctx->active_nontimer_query_list, list) {
 		r600_query_end(ctx, query);
 	}
-	assert(ctx->num_cs_dw_queries_suspend == 0);
+	assert(ctx->num_cs_dw_nontimer_queries_suspend == 0);
 }
 
 void r600_context_queries_resume(struct r600_context *ctx)
 {
 	struct r600_query *query;
 
-	assert(ctx->num_cs_dw_queries_suspend == 0);
+	assert(ctx->num_cs_dw_nontimer_queries_suspend == 0);
 
-	LIST_FOR_EACH_ENTRY(query, &ctx->active_query_list, list) {
+	LIST_FOR_EACH_ENTRY(query, &ctx->active_nontimer_query_list, list) {
 		r600_query_begin(ctx, query);
 	}
 }
