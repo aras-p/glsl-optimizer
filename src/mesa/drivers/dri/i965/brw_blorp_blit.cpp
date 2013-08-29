@@ -899,22 +899,22 @@ void
 brw_blorp_blit_program::alloc_push_const_regs(int base_reg)
 {
 #define CONST_LOC(name) offsetof(brw_blorp_wm_push_constants, name)
-#define ALLOC_REG(name) \
-   this->name = \
-      brw_vec1_reg(BRW_GENERAL_REGISTER_FILE, \
-                   base_reg + CONST_LOC(name) / 32, \
-                   (CONST_LOC(name) % 32) / 4)
+#define ALLOC_REG(name, type)                                   \
+   this->name =                                                 \
+      retype(brw_vec1_reg(BRW_GENERAL_REGISTER_FILE,            \
+                          base_reg + CONST_LOC(name) / 32,      \
+                          (CONST_LOC(name) % 32) / 4), type)
 
-   ALLOC_REG(dst_x0);
-   ALLOC_REG(dst_x1);
-   ALLOC_REG(dst_y0);
-   ALLOC_REG(dst_y1);
-   ALLOC_REG(rect_grid_x1);
-   ALLOC_REG(rect_grid_y1);
-   ALLOC_REG(x_transform.multiplier);
-   ALLOC_REG(x_transform.offset);
-   ALLOC_REG(y_transform.multiplier);
-   ALLOC_REG(y_transform.offset);
+   ALLOC_REG(dst_x0, BRW_REGISTER_TYPE_UD);
+   ALLOC_REG(dst_x1, BRW_REGISTER_TYPE_UD);
+   ALLOC_REG(dst_y0, BRW_REGISTER_TYPE_UD);
+   ALLOC_REG(dst_y1, BRW_REGISTER_TYPE_UD);
+   ALLOC_REG(rect_grid_x1, BRW_REGISTER_TYPE_F);
+   ALLOC_REG(rect_grid_y1, BRW_REGISTER_TYPE_F);
+   ALLOC_REG(x_transform.multiplier, BRW_REGISTER_TYPE_F);
+   ALLOC_REG(x_transform.offset, BRW_REGISTER_TYPE_F);
+   ALLOC_REG(y_transform.multiplier, BRW_REGISTER_TYPE_F);
+   ALLOC_REG(y_transform.offset, BRW_REGISTER_TYPE_F);
 #undef CONST_LOC
 #undef ALLOC_REG
 }
