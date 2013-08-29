@@ -1630,7 +1630,12 @@ static uint32_t si_translate_vertexformat(struct pipe_screen *screen,
 		}
 		break;
 	case 32:
-		if (type != UTIL_FORMAT_TYPE_FLOAT)
+		/* From the Southern Islands ISA documentation about MTBUF:
+		 * 'Memory reads of data in memory that is 32 or 64 bits do not
+		 * undergo any format conversion.'
+		 */
+		if (type != UTIL_FORMAT_TYPE_FLOAT &&
+		    !desc->channel[first_non_void].pure_integer)
 			return V_008F0C_BUF_DATA_FORMAT_INVALID;
 
 		switch (desc->nr_channels) {
