@@ -239,7 +239,8 @@ _mesa_choose_tex_format(struct gl_context *ctx, GLenum target,
        * 1D ARRAY textures in S3TC format.
        */
       if (target != GL_TEXTURE_1D && target != GL_TEXTURE_1D_ARRAY) {
-         RETURN_IF_SUPPORTED(MESA_FORMAT_RGB_DXT1);
+         if (ctx->Mesa_DXTn)
+            RETURN_IF_SUPPORTED(MESA_FORMAT_RGB_DXT1);
          RETURN_IF_SUPPORTED(MESA_FORMAT_RGB_FXT1);
       }
       RETURN_IF_SUPPORTED(MESA_FORMAT_RGB888);
@@ -249,7 +250,8 @@ _mesa_choose_tex_format(struct gl_context *ctx, GLenum target,
    case GL_COMPRESSED_RGBA_ARB:
       /* We don't use texture compression for 1D and 1D array textures. */
       if (target != GL_TEXTURE_1D && target != GL_TEXTURE_1D_ARRAY) {
-         RETURN_IF_SUPPORTED(MESA_FORMAT_RGBA_DXT3); /* Not rgba_dxt1, see spec */
+         if (ctx->Mesa_DXTn)
+            RETURN_IF_SUPPORTED(MESA_FORMAT_RGBA_DXT3); /* Not rgba_dxt1, see spec */
          RETURN_IF_SUPPORTED(MESA_FORMAT_RGBA_FXT1);
       }
       RETURN_IF_SUPPORTED(MESA_FORMAT_RGBA8888);
@@ -547,12 +549,14 @@ _mesa_choose_tex_format(struct gl_context *ctx, GLenum target,
       RETURN_IF_SUPPORTED(MESA_FORMAT_SARGB8);
       break;
    case GL_COMPRESSED_SRGB_EXT:
-      RETURN_IF_SUPPORTED(MESA_FORMAT_SRGB_DXT1);
+      if (ctx->Mesa_DXTn)
+         RETURN_IF_SUPPORTED(MESA_FORMAT_SRGB_DXT1);
       RETURN_IF_SUPPORTED(MESA_FORMAT_SRGB8);
       RETURN_IF_SUPPORTED(MESA_FORMAT_SARGB8);
       break;
    case GL_COMPRESSED_SRGB_ALPHA_EXT:
-      RETURN_IF_SUPPORTED(MESA_FORMAT_SRGBA_DXT3); /* Not srgba_dxt1, see spec */
+      if (ctx->Mesa_DXTn)
+         RETURN_IF_SUPPORTED(MESA_FORMAT_SRGBA_DXT3); /* Not srgba_dxt1, see spec */
       RETURN_IF_SUPPORTED(MESA_FORMAT_SRGBA8);
       RETURN_IF_SUPPORTED(MESA_FORMAT_SARGB8);
       break;
