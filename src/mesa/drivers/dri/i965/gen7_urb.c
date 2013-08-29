@@ -67,6 +67,36 @@ gen7_allocate_push_constants(struct brw_context *brw)
    OUT_BATCH(_3DSTATE_PUSH_CONSTANT_ALLOC_PS << 16 | (2 - 2));
    OUT_BATCH(size | size << GEN7_PUSH_CONSTANT_BUFFER_OFFSET_SHIFT);
    ADVANCE_BATCH();
+
+   /* From p292 of the Ivy Bridge PRM (11.2.4 3DSTATE_PUSH_CONSTANT_ALLOC_PS):
+    *
+    *     A PIPE_CONTOL command with the CS Stall bit set must be programmed
+    *     in the ring after this instruction.
+    *
+    * No such restriction exists for Haswell.
+    */
+   if (!brw->is_haswell) {
+      BEGIN_BATCH(4);
+      OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2));
+      /* From p61 of the Ivy Bridge PRM (1.10.4 PIPE_CONTROL Command: DW1[20]
+       * CS Stall):
+       *
+       *     One of the following must also be set:
+       *     - Render Target Cache Flush Enable ([12] of DW1)
+       *     - Depth Cache Flush Enable ([0] of DW1)
+       *     - Stall at Pixel Scoreboard ([1] of DW1)
+       *     - Depth Stall ([13] of DW1)
+       *     - Post-Sync Operation ([13] of DW1)
+       *
+       * We choose to do a Post-Sync Operation (Write Immediate Data), since
+       * it seems like it will incur the least additional performance penalty.
+       */
+      OUT_BATCH(PIPE_CONTROL_CS_STALL | PIPE_CONTROL_WRITE_IMMEDIATE);
+      OUT_RELOC(brw->batch.workaround_bo,
+                I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION, 0);
+      OUT_BATCH(0);
+      ADVANCE_BATCH();
+   }
 }
 
 static void
