@@ -2264,6 +2264,10 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
                         /* not sure this is strictly needed or simply impossible */
                         static_sampler_state->compare_mode == PIPE_TEX_COMPARE_NONE &&
                         lp_is_simple_wrap_mode(static_sampler_state->wrap_s);
+
+      use_aos &= bld.num_lods <= num_quads ||
+                 static_sampler_state->min_img_filter ==
+                    static_sampler_state->mag_img_filter;
       if (dims > 1) {
          use_aos &= lp_is_simple_wrap_mode(static_sampler_state->wrap_t);
          if (dims > 2) {
@@ -2292,7 +2296,8 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
 
       /*
        * we only try 8-wide sampling with soa as it appears to
-       * be a loss with aos with AVX (but it should work).
+       * be a loss with aos with AVX (but it should work, except
+       * for conformance if min_filter != mag_filter if num_lods > 1).
        * (It should be faster if we'd support avx2)
        */
       if (num_quads == 1 || !use_aos) {
