@@ -232,6 +232,7 @@ lp_build_rho(struct lp_build_sample_context *bld,
    unsigned length = coord_bld->type.length;
    unsigned num_quads = length / 4;
    boolean rho_per_quad = rho_bld->type.length != length;
+   boolean no_rho_opt = (gallivm_debug & GALLIVM_DEBUG_NO_RHO_APPROX) && (dims > 1);
    unsigned i;
    LLVMValueRef i32undef = LLVMGetUndef(LLVMInt32TypeInContext(gallivm->context));
    LLVMValueRef rho_xvec, rho_yvec;
@@ -264,12 +265,13 @@ lp_build_rho(struct lp_build_sample_context *bld,
       else {
          rho = lp_build_swizzle_scalar_aos(coord_bld, cube_rho, 0, 4);
       }
-      if (gallivm_debug & GALLIVM_DEBUG_NO_RHO_APPROX) {
-         rho = lp_build_sqrt(rho_bld, rho);
-      }
       /* Could optimize this for single quad just skip the broadcast */
       cubesize = lp_build_extract_broadcast(gallivm, bld->float_size_in_type,
                                             rho_bld->type, float_size, index0);
+      if (no_rho_opt) {
+         /* skipping sqrt hence returning rho squared */
+         cubesize = lp_build_mul(rho_bld, cubesize, cubesize);
+      }
       rho = lp_build_mul(rho_bld, cubesize, rho);
    }
    else if (derivs && !(bld->static_texture_state->target == PIPE_TEXTURE_CUBE)) {
@@ -281,7 +283,11 @@ lp_build_rho(struct lp_build_sample_context *bld,
          floatdim = lp_build_extract_broadcast(gallivm, bld->float_size_in_type,
                                                coord_bld->type, float_size, indexi);
 
-         if ((gallivm_debug & GALLIVM_DEBUG_NO_RHO_APPROX) && (dims > 1)) {
+         /*
+          * note that for rho_per_quad case could reduce math (at some shuffle
+          * cost), but for now use same code to per-pixel lod case.
+          */
+         if (no_rho_opt) {
             ddx[i] = lp_build_mul(coord_bld, floatdim, derivs->ddx[i]);
             ddy[i] = lp_build_mul(coord_bld, floatdim, derivs->ddy[i]);
             ddx[i] = lp_build_mul(coord_bld, ddx[i], ddx[i]);
@@ -295,7 +301,7 @@ lp_build_rho(struct lp_build_sample_context *bld,
             ddmax[i] = lp_build_mul(coord_bld, floatdim, ddmax[i]);
          }
       }
-      if ((gallivm_debug & GALLIVM_DEBUG_NO_RHO_APPROX) && (dims > 1)) {
+      if (no_rho_opt) {
          rho_xvec = lp_build_add(coord_bld, ddx[0], ddx[1]);
          rho_yvec = lp_build_add(coord_bld, ddy[0], ddy[1]);
          if (dims > 2) {
@@ -303,19 +309,8 @@ lp_build_rho(struct lp_build_sample_context *bld,
             rho_yvec = lp_build_add(coord_bld, rho_yvec, ddy[2]);
          }
          rho = lp_build_max(coord_bld, rho_xvec, rho_yvec);
-
-         if (rho_per_quad) {
-            /*
-             * note for this case without per-pixel lod could reduce math more
-             * (at some shuffle cost), but for now only do sqrt after packing,
-             * otherwise would also need different code to per-pixel lod case.
-             */
-            rho = lp_build_pack_aos_scalars(bld->gallivm, coord_bld->type,
-                                            rho_bld->type, rho, 0);
-         }
-         rho = lp_build_sqrt(rho_bld, rho);
-
-      }
+         /* skipping sqrt hence returning rho squared */
+     }
       else {
          rho = ddmax[0];
          if (dims > 1) {
@@ -324,13 +319,13 @@ lp_build_rho(struct lp_build_sample_context *bld,
                rho = lp_build_max(coord_bld, rho, ddmax[2]);
             }
          }
-         if (rho_per_quad) {
-            /*
-             * rho_vec contains per-pixel rho, convert to scalar per quad.
-             */
-            rho = lp_build_pack_aos_scalars(bld->gallivm, coord_bld->type,
-                                            rho_bld->type, rho, 0);
-         }
+      }
+      if (rho_per_quad) {
+         /*
+          * rho_vec contains per-pixel rho, convert to scalar per quad.
+          */
+         rho = lp_build_pack_aos_scalars(bld->gallivm, coord_bld->type,
+                                         rho_bld->type, rho, 0);
       }
    }
    else {
@@ -362,7 +357,7 @@ lp_build_rho(struct lp_build_sample_context *bld,
          }
       }
 
-      if ((gallivm_debug & GALLIVM_DEBUG_NO_RHO_APPROX) && (dims > 1)) {
+      if (no_rho_opt) {
          static const unsigned char swizzle01[] = { /* no-op swizzle */
             0, 1,
             LP_BLD_SWIZZLE_DONTCARE, LP_BLD_SWIZZLE_DONTCARE
@@ -407,16 +402,9 @@ lp_build_rho(struct lp_build_sample_context *bld,
                                             rho_bld->type, rho, 0);
          }
          else {
-            /*
-             * on some cpus with half-speed 8-wide sqrt (e.g. SNB but not IVB)
-             * doing pack/sqrt/unpack/swizzle might be better for 8-wide case,
-             * same is true for cpus having faster scalars than 4-wide vecs
-             * for 4-wide case (where pack/unpack would be no-ops anyway).
-             * (Same is true really for cube_rho case above.)
-             */
             rho = lp_build_swizzle_scalar_aos(coord_bld, rho, 0, 4);
          }
-         rho = lp_build_sqrt(rho_bld, rho);
+         /* skipping sqrt hence returning rho squared */
       }
       else {
          ddx_ddy[0] = lp_build_abs(coord_bld, ddx_ddy[0]);
@@ -636,7 +624,7 @@ lp_build_brilinear_rho(struct lp_build_context *bld,
 
    /*
     * The pre factor will make the intersections with the exact powers of two
-    * happen precisely where we want then to be, which means that the integer
+    * happen precisely where we want them to be, which means that the integer
     * part will not need any post adjustments.
     */
    rho = lp_build_mul(bld, rho,
@@ -662,6 +650,34 @@ lp_build_brilinear_rho(struct lp_build_context *bld,
 
    *out_lod_ipart = lod_ipart;
    *out_lod_fpart = lod_fpart;
+}
+
+
+/**
+ * Fast implementation of iround(log2(sqrt(x))), based on
+ * log2(x^n) == n*log2(x).
+ *
+ * Gives accurate results all the time.
+ * (Could be trivially extended to handle other power-of-two roots.)
+ */
+static LLVMValueRef
+lp_build_ilog2_sqrt(struct lp_build_context *bld,
+                    LLVMValueRef x)
+{
+   LLVMBuilderRef builder = bld->gallivm->builder;
+   LLVMValueRef ipart;
+   struct lp_type i_type = lp_int_type(bld->type);
+   LLVMValueRef one = lp_build_const_int_vec(bld->gallivm, i_type, 1);
+
+   assert(bld->type.floating);
+
+   assert(lp_check_value(bld->type, x));
+
+   /* ipart = log2(x) + 0.5 = 0.5*(log2(x^2) + 1.0) */
+   ipart = lp_build_extract_exponent(bld, x, 1);
+   ipart = LLVMBuildAShr(builder, ipart, one, "");
+
+   return ipart;
 }
 
 
@@ -740,6 +756,8 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
       }
       else {
          LLVMValueRef rho;
+         boolean rho_squared = (gallivm_debug & GALLIVM_DEBUG_NO_RHO_APPROX) &&
+                               (bld->dims > 1);
 
          rho = lp_build_rho(bld, texture_unit, s, t, r, cube_rho, derivs);
 
@@ -760,16 +778,28 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
             if (mip_filter == PIPE_TEX_MIPFILTER_NONE ||
                 mip_filter == PIPE_TEX_MIPFILTER_NEAREST) {
                /*
-                * Don't actually need both all the time, ipart is needed
-                * for nearest mipfilter, pos_or_zero if min != mag.
+                * Don't actually need both values all the time, lod_ipart is
+                * needed for nearest mipfilter, lod_positive if min != mag.
                 */
-               *out_lod_ipart = lp_build_ilog2(lodf_bld, rho);
+               if (rho_squared) {
+                  *out_lod_ipart = lp_build_ilog2_sqrt(lodf_bld, rho);
+               }
+               else {
+                  *out_lod_ipart = lp_build_ilog2(lodf_bld, rho);
+               }
                *out_lod_positive = lp_build_cmp(lodf_bld, PIPE_FUNC_GREATER,
                                                 rho, lodf_bld->one);
                return;
             }
             if (mip_filter == PIPE_TEX_MIPFILTER_LINEAR &&
-                !(gallivm_debug & GALLIVM_DEBUG_NO_BRILINEAR)) {
+                !(gallivm_debug & GALLIVM_DEBUG_NO_BRILINEAR) &&
+                !rho_squared) {
+               /*
+                * This can't work if rho is squared. Not sure if it could be
+                * fixed while keeping it worthwile, could also do sqrt here
+                * but brilinear and no_rho_opt seems like a combination not
+                * making much sense anyway so just use ordinary path below.
+                */
                lp_build_brilinear_rho(lodf_bld, rho, BRILINEAR_FACTOR,
                                       out_lod_ipart, out_lod_fpart);
                *out_lod_positive = lp_build_cmp(lodf_bld, PIPE_FUNC_GREATER,
@@ -783,6 +813,11 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
          }
          else {
             lod = lp_build_fast_log2(lodf_bld, rho);
+         }
+         if (rho_squared) {
+            /* log2(x^2) == 0.5*log2(x) */
+            lod = lp_build_mul(lodf_bld, lod,
+                               lp_build_const_vec(bld->gallivm, lodf_bld->type, 0.5F));
          }
 
          /* add shader lod bias */
