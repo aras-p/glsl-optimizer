@@ -53,8 +53,6 @@ is_expression(const fs_inst *const inst)
    case BRW_OPCODE_XOR:
    case BRW_OPCODE_SHR:
    case BRW_OPCODE_SHL:
-   case BRW_OPCODE_RSR:
-   case BRW_OPCODE_RSL:
    case BRW_OPCODE_ASR:
    case BRW_OPCODE_ADD:
    case BRW_OPCODE_MUL:
