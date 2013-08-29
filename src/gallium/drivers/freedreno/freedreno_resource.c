@@ -59,6 +59,9 @@ fd_resource_transfer_unmap(struct pipe_context *pctx,
 		struct pipe_transfer *ptrans)
 {
 	struct fd_context *ctx = fd_context(pctx);
+	struct fd_resource *rsc = fd_resource(ptrans->resource);
+	if (!(ptrans->usage & PIPE_TRANSFER_UNSYNCHRONIZED))
+		fd_bo_cpu_fini(rsc->bo);
 	pipe_resource_reference(&ptrans->resource, NULL);
 	util_slab_free(&ctx->transfer_pool, ptrans);
 }
@@ -74,12 +77,13 @@ fd_resource_transfer_map(struct pipe_context *pctx,
 	struct fd_resource *rsc = fd_resource(prsc);
 	struct pipe_transfer *ptrans = util_slab_alloc(&ctx->transfer_pool);
 	enum pipe_format format = prsc->format;
+	uint32_t op = 0;
 	char *buf;
 
 	if (!ptrans)
 		return NULL;
 
-	/* util_slap_alloc() doesn't zero: */
+	/* util_slab_alloc() doesn't zero: */
 	memset(ptrans, 0, sizeof(*ptrans));
 
 	pipe_resource_reference(&ptrans->resource, prsc);
@@ -90,13 +94,23 @@ fd_resource_transfer_map(struct pipe_context *pctx,
 	ptrans->layer_stride = ptrans->stride;
 
 	/* some state trackers (at least XA) don't do this.. */
-	fd_resource_transfer_flush_region(pctx, ptrans, box);
+	if (!(usage & PIPE_TRANSFER_FLUSH_EXPLICIT))
+		fd_resource_transfer_flush_region(pctx, ptrans, box);
 
 	buf = fd_bo_map(rsc->bo);
 	if (!buf) {
 		fd_resource_transfer_unmap(pctx, ptrans);
 		return NULL;
 	}
+
+	if (usage & PIPE_TRANSFER_READ)
+		op |= DRM_FREEDRENO_PREP_READ;
+
+	if (usage & PIPE_TRANSFER_WRITE)
+		op |= DRM_FREEDRENO_PREP_WRITE;
+
+	if (!(usage & PIPE_TRANSFER_UNSYNCHRONIZED))
+		fd_bo_cpu_prep(rsc->bo, ctx->screen->pipe, op);
 
 	*pptrans = ptrans;
 

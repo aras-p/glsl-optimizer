@@ -137,7 +137,7 @@ emit_texture(struct fd_ringbuffer *ring, struct fd_context *ctx,
 	OUT_RING(ring, 0x00010000 + (0x6 * const_idx));
 
 	OUT_RING(ring, sampler->tex0 | view->tex0);
-	OUT_RELOC(ring, view->tex_resource->bo, 0, view->fmt);
+	OUT_RELOC(ring, view->tex_resource->bo, 0, view->fmt, 0);
 	OUT_RING(ring, view->tex2);
 	OUT_RING(ring, sampler->tex3 | view->tex3);
 	OUT_RING(ring, sampler->tex4);
@@ -171,7 +171,7 @@ fd2_emit_vertex_bufs(struct fd_ringbuffer *ring, uint32_t val,
 	OUT_RING(ring, (0x1 << 16) | (val & 0xffff));
 	for (i = 0; i < n; i++) {
 		struct fd_resource *rsc = fd_resource(vbufs[i].prsc);
-		OUT_RELOC(ring, rsc->bo, vbufs[i].offset, 3);
+		OUT_RELOC(ring, rsc->bo, vbufs[i].offset, 3, 0);
 		OUT_RING (ring, vbufs[i].size);
 	}
 }

@@ -70,7 +70,7 @@ emit_gmem2mem_surf(struct fd_ringbuffer *ring, uint32_t base,
 	OUT_PKT3(ring, CP_SET_CONSTANT, 5);
 	OUT_RING(ring, CP_REG(REG_A2XX_RB_COPY_CONTROL));
 	OUT_RING(ring, 0x00000000);             /* RB_COPY_CONTROL */
-	OUT_RELOC(ring, rsc->bo, 0, 0);         /* RB_COPY_DEST_BASE */
+	OUT_RELOCW(ring, rsc->bo, 0, 0, 0);     /* RB_COPY_DEST_BASE */
 	OUT_RING(ring, rsc->pitch >> 5);        /* RB_COPY_DEST_PITCH */
 	OUT_RING(ring,                          /* RB_COPY_DEST_INFO */
 			A2XX_RB_COPY_DEST_INFO_FORMAT(fd2_pipe2color(psurf->format)) |
@@ -199,7 +199,7 @@ emit_mem2gmem_surf(struct fd_ringbuffer *ring, uint32_t base,
 			A2XX_SQ_TEX_0_CLAMP_Z(SQ_TEX_WRAP) |
 			A2XX_SQ_TEX_0_PITCH(rsc->pitch));
 	OUT_RELOC(ring, rsc->bo, 0,
-			fd2_pipe2surface(psurf->format) | 0x800);
+			fd2_pipe2surface(psurf->format) | 0x800, 0);
 	OUT_RING(ring, A2XX_SQ_TEX_2_WIDTH(psurf->width - 1) |
 			A2XX_SQ_TEX_2_HEIGHT(psurf->height - 1));
 	OUT_RING(ring, 0x01000000 | // XXX
@@ -241,7 +241,7 @@ fd2_emit_tile_mem2gmem(struct fd_context *ctx, uint32_t xoff, uint32_t yoff,
 	y0 = ((float)yoff) / ((float)pfb->height);
 	y1 = ((float)yoff + bin_h) / ((float)pfb->height);
 	OUT_PKT3(ring, CP_MEM_WRITE, 9);
-	OUT_RELOC(ring, fd_resource(fd2_ctx->solid_vertexbuf)->bo, 0x60, 0);
+	OUT_RELOC(ring, fd_resource(fd2_ctx->solid_vertexbuf)->bo, 0x60, 0, 0);
 	OUT_RING(ring, fui(x0));
 	OUT_RING(ring, fui(y0));
 	OUT_RING(ring, fui(x1));

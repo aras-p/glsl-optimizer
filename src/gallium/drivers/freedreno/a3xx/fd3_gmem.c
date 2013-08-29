@@ -89,7 +89,7 @@ emit_mrt(struct fd_ringbuffer *ring, unsigned nr_bufs,
 		if (bin_w || (i >= nr_bufs)) {
 			OUT_RING(ring, A3XX_RB_MRT_BUF_BASE_COLOR_BUF_BASE(base));
 		} else {
-			OUT_RELOCS(ring, res->bo, 0, 0, -1);
+			OUT_RELOCW(ring, res->bo, 0, 0, -1);
 		}
 
 		OUT_PKT0(ring, REG_A3XX_SP_FS_IMAGE_OUTPUT_REG(i), 1);
@@ -116,7 +116,7 @@ emit_gmem2mem_surf(struct fd_ringbuffer *ring,
 	OUT_RING(ring, A3XX_RB_COPY_CONTROL_MSAA_RESOLVE(MSAA_ONE) |
 			A3XX_RB_COPY_CONTROL_MODE(mode) |
 			A3XX_RB_COPY_CONTROL_GMEM_BASE(base));
-	OUT_RELOCS(ring, rsc->bo, 0, 0, -1);    /* RB_COPY_DEST_BASE */
+	OUT_RELOCW(ring, rsc->bo, 0, 0, -1);    /* RB_COPY_DEST_BASE */
 	OUT_RING(ring, A3XX_RB_COPY_DEST_PITCH_PITCH(rsc->pitch * rsc->cpp));
 	OUT_RING(ring, A3XX_RB_COPY_DEST_INFO_TILE(LINEAR) |
 			A3XX_RB_COPY_DEST_INFO_FORMAT(fd3_pipe2color(psurf->format)) |
@@ -272,7 +272,7 @@ fd3_emit_tile_mem2gmem(struct fd_context *ctx, uint32_t xoff, uint32_t yoff,
 	y1 = ((float)yoff + bin_h) / ((float)pfb->height);
 
 	OUT_PKT3(ring, CP_MEM_WRITE, 5);
-	OUT_RELOC(ring, fd_resource(fd3_ctx->blit_texcoord_vbuf)->bo, 0, 0);
+	OUT_RELOC(ring, fd_resource(fd3_ctx->blit_texcoord_vbuf)->bo, 0, 0, 0);
 	OUT_RING(ring, fui(x0));
 	OUT_RING(ring, fui(y0));
 	OUT_RING(ring, fui(x1));
@@ -395,7 +395,7 @@ update_vsc_pipe(struct fd_context *ctx)
 			A3XX_VSC_PIPE_CONFIG_Y(0) |
 			A3XX_VSC_PIPE_CONFIG_W(gmem->nbins_x) |
 			A3XX_VSC_PIPE_CONFIG_H(gmem->nbins_y));
-	OUT_RELOC(ring, bo, 0, 0);              /* VSC_PIPE[0].DATA_ADDRESS */
+	OUT_RELOC(ring, bo, 0, 0, 0);           /* VSC_PIPE[0].DATA_ADDRESS */
 	OUT_RING(ring, fd_bo_size(bo) - 32);    /* VSC_PIPE[0].DATA_LENGTH */
 
 	for (i = 1; i < 8; i++) {

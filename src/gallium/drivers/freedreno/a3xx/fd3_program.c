@@ -320,7 +320,7 @@ fd3_program_emit(struct fd_ringbuffer *ring,
 	OUT_PKT0(ring, REG_A3XX_SP_VS_OBJ_OFFSET_REG, 2);
 	OUT_RING(ring, A3XX_SP_VS_OBJ_OFFSET_REG_CONSTOBJECTOFFSET(0) |
 			A3XX_SP_VS_OBJ_OFFSET_REG_SHADEROBJOFFSET(0));
-	OUT_RELOC(ring, vp->bo, 0, 0);    /* SP_VS_OBJ_START_REG */
+	OUT_RELOC(ring, vp->bo, 0, 0, 0);  /* SP_VS_OBJ_START_REG */
 #endif
 
 	OUT_PKT0(ring, REG_A3XX_SP_FS_LENGTH_REG, 1);
@@ -345,7 +345,7 @@ fd3_program_emit(struct fd_ringbuffer *ring,
 	OUT_PKT0(ring, REG_A3XX_SP_FS_OBJ_OFFSET_REG, 2);
 	OUT_RING(ring, A3XX_SP_FS_OBJ_OFFSET_REG_CONSTOBJECTOFFSET(128) |
 			A3XX_SP_FS_OBJ_OFFSET_REG_SHADEROBJOFFSET(128 - fp->instrlen));
-	OUT_RELOC(ring, fp->bo, 0, 0);    /* SP_FS_OBJ_START_REG */
+	OUT_RELOC(ring, fp->bo, 0, 0, 0);  /* SP_FS_OBJ_START_REG */
 #endif
 
 	OUT_PKT0(ring, REG_A3XX_SP_FS_FLAT_SHAD_MODE_REG_0, 2);

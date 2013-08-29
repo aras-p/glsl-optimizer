@@ -104,7 +104,7 @@ fd_draw_emit(struct fd_context *ctx, const struct pipe_draw_info *info)
 			src_sel, idx_type, IGNORE_VISIBILITY));
 	OUT_RING(ring, info->count);       /* NumIndices */
 	if (info->indexed) {
-		OUT_RELOC(ring, idx_bo, idx_offset, 0);
+		OUT_RELOC(ring, idx_bo, idx_offset, 0, 0);
 		OUT_RING (ring, idx_size);
 	}
 }
