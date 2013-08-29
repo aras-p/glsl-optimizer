@@ -241,7 +241,7 @@ egl_pipe_create_drm_screen(const char *name, int fd)
       return pipe_radeonsi_create_screen(fd);
    else if (strcmp(name, "vmwgfx") == 0)
       return pipe_vmwgfx_create_screen(fd);
-   else if (strcmp(name, "kgsl") == 0)
+   else if ((strcmp(name, "kgsl") == 0) || (strcmp(name, "msm") == 0))
       return pipe_freedreno_create_screen(fd);
    else
       return NULL;
