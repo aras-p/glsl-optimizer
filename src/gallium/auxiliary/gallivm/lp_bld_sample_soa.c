@@ -827,11 +827,14 @@ lp_build_masklerp2d(struct lp_build_context *bld,
 /**
  * Generate code to sample a mipmap level with linear filtering.
  * If sampling a cube texture, r = cube face in [0,5].
+ * If linear_mask is present, only pixels having their mask set
+ * will receive linear filtering, the rest will use nearest.
  */
 static void
 lp_build_sample_image_linear(struct lp_build_sample_context *bld,
                              unsigned sampler_unit,
                              LLVMValueRef size,
+                             LLVMValueRef linear_mask,
                              LLVMValueRef row_stride_vec,
                              LLVMValueRef img_stride_vec,
                              LLVMValueRef data_ptr,
@@ -905,6 +908,31 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
       lp_build_name(z1, "tex.z1.layer");
    }
 
+   if (linear_mask) {
+      /*
+       * Whack filter weights into place. Whatever pixel had more weight is
+       * the one which should have been selected by nearest filtering hence
+       * just use 100% weight for it.
+       */
+      struct lp_build_context *c_bld = &bld->coord_bld;
+      LLVMValueRef w1_mask, w1_weight;
+      LLVMValueRef half = lp_build_const_vec(bld->gallivm, c_bld->type, 0.5f);
+
+      w1_mask = lp_build_cmp(c_bld, PIPE_FUNC_GREATER, s_fpart, half);
+      /* this select is really just a "and" */
+      w1_weight = lp_build_select(c_bld, w1_mask, c_bld->one, c_bld->zero);
+      s_fpart = lp_build_select(c_bld, linear_mask, s_fpart, w1_weight);
+      if (dims >= 2) {
+         w1_mask = lp_build_cmp(c_bld, PIPE_FUNC_GREATER, t_fpart, half);
+         w1_weight = lp_build_select(c_bld, w1_mask, c_bld->one, c_bld->zero);
+         t_fpart = lp_build_select(c_bld, linear_mask, t_fpart, w1_weight);
+         if (dims == 3) {
+            w1_mask = lp_build_cmp(c_bld, PIPE_FUNC_GREATER, r_fpart, half);
+            w1_weight = lp_build_select(c_bld, w1_mask, c_bld->one, c_bld->zero);
+            r_fpart = lp_build_select(c_bld, linear_mask, r_fpart, w1_weight);
+         }
+      }
+   }
 
    /*
     * Get texture colors.
@@ -1053,8 +1081,8 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
 
 /**
  * Sample the texture/mipmap using given image filter and mip filter.
- * data0_ptr and data1_ptr point to the two mipmap levels to sample
- * from.  width0/1_vec, height0/1_vec, depth0/1_vec indicate their sizes.
+ * ilevel0 and ilevel1 indicate the two mipmap levels to sample
+ * from (vectors or scalars).
  * If we're using nearest miplevel sampling the '1' values will be null/unused.
  */
 static void
@@ -1105,7 +1133,7 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
    else {
       assert(img_filter == PIPE_TEX_FILTER_LINEAR);
       lp_build_sample_image_linear(bld, sampler_unit,
-                                   size0,
+                                   size0, NULL,
                                    row_stride0_vec, img_stride0_vec,
                                    data_ptr0, mipoff0, coords, offsets,
                                    colors0);
@@ -1131,15 +1159,8 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
           * We'll do mip filtering if any of the quads (or individual
           * pixel in case of per-pixel lod) need it.
           * It might be better to split the vectors here and only fetch/filter
-          * quads which need it.
+          * quads which need it (if there's one lod per quad).
           */
-         /*
-          * We unfortunately need to clamp lod_fpart here since we can get
-          * negative values which would screw up filtering if not all
-          * lod_fpart values have same sign.
-          */
-         lod_fpart = lp_build_max(&bld->lodf_bld, lod_fpart,
-                                  bld->lodf_bld.zero);
          need_lerp = lp_build_compare(bld->gallivm, bld->lodf_bld.type,
                                       PIPE_FUNC_GREATER,
                                       lod_fpart, bld->lodf_bld.zero);
@@ -1148,6 +1169,13 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
 
       lp_build_if(&if_ctx, bld->gallivm, need_lerp);
       {
+         /*
+          * We unfortunately need to clamp lod_fpart here since we can get
+          * negative values which would screw up filtering if not all
+          * lod_fpart values have same sign.
+          */
+         lod_fpart = lp_build_max(&bld->lodf_bld, lod_fpart,
+                                  bld->lodf_bld.zero);
          /* sample the second mipmap level */
          lp_build_mipmap_level_sizes(bld, ilevel1,
                                      &size1,
@@ -1168,11 +1196,131 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
          }
          else {
             lp_build_sample_image_linear(bld, sampler_unit,
-                                         size1,
+                                         size1, NULL,
                                          row_stride1_vec, img_stride1_vec,
                                          data_ptr1, mipoff1, coords, offsets,
                                          colors1);
          }
+
+         /* interpolate samples from the two mipmap levels */
+
+         if (bld->num_lods != bld->coord_type.length)
+            lod_fpart = lp_build_unpack_broadcast_aos_scalars(bld->gallivm,
+                                                              bld->lodf_bld.type,
+                                                              bld->texel_bld.type,
+                                                              lod_fpart);
+
+         for (chan = 0; chan < 4; chan++) {
+            colors0[chan] = lp_build_lerp(&bld->texel_bld, lod_fpart,
+                                          colors0[chan], colors1[chan],
+                                          0);
+            LLVMBuildStore(builder, colors0[chan], colors_out[chan]);
+         }
+      }
+      lp_build_endif(&if_ctx);
+   }
+}
+
+
+/**
+ * Sample the texture/mipmap using given mip filter, and using
+ * both nearest and linear filtering at the same time depending
+ * on linear_mask.
+ * lod can be per quad but linear_mask is always per pixel.
+ * ilevel0 and ilevel1 indicate the two mipmap levels to sample
+ * from (vectors or scalars).
+ * If we're using nearest miplevel sampling the '1' values will be null/unused.
+ */
+static void
+lp_build_sample_mipmap_both(struct lp_build_sample_context *bld,
+                            unsigned sampler_unit,
+                            LLVMValueRef linear_mask,
+                            unsigned mip_filter,
+                            LLVMValueRef *coords,
+                            const LLVMValueRef *offsets,
+                            LLVMValueRef ilevel0,
+                            LLVMValueRef ilevel1,
+                            LLVMValueRef lod_fpart,
+                            LLVMValueRef lod_positive,
+                            LLVMValueRef *colors_out)
+{
+   LLVMBuilderRef builder = bld->gallivm->builder;
+   LLVMValueRef size0 = NULL;
+   LLVMValueRef size1 = NULL;
+   LLVMValueRef row_stride0_vec = NULL;
+   LLVMValueRef row_stride1_vec = NULL;
+   LLVMValueRef img_stride0_vec = NULL;
+   LLVMValueRef img_stride1_vec = NULL;
+   LLVMValueRef data_ptr0 = NULL;
+   LLVMValueRef data_ptr1 = NULL;
+   LLVMValueRef mipoff0 = NULL;
+   LLVMValueRef mipoff1 = NULL;
+   LLVMValueRef colors0[4], colors1[4];
+   unsigned chan;
+
+   /* sample the first mipmap level */
+   lp_build_mipmap_level_sizes(bld, ilevel0,
+                               &size0,
+                               &row_stride0_vec, &img_stride0_vec);
+   if (bld->num_mips == 1) {
+      data_ptr0 = lp_build_get_mipmap_level(bld, ilevel0);
+   }
+   else {
+      /* This path should work for num_lods 1 too but slightly less efficient */
+      data_ptr0 = bld->base_ptr;
+      mipoff0 = lp_build_get_mip_offsets(bld, ilevel0);
+   }
+
+   lp_build_sample_image_linear(bld, sampler_unit,
+                                size0, linear_mask,
+                                row_stride0_vec, img_stride0_vec,
+                                data_ptr0, mipoff0, coords, offsets,
+                                colors0);
+
+   /* Store the first level's colors in the output variables */
+   for (chan = 0; chan < 4; chan++) {
+       LLVMBuildStore(builder, colors0[chan], colors_out[chan]);
+   }
+
+   if (mip_filter == PIPE_TEX_MIPFILTER_LINEAR) {
+      struct lp_build_if_state if_ctx;
+      LLVMValueRef need_lerp;
+
+      /*
+       * We'll do mip filtering if any of the quads (or individual
+       * pixel in case of per-pixel lod) need it.
+       * Note using lod_positive here not lod_fpart since it may be the same
+       * condition as that used in the outer "if" in the caller hence llvm
+       * should be able to merge the branches in this case.
+       */
+      need_lerp = lp_build_any_true_range(&bld->lodi_bld, bld->num_lods, lod_positive);
+
+      lp_build_if(&if_ctx, bld->gallivm, need_lerp);
+      {
+         /*
+          * We unfortunately need to clamp lod_fpart here since we can get
+          * negative values which would screw up filtering if not all
+          * lod_fpart values have same sign.
+          */
+         lod_fpart = lp_build_max(&bld->lodf_bld, lod_fpart,
+                                  bld->lodf_bld.zero);
+         /* sample the second mipmap level */
+         lp_build_mipmap_level_sizes(bld, ilevel1,
+                                     &size1,
+                                     &row_stride1_vec, &img_stride1_vec);
+         if (bld->num_mips == 1) {
+            data_ptr1 = lp_build_get_mipmap_level(bld, ilevel1);
+         }
+         else {
+            data_ptr1 = bld->base_ptr;
+            mipoff1 = lp_build_get_mip_offsets(bld, ilevel1);
+         }
+
+         lp_build_sample_image_linear(bld, sampler_unit,
+                                      size1, linear_mask,
+                                      row_stride1_vec, img_stride1_vec,
+                                      data_ptr1, mipoff1, coords, offsets,
+                                      colors1);
 
          /* interpolate samples from the two mipmap levels */
 
@@ -1637,42 +1785,94 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
                              texels);
    }
    else {
-      /* Emit conditional to choose min image filter or mag image filter
-       * depending on the lod being > 0 or <= 0, respectively.
-       */
-      struct lp_build_if_state if_ctx;
-
       /*
-       * FIXME this should take all lods into account, if some are min
-       * some max probably could hack up the weights in the linear
-       * path with selects to work for nearest.
+       * Could also get rid of the if-logic and always use mipmap_both, both
+       * for the single lod and multi-lod case if nothing really uses this.
        */
-      if (bld->num_lods > 1)
-         lod_positive = LLVMBuildExtractElement(builder, lod_positive,
-                                                lp_build_const_int32(bld->gallivm, 0), "");
+      if (bld->num_lods == 1) {
+         /* Emit conditional to choose min image filter or mag image filter
+          * depending on the lod being > 0 or <= 0, respectively.
+          */
+         struct lp_build_if_state if_ctx;
 
-      lod_positive = LLVMBuildTrunc(builder, lod_positive,
-                                    LLVMInt1TypeInContext(bld->gallivm->context), "");
+         lod_positive = LLVMBuildTrunc(builder, lod_positive,
+                                       LLVMInt1TypeInContext(bld->gallivm->context), "");
 
-      lp_build_if(&if_ctx, bld->gallivm, lod_positive);
-      {
-         /* Use the minification filter */
-         lp_build_sample_mipmap(bld, sampler_unit,
-                                min_filter, mip_filter,
-                                coords, offsets,
-                                ilevel0, ilevel1, lod_fpart,
-                                texels);
+         lp_build_if(&if_ctx, bld->gallivm, lod_positive);
+         {
+            /* Use the minification filter */
+            lp_build_sample_mipmap(bld, sampler_unit,
+                                   min_filter, mip_filter,
+                                   coords, offsets,
+                                   ilevel0, ilevel1, lod_fpart,
+                                   texels);
+         }
+         lp_build_else(&if_ctx);
+         {
+            /* Use the magnification filter */
+            lp_build_sample_mipmap(bld, sampler_unit,
+                                   mag_filter, PIPE_TEX_MIPFILTER_NONE,
+                                   coords, offsets,
+                                   ilevel0, NULL, NULL,
+                                   texels);
+         }
+         lp_build_endif(&if_ctx);
       }
-      lp_build_else(&if_ctx);
-      {
-         /* Use the magnification filter */
-         lp_build_sample_mipmap(bld, sampler_unit,
-                                mag_filter, PIPE_TEX_MIPFILTER_NONE,
-                                coords, offsets,
-                                ilevel0, NULL, NULL,
-                                texels);
+      else {
+         LLVMValueRef need_linear, linear_mask;
+         unsigned mip_filter_for_nearest;
+         struct lp_build_if_state if_ctx;
+
+         if (min_filter == PIPE_TEX_FILTER_LINEAR) {
+            linear_mask = lod_positive;
+            mip_filter_for_nearest = PIPE_TEX_MIPFILTER_NONE;
+         }
+         else {
+            linear_mask = lp_build_not(&bld->lodi_bld, lod_positive);
+            mip_filter_for_nearest = mip_filter;
+         }
+         need_linear = lp_build_any_true_range(&bld->lodi_bld, bld->num_lods,
+                                               linear_mask);
+
+         if (bld->num_lods != bld->coord_type.length) {
+            linear_mask = lp_build_unpack_broadcast_aos_scalars(bld->gallivm,
+                                                                bld->lodi_type,
+                                                                bld->int_coord_type,
+                                                                linear_mask);
+         }
+
+         lp_build_if(&if_ctx, bld->gallivm, need_linear);
+         {
+            /*
+             * Do sampling with both filters simultaneously. This means using
+             * a linear filter and doing some tricks (with weights) for the pixels
+             * which need nearest filter.
+             * Note that it's probably rare some pixels need nearest and some
+             * linear filter but the fixups required for the nearest pixels
+             * aren't all that complicated so just always run a combined path
+             * if at least some pixels require linear.
+             */
+            lp_build_sample_mipmap_both(bld, sampler_unit,
+                                        linear_mask, mip_filter,
+                                        coords, offsets,
+                                        ilevel0, ilevel1,
+                                        lod_fpart, lod_positive,
+                                        texels);
+         }
+         lp_build_else(&if_ctx);
+         {
+            /*
+             * All pixels require just nearest filtering, which is way
+             * cheaper than linear, hence do a separate path for that.
+             */
+            lp_build_sample_mipmap(bld, sampler_unit,
+                                   PIPE_TEX_FILTER_NEAREST, mip_filter_for_nearest,
+                                   coords, offsets,
+                                   ilevel0, ilevel1, lod_fpart,
+                                   texels);
+         }
+         lp_build_endif(&if_ctx);
       }
-      lp_build_endif(&if_ctx);
    }
 
    for (chan = 0; chan < 4; ++chan) {
