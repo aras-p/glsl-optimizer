@@ -239,11 +239,8 @@ _mesa_choose_tex_format(struct gl_context *ctx, GLenum target,
        * 1D ARRAY textures in S3TC format.
        */
       if (target != GL_TEXTURE_1D && target != GL_TEXTURE_1D_ARRAY) {
-         if (ctx->Extensions.EXT_texture_compression_s3tc ||
-             ctx->Extensions.ANGLE_texture_compression_dxt)
-            RETURN_IF_SUPPORTED(MESA_FORMAT_RGB_DXT1);
-         if (ctx->Extensions.TDFX_texture_compression_FXT1)
-            RETURN_IF_SUPPORTED(MESA_FORMAT_RGB_FXT1);
+         RETURN_IF_SUPPORTED(MESA_FORMAT_RGB_DXT1);
+         RETURN_IF_SUPPORTED(MESA_FORMAT_RGB_FXT1);
       }
       RETURN_IF_SUPPORTED(MESA_FORMAT_RGB888);
       RETURN_IF_SUPPORTED(MESA_FORMAT_XRGB8888);
@@ -252,11 +249,8 @@ _mesa_choose_tex_format(struct gl_context *ctx, GLenum target,
    case GL_COMPRESSED_RGBA_ARB:
       /* We don't use texture compression for 1D and 1D array textures. */
       if (target != GL_TEXTURE_1D && target != GL_TEXTURE_1D_ARRAY) {
-         if (ctx->Extensions.EXT_texture_compression_s3tc ||
-             ctx->Extensions.ANGLE_texture_compression_dxt)
-            RETURN_IF_SUPPORTED(MESA_FORMAT_RGBA_DXT3); /* Not rgba_dxt1, see spec */
-         if (ctx->Extensions.TDFX_texture_compression_FXT1)
-            RETURN_IF_SUPPORTED(MESA_FORMAT_RGBA_FXT1);
+         RETURN_IF_SUPPORTED(MESA_FORMAT_RGBA_DXT3); /* Not rgba_dxt1, see spec */
+         RETURN_IF_SUPPORTED(MESA_FORMAT_RGBA_FXT1);
       }
       RETURN_IF_SUPPORTED(MESA_FORMAT_RGBA8888);
       RETURN_IF_SUPPORTED(MESA_FORMAT_ARGB8888);
