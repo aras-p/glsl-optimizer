@@ -131,6 +131,7 @@ void r600_blit_decompress_depth(struct pipe_context *ctx,
 	switch (util_format_has_depth(desc) | util_format_has_stencil(desc) << 1) {
 	default:
 		assert(!"No depth or stencil to uncompress");
+		return;
 	case 3:
 		custom_dsa = rctx->custom_dsa_flush_depth_stencil;
 		break;
