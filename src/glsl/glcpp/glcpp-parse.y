@@ -1245,6 +1245,9 @@ glcpp_parser_create (const struct gl_extensions *extensions, int api)
 
 	      if (extensions->ARB_shading_language_420pack)
 	         add_builtin_define(parser, "GL_ARB_shading_language_420pack", 1);
+
+	      if (extensions->MESA_shader_integer_mix)
+	         add_builtin_define(parser, "GL_MESA_shader_integer_mix", 1);
 	   }
 	}
 

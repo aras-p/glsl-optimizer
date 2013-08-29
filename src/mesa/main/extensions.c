@@ -311,6 +311,7 @@ static const struct extension extension_table[] = {
    { "GL_IBM_texture_mirrored_repeat",             o(dummy_true),                              GLL,            1998 },
    { "GL_INGR_blend_func_separate",                o(EXT_blend_func_separate),                 GLL,            1999 },
    { "GL_MESA_pack_invert",                        o(MESA_pack_invert),                        GL,             2002 },
+   { "GL_MESA_shader_integer_mix",                 o(MESA_shader_integer_mix),                 GL       | ES3, 2013 },
    { "GL_MESA_texture_array",                      o(MESA_texture_array),                      GLL,            2007 },
    { "GL_MESA_texture_signed_rgba",                o(EXT_texture_snorm),                       GL,             2009 },
    { "GL_MESA_window_pos",                         o(dummy_true),                              GLL,            2000 },

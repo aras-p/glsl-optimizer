@@ -3154,8 +3154,9 @@ struct gl_extensions
    GLboolean ATI_fragment_shader;
    GLboolean ATI_separate_stencil;
    GLboolean MESA_pack_invert;
-   GLboolean MESA_ycbcr_texture;
+   GLboolean MESA_shader_integer_mix;
    GLboolean MESA_texture_array;
+   GLboolean MESA_ycbcr_texture;
    GLboolean NV_conditional_render;
    GLboolean NV_fog_distance;
    GLboolean NV_fragment_program_option;

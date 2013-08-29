@@ -188,6 +188,12 @@ shader_bit_encoding(const _mesa_glsl_parse_state *state)
 }
 
 static bool
+shader_integer_mix(const _mesa_glsl_parse_state *state)
+{
+   return v130(state) && state->MESA_shader_integer_mix_enable;
+}
+
+static bool
 shader_packing(const _mesa_glsl_parse_state *state)
 {
    return state->ARB_shading_language_packing_enable ||
@@ -415,7 +421,9 @@ private:
    BA2(max)
    BA2(clamp)
    B2(mix_lrp)
-   B2(mix_sel)
+   ir_function_signature *_mix_sel(builtin_available_predicate avail,
+                                   const glsl_type *val_type,
+                                   const glsl_type *blend_type);
    B2(step)
    B2(smoothstep)
    B1(isnan)
@@ -773,10 +781,25 @@ builtin_builder::create_builtins()
                 _mix_lrp(glsl_type::vec3_type,  glsl_type::vec3_type),
                 _mix_lrp(glsl_type::vec4_type,  glsl_type::vec4_type),
 
-                _mix_sel(glsl_type::float_type, glsl_type::bool_type),
-                _mix_sel(glsl_type::vec2_type,  glsl_type::bvec2_type),
-                _mix_sel(glsl_type::vec3_type,  glsl_type::bvec3_type),
-                _mix_sel(glsl_type::vec4_type,  glsl_type::bvec4_type),
+                _mix_sel(v130, glsl_type::float_type, glsl_type::bool_type),
+                _mix_sel(v130, glsl_type::vec2_type,  glsl_type::bvec2_type),
+                _mix_sel(v130, glsl_type::vec3_type,  glsl_type::bvec3_type),
+                _mix_sel(v130, glsl_type::vec4_type,  glsl_type::bvec4_type),
+
+                _mix_sel(shader_integer_mix, glsl_type::int_type,   glsl_type::bool_type),
+                _mix_sel(shader_integer_mix, glsl_type::ivec2_type, glsl_type::bvec2_type),
+                _mix_sel(shader_integer_mix, glsl_type::ivec3_type, glsl_type::bvec3_type),
+                _mix_sel(shader_integer_mix, glsl_type::ivec4_type, glsl_type::bvec4_type),
+
+                _mix_sel(shader_integer_mix, glsl_type::uint_type,  glsl_type::bool_type),
+                _mix_sel(shader_integer_mix, glsl_type::uvec2_type, glsl_type::bvec2_type),
+                _mix_sel(shader_integer_mix, glsl_type::uvec3_type, glsl_type::bvec3_type),
+                _mix_sel(shader_integer_mix, glsl_type::uvec4_type, glsl_type::bvec4_type),
+
+                _mix_sel(shader_integer_mix, glsl_type::bool_type,  glsl_type::bool_type),
+                _mix_sel(shader_integer_mix, glsl_type::bvec2_type, glsl_type::bvec2_type),
+                _mix_sel(shader_integer_mix, glsl_type::bvec3_type, glsl_type::bvec3_type),
+                _mix_sel(shader_integer_mix, glsl_type::bvec4_type, glsl_type::bvec4_type),
                 NULL);
 
    add_function("step",
@@ -2255,12 +2278,14 @@ builtin_builder::_mix_lrp(const glsl_type *val_type, const glsl_type *blend_type
 }
 
 ir_function_signature *
-builtin_builder::_mix_sel(const glsl_type *val_type, const glsl_type *blend_type)
+builtin_builder::_mix_sel(builtin_available_predicate avail,
+                          const glsl_type *val_type,
+                          const glsl_type *blend_type)
 {
    ir_variable *x = in_var(val_type, "x");
    ir_variable *y = in_var(val_type, "y");
    ir_variable *a = in_var(blend_type, "a");
-   MAKE_SIG(val_type, v130, 3, x, y, a);
+   MAKE_SIG(val_type, avail, 3, x, y, a);
 
    /* csel matches the ternary operator in that a selector of true choses the
     * first argument. This differs from mix(x, y, false) which choses the
