@@ -113,7 +113,7 @@ struct _mesa_glsl_parse_state {
     * feature.
     */
    bool is_version(unsigned required_glsl_version,
-                   unsigned required_glsl_es_version)
+                   unsigned required_glsl_es_version) const
    {
       unsigned required_version = this->es_shader ?
          required_glsl_es_version : required_glsl_version;
