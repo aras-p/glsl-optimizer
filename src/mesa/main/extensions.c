@@ -118,6 +118,7 @@ static const struct extension extension_table[] = {
    { "GL_ARB_point_sprite",                        o(ARB_point_sprite),                        GL,             2003 },
    { "GL_ARB_provoking_vertex",                    o(EXT_provoking_vertex),                    GL,             2009 },
    { "GL_ARB_robustness",                          o(dummy_true),                              GL,             2010 },
+   { "GL_ARB_sample_shading",                      o(ARB_sample_shading),                      GL,             2009 },
    { "GL_ARB_sampler_objects",                     o(dummy_true),                              GL,             2009 },
    { "GL_ARB_seamless_cube_map",                   o(ARB_seamless_cube_map),                   GL,             2009 },
    { "GL_ARB_shader_atomic_counters",              o(ARB_shader_atomic_counters),              GL,             2011 },

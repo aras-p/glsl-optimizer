@@ -540,6 +540,7 @@ static const _mesa_glsl_extension _mesa_glsl_supported_extensions[] = {
    EXT(EXT_shader_integer_mix,         true,  true,      EXT_shader_integer_mix),
    EXT(ARB_texture_gather,             true,  false,     ARB_texture_gather),
    EXT(ARB_shader_atomic_counters,     true,  false,     ARB_shader_atomic_counters),
+   EXT(ARB_sample_shading,             true,  false,     ARB_sample_shading),
 };
 
 #undef EXT
