@@ -2059,6 +2059,19 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
       debug_printf("Sample from %s\n", util_format_name(fmt));
    }
 
+   if (static_texture_state->format == PIPE_FORMAT_NONE) {
+      /*
+       * If there's nothing bound, format is NONE, and we must return
+       * all zero as mandated by d3d10 in this case.
+       */
+      unsigned chan;
+      LLVMValueRef zero = lp_build_const_vec(gallivm, type, 0.0F);
+      for (chan = 0; chan < 4; chan++) {
+         texel_out[chan] = zero;
+      }
+      return;
+   }
+
    assert(type.floating);
 
    /* Setup our build context */
@@ -2487,6 +2500,19 @@ lp_build_size_query_soa(struct gallivm_state *gallivm,
    boolean has_array;
    unsigned num_lods = 1;
    struct lp_build_context bld_int_vec4;
+
+   if (static_state->format == PIPE_FORMAT_NONE) {
+      /*
+       * If there's nothing bound, format is NONE, and we must return
+       * all zero as mandated by d3d10 in this case.
+       */
+      unsigned chan;
+      LLVMValueRef zero = lp_build_const_vec(gallivm, int_type, 0.0F);
+      for (chan = 0; chan < 4; chan++) {
+         sizes_out[chan] = zero;
+      }
+      return;
+   }
 
    /*
     * Do some sanity verification about bound texture and shader dcl target.
