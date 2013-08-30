@@ -30,6 +30,9 @@
 #include "program/prog_statevars.h"
 #include "program/prog_instruction.h"
 
+static struct gl_builtin_uniform_element gl_NumSamples_elements[] = {
+   {NULL, {STATE_NUM_SAMPLES, 0, 0}, SWIZZLE_XXXX}
+};
 
 static struct gl_builtin_uniform_element gl_DepthRange_elements[] = {
    {"near", {STATE_DEPTH_RANGE, 0, 0}, SWIZZLE_XXXX},
@@ -236,6 +239,7 @@ static struct gl_builtin_uniform_element gl_NormalMatrix_elements[] = {
 #define STATEVAR(name) {#name, name ## _elements, Elements(name ## _elements)}
 
 static const struct gl_builtin_uniform_desc _mesa_builtin_uniform_desc[] = {
+   STATEVAR(gl_NumSamples),
    STATEVAR(gl_DepthRange),
    STATEVAR(gl_ClipPlane),
    STATEVAR(gl_Point),
@@ -662,6 +666,7 @@ builtin_variable_generator::generate_constants()
 void
 builtin_variable_generator::generate_uniforms()
 {
+   add_uniform(int_t, "gl_NumSamples");
    add_uniform(type("gl_DepthRangeParameters"), "gl_DepthRange");
    add_uniform(array(vec4_t, VERT_ATTRIB_MAX), "gl_CurrentAttribVertMESA");
    add_uniform(array(vec4_t, VARYING_SLOT_MAX), "gl_CurrentAttribFragMESA");
@@ -837,6 +842,19 @@ builtin_variable_generator::generate_fs_special_vars()
          add_output(FRAG_RESULT_STENCIL, int_t, "gl_FragStencilRefAMD");
       if (state->AMD_shader_stencil_export_warn)
          var->warn_extension = "GL_AMD_shader_stencil_export";
+   }
+
+   if (state->ARB_sample_shading_enable) {
+      add_system_value(SYSTEM_VALUE_SAMPLE_ID, int_t, "gl_SampleID");
+      add_system_value(SYSTEM_VALUE_SAMPLE_POS, vec2_t, "gl_SamplePosition");
+      /* From the ARB_sample_shading specification:
+       *    "The number of elements in the array is ceil(<s>/32), where
+       *    <s> is the maximum number of color samples supported by the
+       *    implementation."
+       * Since no drivers expose more than 32x MSAA, we can simply set
+       * the array size to 1 rather than computing it.
+       */
+      add_output(FRAG_RESULT_SAMPLE_MASK, array(int_t, 1), "gl_SampleMask");
    }
 }
 

@@ -274,6 +274,11 @@ typedef enum
 #define VARYING_BIT_VAR(V) BITFIELD64_BIT(VARYING_SLOT_VAR0 + (V))
 /*@}*/
 
+/**
+ * Bitflags for system values.
+ */
+#define SYSTEM_BIT_SAMPLE_ID BITFIELD64_BIT(SYSTEM_VALUE_SAMPLE_ID)
+#define SYSTEM_BIT_SAMPLE_POS BITFIELD64_BIT(SYSTEM_VALUE_SAMPLE_POS)
 
 /**
  * Determine if the given gl_varying_slot appears in the fragment shader.
@@ -306,12 +311,13 @@ typedef enum
     * register is written.  No FRAG_RESULT_DATAn will be written.
     */
    FRAG_RESULT_COLOR = 2,
+   FRAG_RESULT_SAMPLE_MASK = 3,
 
    /* FRAG_RESULT_DATAn are the per-render-target (GLSL gl_FragData[n]
     * or ARB_fragment_program fragment.color[n]) color results.  If
     * any are written, FRAG_RESULT_COLOR will not be written.
     */
-   FRAG_RESULT_DATA0 = 3,
+   FRAG_RESULT_DATA0 = 4,
    FRAG_RESULT_MAX = (FRAG_RESULT_DATA0 + MAX_DRAW_BUFFERS)
 } gl_frag_result;
 
@@ -1904,6 +1910,8 @@ typedef enum
    SYSTEM_VALUE_FRONT_FACE,  /**< Fragment shader only (not done yet) */
    SYSTEM_VALUE_VERTEX_ID,   /**< Vertex shader only */
    SYSTEM_VALUE_INSTANCE_ID, /**< Vertex shader only */
+   SYSTEM_VALUE_SAMPLE_ID,   /**< Fragment shader only */
+   SYSTEM_VALUE_SAMPLE_POS,  /**< Fragment shader only */
    SYSTEM_VALUE_MAX          /**< Number of values */
 } gl_system_value;
 

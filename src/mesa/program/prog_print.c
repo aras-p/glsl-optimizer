@@ -311,6 +311,7 @@ arb_output_attrib_string(GLint index, GLenum progType)
       "result.depth", /* FRAG_RESULT_DEPTH */
       "result.(one)", /* FRAG_RESULT_STENCIL */
       "result.color", /* FRAG_RESULT_COLOR */
+      "result.samplemask", /* FRAG_RESULT_SAMPLE_MASK */
       "result.color[0]", /* FRAG_RESULT_DATA0 (named for GLSL's gl_FragData) */
       "result.color[1]",
       "result.color[2]",
