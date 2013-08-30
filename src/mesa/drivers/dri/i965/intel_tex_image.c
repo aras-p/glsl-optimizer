@@ -35,7 +35,6 @@ intel_miptree_create_for_teximage(struct brw_context *brw,
 				  struct intel_texture_image *intelImage,
 				  bool expect_accelerated_upload)
 {
-   GLuint firstLevel;
    GLuint lastLevel;
    int width, height, depth;
    GLuint i;
@@ -45,16 +44,8 @@ intel_miptree_create_for_teximage(struct brw_context *brw,
 
    DBG("%s\n", __FUNCTION__);
 
-   /* If this image disrespects BaseLevel, allocate from level zero.
-    * Usually BaseLevel == 0, so it's unlikely to happen.
-    */
-   if (intelImage->base.Base.Level < intelObj->base.BaseLevel)
-      firstLevel = 0;
-   else
-      firstLevel = intelObj->base.BaseLevel;
-
    /* Figure out image dimensions at start level. */
-   for (i = intelImage->base.Base.Level; i > firstLevel; i--) {
+   for (i = intelImage->base.Base.Level; i > 0; i--) {
       width <<= 1;
       if (height != 1)
          height <<= 1;
@@ -69,19 +60,17 @@ intel_miptree_create_for_teximage(struct brw_context *brw,
     */
    if ((intelObj->base.Sampler.MinFilter == GL_NEAREST ||
         intelObj->base.Sampler.MinFilter == GL_LINEAR) &&
-       intelImage->base.Base.Level == firstLevel &&
-       firstLevel == 0) {
-      lastLevel = firstLevel;
+       intelImage->base.Base.Level == 0) {
+      lastLevel = 0;
    } else {
-      lastLevel = (firstLevel +
-                   _mesa_get_tex_max_num_levels(intelObj->base.Target,
-                                                width, height, depth) - 1);
+      lastLevel = _mesa_get_tex_max_num_levels(intelObj->base.Target,
+                                               width, height, depth) - 1;
    }
 
    return intel_miptree_create(brw,
 			       intelObj->base.Target,
 			       intelImage->base.Base.TexFormat,
-			       firstLevel,
+			       0,
 			       lastLevel,
 			       width,
 			       height,
