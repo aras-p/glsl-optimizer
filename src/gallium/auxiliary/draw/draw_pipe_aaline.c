@@ -107,7 +107,7 @@ struct aaline_stage
    struct aaline_fragment_shader *fs;
    struct {
       void *sampler[PIPE_MAX_SAMPLERS];
-      struct pipe_sampler_view *sampler_views[PIPE_MAX_SAMPLERS];
+      struct pipe_sampler_view *sampler_views[PIPE_MAX_SHADER_SAMPLER_VIEWS];
    } state;
 
    /*
@@ -763,7 +763,7 @@ aaline_destroy(struct draw_stage *stage)
    struct pipe_context *pipe = stage->draw->pipe;
    uint i;
 
-   for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
+   for (i = 0; i < PIPE_MAX_SHADER_SAMPLER_VIEWS; i++) {
       pipe_sampler_view_reference(&aaline->state.sampler_views[i], NULL);
    }
 
@@ -937,7 +937,7 @@ aaline_set_sampler_views(struct pipe_context *pipe,
    for (i = 0; i < num; i++) {
       pipe_sampler_view_reference(&aaline->state.sampler_views[i], views[i]);
    }
-   for ( ; i < PIPE_MAX_SAMPLERS; i++) {
+   for ( ; i < PIPE_MAX_SHADER_SAMPLER_VIEWS; i++) {
       pipe_sampler_view_reference(&aaline->state.sampler_views[i], NULL);
    }
    aaline->num_sampler_views = num;

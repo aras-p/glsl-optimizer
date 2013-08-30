@@ -87,7 +87,7 @@ struct pstip_stage
    struct pstip_fragment_shader *fs;
    struct {
       void *samplers[PIPE_MAX_SAMPLERS];
-      struct pipe_sampler_view *sampler_views[PIPE_MAX_SAMPLERS];
+      struct pipe_sampler_view *sampler_views[PIPE_MAX_SHADER_SAMPLER_VIEWS];
       const struct pipe_poly_stipple *stipple;
    } state;
 
@@ -592,7 +592,7 @@ pstip_destroy(struct draw_stage *stage)
    struct pstip_stage *pstip = pstip_stage(stage);
    uint i;
 
-   for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
+   for (i = 0; i < PIPE_MAX_SHADER_SAMPLER_VIEWS; i++) {
       pipe_sampler_view_reference(&pstip->state.sampler_views[i], NULL);
    }
 
@@ -731,7 +731,7 @@ pstip_set_sampler_views(struct pipe_context *pipe,
    for (i = 0; i < num; i++) {
       pipe_sampler_view_reference(&pstip->state.sampler_views[i], views[i]);
    }
-   for (; i < PIPE_MAX_SAMPLERS; i++) {
+   for (; i < PIPE_MAX_SHADER_SAMPLER_VIEWS; i++) {
       pipe_sampler_view_reference(&pstip->state.sampler_views[i], NULL);
    }
 
