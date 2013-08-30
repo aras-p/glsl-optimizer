@@ -242,6 +242,7 @@ void si_pm4_emit_dirty(struct r600_context *rctx)
 		if (!state || rctx->emitted.array[i] == state)
 			continue;
 
+		assert(state != rctx->queued.named.init);
 		si_pm4_emit(rctx, state);
 		rctx->emitted.array[i] = state;
 	}

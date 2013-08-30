@@ -179,15 +179,15 @@ void si_need_cs_space(struct r600_context *ctx, unsigned num_dw,
 void si_context_flush(struct r600_context *ctx, unsigned flags)
 {
 	struct radeon_winsys_cs *cs = ctx->b.rings.gfx.cs;
-	bool queries_suspended = false;
 
 	if (!cs->cdw)
 		return;
 
 	/* suspend queries */
+	ctx->nontimer_queries_suspended = false;
 	if (ctx->num_cs_dw_nontimer_queries_suspend) {
 		r600_context_queries_suspend(ctx);
-		queries_suspended = true;
+		ctx->nontimer_queries_suspended = true;
 	}
 
 	ctx->b.streamout.suspended = false;
@@ -245,6 +245,11 @@ void si_context_flush(struct r600_context *ctx, unsigned flags)
 	}
 #endif
 
+	si_begin_new_cs(ctx);
+}
+
+void si_begin_new_cs(struct r600_context *ctx)
+{
 	ctx->pm4_dirty_cdwords = 0;
 
 	/* Flush read caches at the beginning of CS. */
@@ -267,7 +272,7 @@ void si_context_flush(struct r600_context *ctx, unsigned flags)
 	}
 
 	/* resume queries */
-	if (queries_suspended) {
+	if (ctx->nontimer_queries_suspended) {
 		r600_context_queries_resume(ctx);
 	}
 

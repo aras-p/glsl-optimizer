@@ -180,6 +180,8 @@ struct r600_context {
 	/* The list of active queries. Only one query of each type can be active. */
 	struct list_head	active_nontimer_query_list;
 	unsigned		num_cs_dw_nontimer_queries_suspend;
+	/* If queries have been suspended. */
+	bool			nontimer_queries_suspended;
 
 	unsigned		backend_mask;
 	unsigned                max_db; /* for OQ */

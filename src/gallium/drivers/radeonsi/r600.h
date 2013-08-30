@@ -74,6 +74,7 @@ struct r600_screen;
 
 void si_get_backend_mask(struct r600_context *ctx);
 void si_context_flush(struct r600_context *ctx, unsigned flags);
+void si_begin_new_cs(struct r600_context *ctx);
 
 struct r600_query *r600_context_query_create(struct r600_context *ctx, unsigned query_type);
 void r600_context_query_destroy(struct r600_context *ctx, struct r600_query *query);

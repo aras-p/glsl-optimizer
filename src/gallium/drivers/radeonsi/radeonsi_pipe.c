@@ -279,14 +279,15 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	if (rctx->blitter == NULL)
 		goto fail;
 
-	si_get_backend_mask(rctx); /* this emits commands and must be last */
-
 	rctx->dummy_pixel_shader =
 		util_make_fragment_cloneinput_shader(&rctx->b.b, 0,
 						     TGSI_SEMANTIC_GENERIC,
 						     TGSI_INTERPOLATE_CONSTANT);
 	rctx->b.b.bind_fs_state(&rctx->b.b, rctx->dummy_pixel_shader);
 
+	/* these must be last */
+	si_begin_new_cs(rctx);
+	si_get_backend_mask(rctx);
 	return &rctx->b.b;
 fail:
 	r600_destroy_context(&rctx->b.b);
