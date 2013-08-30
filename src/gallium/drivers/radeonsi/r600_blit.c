@@ -76,7 +76,8 @@ static void r600_blitter_begin(struct pipe_context *ctx, enum r600_blitter_op op
 			(void**)rctx->samplers[PIPE_SHADER_FRAGMENT].samplers);
 
 		util_blitter_save_fragment_sampler_views(rctx->blitter,
-			util_last_bit(rctx->samplers[PIPE_SHADER_FRAGMENT].views.desc.enabled_mask),
+			util_last_bit(rctx->samplers[PIPE_SHADER_FRAGMENT].views.desc.enabled_mask &
+				      ((1 << NUM_TEX_UNITS) - 1)),
 			rctx->samplers[PIPE_SHADER_FRAGMENT].views.views);
 	}
 
