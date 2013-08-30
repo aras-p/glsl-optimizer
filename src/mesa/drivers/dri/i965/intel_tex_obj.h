@@ -41,6 +41,9 @@ struct intel_texture_object
     */
    unsigned int _MaxLevel;
 
+   unsigned int validated_first_level;
+   unsigned int validated_last_level;
+
    /* On validation any active images held in main memory or in other
     * regions will be copied to this region and the old storage freed.
     */

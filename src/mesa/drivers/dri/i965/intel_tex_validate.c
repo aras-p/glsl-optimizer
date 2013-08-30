@@ -11,31 +11,32 @@
 #define FILE_DEBUG_FLAG DEBUG_TEXTURE
 
 /**
- * When validating, we only care about the texture images that could
- * be seen, so for non-mipmapped modes we want to ignore everything
- * but BaseLevel.
+ * Sets our driver-specific variant of tObj->_MaxLevel for later surface state
+ * upload.
+ *
+ * If we're only ensuring that there is storage for the first miplevel of a
+ * texture, then in texture setup we're going to have to make sure we don't
+ * allow sampling beyond level 0.
  */
 static void
 intel_update_max_level(struct intel_texture_object *intelObj,
 		       struct gl_sampler_object *sampler)
 {
    struct gl_texture_object *tObj = &intelObj->base;
-   int maxlevel;
 
    if (sampler->MinFilter == GL_NEAREST ||
        sampler->MinFilter == GL_LINEAR) {
-      maxlevel = tObj->BaseLevel;
+      intelObj->_MaxLevel = tObj->BaseLevel;
    } else {
-      maxlevel = tObj->_MaxLevel;
-   }
-
-   if (intelObj->_MaxLevel != maxlevel) {
-      intelObj->_MaxLevel = maxlevel;
-      intelObj->needs_validate = true;
+      intelObj->_MaxLevel = tObj->_MaxLevel;
    }
 }
 
-/*  
+/**
+ * At rendering-from-a-texture time, make sure that the texture object has a
+ * miptree that can hold the entire texture based on
+ * BaseLevel/MaxLevel/filtering, and copy in any texture images that are
+ * stored in other miptrees.
  */
 GLuint
 intel_finalize_mipmap_tree(struct brw_context *brw, GLuint unit)
@@ -53,18 +54,26 @@ intel_finalize_mipmap_tree(struct brw_context *brw, GLuint unit)
    if (tObj->Target == GL_TEXTURE_BUFFER)
       return true;
 
-   /* We know/require this is true by now: 
+   /* We know that this is true by now, and if it wasn't, we might have
+    * mismatched level sizes and the copies would fail.
     */
    assert(intelObj->base._BaseComplete);
 
-   /* What levels must the tree include at a minimum?
-    */
    intel_update_max_level(intelObj, sampler);
-   if (intelObj->mt && intelObj->mt->first_level != tObj->BaseLevel)
-      intelObj->needs_validate = true;
 
-   if (!intelObj->needs_validate)
+   /* What levels does this validated texture image require? */
+   int validate_first_level = tObj->BaseLevel;
+   int validate_last_level = intelObj->_MaxLevel;
+
+   /* Skip the loop over images in the common case of no images having
+    * changed.  But if the GL_BASE_LEVEL / GL_MAX_LEVEL change to something we
+    * haven't looked at, then we do need to look at those new images.
+    */
+   if (!intelObj->needs_validate &&
+       validate_first_level >= intelObj->validated_first_level &&
+       validate_last_level <= intelObj->validated_last_level) {
       return true;
+   }
 
    firstImage = intel_texture_image(tObj->Image[0][tObj->BaseLevel]);
 
@@ -78,8 +87,8 @@ intel_finalize_mipmap_tree(struct brw_context *brw, GLuint unit)
     */
    if (intelObj->mt &&
        (!intel_miptree_match_image(intelObj->mt, &firstImage->base.Base) ||
-	intelObj->mt->first_level != tObj->BaseLevel ||
-	intelObj->mt->last_level < intelObj->_MaxLevel)) {
+	validate_first_level < intelObj->mt->first_level ||
+	validate_last_level > intelObj->mt->last_level)) {
       intel_miptree_release(&intelObj->mt);
    }
 
@@ -93,13 +102,14 @@ intel_finalize_mipmap_tree(struct brw_context *brw, GLuint unit)
       perf_debug("Creating new %s %dx%dx%d %d..%d miptree to handle finalized "
                  "texture miptree.\n",
                  _mesa_get_format_name(firstImage->base.Base.TexFormat),
-                 width, height, depth, tObj->BaseLevel, intelObj->_MaxLevel);
+                 width, height, depth,
+                 validate_first_level, validate_last_level);
 
       intelObj->mt = intel_miptree_create(brw,
                                           intelObj->base.Target,
 					  firstImage->base.Base.TexFormat,
-                                          tObj->BaseLevel,
-                                          intelObj->_MaxLevel,
+                                          validate_first_level,
+                                          validate_last_level,
                                           width,
                                           height,
                                           depth,
@@ -114,7 +124,7 @@ intel_finalize_mipmap_tree(struct brw_context *brw, GLuint unit)
     */
    nr_faces = _mesa_num_tex_faces(intelObj->base.Target);
    for (face = 0; face < nr_faces; face++) {
-      for (i = tObj->BaseLevel; i <= intelObj->_MaxLevel; i++) {
+      for (i = validate_first_level; i <= validate_last_level; i++) {
          struct intel_texture_image *intelImage =
             intel_texture_image(intelObj->base.Image[face][i]);
 	 /* skip too small size mipmap */
@@ -134,6 +144,8 @@ intel_finalize_mipmap_tree(struct brw_context *brw, GLuint unit)
       }
    }
 
+   intelObj->validated_first_level = validate_first_level;
+   intelObj->validated_last_level = validate_last_level;
    intelObj->needs_validate = false;
 
    return true;
