@@ -245,13 +245,13 @@ public:
                   snprintf(name, 32, "gl_%s_TexCoord%i_dummy", mode_str, i);
                   this->new_texcoord[i] =
                      new (ctx) ir_variable(glsl_type::vec4_type, name,
-                                           ir_var_temporary);
+                                           ir_var_temporary, glsl_precision_undefined);
                }
                else {
                   snprintf(name, 32, "gl_%s_TexCoord%i", mode_str, i);
                   this->new_texcoord[i] =
                      new(ctx) ir_variable(glsl_type::vec4_type, name,
-                                          info->mode);
+                                          info->mode, glsl_precision_undefined);
                   this->new_texcoord[i]->location = VARYING_SLOT_TEX0 + i;
                   this->new_texcoord[i]->explicit_location = true;
                   this->new_texcoord[i]->explicit_index = 0;
@@ -275,14 +275,14 @@ public:
                snprintf(name, 32, "gl_%s_FrontColor%i_dummy", mode_str, i);
                this->new_color[i] =
                   new (ctx) ir_variable(glsl_type::vec4_type, name,
-                                        ir_var_temporary);
+                                        ir_var_temporary, glsl_precision_medium);
             }
 
             if (info->backcolor[i]) {
                snprintf(name, 32, "gl_%s_BackColor%i_dummy", mode_str, i);
                this->new_backcolor[i] =
                   new (ctx) ir_variable(glsl_type::vec4_type, name,
-                                        ir_var_temporary);
+                                        ir_var_temporary, glsl_precision_medium);
             }
          }
       }
@@ -293,7 +293,7 @@ public:
 
          snprintf(name, 32, "gl_%s_FogFragCoord_dummy", mode_str);
          this->new_fog = new (ctx) ir_variable(glsl_type::float_type, name,
-                                               ir_var_temporary);
+                                               ir_var_temporary, glsl_precision_high);
       }
 
       /* Now do the replacing. */
