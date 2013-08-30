@@ -542,7 +542,7 @@ const struct function gl_core_functions_possible[] = {
    { "glVertexAttribDivisor", 33, -1 },
 
    /* GL 4.0 */
-// { "glMinSampleShading", 40, -1 },                    // XXX: Add to xml
+   { "glMinSampleShading", 40, -1 },                    // XXX: Add to xml
 // { "glBlendEquationi", 40, -1 },                      // XXX: Add to xml
 // { "glBlendEquationSeparatei", 40, -1 },              // XXX: Add to xml
 // { "glBlendFunci", 40, -1 },                          // XXX: Add to xml
@@ -603,7 +603,7 @@ const struct function gl_core_functions_possible[] = {
    { "glBlendEquationSeparateiARB", 43, -1 },
    { "glBlendFunciARB", 43, -1 },
    { "glBlendFuncSeparateiARB", 43, -1 },
-// { "glMinSampleShadingARB", 43, -1 },                 // XXX: Add to xml
+   { "glMinSampleShadingARB", 43, -1 },                 // XXX: Add to xml
 // { "glNamedStringARB", 43, -1 },                      // XXX: Add to xml
 // { "glDeleteNamedStringARB", 43, -1 },                // XXX: Add to xml
 // { "glCompileShaderIncludeARB", 43, -1 },             // XXX: Add to xml

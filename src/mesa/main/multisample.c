@@ -119,6 +119,24 @@ _mesa_SampleMaski(GLuint index, GLbitfield mask)
    ctx->Multisample.SampleMaskValue = mask;
 }
 
+/**
+ * Called via glMinSampleShadingARB
+ */
+void GLAPIENTRY
+_mesa_MinSampleShading(GLclampf value)
+{
+   GET_CURRENT_CONTEXT(ctx);
+
+   if (!ctx->Extensions.ARB_sample_shading || !_mesa_is_desktop_gl(ctx)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glMinSampleShading");
+      return;
+   }
+
+   FLUSH_VERTICES(ctx, 0);
+
+   ctx->Multisample.MinSampleShadingValue = CLAMP(value, 0.0, 1.0);
+   ctx->NewState |= _NEW_MULTISAMPLE;
+}
 
 /**
  * Helper for checking a requested sample count against the limit

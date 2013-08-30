@@ -83,6 +83,9 @@ descriptor=[
   [ "SAMPLE_BUFFERS_ARB", "BUFFER_INT(Visual.sampleBuffers), extra_new_buffers" ],
   [ "SAMPLES_ARB", "BUFFER_INT(Visual.samples), extra_new_buffers" ],
 
+# GL_ARB_sample_shading
+  [ "MIN_SAMPLE_SHADING_VALUE_ARB", "CONTEXT_FLOAT(Multisample.MinSampleShadingValue), extra_gl40_ARB_sample_shading" ],
+
 # GL_SGIS_generate_mipmap
   [ "GENERATE_MIPMAP_HINT_SGIS", "CONTEXT_ENUM(Hint.GenerateMipmap), NO_EXTRA" ],
 

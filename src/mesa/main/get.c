@@ -131,6 +131,7 @@ enum value_extra {
    EXTRA_VERSION_30,
    EXTRA_VERSION_31,
    EXTRA_VERSION_32,
+   EXTRA_VERSION_40,
    EXTRA_API_GL,
    EXTRA_API_GL_CORE,
    EXTRA_API_ES2,
@@ -391,6 +392,7 @@ extra_NV_primitive_restart[] = {
 static const int extra_version_30[] = { EXTRA_VERSION_30, EXTRA_END };
 static const int extra_version_31[] = { EXTRA_VERSION_31, EXTRA_END };
 static const int extra_version_32[] = { EXTRA_VERSION_32, EXTRA_END };
+static const int extra_version_40[] = { EXTRA_VERSION_40, EXTRA_END };
 
 static const int extra_gl30_es3[] = {
     EXTRA_VERSION_30,
@@ -408,6 +410,12 @@ static const int extra_gl32_ARB_geometry_shader4[] = {
     EXTRA_VERSION_32,
     EXT(ARB_geometry_shader4),
     EXTRA_END
+};
+
+static const int extra_gl40_ARB_sample_shading[] = {
+   EXTRA_VERSION_40,
+   EXT(ARB_sample_shading),
+   EXTRA_END
 };
 
 static const int

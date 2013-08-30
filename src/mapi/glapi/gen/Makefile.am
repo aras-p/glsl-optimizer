@@ -108,6 +108,7 @@ API_XML = \
 	ARB_invalidate_subdata.xml \
 	ARB_map_buffer_range.xml \
 	ARB_robustness.xml \
+	ARB_sample_shading.xml \
 	ARB_sampler_objects.xml \
 	ARB_seamless_cube_map.xml \
 	ARB_shader_atomic_counters.xml \
@@ -144,7 +145,9 @@ API_XML = \
 	NV_texture_barrier.xml \
 	NV_vdpau_interop.xml \
 	OES_EGL_image.xml \
-	GL3x.xml
+	GL3x.xml \
+	GL4x.xml
+
 
 
 COMMON = $(API_XML) \

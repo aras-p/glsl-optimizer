@@ -44,6 +44,8 @@ _mesa_GetMultisamplefv(GLenum pname, GLuint index, GLfloat* val);
 extern void GLAPIENTRY
 _mesa_SampleMaski(GLuint index, GLbitfield mask);
 
+extern void GLAPIENTRY
+_mesa_MinSampleShading(GLclampf value);
 
 extern GLenum
 _mesa_check_sample_count(struct gl_context *ctx, GLenum target,
