@@ -227,8 +227,8 @@ cross_validate_outputs_to_inputs(struct gl_shader_program *prog,
  * will fail to find any matching variable.
  */
 void
-tfeedback_decl::init(struct gl_context *ctx, struct gl_shader_program *prog,
-                     const void *mem_ctx, const char *input)
+tfeedback_decl::init(struct gl_context *ctx, const void *mem_ctx,
+                     const char *input)
 {
    /* We don't have to be pedantic about what is a valid GLSL variable name,
     * because any variable with an invalid name can't exist in the IR anyway.
@@ -498,7 +498,7 @@ parse_tfeedback_decls(struct gl_context *ctx, struct gl_shader_program *prog,
                       char **varying_names, tfeedback_decl *decls)
 {
    for (unsigned i = 0; i < num_names; ++i) {
-      decls[i].init(ctx, prog, mem_ctx, varying_names[i]);
+      decls[i].init(ctx, mem_ctx, varying_names[i]);
 
       if (!decls[i].is_varying())
          continue;
