@@ -133,6 +133,26 @@ cross_validate_types_and_qualifiers(struct gl_shader_program *prog,
 }
 
 /**
+ * Validate front and back color outputs against single color input
+ */
+static void
+cross_validate_front_and_back_color(struct gl_shader_program *prog,
+                                    const ir_variable *input,
+                                    const ir_variable *front_color,
+                                    const ir_variable *back_color,
+                                    GLenum consumer_type,
+                                    GLenum producer_type)
+{
+   if (front_color != NULL && front_color->assigned)
+      cross_validate_types_and_qualifiers(prog, input, front_color,
+                                          consumer_type, producer_type);
+
+   if (back_color != NULL && back_color->assigned)
+      cross_validate_types_and_qualifiers(prog, input, back_color,
+                                          consumer_type, producer_type);
+}
+
+/**
  * Validate that outputs from one stage match inputs of another
  */
 void
@@ -167,10 +187,32 @@ cross_validate_outputs_to_inputs(struct gl_shader_program *prog,
       if ((input == NULL) || (input->mode != ir_var_shader_in))
 	 continue;
 
-      ir_variable *const output = parameters.get_variable(input->name);
-      if (output != NULL) {
-         cross_validate_types_and_qualifiers(prog, input, output,
+      if (strcmp(input->name, "gl_Color") == 0 && input->used) {
+         const ir_variable *const front_color =
+            parameters.get_variable("gl_FrontColor");
+
+         const ir_variable *const back_color =
+            parameters.get_variable("gl_BackColor");
+
+         cross_validate_front_and_back_color(prog, input,
+                                             front_color, back_color,
                                              consumer->Type, producer->Type);
+      } else if (strcmp(input->name, "gl_SecondaryColor") == 0 && input->used) {
+         const ir_variable *const front_color =
+            parameters.get_variable("gl_FrontSecondaryColor");
+
+         const ir_variable *const back_color =
+            parameters.get_variable("gl_BackSecondaryColor");
+
+         cross_validate_front_and_back_color(prog, input,
+                                             front_color, back_color,
+                                             consumer->Type, producer->Type);
+      } else {
+         ir_variable *const output = parameters.get_variable(input->name);
+         if (output != NULL) {
+            cross_validate_types_and_qualifiers(prog, input, output,
+                                                consumer->Type, producer->Type);
+         }
       }
    }
 }
