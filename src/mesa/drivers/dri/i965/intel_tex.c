@@ -111,6 +111,68 @@ intel_alloc_texture_image_buffer(struct gl_context *ctx,
    return true;
 }
 
+/**
+ * ctx->Driver.AllocTextureStorage() handler.
+ *
+ * Compare this to _mesa_alloc_texture_storage, which would call into
+ * intel_alloc_texture_image_buffer() above.
+ */
+static GLboolean
+intel_alloc_texture_storage(struct gl_context *ctx,
+                            struct gl_texture_object *texobj,
+                            GLsizei levels, GLsizei width,
+                            GLsizei height, GLsizei depth)
+{
+   struct brw_context *brw = brw_context(ctx);
+   struct intel_texture_object *intel_texobj = intel_texture_object(texobj);
+   struct gl_texture_image *first_image = texobj->Image[0][0];
+   int num_samples = intel_quantize_num_samples(brw->intelScreen,
+                                                first_image->NumSamples);
+   const int numFaces = _mesa_num_tex_faces(texobj->Target);
+   int face;
+   int level;
+
+   /* If the object's current miptree doesn't match what we need, make a new
+    * one.
+    */
+   if (!intel_texobj->mt ||
+       !intel_miptree_match_image(intel_texobj->mt, first_image) ||
+       intel_texobj->mt->last_level != levels - 1) {
+      intel_miptree_release(&intel_texobj->mt);
+      intel_texobj->mt = intel_miptree_create(brw, texobj->Target,
+                                              first_image->TexFormat,
+                                              0, levels - 1,
+                                              width, height, depth,
+                                              false, /* expect_accelerated */
+                                              num_samples,
+                                              INTEL_MIPTREE_TILING_ANY);
+
+   }
+
+   for (face = 0; face < numFaces; face++) {
+      for (level = 0; level < levels; level++) {
+         struct gl_texture_image *image = texobj->Image[face][level];
+         struct intel_texture_image *intel_image = intel_texture_image(image);
+
+         image->NumSamples = num_samples;
+
+         _swrast_free_texture_image_buffer(ctx, image);
+         if (!_swrast_init_texture_image(image))
+            return false;
+
+         intel_miptree_reference(&intel_image->mt, intel_texobj->mt);
+      }
+   }
+
+   /* The miptree is in a validated state, so no need to check later. */
+   intel_texobj->needs_validate = false;
+   intel_texobj->validated_first_level = 0;
+   intel_texobj->validated_last_level = levels - 1;
+
+   return true;
+}
+
+
 static void
 intel_free_texture_image_buffer(struct gl_context * ctx,
 				struct gl_texture_image *texImage)
@@ -184,6 +246,7 @@ intelInitTextureFuncs(struct dd_function_table *functions)
    functions->DeleteTexture = intelDeleteTextureObject;
    functions->AllocTextureImageBuffer = intel_alloc_texture_image_buffer;
    functions->FreeTextureImageBuffer = intel_free_texture_image_buffer;
+   functions->AllocTextureStorage = intel_alloc_texture_storage;
    functions->MapTextureImage = intel_map_texture_image;
    functions->UnmapTextureImage = intel_unmap_texture_image;
 }
