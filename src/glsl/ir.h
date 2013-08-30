@@ -2127,7 +2127,17 @@ extern void
 _mesa_glsl_initialize_functions(_mesa_glsl_parse_state *state);
 
 extern void
+_mesa_glsl_initialize_builtin_functions();
+
+extern ir_function_signature *
+_mesa_glsl_find_builtin_function(_mesa_glsl_parse_state *state,
+                                 const char *name, exec_list *actual_parameters);
+
+extern void
 _mesa_glsl_release_functions(void);
+
+extern void
+_mesa_glsl_release_builtin_functions(void);
 
 extern void
 reparent_ir(exec_list *list, void *mem_ctx);
