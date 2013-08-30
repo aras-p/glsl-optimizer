@@ -686,6 +686,9 @@ public:
    /** Whether or not this function signature is a built-in. */
    bool is_builtin() const;
 
+   /** Whether or not a built-in is available for this shader. */
+   bool is_builtin_available(const _mesa_glsl_parse_state *state) const;
+
    /** Body of instructions in the function. */
    struct exec_list body;
 

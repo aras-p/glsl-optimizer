@@ -1596,6 +1596,23 @@ ir_function_signature::is_builtin() const
 }
 
 
+bool
+ir_function_signature::is_builtin_available(const _mesa_glsl_parse_state *state) const
+{
+   /* We can't call the predicate without a state pointer, so just say that
+    * the signature is available.  At compile time, we need the filtering,
+    * but also receive a valid state pointer.  At link time, we're resolving
+    * imported built-in prototypes to their definitions, which will always
+    * be an exact match.  So we can skip the filtering.
+    */
+   if (state == NULL)
+      return true;
+
+   assert(builtin_info != NULL);
+   return builtin_info(state);
+}
+
+
 static bool
 modes_match(unsigned a, unsigned b)
 {
