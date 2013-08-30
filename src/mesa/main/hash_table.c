@@ -45,7 +45,7 @@
 
 #include "main/hash_table.h"
 #include "main/macros.h"
-#include "ralloc.h"
+#include "../../glsl/ralloc.h"
 
 static const uint32_t deleted_key_value;
 
