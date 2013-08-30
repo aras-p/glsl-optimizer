@@ -1271,6 +1271,7 @@ vec4_visitor::setup_uniforms(int reg)
    if (brw->gen < 6 && this->uniforms == 0) {
       this->uniform_vector_size[this->uniforms] = 1;
 
+      prog_data->param = reralloc(NULL, prog_data->param, const float *, 4);
       for (unsigned int i = 0; i < 4; i++) {
 	 unsigned int slot = this->uniforms * 4 + i;
 	 static float zero = 0.0;
