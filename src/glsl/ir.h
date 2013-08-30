@@ -591,6 +591,11 @@ public:
    const glsl_type *interface_type;
 };
 
+/**
+ * A function that returns whether a built-in function is available in the
+ * current shading language (based on version, ES or desktop, and extensions).
+ */
+typedef bool (*builtin_available_predicate)(const _mesa_glsl_parse_state *);
 
 /*@{*/
 /**
@@ -602,7 +607,8 @@ class ir_function_signature : public ir_instruction {
     * an ir_function.
     */
 public:
-   ir_function_signature(const glsl_type *return_type);
+   ir_function_signature(const glsl_type *return_type,
+                         builtin_available_predicate builtin_info = NULL);
 
    virtual ir_function_signature *clone(void *mem_ctx,
 					struct hash_table *ht) const;
@@ -684,6 +690,12 @@ public:
    struct exec_list body;
 
 private:
+   /**
+    * A function pointer to a predicate that answers whether a built-in
+    * function is available in the current shader.  NULL if not a built-in.
+    */
+   builtin_available_predicate builtin_info;
+
    /** Function of which this signature is one overload. */
    class ir_function *_function;
 
