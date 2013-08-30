@@ -13,6 +13,11 @@
 extern "C" struct gl_shader *
 _mesa_new_shader(struct gl_context *ctx, GLuint name, GLenum type);
 
+static void DeleteShader(struct gl_context *ctx, struct gl_shader *shader)
+{
+	ralloc_free(shader);
+}
+
 
 static void
 initialize_mesa_context(struct gl_context *ctx, gl_api api)
@@ -55,6 +60,7 @@ initialize_mesa_context(struct gl_context *ctx, gl_api api)
    ctx->Const.MaxDrawBuffers = 2;
 
    ctx->Driver.NewShader = _mesa_new_shader;
+   ctx->Driver.DeleteShader = DeleteShader;
 }
 
 
