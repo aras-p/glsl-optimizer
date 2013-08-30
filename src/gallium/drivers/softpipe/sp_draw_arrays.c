@@ -107,8 +107,11 @@ softpipe_draw_vbo(struct pipe_context *pipe,
 
 
    for (i = 0; i < sp->num_so_targets; i++) {
-      void *buf = softpipe_resource_data(sp->so_targets[i]->target.buffer);
-      sp->so_targets[i]->mapping = buf;
+      void *buf = 0;
+      if (sp->so_targets[i]) {
+         buf = softpipe_resource(sp->so_targets[i]->target.buffer)->data;
+         sp->so_targets[i]->mapping = buf;
+      }
    }
 
    draw_set_mapped_so_targets(draw, sp->num_so_targets,
