@@ -66,7 +66,7 @@ intel_finalize_mipmap_tree(struct brw_context *brw, GLuint unit)
    int validate_last_level = intelObj->_MaxLevel;
 
    /* Skip the loop over images in the common case of no images having
-    * changed.  But if the GL_BASE_LEVEL / GL_MAX_LEVEL change to something we
+    * changed.  But if the GL_BASE_LEVEL or GL_MAX_LEVEL change to something we
     * haven't looked at, then we do need to look at those new images.
     */
    if (!intelObj->needs_validate &&
@@ -99,16 +99,15 @@ intel_finalize_mipmap_tree(struct brw_context *brw, GLuint unit)
       intel_miptree_get_dimensions_for_image(&firstImage->base.Base,
 					     &width, &height, &depth);
 
-      perf_debug("Creating new %s %dx%dx%d %d..%d miptree to handle finalized "
-                 "texture miptree.\n",
+      perf_debug("Creating new %s %dx%dx%d %d-level miptree to handle "
+                 "finalized texture miptree.\n",
                  _mesa_get_format_name(firstImage->base.Base.TexFormat),
-                 width, height, depth,
-                 validate_first_level, validate_last_level);
+                 width, height, depth, validate_last_level + 1);
 
       intelObj->mt = intel_miptree_create(brw,
                                           intelObj->base.Target,
 					  firstImage->base.Base.TexFormat,
-                                          validate_first_level,
+                                          0, /* first_level */
                                           validate_last_level,
                                           width,
                                           height,
