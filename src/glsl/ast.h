@@ -189,7 +189,8 @@ enum ast_operators {
    ast_float_constant,
    ast_bool_constant,
 
-   ast_sequence
+   ast_sequence,
+   ast_aggregate
 };
 
 /**
@@ -292,6 +293,30 @@ private:
    bool cons;
 };
 
+/**
+ * C-style aggregate initialization class
+ *
+ * Represents C-style initializers of vectors, matrices, arrays, and
+ * structures. E.g., vec3 pos = {1.0, 0.0, -1.0} is equivalent to
+ * vec3 pos = vec3(1.0, 0.0, -1.0).
+ *
+ * Specified in GLSL 4.20 and GL_ARB_shading_language_420pack.
+ *
+ * \sa _mesa_ast_set_aggregate_type
+ */
+class ast_aggregate_initializer : public ast_expression {
+public:
+   ast_aggregate_initializer()
+      : ast_expression(ast_aggregate, NULL, NULL, NULL),
+        constructor_type(NULL)
+   {
+      /* empty */
+   }
+
+   ast_type_specifier *constructor_type;
+   virtual ir_rvalue *hir(exec_list *instructions,
+                          struct _mesa_glsl_parse_state *state);
+};
 
 /**
  * Number of possible operators for an ast_expression
@@ -317,13 +342,13 @@ public:
 
 class ast_declaration : public ast_node {
 public:
-   ast_declaration(const char *identifier, int is_array, ast_expression *array_size,
+   ast_declaration(const char *identifier, bool is_array, ast_expression *array_size,
 		   ast_expression *initializer);
    virtual void print(void) const;
 
    const char *identifier;
    
-   int is_array;
+   bool is_array;
    ast_expression *array_size;
 
    ast_expression *initializer;
@@ -388,6 +413,12 @@ struct ast_type_qualifier {
 	  */
 	 unsigned explicit_index:1;
 
+         /**
+          * Flag set if GL_ARB_shading_language_420pack "binding" layout
+          * qualifier is used.
+          */
+         unsigned explicit_binding:1;
+
          /** \name Layout qualifiers for GL_AMD_conservative_depth */
          /** \{ */
          unsigned depth_any:1;
@@ -404,6 +435,12 @@ struct ast_type_qualifier {
          unsigned column_major:1;
          unsigned row_major:1;
 	 /** \} */
+
+	 /** \name Layout qualifiers for GLSL 1.50 geometry shaders */
+	 /** \{ */
+	 unsigned prim_type:1;
+	 unsigned max_vertices:1;
+	 /** \} */
       }
       /** \brief Set of flags, accessed by name. */
       q;
@@ -411,6 +448,9 @@ struct ast_type_qualifier {
       /** \brief Set of flags, accessed as a bitmask. */
       unsigned i;
    } flags;
+
+   /** Precision of the type (highp/medium/lowp). */
+   unsigned precision:2;
 
    /**
     * Location specified via GL_ARB_explicit_attrib_location layout
@@ -427,10 +467,39 @@ struct ast_type_qualifier {
     */
    int index;
 
+   /** Maximum output vertices in GLSL 1.50 geometry shaders. */
+   int max_vertices;
+
+   /** Input or output primitive type in GLSL 1.50 geometry shaders */
+   GLenum prim_type;
+
+   /**
+    * Binding specified via GL_ARB_shading_language_420pack's "binding" keyword.
+    *
+    * \note
+    * This field is only valid if \c explicit_binding is set.
+    */
+   int binding;
+
    /**
     * Return true if and only if an interpolation qualifier is present.
     */
    bool has_interpolation() const;
+
+   /**
+    * Return whether a layout qualifier is present.
+    */
+   bool has_layout() const;
+
+   /**
+    * Return whether a storage qualifier is present.
+    */
+   bool has_storage() const;
+
+   /**
+    * Return whether an auxiliary storage qualifier is present.
+    */
+   bool has_auxiliary_storage() const;
 
    /**
     * \brief Return string representation of interpolation qualifier.
@@ -453,6 +522,19 @@ class ast_declarator_list;
 
 class ast_struct_specifier : public ast_node {
 public:
+   /**
+    * \brief Make a shallow copy of an ast_struct_specifier.
+    *
+    * Use only if the objects are allocated from the same context and will not
+    * be modified. Zeros the inherited ast_node's fields.
+    */
+   ast_struct_specifier(const ast_struct_specifier& that):
+      ast_node(), name(that.name), declarations(that.declarations),
+      is_declaration(that.is_declaration)
+   {
+      /* empty */
+   }
+
    ast_struct_specifier(const char *identifier,
 			ast_declarator_list *declarator_list);
    virtual void print(void) const;
@@ -463,17 +545,34 @@ public:
    const char *name;
    /* List of ast_declarator_list * */
    exec_list declarations;
+   bool is_declaration;
 };
 
 
 
 class ast_type_specifier : public ast_node {
 public:
+   /**
+    * \brief Make a shallow copy of an ast_type_specifier, specifying array
+    *        fields.
+    *
+    * Use only if the objects are allocated from the same context and will not
+    * be modified. Zeros the inherited ast_node's fields.
+    */
+   ast_type_specifier(const ast_type_specifier *that, bool is_array,
+                      ast_expression *array_size)
+      : ast_node(), type_name(that->type_name), structure(that->structure),
+        is_array(is_array), array_size(array_size),
+        default_precision(that->default_precision)
+   {
+      /* empty */
+   }
+
    /** Construct a type specifier from a type name */
    ast_type_specifier(const char *name) 
       : type_name(name), structure(NULL),
-	is_array(false), array_size(NULL), precision(ast_precision_none),
-	is_precision_statement(false)
+	is_array(false), array_size(NULL),
+	default_precision(ast_precision_none)
    {
       /* empty */
    }
@@ -481,8 +580,8 @@ public:
    /** Construct a type specifier from a structure definition */
    ast_type_specifier(ast_struct_specifier *s)
       : type_name(s->name), structure(s),
-	is_array(false), array_size(NULL), precision(ast_precision_none),
-	is_precision_statement(false)
+	is_array(false), array_size(NULL),
+	default_precision(ast_precision_none)
    {
       /* empty */
    }
@@ -498,12 +597,11 @@ public:
    const char *type_name;
    ast_struct_specifier *structure;
 
-   int is_array;
+   bool is_array;
    ast_expression *array_size;
 
-   unsigned precision:2;
-
-   bool is_precision_statement;
+   /** For precision statements, this is the given precision; otherwise none. */
+   unsigned default_precision:2;
 };
 
 
@@ -521,6 +619,10 @@ public:
    virtual void print(void) const;
    bool has_qualifiers() const;
 
+   const struct glsl_type *glsl_type(const char **name,
+				     struct _mesa_glsl_parse_state *state)
+      const;
+
    ast_type_qualifier qualifier;
    ast_type_specifier *specifier;
 };
@@ -535,6 +637,7 @@ public:
 			  struct _mesa_glsl_parse_state *state);
 
    ast_fully_specified_type *type;
+   /** List of 'ast_declaration *' */
    exec_list declarations;
 
    /**
@@ -545,12 +648,6 @@ public:
     * is used to note these cases when no type is specified.
     */
    int invariant;
-
-   /**
-    * Flag indicating that these declarators are in a uniform block,
-    * allowing UBO type qualifiers.
-    */
-   bool ubo_qualifiers_valid;
 };
 
 
@@ -574,7 +671,7 @@ public:
 
    ast_fully_specified_type *type;
    const char *identifier;
-   int is_array;
+   bool is_array;
    ast_expression *array_size;
 
    static void parameters_to_hir(exec_list *ast_parameters,
@@ -814,15 +911,17 @@ public:
    ast_compound_statement *body;
 };
 
-class ast_uniform_block : public ast_node {
+class ast_interface_block : public ast_node {
 public:
-   ast_uniform_block(ast_type_qualifier layout,
-                     const char *instance_name,
-		     ast_expression *array_size)
+   ast_interface_block(ast_type_qualifier layout,
+                       const char *instance_name,
+                       bool is_array,
+                       ast_expression *array_size)
    : layout(layout), block_name(NULL), instance_name(instance_name),
-     array_size(array_size)
+     is_array(is_array), array_size(array_size)
    {
-      /* empty */
+      if (!is_array)
+         assert(array_size == NULL);
    }
 
    virtual ir_rvalue *hir(exec_list *instructions,
@@ -843,16 +942,44 @@ public:
    exec_list declarations;
 
    /**
-    * Declared array size of the block instance
-    *
-    * If the block is not declared as an array, this field will be \c NULL.
+    * True if the block is declared as an array
     *
     * \note
     * A block can only be an array if it also has an instance name.  If this
-    * field is not \c NULL, ::instance_name must also not be \c NULL.
+    * field is true, ::instance_name must also not be \c NULL.
+    */
+   bool is_array;
+
+   /**
+    * Declared array size of the block instance
+    *
+    * If the block is not declared as an array or if the block instance array
+    * is unsized, this field will be \c NULL.
     */
    ast_expression *array_size;
 };
+
+
+/**
+ * AST node representing a declaration of the input layout for geometry
+ * shaders.
+ */
+class ast_gs_input_layout : public ast_node
+{
+public:
+   ast_gs_input_layout(const struct YYLTYPE &locp, GLenum prim_type)
+      : prim_type(prim_type)
+   {
+      set_location(locp);
+   }
+
+   virtual ir_rvalue *hir(exec_list *instructions,
+                          struct _mesa_glsl_parse_state *state);
+
+private:
+   const GLenum prim_type;
+};
+
 /*@}*/
 
 extern void
@@ -868,6 +995,11 @@ _mesa_ast_array_index_to_hir(void *mem_ctx,
 			     struct _mesa_glsl_parse_state *state,
 			     ir_rvalue *array, ir_rvalue *idx,
 			     YYLTYPE &loc, YYLTYPE &idx_loc);
+
+extern void
+_mesa_ast_set_aggregate_type(const ast_type_specifier *type,
+                             ast_expression *expr,
+                             _mesa_glsl_parse_state *state);
 
 void
 emit_function(_mesa_glsl_parse_state *state, ir_function *f);

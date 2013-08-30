@@ -416,6 +416,10 @@ ir_expression::ir_expression(int op, ir_rvalue *op0, ir_rvalue *op1)
       this->type = op0->type;
       break;
 
+   case ir_binop_vector_extract:
+      this->type = op0->type->get_scalar_type();
+      break;
+
    default:
       assert(!"not reached: missing automatic type setup for ir_expression");
       this->type = glsl_type::float_type;
@@ -437,7 +441,7 @@ ir_expression::get_num_operands(ir_expression_operation op)
    if (op <= ir_last_triop)
       return 3;
 
-   if (op == ir_quadop_vector)
+   if (op <= ir_last_quadop)
       return 4;
 
    assert(false);
@@ -496,6 +500,10 @@ static const char *const operator_strs[] = {
    "unpackHalf2x16",
    "unpackHalf2x16_split_x",
    "unpackHalf2x16_split_y",
+   "bitfield_reverse",
+   "bit_count",
+   "find_msb",
+   "find_lsb",
    "noise",
    "+",
    "-",
@@ -523,9 +531,16 @@ static const char *const operator_strs[] = {
    "max",
    "pow",
    "packHalf2x16_split",
+   "bfm",
    "ubo_load",
    "clamp",
+   "vector_extract",
+   "fma",
    "lrp",
+   "bfi",
+   "bitfield_extract",
+   "vector_insert",
+   "bitfield_insert",
    "vector",
 };
 
@@ -1823,4 +1838,25 @@ ir_rvalue::as_rvalue_to_saturate()
    }
 
    return NULL;
+}
+
+
+unsigned
+vertices_per_prim(GLenum prim)
+{
+   switch (prim) {
+   case GL_POINTS:
+      return 1;
+   case GL_LINES:
+      return 2;
+   case GL_TRIANGLES:
+      return 3;
+   case GL_LINES_ADJACENCY:
+      return 4;
+   case GL_TRIANGLES_ADJACENCY:
+      return 6;
+   default:
+      assert(!"Bad primitive");
+      return 3;
+   }
 }

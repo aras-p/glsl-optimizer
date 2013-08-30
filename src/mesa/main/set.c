@@ -103,8 +103,8 @@ entry_is_present(struct set_entry *entry)
 
 struct set *
 _mesa_set_create(void *mem_ctx,
-                 bool key_equals_function(const void *a,
-                                          const void *b))
+                 bool (*key_equals_function)(const void *a,
+                                             const void *b))
 {
    struct set *ht;
 

@@ -37,6 +37,8 @@
 #include "main/mtypes.h"
 #include "main/macros.h"
 
+#ifdef __cplusplus
+
 /**
  * \defgroup IR Intermediate representation nodes
  *
@@ -82,6 +84,8 @@ enum ir_node_type {
    ir_type_texture,
    ir_type_precision,
    ir_type_typedecl,
+   ir_type_emit_vertex,
+   ir_type_end_primitive,
    ir_type_max /**< maximum ir_type enum number, for validation */
 };
 
@@ -135,6 +139,7 @@ public:
    virtual class ir_swizzle *           as_swizzle()          { return NULL; }
    virtual class ir_constant *          as_constant()         { return NULL; }
    virtual class ir_discard *           as_discard()          { return NULL; }
+   virtual class ir_jump *              as_jump()             { return NULL; }
    /*@}*/
 
 protected:
@@ -480,6 +485,14 @@ public:
    unsigned explicit_index:1;
 
    /**
+    * Was an initial binding explicitly set in the shader?
+    *
+    * If so, constant_value contains an integer ir_constant representing the
+    * initial binding point.
+    */
+   unsigned explicit_binding:1;
+
+   /**
     * Does this variable have an initializer?
     *
     * This is used by the linker to cross-validiate initializers of global
@@ -520,6 +533,8 @@ public:
     *
     *   - Vertex shader input: one of the values from \c gl_vert_attrib.
     *   - Vertex shader output: one of the values from \c gl_varying_slot.
+    *   - Geometry shader input: one of the values from \c gl_varying_slot.
+    *   - Geometry shader output: one of the values from \c gl_varying_slot.
     *   - Fragment shader input: one of the values from \c gl_varying_slot.
     *   - Fragment shader output: one of the values from \c gl_frag_result.
     *   - Uniforms: Per-stage uniform slot number for default uniform block.
@@ -535,6 +550,13 @@ public:
     * output index for dual source blending.
     */
    int index;
+
+   /**
+    * Initial binding point for a sampler or UBO.
+    *
+    * For array types, this represents the binding point for the first element.
+    */
+   int binding;
 
    /**
     * Built-in state that backs this uniform
@@ -1045,6 +1067,16 @@ enum ir_expression_operation {
    ir_unop_unpack_half_2x16_split_y,
    /*@}*/
 
+   /**
+    * \name Bit operations, part of ARB_gpu_shader5.
+    */
+   /*@{*/
+   ir_unop_bitfield_reverse,
+   ir_unop_bit_count,
+   ir_unop_find_msb,
+   ir_unop_find_lsb,
+   /*@}*/
+
    ir_unop_noise,
 
    /**
@@ -1121,6 +1153,15 @@ enum ir_expression_operation {
    /*@}*/
 
    /**
+    * \name First half of a lowered bitfieldInsert() operation.
+    *
+    * \see lower_instructions::bitfield_insert_to_bfm_bfi
+    */
+   /*@{*/
+   ir_binop_bfm,
+   /*@}*/
+
+   /**
     * Load a value the size of a given GLSL type from a uniform block.
     *
     * operand0 is the ir_constant uniform block index in the linked shader.
@@ -1129,19 +1170,61 @@ enum ir_expression_operation {
    ir_binop_ubo_load,
 
    /**
+    * Extract a scalar from a vector
+    *
+    * operand0 is the vector
+    * operand1 is the index of the field to read from operand0
+    */
+   ir_binop_vector_extract,
+
+   /**
     * A sentinel marking the last of the binary operations.
     */
-   ir_last_binop = ir_binop_ubo_load,
+   ir_last_binop = ir_binop_vector_extract,
+
+   /**
+    * \name Fused floating-point multiply-add, part of ARB_gpu_shader5.
+    */
+   /*@{*/
+   ir_triop_fma,
+   /*@}*/
 
    ir_triop_clamp,
    ir_triop_lrp,
 
    /**
+    * \name Second half of a lowered bitfieldInsert() operation.
+    *
+    * \see lower_instructions::bitfield_insert_to_bfm_bfi
+    */
+   /*@{*/
+   ir_triop_bfi,
+   /*@}*/
+
+   ir_triop_bitfield_extract,
+
+   /**
+    * Generate a value with one field of a vector changed
+    *
+    * operand0 is the vector
+    * operand1 is the value to write into the vector result
+    * operand2 is the index in operand0 to be modified
+    */
+   ir_triop_vector_insert,
+
+   /**
     * A sentinel marking the last of the ternary operations.
     */
-   ir_last_triop = ir_triop_lrp,
+   ir_last_triop = ir_triop_vector_insert,
+
+   ir_quadop_bitfield_insert,
 
    ir_quadop_vector,
+
+   /**
+    * A sentinel marking the last of the ternary operations.
+    */
+   ir_last_quadop = ir_quadop_vector,
 
    /**
     * A sentinel marking the last of all operations.
@@ -1311,6 +1394,12 @@ protected:
    ir_jump()
    {
       ir_type = ir_type_unset;
+   }
+
+public:
+   virtual ir_jump *as_jump()
+   {
+      return this;
    }
 };
 
@@ -1959,6 +2048,53 @@ public:
 /*@}*/
 
 /**
+ * IR instruction to emit a vertex in a geometry shader.
+ */
+class ir_emit_vertex : public ir_instruction {
+public:
+   ir_emit_vertex()
+   {
+      ir_type = ir_type_emit_vertex;
+   }
+
+   virtual void accept(ir_visitor *v)
+   {
+      v->visit(this);
+   }
+
+   virtual ir_emit_vertex *clone(void *mem_ctx, struct hash_table *) const
+   {
+      return new(mem_ctx) ir_emit_vertex();
+   }
+
+   virtual ir_visitor_status accept(ir_hierarchical_visitor *);
+};
+
+/**
+ * IR instruction to complete the current primitive and start a new one in a
+ * geometry shader.
+ */
+class ir_end_primitive : public ir_instruction {
+public:
+   ir_end_primitive()
+   {
+      ir_type = ir_type_end_primitive;
+   }
+
+   virtual void accept(ir_visitor *v)
+   {
+      v->visit(this);
+   }
+
+   virtual ir_end_primitive *clone(void *mem_ctx, struct hash_table *) const
+   {
+      return new(mem_ctx) ir_end_primitive();
+   }
+
+   virtual ir_visitor_status accept(ir_hierarchical_visitor *);
+};
+
+/**
  * Apply a visitor to each IR node in a list
  */
 void
@@ -2025,7 +2161,7 @@ import_prototypes(const exec_list *source, exec_list *dest,
 
 extern void
 do_set_program_inouts(exec_list *instructions, struct gl_program *prog,
-                      bool is_fragment_shader);
+                      GLenum shader_type);
 
 extern glsl_precision
 precision_from_ir (ir_instruction* ir);
@@ -2040,5 +2176,18 @@ static inline glsl_precision higher_precision (glsl_precision a, glsl_precision 
 extern char *
 prototype_string(const glsl_type *return_type, const char *name,
 		 exec_list *parameters);
+
+extern "C" {
+#endif /* __cplusplus */
+
+extern void _mesa_print_ir(struct exec_list *instructions,
+                           struct _mesa_glsl_parse_state *state);
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
+
+unsigned
+vertices_per_prim(GLenum prim);
 
 #endif /* IR_H */

@@ -99,7 +99,7 @@ compare_index_block(exec_list *instructions, ir_variable *index,
 
    ir_rvalue *const condition_val =
       new(mem_ctx) ir_expression(ir_binop_equal,
-				 &glsl_type::bool_type[components - 1],
+				 glsl_type::bvec(components),
 				 broadcast_index,
 				 test_indices);
 

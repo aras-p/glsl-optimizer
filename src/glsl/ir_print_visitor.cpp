@@ -38,6 +38,7 @@ ir_instruction::print(void) const
    deconsted->accept(&v);
 }
 
+extern "C" {
 void
 _mesa_print_ir(exec_list *instructions,
 	       struct _mesa_glsl_parse_state *state)
@@ -68,6 +69,8 @@ _mesa_print_ir(exec_list *instructions,
    }
    printf("\n)");
 }
+
+} /* extern "C" */
 
 ir_print_visitor::ir_print_visitor()
 {
@@ -389,7 +392,17 @@ void ir_print_visitor::visit(ir_constant *ir)
 	 switch (ir->type->base_type) {
 	 case GLSL_TYPE_UINT:  printf("%u", ir->value.u[i]); break;
 	 case GLSL_TYPE_INT:   printf("%d", ir->value.i[i]); break;
-	 case GLSL_TYPE_FLOAT: printf("%f", ir->value.f[i]); break;
+	 case GLSL_TYPE_FLOAT:
+            if (ir->value.f[i] == 0.0f)
+               /* 0.0 == -0.0, so print with %f to get the proper sign. */
+               printf("%.1f", ir->value.f[i]);
+            else if (abs(ir->value.f[i]) < 0.000001f)
+               printf("%a", ir->value.f[i]);
+            else if (abs(ir->value.f[i]) > 1000000.0f)
+               printf("%e", ir->value.f[i]);
+            else
+               printf("%f", ir->value.f[i]);
+            break;
 	 case GLSL_TYPE_BOOL:  printf("%d", ir->value.b[i]); break;
 	 default: assert(0);
 	 }
@@ -532,4 +545,16 @@ ir_print_visitor::visit(ir_precision_statement *ir)
 void
 ir_print_visitor::visit(ir_typedecl_statement *ir)
 {
+}
+
+void
+ir_print_visitor::visit(ir_emit_vertex *ir)
+{
+   printf("(emit-vertex)");
+}
+
+void
+ir_print_visitor::visit(ir_end_primitive *ir)
+{
+   printf("(end-primitive)");
 }

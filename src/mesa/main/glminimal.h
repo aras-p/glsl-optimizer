@@ -135,6 +135,10 @@ typedef char GLcharARB;
 #define GL_QUADS				0x0007
 #define GL_QUAD_STRIP				0x0008
 #define GL_POLYGON				0x0009
+#define GL_LINES_ADJACENCY                0x000A
+#define GL_LINE_STRIP_ADJACENCY           0x000B
+#define GL_TRIANGLES_ADJACENCY            0x000C
+#define GL_TRIANGLE_STRIP_ADJACENCY       0x000D
 
 
 /* Matrix Mode */

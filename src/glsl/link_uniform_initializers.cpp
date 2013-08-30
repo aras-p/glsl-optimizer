@@ -82,6 +82,56 @@ copy_constant_to_storage(union gl_constant_value *storage,
 }
 
 void
+set_uniform_binding(void *mem_ctx, gl_shader_program *prog,
+                    const char *name, const glsl_type *type, int binding)
+{
+   struct gl_uniform_storage *const storage =
+      get_storage(prog->UniformStorage, prog->NumUserUniformStorage, name);
+
+   if (storage == NULL) {
+      assert(storage != NULL);
+      return;
+   }
+
+   if (storage->type->is_sampler()) {
+      unsigned elements = MAX2(storage->array_elements, 1);
+
+      /* From section 4.4.4 of the GLSL 4.20 specification:
+       * "If the binding identifier is used with an array, the first element
+       *  of the array takes the specified unit and each subsequent element
+       *  takes the next consecutive unit."
+       */
+      for (unsigned int i = 0; i < elements; i++) {
+         storage->storage[i].i = binding + i;
+      }
+
+      for (int sh = 0; sh < MESA_SHADER_TYPES; sh++) {
+         gl_shader *shader = prog->_LinkedShaders[sh];
+
+         if (shader && storage->sampler[sh].active) {
+            for (unsigned i = 0; i < elements; i++) {
+               unsigned index = storage->sampler[sh].index + i;
+
+               shader->SamplerUnits[index] = storage->storage[i].i;
+            }
+         }
+      }
+   } else if (storage->block_index != -1) {
+      /* This is a field of a UBO.  val is the binding index. */
+      for (int i = 0; i < MESA_SHADER_TYPES; i++) {
+         int stage_index = prog->UniformBlockStageIndex[i][storage->block_index];
+
+         if (stage_index != -1) {
+            struct gl_shader *sh = prog->_LinkedShaders[i];
+            sh->UniformBlocks[stage_index].Binding = binding;
+         }
+      }
+   }
+
+   storage->initialized = true;
+}
+
+void
 set_uniform_initializer(void *mem_ctx, gl_shader_program *prog,
 			const char *name, const glsl_type *type,
 			ir_constant *val)
@@ -136,20 +186,23 @@ set_uniform_initializer(void *mem_ctx, gl_shader_program *prog,
 
 	 idx += elements;
       }
-
-      if (base_type == GLSL_TYPE_SAMPLER) {
-	 for (unsigned int i = 0; i < storage->array_elements; i++) {
-	    prog->SamplerUnits[storage->sampler + i] = storage->storage[i].i;
-	 }
-      }
    } else {
       copy_constant_to_storage(storage->storage,
 			       val,
 			       val->type->base_type,
 			       val->type->components());
 
-      if (storage->type->is_sampler())
-	 prog->SamplerUnits[storage->sampler] = storage->storage[0].i;
+      if (storage->type->is_sampler()) {
+         for (int sh = 0; sh < MESA_SHADER_TYPES; sh++) {
+            gl_shader *shader = prog->_LinkedShaders[sh];
+
+            if (shader && storage->sampler[sh].active) {
+               unsigned index = storage->sampler[sh].index;
+
+               shader->SamplerUnits[index] = storage->storage[0].i;
+            }
+         }
+      }
    }
 
    storage->initialized = true;
@@ -170,14 +223,19 @@ link_set_uniform_initializers(struct gl_shader_program *prog)
       foreach_list(node, shader->ir) {
 	 ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
-	 if (!var || var->mode != ir_var_uniform || !var->constant_value)
+	 if (!var || var->mode != ir_var_uniform)
 	    continue;
 
 	 if (!mem_ctx)
 	    mem_ctx = ralloc_context(NULL);
 
-	 linker::set_uniform_initializer(mem_ctx, prog, var->name,
-					 var->type, var->constant_value);
+         if (var->explicit_binding) {
+            linker::set_uniform_binding(mem_ctx, prog, var->name,
+                                        var->type, var->binding);
+         } else if (var->constant_value) {
+            linker::set_uniform_initializer(mem_ctx, prog, var->name,
+                                            var->type, var->constant_value);
+         }
       }
    }
 

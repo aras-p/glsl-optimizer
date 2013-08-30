@@ -219,10 +219,22 @@ saturate(operand a)
 	       new(mem_ctx) ir_constant(0.0f));
 }
 
+ir_expression *
+abs(operand a)
+{
+   return expr(ir_unop_abs, a);
+}
+
 ir_expression*
 equal(operand a, operand b)
 {
    return expr(ir_binop_equal, a, b);
+}
+
+ir_expression*
+nequal(operand a, operand b)
+{
+   return expr(ir_binop_nequal, a, b);
 }
 
 ir_expression*
@@ -304,9 +316,21 @@ f2i(operand a)
 }
 
 ir_expression*
+bitcast_f2i(operand a)
+{
+   return expr(ir_unop_bitcast_f2i, a);
+}
+
+ir_expression*
 i2f(operand a)
 {
    return expr(ir_unop_i2f, a);
+}
+
+ir_expression*
+bitcast_i2f(operand a)
+{
+   return expr(ir_unop_bitcast_i2f, a);
 }
 
 ir_expression*
@@ -328,9 +352,33 @@ f2u(operand a)
 }
 
 ir_expression*
+bitcast_f2u(operand a)
+{
+   return expr(ir_unop_bitcast_f2u, a);
+}
+
+ir_expression*
 u2f(operand a)
 {
    return expr(ir_unop_u2f, a);
+}
+
+ir_expression*
+bitcast_u2f(operand a)
+{
+   return expr(ir_unop_bitcast_u2f, a);
+}
+
+ir_expression*
+i2b(operand a)
+{
+   return expr(ir_unop_i2b, a);
+}
+
+ir_expression*
+b2i(operand a)
+{
+   return expr(ir_unop_b2i, a);
 }
 
 ir_if*

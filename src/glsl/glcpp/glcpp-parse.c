@@ -3388,14 +3388,14 @@ glcpp_parser_create (const struct gl_extensions *extensions, int api)
 	parser->is_gles = false;
 
 	/* Add pre-defined macros. */
-	if (extensions != NULL) {
-	   if (extensions->OES_EGL_image_external)
-	      add_builtin_define(parser, "GL_OES_EGL_image_external", 1);
-	}
-
 	if (api == API_OPENGLES2) {
-		parser->is_gles = true;
-		add_builtin_define(parser, "GL_ES", 1);
+           parser->is_gles = true;
+           add_builtin_define(parser, "GL_ES", 1);
+
+           if (extensions != NULL) {
+              if (extensions->OES_EGL_image_external)
+                 add_builtin_define(parser, "GL_OES_EGL_image_external", 1);
+           }
 	} else {
 	   add_builtin_define(parser, "GL_ARB_draw_buffers", 1);
 	   add_builtin_define(parser, "GL_ARB_texture_rectangle", 1);
@@ -3440,6 +3440,15 @@ glcpp_parser_create (const struct gl_extensions *extensions, int api)
 
 	      if (extensions->ARB_texture_query_lod)
 	         add_builtin_define(parser, "GL_ARB_texture_query_lod", 1);
+
+	      if (extensions->ARB_gpu_shader5)
+	         add_builtin_define(parser, "GL_ARB_gpu_shader5", 1);
+
+	      if (extensions->AMD_vertex_shader_layer)
+	         add_builtin_define(parser, "GL_AMD_vertex_shader_layer", 1);
+
+	      if (extensions->ARB_shading_language_420pack)
+	         add_builtin_define(parser, "GL_ARB_shading_language_420pack", 1);
 	   }
 	}
 
@@ -4261,6 +4270,9 @@ _glcpp_parser_handle_version_declaration(glcpp_parser_t *parser, intmax_t versio
 		parser->is_gles = true;
 		add_builtin_define (parser, "GL_ES", 1);
 	}
+
+	if (version >= 150)
+		add_builtin_define(parser, "GL_core_profile", 1);
 
 	/* Currently, all ES2/ES3 implementations support highp in the
 	 * fragment shader, so we always define this macro in ES2/ES3.

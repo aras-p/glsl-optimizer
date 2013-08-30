@@ -125,6 +125,10 @@ public:
          return this->vector_elements * this->matrix_columns * this->size;
    }
 
+   unsigned get_location() const {
+      return this->location;
+   }
+
 private:
    /**
     * The name that was supplied to glTransformFeedbackVaryings.  Used for
@@ -210,7 +214,7 @@ private:
 };
 
 
-bool
+void
 cross_validate_outputs_to_inputs(struct gl_shader_program *prog,
 				 gl_shader *producer, gl_shader *consumer);
 
@@ -230,6 +234,12 @@ assign_varying_locations(struct gl_context *ctx,
 			 struct gl_shader_program *prog,
 			 gl_shader *producer, gl_shader *consumer,
                          unsigned num_tfeedback_decls,
-                         tfeedback_decl *tfeedback_decls);
+                         tfeedback_decl *tfeedback_decls,
+                         unsigned gs_input_vertices);
+
+bool
+check_against_varying_limit(struct gl_context *ctx,
+                            struct gl_shader_program *prog,
+                            gl_shader *consumer);
 
 #endif /* GLSL_LINK_VARYINGS_H */

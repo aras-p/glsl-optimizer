@@ -133,8 +133,10 @@ ir_expression *round_even(operand a);
 ir_expression *dot(operand a, operand b);
 ir_expression *clamp(operand a, operand b, operand c);
 ir_expression *saturate(operand a);
+ir_expression *abs(operand a);
 
 ir_expression *equal(operand a, operand b);
+ir_expression *nequal(operand a, operand b);
 ir_expression *less(operand a, operand b);
 ir_expression *greater(operand a, operand b);
 ir_expression *lequal(operand a, operand b);
@@ -151,11 +153,17 @@ ir_expression *lshift(operand a, operand b);
 ir_expression *rshift(operand a, operand b);
 
 ir_expression *f2i(operand a);
+ir_expression *bitcast_f2i(operand a);
 ir_expression *i2f(operand a);
+ir_expression *bitcast_i2f(operand a);
 ir_expression *f2u(operand a);
+ir_expression *bitcast_f2u(operand a);
 ir_expression *u2f(operand a);
+ir_expression *bitcast_u2f(operand a);
 ir_expression *i2u(operand a);
 ir_expression *u2i(operand a);
+ir_expression *b2i(operand a);
+ir_expression *i2b(operand a);
 
 /**
  * Swizzle away later components, but preserve the ordering.

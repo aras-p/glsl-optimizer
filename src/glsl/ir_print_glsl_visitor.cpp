@@ -115,6 +115,8 @@ public:
 	virtual void visit(ir_loop_jump *);
 	virtual void visit(ir_precision_statement *);
 	virtual void visit(ir_typedecl_statement *);
+	virtual void visit(ir_emit_vertex *);
+	virtual void visit(ir_end_primitive *);
 	
 	int indentation;
 	char* buffer;
@@ -1150,4 +1152,16 @@ ir_print_glsl_visitor::visit(ir_typedecl_statement *ir)
 		ralloc_asprintf_append (&buffer, ";\n");
 	}
 	ralloc_asprintf_append (&buffer, "}");
+}
+
+void
+ir_print_glsl_visitor::visit(ir_emit_vertex *ir)
+{
+	ralloc_asprintf_append (&buffer, "emit-vertex-TODO");
+}
+
+void
+ir_print_glsl_visitor::visit(ir_end_primitive *ir)
+{
+	ralloc_asprintf_append (&buffer, "end-primitive-TODO");
 }

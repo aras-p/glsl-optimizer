@@ -46,10 +46,11 @@
  */
 
 #include "glsl_symbol_table.h"
-#include "ir_hierarchical_visitor.h"
+#include "ir_rvalue_visitor.h"
 #include "ir.h"
+#include "program/prog_instruction.h" /* For WRITEMASK_* */
 
-class lower_clip_distance_visitor : public ir_hierarchical_visitor {
+class lower_clip_distance_visitor : public ir_rvalue_visitor {
 public:
    lower_clip_distance_visitor()
       : progress(false), old_clip_distance_var(NULL),
@@ -59,10 +60,13 @@ public:
 
    virtual ir_visitor_status visit(ir_variable *);
    void create_indices(ir_rvalue*, ir_rvalue *&, ir_rvalue *&);
-   virtual ir_visitor_status visit_leave(ir_dereference_array *);
    virtual ir_visitor_status visit_leave(ir_assignment *);
    void visit_new_assignment(ir_assignment *ir);
    virtual ir_visitor_status visit_leave(ir_call *);
+
+   virtual void handle_rvalue(ir_rvalue **rvalue);
+
+   void fix_lhs(ir_assignment *);
 
    bool progress;
 
@@ -173,35 +177,70 @@ lower_clip_distance_visitor::create_indices(ir_rvalue *old_index,
 }
 
 
-/**
- * Replace any expression that indexes into the gl_ClipDistance array with an
- * expression that indexes into one of the vec4's in gl_ClipDistanceMESA and
- * accesses the appropriate component.
- */
-ir_visitor_status
-lower_clip_distance_visitor::visit_leave(ir_dereference_array *ir)
+void
+lower_clip_distance_visitor::handle_rvalue(ir_rvalue **rv)
 {
    /* If the gl_ClipDistance var hasn't been declared yet, then
     * there's no way this deref can refer to it.
     */
-   if (!this->old_clip_distance_var)
-      return visit_continue;
+   if (!this->old_clip_distance_var || *rv == NULL)
+      return;
 
-   ir_dereference_variable *old_var_ref = ir->array->as_dereference_variable();
+   ir_dereference_array *const array_deref = (*rv)->as_dereference_array();
+   if (array_deref == NULL)
+      return;
+
+   /* Replace any expression that indexes into the gl_ClipDistance array
+    * with an expression that indexes into one of the vec4's in
+    * gl_ClipDistanceMESA and accesses the appropriate component.
+    */
+   ir_dereference_variable *old_var_ref =
+      array_deref->array->as_dereference_variable();
    if (old_var_ref && old_var_ref->var == this->old_clip_distance_var) {
       this->progress = true;
       ir_rvalue *array_index;
       ir_rvalue *swizzle_index;
-      this->create_indices(ir->array_index, array_index, swizzle_index);
-      void *mem_ctx = ralloc_parent(ir);
-      ir->array = new(mem_ctx) ir_dereference_array(
-         this->new_clip_distance_var, array_index);
-      ir->array_index = swizzle_index;
-   }
+      this->create_indices(array_deref->array_index, array_index, swizzle_index);
+      void *mem_ctx = ralloc_parent(array_deref);
 
-   return visit_continue;
+      ir_dereference_array *const ClipDistanceMESA_deref =
+         new(mem_ctx) ir_dereference_array(this->new_clip_distance_var,
+                                           array_index);
+
+      ir_expression *const expr =
+         new(mem_ctx) ir_expression(ir_binop_vector_extract,
+                                    ClipDistanceMESA_deref,
+                                    swizzle_index);
+
+      *rv = expr;
+   }
 }
 
+void
+lower_clip_distance_visitor::fix_lhs(ir_assignment *ir)
+{
+   if (ir->lhs->ir_type == ir_type_expression) {
+      void *mem_ctx = ralloc_parent(ir);
+      ir_expression *const expr = (ir_expression *) ir->lhs;
+
+      /* The expression must be of the form:
+       *
+       *     (vector_extract gl_ClipDistanceMESA[i], j).
+       */
+      assert(expr->operation == ir_binop_vector_extract);
+      assert(expr->operands[0]->ir_type == ir_type_dereference_array);
+      assert(expr->operands[0]->type == glsl_type::vec4_type);
+
+      ir_dereference *const new_lhs = (ir_dereference *) expr->operands[0];
+      ir->rhs = new(mem_ctx) ir_expression(ir_triop_vector_insert,
+					   glsl_type::vec4_type,
+					   new_lhs->clone(mem_ctx, NULL),
+					   ir->rhs,
+					   expr->operands[1]);
+      ir->set_lhs(new_lhs);
+      ir->write_mask = WRITEMASK_XYZW;
+   }
+}
 
 /**
  * Replace any assignment having gl_ClipDistance (undereferenced) as its LHS
@@ -223,29 +262,50 @@ lower_clip_distance_visitor::visit_leave(ir_assignment *ir)
        * each of them.
        *
        * Note: to unroll into element-by-element assignments, we need to make
-       * clones of the LHS and RHS.  This is only safe if the LHS and RHS are
-       * side-effect free.  Fortunately, we know that they are, because the
-       * only kind of rvalue that can have side effects is an ir_call, and
-       * ir_calls only appear (a) as a statement on their own, or (b) as the
-       * RHS of an assignment that stores the result of the call in a
-       * temporary variable.
+       * clones of the LHS and RHS.  This is safe because expressions and
+       * l-values are side-effect free.
        */
       void *ctx = ralloc_parent(ir);
       int array_size = this->old_clip_distance_var->type->array_size();
       for (int i = 0; i < array_size; ++i) {
          ir_dereference_array *new_lhs = new(ctx) ir_dereference_array(
             ir->lhs->clone(ctx, NULL), new(ctx) ir_constant(i));
-         new_lhs->accept(this);
          ir_dereference_array *new_rhs = new(ctx) ir_dereference_array(
             ir->rhs->clone(ctx, NULL), new(ctx) ir_constant(i));
-         new_rhs->accept(this);
-         this->base_ir->insert_before(
-            new(ctx) ir_assignment(new_lhs, new_rhs));
+         this->handle_rvalue((ir_rvalue **) &new_rhs);
+
+         /* Handle the LHS after creating the new assignment.  This must
+          * happen in this order because handle_rvalue may replace the old LHS
+          * with an ir_expression of ir_binop_vector_extract.  Since this is
+          * not a valide l-value, this will cause an assertion in the
+          * ir_assignment constructor to fail.
+          *
+          * If this occurs, replace the mangled LHS with a dereference of the
+          * vector, and replace the RHS with an ir_triop_vector_insert.
+          */
+         ir_assignment *const assign = new(ctx) ir_assignment(new_lhs, new_rhs);
+         this->handle_rvalue((ir_rvalue **) &assign->lhs);
+         this->fix_lhs(assign);
+
+         this->base_ir->insert_before(assign);
       }
       ir->remove();
+
+      return visit_continue;
    }
 
-   return visit_continue;
+   /* Handle the LHS as if it were an r-value.  Normally
+    * rvalue_visit(ir_assignment *) only visits the RHS, but we need to lower
+    * expressions in the LHS as well.
+    *
+    * This may cause the LHS to get replaced with an ir_expression of
+    * ir_binop_vector_extract.  If this occurs, replace it with a dereference
+    * of the vector, and replace the RHS with an ir_triop_vector_insert.
+    */
+   handle_rvalue((ir_rvalue **)&ir->lhs);
+   this->fix_lhs(ir);
+
+   return rvalue_visit(ir);
 }
 
 
@@ -330,7 +390,7 @@ lower_clip_distance_visitor::visit_leave(ir_call *ir)
       }
    }
 
-   return visit_continue;
+   return rvalue_visit(ir);
 }
 
 

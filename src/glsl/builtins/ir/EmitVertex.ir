@@ -1,0 +1,5 @@
+((function EmitVertex
+  (signature void
+    (parameters)
+    ((emit-vertex)))
+))

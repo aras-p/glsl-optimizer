@@ -503,7 +503,8 @@ is_loop_terminator(ir_if *ir)
 
    ir_instruction *const inst =
       (ir_instruction *) ir->then_instructions.get_head();
-   assert(inst != NULL);
+   if (inst == NULL)
+      return false;
 
    if (inst->ir_type != ir_type_loop_jump)
       return false;

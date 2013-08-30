@@ -125,7 +125,7 @@ def write_profiles():
 
 def get_profile_list():
     profile_files = []
-    for extension in ['glsl', 'frag', 'vert']:
+    for extension in ['glsl', 'frag', 'vert', 'geom']:
         path_glob = path.join(
             path.join(builtins_dir, 'profiles'), '*.' + extension)
         profile_files.extend(glob(path_glob))
@@ -174,7 +174,7 @@ read_builtins(GLenum target, const char *protos, const char **functions, unsigne
 {
    struct gl_context fakeCtx;
    fakeCtx.API = API_OPENGL_COMPAT;
-   fakeCtx.Const.GLSLVersion = 150;
+   fakeCtx.Const.GLSLVersion = 330;
    fakeCtx.Extensions.ARB_ES2_compatibility = true;
    fakeCtx.Extensions.ARB_ES3_compatibility = true;
    fakeCtx.Const.ForceGLSLExtensionsWarn = false;
@@ -182,7 +182,7 @@ read_builtins(GLenum target, const char *protos, const char **functions, unsigne
    struct _mesa_glsl_parse_state *st =
       new(sh) _mesa_glsl_parse_state(&fakeCtx, target, sh);
 
-   st->language_version = 150;
+   st->language_version = 330;
    st->symbols->separate_function_namespace = false;
    st->ARB_texture_rectangle_enable = true;
    st->EXT_texture_array_enable = true;
@@ -192,6 +192,7 @@ read_builtins(GLenum target, const char *protos, const char **functions, unsigne
    st->ARB_shading_language_packing_enable = true;
    st->ARB_texture_multisample_enable = true;
    st->ARB_texture_query_lod_enable = true;
+   st->ARB_gpu_shader5_enable = true;
    _mesa_glsl_initialize_types(st);
 
    sh->ir = new(sh) exec_list;
@@ -278,10 +279,12 @@ _mesa_glsl_initialize_functions(struct _mesa_glsl_parse_state *state)
             check = 'state->target == vertex_shader && '
         elif profile.endswith('_frag'):
             check = 'state->target == fragment_shader && '
+        elif profile.endswith('_geom'):
+            check = 'state->target == geometry_shader && '
         else:
             check = ''
 
-        version = re.sub(r'_(glsl|vert|frag)$', '', profile)
+        version = re.sub(r'_(glsl|vert|frag|geom)$', '', profile)
         if version[0].isdigit():
             is_es = version.endswith('es')
             if is_es:

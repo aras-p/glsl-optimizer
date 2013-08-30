@@ -1,0 +1,5 @@
+((function EndPrimitive
+  (signature void
+    (parameters)
+    ((end-primitive)))
+))

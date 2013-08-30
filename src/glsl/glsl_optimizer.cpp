@@ -52,9 +52,10 @@ initialize_mesa_context(struct gl_context *ctx, gl_api api)
    ctx->Const.VertexProgram.MaxAttribs = 16;
    ctx->Const.VertexProgram.MaxUniformComponents = 512;
    ctx->Const.MaxVarying = 8;
-   ctx->Const.MaxVertexTextureImageUnits = 0;
    ctx->Const.MaxCombinedTextureImageUnits = 2;
-   ctx->Const.MaxTextureImageUnits = 2;
+   ctx->Const.VertexProgram.MaxTextureImageUnits = 16;
+   ctx->Const.FragmentProgram.MaxTextureImageUnits = 16;
+   ctx->Const.GeometryProgram.MaxTextureImageUnits = 16;
    ctx->Const.FragmentProgram.MaxUniformComponents = 64;
 
    ctx->Const.MaxDrawBuffers = 2;

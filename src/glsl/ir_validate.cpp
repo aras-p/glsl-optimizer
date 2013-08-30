@@ -69,6 +69,8 @@ public:
    virtual ir_visitor_status visit_leave(ir_expression *ir);
    virtual ir_visitor_status visit_leave(ir_swizzle *ir);
 
+   virtual ir_visitor_status visit_enter(class ir_dereference_array *);
+
    virtual ir_visitor_status visit_enter(ir_assignment *ir);
    virtual ir_visitor_status visit_enter(ir_call *ir);
 
@@ -97,6 +99,33 @@ ir_validate::visit(ir_dereference_variable *ir)
    }
 
    this->validate_ir(ir, this->data);
+
+   return visit_continue;
+}
+
+ir_visitor_status
+ir_validate::visit_enter(class ir_dereference_array *ir)
+{
+   if (!ir->array->type->is_array() && !ir->array->type->is_matrix()) {
+      printf("ir_dereference_array @ %p does not specify an array or a "
+             "matrix\n",
+             (void *) ir);
+      ir->print();
+      printf("\n");
+      abort();
+   }
+
+   if (!ir->array_index->type->is_scalar()) {
+      printf("ir_dereference_array @ %p does not have scalar index: %s\n",
+             (void *) ir, ir->array_index->type->name);
+      abort();
+   }
+
+   if (!ir->array_index->type->is_integer()) {
+      printf("ir_dereference_array @ %p does not have integer index: %s\n",
+             (void *) ir, ir->array_index->type->name);
+      abort();
+   }
 
    return visit_continue;
 }
@@ -364,6 +393,19 @@ ir_validate::visit_leave(ir_expression *ir)
       assert(ir->operands[0]->type == glsl_type::uint_type);
       break;
 
+   case ir_unop_bitfield_reverse:
+      assert(ir->operands[0]->type == ir->type);
+      assert(ir->type->is_integer());
+      break;
+
+   case ir_unop_bit_count:
+   case ir_unop_find_msb:
+   case ir_unop_find_lsb:
+      assert(ir->operands[0]->type->vector_elements == ir->type->vector_elements);
+      assert(ir->operands[0]->type->is_integer());
+      assert(ir->type->base_type == GLSL_TYPE_INT);
+      break;
+
    case ir_unop_noise:
       /* XXX what can we assert here? */
       break;
@@ -464,6 +506,12 @@ ir_validate::visit_leave(ir_expression *ir)
       assert(ir->operands[1]->type == glsl_type::float_type);
       break;
 
+   case ir_binop_bfm:
+      assert(ir->type->is_integer());
+      assert(ir->operands[0]->type->is_integer());
+      assert(ir->operands[1]->type->is_integer());
+      break;
+
    case ir_binop_ubo_load:
       assert(ir->operands[0]->as_constant());
       assert(ir->operands[0]->type == glsl_type::uint_type);
@@ -471,10 +519,45 @@ ir_validate::visit_leave(ir_expression *ir)
       assert(ir->operands[1]->type == glsl_type::uint_type);
       break;
 
+   case ir_binop_vector_extract:
+      assert(ir->operands[0]->type->is_vector());
+      assert(ir->operands[1]->type->is_scalar()
+             && ir->operands[1]->type->is_integer());
+      break;
+
+   case ir_triop_fma:
    case ir_triop_lrp:
       assert(ir->operands[0]->type->base_type == GLSL_TYPE_FLOAT);
       assert(ir->operands[0]->type == ir->operands[1]->type);
       assert(ir->operands[2]->type == ir->operands[0]->type || ir->operands[2]->type == glsl_type::float_type);
+      break;
+
+   case ir_triop_bfi:
+      assert(ir->operands[0]->type->is_integer());
+      assert(ir->operands[1]->type == ir->operands[2]->type);
+      assert(ir->operands[1]->type == ir->type);
+      break;
+
+   case ir_triop_bitfield_extract:
+      assert(ir->operands[0]->type == ir->type);
+      assert(ir->operands[1]->type == glsl_type::int_type);
+      assert(ir->operands[2]->type == glsl_type::int_type);
+      break;
+
+   case ir_triop_vector_insert:
+      assert(ir->operands[0]->type->is_vector());
+      assert(ir->operands[1]->type->is_scalar());
+      assert(ir->operands[0]->type->base_type == ir->operands[1]->type->base_type);
+      assert(ir->operands[2]->type->is_scalar()
+             && ir->operands[2]->type->is_integer());
+      assert(ir->type == ir->operands[0]->type);
+      break;
+
+   case ir_quadop_bitfield_insert:
+      assert(ir->operands[0]->type == ir->type);
+      assert(ir->operands[1]->type == ir->type);
+      assert(ir->operands[2]->type == glsl_type::int_type);
+      assert(ir->operands[3]->type == glsl_type::int_type);
       break;
 
    case ir_quadop_vector:

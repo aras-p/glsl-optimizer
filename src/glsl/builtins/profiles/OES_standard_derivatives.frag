@@ -1,5 +1,6 @@
 #version 100
 #extension GL_OES_standard_derivatives : enable
+precision highp float;
 
 /*
  * 8.8 - Fragment Processing Functions

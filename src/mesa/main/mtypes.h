@@ -1,6 +1,5 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.7
  *
  * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
  * Copyright (C) 2009  VMware, Inc.  All Rights Reserved.
@@ -18,9 +17,10 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
- * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
- * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
  */
 
 /**
@@ -58,9 +58,9 @@ struct set_entry;
 
 
 /** Extra draw modes beyond GL_POINTS, GL_TRIANGLE_FAN, etc */
-#define PRIM_OUTSIDE_BEGIN_END   (GL_POLYGON+1)
-#define PRIM_INSIDE_UNKNOWN_PRIM (GL_POLYGON+2)
-#define PRIM_UNKNOWN             (GL_POLYGON+3)
+#define PRIM_MAX                 GL_TRIANGLE_STRIP_ADJACENCY
+#define PRIM_OUTSIDE_BEGIN_END   (PRIM_MAX + 1)
+#define PRIM_UNKNOWN             (PRIM_MAX + 2)
 
 
 
@@ -168,7 +168,7 @@ typedef enum
    VARYING_SLOT_CLIP_DIST0,
    VARYING_SLOT_CLIP_DIST1,
    VARYING_SLOT_PRIMITIVE_ID, /* Does not appear in VS */
-   VARYING_SLOT_LAYER, /* Appears only as GS output */
+   VARYING_SLOT_LAYER, /* Appears as VS or GS output */
    VARYING_SLOT_FACE, /* FS only */
    VARYING_SLOT_PNTC, /* FS only */
    VARYING_SLOT_VAR0, /* First generic varying slot */
@@ -176,8 +176,6 @@ typedef enum
 } gl_varying_slot;
 
 
-
-/*********************************************/
 
 /**
  * Fragment program results
@@ -198,6 +196,7 @@ typedef enum
    FRAG_RESULT_DATA0 = 3,
    FRAG_RESULT_MAX = (FRAG_RESULT_DATA0 + MAX_DRAW_BUFFERS)
 } gl_frag_result;
+
 
 
 
@@ -292,6 +291,7 @@ typedef enum
    TEXTURE_1D_INDEX,
    NUM_TEXTURE_TARGETS
 } gl_texture_index;
+
 
 
 
@@ -441,7 +441,7 @@ struct gl_program
    GLuint Id;
    GLubyte *String;  /**< Null-terminated program text */
    GLint RefCount;
-   GLenum Target;    /**< GL_VERTEX/FRAGMENT_PROGRAM_ARB */
+   GLenum Target;    /**< GL_VERTEX/FRAGMENT_PROGRAM_ARB, GL_GEOMETRY_PROGRAM_NV */
    GLenum Format;    /**< String encoding format */
 
    /** Numbered local parameters */
@@ -496,7 +496,10 @@ struct gl_sl_pragmas
  */
 struct gl_shader
 {
-   GLenum Type;  /**< GL_FRAGMENT_SHADER || GL_VERTEX_SHADER || GL_GEOMETRY_SHADER_ARB (first field!) */
+   /** GL_FRAGMENT_SHADER || GL_VERTEX_SHADER || GL_GEOMETRY_SHADER_ARB.
+    * Must be the first field.
+    */
+   GLenum Type;
    GLuint Name;  /**< AKA the handle */
    GLint RefCount;  /**< Reference count */
    GLboolean DeletePending;
@@ -522,11 +525,30 @@ struct gl_shader
    /*@}*/
 
    /**
-    * Number of uniform components used by this shader.
+    * Map from sampler unit to texture unit (set by glUniform1i())
+    *
+    * A sampler unit is associated with each sampler uniform by the linker.
+    * The sampler unit associated with each uniform is stored in the
+    * \c gl_uniform_storage::sampler field.
+    */
+   GLubyte SamplerUnits[MAX_SAMPLERS];
+   /** Which texture target is being sampled (TEXTURE_1D/2D/3D/etc_INDEX) */
+   gl_texture_index SamplerTargets[MAX_SAMPLERS];
+
+   /**
+    * Number of default uniform block components used by this shader.
     *
     * This field is only set post-linking.
     */
    unsigned num_uniform_components;
+
+   /**
+    * Number of combined uniform components used by this shader.
+    *
+    * This field is only set post-linking.  It is the sum of the uniform block
+    * sizes divided by sizeof(float), and num_uniform_compoennts.
+    */
+   unsigned num_combined_uniform_components;
 
    /**
     * This shader's uniform block information.
@@ -543,20 +565,42 @@ struct gl_shader
    /** Shaders containing built-in functions that are used for linking. */
    struct gl_shader *builtins_to_link[16];
    unsigned num_builtins_to_link;
+
+   /**
+    * Geometry shader state from GLSL 1.50 layout qualifiers.
+    */
+   struct {
+      GLint VerticesOut;
+      /**
+       * GL_POINTS, GL_LINES, GL_LINES_ADJACENCY, GL_TRIANGLES, or
+       * GL_TRIANGLES_ADJACENCY, or PRIM_UNKNOWN if it's not set in this
+       * shader.
+       */
+      GLenum InputType;
+       /**
+        * GL_POINTS, GL_LINE_STRIP or GL_TRIANGLE_STRIP, or PRIM_UNKNOWN if
+        * it's not set in this shader.
+        */
+      GLenum OutputType;
+   } Geom;
 };
 
 
 /**
  * Shader stages. Note that these will become 5 with tessellation.
- * These MUST have the same values as gallium's PIPE_SHADER_*
+ *
+ * The order must match how shaders are ordered in the pipeline.
+ * The GLSL linker assumes that if i<j, then the j-th shader is
+ * executed later than the i-th shader.
  */
 typedef enum
 {
    MESA_SHADER_VERTEX = 0,
-   MESA_SHADER_FRAGMENT = 1,
-   MESA_SHADER_GEOMETRY = 2,
+   MESA_SHADER_GEOMETRY = 1,
+   MESA_SHADER_FRAGMENT = 2,
    MESA_SHADER_TYPES = 3
 } gl_shader_type;
+
 
 struct gl_uniform_buffer_variable
 {
@@ -579,11 +623,14 @@ struct gl_uniform_buffer_variable
    GLboolean RowMajor;
 };
 
-enum gl_uniform_block_packing {
+
+enum gl_uniform_block_packing
+{
    ubo_packing_std140,
    ubo_packing_shared,
    ubo_packing_packed
 };
+
 
 struct gl_uniform_block
 {
@@ -615,6 +662,7 @@ struct gl_uniform_block
     */
    enum gl_uniform_block_packing _Packing;
 };
+
 
 /**
  * A GLSL program object.
@@ -684,17 +732,32 @@ struct gl_shader_program
    /** Post-link gl_FragDepth layout for ARB_conservative_depth. */
    enum gl_frag_depth_layout FragDepthLayout;
 
-   /** Geometry shader state - copied into gl_geometry_program at link time */
+   /**
+    * Geometry shader state - copied into gl_geometry_program by
+    * _mesa_copy_linked_program_data().
+    */
    struct {
+      GLint VerticesIn;
       GLint VerticesOut;
       GLenum InputType;  /**< GL_POINTS, GL_LINES, GL_LINES_ADJACENCY_ARB,
                               GL_TRIANGLES, or GL_TRIANGLES_ADJACENCY_ARB */
       GLenum OutputType; /**< GL_POINTS, GL_LINE_STRIP or GL_TRIANGLE_STRIP */
+      /**
+       * True if gl_ClipDistance is written to.  Copied into
+       * gl_geometry_program by _mesa_copy_linked_program_data().
+       */
+      GLboolean UsesClipDistance;
+      GLuint ClipDistanceArraySize; /**< Size of the gl_ClipDistance array, or
+                                         0 if not present. */
    } Geom;
 
-   /** Vertex shader state - copied into gl_vertex_program at link time */
+   /** Vertex shader state */
    struct {
-      GLboolean UsesClipDistance; /**< True if gl_ClipDistance is written to. */
+      /**
+       * True if gl_ClipDistance is written to.  Copied into gl_vertex_program
+       * by _mesa_copy_linked_program_data().
+       */
+      GLboolean UsesClipDistance;
       GLuint ClipDistanceArraySize; /**< Size of the gl_ClipDistance array, or
                                          0 if not present. */
    } Vert;
@@ -705,6 +768,21 @@ struct gl_shader_program
 
    struct gl_uniform_block *UniformBlocks;
    unsigned NumUniformBlocks;
+
+   /**
+    * Scale factor for the uniform base location
+    *
+    * This is used to generate locations (returned by \c glGetUniformLocation)
+    * of uniforms.  The base location of the uniform is multiplied by this
+    * value, and the array index is added.
+    *
+    * \note
+    * Must be >= 1.
+    *
+    * \sa
+    * _mesa_uniform_merge_location_offset, _mesa_uniform_split_location_offset
+    */
+   unsigned UniformLocationBaseScale;
 
    /**
     * Indices into the _LinkedShaders's UniformBlocks[] array for each stage
@@ -725,21 +803,10 @@ struct gl_shader_program
     */
    struct string_to_uint_map *UniformHash;
 
-   /**
-    * Map from sampler unit to texture unit (set by glUniform1i())
-    *
-    * A sampler unit is associated with each sampler uniform by the linker.
-    * The sampler unit associated with each uniform is stored in the
-    * \c gl_uniform_storage::sampler field.
-    */
-   GLubyte SamplerUnits[MAX_SAMPLERS];
-   /** Which texture target is being sampled (TEXTURE_1D/2D/3D/etc_INDEX) */
-   gl_texture_index SamplerTargets[MAX_SAMPLERS];
-
    GLboolean LinkStatus;   /**< GL_LINK_STATUS */
    GLboolean Validated;
    GLboolean _Used;        /**< Ever used for drawing? */
-   char *InfoLog;
+   GLchar *InfoLog;
 
    unsigned Version;       /**< GLSL version used for linking */
    GLboolean IsES;         /**< True if this program uses GLSL ES */
@@ -762,7 +829,9 @@ struct gl_shader_program
 #define GLSL_UNIFORMS 0x10  /**< Print glUniform calls */
 #define GLSL_NOP_VERT 0x20  /**< Force no-op vertex shaders */
 #define GLSL_NOP_FRAG 0x40  /**< Force no-op fragment shaders */
+#define GLSL_USE_PROG 0x80  /**< Log glUseProgram calls */
 #define GLSL_REPORT_ERRORS 0x100  /**< Print compilation errors */
+#define GLSL_DUMP_ON_ERROR 0x200 /**< Dump shaders to stderr on compile error */
 
 
 
@@ -794,8 +863,25 @@ struct gl_shader_compiler_options
    GLuint MaxIfDepth;               /**< Maximum nested IF blocks */
    GLuint MaxUnrollIterations;
 
+   /**
+    * Prefer DP4 instructions (rather than MUL/MAD) for matrix * vector
+    * operations, such as position transformation.
+    */
+   GLboolean PreferDP4;
+
    struct gl_sl_pragmas DefaultPragmas; /**< Default #pragma settings */
 };
+
+
+#define GLSL_DUMP      0x1  /**< Dump shaders to stdout */
+#define GLSL_LOG       0x2  /**< Write shaders to files */
+#define GLSL_OPT       0x4  /**< Force optimizations (override pragmas) */
+#define GLSL_NO_OPT    0x8  /**< Force no optimizations (override pragmas) */
+#define GLSL_UNIFORMS 0x10  /**< Print glUniform calls */
+#define GLSL_NOP_VERT 0x20  /**< Force no-op vertex shaders */
+#define GLSL_NOP_FRAG 0x40  /**< Force no-op fragment shaders */
+#define GLSL_REPORT_ERRORS 0x100  /**< Print compilation errors */
+
 
 
 
@@ -832,6 +918,7 @@ struct gl_program_constants
    /* GL_ARB_uniform_buffer_object */
    GLuint MaxUniformBlocks;
    GLuint MaxCombinedUniformComponents;
+   GLuint MaxTextureImageUnits;
 };
 
 
@@ -848,11 +935,8 @@ struct gl_constants
    GLuint MaxArrayTextureLayers; /**< Max layers in array textures */
    GLuint MaxTextureRectSize;    /**< Max rectangle texture size, in pixes */
    GLuint MaxTextureCoordUnits;
-   GLuint MaxTextureImageUnits;
-   GLuint MaxVertexTextureImageUnits;
    GLuint MaxCombinedTextureImageUnits;
-   GLuint MaxGeometryTextureImageUnits;
-   GLuint MaxTextureUnits;           /**< = MIN(CoordUnits, ImageUnits) */
+   GLuint MaxTextureUnits; /**< = MIN(CoordUnits, FragmentProgram.ImageUnits) */
    GLfloat MaxTextureMaxAnisotropy;  /**< GL_EXT_texture_filter_anisotropic */
    GLfloat MaxTextureLodBias;        /**< GL_EXT_texture_lod_bias */
    GLuint MaxTextureBufferSize;      /**< GL_ARB_texture_buffer_object */
@@ -869,8 +953,6 @@ struct gl_constants
    GLfloat MinLineWidth, MaxLineWidth;       /**< aliased */
    GLfloat MinLineWidthAA, MaxLineWidthAA;   /**< antialiased */
    GLfloat LineWidthGranularity;
-
-   GLuint MaxColorTableSize;
 
    GLuint MaxClipPlanes;
    GLuint MaxLights;
@@ -902,10 +984,9 @@ struct gl_constants
    GLuint MaxRenderbufferSize;   /**< GL_EXT_framebuffer_object */
    GLuint MaxSamples;            /**< GL_ARB_framebuffer_object */
 
-   /** Number of varying vectors between vertex and fragment shaders */
+   /** Number of varying vectors between any two shader stages. */
    GLuint MaxVarying;
-   GLuint MaxVertexVaryingComponents;   /**< Between vert and geom shader */
-   GLuint MaxGeometryVaryingComponents; /**< Between geom and frag shader */
+   GLuint MaxVaryingComponents;
 
    /** @{
     * GL_ARB_uniform_buffer_object
@@ -927,6 +1008,12 @@ struct gl_constants
     * of spec, but it can make some apps work that otherwise wouldn't.
     */
    GLboolean ForceGLSLExtensionsWarn;
+
+   /**
+    * If non-zero, forces GLSL shaders without the #version directive to behave
+    * as if they began with "#version ForceGLSLVersion".
+    */
+   GLuint ForceGLSLVersion;
 
    /**
     * Does the driver support real 32-bit integers?  (Otherwise, integers are
@@ -982,12 +1069,11 @@ struct gl_constants
    GLboolean StripTextureBorder;
 
    /**
-    * For drivers which can do a better job at eliminating unused varyings
-    * and uniforms than the GLSL compiler.
+    * For drivers which can do a better job at eliminating unused uniforms
+    * than the GLSL compiler.
     *
     * XXX Remove these as soon as a better solution is available.
     */
-   GLboolean GLSLSkipStrictMaxVaryingLimitCheck;
    GLboolean GLSLSkipStrictMaxUniformLimitCheck;
 
    /**
@@ -1051,6 +1137,7 @@ struct gl_extensions
    GLboolean ARB_framebuffer_object;
    GLboolean ARB_explicit_attrib_location;
    GLboolean ARB_geometry_shader4;
+   GLboolean ARB_gpu_shader5;
    GLboolean ARB_half_float_pixel;
    GLboolean ARB_half_float_vertex;
    GLboolean ARB_instanced_arrays;
@@ -1062,11 +1149,10 @@ struct gl_extensions
    GLboolean ARB_point_sprite;
    GLboolean ARB_seamless_cube_map;
    GLboolean ARB_shader_bit_encoding;
-   GLboolean ARB_shader_objects;
    GLboolean ARB_shader_stencil_export;
    GLboolean ARB_shader_texture_lod;
-   GLboolean ARB_shading_language_100;
    GLboolean ARB_shading_language_packing;
+   GLboolean ARB_shading_language_420pack;
    GLboolean ARB_shadow;
    GLboolean ARB_sync;
    GLboolean ARB_texture_border_clamp;
@@ -1085,8 +1171,6 @@ struct gl_extensions
    GLboolean ARB_texture_query_lod;
    GLboolean ARB_texture_rg;
    GLboolean ARB_texture_rgb10_a2ui;
-   GLboolean ARB_texture_storage;
-   GLboolean ARB_texture_storage_multisample;
    GLboolean ARB_timer_query;
    GLboolean ARB_transform_feedback2;
    GLboolean ARB_transform_feedback3;
@@ -1099,13 +1183,11 @@ struct gl_extensions
    GLboolean EXT_blend_equation_separate;
    GLboolean EXT_blend_func_separate;
    GLboolean EXT_blend_minmax;
-   GLboolean EXT_clip_volume_hint;
    GLboolean EXT_depth_bounds_test;
    GLboolean EXT_draw_buffers2;
-   GLboolean EXT_fog_coord;
    GLboolean EXT_framebuffer_blit;
    GLboolean EXT_framebuffer_multisample;
-   GLboolean EXT_framebuffer_object;
+   GLboolean EXT_framebuffer_multisample_blit_scaled;
    GLboolean EXT_framebuffer_sRGB;
    GLboolean EXT_gpu_program_parameters;
    GLboolean EXT_gpu_shader4;
@@ -1114,8 +1196,6 @@ struct gl_extensions
    GLboolean EXT_pixel_buffer_object;
    GLboolean EXT_point_parameters;
    GLboolean EXT_provoking_vertex;
-   GLboolean EXT_shadow_funcs;
-   GLboolean EXT_secondary_color;
    GLboolean EXT_separate_shader_objects;
    GLboolean EXT_stencil_two_side;
    GLboolean EXT_texture3D;
@@ -1139,6 +1219,7 @@ struct gl_extensions
    GLboolean EXT_frag_depth;
    /* vendor extensions */
    GLboolean AMD_seamless_cubemap_per_texture;
+   GLboolean AMD_vertex_shader_layer;
    GLboolean APPLE_object_purgeable;
    GLboolean ATI_envmap_bumpmap;
    GLboolean ATI_texture_compression_3dc;
@@ -1147,10 +1228,8 @@ struct gl_extensions
    GLboolean ATI_fragment_shader;
    GLboolean ATI_separate_stencil;
    GLboolean MESA_pack_invert;
-   GLboolean MESA_resize_buffers;
    GLboolean MESA_ycbcr_texture;
    GLboolean MESA_texture_array;
-   GLboolean NV_blend_square;
    GLboolean NV_conditional_render;
    GLboolean NV_fog_distance;
    GLboolean NV_fragment_program_option;
@@ -1176,6 +1255,7 @@ struct gl_extensions
 
 
 
+
 /* This has to be included here. */
 #include "dd.h"
 
@@ -1194,10 +1274,8 @@ enum mesa_debug_type {
    MESA_DEBUG_TYPE_PORTABILITY,
    MESA_DEBUG_TYPE_PERFORMANCE,
    MESA_DEBUG_TYPE_OTHER,
-   MESA_DEBUG_TYPE_COUNT,
+   MESA_DEBUG_TYPE_COUNT
 };
-
-/** @} */
 
 /**
  * Enum for the OpenGL APIs we know about and may support.
@@ -1211,8 +1289,9 @@ typedef enum
    API_OPENGLES,
    API_OPENGLES2,
    API_OPENGL_CORE,
-   API_OPENGL_LAST = API_OPENGL_CORE,
+   API_OPENGL_LAST = API_OPENGL_CORE
 } gl_api;
+
 
 
 
@@ -1249,6 +1328,7 @@ struct gl_context
    struct gl_shader_compiler_options ShaderCompilerOptions[MESA_SHADER_TYPES];
 
    GLenum ErrorValue;        /**< Last error code */
+
 };
 
 

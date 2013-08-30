@@ -160,11 +160,36 @@ struct _mesa_glsl_parse_state {
    enum _mesa_glsl_parser_targets target;
 
    /**
+    * Number of nested struct_specifier levels
+    *
+    * Outside a struct_specifer, this is zero.
+    */
+   unsigned struct_specifier_depth;
+
+   /**
     * Default uniform layout qualifiers tracked during parsing.
     * Currently affects uniform blocks and uniform buffer variables in
     * those blocks.
     */
    struct ast_type_qualifier *default_uniform_qualifier;
+
+   /**
+    * True if a geometry shader input primitive type was specified using a
+    * layout directive.
+    *
+    * Note: this value is computed at ast_to_hir time rather than at parse
+    * time.
+    */
+   bool gs_input_prim_type_specified;
+
+   /**
+    * If gs_input_prim_type_specified is true, the primitive type that was
+    * specified.  Otherwise ignored.
+    */
+   GLenum gs_input_prim_type;
+
+   /** Output layout qualifiers from GLSL 1.50. (geometry shader controls)*/
+   struct ast_type_qualifier *out_qualifier;
 
    /**
     * Printable list of GLSL versions supported by the current context
@@ -291,6 +316,12 @@ struct _mesa_glsl_parse_state {
    bool ARB_texture_multisample_warn;
    bool ARB_texture_query_lod_enable;
    bool ARB_texture_query_lod_warn;
+   bool ARB_gpu_shader5_enable;
+   bool ARB_gpu_shader5_warn;
+   bool AMD_vertex_shader_layer_enable;
+   bool AMD_vertex_shader_layer_warn;
+   bool ARB_shading_language_420pack_enable;
+   bool ARB_shading_language_420pack_warn;
    /*@}*/
 
    /** Extensions supported by the OpenGL implementation. */
@@ -299,6 +330,15 @@ struct _mesa_glsl_parse_state {
    /** Shaders containing built-in functions that are used for linking. */
    struct gl_shader *builtins_to_link[16];
    unsigned num_builtins_to_link;
+
+   /**
+    * For geometry shaders, size of the most recently seen input declaration
+    * that was a sized array, or 0 if no sized input array declarations have
+    * been seen.
+    *
+    * Unused for other shader types.
+    */
+   unsigned gs_input_size;
 };
 
 # define YYLLOC_DEFAULT(Current, Rhs, N)			\
@@ -338,8 +378,8 @@ extern void _mesa_glsl_lexer_ctor(struct _mesa_glsl_parse_state *state,
 extern void _mesa_glsl_lexer_dtor(struct _mesa_glsl_parse_state *state);
 
 union YYSTYPE;
-extern int _mesa_glsl_lex(union YYSTYPE *yylval, YYLTYPE *yylloc, 
-			  void *scanner);
+extern int _mesa_glsl_lexer_lex(union YYSTYPE *yylval, YYLTYPE *yylloc,
+                                void *scanner);
 
 extern int _mesa_glsl_parse(struct _mesa_glsl_parse_state *);
 
@@ -371,6 +411,9 @@ _mesa_glsl_shader_target_name(enum _mesa_glsl_parser_targets target);
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+extern const char *
+_mesa_glsl_shader_target_name(GLenum type);
 
 extern int glcpp_preprocess(void *ctx, const char **shader, char **info_log,
                       const struct gl_extensions *extensions, struct gl_context *gl_ctx);

@@ -255,7 +255,8 @@
      UIMAGEBUFFER = 471,
      IMAGE1DARRAYSHADOW = 472,
      IMAGE2DARRAYSHADOW = 473,
-     ROW_MAJOR = 474
+     ROW_MAJOR = 474,
+     THEN = 475
    };
 #endif
 /* Tokens.  */
@@ -476,13 +477,14 @@
 #define IMAGE1DARRAYSHADOW 472
 #define IMAGE2DARRAYSHADOW 473
 #define ROW_MAJOR 474
+#define THEN 475
 
 
 
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 64 "src/glsl/glsl_parser.yy"
+#line 70 "src/glsl/glsl_parser.yy"
 {
    int n;
    float real;
@@ -506,7 +508,7 @@ typedef union YYSTYPE
    ast_case_label_list *case_label_list;
    ast_case_statement *case_statement;
    ast_case_statement_list *case_statement_list;
-   ast_uniform_block *uniform_block;
+   ast_interface_block *interface_block;
 
    struct {
       ast_node *cond;
@@ -519,7 +521,7 @@ typedef union YYSTYPE
    } selection_rest_statement;
 }
 /* Line 1529 of yacc.c.  */
-#line 523 "src/glsl/glsl_parser.h"
+#line 525 "src/glsl/glsl_parser.h"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1

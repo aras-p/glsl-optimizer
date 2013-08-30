@@ -104,6 +104,7 @@ void initialize_context_to_defaults(struct gl_context *ctx, gl_api api)
    ctx->Extensions.ARB_texture_cube_map_array = true;
    ctx->Extensions.ARB_texture_multisample = true;
    ctx->Extensions.ARB_texture_query_lod = true;
+   ctx->Extensions.ARB_gpu_shader5 = true;
 
    ctx->Const.GLSLVersion = 120;
 
@@ -116,10 +117,22 @@ void initialize_context_to_defaults(struct gl_context *ctx, gl_api api)
 
    ctx->Const.VertexProgram.MaxUniformComponents = 512;
    ctx->Const.MaxVarying = 8; /* == gl_MaxVaryingFloats / 4 */
-   ctx->Const.MaxVertexTextureImageUnits = 0;
+   ctx->Const.VertexProgram.MaxTextureImageUnits = 0;
    ctx->Const.MaxCombinedTextureImageUnits = 2;
-   ctx->Const.MaxTextureImageUnits = 2;
+   ctx->Const.FragmentProgram.MaxTextureImageUnits = 2;
    ctx->Const.FragmentProgram.MaxUniformComponents = 64;
 
    ctx->Const.MaxDrawBuffers = 1;
+
+   /* Set up default shader compiler options. */
+   struct gl_shader_compiler_options options;
+   memset(&options, 0, sizeof(options));
+   options.MaxUnrollIterations = 32;
+   options.MaxIfDepth = UINT_MAX;
+
+   /* Default pragma settings */
+   options.DefaultPragmas.Optimize = true;
+
+   for (int sh = 0; sh < MESA_SHADER_TYPES; ++sh)
+      memcpy(&ctx->ShaderCompilerOptions[sh], &options, sizeof(options));
 }

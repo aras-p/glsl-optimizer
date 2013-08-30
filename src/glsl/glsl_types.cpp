@@ -28,7 +28,6 @@
 #include "glsl_parser_extras.h"
 #include "glsl_types.h"
 #include "main/glminimal.h"
-#include "builtin_types.h"
 extern "C" {
 #include "program/hash_table.h"
 }
@@ -132,22 +131,6 @@ glsl_type::glsl_type(const glsl_struct_field *fields, unsigned num_fields,
    }
 }
 
-static void
-add_types_to_symbol_table(glsl_symbol_table *symtab,
-			  const struct glsl_type *types,
-			  unsigned num_types, bool warn,
-                          bool skip_1d)
-{
-   (void) warn;
-
-   for (unsigned i = 0; i < num_types; i++) {
-      if (skip_1d && types[i].base_type == GLSL_TYPE_SAMPLER
-          && types[i].sampler_dimensionality == GLSL_SAMPLER_DIM_1D)
-         continue;
-
-      symtab->add_type(types[i].name, & types[i]);
-   }
-}
 
 bool
 glsl_type::contains_sampler() const
@@ -213,255 +196,14 @@ glsl_type::sampler_index() const
    }
 }
 
-void
-glsl_type::generate_100ES_types(glsl_symbol_table *symtab)
-{
-   bool skip_1d = false;
-   add_types_to_symbol_table(symtab, builtin_core_types,
-			     Elements(builtin_core_types),
-			     false, skip_1d);
-   add_types_to_symbol_table(symtab, builtin_structure_types,
-			     Elements(builtin_structure_types),
-			     false, skip_1d);
-   add_types_to_symbol_table(symtab, void_type, 1, false, skip_1d);
-}
-
-void
-glsl_type::generate_300ES_types(glsl_symbol_table *symtab)
-{
-   /* GLSL 3.00 ES types are the same as GLSL 1.30 types, except that 1D
-    * samplers are skipped, and samplerCubeShadow is added.
-    */
-   bool add_deprecated = false;
-   bool skip_1d = true;
-
-   generate_130_types(symtab, add_deprecated, skip_1d);
-
-   add_types_to_symbol_table(symtab, &_samplerCubeShadow_type, 1, false,
-                             skip_1d);
-}
-
-void
-glsl_type::generate_110_types(glsl_symbol_table *symtab, bool add_deprecated,
-                              bool skip_1d)
-{
-   generate_100ES_types(symtab);
-
-   add_types_to_symbol_table(symtab, builtin_110_types,
-			     Elements(builtin_110_types),
-			     false, skip_1d);
-   add_types_to_symbol_table(symtab, &_sampler3D_type, 1, false, skip_1d);
-   if (add_deprecated) {
-      add_types_to_symbol_table(symtab, builtin_110_deprecated_structure_types,
-				Elements(builtin_110_deprecated_structure_types),
-				false, skip_1d);
-   }
-}
-
-
-void
-glsl_type::generate_120_types(glsl_symbol_table *symtab, bool add_deprecated,
-                              bool skip_1d)
-{
-   generate_110_types(symtab, add_deprecated, skip_1d);
-
-   add_types_to_symbol_table(symtab, builtin_120_types,
-			     Elements(builtin_120_types), false, skip_1d);
-}
-
-
-void
-glsl_type::generate_130_types(glsl_symbol_table *symtab, bool add_deprecated,
-                              bool skip_1d)
-{
-   generate_120_types(symtab, add_deprecated, skip_1d);
-
-   add_types_to_symbol_table(symtab, builtin_130_types,
-			     Elements(builtin_130_types), false, skip_1d);
-   generate_EXT_texture_array_types(symtab, false);
-}
-
-
-void
-glsl_type::generate_140_types(glsl_symbol_table *symtab)
-{
-   bool skip_1d = false;
-
-   generate_130_types(symtab, false, skip_1d);
-
-   add_types_to_symbol_table(symtab, builtin_140_types,
-			     Elements(builtin_140_types), false, skip_1d);
-
-   add_types_to_symbol_table(symtab, builtin_EXT_texture_buffer_object_types,
-			     Elements(builtin_EXT_texture_buffer_object_types),
-			     false, skip_1d);
-}
-
-
-void
-glsl_type::generate_150_types(glsl_symbol_table *symtab)
-{
-   generate_140_types(symtab);
-   generate_ARB_texture_multisample_types(symtab, false);
-}
-
-
-void
-glsl_type::generate_ARB_texture_rectangle_types(glsl_symbol_table *symtab,
-						bool warn)
-{
-   bool skip_1d = false;
-
-   add_types_to_symbol_table(symtab, builtin_ARB_texture_rectangle_types,
-			     Elements(builtin_ARB_texture_rectangle_types),
-			     warn, skip_1d);
-}
-
-
-void
-glsl_type::generate_EXT_texture_array_types(glsl_symbol_table *symtab,
-					    bool warn)
-{
-   bool skip_1d = false;
-
-   add_types_to_symbol_table(symtab, builtin_EXT_texture_array_types,
-			     Elements(builtin_EXT_texture_array_types),
-			     warn, skip_1d);
-}
-
-
-void
-glsl_type::generate_OES_texture_3D_types(glsl_symbol_table *symtab, bool warn)
-{
-   bool skip_1d = false;
-
-   add_types_to_symbol_table(symtab, &_sampler3D_type, 1, warn, skip_1d);
-}
-
-
+/*
 void
 glsl_type::generate_EXT_shadow_samplers_types(glsl_symbol_table *symtab, bool warn)
 {
    bool skip_1d = false;
    add_types_to_symbol_table(symtab, &builtin_110_types[2], 1, warn, skip_1d);
 }
-
-
-
-void
-glsl_type::generate_OES_EGL_image_external_types(glsl_symbol_table *symtab,
-						 bool warn)
-{
-   bool skip_1d = false;
-
-   add_types_to_symbol_table(symtab, builtin_OES_EGL_image_external_types,
-			     Elements(builtin_OES_EGL_image_external_types),
-			     warn, skip_1d);
-}
-
-void
-glsl_type::generate_ARB_texture_cube_map_array_types(glsl_symbol_table *symtab,
-						     bool warn)
-{
-   bool skip_1d = false;
-
-   add_types_to_symbol_table(symtab, builtin_ARB_texture_cube_map_array_types,
-			     Elements(builtin_ARB_texture_cube_map_array_types),
-			     warn, skip_1d);
-}
-
-void
-glsl_type::generate_ARB_texture_multisample_types(glsl_symbol_table *symtab,
-                                                  bool warn)
-{
-   bool skip_1d = false;
-   add_types_to_symbol_table(symtab, builtin_ARB_texture_multisample_types,
-                             Elements(builtin_ARB_texture_multisample_types),
-                             warn, skip_1d);
-}
-
-void
-_mesa_glsl_initialize_types(struct _mesa_glsl_parse_state *state)
-{
-   if (state->es_shader) {
-      switch (state->language_version) {
-      case 100:
-         assert(state->es_shader);
-         glsl_type::generate_100ES_types(state->symbols);
-         break;
-      case 300:
-         glsl_type::generate_300ES_types(state->symbols);
-         break;
-      default:
-         assert(!"Unexpected language version");
-         break;
-      }
-   } else {
-      bool skip_1d = false;
-      switch (state->language_version) {
-      case 110:
-         glsl_type::generate_110_types(state->symbols, true, skip_1d);
-         break;
-      case 120:
-         glsl_type::generate_120_types(state->symbols, true, skip_1d);
-         break;
-      case 130:
-         glsl_type::generate_130_types(state->symbols, true, skip_1d);
-         break;
-      case 140:
-         glsl_type::generate_140_types(state->symbols);
-         break;
-      case 150:
-         glsl_type::generate_150_types(state->symbols);
-         break;
-      default:
-         assert(!"Unexpected language version");
-         break;
-      }
-   }
-
-   if (state->ARB_texture_rectangle_enable ||
-       state->is_version(140, 0)) {
-      glsl_type::generate_ARB_texture_rectangle_types(state->symbols,
-					   state->ARB_texture_rectangle_warn);
-   }
-   if (state->OES_texture_3D_enable
-       && state->is_version(0, 100)) {
-      glsl_type::generate_OES_texture_3D_types(state->symbols,
-					       state->OES_texture_3D_warn);
-   }
-
-   if (state->EXT_texture_array_enable
-       && !state->is_version(130, 0)) {
-      // These are already included in 130; don't create twice.
-      glsl_type::generate_EXT_texture_array_types(state->symbols,
-				       state->EXT_texture_array_warn);
-   }
-	
-	if (state->EXT_shadow_samplers_enable && state->es_shader) {
-		glsl_type::generate_EXT_shadow_samplers_types(state->symbols,
-						state->EXT_shadow_samplers_warn);
-	}
-	
-   /* We cannot check for language_version == 100 here because we need the
-    * types to support fixed-function program generation.  But this is fine
-    * since the extension is never enabled for OpenGL contexts.
-    */
-   if (state->OES_EGL_image_external_enable) {
-      glsl_type::generate_OES_EGL_image_external_types(state->symbols,
-					       state->OES_EGL_image_external_warn);
-   }
-
-   if (state->ARB_texture_cube_map_array_enable) {
-      glsl_type::generate_ARB_texture_cube_map_array_types(state->symbols,
-				       state->ARB_texture_cube_map_array_warn);
-   }
-
-   if (state->ARB_texture_multisample_enable) {
-      glsl_type::generate_ARB_texture_multisample_types(state->symbols,
-         state->ARB_texture_multisample_warn);
-   }
-}
+*/
 
 
 const glsl_type *glsl_type::get_base_type() const
@@ -552,6 +294,58 @@ glsl_type::glsl_type(const glsl_type *array, unsigned length) :
 
 
 const glsl_type *
+glsl_type::vec(unsigned components)
+{
+   if (components == 0 || components > 4)
+      return error_type;
+
+   static const glsl_type *const ts[] = {
+      float_type, vec2_type, vec3_type, vec4_type
+   };
+   return ts[components - 1];
+}
+
+
+const glsl_type *
+glsl_type::ivec(unsigned components)
+{
+   if (components == 0 || components > 4)
+      return error_type;
+
+   static const glsl_type *const ts[] = {
+      int_type, ivec2_type, ivec3_type, ivec4_type
+   };
+   return ts[components - 1];
+}
+
+
+const glsl_type *
+glsl_type::uvec(unsigned components)
+{
+   if (components == 0 || components > 4)
+      return error_type;
+
+   static const glsl_type *const ts[] = {
+      uint_type, uvec2_type, uvec3_type, uvec4_type
+   };
+   return ts[components - 1];
+}
+
+
+const glsl_type *
+glsl_type::bvec(unsigned components)
+{
+   if (components == 0 || components > 4)
+      return error_type;
+
+   static const glsl_type *const ts[] = {
+      bool_type, bvec2_type, bvec3_type, bvec4_type
+   };
+   return ts[components - 1];
+}
+
+
+const glsl_type *
 glsl_type::get_instance(unsigned base_type, unsigned rows, unsigned columns)
 {
    if (base_type == GLSL_TYPE_VOID)
@@ -565,13 +359,13 @@ glsl_type::get_instance(unsigned base_type, unsigned rows, unsigned columns)
    if (columns == 1) {
       switch (base_type) {
       case GLSL_TYPE_UINT:
-	 return uint_type + (rows - 1);
+	 return uvec(rows);
       case GLSL_TYPE_INT:
-	 return int_type + (rows - 1);
+	 return ivec(rows);
       case GLSL_TYPE_FLOAT:
-	 return float_type + (rows - 1);
+	 return vec(rows);
       case GLSL_TYPE_BOOL:
-	 return bool_type + (rows - 1);
+	 return bvec(rows);
       default:
 	 return error_type;
       }
@@ -1061,4 +855,59 @@ glsl_type::std140_size(bool row_major) const
 
    assert(!"not reached");
    return -1;
+}
+
+
+unsigned
+glsl_type::count_attribute_slots() const
+{
+   /* From page 31 (page 37 of the PDF) of the GLSL 1.50 spec:
+    *
+    *     "A scalar input counts the same amount against this limit as a vec4,
+    *     so applications may want to consider packing groups of four
+    *     unrelated float inputs together into a vector to better utilize the
+    *     capabilities of the underlying hardware. A matrix input will use up
+    *     multiple locations.  The number of locations used will equal the
+    *     number of columns in the matrix."
+    *
+    * The spec does not explicitly say how arrays are counted.  However, it
+    * should be safe to assume the total number of slots consumed by an array
+    * is the number of entries in the array multiplied by the number of slots
+    * consumed by a single element of the array.
+    *
+    * The spec says nothing about how structs are counted, because vertex
+    * attributes are not allowed to be (or contain) structs.  However, Mesa
+    * allows varying structs, the number of varying slots taken up by a
+    * varying struct is simply equal to the sum of the number of slots taken
+    * up by each element.
+    */
+   switch (this->base_type) {
+   case GLSL_TYPE_UINT:
+   case GLSL_TYPE_INT:
+   case GLSL_TYPE_FLOAT:
+   case GLSL_TYPE_BOOL:
+      return this->matrix_columns;
+
+   case GLSL_TYPE_STRUCT:
+   case GLSL_TYPE_INTERFACE: {
+      unsigned size = 0;
+
+      for (unsigned i = 0; i < this->length; i++)
+         size += this->fields.structure[i].type->count_attribute_slots();
+
+      return size;
+   }
+
+   case GLSL_TYPE_ARRAY:
+      return this->length * this->fields.array->count_attribute_slots();
+
+   case GLSL_TYPE_SAMPLER:
+   case GLSL_TYPE_VOID:
+   case GLSL_TYPE_ERROR:
+      break;
+   }
+
+   assert(!"Unexpected type in count_attribute_slots()");
+
+   return 0;
 }

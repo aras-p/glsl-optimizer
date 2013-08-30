@@ -383,6 +383,10 @@ mat4x2 transpose(mat2x4 m);
 mat3x4 transpose(mat4x3 m);
 mat4x3 transpose(mat3x4 m);
 
+float determinant(mat2 m);
+float determinant(mat3 m);
+float determinant(mat4 m);
+
 mat2 inverse(mat2 m);
 mat3 inverse(mat3 m);
 mat4 inverse(mat4 m);
