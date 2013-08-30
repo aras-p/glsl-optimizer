@@ -614,6 +614,7 @@ public:
 		   unsigned i;
 	   } q;
 	   q.i = 0;
+	   q.q.precision = ast_precision_none;
 	   qualifier = q.q;
    }
    virtual void print(void) const;

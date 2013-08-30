@@ -893,6 +893,7 @@ parameter_qualifier:
    /* empty */
    {
       memset(& $$, 0, sizeof($$));
+	  $$.precision = ast_precision_none;
    }
    | CONST_TOK parameter_qualifier
    {
@@ -930,16 +931,19 @@ parameter_direction_qualifier:
    IN_TOK
    {
       memset(& $$, 0, sizeof($$));
+	  $$.precision = ast_precision_none;
       $$.flags.q.in = 1;
    }
    | OUT_TOK
    {
       memset(& $$, 0, sizeof($$));
+	  $$.precision = ast_precision_none;
       $$.flags.q.out = 1;
    }
    | INOUT_TOK
    {
       memset(& $$, 0, sizeof($$));
+	  $$.precision = ast_precision_none;
       $$.flags.q.in = 1;
       $$.flags.q.out = 1;
    }
@@ -1162,6 +1166,7 @@ layout_qualifier_id:
    any_identifier
    {
       memset(& $$, 0, sizeof($$));
+	  $$.precision = ast_precision_none;
 
       /* Layout qualifiers for ARB_fragment_coord_conventions. */
       if (!$$.flags.i && (state->ARB_fragment_coord_conventions_enable ||
@@ -1267,6 +1272,7 @@ layout_qualifier_id:
    | any_identifier '=' integer_constant
    {
       memset(& $$, 0, sizeof($$));
+	  $$.precision = ast_precision_none;
 
       if (state->ARB_explicit_attrib_location_enable) {
          if (strcmp("location", $1) == 0) {
@@ -1355,11 +1361,13 @@ interface_block_layout_qualifier:
    ROW_MAJOR
    {
       memset(& $$, 0, sizeof($$));
+	  $$.precision = ast_precision_none;
       $$.flags.q.row_major = 1;
    }
    | PACKED_TOK
    {
       memset(& $$, 0, sizeof($$));
+	  $$.precision = ast_precision_none;
       $$.flags.q.packed = 1;
    }
    ;
@@ -1368,16 +1376,19 @@ interpolation_qualifier:
    SMOOTH
    {
       memset(& $$, 0, sizeof($$));
+	  $$.precision = ast_precision_none;
       $$.flags.q.smooth = 1;
    }
    | FLAT
    {
       memset(& $$, 0, sizeof($$));
+	  $$.precision = ast_precision_none;
       $$.flags.q.flat = 1;
    }
    | NOPERSPECTIVE
    {
       memset(& $$, 0, sizeof($$));
+	  $$.precision = ast_precision_none;
       $$.flags.q.noperspective = 1;
    }
    ;
@@ -1387,6 +1398,7 @@ type_qualifier:
    INVARIANT
    {
       memset(& $$, 0, sizeof($$));
+	  $$.precision = ast_precision_none;
       $$.flags.q.invariant = 1;
    }
    | auxiliary_storage_qualifier
@@ -1396,6 +1408,7 @@ type_qualifier:
    | precision_qualifier
    {
       memset(&$$, 0, sizeof($$));
+	  $$.precision = ast_precision_none;
       $$.precision = $1;
    }
 
@@ -1527,6 +1540,7 @@ auxiliary_storage_qualifier:
    CENTROID
    {
       memset(& $$, 0, sizeof($$));
+	  $$.precision = ast_precision_none;
       $$.flags.q.centroid = 1;
    }
    /* TODO: "sample" and "patch" also go here someday. */
@@ -1535,31 +1549,37 @@ storage_qualifier:
    CONST_TOK
    {
       memset(& $$, 0, sizeof($$));
+	  $$.precision = ast_precision_none;
       $$.flags.q.constant = 1;
    }
    | ATTRIBUTE
    {
       memset(& $$, 0, sizeof($$));
+	  $$.precision = ast_precision_none;
       $$.flags.q.attribute = 1;
    }
    | VARYING
    {
       memset(& $$, 0, sizeof($$));
+	  $$.precision = ast_precision_none;
       $$.flags.q.varying = 1;
    }
    | IN_TOK
    {
       memset(& $$, 0, sizeof($$));
+	  $$.precision = ast_precision_none;
       $$.flags.q.in = 1;
    }
    | OUT_TOK
    {
       memset(& $$, 0, sizeof($$));
+	  $$.precision = ast_precision_none;
       $$.flags.q.out = 1;
    }
    | UNIFORM
    {
       memset(& $$, 0, sizeof($$));
+	  $$.precision = ast_precision_none;
       $$.flags.q.uniform = 1;
    }
    ;
@@ -2232,16 +2252,19 @@ interface_qualifier:
    IN_TOK
    {
       memset(& $$, 0, sizeof($$));
+	  $$.precision = ast_precision_none;
       $$.flags.q.in = 1;
    }
    | OUT_TOK
    {
       memset(& $$, 0, sizeof($$));
+	  $$.precision = ast_precision_none;
       $$.flags.q.out = 1;
    }
    | UNIFORM
    {
       memset(& $$, 0, sizeof($$));
+	  $$.precision = ast_precision_none;
       $$.flags.q.uniform = 1;
    }
    ;

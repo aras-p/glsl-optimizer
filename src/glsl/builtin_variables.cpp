@@ -392,6 +392,8 @@ builtin_variable_generator::add_variable(const char *name,
                                          enum ir_variable_mode mode, int slot, glsl_precision prec)
 
 {
+   if (!this->state->es_shader)
+      prec = glsl_precision_undefined;
    ir_variable *var = new(symtab) ir_variable(type, name, mode, prec);
 
    switch (var->mode) {
