@@ -2076,6 +2076,7 @@ exec_txq(struct tgsi_exec_machine *mach,
 
    fetch_source(mach, &src, &inst->Src[0], TGSI_CHAN_X, TGSI_EXEC_DATA_INT);
 
+   /* XXX: This interface can't return per-pixel values */
    mach->Sampler->get_dims(mach->Sampler, unit, src.i[0], result);
 
    for (i = 0; i < TGSI_QUAD_SIZE; i++) {

@@ -3112,7 +3112,11 @@ sp_tgsi_get_dims(struct tgsi_sampler *tgsi_sampler,
    struct sp_tgsi_sampler *sp_samp = (struct sp_tgsi_sampler *)tgsi_sampler;
 
    assert(sview_index < PIPE_MAX_SHADER_SAMPLER_VIEWS);
-   /* TODO should have defined behavior if no texture is bound. */
+   /* always have a view here but texture is NULL if no sampler view was set. */
+   if (!sp_samp->sp_sview[sview_index].base.texture) {
+      dims[0] = dims[1] = dims[2] = dims[3] = 0;
+      return;
+   }
    sp_get_dims(&sp_samp->sp_sview[sview_index], level, dims);
 }
 
@@ -3136,8 +3140,16 @@ sp_tgsi_get_samples(struct tgsi_sampler *tgsi_sampler,
    assert(sview_index < PIPE_MAX_SHADER_SAMPLER_VIEWS);
    assert(sampler_index < PIPE_MAX_SAMPLERS);
    assert(sp_samp->sp_sampler[sampler_index]);
-   /* FIXME should have defined behavior if no texture is bound. */
-   assert(sp_samp->sp_sview[sview_index].get_samples);
+   /* always have a view here but texture is NULL if no sampler view was set. */
+   if (!sp_samp->sp_sview[sview_index].base.texture) {
+      int i, j;
+      for (j = 0; j < TGSI_NUM_CHANNELS; j++) {
+         for (i = 0; i < TGSI_QUAD_SIZE; i++) {
+            rgba[j][i] = 0.0f;
+         }
+      }
+      return;
+   }
    sp_samp->sp_sview[sview_index].get_samples(&sp_samp->sp_sview[sview_index],
                                               sp_samp->sp_sampler[sampler_index],
                                               s, t, p, c0, lod, control, rgba);
@@ -3155,8 +3167,16 @@ sp_tgsi_get_texel(struct tgsi_sampler *tgsi_sampler,
    struct sp_tgsi_sampler *sp_samp = (struct sp_tgsi_sampler *)tgsi_sampler;
 
    assert(sview_index < PIPE_MAX_SHADER_SAMPLER_VIEWS);
-   /* FIXME should have defined behavior if no texture is bound. */
-   assert(sp_samp->sp_sview[sview_index].base.texture);
+   /* always have a view here but texture is NULL if no sampler view was set. */
+   if (!sp_samp->sp_sview[sview_index].base.texture) {
+      int i, j;
+      for (j = 0; j < TGSI_NUM_CHANNELS; j++) {
+         for (i = 0; i < TGSI_QUAD_SIZE; i++) {
+            rgba[j][i] = 0.0f;
+         }
+      }
+      return;
+   }
    sp_get_texels(&sp_samp->sp_sview[sview_index], i, j, k, lod, offset, rgba);
 }
 
