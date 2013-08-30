@@ -141,7 +141,6 @@
 		2BA55A9F1207FEA6002DC82D /* ast_type.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA55A541207FEA6002DC82D /* ast_type.cpp */; };
 		2BA55AA01207FEA6002DC82D /* ast.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BA55A551207FEA6002DC82D /* ast.h */; };
 		2BA55AA11207FEA6002DC82D /* builtin_function.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA55A561207FEA6002DC82D /* builtin_function.cpp */; };
-		2BA55AA21207FEA6002DC82D /* builtin_types.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BA55A571207FEA6002DC82D /* builtin_types.h */; };
 		2BA55AA41207FEA6002DC82D /* glsl_lexer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA55A591207FEA6002DC82D /* glsl_lexer.cpp */; };
 		2BA55AA61207FEA6002DC82D /* glsl_optimizer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA55A5B1207FEA6002DC82D /* glsl_optimizer.cpp */; };
 		2BA55AA71207FEA6002DC82D /* glsl_optimizer.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BA55A5C1207FEA6002DC82D /* glsl_optimizer.h */; };
@@ -188,6 +187,19 @@
 		2BA55AE41207FEA6002DC82D /* program.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BA55A991207FEA6002DC82D /* program.h */; };
 		2BA55AE51207FEA6002DC82D /* s_expression.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA55A9A1207FEA6002DC82D /* s_expression.cpp */; };
 		2BA55AE61207FEA6002DC82D /* s_expression.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BA55A9B1207FEA6002DC82D /* s_expression.h */; };
+		2BA7E13F17D0AEB200D5C475 /* builtin_type_macros.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BA7E13817D0AEB200D5C475 /* builtin_type_macros.h */; };
+		2BA7E14017D0AEB200D5C475 /* builtin_types.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA7E13917D0AEB200D5C475 /* builtin_types.cpp */; };
+		2BA7E14117D0AEB200D5C475 /* builtin_types.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA7E13917D0AEB200D5C475 /* builtin_types.cpp */; };
+		2BA7E14217D0AEB200D5C475 /* link_interface_blocks.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA7E13A17D0AEB200D5C475 /* link_interface_blocks.cpp */; };
+		2BA7E14317D0AEB200D5C475 /* link_interface_blocks.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA7E13A17D0AEB200D5C475 /* link_interface_blocks.cpp */; };
+		2BA7E14417D0AEB200D5C475 /* lower_named_interface_blocks.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA7E13B17D0AEB200D5C475 /* lower_named_interface_blocks.cpp */; };
+		2BA7E14517D0AEB200D5C475 /* lower_named_interface_blocks.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA7E13B17D0AEB200D5C475 /* lower_named_interface_blocks.cpp */; };
+		2BA7E14617D0AEB200D5C475 /* lower_vector_insert.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA7E13C17D0AEB200D5C475 /* lower_vector_insert.cpp */; };
+		2BA7E14717D0AEB200D5C475 /* lower_vector_insert.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA7E13C17D0AEB200D5C475 /* lower_vector_insert.cpp */; };
+		2BA7E14817D0AEB200D5C475 /* opt_dead_builtin_varyings.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA7E13D17D0AEB200D5C475 /* opt_dead_builtin_varyings.cpp */; };
+		2BA7E14917D0AEB200D5C475 /* opt_dead_builtin_varyings.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA7E13D17D0AEB200D5C475 /* opt_dead_builtin_varyings.cpp */; };
+		2BA7E14A17D0AEB200D5C475 /* opt_flip_matrices.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA7E13E17D0AEB200D5C475 /* opt_flip_matrices.cpp */; };
+		2BA7E14B17D0AEB200D5C475 /* opt_flip_matrices.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA7E13E17D0AEB200D5C475 /* opt_flip_matrices.cpp */; };
 		2BB2F5B012B8F1580052C6B0 /* lower_discard.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BB2F5AA12B8F1580052C6B0 /* lower_discard.cpp */; };
 		2BB2F5B112B8F1580052C6B0 /* lower_instructions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BB2F5AB12B8F1580052C6B0 /* lower_instructions.cpp */; };
 		2BB2F5B212B8F1580052C6B0 /* lower_vector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BB2F5AC12B8F1580052C6B0 /* lower_vector.cpp */; };
@@ -298,7 +310,6 @@
 		2BA55A541207FEA6002DC82D /* ast_type.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ast_type.cpp; path = ../../src/glsl/ast_type.cpp; sourceTree = SOURCE_ROOT; };
 		2BA55A551207FEA6002DC82D /* ast.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ast.h; path = ../../src/glsl/ast.h; sourceTree = SOURCE_ROOT; };
 		2BA55A561207FEA6002DC82D /* builtin_function.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = builtin_function.cpp; path = ../../src/glsl/builtin_function.cpp; sourceTree = SOURCE_ROOT; };
-		2BA55A571207FEA6002DC82D /* builtin_types.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = builtin_types.h; path = ../../src/glsl/builtin_types.h; sourceTree = SOURCE_ROOT; };
 		2BA55A591207FEA6002DC82D /* glsl_lexer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = glsl_lexer.cpp; path = ../../src/glsl/glsl_lexer.cpp; sourceTree = SOURCE_ROOT; };
 		2BA55A5A1207FEA6002DC82D /* glsl_lexer.ll */ = {isa = PBXFileReference; explicitFileType = sourcecode.lex; fileEncoding = 4; name = glsl_lexer.ll; path = ../../src/glsl/glsl_lexer.ll; sourceTree = SOURCE_ROOT; };
 		2BA55A5B1207FEA6002DC82D /* glsl_optimizer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = glsl_optimizer.cpp; path = ../../src/glsl/glsl_optimizer.cpp; sourceTree = SOURCE_ROOT; };
@@ -347,6 +358,13 @@
 		2BA55A991207FEA6002DC82D /* program.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = program.h; path = ../../src/glsl/program.h; sourceTree = SOURCE_ROOT; };
 		2BA55A9A1207FEA6002DC82D /* s_expression.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = s_expression.cpp; path = ../../src/glsl/s_expression.cpp; sourceTree = SOURCE_ROOT; };
 		2BA55A9B1207FEA6002DC82D /* s_expression.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = s_expression.h; path = ../../src/glsl/s_expression.h; sourceTree = SOURCE_ROOT; };
+		2BA7E13817D0AEB200D5C475 /* builtin_type_macros.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = builtin_type_macros.h; path = ../../src/glsl/builtin_type_macros.h; sourceTree = "<group>"; };
+		2BA7E13917D0AEB200D5C475 /* builtin_types.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = builtin_types.cpp; path = ../../src/glsl/builtin_types.cpp; sourceTree = "<group>"; };
+		2BA7E13A17D0AEB200D5C475 /* link_interface_blocks.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = link_interface_blocks.cpp; path = ../../src/glsl/link_interface_blocks.cpp; sourceTree = "<group>"; };
+		2BA7E13B17D0AEB200D5C475 /* lower_named_interface_blocks.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = lower_named_interface_blocks.cpp; path = ../../src/glsl/lower_named_interface_blocks.cpp; sourceTree = "<group>"; };
+		2BA7E13C17D0AEB200D5C475 /* lower_vector_insert.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = lower_vector_insert.cpp; path = ../../src/glsl/lower_vector_insert.cpp; sourceTree = "<group>"; };
+		2BA7E13D17D0AEB200D5C475 /* opt_dead_builtin_varyings.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = opt_dead_builtin_varyings.cpp; path = ../../src/glsl/opt_dead_builtin_varyings.cpp; sourceTree = "<group>"; };
+		2BA7E13E17D0AEB200D5C475 /* opt_flip_matrices.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = opt_flip_matrices.cpp; path = ../../src/glsl/opt_flip_matrices.cpp; sourceTree = "<group>"; };
 		2BB2F5AA12B8F1580052C6B0 /* lower_discard.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = lower_discard.cpp; path = ../../src/glsl/lower_discard.cpp; sourceTree = SOURCE_ROOT; };
 		2BB2F5AB12B8F1580052C6B0 /* lower_instructions.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = lower_instructions.cpp; path = ../../src/glsl/lower_instructions.cpp; sourceTree = SOURCE_ROOT; };
 		2BB2F5AC12B8F1580052C6B0 /* lower_vector.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = lower_vector.cpp; path = ../../src/glsl/lower_vector.cpp; sourceTree = SOURCE_ROOT; };
@@ -473,7 +491,8 @@
 				2BA55A541207FEA6002DC82D /* ast_type.cpp */,
 				2BBD9DA8171968C300515007 /* builtin_compiler */,
 				2BA55A561207FEA6002DC82D /* builtin_function.cpp */,
-				2BA55A571207FEA6002DC82D /* builtin_types.h */,
+				2BA7E13817D0AEB200D5C475 /* builtin_type_macros.h */,
+				2BA7E13917D0AEB200D5C475 /* builtin_types.cpp */,
 				2B92A05C15F9FF4700CFED4A /* builtin_variables.cpp */,
 				2B6A99EB1223B1460059FBED /* glcpp */,
 				2BA55A591207FEA6002DC82D /* glsl_lexer.cpp */,
@@ -525,6 +544,7 @@
 				2BA55A8E1207FEA6002DC82D /* ir_variable_refcount.h */,
 				2BA55A921207FEA6002DC82D /* ir_visitor.h */,
 				2BA55A951207FEA6002DC82D /* link_functions.cpp */,
+				2BA7E13A17D0AEB200D5C475 /* link_interface_blocks.cpp */,
 				2BBD9DAA1719693F00515007 /* link_uniform_block_active_visitor.cpp */,
 				2BBD9DAB1719694000515007 /* link_uniform_block_active_visitor.h */,
 				2BBD9DAC1719694100515007 /* link_uniform_blocks.cpp */,
@@ -546,6 +566,7 @@
 				2BB2F5AB12B8F1580052C6B0 /* lower_instructions.cpp */,
 				2B3854491293BE5000F3E692 /* lower_jumps.cpp */,
 				2B38544A1293BE5000F3E692 /* lower_mat_op_to_vec.cpp */,
+				2BA7E13B17D0AEB200D5C475 /* lower_named_interface_blocks.cpp */,
 				2BBA49251254706A00D42573 /* lower_noise.cpp */,
 				2B3A6B9E15FA0494000DCBE1 /* lower_output_reads.cpp */,
 				2BBD9DB61719698900515007 /* lower_packed_varyings.cpp */,
@@ -555,6 +576,7 @@
 				2B38544D1293BE5000F3E692 /* lower_vec_index_to_cond_assign.cpp */,
 				2B38544E1293BE5000F3E692 /* lower_vec_index_to_swizzle.cpp */,
 				2BB2F5AC12B8F1580052C6B0 /* lower_vector.cpp */,
+				2BA7E13C17D0AEB200D5C475 /* lower_vector_insert.cpp */,
 				2BA0808A1352EBFB00A1C074 /* main.cpp */,
 				2B38544F1293BE5000F3E692 /* opt_algebraic.cpp */,
 				2B3A6BA115FA0494000DCBE1 /* opt_array_splitting.cpp */,
@@ -563,10 +585,12 @@
 				2B3854521293BE5000F3E692 /* opt_constant_variable.cpp */,
 				2B3854531293BE5000F3E692 /* opt_copy_propagation.cpp */,
 				2BEC22CB1356E94E00B5E301 /* opt_copy_propagation_elements.cpp */,
+				2BA7E13D17D0AEB200D5C475 /* opt_dead_builtin_varyings.cpp */,
 				2B3854551293BE5000F3E692 /* opt_dead_code.cpp */,
 				2B3854541293BE5000F3E692 /* opt_dead_code_local.cpp */,
 				2B3854561293BE5000F3E692 /* opt_dead_functions.cpp */,
 				2BBD9DB81719698B00515007 /* opt_flatten_nested_if_blocks.cpp */,
+				2BA7E13E17D0AEB200D5C475 /* opt_flip_matrices.cpp */,
 				2B3854571293BE5000F3E692 /* opt_function_inlining.cpp */,
 				2B3854581293BE5000F3E692 /* opt_if_simplification.cpp */,
 				2B3854591293BE5000F3E692 /* opt_noop_swizzle.cpp */,
@@ -624,7 +648,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				2BA55AA01207FEA6002DC82D /* ast.h in Headers */,
-				2BA55AA21207FEA6002DC82D /* builtin_types.h in Headers */,
 				2BA55AA71207FEA6002DC82D /* glsl_optimizer.h in Headers */,
 				2BA55AA91207FEA6002DC82D /* glsl_parser_extras.h in Headers */,
 				2BA55AAB1207FEA6002DC82D /* glsl_parser.h in Headers */,
@@ -662,6 +685,7 @@
 				2BB725B0135094BE0057D8B5 /* imports.h in Headers */,
 				2BB725B1135094BE0057D8B5 /* macros.h in Headers */,
 				2BB725B3135094BE0057D8B5 /* mtypes.h in Headers */,
+				2BA7E13F17D0AEB200D5C475 /* builtin_type_macros.h in Headers */,
 				2BB725B5135094BE0057D8B5 /* simple_list.h in Headers */,
 				2BA07FAC1352E7BB00A1C074 /* ralloc.h in Headers */,
 				2B655A7A13E0324F00B5278F /* standalone_scaffolding.h in Headers */,
@@ -766,6 +790,7 @@
 				2BA080421352EBB900A1C074 /* ast_expr.cpp in Sources */,
 				2BA080431352EBB900A1C074 /* ast_function.cpp in Sources */,
 				2BA080441352EBB900A1C074 /* ast_to_hir.cpp in Sources */,
+				2BA7E14517D0AEB200D5C475 /* lower_named_interface_blocks.cpp in Sources */,
 				2BA080451352EBB900A1C074 /* ast_type.cpp in Sources */,
 				2BA080471352EBB900A1C074 /* glsl_lexer.cpp in Sources */,
 				2BA080491352EBB900A1C074 /* glsl_parser_extras.cpp in Sources */,
@@ -785,9 +810,11 @@
 				2BA080571352EBB900A1C074 /* ir_print_visitor.cpp in Sources */,
 				2BA080581352EBB900A1C074 /* ir_reader.cpp in Sources */,
 				2BA080591352EBB900A1C074 /* ir_unused_structs.cpp in Sources */,
+				2BA7E14717D0AEB200D5C475 /* lower_vector_insert.cpp in Sources */,
 				2BA0805A1352EBB900A1C074 /* ir_validate.cpp in Sources */,
 				2BA0805B1352EBB900A1C074 /* ir_variable_refcount.cpp in Sources */,
 				2BA0805D1352EBB900A1C074 /* ir.cpp in Sources */,
+				2BA7E14917D0AEB200D5C475 /* opt_dead_builtin_varyings.cpp in Sources */,
 				2BA0805E1352EBB900A1C074 /* link_functions.cpp in Sources */,
 				2BA0805F1352EBB900A1C074 /* linker.cpp in Sources */,
 				2BA080601352EBB900A1C074 /* s_expression.cpp in Sources */,
@@ -830,9 +857,12 @@
 				2BA080861352EBB900A1C074 /* ralloc.c in Sources */,
 				2BA080871352EBD100A1C074 /* builtin_stubs.cpp in Sources */,
 				2BA0808B1352EBFB00A1C074 /* main.cpp in Sources */,
+				2BA7E14117D0AEB200D5C475 /* builtin_types.cpp in Sources */,
 				2BEC22EB1356E98500B5E301 /* opt_copy_propagation_elements.cpp in Sources */,
 				2B655A7213E0322E00B5278F /* ir_function_detect_recursion.cpp in Sources */,
 				2B655A7813E0324F00B5278F /* standalone_scaffolding.cpp in Sources */,
+				2BA7E14B17D0AEB200D5C475 /* opt_flip_matrices.cpp in Sources */,
+				2BA7E14317D0AEB200D5C475 /* link_interface_blocks.cpp in Sources */,
 				2B92A05D15F9FF4700CFED4A /* builtin_variables.cpp in Sources */,
 				2B3A6B8F15FA043D000DCBE1 /* link_uniforms.cpp in Sources */,
 				2B3A6B9615FA0468000DCBE1 /* link_uniform_initializers.cpp in Sources */,
@@ -861,6 +891,7 @@
 				2BA55A9C1207FEA6002DC82D /* ast_expr.cpp in Sources */,
 				2BA55A9D1207FEA6002DC82D /* ast_function.cpp in Sources */,
 				2BA55A9E1207FEA6002DC82D /* ast_to_hir.cpp in Sources */,
+				2BA7E14417D0AEB200D5C475 /* lower_named_interface_blocks.cpp in Sources */,
 				2BA55A9F1207FEA6002DC82D /* ast_type.cpp in Sources */,
 				2BA55AA11207FEA6002DC82D /* builtin_function.cpp in Sources */,
 				2BA55AA41207FEA6002DC82D /* glsl_lexer.cpp in Sources */,
@@ -880,9 +911,11 @@
 				2BA55AC81207FEA6002DC82D /* ir_import_prototypes.cpp in Sources */,
 				2BA55ACC1207FEA6002DC82D /* ir_print_glsl_visitor.cpp in Sources */,
 				2BA55ACE1207FEA6002DC82D /* ir_print_visitor.cpp in Sources */,
+				2BA7E14617D0AEB200D5C475 /* lower_vector_insert.cpp in Sources */,
 				2BA55AD01207FEA6002DC82D /* ir_reader.cpp in Sources */,
 				2BA55AD51207FEA6002DC82D /* ir_unused_structs.cpp in Sources */,
 				2BA55AD71207FEA6002DC82D /* ir_validate.cpp in Sources */,
+				2BA7E14817D0AEB200D5C475 /* opt_dead_builtin_varyings.cpp in Sources */,
 				2BA55AD81207FEA6002DC82D /* ir_variable_refcount.cpp in Sources */,
 				2BA55ADE1207FEA6002DC82D /* ir.cpp in Sources */,
 				2BA55AE01207FEA6002DC82D /* link_functions.cpp in Sources */,
@@ -925,9 +958,12 @@
 				2BB2F5B212B8F1580052C6B0 /* lower_vector.cpp in Sources */,
 				2BB2F5B412B8F1580052C6B0 /* strtod.c in Sources */,
 				2BA07FAB1352E7BB00A1C074 /* ralloc.c in Sources */,
+				2BA7E14017D0AEB200D5C475 /* builtin_types.cpp in Sources */,
 				2BEC22EA1356E98300B5E301 /* opt_copy_propagation_elements.cpp in Sources */,
 				2B655A7313E0322E00B5278F /* ir_function_detect_recursion.cpp in Sources */,
 				2B655A7913E0324F00B5278F /* standalone_scaffolding.cpp in Sources */,
+				2BA7E14A17D0AEB200D5C475 /* opt_flip_matrices.cpp in Sources */,
+				2BA7E14217D0AEB200D5C475 /* link_interface_blocks.cpp in Sources */,
 				2B92A05E15F9FF4700CFED4A /* builtin_variables.cpp in Sources */,
 				2B3A6B9015FA043D000DCBE1 /* link_uniforms.cpp in Sources */,
 				2B3A6B9715FA0468000DCBE1 /* link_uniform_initializers.cpp in Sources */,
