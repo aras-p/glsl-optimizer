@@ -60,7 +60,8 @@ intel_miptree_create_for_teximage(struct brw_context *brw,
     */
    if ((intelObj->base.Sampler.MinFilter == GL_NEAREST ||
         intelObj->base.Sampler.MinFilter == GL_LINEAR) &&
-       intelImage->base.Base.Level == 0) {
+       intelImage->base.Base.Level == 0 &&
+       !intelObj->base.GenerateMipmap) {
       lastLevel = 0;
    } else {
       lastLevel = _mesa_get_tex_max_num_levels(intelObj->base.Target,
