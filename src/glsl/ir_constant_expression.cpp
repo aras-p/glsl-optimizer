@@ -1840,7 +1840,7 @@ ir_function_signature::constant_expression_value(exec_list *actual_parameters, s
     * "Function calls to user-defined functions (non-built-in functions)
     *  cannot be used to form constant expressions."
     */
-   if (!this->is_builtin)
+   if (!this->is_builtin())
       return NULL;
 
    /*

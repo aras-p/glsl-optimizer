@@ -684,7 +684,7 @@ public:
    unsigned is_defined:1;
 
    /** Whether or not this function signature is a built-in. */
-   unsigned is_builtin:1;
+   bool is_builtin() const;
 
    /** Body of instructions in the function. */
    struct exec_list body;
@@ -1321,7 +1321,7 @@ public:
       ir_type = ir_type_call;
       assert(callee->return_type != NULL);
       actual_parameters->move_nodes_to(& this->actual_parameters);
-      this->use_builtin = callee->is_builtin;
+      this->use_builtin = callee->is_builtin();
    }
 
    virtual ir_call *clone(void *mem_ctx, struct hash_table *ht) const;

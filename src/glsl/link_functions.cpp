@@ -116,7 +116,7 @@ public:
 	 f->exact_matching_signature(&callee->parameters);
       if ((linked_sig == NULL)
 	  || ((linked_sig != NULL)
-	      && (linked_sig->is_builtin != ir->use_builtin))) {
+	      && (linked_sig->is_builtin() != ir->use_builtin))) {
 	 linked_sig = new(linked) ir_function_signature(callee->return_type);
 	 f->add_signature(linked_sig);
       }
@@ -297,7 +297,7 @@ find_matching_signature(const char *name, const exec_list *actual_parameters,
        * signature that we found isn't a built-in, keep looking.  Also keep
        * looking if we expect a non-built-in but found a built-in.
        */
-      if (use_builtin != sig->is_builtin)
+      if (use_builtin != sig->is_builtin())
 	    continue;
 
       return sig;

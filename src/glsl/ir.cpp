@@ -1585,8 +1585,14 @@ ir_function_signature::ir_function_signature(const glsl_type *return_type,
      _function(NULL)
 {
    this->ir_type = ir_type_function_signature;
-   this->is_builtin = builtin_info != NULL;
    this->origin = NULL;
+}
+
+
+bool
+ir_function_signature::is_builtin() const
+{
+   return builtin_info != NULL;
 }
 
 
@@ -1661,7 +1667,7 @@ ir_function::has_user_signature()
 {
    foreach_list(n, &this->signatures) {
       ir_function_signature *const sig = (ir_function_signature *) n;
-      if (!sig->is_builtin)
+      if (!sig->is_builtin())
 	 return true;
    }
    return false;
