@@ -145,6 +145,10 @@ ir_function::matching_signature(_mesa_glsl_parse_state *state,
       ir_function_signature *const sig =
 	 (ir_function_signature *) iter.get();
 
+      /* Skip over any built-ins that aren't available in this shader. */
+      if (sig->is_builtin() && !sig->is_builtin_available(state))
+         continue;
+
       switch (parameter_lists_match(& sig->parameters, actual_parameters)) {
       case PARAMETER_LIST_EXACT_MATCH:
 	 *is_exact = true;
@@ -211,6 +215,10 @@ ir_function::exact_matching_signature(_mesa_glsl_parse_state *state,
    foreach_iter(exec_list_iterator, iter, signatures) {
       ir_function_signature *const sig =
 	 (ir_function_signature *) iter.get();
+
+      /* Skip over any built-ins that aren't available in this shader. */
+      if (sig->is_builtin() && !sig->is_builtin_available(state))
+         continue;
 
       if (parameter_lists_match_exact(&sig->parameters, actual_parameters))
 	 return sig;
