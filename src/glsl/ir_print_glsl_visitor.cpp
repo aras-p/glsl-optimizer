@@ -888,8 +888,21 @@ void ir_print_glsl_visitor::visit(ir_assignment *ir)
 	ir_expression* rhsOp = ir->rhs->as_expression();
 	if (rhsOp && rhsOp->operation == ir_triop_vector_insert)
 	{
-		emit_assignment_part(ir->lhs, rhsOp->operands[0], ir->write_mask, NULL);
-		ralloc_asprintf_append(&buffer, "; ");
+		// skip assignment if lhs and rhs would be the same
+		bool skip_assign = false;
+		ir_dereference_variable* lhsDeref = ir->lhs->as_dereference_variable();
+		ir_dereference_variable* rhsDeref = rhsOp->operands[0]->as_dereference_variable();
+		if (lhsDeref && rhsDeref)
+		{
+			if (lhsDeref->var == rhsDeref->var)
+				skip_assign = true;
+		}
+		
+		if (!skip_assign)
+		{
+			emit_assignment_part(ir->lhs, rhsOp->operands[0], ir->write_mask, NULL);
+			ralloc_asprintf_append(&buffer, "; ");
+		}
 		emit_assignment_part(ir->lhs, rhsOp->operands[1], ir->write_mask, rhsOp->operands[2]);
 		return;
 	}
