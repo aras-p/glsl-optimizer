@@ -414,10 +414,12 @@ ir_expression::ir_expression(int op, ir_rvalue *op0, ir_rvalue *op1)
    case ir_binop_lshift:
    case ir_binop_rshift:
       this->type = op0->type;
+      this->set_precision(op0->get_precision());
       break;
 
    case ir_binop_vector_extract:
       this->type = op0->type->get_scalar_type();
+      this->set_precision(op0->get_precision());
       break;
 
    default:
