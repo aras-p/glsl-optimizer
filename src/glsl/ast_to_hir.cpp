@@ -104,7 +104,18 @@ _mesa_ast_to_hir(exec_list *instructions, struct _mesa_glsl_parse_state *state)
     * locations being assigned in the declared order.  Many (arguably buggy)
     * applications depend on this behavior, and it matches what nearly all
     * other drivers do.
+	*
+	* However, do not push the declarations before struct decls or precision
+	* statements.
     */
+	ir_instruction* before_node = (ir_instruction*)instructions->head;
+	ir_instruction* after_node = NULL;
+	while (before_node && (before_node->ir_type == ir_type_precision || before_node->ir_type == ir_type_typedecl))
+	{
+		after_node = before_node;
+	    before_node = (ir_instruction*)before_node->next;
+	}
+
    foreach_list_safe(node, instructions) {
       ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
@@ -112,7 +123,10 @@ _mesa_ast_to_hir(exec_list *instructions, struct _mesa_glsl_parse_state *state)
          continue;
 
       var->remove();
-      instructions->push_head(var);
+      if (after_node)
+         after_node->insert_after(var);
+      else
+         instructions->push_head(var);
    }
 }
 
@@ -1819,6 +1833,9 @@ ast_fully_specified_type::glsl_type(const char **name,
    if (type == NULL)
       return NULL;
 
+   /* GLSL Optimizer change: do allow unspecified precision; hlsl2glsl
+	produces a bunch of wrapper functions without precision specified.
+
    if (type->base_type == GLSL_TYPE_FLOAT
        && state->es_shader
        && state->target == fragment_shader
@@ -1829,6 +1846,7 @@ ast_fully_specified_type::glsl_type(const char **name,
                        "no precision specified this scope for type `%s'",
                        type->name);
    }
+	*/
 
    return type;
 }
