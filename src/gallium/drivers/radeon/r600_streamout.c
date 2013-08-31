@@ -74,23 +74,35 @@ static void r600_so_target_destroy(struct pipe_context *ctx,
 
 void r600_streamout_buffers_dirty(struct r600_common_context *rctx)
 {
+	struct r600_atom *begin = &rctx->streamout.begin_atom;
+	unsigned num_bufs = util_bitcount(rctx->streamout.enabled_mask);
+	unsigned num_bufs_appended = util_bitcount(rctx->streamout.enabled_mask &
+						   rctx->streamout.append_bitmask);
+
 	rctx->streamout.num_dw_for_end =
 		12 + /* flush_vgt_streamout */
-		util_bitcount(rctx->streamout.enabled_mask) * 8 + /* STRMOUT_BUFFER_UPDATE */
+		num_bufs * 8 + /* STRMOUT_BUFFER_UPDATE */
 		3 /* set_streamout_enable(0) */;
 
-	rctx->streamout.begin_atom.num_dw =
-		12 + /* flush_vgt_streamout */
-		6 + /* set_streamout_enable */
-		util_bitcount(rctx->streamout.enabled_mask) * 7 + /* SET_CONTEXT_REG */
-		(rctx->family >= CHIP_RS780 &&
-		 rctx->family <= CHIP_RV740 ? util_bitcount(rctx->streamout.enabled_mask) * 5 : 0) + /* STRMOUT_BASE_UPDATE */
-		util_bitcount(rctx->streamout.enabled_mask & rctx->streamout.append_bitmask) * 8 + /* STRMOUT_BUFFER_UPDATE */
-		util_bitcount(rctx->streamout.enabled_mask & ~rctx->streamout.append_bitmask) * 6 + /* STRMOUT_BUFFER_UPDATE */
+	begin->num_dw = 12 + /* flush_vgt_streamout */
+			6; /* set_streamout_enable */
+
+	if (rctx->chip_class >= SI) {
+		begin->num_dw += num_bufs * 4; /* SET_CONTEXT_REG */
+	} else {
+		begin->num_dw += num_bufs * 7; /* SET_CONTEXT_REG */
+
+		if (rctx->family >= CHIP_RS780 && rctx->family <= CHIP_RV740)
+			begin->num_dw += num_bufs * 5; /* STRMOUT_BASE_UPDATE */
+	}
+
+	begin->num_dw +=
+		num_bufs_appended * 8 + /* STRMOUT_BUFFER_UPDATE */
+		(num_bufs - num_bufs_appended) * 6 + /* STRMOUT_BUFFER_UPDATE */
 		(rctx->family > CHIP_R600 && rctx->family < CHIP_RS780 ? 2 : 0) + /* SURFACE_BASE_UPDATE */
 		rctx->streamout.num_dw_for_end;
 
-	rctx->streamout.begin_atom.dirty = true;
+	begin->dirty = true;
 }
 
 void r600_set_streamout_targets(struct pipe_context *ctx,
@@ -209,7 +221,6 @@ static void r600_emit_streamout_begin(struct r600_common_context *rctx, struct r
 	struct r600_so_target **t = rctx->streamout.targets;
 	unsigned *stride_in_dw = rctx->streamout.stride_in_dw;
 	unsigned i, update_flags = 0;
-	uint64_t va;
 
 	if (rctx->chip_class >= EVERGREEN) {
 		evergreen_flush_vgt_streamout(rctx);
@@ -225,34 +236,46 @@ static void r600_emit_streamout_begin(struct r600_common_context *rctx, struct r
 
 		t[i]->stride_in_dw = stride_in_dw[i];
 
-		va = r600_resource_va(rctx->b.screen,
-				      (void*)t[i]->b.buffer);
+		if (rctx->chip_class >= SI) {
+			/* SI binds streamout buffers as shader resources.
+			 * VGT only counts primitives and tells the shader
+			 * through SGPRs what to do. */
+			r600_write_context_reg_seq(cs, R_028AD0_VGT_STRMOUT_BUFFER_SIZE_0 + 16*i, 2);
+			radeon_emit(cs, (t[i]->b.buffer_offset +
+					 t[i]->b.buffer_size) >> 2);	/* BUFFER_SIZE (in DW) */
+			radeon_emit(cs, stride_in_dw[i]);		/* VTX_STRIDE (in DW) */
+		} else {
+			uint64_t va = r600_resource_va(rctx->b.screen,
+						       (void*)t[i]->b.buffer);
 
-		update_flags |= SURFACE_BASE_UPDATE_STRMOUT(i);
+			update_flags |= SURFACE_BASE_UPDATE_STRMOUT(i);
 
-		r600_write_context_reg_seq(cs, R_028AD0_VGT_STRMOUT_BUFFER_SIZE_0 + 16*i, 3);
-		radeon_emit(cs, (t[i]->b.buffer_offset +
-				 t[i]->b.buffer_size) >> 2);	/* BUFFER_SIZE (in DW) */
-		radeon_emit(cs, stride_in_dw[i]);		/* VTX_STRIDE (in DW) */
-		radeon_emit(cs, va >> 8);			/* BUFFER_BASE */
-
-		r600_emit_reloc(rctx, &rctx->rings.gfx, r600_resource(t[i]->b.buffer),
-				RADEON_USAGE_WRITE);
-
-		/* R7xx requires this packet after updating BUFFER_BASE.
-		 * Without this, R7xx locks up. */
-		if (rctx->family >= CHIP_RS780 && rctx->family <= CHIP_RV740) {
-			radeon_emit(cs, PKT3(PKT3_STRMOUT_BASE_UPDATE, 1, 0));
-			radeon_emit(cs, i);
-			radeon_emit(cs, va >> 8);
+			r600_write_context_reg_seq(cs, R_028AD0_VGT_STRMOUT_BUFFER_SIZE_0 + 16*i, 3);
+			radeon_emit(cs, (t[i]->b.buffer_offset +
+					 t[i]->b.buffer_size) >> 2);	/* BUFFER_SIZE (in DW) */
+			radeon_emit(cs, stride_in_dw[i]);		/* VTX_STRIDE (in DW) */
+			radeon_emit(cs, va >> 8);			/* BUFFER_BASE */
 
 			r600_emit_reloc(rctx, &rctx->rings.gfx, r600_resource(t[i]->b.buffer),
 					RADEON_USAGE_WRITE);
+
+			/* R7xx requires this packet after updating BUFFER_BASE.
+			 * Without this, R7xx locks up. */
+			if (rctx->family >= CHIP_RS780 && rctx->family <= CHIP_RV740) {
+				radeon_emit(cs, PKT3(PKT3_STRMOUT_BASE_UPDATE, 1, 0));
+				radeon_emit(cs, i);
+				radeon_emit(cs, va >> 8);
+
+				r600_emit_reloc(rctx, &rctx->rings.gfx, r600_resource(t[i]->b.buffer),
+						RADEON_USAGE_WRITE);
+			}
 		}
 
 		if (rctx->streamout.append_bitmask & (1 << i)) {
-			va = r600_resource_va(rctx->b.screen,
-					      (void*)t[i]->buf_filled_size) + t[i]->buf_filled_size_offset;
+			uint64_t va = r600_resource_va(rctx->b.screen,
+						       (void*)t[i]->buf_filled_size) +
+				      t[i]->buf_filled_size_offset;
+
 			/* Append. */
 			radeon_emit(cs, PKT3(PKT3_STRMOUT_BUFFER_UPDATE, 4, 0));
 			radeon_emit(cs, STRMOUT_SELECT_BUFFER(i) |
