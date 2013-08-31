@@ -1740,13 +1740,17 @@ struct_declaration_list:
    ;
 
 struct_declaration:
-   type_specifier struct_declarator_list ';'
+   fully_specified_type struct_declarator_list ';'
    {
       void *ctx = state;
-      ast_fully_specified_type *type = new(ctx) ast_fully_specified_type();
+      ast_fully_specified_type *const type = $1;
       type->set_location(yylloc);
 
-      type->specifier = $1;
+      if (type->qualifier.flags.i != 0)
+         _mesa_glsl_error(&@1, state,
+			  "only precision qualifiers may be applied to "
+			  "structure members");
+
       $$ = new(ctx) ast_declarator_list(type);
       $$->set_location(yylloc);
 
