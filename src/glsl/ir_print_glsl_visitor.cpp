@@ -118,6 +118,8 @@ public:
 	virtual void visit(ir_emit_vertex *);
 	virtual void visit(ir_end_primitive *);
 	
+	void emit_assignment_part (ir_dereference* lhs, ir_rvalue* rhs, unsigned write_mask, ir_rvalue* dstIndex);
+	
 	int indentation;
 	char* buffer;
 	global_print_tracker* globals;
@@ -801,6 +803,72 @@ void ir_print_glsl_visitor::visit(ir_dereference_record *ir)
    ralloc_asprintf_append (&buffer, ".%s", ir->field);
 }
 
+
+void ir_print_glsl_visitor::emit_assignment_part (ir_dereference* lhs, ir_rvalue* rhs, unsigned write_mask, ir_rvalue* dstIndex)
+{
+	lhs->accept(this);
+	
+	if (dstIndex)
+	{
+		// if dst index is a constant, then emit a swizzle
+		ir_constant* dstConst = dstIndex->as_constant();
+		if (dstConst)
+		{
+			const char* comps = "xyzw";
+			char comp = comps[dstConst->get_int_component(0)];
+			ralloc_asprintf_append (&buffer, ".%c", comp);
+		}
+		else
+		{
+			ralloc_asprintf_append (&buffer, "[");
+			dstIndex->accept(this);
+			ralloc_asprintf_append (&buffer, "]");
+		}
+	}
+	
+	char mask[5];
+	unsigned j = 0;
+	const glsl_type* lhsType = lhs->type;
+	const glsl_type* rhsType = rhs->type;
+	if (!dstIndex && lhsType->matrix_columns <= 1 && lhsType->vector_elements > 1 && write_mask != (1<<lhsType->vector_elements)-1)
+	{
+		for (unsigned i = 0; i < 4; i++) {
+			if ((write_mask & (1 << i)) != 0) {
+				mask[j] = "xyzw"[i];
+				j++;
+			}
+		}
+		lhsType = glsl_type::get_instance(lhsType->base_type, j, 1);
+	}
+	mask[j] = '\0';
+	bool hasWriteMask = false;
+	if (mask[0])
+	{
+		ralloc_asprintf_append (&buffer, ".%s", mask);
+		hasWriteMask = true;
+	}
+	
+	ralloc_asprintf_append (&buffer, " = ");
+	
+	bool typeMismatch = !dstIndex && (lhsType != rhsType);
+	const bool addSwizzle = hasWriteMask && typeMismatch;
+	if (typeMismatch)
+	{
+		if (!addSwizzle)
+			buffer = print_type(buffer, lhsType, true);
+		ralloc_asprintf_append (&buffer, "(");
+	}
+	
+	rhs->accept(this);
+	
+	if (typeMismatch)
+	{
+		ralloc_asprintf_append (&buffer, ")");
+		if (addSwizzle)
+			ralloc_asprintf_append (&buffer, ".%s", mask);
+	}
+}
+
 void ir_print_glsl_visitor::visit(ir_assignment *ir)
 {
 	// assignments in global scope are postponed to main function
@@ -812,56 +880,27 @@ void ir_print_glsl_visitor::visit(ir_assignment *ir)
 		return;
 	}
 	
+	// if RHS is ir_triop_vector_insert, then we have to do some special dance. If source expression is:
+	//   dst = vector_insert (a, b, idx)
+	// then emit it like:
+	//   dst = a;
+	//   dst.idx = b;
+	ir_expression* rhsOp = ir->rhs->as_expression();
+	if (rhsOp && rhsOp->operation == ir_triop_vector_insert)
+	{
+		emit_assignment_part(ir->lhs, rhsOp->operands[0], ir->write_mask, NULL);
+		ralloc_asprintf_append(&buffer, "; ");
+		emit_assignment_part(ir->lhs, rhsOp->operands[1], ir->write_mask, rhsOp->operands[2]);
+		return;
+	}
+	
    if (ir->condition)
    {
       ir->condition->accept(this);
 	  ralloc_asprintf_append (&buffer, " ");
    }
-
-   ir->lhs->accept(this);
-
-   char mask[5];
-   unsigned j = 0;
-   const glsl_type* lhsType = ir->lhs->type;
-   const glsl_type* rhsType = ir->rhs->type;
-   if (lhsType->matrix_columns <= 1 && lhsType->vector_elements > 1 && ir->write_mask != (1<<lhsType->vector_elements)-1)
-   {
-	   for (unsigned i = 0; i < 4; i++) {
-		   if ((ir->write_mask & (1 << i)) != 0) {
-			   mask[j] = "xyzw"[i];
-			   j++;
-		   }
-	   }
-	   lhsType = glsl_type::get_instance(lhsType->base_type, j, 1);
-   }
-   mask[j] = '\0';
-   bool hasWriteMask = false;
-   if (mask[0])
-   {
-	   ralloc_asprintf_append (&buffer, ".%s", mask);
-	   hasWriteMask = true;
-   }
-
-   ralloc_asprintf_append (&buffer, " = ");
-
-   bool typeMismatch = (lhsType != rhsType);
-   const bool addSwizzle = hasWriteMask && typeMismatch;
-   if (typeMismatch)
-   {
-	   if (!addSwizzle)
-		buffer = print_type(buffer, lhsType, true);
-	   ralloc_asprintf_append (&buffer, "(");
-   }
-
-   ir->rhs->accept(this);
-
-   if (typeMismatch)
-   {
-	   ralloc_asprintf_append (&buffer, ")");
-	   if (addSwizzle)
-		   ralloc_asprintf_append (&buffer, ".%s", mask);
-   }
-
+	
+	emit_assignment_part (ir->lhs, ir->rhs, ir->write_mask, NULL);
 }
 
 static char* print_float (char* buffer, float f)
