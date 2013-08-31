@@ -550,6 +550,17 @@ void ir_print_glsl_visitor::visit(ir_expression *ir)
 			ralloc_asprintf_append (&buffer, ")");
 		}
 	}
+	else if (ir->operation == ir_binop_vector_extract)
+	{
+		// a[b]
+		
+		if (ir->operands[0])
+			ir->operands[0]->accept(this);
+		ralloc_asprintf_append (&buffer, "[");
+		if (ir->operands[1])
+			ir->operands[1]->accept(this);
+		ralloc_asprintf_append (&buffer, "]");
+	}
 	else if (is_binop_func_like(ir->operation, ir->type))
 	{
 		if (ir->operation == ir_binop_mod)
@@ -813,7 +824,7 @@ void ir_print_glsl_visitor::visit(ir_assignment *ir)
    unsigned j = 0;
    const glsl_type* lhsType = ir->lhs->type;
    const glsl_type* rhsType = ir->rhs->type;
-   if (ir->lhs->type->vector_elements > 1 && ir->write_mask != (1<<ir->lhs->type->vector_elements)-1)
+   if (lhsType->matrix_columns <= 1 && lhsType->vector_elements > 1 && ir->write_mask != (1<<lhsType->vector_elements)-1)
    {
 	   for (unsigned i = 0; i < 4; i++) {
 		   if ((ir->write_mask & (1 << i)) != 0) {

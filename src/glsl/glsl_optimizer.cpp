@@ -304,6 +304,7 @@ static void do_optimization_passes(exec_list* ir, bool linked, _mesa_glsl_parse_
 		progress2 = do_algebraic(ir); progress |= progress2; if (progress2) debug_print_ir ("After algebraic", ir, state, mem_ctx);
 		progress2 = do_lower_jumps(ir); progress |= progress2; if (progress2) debug_print_ir ("After lower jumps", ir, state, mem_ctx);
 		progress2 = do_vec_index_to_swizzle(ir); progress |= progress2; if (progress2) debug_print_ir ("After vec index to swizzle", ir, state, mem_ctx);
+		progress2 = lower_vector_insert(ir, true); progress |= progress2; if (progress2) debug_print_ir ("After lower vector insert", ir, state, mem_ctx);
 		progress2 = do_swizzle_swizzle(ir); progress |= progress2; if (progress2) debug_print_ir ("After swizzle swizzle", ir, state, mem_ctx);
 		progress2 = do_noop_swizzle(ir); progress |= progress2; if (progress2) debug_print_ir ("After noop swizzle", ir, state, mem_ctx);
 		progress2 = optimize_split_arrays(ir, linked); progress |= progress2; if (progress2) debug_print_ir ("After split arrays", ir, state, mem_ctx);
@@ -367,6 +368,9 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 	// Un-optimized output
 	if (!state->error) {
 		validate_ir_tree(ir);
+		// unconditionally lower vector insert operations; no good way to print them
+		// back into GLSL.
+		lower_vector_insert(ir, true);
 		shader->rawOutput = _mesa_print_ir_glsl(ir, state, ralloc_strdup(shader, ""), printMode);
 	}
 	
