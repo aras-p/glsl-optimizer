@@ -206,7 +206,7 @@ fd_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 	case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
 	case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
 	case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
-		return 14;
+		return MAX_MIP_LEVELS;
 	case PIPE_CAP_MAX_TEXTURE_ARRAY_LAYERS:
 		return 9192;
 	case PIPE_CAP_MAX_COMBINED_SAMPLERS:

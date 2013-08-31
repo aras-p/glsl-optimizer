@@ -71,7 +71,7 @@ emit_gmem2mem_surf(struct fd_ringbuffer *ring, uint32_t base,
 	OUT_RING(ring, CP_REG(REG_A2XX_RB_COPY_CONTROL));
 	OUT_RING(ring, 0x00000000);             /* RB_COPY_CONTROL */
 	OUT_RELOCW(ring, rsc->bo, 0, 0, 0);     /* RB_COPY_DEST_BASE */
-	OUT_RING(ring, rsc->pitch >> 5);        /* RB_COPY_DEST_PITCH */
+	OUT_RING(ring, rsc->slices[0].pitch >> 5); /* RB_COPY_DEST_PITCH */
 	OUT_RING(ring,                          /* RB_COPY_DEST_INFO */
 			A2XX_RB_COPY_DEST_INFO_FORMAT(fd2_pipe2color(psurf->format)) |
 			A2XX_RB_COPY_DEST_INFO_LINEAR |
@@ -197,7 +197,7 @@ emit_mem2gmem_surf(struct fd_ringbuffer *ring, uint32_t base,
 	OUT_RING(ring, A2XX_SQ_TEX_0_CLAMP_X(SQ_TEX_WRAP) |
 			A2XX_SQ_TEX_0_CLAMP_Y(SQ_TEX_WRAP) |
 			A2XX_SQ_TEX_0_CLAMP_Z(SQ_TEX_WRAP) |
-			A2XX_SQ_TEX_0_PITCH(rsc->pitch));
+			A2XX_SQ_TEX_0_PITCH(rsc->slices[0].pitch));
 	OUT_RELOC(ring, rsc->bo, 0,
 			fd2_pipe2surface(psurf->format) | 0x800, 0);
 	OUT_RING(ring, A2XX_SQ_TEX_2_WIDTH(psurf->width - 1) |

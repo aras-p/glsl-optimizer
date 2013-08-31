@@ -59,25 +59,27 @@ emit_mrt(struct fd_ringbuffer *ring, unsigned nr_bufs,
 	for (i = 0; i < 4; i++) {
 		enum a3xx_color_fmt format = 0;
 		enum a3xx_color_swap swap = WZYX;
-		struct fd_resource *res = NULL;
+		struct fd_resource *rsc = NULL;
+		struct fd_resource_slice *slice = NULL;
 		uint32_t stride = 0;
 		uint32_t base = 0;
 
 		if (i < nr_bufs) {
 			struct pipe_surface *psurf = bufs[i];
 
-			res = fd_resource(psurf->texture);
+			rsc = fd_resource(psurf->texture);
+			slice = &rsc->slices[psurf->u.tex.level];
 			format = fd3_pipe2color(psurf->format);
 			swap = fd3_pipe2swap(psurf->format);
 
 			if (bin_w) {
-				stride = bin_w * res->cpp;
+				stride = bin_w * rsc->cpp;
 
 				if (bases) {
-					base = bases[i] * res->cpp;
+					base = bases[i] * rsc->cpp;
 				}
 			} else {
-				stride = res->pitch * res->cpp;
+				stride = slice->pitch * rsc->cpp;
 			}
 		}
 
@@ -89,7 +91,7 @@ emit_mrt(struct fd_ringbuffer *ring, unsigned nr_bufs,
 		if (bin_w || (i >= nr_bufs)) {
 			OUT_RING(ring, A3XX_RB_MRT_BUF_BASE_COLOR_BUF_BASE(base));
 		} else {
-			OUT_RELOCW(ring, res->bo, 0, 0, -1);
+			OUT_RELOCW(ring, rsc->bo, slice->offset, 0, -1);
 		}
 
 		OUT_PKT0(ring, REG_A3XX_SP_FS_IMAGE_OUTPUT_REG(i), 1);
@@ -111,13 +113,14 @@ emit_gmem2mem_surf(struct fd_ringbuffer *ring,
 		uint32_t base, struct pipe_surface *psurf)
 {
 	struct fd_resource *rsc = fd_resource(psurf->texture);
+	struct fd_resource_slice *slice = &rsc->slices[psurf->u.tex.level];
 
 	OUT_PKT0(ring, REG_A3XX_RB_COPY_CONTROL, 4);
 	OUT_RING(ring, A3XX_RB_COPY_CONTROL_MSAA_RESOLVE(MSAA_ONE) |
 			A3XX_RB_COPY_CONTROL_MODE(mode) |
 			A3XX_RB_COPY_CONTROL_GMEM_BASE(base));
-	OUT_RELOCW(ring, rsc->bo, 0, 0, -1);    /* RB_COPY_DEST_BASE */
-	OUT_RING(ring, A3XX_RB_COPY_DEST_PITCH_PITCH(rsc->pitch * rsc->cpp));
+	OUT_RELOCW(ring, rsc->bo, slice->offset, 0, -1);    /* RB_COPY_DEST_BASE */
+	OUT_RING(ring, A3XX_RB_COPY_DEST_PITCH_PITCH(slice->pitch * rsc->cpp));
 	OUT_RING(ring, A3XX_RB_COPY_DEST_INFO_TILE(LINEAR) |
 			A3XX_RB_COPY_DEST_INFO_FORMAT(fd3_pipe2color(psurf->format)) |
 			A3XX_RB_COPY_DEST_INFO_COMPONENT_ENABLE(0xf) |
@@ -418,7 +421,7 @@ fd3_emit_sysmem_prep(struct fd_context *ctx)
 	uint32_t pitch = 0;
 
 	if (pfb->cbufs[0])
-		pitch = fd_resource(pfb->cbufs[0]->texture)->pitch;
+		pitch = fd_resource(pfb->cbufs[0]->texture)->slices[0].pitch;
 
 	fd3_emit_restore(ctx);
 

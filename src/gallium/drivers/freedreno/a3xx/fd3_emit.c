@@ -146,7 +146,7 @@ emit_constants(struct fd_ringbuffer *ring,
 
 #define VERT_TEX_OFF    0
 #define FRAG_TEX_OFF    16
-#define BASETABLE_SZ    14
+#define BASETABLE_SZ    A3XX_MAX_MIP_LEVELS
 
 static void
 emit_textures(struct fd_ringbuffer *ring,
@@ -212,12 +212,15 @@ emit_textures(struct fd_ringbuffer *ring,
 	for (i = 0; i < tex->num_textures; i++) {
 		struct fd3_pipe_sampler_view *view =
 				fd3_pipe_sampler_view(tex->textures[i]);
-		OUT_RELOC(ring, view->tex_resource->bo, 0, 0, 0);
-		/* I think each entry is a ptr to mipmap level.. for now, just
-		 * pad w/ null's until I get around to actually implementing
-		 * mipmap support..
-		 */
-		for (j = 1; j < BASETABLE_SZ; j++) {
+		struct fd_resource *rsc = view->tex_resource;
+
+		for (j = 0; j < view->mipaddrs; j++) {
+			struct fd_resource_slice *slice = fd_resource_slice(rsc, j);
+			OUT_RELOC(ring, rsc->bo, slice->offset, 0, 0);
+		}
+
+		/* pad the remaining entries w/ null: */
+		for (; j < BASETABLE_SZ; j++) {
 			OUT_RING(ring, 0x00000000);
 		}
 	}
@@ -284,7 +287,7 @@ fd3_emit_gmem_restore_tex(struct fd_ringbuffer *ring, struct pipe_surface *psurf
 	OUT_RING(ring, A3XX_TEX_CONST_1_FETCHSIZE(TFETCH_DISABLE) |
 			A3XX_TEX_CONST_1_WIDTH(psurf->width) |
 			A3XX_TEX_CONST_1_HEIGHT(psurf->height));
-	OUT_RING(ring, A3XX_TEX_CONST_2_PITCH(rsc->pitch * rsc->cpp) |
+	OUT_RING(ring, A3XX_TEX_CONST_2_PITCH(rsc->slices[0].pitch * rsc->cpp) |
 			A3XX_TEX_CONST_2_INDX(0));
 	OUT_RING(ring, 0x00000000);
 

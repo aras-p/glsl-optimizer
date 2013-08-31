@@ -48,6 +48,9 @@ enum adreno_rb_blend_opcode fd_blend_func(unsigned func);
 enum adreno_pa_su_sc_draw fd_polygon_mode(unsigned mode);
 enum adreno_stencil_op fd_stencil_op(unsigned op);
 
+#define A3XX_MAX_MIP_LEVELS 14
+/* TBD if it is same on a2xx, but for now: */
+#define MAX_MIP_LEVELS A3XX_MAX_MIP_LEVELS
 
 #define FD_DBG_MSGS     0x01
 #define FD_DBG_DISASM   0x02

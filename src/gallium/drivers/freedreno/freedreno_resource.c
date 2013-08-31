@@ -75,11 +75,13 @@ fd_resource_transfer_map(struct pipe_context *pctx,
 {
 	struct fd_context *ctx = fd_context(pctx);
 	struct fd_resource *rsc = fd_resource(prsc);
-	struct pipe_transfer *ptrans = util_slab_alloc(&ctx->transfer_pool);
+	struct fd_resource_slice *slice = fd_resource_slice(rsc, level);
+	struct pipe_transfer *ptrans;
 	enum pipe_format format = prsc->format;
 	uint32_t op = 0;
 	char *buf;
 
+	ptrans = util_slab_alloc(&ctx->transfer_pool);
 	if (!ptrans)
 		return NULL;
 
@@ -90,7 +92,7 @@ fd_resource_transfer_map(struct pipe_context *pctx,
 	ptrans->level = level;
 	ptrans->usage = usage;
 	ptrans->box = *box;
-	ptrans->stride = rsc->pitch * rsc->cpp;
+	ptrans->stride = slice->pitch * rsc->cpp;
 	ptrans->layer_stride = ptrans->stride;
 
 	/* some state trackers (at least XA) don't do this.. */
@@ -114,9 +116,10 @@ fd_resource_transfer_map(struct pipe_context *pctx,
 
 	*pptrans = ptrans;
 
-	return buf +
+	return buf + slice->offset +
 		box->y / util_format_get_blockheight(format) * ptrans->stride +
-		box->x / util_format_get_blockwidth(format) * rsc->cpp;
+		box->x / util_format_get_blockwidth(format) * rsc->cpp +
+		box->z * slice->size0;
 }
 
 static void
@@ -136,7 +139,7 @@ fd_resource_get_handle(struct pipe_screen *pscreen,
 	struct fd_resource *rsc = fd_resource(prsc);
 
 	return fd_screen_bo_get_handle(pscreen, rsc->bo,
-			rsc->pitch * rsc->cpp, handle);
+			rsc->slices[0].pitch * rsc->cpp, handle);
 }
 
 
@@ -148,6 +151,33 @@ static const struct u_resource_vtbl fd_resource_vtbl = {
 		.transfer_unmap           = fd_resource_transfer_unmap,
 		.transfer_inline_write    = u_default_transfer_inline_write,
 };
+
+static uint32_t
+setup_slices(struct fd_resource *rsc)
+{
+	struct pipe_resource *prsc = &rsc->base.b;
+	uint32_t level, size = 0;
+	uint32_t width = prsc->width0;
+	uint32_t height = prsc->height0;
+	uint32_t depth = prsc->depth0;
+
+	for (level = 0; level <= prsc->last_level; level++) {
+		struct fd_resource_slice *slice = fd_resource_slice(rsc, level);
+		uint32_t aligned_width = align(width, 32);
+
+		slice->pitch = aligned_width;
+		slice->offset = size;
+		slice->size0 = slice->pitch * height * rsc->cpp;
+
+		size += slice->size0 * depth * prsc->array_size;
+
+		width = u_minify(width, 1);
+		height = u_minify(height, 1);
+		depth = u_minify(depth, 1);
+	}
+
+	return size;
+}
 
 /**
  * Create a new texture object, using the given template info.
@@ -161,7 +191,7 @@ fd_resource_create(struct pipe_screen *pscreen,
 	struct pipe_resource *prsc = &rsc->base.b;
 	uint32_t flags, size;
 
-	DBG("target=%d, format=%s, %ux%u@%u, array_size=%u, last_level=%u, "
+	DBG("target=%d, format=%s, %ux%ux%u, array_size=%u, last_level=%u, "
 			"nr_samples=%u, usage=%u, bind=%x, flags=%x",
 			tmpl->target, util_format_name(tmpl->format),
 			tmpl->width0, tmpl->height0, tmpl->depth0,
@@ -177,12 +207,12 @@ fd_resource_create(struct pipe_screen *pscreen,
 	prsc->screen = pscreen;
 
 	rsc->base.vtbl = &fd_resource_vtbl;
-	rsc->pitch = align(tmpl->width0, 32);
 	rsc->cpp = util_format_get_blocksize(tmpl->format);
 
 	assert(rsc->cpp);
 
-	size = rsc->pitch * tmpl->height0 * rsc->cpp;
+	size = setup_slices(rsc);
+
 	flags = DRM_FREEDRENO_GEM_CACHE_WCOMBINE |
 			DRM_FREEDRENO_GEM_TYPE_KMEM; /* TODO */
 
@@ -202,9 +232,10 @@ fd_resource_from_handle(struct pipe_screen *pscreen,
 		struct winsys_handle *handle)
 {
 	struct fd_resource *rsc = CALLOC_STRUCT(fd_resource);
+	struct fd_resource_slice *slice = &rsc->slices[0];
 	struct pipe_resource *prsc = &rsc->base.b;
 
-	DBG("target=%d, format=%s, %ux%u@%u, array_size=%u, last_level=%u, "
+	DBG("target=%d, format=%s, %ux%ux%u, array_size=%u, last_level=%u, "
 			"nr_samples=%u, usage=%u, bind=%x, flags=%x",
 			tmpl->target, util_format_name(tmpl->format),
 			tmpl->width0, tmpl->height0, tmpl->depth0,
@@ -219,11 +250,11 @@ fd_resource_from_handle(struct pipe_screen *pscreen,
 	pipe_reference_init(&prsc->reference, 1);
 	prsc->screen = pscreen;
 
-	rsc->bo = fd_screen_bo_from_handle(pscreen, handle, &rsc->pitch);
+	rsc->bo = fd_screen_bo_from_handle(pscreen, handle, &slice->pitch);
 
 	rsc->base.vtbl = &fd_resource_vtbl;
 	rsc->cpp = util_format_get_blocksize(tmpl->format);
-	rsc->pitch /= rsc->cpp;
+	slice->pitch /= rsc->cpp;
 
 	assert(rsc->cpp);
 

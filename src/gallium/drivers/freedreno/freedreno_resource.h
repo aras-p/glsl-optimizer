@@ -31,10 +31,25 @@
 
 #include "util/u_transfer.h"
 
+#include "freedreno_util.h"
+
+/* for mipmap, cubemap, etc, each level is represented by a slice.
+ * Currently all slices are part of same bo (just different offsets),
+ * this is at least how it needs to be for cubemaps, although mipmap
+ * can be different bo's (although, not sure if there is a strong
+ * advantage to doing that)
+ */
+struct fd_resource_slice {
+	uint32_t offset;         /* offset of first layer in slice */
+	uint32_t pitch;
+	uint32_t size0;          /* size of first layer in slice */
+};
+
 struct fd_resource {
 	struct u_resource base;
 	struct fd_bo *bo;
-	uint32_t pitch, cpp;
+	uint32_t cpp;
+	struct fd_resource_slice slices[MAX_MIP_LEVELS];
 	uint32_t timestamp;
 	bool dirty;
 };
@@ -43,6 +58,13 @@ static INLINE struct fd_resource *
 fd_resource(struct pipe_resource *ptex)
 {
 	return (struct fd_resource *)ptex;
+}
+
+static INLINE struct fd_resource_slice *
+fd_resource_slice(struct fd_resource *rsc, unsigned level)
+{
+	assert(level <= rsc->base.b.last_level);
+	return &rsc->slices[level];
 }
 
 void fd_resource_screen_init(struct pipe_screen *pscreen);

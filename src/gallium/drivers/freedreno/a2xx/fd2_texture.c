@@ -120,7 +120,7 @@ fd2_sampler_view_create(struct pipe_context *pctx, struct pipe_resource *prsc,
 	so->tex_resource =  rsc;
 	so->fmt = fd2_pipe2surface(cso->format);
 
-	so->tex0 = A2XX_SQ_TEX_0_PITCH(rsc->pitch);
+	so->tex0 = A2XX_SQ_TEX_0_PITCH(rsc->slices[0].pitch);
 	so->tex2 =
 		A2XX_SQ_TEX_2_HEIGHT(prsc->height0 - 1) |
 		A2XX_SQ_TEX_2_WIDTH(prsc->width0 - 1);

@@ -824,8 +824,10 @@ trans_samp(const struct instr_translater *t,
 		break;
 	}
 
-	if (tex == TGSI_TEXTURE_3D)
+	if ((tex == TGSI_TEXTURE_3D) || (tex == TGSI_TEXTURE_CUBE)) {
+		ir3_instr_create(ctx->ir, 0, OPC_NOP)->repeat = 2; // XXX ???
 		flags |= IR3_INSTR_3D;
+	}
 
 	/* The texture sample instructions need to coord in successive
 	 * registers/components (ie. src.xy but not src.yx).  And TXP
