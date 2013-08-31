@@ -26,8 +26,8 @@ varying highp vec2 xlv_TEXCOORD3;
 void main ()
 {
   highp vec3 tmpvar_1;
-  tmpvar_1 = _glesNormal;
   highp vec4 tmpvar_2;
+  tmpvar_1 = _glesNormal;
   tmpvar_2 = _glesColor;
   highp vec4 tmpvar_3;
   highp vec4 tmpvar_4;
