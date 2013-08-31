@@ -8758,7 +8758,6 @@ static const char builtin_unpackUnorm4x8[] =
 ;
 static const char prototypes_for_100es_frag[] =
    "(\n"
-   "precision highp float\n"
    "(function texture2D\n"
    "  (signature vec4\n"
    "    (parameters\n"
@@ -15740,7 +15739,6 @@ static const char *functions_for_150_glsl [] = {
 };
 static const char prototypes_for_300es_frag[] =
    "(\n"
-   "precision highp float\n"
    "(function texture\n"
    "  (signature vec4\n"
    "    (parameters\n"
@@ -21433,7 +21431,6 @@ static const char *functions_for_EXT_texture_array_vert [] = {
 };
 static const char prototypes_for_OES_EGL_image_external_glsl[] =
    "(\n"
-   "precision highp float\n"
    "(function texture2D\n"
    "  (signature vec4\n"
    "    (parameters\n"
@@ -21458,7 +21455,6 @@ static const char *functions_for_OES_EGL_image_external_glsl [] = {
 };
 static const char prototypes_for_OES_standard_derivatives_frag[] =
    "(\n"
-   "precision highp float\n"
    "(function dFdx\n"
    "  (signature float\n"
    "    (parameters\n"
@@ -21518,7 +21514,6 @@ static const char *functions_for_OES_standard_derivatives_frag [] = {
 };
 static const char prototypes_for_OES_texture_3D_frag[] =
    "(\n"
-   "precision highp float\n"
    "(function texture3D\n"
    "  (signature vec4\n"
    "    (parameters\n"
