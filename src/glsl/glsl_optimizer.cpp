@@ -121,6 +121,8 @@ struct glslopt_shader
 		shader = rzalloc(whole_program, gl_shader);
 		whole_program->Shaders[whole_program->NumShaders] = shader;
 		whole_program->NumShaders++;
+		
+		whole_program->LinkStatus = true;		
 	}
 	
 	~glslopt_shader()
