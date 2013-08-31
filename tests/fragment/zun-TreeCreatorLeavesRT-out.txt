@@ -1,10 +1,10 @@
-uniform sampler2D _TranslucencyMap;
-uniform vec3 _TranslucencyColor;
-uniform vec4 _TerrainTreeLightColors[4];
-uniform vec4 _SpecColor;
-uniform sampler2D _MainTex;
-uniform float _Cutoff;
 uniform sampler2D _BumpSpecMap;
+uniform float _Cutoff;
+uniform sampler2D _MainTex;
+uniform vec4 _SpecColor;
+uniform vec4 _TerrainTreeLightColors[4];
+uniform vec3 _TranslucencyColor;
+uniform sampler2D _TranslucencyMap;
 void main ()
 {
   vec2 tmpvar_1;

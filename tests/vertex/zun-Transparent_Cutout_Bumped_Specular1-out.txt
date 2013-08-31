@@ -1,6 +1,6 @@
-varying vec4 xlv_FOG;
-uniform vec4 _ProjectionParams;
 uniform vec4 _MainTex_ST;
+uniform vec4 _ProjectionParams;
+varying vec4 xlv_FOG;
 void main ()
 {
   vec4 tmpvar_1;

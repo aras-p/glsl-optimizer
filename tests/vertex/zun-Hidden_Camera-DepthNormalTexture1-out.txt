@@ -1,5 +1,5 @@
-uniform vec4 _WaveAndDistance;
 uniform vec4 _ProjectionParams;
+uniform vec4 _WaveAndDistance;
 void main ()
 {
   vec4 tmpvar_1;

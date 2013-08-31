@@ -1,5 +1,5 @@
-uniform vec4 _ScratchOffsetScale;
 uniform vec4 _GrainOffsetScale;
+uniform vec4 _ScratchOffsetScale;
 void main ()
 {
   vec2 tmpvar_1;

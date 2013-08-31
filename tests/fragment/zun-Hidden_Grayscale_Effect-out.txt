@@ -1,6 +1,6 @@
-uniform sampler2D _RampTex;
-uniform float _RampOffset;
 uniform sampler2D _MainTex;
+uniform float _RampOffset;
+uniform sampler2D _RampTex;
 void main ()
 {
   vec4 xlat_var_output_1;

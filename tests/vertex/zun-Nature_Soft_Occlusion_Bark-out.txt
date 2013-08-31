@@ -1,13 +1,13 @@
-varying vec4 xlv_FOG;
-uniform vec4 unity_Scale;
-uniform vec4 _WorldSpaceLightPos0;
-uniform mat4 _TerrainEngineBendTree;
-uniform vec4 _SquashPlaneNormal;
-uniform float _SquashAmount;
-uniform vec4 _Scale;
-uniform mat4 _Object2World;
-uniform vec4 _MainTex_ST;
 uniform mat4 _LightMatrix0;
+uniform vec4 _MainTex_ST;
+uniform mat4 _Object2World;
+uniform vec4 _Scale;
+uniform float _SquashAmount;
+uniform vec4 _SquashPlaneNormal;
+uniform mat4 _TerrainEngineBendTree;
+uniform vec4 _WorldSpaceLightPos0;
+uniform vec4 unity_Scale;
+varying vec4 xlv_FOG;
 void main ()
 {
   vec4 pos_1;

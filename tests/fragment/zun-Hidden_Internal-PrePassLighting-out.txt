@@ -1,17 +1,17 @@
-uniform vec4 unity_LightmapFade;
-uniform vec4 _ZBufferParams;
-uniform mat4 _ViewToCookie;
-uniform mat4 _View2Shadow;
-uniform samplerCube _ShadowMapTexture;
-uniform vec4 _ProjectionParams;
-uniform sampler2D _LightTextureB0;
-uniform samplerCube _LightTexture0;
-uniform vec4 _LightShadowData;
-uniform vec4 _LightPositionRange;
-uniform vec4 _LightPos;
-uniform vec4 _LightColor;
-uniform sampler2D _CameraNormalsTexture;
 uniform sampler2D _CameraDepthTexture;
+uniform sampler2D _CameraNormalsTexture;
+uniform vec4 _LightColor;
+uniform vec4 _LightPos;
+uniform vec4 _LightPositionRange;
+uniform vec4 _LightShadowData;
+uniform samplerCube _LightTexture0;
+uniform sampler2D _LightTextureB0;
+uniform vec4 _ProjectionParams;
+uniform samplerCube _ShadowMapTexture;
+uniform mat4 _View2Shadow;
+uniform mat4 _ViewToCookie;
+uniform vec4 _ZBufferParams;
+uniform vec4 unity_LightmapFade;
 void main ()
 {
   vec4 tmpvar_1;

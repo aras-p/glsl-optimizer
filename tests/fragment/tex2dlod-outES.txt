@@ -1,6 +1,6 @@
 #extension GL_EXT_shader_texture_lod : enable
-varying highp vec4 xlv_TEXCOORD0;
 uniform sampler2D tex;
+varying highp vec4 xlv_TEXCOORD0;
 void main ()
 {
   mediump vec4 tmpvar_1;

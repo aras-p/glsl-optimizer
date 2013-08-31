@@ -1,5 +1,5 @@
-uniform vec4 _Tint;
 uniform samplerCube _Tex;
+uniform vec4 _Tint;
 void main ()
 {
   vec4 col_1;

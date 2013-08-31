@@ -1,8 +1,8 @@
-uniform sampler2D _MainTex;
-uniform vec4 _GrabTexture_TexelSize;
-uniform sampler2D _GrabTexture;
-uniform sampler2D _BumpMap;
 uniform float _BumpAmt;
+uniform sampler2D _BumpMap;
+uniform sampler2D _GrabTexture;
+uniform vec4 _GrabTexture_TexelSize;
+uniform sampler2D _MainTex;
 void main ()
 {
   vec4 tmpvar_1;

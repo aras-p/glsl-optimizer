@@ -1,6 +1,6 @@
-uniform sampler2D _MainTex;
-uniform sampler2D _CurTex;
 uniform vec4 _AdaptParams;
+uniform sampler2D _CurTex;
+uniform sampler2D _MainTex;
 void main ()
 {
   vec2 tmpvar_1;

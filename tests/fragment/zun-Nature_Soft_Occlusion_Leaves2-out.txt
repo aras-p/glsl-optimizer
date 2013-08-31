@@ -1,9 +1,9 @@
-uniform sampler2D unity_LightmapInd;
-uniform sampler2D unity_Lightmap;
-uniform sampler2D _MainTex;
-uniform sampler2D _LightBuffer;
-uniform float _Cutoff;
 uniform vec4 _Color;
+uniform float _Cutoff;
+uniform sampler2D _LightBuffer;
+uniform sampler2D _MainTex;
+uniform sampler2D unity_Lightmap;
+uniform sampler2D unity_LightmapInd;
 void main ()
 {
   vec3 tmpvar_1;

@@ -1,5 +1,5 @@
-uniform sampler2D _MainTex;
 uniform sampler2D _CameraDepthNormalsTexture;
+uniform sampler2D _MainTex;
 void main ()
 {
   vec2 tmpvar_1;

@@ -1,5 +1,5 @@
-uniform float _TranslucencyViewDependency;
 uniform vec3 _TerrainTreeLightDirections[4];
+uniform float _TranslucencyViewDependency;
 void main ()
 {
   vec3 tmpvar_1;

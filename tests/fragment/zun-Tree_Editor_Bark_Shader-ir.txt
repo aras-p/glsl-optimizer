@@ -18,13 +18,13 @@ struct v2f_surf {
   vec3 lightDir;
   vec3 viewDir;
 };
-varying vec4 xlv_FOG;
-uniform float _Shininess;
-uniform sampler2D _MainTex;
-uniform vec4 _LightColor0;
-uniform sampler2D _GlossMap;
-uniform vec4 _Color;
 uniform sampler2D _BumpMap;
+uniform vec4 _Color;
+uniform sampler2D _GlossMap;
+uniform vec4 _LightColor0;
+uniform sampler2D _MainTex;
+uniform float _Shininess;
+varying vec4 xlv_FOG;
 vec4 UnpackNormal (
   in vec4 packednormal_1
 )

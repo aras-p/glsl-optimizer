@@ -1,5 +1,5 @@
-uniform vec4 _TintColor;
 uniform sampler2D _MainTex;
+uniform vec4 _TintColor;
 void main ()
 {
   vec4 col_1;

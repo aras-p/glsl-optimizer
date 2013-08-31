@@ -1,5 +1,5 @@
-uniform sampler2D _MainTex;
 uniform vec4 _Color;
+uniform sampler2D _MainTex;
 void main ()
 {
   vec4 c_1;

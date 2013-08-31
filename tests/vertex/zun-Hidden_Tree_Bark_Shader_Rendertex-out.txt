@@ -1,5 +1,5 @@
-uniform vec3 _TerrainTreeLightDirections[4];
 uniform vec4 _TerrainTreeLightColors[4];
+uniform vec3 _TerrainTreeLightDirections[4];
 void main ()
 {
   vec3 lightColor_1;

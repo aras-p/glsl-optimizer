@@ -1,9 +1,9 @@
-uniform sampler2D _TranslucencyMap;
-uniform sampler2D _MainTex;
-uniform sampler2D _LightTextureB0;
-uniform samplerCube _LightTexture0;
-uniform vec4 _LightColor0;
 uniform sampler2D _BumpSpecMap;
+uniform vec4 _LightColor0;
+uniform samplerCube _LightTexture0;
+uniform sampler2D _LightTextureB0;
+uniform sampler2D _MainTex;
+uniform sampler2D _TranslucencyMap;
 void main ()
 {
   vec2 tmpvar_1;

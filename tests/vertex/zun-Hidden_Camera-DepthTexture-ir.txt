@@ -8,11 +8,11 @@ struct appdata_tree_billboard {
   vec4 texcoord;
   vec2 texcoord1;
 };
-uniform vec4 _TreeBillboardDistances;
-uniform vec4 _TreeBillboardCameraUp;
-uniform vec3 _TreeBillboardCameraRight;
-uniform vec4 _TreeBillboardCameraPos;
 uniform vec4 _TreeBillboardCameraFront;
+uniform vec4 _TreeBillboardCameraPos;
+uniform vec3 _TreeBillboardCameraRight;
+uniform vec4 _TreeBillboardCameraUp;
+uniform vec4 _TreeBillboardDistances;
 void TerrainBillboardTree (
   inout vec4 pos_1,
   in vec2 offset_2,

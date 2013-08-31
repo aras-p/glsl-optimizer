@@ -11,14 +11,14 @@ struct v2f_surf {
   vec2 hip_pack0;
   vec4 lop_color;
 };
-attribute vec4 TANGENT;
-uniform vec4 unity_LightShadowBias;
-uniform vec4 _WavingTint;
-uniform vec4 _WaveAndDistance;
-uniform vec4 _MainTex_ST;
-uniform vec3 _CameraUp;
-uniform vec3 _CameraRight;
 uniform vec4 _CameraPosition;
+uniform vec3 _CameraRight;
+uniform vec3 _CameraUp;
+uniform vec4 _MainTex_ST;
+uniform vec4 _WaveAndDistance;
+uniform vec4 _WavingTint;
+uniform vec4 unity_LightShadowBias;
+attribute vec4 TANGENT;
 void FastSinCos (
   in vec4 val_1,
   out vec4 s_2,

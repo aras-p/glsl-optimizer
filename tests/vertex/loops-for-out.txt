@@ -1,10 +1,10 @@
-varying vec4 xlv_TEXCOORD0;
-uniform vec4 unity_LightPosition[4];
-uniform vec4 unity_LightColor[4];
-uniform vec4 unity_LightAtten[4];
-uniform mat4 UNITY_MATRIX_MVP;
-uniform mat4 UNITY_MATRIX_MV;
 uniform mat4 UNITY_MATRIX_IT_MV;
+uniform mat4 UNITY_MATRIX_MV;
+uniform mat4 UNITY_MATRIX_MVP;
+uniform vec4 unity_LightAtten[4];
+uniform vec4 unity_LightColor[4];
+uniform vec4 unity_LightPosition[4];
+varying vec4 xlv_TEXCOORD0;
 void main ()
 {
   vec3 lightColor_1;

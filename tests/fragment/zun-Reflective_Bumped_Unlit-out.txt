@@ -1,7 +1,7 @@
-uniform vec4 _ReflectColor;
-uniform sampler2D _MainTex;
-uniform samplerCube _Cube;
 uniform sampler2D _BumpMap;
+uniform samplerCube _Cube;
+uniform sampler2D _MainTex;
+uniform vec4 _ReflectColor;
 void main ()
 {
   vec3 tmpvar_1;

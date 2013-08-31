@@ -1,9 +1,9 @@
-varying vec4 xlv_FOG;
-uniform vec4 unity_Scale;
-uniform vec4 _WorldSpaceLightPos0;
-uniform vec3 _WorldSpaceCameraPos;
-uniform mat4 _World2Object;
 uniform mat4 _Object2World;
+uniform mat4 _World2Object;
+uniform vec3 _WorldSpaceCameraPos;
+uniform vec4 _WorldSpaceLightPos0;
+uniform vec4 unity_Scale;
+varying vec4 xlv_FOG;
 void main ()
 {
   vec4 tmpvar_1;

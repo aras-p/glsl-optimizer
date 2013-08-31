@@ -1,11 +1,11 @@
-attribute vec4 TANGENT;
-uniform vec4 unity_LightShadowBias;
-uniform vec4 _WavingTint;
-uniform vec4 _WaveAndDistance;
-uniform vec4 _MainTex_ST;
-uniform vec3 _CameraUp;
-uniform vec3 _CameraRight;
 uniform vec4 _CameraPosition;
+uniform vec3 _CameraRight;
+uniform vec3 _CameraUp;
+uniform vec4 _MainTex_ST;
+uniform vec4 _WaveAndDistance;
+uniform vec4 _WavingTint;
+uniform vec4 unity_LightShadowBias;
+attribute vec4 TANGENT;
 void main ()
 {
   vec4 tmpvar_1;

@@ -10,10 +10,10 @@ struct appdata_grass {
   vec4 texcoord;
   vec4 texcoord1;
 };
-attribute vec4 TANGENT;
-uniform vec4 _WavingTint;
-uniform vec4 _WaveAndDistance;
 uniform vec4 _ProjectionParams;
+uniform vec4 _WaveAndDistance;
+uniform vec4 _WavingTint;
+attribute vec4 TANGENT;
 void FastSinCos (
   in vec4 val_1,
   out vec4 s_2,

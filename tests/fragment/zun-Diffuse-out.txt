@@ -1,7 +1,7 @@
-uniform sampler2D _MainTex;
-uniform sampler2D _LightTexture0;
-uniform vec4 _LightColor0;
 uniform vec4 _Color;
+uniform vec4 _LightColor0;
+uniform sampler2D _LightTexture0;
+uniform sampler2D _MainTex;
 void main ()
 {
   vec3 tmpvar_1;

@@ -1,7 +1,7 @@
-uniform vec4 _WorldSpaceLightPos0;
-uniform sampler2D _MainTex;
-uniform vec4 _LightColor0;
 uniform float _Cutoff;
+uniform vec4 _LightColor0;
+uniform sampler2D _MainTex;
+uniform vec4 _WorldSpaceLightPos0;
 void main ()
 {
   vec4 c_1;

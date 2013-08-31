@@ -1,6 +1,6 @@
-uniform vec4 _ZBufferParams;
-uniform sampler2D _CameraNormalsTexture;
 uniform sampler2D _CameraDepthTexture;
+uniform sampler2D _CameraNormalsTexture;
+uniform vec4 _ZBufferParams;
 void main ()
 {
   vec2 tmpvar_1;

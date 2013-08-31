@@ -1,15 +1,15 @@
-varying lowp vec3 varViewDir;
-varying lowp vec3 varLightDir;
-varying lowp vec3 varWorldN;
-uniform highp vec4 unity_Scale;
-uniform lowp vec4 _WorldSpaceLightPos0;
-uniform highp vec3 _WorldSpaceCameraPos;
-uniform highp mat4 _World2Object;
-uniform highp mat4 _Object2World;
-attribute vec4 attrTangent;
-attribute vec3 attrNormal;
-attribute vec4 attrVertex;
 uniform mat4 glstate_matrix_mvp;
+attribute vec4 attrVertex;
+attribute vec3 attrNormal;
+attribute vec4 attrTangent;
+uniform highp mat4 _Object2World;
+uniform highp mat4 _World2Object;
+uniform highp vec3 _WorldSpaceCameraPos;
+uniform lowp vec4 _WorldSpaceLightPos0;
+uniform highp vec4 unity_Scale;
+varying lowp vec3 varWorldN;
+varying lowp vec3 varLightDir;
+varying lowp vec3 varViewDir;
 void main ()
 {
   lowp vec3 tmpvar_1;

@@ -1,6 +1,6 @@
-uniform sampler2D _MainTex;
-uniform vec4 _CenterRadius;
 uniform float _Angle;
+uniform vec4 _CenterRadius;
+uniform sampler2D _MainTex;
 void main ()
 {
   vec2 tmpvar_1;

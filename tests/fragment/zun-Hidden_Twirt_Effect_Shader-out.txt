@@ -1,6 +1,6 @@
-uniform mat4 _RotationMatrix;
-uniform sampler2D _MainTex;
 uniform vec4 _CenterRadius;
+uniform sampler2D _MainTex;
+uniform mat4 _RotationMatrix;
 void main ()
 {
   vec2 tmpvar_1;

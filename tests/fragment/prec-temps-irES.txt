@@ -5,14 +5,14 @@ struct v2f_surf {
   lowp vec3 lightDir;
   lowp vec3 vlight;
 };
-varying lowp vec3 xlv_TEXCOORD3;
-varying lowp vec3 xlv_TEXCOORD2;
-varying lowp vec3 xlv_TEXCOORD1;
-varying lowp vec2 xlv_TEXCOORD0;
-uniform lowp float _Shininess;
-uniform sampler2D _MainTex;
-uniform lowp vec4 _LightColor0;
 uniform sampler2D _BumpMap;
+uniform lowp vec4 _LightColor0;
+uniform sampler2D _MainTex;
+uniform lowp float _Shininess;
+varying lowp vec2 xlv_TEXCOORD0;
+varying lowp vec3 xlv_TEXCOORD1;
+varying lowp vec3 xlv_TEXCOORD2;
+varying lowp vec3 xlv_TEXCOORD3;
 lowp vec4 frag_surf (
   in v2f_surf IN_1
 )

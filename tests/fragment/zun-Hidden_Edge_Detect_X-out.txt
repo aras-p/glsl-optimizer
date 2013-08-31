@@ -1,5 +1,5 @@
-uniform float _Treshold;
 uniform sampler2D _MainTex;
+uniform float _Treshold;
 void main ()
 {
   vec4 original_1;

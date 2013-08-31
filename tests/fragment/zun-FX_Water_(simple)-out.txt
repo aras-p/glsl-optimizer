@@ -1,6 +1,6 @@
-uniform vec4 _horizonColor;
-uniform sampler2D _ColorControl;
 uniform sampler2D _BumpMap;
+uniform sampler2D _ColorControl;
+uniform vec4 _horizonColor;
 void main ()
 {
   vec4 col_1;

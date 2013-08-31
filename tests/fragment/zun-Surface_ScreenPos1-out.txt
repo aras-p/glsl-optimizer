@@ -1,6 +1,6 @@
-uniform sampler2D _LightTextureB0;
-uniform samplerCube _LightTexture0;
 uniform vec4 _LightColor0;
+uniform samplerCube _LightTexture0;
+uniform sampler2D _LightTextureB0;
 void main ()
 {
   vec3 tmpvar_1;

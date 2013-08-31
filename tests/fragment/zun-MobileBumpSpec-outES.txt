@@ -1,11 +1,11 @@
-varying lowp vec3 xlv_TEXCOORD3;
-varying lowp vec3 xlv_TEXCOORD2;
-varying mediump vec3 xlv_TEXCOORD1;
-varying mediump vec2 xlv_TEXCOORD0;
-uniform mediump float _Shininess;
-uniform sampler2D _MainTex;
-uniform lowp vec4 _LightColor0;
 uniform sampler2D _BumpMap;
+uniform lowp vec4 _LightColor0;
+uniform sampler2D _MainTex;
+uniform mediump float _Shininess;
+varying mediump vec2 xlv_TEXCOORD0;
+varying mediump vec3 xlv_TEXCOORD1;
+varying lowp vec3 xlv_TEXCOORD2;
+varying lowp vec3 xlv_TEXCOORD3;
 void main ()
 {
   lowp vec4 c_1;

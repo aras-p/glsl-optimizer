@@ -1,11 +1,11 @@
-uniform sampler2D unity_LightmapInd;
-uniform sampler2D unity_Lightmap;
-uniform sampler2D _ParallaxMap;
-uniform float _Parallax;
-uniform sampler2D _MainTex;
-uniform sampler2D _LightBuffer;
-uniform vec4 _Color;
 uniform sampler2D _BumpMap;
+uniform vec4 _Color;
+uniform sampler2D _LightBuffer;
+uniform sampler2D _MainTex;
+uniform float _Parallax;
+uniform sampler2D _ParallaxMap;
+uniform sampler2D unity_Lightmap;
+uniform sampler2D unity_LightmapInd;
 void main ()
 {
   vec4 tmpvar_1;

@@ -1,16 +1,16 @@
-varying highp vec3 xlv_TEXCOORD4;
-varying highp vec3 xlv_TEXCOORD3;
-varying highp vec3 xlv_TEXCOORD2;
-varying highp vec3 xlv_TEXCOORD1;
-varying highp vec2 xlv_TEXCOORD0;
-uniform sampler2D _TranslucencyMap;
-uniform lowp vec3 _TranslucencyColor;
-uniform highp vec4 _TerrainTreeLightColors[4];
-uniform lowp vec4 _SpecColor;
-uniform sampler2D _MainTex;
-uniform lowp float _Cutoff;
-uniform sampler2D _BumpSpecMap;
 uniform lowp vec4 UNITY_LIGHTMODEL_AMBIENT;
+uniform sampler2D _BumpSpecMap;
+uniform lowp float _Cutoff;
+uniform sampler2D _MainTex;
+uniform lowp vec4 _SpecColor;
+uniform highp vec4 _TerrainTreeLightColors[4];
+uniform lowp vec3 _TranslucencyColor;
+uniform sampler2D _TranslucencyMap;
+varying highp vec2 xlv_TEXCOORD0;
+varying highp vec3 xlv_TEXCOORD1;
+varying highp vec3 xlv_TEXCOORD2;
+varying highp vec3 xlv_TEXCOORD3;
+varying highp vec3 xlv_TEXCOORD4;
 void main ()
 {
   lowp vec4 c_1;

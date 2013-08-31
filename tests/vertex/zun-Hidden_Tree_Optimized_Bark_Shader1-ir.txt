@@ -9,15 +9,15 @@ struct appdata_full {
 struct v2f_surf {
   vec4 pos;
 };
-attribute vec4 TANGENT;
-uniform vec4 unity_LightShadowBias;
-uniform vec4 _Wind;
-uniform float _TimeX;
-uniform vec4 _SquashPlaneNormal;
-uniform float _SquashAmount;
-uniform vec4 _Scale;
-uniform mat4 _Object2World;
 uniform vec4 _Color;
+uniform mat4 _Object2World;
+uniform vec4 _Scale;
+uniform float _SquashAmount;
+uniform vec4 _SquashPlaneNormal;
+uniform float _TimeX;
+uniform vec4 _Wind;
+uniform vec4 unity_LightShadowBias;
+attribute vec4 TANGENT;
 vec4 Squash (
   in vec4 pos_1
 )

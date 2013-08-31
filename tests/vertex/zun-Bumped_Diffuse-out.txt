@@ -1,5 +1,5 @@
-attribute vec4 TANGENT;
 uniform vec4 _BumpMap_ST;
+attribute vec4 TANGENT;
 void main ()
 {
   vec3 tmpvar_1;

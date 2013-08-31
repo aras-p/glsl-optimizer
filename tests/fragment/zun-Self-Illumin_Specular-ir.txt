@@ -19,15 +19,15 @@ struct v2f_surf {
   vec3 viewDir;
   vec4 _LightCoord;
 };
-varying vec4 xlv_FOG;
-uniform vec4 _SpecColor;
-uniform float _Shininess;
-uniform sampler2D _MainTex;
-uniform sampler2D _LightTextureB0;
-uniform sampler2D _LightTexture0;
-uniform vec4 _LightColor0;
-uniform sampler2D _Illum;
 uniform vec4 _Color;
+uniform sampler2D _Illum;
+uniform vec4 _LightColor0;
+uniform sampler2D _LightTexture0;
+uniform sampler2D _LightTextureB0;
+uniform sampler2D _MainTex;
+uniform float _Shininess;
+uniform vec4 _SpecColor;
+varying vec4 xlv_FOG;
 void surf (
   in Input IN_1,
   inout SurfaceOutput o_2

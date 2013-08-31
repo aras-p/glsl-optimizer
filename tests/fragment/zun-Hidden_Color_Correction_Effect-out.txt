@@ -1,5 +1,5 @@
-uniform sampler2D _RampTex;
 uniform sampler2D _MainTex;
+uniform sampler2D _RampTex;
 void main ()
 {
   vec4 tmpvar_1;

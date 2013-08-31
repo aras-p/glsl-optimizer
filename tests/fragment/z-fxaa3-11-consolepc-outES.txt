@@ -1,8 +1,8 @@
 #extension GL_EXT_shader_texture_lod : enable
-varying highp vec4 xlv_TEXCOORD1;
-varying highp vec2 xlv_TEXCOORD0;
-uniform highp vec4 _MainTex_TexelSize;
 uniform sampler2D _MainTex;
+uniform highp vec4 _MainTex_TexelSize;
+varying highp vec2 xlv_TEXCOORD0;
+varying highp vec4 xlv_TEXCOORD1;
 void main ()
 {
   highp vec4 fxaaConsoleRcpFrameOpt_1;

@@ -16,11 +16,11 @@ struct v2f_surf {
   vec4 hip_screen;
   vec3 hip_lmapFade;
 };
-varying vec4 xlv_FOG;
-attribute vec4 TANGENT;
-uniform vec4 unity_LightmapST;
-uniform vec4 unity_LightmapFade;
 uniform vec4 _ProjectionParams;
+uniform vec4 unity_LightmapFade;
+uniform vec4 unity_LightmapST;
+attribute vec4 TANGENT;
+varying vec4 xlv_FOG;
 void vert (
   inout appdata_full v_1,
   out Input o_2

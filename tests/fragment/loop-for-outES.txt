@@ -1,7 +1,7 @@
-varying highp vec3 xlv_nl;
-varying highp vec2 xlv_uv;
-uniform highp vec4 _TerrainTreeLightColors[4];
 uniform sampler2D _MainTex;
+uniform highp vec4 _TerrainTreeLightColors[4];
+varying highp vec2 xlv_uv;
+varying highp vec3 xlv_nl;
 void main ()
 {
   lowp vec4 tmpvar_1;

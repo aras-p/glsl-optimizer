@@ -1,7 +1,7 @@
-uniform sampler2D _ShadowMapTexture;
-uniform vec4 _LightColor0;
-uniform sampler2D _DecalBump;
 uniform sampler2D _Decal;
+uniform sampler2D _DecalBump;
+uniform vec4 _LightColor0;
+uniform sampler2D _ShadowMapTexture;
 void main ()
 {
   vec4 tmpvar_1;

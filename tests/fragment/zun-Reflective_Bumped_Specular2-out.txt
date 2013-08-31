@@ -1,11 +1,11 @@
-uniform vec4 unity_Ambient;
-uniform vec4 _SpecColor;
-uniform vec4 _ReflectColor;
-uniform sampler2D _MainTex;
-uniform sampler2D _LightBuffer;
-uniform samplerCube _Cube;
-uniform vec4 _Color;
 uniform sampler2D _BumpMap;
+uniform vec4 _Color;
+uniform samplerCube _Cube;
+uniform sampler2D _LightBuffer;
+uniform sampler2D _MainTex;
+uniform vec4 _ReflectColor;
+uniform vec4 _SpecColor;
+uniform vec4 unity_Ambient;
 void main ()
 {
   vec4 tmpvar_1;

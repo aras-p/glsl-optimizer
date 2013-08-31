@@ -1,7 +1,7 @@
-uniform sampler2D _MainTex;
-uniform vec4 _LightPositionRange;
-uniform float _Cutoff;
 uniform vec4 _Color;
+uniform float _Cutoff;
+uniform vec4 _LightPositionRange;
+uniform sampler2D _MainTex;
 void main ()
 {
   vec3 tmpvar_1;

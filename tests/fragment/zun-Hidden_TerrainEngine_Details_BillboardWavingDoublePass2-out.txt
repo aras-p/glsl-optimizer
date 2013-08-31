@@ -1,5 +1,5 @@
-uniform sampler2D _MainTex;
 uniform float _Cutoff;
+uniform sampler2D _MainTex;
 void main ()
 {
   float x_1;

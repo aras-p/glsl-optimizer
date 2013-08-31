@@ -1,5 +1,5 @@
-uniform vec4 _LightColor0;
 uniform samplerCube _Cube;
+uniform vec4 _LightColor0;
 void main ()
 {
   vec4 c_1;

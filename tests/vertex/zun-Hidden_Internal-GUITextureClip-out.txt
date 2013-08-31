@@ -1,5 +1,5 @@
-uniform vec4 _MainTex_ST;
 uniform mat4 _GUIClipTextureMatrix;
+uniform vec4 _MainTex_ST;
 void main ()
 {
   gl_Position = (gl_ModelViewProjectionMatrix * gl_Vertex);

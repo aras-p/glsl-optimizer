@@ -1,5 +1,5 @@
-uniform float _Shininess;
 uniform sampler2D _BumpMap;
+uniform float _Shininess;
 void main ()
 {
   vec4 res_1;
