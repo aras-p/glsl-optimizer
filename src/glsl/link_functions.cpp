@@ -113,7 +113,7 @@ public:
       }
 
       ir_function_signature *linked_sig =
-	 f->exact_matching_signature(&callee->parameters);
+	 f->exact_matching_signature(NULL, &callee->parameters);
       if ((linked_sig == NULL)
 	  || ((linked_sig != NULL)
 	      && (linked_sig->is_builtin() != ir->use_builtin))) {
@@ -288,7 +288,8 @@ find_matching_signature(const char *name, const exec_list *actual_parameters,
       if (f == NULL)
 	 continue;
 
-      ir_function_signature *sig = f->matching_signature(actual_parameters);
+      ir_function_signature *sig =
+         f->matching_signature(NULL, actual_parameters);
 
       if ((sig == NULL) || !sig->is_defined)
 	 continue;

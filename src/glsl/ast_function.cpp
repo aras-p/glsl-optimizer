@@ -388,7 +388,8 @@ match_function_by_name(const char *name,
    if (f != NULL) {
       /* Look for a match in the local shader.  If exact, we're done. */
       bool is_exact = false;
-      sig = local_sig = f->matching_signature(actual_parameters, &is_exact);
+      sig = local_sig = f->matching_signature(state, actual_parameters,
+                                              &is_exact);
       if (is_exact)
 	 goto done;
 
@@ -411,7 +412,7 @@ match_function_by_name(const char *name,
 
       bool is_exact = false;
       ir_function_signature *builtin_sig =
-	 builtin->matching_signature(actual_parameters, &is_exact);
+	 builtin->matching_signature(state, actual_parameters, &is_exact);
 
       if (builtin_sig == NULL)
 	 continue;

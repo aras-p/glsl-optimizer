@@ -3576,7 +3576,7 @@ ast_function::hir(exec_list *instructions,
     */
    f = state->symbols->get_function(name);
    if (f != NULL && (state->es_shader || f->has_user_signature())) {
-      sig = f->exact_matching_signature(&hir_parameters);
+      sig = f->exact_matching_signature(state, &hir_parameters);
       if (sig != NULL) {
 	 const char *badvar = sig->qualifiers_match(&hir_parameters);
 	 if (badvar != NULL) {

@@ -765,20 +765,23 @@ public:
     * Find a signature that matches a set of actual parameters, taking implicit
     * conversions into account.  Also flags whether the match was exact.
     */
-   ir_function_signature *matching_signature(const exec_list *actual_param,
+   ir_function_signature *matching_signature(_mesa_glsl_parse_state *state,
+                                             const exec_list *actual_param,
 					     bool *match_is_exact);
 
    /**
     * Find a signature that matches a set of actual parameters, taking implicit
     * conversions into account.
     */
-   ir_function_signature *matching_signature(const exec_list *actual_param);
+   ir_function_signature *matching_signature(_mesa_glsl_parse_state *state,
+                                             const exec_list *actual_param);
 
    /**
     * Find a signature that exactly matches a set of actual parameters without
     * any implicit type conversions.
     */
-   ir_function_signature *exact_matching_signature(const exec_list *actual_ps);
+   ir_function_signature *exact_matching_signature(_mesa_glsl_parse_state *state,
+                                                   const exec_list *actual_ps);
 
    /**
     * Name of the function.

@@ -254,7 +254,8 @@ ir_reader::read_function_sig(ir_function *f, s_expression *expr, bool skip_body)
       hir_parameters.push_tail(var);
    }
 
-   ir_function_signature *sig = f->exact_matching_signature(&hir_parameters);
+   ir_function_signature *sig =
+      f->exact_matching_signature(state, &hir_parameters);
    if (sig == NULL && skip_body) {
       /* If scanning for prototypes, generate a new signature. */
       /* ir_reader doesn't know what languages support a given built-in, so
@@ -668,7 +669,7 @@ ir_reader::read_call(s_expression *expr)
       return NULL;
    }
 
-   ir_function_signature *callee = f->matching_signature(&parameters);
+   ir_function_signature *callee = f->matching_signature(state, &parameters);
    if (callee == NULL) {
       ir_read_error(expr, "couldn't find matching signature for function "
                     "%s", name->value());

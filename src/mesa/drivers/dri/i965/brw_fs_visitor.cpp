@@ -2072,7 +2072,7 @@ fs_visitor::visit(ir_function *ir)
       const ir_function_signature *sig;
       exec_list empty;
 
-      sig = ir->matching_signature(&empty);
+      sig = ir->matching_signature(NULL, &empty);
 
       assert(sig);
 
