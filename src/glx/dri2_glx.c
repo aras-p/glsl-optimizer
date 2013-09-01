@@ -260,12 +260,12 @@ dri2_create_context_attribs(struct glx_screen *base,
    __GLXDRIconfigPrivate *config = (__GLXDRIconfigPrivate *) config_base;
    __DRIcontext *shared = NULL;
 
-   uint32_t minor_ver = 1;
-   uint32_t major_ver = 2;
-   uint32_t renderType = GLX_RGBA_TYPE;
-   uint32_t flags = 0;
+   uint32_t minor_ver;
+   uint32_t major_ver;
+   uint32_t renderType;
+   uint32_t flags;
    unsigned api;
-   int reset = __DRI_CTX_RESET_NO_NOTIFICATION;
+   int reset;
    uint32_t ctx_attribs[2 * 5];
    unsigned num_ctx_attribs = 0;
 
