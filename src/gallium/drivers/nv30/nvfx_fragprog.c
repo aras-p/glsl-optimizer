@@ -976,9 +976,8 @@ nvfx_fragprog_assign_generic(struct nv30_context *nvfx, struct nvfx_fpc *fpc,
             fpc->r_input[idx] = nvfx_reg(NVFXSR_INPUT, hw);
             return TRUE;
          }
-         return FALSE;
       }
-      return TRUE;
+      return FALSE;
    default:
       return TRUE;
    }
