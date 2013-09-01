@@ -1073,6 +1073,7 @@ struct brw_context
 
       bool constrained;
 
+      GLuint min_vs_entries;    /* Minimum number of VS entries */
       GLuint max_vs_entries;	/* Maximum number of VS entries */
       GLuint max_gs_entries;	/* Maximum number of GS entries */
 

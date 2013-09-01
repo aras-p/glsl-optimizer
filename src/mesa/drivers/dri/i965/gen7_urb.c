@@ -195,9 +195,10 @@ gen7_upload_urb(struct brw_context *brw)
     * additional space it could actually make use of).
     */
 
-   /* VS always requires at least 32 URB entries */
+   /* VS has a lower limit on the number of URB entries */
    unsigned vs_chunks =
-      ALIGN(32 * vs_entry_size_bytes, chunk_size_bytes) / chunk_size_bytes;
+      ALIGN(brw->urb.min_vs_entries * vs_entry_size_bytes, chunk_size_bytes) /
+      chunk_size_bytes;
    unsigned vs_wants =
       ALIGN(brw->urb.max_vs_entries * vs_entry_size_bytes,
             chunk_size_bytes) / chunk_size_bytes - vs_chunks;
@@ -261,7 +262,7 @@ gen7_upload_urb(struct brw_context *brw)
    /* Finally, sanity check to make sure we have at least the minimum number
     * of entries needed for each stage.
     */
-   assert(nr_vs_entries >= 32);
+   assert(nr_vs_entries >= brw->urb.min_vs_entries);
    if (gs_present)
       assert(nr_gs_entries >= 2);
 

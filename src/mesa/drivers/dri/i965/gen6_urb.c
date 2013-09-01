@@ -83,7 +83,7 @@ gen6_upload_urb( struct brw_context *brw )
    brw->urb.nr_vs_entries = ROUND_DOWN_TO(nr_vs_entries, 4);
    brw->urb.nr_gs_entries = ROUND_DOWN_TO(nr_gs_entries, 4);
 
-   assert(brw->urb.nr_vs_entries >= 24);
+   assert(brw->urb.nr_vs_entries >= brw->urb.min_vs_entries);
    assert(brw->urb.nr_vs_entries % 4 == 0);
    assert(brw->urb.nr_gs_entries % 4 == 0);
    assert(vs_size < 5);

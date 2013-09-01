@@ -361,6 +361,7 @@ brwCreateContext(int api,
 	 brw->max_vs_threads = 70;
 	 brw->max_gs_threads = 70;
 	 brw->urb.size = 128;
+         brw->urb.min_vs_entries = 32;
 	 brw->urb.max_vs_entries = 640;
 	 brw->urb.max_gs_entries = 256;
       } else if (brw->gt == 2) {
@@ -368,6 +369,7 @@ brwCreateContext(int api,
 	 brw->max_vs_threads = 280;
 	 brw->max_gs_threads = 256;
 	 brw->urb.size = 256;
+         brw->urb.min_vs_entries = 64;
 	 brw->urb.max_vs_entries = 1664;
 	 brw->urb.max_gs_entries = 640;
       } else if (brw->gt == 3) {
@@ -375,6 +377,7 @@ brwCreateContext(int api,
 	 brw->max_vs_threads = 280;
 	 brw->max_gs_threads = 256;
 	 brw->urb.size = 512;
+         brw->urb.min_vs_entries = 64;
 	 brw->urb.max_vs_entries = 1664;
 	 brw->urb.max_gs_entries = 640;
       }
@@ -384,6 +387,7 @@ brwCreateContext(int api,
 	 brw->max_vs_threads = 36;
 	 brw->max_gs_threads = 36;
 	 brw->urb.size = 128;
+         brw->urb.min_vs_entries = 32;
 	 brw->urb.max_vs_entries = 512;
 	 brw->urb.max_gs_entries = 192;
       } else if (brw->gt == 2) {
@@ -391,6 +395,7 @@ brwCreateContext(int api,
 	 brw->max_vs_threads = 128;
 	 brw->max_gs_threads = 128;
 	 brw->urb.size = 256;
+         brw->urb.min_vs_entries = 32;
 	 brw->urb.max_vs_entries = 704;
 	 brw->urb.max_gs_entries = 320;
       } else {
@@ -402,6 +407,7 @@ brwCreateContext(int api,
 	 brw->max_vs_threads = 60;
 	 brw->max_gs_threads = 60;
 	 brw->urb.size = 64;            /* volume 5c.5 section 5.1 */
+         brw->urb.min_vs_entries = 24;
 	 brw->urb.max_vs_entries = 256; /* volume 2a (see 3DSTATE_URB) */
 	 brw->urb.max_gs_entries = 256;
       } else {
@@ -409,6 +415,7 @@ brwCreateContext(int api,
 	 brw->max_vs_threads = 24;
 	 brw->max_gs_threads = 21; /* conservative; 24 if rendering disabled */
 	 brw->urb.size = 32;            /* volume 5c.5 section 5.1 */
+         brw->urb.min_vs_entries = 24;
 	 brw->urb.max_vs_entries = 256; /* volume 2a (see 3DSTATE_URB) */
 	 brw->urb.max_gs_entries = 256;
       }
