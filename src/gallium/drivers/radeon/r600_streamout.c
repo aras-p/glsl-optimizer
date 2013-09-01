@@ -137,6 +137,8 @@ void r600_set_streamout_targets(struct pipe_context *ctx,
 
 	if (num_targets) {
 		r600_streamout_buffers_dirty(rctx);
+	} else {
+		rctx->streamout.begin_atom.dirty = false;
 	}
 }
 
