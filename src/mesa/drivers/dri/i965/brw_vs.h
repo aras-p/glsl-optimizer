@@ -99,6 +99,44 @@ void brw_vs_prog_data_free(const void *in_prog_data);
 
 #ifdef __cplusplus
 } /* extern "C" */
+
+
+namespace brw {
+
+class vec4_vs_visitor : public vec4_visitor
+{
+public:
+   vec4_vs_visitor(struct brw_context *brw,
+                   struct brw_vs_compile *vs_compile,
+                   struct brw_vs_prog_data *vs_prog_data,
+                   struct gl_shader_program *prog,
+                   struct brw_shader *shader,
+                   void *mem_ctx);
+
+protected:
+   virtual dst_reg *make_reg_for_system_value(ir_variable *ir);
+   virtual void setup_payload();
+   virtual void emit_prolog();
+   virtual void emit_program_code();
+   virtual void emit_thread_end();
+   virtual void emit_urb_write_header(int mrf);
+   virtual vec4_instruction *emit_urb_write_opcode(bool complete);
+
+private:
+   int setup_attributes(int payload_reg);
+   void setup_vp_regs();
+   dst_reg get_vp_dst_reg(const prog_dst_register &dst);
+   src_reg get_vp_src_reg(const prog_src_register &src);
+
+   struct brw_vs_compile * const vs_compile;
+   struct brw_vs_prog_data * const vs_prog_data;
+   src_reg *vp_temp_regs;
+   src_reg vp_addr_reg;
+};
+
+} /* namespace brw */
+
+
 #endif
 
 #endif
