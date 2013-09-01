@@ -908,7 +908,7 @@ vec4_visitor::emit_if_gen6(ir_if *ir)
    emit(IF(this->result, src_reg(0), BRW_CONDITIONAL_NZ));
 }
 
-static dst_reg
+dst_reg
 with_writemask(dst_reg const & r, int mask)
 {
    dst_reg result = r;

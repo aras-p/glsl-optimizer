@@ -183,6 +183,9 @@ public:
    src_reg *reladdr;
 };
 
+dst_reg
+with_writemask(dst_reg const &r, int mask);
+
 class vec4_instruction : public backend_instruction {
 public:
    /* Callers of this ralloc-based new need not call delete. It's
