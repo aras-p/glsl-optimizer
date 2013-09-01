@@ -50,10 +50,7 @@
 #define SI_PARAM_VERTEX_BUFFER	3
 #define SI_PARAM_SO_BUFFER	4
 #define SI_PARAM_START_INSTANCE	5
-#define SI_PARAM_VERTEX_ID	6
-#define SI_PARAM_DUMMY_0	7
-#define SI_PARAM_DUMMY_1	8
-#define SI_PARAM_INSTANCE_ID	9
+/* the other VS parameters are assigned dynamically */
 
 /* PS only parameters */
 #define SI_PARAM_PRIM_MASK		3

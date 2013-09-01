@@ -104,7 +104,12 @@ static void si_pipe_shader_vs(struct pipe_context *ctx, struct si_pipe_shader *s
 		       S_00B128_SGPRS((num_sgprs - 1) / 8) |
 		       S_00B128_VGPR_COMP_CNT(vgpr_comp_cnt));
 	si_pm4_set_reg(pm4, R_00B12C_SPI_SHADER_PGM_RSRC2_VS,
-		       S_00B12C_USER_SGPR(num_user_sgprs));
+		       S_00B12C_USER_SGPR(num_user_sgprs) |
+		       S_00B12C_SO_BASE0_EN(!!shader->selector->so.stride[0]) |
+		       S_00B12C_SO_BASE1_EN(!!shader->selector->so.stride[1]) |
+		       S_00B12C_SO_BASE2_EN(!!shader->selector->so.stride[2]) |
+		       S_00B12C_SO_BASE3_EN(!!shader->selector->so.stride[3]) |
+		       S_00B12C_SO_EN(!!shader->selector->so.num_outputs));
 
 	if (rctx->b.chip_class >= CIK) {
 		si_pm4_set_reg(pm4, R_00B118_SPI_SHADER_PGM_RSRC3_VS,
