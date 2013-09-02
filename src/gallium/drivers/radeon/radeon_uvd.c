@@ -854,6 +854,8 @@ struct pipe_video_codec *ruvd_create_decoder(struct pipe_context *context,
 
 	dec->base = *templ;
 	dec->base.context = context;
+	dec->base.width = width;
+	dec->base.height = height;
 
 	dec->base.destroy = ruvd_destroy;
 	dec->base.begin_frame = ruvd_begin_frame;
