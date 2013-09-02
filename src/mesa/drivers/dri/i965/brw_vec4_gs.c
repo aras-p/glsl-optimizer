@@ -94,9 +94,18 @@ do_gs_prog(struct brw_context *brw,
    c.prog_data.control_data_header_size_hwords =
       ALIGN(c.control_data_header_size_bits, 256) / 256;
 
-   brw_compute_vue_map(brw, &c.prog_data.base.vue_map,
-                       gp->program.Base.OutputsWritten,
-                       c.key.base.userclip_active);
+   GLbitfield64 outputs_written = gp->program.Base.OutputsWritten;
+
+   /* In order for legacy clipping to work, we need to populate the clip
+    * distance varying slots whenever clipping is enabled, even if the vertex
+    * shader doesn't write to gl_ClipDistance.
+    */
+   if (c.key.base.userclip_active) {
+      outputs_written |= BITFIELD64_BIT(VARYING_SLOT_CLIP_DIST0);
+      outputs_written |= BITFIELD64_BIT(VARYING_SLOT_CLIP_DIST1);
+   }
+
+   brw_compute_vue_map(brw, &c.prog_data.base.vue_map, outputs_written);
 
    /* Compute the output vertex size.
     *

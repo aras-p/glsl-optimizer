@@ -436,7 +436,7 @@ static inline GLuint brw_varying_to_offset(struct brw_vue_map *vue_map,
 }
 
 void brw_compute_vue_map(struct brw_context *brw, struct brw_vue_map *vue_map,
-                         GLbitfield64 slots_valid, bool userclip_active);
+                         GLbitfield64 slots_valid);
 
 
 /**
