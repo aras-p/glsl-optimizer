@@ -24,12 +24,6 @@
     <ClInclude Include="..\..\src\glsl\ast.h">
       <Filter>src\glsl</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\glsl\builtin_types.h">
-      <Filter>src\glsl</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\glsl\builtin_variables.h">
-      <Filter>src\glsl</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\glsl\glsl_optimizer.h">
       <Filter>src\glsl</Filter>
     </ClInclude>
@@ -178,6 +172,9 @@
       <Filter>src\glsl</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\glsl\ir_builder.h">
+      <Filter>src\glsl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\glsl\builtin_type_macros.h">
       <Filter>src\glsl</Filter>
     </ClInclude>
   </ItemGroup>
@@ -447,6 +444,30 @@
       <Filter>src\glsl</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\glsl\lower_packing_builtins.cpp">
+      <Filter>src\glsl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\glsl\link_interface_blocks.cpp">
+      <Filter>src\glsl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\glsl\lower_named_interface_blocks.cpp">
+      <Filter>src\glsl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\glsl\lower_output_reads.cpp">
+      <Filter>src\glsl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\glsl\lower_ubo_reference.cpp">
+      <Filter>src\glsl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\glsl\lower_vector_insert.cpp">
+      <Filter>src\glsl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\glsl\builtin_types.cpp">
+      <Filter>src\glsl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\glsl\opt_dead_builtin_varyings.cpp">
+      <Filter>src\glsl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\glsl\opt_flip_matrices.cpp">
       <Filter>src\glsl</Filter>
     </ClCompile>
   </ItemGroup>
