@@ -138,7 +138,7 @@ upload_sf_state(struct brw_context *brw)
    bool multisampled_fbo = ctx->DrawBuffer->Visual.samples > 1;
 
    int attr = 0, input_index = 0;
-   int urb_entry_read_offset = 1;
+   const int urb_entry_read_offset = BRW_SF_URB_ENTRY_READ_OFFSET;
    float point_size;
    uint16_t attr_overrides[VARYING_SLOT_MAX];
    uint32_t point_sprite_origin;

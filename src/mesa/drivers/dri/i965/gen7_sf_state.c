@@ -40,7 +40,7 @@ upload_sbe_state(struct brw_context *brw)
    uint32_t dw1, dw10, dw11;
    int i;
    int attr = 0, input_index = 0;
-   int urb_entry_read_offset = 1;
+   const int urb_entry_read_offset = BRW_SF_URB_ENTRY_READ_OFFSET;
    uint16_t attr_overrides[VARYING_SLOT_MAX];
    /* _NEW_BUFFERS */
    bool render_to_fbo = _mesa_is_user_fbo(ctx->DrawBuffer);
