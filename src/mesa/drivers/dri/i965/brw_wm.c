@@ -183,7 +183,7 @@ bool do_wm_prog(struct brw_context *brw,
 
       c->prog_data.total_scratch = brw_get_scratch_size(c->last_scratch);
 
-      brw_get_scratch_bo(brw, &brw->wm.scratch_bo,
+      brw_get_scratch_bo(brw, &brw->wm.base.scratch_bo,
 			 c->prog_data.total_scratch * brw->max_wm_threads);
    }
 
@@ -194,7 +194,7 @@ bool do_wm_prog(struct brw_context *brw,
 		    &c->key, sizeof(c->key),
 		    program, program_size,
 		    &c->prog_data, sizeof(c->prog_data),
-		    &brw->wm.prog_offset, &brw->wm.prog_data);
+		    &brw->wm.base.prog_offset, &brw->wm.prog_data);
 
    ralloc_free(c);
 
@@ -426,7 +426,7 @@ static void brw_wm_populate_key( struct brw_context *brw,
    key->clamp_fragment_color = ctx->Color._ClampFragmentColor;
 
    /* _NEW_TEXTURE */
-   brw_populate_sampler_prog_key_data(ctx, prog, brw->wm.sampler_count,
+   brw_populate_sampler_prog_key_data(ctx, prog, brw->wm.base.sampler_count,
                                       &key->tex);
 
    /* _NEW_BUFFERS */
@@ -486,7 +486,7 @@ brw_upload_wm_prog(struct brw_context *brw)
 
    if (!brw_search_cache(&brw->cache, BRW_WM_PROG,
 			 &key, sizeof(key),
-			 &brw->wm.prog_offset, &brw->wm.prog_data)) {
+			 &brw->wm.base.prog_offset, &brw->wm.prog_data)) {
       bool success = do_wm_prog(brw, ctx->Shader._CurrentFragmentProgram, fp,
 				&key);
       (void) success;

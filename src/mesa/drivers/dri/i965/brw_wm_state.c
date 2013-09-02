@@ -78,7 +78,7 @@ brw_upload_wm_unit(struct brw_context *brw)
    struct brw_wm_unit_state *wm;
 
    wm = brw_state_batch(brw, AUB_TRACE_WM_STATE,
-			sizeof(*wm), 32, &brw->wm.state_offset);
+			sizeof(*wm), 32, &brw->wm.base.state_offset);
    memset(wm, 0, sizeof(*wm));
 
    if (brw->wm.prog_data->prog_offset_16) {
@@ -96,16 +96,16 @@ brw_upload_wm_unit(struct brw_context *brw)
 
    wm->thread0.kernel_start_pointer =
       brw_program_reloc(brw,
-			brw->wm.state_offset +
+			brw->wm.base.state_offset +
 			offsetof(struct brw_wm_unit_state, thread0),
-			brw->wm.prog_offset +
+			brw->wm.base.prog_offset +
 			(wm->thread0.grf_reg_count << 1)) >> 6;
 
    wm->wm9.kernel_start_pointer_2 =
       brw_program_reloc(brw,
-			brw->wm.state_offset +
+			brw->wm.base.state_offset +
 			offsetof(struct brw_wm_unit_state, wm9),
-			brw->wm.prog_offset +
+			brw->wm.base.prog_offset +
 			brw->wm.prog_data->prog_offset_16 +
 			(wm->wm9.grf_reg_count_2 << 1)) >> 6;
 
@@ -124,7 +124,7 @@ brw_upload_wm_unit(struct brw_context *brw)
 
    if (brw->wm.prog_data->total_scratch != 0) {
       wm->thread2.scratch_space_base_pointer =
-	 brw->wm.scratch_bo->offset >> 10; /* reloc */
+	 brw->wm.base.scratch_bo->offset >> 10; /* reloc */
       wm->thread2.per_thread_scratch_space =
 	 ffs(brw->wm.prog_data->total_scratch) - 11;
    } else {
@@ -144,13 +144,13 @@ brw_upload_wm_unit(struct brw_context *brw)
       wm->wm4.sampler_count = 0; /* hardware requirement */
    else {
       /* CACHE_NEW_SAMPLER */
-      wm->wm4.sampler_count = (brw->wm.sampler_count + 1) / 4;
+      wm->wm4.sampler_count = (brw->wm.base.sampler_count + 1) / 4;
    }
 
-   if (brw->wm.sampler_count) {
+   if (brw->wm.base.sampler_count) {
       /* reloc */
       wm->wm4.sampler_state_pointer = (brw->batch.bo->offset +
-				       brw->wm.sampler_offset) >> 5;
+				       brw->wm.base.sampler_offset) >> 5;
    } else {
       wm->wm4.sampler_state_pointer = 0;
    }
@@ -217,19 +217,19 @@ brw_upload_wm_unit(struct brw_context *brw)
    /* Emit scratch space relocation */
    if (brw->wm.prog_data->total_scratch != 0) {
       drm_intel_bo_emit_reloc(brw->batch.bo,
-			      brw->wm.state_offset +
+			      brw->wm.base.state_offset +
 			      offsetof(struct brw_wm_unit_state, thread2),
-			      brw->wm.scratch_bo,
+			      brw->wm.base.scratch_bo,
 			      wm->thread2.per_thread_scratch_space,
 			      I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER);
    }
 
    /* Emit sampler state relocation */
-   if (brw->wm.sampler_count != 0) {
+   if (brw->wm.base.sampler_count != 0) {
       drm_intel_bo_emit_reloc(brw->batch.bo,
-			      brw->wm.state_offset +
+			      brw->wm.base.state_offset +
 			      offsetof(struct brw_wm_unit_state, wm4),
-			      brw->batch.bo, (brw->wm.sampler_offset |
+			      brw->batch.bo, (brw->wm.base.sampler_offset |
                                               wm->wm4.stats_enable |
                                               (wm->wm4.sampler_count << 2)),
 			      I915_GEM_DOMAIN_INSTRUCTION, 0);

@@ -333,7 +333,8 @@ static bool brw_try_draw_prims( struct gl_context *ctx,
     * won't work since ARB programs use the texture unit number as the sampler
     * index.
     */
-   brw->wm.sampler_count = _mesa_fls(ctx->FragmentProgram._Current->Base.SamplersUsed);
+   brw->wm.base.sampler_count =
+      _mesa_fls(ctx->FragmentProgram._Current->Base.SamplersUsed);
    brw->gs.base.sampler_count = ctx->GeometryProgram._Current ?
       _mesa_fls(ctx->GeometryProgram._Current->Base.SamplersUsed) : 0;
    brw->vs.base.sampler_count =

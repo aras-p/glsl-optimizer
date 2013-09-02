@@ -1237,42 +1237,16 @@ struct brw_context
    } sf;
 
    struct {
+      struct brw_stage_state base;
       struct brw_wm_prog_data *prog_data;
 
       GLuint render_surf;
-
-      drm_intel_bo *scratch_bo;
 
       /**
        * Buffer object used in place of multisampled null render targets on
        * Gen6.  See brw_update_null_renderbuffer_surface().
        */
       drm_intel_bo *multisampled_null_render_target_bo;
-
-      /** Offset in the program cache to the WM program */
-      uint32_t prog_offset;
-
-      uint32_t state_offset; /* offset in batchbuffer to pre-gen6 WM state */
-
-      drm_intel_bo *const_bo; /* pull constant buffer. */
-      /**
-       * This is offset in the batch to the push constants on gen6.
-       *
-       * Pre-gen6, push constants live in the CURBE.
-       */
-      uint32_t push_const_offset;
-
-      /** Binding table of pointers to surf_bo entries */
-      uint32_t bind_bo_offset;
-      uint32_t surf_offset[BRW_MAX_WM_SURFACES];
-
-      /** SAMPLER_STATE count and table offset */
-      uint32_t sampler_count;
-      uint32_t sampler_offset;
-
-      /** Offsets in the batch to sampler default colors (texture border color)
-       */
-      uint32_t sdc_offset[BRW_MAX_TEX_UNIT];
 
       struct {
          struct ra_regs *regs;

@@ -453,29 +453,29 @@ brw_upload_wm_pull_constants(struct brw_context *brw)
 
    /* CACHE_NEW_WM_PROG */
    if (brw->wm.prog_data->nr_pull_params == 0) {
-      if (brw->wm.const_bo) {
-	 drm_intel_bo_unreference(brw->wm.const_bo);
-	 brw->wm.const_bo = NULL;
-	 brw->wm.surf_offset[surf_index] = 0;
+      if (brw->wm.base.const_bo) {
+	 drm_intel_bo_unreference(brw->wm.base.const_bo);
+	 brw->wm.base.const_bo = NULL;
+	 brw->wm.base.surf_offset[surf_index] = 0;
 	 brw->state.dirty.brw |= BRW_NEW_SURFACES;
       }
       return;
    }
 
-   drm_intel_bo_unreference(brw->wm.const_bo);
-   brw->wm.const_bo = drm_intel_bo_alloc(brw->bufmgr, "WM const bo",
+   drm_intel_bo_unreference(brw->wm.base.const_bo);
+   brw->wm.base.const_bo = drm_intel_bo_alloc(brw->bufmgr, "WM const bo",
 					 size, 64);
 
    /* _NEW_PROGRAM_CONSTANTS */
-   drm_intel_gem_bo_map_gtt(brw->wm.const_bo);
-   constants = brw->wm.const_bo->virtual;
+   drm_intel_gem_bo_map_gtt(brw->wm.base.const_bo);
+   constants = brw->wm.base.const_bo->virtual;
    for (i = 0; i < brw->wm.prog_data->nr_pull_params; i++) {
       constants[i] = *brw->wm.prog_data->pull_param[i];
    }
-   drm_intel_gem_bo_unmap_gtt(brw->wm.const_bo);
+   drm_intel_gem_bo_unmap_gtt(brw->wm.base.const_bo);
 
-   brw->vtbl.create_constant_surface(brw, brw->wm.const_bo, 0, size,
-                                     &brw->wm.surf_offset[surf_index],
+   brw->vtbl.create_constant_surface(brw, brw->wm.base.const_bo, 0, size,
+                                     &brw->wm.base.surf_offset[surf_index],
                                      true);
 
    brw->state.dirty.brw |= BRW_NEW_SURFACES;
@@ -522,7 +522,7 @@ brw_update_null_renderbuffer_surface(struct brw_context *brw, unsigned int unit)
    const struct gl_framebuffer *fb = ctx->DrawBuffer;
 
    surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE, 6 * 4, 32,
-                          &brw->wm.surf_offset[SURF_INDEX_DRAW(unit)]);
+                          &brw->wm.base.surf_offset[SURF_INDEX_DRAW(unit)]);
 
    if (fb->Visual.samples > 1) {
       /* On Gen6, null render targets seem to cause GPU hangs when
@@ -575,7 +575,7 @@ brw_update_null_renderbuffer_surface(struct brw_context *brw, unsigned int unit)
 
    if (bo) {
       drm_intel_bo_emit_reloc(brw->batch.bo,
-                              brw->wm.surf_offset[SURF_INDEX_DRAW(unit)] + 4,
+                              brw->wm.base.surf_offset[SURF_INDEX_DRAW(unit)] + 4,
                               bo, 0,
                               I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER);
    }
@@ -624,7 +624,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
    region = irb->mt->region;
 
    surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE, 6 * 4, 32,
-                          &brw->wm.surf_offset[SURF_INDEX_DRAW(unit)]);
+                          &brw->wm.base.surf_offset[SURF_INDEX_DRAW(unit)]);
 
    format = brw->render_target_format[rb_format];
    if (unlikely(!brw->format_supported_as_render_target[rb_format])) {
@@ -680,7 +680,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
    }
 
    drm_intel_bo_emit_reloc(brw->batch.bo,
-			   brw->wm.surf_offset[SURF_INDEX_DRAW(unit)] + 4,
+			   brw->wm.base.surf_offset[SURF_INDEX_DRAW(unit)] + 4,
 			   region->bo,
 			   surf[1] - region->bo->offset,
 			   I915_GEM_DOMAIN_RENDER,
@@ -783,7 +783,7 @@ brw_update_texture_surfaces(struct brw_context *brw)
                                  brw->gs.base.surf_offset +
                                  SURF_INDEX_VEC4_TEXTURE(0));
    update_stage_texture_surfaces(brw, fs,
-                                 brw->wm.surf_offset +
+                                 brw->wm.base.surf_offset +
                                  SURF_INDEX_TEXTURE(0));
 
    brw->state.dirty.brw |= BRW_NEW_SURFACES;
@@ -844,7 +844,7 @@ brw_upload_wm_ubo_surfaces(struct brw_context *brw)
       return;
 
    brw_upload_ubo_surfaces(brw, prog->_LinkedShaders[MESA_SHADER_FRAGMENT],
-			   &brw->wm.surf_offset[SURF_INDEX_WM_UBO(0)]);
+			   &brw->wm.base.surf_offset[SURF_INDEX_WM_UBO(0)]);
 }
 
 const struct brw_tracked_state brw_wm_ubo_surfaces = {
@@ -867,18 +867,18 @@ brw_upload_wm_binding_table(struct brw_context *brw)
    int i;
 
    if (INTEL_DEBUG & DEBUG_SHADER_TIME) {
-      gen7_create_shader_time_surface(brw, &brw->wm.surf_offset[SURF_INDEX_WM_SHADER_TIME]);
+      gen7_create_shader_time_surface(brw, &brw->wm.base.surf_offset[SURF_INDEX_WM_SHADER_TIME]);
    }
 
    /* CACHE_NEW_WM_PROG */
    unsigned entries = brw->wm.prog_data->binding_table_size;
    bind = brw_state_batch(brw, AUB_TRACE_BINDING_TABLE,
 			  sizeof(uint32_t) * entries,
-			  32, &brw->wm.bind_bo_offset);
+			  32, &brw->wm.base.bind_bo_offset);
 
    /* BRW_NEW_SURFACES */
    for (i = 0; i < entries; i++) {
-      bind[i] = brw->wm.surf_offset[i];
+      bind[i] = brw->wm.base.surf_offset[i];
    }
 
    brw->state.dirty.brw |= BRW_NEW_PS_BINDING_TABLE;

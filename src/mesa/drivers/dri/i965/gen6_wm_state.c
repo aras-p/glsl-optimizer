@@ -56,7 +56,7 @@ gen6_upload_wm_push_constants(struct brw_context *brw)
       constants = brw_state_batch(brw, AUB_TRACE_WM_CONSTANTS,
 				  brw->wm.prog_data->nr_params *
 				  sizeof(float),
-				  32, &brw->wm.push_const_offset);
+				  32, &brw->wm.base.push_const_offset);
 
       for (i = 0; i < brw->wm.prog_data->nr_params; i++) {
 	 constants[i] = *brw->wm.prog_data->param[i];
@@ -117,7 +117,7 @@ upload_wm_state(struct brw_context *brw)
       /* Pointer to the WM constant buffer.  Covered by the set of
        * state flags from gen6_upload_wm_push_constants.
        */
-      OUT_BATCH(brw->wm.push_const_offset +
+      OUT_BATCH(brw->wm.base.push_const_offset +
 		ALIGN(brw->wm.prog_data->nr_params,
 		      brw->wm.prog_data->dispatch_width) / 8 - 1);
       OUT_BATCH(0);
@@ -140,7 +140,8 @@ upload_wm_state(struct brw_context *brw)
       dw2 |= GEN6_WM_FLOATING_POINT_MODE_ALT;
 
    /* CACHE_NEW_SAMPLER */
-   dw2 |= (ALIGN(brw->wm.sampler_count, 4) / 4) << GEN6_WM_SAMPLER_COUNT_SHIFT;
+   dw2 |= (ALIGN(brw->wm.base.sampler_count, 4) / 4) <<
+           GEN6_WM_SAMPLER_COUNT_SHIFT;
    dw4 |= (brw->wm.prog_data->first_curbe_grf <<
 	   GEN6_WM_DISPATCH_START_GRF_SHIFT_0);
    dw4 |= (brw->wm.prog_data->first_curbe_grf_16 <<
@@ -203,10 +204,11 @@ upload_wm_state(struct brw_context *brw)
 
    BEGIN_BATCH(9);
    OUT_BATCH(_3DSTATE_WM << 16 | (9 - 2));
-   OUT_BATCH(brw->wm.prog_offset);
+   OUT_BATCH(brw->wm.base.prog_offset);
    OUT_BATCH(dw2);
    if (brw->wm.prog_data->total_scratch) {
-      OUT_RELOC(brw->wm.scratch_bo, I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
+      OUT_RELOC(brw->wm.base.scratch_bo,
+                I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
 		ffs(brw->wm.prog_data->total_scratch) - 11);
    } else {
       OUT_BATCH(0);
@@ -216,7 +218,7 @@ upload_wm_state(struct brw_context *brw)
    OUT_BATCH(dw6);
    OUT_BATCH(0); /* kernel 1 pointer */
    /* kernel 2 pointer */
-   OUT_BATCH(brw->wm.prog_offset + brw->wm.prog_data->prog_offset_16);
+   OUT_BATCH(brw->wm.base.prog_offset + brw->wm.prog_data->prog_offset_16);
    ADVANCE_BATCH();
 }
 

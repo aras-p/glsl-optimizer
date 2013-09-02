@@ -465,7 +465,7 @@ gen7_update_null_renderbuffer_surface(struct brw_context *brw, unsigned unit)
    const struct gl_framebuffer *fb = ctx->DrawBuffer;
 
    uint32_t *surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE, 8 * 4, 32,
-                                    &brw->wm.surf_offset[SURF_INDEX_DRAW(unit)]);
+                                    &brw->wm.base.surf_offset[SURF_INDEX_DRAW(unit)]);
    memset(surf, 0, 8 * 4);
 
    /* From the Ivybridge PRM, Volume 4, Part 1, page 65,
@@ -510,7 +510,7 @@ gen7_update_renderbuffer_surface(struct brw_context *brw,
    uint32_t surf_index = SURF_INDEX_DRAW(unit);
 
    uint32_t *surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE, 8 * 4, 32,
-                                    &brw->wm.surf_offset[surf_index]);
+                                    &brw->wm.base.surf_offset[surf_index]);
    memset(surf, 0, 8 * 4);
 
    intel_miptree_used_for_rendering(irb->mt);
@@ -579,7 +579,7 @@ gen7_update_renderbuffer_surface(struct brw_context *brw,
              (depth - 1) << GEN7_SURFACE_RENDER_TARGET_VIEW_EXTENT_SHIFT;
 
    if (irb->mt->mcs_mt) {
-      gen7_set_surface_mcs_info(brw, surf, brw->wm.surf_offset[surf_index],
+      gen7_set_surface_mcs_info(brw, surf, brw->wm.base.surf_offset[surf_index],
                                 irb->mt->mcs_mt, true /* is RT */);
    }
 
@@ -593,7 +593,7 @@ gen7_update_renderbuffer_surface(struct brw_context *brw,
    }
 
    drm_intel_bo_emit_reloc(brw->batch.bo,
-			   brw->wm.surf_offset[surf_index] + 4,
+			   brw->wm.base.surf_offset[surf_index] + 4,
 			   region->bo,
 			   surf[1] - region->bo->offset,
 			   I915_GEM_DOMAIN_RENDER,

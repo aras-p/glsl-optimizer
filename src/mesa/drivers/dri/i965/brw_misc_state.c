@@ -81,7 +81,7 @@ static void upload_binding_table_pointers(struct brw_context *brw)
    OUT_BATCH(0); /* gs */
    OUT_BATCH(0); /* clip */
    OUT_BATCH(0); /* sf */
-   OUT_BATCH(brw->wm.bind_bo_offset);
+   OUT_BATCH(brw->wm.base.bind_bo_offset);
    ADVANCE_BATCH();
 }
 
@@ -115,7 +115,7 @@ static void upload_gen6_binding_table_pointers(struct brw_context *brw)
 	     (4 - 2));
    OUT_BATCH(brw->vs.base.bind_bo_offset); /* vs */
    OUT_BATCH(brw->ff_gs.bind_bo_offset); /* gs */
-   OUT_BATCH(brw->wm.bind_bo_offset); /* wm/ps */
+   OUT_BATCH(brw->wm.base.bind_bo_offset); /* wm/ps */
    ADVANCE_BATCH();
 }
 
@@ -161,7 +161,7 @@ static void upload_pipelined_state_pointers(struct brw_context *brw )
    OUT_RELOC(brw->batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
 	     brw->sf.state_offset);
    OUT_RELOC(brw->batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
-	     brw->wm.state_offset);
+	     brw->wm.base.state_offset);
    OUT_RELOC(brw->batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
 	     brw->cc.state_offset);
    ADVANCE_BATCH();

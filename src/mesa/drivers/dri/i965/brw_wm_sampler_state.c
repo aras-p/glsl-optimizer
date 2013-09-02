@@ -403,9 +403,9 @@ brw_upload_fs_samplers(struct brw_context *brw)
    /* BRW_NEW_FRAGMENT_PROGRAM */
    struct gl_program *fs = (struct gl_program *) brw->fragment_program;
    brw->vtbl.upload_sampler_state_table(brw, fs,
-                                        brw->wm.sampler_count,
-                                        &brw->wm.sampler_offset,
-                                        brw->wm.sdc_offset);
+                                        brw->wm.base.sampler_count,
+                                        &brw->wm.base.sampler_offset,
+                                        brw->wm.base.sdc_offset);
 }
 
 const struct brw_tracked_state brw_fs_samplers = {
