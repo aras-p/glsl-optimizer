@@ -1568,6 +1568,7 @@ public:
         shadow_comparitor(NULL), offset(NULL)
    {
       this->ir_type = ir_type_texture;
+      memset(&lod_info, 0, sizeof(lod_info));
    }
 
    virtual ir_texture *clone(void *mem_ctx, struct hash_table *) const;
