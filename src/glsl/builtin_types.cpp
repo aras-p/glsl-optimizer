@@ -281,6 +281,10 @@ _mesa_glsl_initialize_types(struct _mesa_glsl_parse_state *state)
       add_type(symbols, glsl_type::samplerExternalOES_type);
    }
 
+   if (state->EXT_shadow_samplers_enable) {
+      add_type(symbols, glsl_type::sampler2DShadow_type);
+   }
+
    if (state->OES_texture_3D_enable) {
       add_type(symbols, glsl_type::sampler3D_type);
    }
