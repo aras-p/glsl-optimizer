@@ -2606,7 +2606,7 @@ process_initializer(ir_variable *var, ast_declaration *decl,
 }
 
 static void
-apply_precision_to_variable(const class ast_type_qualifier& qual,
+apply_precision_to_variable(const struct ast_type_qualifier& qual,
 				 ir_variable *var,
 				 struct _mesa_glsl_parse_state *state)
 {
