@@ -75,7 +75,6 @@ size2indextype(unsigned index_size)
 void
 fd_draw_emit(struct fd_context *ctx, const struct pipe_draw_info *info)
 {
-	struct fd_ringbuffer *ring = ctx->ring;
 	struct pipe_index_buffer *idx = &ctx->indexbuf;
 	struct fd_bo *idx_bo = NULL;
 	enum pc_di_index_size idx_type = INDEX_SIZE_IGN;
@@ -98,15 +97,8 @@ fd_draw_emit(struct fd_context *ctx, const struct pipe_draw_info *info)
 		src_sel = DI_SRC_SEL_AUTO_INDEX;
 	}
 
-	OUT_PKT3(ring, CP_DRAW_INDX, info->indexed ? 5 : 3);
-	OUT_RING(ring, 0x00000000);        /* viz query info. */
-	OUT_RING(ring, DRAW(mode2primtype(info->mode),
-			src_sel, idx_type, IGNORE_VISIBILITY));
-	OUT_RING(ring, info->count);       /* NumIndices */
-	if (info->indexed) {
-		OUT_RELOC(ring, idx_bo, idx_offset, 0, 0);
-		OUT_RING (ring, idx_size);
-	}
+	fd_draw(ctx, mode2primtype(info->mode), src_sel, info->count,
+			idx_type, idx_size, idx_offset, idx_bo);
 }
 
 static void

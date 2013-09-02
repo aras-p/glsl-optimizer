@@ -33,11 +33,33 @@
 #include "pipe/p_context.h"
 
 #include "freedreno_context.h"
+#include "freedreno_screen.h"
+#include "freedreno_util.h"
 
 struct fd_ringbuffer;
 
 void fd_draw_emit(struct fd_context *ctx, const struct pipe_draw_info *info);
 
 void fd_draw_init(struct pipe_context *pctx);
+
+static inline void
+fd_draw(struct fd_context *ctx, enum pc_di_primtype primtype,
+		enum pc_di_src_sel src_sel, uint32_t count,
+		enum pc_di_index_size idx_type,
+		uint32_t idx_size, uint32_t idx_offset,
+		struct fd_bo *idx_bo)
+{
+	struct fd_ringbuffer *ring = ctx->ring;
+
+	OUT_PKT3(ring, CP_DRAW_INDX, idx_bo ? 5 : 3);
+	OUT_RING(ring, 0x00000000);        /* viz query info. */
+	OUT_RING(ring, DRAW(primtype, src_sel,
+			idx_type, IGNORE_VISIBILITY));
+	OUT_RING(ring, count);             /* NumIndices */
+	if (idx_bo) {
+		OUT_RELOC(ring, idx_bo, idx_offset, 0, 0);
+		OUT_RING (ring, idx_size);
+	}
+}
 
 #endif /* FREEDRENO_DRAW_H_ */

@@ -217,11 +217,8 @@ fd3_clear(struct fd_context *ctx, unsigned buffers,
 	OUT_PKT3(ring, CP_EVENT_WRITE, 1);
 	OUT_RING(ring, PERFCOUNTER_STOP);
 
-	OUT_PKT3(ring, CP_DRAW_INDX, 3);
-	OUT_RING(ring, 0x00000000);
-	OUT_RING(ring, DRAW(DI_PT_RECTLIST, DI_SRC_SEL_AUTO_INDEX,
-			INDEX_SIZE_IGN, IGNORE_VISIBILITY));
-	OUT_RING(ring, 2);					/* NumIndices */
+	fd_draw(ctx, DI_PT_RECTLIST, DI_SRC_SEL_AUTO_INDEX, 2,
+			INDEX_SIZE_IGN, 0, 0, NULL);
 
 	OUT_PKT3(ring, CP_WAIT_FOR_IDLE, 1);
 	OUT_RING(ring, 0x00000000);

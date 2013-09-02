@@ -31,6 +31,7 @@
 #include "util/u_memory.h"
 #include "util/u_inlines.h"
 
+#include "freedreno_draw.h"
 #include "freedreno_state.h"
 #include "freedreno_resource.h"
 
@@ -55,9 +56,10 @@ static uint32_t fmt2swap(enum pipe_format format)
 /* transfer from gmem to system memory (ie. normal RAM) */
 
 static void
-emit_gmem2mem_surf(struct fd_ringbuffer *ring, uint32_t base,
+emit_gmem2mem_surf(struct fd_context *ctx, uint32_t base,
 		struct pipe_surface *psurf)
 {
+	struct fd_ringbuffer *ring = ctx->ring;
 	struct fd_resource *rsc = fd_resource(psurf->texture);
 	uint32_t swap = fmt2swap(psurf->format);
 
@@ -89,11 +91,8 @@ emit_gmem2mem_surf(struct fd_ringbuffer *ring, uint32_t base,
 	OUT_RING(ring, 3);                 /* VGT_MAX_VTX_INDX */
 	OUT_RING(ring, 0);                 /* VGT_MIN_VTX_INDX */
 
-	OUT_PKT3(ring, CP_DRAW_INDX, 3);
-	OUT_RING(ring, 0x00000000);
-	OUT_RING(ring, DRAW(DI_PT_RECTLIST, DI_SRC_SEL_AUTO_INDEX,
-			INDEX_SIZE_IGN, IGNORE_VISIBILITY));
-	OUT_RING(ring, 3);					/* NumIndices */
+	fd_draw(ctx, DI_PT_RECTLIST, DI_SRC_SEL_AUTO_INDEX, 3,
+			INDEX_SIZE_IGN, 0, 0, NULL);
 }
 
 static void
@@ -163,10 +162,10 @@ fd2_emit_tile_gmem2mem(struct fd_context *ctx, uint32_t xoff, uint32_t yoff,
 			A2XX_RB_COPY_DEST_OFFSET_Y(yoff));
 
 	if (ctx->resolve & (FD_BUFFER_DEPTH | FD_BUFFER_STENCIL))
-		emit_gmem2mem_surf(ring, bin_w * bin_h, pfb->zsbuf);
+		emit_gmem2mem_surf(ctx, bin_w * bin_h, pfb->zsbuf);
 
 	if (ctx->resolve & FD_BUFFER_COLOR)
-		emit_gmem2mem_surf(ring, 0, pfb->cbufs[0]);
+		emit_gmem2mem_surf(ctx, 0, pfb->cbufs[0]);
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
 	OUT_RING(ring, CP_REG(REG_A2XX_RB_MODECONTROL));
@@ -176,9 +175,10 @@ fd2_emit_tile_gmem2mem(struct fd_context *ctx, uint32_t xoff, uint32_t yoff,
 /* transfer from system memory to gmem */
 
 static void
-emit_mem2gmem_surf(struct fd_ringbuffer *ring, uint32_t base,
+emit_mem2gmem_surf(struct fd_context *ctx, uint32_t base,
 		struct pipe_surface *psurf)
 {
+	struct fd_ringbuffer *ring = ctx->ring;
 	struct fd_resource *rsc = fd_resource(psurf->texture);
 	uint32_t swiz;
 
@@ -214,11 +214,8 @@ emit_mem2gmem_surf(struct fd_ringbuffer *ring, uint32_t base,
 	OUT_RING(ring, 3);                 /* VGT_MAX_VTX_INDX */
 	OUT_RING(ring, 0);                 /* VGT_MIN_VTX_INDX */
 
-	OUT_PKT3(ring, CP_DRAW_INDX, 3);
-	OUT_RING(ring, 0x00000000);
-	OUT_RING(ring, DRAW(DI_PT_RECTLIST, DI_SRC_SEL_AUTO_INDEX,
-			INDEX_SIZE_IGN, IGNORE_VISIBILITY));
-	OUT_RING(ring, 3);					/* NumIndices */
+	fd_draw(ctx, DI_PT_RECTLIST, DI_SRC_SEL_AUTO_INDEX, 3,
+			INDEX_SIZE_IGN, 0, 0, NULL);
 }
 
 static void
@@ -322,10 +319,10 @@ fd2_emit_tile_mem2gmem(struct fd_context *ctx, uint32_t xoff, uint32_t yoff,
 	OUT_RING(ring, 0x00000000);
 
 	if (ctx->restore & (FD_BUFFER_DEPTH | FD_BUFFER_STENCIL))
-		emit_mem2gmem_surf(ring, bin_w * bin_h, pfb->zsbuf);
+		emit_mem2gmem_surf(ctx, bin_w * bin_h, pfb->zsbuf);
 
 	if (ctx->restore & FD_BUFFER_COLOR)
-		emit_mem2gmem_surf(ring, 0, pfb->cbufs[0]);
+		emit_mem2gmem_surf(ctx, 0, pfb->cbufs[0]);
 
 	/* TODO blob driver seems to toss in a CACHE_FLUSH after each DRAW_INDX.. */
 }
