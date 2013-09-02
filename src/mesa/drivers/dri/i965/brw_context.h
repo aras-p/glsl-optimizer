@@ -855,7 +855,7 @@ struct brw_stage_state
 
    /* Binding table: pointers to SURFACE_STATE entries. */
    uint32_t bind_bo_offset;
-   uint32_t surf_offset[BRW_MAX_VEC4_SURFACES];
+   uint32_t surf_offset[BRW_MAX_WM_SURFACES];
 
    /** SAMPLER_STATE count and table offset */
    uint32_t sampler_count;
