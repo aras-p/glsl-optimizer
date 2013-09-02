@@ -403,33 +403,8 @@ match_function_by_name(const char *name,
    }
 
    /* Local shader has no exact candidates; check the built-ins. */
-   _mesa_glsl_initialize_functions(state);
-   for (unsigned i = 0; i < state->num_builtins_to_link; i++) {
-      ir_function *builtin =
-	 state->builtins_to_link[i]->symbols->get_function(name);
-      if (builtin == NULL)
-	 continue;
-
-      bool is_exact = false;
-      ir_function_signature *builtin_sig =
-	 builtin->matching_signature(state, actual_parameters, &is_exact);
-
-      if (builtin_sig == NULL)
-	 continue;
-
-      /* If the built-in signature is exact, we can stop. */
-      if (is_exact) {
-	 sig = builtin_sig;
-	 goto done;
-      }
-
-      if (sig == NULL) {
-	 /* We found an inexact match, which is better than nothing.  However,
-	  * we should keep searching for an exact match.
-	  */
-	 sig = builtin_sig;
-      }
-   }
+   _mesa_glsl_initialize_builtin_functions();
+   sig = _mesa_glsl_find_builtin_function(state, name, actual_parameters);
 
 done:
    if (sig != NULL) {

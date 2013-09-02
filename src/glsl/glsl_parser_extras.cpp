@@ -1625,7 +1625,7 @@ _mesa_destroy_shader_compiler(void)
 void
 _mesa_destroy_shader_compiler_caches(void)
 {
-   _mesa_glsl_release_functions();
+   _mesa_glsl_release_builtin_functions();
 }
 
 }
