@@ -245,9 +245,11 @@ nvc0_validate_viewport(struct nvc0_context *nvc0)
     zmin = vp->translate[2] - fabsf(vp->scale[2]);
     zmax = vp->translate[2] + fabsf(vp->scale[2]);
 
+    nvc0->vport_int[0] = (w << 16) | x;
+    nvc0->vport_int[1] = (h << 16) | y;
     BEGIN_NVC0(push, NVC0_3D(VIEWPORT_HORIZ(0)), 2);
-    PUSH_DATA (push, (w << 16) | x);
-    PUSH_DATA (push, (h << 16) | y);
+    PUSH_DATA (push, nvc0->vport_int[0]);
+    PUSH_DATA (push, nvc0->vport_int[1]);
     BEGIN_NVC0(push, NVC0_3D(DEPTH_RANGE_NEAR(0)), 2);
     PUSH_DATAf(push, zmin);
     PUSH_DATAf(push, zmax);
