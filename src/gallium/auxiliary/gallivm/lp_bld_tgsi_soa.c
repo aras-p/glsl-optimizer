@@ -1135,7 +1135,9 @@ emit_fetch_gs_input(
 
    res = bld->gs_iface->fetch_input(bld->gs_iface, bld_base,
                                     reg->Dimension.Indirect,
-                                    vertex_index, attrib_index,
+                                    vertex_index,
+                                    reg->Register.Indirect,
+                                    attrib_index,
                                     swizzle_index);
 
    assert(res);

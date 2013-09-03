@@ -1360,8 +1360,9 @@ clipmask_booli32(struct gallivm_state *gallivm,
 static LLVMValueRef
 draw_gs_llvm_fetch_input(const struct lp_build_tgsi_gs_iface *gs_iface,
                          struct lp_build_tgsi_context * bld_base,
-                         boolean is_indirect,
+                         boolean is_vindex_indirect,
                          LLVMValueRef vertex_index,
+                         boolean is_aindex_indirect,
                          LLVMValueRef attrib_index,
                          LLVMValueRef swizzle_index)
 {
@@ -1372,18 +1373,28 @@ draw_gs_llvm_fetch_input(const struct lp_build_tgsi_gs_iface *gs_iface,
    LLVMValueRef res;
    struct lp_type type = bld_base->base.type;
 
-   if (is_indirect) {
+   if (is_vindex_indirect || is_aindex_indirect) {
       int i;
       res = bld_base->base.zero;
       for (i = 0; i < type.length; ++i) {
          LLVMValueRef idx = lp_build_const_int32(gallivm, i);
-         LLVMValueRef vert_chan_index = LLVMBuildExtractElement(builder,
-                                                                vertex_index, idx, "");
+         LLVMValueRef vert_chan_index = vertex_index;
+         LLVMValueRef attr_chan_index = attrib_index;
          LLVMValueRef channel_vec, value;
+
+         if (is_vindex_indirect) {
+            vert_chan_index = LLVMBuildExtractElement(builder,
+                                                      vertex_index, idx, "");
+         }
+         if (is_aindex_indirect) {
+            attr_chan_index = LLVMBuildExtractElement(builder,
+                                                      attrib_index, idx, "");
+         }
+
          indices[0] = vert_chan_index;
-         indices[1] = attrib_index;
+         indices[1] = attr_chan_index;
          indices[2] = swizzle_index;
-         
+
          channel_vec = LLVMBuildGEP(builder, gs->input, indices, 3, "");
          channel_vec = LLVMBuildLoad(builder, channel_vec, "");
          value = LLVMBuildExtractElement(builder, channel_vec, idx, "");
