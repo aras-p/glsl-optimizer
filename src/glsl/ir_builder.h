@@ -171,6 +171,7 @@ ir_expression *u2i(operand a);
 ir_expression *b2i(operand a);
 ir_expression *i2b(operand a);
 
+ir_swizzle *swizzle(operand a, int swizzle, int components);
 /**
  * Swizzle away later components, but preserve the ordering.
  */
