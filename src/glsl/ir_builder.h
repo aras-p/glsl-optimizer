@@ -122,6 +122,8 @@ public:
 
 ir_assignment *assign(deref lhs, operand rhs);
 ir_assignment *assign(deref lhs, operand rhs, int writemask);
+ir_assignment *assign(deref lhs, operand rhs, operand condition);
+ir_assignment *assign(deref lhs, operand rhs, operand condition, int writemask);
 
 ir_expression *expr(ir_expression_operation op, operand a);
 ir_expression *expr(ir_expression_operation op, operand a, operand b);
