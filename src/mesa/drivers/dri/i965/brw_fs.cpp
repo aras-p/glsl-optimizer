@@ -1272,8 +1272,7 @@ fs_visitor::calculate_urb_setup()
          c->prog_data.urb_setup[VARYING_SLOT_PNTC] = urb_next++;
    }
 
-   /* Each attribute is 4 setup channels, each of which is half a reg. */
-   c->prog_data.urb_read_length = urb_next * 2;
+   c->prog_data.num_varying_inputs = urb_next;
 }
 
 void
@@ -1298,7 +1297,9 @@ fs_visitor::assign_urb_setup()
       }
    }
 
-   this->first_non_payload_grf = urb_start + c->prog_data.urb_read_length;
+   /* Each attribute is 4 setup channels, each of which is half a reg. */
+   this->first_non_payload_grf =
+      urb_start + c->prog_data.num_varying_inputs * 2;
 }
 
 /**

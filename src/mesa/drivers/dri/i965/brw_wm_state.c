@@ -133,7 +133,8 @@ brw_upload_wm_unit(struct brw_context *brw)
    }
 
    wm->thread3.dispatch_grf_start_reg = brw->wm.prog_data->first_curbe_grf;
-   wm->thread3.urb_entry_read_length = brw->wm.prog_data->urb_read_length;
+   wm->thread3.urb_entry_read_length =
+      brw->wm.prog_data->num_varying_inputs * 2;
    wm->thread3.urb_entry_read_offset = 0;
    wm->thread3.const_urb_entry_read_length =
       brw->wm.prog_data->curb_read_length;

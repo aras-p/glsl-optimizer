@@ -314,7 +314,7 @@ struct brw_shader {
  */
 struct brw_wm_prog_data {
    GLuint curb_read_length;
-   GLuint urb_read_length;
+   GLuint num_varying_inputs;
 
    GLuint first_curbe_grf;
    GLuint first_curbe_grf_16;
