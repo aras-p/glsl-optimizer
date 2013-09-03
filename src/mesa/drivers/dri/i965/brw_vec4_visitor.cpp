@@ -2694,47 +2694,37 @@ vec4_visitor::emit_vertex()
       emit_clip_distances(output_reg[VARYING_SLOT_CLIP_DIST1], 4);
    }
 
-   /* Set up the VUE data for the first URB write */
-   int slot;
-   for (slot = 0; slot < prog_data->vue_map.num_slots; ++slot) {
-      emit_urb_slot(mrf++, prog_data->vue_map.slot_to_varying[slot]);
-
-      /* If this was max_usable_mrf, we can't fit anything more into this URB
-       * WRITE.
+   /* We may need to split this up into several URB writes, so do them in a
+    * loop.
+    */
+   int slot = 0;
+   bool complete = false;
+   do {
+      /* URB offset is in URB row increments, and each of our MRFs is half of
+       * one of those, since we're doing interleaved writes.
        */
-      if (mrf > max_usable_mrf) {
-	 slot++;
-	 break;
-      }
-   }
+      int offset = slot / 2;
 
-   bool complete = slot >= prog_data->vue_map.num_slots;
-   current_annotation = "URB write";
-   vec4_instruction *inst = emit_urb_write_opcode(complete);
-   inst->base_mrf = base_mrf;
-   inst->mlen = align_interleaved_urb_mlen(brw, mrf - base_mrf);
-
-   /* Optional second URB write */
-   if (!complete) {
       mrf = base_mrf + 1;
-
       for (; slot < prog_data->vue_map.num_slots; ++slot) {
-	 assert(mrf < max_usable_mrf);
-
          emit_urb_slot(mrf++, prog_data->vue_map.slot_to_varying[slot]);
+
+         /* If this was max_usable_mrf, we can't fit anything more into this
+          * URB WRITE.
+          */
+         if (mrf > max_usable_mrf) {
+            slot++;
+            break;
+         }
       }
 
+      complete = slot >= prog_data->vue_map.num_slots;
       current_annotation = "URB write";
-      inst = emit_urb_write_opcode(true /* complete */);
+      vec4_instruction *inst = emit_urb_write_opcode(complete);
       inst->base_mrf = base_mrf;
       inst->mlen = align_interleaved_urb_mlen(brw, mrf - base_mrf);
-      /* URB destination offset.  In the previous write, we got MRFs
-       * 2-13 minus the one header MRF, so 12 regs.  URB offset is in
-       * URB row increments, and each of our MRFs is half of one of
-       * those, since we're doing interleaved writes.
-       */
-      inst->offset += (max_usable_mrf - base_mrf) / 2;
-   }
+      inst->offset += offset;
+   } while(!complete);
 }
 
 
