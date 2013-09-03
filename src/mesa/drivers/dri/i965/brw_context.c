@@ -247,6 +247,9 @@ brw_initialize_context_constants(struct brw_context *brw)
    ctx->Const.DisableGLSLLineContinuations =
       driQueryOptionb(&brw->optionCache, "disable_glsl_line_continuations");
 
+   if (brw->gen >= 6)
+      ctx->Const.MaxVarying = 32;
+
    /* We want the GLSL compiler to emit code that uses condition codes */
    for (int i = 0; i < MESA_SHADER_TYPES; i++) {
       ctx->ShaderCompilerOptions[i].MaxIfDepth = brw->gen < 6 ? 16 : UINT_MAX;
