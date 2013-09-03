@@ -1252,6 +1252,11 @@ public:
     */
    ir_expression(int op, ir_rvalue *op0, ir_rvalue *op1);
 
+   /**
+    * Constructor for ternary operation expressions
+    */
+   ir_expression(int op, ir_rvalue *op0, ir_rvalue *op1, ir_rvalue *op2);
+
    virtual ir_expression *as_expression()
    {
       return this;

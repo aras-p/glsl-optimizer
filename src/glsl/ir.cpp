@@ -413,6 +413,37 @@ ir_expression::ir_expression(int op, ir_rvalue *op0, ir_rvalue *op1)
    }
 }
 
+ir_expression::ir_expression(int op, ir_rvalue *op0, ir_rvalue *op1,
+                             ir_rvalue *op2)
+{
+   this->ir_type = ir_type_expression;
+
+   this->operation = ir_expression_operation(op);
+   this->operands[0] = op0;
+   this->operands[1] = op1;
+   this->operands[2] = op2;
+   this->operands[3] = NULL;
+
+   assert(op > ir_last_binop && op <= ir_last_triop);
+
+   switch (this->operation) {
+   case ir_triop_fma:
+   case ir_triop_lrp:
+   case ir_triop_bitfield_extract:
+   case ir_triop_vector_insert:
+      this->type = op0->type;
+      break;
+
+   case ir_triop_bfi:
+      this->type = op1->type;
+      break;
+
+   default:
+      assert(!"not reached: missing automatic type setup for ir_expression");
+      this->type = glsl_type::float_type;
+   }
+}
+
 unsigned int
 ir_expression::get_num_operands(ir_expression_operation op)
 {
