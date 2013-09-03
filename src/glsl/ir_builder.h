@@ -125,6 +125,7 @@ ir_assignment *assign(deref lhs, operand rhs, int writemask);
 
 ir_expression *expr(ir_expression_operation op, operand a);
 ir_expression *expr(ir_expression_operation op, operand a, operand b);
+ir_expression *expr(ir_expression_operation op, operand a, operand b, operand c);
 ir_expression *add(operand a, operand b);
 ir_expression *sub(operand a, operand b);
 ir_expression *mul(operand a, operand b);

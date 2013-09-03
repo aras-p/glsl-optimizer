@@ -173,6 +173,14 @@ expr(ir_expression_operation op, operand a, operand b)
    return new(mem_ctx) ir_expression(op, a.val, b.val);
 }
 
+ir_expression *
+expr(ir_expression_operation op, operand a, operand b, operand c)
+{
+   void *mem_ctx = ralloc_parent(a.val);
+
+   return new(mem_ctx) ir_expression(op, a.val, b.val, c.val);
+}
+
 ir_expression *add(operand a, operand b)
 {
    return expr(ir_binop_add, a, b);
