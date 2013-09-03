@@ -472,6 +472,9 @@ no_matching_function_error(const char *name,
       foreach_list (node, &f->signatures) {
 	 ir_function_signature *sig = (ir_function_signature *) node;
 
+         if (sig->is_builtin() && !sig->is_builtin_available(state))
+            continue;
+
 	 str = prototype_string(sig->return_type, f->name, &sig->parameters);
 	 _mesa_glsl_error(loc, state, "%s%s", prefix, str);
 	 ralloc_free(str);
