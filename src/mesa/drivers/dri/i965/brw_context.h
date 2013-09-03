@@ -439,6 +439,15 @@ void brw_compute_vue_map(struct brw_context *brw, struct brw_vue_map *vue_map,
                          GLbitfield64 slots_valid, bool userclip_active);
 
 
+/**
+ * Bitmask indicating which fragment shader inputs represent varyings (and
+ * hence have to be delivered to the fragment shader by the SF/SBE stage).
+ */
+#define BRW_FS_VARYING_INPUT_MASK \
+   (BITFIELD64_RANGE(0, VARYING_SLOT_MAX) & \
+    ~VARYING_BIT_POS & ~VARYING_BIT_FACE)
+
+
 /*
  * Mapping of VUE map slots to interpolation modes.
  */

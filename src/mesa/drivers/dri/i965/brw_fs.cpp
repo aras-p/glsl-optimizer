@@ -1238,7 +1238,8 @@ fs_visitor::calculate_urb_setup()
    /* Figure out where each of the incoming setup attributes lands. */
    if (brw->gen >= 6) {
       for (unsigned int i = 0; i < VARYING_SLOT_MAX; i++) {
-	 if (fp->Base.InputsRead & BITFIELD64_BIT(i)) {
+	 if (fp->Base.InputsRead & BRW_FS_VARYING_INPUT_MASK &
+             BITFIELD64_BIT(i)) {
 	    c->prog_data.urb_setup[i] = urb_next++;
 	 }
       }

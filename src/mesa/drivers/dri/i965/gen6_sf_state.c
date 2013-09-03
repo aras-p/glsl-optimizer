@@ -56,14 +56,6 @@ static uint32_t
 get_attr_override(const struct brw_vue_map *vue_map, int urb_entry_read_offset,
                   int fs_attr, bool two_side_color, uint32_t *max_source_attr)
 {
-   if (fs_attr == VARYING_SLOT_POS) {
-      /* This attribute will be overwritten by the fragment shader's
-       * interpolation code (see emit_interp() in brw_wm_fp.c), so just let it
-       * reference the first available attribute.
-       */
-      return 0;
-   }
-
    /* Find the VUE slot for this attribute. */
    int slot = vue_map->varying_to_slot[fs_attr];
 
