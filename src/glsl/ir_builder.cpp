@@ -76,6 +76,13 @@ assign(deref lhs, operand rhs, operand condition)
    return assign(lhs, rhs, condition, (1 << lhs.val->type->vector_elements) - 1);
 }
 
+ir_return *
+ret(operand retval)
+{
+   void *mem_ctx = ralloc_parent(retval.val);
+   return new(mem_ctx) ir_return(retval.val);
+}
+
 ir_swizzle *
 swizzle(operand a, int swizzle, int components)
 {
