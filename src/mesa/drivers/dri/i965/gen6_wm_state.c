@@ -188,7 +188,8 @@ upload_wm_state(struct brw_context *brw)
       dw5 |= GEN6_WM_DISPATCH_ENABLE;
    }
 
-   dw6 |= _mesa_bitcount_64(brw->fragment_program->Base.InputsRead) <<
+   /* CACHE_NEW_WM_PROG */
+   dw6 |= brw->wm.prog_data->num_varying_inputs <<
       GEN6_WM_NUM_SF_OUTPUTS_SHIFT;
    if (multisampled_fbo) {
       /* _NEW_MULTISAMPLE */

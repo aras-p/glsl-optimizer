@@ -168,6 +168,7 @@ upload_ps_state(struct brw_context *brw)
     * rendering, CurrentFragmentProgram is used for this check to
     * differentiate between the GLSL and non-GLSL cases.
     */
+   /* BRW_NEW_FRAGMENT_PROGRAM */
    if (ctx->Shader.CurrentFragmentProgram == NULL)
       dw2 |= GEN7_PS_FLOATING_POINT_MODE_ALT;
 
@@ -191,8 +192,8 @@ upload_ps_state(struct brw_context *brw)
       dw4 |= GEN7_PS_DUAL_SOURCE_BLEND_ENABLE;
    }
 
-   /* BRW_NEW_FRAGMENT_PROGRAM */
-   if (brw->fragment_program->Base.InputsRead != 0)
+   /* CACHE_NEW_WM_PROG */
+   if (brw->wm.prog_data->num_varying_inputs != 0)
       dw4 |= GEN7_PS_ATTRIBUTE_ENABLE;
 
    dw4 |= GEN7_PS_8_DISPATCH_ENABLE;
