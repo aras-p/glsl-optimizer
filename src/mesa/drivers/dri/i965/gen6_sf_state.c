@@ -52,7 +52,7 @@
  * the VUE that are not needed by the fragment shader.  It is measured in
  * 256-bit increments.
  */
-uint32_t
+static uint32_t
 get_attr_override(const struct brw_vue_map *vue_map, int urb_entry_read_offset,
                   int fs_attr, bool two_side_color, uint32_t *max_source_attr)
 {
@@ -123,21 +123,98 @@ get_attr_override(const struct brw_vue_map *vue_map, int urb_entry_read_offset,
    return source_attr;
 }
 
+
+/**
+ * Create the mapping from the FS inputs we produce to the previous pipeline
+ * stage (GS or VS) outputs they source from.
+ */
+void
+calculate_attr_overrides(const struct brw_context *brw,
+                         uint16_t *attr_overrides,
+                         uint32_t *point_sprite_enables,
+                         uint32_t *flat_enables,
+                         uint32_t *urb_entry_read_length)
+{
+   const int urb_entry_read_offset = BRW_SF_URB_ENTRY_READ_OFFSET;
+   uint32_t max_source_attr = 0;
+   int input_index = 0;
+
+   /* _NEW_LIGHT */
+   bool shade_model_flat = brw->ctx.Light.ShadeModel == GL_FLAT;
+
+   for (int attr = 0; attr < VARYING_SLOT_MAX; attr++) {
+      enum glsl_interp_qualifier interp_qualifier =
+         brw->fragment_program->InterpQualifier[attr];
+      bool is_gl_Color = attr == VARYING_SLOT_COL0 || attr == VARYING_SLOT_COL1;
+
+      if (!(brw->fragment_program->Base.InputsRead & BITFIELD64_BIT(attr)))
+	 continue;
+
+      /* _NEW_POINT */
+      if (brw->ctx.Point.PointSprite &&
+	  (attr >= VARYING_SLOT_TEX0 && attr <= VARYING_SLOT_TEX7) &&
+	  brw->ctx.Point.CoordReplace[attr - VARYING_SLOT_TEX0]) {
+	 *point_sprite_enables |= (1 << input_index);
+      }
+
+      if (attr == VARYING_SLOT_PNTC)
+	 *point_sprite_enables |= (1 << input_index);
+
+      /* flat shading */
+      if (interp_qualifier == INTERP_QUALIFIER_FLAT ||
+          (shade_model_flat && is_gl_Color &&
+           interp_qualifier == INTERP_QUALIFIER_NONE))
+         *flat_enables |= (1 << input_index);
+
+      /* The hardware can only do the overrides on 16 overrides at a
+       * time, and the other up to 16 have to be lined up so that the
+       * input index = the output index.  We'll need to do some
+       * tweaking to make sure that's the case.
+       */
+      assert(input_index < 16 || attr == input_index);
+
+      /* BRW_NEW_VUE_MAP_GEOM_OUT | _NEW_LIGHT | _NEW_PROGRAM */
+      attr_overrides[input_index++] =
+         get_attr_override(&brw->vue_map_geom_out,
+			   urb_entry_read_offset, attr,
+                           brw->ctx.VertexProgram._TwoSideEnabled,
+                           &max_source_attr);
+   }
+
+   for (; input_index < VARYING_SLOT_MAX; input_index++)
+      attr_overrides[input_index] = 0;
+
+   /* From the Sandy Bridge PRM, Volume 2, Part 1, documentation for
+    * 3DSTATE_SF DWord 1 bits 15:11, "Vertex URB Entry Read Length":
+    *
+    * "This field should be set to the minimum length required to read the
+    *  maximum source attribute.  The maximum source attribute is indicated
+    *  by the maximum value of the enabled Attribute # Source Attribute if
+    *  Attribute Swizzle Enable is set, Number of Output Attributes-1 if
+    *  enable is not set.
+    *  read_length = ceiling((max_source_attr + 1) / 2)
+    *
+    *  [errata] Corruption/Hang possible if length programmed larger than
+    *  recommended"
+    *
+    * Similar text exists for Ivy Bridge.
+    */
+   *urb_entry_read_length = ALIGN(max_source_attr + 1, 2) / 2;
+}
+
+
 static void
 upload_sf_state(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->ctx;
    /* BRW_NEW_FRAGMENT_PROGRAM */
    uint32_t num_outputs = _mesa_bitcount_64(brw->fragment_program->Base.InputsRead);
-   /* _NEW_LIGHT */
-   bool shade_model_flat = ctx->Light.ShadeModel == GL_FLAT;
    uint32_t dw1, dw2, dw3, dw4, dw16, dw17;
    int i;
    /* _NEW_BUFFER */
    bool render_to_fbo = _mesa_is_user_fbo(ctx->DrawBuffer);
    bool multisampled_fbo = ctx->DrawBuffer->Visual.samples > 1;
 
-   int attr = 0, input_index = 0;
    const int urb_entry_read_offset = BRW_SF_URB_ENTRY_READ_OFFSET;
    float point_size;
    uint16_t attr_overrides[VARYING_SLOT_MAX];
@@ -276,68 +353,12 @@ upload_sf_state(struct brw_context *brw)
 	 (1 << GEN6_SF_TRIFAN_PROVOKE_SHIFT);
    }
 
-   /* Create the mapping from the FS inputs we produce to the VS outputs
-    * they source from.
-    */
-   uint32_t max_source_attr = 0;
-   for (; attr < VARYING_SLOT_MAX; attr++) {
-      enum glsl_interp_qualifier interp_qualifier =
-         brw->fragment_program->InterpQualifier[attr];
-      bool is_gl_Color = attr == VARYING_SLOT_COL0 || attr == VARYING_SLOT_COL1;
-
-      if (!(brw->fragment_program->Base.InputsRead & BITFIELD64_BIT(attr)))
-	 continue;
-
-      /* _NEW_POINT */
-      if (ctx->Point.PointSprite &&
-	  (attr >= VARYING_SLOT_TEX0 && attr <= VARYING_SLOT_TEX7) &&
-	  ctx->Point.CoordReplace[attr - VARYING_SLOT_TEX0]) {
-	 dw16 |= (1 << input_index);
-      }
-
-      if (attr == VARYING_SLOT_PNTC)
-	 dw16 |= (1 << input_index);
-
-      /* flat shading */
-      if (interp_qualifier == INTERP_QUALIFIER_FLAT ||
-          (shade_model_flat && is_gl_Color &&
-           interp_qualifier == INTERP_QUALIFIER_NONE))
-         dw17 |= (1 << input_index);
-
-      /* The hardware can only do the overrides on 16 overrides at a
-       * time, and the other up to 16 have to be lined up so that the
-       * input index = the output index.  We'll need to do some
-       * tweaking to make sure that's the case.
-       */
-      assert(input_index < 16 || attr == input_index);
-
-      /* BRW_NEW_VUE_MAP_GEOM_OUT | _NEW_LIGHT | _NEW_PROGRAM */
-      attr_overrides[input_index++] =
-         get_attr_override(&brw->vue_map_geom_out,
-			   urb_entry_read_offset, attr,
-                           ctx->VertexProgram._TwoSideEnabled,
-                           &max_source_attr);
-   }
-
-   for (; input_index < VARYING_SLOT_MAX; input_index++)
-      attr_overrides[input_index] = 0;
-
-   /* From the Sandy Bridge PRM, Volume 2, Part 1, documentation for
-    * 3DSTATE_SF DWord 1 bits 15:11, "Vertex URB Entry Read Length":
-    *
-    * "This field should be set to the minimum length required to read the
-    *  maximum source attribute.  The maximum source attribute is indicated
-    *  by the maximum value of the enabled Attribute # Source Attribute if
-    *  Attribute Swizzle Enable is set, Number of Output Attributes-1 if
-    *  enable is not set.
-    *  read_length = ceiling((max_source_attr + 1) / 2)
-    *
-    *  [errata] Corruption/Hang possible if length programmed larger than
-    *  recommended"
-    */
-   uint32_t urb_entry_read_length = ALIGN(max_source_attr + 1, 2) / 2;
-      dw1 |= urb_entry_read_length << GEN6_SF_URB_ENTRY_READ_LENGTH_SHIFT |
-             urb_entry_read_offset << GEN6_SF_URB_ENTRY_READ_OFFSET_SHIFT;
+   /* BRW_NEW_VUE_MAP_GEOM_OUT | _NEW_POINT | _NEW_LIGHT | _NEW_PROGRAM */
+   uint32_t urb_entry_read_length;
+   calculate_attr_overrides(brw, attr_overrides, &dw16, &dw17,
+                            &urb_entry_read_length);
+   dw1 |= (urb_entry_read_length << GEN6_SF_URB_ENTRY_READ_LENGTH_SHIFT |
+           urb_entry_read_offset << GEN6_SF_URB_ENTRY_READ_OFFSET_SHIFT);
 
    BEGIN_BATCH(20);
    OUT_BATCH(_3DSTATE_SF << 16 | (20 - 2));

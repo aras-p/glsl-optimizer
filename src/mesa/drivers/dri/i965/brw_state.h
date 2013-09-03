@@ -225,9 +225,12 @@ void gen4_init_vtable_sampler_functions(struct brw_context *brw);
 void gen7_init_vtable_sampler_functions(struct brw_context *brw);
 
 /* gen6_sf_state.c */
-uint32_t
-get_attr_override(const struct brw_vue_map *vue_map, int urb_entry_read_offset,
-                  int fs_attr, bool two_side_color, uint32_t *max_source_attr);
+void
+calculate_attr_overrides(const struct brw_context *brw,
+                         uint16_t *attr_overrides,
+                         uint32_t *point_sprite_enables,
+                         uint32_t *flat_enables,
+                         uint32_t *urb_entry_read_length);
 
 /* brw_vs_surface_state.c */
 void
