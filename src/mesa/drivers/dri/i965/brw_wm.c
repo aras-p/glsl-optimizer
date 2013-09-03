@@ -466,7 +466,8 @@ static void brw_wm_populate_key( struct brw_context *brw,
       (ctx->Multisample.SampleAlphaToCoverage || ctx->Color.AlphaEnabled);
 
    /* BRW_NEW_VUE_MAP_GEOM_OUT */
-   if (brw->gen < 6)
+   if (brw->gen < 6 || _mesa_bitcount_64(fp->program.Base.InputsRead &
+                                         BRW_FS_VARYING_INPUT_MASK) > 16)
       key->input_slots_valid = brw->vue_map_geom_out.slots_valid;
 
    /* The unique fragment program ID */
