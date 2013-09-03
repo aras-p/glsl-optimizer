@@ -137,17 +137,23 @@ calculate_attr_overrides(const struct brw_context *brw,
 {
    const int urb_entry_read_offset = BRW_SF_URB_ENTRY_READ_OFFSET;
    uint32_t max_source_attr = 0;
-   int input_index = 0;
 
    /* _NEW_LIGHT */
    bool shade_model_flat = brw->ctx.Light.ShadeModel == GL_FLAT;
+
+   /* Initialize all the attr_overrides to 0.  In the loop below we'll modify
+    * just the ones that correspond to inputs used by the fs.
+    */
+   memset(attr_overrides, 0, 16*sizeof(*attr_overrides));
 
    for (int attr = 0; attr < VARYING_SLOT_MAX; attr++) {
       enum glsl_interp_qualifier interp_qualifier =
          brw->fragment_program->InterpQualifier[attr];
       bool is_gl_Color = attr == VARYING_SLOT_COL0 || attr == VARYING_SLOT_COL1;
+      /* CACHE_NEW_WM_PROG */
+      int input_index = brw->wm.prog_data->urb_setup[attr];
 
-      if (!(brw->fragment_program->Base.InputsRead & BITFIELD64_BIT(attr)))
+      if (input_index < 0)
 	 continue;
 
       /* _NEW_POINT */
@@ -166,23 +172,23 @@ calculate_attr_overrides(const struct brw_context *brw,
            interp_qualifier == INTERP_QUALIFIER_NONE))
          *flat_enables |= (1 << input_index);
 
+      /* BRW_NEW_VUE_MAP_GEOM_OUT | _NEW_LIGHT | _NEW_PROGRAM */
+      uint16_t attr_override =
+         get_attr_override(&brw->vue_map_geom_out,
+			   urb_entry_read_offset, attr,
+                           brw->ctx.VertexProgram._TwoSideEnabled,
+                           &max_source_attr);
+
       /* The hardware can only do the overrides on 16 overrides at a
        * time, and the other up to 16 have to be lined up so that the
        * input index = the output index.  We'll need to do some
        * tweaking to make sure that's the case.
        */
-      assert(input_index < 16 || attr == input_index);
-
-      /* BRW_NEW_VUE_MAP_GEOM_OUT | _NEW_LIGHT | _NEW_PROGRAM */
-      attr_overrides[input_index++] =
-         get_attr_override(&brw->vue_map_geom_out,
-			   urb_entry_read_offset, attr,
-                           brw->ctx.VertexProgram._TwoSideEnabled,
-                           &max_source_attr);
+      if (input_index < 16)
+         attr_overrides[input_index] = attr_override;
+      else
+         assert(attr_override == input_index);
    }
-
-   for (; input_index < VARYING_SLOT_MAX; input_index++)
-      attr_overrides[input_index] = 0;
 
    /* From the Sandy Bridge PRM, Volume 2, Part 1, documentation for
     * 3DSTATE_SF DWord 1 bits 15:11, "Vertex URB Entry Read Length":
@@ -207,8 +213,8 @@ static void
 upload_sf_state(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->ctx;
-   /* BRW_NEW_FRAGMENT_PROGRAM */
-   uint32_t num_outputs = _mesa_bitcount_64(brw->fragment_program->Base.InputsRead);
+   /* CACHE_NEW_WM_PROG */
+   uint32_t num_outputs = brw->wm.prog_data->num_varying_inputs;
    uint32_t dw1, dw2, dw3, dw4, dw16, dw17;
    int i;
    /* _NEW_BUFFER */
@@ -217,7 +223,7 @@ upload_sf_state(struct brw_context *brw)
 
    const int urb_entry_read_offset = BRW_SF_URB_ENTRY_READ_OFFSET;
    float point_size;
-   uint16_t attr_overrides[VARYING_SLOT_MAX];
+   uint16_t attr_overrides[16];
    uint32_t point_sprite_origin;
 
    dw1 = GEN6_SF_SWIZZLE_ENABLE | num_outputs << GEN6_SF_NUM_OUTPUTS_SHIFT;
@@ -353,7 +359,9 @@ upload_sf_state(struct brw_context *brw)
 	 (1 << GEN6_SF_TRIFAN_PROVOKE_SHIFT);
    }
 
-   /* BRW_NEW_VUE_MAP_GEOM_OUT | _NEW_POINT | _NEW_LIGHT | _NEW_PROGRAM */
+   /* BRW_NEW_VUE_MAP_GEOM_OUT | _NEW_POINT | _NEW_LIGHT | _NEW_PROGRAM |
+    * CACHE_NEW_WM_PROG
+    */
    uint32_t urb_entry_read_length;
    calculate_attr_overrides(brw, attr_overrides, &dw16, &dw17,
                             &urb_entry_read_length);
@@ -391,7 +399,8 @@ const struct brw_tracked_state gen6_sf_state = {
                 _NEW_MULTISAMPLE),
       .brw   = (BRW_NEW_CONTEXT |
 		BRW_NEW_FRAGMENT_PROGRAM |
-                BRW_NEW_VUE_MAP_GEOM_OUT)
+                BRW_NEW_VUE_MAP_GEOM_OUT),
+      .cache = CACHE_NEW_WM_PROG
    },
    .emit = upload_sf_state,
 };

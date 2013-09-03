@@ -33,12 +33,12 @@ static void
 upload_sbe_state(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->ctx;
-   /* BRW_NEW_FRAGMENT_PROGRAM */
-   uint32_t num_outputs = _mesa_bitcount_64(brw->fragment_program->Base.InputsRead);
+   /* CACHE_NEW_WM_PROG */
+   uint32_t num_outputs = brw->wm.prog_data->num_varying_inputs;
    uint32_t dw1, dw10, dw11;
    int i;
    const int urb_entry_read_offset = BRW_SF_URB_ENTRY_READ_OFFSET;
-   uint16_t attr_overrides[VARYING_SLOT_MAX];
+   uint16_t attr_overrides[16];
    /* _NEW_BUFFERS */
    bool render_to_fbo = _mesa_is_user_fbo(ctx->DrawBuffer);
    uint32_t point_sprite_origin;
@@ -62,7 +62,9 @@ upload_sbe_state(struct brw_context *brw)
    dw10 = 0;
    dw11 = 0;
 
-   /* BRW_NEW_VUE_MAP_GEOM_OUT | _NEW_POINT | _NEW_LIGHT | _NEW_PROGRAM */
+   /* BRW_NEW_VUE_MAP_GEOM_OUT | _NEW_POINT | _NEW_LIGHT | _NEW_PROGRAM |
+    * CACHE_NEW_WM_PROG
+    */
    uint32_t urb_entry_read_length;
    calculate_attr_overrides(brw, attr_overrides, &dw10, &dw11,
                             &urb_entry_read_length);
@@ -93,7 +95,8 @@ const struct brw_tracked_state gen7_sbe_state = {
 		_NEW_PROGRAM),
       .brw   = (BRW_NEW_CONTEXT |
 		BRW_NEW_FRAGMENT_PROGRAM |
-                BRW_NEW_VUE_MAP_GEOM_OUT)
+                BRW_NEW_VUE_MAP_GEOM_OUT),
+      .cache = CACHE_NEW_WM_PROG
    },
    .emit = upload_sbe_state,
 };
