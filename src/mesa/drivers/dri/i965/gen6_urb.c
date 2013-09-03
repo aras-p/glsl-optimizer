@@ -86,8 +86,8 @@ gen6_upload_urb( struct brw_context *brw )
    assert(brw->urb.nr_vs_entries >= brw->urb.min_vs_entries);
    assert(brw->urb.nr_vs_entries % 4 == 0);
    assert(brw->urb.nr_gs_entries % 4 == 0);
-   assert(vs_size < 5);
-   assert(gs_size < 5);
+   assert(vs_size <= 5);
+   assert(gs_size <= 5);
 
    BEGIN_BATCH(3);
    OUT_BATCH(_3DSTATE_URB << 16 | (3 - 2));
