@@ -250,6 +250,7 @@ ir_expression::ir_expression(int op, ir_rvalue *op0)
    case ir_unop_cos_reduced:
    case ir_unop_dFdx:
    case ir_unop_dFdy:
+   case ir_unop_bitfield_reverse:
       this->type = op0->type;
       break;
 
@@ -257,6 +258,9 @@ ir_expression::ir_expression(int op, ir_rvalue *op0)
    case ir_unop_b2i:
    case ir_unop_u2i:
    case ir_unop_bitcast_f2i:
+   case ir_unop_bit_count:
+   case ir_unop_find_msb:
+   case ir_unop_find_lsb:
       this->type = glsl_type::get_instance(GLSL_TYPE_INT,
 					   op0->type->vector_elements, 1);
       break;
