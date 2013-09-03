@@ -3150,17 +3150,7 @@ brw_fs_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
    }
 
    if (brw->gen < 6)
-      key.input_slots_valid |= BITFIELD64_BIT(VARYING_SLOT_POS);
-
-   for (int i = 0; i < VARYING_SLOT_MAX; i++) {
-      if (!(fp->Base.InputsRead & BITFIELD64_BIT(i)))
-	 continue;
-
-      if (brw->gen < 6) {
-         if (_mesa_varying_slot_in_fs((gl_varying_slot) i))
-            key.input_slots_valid |= BITFIELD64_BIT(i);
-      }
-   }
+      key.input_slots_valid = fp->Base.InputsRead | VARYING_BIT_POS;
 
    key.clamp_fragment_color = ctx->API == API_OPENGL_COMPAT;
 
