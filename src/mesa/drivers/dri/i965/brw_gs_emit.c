@@ -169,31 +169,46 @@ static void brw_ff_gs_emit_vue(struct brw_ff_gs_compile *c,
                                bool last)
 {
    struct brw_compile *p = &c->func;
-   bool allocate = !last;
+   int write_offset = 0;
+   bool complete = false;
 
-   /* Copy the vertex from vertn into m1..mN+1:
-    */
-   brw_copy8(p, brw_message_reg(1), vert, c->nr_regs);
+   do {
+      /* We can't write more than 14 registers at a time to the URB */
+      int write_len = MIN2(c->nr_regs - write_offset, 14);
+      if (write_len == c->nr_regs - write_offset)
+         complete = true;
 
-   /* Send each vertex as a seperate write to the urb.  This is
-    * different to the concept in brw_sf_emit.c, where subsequent
-    * writes are used to build up a single urb entry.  Each of these
-    * writes instantiates a seperate urb entry, and a new one must be
-    * allocated each time.
-    */
-   brw_urb_WRITE(p, 
-		 allocate ? c->reg.temp
-                          : retype(brw_null_reg(), BRW_REGISTER_TYPE_UD),
-		 0,
-		 c->reg.header,
-		 allocate ? BRW_URB_WRITE_ALLOCATE_COMPLETE
-                          : BRW_URB_WRITE_EOT_COMPLETE,
-		 c->nr_regs + 1, /* msg length */
-		 allocate ? 1 : 0, /* response length */
-		 0,		/* urb offset */
-		 BRW_URB_SWIZZLE_NONE);
+      /* Copy the vertex from vertn into m1..mN+1:
+       */
+      brw_copy8(p, brw_message_reg(1), offset(vert, write_offset), write_len);
 
-   if (allocate) {
+      /* Send the vertex data to the URB.  If this is the last write for this
+       * vertex, then we mark it as complete, and either end the thread or
+       * allocate another vertex URB entry (depending whether this is the last
+       * vertex).
+       */
+      enum brw_urb_write_flags flags;
+      if (!complete)
+         flags = BRW_URB_WRITE_NO_FLAGS;
+      else if (last)
+         flags = BRW_URB_WRITE_EOT_COMPLETE;
+      else
+         flags = BRW_URB_WRITE_ALLOCATE_COMPLETE;
+      brw_urb_WRITE(p,
+                    (flags & BRW_URB_WRITE_ALLOCATE) ? c->reg.temp
+                    : retype(brw_null_reg(), BRW_REGISTER_TYPE_UD),
+                    0,
+                    c->reg.header,
+                    flags,
+                    write_len + 1, /* msg length */
+                    (flags & BRW_URB_WRITE_ALLOCATE) ? 1
+                    : 0, /* response length */
+                    write_offset,  /* urb offset */
+                    BRW_URB_SWIZZLE_NONE);
+      write_offset += write_len;
+   } while (!complete);
+
+   if (!last) {
       brw_MOV(p, get_element_ud(c->reg.header, 0),
               get_element_ud(c->reg.temp, 0));
    }
