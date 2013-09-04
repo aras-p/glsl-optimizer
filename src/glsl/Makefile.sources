@@ -105,20 +105,7 @@ GLSL_COMPILER_CXX_FILES = \
 	$(GLSL_SRCDIR)/standalone_scaffolding.cpp \
 	$(GLSL_SRCDIR)/main.cpp
 
-# builtin_compiler
-#
-# This is built before libglsl to generate builtin_function.cpp for libglsl.
-# For this to work, a dummy version of builtin_function.cpp,
-# builtin_stubs.cpp, is used.
-
-BUILTIN_COMPILER_CXX_FILES = \
-	$(GLSL_SRCDIR)/builtin_compiler/builtin_stubs.cpp
-
-BUILTIN_COMPILER_GENERATED_CXX_FILES = \
-	$(GLSL_BUILDDIR)/glsl_lexer.cpp \
-	$(GLSL_BUILDDIR)/glsl_parser.cpp
-
 # libglsl generated sources
 LIBGLSL_GENERATED_CXX_FILES = \
-	$(BUILTIN_COMPILER_GENERATED_CXX_FILES) \
-	$(GLSL_BUILDDIR)/builtin_function.cpp
+	$(GLSL_BUILDDIR)/glsl_lexer.cpp \
+	$(GLSL_BUILDDIR)/glsl_parser.cpp

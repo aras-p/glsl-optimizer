@@ -2103,7 +2103,6 @@ AC_CONFIG_FILES([Makefile
 		src/gbm/Makefile
 		src/gbm/main/gbm.pc
 		src/glsl/Makefile
-		src/glsl/builtin_compiler/Makefile
 		src/glx/Makefile
 		src/glx/tests/Makefile
 		src/gtest/Makefile

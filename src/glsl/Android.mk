@@ -50,32 +50,6 @@ include $(MESA_COMMON_MK)
 include $(BUILD_STATIC_LIBRARY)
 
 # ---------------------------------------
-# Build mesa_builtin_compiler for host
-# ---------------------------------------
-
-include $(CLEAR_VARS)
-
-LOCAL_SRC_FILES := \
-	$(LIBGLCPP_FILES) \
-	$(LIBGLSL_FILES) \
-	$(BUILTIN_COMPILER_CXX_FILES) \
-	$(GLSL_COMPILER_CXX_FILES)
-
-LOCAL_C_INCLUDES := \
-	$(MESA_TOP)/src/mapi \
-	$(MESA_TOP)/src/mesa
-
-LOCAL_STATIC_LIBRARIES := libmesa_glsl_utils
-
-LOCAL_MODULE := mesa_builtin_compiler
-
-LOCAL_MODULE_CLASS := EXECUTABLES
-LOCAL_IS_HOST_MODULE := true
-include $(LOCAL_PATH)/Android.gen.mk
-include $(MESA_COMMON_MK)
-include $(BUILD_HOST_EXECUTABLE)
-
-# ---------------------------------------
 # Build glsl_compiler
 # ---------------------------------------
 

@@ -19,8 +19,6 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
-SUBDIRS = builtin_compiler
-
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/src/mapi \
@@ -72,31 +70,21 @@ tests_ralloc_test_LDADD =				\
 	$(top_builddir)/src/gtest/libgtest.la		\
 	$(PTHREAD_LIBS)
 
-if CROSS_COMPILING
 libglcpp_la_SOURCES =					\
 	glcpp/glcpp-lex.c				\
 	glcpp/glcpp-parse.c				\
 	$(LIBGLCPP_FILES)
-else
-libglcpp_la_LIBADD = builtin_compiler/libglcpp.la
-endif
 
 glcpp_glcpp_SOURCES =					\
 	glcpp/glcpp.c					\
 	$(top_srcdir)/src/mesa/program/prog_hash_table.c
 glcpp_glcpp_LDADD = libglcpp.la
 
-libglsl_la_SOURCES = builtin_function.cpp
 libglsl_la_LIBADD = libglcpp.la
-if CROSS_COMPILING
-libglsl_la_SOURCES +=					\
+libglsl_la_SOURCES =					\
 	glsl_lexer.cpp					\
 	glsl_parser.cpp					\
 	$(LIBGLSL_FILES)
-else
-libglsl_la_LIBADD +=					\
-	builtin_compiler/libglslcore.la
-endif
 
 glsl_test_SOURCES = \
 	$(top_srcdir)/src/mesa/main/hash_table.c \
@@ -168,6 +156,3 @@ CLEANFILES =						\
 	glcpp/glcpp-parse.h				\
 	glsl_parser.h					\
 	$(BUILT_SOURCES)
-
-builtin_function.cpp: $(srcdir)/builtins/profiles/* $(srcdir)/builtins/ir/* $(srcdir)/builtins/glsl/* $(srcdir)/builtins/tools/generate_builtins.py $(srcdir)/builtins/tools/texture_builtins.py $(builddir)/builtin_compiler/builtin_compiler$(BUILD_EXEEXT)
-	$(AM_V_GEN) $(PYTHON2) $(PYTHON_FLAGS) $(srcdir)/builtins/tools/generate_builtins.py $(builddir)/builtin_compiler/builtin_compiler$(BUILD_EXEEXT) > builtin_function.cpp || rm -f builtin_function.cpp
