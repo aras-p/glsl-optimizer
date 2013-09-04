@@ -810,6 +810,14 @@ _mesa_init_texture(struct gl_context *ctx)
    ctx->Texture.CurrentUnit = 0;      /* multitexture */
    ctx->Texture._EnabledUnits = 0x0;
 
+   /* Appendix F.2 of the OpenGL ES 3.0 spec says:
+    *
+    *     "OpenGL ES 3.0 requires that all cube map filtering be
+    *     seamless. OpenGL ES 2.0 specified that a single cube map face be
+    *     selected and used for filtering."
+    */
+   ctx->Texture.CubeMapSeamless = _mesa_is_gles3(ctx);
+
    for (u = 0; u < Elements(ctx->Texture.Unit); u++)
       init_texture_unit(ctx, u);
 
