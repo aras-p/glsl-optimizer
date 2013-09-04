@@ -322,6 +322,8 @@ struct i915_token_list
 
 extern struct i915_token_list* i915_optimize(const struct tgsi_token *tokens);
 
-extern void i915_optimize_free(struct i915_token_list* tokens);
+extern void i915_optimize_free(struct i915_token_list *tokens);
+
+extern uint i915_num_coords(uint tex);
 
 #endif

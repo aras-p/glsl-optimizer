@@ -31,6 +31,7 @@
 #include "i915_reg.h"
 #include "i915_context.h"
 #include "i915_fpc.h"
+#include "i915_debug_private.h"
 
 #include "pipe/p_shader_tokens.h"
 #include "util/u_math.h"
@@ -179,7 +180,7 @@ static uint get_mapping(struct i915_fragment_shader* fs, int unit)
 static uint
 src_vector(struct i915_fp_compile *p,
            const struct i915_full_src_register *source,
-           struct i915_fragment_shader* fs)
+           struct i915_fragment_shader *fs)
 {
    uint index = source->Register.Index;
    uint src = 0, sem_name, sem_ind;
@@ -381,8 +382,8 @@ translate_tex_src_target(struct i915_fp_compile *p, uint tex)
 /**
  * Return the number of coords needed to access a given TGSI_TEXTURE_*
  */
-static uint
-texture_num_coords(struct i915_fp_compile *p, uint tex)
+uint
+i915_num_coords(uint tex)
 {
    switch (tex) {
    case TGSI_TEXTURE_SHADOW1D:
@@ -400,7 +401,7 @@ texture_num_coords(struct i915_fp_compile *p, uint tex)
       return 3;
 
    default:
-      i915_program_error(p, "Num coords");
+      debug_printf("Unknown texture target for num coords");
       return 2;
    }
 }
@@ -427,7 +428,7 @@ emit_tex(struct i915_fp_compile *p,
                     sampler,
                     coord,
                     opcode,
-                    texture_num_coords(p, texture) );
+                    i915_num_coords(texture) );
 }
 
 
@@ -440,7 +441,7 @@ static void
 emit_simple_arith(struct i915_fp_compile *p,
                   const struct i915_full_instruction *inst,
                   uint opcode, uint numArgs,
-                  struct i915_fragment_shader* fs)
+                  struct i915_fragment_shader *fs)
 {
    uint arg1, arg2, arg3;
 
@@ -465,7 +466,7 @@ static void
 emit_simple_arith_swap2(struct i915_fp_compile *p,
                         const struct i915_full_instruction *inst,
                         uint opcode, uint numArgs,
-                        struct i915_fragment_shader* fs)
+                        struct i915_fragment_shader *fs)
 {
    struct i915_full_instruction inst2;
 
@@ -1108,7 +1109,7 @@ i915_translate_instruction(struct i915_fp_compile *p,
 
 
 static void i915_translate_token(struct i915_fp_compile *p,
-                                 const union i915_full_token* token,
+                                 const union i915_full_token *token,
                                  struct i915_fragment_shader *fs)
 {
    struct i915_fragment_shader *ifs = p->shader;
