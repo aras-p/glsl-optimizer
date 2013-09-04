@@ -255,7 +255,6 @@ void trace_dump_clip_state(const struct pipe_clip_state *state)
 
 void trace_dump_shader_state(const struct pipe_shader_state *state)
 {
-   static char str[8192];
    unsigned i;
 
    if (!trace_dumping_enabled_locked())
@@ -271,6 +270,7 @@ void trace_dump_shader_state(const struct pipe_shader_state *state)
 
    trace_dump_member_begin("tokens");
    if (state->tokens) {
+      static char str[64 * 1024];
       tgsi_dump_str(state->tokens, 0, str, sizeof(str));
       trace_dump_string(str);
    } else {
