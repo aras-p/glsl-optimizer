@@ -569,7 +569,8 @@ static GLuint
 set_sampler_cube_map_seamless(struct gl_context *ctx,
                               struct gl_sampler_object *samp, GLboolean param)
 {
-   if (!ctx->Extensions.AMD_seamless_cubemap_per_texture)
+   if (!_mesa_is_desktop_gl(ctx)
+       || !ctx->Extensions.AMD_seamless_cubemap_per_texture)
       return INVALID_PNAME;
 
    if (samp->CubeMapSeamless == param)
