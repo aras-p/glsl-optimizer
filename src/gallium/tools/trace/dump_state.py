@@ -32,6 +32,7 @@ import struct
 import json
 import binascii
 import re
+import copy
 
 import model
 import parse as parser
@@ -48,6 +49,11 @@ except ImportError:
 # Some constants
 #
 PIPE_BUFFER = 0
+PIPE_SHADER_VERTEX   = 0
+PIPE_SHADER_FRAGMENT = 1
+PIPE_SHADER_GEOMETRY = 2
+PIPE_SHADER_COMPUTE  = 3
+PIPE_SHADER_TYPES    = 4
 
 
 def serialize(obj):
@@ -96,6 +102,9 @@ class Struct:
             if not name.startswith('_'):
                 obj[name] = value
         return obj
+
+    def __repr__(self):
+        return repr(self.__json__)
 
 
 class Translator(model.Visitor):
@@ -190,12 +199,15 @@ class Screen(Dispatcher):
         if resource.target == PIPE_BUFFER:
             # We will keep track of buffer contents
             resource.data = bytearray(resource.width)
+        if resource.width == 1 and resource.height == 1 and resource.depth == 1:
+            # Ignore dummy texture
+            return None
         return resource
 
     def resource_destroy(self, resource):
         self.interpreter.unregister_object(resource)
 
-    def fence_finish(self, fence, flags):
+    def fence_finish(self, fence, timeout=None):
         pass
     
     def fence_signalled(self, fence):
@@ -221,7 +233,21 @@ class Context(Dispatcher):
         self._state.scissors = []
         self._state.viewports = []
         self._state.vertex_buffers = []
-        self._state.constant_buffer = [[] for i in range(3)]
+        self._state.vs = Struct()
+        self._state.gs = Struct()
+        self._state.fs = Struct()
+        self._state.vs.shader = None
+        self._state.gs.shader = None
+        self._state.fs.shader = None
+        self._state.vs.sampler = []
+        self._state.gs.sampler = []
+        self._state.fs.sampler = []
+        self._state.vs.sampler_views = []
+        self._state.gs.sampler_views = []
+        self._state.fs.sampler_views = []
+        self._state.vs.constant_buffer = []
+        self._state.gs.constant_buffer = []
+        self._state.fs.constant_buffer = []
 
         self._draw_no = 0
 
@@ -255,13 +281,13 @@ class Context(Dispatcher):
         pass
 
     def bind_vertex_sampler_states(self, num_states, states):
-        self._state.vertex_sampler = states
+        self._state.vs.sampler = states
         
     def bind_geometry_sampler_states(self, num_states, states):
-        self._state.geometry_sampler = states
+        self._state.gs.sampler = states
         
     def bind_fragment_sampler_states(self, num_states, states):
-        self._state.fragment_sampler = states
+        self._state.fs.sampler = states
         
     def create_rasterizer_state(self, state):
         return state
@@ -292,7 +318,8 @@ class Context(Dispatcher):
 
     def _create_shader_state(self, state):
         # Strip the labels from the tokens
-        state.tokens = self._tokenLabelRE.sub('', state.tokens)
+        if state.tokens is not None:
+            state.tokens = self._tokenLabelRE.sub('', state.tokens)
         return state
 
     create_vs_state = _create_shader_state
@@ -300,13 +327,13 @@ class Context(Dispatcher):
     create_fs_state = _create_shader_state
     
     def bind_vs_state(self, state):
-        self._state.vs = state
+        self._state.vs.shader = state
 
     def bind_gs_state(self, state):
-        self._state.gs = state
+        self._state.gs.shader = state
         
     def bind_fs_state(self, state):
-        self._state.fs = state
+        self._state.fs.shader = state
         
     def _delete_shader_state(self, state):
         return state
@@ -337,8 +364,17 @@ class Context(Dispatcher):
             index += 1
         sys.stdout.flush()
 
+    def _get_stage_state(self, shader):
+        if shader == PIPE_SHADER_VERTEX:
+            return self._state.vs
+        if shader == PIPE_SHADER_GEOMETRY:
+            return self._state.gs
+        if shader == PIPE_SHADER_FRAGMENT:
+            return self._state.fs
+        assert False
+
     def set_constant_buffer(self, shader, index, constant_buffer):
-        self._update(self._state.constant_buffer[shader], index, 1, [constant_buffer])
+        self._update(self._get_stage_state(shader).constant_buffer, index, 1, [constant_buffer])
 
     def set_framebuffer_state(self, state):
         self._state.fb = state
@@ -370,13 +406,13 @@ class Context(Dispatcher):
         pass
 
     def set_fragment_sampler_views(self, num, views):
-        self._state.fragment_sampler_views = views
+        self._state.fs.sampler_views = views
 
     def set_geometry_sampler_views(self, num, views):
-        self._state.geometry_sampler_views = views
+        self._state.gs.sampler_views = views
 
     def set_vertex_sampler_views(self, num, views):
-        self._state.vertex_sampler_views = views
+        self._state.vs.sampler_views = views
 
     def set_vertex_buffers(self, start_slot, num_buffers, buffers):
         self._update(self._state.vertex_buffers, start_slot, num_buffers, buffers)
@@ -444,11 +480,18 @@ class Context(Dispatcher):
 
                 offset = vbuf.buffer_offset + velem.src_offset + vbuf.stride*index
                 format = {
-                    'PIPE_FORMAT_R32_UINT': 'I',
                     'PIPE_FORMAT_R32_FLOAT': 'f',
                     'PIPE_FORMAT_R32G32_FLOAT': '2f',
                     'PIPE_FORMAT_R32G32B32_FLOAT': '3f',
                     'PIPE_FORMAT_R32G32B32A32_FLOAT': '4f',
+                    'PIPE_FORMAT_R32_UINT': 'I',
+                    'PIPE_FORMAT_R32G32_UINT': '2I',
+                    'PIPE_FORMAT_R32G32B32_UINT': '3I',
+                    'PIPE_FORMAT_R32G32B32A32_UINT': '4I',
+                    'PIPE_FORMAT_R8_UINT': 'B',
+                    'PIPE_FORMAT_R8G8_UINT': '2B',
+                    'PIPE_FORMAT_R8G8B8_UINT': '3B',
+                    'PIPE_FORMAT_R8G8B8A8_UINT': '4B',
                     'PIPE_FORMAT_A8R8G8B8_UNORM': '4B',
                     'PIPE_FORMAT_R8G8B8A8_UNORM': '4B',
                     'PIPE_FORMAT_B8G8R8A8_UNORM': '4B',
@@ -462,6 +505,15 @@ class Context(Dispatcher):
             vertices.append(vertex)
 
         self._state.vertices = vertices
+
+    def render_condition(self, query, condition = 0, mode = 0):
+        self._state.render_condition_query = query
+        self._state.render_condition_condition = condition
+        self._state.render_condition_mode = mode
+
+    def set_stream_output_targets(self, num_targets, tgs, append_bitmask):
+        self._state.so_targets = tgs
+        self._state.so_append_bitmask = append_bitmask
 
     def draw_vbo(self, info):
         self._draw_no += 1
@@ -483,11 +535,45 @@ class Context(Dispatcher):
 
         self._dump_state()
 
+    _dclRE = re.compile('^DCL\s+(IN|OUT|SAMP|SVIEW)\[([0-9]+)\].*$', re.MULTILINE)
+
+    def _normalize_stage_state(self, stage):
+
+        registers = {}
+
+        if stage.shader is not None and stage.shader.tokens is not None:
+            for mo in self._dclRE.finditer(stage.shader.tokens):
+                file_ = mo.group(1)
+                index = mo.group(2)
+                register = registers.setdefault(file_, set())
+                register.add(int(index))
+
+        mapping = [
+            ("CONST", "constant_buffer"),
+            ("SAMP", "sampler"),
+            ("SVIEW", "sampler_views"),
+        ]
+
+        for fileName, attrName in mapping:
+            register = registers.setdefault(fileName, set())
+            attr = getattr(stage, attrName)
+            for index in range(len(attr)):
+                if index not in register:
+                    attr[index] = None
+            while attr and attr[-1] is None:
+                attr.pop()
+
     def _dump_state(self):
         '''Dump our state to JSON and terminate.'''
 
+        state = copy.deepcopy(self._state)
+
+        self._normalize_stage_state(state.vs)
+        self._normalize_stage_state(state.gs)
+        self._normalize_stage_state(state.fs)
+
         json.dump(
-            obj = self._state,
+            obj = state,
             fp = sys.stdout,
             default = serialize,
             sort_keys = True,
@@ -499,8 +585,16 @@ class Context(Dispatcher):
 
     def resource_copy_region(self, dst, dst_level, dstx, dsty, dstz, src, src_level, src_box):
         if dst.target == PIPE_BUFFER or src.target == PIPE_BUFFER:
-            # TODO
-            assert 0
+            assert dst.target == PIPE_BUFFER and src.target == PIPE_BUFFER
+            assert dst_level == 0
+            assert dsty == 0
+            assert dstz == 0
+            assert src_level == 0
+            assert src_box.y == 0
+            assert src_box.z == 0
+            assert src_box.height == 1
+            assert src_box.depth == 1
+            dst.data[dstx : dstx + src_box.width] = src.data[src_box.x : src_box.x + src_box.width]
         pass
 
     def is_resource_referenced(self, texture, face, level):
@@ -516,7 +610,7 @@ class Context(Dispatcher):
         self.interpreter.unregister_object(transfer)
 
     def transfer_inline_write(self, resource, level, usage, box, stride, layer_stride, data):
-        if resource.target == PIPE_BUFFER:
+        if resource is not None and resource.target == PIPE_BUFFER:
             data = data.getValue()
             assert len(data) == box.width
             assert box.x + box.width <= len(resource.data)
