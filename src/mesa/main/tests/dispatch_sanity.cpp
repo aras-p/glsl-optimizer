@@ -896,6 +896,18 @@ const struct function gl_core_functions_possible[] = {
    /* GL_ARB_internalformat_query */
    { "glGetInternalformativ", 30, -1 },
 
+   /* GL_KHR_debug */
+   { "glPushDebugGroup", 11, -1 },
+   { "glPopDebugGroup", 11, -1 },
+   { "glDebugMessageCallback", 11, -1 },
+   { "glDebugMessageControl", 11, -1 },
+   { "glDebugMessageInsert", 11, -1 },
+   { "glGetDebugMessageLog", 11, -1 },
+   { "glGetObjectLabel", 11, -1 },
+   { "glGetObjectPtrLabel", 11, -1 },
+   { "glObjectLabel", 11, -1 },
+   { "glObjectPtrLabel", 11, -1 },
+
    { NULL, 0, -1 }
 };
 
