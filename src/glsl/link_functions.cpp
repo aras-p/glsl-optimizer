@@ -173,6 +173,38 @@ public:
       return visit_continue;
    }
 
+   virtual ir_visitor_status visit_leave(ir_call *ir)
+   {
+      /* Traverse list of function parameters, and for array parameters
+       * propagate max_array_access. Otherwise arrays that are only referenced
+       * from inside functions via function parameters will be incorrectly
+       * optimized. This will lead to incorrect code being generated (or worse).
+       * Do it when leaving the node so the children would propagate their
+       * array accesses first.
+       */
+
+      const exec_node *formal_param_node = ir->callee->parameters.get_head();
+      if (formal_param_node) {
+         const exec_node *actual_param_node = ir->actual_parameters.get_head();
+         while (!actual_param_node->is_tail_sentinel()) {
+            ir_variable *formal_param = (ir_variable *) formal_param_node;
+            ir_rvalue *actual_param = (ir_rvalue *) actual_param_node;
+
+            formal_param_node = formal_param_node->get_next();
+            actual_param_node = actual_param_node->get_next();
+
+            if (formal_param->type->is_array()) {
+               ir_dereference_variable *deref = actual_param->as_dereference_variable();
+               if (deref && deref->var && deref->var->type->is_array()) {
+                  deref->var->max_array_access =
+                     MAX2(formal_param->max_array_access, deref->var->max_array_access);
+               }
+            }
+         }
+      }
+      return visit_continue;
+   }
+
    virtual ir_visitor_status visit(ir_dereference_variable *ir)
    {
       if (hash_table_find(locals, ir->var) == NULL) {
