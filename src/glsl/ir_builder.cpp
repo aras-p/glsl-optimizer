@@ -264,6 +264,54 @@ abs(operand a)
    return expr(ir_unop_abs, a);
 }
 
+ir_expression *
+neg(operand a)
+{
+   return expr(ir_unop_neg, a);
+}
+
+ir_expression *
+sin(operand a)
+{
+   return expr(ir_unop_sin, a);
+}
+
+ir_expression *
+cos(operand a)
+{
+   return expr(ir_unop_cos, a);
+}
+
+ir_expression *
+exp(operand a)
+{
+   return expr(ir_unop_exp, a);
+}
+
+ir_expression *
+rsq(operand a)
+{
+   return expr(ir_unop_rsq, a);
+}
+
+ir_expression *
+sqrt(operand a)
+{
+   return expr(ir_unop_sqrt, a);
+}
+
+ir_expression *
+log(operand a)
+{
+   return expr(ir_unop_log, a);
+}
+
+ir_expression *
+sign(operand a)
+{
+   return expr(ir_unop_sign, a);
+}
+
 ir_expression*
 equal(operand a, operand b)
 {
@@ -418,6 +466,38 @@ ir_expression*
 b2i(operand a)
 {
    return expr(ir_unop_b2i, a);
+}
+
+ir_expression *
+f2b(operand a)
+{
+   return expr(ir_unop_f2b, a);
+}
+
+ir_expression *
+b2f(operand a)
+{
+   return expr(ir_unop_b2f, a);
+}
+
+ir_expression *
+fma(operand a, operand b, operand c)
+{
+   return expr(ir_triop_fma, a, b, c);
+}
+
+ir_expression *
+lrp(operand x, operand y, operand a)
+{
+   return expr(ir_triop_lrp, x, y, a);
+}
+
+ir_expression *
+bitfield_insert(operand a, operand b, operand c, operand d)
+{
+   void *mem_ctx = ralloc_parent(a.val);
+   return new(mem_ctx) ir_expression(ir_quadop_bitfield_insert,
+                                     a.val->type, a.val, b.val, c.val, d.val);
 }
 
 ir_if*
