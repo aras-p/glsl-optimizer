@@ -116,7 +116,7 @@ gen7_update_sampler_state(struct brw_context *brw, int unit, int ss_index,
     */
    if (texObj->Target == GL_TEXTURE_CUBE_MAP ||
        texObj->Target == GL_TEXTURE_CUBE_MAP_ARRAY) {
-      if (ctx->Texture.CubeMapSeamless &&
+      if ((ctx->Texture.CubeMapSeamless || gl_sampler->CubeMapSeamless) &&
 	  (gl_sampler->MinFilter != GL_NEAREST ||
 	   gl_sampler->MagFilter != GL_NEAREST)) {
 	 sampler->ss3.r_wrap_mode = BRW_TEXCOORDMODE_CUBE;

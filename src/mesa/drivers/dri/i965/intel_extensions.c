@@ -106,6 +106,7 @@ intelInitExtensions(struct gl_context *ctx)
    ctx->Extensions.EXT_texture_swizzle = true;
    ctx->Extensions.EXT_stencil_two_side = true;
    ctx->Extensions.EXT_vertex_array_bgra = true;
+   ctx->Extensions.AMD_seamless_cubemap_per_texture = true;
    ctx->Extensions.APPLE_object_purgeable = true;
    ctx->Extensions.ATI_envmap_bumpmap = true;
    ctx->Extensions.ATI_separate_stencil = true;
