@@ -273,7 +273,7 @@ fd3_program_emit(struct fd_ringbuffer *ring,
 			A3XX_SP_VS_CTRL_REG1_CONSTFOOTPRINT(MAX2(vsi->max_const, 0)));
 	OUT_RING(ring, A3XX_SP_VS_PARAM_REG_POSREGID(vp->pos_regid) |
 			A3XX_SP_VS_PARAM_REG_PSIZEREGID(vp->psize_regid) |
-			A3XX_SP_VS_PARAM_REG_TOTALVSOUTVAR(vp->outputs_count));
+			A3XX_SP_VS_PARAM_REG_TOTALVSOUTVAR(fp->inputs_count));
 
 	assert(vp->outputs_count >= fp->inputs_count);
 
