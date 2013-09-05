@@ -128,6 +128,70 @@ validate_immediate(struct i915_context *i915, unsigned *batch_space)
    *batch_space = 1 + util_bitcount(dirty);
 }
 
+static uint target_fixup(struct pipe_surface *p, int component)
+{
+   const struct
+   {
+      enum pipe_format format;
+      uint hw_mask[4];
+   } fixup_mask[] = {
+      { PIPE_FORMAT_R8G8B8A8_UNORM, { S5_WRITEDISABLE_BLUE, S5_WRITEDISABLE_GREEN, S5_WRITEDISABLE_RED, S5_WRITEDISABLE_ALPHA}},
+      { PIPE_FORMAT_R8G8B8X8_UNORM, { S5_WRITEDISABLE_BLUE, S5_WRITEDISABLE_GREEN, S5_WRITEDISABLE_RED, S5_WRITEDISABLE_ALPHA}},
+      { PIPE_FORMAT_L8_UNORM,       { S5_WRITEDISABLE_RED | S5_WRITEDISABLE_GREEN | S5_WRITEDISABLE_BLUE, 0, 0, S5_WRITEDISABLE_ALPHA}},
+      { PIPE_FORMAT_I8_UNORM,       { S5_WRITEDISABLE_RED | S5_WRITEDISABLE_GREEN | S5_WRITEDISABLE_BLUE, 0, 0, S5_WRITEDISABLE_ALPHA}},
+      { PIPE_FORMAT_A8_UNORM,       { 0, 0, 0, S5_WRITEDISABLE_RED | S5_WRITEDISABLE_GREEN | S5_WRITEDISABLE_BLUE | S5_WRITEDISABLE_ALPHA}},
+      { 0,                          { S5_WRITEDISABLE_RED, S5_WRITEDISABLE_GREEN, S5_WRITEDISABLE_BLUE, S5_WRITEDISABLE_ALPHA}}
+   };
+   int i = sizeof(fixup_mask) / sizeof(*fixup_mask);
+
+   if (p)
+      for(i = 0; fixup_mask[i].format != 0; i++)
+         if (p->format == fixup_mask[i].format)
+            return fixup_mask[i].hw_mask[component];
+
+   /* Just return default masks */
+   return fixup_mask[i].hw_mask[component];
+}
+
+static void emit_immediate_s5(struct i915_context *i915, uint imm)
+{
+   /* Fixup write mask for non-BGRA render targets */
+   uint fixup_imm = imm & ~( S5_WRITEDISABLE_RED | S5_WRITEDISABLE_GREEN |
+                             S5_WRITEDISABLE_BLUE | S5_WRITEDISABLE_ALPHA );
+   struct pipe_surface *surf = i915->framebuffer.cbufs[0];
+
+   if (imm & S5_WRITEDISABLE_RED)
+      fixup_imm |= target_fixup(surf, 0);
+   if (imm & S5_WRITEDISABLE_GREEN)
+      fixup_imm |= target_fixup(surf, 1);
+   if (imm & S5_WRITEDISABLE_BLUE)
+      fixup_imm |= target_fixup(surf, 2);
+   if (imm & S5_WRITEDISABLE_ALPHA)
+      fixup_imm |= target_fixup(surf, 3);
+
+   OUT_BATCH(fixup_imm);
+}
+
+static void emit_immediate_s6(struct i915_context *i915, uint imm)
+{
+   /* Fixup blend function for A8 dst buffers.
+    * When we blend to an A8 buffer, the GPU thinks it's a G8 buffer,
+    * and therefore we need to use the color factor for alphas. */
+   uint srcRGB;
+
+   if (i915->current.target_fixup_format == PIPE_FORMAT_A8_UNORM) {
+      srcRGB = (imm >> S6_CBUF_SRC_BLEND_FACT_SHIFT) & BLENDFACT_MASK;
+      if (srcRGB == BLENDFACT_DST_ALPHA)
+         srcRGB = BLENDFACT_DST_COLR;
+      else if (srcRGB == BLENDFACT_INV_DST_ALPHA)
+         srcRGB = BLENDFACT_INV_DST_COLR;
+      imm &= ~SRC_BLND_FACT(BLENDFACT_MASK);
+      imm |= SRC_BLND_FACT(srcRGB);
+   }
+
+   OUT_BATCH(imm);
+}
+
 static void
 emit_immediate(struct i915_context *i915)
 {
@@ -153,23 +217,12 @@ emit_immediate(struct i915_context *i915)
 
    for (i = 1; i < I915_MAX_IMMEDIATE; i++) {
       if (dirty & (1 << i)) {
-         /* Fixup blend function for A8 dst buffers.
-          * When we blend to an A8 buffer, the GPU thinks it's a G8 buffer,
-          * and therefore we need to use the color factor for alphas. */
-         if ((i == I915_IMMEDIATE_S6) &&
-             (i915->current.target_fixup_format == PIPE_FORMAT_A8_UNORM)) {
-            uint32_t imm = i915->current.immediate[i];
-            uint32_t srcRGB = (imm >> S6_CBUF_SRC_BLEND_FACT_SHIFT) & BLENDFACT_MASK;
-            if (srcRGB == BLENDFACT_DST_ALPHA)
-               srcRGB = BLENDFACT_DST_COLR;
-            else if (srcRGB == BLENDFACT_INV_DST_ALPHA)
-               srcRGB = BLENDFACT_INV_DST_COLR;
-            imm &= ~SRC_BLND_FACT(BLENDFACT_MASK);
-            imm |= SRC_BLND_FACT(srcRGB);
-            OUT_BATCH(imm);
-         } else {
+         if (i == I915_IMMEDIATE_S5)
+            emit_immediate_s5(i915, i915->current.immediate[i]);
+         else if (i == I915_IMMEDIATE_S6)
+            emit_immediate_s6(i915, i915->current.immediate[i]);
+         else
             OUT_BATCH(i915->current.immediate[i]);
-         }
       }
    }
 }

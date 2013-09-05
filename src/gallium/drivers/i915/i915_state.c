@@ -94,7 +94,6 @@ static unsigned translate_mip_filter( unsigned filter )
    }
 }
 
-
 /* None of this state is actually used for anything yet.
  */
 static void *
@@ -117,10 +116,10 @@ i915_create_blend_state(struct pipe_context *pipe,
        */
 
       if (srcA != srcRGB ||
-	  dstA != dstRGB ||
-	  eqA != eqRGB) {
+          dstA != dstRGB ||
+          eqA != eqRGB) {
 
-	 cso_data->iab = (_3DSTATE_INDEPENDENT_ALPHA_BLEND_CMD |
+         cso_data->iab = (_3DSTATE_INDEPENDENT_ALPHA_BLEND_CMD |
                           IAB_MODIFY_ENABLE |
                           IAB_ENABLE |
                           IAB_MODIFY_FUNC |
@@ -131,7 +130,7 @@ i915_create_blend_state(struct pipe_context *pipe,
                           (i915_translate_blend_func(eqA) << IAB_FUNC_SHIFT));
       }
       else {
-	 cso_data->iab = (_3DSTATE_INDEPENDENT_ALPHA_BLEND_CMD |
+         cso_data->iab = (_3DSTATE_INDEPENDENT_ALPHA_BLEND_CMD |
                           IAB_MODIFY_ENABLE |
                           0);
       }
@@ -147,7 +146,7 @@ i915_create_blend_state(struct pipe_context *pipe,
    if (blend->dither)
       cso_data->LIS5 |= S5_COLOR_DITHER_ENABLE;
 
-   /* XXX here take the target fixup into account */
+   /* We potentially do some fixup at emission for non-BGRA targets */
    if ((blend->rt[0].colormask & PIPE_MASK_R) == 0)
       cso_data->LIS5 |= S5_WRITEDISABLE_RED;
 
@@ -276,7 +275,7 @@ i915_create_sampler_state(struct pipe_context *pipe,
       maxlod = CLAMP(maxlod, 0, 16 * 11);
 
       if (minlod > maxlod)
-	 maxlod = minlod;
+         maxlod = minlod;
 
       cso->minlod = minlod;
       cso->maxlod = maxlod;
@@ -499,7 +498,7 @@ i915_create_depth_stencil_state(struct pipe_context *pipe,
                           (func << S6_DEPTH_TEST_FUNC_SHIFT));
 
       if (depth_stencil->depth.writemask)
-	 cso->depth_LIS6 |= S6_DEPTH_WRITE_ENABLE;
+         cso->depth_LIS6 |= S6_DEPTH_WRITE_ENABLE;
    }
 
    if (depth_stencil->alpha.enabled) {
