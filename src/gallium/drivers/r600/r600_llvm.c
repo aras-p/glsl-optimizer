@@ -433,7 +433,8 @@ static void llvm_emit_tex(
 		}
 	}
 
-	if (emit_data->inst->Instruction.Opcode == TGSI_OPCODE_TEX) {
+	if (emit_data->inst->Instruction.Opcode == TGSI_OPCODE_TEX ||
+		emit_data->inst->Instruction.Opcode == TGSI_OPCODE_TXP) {
 		LLVMValueRef Vector[4] = {
 			LLVMBuildExtractElement(gallivm->builder, emit_data->args[0],
 				lp_build_const_int32(gallivm, 0), ""),
