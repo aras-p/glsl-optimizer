@@ -1344,10 +1344,7 @@ AC_ARG_WITH([clang-libdir],
    [CLANG_LIBDIR="$withval"],
    [CLANG_LIBDIR=""])
 
-LIBCLC_INCLUDEDIR=`pkg-config --variable=includedir libclc`
-LIBCLC_LIBEXECDIR=`pkg-config --variable=libexecdir libclc`
-AC_SUBST([LIBCLC_INCLUDEDIR])
-AC_SUBST([LIBCLC_LIBEXECDIR])
+PKG_CHECK_EXISTS([libclc], [have_libclc=yes], [have_libclc=no])
 
 if test "x$enable_opencl" = xyes; then
     if test "x$with_gallium_drivers" = x; then
@@ -1358,8 +1355,16 @@ if test "x$enable_opencl" = xyes; then
         AC_MSG_ERROR([gcc >= 4.6 is required to build clover])
     fi
 
-    if test "x$LIBCLC_INCLUDEDIR" == x || test "x$LIBCLC_LIBEXECDIR" == x; then
-        AC_MSG_ERROR([pkg-config cannot use libclc.pc which is required to build clover])
+    if test "x$have_libclc" = xno; then
+        AC_MSG_ERROR([pkg-config cannot find libclc.pc which is required to build clover.
+                    Make sure the directory containing libclc.pc is specified in your
+                    PKG_CONFIG_PATH environment variable.
+                    By default libclc.pc is installed to /usr/local/share/pkgconfig/])
+    else
+        LIBCLC_INCLUDEDIR=`pkg-config --variable=includedir libclc`
+        LIBCLC_LIBEXECDIR=`pkg-config --variable=libexecdir libclc`
+        AC_SUBST([LIBCLC_INCLUDEDIR])
+        AC_SUBST([LIBCLC_LIBEXECDIR])
     fi
 
     GALLIUM_STATE_TRACKERS_DIRS="$GALLIUM_STATE_TRACKERS_DIRS clover"
