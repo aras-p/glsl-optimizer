@@ -153,7 +153,7 @@ struct tgsi_declaration_interp
 #define TGSI_SEMANTIC_FACE       7
 #define TGSI_SEMANTIC_EDGEFLAG   8
 #define TGSI_SEMANTIC_PRIMID     9
-#define TGSI_SEMANTIC_INSTANCEID 10
+#define TGSI_SEMANTIC_INSTANCEID 10 /**< doesn't include start_instance */
 #define TGSI_SEMANTIC_VERTEXID   11
 #define TGSI_SEMANTIC_STENCIL    12
 #define TGSI_SEMANTIC_CLIPDIST   13
