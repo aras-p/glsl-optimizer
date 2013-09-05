@@ -122,7 +122,7 @@ static LLVMValueRef build_indexed_load(
 	return result;
 }
 
-static LLVMValueRef get_instance_index(
+static LLVMValueRef get_instance_index_for_fetch(
 	struct radeon_llvm_context * radeon_bld,
 	unsigned divisor)
 {
@@ -174,7 +174,7 @@ static void declare_input_vs(
 	if (divisor) {
 		/* Build index from instance ID, start instance and divisor */
 		si_shader_ctx->shader->shader.uses_instanceid = true;
-		buffer_index = get_instance_index(&si_shader_ctx->radeon_bld, divisor);
+		buffer_index = get_instance_index_for_fetch(&si_shader_ctx->radeon_bld, divisor);
 	} else {
 		/* Load the buffer index, which is always stored in VGPR0
 		 * for Vertex Shaders */
@@ -414,7 +414,8 @@ static void declare_system_value(
 
 	switch (decl->Semantic.Name) {
 	case TGSI_SEMANTIC_INSTANCEID:
-		value = get_instance_index(radeon_bld, 1);
+		value = LLVMGetParam(radeon_bld->main_fn,
+				     si_shader_ctx->param_instance_id);
 		break;
 
 	case TGSI_SEMANTIC_VERTEXID:
