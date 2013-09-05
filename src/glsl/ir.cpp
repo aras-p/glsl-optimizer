@@ -400,6 +400,7 @@ ir_expression::ir_expression(int op, ir_rvalue *op0, ir_rvalue *op1)
 
    case ir_binop_lshift:
    case ir_binop_rshift:
+   case ir_binop_bfm:
       this->type = op0->type;
       break;
 
