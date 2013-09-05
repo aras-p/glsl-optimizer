@@ -155,6 +155,29 @@ of <tt>bool</tt>, <tt>true</tt>, and
 src/mesa/state_tracker/st_glsl_to_tgsi.cpp can serve as examples.
 </p>
 
+<h2>Submitting patches</h2>
+
+<p>
+You should always run the Mesa Testsuite before submitting patches.
+The Testsuite can be run using the 'make check' command. All tests
+must pass before patches will be accepted, this may mean you have
+to update the tests themselves.
+</p>
+
+<p>
+Patches should be sent to the Mesa mailing list for review.
+When submitting a patch make sure to use git send-email rather than attaching
+patches to emails. Sending patches as attachments prevents people from being
+able to provide in-line review comments.
+</p>
+
+<p>
+When submitting follow-up patches you can use --in-reply-to to make v2, v3,
+etc patches show up as replies to the originals. This usually works well
+when you're sending out updates to individual patches (as opposed to
+re-sending the whole series). Using --in-reply-to makes
+it harder for reviewers to accidentally review old patches.
+</p>
 
 <h2>Marking a commit as a candidate for a stable branch</h2>
 
