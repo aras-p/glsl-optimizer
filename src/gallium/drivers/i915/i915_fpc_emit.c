@@ -200,16 +200,15 @@ uint i915_emit_texld( struct i915_fp_compile *p,
     * a swizzle for no reason below. */
    switch(num_coord) {
       case 0:
-         /* Ignore x */
          ignore |= (0xf << UREG_CHANNEL_X_SHIFT);
+         /* fall-through */
       case 1:
-         /* Ignore y */
          ignore |= (0xf << UREG_CHANNEL_Y_SHIFT);
+         /* fall-through */
       case 2:
-         /* Ignore z */
          ignore |= (0xf << UREG_CHANNEL_Z_SHIFT);
+         /* fall-through */
       case 3:
-         /* Ignore w */
          ignore |= (0xf << UREG_CHANNEL_W_SHIFT);
    }
 
