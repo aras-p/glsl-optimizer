@@ -249,14 +249,171 @@ const struct brw_tracked_state gen7_sol_state = {
    .emit = upload_sol_state,
 };
 
+/**
+ * Tally the number of primitives generated so far.
+ *
+ * The buffer contains a series of pairs:
+ * (<start0, start1, start2, start3>, <end0, end1, end2, end3>) ;
+ * (<start0, start1, start2, start3>, <end0, end1, end2, end3>) ;
+ *
+ * For each stream, we subtract the pair of values (end - start) to get the
+ * number of primitives generated during one section.  We accumulate these
+ * values, adding them up to get the total number of primitives generated.
+ */
+static void
+gen7_tally_prims_generated(struct brw_context *brw,
+                           struct brw_transform_feedback_object *obj)
+{
+   /* If the current batch is still contributing to the number of primitives
+    * generated, flush it now so the results will be present when mapped.
+    */
+   if (drm_intel_bo_references(brw->batch.bo, obj->prim_count_bo))
+      intel_batchbuffer_flush(brw);
+
+   if (unlikely(brw->perf_debug && drm_intel_bo_busy(obj->prim_count_bo)))
+      perf_debug("Stalling for # of transform feedback primitives written.\n");
+
+   drm_intel_bo_map(obj->prim_count_bo, false);
+   uint64_t *prim_counts = obj->prim_count_bo->virtual;
+
+   assert(obj->prim_count_buffer_index % (2 * BRW_MAX_XFB_STREAMS) == 0);
+   int pairs = obj->prim_count_buffer_index / (2 * BRW_MAX_XFB_STREAMS);
+
+   for (int i = 0; i < pairs; i++) {
+      for (int s = 0; s < BRW_MAX_XFB_STREAMS; s++) {
+         obj->prims_generated[s] +=
+            prim_counts[BRW_MAX_XFB_STREAMS + s] - prim_counts[s];
+      }
+      prim_counts += 2 * BRW_MAX_XFB_STREAMS; /* move to the next pair */
+   }
+
+   drm_intel_bo_unmap(obj->prim_count_bo);
+
+   /* We've already gathered up the old data; we can safely overwrite it now. */
+   obj->prim_count_buffer_index = 0;
+}
+
+/**
+ * Store the SO_NUM_PRIMS_WRITTEN counters for each stream (4 uint64_t values)
+ * to prim_count_bo.
+ *
+ * If prim_count_bo is out of space, gather up the results so far into
+ * prims_generated[] and allocate a new buffer with enough space.
+ *
+ * The number of primitives written is used to compute the number of vertices
+ * written to a transform feedback stream, which is required to implement
+ * DrawTransformFeedback().
+ */
+static void
+gen7_save_primitives_written_counters(struct brw_context *brw,
+                                struct brw_transform_feedback_object *obj)
+{
+   const int streams = BRW_MAX_XFB_STREAMS;
+
+   /* Check if there's enough space for a new pair of four values. */
+   if (obj->prim_count_bo != NULL &&
+       obj->prim_count_buffer_index + 2 * streams >= 4096 / sizeof(uint64_t)) {
+      /* Gather up the results so far and release the BO. */
+      gen7_tally_prims_generated(brw, obj);
+   }
+
+   /* Flush any drawing so that the counters have the right values. */
+   intel_batchbuffer_emit_mi_flush(brw);
+
+   /* Emit MI_STORE_REGISTER_MEM commands to write the values. */
+   for (int i = 0; i < streams; i++) {
+      brw_store_register_mem64(brw, obj->prim_count_bo,
+                               GEN7_SO_NUM_PRIMS_WRITTEN(i),
+                               obj->prim_count_buffer_index + i);
+   }
+
+   /* Update where to write data to. */
+   obj->prim_count_buffer_index += streams;
+}
+
+/**
+ * Compute the number of vertices written by this transform feedback operation.
+ */
+static void
+brw_compute_xfb_vertices_written(struct brw_context *brw,
+                                 struct brw_transform_feedback_object *obj)
+{
+   if (obj->vertices_written_valid || !obj->base.EndedAnytime)
+      return;
+
+   unsigned vertices_per_prim = 0;
+
+   switch (obj->primitive_mode) {
+   case GL_POINTS:
+      vertices_per_prim = 1;
+      break;
+   case GL_LINES:
+      vertices_per_prim = 2;
+      break;
+   case GL_TRIANGLES:
+      vertices_per_prim = 3;
+      break;
+   default:
+      assert(!"Invalid transform feedback primitive mode.");
+   }
+
+   /* Get the number of primitives generated. */
+   gen7_tally_prims_generated(brw, obj);
+
+   for (int i = 0; i < BRW_MAX_XFB_STREAMS; i++) {
+      obj->vertices_written[i] = vertices_per_prim * obj->prims_generated[i];
+   }
+   obj->vertices_written_valid = true;
+}
+
+/**
+ * GetTransformFeedbackVertexCount() driver hook.
+ *
+ * Returns the number of vertices written to a particular stream by the last
+ * Begin/EndTransformFeedback block.  Used to implement DrawTransformFeedback().
+ */
+GLsizei
+brw_get_transform_feedback_vertex_count(struct gl_context *ctx,
+                                        struct gl_transform_feedback_object *obj,
+                                        GLuint stream)
+{
+   struct brw_context *brw = brw_context(ctx);
+   struct brw_transform_feedback_object *brw_obj =
+      (struct brw_transform_feedback_object *) obj;
+
+   assert(obj->EndedAnytime);
+   assert(stream < BRW_MAX_XFB_STREAMS);
+
+   brw_compute_xfb_vertices_written(brw, brw_obj);
+   return brw_obj->vertices_written[stream];
+}
+
 void
 gen7_begin_transform_feedback(struct gl_context *ctx, GLenum mode,
                               struct gl_transform_feedback_object *obj)
 {
    struct brw_context *brw = brw_context(ctx);
+   struct brw_transform_feedback_object *brw_obj =
+      (struct brw_transform_feedback_object *) obj;
 
    intel_batchbuffer_flush(brw);
    brw->batch.needs_sol_reset = true;
+
+   /* We're about to lose the information needed to compute the number of
+    * vertices written during the last Begin/EndTransformFeedback section,
+    * so we can't delay it any further.
+    */
+   brw_compute_xfb_vertices_written(brw, brw_obj);
+
+   /* No primitives have been generated yet. */
+   for (int i = 0; i < BRW_MAX_XFB_STREAMS; i++) {
+      brw_obj->prims_generated[i] = 0;
+   }
+
+   /* Store the starting value of the SO_NUM_PRIMS_WRITTEN counters. */
+   gen7_save_primitives_written_counters(brw, brw_obj);
+
+   brw_obj->primitive_mode = mode;
 }
 
 void
@@ -270,8 +427,18 @@ gen7_end_transform_feedback(struct gl_context *ctx,
     * simplicity, just do a full flush.
     */
    struct brw_context *brw = brw_context(ctx);
+   struct brw_transform_feedback_object *brw_obj =
+      (struct brw_transform_feedback_object *) obj;
 
-   intel_batchbuffer_emit_mi_flush(brw);
+   /* Store the ending value of the SO_NUM_PRIMS_WRITTEN counters. */
+   gen7_save_primitives_written_counters(brw, brw_obj);
+
+   /* EndTransformFeedback() means that we need to update the number of
+    * vertices written.  Since it's only necessary if DrawTransformFeedback()
+    * is called and it means mapping a buffer object, we delay computing it
+    * until it's absolutely necessary to try and avoid stalls.
+    */
+   brw_obj->vertices_written_valid = false;
 }
 
 void
@@ -281,6 +448,9 @@ gen7_pause_transform_feedback(struct gl_context *ctx,
    struct brw_context *brw = brw_context(ctx);
    struct brw_transform_feedback_object *brw_obj =
       (struct brw_transform_feedback_object *) obj;
+
+   /* Flush any drawing so that the counters have the right values. */
+   intel_batchbuffer_emit_mi_flush(brw);
 
    /* Save the SOL buffer offset register values. */
    for (int i = 0; i < 4; i++) {
@@ -292,6 +462,13 @@ gen7_pause_transform_feedback(struct gl_context *ctx,
                 i * sizeof(uint32_t));
       ADVANCE_BATCH();
    }
+
+   /* Store the temporary ending value of the SO_NUM_PRIMS_WRITTEN counters.
+    * While this operation is paused, other transform feedback actions may
+    * occur, which will contribute to the counters.  We need to exclude that
+    * from our counts.
+    */
+   gen7_save_primitives_written_counters(brw, brw_obj);
 }
 
 void
@@ -312,4 +489,7 @@ gen7_resume_transform_feedback(struct gl_context *ctx,
                 i * sizeof(uint32_t));
       ADVANCE_BATCH();
    }
+
+   /* Store the new starting value of the SO_NUM_PRIMS_WRITTEN counters. */
+   gen7_save_primitives_written_counters(brw, brw_obj);
 }

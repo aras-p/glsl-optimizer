@@ -887,11 +887,33 @@ struct intel_batchbuffer {
    } saved;
 };
 
+#define BRW_MAX_XFB_STREAMS 4
+
 struct brw_transform_feedback_object {
    struct gl_transform_feedback_object base;
 
    /** A buffer to hold SO_WRITE_OFFSET(n) values while paused. */
    drm_intel_bo *offset_bo;
+
+   /** The most recent primitive mode (GL_TRIANGLES/GL_POINTS/GL_LINES). */
+   GLenum primitive_mode;
+
+   /**
+    * Count of primitives generated during this transform feedback operation.
+    *  @{
+    */
+   uint64_t prims_generated[BRW_MAX_XFB_STREAMS];
+   drm_intel_bo *prim_count_bo;
+   unsigned prim_count_buffer_index; /**< in number of uint64_t units */
+   /** @} */
+
+   /**
+    * Number of vertices written between last Begin/EndTransformFeedback().
+    *
+    * Used to implement DrawTransformFeedback().
+    */
+   uint64_t vertices_written[BRW_MAX_XFB_STREAMS];
+   bool vertices_written_valid;
 };
 
 /**
@@ -1592,6 +1614,10 @@ brw_begin_transform_feedback(struct gl_context *ctx, GLenum mode,
 void
 brw_end_transform_feedback(struct gl_context *ctx,
                            struct gl_transform_feedback_object *obj);
+GLsizei
+brw_get_transform_feedback_vertex_count(struct gl_context *ctx,
+                                        struct gl_transform_feedback_object *obj,
+                                        GLuint stream);
 
 /* gen7_sol_state.c */
 void

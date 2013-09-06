@@ -146,6 +146,8 @@ brw_new_transform_feedback(struct gl_context *ctx, GLuint name)
 
    brw_obj->offset_bo =
       drm_intel_bo_alloc(brw->bufmgr, "transform feedback offsets", 16, 64);
+   brw_obj->prim_count_bo =
+      drm_intel_bo_alloc(brw->bufmgr, "xfb primitive counts", 4096, 64);
 
    return &brw_obj->base;
 }
@@ -162,6 +164,7 @@ brw_delete_transform_feedback(struct gl_context *ctx,
    }
 
    drm_intel_bo_unreference(brw_obj->offset_bo);
+   drm_intel_bo_unreference(brw_obj->prim_count_bo);
 
    free(brw_obj);
 }
