@@ -913,7 +913,7 @@ i915_dump_batchbuffer( struct i915_winsys_batchbuffer *batch )
       debug_printf( "\n\nBATCH: ???\n");
       return;
    }
-   
+
    debug_printf( "\n\nBATCH: (%d)\n", (int)bytes / 4);
 
    while (!done &&
@@ -922,8 +922,7 @@ i915_dump_batchbuffer( struct i915_winsys_batchbuffer *batch )
       if (!i915_debug_packet( &stream ))
 	 break;
 
-      assert(stream.offset <= bytes &&
-	     stream.offset >= 0);
+      assert(stream.offset <= bytes);
    }
 
    debug_printf( "END-BATCH\n\n\n");
