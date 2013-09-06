@@ -342,7 +342,7 @@ static const char* r600_get_name(struct pipe_screen* pscreen)
 static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 {
 	struct r600_screen *rscreen = (struct r600_screen *)pscreen;
-	bool has_streamout = HAVE_LLVM >= 0x0304 && rscreen->b.chip_class == SI;
+	bool has_streamout = HAVE_LLVM >= 0x0304;
 
 	switch (param) {
 	/* Supported features (boolean caps). */

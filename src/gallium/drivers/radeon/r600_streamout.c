@@ -145,36 +145,32 @@ void r600_set_streamout_targets(struct pipe_context *ctx,
 static void r600_flush_vgt_streamout(struct r600_common_context *rctx)
 {
 	struct radeon_winsys_cs *cs = rctx->rings.gfx.cs;
+	unsigned reg_strmout_cntl;
 
-	r600_write_config_reg(cs, R_008490_CP_STRMOUT_CNTL, 0);
+	/* The register is at different places on different ASICs. */
+	if (rctx->chip_class >= CIK) {
+		reg_strmout_cntl = R_0300FC_CP_STRMOUT_CNTL;
+	} else if (rctx->chip_class >= EVERGREEN) {
+		reg_strmout_cntl = R_0084FC_CP_STRMOUT_CNTL;
+	} else {
+		reg_strmout_cntl = R_008490_CP_STRMOUT_CNTL;
+	}
+
+	if (rctx->chip_class >= CIK) {
+		cik_write_uconfig_reg(cs, reg_strmout_cntl, 0);
+	} else {
+		r600_write_config_reg(cs, reg_strmout_cntl, 0);
+	}
 
 	radeon_emit(cs, PKT3(PKT3_EVENT_WRITE, 0, 0));
 	radeon_emit(cs, EVENT_TYPE(EVENT_TYPE_SO_VGTSTREAMOUT_FLUSH) | EVENT_INDEX(0));
 
 	radeon_emit(cs, PKT3(PKT3_WAIT_REG_MEM, 5, 0));
 	radeon_emit(cs, WAIT_REG_MEM_EQUAL); /* wait until the register is equal to the reference value */
-	radeon_emit(cs, R_008490_CP_STRMOUT_CNTL >> 2);  /* register */
+	radeon_emit(cs, reg_strmout_cntl >> 2);  /* register */
 	radeon_emit(cs, 0);
 	radeon_emit(cs, S_008490_OFFSET_UPDATE_DONE(1)); /* reference value */
 	radeon_emit(cs, S_008490_OFFSET_UPDATE_DONE(1)); /* mask */
-	radeon_emit(cs, 4); /* poll interval */
-}
-
-static void evergreen_flush_vgt_streamout(struct r600_common_context *rctx)
-{
-	struct radeon_winsys_cs *cs = rctx->rings.gfx.cs;
-
-	r600_write_config_reg(cs, R_0084FC_CP_STRMOUT_CNTL, 0);
-
-	radeon_emit(cs, PKT3(PKT3_EVENT_WRITE, 0, 0));
-	radeon_emit(cs, EVENT_TYPE(EVENT_TYPE_SO_VGTSTREAMOUT_FLUSH) | EVENT_INDEX(0));
-
-	radeon_emit(cs, PKT3(PKT3_WAIT_REG_MEM, 5, 0));
-	radeon_emit(cs, WAIT_REG_MEM_EQUAL); /* wait until the register is equal to the reference value */
-	radeon_emit(cs, R_0084FC_CP_STRMOUT_CNTL >> 2);  /* register */
-	radeon_emit(cs, 0);
-	radeon_emit(cs, S_0084FC_OFFSET_UPDATE_DONE(1)); /* reference value */
-	radeon_emit(cs, S_0084FC_OFFSET_UPDATE_DONE(1)); /* mask */
 	radeon_emit(cs, 4); /* poll interval */
 }
 
@@ -224,11 +220,11 @@ static void r600_emit_streamout_begin(struct r600_common_context *rctx, struct r
 	unsigned *stride_in_dw = rctx->streamout.stride_in_dw;
 	unsigned i, update_flags = 0;
 
+	r600_flush_vgt_streamout(rctx);
+
 	if (rctx->chip_class >= EVERGREEN) {
-		evergreen_flush_vgt_streamout(rctx);
 		evergreen_set_streamout_enable(rctx, rctx->streamout.enabled_mask);
 	} else {
-		r600_flush_vgt_streamout(rctx);
 		r600_set_streamout_enable(rctx, rctx->streamout.enabled_mask);
 	}
 
@@ -315,11 +311,7 @@ void r600_emit_streamout_end(struct r600_common_context *rctx)
 	unsigned i;
 	uint64_t va;
 
-	if (rctx->chip_class >= EVERGREEN) {
-		evergreen_flush_vgt_streamout(rctx);
-	} else {
-		r600_flush_vgt_streamout(rctx);
-	}
+	r600_flush_vgt_streamout(rctx);
 
 	for (i = 0; i < rctx->streamout.num_targets; i++) {
 		if (!t[i])
