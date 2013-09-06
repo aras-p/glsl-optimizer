@@ -45,9 +45,7 @@ LIBKMS_XORG_REQUIRED=1.0.0
 dnl Check for progs
 AC_PROG_CPP
 AC_PROG_CC
-AX_PROG_CC_FOR_BUILD
 AC_PROG_CXX
-AX_PROG_CXX_FOR_BUILD
 AM_PROG_CC_C_O
 AM_PROG_AS
 AC_CHECK_PROGS([MAKE], [gmake make])
@@ -142,21 +140,6 @@ dnl Cache LDFLAGS and CPPFLAGS so we can add to them and restore later
 _SAVE_LDFLAGS="$LDFLAGS"
 _SAVE_CPPFLAGS="$CPPFLAGS"
 
-dnl build host compiler macros
-DEFINES_FOR_BUILD=""
-AC_SUBST([DEFINES_FOR_BUILD])
-case "$build_os" in
-linux*|*-gnu*|gnu*)
-    DEFINES_FOR_BUILD="$DEFINES_FOR_BUILD -D_GNU_SOURCE"
-    ;;
-solaris*)
-    DEFINES_FOR_BUILD="$DEFINES_FOR_BUILD -DSVR4"
-    ;;
-cygwin*)
-    DEFINES_FOR_BUILD="$DEFINES_FOR_BUILD"
-    ;;
-esac
-
 dnl Compiler macros
 DEFINES=""
 AC_SUBST([DEFINES])
@@ -179,7 +162,6 @@ if test "x$GCC" = xyes; then
         CFLAGS="$CFLAGS -Wall -std=gnu99"
         ;;
     *)
-        CFLAGS_FOR_BUILD="$CFLAGS_FOR_BUILD -Wall -std=c99"
         CFLAGS="$CFLAGS -Wall -std=c99"
         ;;
     esac
@@ -209,16 +191,13 @@ if test "x$GCC" = xyes; then
     CFLAGS=$save_CFLAGS
 
     # Work around aliasing bugs - developers should comment this out
-    CFLAGS_FOR_BUILD="$CFLAGS_FOR_BUILD -fno-strict-aliasing"
     CFLAGS="$CFLAGS -fno-strict-aliasing"
 
     # gcc's builtin memcmp is slower than glibc's
     # http://gcc.gnu.org/bugzilla/show_bug.cgi?id=43052
-    CFLAGS_FOR_BUILD="$CFLAGS_FOR_BUILD -fno-builtin-memcmp"
     CFLAGS="$CFLAGS -fno-builtin-memcmp"
 fi
 if test "x$GXX" = xyes; then
-    CXXFLAGS_FOR_BUILD="$CXXFLAGS_FOR_BUILD -Wall"
     CXXFLAGS="$CXXFLAGS -Wall"
 
     # Enable -fvisibility=hidden if using a gcc that supports it
@@ -235,12 +214,10 @@ if test "x$GXX" = xyes; then
     CXXFLAGS=$save_CXXFLAGS
 
     # Work around aliasing bugs - developers should comment this out
-    CXXFLAGS_FOR_BUILD="$CXXFLAGS_FOR_BUILD -fno-strict-aliasing"
     CXXFLAGS="$CXXFLAGS -fno-strict-aliasing"
 
     # gcc's builtin memcmp is slower than glibc's
     # http://gcc.gnu.org/bugzilla/show_bug.cgi?id=43052
-    CXXFLAGS_FOR_BUILD="$CXXFLAGS_FOR_BUILD -fno-builtin-memcmp"
     CXXFLAGS="$CXXFLAGS -fno-builtin-memcmp"
 fi
 
@@ -315,14 +292,6 @@ AC_ARG_ENABLE([debug],
     [enable_debug=no]
 )
 if test "x$enable_debug" = xyes; then
-    DEFINES_FOR_BUILD="$DEFINES_FOR_BUILD -DDEBUG"
-    if test "x$GCC_FOR_BUILD" = xyes; then
-        CFLAGS_FOR_BUILD="$CFLAGS_FOR_BUILD -g -O0"
-    fi
-    if test "x$GXX_FOR_BUILD" = xyes; then
-        CXXFLAGS_FOR_BUILD="$CXXFLAGS_FOR_BUILD -g -O0"
-    fi
-
     DEFINES="$DEFINES -DDEBUG"
     if test "x$GCC" = xyes; then
         CFLAGS="$CFLAGS -g -O0"
