@@ -186,7 +186,8 @@ emit_shader(struct fd_ringbuffer *ring, struct fd3_shader_stateobj *so)
 {
 	struct ir3_shader_info *si = &so->info;
 	enum adreno_state_block sb;
-	uint32_t i, *bin;
+	enum adreno_state_src src;
+	uint32_t i, sz, *bin;
 
 	if (so->type == SHADER_VERTEX) {
 		sb = SB_VERT_SHADER;
@@ -194,17 +195,31 @@ emit_shader(struct fd_ringbuffer *ring, struct fd3_shader_stateobj *so)
 		sb = SB_FRAG_SHADER;
 	}
 
-	// XXX use SS_INDIRECT
-	bin = fd_bo_map(so->bo);
-	OUT_PKT3(ring, CP_LOAD_STATE, 2 + si->sizedwords);
+	if (fd_mesa_debug & FD_DBG_DIRECT) {
+		sz = si->sizedwords;
+		src = SS_DIRECT;
+		bin = fd_bo_map(so->bo);
+	} else {
+		sz = 0;
+		src = SS_INDIRECT;
+		bin = NULL;
+	}
+
+	OUT_PKT3(ring, CP_LOAD_STATE, 2 + sz);
 	OUT_RING(ring, CP_LOAD_STATE_0_DST_OFF(0) |
-			CP_LOAD_STATE_0_STATE_SRC(SS_DIRECT) |
+			CP_LOAD_STATE_0_STATE_SRC(src) |
 			CP_LOAD_STATE_0_STATE_BLOCK(sb) |
 			CP_LOAD_STATE_0_NUM_UNIT(so->instrlen));
-	OUT_RING(ring, CP_LOAD_STATE_1_STATE_TYPE(ST_SHADER) |
-			CP_LOAD_STATE_1_EXT_SRC_ADDR(0));
-	for (i = 0; i < si->sizedwords; i++)
+	if (bin) {
+		OUT_RING(ring, CP_LOAD_STATE_1_EXT_SRC_ADDR(0) |
+				CP_LOAD_STATE_1_STATE_TYPE(ST_SHADER));
+	} else {
+		OUT_RELOC(ring, so->bo, 0,
+				CP_LOAD_STATE_1_STATE_TYPE(ST_SHADER), 0);
+	}
+	for (i = 0; i < sz; i++) {
 		OUT_RING(ring, bin[i]);
+	}
 }
 
 void
@@ -223,6 +238,10 @@ fd3_program_emit(struct fd_ringbuffer *ring,
 
 	OUT_PKT0(ring, REG_A3XX_HLSQ_CONTROL_0_REG, 6);
 	OUT_RING(ring, A3XX_HLSQ_CONTROL_0_REG_FSTHREADSIZE(FOUR_QUADS) |
+			/* NOTE:  I guess SHADERRESTART and CONSTFULLUPDATE maybe
+			 * flush some caches? I think we only need to set those
+			 * bits if we have updated const or shader..
+			 */
 			A3XX_HLSQ_CONTROL_0_REG_SPSHADERRESTART |
 			A3XX_HLSQ_CONTROL_0_REG_SPCONSTFULLUPDATE);
 	OUT_RING(ring, A3XX_HLSQ_CONTROL_1_REG_VSTHREADSIZE(TWO_QUADS) |
