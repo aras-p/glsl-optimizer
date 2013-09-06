@@ -217,18 +217,9 @@ static void r600_flush_dma_ring(void *ctx, unsigned flags)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct radeon_winsys_cs *cs = rctx->b.rings.dma.cs;
-	unsigned padding_dw, i;
 
 	if (!cs->cdw) {
 		return;
-	}
-
-	/* Pad the DMA CS to a multiple of 8 dwords. */
-	padding_dw = 8 - cs->cdw % 8;
-	if (padding_dw < 8) {
-		for (i = 0; i < padding_dw; i++) {
-			cs->buf[cs->cdw++] = DMA_PACKET(DMA_PACKET_NOP, 0, 0, 0);
-		}
 	}
 
 	rctx->b.rings.dma.flushing = true;
