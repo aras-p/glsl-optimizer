@@ -2262,14 +2262,14 @@ builtin_builder::_mix_sel(const glsl_type *val_type, const glsl_type *blend_type
    ir_variable *a = in_var(blend_type, "a");
    MAKE_SIG(val_type, v130, 3, x, y, a);
 
-   if (blend_type->vector_elements == 1) {
-      body.emit(assign(x, y, a));
-   } else {
-      for (int i = 0; i < blend_type->vector_elements; i++) {
-         body.emit(assign(x, swizzle(y, i, 1), swizzle(a, i, 1), 1 << i));
-      }
-   }
-   body.emit(ret(x));
+   /* csel matches the ternary operator in that a selector of true choses the
+    * first argument. This differs from mix(x, y, false) which choses the
+    * second argument (to remain consistent with the interpolating version of
+    * mix() which takes a blend factor from 0.0 to 1.0 where 0.0 is only x.
+    *
+    * To handle the behavior mismatch, reverse the x and y arguments.
+    */
+   body.emit(ret(csel(a, y, x)));
 
    return sig;
 }
