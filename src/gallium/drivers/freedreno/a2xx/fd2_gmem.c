@@ -83,8 +83,7 @@ emit_gmem2mem_surf(struct fd_context *ctx, uint32_t base,
 			A2XX_RB_COPY_DEST_INFO_WRITE_BLUE |
 			A2XX_RB_COPY_DEST_INFO_WRITE_ALPHA);
 
-	OUT_PKT3(ring, CP_WAIT_FOR_IDLE, 1);
-	OUT_RING(ring, 0x0000000);
+	OUT_WFI (ring);
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 3);
 	OUT_RING(ring, CP_REG(REG_A2XX_VGT_MAX_VTX_INDX));

@@ -101,8 +101,7 @@ fd2_draw(struct fd_context *ctx, const struct pipe_draw_info *info)
 	OUT_PKT0(ring, REG_A2XX_TC_CNTL_STATUS, 1);
 	OUT_RING(ring, A2XX_TC_CNTL_STATUS_L2_INVALIDATE);
 
-	OUT_PKT3(ring, CP_WAIT_FOR_IDLE, 1);
-	OUT_RING(ring, 0x0000000);
+	OUT_WFI (ring);
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 3);
 	OUT_RING(ring, CP_REG(REG_A2XX_VGT_MAX_VTX_INDX));

@@ -80,8 +80,7 @@ fd3_draw(struct fd_context *ctx, const struct pipe_draw_info *info)
 	OUT_PKT0(ring, REG_A3XX_PC_VERTEX_REUSE_BLOCK_CNTL, 1);
 	OUT_RING(ring, 0x0000000b);                  /* PC_VERTEX_REUSE_BLOCK_CNTL */
 
-	OUT_PKT3(ring, CP_WAIT_FOR_IDLE, 1);
-	OUT_RING(ring, 0x0000000);
+	OUT_WFI (ring);
 
 	OUT_PKT0(ring, REG_A3XX_VFD_INDEX_MIN, 4);
 	OUT_RING(ring, info->min_index);        /* VFD_INDEX_MIN */
@@ -220,8 +219,7 @@ fd3_clear(struct fd_context *ctx, unsigned buffers,
 	fd_draw(ctx, DI_PT_RECTLIST, DI_SRC_SEL_AUTO_INDEX, 2,
 			INDEX_SIZE_IGN, 0, 0, NULL);
 
-	OUT_PKT3(ring, CP_WAIT_FOR_IDLE, 1);
-	OUT_RING(ring, 0x00000000);
+	OUT_WFI (ring);
 }
 
 void

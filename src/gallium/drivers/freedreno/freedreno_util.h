@@ -165,6 +165,13 @@ OUT_PKT3(struct fd_ringbuffer *ring, uint8_t opcode, uint16_t cnt)
 }
 
 static inline void
+OUT_WFI(struct fd_ringbuffer *ring)
+{
+	OUT_PKT3(ring, CP_WAIT_FOR_IDLE, 1);
+	OUT_RING(ring, 0x00000000);
+}
+
+static inline void
 OUT_IB(struct fd_ringbuffer *ring, struct fd_ringmarker *start,
 		struct fd_ringmarker *end)
 {

@@ -244,8 +244,7 @@ emit_cache_flush(struct fd_ringbuffer *ring)
 	OUT_RING(ring, 0x00000000);
 	OUT_RING(ring, 0x00000000);
 
-	OUT_PKT3(ring, CP_WAIT_FOR_IDLE, 1);
-	OUT_RING(ring, 0x00000000);
+	OUT_WFI (ring);
 }
 
 /* emit texture state for mem->gmem restore operation.. eventually it would
