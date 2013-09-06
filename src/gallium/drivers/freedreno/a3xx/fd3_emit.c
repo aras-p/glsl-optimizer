@@ -342,6 +342,8 @@ fd3_emit_state(struct fd_context *ctx, uint32_t dirty)
 {
 	struct fd_ringbuffer *ring = ctx->ring;
 
+	emit_marker(ring, 5);
+
 	if (dirty & FD_DIRTY_SAMPLE_MASK) {
 		OUT_PKT0(ring, REG_A3XX_RB_MSAA_CONTROL, 1);
 		OUT_RING(ring, A3XX_RB_MSAA_CONTROL_DISABLE |

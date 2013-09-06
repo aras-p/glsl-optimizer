@@ -51,6 +51,14 @@ fd_draw(struct fd_context *ctx, enum pc_di_primtype primtype,
 {
 	struct fd_ringbuffer *ring = ctx->ring;
 
+	/* for debug after a lock up, write a unique counter value
+	 * to scratch7 for each draw, to make it easier to match up
+	 * register dumps to cmdstream.  The combination of IB
+	 * (scratch6) and DRAW is enough to "triangulate" the
+	 * particular draw that caused lockup.
+	 */
+	emit_marker(ring, 7);
+
 	OUT_PKT3(ring, CP_DRAW_INDX, idx_bo ? 5 : 3);
 	OUT_RING(ring, 0x00000000);        /* viz query info. */
 	OUT_RING(ring, DRAW(primtype, src_sel,
@@ -60,6 +68,8 @@ fd_draw(struct fd_context *ctx, enum pc_di_primtype primtype,
 		OUT_RELOC(ring, idx_bo, idx_offset, 0, 0);
 		OUT_RING (ring, idx_size);
 	}
+
+	emit_marker(ring, 7);
 }
 
 #endif /* FREEDRENO_DRAW_H_ */
