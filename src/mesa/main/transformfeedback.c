@@ -44,6 +44,41 @@
 
 #include "program/prog_parameter.h"
 
+struct using_program_tuple
+{
+   struct gl_shader_program *shProg;
+   bool found;
+};
+
+static void
+active_xfb_object_references_program(GLuint key, void *data, void *user_data)
+{
+   struct using_program_tuple *callback_data = user_data;
+   struct gl_transform_feedback_object *obj = data;
+   if (obj->Active && obj->shader_program == callback_data->shProg)
+      callback_data->found = true;
+}
+
+/**
+ * Return true if any active transform feedback object is using a program.
+ */
+bool
+_mesa_transform_feedback_is_using_program(struct gl_context *ctx,
+                                          struct gl_shader_program *shProg)
+{
+   struct using_program_tuple callback_data;
+   callback_data.shProg = shProg;
+   callback_data.found = false;
+
+   _mesa_HashWalk(ctx->TransformFeedback.Objects,
+                  active_xfb_object_references_program, &callback_data);
+
+   /* Also check DefaultObject, as it's not in the Objects hash table. */
+   active_xfb_object_references_program(0, ctx->TransformFeedback.DefaultObject,
+                                        &callback_data);
+
+   return callback_data.found;
+}
 
 /**
  * Do reference counting of transform feedback buffers.

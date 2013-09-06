@@ -120,4 +120,8 @@ _mesa_is_xfb_active_and_unpaused(const struct gl_context *ctx)
       !ctx->TransformFeedback.CurrentObject->Paused;
 }
 
+extern bool
+_mesa_transform_feedback_is_using_program(struct gl_context *ctx,
+                                          struct gl_shader_program *shProg);
+
 #endif /* TRANSFORM_FEEDBACK_H */
