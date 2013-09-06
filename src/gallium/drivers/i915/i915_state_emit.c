@@ -142,7 +142,7 @@ static uint target_fixup(struct pipe_surface *p, int component)
       { PIPE_FORMAT_A8_UNORM,       { 0, 0, 0, S5_WRITEDISABLE_RED | S5_WRITEDISABLE_GREEN | S5_WRITEDISABLE_BLUE | S5_WRITEDISABLE_ALPHA}},
       { 0,                          { S5_WRITEDISABLE_RED, S5_WRITEDISABLE_GREEN, S5_WRITEDISABLE_BLUE, S5_WRITEDISABLE_ALPHA}}
    };
-   int i = sizeof(fixup_mask) / sizeof(*fixup_mask);
+   int i = sizeof(fixup_mask) / sizeof(*fixup_mask) - 1;
 
    if (p)
       for(i = 0; fixup_mask[i].format != 0; i++)
