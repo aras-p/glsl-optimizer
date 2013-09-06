@@ -134,6 +134,18 @@ struct fd_context {
 	} gmem_reason;
 	unsigned num_draws;
 
+	/* we can't really sanely deal with wraparound point in ringbuffer
+	 * and because of the way tiling works we can't really flush at
+	 * arbitrary points (without a big performance hit).  When we get
+	 * too close to the end of the current ringbuffer, cycle to the next
+	 * one (and wait for pending rendering from next rb to complete).
+	 * We want the # of ringbuffers to be high enough that we don't
+	 * normally have to wait before resetting to the start of the next
+	 * rb.
+	 */
+	struct fd_ringbuffer *rings[4];
+	unsigned rings_idx;
+
 	struct fd_ringbuffer *ring;
 	struct fd_ringmarker *draw_start, *draw_end;
 
