@@ -531,6 +531,12 @@ ir_validate::visit_leave(ir_expression *ir)
       break;
 
    case ir_triop_fma:
+      assert(ir->type->base_type == GLSL_TYPE_FLOAT);
+      assert(ir->type == ir->operands[0]->type);
+      assert(ir->type == ir->operands[1]->type);
+      assert(ir->type == ir->operands[2]->type);
+      break;
+
    case ir_triop_lrp:
       assert(ir->operands[0]->type->base_type == GLSL_TYPE_FLOAT);
       assert(ir->operands[0]->type == ir->operands[1]->type);
