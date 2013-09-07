@@ -823,6 +823,7 @@ struct pipe_video_codec *ruvd_create_decoder(struct pipe_context *context,
 {
 	unsigned dpb_size = calc_dpb_size(templ);
 	unsigned width = templ->width, height = templ->height;
+	unsigned bs_buf_size;
 	struct radeon_info info;
 	struct ruvd_decoder *dec;
 	struct ruvd_msg msg;
@@ -873,6 +874,7 @@ struct pipe_video_codec *ruvd_create_decoder(struct pipe_context *context,
 		goto error;
 	}
 
+	bs_buf_size = width * height * 512 / (16 * 16);
 	for (i = 0; i < NUM_BUFFERS; ++i) {
 		unsigned msg_fb_size = align(sizeof(struct ruvd_msg), 0x1000) + 0x1000;
 		if (!create_buffer(dec, &dec->msg_fb_buffers[i], msg_fb_size)) {
@@ -880,7 +882,7 @@ struct pipe_video_codec *ruvd_create_decoder(struct pipe_context *context,
 			goto error;
 		}
 
-		if (!create_buffer(dec, &dec->bs_buffers[i], 4096)) {
+		if (!create_buffer(dec, &dec->bs_buffers[i], bs_buf_size)) {
 			RUVD_ERR("Can't allocated bitstream buffers.\n");
 			goto error;
 		}
