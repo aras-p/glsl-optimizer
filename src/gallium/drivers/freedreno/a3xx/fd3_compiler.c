@@ -556,7 +556,10 @@ vectorize(struct fd3_compile_context *ctx, struct ir3_instruction *instr,
 		struct tgsi_src_register *src =
 				va_arg(ap, struct tgsi_src_register *);
 		unsigned flags = va_arg(ap, unsigned);
-		add_src_reg(ctx, instr, src, 0)->flags |= flags;
+		struct ir3_register *reg = add_src_reg(ctx, instr, src, 0);
+		reg->flags |= flags & ~IR3_REG_NEGATE;
+		if (flags & IR3_REG_NEGATE)
+			reg->flags ^= IR3_REG_NEGATE;
 	}
 	va_end(ap);
 
@@ -1288,11 +1291,14 @@ instr_cat2(const struct instr_translater *t,
 	struct tgsi_src_register *src0 = &inst->Src[0].Register;
 	struct tgsi_src_register *src1 = &inst->Src[1].Register;
 	struct ir3_instruction *instr;
-	unsigned src0_flags = 0;
+	unsigned src0_flags = 0, src1_flags = 0;
 
 	switch (t->tgsi_opc) {
 	case TGSI_OPCODE_ABS:
 		src0_flags = IR3_REG_ABS;
+		break;
+	case TGSI_OPCODE_SUB:
+		src1_flags = IR3_REG_NEGATE;
 		break;
 	}
 
@@ -1320,7 +1326,8 @@ instr_cat2(const struct instr_translater *t,
 			src0 = get_unconst(ctx, src0);
 
 		instr = ir3_instr_create(ctx->ir, 2, t->opc);
-		vectorize(ctx, instr, dst, 2, src0, src0_flags, src1, 0);
+		vectorize(ctx, instr, dst, 2, src0, src0_flags,
+				src1, src1_flags);
 		break;
 	}
 
@@ -1410,6 +1417,7 @@ static const struct instr_translater translaters[TGSI_OPCODE_LAST] = {
 	INSTR(SQRT,         instr_cat4, .opc = OPC_SQRT),
 	INSTR(MUL,          instr_cat2, .opc = OPC_MUL_F),
 	INSTR(ADD,          instr_cat2, .opc = OPC_ADD_F),
+	INSTR(SUB,          instr_cat2, .opc = OPC_ADD_F),
 	INSTR(DP2,          trans_dotp, .arg = 2),
 	INSTR(DP3,          trans_dotp, .arg = 3),
 	INSTR(DP4,          trans_dotp, .arg = 4),
