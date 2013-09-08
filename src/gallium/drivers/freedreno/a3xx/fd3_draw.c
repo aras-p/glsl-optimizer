@@ -122,6 +122,7 @@ fd3_clear(struct fd_context *ctx, unsigned buffers,
 		OUT_PKT0(ring, REG_A3XX_GRAS_CL_VPORT_ZOFFSET, 2);
 		OUT_RING(ring, A3XX_GRAS_CL_VPORT_ZOFFSET(0.0));
 		OUT_RING(ring, A3XX_GRAS_CL_VPORT_ZSCALE(depth));
+		ctx->dirty |= FD_DIRTY_VIEWPORT;
 	} else {
 		OUT_PKT0(ring, REG_A3XX_RB_DEPTH_CONTROL, 1);
 		OUT_RING(ring, A3XX_RB_DEPTH_CONTROL_ZFUNC(FUNC_NEVER));

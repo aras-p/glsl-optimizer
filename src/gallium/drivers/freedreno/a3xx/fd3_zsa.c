@@ -62,6 +62,7 @@ fd3_zsa_state_create(struct pipe_context *pctx,
 		const struct pipe_stencil_state *s = &cso->stencil[0];
 
 		so->rb_stencil_control |=
+			A3XX_RB_STENCIL_CONTROL_STENCIL_READ |
 			A3XX_RB_STENCIL_CONTROL_STENCIL_ENABLE |
 			A3XX_RB_STENCIL_CONTROL_FUNC(s->func) | /* maps 1:1 */
 			A3XX_RB_STENCIL_CONTROL_FAIL(fd_stencil_op(s->fail_op)) |

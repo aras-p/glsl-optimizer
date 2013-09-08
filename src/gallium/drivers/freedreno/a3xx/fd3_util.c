@@ -299,6 +299,24 @@ fd3_pipe2color(enum pipe_format format)
 	}
 }
 
+/* we need to special case a bit the depth/stencil restore, because we are
+ * using the texture sampler to blit into the depth/stencil buffer, *not*
+ * into a color buffer.  Otherwise fd3_tex_swiz() will do the wrong thing,
+ * as it is assuming that you are sampling into normal render target..
+ */
+enum pipe_format
+fd3_gmem_restore_format(enum pipe_format format)
+{
+	switch (format) {
+	case PIPE_FORMAT_Z24X8_UNORM:
+	case PIPE_FORMAT_Z24_UNORM_S8_UINT:
+	case PIPE_FORMAT_Z16_UNORM:
+		return PIPE_FORMAT_B8G8R8A8_UNORM;
+	default:
+		return format;
+	}
+}
+
 enum a3xx_color_swap
 fd3_pipe2swap(enum pipe_format format)
 {

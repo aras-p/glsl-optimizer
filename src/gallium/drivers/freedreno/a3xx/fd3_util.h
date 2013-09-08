@@ -37,6 +37,7 @@ enum a3xx_vtx_fmt fd3_pipe2vtx(enum pipe_format format);
 enum a3xx_tex_fmt fd3_pipe2tex(enum pipe_format format);
 enum a3xx_tex_fetchsize fd3_pipe2fetchsize(enum pipe_format format);
 enum a3xx_color_fmt fd3_pipe2color(enum pipe_format format);
+enum pipe_format fd3_gmem_restore_format(enum pipe_format format);
 enum a3xx_color_swap fd3_pipe2swap(enum pipe_format format);
 
 uint32_t fd3_tex_swiz(enum pipe_format format, unsigned swizzle_r,

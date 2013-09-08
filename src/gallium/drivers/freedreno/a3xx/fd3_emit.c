@@ -255,6 +255,7 @@ void
 fd3_emit_gmem_restore_tex(struct fd_ringbuffer *ring, struct pipe_surface *psurf)
 {
 	struct fd_resource *rsc = fd_resource(psurf->texture);
+	enum pipe_format format = fd3_gmem_restore_format(psurf->format);
 
 	/* output sampler state: */
 	OUT_PKT3(ring, CP_LOAD_STATE, 4);
@@ -280,8 +281,8 @@ fd3_emit_gmem_restore_tex(struct fd_ringbuffer *ring, struct pipe_surface *psurf
 	OUT_RING(ring, CP_LOAD_STATE_1_STATE_TYPE(ST_CONSTANTS) |
 			CP_LOAD_STATE_1_EXT_SRC_ADDR(0));
 	OUT_RING(ring, A3XX_TEX_CONST_0_FMT(fd3_pipe2tex(psurf->format)) |
-			0x40000000 | // XXX
-			fd3_tex_swiz(psurf->format,  PIPE_SWIZZLE_RED, PIPE_SWIZZLE_GREEN,
+			A3XX_TEX_CONST_0_TYPE(A3XX_TEX_2D) |
+			fd3_tex_swiz(format,  PIPE_SWIZZLE_RED, PIPE_SWIZZLE_GREEN,
 					PIPE_SWIZZLE_BLUE, PIPE_SWIZZLE_ALPHA));
 	OUT_RING(ring, A3XX_TEX_CONST_1_FETCHSIZE(TFETCH_DISABLE) |
 			A3XX_TEX_CONST_1_WIDTH(psurf->width) |

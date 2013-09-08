@@ -13,7 +13,7 @@ The rules-ng-ng source files this header was generated from are:
 - /home/robclark/src/freedreno/envytools/rnndb/a2xx/a2xx.xml           (  30005 bytes, from 2013-07-19 21:30:48)
 - /home/robclark/src/freedreno/envytools/rnndb/adreno_common.xml       (   8983 bytes, from 2013-07-24 01:38:36)
 - /home/robclark/src/freedreno/envytools/rnndb/adreno_pm4.xml          (   9759 bytes, from 2013-09-06 12:50:15)
-- /home/robclark/src/freedreno/envytools/rnndb/a3xx/a3xx.xml           (  51659 bytes, from 2013-09-08 18:21:13)
+- /home/robclark/src/freedreno/envytools/rnndb/a3xx/a3xx.xml           (  51947 bytes, from 2013-09-08 20:53:23)
 
 Copyright (C) 2013 by the following authors:
 - Rob Clark <robdclark@gmail.com> (robclark)
@@ -1051,7 +1051,8 @@ static inline uint32_t A3XX_RB_DEPTH_PITCH(uint32_t val)
 
 #define REG_A3XX_RB_STENCIL_CONTROL				0x00002104
 #define A3XX_RB_STENCIL_CONTROL_STENCIL_ENABLE			0x00000001
-#define A3XX_RB_STENCIL_CONTROL_STENCIL_ENABLE_BF		0x00000004
+#define A3XX_RB_STENCIL_CONTROL_STENCIL_ENABLE_BF		0x00000002
+#define A3XX_RB_STENCIL_CONTROL_STENCIL_READ			0x00000004
 #define A3XX_RB_STENCIL_CONTROL_FUNC__MASK			0x00000700
 #define A3XX_RB_STENCIL_CONTROL_FUNC__SHIFT			8
 static inline uint32_t A3XX_RB_STENCIL_CONTROL_FUNC(enum adreno_compare_func val)
