@@ -90,8 +90,13 @@ fd3_zsa_state_create(struct pipe_context *pctx,
 
 	if (cso->alpha.enabled) {
 		so->rb_render_control =
+			A3XX_RB_RENDER_CONTROL_ALPHA_TEST |
 			A3XX_RB_RENDER_CONTROL_ALPHA_TEST_FUNC(cso->alpha.func);
-		// TODO alpha_ref and alpha_test_enable??
+		so->rb_alpha_ref =
+			A3XX_RB_ALPHA_REF_UINT(cso->alpha.ref_value * 255.0) |
+			A3XX_RB_ALPHA_REF_FLOAT(cso->alpha.ref_value);
+		so->rb_depth_control |=
+			A3XX_RB_DEPTH_CONTROL_EARLY_Z_DISABLE;
 	}
 
 	return so;

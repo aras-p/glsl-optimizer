@@ -13,7 +13,7 @@ The rules-ng-ng source files this header was generated from are:
 - /home/robclark/src/freedreno/envytools/rnndb/a2xx/a2xx.xml           (  30005 bytes, from 2013-07-19 21:30:48)
 - /home/robclark/src/freedreno/envytools/rnndb/adreno_common.xml       (   8983 bytes, from 2013-07-24 01:38:36)
 - /home/robclark/src/freedreno/envytools/rnndb/adreno_pm4.xml          (   9759 bytes, from 2013-09-06 12:50:15)
-- /home/robclark/src/freedreno/envytools/rnndb/a3xx/a3xx.xml           (  51536 bytes, from 2013-09-08 13:18:17)
+- /home/robclark/src/freedreno/envytools/rnndb/a3xx/a3xx.xml           (  51659 bytes, from 2013-09-08 18:21:13)
 
 Copyright (C) 2013 by the following authors:
 - Rob Clark <robdclark@gmail.com> (robclark)
@@ -745,6 +745,7 @@ static inline uint32_t A3XX_RB_RENDER_CONTROL_BIN_WIDTH(uint32_t val)
 }
 #define A3XX_RB_RENDER_CONTROL_DISABLE_COLOR_PIPE		0x00001000
 #define A3XX_RB_RENDER_CONTROL_ENABLE_GMEM			0x00002000
+#define A3XX_RB_RENDER_CONTROL_ALPHA_TEST			0x00400000
 #define A3XX_RB_RENDER_CONTROL_ALPHA_TEST_FUNC__MASK		0x07000000
 #define A3XX_RB_RENDER_CONTROL_ALPHA_TEST_FUNC__SHIFT		24
 static inline uint32_t A3XX_RB_RENDER_CONTROL_ALPHA_TEST_FUNC(enum adreno_compare_func val)
@@ -767,7 +768,19 @@ static inline uint32_t A3XX_RB_MSAA_CONTROL_SAMPLE_MASK(uint32_t val)
 	return ((val) << A3XX_RB_MSAA_CONTROL_SAMPLE_MASK__SHIFT) & A3XX_RB_MSAA_CONTROL_SAMPLE_MASK__MASK;
 }
 
-#define REG_A3XX_UNKNOWN_20C3					0x000020c3
+#define REG_A3XX_RB_ALPHA_REF					0x000020c3
+#define A3XX_RB_ALPHA_REF_UINT__MASK				0x0000ff00
+#define A3XX_RB_ALPHA_REF_UINT__SHIFT				8
+static inline uint32_t A3XX_RB_ALPHA_REF_UINT(uint32_t val)
+{
+	return ((val) << A3XX_RB_ALPHA_REF_UINT__SHIFT) & A3XX_RB_ALPHA_REF_UINT__MASK;
+}
+#define A3XX_RB_ALPHA_REF_FLOAT__MASK				0xffff0000
+#define A3XX_RB_ALPHA_REF_FLOAT__SHIFT				16
+static inline uint32_t A3XX_RB_ALPHA_REF_FLOAT(float val)
+{
+	return ((util_float_to_half(val)) << A3XX_RB_ALPHA_REF_FLOAT__SHIFT) & A3XX_RB_ALPHA_REF_FLOAT__MASK;
+}
 
 static inline uint32_t REG_A3XX_RB_MRT(uint32_t i0) { return 0x000020c4 + 0x4*i0; }
 
@@ -1002,7 +1015,7 @@ static inline uint32_t A3XX_RB_COPY_DEST_INFO_ENDIAN(enum adreno_rb_surface_endi
 #define REG_A3XX_RB_DEPTH_CONTROL				0x00002100
 #define A3XX_RB_DEPTH_CONTROL_Z_ENABLE				0x00000002
 #define A3XX_RB_DEPTH_CONTROL_Z_WRITE_ENABLE			0x00000004
-#define A3XX_RB_DEPTH_CONTROL_EARLY_Z_ENABLE			0x00000008
+#define A3XX_RB_DEPTH_CONTROL_EARLY_Z_DISABLE			0x00000008
 #define A3XX_RB_DEPTH_CONTROL_ZFUNC__MASK			0x00000070
 #define A3XX_RB_DEPTH_CONTROL_ZFUNC__SHIFT			4
 static inline uint32_t A3XX_RB_DEPTH_CONTROL_ZFUNC(enum adreno_compare_func val)

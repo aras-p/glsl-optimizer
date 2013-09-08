@@ -357,6 +357,9 @@ fd3_emit_state(struct fd_context *ctx, uint32_t dirty)
 
 		fd3_emit_rbrc_draw_state(ring, zsa->rb_render_control);
 
+		OUT_PKT0(ring, REG_A3XX_RB_ALPHA_REF, 1);
+		OUT_RING(ring, zsa->rb_alpha_ref);
+
 		OUT_PKT0(ring, REG_A3XX_RB_DEPTH_CONTROL, 1);
 		OUT_RING(ring, zsa->rb_depth_control);
 
