@@ -410,14 +410,13 @@ vlVdpDecoderFixVC1Startcode(uint32_t *num_buffers, const void *buffers[], unsign
 
    /* search the first 64 bytes for a startcode */
    vl_vlc_init(&vlc, *num_buffers, buffers, sizes);
-   for (i = 0; i < 64 && vl_vlc_bits_left(&vlc) >= 32; ++i) {
+   while (vl_vlc_search_byte(&vlc, 64*8, 0x00) && vl_vlc_bits_left(&vlc) >= 32) {
       uint32_t value = vl_vlc_peekbits(&vlc, 32);
       if (value == 0x0000010D ||
           value == 0x0000010C ||
           value == 0x0000010B)
          return;
       vl_vlc_eatbits(&vlc, 8);
-      vl_vlc_fillbits(&vlc);
    }
 
    /* none found, ok add one manually */
