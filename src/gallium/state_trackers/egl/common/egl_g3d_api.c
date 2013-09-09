@@ -443,7 +443,7 @@ egl_g3d_create_pbuffer_from_client_buffer(_EGLDriver *drv, _EGLDisplay *dpy,
    gsurf->client_buffer = buffer;
 
    /* validate now so that it fails if the client buffer is invalid */
-   if (!gsurf->stfbi->validate(gsurf->stfbi,
+   if (!gsurf->stfbi->validate(NULL, gsurf->stfbi,
             &gsurf->stvis.render_buffer, 1, &ptex)) {
       egl_g3d_destroy_st_framebuffer(gsurf->stfbi);
       FREE(gsurf);

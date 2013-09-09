@@ -189,7 +189,7 @@ st_framebuffer_validate(struct st_framebuffer *stfb,
 
    /* validate the fb */
    do {
-      if (!stfb->iface->validate(stfb->iface, stfb->statts,
+      if (!stfb->iface->validate(&st->iface, stfb->iface, stfb->statts,
 				 stfb->num_statts, textures))
 	 return;
 

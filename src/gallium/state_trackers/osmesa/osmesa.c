@@ -342,7 +342,8 @@ osmesa_st_framebuffer_flush_front(struct st_context_iface *stctx,
  * its resources).
  */
 static boolean
-osmesa_st_framebuffer_validate(struct st_framebuffer_iface *stfbi,
+osmesa_st_framebuffer_validate(struct st_context_iface *stctx,
+                               struct st_framebuffer_iface *stfbi,
                                const enum st_attachment_type *statts,
                                unsigned count,
                                struct pipe_resource **out)

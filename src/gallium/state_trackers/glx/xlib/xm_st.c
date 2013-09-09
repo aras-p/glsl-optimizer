@@ -194,7 +194,8 @@ xmesa_st_framebuffer_validate_textures(struct st_framebuffer_iface *stfbi,
  * \param out  returns resources for each of the attachments
  */
 static boolean
-xmesa_st_framebuffer_validate(struct st_framebuffer_iface *stfbi,
+xmesa_st_framebuffer_validate(struct st_context_iface *stctx,
+                              struct st_framebuffer_iface *stfbi,
                               const enum st_attachment_type *statts,
                               unsigned count,
                               struct pipe_resource **out)

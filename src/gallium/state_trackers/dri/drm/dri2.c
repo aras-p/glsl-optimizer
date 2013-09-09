@@ -169,7 +169,8 @@ dri2_drawable_get_buffers(struct dri_drawable *drawable,
  * Process __DRIbuffer and convert them into pipe_resources.
  */
 static void
-dri2_drawable_process_buffers(struct dri_drawable *drawable,
+dri2_drawable_process_buffers(struct dri_context *ctx,
+                              struct dri_drawable *drawable,
                               __DRIbuffer *buffers, unsigned buffer_count,
                               const enum st_attachment_type *atts,
                               unsigned att_count)
@@ -180,8 +181,6 @@ dri2_drawable_process_buffers(struct dri_drawable *drawable,
    struct winsys_handle whandle;
    boolean alloc_depthstencil = FALSE;
    unsigned i, j, bind;
-   struct pipe_screen *pscreen = screen->base.screen;
-   struct pipe_context *pipe = NULL;
 
    if (drawable->old_num == buffer_count &&
        drawable->old_w == dri_drawable->w &&
@@ -308,14 +307,8 @@ dri2_drawable_process_buffers(struct dri_drawable *drawable,
                 * The single-sample resources are not exposed
                 * to the state tracker.
                 *
-                * We don't have a context here, so create one temporarily.
-                * We may need to create a persistent context if creation and
-                * destruction of the context becomes a bottleneck.
                 */
-               if (!pipe)
-                  pipe = pscreen->context_create(pscreen, NULL);
-
-               dri_pipe_blit(pipe,
+               dri_pipe_blit(ctx->st->pipe,
                              drawable->msaa_textures[att],
                              drawable->textures[att]);
             }
@@ -371,11 +364,6 @@ dri2_drawable_process_buffers(struct dri_drawable *drawable,
    drawable->old_w = dri_drawable->w;
    drawable->old_h = dri_drawable->h;
    memcpy(drawable->old, buffers, sizeof(__DRIbuffer) * buffer_count);
-
-   if (pipe) {
-      pipe->flush(pipe, NULL, 0);
-      pipe->destroy(pipe);
-   }
 }
 
 static __DRIbuffer *
@@ -470,7 +458,8 @@ dri2_release_buffer(__DRIscreen *sPriv, __DRIbuffer *bPriv)
  */
 
 static void
-dri2_allocate_textures(struct dri_drawable *drawable,
+dri2_allocate_textures(struct dri_context *ctx,
+                       struct dri_drawable *drawable,
                        const enum st_attachment_type *statts,
                        unsigned statts_count)
 {
@@ -479,7 +468,7 @@ dri2_allocate_textures(struct dri_drawable *drawable,
 
    buffers = dri2_drawable_get_buffers(drawable, statts, &num_buffers);
    if (buffers)
-      dri2_drawable_process_buffers(drawable, buffers, num_buffers,
+      dri2_drawable_process_buffers(ctx, drawable, buffers, num_buffers,
                                     statts, statts_count);
 }
 

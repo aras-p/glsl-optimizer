@@ -113,7 +113,8 @@ vg_manager_validate_framebuffer(struct vg_context *ctx)
    if (stfb->iface_stamp != new_stamp) {
       do {
 	 /* validate the fb */
-	 if (!stfb->iface->validate(stfb->iface, &stfb->strb_att,
+	 if (!stfb->iface->validate((struct st_context_iface *)ctx,
+				    stfb->iface, &stfb->strb_att,
 				    1, &pt) || !pt)
 	    return;
 

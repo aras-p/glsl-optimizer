@@ -182,7 +182,8 @@ drisw_flush_frontbuffer(struct dri_context *ctx,
  * framebuffer is resized or destroyed.
  */
 static void
-drisw_allocate_textures(struct dri_drawable *drawable,
+drisw_allocate_textures(struct dri_context *stctx,
+                        struct dri_drawable *drawable,
                         const enum st_attachment_type *statts,
                         unsigned count)
 {

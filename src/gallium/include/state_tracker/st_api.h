@@ -342,7 +342,8 @@ struct st_framebuffer_iface
     * the last call might be destroyed.  This behavior might change in the
     * future.
     */
-   boolean (*validate)(struct st_framebuffer_iface *stfbi,
+   boolean (*validate)(struct st_context_iface *stctx,
+                       struct st_framebuffer_iface *stfbi,
                        const enum st_attachment_type *statts,
                        unsigned count,
                        struct pipe_resource **out);
