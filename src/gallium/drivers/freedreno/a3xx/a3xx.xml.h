@@ -13,7 +13,7 @@ The rules-ng-ng source files this header was generated from are:
 - /home/robclark/src/freedreno/envytools/rnndb/a2xx/a2xx.xml           (  30005 bytes, from 2013-07-19 21:30:48)
 - /home/robclark/src/freedreno/envytools/rnndb/adreno_common.xml       (   8983 bytes, from 2013-07-24 01:38:36)
 - /home/robclark/src/freedreno/envytools/rnndb/adreno_pm4.xml          (   9759 bytes, from 2013-09-06 12:50:15)
-- /home/robclark/src/freedreno/envytools/rnndb/a3xx/a3xx.xml           (  51947 bytes, from 2013-09-08 20:53:23)
+- /home/robclark/src/freedreno/envytools/rnndb/a3xx/a3xx.xml           (  51983 bytes, from 2013-09-09 15:24:38)
 
 Copyright (C) 2013 by the following authors:
 - Rob Clark <robdclark@gmail.com> (robclark)
@@ -637,11 +637,12 @@ static inline uint32_t A3XX_GRAS_SU_POLY_OFFSET_OFFSET(float val)
 #define REG_A3XX_GRAS_SU_MODE_CONTROL				0x00002070
 #define A3XX_GRAS_SU_MODE_CONTROL_CULL_FRONT			0x00000001
 #define A3XX_GRAS_SU_MODE_CONTROL_CULL_BACK			0x00000002
-#define A3XX_GRAS_SU_MODE_CONTROL_LINEHALFWIDTH__MASK		0x000007fc
-#define A3XX_GRAS_SU_MODE_CONTROL_LINEHALFWIDTH__SHIFT		2
-static inline uint32_t A3XX_GRAS_SU_MODE_CONTROL_LINEHALFWIDTH(uint32_t val)
+#define A3XX_GRAS_SU_MODE_CONTROL_FRONT_CW			0x00000004
+#define A3XX_GRAS_SU_MODE_CONTROL_LINEHALFWIDTH__MASK		0x000007f8
+#define A3XX_GRAS_SU_MODE_CONTROL_LINEHALFWIDTH__SHIFT		3
+static inline uint32_t A3XX_GRAS_SU_MODE_CONTROL_LINEHALFWIDTH(float val)
 {
-	return ((val) << A3XX_GRAS_SU_MODE_CONTROL_LINEHALFWIDTH__SHIFT) & A3XX_GRAS_SU_MODE_CONTROL_LINEHALFWIDTH__MASK;
+	return ((((uint32_t)(val * 4.0))) << A3XX_GRAS_SU_MODE_CONTROL_LINEHALFWIDTH__SHIFT) & A3XX_GRAS_SU_MODE_CONTROL_LINEHALFWIDTH__MASK;
 }
 #define A3XX_GRAS_SU_MODE_CONTROL_POLY_OFFSET			0x00000800
 
