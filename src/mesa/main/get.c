@@ -714,6 +714,7 @@ find_custom_value(struct gl_context *ctx, const struct value_desc *d, union valu
 
    case GL_MAX_VARYING_FLOATS_ARB:
    case GL_MAX_FRAGMENT_INPUT_COMPONENTS:
+   case GL_MAX_VERTEX_OUTPUT_COMPONENTS:
       v->value_int = ctx->Const.MaxVarying * 4;
       break;
 

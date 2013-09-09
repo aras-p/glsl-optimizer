@@ -330,6 +330,7 @@ descriptor=[
   [ "MINOR_VERSION", "LOC_CUSTOM, TYPE_INT, 0, extra_gl30_es3" ],
 
   # GL 3.0 / GLES3
+  [ "MAX_VERTEX_OUTPUT_COMPONENTS", "LOC_CUSTOM, TYPE_INT, 0, extra_gl32_es3" ],
   [ "MAX_FRAGMENT_INPUT_COMPONENTS", "LOC_CUSTOM, TYPE_INT, 0, extra_gl32_es3" ],
 
 # GL_ARB_ES3_compatibility
