@@ -995,7 +995,7 @@ vl_mpg12_bs_decode(struct vl_mpg12_bs *bs,
    bs->intra_dct_tbl = picture->intra_vlc_format ? tbl_B15 : tbl_B14_AC;
 
    vl_vlc_init(&bs->vlc, num_buffers, buffers, sizes);
-   while (vl_vlc_bits_left(&bs->vlc) > 32) {
+   while (vl_vlc_search_byte(&bs->vlc, ~0, 0x00) && vl_vlc_bits_left(&bs->vlc) > 32) {
       uint32_t code = vl_vlc_peekbits(&bs->vlc, 32);
 
       if (code >= 0x101 && code <= 0x1AF) {
