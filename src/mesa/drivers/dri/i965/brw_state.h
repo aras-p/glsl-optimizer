@@ -240,6 +240,12 @@ brw_vec4_upload_binding_table(struct brw_context *brw,
                               struct brw_stage_state *stage_state,
                               const struct brw_vec4_prog_data *prog_data);
 
+/* gen7_vs_state.c */
+void
+gen7_upload_constant_state(struct brw_context *brw,
+                           const struct brw_stage_state *stage_state,
+                           bool active, unsigned opcode);
+
 #ifdef __cplusplus
 }
 #endif
