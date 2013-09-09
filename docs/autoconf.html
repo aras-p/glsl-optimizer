@@ -123,24 +123,6 @@ directories.</p>
 There are also a few general options for altering the Mesa build:
 </p>
 <dl>
-<dt><code>--with-x</code></dt>
-<dd><p>When the X11 development libraries are
-needed, the <code>pkg-config</code> utility <a href="#pkg-config">will
-be used</a> for locating them. If they cannot be found through
-<code>pkg-config</code> a fallback routing using <code>imake</code> will
-be used. In this case, the <code>--with-x</code>,
-<code>--x-includes</code> and <code>--x-libraries</code> options can
-control the use of X for Mesa.</p>
-</dd>
-
-<dt><code>--enable-gl-osmesa</code></dt>
-<dd><p>The <a href="osmesa.html">OSMesa
-library</a> can be built on top of libGL for drivers that provide it.
-This option controls whether to build libOSMesa. By default, this is
-enabled for the Xlib driver and disabled otherwise. Note that this
-option is different than using OSMesa as the driver.</p>
-</dd>
-
 <dt><code>--enable-debug</code></dt>
 <dd><p>This option will enable compiler
 options and macros to aid in debugging the Mesa libraries.</p>
@@ -155,12 +137,12 @@ assembly will not be used.</p>
 
 <dt><code>--enable-32-bit</code></dt>
 <dt><code>--enable-64-bit</code></dt>
-<dd><p>By default, the
-build will compile code as directed by the environment variables
+<dd><p>By default, the build will compile code as directed by the environment
+variables
 <code>CC</code>, <code>CFLAGS</code>, etc. If the compiler is
 <code>gcc</code>, these options offer a helper to add the compiler flags
 to force 32- or 64-bit code generation as used on the x86 and x86_64
-architectures.</p>
+architectures. Note that these options are mutually exclusive.</p>
 </dd>
 </dl>
 
@@ -171,19 +153,19 @@ architectures.</p>
 There are several different driver modes that Mesa can use. These are
 described in more detail in the <a href="install.html">basic
 installation instructions</a>. The Mesa driver is controlled through the
-configure option --with-driver. There are currently three supported
-options in the configure script.
+configure options <code>--enable-xlib-glx</code>, <code>--enable-osmesa</code>,
+and <code>--enable-dri</code>.
 </p>
 
-<h3 id="xlib">Xlib</h3><p>This is the default mode for building Mesa.
+<h3 id="xlib">Xlib</h3><p>
 It uses Xlib as a software renderer to do all rendering. It corresponds
-to the option <code>--with-driver=xlib</code>. The libX11 and libXext
+to the option <code>--enable-xlib-glx</code>. The libX11 and libXext
 libraries, as well as the X11 development headers, will be need to
 support the Xlib driver.
 
 <h3 id="dri">DRI</h3><p>This mode uses the DRI hardware drivers for
 accelerated OpenGL rendering. Enable the DRI drivers with the option
-<code>--with-driver=dri</code>. See the <a href="install.html">basic
+<code>--enable-dri</code>. See the <a href="install.html">basic
 installation instructions</a> for details on prerequisites for the DRI
 drivers.
 
@@ -223,7 +205,8 @@ and <code>/usr/local/lib</code>, respectively.
 <h3 id="osmesa">OSMesa </h3><p> No libGL is built in this
 mode. Instead, the driver code is built into the Off-Screen Mesa
 (OSMesa) library. See the <a href="osmesa.html">Off-Screen Rendering</a>
-page for more details.
+page for more details.  It corresponds to the option
+<code>--enable-osmesa</code>.
 
 <!-- OSMesa specific options -->
 <dl>
