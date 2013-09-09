@@ -391,10 +391,10 @@ public:
 
 private:
    const varying_info_visitor *info;
-   struct ir_variable *new_texcoord[MAX_TEXTURE_COORD_UNITS];
-   struct ir_variable *new_color[2];
-   struct ir_variable *new_backcolor[2];
-   struct ir_variable *new_fog;
+   ir_variable *new_texcoord[MAX_TEXTURE_COORD_UNITS];
+   ir_variable *new_color[2];
+   ir_variable *new_backcolor[2];
+   ir_variable *new_fog;
 };
 
 
