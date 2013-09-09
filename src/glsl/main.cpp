@@ -110,11 +110,11 @@ int dump_lir = 0;
 int do_link = 0;
 
 const struct option compiler_opts[] = {
-   { "glsl-es",  0, &glsl_es,  1 },
-   { "dump-ast", 0, &dump_ast, 1 },
-   { "dump-hir", 0, &dump_hir, 1 },
-   { "dump-lir", 0, &dump_lir, 1 },
-   { "link",     0, &do_link,  1 },
+   { "glsl-es",  no_argument, &glsl_es,  1 },
+   { "dump-ast", no_argument, &dump_ast, 1 },
+   { "dump-hir", no_argument, &dump_hir, 1 },
+   { "dump-lir", no_argument, &dump_lir, 1 },
+   { "link",     no_argument, &do_link,  1 },
    { NULL, 0, NULL, 0 }
 };
 
