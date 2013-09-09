@@ -608,7 +608,7 @@ class ir_function_signature : public ir_instruction {
     */
 public:
    ir_function_signature(const glsl_type *return_type,
-                         builtin_available_predicate builtin_info = NULL);
+                         builtin_available_predicate builtin_avail = NULL);
 
    virtual ir_function_signature *clone(void *mem_ctx,
 					struct hash_table *ht) const;
@@ -697,7 +697,7 @@ private:
     * A function pointer to a predicate that answers whether a built-in
     * function is available in the current shader.  NULL if not a built-in.
     */
-   builtin_available_predicate builtin_info;
+   builtin_available_predicate builtin_avail;
 
    /** Function of which this signature is one overload. */
    class ir_function *_function;

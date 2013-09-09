@@ -1617,7 +1617,7 @@ ir_variable::determine_interpolation_mode(bool flat_shade)
 
 ir_function_signature::ir_function_signature(const glsl_type *return_type,
                                              builtin_available_predicate b)
-   : return_type(return_type), is_defined(false), builtin_info(b),
+   : return_type(return_type), is_defined(false), builtin_avail(b),
      _function(NULL)
 {
    this->ir_type = ir_type_function_signature;
@@ -1628,7 +1628,7 @@ ir_function_signature::ir_function_signature(const glsl_type *return_type,
 bool
 ir_function_signature::is_builtin() const
 {
-   return builtin_info != NULL;
+   return builtin_avail != NULL;
 }
 
 
@@ -1644,8 +1644,8 @@ ir_function_signature::is_builtin_available(const _mesa_glsl_parse_state *state)
    if (state == NULL)
       return true;
 
-   assert(builtin_info != NULL);
-   return builtin_info(state);
+   assert(builtin_avail != NULL);
+   return builtin_avail(state);
 }
 
 
