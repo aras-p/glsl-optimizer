@@ -49,6 +49,8 @@ check_PROGRAMS =					\
 	tests/sampler-types-test			\
 	tests/uniform-initializer-test
 
+noinst_PROGRAMS = glsl_compiler
+
 tests_uniform_initializer_test_SOURCES =		\
 	$(top_srcdir)/src/mesa/main/hash_table.c	\
 	$(top_srcdir)/src/mesa/main/imports.c		\
@@ -98,6 +100,15 @@ libglsl_la_SOURCES =					\
 	glsl_lexer.cpp					\
 	glsl_parser.cpp					\
 	$(LIBGLSL_FILES)
+
+glsl_compiler_SOURCES = \
+	$(top_srcdir)/src/mesa/main/hash_table.c \
+	$(top_srcdir)/src/mesa/main/imports.c \
+	$(top_srcdir)/src/mesa/program/prog_hash_table.c \
+	$(top_srcdir)/src/mesa/program/symbol_table.c \
+	$(GLSL_COMPILER_CXX_FILES)
+
+glsl_compiler_LDADD = libglsl.la
 
 glsl_test_SOURCES = \
 	$(top_srcdir)/src/mesa/main/hash_table.c \

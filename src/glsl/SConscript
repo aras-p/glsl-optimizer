@@ -98,11 +98,11 @@ if env['platform'] == 'windows':
 
 env.Prepend(LIBS = [glsl])
 
-glsl2 = env.Program(
-    target = 'glsl2',
+glsl_compiler = env.Program(
+    target = 'glsl_compiler',
     source = compiler_objs,
 )
-env.Alias('glsl2', glsl2)
+env.Alias('glsl_compiler', glsl_compiler)
 
 glcpp = env.Program(
     target = 'glcpp/glcpp',
