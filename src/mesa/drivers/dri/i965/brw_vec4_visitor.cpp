@@ -2251,10 +2251,8 @@ vec4_visitor::visit(ir_texture *ir)
 	 emit(MOV(dst_reg(MRF, param_base, ir->coordinate->type, coord_mask),
 		  coordinate));
       }
-      if (zero_mask != 0) {
-         emit(MOV(dst_reg(MRF, param_base, ir->coordinate->type, zero_mask),
-                  src_reg(0)));
-      }
+      emit(MOV(dst_reg(MRF, param_base, ir->coordinate->type, zero_mask),
+	       src_reg(0)));
       /* Load the shadow comparitor */
       if (ir->shadow_comparitor && ir->op != ir_txd) {
 	 emit(MOV(dst_reg(MRF, param_base + 1, ir->shadow_comparitor->type,
