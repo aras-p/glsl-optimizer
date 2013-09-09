@@ -91,7 +91,6 @@ vl_vlc_init_table(struct vl_vlc_entry *dst, unsigned dst_size, const struct vl_v
 static INLINE void
 vl_vlc_next_input(struct vl_vlc *vlc)
 {
-   const uint8_t* data = vlc->inputs[0];
    unsigned len = vlc->sizes[0];
 
    assert(vlc);
@@ -99,19 +98,26 @@ vl_vlc_next_input(struct vl_vlc *vlc)
 
    vlc->bytes_left -= len;
 
-   /* align the data pointer */
-   while (len && pointer_to_uintptr(data) & 3) {
-      vlc->buffer |= (uint64_t)*data << (24 + vlc->invalid_bits);
-      ++data;
-      --len;
-      vlc->invalid_bits -= 8;
-   }
-   vlc->data = data;
-   vlc->end = data + len;
+   vlc->data = vlc->inputs[0];
+   vlc->end = vlc->data + len;
 
    --vlc->num_inputs;
    ++vlc->inputs;
    ++vlc->sizes;
+}
+
+/**
+ * align the data pointer to the next dword
+ */
+static INLINE void
+vl_vlc_align_data_ptr(struct vl_vlc *vlc)
+{
+   /* align the data pointer */
+   while (vlc->data != vlc->end && pointer_to_uintptr(vlc->data) & 3) {
+      vlc->buffer |= (uint64_t)*vlc->data << (24 + vlc->invalid_bits);
+      ++vlc->data;
+      vlc->invalid_bits -= 8;
+   }
 }
 
 /**
@@ -185,6 +191,7 @@ vl_vlc_init(struct vl_vlc *vlc, unsigned num_inputs,
       vlc->bytes_left += sizes[i];
 
    vl_vlc_next_input(vlc);
+   vl_vlc_align_data_ptr(vlc);
    vl_vlc_fillbits(vlc);
    vl_vlc_fillbits(vlc);
 }
@@ -272,6 +279,63 @@ vl_vlc_get_vlclbf(struct vl_vlc *vlc, const struct vl_vlc_entry *tbl, unsigned n
    tbl += vl_vlc_peekbits(vlc, num_bits);
    vl_vlc_eatbits(vlc, tbl->length);
    return tbl->value;
+}
+
+/**
+ * fast forward search for a specific byte value
+ */
+static INLINE boolean
+vl_vlc_search_byte(struct vl_vlc *vlc, unsigned num_bits, uint8_t value)
+{
+   /* make sure we are on a byte boundary */
+   assert((vl_vlc_valid_bits(vlc) % 8) == 0);
+   assert(num_bits == ~0 || (num_bits % 8) == 0);
+
+   /* deplete the bit buffer */
+   while (vl_vlc_valid_bits(vlc) > 0) {
+
+      if (vl_vlc_peekbits(vlc, 8) == value) {
+         vl_vlc_fillbits(vlc);
+         return TRUE;
+      }
+
+      vl_vlc_eatbits(vlc, 8);
+
+      if (num_bits != ~0) {
+         num_bits -= 8;
+         if (num_bits == 0)
+            return FALSE;
+      }
+   }
+
+   /* deplete the byte buffers */
+   while (1) {
+
+      /* if this input is depleted */
+      if (vlc->data == vlc->end) {
+         if (vlc->num_inputs)
+            /* go on to next input */
+            vl_vlc_next_input(vlc);
+         else
+            /* or give up since we don't have anymore inputs */
+            return FALSE;
+      }
+
+      if (*vlc->data == value) {
+         vl_vlc_align_data_ptr(vlc);
+         vl_vlc_fillbits(vlc);
+         return TRUE;
+      }
+
+      ++vlc->data;
+      if (num_bits != ~0) {
+         num_bits -= 8;
+         if (num_bits == 0) {
+            vl_vlc_align_data_ptr(vlc);
+            return FALSE;
+         }
+      }
+   }
 }
 
 #endif /* vl_vlc_h */
