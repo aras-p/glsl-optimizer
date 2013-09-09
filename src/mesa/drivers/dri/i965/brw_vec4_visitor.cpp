@@ -2221,13 +2221,10 @@ vec4_visitor::visit(ir_texture *ir)
       int writemask = brw->gen == 4 ? WRITEMASK_W : WRITEMASK_X;
       emit(MOV(dst_reg(MRF, param_base, lod_type, writemask), lod));
    } else {
-      int i, coord_mask = 0, zero_mask = 0;
       /* Load the coordinate */
       /* FINISHME: gl_clamp_mask and saturate */
-      for (i = 0; i < ir->coordinate->type->vector_elements; i++)
-	 coord_mask |= (1 << i);
-      for (; i < 4; i++)
-	 zero_mask |= (1 << i);
+      int coord_mask = (1 << ir->coordinate->type->vector_elements) - 1;
+      int zero_mask = 0xf & ~coord_mask;
 
       if (ir->offset && ir->op == ir_txf) {
 	 /* It appears that the ld instruction used for txf does its
