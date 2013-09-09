@@ -167,33 +167,5 @@ static struct radeon_winsys_cs_handle* r600_uvd_set_dtb(struct ruvd_msg *msg, st
 struct pipe_video_codec *r600_uvd_create_decoder(struct pipe_context *context,
 						   const struct pipe_video_codec *templat)
 {
-	struct r600_context *ctx = (struct r600_context *)context;
-
-	return ruvd_create_decoder(context, templat, ctx->b.ws, r600_uvd_set_dtb);
-}
-
-int r600_uvd_get_video_param(struct pipe_screen *screen,
-			     enum pipe_video_profile profile,
-			     enum pipe_video_entrypoint entrypoint,
-			     enum pipe_video_cap param)
-{
-	struct r600_screen *rscreen = (struct r600_screen *)screen;
-
-	/* UVD 2.x limits */
-	if (rscreen->b.family < CHIP_PALM) {
-		enum pipe_video_format codec = u_reduce_video_profile(profile);
-		switch (param) {
-		case PIPE_VIDEO_CAP_SUPPORTED:
-			/* no support for MPEG4 */
-	    		return codec != PIPE_VIDEO_FORMAT_MPEG4;
-        	case PIPE_VIDEO_CAP_PREFERS_INTERLACED:
-        	case PIPE_VIDEO_CAP_SUPPORTS_INTERLACED:
-			/* and MPEG2 only with shaders */
-	    		return codec != PIPE_VIDEO_FORMAT_MPEG12;
-		default:
-			break;
-		}
-	}
-
-	return ruvd_get_video_param(screen, profile, entrypoint, param);
+	return ruvd_create_decoder(context, templat, r600_uvd_set_dtb);
 }

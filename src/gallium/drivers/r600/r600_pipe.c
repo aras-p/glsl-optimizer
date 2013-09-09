@@ -1293,7 +1293,7 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 	rscreen->b.b.get_driver_query_info = r600_get_driver_query_info;
 
 	if (rscreen->b.info.has_uvd) {
-		rscreen->b.b.get_video_param = r600_uvd_get_video_param;
+		rscreen->b.b.get_video_param = ruvd_get_video_param;
 		rscreen->b.b.is_video_format_supported = ruvd_is_format_supported;
 	} else {
 		rscreen->b.b.get_video_param = r600_get_video_param;

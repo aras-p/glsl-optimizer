@@ -46,6 +46,7 @@
 #include "vl/vl_mpeg12_decoder.h"
 
 #include "../../winsys/radeon/drm/radeon_winsys.h"
+#include "r600_pipe_common.h"
 #include "radeon_uvd.h"
 
 #define RUVD_ERR(fmt, args...) \
@@ -818,9 +819,9 @@ static void ruvd_flush(struct pipe_video_codec *decoder)
  */
 struct pipe_video_codec *ruvd_create_decoder(struct pipe_context *context,
 					     const struct pipe_video_codec *templ,
-					     struct radeon_winsys* ws,
 					     ruvd_set_dtb set_dtb)
 {
+	struct radeon_winsys* ws = ((struct r600_common_context *)context)->ws;
 	unsigned dpb_size = calc_dpb_size(templ);
 	unsigned width = templ->width, height = templ->height;
 	unsigned bs_buf_size;
@@ -1082,6 +1083,24 @@ int ruvd_get_video_param(struct pipe_screen *screen,
 			 enum pipe_video_entrypoint entrypoint,
 			 enum pipe_video_cap param)
 {
+	struct r600_common_screen *rscreen = (struct r600_common_screen *)screen;
+
+	/* UVD 2.x limits */
+	if (rscreen->family < CHIP_PALM) {
+		enum pipe_video_format codec = u_reduce_video_profile(profile);
+		switch (param) {
+		case PIPE_VIDEO_CAP_SUPPORTED:
+			/* no support for MPEG4 */
+			return codec != PIPE_VIDEO_FORMAT_MPEG4;
+		case PIPE_VIDEO_CAP_PREFERS_INTERLACED:
+		case PIPE_VIDEO_CAP_SUPPORTS_INTERLACED:
+			/* and MPEG2 only with shaders */
+			return codec != PIPE_VIDEO_FORMAT_MPEG12;
+		default:
+			break;
+		}
+	}
+
 	switch (param) {
 	case PIPE_VIDEO_CAP_SUPPORTED:
 		switch (u_reduce_video_profile(profile)) {

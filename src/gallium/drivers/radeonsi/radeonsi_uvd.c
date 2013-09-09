@@ -149,7 +149,5 @@ static struct radeon_winsys_cs_handle* radeonsi_uvd_set_dtb(struct ruvd_msg *msg
 struct pipe_video_codec *radeonsi_uvd_create_decoder(struct pipe_context *context,
 						     const struct pipe_video_codec *templ)
 {
-	struct r600_context *ctx = (struct r600_context *)context;
-
-	return ruvd_create_decoder(context, templ, ctx->b.ws, radeonsi_uvd_set_dtb);
+	return ruvd_create_decoder(context, templ, radeonsi_uvd_set_dtb);
 }
