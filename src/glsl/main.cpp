@@ -371,8 +371,10 @@ main(int argc, char **argv)
 
       compile_shader(ctx, shader);
 
-      if (!shader->CompileStatus) {
+      if (strlen(shader->InfoLog) > 0)
 	 printf("Info log for %s:\n%s\n", argv[optind], shader->InfoLog);
+
+      if (!shader->CompileStatus) {
 	 status = EXIT_FAILURE;
 	 break;
       }
