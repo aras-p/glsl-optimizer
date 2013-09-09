@@ -1935,9 +1935,9 @@ builtin_builder::new_sig(const glsl_type *return_type,
    return sig;
 }
 
-#define MAKE_SIG(return_type, avail, rest...) \
+#define MAKE_SIG(return_type, avail, ...)  \
    ir_function_signature *sig =               \
-      new_sig(return_type, avail, rest);      \
+      new_sig(return_type, avail, __VA_ARGS__);      \
    ir_factory body(&sig->body, mem_ctx);
 
 ir_function_signature *
