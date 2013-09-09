@@ -581,6 +581,15 @@ struct glsl_struct_field {
    const struct glsl_type *type;
    const char *name;
    bool row_major;
+
+   /**
+    * For interface blocks, gl_varying_slot corresponding to the input/output
+    * if this is a built-in input/output (i.e. a member of the built-in
+    * gl_PerVertex interface block); -1 otherwise.
+    *
+    * Ignored for structs.
+    */
+   int location;
 };
 
 static inline unsigned int

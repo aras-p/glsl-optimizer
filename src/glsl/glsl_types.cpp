@@ -100,6 +100,7 @@ glsl_type::glsl_type(const glsl_struct_field *fields, unsigned num_fields,
       this->fields.structure[i].type = fields[i].type;
       this->fields.structure[i].name = ralloc_strdup(this->fields.structure,
 						     fields[i].name);
+      this->fields.structure[i].location = fields[i].location;
       this->fields.structure[i].row_major = fields[i].row_major;
    }
 }
@@ -124,6 +125,7 @@ glsl_type::glsl_type(const glsl_struct_field *fields, unsigned num_fields,
       this->fields.structure[i].type = fields[i].type;
       this->fields.structure[i].name = ralloc_strdup(this->fields.structure,
 						     fields[i].name);
+      this->fields.structure[i].location = fields[i].location;
       this->fields.structure[i].row_major = fields[i].row_major;
    }
 }

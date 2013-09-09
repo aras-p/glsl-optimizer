@@ -150,6 +150,7 @@ flatten_named_interface_blocks_declarations::run(exec_list *instructions)
                                            var_name,
                                            (ir_variable_mode) var->mode);
             }
+            new_var->location = iface_t->fields.structure[i].location;
 
             new_var->interface_type = iface_t;
             hash_table_insert(interface_namespace, new_var,

@@ -4491,6 +4491,7 @@ ast_process_structure_or_interface_block(exec_list *instructions,
 	 }
          fields[i].type = field_type;
 	 fields[i].name = decl->identifier;
+         fields[i].location = -1;
 
          if (qual->flags.q.row_major || qual->flags.q.column_major) {
             if (!qual->flags.q.uniform) {
