@@ -126,6 +126,8 @@ brw_set_dest(struct brw_compile *p, struct brw_instruction *insn,
       else {
 	 insn->bits1.da16.dest_subreg_nr = dest.subnr / 16;
 	 insn->bits1.da16.dest_writemask = dest.dw1.bits.writemask;
+         assert(dest.dw1.bits.writemask != 0 ||
+                dest.file == BRW_ARCHITECTURE_REGISTER_FILE);
 	 /* From the Ivybridge PRM, Vol 4, Part 3, Section 5.2.4.1:
 	  *    Although Dst.HorzStride is a don't care for Align16, HW needs
 	  *    this to be programmed as "01".
