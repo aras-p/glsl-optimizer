@@ -331,7 +331,7 @@ descriptor=[
 
   # GL 3.0 / GLES3
   [ "MAX_VERTEX_OUTPUT_COMPONENTS", "CONTEXT_INT(Const.VertexProgram.MaxOutputComponents), extra_gl32_es3" ],
-  [ "MAX_FRAGMENT_INPUT_COMPONENTS", "LOC_CUSTOM, TYPE_INT, 0, extra_gl32_es3" ],
+  [ "MAX_FRAGMENT_INPUT_COMPONENTS", "CONTEXT_INT(Const.FragmentProgram.MaxInputComponents), extra_gl32_es3" ],
 
 # GL_ARB_ES3_compatibility
   [ "MAX_ELEMENT_INDEX", "CONTEXT_INT64(Const.MaxElementIndex), extra_ARB_ES3_compatibility_api_es3"],
