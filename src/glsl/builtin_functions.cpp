@@ -1853,6 +1853,7 @@ builtin_builder::add_function(const char *name, ...)
 
       f->add_signature(sig);
    }
+   va_end(ap);
 
    shader->symbols->add_function(f);
 }
