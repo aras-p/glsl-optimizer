@@ -204,7 +204,7 @@ fd_gmem_render_tiles(struct pipe_context *pctx)
 		if (ctx->cleared || ctx->gmem_reason || (ctx->num_draws > 5)) {
 			DBG("GMEM: cleared=%x, gmem_reason=%x, num_draws=%u",
 				ctx->cleared, ctx->gmem_reason, ctx->num_draws);
-		} else {
+		} else if (!(fd_mesa_debug & FD_DBG_DBYPASS)) {
 			sysmem = true;
 		}
 	}

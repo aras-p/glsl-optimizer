@@ -62,6 +62,7 @@ static const struct debug_named_value debug_options[] = {
 		{"dgmem",     FD_DBG_DGMEM,  "Mark all state dirty after GMEM tile pass"},
 		{"dscis",     FD_DBG_DSCIS,  "Disable scissor optimization"},
 		{"direct",    FD_DBG_DIRECT, "Force inline (SS_DIRECT) state loads"},
+		{"dbypass",   FD_DBG_DBYPASS,"Disable GMEM bypass"},
 		DEBUG_NAMED_VALUE_END
 };
 
