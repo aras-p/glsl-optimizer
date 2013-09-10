@@ -1555,8 +1555,11 @@ void evergreen_init_color_surface(struct r600_context *rctx,
 		surf->export_16bpc = true;
 	}
 
-	if (rtex->fmask_size && rtex->cmask_size) {
-		color_info |= S_028C70_COMPRESSION(1) | S_028C70_FAST_CLEAR(1);
+	if (rtex->fmask_size) {
+		color_info |= S_028C70_COMPRESSION(1);
+	}
+	if (rtex->cmask_size) {
+		color_info |= S_028C70_FAST_CLEAR(1);
 	}
 
 	base_offset = r600_resource_va(rctx->b.b.screen, pipe_tex);
@@ -1574,11 +1577,15 @@ void evergreen_init_color_surface(struct r600_context *rctx,
 				      S_028C6C_SLICE_MAX(surf->base.u.tex.last_layer);
 	}
 	surf->cb_color_attrib = color_attrib;
-	if (rtex->fmask_size && rtex->cmask_size) {
+	if (rtex->fmask_size) {
 		surf->cb_color_fmask = (base_offset + rtex->fmask_offset) >> 8;
-		surf->cb_color_cmask = (base_offset + rtex->cmask_offset) >> 8;
 	} else {
 		surf->cb_color_fmask = surf->cb_color_base;
+	}
+	if (rtex->cmask_size) {
+		uint64_t va = r600_resource_va(rctx->b.b.screen, &rtex->cmask->b.b);
+		surf->cb_color_cmask = (va + rtex->cmask_offset) >> 8;
+	} else {
 		surf->cb_color_cmask = surf->cb_color_base;
 	}
 	surf->cb_color_fmask_slice = S_028C88_TILE_MAX(rtex->fmask_slice_tile_max);
@@ -2180,6 +2187,13 @@ static void evergreen_emit_framebuffer_state(struct r600_context *rctx, struct r
 						       &rctx->b.rings.gfx,
 						       (struct r600_resource*)cb->base.texture,
 						       RADEON_USAGE_READWRITE);
+		unsigned cmask_reloc = 0;
+		if (tex->cmask && tex->cmask != &tex->resource) {
+			cmask_reloc = r600_context_bo_reloc(&rctx->b, &rctx->b.rings.gfx,
+				tex->cmask, RADEON_USAGE_READWRITE);
+		} else {
+			cmask_reloc = reloc;
+		}
 
 		r600_write_context_reg_seq(cs, R_028C60_CB_COLOR0_BASE + i * 0x3C, 13);
 		radeon_emit(cs, cb->cb_color_base);	/* R_028C60_CB_COLOR0_BASE */
@@ -2208,7 +2222,7 @@ static void evergreen_emit_framebuffer_state(struct r600_context *rctx, struct r
 		radeon_emit(cs, reloc);
 
 		radeon_emit(cs, PKT3(PKT3_NOP, 0, 0)); /* R_028C7C_CB_COLOR0_CMASK */
-		radeon_emit(cs, reloc);
+		radeon_emit(cs, cmask_reloc);
 
 		radeon_emit(cs, PKT3(PKT3_NOP, 0, 0)); /* R_028C84_CB_COLOR0_FMASK */
 		radeon_emit(cs, reloc);

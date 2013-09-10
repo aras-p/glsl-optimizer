@@ -71,6 +71,7 @@ struct r600_texture {
 	/* use htile only for first level */
 	float				depth_clear;
 
+	struct r600_resource		*cmask;
 	unsigned			color_clear_value[2];
 };
 
@@ -152,6 +153,8 @@ void r600_texture_get_fmask_info(struct r600_screen *rscreen,
 void r600_texture_get_cmask_info(struct r600_screen *rscreen,
 				 struct r600_texture *rtex,
 				 struct r600_cmask_info *out);
+void r600_texture_init_cmask(struct r600_screen *rscreen,
+			     struct r600_texture *rtex);
 struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
 					const struct pipe_resource *templ);
 struct pipe_resource *r600_texture_from_handle(struct pipe_screen *screen,

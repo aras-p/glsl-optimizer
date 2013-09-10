@@ -301,6 +301,9 @@ static void r600_texture_destroy(struct pipe_screen *screen,
 		pipe_resource_reference((struct pipe_resource **)&rtex->flushed_depth_texture, NULL);
 
         pipe_resource_reference((struct pipe_resource**)&rtex->htile, NULL);
+	if (rtex->cmask != &rtex->resource) {
+	    pipe_resource_reference((struct pipe_resource**)&rtex->cmask, NULL);
+	}
 	pb_reference(&resource->buf, NULL);
 	FREE(rtex);
 }
@@ -431,6 +434,24 @@ static void r600_texture_allocate_cmask(struct r600_screen *rscreen,
 #endif
 }
 
+void r600_texture_init_cmask(struct r600_screen *rscreen,
+			     struct r600_texture *rtex) {
+    struct r600_cmask_info cmask;
+
+    assert(rtex->cmask_size == 0);
+
+    r600_texture_get_cmask_info(rscreen, rtex, &cmask);
+    rtex->cmask_slice_tile_max = cmask.slice_tile_max;
+    rtex->cmask_offset = 0;
+    rtex->cmask_size = cmask.size;
+    rtex->cmask = (struct r600_resource *)pipe_buffer_create(&rscreen->b.b,
+	    PIPE_BIND_CUSTOM, PIPE_USAGE_STATIC, rtex->cmask_size);
+
+    if (rtex->cmask == NULL) {
+	rtex->cmask_size = 0;
+    }
+}
+
 static struct r600_texture *
 r600_texture_create_object(struct pipe_screen *screen,
 			   const struct pipe_resource *base,
@@ -464,9 +485,11 @@ r600_texture_create_object(struct pipe_screen *screen,
 		return NULL;
 	}
 
+	rtex->cmask = NULL;
 	if (base->nr_samples > 1 && !rtex->is_depth && !buf) {
 		r600_texture_allocate_fmask(rscreen, rtex);
 		r600_texture_allocate_cmask(rscreen, rtex);
+		rtex->cmask = &rtex->resource;
 	}
 
 	if (!rtex->is_depth && base->nr_samples > 1 &&
@@ -532,7 +555,7 @@ r600_texture_create_object(struct pipe_screen *screen,
 
 	if (rtex->cmask_size) {
 		/* Initialize the cmask to 0xCC (= compressed state). */
-		r600_screen_clear_buffer(rscreen, &rtex->resource.b.b,
+		r600_screen_clear_buffer(rscreen, &rtex->cmask->b.b,
 					 rtex->cmask_offset, rtex->cmask_size, 0xCC);
 	}
 

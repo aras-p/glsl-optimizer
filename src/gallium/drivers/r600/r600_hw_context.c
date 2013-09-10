@@ -644,11 +644,15 @@ void r600_flag_resource_cache_flush(struct r600_context *rctx,
 
 	/* Check colorbuffers. */
 	for (i = 0; i < rctx->framebuffer.state.nr_cbufs; i++) {
-		if (rctx->framebuffer.state.cbufs[i] &&
-		    rctx->framebuffer.state.cbufs[i]->texture == res) {
-			struct r600_texture *tex =
-				(struct r600_texture*)rctx->framebuffer.state.cbufs[i]->texture;
+		struct r600_texture *tex;
 
+		if (rctx->framebuffer.state.cbufs[i] == NULL) {
+		    continue;
+		}
+
+		tex = (struct r600_texture*)rctx->framebuffer.state.cbufs[i]->texture;
+
+		if (rctx->framebuffer.state.cbufs[i]->texture == res) {
 			rctx->b.flags |= R600_CONTEXT_FLUSH_AND_INV_CB |
 				       R600_CONTEXT_FLUSH_AND_INV |
 				       R600_CONTEXT_WAIT_3D_IDLE;
@@ -657,6 +661,12 @@ void r600_flag_resource_cache_flush(struct r600_context *rctx,
 				rctx->b.flags |= R600_CONTEXT_FLUSH_AND_INV_CB_META;
 			}
 			break;
+		}
+
+		if (tex && tex->cmask && tex->cmask != &tex->resource && &tex->cmask->b.b == res) {
+			rctx->b.flags |= R600_CONTEXT_FLUSH_AND_INV_CB_META |
+				       R600_CONTEXT_FLUSH_AND_INV |
+				       R600_CONTEXT_WAIT_3D_IDLE;
 		}
 	}
 
