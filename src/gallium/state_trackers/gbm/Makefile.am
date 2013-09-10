@@ -27,6 +27,7 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/gbm/main \
 	-I$(top_srcdir)/include
 if HAVE_EGL_PLATFORM_WAYLAND
+AM_CFLAGS += $(WAYLAND_CFLAGS)
 AM_CPPFLAGS += -DHAVE_WAYLAND_PLATFORM
 endif
 
