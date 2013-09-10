@@ -515,7 +515,7 @@ struct pipe_resource *si_texture_create(struct pipe_screen *screen,
 	int r;
 
 	if (!(templ->flags & R600_RESOURCE_FLAG_TRANSFER) &&
-	    !(templ->bind & PIPE_BIND_CURSOR | PIPE_BIND_LINEAR)) {
+	    !(templ->bind & (PIPE_BIND_CURSOR | PIPE_BIND_LINEAR))) {
 		if (templ->flags & R600_RESOURCE_FLAG_FORCE_TILING ||
 		    templ->nr_samples > 1) {
 			array_mode = V_009910_ARRAY_2D_TILED_THIN1;
