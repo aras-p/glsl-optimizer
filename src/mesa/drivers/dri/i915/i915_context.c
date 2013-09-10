@@ -194,6 +194,8 @@ i915CreateContext(int api,
    ctx->Const.FragmentProgram.MaxTextureImageUnits = I915_TEX_UNITS;
    ctx->Const.MaxTextureCoordUnits = I915_TEX_UNITS;
    ctx->Const.MaxVarying = I915_TEX_UNITS;
+   ctx->Const.VertexProgram.MaxOutputComponents =
+      ctx->Const.FragmentProgram.MaxInputComponents = ctx->Const.MaxVarying * 4;
    ctx->Const.MaxCombinedTextureImageUnits =
       ctx->Const.VertexProgram.MaxTextureImageUnits +
       ctx->Const.FragmentProgram.MaxTextureImageUnits;
