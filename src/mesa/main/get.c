@@ -508,7 +508,9 @@ print_table_stats(int api)
 void _mesa_init_get_hash(struct gl_context *ctx)
 {
 #ifdef GET_DEBUG
-   print_table_stats();
+   print_table_stats(ctx->API);
+#else
+   (void) ctx;
 #endif
 }
 
