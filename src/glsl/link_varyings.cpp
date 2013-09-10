@@ -1220,39 +1220,98 @@ assign_varying_locations(struct gl_context *ctx,
 }
 
 bool
-check_against_varying_limit(struct gl_context *ctx,
-                            struct gl_shader_program *prog,
-                            gl_shader *consumer)
+check_against_output_limit(struct gl_context *ctx,
+                           struct gl_shader_program *prog,
+                           gl_shader *producer)
 {
-   unsigned varying_vectors = 0;
+   unsigned output_vectors = 0;
+
+   foreach_list(node, producer->ir) {
+      ir_variable *const var = ((ir_instruction *) node)->as_variable();
+
+      if (var && var->mode == ir_var_shader_out &&
+          is_varying_var(producer->Type, var)) {
+         output_vectors += var->type->count_attribute_slots();
+      }
+   }
+
+   unsigned max_output_components;
+   switch (producer->Type) {
+   case GL_VERTEX_SHADER:
+      max_output_components = ctx->Const.VertexProgram.MaxOutputComponents;
+      break;
+   case GL_GEOMETRY_SHADER:
+      max_output_components = ctx->Const.GeometryProgram.MaxOutputComponents;
+      break;
+   case GL_FRAGMENT_SHADER:
+   default:
+      assert(!"Should not get here.");
+      return false;
+   }
+
+   const unsigned output_components = output_vectors * 4;
+   if (output_components > max_output_components) {
+      if (ctx->API == API_OPENGLES2 || prog->IsES)
+         linker_error(prog, "shader uses too many output vectors "
+                      "(%u > %u)\n",
+                      output_vectors,
+                      max_output_components / 4);
+      else
+         linker_error(prog, "shader uses too many output components "
+                      "(%u > %u)\n",
+                      output_components,
+                      max_output_components);
+
+      return false;
+   }
+
+   return true;
+}
+
+bool
+check_against_input_limit(struct gl_context *ctx,
+                          struct gl_shader_program *prog,
+                          gl_shader *consumer)
+{
+   unsigned input_vectors = 0;
 
    foreach_list(node, consumer->ir) {
       ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
       if (var && var->mode == ir_var_shader_in &&
           is_varying_var(consumer->Type, var)) {
-         /* The packing rules used for vertex shader inputs are also
-          * used for fragment shader inputs.
-          */
-         varying_vectors += var->type->count_attribute_slots();
+         input_vectors += var->type->count_attribute_slots();
       }
    }
 
-   if (ctx->API == API_OPENGLES2 || prog->IsES) {
-      if (varying_vectors > ctx->Const.MaxVarying) {
-         linker_error(prog, "shader uses too many varying vectors "
+   unsigned max_input_components;
+   switch (consumer->Type) {
+   case GL_GEOMETRY_SHADER:
+      max_input_components = ctx->Const.GeometryProgram.MaxInputComponents;
+      break;
+   case GL_FRAGMENT_SHADER:
+      max_input_components = ctx->Const.FragmentProgram.MaxInputComponents;
+      break;
+   case GL_VERTEX_SHADER:
+   default:
+      assert(!"Should not get here.");
+      return false;
+   }
+
+   const unsigned input_components = input_vectors * 4;
+   if (input_components > max_input_components) {
+      if (ctx->API == API_OPENGLES2 || prog->IsES)
+         linker_error(prog, "shader uses too many input vectors "
                       "(%u > %u)\n",
-                      varying_vectors, ctx->Const.MaxVarying);
-         return false;
-      }
-   } else {
-      const unsigned float_components = varying_vectors * 4;
-      if (float_components > ctx->Const.MaxVarying * 4) {
-         linker_error(prog, "shader uses too many varying components "
+                      input_vectors,
+                      max_input_components / 4);
+      else
+         linker_error(prog, "shader uses too many input components "
                       "(%u > %u)\n",
-                      float_components, ctx->Const.MaxVarying * 4);
-         return false;
-      }
+                      input_components,
+                      max_input_components);
+
+      return false;
    }
 
    return true;
