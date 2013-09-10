@@ -256,7 +256,10 @@ void st_init_limits(struct st_context *st)
    c->MaxVarying = screen->get_shader_param(screen, PIPE_SHADER_FRAGMENT,
                                             PIPE_SHADER_CAP_MAX_INPUTS);
    c->MaxVarying = MIN2(c->MaxVarying, MAX_VARYING);
-   c->MaxVaryingComponents = c->MaxVarying * 4;
+   c->FragmentProgram.MaxInputComponents = c->MaxVarying * 4;
+   c->VertexProgram.MaxOutputComponents = c->MaxVarying * 4;
+   c->GeometryProgram.MaxInputComponents = c->MaxVarying * 4;
+   c->GeometryProgram.MaxOutputComponents = c->MaxVarying * 4;
 
    c->MinProgramTexelOffset = screen->get_param(screen, PIPE_CAP_MIN_TEXEL_OFFSET);
    c->MaxProgramTexelOffset = screen->get_param(screen, PIPE_CAP_MAX_TEXEL_OFFSET);
