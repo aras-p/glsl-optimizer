@@ -283,7 +283,7 @@ static INLINE boolean sse2_has_daz(void)
    fxarea.mxcsr_mask = 0;
 #if (defined(PIPE_CC_GCC) || defined(PIPE_CC_SUNPRO))
    __asm __volatile ("fxsave %0" : "+m" (fxarea));
-#elif (defined(PIPE_CC_MSVC) && _MSC_VER >= 1700)) || defined(PIPE_CC_ICL)
+#elif (defined(PIPE_CC_MSVC) && _MSC_VER >= 1700) || defined(PIPE_CC_ICL)
    /* 1700 = Visual Studio 2012 */
    _fxsave(&fxarea);
 #else
