@@ -502,7 +502,7 @@ st_validate_attachment(struct gl_context *ctx,
    if (att->Type != GL_TEXTURE)
       return GL_TRUE;
 
-   if (!stObj)
+   if (!stObj || !stObj->pt)
       return GL_FALSE;
 
    format = stObj->pt->format;
