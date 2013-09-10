@@ -329,7 +329,7 @@ descriptor=[
   [ "MAJOR_VERSION", "LOC_CUSTOM, TYPE_INT, 0, extra_gl30_es3" ],
   [ "MINOR_VERSION", "LOC_CUSTOM, TYPE_INT, 0, extra_gl30_es3" ],
 
-  # GL 3.0 / GLES3
+  # GL 3.2 / GLES3
   [ "MAX_VERTEX_OUTPUT_COMPONENTS", "CONTEXT_INT(Const.VertexProgram.MaxOutputComponents), extra_gl32_es3" ],
   [ "MAX_FRAGMENT_INPUT_COMPONENTS", "CONTEXT_INT(Const.FragmentProgram.MaxInputComponents), extra_gl32_es3" ],
 
@@ -692,6 +692,8 @@ descriptor=[
 
 # GL 3.2
   [ "CONTEXT_PROFILE_MASK", "CONTEXT_INT(Const.ProfileMask), extra_version_32" ],
+  [ "MAX_GEOMETRY_INPUT_COMPONENTS", "CONTEXT_INT(Const.GeometryProgram.MaxInputComponents), extra_version_32" ],
+  [ "MAX_GEOMETRY_OUTPUT_COMPONENTS", "CONTEXT_INT(Const.GeometryProgram.MaxOutputComponents), extra_version_32" ],
 
 # GL_ARB_robustness
   [ "RESET_NOTIFICATION_STRATEGY_ARB", "CONTEXT_ENUM(Const.ResetStrategy), NO_EXTRA" ],
