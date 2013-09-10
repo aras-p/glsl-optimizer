@@ -478,18 +478,24 @@ init_program_limits(struct gl_context *ctx, GLenum type,
       prog->MaxAttribs = MAX_VERTEX_GENERIC_ATTRIBS;
       prog->MaxAddressRegs = MAX_VERTEX_PROGRAM_ADDRESS_REGS;
       prog->MaxUniformComponents = 4 * MAX_UNIFORMS;
+      prog->MaxInputComponents = 0; /* value not used */
+      prog->MaxOutputComponents = 16 * 4; /* old limit not to break tnl and swrast */
       break;
    case GL_FRAGMENT_PROGRAM_ARB:
       prog->MaxParameters = MAX_NV_FRAGMENT_PROGRAM_PARAMS;
       prog->MaxAttribs = MAX_NV_FRAGMENT_PROGRAM_INPUTS;
       prog->MaxAddressRegs = MAX_FRAGMENT_PROGRAM_ADDRESS_REGS;
       prog->MaxUniformComponents = 4 * MAX_UNIFORMS;
+      prog->MaxInputComponents = 16 * 4; /* old limit not to break tnl and swrast */
+      prog->MaxOutputComponents = 0; /* value not used */
       break;
    case MESA_GEOMETRY_PROGRAM:
       prog->MaxParameters = MAX_VERTEX_PROGRAM_PARAMS;
       prog->MaxAttribs = MAX_VERTEX_GENERIC_ATTRIBS;
       prog->MaxAddressRegs = MAX_VERTEX_PROGRAM_ADDRESS_REGS;
       prog->MaxUniformComponents = MAX_GEOMETRY_UNIFORM_COMPONENTS;
+      prog->MaxInputComponents = 16 * 4; /* old limit not to break tnl and swrast */
+      prog->MaxOutputComponents = 16 * 4; /* old limit not to break tnl and swrast */
       break;
    default:
       assert(0 && "Bad program type in init_program_limits()");
