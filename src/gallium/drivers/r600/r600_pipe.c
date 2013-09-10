@@ -331,6 +331,9 @@ static void r600_destroy_context(struct pipe_context *context)
 	if (rctx->custom_blend_decompress) {
 		rctx->b.b.delete_blend_state(&rctx->b.b, rctx->custom_blend_decompress);
 	}
+	if (rctx->custom_blend_fastclear) {
+		rctx->b.b.delete_blend_state(&rctx->b.b, rctx->custom_blend_fastclear);
+	}
 	util_unreference_framebuffer_state(&rctx->framebuffer.state);
 
 	if (rctx->blitter) {
@@ -422,6 +425,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 		rctx->custom_dsa_flush = evergreen_create_db_flush_dsa(rctx);
 		rctx->custom_blend_resolve = evergreen_create_resolve_blend(rctx);
 		rctx->custom_blend_decompress = evergreen_create_decompress_blend(rctx);
+		rctx->custom_blend_fastclear = evergreen_create_fastclear_blend(rctx);
 		rctx->has_vertex_cache = !(rctx->b.family == CHIP_CEDAR ||
 					   rctx->b.family == CHIP_PALM ||
 					   rctx->b.family == CHIP_SUMO ||

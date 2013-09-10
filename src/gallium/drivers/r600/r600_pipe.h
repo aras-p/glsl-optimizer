@@ -481,6 +481,7 @@ struct r600_context {
 	void				*custom_dsa_flush;
 	void				*custom_blend_resolve;
 	void				*custom_blend_decompress;
+	void                            *custom_blend_fastclear;
 	/* With rasterizer discard, there doesn't have to be a pixel shader.
 	 * In that case, we bind this one: */
 	void				*dummy_pixel_shader;
@@ -631,6 +632,7 @@ void evergreen_update_vs_state(struct pipe_context *ctx, struct r600_pipe_shader
 void *evergreen_create_db_flush_dsa(struct r600_context *rctx);
 void *evergreen_create_resolve_blend(struct r600_context *rctx);
 void *evergreen_create_decompress_blend(struct r600_context *rctx);
+void *evergreen_create_fastclear_blend(struct r600_context *rctx);
 boolean evergreen_is_format_supported(struct pipe_screen *screen,
 				      enum pipe_format format,
 				      enum pipe_texture_target target,

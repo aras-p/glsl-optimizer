@@ -3567,6 +3567,17 @@ void *evergreen_create_decompress_blend(struct r600_context *rctx)
 	return evergreen_create_blend_state_mode(&rctx->b.b, &blend, mode);
 }
 
+void *evergreen_create_fastclear_blend(struct r600_context *rctx)
+{
+	struct pipe_blend_state blend;
+	unsigned mode = V_028808_CB_ELIMINATE_FAST_CLEAR;
+
+	memset(&blend, 0, sizeof(blend));
+	blend.independent_blend_enable = true;
+	blend.rt[0].colormask = 0xf;
+	return evergreen_create_blend_state_mode(&rctx->b.b, &blend, mode);
+}
+
 void *evergreen_create_db_flush_dsa(struct r600_context *rctx)
 {
 	struct pipe_depth_stencil_alpha_state dsa = {{0}};
@@ -3754,6 +3765,12 @@ boolean evergreen_dma_blit(struct pipe_context *ctx,
 	}
 	if (src->format != dst->format) {
 		return FALSE;
+	}
+	if (rdst->dirty_level_mask != 0) {
+		return FALSE;
+	}
+	if (rsrc->dirty_level_mask) {
+		ctx->flush_resource(ctx, src);
 	}
 
 	src_x = util_format_get_nblocksx(src->format, src_box->x);
