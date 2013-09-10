@@ -751,7 +751,7 @@ ConstantFolding::opnd(Instruction *i, ImmediateValue &imm0, int s)
          else
             tB = tA;
          tA = bld.getSSA();
-         bld.mkCmp(OP_SET, CC_LT, TYPE_S32, tA, i->getSrc(0), bld.mkImm(0));
+         bld.mkCmp(OP_SET, CC_LT, TYPE_S32, tA, TYPE_S32, i->getSrc(0), bld.mkImm(0));
          tD = (d < 0) ? bld.getSSA() : i->getDef(0)->asLValue();
          bld.mkOp2(OP_SUB, TYPE_U32, tD, tB, tA);
          if (d < 0)

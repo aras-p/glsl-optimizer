@@ -1776,7 +1776,7 @@ Converter::handleLIT(Value *dst0[4])
       mkOp2(OP_MIN, TYPE_F32, val3, val3, pos128);
       mkOp2(OP_POW, TYPE_F32, val3, val1, val3);
 
-      mkCmp(OP_SLCT, CC_GT, TYPE_F32, dst0[2], val3, zero, val0);
+      mkCmp(OP_SLCT, CC_GT, TYPE_F32, dst0[2], TYPE_F32, val3, zero, val0);
    }
 }
 
@@ -2315,8 +2315,8 @@ Converter::handleInstruction(const struct tgsi_full_instruction *insn)
          src0 = fetchSrc(0, c);
          val0 = getScratch();
          val1 = getScratch();
-         mkCmp(OP_SET, CC_GT, srcTy, val0, src0, zero);
-         mkCmp(OP_SET, CC_LT, srcTy, val1, src0, zero);
+         mkCmp(OP_SET, CC_GT, srcTy, val0, srcTy, src0, zero);
+         mkCmp(OP_SET, CC_LT, srcTy, val1, srcTy, src0, zero);
          if (srcTy == TYPE_F32)
             mkOp2(OP_SUB, TYPE_F32, dst0[c], val0, val1);
          else
@@ -2333,7 +2333,7 @@ Converter::handleInstruction(const struct tgsi_full_instruction *insn)
             mkMov(dst0[c], src1);
          else
             mkCmp(OP_SLCT, (srcTy == TYPE_F32) ? CC_LT : CC_NE,
-                  srcTy, dst0[c], src1, src2, src0);
+                  srcTy, dst0[c], srcTy, src1, src2, src0);
       }
       break;
    case TGSI_OPCODE_FRC:
@@ -2380,13 +2380,13 @@ Converter::handleInstruction(const struct tgsi_full_instruction *insn)
       FOR_EACH_DST_ENABLED_CHANNEL(0, c, tgsi) {
          src0 = fetchSrc(0, c);
          src1 = fetchSrc(1, c);
-         mkCmp(op, tgsi.getSetCond(), dstTy, dst0[c], src0, src1);
+         mkCmp(op, tgsi.getSetCond(), dstTy, dst0[c], srcTy, src0, src1);
       }
       break;
    case TGSI_OPCODE_KILL_IF:
       val0 = new_LValue(func, FILE_PREDICATE);
       for (c = 0; c < 4; ++c) {
-         mkCmp(OP_SET, CC_LT, TYPE_F32, val0, fetchSrc(0, c), zero);
+         mkCmp(OP_SET, CC_LT, TYPE_F32, val0, TYPE_F32, fetchSrc(0, c), zero);
          mkOp(OP_DISCARD, TYPE_NONE, NULL)->setPredicate(CC_P, val0);
       }
       break;

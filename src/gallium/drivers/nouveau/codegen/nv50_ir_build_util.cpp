@@ -219,13 +219,13 @@ BuildUtil::mkCvt(operation op,
 }
 
 CmpInstruction *
-BuildUtil::mkCmp(operation op, CondCode cc, DataType ty, Value *dst,
-                 Value *src0, Value *src1, Value *src2)
+BuildUtil::mkCmp(operation op, CondCode cc, DataType dstTy, Value *dst,
+                 DataType srcTy, Value *src0, Value *src1, Value *src2)
 {
    CmpInstruction *insn = new_CmpInstruction(func, op);
 
    insn->setType((dst->reg.file == FILE_PREDICATE ||
-                  dst->reg.file == FILE_FLAGS) ? TYPE_U8 : ty, ty);
+                  dst->reg.file == FILE_FLAGS) ? TYPE_U8 : dstTy, srcTy);
    insn->setCondition(cc);
    insn->setDef(0, dst);
    insn->setSrc(0, src0);

@@ -423,7 +423,7 @@ NV50LegalizeSSA::handleDIV(Instruction *div)
    expandIntegerMUL(&bld,
       bld.mkOp2(OP_MUL, TYPE_U32, (t = bld.getSSA()), q, b));
    bld.mkOp2(OP_SUB, TYPE_U32, (m = bld.getSSA()), a, t);
-   bld.mkCmp(OP_SET, CC_GE, TYPE_U32, (s = bld.getSSA()), m, b);
+   bld.mkCmp(OP_SET, CC_GE, TYPE_U32, (s = bld.getSSA()), TYPE_U32, m, b);
    if (!isSignedType(ty)) {
       div->op = OP_SUB;
       div->setSrc(0, q);
@@ -1011,7 +1011,7 @@ NV50LoweringPreSSA::checkPredicate(Instruction *insn)
       return;
    cdst = bld.getSSA(1, FILE_FLAGS);
 
-   bld.mkCmp(OP_SET, CC_NEU, insn->dType, cdst, bld.loadImm(NULL, 0), pred);
+   bld.mkCmp(OP_SET, CC_NEU, insn->dType, cdst, insn->dType, bld.loadImm(NULL, 0), pred);
 
    insn->setPredicate(insn->cc, cdst);
 }
