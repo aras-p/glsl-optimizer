@@ -6,5 +6,6 @@ includedir=@includedir@
 Name: wayland-egl
 Description: Mesa wayland-egl library
 Version: @VERSION@
+Requires: wayland-client
 Libs: -L${libdir} -lwayland-egl
 Cflags: -I${includedir}
