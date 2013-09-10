@@ -396,6 +396,12 @@ static const int extra_gl32_es3[] = {
     EXTRA_END,
 };
 
+static const int extra_gl32_ARB_geometry_shader4[] = {
+    EXTRA_VERSION_32,
+    EXT(ARB_geometry_shader4),
+    EXTRA_END
+};
+
 static const int
 extra_ARB_vertex_program_api_es2[] = {
    EXT(ARB_vertex_program),
