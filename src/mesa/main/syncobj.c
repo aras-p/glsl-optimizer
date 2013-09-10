@@ -71,7 +71,7 @@
 static struct gl_sync_object *
 _mesa_new_sync_object(struct gl_context *ctx, GLenum type)
 {
-   struct gl_sync_object *s = MALLOC_STRUCT(gl_sync_object);
+   struct gl_sync_object *s = CALLOC_STRUCT(gl_sync_object);
    (void) ctx;
    (void) type;
 
