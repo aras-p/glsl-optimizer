@@ -856,7 +856,7 @@ _mesa_PushDebugGroup(GLenum source, GLuint id, GLsizei length,
       length = strlen(message);
    emptySlot = &ctx->Debug.DebugGroupMsgs[ctx->Debug.GroupStackDepth];
    store_message_details(emptySlot, gl_enum_to_debug_source(source),
-                         gl_enum_to_debug_source(GL_DEBUG_TYPE_PUSH_GROUP),
+                         gl_enum_to_debug_type(GL_DEBUG_TYPE_PUSH_GROUP),
                          id,
                    gl_enum_to_debug_severity(GL_DEBUG_SEVERITY_NOTIFICATION),
                          length, message);
