@@ -99,7 +99,6 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
    this->Const.MaxTextureCoords = ctx->Const.MaxTextureCoordUnits;
    this->Const.MaxVertexAttribs = ctx->Const.VertexProgram.MaxAttribs;
    this->Const.MaxVertexUniformComponents = ctx->Const.VertexProgram.MaxUniformComponents;
-   this->Const.MaxVaryingFloats = ctx->Const.MaxVarying * 4;
    this->Const.MaxVertexTextureImageUnits = ctx->Const.VertexProgram.MaxTextureImageUnits;
    this->Const.MaxCombinedTextureImageUnits = ctx->Const.MaxCombinedTextureImageUnits;
    this->Const.MaxTextureImageUnits = ctx->Const.FragmentProgram.MaxTextureImageUnits;

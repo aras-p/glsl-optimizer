@@ -501,7 +501,8 @@ builtin_variable_generator::generate_constants()
          add_const("gl_MaxFragmentInputVectors",
                    state->ctx->Const.FragmentProgram.MaxInputComponents / 4);
       } else {
-         add_const("gl_MaxVaryingVectors", state->Const.MaxVaryingFloats / 4);
+         add_const("gl_MaxVaryingVectors",
+                   state->ctx->Const.MaxVarying);
       }
    } else {
       add_const("gl_MaxVertexUniformComponents",
@@ -510,7 +511,7 @@ builtin_variable_generator::generate_constants()
       /* Note: gl_MaxVaryingFloats was deprecated in GLSL 1.30+, but not
        * removed
        */
-      add_const("gl_MaxVaryingFloats", state->Const.MaxVaryingFloats);
+      add_const("gl_MaxVaryingFloats", state->ctx->Const.MaxVarying * 4);
 
       add_const("gl_MaxFragmentUniformComponents",
                 state->Const.MaxFragmentUniformComponents);
@@ -531,7 +532,7 @@ builtin_variable_generator::generate_constants()
 
    if (state->is_version(130, 0)) {
       add_const("gl_MaxClipDistances", state->Const.MaxClipPlanes);
-      add_const("gl_MaxVaryingComponents", state->Const.MaxVaryingFloats);
+      add_const("gl_MaxVaryingComponents", state->ctx->Const.MaxVarying * 4);
    }
 
    if (compatibility) {

@@ -208,7 +208,6 @@ struct _mesa_glsl_parse_state {
       unsigned MaxTextureCoords;
       unsigned MaxVertexAttribs;
       unsigned MaxVertexUniformComponents;
-      unsigned MaxVaryingFloats;
       unsigned MaxVertexTextureImageUnits;
       unsigned MaxCombinedTextureImageUnits;
       unsigned MaxTextureImageUnits;
