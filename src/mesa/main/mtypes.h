@@ -2930,7 +2930,6 @@ struct gl_constants
 
    /** Number of varying vectors between any two shader stages. */
    GLuint MaxVarying;
-   GLuint MaxVaryingComponents;
 
    /** @{
     * GL_ARB_uniform_buffer_object
