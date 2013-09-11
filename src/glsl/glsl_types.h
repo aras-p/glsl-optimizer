@@ -498,6 +498,18 @@ struct glsl_type {
       return is_array() ? length : -1;
    }
 
+   /**
+    * Return the number of coordinate components needed for this sampler type.
+    *
+    * This is based purely on the sampler's dimensionality.  For example, this
+    * returns 1 for sampler1D, and 3 for sampler2DArray.
+    *
+    * Note that this is often different than actual coordinate type used in
+    * a texturing built-in function, since those pack additional values (such
+    * as the shadow comparitor or projector) into the coordinate type.
+    */
+   int sampler_coordinate_components() const;
+
 private:
    /**
     * ralloc context for all glsl_type allocations

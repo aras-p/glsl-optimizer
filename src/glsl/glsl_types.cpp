@@ -883,3 +883,38 @@ glsl_type::count_attribute_slots() const
 
    return 0;
 }
+
+int
+glsl_type::sampler_coordinate_components() const
+{
+   assert(is_sampler());
+
+   int size;
+
+   switch (sampler_dimensionality) {
+   case GLSL_SAMPLER_DIM_1D:
+   case GLSL_SAMPLER_DIM_BUF:
+      size = 1;
+      break;
+   case GLSL_SAMPLER_DIM_2D:
+   case GLSL_SAMPLER_DIM_RECT:
+   case GLSL_SAMPLER_DIM_MS:
+   case GLSL_SAMPLER_DIM_EXTERNAL:
+      size = 2;
+      break;
+   case GLSL_SAMPLER_DIM_3D:
+   case GLSL_SAMPLER_DIM_CUBE:
+      size = 3;
+      break;
+   default:
+      assert(!"Should not get here.");
+      size = 1;
+      break;
+   }
+
+   /* Array textures need an additional component for the array index. */
+   if (sampler_array)
+      size += 1;
+
+   return size;
+}
