@@ -773,6 +773,7 @@ fs_visitor::implied_mrf_writes(fs_inst *inst)
    case FS_OPCODE_SPILL:
       return 2;
    case SHADER_OPCODE_UNTYPED_ATOMIC:
+   case SHADER_OPCODE_UNTYPED_SURFACE_READ:
       return 0;
    default:
       assert(!"not reached");

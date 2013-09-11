@@ -559,6 +559,10 @@ private:
                                 struct brw_reg atomic_op,
                                 struct brw_reg surf_index);
 
+   void generate_untyped_surface_read(fs_inst *inst,
+                                      struct brw_reg dst,
+                                      struct brw_reg surf_index);
+
    void mark_surface_used(unsigned surf_index);
 
    void patch_discard_jumps_to_fb_writes();

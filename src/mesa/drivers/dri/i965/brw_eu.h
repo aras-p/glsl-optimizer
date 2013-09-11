@@ -433,6 +433,14 @@ brw_untyped_atomic(struct brw_compile *p,
                    GLuint msg_length,
                    GLuint response_length);
 
+void
+brw_untyped_surface_read(struct brw_compile *p,
+                         struct brw_reg dest,
+                         struct brw_reg mrf,
+                         GLuint bind_table_index,
+                         GLuint msg_length,
+                         GLuint response_length);
+
 /*********************************************************************** 
  * brw_eu_util.c:
  */

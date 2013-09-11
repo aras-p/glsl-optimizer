@@ -2547,6 +2547,62 @@ brw_untyped_atomic(struct brw_compile *p,
       insn->header.access_mode == BRW_ALIGN_1);
 }
 
+static void
+brw_set_dp_untyped_surface_read_message(struct brw_compile *p,
+                                        struct brw_instruction *insn,
+                                        GLuint bind_table_index,
+                                        GLuint msg_length,
+                                        GLuint response_length,
+                                        bool header_present)
+{
+   const unsigned dispatch_width =
+      (insn->header.execution_size == BRW_EXECUTE_16 ? 16 : 8);
+   const unsigned num_channels = response_length / (dispatch_width / 8);
+
+   if (p->brw->is_haswell) {
+      brw_set_message_descriptor(p, insn, HSW_SFID_DATAPORT_DATA_CACHE_1,
+                                 msg_length, response_length,
+                                 header_present, false);
+
+      insn->bits3.gen7_dp.msg_type = HSW_DATAPORT_DC_PORT1_UNTYPED_SURFACE_READ;
+   } else {
+      brw_set_message_descriptor(p, insn, GEN7_SFID_DATAPORT_DATA_CACHE,
+                                 msg_length, response_length,
+                                 header_present, false);
+
+      insn->bits3.gen7_dp.msg_type = GEN7_DATAPORT_DC_UNTYPED_SURFACE_READ;
+   }
+
+   if (insn->header.access_mode == BRW_ALIGN_1) {
+      if (dispatch_width == 16)
+         insn->bits3.ud |= 1 << 12; /* SIMD16 mode */
+      else
+         insn->bits3.ud |= 2 << 12; /* SIMD8 mode */
+   }
+
+   insn->bits3.gen7_dp.binding_table_index = bind_table_index;
+
+   /* Set mask of 32-bit channels to drop. */
+   insn->bits3.ud |= (0xf & (0xf << num_channels)) << 8;
+}
+
+void
+brw_untyped_surface_read(struct brw_compile *p,
+                         struct brw_reg dest,
+                         struct brw_reg mrf,
+                         GLuint bind_table_index,
+                         GLuint msg_length,
+                         GLuint response_length)
+{
+   struct brw_instruction *insn = next_insn(p, BRW_OPCODE_SEND);
+
+   brw_set_dest(p, insn, retype(dest, BRW_REGISTER_TYPE_UD));
+   brw_set_src0(p, insn, retype(mrf, BRW_REGISTER_TYPE_UD));
+   brw_set_dp_untyped_surface_read_message(
+      p, insn, bind_table_index, msg_length, response_length,
+      insn->header.access_mode == BRW_ALIGN_1);
+}
+
 /**
  * This instruction is generated as a single-channel align1 instruction by
  * both the VS and FS stages when using INTEL_DEBUG=shader_time.

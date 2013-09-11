@@ -622,6 +622,10 @@ private:
                                 struct brw_reg atomic_op,
                                 struct brw_reg surf_index);
 
+   void generate_untyped_surface_read(vec4_instruction *inst,
+                                      struct brw_reg dst,
+                                      struct brw_reg surf_index);
+
    void mark_surface_used(unsigned surf_index);
 
    struct brw_context *brw;
