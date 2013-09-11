@@ -27,7 +27,7 @@ include $(top_srcdir)/src/gallium/Automake.inc
 noinst_LTLIBRARIES = libilo.la
 
 AM_CPPFLAGS = \
-	-Iinclude \
+	-I$(srcdir)/include \
 	-I$(top_srcdir)/src/gallium/winsys/intel \
 	$(GALLIUM_CFLAGS)
 
