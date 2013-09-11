@@ -90,23 +90,26 @@ void initialize_context_to_defaults(struct gl_context *ctx, gl_api api)
 
    ctx->Extensions.dummy_false = false;
    ctx->Extensions.dummy_true = true;
+   ctx->Extensions.ARB_draw_instanced = true;
    ctx->Extensions.ARB_ES2_compatibility = true;
    ctx->Extensions.ARB_ES3_compatibility = false;
-   ctx->Extensions.ARB_draw_instanced = true;
    ctx->Extensions.ARB_fragment_coord_conventions = true;
-   ctx->Extensions.EXT_texture_array = true;
-   ctx->Extensions.NV_texture_rectangle = true;
-   ctx->Extensions.EXT_texture3D = true;
-   ctx->Extensions.OES_EGL_image_external = true;
+   ctx->Extensions.ARB_gpu_shader5 = true;
    ctx->Extensions.ARB_shader_bit_encoding = true;
    ctx->Extensions.ARB_shading_language_packing = true;
-   ctx->Extensions.OES_standard_derivatives = true;
    ctx->Extensions.ARB_texture_cube_map_array = true;
+   ctx->Extensions.ARB_texture_gather = true;
    ctx->Extensions.ARB_texture_multisample = true;
    ctx->Extensions.ARB_texture_query_levels = true;
    ctx->Extensions.ARB_texture_query_lod = true;
-   ctx->Extensions.ARB_gpu_shader5 = true;
-   ctx->Extensions.ARB_texture_gather = true;
+
+   ctx->Extensions.OES_EGL_image_external = true;
+   ctx->Extensions.OES_standard_derivatives = true;
+
+   ctx->Extensions.EXT_texture3D = true;
+   ctx->Extensions.EXT_texture_array = true;
+
+   ctx->Extensions.NV_texture_rectangle = true;
 
    ctx->Const.GLSLVersion = 120;
 
