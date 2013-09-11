@@ -282,6 +282,24 @@ brw_vec1_reg(unsigned file, unsigned nr, unsigned subnr)
                   WRITEMASK_X);
 }
 
+static inline struct brw_reg
+brw_vecn_reg(unsigned width, unsigned file, unsigned nr, unsigned subnr)
+{
+   switch (width) {
+   case 1:
+      return brw_vec1_reg(file, nr, subnr);
+   case 2:
+      return brw_vec2_reg(file, nr, subnr);
+   case 4:
+      return brw_vec4_reg(file, nr, subnr);
+   case 8:
+      return brw_vec8_reg(file, nr, subnr);
+   case 16:
+      return brw_vec16_reg(file, nr, subnr);
+   default:
+      assert(!"Invalid register width");
+   }
+}
 
 static inline struct brw_reg
 retype(struct brw_reg reg, unsigned type)
@@ -570,6 +588,12 @@ brw_message_reg(unsigned nr)
    return brw_vec8_reg(BRW_MESSAGE_REGISTER_FILE, nr, 0);
 }
 
+static inline struct brw_reg
+brw_uvec_mrf(unsigned width, unsigned nr, unsigned subnr)
+{
+   return retype(brw_vecn_reg(width, BRW_MESSAGE_REGISTER_FILE, nr, subnr),
+                 BRW_REGISTER_TYPE_UD);
+}
 
 /* This is almost always called with a numeric constant argument, so
  * make things easy to evaluate at compile time:
