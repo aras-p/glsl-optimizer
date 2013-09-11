@@ -1969,6 +1969,12 @@ dnl Restore LDFLAGS and CPPFLAGS
 LDFLAGS="$_SAVE_LDFLAGS"
 CPPFLAGS="$_SAVE_CPPFLAGS"
 
+dnl Suppress clang's warnings about unused CFLAGS and CXXFLAGS
+if test "x$acv_mesa_CLANG" = xyes; then
+    CFLAGS="$CFLAGS -Qunused-arguments"
+    CXXFLAGS="$CXXFLAGS -Qunused-arguments"
+fi
+
 dnl Add user CFLAGS and CXXFLAGS
 CFLAGS="$CFLAGS $USER_CFLAGS"
 CXXFLAGS="$CXXFLAGS $USER_CXXFLAGS"
