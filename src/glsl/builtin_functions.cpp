@@ -482,7 +482,6 @@ private:
                                    builtin_available_predicate avail,
                                    const glsl_type *return_type,
                                    const glsl_type *sampler_type,
-                                   int coord_size,
                                    const glsl_type *coord_type,
                                    int flags = 0);
    B0(textureCubeArrayShadow);
@@ -990,230 +989,230 @@ builtin_builder::create_builtins()
                 NULL);
 
    add_function("texture",
-                _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler1D_type,  1, glsl_type::float_type),
-                _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isampler1D_type, 1, glsl_type::float_type),
-                _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usampler1D_type, 1, glsl_type::float_type),
+                _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler1D_type,  glsl_type::float_type),
+                _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isampler1D_type, glsl_type::float_type),
+                _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usampler1D_type, glsl_type::float_type),
 
-                _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler2D_type,  2, glsl_type::vec2_type),
-                _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isampler2D_type, 2, glsl_type::vec2_type),
-                _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usampler2D_type, 2, glsl_type::vec2_type),
+                _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler2D_type,  glsl_type::vec2_type),
+                _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isampler2D_type, glsl_type::vec2_type),
+                _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usampler2D_type, glsl_type::vec2_type),
 
-                _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler3D_type,  3, glsl_type::vec3_type),
-                _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isampler3D_type, 3, glsl_type::vec3_type),
-                _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usampler3D_type, 3, glsl_type::vec3_type),
+                _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler3D_type,  glsl_type::vec3_type),
+                _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isampler3D_type, glsl_type::vec3_type),
+                _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usampler3D_type, glsl_type::vec3_type),
 
-                _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::samplerCube_type,  3, glsl_type::vec3_type),
-                _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isamplerCube_type, 3, glsl_type::vec3_type),
-                _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usamplerCube_type, 3, glsl_type::vec3_type),
+                _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::samplerCube_type,  glsl_type::vec3_type),
+                _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isamplerCube_type, glsl_type::vec3_type),
+                _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usamplerCube_type, glsl_type::vec3_type),
 
-                _texture(ir_tex, v130, glsl_type::float_type, glsl_type::sampler1DShadow_type,   1, glsl_type::vec3_type),
-                _texture(ir_tex, v130, glsl_type::float_type, glsl_type::sampler2DShadow_type,   2, glsl_type::vec3_type),
-                _texture(ir_tex, v130, glsl_type::float_type, glsl_type::samplerCubeShadow_type, 3, glsl_type::vec4_type),
+                _texture(ir_tex, v130, glsl_type::float_type, glsl_type::sampler1DShadow_type,   glsl_type::vec3_type),
+                _texture(ir_tex, v130, glsl_type::float_type, glsl_type::sampler2DShadow_type,   glsl_type::vec3_type),
+                _texture(ir_tex, v130, glsl_type::float_type, glsl_type::samplerCubeShadow_type, glsl_type::vec4_type),
 
-                _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler1DArray_type,  2, glsl_type::vec2_type),
-                _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isampler1DArray_type, 2, glsl_type::vec2_type),
-                _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usampler1DArray_type, 2, glsl_type::vec2_type),
+                _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler1DArray_type,  glsl_type::vec2_type),
+                _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isampler1DArray_type, glsl_type::vec2_type),
+                _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usampler1DArray_type, glsl_type::vec2_type),
 
-                _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler2DArray_type,  3, glsl_type::vec3_type),
-                _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isampler2DArray_type, 3, glsl_type::vec3_type),
-                _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usampler2DArray_type, 3, glsl_type::vec3_type),
+                _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler2DArray_type,  glsl_type::vec3_type),
+                _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isampler2DArray_type, glsl_type::vec3_type),
+                _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usampler2DArray_type, glsl_type::vec3_type),
 
-                _texture(ir_tex, texture_cube_map_array, glsl_type::vec4_type,  glsl_type::samplerCubeArray_type,  4, glsl_type::vec4_type),
-                _texture(ir_tex, texture_cube_map_array, glsl_type::ivec4_type, glsl_type::isamplerCubeArray_type, 4, glsl_type::vec4_type),
-                _texture(ir_tex, texture_cube_map_array, glsl_type::uvec4_type, glsl_type::usamplerCubeArray_type, 4, glsl_type::vec4_type),
+                _texture(ir_tex, texture_cube_map_array, glsl_type::vec4_type,  glsl_type::samplerCubeArray_type,  glsl_type::vec4_type),
+                _texture(ir_tex, texture_cube_map_array, glsl_type::ivec4_type, glsl_type::isamplerCubeArray_type, glsl_type::vec4_type),
+                _texture(ir_tex, texture_cube_map_array, glsl_type::uvec4_type, glsl_type::usamplerCubeArray_type, glsl_type::vec4_type),
 
-                _texture(ir_tex, v130, glsl_type::float_type, glsl_type::sampler1DArrayShadow_type, 2, glsl_type::vec3_type),
-                _texture(ir_tex, v130, glsl_type::float_type, glsl_type::sampler2DArrayShadow_type, 3, glsl_type::vec4_type),
+                _texture(ir_tex, v130, glsl_type::float_type, glsl_type::sampler1DArrayShadow_type, glsl_type::vec3_type),
+                _texture(ir_tex, v130, glsl_type::float_type, glsl_type::sampler2DArrayShadow_type, glsl_type::vec4_type),
                 /* samplerCubeArrayShadow is special; it has an extra parameter
                  * for the shadow comparitor since there is no vec5 type.
                  */
                 _textureCubeArrayShadow(),
 
-                _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler2DRect_type,  2, glsl_type::vec2_type),
-                _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isampler2DRect_type, 2, glsl_type::vec2_type),
-                _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usampler2DRect_type, 2, glsl_type::vec2_type),
+                _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler2DRect_type,  glsl_type::vec2_type),
+                _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isampler2DRect_type, glsl_type::vec2_type),
+                _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usampler2DRect_type, glsl_type::vec2_type),
 
-                _texture(ir_tex, v130, glsl_type::float_type, glsl_type::sampler2DRectShadow_type, 2, glsl_type::vec3_type),
+                _texture(ir_tex, v130, glsl_type::float_type, glsl_type::sampler2DRectShadow_type, glsl_type::vec3_type),
 
-                _texture(ir_txb, v130_fs_only, glsl_type::vec4_type,  glsl_type::sampler1D_type,  1, glsl_type::float_type),
-                _texture(ir_txb, v130_fs_only, glsl_type::ivec4_type, glsl_type::isampler1D_type, 1, glsl_type::float_type),
-                _texture(ir_txb, v130_fs_only, glsl_type::uvec4_type, glsl_type::usampler1D_type, 1, glsl_type::float_type),
+                _texture(ir_txb, v130_fs_only, glsl_type::vec4_type,  glsl_type::sampler1D_type,  glsl_type::float_type),
+                _texture(ir_txb, v130_fs_only, glsl_type::ivec4_type, glsl_type::isampler1D_type, glsl_type::float_type),
+                _texture(ir_txb, v130_fs_only, glsl_type::uvec4_type, glsl_type::usampler1D_type, glsl_type::float_type),
 
-                _texture(ir_txb, v130_fs_only, glsl_type::vec4_type,  glsl_type::sampler2D_type,  2, glsl_type::vec2_type),
-                _texture(ir_txb, v130_fs_only, glsl_type::ivec4_type, glsl_type::isampler2D_type, 2, glsl_type::vec2_type),
-                _texture(ir_txb, v130_fs_only, glsl_type::uvec4_type, glsl_type::usampler2D_type, 2, glsl_type::vec2_type),
+                _texture(ir_txb, v130_fs_only, glsl_type::vec4_type,  glsl_type::sampler2D_type,  glsl_type::vec2_type),
+                _texture(ir_txb, v130_fs_only, glsl_type::ivec4_type, glsl_type::isampler2D_type, glsl_type::vec2_type),
+                _texture(ir_txb, v130_fs_only, glsl_type::uvec4_type, glsl_type::usampler2D_type, glsl_type::vec2_type),
 
-                _texture(ir_txb, v130_fs_only, glsl_type::vec4_type,  glsl_type::sampler3D_type,  3, glsl_type::vec3_type),
-                _texture(ir_txb, v130_fs_only, glsl_type::ivec4_type, glsl_type::isampler3D_type, 3, glsl_type::vec3_type),
-                _texture(ir_txb, v130_fs_only, glsl_type::uvec4_type, glsl_type::usampler3D_type, 3, glsl_type::vec3_type),
+                _texture(ir_txb, v130_fs_only, glsl_type::vec4_type,  glsl_type::sampler3D_type,  glsl_type::vec3_type),
+                _texture(ir_txb, v130_fs_only, glsl_type::ivec4_type, glsl_type::isampler3D_type, glsl_type::vec3_type),
+                _texture(ir_txb, v130_fs_only, glsl_type::uvec4_type, glsl_type::usampler3D_type, glsl_type::vec3_type),
 
-                _texture(ir_txb, v130_fs_only, glsl_type::vec4_type,  glsl_type::samplerCube_type,  3, glsl_type::vec3_type),
-                _texture(ir_txb, v130_fs_only, glsl_type::ivec4_type, glsl_type::isamplerCube_type, 3, glsl_type::vec3_type),
-                _texture(ir_txb, v130_fs_only, glsl_type::uvec4_type, glsl_type::usamplerCube_type, 3, glsl_type::vec3_type),
+                _texture(ir_txb, v130_fs_only, glsl_type::vec4_type,  glsl_type::samplerCube_type,  glsl_type::vec3_type),
+                _texture(ir_txb, v130_fs_only, glsl_type::ivec4_type, glsl_type::isamplerCube_type, glsl_type::vec3_type),
+                _texture(ir_txb, v130_fs_only, glsl_type::uvec4_type, glsl_type::usamplerCube_type, glsl_type::vec3_type),
 
-                _texture(ir_txb, v130_fs_only, glsl_type::float_type, glsl_type::sampler1DShadow_type,   1, glsl_type::vec3_type),
-                _texture(ir_txb, v130_fs_only, glsl_type::float_type, glsl_type::sampler2DShadow_type,   2, glsl_type::vec3_type),
-                _texture(ir_txb, v130_fs_only, glsl_type::float_type, glsl_type::samplerCubeShadow_type, 3, glsl_type::vec4_type),
+                _texture(ir_txb, v130_fs_only, glsl_type::float_type, glsl_type::sampler1DShadow_type,   glsl_type::vec3_type),
+                _texture(ir_txb, v130_fs_only, glsl_type::float_type, glsl_type::sampler2DShadow_type,   glsl_type::vec3_type),
+                _texture(ir_txb, v130_fs_only, glsl_type::float_type, glsl_type::samplerCubeShadow_type, glsl_type::vec4_type),
 
-                _texture(ir_txb, v130_fs_only, glsl_type::vec4_type,  glsl_type::sampler1DArray_type,  2, glsl_type::vec2_type),
-                _texture(ir_txb, v130_fs_only, glsl_type::ivec4_type, glsl_type::isampler1DArray_type, 2, glsl_type::vec2_type),
-                _texture(ir_txb, v130_fs_only, glsl_type::uvec4_type, glsl_type::usampler1DArray_type, 2, glsl_type::vec2_type),
+                _texture(ir_txb, v130_fs_only, glsl_type::vec4_type,  glsl_type::sampler1DArray_type,  glsl_type::vec2_type),
+                _texture(ir_txb, v130_fs_only, glsl_type::ivec4_type, glsl_type::isampler1DArray_type, glsl_type::vec2_type),
+                _texture(ir_txb, v130_fs_only, glsl_type::uvec4_type, glsl_type::usampler1DArray_type, glsl_type::vec2_type),
 
-                _texture(ir_txb, v130_fs_only, glsl_type::vec4_type,  glsl_type::sampler2DArray_type,  3, glsl_type::vec3_type),
-                _texture(ir_txb, v130_fs_only, glsl_type::ivec4_type, glsl_type::isampler2DArray_type, 3, glsl_type::vec3_type),
-                _texture(ir_txb, v130_fs_only, glsl_type::uvec4_type, glsl_type::usampler2DArray_type, 3, glsl_type::vec3_type),
+                _texture(ir_txb, v130_fs_only, glsl_type::vec4_type,  glsl_type::sampler2DArray_type,  glsl_type::vec3_type),
+                _texture(ir_txb, v130_fs_only, glsl_type::ivec4_type, glsl_type::isampler2DArray_type, glsl_type::vec3_type),
+                _texture(ir_txb, v130_fs_only, glsl_type::uvec4_type, glsl_type::usampler2DArray_type, glsl_type::vec3_type),
 
-                _texture(ir_txb, fs_texture_cube_map_array, glsl_type::vec4_type,  glsl_type::samplerCubeArray_type,  4, glsl_type::vec4_type),
-                _texture(ir_txb, fs_texture_cube_map_array, glsl_type::ivec4_type, glsl_type::isamplerCubeArray_type, 4, glsl_type::vec4_type),
-                _texture(ir_txb, fs_texture_cube_map_array, glsl_type::uvec4_type, glsl_type::usamplerCubeArray_type, 4, glsl_type::vec4_type),
+                _texture(ir_txb, fs_texture_cube_map_array, glsl_type::vec4_type,  glsl_type::samplerCubeArray_type,  glsl_type::vec4_type),
+                _texture(ir_txb, fs_texture_cube_map_array, glsl_type::ivec4_type, glsl_type::isamplerCubeArray_type, glsl_type::vec4_type),
+                _texture(ir_txb, fs_texture_cube_map_array, glsl_type::uvec4_type, glsl_type::usamplerCubeArray_type, glsl_type::vec4_type),
 
-                _texture(ir_txb, v130_fs_only, glsl_type::float_type, glsl_type::sampler1DArrayShadow_type, 2, glsl_type::vec3_type),
+                _texture(ir_txb, v130_fs_only, glsl_type::float_type, glsl_type::sampler1DArrayShadow_type, glsl_type::vec3_type),
                 NULL);
 
    add_function("textureLod",
-                _texture(ir_txl, v130, glsl_type::vec4_type,  glsl_type::sampler1D_type,  1, glsl_type::float_type),
-                _texture(ir_txl, v130, glsl_type::ivec4_type, glsl_type::isampler1D_type, 1, glsl_type::float_type),
-                _texture(ir_txl, v130, glsl_type::uvec4_type, glsl_type::usampler1D_type, 1, glsl_type::float_type),
+                _texture(ir_txl, v130, glsl_type::vec4_type,  glsl_type::sampler1D_type,  glsl_type::float_type),
+                _texture(ir_txl, v130, glsl_type::ivec4_type, glsl_type::isampler1D_type, glsl_type::float_type),
+                _texture(ir_txl, v130, glsl_type::uvec4_type, glsl_type::usampler1D_type, glsl_type::float_type),
 
-                _texture(ir_txl, v130, glsl_type::vec4_type,  glsl_type::sampler2D_type,  2, glsl_type::vec2_type),
-                _texture(ir_txl, v130, glsl_type::ivec4_type, glsl_type::isampler2D_type, 2, glsl_type::vec2_type),
-                _texture(ir_txl, v130, glsl_type::uvec4_type, glsl_type::usampler2D_type, 2, glsl_type::vec2_type),
+                _texture(ir_txl, v130, glsl_type::vec4_type,  glsl_type::sampler2D_type,  glsl_type::vec2_type),
+                _texture(ir_txl, v130, glsl_type::ivec4_type, glsl_type::isampler2D_type, glsl_type::vec2_type),
+                _texture(ir_txl, v130, glsl_type::uvec4_type, glsl_type::usampler2D_type, glsl_type::vec2_type),
 
-                _texture(ir_txl, v130, glsl_type::vec4_type,  glsl_type::sampler3D_type,  3, glsl_type::vec3_type),
-                _texture(ir_txl, v130, glsl_type::ivec4_type, glsl_type::isampler3D_type, 3, glsl_type::vec3_type),
-                _texture(ir_txl, v130, glsl_type::uvec4_type, glsl_type::usampler3D_type, 3, glsl_type::vec3_type),
+                _texture(ir_txl, v130, glsl_type::vec4_type,  glsl_type::sampler3D_type,  glsl_type::vec3_type),
+                _texture(ir_txl, v130, glsl_type::ivec4_type, glsl_type::isampler3D_type, glsl_type::vec3_type),
+                _texture(ir_txl, v130, glsl_type::uvec4_type, glsl_type::usampler3D_type, glsl_type::vec3_type),
 
-                _texture(ir_txl, v130, glsl_type::vec4_type,  glsl_type::samplerCube_type,  3, glsl_type::vec3_type),
-                _texture(ir_txl, v130, glsl_type::ivec4_type, glsl_type::isamplerCube_type, 3, glsl_type::vec3_type),
-                _texture(ir_txl, v130, glsl_type::uvec4_type, glsl_type::usamplerCube_type, 3, glsl_type::vec3_type),
+                _texture(ir_txl, v130, glsl_type::vec4_type,  glsl_type::samplerCube_type,  glsl_type::vec3_type),
+                _texture(ir_txl, v130, glsl_type::ivec4_type, glsl_type::isamplerCube_type, glsl_type::vec3_type),
+                _texture(ir_txl, v130, glsl_type::uvec4_type, glsl_type::usamplerCube_type, glsl_type::vec3_type),
 
-                _texture(ir_txl, v130, glsl_type::float_type, glsl_type::sampler1DShadow_type, 1, glsl_type::vec3_type),
-                _texture(ir_txl, v130, glsl_type::float_type, glsl_type::sampler2DShadow_type, 2, glsl_type::vec3_type),
+                _texture(ir_txl, v130, glsl_type::float_type, glsl_type::sampler1DShadow_type, glsl_type::vec3_type),
+                _texture(ir_txl, v130, glsl_type::float_type, glsl_type::sampler2DShadow_type, glsl_type::vec3_type),
 
-                _texture(ir_txl, v130, glsl_type::vec4_type,  glsl_type::sampler1DArray_type,  2, glsl_type::vec2_type),
-                _texture(ir_txl, v130, glsl_type::ivec4_type, glsl_type::isampler1DArray_type, 2, glsl_type::vec2_type),
-                _texture(ir_txl, v130, glsl_type::uvec4_type, glsl_type::usampler1DArray_type, 2, glsl_type::vec2_type),
+                _texture(ir_txl, v130, glsl_type::vec4_type,  glsl_type::sampler1DArray_type,  glsl_type::vec2_type),
+                _texture(ir_txl, v130, glsl_type::ivec4_type, glsl_type::isampler1DArray_type, glsl_type::vec2_type),
+                _texture(ir_txl, v130, glsl_type::uvec4_type, glsl_type::usampler1DArray_type, glsl_type::vec2_type),
 
-                _texture(ir_txl, v130, glsl_type::vec4_type,  glsl_type::sampler2DArray_type,  3, glsl_type::vec3_type),
-                _texture(ir_txl, v130, glsl_type::ivec4_type, glsl_type::isampler2DArray_type, 3, glsl_type::vec3_type),
-                _texture(ir_txl, v130, glsl_type::uvec4_type, glsl_type::usampler2DArray_type, 3, glsl_type::vec3_type),
+                _texture(ir_txl, v130, glsl_type::vec4_type,  glsl_type::sampler2DArray_type,  glsl_type::vec3_type),
+                _texture(ir_txl, v130, glsl_type::ivec4_type, glsl_type::isampler2DArray_type, glsl_type::vec3_type),
+                _texture(ir_txl, v130, glsl_type::uvec4_type, glsl_type::usampler2DArray_type, glsl_type::vec3_type),
 
-                _texture(ir_txl, texture_cube_map_array, glsl_type::vec4_type,  glsl_type::samplerCubeArray_type,  4, glsl_type::vec4_type),
-                _texture(ir_txl, texture_cube_map_array, glsl_type::ivec4_type, glsl_type::isamplerCubeArray_type, 4, glsl_type::vec4_type),
-                _texture(ir_txl, texture_cube_map_array, glsl_type::uvec4_type, glsl_type::usamplerCubeArray_type, 4, glsl_type::vec4_type),
+                _texture(ir_txl, texture_cube_map_array, glsl_type::vec4_type,  glsl_type::samplerCubeArray_type,  glsl_type::vec4_type),
+                _texture(ir_txl, texture_cube_map_array, glsl_type::ivec4_type, glsl_type::isamplerCubeArray_type, glsl_type::vec4_type),
+                _texture(ir_txl, texture_cube_map_array, glsl_type::uvec4_type, glsl_type::usamplerCubeArray_type, glsl_type::vec4_type),
 
-                _texture(ir_txl, v130, glsl_type::float_type, glsl_type::sampler1DArrayShadow_type, 2, glsl_type::vec3_type),
+                _texture(ir_txl, v130, glsl_type::float_type, glsl_type::sampler1DArrayShadow_type, glsl_type::vec3_type),
                 NULL);
 
    add_function("textureOffset",
-                _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler1D_type,  1, glsl_type::float_type, TEX_OFFSET),
-                _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isampler1D_type, 1, glsl_type::float_type, TEX_OFFSET),
-                _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usampler1D_type, 1, glsl_type::float_type, TEX_OFFSET),
+                _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler1D_type,  glsl_type::float_type, TEX_OFFSET),
+                _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isampler1D_type, glsl_type::float_type, TEX_OFFSET),
+                _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usampler1D_type, glsl_type::float_type, TEX_OFFSET),
 
-                _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler2D_type,  2, glsl_type::vec2_type, TEX_OFFSET),
-                _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isampler2D_type, 2, glsl_type::vec2_type, TEX_OFFSET),
-                _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usampler2D_type, 2, glsl_type::vec2_type, TEX_OFFSET),
+                _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler2D_type,  glsl_type::vec2_type, TEX_OFFSET),
+                _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isampler2D_type, glsl_type::vec2_type, TEX_OFFSET),
+                _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usampler2D_type, glsl_type::vec2_type, TEX_OFFSET),
 
-                _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler3D_type,  3, glsl_type::vec3_type, TEX_OFFSET),
-                _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isampler3D_type, 3, glsl_type::vec3_type, TEX_OFFSET),
-                _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usampler3D_type, 3, glsl_type::vec3_type, TEX_OFFSET),
+                _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler3D_type,  glsl_type::vec3_type, TEX_OFFSET),
+                _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isampler3D_type, glsl_type::vec3_type, TEX_OFFSET),
+                _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usampler3D_type, glsl_type::vec3_type, TEX_OFFSET),
 
-                _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler2DRect_type,  2, glsl_type::vec2_type, TEX_OFFSET),
-                _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isampler2DRect_type, 2, glsl_type::vec2_type, TEX_OFFSET),
-                _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usampler2DRect_type, 2, glsl_type::vec2_type, TEX_OFFSET),
+                _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler2DRect_type,  glsl_type::vec2_type, TEX_OFFSET),
+                _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isampler2DRect_type, glsl_type::vec2_type, TEX_OFFSET),
+                _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usampler2DRect_type, glsl_type::vec2_type, TEX_OFFSET),
 
-                _texture(ir_tex, v130, glsl_type::float_type, glsl_type::sampler2DRectShadow_type, 2, glsl_type::vec3_type, TEX_OFFSET),
+                _texture(ir_tex, v130, glsl_type::float_type, glsl_type::sampler2DRectShadow_type, glsl_type::vec3_type, TEX_OFFSET),
 
-                _texture(ir_tex, v130, glsl_type::float_type, glsl_type::sampler1DShadow_type, 1, glsl_type::vec3_type, TEX_OFFSET),
-                _texture(ir_tex, v130, glsl_type::float_type, glsl_type::sampler2DShadow_type, 2, glsl_type::vec3_type, TEX_OFFSET),
+                _texture(ir_tex, v130, glsl_type::float_type, glsl_type::sampler1DShadow_type, glsl_type::vec3_type, TEX_OFFSET),
+                _texture(ir_tex, v130, glsl_type::float_type, glsl_type::sampler2DShadow_type, glsl_type::vec3_type, TEX_OFFSET),
 
-                _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler1DArray_type,  2, glsl_type::vec2_type, TEX_OFFSET),
-                _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isampler1DArray_type, 2, glsl_type::vec2_type, TEX_OFFSET),
-                _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usampler1DArray_type, 2, glsl_type::vec2_type, TEX_OFFSET),
+                _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler1DArray_type,  glsl_type::vec2_type, TEX_OFFSET),
+                _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isampler1DArray_type, glsl_type::vec2_type, TEX_OFFSET),
+                _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usampler1DArray_type, glsl_type::vec2_type, TEX_OFFSET),
 
-                _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler2DArray_type,  3, glsl_type::vec3_type, TEX_OFFSET),
-                _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isampler2DArray_type, 3, glsl_type::vec3_type, TEX_OFFSET),
-                _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usampler2DArray_type, 3, glsl_type::vec3_type, TEX_OFFSET),
+                _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler2DArray_type,  glsl_type::vec3_type, TEX_OFFSET),
+                _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isampler2DArray_type, glsl_type::vec3_type, TEX_OFFSET),
+                _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usampler2DArray_type, glsl_type::vec3_type, TEX_OFFSET),
 
-                _texture(ir_tex, v130, glsl_type::float_type, glsl_type::sampler1DArrayShadow_type, 2, glsl_type::vec3_type, TEX_OFFSET),
+                _texture(ir_tex, v130, glsl_type::float_type, glsl_type::sampler1DArrayShadow_type, glsl_type::vec3_type, TEX_OFFSET),
 
-                _texture(ir_txb, v130_fs_only, glsl_type::vec4_type,  glsl_type::sampler1D_type,  1, glsl_type::float_type, TEX_OFFSET),
-                _texture(ir_txb, v130_fs_only, glsl_type::ivec4_type, glsl_type::isampler1D_type, 1, glsl_type::float_type, TEX_OFFSET),
-                _texture(ir_txb, v130_fs_only, glsl_type::uvec4_type, glsl_type::usampler1D_type, 1, glsl_type::float_type, TEX_OFFSET),
+                _texture(ir_txb, v130_fs_only, glsl_type::vec4_type,  glsl_type::sampler1D_type,  glsl_type::float_type, TEX_OFFSET),
+                _texture(ir_txb, v130_fs_only, glsl_type::ivec4_type, glsl_type::isampler1D_type, glsl_type::float_type, TEX_OFFSET),
+                _texture(ir_txb, v130_fs_only, glsl_type::uvec4_type, glsl_type::usampler1D_type, glsl_type::float_type, TEX_OFFSET),
 
-                _texture(ir_txb, v130_fs_only, glsl_type::vec4_type,  glsl_type::sampler2D_type,  2, glsl_type::vec2_type, TEX_OFFSET),
-                _texture(ir_txb, v130_fs_only, glsl_type::ivec4_type, glsl_type::isampler2D_type, 2, glsl_type::vec2_type, TEX_OFFSET),
-                _texture(ir_txb, v130_fs_only, glsl_type::uvec4_type, glsl_type::usampler2D_type, 2, glsl_type::vec2_type, TEX_OFFSET),
+                _texture(ir_txb, v130_fs_only, glsl_type::vec4_type,  glsl_type::sampler2D_type,  glsl_type::vec2_type, TEX_OFFSET),
+                _texture(ir_txb, v130_fs_only, glsl_type::ivec4_type, glsl_type::isampler2D_type, glsl_type::vec2_type, TEX_OFFSET),
+                _texture(ir_txb, v130_fs_only, glsl_type::uvec4_type, glsl_type::usampler2D_type, glsl_type::vec2_type, TEX_OFFSET),
 
-                _texture(ir_txb, v130_fs_only, glsl_type::vec4_type,  glsl_type::sampler3D_type,  3, glsl_type::vec3_type, TEX_OFFSET),
-                _texture(ir_txb, v130_fs_only, glsl_type::ivec4_type, glsl_type::isampler3D_type, 3, glsl_type::vec3_type, TEX_OFFSET),
-                _texture(ir_txb, v130_fs_only, glsl_type::uvec4_type, glsl_type::usampler3D_type, 3, glsl_type::vec3_type, TEX_OFFSET),
+                _texture(ir_txb, v130_fs_only, glsl_type::vec4_type,  glsl_type::sampler3D_type,  glsl_type::vec3_type, TEX_OFFSET),
+                _texture(ir_txb, v130_fs_only, glsl_type::ivec4_type, glsl_type::isampler3D_type, glsl_type::vec3_type, TEX_OFFSET),
+                _texture(ir_txb, v130_fs_only, glsl_type::uvec4_type, glsl_type::usampler3D_type, glsl_type::vec3_type, TEX_OFFSET),
 
-                _texture(ir_txb, v130_fs_only, glsl_type::float_type, glsl_type::sampler1DShadow_type, 1, glsl_type::vec3_type, TEX_OFFSET),
-                _texture(ir_txb, v130_fs_only, glsl_type::float_type, glsl_type::sampler2DShadow_type, 2, glsl_type::vec3_type, TEX_OFFSET),
+                _texture(ir_txb, v130_fs_only, glsl_type::float_type, glsl_type::sampler1DShadow_type, glsl_type::vec3_type, TEX_OFFSET),
+                _texture(ir_txb, v130_fs_only, glsl_type::float_type, glsl_type::sampler2DShadow_type, glsl_type::vec3_type, TEX_OFFSET),
 
-                _texture(ir_txb, v130_fs_only, glsl_type::vec4_type,  glsl_type::sampler1DArray_type,  2, glsl_type::vec2_type, TEX_OFFSET),
-                _texture(ir_txb, v130_fs_only, glsl_type::ivec4_type, glsl_type::isampler1DArray_type, 2, glsl_type::vec2_type, TEX_OFFSET),
-                _texture(ir_txb, v130_fs_only, glsl_type::uvec4_type, glsl_type::usampler1DArray_type, 2, glsl_type::vec2_type, TEX_OFFSET),
+                _texture(ir_txb, v130_fs_only, glsl_type::vec4_type,  glsl_type::sampler1DArray_type,  glsl_type::vec2_type, TEX_OFFSET),
+                _texture(ir_txb, v130_fs_only, glsl_type::ivec4_type, glsl_type::isampler1DArray_type, glsl_type::vec2_type, TEX_OFFSET),
+                _texture(ir_txb, v130_fs_only, glsl_type::uvec4_type, glsl_type::usampler1DArray_type, glsl_type::vec2_type, TEX_OFFSET),
 
-                _texture(ir_txb, v130_fs_only, glsl_type::vec4_type,  glsl_type::sampler2DArray_type,  3, glsl_type::vec3_type, TEX_OFFSET),
-                _texture(ir_txb, v130_fs_only, glsl_type::ivec4_type, glsl_type::isampler2DArray_type, 3, glsl_type::vec3_type, TEX_OFFSET),
-                _texture(ir_txb, v130_fs_only, glsl_type::uvec4_type, glsl_type::usampler2DArray_type, 3, glsl_type::vec3_type, TEX_OFFSET),
+                _texture(ir_txb, v130_fs_only, glsl_type::vec4_type,  glsl_type::sampler2DArray_type,  glsl_type::vec3_type, TEX_OFFSET),
+                _texture(ir_txb, v130_fs_only, glsl_type::ivec4_type, glsl_type::isampler2DArray_type, glsl_type::vec3_type, TEX_OFFSET),
+                _texture(ir_txb, v130_fs_only, glsl_type::uvec4_type, glsl_type::usampler2DArray_type, glsl_type::vec3_type, TEX_OFFSET),
 
-                _texture(ir_txb, v130_fs_only, glsl_type::float_type, glsl_type::sampler1DArrayShadow_type, 2, glsl_type::vec3_type, TEX_OFFSET),
+                _texture(ir_txb, v130_fs_only, glsl_type::float_type, glsl_type::sampler1DArrayShadow_type, glsl_type::vec3_type, TEX_OFFSET),
                 NULL);
 
    add_function("textureProj",
-                _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler1D_type,  1, glsl_type::vec2_type, TEX_PROJECT),
-                _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isampler1D_type, 1, glsl_type::vec2_type, TEX_PROJECT),
-                _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usampler1D_type, 1, glsl_type::vec2_type, TEX_PROJECT),
-                _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler1D_type,  1, glsl_type::vec4_type, TEX_PROJECT),
-                _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isampler1D_type, 1, glsl_type::vec4_type, TEX_PROJECT),
-                _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usampler1D_type, 1, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler1D_type,  glsl_type::vec2_type, TEX_PROJECT),
+                _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isampler1D_type, glsl_type::vec2_type, TEX_PROJECT),
+                _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usampler1D_type, glsl_type::vec2_type, TEX_PROJECT),
+                _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler1D_type,  glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isampler1D_type, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usampler1D_type, glsl_type::vec4_type, TEX_PROJECT),
 
-                _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler2D_type,  2, glsl_type::vec3_type, TEX_PROJECT),
-                _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isampler2D_type, 2, glsl_type::vec3_type, TEX_PROJECT),
-                _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usampler2D_type, 2, glsl_type::vec3_type, TEX_PROJECT),
-                _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler2D_type,  2, glsl_type::vec4_type, TEX_PROJECT),
-                _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isampler2D_type, 2, glsl_type::vec4_type, TEX_PROJECT),
-                _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usampler2D_type, 2, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler2D_type,  glsl_type::vec3_type, TEX_PROJECT),
+                _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isampler2D_type, glsl_type::vec3_type, TEX_PROJECT),
+                _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usampler2D_type, glsl_type::vec3_type, TEX_PROJECT),
+                _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler2D_type,  glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isampler2D_type, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usampler2D_type, glsl_type::vec4_type, TEX_PROJECT),
 
-                _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler3D_type,  3, glsl_type::vec4_type, TEX_PROJECT),
-                _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isampler3D_type, 3, glsl_type::vec4_type, TEX_PROJECT),
-                _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usampler3D_type, 3, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler3D_type,  glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isampler3D_type, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usampler3D_type, glsl_type::vec4_type, TEX_PROJECT),
 
-                _texture(ir_tex, v130, glsl_type::float_type, glsl_type::sampler1DShadow_type, 1, glsl_type::vec4_type, TEX_PROJECT),
-                _texture(ir_tex, v130, glsl_type::float_type, glsl_type::sampler2DShadow_type, 2, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_tex, v130, glsl_type::float_type, glsl_type::sampler1DShadow_type, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_tex, v130, glsl_type::float_type, glsl_type::sampler2DShadow_type, glsl_type::vec4_type, TEX_PROJECT),
 
-                _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler2DRect_type,  2, glsl_type::vec3_type, TEX_PROJECT),
-                _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isampler2DRect_type, 2, glsl_type::vec3_type, TEX_PROJECT),
-                _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usampler2DRect_type, 2, glsl_type::vec3_type, TEX_PROJECT),
-                _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler2DRect_type,  2, glsl_type::vec4_type, TEX_PROJECT),
-                _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isampler2DRect_type, 2, glsl_type::vec4_type, TEX_PROJECT),
-                _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usampler2DRect_type, 2, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler2DRect_type,  glsl_type::vec3_type, TEX_PROJECT),
+                _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isampler2DRect_type, glsl_type::vec3_type, TEX_PROJECT),
+                _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usampler2DRect_type, glsl_type::vec3_type, TEX_PROJECT),
+                _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler2DRect_type,  glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isampler2DRect_type, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usampler2DRect_type, glsl_type::vec4_type, TEX_PROJECT),
 
-                _texture(ir_tex, v130, glsl_type::float_type, glsl_type::sampler2DRectShadow_type, 2, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_tex, v130, glsl_type::float_type, glsl_type::sampler2DRectShadow_type, glsl_type::vec4_type, TEX_PROJECT),
 
-                _texture(ir_txb, v130, glsl_type::vec4_type,  glsl_type::sampler1D_type,  1, glsl_type::vec2_type, TEX_PROJECT),
-                _texture(ir_txb, v130, glsl_type::ivec4_type, glsl_type::isampler1D_type, 1, glsl_type::vec2_type, TEX_PROJECT),
-                _texture(ir_txb, v130, glsl_type::uvec4_type, glsl_type::usampler1D_type, 1, glsl_type::vec2_type, TEX_PROJECT),
-                _texture(ir_txb, v130, glsl_type::vec4_type,  glsl_type::sampler1D_type,  1, glsl_type::vec4_type, TEX_PROJECT),
-                _texture(ir_txb, v130, glsl_type::ivec4_type, glsl_type::isampler1D_type, 1, glsl_type::vec4_type, TEX_PROJECT),
-                _texture(ir_txb, v130, glsl_type::uvec4_type, glsl_type::usampler1D_type, 1, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txb, v130, glsl_type::vec4_type,  glsl_type::sampler1D_type,  glsl_type::vec2_type, TEX_PROJECT),
+                _texture(ir_txb, v130, glsl_type::ivec4_type, glsl_type::isampler1D_type, glsl_type::vec2_type, TEX_PROJECT),
+                _texture(ir_txb, v130, glsl_type::uvec4_type, glsl_type::usampler1D_type, glsl_type::vec2_type, TEX_PROJECT),
+                _texture(ir_txb, v130, glsl_type::vec4_type,  glsl_type::sampler1D_type,  glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txb, v130, glsl_type::ivec4_type, glsl_type::isampler1D_type, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txb, v130, glsl_type::uvec4_type, glsl_type::usampler1D_type, glsl_type::vec4_type, TEX_PROJECT),
 
-                _texture(ir_txb, v130, glsl_type::vec4_type,  glsl_type::sampler2D_type,  2, glsl_type::vec3_type, TEX_PROJECT),
-                _texture(ir_txb, v130, glsl_type::ivec4_type, glsl_type::isampler2D_type, 2, glsl_type::vec3_type, TEX_PROJECT),
-                _texture(ir_txb, v130, glsl_type::uvec4_type, glsl_type::usampler2D_type, 2, glsl_type::vec3_type, TEX_PROJECT),
-                _texture(ir_txb, v130, glsl_type::vec4_type,  glsl_type::sampler2D_type,  2, glsl_type::vec4_type, TEX_PROJECT),
-                _texture(ir_txb, v130, glsl_type::ivec4_type, glsl_type::isampler2D_type, 2, glsl_type::vec4_type, TEX_PROJECT),
-                _texture(ir_txb, v130, glsl_type::uvec4_type, glsl_type::usampler2D_type, 2, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txb, v130, glsl_type::vec4_type,  glsl_type::sampler2D_type,  glsl_type::vec3_type, TEX_PROJECT),
+                _texture(ir_txb, v130, glsl_type::ivec4_type, glsl_type::isampler2D_type, glsl_type::vec3_type, TEX_PROJECT),
+                _texture(ir_txb, v130, glsl_type::uvec4_type, glsl_type::usampler2D_type, glsl_type::vec3_type, TEX_PROJECT),
+                _texture(ir_txb, v130, glsl_type::vec4_type,  glsl_type::sampler2D_type,  glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txb, v130, glsl_type::ivec4_type, glsl_type::isampler2D_type, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txb, v130, glsl_type::uvec4_type, glsl_type::usampler2D_type, glsl_type::vec4_type, TEX_PROJECT),
 
-                _texture(ir_txb, v130, glsl_type::vec4_type,  glsl_type::sampler3D_type,  3, glsl_type::vec4_type, TEX_PROJECT),
-                _texture(ir_txb, v130, glsl_type::ivec4_type, glsl_type::isampler3D_type, 3, glsl_type::vec4_type, TEX_PROJECT),
-                _texture(ir_txb, v130, glsl_type::uvec4_type, glsl_type::usampler3D_type, 3, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txb, v130, glsl_type::vec4_type,  glsl_type::sampler3D_type,  glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txb, v130, glsl_type::ivec4_type, glsl_type::isampler3D_type, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txb, v130, glsl_type::uvec4_type, glsl_type::usampler3D_type, glsl_type::vec4_type, TEX_PROJECT),
 
-                _texture(ir_txb, v130, glsl_type::float_type, glsl_type::sampler1DShadow_type, 1, glsl_type::vec4_type, TEX_PROJECT),
-                _texture(ir_txb, v130, glsl_type::float_type, glsl_type::sampler2DShadow_type, 2, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txb, v130, glsl_type::float_type, glsl_type::sampler1DShadow_type, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txb, v130, glsl_type::float_type, glsl_type::sampler2DShadow_type, glsl_type::vec4_type, TEX_PROJECT),
                 NULL);
 
    add_function("texelFetch",
@@ -1282,270 +1281,270 @@ builtin_builder::create_builtins()
                 NULL);
 
    add_function("textureProjOffset",
-                _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler1D_type,  1, glsl_type::vec2_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isampler1D_type, 1, glsl_type::vec2_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usampler1D_type, 1, glsl_type::vec2_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler1D_type,  1, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isampler1D_type, 1, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usampler1D_type, 1, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler1D_type,  glsl_type::vec2_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isampler1D_type, glsl_type::vec2_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usampler1D_type, glsl_type::vec2_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler1D_type,  glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isampler1D_type, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usampler1D_type, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
 
-                _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler2D_type,  2, glsl_type::vec3_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isampler2D_type, 2, glsl_type::vec3_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usampler2D_type, 2, glsl_type::vec3_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler2D_type,  2, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isampler2D_type, 2, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usampler2D_type, 2, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler2D_type,  glsl_type::vec3_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isampler2D_type, glsl_type::vec3_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usampler2D_type, glsl_type::vec3_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler2D_type,  glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isampler2D_type, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usampler2D_type, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
 
-                _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler3D_type,  3, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isampler3D_type, 3, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usampler3D_type, 3, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler3D_type,  glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isampler3D_type, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usampler3D_type, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
 
-                _texture(ir_tex, v130, glsl_type::float_type, glsl_type::sampler1DShadow_type, 1, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_tex, v130, glsl_type::float_type, glsl_type::sampler2DShadow_type, 2, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_tex, v130, glsl_type::float_type, glsl_type::sampler1DShadow_type, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_tex, v130, glsl_type::float_type, glsl_type::sampler2DShadow_type, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
 
-                _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler2DRect_type,  2, glsl_type::vec3_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isampler2DRect_type, 2, glsl_type::vec3_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usampler2DRect_type, 2, glsl_type::vec3_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler2DRect_type,  2, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isampler2DRect_type, 2, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usampler2DRect_type, 2, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler2DRect_type,  glsl_type::vec3_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isampler2DRect_type, glsl_type::vec3_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usampler2DRect_type, glsl_type::vec3_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_tex, v130, glsl_type::vec4_type,  glsl_type::sampler2DRect_type,  glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_tex, v130, glsl_type::ivec4_type, glsl_type::isampler2DRect_type, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_tex, v130, glsl_type::uvec4_type, glsl_type::usampler2DRect_type, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
 
-                _texture(ir_tex, v130, glsl_type::float_type, glsl_type::sampler2DRectShadow_type, 2, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_tex, v130, glsl_type::float_type, glsl_type::sampler2DRectShadow_type, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
 
-                _texture(ir_txb, v130, glsl_type::vec4_type,  glsl_type::sampler1D_type,  1, glsl_type::vec2_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_txb, v130, glsl_type::ivec4_type, glsl_type::isampler1D_type, 1, glsl_type::vec2_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_txb, v130, glsl_type::uvec4_type, glsl_type::usampler1D_type, 1, glsl_type::vec2_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_txb, v130, glsl_type::vec4_type,  glsl_type::sampler1D_type,  1, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_txb, v130, glsl_type::ivec4_type, glsl_type::isampler1D_type, 1, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_txb, v130, glsl_type::uvec4_type, glsl_type::usampler1D_type, 1, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txb, v130, glsl_type::vec4_type,  glsl_type::sampler1D_type,  glsl_type::vec2_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txb, v130, glsl_type::ivec4_type, glsl_type::isampler1D_type, glsl_type::vec2_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txb, v130, glsl_type::uvec4_type, glsl_type::usampler1D_type, glsl_type::vec2_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txb, v130, glsl_type::vec4_type,  glsl_type::sampler1D_type,  glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txb, v130, glsl_type::ivec4_type, glsl_type::isampler1D_type, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txb, v130, glsl_type::uvec4_type, glsl_type::usampler1D_type, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
 
-                _texture(ir_txb, v130, glsl_type::vec4_type,  glsl_type::sampler2D_type,  2, glsl_type::vec3_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_txb, v130, glsl_type::ivec4_type, glsl_type::isampler2D_type, 2, glsl_type::vec3_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_txb, v130, glsl_type::uvec4_type, glsl_type::usampler2D_type, 2, glsl_type::vec3_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_txb, v130, glsl_type::vec4_type,  glsl_type::sampler2D_type,  2, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_txb, v130, glsl_type::ivec4_type, glsl_type::isampler2D_type, 2, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_txb, v130, glsl_type::uvec4_type, glsl_type::usampler2D_type, 2, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txb, v130, glsl_type::vec4_type,  glsl_type::sampler2D_type,  glsl_type::vec3_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txb, v130, glsl_type::ivec4_type, glsl_type::isampler2D_type, glsl_type::vec3_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txb, v130, glsl_type::uvec4_type, glsl_type::usampler2D_type, glsl_type::vec3_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txb, v130, glsl_type::vec4_type,  glsl_type::sampler2D_type,  glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txb, v130, glsl_type::ivec4_type, glsl_type::isampler2D_type, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txb, v130, glsl_type::uvec4_type, glsl_type::usampler2D_type, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
 
-                _texture(ir_txb, v130, glsl_type::vec4_type,  glsl_type::sampler3D_type,  3, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_txb, v130, glsl_type::ivec4_type, glsl_type::isampler3D_type, 3, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_txb, v130, glsl_type::uvec4_type, glsl_type::usampler3D_type, 3, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txb, v130, glsl_type::vec4_type,  glsl_type::sampler3D_type,  glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txb, v130, glsl_type::ivec4_type, glsl_type::isampler3D_type, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txb, v130, glsl_type::uvec4_type, glsl_type::usampler3D_type, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
 
-                _texture(ir_txb, v130, glsl_type::float_type, glsl_type::sampler1DShadow_type, 1, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_txb, v130, glsl_type::float_type, glsl_type::sampler2DShadow_type, 2, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txb, v130, glsl_type::float_type, glsl_type::sampler1DShadow_type, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txb, v130, glsl_type::float_type, glsl_type::sampler2DShadow_type, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
                 NULL);
 
    add_function("textureLodOffset",
-                _texture(ir_txl, v130, glsl_type::vec4_type,  glsl_type::sampler1D_type,  1, glsl_type::float_type, TEX_OFFSET),
-                _texture(ir_txl, v130, glsl_type::ivec4_type, glsl_type::isampler1D_type, 1, glsl_type::float_type, TEX_OFFSET),
-                _texture(ir_txl, v130, glsl_type::uvec4_type, glsl_type::usampler1D_type, 1, glsl_type::float_type, TEX_OFFSET),
+                _texture(ir_txl, v130, glsl_type::vec4_type,  glsl_type::sampler1D_type,  glsl_type::float_type, TEX_OFFSET),
+                _texture(ir_txl, v130, glsl_type::ivec4_type, glsl_type::isampler1D_type, glsl_type::float_type, TEX_OFFSET),
+                _texture(ir_txl, v130, glsl_type::uvec4_type, glsl_type::usampler1D_type, glsl_type::float_type, TEX_OFFSET),
 
-                _texture(ir_txl, v130, glsl_type::vec4_type,  glsl_type::sampler2D_type,  2, glsl_type::vec2_type, TEX_OFFSET),
-                _texture(ir_txl, v130, glsl_type::ivec4_type, glsl_type::isampler2D_type, 2, glsl_type::vec2_type, TEX_OFFSET),
-                _texture(ir_txl, v130, glsl_type::uvec4_type, glsl_type::usampler2D_type, 2, glsl_type::vec2_type, TEX_OFFSET),
+                _texture(ir_txl, v130, glsl_type::vec4_type,  glsl_type::sampler2D_type,  glsl_type::vec2_type, TEX_OFFSET),
+                _texture(ir_txl, v130, glsl_type::ivec4_type, glsl_type::isampler2D_type, glsl_type::vec2_type, TEX_OFFSET),
+                _texture(ir_txl, v130, glsl_type::uvec4_type, glsl_type::usampler2D_type, glsl_type::vec2_type, TEX_OFFSET),
 
-                _texture(ir_txl, v130, glsl_type::vec4_type,  glsl_type::sampler3D_type,  3, glsl_type::vec3_type, TEX_OFFSET),
-                _texture(ir_txl, v130, glsl_type::ivec4_type, glsl_type::isampler3D_type, 3, glsl_type::vec3_type, TEX_OFFSET),
-                _texture(ir_txl, v130, glsl_type::uvec4_type, glsl_type::usampler3D_type, 3, glsl_type::vec3_type, TEX_OFFSET),
+                _texture(ir_txl, v130, glsl_type::vec4_type,  glsl_type::sampler3D_type,  glsl_type::vec3_type, TEX_OFFSET),
+                _texture(ir_txl, v130, glsl_type::ivec4_type, glsl_type::isampler3D_type, glsl_type::vec3_type, TEX_OFFSET),
+                _texture(ir_txl, v130, glsl_type::uvec4_type, glsl_type::usampler3D_type, glsl_type::vec3_type, TEX_OFFSET),
 
-                _texture(ir_txl, v130, glsl_type::float_type, glsl_type::sampler1DShadow_type, 1, glsl_type::vec3_type, TEX_OFFSET),
-                _texture(ir_txl, v130, glsl_type::float_type, glsl_type::sampler2DShadow_type, 2, glsl_type::vec3_type, TEX_OFFSET),
+                _texture(ir_txl, v130, glsl_type::float_type, glsl_type::sampler1DShadow_type, glsl_type::vec3_type, TEX_OFFSET),
+                _texture(ir_txl, v130, glsl_type::float_type, glsl_type::sampler2DShadow_type, glsl_type::vec3_type, TEX_OFFSET),
 
-                _texture(ir_txl, v130, glsl_type::vec4_type,  glsl_type::sampler1DArray_type,  2, glsl_type::vec2_type, TEX_OFFSET),
-                _texture(ir_txl, v130, glsl_type::ivec4_type, glsl_type::isampler1DArray_type, 2, glsl_type::vec2_type, TEX_OFFSET),
-                _texture(ir_txl, v130, glsl_type::uvec4_type, glsl_type::usampler1DArray_type, 2, glsl_type::vec2_type, TEX_OFFSET),
+                _texture(ir_txl, v130, glsl_type::vec4_type,  glsl_type::sampler1DArray_type,  glsl_type::vec2_type, TEX_OFFSET),
+                _texture(ir_txl, v130, glsl_type::ivec4_type, glsl_type::isampler1DArray_type, glsl_type::vec2_type, TEX_OFFSET),
+                _texture(ir_txl, v130, glsl_type::uvec4_type, glsl_type::usampler1DArray_type, glsl_type::vec2_type, TEX_OFFSET),
 
-                _texture(ir_txl, v130, glsl_type::vec4_type,  glsl_type::sampler2DArray_type,  3, glsl_type::vec3_type, TEX_OFFSET),
-                _texture(ir_txl, v130, glsl_type::ivec4_type, glsl_type::isampler2DArray_type, 3, glsl_type::vec3_type, TEX_OFFSET),
-                _texture(ir_txl, v130, glsl_type::uvec4_type, glsl_type::usampler2DArray_type, 3, glsl_type::vec3_type, TEX_OFFSET),
+                _texture(ir_txl, v130, glsl_type::vec4_type,  glsl_type::sampler2DArray_type,  glsl_type::vec3_type, TEX_OFFSET),
+                _texture(ir_txl, v130, glsl_type::ivec4_type, glsl_type::isampler2DArray_type, glsl_type::vec3_type, TEX_OFFSET),
+                _texture(ir_txl, v130, glsl_type::uvec4_type, glsl_type::usampler2DArray_type, glsl_type::vec3_type, TEX_OFFSET),
 
-                _texture(ir_txl, v130, glsl_type::float_type, glsl_type::sampler1DArrayShadow_type, 2, glsl_type::vec3_type, TEX_OFFSET),
+                _texture(ir_txl, v130, glsl_type::float_type, glsl_type::sampler1DArrayShadow_type, glsl_type::vec3_type, TEX_OFFSET),
                 NULL);
 
    add_function("textureProjLod",
-                _texture(ir_txl, v130, glsl_type::vec4_type,  glsl_type::sampler1D_type,  1, glsl_type::vec2_type, TEX_PROJECT),
-                _texture(ir_txl, v130, glsl_type::ivec4_type, glsl_type::isampler1D_type, 1, glsl_type::vec2_type, TEX_PROJECT),
-                _texture(ir_txl, v130, glsl_type::uvec4_type, glsl_type::usampler1D_type, 1, glsl_type::vec2_type, TEX_PROJECT),
-                _texture(ir_txl, v130, glsl_type::vec4_type,  glsl_type::sampler1D_type,  1, glsl_type::vec4_type, TEX_PROJECT),
-                _texture(ir_txl, v130, glsl_type::ivec4_type, glsl_type::isampler1D_type, 1, glsl_type::vec4_type, TEX_PROJECT),
-                _texture(ir_txl, v130, glsl_type::uvec4_type, glsl_type::usampler1D_type, 1, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txl, v130, glsl_type::vec4_type,  glsl_type::sampler1D_type,  glsl_type::vec2_type, TEX_PROJECT),
+                _texture(ir_txl, v130, glsl_type::ivec4_type, glsl_type::isampler1D_type, glsl_type::vec2_type, TEX_PROJECT),
+                _texture(ir_txl, v130, glsl_type::uvec4_type, glsl_type::usampler1D_type, glsl_type::vec2_type, TEX_PROJECT),
+                _texture(ir_txl, v130, glsl_type::vec4_type,  glsl_type::sampler1D_type,  glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txl, v130, glsl_type::ivec4_type, glsl_type::isampler1D_type, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txl, v130, glsl_type::uvec4_type, glsl_type::usampler1D_type, glsl_type::vec4_type, TEX_PROJECT),
 
-                _texture(ir_txl, v130, glsl_type::vec4_type,  glsl_type::sampler2D_type,  2, glsl_type::vec3_type, TEX_PROJECT),
-                _texture(ir_txl, v130, glsl_type::ivec4_type, glsl_type::isampler2D_type, 2, glsl_type::vec3_type, TEX_PROJECT),
-                _texture(ir_txl, v130, glsl_type::uvec4_type, glsl_type::usampler2D_type, 2, glsl_type::vec3_type, TEX_PROJECT),
-                _texture(ir_txl, v130, glsl_type::vec4_type,  glsl_type::sampler2D_type,  2, glsl_type::vec4_type, TEX_PROJECT),
-                _texture(ir_txl, v130, glsl_type::ivec4_type, glsl_type::isampler2D_type, 2, glsl_type::vec4_type, TEX_PROJECT),
-                _texture(ir_txl, v130, glsl_type::uvec4_type, glsl_type::usampler2D_type, 2, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txl, v130, glsl_type::vec4_type,  glsl_type::sampler2D_type,  glsl_type::vec3_type, TEX_PROJECT),
+                _texture(ir_txl, v130, glsl_type::ivec4_type, glsl_type::isampler2D_type, glsl_type::vec3_type, TEX_PROJECT),
+                _texture(ir_txl, v130, glsl_type::uvec4_type, glsl_type::usampler2D_type, glsl_type::vec3_type, TEX_PROJECT),
+                _texture(ir_txl, v130, glsl_type::vec4_type,  glsl_type::sampler2D_type,  glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txl, v130, glsl_type::ivec4_type, glsl_type::isampler2D_type, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txl, v130, glsl_type::uvec4_type, glsl_type::usampler2D_type, glsl_type::vec4_type, TEX_PROJECT),
 
-                _texture(ir_txl, v130, glsl_type::vec4_type,  glsl_type::sampler3D_type,  3, glsl_type::vec4_type, TEX_PROJECT),
-                _texture(ir_txl, v130, glsl_type::ivec4_type, glsl_type::isampler3D_type, 3, glsl_type::vec4_type, TEX_PROJECT),
-                _texture(ir_txl, v130, glsl_type::uvec4_type, glsl_type::usampler3D_type, 3, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txl, v130, glsl_type::vec4_type,  glsl_type::sampler3D_type,  glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txl, v130, glsl_type::ivec4_type, glsl_type::isampler3D_type, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txl, v130, glsl_type::uvec4_type, glsl_type::usampler3D_type, glsl_type::vec4_type, TEX_PROJECT),
 
-                _texture(ir_txl, v130, glsl_type::float_type, glsl_type::sampler1DShadow_type, 1, glsl_type::vec4_type, TEX_PROJECT),
-                _texture(ir_txl, v130, glsl_type::float_type, glsl_type::sampler2DShadow_type, 2, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txl, v130, glsl_type::float_type, glsl_type::sampler1DShadow_type, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txl, v130, glsl_type::float_type, glsl_type::sampler2DShadow_type, glsl_type::vec4_type, TEX_PROJECT),
                 NULL);
 
    add_function("textureProjLodOffset",
-                _texture(ir_txl, v130, glsl_type::vec4_type,  glsl_type::sampler1D_type,  1, glsl_type::vec2_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_txl, v130, glsl_type::ivec4_type, glsl_type::isampler1D_type, 1, glsl_type::vec2_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_txl, v130, glsl_type::uvec4_type, glsl_type::usampler1D_type, 1, glsl_type::vec2_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_txl, v130, glsl_type::vec4_type,  glsl_type::sampler1D_type,  1, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_txl, v130, glsl_type::ivec4_type, glsl_type::isampler1D_type, 1, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_txl, v130, glsl_type::uvec4_type, glsl_type::usampler1D_type, 1, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txl, v130, glsl_type::vec4_type,  glsl_type::sampler1D_type,  glsl_type::vec2_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txl, v130, glsl_type::ivec4_type, glsl_type::isampler1D_type, glsl_type::vec2_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txl, v130, glsl_type::uvec4_type, glsl_type::usampler1D_type, glsl_type::vec2_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txl, v130, glsl_type::vec4_type,  glsl_type::sampler1D_type,  glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txl, v130, glsl_type::ivec4_type, glsl_type::isampler1D_type, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txl, v130, glsl_type::uvec4_type, glsl_type::usampler1D_type, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
 
-                _texture(ir_txl, v130, glsl_type::vec4_type,  glsl_type::sampler2D_type,  2, glsl_type::vec3_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_txl, v130, glsl_type::ivec4_type, glsl_type::isampler2D_type, 2, glsl_type::vec3_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_txl, v130, glsl_type::uvec4_type, glsl_type::usampler2D_type, 2, glsl_type::vec3_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_txl, v130, glsl_type::vec4_type,  glsl_type::sampler2D_type,  2, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_txl, v130, glsl_type::ivec4_type, glsl_type::isampler2D_type, 2, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_txl, v130, glsl_type::uvec4_type, glsl_type::usampler2D_type, 2, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txl, v130, glsl_type::vec4_type,  glsl_type::sampler2D_type,  glsl_type::vec3_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txl, v130, glsl_type::ivec4_type, glsl_type::isampler2D_type, glsl_type::vec3_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txl, v130, glsl_type::uvec4_type, glsl_type::usampler2D_type, glsl_type::vec3_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txl, v130, glsl_type::vec4_type,  glsl_type::sampler2D_type,  glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txl, v130, glsl_type::ivec4_type, glsl_type::isampler2D_type, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txl, v130, glsl_type::uvec4_type, glsl_type::usampler2D_type, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
 
-                _texture(ir_txl, v130, glsl_type::vec4_type,  glsl_type::sampler3D_type,  3, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_txl, v130, glsl_type::ivec4_type, glsl_type::isampler3D_type, 3, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_txl, v130, glsl_type::uvec4_type, glsl_type::usampler3D_type, 3, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txl, v130, glsl_type::vec4_type,  glsl_type::sampler3D_type,  glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txl, v130, glsl_type::ivec4_type, glsl_type::isampler3D_type, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txl, v130, glsl_type::uvec4_type, glsl_type::usampler3D_type, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
 
-                _texture(ir_txl, v130, glsl_type::float_type, glsl_type::sampler1DShadow_type, 1, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_txl, v130, glsl_type::float_type, glsl_type::sampler2DShadow_type, 2, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txl, v130, glsl_type::float_type, glsl_type::sampler1DShadow_type, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txl, v130, glsl_type::float_type, glsl_type::sampler2DShadow_type, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
                 NULL);
 
    add_function("textureGrad",
-                _texture(ir_txd, v130, glsl_type::vec4_type,  glsl_type::sampler1D_type,  1, glsl_type::float_type),
-                _texture(ir_txd, v130, glsl_type::ivec4_type, glsl_type::isampler1D_type, 1, glsl_type::float_type),
-                _texture(ir_txd, v130, glsl_type::uvec4_type, glsl_type::usampler1D_type, 1, glsl_type::float_type),
+                _texture(ir_txd, v130, glsl_type::vec4_type,  glsl_type::sampler1D_type,  glsl_type::float_type),
+                _texture(ir_txd, v130, glsl_type::ivec4_type, glsl_type::isampler1D_type, glsl_type::float_type),
+                _texture(ir_txd, v130, glsl_type::uvec4_type, glsl_type::usampler1D_type, glsl_type::float_type),
 
-                _texture(ir_txd, v130, glsl_type::vec4_type,  glsl_type::sampler2D_type,  2, glsl_type::vec2_type),
-                _texture(ir_txd, v130, glsl_type::ivec4_type, glsl_type::isampler2D_type, 2, glsl_type::vec2_type),
-                _texture(ir_txd, v130, glsl_type::uvec4_type, glsl_type::usampler2D_type, 2, glsl_type::vec2_type),
+                _texture(ir_txd, v130, glsl_type::vec4_type,  glsl_type::sampler2D_type,  glsl_type::vec2_type),
+                _texture(ir_txd, v130, glsl_type::ivec4_type, glsl_type::isampler2D_type, glsl_type::vec2_type),
+                _texture(ir_txd, v130, glsl_type::uvec4_type, glsl_type::usampler2D_type, glsl_type::vec2_type),
 
-                _texture(ir_txd, v130, glsl_type::vec4_type,  glsl_type::sampler3D_type,  3, glsl_type::vec3_type),
-                _texture(ir_txd, v130, glsl_type::ivec4_type, glsl_type::isampler3D_type, 3, glsl_type::vec3_type),
-                _texture(ir_txd, v130, glsl_type::uvec4_type, glsl_type::usampler3D_type, 3, glsl_type::vec3_type),
+                _texture(ir_txd, v130, glsl_type::vec4_type,  glsl_type::sampler3D_type,  glsl_type::vec3_type),
+                _texture(ir_txd, v130, glsl_type::ivec4_type, glsl_type::isampler3D_type, glsl_type::vec3_type),
+                _texture(ir_txd, v130, glsl_type::uvec4_type, glsl_type::usampler3D_type, glsl_type::vec3_type),
 
-                _texture(ir_txd, v130, glsl_type::vec4_type,  glsl_type::samplerCube_type,  3, glsl_type::vec3_type),
-                _texture(ir_txd, v130, glsl_type::ivec4_type, glsl_type::isamplerCube_type, 3, glsl_type::vec3_type),
-                _texture(ir_txd, v130, glsl_type::uvec4_type, glsl_type::usamplerCube_type, 3, glsl_type::vec3_type),
+                _texture(ir_txd, v130, glsl_type::vec4_type,  glsl_type::samplerCube_type,  glsl_type::vec3_type),
+                _texture(ir_txd, v130, glsl_type::ivec4_type, glsl_type::isamplerCube_type, glsl_type::vec3_type),
+                _texture(ir_txd, v130, glsl_type::uvec4_type, glsl_type::usamplerCube_type, glsl_type::vec3_type),
 
-                _texture(ir_txd, v130, glsl_type::vec4_type,  glsl_type::sampler2DRect_type,  2, glsl_type::vec2_type),
-                _texture(ir_txd, v130, glsl_type::ivec4_type, glsl_type::isampler2DRect_type, 2, glsl_type::vec2_type),
-                _texture(ir_txd, v130, glsl_type::uvec4_type, glsl_type::usampler2DRect_type, 2, glsl_type::vec2_type),
+                _texture(ir_txd, v130, glsl_type::vec4_type,  glsl_type::sampler2DRect_type,  glsl_type::vec2_type),
+                _texture(ir_txd, v130, glsl_type::ivec4_type, glsl_type::isampler2DRect_type, glsl_type::vec2_type),
+                _texture(ir_txd, v130, glsl_type::uvec4_type, glsl_type::usampler2DRect_type, glsl_type::vec2_type),
 
-                _texture(ir_txd, v130, glsl_type::float_type, glsl_type::sampler2DRectShadow_type, 2, glsl_type::vec3_type),
+                _texture(ir_txd, v130, glsl_type::float_type, glsl_type::sampler2DRectShadow_type, glsl_type::vec3_type),
 
-                _texture(ir_txd, v130, glsl_type::float_type, glsl_type::sampler1DShadow_type,   1, glsl_type::vec3_type),
-                _texture(ir_txd, v130, glsl_type::float_type, glsl_type::sampler2DShadow_type,   2, glsl_type::vec3_type),
-                _texture(ir_txd, v130, glsl_type::float_type, glsl_type::samplerCubeShadow_type, 3, glsl_type::vec4_type),
+                _texture(ir_txd, v130, glsl_type::float_type, glsl_type::sampler1DShadow_type,   glsl_type::vec3_type),
+                _texture(ir_txd, v130, glsl_type::float_type, glsl_type::sampler2DShadow_type,   glsl_type::vec3_type),
+                _texture(ir_txd, v130, glsl_type::float_type, glsl_type::samplerCubeShadow_type, glsl_type::vec4_type),
 
-                _texture(ir_txd, v130, glsl_type::vec4_type,  glsl_type::sampler1DArray_type,  2, glsl_type::vec2_type),
-                _texture(ir_txd, v130, glsl_type::ivec4_type, glsl_type::isampler1DArray_type, 2, glsl_type::vec2_type),
-                _texture(ir_txd, v130, glsl_type::uvec4_type, glsl_type::usampler1DArray_type, 2, glsl_type::vec2_type),
+                _texture(ir_txd, v130, glsl_type::vec4_type,  glsl_type::sampler1DArray_type,  glsl_type::vec2_type),
+                _texture(ir_txd, v130, glsl_type::ivec4_type, glsl_type::isampler1DArray_type, glsl_type::vec2_type),
+                _texture(ir_txd, v130, glsl_type::uvec4_type, glsl_type::usampler1DArray_type, glsl_type::vec2_type),
 
-                _texture(ir_txd, v130, glsl_type::vec4_type,  glsl_type::sampler2DArray_type,  3, glsl_type::vec3_type),
-                _texture(ir_txd, v130, glsl_type::ivec4_type, glsl_type::isampler2DArray_type, 3, glsl_type::vec3_type),
-                _texture(ir_txd, v130, glsl_type::uvec4_type, glsl_type::usampler2DArray_type, 3, glsl_type::vec3_type),
+                _texture(ir_txd, v130, glsl_type::vec4_type,  glsl_type::sampler2DArray_type,  glsl_type::vec3_type),
+                _texture(ir_txd, v130, glsl_type::ivec4_type, glsl_type::isampler2DArray_type, glsl_type::vec3_type),
+                _texture(ir_txd, v130, glsl_type::uvec4_type, glsl_type::usampler2DArray_type, glsl_type::vec3_type),
 
-                _texture(ir_txd, texture_cube_map_array, glsl_type::vec4_type,  glsl_type::samplerCubeArray_type,  4, glsl_type::vec4_type),
-                _texture(ir_txd, texture_cube_map_array, glsl_type::ivec4_type, glsl_type::isamplerCubeArray_type, 4, glsl_type::vec4_type),
-                _texture(ir_txd, texture_cube_map_array, glsl_type::uvec4_type, glsl_type::usamplerCubeArray_type, 4, glsl_type::vec4_type),
+                _texture(ir_txd, texture_cube_map_array, glsl_type::vec4_type,  glsl_type::samplerCubeArray_type,  glsl_type::vec4_type),
+                _texture(ir_txd, texture_cube_map_array, glsl_type::ivec4_type, glsl_type::isamplerCubeArray_type, glsl_type::vec4_type),
+                _texture(ir_txd, texture_cube_map_array, glsl_type::uvec4_type, glsl_type::usamplerCubeArray_type, glsl_type::vec4_type),
 
-                _texture(ir_txd, v130, glsl_type::float_type, glsl_type::sampler1DArrayShadow_type, 2, glsl_type::vec3_type),
-                _texture(ir_txd, v130, glsl_type::float_type, glsl_type::sampler2DArrayShadow_type, 3, glsl_type::vec4_type),
+                _texture(ir_txd, v130, glsl_type::float_type, glsl_type::sampler1DArrayShadow_type, glsl_type::vec3_type),
+                _texture(ir_txd, v130, glsl_type::float_type, glsl_type::sampler2DArrayShadow_type, glsl_type::vec4_type),
                 NULL);
 
    add_function("textureGradOffset",
-                _texture(ir_txd, v130, glsl_type::vec4_type,  glsl_type::sampler1D_type,  1, glsl_type::float_type, TEX_OFFSET),
-                _texture(ir_txd, v130, glsl_type::ivec4_type, glsl_type::isampler1D_type, 1, glsl_type::float_type, TEX_OFFSET),
-                _texture(ir_txd, v130, glsl_type::uvec4_type, glsl_type::usampler1D_type, 1, glsl_type::float_type, TEX_OFFSET),
+                _texture(ir_txd, v130, glsl_type::vec4_type,  glsl_type::sampler1D_type,  glsl_type::float_type, TEX_OFFSET),
+                _texture(ir_txd, v130, glsl_type::ivec4_type, glsl_type::isampler1D_type, glsl_type::float_type, TEX_OFFSET),
+                _texture(ir_txd, v130, glsl_type::uvec4_type, glsl_type::usampler1D_type, glsl_type::float_type, TEX_OFFSET),
 
-                _texture(ir_txd, v130, glsl_type::vec4_type,  glsl_type::sampler2D_type,  2, glsl_type::vec2_type, TEX_OFFSET),
-                _texture(ir_txd, v130, glsl_type::ivec4_type, glsl_type::isampler2D_type, 2, glsl_type::vec2_type, TEX_OFFSET),
-                _texture(ir_txd, v130, glsl_type::uvec4_type, glsl_type::usampler2D_type, 2, glsl_type::vec2_type, TEX_OFFSET),
+                _texture(ir_txd, v130, glsl_type::vec4_type,  glsl_type::sampler2D_type,  glsl_type::vec2_type, TEX_OFFSET),
+                _texture(ir_txd, v130, glsl_type::ivec4_type, glsl_type::isampler2D_type, glsl_type::vec2_type, TEX_OFFSET),
+                _texture(ir_txd, v130, glsl_type::uvec4_type, glsl_type::usampler2D_type, glsl_type::vec2_type, TEX_OFFSET),
 
-                _texture(ir_txd, v130, glsl_type::vec4_type,  glsl_type::sampler3D_type,  3, glsl_type::vec3_type, TEX_OFFSET),
-                _texture(ir_txd, v130, glsl_type::ivec4_type, glsl_type::isampler3D_type, 3, glsl_type::vec3_type, TEX_OFFSET),
-                _texture(ir_txd, v130, glsl_type::uvec4_type, glsl_type::usampler3D_type, 3, glsl_type::vec3_type, TEX_OFFSET),
+                _texture(ir_txd, v130, glsl_type::vec4_type,  glsl_type::sampler3D_type,  glsl_type::vec3_type, TEX_OFFSET),
+                _texture(ir_txd, v130, glsl_type::ivec4_type, glsl_type::isampler3D_type, glsl_type::vec3_type, TEX_OFFSET),
+                _texture(ir_txd, v130, glsl_type::uvec4_type, glsl_type::usampler3D_type, glsl_type::vec3_type, TEX_OFFSET),
 
-                _texture(ir_txd, v130, glsl_type::vec4_type,  glsl_type::sampler2DRect_type,  2, glsl_type::vec2_type, TEX_OFFSET),
-                _texture(ir_txd, v130, glsl_type::ivec4_type, glsl_type::isampler2DRect_type, 2, glsl_type::vec2_type, TEX_OFFSET),
-                _texture(ir_txd, v130, glsl_type::uvec4_type, glsl_type::usampler2DRect_type, 2, glsl_type::vec2_type, TEX_OFFSET),
+                _texture(ir_txd, v130, glsl_type::vec4_type,  glsl_type::sampler2DRect_type,  glsl_type::vec2_type, TEX_OFFSET),
+                _texture(ir_txd, v130, glsl_type::ivec4_type, glsl_type::isampler2DRect_type, glsl_type::vec2_type, TEX_OFFSET),
+                _texture(ir_txd, v130, glsl_type::uvec4_type, glsl_type::usampler2DRect_type, glsl_type::vec2_type, TEX_OFFSET),
 
-                _texture(ir_txd, v130, glsl_type::float_type, glsl_type::sampler2DRectShadow_type, 2, glsl_type::vec3_type, TEX_OFFSET),
+                _texture(ir_txd, v130, glsl_type::float_type, glsl_type::sampler2DRectShadow_type, glsl_type::vec3_type, TEX_OFFSET),
 
-                _texture(ir_txd, v130, glsl_type::float_type, glsl_type::sampler1DShadow_type, 1, glsl_type::vec3_type, TEX_OFFSET),
-                _texture(ir_txd, v130, glsl_type::float_type, glsl_type::sampler2DShadow_type, 2, glsl_type::vec3_type, TEX_OFFSET),
+                _texture(ir_txd, v130, glsl_type::float_type, glsl_type::sampler1DShadow_type, glsl_type::vec3_type, TEX_OFFSET),
+                _texture(ir_txd, v130, glsl_type::float_type, glsl_type::sampler2DShadow_type, glsl_type::vec3_type, TEX_OFFSET),
 
-                _texture(ir_txd, v130, glsl_type::vec4_type,  glsl_type::sampler1DArray_type,  2, glsl_type::vec2_type, TEX_OFFSET),
-                _texture(ir_txd, v130, glsl_type::ivec4_type, glsl_type::isampler1DArray_type, 2, glsl_type::vec2_type, TEX_OFFSET),
-                _texture(ir_txd, v130, glsl_type::uvec4_type, glsl_type::usampler1DArray_type, 2, glsl_type::vec2_type, TEX_OFFSET),
+                _texture(ir_txd, v130, glsl_type::vec4_type,  glsl_type::sampler1DArray_type,  glsl_type::vec2_type, TEX_OFFSET),
+                _texture(ir_txd, v130, glsl_type::ivec4_type, glsl_type::isampler1DArray_type, glsl_type::vec2_type, TEX_OFFSET),
+                _texture(ir_txd, v130, glsl_type::uvec4_type, glsl_type::usampler1DArray_type, glsl_type::vec2_type, TEX_OFFSET),
 
-                _texture(ir_txd, v130, glsl_type::vec4_type,  glsl_type::sampler2DArray_type,  3, glsl_type::vec3_type, TEX_OFFSET),
-                _texture(ir_txd, v130, glsl_type::ivec4_type, glsl_type::isampler2DArray_type, 3, glsl_type::vec3_type, TEX_OFFSET),
-                _texture(ir_txd, v130, glsl_type::uvec4_type, glsl_type::usampler2DArray_type, 3, glsl_type::vec3_type, TEX_OFFSET),
+                _texture(ir_txd, v130, glsl_type::vec4_type,  glsl_type::sampler2DArray_type,  glsl_type::vec3_type, TEX_OFFSET),
+                _texture(ir_txd, v130, glsl_type::ivec4_type, glsl_type::isampler2DArray_type, glsl_type::vec3_type, TEX_OFFSET),
+                _texture(ir_txd, v130, glsl_type::uvec4_type, glsl_type::usampler2DArray_type, glsl_type::vec3_type, TEX_OFFSET),
 
-                _texture(ir_txd, v130, glsl_type::float_type, glsl_type::sampler1DArrayShadow_type, 2, glsl_type::vec3_type, TEX_OFFSET),
-                _texture(ir_txd, v130, glsl_type::float_type, glsl_type::sampler2DArrayShadow_type, 3, glsl_type::vec4_type, TEX_OFFSET),
+                _texture(ir_txd, v130, glsl_type::float_type, glsl_type::sampler1DArrayShadow_type, glsl_type::vec3_type, TEX_OFFSET),
+                _texture(ir_txd, v130, glsl_type::float_type, glsl_type::sampler2DArrayShadow_type, glsl_type::vec4_type, TEX_OFFSET),
                 NULL);
 
    add_function("textureProjGrad",
-                _texture(ir_txd, v130, glsl_type::vec4_type,  glsl_type::sampler1D_type,  1, glsl_type::vec2_type, TEX_PROJECT),
-                _texture(ir_txd, v130, glsl_type::ivec4_type, glsl_type::isampler1D_type, 1, glsl_type::vec2_type, TEX_PROJECT),
-                _texture(ir_txd, v130, glsl_type::uvec4_type, glsl_type::usampler1D_type, 1, glsl_type::vec2_type, TEX_PROJECT),
-                _texture(ir_txd, v130, glsl_type::vec4_type,  glsl_type::sampler1D_type,  1, glsl_type::vec4_type, TEX_PROJECT),
-                _texture(ir_txd, v130, glsl_type::ivec4_type, glsl_type::isampler1D_type, 1, glsl_type::vec4_type, TEX_PROJECT),
-                _texture(ir_txd, v130, glsl_type::uvec4_type, glsl_type::usampler1D_type, 1, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txd, v130, glsl_type::vec4_type,  glsl_type::sampler1D_type,  glsl_type::vec2_type, TEX_PROJECT),
+                _texture(ir_txd, v130, glsl_type::ivec4_type, glsl_type::isampler1D_type, glsl_type::vec2_type, TEX_PROJECT),
+                _texture(ir_txd, v130, glsl_type::uvec4_type, glsl_type::usampler1D_type, glsl_type::vec2_type, TEX_PROJECT),
+                _texture(ir_txd, v130, glsl_type::vec4_type,  glsl_type::sampler1D_type,  glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txd, v130, glsl_type::ivec4_type, glsl_type::isampler1D_type, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txd, v130, glsl_type::uvec4_type, glsl_type::usampler1D_type, glsl_type::vec4_type, TEX_PROJECT),
 
-                _texture(ir_txd, v130, glsl_type::vec4_type,  glsl_type::sampler2D_type,  2, glsl_type::vec3_type, TEX_PROJECT),
-                _texture(ir_txd, v130, glsl_type::ivec4_type, glsl_type::isampler2D_type, 2, glsl_type::vec3_type, TEX_PROJECT),
-                _texture(ir_txd, v130, glsl_type::uvec4_type, glsl_type::usampler2D_type, 2, glsl_type::vec3_type, TEX_PROJECT),
-                _texture(ir_txd, v130, glsl_type::vec4_type,  glsl_type::sampler2D_type,  2, glsl_type::vec4_type, TEX_PROJECT),
-                _texture(ir_txd, v130, glsl_type::ivec4_type, glsl_type::isampler2D_type, 2, glsl_type::vec4_type, TEX_PROJECT),
-                _texture(ir_txd, v130, glsl_type::uvec4_type, glsl_type::usampler2D_type, 2, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txd, v130, glsl_type::vec4_type,  glsl_type::sampler2D_type,  glsl_type::vec3_type, TEX_PROJECT),
+                _texture(ir_txd, v130, glsl_type::ivec4_type, glsl_type::isampler2D_type, glsl_type::vec3_type, TEX_PROJECT),
+                _texture(ir_txd, v130, glsl_type::uvec4_type, glsl_type::usampler2D_type, glsl_type::vec3_type, TEX_PROJECT),
+                _texture(ir_txd, v130, glsl_type::vec4_type,  glsl_type::sampler2D_type,  glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txd, v130, glsl_type::ivec4_type, glsl_type::isampler2D_type, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txd, v130, glsl_type::uvec4_type, glsl_type::usampler2D_type, glsl_type::vec4_type, TEX_PROJECT),
 
-                _texture(ir_txd, v130, glsl_type::vec4_type,  glsl_type::sampler3D_type,  3, glsl_type::vec4_type, TEX_PROJECT),
-                _texture(ir_txd, v130, glsl_type::ivec4_type, glsl_type::isampler3D_type, 3, glsl_type::vec4_type, TEX_PROJECT),
-                _texture(ir_txd, v130, glsl_type::uvec4_type, glsl_type::usampler3D_type, 3, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txd, v130, glsl_type::vec4_type,  glsl_type::sampler3D_type,  glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txd, v130, glsl_type::ivec4_type, glsl_type::isampler3D_type, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txd, v130, glsl_type::uvec4_type, glsl_type::usampler3D_type, glsl_type::vec4_type, TEX_PROJECT),
 
-                _texture(ir_txd, v130, glsl_type::vec4_type,  glsl_type::sampler2DRect_type,  2, glsl_type::vec3_type, TEX_PROJECT),
-                _texture(ir_txd, v130, glsl_type::ivec4_type, glsl_type::isampler2DRect_type, 2, glsl_type::vec3_type, TEX_PROJECT),
-                _texture(ir_txd, v130, glsl_type::uvec4_type, glsl_type::usampler2DRect_type, 2, glsl_type::vec3_type, TEX_PROJECT),
-                _texture(ir_txd, v130, glsl_type::vec4_type,  glsl_type::sampler2DRect_type,  2, glsl_type::vec4_type, TEX_PROJECT),
-                _texture(ir_txd, v130, glsl_type::ivec4_type, glsl_type::isampler2DRect_type, 2, glsl_type::vec4_type, TEX_PROJECT),
-                _texture(ir_txd, v130, glsl_type::uvec4_type, glsl_type::usampler2DRect_type, 2, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txd, v130, glsl_type::vec4_type,  glsl_type::sampler2DRect_type,  glsl_type::vec3_type, TEX_PROJECT),
+                _texture(ir_txd, v130, glsl_type::ivec4_type, glsl_type::isampler2DRect_type, glsl_type::vec3_type, TEX_PROJECT),
+                _texture(ir_txd, v130, glsl_type::uvec4_type, glsl_type::usampler2DRect_type, glsl_type::vec3_type, TEX_PROJECT),
+                _texture(ir_txd, v130, glsl_type::vec4_type,  glsl_type::sampler2DRect_type,  glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txd, v130, glsl_type::ivec4_type, glsl_type::isampler2DRect_type, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txd, v130, glsl_type::uvec4_type, glsl_type::usampler2DRect_type, glsl_type::vec4_type, TEX_PROJECT),
 
-                _texture(ir_txd, v130, glsl_type::float_type, glsl_type::sampler2DRectShadow_type, 2, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txd, v130, glsl_type::float_type, glsl_type::sampler2DRectShadow_type, glsl_type::vec4_type, TEX_PROJECT),
 
-                _texture(ir_txd, v130, glsl_type::float_type, glsl_type::sampler1DShadow_type, 1, glsl_type::vec4_type, TEX_PROJECT),
-                _texture(ir_txd, v130, glsl_type::float_type, glsl_type::sampler2DShadow_type, 2, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txd, v130, glsl_type::float_type, glsl_type::sampler1DShadow_type, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txd, v130, glsl_type::float_type, glsl_type::sampler2DShadow_type, glsl_type::vec4_type, TEX_PROJECT),
                 NULL);
 
    add_function("textureProjGradOffset",
-                _texture(ir_txd, v130, glsl_type::vec4_type,  glsl_type::sampler1D_type,  1, glsl_type::vec2_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_txd, v130, glsl_type::ivec4_type, glsl_type::isampler1D_type, 1, glsl_type::vec2_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_txd, v130, glsl_type::uvec4_type, glsl_type::usampler1D_type, 1, glsl_type::vec2_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_txd, v130, glsl_type::vec4_type,  glsl_type::sampler1D_type,  1, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_txd, v130, glsl_type::ivec4_type, glsl_type::isampler1D_type, 1, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_txd, v130, glsl_type::uvec4_type, glsl_type::usampler1D_type, 1, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txd, v130, glsl_type::vec4_type,  glsl_type::sampler1D_type,  glsl_type::vec2_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txd, v130, glsl_type::ivec4_type, glsl_type::isampler1D_type, glsl_type::vec2_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txd, v130, glsl_type::uvec4_type, glsl_type::usampler1D_type, glsl_type::vec2_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txd, v130, glsl_type::vec4_type,  glsl_type::sampler1D_type,  glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txd, v130, glsl_type::ivec4_type, glsl_type::isampler1D_type, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txd, v130, glsl_type::uvec4_type, glsl_type::usampler1D_type, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
 
-                _texture(ir_txd, v130, glsl_type::vec4_type,  glsl_type::sampler2D_type,  2, glsl_type::vec3_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_txd, v130, glsl_type::ivec4_type, glsl_type::isampler2D_type, 2, glsl_type::vec3_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_txd, v130, glsl_type::uvec4_type, glsl_type::usampler2D_type, 2, glsl_type::vec3_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_txd, v130, glsl_type::vec4_type,  glsl_type::sampler2D_type,  2, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_txd, v130, glsl_type::ivec4_type, glsl_type::isampler2D_type, 2, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_txd, v130, glsl_type::uvec4_type, glsl_type::usampler2D_type, 2, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txd, v130, glsl_type::vec4_type,  glsl_type::sampler2D_type,  glsl_type::vec3_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txd, v130, glsl_type::ivec4_type, glsl_type::isampler2D_type, glsl_type::vec3_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txd, v130, glsl_type::uvec4_type, glsl_type::usampler2D_type, glsl_type::vec3_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txd, v130, glsl_type::vec4_type,  glsl_type::sampler2D_type,  glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txd, v130, glsl_type::ivec4_type, glsl_type::isampler2D_type, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txd, v130, glsl_type::uvec4_type, glsl_type::usampler2D_type, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
 
-                _texture(ir_txd, v130, glsl_type::vec4_type,  glsl_type::sampler3D_type,  3, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_txd, v130, glsl_type::ivec4_type, glsl_type::isampler3D_type, 3, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_txd, v130, glsl_type::uvec4_type, glsl_type::usampler3D_type, 3, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txd, v130, glsl_type::vec4_type,  glsl_type::sampler3D_type,  glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txd, v130, glsl_type::ivec4_type, glsl_type::isampler3D_type, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txd, v130, glsl_type::uvec4_type, glsl_type::usampler3D_type, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
 
-                _texture(ir_txd, v130, glsl_type::vec4_type,  glsl_type::sampler2DRect_type,  2, glsl_type::vec3_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_txd, v130, glsl_type::ivec4_type, glsl_type::isampler2DRect_type, 2, glsl_type::vec3_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_txd, v130, glsl_type::uvec4_type, glsl_type::usampler2DRect_type, 2, glsl_type::vec3_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_txd, v130, glsl_type::vec4_type,  glsl_type::sampler2DRect_type,  2, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_txd, v130, glsl_type::ivec4_type, glsl_type::isampler2DRect_type, 2, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_txd, v130, glsl_type::uvec4_type, glsl_type::usampler2DRect_type, 2, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txd, v130, glsl_type::vec4_type,  glsl_type::sampler2DRect_type,  glsl_type::vec3_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txd, v130, glsl_type::ivec4_type, glsl_type::isampler2DRect_type, glsl_type::vec3_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txd, v130, glsl_type::uvec4_type, glsl_type::usampler2DRect_type, glsl_type::vec3_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txd, v130, glsl_type::vec4_type,  glsl_type::sampler2DRect_type,  glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txd, v130, glsl_type::ivec4_type, glsl_type::isampler2DRect_type, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txd, v130, glsl_type::uvec4_type, glsl_type::usampler2DRect_type, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
 
-                _texture(ir_txd, v130, glsl_type::float_type, glsl_type::sampler2DRectShadow_type, 2, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txd, v130, glsl_type::float_type, glsl_type::sampler2DRectShadow_type, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
 
-                _texture(ir_txd, v130, glsl_type::float_type, glsl_type::sampler1DShadow_type, 1, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
-                _texture(ir_txd, v130, glsl_type::float_type, glsl_type::sampler2DShadow_type, 2, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txd, v130, glsl_type::float_type, glsl_type::sampler1DShadow_type, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
+                _texture(ir_txd, v130, glsl_type::float_type, glsl_type::sampler2DShadow_type, glsl_type::vec4_type, TEX_PROJECT | TEX_OFFSET),
                 NULL);
 
    add_function("EmitVertex",   _EmitVertex(),   NULL);
@@ -1589,223 +1588,223 @@ builtin_builder::create_builtins()
                 NULL);
 
    add_function("texture1D",
-                _texture(ir_tex, v110,         glsl_type::vec4_type,  glsl_type::sampler1D_type, 1, glsl_type::float_type),
-                _texture(ir_txb, v110_fs_only, glsl_type::vec4_type,  glsl_type::sampler1D_type, 1, glsl_type::float_type),
+                _texture(ir_tex, v110,         glsl_type::vec4_type,  glsl_type::sampler1D_type, glsl_type::float_type),
+                _texture(ir_txb, v110_fs_only, glsl_type::vec4_type,  glsl_type::sampler1D_type, glsl_type::float_type),
                 NULL);
 
    add_function("texture1DArray",
-                _texture(ir_tex, texture_array,    glsl_type::vec4_type, glsl_type::sampler1DArray_type, 2, glsl_type::vec2_type),
-                _texture(ir_txb, fs_texture_array, glsl_type::vec4_type, glsl_type::sampler1DArray_type, 2, glsl_type::vec2_type),
+                _texture(ir_tex, texture_array,    glsl_type::vec4_type, glsl_type::sampler1DArray_type, glsl_type::vec2_type),
+                _texture(ir_txb, fs_texture_array, glsl_type::vec4_type, glsl_type::sampler1DArray_type, glsl_type::vec2_type),
                 NULL);
 
    add_function("texture1DProj",
-                _texture(ir_tex, v110,         glsl_type::vec4_type,  glsl_type::sampler1D_type, 1, glsl_type::vec2_type, TEX_PROJECT),
-                _texture(ir_tex, v110,         glsl_type::vec4_type,  glsl_type::sampler1D_type, 1, glsl_type::vec4_type, TEX_PROJECT),
-                _texture(ir_txb, v110_fs_only, glsl_type::vec4_type,  glsl_type::sampler1D_type, 1, glsl_type::vec2_type, TEX_PROJECT),
-                _texture(ir_txb, v110_fs_only, glsl_type::vec4_type,  glsl_type::sampler1D_type, 1, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_tex, v110,         glsl_type::vec4_type,  glsl_type::sampler1D_type, glsl_type::vec2_type, TEX_PROJECT),
+                _texture(ir_tex, v110,         glsl_type::vec4_type,  glsl_type::sampler1D_type, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txb, v110_fs_only, glsl_type::vec4_type,  glsl_type::sampler1D_type, glsl_type::vec2_type, TEX_PROJECT),
+                _texture(ir_txb, v110_fs_only, glsl_type::vec4_type,  glsl_type::sampler1D_type, glsl_type::vec4_type, TEX_PROJECT),
                 NULL);
 
    add_function("texture1DLod",
-                _texture(ir_txl, tex1d_lod, glsl_type::vec4_type,  glsl_type::sampler1D_type, 1, glsl_type::float_type),
+                _texture(ir_txl, tex1d_lod, glsl_type::vec4_type,  glsl_type::sampler1D_type, glsl_type::float_type),
                 NULL);
 
    add_function("texture1DArrayLod",
-                _texture(ir_txl, vs_texture_array, glsl_type::vec4_type, glsl_type::sampler1DArray_type, 2, glsl_type::vec2_type),
+                _texture(ir_txl, vs_texture_array, glsl_type::vec4_type, glsl_type::sampler1DArray_type, glsl_type::vec2_type),
                 NULL);
 
    add_function("texture1DProjLod",
-                _texture(ir_txl, tex1d_lod, glsl_type::vec4_type,  glsl_type::sampler1D_type, 1, glsl_type::vec2_type, TEX_PROJECT),
-                _texture(ir_txl, tex1d_lod, glsl_type::vec4_type,  glsl_type::sampler1D_type, 1, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txl, tex1d_lod, glsl_type::vec4_type,  glsl_type::sampler1D_type, glsl_type::vec2_type, TEX_PROJECT),
+                _texture(ir_txl, tex1d_lod, glsl_type::vec4_type,  glsl_type::sampler1D_type, glsl_type::vec4_type, TEX_PROJECT),
                 NULL);
 
    add_function("texture2D",
-                _texture(ir_tex, always_available, glsl_type::vec4_type,  glsl_type::sampler2D_type, 2, glsl_type::vec2_type),
-                _texture(ir_txb, fs_only,          glsl_type::vec4_type,  glsl_type::sampler2D_type, 2, glsl_type::vec2_type),
-                _texture(ir_tex, texture_external, glsl_type::vec4_type,  glsl_type::samplerExternalOES_type, 2, glsl_type::vec2_type),
+                _texture(ir_tex, always_available, glsl_type::vec4_type,  glsl_type::sampler2D_type, glsl_type::vec2_type),
+                _texture(ir_txb, fs_only,          glsl_type::vec4_type,  glsl_type::sampler2D_type, glsl_type::vec2_type),
+                _texture(ir_tex, texture_external, glsl_type::vec4_type,  glsl_type::samplerExternalOES_type, glsl_type::vec2_type),
                 NULL);
 
    add_function("texture2DArray",
-                _texture(ir_tex, texture_array,    glsl_type::vec4_type, glsl_type::sampler2DArray_type, 3, glsl_type::vec3_type),
-                _texture(ir_txb, fs_texture_array, glsl_type::vec4_type, glsl_type::sampler2DArray_type, 3, glsl_type::vec3_type),
+                _texture(ir_tex, texture_array,    glsl_type::vec4_type, glsl_type::sampler2DArray_type, glsl_type::vec3_type),
+                _texture(ir_txb, fs_texture_array, glsl_type::vec4_type, glsl_type::sampler2DArray_type, glsl_type::vec3_type),
                 NULL);
 
    add_function("texture2DProj",
-                _texture(ir_tex, always_available, glsl_type::vec4_type,  glsl_type::sampler2D_type, 2, glsl_type::vec3_type, TEX_PROJECT),
-                _texture(ir_tex, always_available, glsl_type::vec4_type,  glsl_type::sampler2D_type, 2, glsl_type::vec4_type, TEX_PROJECT),
-                _texture(ir_txb, fs_only,          glsl_type::vec4_type,  glsl_type::sampler2D_type, 2, glsl_type::vec3_type, TEX_PROJECT),
-                _texture(ir_txb, fs_only,          glsl_type::vec4_type,  glsl_type::sampler2D_type, 2, glsl_type::vec4_type, TEX_PROJECT),
-                _texture(ir_tex, texture_external, glsl_type::vec4_type,  glsl_type::samplerExternalOES_type, 2, glsl_type::vec3_type, TEX_PROJECT),
-                _texture(ir_tex, texture_external, glsl_type::vec4_type,  glsl_type::samplerExternalOES_type, 2, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_tex, always_available, glsl_type::vec4_type,  glsl_type::sampler2D_type, glsl_type::vec3_type, TEX_PROJECT),
+                _texture(ir_tex, always_available, glsl_type::vec4_type,  glsl_type::sampler2D_type, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txb, fs_only,          glsl_type::vec4_type,  glsl_type::sampler2D_type, glsl_type::vec3_type, TEX_PROJECT),
+                _texture(ir_txb, fs_only,          glsl_type::vec4_type,  glsl_type::sampler2D_type, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_tex, texture_external, glsl_type::vec4_type,  glsl_type::samplerExternalOES_type, glsl_type::vec3_type, TEX_PROJECT),
+                _texture(ir_tex, texture_external, glsl_type::vec4_type,  glsl_type::samplerExternalOES_type, glsl_type::vec4_type, TEX_PROJECT),
                 NULL);
 
    add_function("texture2DLod",
-                _texture(ir_txl, lod_exists_in_stage, glsl_type::vec4_type,  glsl_type::sampler2D_type, 2, glsl_type::vec2_type),
+                _texture(ir_txl, lod_exists_in_stage, glsl_type::vec4_type,  glsl_type::sampler2D_type, glsl_type::vec2_type),
                 NULL);
 
    add_function("texture2DArrayLod",
-                _texture(ir_txl, vs_texture_array, glsl_type::vec4_type, glsl_type::sampler2DArray_type, 3, glsl_type::vec3_type),
+                _texture(ir_txl, vs_texture_array, glsl_type::vec4_type, glsl_type::sampler2DArray_type, glsl_type::vec3_type),
                 NULL);
 
    add_function("texture2DProjLod",
-                _texture(ir_txl, v110_lod, glsl_type::vec4_type,  glsl_type::sampler2D_type, 2, glsl_type::vec3_type, TEX_PROJECT),
-                _texture(ir_txl, v110_lod, glsl_type::vec4_type,  glsl_type::sampler2D_type, 2, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txl, v110_lod, glsl_type::vec4_type,  glsl_type::sampler2D_type, glsl_type::vec3_type, TEX_PROJECT),
+                _texture(ir_txl, v110_lod, glsl_type::vec4_type,  glsl_type::sampler2D_type, glsl_type::vec4_type, TEX_PROJECT),
                 NULL);
 
    add_function("texture3D",
-                _texture(ir_tex, tex3d,    glsl_type::vec4_type,  glsl_type::sampler3D_type, 3, glsl_type::vec3_type),
-                _texture(ir_txb, fs_tex3d, glsl_type::vec4_type,  glsl_type::sampler3D_type, 3, glsl_type::vec3_type),
+                _texture(ir_tex, tex3d,    glsl_type::vec4_type,  glsl_type::sampler3D_type, glsl_type::vec3_type),
+                _texture(ir_txb, fs_tex3d, glsl_type::vec4_type,  glsl_type::sampler3D_type, glsl_type::vec3_type),
                 NULL);
 
    add_function("texture3DProj",
-                _texture(ir_tex, tex3d,    glsl_type::vec4_type,  glsl_type::sampler3D_type, 3, glsl_type::vec4_type, TEX_PROJECT),
-                _texture(ir_txb, fs_tex3d, glsl_type::vec4_type,  glsl_type::sampler3D_type, 3, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_tex, tex3d,    glsl_type::vec4_type,  glsl_type::sampler3D_type, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txb, fs_tex3d, glsl_type::vec4_type,  glsl_type::sampler3D_type, glsl_type::vec4_type, TEX_PROJECT),
                 NULL);
 
    add_function("texture3DLod",
-                _texture(ir_txl, tex3d_lod, glsl_type::vec4_type,  glsl_type::sampler3D_type, 3, glsl_type::vec3_type),
+                _texture(ir_txl, tex3d_lod, glsl_type::vec4_type,  glsl_type::sampler3D_type, glsl_type::vec3_type),
                 NULL);
 
    add_function("texture3DProjLod",
-                _texture(ir_txl, tex3d_lod, glsl_type::vec4_type,  glsl_type::sampler3D_type, 3, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txl, tex3d_lod, glsl_type::vec4_type,  glsl_type::sampler3D_type, glsl_type::vec4_type, TEX_PROJECT),
                 NULL);
 
    add_function("textureCube",
-                _texture(ir_tex, always_available, glsl_type::vec4_type,  glsl_type::samplerCube_type, 3, glsl_type::vec3_type),
-                _texture(ir_txb, fs_only,          glsl_type::vec4_type,  glsl_type::samplerCube_type, 3, glsl_type::vec3_type),
+                _texture(ir_tex, always_available, glsl_type::vec4_type,  glsl_type::samplerCube_type, glsl_type::vec3_type),
+                _texture(ir_txb, fs_only,          glsl_type::vec4_type,  glsl_type::samplerCube_type, glsl_type::vec3_type),
                 NULL);
 
    add_function("textureCubeLod",
-                _texture(ir_txl, v110_lod, glsl_type::vec4_type,  glsl_type::samplerCube_type, 3, glsl_type::vec3_type),
+                _texture(ir_txl, v110_lod, glsl_type::vec4_type,  glsl_type::samplerCube_type, glsl_type::vec3_type),
                 NULL);
 
    add_function("texture2DRect",
-                _texture(ir_tex, texture_rectangle, glsl_type::vec4_type,  glsl_type::sampler2DRect_type, 2, glsl_type::vec2_type),
+                _texture(ir_tex, texture_rectangle, glsl_type::vec4_type,  glsl_type::sampler2DRect_type, glsl_type::vec2_type),
                 NULL);
 
    add_function("texture2DRectProj",
-                _texture(ir_tex, texture_rectangle, glsl_type::vec4_type,  glsl_type::sampler2DRect_type, 2, glsl_type::vec3_type, TEX_PROJECT),
-                _texture(ir_tex, texture_rectangle, glsl_type::vec4_type,  glsl_type::sampler2DRect_type, 2, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_tex, texture_rectangle, glsl_type::vec4_type,  glsl_type::sampler2DRect_type, glsl_type::vec3_type, TEX_PROJECT),
+                _texture(ir_tex, texture_rectangle, glsl_type::vec4_type,  glsl_type::sampler2DRect_type, glsl_type::vec4_type, TEX_PROJECT),
                 NULL);
 
    add_function("shadow1D",
-                _texture(ir_tex, v110,         glsl_type::vec4_type,  glsl_type::sampler1DShadow_type, 1, glsl_type::vec3_type),
-                _texture(ir_txb, v110_fs_only, glsl_type::vec4_type,  glsl_type::sampler1DShadow_type, 1, glsl_type::vec3_type),
+                _texture(ir_tex, v110,         glsl_type::vec4_type,  glsl_type::sampler1DShadow_type, glsl_type::vec3_type),
+                _texture(ir_txb, v110_fs_only, glsl_type::vec4_type,  glsl_type::sampler1DShadow_type, glsl_type::vec3_type),
                 NULL);
 
    add_function("shadow1DArray",
-                _texture(ir_tex, texture_array,    glsl_type::vec4_type,  glsl_type::sampler1DArrayShadow_type, 2, glsl_type::vec3_type),
-                _texture(ir_txb, fs_texture_array, glsl_type::vec4_type,  glsl_type::sampler1DArrayShadow_type, 2, glsl_type::vec3_type),
+                _texture(ir_tex, texture_array,    glsl_type::vec4_type,  glsl_type::sampler1DArrayShadow_type, glsl_type::vec3_type),
+                _texture(ir_txb, fs_texture_array, glsl_type::vec4_type,  glsl_type::sampler1DArrayShadow_type, glsl_type::vec3_type),
                 NULL);
 
    add_function("shadow2D",
-                _texture(ir_tex, v110,         glsl_type::vec4_type,  glsl_type::sampler2DShadow_type, 2, glsl_type::vec3_type),
-                _texture(ir_txb, v110_fs_only, glsl_type::vec4_type,  glsl_type::sampler2DShadow_type, 2, glsl_type::vec3_type),
+                _texture(ir_tex, v110,         glsl_type::vec4_type,  glsl_type::sampler2DShadow_type, glsl_type::vec3_type),
+                _texture(ir_txb, v110_fs_only, glsl_type::vec4_type,  glsl_type::sampler2DShadow_type, glsl_type::vec3_type),
                 NULL);
 
    add_function("shadow2DArray",
-                _texture(ir_tex, texture_array,    glsl_type::vec4_type,  glsl_type::sampler2DArrayShadow_type, 3, glsl_type::vec4_type),
-                _texture(ir_txb, fs_texture_array, glsl_type::vec4_type,  glsl_type::sampler2DArrayShadow_type, 3, glsl_type::vec4_type),
+                _texture(ir_tex, texture_array,    glsl_type::vec4_type,  glsl_type::sampler2DArrayShadow_type, glsl_type::vec4_type),
+                _texture(ir_txb, fs_texture_array, glsl_type::vec4_type,  glsl_type::sampler2DArrayShadow_type, glsl_type::vec4_type),
                 NULL);
 
    add_function("shadow1DProj",
-                _texture(ir_tex, v110,         glsl_type::vec4_type,  glsl_type::sampler1DShadow_type, 1, glsl_type::vec4_type, TEX_PROJECT),
-                _texture(ir_txb, v110_fs_only, glsl_type::vec4_type,  glsl_type::sampler1DShadow_type, 1, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_tex, v110,         glsl_type::vec4_type,  glsl_type::sampler1DShadow_type, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txb, v110_fs_only, glsl_type::vec4_type,  glsl_type::sampler1DShadow_type, glsl_type::vec4_type, TEX_PROJECT),
                 NULL);
 
    add_function("shadow2DProj",
-                _texture(ir_tex, v110,         glsl_type::vec4_type,  glsl_type::sampler2DShadow_type, 2, glsl_type::vec4_type, TEX_PROJECT),
-                _texture(ir_txb, v110_fs_only, glsl_type::vec4_type,  glsl_type::sampler2DShadow_type, 2, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_tex, v110,         glsl_type::vec4_type,  glsl_type::sampler2DShadow_type, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txb, v110_fs_only, glsl_type::vec4_type,  glsl_type::sampler2DShadow_type, glsl_type::vec4_type, TEX_PROJECT),
                 NULL);
 
    add_function("shadow1DLod",
-                _texture(ir_txl, v110_lod, glsl_type::vec4_type,  glsl_type::sampler1DShadow_type, 1, glsl_type::vec3_type),
+                _texture(ir_txl, v110_lod, glsl_type::vec4_type,  glsl_type::sampler1DShadow_type, glsl_type::vec3_type),
                 NULL);
 
    add_function("shadow2DLod",
-                _texture(ir_txl, v110_lod, glsl_type::vec4_type,  glsl_type::sampler2DShadow_type, 2, glsl_type::vec3_type),
+                _texture(ir_txl, v110_lod, glsl_type::vec4_type,  glsl_type::sampler2DShadow_type, glsl_type::vec3_type),
                 NULL);
 
    add_function("shadow1DArrayLod",
-                _texture(ir_txl, vs_texture_array, glsl_type::vec4_type, glsl_type::sampler1DArrayShadow_type, 2, glsl_type::vec3_type),
+                _texture(ir_txl, vs_texture_array, glsl_type::vec4_type, glsl_type::sampler1DArrayShadow_type, glsl_type::vec3_type),
                 NULL);
 
    add_function("shadow1DProjLod",
-                _texture(ir_txl, v110_lod, glsl_type::vec4_type,  glsl_type::sampler1DShadow_type, 1, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txl, v110_lod, glsl_type::vec4_type,  glsl_type::sampler1DShadow_type, glsl_type::vec4_type, TEX_PROJECT),
                 NULL);
 
    add_function("shadow2DProjLod",
-                _texture(ir_txl, v110_lod, glsl_type::vec4_type,  glsl_type::sampler2DShadow_type, 2, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txl, v110_lod, glsl_type::vec4_type,  glsl_type::sampler2DShadow_type, glsl_type::vec4_type, TEX_PROJECT),
                 NULL);
 
    add_function("shadow2DRect",
-                _texture(ir_tex, texture_rectangle, glsl_type::vec4_type,  glsl_type::sampler2DRectShadow_type, 2, glsl_type::vec3_type),
+                _texture(ir_tex, texture_rectangle, glsl_type::vec4_type,  glsl_type::sampler2DRectShadow_type, glsl_type::vec3_type),
                 NULL);
 
    add_function("shadow2DRectProj",
-                _texture(ir_tex, texture_rectangle, glsl_type::vec4_type,  glsl_type::sampler2DRectShadow_type, 2, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_tex, texture_rectangle, glsl_type::vec4_type,  glsl_type::sampler2DRectShadow_type, glsl_type::vec4_type, TEX_PROJECT),
                 NULL);
 
    add_function("texture1DGradARB",
-                _texture(ir_txd, shader_texture_lod, glsl_type::vec4_type,  glsl_type::sampler1D_type, 1, glsl_type::float_type),
+                _texture(ir_txd, shader_texture_lod, glsl_type::vec4_type,  glsl_type::sampler1D_type, glsl_type::float_type),
                 NULL);
 
    add_function("texture1DProjGradARB",
-                _texture(ir_txd, shader_texture_lod, glsl_type::vec4_type,  glsl_type::sampler1D_type, 1, glsl_type::vec2_type, TEX_PROJECT),
-                _texture(ir_txd, shader_texture_lod, glsl_type::vec4_type,  glsl_type::sampler1D_type, 1, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txd, shader_texture_lod, glsl_type::vec4_type,  glsl_type::sampler1D_type, glsl_type::vec2_type, TEX_PROJECT),
+                _texture(ir_txd, shader_texture_lod, glsl_type::vec4_type,  glsl_type::sampler1D_type, glsl_type::vec4_type, TEX_PROJECT),
                 NULL);
 
    add_function("texture2DGradARB",
-                _texture(ir_txd, shader_texture_lod, glsl_type::vec4_type,  glsl_type::sampler2D_type, 2, glsl_type::vec2_type),
+                _texture(ir_txd, shader_texture_lod, glsl_type::vec4_type,  glsl_type::sampler2D_type, glsl_type::vec2_type),
                 NULL);
 
    add_function("texture2DProjGradARB",
-                _texture(ir_txd, shader_texture_lod, glsl_type::vec4_type,  glsl_type::sampler2D_type, 2, glsl_type::vec3_type, TEX_PROJECT),
-                _texture(ir_txd, shader_texture_lod, glsl_type::vec4_type,  glsl_type::sampler2D_type, 2, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txd, shader_texture_lod, glsl_type::vec4_type,  glsl_type::sampler2D_type, glsl_type::vec3_type, TEX_PROJECT),
+                _texture(ir_txd, shader_texture_lod, glsl_type::vec4_type,  glsl_type::sampler2D_type, glsl_type::vec4_type, TEX_PROJECT),
                 NULL);
 
    add_function("texture3DGradARB",
-                _texture(ir_txd, shader_texture_lod, glsl_type::vec4_type,  glsl_type::sampler3D_type, 3, glsl_type::vec3_type),
+                _texture(ir_txd, shader_texture_lod, glsl_type::vec4_type,  glsl_type::sampler3D_type, glsl_type::vec3_type),
                 NULL);
 
    add_function("texture3DProjGradARB",
-                _texture(ir_txd, shader_texture_lod, glsl_type::vec4_type,  glsl_type::sampler3D_type, 3, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txd, shader_texture_lod, glsl_type::vec4_type,  glsl_type::sampler3D_type, glsl_type::vec4_type, TEX_PROJECT),
                 NULL);
 
    add_function("textureCubeGradARB",
-                _texture(ir_txd, shader_texture_lod, glsl_type::vec4_type,  glsl_type::samplerCube_type, 3, glsl_type::vec3_type),
+                _texture(ir_txd, shader_texture_lod, glsl_type::vec4_type,  glsl_type::samplerCube_type, glsl_type::vec3_type),
                 NULL);
 
    add_function("shadow1DGradARB",
-                _texture(ir_txd, shader_texture_lod, glsl_type::vec4_type,  glsl_type::sampler1DShadow_type, 1, glsl_type::vec3_type),
+                _texture(ir_txd, shader_texture_lod, glsl_type::vec4_type,  glsl_type::sampler1DShadow_type, glsl_type::vec3_type),
                 NULL);
 
    add_function("shadow1DProjGradARB",
-                _texture(ir_txd, shader_texture_lod, glsl_type::vec4_type,  glsl_type::sampler1DShadow_type, 1, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txd, shader_texture_lod, glsl_type::vec4_type,  glsl_type::sampler1DShadow_type, glsl_type::vec4_type, TEX_PROJECT),
                 NULL);
 
    add_function("shadow2DGradARB",
-                _texture(ir_txd, shader_texture_lod, glsl_type::vec4_type,  glsl_type::sampler2DShadow_type, 2, glsl_type::vec3_type),
+                _texture(ir_txd, shader_texture_lod, glsl_type::vec4_type,  glsl_type::sampler2DShadow_type, glsl_type::vec3_type),
                 NULL);
 
    add_function("shadow2DProjGradARB",
-                _texture(ir_txd, shader_texture_lod, glsl_type::vec4_type,  glsl_type::sampler2DShadow_type, 2, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txd, shader_texture_lod, glsl_type::vec4_type,  glsl_type::sampler2DShadow_type, glsl_type::vec4_type, TEX_PROJECT),
                 NULL);
 
    add_function("texture2DRectGradARB",
-                _texture(ir_txd, shader_texture_lod_and_rect, glsl_type::vec4_type,  glsl_type::sampler2DRect_type, 2, glsl_type::vec2_type),
+                _texture(ir_txd, shader_texture_lod_and_rect, glsl_type::vec4_type,  glsl_type::sampler2DRect_type, glsl_type::vec2_type),
                 NULL);
 
    add_function("texture2DRectProjGradARB",
-                _texture(ir_txd, shader_texture_lod_and_rect, glsl_type::vec4_type,  glsl_type::sampler2DRect_type, 2, glsl_type::vec3_type, TEX_PROJECT),
-                _texture(ir_txd, shader_texture_lod_and_rect, glsl_type::vec4_type,  glsl_type::sampler2DRect_type, 2, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txd, shader_texture_lod_and_rect, glsl_type::vec4_type,  glsl_type::sampler2DRect_type, glsl_type::vec3_type, TEX_PROJECT),
+                _texture(ir_txd, shader_texture_lod_and_rect, glsl_type::vec4_type,  glsl_type::sampler2DRect_type, glsl_type::vec4_type, TEX_PROJECT),
                 NULL);
 
    add_function("shadow2DRectGradARB",
-                _texture(ir_txd, shader_texture_lod_and_rect, glsl_type::vec4_type,  glsl_type::sampler2DRectShadow_type, 2, glsl_type::vec3_type),
+                _texture(ir_txd, shader_texture_lod_and_rect, glsl_type::vec4_type,  glsl_type::sampler2DRectShadow_type, glsl_type::vec3_type),
                 NULL);
 
    add_function("shadow2DRectProjGradARB",
-                _texture(ir_txd, shader_texture_lod_and_rect, glsl_type::vec4_type,  glsl_type::sampler2DRectShadow_type, 2, glsl_type::vec4_type, TEX_PROJECT),
+                _texture(ir_txd, shader_texture_lod_and_rect, glsl_type::vec4_type,  glsl_type::sampler2DRectShadow_type, glsl_type::vec4_type, TEX_PROJECT),
                 NULL);
 
    F(dFdx)
@@ -3170,7 +3169,6 @@ builtin_builder::_texture(ir_texture_opcode opcode,
                           builtin_available_predicate avail,
                           const glsl_type *return_type,
                           const glsl_type *sampler_type,
-                          int coord_size,
                           const glsl_type *coord_type,
                           int flags)
 {
@@ -3181,6 +3179,8 @@ builtin_builder::_texture(ir_texture_opcode opcode,
 
    ir_texture *tex = new(mem_ctx) ir_texture(opcode);
    tex->set_sampler(var_ref(s), return_type);
+
+   const int coord_size = sampler_type->sampler_coordinate_components();
 
    if (coord_size == coord_type->vector_elements) {
       tex->coordinate = var_ref(P);
