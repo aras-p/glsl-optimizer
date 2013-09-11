@@ -168,7 +168,7 @@ with_writemask(dst_reg const &r, int mask);
 
 class vec4_instruction : public backend_instruction {
 public:
-   DECLARE_RZALLOC_CXX_OPERATORS(vec4_instruction)
+   DECLARE_RALLOC_CXX_OPERATORS(vec4_instruction)
 
    vec4_instruction(vec4_visitor *v, enum opcode opcode,
 		    dst_reg dst = dst_reg(),

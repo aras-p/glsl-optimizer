@@ -38,7 +38,22 @@ vec4_instruction::vec4_instruction(vec4_visitor *v,
    this->src[0] = src0;
    this->src[1] = src1;
    this->src[2] = src2;
+   this->saturate = false;
+   this->force_writemask_all = false;
+   this->no_dd_clear = false;
+   this->no_dd_check = false;
+   this->conditional_mod = BRW_CONDITIONAL_NONE;
+   this->sampler = 0;
+   this->texture_offset = 0;
+   this->target = 0;
+   this->shadow_compare = false;
    this->ir = v->base_ir;
+   this->urb_write_flags = BRW_URB_WRITE_NO_FLAGS;
+   this->header_present = false;
+   this->mlen = 0;
+   this->base_mrf = 0;
+   this->offset = 0;
+   this->ir = NULL;
    this->annotation = v->current_annotation;
 }
 
