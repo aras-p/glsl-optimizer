@@ -84,7 +84,7 @@ fd3_draw(struct fd_context *ctx, const struct pipe_draw_info *info)
 
 	OUT_PKT0(ring, REG_A3XX_VFD_INDEX_MIN, 4);
 	OUT_RING(ring, info->min_index);        /* VFD_INDEX_MIN */
-	OUT_RING(ring, info->max_index + 1);    /* VFD_INDEX_MAX */
+	OUT_RING(ring, info->max_index);        /* VFD_INDEX_MAX */
 	OUT_RING(ring, info->start_instance);   /* VFD_INSTANCEID_OFFSET */
 	OUT_RING(ring, info->start);            /* VFD_INDEX_OFFSET */
 
