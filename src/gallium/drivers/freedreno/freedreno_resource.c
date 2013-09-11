@@ -38,6 +38,23 @@
 #include "freedreno_context.h"
 #include "freedreno_util.h"
 
+#include <errno.h>
+
+static void
+realloc_bo(struct fd_resource *rsc, uint32_t size)
+{
+	struct fd_screen *screen = fd_screen(rsc->base.b.screen);
+	uint32_t flags = DRM_FREEDRENO_GEM_CACHE_WCOMBINE |
+			DRM_FREEDRENO_GEM_TYPE_KMEM; /* TODO */
+
+	if (rsc->bo)
+		fd_bo_del(rsc->bo);
+
+	rsc->bo = fd_bo_new(screen->dev, size, flags);
+	rsc->timestamp = 0;
+	rsc->dirty = false;
+}
+
 static void fd_resource_transfer_flush_region(struct pipe_context *pctx,
 		struct pipe_transfer *ptrans,
 		const struct pipe_box *box)
@@ -80,6 +97,7 @@ fd_resource_transfer_map(struct pipe_context *pctx,
 	enum pipe_format format = prsc->format;
 	uint32_t op = 0;
 	char *buf;
+	int ret = 0;
 
 	ptrans = util_slab_alloc(&ctx->transfer_pool);
 	if (!ptrans)
@@ -95,9 +113,26 @@ fd_resource_transfer_map(struct pipe_context *pctx,
 	ptrans->stride = slice->pitch * rsc->cpp;
 	ptrans->layer_stride = ptrans->stride;
 
+	if (usage & PIPE_TRANSFER_READ)
+		op |= DRM_FREEDRENO_PREP_READ;
+
+	if (usage & PIPE_TRANSFER_WRITE)
+		op |= DRM_FREEDRENO_PREP_WRITE;
+
+	if (usage & PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE)
+		op |= DRM_FREEDRENO_PREP_NOSYNC;
+
 	/* some state trackers (at least XA) don't do this.. */
-	if (!(usage & PIPE_TRANSFER_FLUSH_EXPLICIT))
-		fd_resource_transfer_flush_region(pctx, ptrans, box);
+//	if (!(usage & PIPE_TRANSFER_FLUSH_EXPLICIT))
+//		fd_resource_transfer_flush_region(pctx, ptrans, box);
+
+	if (!(usage & PIPE_TRANSFER_UNSYNCHRONIZED)) {
+		ret = fd_bo_cpu_prep(rsc->bo, ctx->screen->pipe, op);
+		if ((ret == -EBUSY) && (usage & PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE))
+			realloc_bo(rsc, fd_bo_size(rsc->bo));
+		else if (ret)
+			goto fail;
+	}
 
 	buf = fd_bo_map(rsc->bo);
 	if (!buf) {
@@ -105,21 +140,16 @@ fd_resource_transfer_map(struct pipe_context *pctx,
 		return NULL;
 	}
 
-	if (usage & PIPE_TRANSFER_READ)
-		op |= DRM_FREEDRENO_PREP_READ;
-
-	if (usage & PIPE_TRANSFER_WRITE)
-		op |= DRM_FREEDRENO_PREP_WRITE;
-
-	if (!(usage & PIPE_TRANSFER_UNSYNCHRONIZED))
-		fd_bo_cpu_prep(rsc->bo, ctx->screen->pipe, op);
-
 	*pptrans = ptrans;
 
 	return buf + slice->offset +
 		box->y / util_format_get_blockheight(format) * ptrans->stride +
 		box->x / util_format_get_blockwidth(format) * rsc->cpp +
 		box->z * slice->size0;
+
+fail:
+	fd_resource_transfer_unmap(pctx, ptrans);
+	return NULL;
 }
 
 static void
@@ -186,10 +216,9 @@ static struct pipe_resource *
 fd_resource_create(struct pipe_screen *pscreen,
 		const struct pipe_resource *tmpl)
 {
-	struct fd_screen *screen = fd_screen(pscreen);
 	struct fd_resource *rsc = CALLOC_STRUCT(fd_resource);
 	struct pipe_resource *prsc = &rsc->base.b;
-	uint32_t flags, size;
+	uint32_t size;
 
 	DBG("target=%d, format=%s, %ux%ux%u, array_size=%u, last_level=%u, "
 			"nr_samples=%u, usage=%u, bind=%x, flags=%x",
@@ -213,10 +242,7 @@ fd_resource_create(struct pipe_screen *pscreen,
 
 	size = setup_slices(rsc);
 
-	flags = DRM_FREEDRENO_GEM_CACHE_WCOMBINE |
-			DRM_FREEDRENO_GEM_TYPE_KMEM; /* TODO */
-
-	rsc->bo = fd_bo_new(screen->dev, size, flags);
+	realloc_bo(rsc, size);
 
 	return prsc;
 }
