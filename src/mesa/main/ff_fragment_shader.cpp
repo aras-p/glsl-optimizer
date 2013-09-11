@@ -32,7 +32,6 @@ extern "C" {
 #include "imports.h"
 #include "mtypes.h"
 #include "main/context.h"
-#include "main/uniforms.h"
 #include "main/macros.h"
 #include "main/samplerobj.h"
 #include "program/program.h"

@@ -33,7 +33,6 @@ extern "C" {
 
 #include "main/macros.h"
 #include "main/shaderobj.h"
-#include "main/uniforms.h"
 #include "program/prog_parameter.h"
 #include "program/prog_print.h"
 #include "program/prog_optimize.h"
@@ -45,6 +44,7 @@ extern "C" {
 #include "brw_wm.h"
 }
 #include "brw_fs.h"
+#include "main/uniforms.h"
 #include "glsl/glsl_types.h"
 #include "glsl/ir_optimization.h"
 
