@@ -160,7 +160,6 @@ struct dri2_egl_surface
    __DRIbuffer          buffers[5];
    int                  buffer_count;
    int                  have_fake_front;
-   int                  swap_interval;
 
 #ifdef HAVE_X11_PLATFORM
    xcb_drawable_t       drawable;
