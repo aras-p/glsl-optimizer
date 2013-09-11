@@ -3001,12 +3001,9 @@ const double lp_build_exp2_polynomial[] = {
 };
 
 
-void
-lp_build_exp2_approx(struct lp_build_context *bld,
-                     LLVMValueRef x,
-                     LLVMValueRef *p_exp2_int_part,
-                     LLVMValueRef *p_frac_part,
-                     LLVMValueRef *p_exp2)
+LLVMValueRef
+lp_build_exp2(struct lp_build_context *bld,
+              LLVMValueRef x)
 {
    LLVMBuilderRef builder = bld->gallivm->builder;
    const struct lp_type type = bld->type;
@@ -3019,63 +3016,46 @@ lp_build_exp2_approx(struct lp_build_context *bld,
 
    assert(lp_check_value(bld->type, x));
 
-   if(p_exp2_int_part || p_frac_part || p_exp2) {
-      /* TODO: optimize the constant case */
-      if (gallivm_debug & GALLIVM_DEBUG_PERF &&
-          LLVMIsConstant(x)) {
-         debug_printf("%s: inefficient/imprecise constant arithmetic\n",
-                      __FUNCTION__);
-      }
 
-      assert(type.floating && type.width == 32);
-
-      /* We want to preserve NaN and make sure than for exp2 if x > 128,
-       * the result is INF  and if it's smaller than -126.9 the result is 0 */
-      x = lp_build_min_ext(bld, lp_build_const_vec(bld->gallivm, type,  128.0), x,
-                           GALLIVM_NAN_RETURN_SECOND);
-      x = lp_build_max_ext(bld, lp_build_const_vec(bld->gallivm, type, -126.99999), x,
-                           GALLIVM_NAN_RETURN_SECOND);
-
-      /* ipart = floor(x) */
-      /* fpart = x - ipart */
-      lp_build_ifloor_fract(bld, x, &ipart, &fpart);
+   /* TODO: optimize the constant case */
+   if (gallivm_debug & GALLIVM_DEBUG_PERF &&
+       LLVMIsConstant(x)) {
+      debug_printf("%s: inefficient/imprecise constant arithmetic\n",
+                   __FUNCTION__);
    }
 
-   if(p_exp2_int_part || p_exp2) {
-      /* expipart = (float) (1 << ipart) */
-      expipart = LLVMBuildAdd(builder, ipart,
-                              lp_build_const_int_vec(bld->gallivm, type, 127), "");
-      expipart = LLVMBuildShl(builder, expipart,
-                              lp_build_const_int_vec(bld->gallivm, type, 23), "");
-      expipart = LLVMBuildBitCast(builder, expipart, vec_type, "");
-   }
+   assert(type.floating && type.width == 32);
 
-   if(p_exp2) {
-      expfpart = lp_build_polynomial(bld, fpart, lp_build_exp2_polynomial,
-                                     Elements(lp_build_exp2_polynomial));
+   /* We want to preserve NaN and make sure than for exp2 if x > 128,
+    * the result is INF  and if it's smaller than -126.9 the result is 0 */
+   x = lp_build_min_ext(bld, lp_build_const_vec(bld->gallivm, type,  128.0), x,
+                        GALLIVM_NAN_RETURN_SECOND);
+   x = lp_build_max_ext(bld, lp_build_const_vec(bld->gallivm, type, -126.99999), x,
+                        GALLIVM_NAN_RETURN_SECOND);
 
-      res = LLVMBuildFMul(builder, expipart, expfpart, "");
-   }
-
-   if(p_exp2_int_part)
-      *p_exp2_int_part = expipart;
-
-   if(p_frac_part)
-      *p_frac_part = fpart;
-
-   if(p_exp2)
-      *p_exp2 = res;
-}
+   /* ipart = floor(x) */
+   /* fpart = x - ipart */
+   lp_build_ifloor_fract(bld, x, &ipart, &fpart);
 
 
-LLVMValueRef
-lp_build_exp2(struct lp_build_context *bld,
-              LLVMValueRef x)
-{
-   LLVMValueRef res;
-   lp_build_exp2_approx(bld, x, NULL, NULL, &res);
+
+   /* expipart = (float) (1 << ipart) */
+   expipart = LLVMBuildAdd(builder, ipart,
+                           lp_build_const_int_vec(bld->gallivm, type, 127), "");
+   expipart = LLVMBuildShl(builder, expipart,
+                           lp_build_const_int_vec(bld->gallivm, type, 23), "");
+   expipart = LLVMBuildBitCast(builder, expipart, vec_type, "");
+
+
+   expfpart = lp_build_polynomial(bld, fpart, lp_build_exp2_polynomial,
+                                  Elements(lp_build_exp2_polynomial));
+
+   res = LLVMBuildFMul(builder, expipart, expfpart, "");
+
+
    return res;
 }
+
 
 
 /**

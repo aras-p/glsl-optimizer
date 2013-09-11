@@ -326,13 +326,6 @@ lp_build_ilog2(struct lp_build_context *bld,
                LLVMValueRef x);
 
 void
-lp_build_exp2_approx(struct lp_build_context *bld,
-                     LLVMValueRef x,
-                     LLVMValueRef *p_exp2_int_part,
-                     LLVMValueRef *p_frac_part,
-                     LLVMValueRef *p_exp2);
-
-void
 lp_build_log2_approx(struct lp_build_context *bld,
                      LLVMValueRef x,
                      LLVMValueRef *p_exp,

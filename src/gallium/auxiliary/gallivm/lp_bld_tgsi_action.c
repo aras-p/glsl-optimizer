@@ -1057,20 +1057,6 @@ ex2_emit_cpu(
                                                         emit_data->args[0]);
 }
 
-/* TGSI_OPCODE_EXP (CPU Only) */
-static void
-exp_emit_cpu(
-   const struct lp_build_tgsi_action * action,
-   struct lp_build_tgsi_context * bld_base,
-   struct lp_build_emit_data * emit_data)
-{
-   lp_build_exp2_approx(&bld_base->base, emit_data->args[0],
-                        &emit_data->output[TGSI_CHAN_X],
-                        &emit_data->output[TGSI_CHAN_Y],
-                        &emit_data->output[TGSI_CHAN_Z]);
-   emit_data->output[TGSI_CHAN_W] = bld_base->base.one;
-}
-
 /* TGSI_OPCODE_F2I (CPU Only) */
 static void
 f2i_emit_cpu(
@@ -1785,7 +1771,6 @@ lp_set_default_actions_cpu(
    bld_base->op_actions[TGSI_OPCODE_CMP].emit = cmp_emit_cpu;
    bld_base->op_actions[TGSI_OPCODE_DIV].emit = div_emit_cpu;
    bld_base->op_actions[TGSI_OPCODE_EX2].emit = ex2_emit_cpu;
-   bld_base->op_actions[TGSI_OPCODE_EXP].emit = exp_emit_cpu;
    bld_base->op_actions[TGSI_OPCODE_F2I].emit = f2i_emit_cpu;
    bld_base->op_actions[TGSI_OPCODE_F2U].emit = f2u_emit_cpu;
    bld_base->op_actions[TGSI_OPCODE_FLR].emit = flr_emit_cpu;
