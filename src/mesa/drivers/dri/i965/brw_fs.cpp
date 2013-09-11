@@ -772,6 +772,8 @@ fs_visitor::implied_mrf_writes(fs_inst *inst)
       return inst->mlen;
    case FS_OPCODE_SPILL:
       return 2;
+   case SHADER_OPCODE_UNTYPED_ATOMIC:
+      return 0;
    default:
       assert(!"not reached");
       return inst->mlen;

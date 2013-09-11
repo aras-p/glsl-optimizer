@@ -424,6 +424,15 @@ void brw_CMP(struct brw_compile *p,
 	     struct brw_reg src0,
 	     struct brw_reg src1);
 
+void
+brw_untyped_atomic(struct brw_compile *p,
+                   struct brw_reg dest,
+                   struct brw_reg mrf,
+                   GLuint atomic_op,
+                   GLuint bind_table_index,
+                   GLuint msg_length,
+                   GLuint response_length);
+
 /*********************************************************************** 
  * brw_eu_util.c:
  */

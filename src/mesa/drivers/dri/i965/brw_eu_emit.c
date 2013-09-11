@@ -2485,6 +2485,68 @@ brw_svb_write(struct brw_compile *p,
                             send_commit_msg); /* send_commit_msg */
 }
 
+static void
+brw_set_dp_untyped_atomic_message(struct brw_compile *p,
+                                  struct brw_instruction *insn,
+                                  GLuint atomic_op,
+                                  GLuint bind_table_index,
+                                  GLuint msg_length,
+                                  GLuint response_length,
+                                  bool header_present)
+{
+   if (p->brw->is_haswell) {
+      brw_set_message_descriptor(p, insn, HSW_SFID_DATAPORT_DATA_CACHE_1,
+                                 msg_length, response_length,
+                                 header_present, false);
+
+
+      if (insn->header.access_mode == BRW_ALIGN_1) {
+         if (insn->header.execution_size != BRW_EXECUTE_16)
+            insn->bits3.ud |= 1 << 12; /* SIMD8 mode */
+
+         insn->bits3.gen7_dp.msg_type =
+            HSW_DATAPORT_DC_PORT1_UNTYPED_ATOMIC_OP;
+      } else {
+         insn->bits3.gen7_dp.msg_type =
+            HSW_DATAPORT_DC_PORT1_UNTYPED_ATOMIC_OP_SIMD4X2;
+      }
+
+   } else {
+      brw_set_message_descriptor(p, insn, GEN7_SFID_DATAPORT_DATA_CACHE,
+                                 msg_length, response_length,
+                                 header_present, false);
+
+      insn->bits3.gen7_dp.msg_type = GEN7_DATAPORT_DC_UNTYPED_ATOMIC_OP;
+
+      if (insn->header.execution_size != BRW_EXECUTE_16)
+         insn->bits3.ud |= 1 << 12; /* SIMD8 mode */
+   }
+
+   if (response_length)
+      insn->bits3.ud |= 1 << 13; /* Return data expected */
+
+   insn->bits3.gen7_dp.binding_table_index = bind_table_index;
+   insn->bits3.ud |= atomic_op << 8;
+}
+
+void
+brw_untyped_atomic(struct brw_compile *p,
+                   struct brw_reg dest,
+                   struct brw_reg mrf,
+                   GLuint atomic_op,
+                   GLuint bind_table_index,
+                   GLuint msg_length,
+                   GLuint response_length) {
+   struct brw_instruction *insn = brw_next_insn(p, BRW_OPCODE_SEND);
+
+   brw_set_dest(p, insn, retype(dest, BRW_REGISTER_TYPE_UD));
+   brw_set_src0(p, insn, retype(mrf, BRW_REGISTER_TYPE_UD));
+   brw_set_src1(p, insn, brw_imm_d(0));
+   brw_set_dp_untyped_atomic_message(
+      p, insn, atomic_op, bind_table_index, msg_length, response_length,
+      insn->header.access_mode == BRW_ALIGN_1);
+}
+
 /**
  * This instruction is generated as a single-channel align1 instruction by
  * both the VS and FS stages when using INTEL_DEBUG=shader_time.

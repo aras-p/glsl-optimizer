@@ -854,6 +854,24 @@ vec4_generator::generate_pull_constant_load_gen7(vec4_instruction *inst,
    mark_surface_used(surf_index.dw1.ud);
 }
 
+void
+vec4_generator::generate_untyped_atomic(vec4_instruction *inst,
+                                        struct brw_reg dst,
+                                        struct brw_reg atomic_op,
+                                        struct brw_reg surf_index)
+{
+   assert(atomic_op.file == BRW_IMMEDIATE_VALUE &&
+          atomic_op.type == BRW_REGISTER_TYPE_UD &&
+          surf_index.file == BRW_IMMEDIATE_VALUE &&
+	  surf_index.type == BRW_REGISTER_TYPE_UD);
+
+   brw_untyped_atomic(p, dst, brw_message_reg(inst->base_mrf),
+                      atomic_op.dw1.ud, surf_index.dw1.ud,
+                      inst->mlen, 1);
+
+   mark_surface_used(surf_index.dw1.ud);
+}
+
 /**
  * Generate assembly for a Vec4 IR instruction.
  *
@@ -1164,6 +1182,10 @@ vec4_generator::generate_vec4_instruction(vec4_instruction *instruction,
       brw_shader_time_add(p, src[0],
                           prog_data->base.binding_table.shader_time_start);
       mark_surface_used(prog_data->base.binding_table.shader_time_start);
+      break;
+
+   case SHADER_OPCODE_UNTYPED_ATOMIC:
+      generate_untyped_atomic(inst, dst, src[0], src[1]);
       break;
 
    case VS_OPCODE_UNPACK_FLAGS_SIMD4X2:
