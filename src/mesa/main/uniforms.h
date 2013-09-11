@@ -142,6 +142,9 @@ _mesa_UniformBlockBinding(GLuint program,
 			  GLuint uniformBlockIndex,
 			  GLuint uniformBlockBinding);
 void GLAPIENTRY
+_mesa_GetActiveAtomicCounterBufferiv(GLuint program, GLuint bufferIndex,
+                                     GLenum pname, GLint *params);
+void GLAPIENTRY
 _mesa_GetActiveUniformBlockiv(GLuint program,
 			      GLuint uniformBlockIndex,
 			      GLenum pname,

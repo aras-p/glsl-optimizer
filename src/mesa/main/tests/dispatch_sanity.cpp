@@ -827,7 +827,7 @@ const struct function gl_core_functions_possible[] = {
    { "glDrawTransformFeedbackInstanced", 43, -1 },
    { "glDrawTransformFeedbackStreamInstanced", 43, -1 },
 // { "glGetInternalformativ", 43, -1 },                 // XXX: Add to xml
-// { "glGetActiveAtomicCounterBufferiv", 43, -1 },      // XXX: Add to xml
+   { "glGetActiveAtomicCounterBufferiv", 43, -1 },
 // { "glBindImageTexture", 43, -1 },                    // XXX: Add to xml
 // { "glMemoryBarrier", 43, -1 },                       // XXX: Add to xml
    { "glTexStorage1D", 43, -1 },

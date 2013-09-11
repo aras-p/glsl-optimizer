@@ -844,3 +844,9 @@ _mesa_get_uniform_name(const struct gl_uniform_storage *uni,
       *length += i;
    }
 }
+
+void GLAPIENTRY
+_mesa_GetActiveAtomicCounterBufferiv(GLuint program, GLuint bufferIndex,
+                                     GLenum pname, GLint *params)
+{
+}
