@@ -92,20 +92,29 @@ static void set_sampler_views(struct fd_texture_stateobj *prog,
 }
 
 static void
-fd_fragtex_sampler_states_bind(struct pipe_context *pctx,
+fd_sampler_states_bind(struct pipe_context *pctx,
+		unsigned shader, unsigned start,
 		unsigned nr, void **hwcso)
 {
 	struct fd_context *ctx = fd_context(pctx);
 
-	/* on a2xx, since there is a flat address space for textures/samplers,
-	 * a change in # of fragment textures/samplers will trigger patching and
-	 * re-emitting the vertex shader:
-	 */
-	if (nr != ctx->fragtex.num_samplers)
-		ctx->dirty |= FD_DIRTY_TEXSTATE;
+	assert(start == 0);
 
-	bind_sampler_states(&ctx->fragtex, nr, hwcso);
-	ctx->dirty |= FD_DIRTY_FRAGTEX;
+	if (shader == PIPE_SHADER_FRAGMENT) {
+		/* on a2xx, since there is a flat address space for textures/samplers,
+		 * a change in # of fragment textures/samplers will trigger patching and
+		 * re-emitting the vertex shader:
+		 */
+		if (nr != ctx->fragtex.num_samplers)
+			ctx->dirty |= FD_DIRTY_TEXSTATE;
+
+		bind_sampler_states(&ctx->fragtex, nr, hwcso);
+		ctx->dirty |= FD_DIRTY_FRAGTEX;
+	}
+	else if (shader == PIPE_SHADER_VERTEX) {
+		bind_sampler_states(&ctx->verttex, nr, hwcso);
+		ctx->dirty |= FD_DIRTY_VERTTEX;
+	}
 }
 
 
@@ -127,16 +136,6 @@ fd_fragtex_set_sampler_views(struct pipe_context *pctx, unsigned nr,
 }
 
 static void
-fd_verttex_sampler_states_bind(struct pipe_context *pctx,
-		unsigned nr, void **hwcso)
-{
-	struct fd_context *ctx = fd_context(pctx);
-	bind_sampler_states(&ctx->verttex, nr, hwcso);
-	ctx->dirty |= FD_DIRTY_VERTTEX;
-}
-
-
-static void
 fd_verttex_set_sampler_views(struct pipe_context *pctx, unsigned nr,
 		struct pipe_sampler_view **views)
 {
@@ -152,9 +151,8 @@ fd_texture_init(struct pipe_context *pctx)
 
 	pctx->sampler_view_destroy = fd_sampler_view_destroy;
 
-	pctx->bind_fragment_sampler_states = fd_fragtex_sampler_states_bind;
+	pctx->bind_sampler_states = fd_sampler_states_bind;
 	pctx->set_fragment_sampler_views = fd_fragtex_set_sampler_views;
 
-	pctx->bind_vertex_sampler_states = fd_verttex_sampler_states_bind;
 	pctx->set_vertex_sampler_views = fd_verttex_set_sampler_views;
 }
