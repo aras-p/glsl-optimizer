@@ -157,7 +157,7 @@ intelInitExtensions(struct gl_context *ctx)
    if (brw->gen >= 5) {
       ctx->Extensions.ARB_texture_query_lod = true;
       ctx->Extensions.EXT_timer_query = true;
-      ctx->Extensions.MESA_shader_integer_mix = ctx->Const.GLSLVersion >= 130;
+      ctx->Extensions.EXT_shader_integer_mix = ctx->Const.GLSLVersion >= 130;
    }
 
    if (ctx->API == API_OPENGL_CORE)

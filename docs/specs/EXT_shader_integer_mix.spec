@@ -1,10 +1,10 @@
 Name
 
-    MESA_shader_integer_mix
+    EXT_shader_integer_mix
 
 Name Strings
 
-    GL_MESA_shader_integer_mix
+    GL_EXT_shader_integer_mix
 
 Contact
 
@@ -21,12 +21,12 @@ Status
 
 Version
 
-    Last Modified Date:         09/09/2013
-    Author Revision:            5
+    Last Modified Date:         09/12/2013
+    Author Revision:            6
 
 Number
 
-    
+    TBD
 
 Dependencies
 
@@ -78,18 +78,18 @@ Modifications to The OpenGL Shading Language Specification, Version 4.40
     Including the following line in a shader can be used to control the
     language features described in this extension:
 
-      #extension GL_MESA_shader_integer_mix : <behavior>
+      #extension GL_EXT_shader_integer_mix : <behavior>
 
     where <behavior> is as specified in section 3.3.
 
     New preprocessor #defines are added to the OpenGL Shading Language:
 
-      #define GL_MESA_shader_integer_mix        1
+      #define GL_EXT_shader_integer_mix        1
 
 Interactions with ARB_ES3_compatibility
 
     On desktop implementations that support ARB_ES3_compatibility,
-    GL_MESA_shader_integer_mix can be enabled (and the new functions
+    GL_EXT_shader_integer_mix can be enabled (and the new functions
     used) in shaders declared with '#version 300 es'.
 
 GLX Protocol
@@ -124,6 +124,9 @@ Revision History
 
     Rev.    Date      Author    Changes
     ----  --------    --------  ---------------------------------------------
+      6   09/12/2013  idr       After discussions in Khronos, change vendor
+                                prefix to EXT.
+
       5   09/09/2013  idr       Add ARB_ES3_compatibility interaction.
 
       4   09/06/2013  mattst88  Allow extension on OpenGL ES 3.0.
