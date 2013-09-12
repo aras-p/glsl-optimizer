@@ -197,18 +197,23 @@ galahad_context_bind_sampler_states(struct pipe_context *_pipe,
          num_samplers, PIPE_MAX_SAMPLERS);
    }
 
-   switch (shader) {
-   case PIPE_SHADER_VERTEX:
-      pipe->bind_vertex_sampler_states(pipe, num_samplers, samplers);
-      break;
-   case PIPE_SHADER_FRAGMENT:
-      pipe->bind_fragment_sampler_states(pipe, num_samplers, samplers);
-      break;
-   case PIPE_SHADER_GEOMETRY:
-      pipe->bind_geometry_sampler_states(pipe, num_samplers, samplers);
-      break;
-   default:
-      assert(0);
+   if (pipe->bind_sampler_states) {
+      pipe->bind_sampler_states(pipe, shader, start, num_samplers, samplers);
+   }
+   else {
+      switch (shader) {
+      case PIPE_SHADER_VERTEX:
+         pipe->bind_vertex_sampler_states(pipe, num_samplers, samplers);
+         break;
+      case PIPE_SHADER_FRAGMENT:
+         pipe->bind_fragment_sampler_states(pipe, num_samplers, samplers);
+         break;
+      case PIPE_SHADER_GEOMETRY:
+         pipe->bind_geometry_sampler_states(pipe, num_samplers, samplers);
+         break;
+      default:
+         assert(0);
+      }
    }
 }
 
@@ -1064,6 +1069,7 @@ galahad_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    GLHD_PIPE_INIT(bind_blend_state);
    GLHD_PIPE_INIT(delete_blend_state);
    GLHD_PIPE_INIT(create_sampler_state);
+   GLHD_PIPE_INIT(bind_sampler_states);
    GLHD_PIPE_INIT(bind_fragment_sampler_states);
    GLHD_PIPE_INIT(bind_vertex_sampler_states);
    GLHD_PIPE_INIT(bind_geometry_sampler_states);
