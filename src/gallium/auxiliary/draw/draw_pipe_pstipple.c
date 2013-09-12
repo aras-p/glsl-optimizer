@@ -99,7 +99,7 @@ struct pstip_stage
    void (*driver_bind_fs_state)(struct pipe_context *, void *);
    void (*driver_delete_fs_state)(struct pipe_context *, void *);
 
-   void (*driver_bind_sampler_states)(struct pipe_context *, unsigned, void **);
+   void (*driver_bind_fragment_sampler_states)(struct pipe_context *, unsigned, void **);
 
    void (*driver_set_sampler_views)(struct pipe_context *,
                                     unsigned,
@@ -547,7 +547,7 @@ pstip_first_tri(struct draw_stage *stage, struct prim_header *header)
    assert(num_samplers <= PIPE_MAX_SAMPLERS);
 
    draw->suspend_flushing = TRUE;
-   pstip->driver_bind_sampler_states(pipe, num_samplers, pstip->state.samplers);
+   pstip->driver_bind_fragment_sampler_states(pipe, num_samplers, pstip->state.samplers);
    pstip->driver_set_sampler_views(pipe, num_samplers, pstip->state.sampler_views);
    draw->suspend_flushing = FALSE;
 
@@ -570,7 +570,7 @@ pstip_flush(struct draw_stage *stage, unsigned flags)
    /* restore original frag shader, texture, sampler state */
    draw->suspend_flushing = TRUE;
    pstip->driver_bind_fs_state(pipe, pstip->fs ? pstip->fs->driver_fs : NULL);
-   pstip->driver_bind_sampler_states(pipe, pstip->num_samplers,
+   pstip->driver_bind_fragment_sampler_states(pipe, pstip->num_samplers,
                                      pstip->state.samplers);
    pstip->driver_set_sampler_views(pipe,
                                    pstip->num_sampler_views,
@@ -701,8 +701,8 @@ pstip_delete_fs_state(struct pipe_context *pipe, void *fs)
 
 
 static void
-pstip_bind_sampler_states(struct pipe_context *pipe,
-                          unsigned num, void **sampler)
+pstip_bind_fragment_sampler_states(struct pipe_context *pipe,
+                                   unsigned num, void **sampler)
 {
    struct pstip_stage *pstip = pstip_stage_from_pipe(pipe);
    uint i;
@@ -715,7 +715,7 @@ pstip_bind_sampler_states(struct pipe_context *pipe,
 
    pstip->num_samplers = num;
    /* pass-through */
-   pstip->driver_bind_sampler_states(pstip->pipe, num, sampler);
+   pstip->driver_bind_fragment_sampler_states(pstip->pipe, num, sampler);
 }
 
 
@@ -792,7 +792,7 @@ draw_install_pstipple_stage(struct draw_context *draw,
    pstip->driver_bind_fs_state = pipe->bind_fs_state;
    pstip->driver_delete_fs_state = pipe->delete_fs_state;
 
-   pstip->driver_bind_sampler_states = pipe->bind_fragment_sampler_states;
+   pstip->driver_bind_fragment_sampler_states = pipe->bind_fragment_sampler_states;
    pstip->driver_set_sampler_views = pipe->set_fragment_sampler_views;
    pstip->driver_set_polygon_stipple = pipe->set_polygon_stipple;
 
@@ -801,7 +801,7 @@ draw_install_pstipple_stage(struct draw_context *draw,
    pipe->bind_fs_state = pstip_bind_fs_state;
    pipe->delete_fs_state = pstip_delete_fs_state;
 
-   pipe->bind_fragment_sampler_states = pstip_bind_sampler_states;
+   pipe->bind_fragment_sampler_states = pstip_bind_fragment_sampler_states;
    pipe->set_fragment_sampler_views = pstip_set_sampler_views;
    pipe->set_polygon_stipple = pstip_set_polygon_stipple;
 
