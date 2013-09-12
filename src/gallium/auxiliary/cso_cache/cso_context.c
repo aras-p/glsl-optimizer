@@ -1089,10 +1089,17 @@ single_sampler_done(struct cso_context *ctx, unsigned shader_stage)
       memcpy(info->hw.samplers,
              info->samplers,
              info->nr_samplers * sizeof(void *));
-      info->hw.nr_samplers = info->nr_samplers;
+
+      /* set remaining slots/pointers to null */
+      for (i = info->nr_samplers; i < info->hw.nr_samplers; i++)
+         info->samplers[i] = NULL;
 
       ctx->pipe->bind_sampler_states(ctx->pipe, shader_stage, 0,
-                                     info->nr_samplers, info->samplers);
+                                     MAX2(info->nr_samplers,
+                                          info->hw.nr_samplers),
+                                     info->samplers);
+
+      info->hw.nr_samplers = info->nr_samplers;
    }
 }
 
