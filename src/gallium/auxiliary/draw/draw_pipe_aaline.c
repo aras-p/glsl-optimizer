@@ -118,6 +118,8 @@ struct aaline_stage
    void (*driver_bind_fs_state)(struct pipe_context *, void *);
    void (*driver_delete_fs_state)(struct pipe_context *, void *);
 
+   void (*driver_bind_sampler_states)(struct pipe_context *, unsigned, unsigned,
+                                      unsigned, void **);
    void (*driver_bind_fragment_sampler_states)(struct pipe_context *, unsigned,
                                                void **);
 
@@ -704,7 +706,13 @@ aaline_first_line(struct draw_stage *stage, struct prim_header *header)
                                aaline->sampler_view);
 
    draw->suspend_flushing = TRUE;
-   aaline->driver_bind_fragment_sampler_states(pipe, num_samplers, aaline->state.sampler);
+   if (aaline->driver_bind_sampler_states)
+      aaline->driver_bind_sampler_states(pipe, PIPE_SHADER_FRAGMENT, 0,
+                                         num_samplers, aaline->state.sampler);
+   else
+      aaline->driver_bind_fragment_sampler_states(pipe, num_samplers,
+                                                  aaline->state.sampler);
+
    aaline->driver_set_sampler_views(pipe, num_samplers, aaline->state.sampler_views);
 
    /* Disable triangle culling, stippling, unfilled mode etc. */
@@ -732,8 +740,15 @@ aaline_flush(struct draw_stage *stage, unsigned flags)
    /* restore original frag shader, texture, sampler state */
    draw->suspend_flushing = TRUE;
    aaline->driver_bind_fs_state(pipe, aaline->fs ? aaline->fs->driver_fs : NULL);
-   aaline->driver_bind_fragment_sampler_states(pipe, aaline->num_samplers,
-                                               aaline->state.sampler);
+
+   if (aaline->driver_bind_sampler_states)
+      aaline->driver_bind_sampler_states(pipe, PIPE_SHADER_FRAGMENT, 0,
+                                         aaline->num_samplers,
+                                         aaline->state.sampler);
+   else
+      aaline->driver_bind_fragment_sampler_states(pipe, aaline->num_samplers,
+                                                  aaline->state.sampler);
+
    aaline->driver_set_sampler_views(pipe,
                                     aaline->num_sampler_views,
                                     aaline->state.sampler_views);
@@ -784,6 +799,7 @@ aaline_destroy(struct draw_stage *stage)
    pipe->bind_fs_state = aaline->driver_bind_fs_state;
    pipe->delete_fs_state = aaline->driver_delete_fs_state;
 
+   pipe->bind_sampler_states = aaline->driver_bind_sampler_states;
    pipe->bind_fragment_sampler_states = aaline->driver_bind_fragment_sampler_states;
    pipe->set_fragment_sampler_views = aaline->driver_set_sampler_views;
 
@@ -903,6 +919,30 @@ aaline_delete_fs_state(struct pipe_context *pipe, void *fs)
 
 
 static void
+aaline_bind_sampler_states(struct pipe_context *pipe, unsigned shader,
+                           unsigned start, unsigned num, void **sampler)
+{
+   struct aaline_stage *aaline = aaline_stage_from_pipe(pipe);
+
+   assert(start == 0);
+
+   if (aaline == NULL) {
+      return;
+   }
+
+   if (shader == PIPE_SHADER_FRAGMENT) {
+      /* save current */
+      memcpy(aaline->state.sampler, sampler, num * sizeof(void *));
+      aaline->num_samplers = num;
+   }
+
+   /* pass-through */
+   aaline->driver_bind_sampler_states(pipe, shader, start, num, sampler);
+}
+
+
+/* XXX deprecated / remove */
+static void
 aaline_bind_fragment_sampler_states(struct pipe_context *pipe,
                                     unsigned num, void **sampler)
 {
@@ -997,6 +1037,7 @@ draw_install_aaline_stage(struct draw_context *draw, struct pipe_context *pipe)
    aaline->driver_bind_fs_state = pipe->bind_fs_state;
    aaline->driver_delete_fs_state = pipe->delete_fs_state;
 
+   aaline->driver_bind_sampler_states = pipe->bind_sampler_states;
    aaline->driver_bind_fragment_sampler_states = pipe->bind_fragment_sampler_states;
    aaline->driver_set_sampler_views = pipe->set_fragment_sampler_views;
 
@@ -1005,7 +1046,11 @@ draw_install_aaline_stage(struct draw_context *draw, struct pipe_context *pipe)
    pipe->bind_fs_state = aaline_bind_fs_state;
    pipe->delete_fs_state = aaline_delete_fs_state;
 
-   pipe->bind_fragment_sampler_states = aaline_bind_fragment_sampler_states;
+   if (pipe->bind_sampler_states)
+      pipe->bind_sampler_states = aaline_bind_sampler_states;
+   else
+      pipe->bind_fragment_sampler_states = aaline_bind_fragment_sampler_states;
+
    pipe->set_fragment_sampler_views = aaline_set_sampler_views;
    
    /* Install once everything is known to be OK:
