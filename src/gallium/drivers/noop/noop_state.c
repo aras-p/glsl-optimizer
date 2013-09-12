@@ -140,10 +140,6 @@ static void noop_bind_sampler_states(struct pipe_context *ctx, unsigned shader,
 {
 }
 
-static void noop_bind_sampler(struct pipe_context *ctx, unsigned count, void **states)
-{
-}
-
 static void noop_set_clip_state(struct pipe_context *ctx,
 				const struct pipe_clip_state *state)
 {
@@ -302,11 +298,9 @@ void noop_init_state_functions(struct pipe_context *ctx)
 	ctx->bind_blend_state = noop_bind_state;
 	ctx->bind_depth_stencil_alpha_state = noop_bind_state;
 	ctx->bind_sampler_states = noop_bind_sampler_states;
-	ctx->bind_fragment_sampler_states = noop_bind_sampler;
 	ctx->bind_fs_state = noop_bind_state;
 	ctx->bind_rasterizer_state = noop_bind_state;
 	ctx->bind_vertex_elements_state = noop_bind_state;
-	ctx->bind_vertex_sampler_states = noop_bind_sampler;
 	ctx->bind_vs_state = noop_bind_state;
 	ctx->delete_blend_state = noop_delete_state;
 	ctx->delete_depth_stencil_alpha_state = noop_delete_state;
