@@ -25,10 +25,11 @@ CSO objects handled by the context object:
 
 * :ref:`Blend`: ``*_blend_state``
 * :ref:`Sampler`: Texture sampler states are bound separately for fragment,
-  vertex and geometry samplers.  Note that sampler states are set en masse.
-  If M is the max number of sampler units supported by the driver and N
-  samplers are bound with ``bind_fragment_sampler_states`` then sampler
-  units N..M-1 are considered disabled/NULL.
+  vertex, geometry and compute shaders with the ``bind_sampler_states``
+  function.  The ``start`` and ``num_samplers`` parameters indicate a range
+  of samplers to change.  NOTE: at this time, start is always zero and
+  the CSO module will always replace all samplers at once (no sub-ranges).
+  This may change in the future.
 * :ref:`Rasterizer`: ``*_rasterizer_state``
 * :ref:`Depth, Stencil, & Alpha`: ``*_depth_stencil_alpha_state``
 * :ref:`Shader`: These are create, bind and destroy methods for vertex,
@@ -599,6 +600,6 @@ may be specified by the user with the ``set_compute_resources``
 method.
 
 In addition, normal texture sampling is allowed from the compute
-program: ``bind_compute_sampler_states`` may be used to set up texture
+program: ``bind_sampler_states`` may be used to set up texture
 samplers for the compute stage and ``set_compute_sampler_views`` may
 be used to bind a number of sampler views to it.
