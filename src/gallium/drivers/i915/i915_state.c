@@ -1037,8 +1037,6 @@ i915_init_state_functions( struct i915_context *i915 )
 
    i915->base.create_sampler_state = i915_create_sampler_state;
    i915->base.bind_sampler_states = i915_bind_sampler_states;
-   i915->base.bind_fragment_sampler_states = i915_bind_fragment_sampler_states;
-   i915->base.bind_vertex_sampler_states = i915_bind_vertex_sampler_states;
    i915->base.delete_sampler_state = i915_delete_sampler_state;
 
    i915->base.create_depth_stencil_alpha_state = i915_create_depth_stencil_state;
