@@ -304,9 +304,26 @@ void cso_release_all( struct cso_context *ctx )
    if (ctx->pipe) {
       ctx->pipe->bind_blend_state( ctx->pipe, NULL );
       ctx->pipe->bind_rasterizer_state( ctx->pipe, NULL );
-      ctx->pipe->bind_fragment_sampler_states( ctx->pipe, 0, NULL );
-      if (ctx->pipe->bind_vertex_sampler_states)
-         ctx->pipe->bind_vertex_sampler_states(ctx->pipe, 0, NULL);
+
+      if (ctx->pipe->bind_sampler_states) {
+         static void *zeros[PIPE_MAX_SAMPLERS] = { NULL };
+         struct pipe_screen *scr = ctx->pipe->screen;
+         unsigned sh;
+         for (sh = 0; sh < PIPE_SHADER_TYPES; sh++) {
+            int max = scr->get_shader_param(scr, sh,
+                                      PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS);
+            assert(max <= PIPE_MAX_SAMPLERS);
+            if (max > 0) {
+               ctx->pipe->bind_sampler_states(ctx->pipe, sh, 0, max, zeros);
+            }
+         }
+      }
+      else {
+         ctx->pipe->bind_fragment_sampler_states( ctx->pipe, 0, NULL );
+         if (ctx->pipe->bind_vertex_sampler_states)
+            ctx->pipe->bind_vertex_sampler_states(ctx->pipe, 0, NULL);
+      }
+
       ctx->pipe->bind_depth_stencil_alpha_state( ctx->pipe, NULL );
       ctx->pipe->bind_fs_state( ctx->pipe, NULL );
       ctx->pipe->bind_vs_state( ctx->pipe, NULL );
@@ -1079,24 +1096,30 @@ single_sampler_done(struct cso_context *ctx, unsigned shader_stage)
              info->nr_samplers * sizeof(void *));
       info->hw.nr_samplers = info->nr_samplers;
 
-      switch (shader_stage) {
-      case PIPE_SHADER_FRAGMENT:
-         ctx->pipe->bind_fragment_sampler_states(ctx->pipe,
-                                                 info->nr_samplers,
-                                                 info->samplers);
-         break;
-      case PIPE_SHADER_VERTEX:
-         ctx->pipe->bind_vertex_sampler_states(ctx->pipe,
-                                               info->nr_samplers,
-                                               info->samplers);
-         break;
-      case PIPE_SHADER_GEOMETRY:
-         ctx->pipe->bind_geometry_sampler_states(ctx->pipe,
-                                               info->nr_samplers,
-                                               info->samplers);
-         break;
-      default:
-         assert(!"bad shader type in single_sampler_done()");
+      if (ctx->pipe->bind_sampler_states) {
+         ctx->pipe->bind_sampler_states(ctx->pipe, shader_stage, 0,
+                                        info->nr_samplers, info->samplers);
+      }
+      else {
+         switch (shader_stage) {
+         case PIPE_SHADER_FRAGMENT:
+            ctx->pipe->bind_fragment_sampler_states(ctx->pipe,
+                                                    info->nr_samplers,
+                                                    info->samplers);
+            break;
+         case PIPE_SHADER_VERTEX:
+            ctx->pipe->bind_vertex_sampler_states(ctx->pipe,
+                                                  info->nr_samplers,
+                                                  info->samplers);
+            break;
+         case PIPE_SHADER_GEOMETRY:
+            ctx->pipe->bind_geometry_sampler_states(ctx->pipe,
+                                                  info->nr_samplers,
+                                                  info->samplers);
+            break;
+         default:
+            assert(!"bad shader type in single_sampler_done()");
+         }
       }
    }
 }
