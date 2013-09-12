@@ -417,6 +417,7 @@ llvmpipe_init_sampler_funcs(struct llvmpipe_context *llvmpipe)
 {
    llvmpipe->pipe.create_sampler_state = llvmpipe_create_sampler_state;
 
+   llvmpipe->pipe.bind_sampler_states = llvmpipe_bind_sampler_states;
    llvmpipe->pipe.bind_fragment_sampler_states  = llvmpipe_bind_fragment_sampler_states;
    llvmpipe->pipe.bind_vertex_sampler_states  = llvmpipe_bind_vertex_sampler_states;
    llvmpipe->pipe.bind_geometry_sampler_states  = llvmpipe_bind_geometry_sampler_states;
