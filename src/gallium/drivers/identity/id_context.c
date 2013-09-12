@@ -168,45 +168,7 @@ identity_bind_sampler_states(struct pipe_context *_pipe,
    struct identity_context *id_pipe = identity_context(_pipe);
    struct pipe_context *pipe = id_pipe->pipe;
 
-   if (pipe->bind_sampler_states) {
-      pipe->bind_sampler_states(pipe, shader, start, num_samplers, samplers);
-   }
-   else {
-      /* remove this when we have pipe->bind_sampler_states(..., start, ...) */
-      assert(start == 0);
-
-      switch (shader) {
-      case PIPE_SHADER_VERTEX:
-         pipe->bind_vertex_sampler_states(pipe, num_samplers, samplers);
-         break;
-      case PIPE_SHADER_GEOMETRY:
-         pipe->bind_geometry_sampler_states(pipe, num_samplers, samplers);
-         break;
-      case PIPE_SHADER_FRAGMENT:
-         pipe->bind_fragment_sampler_states(pipe, num_samplers, samplers);
-         break;
-      default:
-         debug_error("Unexpected shader in identity_bind_sampler_states()");
-      }
-   }
-}
-
-static void
-identity_bind_fragment_sampler_states(struct pipe_context *_pipe,
-                                      unsigned num_samplers,
-                                      void **samplers)
-{
-   identity_bind_sampler_states(_pipe, PIPE_SHADER_FRAGMENT,
-                                0, num_samplers, samplers);
-}
-
-static void
-identity_bind_vertex_sampler_states(struct pipe_context *_pipe,
-                                    unsigned num_samplers,
-                                    void **samplers)
-{
-   identity_bind_sampler_states(_pipe, PIPE_SHADER_VERTEX,
-                                0, num_samplers, samplers);
+   pipe->bind_sampler_states(pipe, shader, start, num_samplers, samplers);
 }
 
 static void
@@ -907,8 +869,6 @@ identity_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    id_pipe->base.delete_blend_state = identity_delete_blend_state;
    id_pipe->base.create_sampler_state = identity_create_sampler_state;
    id_pipe->base.bind_sampler_states = identity_bind_sampler_states;
-   id_pipe->base.bind_fragment_sampler_states = identity_bind_fragment_sampler_states;
-   id_pipe->base.bind_vertex_sampler_states = identity_bind_vertex_sampler_states;
    id_pipe->base.delete_sampler_state = identity_delete_sampler_state;
    id_pipe->base.create_rasterizer_state = identity_create_rasterizer_state;
    id_pipe->base.bind_rasterizer_state = identity_bind_rasterizer_state;
