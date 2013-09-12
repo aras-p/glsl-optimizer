@@ -385,7 +385,12 @@ vl_median_filter_render(struct vl_median_filter *filter,
 
    filter->pipe->bind_rasterizer_state(filter->pipe, filter->rs_state);
    filter->pipe->bind_blend_state(filter->pipe, filter->blend);
-   filter->pipe->bind_fragment_sampler_states(filter->pipe, 1, &filter->sampler);
+   if (filter->pipe->bind_sampler_states)
+      filter->pipe->bind_sampler_states(filter->pipe, PIPE_SHADER_FRAGMENT,
+                                        0, 1, &filter->sampler);
+   else
+      filter->pipe->bind_fragment_sampler_states(filter->pipe, 1,
+                                                 &filter->sampler);
    filter->pipe->set_fragment_sampler_views(filter->pipe, 1, &src);
    filter->pipe->bind_vs_state(filter->pipe, filter->vs);
    filter->pipe->bind_fs_state(filter->pipe, filter->fs);

@@ -725,7 +725,12 @@ draw_layers(struct vl_compositor *c, struct vl_compositor_state *s, struct u_rec
          c->pipe->bind_blend_state(c->pipe, blend);
          c->pipe->set_viewport_states(c->pipe, 0, 1, &layer->viewport);
          c->pipe->bind_fs_state(c->pipe, layer->fs);
-         c->pipe->bind_fragment_sampler_states(c->pipe, num_sampler_views, layer->samplers);
+         if (c->pipe->bind_sampler_states)
+            c->pipe->bind_sampler_states(c->pipe, PIPE_SHADER_FRAGMENT, 0,
+                                         num_sampler_views, layer->samplers);
+         else
+            c->pipe->bind_fragment_sampler_states(c->pipe, num_sampler_views,
+                                                  layer->samplers);
          c->pipe->set_fragment_sampler_views(c->pipe, num_sampler_views, samplers);
          util_draw_arrays(c->pipe, PIPE_PRIM_QUADS, vb_index * 4, 4);
          vb_index++;

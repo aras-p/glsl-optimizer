@@ -614,7 +614,12 @@ vl_mc_render_ref(struct vl_mc *renderer, struct vl_mc_buffer *buffer, struct pip
    renderer->pipe->bind_fs_state(renderer->pipe, renderer->fs_ref);
 
    renderer->pipe->set_fragment_sampler_views(renderer->pipe, 1, &ref);
-   renderer->pipe->bind_fragment_sampler_states(renderer->pipe, 1, &renderer->sampler_ref);
+   if (renderer->pipe->bind_sampler_states)
+      renderer->pipe->bind_sampler_states(renderer->pipe, PIPE_SHADER_FRAGMENT,
+                                          0, 1, &renderer->sampler_ref);
+   else
+      renderer->pipe->bind_fragment_sampler_states(renderer->pipe,
+                                                   1, &renderer->sampler_ref);
 
    util_draw_arrays_instanced(renderer->pipe, PIPE_PRIM_QUADS, 0, 4, 0,
                               renderer->buffer_width / VL_MACROBLOCK_WIDTH *
