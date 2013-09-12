@@ -139,6 +139,11 @@ struct pipe_context {
 
    void * (*create_sampler_state)(struct pipe_context *,
                                   const struct pipe_sampler_state *);
+
+   void   (*bind_sampler_states)(struct pipe_context *,
+                                 unsigned shader, unsigned start_slot,
+                                 unsigned num_samplers, void **samplers);
+
    void   (*bind_fragment_sampler_states)(struct pipe_context *,
                                           unsigned num_samplers,
                                           void **samplers);
