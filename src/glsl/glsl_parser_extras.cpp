@@ -55,7 +55,7 @@ static unsigned known_desktop_glsl_versions[] =
 
 _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
 					       GLenum target, void *mem_ctx)
- : ctx(_ctx)
+   : ctx(_ctx), switch_state()
 {
    switch (target) {
    case GL_VERTEX_SHADER:   this->target = vertex_shader; break;
@@ -66,10 +66,14 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
    this->scanner = NULL;
    this->translation_unit.make_empty();
    this->symbols = new(mem_ctx) glsl_symbol_table;
+
+   this->num_uniform_blocks = 0;
+   this->uniform_block_array_size = 0;
+   this->uniform_blocks = NULL;
+
    this->info_log = ralloc_strdup(mem_ctx, "");
    this->error = false;
    this->loop_nesting_ast = NULL;
-   this->switch_state.switch_nesting_ast = NULL;
 
    this->struct_specifier_depth = 0;
    this->num_builtins_to_link = 0;
@@ -104,6 +108,13 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
    this->Const.MaxProgramTexelOffset = ctx->Const.MaxProgramTexelOffset;
 
    this->Const.MaxDrawBuffers = ctx->Const.MaxDrawBuffers;
+
+   this->current_function = NULL;
+   this->toplevel_ir = NULL;
+   this->found_return = false;
+   this->all_invariant = false;
+   this->user_structures = NULL;
+   this->num_user_structures = 0;
 
    /* Populate the list of supported GLSL versions */
    /* FINISHME: Once the OpenGL 3.0 'forward compatible' context or
@@ -163,6 +174,7 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
 
    this->gs_input_prim_type_specified = false;
    this->gs_input_prim_type = GL_POINTS;
+   this->gs_input_size = 0;
    this->out_qualifier = new(this) ast_type_qualifier();
 }
 
