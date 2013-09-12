@@ -214,9 +214,9 @@ gpu_shader5(const _mesa_glsl_parse_state *state)
 }
 
 static bool
-vs_texture_array(const _mesa_glsl_parse_state *state)
+texture_array_lod(const _mesa_glsl_parse_state *state)
 {
-   return state->target == vertex_shader &&
+   return lod_exists_in_stage(state) &&
           state->EXT_texture_array_enable;
 }
 
@@ -1609,7 +1609,7 @@ builtin_builder::create_builtins()
                 NULL);
 
    add_function("texture1DArrayLod",
-                _texture(ir_txl, vs_texture_array, glsl_type::vec4_type, glsl_type::sampler1DArray_type, glsl_type::vec2_type),
+                _texture(ir_txl, texture_array_lod, glsl_type::vec4_type, glsl_type::sampler1DArray_type, glsl_type::vec2_type),
                 NULL);
 
    add_function("texture1DProjLod",
@@ -1642,7 +1642,7 @@ builtin_builder::create_builtins()
                 NULL);
 
    add_function("texture2DArrayLod",
-                _texture(ir_txl, vs_texture_array, glsl_type::vec4_type, glsl_type::sampler2DArray_type, glsl_type::vec3_type),
+                _texture(ir_txl, texture_array_lod, glsl_type::vec4_type, glsl_type::sampler2DArray_type, glsl_type::vec3_type),
                 NULL);
 
    add_function("texture2DProjLod",
@@ -1725,7 +1725,7 @@ builtin_builder::create_builtins()
                 NULL);
 
    add_function("shadow1DArrayLod",
-                _texture(ir_txl, vs_texture_array, glsl_type::vec4_type, glsl_type::sampler1DArrayShadow_type, glsl_type::vec3_type),
+                _texture(ir_txl, texture_array_lod, glsl_type::vec4_type, glsl_type::sampler1DArrayShadow_type, glsl_type::vec3_type),
                 NULL);
 
    add_function("shadow1DProjLod",
