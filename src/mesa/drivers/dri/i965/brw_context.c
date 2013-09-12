@@ -478,6 +478,8 @@ brwCreateContext(int api,
    brw_draw_init( brw );
 
    brw->precompile = driQueryOptionb(&brw->optionCache, "shader_precompile");
+   brw->disable_derivative_optimization =
+      driQueryOptionb(&brw->optionCache, "disable_derivative_optimization");
 
    ctx->Const.ContextFlags = 0;
    if ((flags & __DRI_CTX_FLAG_FORWARD_COMPATIBLE) != 0)

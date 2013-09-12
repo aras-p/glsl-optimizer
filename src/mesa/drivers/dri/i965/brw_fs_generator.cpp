@@ -540,7 +540,7 @@ fs_generator::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src
  *
  * arg0: ss0.tl ss0.tr ss0.bl ss0.br ss1.tl ss1.tr ss1.bl ss1.br
  *
- * and we're trying to produce:
+ * Ideally, we want to produce:
  *
  *           DDX                     DDY
  * dst: (ss0.tr - ss0.tl)     (ss0.tl - ss0.bl)
@@ -556,24 +556,41 @@ fs_generator::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src
  *
  * For DDX, it ends up being easy: width = 2, horiz=0 gets us the same result
  * for each pair, and vertstride = 2 jumps us 2 elements after processing a
- * pair. But for DDY, it's harder, as we want to produce the pairs swizzled
- * between each other.  We could probably do it like ddx and swizzle the right
- * order later, but bail for now and just produce
+ * pair.  But the ideal approximation may impose a huge performance cost on
+ * sample_d.  On at least Haswell, sample_d instruction does some
+ * optimizations if the same LOD is used for all pixels in the subspan.
+ *
+ * For DDY, it's harder, as we want to produce the pairs swizzled between each
+ * other.  We could probably do it like ddx and swizzle the right order later,
+ * but bail for now and just produce
  * ((ss0.tl - ss0.bl)x4 (ss1.tl - ss1.bl)x4)
  */
 void
 fs_generator::generate_ddx(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
 {
+   unsigned vstride, width;
+
+   if (c->key.high_quality_derivatives) {
+      /* produce accurate derivatives */
+      vstride = BRW_VERTICAL_STRIDE_2;
+      width = BRW_WIDTH_2;
+   }
+   else {
+      /* replicate the derivative at the top-left pixel to other pixels */
+      vstride = BRW_VERTICAL_STRIDE_4;
+      width = BRW_WIDTH_4;
+   }
+
    struct brw_reg src0 = brw_reg(src.file, src.nr, 1,
 				 BRW_REGISTER_TYPE_F,
-				 BRW_VERTICAL_STRIDE_2,
-				 BRW_WIDTH_2,
+				 vstride,
+				 width,
 				 BRW_HORIZONTAL_STRIDE_0,
 				 BRW_SWIZZLE_XYZW, WRITEMASK_XYZW);
    struct brw_reg src1 = brw_reg(src.file, src.nr, 0,
 				 BRW_REGISTER_TYPE_F,
-				 BRW_VERTICAL_STRIDE_2,
-				 BRW_WIDTH_2,
+				 vstride,
+				 width,
 				 BRW_HORIZONTAL_STRIDE_0,
 				 BRW_SWIZZLE_XYZW, WRITEMASK_XYZW);
    brw_ADD(p, dst, src0, negate(src1));

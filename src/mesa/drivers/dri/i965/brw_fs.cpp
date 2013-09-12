@@ -3213,6 +3213,12 @@ brw_fs_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
 
    key.nr_color_regions = 1;
 
+   /* GL_FRAGMENT_SHADER_DERIVATIVE_HINT is almost always GL_DONT_CARE.  The
+    * quality of the derivatives is likely to be determined by the driconf
+    * option.
+    */
+   key.high_quality_derivatives = brw->disable_derivative_optimization;
+
    key.program_string_id = bfp->id;
 
    uint32_t old_prog_offset = brw->wm.base.prog_offset;

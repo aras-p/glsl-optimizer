@@ -1005,6 +1005,7 @@ struct brw_context
    bool always_flush_cache;
    bool disable_throttling;
    bool precompile;
+   bool disable_derivative_optimization;
 
    driOptionCache optionCache;
    /** @} */
