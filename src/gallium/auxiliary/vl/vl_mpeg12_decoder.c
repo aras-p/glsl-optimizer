@@ -747,13 +747,9 @@ vl_mpeg12_end_frame(struct pipe_video_codec *decoder,
             vl_idct_prepare_stage2(i ? &dec->idct_c : &dec->idct_y, &buf->idct[plane]);
          else {
             dec->base.context->set_fragment_sampler_views(dec->base.context, 1, &mc_source_sv[plane]);
-            if (dec->base.context->bind_sampler_states)
-               dec->base.context->bind_sampler_states(dec->base.context,
-                                                      PIPE_SHADER_FRAGMENT,
-                                                      0, 1,
-                                                      &dec->sampler_ycbcr);
-            else
-               dec->base.context->bind_fragment_sampler_states(dec->base.context, 1, &dec->sampler_ycbcr);
+            dec->base.context->bind_sampler_states(dec->base.context,
+                                                   PIPE_SHADER_FRAGMENT,
+                                                   0, 1, &dec->sampler_ycbcr);
          }
          vl_mc_render_ycbcr(i ? &dec->mc_c : &dec->mc_y, &buf->mc[i], j, buf->num_ycbcr_blocks[plane]);
       }
