@@ -2085,6 +2085,7 @@ void r600_init_common_state_functions(struct r600_context *rctx)
 	rctx->b.b.create_vertex_elements_state = r600_create_vertex_fetch_shader;
 	rctx->b.b.bind_blend_state = r600_bind_blend_state;
 	rctx->b.b.bind_depth_stencil_alpha_state = r600_bind_dsa_state;
+	rctx->b.b.bind_sampler_states = r600_bind_sampler_states;
 	rctx->b.b.bind_fragment_sampler_states = r600_bind_ps_sampler_states;
 	rctx->b.b.bind_fs_state = r600_bind_ps_state;
 	rctx->b.b.bind_rasterizer_state = r600_bind_rs_state;

@@ -2772,6 +2772,27 @@ static void si_bind_ps_sampler_states(struct pipe_context *ctx, unsigned count, 
 	si_pm4_set_state(rctx, ps_sampler, pm4);
 }
 
+
+static void si_bind_sampler_states(struct pipe_context *ctx, unsigned shader,
+                                   unsigned start, unsigned count,
+                                   void **states)
+{
+   assert(start == 0);
+
+   switch (shader) {
+   case PIPE_SHADER_VERTEX:
+      si_bind_vs_sampler_states(ctx, count, states);
+      break;
+   case PIPE_SHADER_FRAGMENT:
+      si_bind_ps_sampler_states(ctx, count, states);
+      break;
+   default:
+      ;
+   }
+}
+
+
+
 static void si_set_sample_mask(struct pipe_context *ctx, unsigned sample_mask)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
@@ -3009,6 +3030,7 @@ void si_init_state_functions(struct r600_context *rctx)
 	rctx->b.b.delete_fs_state = si_delete_ps_shader;
 
 	rctx->b.b.create_sampler_state = si_create_sampler_state;
+	rctx->b.b.bind_sampler_states = si_bind_sampler_states;
 	rctx->b.b.bind_vertex_sampler_states = si_bind_vs_sampler_states;
 	rctx->b.b.bind_fragment_sampler_states = si_bind_ps_sampler_states;
 	rctx->b.b.delete_sampler_state = si_delete_sampler_state;
