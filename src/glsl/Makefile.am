@@ -34,6 +34,7 @@ include Makefile.sources
 TESTS = glcpp/tests/glcpp-test				\
 	tests/optimization-test				\
 	tests/ralloc-test				\
+	tests/sampler-types-test                        \
 	tests/uniform-initializer-test
 
 TESTS_ENVIRONMENT= \
@@ -45,6 +46,7 @@ check_PROGRAMS =					\
 	glcpp/glcpp					\
 	glsl_test					\
 	tests/ralloc-test				\
+	tests/sampler-types-test			\
 	tests/uniform-initializer-test
 
 tests_uniform_initializer_test_SOURCES =		\
@@ -68,6 +70,17 @@ tests_ralloc_test_SOURCES =				\
 tests_ralloc_test_CFLAGS = $(PTHREAD_CFLAGS)
 tests_ralloc_test_LDADD =				\
 	$(top_builddir)/src/gtest/libgtest.la		\
+	$(PTHREAD_LIBS)
+
+tests_sampler_types_test_SOURCES =			\
+	$(top_srcdir)/src/mesa/program/prog_hash_table.c\
+	$(top_srcdir)/src/mesa/program/symbol_table.c	\
+	tests/sampler_types_test.cpp
+tests_sampler_types_test_CFLAGS =			\
+	$(PTHREAD_CFLAGS)
+tests_sampler_types_test_LDADD =			\
+	$(top_builddir)/src/gtest/libgtest.la		\
+	$(top_builddir)/src/glsl/libglsl.la		\
 	$(PTHREAD_LIBS)
 
 libglcpp_la_SOURCES =					\
