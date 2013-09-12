@@ -3031,8 +3031,6 @@ void si_init_state_functions(struct r600_context *rctx)
 
 	rctx->b.b.create_sampler_state = si_create_sampler_state;
 	rctx->b.b.bind_sampler_states = si_bind_sampler_states;
-	rctx->b.b.bind_vertex_sampler_states = si_bind_vs_sampler_states;
-	rctx->b.b.bind_fragment_sampler_states = si_bind_ps_sampler_states;
 	rctx->b.b.delete_sampler_state = si_delete_sampler_state;
 
 	rctx->b.b.create_sampler_view = si_create_sampler_view;

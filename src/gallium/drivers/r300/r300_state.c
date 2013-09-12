@@ -1522,25 +1522,6 @@ static void*
     return (void*)sampler;
 }
 
-static void r300_bind_fragment_sampler_states(struct pipe_context* pipe,
-                                              unsigned count,
-                                              void** states)
-{
-    struct r300_context* r300 = r300_context(pipe);
-    struct r300_textures_state* state =
-        (struct r300_textures_state*)r300->textures_state.state;
-    unsigned tex_units = r300->screen->caps.num_tex_units;
-
-    if (count > tex_units) {
-        return;
-    }
-
-    memcpy(state->sampler_states, states, sizeof(void*) * count);
-    state->sampler_state_count = count;
-
-    r300_mark_atom_dirty(r300, &r300->textures_state);
-}
-
 static void r300_bind_sampler_states(struct pipe_context* pipe,
                                      unsigned shader,
                                      unsigned start, unsigned count,
@@ -2183,8 +2164,6 @@ void r300_init_state_functions(struct r300_context* r300)
 
     r300->context.create_sampler_state = r300_create_sampler_state;
     r300->context.bind_sampler_states = r300_bind_sampler_states;
-    r300->context.bind_fragment_sampler_states = r300_bind_fragment_sampler_states;
-    r300->context.bind_vertex_sampler_states = r300_lacks_vertex_textures;
     r300->context.delete_sampler_state = r300_delete_sampler_state;
 
     r300->context.set_fragment_sampler_views = r300_set_fragment_sampler_views;

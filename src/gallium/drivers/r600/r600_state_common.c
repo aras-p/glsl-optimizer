@@ -394,6 +394,12 @@ static void r600_bind_sampler_states(struct pipe_context *pipe,
 
 	assert(start == 0); /* XXX fix below */
 
+	if (shader != PIPE_SHADER_VERTEX &&
+	    shader != PIPE_SHADER_FRAGMENT) {
+		assert(!"Only vertex/fragment sampler are implemented.");
+		return;
+	}
+
 	for (i = 0; i < count; i++) {
 		struct r600_pipe_sampler_state *rstate = rstates[i];
 
@@ -435,16 +441,6 @@ static void r600_bind_sampler_states(struct pipe_context *pipe,
 		rctx->seamless_cube_map.enabled = seamless_cube_map;
 		rctx->seamless_cube_map.atom.dirty = true;
 	}
-}
-
-static void r600_bind_vs_sampler_states(struct pipe_context *ctx, unsigned count, void **states)
-{
-	r600_bind_sampler_states(ctx, PIPE_SHADER_VERTEX, 0, count, states);
-}
-
-static void r600_bind_ps_sampler_states(struct pipe_context *ctx, unsigned count, void **states)
-{
-	r600_bind_sampler_states(ctx, PIPE_SHADER_FRAGMENT, 0, count, states);
 }
 
 static void r600_delete_sampler_state(struct pipe_context *ctx, void *state)
@@ -2086,11 +2082,9 @@ void r600_init_common_state_functions(struct r600_context *rctx)
 	rctx->b.b.bind_blend_state = r600_bind_blend_state;
 	rctx->b.b.bind_depth_stencil_alpha_state = r600_bind_dsa_state;
 	rctx->b.b.bind_sampler_states = r600_bind_sampler_states;
-	rctx->b.b.bind_fragment_sampler_states = r600_bind_ps_sampler_states;
 	rctx->b.b.bind_fs_state = r600_bind_ps_state;
 	rctx->b.b.bind_rasterizer_state = r600_bind_rs_state;
 	rctx->b.b.bind_vertex_elements_state = r600_bind_vertex_elements;
-	rctx->b.b.bind_vertex_sampler_states = r600_bind_vs_sampler_states;
 	rctx->b.b.bind_vs_state = r600_bind_vs_state;
 	rctx->b.b.delete_blend_state = r600_delete_blend_state;
 	rctx->b.b.delete_depth_stencil_alpha_state = r600_delete_dsa_state;
