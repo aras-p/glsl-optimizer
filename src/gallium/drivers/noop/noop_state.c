@@ -134,6 +134,12 @@ static void noop_set_ps_sampler_view(struct pipe_context *ctx, unsigned count,
 {
 }
 
+static void noop_bind_sampler_states(struct pipe_context *ctx, unsigned shader,
+                                     unsigned start, unsigned count,
+                                     void **states)
+{
+}
+
 static void noop_bind_sampler(struct pipe_context *ctx, unsigned count, void **states)
 {
 }
@@ -295,6 +301,7 @@ void noop_init_state_functions(struct pipe_context *ctx)
 	ctx->create_vs_state = noop_create_shader_state;
 	ctx->bind_blend_state = noop_bind_state;
 	ctx->bind_depth_stencil_alpha_state = noop_bind_state;
+	ctx->bind_sampler_states = noop_bind_sampler_states;
 	ctx->bind_fragment_sampler_states = noop_bind_sampler;
 	ctx->bind_fs_state = noop_bind_state;
 	ctx->bind_rasterizer_state = noop_bind_state;
