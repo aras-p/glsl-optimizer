@@ -71,8 +71,13 @@ _cl_kernel::launch(clover::command_queue &q,
                         exec.g_handles.begin(), exec.g_handles.end());
 
    q.pipe->bind_compute_state(q.pipe, st);
-   q.pipe->bind_compute_sampler_states(q.pipe, 0, exec.samplers.size(),
-                                       exec.samplers.data());
+   if (q.pipe->bind_sampler_states)
+      q.pipe->bind_sampler_states(q.pipe, PIPE_SHADER_COMPUTE,
+                                  0, exec.samplers.size(),
+                                  exec.samplers.data());
+   else
+      q.pipe->bind_compute_sampler_states(q.pipe, 0, exec.samplers.size(),
+                                          exec.samplers.data());
    q.pipe->set_compute_sampler_views(q.pipe, 0, exec.sviews.size(),
                                      exec.sviews.data());
    q.pipe->set_compute_resources(q.pipe, 0, exec.resources.size(),
