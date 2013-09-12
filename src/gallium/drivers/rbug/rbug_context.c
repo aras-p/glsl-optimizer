@@ -263,6 +263,39 @@ rbug_create_sampler_state(struct pipe_context *_pipe,
 }
 
 static void
+rbug_bind_sampler_states(struct pipe_context *_pipe, unsigned shader,
+                         unsigned start, unsigned count,
+                         void **samplers)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct pipe_context *pipe = rb_pipe->pipe;
+
+   pipe_mutex_lock(rb_pipe->call_mutex);
+   if (pipe->bind_sampler_states) {
+      pipe->bind_sampler_states(pipe, shader, start, count, samplers);
+   }
+   else {
+      assert(start == 0);
+      switch (shader) {
+      case PIPE_SHADER_VERTEX:
+         pipe->bind_vertex_sampler_states(pipe, count, samplers);
+         break;
+      case PIPE_SHADER_FRAGMENT:
+         pipe->bind_fragment_sampler_states(pipe, count, samplers);
+         break;
+      case PIPE_SHADER_GEOMETRY:
+         pipe->bind_geometry_sampler_states(pipe, count, samplers);
+         break;
+      default:
+         ;
+      }
+   }
+
+   pipe_mutex_unlock(rb_pipe->call_mutex);
+}
+
+
+static void
 rbug_bind_fragment_sampler_states(struct pipe_context *_pipe,
                                   unsigned num_samplers,
                                   void **samplers)
@@ -1160,6 +1193,7 @@ rbug_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    rb_pipe->base.bind_blend_state = rbug_bind_blend_state;
    rb_pipe->base.delete_blend_state = rbug_delete_blend_state;
    rb_pipe->base.create_sampler_state = rbug_create_sampler_state;
+   rb_pipe->base.bind_sampler_states = rbug_bind_sampler_states;
    rb_pipe->base.bind_fragment_sampler_states = rbug_bind_fragment_sampler_states;
    rb_pipe->base.bind_vertex_sampler_states = rbug_bind_vertex_sampler_states;
    rb_pipe->base.delete_sampler_state = rbug_delete_sampler_state;
