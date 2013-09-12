@@ -342,6 +342,27 @@ static void i915_bind_fragment_sampler_states(struct pipe_context *pipe,
    i915->dirty |= I915_NEW_SAMPLER;
 }
 
+
+static void
+i915_bind_sampler_states(struct pipe_context *pipe, unsigned shader,
+                         unsigned start, unsigned num_samplers,
+                         void **samplers)
+{
+   assert(start == 0);
+
+   switch (shader) {
+   case PIPE_SHADER_VERTEX:
+      i915_bind_vertex_sampler_states(pipe, num_samplers, samplers);
+      break;
+   case PIPE_SHADER_FRAGMENT:
+      i915_bind_fragment_sampler_states(pipe, num_samplers, samplers);
+      break;
+   default:
+      ;
+   }
+}
+
+
 static void i915_delete_sampler_state(struct pipe_context *pipe,
                                       void *sampler)
 {
@@ -1015,6 +1036,7 @@ i915_init_state_functions( struct i915_context *i915 )
    i915->base.delete_blend_state = i915_delete_blend_state;
 
    i915->base.create_sampler_state = i915_create_sampler_state;
+   i915->base.bind_sampler_states = i915_bind_sampler_states;
    i915->base.bind_fragment_sampler_states = i915_bind_fragment_sampler_states;
    i915->base.bind_vertex_sampler_states = i915_bind_vertex_sampler_states;
    i915->base.delete_sampler_state = i915_delete_sampler_state;
