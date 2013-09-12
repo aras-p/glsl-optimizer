@@ -1522,9 +1522,9 @@ static void*
     return (void*)sampler;
 }
 
-static void r300_bind_sampler_states(struct pipe_context* pipe,
-                                     unsigned count,
-                                     void** states)
+static void r300_bind_fragment_sampler_states(struct pipe_context* pipe,
+                                              unsigned count,
+                                              void** states)
 {
     struct r300_context* r300 = r300_context(pipe);
     struct r300_textures_state* state =
@@ -2157,7 +2157,7 @@ void r300_init_state_functions(struct r300_context* r300)
     r300->context.delete_rasterizer_state = r300_delete_rs_state;
 
     r300->context.create_sampler_state = r300_create_sampler_state;
-    r300->context.bind_fragment_sampler_states = r300_bind_sampler_states;
+    r300->context.bind_fragment_sampler_states = r300_bind_fragment_sampler_states;
     r300->context.bind_vertex_sampler_states = r300_lacks_vertex_textures;
     r300->context.delete_sampler_state = r300_delete_sampler_state;
 
