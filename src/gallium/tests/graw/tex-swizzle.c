@@ -152,7 +152,8 @@ init_tex(const unsigned swizzle[4])
                                              PIPE_TEX_WRAP_REPEAT,
                                              PIPE_TEX_FILTER_NEAREST);
 
-   info.ctx->bind_fragment_sampler_states(info.ctx, 1, &sampler);
+   info.ctx->bind_sampler_states(info.ctx, PIPE_SHADER_FRAGMENT,
+                                 0, 1, &sampler);
 #undef SIZE
 }
 

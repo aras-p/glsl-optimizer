@@ -371,7 +371,7 @@ static void init_tex( void )
    if (sampler == NULL)
       exit(6);
 
-   ctx->bind_fragment_sampler_states(ctx, 1, &sampler);
+   ctx->bind_sampler_states(ctx, PIPE_SHADER_FRAGMENT, 0, 1, &sampler);
    
 }
 
