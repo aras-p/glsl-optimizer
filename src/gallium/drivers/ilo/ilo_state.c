@@ -366,6 +366,26 @@ ilo_bind_compute_sampler_states(struct pipe_context *pipe,
 }
 
 static void
+ilo_bind_sampler_states2(struct pipe_context *pipe, unsigned shader,
+                         unsigned start, unsigned count, void **samplers)
+{
+   switch (shader) {
+   case PIPE_SHADER_VERTEX:
+      ilo_bind_vertex_sampler_states(pipe, count, samplers);
+      break;
+   case PIPE_SHADER_GEOMETRY:
+      ilo_bind_geometry_sampler_states(pipe, count, samplers);
+      break;
+   case PIPE_SHADER_FRAGMENT:
+      ilo_bind_fragment_sampler_states(pipe, count, samplers);
+      break;
+   case PIPE_SHADER_COMPUTE:
+      ilo_bind_compute_sampler_states(pipe, start, count, samplers);
+      break;
+   }
+}
+
+static void
 ilo_delete_sampler_state(struct pipe_context *pipe, void *state)
 {
    FREE(state);
@@ -1239,6 +1259,7 @@ ilo_init_state_functions(struct ilo_context *ilo)
    ilo->base.bind_blend_state = ilo_bind_blend_state;
    ilo->base.delete_blend_state = ilo_delete_blend_state;
    ilo->base.create_sampler_state = ilo_create_sampler_state;
+   ilo->base.bind_sampler_states = ilo_bind_sampler_states2;
    ilo->base.bind_fragment_sampler_states = ilo_bind_fragment_sampler_states;
    ilo->base.bind_vertex_sampler_states = ilo_bind_vertex_sampler_states;
    ilo->base.bind_geometry_sampler_states = ilo_bind_geometry_sampler_states;
