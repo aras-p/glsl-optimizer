@@ -232,6 +232,7 @@ void
 softpipe_init_sampler_funcs(struct pipe_context *pipe)
 {
    pipe->create_sampler_state = softpipe_create_sampler_state;
+   pipe->bind_sampler_states = softpipe_bind_sampler_states;
    pipe->bind_fragment_sampler_states  = softpipe_bind_fragment_sampler_states;
    pipe->bind_vertex_sampler_states = softpipe_bind_vertex_sampler_states;
    pipe->bind_geometry_sampler_states = softpipe_bind_geometry_sampler_states;
