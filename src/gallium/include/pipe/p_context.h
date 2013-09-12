@@ -139,24 +139,9 @@ struct pipe_context {
 
    void * (*create_sampler_state)(struct pipe_context *,
                                   const struct pipe_sampler_state *);
-
    void   (*bind_sampler_states)(struct pipe_context *,
                                  unsigned shader, unsigned start_slot,
                                  unsigned num_samplers, void **samplers);
-
-   void   (*bind_fragment_sampler_states)(struct pipe_context *,
-                                          unsigned num_samplers,
-                                          void **samplers);
-   void   (*bind_vertex_sampler_states)(struct pipe_context *,
-                                        unsigned num_samplers,
-                                        void **samplers);
-   void   (*bind_geometry_sampler_states)(struct pipe_context *,
-                                          unsigned num_samplers,
-                                          void **samplers);
-   void   (*bind_compute_sampler_states)(struct pipe_context *,
-                                         unsigned start_slot,
-                                         unsigned num_samplers,
-                                         void **samplers);
    void   (*delete_sampler_state)(struct pipe_context *, void *);
 
    void * (*create_rasterizer_state)(struct pipe_context *,
