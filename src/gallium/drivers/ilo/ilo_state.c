@@ -1260,10 +1260,6 @@ ilo_init_state_functions(struct ilo_context *ilo)
    ilo->base.delete_blend_state = ilo_delete_blend_state;
    ilo->base.create_sampler_state = ilo_create_sampler_state;
    ilo->base.bind_sampler_states = ilo_bind_sampler_states2;
-   ilo->base.bind_fragment_sampler_states = ilo_bind_fragment_sampler_states;
-   ilo->base.bind_vertex_sampler_states = ilo_bind_vertex_sampler_states;
-   ilo->base.bind_geometry_sampler_states = ilo_bind_geometry_sampler_states;
-   ilo->base.bind_compute_sampler_states = ilo_bind_compute_sampler_states;
    ilo->base.delete_sampler_state = ilo_delete_sampler_state;
    ilo->base.create_rasterizer_state = ilo_create_rasterizer_state;
    ilo->base.bind_rasterizer_state = ilo_bind_rasterizer_state;
