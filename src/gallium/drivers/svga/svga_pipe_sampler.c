@@ -309,6 +309,7 @@ svga_set_fragment_sampler_views(struct pipe_context *pipe,
 void svga_init_sampler_functions( struct svga_context *svga )
 {
    svga->pipe.create_sampler_state = svga_create_sampler_state;
+   svga->pipe.bind_sampler_states = svga_bind_sampler_states;
    svga->pipe.bind_fragment_sampler_states = svga_bind_fragment_sampler_states;
    svga->pipe.delete_sampler_state = svga_delete_sampler_state;
    svga->pipe.set_fragment_sampler_views = svga_set_fragment_sampler_views;
