@@ -528,14 +528,10 @@ static void blitter_restore_textures(struct blitter_context_priv *ctx)
    unsigned i;
 
    /* Fragment sampler states. */
-   if (pipe->bind_sampler_states)
-      pipe->bind_sampler_states(pipe, PIPE_SHADER_FRAGMENT, 0,
-                                ctx->base.saved_num_sampler_states,
-                                ctx->base.saved_sampler_states);
-   else
-      pipe->bind_fragment_sampler_states(pipe,
-                                         ctx->base.saved_num_sampler_states,
-                                         ctx->base.saved_sampler_states);
+   pipe->bind_sampler_states(pipe, PIPE_SHADER_FRAGMENT, 0,
+                             ctx->base.saved_num_sampler_states,
+                             ctx->base.saved_sampler_states);
+
    ctx->base.saved_num_sampler_states = ~0;
 
    /* Fragment sampler views. */
@@ -1314,10 +1310,7 @@ void util_blitter_blit_generic(struct blitter_context *blitter,
       views[1] = pipe->create_sampler_view(pipe, src->texture, &templ);
 
       pipe->set_fragment_sampler_views(pipe, 2, views);
-      if (pipe->bind_sampler_states)
-         pipe->bind_sampler_states(pipe, PIPE_SHADER_FRAGMENT, 0, 2, samplers);
-      else
-         pipe->bind_fragment_sampler_states(pipe, 2, samplers);
+      pipe->bind_sampler_states(pipe, PIPE_SHADER_FRAGMENT, 0, 2, samplers);
 
       pipe_sampler_view_reference(&views[1], NULL);
    } else if (blit_stencil) {
@@ -1332,20 +1325,14 @@ void util_blitter_blit_generic(struct blitter_context *blitter,
       view = pipe->create_sampler_view(pipe, src->texture, &templ);
 
       pipe->set_fragment_sampler_views(pipe, 1, &view);
-      if (pipe->bind_sampler_states)
-         pipe->bind_sampler_states(pipe, PIPE_SHADER_FRAGMENT,
-                                   0, 1, &sampler_state);
-      else
-         pipe->bind_fragment_sampler_states(pipe, 1, &sampler_state);
+      pipe->bind_sampler_states(pipe, PIPE_SHADER_FRAGMENT,
+                                0, 1, &sampler_state);
 
       pipe_sampler_view_reference(&view, NULL);
    } else {
       pipe->set_fragment_sampler_views(pipe, 1, &src);
-      if (pipe->bind_sampler_states)
-         pipe->bind_sampler_states(pipe, PIPE_SHADER_FRAGMENT,
-                                   0, 1, &sampler_state);
-      else
-         pipe->bind_fragment_sampler_states(pipe, 1, &sampler_state);
+      pipe->bind_sampler_states(pipe, PIPE_SHADER_FRAGMENT,
+                                0, 1, &sampler_state);
    }
 
    pipe->bind_vertex_elements_state(pipe, ctx->velem_state);
