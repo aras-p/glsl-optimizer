@@ -197,6 +197,5 @@ nv30_fragtex_set_sampler_views(struct pipe_context *pipe, unsigned nr,
 void
 nv30_fragtex_init(struct pipe_context *pipe)
 {
-   pipe->bind_fragment_sampler_states = nv30_fragtex_sampler_states_bind;
    pipe->set_fragment_sampler_views = nv30_fragtex_set_sampler_views;
 }

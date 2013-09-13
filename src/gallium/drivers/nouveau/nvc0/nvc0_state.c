@@ -472,24 +472,6 @@ nvc0_stage_sampler_states_bind(struct nvc0_context *nvc0, int s,
 }
 
 static void
-nvc0_vp_sampler_states_bind(struct pipe_context *pipe, unsigned nr, void **s)
-{
-   nvc0_stage_sampler_states_bind(nvc0_context(pipe), 0, nr, s);
-}
-
-static void
-nvc0_fp_sampler_states_bind(struct pipe_context *pipe, unsigned nr, void **s)
-{
-   nvc0_stage_sampler_states_bind(nvc0_context(pipe), 4, nr, s);
-}
-
-static void
-nvc0_gp_sampler_states_bind(struct pipe_context *pipe, unsigned nr, void **s)
-{
-   nvc0_stage_sampler_states_bind(nvc0_context(pipe), 3, nr, s);
-}
-
-static void
 nvc0_stage_sampler_states_bind_range(struct nvc0_context *nvc0,
                                      const unsigned s,
                                      unsigned start, unsigned nr, void **cso)
@@ -529,15 +511,6 @@ nvc0_stage_sampler_states_bind_range(struct nvc0_context *nvc0,
          nvc0->num_samplers[s] = last_valid + 1;
       }
    }
-}
-
-static void
-nvc0_cp_sampler_states_bind(struct pipe_context *pipe,
-                            unsigned start, unsigned nr, void **cso)
-{
-   nvc0_stage_sampler_states_bind_range(nvc0_context(pipe), 5, start, nr, cso);
-
-   nvc0_context(pipe)->dirty_cp |= NVC0_NEW_CP_SAMPLERS;
 }
 
 static void
@@ -1221,10 +1194,6 @@ nvc0_init_state_functions(struct nvc0_context *nvc0)
    pipe->create_sampler_state = nv50_sampler_state_create;
    pipe->delete_sampler_state = nvc0_sampler_state_delete;
    pipe->bind_sampler_states = nvc0_bind_sampler_states;
-   pipe->bind_vertex_sampler_states   = nvc0_vp_sampler_states_bind;
-   pipe->bind_fragment_sampler_states = nvc0_fp_sampler_states_bind;
-   pipe->bind_geometry_sampler_states = nvc0_gp_sampler_states_bind;
-   pipe->bind_compute_sampler_states = nvc0_cp_sampler_states_bind;
 
    pipe->create_sampler_view = nvc0_create_sampler_view;
    pipe->sampler_view_destroy = nvc0_sampler_view_destroy;

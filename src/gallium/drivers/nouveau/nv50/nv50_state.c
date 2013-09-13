@@ -1089,9 +1089,6 @@ nv50_init_state_functions(struct nv50_context *nv50)
    pipe->create_sampler_state = nv50_sampler_state_create;
    pipe->delete_sampler_state = nv50_sampler_state_delete;
    pipe->bind_sampler_states   = nv50_bind_sampler_states;
-   pipe->bind_vertex_sampler_states   = nv50_vp_sampler_states_bind;
-   pipe->bind_fragment_sampler_states = nv50_fp_sampler_states_bind;
-   pipe->bind_geometry_sampler_states = nv50_gp_sampler_states_bind;
 
    pipe->create_sampler_view = nv50_create_sampler_view;
    pipe->sampler_view_destroy = nv50_sampler_view_destroy;
