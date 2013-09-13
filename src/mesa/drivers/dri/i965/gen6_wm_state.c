@@ -41,6 +41,8 @@ gen6_upload_wm_push_constants(struct brw_context *brw)
    /* BRW_NEW_FRAGMENT_PROGRAM */
    const struct brw_fragment_program *fp =
       brw_fragment_program_const(brw->fragment_program);
+   /* CACHE_NEW_WM_PROG */
+   const struct brw_wm_prog_data *prog_data = brw->wm.prog_data;
 
    /* Updates the ParameterValues[i] pointers for all parameters of the
     * basic type of PROGRAM_STATE_VAR.
@@ -48,25 +50,23 @@ gen6_upload_wm_push_constants(struct brw_context *brw)
    /* XXX: Should this happen somewhere before to get our state flag set? */
    _mesa_load_state_parameters(ctx, fp->program.Base.Parameters);
 
-   /* CACHE_NEW_WM_PROG */
-   if (brw->wm.prog_data->nr_params != 0) {
+   if (prog_data->nr_params != 0) {
       float *constants;
       unsigned int i;
 
       constants = brw_state_batch(brw, AUB_TRACE_WM_CONSTANTS,
-				  brw->wm.prog_data->nr_params *
-				  sizeof(float),
+				  prog_data->nr_params * sizeof(float),
 				  32, &brw->wm.base.push_const_offset);
 
-      for (i = 0; i < brw->wm.prog_data->nr_params; i++) {
-	 constants[i] = *brw->wm.prog_data->param[i];
+      for (i = 0; i < prog_data->nr_params; i++) {
+	 constants[i] = *prog_data->param[i];
       }
 
       if (0) {
 	 printf("WM constants:\n");
-	 for (i = 0; i < brw->wm.prog_data->nr_params; i++) {
+	 for (i = 0; i < prog_data->nr_params; i++) {
 	    if ((i & 7) == 0)
-	       printf("g%d: ", brw->wm.prog_data->first_curbe_grf + i / 8);
+	       printf("g%d: ", prog_data->first_curbe_grf + i / 8);
 	    printf("%8f ", constants[i]);
 	    if ((i & 7) == 7)
 	       printf("\n");
