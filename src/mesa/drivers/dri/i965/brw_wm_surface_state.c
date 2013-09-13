@@ -862,25 +862,12 @@ const struct brw_tracked_state brw_wm_ubo_surfaces = {
 static void
 brw_upload_wm_binding_table(struct brw_context *brw)
 {
-   uint32_t *bind;
-   int i;
+   struct brw_stage_state *stage_state = &brw->wm.base;
 
-   if (INTEL_DEBUG & DEBUG_SHADER_TIME) {
-      gen7_create_shader_time_surface(brw, &brw->wm.base.surf_offset[SURF_INDEX_WM_SHADER_TIME]);
-   }
-
-   /* CACHE_NEW_WM_PROG */
-   unsigned entries = brw->wm.prog_data->binding_table_size;
-   bind = brw_state_batch(brw, AUB_TRACE_BINDING_TABLE,
-			  sizeof(uint32_t) * entries,
-			  32, &brw->wm.base.bind_bo_offset);
-
-   /* BRW_NEW_SURFACES */
-   for (i = 0; i < entries; i++) {
-      bind[i] = brw->wm.base.surf_offset[i];
-   }
-
-   brw->state.dirty.brw |= BRW_NEW_PS_BINDING_TABLE;
+   /* BRW_NEW_SURFACES and CACHE_NEW_WM_PROG */
+   brw_upload_binding_table(brw, BRW_NEW_PS_BINDING_TABLE, stage_state,
+                            brw->wm.prog_data->binding_table_size,
+                            SURF_INDEX_WM_SHADER_TIME);
 }
 
 const struct brw_tracked_state brw_wm_binding_table = {
