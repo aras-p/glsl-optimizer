@@ -239,6 +239,7 @@ class Context(Dispatcher):
         self._state.vs.shader = None
         self._state.gs.shader = None
         self._state.fs.shader = None
+        self._state.sampler = {}
         self._state.vs.sampler = []
         self._state.gs.sampler = []
         self._state.fs.sampler = []
@@ -280,14 +281,8 @@ class Context(Dispatcher):
     def delete_sampler_state(self, state):
         pass
 
-    def bind_vertex_sampler_states(self, num_states, states):
-        self._state.vs.sampler = states
-        
-    def bind_geometry_sampler_states(self, num_states, states):
-        self._state.gs.sampler = states
-        
-    def bind_fragment_sampler_states(self, num_states, states):
-        self._state.fs.sampler = states
+    def bind_sampler_states(self, shader, start, num_states, states):
+        self._state.sampler[shader] = states
         
     def create_rasterizer_state(self, state):
         return state
