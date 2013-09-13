@@ -129,33 +129,7 @@ upload_ps_state(struct brw_context *brw)
    ADVANCE_BATCH();
 
    /* CACHE_NEW_WM_PROG */
-   if (brw->wm.prog_data->nr_params == 0) {
-      /* Disable the push constant buffers. */
-      BEGIN_BATCH(7);
-      OUT_BATCH(_3DSTATE_CONSTANT_PS << 16 | (7 - 2));
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      ADVANCE_BATCH();
-   } else {
-      BEGIN_BATCH(7);
-      OUT_BATCH(_3DSTATE_CONSTANT_PS << 16 | (7 - 2));
-
-      OUT_BATCH(ALIGN(brw->wm.prog_data->nr_params,
-		      brw->wm.prog_data->dispatch_width) / 8);
-      OUT_BATCH(0);
-      /* Pointer to the WM constant buffer.  Covered by the set of
-       * state flags from gen6_upload_wm_push_constants.
-       */
-      OUT_BATCH(brw->wm.base.push_const_offset | GEN7_MOCS_L3);
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      ADVANCE_BATCH();
-   }
+   gen7_upload_constant_state(brw, &brw->wm.base, true, _3DSTATE_CONSTANT_PS);
 
    dw2 = dw4 = dw5 = 0;
 
