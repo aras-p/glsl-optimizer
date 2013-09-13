@@ -540,6 +540,32 @@ nvc0_cp_sampler_states_bind(struct pipe_context *pipe,
    nvc0_context(pipe)->dirty_cp |= NVC0_NEW_CP_SAMPLERS;
 }
 
+static void
+nvc0_bind_sampler_states(struct pipe_context *pipe, unsigned shader,
+                         unsigned start, unsigned nr, void **s)
+{
+   switch (shader) {
+   case PIPE_SHADER_VERTEX:
+      assert(start == 0);
+      nvc0_stage_sampler_states_bind(nvc0_context(pipe), 0, nr, s);
+      break;
+   case PIPE_SHADER_GEOMETRY:
+      assert(start == 0);
+      nvc0_stage_sampler_states_bind(nvc0_context(pipe), 3, nr, s);
+      break;
+   case PIPE_SHADER_FRAGMENT:
+      assert(start == 0);
+      nvc0_stage_sampler_states_bind(nvc0_context(pipe), 4, nr, s);
+      break;
+   case PIPE_SHADER_COMPUTE:
+      nvc0_stage_sampler_states_bind_range(nvc0_context(pipe), 5,
+                                           start, nr, s);
+      nvc0_context(pipe)->dirty_cp |= NVC0_NEW_CP_SAMPLERS;
+      break;
+   }
+}
+
+
 /* NOTE: only called when not referenced anywhere, won't be bound */
 static void
 nvc0_sampler_view_destroy(struct pipe_context *pipe,
@@ -1194,6 +1220,7 @@ nvc0_init_state_functions(struct nvc0_context *nvc0)
 
    pipe->create_sampler_state = nv50_sampler_state_create;
    pipe->delete_sampler_state = nvc0_sampler_state_delete;
+   pipe->bind_sampler_states = nvc0_bind_sampler_states;
    pipe->bind_vertex_sampler_states   = nvc0_vp_sampler_states_bind;
    pipe->bind_fragment_sampler_states = nvc0_fp_sampler_states_bind;
    pipe->bind_geometry_sampler_states = nvc0_gp_sampler_states_bind;

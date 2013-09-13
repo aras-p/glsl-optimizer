@@ -186,6 +186,21 @@ nv30_sampler_state_delete(struct pipe_context *pipe, void *hwcso)
    FREE(hwcso);
 }
 
+static void
+nv30_bind_sampler_states(struct pipe_context *pipe,
+                         unsigned shader, unsigned start_slot,
+                         unsigned num_samplers, void **samplers)
+{
+   switch (shader) {
+   case PIPE_SHADER_VERTEX:
+      nv40_verttex_sampler_states_bind(pipe, num_samplers, samplers);
+      break;
+   case PIPE_SHADER_FRAGMENT:
+      nv30_fragtex_sampler_states_bind(pipe, num_samplers, samplers);
+      break;
+   }
+}
+
 static INLINE uint32_t
 swizzle(const struct nv30_texfmt *fmt, unsigned cmp, unsigned swz)
 {
@@ -301,6 +316,8 @@ nv30_texture_init(struct pipe_context *pipe)
 {
    pipe->create_sampler_state = nv30_sampler_state_create;
    pipe->delete_sampler_state = nv30_sampler_state_delete;
+   pipe->bind_sampler_states = nv30_bind_sampler_states;
+
    pipe->create_sampler_view = nv30_sampler_view_create;
    pipe->sampler_view_destroy = nv30_sampler_view_destroy;
 }

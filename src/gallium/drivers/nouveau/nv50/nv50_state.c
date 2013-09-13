@@ -606,6 +606,27 @@ nv50_gp_sampler_states_bind(struct pipe_context *pipe, unsigned nr, void **s)
    nv50_stage_sampler_states_bind(nv50_context(pipe), 1, nr, s);
 }
 
+static void
+nv50_bind_sampler_states(struct pipe_context *pipe,
+                         unsigned shader, unsigned start,
+                         unsigned num_samplers, void **samplers)
+{
+   assert(start == 0);
+   switch (shader) {
+   case PIPE_SHADER_VERTEX:
+      nv50_vp_sampler_states_bind(pipe, num_samplers, samplers);
+      break;
+   case PIPE_SHADER_GEOMETRY:
+      nv50_gp_sampler_states_bind(pipe, num_samplers, samplers);
+      break;
+   case PIPE_SHADER_FRAGMENT:
+      nv50_fp_sampler_states_bind(pipe, num_samplers, samplers);
+      break;
+   }
+}
+
+
+
 /* NOTE: only called when not referenced anywhere, won't be bound */
 static void
 nv50_sampler_view_destroy(struct pipe_context *pipe,
@@ -1067,6 +1088,7 @@ nv50_init_state_functions(struct nv50_context *nv50)
 
    pipe->create_sampler_state = nv50_sampler_state_create;
    pipe->delete_sampler_state = nv50_sampler_state_delete;
+   pipe->bind_sampler_states   = nv50_bind_sampler_states;
    pipe->bind_vertex_sampler_states   = nv50_vp_sampler_states_bind;
    pipe->bind_fragment_sampler_states = nv50_fp_sampler_states_bind;
    pipe->bind_geometry_sampler_states = nv50_gp_sampler_states_bind;

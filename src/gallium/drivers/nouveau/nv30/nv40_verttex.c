@@ -47,7 +47,7 @@ nv40_verttex_validate(struct nv30_context *nv30)
    nv30->vertprog.dirty_samplers = 0;
 }
 
-static void
+void
 nv40_verttex_sampler_states_bind(struct pipe_context *pipe,
                                  unsigned nr, void **hwcso)
 {
