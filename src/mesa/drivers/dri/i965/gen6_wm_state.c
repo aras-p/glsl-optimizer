@@ -50,7 +50,9 @@ gen6_upload_wm_push_constants(struct brw_context *brw)
    /* XXX: Should this happen somewhere before to get our state flag set? */
    _mesa_load_state_parameters(ctx, fp->program.Base.Parameters);
 
-   if (prog_data->nr_params != 0) {
+   if (prog_data->nr_params == 0) {
+      brw->wm.base.push_const_size = 0;
+   } else {
       float *constants;
       unsigned int i;
 
@@ -75,6 +77,9 @@ gen6_upload_wm_push_constants(struct brw_context *brw)
 	    printf("\n");
 	 printf("\n");
       }
+
+      brw->wm.base.push_const_size =
+         ALIGN(prog_data->nr_params, prog_data->dispatch_width) / 8;
    }
 }
 
