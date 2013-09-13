@@ -163,9 +163,7 @@ brw_vec4_upload_binding_table(struct brw_context *brw,
       gen7_create_shader_time_surface(brw, &stage_state->surf_offset[SURF_INDEX_VEC4_SHADER_TIME]);
    }
 
-   /* Skip making a binding table if we don't use textures or pull
-    * constants.
-    */
+   /* If there are no surfaces, skip making the binding table altogether. */
    const unsigned entries = prog_data->binding_table_size;
    if (entries == 0) {
       if (stage_state->bind_bo_offset != 0) {
@@ -175,9 +173,6 @@ brw_vec4_upload_binding_table(struct brw_context *brw,
       return;
    }
 
-   /* Might want to calculate nr_surfaces first, to avoid taking up so much
-    * space for the binding table.
-    */
    bind = brw_state_batch(brw, AUB_TRACE_BINDING_TABLE,
 			  sizeof(uint32_t) * entries,
 			  32, &stage_state->bind_bo_offset);
