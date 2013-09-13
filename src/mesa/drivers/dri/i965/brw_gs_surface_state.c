@@ -87,37 +87,3 @@ const struct brw_tracked_state brw_gs_ubo_surfaces = {
    },
    .emit = brw_upload_gs_ubo_surfaces,
 };
-
-
-/**
- * Constructs the binding table for the WM surface state, which maps unit
- * numbers to surface state objects.
- */
-static void
-brw_gs_upload_binding_table(struct brw_context *brw)
-{
-   struct brw_stage_state *stage_state = &brw->gs.base;
-
-   /* If there's no GS, skip changing anything. */
-   if (!brw->gs.prog_data)
-      return;
-
-   /* CACHE_NEW_GS_PROG */
-   const struct brw_vec4_prog_data *prog_data = &brw->gs.prog_data->base;
-
-   /* BRW_NEW_SURFACES and BRW_NEW_GS_CONSTBUF */
-   brw_upload_binding_table(brw, BRW_NEW_GS_BINDING_TABLE, stage_state,
-                            prog_data->binding_table_size,
-                            SURF_INDEX_VEC4_SHADER_TIME);
-}
-
-const struct brw_tracked_state brw_gs_binding_table = {
-   .dirty = {
-      .mesa = 0,
-      .brw = (BRW_NEW_BATCH |
-	      BRW_NEW_GS_CONSTBUF |
-	      BRW_NEW_SURFACES),
-      .cache = CACHE_NEW_GS_PROG
-   },
-   .emit = brw_gs_upload_binding_table,
-};

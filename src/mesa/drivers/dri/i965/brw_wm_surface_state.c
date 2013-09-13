@@ -855,31 +855,6 @@ const struct brw_tracked_state brw_wm_ubo_surfaces = {
    .emit = brw_upload_wm_ubo_surfaces,
 };
 
-/**
- * Constructs the binding table for the WM surface state, which maps unit
- * numbers to surface state objects.
- */
-static void
-brw_upload_wm_binding_table(struct brw_context *brw)
-{
-   struct brw_stage_state *stage_state = &brw->wm.base;
-
-   /* BRW_NEW_SURFACES and CACHE_NEW_WM_PROG */
-   brw_upload_binding_table(brw, BRW_NEW_PS_BINDING_TABLE, stage_state,
-                            brw->wm.prog_data->binding_table_size,
-                            SURF_INDEX_WM_SHADER_TIME);
-}
-
-const struct brw_tracked_state brw_wm_binding_table = {
-   .dirty = {
-      .mesa = 0,
-      .brw = (BRW_NEW_BATCH |
-	      BRW_NEW_SURFACES),
-      .cache = CACHE_NEW_WM_PROG
-   },
-   .emit = brw_upload_wm_binding_table,
-};
-
 void
 gen4_init_vtable_surface_functions(struct brw_context *brw)
 {
