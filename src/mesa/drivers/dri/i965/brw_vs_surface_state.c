@@ -156,9 +156,6 @@ brw_vec4_upload_binding_table(struct brw_context *brw,
                               struct brw_stage_state *stage_state,
                               const struct brw_vec4_prog_data *prog_data)
 {
-   uint32_t *bind;
-   int i;
-
    if (INTEL_DEBUG & DEBUG_SHADER_TIME) {
       gen7_create_shader_time_surface(brw, &stage_state->surf_offset[SURF_INDEX_VEC4_SHADER_TIME]);
    }
@@ -173,14 +170,14 @@ brw_vec4_upload_binding_table(struct brw_context *brw,
       return;
    }
 
-   bind = brw_state_batch(brw, AUB_TRACE_BINDING_TABLE,
-			  sizeof(uint32_t) * entries,
-			  32, &stage_state->bind_bo_offset);
+   size_t table_size_in_bytes = entries * sizeof(uint32_t);
+
+   uint32_t *bind = brw_state_batch(brw, AUB_TRACE_BINDING_TABLE,
+                                    table_size_in_bytes, 32,
+                                    &stage_state->bind_bo_offset);
 
    /* BRW_NEW_SURFACES and BRW_NEW_*_CONSTBUF */
-   for (i = 0; i < entries; i++) {
-      bind[i] = stage_state->surf_offset[i];
-   }
+   memcpy(bind, stage_state->surf_offset, table_size_in_bytes);
 
    brw->state.dirty.brw |= brw_new_binding_table;
 }
