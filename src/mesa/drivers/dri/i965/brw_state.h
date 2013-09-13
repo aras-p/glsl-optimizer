@@ -240,10 +240,11 @@ brw_upload_vec4_pull_constants(struct brw_context *brw,
                                struct brw_stage_state *stage_state,
                                const struct brw_vec4_prog_data *prog_data);
 void
-brw_vec4_upload_binding_table(struct brw_context *brw,
-                              GLbitfield brw_new_binding_table,
-                              struct brw_stage_state *stage_state,
-                              const struct brw_vec4_prog_data *prog_data);
+brw_upload_binding_table(struct brw_context *brw,
+                         GLbitfield brw_new_binding_table,
+                         struct brw_stage_state *stage_state,
+                         unsigned binding_table_entries,
+                         int shader_time_surf_index);
 
 /* gen7_vs_state.c */
 void

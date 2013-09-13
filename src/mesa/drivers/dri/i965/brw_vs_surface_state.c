@@ -151,18 +151,18 @@ const struct brw_tracked_state brw_vs_ubo_surfaces = {
 
 
 void
-brw_vec4_upload_binding_table(struct brw_context *brw,
-                              GLbitfield brw_new_binding_table,
-                              struct brw_stage_state *stage_state,
-                              const struct brw_vec4_prog_data *prog_data)
+brw_upload_binding_table(struct brw_context *brw,
+                         GLbitfield brw_new_binding_table,
+                         struct brw_stage_state *stage_state,
+                         unsigned binding_table_entries,
+                         int shader_time_surf_index)
 {
    if (INTEL_DEBUG & DEBUG_SHADER_TIME) {
-      gen7_create_shader_time_surface(brw, &stage_state->surf_offset[SURF_INDEX_VEC4_SHADER_TIME]);
+      gen7_create_shader_time_surface(brw, &stage_state->surf_offset[shader_time_surf_index]);
    }
 
    /* If there are no surfaces, skip making the binding table altogether. */
-   const unsigned entries = prog_data->binding_table_size;
-   if (entries == 0) {
+   if (binding_table_entries == 0) {
       if (stage_state->bind_bo_offset != 0) {
 	 brw->state.dirty.brw |= brw_new_binding_table;
 	 stage_state->bind_bo_offset = 0;
@@ -170,7 +170,7 @@ brw_vec4_upload_binding_table(struct brw_context *brw,
       return;
    }
 
-   size_t table_size_in_bytes = entries * sizeof(uint32_t);
+   size_t table_size_in_bytes = binding_table_entries * sizeof(uint32_t);
 
    uint32_t *bind = brw_state_batch(brw, AUB_TRACE_BINDING_TABLE,
                                     table_size_in_bytes, 32,
@@ -195,8 +195,9 @@ brw_vs_upload_binding_table(struct brw_context *brw)
    const struct brw_vec4_prog_data *prog_data = &brw->vs.prog_data->base;
 
    /* BRW_NEW_SURFACES and BRW_NEW_VS_CONSTBUF */
-   brw_vec4_upload_binding_table(brw, BRW_NEW_VS_BINDING_TABLE, stage_state,
-                                 prog_data);
+   brw_upload_binding_table(brw, BRW_NEW_VS_BINDING_TABLE, stage_state,
+                            prog_data->binding_table_size,
+                            SURF_INDEX_VEC4_SHADER_TIME);
 }
 
 const struct brw_tracked_state brw_vs_binding_table = {

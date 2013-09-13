@@ -106,8 +106,9 @@ brw_gs_upload_binding_table(struct brw_context *brw)
    const struct brw_vec4_prog_data *prog_data = &brw->gs.prog_data->base;
 
    /* BRW_NEW_SURFACES and BRW_NEW_GS_CONSTBUF */
-   brw_vec4_upload_binding_table(brw, BRW_NEW_GS_BINDING_TABLE, stage_state,
-                                 prog_data);
+   brw_upload_binding_table(brw, BRW_NEW_GS_BINDING_TABLE, stage_state,
+                            prog_data->binding_table_size,
+                            SURF_INDEX_VEC4_SHADER_TIME);
 }
 
 const struct brw_tracked_state brw_gs_binding_table = {
