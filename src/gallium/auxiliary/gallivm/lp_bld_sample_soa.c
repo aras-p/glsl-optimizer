@@ -2123,8 +2123,21 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
       debug_printf("  .min_mip_filter = %u\n", derived_sampler_state.min_mip_filter);
    }
 
-   min_img_filter = static_sampler_state->min_img_filter;
-   mag_img_filter = static_sampler_state->mag_img_filter;
+   if ((static_texture_state->target == PIPE_TEXTURE_CUBE ||
+        static_texture_state->target == PIPE_TEXTURE_CUBE_ARRAY) &&
+       static_sampler_state->seamless_cube_map)
+   {
+      /*
+       * Seamless filtering ignores wrap modes.
+       * Setting to CLAMP_TO_EDGE is correct for nearest filtering, for
+       * bilinear it's not correct but way better than using for instance repeat.
+       */
+      derived_sampler_state.wrap_s = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
+      derived_sampler_state.wrap_t = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
+   }
+
+   min_img_filter = derived_sampler_state.min_img_filter;
+   mag_img_filter = derived_sampler_state.mag_img_filter;
 
 
    /*
@@ -2260,16 +2273,16 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
       LLVMValueRef ilevel0 = NULL, ilevel1 = NULL;
       boolean use_aos = util_format_fits_8unorm(bld.format_desc) &&
                         /* not sure this is strictly needed or simply impossible */
-                        static_sampler_state->compare_mode == PIPE_TEX_COMPARE_NONE &&
-                        lp_is_simple_wrap_mode(static_sampler_state->wrap_s);
+                        derived_sampler_state.compare_mode == PIPE_TEX_COMPARE_NONE &&
+                        lp_is_simple_wrap_mode(derived_sampler_state.wrap_s);
 
       use_aos &= bld.num_lods <= num_quads ||
-                 static_sampler_state->min_img_filter ==
-                    static_sampler_state->mag_img_filter;
+                 derived_sampler_state.min_img_filter ==
+                    derived_sampler_state.mag_img_filter;
       if (dims > 1) {
-         use_aos &= lp_is_simple_wrap_mode(static_sampler_state->wrap_t);
+         use_aos &= lp_is_simple_wrap_mode(derived_sampler_state.wrap_t);
          if (dims > 2) {
-            use_aos &= lp_is_simple_wrap_mode(static_sampler_state->wrap_r);
+            use_aos &= lp_is_simple_wrap_mode(derived_sampler_state.wrap_r);
          }
       }
 
@@ -2278,12 +2291,12 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
          debug_printf("%s: using floating point linear filtering for %s\n",
                       __FUNCTION__, bld.format_desc->short_name);
          debug_printf("  min_img %d  mag_img %d  mip %d  wraps %d  wrapt %d  wrapr %d\n",
-                      static_sampler_state->min_img_filter,
-                      static_sampler_state->mag_img_filter,
-                      static_sampler_state->min_mip_filter,
-                      static_sampler_state->wrap_s,
-                      static_sampler_state->wrap_t,
-                      static_sampler_state->wrap_r);
+                      derived_sampler_state.min_img_filter,
+                      derived_sampler_state.mag_img_filter,
+                      derived_sampler_state.min_mip_filter,
+                      derived_sampler_state.wrap_s,
+                      derived_sampler_state.wrap_t,
+                      derived_sampler_state.wrap_r);
       }
 
       lp_build_sample_common(&bld, texture_index, sampler_index,
