@@ -229,11 +229,6 @@ descriptor=[
 
 
 { "apis": ["GLES"], "params": [
-# XXX: OES_matrix_get
-  [ "MODELVIEW_MATRIX_FLOAT_AS_INT_BITS_OES", "" ],
-  [ "PROJECTION_MATRIX_FLOAT_AS_INT_BITS_OES", "" ],
-  [ "TEXTURE_MATRIX_FLOAT_AS_INT_BITS_OES", "" ],
-
 # OES_point_size_array
   [ "POINT_SIZE_ARRAY_OES", "ARRAY_FIELD(VertexAttrib[VERT_ATTRIB_POINT_SIZE].Enabled, TYPE_BOOLEAN)" ],
   [ "POINT_SIZE_ARRAY_TYPE_OES", "ARRAY_FIELD(VertexAttrib[VERT_ATTRIB_POINT_SIZE].Type, TYPE_ENUM)" ],

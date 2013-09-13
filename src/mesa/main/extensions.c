@@ -263,7 +263,6 @@ static const struct extension extension_table[] = {
    { "GL_OES_framebuffer_object",                  o(dummy_true),                                   ES1,       2005 },
    { "GL_OES_get_program_binary",                  o(dummy_true),                                         ES2, 2008 },
    { "GL_OES_mapbuffer",                           o(dummy_true),                                   ES1 | ES2, 2005 },
-   { "GL_OES_matrix_get",                          o(dummy_true),                                   ES1,       2004 },
    { "GL_OES_packed_depth_stencil",                o(EXT_packed_depth_stencil),                     ES1 | ES2, 2007 },
    { "GL_OES_point_size_array",                    o(dummy_true),                                   ES1,       2004 },
    { "GL_OES_point_sprite",                        o(ARB_point_sprite),                             ES1,       2004 },

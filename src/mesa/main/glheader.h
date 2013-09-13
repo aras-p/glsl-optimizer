@@ -115,12 +115,6 @@ typedef void *GLeglImageOES;
 #define GL_PALETTE8_RGB5_A1_OES                                 0x8B99
 #endif
 
-#ifndef GL_OES_matrix_get
-#define GL_MODELVIEW_MATRIX_FLOAT_AS_INT_BITS_OES               0x898D
-#define GL_PROJECTION_MATRIX_FLOAT_AS_INT_BITS_OES              0x898E
-#define GL_TEXTURE_MATRIX_FLOAT_AS_INT_BITS_OES                 0x898F
-#endif
-
 #ifndef GL_ES_VERSION_2_0
 #define GL_SHADER_BINARY_FORMATS            0x8DF8
 #define GL_NUM_SHADER_BINARY_FORMATS        0x8DF9
