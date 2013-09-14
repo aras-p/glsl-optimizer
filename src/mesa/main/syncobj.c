@@ -161,8 +161,16 @@ _mesa_free_sync_data(struct gl_context *ctx)
 }
 
 
-int
-_mesa_validate_sync(struct gl_context *ctx, struct gl_sync_object *syncObj)
+/**
+ * Check if the given sync object is:
+ *  - non-null
+ *  - not in sync objects hash table
+ *  - type is GL_SYNC_FENCE
+ *  - not marked as deleted
+ */
+bool
+_mesa_validate_sync(struct gl_context *ctx,
+                    const struct gl_sync_object *syncObj)
 {
    return (syncObj != NULL)
       && _mesa_set_search(ctx->Shared->SyncObjects,

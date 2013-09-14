@@ -53,8 +53,9 @@ _mesa_ref_sync_object(struct gl_context *ctx, struct gl_sync_object *syncObj);
 extern void
 _mesa_unref_sync_object(struct gl_context *ctx, struct gl_sync_object *syncObj);
 
-extern int
-_mesa_validate_sync(struct gl_context *ctx, struct gl_sync_object *syncObj);
+extern bool
+_mesa_validate_sync(struct gl_context *ctx,
+                    const struct gl_sync_object *syncObj);
 
 extern GLboolean GLAPIENTRY
 _mesa_IsSync(GLsync sync);
