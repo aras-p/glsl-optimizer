@@ -51,6 +51,7 @@ vlVdpDecoderCreate(VdpDevice device,
    vlVdpDecoder *vldecoder;
    VdpStatus ret;
    bool supported;
+   uint32_t maxwidth, maxheight;
 
    if (!decoder)
       return VDP_STATUS_INVALID_POINTER;
@@ -82,6 +83,25 @@ vlVdpDecoderCreate(VdpDevice device,
    if (!supported) {
       pipe_mutex_unlock(dev->mutex);
       return VDP_STATUS_INVALID_DECODER_PROFILE;
+   }
+
+   maxwidth = screen->get_video_param
+   (
+      screen,
+      templat.profile,
+      PIPE_VIDEO_ENTRYPOINT_BITSTREAM,
+      PIPE_VIDEO_CAP_MAX_WIDTH
+   );
+   maxheight = screen->get_video_param
+   (
+      screen,
+      templat.profile,
+      PIPE_VIDEO_ENTRYPOINT_BITSTREAM,
+      PIPE_VIDEO_CAP_MAX_HEIGHT
+   );
+   if (width > maxwidth || height > maxheight) {
+      pipe_mutex_unlock(dev->mutex);
+      return VDP_STATUS_INVALID_SIZE;
    }
 
    vldecoder = CALLOC(1,sizeof(vlVdpDecoder));
