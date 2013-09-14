@@ -318,7 +318,6 @@ brw_create_constant_surface(struct brw_context *brw,
 			  6 * 4, 32, out_offset);
 
    surf[0] = (BRW_SURFACE_BUFFER << BRW_SURFACE_TYPE_SHIFT |
-	      BRW_SURFACE_MIPMAPLAYOUT_BELOW << BRW_SURFACE_MIPLAYOUT_SHIFT |
 	      BRW_SURFACEFORMAT_R32G32B32A32_FLOAT << BRW_SURFACE_FORMAT_SHIFT);
 
    if (brw->gen >= 6)
