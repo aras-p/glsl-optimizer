@@ -418,7 +418,7 @@ _mesa_GetSynciv(GLsync sync, GLenum pname, GLsizei bufSize, GLsizei *length,
       return;
    }
 
-   if (size > 0) {
+   if (size > 0 && bufSize > 0) {
       const GLsizei copy_count = MIN2(size, bufSize);
 
       memcpy(values, v, sizeof(GLint) * copy_count);
