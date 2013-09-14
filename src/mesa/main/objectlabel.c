@@ -224,7 +224,7 @@ get_label_pointer(struct gl_context *ctx, GLenum identifier, GLuint name,
    }
 
    if (NULL == labelPtr) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glObjectLabel(name = %u)", name);
+      _mesa_error(ctx, GL_INVALID_VALUE, "%s(name = %u)", caller, name);
    }
 
    return labelPtr;
