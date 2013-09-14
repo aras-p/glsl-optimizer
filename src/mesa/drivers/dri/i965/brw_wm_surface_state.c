@@ -190,6 +190,38 @@ brw_get_texture_swizzle(const struct gl_context *ctx,
                         swizzles[GET_SWZ(t->_Swizzle, 3)]);
 }
 
+static void
+gen4_emit_buffer_surface_state(struct brw_context *brw,
+                               uint32_t *out_offset,
+                               drm_intel_bo *bo,
+                               unsigned buffer_offset,
+                               unsigned surface_format,
+                               unsigned buffer_size,
+                               unsigned pitch)
+{
+   uint32_t *surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE,
+                                    6 * 4, 32, out_offset);
+   memset(surf, 0, 6 * 4);
+
+   surf[0] = BRW_SURFACE_BUFFER << BRW_SURFACE_TYPE_SHIFT |
+             surface_format << BRW_SURFACE_FORMAT_SHIFT |
+             (brw->gen >= 6 ? BRW_SURFACE_RC_READ_WRITE : 0);
+   surf[1] = (bo ? bo->offset : 0) + buffer_offset; /* reloc */
+   surf[2] = (buffer_size & 0x7f) << BRW_SURFACE_WIDTH_SHIFT |
+             ((buffer_size >> 7) & 0x1fff) << BRW_SURFACE_HEIGHT_SHIFT;
+   surf[3] = ((buffer_size >> 20) & 0x7f) << BRW_SURFACE_DEPTH_SHIFT |
+             (pitch - 1) << BRW_SURFACE_PITCH_SHIFT;
+
+   /* Emit relocation to surface contents.  The 965 PRM, Volume 4, section
+    * 5.1.2 "Data Cache" says: "the data cache does not exist as a separate
+    * physical cache.  It is mapped in hardware to the sampler cache."
+    */
+   if (bo) {
+      drm_intel_bo_emit_reloc(brw->batch.bo, *out_offset + 4,
+                              bo, buffer_offset,
+                              I915_GEM_DOMAIN_SAMPLER, 0);
+   }
+}
 
 static void
 brw_update_buffer_texture_surface(struct gl_context *ctx,
@@ -198,49 +230,22 @@ brw_update_buffer_texture_surface(struct gl_context *ctx,
 {
    struct brw_context *brw = brw_context(ctx);
    struct gl_texture_object *tObj = ctx->Texture.Unit[unit]._Current;
-   uint32_t *surf;
    struct intel_buffer_object *intel_obj =
       intel_buffer_object(tObj->BufferObject);
    drm_intel_bo *bo = intel_obj ? intel_obj->buffer : NULL;
    gl_format format = tObj->_BufferObjectFormat;
    uint32_t brw_format = brw_format_for_mesa_format(format);
    int texel_size = _mesa_get_format_bytes(format);
+   int w = intel_obj ? intel_obj->Base.Size / texel_size : 0;
 
    if (brw_format == 0 && format != MESA_FORMAT_RGBA_FLOAT32) {
       _mesa_problem(NULL, "bad format %s for texture buffer\n",
 		    _mesa_get_format_name(format));
    }
 
-   surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE,
-			  6 * 4, 32, surf_offset);
-
-   surf[0] = (BRW_SURFACE_BUFFER << BRW_SURFACE_TYPE_SHIFT |
-	      (brw_format_for_mesa_format(format) << BRW_SURFACE_FORMAT_SHIFT));
-
-   if (brw->gen >= 6)
-      surf[0] |= BRW_SURFACE_RC_READ_WRITE;
-
-   if (bo) {
-      surf[1] = bo->offset; /* reloc */
-
-      /* Emit relocation to surface contents. */
-      drm_intel_bo_emit_reloc(brw->batch.bo,
-			      *surf_offset + 4,
-			      bo, 0, I915_GEM_DOMAIN_SAMPLER, 0);
-
-      int w = (intel_obj->Base.Size / texel_size) - 1;
-      surf[2] = ((w & 0x7f) << BRW_SURFACE_WIDTH_SHIFT |
-		 ((w >> 7) & 0x1fff) << BRW_SURFACE_HEIGHT_SHIFT);
-      surf[3] = (((w >> 20) & 0x7f) << BRW_SURFACE_DEPTH_SHIFT |
-		 (texel_size - 1) << BRW_SURFACE_PITCH_SHIFT);
-   } else {
-      surf[1] = 0;
-      surf[2] = 0;
-      surf[3] = 0;
-   }
-
-   surf[4] = 0;
-   surf[5] = 0;
+   gen4_emit_buffer_surface_state(brw, surf_offset, bo, 0,
+                                  brw_format,
+                                  w, texel_size);
 }
 
 static void
@@ -311,37 +316,10 @@ brw_create_constant_surface(struct brw_context *brw,
 {
    uint32_t stride = dword_pitch ? 4 : 16;
    uint32_t elements = ALIGN(size, stride) / stride;
-   const GLint w = elements - 1;
-   uint32_t *surf;
 
-   surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE,
-			  6 * 4, 32, out_offset);
-
-   surf[0] = (BRW_SURFACE_BUFFER << BRW_SURFACE_TYPE_SHIFT |
-	      BRW_SURFACEFORMAT_R32G32B32A32_FLOAT << BRW_SURFACE_FORMAT_SHIFT);
-
-   if (brw->gen >= 6)
-      surf[0] |= BRW_SURFACE_RC_READ_WRITE;
-
-   surf[1] = bo->offset + offset; /* reloc */
-
-   surf[2] = ((w & 0x7f) << BRW_SURFACE_WIDTH_SHIFT |
-	      ((w >> 7) & 0x1fff) << BRW_SURFACE_HEIGHT_SHIFT);
-
-   surf[3] = (((w >> 20) & 0x7f) << BRW_SURFACE_DEPTH_SHIFT |
-	      (stride - 1) << BRW_SURFACE_PITCH_SHIFT);
-
-   surf[4] = 0;
-   surf[5] = 0;
-
-   /* Emit relocation to surface contents.  The 965 PRM, Volume 4, section
-    * 5.1.2 "Data Cache" says: "the data cache does not exist as a separate
-    * physical cache.  It is mapped in hardware to the sampler cache."
-    */
-   drm_intel_bo_emit_reloc(brw->batch.bo,
-			   *out_offset + 4,
-			   bo, offset,
-			   I915_GEM_DOMAIN_SAMPLER, 0);
+   gen4_emit_buffer_surface_state(brw, out_offset, bo, offset,
+                                  BRW_SURFACEFORMAT_R32G32B32A32_FLOAT,
+                                  elements, stride);
 }
 
 /**
