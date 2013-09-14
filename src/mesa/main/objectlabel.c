@@ -256,6 +256,12 @@ _mesa_GetObjectLabel(GLenum identifier, GLuint name, GLsizei bufSize,
    GET_CURRENT_CONTEXT(ctx);
    char **labelPtr;
 
+   if (bufSize < 0) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glGetObjectLabel(bufSize = %d)",
+                  bufSize);
+      return;
+   }
+
    labelPtr = get_label_pointer(ctx, identifier, name, "glGetObjectLabel");
    if (!labelPtr)
       return;
@@ -287,6 +293,12 @@ _mesa_GetObjectPtrLabel(const void *ptr, GLsizei bufSize, GLsizei *length,
    GET_CURRENT_CONTEXT(ctx);
    char **labelPtr;
    struct gl_sync_object *const syncObj = (struct gl_sync_object *) ptr;
+
+   if (bufSize < 0) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glGetObjectPtrLabel(bufSize = %d)",
+                  bufSize);
+      return;
+   }
 
    if (!_mesa_validate_sync(ctx, syncObj)) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glGetObjectPtrLabel (not a valid sync object)");
