@@ -32,6 +32,7 @@
 
 #include "glsl/glsl_types.h"
 #include "glsl/ir.h"
+#include "program/prog_instruction.h" /* For WRITEMASK_* */
 
 class brw_cubemap_normalize_visitor : public ir_hierarchical_visitor {
 public:
@@ -88,11 +89,16 @@ brw_cubemap_normalize_visitor::visit_leave(ir_texture *ir)
 				     glsl_type::float_type,
 				     expr, NULL);
 
-   deref = new(mem_ctx) ir_dereference_variable(var);
-   ir->coordinate = new(mem_ctx) ir_expression(ir_binop_mul,
-					       ir->coordinate->type,
-					       deref,
-					       expr);
+   /* coordinate.xyz *= expr */
+   assign = new(mem_ctx) ir_assignment(
+      new(mem_ctx) ir_dereference_variable(var),
+      new(mem_ctx) ir_expression(ir_binop_mul,
+                                 ir->coordinate->type,
+                                 new(mem_ctx) ir_dereference_variable(var),
+                                 expr));
+   assign->write_mask = WRITEMASK_XYZ;
+   base_ir->insert_before(assign);
+   ir->coordinate = new(mem_ctx) ir_dereference_variable(var);
 
    progress = true;
    return visit_continue;
