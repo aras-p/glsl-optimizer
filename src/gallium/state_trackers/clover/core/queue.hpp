@@ -20,8 +20,8 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 //
 
-#ifndef _CORE_QUEUE_HPP_
-#define _CORE_QUEUE_HPP_
+#ifndef CLOVER_CORE_QUEUE_HPP
+#define CLOVER_CORE_QUEUE_HPP
 
 #include "core/base.hpp"
 #include "core/context.hpp"

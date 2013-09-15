@@ -20,8 +20,8 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 //
 
-#ifndef _CORE_MEMORY_HPP_
-#define _CORE_MEMORY_HPP_
+#ifndef CLOVER_CORE_MEMORY_HPP
+#define CLOVER_CORE_MEMORY_HPP
 
 #include <functional>
 #include <map>

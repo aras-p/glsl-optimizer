@@ -20,8 +20,8 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 //
 
-#ifndef _CORE_PLATFORM_HPP_
-#define _CORE_PLATFORM_HPP_
+#ifndef CLOVER_CORE_PLATFORM_HPP
+#define CLOVER_CORE_PLATFORM_HPP
 
 #include <vector>
 

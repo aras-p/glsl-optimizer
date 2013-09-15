@@ -20,8 +20,8 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 //
 
-#ifndef _CORE_BASE_HPP_
-#define _CORE_BASE_HPP_
+#ifndef CLOVER_CORE_BASE_HPP
+#define CLOVER_CORE_BASE_HPP
 
 #include <stdexcept>
 #include <atomic>

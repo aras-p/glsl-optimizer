@@ -20,8 +20,8 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 //
 
-#ifndef _CORE_EVENT_HPP_
-#define _CORE_EVENT_HPP_
+#ifndef CLOVER_CORE_EVENT_HPP
+#define CLOVER_CORE_EVENT_HPP
 
 #include <functional>
 

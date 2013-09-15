@@ -20,8 +20,8 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 //
 
-#ifndef _CORE_SAMPLER_HPP_
-#define _CORE_SAMPLER_HPP_
+#ifndef CLOVER_CORE_SAMPLER_HPP
+#define CLOVER_CORE_SAMPLER_HPP
 
 #include "core/base.hpp"
 #include "core/queue.hpp"

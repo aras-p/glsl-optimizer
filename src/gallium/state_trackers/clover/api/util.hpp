@@ -20,8 +20,8 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 //
 
-#ifndef _CL_UTIL_HPP_
-#define _CL_UTIL_HPP_
+#ifndef CLOVER_API_UTIL_HPP
+#define CLOVER_API_UTIL_HPP
 
 #include <cstdint>
 #include <cstring>

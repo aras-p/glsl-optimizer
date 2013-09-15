@@ -20,8 +20,8 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 //
 
-#ifndef _CORE_COMPILER_HPP_
-#define _CORE_COMPILER_HPP_
+#ifndef CLOVER_CORE_COMPILER_HPP
+#define CLOVER_CORE_COMPILER_HPP
 
 #include "core/compat.hpp"
 #include "core/module.hpp"

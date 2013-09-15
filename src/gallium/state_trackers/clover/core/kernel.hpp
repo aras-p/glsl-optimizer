@@ -20,8 +20,8 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 //
 
-#ifndef _CORE_KERNEL_HPP_
-#define _CORE_KERNEL_HPP_
+#ifndef CLOVER_CORE_KERNEL_HPP
+#define CLOVER_CORE_KERNEL_HPP
 
 #include <memory>
 

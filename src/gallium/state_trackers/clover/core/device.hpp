@@ -20,8 +20,8 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 //
 
-#ifndef _CORE_DEVICE_HPP_
-#define _CORE_DEVICE_HPP_
+#ifndef CLOVER_CORE_DEVICE_HPP
+#define CLOVER_CORE_DEVICE_HPP
 
 #include <set>
 #include <vector>

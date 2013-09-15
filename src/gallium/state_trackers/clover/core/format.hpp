@@ -20,8 +20,8 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 //
 
-#ifndef _CORE_FORMAT_HPP_
-#define _CORE_FORMAT_HPP_
+#ifndef CLOVER_CORE_FORMAT_HPP
+#define CLOVER_CORE_FORMAT_HPP
 
 #include <set>
 

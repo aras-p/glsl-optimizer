@@ -20,8 +20,8 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 //
 
-#ifndef _CORE_CONTEXT_HPP_
-#define _CORE_CONTEXT_HPP_
+#ifndef CLOVER_CORE_CONTEXT_HPP
+#define CLOVER_CORE_CONTEXT_HPP
 
 #include "core/base.hpp"
 #include "core/device.hpp"
