@@ -189,6 +189,10 @@ driCreateConfigs(gl_format format,
       { 0x00FF0000, 0x0000FF00, 0x000000FF, 0x00000000 },
       /* MESA_FORMAT_ARGB8888 */
       { 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000 },
+      /* MESA_FORMAT_XRGB2101010_UNORM */
+      { 0x3FF00000, 0x000FFC00, 0x000003FF, 0x00000000 },
+      /* MESA_FORMAT_ARGB2101010 */
+      { 0x3FF00000, 0x000FFC00, 0x000003FF, 0xC0000000 },
    };
 
    const uint32_t * masks;
@@ -213,6 +217,12 @@ driCreateConfigs(gl_format format,
    case MESA_FORMAT_ARGB8888:
    case MESA_FORMAT_SARGB8:
       masks = masks_table[2];
+      break;
+   case MESA_FORMAT_XRGB2101010_UNORM:
+      masks = masks_table[3];
+      break;
+   case MESA_FORMAT_ARGB2101010:
+      masks = masks_table[4];
       break;
    default:
       fprintf(stderr, "[%s:%u] Unknown framebuffer type %s (%d).\n",
