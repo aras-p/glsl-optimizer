@@ -385,11 +385,15 @@ vec4_generator::generate_tex(vec4_instruction *inst,
       break;
    }
 
+   uint32_t surface_index = inst->opcode == SHADER_OPCODE_TG4
+      ? SURF_INDEX_VEC4_GATHER_TEXTURE(inst->sampler)
+      : SURF_INDEX_VEC4_TEXTURE(inst->sampler);
+
    brw_SAMPLE(p,
 	      dst,
 	      inst->base_mrf,
 	      src,
-	      SURF_INDEX_VEC4_TEXTURE(inst->sampler),
+              surface_index,
 	      inst->sampler,
 	      msg_type,
 	      1, /* response length */
@@ -398,7 +402,7 @@ vec4_generator::generate_tex(vec4_instruction *inst,
 	      BRW_SAMPLER_SIMD_MODE_SIMD4X2,
 	      return_format);
 
-   mark_surface_used(SURF_INDEX_VEC4_TEXTURE(inst->sampler));
+   mark_surface_used(surface_index);
 }
 
 void

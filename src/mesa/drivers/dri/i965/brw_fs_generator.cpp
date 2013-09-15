@@ -522,11 +522,15 @@ fs_generator::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src
       src = retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UW);
    }
 
+   uint32_t surface_index = inst->opcode == SHADER_OPCODE_TG4
+      ? SURF_INDEX_GATHER_TEXTURE(inst->sampler)
+      : SURF_INDEX_TEXTURE(inst->sampler);
+
    brw_SAMPLE(p,
 	      retype(dst, BRW_REGISTER_TYPE_UW),
 	      inst->base_mrf,
 	      src,
-              SURF_INDEX_TEXTURE(inst->sampler),
+              surface_index,
 	      inst->sampler,
 	      msg_type,
 	      rlen,
@@ -535,7 +539,7 @@ fs_generator::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src
 	      simd_mode,
 	      return_format);
 
-   mark_surface_used(SURF_INDEX_TEXTURE(inst->sampler));
+   mark_surface_used(surface_index);
 }
 
 
