@@ -964,6 +964,8 @@ struct __DRIdri2ExtensionRec {
 #define __DRI_IMAGE_FORMAT_R8           0x1006 /* Since version 5 */
 #define __DRI_IMAGE_FORMAT_GR88         0x1007
 #define __DRI_IMAGE_FORMAT_NONE         0x1008
+#define __DRI_IMAGE_FORMAT_XRGB2101010  0x1009
+#define __DRI_IMAGE_FORMAT_ARGB2101010  0x100a
 
 #define __DRI_IMAGE_USE_SHARE		0x0001
 #define __DRI_IMAGE_USE_SCANOUT		0x0002

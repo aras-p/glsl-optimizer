@@ -296,6 +296,12 @@ intel_allocate_image(int dri_format, void *loaderPrivate)
     case __DRI_IMAGE_FORMAT_XRGB8888:
        image->format = MESA_FORMAT_XRGB8888;
        break;
+    case __DRI_IMAGE_FORMAT_ARGB2101010:
+       image->format = MESA_FORMAT_ARGB2101010;
+       break;
+    case __DRI_IMAGE_FORMAT_XRGB2101010:
+       image->format = MESA_FORMAT_XRGB2101010_UNORM;
+       break;
     case __DRI_IMAGE_FORMAT_ARGB8888:
        image->format = MESA_FORMAT_ARGB8888;
        break;
@@ -382,6 +388,10 @@ intel_dri_format(GLuint format)
       return __DRI_IMAGE_FORMAT_R8;
    case MESA_FORMAT_RG88:
       return __DRI_IMAGE_FORMAT_GR88;
+   case MESA_FORMAT_XRGB2101010_UNORM:
+      return __DRI_IMAGE_FORMAT_XRGB2101010;
+   case MESA_FORMAT_ARGB2101010:
+      return __DRI_IMAGE_FORMAT_ARGB2101010;
    }
 
    return MESA_FORMAT_NONE;
