@@ -299,7 +299,8 @@ gen7_update_buffer_texture_surface(struct gl_context *ctx,
 static void
 gen7_update_texture_surface(struct gl_context *ctx,
                             unsigned unit,
-                            uint32_t *surf_offset)
+                            uint32_t *surf_offset,
+                            bool for_gather)
 {
    struct brw_context *brw = brw_context(ctx);
    struct gl_texture_object *tObj = ctx->Texture.Unit[unit]._Current;
@@ -321,6 +322,9 @@ gen7_update_texture_surface(struct gl_context *ctx,
                                               mt->format,
                                               tObj->DepthMode,
                                               sampler->sRGBDecode);
+
+   if (for_gather && tex_format == BRW_SURFACEFORMAT_R32G32_FLOAT)
+      tex_format = BRW_SURFACEFORMAT_R32G32_FLOAT_LD;
 
    surf[0] = translate_tex_target(tObj->Target) << BRW_SURFACE_TYPE_SHIFT |
              tex_format << BRW_SURFACE_FORMAT_SHIFT |

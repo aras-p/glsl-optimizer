@@ -251,7 +251,8 @@ brw_update_buffer_texture_surface(struct gl_context *ctx,
 static void
 brw_update_texture_surface(struct gl_context *ctx,
                            unsigned unit,
-                           uint32_t *surf_offset)
+                           uint32_t *surf_offset,
+                           bool for_gather)
 {
    struct brw_context *brw = brw_context(ctx);
    struct gl_texture_object *tObj = ctx->Texture.Unit[unit]._Current;
@@ -267,6 +268,8 @@ brw_update_texture_surface(struct gl_context *ctx,
 
    surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE,
 			  6 * 4, 32, surf_offset);
+
+   (void) for_gather;   /* no w/a to apply for this gen */
 
    surf[0] = (translate_tex_target(tObj->Target) << BRW_SURFACE_TYPE_SHIFT |
 	      BRW_SURFACE_MIPMAPLAYOUT_BELOW << BRW_SURFACE_MIPLAYOUT_SHIFT |
@@ -712,7 +715,8 @@ const struct brw_tracked_state gen6_renderbuffer_surfaces = {
 static void
 update_stage_texture_surfaces(struct brw_context *brw,
                               const struct gl_program *prog,
-                              uint32_t *surf_offset)
+                              uint32_t *surf_offset,
+                              bool for_gather)
 {
    if (!prog)
       return;
@@ -729,7 +733,7 @@ update_stage_texture_surfaces(struct brw_context *brw,
 
          /* _NEW_TEXTURE */
          if (ctx->Texture.Unit[unit]._ReallyEnabled) {
-            brw->vtbl.update_texture_surface(ctx, unit, surf_offset + s);
+            brw->vtbl.update_texture_surface(ctx, unit, surf_offset + s, for_gather);
          }
       }
    }
@@ -754,13 +758,35 @@ brw_update_texture_surfaces(struct brw_context *brw)
    /* _NEW_TEXTURE */
    update_stage_texture_surfaces(brw, vs,
                                  brw->vs.base.surf_offset +
-                                 SURF_INDEX_VEC4_TEXTURE(0));
+                                 SURF_INDEX_VEC4_TEXTURE(0),
+                                 false);
    update_stage_texture_surfaces(brw, gs,
                                  brw->gs.base.surf_offset +
-                                 SURF_INDEX_VEC4_TEXTURE(0));
+                                 SURF_INDEX_VEC4_TEXTURE(0),
+                                 false);
    update_stage_texture_surfaces(brw, fs,
                                  brw->wm.base.surf_offset +
-                                 SURF_INDEX_TEXTURE(0));
+                                 SURF_INDEX_TEXTURE(0),
+                                 false);
+
+   /* emit alternate set of surface state for gather. this
+    * allows the surface format to be overriden for only the
+    * gather4 messages. */
+   if (vs && vs->UsesGather)
+      update_stage_texture_surfaces(brw, vs,
+                                    brw->vs.base.surf_offset +
+                                    SURF_INDEX_VEC4_GATHER_TEXTURE(0),
+                                    true);
+   if (gs && gs->UsesGather)
+      update_stage_texture_surfaces(brw, gs,
+                                    brw->gs.base.surf_offset +
+                                    SURF_INDEX_VEC4_GATHER_TEXTURE(0),
+                                    true);
+   if (fs && fs->UsesGather)
+      update_stage_texture_surfaces(brw, fs,
+                                    brw->wm.base.surf_offset +
+                                    SURF_INDEX_GATHER_TEXTURE(0),
+                                    true);
 
    brw->state.dirty.brw |= BRW_NEW_SURFACES;
 }
