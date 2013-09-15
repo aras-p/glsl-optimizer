@@ -246,7 +246,7 @@ dri2_lookup_egl_image(__DRIscreen *screen, void *image, void *data);
 
 struct dri2_egl_config *
 dri2_add_config(_EGLDisplay *disp, const __DRIconfig *dri_config, int id,
-		int depth, EGLint surface_type, const EGLint *attr_list,
+		EGLint surface_type, const EGLint *attr_list,
 		const unsigned int *rgba_masks);
 
 _EGLImage *

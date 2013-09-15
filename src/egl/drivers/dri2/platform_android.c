@@ -547,14 +547,13 @@ droid_add_configs_for_visuals(_EGLDriver *drv, _EGLDisplay *dpy)
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(dpy);
    const struct {
       int format;
-      int size;
       unsigned int rgba_masks[4];
    } visuals[] = {
-      { HAL_PIXEL_FORMAT_RGBA_8888, 32, { 0xff, 0xff00, 0xff0000, 0xff000000 } },
-      { HAL_PIXEL_FORMAT_RGBX_8888, 32, { 0xff, 0xff00, 0xff0000, 0x0 } },
-      { HAL_PIXEL_FORMAT_RGB_888,   24, { 0xff, 0xff00, 0xff0000, 0x0 } },
-      { HAL_PIXEL_FORMAT_RGB_565,   16, { 0xf800, 0x7e0, 0x1f, 0x0 } },
-      { HAL_PIXEL_FORMAT_BGRA_8888, 32, { 0xff0000, 0xff00, 0xff, 0xff000000 } },
+      { HAL_PIXEL_FORMAT_RGBA_8888, { 0xff, 0xff00, 0xff0000, 0xff000000 } },
+      { HAL_PIXEL_FORMAT_RGBX_8888, { 0xff, 0xff00, 0xff0000, 0x0 } },
+      { HAL_PIXEL_FORMAT_RGB_888,   { 0xff, 0xff00, 0xff0000, 0x0 } },
+      { HAL_PIXEL_FORMAT_RGB_565,   { 0xf800, 0x7e0, 0x1f, 0x0 } },
+      { HAL_PIXEL_FORMAT_BGRA_8888, { 0xff0000, 0xff00, 0xff, 0xff000000 } },
       { 0, 0, { 0, 0, 0, 0 } }
    };
    int count, i, j;
@@ -576,8 +575,7 @@ droid_add_configs_for_visuals(_EGLDriver *drv, _EGLDisplay *dpy)
             continue;
 
          dri2_conf = dri2_add_config(dpy, dri2_dpy->driver_configs[j],
-               count + 1, visuals[i].size, surface_type, NULL,
-               visuals[i].rgba_masks);
+               count + 1, surface_type, NULL, visuals[i].rgba_masks);
          if (dri2_conf) {
             dri2_conf->base.NativeVisualID = visuals[i].format;
             dri2_conf->base.NativeVisualType = visuals[i].format;

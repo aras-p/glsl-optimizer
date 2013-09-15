@@ -478,7 +478,7 @@ dri2_initialize_drm(_EGLDriver *drv, _EGLDisplay *disp)
 
    for (i = 0; dri2_dpy->driver_configs[i]; i++)
       dri2_add_config(disp, dri2_dpy->driver_configs[i],
-                      i + 1, 0, EGL_WINDOW_BIT, NULL, NULL);
+                      i + 1, EGL_WINDOW_BIT, NULL, NULL);
 
    drv->API.CreateWindowSurface = dri2_create_window_surface;
    drv->API.DestroySurface = dri2_destroy_surface;

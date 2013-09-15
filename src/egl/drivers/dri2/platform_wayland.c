@@ -821,11 +821,11 @@ dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp)
    for (i = 0; dri2_dpy->driver_configs[i]; i++) {
       config = dri2_dpy->driver_configs[i];
       if (dri2_dpy->formats & HAS_XRGB8888)
-	 dri2_add_config(disp, config, i + 1, 0, types, NULL, rgb_masks);
+	 dri2_add_config(disp, config, i + 1, types, NULL, rgb_masks);
       if (dri2_dpy->formats & HAS_ARGB8888)
-	 dri2_add_config(disp, config, i + 1, 0, types, NULL, argb_masks);
+	 dri2_add_config(disp, config, i + 1, types, NULL, argb_masks);
       if (dri2_dpy->formats & HAS_RGB565)
-        dri2_add_config(disp, config, i + 1, 0, types, NULL, rgb565_masks);
+        dri2_add_config(disp, config, i + 1, types, NULL, rgb565_masks);
    }
 
    disp->Extensions.WL_bind_wayland_display = EGL_TRUE;
