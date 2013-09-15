@@ -660,6 +660,13 @@ struct brw_gs_prog_data
  *    |   . |     .                   |
  *    |   : |     :                   |
  *    |  36 | UBO 11                  |
+ *    |-----|-------------------------|
+ *    |  37 | Shader time buffer      |
+ *    |-----|-------------------------|
+ *    |  38 | Gather texture 0        |
+ *    |   . |     .                   |
+ *    |   : |     :                   |
+ *    |  53 | Gather texture 15       |
  *    +-------------------------------+
  *
  * Our VS (and Gen7 GS) binding tables are programmed as follows:
@@ -676,6 +683,13 @@ struct brw_gs_prog_data
  *    |   . |     .                   |
  *    |   : |     :                   |
  *    |  28 | UBO 11                  |
+ *    |-----|-------------------------|
+ *    |  29 | Shader time buffer      |
+ *    |-----|-------------------------|
+ *    |  30 | Gather texture 0        |
+ *    |   . |     .                   |
+ *    |   : |     :                   |
+ *    |  45 | Gather texture 15       |
  *    +-------------------------------+
  *
  * Our (gen6) GS binding tables are programmed as follows:
@@ -692,14 +706,16 @@ struct brw_gs_prog_data
 #define SURF_INDEX_TEXTURE(t)        (BRW_MAX_DRAW_BUFFERS + 2 + (t))
 #define SURF_INDEX_WM_UBO(u)         (SURF_INDEX_TEXTURE(BRW_MAX_TEX_UNIT) + u)
 #define SURF_INDEX_WM_SHADER_TIME    (SURF_INDEX_WM_UBO(12))
+#define SURF_INDEX_GATHER_TEXTURE(t) (SURF_INDEX_WM_SHADER_TIME + 1 + (t))
 /** Maximum size of the binding table. */
-#define BRW_MAX_WM_SURFACES          (SURF_INDEX_WM_SHADER_TIME + 1)
+#define BRW_MAX_WM_SURFACES          (SURF_INDEX_GATHER_TEXTURE(BRW_MAX_TEX_UNIT))
 
 #define SURF_INDEX_VEC4_CONST_BUFFER (0)
 #define SURF_INDEX_VEC4_TEXTURE(t)   (SURF_INDEX_VEC4_CONST_BUFFER + 1 + (t))
 #define SURF_INDEX_VEC4_UBO(u)       (SURF_INDEX_VEC4_TEXTURE(BRW_MAX_TEX_UNIT) + u)
 #define SURF_INDEX_VEC4_SHADER_TIME  (SURF_INDEX_VEC4_UBO(12))
-#define BRW_MAX_VEC4_SURFACES        (SURF_INDEX_VEC4_SHADER_TIME + 1)
+#define SURF_INDEX_VEC4_GATHER_TEXTURE(t)   (SURF_INDEX_VEC4_SHADER_TIME + 1 + (t))
+#define BRW_MAX_VEC4_SURFACES        (SURF_INDEX_VEC4_GATHER_TEXTURE(BRW_MAX_TEX_UNIT))
 
 #define SURF_INDEX_GEN6_SOL_BINDING(t) (t)
 #define BRW_MAX_GEN6_GS_SURFACES       SURF_INDEX_GEN6_SOL_BINDING(BRW_MAX_SOL_BINDINGS)
