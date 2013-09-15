@@ -630,6 +630,7 @@ dri2_add_configs_for_visuals(struct dri2_egl_display *dri2_dpy,
    xcb_depth_iterator_t d;
    xcb_visualtype_t *visuals;
    int i, j, id;
+   unsigned int rgba_masks[4];
    EGLint surface_type;
    EGLint config_attrs[] = {
 	   EGL_NATIVE_VISUAL_ID,   0,
@@ -660,8 +661,26 @@ dri2_add_configs_for_visuals(struct dri2_egl_display *dri2_dpy,
             config_attrs[1] = visuals[i].visual_id;
             config_attrs[3] = visuals[i]._class;
 
+            rgba_masks[0] = visuals[i].red_mask;
+            rgba_masks[1] = visuals[i].green_mask;
+            rgba_masks[2] = visuals[i].blue_mask;
+            rgba_masks[3] = 0;
 	    dri2_add_config(disp, dri2_dpy->driver_configs[j], id++,
-			    d.data->depth, surface_type, config_attrs, NULL);
+			    0, surface_type, config_attrs, rgba_masks);
+
+            /* Allow a 24-bit RGB visual to match a 32-bit RGBA EGLConfig.
+             * Otherwise it will only match a 32-bit RGBA visual.  On a
+             * composited window manager on X11, this will make all of the
+             * EGLConfigs with destination alpha get blended by the
+             * compositor.  This is probably not what the application
+             * wants... especially on drivers that only have 32-bit RGBA
+             * EGLConfigs! */
+            if (d.data->depth == 24) {
+               rgba_masks[3] =
+                  ~(rgba_masks[0] | rgba_masks[1] | rgba_masks[2]);
+               dri2_add_config(disp, dri2_dpy->driver_configs[j], id++,
+                               0, surface_type, config_attrs, rgba_masks);
+            }
 	 }
       }
 
