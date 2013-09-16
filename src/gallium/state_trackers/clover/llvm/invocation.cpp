@@ -121,6 +121,8 @@ namespace {
       clang::EmitLLVMOnlyAction act(&llvm::getGlobalContext());
       std::string log;
       llvm::raw_string_ostream s_log(log);
+      std::string libclc_path = LIBCLC_LIBEXECDIR + processor + "-"
+                                                  + triple + ".bc";
 
       // Parse the compiler options:
       std::vector<std::string> opts_array;
@@ -202,6 +204,15 @@ namespace {
       c.getPreprocessorOpts().addRemappedFile(name,
                                       llvm::MemoryBuffer::getMemBuffer(source));
 
+      // Setting this attribute tells clang to link this file before
+      // performing any optimizations.  This is required so that
+      // we can replace calls to the OpenCL C barrier() builtin
+      // with calls to target intrinsics that have the noduplicate
+      // attribute.  This attribute will prevent Clang from creating
+      // illegal uses of barrier() (e.g. Moving barrier() inside a conditional
+      // that is no executed by all threads) during its optimizaton passes.
+      c.getCodeGenOpts().LinkBitcodeFile = libclc_path;
+
       // Compile the code
       if (!c.ExecuteAction(act))
          throw build_error(log);
@@ -231,32 +242,10 @@ namespace {
    }
 
    void
-   link(llvm::Module *mod, const std::string &triple,
-        const std::string &processor,
+   internalize_functions(llvm::Module *mod,
         const std::vector<llvm::Function *> &kernels) {
 
       llvm::PassManager PM;
-      llvm::PassManagerBuilder Builder;
-      std::string libclc_path = LIBCLC_LIBEXECDIR + processor + "-"
-                                                  + triple + ".bc";
-      // Link the kernel with libclc
-#if HAVE_LLVM < 0x0303
-      bool isNative;
-      llvm::Linker linker("clover", mod);
-      linker.LinkInFile(llvm::sys::Path(libclc_path), isNative);
-      mod = linker.releaseModule();
-#else
-      std::string err_str;
-      llvm::SMDiagnostic err;
-      llvm::Module *libclc_mod = llvm::ParseIRFile(libclc_path, err,
-                                                   mod->getContext());
-      if (llvm::Linker::LinkModules(mod, libclc_mod,
-                                    llvm::Linker::DestroySource,
-                                    &err_str)) {
-         throw build_error(err_str);
-      }
-#endif
-
       // Add a function internalizer pass.
       //
       // By default, the function internalizer pass will look for a function
@@ -284,9 +273,6 @@ namespace {
       std::vector<const char*> dso_list;
       PM.add(llvm::createInternalizePass(export_list, dso_list));
 #endif
-      // Run link time optimizations
-      Builder.OptLevel = 2;
-      Builder.populateLTOPassManager(PM, false, true);
       PM.run(*mod);
    }
 
@@ -406,7 +392,7 @@ clover::compile_program_llvm(const compat::string &source,
 
    find_kernels(mod, kernels);
 
-   link(mod, triple, processor, kernels);
+   internalize_functions(mod, kernels);
 
    // Build the clover::module
    switch (ir) {
