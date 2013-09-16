@@ -115,6 +115,8 @@ typedef EGLDisplay (EGLAPIENTRYP PFNEGLGETDRMDISPLAYMESA) (int fd);
 #define EGL_WAYLAND_BUFFER_WL		0x31D5 /* eglCreateImageKHR target */
 #define EGL_WAYLAND_PLANE_WL		0x31D6 /* eglCreateImageKHR target */
 
+#define EGL_WAYLAND_Y_INVERTED_WL	0x31DB /* eglQueryWaylandBufferWL attribute */
+
 #define EGL_TEXTURE_Y_U_V_WL            0x31D7
 #define EGL_TEXTURE_Y_UV_WL             0x31D8
 #define EGL_TEXTURE_Y_XUXV_WL           0x31D9
