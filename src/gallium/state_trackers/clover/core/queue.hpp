@@ -23,6 +23,8 @@
 #ifndef CLOVER_CORE_QUEUE_HPP
 #define CLOVER_CORE_QUEUE_HPP
 
+#include <deque>
+
 #include "core/object.hpp"
 #include "core/context.hpp"
 #include "core/timestamp.hpp"
@@ -69,7 +71,7 @@ namespace clover {
       pipe_context *pipe;
 
       typedef ref_ptr<hard_event> event_ptr;
-      std::vector<event_ptr> queued_events;
+      std::deque<event_ptr> queued_events;
    };
 }
 

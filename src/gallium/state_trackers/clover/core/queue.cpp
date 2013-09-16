@@ -20,8 +20,6 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 //
 
-#include <algorithm>
-
 #include "core/queue.hpp"
 #include "core/event.hpp"
 #include "pipe/p_screen.h"
@@ -47,16 +45,15 @@ command_queue::flush() {
    pipe_fence_handle *fence = NULL;
 
    if (!queued_events.empty()) {
-      // Find out which events have already been signalled.
-      auto first = queued_events.begin();
-      auto last = std::find_if(queued_events.begin(), queued_events.end(),
-                               [](event_ptr &ev) { return !ev->signalled(); });
-
-      // Flush and fence them.
       pipe->flush(pipe, &fence, 0);
-      std::for_each(first, last, [&](event_ptr &ev) { ev->fence(fence); });
+
+      while (!queued_events.empty() &&
+             queued_events.front()->signalled()) {
+         queued_events.front()->fence(fence);
+         queued_events.pop_front();
+      }
+
       screen->fence_reference(screen, &fence, NULL);
-      queued_events.erase(first, last);
    }
 }
 
