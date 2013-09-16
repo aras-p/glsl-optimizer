@@ -44,7 +44,7 @@ namespace clover {
    class image3d;
    class platform;
    class program;
-   typedef struct _cl_sampler sampler;
+   class sampler;
 
    ///
    /// Class that represents an error that can be converted to an

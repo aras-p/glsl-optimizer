@@ -203,4 +203,7 @@ struct _cl_program :
 struct _cl_command_queue :
    public clover::descriptor<clover::command_queue, _cl_command_queue> {};
 
+struct _cl_sampler :
+   public clover::descriptor<clover::sampler, _cl_sampler> {};
+
 #endif

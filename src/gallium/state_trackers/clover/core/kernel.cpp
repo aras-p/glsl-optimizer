@@ -441,7 +441,7 @@ kernel::sampler_argument::set(size_t size, const void *value) {
    if (size != sizeof(cl_sampler))
       throw error(CL_INVALID_ARG_SIZE);
 
-   s = *(cl_sampler *)value;
+   s = &obj(*(cl_sampler *)value);
    _set = true;
 }
 
