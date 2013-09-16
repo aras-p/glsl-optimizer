@@ -26,99 +26,97 @@
 using namespace clover;
 
 PUBLIC cl_context
-clCreateContext(const cl_context_properties *props, cl_uint num_devs,
+clCreateContext(const cl_context_properties *d_props, cl_uint num_devs,
                 const cl_device_id *d_devs,
                 void (CL_CALLBACK *pfn_notify)(const char *, const void *,
                                                size_t, void *),
-                void *user_data, cl_int *errcode_ret) try {
-   auto devs = map(addresses(), objs(d_devs, num_devs));
-   auto mprops = property_map(props);
+                void *user_data, cl_int *r_errcode) try {
+   auto props = property_map(d_props);
+   auto devs = objs(d_devs, num_devs);
 
    if (!pfn_notify && user_data)
       throw error(CL_INVALID_VALUE);
 
-   for (auto p : mprops) {
-      if (p.first != CL_CONTEXT_PLATFORM)
+   for (auto prop : props) {
+      if (prop.first != CL_CONTEXT_PLATFORM)
          throw error(CL_INVALID_PROPERTY);
    }
 
-   ret_error(errcode_ret, CL_SUCCESS);
-   return new context(property_vector(mprops), devs);
+   ret_error(r_errcode, CL_SUCCESS);
+   return desc(new context(property_vector(props), devs));
 
-} catch(error &e) {
-   ret_error(errcode_ret, e);
+} catch (error &e) {
+   ret_error(r_errcode, e);
    return NULL;
 }
 
 PUBLIC cl_context
-clCreateContextFromType(const cl_context_properties *props,
+clCreateContextFromType(const cl_context_properties *d_props,
                         cl_device_type type,
                         void (CL_CALLBACK *pfn_notify)(
                            const char *, const void *, size_t, void *),
-                        void *user_data, cl_int *errcode_ret) try {
-   cl_platform_id platform;
+                        void *user_data, cl_int *r_errcode) try {
+   cl_platform_id d_platform;
    cl_uint num_platforms;
-   cl_device_id dev;
+   cl_device_id d_dev;
    cl_int ret;
 
-   ret = clGetPlatformIDs(1, &platform, &num_platforms);
+   ret = clGetPlatformIDs(1, &d_platform, &num_platforms);
    if (ret || !num_platforms)
       throw error(CL_INVALID_PLATFORM);
 
-   ret = clGetDeviceIDs(platform, type, 1, &dev, 0);
+   ret = clGetDeviceIDs(d_platform, type, 1, &d_dev, 0);
    if (ret)
       throw error(CL_DEVICE_NOT_FOUND);
 
-   return clCreateContext(props, 1, &dev, pfn_notify, user_data, errcode_ret);
+   return clCreateContext(d_props, 1, &d_dev, pfn_notify, user_data, r_errcode);
 
-} catch(error &e) {
-   ret_error(errcode_ret, e);
+} catch (error &e) {
+   ret_error(r_errcode, e);
    return NULL;
 }
 
 PUBLIC cl_int
-clRetainContext(cl_context ctx) {
-   if (!ctx)
-      return CL_INVALID_CONTEXT;
-
-   ctx->retain();
+clRetainContext(cl_context d_ctx) try {
+   obj(d_ctx).retain();
    return CL_SUCCESS;
+
+} catch (error &e) {
+   return e.get();
 }
 
 PUBLIC cl_int
-clReleaseContext(cl_context ctx) {
-   if (!ctx)
-      return CL_INVALID_CONTEXT;
-
-   if (ctx->release())
-      delete ctx;
+clReleaseContext(cl_context d_ctx) try {
+   if (obj(d_ctx).release())
+      delete pobj(d_ctx);
 
    return CL_SUCCESS;
+
+} catch (error &e) {
+   return e.get();
 }
 
 PUBLIC cl_int
-clGetContextInfo(cl_context ctx, cl_context_info param,
+clGetContextInfo(cl_context d_ctx, cl_context_info param,
                  size_t size, void *r_buf, size_t *r_size) try {
    property_buffer buf { r_buf, size, r_size };
-
-   if (!ctx)
-      return CL_INVALID_CONTEXT;
+   auto &ctx = obj(d_ctx);
 
    switch (param) {
    case CL_CONTEXT_REFERENCE_COUNT:
-      buf.as_scalar<cl_uint>() = ctx->ref_count();
+      buf.as_scalar<cl_uint>() = ctx.ref_count();
       break;
 
    case CL_CONTEXT_NUM_DEVICES:
-      buf.as_scalar<cl_uint>() = ctx->devs.size();
+      buf.as_scalar<cl_uint>() = ctx.devs.size();
       break;
 
    case CL_CONTEXT_DEVICES:
-      buf.as_vector<cl_device_id>() = ctx->devs;
+      buf.as_vector<cl_device_id>() = descs(map(derefs(), ctx.devs));
       break;
 
    case CL_CONTEXT_PROPERTIES:
-      buf.as_vector<cl_context_properties>() = ctx->props();
+      buf.as_vector<cl_context_properties>() = ctx.props();
       break;
 
    default:

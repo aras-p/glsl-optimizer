@@ -26,13 +26,11 @@
 using namespace clover;
 
 PUBLIC cl_program
-clCreateProgramWithSource(cl_context ctx, cl_uint count,
+clCreateProgramWithSource(cl_context d_ctx, cl_uint count,
                           const char **strings, const size_t *lengths,
                           cl_int *errcode_ret) try {
+   auto &ctx = obj(d_ctx);
    std::string source;
-
-   if (!ctx)
-      throw error(CL_INVALID_CONTEXT);
 
    if (!count || !strings ||
        any_of(is_zero(), range(strings, count)))
@@ -46,7 +44,7 @@ clCreateProgramWithSource(cl_context ctx, cl_uint count,
 
    // ...and create a program object for them.
    ret_error(errcode_ret, CL_SUCCESS);
-   return new program(*ctx, source);
+   return new program(ctx, source);
 
 } catch (error &e) {
    ret_error(errcode_ret, e);
@@ -54,20 +52,18 @@ clCreateProgramWithSource(cl_context ctx, cl_uint count,
 }
 
 PUBLIC cl_program
-clCreateProgramWithBinary(cl_context ctx, cl_uint n,
+clCreateProgramWithBinary(cl_context d_ctx, cl_uint n,
                           const cl_device_id *d_devs, const size_t *lengths,
                           const unsigned char **binaries, cl_int *status_ret,
                           cl_int *errcode_ret) try {
+   auto &ctx = obj(d_ctx);
    auto devs = objs(d_devs, n);
-
-   if (!ctx)
-      throw error(CL_INVALID_CONTEXT);
 
    if (!lengths || !binaries)
       throw error(CL_INVALID_VALUE);
 
    if (any_of([&](device &dev) {
-            return !ctx->has_device(&dev);
+            return !ctx.has_device(dev);
          }, devs))
       throw error(CL_INVALID_DEVICE);
 
@@ -102,7 +98,7 @@ clCreateProgramWithBinary(cl_context ctx, cl_uint n,
 
    // initialize a program object with them.
    ret_error(errcode_ret, CL_SUCCESS);
-   return new program(*ctx, map(addresses(), devs), map(values(), modules));
+   return new program(ctx, map(addresses(), devs), map(values(), modules));
 
 } catch (error &e) {
    ret_error(errcode_ret, e);
@@ -145,7 +141,7 @@ clBuildProgram(cl_program prog, cl_uint count, const cl_device_id *devs,
 
    if (devs) {
       if (any_of([&](const cl_device_id dev) {
-               return !prog->ctx.has_device(pobj(dev));
+               return !prog->ctx.has_device(obj(dev));
             }, range(devs, count)))
          throw error(CL_INVALID_DEVICE);
 
@@ -235,7 +231,7 @@ clGetProgramBuildInfo(cl_program prog, cl_device_id dev,
    if (!prog)
       return CL_INVALID_PROGRAM;
 
-   if (!prog->ctx.has_device(pobj(dev)))
+   if (!prog->ctx.has_device(obj(dev)))
       return CL_INVALID_DEVICE;
 
    switch (param) {

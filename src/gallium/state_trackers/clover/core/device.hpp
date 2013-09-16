@@ -70,7 +70,7 @@ namespace clover {
       friend class root_resource;
       friend class hard_event;
       friend std::set<cl_image_format>
-      supported_formats(cl_context, cl_mem_object_type);
+      supported_formats(const context &, cl_mem_object_type);
 
       clover::platform &platform;
 

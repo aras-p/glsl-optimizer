@@ -45,7 +45,7 @@ clCreateBuffer(cl_context ctx, cl_mem_flags flags, size_t size,
       throw error(CL_INVALID_VALUE);
 
    ret_error(errcode_ret, CL_SUCCESS);
-   return new root_buffer(*ctx, flags, size, host_ptr);
+   return new root_buffer(obj(ctx), flags, size, host_ptr);
 
 } catch (error &e) {
    ret_error(errcode_ret, e);
@@ -91,12 +91,11 @@ clCreateSubBuffer(cl_mem obj, cl_mem_flags flags, cl_buffer_create_type op,
 }
 
 PUBLIC cl_mem
-clCreateImage2D(cl_context ctx, cl_mem_flags flags,
+clCreateImage2D(cl_context d_ctx, cl_mem_flags flags,
                 const cl_image_format *format,
                 size_t width, size_t height, size_t row_pitch,
                 void *host_ptr, cl_int *errcode_ret) try {
-   if (!ctx)
-      throw error(CL_INVALID_CONTEXT);
+   auto &ctx = obj(d_ctx);
 
    if (flags & ~(CL_MEM_READ_WRITE | CL_MEM_WRITE_ONLY | CL_MEM_READ_ONLY |
                  CL_MEM_USE_HOST_PTR | CL_MEM_ALLOC_HOST_PTR |
@@ -117,7 +116,7 @@ clCreateImage2D(cl_context ctx, cl_mem_flags flags,
       throw error(CL_IMAGE_FORMAT_NOT_SUPPORTED);
 
    ret_error(errcode_ret, CL_SUCCESS);
-   return new image2d(*ctx, flags, format, width, height,
+   return new image2d(ctx, flags, format, width, height,
                       row_pitch, host_ptr);
 
 } catch (error &e) {
@@ -126,13 +125,12 @@ clCreateImage2D(cl_context ctx, cl_mem_flags flags,
 }
 
 PUBLIC cl_mem
-clCreateImage3D(cl_context ctx, cl_mem_flags flags,
+clCreateImage3D(cl_context d_ctx, cl_mem_flags flags,
                 const cl_image_format *format,
                 size_t width, size_t height, size_t depth,
                 size_t row_pitch, size_t slice_pitch,
                 void *host_ptr, cl_int *errcode_ret) try {
-   if (!ctx)
-      throw error(CL_INVALID_CONTEXT);
+   auto &ctx = obj(d_ctx);
 
    if (flags & ~(CL_MEM_READ_WRITE | CL_MEM_WRITE_ONLY | CL_MEM_READ_ONLY |
                  CL_MEM_USE_HOST_PTR | CL_MEM_ALLOC_HOST_PTR |
@@ -153,7 +151,7 @@ clCreateImage3D(cl_context ctx, cl_mem_flags flags,
       throw error(CL_IMAGE_FORMAT_NOT_SUPPORTED);
 
    ret_error(errcode_ret, CL_SUCCESS);
-   return new image3d(*ctx, flags, format, width, height, depth,
+   return new image3d(ctx, flags, format, width, height, depth,
                       row_pitch, slice_pitch, host_ptr);
 
 } catch (error &e) {
@@ -162,11 +160,10 @@ clCreateImage3D(cl_context ctx, cl_mem_flags flags,
 }
 
 PUBLIC cl_int
-clGetSupportedImageFormats(cl_context ctx, cl_mem_flags flags,
+clGetSupportedImageFormats(cl_context d_ctx, cl_mem_flags flags,
                            cl_mem_object_type type, cl_uint count,
                            cl_image_format *buf, cl_uint *count_ret) try {
-   if (!ctx)
-      throw error(CL_INVALID_CONTEXT);
+   auto &ctx = obj(d_ctx);
 
    if (flags & ~(CL_MEM_READ_WRITE | CL_MEM_WRITE_ONLY | CL_MEM_READ_ONLY |
                  CL_MEM_USE_HOST_PTR | CL_MEM_ALLOC_HOST_PTR |

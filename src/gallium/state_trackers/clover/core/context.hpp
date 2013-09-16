@@ -27,25 +27,23 @@
 #include "core/device.hpp"
 
 namespace clover {
-   typedef struct _cl_context context;
+   class context : public ref_counter, public _cl_context {
+   public:
+      context(const std::vector<cl_context_properties> &props,
+              const ref_vector<device> &devs);
+      context(const context &ctx) = delete;
+
+      bool has_device(device &dev) const;
+
+      const std::vector<cl_context_properties> &props() const {
+         return _props;
+      }
+
+      const std::vector<device *> devs;
+
+   private:
+      std::vector<cl_context_properties> _props;
+   };
 }
-
-struct _cl_context : public clover::ref_counter {
-public:
-   _cl_context(const std::vector<cl_context_properties> &props,
-               const std::vector<clover::device *> &devs);
-   _cl_context(const _cl_context &ctx) = delete;
-
-   bool has_device(clover::device *dev) const;
-
-   const std::vector<cl_context_properties> &props() const {
-      return _props;
-   }
-
-   const std::vector<clover::device *> devs;
-
-private:
-   std::vector<cl_context_properties> _props;
-};
 
 #endif

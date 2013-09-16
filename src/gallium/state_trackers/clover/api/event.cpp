@@ -26,12 +26,11 @@
 using namespace clover;
 
 PUBLIC cl_event
-clCreateUserEvent(cl_context ctx, cl_int *errcode_ret) try {
-   if (!ctx)
-      throw error(CL_INVALID_CONTEXT);
+clCreateUserEvent(cl_context d_ctx, cl_int *errcode_ret) try {
+   auto &ctx = obj(d_ctx);
 
    ret_error(errcode_ret, CL_SUCCESS);
-   return new soft_event(*ctx, {}, false);
+   return new soft_event(ctx, {}, false);
 
 } catch(error &e) {
    ret_error(errcode_ret, e);

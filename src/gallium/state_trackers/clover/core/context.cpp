@@ -26,12 +26,12 @@
 
 using namespace clover;
 
-_cl_context::_cl_context(const std::vector<cl_context_properties> &props,
-                         const std::vector<device *> &devs) :
-   devs(devs), _props(props) {
+context::context(const std::vector<cl_context_properties> &props,
+                 const ref_vector<device> &devs) :
+   devs(map(addresses(), devs)), _props(props) {
 }
 
 bool
-_cl_context::has_device(clover::device *dev) const {
-   return std::count(devs.begin(), devs.end(), dev);
+context::has_device(device &dev) const {
+   return std::count(devs.begin(), devs.end(), &dev);
 }

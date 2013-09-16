@@ -26,14 +26,13 @@
 using namespace clover;
 
 PUBLIC cl_sampler
-clCreateSampler(cl_context ctx, cl_bool norm_mode,
+clCreateSampler(cl_context d_ctx, cl_bool norm_mode,
                 cl_addressing_mode addr_mode, cl_filter_mode filter_mode,
                 cl_int *errcode_ret) try {
-   if (!ctx)
-      throw error(CL_INVALID_CONTEXT);
+   auto &ctx = obj(d_ctx);
 
    ret_error(errcode_ret, CL_SUCCESS);
-   return new sampler(*ctx, norm_mode, addr_mode, filter_mode);
+   return new sampler(ctx, norm_mode, addr_mode, filter_mode);
 
 } catch (error &e) {
    ret_error(errcode_ret, e);

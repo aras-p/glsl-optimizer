@@ -37,7 +37,7 @@ namespace clover {
    /// Return all the image formats supported by a given context for
    /// the given memory object type.
    ///
-   std::set<cl_image_format> supported_formats(cl_context ctx,
+   std::set<cl_image_format> supported_formats(const context &ctx,
                                                cl_mem_object_type type);
 }
 
