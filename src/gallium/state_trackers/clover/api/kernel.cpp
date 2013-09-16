@@ -165,7 +165,7 @@ clGetKernelWorkGroupInfo(cl_kernel kern, cl_device_id dev,
       return CL_INVALID_KERNEL;
 
    if ((!dev && kern->prog.binaries().size() != 1) ||
-       (dev && !kern->prog.binaries().count(dev)))
+       (dev && !kern->prog.binaries().count(pobj(dev))))
       return CL_INVALID_DEVICE;
 
    switch (param) {

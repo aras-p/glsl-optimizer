@@ -26,13 +26,15 @@
 using namespace clover;
 
 PUBLIC cl_command_queue
-clCreateCommandQueue(cl_context ctx, cl_device_id dev,
+clCreateCommandQueue(cl_context ctx, cl_device_id d_dev,
                      cl_command_queue_properties props,
                      cl_int *errcode_ret) try {
+   auto &dev = obj(d_dev);
+
    if (!ctx)
       throw error(CL_INVALID_CONTEXT);
 
-   if (!ctx->has_device(dev))
+   if (!ctx->has_device(&dev))
       throw error(CL_INVALID_DEVICE);
 
    if (props & ~(CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE |
@@ -40,7 +42,7 @@ clCreateCommandQueue(cl_context ctx, cl_device_id dev,
       throw error(CL_INVALID_VALUE);
 
    ret_error(errcode_ret, CL_SUCCESS);
-   return new command_queue(*ctx, *dev, props);
+   return new command_queue(*ctx, dev, props);
 
 } catch (error &e) {
    ret_error(errcode_ret, e);

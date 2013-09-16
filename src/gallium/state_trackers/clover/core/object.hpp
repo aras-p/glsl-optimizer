@@ -179,6 +179,9 @@ namespace clover {
    }
 }
 
+struct _cl_device_id :
+   public clover::descriptor<clover::device, _cl_device_id> {};
+
 struct _cl_platform_id :
    public clover::descriptor<clover::platform, _cl_platform_id> {};
 

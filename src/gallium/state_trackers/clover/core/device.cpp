@@ -38,29 +38,28 @@ namespace {
    }
 }
 
-_cl_device_id::_cl_device_id(clover::platform &platform,
-                             pipe_loader_device *ldev) :
+device::device(clover::platform &platform, pipe_loader_device *ldev) :
    platform(platform), ldev(ldev) {
    pipe = pipe_loader_create_screen(ldev, PIPE_SEARCH_DIR);
    if (!pipe || !pipe->get_param(pipe, PIPE_CAP_COMPUTE))
       throw error(CL_INVALID_DEVICE);
 }
 
-_cl_device_id::_cl_device_id(_cl_device_id &&dev) :
+device::device(device &&dev) :
    platform(dev.platform), pipe(dev.pipe), ldev(dev.ldev) {
    dev.pipe = NULL;
    dev.ldev = NULL;
 }
 
-_cl_device_id::~_cl_device_id() {
+device::~device() {
    if (pipe)
       pipe->destroy(pipe);
    if (ldev)
       pipe_loader_release(&ldev, 1);
 }
 
-_cl_device_id &
-_cl_device_id::operator=(_cl_device_id dev) {
+device &
+device::operator=(device dev) {
    assert(&platform == &dev.platform);
 
    std::swap(pipe, dev.pipe);
@@ -70,7 +69,7 @@ _cl_device_id::operator=(_cl_device_id dev) {
 }
 
 cl_device_type
-_cl_device_id::type() const {
+device::type() const {
    switch (ldev->type) {
    case PIPE_LOADER_DEVICE_SOFTWARE:
       return CL_DEVICE_TYPE_CPU;
@@ -83,7 +82,7 @@ _cl_device_id::type() const {
 }
 
 cl_uint
-_cl_device_id::vendor_id() const {
+device::vendor_id() const {
    switch (ldev->type) {
    case PIPE_LOADER_DEVICE_SOFTWARE:
       return 0;
@@ -96,104 +95,103 @@ _cl_device_id::vendor_id() const {
 }
 
 size_t
-_cl_device_id::max_images_read() const {
+device::max_images_read() const {
    return PIPE_MAX_SHADER_RESOURCES;
 }
 
 size_t
-_cl_device_id::max_images_write() const {
+device::max_images_write() const {
    return PIPE_MAX_SHADER_RESOURCES;
 }
 
 cl_uint
-_cl_device_id::max_image_levels_2d() const {
+device::max_image_levels_2d() const {
    return pipe->get_param(pipe, PIPE_CAP_MAX_TEXTURE_2D_LEVELS);
 }
 
 cl_uint
-_cl_device_id::max_image_levels_3d() const {
+device::max_image_levels_3d() const {
    return pipe->get_param(pipe, PIPE_CAP_MAX_TEXTURE_3D_LEVELS);
 }
 
 cl_uint
-_cl_device_id::max_samplers() const {
+device::max_samplers() const {
    return pipe->get_shader_param(pipe, PIPE_SHADER_COMPUTE,
                                  PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS);
 }
 
 cl_ulong
-_cl_device_id::max_mem_global() const {
+device::max_mem_global() const {
    return get_compute_param<uint64_t>(pipe,
                                       PIPE_COMPUTE_CAP_MAX_GLOBAL_SIZE)[0];
 }
 
 cl_ulong
-_cl_device_id::max_mem_local() const {
+device::max_mem_local() const {
    return get_compute_param<uint64_t>(pipe,
                                       PIPE_COMPUTE_CAP_MAX_LOCAL_SIZE)[0];
 }
 
 cl_ulong
-_cl_device_id::max_mem_input() const {
+device::max_mem_input() const {
    return get_compute_param<uint64_t>(pipe,
                                       PIPE_COMPUTE_CAP_MAX_INPUT_SIZE)[0];
 }
 
 cl_ulong
-_cl_device_id::max_const_buffer_size() const {
+device::max_const_buffer_size() const {
    return pipe->get_shader_param(pipe, PIPE_SHADER_COMPUTE,
                                  PIPE_SHADER_CAP_MAX_CONSTS) * 16;
 }
 
 cl_uint
-_cl_device_id::max_const_buffers() const {
+device::max_const_buffers() const {
    return pipe->get_shader_param(pipe, PIPE_SHADER_COMPUTE,
                                  PIPE_SHADER_CAP_MAX_CONST_BUFFERS);
 }
 
 size_t
-_cl_device_id::max_threads_per_block() const {
+device::max_threads_per_block() const {
    return get_compute_param<uint64_t>(
       pipe, PIPE_COMPUTE_CAP_MAX_THREADS_PER_BLOCK)[0];
 }
 
 cl_ulong
-_cl_device_id::max_mem_alloc_size() const {
+device::max_mem_alloc_size() const {
    return get_compute_param<uint64_t>(pipe,
                                       PIPE_COMPUTE_CAP_MAX_MEM_ALLOC_SIZE)[0];
 }
 
 std::vector<size_t>
-_cl_device_id::max_block_size() const {
+device::max_block_size() const {
    auto v = get_compute_param<uint64_t>(pipe, PIPE_COMPUTE_CAP_MAX_BLOCK_SIZE);
    return { v.begin(), v.end() };
 }
 
 std::string
-_cl_device_id::device_name() const {
+device::device_name() const {
    return pipe->get_name(pipe);
 }
 
 std::string
-_cl_device_id::vendor_name() const {
+device::vendor_name() const {
    return pipe->get_vendor(pipe);
 }
 
 enum pipe_shader_ir
-_cl_device_id::ir_format() const {
-   return (enum pipe_shader_ir) pipe->get_shader_param(pipe,
-                                                  PIPE_SHADER_COMPUTE,
-                                                  PIPE_SHADER_CAP_PREFERRED_IR);
+device::ir_format() const {
+   return (enum pipe_shader_ir) pipe->get_shader_param(
+      pipe, PIPE_SHADER_COMPUTE, PIPE_SHADER_CAP_PREFERRED_IR);
 }
 
 std::string
-_cl_device_id::ir_target() const {
-   std::vector<char> target = get_compute_param<char>(pipe,
-                                                    PIPE_COMPUTE_CAP_IR_TARGET);
+device::ir_target() const {
+   std::vector<char> target = get_compute_param<char>(
+      pipe, PIPE_COMPUTE_CAP_IR_TARGET);
    return { target.data() };
 }
 
 enum pipe_endian
-_cl_device_id::endianness() const {
+device::endianness() const {
    return (enum pipe_endian)pipe->get_param(pipe, PIPE_CAP_ENDIANNESS);
 }

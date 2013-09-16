@@ -28,52 +28,53 @@ using namespace clover;
 
 PUBLIC cl_int
 clGetDeviceIDs(cl_platform_id d_platform, cl_device_type device_type,
-               cl_uint num_entries, cl_device_id *devices,
-               cl_uint *num_devices) {
+               cl_uint num_entries, cl_device_id *rd_devices,
+               cl_uint *rnum_devices) try {
    auto &platform = obj(d_platform);
-   std::vector<cl_device_id> devs;
+   std::vector<cl_device_id> d_devs;
 
-   if ((!num_entries && devices) ||
-       (!num_devices && !devices))
-      return CL_INVALID_VALUE;
+   if ((!num_entries && rd_devices) ||
+       (!rnum_devices && !rd_devices))
+      throw error(CL_INVALID_VALUE);
 
    // Collect matching devices
    for (device &dev : platform) {
       if (((device_type & CL_DEVICE_TYPE_DEFAULT) &&
            &dev == &platform.front()) ||
           (device_type & dev.type()))
-         devs.push_back(&dev);
+         d_devs.push_back(desc(dev));
    }
 
-   if (devs.empty())
-      return CL_DEVICE_NOT_FOUND;
+   if (d_devs.empty())
+      throw error(CL_DEVICE_NOT_FOUND);
 
    // ...and return the requested data.
-   if (num_devices)
-      *num_devices = devs.size();
-   if (devices)
-      std::copy_n(devs.begin(),
-                  std::min((cl_uint)devs.size(), num_entries),
-                  devices);
+   if (rnum_devices)
+      *rnum_devices = d_devs.size();
+   if (rd_devices)
+      copy(range(d_devs.begin(),
+                 std::min((unsigned)d_devs.size(), num_entries)),
+           rd_devices);
 
    return CL_SUCCESS;
+
+} catch (error &e) {
+   return e.get();
 }
 
 PUBLIC cl_int
-clGetDeviceInfo(cl_device_id dev, cl_device_info param,
+clGetDeviceInfo(cl_device_id d_dev, cl_device_info param,
                 size_t size, void *r_buf, size_t *r_size) try {
    property_buffer buf { r_buf, size, r_size };
-
-   if (!dev)
-      return CL_INVALID_DEVICE;
+   auto &dev = obj(d_dev);
 
    switch (param) {
    case CL_DEVICE_TYPE:
-      buf.as_scalar<cl_device_type>() = dev->type();
+      buf.as_scalar<cl_device_type>() = dev.type();
       break;
 
    case CL_DEVICE_VENDOR_ID:
-      buf.as_scalar<cl_uint>() = dev->vendor_id();
+      buf.as_scalar<cl_uint>() = dev.vendor_id();
       break;
 
    case CL_DEVICE_MAX_COMPUTE_UNITS:
@@ -81,15 +82,15 @@ clGetDeviceInfo(cl_device_id dev, cl_device_info param,
       break;
 
    case CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS:
-      buf.as_scalar<cl_uint>() = dev->max_block_size().size();
+      buf.as_scalar<cl_uint>() = dev.max_block_size().size();
       break;
 
    case CL_DEVICE_MAX_WORK_ITEM_SIZES:
-      buf.as_vector<size_t>() = dev->max_block_size();
+      buf.as_vector<size_t>() = dev.max_block_size();
       break;
 
    case CL_DEVICE_MAX_WORK_GROUP_SIZE:
-      buf.as_scalar<size_t>() = dev->max_threads_per_block();
+      buf.as_scalar<size_t>() = dev.max_threads_per_block();
       break;
 
    case CL_DEVICE_PREFERRED_VECTOR_WIDTH_CHAR:
@@ -129,26 +130,26 @@ clGetDeviceInfo(cl_device_id dev, cl_device_info param,
       break;
 
    case CL_DEVICE_MAX_READ_IMAGE_ARGS:
-      buf.as_scalar<cl_uint>() = dev->max_images_read();
+      buf.as_scalar<cl_uint>() = dev.max_images_read();
       break;
 
    case CL_DEVICE_MAX_WRITE_IMAGE_ARGS:
-      buf.as_scalar<cl_uint>() = dev->max_images_write();
+      buf.as_scalar<cl_uint>() = dev.max_images_write();
       break;
 
    case CL_DEVICE_MAX_MEM_ALLOC_SIZE:
-      buf.as_scalar<cl_ulong>() = dev->max_mem_alloc_size();
+      buf.as_scalar<cl_ulong>() = dev.max_mem_alloc_size();
       break;
 
    case CL_DEVICE_IMAGE2D_MAX_WIDTH:
    case CL_DEVICE_IMAGE2D_MAX_HEIGHT:
-      buf.as_scalar<size_t>() = 1 << dev->max_image_levels_2d();
+      buf.as_scalar<size_t>() = 1 << dev.max_image_levels_2d();
       break;
 
    case CL_DEVICE_IMAGE3D_MAX_WIDTH:
    case CL_DEVICE_IMAGE3D_MAX_HEIGHT:
    case CL_DEVICE_IMAGE3D_MAX_DEPTH:
-      buf.as_scalar<size_t>() = 1 << dev->max_image_levels_3d();
+      buf.as_scalar<size_t>() = 1 << dev.max_image_levels_3d();
       break;
 
    case CL_DEVICE_IMAGE_SUPPORT:
@@ -156,11 +157,11 @@ clGetDeviceInfo(cl_device_id dev, cl_device_info param,
       break;
 
    case CL_DEVICE_MAX_PARAMETER_SIZE:
-      buf.as_scalar<size_t>() = dev->max_mem_input();
+      buf.as_scalar<size_t>() = dev.max_mem_input();
       break;
 
    case CL_DEVICE_MAX_SAMPLERS:
-      buf.as_scalar<cl_uint>() = dev->max_samplers();
+      buf.as_scalar<cl_uint>() = dev.max_samplers();
       break;
 
    case CL_DEVICE_MEM_BASE_ADDR_ALIGN:
@@ -186,15 +187,15 @@ clGetDeviceInfo(cl_device_id dev, cl_device_info param,
       break;
 
    case CL_DEVICE_GLOBAL_MEM_SIZE:
-      buf.as_scalar<cl_ulong>() = dev->max_mem_global();
+      buf.as_scalar<cl_ulong>() = dev.max_mem_global();
       break;
 
    case CL_DEVICE_MAX_CONSTANT_BUFFER_SIZE:
-      buf.as_scalar<cl_ulong>() = dev->max_const_buffer_size();
+      buf.as_scalar<cl_ulong>() = dev.max_const_buffer_size();
       break;
 
    case CL_DEVICE_MAX_CONSTANT_ARGS:
-      buf.as_scalar<cl_uint>() = dev->max_const_buffers();
+      buf.as_scalar<cl_uint>() = dev.max_const_buffers();
       break;
 
    case CL_DEVICE_LOCAL_MEM_TYPE:
@@ -202,7 +203,7 @@ clGetDeviceInfo(cl_device_id dev, cl_device_info param,
       break;
 
    case CL_DEVICE_LOCAL_MEM_SIZE:
-      buf.as_scalar<cl_ulong>() = dev->max_mem_local();
+      buf.as_scalar<cl_ulong>() = dev.max_mem_local();
       break;
 
    case CL_DEVICE_ERROR_CORRECTION_SUPPORT:
@@ -214,7 +215,7 @@ clGetDeviceInfo(cl_device_id dev, cl_device_info param,
       break;
 
    case CL_DEVICE_ENDIAN_LITTLE:
-      buf.as_scalar<cl_bool>() = (dev->endianness() == PIPE_ENDIAN_LITTLE);
+      buf.as_scalar<cl_bool>() = (dev.endianness() == PIPE_ENDIAN_LITTLE);
       break;
 
    case CL_DEVICE_AVAILABLE:
@@ -231,11 +232,11 @@ clGetDeviceInfo(cl_device_id dev, cl_device_info param,
       break;
 
    case CL_DEVICE_NAME:
-      buf.as_string() = dev->device_name();
+      buf.as_string() = dev.device_name();
       break;
 
    case CL_DEVICE_VENDOR:
-      buf.as_string() = dev->vendor_name();
+      buf.as_string() = dev.vendor_name();
       break;
 
    case CL_DRIVER_VERSION:
@@ -255,7 +256,7 @@ clGetDeviceInfo(cl_device_id dev, cl_device_info param,
       break;
 
    case CL_DEVICE_PLATFORM:
-      buf.as_scalar<cl_platform_id>() = desc(dev->platform);
+      buf.as_scalar<cl_platform_id>() = desc(dev.platform);
       break;
 
    case CL_DEVICE_HOST_UNIFIED_MEMORY:

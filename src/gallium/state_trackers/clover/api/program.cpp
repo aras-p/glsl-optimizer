@@ -54,19 +54,21 @@ clCreateProgramWithSource(cl_context ctx, cl_uint count,
 }
 
 PUBLIC cl_program
-clCreateProgramWithBinary(cl_context ctx, cl_uint count,
-                          const cl_device_id *devs, const size_t *lengths,
+clCreateProgramWithBinary(cl_context ctx, cl_uint n,
+                          const cl_device_id *d_devs, const size_t *lengths,
                           const unsigned char **binaries, cl_int *status_ret,
                           cl_int *errcode_ret) try {
+   auto devs = objs(d_devs, n);
+
    if (!ctx)
       throw error(CL_INVALID_CONTEXT);
 
-   if (!count || !devs || !lengths || !binaries)
+   if (!lengths || !binaries)
       throw error(CL_INVALID_VALUE);
 
-   if (any_of([&](const cl_device_id dev) {
-            return !ctx->has_device(dev);
-         }, range(devs, count)))
+   if (any_of([&](device &dev) {
+            return !ctx->has_device(&dev);
+         }, devs))
       throw error(CL_INVALID_DEVICE);
 
    // Deserialize the provided binaries,
@@ -85,8 +87,8 @@ clCreateProgramWithBinary(cl_context ctx, cl_uint count,
             return { CL_INVALID_BINARY, {} };
          }
       },
-      range(binaries, count),
-      range(lengths, count));
+      range(binaries, n),
+      range(lengths, n));
 
    // update the status array,
    if (status_ret)
@@ -100,8 +102,7 @@ clCreateProgramWithBinary(cl_context ctx, cl_uint count,
 
    // initialize a program object with them.
    ret_error(errcode_ret, CL_SUCCESS);
-   return new program(*ctx, { devs, devs + count },
-                      map(values(), modules));
+   return new program(*ctx, map(addresses(), devs), map(values(), modules));
 
 } catch (error &e) {
    ret_error(errcode_ret, e);
@@ -144,11 +145,11 @@ clBuildProgram(cl_program prog, cl_uint count, const cl_device_id *devs,
 
    if (devs) {
       if (any_of([&](const cl_device_id dev) {
-               return !prog->ctx.has_device(dev);
+               return !prog->ctx.has_device(pobj(dev));
             }, range(devs, count)))
          throw error(CL_INVALID_DEVICE);
 
-      prog->build({ devs, devs + count }, opts);
+      prog->build(map(addresses(), objs(devs, count)), opts);
    } else {
       prog->build(prog->ctx.devs, opts);
    }
@@ -234,20 +235,20 @@ clGetProgramBuildInfo(cl_program prog, cl_device_id dev,
    if (!prog)
       return CL_INVALID_PROGRAM;
 
-   if (!prog->ctx.has_device(dev))
+   if (!prog->ctx.has_device(pobj(dev)))
       return CL_INVALID_DEVICE;
 
    switch (param) {
    case CL_PROGRAM_BUILD_STATUS:
-      buf.as_scalar<cl_build_status>() = prog->build_status(dev);
+      buf.as_scalar<cl_build_status>() = prog->build_status(pobj(dev));
       break;
 
    case CL_PROGRAM_BUILD_OPTIONS:
-      buf.as_string() = prog->build_opts(dev);
+      buf.as_string() = prog->build_opts(pobj(dev));
       break;
 
    case CL_PROGRAM_BUILD_LOG:
-      buf.as_string() = prog->build_log(dev);
+      buf.as_string() = prog->build_log(pobj(dev));
       break;
 
    default:

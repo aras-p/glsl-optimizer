@@ -30,7 +30,7 @@
 namespace clover {
    typedef struct _cl_command_queue command_queue;
    typedef struct _cl_context context;
-   typedef struct _cl_device_id device;
+   class device;
    typedef struct _cl_event event;
    class hard_event;
    class soft_event;

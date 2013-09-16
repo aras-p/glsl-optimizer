@@ -27,18 +27,15 @@ using namespace clover;
 
 PUBLIC cl_context
 clCreateContext(const cl_context_properties *props, cl_uint num_devs,
-                const cl_device_id *devs,
+                const cl_device_id *d_devs,
                 void (CL_CALLBACK *pfn_notify)(const char *, const void *,
                                                size_t, void *),
                 void *user_data, cl_int *errcode_ret) try {
+   auto devs = map(addresses(), objs(d_devs, num_devs));
    auto mprops = property_map(props);
 
-   if (!devs || !num_devs ||
-       (!pfn_notify && user_data))
+   if (!pfn_notify && user_data)
       throw error(CL_INVALID_VALUE);
-
-   if (any_of(is_zero(), range(devs, num_devs)))
-      throw error(CL_INVALID_DEVICE);
 
    for (auto p : mprops) {
       if (p.first != CL_CONTEXT_PLATFORM)
@@ -46,9 +43,7 @@ clCreateContext(const cl_context_properties *props, cl_uint num_devs,
    }
 
    ret_error(errcode_ret, CL_SUCCESS);
-   return new context(
-      property_vector(mprops),
-      std::vector<cl_device_id>(devs, devs + num_devs));
+   return new context(property_vector(mprops), devs);
 
 } catch(error &e) {
    ret_error(errcode_ret, e);

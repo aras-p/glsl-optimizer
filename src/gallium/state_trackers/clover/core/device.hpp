@@ -31,54 +31,53 @@
 #include "pipe-loader/pipe_loader.h"
 
 namespace clover {
-   typedef struct _cl_device_id device;
-   struct platform;
+   class platform;
    class root_resource;
    class hard_event;
+
+   class device : public _cl_device_id {
+   public:
+      device(clover::platform &platform, pipe_loader_device *ldev);
+      device(device &&dev);
+      device(const device &dev) = delete;
+      ~device();
+
+      device &operator=(device dev);
+
+      cl_device_type type() const;
+      cl_uint vendor_id() const;
+      size_t max_images_read() const;
+      size_t max_images_write() const;
+      cl_uint max_image_levels_2d() const;
+      cl_uint max_image_levels_3d() const;
+      cl_uint max_samplers() const;
+      cl_ulong max_mem_global() const;
+      cl_ulong max_mem_local() const;
+      cl_ulong max_mem_input() const;
+      cl_ulong max_const_buffer_size() const;
+      cl_uint max_const_buffers() const;
+      size_t max_threads_per_block() const;
+      cl_ulong max_mem_alloc_size() const;
+
+      std::vector<size_t> max_block_size() const;
+      std::string device_name() const;
+      std::string vendor_name() const;
+      enum pipe_shader_ir ir_format() const;
+      std::string ir_target() const;
+      enum pipe_endian endianness() const;
+
+      friend struct ::_cl_command_queue;
+      friend class root_resource;
+      friend class hard_event;
+      friend std::set<cl_image_format>
+      supported_formats(cl_context, cl_mem_object_type);
+
+      clover::platform &platform;
+
+   private:
+      pipe_screen *pipe;
+      pipe_loader_device *ldev;
+   };
 }
-
-struct _cl_device_id {
-public:
-   _cl_device_id(clover::platform &platform, pipe_loader_device *ldev);
-   _cl_device_id(_cl_device_id &&dev);
-   _cl_device_id(const _cl_device_id &dev) = delete;
-   ~_cl_device_id();
-
-   _cl_device_id &operator=(_cl_device_id dev);
-
-   cl_device_type type() const;
-   cl_uint vendor_id() const;
-   size_t max_images_read() const;
-   size_t max_images_write() const;
-   cl_uint max_image_levels_2d() const;
-   cl_uint max_image_levels_3d() const;
-   cl_uint max_samplers() const;
-   cl_ulong max_mem_global() const;
-   cl_ulong max_mem_local() const;
-   cl_ulong max_mem_input() const;
-   cl_ulong max_const_buffer_size() const;
-   cl_uint max_const_buffers() const;
-   size_t max_threads_per_block() const;
-   cl_ulong max_mem_alloc_size() const;
-
-   std::vector<size_t> max_block_size() const;
-   std::string device_name() const;
-   std::string vendor_name() const;
-   enum pipe_shader_ir ir_format() const;
-   std::string ir_target() const;
-   enum pipe_endian endianness() const;
-
-   friend struct _cl_command_queue;
-   friend class clover::root_resource;
-   friend class clover::hard_event;
-   friend std::set<cl_image_format>
-   clover::supported_formats(cl_context, cl_mem_object_type);
-
-   clover::platform &platform;
-
-private:
-   pipe_screen *pipe;
-   pipe_loader_device *ldev;
-};
 
 #endif
