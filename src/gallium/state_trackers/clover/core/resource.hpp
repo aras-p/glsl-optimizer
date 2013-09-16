@@ -62,7 +62,7 @@ namespace clover {
       friend class kernel;
 
    protected:
-      resource(device &dev, clover::memory_obj &obj);
+      resource(device &dev, memory_obj &obj);
 
       pipe_sampler_view *bind_sampler_view(command_queue &q);
       void unbind_sampler_view(command_queue &q,
@@ -86,8 +86,7 @@ namespace clover {
    public:
       root_resource(device &dev, memory_obj &obj,
                     command_queue &q, const std::string &data);
-      root_resource(device &dev, memory_obj &obj,
-                    root_resource &r);
+      root_resource(device &dev, memory_obj &obj, root_resource &r);
       virtual ~root_resource();
    };
 
@@ -109,19 +108,17 @@ namespace clover {
       mapping(command_queue &q, resource &r, cl_map_flags flags,
               bool blocking, const resource::vector &origin,
               const resource::vector &region);
-      mapping(const mapping &m) = delete;
       mapping(mapping &&m);
       ~mapping();
 
       mapping &
       operator=(mapping m);
 
-      operator void *() {
-         return p;
-      }
+      mapping(const mapping &m) = delete;
 
-      operator char *() {
-         return (char *)p;
+      template<typename T>
+      operator T *() const {
+         return (T *)p;
       }
 
    private:
