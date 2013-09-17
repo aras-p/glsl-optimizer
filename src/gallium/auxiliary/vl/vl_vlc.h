@@ -338,4 +338,16 @@ vl_vlc_search_byte(struct vl_vlc *vlc, unsigned num_bits, uint8_t value)
    }
 }
 
+/**
+ * remove num_bits bits starting at pos from the bitbuffer
+ */
+static INLINE void
+vl_vlc_removebits(struct vl_vlc *vlc, unsigned pos, unsigned num_bits)
+{
+   uint64_t lo = (vlc->buffer & (~0UL >> (pos + num_bits))) << num_bits;
+   uint64_t hi = (vlc->buffer & (~0UL << (64 - pos)));
+   vlc->buffer = lo | hi;
+   vlc->invalid_bits += num_bits;
+}
+
 #endif /* vl_vlc_h */
