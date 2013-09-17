@@ -45,7 +45,6 @@ struct vl_vlc
    const uint8_t *data;
    const uint8_t *end;
 
-   unsigned          num_inputs;
    const void *const *inputs;
    const unsigned    *sizes;
    unsigned          bytes_left;
@@ -94,14 +93,18 @@ vl_vlc_next_input(struct vl_vlc *vlc)
    unsigned len = vlc->sizes[0];
 
    assert(vlc);
-   assert(vlc->num_inputs);
+   assert(vlc->bytes_left);
 
-   vlc->bytes_left -= len;
+   if (len < vlc->bytes_left)
+      vlc->bytes_left -= len;
+   else {
+      len = vlc->bytes_left;
+      vlc->bytes_left = 0;
+   }
 
    vlc->data = vlc->inputs[0];
    vlc->end = vlc->data + len;
 
-   --vlc->num_inputs;
    ++vlc->inputs;
    ++vlc->sizes;
 }
@@ -135,10 +138,11 @@ vl_vlc_fillbits(struct vl_vlc *vlc)
       /* if this input is depleted */
       if (bytes_left == 0) {
 
-         if (vlc->num_inputs)
+         if (vlc->bytes_left) {
             /* go on to next input */
             vl_vlc_next_input(vlc);
-         else
+            vl_vlc_align_data_ptr(vlc);
+         } else
             /* or give up since we don't have anymore inputs */
             return;
 
@@ -182,7 +186,6 @@ vl_vlc_init(struct vl_vlc *vlc, unsigned num_inputs,
 
    vlc->buffer = 0;
    vlc->invalid_bits = 32;
-   vlc->num_inputs = num_inputs;
    vlc->inputs = inputs;
    vlc->sizes = sizes;
    vlc->bytes_left = 0;
@@ -190,10 +193,11 @@ vl_vlc_init(struct vl_vlc *vlc, unsigned num_inputs,
    for (i = 0; i < num_inputs; ++i)
       vlc->bytes_left += sizes[i];
 
-   vl_vlc_next_input(vlc);
-   vl_vlc_align_data_ptr(vlc);
-   vl_vlc_fillbits(vlc);
-   vl_vlc_fillbits(vlc);
+   if (vlc->bytes_left) {
+      vl_vlc_next_input(vlc);
+      vl_vlc_align_data_ptr(vlc);
+      vl_vlc_fillbits(vlc);
+   }
 }
 
 /**
@@ -313,7 +317,7 @@ vl_vlc_search_byte(struct vl_vlc *vlc, unsigned num_bits, uint8_t value)
 
       /* if this input is depleted */
       if (vlc->data == vlc->end) {
-         if (vlc->num_inputs)
+         if (vlc->bytes_left)
             /* go on to next input */
             vl_vlc_next_input(vlc);
          else
@@ -348,6 +352,31 @@ vl_vlc_removebits(struct vl_vlc *vlc, unsigned pos, unsigned num_bits)
    uint64_t hi = (vlc->buffer & (~0UL << (64 - pos)));
    vlc->buffer = lo | hi;
    vlc->invalid_bits += num_bits;
+}
+
+/**
+ * limit the number of bits left for fetching
+ */
+static INLINE void
+vl_vlc_limit(struct vl_vlc *vlc, unsigned bits_left)
+{
+   assert(bits_left <= vl_vlc_bits_left(vlc));
+
+   vl_vlc_fillbits(vlc);
+   if (bits_left < vl_vlc_valid_bits(vlc)) {
+      vlc->invalid_bits = 32 - bits_left;
+      vlc->buffer &= ~0L << (vlc->invalid_bits + 32);
+      vlc->end = vlc->data;
+      vlc->bytes_left = 0;
+   } else {
+      assert((bits_left - vl_vlc_valid_bits(vlc)) % 8 == 0);
+      vlc->bytes_left = (bits_left - vl_vlc_valid_bits(vlc)) / 8;
+      if (vlc->bytes_left < (vlc->end - vlc->data)) {
+         vlc->end = vlc->data + vlc->bytes_left;
+         vlc->bytes_left = 0;
+      } else
+         vlc->bytes_left -= vlc->end - vlc->data;
+   }
 }
 
 #endif /* vl_vlc_h */
