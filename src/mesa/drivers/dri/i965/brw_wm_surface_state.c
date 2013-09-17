@@ -257,8 +257,6 @@ brw_update_texture_surface(struct gl_context *ctx,
    struct gl_texture_object *tObj = ctx->Texture.Unit[unit]._Current;
    struct intel_texture_object *intelObj = intel_texture_object(tObj);
    struct intel_mipmap_tree *mt = intelObj->mt;
-   struct gl_texture_image *firstImage = tObj->Image[0][tObj->BaseLevel];
-   struct intel_texture_image *intel_image = intel_texture_image(firstImage);
    struct gl_sampler_object *sampler = _mesa_get_samplerobj(ctx, unit);
    uint32_t *surf;
 
@@ -281,7 +279,7 @@ brw_update_texture_surface(struct gl_context *ctx,
 
    surf[1] = intelObj->mt->region->bo->offset + intelObj->mt->offset; /* reloc */
 
-   surf[2] = ((intelObj->_MaxLevel - intel_image->mt->first_level) << BRW_SURFACE_LOD_SHIFT |
+   surf[2] = ((intelObj->_MaxLevel - mt->first_level) << BRW_SURFACE_LOD_SHIFT |
 	      (mt->logical_width0 - 1) << BRW_SURFACE_WIDTH_SHIFT |
 	      (mt->logical_height0 - 1) << BRW_SURFACE_HEIGHT_SHIFT);
 

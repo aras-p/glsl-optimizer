@@ -306,7 +306,6 @@ gen7_update_texture_surface(struct gl_context *ctx,
    struct intel_texture_object *intelObj = intel_texture_object(tObj);
    struct intel_mipmap_tree *mt = intelObj->mt;
    struct gl_texture_image *firstImage = tObj->Image[0][tObj->BaseLevel];
-   struct intel_texture_image *intel_image = intel_texture_image(firstImage);
    struct gl_sampler_object *sampler = _mesa_get_samplerobj(ctx, unit);
 
    if (tObj->Target == GL_TEXTURE_BUFFER) {
@@ -350,7 +349,7 @@ gen7_update_texture_surface(struct gl_context *ctx,
 
    surf[5] = (SET_FIELD(GEN7_MOCS_L3, GEN7_SURFACE_MOCS) |
               /* mip count */
-              (intelObj->_MaxLevel - intel_image->mt->first_level));
+              (intelObj->_MaxLevel - mt->first_level));
 
    if (brw->is_haswell) {
       /* Handling GL_ALPHA as a surface format override breaks 1.30+ style
