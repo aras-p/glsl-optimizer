@@ -161,8 +161,9 @@ struct compute_memory_item* compute_memory_postalloc_chunk(
 void compute_memory_grow_pool(struct compute_memory_pool* pool,
 	struct pipe_context * pipe, int new_size_in_dw)
 {
-	COMPUTE_DBG(pool->screen, "* compute_memory_grow_pool() new_size_in_dw = %d\n",
-		new_size_in_dw);
+	COMPUTE_DBG(pool->screen, "* compute_memory_grow_pool() "
+		"new_size_in_dw = %d (%d bytes)\n",
+		new_size_in_dw, new_size_in_dw * 4);
 
 	assert(new_size_in_dw >= pool->size_in_dw);
 
@@ -171,7 +172,8 @@ void compute_memory_grow_pool(struct compute_memory_pool* pool,
 	} else {
 		new_size_in_dw += 1024 - (new_size_in_dw % 1024);
 
-		COMPUTE_DBG(pool->screen, "  Aligned size = %d\n", new_size_in_dw);
+		COMPUTE_DBG(pool->screen, "  Aligned size = %d (%d bytes)\n",
+			new_size_in_dw, new_size_in_dw * 4);
 
 		compute_memory_shadow(pool, pipe, 1);
 		pool->shadow = realloc(pool->shadow, new_size_in_dw*4);

@@ -934,8 +934,8 @@ void *r600_compute_global_transfer_map(
 			"width = %u, height = %u, depth = %u)\n", level, usage,
 			box->x, box->y, box->z, box->width, box->height,
 			box->depth);
-	COMPUTE_DBG(rctx->screen, "Buffer: %u (buffer offset in global memory) "
-		"+ %u (box.x)\n", buffer->chunk->start_in_dw, box->x);
+	COMPUTE_DBG(rctx->screen, "Buffer id = %u offset = "
+		"%u (box.x)\n", buffer->chunk->id, box->x);
 
 
 	compute_memory_finalize_pending(pool, ctx_);
