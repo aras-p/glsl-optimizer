@@ -1,8 +1,6 @@
 include Makefile.sources
 include $(top_srcdir)/src/gallium/Automake.inc
 
-LIBGALLIUM_LIBS=
-
 noinst_LTLIBRARIES = libradeon.la
 
 AM_CFLAGS = $(GALLIUM_CFLAGS) $(RADEON_CFLAGS)
@@ -30,7 +28,6 @@ libllvmradeon_la_SOURCES = \
 	$(LLVM_C_FILES)
 
 libllvmradeon_la_LIBADD = \
-	$(LIBGALLIUM_LIBS) \
 	$(CLOCK_LIB) \
 	$(LLVM_LIBS) \
 	$(ELF_LIB)
