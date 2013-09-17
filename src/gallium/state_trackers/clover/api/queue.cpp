@@ -32,7 +32,7 @@ clCreateCommandQueue(cl_context d_ctx, cl_device_id d_dev,
    auto &ctx = obj(d_ctx);
    auto &dev = obj(d_dev);
 
-   if (!ctx.has_device(dev))
+   if (!count(dev, ctx.devs()))
       throw error(CL_INVALID_DEVICE);
 
    if (props & ~(CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE |

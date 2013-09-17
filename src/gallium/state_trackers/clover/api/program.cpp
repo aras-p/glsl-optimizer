@@ -63,8 +63,8 @@ clCreateProgramWithBinary(cl_context d_ctx, cl_uint n,
    if (!lengths || !binaries)
       throw error(CL_INVALID_VALUE);
 
-   if (any_of([&](device &dev) {
-            return !ctx.has_device(dev);
+   if (any_of([&](const device &dev) {
+            return !count(dev, ctx.devs());
          }, devs))
       throw error(CL_INVALID_DEVICE);
 
@@ -133,15 +133,15 @@ clBuildProgram(cl_program d_prog, cl_uint num_devs,
                void *user_data) try {
    auto &prog = obj(d_prog);
    auto devs = (d_devs ? objs(d_devs, num_devs) :
-                ref_vector<device>(map(derefs(), prog.ctx.devs)));
+                ref_vector<device>(prog.ctx.devs()));
    auto opts = (p_opts ? p_opts : "");
 
    if (bool(num_devs) != bool(d_devs) ||
        (!pfn_notify && user_data))
       throw error(CL_INVALID_VALUE);
 
-   if (any_of([&](device &dev) {
-            return !prog.ctx.has_device(dev);
+   if (any_of([&](const device &dev) {
+            return !count(dev, prog.ctx.devs());
          }, devs))
       throw error(CL_INVALID_DEVICE);
 
@@ -224,7 +224,7 @@ clGetProgramBuildInfo(cl_program d_prog, cl_device_id d_dev,
    auto &prog = obj(d_prog);
    auto &dev = obj(d_dev);
 
-   if (!prog.ctx.has_device(dev))
+   if (!count(dev, prog.ctx.devs()))
       return CL_INVALID_DEVICE;
 
    switch (param) {

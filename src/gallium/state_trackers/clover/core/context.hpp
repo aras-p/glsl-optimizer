@@ -30,6 +30,7 @@
 namespace clover {
    class context : public ref_counter, public _cl_context {
    private:
+      typedef adaptor_range<derefs, const std::vector<device *> &> device_range;
       typedef clover::property_list<cl_context_properties> property_list;
 
    public:
@@ -39,8 +40,6 @@ namespace clover {
       context &
       operator=(const context &ctx) = delete;
 
-      bool has_device(device &dev) const;
-
       bool
       operator==(const context &ctx) const;
       bool
@@ -49,10 +48,12 @@ namespace clover {
       const property_list &
       props() const;
 
-      const std::vector<device *> devs;
+      device_range
+      devs() const;
 
    private:
       property_list _props;
+      const std::vector<clover::device *> _devs;
    };
 }
 

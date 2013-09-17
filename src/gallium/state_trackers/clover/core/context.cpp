@@ -20,20 +20,13 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 //
 
-#include <algorithm>
-
 #include "core/context.hpp"
 
 using namespace clover;
 
 context::context(const property_list &props,
                  const ref_vector<device> &devs) :
-   devs(map(addresses(), devs)), _props(props) {
-}
-
-bool
-context::has_device(device &dev) const {
-   return std::count(devs.begin(), devs.end(), &dev);
+   _props(props), _devs(map(addresses(), devs)) {
 }
 
 bool
@@ -49,4 +42,9 @@ context::operator!=(const context &ctx) const {
 const context::property_list &
 context::props() const {
    return _props;
+}
+
+context::device_range
+context::devs() const {
+   return map(derefs(), _devs);
 }

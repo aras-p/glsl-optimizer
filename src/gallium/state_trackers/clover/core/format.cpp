@@ -20,8 +20,6 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 //
 
-#include <algorithm>
-
 #include "core/format.hpp"
 #include "core/memory.hpp"
 #include "pipe/p_screen.h"
@@ -154,11 +152,10 @@ namespace clover {
                            PIPE_BIND_TRANSFER_WRITE);
 
       for (auto f : formats) {
-         if (std::all_of(ctx.devs.begin(), ctx.devs.end(),
-                         [=](const device *dev) {
-                            return dev->pipe->is_format_supported(
-                               dev->pipe, f.second, target, 1, bindings);
-                         }))
+         if (all_of([=](const device &dev) {
+                  return dev.pipe->is_format_supported(
+                     dev.pipe, f.second, target, 1, bindings);
+               }, ctx.devs()))
             s.insert(f.first);
       }
 
