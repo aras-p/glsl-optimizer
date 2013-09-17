@@ -78,6 +78,7 @@ New Tokens
 
     Accepted in the <attribute> parameter of eglQueryWaylandBufferWL:
 
+        EGL_TEXTURE_FORMAT                      0x3080
         EGL_WAYLAND_Y_INVERTED_WL               0x31DB
 
 
