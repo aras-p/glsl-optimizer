@@ -188,7 +188,7 @@ brw_vs_prog_data_compare(const void *in_a, const void *in_b,
 
    /* Compare the rest of the struct. */
    const unsigned offset = sizeof(struct brw_vec4_prog_data);
-   if (memcmp(((char *) &a) + offset, ((char *) &b) + offset,
+   if (memcmp(((char *) a) + offset, ((char *) b) + offset,
               sizeof(struct brw_vs_prog_data) - offset)) {
       return false;
    }
