@@ -27,36 +27,35 @@
 
 using namespace clover;
 
-kernel::kernel(program &prog,
-               const std::string &name,
+kernel::kernel(program &prog, const std::string &name,
                const std::vector<module::argument> &margs) :
    prog(prog), _name(name), exec(*this) {
-   for (auto marg : margs) {
+   for (auto &marg : margs) {
       if (marg.type == module::argument::scalar)
-         args.emplace_back(new scalar_argument(marg.size));
+         _args.emplace_back(new scalar_argument(marg.size));
       else if (marg.type == module::argument::global)
-         args.emplace_back(new global_argument);
+         _args.emplace_back(new global_argument);
       else if (marg.type == module::argument::local)
-         args.emplace_back(new local_argument);
+         _args.emplace_back(new local_argument);
       else if (marg.type == module::argument::constant)
-         args.emplace_back(new constant_argument);
+         _args.emplace_back(new constant_argument);
       else if (marg.type == module::argument::image2d_rd ||
                marg.type == module::argument::image3d_rd)
-         args.emplace_back(new image_rd_argument);
+         _args.emplace_back(new image_rd_argument);
       else if (marg.type == module::argument::image2d_wr ||
                marg.type == module::argument::image3d_wr)
-         args.emplace_back(new image_wr_argument);
+         _args.emplace_back(new image_wr_argument);
       else if (marg.type == module::argument::sampler)
-         args.emplace_back(new sampler_argument);
+         _args.emplace_back(new sampler_argument);
       else
          throw error(CL_INVALID_KERNEL_DEFINITION);
    }
 }
 
-template<typename T, typename V>
-static inline std::vector<T>
-pad_vector(command_queue &q, const V &v, T x) {
-   std::vector<T> w { v.begin(), v.end() };
+template<typename V>
+static inline std::vector<uint>
+pad_vector(command_queue &q, const V &v, uint x) {
+   std::vector<uint> w { v.begin(), v.end() };
    w.resize(q.dev.max_block_size().size(), x);
    return w;
 }
@@ -66,7 +65,13 @@ kernel::launch(command_queue &q,
                const std::vector<size_t> &grid_offset,
                const std::vector<size_t> &grid_size,
                const std::vector<size_t> &block_size) {
+   const auto m = prog.binary(q.dev);
+   const auto reduced_grid_size =
+      map(divides(), grid_size, block_size);
    void *st = exec.bind(&q);
+
+   // The handles are created during exec_context::bind(), so we need make
+   // sure to call exec_context::bind() before retrieving them.
    std::vector<uint32_t *> g_handles = map([&](size_t h) {
          return (uint32_t *)&exec.input[h];
       }, exec.g_handles);
@@ -84,9 +89,9 @@ kernel::launch(command_queue &q,
                               exec.g_buffers.data(), g_handles.data());
 
    q.pipe->launch_grid(q.pipe,
-                       pad_vector<uint>(q, block_size, 1).data(),
-                       pad_vector<uint>(q, grid_size, 1).data(),
-                       module(q).sym(_name).offset,
+                       pad_vector(q, block_size, 1).data(),
+                       pad_vector(q, reduced_grid_size, 1).data(),
+                       find(name_equals(_name), m.syms).offset,
                        exec.input.data());
 
    q.pipe->set_global_binding(q.pipe, 0, exec.g_buffers.size(), NULL, NULL);
@@ -101,9 +106,9 @@ size_t
 kernel::mem_local() const {
    size_t sz = 0;
 
-   for (auto &arg : args) {
-      if (dynamic_cast<local_argument *>(arg.get()))
-         sz += arg->storage();
+   for (auto &arg : args()) {
+      if (dynamic_cast<local_argument *>(&arg))
+         sz += arg.storage();
    }
 
    return sz;
@@ -129,13 +134,23 @@ kernel::block_size() const {
    return { 0, 0, 0 };
 }
 
+kernel::argument_range
+kernel::args() {
+   return map(derefs(), _args);
+}
+
+kernel::const_argument_range
+kernel::args() const {
+   return map(derefs(), _args);
+}
+
 const module &
 kernel::module(const command_queue &q) const {
-   return prog.binaries().find(&q.dev)->second;
+   return prog.binary(q.dev);
 }
 
 kernel::exec_context::exec_context(kernel &kern) :
-   kern(kern), q(NULL), mem_local(0), st(NULL) {
+   kern(kern), q(NULL), mem_local(0), st(NULL), cs() {
 }
 
 kernel::exec_context::~exec_context() {
@@ -148,11 +163,13 @@ kernel::exec_context::bind(command_queue *_q) {
    std::swap(q, _q);
 
    // Bind kernel arguments.
-   auto margs = kern.module(*q).sym(kern.name()).args;
-   for_each([=](std::unique_ptr<kernel::argument> &karg,
-                const module::argument &marg) {
-               karg->bind(*this, marg);
-            }, kern.args, margs);
+   auto &m = kern.prog.binary(q->dev);
+   auto margs = find(name_equals(kern.name()), m.syms).args;
+   auto msec = find(type_equals(module::section::text), m.secs);
+
+   for_each([=](kernel::argument &karg, const module::argument &marg) {
+               karg.bind(*this, marg);
+            }, kern.args(), margs);
 
    // Create a new compute state if anything changed.
    if (!st || q != _q ||
@@ -161,7 +178,7 @@ kernel::exec_context::bind(command_queue *_q) {
       if (st)
          _q->pipe->delete_compute_state(_q->pipe, st);
 
-      cs.prog = kern.module(*q).sec(module::section::text).data.begin();
+      cs.prog = msec.data.begin();
       cs.req_local_mem = mem_local;
       cs.req_input_mem = input.size();
       st = q->pipe->create_compute_state(q->pipe, &cs);
@@ -172,8 +189,8 @@ kernel::exec_context::bind(command_queue *_q) {
 
 void
 kernel::exec_context::unbind() {
-   for (auto &arg : kern.args)
-      arg->unbind(*this);
+   for (auto &arg : kern.args())
+      arg.unbind(*this);
 
    input.clear();
    samplers.clear();

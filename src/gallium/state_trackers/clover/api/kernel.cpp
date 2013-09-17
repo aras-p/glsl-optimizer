@@ -33,15 +33,12 @@ clCreateKernel(cl_program d_prog, const char *name, cl_int *r_errcode) try {
    if (!name)
       throw error(CL_INVALID_VALUE);
 
-   if (prog.binaries().empty())
-      throw error(CL_INVALID_PROGRAM_EXECUTABLE);
-
-   auto sym = prog.binaries().begin()->second.sym(name);
+   auto &sym = find(name_equals(name), prog.symbols());
 
    ret_error(r_errcode, CL_SUCCESS);
    return new kernel(prog, name, range(sym.args));
 
-} catch (module::noent_error &e) {
+} catch (std::out_of_range &e) {
    ret_error(r_errcode, CL_INVALID_KERNEL_NAME);
    return NULL;
 
@@ -54,11 +51,7 @@ PUBLIC cl_int
 clCreateKernelsInProgram(cl_program d_prog, cl_uint count,
                          cl_kernel *rd_kerns, cl_uint *r_count) try {
    auto &prog = obj(d_prog);
-
-   if (prog.binaries().empty())
-      throw error(CL_INVALID_PROGRAM_EXECUTABLE);
-
-   auto &syms = prog.binaries().begin()->second.syms;
+   auto &syms = prog.symbols();
 
    if (rd_kerns && count < syms.size())
       throw error(CL_INVALID_VALUE);
@@ -102,14 +95,11 @@ clReleaseKernel(cl_kernel d_kern) try {
 PUBLIC cl_int
 clSetKernelArg(cl_kernel d_kern, cl_uint idx, size_t size,
                const void *value) try {
-   auto &kern = obj(d_kern);
-
-   if (idx >= kern.args.size())
-      throw error(CL_INVALID_ARG_INDEX);
-
-   kern.args[idx]->set(size, value);
-
+   obj(d_kern).args().at(idx).set(size, value);
    return CL_SUCCESS;
+
+} catch (std::out_of_range &e) {
+   return CL_INVALID_ARG_INDEX;
 
 } catch (error &e) {
    return e.get();
@@ -127,7 +117,7 @@ clGetKernelInfo(cl_kernel d_kern, cl_kernel_info param,
       break;
 
    case CL_KERNEL_NUM_ARGS:
-      buf.as_scalar<cl_uint>() = kern.args.size();
+      buf.as_scalar<cl_uint>() = kern.args().size();
       break;
 
    case CL_KERNEL_REFERENCE_COUNT:
@@ -160,8 +150,8 @@ clGetKernelWorkGroupInfo(cl_kernel d_kern, cl_device_id d_dev,
    auto &kern = obj(d_kern);
    auto pdev = pobj(d_dev);
 
-   if ((!pdev && kern.prog.binaries().size() != 1) ||
-       (pdev && !kern.prog.binaries().count(pdev)))
+   if ((!pdev && kern.prog.devices().size() != 1) ||
+       (pdev && !count(*pdev, kern.prog.devices())))
       throw error(CL_INVALID_DEVICE);
 
    switch (param) {
@@ -210,10 +200,10 @@ namespace {
 
       if (any_of([](kernel::argument &arg) {
                return !arg.set();
-            }, map(derefs(), kern.args)))
+            }, kern.args()))
          throw error(CL_INVALID_KERNEL_ARGS);
 
-      if (!kern.prog.binaries().count(&q.dev))
+      if (!count(q.dev, kern.prog.devices()))
          throw error(CL_INVALID_PROGRAM_EXECUTABLE);
    }
 

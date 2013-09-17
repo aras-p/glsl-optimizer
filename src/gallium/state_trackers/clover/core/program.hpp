@@ -31,6 +31,11 @@
 
 namespace clover {
    class program : public ref_counter, public _cl_program {
+   private:
+      typedef adaptor_range<
+         derefs, adaptor_range<
+             keys, const std::map<device *, module> &>> device_range;
+
    public:
       program(context &ctx,
               const std::string &source);
@@ -45,18 +50,22 @@ namespace clover {
       void build(const ref_vector<device> &devs, const char *opts);
 
       const std::string &source() const;
-      const std::map<device *, module> &binaries() const;
 
-      cl_build_status build_status(device &dev) const;
-      std::string build_opts(device &dev) const;
-      std::string build_log(device &dev) const;
+      device_range devices() const;
+
+      const module &binary(const device &dev) const;
+      cl_build_status build_status(const device &dev) const;
+      std::string build_opts(const device &dev) const;
+      std::string build_log(const device &dev) const;
+
+      const compat::vector<module::symbol> &symbols() const;
 
       context &ctx;
 
    private:
       std::map<device *, module> _binaries;
-      std::map<device *, std::string> _logs;
-      std::map<device *, std::string> _opts;
+      std::map<const device *, std::string> _logs;
+      std::map<const device *, std::string> _opts;
       std::string _source;
    };
 }

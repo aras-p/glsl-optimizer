@@ -173,11 +173,11 @@ clGetProgramInfo(cl_program d_prog, cl_program_info param,
       break;
 
    case CL_PROGRAM_NUM_DEVICES:
-      buf.as_scalar<cl_uint>() = prog.binaries().size();
+      buf.as_scalar<cl_uint>() = prog.devices().size();
       break;
 
    case CL_PROGRAM_DEVICES:
-      buf.as_vector<cl_device_id>() = map(keys(), prog.binaries());
+      buf.as_vector<cl_device_id>() = descs(prog.devices());
       break;
 
    case CL_PROGRAM_SOURCE:
@@ -185,25 +185,23 @@ clGetProgramInfo(cl_program d_prog, cl_program_info param,
       break;
 
    case CL_PROGRAM_BINARY_SIZES:
-      buf.as_vector<size_t>() =
-         map([](const std::pair<device *, module> &ent) {
-               compat::ostream::buffer_t bin;
-               compat::ostream s(bin);
-               ent.second.serialize(s);
-               return bin.size();
-            },
-            prog.binaries());
+      buf.as_vector<size_t>() = map([&](const device &dev) {
+            compat::ostream::buffer_t bin;
+            compat::ostream s(bin);
+            prog.binary(dev).serialize(s);
+            return bin.size();
+         },
+         prog.devices());
       break;
 
    case CL_PROGRAM_BINARIES:
-      buf.as_matrix<unsigned char>() =
-         map([](const std::pair<device *, module> &ent) {
-               compat::ostream::buffer_t bin;
-               compat::ostream s(bin);
-               ent.second.serialize(s);
-               return bin;
-            },
-            prog.binaries());
+      buf.as_matrix<unsigned char>() = map([&](const device &dev) {
+            compat::ostream::buffer_t bin;
+            compat::ostream s(bin);
+            prog.binary(dev).serialize(s);
+            return bin;
+         },
+         prog.devices());
       break;
 
    default:
@@ -224,7 +222,7 @@ clGetProgramBuildInfo(cl_program d_prog, cl_device_id d_dev,
    auto &prog = obj(d_prog);
    auto &dev = obj(d_dev);
 
-   if (!count(dev, prog.ctx.devs()))
+   if (!count(dev, prog.devices()))
       return CL_INVALID_DEVICE;
 
    switch (param) {

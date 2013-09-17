@@ -67,22 +67,38 @@ program::source() const {
    return _source;
 }
 
-const std::map<device *, module> &
-program::binaries() const {
-   return _binaries;
+program::device_range
+program::devices() const {
+   return map(derefs(), map(keys(), _binaries));
+}
+
+const module &
+program::binary(const device &dev) const {
+   return _binaries.find(const_cast<device *>(&dev))->second;
 }
 
 cl_build_status
-program::build_status(device &dev) const {
-   return _binaries.count(&dev) ? CL_BUILD_SUCCESS : CL_BUILD_NONE;
+program::build_status(const device &dev) const {
+   if (_binaries.count(const_cast<device *>(&dev)))
+      return CL_BUILD_SUCCESS;
+   else
+      return CL_BUILD_NONE;
 }
 
 std::string
-program::build_opts(device &dev) const {
+program::build_opts(const device &dev) const {
    return _opts.count(&dev) ? _opts.find(&dev)->second : "";
 }
 
 std::string
-program::build_log(device &dev) const {
+program::build_log(const device &dev) const {
    return _logs.count(&dev) ? _logs.find(&dev)->second : "";
+}
+
+const compat::vector<module::symbol> &
+program::symbols() const {
+   if (_binaries.empty())
+      throw error(CL_INVALID_PROGRAM_EXECUTABLE);
+
+   return _binaries.begin()->second.syms;
 }

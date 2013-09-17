@@ -27,11 +27,6 @@
 
 namespace clover {
    struct module {
-      class noent_error {
-      public:
-         virtual ~noent_error() {}
-      };
-
       typedef uint32_t resource_id;
       typedef uint32_t size_t;
 
@@ -45,14 +40,14 @@ namespace clover {
          };
 
          section(resource_id id, enum type type, size_t size,
-                 const clover::compat::vector<char> &data) :
+                 const compat::vector<char> &data) :
                  id(id), type(type), size(size), data(data) { }
          section() : id(0), type(text), size(0), data() { }
 
          resource_id id;
          type type;
          size_t size;
-         clover::compat::vector<char> data;
+         compat::vector<char> data;
       };
 
       struct argument {
@@ -97,30 +92,22 @@ namespace clover {
       };
 
       struct symbol {
-         symbol(const clover::compat::vector<char> &name, resource_id section,
-                size_t offset, const clover::compat::vector<argument> &args) :
+         symbol(const compat::vector<char> &name, resource_id section,
+                size_t offset, const compat::vector<argument> &args) :
                 name(name), section(section), offset(offset), args(args) { }
          symbol() : name(), section(0), offset(0), args() { }
 
-         clover::compat::vector<char> name;
+         compat::vector<char> name;
          resource_id section;
          size_t offset;
-         clover::compat::vector<argument> args;
+         compat::vector<argument> args;
       };
 
       void serialize(compat::ostream &os) const;
       static module deserialize(compat::istream &is);
 
-      /// Look up a symbol by name.  Throws module::noent_error if not
-      /// found.
-      const symbol &sym(compat::string name) const;
-
-      /// Look up a section by type.  Throws module::noent_error if not
-      /// found.
-      const section &sec(typename section::type type) const;
-
-      clover::compat::vector<symbol> syms;
-      clover::compat::vector<section> secs;
+      compat::vector<symbol> syms;
+      compat::vector<section> secs;
    };
 }
 

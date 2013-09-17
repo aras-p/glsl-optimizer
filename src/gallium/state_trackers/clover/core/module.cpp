@@ -21,7 +21,6 @@
 //
 
 #include <type_traits>
-#include <algorithm>
 
 #include "core/module.hpp"
 
@@ -146,29 +145,5 @@ namespace clover {
    module
    module::deserialize(compat::istream &is) {
       return _proc<module>(is);
-   }
-
-   const module::symbol &
-   module::sym(compat::string name) const {
-      auto it = std::find_if(syms.begin(), syms.end(), [&](const symbol &x) {
-            return compat::string(x.name) == name;
-         });
-
-      if (it == syms.end())
-         throw noent_error();
-
-      return *it;
-   }
-
-   const module::section &
-   module::sec(typename section::type type) const {
-      auto it = std::find_if(secs.begin(), secs.end(), [&](const section &x) {
-            return x.type == type;
-         });
-
-      if (it == secs.end())
-         throw noent_error();
-
-      return *it;
    }
 }

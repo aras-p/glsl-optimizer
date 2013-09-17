@@ -95,9 +95,18 @@ namespace clover {
          bool _set;
       };
 
-      kernel(program &prog,
-             const std::string &name,
-             const std::vector<module::argument> &margs);
+   private:
+      typedef adaptor_range<
+            derefs, std::vector<std::unique_ptr<argument>> &
+         > argument_range;
+
+      typedef adaptor_range<
+            derefs, const std::vector<std::unique_ptr<argument>> &
+         > const_argument_range;
+
+   public:
+      kernel(program &prog, const std::string &name,
+             const std::vector<clover::module::argument> &margs);
 
       kernel(const kernel &kern) = delete;
       kernel &
@@ -115,12 +124,13 @@ namespace clover {
       const std::string &name() const;
       std::vector<size_t> block_size() const;
 
+      argument_range args();
+      const_argument_range args() const;
+
       program &prog;
-      std::vector<std::unique_ptr<argument>> args;
 
    private:
-      const clover::module &
-      module(const command_queue &q) const;
+      const clover::module &module(const command_queue &q) const;
 
       class scalar_argument : public argument {
       public:
@@ -208,6 +218,7 @@ namespace clover {
          void *st;
       };
 
+      std::vector<std::unique_ptr<argument>> _args;
       std::string _name;
       exec_context exec;
    };
