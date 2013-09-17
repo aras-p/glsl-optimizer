@@ -27,9 +27,10 @@
 using namespace clover;
 
 PUBLIC cl_int
-clGetDeviceIDs(cl_platform_id platform, cl_device_type device_type,
+clGetDeviceIDs(cl_platform_id d_platform, cl_device_type device_type,
                cl_uint num_entries, cl_device_id *devices,
                cl_uint *num_devices) {
+   auto &platform = obj(d_platform);
    std::vector<cl_device_id> devs;
 
    if ((!num_entries && devices) ||
@@ -37,9 +38,9 @@ clGetDeviceIDs(cl_platform_id platform, cl_device_type device_type,
       return CL_INVALID_VALUE;
 
    // Collect matching devices
-   for (device &dev : *platform) {
+   for (device &dev : platform) {
       if (((device_type & CL_DEVICE_TYPE_DEFAULT) &&
-           &dev == &platform->front()) ||
+           &dev == &platform.front()) ||
           (device_type & dev.type()))
          devs.push_back(&dev);
    }
@@ -254,7 +255,7 @@ clGetDeviceInfo(cl_device_id dev, cl_device_info param,
       break;
 
    case CL_DEVICE_PLATFORM:
-      buf.as_scalar<cl_platform_id>() = &dev->platform;
+      buf.as_scalar<cl_platform_id>() = desc(dev->platform);
       break;
 
    case CL_DEVICE_HOST_UNIFIED_MEMORY:

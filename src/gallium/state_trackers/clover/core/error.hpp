@@ -42,7 +42,7 @@ namespace clover {
    class image;
    class image2d;
    class image3d;
-   typedef struct _cl_platform_id platform;
+   class platform;
    typedef struct _cl_program program;
    typedef struct _cl_sampler sampler;
 

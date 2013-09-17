@@ -30,29 +30,28 @@ namespace {
 }
 
 PUBLIC cl_int
-clGetPlatformIDs(cl_uint num_entries, cl_platform_id *platforms,
-                 cl_uint *num_platforms) {
-   if ((!num_entries && platforms) ||
-       (!num_platforms && !platforms))
+clGetPlatformIDs(cl_uint num_entries, cl_platform_id *rd_platforms,
+                 cl_uint *rnum_platforms) {
+   if ((!num_entries && rd_platforms) ||
+       (!rnum_platforms && !rd_platforms))
       return CL_INVALID_VALUE;
 
-   if (num_platforms)
-      *num_platforms = 1;
-   if (platforms)
-      *platforms = &_clover_platform;
+   if (rnum_platforms)
+      *rnum_platforms = 1;
+   if (rd_platforms)
+      *rd_platforms = desc(_clover_platform);
 
    return CL_SUCCESS;
 }
 
 PUBLIC cl_int
-clGetPlatformInfo(cl_platform_id platform, cl_platform_info param_name,
+clGetPlatformInfo(cl_platform_id d_platform, cl_platform_info param,
                   size_t size, void *r_buf, size_t *r_size) try {
    property_buffer buf { r_buf, size, r_size };
 
-   if (platform != &_clover_platform)
-      return CL_INVALID_PLATFORM;
+   obj(d_platform);
 
-   switch (param_name) {
+   switch (param) {
    case CL_PLATFORM_PROFILE:
       buf.as_string() = "FULL_PROFILE";
       break;

@@ -179,4 +179,7 @@ namespace clover {
    }
 }
 
+struct _cl_platform_id :
+   public clover::descriptor<clover::platform, _cl_platform_id> {};
+
 #endif

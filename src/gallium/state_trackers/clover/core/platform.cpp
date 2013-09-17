@@ -24,7 +24,7 @@
 
 using namespace clover;
 
-_cl_platform_id::_cl_platform_id() {
+platform::platform() {
    int n = pipe_loader_probe(NULL, 0);
    std::vector<pipe_loader_device *> ldevs(n);
 

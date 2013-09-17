@@ -32,7 +32,7 @@
 
 namespace clover {
    typedef struct _cl_device_id device;
-   typedef struct _cl_platform_id platform;
+   struct platform;
    class root_resource;
    class hard_event;
 }

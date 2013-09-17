@@ -29,38 +29,36 @@
 #include "core/device.hpp"
 
 namespace clover {
-   typedef struct _cl_platform_id platform;
+   class platform : public _cl_platform_id {
+   public:
+      typedef std::vector<device>::iterator iterator;
+
+      platform();
+
+      ///
+      /// Container of all compute devices that are available in the platform.
+      ///
+      /// @{
+      iterator begin() {
+         return devs.begin();
+      }
+
+      iterator end() {
+         return devs.end();
+      }
+
+      device &front() {
+         return devs.front();
+      }
+
+      device &back() {
+         return devs.back();
+      }
+      /// @}
+
+   protected:
+      std::vector<device> devs;
+   };
 }
-
-struct _cl_platform_id {
-public:
-   typedef std::vector<clover::device>::iterator iterator;
-
-   _cl_platform_id();
-
-   ///
-   /// Container of all compute devices that are available in the platform.
-   ///
-   /// @{
-   iterator begin() {
-      return devs.begin();
-   }
-
-   iterator end() {
-      return devs.end();
-   }
-
-   clover::device &front() {
-      return devs.front();
-   }
-
-   clover::device &back() {
-      return devs.back();
-   }
-   /// @}
-
-protected:
-   std::vector<clover::device> devs;
-};
 
 #endif
