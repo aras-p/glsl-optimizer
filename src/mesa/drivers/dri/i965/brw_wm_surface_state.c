@@ -228,7 +228,7 @@ brw_update_buffer_texture_surface(struct gl_context *ctx,
 			      *surf_offset + 4,
 			      bo, 0, I915_GEM_DOMAIN_SAMPLER, 0);
 
-      int w = intel_obj->Base.Size / texel_size;
+      int w = (intel_obj->Base.Size / texel_size) - 1;
       surf[2] = ((w & 0x7f) << BRW_SURFACE_WIDTH_SHIFT |
 		 ((w >> 7) & 0x1fff) << BRW_SURFACE_HEIGHT_SHIFT);
       surf[3] = (((w >> 20) & 0x7f) << BRW_SURFACE_DEPTH_SHIFT |

@@ -260,7 +260,7 @@ gen7_update_buffer_texture_surface(struct gl_context *ctx,
 			      I915_GEM_DOMAIN_SAMPLER, 0);
 
       int texel_size = _mesa_get_format_bytes(format);
-      int w = intel_obj->Base.Size / texel_size;
+      int w = (intel_obj->Base.Size / texel_size) - 1;
 
       /* note that these differ from GEN6 */
       surf[2] = SET_FIELD(w & 0x7f, GEN7_SURFACE_WIDTH) | /* bits 6:0 of size */
