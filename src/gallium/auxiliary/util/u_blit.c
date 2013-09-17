@@ -46,6 +46,7 @@
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "util/u_sampler.h"
+#include "util/u_texture.h"
 #include "util/u_simple_shaders.h"
 
 #include "cso_cache/cso_context.h"
@@ -143,7 +144,6 @@ util_create_blit(struct pipe_context *pipe, struct cso_context *cso)
    /* init vertex data that doesn't change */
    for (i = 0; i < 4; i++) {
       ctx->vertices[i][0][3] = 1.0f; /* w */
-      ctx->vertices[i][1][2] = 0.0f; /* r */
       ctx->vertices[i][1][3] = 1.0f; /* q */
    }
 
@@ -327,6 +327,8 @@ get_next_slot( struct blit_state *ctx )
  */
 static unsigned
 setup_vertex_data_tex(struct blit_state *ctx,
+                      unsigned src_target,
+                      unsigned src_face,
                       float x0, float y0, float x1, float y1,
                       float s0, float t0, float s1, float t1,
                       float z)
@@ -338,24 +340,37 @@ setup_vertex_data_tex(struct blit_state *ctx,
    ctx->vertices[0][0][2] = z;
    ctx->vertices[0][1][0] = s0; /*s*/
    ctx->vertices[0][1][1] = t0; /*t*/
+   ctx->vertices[0][1][2] = 0;  /*r*/
 
    ctx->vertices[1][0][0] = x1;
    ctx->vertices[1][0][1] = y0;
    ctx->vertices[1][0][2] = z;
    ctx->vertices[1][1][0] = s1; /*s*/
    ctx->vertices[1][1][1] = t0; /*t*/
+   ctx->vertices[1][1][2] = 0;  /*r*/
 
    ctx->vertices[2][0][0] = x1;
    ctx->vertices[2][0][1] = y1;
    ctx->vertices[2][0][2] = z;
    ctx->vertices[2][1][0] = s1;
    ctx->vertices[2][1][1] = t1;
+   ctx->vertices[3][1][2] = 0;
 
    ctx->vertices[3][0][0] = x0;
    ctx->vertices[3][0][1] = y1;
    ctx->vertices[3][0][2] = z;
    ctx->vertices[3][1][0] = s0;
    ctx->vertices[3][1][1] = t1;
+   ctx->vertices[3][1][2] = 0;
+
+   if (src_target == PIPE_TEXTURE_CUBE ||
+       src_target == PIPE_TEXTURE_CUBE_ARRAY) {
+      /* Map cubemap texture coordinates inplace. */
+      const unsigned stride = sizeof ctx->vertices[0] / sizeof ctx->vertices[0][0][0];
+      util_map_texcoords2d_onto_cubemap(src_face,
+                                        &ctx->vertices[0][1][0], stride,
+                                        &ctx->vertices[0][1][0], stride);
+   }
 
    offset = get_next_slot( ctx );
 
@@ -770,6 +785,8 @@ util_blit_pixels(struct blit_state *ctx,
 
    /* draw quad */
    offset = setup_vertex_data_tex(ctx,
+                                  sampler_view->texture->target,
+                                  srcZ0 % 6,
                                   (float) dstX0 / dst_surface->width * 2.0f - 1.0f,
                                   (float) dstY0 / dst_surface->height * 2.0f - 1.0f,
                                   (float) dstX1 / dst_surface->width * 2.0f - 1.0f,
@@ -811,16 +828,25 @@ util_blit_pixels(struct blit_state *ctx,
 
 
 /**
- * Copy pixel block from src texture to dst surface.
+ * Copy pixel block from src sampler view to dst surface.
+ *
  * The sampler view's first_level field indicates the source
  * mipmap level to use.
- * XXX need some control over blitting Z and/or stencil.
+ *
+ * The sampler view's first_layer indicate the layer to use, but for
+ * cube maps it must point to the first face.  Face is passed in src_face.
+ *
+ * The main advantage over util_blit_pixels is that it allows to specify swizzles in
+ * pipe_sampler_view::swizzle_?.
+ *
+ * But there is no control over blitting Z and/or stencil.
  */
 void
 util_blit_pixels_tex(struct blit_state *ctx,
                      struct pipe_sampler_view *src_sampler_view,
                      int srcX0, int srcY0,
                      int srcX1, int srcY1,
+                     unsigned src_face,
                      struct pipe_surface *dst,
                      int dstX0, int dstY0,
                      int dstX1, int dstY1,
@@ -922,6 +948,8 @@ util_blit_pixels_tex(struct blit_state *ctx,
 
    /* draw quad */
    offset = setup_vertex_data_tex(ctx,
+                                  src_sampler_view->texture->target,
+                                  src_face,
                                   (float) dstX0 / dst->width * 2.0f - 1.0f,
                                   (float) dstY0 / dst->height * 2.0f - 1.0f,
                                   (float) dstX1 / dst->width * 2.0f - 1.0f,
