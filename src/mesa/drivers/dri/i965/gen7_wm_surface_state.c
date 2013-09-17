@@ -348,8 +348,10 @@ gen7_update_texture_surface(struct gl_context *ctx,
    surf[4] = gen7_surface_msaa_bits(mt->num_samples, mt->msaa_layout);
 
    surf[5] = (SET_FIELD(GEN7_MOCS_L3, GEN7_SURFACE_MOCS) |
+              SET_FIELD(tObj->BaseLevel - mt->first_level,
+                        GEN7_SURFACE_MIN_LOD) |
               /* mip count */
-              (intelObj->_MaxLevel - mt->first_level));
+              (intelObj->_MaxLevel - tObj->BaseLevel));
 
    if (brw->is_haswell) {
       /* Handling GL_ALPHA as a surface format override breaks 1.30+ style

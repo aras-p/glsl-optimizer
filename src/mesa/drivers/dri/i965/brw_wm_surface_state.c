@@ -279,7 +279,7 @@ brw_update_texture_surface(struct gl_context *ctx,
 
    surf[1] = intelObj->mt->region->bo->offset + intelObj->mt->offset; /* reloc */
 
-   surf[2] = ((intelObj->_MaxLevel - mt->first_level) << BRW_SURFACE_LOD_SHIFT |
+   surf[2] = ((intelObj->_MaxLevel - tObj->BaseLevel) << BRW_SURFACE_LOD_SHIFT |
 	      (mt->logical_width0 - 1) << BRW_SURFACE_WIDTH_SHIFT |
 	      (mt->logical_height0 - 1) << BRW_SURFACE_HEIGHT_SHIFT);
 
@@ -288,7 +288,8 @@ brw_update_texture_surface(struct gl_context *ctx,
 	      (intelObj->mt->region->pitch - 1) <<
 	      BRW_SURFACE_PITCH_SHIFT);
 
-   surf[4] = brw_get_surface_num_multisamples(intelObj->mt->num_samples);
+   surf[4] = (brw_get_surface_num_multisamples(intelObj->mt->num_samples) |
+              SET_FIELD(tObj->BaseLevel - mt->first_level, BRW_SURFACE_MIN_LOD));
 
    surf[5] = mt->align_h == 4 ? BRW_SURFACE_VERTICAL_ALIGN_ENABLE : 0;
 
