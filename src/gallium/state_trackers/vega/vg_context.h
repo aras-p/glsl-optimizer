@@ -129,8 +129,6 @@ struct vg_context
    struct pipe_sampler_state blend_sampler;
    struct vg_paint *default_paint;
 
-   struct blit_state *blit;
-
    int32_t draw_stamp;
 };
 

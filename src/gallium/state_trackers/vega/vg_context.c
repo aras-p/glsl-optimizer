@@ -41,7 +41,6 @@
 #include "cso_cache/cso_context.h"
 
 #include "util/u_memory.h"
-#include "util/u_blit.h"
 #include "util/u_sampler.h"
 #include "util/u_surface.h"
 #include "util/u_format.h"
@@ -138,8 +137,6 @@ struct vg_context * vg_create_context(struct pipe_context *pipe,
    ctx->sc = shaders_cache_create(ctx);
    ctx->shader = shader_create(ctx);
 
-   ctx->blit = util_create_blit(ctx->pipe, ctx->cso_context);
-
    return ctx;
 }
 
@@ -147,7 +144,6 @@ void vg_destroy_context(struct vg_context *ctx)
 {
    struct pipe_resource **cbuf = &ctx->mask.cbuf;
 
-   util_destroy_blit(ctx->blit);
    renderer_destroy(ctx->renderer);
    shaders_cache_destroy(ctx->sc);
    shader_destroy(ctx->shader);
@@ -443,23 +439,35 @@ static void vg_prepare_blend_texture(struct vg_context *ctx,
                                      struct pipe_sampler_view *src)
 {
    struct st_framebuffer *stfb = ctx->draw_buffer;
-   struct pipe_surface *surf;
-   struct pipe_surface surf_tmpl;
+   struct pipe_context *pipe = ctx->pipe;
+   struct pipe_blit_info info;
 
    vg_context_update_blend_texture_view(ctx, stfb->width, stfb->height);
 
-   u_surface_default_template(&surf_tmpl, stfb->blend_texture_view->texture);
-   surf = ctx->pipe->create_surface(ctx->pipe,
-                                    stfb->blend_texture_view->texture,
-                                    &surf_tmpl);
-   if (surf) {
-      util_blit_pixels_tex(ctx->blit,
-                           src, 0, 0, stfb->width, stfb->height,
-                           surf, 0, 0, stfb->width, stfb->height,
-                           0.0, PIPE_TEX_MIPFILTER_NEAREST);
+   memset(&info, 0, sizeof info);
+   info.dst.resource = stfb->blend_texture_view->texture;
+   info.dst.level = 0;
+   info.dst.box.x = 0;
+   info.dst.box.y = 0;
+   info.dst.box.z = 0;
+   info.dst.box.width = stfb->width;
+   info.dst.box.height = stfb->height;
+   info.dst.box.depth = 1;
+   info.dst.format = stfb->blend_texture_view->format;
+   info.src.resource = src->texture;
+   info.src.level = src->u.tex.first_level;
+   info.src.box.x = 0;
+   info.src.box.y = 0;
+   info.src.box.z = src->u.tex.first_layer;
+   info.src.box.width = stfb->width;
+   info.src.box.height = stfb->height;
+   info.src.box.depth = 1;
+   info.src.format = src->format;
+   info.mask = PIPE_MASK_RGBA;
+   info.filter = PIPE_TEX_MIPFILTER_NEAREST;
+   info.scissor_enable = 0;
 
-      pipe_surface_reference(&surf, NULL);
-   }
+   pipe->blit(pipe, &info);
 }
 
 struct pipe_sampler_view *vg_prepare_blend_surface(struct vg_context *ctx)
