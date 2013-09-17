@@ -580,6 +580,9 @@ builtin_builder::release()
 {
    ralloc_free(mem_ctx);
    mem_ctx = NULL;
+
+   ralloc_free(shader);
+   shader = NULL;
 }
 
 void
