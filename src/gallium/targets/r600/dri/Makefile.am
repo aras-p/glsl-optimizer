@@ -40,14 +40,12 @@ dridir = $(DRI_DRIVER_INSTALL_DIR)
 dri_LTLIBRARIES = r600_dri.la
 
 r600_dri_la_SOURCES = \
-	../drm_target.c \
-	$(top_srcdir)/src/mesa/drivers/dri/common/utils.c \
-	$(top_srcdir)/src/mesa/drivers/dri/common/dri_util.c \
-	$(top_srcdir)/src/mesa/drivers/dri/common/xmlconfig.c
+	../drm_target.c
 
 r600_dri_la_LDFLAGS = -module -avoid-version -shared -no-undefined
 
 r600_dri_la_LIBADD = \
+	$(top_builddir)/src/mesa/drivers/dri/common/libdricommon.la \
 	$(top_builddir)/src/mesa/libmesagallium.la \
 	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
 	$(top_builddir)/src/gallium/drivers/r600/libr600.la \

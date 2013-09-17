@@ -41,14 +41,12 @@ dri_LTLIBRARIES = radeonsi_dri.la
 
 nodist_EXTRA_radeonsi_dri_la_SOURCES = dummy.cpp
 radeonsi_dri_la_SOURCES = \
-	../drm_target.c \
-	$(top_srcdir)/src/mesa/drivers/dri/common/utils.c \
-	$(top_srcdir)/src/mesa/drivers/dri/common/dri_util.c \
-	$(top_srcdir)/src/mesa/drivers/dri/common/xmlconfig.c
+	../drm_target.c
 
 radeonsi_dri_la_LDFLAGS = -module -avoid-version -shared -no-undefined
 
 radeonsi_dri_la_LIBADD = \
+	$(top_builddir)/src/mesa/drivers/dri/common/libdricommon.la \
 	$(top_builddir)/src/mesa/libmesagallium.la \
 	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
 	$(top_builddir)/src/gallium/drivers/radeonsi/libradeonsi.la \

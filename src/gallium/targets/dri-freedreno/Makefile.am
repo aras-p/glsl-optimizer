@@ -39,14 +39,10 @@ AM_CPPFLAGS = \
 dridir = $(DRI_DRIVER_INSTALL_DIR)
 dri_LTLIBRARIES = kgsl_dri.la msm_dri.la
 
-COMMON_SOURCES = \
-	$(top_srcdir)/src/mesa/drivers/dri/common/utils.c \
-	$(top_srcdir)/src/mesa/drivers/dri/common/dri_util.c \
-	$(top_srcdir)/src/mesa/drivers/dri/common/xmlconfig.c
-
 COMMON_LDFLAGS = -module -avoid-version -shared -no-undefined
 
 COMMON_LIBADD = \
+	$(top_builddir)/src/mesa/drivers/dri/common/libdricommon.la \
 	$(top_builddir)/src/mesa/libmesagallium.la \
 	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
 	$(top_builddir)/src/gallium/state_trackers/dri/drm/libdridrm.la \
@@ -65,12 +61,12 @@ COMMON_LIBADD += $(LLVM_LIBS)
 endif
 
 nodist_EXTRA_kgsl_dri_la_SOURCES = dummy.cpp
-kgsl_dri_la_SOURCES = target-kgsl.c $(COMMON_SOURCES)
+kgsl_dri_la_SOURCES = target-kgsl.c
 kgsl_dri_la_LDFLAGS = $(COMMON_LDFLAGS)
 kgsl_dri_la_LIBADD  = $(COMMON_LIBADD)
 
 nodist_EXTRA_msm_dri_la_SOURCES = dummy.cpp
-msm_dri_la_SOURCES  = target-msm.c $(COMMON_SOURCES)
+msm_dri_la_SOURCES  = target-msm.c
 msm_dri_la_LDFLAGS  = $(COMMON_LDFLAGS)
 msm_dri_la_LIBADD   = $(COMMON_LIBADD)
 

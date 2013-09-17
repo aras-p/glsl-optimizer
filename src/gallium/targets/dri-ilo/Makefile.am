@@ -39,17 +39,14 @@ AM_CPPFLAGS = \
 
 noinst_LTLIBRARIES = ilo_dri.la
 
-ilo_dri_la_SOURCES = \
-	target.c \
-	$(top_srcdir)/src/mesa/drivers/dri/common/utils.c \
-	$(top_srcdir)/src/mesa/drivers/dri/common/dri_util.c \
-	$(top_srcdir)/src/mesa/drivers/dri/common/xmlconfig.c
+ilo_dri_la_SOURCES = target.c
 
 # need -rpath to create a noinst shared library
 ilo_dri_la_LDFLAGS = -module -avoid-version -shared -no-undefined \
 		     -rpath $(abs_builddir)
 
 ilo_dri_la_LIBADD = \
+	$(top_builddir)/src/mesa/drivers/dri/common/libdricommon.la \
 	$(top_builddir)/src/mesa/libmesagallium.la \
 	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
 	$(top_builddir)/src/gallium/state_trackers/dri/drm/libdridrm.la \
