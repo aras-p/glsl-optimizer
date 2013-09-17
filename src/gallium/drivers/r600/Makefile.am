@@ -24,7 +24,7 @@ libr600_la_SOURCES = \
 
 libr600_la_LIBADD = ../radeon/libradeon.la
 
-if R600_NEED_RADEON_GALLIUM
+if NEED_RADEON_LLVM
 
 libr600_la_SOURCES += \
 	$(LLVM_C_SOURCES)

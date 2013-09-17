@@ -1781,7 +1781,6 @@ if test "x$with_gallium_drivers" != x; then
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r600"
             if test "x$enable_r600_llvm" = xyes -o "x$enable_opencl" = xyes; then
                 radeon_llvm_check
-                R600_NEED_RADEON_GALLIUM=yes;
                 LLVM_COMPONENTS="${LLVM_COMPONENTS} bitreader asmparser"
             fi
             if test "x$enable_r600_llvm" = xyes; then
@@ -1937,7 +1936,6 @@ AM_CONDITIONAL(NEED_WINSYS_WRAPPER, test "x$HAVE_GALLIUM_I915" = xyes -o \
                                          "x$HAVE_GALLIUM_SVGA" = xyes)
 AM_CONDITIONAL(NEED_WINSYS_XLIB, test "x$NEED_WINSYS_XLIB" = xyes)
 AM_CONDITIONAL(NEED_RADEON_LLVM, test x$NEED_RADEON_LLVM = xyes)
-AM_CONDITIONAL(R600_NEED_RADEON_GALLIUM, test x$R600_NEED_RADEON_GALLIUM = xyes)
 AM_CONDITIONAL(USE_R600_LLVM_COMPILER, test x$USE_R600_LLVM_COMPILER = xyes)
 AM_CONDITIONAL(HAVE_LOADER_GALLIUM, test x$enable_gallium_loader = xyes)
 AM_CONDITIONAL(HAVE_DRM_LOADER_GALLIUM, test x$enable_gallium_drm_loader = xyes)
