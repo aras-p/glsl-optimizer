@@ -35,7 +35,7 @@ namespace clover {
    class root_resource;
    class hard_event;
 
-   class device : public _cl_device_id {
+   class device : public ref_counter, public _cl_device_id {
    public:
       device(clover::platform &platform, pipe_loader_device *ldev);
       device(device &&dev);

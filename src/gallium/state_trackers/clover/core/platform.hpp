@@ -27,37 +27,17 @@
 
 #include "core/object.hpp"
 #include "core/device.hpp"
+#include "util/range.hpp"
 
 namespace clover {
-   class platform : public _cl_platform_id {
+   class platform : public _cl_platform_id,
+                    public adaptor_range<
+      derefs, std::vector<ref_ptr<device>> &> {
    public:
-      typedef std::vector<device>::iterator iterator;
-
       platform();
 
-      ///
-      /// Container of all compute devices that are available in the platform.
-      ///
-      /// @{
-      iterator begin() {
-         return devs.begin();
-      }
-
-      iterator end() {
-         return devs.end();
-      }
-
-      device &front() {
-         return devs.front();
-      }
-
-      device &back() {
-         return devs.back();
-      }
-      /// @}
-
    protected:
-      std::vector<device> devs;
+      std::vector<ref_ptr<device>> devs;
    };
 }
 
