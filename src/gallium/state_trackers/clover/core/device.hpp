@@ -44,6 +44,9 @@ namespace clover {
 
       device &operator=(device dev);
 
+      bool
+      operator==(const device &dev) const;
+
       cl_device_type type() const;
       cl_uint vendor_id() const;
       size_t max_images_read() const;

@@ -63,7 +63,7 @@ clWaitForEvents(cl_uint num_evs, const cl_event *d_evs) try {
    auto evs = objs(d_evs, num_evs);
 
    for (auto &ev : evs) {
-      if (&ev.ctx != &evs.front().ctx)
+      if (ev.ctx != evs.front().ctx)
          throw error(CL_INVALID_CONTEXT);
 
       if (ev.status() < 0)
@@ -199,7 +199,7 @@ clEnqueueWaitForEvents(cl_command_queue d_q, cl_uint num_evs,
    auto evs = objs(d_evs, num_evs);
 
    for (auto &ev : evs) {
-         if (&ev.ctx != &q.ctx)
+         if (ev.ctx != q.ctx)
             throw error(CL_INVALID_CONTEXT);
    }
 

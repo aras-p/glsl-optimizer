@@ -68,6 +68,11 @@ device::operator=(device dev) {
    return *this;
 }
 
+bool
+device::operator==(const device &dev) const {
+   return this == &dev;
+}
+
 cl_device_type
 device::type() const {
    switch (ldev->type) {

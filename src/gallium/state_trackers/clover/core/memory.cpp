@@ -38,6 +38,11 @@ memory_obj::~memory_obj() {
    _destroy_notify();
 }
 
+bool
+memory_obj::operator==(const memory_obj &obj) const {
+   return this == &obj;
+}
+
 void
 memory_obj::destroy_notify(std::function<void ()> f) {
    _destroy_notify = f;

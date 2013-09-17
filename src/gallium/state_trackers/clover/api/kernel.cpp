@@ -202,9 +202,9 @@ namespace {
    void
    validate_common(command_queue &q, kernel &kern,
                    const ref_vector<event> &deps) {
-      if (&kern.prog.ctx != &q.ctx ||
+      if (kern.prog.ctx != q.ctx ||
           any_of([&](const event &ev) {
-                return &ev.ctx != &q.ctx;
+                return ev.ctx != q.ctx;
              }, deps))
          throw error(CL_INVALID_CONTEXT);
 

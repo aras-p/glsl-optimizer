@@ -40,7 +40,7 @@ clGetDeviceIDs(cl_platform_id d_platform, cl_device_type device_type,
    // Collect matching devices
    for (device &dev : platform) {
       if (((device_type & CL_DEVICE_TYPE_DEFAULT) &&
-           &dev == &platform.front()) ||
+           dev == platform.front()) ||
           (device_type & dev.type()))
          d_devs.push_back(desc(dev));
    }

@@ -43,6 +43,9 @@ namespace clover {
    public:
       virtual ~memory_obj();
 
+      bool
+      operator==(const memory_obj &obj) const;
+
       virtual cl_mem_object_type type() const = 0;
       virtual clover::resource &resource(command_queue &q) = 0;
 

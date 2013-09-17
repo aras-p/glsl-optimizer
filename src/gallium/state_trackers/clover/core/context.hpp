@@ -39,6 +39,11 @@ namespace clover {
 
       bool has_device(device &dev) const;
 
+      bool
+      operator==(const context &ctx) const;
+      bool
+      operator!=(const context &ctx) const;
+
       const property_list &
       props() const;
 

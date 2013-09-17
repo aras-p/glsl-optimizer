@@ -36,6 +36,16 @@ context::has_device(device &dev) const {
    return std::count(devs.begin(), devs.end(), &dev);
 }
 
+bool
+context::operator==(const context &ctx) const {
+   return this == &ctx;
+}
+
+bool
+context::operator!=(const context &ctx) const {
+   return this != &ctx;
+}
+
 const context::property_list &
 context::props() const {
    return _props;
