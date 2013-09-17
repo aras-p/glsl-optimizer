@@ -37,10 +37,7 @@ AM_CFLAGS = \
 	$(RADEON_CFLAGS)
 
 dridir = $(DRI_DRIVER_INSTALL_DIR)
-
-if HAVE_R200_DRI
 dri_LTLIBRARIES = r200_dri.la
-endif
 
 r200_dri_la_SOURCES = \
         $(R200_C_FILES)

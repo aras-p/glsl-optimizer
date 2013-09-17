@@ -34,10 +34,7 @@ AM_CFLAGS = \
 	$(NOUVEAU_CFLAGS)
 
 dridir = $(DRI_DRIVER_INSTALL_DIR)
-
-if HAVE_NOUVEAU_DRI
 dri_LTLIBRARIES = nouveau_vieux_dri.la
-endif
 
 nouveau_vieux_dri_la_SOURCES = \
 	$(NOUVEAU_C_FILES)

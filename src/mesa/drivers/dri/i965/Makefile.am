@@ -23,8 +23,6 @@
 
 include Makefile.sources
 
-if HAVE_I965_DRI
-
 AM_CFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/src/ \
@@ -85,5 +83,3 @@ test_eu_compact_LDADD = $(TEST_LIBS)
 all-local: i965_dri.la
 	$(MKDIR_P) $(top_builddir)/$(LIB_DIR);
 	ln -f .libs/i965_dri.so $(top_builddir)/$(LIB_DIR)/i965_dri.so;
-
-endif

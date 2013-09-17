@@ -36,10 +36,7 @@ AM_CFLAGS = \
 	$(INTEL_CFLAGS)
 
 dridir = $(DRI_DRIVER_INSTALL_DIR)
-
-if HAVE_I915_DRI
 dri_LTLIBRARIES = i915_dri.la
-endif
 
 i915_dri_la_SOURCES = $(i915_FILES)
 i915_dri_la_LDFLAGS = $(DRI_DRIVER_LDFLAGS)

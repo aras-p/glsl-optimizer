@@ -37,10 +37,7 @@ AM_CFLAGS = \
 	$(RADEON_CFLAGS)
 
 dridir = $(DRI_DRIVER_INSTALL_DIR)
-
-if HAVE_RADEON_DRI
 dri_LTLIBRARIES = radeon_dri.la
-endif
 
 radeon_dri_la_SOURCES = \
         $(RADEON_C_FILES)

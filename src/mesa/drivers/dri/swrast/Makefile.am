@@ -34,10 +34,7 @@ AM_CFLAGS = \
 	$(VISIBILITY_CFLAGS)
 
 dridir = $(DRI_DRIVER_INSTALL_DIR)
-
-if HAVE_SWRAST_DRI
 dri_LTLIBRARIES = swrast_dri.la
-endif
 
 swrast_dri_la_SOURCES = \
 	$(SWRAST_C_FILES)
