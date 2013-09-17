@@ -42,6 +42,10 @@ namespace clover {
          exec_context(kernel &kern);
          ~exec_context();
 
+         exec_context(const exec_context &) = delete;
+         exec_context &
+         operator=(const exec_context &) = delete;
+
          void *bind(command_queue *q);
          void unbind();
 
@@ -65,6 +69,10 @@ namespace clover {
       class argument {
       public:
          argument();
+
+         argument(const argument &arg) = delete;
+         argument &
+         operator=(const argument &arg) = delete;
 
          /// \a true if the argument has been set.
          bool set() const;
@@ -90,6 +98,10 @@ namespace clover {
       kernel(program &prog,
              const std::string &name,
              const std::vector<module::argument> &margs);
+
+      kernel(const kernel &kern) = delete;
+      kernel &
+      operator=(const kernel &kern) = delete;
 
       void launch(command_queue &q,
                   const std::vector<size_t> &grid_offset,

@@ -57,6 +57,10 @@ namespace clover {
             action action_ok, action action_fail);
       virtual ~event();
 
+      event(const event &ev) = delete;
+      event &
+      operator=(const event &ev) = delete;
+
       void trigger();
       void abort(cl_int status);
       bool signalled() const;

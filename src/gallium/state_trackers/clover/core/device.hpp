@@ -38,11 +38,11 @@ namespace clover {
    class device : public ref_counter, public _cl_device_id {
    public:
       device(clover::platform &platform, pipe_loader_device *ldev);
-      device(device &&dev);
-      device(const device &dev) = delete;
       ~device();
 
-      device &operator=(device dev);
+      device(const device &dev) = delete;
+      device &
+      operator=(const device &dev) = delete;
 
       bool
       operator==(const device &dev) const;

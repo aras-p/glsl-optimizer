@@ -36,6 +36,8 @@ namespace clover {
       context(const property_list &props, const ref_vector<device> &devs);
 
       context(const context &ctx) = delete;
+      context &
+      operator=(const context &ctx) = delete;
 
       bool has_device(device &dev) const;
 

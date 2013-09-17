@@ -38,6 +38,10 @@ namespace clover {
               const ref_vector<device> &devs,
               const std::vector<module> &binaries);
 
+      program(const program &prog) = delete;
+      program &
+      operator=(const program &prog) = delete;
+
       void build(const ref_vector<device> &devs, const char *opts);
 
       const std::string &source() const;

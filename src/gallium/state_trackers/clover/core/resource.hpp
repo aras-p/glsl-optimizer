@@ -25,7 +25,6 @@
 
 #include <list>
 
-#include "core/object.hpp"
 #include "core/memory.hpp"
 #include "util/algebra.hpp"
 #include "pipe/p_state.h"
@@ -41,8 +40,11 @@ namespace clover {
    public:
       typedef std::array<size_t, 3> vector;
 
-      resource(const resource &r) = delete;
       virtual ~resource();
+
+      resource(const resource &r) = delete;
+      resource &
+      operator=(const resource &r) = delete;
 
       void copy(command_queue &q, const vector &origin, const vector &region,
                 resource &src_resource, const vector &src_origin);

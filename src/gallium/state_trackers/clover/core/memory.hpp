@@ -38,7 +38,10 @@ namespace clover {
    protected:
       memory_obj(context &ctx, cl_mem_flags flags,
                  size_t size, void *host_ptr);
+
       memory_obj(const memory_obj &obj) = delete;
+      memory_obj &
+      operator=(const memory_obj &obj) = delete;
 
    public:
       virtual ~memory_obj();

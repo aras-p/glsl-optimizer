@@ -45,27 +45,11 @@ device::device(clover::platform &platform, pipe_loader_device *ldev) :
       throw error(CL_INVALID_DEVICE);
 }
 
-device::device(device &&dev) :
-   platform(dev.platform), pipe(dev.pipe), ldev(dev.ldev) {
-   dev.pipe = NULL;
-   dev.ldev = NULL;
-}
-
 device::~device() {
    if (pipe)
       pipe->destroy(pipe);
    if (ldev)
       pipe_loader_release(&ldev, 1);
-}
-
-device &
-device::operator=(device dev) {
-   assert(&platform == &dev.platform);
-
-   std::swap(pipe, dev.pipe);
-   std::swap(ldev, dev.ldev);
-
-   return *this;
 }
 
 bool

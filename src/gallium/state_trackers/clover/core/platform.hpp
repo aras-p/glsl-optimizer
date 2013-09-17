@@ -36,6 +36,10 @@ namespace clover {
    public:
       platform();
 
+      platform(const platform &platform) = delete;
+      platform &
+      operator=(const platform &platform) = delete;
+
    protected:
       std::vector<ref_ptr<device>> devs;
    };

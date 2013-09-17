@@ -37,8 +37,11 @@ namespace clover {
    public:
       command_queue(context &ctx, device &dev,
                     cl_command_queue_properties props);
-      command_queue(const command_queue &q) = delete;
       ~command_queue();
+
+      command_queue(const command_queue &q) = delete;
+      command_queue &
+      operator=(const command_queue &q) = delete;
 
       void flush();
 

@@ -33,6 +33,10 @@ namespace clover {
               cl_addressing_mode addr_mode,
               cl_filter_mode filter_mode);
 
+      sampler(const sampler &s) = delete;
+      sampler &
+      operator=(const sampler &s) = delete;
+
       bool norm_mode();
       cl_addressing_mode addr_mode();
       cl_filter_mode filter_mode();
