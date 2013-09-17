@@ -188,6 +188,74 @@ namespace clover {
          return *this;
       }
    };
+
+   template<typename T>
+   class property_element {
+   public:
+      property_element() : x() {
+      }
+
+      property_element(T x) : x(x) {
+      }
+
+      template<typename S>
+      S
+      as() const {
+         assert(sizeof(S) <= sizeof(T));
+         return reinterpret_cast<S>(x);
+      }
+
+   private:
+      T x;
+   };
+
+   template<typename D>
+   using property_list = std::map<D, property_element<D>>;
+
+   struct property_list_tag;
+
+   ///
+   /// Create a clover::property_list object from a zero-terminated
+   /// CL property list.
+   ///
+   template<typename T, typename D,
+            typename = typename std::enable_if<
+               std::is_same<T, property_list_tag>::value>::type>
+   property_list<D>
+   obj(const D *d_props) {
+      property_list<D> props;
+
+      while (d_props && *d_props) {
+         auto key = *d_props++;
+         auto value = *d_props++;
+
+         if (props.count(key))
+            throw error(CL_INVALID_PROPERTY);
+
+         props.insert({ key, value });
+      }
+
+      return props;
+   }
+
+   ///
+   /// Create a zero-terminated CL property list from a
+   /// clover::property_list object.
+   ///
+   template<typename D>
+   std::vector<D>
+   desc(const property_list<D> &props) {
+      std::vector<D> d_props;
+
+      for (auto &prop : props) {
+         d_props.push_back(prop.first);
+         d_props.push_back(prop.second.template as<D>());
+      }
+
+      d_props.push_back(0);
+
+      return d_props;
+   }
 }
 
 #endif

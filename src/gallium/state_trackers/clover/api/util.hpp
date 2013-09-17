@@ -31,44 +31,6 @@
 
 namespace clover {
    ///
-   /// Convert a NULL-terminated property list into an std::map.
-   ///
-   template<typename T>
-   std::map<T, T>
-   property_map(const T *props) {
-      std::map<T, T> m;
-
-      while (props && *props) {
-         T key = *props++;
-         T value = *props++;
-
-         if (m.count(key))
-            throw clover::error(CL_INVALID_PROPERTY);
-
-         m.insert({ key, value });
-      }
-
-      return m;
-   }
-
-   ///
-   /// Convert an std::map into a NULL-terminated property list.
-   ///
-   template<typename T>
-   std::vector<T>
-   property_vector(const std::map<T, T> &m) {
-      std::vector<T> v;
-
-      for (auto &p : m) {
-         v.push_back(p.first);
-         v.push_back(p.second);
-      }
-
-      v.push_back(0);
-      return v;
-   }
-
-   ///
    /// Return an error code in \a p if non-zero.
    ///
    inline void

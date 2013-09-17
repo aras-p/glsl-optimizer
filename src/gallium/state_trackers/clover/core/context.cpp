@@ -26,7 +26,7 @@
 
 using namespace clover;
 
-context::context(const std::vector<cl_context_properties> &props,
+context::context(const property_list &props,
                  const ref_vector<device> &devs) :
    devs(map(addresses(), devs)), _props(props) {
 }
@@ -34,4 +34,9 @@ context::context(const std::vector<cl_context_properties> &props,
 bool
 context::has_device(device &dev) const {
    return std::count(devs.begin(), devs.end(), &dev);
+}
+
+const context::property_list &
+context::props() const {
+   return _props;
 }

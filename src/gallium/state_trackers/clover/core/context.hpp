@@ -25,24 +25,27 @@
 
 #include "core/object.hpp"
 #include "core/device.hpp"
+#include "core/property.hpp"
 
 namespace clover {
    class context : public ref_counter, public _cl_context {
+   private:
+      typedef clover::property_list<cl_context_properties> property_list;
+
    public:
-      context(const std::vector<cl_context_properties> &props,
-              const ref_vector<device> &devs);
+      context(const property_list &props, const ref_vector<device> &devs);
+
       context(const context &ctx) = delete;
 
       bool has_device(device &dev) const;
 
-      const std::vector<cl_context_properties> &props() const {
-         return _props;
-      }
+      const property_list &
+      props() const;
 
       const std::vector<device *> devs;
 
    private:
-      std::vector<cl_context_properties> _props;
+      property_list _props;
    };
 }
 

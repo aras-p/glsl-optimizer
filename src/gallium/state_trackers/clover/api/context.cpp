@@ -22,6 +22,7 @@
 
 #include "api/util.hpp"
 #include "core/context.hpp"
+#include "core/platform.hpp"
 
 using namespace clover;
 
@@ -31,19 +32,21 @@ clCreateContext(const cl_context_properties *d_props, cl_uint num_devs,
                 void (CL_CALLBACK *pfn_notify)(const char *, const void *,
                                                size_t, void *),
                 void *user_data, cl_int *r_errcode) try {
-   auto props = property_map(d_props);
+   auto props = obj<property_list_tag>(d_props);
    auto devs = objs(d_devs, num_devs);
 
    if (!pfn_notify && user_data)
       throw error(CL_INVALID_VALUE);
 
-   for (auto prop : props) {
-      if (prop.first != CL_CONTEXT_PLATFORM)
+   for (auto &prop : props) {
+      if (prop.first == CL_CONTEXT_PLATFORM)
+         obj(prop.second.as<cl_platform_id>());
+      else
          throw error(CL_INVALID_PROPERTY);
    }
 
    ret_error(r_errcode, CL_SUCCESS);
-   return desc(new context(property_vector(props), devs));
+   return desc(new context(props, devs));
 
 } catch (error &e) {
    ret_error(r_errcode, e);
@@ -116,7 +119,7 @@ clGetContextInfo(cl_context d_ctx, cl_context_info param,
       break;
 
    case CL_CONTEXT_PROPERTIES:
-      buf.as_vector<cl_context_properties>() = ctx.props();
+      buf.as_vector<cl_context_properties>() = desc(ctx.props());
       break;
 
    default:
