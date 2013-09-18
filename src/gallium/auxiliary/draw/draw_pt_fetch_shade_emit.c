@@ -178,6 +178,12 @@ fse_prepare(struct draw_pt_middle_end *middle,
 }
 
 
+static void
+fse_bind_parameters(struct draw_pt_middle_end *middle)
+{
+   /* No-op? */
+}
+
 
 static void
 fse_run_linear(struct draw_pt_middle_end *middle,
@@ -366,6 +372,7 @@ draw_pt_middle_fse(struct draw_context *draw)
       return NULL;
 
    fse->base.prepare = fse_prepare;
+   fse->base.bind_parameters = fse_bind_parameters;
    fse->base.run = fse_run;
    fse->base.run_linear = fse_run_linear;
    fse->base.run_linear_elts = fse_run_linear_elts;

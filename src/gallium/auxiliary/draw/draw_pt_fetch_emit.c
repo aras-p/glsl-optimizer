@@ -180,6 +180,13 @@ static void fetch_emit_prepare( struct draw_pt_middle_end *middle,
 }
 
 
+static void
+fetch_emit_bind_parameters(struct draw_pt_middle_end *middle)
+{
+   /* No-op? */
+}
+
+
 static void fetch_emit_run( struct draw_pt_middle_end *middle,
                             const unsigned *fetch_elts,
                             unsigned fetch_count,
@@ -379,6 +386,7 @@ struct draw_pt_middle_end *draw_pt_fetch_emit( struct draw_context *draw )
    }
 
    fetch_emit->base.prepare    = fetch_emit_prepare;
+   fetch_emit->base.bind_parameters = fetch_emit_bind_parameters;
    fetch_emit->base.run        = fetch_emit_run;
    fetch_emit->base.run_linear = fetch_emit_run_linear;
    fetch_emit->base.run_linear_elts = fetch_emit_run_linear_elts;
