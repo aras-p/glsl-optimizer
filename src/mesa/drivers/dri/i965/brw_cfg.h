@@ -39,15 +39,7 @@ public:
 
 class bblock_t {
 public:
-   static void* operator new(size_t size, void *ctx)
-   {
-      void *node;
-
-      node = rzalloc_size(ctx, size);
-      assert(node != NULL);
-
-      return node;
-   }
+   DECLARE_RZALLOC_CXX_OPERATORS(bblock_t)
 
    bblock_link *make_list(void *mem_ctx);
 
@@ -68,15 +60,7 @@ public:
 
 class cfg_t {
 public:
-   static void* operator new(size_t size, void *ctx)
-   {
-      void *node;
-
-      node = rzalloc_size(ctx, size);
-      assert(node != NULL);
-
-      return node;
-   }
+   DECLARE_RZALLOC_CXX_OPERATORS(cfg_t)
 
    cfg_t(backend_visitor *v);
    cfg_t(void *mem_ctx, exec_list *instructions);

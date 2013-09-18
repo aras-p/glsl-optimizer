@@ -217,17 +217,7 @@ st_dst_reg::st_dst_reg(st_src_reg reg)
 
 class glsl_to_tgsi_instruction : public exec_node {
 public:
-   /* Callers of this ralloc-based new need not call delete. It's
-    * easier to just ralloc_free 'ctx' (or any of its ancestors). */
-   static void* operator new(size_t size, void *ctx)
-   {
-      void *node;
-
-      node = rzalloc_size(ctx, size);
-      assert(node != NULL);
-
-      return node;
-   }
+   DECLARE_RZALLOC_CXX_OPERATORS(glsl_to_tgsi_instruction)
 
    unsigned op;
    st_dst_reg dst;

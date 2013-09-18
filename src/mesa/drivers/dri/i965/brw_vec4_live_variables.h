@@ -52,15 +52,7 @@ struct block_data {
 
 class vec4_live_variables {
 public:
-   static void* operator new(size_t size, void *ctx)
-   {
-      void *node;
-
-      node = rzalloc_size(ctx, size);
-      assert(node != NULL);
-
-      return node;
-   }
+   DECLARE_RZALLOC_CXX_OPERATORS(vec4_live_variables)
 
    vec4_live_variables(vec4_visitor *v, cfg_t *cfg);
    ~vec4_live_variables();

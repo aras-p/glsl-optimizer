@@ -53,15 +53,7 @@ struct block_data {
 
 class fs_live_variables {
 public:
-   static void* operator new(size_t size, void *ctx)
-   {
-      void *node;
-
-      node = rzalloc_size(ctx, size);
-      assert(node != NULL);
-
-      return node;
-   }
+   DECLARE_RZALLOC_CXX_OPERATORS(fs_live_variables)
 
    fs_live_variables(fs_visitor *v, cfg_t *cfg);
    ~fs_live_variables();
