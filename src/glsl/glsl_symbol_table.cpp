@@ -26,20 +26,7 @@
 
 class symbol_table_entry {
 public:
-   /* Callers of this ralloc-based new need not call delete. It's
-    * easier to just ralloc_free 'ctx' (or any of its ancestors). */
-   static void* operator new(size_t size, void *ctx)
-   {
-      void *entry = ralloc_size(ctx, size);
-      assert(entry != NULL);
-      return entry;
-   }
-
-   /* If the user *does* call delete, that's OK, we will just ralloc_free. */
-   static void operator delete(void *entry)
-   {
-      ralloc_free(entry);
-   }
+   DECLARE_RALLOC_CXX_OPERATORS(symbol_table_entry);
 
    bool add_interface(const glsl_type *i, enum ir_variable_mode mode)
    {
