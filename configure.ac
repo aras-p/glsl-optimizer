@@ -593,6 +593,12 @@ AC_ARG_ENABLE([opencl],
           @<:@default=no@:>@])],
    [],
    [enable_opencl=no])
+AC_ARG_ENABLE([opencl_icd],
+   [AS_HELP_STRING([--enable-opencl-icd],
+          [Build an OpenCL ICD library to be loaded by an ICD implementation
+           @<:@default=no@:>@])],
+    [enable_opencl_icd="$enableval"],
+    [enable_opencl_icd=no])
 AC_ARG_ENABLE([xlib-glx],
     [AS_HELP_STRING([--enable-xlib-glx],
         [make GLX library Xlib-based instead of DRI-based @<:@default=disabled@:>@])],
@@ -1356,8 +1362,16 @@ if test "x$enable_opencl" = xyes; then
     GALLIUM_STATE_TRACKERS_DIRS="$GALLIUM_STATE_TRACKERS_DIRS clover"
     GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS opencl"
     enable_gallium_loader=yes
+
+    if test "x$enable_opencl_icd" = xyes; then
+        OPENCL_LIBNAME="MesaOpenCL"
+    else
+        OPENCL_LIBNAME="OpenCL"
+    fi
 fi
 AM_CONDITIONAL(HAVE_CLOVER, test "x$enable_opencl" = xyes)
+AM_CONDITIONAL(HAVE_CLOVER_ICD, test "x$enable_opencl_icd" = xyes)
+AC_SUBST([OPENCL_LIBNAME])
 
 dnl
 dnl Gallium configuration

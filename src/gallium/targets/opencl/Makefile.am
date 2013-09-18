@@ -1,12 +1,12 @@
 AUTOMAKE_OPTIONS = subdir-objects
 
-lib_LTLIBRARIES = libOpenCL.la
+lib_LTLIBRARIES = lib@OPENCL_LIBNAME@.la
 
-libOpenCL_la_LDFLAGS = \
+lib@OPENCL_LIBNAME@_la_LDFLAGS = \
 	$(LLVM_LDFLAGS) \
 	-version-number 1:0
 
-libOpenCL_la_LIBADD = \
+lib@OPENCL_LIBNAME@_la_LIBADD = \
 	$(top_builddir)/src/gallium/auxiliary/pipe-loader/libpipe_loader.la \
 	$(top_builddir)/src/gallium/winsys/sw/null/libws_null.la \
 	$(top_builddir)/src/gallium/state_trackers/clover/libclover.la \
@@ -28,14 +28,13 @@ libOpenCL_la_LIBADD = \
 	-lclangBasic \
 	$(LLVM_LIBS)
 
-
-libOpenCL_la_SOURCES =
+lib@OPENCL_LIBNAME@_la_SOURCES =
 
 # Force usage of a C++ linker
-nodist_EXTRA_libOpenCL_la_SOURCES = dummy.cpp
+nodist_EXTRA_lib@OPENCL_LIBNAME@_la_SOURCES = dummy.cpp
 
 # Provide compatibility with scripts for the old Mesa build system for
 # a while by putting a link to the driver into /lib of the build tree.
-all-local: libOpenCL.la
+all-local: lib@OPENCL_LIBNAME@.la
 	$(MKDIR_P) $(top_builddir)/$(LIB_DIR)
-	ln -f .libs/libOpenCL.so* $(top_builddir)/$(LIB_DIR)/
+	ln -f .libs/lib@OPENCL_LIBNAME@.so* $(top_builddir)/$(LIB_DIR)/

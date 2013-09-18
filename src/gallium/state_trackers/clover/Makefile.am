@@ -12,6 +12,10 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/gallium/winsys \
 	-I$(srcdir)
 
+if HAVE_CLOVER_ICD
+AM_CPPFLAGS += -DHAVE_CLOVER_ICD
+endif
+
 noinst_LTLIBRARIES = libclover.la libcltgsi.la libclllvm.la
 
 libcltgsi_la_CXXFLAGS = \
