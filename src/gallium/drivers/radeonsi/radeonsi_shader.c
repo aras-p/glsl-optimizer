@@ -1353,17 +1353,31 @@ static void tex_fetch_args(
 
 			assert(inst->Texture.NumOffsets == 1);
 
-			address[0] =
-				lp_build_add(uint_bld, address[0],
-					     bld->immediates[off->Index][off->SwizzleX]);
-			if (num_coords > 1)
+			switch (target) {
+			case TGSI_TEXTURE_3D:
+				address[2] = lp_build_add(uint_bld, address[2],
+						bld->immediates[off->Index][off->SwizzleZ]);
+				/* fall through */
+			case TGSI_TEXTURE_2D:
+			case TGSI_TEXTURE_SHADOW2D:
+			case TGSI_TEXTURE_RECT:
+			case TGSI_TEXTURE_SHADOWRECT:
+			case TGSI_TEXTURE_2D_ARRAY:
+			case TGSI_TEXTURE_SHADOW2D_ARRAY:
 				address[1] =
 					lp_build_add(uint_bld, address[1],
-						     bld->immediates[off->Index][off->SwizzleY]);
-			if (num_coords > 2)
-				address[2] =
-					lp_build_add(uint_bld, address[2],
-						     bld->immediates[off->Index][off->SwizzleZ]);
+						bld->immediates[off->Index][off->SwizzleY]);
+				/* fall through */
+			case TGSI_TEXTURE_1D:
+			case TGSI_TEXTURE_SHADOW1D:
+			case TGSI_TEXTURE_1D_ARRAY:
+			case TGSI_TEXTURE_SHADOW1D_ARRAY:
+				address[0] =
+					lp_build_add(uint_bld, address[0],
+						bld->immediates[off->Index][off->SwizzleX]);
+				break;
+				/* texture offsets do not apply to other texture targets */
+			}
 		}
 
 		emit_data->dst_type = LLVMVectorType(
