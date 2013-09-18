@@ -25,6 +25,34 @@
 #include "glsl_types.h"
 #include "ir.h"
 
+
+/**
+ * If \c ir is a reference to an array for which we are tracking the max array
+ * element accessed, track that the given element has been accessed.
+ * Otherwise do nothing.
+ *
+ * This function also checks whether the array is a built-in array whose
+ * maximum size is too small to accommodate the given index, and if so uses
+ * loc and state to report the error.
+ */
+static void
+update_max_array_access(ir_rvalue *ir, unsigned idx, YYLTYPE *loc,
+                        struct _mesa_glsl_parse_state *state)
+{
+   if (ir_dereference_variable *deref_var = ir->as_dereference_variable()) {
+      ir_variable *var = deref_var->var;
+      if (idx > var->max_array_access) {
+         var->max_array_access = idx;
+
+         /* Check whether this access will, as a side effect, implicitly cause
+          * the size of a built-in array to be too large.
+          */
+         check_builtin_array_max_size(var->name, idx+1, *loc, state);
+      }
+   }
+}
+
+
 ir_rvalue *
 _mesa_ast_array_index_to_hir(void *mem_ctx,
 			     struct _mesa_glsl_parse_state *state,
@@ -97,23 +125,8 @@ _mesa_ast_array_index_to_hir(void *mem_ctx,
 			  type_name);
       }
 
-      if (array->type->is_array()) {
-	 /* If the array is a variable dereference, it dereferences the
-	  * whole array, by definition.  Use this to get the variable.
-	  *
-	  * FINISHME: Should some methods for getting / setting / testing
-	  * FINISHME: array access limits be added to ir_dereference?
-	  */
-	 ir_variable *const v = array->whole_variable_referenced();
-	 if ((v != NULL) && (unsigned(idx) > v->max_array_access)) {
-	    v->max_array_access = idx;
-
-	    /* Check whether this access will, as a side effect, implicitly
-	     * cause the size of a built-in array to be too large.
-	     */
-	    check_builtin_array_max_size(v->name, idx+1, loc, state);
-	 }
-      }
+      if (array->type->is_array())
+         update_max_array_access(array, idx, &loc, state);
    } else if (const_index == NULL && array->type->is_array()) {
       if (array->type->array_size() == 0) {
 	 _mesa_glsl_error(&loc, state, "unsized array index must be constant");
