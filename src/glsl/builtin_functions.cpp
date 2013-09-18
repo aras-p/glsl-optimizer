@@ -532,6 +532,7 @@ private:
    B2(ldexp)
    B2(frexp)
    B1(uaddCarry)
+   B1(usubBorrow)
 #undef B0
 #undef B1
 #undef B2
@@ -1953,6 +1954,12 @@ builtin_builder::create_builtins()
                 _uaddCarry(glsl_type::uvec2_type),
                 _uaddCarry(glsl_type::uvec3_type),
                 _uaddCarry(glsl_type::uvec4_type),
+                NULL);
+   add_function("usubBorrow",
+                _usubBorrow(glsl_type::uint_type),
+                _usubBorrow(glsl_type::uvec2_type),
+                _usubBorrow(glsl_type::uvec3_type),
+                _usubBorrow(glsl_type::uvec4_type),
                 NULL);
 #undef F
 #undef FI
@@ -3738,6 +3745,20 @@ builtin_builder::_uaddCarry(const glsl_type *type)
 
    body.emit(assign(carry, ir_builder::carry(x, y)));
    body.emit(ret(add(x, y)));
+
+   return sig;
+}
+
+ir_function_signature *
+builtin_builder::_usubBorrow(const glsl_type *type)
+{
+   ir_variable *x = in_var(type, "x");
+   ir_variable *y = in_var(type, "y");
+   ir_variable *borrow = out_var(type, "borrow");
+   MAKE_SIG(type, gpu_shader5, 3, x, y, borrow);
+
+   body.emit(assign(borrow, ir_builder::borrow(x, y)));
+   body.emit(ret(sub(x, y)));
 
    return sig;
 }
