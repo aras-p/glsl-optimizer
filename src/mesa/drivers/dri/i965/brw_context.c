@@ -247,8 +247,13 @@ brw_initialize_context_constants(struct brw_context *brw)
    ctx->Const.DisableGLSLLineContinuations =
       driQueryOptionb(&brw->optionCache, "disable_glsl_line_continuations");
 
-   if (brw->gen >= 6)
+   if (brw->gen >= 6) {
       ctx->Const.MaxVarying = 32;
+      ctx->Const.VertexProgram.MaxOutputComponents = 128;
+      ctx->Const.GeometryProgram.MaxInputComponents = 128;
+      ctx->Const.GeometryProgram.MaxOutputComponents = 128;
+      ctx->Const.FragmentProgram.MaxInputComponents = 128;
+   }
 
    /* We want the GLSL compiler to emit code that uses condition codes */
    for (int i = 0; i < MESA_SHADER_TYPES; i++) {
