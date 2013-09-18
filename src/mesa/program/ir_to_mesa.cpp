@@ -1499,6 +1499,7 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
    case ir_triop_csel:
    case ir_binop_carry:
    case ir_binop_borrow:
+   case ir_binop_imul_high:
       assert(!"not supported");
       break;
 

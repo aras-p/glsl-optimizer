@@ -429,6 +429,12 @@ ir_validate::visit_leave(ir_expression *ir)
       }
       break;
 
+   case ir_binop_imul_high:
+      assert(ir->type == ir->operands[0]->type);
+      assert(ir->type == ir->operands[1]->type);
+      assert(ir->type->is_integer());
+      break;
+
    case ir_binop_carry:
    case ir_binop_borrow:
       assert(ir->type == ir->operands[0]->type);

@@ -216,6 +216,11 @@ ir_expression *mul(operand a, operand b)
    return expr(ir_binop_mul, a, b);
 }
 
+ir_expression *imul_high(operand a, operand b)
+{
+   return expr(ir_binop_imul_high, a, b);
+}
+
 ir_expression *div(operand a, operand b)
 {
    return expr(ir_binop_div, a, b);

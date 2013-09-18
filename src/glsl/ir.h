@@ -1091,7 +1091,8 @@ enum ir_expression_operation {
 
    ir_binop_add,
    ir_binop_sub,
-   ir_binop_mul,
+   ir_binop_mul,       /**< Floating-point or low 32-bit integer multiply. */
+   ir_binop_imul_high, /**< Calculates the high 32-bits of a 64-bit multiply. */
    ir_binop_div,
 
    /**
