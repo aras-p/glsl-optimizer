@@ -442,6 +442,16 @@ fs_visitor::visit(ir_expression *ir)
 	 emit(MUL(this->result, op[0], op[1]));
       }
       break;
+   case ir_binop_imul_high: {
+      if (brw->gen >= 7 && dispatch_width == 16)
+         fail("16-wide explicit accumulator operands unsupported\n");
+
+      struct brw_reg acc = retype(brw_acc_reg(), this->result.type);
+
+      emit(MUL(acc, op[0], op[1]));
+      emit(MACH(this->result, op[0], op[1]));
+      break;
+   }
    case ir_binop_div:
       /* Floating point should be lowered by DIV_TO_MUL_RCP in the compiler. */
       assert(ir->type->is_integer());

@@ -1368,6 +1368,13 @@ vec4_visitor::visit(ir_expression *ir)
 	 emit(MUL(result_dst, op[0], op[1]));
       }
       break;
+   case ir_binop_imul_high: {
+      struct brw_reg acc = retype(brw_acc_reg(), result_dst.type);
+
+      emit(MUL(acc, op[0], op[1]));
+      emit(MACH(result_dst, op[0], op[1]));
+      break;
+   }
    case ir_binop_div:
       /* Floating point should be lowered by DIV_TO_MUL_RCP in the compiler. */
       assert(ir->type->is_integer());
