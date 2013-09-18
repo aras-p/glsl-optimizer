@@ -54,8 +54,8 @@ i965_FILES = \
 	brw_fs_channel_expressions.cpp \
 	brw_fs_copy_propagation.cpp \
 	brw_fs_cse.cpp \
-	brw_fs_emit.cpp \
 	brw_fs_fp.cpp \
+	brw_fs_generator.cpp \
 	brw_fs_live_variables.cpp \
 	brw_fs_reg_allocate.cpp \
 	brw_fs_vector_splitting.cpp \
@@ -87,7 +87,7 @@ i965_FILES = \
 	brw_util.c \
 	brw_vec4.cpp \
 	brw_vec4_copy_propagation.cpp \
-	brw_vec4_emit.cpp \
+	brw_vec4_generator.cpp \
 	brw_vec4_gs.c \
 	brw_vec4_gs_visitor.cpp \
 	brw_vec4_live_variables.cpp \

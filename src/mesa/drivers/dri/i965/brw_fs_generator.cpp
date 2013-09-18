@@ -21,9 +21,9 @@
  * IN THE SOFTWARE.
  */
 
-/** @file brw_fs_emit.cpp
+/** @file brw_fs_generator.cpp
  *
- * This file supports emitting code from the FS LIR to the actual
+ * This file supports generating code from the FS LIR to the actual
  * native instructions.
  */
 
