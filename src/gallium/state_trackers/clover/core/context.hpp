@@ -20,8 +20,8 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 //
 
-#ifndef __CORE_CONTEXT_HPP__
-#define __CORE_CONTEXT_HPP__
+#ifndef _CORE_CONTEXT_HPP_
+#define _CORE_CONTEXT_HPP_
 
 #include "core/base.hpp"
 #include "core/device.hpp"
@@ -39,13 +39,13 @@ public:
    bool has_device(clover::device *dev) const;
 
    const std::vector<cl_context_properties> &props() const {
-      return __props;
+      return _props;
    }
 
    const std::vector<clover::device *> devs;
 
 private:
-   std::vector<cl_context_properties> __props;
+   std::vector<cl_context_properties> _props;
 };
 
 #endif

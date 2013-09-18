@@ -20,8 +20,8 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 //
 
-#ifndef __CORE_EVENT_HPP__
-#define __CORE_EVENT_HPP__
+#ifndef _CORE_EVENT_HPP_
+#define _CORE_EVENT_HPP_
 
 #include <functional>
 
@@ -73,14 +73,14 @@ public:
 protected:
    void chain(clover::event *ev);
 
-   cl_int __status;
+   cl_int _status;
    std::vector<clover::ref_ptr<clover::event>> deps;
 
 private:
    unsigned wait_count;
    action action_ok;
    action action_fail;
-   std::vector<clover::ref_ptr<clover::event>> __chain;
+   std::vector<clover::ref_ptr<clover::event>> _chain;
 };
 
 namespace clover {
@@ -119,9 +119,9 @@ namespace clover {
       virtual void fence(pipe_fence_handle *fence);
       action profile(command_queue &q, const action &action) const;
 
-      clover::command_queue &__queue;
-      cl_command_type __command;
-      pipe_fence_handle *__fence;
+      clover::command_queue &_queue;
+      cl_command_type _command;
+      pipe_fence_handle *_fence;
       lazy<cl_ulong> _time_queued, _time_submit, _time_start, _time_end;
    };
 

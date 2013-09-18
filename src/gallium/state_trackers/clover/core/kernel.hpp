@@ -20,8 +20,8 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 //
 
-#ifndef __CORE_KERNEL_HPP__
-#define __CORE_KERNEL_HPP__
+#ifndef _CORE_KERNEL_HPP_
+#define _CORE_KERNEL_HPP_
 
 #include <memory>
 
@@ -88,7 +88,7 @@ public:
       virtual void unbind(exec_context &ctx) = 0;
 
    protected:
-      bool __set;
+      bool _set;
    };
 
    _cl_kernel(clover::program &prog,
@@ -149,7 +149,7 @@ private:
       virtual void unbind(exec_context &ctx);
 
    private:
-      size_t __storage;
+      size_t _storage;
    };
 
    class constant_argument : public argument {
@@ -200,7 +200,7 @@ private:
       void *st;
    };
 
-   std::string __name;
+   std::string _name;
    exec_context exec;
 };
 

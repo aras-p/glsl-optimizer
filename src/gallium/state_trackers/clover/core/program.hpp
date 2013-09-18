@@ -20,8 +20,8 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 //
 
-#ifndef __CORE_PROGRAM_HPP__
-#define __CORE_PROGRAM_HPP__
+#ifndef _CORE_PROGRAM_HPP_
+#define _CORE_PROGRAM_HPP_
 
 #include <map>
 
@@ -53,10 +53,10 @@ public:
    clover::context &ctx;
 
 private:
-   std::map<clover::device *, clover::module> __binaries;
-   std::map<clover::device *, std::string> __logs;
-   std::map<clover::device *, std::string> __opts;
-   std::string __source;
+   std::map<clover::device *, clover::module> _binaries;
+   std::map<clover::device *, std::string> _logs;
+   std::map<clover::device *, std::string> _opts;
+   std::string _source;
 };
 
 #endif

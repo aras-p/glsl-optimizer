@@ -20,8 +20,8 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 //
 
-#ifndef __CORE_SAMPLER_HPP__
-#define __CORE_SAMPLER_HPP__
+#ifndef _CORE_SAMPLER_HPP_
+#define _CORE_SAMPLER_HPP_
 
 #include "core/base.hpp"
 #include "core/queue.hpp"
@@ -47,9 +47,9 @@ private:
    void *bind(clover::command_queue &q);
    void unbind(clover::command_queue &q, void *st);
 
-   bool __norm_mode;
-   cl_addressing_mode __addr_mode;
-   cl_filter_mode __filter_mode;
+   bool _norm_mode;
+   cl_addressing_mode _addr_mode;
+   cl_filter_mode _filter_mode;
 };
 
 #endif

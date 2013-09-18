@@ -25,7 +25,9 @@
 
 using namespace clover;
 
-static platform __platform;
+namespace {
+   platform _clover_platform;
+}
 
 PUBLIC cl_int
 clGetPlatformIDs(cl_uint num_entries, cl_platform_id *platforms,
@@ -37,7 +39,7 @@ clGetPlatformIDs(cl_uint num_entries, cl_platform_id *platforms,
    if (num_platforms)
       *num_platforms = 1;
    if (platforms)
-      *platforms = &__platform;
+      *platforms = &_clover_platform;
 
    return CL_SUCCESS;
 }
@@ -45,7 +47,7 @@ clGetPlatformIDs(cl_uint num_entries, cl_platform_id *platforms,
 PUBLIC cl_int
 clGetPlatformInfo(cl_platform_id platform, cl_platform_info param_name,
                   size_t size, void *buf, size_t *size_ret) {
-   if (platform != &__platform)
+   if (platform != &_clover_platform)
       return CL_INVALID_PLATFORM;
 
    switch (param_name) {

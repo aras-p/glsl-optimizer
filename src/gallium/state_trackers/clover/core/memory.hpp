@@ -20,8 +20,8 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 //
 
-#ifndef __CORE_MEMORY_HPP__
-#define __CORE_MEMORY_HPP__
+#ifndef _CORE_MEMORY_HPP_
+#define _CORE_MEMORY_HPP_
 
 #include <functional>
 #include <map>
@@ -57,10 +57,10 @@ public:
    clover::context &ctx;
 
 private:
-   cl_mem_flags __flags;
-   size_t __size;
-   void *__host_ptr;
-   std::function<void ()> __destroy_notify;
+   cl_mem_flags _flags;
+   size_t _size;
+   void *_host_ptr;
+   std::function<void ()> _destroy_notify;
 
 protected:
    std::string data;
@@ -99,7 +99,7 @@ namespace clover {
       clover::root_buffer &parent;
 
    private:
-      size_t __offset;
+      size_t _offset;
       std::map<clover::device *,
                std::unique_ptr<clover::sub_resource>> resources;
    };
@@ -122,12 +122,12 @@ namespace clover {
       size_t slice_pitch() const;
 
    private:
-      cl_image_format __format;
-      size_t __width;
-      size_t __height;
-      size_t __depth;
-      size_t __row_pitch;
-      size_t __slice_pitch;
+      cl_image_format _format;
+      size_t _width;
+      size_t _height;
+      size_t _depth;
+      size_t _row_pitch;
+      size_t _slice_pitch;
       std::map<clover::device *,
                std::unique_ptr<clover::root_resource>> resources;
    };

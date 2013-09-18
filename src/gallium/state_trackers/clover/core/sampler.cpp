@@ -28,23 +28,23 @@ using namespace clover;
 _cl_sampler::_cl_sampler(clover::context &ctx, bool norm_mode,
                          cl_addressing_mode addr_mode,
                          cl_filter_mode filter_mode) :
-   ctx(ctx), __norm_mode(norm_mode),
-   __addr_mode(addr_mode), __filter_mode(filter_mode) {
+   ctx(ctx), _norm_mode(norm_mode),
+   _addr_mode(addr_mode), _filter_mode(filter_mode) {
 }
 
 bool
 _cl_sampler::norm_mode() {
-   return __norm_mode;
+   return _norm_mode;
 }
 
 cl_addressing_mode
 _cl_sampler::addr_mode() {
-   return __addr_mode;
+   return _addr_mode;
 }
 
 cl_filter_mode
 _cl_sampler::filter_mode() {
-   return __filter_mode;
+   return _filter_mode;
 }
 
 void *

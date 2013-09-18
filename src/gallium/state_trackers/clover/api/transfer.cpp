@@ -67,9 +67,9 @@ namespace {
    /// \a T.  The return value of get() should be implicitly
    /// convertible to \a void *.
    ///
-   template<typename T> struct __map;
+   template<typename T> struct _map;
 
-   template<> struct __map<void *> {
+   template<> struct _map<void *> {
       static void *
       get(cl_command_queue q, void *obj, cl_map_flags flags,
           size_t offset, size_t size) {
@@ -77,7 +77,7 @@ namespace {
       }
    };
 
-   template<> struct __map<const void *> {
+   template<> struct _map<const void *> {
       static const void *
       get(cl_command_queue q, const void *obj, cl_map_flags flags,
           size_t offset, size_t size) {
@@ -85,7 +85,7 @@ namespace {
       }
    };
 
-   template<> struct __map<memory_obj *> {
+   template<> struct _map<memory_obj *> {
       static mapping
       get(cl_command_queue q, memory_obj *obj, cl_map_flags flags,
           size_t offset, size_t size) {
@@ -104,9 +104,9 @@ namespace {
                 S src_obj, const point &src_orig, const point &src_pitch,
                 const point &region) {
       return [=](event &) {
-         auto dst = __map<T>::get(q, dst_obj, CL_MAP_WRITE,
+         auto dst = _map<T>::get(q, dst_obj, CL_MAP_WRITE,
                                   dst_pitch(dst_orig), dst_pitch(region));
-         auto src = __map<S>::get(q, src_obj, CL_MAP_READ,
+         auto src = _map<S>::get(q, src_obj, CL_MAP_READ,
                                   src_pitch(src_orig), src_pitch(region));
          point p;
 

@@ -20,8 +20,8 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 //
 
-#ifndef __CORE_COMPAT_HPP__
-#define __CORE_COMPAT_HPP__
+#ifndef _CORE_COMPAT_HPP_
+#define _CORE_COMPAT_HPP_
 
 #include <new>
 #include <cstring>

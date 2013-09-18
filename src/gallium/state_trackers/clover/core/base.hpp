@@ -20,8 +20,8 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 //
 
-#ifndef __CORE_BASE_HPP__
-#define __CORE_BASE_HPP__
+#ifndef _CORE_BASE_HPP_
+#define _CORE_BASE_HPP_
 
 #include <stdexcept>
 #include <atomic>
@@ -59,22 +59,22 @@ namespace clover {
    ///
    class ref_counter {
    public:
-      ref_counter() : __ref_count(1) {}
+      ref_counter() : _ref_count(1) {}
 
       unsigned ref_count() {
-         return __ref_count;
+         return _ref_count;
       }
 
       void retain() {
-         __ref_count++;
+         _ref_count++;
       }
 
       bool release() {
-         return (--__ref_count) == 0;
+         return (--_ref_count) == 0;
       }
 
    private:
-      std::atomic<unsigned> __ref_count;
+      std::atomic<unsigned> _ref_count;
    };
 
    ///
@@ -138,17 +138,17 @@ namespace clover {
    }
 
    template<typename T, typename S, int N>
-   struct __iter_helper {
+   struct _iter_helper {
       template<typename F, typename Its, typename... Args>
       static T
       step(F op, S state, Its its, Args... args) {
-         return __iter_helper<T, S, N - 1>::step(
+         return _iter_helper<T, S, N - 1>::step(
             op, state, its, *(std::get<N>(its)++), args...);
       }
    };
 
    template<typename T, typename S>
-   struct __iter_helper<T, S, 0> {
+   struct _iter_helper<T, S, 0> {
       template<typename F, typename Its, typename... Args>
       static T
       step(F op, S state, Its its, Args... args) {
@@ -156,19 +156,19 @@ namespace clover {
       }
    };
 
-   struct __empty {};
+   struct _empty {};
 
    template<typename T>
-   struct __iter_helper<T, __empty, 0> {
+   struct _iter_helper<T, _empty, 0> {
       template<typename F, typename Its, typename... Args>
       static T
-      step(F op, __empty state, Its its, Args... args) {
+      step(F op, _empty state, Its its, Args... args) {
          return op(*(std::get<0>(its)++), args...);
       }
    };
 
    template<typename F, typename... Its>
-   struct __result_helper {
+   struct _result_helper {
       typedef typename std::remove_const<
          typename std::result_of<
             F (typename std::iterator_traits<Its>::value_type...)
@@ -187,7 +187,7 @@ namespace clover {
    F
    for_each(F op, It0 it0, It0 end0, Its... its) {
       while (it0 != end0)
-         __iter_helper<void, __empty, sizeof...(Its)>::step(
+         _iter_helper<void, _empty, sizeof...(Its)>::step(
             op, {}, std::tie(it0, its...));
 
       return op;
@@ -203,14 +203,14 @@ namespace clover {
    ///
    template<typename F, typename It0, typename... Its,
             typename C = std::vector<
-               typename __result_helper<F, It0, Its...>::type>>
+               typename _result_helper<F, It0, Its...>::type>>
    C
    map(F op, It0 it0, It0 end0, Its... its) {
       C c;
 
       while (it0 != end0)
          c.push_back(
-            __iter_helper<typename C::value_type, __empty, sizeof...(Its)>
+            _iter_helper<typename C::value_type, _empty, sizeof...(Its)>
             ::step(op, {}, std::tie(it0, its...)));
 
       return c;
@@ -228,7 +228,7 @@ namespace clover {
    T
    fold(F op, T a, It0 it0, It0 end0, Its... its) {
       while (it0 != end0)
-         a = __iter_helper<T, T, sizeof...(Its)>::step(
+         a = _iter_helper<T, T, sizeof...(Its)>::step(
             op, a, std::tie(it0, its...));
 
       return a;
@@ -245,7 +245,7 @@ namespace clover {
    bool
    any_of(F op, It0 it0, It0 end0, Its... its) {
       while (it0 != end0)
-         if (__iter_helper<bool, __empty, sizeof...(Its)>::step(
+         if (_iter_helper<bool, _empty, sizeof...(Its)>::step(
                 op, {}, std::tie(it0, its...)))
             return true;
 

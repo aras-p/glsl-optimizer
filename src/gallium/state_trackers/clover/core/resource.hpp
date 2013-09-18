@@ -20,8 +20,8 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 //
 
-#ifndef __CORE_RESOURCE_HPP__
-#define __CORE_RESOURCE_HPP__
+#ifndef _CORE_RESOURCE_HPP_
+#define _CORE_RESOURCE_HPP_
 
 #include <list>
 

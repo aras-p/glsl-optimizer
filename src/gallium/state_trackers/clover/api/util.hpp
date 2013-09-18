@@ -20,8 +20,8 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 //
 
-#ifndef __CL_UTIL_HPP__
-#define __CL_UTIL_HPP__
+#ifndef _CL_UTIL_HPP_
+#define _CL_UTIL_HPP_
 
 #include <cstdint>
 #include <cstring>

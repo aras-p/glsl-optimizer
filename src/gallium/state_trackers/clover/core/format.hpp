@@ -20,8 +20,8 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 //
 
-#ifndef __CORE_FORMAT_HPP__
-#define __CORE_FORMAT_HPP__
+#ifndef _CORE_FORMAT_HPP_
+#define _CORE_FORMAT_HPP_
 
 #include <set>
 

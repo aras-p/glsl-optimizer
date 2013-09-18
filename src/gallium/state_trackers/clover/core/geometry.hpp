@@ -20,8 +20,8 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 //
 
-#ifndef __CORE_GEOMETRY_HPP__
-#define __CORE_GEOMETRY_HPP__
+#ifndef _CORE_GEOMETRY_HPP_
+#define _CORE_GEOMETRY_HPP_
 
 #include <array>
 #include <algorithm>

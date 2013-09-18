@@ -30,7 +30,7 @@ using namespace clover;
 _cl_kernel::_cl_kernel(clover::program &prog,
                        const std::string &name,
                        const std::vector<clover::module::argument> &margs) :
-   prog(prog), __name(name), exec(*this) {
+   prog(prog), _name(name), exec(*this) {
    for (auto marg : margs) {
       if (marg.type == module::argument::scalar)
          args.emplace_back(new scalar_argument(marg.size));
@@ -85,7 +85,7 @@ _cl_kernel::launch(clover::command_queue &q,
    q.pipe->launch_grid(q.pipe,
                        pad_vector<uint>(q, block_size, 1).data(),
                        pad_vector<uint>(q, grid_size, 1).data(),
-                       module(q).sym(__name).offset,
+                       module(q).sym(_name).offset,
                        exec.input.data());
 
    q.pipe->set_global_binding(q.pipe, 0, exec.g_buffers.size(), NULL, NULL);
@@ -120,7 +120,7 @@ _cl_kernel::max_block_size() const {
 
 const std::string &
 _cl_kernel::name() const {
-   return __name;
+   return _name;
 }
 
 std::vector<size_t>
@@ -143,8 +143,8 @@ _cl_kernel::exec_context::~exec_context() {
 }
 
 void *
-_cl_kernel::exec_context::bind(clover::command_queue *__q) {
-   std::swap(q, __q);
+_cl_kernel::exec_context::bind(clover::command_queue *_q) {
+   std::swap(q, _q);
 
    // Bind kernel arguments.
    auto margs = kern.module(*q).sym(kern.name()).args;
@@ -154,11 +154,11 @@ _cl_kernel::exec_context::bind(clover::command_queue *__q) {
       }, kern.args.begin(), kern.args.end(), margs.begin());
 
    // Create a new compute state if anything changed.
-   if (!st || q != __q ||
+   if (!st || q != _q ||
        cs.req_local_mem != mem_local ||
        cs.req_input_mem != input.size()) {
       if (st)
-         __q->pipe->delete_compute_state(__q->pipe, st);
+         _q->pipe->delete_compute_state(_q->pipe, st);
 
       cs.prog = kern.module(*q).sec(module::section::text).data.begin();
       cs.req_local_mem = mem_local;
@@ -259,12 +259,12 @@ namespace {
    }
 }
 
-_cl_kernel::argument::argument() : __set(false) {
+_cl_kernel::argument::argument() : _set(false) {
 }
 
 bool
 _cl_kernel::argument::set() const {
-   return __set;
+   return _set;
 }
 
 size_t
@@ -281,7 +281,7 @@ _cl_kernel::scalar_argument::set(size_t size, const void *value) {
       throw error(CL_INVALID_ARG_SIZE);
 
    v = { (uint8_t *)value, (uint8_t *)value + size };
-   __set = true;
+   _set = true;
 }
 
 void
@@ -308,7 +308,7 @@ _cl_kernel::global_argument::set(size_t size, const void *value) {
    if (!obj)
       throw error(CL_INVALID_MEM_OBJECT);
 
-   __set = true;
+   _set = true;
 }
 
 void
@@ -325,7 +325,7 @@ _cl_kernel::global_argument::unbind(exec_context &ctx) {
 
 size_t
 _cl_kernel::local_argument::storage() const {
-   return __storage;
+   return _storage;
 }
 
 void
@@ -333,8 +333,8 @@ _cl_kernel::local_argument::set(size_t size, const void *value) {
    if (value)
       throw error(CL_INVALID_ARG_VALUE);
 
-   __storage = size;
-   __set = true;
+   _storage = size;
+   _set = true;
 }
 
 void
@@ -347,7 +347,7 @@ _cl_kernel::local_argument::bind(exec_context &ctx,
    align(ctx.input, marg.target_align);
    insert(ctx.input, v);
 
-   ctx.mem_local += __storage;
+   ctx.mem_local += _storage;
 }
 
 void
@@ -363,7 +363,7 @@ _cl_kernel::constant_argument::set(size_t size, const void *value) {
    if (!obj)
       throw error(CL_INVALID_MEM_OBJECT);
 
-   __set = true;
+   _set = true;
 }
 
 void
@@ -394,7 +394,7 @@ _cl_kernel::image_rd_argument::set(size_t size, const void *value) {
    if (!obj)
       throw error(CL_INVALID_MEM_OBJECT);
 
-   __set = true;
+   _set = true;
 }
 
 void
@@ -425,7 +425,7 @@ _cl_kernel::image_wr_argument::set(size_t size, const void *value) {
    if (!obj)
       throw error(CL_INVALID_MEM_OBJECT);
 
-   __set = true;
+   _set = true;
 }
 
 void
@@ -453,7 +453,7 @@ _cl_kernel::sampler_argument::set(size_t size, const void *value) {
       throw error(CL_INVALID_ARG_SIZE);
 
    obj = *(cl_sampler *)value;
-   __set = true;
+   _set = true;
 }
 
 void

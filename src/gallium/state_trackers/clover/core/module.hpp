@@ -20,8 +20,8 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 //
 
-#ifndef __CORE_MODULE_HPP__
-#define __CORE_MODULE_HPP__
+#ifndef _CORE_MODULE_HPP_
+#define _CORE_MODULE_HPP_
 
 #include "core/compat.hpp"
 

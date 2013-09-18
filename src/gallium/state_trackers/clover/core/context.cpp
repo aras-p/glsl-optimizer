@@ -28,7 +28,7 @@ using namespace clover;
 
 _cl_context::_cl_context(const std::vector<cl_context_properties> &props,
                          const std::vector<device *> &devs) :
-   devs(devs), __props(props) {
+   devs(devs), _props(props) {
 }
 
 bool

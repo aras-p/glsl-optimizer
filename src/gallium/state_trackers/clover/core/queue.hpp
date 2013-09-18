@@ -20,8 +20,8 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 //
 
-#ifndef __CORE_QUEUE_HPP__
-#define __CORE_QUEUE_HPP__
+#ifndef _CORE_QUEUE_HPP_
+#define _CORE_QUEUE_HPP_
 
 #include "core/base.hpp"
 #include "core/context.hpp"
@@ -64,7 +64,7 @@ private:
    /// and push it to the pending list.
    void sequence(clover::hard_event *ev);
 
-   cl_command_queue_properties __props;
+   cl_command_queue_properties _props;
    pipe_context *pipe;
 
    typedef clover::ref_ptr<clover::hard_event> event_ptr;

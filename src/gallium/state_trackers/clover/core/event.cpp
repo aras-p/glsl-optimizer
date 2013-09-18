@@ -28,7 +28,7 @@ using namespace clover;
 _cl_event::_cl_event(clover::context &ctx,
                      std::vector<clover::event *> deps,
                      action action_ok, action action_fail) :
-   ctx(ctx), __status(0), wait_count(1),
+   ctx(ctx), _status(0), wait_count(1),
    action_ok(action_ok), action_fail(action_fail) {
    for (auto ev : deps)
       ev->chain(this);
@@ -42,21 +42,21 @@ _cl_event::trigger() {
    if (!--wait_count) {
       action_ok(*this);
 
-      while (!__chain.empty()) {
-         __chain.back()->trigger();
-         __chain.pop_back();
+      while (!_chain.empty()) {
+         _chain.back()->trigger();
+         _chain.pop_back();
       }
    }
 }
 
 void
 _cl_event::abort(cl_int status) {
-   __status = status;
+   _status = status;
    action_fail(*this);
 
-   while (!__chain.empty()) {
-      __chain.back()->abort(status);
-      __chain.pop_back();
+   while (!_chain.empty()) {
+      _chain.back()->abort(status);
+      _chain.pop_back();
    }
 }
 
@@ -69,7 +69,7 @@ void
 _cl_event::chain(clover::event *ev) {
    if (wait_count) {
       ev->wait_count++;
-      __chain.push_back(ev);
+      _chain.push_back(ev);
    }
    ev->deps.push_back(this);
 }
@@ -77,7 +77,7 @@ _cl_event::chain(clover::event *ev) {
 hard_event::hard_event(clover::command_queue &q, cl_command_type command,
                        std::vector<clover::event *> deps, action action) :
    _cl_event(q.ctx, deps, profile(q, action), [](event &ev){}),
-   __queue(q), __command(command), __fence(NULL) {
+   _queue(q), _command(command), _fence(NULL) {
    if (q.profiling_enabled())
       _time_queued = timestamp::current(q);
 
@@ -87,20 +87,20 @@ hard_event::hard_event(clover::command_queue &q, cl_command_type command,
 
 hard_event::~hard_event() {
    pipe_screen *screen = queue()->dev.pipe;
-   screen->fence_reference(screen, &__fence, NULL);
+   screen->fence_reference(screen, &_fence, NULL);
 }
 
 cl_int
 hard_event::status() const {
    pipe_screen *screen = queue()->dev.pipe;
 
-   if (__status < 0)
-      return __status;
+   if (_status < 0)
+      return _status;
 
-   else if (!__fence)
+   else if (!_fence)
       return CL_QUEUED;
 
-   else if (!screen->fence_signalled(screen, __fence))
+   else if (!screen->fence_signalled(screen, _fence))
       return CL_SUBMITTED;
 
    else
@@ -109,12 +109,12 @@ hard_event::status() const {
 
 cl_command_queue
 hard_event::queue() const {
-   return &__queue;
+   return &_queue;
 }
 
 cl_command_type
 hard_event::command() const {
-   return __command;
+   return _command;
 }
 
 void
@@ -124,8 +124,8 @@ hard_event::wait() const {
    if (status() == CL_QUEUED)
       queue()->flush();
 
-   if (!__fence ||
-       !screen->fence_finish(screen, __fence, PIPE_TIMEOUT_INFINITE))
+   if (!_fence ||
+       !screen->fence_finish(screen, _fence, PIPE_TIMEOUT_INFINITE))
       throw error(CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST);
 }
 
@@ -152,7 +152,7 @@ hard_event::time_end() const {
 void
 hard_event::fence(pipe_fence_handle *fence) {
    pipe_screen *screen = queue()->dev.pipe;
-   screen->fence_reference(screen, &__fence, fence);
+   screen->fence_reference(screen, &_fence, fence);
 }
 
 event::action
@@ -176,16 +176,16 @@ hard_event::profile(command_queue &q, const action &action) const {
 
 soft_event::soft_event(clover::context &ctx,
                        std::vector<clover::event *> deps,
-                       bool __trigger, action action) :
+                       bool _trigger, action action) :
    _cl_event(ctx, deps, action, action) {
-   if (__trigger)
+   if (_trigger)
       trigger();
 }
 
 cl_int
 soft_event::status() const {
-   if (__status < 0)
-      return __status;
+   if (_status < 0)
+      return _status;
 
    else if (!signalled() ||
             any_of([](const ref_ptr<event> &ev) {
