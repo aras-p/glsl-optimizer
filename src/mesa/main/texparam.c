@@ -256,7 +256,7 @@ static inline void
 incomplete(struct gl_context *ctx, struct gl_texture_object *texObj)
 {
    FLUSH_VERTICES(ctx, _NEW_TEXTURE);
-   _mesa_dirty_texobj(ctx, texObj, GL_TRUE);
+   _mesa_dirty_texobj(ctx, texObj);
 }
 
 

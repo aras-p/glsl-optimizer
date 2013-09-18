@@ -132,7 +132,7 @@ st_bind_surface(struct gl_context *ctx, GLenum target,
    stObj->depth0 = 1;
    stObj->surface_format = ps->format;
 
-   _mesa_dirty_texobj(ctx, texObj, GL_TRUE);
+   _mesa_dirty_texobj(ctx, texObj);
 }
 
 static void

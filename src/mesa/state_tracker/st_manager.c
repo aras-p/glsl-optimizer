@@ -545,7 +545,7 @@ st_context_teximage(struct st_context_iface *stctxi,
    stObj->depth0 = depth;
    stObj->surface_format = pipe_format;
 
-   _mesa_dirty_texobj(ctx, texObj, GL_TRUE);
+   _mesa_dirty_texobj(ctx, texObj);
    _mesa_unlock_texture(ctx, texObj);
    
    return TRUE;

@@ -3179,7 +3179,7 @@ teximage(struct gl_context *ctx, GLboolean compressed, GLuint dims,
 
             _mesa_update_fbo_texture(ctx, texObj, face, level);
 
-            _mesa_dirty_texobj(ctx, texObj, GL_TRUE);
+            _mesa_dirty_texobj(ctx, texObj);
          }
       }
       _mesa_unlock_texture(ctx, texObj);
@@ -3298,7 +3298,7 @@ _mesa_EGLImageTargetTexture2DOES (GLenum target, GLeglImageOES image)
       ctx->Driver.EGLImageTargetTexture2D(ctx, target,
 					  texObj, texImage, image);
 
-      _mesa_dirty_texobj(ctx, texObj, GL_TRUE);
+      _mesa_dirty_texobj(ctx, texObj);
    }
    _mesa_unlock_texture(ctx, texObj);
 
@@ -3569,7 +3569,7 @@ copyteximage(struct gl_context *ctx, GLuint dims,
 
          _mesa_update_fbo_texture(ctx, texObj, face, level);
 
-         _mesa_dirty_texobj(ctx, texObj, GL_TRUE);
+         _mesa_dirty_texobj(ctx, texObj);
       }
    }
    _mesa_unlock_texture(ctx, texObj);
