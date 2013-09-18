@@ -398,6 +398,10 @@ public:
    {
       assert(this->interface_type == NULL);
       this->interface_type = type;
+      if (this->is_interface_instance()) {
+         this->max_ifc_array_access =
+            rzalloc_array(this, unsigned, type->length);
+      }
    }
 
    const glsl_type *get_interface_type() const
@@ -421,6 +425,19 @@ public:
     * Not used for non-array variables.
     */
    unsigned max_array_access;
+
+   /**
+    * For variables which satisfy the is_interface_instance() predicate, this
+    * points to an array of integers such that if the ith member of the
+    * interface block is an array, max_ifc_array_access[i] is the maximum
+    * array element of that member that has been accessed.  If the ith member
+    * of the interface block is not an array, max_ifc_array_access[i] is
+    * unused.
+    *
+    * For variables whose type is not an interface block, this pointer is
+    * NULL.
+    */
+   unsigned *max_ifc_array_access;
 
    /**
     * Is the variable read-only?
