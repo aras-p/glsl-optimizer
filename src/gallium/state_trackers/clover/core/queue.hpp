@@ -53,7 +53,7 @@ namespace clover {
       friend class mapping;
       friend class hard_event;
       friend struct ::_cl_sampler;
-      friend struct ::_cl_kernel;
+      friend class kernel;
       friend class clover::timestamp::query;
       friend class clover::timestamp::current;
 

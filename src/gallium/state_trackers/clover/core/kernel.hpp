@@ -32,176 +32,173 @@
 #include "pipe/p_state.h"
 
 namespace clover {
-   typedef struct _cl_kernel kernel;
-   class argument;
+   class kernel : public ref_counter, public _cl_kernel {
+   private:
+      ///
+      /// Class containing all the state required to execute a compute
+      /// kernel.
+      ///
+      struct exec_context {
+         exec_context(kernel &kern);
+         ~exec_context();
+
+         void *bind(command_queue *q);
+         void unbind();
+
+         kernel &kern;
+         command_queue *q;
+
+         std::vector<uint8_t> input;
+         std::vector<void *> samplers;
+         std::vector<pipe_sampler_view *> sviews;
+         std::vector<pipe_surface *> resources;
+         std::vector<pipe_resource *> g_buffers;
+         std::vector<size_t> g_handles;
+         size_t mem_local;
+
+      private:
+         void *st;
+         pipe_compute_state cs;
+      };
+
+   public:
+      class argument {
+      public:
+         argument();
+
+         /// \a true if the argument has been set.
+         bool set() const;
+
+         /// Storage space required for the referenced object.
+         virtual size_t storage() const;
+
+         /// Set this argument to some object.
+         virtual void set(size_t size, const void *value) = 0;
+
+         /// Allocate the necessary resources to bind the specified
+         /// object to this argument, and update \a ctx accordingly.
+         virtual void bind(exec_context &ctx,
+                           const module::argument &marg) = 0;
+
+         /// Free any resources that were allocated in bind().
+         virtual void unbind(exec_context &ctx) = 0;
+
+      protected:
+         bool _set;
+      };
+
+      kernel(program &prog,
+             const std::string &name,
+             const std::vector<module::argument> &margs);
+
+      void launch(command_queue &q,
+                  const std::vector<size_t> &grid_offset,
+                  const std::vector<size_t> &grid_size,
+                  const std::vector<size_t> &block_size);
+
+      size_t mem_local() const;
+      size_t mem_private() const;
+      size_t max_block_size() const;
+
+      const std::string &name() const;
+      std::vector<size_t> block_size() const;
+
+      program &prog;
+      std::vector<std::unique_ptr<argument>> args;
+
+   private:
+      const clover::module &
+      module(const command_queue &q) const;
+
+      class scalar_argument : public argument {
+      public:
+         scalar_argument(size_t size);
+
+         virtual void set(size_t size, const void *value);
+         virtual void bind(exec_context &ctx,
+                           const module::argument &marg);
+         virtual void unbind(exec_context &ctx);
+
+      private:
+         size_t size;
+         std::vector<uint8_t> v;
+      };
+
+      class global_argument : public argument {
+      public:
+         virtual void set(size_t size, const void *value);
+         virtual void bind(exec_context &ctx,
+                           const module::argument &marg);
+         virtual void unbind(exec_context &ctx);
+
+      private:
+         buffer *buf;
+      };
+
+      class local_argument : public argument {
+      public:
+         virtual size_t storage() const;
+
+         virtual void set(size_t size, const void *value);
+         virtual void bind(exec_context &ctx,
+                           const module::argument &marg);
+         virtual void unbind(exec_context &ctx);
+
+      private:
+         size_t _storage;
+      };
+
+      class constant_argument : public argument {
+      public:
+         virtual void set(size_t size, const void *value);
+         virtual void bind(exec_context &ctx,
+                           const module::argument &marg);
+         virtual void unbind(exec_context &ctx);
+
+      private:
+         buffer *buf;
+         pipe_surface *st;
+      };
+
+      class image_rd_argument : public argument {
+      public:
+         virtual void set(size_t size, const void *value);
+         virtual void bind(exec_context &ctx,
+                           const module::argument &marg);
+         virtual void unbind(exec_context &ctx);
+
+      private:
+         image *img;
+         pipe_sampler_view *st;
+      };
+
+      class image_wr_argument : public argument {
+      public:
+         virtual void set(size_t size, const void *value);
+         virtual void bind(exec_context &ctx,
+                           const module::argument &marg);
+         virtual void unbind(exec_context &ctx);
+
+      private:
+         image *img;
+         pipe_surface *st;
+      };
+
+      class sampler_argument : public argument {
+      public:
+         virtual void set(size_t size, const void *value);
+         virtual void bind(exec_context &ctx,
+                           const module::argument &marg);
+         virtual void unbind(exec_context &ctx);
+
+      private:
+         sampler *s;
+         void *st;
+      };
+
+      std::string _name;
+      exec_context exec;
+   };
 }
-
-struct _cl_kernel : public clover::ref_counter {
-private:
-   ///
-   /// Class containing all the state required to execute a compute
-   /// kernel.
-   ///
-   struct exec_context {
-      exec_context(clover::kernel &kern);
-      ~exec_context();
-
-      void *bind(clover::command_queue *q);
-      void unbind();
-
-      clover::kernel &kern;
-      clover::command_queue *q;
-
-      std::vector<uint8_t> input;
-      std::vector<void *> samplers;
-      std::vector<pipe_sampler_view *> sviews;
-      std::vector<pipe_surface *> resources;
-      std::vector<pipe_resource *> g_buffers;
-      std::vector<size_t> g_handles;
-      size_t mem_local;
-
-   private:
-      void *st;
-      pipe_compute_state cs;
-   };
-
-public:
-   class argument {
-   public:
-      argument();
-
-      /// \a true if the argument has been set.
-      bool set() const;
-
-      /// Storage space required for the referenced object.
-      virtual size_t storage() const;
-
-      /// Set this argument to some object.
-      virtual void set(size_t size, const void *value) = 0;
-
-      /// Allocate the necessary resources to bind the specified
-      /// object to this argument, and update \a ctx accordingly.
-      virtual void bind(exec_context &ctx,
-                        const clover::module::argument &marg) = 0;
-
-      /// Free any resources that were allocated in bind().
-      virtual void unbind(exec_context &ctx) = 0;
-
-   protected:
-      bool _set;
-   };
-
-   _cl_kernel(clover::program &prog,
-              const std::string &name,
-              const std::vector<clover::module::argument> &margs);
-
-   void launch(clover::command_queue &q,
-               const std::vector<size_t> &grid_offset,
-               const std::vector<size_t> &grid_size,
-               const std::vector<size_t> &block_size);
-
-   size_t mem_local() const;
-   size_t mem_private() const;
-   size_t max_block_size() const;
-
-   const std::string &name() const;
-   std::vector<size_t> block_size() const;
-
-   clover::program &prog;
-   std::vector<std::unique_ptr<argument>> args;
-
-private:
-   const clover::module &
-   module(const clover::command_queue &q) const;
-
-   class scalar_argument : public argument {
-   public:
-      scalar_argument(size_t size);
-
-      virtual void set(size_t size, const void *value);
-      virtual void bind(exec_context &ctx,
-                        const clover::module::argument &marg);
-      virtual void unbind(exec_context &ctx);
-
-   private:
-      size_t size;
-      std::vector<uint8_t> v;
-   };
-
-   class global_argument : public argument {
-   public:
-      virtual void set(size_t size, const void *value);
-      virtual void bind(exec_context &ctx,
-                        const clover::module::argument &marg);
-      virtual void unbind(exec_context &ctx);
-
-   private:
-      clover::buffer *obj;
-   };
-
-   class local_argument : public argument {
-   public:
-      virtual size_t storage() const;
-
-      virtual void set(size_t size, const void *value);
-      virtual void bind(exec_context &ctx,
-                        const clover::module::argument &marg);
-      virtual void unbind(exec_context &ctx);
-
-   private:
-      size_t _storage;
-   };
-
-   class constant_argument : public argument {
-   public:
-      virtual void set(size_t size, const void *value);
-      virtual void bind(exec_context &ctx,
-                        const clover::module::argument &marg);
-      virtual void unbind(exec_context &ctx);
-
-   private:
-      clover::buffer *obj;
-      pipe_surface *st;
-   };
-
-   class image_rd_argument : public argument {
-   public:
-      virtual void set(size_t size, const void *value);
-      virtual void bind(exec_context &ctx,
-                        const clover::module::argument &marg);
-      virtual void unbind(exec_context &ctx);
-
-   private:
-      clover::image *obj;
-      pipe_sampler_view *st;
-   };
-
-   class image_wr_argument : public argument {
-   public:
-      virtual void set(size_t size, const void *value);
-      virtual void bind(exec_context &ctx,
-                        const clover::module::argument &marg);
-      virtual void unbind(exec_context &ctx);
-
-   private:
-      clover::image *obj;
-      pipe_surface *st;
-   };
-
-   class sampler_argument : public argument {
-   public:
-      virtual void set(size_t size, const void *value);
-      virtual void bind(exec_context &ctx,
-                        const clover::module::argument &marg);
-      virtual void unbind(exec_context &ctx);
-
-   private:
-      clover::sampler *obj;
-      void *st;
-   };
-
-   std::string _name;
-   exec_context exec;
-};
 
 #endif

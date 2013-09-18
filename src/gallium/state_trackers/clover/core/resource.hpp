@@ -57,7 +57,7 @@ namespace clover {
 
       friend class sub_resource;
       friend class mapping;
-      friend struct ::_cl_kernel;
+      friend class kernel;
 
    protected:
       resource(clover::device &dev, clover::memory_obj &obj);

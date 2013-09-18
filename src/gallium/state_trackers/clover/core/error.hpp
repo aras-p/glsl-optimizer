@@ -34,7 +34,7 @@ namespace clover {
    class event;
    class hard_event;
    class soft_event;
-   typedef struct _cl_kernel kernel;
+   class kernel;
    typedef struct _cl_mem memory_obj;
    class buffer;
    class root_buffer;
@@ -43,7 +43,7 @@ namespace clover {
    class image2d;
    class image3d;
    class platform;
-   typedef struct _cl_program program;
+   class program;
    typedef struct _cl_sampler sampler;
 
    ///

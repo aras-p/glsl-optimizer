@@ -41,7 +41,7 @@ public:
 
    clover::context &ctx;
 
-   friend class _cl_kernel;
+   friend class clover::kernel;
 
 private:
    void *bind(clover::command_queue &q);

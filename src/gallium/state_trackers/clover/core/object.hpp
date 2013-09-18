@@ -188,8 +188,14 @@ struct _cl_device_id :
 struct _cl_event :
    public clover::descriptor<clover::event, _cl_event> {};
 
+struct _cl_kernel :
+   public clover::descriptor<clover::kernel, _cl_kernel> {};
+
 struct _cl_platform_id :
    public clover::descriptor<clover::platform, _cl_platform_id> {};
+
+struct _cl_program :
+   public clover::descriptor<clover::program, _cl_program> {};
 
 struct _cl_command_queue :
    public clover::descriptor<clover::command_queue, _cl_command_queue> {};

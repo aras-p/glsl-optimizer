@@ -30,33 +30,31 @@
 #include "core/module.hpp"
 
 namespace clover {
-   typedef struct _cl_program program;
+   class program : public ref_counter, public _cl_program {
+   public:
+      program(context &ctx,
+              const std::string &source);
+      program(context &ctx,
+              const ref_vector<device> &devs,
+              const std::vector<module> &binaries);
+
+      void build(const ref_vector<device> &devs, const char *opts);
+
+      const std::string &source() const;
+      const std::map<device *, module> &binaries() const;
+
+      cl_build_status build_status(device &dev) const;
+      std::string build_opts(device &dev) const;
+      std::string build_log(device &dev) const;
+
+      context &ctx;
+
+   private:
+      std::map<device *, module> _binaries;
+      std::map<device *, std::string> _logs;
+      std::map<device *, std::string> _opts;
+      std::string _source;
+   };
 }
-
-struct _cl_program : public clover::ref_counter {
-public:
-   _cl_program(clover::context &ctx,
-               const std::string &source);
-   _cl_program(clover::context &ctx,
-               const std::vector<clover::device *> &devs,
-               const std::vector<clover::module> &binaries);
-
-   void build(const std::vector<clover::device *> &devs, const char *opts);
-
-   const std::string &source() const;
-   const std::map<clover::device *, clover::module> &binaries() const;
-
-   cl_build_status build_status(clover::device *dev) const;
-   std::string build_opts(clover::device *dev) const;
-   std::string build_log(clover::device *dev) const;
-
-   clover::context &ctx;
-
-private:
-   std::map<clover::device *, clover::module> _binaries;
-   std::map<clover::device *, std::string> _logs;
-   std::map<clover::device *, std::string> _opts;
-   std::string _source;
-};
 
 #endif
