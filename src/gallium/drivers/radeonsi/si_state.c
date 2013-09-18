@@ -2758,7 +2758,8 @@ static struct pipe_sampler_view *si_create_sampler_view(struct pipe_context *ctx
 				       S_008F1C_DST_SEL_W(V_008F1C_SQ_SEL_X) |
 				       S_008F1C_TILING_INDEX(tmp->fmask.tile_mode_index) |
 				       S_008F1C_TYPE(si_tex_dim(texture->target, 0));
-		view->fmask_state[4] = S_008F20_PITCH(tmp->fmask.pitch - 1);
+		view->fmask_state[4] = S_008F20_DEPTH(depth - 1) |
+				       S_008F20_PITCH(tmp->fmask.pitch - 1);
 		view->fmask_state[5] = S_008F24_BASE_ARRAY(state->u.tex.first_layer) |
 				       S_008F24_LAST_ARRAY(state->u.tex.last_layer);
 		view->fmask_state[6] = 0;

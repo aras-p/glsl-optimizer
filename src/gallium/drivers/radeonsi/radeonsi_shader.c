@@ -1172,8 +1172,6 @@ static void tex_fetch_args(
 	unsigned sampler_src, sampler_index;
 	LLVMValueRef coords[4];
 	LLVMValueRef address[16];
-	LLVMValueRef sample_index_rewrite = NULL;
-	LLVMValueRef sample_chan = NULL;
 	int ref_pos;
 	unsigned num_coords = tgsi_util_get_texture_coord_dim(target, &ref_pos);
 	unsigned count = 0;
@@ -1233,7 +1231,7 @@ static void tex_fetch_args(
 	if (num_coords > 2)
 		address[count++] = coords[2];
 
-	/* Pack LOD */
+	/* Pack LOD or sample index */
 	if (opcode == TGSI_OPCODE_TXL || opcode == TGSI_OPCODE_TXF)
 		address[count++] = coords[3];
 
@@ -1270,10 +1268,15 @@ static void tex_fetch_args(
 	    target == TGSI_TEXTURE_2D_ARRAY_MSAA) {
 		struct lp_build_context *uint_bld = &bld_base->uint_bld;
 		struct lp_build_emit_data txf_emit_data = *emit_data;
-		LLVMValueRef txf_address[16];
+		LLVMValueRef txf_address[4];
 		unsigned txf_count = count;
 
-		memcpy(txf_address, address, sizeof(address));
+		memcpy(txf_address, address, sizeof(txf_address));
+
+		if (target == TGSI_TEXTURE_2D_MSAA) {
+			txf_address[2] = bld_base->uint_bld.zero;
+		}
+		txf_address[3] = bld_base->uint_bld.zero;
 
 		/* Pad to a power-of-two size. */
 		while (txf_count < util_next_power_of_two(txf_count))
@@ -1285,18 +1288,13 @@ static void tex_fetch_args(
 			LLVMInt32TypeInContext(bld_base->base.gallivm->context), 4);
 		txf_emit_data.args[0] = lp_build_gather_values(gallivm, txf_address, txf_count);
 		txf_emit_data.args[1] = si_shader_ctx->resources[FMASK_TEX_OFFSET + sampler_index];
-		txf_emit_data.args[2] = lp_build_const_int32(bld_base->base.gallivm, target);
+		txf_emit_data.args[2] = lp_build_const_int32(bld_base->base.gallivm,
+			target == TGSI_TEXTURE_2D_MSAA ? TGSI_TEXTURE_2D : TGSI_TEXTURE_2D_ARRAY);
 		txf_emit_data.arg_count = 3;
 
 		build_tex_intrinsic(&txf_action, bld_base, &txf_emit_data);
 
 		/* Initialize some constants. */
-		if (target == TGSI_TEXTURE_2D_MSAA) {
-			sample_chan = LLVMConstInt(uint_bld->elem_type, 2, 0);
-		} else {
-			sample_chan = LLVMConstInt(uint_bld->elem_type, 3, 0);
-		}
-
 		LLVMValueRef four = LLVMConstInt(uint_bld->elem_type, 4, 0);
 		LLVMValueRef F = LLVMConstInt(uint_bld->elem_type, 0xF, 0);
 
@@ -1306,13 +1304,10 @@ static void tex_fetch_args(
 						txf_emit_data.output[0],
 						uint_bld->zero, "");
 
-		LLVMValueRef sample_index =
-			LLVMBuildExtractElement(gallivm->builder,
-						txf_emit_data.args[0],
-						sample_chan, "");
+		unsigned sample_chan = target == TGSI_TEXTURE_2D_MSAA ? 2 : 3;
 
 		LLVMValueRef sample_index4 =
-			LLVMBuildMul(gallivm->builder, sample_index, four, "");
+			LLVMBuildMul(gallivm->builder, address[sample_chan], four, "");
 
 		LLVMValueRef shifted_fmask =
 			LLVMBuildLShr(gallivm->builder, fmask, sample_index4, "");
@@ -1336,9 +1331,10 @@ static void tex_fetch_args(
 			LLVMBuildICmp(gallivm->builder, LLVMIntNE,
 				      fmask_word1, uint_bld->zero, "");
 
-		sample_index_rewrite =
+		/* Replace the MSAA sample index. */
+		address[sample_chan] =
 			LLVMBuildSelect(gallivm->builder, word1_is_nonzero,
-					final_sample, sample_index, "");
+					final_sample, address[sample_chan], "");
 	}
 
 	/* Resource */
@@ -1405,13 +1401,6 @@ static void tex_fetch_args(
 		address[count++] = LLVMGetUndef(LLVMInt32TypeInContext(gallivm->context));
 
 	emit_data->args[0] = lp_build_gather_values(gallivm, address, count);
-
-	/* Replace the MSAA sample index if needed. */
-	if (sample_index_rewrite) {
-		emit_data->args[0] =
-			LLVMBuildInsertElement(gallivm->builder, emit_data->args[0],
-					       sample_index_rewrite, sample_chan, "");
-	}
 }
 
 static void build_tex_intrinsic(const struct lp_build_tgsi_action * action,
