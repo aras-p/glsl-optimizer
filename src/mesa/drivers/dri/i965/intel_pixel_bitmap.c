@@ -25,6 +25,7 @@
  * 
  **************************************************************************/
 
+#include "main/blend.h"
 #include "main/glheader.h"
 #include "main/enums.h"
 #include "main/image.h"
@@ -227,7 +228,7 @@ do_blit_bitmap( struct gl_context *ctx,
    UNCLAMPED_FLOAT_TO_UBYTE(ubcolor[2], tmpColor[2]);
    UNCLAMPED_FLOAT_TO_UBYTE(ubcolor[3], tmpColor[3]);
 
-   switch (irb->mt->format) {
+   switch (_mesa_get_render_format(ctx, intel_rb_format(irb))) {
    case MESA_FORMAT_ARGB8888:
    case MESA_FORMAT_XRGB8888:
       color = PACK_COLOR_8888(ubcolor[3], ubcolor[0], ubcolor[1], ubcolor[2]);
