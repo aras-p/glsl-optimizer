@@ -252,7 +252,6 @@ do_triangle_ccw(struct lp_setup_context *setup,
                 const float (*v2)[4],
                 boolean frontfacing )
 {
-   struct llvmpipe_context *lp_context = (struct llvmpipe_context *)setup->pipe;
    struct lp_scene *scene = setup->scene;
    const struct lp_setup_variant_key *key = &setup->setup.variant->key;
    struct lp_rast_triangle *tri;
@@ -339,11 +338,6 @@ do_triangle_ccw(struct lp_setup_context *setup,
 #endif
 
    LP_COUNT(nr_tris);
-
-   if (lp_context->active_statistics_queries &&
-       !llvmpipe_rasterization_disabled(lp_context)) {
-      lp_context->pipeline_statistics.c_primitives++;
-   }
 
    /* Setup parameter interpolants:
     */
@@ -803,7 +797,6 @@ static void retry_triangle_ccw( struct lp_setup_context *setup,
    }
 }
 
-
 /**
  * Calculate fixed position data for a triangle
  */
@@ -1102,10 +1095,16 @@ static void triangle_both( struct lp_setup_context *setup,
 			   const float (*v2)[4] )
 {
    struct fixed_position position;
+   struct llvmpipe_context *lp_context = (struct llvmpipe_context *)setup->pipe;
 
    if (setup->subdivide_large_triangles &&
        check_subdivide_triangle(setup, v0, v1, v2, triangle_both))
       return;
+
+   if (lp_context->active_statistics_queries &&
+       !llvmpipe_rasterization_disabled(lp_context)) {
+      lp_context->pipeline_statistics.c_primitives++;
+   }
 
    calc_fixed_position(setup, &position, v0, v1, v2);
 
