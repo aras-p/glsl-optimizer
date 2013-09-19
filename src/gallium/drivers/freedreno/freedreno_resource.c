@@ -123,8 +123,8 @@ fd_resource_transfer_map(struct pipe_context *pctx,
 		op |= DRM_FREEDRENO_PREP_NOSYNC;
 
 	/* some state trackers (at least XA) don't do this.. */
-//	if (!(usage & PIPE_TRANSFER_FLUSH_EXPLICIT))
-//		fd_resource_transfer_flush_region(pctx, ptrans, box);
+	if (!(usage & (PIPE_TRANSFER_FLUSH_EXPLICIT | PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE)))
+		fd_resource_transfer_flush_region(pctx, ptrans, box);
 
 	if (!(usage & PIPE_TRANSFER_UNSYNCHRONIZED)) {
 		ret = fd_bo_cpu_prep(rsc->bo, ctx->screen->pipe, op);
