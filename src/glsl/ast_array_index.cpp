@@ -49,6 +49,43 @@ update_max_array_access(ir_rvalue *ir, unsigned idx, YYLTYPE *loc,
           */
          check_builtin_array_max_size(var->name, idx+1, *loc, state);
       }
+   } else if (ir_dereference_record *deref_record =
+              ir->as_dereference_record()) {
+      /* There are two possibilities we need to consider:
+       *
+       * - Accessing an element of an array that is a member of a named
+       *   interface block (e.g. ifc.foo[i])
+       *
+       * - Accessing an element of an array that is a member of a named
+       *   interface block array (e.g. ifc[j].foo[i]).
+       */
+      ir_dereference_variable *deref_var =
+         deref_record->record->as_dereference_variable();
+      if (deref_var == NULL) {
+         if (ir_dereference_array *deref_array =
+             deref_record->record->as_dereference_array()) {
+            deref_var = deref_array->array->as_dereference_variable();
+         }
+      }
+
+      if (deref_var != NULL) {
+         const glsl_type *interface_type =
+            deref_var->var->get_interface_type();
+         if (interface_type != NULL) {
+            unsigned field_index =
+               deref_record->record->type->field_index(deref_record->field);
+            assert(field_index < interface_type->length);
+            if (idx > deref_var->var->max_ifc_array_access[field_index]) {
+               deref_var->var->max_ifc_array_access[field_index] = idx;
+
+               /* Check whether this access will, as a side effect, implicitly
+                * cause the size of a built-in array to be too large.
+                */
+               check_builtin_array_max_size(deref_record->field, idx+1, *loc,
+                                            state);
+            }
+         }
+      }
    }
 }
 
