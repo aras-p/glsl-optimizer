@@ -2123,14 +2123,18 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
       debug_printf("  .min_mip_filter = %u\n", derived_sampler_state.min_mip_filter);
    }
 
-   if ((static_texture_state->target == PIPE_TEXTURE_CUBE ||
-        static_texture_state->target == PIPE_TEXTURE_CUBE_ARRAY) &&
-       static_sampler_state->seamless_cube_map)
+   if (static_texture_state->target == PIPE_TEXTURE_CUBE ||
+       static_texture_state->target == PIPE_TEXTURE_CUBE_ARRAY)
    {
       /*
        * Seamless filtering ignores wrap modes.
        * Setting to CLAMP_TO_EDGE is correct for nearest filtering, for
        * bilinear it's not correct but way better than using for instance repeat.
+       * Note we even set this for non-seamless. Technically GL allows any wrap
+       * mode, which made sense when supporting true borders (can get seamless
+       * effect with border and CLAMP_TO_BORDER), but gallium doesn't support
+       * borders and d3d9 requires wrap modes to be ignored and it's a pain to fix
+       * up the sampler state (as it makes it texture dependent).
        */
       derived_sampler_state.wrap_s = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
       derived_sampler_state.wrap_t = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
