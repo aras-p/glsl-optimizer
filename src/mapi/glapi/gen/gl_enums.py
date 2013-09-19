@@ -59,18 +59,18 @@ class PrintGlEnums(gl_XML.gl_print_base):
 typedef int (*cfunc)(const void *, const void *);
 
 /**
- * Compare a key enum value to an element in the \c all_enums array.
+ * Compare a key enum value to an element in the \c enum_string_table_offsets array.
  *
  * \c bsearch always passes the key as the first parameter and the pointer
  * to the array element as the second parameter.  We can elimiate some
  * extra work by taking advantage of that fact.
  *
  * \param a  Pointer to the desired enum name.
- * \param b  Pointer to an index into the \c all_enums array.
+ * \param b  Pointer into the \c enum_string_table_offsets array.
  */
-static int compar_nr( const int *a, const unsigned *b )
+static int compar_nr( const int *a, enum_elt *b )
 {
-   return a[0] - all_enums[*b].n;
+   return a[0] - b->n;
 }
 
 
@@ -78,15 +78,13 @@ static char token_tmp[20];
 
 const char *_mesa_lookup_enum_by_nr( int nr )
 {
-   unsigned * i;
+   enum_elt *elt = _mesa_bsearch(& nr, enum_string_table_offsets,
+                                 Elements(enum_string_table_offsets),
+                                 sizeof(enum_string_table_offsets[0]),
+                                 (cfunc) compar_nr);
 
-   i = (unsigned *) _mesa_bsearch(& nr, reduced_enums,
-                                  Elements(reduced_enums),
-                                  sizeof(reduced_enums[0]),
-                                  (cfunc) compar_nr);
-
-   if ( i != NULL ) {
-      return & enum_string_table[ all_enums[ *i ].offset ];
+   if (elt != NULL) {
+      return &enum_string_table[elt->offset];
    }
    else {
       /* this is not re-entrant safe, no big deal here */
@@ -141,55 +139,36 @@ _mesa_lookup_prim_by_nr(GLuint nr)
         for api in api_list:
             self.process_enums( api )
 
-        keys = self.enum_table.keys()
-        keys.sort()
+        enum_table = []
 
-        name_table = []
-        enum_table = {}
-
-        for enum in keys:
+        for enum in sorted(self.enum_table.keys()):
             low_pri = 9
+            best_name = ''
             for [name, pri] in self.enum_table[ enum ]:
-                name_table.append( [name, enum] )
-
                 if pri < low_pri:
                     low_pri = pri
-                    enum_table[enum] = name
+                    best_name = name
 
-
-        name_table.sort()
+            enum_table.append((enum, best_name))
 
         string_offsets = {}
         i = 0;
         print 'LONGSTRING static const char enum_string_table[] = '
-        for [name, enum] in name_table:
+        for enum, name in enum_table:
             print '   "%s\\0"' % (name)
-            string_offsets[ name ] = i
+            string_offsets[ enum ] = i
             i += len(name) + 1
 
         print '   ;'
         print ''
 
 
-        print 'static const enum_elt all_enums[%u] =' % (len(name_table))
+        print 'static const enum_elt enum_string_table_offsets[%u] =' % (len(enum_table))
         print '{'
-        for [name, enum] in name_table:
-            print '   { %5u, 0x%08X }, /* %s */' % (string_offsets[name], enum, name)
+        for enum, name in enum_table:
+            print '   { %5u, 0x%08X }, /* %s */' % (string_offsets[enum], enum, name)
         print '};'
         print ''
-
-        print 'static const unsigned reduced_enums[%u] =' % (len(keys))
-        print '{'
-        for enum in keys:
-            name = enum_table[ enum ]
-            if [name, enum] not in name_table:
-                print '      /* Error! %s, 0x%04x */ 0,' % (name, enum)
-            else:
-                i = name_table.index( [name, enum] )
-
-                print '      %4u, /* %s */' % (i, name)
-        print '};'
-
 
         self.print_code()
         return
