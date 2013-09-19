@@ -108,7 +108,8 @@ fd3_clear(struct fd_context *ctx, unsigned buffers,
 			FD_DIRTY_FRAMEBUFFER | FD_DIRTY_SCISSOR));
 
 	OUT_PKT0(ring, REG_A3XX_RB_BLEND_ALPHA, 1);
-	OUT_RING(ring, 0X3c0000ff);
+	OUT_RING(ring, A3XX_RB_BLEND_ALPHA_UINT(0xff) |
+			A3XX_RB_BLEND_ALPHA_FLOAT(1.0));
 
 	fd3_emit_rbrc_draw_state(ring,
 			A3XX_RB_RENDER_CONTROL_ALPHA_TEST_FUNC(FUNC_NEVER));
