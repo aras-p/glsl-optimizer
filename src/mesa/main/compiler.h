@@ -270,6 +270,15 @@ static INLINE GLuint CPU_TO_LE32(GLuint x)
 #define NULL 0
 #endif
 
+/* Used to optionally mark structures with misaligned elements or size as
+ * packed, to trade off performance for space.
+ */
+#if (__GNUC__ >= 3)
+#define PACKED __attribute__((__packed__))
+#else
+#define PACKED
+#endif
+
 
 /**
  * LONGSTRING macro
