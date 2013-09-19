@@ -247,7 +247,10 @@ void r600_flush_emit(struct r600_context *rctx)
 							: S_0085F0_TC_ACTION_ENA(1);
 	}
 	if (rctx->b.flags & R600_CONTEXT_INV_TEX_CACHE) {
-		cp_coher_cntl |= S_0085F0_TC_ACTION_ENA(1);
+		/* Textures use the texture cache.
+		 * Texture buffer objects use the vertex cache. */
+		cp_coher_cntl |= S_0085F0_TC_ACTION_ENA(1) |
+				 (rctx->has_vertex_cache ? S_0085F0_VC_ACTION_ENA(1) : 0);
 	}
 
 	/* Don't use the DB CP COHER logic on r6xx.
