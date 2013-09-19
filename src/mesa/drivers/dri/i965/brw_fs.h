@@ -109,6 +109,7 @@ public:
 static const fs_reg reg_undef;
 static const fs_reg reg_null_f(ARF, BRW_ARF_NULL, BRW_REGISTER_TYPE_F);
 static const fs_reg reg_null_d(ARF, BRW_ARF_NULL, BRW_REGISTER_TYPE_D);
+static const fs_reg reg_null_ud(ARF, BRW_ARF_NULL, BRW_REGISTER_TYPE_UD);
 
 class ip_record : public exec_node {
 public:
