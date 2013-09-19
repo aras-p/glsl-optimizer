@@ -33,6 +33,8 @@ platform::platform() : adaptor_range(derefs(), devs) {
    for (pipe_loader_device *ldev : ldevs) {
       try {
          devs.push_back(transfer(new device(*this, ldev)));
-      } catch (error &) {}
+      } catch (error &) {
+         pipe_loader_release(&ldev, 1);
+      }
    }
 }
