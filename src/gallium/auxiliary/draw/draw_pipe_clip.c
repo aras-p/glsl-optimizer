@@ -209,6 +209,29 @@ static void interp( const struct clip_stage *clip,
    }
 }
 
+/**
+ * Checks whether the specifed triangle is empty and if it is returns
+ * true, otherwise returns false.
+ * Triangle is considered null/empty if it's area is qual to zero.
+ */
+static INLINE boolean
+is_tri_null(struct draw_context *draw, const struct prim_header *header)
+{
+   const unsigned pos_attr = draw_current_shader_position_output(draw);
+   float x1 = header->v[1]->data[pos_attr][0] - header->v[0]->data[pos_attr][0];
+   float y1 = header->v[1]->data[pos_attr][1] - header->v[0]->data[pos_attr][1];
+   float z1 = header->v[1]->data[pos_attr][2] - header->v[0]->data[pos_attr][2];
+
+   float x2 = header->v[2]->data[pos_attr][0] - header->v[0]->data[pos_attr][0];
+   float y2 = header->v[2]->data[pos_attr][1] - header->v[0]->data[pos_attr][1];
+   float z2 = header->v[2]->data[pos_attr][2] - header->v[0]->data[pos_attr][2];
+
+   float vx = y1 * z2 - z1 * y2;
+   float vy = x1 * z2 - z1 * x2;
+   float vz = x1 * y2 - y1 * x2;
+
+   return (vx*vx  + vy*vy + vz*vz) == 0.f;
+}
 
 /**
  * Emit a post-clip polygon to the next pipeline stage.  The polygon
@@ -223,6 +246,8 @@ static void emit_poly( struct draw_stage *stage,
    struct prim_header header;
    unsigned i;
    ushort edge_first, edge_middle, edge_last;
+   boolean last_tri_was_null = FALSE;
+   boolean tri_was_not_null = FALSE;
 
    if (stage->draw->rasterizer->flatshade_first) {
       edge_first  = DRAW_PIPE_EDGE_FLAG_0;
@@ -244,6 +269,7 @@ static void emit_poly( struct draw_stage *stage,
    header.pad = 0;
 
    for (i = 2; i < n; i++, header.flags = edge_middle) {
+      boolean tri_null;
       /* order the triangle verts to respect the provoking vertex mode */
       if (stage->draw->rasterizer->flatshade_first) {
          header.v[0] = inlist[0];  /* the provoking vertex */
@@ -254,6 +280,19 @@ static void emit_poly( struct draw_stage *stage,
          header.v[0] = inlist[i-1];
          header.v[1] = inlist[i];
          header.v[2] = inlist[0];  /* the provoking vertex */
+      }
+
+      tri_null = is_tri_null(stage->draw, &header);
+      /* If we generated a triangle with an area, aka. non-null triangle,
+       * or if the previous triangle was also null then skip all subsequent
+       * null triangles */
+      if ((tri_was_not_null && tri_null) || (last_tri_was_null && tri_null)) {
+         last_tri_was_null = tri_null;
+         continue;
+      }
+      last_tri_was_null = tri_null;
+      if (!tri_null) {
+         tri_was_not_null = TRUE;
       }
 
       if (!edgeflags[i-1]) {
