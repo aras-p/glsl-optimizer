@@ -85,7 +85,7 @@ fd3_sampler_state_create(struct pipe_context *pctx,
 	if (!so)
 		return NULL;
 
-	if (cso->min_mip_filter == PIPE_TEX_MIPFILTER_NEAREST)
+	if (cso->min_mip_filter == PIPE_TEX_MIPFILTER_LINEAR)
 		miplinear = true;
 
 	so->base = *cso;
