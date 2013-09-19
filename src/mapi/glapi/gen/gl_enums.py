@@ -59,21 +59,6 @@ class PrintGlEnums(gl_XML.gl_print_base):
 typedef int (*cfunc)(const void *, const void *);
 
 /**
- * Compare a key name to an element in the \c all_enums array.
- *
- * \c bsearch always passes the key as the first parameter and the pointer
- * to the array element as the second parameter.  We can elimiate some
- * extra work by taking advantage of that fact.
- *
- * \param a  Pointer to the desired enum name.
- * \param b  Pointer to an element of the \c all_enums array.
- */
-static int compar_name( const char *a, const enum_elt *b )
-{
-   return strcmp( a, & enum_string_table[ b->offset ] );
-}
-
-/**
  * Compare a key enum value to an element in the \c all_enums array.
  *
  * \c bsearch always passes the key as the first parameter and the pointer
@@ -146,20 +131,6 @@ _mesa_lookup_prim_by_nr(GLuint nr)
       return "invalid mode";
 }
 
-
-int _mesa_lookup_enum_by_name( const char *symbol )
-{
-   enum_elt * f = NULL;
-
-   if ( symbol != NULL ) {
-      f = (enum_elt *) _mesa_bsearch(symbol, all_enums,
-                                     Elements(all_enums),
-                                     sizeof( enum_elt ),
-                                     (cfunc) compar_name);
-   }
-
-   return (f != NULL) ? f->n : -1;
-}
 
 """
         return

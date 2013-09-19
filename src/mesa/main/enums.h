@@ -44,6 +44,4 @@ extern const char *_mesa_lookup_enum_by_nr( int nr );
  */
 const char *_mesa_lookup_prim_by_nr( unsigned nr );
 
-extern int _mesa_lookup_enum_by_name( const char *symbol );
-
 #endif

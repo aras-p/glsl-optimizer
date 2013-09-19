@@ -34,32 +34,12 @@ struct enum_info {
 };
 
 extern const struct enum_info everything[];
-extern const struct enum_info alternate_names[];
 
 TEST(EnumStrings, LookUpByNumber)
 {
    for (unsigned i = 0; everything[i].name != NULL; i++) {
       EXPECT_STREQ(everything[i].name,
 		   _mesa_lookup_enum_by_nr(everything[i].value));
-   }
-}
-
-TEST(EnumStrings, LookUpByName)
-{
-   for (unsigned i = 0; everything[i].name != NULL; i++) {
-      EXPECT_EQ(everything[i].value,
-		_mesa_lookup_enum_by_name(everything[i].name));
-   }
-}
-
-TEST(EnumStrings, LookUpByDuplicateName)
-{
-   /* Some enum values have multiple names.  Try to find some values
-    * by alternate names.
-    */
-   for (unsigned i = 0; alternate_names[i].name != NULL; i++) {
-      EXPECT_EQ(alternate_names[i].value,
-		_mesa_lookup_enum_by_name(alternate_names[i].name));
    }
 }
 
@@ -1864,17 +1844,5 @@ const struct enum_info everything[] = {
    { 0x9272, "GL_COMPRESSED_RG11_EAC" },
    { 0x9273, "GL_COMPRESSED_SIGNED_RG11_EAC" },
    { 0x19262, "GL_RASTER_POSITION_UNCLIPPED_IBM" },
-   { 0, NULL }
-};
-
-const struct enum_info alternate_names[] = {
-   { 0x8513, "GL_TEXTURE_CUBE_MAP_ARB" },
-   { 0x8514, "GL_TEXTURE_BINDING_CUBE_MAP_ARB" },
-   { 0x8515, "GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB" },
-   { 0x8516, "GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB" },
-   { 0x8517, "GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB" },
-   { 0x8518, "GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB" },
-   { 0x8519, "GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB" },
-   { 0x851A, "GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB" },
    { 0, NULL }
 };
