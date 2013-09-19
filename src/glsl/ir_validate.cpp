@@ -429,6 +429,13 @@ ir_validate::visit_leave(ir_expression *ir)
       }
       break;
 
+   case ir_binop_carry:
+   case ir_binop_borrow:
+      assert(ir->type == ir->operands[0]->type);
+      assert(ir->type == ir->operands[1]->type);
+      assert(ir->type->base_type == GLSL_TYPE_UINT);
+      break;
+
    case ir_binop_less:
    case ir_binop_greater:
    case ir_binop_lequal:

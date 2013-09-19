@@ -134,6 +134,8 @@ ir_expression *add(operand a, operand b);
 ir_expression *sub(operand a, operand b);
 ir_expression *mul(operand a, operand b);
 ir_expression *div(operand a, operand b);
+ir_expression *carry(operand a, operand b);
+ir_expression *borrow(operand a, operand b);
 ir_expression *round_even(operand a);
 ir_expression *dot(operand a, operand b);
 ir_expression *dotlike(operand a, operand b);

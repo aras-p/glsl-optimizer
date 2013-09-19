@@ -398,6 +398,8 @@ ir_expression::ir_expression(int op, ir_rvalue *op0, ir_rvalue *op1)
       this->type = glsl_type::uint_type;
       break;
 
+   case ir_binop_carry:
+   case ir_binop_borrow:
    case ir_binop_lshift:
    case ir_binop_rshift:
    case ir_binop_bfm:
@@ -528,6 +530,8 @@ static const char *const operator_strs[] = {
    "-",
    "*",
    "/",
+   "carry",
+   "borrow",
    "%",
    "<",
    ">",

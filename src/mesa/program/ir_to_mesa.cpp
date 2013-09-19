@@ -1497,6 +1497,8 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
    case ir_quadop_bitfield_insert:
    case ir_binop_ldexp:
    case ir_triop_csel:
+   case ir_binop_carry:
+   case ir_binop_borrow:
       assert(!"not supported");
       break;
 

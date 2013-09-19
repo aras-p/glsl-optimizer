@@ -1095,6 +1095,21 @@ enum ir_expression_operation {
    ir_binop_div,
 
    /**
+    * Returns the carry resulting from the addition of the two arguments.
+    */
+   /*@{*/
+   ir_binop_carry,
+   /*@}*/
+
+   /**
+    * Returns the borrow resulting from the subtraction of the second argument
+    * from the first argument.
+    */
+   /*@{*/
+   ir_binop_borrow,
+   /*@}*/
+
+   /**
     * Takes one of two combinations of arguments:
     *
     * - mod(vecN, vecN)
