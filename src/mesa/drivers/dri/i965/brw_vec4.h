@@ -419,6 +419,8 @@ public:
    vec4_instruction *FBL(dst_reg dst, src_reg value);
    vec4_instruction *CBIT(dst_reg dst, src_reg value);
    vec4_instruction *MAD(dst_reg dst, src_reg c, src_reg b, src_reg a);
+   vec4_instruction *ADDC(dst_reg dst, src_reg src0, src_reg src1);
+   vec4_instruction *SUBB(dst_reg dst, src_reg src0, src_reg src1);
 
    int implied_mrf_writes(vec4_instruction *inst);
 

@@ -234,6 +234,8 @@ ir_channel_expressions_visitor::visit_leave(ir_assignment *ir)
    case ir_binop_sub:
    case ir_binop_mul:
    case ir_binop_div:
+   case ir_binop_carry:
+   case ir_binop_borrow:
    case ir_binop_mod:
    case ir_binop_min:
    case ir_binop_max:

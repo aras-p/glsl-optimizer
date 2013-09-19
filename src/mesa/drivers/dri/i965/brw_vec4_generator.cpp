@@ -963,6 +963,18 @@ vec4_generator::generate_vec4_instruction(vec4_instruction *instruction,
       /* CBIT only supports UD type for dst. */
       brw_CBIT(p, retype(dst, BRW_REGISTER_TYPE_UD), src[0]);
       break;
+   case BRW_OPCODE_ADDC:
+      assert(brw->gen >= 7);
+      brw_set_acc_write_control(p, 1);
+      brw_ADDC(p, dst, src[0], src[1]);
+      brw_set_acc_write_control(p, 0);
+      break;
+   case BRW_OPCODE_SUBB:
+      assert(brw->gen >= 7);
+      brw_set_acc_write_control(p, 1);
+      brw_SUBB(p, dst, src[0], src[1]);
+      brw_set_acc_write_control(p, 0);
+      break;
 
    case BRW_OPCODE_BFE:
       brw_BFE(p, dst, src[0], src[1], src[2]);
