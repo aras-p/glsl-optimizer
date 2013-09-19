@@ -25,7 +25,7 @@ include $(top_srcdir)/src/gallium/Automake.inc
 
 AM_CFLAGS = \
 	$(GALLIUM_CFLAGS) \
-	$(X11_CFLAGS)
+	$(X11_INCLUDES)
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/src/mapi \
