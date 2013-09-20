@@ -233,6 +233,12 @@ static void lp_blit(struct pipe_context *pipe,
 }
 
 
+static void
+lp_flush_resource(struct pipe_context *ctx, struct pipe_resource *resource)
+{
+}
+
+
 static struct pipe_surface *
 llvmpipe_create_surface(struct pipe_context *pipe,
                         struct pipe_resource *pt,
@@ -334,4 +340,5 @@ llvmpipe_init_surface_functions(struct llvmpipe_context *lp)
    /* These two are not actually functions dealing with surfaces */
    lp->pipe.resource_copy_region = lp_resource_copy;
    lp->pipe.blit = lp_blit;
+   lp->pipe.flush_resource = lp_flush_resource;
 }

@@ -394,6 +394,11 @@ render_blit(struct pipe_context *pctx, struct pipe_blit_info *info)
 	return true;
 }
 
+static void
+fd_flush_resource(struct pipe_context *ctx, struct pipe_resource *resource)
+{
+}
+
 void
 fd_resource_screen_init(struct pipe_screen *pscreen)
 {
@@ -414,4 +419,5 @@ fd_resource_context_init(struct pipe_context *pctx)
 	pctx->surface_destroy = fd_surface_destroy;
 	pctx->resource_copy_region = fd_resource_copy_region;
 	pctx->blit = fd_blit;
+	pctx->flush_resource = fd_flush_resource;
 }

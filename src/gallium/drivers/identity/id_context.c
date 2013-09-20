@@ -649,6 +649,16 @@ identity_blit(struct pipe_context *_pipe,
 }
 
 static void
+identity_flush_resource(struct pipe_context *_pipe,
+                        struct pipe_resource *resource)
+{
+   struct identity_context *id_pipe = identity_context(_pipe);
+   struct pipe_context *pipe = id_pipe->pipe;
+
+   pipe->flush_resource(pipe, resource);
+}
+
+static void
 identity_clear(struct pipe_context *_pipe,
                unsigned buffers,
                const union pipe_color_union *color,
@@ -936,6 +946,7 @@ identity_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    id_pipe->base.transfer_flush_region = identity_context_transfer_flush_region;
    id_pipe->base.transfer_inline_write = identity_context_transfer_inline_write;
    id_pipe->base.blit = identity_blit;
+   id_pipe->base.flush_resource = identity_flush_resource;
 
    id_pipe->pipe = pipe;
 

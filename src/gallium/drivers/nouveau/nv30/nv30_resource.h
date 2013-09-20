@@ -72,4 +72,8 @@ void
 nv30_blit(struct pipe_context *pipe,
           const struct pipe_blit_info *blit_info);
 
+void
+nv30_flush_resource(struct pipe_context *pipe,
+                    struct pipe_resource *resource);
+
 #endif

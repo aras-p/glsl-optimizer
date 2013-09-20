@@ -240,6 +240,11 @@ i915_blit(struct pipe_context *pipe, const struct pipe_blit_info *blit_info)
 }
 
 static void
+i915_flush_resource(struct pipe_context *ctx, struct pipe_resource *resource)
+{
+}
+
+static void
 i915_clear_render_target_blitter(struct pipe_context *pipe,
                                  struct pipe_surface *dst,
                                  const union pipe_color_union *color,
@@ -359,6 +364,7 @@ i915_init_surface_functions(struct i915_context *i915)
       i915->base.clear_depth_stencil = i915_clear_depth_stencil_render;
    }
    i915->base.blit = i915_blit;
+   i915->base.flush_resource = i915_flush_resource;
    i915->base.create_surface = i915_create_surface;
    i915->base.surface_destroy = i915_surface_destroy;
 }

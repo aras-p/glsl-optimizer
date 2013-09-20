@@ -873,6 +873,20 @@ rbug_resource_copy_region(struct pipe_context *_pipe,
 }
 
 static void
+rbug_flush_resource(struct pipe_context *_pipe,
+                    struct pipe_resource *_res)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct rbug_resource *rb_resource_res = rbug_resource(_res);
+   struct pipe_context *pipe = rb_pipe->pipe;
+   struct pipe_resource *res = rb_resource_res->resource;
+
+   pipe_mutex_lock(rb_pipe->call_mutex);
+   pipe->flush_resource(pipe, res);
+   pipe_mutex_unlock(rb_pipe->call_mutex);
+}
+
+static void
 rbug_clear(struct pipe_context *_pipe,
            unsigned buffers,
            const union pipe_color_union *color,
@@ -1181,6 +1195,7 @@ rbug_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    rb_pipe->base.set_index_buffer = rbug_set_index_buffer;
    rb_pipe->base.set_sample_mask = rbug_set_sample_mask;
    rb_pipe->base.resource_copy_region = rbug_resource_copy_region;
+   rb_pipe->base.flush_resource = rbug_flush_resource;
    rb_pipe->base.clear = rbug_clear;
    rb_pipe->base.clear_render_target = rbug_clear_render_target;
    rb_pipe->base.clear_depth_stencil = rbug_clear_depth_stencil;

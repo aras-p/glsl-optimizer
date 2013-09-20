@@ -128,6 +128,11 @@ ilo_blit(struct pipe_context *pipe, const struct pipe_blit_info *info)
    ilo_blitter_pipe_blit(ilo->blitter, info);
 }
 
+static void
+ilo_flush_resource(struct pipe_context *ctx, struct pipe_resource *resource)
+{
+}
+
 /**
  * Initialize blit-related functions.
  */
@@ -136,6 +141,7 @@ ilo_init_blit_functions(struct ilo_context *ilo)
 {
    ilo->base.resource_copy_region = ilo_resource_copy_region;
    ilo->base.blit = ilo_blit;
+   ilo->base.flush_resource = ilo_flush_resource;
 
    ilo->base.clear = ilo_clear;
    ilo->base.clear_render_target = ilo_clear_render_target;

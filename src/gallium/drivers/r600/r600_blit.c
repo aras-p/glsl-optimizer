@@ -900,6 +900,11 @@ static void r600_blit(struct pipe_context *ctx,
 	r600_blitter_end(ctx);
 }
 
+static void r600_flush_resource(struct pipe_context *ctx,
+				struct pipe_resource *resource)
+{
+}
+
 void r600_init_blit_functions(struct r600_context *rctx)
 {
 	rctx->b.b.clear = r600_clear;
@@ -907,4 +912,5 @@ void r600_init_blit_functions(struct r600_context *rctx)
 	rctx->b.b.clear_depth_stencil = r600_clear_depth_stencil;
 	rctx->b.b.resource_copy_region = r600_resource_copy_region;
 	rctx->b.b.blit = r600_blit;
+	rctx->b.b.flush_resource = r600_flush_resource;
 }

@@ -438,6 +438,8 @@ dri_flush(__DRIcontext *cPriv,
    /* Flush the drawable. */
    if ((flags & __DRI2_FLUSH_DRAWABLE) &&
        drawable->textures[ST_ATTACHMENT_BACK_LEFT]) {
+      struct pipe_context *pipe = ctx->st->pipe;
+
       if (drawable->stvis.samples > 1 &&
           reason == __DRI2_THROTTLE_SWAPBUFFER) {
          /* Resolve the MSAA back buffer. */
@@ -458,6 +460,8 @@ dri_flush(__DRIcontext *cPriv,
       if (ctx->hud) {
          hud_draw(ctx->hud, drawable->textures[ST_ATTACHMENT_BACK_LEFT]);
       }
+
+      pipe->flush_resource(pipe, drawable->textures[ST_ATTACHMENT_BACK_LEFT]);
    }
 
    flush_flags = 0;

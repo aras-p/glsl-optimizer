@@ -479,19 +479,23 @@ dri2_flush_frontbuffer(struct dri_context *ctx,
 {
    __DRIdrawable *dri_drawable = drawable->dPriv;
    struct __DRIdri2LoaderExtensionRec *loader = drawable->sPriv->dri2.loader;
+   struct pipe_context *pipe = ctx->st->pipe;
 
    if (statt != ST_ATTACHMENT_FRONT_LEFT)
       return;
 
    if (drawable->stvis.samples > 1) {
-      struct pipe_context *pipe = ctx->st->pipe;
-
       /* Resolve the front buffer. */
       dri_pipe_blit(ctx->st->pipe,
                     drawable->textures[ST_ATTACHMENT_FRONT_LEFT],
                     drawable->msaa_textures[ST_ATTACHMENT_FRONT_LEFT]);
-      pipe->flush(pipe, NULL, 0);
    }
+
+   if (drawable->textures[ST_ATTACHMENT_FRONT_LEFT]) {
+      pipe->flush_resource(pipe, drawable->textures[ST_ATTACHMENT_FRONT_LEFT]);
+   }
+
+   pipe->flush(pipe, NULL, 0);
 
    if (loader->flushFrontBuffer) {
       loader->flushFrontBuffer(dri_drawable, dri_drawable->loaderPrivate);

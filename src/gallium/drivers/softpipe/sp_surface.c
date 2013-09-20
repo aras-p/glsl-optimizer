@@ -84,6 +84,12 @@ static void sp_blit(struct pipe_context *pipe,
 }
 
 static void
+sp_flush_resource(struct pipe_context *pipe,
+                  struct pipe_resource *resource)
+{
+}
+
+static void
 softpipe_clear_render_target(struct pipe_context *pipe,
                              struct pipe_surface *dst,
                              const union pipe_color_union *color,
@@ -127,4 +133,5 @@ sp_init_surface_functions(struct softpipe_context *sp)
    sp->pipe.clear_render_target = softpipe_clear_render_target;
    sp->pipe.clear_depth_stencil = softpipe_clear_depth_stencil;
    sp->pipe.blit = sp_blit;
+   sp->pipe.flush_resource = sp_flush_resource;
 }

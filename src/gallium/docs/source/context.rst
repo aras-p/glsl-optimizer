@@ -423,6 +423,19 @@ Flushing
 ``flush``
 
 
+``flush_resource``
+
+Flush the resource cache, so that the resource can be used
+by an external client. Possible usage:
+- flushing a resource before presenting it on the screen
+- flushing a resource if some other process or device wants to use it
+This shouldn't be used to flush caches if the resource is only managed
+by a single pipe_screen and is not shared with another process.
+(i.e. you shouldn't use it to flush caches explicitly if you want to e.g.
+use the resource for texturing)
+
+
+
 Resource Busy Queries
 ^^^^^^^^^^^^^^^^^^^^^
 

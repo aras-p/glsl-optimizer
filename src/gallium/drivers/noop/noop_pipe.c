@@ -238,6 +238,13 @@ static void noop_blit(struct pipe_context *ctx,
 }
 
 
+static void
+noop_flush_resource(struct pipe_context *ctx,
+                    struct pipe_resource *resource)
+{
+}
+
+
 /*
  * context
  */
@@ -267,6 +274,7 @@ static struct pipe_context *noop_create_context(struct pipe_screen *screen, void
 	ctx->clear_depth_stencil = noop_clear_depth_stencil;
 	ctx->resource_copy_region = noop_resource_copy_region;
 	ctx->blit = noop_blit;
+	ctx->flush_resource = noop_flush_resource;
 	ctx->create_query = noop_create_query;
 	ctx->destroy_query = noop_destroy_query;
 	ctx->begin_query = noop_begin_query;

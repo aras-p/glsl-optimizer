@@ -217,6 +217,12 @@ nv30_blit(struct pipe_context *pipe,
    util_blitter_blit(nv30->blitter, &info);
 }
 
+void
+nv30_flush_resource(struct pipe_context *pipe,
+                    struct pipe_resource *resource)
+{
+}
+
 static void *
 nv30_miptree_transfer_map(struct pipe_context *pipe, struct pipe_resource *pt,
                           unsigned level, unsigned usage,

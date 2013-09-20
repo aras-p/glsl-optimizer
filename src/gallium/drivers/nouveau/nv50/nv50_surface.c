@@ -1288,6 +1288,12 @@ nv50_blit(struct pipe_context *pipe, const struct pipe_blit_info *info)
       nv50_blit_3d(nv50, info);
 }
 
+static void
+nv50_flush_resource(struct pipe_context *ctx,
+                    struct pipe_resource *resource)
+{
+}
+
 boolean
 nv50_blitter_create(struct nv50_screen *screen)
 {
@@ -1348,6 +1354,7 @@ nv50_init_surface_functions(struct nv50_context *nv50)
 
    pipe->resource_copy_region = nv50_resource_copy_region;
    pipe->blit = nv50_blit;
+   pipe->flush_resource = nv50_flush_resource;
    pipe->clear_render_target = nv50_clear_render_target;
    pipe->clear_depth_stencil = nv50_clear_depth_stencil;
 }

@@ -1192,6 +1192,12 @@ nvc0_blit(struct pipe_context *pipe, const struct pipe_blit_info *info)
    NOUVEAU_DRV_STAT(&nvc0->screen->base, tex_blit_count, 1);
 }
 
+static void
+nvc0_flush_resource(struct pipe_context *ctx,
+                    struct pipe_resource *resource)
+{
+}
+
 boolean
 nvc0_blitter_create(struct nvc0_screen *screen)
 {
@@ -1260,6 +1266,7 @@ nvc0_init_surface_functions(struct nvc0_context *nvc0)
 
    pipe->resource_copy_region = nvc0_resource_copy_region;
    pipe->blit = nvc0_blit;
+   pipe->flush_resource = nvc0_flush_resource;
    pipe->clear_render_target = nvc0_clear_render_target;
    pipe->clear_depth_stencil = nvc0_clear_depth_stencil;
 }

@@ -720,6 +720,11 @@ static void si_blit(struct pipe_context *ctx,
 	r600_blitter_end(ctx);
 }
 
+static void si_flush_resource(struct pipe_context *ctx,
+			      struct pipe_resource *resource)
+{
+}
+
 void si_init_blit_functions(struct r600_context *rctx)
 {
 	rctx->b.b.clear = r600_clear;
@@ -727,4 +732,5 @@ void si_init_blit_functions(struct r600_context *rctx)
 	rctx->b.b.clear_depth_stencil = r600_clear_depth_stencil;
 	rctx->b.b.resource_copy_region = r600_resource_copy_region;
 	rctx->b.b.blit = si_blit;
+	rctx->b.b.flush_resource = si_flush_resource;
 }

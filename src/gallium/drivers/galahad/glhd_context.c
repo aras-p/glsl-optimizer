@@ -783,6 +783,18 @@ galahad_context_blit(struct pipe_context *_pipe,
 }
 
 static void
+galahad_context_flush_resource(struct pipe_context *_pipe,
+                               struct pipe_resource *_res)
+{
+   struct galahad_context *glhd_pipe = galahad_context(_pipe);
+   struct galahad_resource *glhd_resource_res = galahad_resource(_res);
+   struct pipe_context *pipe = glhd_pipe->pipe;
+   struct pipe_resource *res = glhd_resource_res->resource;
+
+   pipe->flush_resource(pipe, res);
+}
+
+static void
 galahad_context_clear(struct pipe_context *_pipe,
                unsigned buffers,
                const union pipe_color_union *color,
@@ -1096,6 +1108,7 @@ galahad_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    GLHD_PIPE_INIT(set_stream_output_targets);
    GLHD_PIPE_INIT(resource_copy_region);
    GLHD_PIPE_INIT(blit);
+   GLHD_PIPE_INIT(flush_resource);
    GLHD_PIPE_INIT(clear);
    GLHD_PIPE_INIT(clear_render_target);
    GLHD_PIPE_INIT(clear_depth_stencil);

@@ -211,9 +211,17 @@ static void svga_blit(struct pipe_context *pipe,
 }
 
 
+static void
+svga_flush_resource(struct pipe_context *pipe,
+                    struct pipe_resource *resource)
+{
+}
+
+
 void
 svga_init_blit_functions(struct svga_context *svga)
 {
    svga->pipe.resource_copy_region = svga_surface_copy;
    svga->pipe.blit = svga_blit;
+   svga->pipe.flush_resource = svga_flush_resource;
 }
