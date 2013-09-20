@@ -1244,6 +1244,7 @@ fs_generator::generate_code(exec_list *instructions)
 	 break;
 
       case BRW_OPCODE_MAD:
+         assert(brw->gen >= 6);
 	 brw_set_access_mode(p, BRW_ALIGN_16);
 	 if (dispatch_width == 16) {
 	    brw_set_compression_control(p, BRW_COMPRESSION_NONE);
@@ -1258,6 +1259,7 @@ fs_generator::generate_code(exec_list *instructions)
 	 break;
 
       case BRW_OPCODE_LRP:
+         assert(brw->gen >= 6);
 	 brw_set_access_mode(p, BRW_ALIGN_16);
 	 if (dispatch_width == 16) {
 	    brw_set_compression_control(p, BRW_COMPRESSION_NONE);
@@ -1306,9 +1308,11 @@ fs_generator::generate_code(exec_list *instructions)
 	 brw_SHL(p, dst, src[0], src[1]);
 	 break;
       case BRW_OPCODE_F32TO16:
+         assert(brw->gen >= 7);
          brw_F32TO16(p, dst, src[0]);
          break;
       case BRW_OPCODE_F16TO32:
+         assert(brw->gen >= 7);
          brw_F16TO32(p, dst, src[0]);
          break;
       case BRW_OPCODE_CMP:
@@ -1318,19 +1322,23 @@ fs_generator::generate_code(exec_list *instructions)
 	 brw_SEL(p, dst, src[0], src[1]);
 	 break;
       case BRW_OPCODE_BFREV:
+         assert(brw->gen >= 7);
          /* BFREV only supports UD type for src and dst. */
          brw_BFREV(p, retype(dst, BRW_REGISTER_TYPE_UD),
                       retype(src[0], BRW_REGISTER_TYPE_UD));
          break;
       case BRW_OPCODE_FBH:
+         assert(brw->gen >= 7);
          /* FBH only supports UD type for dst. */
          brw_FBH(p, retype(dst, BRW_REGISTER_TYPE_UD), src[0]);
          break;
       case BRW_OPCODE_FBL:
+         assert(brw->gen >= 7);
          /* FBL only supports UD type for dst. */
          brw_FBL(p, retype(dst, BRW_REGISTER_TYPE_UD), src[0]);
          break;
       case BRW_OPCODE_CBIT:
+         assert(brw->gen >= 7);
          /* CBIT only supports UD type for dst. */
          brw_CBIT(p, retype(dst, BRW_REGISTER_TYPE_UD), src[0]);
          break;
@@ -1348,6 +1356,7 @@ fs_generator::generate_code(exec_list *instructions)
          break;
 
       case BRW_OPCODE_BFE:
+         assert(brw->gen >= 7);
          brw_set_access_mode(p, BRW_ALIGN_16);
          if (dispatch_width == 16) {
             brw_set_compression_control(p, BRW_COMPRESSION_NONE);
@@ -1362,9 +1371,11 @@ fs_generator::generate_code(exec_list *instructions)
          break;
 
       case BRW_OPCODE_BFI1:
+         assert(brw->gen >= 7);
          brw_BFI1(p, dst, src[0], src[1]);
          break;
       case BRW_OPCODE_BFI2:
+         assert(brw->gen >= 7);
          brw_set_access_mode(p, BRW_ALIGN_16);
          if (dispatch_width == 16) {
             brw_set_compression_control(p, BRW_COMPRESSION_NONE);
