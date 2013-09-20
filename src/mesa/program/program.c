@@ -349,6 +349,7 @@ _mesa_delete_program(struct gl_context *ctx, struct gl_program *prog)
       return;
 
    free(prog->String);
+   free(prog->LocalParams);
 
    if (prog->Instructions) {
       _mesa_free_instructions(prog->Instructions, prog->NumInstructions);
@@ -477,7 +478,16 @@ _mesa_clone_program(struct gl_context *ctx, const struct gl_program *prog)
 
    if (prog->Parameters)
       clone->Parameters = _mesa_clone_parameter_list(prog->Parameters);
-   memcpy(clone->LocalParams, prog->LocalParams, sizeof(clone->LocalParams));
+   if (prog->LocalParams) {
+      clone->LocalParams = malloc(MAX_PROGRAM_LOCAL_PARAMS *
+                                  sizeof(float[4]));
+      if (!clone->LocalParams) {
+         _mesa_reference_program(ctx, &clone, NULL);
+         return NULL;
+      }
+      memcpy(clone->LocalParams, prog->LocalParams,
+             MAX_PROGRAM_LOCAL_PARAMS * sizeof(float[4]));
+   }
    clone->IndirectRegisterFiles = prog->IndirectRegisterFiles;
    clone->NumInstructions = prog->NumInstructions;
    clone->NumTemporaries = prog->NumTemporaries;

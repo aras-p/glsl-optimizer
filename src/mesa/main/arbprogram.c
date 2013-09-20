@@ -265,6 +265,12 @@ get_local_param_pointer(struct gl_context *ctx, const char *func,
       return GL_FALSE;
    }
 
+   if (!prog->LocalParams) {
+      prog->LocalParams = calloc(maxParams, sizeof(float[4]));
+      if (!prog->LocalParams)
+         return GL_FALSE;
+   }
+
    *param = prog->LocalParams[index];
    return GL_TRUE;
 }

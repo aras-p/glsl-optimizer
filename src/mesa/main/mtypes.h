@@ -2035,8 +2035,15 @@ struct gl_program
 
    /** Named parameters, constants, etc. from program text */
    struct gl_program_parameter_list *Parameters;
-   /** Numbered local parameters */
-   GLfloat LocalParams[MAX_PROGRAM_LOCAL_PARAMS][4];
+
+   /**
+    * Local parameters used by the program.
+    *
+    * It's dynamically allocated because it is rarely used (just
+    * assembly-style programs), and MAX_PROGRAM_LOCAL_PARAMS entries once it's
+    * allocated.
+    */
+   GLfloat (*LocalParams)[4];
 
    /** Map from sampler unit to texture unit (set by glUniform1i()) */
    GLubyte SamplerUnits[MAX_SAMPLERS];
