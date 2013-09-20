@@ -1846,7 +1846,21 @@ fs_visitor::dead_code_eliminate()
       if (inst->dst.file == GRF) {
          assert(this->virtual_grf_end[inst->dst.reg] >= pc);
          if (this->virtual_grf_end[inst->dst.reg] == pc) {
-            inst->remove();
+            /* Don't dead code eliminate instructions that write to the
+             * accumulator as a side-effect. Instead just set the destination
+             * to the null register to free it.
+             */
+            switch (inst->opcode) {
+            case BRW_OPCODE_ADDC:
+            case BRW_OPCODE_SUBB:
+            case BRW_OPCODE_MACH:
+               inst->dst.file = ARF;
+               inst->dst.reg = BRW_ARF_NULL;
+               break;
+            default:
+               inst->remove();
+               break;
+            }
             progress = true;
          }
       }
