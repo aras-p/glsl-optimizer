@@ -151,6 +151,7 @@ calculate_iterations(ir_rvalue *from, ir_rvalue *to, ir_rvalue *increment,
    return (valid_loop) ? iter_value : -1;
 }
 
+namespace {
 
 class loop_control_visitor : public ir_hierarchical_visitor {
 public:
@@ -167,6 +168,7 @@ public:
    bool progress;
 };
 
+} /* anonymous namespace */
 
 ir_visitor_status
 loop_control_visitor::visit_leave(ir_loop *ir)

@@ -50,6 +50,8 @@
 #include "ir.h"
 #include "program/prog_instruction.h" /* For WRITEMASK_* */
 
+namespace {
+
 class lower_clip_distance_visitor : public ir_rvalue_visitor {
 public:
    lower_clip_distance_visitor()
@@ -81,6 +83,7 @@ public:
    ir_variable *new_clip_distance_var;
 };
 
+} /* anonymous namespace */
 
 /**
  * Replace any declaration of gl_ClipDistance as an array of floats with a

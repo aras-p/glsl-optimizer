@@ -52,6 +52,7 @@
 #include "glsl_types.h"
 #include "link_varyings.h"
 
+namespace {
 
 /**
  * This obtains detailed information about built-in varyings from shader code.
@@ -397,6 +398,7 @@ private:
    ir_variable *new_fog;
 };
 
+} /* anonymous namespace */
 
 static void
 lower_texcoord_array(exec_list *ir, const varying_info_visitor *info)

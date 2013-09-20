@@ -168,6 +168,8 @@ program_resource_visitor::visit_field(const glsl_struct_field *field)
    /* empty */
 }
 
+namespace {
+
 /**
  * Class to help calculate the storage requirements for a set of uniforms
  *
@@ -271,6 +273,8 @@ private:
 
    struct string_to_uint_map *map;
 };
+
+} /* anonymous namespace */
 
 /**
  * Class to help parcel out pieces of backing storage to uniforms

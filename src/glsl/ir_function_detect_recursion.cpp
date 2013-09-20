@@ -127,6 +127,8 @@
 #include "program/hash_table.h"
 #include "program.h"
 
+namespace {
+
 struct call_node : public exec_node {
    class function *func;
 };
@@ -221,6 +223,8 @@ public:
    void *mem_ctx;
    bool progress;
 };
+
+} /* anonymous namespace */
 
 static void
 destroy_links(exec_list *list, function *f)

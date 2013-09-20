@@ -38,6 +38,8 @@
 #include "program/hash_table.h"
 #include "glsl_types.h"
 
+namespace {
+
 class ir_validate : public ir_hierarchical_visitor {
 public:
    ir_validate()
@@ -81,6 +83,7 @@ public:
    struct hash_table *ht;
 };
 
+} /* anonymous namespace */
 
 ir_visitor_status
 ir_validate::visit(ir_dereference_variable *ir)

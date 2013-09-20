@@ -40,6 +40,8 @@
 
 static bool debug = false;
 
+namespace {
+
 namespace opt_array_splitting {
 
 class variable_entry : public exec_node
@@ -77,6 +79,7 @@ public:
 };
 
 } /* namespace */
+
 using namespace opt_array_splitting;
 
 /**
@@ -111,6 +114,8 @@ public:
 
    void *mem_ctx;
 };
+
+} /* namespace */
 
 variable_entry *
 ir_array_reference_visitor::get_variable_entry(ir_variable *var)

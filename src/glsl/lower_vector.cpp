@@ -31,6 +31,8 @@
 #include "ir.h"
 #include "ir_rvalue_visitor.h"
 
+namespace {
+
 class lower_vector_visitor : public ir_rvalue_visitor {
 public:
    lower_vector_visitor() : progress(false)
@@ -47,6 +49,8 @@ public:
 
    bool progress;
 };
+
+} /* anonymous namespace */
 
 /**
  * Determine if an IR expression tree looks like an extended swizzle

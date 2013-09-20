@@ -597,6 +597,7 @@ store_tfeedback_info(struct gl_context *ctx, struct gl_shader_program *prog,
    return true;
 }
 
+namespace {
 
 /**
  * Data structure recording the relationship between outputs of one shader
@@ -689,6 +690,7 @@ private:
    const bool consumer_is_fs;
 };
 
+} /* anonymous namespace */
 
 varying_matches::varying_matches(bool disable_varying_packing,
                                  bool consumer_is_fs)

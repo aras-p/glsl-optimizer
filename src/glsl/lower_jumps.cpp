@@ -133,6 +133,8 @@ enum jump_strength
    strength_return
 };
 
+namespace {
+
 struct block_record
 {
    /* minimum jump strength (of lowered IR, not pre-lowering IR)
@@ -991,6 +993,8 @@ lower_continue:
       visit_block(&ir->signatures);
    }
 };
+
+} /* anonymous namespace */
 
 bool
 do_lower_jumps(exec_list *instructions, bool pull_out_jumps, bool lower_sub_return, bool lower_main_return, bool lower_continue, bool lower_break)

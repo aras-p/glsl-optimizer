@@ -65,6 +65,8 @@
 #include "ir_rvalue_visitor.h"
 #include "program/hash_table.h"
 
+namespace {
+
 class flatten_named_interface_blocks_declarations : public ir_rvalue_visitor
 {
 public:
@@ -82,6 +84,8 @@ public:
    virtual ir_visitor_status visit_leave(ir_assignment *);
    virtual void handle_rvalue(ir_rvalue **rvalue);
 };
+
+} /* anonymous namespace */
 
 void
 flatten_named_interface_blocks_declarations::run(exec_list *instructions)

@@ -27,6 +27,8 @@
 
 using namespace ir_builder;
 
+namespace {
+
 class vector_insert_visitor : public ir_rvalue_visitor {
 public:
    vector_insert_visitor(bool lower_nonconstant_index)
@@ -48,6 +50,7 @@ public:
    bool lower_nonconstant_index;
 };
 
+} /* anonymous namespace */
 
 void
 vector_insert_visitor::handle_rvalue(ir_rvalue **rv)

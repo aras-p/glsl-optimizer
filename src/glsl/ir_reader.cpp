@@ -28,6 +28,8 @@
 
 const static bool debug = false;
 
+namespace {
+
 class ir_reader {
 public:
    ir_reader(_mesa_glsl_parse_state *);
@@ -65,6 +67,8 @@ private:
    ir_dereference *read_dereference(s_expression *);
    ir_dereference_variable *read_var_ref(s_expression *);
 };
+
+} /* anonymous namespace */
 
 ir_reader::ir_reader(_mesa_glsl_parse_state *state) : state(state)
 {

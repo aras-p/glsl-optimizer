@@ -34,6 +34,8 @@ find_matching_signature(const char *name, const exec_list *actual_parameters,
 			gl_shader **shader_list, unsigned num_shaders,
 			bool use_builtin);
 
+namespace {
+
 class call_link_visitor : public ir_hierarchical_visitor {
 public:
    call_link_visitor(gl_shader_program *prog, gl_shader *linked,
@@ -273,6 +275,7 @@ private:
    hash_table *locals;
 };
 
+} /* anonymous namespace */
 
 /**
  * Searches a list of shaders for a particular function definition

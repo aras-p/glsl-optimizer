@@ -109,6 +109,8 @@
 
 using namespace ir_builder;
 
+namespace {
+
 class lower_instructions_visitor : public ir_hierarchical_visitor {
 public:
    lower_instructions_visitor(unsigned lower)
@@ -132,6 +134,8 @@ private:
    void bitfield_insert_to_bfm_bfi(ir_expression *);
    void ldexp_to_arith(ir_expression *);
 };
+
+} /* anonymous namespace */
 
 /**
  * Determine if a particular type of lowering should occur

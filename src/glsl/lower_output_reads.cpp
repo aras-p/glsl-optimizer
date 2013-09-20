@@ -37,6 +37,8 @@
  * main() function to copy the final values to the actual shader outputs.
  */
 
+namespace {
+
 class output_read_remover : public ir_hierarchical_visitor {
 protected:
    /**
@@ -54,6 +56,8 @@ public:
    virtual ir_visitor_status visit_leave(class ir_return *);
    virtual ir_visitor_status visit_leave(class ir_function_signature *);
 };
+
+} /* anonymous namespace */
 
 /**
  * Hash function for the output variables - computes the hash of the name.

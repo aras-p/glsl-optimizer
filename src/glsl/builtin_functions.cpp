@@ -304,6 +304,8 @@ tex3d_lod(const _mesa_glsl_parse_state *state)
 
 /******************************************************************************/
 
+namespace {
+
 /**
  * builtin_builder: A singleton object representing the core of the built-in
  * function module.
@@ -520,6 +522,8 @@ private:
 #undef BA2
    /** @} */
 };
+
+} /* anonymous namespace */
 
 /**
  * Core builtin_builder functionality:

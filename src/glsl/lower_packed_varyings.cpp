@@ -148,6 +148,8 @@
 #include "ir.h"
 #include "ir_optimization.h"
 
+namespace {
+
 /**
  * Visitor that performs varying packing.  For each varying declared in the
  * shader, this visitor determines whether it needs to be packed.  If so, it
@@ -229,6 +231,8 @@ private:
     */
    exec_list *out_instructions;
 };
+
+} /* anonymous namespace */
 
 lower_packed_varyings_visitor::lower_packed_varyings_visitor(
       void *mem_ctx, unsigned location_base, unsigned locations_used,

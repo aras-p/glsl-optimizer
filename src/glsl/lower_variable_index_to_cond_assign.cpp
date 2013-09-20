@@ -122,6 +122,7 @@ is_array_or_matrix(const ir_rvalue *ir)
    return (ir->type->is_array() || ir->type->is_matrix());
 }
 
+namespace {
 /**
  * Replace a dereference of a variable with a specified r-value
  *
@@ -511,6 +512,8 @@ public:
       return visit_continue;
    }
 };
+
+} /* anonymous namespace */
 
 bool
 lower_variable_index_to_cond_assign(exec_list *instructions,

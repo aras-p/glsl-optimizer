@@ -82,6 +82,8 @@ extern "C" {
 
 void linker_error(gl_shader_program *, const char *, ...);
 
+namespace {
+
 /**
  * Visitor that determines whether or not a variable is ever written.
  */
@@ -275,6 +277,7 @@ private:
    bool found;
 };
 
+} /* anonymous namespace */
 
 void
 linker_error(gl_shader_program *prog, const char *fmt, ...)

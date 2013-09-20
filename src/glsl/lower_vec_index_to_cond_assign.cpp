@@ -41,6 +41,8 @@
 #include "ir_optimization.h"
 #include "glsl_types.h"
 
+namespace {
+
 /**
  * Visitor class for replacing expressions with ir_constant values.
  */
@@ -68,6 +70,8 @@ public:
 
    bool progress;
 };
+
+} /* anonymous namespace */
 
 ir_rvalue *
 ir_vec_index_to_cond_assign_visitor::convert_vec_index_to_cond_assign(void *mem_ctx,

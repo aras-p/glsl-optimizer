@@ -42,6 +42,8 @@
 #include "ir_visitor.h"
 #include "glsl_types.h"
 
+namespace {
+
 class ir_set_program_inouts_visitor : public ir_hierarchical_visitor {
 public:
    ir_set_program_inouts_visitor(struct gl_program *prog, GLenum shader_type)
@@ -66,6 +68,8 @@ private:
    struct gl_program *prog;
    GLenum shader_type;
 };
+
+} /* anonymous namespace */
 
 static inline bool
 is_shader_inout(ir_variable *var)
