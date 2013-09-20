@@ -568,10 +568,8 @@ fs_generator::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src
  * sample_d.  On at least Haswell, sample_d instruction does some
  * optimizations if the same LOD is used for all pixels in the subspan.
  *
- * For DDY, it's harder, as we want to produce the pairs swizzled between each
- * other.  We could probably do it like ddx and swizzle the right order later,
- * but bail for now and just produce
- * ((ss0.tl - ss0.bl)x4 (ss1.tl - ss1.bl)x4)
+ * For DDY, we need to use ALIGN16 mode since it's capable of doing the
+ * appropriate swizzling.
  */
 void
 fs_generator::generate_ddx(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
@@ -612,22 +610,65 @@ void
 fs_generator::generate_ddy(fs_inst *inst, struct brw_reg dst, struct brw_reg src,
                          bool negate_value)
 {
-   struct brw_reg src0 = brw_reg(src.file, src.nr, 0,
-				 BRW_REGISTER_TYPE_F,
-				 BRW_VERTICAL_STRIDE_4,
-				 BRW_WIDTH_4,
-				 BRW_HORIZONTAL_STRIDE_0,
-				 BRW_SWIZZLE_XYZW, WRITEMASK_XYZW);
-   struct brw_reg src1 = brw_reg(src.file, src.nr, 2,
-				 BRW_REGISTER_TYPE_F,
-				 BRW_VERTICAL_STRIDE_4,
-				 BRW_WIDTH_4,
-				 BRW_HORIZONTAL_STRIDE_0,
-				 BRW_SWIZZLE_XYZW, WRITEMASK_XYZW);
-   if (negate_value)
-      brw_ADD(p, dst, src1, negate(src0));
-   else
-      brw_ADD(p, dst, src0, negate(src1));
+   if (c->key.high_quality_derivatives) {
+      /* produce accurate derivatives */
+      struct brw_reg src0 = brw_reg(src.file, src.nr, 0,
+                                    BRW_REGISTER_TYPE_F,
+                                    BRW_VERTICAL_STRIDE_4,
+                                    BRW_WIDTH_4,
+                                    BRW_HORIZONTAL_STRIDE_1,
+                                    BRW_SWIZZLE_XYXY, WRITEMASK_XYZW);
+      struct brw_reg src1 = brw_reg(src.file, src.nr, 0,
+                                    BRW_REGISTER_TYPE_F,
+                                    BRW_VERTICAL_STRIDE_4,
+                                    BRW_WIDTH_4,
+                                    BRW_HORIZONTAL_STRIDE_1,
+                                    BRW_SWIZZLE_ZWZW, WRITEMASK_XYZW);
+      brw_push_insn_state(p);
+      brw_set_access_mode(p, BRW_ALIGN_16);
+      brw_set_compression_control(p, BRW_COMPRESSION_NONE);
+      if (negate_value)
+         brw_ADD(p, dst, src1, negate(src0));
+      else
+         brw_ADD(p, dst, src0, negate(src1));
+      if (dispatch_width == 16) {
+         /* From page 340 of the i965 PRM:
+          *
+          *     "A compressed instruction must be in Align1 access
+          *     mode. Align16 mode instructions cannot be compressed."
+          *
+          * Therefore, when doing a 16-wide dispatch, we need to manually
+          * unroll to two instructions.
+          */
+         brw_set_compression_control(p, BRW_COMPRESSION_2NDHALF);
+         src0 = sechalf(src0);
+         src1 = sechalf(src1);
+         dst = sechalf(dst);
+         if (negate_value)
+            brw_ADD(p, dst, src1, negate(src0));
+         else
+            brw_ADD(p, dst, src0, negate(src1));
+      }
+      brw_pop_insn_state(p);
+   } else {
+      /* replicate the derivative at the top-left pixel to other pixels */
+      struct brw_reg src0 = brw_reg(src.file, src.nr, 0,
+                                    BRW_REGISTER_TYPE_F,
+                                    BRW_VERTICAL_STRIDE_4,
+                                    BRW_WIDTH_4,
+                                    BRW_HORIZONTAL_STRIDE_0,
+                                    BRW_SWIZZLE_XYZW, WRITEMASK_XYZW);
+      struct brw_reg src1 = brw_reg(src.file, src.nr, 2,
+                                    BRW_REGISTER_TYPE_F,
+                                    BRW_VERTICAL_STRIDE_4,
+                                    BRW_WIDTH_4,
+                                    BRW_HORIZONTAL_STRIDE_0,
+                                    BRW_SWIZZLE_XYZW, WRITEMASK_XYZW);
+      if (negate_value)
+         brw_ADD(p, dst, src1, negate(src0));
+      else
+         brw_ADD(p, dst, src0, negate(src1));
+   }
 }
 
 void
