@@ -52,7 +52,7 @@ struct block_data {
 
 class vec4_live_variables {
 public:
-   DECLARE_RZALLOC_CXX_OPERATORS(vec4_live_variables)
+   DECLARE_RALLOC_CXX_OPERATORS(vec4_live_variables)
 
    vec4_live_variables(vec4_visitor *v, cfg_t *cfg);
    ~vec4_live_variables();
