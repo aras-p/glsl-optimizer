@@ -112,7 +112,7 @@ static const fs_reg reg_null_d(ARF, BRW_ARF_NULL, BRW_REGISTER_TYPE_D);
 
 class ip_record : public exec_node {
 public:
-   DECLARE_RZALLOC_CXX_OPERATORS(ip_record)
+   DECLARE_RALLOC_CXX_OPERATORS(ip_record)
 
    ip_record(int ip)
    {
