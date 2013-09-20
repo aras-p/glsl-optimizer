@@ -3498,8 +3498,6 @@ struct gl_uniform_buffer_binding
  * OpenGL state is contained in this structure.
  * Think of this as a base class from which device drivers will derive
  * sub classes.
- *
- * The struct gl_context typedef names this structure.
  */
 struct gl_context
 {
