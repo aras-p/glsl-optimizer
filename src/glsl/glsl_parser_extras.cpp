@@ -1050,7 +1050,8 @@ ast_expression::print(void) const
 ast_expression::ast_expression(int oper,
 			       ast_expression *ex0,
 			       ast_expression *ex1,
-			       ast_expression *ex2)
+			       ast_expression *ex2) :
+   primary_expression()
 {
    this->oper = ast_operators(oper);
    this->subexpressions[0] = ex0;

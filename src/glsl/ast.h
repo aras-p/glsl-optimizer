@@ -49,7 +49,7 @@ struct YYLTYPE;
  */
 class ast_node {
 public:
-   DECLARE_RZALLOC_CXX_OPERATORS(ast_node);
+   DECLARE_RALLOC_CXX_OPERATORS(ast_node);
 
    /**
     * Print an AST node in something approximating the original GLSL code
@@ -576,6 +576,10 @@ public:
    virtual void print(void) const;
    bool has_qualifiers() const;
 
+   ast_fully_specified_type() : qualifier(), specifier(NULL)
+   {
+   }
+
    const struct glsl_type *glsl_type(const char **name,
 				     struct _mesa_glsl_parse_state *state)
       const;
@@ -859,6 +863,10 @@ public:
 
 class ast_function_definition : public ast_node {
 public:
+   ast_function_definition() : prototype(NULL), body(NULL)
+   {
+   }
+
    virtual void print(void) const;
 
    virtual ir_rvalue *hir(exec_list *instructions,
