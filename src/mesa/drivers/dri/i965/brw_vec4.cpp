@@ -322,8 +322,7 @@ vec4_visitor::dead_code_eliminate()
             case BRW_OPCODE_ADDC:
             case BRW_OPCODE_SUBB:
             case BRW_OPCODE_MACH:
-               inst->dst.file = ARF;
-               inst->dst.reg = BRW_ARF_NULL;
+               inst->dst = dst_reg(retype(brw_null_reg(), inst->dst.type));
                break;
             default:
                inst->remove();
