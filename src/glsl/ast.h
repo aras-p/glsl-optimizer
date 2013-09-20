@@ -346,7 +346,7 @@ enum {
 };
 
 struct ast_type_qualifier {
-   DECLARE_RZALLOC_CXX_OPERATORS(ast_type_qualifier);
+   DECLARE_RALLOC_CXX_OPERATORS(ast_type_qualifier);
 
    union {
       struct {
