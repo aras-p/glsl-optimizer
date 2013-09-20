@@ -82,6 +82,7 @@ cfg_t::create(void *parent_mem_ctx, exec_list *instructions)
 {
    mem_ctx = ralloc_context(parent_mem_ctx);
    block_list.make_empty();
+   blocks = NULL;
    num_blocks = 0;
    ip = 0;
    cur = NULL;
