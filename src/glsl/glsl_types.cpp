@@ -168,6 +168,24 @@ glsl_type::contains_integer() const
    }
 }
 
+bool
+glsl_type::contains_opaque() const {
+   switch (base_type) {
+   case GLSL_TYPE_SAMPLER:
+   case GLSL_TYPE_ATOMIC_UINT:
+      return true;
+   case GLSL_TYPE_ARRAY:
+      return element_type()->contains_opaque();
+   case GLSL_TYPE_STRUCT:
+      for (unsigned int i = 0; i < length; i++) {
+         if (fields.structure[i].type->contains_opaque())
+            return true;
+      }
+      return false;
+   default:
+      return false;
+   }
+}
 
 gl_texture_index
 glsl_type::sampler_index() const

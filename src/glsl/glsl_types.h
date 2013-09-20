@@ -463,6 +463,11 @@ struct glsl_type {
    }
 
    /**
+    * Return whether a type contains any opaque types.
+    */
+   bool contains_opaque() const;
+
+   /**
     * Query the full type of a matrix row
     *
     * \return
