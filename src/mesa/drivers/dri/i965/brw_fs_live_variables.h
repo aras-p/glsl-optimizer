@@ -53,7 +53,7 @@ struct block_data {
 
 class fs_live_variables {
 public:
-   DECLARE_RZALLOC_CXX_OPERATORS(fs_live_variables)
+   DECLARE_RALLOC_CXX_OPERATORS(fs_live_variables)
 
    fs_live_variables(fs_visitor *v, cfg_t *cfg);
    ~fs_live_variables();
