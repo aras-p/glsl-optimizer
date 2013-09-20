@@ -42,7 +42,7 @@ endif
 nouveau_vieux_dri_la_SOURCES = \
 	$(NOUVEAU_C_FILES)
 
-nouveau_vieux_dri_la_LDFLAGS = -module -avoid-version -shared
+nouveau_vieux_dri_la_LDFLAGS = $(DRI_DRIVER_LDFLAGS)
 nouveau_vieux_dri_la_LIBADD = \
 	../common/libdricommon.la \
 	$(DRI_LIB_DEPS) \

@@ -72,7 +72,7 @@ TEST_LIBS = \
 i965_dri_la_SOURCES =
 nodist_EXTRA_i965_dri_la_SOURCES = dummy2.cpp
 i965_dri_la_LIBADD = $(COMMON_LIBS)
-i965_dri_la_LDFLAGS = -module -avoid-version -shared
+i965_dri_la_LDFLAGS = $(DRI_DRIVER_LDFLAGS)
 
 TESTS = \
         test_eu_compact \

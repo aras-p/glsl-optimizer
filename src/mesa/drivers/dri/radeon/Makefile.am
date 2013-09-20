@@ -45,7 +45,7 @@ endif
 radeon_dri_la_SOURCES = \
         $(RADEON_C_FILES)
 
-radeon_dri_la_LDFLAGS = -module -avoid-version -shared
+radeon_dri_la_LDFLAGS = $(DRI_DRIVER_LDFLAGS)
 radeon_dri_la_LIBADD = \
 	../common/libdricommon.la \
 	$(DRI_LIB_DEPS) \

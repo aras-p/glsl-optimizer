@@ -42,7 +42,8 @@ endif
 swrast_dri_la_SOURCES = \
 	$(SWRAST_C_FILES)
 
-swrast_dri_la_LDFLAGS = -module -avoid-version -shared
+swrast_dri_la_LDFLAGS = $(DRI_DRIVER_LDFLAGS)
+
 swrast_dri_la_LIBADD = \
 	$(DRI_LIB_DEPS)
 

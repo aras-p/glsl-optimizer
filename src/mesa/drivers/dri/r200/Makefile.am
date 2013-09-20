@@ -45,7 +45,7 @@ endif
 r200_dri_la_SOURCES = \
         $(R200_C_FILES)
 
-r200_dri_la_LDFLAGS = -module -avoid-version -shared
+r200_dri_la_LDFLAGS = $(DRI_DRIVER_LDFLAGS)
 r200_dri_la_LIBADD = \
 	../common/libdricommon.la \
 	$(DRI_LIB_DEPS) \

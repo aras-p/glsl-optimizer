@@ -37,7 +37,11 @@ libdricore@VERSION@_la_SOURCES = \
 	$(LIBGLCPP_FILES) \
 	$(LIBGLSL_GENERATED_CXX_FILES) \
 	$(LIBGLSL_FILES)
-libdricore@VERSION@_la_LDFLAGS = -version-number 1:0
+libdricore@VERSION@_la_LDFLAGS = \
+        -version-number 1:0 \
+	-Wl,-Bsymbolic \
+        $()
+
 libdricore@VERSION@_la_LIBADD = \
         ../program/libdricore_program.la \
         $()
