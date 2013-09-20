@@ -568,6 +568,25 @@ backend_instruction::is_control_flow()
    }
 }
 
+bool
+backend_instruction::can_do_source_mods()
+{
+   switch (opcode) {
+   case BRW_OPCODE_ADDC:
+   case BRW_OPCODE_BFE:
+   case BRW_OPCODE_BFI1:
+   case BRW_OPCODE_BFI2:
+   case BRW_OPCODE_BFREV:
+   case BRW_OPCODE_CBIT:
+   case BRW_OPCODE_FBH:
+   case BRW_OPCODE_FBL:
+   case BRW_OPCODE_SUBB:
+      return false;
+   default:
+      return true;
+   }
+}
+
 void
 backend_visitor::dump_instructions()
 {

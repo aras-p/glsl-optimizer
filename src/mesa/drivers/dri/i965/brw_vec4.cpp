@@ -222,6 +222,9 @@ vec4_visitor::can_do_source_mods(vec4_instruction *inst)
    if (inst->is_send_from_grf())
       return false;
 
+   if (!inst->can_do_source_mods())
+      return false;
+
    return true;
 }
 

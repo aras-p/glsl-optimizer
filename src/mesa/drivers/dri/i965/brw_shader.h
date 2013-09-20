@@ -44,6 +44,7 @@ public:
    bool is_tex();
    bool is_math();
    bool is_control_flow();
+   bool can_do_source_mods();
 
    enum opcode opcode; /* BRW_OPCODE_* or FS_OPCODE_* */
 
