@@ -44,7 +44,8 @@ pop_stack(exec_list *list)
    return block;
 }
 
-bblock_t::bblock_t()
+bblock_t::bblock_t() :
+   start_ip(0), end_ip(0), block_num(0)
 {
    start = NULL;
    end = NULL;
