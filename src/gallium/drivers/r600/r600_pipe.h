@@ -717,9 +717,6 @@ boolean r600_is_format_supported(struct pipe_screen *screen,
 				 unsigned usage);
 void r600_update_db_shader_control(struct r600_context * rctx);
 
-/* r600_texture.c */
-void r600_init_screen_texture_functions(struct pipe_screen *screen);
-
 /* r600_hw_context.c */
 void r600_get_backend_mask(struct r600_context *ctx);
 void r600_context_flush(struct r600_context *ctx, unsigned flags);

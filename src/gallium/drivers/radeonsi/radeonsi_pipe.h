@@ -241,7 +241,6 @@ void r600_init_query_functions(struct r600_context *rctx);
 void r600_init_context_resource_functions(struct r600_context *r600);
 
 /* r600_texture.c */
-void r600_init_screen_texture_functions(struct pipe_screen *screen);
 void si_init_surface_functions(struct r600_context *r600);
 
 /* r600_translate.c */
