@@ -182,6 +182,12 @@ The integer capabilities:
   vertex components output by a single invocation of a geometry shader.
   This is the product of the number of attribute components per vertex and
   the number of output vertices.
+* ``PIPE_CAP_MAX_TEXTURE_GATHER_COMPONENTS``: Max number of components
+  in format that texture gather can operate on. 1 == RED, ALPHA etc,
+  4 == All formats.
+* ``PIPE_CAP_TEXTURE_GATHER_SM5``: Whether the texture gather
+  hardware implements the SM5 features, component selection,
+  shadow comparison, and run-time offsets.
 
 
 .. _pipe_capf:

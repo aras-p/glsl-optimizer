@@ -221,6 +221,7 @@ static const struct tgsi_opcode_info opcode_info[TGSI_OPCODE_LAST] =
    { 1, 3, 1, 0, 0, 0, OTHR, "TXL2", TGSI_OPCODE_TXL2 },
    { 1, 2, 0, 0, 0, 0, COMP, "IMUL_HI", TGSI_OPCODE_IMUL_HI },
    { 1, 2, 0, 0, 0, 0, COMP, "UMUL_HI", TGSI_OPCODE_UMUL_HI },
+   { 1, 3, 1, 0, 0, 0, OTHR, "TG4", TGSI_OPCODE_TG4 },
 };
 
 const struct tgsi_opcode_info *
