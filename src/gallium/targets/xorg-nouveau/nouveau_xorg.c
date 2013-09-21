@@ -30,7 +30,6 @@
 
 #include "../../state_trackers/xorg/xorg_winsys.h"
 #include <nouveau.h>
-#include <dri.h>
 #include <xf86drmMode.h>
 
 static void nouveau_xorg_identify(int flags);
@@ -129,31 +128,30 @@ nouveau_xorg_pci_probe(DriverPtr driver,
     char *busid;
     int chipset, ret;
 
-    if (device->vendor_id != 0x10DE)
+    busid = malloc(64);
+    if (!busid)
 	return FALSE;
 
-    if (!xf86LoaderCheckSymbol("DRICreatePCIBusID")) {
-	xf86DrvMsg(-1, X_ERROR, "[drm] No DRICreatePCIBusID symbol\n");
+    sprintf(busid, "pci:%04x:%02x:%02x.%d",
+	    device->domain, device->bus,
+	    device->dev, device->func);
+
+    ret = drmCheckModesettingSupported(busid);
+    if (ret) {
+	xf86DrvMsg(-1, X_ERROR, "[drm] KMS not enabled\n");
+	free(busid);
 	return FALSE;
     }
-    busid = DRICreatePCIBusID(device);
 
     ret = nouveau_device_open(busid, &dev);
+    free(busid);
     if (ret) {
 	xf86DrvMsg(-1, X_ERROR, "[drm] failed to open device\n");
-	free(busid);
 	return FALSE;
     }
 
     chipset = dev->chipset;
     nouveau_device_del(&dev);
-
-    ret = drmCheckModesettingSupported(busid);
-    free(busid);
-    if (ret) {
-	xf86DrvMsg(-1, X_ERROR, "[drm] KMS not enabled\n");
-	return FALSE;
-    }
 
     switch (chipset & 0xf0) {
     case 0x00:
@@ -169,6 +167,9 @@ nouveau_xorg_pci_probe(DriverPtr driver,
     case 0x90:
     case 0xa0:
     case 0xc0:
+    case 0xd0:
+    case 0xe0:
+    case 0xf0:
 	xf86DrvMsg(-1, X_INFO, "Detected chipset: NV%02x\n", chipset);
 	break;
     default:
