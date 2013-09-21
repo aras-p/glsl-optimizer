@@ -140,8 +140,8 @@ program_resource_visitor::recursion(const glsl_type *t, char **name,
 	 /* Append the subscript to the current variable name */
 	 ralloc_asprintf_rewrite_tail(name, &new_length, "[%u]", i);
 
-         recursion(t->fields.array, name, new_length,
-                   t->fields.structure[i].row_major, record_type);
+         recursion(t->fields.array, name, new_length, row_major,
+                   record_type);
 
          /* Only the first leaf-field of the record gets called with the
           * record type pointer.
