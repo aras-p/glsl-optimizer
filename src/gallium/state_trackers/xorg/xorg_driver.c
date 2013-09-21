@@ -124,6 +124,9 @@ Bool
 xorg_tracker_have_modesetting(ScrnInfoPtr pScrn, struct pci_device *device)
 {
     char *BusID = malloc(64);
+
+    if (!BusID)
+	return FALSE;
     sprintf(BusID, "pci:%04x:%02x:%02x.%d",
 	    device->domain, device->bus,
 	    device->dev, device->func);
@@ -276,6 +279,9 @@ drv_init_drm(ScrnInfoPtr pScrn)
 	char *BusID;
 
 	BusID = malloc(64);
+	if (!BusID)
+	    return FALSE;
+
 	sprintf(BusID, "PCI:%d:%d:%d",
 		((ms->PciInfo->domain << 8) | ms->PciInfo->bus),
 		ms->PciInfo->dev, ms->PciInfo->func
