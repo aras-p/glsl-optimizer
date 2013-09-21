@@ -240,9 +240,6 @@ void r600_init_query_functions(struct r600_context *rctx);
 /* r600_resource.c */
 void r600_init_context_resource_functions(struct r600_context *r600);
 
-/* r600_texture.c */
-void si_init_surface_functions(struct r600_context *r600);
-
 /* r600_translate.c */
 void r600_translate_index_buffer(struct r600_context *r600,
 				 struct pipe_index_buffer *ib,

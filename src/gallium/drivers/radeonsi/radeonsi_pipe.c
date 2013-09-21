@@ -228,7 +228,6 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	si_init_blit_functions(rctx);
 	r600_init_query_functions(rctx);
 	r600_init_context_resource_functions(rctx);
-	si_init_surface_functions(rctx);
 	si_init_compute_functions(rctx);
 
 	if (rscreen->b.info.has_uvd) {

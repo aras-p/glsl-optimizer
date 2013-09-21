@@ -546,42 +546,6 @@ struct pipe_resource *si_texture_create(struct pipe_screen *screen,
 								  0, NULL, &surface);
 }
 
-static struct pipe_surface *r600_create_surface(struct pipe_context *pipe,
-						struct pipe_resource *texture,
-						const struct pipe_surface *surf_tmpl)
-{
-	struct r600_texture *rtex = (struct r600_texture*)texture;
-	struct r600_surface *surface = CALLOC_STRUCT(r600_surface);
-	unsigned level = surf_tmpl->u.tex.level;
-
-	assert(surf_tmpl->u.tex.first_layer <= util_max_layer(texture, surf_tmpl->u.tex.level));
-	assert(surf_tmpl->u.tex.last_layer <= util_max_layer(texture, surf_tmpl->u.tex.level));
-	assert(surf_tmpl->u.tex.first_layer == surf_tmpl->u.tex.last_layer);
-	if (surface == NULL)
-		return NULL;
-	/* XXX no offset */
-/*	offset = r600_texture_get_offset(rtex, level, surf_tmpl->u.tex.first_layer);*/
-	pipe_reference_init(&surface->base.reference, 1);
-	pipe_resource_reference(&surface->base.texture, texture);
-	surface->base.context = pipe;
-	surface->base.format = surf_tmpl->format;
-	surface->base.width = rtex->surface.level[level].npix_x;
-	surface->base.height = rtex->surface.level[level].npix_y;
-	surface->base.texture = texture;
-	surface->base.u.tex.first_layer = surf_tmpl->u.tex.first_layer;
-	surface->base.u.tex.last_layer = surf_tmpl->u.tex.last_layer;
-	surface->base.u.tex.level = level;
-
-	return &surface->base;
-}
-
-static void r600_surface_destroy(struct pipe_context *pipe,
-				 struct pipe_surface *surface)
-{
-	pipe_resource_reference(&surface->texture, NULL);
-	FREE(surface);
-}
-
 struct pipe_resource *si_texture_from_handle(struct pipe_screen *screen,
 					     const struct pipe_resource *templ,
 					     struct winsys_handle *whandle)
@@ -879,12 +843,6 @@ static void si_texture_transfer_unmap(struct pipe_context *ctx,
 		pipe_resource_reference((struct pipe_resource**)&rtransfer->staging, NULL);
 
 	FREE(transfer);
-}
-
-void si_init_surface_functions(struct r600_context *r600)
-{
-	r600->b.b.create_surface = r600_create_surface;
-	r600->b.b.surface_destroy = r600_surface_destroy;
 }
 
 static const struct u_resource_vtbl r600_texture_vtbl =
