@@ -23,24 +23,7 @@
 #ifndef R600_RESOURCE_H
 #define R600_RESOURCE_H
 
-#include "util/u_transfer.h"
-
-struct r600_texture {
-	struct r600_resource		resource;
-
-	unsigned			size;
-	unsigned			pitch_override;
-	unsigned			is_depth;
-	unsigned			dirty_level_mask; /* each bit says if that miplevel is dirty */
-	struct r600_texture		*flushed_depth_texture;
-	boolean				is_flushing_texture;
-	struct radeon_surface		surface;
-	unsigned mipmap_shift;
-
-	/* Colorbuffer compression and fast clear. */
-	struct r600_fmask_info		fmask;
-	struct r600_cmask_info		cmask;
-};
+#include "../radeon/r600_pipe_common.h"
 
 struct r600_surface {
 	struct pipe_surface		base;

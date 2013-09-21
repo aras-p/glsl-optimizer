@@ -105,6 +105,31 @@ struct r600_cmask_info {
 	unsigned slice_tile_max;
 };
 
+struct r600_texture {
+	struct r600_resource		resource;
+
+	unsigned			size;
+	unsigned			pitch_override;
+	bool				is_depth;
+	unsigned			dirty_level_mask; /* each bit says if that mipmap is compressed */
+	struct r600_texture		*flushed_depth_texture;
+	boolean				is_flushing_texture;
+	struct radeon_surface		surface;
+
+	/* Colorbuffer compression and fast clear. */
+	struct r600_fmask_info		fmask;
+	struct r600_cmask_info		cmask;
+
+	struct r600_resource		*htile;
+	float				depth_clear; /* use htile only for first level */
+
+	struct r600_resource		*cmask_buffer;
+	unsigned			color_clear_value[2];
+
+	bool				non_disp_tiling; /* R600-Cayman only */
+	unsigned			mipmap_shift;
+};
+
 struct r600_common_screen {
 	struct pipe_screen		b;
 	struct radeon_winsys		*ws;

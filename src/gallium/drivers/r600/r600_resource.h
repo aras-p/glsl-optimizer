@@ -34,30 +34,6 @@ struct r600_resource_global {
 	struct compute_memory_item *chunk;
 };
 
-struct r600_texture {
-	struct r600_resource		resource;
-
-	unsigned			pitch_override;
-	unsigned			size;
-	bool				non_disp_tiling;
-	bool				is_depth;
-	unsigned			dirty_level_mask; /* each bit says if that mipmap is compressed */
-	struct r600_texture		*flushed_depth_texture;
-	boolean				is_flushing_texture;
-	struct radeon_surface		surface;
-
-	/* Colorbuffer compression and fast clear. */
-	struct r600_fmask_info		fmask;
-	struct r600_cmask_info		cmask;
-
-	struct r600_resource		*htile;
-	/* use htile only for first level */
-	float				depth_clear;
-
-	struct r600_resource		*cmask_buffer;
-	unsigned			color_clear_value[2];
-};
-
 struct r600_surface {
 	struct pipe_surface		base;
 
