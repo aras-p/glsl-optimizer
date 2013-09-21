@@ -651,6 +651,9 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 		/* XXX some r6xx are buggy and can only do 4 */
 		return 8;
 
+	case PIPE_CAP_MAX_VIEWPORTS:
+		return 1;
+
 	/* Timer queries, present when the clock frequency is non zero. */
 	case PIPE_CAP_QUERY_TIME_ELAPSED:
 		return rscreen->b.info.r600_clock_crystal_freq != 0;

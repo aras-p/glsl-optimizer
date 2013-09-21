@@ -192,6 +192,9 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
             return 4;
 	case PIPE_CAP_ENDIANNESS:
             return PIPE_ENDIAN_LITTLE;
+
+        case PIPE_CAP_MAX_VIEWPORTS:
+            return 1;
     }
     return 0;
 }
