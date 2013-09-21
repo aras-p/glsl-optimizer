@@ -664,13 +664,13 @@ void r600_flag_resource_cache_flush(struct r600_context *rctx,
 				       R600_CONTEXT_FLUSH_AND_INV |
 				       R600_CONTEXT_WAIT_3D_IDLE;
 
-			if (tex->cmask_size || tex->fmask_size) {
+			if (tex->cmask.size || tex->fmask.size) {
 				rctx->b.flags |= R600_CONTEXT_FLUSH_AND_INV_CB_META;
 			}
 			break;
 		}
 
-		if (tex && tex->cmask && tex->cmask != &tex->resource && &tex->cmask->b.b == res) {
+		if (tex && tex->cmask_buffer && tex->cmask_buffer != &tex->resource && &tex->cmask_buffer->b.b == res) {
 			rctx->b.flags |= R600_CONTEXT_FLUSH_AND_INV_CB_META |
 				       R600_CONTEXT_FLUSH_AND_INV |
 				       R600_CONTEXT_WAIT_3D_IDLE;

@@ -608,7 +608,7 @@ static void r600_set_sampler_views(struct pipe_context *pipe, unsigned shader,
 				}
 
 				/* Track compressed colorbuffers. */
-				if (rtex->cmask_size) {
+				if (rtex->cmask.size) {
 					dst->views.compressed_colortex_mask |= 1 << i;
 				} else {
 					dst->views.compressed_colortex_mask &= ~(1 << i);

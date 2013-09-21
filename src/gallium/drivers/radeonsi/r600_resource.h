@@ -25,38 +25,6 @@
 
 #include "util/u_transfer.h"
 
-/* flag to indicate a resource is to be used as a transfer so should not be tiled */
-#define R600_RESOURCE_FLAG_TRANSFER		PIPE_RESOURCE_FLAG_DRV_PRIV
-#define R600_RESOURCE_FLAG_FLUSHED_DEPTH	(PIPE_RESOURCE_FLAG_DRV_PRIV << 1)
-#define R600_RESOURCE_FLAG_FORCE_TILING		(PIPE_RESOURCE_FLAG_DRV_PRIV << 2)
-
-/* Texture transfer. */
-struct r600_transfer {
-	/* Base class. */
-	struct pipe_transfer		transfer;
-	/* Buffer transfer. */
-	struct pipe_transfer		*buffer_transfer;
-	unsigned			offset;
-	struct r600_resource		*staging;
-};
-
-struct r600_fmask_info {
-	unsigned offset;
-	unsigned size;
-	unsigned alignment;
-	unsigned pitch;
-	unsigned bank_height;
-	unsigned slice_tile_max;
-	unsigned tile_mode_index;
-};
-
-struct r600_cmask_info {
-	unsigned offset;
-	unsigned size;
-	unsigned alignment;
-	unsigned slice_tile_max;
-};
-
 struct r600_texture {
 	struct r600_resource		resource;
 

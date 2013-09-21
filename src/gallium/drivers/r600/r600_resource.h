@@ -27,18 +27,6 @@
 #include "../radeon/r600_pipe_common.h"
 
 struct r600_screen;
-
-/* flag to indicate a resource is to be used as a transfer so should not be tiled */
-#define R600_RESOURCE_FLAG_TRANSFER		PIPE_RESOURCE_FLAG_DRV_PRIV
-#define R600_RESOURCE_FLAG_FLUSHED_DEPTH	(PIPE_RESOURCE_FLAG_DRV_PRIV << 1)
-#define R600_RESOURCE_FLAG_FORCE_TILING		(PIPE_RESOURCE_FLAG_DRV_PRIV << 2)
-
-struct r600_transfer {
-	struct pipe_transfer		transfer;
-	struct r600_resource		*staging;
-	unsigned			offset;
-};
-
 struct compute_memory_item;
 
 struct r600_resource_global {
@@ -60,35 +48,19 @@ struct r600_texture {
 	boolean				is_flushing_texture;
 	struct radeon_surface		surface;
 
-	/* FMASK and CMASK can only be used with MSAA textures for now.
-	 * MSAA textures cannot have mipmaps. */
-	unsigned			fmask_offset, fmask_size, fmask_bank_height;
-	unsigned			fmask_slice_tile_max;
-	unsigned			cmask_offset, cmask_size;
-	unsigned			cmask_slice_tile_max;
+	/* Colorbuffer compression and fast clear. */
+	struct r600_fmask_info		fmask;
+	struct r600_cmask_info		cmask;
 
 	struct r600_resource		*htile;
 	/* use htile only for first level */
 	float				depth_clear;
 
-	struct r600_resource		*cmask;
+	struct r600_resource		*cmask_buffer;
 	unsigned			color_clear_value[2];
 };
 
 #define R600_TEX_IS_TILED(tex, level) ((tex)->array_mode[level] != V_038000_ARRAY_LINEAR_GENERAL && (tex)->array_mode[level] != V_038000_ARRAY_LINEAR_ALIGNED)
-
-struct r600_fmask_info {
-	unsigned size;
-	unsigned alignment;
-	unsigned bank_height;
-	unsigned slice_tile_max;
-};
-
-struct r600_cmask_info {
-	unsigned size;
-	unsigned alignment;
-	unsigned slice_tile_max;
-};
 
 struct r600_surface {
 	struct pipe_surface		base;

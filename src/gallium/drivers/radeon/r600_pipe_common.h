@@ -38,6 +38,10 @@
 #include "util/u_suballoc.h"
 #include "util/u_transfer.h"
 
+#define R600_RESOURCE_FLAG_TRANSFER		(PIPE_RESOURCE_FLAG_DRV_PRIV << 0)
+#define R600_RESOURCE_FLAG_FLUSHED_DEPTH	(PIPE_RESOURCE_FLAG_DRV_PRIV << 1)
+#define R600_RESOURCE_FLAG_FORCE_TILING		(PIPE_RESOURCE_FLAG_DRV_PRIV << 2)
+
 /* read caches */
 #define R600_CONTEXT_INV_VERTEX_CACHE		(1 << 0)
 #define R600_CONTEXT_INV_TEX_CACHE		(1 << 1)
@@ -76,6 +80,29 @@ struct r600_resource {
 	 * the unsynchronized map flag and expect the driver to figure it out.
          */
 	struct util_range		valid_buffer_range;
+};
+
+struct r600_transfer {
+	struct pipe_transfer		transfer;
+	struct r600_resource		*staging;
+	unsigned			offset;
+};
+
+struct r600_fmask_info {
+	unsigned offset;
+	unsigned size;
+	unsigned alignment;
+	unsigned pitch;
+	unsigned bank_height;
+	unsigned slice_tile_max;
+	unsigned tile_mode_index;
+};
+
+struct r600_cmask_info {
+	unsigned offset;
+	unsigned size;
+	unsigned alignment;
+	unsigned slice_tile_max;
 };
 
 struct r600_common_screen {

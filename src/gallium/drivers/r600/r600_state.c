@@ -1399,14 +1399,14 @@ static void r600_init_color_surface(struct r600_context *rctx,
 	pipe_resource_reference((struct pipe_resource**)&surf->cb_buffer_fmask,
 				&rtex->resource.b.b);
 
-	if (rtex->cmask_size) {
-		surf->cb_color_cmask = rtex->cmask_offset >> 8;
-		surf->cb_color_mask |= S_028100_CMASK_BLOCK_MAX(rtex->cmask_slice_tile_max);
+	if (rtex->cmask.size) {
+		surf->cb_color_cmask = rtex->cmask.offset >> 8;
+		surf->cb_color_mask |= S_028100_CMASK_BLOCK_MAX(rtex->cmask.slice_tile_max);
 
-		if (rtex->fmask_size) {
+		if (rtex->fmask.size) {
 			color_info |= S_0280A0_TILE_MODE(V_0280A0_FRAG_ENABLE);
-			surf->cb_color_fmask = rtex->fmask_offset >> 8;
-			surf->cb_color_mask |= S_028100_FMASK_TILE_MAX(rtex->fmask_slice_tile_max);
+			surf->cb_color_fmask = rtex->fmask.offset >> 8;
+			surf->cb_color_mask |= S_028100_FMASK_TILE_MAX(rtex->fmask.slice_tile_max);
 		} else { /* cmask only */
 			color_info |= S_0280A0_TILE_MODE(V_0280A0_CLEAR_ENABLE);
 		}
@@ -1611,7 +1611,7 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 			rctx->framebuffer.export_16bpc = false;
 		}
 
-		if (rtex->fmask_size && rtex->cmask_size) {
+		if (rtex->fmask.size && rtex->cmask.size) {
 			rctx->framebuffer.compressed_cb_mask |= 1 << i;
 		}
 	}

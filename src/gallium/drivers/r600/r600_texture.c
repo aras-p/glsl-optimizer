@@ -301,8 +301,8 @@ static void r600_texture_destroy(struct pipe_screen *screen,
 		pipe_resource_reference((struct pipe_resource **)&rtex->flushed_depth_texture, NULL);
 
         pipe_resource_reference((struct pipe_resource**)&rtex->htile, NULL);
-	if (rtex->cmask != &rtex->resource) {
-	    pipe_resource_reference((struct pipe_resource**)&rtex->cmask, NULL);
+	if (rtex->cmask_buffer != &rtex->resource) {
+	    pipe_resource_reference((struct pipe_resource**)&rtex->cmask_buffer, NULL);
 	}
 	pb_reference(&resource->buf, NULL);
 	FREE(rtex);
@@ -371,11 +371,11 @@ static void r600_texture_allocate_fmask(struct r600_screen *rscreen,
 	r600_texture_get_fmask_info(rscreen, rtex,
 				    rtex->resource.b.b.nr_samples, &fmask);
 
-	rtex->fmask_bank_height = fmask.bank_height;
-	rtex->fmask_slice_tile_max = fmask.slice_tile_max;
-	rtex->fmask_offset = align(rtex->size, fmask.alignment);
-	rtex->fmask_size = fmask.size;
-	rtex->size = rtex->fmask_offset + rtex->fmask_size;
+	rtex->fmask.bank_height = fmask.bank_height;
+	rtex->fmask.slice_tile_max = fmask.slice_tile_max;
+	rtex->fmask.offset = align(rtex->size, fmask.alignment);
+	rtex->fmask.size = fmask.size;
+	rtex->size = rtex->fmask.offset + rtex->fmask.size;
 #if 0
 	printf("FMASK width=%u, height=%i, bits=%u, size=%u\n",
 	       fmask.npix_x, fmask.npix_y, fmask.bpe * fmask.nsamples, rtex->fmask_size);
@@ -422,10 +422,10 @@ static void r600_texture_allocate_cmask(struct r600_screen *rscreen,
 
 	r600_texture_get_cmask_info(rscreen, rtex, &cmask);
 
-	rtex->cmask_slice_tile_max = cmask.slice_tile_max;
-	rtex->cmask_offset = align(rtex->size, cmask.alignment);
-	rtex->cmask_size = cmask.size;
-	rtex->size = rtex->cmask_offset + rtex->cmask_size;
+	rtex->cmask.slice_tile_max = cmask.slice_tile_max;
+	rtex->cmask.offset = align(rtex->size, cmask.alignment);
+	rtex->cmask.size = cmask.size;
+	rtex->size = rtex->cmask.offset + rtex->cmask.size;
 #if 0
 	printf("CMASK: macro tile width = %u, macro tile height = %u, "
 	       "pitch elements = %u, height = %u, slice tile max = %u\n",
@@ -438,17 +438,17 @@ void r600_texture_init_cmask(struct r600_screen *rscreen,
 			     struct r600_texture *rtex) {
     struct r600_cmask_info cmask;
 
-    assert(rtex->cmask_size == 0);
+    assert(rtex->cmask.size == 0);
 
     r600_texture_get_cmask_info(rscreen, rtex, &cmask);
-    rtex->cmask_slice_tile_max = cmask.slice_tile_max;
-    rtex->cmask_offset = 0;
-    rtex->cmask_size = cmask.size;
-    rtex->cmask = (struct r600_resource *)pipe_buffer_create(&rscreen->b.b,
-	    PIPE_BIND_CUSTOM, PIPE_USAGE_STATIC, rtex->cmask_size);
+    rtex->cmask.slice_tile_max = cmask.slice_tile_max;
+    rtex->cmask.offset = 0;
+    rtex->cmask.size = cmask.size;
+    rtex->cmask_buffer = (struct r600_resource *)pipe_buffer_create(&rscreen->b.b,
+	    PIPE_BIND_CUSTOM, PIPE_USAGE_STATIC, rtex->cmask.size);
 
-    if (rtex->cmask == NULL) {
-	rtex->cmask_size = 0;
+    if (rtex->cmask_buffer == NULL) {
+	rtex->cmask.size = 0;
     }
 }
 
@@ -485,15 +485,15 @@ r600_texture_create_object(struct pipe_screen *screen,
 		return NULL;
 	}
 
-	rtex->cmask = NULL;
+	rtex->cmask_buffer = NULL;
 	if (base->nr_samples > 1 && !rtex->is_depth && !buf) {
 		r600_texture_allocate_fmask(rscreen, rtex);
 		r600_texture_allocate_cmask(rscreen, rtex);
-		rtex->cmask = &rtex->resource;
+		rtex->cmask_buffer = &rtex->resource;
 	}
 
 	if (!rtex->is_depth && base->nr_samples > 1 &&
-	    (!rtex->fmask_size || !rtex->cmask_size)) {
+	    (!rtex->fmask.size || !rtex->cmask.size)) {
 		FREE(rtex);
 		return NULL;
 	}
@@ -553,10 +553,10 @@ r600_texture_create_object(struct pipe_screen *screen,
 		resource->domains = RADEON_DOMAIN_VRAM;
 	}
 
-	if (rtex->cmask_size) {
+	if (rtex->cmask.size) {
 		/* Initialize the cmask to 0xCC (= compressed state). */
-		r600_screen_clear_buffer(rscreen, &rtex->cmask->b.b,
-					 rtex->cmask_offset, rtex->cmask_size, 0xCC);
+		r600_screen_clear_buffer(rscreen, &rtex->cmask_buffer->b.b,
+					 rtex->cmask.offset, rtex->cmask.size, 0xCC);
 	}
 
 	if (rscreen->debug_flags & DBG_VM) {
