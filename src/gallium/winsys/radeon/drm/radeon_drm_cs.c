@@ -560,17 +560,12 @@ static void radeon_drm_cs_flush(struct radeon_winsys_cs *rcs, unsigned flags, ui
             break;
         }
 
-        if (cs->ws->thread && (flags & RADEON_FLUSH_ASYNC)) {
+        if (cs->ws->thread) {
             cs->flush_started = 1;
             radeon_drm_ws_queue_cs(cs->ws, cs);
+            if (!(flags & RADEON_FLUSH_ASYNC))
+                radeon_drm_cs_sync_flush(rcs);
         } else {
-            pipe_mutex_lock(cs->ws->cs_stack_lock);
-            if (cs->ws->thread) {
-                while (p_atomic_read(&cs->ws->ncs)) {
-                    pipe_condvar_wait(cs->ws->cs_queue_empty, cs->ws->cs_stack_lock);
-                }
-            }
-            pipe_mutex_unlock(cs->ws->cs_stack_lock);
             radeon_drm_cs_emit_ioctl_oneshot(cs, cs->cst);
         }
     } else {

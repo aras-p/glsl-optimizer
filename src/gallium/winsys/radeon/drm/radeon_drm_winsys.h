@@ -67,11 +67,6 @@ struct radeon_drm_winsys {
     /* rings submission thread */
     pipe_mutex cs_stack_lock;
     pipe_semaphore cs_queued;
-    /* we cannot use semaphore for empty queue because maintaining an even
-     * number of call to semaphore_wait and semaphore_signal is, to say the
-     * least, tricky
-     */
-    pipe_condvar cs_queue_empty;
     pipe_thread thread;
     int kill_thread;
     int ncs;
