@@ -110,7 +110,7 @@ static void flush(struct ruvd_decoder *dec)
 	while(dec->cs->cdw % 16)
 		pm4[dec->cs->cdw++] = RUVD_PKT2();
 
-	dec->ws->cs_flush(dec->cs, 0, 0);
+	dec->ws->cs_flush(dec->cs, RADEON_FLUSH_ASYNC, 0);
 }
 
 /* add a new set register command to the IB */
