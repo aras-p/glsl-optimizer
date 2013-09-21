@@ -1533,12 +1533,6 @@ void evergreen_init_color_surface(struct r600_context *rctx,
 		S_028C70_NUMBER_TYPE(ntype) |
 		S_028C70_ENDIAN(endian);
 
-	if (rtex->is_rat) {
-		color_info |= S_028C70_RAT(1);
-		color_dim = S_028C78_WIDTH_MAX(pipe_tex->width0 & 0xffff)
-			| S_028C78_HEIGHT_MAX((pipe_tex->width0 >> 16) & 0xffff);
-	}
-
 	/* EXPORT_NORM is an optimzation that can be enabled for better
 	 * performance in certain cases.
 	 * EXPORT_NORM can be enabled if:
@@ -2228,7 +2222,7 @@ static void evergreen_emit_framebuffer_state(struct r600_context *rctx, struct r
 		radeon_emit(cs, reloc);
 	}
 	/* set CB_COLOR1_INFO for possible dual-src blending */
-	if (i == 1 && !((struct r600_texture*)state->cbufs[0]->texture)->is_rat) {
+	if (i == 1) {
 		r600_write_context_reg(cs, R_028C70_CB_COLOR0_INFO + 1 * 0x3C,
 				       ((struct r600_surface*)state->cbufs[0])->cb_color_info);
 

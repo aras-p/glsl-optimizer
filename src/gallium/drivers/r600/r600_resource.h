@@ -41,7 +41,6 @@ struct r600_texture {
 	unsigned			size;
 	bool				non_disp_tiling;
 	bool				is_depth;
-	bool				is_rat;
 	unsigned			dirty_level_mask; /* each bit says if that mipmap is compressed */
 	struct r600_texture		*flushed_depth_texture;
 	boolean				is_flushing_texture;
