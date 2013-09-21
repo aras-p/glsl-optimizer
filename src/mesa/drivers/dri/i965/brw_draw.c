@@ -376,7 +376,8 @@ static bool brw_try_draw_prims( struct gl_context *ctx,
 				     GLuint nr_prims,
 				     const struct _mesa_index_buffer *ib,
 				     GLuint min_index,
-				     GLuint max_index )
+				     GLuint max_index,
+				     struct gl_buffer_object *indirect)
 {
    struct brw_context *brw = brw_context(ctx);
    bool retval = true;
@@ -528,7 +529,7 @@ void brw_draw_prims( struct gl_context *ctx,
       return;
 
    /* Handle primitive restart if needed */
-   if (brw_handle_primitive_restart(ctx, prims, nr_prims, ib)) {
+   if (brw_handle_primitive_restart(ctx, prims, nr_prims, ib, indirect)) {
       /* The draw was handled, so we can exit now */
       return;
    }
@@ -559,7 +560,7 @@ void brw_draw_prims( struct gl_context *ctx,
     * manage it.  swrast doesn't support our featureset, so we can't fall back
     * to it.
     */
-   brw_try_draw_prims(ctx, arrays, prims, nr_prims, ib, min_index, max_index);
+   brw_try_draw_prims(ctx, arrays, prims, nr_prims, ib, min_index, max_index, indirect);
 }
 
 void brw_draw_init( struct brw_context *brw )

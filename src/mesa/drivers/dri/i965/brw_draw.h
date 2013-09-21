@@ -52,6 +52,7 @@ GLboolean
 brw_handle_primitive_restart(struct gl_context *ctx,
                              const struct _mesa_prim *prims,
                              GLuint nr_prims,
-                             const struct _mesa_index_buffer *ib);
+                             const struct _mesa_index_buffer *ib,
+                             struct gl_buffer_object *indirect);
 
 #endif
