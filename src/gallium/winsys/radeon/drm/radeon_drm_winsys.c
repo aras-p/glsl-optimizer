@@ -41,6 +41,9 @@
 
 #include <xf86drm.h>
 #include <stdio.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 /*
  * this are copy from radeon_drm, once an updated libdrm is released
@@ -519,12 +522,24 @@ static uint64_t radeon_query_value(struct radeon_winsys *rws,
 
 static unsigned hash_fd(void *key)
 {
-    return pointer_to_intptr(key);
+    int fd = pointer_to_intptr(key);
+    struct stat stat;
+    fstat(fd, &stat);
+
+    return stat.st_dev ^ stat.st_ino ^ stat.st_rdev;
 }
 
 static int compare_fd(void *key1, void *key2)
 {
-    return pointer_to_intptr(key1) != pointer_to_intptr(key2);
+    int fd1 = pointer_to_intptr(key1);
+    int fd2 = pointer_to_intptr(key2);
+    struct stat stat1, stat2;
+    fstat(fd1, &stat1);
+    fstat(fd2, &stat2);
+
+    return stat1.st_dev != stat2.st_dev ||
+           stat1.st_ino != stat2.st_ino ||
+           stat1.st_rdev != stat2.st_rdev;
 }
 
 void radeon_drm_ws_queue_cs(struct radeon_drm_winsys *ws, struct radeon_drm_cs *cs)
