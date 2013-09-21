@@ -224,9 +224,7 @@ static int r600_setup_surface(struct pipe_screen *screen,
 			      struct r600_texture *rtex,
 			      unsigned pitch_in_bytes_override)
 {
-	struct pipe_resource *ptex = &rtex->resource.b.b;
 	struct r600_screen *rscreen = (struct r600_screen*)screen;
-	unsigned i;
 	int r;
 
 	r = rscreen->b.ws->surface_init(rscreen->b.ws, &rtex->surface);
@@ -244,23 +242,6 @@ static int r600_setup_surface(struct pipe_screen *screen,
 		if (rtex->surface.flags & RADEON_SURF_SBUFFER) {
 			rtex->surface.stencil_offset =
 			rtex->surface.stencil_level[0].offset = rtex->surface.level[0].slice_size;
-		}
-	}
-	for (i = 0; i <= ptex->last_level; i++) {
-		switch (rtex->surface.level[i].mode) {
-		case RADEON_SURF_MODE_LINEAR_ALIGNED:
-			rtex->array_mode[i] = V_038000_ARRAY_LINEAR_ALIGNED;
-			break;
-		case RADEON_SURF_MODE_1D:
-			rtex->array_mode[i] = V_038000_ARRAY_1D_TILED_THIN1;
-			break;
-		case RADEON_SURF_MODE_2D:
-			rtex->array_mode[i] = V_038000_ARRAY_2D_TILED_THIN1;
-			break;
-		default:
-		case RADEON_SURF_MODE_LINEAR:
-			rtex->array_mode[i] = 0;
-			break;
 		}
 	}
 	return 0;
@@ -540,7 +521,8 @@ r600_texture_create_object(struct pipe_screen *screen,
 	/* Now create the backing buffer. */
 	if (!buf) {
 		unsigned base_align = rtex->surface.bo_alignment;
-		unsigned usage = R600_TEX_IS_TILED(rtex, 0) ? PIPE_USAGE_STATIC : base->usage;
+		unsigned usage = rtex->surface.level[0].mode >= RADEON_SURF_MODE_1D ?
+					 PIPE_USAGE_STATIC : base->usage;
 
 		if (!r600_init_resource(rscreen, resource, rtex->size, base_align, FALSE, usage)) {
 			FREE(rtex);
@@ -847,7 +829,7 @@ static void *r600_texture_transfer_map(struct pipe_context *ctx,
 	 * the CPU is much happier reading out of cached system memory
 	 * than uncached VRAM.
 	 */
-	if (R600_TEX_IS_TILED(rtex, level)) {
+	if (rtex->surface.level[level].mode >= RADEON_SURF_MODE_1D) {
 		use_staging_texture = TRUE;
 	}
 

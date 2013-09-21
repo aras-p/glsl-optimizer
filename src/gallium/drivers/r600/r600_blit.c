@@ -485,7 +485,7 @@ static bool can_fast_clear_color(struct pipe_context *ctx)
 		}
 
 		/* only supported on tiled surfaces */
-		if (tex->array_mode[0] < V_028C70_ARRAY_1D_TILED_THIN1) {
+		if (tex->surface.level[0].mode < RADEON_SURF_MODE_1D) {
 		    return false;
 		}
 

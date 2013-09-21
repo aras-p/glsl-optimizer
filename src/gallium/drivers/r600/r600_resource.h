@@ -37,7 +37,6 @@ struct r600_resource_global {
 struct r600_texture {
 	struct r600_resource		resource;
 
-	unsigned			array_mode[PIPE_MAX_TEXTURE_LEVELS];
 	unsigned			pitch_override;
 	unsigned			size;
 	bool				non_disp_tiling;
@@ -59,8 +58,6 @@ struct r600_texture {
 	struct r600_resource		*cmask_buffer;
 	unsigned			color_clear_value[2];
 };
-
-#define R600_TEX_IS_TILED(tex, level) ((tex)->array_mode[level] != V_038000_ARRAY_LINEAR_GENERAL && (tex)->array_mode[level] != V_038000_ARRAY_LINEAR_ALIGNED)
 
 struct r600_surface {
 	struct pipe_surface		base;
