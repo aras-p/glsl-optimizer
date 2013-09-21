@@ -1752,6 +1752,12 @@ struct_declarator:
       $$ = new(ctx) ast_declaration($1, false, NULL, NULL);
       $$->set_location(yylloc);
    }
+   | any_identifier '[' ']'
+   {
+      void *ctx = state;
+      $$ = new(ctx) ast_declaration($1, true, NULL, NULL);
+      $$->set_location(yylloc);
+   }
    | any_identifier '[' constant_expression ']'
    {
       void *ctx = state;
