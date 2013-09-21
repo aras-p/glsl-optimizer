@@ -719,18 +719,6 @@ void r600_update_db_shader_control(struct r600_context * rctx);
 
 /* r600_texture.c */
 void r600_init_screen_texture_functions(struct pipe_screen *screen);
-void r600_init_surface_functions(struct r600_context *r600);
-uint32_t r600_translate_texformat(struct pipe_screen *screen, enum pipe_format format,
-				  const unsigned char *swizzle_view,
-				  uint32_t *word4_p, uint32_t *yuv_format_p);
-struct pipe_surface *r600_create_surface_custom(struct pipe_context *pipe,
-						struct pipe_resource *texture,
-						const struct pipe_surface *templ,
-						unsigned width, unsigned height);
-
-unsigned r600_get_swizzle_combined(const unsigned char *swizzle_format,
-				   const unsigned char *swizzle_view,
-				   boolean vtx);
 
 /* r600_hw_context.c */
 void r600_get_backend_mask(struct r600_context *ctx);
@@ -810,6 +798,16 @@ unsigned r600_tex_filter(unsigned filter);
 unsigned r600_tex_mipfilter(unsigned filter);
 unsigned r600_tex_compare(unsigned compare);
 bool sampler_state_needs_border_color(const struct pipe_sampler_state *state);
+struct pipe_surface *r600_create_surface_custom(struct pipe_context *pipe,
+						struct pipe_resource *texture,
+						const struct pipe_surface *templ,
+						unsigned width, unsigned height);
+unsigned r600_get_swizzle_combined(const unsigned char *swizzle_format,
+				   const unsigned char *swizzle_view,
+				   boolean vtx);
+uint32_t r600_translate_texformat(struct pipe_screen *screen, enum pipe_format format,
+				  const unsigned char *swizzle_view,
+				  uint32_t *word4_p, uint32_t *yuv_format_p);
 
 /* r600_uvd.c */
 struct pipe_video_codec *r600_uvd_create_decoder(struct pipe_context *context,
