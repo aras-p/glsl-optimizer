@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
+include Makefile.sources
 include $(top_srcdir)/src/gallium/Automake.inc
 
 AM_CFLAGS = $(GALLIUM_CFLAGS)
@@ -33,4 +34,4 @@ endif
 
 noinst_LTLIBRARIES = libgbm.la
 
-libgbm_la_SOURCES = gbm_drm.c
+libgbm_la_SOURCES = $(C_SOURCES)
