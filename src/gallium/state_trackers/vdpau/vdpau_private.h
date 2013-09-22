@@ -387,6 +387,7 @@ typedef struct
 typedef struct
 {
    vlVdpDevice *device;
+   pipe_mutex mutex;
    struct pipe_video_codec *decoder;
 } vlVdpDecoder;
 
