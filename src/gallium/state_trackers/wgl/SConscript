@@ -19,25 +19,8 @@ if not env['gles']:
     # prevent _glapi_* from being declared __declspec(dllimport)
     env.Append(CPPDEFINES = ['_GLAPI_NO_EXPORTS'])
 
-sources = [
-    'stw_context.c',
-    'stw_device.c',
-    'stw_ext_context.c',
-    'stw_ext_extensionsstring.c',
-    'stw_ext_gallium.c',
-    'stw_ext_pbuffer.c',
-    'stw_ext_pixelformat.c',
-    'stw_ext_swapinterval.c',
-    'stw_framebuffer.c',
-    'stw_getprocaddress.c',
-    'stw_pixelformat.c',
-    'stw_st.c',
-    'stw_tls.c',
-    'stw_wgl.c',
-]
-
 wgl = env.ConvenienceLibrary(
     target ='wgl',
-    source = sources,
+    source = env.ParseSourceList('Makefile.sources', 'C_SOURCES'),
 )
 Export('wgl')

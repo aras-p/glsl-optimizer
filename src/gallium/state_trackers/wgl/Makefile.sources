@@ -1,0 +1,15 @@
+C_SOURCES := \
+	stw_context.c \
+	stw_device.c \
+	stw_ext_context.c \
+	stw_ext_extensionsstring.c \
+	stw_ext_gallium.c \
+	stw_ext_pbuffer.c \
+	stw_ext_pixelformat.c \
+	stw_ext_swapinterval.c \
+	stw_framebuffer.c \
+	stw_getprocaddress.c \
+	stw_pixelformat.c \
+	stw_st.c \
+	stw_tls.c \
+	stw_wgl.c
