@@ -1290,10 +1290,8 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 
 	if (rscreen->b.chip_class >= EVERGREEN) {
 		rscreen->b.b.is_format_supported = evergreen_is_format_supported;
-		rscreen->dma_blit = &evergreen_dma_blit;
 	} else {
 		rscreen->b.b.is_format_supported = r600_is_format_supported;
-		rscreen->dma_blit = &r600_dma_blit;
 	}
 	rscreen->b.b.context_create = r600_create_context;
 	rscreen->b.b.fence_reference = r600_fence_reference;

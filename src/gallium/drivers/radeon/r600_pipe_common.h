@@ -203,6 +203,16 @@ struct r600_common_context {
 
 	/* Additional context states. */
 	unsigned flags; /* flush flags */
+
+	/* Copy one resource to another using async DMA.
+	 * False is returned if the copy couldn't be done. */
+	boolean (*dma_copy)(struct pipe_context *ctx,
+			    struct pipe_resource *dst,
+			    unsigned dst_level,
+			    unsigned dst_x, unsigned dst_y, unsigned dst_z,
+			    struct pipe_resource *src,
+			    unsigned src_level,
+			    const struct pipe_box *src_box);
 };
 
 /* r600_common_pipe.c */

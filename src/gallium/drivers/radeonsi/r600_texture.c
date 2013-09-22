@@ -73,6 +73,7 @@ static void r600_copy_region_with_blit(struct pipe_context *pipe,
 /* Copy from a full GPU texture to a transfer's staging one. */
 static void r600_copy_to_staging_texture(struct pipe_context *ctx, struct r600_transfer *rtransfer)
 {
+	struct r600_context *rctx = (struct r600_context*)ctx;
 	struct pipe_transfer *transfer = (struct pipe_transfer*)rtransfer;
 	struct pipe_resource *dst = &rtransfer->staging->b.b;
 	struct pipe_resource *src = transfer->resource;
@@ -83,13 +84,18 @@ static void r600_copy_to_staging_texture(struct pipe_context *ctx, struct r600_t
 		return;
 	}
 
-	ctx->resource_copy_region(ctx, dst, 0, 0, 0, 0,
-				  src, transfer->level, &transfer->box);
+	if (!rctx->b.dma_copy(ctx, dst, 0, 0, 0, 0,
+			      src, transfer->level,
+			      &transfer->box)) {
+		ctx->resource_copy_region(ctx, dst, 0, 0, 0, 0,
+					  src, transfer->level, &transfer->box);
+	}
 }
 
 /* Copy from a transfer's staging texture to a full GPU one. */
 static void r600_copy_from_staging_texture(struct pipe_context *ctx, struct r600_transfer *rtransfer)
 {
+	struct r600_context *rctx = (struct r600_context*)ctx;
 	struct pipe_transfer *transfer = (struct pipe_transfer*)rtransfer;
 	struct pipe_resource *dst = transfer->resource;
 	struct pipe_resource *src = &rtransfer->staging->b.b;
@@ -104,9 +110,13 @@ static void r600_copy_from_staging_texture(struct pipe_context *ctx, struct r600
 		return;
 	}
 
-	ctx->resource_copy_region(ctx, dst, transfer->level,
-				  transfer->box.x, transfer->box.y, transfer->box.z,
-				  src, 0, &sbox);
+	if (!rctx->b.dma_copy(ctx, dst, transfer->level,
+			      transfer->box.x, transfer->box.y, transfer->box.z,
+			      src, 0, &sbox)) {
+		ctx->resource_copy_region(ctx, dst, transfer->level,
+					  transfer->box.x, transfer->box.y, transfer->box.z,
+					  src, 0, &sbox);
+	}
 }
 
 static unsigned r600_texture_get_offset(struct r600_texture *rtex, unsigned level,

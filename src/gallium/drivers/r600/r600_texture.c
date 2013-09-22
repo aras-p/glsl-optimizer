@@ -81,9 +81,9 @@ static void r600_copy_to_staging_texture(struct pipe_context *ctx, struct r600_t
 		return;
 	}
 
-	if (!rctx->screen->dma_blit(ctx, dst, 0, 0, 0, 0,
-				    src, transfer->level,
-				    &transfer->box)) {
+	if (!rctx->b.dma_copy(ctx, dst, 0, 0, 0, 0,
+			      src, transfer->level,
+			      &transfer->box)) {
 		ctx->resource_copy_region(ctx, dst, 0, 0, 0, 0,
 					  src, transfer->level, &transfer->box);
 	}
@@ -107,9 +107,9 @@ static void r600_copy_from_staging_texture(struct pipe_context *ctx, struct r600
 		return;
 	}
 
-	if (!rctx->screen->dma_blit(ctx, dst, transfer->level,
-				    transfer->box.x, transfer->box.y, transfer->box.z,
-				    src, 0, &sbox)) {
+	if (!rctx->b.dma_copy(ctx, dst, transfer->level,
+			      transfer->box.x, transfer->box.y, transfer->box.z,
+			      src, 0, &sbox)) {
 		ctx->resource_copy_region(ctx, dst, transfer->level,
 					  transfer->box.x, transfer->box.y, transfer->box.z,
 					  src, 0, &sbox);

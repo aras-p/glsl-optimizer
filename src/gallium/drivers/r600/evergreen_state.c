@@ -3739,13 +3739,13 @@ static void evergreen_dma_copy_tile(struct r600_context *rctx,
 	}
 }
 
-boolean evergreen_dma_blit(struct pipe_context *ctx,
-			struct pipe_resource *dst,
-			unsigned dst_level,
-			unsigned dst_x, unsigned dst_y, unsigned dst_z,
-			struct pipe_resource *src,
-			unsigned src_level,
-			const struct pipe_box *src_box)
+static boolean evergreen_dma_blit(struct pipe_context *ctx,
+				  struct pipe_resource *dst,
+				  unsigned dst_level,
+				  unsigned dst_x, unsigned dst_y, unsigned dst_z,
+				  struct pipe_resource *src,
+				  unsigned src_level,
+				  const struct pipe_box *src_box)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_texture *rsrc = (struct r600_texture*)src;
@@ -3904,5 +3904,7 @@ void evergreen_init_state_functions(struct r600_context *rctx)
                 rctx->b.b.get_sample_position = evergreen_get_sample_position;
         else
                 rctx->b.b.get_sample_position = cayman_get_sample_position;
+	rctx->b.dma_copy = evergreen_dma_blit;
+
 	evergreen_init_compute_state_functions(rctx);
 }

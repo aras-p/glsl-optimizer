@@ -201,14 +201,6 @@ struct r600_pipe_fences {
 	pipe_mutex			mutex;
 };
 
-typedef boolean (*r600g_dma_blit_t)(struct pipe_context *ctx,
-				struct pipe_resource *dst,
-				unsigned dst_level,
-				unsigned dst_x, unsigned dst_y, unsigned dst_z,
-				struct pipe_resource *src,
-				unsigned src_level,
-				const struct pipe_box *src_box);
-
 /* logging */
 #define DBG_TEX_DEPTH		(1 << 0)
 #define DBG_COMPUTE		(1 << 1)
@@ -260,7 +252,6 @@ struct r600_screen {
 	struct r600_resource		*trace_bo;
 	uint32_t			*trace_ptr;
 	unsigned			cs_count;
-	r600g_dma_blit_t		dma_blit;
 
 	/* Auxiliary context. Mainly used to initialize resources.
 	 * It must be locked prior to using and flushed before unlocking. */
@@ -739,13 +730,6 @@ void r600_dma_copy(struct r600_context *rctx,
 		uint64_t dst_offset,
 		uint64_t src_offset,
 		uint64_t size);
-boolean r600_dma_blit(struct pipe_context *ctx,
-			struct pipe_resource *dst,
-			unsigned dst_level,
-			unsigned dst_x, unsigned dst_y, unsigned dst_z,
-			struct pipe_resource *src,
-			unsigned src_level,
-			const struct pipe_box *src_box);
 void r600_flag_resource_cache_flush(struct r600_context *rctx,
 				    struct pipe_resource *res);
 
@@ -758,13 +742,6 @@ void evergreen_dma_copy(struct r600_context *rctx,
 		uint64_t dst_offset,
 		uint64_t src_offset,
 		uint64_t size);
-boolean evergreen_dma_blit(struct pipe_context *ctx,
-			struct pipe_resource *dst,
-			unsigned dst_level,
-			unsigned dst_x, unsigned dst_y, unsigned dst_z,
-			struct pipe_resource *src,
-			unsigned src_level,
-			const struct pipe_box *src_box);
 
 /* r600_state_common.c */
 void r600_init_common_state_functions(struct r600_context *rctx);

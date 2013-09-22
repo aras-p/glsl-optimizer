@@ -2955,6 +2955,18 @@ static void r600_surface_destroy(struct pipe_context *pipe,
 	FREE(surface);
 }
 
+static boolean si_dma_copy(struct pipe_context *ctx,
+			   struct pipe_resource *dst,
+			   unsigned dst_level,
+			   unsigned dst_x, unsigned dst_y, unsigned dst_z,
+			   struct pipe_resource *src,
+			   unsigned src_level,
+			   const struct pipe_box *src_box)
+{
+	/* XXX implement this or share evergreen_dma_blit with r600g */
+	return FALSE;
+}
+
 void si_init_state_functions(struct r600_context *rctx)
 {
 	int i;
@@ -3018,6 +3030,7 @@ void si_init_state_functions(struct r600_context *rctx)
 	rctx->b.b.set_polygon_stipple = si_set_polygon_stipple;
 	rctx->b.b.create_surface = r600_create_surface;
 	rctx->b.b.surface_destroy = r600_surface_destroy;
+	rctx->b.dma_copy = si_dma_copy;
 
 	rctx->b.b.draw_vbo = si_draw_vbo;
 }

@@ -3119,13 +3119,13 @@ static boolean r600_dma_copy_tile(struct r600_context *rctx,
 	return TRUE;
 }
 
-boolean r600_dma_blit(struct pipe_context *ctx,
-			struct pipe_resource *dst,
-			unsigned dst_level,
-			unsigned dst_x, unsigned dst_y, unsigned dst_z,
-			struct pipe_resource *src,
-			unsigned src_level,
-			const struct pipe_box *src_box)
+static boolean r600_dma_blit(struct pipe_context *ctx,
+			     struct pipe_resource *dst,
+			     unsigned dst_level,
+			     unsigned dst_x, unsigned dst_y, unsigned dst_z,
+			     struct pipe_resource *src,
+			     unsigned src_level,
+			     const struct pipe_box *src_box)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_texture *rsrc = (struct r600_texture*)src;
@@ -3263,7 +3263,7 @@ void r600_init_state_functions(struct r600_context *rctx)
 	rctx->b.b.set_framebuffer_state = r600_set_framebuffer_state;
 	rctx->b.b.set_polygon_stipple = r600_set_polygon_stipple;
 	rctx->b.b.set_scissor_states = r600_set_scissor_states;
-
 	rctx->b.b.get_sample_position = r600_get_sample_position;
+	rctx->b.dma_copy = r600_dma_blit;
 }
 /* this function must be last */
