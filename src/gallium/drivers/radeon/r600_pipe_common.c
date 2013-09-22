@@ -25,6 +25,7 @@
  */
 
 #include "r600_pipe_common.h"
+#include "tgsi/tgsi_parse.h"
 
 static const struct debug_named_value common_debug_options[] = {
 	/* logging */
@@ -99,5 +100,33 @@ void r600_context_add_resource_size(struct pipe_context *ctx, struct pipe_resour
 	}
 	if (rr->domains & RADEON_DOMAIN_VRAM) {
 		rctx->vram += rr->buf->size;
+	}
+}
+
+static unsigned tgsi_get_processor_type(const struct tgsi_token *tokens)
+{
+	struct tgsi_parse_context parse;
+
+	if (tgsi_parse_init( &parse, tokens ) != TGSI_PARSE_OK) {
+		debug_printf("tgsi_parse_init() failed in %s:%i!\n", __func__, __LINE__);
+		return ~0;
+	}
+	return parse.FullHeader.Processor.Processor;
+}
+
+bool r600_can_dump_shader(struct r600_common_screen *rscreen,
+			  const struct tgsi_token *tokens)
+{
+	switch (tgsi_get_processor_type(tokens)) {
+	case TGSI_PROCESSOR_VERTEX:
+		return (rscreen->debug_flags & DBG_VS) != 0;
+	case TGSI_PROCESSOR_GEOMETRY:
+		return (rscreen->debug_flags & DBG_GS) != 0;
+	case TGSI_PROCESSOR_FRAGMENT:
+		return (rscreen->debug_flags & DBG_PS) != 0;
+	case TGSI_PROCESSOR_COMPUTE:
+		return (rscreen->debug_flags & DBG_CS) != 0;
+	default:
+		return false;
 	}
 }

@@ -237,6 +237,8 @@ bool r600_common_context_init(struct r600_common_context *rctx,
 			      struct r600_common_screen *rscreen);
 void r600_common_context_cleanup(struct r600_common_context *rctx);
 void r600_context_add_resource_size(struct pipe_context *ctx, struct pipe_resource *r);
+bool r600_can_dump_shader(struct r600_common_screen *rscreen,
+			  const struct tgsi_token *tokens);
 
 /* r600_streamout.c */
 void r600_streamout_buffers_dirty(struct r600_common_context *rctx);

@@ -1758,10 +1758,8 @@ int si_compile_llvm(struct r600_context *rctx, struct si_pipe_shader *shader,
 {
 	unsigned i;
 	uint32_t *ptr;
-	bool dump;
 	struct radeon_llvm_binary binary;
-
-	dump = debug_get_bool_option("RADEON_DUMP_SHADERS", FALSE);
+	bool dump = r600_can_dump_shader(&rctx->screen->b, shader->selector->tokens);
 
 	memset(&binary, 0, sizeof(binary));
 	radeon_llvm_compile(mod, &binary,
@@ -1839,10 +1837,8 @@ int si_pipe_shader_create(
 	struct tgsi_shader_info shader_info;
 	struct lp_build_tgsi_context * bld_base;
 	LLVMModuleRef mod;
-	bool dump;
 	int r = 0;
-
-	dump = debug_get_bool_option("RADEON_DUMP_SHADERS", FALSE);
+	bool dump = r600_can_dump_shader(&rctx->screen->b, shader->selector->tokens);
 
 	assert(shader->shader.noutput == 0);
 	assert(shader->shader.ninterp == 0);

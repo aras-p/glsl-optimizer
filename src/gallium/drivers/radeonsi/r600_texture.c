@@ -291,8 +291,6 @@ static void r600_texture_destroy(struct pipe_screen *screen,
 
 static const struct u_resource_vtbl r600_texture_vtbl;
 
-DEBUG_GET_ONCE_BOOL_OPTION(print_texdepth, "RADEON_PRINT_TEXDEPTH", FALSE);
-
 /* The number of samples can be specified independently of the texture. */
 static void r600_texture_get_fmask_info(struct r600_screen *rscreen,
 					struct r600_texture *rtex,
@@ -468,7 +466,7 @@ r600_texture_create_object(struct pipe_screen *screen,
 		memset(map + rtex->cmask.offset, 0xCC, rtex->cmask.size);
 	}
 
-	if (debug_get_option_print_texdepth() && rtex->is_depth) {
+	if (rscreen->b.debug_flags & DBG_TEX_DEPTH && rtex->is_depth) {
 		printf("Texture: npix_x=%u, npix_y=%u, npix_z=%u, blk_w=%u, "
 		       "blk_h=%u, blk_d=%u, array_size=%u, last_level=%u, "
 		       "bpe=%u, nsamples=%u, flags=%u\n",

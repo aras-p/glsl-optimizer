@@ -825,6 +825,11 @@ struct pipe_screen *radeonsi_screen_create(struct radeon_winsys *ws)
 
 	r600_common_screen_init(&rscreen->b, ws);
 
+	if (debug_get_bool_option("RADEON_PRINT_TEXDEPTH", FALSE))
+		rscreen->b.debug_flags |= DBG_TEX_DEPTH;
+	if (debug_get_bool_option("RADEON_DUMP_SHADERS", FALSE))
+		rscreen->b.debug_flags |= DBG_FS | DBG_VS | DBG_GS | DBG_PS | DBG_CS;
+
 	if (r600_init_tiling(rscreen)) {
 		FREE(rscreen);
 		return NULL;
