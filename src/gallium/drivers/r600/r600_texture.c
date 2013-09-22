@@ -490,7 +490,7 @@ r600_texture_create_object(struct pipe_screen *screen,
 	if (!(base->flags & (R600_RESOURCE_FLAG_TRANSFER | R600_RESOURCE_FLAG_FLUSHED_DEPTH)) &&
 	    util_format_is_depth_or_stencil(base->format) &&
 	    rscreen->b.info.drm_minor >= 26 &&
-	    !(rscreen->debug_flags & DBG_NO_HYPERZ) &&
+	    !(rscreen->b.debug_flags & DBG_NO_HYPERZ) &&
 	    base->target == PIPE_TEXTURE_2D &&
 	    rtex->surface.level[0].nblk_x >= 32 &&
 	    rtex->surface.level[0].nblk_y >= 32) {
@@ -541,7 +541,7 @@ r600_texture_create_object(struct pipe_screen *screen,
 					 rtex->cmask.offset, rtex->cmask.size, 0xCC);
 	}
 
-	if (rscreen->debug_flags & DBG_VM) {
+	if (rscreen->b.debug_flags & DBG_VM) {
 		fprintf(stderr, "VM start=0x%llX  end=0x%llX | Texture %ix%ix%i, %i levels, %i samples, %s\n",
 			r600_resource_va(screen, &rtex->resource.b.b),
 			r600_resource_va(screen, &rtex->resource.b.b) + rtex->resource.buf->size,
@@ -549,7 +549,7 @@ r600_texture_create_object(struct pipe_screen *screen,
 			base->nr_samples ? base->nr_samples : 1, util_format_short_name(base->format));
 	}
 
-	if (rscreen->debug_flags & DBG_TEX_DEPTH && rtex->is_depth && rtex->non_disp_tiling) {
+	if (rscreen->b.debug_flags & DBG_TEX_DEPTH && rtex->is_depth && rtex->non_disp_tiling) {
 		printf("Texture: npix_x=%u, npix_y=%u, npix_z=%u, blk_w=%u, "
 		       "blk_h=%u, blk_d=%u, array_size=%u, last_level=%u, "
 		       "bpe=%u, nsamples=%u, flags=%u\n",

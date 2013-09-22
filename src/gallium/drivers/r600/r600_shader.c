@@ -99,13 +99,13 @@ static bool r600_can_dump_shader(struct r600_screen *rscreen, unsigned processor
 {
 	switch (processor_type) {
 	case TGSI_PROCESSOR_VERTEX:
-		return (rscreen->debug_flags & DBG_VS) != 0;
+		return (rscreen->b.debug_flags & DBG_VS) != 0;
 	case TGSI_PROCESSOR_GEOMETRY:
-		return (rscreen->debug_flags & DBG_GS) != 0;
+		return (rscreen->b.debug_flags & DBG_GS) != 0;
 	case TGSI_PROCESSOR_FRAGMENT:
-		return (rscreen->debug_flags & DBG_PS) != 0;
+		return (rscreen->b.debug_flags & DBG_PS) != 0;
 	case TGSI_PROCESSOR_COMPUTE:
-		return (rscreen->debug_flags & DBG_CS) != 0;
+		return (rscreen->b.debug_flags & DBG_CS) != 0;
 	default:
 		return false;
 	}
@@ -140,8 +140,8 @@ int r600_pipe_shader_create(struct pipe_context *ctx,
 	int r, i;
 	uint32_t *ptr;
 	bool dump = r600_can_dump_shader(rctx->screen, tgsi_get_processor_type(sel->tokens));
-	unsigned use_sb = !(rctx->screen->debug_flags & DBG_NO_SB);
-	unsigned sb_disasm = use_sb || (rctx->screen->debug_flags & DBG_SB_DISASM);
+	unsigned use_sb = !(rctx->screen->b.debug_flags & DBG_NO_SB);
+	unsigned sb_disasm = use_sb || (rctx->screen->b.debug_flags & DBG_SB_DISASM);
 
 	shader->shader.bc.isa = rctx->isa;
 
@@ -924,7 +924,7 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 	bool indirect_gprs;
 
 #ifdef R600_USE_LLVM
-	use_llvm = !(rscreen->debug_flags & DBG_NO_LLVM);
+	use_llvm = !(rscreen->b.debug_flags & DBG_NO_LLVM);
 #endif
 	ctx.bc = &shader->bc;
 	ctx.shader = shader;

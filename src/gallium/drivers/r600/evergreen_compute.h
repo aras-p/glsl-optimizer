@@ -55,7 +55,7 @@ void r600_compute_global_transfer_inline_write( struct pipe_context *, struct pi
 
 static inline void COMPUTE_DBG(struct r600_screen *rscreen, const char *fmt, ...)
 {
-	if (!(rscreen->debug_flags & DBG_COMPUTE)) {
+	if (!(rscreen->b.debug_flags & DBG_COMPUTE)) {
 		return;
 	}
 

@@ -150,7 +150,7 @@ static void *r600_buffer_transfer_map(struct pipe_context *ctx,
 	}
 	else if ((usage & PIPE_TRANSFER_DISCARD_RANGE) &&
 		 !(usage & PIPE_TRANSFER_UNSYNCHRONIZED) &&
-		 !(rctx->screen->debug_flags & DBG_NO_DISCARD_RANGE) &&
+		 !(rctx->screen->b.debug_flags & DBG_NO_DISCARD_RANGE) &&
 		 (rctx->screen->has_cp_dma ||
 		  (rctx->screen->has_streamout &&
 		   /* The buffer range must be aligned to 4 with streamout. */
@@ -280,7 +280,7 @@ bool r600_init_resource(struct r600_screen *rscreen,
 	res->domains = domains;
 	util_range_set_empty(&res->valid_buffer_range);
 
-	if (rscreen->debug_flags & DBG_VM && res->b.b.target == PIPE_BUFFER) {
+	if (rscreen->b.debug_flags & DBG_VM && res->b.b.target == PIPE_BUFFER) {
 		fprintf(stderr, "VM start=0x%llX  end=0x%llX | Buffer %u bytes\n",
 			r600_resource_va(&rscreen->b.b, &res->b.b),
 			r600_resource_va(&rscreen->b.b, &res->b.b) + res->buf->size,

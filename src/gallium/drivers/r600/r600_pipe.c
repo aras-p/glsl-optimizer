@@ -42,20 +42,7 @@
 #include "radeon/radeon_uvd.h"
 #include "os/os_time.h"
 
-static const struct debug_named_value debug_options[] = {
-	/* logging */
-	{ "texdepth", DBG_TEX_DEPTH, "Print texture depth info" },
-	{ "compute", DBG_COMPUTE, "Print compute info" },
-	{ "vm", DBG_VM, "Print virtual addresses when creating resources" },
-	{ "trace_cs", DBG_TRACE_CS, "Trace cs and write rlockup_<csid>.c file with faulty cs" },
-
-	/* shaders */
-	{ "fs", DBG_FS, "Print fetch shaders" },
-	{ "vs", DBG_VS, "Print vertex shaders" },
-	{ "gs", DBG_GS, "Print geometry shaders" },
-	{ "ps", DBG_PS, "Print pixel shaders" },
-	{ "cs", DBG_CS, "Print compute shaders" },
-
+static const struct debug_named_value r600_debug_options[] = {
 	/* features */
 	{ "nohyperz", DBG_NO_HYPERZ, "Disable Hyper-Z" },
 #if defined(R600_USE_LLVM)
@@ -448,7 +435,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	rctx->b.rings.gfx.flushing = false;
 
 	rctx->b.rings.dma.cs = NULL;
-	if (rscreen->b.info.r600_has_dma && !(rscreen->debug_flags & DBG_NO_ASYNC_DMA)) {
+	if (rscreen->b.info.r600_has_dma && !(rscreen->b.debug_flags & DBG_NO_ASYNC_DMA)) {
 		rctx->b.rings.dma.cs = rctx->b.ws->cs_create(rctx->b.ws, RING_DMA, NULL);
 		rctx->b.rings.dma.flush = r600_flush_dma_ring;
 		rctx->b.ws->cs_set_flush_callback(rctx->b.rings.dma.cs, r600_flush_dma_from_winsys, rctx);
@@ -1212,17 +1199,17 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 
 	r600_common_screen_init(&rscreen->b, ws);
 
-	rscreen->debug_flags = debug_get_flags_option("R600_DEBUG", debug_options, 0);
+	rscreen->b.debug_flags |= debug_get_flags_option("R600_DEBUG", r600_debug_options, 0);
 	if (debug_get_bool_option("R600_DEBUG_COMPUTE", FALSE))
-		rscreen->debug_flags |= DBG_COMPUTE;
+		rscreen->b.debug_flags |= DBG_COMPUTE;
 	if (debug_get_bool_option("R600_DUMP_SHADERS", FALSE))
-		rscreen->debug_flags |= DBG_FS | DBG_VS | DBG_GS | DBG_PS | DBG_CS;
+		rscreen->b.debug_flags |= DBG_FS | DBG_VS | DBG_GS | DBG_PS | DBG_CS;
 	if (!debug_get_bool_option("R600_HYPERZ", TRUE))
-		rscreen->debug_flags |= DBG_NO_HYPERZ;
+		rscreen->b.debug_flags |= DBG_NO_HYPERZ;
 	if (!debug_get_bool_option("R600_LLVM", TRUE))
-		rscreen->debug_flags |= DBG_NO_LLVM;
+		rscreen->b.debug_flags |= DBG_NO_LLVM;
 	if (debug_get_bool_option("R600_PRINT_TEXDEPTH", FALSE))
-		rscreen->debug_flags |= DBG_TEX_DEPTH;
+		rscreen->b.debug_flags |= DBG_TEX_DEPTH;
 
 	if (rscreen->b.family == CHIP_UNKNOWN) {
 		fprintf(stderr, "r600: Unknown chipset 0x%04X\n", rscreen->b.info.pci_id);
@@ -1272,7 +1259,7 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 	}
 
 	rscreen->has_cp_dma = rscreen->b.info.drm_minor >= 27 &&
-			      !(rscreen->debug_flags & DBG_NO_CP_DMA);
+			      !(rscreen->b.debug_flags & DBG_NO_CP_DMA);
 
 	if (r600_init_tiling(rscreen)) {
 		FREE(rscreen);
@@ -1321,7 +1308,7 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 	rscreen->global_pool = compute_memory_pool_new(rscreen);
 
 	rscreen->cs_count = 0;
-	if (rscreen->b.info.drm_minor >= 28 && (rscreen->debug_flags & DBG_TRACE_CS)) {
+	if (rscreen->b.info.drm_minor >= 28 && (rscreen->b.debug_flags & DBG_TRACE_CS)) {
 		rscreen->trace_bo = (struct r600_resource*)pipe_buffer_create(&rscreen->b.b,
 										PIPE_BIND_CUSTOM,
 										PIPE_USAGE_STAGING,

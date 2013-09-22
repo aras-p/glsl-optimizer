@@ -57,7 +57,7 @@ sb_context *r600_sb_context_create(struct r600_context *rctx) {
 		sctx = NULL;
 	}
 
-	unsigned df = rctx->screen->debug_flags;
+	unsigned df = rctx->screen->b.debug_flags;
 
 	sb_context::dump_pass = df & DBG_SB_DUMP;
 	sb_context::dump_stat = df & DBG_SB_STAT;

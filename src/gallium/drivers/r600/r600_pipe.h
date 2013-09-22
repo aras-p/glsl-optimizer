@@ -201,18 +201,8 @@ struct r600_pipe_fences {
 	pipe_mutex			mutex;
 };
 
-/* logging */
-#define DBG_TEX_DEPTH		(1 << 0)
-#define DBG_COMPUTE		(1 << 1)
-#define DBG_VM			(1 << 2)
-#define DBG_TRACE_CS		(1 << 3)
-/* shaders */
-#define DBG_FS			(1 << 8)
-#define DBG_VS			(1 << 9)
-#define DBG_GS			(1 << 10)
-#define DBG_PS			(1 << 11)
-#define DBG_CS			(1 << 12)
 /* features */
+/* This must start from 16. */
 #define DBG_NO_HYPERZ		(1 << 16)
 #define DBG_NO_LLVM		(1 << 17)
 #define DBG_NO_CP_DMA		(1 << 18)
@@ -236,7 +226,6 @@ struct r600_tiling_info {
 
 struct r600_screen {
 	struct r600_common_screen	b;
-	unsigned			debug_flags;
 	bool				has_streamout;
 	bool				has_msaa;
 	bool				has_cp_dma;

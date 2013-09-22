@@ -2281,8 +2281,8 @@ void *r600_create_vertex_fetch_shader(struct pipe_context *ctx,
 	uint32_t *bytecode;
 	int i, j, r, fs_size;
 	struct r600_fetch_shader *shader;
-	unsigned no_sb = rctx->screen->debug_flags & DBG_NO_SB;
-	unsigned sb_disasm = !no_sb || (rctx->screen->debug_flags & DBG_SB_DISASM);
+	unsigned no_sb = rctx->screen->b.debug_flags & DBG_NO_SB;
+	unsigned sb_disasm = !no_sb || (rctx->screen->b.debug_flags & DBG_SB_DISASM);
 
 	assert(count < 32);
 
@@ -2380,7 +2380,7 @@ void *r600_create_vertex_fetch_shader(struct pipe_context *ctx,
 		return NULL;
 	}
 
-	if (rctx->screen->debug_flags & DBG_FS) {
+	if (rctx->screen->b.debug_flags & DBG_FS) {
 		fprintf(stderr, "--------------------------------------------------------------\n");
 		fprintf(stderr, "Vertex elements state:\n");
 		for (i = 0; i < count; i++) {

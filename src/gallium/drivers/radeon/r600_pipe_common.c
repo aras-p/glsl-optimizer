@@ -26,6 +26,23 @@
 
 #include "r600_pipe_common.h"
 
+static const struct debug_named_value common_debug_options[] = {
+	/* logging */
+	{ "texdepth", DBG_TEX_DEPTH, "Print texture depth info" },
+	{ "compute", DBG_COMPUTE, "Print compute info" },
+	{ "vm", DBG_VM, "Print virtual addresses when creating resources" },
+	{ "trace_cs", DBG_TRACE_CS, "Trace cs and write rlockup_<csid>.c file with faulty cs" },
+
+	/* shaders */
+	{ "fs", DBG_FS, "Print fetch shaders" },
+	{ "vs", DBG_VS, "Print vertex shaders" },
+	{ "gs", DBG_GS, "Print geometry shaders" },
+	{ "ps", DBG_PS, "Print pixel shaders" },
+	{ "cs", DBG_CS, "Print compute shaders" },
+
+	DEBUG_NAMED_VALUE_END /* must be last */
+};
+
 void r600_common_screen_init(struct r600_common_screen *rscreen,
 			     struct radeon_winsys *ws)
 {
@@ -34,6 +51,7 @@ void r600_common_screen_init(struct r600_common_screen *rscreen,
 	rscreen->ws = ws;
 	rscreen->family = rscreen->info.family;
 	rscreen->chip_class = rscreen->info.chip_class;
+	rscreen->debug_flags = debug_get_flags_option("R600_DEBUG", common_debug_options, 0);
 }
 
 bool r600_common_context_init(struct r600_common_context *rctx,

@@ -59,6 +59,20 @@
 #define R600_CONTEXT_WAIT_3D_IDLE		(1 << 17)
 #define R600_CONTEXT_WAIT_CP_DMA_IDLE		(1 << 18)
 
+/* Debug flags. */
+/* logging */
+#define DBG_TEX_DEPTH		(1 << 0)
+#define DBG_COMPUTE		(1 << 1)
+#define DBG_VM			(1 << 2)
+#define DBG_TRACE_CS		(1 << 3)
+/* shaders */
+#define DBG_FS			(1 << 8)
+#define DBG_VS			(1 << 9)
+#define DBG_GS			(1 << 10)
+#define DBG_PS			(1 << 11)
+#define DBG_CS			(1 << 12)
+/* The maximum allowed bit is 15. */
+
 struct r600_common_context;
 
 struct r600_resource {
@@ -136,6 +150,7 @@ struct r600_common_screen {
 	enum radeon_family		family;
 	enum chip_class			chip_class;
 	struct radeon_info		info;
+	unsigned			debug_flags;
 };
 
 /* This encapsulates a state or an operation which can emitted into the GPU
