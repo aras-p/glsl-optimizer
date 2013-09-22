@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
+include Makefile.sources
 include $(top_srcdir)/src/gallium/Automake.inc
 
 AM_CFLAGS = \
@@ -29,4 +30,4 @@ AM_CFLAGS = \
 
 noinst_LTLIBRARIES = libfreedrenodrm.la
 
-libfreedrenodrm_la_SOURCES = freedreno_drm_winsys.c
+libfreedrenodrm_la_SOURCES = $(C_SOURCES)
