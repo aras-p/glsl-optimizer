@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
+include Makefile.sources
 include $(top_srcdir)/src/gallium/Automake.inc
 
 AM_CFLAGS = \
@@ -30,8 +31,4 @@ AM_CFLAGS = \
 
 noinst_LTLIBRARIES = libi915sw.la
 
-libi915sw_la_SOURCES = \
-	i915_sw_batchbuffer.c \
-	i915_sw_buffer.c \
-	i915_sw_fence.c \
-	i915_sw_winsys.c
+libi915sw_la_SOURCES = $(C_SOURCES)
