@@ -494,6 +494,12 @@ static void radeon_drm_cs_flush(struct radeon_winsys_cs *rcs, unsigned flags, ui
 			    OUT_CS(&cs->base, 0x80000000); /* type2 nop packet */
 	    }
 	    break;
+    case RING_UVD:
+            while (rcs->cdw & 15)
+		OUT_CS(&cs->base, 0x80000000); /* type2 nop packet */
+	    break;
+    default:
+	    break;
     }
 
     if (rcs->cdw > RADEON_MAX_CMDBUF_DWORDS) {

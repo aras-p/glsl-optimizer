@@ -104,12 +104,6 @@ static unsigned alloc_stream_handle()
 /* flush IB to the hardware */
 static void flush(struct ruvd_decoder *dec)
 {
-	uint32_t *pm4 =	dec->cs->buf;
-
-	// align IB
-	while(dec->cs->cdw % 16)
-		pm4[dec->cs->cdw++] = RUVD_PKT2();
-
 	dec->ws->cs_flush(dec->cs, RADEON_FLUSH_ASYNC, 0);
 }
 
