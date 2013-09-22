@@ -1,0 +1,2 @@
+C_SOURCES := \
+	nouveau_drm_winsys.c

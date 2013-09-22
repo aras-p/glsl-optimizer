@@ -23,8 +23,8 @@
 
 LOCAL_PATH := $(call my-dir)
 
-# from Makefile
-C_SOURCES = nouveau_drm_winsys.c
+# get C_SOURCES
+include $(LOCAL_PATH)/Makefile.sources
 
 include $(CLEAR_VARS)
 
