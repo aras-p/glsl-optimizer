@@ -148,7 +148,7 @@ static void send_msg(struct ruvd_decoder *dec, struct ruvd_msg *msg)
 
 	/* and send it to the hardware */
 	send_cmd(dec, RUVD_CMD_MSG_BUFFER, buf->cs_handle, 0,
-		 RADEON_USAGE_READ, RADEON_DOMAIN_VRAM);
+		 RADEON_USAGE_READ, RADEON_DOMAIN_GTT);
 }
 
 /* create a buffer in the winsys */
@@ -794,7 +794,7 @@ static void ruvd_end_frame(struct pipe_video_codec *decoder,
 	send_cmd(dec, RUVD_CMD_DECODING_TARGET_BUFFER, dt, 0,
 		 RADEON_USAGE_WRITE, RADEON_DOMAIN_VRAM);
 	send_cmd(dec, RUVD_CMD_FEEDBACK_BUFFER, msg_fb_buf->cs_handle,
-		 0x1000, RADEON_USAGE_WRITE, RADEON_DOMAIN_VRAM);
+		 0x1000, RADEON_USAGE_WRITE, RADEON_DOMAIN_GTT);
 	set_reg(dec, RUVD_ENGINE_CNTL, 1);
 
 	flush(dec);
