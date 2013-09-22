@@ -89,24 +89,4 @@ static INLINE bool r600_can_read_depth(struct r600_texture *rtex)
 void r600_resource_destroy(struct pipe_screen *screen, struct pipe_resource *res);
 void r600_init_screen_resource_functions(struct pipe_screen *screen);
 
-/* r600_texture */
-void r600_texture_get_fmask_info(struct r600_screen *rscreen,
-				 struct r600_texture *rtex,
-				 unsigned nr_samples,
-				 struct r600_fmask_info *out);
-void r600_texture_get_cmask_info(struct r600_screen *rscreen,
-				 struct r600_texture *rtex,
-				 struct r600_cmask_info *out);
-void r600_texture_init_cmask(struct r600_screen *rscreen,
-			     struct r600_texture *rtex);
-struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
-					const struct pipe_resource *templ);
-struct pipe_resource *r600_texture_from_handle(struct pipe_screen *screen,
-						const struct pipe_resource *base,
-						struct winsys_handle *whandle);
-
-bool r600_init_flushed_depth_texture(struct pipe_context *ctx,
-				     struct pipe_resource *texture,
-				     struct r600_texture **staging);
-
 #endif

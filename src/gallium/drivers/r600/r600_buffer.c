@@ -121,7 +121,7 @@ static void *r600_buffer_transfer_map(struct pipe_context *ctx,
 
 			/* Create a new one in the same pipe_resource. */
 			/* XXX We probably want a different alignment for buffers and textures. */
-			r600_init_resource(rctx->screen, rbuffer, rbuffer->b.b.width0, 4096,
+			r600_init_resource(&rctx->screen->b, rbuffer, rbuffer->b.b.width0, 4096,
 					   TRUE, rbuffer->b.b.usage);
 
 			/* We changed the buffer, now we need to bind it where the old one was bound. */
@@ -235,60 +235,6 @@ static const struct u_resource_vtbl r600_buffer_vtbl =
 	NULL					/* transfer_inline_write */
 };
 
-bool r600_init_resource(struct r600_screen *rscreen,
-			struct r600_resource *res,
-			unsigned size, unsigned alignment,
-			bool use_reusable_pool, unsigned usage)
-{
-	uint32_t initial_domain, domains;
-
-	switch(usage) {
-	case PIPE_USAGE_STAGING:
-		/* Staging resources participate in transfers, i.e. are used
-		 * for uploads and downloads from regular resources.
-		 * We generate them internally for some transfers.
-		 */
-		initial_domain = RADEON_DOMAIN_GTT;
-		domains = RADEON_DOMAIN_GTT;
-		break;
-	case PIPE_USAGE_DYNAMIC:
-	case PIPE_USAGE_STREAM:
-		/* Default to GTT, but allow the memory manager to move it to VRAM. */
-		initial_domain = RADEON_DOMAIN_GTT;
-		domains = RADEON_DOMAIN_GTT | RADEON_DOMAIN_VRAM;
-		break;
-	case PIPE_USAGE_DEFAULT:
-	case PIPE_USAGE_STATIC:
-	case PIPE_USAGE_IMMUTABLE:
-	default:
-		/* Don't list GTT here, because the memory manager would put some
-		 * resources to GTT no matter what the initial domain is.
-		 * Not listing GTT in the domains improves performance a lot. */
-		initial_domain = RADEON_DOMAIN_VRAM;
-		domains = RADEON_DOMAIN_VRAM;
-		break;
-	}
-
-	res->buf = rscreen->b.ws->buffer_create(rscreen->b.ws, size, alignment,
-                                              use_reusable_pool,
-                                              initial_domain);
-	if (!res->buf) {
-		return false;
-	}
-
-	res->cs_buf = rscreen->b.ws->buffer_get_cs_handle(res->buf);
-	res->domains = domains;
-	util_range_set_empty(&res->valid_buffer_range);
-
-	if (rscreen->b.debug_flags & DBG_VM && res->b.b.target == PIPE_BUFFER) {
-		fprintf(stderr, "VM start=0x%llX  end=0x%llX | Buffer %u bytes\n",
-			r600_resource_va(&rscreen->b.b, &res->b.b),
-			r600_resource_va(&rscreen->b.b, &res->b.b) + res->buf->size,
-			res->buf->size);
-	}
-	return true;
-}
-
 struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
 					 const struct pipe_resource *templ,
 					 unsigned alignment)
@@ -304,7 +250,7 @@ struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
 	rbuffer->b.vtbl = &r600_buffer_vtbl;
 	util_range_init(&rbuffer->valid_buffer_range);
 
-	if (!r600_init_resource(rscreen, rbuffer, templ->width0, alignment, TRUE, templ->usage)) {
+	if (!r600_init_resource(&rscreen->b, rbuffer, templ->width0, alignment, TRUE, templ->usage)) {
 		FREE(rbuffer);
 		return NULL;
 	}

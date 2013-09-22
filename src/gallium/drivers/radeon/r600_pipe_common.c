@@ -25,6 +25,7 @@
  */
 
 #include "r600_pipe_common.h"
+#include "r600_cs.h"
 #include "tgsi/tgsi_parse.h"
 #include "util/u_format_s3tc.h"
 
@@ -336,4 +337,58 @@ void *r600_buffer_map_sync_with_rings(struct r600_common_context *ctx,
 	}
 
 	return ctx->ws->buffer_map(resource->cs_buf, NULL, usage);
+}
+
+bool r600_init_resource(struct r600_common_screen *rscreen,
+			struct r600_resource *res,
+			unsigned size, unsigned alignment,
+			bool use_reusable_pool, unsigned usage)
+{
+	uint32_t initial_domain, domains;
+
+	switch(usage) {
+	case PIPE_USAGE_STAGING:
+		/* Staging resources participate in transfers, i.e. are used
+		 * for uploads and downloads from regular resources.
+		 * We generate them internally for some transfers.
+		 */
+		initial_domain = RADEON_DOMAIN_GTT;
+		domains = RADEON_DOMAIN_GTT;
+		break;
+	case PIPE_USAGE_DYNAMIC:
+	case PIPE_USAGE_STREAM:
+		/* Default to GTT, but allow the memory manager to move it to VRAM. */
+		initial_domain = RADEON_DOMAIN_GTT;
+		domains = RADEON_DOMAIN_GTT | RADEON_DOMAIN_VRAM;
+		break;
+	case PIPE_USAGE_DEFAULT:
+	case PIPE_USAGE_STATIC:
+	case PIPE_USAGE_IMMUTABLE:
+	default:
+		/* Don't list GTT here, because the memory manager would put some
+		 * resources to GTT no matter what the initial domain is.
+		 * Not listing GTT in the domains improves performance a lot. */
+		initial_domain = RADEON_DOMAIN_VRAM;
+		domains = RADEON_DOMAIN_VRAM;
+		break;
+	}
+
+	res->buf = rscreen->ws->buffer_create(rscreen->ws, size, alignment,
+                                              use_reusable_pool,
+                                              initial_domain);
+	if (!res->buf) {
+		return false;
+	}
+
+	res->cs_buf = rscreen->ws->buffer_get_cs_handle(res->buf);
+	res->domains = domains;
+	util_range_set_empty(&res->valid_buffer_range);
+
+	if (rscreen->debug_flags & DBG_VM && res->b.b.target == PIPE_BUFFER) {
+		fprintf(stderr, "VM start=0x%llX  end=0x%llX | Buffer %u bytes\n",
+			r600_resource_va(&rscreen->b, &res->b.b),
+			r600_resource_va(&rscreen->b, &res->b.b) + res->buf->size,
+			res->buf->size);
+	}
+	return true;
 }

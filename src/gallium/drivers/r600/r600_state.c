@@ -1420,8 +1420,8 @@ static void r600_init_color_surface(struct r600_context *rctx,
 		struct r600_cmask_info cmask;
 		struct r600_fmask_info fmask;
 
-		r600_texture_get_cmask_info(rscreen, rtex, &cmask);
-		r600_texture_get_fmask_info(rscreen, rtex, 8, &fmask);
+		r600_texture_get_cmask_info(&rscreen->b, rtex, &cmask);
+		r600_texture_get_fmask_info(&rscreen->b, rtex, 8, &fmask);
 
 		/* CMASK. */
 		if (!rctx->dummy_cmask ||

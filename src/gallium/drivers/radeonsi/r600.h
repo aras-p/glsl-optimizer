@@ -32,9 +32,6 @@
 
 #include "radeonsi_resource.h"
 
-#define R600_ERR(fmt, args...) \
-	fprintf(stderr, "EE %s:%d %s - "fmt, __FILE__, __LINE__, __func__, ##args)
-
 struct winsys_handle;
 
 /* R600/R700 STATES */

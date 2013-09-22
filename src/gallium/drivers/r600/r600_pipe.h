@@ -65,9 +65,6 @@
 
 #define R600_MAP_BUFFER_ALIGNMENT 64
 
-#define R600_ERR(fmt, args...) \
-	fprintf(stderr, "EE %s:%d %s - "fmt, __FILE__, __LINE__, __func__, ##args)
-
 #define R600_QUERY_DRAW_CALLS		(PIPE_QUERY_DRIVER_SPECIFIC + 0)
 #define R600_QUERY_REQUESTED_VRAM	(PIPE_QUERY_DRIVER_SPECIFIC + 1)
 #define R600_QUERY_REQUESTED_GTT	(PIPE_QUERY_DRIVER_SPECIFIC + 2)
@@ -201,9 +198,8 @@ struct r600_pipe_fences {
 	pipe_mutex			mutex;
 };
 
-/* features */
 /* This must start from 16. */
-#define DBG_NO_HYPERZ		(1 << 16)
+/* features */
 #define DBG_NO_LLVM		(1 << 17)
 #define DBG_NO_CP_DMA		(1 << 18)
 #define DBG_NO_ASYNC_DMA	(1 << 19)
@@ -616,22 +612,12 @@ void evergreen_update_db_shader_control(struct r600_context * rctx);
 void r600_copy_buffer(struct pipe_context *ctx, struct pipe_resource *dst, unsigned dstx,
 		      struct pipe_resource *src, const struct pipe_box *src_box);
 void r600_init_blit_functions(struct r600_context *rctx);
-void r600_blit_decompress_depth(struct pipe_context *ctx,
-		struct r600_texture *texture,
-		struct r600_texture *staging,
-		unsigned first_level, unsigned last_level,
-		unsigned first_layer, unsigned last_layer,
-		unsigned first_sample, unsigned last_sample);
 void r600_decompress_depth_textures(struct r600_context *rctx,
 				    struct r600_samplerview_state *textures);
 void r600_decompress_color_textures(struct r600_context *rctx,
 				    struct r600_samplerview_state *textures);
 
 /* r600_buffer.c */
-bool r600_init_resource(struct r600_screen *rscreen,
-			struct r600_resource *res,
-			unsigned size, unsigned alignment,
-			bool use_reusable_pool, unsigned usage);
 struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
 					 const struct pipe_resource *templ,
 					 unsigned alignment);

@@ -205,22 +205,12 @@ struct r600_context {
 
 /* r600_blit.c */
 void si_init_blit_functions(struct r600_context *rctx);
-void r600_blit_decompress_depth(struct pipe_context *ctx,
-		struct r600_texture *texture,
-		struct r600_texture *staging,
-		unsigned first_level, unsigned last_level,
-		unsigned first_layer, unsigned last_layer,
-		unsigned first_sample, unsigned last_sample);
 void si_flush_depth_textures(struct r600_context *rctx,
 			     struct r600_textures_info *textures);
 void r600_decompress_color_textures(struct r600_context *rctx,
 				    struct r600_textures_info *textures);
 
 /* r600_buffer.c */
-bool si_init_resource(struct r600_screen *rscreen,
-		      struct r600_resource *res,
-		      unsigned size, unsigned alignment,
-		      boolean use_reusable_pool, unsigned usage);
 struct pipe_resource *si_buffer_create(struct pipe_screen *screen,
 				       const struct pipe_resource *templ);
 void r600_upload_index_buffer(struct r600_context *rctx,

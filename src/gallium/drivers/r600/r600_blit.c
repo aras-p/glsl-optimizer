@@ -105,12 +105,12 @@ static unsigned u_max_sample(struct pipe_resource *r)
 	return r->nr_samples ? r->nr_samples - 1 : 0;
 }
 
-void r600_blit_decompress_depth(struct pipe_context *ctx,
-		struct r600_texture *texture,
-		struct r600_texture *staging,
-		unsigned first_level, unsigned last_level,
-		unsigned first_layer, unsigned last_layer,
-		unsigned first_sample, unsigned last_sample)
+static void r600_blit_decompress_depth(struct pipe_context *ctx,
+				       struct r600_texture *texture,
+				       struct r600_texture *staging,
+				       unsigned first_level, unsigned last_level,
+				       unsigned first_layer, unsigned last_layer,
+				       unsigned first_sample, unsigned last_sample)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	unsigned layer, level, sample, checked_last_layer, max_layer, max_sample;
@@ -444,7 +444,7 @@ static void evergreen_check_alloc_cmask(struct pipe_context *ctx,
         if (tex->cmask_buffer)
                 return;
 
-        r600_texture_init_cmask(rctx->screen, tex);
+        r600_texture_init_cmask(&rctx->screen->b, tex);
 
         /* update colorbuffer state bits */
         if (tex->cmask_buffer != NULL) {
@@ -955,4 +955,5 @@ void r600_init_blit_functions(struct r600_context *rctx)
 	rctx->b.b.blit = r600_blit;
 	rctx->b.b.flush_resource = r600_flush_resource;
 	rctx->b.clear_buffer = r600_clear_buffer;
+	rctx->b.blit_decompress_depth = r600_blit_decompress_depth;
 }

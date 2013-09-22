@@ -29,7 +29,7 @@ static struct pipe_resource *r600_resource_create(struct pipe_screen *screen,
 	if (templ->target == PIPE_BUFFER) {
 		return si_buffer_create(screen, templ);
 	} else {
-		return si_texture_create(screen, templ);
+		return r600_texture_create(screen, templ);
 	}
 }
 
@@ -40,7 +40,7 @@ static struct pipe_resource *r600_resource_from_handle(struct pipe_screen * scre
 	if (templ->target == PIPE_BUFFER) {
 		return NULL;
 	} else {
-		return si_texture_from_handle(screen, templ, whandle);
+		return r600_texture_from_handle(screen, templ, whandle);
 	}
 }
 

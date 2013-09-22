@@ -71,6 +71,8 @@
 #define DBG_GS			(1 << 10)
 #define DBG_PS			(1 << 11)
 #define DBG_CS			(1 << 12)
+/* features */
+#define DBG_NO_HYPERZ		(1 << 13)
 /* The maximum allowed bit is 15. */
 
 struct r600_common_context;
@@ -243,6 +245,13 @@ struct r600_common_context {
 
 	void (*clear_buffer)(struct pipe_context *ctx, struct pipe_resource *dst,
 			     unsigned offset, unsigned size, unsigned value);
+
+	void (*blit_decompress_depth)(struct pipe_context *ctx,
+				      struct r600_texture *texture,
+				      struct r600_texture *staging,
+				      unsigned first_level, unsigned last_level,
+				      unsigned first_layer, unsigned last_layer,
+				      unsigned first_sample, unsigned last_sample);
 };
 
 /* r600_common_pipe.c */
@@ -263,6 +272,10 @@ boolean r600_rings_is_buffer_referenced(struct r600_common_context *ctx,
 void *r600_buffer_map_sync_with_rings(struct r600_common_context *ctx,
                                       struct r600_resource *resource,
                                       unsigned usage);
+bool r600_init_resource(struct r600_common_screen *rscreen,
+			struct r600_resource *res,
+			unsigned size, unsigned alignment,
+			bool use_reusable_pool, unsigned usage);
 
 /* r600_streamout.c */
 void r600_streamout_buffers_dirty(struct r600_common_context *rctx);
@@ -272,6 +285,26 @@ void r600_set_streamout_targets(struct pipe_context *ctx,
 				unsigned append_bitmask);
 void r600_emit_streamout_end(struct r600_common_context *rctx);
 void r600_streamout_init(struct r600_common_context *rctx);
+
+/* r600_texture.c */
+void r600_texture_get_fmask_info(struct r600_common_screen *rscreen,
+				 struct r600_texture *rtex,
+				 unsigned nr_samples,
+				 struct r600_fmask_info *out);
+void r600_texture_get_cmask_info(struct r600_common_screen *rscreen,
+				 struct r600_texture *rtex,
+				 struct r600_cmask_info *out);
+void r600_texture_init_cmask(struct r600_common_screen *rscreen,
+			     struct r600_texture *rtex);
+bool r600_init_flushed_depth_texture(struct pipe_context *ctx,
+				     struct pipe_resource *texture,
+				     struct r600_texture **staging);
+struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
+					const struct pipe_resource *templ);
+struct pipe_resource *r600_texture_from_handle(struct pipe_screen *screen,
+						const struct pipe_resource *base,
+						struct winsys_handle *whandle);
+
 
 /* Inline helpers. */
 
@@ -286,5 +319,8 @@ r600_resource_reference(struct r600_resource **ptr, struct r600_resource *res)
 	pipe_resource_reference((struct pipe_resource **)ptr,
 				(struct pipe_resource *)res);
 }
+
+#define R600_ERR(fmt, args...) \
+	fprintf(stderr, "EE %s:%d %s - "fmt, __FILE__, __LINE__, __func__, ##args)
 
 #endif

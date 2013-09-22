@@ -31,18 +31,6 @@ struct r600_surface {
 
 void r600_init_screen_resource_functions(struct pipe_screen *screen);
 
-/* r600_texture */
-struct pipe_resource *si_texture_create(struct pipe_screen *screen,
-					const struct pipe_resource *templ);
-struct pipe_resource *si_texture_from_handle(struct pipe_screen *screen,
-					     const struct pipe_resource *base,
-					     struct winsys_handle *whandle);
-
-bool r600_init_flushed_depth_texture(struct pipe_context *ctx,
-				     struct pipe_resource *texture,
-				     struct r600_texture **staging);
-
-
 struct r600_context;
 
 void r600_upload_const_buffer(struct r600_context *rctx, struct r600_resource **rbuffer,
