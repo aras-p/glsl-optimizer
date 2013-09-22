@@ -413,7 +413,7 @@ static boolean is_simple_msaa_resolve(const struct pipe_blit_info *info)
 }
 
 static void r600_clear_buffer(struct pipe_context *ctx, struct pipe_resource *dst,
-			      unsigned offset, unsigned size, unsigned char value);
+			      unsigned offset, unsigned size, unsigned value);
 
 static void evergreen_set_clear_color(struct pipe_surface *cbuf,
 				      const union pipe_color_union *color)
@@ -627,21 +627,17 @@ void r600_copy_buffer(struct pipe_context *ctx, struct pipe_resource *dst, unsig
 }
 
 static void r600_clear_buffer(struct pipe_context *ctx, struct pipe_resource *dst,
-			      unsigned offset, unsigned size, unsigned char value)
+			      unsigned offset, unsigned size, unsigned value)
 {
 	struct r600_context *rctx = (struct r600_context*)ctx;
-	uint32_t v = value;
 
 	if (rctx->screen->has_cp_dma &&
 	    rctx->b.chip_class >= EVERGREEN &&
 	    offset % 4 == 0 && size % 4 == 0) {
-		uint32_t clear_value = v | (v << 8) | (v << 16) | (v << 24);
-
-		evergreen_cp_dma_clear_buffer(rctx, dst, offset, size, clear_value);
+		evergreen_cp_dma_clear_buffer(rctx, dst, offset, size, value);
 	} else if (rctx->screen->has_streamout && offset % 4 == 0 && size % 4 == 0) {
 		union pipe_color_union clear_value;
-
-		clear_value.ui[0] = v | (v << 8) | (v << 16) | (v << 24);
+		clear_value.ui[0] = value;
 
 		r600_flag_resource_cache_flush(rctx, dst);
 
@@ -653,19 +649,12 @@ static void r600_clear_buffer(struct pipe_context *ctx, struct pipe_resource *ds
 		/* Flush again in case the 3D engine has been prefetching the resource. */
 		r600_flag_resource_cache_flush(rctx, dst);
 	} else {
-		char *map = r600_buffer_mmap_sync_with_rings(rctx, r600_resource(dst),
-							     PIPE_TRANSFER_WRITE);
-		memset(map + offset, value, size);
+		uint32_t *map = r600_buffer_mmap_sync_with_rings(rctx, r600_resource(dst),
+								 PIPE_TRANSFER_WRITE);
+		size /= 4;
+		for (unsigned i = 0; i < size; i++)
+			*map++ = value;
 	}
-}
-
-void r600_screen_clear_buffer(struct r600_screen *rscreen, struct pipe_resource *dst,
-			      unsigned offset, unsigned size, unsigned char value)
-{
-	pipe_mutex_lock(rscreen->aux_context_lock);
-	r600_clear_buffer(rscreen->aux_context, dst, offset, size, value);
-	rscreen->aux_context->flush(rscreen->aux_context, NULL, 0);
-	pipe_mutex_unlock(rscreen->aux_context_lock);
 }
 
 static bool util_format_is_subsampled_2x1_32bpp(enum pipe_format format)
@@ -965,4 +954,5 @@ void r600_init_blit_functions(struct r600_context *rctx)
 	rctx->b.b.resource_copy_region = r600_resource_copy_region;
 	rctx->b.b.blit = r600_blit;
 	rctx->b.b.flush_resource = r600_flush_resource;
+	rctx->b.clear_buffer = r600_clear_buffer;
 }

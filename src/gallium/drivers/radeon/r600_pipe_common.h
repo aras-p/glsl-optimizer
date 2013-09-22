@@ -151,6 +151,11 @@ struct r600_common_screen {
 	enum chip_class			chip_class;
 	struct radeon_info		info;
 	unsigned			debug_flags;
+
+	/* Auxiliary context. Mainly used to initialize resources.
+	 * It must be locked prior to using and flushed before unlocking. */
+	struct pipe_context		*aux_context;
+	pipe_mutex			aux_context_lock;
 };
 
 /* This encapsulates a state or an operation which can emitted into the GPU
@@ -228,17 +233,23 @@ struct r600_common_context {
 			    struct pipe_resource *src,
 			    unsigned src_level,
 			    const struct pipe_box *src_box);
+
+	void (*clear_buffer)(struct pipe_context *ctx, struct pipe_resource *dst,
+			     unsigned offset, unsigned size, unsigned value);
 };
 
 /* r600_common_pipe.c */
 void r600_common_screen_init(struct r600_common_screen *rscreen,
 			     struct radeon_winsys *ws);
+void r600_common_screen_cleanup(struct r600_common_screen *rscreen);
 bool r600_common_context_init(struct r600_common_context *rctx,
 			      struct r600_common_screen *rscreen);
 void r600_common_context_cleanup(struct r600_common_context *rctx);
 void r600_context_add_resource_size(struct pipe_context *ctx, struct pipe_resource *r);
 bool r600_can_dump_shader(struct r600_common_screen *rscreen,
 			  const struct tgsi_token *tokens);
+void r600_screen_clear_buffer(struct r600_common_screen *rscreen, struct pipe_resource *dst,
+			      unsigned offset, unsigned size, unsigned value);
 
 /* r600_streamout.c */
 void r600_streamout_buffers_dirty(struct r600_common_context *rctx);

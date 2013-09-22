@@ -53,6 +53,16 @@ void r600_common_screen_init(struct r600_common_screen *rscreen,
 	rscreen->family = rscreen->info.family;
 	rscreen->chip_class = rscreen->info.chip_class;
 	rscreen->debug_flags = debug_get_flags_option("R600_DEBUG", common_debug_options, 0);
+
+	/* Create the auxiliary context. */
+	pipe_mutex_init(rscreen->aux_context_lock);
+	rscreen->aux_context = rscreen->b.context_create(&rscreen->b, NULL);
+}
+
+void r600_common_screen_cleanup(struct r600_common_screen *rscreen)
+{
+	pipe_mutex_destroy(rscreen->aux_context_lock);
+	rscreen->aux_context->destroy(rscreen->aux_context);
 }
 
 bool r600_common_context_init(struct r600_common_context *rctx,
@@ -129,4 +139,15 @@ bool r600_can_dump_shader(struct r600_common_screen *rscreen,
 	default:
 		return false;
 	}
+}
+
+void r600_screen_clear_buffer(struct r600_common_screen *rscreen, struct pipe_resource *dst,
+			      unsigned offset, unsigned size, unsigned value)
+{
+	struct r600_common_context *rctx = (struct r600_common_context*)rscreen->aux_context;
+
+	pipe_mutex_lock(rscreen->aux_context_lock);
+	rctx->clear_buffer(&rctx->b, dst, offset, size, value);
+	rscreen->aux_context->flush(rscreen->aux_context, NULL, 0);
+	pipe_mutex_unlock(rscreen->aux_context_lock);
 }
