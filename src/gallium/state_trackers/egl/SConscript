@@ -11,18 +11,11 @@ env.Append(CPPPATH = [
     '.',
 ])
 
-sources = [
-    'common/egl_g3d.c',
-    'common/egl_g3d_api.c',
-    'common/egl_g3d_image.c',
-    'common/egl_g3d_st.c',
-    'common/egl_g3d_sync.c',
-    'common/native_helper.c',
-]
+sources = env.ParseSourceList('Makefile.sources', 'common_SOURCES')
 
 if env['platform'] == 'windows':
     env.Append(CPPDEFINES = ['HAVE_GDI_BACKEND'])
-    sources.append('gdi/native_gdi.c')
+    sources.append(env.ParseSourceList('Makefile.sources', 'gdi_SOURCES'))
 else:
     if env['drm']:
         env.PkgUseModules('DRM')
@@ -32,17 +25,10 @@ else:
             '#/src/glx',
             '#/src/mapi',
         ])
-        sources.append([
-            'x11/native_x11.c',
-            'x11/native_dri2.c',
-            'x11/native_ximage.c',
-            'x11/glxinit.c'])
+        sources.append(env.ParseSourceList('Makefile.sources', 'x11_SOURCES'))
         if env['drm']:
             env.Append(CPPDEFINES = ['GLX_DIRECT_RENDERING'])
-            sources.append([
-                    '#/src/glx/dri2.c',
-                    'x11/x11_screen.c',
-                    ])
+            sources.append(env.ParseSourceList('Makefile.sources', 'x11_drm_SOURCES'))
     if env['drm'] and False:
         # XXX: Disabled as it depends on gbm, which is not yet built with scons
         env.Append(CPPDEFINES = ['HAVE_DRM_BACKEND'])
@@ -50,7 +36,7 @@ else:
             '#/src/gbm/main',
             '#/src/gallium/state_trackers/gbm',
         ])
-        sources.append(['drm/native_drm.c', 'drm/modeset.c'])
+        sources.append(env.ParseSourceList('Makefile.sources', 'drm_SOURCES'))
 
 st_egl = env.ConvenienceLibrary(
     target = 'st_egl',

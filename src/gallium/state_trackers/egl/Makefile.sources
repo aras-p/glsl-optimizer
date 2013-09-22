@@ -1,0 +1,39 @@
+common_SOURCES := \
+	common/egl_g3d_api.c \
+	common/egl_g3d.c \
+	common/egl_g3d_image.c \
+	common/egl_g3d_st.c \
+	common/egl_g3d_sync.c \
+	common/native_helper.c \
+	common/native_wayland_drm_bufmgr.c
+
+android_SOURCES := \
+	android/native_android.cpp
+
+drm_SOURCES := \
+	drm/modeset.c \
+	drm/native_drm.c
+
+fbdev_SOURCES := \
+	fbdev/native_fbdev.c
+
+gdi_SOURCES := \
+	gdi/native_gdi.c
+
+null_SOURCES := \
+	null/native_null.c
+
+x11_SOURCES := \
+	x11/glxinit.c \
+	x11/native_dri2.c \
+	x11/native_x11.c \
+	x11/native_ximage.c
+
+x11_drm_SOURCES := \
+	x11/x11_screen.c \
+	x11/dri2.c
+
+wayland_SOURCES := \
+	wayland/native_drm.c \
+	wayland/native_shm.c \
+	wayland/native_wayland.c
