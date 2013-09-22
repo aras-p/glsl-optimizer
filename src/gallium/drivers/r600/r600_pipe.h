@@ -218,19 +218,12 @@ struct r600_pipe_fences {
 #define DBG_SB_DISASM	(1 << 27)
 #define DBG_SB_SAFEMATH	(1 << 28)
 
-struct r600_tiling_info {
-	unsigned num_channels;
-	unsigned num_banks;
-	unsigned group_bytes;
-};
-
 struct r600_screen {
 	struct r600_common_screen	b;
 	bool				has_streamout;
 	bool				has_msaa;
 	bool				has_cp_dma;
 	bool				has_compressed_msaa_texturing;
-	struct r600_tiling_info		tiling_info;
 	struct r600_pipe_fences		fences;
 
 	/*for compute global memory binding, we allocate stuff here, instead of

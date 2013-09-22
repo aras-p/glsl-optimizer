@@ -31,7 +31,6 @@
 #include "util/u_blitter.h"
 #include "util/u_double_list.h"
 #include "util/u_format.h"
-#include "util/u_format_s3tc.h"
 #include "util/u_transfer.h"
 #include "util/u_surface.h"
 #include "util/u_pack_color.h"
@@ -751,65 +750,6 @@ static boolean r600_fence_finish(struct pipe_screen *pscreen,
 	return rscreen->fences.data[rfence->index] != 0;
 }
 
-static int evergreen_interpret_tiling(struct r600_screen *rscreen, uint32_t tiling_config)
-{
-	switch (tiling_config & 0xf) {
-	case 0:
-		rscreen->tiling_info.num_channels = 1;
-		break;
-	case 1:
-		rscreen->tiling_info.num_channels = 2;
-		break;
-	case 2:
-		rscreen->tiling_info.num_channels = 4;
-		break;
-	case 3:
-		rscreen->tiling_info.num_channels = 8;
-		break;
-	default:
-		return -EINVAL;
-	}
-
-	switch ((tiling_config & 0xf0) >> 4) {
-	case 0:
-		rscreen->tiling_info.num_banks = 4;
-		break;
-	case 1:
-		rscreen->tiling_info.num_banks = 8;
-		break;
-	case 2:
-		rscreen->tiling_info.num_banks = 16;
-		break;
-	default:
-		return -EINVAL;
-	}
-
-	switch ((tiling_config & 0xf00) >> 8) {
-	case 0:
-		rscreen->tiling_info.group_bytes = 256;
-		break;
-	case 1:
-		rscreen->tiling_info.group_bytes = 512;
-		break;
-	default:
-		return -EINVAL;
-	}
-	return 0;
-}
-
-static int r600_init_tiling(struct r600_screen *rscreen)
-{
-	uint32_t tiling_config = rscreen->b.info.r600_tiling_config;
-
-	/* set default group bytes, overridden by tiling info ioctl */
-	rscreen->tiling_info.group_bytes = 512;
-
-	if (!tiling_config)
-		return 0;
-
-	return evergreen_interpret_tiling(rscreen, tiling_config);
-}
-
 static uint64_t r600_get_timestamp(struct pipe_screen *screen)
 {
 	struct r600_screen *rscreen = (struct r600_screen*)screen;
@@ -848,19 +788,15 @@ struct pipe_screen *radeonsi_screen_create(struct radeon_winsys *ws)
 	}
 	r600_init_screen_resource_functions(&rscreen->b.b);
 
-	r600_common_screen_init(&rscreen->b, ws);
+	if (!r600_common_screen_init(&rscreen->b, ws)) {
+		FREE(rscreen);
+		return NULL;
+	}
 
 	if (debug_get_bool_option("RADEON_PRINT_TEXDEPTH", FALSE))
 		rscreen->b.debug_flags |= DBG_TEX_DEPTH;
 	if (debug_get_bool_option("RADEON_DUMP_SHADERS", FALSE))
 		rscreen->b.debug_flags |= DBG_FS | DBG_VS | DBG_GS | DBG_PS | DBG_CS;
-
-	if (r600_init_tiling(rscreen)) {
-		FREE(rscreen);
-		return NULL;
-	}
-
-	util_format_s3tc_init();
 
 	rscreen->fences.bo = NULL;
 	rscreen->fences.data = NULL;

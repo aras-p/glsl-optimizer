@@ -26,6 +26,7 @@
 
 #include "r600_pipe_common.h"
 #include "tgsi/tgsi_parse.h"
+#include "util/u_format_s3tc.h"
 
 static const struct debug_named_value common_debug_options[] = {
 	/* logging */
@@ -44,7 +45,119 @@ static const struct debug_named_value common_debug_options[] = {
 	DEBUG_NAMED_VALUE_END /* must be last */
 };
 
-void r600_common_screen_init(struct r600_common_screen *rscreen,
+static bool r600_interpret_tiling(struct r600_common_screen *rscreen,
+				  uint32_t tiling_config)
+{
+	switch ((tiling_config & 0xe) >> 1) {
+	case 0:
+		rscreen->tiling_info.num_channels = 1;
+		break;
+	case 1:
+		rscreen->tiling_info.num_channels = 2;
+		break;
+	case 2:
+		rscreen->tiling_info.num_channels = 4;
+		break;
+	case 3:
+		rscreen->tiling_info.num_channels = 8;
+		break;
+	default:
+		return false;
+	}
+
+	switch ((tiling_config & 0x30) >> 4) {
+	case 0:
+		rscreen->tiling_info.num_banks = 4;
+		break;
+	case 1:
+		rscreen->tiling_info.num_banks = 8;
+		break;
+	default:
+		return false;
+
+	}
+	switch ((tiling_config & 0xc0) >> 6) {
+	case 0:
+		rscreen->tiling_info.group_bytes = 256;
+		break;
+	case 1:
+		rscreen->tiling_info.group_bytes = 512;
+		break;
+	default:
+		return false;
+	}
+	return true;
+}
+
+static bool evergreen_interpret_tiling(struct r600_common_screen *rscreen,
+				       uint32_t tiling_config)
+{
+	switch (tiling_config & 0xf) {
+	case 0:
+		rscreen->tiling_info.num_channels = 1;
+		break;
+	case 1:
+		rscreen->tiling_info.num_channels = 2;
+		break;
+	case 2:
+		rscreen->tiling_info.num_channels = 4;
+		break;
+	case 3:
+		rscreen->tiling_info.num_channels = 8;
+		break;
+	default:
+		return false;
+	}
+
+	switch ((tiling_config & 0xf0) >> 4) {
+	case 0:
+		rscreen->tiling_info.num_banks = 4;
+		break;
+	case 1:
+		rscreen->tiling_info.num_banks = 8;
+		break;
+	case 2:
+		rscreen->tiling_info.num_banks = 16;
+		break;
+	default:
+		return false;
+	}
+
+	switch ((tiling_config & 0xf00) >> 8) {
+	case 0:
+		rscreen->tiling_info.group_bytes = 256;
+		break;
+	case 1:
+		rscreen->tiling_info.group_bytes = 512;
+		break;
+	default:
+		return false;
+	}
+	return true;
+}
+
+static bool r600_init_tiling(struct r600_common_screen *rscreen)
+{
+	uint32_t tiling_config = rscreen->info.r600_tiling_config;
+
+	/* set default group bytes, overridden by tiling info ioctl */
+	if (rscreen->chip_class <= R700) {
+		rscreen->tiling_info.group_bytes = 256;
+	} else {
+		rscreen->tiling_info.group_bytes = 512;
+	}
+
+	if (!tiling_config)
+		return true;
+
+	if (rscreen->chip_class <= R700) {
+		return r600_interpret_tiling(rscreen, tiling_config);
+	} else {
+		return evergreen_interpret_tiling(rscreen, tiling_config);
+	}
+}
+
+bool r600_common_screen_init(struct r600_common_screen *rscreen,
 			     struct radeon_winsys *ws)
 {
 	ws->query_info(ws, &rscreen->info);
@@ -54,9 +167,16 @@ void r600_common_screen_init(struct r600_common_screen *rscreen,
 	rscreen->chip_class = rscreen->info.chip_class;
 	rscreen->debug_flags = debug_get_flags_option("R600_DEBUG", common_debug_options, 0);
 
+	if (!r600_init_tiling(rscreen)) {
+		return false;
+	}
+
+	util_format_s3tc_init();
+
 	/* Create the auxiliary context. */
 	pipe_mutex_init(rscreen->aux_context_lock);
 	rscreen->aux_context = rscreen->b.context_create(&rscreen->b, NULL);
+	return true;
 }
 
 void r600_common_screen_cleanup(struct r600_common_screen *rscreen)

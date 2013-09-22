@@ -32,7 +32,6 @@
 #include "pipe/p_shader_tokens.h"
 #include "util/u_blitter.h"
 #include "util/u_debug.h"
-#include "util/u_format_s3tc.h"
 #include "util/u_memory.h"
 #include "util/u_simple_shaders.h"
 #include "util/u_upload_mgr.h"
@@ -1048,116 +1047,6 @@ static boolean r600_fence_finish(struct pipe_screen *pscreen,
 	return rscreen->fences.data[rfence->index] != 0;
 }
 
-static int r600_interpret_tiling(struct r600_screen *rscreen, uint32_t tiling_config)
-{
-	switch ((tiling_config & 0xe) >> 1) {
-	case 0:
-		rscreen->tiling_info.num_channels = 1;
-		break;
-	case 1:
-		rscreen->tiling_info.num_channels = 2;
-		break;
-	case 2:
-		rscreen->tiling_info.num_channels = 4;
-		break;
-	case 3:
-		rscreen->tiling_info.num_channels = 8;
-		break;
-	default:
-		return -EINVAL;
-	}
-
-	switch ((tiling_config & 0x30) >> 4) {
-	case 0:
-		rscreen->tiling_info.num_banks = 4;
-		break;
-	case 1:
-		rscreen->tiling_info.num_banks = 8;
-		break;
-	default:
-		return -EINVAL;
-
-	}
-	switch ((tiling_config & 0xc0) >> 6) {
-	case 0:
-		rscreen->tiling_info.group_bytes = 256;
-		break;
-	case 1:
-		rscreen->tiling_info.group_bytes = 512;
-		break;
-	default:
-		return -EINVAL;
-	}
-	return 0;
-}
-
-static int evergreen_interpret_tiling(struct r600_screen *rscreen, uint32_t tiling_config)
-{
-	switch (tiling_config & 0xf) {
-	case 0:
-		rscreen->tiling_info.num_channels = 1;
-		break;
-	case 1:
-		rscreen->tiling_info.num_channels = 2;
-		break;
-	case 2:
-		rscreen->tiling_info.num_channels = 4;
-		break;
-	case 3:
-		rscreen->tiling_info.num_channels = 8;
-		break;
-	default:
-		return -EINVAL;
-	}
-
-	switch ((tiling_config & 0xf0) >> 4) {
-	case 0:
-		rscreen->tiling_info.num_banks = 4;
-		break;
-	case 1:
-		rscreen->tiling_info.num_banks = 8;
-		break;
-	case 2:
-		rscreen->tiling_info.num_banks = 16;
-		break;
-	default:
-		return -EINVAL;
-	}
-
-	switch ((tiling_config & 0xf00) >> 8) {
-	case 0:
-		rscreen->tiling_info.group_bytes = 256;
-		break;
-	case 1:
-		rscreen->tiling_info.group_bytes = 512;
-		break;
-	default:
-		return -EINVAL;
-	}
-	return 0;
-}
-
-static int r600_init_tiling(struct r600_screen *rscreen)
-{
-	uint32_t tiling_config = rscreen->b.info.r600_tiling_config;
-
-	/* set default group bytes, overridden by tiling info ioctl */
-	if (rscreen->b.chip_class <= R700) {
-		rscreen->tiling_info.group_bytes = 256;
-	} else {
-		rscreen->tiling_info.group_bytes = 512;
-	}
-
-	if (!tiling_config)
-		return 0;
-
-	if (rscreen->b.chip_class <= R700) {
-		return r600_interpret_tiling(rscreen, tiling_config);
-	} else {
-		return evergreen_interpret_tiling(rscreen, tiling_config);
-	}
-}
-
 static uint64_t r600_get_timestamp(struct pipe_screen *screen)
 {
 	struct r600_screen *rscreen = (struct r600_screen*)screen;
@@ -1224,7 +1113,10 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 	}
 	r600_init_screen_resource_functions(&rscreen->b.b);
 
-	r600_common_screen_init(&rscreen->b, ws);
+	if (!r600_common_screen_init(&rscreen->b, ws)) {
+		FREE(rscreen);
+		return NULL;
+	}
 
 	rscreen->b.debug_flags |= debug_get_flags_option("R600_DEBUG", r600_debug_options, 0);
 	if (debug_get_bool_option("R600_DEBUG_COMPUTE", FALSE))
@@ -1287,13 +1179,6 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 
 	rscreen->has_cp_dma = rscreen->b.info.drm_minor >= 27 &&
 			      !(rscreen->b.debug_flags & DBG_NO_CP_DMA);
-
-	if (r600_init_tiling(rscreen)) {
-		FREE(rscreen);
-		return NULL;
-	}
-
-	util_format_s3tc_init();
 
 	rscreen->fences.bo = NULL;
 	rscreen->fences.data = NULL;

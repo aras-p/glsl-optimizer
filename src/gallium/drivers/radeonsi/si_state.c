@@ -1762,7 +1762,7 @@ static void si_db(struct r600_context *rctx, struct si_pm4_state *pm4,
 		macro_aspect = cik_macro_tile_aspect(macro_aspect);
 		bankw = cik_bank_wh(bankw);
 		bankh = cik_bank_wh(bankh);
-		nbanks = cik_num_banks(rscreen->tiling_info.num_banks);
+		nbanks = cik_num_banks(rscreen->b.tiling_info.num_banks);
 		pipe_config = cik_db_pipe_config(rscreen->b.info.r600_num_tile_pipes,
 						 rscreen->b.info.r600_num_backends);
 

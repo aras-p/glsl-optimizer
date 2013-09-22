@@ -27,7 +27,6 @@
 #include <errno.h>
 #include "pipe/p_screen.h"
 #include "util/u_format.h"
-#include "util/u_format_s3tc.h"
 #include "util/u_math.h"
 #include "util/u_inlines.h"
 #include "util/u_memory.h"
@@ -352,8 +351,8 @@ static void si_texture_get_cmask_info(struct r600_screen *rscreen,
 				      struct r600_texture *rtex,
 				      struct r600_cmask_info *out)
 {
-	unsigned pipe_interleave_bytes = rscreen->tiling_info.group_bytes;
-	unsigned num_pipes = rscreen->tiling_info.num_channels;
+	unsigned pipe_interleave_bytes = rscreen->b.tiling_info.group_bytes;
+	unsigned num_pipes = rscreen->b.tiling_info.num_channels;
 	unsigned cl_width, cl_height;
 
 	switch (num_pipes) {

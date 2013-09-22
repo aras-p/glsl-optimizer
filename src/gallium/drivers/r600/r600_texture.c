@@ -29,7 +29,6 @@
 #include "r600d.h"
 
 #include <errno.h>
-#include "util/u_format_s3tc.h"
 #include "util/u_memory.h"
 
 
@@ -372,8 +371,8 @@ void r600_texture_get_cmask_info(struct r600_screen *rscreen,
 	unsigned cmask_tile_elements = cmask_tile_width * cmask_tile_height;
 	unsigned element_bits = 4;
 	unsigned cmask_cache_bits = 1024;
-	unsigned num_pipes = rscreen->tiling_info.num_channels;
-	unsigned pipe_interleave_bytes = rscreen->tiling_info.group_bytes;
+	unsigned num_pipes = rscreen->b.tiling_info.num_channels;
+	unsigned pipe_interleave_bytes = rscreen->b.tiling_info.group_bytes;
 
 	unsigned elements_per_macro_tile = (cmask_cache_bits / element_bits) * num_pipes;
 	unsigned pixels_per_macro_tile = elements_per_macro_tile * cmask_tile_elements;

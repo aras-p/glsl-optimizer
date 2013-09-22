@@ -144,12 +144,19 @@ struct r600_texture {
 	unsigned			mipmap_shift;
 };
 
+struct r600_tiling_info {
+	unsigned num_channels;
+	unsigned num_banks;
+	unsigned group_bytes;
+};
+
 struct r600_common_screen {
 	struct pipe_screen		b;
 	struct radeon_winsys		*ws;
 	enum radeon_family		family;
 	enum chip_class			chip_class;
 	struct radeon_info		info;
+	struct r600_tiling_info		tiling_info;
 	unsigned			debug_flags;
 
 	/* Auxiliary context. Mainly used to initialize resources.
@@ -239,7 +246,7 @@ struct r600_common_context {
 };
 
 /* r600_common_pipe.c */
-void r600_common_screen_init(struct r600_common_screen *rscreen,
+bool r600_common_screen_init(struct r600_common_screen *rscreen,
 			     struct radeon_winsys *ws);
 void r600_common_screen_cleanup(struct r600_common_screen *rscreen);
 bool r600_common_context_init(struct r600_common_context *rctx,

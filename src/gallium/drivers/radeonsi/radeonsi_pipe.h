@@ -66,8 +66,6 @@ struct r600_pipe_fences {
 
 struct r600_screen {
 	struct r600_common_screen	b;
-	struct r600_tiling_info		tiling_info;
-	struct util_slab_mempool	pool_buffers;
 	struct r600_pipe_fences		fences;
 #if R600_TRACE_CS
 	struct r600_resource		*trace_bo;

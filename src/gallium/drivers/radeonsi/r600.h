@@ -37,12 +37,6 @@
 
 struct winsys_handle;
 
-struct r600_tiling_info {
-	unsigned num_channels;
-	unsigned num_banks;
-	unsigned group_bytes;
-};
-
 /* R600/R700 STATES */
 struct r600_query {
 	union {
