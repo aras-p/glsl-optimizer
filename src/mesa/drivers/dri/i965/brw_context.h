@@ -945,6 +945,13 @@ struct brw_context
 				      uint32_t *out_offset,
                                       bool dword_pitch);
 
+      void (*create_raw_surface)(struct brw_context *brw,
+                                 drm_intel_bo *bo,
+                                 uint32_t offset,
+                                 uint32_t size,
+                                 uint32_t *out_offset,
+                                 bool rw);
+
       /** Upload a SAMPLER_STATE table. */
       void (*upload_sampler_state_table)(struct brw_context *brw,
                                          struct gl_program *prog,

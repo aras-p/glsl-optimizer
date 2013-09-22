@@ -232,7 +232,8 @@ gen7_emit_buffer_surface_state(struct brw_context *brw,
                                unsigned surface_format,
                                unsigned buffer_size,
                                unsigned pitch,
-                               unsigned mocs)
+                               unsigned mocs,
+                               bool rw)
 {
    uint32_t *surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE,
                                     8 * 4, 32, out_offset);
@@ -259,7 +260,8 @@ gen7_emit_buffer_surface_state(struct brw_context *brw,
    /* Emit relocation to surface contents */
    if (bo) {
       drm_intel_bo_emit_reloc(brw->batch.bo, *out_offset + 4,
-                              bo, buffer_offset, I915_GEM_DOMAIN_SAMPLER, 0);
+                              bo, buffer_offset, I915_GEM_DOMAIN_SAMPLER,
+                              (rw ? I915_GEM_DOMAIN_SAMPLER : 0));
    }
 
    gen7_check_surface_setup(surf, false /* is_render_target */);
@@ -299,7 +301,8 @@ gen7_update_buffer_texture_surface(struct gl_context *ctx,
                                   surface_format,
                                   size / texel_size,
                                   texel_size,
-                                  0 /* mocs */);
+                                  0 /* mocs */,
+                                  false /* rw */);
 }
 
 static void
@@ -416,7 +419,27 @@ gen7_create_constant_surface(struct brw_context *brw,
                                   BRW_SURFACEFORMAT_R32G32B32A32_FLOAT,
                                   elements,
                                   stride,
-                                  0 /* mocs */);
+                                  0 /* mocs */,
+                                  false /* rw */);
+}
+
+/**
+ * Create a raw surface for untyped R/W access.
+ */
+static void
+gen7_create_raw_surface(struct brw_context *brw, drm_intel_bo *bo,
+                        uint32_t offset, uint32_t size,
+                        uint32_t *out_offset, bool rw)
+{
+   gen7_emit_buffer_surface_state(brw,
+                                  out_offset,
+                                  bo,
+                                  offset,
+                                  BRW_SURFACEFORMAT_RAW,
+                                  size,
+                                  1,
+                                  0 /* mocs */,
+                                  true /* rw */);
 }
 
 /**
@@ -432,7 +455,8 @@ gen7_create_shader_time_surface(struct brw_context *brw, uint32_t *out_offset)
                                   BRW_SURFACEFORMAT_RAW,
                                   brw->shader_time.bo->size,
                                   1,
-                                  0 /* mocs */);
+                                  0 /* mocs */,
+                                  true /* rw */);
 }
 
 static void
@@ -607,4 +631,5 @@ gen7_init_vtable_surface_functions(struct brw_context *brw)
    brw->vtbl.update_null_renderbuffer_surface =
       gen7_update_null_renderbuffer_surface;
    brw->vtbl.create_constant_surface = gen7_create_constant_surface;
+   brw->vtbl.create_raw_surface = gen7_create_raw_surface;
 }
