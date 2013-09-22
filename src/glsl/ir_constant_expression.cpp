@@ -40,6 +40,20 @@
 #include "glsl_types.h"
 #include "program/hash_table.h"
 
+#if defined(_MSC_VER) && (_MSC_VER < 1800)
+static int isnormal(double x)
+{
+   return _fpclass(x) == _FPCLASS_NN || _fpclass(x) == _FPCLASS_PN;
+}
+#endif
+
+#if defined(_MSC_VER)
+static double copysign(double x, double y)
+{
+   return _copysign(x, y);
+}
+#endif
+
 static float
 dot(ir_constant *op0, ir_constant *op1)
 {
