@@ -2025,7 +2025,7 @@ AC_CONFIG_FILES([Makefile
 		src/gallium/state_trackers/dri/sw/Makefile
 		src/gallium/state_trackers/egl/Makefile
 		src/gallium/state_trackers/gbm/Makefile
-		src/gallium/state_trackers/glx/Makefile
+		src/gallium/state_trackers/glx/xlib/Makefile
 		src/gallium/state_trackers/osmesa/Makefile
 		src/gallium/state_trackers/vdpau/Makefile
 		src/gallium/state_trackers/vega/Makefile

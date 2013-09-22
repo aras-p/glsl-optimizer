@@ -22,7 +22,7 @@
 SUBDIRS =
 
 if HAVE_X11_DRIVER
-SUBDIRS += glx
+SUBDIRS += glx/xlib
 endif
 
 if HAVE_GALLIUM_OSMESA

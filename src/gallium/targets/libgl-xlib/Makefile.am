@@ -45,7 +45,7 @@ libGL_la_SOURCES = xlib.c
 libGL_la_LDFLAGS = -version-number $(GL_MAJOR):$(GL_MINOR):$(GL_TINY) -no-undefined
 
 libGL_la_LIBADD = \
-	$(top_builddir)/src/gallium/state_trackers/glx/libxlib.la \
+	$(top_builddir)/src/gallium/state_trackers/glx/xlib/libxlib.la \
 	$(top_builddir)/src/gallium/winsys/sw/xlib/libws_xlib.la \
 	$(top_builddir)/src/gallium/drivers/softpipe/libsoftpipe.la \
 	$(top_builddir)/src/gallium/drivers/trace/libtrace.la \
