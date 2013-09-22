@@ -462,8 +462,9 @@ r600_texture_create_object(struct pipe_screen *screen,
 
 	if (rtex->cmask.size) {
 		/* Initialize the cmask to 0xCC (= compressed state). */
-		char *map = rscreen->b.ws->buffer_map(resource->cs_buf, NULL, PIPE_TRANSFER_WRITE);
-		memset(map + rtex->cmask.offset, 0xCC, rtex->cmask.size);
+		r600_screen_clear_buffer(&rscreen->b, &resource->b.b,
+					 rtex->cmask.offset, rtex->cmask.size,
+					 0xCCCCCCCC);
 	}
 
 	if (rscreen->b.debug_flags & DBG_TEX_DEPTH && rtex->is_depth) {

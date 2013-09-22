@@ -44,7 +44,7 @@ static uint32_t null_desc[8]; /* zeros */
 #define SI_CP_DMA_RAW_WAIT	(1 << 1) /* SI+ */
 
 /* Emit a CP DMA packet to do a copy from one buffer to another.
- * The size must fit in bits [20:0]. Notes:
+ * The size must fit in bits [20:0].
  */
 static void si_emit_cp_dma_copy_buffer(struct r600_context *rctx,
 				       uint64_t dst_va, uint64_t src_va,
@@ -517,6 +517,88 @@ static void si_set_streamout_targets(struct pipe_context *ctx,
 	si_update_descriptors(rctx, &buffers->desc);
 }
 
+/* CP DMA */
+
+/* The max number of bytes to copy per packet. */
+#define CP_DMA_MAX_BYTE_COUNT ((1 << 21) - 8)
+
+static void si_clear_buffer(struct pipe_context *ctx, struct pipe_resource *dst,
+			    unsigned offset, unsigned size, unsigned value)
+{
+	struct r600_context *rctx = (struct r600_context*)ctx;
+
+	if (!size)
+		return;
+
+	/* Fallback for unaligned clears. */
+	if (offset % 4 != 0 || size % 4 != 0) {
+		uint32_t *map = rctx->b.ws->buffer_map(r600_resource(dst)->cs_buf,
+						       rctx->b.rings.gfx.cs,
+						       PIPE_TRANSFER_WRITE);
+		size /= 4;
+		for (unsigned i = 0; i < size; i++)
+			*map++ = value;
+
+		util_range_add(&r600_resource(dst)->valid_buffer_range, offset,
+			       offset + size);
+		return;
+	}
+
+	uint64_t va = r600_resource_va(&rctx->screen->b.b, dst) + offset;
+
+	/* Flush the caches where the resource is bound. */
+	/* XXX only flush the caches where the buffer is bound. */
+	rctx->b.flags |= R600_CONTEXT_INV_TEX_CACHE |
+			 R600_CONTEXT_INV_CONST_CACHE |
+			 R600_CONTEXT_FLUSH_AND_INV_CB |
+			 R600_CONTEXT_FLUSH_AND_INV_DB |
+			 R600_CONTEXT_FLUSH_AND_INV_CB_META |
+			 R600_CONTEXT_FLUSH_AND_INV_DB_META;
+	rctx->b.flags |= R600_CONTEXT_WAIT_3D_IDLE;
+
+	while (size) {
+		unsigned byte_count = MIN2(size, CP_DMA_MAX_BYTE_COUNT);
+		unsigned dma_flags = 0;
+
+		si_need_cs_space(rctx, 7 + (rctx->b.flags ? rctx->cache_flush.num_dw : 0),
+				 FALSE);
+
+		/* This must be done after need_cs_space. */
+		r600_context_bo_reloc(&rctx->b, &rctx->b.rings.gfx,
+				      (struct r600_resource*)dst, RADEON_USAGE_WRITE);
+
+		/* Flush the caches for the first copy only.
+		 * Also wait for the previous CP DMA operations. */
+		if (rctx->b.flags) {
+			si_emit_cache_flush(&rctx->b, NULL);
+			dma_flags |= SI_CP_DMA_RAW_WAIT; /* same as WAIT_UNTIL=CP_DMA_IDLE */
+		}
+
+		/* Do the synchronization after the last copy, so that all data is written to memory. */
+		if (size == byte_count)
+			dma_flags |= R600_CP_DMA_SYNC;
+
+		/* Emit the clear packet. */
+		si_emit_cp_dma_clear_buffer(rctx, va, byte_count, value, dma_flags);
+
+		size -= byte_count;
+		va += byte_count;
+	}
+
+	/* Flush the caches again in case the 3D engine has been prefetching
+	 * the resource. */
+	/* XXX only flush the caches where the buffer is bound. */
+	rctx->b.flags |= R600_CONTEXT_INV_TEX_CACHE |
+			 R600_CONTEXT_INV_CONST_CACHE |
+			 R600_CONTEXT_FLUSH_AND_INV_CB |
+			 R600_CONTEXT_FLUSH_AND_INV_DB |
+			 R600_CONTEXT_FLUSH_AND_INV_CB_META |
+			 R600_CONTEXT_FLUSH_AND_INV_DB_META;
+
+	util_range_add(&r600_resource(dst)->valid_buffer_range, offset,
+		       offset + size);
+}
+
 /* INIT/DEINIT */
 
 void si_init_all_descriptors(struct r600_context *rctx)
@@ -541,6 +623,7 @@ void si_init_all_descriptors(struct r600_context *rctx)
 	/* Set pipe_context functions. */
 	rctx->b.b.set_constant_buffer = si_set_constant_buffer;
 	rctx->b.b.set_stream_output_targets = si_set_streamout_targets;
+	rctx->b.clear_buffer = si_clear_buffer;
 }
 
 void si_release_all_descriptors(struct r600_context *rctx)

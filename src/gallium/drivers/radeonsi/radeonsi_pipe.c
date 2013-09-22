@@ -653,6 +653,8 @@ static void r600_destroy_screen(struct pipe_screen* pscreen)
 	if (!radeon_winsys_unref(rscreen->b.ws))
 		return;
 
+	r600_common_screen_cleanup(&rscreen->b);
+
 	if (rscreen->fences.bo) {
 		struct r600_fence_block *entry, *tmp;
 
@@ -823,6 +825,29 @@ struct pipe_screen *radeonsi_screen_create(struct radeon_winsys *ws)
 		return NULL;
 	}
 
+	/* Set functions first. */
+	rscreen->b.b.context_create = r600_create_context;
+	rscreen->b.b.destroy = r600_destroy_screen;
+	rscreen->b.b.get_name = r600_get_name;
+	rscreen->b.b.get_vendor = r600_get_vendor;
+	rscreen->b.b.get_param = r600_get_param;
+	rscreen->b.b.get_shader_param = r600_get_shader_param;
+	rscreen->b.b.get_paramf = r600_get_paramf;
+	rscreen->b.b.get_compute_param = r600_get_compute_param;
+	rscreen->b.b.get_timestamp = r600_get_timestamp;
+	rscreen->b.b.is_format_supported = si_is_format_supported;
+	rscreen->b.b.fence_reference = r600_fence_reference;
+	rscreen->b.b.fence_signalled = r600_fence_signalled;
+	rscreen->b.b.fence_finish = r600_fence_finish;
+	if (rscreen->b.info.has_uvd) {
+		rscreen->b.b.get_video_param = ruvd_get_video_param;
+		rscreen->b.b.is_video_format_supported = ruvd_is_format_supported;
+	} else {
+		rscreen->b.b.get_video_param = r600_get_video_param;
+		rscreen->b.b.is_video_format_supported = vl_video_buffer_is_format_supported;
+	}
+	r600_init_screen_resource_functions(&rscreen->b.b);
+
 	r600_common_screen_init(&rscreen->b, ws);
 
 	if (debug_get_bool_option("RADEON_PRINT_TEXDEPTH", FALSE))
@@ -833,29 +858,6 @@ struct pipe_screen *radeonsi_screen_create(struct radeon_winsys *ws)
 	if (r600_init_tiling(rscreen)) {
 		FREE(rscreen);
 		return NULL;
-	}
-
-	rscreen->b.b.destroy = r600_destroy_screen;
-	rscreen->b.b.get_name = r600_get_name;
-	rscreen->b.b.get_vendor = r600_get_vendor;
-	rscreen->b.b.get_param = r600_get_param;
-	rscreen->b.b.get_shader_param = r600_get_shader_param;
-	rscreen->b.b.get_paramf = r600_get_paramf;
-	rscreen->b.b.get_compute_param = r600_get_compute_param;
-	rscreen->b.b.get_timestamp = r600_get_timestamp;
-	rscreen->b.b.is_format_supported = si_is_format_supported;
-	rscreen->b.b.context_create = r600_create_context;
-	rscreen->b.b.fence_reference = r600_fence_reference;
-	rscreen->b.b.fence_signalled = r600_fence_signalled;
-	rscreen->b.b.fence_finish = r600_fence_finish;
-	r600_init_screen_resource_functions(&rscreen->b.b);
-
-	if (rscreen->b.info.has_uvd) {
-		rscreen->b.b.get_video_param = ruvd_get_video_param;
-		rscreen->b.b.is_video_format_supported = ruvd_is_format_supported;
-	} else {
-		rscreen->b.b.get_video_param = r600_get_video_param;
-		rscreen->b.b.is_video_format_supported = vl_video_buffer_is_format_supported;
 	}
 
 	util_format_s3tc_init();
