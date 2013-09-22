@@ -1,5 +1,7 @@
 AUTOMAKE_OPTIONS = subdir-objects
 
+include Makefile.sources
+
 AM_CPPFLAGS = \
 	$(GALLIUM_PIPE_LOADER_DEFINES) \
 	-DPIPE_SEARCH_DIR=\"$(libdir)/gallium-pipe\" \
@@ -35,46 +37,7 @@ libclover_la_CXXFLAGS = \
 libclover_la_LIBADD = \
 	libcltgsi.la libclllvm.la
 
-libclover_la_SOURCES = \
-	core/base.hpp \
-	core/compat.hpp \
-	core/compiler.hpp \
-	core/geometry.hpp \
-	core/device.hpp \
-	core/device.cpp \
-	core/context.hpp \
-	core/context.cpp \
-	core/queue.hpp \
-	core/queue.cpp \
-	core/format.hpp \
-	core/format.cpp \
-	core/memory.hpp \
-	core/memory.cpp \
-	core/platform.hpp \
-	core/platform.cpp \
-	core/resource.hpp \
-	core/resource.cpp \
-	core/sampler.hpp \
-	core/sampler.cpp \
-	core/event.hpp \
-	core/event.cpp \
-	core/program.hpp \
-	core/program.cpp \
-	core/kernel.hpp \
-	core/kernel.cpp \
-	core/module.hpp \
-	core/module.cpp \
-	api/util.hpp \
-	api/platform.cpp \
-	api/device.cpp \
-	api/context.cpp \
-	api/queue.cpp \
-	api/memory.cpp \
-	api/transfer.cpp \
-	api/sampler.cpp \
-	api/event.cpp \
-	api/program.cpp \
-	api/kernel.cpp
+libclover_la_SOURCES = $(CPP_SOURCES)
 
 cldir = $(includedir)/CL
 cl_HEADERS = \
