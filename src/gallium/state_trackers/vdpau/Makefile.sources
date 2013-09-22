@@ -1,0 +1,12 @@
+C_SOURCES := \
+	htab.c \
+	ftab.c \
+	device.c \
+	query.c \
+	surface.c \
+	decode.c \
+	presentation.c \
+	bitmap.c \
+	output.c \
+	preemption.c \
+	mixer.c
