@@ -687,6 +687,26 @@ ir_validate::visit(ir_variable *ir)
       }
    }
 
+   /* If a variable is an interface block (or an array of interface blocks),
+    * verify that the maximum array index for each interface member is in
+    * bounds.
+    */
+   if (ir->is_interface_instance()) {
+      const glsl_struct_field *fields =
+         ir->get_interface_type()->fields.structure;
+      for (int i = 0; i < ir->get_interface_type()->length; i++) {
+         if (fields[i].type->array_size() > 0) {
+            if (ir->max_ifc_array_access[i] >= fields[i].type->length) {
+               printf("ir_variable has maximum access out of bounds for "
+                      "field %s (%d vs %d)\n", fields[i].name,
+                      ir->max_ifc_array_access[i], fields[i].type->length);
+               ir->print();
+               abort();
+            }
+         }
+      }
+   }
+
    if (ir->constant_initializer != NULL && !ir->has_initializer) {
       printf("ir_variable didn't have an initializer, but has a constant "
 	     "initializer value.\n");
