@@ -1724,7 +1724,10 @@ fs_visitor::emit_bool_to_cond_code(ir_rvalue *ir)
 {
    ir_expression *expr = ir->as_expression();
 
-   if (expr) {
+   if (expr &&
+       expr->operation != ir_binop_logic_and &&
+       expr->operation != ir_binop_logic_or &&
+       expr->operation != ir_binop_logic_xor) {
       fs_reg op[2];
       fs_inst *inst;
 
@@ -1743,11 +1746,6 @@ fs_visitor::emit_bool_to_cond_code(ir_rvalue *ir)
 	 inst = emit(AND(reg_null_d, op[0], fs_reg(1)));
 	 inst->conditional_mod = BRW_CONDITIONAL_Z;
 	 break;
-
-      case ir_binop_logic_xor:
-      case ir_binop_logic_or:
-      case ir_binop_logic_and:
-	 goto out;
 
       case ir_unop_f2b:
 	 if (brw->gen >= 6) {
@@ -1790,7 +1788,6 @@ fs_visitor::emit_bool_to_cond_code(ir_rvalue *ir)
       return;
    }
 
-out:
    ir->accept(this);
 
    fs_inst *inst = emit(AND(reg_null_d, this->result, fs_reg(1)));
