@@ -909,7 +909,7 @@ subdiv_tri(struct lp_setup_context *setup,
    unsigned n = setup->fs.current.variant->shader->info.base.num_inputs + 1;
    const struct lp_shader_input *inputs =
       setup->fs.current.variant->shader->inputs;
-   float vmid[PIPE_MAX_ATTRIBS][4];
+   PIPE_ALIGN_VAR(LP_MIN_VECTOR_ALIGN) float vmid[PIPE_MAX_ATTRIBS][4];
    const float (*vm)[4] = (const float (*)[4]) vmid;
    unsigned i;
    float w0, w1, wm;
