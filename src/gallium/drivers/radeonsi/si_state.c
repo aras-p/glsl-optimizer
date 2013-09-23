@@ -2352,7 +2352,16 @@ static INLINE void si_shader_selector_key(struct pipe_context *ctx,
 		}
 		if (rctx->queued.named.dsa) {
 			key->ps.alpha_func = rctx->queued.named.dsa->alpha_func;
-			key->ps.alpha_ref = rctx->queued.named.dsa->alpha_ref;
+
+			/* Alpha-test should be disabled if colorbuffer 0 is integer. */
+			if (rctx->framebuffer.nr_cbufs &&
+			    rctx->framebuffer.cbufs[0] &&
+			    util_format_is_pure_integer(rctx->framebuffer.cbufs[0]->texture->format))
+				key->ps.alpha_func = PIPE_FUNC_ALWAYS;
+
+			if (key->ps.alpha_func != PIPE_FUNC_ALWAYS &&
+			    key->ps.alpha_func != PIPE_FUNC_NEVER)
+				key->ps.alpha_ref = rctx->queued.named.dsa->alpha_ref;
 		} else {
 			key->ps.alpha_func = PIPE_FUNC_ALWAYS;
 		}
