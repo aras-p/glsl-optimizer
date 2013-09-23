@@ -404,6 +404,22 @@ public:
       }
    }
 
+   /**
+    * Change this->interface_type on a variable that previously had a
+    * different interface_type.  This is used during linking to set the size
+    * of arrays in interface blocks.
+    */
+   void change_interface_type(const struct glsl_type *type)
+   {
+      if (this->max_ifc_array_access != NULL) {
+         /* max_ifc_array_access has already been allocated, so make sure the
+          * new interface has the same number of fields as the old one.
+          */
+         assert(this->interface_type->length == type->length);
+      }
+      this->interface_type = type;
+   }
+
    const glsl_type *get_interface_type() const
    {
       return this->interface_type;

@@ -1035,14 +1035,79 @@ class array_sizing_visitor : public ir_hierarchical_visitor {
 public:
    virtual ir_visitor_status visit(ir_variable *var)
    {
-      if (var->type->is_array() && (var->type->length == 0)) {
-         const glsl_type *type =
-            glsl_type::get_array_instance(var->type->fields.array,
-                                          var->max_array_access + 1);
-         assert(type != NULL);
-         var->type = type;
+      fixup_type(&var->type, var->max_array_access);
+      if (var->type->is_interface()) {
+         if (interface_contains_unsized_arrays(var->type)) {
+            const glsl_type *new_type =
+               resize_interface_members(var->type, var->max_ifc_array_access);
+            var->type = new_type;
+            var->change_interface_type(new_type);
+         }
+      } else if (var->type->is_array() &&
+                 var->type->fields.array->is_interface()) {
+         if (interface_contains_unsized_arrays(var->type->fields.array)) {
+            const glsl_type *new_type =
+               resize_interface_members(var->type->fields.array,
+                                        var->max_ifc_array_access);
+            var->change_interface_type(new_type);
+            var->type =
+               glsl_type::get_array_instance(new_type, var->type->length);
+         }
       }
       return visit_continue;
+   }
+
+private:
+   /**
+    * If the type pointed to by \c type represents an unsized array, replace
+    * it with a sized array whose size is determined by max_array_access.
+    */
+   static void fixup_type(const glsl_type **type, unsigned max_array_access)
+   {
+      if ((*type)->is_array() && (*type)->length == 0) {
+         *type = glsl_type::get_array_instance((*type)->fields.array,
+                                               max_array_access + 1);
+         assert(*type != NULL);
+      }
+   }
+
+   /**
+    * Determine whether the given interface type contains unsized arrays (if
+    * it doesn't, array_sizing_visitor doesn't need to process it).
+    */
+   static bool interface_contains_unsized_arrays(const glsl_type *type)
+   {
+      for (unsigned i = 0; i < type->length; i++) {
+         const glsl_type *elem_type = type->fields.structure[i].type;
+         if (elem_type->is_array() && elem_type->length == 0)
+            return true;
+      }
+      return false;
+   }
+
+   /**
+    * Create a new interface type based on the given type, with unsized arrays
+    * replaced by sized arrays whose size is determined by
+    * max_ifc_array_access.
+    */
+   static const glsl_type *
+   resize_interface_members(const glsl_type *type,
+                            const unsigned *max_ifc_array_access)
+   {
+      unsigned num_fields = type->length;
+      glsl_struct_field *fields = new glsl_struct_field[num_fields];
+      memcpy(fields, type->fields.structure,
+             num_fields * sizeof(*fields));
+      for (unsigned i = 0; i < num_fields; i++) {
+         fixup_type(&fields[i].type, max_ifc_array_access[i]);
+      }
+      glsl_interface_packing packing =
+         (glsl_interface_packing) type->interface_packing;
+      const glsl_type *new_ifc_type =
+         glsl_type::get_interface_instance(fields, num_fields,
+                                           packing, type->name);
+      delete [] fields;
+      return new_ifc_type;
    }
 };
 
