@@ -649,7 +649,7 @@ static void r600_clear_buffer(struct pipe_context *ctx, struct pipe_resource *ds
 		/* Flush again in case the 3D engine has been prefetching the resource. */
 		r600_flag_resource_cache_flush(rctx, dst);
 	} else {
-		uint32_t *map = r600_buffer_mmap_sync_with_rings(rctx, r600_resource(dst),
+		uint32_t *map = r600_buffer_map_sync_with_rings(&rctx->b, r600_resource(dst),
 								 PIPE_TRANSFER_WRITE);
 		size /= 4;
 		for (unsigned i = 0; i < size; i++)

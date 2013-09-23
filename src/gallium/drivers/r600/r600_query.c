@@ -62,7 +62,7 @@ static struct r600_resource *r600_new_query_buffer(struct r600_context *ctx, uns
 	switch (type) {
 	case PIPE_QUERY_OCCLUSION_COUNTER:
 	case PIPE_QUERY_OCCLUSION_PREDICATE:
-		results = r600_buffer_mmap_sync_with_rings(ctx, buf, PIPE_TRANSFER_WRITE);
+		results = r600_buffer_map_sync_with_rings(&ctx->b, buf, PIPE_TRANSFER_WRITE);
 		memset(results, 0, buf_size);
 
 		/* Set top bits for unused backends. */
@@ -86,7 +86,7 @@ static struct r600_resource *r600_new_query_buffer(struct r600_context *ctx, uns
 	case PIPE_QUERY_SO_STATISTICS:
 	case PIPE_QUERY_SO_OVERFLOW_PREDICATE:
 	case PIPE_QUERY_PIPELINE_STATISTICS:
-		results = r600_buffer_mmap_sync_with_rings(ctx, buf, PIPE_TRANSFER_WRITE);
+		results = r600_buffer_map_sync_with_rings(&ctx->b, buf, PIPE_TRANSFER_WRITE);
 		memset(results, 0, buf_size);
 		ctx->b.ws->buffer_unmap(buf->cs_buf);
 		break;
@@ -415,7 +415,7 @@ static void r600_begin_query(struct pipe_context *ctx, struct pipe_query *query)
 	}
 
 	/* Obtain a new buffer if the current one can't be mapped without a stall. */
-	if (r600_rings_is_buffer_referenced(rctx, rquery->buffer.buf->cs_buf, RADEON_USAGE_READWRITE) ||
+	if (r600_rings_is_buffer_referenced(&rctx->b, rquery->buffer.buf->cs_buf, RADEON_USAGE_READWRITE) ||
 	    rctx->b.ws->buffer_is_busy(rquery->buffer.buf->buf, RADEON_USAGE_READWRITE)) {
 		pipe_resource_reference((struct pipe_resource**)&rquery->buffer.buf, NULL);
 		rquery->buffer.buf = r600_new_query_buffer(rctx, rquery->type);
@@ -496,7 +496,7 @@ static boolean r600_get_query_buffer_result(struct r600_context *ctx,
 		return TRUE;
 	}
 
-	map = r600_buffer_mmap_sync_with_rings(ctx, qbuf->buf,
+	map = r600_buffer_map_sync_with_rings(&ctx->b, qbuf->buf,
 						PIPE_TRANSFER_READ |
 						(wait ? 0 : PIPE_TRANSFER_DONTBLOCK));
 	if (!map)

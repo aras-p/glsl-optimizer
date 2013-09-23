@@ -271,3 +271,69 @@ void r600_screen_clear_buffer(struct r600_common_screen *rscreen, struct pipe_re
 	rscreen->aux_context->flush(rscreen->aux_context, NULL, 0);
 	pipe_mutex_unlock(rscreen->aux_context_lock);
 }
+
+boolean r600_rings_is_buffer_referenced(struct r600_common_context *ctx,
+					struct radeon_winsys_cs_handle *buf,
+					enum radeon_bo_usage usage)
+{
+	if (ctx->ws->cs_is_buffer_referenced(ctx->rings.gfx.cs, buf, usage)) {
+		return TRUE;
+	}
+	if (ctx->rings.dma.cs &&
+	    ctx->ws->cs_is_buffer_referenced(ctx->rings.dma.cs, buf, usage)) {
+		return TRUE;
+	}
+	return FALSE;
+}
+
+void *r600_buffer_map_sync_with_rings(struct r600_common_context *ctx,
+                                      struct r600_resource *resource,
+                                      unsigned usage)
+{
+	enum radeon_bo_usage rusage = RADEON_USAGE_READWRITE;
+
+	if (usage & PIPE_TRANSFER_UNSYNCHRONIZED) {
+		return ctx->ws->buffer_map(resource->cs_buf, NULL, usage);
+	}
+
+	if (!(usage & PIPE_TRANSFER_WRITE)) {
+		/* have to wait for the last write */
+		rusage = RADEON_USAGE_WRITE;
+	}
+
+	if (ctx->rings.gfx.cs->cdw &&
+	    ctx->ws->cs_is_buffer_referenced(ctx->rings.gfx.cs,
+					     resource->cs_buf, rusage)) {
+		if (usage & PIPE_TRANSFER_DONTBLOCK) {
+			ctx->rings.gfx.flush(ctx, RADEON_FLUSH_ASYNC);
+			return NULL;
+		} else {
+			ctx->rings.gfx.flush(ctx, 0);
+		}
+	}
+	if (ctx->rings.dma.cs &&
+	    ctx->rings.dma.cs->cdw &&
+	    ctx->ws->cs_is_buffer_referenced(ctx->rings.dma.cs,
+					     resource->cs_buf, rusage)) {
+		if (usage & PIPE_TRANSFER_DONTBLOCK) {
+			ctx->rings.dma.flush(ctx, RADEON_FLUSH_ASYNC);
+			return NULL;
+		} else {
+			ctx->rings.dma.flush(ctx, 0);
+		}
+	}
+
+	if (ctx->ws->buffer_is_busy(resource->buf, rusage)) {
+		if (usage & PIPE_TRANSFER_DONTBLOCK) {
+			return NULL;
+		} else {
+			/* We will be wait for the GPU. Wait for any offloaded
+			 * CS flush to complete to avoid busy-waiting in the winsys. */
+			ctx->ws->cs_sync_flush(ctx->rings.gfx.cs);
+			if (ctx->rings.dma.cs)
+				ctx->ws->cs_sync_flush(ctx->rings.dma.cs);
+		}
+	}
+
+	return ctx->ws->buffer_map(resource->cs_buf, NULL, usage);
+}

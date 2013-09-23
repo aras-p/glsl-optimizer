@@ -164,7 +164,7 @@ int r600_pipe_shader_create(struct pipe_context *ctx,
 		if (shader->bo == NULL) {
 			return -ENOMEM;
 		}
-		ptr = r600_buffer_mmap_sync_with_rings(rctx, shader->bo, PIPE_TRANSFER_WRITE);
+		ptr = r600_buffer_map_sync_with_rings(&rctx->b, shader->bo, PIPE_TRANSFER_WRITE);
 		if (R600_BIG_ENDIAN) {
 			for (i = 0; i < shader->shader.bc.ndw; ++i) {
 				ptr[i] = util_bswap32(shader->shader.bc.bytecode[i]);

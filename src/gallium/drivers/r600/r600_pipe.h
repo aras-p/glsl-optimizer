@@ -637,12 +637,6 @@ struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
 					 unsigned alignment);
 
 /* r600_pipe.c */
-boolean r600_rings_is_buffer_referenced(struct r600_context *ctx,
-					struct radeon_winsys_cs_handle *buf,
-					enum radeon_bo_usage usage);
-void *r600_buffer_mmap_sync_with_rings(struct r600_context *ctx,
-					struct r600_resource *resource,
-					unsigned usage);
 const char * r600_llvm_gpu_string(enum radeon_family family);
 
 

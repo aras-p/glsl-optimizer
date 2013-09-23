@@ -84,7 +84,7 @@ static struct r600_fence *r600_create_fence(struct r600_context *rctx)
 			R600_ERR("r600: failed to create bo for fence objects\n");
 			goto out;
 		}
-		rscreen->fences.data = r600_buffer_mmap_sync_with_rings(rctx, rscreen->fences.bo, PIPE_TRANSFER_READ_WRITE);
+		rscreen->fences.data = r600_buffer_map_sync_with_rings(&rctx->b, rscreen->fences.bo, PIPE_TRANSFER_READ_WRITE);
 	}
 
 	if (!LIST_IS_EMPTY(&rscreen->fences.pool)) {
@@ -211,73 +211,6 @@ static void r600_flush_dma_ring(void *ctx, unsigned flags)
 	rctx->b.rings.dma.flushing = true;
 	rctx->b.ws->cs_flush(cs, flags, 0);
 	rctx->b.rings.dma.flushing = false;
-}
-
-boolean r600_rings_is_buffer_referenced(struct r600_context *ctx,
-					struct radeon_winsys_cs_handle *buf,
-					enum radeon_bo_usage usage)
-{
-	if (ctx->b.ws->cs_is_buffer_referenced(ctx->b.rings.gfx.cs, buf, usage)) {
-		return TRUE;
-	}
-	if (ctx->b.rings.dma.cs) {
-		if (ctx->b.ws->cs_is_buffer_referenced(ctx->b.rings.dma.cs, buf, usage)) {
-			return TRUE;
-		}
-	}
-	return FALSE;
-}
-
-void *r600_buffer_mmap_sync_with_rings(struct r600_context *ctx,
-					struct r600_resource *resource,
-					unsigned usage)
-{
-	enum radeon_bo_usage rusage = RADEON_USAGE_READWRITE;
-	unsigned flags = 0;
-	bool sync_flush = TRUE;
-
-	if (usage & PIPE_TRANSFER_UNSYNCHRONIZED) {
-		return ctx->b.ws->buffer_map(resource->cs_buf, NULL, usage);
-	}
-
-	if (!(usage & PIPE_TRANSFER_WRITE)) {
-		/* have to wait for pending read */
-		rusage = RADEON_USAGE_WRITE;
-	}
-	if (usage & PIPE_TRANSFER_DONTBLOCK) {
-		flags |= RADEON_FLUSH_ASYNC;
-	}
-
-	if (ctx->b.ws->cs_is_buffer_referenced(ctx->b.rings.gfx.cs, resource->cs_buf, rusage) && ctx->b.rings.gfx.cs->cdw) {
-		ctx->b.rings.gfx.flush(ctx, flags);
-		if (usage & PIPE_TRANSFER_DONTBLOCK) {
-			return NULL;
-		}
-	}
-	if (ctx->b.rings.dma.cs) {
-		if (ctx->b.ws->cs_is_buffer_referenced(ctx->b.rings.dma.cs, resource->cs_buf, rusage) && ctx->b.rings.dma.cs->cdw) {
-			ctx->b.rings.dma.flush(ctx, flags);
-			if (usage & PIPE_TRANSFER_DONTBLOCK) {
-				return NULL;
-			}
-		}
-	}
-
-	if (usage & PIPE_TRANSFER_DONTBLOCK) {
-		if (ctx->b.ws->buffer_is_busy(resource->buf, rusage)) {
-			return NULL;
-		}
-	}
-	if (sync_flush) {
-		/* Try to avoid busy-waiting in radeon_bo_wait. */
-		ctx->b.ws->cs_sync_flush(ctx->b.rings.gfx.cs);
-		if (ctx->b.rings.dma.cs) {
-			ctx->b.ws->cs_sync_flush(ctx->b.rings.dma.cs);
-		}
-	}
-
-	/* at this point everything is synchronized */
-	return ctx->b.ws->buffer_map(resource->cs_buf, NULL, usage);
 }
 
 static void r600_flush_from_winsys(void *ctx, unsigned flags)

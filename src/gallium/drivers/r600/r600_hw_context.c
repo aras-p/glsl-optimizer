@@ -75,7 +75,7 @@ void r600_get_backend_mask(struct r600_context *ctx)
 	va = r600_resource_va(&ctx->screen->b.b, (void*)buffer);
 
 	/* initialize buffer with zeroes */
-	results = r600_buffer_mmap_sync_with_rings(ctx, buffer, PIPE_TRANSFER_WRITE);
+	results = r600_buffer_map_sync_with_rings(&ctx->b, buffer, PIPE_TRANSFER_WRITE);
 	if (results) {
 		memset(results, 0, ctx->max_db * 4 * 4);
 		ctx->b.ws->buffer_unmap(buffer->cs_buf);
@@ -90,7 +90,7 @@ void r600_get_backend_mask(struct r600_context *ctx)
 		cs->buf[cs->cdw++] = r600_context_bo_reloc(&ctx->b, &ctx->b.rings.gfx, buffer, RADEON_USAGE_WRITE);
 
 		/* analyze results */
-		results = r600_buffer_mmap_sync_with_rings(ctx, buffer, PIPE_TRANSFER_READ);
+		results = r600_buffer_map_sync_with_rings(&ctx->b, buffer, PIPE_TRANSFER_READ);
 		if (results) {
 			for(i = 0; i < ctx->max_db; i++) {
 				/* at least highest bit will be set if backend is used */

@@ -791,7 +791,7 @@ static void *r600_texture_transfer_map(struct pipe_context *ctx,
 
 	/* Use a staging texture for uploads if the underlying BO is busy. */
 	if (!(usage & PIPE_TRANSFER_READ) &&
-	    (r600_rings_is_buffer_referenced(rctx, rtex->resource.cs_buf, RADEON_USAGE_READWRITE) ||
+	    (r600_rings_is_buffer_referenced(&rctx->b, rtex->resource.cs_buf, RADEON_USAGE_READWRITE) ||
 	     rctx->b.ws->buffer_is_busy(rtex->resource.buf, RADEON_USAGE_READWRITE))) {
 		use_staging_texture = TRUE;
 	}
@@ -898,7 +898,7 @@ static void *r600_texture_transfer_map(struct pipe_context *ctx,
 		buf = &rtex->resource;
 	}
 
-	if (!(map = r600_buffer_mmap_sync_with_rings(rctx, buf, usage))) {
+	if (!(map = r600_buffer_map_sync_with_rings(&rctx->b, buf, usage))) {
 		pipe_resource_reference((struct pipe_resource**)&trans->staging, NULL);
 		FREE(trans);
 		return NULL;
