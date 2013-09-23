@@ -488,6 +488,19 @@ struct __DRIuseInvalidateExtensionRec {
 #define __DRI_DRIVER_EXTENSIONS "__driDriverExtensions"
 
 /**
+ * This symbol replaces the __DRI_DRIVER_EXTENSIONS symbol, and will be
+ * suffixed by "_drivername", allowing multiple drivers to be built into one
+ * library, and also giving the driver the chance to return a variable driver
+ * extensions struct depending on the driver name being loaded or any other
+ * system state.
+ *
+ * The function prototype is:
+ *
+ * const __DRIextension **__driDriverGetExtensions_drivername(void);
+ */
+#define __DRI_DRIVER_GET_EXTENSIONS "__driDriverGetExtensions"
+
+/**
  * Tokens for __DRIconfig attribs.  A number of attributes defined by
  * GLX or EGL standards are not in the table, as they must be provided
  * by the loader.  For example, FBConfig ID or visual ID, drawable type.

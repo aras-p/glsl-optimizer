@@ -189,7 +189,7 @@ glXGetDriverConfig(const char *driverName)
    if (!handle)
       return NULL;
 
-   extensions = driGetDriverExtensions(handle);
+   extensions = driGetDriverExtensions(handle, driverName);
    if (extensions) {
       for (int i = 0; extensions[i]; i++) {
          if (strcmp(extensions[i]->name, __DRI_CONFIG_OPTIONS) == 0)

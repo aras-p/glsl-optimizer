@@ -1183,7 +1183,7 @@ dri2CreateScreen(int screen, struct glx_display * priv)
       goto handle_error;
    }
 
-   extensions = driGetDriverExtensions(psc->driver);
+   extensions = driGetDriverExtensions(psc->driver, driverName);
    if (extensions == NULL)
       goto handle_error;
 
