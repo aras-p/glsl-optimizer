@@ -35,7 +35,7 @@ namespace {
 
 class lower_vector_visitor : public ir_rvalue_visitor {
 public:
-   lower_vector_visitor() : progress(false)
+   lower_vector_visitor() : dont_lower_swz(false), progress(false)
    {
       /* empty */
    }
