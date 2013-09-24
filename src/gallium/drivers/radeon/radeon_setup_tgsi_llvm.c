@@ -633,31 +633,23 @@ void radeon_llvm_emit_prepare_cube_coords(
 	coords[1] = coords[0];
 	coords[0] = coords[3];
 
-	/* all cases except simple cube map sampling require special handling
-	 * for coord vector */
-	if (target != TGSI_TEXTURE_CUBE ||
-		opcode != TGSI_OPCODE_TEX) {
-
+	if (target == TGSI_TEXTURE_CUBE_ARRAY ||
+	    target == TGSI_TEXTURE_SHADOWCUBE_ARRAY) {
 		/* for cube arrays coord.z = coord.w(array_index) * 8 + face */
-		if (target == TGSI_TEXTURE_CUBE_ARRAY ||
-			target == TGSI_TEXTURE_SHADOWCUBE_ARRAY) {
+		/* coords_arg.w component - array_index for cube arrays */
+		coords[2] = lp_build_emit_llvm_ternary(bld_base, TGSI_OPCODE_MAD,
+						       coords_arg[3], lp_build_const_float(gallivm, 8.0), coords[2]);
+	}
 
-			/* coords_arg.w component - array_index for cube arrays or
-			 * compare value for SHADOWCUBE */
-			coords[2] = lp_build_emit_llvm_ternary(bld_base, TGSI_OPCODE_MAD,
-					coords_arg[3], lp_build_const_float(gallivm, 8.0), coords[2]);
-		}
-
-		/* for instructions that need additional src (compare/lod/bias),
-		 * put it in coord.w */
-		if (opcode == TGSI_OPCODE_TEX2 ||
-			opcode == TGSI_OPCODE_TXB2 ||
-			opcode == TGSI_OPCODE_TXL2) {
-			coords[3] = coords_arg[4];
-		} else if (opcode == TGSI_OPCODE_TXB ||
-			opcode == TGSI_OPCODE_TXL) {
-			coords[3] = coords_arg[3];
-		}
+	/* Preserve compare/lod/bias. Put it in coords.w. */
+	if (opcode == TGSI_OPCODE_TEX2 ||
+	    opcode == TGSI_OPCODE_TXB2 ||
+	    opcode == TGSI_OPCODE_TXL2) {
+		coords[3] = coords_arg[4];
+	} else if (opcode == TGSI_OPCODE_TXB ||
+		   opcode == TGSI_OPCODE_TXL ||
+		   target == TGSI_TEXTURE_SHADOWCUBE) {
+		coords[3] = coords_arg[3];
 	}
 
 	memcpy(coords_arg, coords, sizeof(coords));
