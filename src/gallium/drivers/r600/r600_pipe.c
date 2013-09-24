@@ -1060,8 +1060,6 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 		rscreen->b.debug_flags |= DBG_NO_HYPERZ;
 	if (!debug_get_bool_option("R600_LLVM", TRUE))
 		rscreen->b.debug_flags |= DBG_NO_LLVM;
-	if (debug_get_bool_option("R600_PRINT_TEXDEPTH", FALSE))
-		rscreen->b.debug_flags |= DBG_TEX_DEPTH;
 
 	if (rscreen->b.family == CHIP_UNKNOWN) {
 		fprintf(stderr, "r600: Unknown chipset 0x%04X\n", rscreen->b.info.pci_id);

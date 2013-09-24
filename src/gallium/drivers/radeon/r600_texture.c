@@ -580,7 +580,8 @@ r600_texture_create_object(struct pipe_screen *screen,
 			base->nr_samples ? base->nr_samples : 1, util_format_short_name(base->format));
 	}
 
-	if (rscreen->debug_flags & DBG_TEX_DEPTH && rtex->is_depth) {
+	if (rscreen->debug_flags & DBG_TEX ||
+	    (rtex->resource.b.b.last_level > 0 && rscreen->debug_flags & DBG_TEXMIP)) {
 		printf("Texture: npix_x=%u, npix_y=%u, npix_z=%u, blk_w=%u, "
 		       "blk_h=%u, blk_d=%u, array_size=%u, last_level=%u, "
 		       "bpe=%u, nsamples=%u, flags=%u\n",
@@ -590,22 +591,20 @@ r600_texture_create_object(struct pipe_screen *screen,
 		       rtex->surface.array_size, rtex->surface.last_level,
 		       rtex->surface.bpe, rtex->surface.nsamples,
 		       rtex->surface.flags);
-		if (rtex->surface.flags & RADEON_SURF_ZBUFFER) {
-			for (int i = 0; i <= rtex->surface.last_level; i++) {
-				printf("  Z %i: offset=%llu, slice_size=%llu, npix_x=%u, "
-				       "npix_y=%u, npix_z=%u, nblk_x=%u, nblk_y=%u, "
-				       "nblk_z=%u, pitch_bytes=%u, mode=%u\n",
-				       i, rtex->surface.level[i].offset,
-				       rtex->surface.level[i].slice_size,
-				       u_minify(rtex->resource.b.b.width0, i),
-				       u_minify(rtex->resource.b.b.height0, i),
-				       u_minify(rtex->resource.b.b.depth0, i),
-				       rtex->surface.level[i].nblk_x,
-				       rtex->surface.level[i].nblk_y,
-				       rtex->surface.level[i].nblk_z,
-				       rtex->surface.level[i].pitch_bytes,
-				       rtex->surface.level[i].mode);
-			}
+		for (int i = 0; i <= rtex->surface.last_level; i++) {
+			printf("  Z %i: offset=%llu, slice_size=%llu, npix_x=%u, "
+			       "npix_y=%u, npix_z=%u, nblk_x=%u, nblk_y=%u, "
+			       "nblk_z=%u, pitch_bytes=%u, mode=%u\n",
+			       i, rtex->surface.level[i].offset,
+			       rtex->surface.level[i].slice_size,
+			       u_minify(rtex->resource.b.b.width0, i),
+			       u_minify(rtex->resource.b.b.height0, i),
+			       u_minify(rtex->resource.b.b.depth0, i),
+			       rtex->surface.level[i].nblk_x,
+			       rtex->surface.level[i].nblk_y,
+			       rtex->surface.level[i].nblk_z,
+			       rtex->surface.level[i].pitch_bytes,
+			       rtex->surface.level[i].mode);
 		}
 		if (rtex->surface.flags & RADEON_SURF_SBUFFER) {
 			for (int i = 0; i <= rtex->surface.last_level; i++) {

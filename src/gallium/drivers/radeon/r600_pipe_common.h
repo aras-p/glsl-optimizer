@@ -61,10 +61,11 @@
 
 /* Debug flags. */
 /* logging */
-#define DBG_TEX_DEPTH		(1 << 0)
-#define DBG_COMPUTE		(1 << 1)
-#define DBG_VM			(1 << 2)
-#define DBG_TRACE_CS		(1 << 3)
+#define DBG_TEX			(1 << 0)
+#define DBG_TEXMIP		(1 << 1)
+#define DBG_COMPUTE		(1 << 2)
+#define DBG_VM			(1 << 3)
+#define DBG_TRACE_CS		(1 << 4)
 /* shaders */
 #define DBG_FS			(1 << 8)
 #define DBG_VS			(1 << 9)
