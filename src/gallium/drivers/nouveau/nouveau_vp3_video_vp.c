@@ -340,22 +340,22 @@ nouveau_vp3_fill_picparm_h264_vp(struct nouveau_vp3_decoder *dec,
    nouveau_vp3_inter_sizes(dec, 1, &ring, &h->bucket_size, &h->inter_ring_data_size);
 
    h->u220 = 0;
-   h->f0 = d->mb_adaptive_frame_field_flag;
-   h->f1 = d->direct_8x8_inference_flag;
-   h->weighted_pred_flag = d->weighted_pred_flag;
-   h->f3 = d->constrained_intra_pred_flag;
+   h->f0 = d->pps->sps->mb_adaptive_frame_field_flag;
+   h->f1 = d->pps->sps->direct_8x8_inference_flag;
+   h->weighted_pred_flag = d->pps->weighted_pred_flag;
+   h->f3 = d->pps->constrained_intra_pred_flag;
    h->is_reference = d->is_reference;
    h->interlace = d->field_pic_flag;
    h->bottom_field_flag = d->bottom_field_flag;
    h->f7 = 0; // TODO: figure out when set..
-   h->log2_max_frame_num_minus4 = d->log2_max_frame_num_minus4;
+   h->log2_max_frame_num_minus4 = d->pps->sps->log2_max_frame_num_minus4;
    h->u31_45 = 1;
 
-   h->pic_order_cnt_type = d->pic_order_cnt_type;
-   h->pic_init_qp_minus26 = d->pic_init_qp_minus26;
-   h->chroma_qp_index_offset = d->chroma_qp_index_offset;
-   h->second_chroma_qp_index_offset = d->second_chroma_qp_index_offset;
-   h->weighted_bipred_idc = d->weighted_bipred_idc;
+   h->pic_order_cnt_type = d->pps->sps->pic_order_cnt_type;
+   h->pic_init_qp_minus26 = d->pps->pic_init_qp_minus26;
+   h->chroma_qp_index_offset = d->pps->chroma_qp_index_offset;
+   h->second_chroma_qp_index_offset = d->pps->second_chroma_qp_index_offset;
+   h->weighted_bipred_idc = d->pps->weighted_bipred_idc;
    h->tmp_idx = 0; // set in h264_vp_refs below
    h->fifo_dec_index = 0; // always set to 0 to be fifo compatible with other codecs
    h->frame_number = d->frame_num;
@@ -363,8 +363,8 @@ nouveau_vp3_fill_picparm_h264_vp(struct nouveau_vp3_decoder *dec,
    h->field_order_cnt[0] = d->field_order_cnt[0];
    h->field_order_cnt[1] = d->field_order_cnt[1];
    memset(h->refs, 0, sizeof(h->refs));
-   memcpy(h->m4x4, d->scaling_lists_4x4, sizeof(h->m4x4));
-   memcpy(h->m8x8, d->scaling_lists_8x8, sizeof(h->m8x8));
+   memcpy(h->m4x4, d->pps->ScalingList4x4, sizeof(h->m4x4));
+   memcpy(h->m8x8, d->pps->ScalingList8x8, sizeof(h->m8x8));
    h->u220 = 0;
    for (i = 0; i < d->num_ref_frames; ++i) {
       if (!d->ref[i])

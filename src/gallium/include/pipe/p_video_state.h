@@ -101,6 +101,15 @@ enum pipe_mpeg12_field_select
    PIPE_MPEG12_FS_SECOND_BACKWARD = 0x08
 };
 
+enum pipe_h264_slice_type
+{
+   PIPE_H264_SLICE_TYPE_P = 0x0,
+   PIPE_H264_SLICE_TYPE_B = 0x1,
+   PIPE_H264_SLICE_TYPE_I = 0x2,
+   PIPE_H264_SLICE_TYPE_SP = 0x3,
+   PIPE_H264_SLICE_TYPE_SI = 0x4
+};
+
 struct pipe_picture_desc
 {
    enum pipe_video_profile profile;
@@ -242,39 +251,70 @@ struct pipe_vc1_picture_desc
    struct pipe_video_buffer *ref[2];
 };
 
-struct pipe_h264_picture_desc
+struct pipe_h264_sps
 {
-   struct pipe_picture_desc base;
-
-   uint32_t slice_count;
-   int32_t  field_order_cnt[2];
-   bool     is_reference;
-   uint32_t frame_num;
-   uint8_t  field_pic_flag;
-   uint8_t  bottom_field_flag;
-   uint8_t  num_ref_frames;
-   uint8_t  mb_adaptive_frame_field_flag;
-   uint8_t  constrained_intra_pred_flag;
-   uint8_t  weighted_pred_flag;
-   uint8_t  weighted_bipred_idc;
-   uint8_t  frame_mbs_only_flag;
-   uint8_t  transform_8x8_mode_flag;
-   int8_t   chroma_qp_index_offset;
-   int8_t   second_chroma_qp_index_offset;
-   int8_t   pic_init_qp_minus26;
-   uint8_t  num_ref_idx_l0_active_minus1;
-   uint8_t  num_ref_idx_l1_active_minus1;
+   uint8_t  chroma_format_idc;
+   uint8_t  separate_colour_plane_flag;
+   uint8_t  bit_depth_luma_minus8;
+   uint8_t  bit_depth_chroma_minus8;
+   uint8_t  seq_scaling_matrix_present_flag;
+   uint8_t  ScalingList4x4[6][16];
+   uint8_t  ScalingList8x8[6][64];
    uint8_t  log2_max_frame_num_minus4;
    uint8_t  pic_order_cnt_type;
    uint8_t  log2_max_pic_order_cnt_lsb_minus4;
    uint8_t  delta_pic_order_always_zero_flag;
+   int32_t  offset_for_non_ref_pic;
+   int32_t  offset_for_top_to_bottom_field;
+   uint8_t  num_ref_frames_in_pic_order_cnt_cycle;
+   int32_t  offset_for_ref_frame[256];
+   uint8_t  max_num_ref_frames;
+   uint8_t  frame_mbs_only_flag;
+   uint8_t  mb_adaptive_frame_field_flag;
    uint8_t  direct_8x8_inference_flag;
+};
+
+struct pipe_h264_pps
+{
+   struct pipe_h264_sps *sps;
+
    uint8_t  entropy_coding_mode_flag;
-   uint8_t  pic_order_present_flag;
+   uint8_t  bottom_field_pic_order_in_frame_present_flag;
+   uint8_t  num_slice_groups_minus1;
+   uint8_t  slice_group_map_type;
+   uint8_t  slice_group_change_rate_minus1;
+   uint8_t  num_ref_idx_l0_default_active_minus1;
+   uint8_t  num_ref_idx_l1_default_active_minus1;
+   uint8_t  weighted_pred_flag;
+   uint8_t  weighted_bipred_idc;
+   int8_t   pic_init_qp_minus26;
+   int8_t   chroma_qp_index_offset;
    uint8_t  deblocking_filter_control_present_flag;
+   uint8_t  constrained_intra_pred_flag;
    uint8_t  redundant_pic_cnt_present_flag;
-   uint8_t  scaling_lists_4x4[6][16];
-   uint8_t  scaling_lists_8x8[2][64];
+   uint8_t  ScalingList4x4[6][16];
+   uint8_t  ScalingList8x8[6][64];
+   uint8_t  transform_8x8_mode_flag;
+   int8_t   second_chroma_qp_index_offset;
+};
+
+struct pipe_h264_picture_desc
+{
+   struct pipe_picture_desc base;
+
+   struct pipe_h264_pps *pps;
+
+   /* slice header */
+   uint32_t frame_num;
+   uint8_t  field_pic_flag;
+   uint8_t  bottom_field_flag;
+   uint8_t  num_ref_idx_l0_active_minus1;
+   uint8_t  num_ref_idx_l1_active_minus1;
+
+   uint32_t slice_count;
+   int32_t  field_order_cnt[2];
+   bool     is_reference;
+   uint8_t  num_ref_frames;
 
    bool     is_long_term[16];
    bool     top_is_reference[16];

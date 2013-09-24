@@ -90,9 +90,9 @@ nv84_decoder_vp_h264(struct nv84_decoder *dec,
    memset(&param1, 0, sizeof(param1));
    memset(&param2, 0, sizeof(param2));
 
-   memcpy(&param1.scaling_lists_4x4, desc->scaling_lists_4x4,
+   memcpy(&param1.scaling_lists_4x4, desc->pps->ScalingList4x4,
           sizeof(param1.scaling_lists_4x4));
-   memcpy(&param1.scaling_lists_8x8, desc->scaling_lists_8x8,
+   memcpy(&param1.scaling_lists_8x8, desc->pps->ScalingList8x8,
           sizeof(param1.scaling_lists_8x8));
 
    param1.width = width;
@@ -100,7 +100,7 @@ nv84_decoder_vp_h264(struct nv84_decoder *dec,
    param1.height = param1.h2 = height;
    param1.h1 = param1.h3 = align(height, 32);
    param1.format = 0x3231564e; /* 'NV12' */
-   param1.mb_adaptive_frame_field_flag = desc->mb_adaptive_frame_field_flag;
+   param1.mb_adaptive_frame_field_flag = desc->pps->sps->mb_adaptive_frame_field_flag;
    param1.field_pic_flag = desc->field_pic_flag;
 
    param2.width = width;
@@ -116,7 +116,7 @@ nv84_decoder_vp_h264(struct nv84_decoder *dec,
       param2.top = desc->bottom_field_flag ? 2 : 1;
       param2.bottom = desc->bottom_field_flag;
    }
-   param2.mb_adaptive_frame_field_flag = desc->mb_adaptive_frame_field_flag;
+   param2.mb_adaptive_frame_field_flag = desc->pps->sps->mb_adaptive_frame_field_flag;
    param2.is_reference = desc->is_reference;
 
    PUSH_SPACE(push, 5 + 16 + 3 + 2 + 6 + (is_ref ? 2 : 0) + 3 + 2 + 4 + 2);

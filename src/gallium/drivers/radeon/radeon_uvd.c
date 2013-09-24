@@ -380,10 +380,16 @@ static struct ruvd_h264 get_h264_msg(struct ruvd_decoder *dec, struct pipe_h264_
 		result.level = 41;
 
 	result.sps_info_flags = 0;
-	result.sps_info_flags |= pic->direct_8x8_inference_flag << 0;
-	result.sps_info_flags |= pic->mb_adaptive_frame_field_flag << 1;
-	result.sps_info_flags |= pic->frame_mbs_only_flag << 2;
-	result.sps_info_flags |= pic->delta_pic_order_always_zero_flag << 3;
+	result.sps_info_flags |= pic->pps->sps->direct_8x8_inference_flag << 0;
+	result.sps_info_flags |= pic->pps->sps->mb_adaptive_frame_field_flag << 1;
+	result.sps_info_flags |= pic->pps->sps->frame_mbs_only_flag << 2;
+	result.sps_info_flags |= pic->pps->sps->delta_pic_order_always_zero_flag << 3;
+
+	result.bit_depth_luma_minus8 = pic->pps->sps->bit_depth_luma_minus8;
+	result.bit_depth_chroma_minus8 = pic->pps->sps->bit_depth_chroma_minus8;
+	result.log2_max_frame_num_minus4 = pic->pps->sps->log2_max_frame_num_minus4;
+	result.pic_order_cnt_type = pic->pps->sps->pic_order_cnt_type;
+	result.log2_max_pic_order_cnt_lsb_minus4 = pic->pps->sps->log2_max_pic_order_cnt_lsb_minus4;
 
 	switch (dec->base.chroma_format) {
 	case PIPE_VIDEO_CHROMA_FORMAT_400:
@@ -401,36 +407,29 @@ static struct ruvd_h264 get_h264_msg(struct ruvd_decoder *dec, struct pipe_h264_
 	}
 
 	result.pps_info_flags = 0;
-	result.pps_info_flags |= pic->transform_8x8_mode_flag << 0;
-	result.pps_info_flags |= pic->redundant_pic_cnt_present_flag << 1;
-	result.pps_info_flags |= pic->constrained_intra_pred_flag << 2;
-	result.pps_info_flags |= pic->deblocking_filter_control_present_flag << 3;
-	result.pps_info_flags |= pic->weighted_bipred_idc << 4;
-	result.pps_info_flags |= pic->weighted_pred_flag << 6;
-	result.pps_info_flags |= pic->pic_order_present_flag << 7;
-	result.pps_info_flags |= pic->entropy_coding_mode_flag << 8;
+	result.pps_info_flags |= pic->pps->transform_8x8_mode_flag << 0;
+	result.pps_info_flags |= pic->pps->redundant_pic_cnt_present_flag << 1;
+	result.pps_info_flags |= pic->pps->constrained_intra_pred_flag << 2;
+	result.pps_info_flags |= pic->pps->deblocking_filter_control_present_flag << 3;
+	result.pps_info_flags |= pic->pps->weighted_bipred_idc << 4;
+	result.pps_info_flags |= pic->pps->weighted_pred_flag << 6;
+	result.pps_info_flags |= pic->pps->bottom_field_pic_order_in_frame_present_flag << 7;
+	result.pps_info_flags |= pic->pps->entropy_coding_mode_flag << 8;
 
-	result.bit_depth_luma_minus8 = 0;
-	result.bit_depth_chroma_minus8 = 0;
+	result.num_slice_groups_minus1 = pic->pps->num_slice_groups_minus1;
+	result.slice_group_map_type = pic->pps->slice_group_map_type;
+	result.slice_group_change_rate_minus1 = pic->pps->slice_group_change_rate_minus1;
+	result.pic_init_qp_minus26 = pic->pps->pic_init_qp_minus26;
+	result.chroma_qp_index_offset = pic->pps->chroma_qp_index_offset;
+	result.second_chroma_qp_index_offset = pic->pps->second_chroma_qp_index_offset;
 
-	result.log2_max_frame_num_minus4 = pic->log2_max_frame_num_minus4;
-	result.pic_order_cnt_type = pic->pic_order_cnt_type;
-	result.log2_max_pic_order_cnt_lsb_minus4 = pic->log2_max_pic_order_cnt_lsb_minus4;
+	memcpy(result.scaling_list_4x4, pic->pps->ScalingList4x4, 6*16);
+	memcpy(result.scaling_list_8x8, pic->pps->ScalingList8x8, 2*64);
+
 	result.num_ref_frames = pic->num_ref_frames;
-	result.pic_init_qp_minus26 = pic->pic_init_qp_minus26;
-	result.chroma_qp_index_offset = pic->chroma_qp_index_offset;
-	result.second_chroma_qp_index_offset = pic->second_chroma_qp_index_offset;
-
-	result.num_slice_groups_minus1 = 0;
-	result.slice_group_map_type = 0;
 
 	result.num_ref_idx_l0_active_minus1 = pic->num_ref_idx_l0_active_minus1;
 	result.num_ref_idx_l1_active_minus1 = pic->num_ref_idx_l1_active_minus1;
-
-	result.slice_group_change_rate_minus1 = 0;
-
-	memcpy(result.scaling_list_4x4, pic->scaling_lists_4x4, 6*64);
-	memcpy(result.scaling_list_8x8, pic->scaling_lists_8x8, 2*64);
 
 	result.frame_num = pic->frame_num;
 	memcpy(result.frame_num_list, pic->frame_num_list, 4*16);

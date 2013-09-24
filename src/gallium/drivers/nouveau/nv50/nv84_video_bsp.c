@@ -136,7 +136,7 @@ nv84_decoder_bsp(struct nv84_decoder *dec,
    params.iseqparm.chroma_format_idc = 1;
 
    params.iseqparm.pic_width_in_mbs_minus1 = mb(dec->base.width) - 1;
-   if (desc->field_pic_flag || desc->mb_adaptive_frame_field_flag)
+   if (desc->field_pic_flag || desc->pps->sps->mb_adaptive_frame_field_flag)
       params.iseqparm.pic_height_in_map_units_minus1 = mb_half(dec->base.height) - 1;
    else
       params.iseqparm.pic_height_in_map_units_minus1 = mb(dec->base.height) - 1;
@@ -162,26 +162,26 @@ nv84_decoder_bsp(struct nv84_decoder *dec,
    }
 
    params.iseqparm.num_ref_frames = desc->num_ref_frames;
-   params.iseqparm.mb_adaptive_frame_field_flag = desc->mb_adaptive_frame_field_flag;
-   params.ipicparm.constrained_intra_pred_flag = desc->constrained_intra_pred_flag;
-   params.ipicparm.weighted_pred_flag = desc->weighted_pred_flag;
-   params.ipicparm.weighted_bipred_idc = desc->weighted_bipred_idc;
-   params.iseqparm.frame_mbs_only_flag = desc->frame_mbs_only_flag;
-   params.ipicparm.transform_8x8_mode_flag = desc->transform_8x8_mode_flag;
-   params.ipicparm.chroma_qp_index_offset = desc->chroma_qp_index_offset;
-   params.ipicparm.second_chroma_qp_index_offset = desc->second_chroma_qp_index_offset;
-   params.ipicparm.pic_init_qp_minus26 = desc->pic_init_qp_minus26;
+   params.iseqparm.mb_adaptive_frame_field_flag = desc->pps->sps->mb_adaptive_frame_field_flag;
+   params.ipicparm.constrained_intra_pred_flag = desc->pps->constrained_intra_pred_flag;
+   params.ipicparm.weighted_pred_flag = desc->pps->weighted_pred_flag;
+   params.ipicparm.weighted_bipred_idc = desc->pps->weighted_bipred_idc;
+   params.iseqparm.frame_mbs_only_flag = desc->pps->sps->frame_mbs_only_flag;
+   params.ipicparm.transform_8x8_mode_flag = desc->pps->transform_8x8_mode_flag;
+   params.ipicparm.chroma_qp_index_offset = desc->pps->chroma_qp_index_offset;
+   params.ipicparm.second_chroma_qp_index_offset = desc->pps->second_chroma_qp_index_offset;
+   params.ipicparm.pic_init_qp_minus26 = desc->pps->pic_init_qp_minus26;
    params.ipicparm.num_ref_idx_l0_active_minus1 = desc->num_ref_idx_l0_active_minus1;
    params.ipicparm.num_ref_idx_l1_active_minus1 = desc->num_ref_idx_l1_active_minus1;
-   params.iseqparm.log2_max_frame_num_minus4 = desc->log2_max_frame_num_minus4;
-   params.iseqparm.pic_order_cnt_type = desc->pic_order_cnt_type;
-   params.iseqparm.log2_max_pic_order_cnt_lsb_minus4 = desc->log2_max_pic_order_cnt_lsb_minus4;
-   params.iseqparm.delta_pic_order_always_zero_flag = desc->delta_pic_order_always_zero_flag;
-   params.iseqparm.direct_8x8_inference_flag = desc->direct_8x8_inference_flag;
-   params.ipicparm.entropy_coding_mode_flag = desc->entropy_coding_mode_flag;
-   params.ipicparm.pic_order_present_flag = desc->pic_order_present_flag;
-   params.ipicparm.deblocking_filter_control_present_flag = desc->deblocking_filter_control_present_flag;
-   params.ipicparm.redundant_pic_cnt_present_flag = desc->redundant_pic_cnt_present_flag;
+   params.iseqparm.log2_max_frame_num_minus4 = desc->pps->sps->log2_max_frame_num_minus4;
+   params.iseqparm.pic_order_cnt_type = desc->pps->sps->pic_order_cnt_type;
+   params.iseqparm.log2_max_pic_order_cnt_lsb_minus4 = desc->pps->sps->log2_max_pic_order_cnt_lsb_minus4;
+   params.iseqparm.delta_pic_order_always_zero_flag = desc->pps->sps->delta_pic_order_always_zero_flag;
+   params.iseqparm.direct_8x8_inference_flag = desc->pps->sps->direct_8x8_inference_flag;
+   params.ipicparm.entropy_coding_mode_flag = desc->pps->entropy_coding_mode_flag;
+   params.ipicparm.pic_order_present_flag = desc->pps->bottom_field_pic_order_in_frame_present_flag;
+   params.ipicparm.deblocking_filter_control_present_flag = desc->pps->deblocking_filter_control_present_flag;
+   params.ipicparm.redundant_pic_cnt_present_flag = desc->pps->redundant_pic_cnt_present_flag;
 
    memcpy(dec->bitstream->map, &params, sizeof(params));
    for (i = 0; i < num_buffers; i++) {
