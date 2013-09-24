@@ -192,6 +192,12 @@ struct assignment_generator
    ir_variable* var;
 
    assignment_generator()
+      : base_ir(NULL),
+        rvalue(NULL),
+        old_index(NULL),
+        is_write(false),
+        write_mask(0),
+        var(NULL)
    {
    }
 
