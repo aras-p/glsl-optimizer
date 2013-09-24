@@ -2469,6 +2469,7 @@ static struct pipe_sampler_view *si_create_sampler_view(struct pipe_context *ctx
 
 	va = r600_resource_va(ctx->screen, texture);
 	va += surflevel[0].offset;
+	va += tmp->mipmap_shift * surflevel[texture->last_level].slice_size;
 	view->state[0] = va >> 8;
 	view->state[1] = (S_008F14_BASE_ADDRESS_HI(va >> 40) |
 			  S_008F14_DATA_FORMAT(format) |
@@ -2480,10 +2481,10 @@ static struct pipe_sampler_view *si_create_sampler_view(struct pipe_context *ctx
 			  S_008F1C_DST_SEL_Z(si_map_swizzle(swizzle[2])) |
 			  S_008F1C_DST_SEL_W(si_map_swizzle(swizzle[3])) |
 			  S_008F1C_BASE_LEVEL(texture->nr_samples > 1 ?
-						      0 : state->u.tex.first_level) |
+						      0 : state->u.tex.first_level - tmp->mipmap_shift) |
 			  S_008F1C_LAST_LEVEL(texture->nr_samples > 1 ?
 						      util_logbase2(texture->nr_samples) :
-						      state->u.tex.last_level) |
+						      state->u.tex.last_level - tmp->mipmap_shift) |
 			  S_008F1C_TILING_INDEX(si_tile_mode_index(tmp, 0, false)) |
 			  S_008F1C_POW2_PAD(texture->last_level > 0) |
 			  S_008F1C_TYPE(si_tex_dim(texture->target, texture->nr_samples)));

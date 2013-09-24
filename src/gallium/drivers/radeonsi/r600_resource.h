@@ -67,6 +67,7 @@ struct r600_texture {
 	struct r600_texture		*flushed_depth_texture;
 	boolean				is_flushing_texture;
 	struct radeon_surface		surface;
+	unsigned mipmap_shift;
 
 	/* Colorbuffer compression and fast clear. */
 	struct r600_fmask_info		fmask;

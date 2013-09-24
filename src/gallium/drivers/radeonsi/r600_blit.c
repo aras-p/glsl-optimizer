@@ -430,6 +430,21 @@ static void r600_compressed_to_blittable(struct pipe_resource *tex,
 	rtex->surface.level[0].npix_y = util_format_get_nblocksy(orig->format, orig->npix0_y);
 	rtex->surface.level[level].npix_x = util_format_get_nblocksx(orig->format, orig->npix_x);
 	rtex->surface.level[level].npix_y = util_format_get_nblocksy(orig->format, orig->npix_y);
+
+	/* By dividing the dimensions by 4, we effectively decrement
+	 * last_level by 2, therefore the last 2 mipmap levels disappear and
+	 * aren't blittable. Note that the last 3 mipmap levels (4x4, 2x2,
+	 * 1x1) have equal slice sizes, which is an important assumption
+	 * for this to work.
+	 *
+	 * In order to make the last 2 mipmap levels blittable, we have to
+	 * add the slice size of the last mipmap level to the texture
+	 * address, so that even though the hw thinks it reads last_level-2,
+	 * it will actually read last_level-1, and if we add the slice size*2,
+	 * it will read last_level. That's how this workaround works.
+	 */
+	if (level > rtex->resource.b.b.last_level-2)
+		rtex->mipmap_shift = level - (rtex->resource.b.b.last_level-2);
 }
 
 static void r600_change_format(struct pipe_resource *tex,
@@ -463,6 +478,7 @@ static void r600_reset_blittable_to_orig(struct pipe_resource *tex,
 	rtex->surface.level[0].npix_y = orig->npix0_y;
 	rtex->surface.level[level].npix_x = orig->npix_x;
 	rtex->surface.level[level].npix_y = orig->npix_y;
+	rtex->mipmap_shift = 0;
 }
 
 static void r600_resource_copy_region(struct pipe_context *ctx,
