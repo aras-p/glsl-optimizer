@@ -281,8 +281,13 @@ struct ir_lower_jumps_visitor : public ir_control_flow_visitor {
    bool lower_main_return;
 
    ir_lower_jumps_visitor()
+      : progress(false),
+        pull_out_jumps(false),
+        lower_continue(false),
+        lower_break(false),
+        lower_sub_return(false),
+        lower_main_return(false)
    {
-      this->progress = false;
    }
 
    void truncate_after_instruction(exec_node *ir)
