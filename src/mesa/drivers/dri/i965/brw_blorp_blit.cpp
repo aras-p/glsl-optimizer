@@ -1928,7 +1928,7 @@ brw_blorp_blit_program::texture_lookup(struct brw_reg dst,
    }
 
    brw_SAMPLE(&func,
-              retype(dst, BRW_REGISTER_TYPE_F) /* dest */,
+              retype(dst, BRW_REGISTER_TYPE_UW) /* dest */,
               base_mrf /* msg_reg_nr */,
               brw_message_reg(base_mrf) /* src0 */,
               BRW_BLORP_TEXTURE_BINDING_TABLE_INDEX,
