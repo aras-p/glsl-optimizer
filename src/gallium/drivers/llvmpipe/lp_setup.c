@@ -1015,7 +1015,7 @@ try_update_scene_state( struct lp_setup_context *setup )
        * To cope with this problem we check if triangles are large and
        * subdivide them if needed.
        */
-      setup->subdivide_large_triangles = (setup->fb.width > 2048 &&
+      setup->subdivide_large_triangles = (setup->fb.width > 2048 ||
                                           setup->fb.height > 2048);
    }
                                       
