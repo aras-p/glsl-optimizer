@@ -121,6 +121,11 @@ struct _mesa_glsl_parse_state {
       return check_version(130, 300, locp, "bit-wise operations are forbidden");
    }
 
+   bool has_explicit_attrib_location() const
+   {
+      return ARB_explicit_attrib_location_enable || is_version(330, 300);
+   }
+
    void process_version_directive(YYLTYPE *locp, int version,
                                   const char *ident);
 

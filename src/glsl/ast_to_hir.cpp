@@ -2842,7 +2842,7 @@ ast_declarator_list::hir(exec_list *instructions,
        * any extension that adds the 'layout' keyword.
        */
       if (!state->is_version(130, 300)
-	  && !state->ARB_explicit_attrib_location_enable
+	  && !state->has_explicit_attrib_location()
 	  && !state->ARB_fragment_coord_conventions_enable) {
 	 if (this->type->qualifier.flags.q.out) {
 	    _mesa_glsl_error(& loc, state,

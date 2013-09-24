@@ -1262,7 +1262,7 @@ layout_qualifier_id:
    {
       memset(& $$, 0, sizeof($$));
 
-      if (state->ARB_explicit_attrib_location_enable) {
+      if (state->has_explicit_attrib_location()) {
          if (strcmp("location", $1) == 0) {
             $$.flags.q.explicit_location = 1;
 
