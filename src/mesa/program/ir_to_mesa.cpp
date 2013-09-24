@@ -2252,7 +2252,7 @@ ir_to_mesa_visitor::visit(ir_if *ir)
       visit_exec_list(&ir->else_instructions, this);
    }
 
-   if_inst = emit(ir->condition, OPCODE_ENDIF);
+   emit(ir->condition, OPCODE_ENDIF);
 }
 
 void
