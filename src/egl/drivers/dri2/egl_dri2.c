@@ -367,8 +367,10 @@ static const __DRIextension **
 dri2_open_driver(_EGLDisplay *disp)
 {
    struct dri2_egl_display *dri2_dpy = disp->DriverData;
-   const __DRIextension **extensions;
+   const __DRIextension **extensions = NULL;
    char path[PATH_MAX], *search_paths, *p, *next, *end;
+   char *get_extensions_name;
+   const __DRIextension **(*get_extensions)(void);
 
    search_paths = NULL;
    if (geteuid() == getuid()) {
@@ -409,7 +411,21 @@ dri2_open_driver(_EGLDisplay *disp)
    }
 
    _eglLog(_EGL_DEBUG, "DRI2: dlopen(%s)", path);
-   extensions = dlsym(dri2_dpy->driver, __DRI_DRIVER_EXTENSIONS);
+
+   if (asprintf(&get_extensions_name, "%s_%s",
+                __DRI_DRIVER_GET_EXTENSIONS, dri2_dpy->driver_name) != -1) {
+      get_extensions = dlsym(dri2_dpy->driver, get_extensions_name);
+      if (get_extensions) {
+         extensions = get_extensions();
+      } else {
+         _eglLog(_EGL_DEBUG, "driver does not expose %s(): %s\n",
+                 get_extensions_name, dlerror());
+      }
+      free(get_extensions_name);
+   }
+
+   if (!extensions)
+      extensions = dlsym(dri2_dpy->driver, __DRI_DRIVER_EXTENSIONS);
    if (extensions == NULL) {
       _eglLog(_EGL_WARNING,
 	      "DRI2: driver exports no extensions (%s)", dlerror());
