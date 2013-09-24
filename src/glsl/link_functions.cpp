@@ -223,18 +223,31 @@ public:
 	    var = ir->var->clone(linked, NULL);
 	    linked->symbols->add_variable(var);
 	    linked->ir->push_head(var);
-	 } else if (var->type->is_array()) {
-	    /* It is possible to have a global array declared in multiple
-	     * shaders without a size.  The array is implicitly sized by the
-	     * maximal access to it in *any* shader.  Because of this, we
-	     * need to track the maximal access to the array as linking pulls
-	     * more functions in that access the array.
-	     */
-	    var->max_array_access =
-	       MAX2(var->max_array_access, ir->var->max_array_access);
+	 } else {
+            if (var->type->is_array()) {
+               /* It is possible to have a global array declared in multiple
+                * shaders without a size.  The array is implicitly sized by
+                * the maximal access to it in *any* shader.  Because of this,
+                * we need to track the maximal access to the array as linking
+                * pulls more functions in that access the array.
+                */
+               var->max_array_access =
+                  MAX2(var->max_array_access, ir->var->max_array_access);
 
-	    if (var->type->length == 0 && ir->var->type->length != 0)
-	       var->type = ir->var->type;
+               if (var->type->length == 0 && ir->var->type->length != 0)
+                  var->type = ir->var->type;
+            }
+            if (var->is_interface_instance()) {
+               /* Similarly, we need implicit sizes of arrays within interface
+                * blocks to be sized by the maximal access in *any* shader.
+                */
+               for (unsigned i = 0; i < var->get_interface_type()->length;
+                    i++) {
+                  var->max_ifc_array_access[i] =
+                     MAX2(var->max_ifc_array_access[i],
+                          ir->var->max_ifc_array_access[i]);
+               }
+            }
 	 }
 
 	 ir->var = var;
