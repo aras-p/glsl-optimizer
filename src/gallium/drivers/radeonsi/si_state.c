@@ -3136,6 +3136,10 @@ void si_init_config(struct r600_context *rctx)
 			si_pm4_set_reg(pm4, R_028350_PA_SC_RASTER_CONFIG, 0x16000012);
 			si_pm4_set_reg(pm4, R_028354_PA_SC_RASTER_CONFIG_1, 0x00000000);
 			break;
+		case CHIP_HAWAII:
+			si_pm4_set_reg(pm4, R_028350_PA_SC_RASTER_CONFIG, 0x3a00161a);
+			si_pm4_set_reg(pm4, R_028354_PA_SC_RASTER_CONFIG_1, 0x0000002e);
+			break;
 		case CHIP_KAVERI:
 			/* XXX todo */
 		case CHIP_KABINI:

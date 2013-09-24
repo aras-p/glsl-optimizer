@@ -258,6 +258,7 @@ const char *r600_get_llvm_processor_name(enum radeon_family family)
 		case CHIP_BONAIRE: return "bonaire";
 		case CHIP_KABINI: return "kabini";
 		case CHIP_KAVERI: return "kaveri";
+		case CHIP_HAWAII: return "hawaii";
 		default: return "";
 #endif
 	}
@@ -274,6 +275,7 @@ static const char *r600_get_family_name(enum radeon_family family)
 	case CHIP_BONAIRE: return "AMD BONAIRE";
 	case CHIP_KAVERI: return "AMD KAVERI";
 	case CHIP_KABINI: return "AMD KABINI";
+	case CHIP_HAWAII: return "AMD HAWAII";
 	default: return "AMD unknown";
 	}
 }

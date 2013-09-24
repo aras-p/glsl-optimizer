@@ -5403,6 +5403,8 @@
 #define     V_02803C_X_ADDR_SURF_P8_32X32_16X16                     0x0C
 #define     V_02803C_X_ADDR_SURF_P8_32X32_16X32                     0x0D
 #define     V_02803C_X_ADDR_SURF_P8_32X64_32X32                     0x0E
+#define     V_02803C_X_ADDR_SURF_P16_32X32_8X16                     0x10
+#define     V_02803C_X_ADDR_SURF_P16_32X32_16X16                    0x11
 #define   S_02803C_BANK_WIDTH(x)                                      (((x) & 0x03) << 13)
 #define   G_02803C_BANK_WIDTH(x)                                      (((x) >> 13) & 0x03)
 #define   C_02803C_BANK_WIDTH                                         0xFFFF9FFF
@@ -5731,6 +5733,13 @@
 #define     V_028350_RASTER_CONFIG_PKR_YSEL_1                       0x01
 #define     V_028350_RASTER_CONFIG_PKR_YSEL_2                       0x02
 #define     V_028350_RASTER_CONFIG_PKR_YSEL_3                       0x03
+#define   S_028350_PKR_XSEL2(x)                                       (((x) & 0x03) << 14)
+#define   G_028350_PKR_XSEL2(x)                                       (((x) >> 14) & 0x03)
+#define   C_028350_PKR_XSEL2                                          0xFFFF3FFF
+#define     V_028350_RASTER_CONFIG_PKR_XSEL2_0                      0x00
+#define     V_028350_RASTER_CONFIG_PKR_XSEL2_1                      0x01
+#define     V_028350_RASTER_CONFIG_PKR_XSEL2_2                      0x02
+#define     V_028350_RASTER_CONFIG_PKR_XSEL2_3                      0x03
 #define   S_028350_SC_MAP(x)                                          (((x) & 0x03) << 16)
 #define   G_028350_SC_MAP(x)                                          (((x) >> 16) & 0x03)
 #define   C_028350_SC_MAP                                             0xFFFCFFFF
