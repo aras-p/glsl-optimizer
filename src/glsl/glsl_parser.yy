@@ -1200,7 +1200,7 @@ layout_qualifier_id:
       }
 
       /* See also interface_block_layout_qualifier. */
-      if (!$$.flags.i && state->ARB_uniform_buffer_object_enable) {
+      if (!$$.flags.i && state->has_uniform_buffer_objects()) {
          if (strcmp($1, "std140") == 0) {
             $$.flags.q.std140 = 1;
          } else if (strcmp($1, "shared") == 0) {
@@ -1328,7 +1328,7 @@ layout_qualifier_id:
    {
       $$ = $1;
       /* Layout qualifiers for ARB_uniform_buffer_object. */
-      if ($$.flags.q.uniform && !state->ARB_uniform_buffer_object_enable) {
+      if ($$.flags.q.uniform && !state->has_uniform_buffer_objects()) {
          _mesa_glsl_error(& @1, state,
                           "#version 140 / GL_ARB_uniform_buffer_object "
                           "layout qualifier `%s' is used", $1);
@@ -2138,7 +2138,7 @@ basic_interface_block:
       block->declarations.push_degenerate_list_at_head(& $4->link);
 
       if ($1.flags.q.uniform) {
-         if (!state->ARB_uniform_buffer_object_enable) {
+         if (!state->has_uniform_buffer_objects()) {
             _mesa_glsl_error(& @1, state,
                              "#version 140 / GL_ARB_uniform_buffer_object "
                              "required for defining uniform blocks");

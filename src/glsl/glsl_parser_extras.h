@@ -126,6 +126,11 @@ struct _mesa_glsl_parse_state {
       return ARB_explicit_attrib_location_enable || is_version(330, 300);
    }
 
+   bool has_uniform_buffer_objects() const
+   {
+      return ARB_uniform_buffer_object_enable || is_version(140, 300);
+   }
+
    void process_version_directive(YYLTYPE *locp, int version,
                                   const char *ident);
 
