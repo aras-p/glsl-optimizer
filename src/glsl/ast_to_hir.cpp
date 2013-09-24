@@ -4725,7 +4725,7 @@ ast_interface_block::hir(exec_list *instructions,
                                       var_mode);
       }
 
-      var->interface_type = block_type;
+      var->init_interface_type(block_type);
       if (state->target == geometry_shader && var_mode == ir_var_shader_in)
          handle_geometry_shader_input_decl(state, loc, var);
       state->symbols->add_variable(var);
@@ -4741,7 +4741,7 @@ ast_interface_block::hir(exec_list *instructions,
             new(state) ir_variable(fields[i].type,
                                    ralloc_strdup(state, fields[i].name),
                                    var_mode);
-         var->interface_type = block_type;
+         var->init_interface_type(block_type);
 
          /* Propagate the "binding" keyword into this UBO's fields;
           * the UBO declaration itself doesn't get an ir_variable unless it

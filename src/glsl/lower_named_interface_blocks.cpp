@@ -152,7 +152,7 @@ flatten_named_interface_blocks_declarations::run(exec_list *instructions)
             }
             new_var->location = iface_t->fields.structure[i].location;
 
-            new_var->interface_type = iface_t;
+            new_var->init_interface_type(iface_t);
             hash_table_insert(interface_namespace, new_var,
                               iface_field_name);
             insert_pos->insert_after(new_var);
@@ -208,9 +208,9 @@ flatten_named_interface_blocks_declarations::handle_rvalue(ir_rvalue **rvalue)
    if (var->mode == ir_var_uniform)
       return;
 
-   if (var->interface_type != NULL) {
+   if (var->get_interface_type() != NULL) {
       char *iface_field_name =
-         ralloc_asprintf(mem_ctx, "%s.%s", var->interface_type->name,
+         ralloc_asprintf(mem_ctx, "%s.%s", var->get_interface_type()->name,
                          ir->field);
       /* Find the variable in the set of flattened interface blocks */
       ir_variable *found_var =

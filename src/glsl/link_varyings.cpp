@@ -972,8 +972,8 @@ public:
       this->toplevel_var = var;
       this->varying_floats = 0;
       if (var->is_interface_instance())
-         program_resource_visitor::process(var->interface_type,
-                                           var->interface_type->name);
+         program_resource_visitor::process(var->get_interface_type(),
+                                           var->get_interface_type()->name);
       else
          program_resource_visitor::process(var);
    }
@@ -1083,10 +1083,10 @@ assign_varying_locations(struct gl_context *ctx,
             ((ir_instruction *) node)->as_variable();
 
          if ((input_var != NULL) && (input_var->mode == ir_var_shader_in)) {
-            if (input_var->interface_type != NULL) {
+            if (input_var->get_interface_type() != NULL) {
                char *const iface_field_name =
                   ralloc_asprintf(mem_ctx, "%s.%s",
-                                  input_var->interface_type->name,
+                                  input_var->get_interface_type()->name,
                                   input_var->name);
                hash_table_insert(consumer_interface_inputs, input_var,
                                  iface_field_name);
@@ -1108,10 +1108,10 @@ assign_varying_locations(struct gl_context *ctx,
       g.process(output_var);
 
       ir_variable *input_var;
-      if (output_var->interface_type != NULL) {
+      if (output_var->get_interface_type() != NULL) {
          char *const iface_field_name =
             ralloc_asprintf(mem_ctx, "%s.%s",
-                            output_var->interface_type->name,
+                            output_var->get_interface_type()->name,
                             output_var->name);
          input_var =
             (ir_variable *) hash_table_find(consumer_interface_inputs,

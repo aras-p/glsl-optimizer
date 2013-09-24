@@ -392,6 +392,20 @@ public:
     }
 
    /**
+    * Set this->interface_type on a newly created variable.
+    */
+   void init_interface_type(const struct glsl_type *type)
+   {
+      assert(this->interface_type == NULL);
+      this->interface_type = type;
+   }
+
+   const glsl_type *get_interface_type() const
+   {
+      return this->interface_type;
+   }
+
+   /**
     * Declared type of the variable
     */
    const struct glsl_type *type;
@@ -582,6 +596,7 @@ public:
     */
    ir_constant *constant_initializer;
 
+private:
    /**
     * For variables that are in an interface block or are an instance of an
     * interface block, this is the \c GLSL_TYPE_INTERFACE type for that block.

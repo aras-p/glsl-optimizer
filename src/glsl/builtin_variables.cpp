@@ -831,7 +831,7 @@ builtin_variable_generator::generate_varyings()
                                            "gl_in");
       ir_variable *var = add_variable("gl_in", array(per_vertex_type, 0),
                                       ir_var_shader_in, 0);
-      var->interface_type = per_vertex_type;
+      var->init_interface_type(per_vertex_type);
    }
 }
 

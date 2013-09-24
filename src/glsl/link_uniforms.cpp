@@ -199,8 +199,8 @@ public:
    {
       this->is_ubo_var = var->is_in_uniform_block();
       if (var->is_interface_instance())
-         program_resource_visitor::process(var->interface_type,
-                                           var->interface_type->name);
+         program_resource_visitor::process(var->get_interface_type(),
+                                           var->get_interface_type()->name);
       else
          program_resource_visitor::process(var);
    }
@@ -317,10 +317,10 @@ public:
       ubo_block_index = -1;
       if (var->is_in_uniform_block()) {
          if (var->is_interface_instance() && var->type->is_array()) {
-            unsigned l = strlen(var->interface_type->name);
+            unsigned l = strlen(var->get_interface_type()->name);
 
             for (unsigned i = 0; i < prog->NumUniformBlocks; i++) {
-               if (strncmp(var->interface_type->name,
+               if (strncmp(var->get_interface_type()->name,
                            prog->UniformBlocks[i].Name,
                            l) == 0
                    && prog->UniformBlocks[i].Name[l] == '[') {
@@ -330,7 +330,7 @@ public:
             }
          } else {
             for (unsigned i = 0; i < prog->NumUniformBlocks; i++) {
-               if (strcmp(var->interface_type->name,
+               if (strcmp(var->get_interface_type()->name,
                           prog->UniformBlocks[i].Name) == 0) {
                   ubo_block_index = i;
                   break;
@@ -362,7 +362,8 @@ public:
          }
 
          if (var->is_interface_instance())
-            process(var->interface_type, var->interface_type->name);
+            process(var->get_interface_type(),
+                    var->get_interface_type()->name);
          else
             process(var);
       } else
