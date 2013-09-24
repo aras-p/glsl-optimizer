@@ -17,7 +17,9 @@ MEGADRIVERS += i965_dri.so
 endif
 
 if HAVE_NOUVEAU_DRI
-SUBDIRS+=nouveau
+SUBDIRS += nouveau
+MEGADRIVERS_DEPS += nouveau/libnouveau_dri.la
+MEGADRIVERS += nouveau_vieux_dri.so
 endif
 
 if HAVE_R200_DRI

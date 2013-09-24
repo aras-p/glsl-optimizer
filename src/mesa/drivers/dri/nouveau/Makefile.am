@@ -33,20 +33,6 @@ AM_CFLAGS = \
 	$(VISIBILITY_CFLAGS) \
 	$(NOUVEAU_CFLAGS)
 
-dridir = $(DRI_DRIVER_INSTALL_DIR)
-dri_LTLIBRARIES = nouveau_vieux_dri.la
-
-nouveau_vieux_dri_la_SOURCES = \
-	$(NOUVEAU_C_FILES)
-
-nouveau_vieux_dri_la_LDFLAGS = $(DRI_DRIVER_LDFLAGS)
-nouveau_vieux_dri_la_LIBADD = \
-	../common/libdricommon.la \
-	$(DRI_LIB_DEPS) \
-	$(NOUVEAU_LIBS)
-
-# Provide compatibility with scripts for the old Mesa build system for
-# a while by putting a link to the driver into /lib of the build tree.
-all-local: nouveau_vieux_dri.la
-	$(MKDIR_P) $(top_builddir)/$(LIB_DIR);
-	ln -f .libs/nouveau_vieux_dri.so $(top_builddir)/$(LIB_DIR)/nouveau_vieux_dri.so;
+noinst_LTLIBRARIES = libnouveau_dri.la
+libnouveau_dri_la_SOURCES = $(NOUVEAU_C_FILES)
+libnouveau_dri_la_LIBADD = $(NOUVEAU_LIBS)

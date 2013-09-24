@@ -246,7 +246,7 @@ static const __DRIextension *nouveau_screen_extensions[] = {
     NULL
 };
 
-const struct __DriverAPIRec driDriverAPI = {
+const struct __DriverAPIRec nouveau_driver_api = {
 	.InitScreen      = nouveau_init_screen2,
 	.DestroyScreen   = nouveau_destroy_screen,
 	.CreateBuffer    = nouveau_create_buffer,
@@ -257,9 +257,22 @@ const struct __DriverAPIRec driDriverAPI = {
 	.UnbindContext   = nouveau_context_unbind,
 };
 
+static const struct __DRIDriverVtableExtensionRec nouveau_vtable = {
+   .base = { __DRI_DRIVER_VTABLE, 1 },
+   .vtable = &nouveau_driver_api,
+};
+
 /* This is the table of extensions that the loader will dlsym() for. */
-PUBLIC const __DRIextension *__driDriverExtensions[] = {
+static const __DRIextension *nouveau_driver_extensions[] = {
 	&driCoreExtension.base,
 	&driDRI2Extension.base,
+	&nouveau_vtable.base,
 	NULL
 };
+
+PUBLIC const __DRIextension **__driDriverGetExtensions_nouveau_vieux(void)
+{
+   globalDriverAPI = &nouveau_driver_api;
+
+   return nouveau_driver_extensions;
+}
