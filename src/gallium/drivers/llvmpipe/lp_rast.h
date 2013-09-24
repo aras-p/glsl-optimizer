@@ -46,19 +46,9 @@ struct lp_scene;
 struct lp_fence;
 struct cmd_bin;
 
-#define FIXED_TYPE_WIDTH 32
 /** For sub-pixel positioning */
-#define FIXED_ORDER 8
+#define FIXED_ORDER 4
 #define FIXED_ONE (1<<FIXED_ORDER)
-
-/** Maximum length of an edge in a primitive in pixels.
- *  If the framebuffer is large we have to think about fixed-point
- *  integer overflow.  Coordinates need ((FIXED_TYPE_WIDTH/2) - 1) bits
- *  to be able to fit product of two such coordinates inside
- *  FIXED_TYPE_WIDTH, any larger and we could overflow a
- *  FIXED_TYPE_WIDTH_-bit int.
- */
-#define MAX_FIXED_LENGTH (1 << (((FIXED_TYPE_WIDTH/2) - 1) - FIXED_ORDER))
 
 /* Rasterizer output size going to jit fs, width/height */
 #define LP_RASTER_BLOCK_SIZE 4

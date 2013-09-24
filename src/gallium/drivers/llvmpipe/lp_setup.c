@@ -1007,12 +1007,16 @@ try_update_scene_state( struct lp_setup_context *setup )
                                          &setup->draw_regions[i]);
          }
       }
-      /*
-       * Check if subdivision of triangles is needed if the framebuffer
-       * is larger than our MAX_FIXED_LENGTH can accomodate.
+      /* If the framebuffer is large we have to think about fixed-point
+       * integer overflow.  For 2K by 2K images, coordinates need 15 bits
+       * (2^11 + 4 subpixel bits).  The product of two such numbers would
+       * use 30 bits.  Any larger and we could overflow a 32-bit int.
+       *
+       * To cope with this problem we check if triangles are large and
+       * subdivide them if needed.
        */
-      setup->subdivide_large_triangles = (setup->fb.width > MAX_FIXED_LENGTH &&
-                                          setup->fb.height > MAX_FIXED_LENGTH);
+      setup->subdivide_large_triangles = (setup->fb.width > 2048 &&
+                                          setup->fb.height > 2048);
    }
                                       
    setup->dirty = 0;
