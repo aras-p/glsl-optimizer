@@ -29,7 +29,7 @@
  *
  */
 
-#include "../../state_trackers/xorg/xorg_winsys.h"
+#include "../../../state_trackers/xorg/xorg_winsys.h"
 
 static void r600_xorg_identify(int flags);
 static Bool r600_xorg_pci_probe(DriverPtr driver,

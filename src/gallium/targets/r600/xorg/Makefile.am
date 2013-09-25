@@ -25,50 +25,52 @@ include $(top_srcdir)/src/gallium/Automake.inc
 AM_CFLAGS = \
 	$(GALLIUM_CFLAGS) \
 	$(PTHREAD_CFLAGS) \
-	$(LIBDRM_CFLAGS)
+	$(XORG_CFLAGS)
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/gallium/drivers \
-	-I$(top_srcdir)/src/gallium/winsys
+	-I$(top_srcdir)/src/gallium/winsys \
+	-DHAVE_CONFIG_H \
+	-DGALLIUM_RBUG \
+	-DGALLIUM_TRACE \
+	-DGALLIUM_GALAHAD
 
-xvmcdir = $(XVMC_LIB_INSTALL_DIR)
-xvmc_LTLIBRARIES = libXvMCr600.la
+xorgdir = $(XORG_DRIVER_INSTALL_DIR)
+xorg_LTLIBRARIES = r600g_drv.la
 
-libXvMCr600_la_SOURCES = \
-	target.c \
-	$(top_srcdir)/src/gallium/auxiliary/vl/vl_winsys_dri.c
+r600g_drv_la_SOURCES = \
+	../drm_target.c \
+	xorg.c
 
-libXvMCr600_la_LDFLAGS = \
-	-module \
-	-version-number $(XVMC_MAJOR):$(XVMC_MINOR) \
-	-shared \
-	-no-undefined
+r600g_drv_la_LDFLAGS = -module -avoid-version -shared -no-undefined
 
-libXvMCr600_la_LIBADD = \
+r600g_drv_la_LIBADD = \
 	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
+	$(top_builddir)/src/gallium/state_trackers/xorg/libxorgtracker.la \
 	$(top_builddir)/src/gallium/drivers/r600/libr600.la \
-	$(top_builddir)/src/gallium/state_trackers/xvmc/libxvmctracker.la \
 	$(top_builddir)/src/gallium/winsys/radeon/drm/libradeonwinsys.la \
+	$(top_builddir)/src/gallium/drivers/galahad/libgalahad.la \
 	$(top_builddir)/src/gallium/drivers/trace/libtrace.la \
+	$(top_builddir)/src/gallium/drivers/rbug/librbug.la \
 	$(GALLIUM_DRI_LIB_DEPS) \
-	$(XVMC_LIBS) \
-	$(LIBDRM_LIBS) \
+	$(LIBDRM_XORG_LIBS) \
+	$(LIBKMS_XORG_LIBS) \
 	$(RADEON_LIBS)
 
 if HAVE_MESA_LLVM
-libXvMCr600_la_LINK = $(CXXLINK) $(libXvMCr600_la_LDFLAGS)
+r600g_drv_la_LINK = $(CXXLINK) $(r600g_drv_la_LDFLAGS)
 # Mention a dummy pure C++ file to trigger generation of the $(LINK) variable
-nodist_EXTRA_libXvMCr600_la_SOURCES = dummy-cpp.cpp
+nodist_EXTRA_r600g_drv_la_SOURCES = dummy-cpp.cpp
 
-libXvMCr600_la_LDFLAGS += $(LLVM_LDFLAGS)
-libXvMCr600_la_LIBADD += $(LLVM_LIBS)
+r600g_drv_la_LDFLAGS += $(LLVM_LDFLAGS)
+r600g_drv_la_LIBADD += $(LLVM_LIBS)
 else
-libXvMCr600_la_LINK = $(LINK) $(libXvMCr600_la_LDFLAGS)
+r600g_drv_la_LINK = $(LINK) $(r600g_drv_la_LDFLAGS)
 # Mention a dummy pure C file to trigger generation of the $(LINK) variable
-nodist_EXTRA_libXvMCr600_la_SOURCES = dummy-c.c
+nodist_EXTRA_r600g_drv_la_SOURCES = dummy-c.c
 endif
 
 # Provide compatibility with scripts for the old Mesa build system for
 # a while by putting a link to the driver into /lib of the build tree.
-all-local: libXvMCr600.la
+all-local: r600g_drv.la
 	$(MKDIR_P) $(top_builddir)/$(LIB_DIR)/gallium
-	ln -f .libs/libXvMCr600.so* $(top_builddir)/$(LIB_DIR)/gallium/
+	ln -f .libs/r600g_drv.so $(top_builddir)/$(LIB_DIR)/gallium/r600g_drv.so

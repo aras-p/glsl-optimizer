@@ -1785,7 +1785,7 @@ if test "x$with_gallium_drivers" != x; then
             if test "x$enable_opencl" = xyes; then
                 LLVM_COMPONENTS="${LLVM_COMPONENTS} bitreader asmparser"
             fi
-            gallium_check_st "radeon/drm" "dri-r600" "xorg-r600" "" "xvmc-r600" "vdpau-r600"
+            gallium_check_st "radeon/drm" "r600/dri" "r600/xorg" "" "r600/xvmc" "r600/vdpau"
             ;;
         xradeonsi)
             HAVE_GALLIUM_RADEONSI=yes
@@ -2032,7 +2032,6 @@ AC_CONFIG_FILES([Makefile
 		src/gallium/targets/dri-i915/Makefile
 		src/gallium/targets/dri-ilo/Makefile
 		src/gallium/targets/dri-nouveau/Makefile
-		src/gallium/targets/dri-r600/Makefile
 		src/gallium/targets/dri-radeonsi/Makefile
 		src/gallium/targets/dri-swrast/Makefile
 		src/gallium/targets/dri-vmwgfx/Makefile
@@ -2045,19 +2044,20 @@ AC_CONFIG_FILES([Makefile
 		src/gallium/targets/r300/dri/Makefile
 		src/gallium/targets/r300/vdpau/Makefile
 		src/gallium/targets/r300/xvmc/Makefile
+		src/gallium/targets/r600/dri/Makefile
+		src/gallium/targets/r600/vdpau/Makefile
+		src/gallium/targets/r600/xorg/Makefile
+		src/gallium/targets/r600/xvmc/Makefile
 		src/gallium/targets/libgl-xlib/Makefile
 		src/gallium/targets/vdpau-nouveau/Makefile
-		src/gallium/targets/vdpau-r600/Makefile
 		src/gallium/targets/vdpau-radeonsi/Makefile
 		src/gallium/targets/vdpau-softpipe/Makefile
 		src/gallium/targets/xa-vmwgfx/Makefile
 		src/gallium/targets/xa-vmwgfx/xatracker.pc
 		src/gallium/targets/xorg-i915/Makefile
 		src/gallium/targets/xorg-nouveau/Makefile
-		src/gallium/targets/xorg-r600/Makefile
 		src/gallium/targets/xorg-radeonsi/Makefile
 		src/gallium/targets/xvmc-nouveau/Makefile
-		src/gallium/targets/xvmc-r600/Makefile
 		src/gallium/targets/xvmc-softpipe/Makefile
 		src/gallium/tests/trivial/Makefile
 		src/gallium/tests/unit/Makefile

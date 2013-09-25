@@ -86,19 +86,19 @@ endif
 
 if HAVE_GALLIUM_R600
 if HAVE_DRI
-SUBDIRS += dri-r600
+SUBDIRS += r600/dri
 endif
 
 if HAVE_ST_XORG
-SUBDIRS += xorg-r600
+SUBDIRS += r600/xorg
 endif
 
 if HAVE_ST_XVMC
-SUBDIRS += xvmc-r600
+SUBDIRS += r600/xvmc
 endif
 
 if HAVE_ST_VDPAU
-SUBDIRS += vdpau-r600
+SUBDIRS += r600/vdpau
 endif
 endif
 

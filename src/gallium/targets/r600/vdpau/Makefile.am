@@ -34,7 +34,7 @@ vdpaudir = $(VDPAU_LIB_INSTALL_DIR)
 vdpau_LTLIBRARIES = libvdpau_r600.la
 
 libvdpau_r600_la_SOURCES = \
-	target.c \
+	../drm_target.c \
 	$(top_srcdir)/src/gallium/auxiliary/vl/vl_winsys_dri.c
 
 libvdpau_r600_la_LDFLAGS = \
