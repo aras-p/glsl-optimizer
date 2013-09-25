@@ -25,7 +25,6 @@
  *      Corbin Simpson
  */
 #include "r600_formats.h"
-#include "evergreen_compute.h"
 #include "r600d.h"
 
 #include <errno.h>
@@ -774,10 +773,6 @@ static void *r600_texture_transfer_map(struct pipe_context *ctx,
 	unsigned offset = 0;
 	char *map;
 
-	if ((texture->bind & PIPE_BIND_GLOBAL) && texture->target == PIPE_BUFFER) {
-		return r600_compute_global_transfer_map(ctx, texture, level, usage, box, ptransfer);
-	}
-
 	/* We cannot map a tiled texture directly because the data is
 	 * in a different order, therefore we do detiling using a blit.
 	 *
@@ -916,10 +911,6 @@ static void r600_texture_transfer_unmap(struct pipe_context *ctx,
 	struct radeon_winsys_cs_handle *buf;
 	struct pipe_resource *texture = transfer->resource;
 	struct r600_texture *rtex = (struct r600_texture*)texture;
-
-	if ((transfer->resource->bind & PIPE_BIND_GLOBAL) && transfer->resource->target == PIPE_BUFFER) {
-		return r600_compute_global_transfer_unmap(ctx, transfer);
-	}
 
 	if (rtransfer->staging) {
 		buf = ((struct r600_resource *)rtransfer->staging)->cs_buf;
