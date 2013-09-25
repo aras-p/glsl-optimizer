@@ -282,7 +282,7 @@ brwCreateContext(gl_api api,
                  unsigned major_version,
                  unsigned minor_version,
                  uint32_t flags,
-                 unsigned *error,
+                 unsigned *dri_ctx_error,
 	         void *sharedContextPrivate)
 {
    __DRIscreen *sPriv = driContextPriv->driScreenPriv;
@@ -292,7 +292,7 @@ brwCreateContext(gl_api api,
    struct brw_context *brw = rzalloc(NULL, struct brw_context);
    if (!brw) {
       printf("%s: failed to alloc context\n", __FUNCTION__);
-      *error = __DRI_CTX_ERROR_NO_MEMORY;
+      *dri_ctx_error = __DRI_CTX_ERROR_NO_MEMORY;
       return false;
    }
 
@@ -310,7 +310,7 @@ brwCreateContext(gl_api api,
    if (!intelInitContext( brw, api, major_version, minor_version,
                           mesaVis, driContextPriv,
 			  sharedContextPrivate, &functions,
-			  error)) {
+			  dri_ctx_error)) {
       intelDestroyContext(driContextPriv);
       return false;
    }
