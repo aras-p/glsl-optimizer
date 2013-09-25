@@ -49,9 +49,6 @@ ifeq ($(TARGET_ARCH),x86)
 endif # x86
 endif # MESA_ENABLE_ASM
 
-LOCAL_CFLAGS := \
-   $(patsubst %,-DFEATURE_%=1,$(MESA_ENABLED_APIS))
-
 LOCAL_C_INCLUDES := \
 	$(call intermediates-dir-for STATIC_LIBRARIES,libmesa_program,,) \
 	$(MESA_TOP)/src/mapi \

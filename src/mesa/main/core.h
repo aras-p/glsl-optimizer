@@ -31,8 +31,7 @@
  * The public header of core mesa.
  *
  * This file is the (only) public header of core mesa.  It is supposed to be
- * used by GLX, WGL, and GLSL.  It is important that headers directly or
- * indirectly included here do not perform feature tests (#if FEATURE_xxx).
+ * used by GLX, WGL, and GLSL.
  */
 
 

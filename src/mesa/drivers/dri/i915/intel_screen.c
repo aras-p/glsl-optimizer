@@ -1089,14 +1089,6 @@ set_max_gl_versions(struct intel_screen *screen)
       screen->max_gl_compat_version = MAX2(screen->max_gl_compat_version,
                                            gl_version_override);
    }
-
-#ifndef FEATURE_ES1
-   screen->max_gl_es1_version = 0;
-#endif
-
-#ifndef FEATURE_ES2
-   screen->max_gl_es2_version = 0;
-#endif
 }
 
 /**
