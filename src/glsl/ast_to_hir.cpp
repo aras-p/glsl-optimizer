@@ -2063,6 +2063,9 @@ validate_explicit_location(const struct ast_type_qualifier *qual,
    switch (state->target) {
    case vertex_shader:
       if (var->mode == ir_var_shader_in) {
+         if (!state->check_explicit_attrib_location_allowed(loc, var))
+            return;
+
          break;
       }
 
@@ -2077,6 +2080,9 @@ validate_explicit_location(const struct ast_type_qualifier *qual,
 
    case fragment_shader:
       if (var->mode == ir_var_shader_out) {
+         if (!state->check_explicit_attrib_location_allowed(loc, var))
+            return;
+
          break;
       }
 
@@ -2126,6 +2132,8 @@ validate_explicit_location(const struct ast_type_qualifier *qual,
          }
       }
    }
+
+   return;
 }
 
 static void
