@@ -79,6 +79,8 @@ struct ruvd_decoder {
 	unsigned			cur_buffer;
 
 	struct ruvd_buffer		msg_fb_buffers[NUM_BUFFERS];
+	struct ruvd_msg			*msg;
+
 	struct ruvd_buffer		bs_buffers[NUM_BUFFERS];
 	void*				bs_ptr;
 	unsigned			bs_size;
@@ -128,22 +130,31 @@ static void send_cmd(struct ruvd_decoder *dec, unsigned cmd,
 	set_reg(dec, RUVD_GPCOM_VCPU_CMD, cmd << 1);
 }
 
-/* send a message command to the VCPU */
-static void send_msg(struct ruvd_decoder *dec, struct ruvd_msg *msg)
+/* map the next available message buffer */
+static void map_msg_buf(struct ruvd_decoder *dec)
 {
 	struct ruvd_buffer* buf;
-	void *ptr;
 
-	/* grap a message buffer */
+	/* grap the current message buffer */
 	buf = &dec->msg_fb_buffers[dec->cur_buffer];
 
 	/* copy the message into it */
-	ptr = dec->ws->buffer_map(buf->cs_handle, dec->cs, PIPE_TRANSFER_WRITE);
-	if (!ptr)
+	dec->msg = dec->ws->buffer_map(buf->cs_handle, dec->cs, PIPE_TRANSFER_WRITE);
+}
+
+/* unmap and send a message command to the VCPU */
+static void send_msg_buf(struct ruvd_decoder *dec)
+{
+	struct ruvd_buffer* buf;
+
+	/* ignore the request if message buffer isn't mapped */
+	if (!dec->msg)
 		return;
 
-	memcpy(ptr, msg, sizeof(*msg));
-	memset(ptr + sizeof(*msg), 0, buf->buf->size - sizeof(*msg));
+	/* grap the current message buffer */
+	buf = &dec->msg_fb_buffers[dec->cur_buffer];
+
+	/* unmap the buffer */
 	dec->ws->buffer_unmap(buf->cs_handle);
 
 	/* and send it to the hardware */
@@ -611,16 +622,16 @@ static struct ruvd_mpeg4 get_mpeg4_msg(struct ruvd_decoder *dec,
 static void ruvd_destroy(struct pipe_video_codec *decoder)
 {
 	struct ruvd_decoder *dec = (struct ruvd_decoder*)decoder;
-	struct ruvd_msg msg;
 	unsigned i;
 
 	assert(decoder);
 
-	memset(&msg, 0, sizeof(msg));
-	msg.size = sizeof(msg);
-	msg.msg_type = RUVD_MSG_DESTROY;
-	msg.stream_handle = dec->stream_handle;
-	send_msg(dec, &msg);
+	map_msg_buf(dec);
+	memset(dec->msg, 0, sizeof(*dec->msg));
+	dec->msg->size = sizeof(*dec->msg);
+	dec->msg->msg_type = RUVD_MSG_DESTROY;
+	dec->msg->stream_handle = dec->stream_handle;
+	send_msg_buf(dec);
 
 	flush(dec);
 
@@ -730,7 +741,6 @@ static void ruvd_end_frame(struct pipe_video_codec *decoder,
 	struct ruvd_decoder *dec = (struct ruvd_decoder*)decoder;
 	struct radeon_winsys_cs_handle *dt;
 	struct ruvd_buffer *msg_fb_buf, *bs_buf;
-	struct ruvd_msg msg;
 	unsigned bs_size;
 
 	assert(decoder);
@@ -745,37 +755,37 @@ static void ruvd_end_frame(struct pipe_video_codec *decoder,
 	memset(dec->bs_ptr, 0, bs_size - dec->bs_size);
 	dec->ws->buffer_unmap(bs_buf->cs_handle);
 
-	memset(&msg, 0, sizeof(msg));
-	msg.size = sizeof(msg);
-	msg.msg_type = RUVD_MSG_DECODE;
-	msg.stream_handle = dec->stream_handle;
-	msg.status_report_feedback_number = dec->frame_number;
+	map_msg_buf(dec);
+	dec->msg->size = sizeof(*dec->msg);
+	dec->msg->msg_type = RUVD_MSG_DECODE;
+	dec->msg->stream_handle = dec->stream_handle;
+	dec->msg->status_report_feedback_number = dec->frame_number;
 
-	msg.body.decode.stream_type = profile2stream_type(dec->base.profile);
-	msg.body.decode.decode_flags = 0x1;
-	msg.body.decode.width_in_samples = dec->base.width;
-	msg.body.decode.height_in_samples = dec->base.height;
+	dec->msg->body.decode.stream_type = profile2stream_type(dec->base.profile);
+	dec->msg->body.decode.decode_flags = 0x1;
+	dec->msg->body.decode.width_in_samples = dec->base.width;
+	dec->msg->body.decode.height_in_samples = dec->base.height;
 
-	msg.body.decode.dpb_size = dec->dpb.buf->size;
-	msg.body.decode.bsd_size = bs_size;
+	dec->msg->body.decode.dpb_size = dec->dpb.buf->size;
+	dec->msg->body.decode.bsd_size = bs_size;
 
-	dt = dec->set_dtb(&msg, (struct vl_video_buffer *)target);
+	dt = dec->set_dtb(dec->msg, (struct vl_video_buffer *)target);
 
 	switch (u_reduce_video_profile(picture->profile)) {
 	case PIPE_VIDEO_FORMAT_MPEG4_AVC:
-		msg.body.decode.codec.h264 = get_h264_msg(dec, (struct pipe_h264_picture_desc*)picture);
+		dec->msg->body.decode.codec.h264 = get_h264_msg(dec, (struct pipe_h264_picture_desc*)picture);
 		break;
 
 	case PIPE_VIDEO_FORMAT_VC1:
-		msg.body.decode.codec.vc1 = get_vc1_msg((struct pipe_vc1_picture_desc*)picture);
+		dec->msg->body.decode.codec.vc1 = get_vc1_msg((struct pipe_vc1_picture_desc*)picture);
 		break;
 
 	case PIPE_VIDEO_FORMAT_MPEG12:
-		msg.body.decode.codec.mpeg2 = get_mpeg2_msg(dec, (struct pipe_mpeg12_picture_desc*)picture);
+		dec->msg->body.decode.codec.mpeg2 = get_mpeg2_msg(dec, (struct pipe_mpeg12_picture_desc*)picture);
 		break;
 
 	case PIPE_VIDEO_FORMAT_MPEG4:
-		msg.body.decode.codec.mpeg4 = get_mpeg4_msg(dec, (struct pipe_mpeg4_picture_desc*)picture);
+		dec->msg->body.decode.codec.mpeg4 = get_mpeg4_msg(dec, (struct pipe_mpeg4_picture_desc*)picture);
 		break;
 
 	default:
@@ -783,10 +793,10 @@ static void ruvd_end_frame(struct pipe_video_codec *decoder,
 		return;
 	}
 
-	msg.body.decode.db_surf_tile_config = msg.body.decode.dt_surf_tile_config;
-	msg.body.decode.extension_support = 0x1;
+	dec->msg->body.decode.db_surf_tile_config = dec->msg->body.decode.dt_surf_tile_config;
+	dec->msg->body.decode.extension_support = 0x1;
+	send_msg_buf(dec);
 
-	send_msg(dec, &msg);
 	send_cmd(dec, RUVD_CMD_DPB_BUFFER, dec->dpb.cs_handle, 0,
 		 RADEON_USAGE_READWRITE, RADEON_DOMAIN_VRAM);
 	send_cmd(dec, RUVD_CMD_BITSTREAM_BUFFER, bs_buf->cs_handle,
@@ -821,7 +831,6 @@ struct pipe_video_codec *ruvd_create_decoder(struct pipe_context *context,
 	unsigned bs_buf_size;
 	struct radeon_info info;
 	struct ruvd_decoder *dec;
-	struct ruvd_msg msg;
 	int i;
 
 	ws->query_info(ws, &info);
@@ -893,15 +902,15 @@ struct pipe_video_codec *ruvd_create_decoder(struct pipe_context *context,
 
 	clear_buffer(dec, &dec->dpb);
 
-	memset(&msg, 0, sizeof(msg));
-	msg.size = sizeof(msg);
-	msg.msg_type = RUVD_MSG_CREATE;
-	msg.stream_handle = dec->stream_handle;
-	msg.body.create.stream_type = profile2stream_type(dec->base.profile);
-	msg.body.create.width_in_samples = dec->base.width;
-	msg.body.create.height_in_samples = dec->base.height;
-	msg.body.create.dpb_size = dec->dpb.buf->size;
-	send_msg(dec, &msg);
+	map_msg_buf(dec);
+	dec->msg->size = sizeof(*dec->msg);
+	dec->msg->msg_type = RUVD_MSG_CREATE;
+	dec->msg->stream_handle = dec->stream_handle;
+	dec->msg->body.create.stream_type = profile2stream_type(dec->base.profile);
+	dec->msg->body.create.width_in_samples = dec->base.width;
+	dec->msg->body.create.height_in_samples = dec->base.height;
+	dec->msg->body.create.dpb_size = dec->dpb.buf->size;
+	send_msg_buf(dec);
 	flush(dec);
 	next_buffer(dec);
 
