@@ -476,9 +476,28 @@ dri2_initialize_drm(_EGLDriver *drv, _EGLDisplay *disp)
 
    dri2_setup_screen(disp);
 
-   for (i = 0; dri2_dpy->driver_configs[i]; i++)
+   for (i = 0; dri2_dpy->driver_configs[i]; i++) {
+      EGLint format, attr_list[3];
+      unsigned int mask;
+
+      dri2_dpy->core->getConfigAttrib(dri2_dpy->driver_configs[i],
+                                       __DRI_ATTRIB_RED_MASK, &mask);
+      if (mask == 0x3ff00000)
+         format = GBM_FORMAT_XRGB2101010;
+      else if (mask == 0x00ff0000)
+         format = GBM_FORMAT_XRGB8888;
+      else if (mask == 0xf800)
+         format = GBM_FORMAT_RGB565;
+      else
+         continue;
+
+      attr_list[0] = EGL_NATIVE_VISUAL_ID;
+      attr_list[1] = format;
+      attr_list[2] = EGL_NONE;
+
       dri2_add_config(disp, dri2_dpy->driver_configs[i],
-                      i + 1, EGL_WINDOW_BIT, NULL, NULL);
+                      i + 1, EGL_WINDOW_BIT, attr_list, NULL);
+   }
 
    drv->API.CreateWindowSurface = dri2_create_window_surface;
    drv->API.DestroySurface = dri2_destroy_surface;
