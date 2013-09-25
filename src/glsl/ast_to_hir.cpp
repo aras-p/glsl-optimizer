@@ -2047,6 +2047,89 @@ interpret_interpolation_qualifier(const struct ast_type_qualifier *qual,
 
 
 static void
+validate_explicit_location(const struct ast_type_qualifier *qual,
+                           ir_variable *var,
+                           struct _mesa_glsl_parse_state *state,
+                           YYLTYPE *loc)
+{
+   const bool global_scope = (state->current_function == NULL);
+   bool fail = false;
+   const char *string = "";
+
+   /* In the vertex shader only shader inputs can be given explicit
+    * locations.
+    *
+    * In the fragment shader only shader outputs can be given explicit
+    * locations.
+    */
+   switch (state->target) {
+   case vertex_shader:
+      if (!global_scope || (var->mode != ir_var_shader_in)) {
+         fail = true;
+         string = "input";
+      }
+      break;
+
+   case geometry_shader:
+      _mesa_glsl_error(loc, state,
+                       "geometry shader variables cannot be given "
+                       "explicit locations");
+      return;
+
+   case fragment_shader:
+      if (!global_scope || (var->mode != ir_var_shader_out)) {
+         fail = true;
+         string = "output";
+      }
+      break;
+   };
+
+   if (fail) {
+      _mesa_glsl_error(loc, state,
+                       "only %s shader %s variables can be given an "
+                       "explicit location",
+                       _mesa_glsl_shader_target_name(state->target),
+                       string);
+   } else {
+      var->explicit_location = true;
+
+      /* This bit of silliness is needed because invalid explicit locations
+       * are supposed to be flagged during linking.  Small negative values
+       * biased by VERT_ATTRIB_GENERIC0 or FRAG_RESULT_DATA0 could alias
+       * built-in values (e.g., -16+VERT_ATTRIB_GENERIC0 = VERT_ATTRIB_POS).
+       * The linker needs to be able to differentiate these cases.  This
+       * ensures that negative values stay negative.
+       */
+      if (qual->location >= 0) {
+         var->location = (state->target == vertex_shader)
+            ? (qual->location + VERT_ATTRIB_GENERIC0)
+            : (qual->location + FRAG_RESULT_DATA0);
+      } else {
+         var->location = qual->location;
+      }
+
+      if (qual->flags.q.explicit_index) {
+         /* From the GLSL 4.30 specification, section 4.4.2 (Output
+          * Layout Qualifiers):
+          *
+          * "It is also a compile-time error if a fragment shader
+          *  sets a layout index to less than 0 or greater than 1."
+          *
+          * Older specifications don't mandate a behavior; we take
+          * this as a clarification and always generate the error.
+          */
+         if (qual->index < 0 || qual->index > 1) {
+            _mesa_glsl_error(loc, state,
+                             "explicit index may only be 0 or 1");
+         } else {
+            var->explicit_index = true;
+            var->index = qual->index;
+         }
+      }
+   }
+}
+
+static void
 apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
 				 ir_variable *var,
 				 struct _mesa_glsl_parse_state *state,
@@ -2198,81 +2281,7 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
    }
 
    if (qual->flags.q.explicit_location) {
-      const bool global_scope = (state->current_function == NULL);
-      bool fail = false;
-      const char *string = "";
-
-      /* In the vertex shader only shader inputs can be given explicit
-       * locations.
-       *
-       * In the fragment shader only shader outputs can be given explicit
-       * locations.
-       */
-      switch (state->target) {
-      case vertex_shader:
-	 if (!global_scope || (var->mode != ir_var_shader_in)) {
-	    fail = true;
-	    string = "input";
-	 }
-	 break;
-
-      case geometry_shader:
-	 _mesa_glsl_error(loc, state,
-			  "geometry shader variables cannot be given "
-			  "explicit locations");
-	 break;
-
-      case fragment_shader:
-	 if (!global_scope || (var->mode != ir_var_shader_out)) {
-	    fail = true;
-	    string = "output";
-	 }
-	 break;
-      };
-
-      if (fail) {
-	 _mesa_glsl_error(loc, state,
-			  "only %s shader %s variables can be given an "
-			  "explicit location",
-			  _mesa_glsl_shader_target_name(state->target),
-			  string);
-      } else {
-	 var->explicit_location = true;
-
-	 /* This bit of silliness is needed because invalid explicit locations
-	  * are supposed to be flagged during linking.  Small negative values
-	  * biased by VERT_ATTRIB_GENERIC0 or FRAG_RESULT_DATA0 could alias
-	  * built-in values (e.g., -16+VERT_ATTRIB_GENERIC0 = VERT_ATTRIB_POS).
-	  * The linker needs to be able to differentiate these cases.  This
-	  * ensures that negative values stay negative.
-	  */
-	 if (qual->location >= 0) {
-	    var->location = (state->target == vertex_shader)
-	       ? (qual->location + VERT_ATTRIB_GENERIC0)
-	       : (qual->location + FRAG_RESULT_DATA0);
-	 } else {
-	    var->location = qual->location;
-	 }
-
-	 if (qual->flags.q.explicit_index) {
-            /* From the GLSL 4.30 specification, section 4.4.2 (Output
-             * Layout Qualifiers):
-             *
-             * "It is also a compile-time error if a fragment shader
-             *  sets a layout index to less than 0 or greater than 1."
-             *
-             * Older specifications don't mandate a behavior; we take
-             * this as a clarification and always generate the error.
-             */
-            if (qual->index < 0 || qual->index > 1) {
-               _mesa_glsl_error(loc, state,
-                                "explicit index may only be 0 or 1");
-            } else {
-               var->explicit_index = true;
-               var->index = qual->index;
-            }
-	 }
-      }
+      validate_explicit_location(qual, var, state, loc);
    } else if (qual->flags.q.explicit_index) {
 	 _mesa_glsl_error(loc, state,
 			  "explicit index requires explicit location");
