@@ -406,8 +406,8 @@ public:
 
    /**
     * Change this->interface_type on a variable that previously had a
-    * different interface_type.  This is used during linking to set the size
-    * of arrays in interface blocks.
+    * different, but compatible, interface_type.  This is used during linking
+    * to set the size of arrays in interface blocks.
     */
    void change_interface_type(const struct glsl_type *type)
    {

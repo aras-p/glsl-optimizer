@@ -1033,6 +1033,19 @@ get_main_function_signature(gl_shader *sh)
  */
 class array_sizing_visitor : public ir_hierarchical_visitor {
 public:
+   array_sizing_visitor()
+      : mem_ctx(ralloc_context(NULL)),
+        unnamed_interfaces(hash_table_ctor(0, hash_table_pointer_hash,
+                                           hash_table_pointer_compare))
+   {
+   }
+
+   ~array_sizing_visitor()
+   {
+      hash_table_dtor(this->unnamed_interfaces);
+      ralloc_free(this->mem_ctx);
+   }
+
    virtual ir_visitor_status visit(ir_variable *var)
    {
       fixup_type(&var->type, var->max_array_access);
@@ -1053,8 +1066,36 @@ public:
             var->type =
                glsl_type::get_array_instance(new_type, var->type->length);
          }
+      } else if (const glsl_type *ifc_type = var->get_interface_type()) {
+         /* Store a pointer to the variable in the unnamed_interfaces
+          * hashtable.
+          */
+         ir_variable **interface_vars = (ir_variable **)
+            hash_table_find(this->unnamed_interfaces, ifc_type);
+         if (interface_vars == NULL) {
+            interface_vars = rzalloc_array(mem_ctx, ir_variable *,
+                                           ifc_type->length);
+            hash_table_insert(this->unnamed_interfaces, interface_vars,
+                              ifc_type);
+         }
+         unsigned index = ifc_type->field_index(var->name);
+         assert(index < ifc_type->length);
+         assert(interface_vars[index] == NULL);
+         interface_vars[index] = var;
       }
       return visit_continue;
+   }
+
+   /**
+    * For each unnamed interface block that was discovered while running the
+    * visitor, adjust the interface type to reflect the newly assigned array
+    * sizes, and fix up the ir_variable nodes to point to the new interface
+    * type.
+    */
+   void fixup_unnamed_interface_types()
+   {
+      hash_table_call_foreach(this->unnamed_interfaces,
+                              fixup_unnamed_interface_type, NULL);
    }
 
 private:
@@ -1109,6 +1150,50 @@ private:
       delete [] fields;
       return new_ifc_type;
    }
+
+   static void fixup_unnamed_interface_type(const void *key, void *data,
+                                            void *)
+   {
+      const glsl_type *ifc_type = (const glsl_type *) key;
+      ir_variable **interface_vars = (ir_variable **) data;
+      unsigned num_fields = ifc_type->length;
+      glsl_struct_field *fields = new glsl_struct_field[num_fields];
+      memcpy(fields, ifc_type->fields.structure,
+             num_fields * sizeof(*fields));
+      bool interface_type_changed = false;
+      for (unsigned i = 0; i < num_fields; i++) {
+         if (interface_vars[i] != NULL &&
+             fields[i].type != interface_vars[i]->type) {
+            fields[i].type = interface_vars[i]->type;
+            interface_type_changed = true;
+         }
+      }
+      if (!interface_type_changed) {
+         delete [] fields;
+         return;
+      }
+      glsl_interface_packing packing =
+         (glsl_interface_packing) ifc_type->interface_packing;
+      const glsl_type *new_ifc_type =
+         glsl_type::get_interface_instance(fields, num_fields, packing,
+                                           ifc_type->name);
+      delete [] fields;
+      for (unsigned i = 0; i < num_fields; i++) {
+         if (interface_vars[i] != NULL)
+            interface_vars[i]->change_interface_type(new_ifc_type);
+      }
+   }
+
+   /**
+    * Memory context used to allocate the data in \c unnamed_interfaces.
+    */
+   void *mem_ctx;
+
+   /**
+    * Hash table from const glsl_type * to an array of ir_variable *'s
+    * pointing to the ir_variables constituting each unnamed interface block.
+    */
+   hash_table *unnamed_interfaces;
 };
 
 /**
@@ -1383,6 +1468,7 @@ link_intrastage_shaders(void *mem_ctx,
     */
    array_sizing_visitor v;
    v.run(linked->ir);
+   v.fixup_unnamed_interface_types();
 
    return linked;
 }
