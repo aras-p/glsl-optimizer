@@ -406,8 +406,9 @@ static void llvm_emit_tex(
 	struct lp_build_emit_data * emit_data)
 {
 	struct gallivm_state * gallivm = bld_base->base.gallivm;
-	LLVMValueRef args[6];
+	LLVMValueRef args[7];
 	unsigned c, sampler_src;
+	struct radeon_llvm_context * ctx = radeon_llvm_context(bld_base);
 
 	if (emit_data->inst->Texture.Texture == TGSI_TEXTURE_BUFFER) {
 		switch (emit_data->inst->Instruction.Opcode) {
@@ -480,6 +481,55 @@ static void llvm_emit_tex(
 					emit_data->inst->Src[sampler_src].Register.Index);
 	args[c++] = lp_build_const_int32(gallivm,
 					emit_data->inst->Texture.Texture);
+
+	if (emit_data->inst->Instruction.Opcode == TGSI_OPCODE_TXF &&
+		(emit_data->inst->Texture.Texture == TGSI_TEXTURE_2D_MSAA ||
+		emit_data->inst->Texture.Texture == TGSI_TEXTURE_2D_ARRAY_MSAA)) {
+
+		switch (emit_data->inst->Texture.Texture) {
+		case TGSI_TEXTURE_2D_MSAA:
+			args[6] = lp_build_const_int32(gallivm, TGSI_TEXTURE_2D);
+			break;
+		case TGSI_TEXTURE_2D_ARRAY_MSAA:
+			args[6] = lp_build_const_int32(gallivm, TGSI_TEXTURE_2D_ARRAY);
+			break;
+		default:
+			break;
+		}
+
+		if (ctx->has_compressed_msaa_texturing) {
+			LLVMValueRef ldptr_args[10] = {
+				args[0], // Coord
+				args[1], // Offset X
+				args[2], // Offset Y
+				args[3], // Offset Z
+				args[4],
+				args[5],
+				lp_build_const_int32(gallivm, 1),
+				lp_build_const_int32(gallivm, 1),
+				lp_build_const_int32(gallivm, 1),
+				lp_build_const_int32(gallivm, 1)
+			};
+			LLVMValueRef ptr = build_intrinsic(gallivm->builder,
+				"llvm.R600.ldptr",
+				emit_data->dst_type, ldptr_args, 10, LLVMReadNoneAttribute);
+			LLVMValueRef Tmp = LLVMBuildExtractElement(gallivm->builder, args[0],
+				lp_build_const_int32(gallivm, 3), "");
+			Tmp = LLVMBuildMul(gallivm->builder, Tmp,
+				lp_build_const_int32(gallivm, 4), "");
+			LLVMValueRef ResX = LLVMBuildExtractElement(gallivm->builder, ptr,
+				lp_build_const_int32(gallivm, 0), "");
+			ResX = LLVMBuildBitCast(gallivm->builder, ResX,
+				bld_base->base.int_elem_type, "");
+			Tmp = LLVMBuildLShr(gallivm->builder, ResX, Tmp, "");
+			Tmp = LLVMBuildAnd(gallivm->builder, Tmp,
+				lp_build_const_int32(gallivm, 0xF), "");
+			args[0] = LLVMBuildInsertElement(gallivm->builder, args[0], Tmp,
+				lp_build_const_int32(gallivm, 3), "");
+			args[c++] = lp_build_const_int32(gallivm,
+				emit_data->inst->Texture.Texture);
+		}
+	}
 
 	emit_data->output[0] = build_intrinsic(gallivm->builder,
 					action->intr_name,

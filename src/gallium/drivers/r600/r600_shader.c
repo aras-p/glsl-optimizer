@@ -1110,6 +1110,8 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 		radeon_llvm_ctx.stream_outputs = &so;
 		radeon_llvm_ctx.clip_vertex = ctx.cv_output;
 		radeon_llvm_ctx.alpha_to_one = key.alpha_to_one;
+		radeon_llvm_ctx.has_compressed_msaa_texturing =
+			ctx.bc->has_compressed_msaa_texturing;
 		mod = r600_tgsi_llvm(&radeon_llvm_ctx, tokens);
 		ctx.shader->has_txq_cube_array_z_comp = radeon_llvm_ctx.has_txq_cube_array_z_comp;
 		ctx.shader->uses_tex_buffers = radeon_llvm_ctx.uses_tex_buffers;
