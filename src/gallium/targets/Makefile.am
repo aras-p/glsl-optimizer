@@ -104,15 +104,15 @@ endif
 
 if HAVE_GALLIUM_RADEONSI
 if HAVE_DRI
-SUBDIRS += dri-radeonsi
+SUBDIRS += radeonsi/dri
 endif
 
 if HAVE_ST_XORG
-SUBDIRS += xorg-radeonsi
+SUBDIRS += radeonsi/xorg
 endif
 
 if HAVE_ST_VDPAU
-SUBDIRS += vdpau-radeonsi
+SUBDIRS += radeonsi/vdpau
 endif
 endif
 

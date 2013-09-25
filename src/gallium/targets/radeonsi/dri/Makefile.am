@@ -28,42 +28,45 @@ AM_CFLAGS = \
 	$(LIBDRM_CFLAGS)
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/gallium/drivers \
-	-I$(top_srcdir)/src/gallium/winsys
+	-I$(top_srcdir)/src/gallium/winsys \
+	-I$(top_srcdir)/src/mesa \
+	-I$(top_srcdir)/src/mapi \
+	-I$(top_builddir)/src/mesa/drivers/dri/common \
+	-DGALLIUM_RBUG \
+	-DGALLIUM_TRACE \
+	-DGALLIUM_NOOP
 
-vdpaudir = $(VDPAU_LIB_INSTALL_DIR)
-vdpau_LTLIBRARIES = libvdpau_radeonsi.la
+dridir = $(DRI_DRIVER_INSTALL_DIR)
+dri_LTLIBRARIES = radeonsi_dri.la
 
-nodist_EXTRA_libvdpau_radeonsi_la_SOURCES = dummy.cpp
-libvdpau_radeonsi_la_SOURCES = \
-	target.c \
-	$(top_srcdir)/src/gallium/auxiliary/vl/vl_winsys_dri.c
+nodist_EXTRA_radeonsi_dri_la_SOURCES = dummy.cpp
+radeonsi_dri_la_SOURCES = \
+	../drm_target.c \
+	$(top_srcdir)/src/mesa/drivers/dri/common/utils.c \
+	$(top_srcdir)/src/mesa/drivers/dri/common/dri_util.c \
+	$(top_srcdir)/src/mesa/drivers/dri/common/xmlconfig.c
 
-libvdpau_radeonsi_la_LDFLAGS = \
-	-module \
-	-version-number $(VDPAU_MAJOR):$(VDPAU_MINOR) \
-	-shared \
-	-no-undefined
+radeonsi_dri_la_LDFLAGS = -module -avoid-version -shared -no-undefined
 
-libvdpau_radeonsi_la_LIBADD = \
+radeonsi_dri_la_LIBADD = \
+	$(top_builddir)/src/mesa/libmesagallium.la \
 	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
 	$(top_builddir)/src/gallium/drivers/radeonsi/libradeonsi.la \
-	$(top_builddir)/src/gallium/state_trackers/vdpau/libvdpautracker.la \
+	$(top_builddir)/src/gallium/state_trackers/dri/drm/libdridrm.la \
 	$(top_builddir)/src/gallium/winsys/radeon/drm/libradeonwinsys.la \
 	$(top_builddir)/src/gallium/drivers/trace/libtrace.la \
 	$(top_builddir)/src/gallium/drivers/rbug/librbug.la \
 	$(top_builddir)/src/gallium/drivers/noop/libnoop.la \
 	$(GALLIUM_DRI_LIB_DEPS) \
-	$(VDPAU_LIBS) \
-	$(LIBDRM_LIBS) \
 	$(RADEON_LIBS)
 
 if HAVE_MESA_LLVM
-libvdpau_radeonsi_la_LDFLAGS += $(LLVM_LDFLAGS)
-libvdpau_radeonsi_la_LIBADD += $(LLVM_LIBS)
+radeonsi_dri_la_LDFLAGS += $(LLVM_LDFLAGS)
+radeonsi_dri_la_LIBADD += $(LLVM_LIBS)
 endif
 
 # Provide compatibility with scripts for the old Mesa build system for
 # a while by putting a link to the driver into /lib of the build tree.
-all-local: libvdpau_radeonsi.la
+all-local: radeonsi_dri.la
 	$(MKDIR_P) $(top_builddir)/$(LIB_DIR)/gallium
-	ln -f .libs/libvdpau_radeonsi.so* $(top_builddir)/$(LIB_DIR)/gallium/
+	ln -f .libs/radeonsi_dri.so $(top_builddir)/$(LIB_DIR)/gallium/radeonsi_dri.so

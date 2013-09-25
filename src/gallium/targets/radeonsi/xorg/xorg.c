@@ -29,7 +29,7 @@
  *
  */
 
-#include "../../state_trackers/xorg/xorg_winsys.h"
+#include "../../../state_trackers/xorg/xorg_winsys.h"
 
 static void radeonsi_xorg_identify(int flags);
 static Bool radeonsi_xorg_pci_probe(DriverPtr driver,

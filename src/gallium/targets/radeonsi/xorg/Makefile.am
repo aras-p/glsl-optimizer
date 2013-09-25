@@ -39,7 +39,7 @@ xorg_LTLIBRARIES = radeonsi_drv.la
 
 nodist_EXTRA_radeonsi_drv_la_SOURCES = dummy.cpp
 radeonsi_drv_la_SOURCES = \
-	target.c \
+	../drm_target.c \
 	xorg.c
 
 radeonsi_drv_la_LDFLAGS = -module -avoid-version -shared -no-undefined

@@ -1793,7 +1793,7 @@ if test "x$with_gallium_drivers" != x; then
             gallium_require_drm_loader
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS radeonsi"
             radeon_llvm_check
-            gallium_check_st "radeon/drm" "dri-radeonsi" "xorg-radeonsi" "" "" "vdpau-radeonsi" ""
+            gallium_check_st "radeon/drm" "radeonsi/dri" "radeonsi/xorg" "" "" "radeonsi/vdpau" ""
             ;;
         xnouveau)
             HAVE_GALLIUM_NOUVEAU=yes
@@ -2032,7 +2032,6 @@ AC_CONFIG_FILES([Makefile
 		src/gallium/targets/dri-i915/Makefile
 		src/gallium/targets/dri-ilo/Makefile
 		src/gallium/targets/dri-nouveau/Makefile
-		src/gallium/targets/dri-radeonsi/Makefile
 		src/gallium/targets/dri-swrast/Makefile
 		src/gallium/targets/dri-vmwgfx/Makefile
 		src/gallium/targets/egl-static/Makefile
@@ -2041,6 +2040,9 @@ AC_CONFIG_FILES([Makefile
 		src/gallium/targets/osmesa/Makefile
 		src/gallium/targets/osmesa/osmesa.pc
 		src/gallium/targets/pipe-loader/Makefile
+		src/gallium/targets/radeonsi/dri/Makefile
+		src/gallium/targets/radeonsi/vdpau/Makefile
+		src/gallium/targets/radeonsi/xorg/Makefile
 		src/gallium/targets/r300/dri/Makefile
 		src/gallium/targets/r300/vdpau/Makefile
 		src/gallium/targets/r300/xvmc/Makefile
@@ -2050,13 +2052,11 @@ AC_CONFIG_FILES([Makefile
 		src/gallium/targets/r600/xvmc/Makefile
 		src/gallium/targets/libgl-xlib/Makefile
 		src/gallium/targets/vdpau-nouveau/Makefile
-		src/gallium/targets/vdpau-radeonsi/Makefile
 		src/gallium/targets/vdpau-softpipe/Makefile
 		src/gallium/targets/xa-vmwgfx/Makefile
 		src/gallium/targets/xa-vmwgfx/xatracker.pc
 		src/gallium/targets/xorg-i915/Makefile
 		src/gallium/targets/xorg-nouveau/Makefile
-		src/gallium/targets/xorg-radeonsi/Makefile
 		src/gallium/targets/xvmc-nouveau/Makefile
 		src/gallium/targets/xvmc-softpipe/Makefile
 		src/gallium/tests/trivial/Makefile
