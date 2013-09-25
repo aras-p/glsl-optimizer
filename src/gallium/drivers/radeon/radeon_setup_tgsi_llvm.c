@@ -827,10 +827,14 @@ static void emit_ucmp(
 {
 	LLVMBuilderRef builder = bld_base->base.gallivm->builder;
 
-	LLVMValueRef v = LLVMBuildFCmp(builder, LLVMRealUGE,
-			emit_data->args[0], lp_build_const_float(bld_base->base.gallivm, 0.), "");
+	LLVMValueRef arg0 = LLVMBuildBitCast(builder, emit_data->args[0],
+					     bld_base->uint_bld.elem_type, "");
 
-	emit_data->output[emit_data->chan] = LLVMBuildSelect(builder, v, emit_data->args[2], emit_data->args[1], "");
+	LLVMValueRef v = LLVMBuildICmp(builder, LLVMIntNE, arg0,
+				       bld_base->uint_bld.zero, "");
+
+	emit_data->output[emit_data->chan] =
+		LLVMBuildSelect(builder, v, emit_data->args[1], emit_data->args[2], "");
 }
 
 static void emit_cmp(
