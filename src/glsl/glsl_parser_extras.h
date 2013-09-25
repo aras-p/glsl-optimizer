@@ -135,6 +135,23 @@ struct _mesa_glsl_parse_state {
       return true;
    }
 
+   bool check_separate_shader_objects_allowed(YYLTYPE *locp,
+                                              const ir_variable *var)
+   {
+      if (!this->has_separate_shader_objects()) {
+         const char *const requirement = this->es_shader
+            ? "GL_EXT_separate_shader_objects (not supported by this "
+              "implementation)"
+            : "GL_ARB_separate_shader_objects extension or GLSL 420";
+
+         _mesa_glsl_error(locp, this, "%s explicit location requires %s",
+                          mode_string(var), requirement);
+         return false;
+      }
+
+      return true;
+   }
+
    bool has_explicit_attrib_location() const
    {
       return ARB_explicit_attrib_location_enable || is_version(330, 300);

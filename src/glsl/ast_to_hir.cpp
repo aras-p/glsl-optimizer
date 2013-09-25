@@ -2123,11 +2123,16 @@ validate_explicit_location(const struct ast_type_qualifier *qual,
 {
    bool fail = false;
 
-   /* In the vertex shader only shader inputs can be given explicit
-    * locations.
+   /* Between GL_ARB_explicit_attrib_location an
+    * GL_ARB_separate_shader_objects, the inputs and outputs of any shader
+    * stage can be assigned explicit locations.  The checking here associates
+    * the correct extension with the correct stage's input / output:
     *
-    * In the fragment shader only shader outputs can be given explicit
-    * locations.
+    *                     input            output
+    *                     -----            ------
+    * vertex              explicit_loc     sso
+    * geometry            sso              sso
+    * fragment            sso              explicit_loc
     */
    switch (state->stage) {
    case MESA_SHADER_VERTEX:
@@ -2138,16 +2143,35 @@ validate_explicit_location(const struct ast_type_qualifier *qual,
          break;
       }
 
+      if (var->data.mode == ir_var_shader_out) {
+         if (!state->check_separate_shader_objects_allowed(loc, var))
+            return;
+
+         break;
+      }
+
       fail = true;
       break;
 
    case MESA_SHADER_GEOMETRY:
-      _mesa_glsl_error(loc, state,
-                       "geometry shader variables cannot be given "
-                       "explicit locations");
-      return;
+      if (var->data.mode == ir_var_shader_in || var->data.mode == ir_var_shader_out) {
+         if (!state->check_separate_shader_objects_allowed(loc, var))
+            return;
+
+         break;
+      }
+
+      fail = true;
+      break;
 
    case MESA_SHADER_FRAGMENT:
+      if (var->data.mode == ir_var_shader_in) {
+         if (!state->check_separate_shader_objects_allowed(loc, var))
+            return;
+
+         break;
+      }
+
       if (var->data.mode == ir_var_shader_out) {
          if (!state->check_explicit_attrib_location_allowed(loc, var))
             return;
@@ -2181,9 +2205,23 @@ validate_explicit_location(const struct ast_type_qualifier *qual,
        * ensures that negative values stay negative.
        */
       if (qual->location >= 0) {
-         var->data.location = (state->stage == MESA_SHADER_VERTEX)
-            ? (qual->location + VERT_ATTRIB_GENERIC0)
-            : (qual->location + FRAG_RESULT_DATA0);
+         switch (state->stage) {
+         case MESA_SHADER_VERTEX:
+            var->data.location = (var->data.mode == ir_var_shader_in)
+               ? (qual->location + VERT_ATTRIB_GENERIC0)
+               : (qual->location + VARYING_SLOT_VAR0);
+            break;
+
+         case MESA_SHADER_GEOMETRY:
+            var->data.location = qual->location + VARYING_SLOT_VAR0;
+            break;
+
+         case MESA_SHADER_FRAGMENT:
+            var->data.location = (var->data.mode == ir_var_shader_out)
+               ? (qual->location + FRAG_RESULT_DATA0)
+               : (qual->location + VARYING_SLOT_VAR0);
+            break;
+         }
       } else {
          var->data.location = qual->location;
       }
@@ -2207,8 +2245,6 @@ validate_explicit_location(const struct ast_type_qualifier *qual,
          }
       }
    }
-
-   return;
 }
 
 static void
@@ -3147,6 +3183,7 @@ ast_declarator_list::hir(exec_list *instructions,
        */
       if (!state->is_version(130, 300)
 	  && !state->has_explicit_attrib_location()
+	  && !state->has_separate_shader_objects()
 	  && !state->ARB_fragment_coord_conventions_enable) {
 	 if (this->type->qualifier.flags.q.out) {
 	    _mesa_glsl_error(& loc, state,
