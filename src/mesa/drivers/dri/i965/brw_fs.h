@@ -401,6 +401,13 @@ public:
    void emit_shader_time_write(enum shader_time_shader_type type,
                                fs_reg value);
 
+   void emit_untyped_atomic(unsigned atomic_op, unsigned surf_index,
+                            fs_reg dst, fs_reg offset, fs_reg src0,
+                            fs_reg src1);
+
+   void emit_untyped_surface_read(unsigned surf_index, fs_reg dst,
+                                  fs_reg offset);
+
    bool try_rewrite_rhs_to_dst(ir_assignment *ir,
 			       fs_reg dst,
 			       fs_reg src,
@@ -419,6 +426,8 @@ public:
    int implied_mrf_writes(fs_inst *inst);
 
    void dump_instruction(backend_instruction *inst);
+
+   void visit_atomic_counter_intrinsic(ir_call *ir);
 
    struct gl_fragment_program *fp;
    struct brw_wm_compile *c;

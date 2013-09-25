@@ -107,8 +107,11 @@ fs_visitor::visit(ir_variable *ir)
       /* Thanks to the lower_ubo_reference pass, we will see only
        * ir_binop_ubo_load expressions and not ir_dereference_variable for UBO
        * variables, so no need for them to be in variable_ht.
+       *
+       * Atomic counters take no uniform storage, no need to do
+       * anything here.
        */
-      if (ir->is_in_uniform_block())
+      if (ir->is_in_uniform_block() || ir->type->contains_atomic())
          return;
 
       if (dispatch_width == 16) {
@@ -2196,9 +2199,58 @@ fs_visitor::visit(ir_loop_jump *ir)
 }
 
 void
+fs_visitor::visit_atomic_counter_intrinsic(ir_call *ir)
+{
+   ir_dereference *deref = static_cast<ir_dereference *>(
+      ir->actual_parameters.get_head());
+   ir_variable *location = deref->variable_referenced();
+   unsigned surf_index = (c->prog_data.base.binding_table.abo_start +
+                          location->atomic.buffer_index);
+
+   /* Calculate the surface offset */
+   fs_reg offset(this, glsl_type::uint_type);
+   ir_dereference_array *deref_array = deref->as_dereference_array();
+
+   if (deref_array) {
+      deref_array->array_index->accept(this);
+
+      fs_reg tmp(this, glsl_type::uint_type);
+      emit(MUL(tmp, this->result, ATOMIC_COUNTER_SIZE));
+      emit(ADD(offset, tmp, location->atomic.offset));
+   } else {
+      offset = location->atomic.offset;
+   }
+
+   /* Emit the appropriate machine instruction */
+   const char *callee = ir->callee->function_name();
+   ir->return_deref->accept(this);
+   fs_reg dst = this->result;
+
+   if (!strcmp("__intrinsic_atomic_read", callee)) {
+      emit_untyped_surface_read(surf_index, dst, offset);
+
+   } else if (!strcmp("__intrinsic_atomic_increment", callee)) {
+      emit_untyped_atomic(BRW_AOP_INC, surf_index, dst, offset,
+                          fs_reg(), fs_reg());
+
+   } else if (!strcmp("__intrinsic_atomic_predecrement", callee)) {
+      emit_untyped_atomic(BRW_AOP_PREDEC, surf_index, dst, offset,
+                          fs_reg(), fs_reg());
+   }
+}
+
+void
 fs_visitor::visit(ir_call *ir)
 {
-   assert(!"FINISHME");
+   const char *callee = ir->callee->function_name();
+
+   if (!strcmp("__intrinsic_atomic_read", callee) ||
+       !strcmp("__intrinsic_atomic_increment", callee) ||
+       !strcmp("__intrinsic_atomic_predecrement", callee)) {
+      visit_atomic_counter_intrinsic(ir);
+   } else {
+      assert(!"Unsupported intrinsic.");
+   }
 }
 
 void
@@ -2247,6 +2299,84 @@ void
 fs_visitor::visit(ir_end_primitive *)
 {
    assert(!"not reached");
+}
+
+void
+fs_visitor::emit_untyped_atomic(unsigned atomic_op, unsigned surf_index,
+                                fs_reg dst, fs_reg offset, fs_reg src0,
+                                fs_reg src1)
+{
+   const unsigned operand_len = dispatch_width / 8;
+   unsigned mlen = 0;
+
+   /* Initialize the sample mask in the message header. */
+   emit(MOV(brw_uvec_mrf(8, mlen, 0), brw_imm_ud(0)))
+      ->force_writemask_all = true;
+
+   if (fp->UsesKill) {
+      emit(MOV(brw_uvec_mrf(1, mlen, 7), brw_flag_reg(0, 1)))
+         ->force_writemask_all = true;
+   } else {
+      emit(MOV(brw_uvec_mrf(1, mlen, 7),
+               retype(brw_vec1_grf(1, 7), BRW_REGISTER_TYPE_UD)))
+         ->force_writemask_all = true;
+   }
+
+   mlen++;
+
+   /* Set the atomic operation offset. */
+   emit(MOV(brw_uvec_mrf(dispatch_width, mlen, 0), offset));
+   mlen += operand_len;
+
+   /* Set the atomic operation arguments. */
+   if (src0.file != BAD_FILE) {
+      emit(MOV(brw_uvec_mrf(dispatch_width, mlen, 0), src0));
+      mlen += operand_len;
+   }
+
+   if (src1.file != BAD_FILE) {
+      emit(MOV(brw_uvec_mrf(dispatch_width, mlen, 0), src1));
+      mlen += operand_len;
+   }
+
+   /* Emit the instruction. */
+   fs_inst inst(SHADER_OPCODE_UNTYPED_ATOMIC, dst, atomic_op, surf_index);
+   inst.base_mrf = 0;
+   inst.mlen = mlen;
+   emit(inst);
+}
+
+void
+fs_visitor::emit_untyped_surface_read(unsigned surf_index, fs_reg dst,
+                                      fs_reg offset)
+{
+   const unsigned operand_len = dispatch_width / 8;
+   unsigned mlen = 0;
+
+   /* Initialize the sample mask in the message header. */
+   emit(MOV(brw_uvec_mrf(8, mlen, 0), brw_imm_ud(0)))
+      ->force_writemask_all = true;
+
+   if (fp->UsesKill) {
+      emit(MOV(brw_uvec_mrf(1, mlen, 7), brw_flag_reg(0, 1)))
+         ->force_writemask_all = true;
+   } else {
+      emit(MOV(brw_uvec_mrf(1, mlen, 7),
+               retype(brw_vec1_grf(1, 7), BRW_REGISTER_TYPE_UD)))
+         ->force_writemask_all = true;
+   }
+
+   mlen++;
+
+   /* Set the surface read offset. */
+   emit(MOV(brw_uvec_mrf(dispatch_width, mlen, 0), offset));
+   mlen += operand_len;
+
+   /* Emit the instruction. */
+   fs_inst inst(SHADER_OPCODE_UNTYPED_SURFACE_READ, dst, surf_index);
+   inst.base_mrf = 0;
+   inst.mlen = mlen;
+   emit(inst);
 }
 
 fs_inst *
