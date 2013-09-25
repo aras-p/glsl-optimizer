@@ -367,11 +367,9 @@ intelInitContext(struct brw_context *brw,
                  unsigned *dri_ctx_error)
 {
    struct gl_context *ctx = &brw->ctx;
-   struct gl_context *shareCtx = (struct gl_context *) sharedContextPrivate;
    __DRIscreen *sPriv = driContextPriv->driScreenPriv;
    struct intel_screen *intelScreen = sPriv->driverPrivate;
    int bo_reuse_mode;
-   struct gl_config visual;
 
    /* GLX uses DRI2 invalidate events to handle window resizing.
     * Unfortunately, EGL does not - libEGL is written in XCB (not Xlib),
@@ -384,51 +382,6 @@ intelInitContext(struct brw_context *brw,
       brw->saved_viewport = functions->Viewport;
       functions->Viewport = intel_viewport;
    }
-
-   if (mesaVis == NULL) {
-      memset(&visual, 0, sizeof visual);
-      mesaVis = &visual;
-   }
-
-   brw->intelScreen = intelScreen;
-   brw->bufmgr = intelScreen->bufmgr;
-
-   driContextPriv->driverPrivate = brw;
-   brw->driContext = driContextPriv;
-
-   if (!_mesa_initialize_context(&brw->ctx, api, mesaVis, shareCtx,
-                                 functions)) {
-      *dri_ctx_error = __DRI_CTX_ERROR_NO_MEMORY;
-      printf("%s: failed to init mesa context\n", __FUNCTION__);
-      return false;
-   }
-
-   brw->gen = intelScreen->gen;
-
-   const int devID = intelScreen->deviceID;
-   if (IS_SNB_GT1(devID) || IS_IVB_GT1(devID) || IS_HSW_GT1(devID))
-      brw->gt = 1;
-   else if (IS_SNB_GT2(devID) || IS_IVB_GT2(devID) || IS_HSW_GT2(devID))
-      brw->gt = 2;
-   else if (IS_HSW_GT3(devID))
-      brw->gt = 3;
-   else
-      brw->gt = 0;
-
-   if (IS_HASWELL(devID)) {
-      brw->is_haswell = true;
-   } else if (IS_BAYTRAIL(devID)) {
-      brw->is_baytrail = true;
-      brw->gt = 1;
-   } else if (IS_G4X(devID)) {
-      brw->is_g4x = true;
-   }
-
-   brw->has_separate_stencil = brw->intelScreen->hw_has_separate_stencil;
-   brw->must_use_separate_stencil = brw->intelScreen->hw_must_use_separate_stencil;
-   brw->has_hiz = brw->gen >= 6;
-   brw->has_llc = brw->intelScreen->hw_has_llc;
-   brw->has_swizzling = brw->intelScreen->hw_has_swizzling;
 
    memset(&ctx->TextureFormatSupported,
 	  0, sizeof(ctx->TextureFormatSupported));

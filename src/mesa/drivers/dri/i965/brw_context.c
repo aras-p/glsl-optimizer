@@ -31,6 +31,7 @@
 
 
 #include "main/api_exec.h"
+#include "main/context.h"
 #include "main/imports.h"
 #include "main/macros.h"
 #include "main/points.h"
@@ -286,8 +287,10 @@ brwCreateContext(gl_api api,
 	         void *sharedContextPrivate)
 {
    __DRIscreen *sPriv = driContextPriv->driScreenPriv;
+   struct gl_context *shareCtx = (struct gl_context *) sharedContextPrivate;
    struct intel_screen *screen = sPriv->driverPrivate;
    struct dd_function_table functions;
+   struct gl_config visual;
 
    struct brw_context *brw = rzalloc(NULL, struct brw_context);
    if (!brw) {
@@ -296,16 +299,54 @@ brwCreateContext(gl_api api,
       return false;
    }
 
-   /* brwInitVtbl needs to know the chipset generation so that it can set the
-    * right pointers.
-    */
+   driContextPriv->driverPrivate = brw;
+   brw->driContext = driContextPriv;
+   brw->intelScreen = screen;
+   brw->bufmgr = screen->bufmgr;
    brw->gen = screen->gen;
+
+   const int devID = screen->deviceID;
+   if (IS_SNB_GT1(devID) || IS_IVB_GT1(devID) || IS_HSW_GT1(devID))
+      brw->gt = 1;
+   else if (IS_SNB_GT2(devID) || IS_IVB_GT2(devID) || IS_HSW_GT2(devID))
+      brw->gt = 2;
+   else if (IS_HSW_GT3(devID))
+      brw->gt = 3;
+   else
+      brw->gt = 0;
+
+   if (IS_HASWELL(devID)) {
+      brw->is_haswell = true;
+   } else if (IS_BAYTRAIL(devID)) {
+      brw->is_baytrail = true;
+      brw->gt = 1;
+   } else if (IS_G4X(devID)) {
+      brw->is_g4x = true;
+   }
+
+   brw->has_separate_stencil = screen->hw_has_separate_stencil;
+   brw->must_use_separate_stencil = screen->hw_must_use_separate_stencil;
+   brw->has_hiz = brw->gen >= 6;
+   brw->has_llc = screen->hw_has_llc;
+   brw->has_swizzling = screen->hw_has_swizzling;
 
    brwInitVtbl( brw );
 
    brwInitDriverFunctions(screen, &functions);
 
    struct gl_context *ctx = &brw->ctx;
+
+   if (mesaVis == NULL) {
+      memset(&visual, 0, sizeof visual);
+      mesaVis = &visual;
+   }
+
+   if (!_mesa_initialize_context(ctx, api, mesaVis, shareCtx, &functions)) {
+      *dri_ctx_error = __DRI_CTX_ERROR_NO_MEMORY;
+      printf("%s: failed to init mesa context\n", __FUNCTION__);
+      intelDestroyContext(driContextPriv);
+      return false;
+   }
 
    if (!intelInitContext( brw, api, major_version, minor_version,
                           mesaVis, driContextPriv,
