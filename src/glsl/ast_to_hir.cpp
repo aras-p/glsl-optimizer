@@ -2052,7 +2052,6 @@ validate_explicit_location(const struct ast_type_qualifier *qual,
                            struct _mesa_glsl_parse_state *state,
                            YYLTYPE *loc)
 {
-   const bool global_scope = (state->current_function == NULL);
    bool fail = false;
    const char *string = "";
 
@@ -2064,7 +2063,7 @@ validate_explicit_location(const struct ast_type_qualifier *qual,
     */
    switch (state->target) {
    case vertex_shader:
-      if (!global_scope || (var->mode != ir_var_shader_in)) {
+      if (var->mode != ir_var_shader_in) {
          fail = true;
          string = "input";
       }
@@ -2077,7 +2076,7 @@ validate_explicit_location(const struct ast_type_qualifier *qual,
       return;
 
    case fragment_shader:
-      if (!global_scope || (var->mode != ir_var_shader_out)) {
+      if (var->mode != ir_var_shader_out) {
          fail = true;
          string = "output";
       }
