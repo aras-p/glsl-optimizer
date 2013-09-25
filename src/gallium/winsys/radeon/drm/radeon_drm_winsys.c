@@ -424,10 +424,6 @@ static void radeon_winsys_destroy(struct radeon_winsys *rws)
 {
     struct radeon_drm_winsys *ws = (struct radeon_drm_winsys*)rws;
 
-    if (!pipe_reference(&ws->base.reference, NULL)) {
-        return;
-    }
-
     if (ws->thread) {
         ws->kill_thread = 1;
         pipe_semaphore_signal(&ws->cs_queued);

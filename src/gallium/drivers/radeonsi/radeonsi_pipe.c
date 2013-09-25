@@ -648,6 +648,9 @@ static void r600_destroy_screen(struct pipe_screen* pscreen)
 	if (rscreen == NULL)
 		return;
 
+	if (!radeon_winsys_unref(rscreen->b.ws))
+		return;
+
 	if (rscreen->fences.bo) {
 		struct r600_fence_block *entry, *tmp;
 
