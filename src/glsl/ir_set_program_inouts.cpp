@@ -59,6 +59,7 @@ public:
    virtual ir_visitor_status visit_enter(ir_function_signature *);
    virtual ir_visitor_status visit_enter(ir_expression *);
    virtual ir_visitor_status visit_enter(ir_discard *);
+   virtual ir_visitor_status visit_enter(ir_texture *);
    virtual ir_visitor_status visit(ir_dereference_variable *);
 
 private:
@@ -316,6 +317,14 @@ ir_set_program_inouts_visitor::visit_enter(ir_discard *)
    gl_fragment_program *fprog = (gl_fragment_program *) prog;
    fprog->UsesKill = true;
 
+   return visit_continue;
+}
+
+ir_visitor_status
+ir_set_program_inouts_visitor::visit_enter(ir_texture *ir)
+{
+   if (ir->op == ir_tg4)
+      prog->UsesGather = true;
    return visit_continue;
 }
 

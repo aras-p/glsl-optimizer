@@ -1963,6 +1963,8 @@ struct gl_program
    GLbitfield SamplersUsed;   /**< Bitfield of which samplers are used */
    GLbitfield ShadowSamplers; /**< Texture units used for shadow sampling. */
 
+   GLboolean UsesGather; /**< Does this program use gather4 at all? */
+
 
    /** Named parameters, constants, etc. from program text */
    struct gl_program_parameter_list *Parameters;
