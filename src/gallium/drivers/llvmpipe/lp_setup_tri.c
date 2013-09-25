@@ -988,7 +988,7 @@ check_subdivide_triangle(struct lp_setup_context *setup,
                          const float (*v2)[4],
                          triangle_func_t tri)
 {
-   const float maxLen = 2048.0f;  /* longest permissible edge, in pixels */
+   const float maxLen = (float) MAX_FIXED_LENGTH;  /* longest permissible edge, in pixels */
    float dx10, dy10, len10;
    float dx21, dy21, len21;
    float dx02, dy02, len02;
