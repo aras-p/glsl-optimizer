@@ -365,6 +365,7 @@ private:
    ir_variable *gl_Vertex;
 
    void create_shader();
+   void create_intrinsics();
    void create_builtins();
 
    /**
@@ -385,6 +386,14 @@ private:
    ir_swizzle *matrix_elt(ir_variable *var, int col, int row);
 
    ir_expression *asin_expr(ir_variable *x);
+
+   /**
+    * Call function \param f with parameters specified as the linked
+    * list \param params of \c ir_variable objects.  \param ret should
+    * point to the ir_variable that will hold the function return
+    * value, or be \c NULL if the function has void return type.
+    */
+   ir_call *call(ir_function *f, ir_variable *ret, exec_list params);
 
    /** Create a new function and add the given signatures. */
    void add_function(const char *name, ...);
@@ -609,6 +618,7 @@ builtin_builder::initialize()
 
    mem_ctx = ralloc_context(NULL);
    create_shader();
+   create_intrinsics();
    create_builtins();
 }
 
@@ -644,6 +654,15 @@ builtin_builder::create_shader()
 }
 
 /** @} */
+
+/**
+ * Create ir_function and ir_function_signature objects for each
+ * intrinsic.
+ */
+void
+builtin_builder::create_intrinsics()
+{
+}
 
 /**
  * Create ir_function and ir_function_signature objects for each built-in.
@@ -2071,8 +2090,6 @@ builtin_builder::add_function(const char *name, ...)
       if (sig == NULL)
          break;
 
-      sig->is_defined = true;
-
       if (false) {
          exec_list stuff;
          stuff.push_tail(sig);
@@ -2170,7 +2187,13 @@ builtin_builder::new_sig(const glsl_type *return_type,
 #define MAKE_SIG(return_type, avail, ...)  \
    ir_function_signature *sig =               \
       new_sig(return_type, avail, __VA_ARGS__);      \
-   ir_factory body(&sig->body, mem_ctx);
+   ir_factory body(&sig->body, mem_ctx);             \
+   sig->is_defined = true;
+
+#define MAKE_INTRINSIC(return_type, avail, ...)      \
+   ir_function_signature *sig =                      \
+      new_sig(return_type, avail, __VA_ARGS__);      \
+   sig->is_intrinsic = true;
 
 ir_function_signature *
 builtin_builder::unop(builtin_available_predicate avail,
@@ -2262,6 +2285,26 @@ builtin_builder::asin_expr(ir_variable *x)
                                           mul(abs(x), imm(-0.03102955f))))))))));
 }
 
+ir_call *
+builtin_builder::call(ir_function *f, ir_variable *ret, exec_list params)
+{
+   exec_list actual_params;
+
+   foreach_iter(exec_list_iterator, it, params) {
+      ir_variable *var = ((ir_instruction *)it.get())->as_variable();
+      actual_params.push_tail(var_ref(var));
+   }
+
+   ir_function_signature *sig =
+      f->exact_matching_signature(NULL, &actual_params);
+   if (!sig)
+      return NULL;
+
+   ir_dereference_variable *deref =
+      (sig->return_type->is_void() ? NULL : var_ref(ret));
+
+   return new(mem_ctx) ir_call(sig, deref, &actual_params);
+}
 
 ir_function_signature *
 builtin_builder::_asin(const glsl_type *type)

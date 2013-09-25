@@ -155,14 +155,17 @@ public:
 
       linked_sig->replace_parameters(&formal_parameters);
 
-      foreach_list_const(node, &sig->body) {
-	 const ir_instruction *const original = (ir_instruction *) node;
+      if (sig->is_defined) {
+         foreach_list_const(node, &sig->body) {
+            const ir_instruction *const original = (ir_instruction *) node;
 
-	 ir_instruction *copy = original->clone(linked, ht);
-	 linked_sig->body.push_tail(copy);
+            ir_instruction *copy = original->clone(linked, ht);
+            linked_sig->body.push_tail(copy);
+         }
+
+         linked_sig->is_defined = true;
       }
 
-      linked_sig->is_defined = true;
       hash_table_dtor(ht);
 
       /* Patch references inside the function to things outside the function
@@ -307,7 +310,8 @@ find_matching_signature(const char *name, const exec_list *actual_parameters,
       ir_function_signature *sig =
          f->matching_signature(NULL, actual_parameters);
 
-      if ((sig == NULL) || !sig->is_defined)
+      if ((sig == NULL) ||
+          (!sig->is_defined && !sig->is_intrinsic))
 	 continue;
 
       /* If this function expects to bind to a built-in function and the

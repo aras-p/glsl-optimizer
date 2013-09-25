@@ -1647,8 +1647,8 @@ ir_variable::determine_interpolation_mode(bool flat_shade)
 
 ir_function_signature::ir_function_signature(const glsl_type *return_type,
                                              builtin_available_predicate b)
-   : return_type(return_type), is_defined(false), builtin_avail(b),
-     _function(NULL)
+   : return_type(return_type), is_defined(false), is_intrinsic(false),
+     builtin_avail(b), _function(NULL)
 {
    this->ir_type = ir_type_function_signature;
    this->origin = NULL;
