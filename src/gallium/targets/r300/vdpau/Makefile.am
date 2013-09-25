@@ -28,45 +28,43 @@ AM_CFLAGS = \
 	$(LIBDRM_CFLAGS)
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/gallium/drivers \
-	-I$(top_srcdir)/src/gallium/winsys \
-	-I$(top_srcdir)/src/mesa \
-	-I$(top_srcdir)/src/mapi \
-	-I$(top_builddir)/src/mesa/drivers/dri/common \
-	-DGALLIUM_RBUG \
-	-DGALLIUM_TRACE \
-	-DGALLIUM_GALAHAD
+	-I$(top_srcdir)/src/gallium/winsys
 
-dridir = $(DRI_DRIVER_INSTALL_DIR)
-dri_LTLIBRARIES = r300_dri.la
+vdpaudir = $(VDPAU_LIB_INSTALL_DIR)
+vdpau_LTLIBRARIES = libvdpau_r300.la
 
-nodist_EXTRA_r300_dri_la_SOURCES = dummy.cpp
-r300_dri_la_SOURCES = \
-	target.c \
-	$(top_srcdir)/src/mesa/drivers/dri/common/utils.c \
-	$(top_srcdir)/src/mesa/drivers/dri/common/dri_util.c \
-	$(top_srcdir)/src/mesa/drivers/dri/common/xmlconfig.c
+nodist_EXTRA_libvdpau_r300_la_SOURCES = dummy.cpp
+libvdpau_r300_la_SOURCES = \
+	../drm_target.c \
+	$(top_srcdir)/src/gallium/auxiliary/vl/vl_winsys_dri.c
 
-r300_dri_la_LDFLAGS = -module -avoid-version -shared -no-undefined
+libvdpau_r300_la_LDFLAGS = \
+	-module \
+	-version-number $(VDPAU_MAJOR):$(VDPAU_MINOR) \
+	-shared \
+	-no-undefined
 
-r300_dri_la_LIBADD = \
-	$(top_builddir)/src/mesa/libmesagallium.la \
+libvdpau_r300_la_LIBADD = \
 	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
-	$(top_builddir)/src/gallium/state_trackers/dri/drm/libdridrm.la \
-	$(top_builddir)/src/gallium/winsys/radeon/drm/libradeonwinsys.la \
-	$(top_builddir)/src/gallium/drivers/galahad/libgalahad.la \
-	$(top_builddir)/src/gallium/drivers/trace/libtrace.la \
-	$(top_builddir)/src/gallium/drivers/rbug/librbug.la \
+	$(top_builddir)/src/gallium/drivers/r300/libr300-helper.la \
 	$(top_builddir)/src/gallium/drivers/r300/libr300.la \
+	$(top_builddir)/src/gallium/state_trackers/vdpau/libvdpautracker.la \
+	$(top_builddir)/src/gallium/winsys/radeon/drm/libradeonwinsys.la \
+	$(top_builddir)/src/gallium/drivers/rbug/librbug.la \
+	$(top_builddir)/src/gallium/drivers/trace/libtrace.la \
+	$(top_builddir)/src/gallium/drivers/galahad/libgalahad.la \
 	$(GALLIUM_DRI_LIB_DEPS) \
+	$(VDPAU_LIBS) \
+	$(LIBDRM_LIBS) \
 	$(RADEON_LIBS)
 
 if HAVE_MESA_LLVM
-r300_dri_la_LDFLAGS += $(LLVM_LDFLAGS)
-r300_dri_la_LIBADD += $(LLVM_LIBS)
+libvdpau_r300_la_LDFLAGS += $(LLVM_LDFLAGS)
+libvdpau_r300_la_LIBADD += $(LLVM_LIBS)
 endif
 
 # Provide compatibility with scripts for the old Mesa build system for
 # a while by putting a link to the driver into /lib of the build tree.
-all-local: r300_dri.la
+all-local: libvdpau_r300.la
 	$(MKDIR_P) $(top_builddir)/$(LIB_DIR)/gallium
-	ln -f .libs/r300_dri.so $(top_builddir)/$(LIB_DIR)/gallium/r300_dri.so
+	ln -f .libs/libvdpau_r300.so* $(top_builddir)/$(LIB_DIR)/gallium/

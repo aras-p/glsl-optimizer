@@ -30,41 +30,39 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/gallium/drivers \
 	-I$(top_srcdir)/src/gallium/winsys
 
-vdpaudir = $(VDPAU_LIB_INSTALL_DIR)
-vdpau_LTLIBRARIES = libvdpau_r300.la
+xvmcdir = $(XVMC_LIB_INSTALL_DIR)
+xvmc_LTLIBRARIES = libXvMCr300.la
 
-nodist_EXTRA_libvdpau_r300_la_SOURCES = dummy.cpp
-libvdpau_r300_la_SOURCES = \
-	target.c \
+nodist_EXTRA_libXvMCr300_la_SOURCES = dummy.cpp
+libXvMCr300_la_SOURCES = \
+	../drm_target.c \
 	$(top_srcdir)/src/gallium/auxiliary/vl/vl_winsys_dri.c
 
-libvdpau_r300_la_LDFLAGS = \
+libXvMCr300_la_LDFLAGS = \
 	-module \
-	-version-number $(VDPAU_MAJOR):$(VDPAU_MINOR) \
+	-version-number $(XVMC_MAJOR):$(XVMC_MINOR) \
 	-shared \
 	-no-undefined
 
-libvdpau_r300_la_LIBADD = \
+libXvMCr300_la_LIBADD = \
 	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
-	$(top_builddir)/src/gallium/drivers/r300/libr300-helper.la \
-	$(top_builddir)/src/gallium/drivers/r300/libr300.la \
-	$(top_builddir)/src/gallium/state_trackers/vdpau/libvdpautracker.la \
-	$(top_builddir)/src/gallium/winsys/radeon/drm/libradeonwinsys.la \
-	$(top_builddir)/src/gallium/drivers/rbug/librbug.la \
-	$(top_builddir)/src/gallium/drivers/trace/libtrace.la \
-	$(top_builddir)/src/gallium/drivers/galahad/libgalahad.la \
+        $(top_builddir)/src/gallium/drivers/r300/libr300-helper.la \
+        $(top_builddir)/src/gallium/drivers/r300/libr300.la \
+	$(top_builddir)/src/gallium/state_trackers/xvmc/libxvmctracker.la \
+        $(top_builddir)/src/gallium/winsys/radeon/drm/libradeonwinsys.la \
+        $(top_builddir)/src/gallium/drivers/trace/libtrace.la \
 	$(GALLIUM_DRI_LIB_DEPS) \
-	$(VDPAU_LIBS) \
+	$(XVMC_LIBS) \
 	$(LIBDRM_LIBS) \
 	$(RADEON_LIBS)
 
 if HAVE_MESA_LLVM
-libvdpau_r300_la_LDFLAGS += $(LLVM_LDFLAGS)
-libvdpau_r300_la_LIBADD += $(LLVM_LIBS)
+libXvMCr300_la_LDFLAGS += $(LLVM_LDFLAGS)
+libXvMCr300_la_LIBADD += $(LLVM_LIBS)
 endif
 
 # Provide compatibility with scripts for the old Mesa build system for
 # a while by putting a link to the driver into /lib of the build tree.
-all-local: libvdpau_r300.la
+all-local: libXvMCr300.la
 	$(MKDIR_P) $(top_builddir)/$(LIB_DIR)/gallium
-	ln -f .libs/libvdpau_r300.so* $(top_builddir)/$(LIB_DIR)/gallium/
+	ln -f .libs/libXvMCr300.so* $(top_builddir)/$(LIB_DIR)/gallium/

@@ -72,15 +72,15 @@ endif
 
 if HAVE_GALLIUM_R300
 if HAVE_DRI
-SUBDIRS += dri-r300
+SUBDIRS += r300/dri
 endif
 
 if HAVE_ST_XVMC
-SUBDIRS += xvmc-r300
+SUBDIRS += r300/xvmc
 endif
 
 if HAVE_ST_VDPAU
-SUBDIRS += vdpau-r300
+SUBDIRS += r300/vdpau
 endif
 endif
 
