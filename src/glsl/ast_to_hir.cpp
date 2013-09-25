@@ -2053,7 +2053,6 @@ validate_explicit_location(const struct ast_type_qualifier *qual,
                            YYLTYPE *loc)
 {
    bool fail = false;
-   const char *string = "";
 
    /* In the vertex shader only shader inputs can be given explicit
     * locations.
@@ -2063,10 +2062,11 @@ validate_explicit_location(const struct ast_type_qualifier *qual,
     */
    switch (state->target) {
    case vertex_shader:
-      if (var->mode != ir_var_shader_in) {
-         fail = true;
-         string = "input";
+      if (var->mode == ir_var_shader_in) {
+         break;
       }
+
+      fail = true;
       break;
 
    case geometry_shader:
@@ -2076,19 +2076,19 @@ validate_explicit_location(const struct ast_type_qualifier *qual,
       return;
 
    case fragment_shader:
-      if (var->mode != ir_var_shader_out) {
-         fail = true;
-         string = "output";
+      if (var->mode == ir_var_shader_out) {
+         break;
       }
+
+      fail = true;
       break;
    };
 
    if (fail) {
       _mesa_glsl_error(loc, state,
-                       "only %s shader %s variables can be given an "
-                       "explicit location",
-                       _mesa_glsl_shader_target_name(state->target),
-                       string);
+                       "%s cannot be given an explicit location in %s shader",
+                       mode_string(var),
+		       _mesa_glsl_shader_target_name(state->target));
    } else {
       var->explicit_location = true;
 
