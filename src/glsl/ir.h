@@ -2306,6 +2306,9 @@ extern char *
 prototype_string(const glsl_type *return_type, const char *name,
 		 exec_list *parameters);
 
+const char *
+mode_string(const ir_variable *var);
+
 extern "C" {
 #endif /* __cplusplus */
 

@@ -558,29 +558,6 @@ validate_geometry_shader_executable(struct gl_shader_program *prog,
 
 
 /**
- * Generate a string describing the mode of a variable
- */
-static const char *
-mode_string(const ir_variable *var)
-{
-   switch (var->mode) {
-   case ir_var_auto:
-      return (var->read_only) ? "global constant" : "global variable";
-
-   case ir_var_uniform:    return "uniform";
-   case ir_var_shader_in:  return "shader input";
-   case ir_var_shader_out: return "shader output";
-
-   case ir_var_const_in:
-   case ir_var_temporary:
-   default:
-      assert(!"Should not get here.");
-      return "invalid variable";
-   }
-}
-
-
-/**
  * Perform validation of global variables used across multiple shaders
  */
 void
