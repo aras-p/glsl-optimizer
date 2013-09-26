@@ -101,7 +101,20 @@ dri2CreateNewScreen2(int scrn, int fd,
     if (!psp)
 	return NULL;
 
+    /* By default, use the global driDriverAPI symbol (non-megadrivers). */
     psp->driver = &driDriverAPI;
+
+    /* If the driver exposes its vtable through its extensions list
+     * (megadrivers), use that instead.
+     */
+    if (driver_extensions) {
+       for (int i = 0; driver_extensions[i]; i++) {
+          if (strcmp(driver_extensions[i]->name, __DRI_DRIVER_VTABLE) == 0) {
+             psp->driver =
+                ((__DRIDriverVtableExtension *)driver_extensions[i])->vtable;
+          }
+       }
+    }
 
     setupLoaderExtensions(psp, extensions);
 

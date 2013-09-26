@@ -1270,4 +1270,21 @@ typedef struct __DRIconfigOptionsExtensionRec {
    const char *xml;
 } __DRIconfigOptionsExtension;
 
+/**
+ * This extension provides a driver vtable to a set of common driver helper
+ * functions (driCoreExtension, driDRI2Extension) within the driver
+ * implementation, as opposed to having to pass them through a global
+ * variable.
+ *
+ * It is not intended to be public API to the actual loader, and the vtable
+ * layout may change at any time.
+ */
+#define __DRI_DRIVER_VTABLE "DRI_DriverVtable"
+#define __DRI_DRIVER_VTABLE_VERSION 1
+
+typedef struct __DRIDriverVtableExtensionRec {
+    __DRIextension base;
+    const struct __DriverAPIRec *vtable;
+} __DRIDriverVtableExtension;
+
 #endif
