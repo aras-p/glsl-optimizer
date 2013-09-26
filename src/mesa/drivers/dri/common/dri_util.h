@@ -123,6 +123,12 @@ extern const struct __DriverAPIRec driDriverAPI;
  */
 struct __DRIscreenRec {
     /**
+     * Driver-specific entrypoints provided by the driver's
+     * __DRIDriverVtableExtensionRec.
+     */
+    const struct __DriverAPIRec *driver;
+
+    /**
      * Current screen's number
      */
     int myNum;

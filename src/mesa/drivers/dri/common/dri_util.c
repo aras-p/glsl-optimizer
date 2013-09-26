@@ -99,6 +99,8 @@ dri2CreateNewScreen(int scrn, int fd,
     if (!psp)
 	return NULL;
 
+    psp->driver = &driDriverAPI;
+
     setupLoaderExtensions(psp, extensions);
 
 #ifndef __NOT_HAVE_DRM_H
@@ -119,7 +121,7 @@ dri2CreateNewScreen(int scrn, int fd,
     psp->fd = fd;
     psp->myNum = scrn;
 
-    *driver_configs = driDriverAPI.InitScreen(psp);
+    *driver_configs = psp->driver->InitScreen(psp);
     if (*driver_configs == NULL) {
 	free(psp);
 	return NULL;
@@ -176,7 +178,7 @@ static void driDestroyScreen(__DRIscreen *psp)
 
        _mesa_destroy_shader_compiler();
 
-	driDriverAPI.DestroyScreen(psp);
+	psp->driver->DestroyScreen(psp);
 
 	driDestroyOptionCache(&psp->optionCache);
 	driDestroyOptionInfo(&psp->optionInfo);
@@ -369,9 +371,9 @@ dri2CreateContextAttribs(__DRIscreen *screen, int api,
     context->driDrawablePriv = NULL;
     context->driReadablePriv = NULL;
 
-    if (!driDriverAPI.CreateContext(mesa_api, modes, context,
-				    major_version, minor_version,
-				    flags, error, shareCtx) ) {
+    if (!screen->driver->CreateContext(mesa_api, modes, context,
+                                       major_version, minor_version,
+                                       flags, error, shareCtx) ) {
         free(context);
         return NULL;
     }
@@ -410,7 +412,7 @@ static void
 driDestroyContext(__DRIcontext *pcp)
 {
     if (pcp) {
-	driDriverAPI.DestroyContext(pcp);
+	pcp->driScreenPriv->driver->DestroyContext(pcp);
 	free(pcp);
     }
 }
@@ -463,7 +465,7 @@ static int driBindContext(__DRIcontext *pcp,
 	dri_get_drawable(prp);
     }
 
-    return driDriverAPI.MakeCurrent(pcp, pdp, prp);
+    return pcp->driScreenPriv->driver->MakeCurrent(pcp, pdp, prp);
 }
 
 /**
@@ -502,7 +504,7 @@ static int driUnbindContext(__DRIcontext *pcp)
     if (!pdp && !prp)
 	return GL_TRUE;
 
-    driDriverAPI.UnbindContext(pcp);
+    pcp->driScreenPriv->driver->UnbindContext(pcp);
 
     assert(pdp);
     if (pdp->refcount == 0) {
@@ -542,7 +544,7 @@ static void dri_put_drawable(__DRIdrawable *pdp)
 	if (pdp->refcount)
 	    return;
 
-	driDriverAPI.DestroyBuffer(pdp);
+	pdp->driScreenPriv->driver->DestroyBuffer(pdp);
 	free(pdp);
     }
 }
@@ -569,7 +571,8 @@ dri2CreateNewDrawable(__DRIscreen *screen,
 
     dri_get_drawable(pdraw);
 
-    if (!driDriverAPI.CreateBuffer(screen, pdraw, &config->modes, GL_FALSE)) {
+    if (!screen->driver->CreateBuffer(screen, pdraw, &config->modes,
+                                      GL_FALSE)) {
        free(pdraw);
        return NULL;
     }
@@ -590,14 +593,14 @@ dri2AllocateBuffer(__DRIscreen *screen,
 		   unsigned int attachment, unsigned int format,
 		   int width, int height)
 {
-    return driDriverAPI.AllocateBuffer(screen, attachment, format,
-				       width, height);
+    return screen->driver->AllocateBuffer(screen, attachment, format,
+                                          width, height);
 }
 
 static void
 dri2ReleaseBuffer(__DRIscreen *screen, __DRIbuffer *buffer)
 {
-    driDriverAPI.ReleaseBuffer(screen, buffer);
+    screen->driver->ReleaseBuffer(screen, buffer);
 }
 
 
@@ -652,7 +655,7 @@ driSwapBuffers(__DRIdrawable *pdp)
 {
     assert(pdp->driScreenPriv->swrast_loader);
 
-    driDriverAPI.SwapBuffers(pdp);
+    pdp->driScreenPriv->driver->SwapBuffers(pdp);
 }
 
 /** Core interface */
