@@ -1040,8 +1040,6 @@ struct brw_context
 
    uint32_t max_gtt_map_object_size;
 
-   bool emit_state_always;
-
    int gen;
    int gt;
 

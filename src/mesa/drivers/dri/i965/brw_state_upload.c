@@ -471,7 +471,8 @@ void brw_upload_state(struct brw_context *brw)
    state->brw |= ctx->NewDriverState;
    ctx->NewDriverState = 0;
 
-   if (brw->emit_state_always) {
+   if (0) {
+      /* Always re-emit all state. */
       state->mesa |= ~0;
       state->brw |= ~0;
       state->cache |= ~0;

@@ -475,8 +475,6 @@ brwCreateContext(gl_api api,
     */
    STATIC_ASSERT(BRW_NUM_STATE_BITS <= 8 * sizeof(brw->state.dirty.brw));
 
-   brw->emit_state_always = 0;
-
    brw->batch.need_workaround_flush = true;
 
    ctx->VertexProgram._MaintainTnlProgram = true;
