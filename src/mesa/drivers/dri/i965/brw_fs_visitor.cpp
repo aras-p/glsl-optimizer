@@ -1149,6 +1149,11 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       mlen += reg_width;
       inst = emit(SHADER_OPCODE_TXS, dst);
       break;
+   case ir_query_levels:
+      emit(MOV(fs_reg(MRF, base_mrf + mlen, BRW_REGISTER_TYPE_UD), fs_reg(0u)));
+      mlen += reg_width;
+      inst = emit(SHADER_OPCODE_TXS, dst);
+      break;
    case ir_txf:
       mlen = header_present + 4 * reg_width;
       emit(MOV(fs_reg(MRF, base_mrf + mlen - reg_width, BRW_REGISTER_TYPE_UD), lod));
@@ -1259,6 +1264,10 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       emit(MOV(fs_reg(MRF, base_mrf + mlen, BRW_REGISTER_TYPE_UD), lod));
       mlen += reg_width;
       break;
+   case ir_query_levels:
+      emit(MOV(fs_reg(MRF, base_mrf + mlen, BRW_REGISTER_TYPE_UD), fs_reg(0)));
+      mlen += reg_width;
+      break;
    case ir_txf:
       /* It appears that the ld instruction used for txf does its
        * address bounds check before adding in the offset.  To work
@@ -1314,7 +1323,7 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    }
 
    /* Set up the coordinate (except for cases where it was done above) */
-   if (ir->op != ir_txd && ir->op != ir_txs && ir->op != ir_txf && ir->op != ir_txf_ms) {
+   if (ir->op != ir_txd && ir->op != ir_txs && ir->op != ir_txf && ir->op != ir_txf_ms && ir->op != ir_query_levels) {
       for (int i = 0; i < ir->coordinate->type->vector_elements; i++) {
 	 emit(MOV(fs_reg(MRF, base_mrf + mlen), coordinate));
 	 coordinate.reg_offset++;
@@ -1332,6 +1341,7 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    case ir_txf: inst = emit(SHADER_OPCODE_TXF, dst); break;
    case ir_txf_ms: inst = emit(SHADER_OPCODE_TXF_MS, dst); break;
    case ir_txs: inst = emit(SHADER_OPCODE_TXS, dst); break;
+   case ir_query_levels: inst = emit(SHADER_OPCODE_TXS, dst); break;
    case ir_lod: inst = emit(SHADER_OPCODE_LOD, dst); break;
    case ir_tg4: inst = emit(SHADER_OPCODE_TG4, dst); break;
    }
@@ -1507,6 +1517,7 @@ fs_visitor::visit(ir_texture *ir)
    case ir_tex:
    case ir_lod:
    case ir_tg4:
+   case ir_query_levels:
       break;
    case ir_txb:
       ir->lod_info.bias->accept(this);
@@ -1606,6 +1617,13 @@ fs_visitor::gather_channel(ir_texture *ir, int sampler)
 void
 fs_visitor::swizzle_result(ir_texture *ir, fs_reg orig_val, int sampler)
 {
+   if (ir->op == ir_query_levels) {
+      /* # levels is in .w */
+      orig_val.reg_offset += 3;
+      this->result = orig_val;
+      return;
+   }
+
    this->result = orig_val;
 
    /* txs,lod don't actually sample the texture, so swizzling the result
