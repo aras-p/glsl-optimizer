@@ -40,6 +40,10 @@ struct brw_device_info
 
    bool has_llc;
 
+   bool has_pln;
+   bool has_compr4;
+   bool has_surface_tile_offset;
+
    /**
     * Quirks:
     *  @{
