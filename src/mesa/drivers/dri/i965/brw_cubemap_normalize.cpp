@@ -52,7 +52,7 @@ brw_cubemap_normalize_visitor::visit_leave(ir_texture *ir)
    if (ir->sampler->type->sampler_dimensionality != GLSL_SAMPLER_DIM_CUBE)
       return visit_continue;
 
-   if (ir->op == ir_txs)
+   if (!ir->coordinate)
       return visit_continue;
 
    void *mem_ctx = ralloc_parent(ir);
