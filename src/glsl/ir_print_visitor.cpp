@@ -252,7 +252,7 @@ void ir_print_visitor::visit(ir_texture *ir)
    ir->sampler->accept(this);
    printf(" ");
 
-   if (ir->op != ir_txs) {
+   if (ir->op != ir_txs && ir->op != ir_query_levels) {
       ir->coordinate->accept(this);
 
       printf(" ");
@@ -266,7 +266,9 @@ void ir_print_visitor::visit(ir_texture *ir)
       printf(" ");
    }
 
-   if (ir->op != ir_txf && ir->op != ir_txf_ms && ir->op != ir_txs && ir->op != ir_tg4) {
+   if (ir->op != ir_txf && ir->op != ir_txf_ms &&
+       ir->op != ir_txs && ir->op != ir_tg4 &&
+       ir->op != ir_query_levels) {
       if (ir->projector)
 	 ir->projector->accept(this);
       else
@@ -286,6 +288,7 @@ void ir_print_visitor::visit(ir_texture *ir)
    case ir_tex:
    case ir_lod:
    case ir_tg4:
+   case ir_query_levels:
       break;
    case ir_txb:
       ir->lod_info.bias->accept(this);

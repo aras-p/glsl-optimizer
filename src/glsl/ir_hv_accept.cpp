@@ -215,6 +215,7 @@ ir_texture::accept(ir_hierarchical_visitor *v)
    case ir_tex:
    case ir_lod:
    case ir_tg4:
+   case ir_query_levels:
       break;
    case ir_txb:
       s = this->lod_info.bias->accept(v);

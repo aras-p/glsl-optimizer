@@ -518,6 +518,7 @@ static const _mesa_glsl_extension _mesa_glsl_supported_extensions[] = {
    EXT(ARB_shading_language_packing,   true,  false,     ARB_shading_language_packing),
    EXT(ARB_shading_language_420pack,   true,  false,     ARB_shading_language_420pack),
    EXT(ARB_texture_multisample,        true,  false,     ARB_texture_multisample),
+   EXT(ARB_texture_query_levels,       true,  false,     ARB_texture_query_levels),
    EXT(ARB_texture_query_lod,          true,  false,     ARB_texture_query_lod),
    EXT(ARB_gpu_shader5,                true,  false,     ARB_gpu_shader5),
    EXT(AMD_vertex_shader_layer,        true,  false,     AMD_vertex_shader_layer),

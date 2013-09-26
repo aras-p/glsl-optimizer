@@ -1374,7 +1374,7 @@ ir_dereference::is_lvalue() const
 }
 
 
-static const char *tex_opcode_strs[] = { "tex", "txb", "txl", "txd", "txf", "txf_ms", "txs", "lod", "tg4" };
+static const char *tex_opcode_strs[] = { "tex", "txb", "txl", "txd", "txf", "txf_ms", "txs", "lod", "tg4", "query_levels" };
 
 const char *ir_texture::opcode_string()
 {
@@ -1403,7 +1403,7 @@ ir_texture::set_sampler(ir_dereference *sampler, const glsl_type *type)
    this->sampler = sampler;
    this->type = type;
 
-   if (this->op == ir_txs) {
+   if (this->op == ir_txs || this->op == ir_query_levels) {
       assert(type->base_type == GLSL_TYPE_INT);
    } else if (this->op == ir_lod) {
       assert(type->vector_elements == 2);
