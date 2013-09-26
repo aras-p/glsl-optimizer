@@ -73,6 +73,13 @@ setupLoaderExtensions(__DRIscreen *psp,
     }
 }
 
+/**
+ * This is the first entrypoint in the driver called by the DRI driver loader
+ * after dlopen()ing it.
+ *
+ * It's used to create global state for the driver across contexts on the same
+ * Display.
+ */
 static __DRIscreen *
 dri2CreateNewScreen(int scrn, int fd,
 		    const __DRIextension **extensions,
