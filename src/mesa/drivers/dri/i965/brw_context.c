@@ -467,14 +467,6 @@ brwCreateContext(gl_api api,
       brw->curbe.next_buf = calloc(1, 4096);
    }
 
-   brw->state.dirty.mesa = ~0;
-   brw->state.dirty.brw = ~0;
-
-   /* Make sure that brw->state.dirty.brw has enough bits to hold all possible
-    * dirty flags.
-    */
-   STATIC_ASSERT(BRW_NUM_STATE_BITS <= 8 * sizeof(brw->state.dirty.brw));
-
    brw->batch.need_workaround_flush = true;
 
    ctx->VertexProgram._MaintainTnlProgram = true;
