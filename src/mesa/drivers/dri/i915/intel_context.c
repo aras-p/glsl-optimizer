@@ -385,12 +385,6 @@ intelInitContext(struct intel_context *intel,
    int bo_reuse_mode;
    struct gl_config visual;
 
-   /* we can't do anything without a connection to the device */
-   if (intelScreen->bufmgr == NULL) {
-      *dri_ctx_error = __DRI_CTX_ERROR_NO_MEMORY;
-      return false;
-   }
-
    /* Can't rely on invalidate events, fall back to glViewport hack */
    if (!driContextPriv->driScreenPriv->dri2.useInvalidate) {
       intel->saved_viewport = functions->Viewport;
