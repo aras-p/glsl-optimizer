@@ -98,7 +98,8 @@ fs_visitor::opt_cse_local(bblock_t *block, exec_list *aeb)
       if (is_expression(inst) &&
           !inst->predicate &&
           !inst->is_partial_write() &&
-          !inst->conditional_mod)
+          !inst->conditional_mod &&
+          inst->dst.file != HW_REG)
       {
 	 bool found = false;
 
