@@ -433,7 +433,7 @@ fs_visitor::visit(ir_expression *ir)
 	 if (brw->gen >= 7 && dispatch_width == 16)
 	    fail("16-wide explicit accumulator operands unsupported\n");
 
-	 struct brw_reg acc = retype(brw_acc_reg(), BRW_REGISTER_TYPE_D);
+	 struct brw_reg acc = retype(brw_acc_reg(), this->result.type);
 
 	 emit(MUL(acc, op[0], op[1]));
 	 emit(MACH(reg_null_d, op[0], op[1]));

@@ -1358,7 +1358,7 @@ vec4_visitor::visit(ir_expression *ir)
             else
                emit(MUL(result_dst, op[0], op[1]));
          } else {
-            struct brw_reg acc = retype(brw_acc_reg(), BRW_REGISTER_TYPE_D);
+            struct brw_reg acc = retype(brw_acc_reg(), result_dst.type);
 
             emit(MUL(acc, op[0], op[1]));
             emit(MACH(dst_null_d(), op[0], op[1]));
