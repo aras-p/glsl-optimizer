@@ -41,6 +41,22 @@ struct brw_device_info
    bool has_llc;
 
    /**
+    * Quirks:
+    *  @{
+    */
+   bool has_negative_rhw_bug;
+
+   /**
+    * Some versions of Gen hardware don't do centroid interpolation correctly
+    * on unlit pixels, causing incorrect values for derivatives near triangle
+    * edges.  Enabling this flag causes the fragment shader to use
+    * non-centroid interpolation for unlit pixels, at the expense of two extra
+    * fragment shader instructions.
+    */
+   bool needs_unlit_centroid_workaround;
+   /** @} */
+
+   /**
     * GPU Limits:
     *  @{
     */

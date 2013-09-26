@@ -27,6 +27,8 @@
 
 static const struct brw_device_info brw_device_info_i965 = {
    .gen = 4,
+   .has_negative_rhw_bug = true,
+   .needs_unlit_centroid_workaround = true,
    .max_vs_threads = 16,
    .max_gs_threads = 2,
    .max_wm_threads = 8 * 4,
@@ -37,6 +39,7 @@ static const struct brw_device_info brw_device_info_i965 = {
 
 static const struct brw_device_info brw_device_info_g4x = {
    .gen = 4,
+   .needs_unlit_centroid_workaround = true,
    .is_g4x = true,
    .max_vs_threads = 32,
    .max_gs_threads = 2,
@@ -48,6 +51,7 @@ static const struct brw_device_info brw_device_info_g4x = {
 
 static const struct brw_device_info brw_device_info_ilk = {
    .gen = 5,
+   .needs_unlit_centroid_workaround = true,
    .max_vs_threads = 72,
    .max_gs_threads = 32,
    .max_wm_threads = 12 * 6,
@@ -61,6 +65,7 @@ static const struct brw_device_info brw_device_info_snb_gt1 = {
    .gt = 2,
    .has_hiz_and_separate_stencil = true,
    .has_llc = true,
+   .needs_unlit_centroid_workaround = true,
    .max_vs_threads = 24,
    .max_gs_threads = 21, /* conservative; 24 if rendering disabled. */
    .max_wm_threads = 40,
@@ -77,6 +82,7 @@ static const struct brw_device_info brw_device_info_snb_gt2 = {
    .gt = 2,
    .has_hiz_and_separate_stencil = true,
    .has_llc = true,
+   .needs_unlit_centroid_workaround = true,
    .max_vs_threads = 60,
    .max_gs_threads = 60,
    .max_wm_threads = 80,
@@ -92,7 +98,8 @@ static const struct brw_device_info brw_device_info_snb_gt2 = {
    .gen = 7,                                        \
    .has_hiz_and_separate_stencil = true,            \
    .must_use_separate_stencil = true,               \
-   .has_llc = true
+   .has_llc = true,                                 \
+   .needs_unlit_centroid_workaround = true
 
 static const struct brw_device_info brw_device_info_ivb_gt1 = {
    GEN7_FEATURES, .is_ivybridge = true, .gt = 1,

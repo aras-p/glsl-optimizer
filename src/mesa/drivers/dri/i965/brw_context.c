@@ -366,6 +366,9 @@ brwCreateContext(gl_api api,
    brw->has_llc = devinfo->has_llc;
    brw->has_hiz = devinfo->has_hiz_and_separate_stencil;
    brw->has_separate_stencil = devinfo->has_hiz_and_separate_stencil;
+   brw->has_negative_rhw_bug = devinfo->has_negative_rhw_bug;
+   brw->needs_unlit_centroid_workaround =
+      devinfo->needs_unlit_centroid_workaround;
 
    brw->must_use_separate_stencil = screen->hw_must_use_separate_stencil;
    brw->has_swizzling = screen->hw_has_swizzling;
@@ -454,13 +457,6 @@ brwCreateContext(gl_api api,
 
    if (brw->gen == 6)
       brw->urb.gen6_gs_previously_active = false;
-
-   if (brw->gen == 4 && !brw->is_g4x)
-      brw->has_negative_rhw_bug = true;
-
-   if (brw->gen <= 7) {
-      brw->needs_unlit_centroid_workaround = true;
-   }
 
    brw->prim_restart.in_progress = false;
    brw->prim_restart.enable_cut_index = false;
