@@ -66,6 +66,8 @@ struct gbm_dri_device {
 			     int *width, int *height,
 			     unsigned int *attachments, int count,
 			     int *out_count, void *data);
+
+   struct wl_drm *wl_drm;
 };
 
 struct gbm_dri_bo {

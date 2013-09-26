@@ -376,7 +376,10 @@ gbm_dri_bo_import(struct gbm_device *gbm,
    {
       struct wl_drm_buffer *wb;
 
-      wb = wayland_drm_buffer_get((struct wl_resource *) buffer);
+      if (!dri->wl_drm)
+         return NULL;
+
+      wb = wayland_drm_buffer_get(dri->wl_drm, (struct wl_resource *) buffer);
       if (!wb)
          return NULL;
 

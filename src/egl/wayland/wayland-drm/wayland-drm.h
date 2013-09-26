@@ -92,7 +92,7 @@ struct wayland_drm_callbacks {
 enum { WAYLAND_DRM_PRIME = 0x01 };
 
 struct wl_drm_buffer *
-wayland_drm_buffer_get(struct wl_resource *resource);
+wayland_drm_buffer_get(struct wl_drm *drm, struct wl_resource *resource);
 
 struct wl_drm *
 wayland_drm_init(struct wl_display *display, char *device_name,

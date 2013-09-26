@@ -1212,7 +1212,8 @@ dri2_create_image_wayland_wl_buffer(_EGLDisplay *disp, _EGLContext *ctx,
    EGLint err;
    int32_t plane;
 
-   buffer = wayland_drm_buffer_get((struct wl_resource *) _buffer);
+   buffer = wayland_drm_buffer_get(dri2_dpy->wl_server_drm,
+                                   (struct wl_resource *) _buffer);
    if (!buffer)
        return NULL;
 
@@ -1852,6 +1853,10 @@ dri2_bind_wayland_display_wl(_EGLDriver *drv, _EGLDisplay *disp,
    if (!dri2_dpy->wl_server_drm)
 	   return EGL_FALSE;
 
+   /* We have to share the wl_drm instance with gbm, so gbm can convert
+    * wl_buffers to gbm bos. */
+   dri2_dpy->gbm_dri->wl_drm = dri2_dpy->wl_server_drm;
+
    return EGL_TRUE;
 }
 
@@ -1877,10 +1882,11 @@ dri2_query_wayland_buffer_wl(_EGLDriver *drv, _EGLDisplay *disp,
                              struct wl_resource *buffer_resource,
                              EGLint attribute, EGLint *value)
 {
+   struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    struct wl_drm_buffer *buffer;
    const struct wl_drm_components_descriptor *format;
 
-   buffer = wayland_drm_buffer_get(buffer_resource);
+   buffer = wayland_drm_buffer_get(dri2_dpy->wl_server_drm, buffer_resource);
    if (!buffer)
       return EGL_FALSE;
 
