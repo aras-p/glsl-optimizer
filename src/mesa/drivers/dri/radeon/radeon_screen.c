@@ -719,6 +719,9 @@ __DRIconfig **radeonInitScreen2(__DRIscreen *psp)
    int color;
    __DRIconfig **configs = NULL;
 
+   psp->max_gl_compat_version = 13;
+   psp->max_gl_es1_version = 11;
+
    if (!radeonInitDriver(psp)) {
        return NULL;
     }

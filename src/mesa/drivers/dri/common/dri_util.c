@@ -39,6 +39,7 @@
  */
 
 
+#include <stdbool.h>
 #ifndef __NOT_HAVE_DRM_H
 #include <xf86drm.h>
 #endif
@@ -46,6 +47,8 @@
 #include "utils.h"
 #include "xmlpool.h"
 #include "../glsl/glsl_parser_extras.h"
+#include "main/version.h"
+#include "main/macros.h"
 
 PUBLIC const char __dri2ConfigOptions[] =
    DRI_CONF_BEGIN
@@ -116,16 +119,34 @@ dri2CreateNewScreen(int scrn, int fd,
     psp->fd = fd;
     psp->myNum = scrn;
 
-    psp->api_mask = (1 << __DRI_API_OPENGL);
-
     *driver_configs = driDriverAPI.InitScreen(psp);
     if (*driver_configs == NULL) {
 	free(psp);
 	return NULL;
     }
 
+    int gl_version_override = _mesa_get_gl_version_override();
+    if (gl_version_override >= 31) {
+       psp->max_gl_core_version = MAX2(psp->max_gl_core_version,
+                                       gl_version_override);
+    } else {
+       psp->max_gl_compat_version = MAX2(psp->max_gl_compat_version,
+                                         gl_version_override);
+    }
+
+    psp->api_mask = (1 << __DRI_API_OPENGL);
+    if (psp->max_gl_core_version > 0)
+       psp->api_mask |= (1 << __DRI_API_OPENGL_CORE);
+    if (psp->max_gl_es1_version > 0)
+       psp->api_mask |= (1 << __DRI_API_GLES);
+    if (psp->max_gl_es2_version > 0)
+       psp->api_mask |= (1 << __DRI_API_GLES2);
+    if (psp->max_gl_es2_version >= 30)
+       psp->api_mask |= (1 << __DRI_API_GLES3);
+
     driParseOptionInfo(&psp->optionInfo, __dri2ConfigOptions);
     driParseConfigFiles(&psp->optionCache, &psp->optionInfo, psp->myNum, "dri2");
+
 
     return psp;
 }
@@ -171,6 +192,45 @@ static const __DRIextension **driGetExtensions(__DRIscreen *psp)
 
 /*@}*/
 
+
+static bool
+validate_context_version(__DRIscreen *screen,
+                         int mesa_api,
+                         unsigned major_version,
+                         unsigned minor_version,
+                         unsigned *dri_ctx_error)
+{
+   unsigned req_version = 10 * major_version + minor_version;
+   unsigned max_version = 0;
+
+   switch (mesa_api) {
+   case API_OPENGL_COMPAT:
+      max_version = screen->max_gl_compat_version;
+      break;
+   case API_OPENGL_CORE:
+      max_version = screen->max_gl_core_version;
+      break;
+   case API_OPENGLES:
+      max_version = screen->max_gl_es1_version;
+      break;
+   case API_OPENGLES2:
+      max_version = screen->max_gl_es2_version;
+      break;
+   default:
+      max_version = 0;
+      break;
+   }
+
+   if (max_version == 0) {
+      *dri_ctx_error = __DRI_CTX_ERROR_BAD_API;
+      return false;
+   } else if (req_version > max_version) {
+      *dri_ctx_error = __DRI_CTX_ERROR_BAD_VERSION;
+      return false;
+   }
+
+   return true;
+}
 
 /*****************************************************************/
 /** \name Context handling functions                             */
@@ -292,6 +352,10 @@ dri2CreateContextAttribs(__DRIscreen *screen, int api,
 	*error = __DRI_CTX_ERROR_UNKNOWN_FLAG;
 	return NULL;
     }
+
+    if (!validate_context_version(screen, mesa_api,
+                                  major_version, minor_version, error))
+       return NULL;
 
     context = calloc(1, sizeof *context);
     if (!context) {

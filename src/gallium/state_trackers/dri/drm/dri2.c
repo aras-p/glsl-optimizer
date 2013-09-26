@@ -897,14 +897,6 @@ dri2_init_screen(__DRIscreen * sPriv)
    if (!configs)
       goto fail;
 
-   sPriv->api_mask = 0;
-   if (screen->st_api->profile_mask & ST_PROFILE_DEFAULT_MASK)
-      sPriv->api_mask |= 1 << __DRI_API_OPENGL;
-   if (screen->st_api->profile_mask & ST_PROFILE_OPENGL_ES1_MASK)
-      sPriv->api_mask |= 1 << __DRI_API_GLES;
-   if (screen->st_api->profile_mask & ST_PROFILE_OPENGL_ES2_MASK)
-      sPriv->api_mask |= 1 << __DRI_API_GLES2;
-
    screen->auto_fake_front = dri_with_format(sPriv);
    screen->broken_invalidate = !sPriv->dri2.useInvalidate;
    screen->lookup_egl_image = dri2_lookup_egl_image;

@@ -151,6 +151,11 @@ struct __DRIscreenRec {
 
     void *loaderPrivate;
 
+    int max_gl_core_version;
+    int max_gl_compat_version;
+    int max_gl_es1_version;
+    int max_gl_es2_version;
+
     const __DRIextension **extensions;
 
     const __DRIswrastLoaderExtension *swrast_loader;

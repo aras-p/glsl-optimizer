@@ -1220,39 +1220,31 @@ intel_screen_make_configs(__DRIscreen *dri_screen)
 static void
 set_max_gl_versions(struct intel_screen *screen)
 {
-   int gl_version_override = _mesa_get_gl_version_override();
+   __DRIscreen *psp = screen->driScrnPriv;
 
    switch (screen->gen) {
    case 7:
-      screen->max_gl_core_version = 31;
-      screen->max_gl_compat_version = 30;
-      screen->max_gl_es1_version = 11;
-      screen->max_gl_es2_version = 30;
+      psp->max_gl_core_version = 31;
+      psp->max_gl_compat_version = 30;
+      psp->max_gl_es1_version = 11;
+      psp->max_gl_es2_version = 30;
       break;
    case 6:
-      screen->max_gl_core_version = 31;
-      screen->max_gl_compat_version = 30;
-      screen->max_gl_es1_version = 11;
-      screen->max_gl_es2_version = 30;
+      psp->max_gl_core_version = 31;
+      psp->max_gl_compat_version = 30;
+      psp->max_gl_es1_version = 11;
+      psp->max_gl_es2_version = 30;
       break;
    case 5:
    case 4:
-      screen->max_gl_core_version = 0;
-      screen->max_gl_compat_version = 21;
-      screen->max_gl_es1_version = 11;
-      screen->max_gl_es2_version = 20;
+      psp->max_gl_core_version = 0;
+      psp->max_gl_compat_version = 21;
+      psp->max_gl_es1_version = 11;
+      psp->max_gl_es2_version = 20;
       break;
    default:
       assert(!"unrecognized intel_screen::gen");
       break;
-   }
-
-   if (gl_version_override >= 31) {
-      screen->max_gl_core_version = MAX2(screen->max_gl_core_version,
-                                         gl_version_override);
-   } else {
-      screen->max_gl_compat_version = MAX2(screen->max_gl_compat_version,
-                                           gl_version_override);
    }
 }
 
@@ -1318,16 +1310,6 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
    intelScreen->hw_has_swizzling = intel_detect_swizzling(intelScreen);
 
    set_max_gl_versions(intelScreen);
-
-   psp->api_mask = (1 << __DRI_API_OPENGL);
-   if (intelScreen->max_gl_core_version > 0)
-      psp->api_mask |= (1 << __DRI_API_OPENGL_CORE);
-   if (intelScreen->max_gl_es1_version > 0)
-      psp->api_mask |= (1 << __DRI_API_GLES);
-   if (intelScreen->max_gl_es2_version > 0)
-      psp->api_mask |= (1 << __DRI_API_GLES2);
-   if (intelScreen->max_gl_es2_version >= 30)
-      psp->api_mask |= (1 << __DRI_API_GLES3);
 
    psp->extensions = intelScreenExtensions;
 

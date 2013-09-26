@@ -200,6 +200,10 @@ dri_init_screen(__DRIscreen * psp)
 
     TRACE;
 
+    psp->max_gl_compat_version = 21;
+    psp->max_gl_es1_version = 11;
+    psp->max_gl_es2_version = 20;
+
     psp->extensions = dri_screen_extensions;
 
     configs16 = swrastFillInModes(psp, 16, 16, 0, 1);
@@ -673,22 +677,6 @@ dri_create_context(gl_api api,
     /* Flag filtering is handled in dri2CreateContextAttribs.
      */
     (void) flags;
-
-    switch (api) {
-    case API_OPENGL_COMPAT:
-        if (major_version > 2
-	    || (major_version == 2 && minor_version > 1)) {
-            *error = __DRI_CTX_ERROR_BAD_VERSION;
-            return GL_FALSE;
-        }
-        break;
-    case API_OPENGLES:
-    case API_OPENGLES2:
-        break;
-    case API_OPENGL_CORE:
-        *error = __DRI_CTX_ERROR_BAD_API;
-        return GL_FALSE;
-    }
 
     ctx = CALLOC_STRUCT(dri_context);
     if (ctx == NULL) {
