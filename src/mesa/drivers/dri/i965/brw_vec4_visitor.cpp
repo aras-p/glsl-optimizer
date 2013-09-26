@@ -2192,6 +2192,10 @@ vec4_visitor::visit(ir_texture *ir)
       lod = this->result;
       lod_type = ir->lod_info.lod->type;
       break;
+   case ir_query_levels:
+      lod = src_reg(0);
+      lod_type = glsl_type::int_type;
+      break;
    case ir_txf_ms:
       ir->lod_info.sample_index->accept(this);
       sample_index = this->result;
@@ -2232,6 +2236,8 @@ vec4_visitor::visit(ir_texture *ir)
       break;
    case ir_tg4:
       inst = new(mem_ctx) vec4_instruction(this, SHADER_OPCODE_TG4);
+   case ir_query_levels:
+      inst = new(mem_ctx) vec4_instruction(this, SHADER_OPCODE_TXS);
       break;
    case ir_txb:
       assert(!"TXB is not valid for vertex shaders.");
@@ -2264,7 +2270,7 @@ vec4_visitor::visit(ir_texture *ir)
    /* MRF for the first parameter */
    int param_base = inst->base_mrf + inst->header_present;
 
-   if (ir->op == ir_txs) {
+   if (ir->op == ir_txs || ir->op == ir_query_levels) {
       int writemask = brw->gen == 4 ? WRITEMASK_W : WRITEMASK_X;
       emit(MOV(dst_reg(MRF, param_base, lod_type, writemask), lod));
    } else {
@@ -2414,6 +2420,13 @@ vec4_visitor::swizzle_result(ir_texture *ir, src_reg orig_val, int sampler)
 
    this->result = src_reg(this, ir->type);
    dst_reg swizzled_result(this->result);
+
+   if (ir->op == ir_query_levels) {
+      /* # levels is in .w */
+      orig_val.swizzle = BRW_SWIZZLE4(SWIZZLE_W, SWIZZLE_W, SWIZZLE_W, SWIZZLE_W);
+      emit(MOV(swizzled_result, orig_val));
+      return;
+   }
 
    if (ir->op == ir_txs || ir->type == glsl_type::float_type
 			|| s == SWIZZLE_NOOP || ir->op == ir_tg4) {
