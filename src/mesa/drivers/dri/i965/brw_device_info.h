@@ -39,6 +39,22 @@ struct brw_device_info
    bool must_use_separate_stencil;
 
    bool has_llc;
+
+   /**
+    * GPU Limits:
+    *  @{
+    */
+   unsigned max_vs_threads;
+   unsigned max_gs_threads;
+   unsigned max_wm_threads;
+
+   struct {
+      unsigned size;
+      unsigned min_vs_entries;
+      unsigned max_vs_entries;
+      unsigned max_gs_entries;
+   } urb;
+   /** @} */
 };
 
 const struct brw_device_info *brw_get_device_info(int devid);

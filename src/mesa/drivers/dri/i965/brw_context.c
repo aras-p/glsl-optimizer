@@ -444,91 +444,19 @@ brwCreateContext(gl_api api,
       brw->CMD_PIPELINE_SELECT = CMD_PIPELINE_SELECT_965;
    }
 
-   /* WM maximum threads is number of EUs times number of threads per EU. */
-   assert(brw->gen <= 7);
+   brw->max_vs_threads = devinfo->max_vs_threads;
+   brw->max_gs_threads = devinfo->max_gs_threads;
+   brw->max_wm_threads = devinfo->max_wm_threads;
+   brw->urb.size = devinfo->urb.size;
+   brw->urb.min_vs_entries = devinfo->urb.min_vs_entries;
+   brw->urb.max_vs_entries = devinfo->urb.max_vs_entries;
+   brw->urb.max_gs_entries = devinfo->urb.max_gs_entries;
 
-   if (brw->is_haswell) {
-      if (brw->gt == 1) {
-	 brw->max_wm_threads = 102;
-	 brw->max_vs_threads = 70;
-	 brw->max_gs_threads = 70;
-	 brw->urb.size = 128;
-         brw->urb.min_vs_entries = 32;
-	 brw->urb.max_vs_entries = 640;
-	 brw->urb.max_gs_entries = 256;
-      } else if (brw->gt == 2) {
-	 brw->max_wm_threads = 204;
-	 brw->max_vs_threads = 280;
-	 brw->max_gs_threads = 256;
-	 brw->urb.size = 256;
-         brw->urb.min_vs_entries = 64;
-	 brw->urb.max_vs_entries = 1664;
-	 brw->urb.max_gs_entries = 640;
-      } else if (brw->gt == 3) {
-	 brw->max_wm_threads = 408;
-	 brw->max_vs_threads = 280;
-	 brw->max_gs_threads = 256;
-	 brw->urb.size = 512;
-         brw->urb.min_vs_entries = 64;
-	 brw->urb.max_vs_entries = 1664;
-	 brw->urb.max_gs_entries = 640;
-      }
-   } else if (brw->gen == 7) {
-      if (brw->gt == 1) {
-	 brw->max_wm_threads = 48;
-	 brw->max_vs_threads = 36;
-	 brw->max_gs_threads = 36;
-	 brw->urb.size = 128;
-         brw->urb.min_vs_entries = 32;
-	 brw->urb.max_vs_entries = 512;
-	 brw->urb.max_gs_entries = 192;
-      } else if (brw->gt == 2) {
-	 brw->max_wm_threads = 172;
-	 brw->max_vs_threads = 128;
-	 brw->max_gs_threads = 128;
-	 brw->urb.size = 256;
-         brw->urb.min_vs_entries = 32;
-	 brw->urb.max_vs_entries = 704;
-	 brw->urb.max_gs_entries = 320;
-      } else {
-	 assert(!"Unknown gen7 device.");
-      }
-   } else if (brw->gen == 6) {
-      if (brw->gt == 2) {
-	 brw->max_wm_threads = 80;
-	 brw->max_vs_threads = 60;
-	 brw->max_gs_threads = 60;
-	 brw->urb.size = 64;            /* volume 5c.5 section 5.1 */
-         brw->urb.min_vs_entries = 24;
-	 brw->urb.max_vs_entries = 256; /* volume 2a (see 3DSTATE_URB) */
-	 brw->urb.max_gs_entries = 256;
-      } else {
-	 brw->max_wm_threads = 40;
-	 brw->max_vs_threads = 24;
-	 brw->max_gs_threads = 21; /* conservative; 24 if rendering disabled */
-	 brw->urb.size = 32;            /* volume 5c.5 section 5.1 */
-         brw->urb.min_vs_entries = 24;
-	 brw->urb.max_vs_entries = 256; /* volume 2a (see 3DSTATE_URB) */
-	 brw->urb.max_gs_entries = 256;
-      }
+   if (brw->gen == 6)
       brw->urb.gen6_gs_previously_active = false;
-   } else if (brw->gen == 5) {
-      brw->urb.size = 1024;
-      brw->max_vs_threads = 72;
-      brw->max_gs_threads = 32;
-      brw->max_wm_threads = 12 * 6;
-   } else if (brw->is_g4x) {
-      brw->urb.size = 384;
-      brw->max_vs_threads = 32;
-      brw->max_gs_threads = 2;
-      brw->max_wm_threads = 10 * 5;
-   } else if (brw->gen < 6) {
-      brw->urb.size = 256;
-      brw->max_vs_threads = 16;
-      brw->max_gs_threads = 2;
-      brw->max_wm_threads = 8 * 4;
+
+   if (brw->gen == 4 && !brw->is_g4x)
       brw->has_negative_rhw_bug = true;
-   }
 
    if (brw->gen <= 7) {
       brw->needs_unlit_centroid_workaround = true;
