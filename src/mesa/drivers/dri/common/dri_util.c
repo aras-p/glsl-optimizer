@@ -435,10 +435,6 @@ static int driUnbindContext(__DRIcontext *pcp)
 	dri_put_drawable(prp);
     }
 
-    /* XXX this is disabled so that if we call SwapBuffers on an unbound
-     * window we can determine the last context bound to the window and
-     * use that context's lock. (BrianP, 2-Dec-2000)
-     */
     pcp->driDrawablePriv = NULL;
     pcp->driReadablePriv = NULL;
 
