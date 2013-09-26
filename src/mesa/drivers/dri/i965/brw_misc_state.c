@@ -838,7 +838,11 @@ static void upload_aa_line_parameters(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->ctx;
 
-   if (!ctx->Line.SmoothFlag || !brw->has_aa_line_parameters)
+   if (!ctx->Line.SmoothFlag)
+      return;
+
+   /* Original Gen4 doesn't have 3DSTATE_AA_LINE_PARAMETERS. */
+   if (brw->gen == 4 && !brw->is_g4x)
       return;
 
    if (brw->gen == 6)

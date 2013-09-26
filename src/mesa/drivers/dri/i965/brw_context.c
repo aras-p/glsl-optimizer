@@ -440,7 +440,6 @@ brwCreateContext(gl_api api,
    if (brw->is_g4x || brw->gen >= 5) {
       brw->CMD_VF_STATISTICS = GM45_3DSTATE_VF_STATISTICS;
       brw->CMD_PIPELINE_SELECT = CMD_PIPELINE_SELECT_GM45;
-      brw->has_aa_line_parameters = true;
   } else {
       brw->CMD_VF_STATISTICS = GEN4_3DSTATE_VF_STATISTICS;
       brw->CMD_PIPELINE_SELECT = CMD_PIPELINE_SELECT_965;

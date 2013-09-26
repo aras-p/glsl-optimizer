@@ -1055,7 +1055,6 @@ struct brw_context
    bool has_surface_tile_offset;
    bool has_compr4;
    bool has_negative_rhw_bug;
-   bool has_aa_line_parameters;
    bool has_pln;
 
    /**
