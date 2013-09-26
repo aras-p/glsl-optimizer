@@ -44,7 +44,7 @@ dri_LTLIBRARIES = swrast_dri.la
 swrast_dri_la_SOURCES = \
 	swrast_drm_api.c \
 	$(top_srcdir)/src/mesa/drivers/dri/common/utils.c \
-	$(top_srcdir)/src/mesa/drivers/dri/common/drisw_util.c \
+	$(top_srcdir)/src/mesa/drivers/dri/common/dri_util.c \
 	$(top_srcdir)/src/mesa/drivers/dri/common/xmlconfig.c
 
 swrast_dri_la_LDFLAGS = $(DRI_DRIVER_LDFLAGS)

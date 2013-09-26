@@ -5,7 +5,7 @@ SConscript('osmesa/SConscript')
 if env['x11']:
     SConscript('x11/SConscript')
 
-if env['drm']:
+if env['dri']:
     SConscript('dri/common/xmlpool/SConscript')
 
 if env['platform'] == 'windows':

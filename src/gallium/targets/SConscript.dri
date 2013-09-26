@@ -3,9 +3,6 @@
 
 Import('*')
 
-if not env['dri']:
-    Return()
-
 drienv = env.Clone()
 
 drienv.Replace(CPPPATH = [
@@ -30,6 +27,11 @@ drienv.Replace(CPPPATH = [
     '#src/egl/drivers/dri',
 ])
 
+driswenv = drienv.Clone()
+driswenv.Append(CPPDEFINES = [
+    '__NOT_HAVE_DRM_H',
+])
+
 drienv.PkgUseModules('DRM')
 
 dri_common_utils = drienv.SharedObject(
@@ -47,9 +49,9 @@ dri_common_dri_util = drienv.SharedObject(
     source = '#src/mesa/drivers/dri/common/dri_util.c'
 )
 
-dri_common_drisw_util = drienv.SharedObject(
+dri_common_drisw_util = driswenv.SharedObject(
     target = 'drisw_util.o',
-    source = '#src/mesa/drivers/dri/common/drisw_util.c'
+    source = '#src/mesa/drivers/dri/common/dri_util.c'
 )
 
 
@@ -69,8 +71,13 @@ drienv.AppendUnique(LIBS = [
     'expat',
 ])
 
+driswenv.AppendUnique(LIBS = [
+    'expat',
+])
+
 Export([
     'drienv',
+    'driswenv',
     'COMMON_DRI_SW_OBJECTS',
     'COMMON_DRI_DRM_OBJECTS',
 ])

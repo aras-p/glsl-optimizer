@@ -3,7 +3,8 @@ SWRAST_DRIVER_FILES = \
 
 SWRAST_COMMON_FILES = \
 	../common/utils.c \
-	../common/drisw_util.c
+	../common/dri_util.c \
+	../common/xmlconfig.c
 
 SWRAST_C_FILES = \
 	$(SWRAST_COMMON_FILES) \

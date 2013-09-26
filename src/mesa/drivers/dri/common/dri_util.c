@@ -39,7 +39,9 @@
  */
 
 
+#ifndef __NOT_HAVE_DRM_H
 #include <xf86drm.h>
+#endif
 #include "dri_util.h"
 #include "utils.h"
 #include "xmlpool.h"
@@ -70,6 +72,8 @@ setupLoaderExtensions(__DRIscreen *psp,
 	    psp->dri2.image = (__DRIimageLookupExtension *) extensions[i];
 	if (strcmp(extensions[i]->name, __DRI_USE_INVALIDATE) == 0)
 	    psp->dri2.useInvalidate = (__DRIuseInvalidateExtension *) extensions[i];
+	if (strcmp(extensions[i]->name, __DRI_SWRAST_LOADER) == 0)
+	    psp->swrast_loader = (__DRIswrastLoaderExtension *) extensions[i];
     }
 }
 
@@ -87,7 +91,6 @@ dri2CreateNewScreen(int scrn, int fd,
 {
     static const __DRIextension *emptyExtensionList[] = { NULL };
     __DRIscreen *psp;
-    drmVersionPtr version;
 
     psp = calloc(1, sizeof(*psp));
     if (!psp)
@@ -95,13 +98,17 @@ dri2CreateNewScreen(int scrn, int fd,
 
     setupLoaderExtensions(psp, extensions);
 
-    version = drmGetVersion(fd);
-    if (version) {
-	psp->drm_version.major = version->version_major;
-	psp->drm_version.minor = version->version_minor;
-	psp->drm_version.patch = version->version_patchlevel;
-	drmFreeVersion(version);
+#ifndef __NOT_HAVE_DRM_H
+    if (fd != -1) {
+       drmVersionPtr version = drmGetVersion(fd);
+       if (version) {
+          psp->drm_version.major = version->version_major;
+          psp->drm_version.minor = version->version_minor;
+          psp->drm_version.patch = version->version_patchlevel;
+          drmFreeVersion(version);
+       }
     }
+#endif
 
     psp->loaderPrivate = data;
 
@@ -121,6 +128,14 @@ dri2CreateNewScreen(int scrn, int fd,
     driParseConfigFiles(&psp->optionCache, &psp->optionInfo, psp->myNum, "dri2");
 
     return psp;
+}
+
+/** swrast driver createNewScreen entrypoint. */
+static __DRIscreen *
+driCreateNewScreen(int scrn, const __DRIextension **extensions,
+		   const __DRIconfig ***driver_configs, void *data)
+{
+   return dri2CreateNewScreen(scrn, -1, extensions, driver_configs, data);
 }
 
 /**
@@ -562,6 +577,19 @@ dri2GetAPIMask(__DRIscreen *screen)
     return screen->api_mask;
 }
 
+/**
+ * swrast swapbuffers entrypoint.
+ *
+ * DRI2 implements this inside the loader with only flushes handled by the
+ * driver.
+ */
+static void
+driSwapBuffers(__DRIdrawable *pdp)
+{
+    assert(pdp->driScreenPriv->swrast_loader);
+
+    driDriverAPI.SwapBuffers(pdp);
+}
 
 /** Core interface */
 const __DRIcoreExtension driCoreExtension = {
@@ -574,8 +602,8 @@ const __DRIcoreExtension driCoreExtension = {
     .indexConfigAttrib          = driIndexConfigAttrib,
     .createNewDrawable          = NULL,
     .destroyDrawable            = driDestroyDrawable,
-    .swapBuffers                = NULL,
-    .createNewContext           = NULL,
+    .swapBuffers                = driSwapBuffers, /* swrast */
+    .createNewContext           = dri2CreateNewContext, /* swrast */
     .copyContext                = driCopyContext,
     .destroyContext             = driDestroyContext,
     .bindContext                = driBindContext,
@@ -594,6 +622,14 @@ const __DRIdri2Extension driDRI2Extension = {
     .allocateBuffer             = dri2AllocateBuffer,
     .releaseBuffer              = dri2ReleaseBuffer,
     .createContextAttribs       = dri2CreateContextAttribs
+};
+
+const __DRIswrastExtension driSWRastExtension = {
+    { __DRI_SWRAST, __DRI_SWRAST_VERSION },
+    driCreateNewScreen,
+    dri2CreateNewDrawable,
+    dri2CreateNewContextForAPI,
+    dri2CreateContextAttribs
 };
 
 const __DRI2configQueryExtension dri2ConfigQueryExtension = {

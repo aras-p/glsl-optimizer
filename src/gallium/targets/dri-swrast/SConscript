@@ -1,6 +1,6 @@
 Import('*')
 
-env = drienv.Clone()
+env = driswenv.Clone()
 
 env.Append(CPPPATH = [
     '#/src/gallium/winsys/sw/dri',
