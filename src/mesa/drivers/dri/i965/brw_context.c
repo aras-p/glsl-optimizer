@@ -647,8 +647,6 @@ brwCreateContext(gl_api api,
       brw->curbe.next_buf = calloc(1, 4096);
    }
 
-   brw->batch.need_workaround_flush = true;
-
    ctx->VertexProgram._MaintainTnlProgram = true;
    ctx->FragmentProgram._MaintainTexEnvProgram = true;
 

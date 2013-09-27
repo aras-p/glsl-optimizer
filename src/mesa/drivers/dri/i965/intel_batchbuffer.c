@@ -70,6 +70,8 @@ intel_batchbuffer_init(struct brw_context *brw)
 						      4096, 4096);
    }
 
+   brw->batch.need_workaround_flush = true;
+
    if (!brw->has_llc) {
       brw->batch.cpu_map = malloc(BATCH_SZ);
       brw->batch.map = brw->batch.cpu_map;
