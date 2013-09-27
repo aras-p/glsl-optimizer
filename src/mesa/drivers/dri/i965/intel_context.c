@@ -373,7 +373,13 @@ intelInitContext(struct brw_context *brw,
    int bo_reuse_mode;
    struct gl_config visual;
 
-   /* Can't rely on invalidate events, fall back to glViewport hack */
+   /* GLX uses DRI2 invalidate events to handle window resizing.
+    * Unfortunately, EGL does not - libEGL is written in XCB (not Xlib),
+    * which doesn't provide a mechanism for snooping the event queues.
+    *
+    * So EGL still relies on viewport hacks to handle window resizing.
+    * This should go away with DRI3000.
+    */
    if (!driContextPriv->driScreenPriv->dri2.useInvalidate) {
       brw->saved_viewport = functions->Viewport;
       functions->Viewport = intel_viewport;
