@@ -2233,6 +2233,7 @@ fs_visitor::register_coalesce()
                   new_src.abs = 1;
                }
 	       new_src.negate ^= scan_inst->src[i].negate;
+	       new_src.sechalf = scan_inst->src[i].sechalf;
 	       scan_inst->src[i] = new_src;
 	    }
 	 }
