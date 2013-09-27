@@ -60,16 +60,6 @@ struct intel_region;
 #define INTEL_WRITE_FULL  0x2
 #define INTEL_READ        0x4
 
-#ifndef likely
-#ifdef __GNUC__
-#define likely(expr) (__builtin_expect(expr, 1))
-#define unlikely(expr) (__builtin_expect(expr, 0))
-#else
-#define likely(expr) (expr)
-#define unlikely(expr) (expr)
-#endif
-#endif
-
 struct intel_sync_object {
    struct gl_sync_object Base;
 
