@@ -157,7 +157,8 @@ fd_resource_destroy(struct pipe_screen *pscreen,
 		struct pipe_resource *prsc)
 {
 	struct fd_resource *rsc = fd_resource(prsc);
-	fd_bo_del(rsc->bo);
+	if (rsc->bo)
+		fd_bo_del(rsc->bo);
 	FREE(rsc);
 }
 
@@ -243,8 +244,13 @@ fd_resource_create(struct pipe_screen *pscreen,
 	size = setup_slices(rsc);
 
 	realloc_bo(rsc, size);
+	if (!rsc->bo)
+		goto fail;
 
 	return prsc;
+fail:
+	fd_resource_destroy(pscreen, prsc);
+	return NULL;
 }
 
 /**
@@ -277,6 +283,8 @@ fd_resource_from_handle(struct pipe_screen *pscreen,
 	prsc->screen = pscreen;
 
 	rsc->bo = fd_screen_bo_from_handle(pscreen, handle, &slice->pitch);
+	if (!rsc->bo)
+		goto fail;
 
 	rsc->base.vtbl = &fd_resource_vtbl;
 	rsc->cpp = util_format_get_blocksize(tmpl->format);
@@ -285,6 +293,10 @@ fd_resource_from_handle(struct pipe_screen *pscreen,
 	assert(rsc->cpp);
 
 	return prsc;
+
+fail:
+	fd_resource_destroy(pscreen, prsc);
+	return NULL;
 }
 
 static bool render_blit(struct pipe_context *pctx, struct pipe_blit_info *info);
