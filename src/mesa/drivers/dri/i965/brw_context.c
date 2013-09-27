@@ -548,20 +548,41 @@ brwCreateContext(gl_api api,
       return false;
    }
 
-   brw_process_driconf_options(brw);
-
-   if (!intelInitContext( brw, api, major_version, minor_version,
-                          mesaVis, driContextPriv,
-			  sharedContextPrivate, &functions,
-			  dri_ctx_error)) {
-      intelDestroyContext(driContextPriv);
-      return false;
+   /* Initialize the software rasterizer and helper modules.
+    *
+    * As of GL 3.1 core, the gen4+ driver doesn't need the swrast context for
+    * software fallbacks (which we have to support on legacy GL to do weird
+    * glDrawPixels(), glBitmap(), and other functions).
+    */
+   if (api != API_OPENGL_CORE && api != API_OPENGLES2) {
+      _swrast_CreateContext(ctx);
    }
 
+   _vbo_CreateContext(ctx);
+   if (ctx->swrast_context) {
+      _tnl_CreateContext(ctx);
+      TNL_CONTEXT(ctx)->Driver.RunPipeline = _tnl_run_pipeline;
+      _swsetup_CreateContext(ctx);
+
+      /* Configure swrast to match hardware characteristics: */
+      _swrast_allow_pixel_fog(ctx, false);
+      _swrast_allow_vertex_fog(ctx, true);
+   }
+
+   _mesa_meta_init(ctx);
+
+   brw_process_driconf_options(brw);
+   brw_process_intel_debug_variable(brw);
    brw_initialize_context_constants(brw);
 
    /* Reinitialize the context point state.  It depends on ctx->Const values. */
    _mesa_init_point(ctx);
+
+   intelInitExtensions(ctx);
+
+   intel_batchbuffer_init(brw);
+
+   intel_fbo_init(brw);
 
    if (brw->gen >= 6) {
       /* Create a new hardware context.  Using a hardware context means that
@@ -582,11 +603,6 @@ brwCreateContext(gl_api api,
 
    brw_init_surface_formats(brw);
 
-   /* Initialize swrast, tnl driver tables: */
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-   if (tnl)
-      tnl->Driver.RunPipeline = _tnl_run_pipeline;
-
    ctx->DriverFlags.NewTransformFeedback = BRW_NEW_TRANSFORM_FEEDBACK;
    ctx->DriverFlags.NewRasterizerDiscard = BRW_NEW_RASTERIZER_DISCARD;
    ctx->DriverFlags.NewUniformBuffer = BRW_NEW_UNIFORM_BUFFER;
@@ -606,6 +622,21 @@ brwCreateContext(gl_api api,
    brw->urb.min_vs_entries = devinfo->urb.min_vs_entries;
    brw->urb.max_vs_entries = devinfo->urb.max_vs_entries;
    brw->urb.max_gs_entries = devinfo->urb.max_gs_entries;
+
+   /* Estimate the size of the mappable aperture into the GTT.  There's an
+    * ioctl to get the whole GTT size, but not one to get the mappable subset.
+    * It turns out it's basically always 256MB, though some ancient hardware
+    * was smaller.
+    */
+   uint32_t gtt_size = 256 * 1024 * 1024;
+
+   /* We don't want to map two objects such that a memcpy between them would
+    * just fault one mapping in and then the other over and over forever.  So
+    * we would need to divide the GTT size by 2.  Additionally, some GTT is
+    * taken up by things like the framebuffer and the ringbuffer and such, so
+    * be more conservative.
+    */
+   brw->max_gtt_map_object_size = gtt_size / 4;
 
    if (brw->gen == 6)
       brw->urb.gen6_gs_previously_active = false;
@@ -646,67 +677,6 @@ brwCreateContext(gl_api api,
    if (ctx->Extensions.AMD_performance_monitor) {
       brw_init_performance_monitors(brw);
    }
-
-   return true;
-}
-
-bool
-intelInitContext(struct brw_context *brw,
-                 int api,
-                 unsigned major_version,
-                 unsigned minor_version,
-                 const struct gl_config * mesaVis,
-                 __DRIcontext * driContextPriv,
-                 void *sharedContextPrivate,
-                 struct dd_function_table *functions,
-                 unsigned *dri_ctx_error)
-{
-   struct gl_context *ctx = &brw->ctx;
-
-   /* Estimate the size of the mappable aperture into the GTT.  There's an
-    * ioctl to get the whole GTT size, but not one to get the mappable subset.
-    * It turns out it's basically always 256MB, though some ancient hardware
-    * was smaller.
-    */
-   uint32_t gtt_size = 256 * 1024 * 1024;
-
-   /* We don't want to map two objects such that a memcpy between them would
-    * just fault one mapping in and then the other over and over forever.  So
-    * we would need to divide the GTT size by 2.  Additionally, some GTT is
-    * taken up by things like the framebuffer and the ringbuffer and such, so
-    * be more conservative.
-    */
-   brw->max_gtt_map_object_size = gtt_size / 4;
-
-   /* Initialize the software rasterizer and helper modules.
-    *
-    * As of GL 3.1 core, the gen4+ driver doesn't need the swrast context for
-    * software fallbacks (which we have to support on legacy GL to do weird
-    * glDrawPixels(), glBitmap(), and other functions).
-    */
-   if (api != API_OPENGL_CORE && api != API_OPENGLES2) {
-      _swrast_CreateContext(ctx);
-   }
-
-   _vbo_CreateContext(ctx);
-   if (ctx->swrast_context) {
-      _tnl_CreateContext(ctx);
-      _swsetup_CreateContext(ctx);
-
-      /* Configure swrast to match hardware characteristics: */
-      _swrast_allow_pixel_fog(ctx, false);
-      _swrast_allow_vertex_fog(ctx, true);
-   }
-
-   _mesa_meta_init(ctx);
-
-   intelInitExtensions(ctx);
-
-   brw_process_intel_debug_variable(brw);
-
-   intel_batchbuffer_init(brw);
-
-   intel_fbo_init(brw);
 
    return true;
 }

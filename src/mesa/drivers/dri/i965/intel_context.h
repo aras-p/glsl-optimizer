@@ -164,16 +164,6 @@ static INLINE void * __memcpy(void * to, const void * from, size_t n)
  * intel_context.c:
  */
 
-extern bool intelInitContext(struct brw_context *brw,
-                             int api,
-                             unsigned major_version,
-                             unsigned minor_version,
-                             const struct gl_config * mesaVis,
-                             __DRIcontext * driContextPriv,
-                             void *sharedContextPrivate,
-                             struct dd_function_table *functions,
-                             unsigned *dri_ctx_error);
-
 extern void intelFinish(struct gl_context * ctx);
 
 extern void intelInitDriverFunctions(struct dd_function_table *functions);
