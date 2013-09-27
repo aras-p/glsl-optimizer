@@ -187,6 +187,20 @@ driOpenDriver(const char *driverName)
    return handle;
 }
 
+_X_HIDDEN const __DRIextension **
+driGetDriverExtensions(void *handle)
+{
+   const __DRIextension **extensions = NULL;
+
+   extensions = dlsym(handle, __DRI_DRIVER_EXTENSIONS);
+   if (extensions == NULL) {
+      ErrorMessageF("driver exports no extensions (%s)\n", dlerror());
+      return NULL;
+   }
+
+   return extensions;
+}
+
 static GLboolean
 __driGetMSCRate(__DRIdrawable *draw,
 		int32_t * numerator, int32_t * denominator,
