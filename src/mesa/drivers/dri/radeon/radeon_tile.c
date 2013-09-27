@@ -25,6 +25,7 @@
  *
  */
 
+#include "radeon_screen.h"
 #include "radeon_tile.h"
 
 #include <stdint.h>

@@ -36,20 +36,6 @@ AM_CFLAGS = \
 	$(VISIBILITY_CFLAGS) \
 	$(RADEON_CFLAGS)
 
-dridir = $(DRI_DRIVER_INSTALL_DIR)
-dri_LTLIBRARIES = r200_dri.la
-
-r200_dri_la_SOURCES = \
-        $(R200_C_FILES)
-
-r200_dri_la_LDFLAGS = $(DRI_DRIVER_LDFLAGS)
-r200_dri_la_LIBADD = \
-	../common/libdricommon.la \
-	$(DRI_LIB_DEPS) \
-	$(RADEON_LIBS)
-
-# Provide compatibility with scripts for the old Mesa build system for
-# a while by putting a link to the driver into /lib of the build tree.
-all-local: r200_dri.la
-	$(MKDIR_P) $(top_builddir)/$(LIB_DIR);
-	ln -f .libs/r200_dri.so $(top_builddir)/$(LIB_DIR)/r200_dri.so;
+noinst_LTLIBRARIES = libr200_dri.la
+libr200_dri_la_SOURCES = $(R200_C_FILES)
+libr200_dri_la_LIBADD = $(RADEON_LIBS)

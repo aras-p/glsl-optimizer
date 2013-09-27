@@ -29,8 +29,8 @@
 
 #include "utils.h"
 
-#include "radeon_debug.h"
 #include "radeon_common_context.h"
+#include "radeon_debug.h"
 
 #include <stdarg.h>
 #include <stdio.h>

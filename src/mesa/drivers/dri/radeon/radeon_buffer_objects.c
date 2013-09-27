@@ -25,13 +25,12 @@
  *
  */
 
-#include "radeon_buffer_objects.h"
-
 #include "main/imports.h"
 #include "main/mtypes.h"
 #include "main/bufferobj.h"
 
 #include "radeon_common.h"
+#include "radeon_buffer_objects.h"
 
 struct radeon_buffer_object *
 get_radeon_buffer_object(struct gl_buffer_object *obj)

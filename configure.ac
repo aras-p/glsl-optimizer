@@ -1039,7 +1039,7 @@ fi
 enable_dricore=no
 enable_megadriver=no
 for driver in $DRI_DIRS; do
-    if test $driver != "i965" -a $driver != "nouveau" -a $driver != "i915"; then
+    if test $driver = "swrast"; then
         enable_dricore=yes
     else
         enable_megadriver=yes

@@ -7,8 +7,8 @@
 #include "tnl/t_context.h"
 #include "main/colormac.h"
 
-#include "radeon_debug.h"
 #include "radeon_screen.h"
+#include "radeon_debug.h"
 #include "radeon_drm.h"
 #include "dri_util.h"
 #include "tnl/t_vertex.h"

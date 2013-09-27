@@ -25,11 +25,15 @@ MEGADRIVERS += nouveau_vieux_dri.so
 endif
 
 if HAVE_R200_DRI
-SUBDIRS+=r200
+SUBDIRS += r200
+MEGADRIVERS_DEPS += r200/libr200_dri.la
+MEGADRIVERS += r200_dri.so
 endif
 
 if HAVE_RADEON_DRI
-SUBDIRS+=radeon
+SUBDIRS += radeon
+MEGADRIVERS_DEPS += radeon/libradeon_dri.la
+MEGADRIVERS += radeon_dri.so
 endif
 
 if HAVE_SWRAST_DRI

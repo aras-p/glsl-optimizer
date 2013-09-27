@@ -39,6 +39,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/enums.h"
 #include "main/macros.h"
 
+#include "radeon_screen.h"
 #include "radeon_fog.h"
 
 /**********************************************************************/

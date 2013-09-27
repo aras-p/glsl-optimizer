@@ -33,8 +33,8 @@
 #include "main/readpix.h"
 #include "main/state.h"
 
-#include "radeon_buffer_objects.h"
 #include "radeon_common_context.h"
+#include "radeon_buffer_objects.h"
 #include "radeon_debug.h"
 #include "radeon_mipmap_tree.h"
 

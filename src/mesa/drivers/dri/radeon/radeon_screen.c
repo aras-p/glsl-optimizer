@@ -764,7 +764,7 @@ __DRIconfig **radeonInitScreen2(__DRIscreen *psp)
    return (const __DRIconfig **)configs;
 }
 
-const struct __DriverAPIRec driDriverAPI = {
+static const struct __DriverAPIRec radeon_driver_api = {
    .InitScreen      = radeonInitScreen2,
    .DestroyScreen   = radeonDestroyScreen,
 #if defined(RADEON_R200)
@@ -780,10 +780,32 @@ const struct __DriverAPIRec driDriverAPI = {
    .UnbindContext   = radeonUnbindContext,
 };
 
+static const struct __DRIDriverVtableExtensionRec radeon_vtable = {
+   .base = { __DRI_DRIVER_VTABLE, 1 },
+   .vtable = &radeon_driver_api,
+};
+
 /* This is the table of extensions that the loader will dlsym() for. */
-PUBLIC const __DRIextension *__driDriverExtensions[] = {
+static const __DRIextension *radeon_driver_extensions[] = {
     &driCoreExtension.base,
     &driDRI2Extension.base,
     &radeon_config_options.base,
+    &radeon_vtable.base,
     NULL
 };
+
+#ifdef RADEON_R200
+PUBLIC const __DRIextension **__driDriverGetExtensions_r200(void)
+{
+   globalDriverAPI = &radeon_driver_api;
+
+   return radeon_driver_extensions;
+}
+#else
+PUBLIC const __DRIextension **__driDriverGetExtensions_radeon(void)
+{
+   globalDriverAPI = &radeon_driver_api;
+
+   return radeon_driver_extensions;
+}
+#endif
