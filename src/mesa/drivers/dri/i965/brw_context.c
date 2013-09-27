@@ -603,10 +603,6 @@ brwCreateContext(gl_api api,
 
    brw_init_surface_formats(brw);
 
-   ctx->DriverFlags.NewTransformFeedback = BRW_NEW_TRANSFORM_FEEDBACK;
-   ctx->DriverFlags.NewRasterizerDiscard = BRW_NEW_RASTERIZER_DISCARD;
-   ctx->DriverFlags.NewUniformBuffer = BRW_NEW_UNIFORM_BUFFER;
-
    if (brw->is_g4x || brw->gen >= 5) {
       brw->CMD_VF_STATISTICS = GM45_3DSTATE_VF_STATISTICS;
       brw->CMD_PIPELINE_SELECT = CMD_PIPELINE_SELECT_GM45;
