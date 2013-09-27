@@ -214,6 +214,18 @@ brw_init_driver_functions(struct brw_context *brw,
 {
    _mesa_init_driver_functions(functions);
 
+   /* GLX uses DRI2 invalidate events to handle window resizing.
+    * Unfortunately, EGL does not - libEGL is written in XCB (not Xlib),
+    * which doesn't provide a mechanism for snooping the event queues.
+    *
+    * So EGL still relies on viewport hacks to handle window resizing.
+    * This should go away with DRI3000.
+    */
+   if (!brw->driContext->driScreenPriv->dri2.useInvalidate) {
+      brw->saved_viewport = functions->Viewport;
+      functions->Viewport = intel_viewport;
+   }
+
    functions->Flush = intel_glFlush;
    functions->Finish = intelFinish;
    functions->GetString = intelGetString;
@@ -650,18 +662,6 @@ intelInitContext(struct brw_context *brw,
                  unsigned *dri_ctx_error)
 {
    struct gl_context *ctx = &brw->ctx;
-
-   /* GLX uses DRI2 invalidate events to handle window resizing.
-    * Unfortunately, EGL does not - libEGL is written in XCB (not Xlib),
-    * which doesn't provide a mechanism for snooping the event queues.
-    *
-    * So EGL still relies on viewport hacks to handle window resizing.
-    * This should go away with DRI3000.
-    */
-   if (!driContextPriv->driScreenPriv->dri2.useInvalidate) {
-      brw->saved_viewport = functions->Viewport;
-      functions->Viewport = intel_viewport;
-   }
 
    /* Estimate the size of the mappable aperture into the GTT.  There's an
     * ioctl to get the whole GTT size, but not one to get the mappable subset.
