@@ -208,10 +208,9 @@ intelFinish(struct gl_context * ctx)
       drm_intel_bo_wait_rendering(brw->batch.last_bo);
 }
 
-
-
-void
-intelInitDriverFunctions(struct dd_function_table *functions)
+static void
+brwInitDriverFunctions(struct intel_screen *screen,
+                       struct dd_function_table *functions)
 {
    _mesa_init_driver_functions(functions);
 
@@ -230,12 +229,6 @@ intelInitDriverFunctions(struct dd_function_table *functions)
    intelInitBufferObjectFuncs(functions);
    intel_init_syncobj_functions(functions);
    brw_init_object_purgeable_functions(functions);
-}
-
-static void brwInitDriverFunctions(struct intel_screen *screen,
-				   struct dd_function_table *functions)
-{
-   intelInitDriverFunctions( functions );
 
    brwInitFragProgFuncs( functions );
    brw_init_common_queryobj_functions(functions);
