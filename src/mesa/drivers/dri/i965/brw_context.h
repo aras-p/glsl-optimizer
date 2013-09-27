@@ -33,14 +33,34 @@
 #ifndef BRWCONTEXT_INC
 #define BRWCONTEXT_INC
 
-#include "intel_context.h"
-#include "brw_structs.h"
+#include <stdbool.h>
+#include <string.h>
 #include "main/imports.h"
 #include "main/macros.h"
+#include "main/mm.h"
+#include "main/mtypes.h"
+#include "brw_structs.h"
+
+#ifdef __cplusplus
+extern "C" {
+	/* Evil hack for using libdrm in a c++ compiler. */
+        #define virtual virt
+#endif
+
+#include <drm.h>
+#include <intel_bufmgr.h>
+#include <i915_drm.h>
+#ifdef __cplusplus
+	#undef virtual
+}
+#endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+#include "intel_debug.h"
+#include "intel_screen.h"
+#include "intel_tex_obj.h"
 
 /* Glossary:
  *
@@ -119,6 +139,9 @@ extern "C" {
  * Handles blending and (presumably) depth and stencil testing.
  */
 
+#define INTEL_WRITE_PART  0x1
+#define INTEL_WRITE_FULL  0x2
+#define INTEL_READ        0x4
 
 #define BRW_MAX_CURBE                    (32*16)
 
@@ -876,6 +899,39 @@ struct brw_query_object {
    int last_index;
 };
 
+struct intel_sync_object {
+   struct gl_sync_object Base;
+
+   /** Batch associated with this sync object */
+   drm_intel_bo *bo;
+};
+
+struct intel_batchbuffer {
+   /** Current batchbuffer being queued up. */
+   drm_intel_bo *bo;
+   /** Last BO submitted to the hardware.  Used for glFinish(). */
+   drm_intel_bo *last_bo;
+   /** BO for post-sync nonzero writes for gen6 workaround. */
+   drm_intel_bo *workaround_bo;
+   bool need_workaround_flush;
+
+   struct cached_batch_item *cached_items;
+
+   uint16_t emit, total;
+   uint16_t used, reserved_space;
+   uint32_t *map;
+   uint32_t *cpu_map;
+#define BATCH_SZ (8192*sizeof(uint32_t))
+
+   uint32_t state_batch_offset;
+   bool is_blit;
+   bool needs_sol_reset;
+
+   struct {
+      uint16_t used;
+      int reloc_count;
+   } saved;
+};
 
 /**
  * Data shared between brw_context::vs and brw_context::gs
@@ -1399,14 +1455,37 @@ struct brw_context
                           GLint x, GLint y, GLsizei width, GLsizei height);
 };
 
+static INLINE bool
+is_power_of_two(uint32_t value)
+{
+   return (value & (value - 1)) == 0;
+}
+
 /*======================================================================
  * brw_vtbl.c
  */
 void brwInitVtbl( struct brw_context *brw );
 
+/* brw_clear.c */
+extern void intelInitClearFuncs(struct dd_function_table *functions);
+
 /*======================================================================
  * brw_context.c
  */
+extern void intelFinish(struct gl_context * ctx);
+
+enum {
+   DRI_CONF_BO_REUSE_DISABLED,
+   DRI_CONF_BO_REUSE_ALL
+};
+
+void intel_update_renderbuffers(__DRIcontext *context,
+                                __DRIdrawable *drawable);
+void intel_prepare_render(struct brw_context *brw);
+
+void intel_resolve_for_dri2_flush(struct brw_context *brw,
+                                  __DRIdrawable *drawable);
+
 bool brwCreateContext(gl_api api,
 		      const struct gl_config *mesaVis,
 		      __DRIcontext *driContextPriv,
@@ -1514,6 +1593,18 @@ bool brw_render_target_supported(struct brw_context *brw,
 
 /* brw_performance_monitor.c */
 void brw_init_performance_monitors(struct brw_context *brw);
+
+/* intel_extensions.c */
+extern void intelInitExtensions(struct gl_context *ctx);
+
+/* intel_state.c */
+extern int intel_translate_shadow_compare_func(GLenum func);
+extern int intel_translate_compare_func(GLenum func);
+extern int intel_translate_stencil_op(GLenum op);
+extern int intel_translate_logic_op(GLenum opcode);
+
+/* intel_syncobj.c */
+void intel_init_syncobj_functions(struct dd_function_table *functions);
 
 /* gen6_sol.c */
 void
@@ -1685,6 +1776,33 @@ gen6_upload_vec4_push_constants(struct brw_context *brw,
                                 const struct brw_vec4_prog_data *prog_data,
                                 struct brw_stage_state *stage_state,
                                 enum state_struct_type type);
+
+/* ================================================================
+ * From linux kernel i386 header files, copes with odd sizes better
+ * than COPY_DWORDS would:
+ * XXX Put this in src/mesa/main/imports.h ???
+ */
+#if defined(i386) || defined(__i386__)
+static INLINE void * __memcpy(void * to, const void * from, size_t n)
+{
+   int d0, d1, d2;
+   __asm__ __volatile__(
+      "rep ; movsl\n\t"
+      "testb $2,%b4\n\t"
+      "je 1f\n\t"
+      "movsw\n"
+      "1:\ttestb $1,%b4\n\t"
+      "je 2f\n\t"
+      "movsb\n"
+      "2:"
+      : "=&c" (d0), "=&D" (d1), "=&S" (d2)
+      :"0" (n/4), "q" (n),"1" ((long) to),"2" ((long) from)
+      : "memory");
+   return (to);
+}
+#else
+#define __memcpy(a,b,c) memcpy(a,b,c)
+#endif
 
 #ifdef __cplusplus
 }
