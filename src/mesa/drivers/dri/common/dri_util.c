@@ -47,6 +47,7 @@
 #include "utils.h"
 #include "xmlpool.h"
 #include "../glsl/glsl_parser_extras.h"
+#include "main/mtypes.h"
 #include "main/version.h"
 #include "main/macros.h"
 
@@ -376,6 +377,14 @@ dri2CreateContextAttribs(__DRIscreen *screen, int api,
                                        flags, error, shareCtx) ) {
         free(context);
         return NULL;
+    }
+
+    struct gl_context *ctx = context->driverPrivate;
+    if ((flags & __DRI_CTX_FLAG_FORWARD_COMPATIBLE) != 0)
+        ctx->Const.ContextFlags |= GL_CONTEXT_FLAG_FORWARD_COMPATIBLE_BIT;
+    if ((flags & __DRI_CTX_FLAG_DEBUG) != 0) {
+        ctx->Const.ContextFlags |= GL_CONTEXT_FLAG_DEBUG_BIT;
+        ctx->Debug.DebugOutput = GL_TRUE;
     }
 
     *error = __DRI_CTX_ERROR_SUCCESS;
