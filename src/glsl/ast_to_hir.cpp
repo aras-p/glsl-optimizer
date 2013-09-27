@@ -4742,6 +4742,9 @@ ast_interface_block::hir(exec_list *instructions,
                                    var_mode);
          var->init_interface_type(block_type);
 
+         if (state->symbols->get_variable(var->name) != NULL)
+            _mesa_glsl_error(&loc, state, "`%s' redeclared", var->name);
+
          /* Propagate the "binding" keyword into this UBO's fields;
           * the UBO declaration itself doesn't get an ir_variable unless it
           * has an instance name.  This is ugly.
