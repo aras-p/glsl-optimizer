@@ -367,9 +367,6 @@ intelInitContext(struct brw_context *brw,
                  unsigned *dri_ctx_error)
 {
    struct gl_context *ctx = &brw->ctx;
-   __DRIscreen *sPriv = driContextPriv->driScreenPriv;
-   struct intel_screen *intelScreen = sPriv->driverPrivate;
-   int bo_reuse_mode;
 
    /* GLX uses DRI2 invalidate events to handle window resizing.
     * Unfortunately, EGL does not - libEGL is written in XCB (not Xlib),
@@ -386,9 +383,6 @@ intelInitContext(struct brw_context *brw,
    memset(&ctx->TextureFormatSupported,
 	  0, sizeof(ctx->TextureFormatSupported));
 
-   driParseConfigFiles(&brw->optionCache, &intelScreen->optionCache,
-                       sPriv->myNum, "i965");
-
    /* Estimate the size of the mappable aperture into the GTT.  There's an
     * ioctl to get the whole GTT size, but not one to get the mappable subset.
     * It turns out it's basically always 256MB, though some ancient hardware
@@ -403,15 +397,6 @@ intelInitContext(struct brw_context *brw,
     * be more conservative.
     */
    brw->max_gtt_map_object_size = gtt_size / 4;
-
-   bo_reuse_mode = driQueryOptioni(&brw->optionCache, "bo_reuse");
-   switch (bo_reuse_mode) {
-   case DRI_CONF_BO_REUSE_DISABLED:
-      break;
-   case DRI_CONF_BO_REUSE_ALL:
-      intel_bufmgr_gem_enable_reuse(brw->bufmgr);
-      break;
-   }
 
    /* Initialize the software rasterizer and helper modules.
     *
@@ -442,28 +427,6 @@ intelInitContext(struct brw_context *brw,
    intel_batchbuffer_init(brw);
 
    intel_fbo_init(brw);
-
-   if (!driQueryOptionb(&brw->optionCache, "hiz")) {
-       brw->has_hiz = false;
-       /* On gen6, you can only do separate stencil with HIZ. */
-       if (brw->gen == 6)
-	  brw->has_separate_stencil = false;
-   }
-
-   if (driQueryOptionb(&brw->optionCache, "always_flush_batch")) {
-      fprintf(stderr, "flushing batchbuffer before/after each draw call\n");
-      brw->always_flush_batch = 1;
-   }
-
-   if (driQueryOptionb(&brw->optionCache, "always_flush_cache")) {
-      fprintf(stderr, "flushing GPU caches before/after each draw call\n");
-      brw->always_flush_cache = 1;
-   }
-
-   if (driQueryOptionb(&brw->optionCache, "disable_throttling")) {
-      fprintf(stderr, "disabling flush throttling\n");
-      brw->disable_throttling = 1;
-   }
 
    return true;
 }

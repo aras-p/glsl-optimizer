@@ -243,12 +243,6 @@ brw_initialize_context_constants(struct brw_context *brw)
    ctx->Const.UniformBooleanTrue = 1;
    ctx->Const.UniformBufferOffsetAlignment = 16;
 
-   ctx->Const.ForceGLSLExtensionsWarn =
-      driQueryOptionb(&brw->optionCache, "force_glsl_extensions_warn");
-
-   ctx->Const.DisableGLSLLineContinuations =
-      driQueryOptionb(&brw->optionCache, "disable_glsl_line_continuations");
-
    if (brw->gen >= 6) {
       ctx->Const.MaxVarying = 32;
       ctx->Const.VertexProgram.MaxOutputComponents = 128;
@@ -274,6 +268,65 @@ brw_initialize_context_constants(struct brw_context *brw)
    }
 
    ctx->ShaderCompilerOptions[MESA_SHADER_VERTEX].PreferDP4 = true;
+}
+
+/**
+ * Process driconf (drirc) options, setting appropriate context flags.
+ *
+ * intelInitExtensions still pokes at optionCache directly, in order to
+ * avoid advertising various extensions.  No flags are set, so it makes
+ * sense to continue doing that there.
+ */
+static void
+brw_process_driconf_options(struct brw_context *brw)
+{
+   struct gl_context *ctx = &brw->ctx;
+
+   driOptionCache *options = &brw->optionCache;
+   driParseConfigFiles(options, &brw->intelScreen->optionCache,
+                       brw->driContext->driScreenPriv->myNum, "i965");
+
+   int bo_reuse_mode = driQueryOptioni(options, "bo_reuse");
+   switch (bo_reuse_mode) {
+   case DRI_CONF_BO_REUSE_DISABLED:
+      break;
+   case DRI_CONF_BO_REUSE_ALL:
+      intel_bufmgr_gem_enable_reuse(brw->bufmgr);
+      break;
+   }
+
+   if (!driQueryOptionb(options, "hiz")) {
+       brw->has_hiz = false;
+       /* On gen6, you can only do separate stencil with HIZ. */
+       if (brw->gen == 6)
+          brw->has_separate_stencil = false;
+   }
+
+   if (driQueryOptionb(options, "always_flush_batch")) {
+      fprintf(stderr, "flushing batchbuffer before/after each draw call\n");
+      brw->always_flush_batch = true;
+   }
+
+   if (driQueryOptionb(options, "always_flush_cache")) {
+      fprintf(stderr, "flushing GPU caches before/after each draw call\n");
+      brw->always_flush_cache = true;
+   }
+
+   if (driQueryOptionb(options, "disable_throttling")) {
+      fprintf(stderr, "disabling flush throttling\n");
+      brw->disable_throttling = true;
+   }
+
+   brw->disable_derivative_optimization =
+      driQueryOptionb(&brw->optionCache, "disable_derivative_optimization");
+
+   brw->precompile = driQueryOptionb(&brw->optionCache, "shader_precompile");
+
+   ctx->Const.ForceGLSLExtensionsWarn =
+      driQueryOptionb(options, "force_glsl_extensions_warn");
+
+   ctx->Const.DisableGLSLLineContinuations =
+      driQueryOptionb(options, "disable_glsl_line_continuations");
 }
 
 bool
@@ -347,6 +400,8 @@ brwCreateContext(gl_api api,
       intelDestroyContext(driContextPriv);
       return false;
    }
+
+   brw_process_driconf_options(brw);
 
    if (!intelInitContext( brw, api, major_version, minor_version,
                           mesaVis, driContextPriv,
@@ -518,10 +573,6 @@ brwCreateContext(gl_api api,
    ctx->FragmentProgram._MaintainTexEnvProgram = true;
 
    brw_draw_init( brw );
-
-   brw->precompile = driQueryOptionb(&brw->optionCache, "shader_precompile");
-   brw->disable_derivative_optimization =
-      driQueryOptionb(&brw->optionCache, "disable_derivative_optimization");
 
    if ((flags & __DRI_CTX_FLAG_DEBUG) != 0) {
       /* Turn on some extra GL_ARB_debug_output generation. */
