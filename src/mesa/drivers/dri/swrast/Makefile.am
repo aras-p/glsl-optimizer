@@ -34,19 +34,5 @@ AM_CFLAGS = \
 	$(DEFINES) \
 	$(VISIBILITY_CFLAGS)
 
-dridir = $(DRI_DRIVER_INSTALL_DIR)
-dri_LTLIBRARIES = swrast_dri.la
-
-swrast_dri_la_SOURCES = \
-	$(SWRAST_C_FILES)
-
-swrast_dri_la_LDFLAGS = $(DRI_DRIVER_LDFLAGS)
-
-swrast_dri_la_LIBADD = \
-	$(DRI_LIB_DEPS)
-
-# Provide compatibility with scripts for the old Mesa build system for
-# a while by putting a link to the driver into /lib of the build tree.
-all-local: swrast_dri.la
-	$(MKDIR_P) $(top_builddir)/$(LIB_DIR);
-	ln -f .libs/swrast_dri.so $(top_builddir)/$(LIB_DIR)/swrast_dri.so;
+noinst_LTLIBRARIES = libswrast_dri.la
+libswrast_dri_la_SOURCES = $(SWRAST_C_FILES)

@@ -1022,10 +1022,15 @@ if test "x$enable_dri" = xyes; then
     LIBS="$save_LIBS"
 
     # If we are building any DRI driver other than swrast.
-    if test -n "$DRI_DIRS" -a x"$DRI_DIRS" != xswrast; then
-        # ... libdrm is required
-        if test "x$have_libdrm" != xyes; then
-            AC_MSG_ERROR([DRI drivers requires libdrm >= $LIBDRM_REQUIRED])
+    if test -n "$DRI_DIRS"; then
+        if test x"$DRI_DIRS" != xswrast; then
+            # ... libdrm is required
+            if test "x$have_libdrm" != xyes; then
+                AC_MSG_ERROR([DRI drivers requires libdrm >= $LIBDRM_REQUIRED])
+            fi
+            DRICOMMON_NEED_LIBDRM=yes
+        else
+            DRICOMMON_NEED_LIBDRM=no
         fi
     fi
 
@@ -1037,14 +1042,6 @@ if test "x$enable_dri" = xyes; then
 fi
 
 enable_dricore=no
-enable_megadriver=no
-for driver in $DRI_DIRS; do
-    if test $driver = "swrast"; then
-        enable_dricore=yes
-    else
-        enable_megadriver=yes
-    fi
-done
 
 # megadriver wants to use libmesa.la, while non-megadrivers want to
 # automatically get libdricore.  Some day hopefully we'll transition
@@ -1053,10 +1050,10 @@ MEGADRIVER_DRI_LIB_DEPS=$DRI_LIB_DEPS
 DRI_LIB_DEPS="\$(top_builddir)/src/mesa/libdricore/libdricore${VERSION}.la $DRI_LIB_DEPS"
 
 AM_CONDITIONAL(NEED_LIBDRICORE, test "x$enable_dricore" = xyes)
-AM_CONDITIONAL(NEED_MEGADRIVER, test "x$enable_megadriver" = xyes)
+AM_CONDITIONAL(NEED_MEGADRIVER, test -n "$DRI_DIRS")
 AM_CONDITIONAL(NEED_LIBMESA, test "x$enable_xlib_glx" = xyes -o \
                                   "x$enable_osmesa" = xyes -o \
-                                  "x$enable_megadriver" = xyes)
+                                  -n "$DRI_DIRS")
 AC_SUBST([EXPAT_INCLUDES])
 AC_SUBST([DRI_LIB_DEPS])
 AC_SUBST([DRI_DRIVER_LDFLAGS])
@@ -1777,6 +1774,7 @@ if test "x$with_gallium_drivers" != x; then
             fi
             GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS i915/sw"
             gallium_check_st "i915/drm" "dri-i915" "xorg-i915"
+            DRICOMMON_NEED_LIBDRM=yes
             ;;
         xilo)
             HAVE_GALLIUM_ILO=yes
@@ -1784,6 +1782,7 @@ if test "x$with_gallium_drivers" != x; then
             gallium_require_drm_loader
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS ilo"
             gallium_check_st "intel/drm" "dri-ilo"
+            DRICOMMON_NEED_LIBDRM=yes
             ;;
         xr300)
             HAVE_GALLIUM_R300=yes
@@ -1791,6 +1790,7 @@ if test "x$with_gallium_drivers" != x; then
             gallium_require_llvm "Gallium R300"
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r300"
             gallium_check_st "radeon/drm" "r300/dri" "" "" "r300/xvmc" "r300/vdpau"
+            DRICOMMON_NEED_LIBDRM=yes
             ;;
         xr600)
             HAVE_GALLIUM_R600=yes
@@ -1808,6 +1808,7 @@ if test "x$with_gallium_drivers" != x; then
                 LLVM_COMPONENTS="${LLVM_COMPONENTS} bitreader asmparser"
             fi
             gallium_check_st "radeon/drm" "r600/dri" "r600/xorg" "" "r600/xvmc" "r600/vdpau"
+            DRICOMMON_NEED_LIBDRM=yes
             ;;
         xradeonsi)
             HAVE_GALLIUM_RADEONSI=yes
@@ -1816,6 +1817,7 @@ if test "x$with_gallium_drivers" != x; then
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS radeonsi"
             radeon_llvm_check
             gallium_check_st "radeon/drm" "radeonsi/dri" "radeonsi/xorg" "" "" "radeonsi/vdpau" ""
+            DRICOMMON_NEED_LIBDRM=yes
             ;;
         xnouveau)
             HAVE_GALLIUM_NOUVEAU=yes
@@ -1823,6 +1825,7 @@ if test "x$with_gallium_drivers" != x; then
             gallium_require_drm_loader
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS nouveau"
             gallium_check_st "nouveau/drm" "dri-nouveau" "xorg-nouveau" "" "xvmc-nouveau" "vdpau-nouveau"
+            DRICOMMON_NEED_LIBDRM=yes
             ;;
         xfreedreno)
             HAVE_GALLIUM_FREEDRENO=yes
@@ -1830,6 +1833,7 @@ if test "x$with_gallium_drivers" != x; then
             gallium_require_drm_loader
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS freedreno"
             gallium_check_st "freedreno/drm" "dri-freedreno" "" "" "" ""
+            DRICOMMON_NEED_LIBDRM=yes
             ;;
         xswrast)
             HAVE_GALLIUM_SOFTPIPE=yes
@@ -1961,10 +1965,11 @@ AM_CONDITIONAL(HAVE_MESA_LLVM, test x$MESA_LLVM = x1)
 
 AC_SUBST([ELF_LIB])
 
+AM_CONDITIONAL(DRICOMMON_NEED_LIBDRM, test "x$DRICOMMON_NEED_LIBDRM" = xyes)
 AM_CONDITIONAL(NEED_LIBPROGRAM, test "x$with_gallium_drivers" != x -o \
                                      "x$enable_xlib_glx" = xyes -o \
                                      "x$enable_osmesa" = xyes -o \
-                                     "x$enable_megadriver" = xyes -o \
+                                     -n "$DRI_DIRS" -o \
                                      "x$enable_gallium_osmesa" = xyes)
 AM_CONDITIONAL(HAVE_X11_DRIVER, test "x$enable_xlib_glx" = xyes)
 AM_CONDITIONAL(HAVE_OSMESA, test "x$enable_osmesa" = xyes)

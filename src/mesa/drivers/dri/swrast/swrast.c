@@ -59,6 +59,7 @@
 #include "swrast_priv.h"
 #include "swrast/s_context.h"
 
+const __DRIextension **__driDriverGetExtensions_swrast(void);
 
 /**
  * Screen and config-related functions
@@ -819,7 +820,7 @@ dri_unbind_context(__DRIcontext * cPriv)
 }
 
 
-const struct __DriverAPIRec driDriverAPI = {
+static const struct __DriverAPIRec swrast_driver_api = {
     .InitScreen = dri_init_screen,
     .DestroyScreen = dri_destroy_screen,
     .CreateContext = dri_create_context,
@@ -831,9 +832,21 @@ const struct __DriverAPIRec driDriverAPI = {
     .UnbindContext = dri_unbind_context,
 };
 
-/* This is the table of extensions that the loader will dlsym() for. */
-PUBLIC const __DRIextension *__driDriverExtensions[] = {
+static const struct __DRIDriverVtableExtensionRec swrast_vtable = {
+   .base = { __DRI_DRIVER_VTABLE, 1 },
+   .vtable = &swrast_driver_api,
+};
+
+static const __DRIextension *swrast_driver_extensions[] = {
     &driCoreExtension.base,
     &driSWRastExtension.base,
+    &swrast_vtable.base,
     NULL
 };
+
+PUBLIC const __DRIextension **__driDriverGetExtensions_swrast(void)
+{
+   globalDriverAPI = &swrast_driver_api;
+
+   return swrast_driver_extensions;
+}

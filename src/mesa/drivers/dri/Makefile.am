@@ -37,7 +37,9 @@ MEGADRIVERS += radeon_dri.so
 endif
 
 if HAVE_SWRAST_DRI
-SUBDIRS+=swrast
+SUBDIRS += swrast
+MEGADRIVERS_DEPS += swrast/libswrast_dri.la
+MEGADRIVERS += swrast_dri.so
 endif
 
 pkgconfigdir = $(libdir)/pkgconfig

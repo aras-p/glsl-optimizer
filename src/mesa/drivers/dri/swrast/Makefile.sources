@@ -1,11 +1,5 @@
 SWRAST_DRIVER_FILES = \
 	swrast.c 
 
-SWRAST_COMMON_FILES = \
-	../common/utils.c \
-	../common/dri_util.c \
-	../common/xmlconfig.c
-
 SWRAST_C_FILES = \
-	$(SWRAST_COMMON_FILES) \
 	$(SWRAST_DRIVER_FILES)
