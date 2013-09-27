@@ -209,8 +209,8 @@ intelFinish(struct gl_context * ctx)
 }
 
 static void
-brwInitDriverFunctions(struct intel_screen *screen,
-                       struct dd_function_table *functions)
+brw_init_driver_functions(struct brw_context *brw,
+                          struct dd_function_table *functions)
 {
    _mesa_init_driver_functions(functions);
 
@@ -232,14 +232,14 @@ brwInitDriverFunctions(struct intel_screen *screen,
 
    brwInitFragProgFuncs( functions );
    brw_init_common_queryobj_functions(functions);
-   if (screen->devinfo->gen >= 6)
+   if (brw->gen >= 6)
       gen6_init_queryobj_functions(functions);
    else
       gen4_init_queryobj_functions(functions);
 
    functions->QuerySamplesForFormat = brw_query_samples_for_format;
 
-   if (screen->devinfo->gen >= 7) {
+   if (brw->gen >= 7) {
       functions->BeginTransformFeedback = gen7_begin_transform_feedback;
       functions->EndTransformFeedback = gen7_end_transform_feedback;
    } else {
@@ -247,7 +247,7 @@ brwInitDriverFunctions(struct intel_screen *screen,
       functions->EndTransformFeedback = brw_end_transform_feedback;
    }
 
-   if (screen->devinfo->gen >= 6)
+   if (brw->gen >= 6)
       functions->GetSamplePosition = gen6_get_sample_position;
 }
 
@@ -520,7 +520,7 @@ brwCreateContext(gl_api api,
 
    brwInitVtbl( brw );
 
-   brwInitDriverFunctions(screen, &functions);
+   brw_init_driver_functions(brw, &functions);
 
    struct gl_context *ctx = &brw->ctx;
 
