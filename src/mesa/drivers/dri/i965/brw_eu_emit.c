@@ -2197,7 +2197,22 @@ void brw_SAMPLE(struct brw_compile *p,
 
    insn = next_insn(p, BRW_OPCODE_SEND);
    insn->header.predicate_control = 0; /* XXX */
-   insn->header.compression_control = BRW_COMPRESSION_NONE;
+
+   /* From the 965 PRM (volume 4, part 1, section 14.2.41):
+    *
+    *    "Instruction compression is not allowed for this instruction (that
+    *     is, send). The hardware behavior is undefined if this instruction is
+    *     set as compressed. However, compress control can be set to "SecHalf"
+    *     to affect the EMask generation."
+    *
+    * No similar wording is found in later PRMs, but there are examples
+    * utilizing send with SecHalf.  More importantly, SIMD8 sampler messages
+    * are allowed in SIMD16 mode and they could not work without SecHalf.  For
+    * these reasons, we allow BRW_COMPRESSION_2NDHALF here.
+    */
+   if (insn->header.compression_control != BRW_COMPRESSION_2NDHALF)
+      insn->header.compression_control = BRW_COMPRESSION_NONE;
+
    if (brw->gen < 6)
       insn->header.destreg__conditionalmod = msg_reg_nr;
 
