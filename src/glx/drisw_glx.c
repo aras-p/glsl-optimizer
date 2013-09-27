@@ -680,9 +680,16 @@ driswCreateScreen(int screen, struct glx_display *priv)
       goto handle_error;
    }
 
-   psc->driScreen =
-      psc->swrast->createNewScreen(screen, loader_extensions,
-				   &driver_configs, psc);
+   if (psc->swrast->base.version >= 4) {
+      psc->driScreen =
+         psc->swrast->createNewScreen2(screen, loader_extensions,
+                                       extensions,
+                                       &driver_configs, psc);
+   } else {
+      psc->driScreen =
+         psc->swrast->createNewScreen(screen, loader_extensions,
+                                      &driver_configs, psc);
+   }
    if (psc->driScreen == NULL) {
       ErrorMessageF("failed to create dri screen\n");
       goto handle_error;

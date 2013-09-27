@@ -53,6 +53,7 @@ struct gbm_dri_device {
 
    const __DRIconfig   **driver_configs;
    const __DRIextension *extensions[4];
+   const __DRIextension **driver_extensions;
 
    __DRIimage *(*lookup_image)(__DRIscreen *screen, void *image, void *data);
    void *lookup_user_data;

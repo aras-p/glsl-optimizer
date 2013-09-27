@@ -713,7 +713,7 @@ struct __DRIlegacyExtensionRec {
  * conjunction with the core extension.
  */
 #define __DRI_SWRAST "DRI_SWRast"
-#define __DRI_SWRAST_VERSION 3
+#define __DRI_SWRAST_VERSION 4
 
 struct __DRIswrastExtensionRec {
     __DRIextension base;
@@ -749,6 +749,18 @@ struct __DRIswrastExtensionRec {
 					 const uint32_t *attribs,
 					 unsigned *error,
 					 void *loaderPrivate);
+
+   /**
+    * createNewScreen() with the driver extensions passed in.
+    *
+    * \since version 4
+    */
+   __DRIscreen *(*createNewScreen2)(int screen,
+                                    const __DRIextension **loader_extensions,
+                                    const __DRIextension **driver_extensions,
+                                    const __DRIconfig ***driver_configs,
+                                    void *loaderPrivate);
+
 };
 
 /**
@@ -831,7 +843,7 @@ struct __DRIdri2LoaderExtensionRec {
  * constructors for DRI2.
  */
 #define __DRI_DRI2 "DRI_DRI2"
-#define __DRI_DRI2_VERSION 3
+#define __DRI_DRI2_VERSION 4
 
 #define __DRI_API_OPENGL	0	/**< OpenGL compatibility profile */
 #define __DRI_API_GLES		1	/**< OpenGL ES 1.x */
@@ -939,6 +951,17 @@ struct __DRIdri2ExtensionRec {
 					 const uint32_t *attribs,
 					 unsigned *error,
 					 void *loaderPrivate);
+
+   /**
+    * createNewScreen with the driver's extension list passed in.
+    *
+    * \since version 4
+    */
+    __DRIscreen *(*createNewScreen2)(int screen, int fd,
+                                     const __DRIextension **loader_extensions,
+                                     const __DRIextension **driver_extensions,
+                                     const __DRIconfig ***driver_configs,
+                                     void *loaderPrivate);
 };
 
 

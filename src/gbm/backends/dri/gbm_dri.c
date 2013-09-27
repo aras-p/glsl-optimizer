@@ -228,7 +228,7 @@ dri_load_driver(struct gbm_dri_device *dri)
       dlclose(dri->driver);
       return -1;
    }
-
+   dri->driver_extensions = extensions;
 
    if (dri_bind_extensions(dri, gbm_dri_device_extensions, extensions) < 0) {
       dlclose(dri->driver);
@@ -263,9 +263,16 @@ dri_screen_create(struct gbm_dri_device *dri)
    if (dri->dri2 == NULL)
       return -1;
 
-   dri->screen = dri->dri2->createNewScreen(0, dri->base.base.fd,
-                                            dri->extensions,
-                                            &dri->driver_configs, dri);
+   if (dri->dri2->base.version >= 4) {
+      dri->screen = dri->dri2->createNewScreen2(0, dri->base.base.fd,
+                                                dri->extensions,
+                                                dri->driver_extensions,
+                                                &dri->driver_configs, dri);
+   } else {
+      dri->screen = dri->dri2->createNewScreen(0, dri->base.base.fd,
+                                               dri->extensions,
+                                               &dri->driver_configs, dri);
+   }
    if (dri->screen == NULL)
       return -1;
 

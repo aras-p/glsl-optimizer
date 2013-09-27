@@ -449,6 +449,7 @@ dri2_load_driver(_EGLDisplay *disp)
       dlclose(dri2_dpy->driver);
       return EGL_FALSE;
    }
+   dri2_dpy->driver_extensions = extensions;
 
    return EGL_TRUE;
 }
@@ -469,6 +470,7 @@ dri2_load_driver_swrast(_EGLDisplay *disp)
       dlclose(dri2_dpy->driver);
       return EGL_FALSE;
    }
+   dri2_dpy->driver_extensions = extensions;
 
    return EGL_TRUE;
 }
@@ -534,14 +536,30 @@ dri2_create_screen(_EGLDisplay *disp)
    dri2_dpy = disp->DriverData;
 
    if (dri2_dpy->dri2) {
-      dri2_dpy->dri_screen =
-         dri2_dpy->dri2->createNewScreen(0, dri2_dpy->fd, dri2_dpy->extensions,
-				         &dri2_dpy->driver_configs, disp);
+      if (dri2_dpy->dri2->base.version >= 4) {
+         dri2_dpy->dri_screen =
+            dri2_dpy->dri2->createNewScreen2(0, dri2_dpy->fd,
+                                             dri2_dpy->extensions,
+                                             dri2_dpy->driver_extensions,
+                                             &dri2_dpy->driver_configs, disp);
+      } else {
+         dri2_dpy->dri_screen =
+            dri2_dpy->dri2->createNewScreen(0, dri2_dpy->fd,
+                                            dri2_dpy->extensions,
+                                            &dri2_dpy->driver_configs, disp);
+      }
    } else {
       assert(dri2_dpy->swrast);
-      dri2_dpy->dri_screen =
-         dri2_dpy->swrast->createNewScreen(0, dri2_dpy->extensions,
-                                           &dri2_dpy->driver_configs, disp);
+      if (dri2_dpy->swrast->base.version >= 4) {
+         dri2_dpy->dri_screen =
+            dri2_dpy->swrast->createNewScreen2(0, dri2_dpy->extensions,
+                                               dri2_dpy->driver_extensions,
+                                               &dri2_dpy->driver_configs, disp);
+      } else {
+         dri2_dpy->dri_screen =
+            dri2_dpy->swrast->createNewScreen(0, dri2_dpy->extensions,
+                                              &dri2_dpy->driver_configs, disp);
+      }
    }
 
    if (dri2_dpy->dri_screen == NULL) {
