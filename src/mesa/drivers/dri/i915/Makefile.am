@@ -35,18 +35,6 @@ AM_CFLAGS = \
 	$(VISIBILITY_CFLAGS) \
 	$(INTEL_CFLAGS)
 
-dridir = $(DRI_DRIVER_INSTALL_DIR)
-dri_LTLIBRARIES = i915_dri.la
-
-i915_dri_la_SOURCES = $(i915_FILES)
-i915_dri_la_LDFLAGS = $(DRI_DRIVER_LDFLAGS)
-i915_dri_la_LIBADD = \
-	../common/libdricommon.la \
-	$(DRI_LIB_DEPS) \
-	$(INTEL_LIBS)
-
-# Provide compatibility with scripts for the old Mesa build system for
-# a while by putting a link to the driver into /lib of the build tree.
-all-local: i915_dri.la
-	$(MKDIR_P) $(top_builddir)/$(LIB_DIR);
-	ln -f .libs/i915_dri.so $(top_builddir)/$(LIB_DIR)/i915_dri.so;
+noinst_LTLIBRARIES = libi915_dri.la
+libi915_dri_la_SOURCES = $(i915_FILES)
+libi915_dri_la_LIBADD = $(INTEL_LIBS)

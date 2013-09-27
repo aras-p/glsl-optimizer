@@ -58,9 +58,7 @@
 #include "utils.h"
 #include "../glsl/ralloc.h"
 
-#ifndef INTEL_DEBUG
 int INTEL_DEBUG = (0);
-#endif
 
 
 static const GLubyte *

@@ -30,6 +30,7 @@
 
 #include <assert.h>
 
+#include "intel_screen.h"
 #include "intel_regions.h"
 
 #ifdef __cplusplus

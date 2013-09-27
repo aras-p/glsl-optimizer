@@ -1190,7 +1190,7 @@ intelReleaseBuffer(__DRIscreen *screen, __DRIbuffer *buffer)
 }
 
 
-const struct __DriverAPIRec driDriverAPI = {
+static const struct __DriverAPIRec i915_driver_api = {
    .InitScreen		 = intelInitScreen2,
    .DestroyScreen	 = intelDestroyScreen,
    .CreateContext	 = intelCreateContext,
@@ -1203,10 +1203,23 @@ const struct __DriverAPIRec driDriverAPI = {
    .ReleaseBuffer        = intelReleaseBuffer
 };
 
+static const struct __DRIDriverVtableExtensionRec i915_vtable = {
+   .base = { __DRI_DRIVER_VTABLE, 1 },
+   .vtable = &i915_driver_api,
+};
+
 /* This is the table of extensions that the loader will dlsym() for. */
-PUBLIC const __DRIextension *__driDriverExtensions[] = {
+static const __DRIextension *i915_driver_extensions[] = {
     &driCoreExtension.base,
     &driDRI2Extension.base,
+    &i915_vtable.base,
     &i915_config_options.base,
     NULL
 };
+
+PUBLIC const __DRIextension **__driDriverGetExtensions_i915(void)
+{
+   globalDriverAPI = &i915_driver_api;
+
+   return i915_driver_extensions;
+}
