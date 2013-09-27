@@ -532,6 +532,8 @@ brw_init_surface_formats(struct brw_context *brw)
    int gen;
    gl_format format;
 
+   memset(&ctx->TextureFormatSupported, 0, sizeof(ctx->TextureFormatSupported));
+
    gen = brw->gen * 10;
    if (brw->is_g4x)
       gen += 5;

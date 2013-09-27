@@ -380,9 +380,6 @@ intelInitContext(struct brw_context *brw,
       functions->Viewport = intel_viewport;
    }
 
-   memset(&ctx->TextureFormatSupported,
-	  0, sizeof(ctx->TextureFormatSupported));
-
    /* Estimate the size of the mappable aperture into the GTT.  There's an
     * ioctl to get the whole GTT size, but not one to get the mappable subset.
     * It turns out it's basically always 256MB, though some ancient hardware
