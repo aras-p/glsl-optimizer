@@ -34,6 +34,8 @@
 #define MTYPES_H
 
 
+#include <stdint.h>             /* uint32_t */
+
 #include "main/glheader.h"
 #include "main/config.h"
 #include "glapi/glapi.h"
