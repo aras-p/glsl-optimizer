@@ -72,7 +72,9 @@ DRI_CONF_OPT_BEGIN_V(command_buffer_size,int,def, # min ":" # max ) \
 DRI_CONF_OPT_END
 
 #if defined(RADEON_R100)	/* R100 */
-PUBLIC const char __driConfigOptions[] =
+static const __DRIconfigOptionsExtension radeon_config_options = {
+   .base = { __DRI_CONFIG_OPTIONS, 1 },
+   .xml =
 DRI_CONF_BEGIN
     DRI_CONF_SECTION_PERFORMANCE
         DRI_CONF_TCL_MODE(DRI_CONF_TCL_CODEGEN)
@@ -94,11 +96,13 @@ DRI_CONF_BEGIN
     DRI_CONF_SECTION_DEBUG
         DRI_CONF_NO_RAST("false")
     DRI_CONF_SECTION_END
-DRI_CONF_END;
+DRI_CONF_END
+};
 
 #elif defined(RADEON_R200)
-
-PUBLIC const char __driConfigOptions[] =
+static const __DRIconfigOptionsExtension radeon_config_options = {
+   .base = { __DRI_CONFIG_OPTIONS, 1 },
+   .xml =
 DRI_CONF_BEGIN
     DRI_CONF_SECTION_PERFORMANCE
         DRI_CONF_TCL_MODE(DRI_CONF_TCL_CODEGEN)
@@ -121,8 +125,8 @@ DRI_CONF_BEGIN
     DRI_CONF_SECTION_DEBUG
         DRI_CONF_NO_RAST("false")
     DRI_CONF_SECTION_END
-DRI_CONF_END;
-
+DRI_CONF_END
+};
 #endif
 
 #ifndef RADEON_INFO_TILE_CONFIG
@@ -490,7 +494,7 @@ radeonCreateScreen2(__DRIscreen *sPriv)
    radeon_init_debug();
 
    /* parse information in __driConfigOptions */
-   driParseOptionInfo (&screen->optionCache, __driConfigOptions);
+   driParseOptionInfo (&screen->optionCache, radeon_config_options.xml);
 
    screen->chip_flags = 0;
 
@@ -780,5 +784,6 @@ const struct __DriverAPIRec driDriverAPI = {
 PUBLIC const __DRIextension *__driDriverExtensions[] = {
     &driCoreExtension.base,
     &driDRI2Extension.base,
+    &radeon_config_options.base,
     NULL
 };

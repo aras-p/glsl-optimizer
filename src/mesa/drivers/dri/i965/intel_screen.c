@@ -40,8 +40,10 @@
 #include "utils.h"
 #include "xmlpool.h"
 
-PUBLIC const char __driConfigOptions[] =
-   DRI_CONF_BEGIN
+static const __DRIconfigOptionsExtension brw_config_options = {
+   .base = { __DRI_CONFIG_OPTIONS, 1 },
+   .xml =
+DRI_CONF_BEGIN
    DRI_CONF_SECTION_PERFORMANCE
       DRI_CONF_VBLANK_MODE(DRI_CONF_VBLANK_ALWAYS_SYNC)
       /* Options correspond to DRI_CONF_BO_REUSE_DISABLED,
@@ -79,7 +81,8 @@ PUBLIC const char __driConfigOptions[] =
 	 DRI_CONF_DESC(en, "Perform code generation at shader link time.")
       DRI_CONF_OPT_END
    DRI_CONF_SECTION_END
-DRI_CONF_END;
+DRI_CONF_END
+};
 
 #include "intel_batchbuffer.h"
 #include "intel_buffers.h"
@@ -1237,7 +1240,7 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
       return false;
    }
    /* parse information in __driConfigOptions */
-   driParseOptionInfo(&intelScreen->optionCache, __driConfigOptions);
+   driParseOptionInfo(&intelScreen->optionCache, brw_config_options.xml);
 
    intelScreen->driScrnPriv = psp;
    psp->driverPrivate = (void *) intelScreen;
@@ -1328,5 +1331,6 @@ const struct __DriverAPIRec driDriverAPI = {
 PUBLIC const __DRIextension *__driDriverExtensions[] = {
     &driCoreExtension.base,
     &driDRI2Extension.base,
+    &brw_config_options.base,
     NULL
 };

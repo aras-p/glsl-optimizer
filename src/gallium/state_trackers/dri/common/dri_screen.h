@@ -133,6 +133,8 @@ dri_destroy_screen_helper(struct dri_screen * screen);
 void
 dri_destroy_screen(__DRIscreen * sPriv);
 
+extern const __DRIconfigOptionsExtension gallium_config_options;
+
 #endif
 
 /* vim: set sw=3 ts=8 sts=3 expandtab: */

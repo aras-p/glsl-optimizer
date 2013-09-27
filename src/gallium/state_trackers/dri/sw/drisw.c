@@ -365,6 +365,7 @@ const struct __DriverAPIRec driDriverAPI = {
 PUBLIC const __DRIextension *__driDriverExtensions[] = {
     &driCoreExtension.base,
     &driSWRastExtension.base,
+    &gallium_config_options.base,
     NULL
 };
 
