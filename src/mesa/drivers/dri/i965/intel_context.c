@@ -426,15 +426,15 @@ intelInitContext(struct brw_context *brw,
    brw->intelScreen = intelScreen;
    brw->bufmgr = intelScreen->bufmgr;
 
+   driContextPriv->driverPrivate = brw;
+   brw->driContext = driContextPriv;
+
    if (!_mesa_initialize_context(&brw->ctx, api, mesaVis, shareCtx,
                                  functions)) {
       *dri_ctx_error = __DRI_CTX_ERROR_NO_MEMORY;
       printf("%s: failed to init mesa context\n", __FUNCTION__);
       return false;
    }
-
-   driContextPriv->driverPrivate = brw;
-   brw->driContext = driContextPriv;
 
    brw->gen = intelScreen->gen;
 

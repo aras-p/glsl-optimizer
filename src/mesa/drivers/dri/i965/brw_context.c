@@ -276,7 +276,7 @@ brw_initialize_context_constants(struct brw_context *brw)
 }
 
 bool
-brwCreateContext(int api,
+brwCreateContext(gl_api api,
 	         const struct gl_config *mesaVis,
 		 __DRIcontext *driContextPriv,
                  unsigned major_version,
@@ -311,7 +311,7 @@ brwCreateContext(int api,
                           mesaVis, driContextPriv,
 			  sharedContextPrivate, &functions,
 			  error)) {
-      ralloc_free(brw);
+      intelDestroyContext(driContextPriv);
       return false;
    }
 
@@ -332,7 +332,7 @@ brwCreateContext(int api,
 
       if (!brw->hw_ctx) {
          fprintf(stderr, "Gen6+ requires Kernel 3.6 or later.\n");
-         ralloc_free(brw);
+         intelDestroyContext(driContextPriv);
          return false;
       }
    }

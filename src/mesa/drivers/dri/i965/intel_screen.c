@@ -984,32 +984,6 @@ intelDestroyBuffer(__DRIdrawable * driDrawPriv)
     _mesa_reference_framebuffer(&fb, NULL);
 }
 
-static GLboolean
-intelCreateContext(gl_api api,
-		   const struct gl_config * mesaVis,
-                   __DRIcontext * driContextPriv,
-		   unsigned major_version,
-		   unsigned minor_version,
-		   uint32_t flags,
-		   unsigned *error,
-                   void *sharedContextPrivate)
-{
-   bool success = false;
-
-   success = brwCreateContext(api, mesaVis,
-                              driContextPriv,
-                              major_version, minor_version, flags,
-                              error, sharedContextPrivate);
-
-   if (success)
-      return true;
-
-   if (driContextPriv->driverPrivate != NULL)
-      intelDestroyContext(driContextPriv);
-
-   return false;
-}
-
 static bool
 intel_init_bufmgr(struct intel_screen *intelScreen)
 {
@@ -1371,7 +1345,7 @@ intelReleaseBuffer(__DRIscreen *screen, __DRIbuffer *buffer)
 const struct __DriverAPIRec driDriverAPI = {
    .InitScreen		 = intelInitScreen2,
    .DestroyScreen	 = intelDestroyScreen,
-   .CreateContext	 = intelCreateContext,
+   .CreateContext	 = brwCreateContext,
    .DestroyContext	 = intelDestroyContext,
    .CreateBuffer	 = intelCreateBuffer,
    .DestroyBuffer	 = intelDestroyBuffer,

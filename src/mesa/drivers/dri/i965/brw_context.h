@@ -1410,7 +1410,7 @@ void brwInitVtbl( struct brw_context *brw );
 /*======================================================================
  * brw_context.c
  */
-bool brwCreateContext(int api,
+bool brwCreateContext(gl_api api,
 		      const struct gl_config *mesaVis,
 		      __DRIcontext *driContextPriv,
                       unsigned major_version,
