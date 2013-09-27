@@ -4410,7 +4410,8 @@ ast_process_structure_or_interface_block(exec_list *instructions,
 					 YYLTYPE &loc,
 					 glsl_struct_field **fields_ret,
                                          bool is_interface,
-                                         bool block_row_major)
+                                         bool block_row_major,
+                                         bool allow_reserved_names)
 {
    unsigned decl_count = 0;
 
@@ -4452,6 +4453,9 @@ ast_process_structure_or_interface_block(exec_list *instructions,
 
       foreach_list_typed (ast_declaration, decl, link,
 			  &decl_list->declarations) {
+         if (!allow_reserved_names)
+            validate_identifier(decl->identifier, loc, state);
+
          /* From the GL_ARB_uniform_buffer_object spec:
           *
           *     "Sampler types are not allowed inside of uniform
@@ -4568,7 +4572,8 @@ ast_struct_specifier::hir(exec_list *instructions,
 					       loc,
 					       &fields,
                                                false,
-                                               false);
+                                               false,
+                                               false /* allow_reserved_names */);
 
    const glsl_type *t =
       glsl_type::get_record_instance(fields, decl_count, this->name);
@@ -4625,7 +4630,8 @@ ast_interface_block::hir(exec_list *instructions,
                                                loc,
                                                &fields,
                                                true,
-                                               block_row_major);
+                                               block_row_major,
+                                               redeclaring_per_vertex);
 
    ir_variable_mode var_mode;
    const char *iface_type_name;
