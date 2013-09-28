@@ -1358,8 +1358,8 @@ if test "x$enable_opencl" = xyes; then
                     PKG_CONFIG_PATH environment variable.
                     By default libclc.pc is installed to /usr/local/share/pkgconfig/])
     else
-        LIBCLC_INCLUDEDIR=`pkg-config --variable=includedir libclc`
-        LIBCLC_LIBEXECDIR=`pkg-config --variable=libexecdir libclc`
+        LIBCLC_INCLUDEDIR=`$PKG_CONFIG --variable=includedir libclc`
+        LIBCLC_LIBEXECDIR=`$PKG_CONFIG --variable=libexecdir libclc`
         AC_SUBST([LIBCLC_INCLUDEDIR])
         AC_SUBST([LIBCLC_LIBEXECDIR])
     fi
