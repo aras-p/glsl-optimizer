@@ -95,7 +95,7 @@ upload_gs_state(struct brw_context *brw)
          OUT_BATCH(0);
       }
 
-      uint32_t dw5 =
+      uint32_t dw4 =
          ((brw->gs.prog_data->output_vertex_size_hwords * 2 - 1) <<
           GEN7_GS_OUTPUT_VERTEX_SIZE_SHIFT) |
          (brw->gs.prog_data->output_topology <<
@@ -105,7 +105,7 @@ upload_gs_state(struct brw_context *brw)
          (0 << GEN6_GS_URB_ENTRY_READ_OFFSET_SHIFT) |
          (prog_data->dispatch_grf_start_reg <<
           GEN6_GS_DISPATCH_START_GRF_SHIFT);
-      uint32_t dw6 =
+      uint32_t dw5 =
          ((brw->max_gs_threads - 1) << max_threads_shift) |
          (brw->gs.prog_data->control_data_header_size_hwords <<
           GEN7_GS_CONTROL_DATA_HEADER_SIZE_SHIFT) |
@@ -114,6 +114,7 @@ upload_gs_state(struct brw_context *brw)
          (brw->gs.prog_data->include_primitive_id ?
           GEN7_GS_INCLUDE_PRIMITIVE_ID : 0) |
          GEN7_GS_ENABLE;
+      uint32_t dw6 = 0;
 
       if (brw->is_haswell) {
          dw6 |= brw->gs.prog_data->control_data_format <<
@@ -123,9 +124,9 @@ upload_gs_state(struct brw_context *brw)
             IVB_GS_CONTROL_DATA_FORMAT_SHIFT;
       }
 
+      OUT_BATCH(dw4);
       OUT_BATCH(dw5);
       OUT_BATCH(dw6);
-      OUT_BATCH(0);
       ADVANCE_BATCH();
    } else {
       BEGIN_BATCH(7);
