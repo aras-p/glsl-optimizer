@@ -105,7 +105,7 @@ endif
 if HAVE_EGL_DRIVER_GLX
 AM_CFLAGS += -D_EGL_BUILT_IN_DRIVER_GLX
 libEGL_la_LIBADD += ../drivers/glx/libegl_glx.la
-libEGL_la_LIBADD += $(X11_LIBS) $(DLOPEN_LIBS)
+libEGL_la_LIBADD += $(DLOPEN_LIBS)
 endif
 
 if HAVE_EGL_DRIVER_DRI2
