@@ -2328,7 +2328,8 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
  */
 static ir_variable *
 get_variable_being_redeclared(ir_variable *var, YYLTYPE loc,
-			      struct _mesa_glsl_parse_state *state)
+                              struct _mesa_glsl_parse_state *state,
+                              bool allow_all_redeclarations)
 {
    /* Check if this declaration is actually a re-declaration, either to
     * resize an array or add qualifiers to an existing variable.
@@ -2431,6 +2432,16 @@ get_variable_being_redeclared(ir_variable *var, YYLTYPE loc,
 
       earlier->depth_layout = var->depth_layout;
 
+   } else if (allow_all_redeclarations) {
+      if (earlier->mode != var->mode) {
+         _mesa_glsl_error(&loc, state,
+                          "redeclaration of `%s' with incorrect qualifiers",
+                          var->name);
+      } else if (earlier->type != var->type) {
+         _mesa_glsl_error(&loc, state,
+                          "redeclaration of `%s' has incorrect type",
+                          var->name);
+      }
    } else {
       _mesa_glsl_error(&loc, state, "`%s' redeclared", var->name);
    }
@@ -3220,7 +3231,8 @@ ast_declarator_list::hir(exec_list *instructions,
        */
       exec_list initializer_instructions;
       ir_variable *earlier =
-         get_variable_being_redeclared(var, decl->get_location(), state);
+         get_variable_being_redeclared(var, decl->get_location(), state,
+                                       false /* allow_all_redeclarations */);
 
       if (decl->initializer != NULL) {
 	 result = process_initializer((earlier == NULL) ? var : earlier,
@@ -4816,6 +4828,20 @@ ast_interface_block::hir(exec_list *instructions,
                                    var_mode);
          var->init_interface_type(block_type);
 
+         if (redeclaring_per_vertex) {
+            ir_variable *earlier =
+               get_variable_being_redeclared(var, loc, state,
+                                             true /* allow_all_redeclarations */);
+            if (strncmp(var->name, "gl_", 3) != 0 || earlier == NULL) {
+               _mesa_glsl_error(&loc, state,
+                                "redeclaration of gl_PerVertex can only "
+                                "include built-in variables");
+            } else {
+               earlier->reinit_interface_type(block_type);
+            }
+            continue;
+         }
+
          if (state->symbols->get_variable(var->name) != NULL)
             _mesa_glsl_error(&loc, state, "`%s' redeclared", var->name);
 
@@ -4828,6 +4854,38 @@ ast_interface_block::hir(exec_list *instructions,
 
          state->symbols->add_variable(var);
          instructions->push_tail(var);
+      }
+
+      if (redeclaring_per_vertex && block_type != earlier_per_vertex) {
+         /* From section 7.1 ("Built-in Language Variables") of the GLSL 4.10 spec:
+          *
+          *     It is also a compilation error ... to redeclare a built-in
+          *     block and then use a member from that built-in block that was
+          *     not included in the redeclaration.
+          *
+          * This appears to be a clarification to the behaviour established
+          * for gl_PerVertex by GLSL 1.50, therefore we implement this
+          * behaviour regardless of GLSL version.
+          *
+          * To prevent the shader from using a member that was not included in
+          * the redeclaration, we disable any ir_variables that are still
+          * associated with the old declaration of gl_PerVertex (since we've
+          * already updated all of the variables contained in the new
+          * gl_PerVertex to point to it).
+          *
+          * As a side effect this will prevent
+          * validate_intrastage_interface_blocks() from getting confused and
+          * thinking there are conflicting definitions of gl_PerVertex in the
+          * shader.
+          */
+         foreach_list_safe(node, instructions) {
+            ir_variable *const var = ((ir_instruction *) node)->as_variable();
+            if (var != NULL &&
+                var->get_interface_type() == earlier_per_vertex) {
+               state->symbols->disable_variable(var->name);
+               var->remove();
+            }
+         }
       }
    }
 
