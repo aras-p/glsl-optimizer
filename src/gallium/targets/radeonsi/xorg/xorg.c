@@ -129,7 +129,6 @@ radeonsi_xorg_pci_probe(DriverPtr driver,
 	  int entity_num, struct pci_device *device, intptr_t match_data)
 {
     ScrnInfoPtr scrn = NULL;
-    EntityInfoPtr entity;
 
     scrn = xf86ConfigPciEntity(scrn, 0, entity_num, radeonsi_xorg_pci_devices,
 			       NULL, NULL, NULL, NULL, NULL);
@@ -138,8 +137,6 @@ radeonsi_xorg_pci_probe(DriverPtr driver,
 	scrn->driverName = "radeonsi";
 	scrn->name = "RADEONSI";
 	scrn->Probe = NULL;
-
-	entity = xf86GetEntityInfo(entity_num);
 
 	/* Use all the functions from the xorg tracker */
 	xorg_tracker_set_functions(scrn);

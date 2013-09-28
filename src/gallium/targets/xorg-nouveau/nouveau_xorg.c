@@ -125,7 +125,6 @@ nouveau_xorg_pci_probe(DriverPtr driver,
 	  int entity_num, struct pci_device *device, intptr_t match_data)
 {
     ScrnInfoPtr scrn = NULL;
-    EntityInfoPtr entity;
     struct nouveau_device *dev = NULL;
     char *busid;
     int chipset, ret;
@@ -184,8 +183,6 @@ nouveau_xorg_pci_probe(DriverPtr driver,
 	scrn->driverName = "nouveau";
 	scrn->name = "nouveau2";
 	scrn->Probe = NULL;
-
-	entity = xf86GetEntityInfo(entity_num);
 
 	/* Use all the functions from the xorg tracker */
 	xorg_tracker_set_functions(scrn);
