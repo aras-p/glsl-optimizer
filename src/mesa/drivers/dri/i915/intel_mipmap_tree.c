@@ -264,8 +264,10 @@ intel_miptree_create_for_bo(struct intel_context *intel,
                                     0, 0,
                                     width, height, 1,
                                     true);
-   if (!mt)
+   if (!mt) {
+      free(region);
       return mt;
+   }
 
    region->cpp = mt->cpp;
    region->width = width;
