@@ -2649,6 +2649,36 @@ handle_geometry_shader_input_decl(struct _mesa_glsl_parse_state *state,
    }
 }
 
+
+void
+validate_identifier(const char *identifier, YYLTYPE loc,
+                    struct _mesa_glsl_parse_state *state)
+{
+   /* From page 15 (page 21 of the PDF) of the GLSL 1.10 spec,
+    *
+    *   "Identifiers starting with "gl_" are reserved for use by
+    *   OpenGL, and may not be declared in a shader as either a
+    *   variable or a function."
+    */
+   if (strncmp(identifier, "gl_", 3) == 0) {
+      _mesa_glsl_error(&loc, state,
+                       "identifier `%s' uses reserved `gl_' prefix",
+                       identifier);
+   } else if (strstr(identifier, "__")) {
+      /* From page 14 (page 20 of the PDF) of the GLSL 1.10
+       * spec:
+       *
+       *     "In addition, all identifiers containing two
+       *      consecutive underscores (__) are reserved as
+       *      possible future keywords."
+       */
+      _mesa_glsl_error(&loc, state,
+                       "identifier `%s' uses reserved `__' string",
+                       identifier);
+   }
+}
+
+
 ir_rvalue *
 ast_declarator_list::hir(exec_list *instructions,
 			 struct _mesa_glsl_parse_state *state)
@@ -3243,28 +3273,7 @@ ast_declarator_list::hir(exec_list *instructions,
        * created for the declaration should be added to the IR stream.
        */
       if (earlier == NULL) {
-	 /* From page 15 (page 21 of the PDF) of the GLSL 1.10 spec,
-	  *
-	  *   "Identifiers starting with "gl_" are reserved for use by
-	  *   OpenGL, and may not be declared in a shader as either a
-	  *   variable or a function."
-	  */
-	 if (strncmp(decl->identifier, "gl_", 3) == 0)
-	    _mesa_glsl_error(& loc, state,
-			     "identifier `%s' uses reserved `gl_' prefix",
-			     decl->identifier);
-	 else if (strstr(decl->identifier, "__")) {
-	    /* From page 14 (page 20 of the PDF) of the GLSL 1.10
-	     * spec:
-	     *
-	     *     "In addition, all identifiers containing two
-	     *      consecutive underscores (__) are reserved as
-	     *      possible future keywords."
-	     */
-	    _mesa_glsl_error(& loc, state,
-			     "identifier `%s' uses reserved `__' string",
-			     decl->identifier);
-	 }
+         validate_identifier(decl->identifier, loc, state);
 
 	 /* Add the variable to the symbol table.  Note that the initializer's
 	  * IR was already processed earlier (though it hasn't been emitted
@@ -3505,17 +3514,7 @@ ast_function::hir(exec_list *instructions,
 		       "function body", name);
    }
 
-   /* From page 15 (page 21 of the PDF) of the GLSL 1.10 spec,
-    *
-    *   "Identifiers starting with "gl_" are reserved for use by
-    *   OpenGL, and may not be declared in a shader as either a
-    *   variable or a function."
-    */
-   if (strncmp(name, "gl_", 3) == 0) {
-      YYLTYPE loc = this->get_location();
-      _mesa_glsl_error(&loc, state,
-		       "identifier `%s' uses reserved `gl_' prefix", name);
-   }
+   validate_identifier(name, this->get_location(), state);
 
    /* Convert the list of function parameters to HIR now so that they can be
     * used below to compare this function's signature with previously seen
