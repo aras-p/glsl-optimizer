@@ -4692,6 +4692,9 @@ ast_interface_block::hir(exec_list *instructions,
     *     field selector ( . ) operator (analogously to structures)."
     */
    if (this->instance_name) {
+      if (!redeclaring_per_vertex)
+         validate_identifier(this->instance_name, loc, state);
+
       ir_variable *var;
 
       if (this->is_array) {
