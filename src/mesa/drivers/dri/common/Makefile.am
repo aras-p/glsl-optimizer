@@ -21,6 +21,8 @@
 
 SUBDIRS = xmlpool
 
+include Makefile.sources
+
 AM_CFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/src/ \
@@ -35,13 +37,9 @@ noinst_LTLIBRARIES = \
 	libmegadriver_stub.la \
 	libdri_test_stubs.la
 
-libdricommon_la_SOURCES = \
-	utils.c \
-	dri_util.c \
-	xmlconfig.c
+libdricommon_la_SOURCES = $(DRI_COMMON_FILES)
 
-libdri_test_stubs_la_SOURCES = \
-	dri_test.c
+libdri_test_stubs_la_SOURCES = $(test_stubs_FILES)
 libdri_test_stubs_la_CFLAGS = $(AM_CFLAGS) -DNO_MAIN
 
 libmegadriver_stub_la_SOURCES = megadriver_stub.c

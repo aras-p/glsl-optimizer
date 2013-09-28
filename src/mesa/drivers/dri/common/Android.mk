@@ -40,7 +40,7 @@ LOCAL_C_INCLUDES := \
     $(intermediates) \
     $(MESA_DRI_C_INCLUDES)
 
-LOCAL_SRC_FILES := $(mesa_dri_common_SOURCES)
+LOCAL_SRC_FILES := $(DRI_COMMON_FILES)
 
 LOCAL_GENERATED_SOURCES := \
     $(intermediates)/xmlpool/options.h
