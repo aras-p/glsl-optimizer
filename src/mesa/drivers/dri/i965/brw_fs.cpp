@@ -2798,12 +2798,6 @@ fs_visitor::dump_instruction(backend_instruction *be_inst)
    case UNIFORM:
       printf("***u%d***", inst->dst.reg);
       break;
-   case ARF:
-      if (inst->dst.reg == BRW_ARF_NULL)
-         printf("(null)");
-      else
-         printf("arf%d", inst->dst.reg);
-      break;
    default:
       printf("???");
       break;

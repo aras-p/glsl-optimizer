@@ -29,7 +29,6 @@
 
 enum register_file {
    BAD_FILE,
-   ARF,
    GRF,
    MRF,
    IMM,

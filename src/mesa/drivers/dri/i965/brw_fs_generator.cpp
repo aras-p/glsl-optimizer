@@ -911,8 +911,6 @@ fs_generator::generate_mov_dispatch_to_flags(fs_inst *inst)
 static uint32_t brw_file_from_reg(fs_reg *reg)
 {
    switch (reg->file) {
-   case ARF:
-      return BRW_ARCHITECTURE_REGISTER_FILE;
    case GRF:
       return BRW_GENERAL_REGISTER_FILE;
    case MRF:
@@ -932,7 +930,6 @@ brw_reg_from_fs_reg(fs_reg *reg)
 
    switch (reg->file) {
    case GRF:
-   case ARF:
    case MRF:
       if (reg->smear == -1) {
 	 brw_reg = brw_vec8_reg(brw_file_from_reg(reg), reg->reg, 0);

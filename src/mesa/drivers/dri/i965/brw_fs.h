@@ -75,10 +75,10 @@ public:
    bool is_one() const;
    bool is_valid_3src() const;
 
-   /** Register file: ARF, GRF, MRF, IMM. */
+   /** Register file: GRF, MRF, IMM. */
    enum register_file file;
    /**
-    * Register number.  For ARF/MRF, it's the hardware register.  For
+    * Register number.  For MRF, it's the hardware register.  For
     * GRF, it's a virtual register number until register allocation
     */
    int reg;
@@ -107,9 +107,9 @@ public:
 };
 
 static const fs_reg reg_undef;
-static const fs_reg reg_null_f(ARF, BRW_ARF_NULL, BRW_REGISTER_TYPE_F);
-static const fs_reg reg_null_d(ARF, BRW_ARF_NULL, BRW_REGISTER_TYPE_D);
-static const fs_reg reg_null_ud(ARF, BRW_ARF_NULL, BRW_REGISTER_TYPE_UD);
+static const fs_reg reg_null_f(retype(brw_null_reg(), BRW_REGISTER_TYPE_F));
+static const fs_reg reg_null_d(retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
+static const fs_reg reg_null_ud(retype(brw_null_reg(), BRW_REGISTER_TYPE_UD));
 
 class ip_record : public exec_node {
 public:

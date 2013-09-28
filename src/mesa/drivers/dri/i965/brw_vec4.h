@@ -97,7 +97,7 @@ swizzle_for_size(int size);
 class reg
 {
 public:
-   /** Register file: ARF, GRF, MRF, IMM. */
+   /** Register file: GRF, MRF, IMM. */
    enum register_file file;
    /** virtual register number.  0 = fixed hw reg */
    int reg;
