@@ -4575,6 +4575,8 @@ ast_struct_specifier::hir(exec_list *instructions,
                                                false,
                                                false /* allow_reserved_names */);
 
+   validate_identifier(this->name, loc, state);
+
    const glsl_type *t =
       glsl_type::get_record_instance(fields, decl_count, this->name);
 
