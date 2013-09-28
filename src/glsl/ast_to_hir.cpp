@@ -4614,6 +4614,7 @@ ast_interface_block::hir(exec_list *instructions,
       packing = GLSL_INTERFACE_PACKING_STD140;
    }
 
+   bool redeclaring_per_vertex = strcmp(this->block_name, "gl_PerVertex") == 0;
    bool block_row_major = this->layout.flags.q.row_major;
    exec_list declared_variables;
    glsl_struct_field *fields;
@@ -4642,6 +4643,9 @@ ast_interface_block::hir(exec_list *instructions,
       iface_type_name = "UNKNOWN";
       assert(!"interface block layout qualifier not found!");
    }
+
+   if (!redeclaring_per_vertex)
+      validate_identifier(this->block_name, loc, state);
 
    const glsl_type *block_type =
       glsl_type::get_interface_instance(fields,
