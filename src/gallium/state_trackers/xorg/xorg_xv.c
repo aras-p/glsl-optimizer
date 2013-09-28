@@ -490,7 +490,6 @@ display_video(ScrnInfoPtr pScrn, struct xorg_xv_port_priv *pPriv, int id,
    modesettingPtr ms = modesettingPTR(pScrn);
    BoxPtr pbox;
    int nbox;
-   int dxo, dyo;
    Bool hdtv;
    int x, y, w, h;
    struct exa_pixmap_priv *dst;
@@ -517,9 +516,6 @@ display_video(ScrnInfoPtr pScrn, struct xorg_xv_port_priv *pPriv, int id,
    REGION_TRANSLATE(pScrn->pScreen, dstRegion, -pPixmap->screen_x,
                     -pPixmap->screen_y);
 #endif
-
-   dxo = dstRegion->extents.x1;
-   dyo = dstRegion->extents.y1;
 
    pbox = REGION_RECTS(dstRegion);
    nbox = REGION_NUM_RECTS(dstRegion);
