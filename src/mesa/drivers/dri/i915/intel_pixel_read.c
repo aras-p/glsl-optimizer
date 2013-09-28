@@ -148,6 +148,7 @@ do_blit_readpixels(struct gl_context * ctx,
                            pbo_mt, 0, 0,
                            0, 0, dst_flip,
                            width, height, GL_COPY)) {
+      intel_miptree_release(&pbo_mt);
       return false;
    }
 
