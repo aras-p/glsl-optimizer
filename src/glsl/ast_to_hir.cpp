@@ -4724,6 +4724,19 @@ ast_interface_block::hir(exec_list *instructions,
           */
          return NULL;
       }
+
+      /* Copy locations from the old gl_PerVertex interface block. */
+      for (unsigned i = 0; i < num_variables; i++) {
+         int j = earlier_per_vertex->field_index(fields[i].name);
+         if (j == -1) {
+            _mesa_glsl_error(&loc, state,
+                             "redeclaration of gl_PerVertex must be a subset "
+                             "of the built-in members of gl_PerVertex");
+         } else {
+            fields[i].location =
+               earlier_per_vertex->fields.structure[j].location;
+         }
+      }
    }
 
    const glsl_type *block_type =
@@ -4814,8 +4827,14 @@ ast_interface_block::hir(exec_list *instructions,
       if (state->target == geometry_shader && var_mode == ir_var_shader_in)
          handle_geometry_shader_input_decl(state, loc, var);
 
-      if (state->symbols->get_variable(this->instance_name)) {
-         _mesa_glsl_error(&loc, state, "`%s' redeclared", this->instance_name);
+      if (ir_variable *earlier =
+          state->symbols->get_variable(this->instance_name)) {
+         if (!redeclaring_per_vertex) {
+            _mesa_glsl_error(&loc, state, "`%s' redeclared",
+                             this->instance_name);
+         }
+         earlier->type = var->type;
+         earlier->reinit_interface_type(block_type);
          delete var;
       } else {
          state->symbols->add_variable(var);
