@@ -4813,8 +4813,14 @@ ast_interface_block::hir(exec_list *instructions,
       var->init_interface_type(block_type);
       if (state->target == geometry_shader && var_mode == ir_var_shader_in)
          handle_geometry_shader_input_decl(state, loc, var);
-      state->symbols->add_variable(var);
-      instructions->push_tail(var);
+
+      if (state->symbols->get_variable(this->instance_name)) {
+         _mesa_glsl_error(&loc, state, "`%s' redeclared", this->instance_name);
+         delete var;
+      } else {
+         state->symbols->add_variable(var);
+         instructions->push_tail(var);
+      }
    } else {
       /* In order to have an array size, the block must also be declared with
        * an instane name.
