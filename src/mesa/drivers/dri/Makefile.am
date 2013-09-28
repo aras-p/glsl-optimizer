@@ -59,7 +59,7 @@ mesa_dri_drivers_la_LIBADD = \
         common/libmegadriver_stub.la \
         common/libdricommon.la \
         $(MEGADRIVERS_DEPS) \
-        $(MEGADRIVER_DRI_LIB_DEPS) \
+        $(DRI_LIB_DEPS) \
         $()
 
 if NEED_MEGADRIVER

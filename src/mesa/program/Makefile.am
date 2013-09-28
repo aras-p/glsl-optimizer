@@ -24,25 +24,13 @@ include ../Makefile.sources
 AM_CPPFLAGS = $(DEFINES) $(INCLUDE_DIRS)
 AM_CFLAGS = $(VISIBILITY_CFLAGS)
 AM_CXXFLAGS = $(VISIBILITY_CXXFLAGS)
-libdricore_program_la_CFLAGS = $(NOVISIBILITY_CFLAGS)
-libdricore_program_la_CXXFLAGS = $(NOVISIBILITY_CXXFLAGS)
 
 SRCDIR = $(top_srcdir)/src/mesa/
 BUILDDIR = $(top_builddir)/src/mesa/
 
-if NEED_LIBDRICORE
-DRICORE_LIB = libdricore_program.la
-endif
-
-noinst_LTLIBRARIES = $(DRICORE_LIB)
-if NEED_LIBPROGRAM
-noinst_LTLIBRARIES += libprogram.la
-else
-check_LTLIBRARIES = libprogram.la
-endif
+noinst_LTLIBRARIES = libprogram.la
 
 libprogram_la_SOURCES = $(PROGRAM_FILES)
-libdricore_program_la_SOURCES = $(PROGRAM_FILES)
 
 lex.yy.c: program_lexer.l
 	$(AM_V_GEN) $(LEX) --never-interactive --outfile=$@ $<

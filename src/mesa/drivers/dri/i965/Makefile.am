@@ -46,7 +46,7 @@ TEST_LIBS = \
 	libi965_dri.la \
 	../common/libdricommon.la \
 	../common/libmegadriver_stub.la \
-	$(MEGADRIVER_DRI_LIB_DEPS) \
+	$(DRI_LIB_DEPS) \
         ../../../libmesa.la \
         -lrt \
 	../common/libdri_test_stubs.la

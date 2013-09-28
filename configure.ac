@@ -1041,15 +1041,6 @@ if test "x$enable_dri" = xyes; then
     DRI_DRIVER_LDFLAGS="-module -avoid-version -shared -Wl,-Bsymbolic"
 fi
 
-enable_dricore=no
-
-# megadriver wants to use libmesa.la, while non-megadrivers want to
-# automatically get libdricore.  Some day hopefully we'll transition
-# everything to megadriver.
-MEGADRIVER_DRI_LIB_DEPS=$DRI_LIB_DEPS
-DRI_LIB_DEPS="\$(top_builddir)/src/mesa/libdricore/libdricore${VERSION}.la $DRI_LIB_DEPS"
-
-AM_CONDITIONAL(NEED_LIBDRICORE, test "x$enable_dricore" = xyes)
 AM_CONDITIONAL(NEED_MEGADRIVER, test -n "$DRI_DIRS")
 AM_CONDITIONAL(NEED_LIBMESA, test "x$enable_xlib_glx" = xyes -o \
                                   "x$enable_osmesa" = xyes -o \
@@ -1057,7 +1048,6 @@ AM_CONDITIONAL(NEED_LIBMESA, test "x$enable_xlib_glx" = xyes -o \
 AC_SUBST([EXPAT_INCLUDES])
 AC_SUBST([DRI_LIB_DEPS])
 AC_SUBST([DRI_DRIVER_LDFLAGS])
-AC_SUBST([MEGADRIVER_DRI_LIB_DEPS])
 AC_SUBST([GALLIUM_DRI_LIB_DEPS])
 
 case $DRI_DIRS in
@@ -1966,11 +1956,6 @@ AM_CONDITIONAL(HAVE_MESA_LLVM, test x$MESA_LLVM = x1)
 AC_SUBST([ELF_LIB])
 
 AM_CONDITIONAL(DRICOMMON_NEED_LIBDRM, test "x$DRICOMMON_NEED_LIBDRM" = xyes)
-AM_CONDITIONAL(NEED_LIBPROGRAM, test "x$with_gallium_drivers" != x -o \
-                                     "x$enable_xlib_glx" = xyes -o \
-                                     "x$enable_osmesa" = xyes -o \
-                                     -n "$DRI_DIRS" -o \
-                                     "x$enable_gallium_osmesa" = xyes)
 AM_CONDITIONAL(HAVE_X11_DRIVER, test "x$enable_xlib_glx" = xyes)
 AM_CONDITIONAL(HAVE_OSMESA, test "x$enable_osmesa" = xyes)
 AM_CONDITIONAL(HAVE_GALLIUM_OSMESA, test "x$enable_gallium_osmesa" = xyes)
@@ -2133,7 +2118,6 @@ AC_CONFIG_FILES([Makefile
 		src/mesa/drivers/osmesa/Makefile
 		src/mesa/drivers/osmesa/osmesa.pc
 		src/mesa/drivers/x11/Makefile
-		src/mesa/libdricore/Makefile
 		src/mesa/main/tests/Makefile
 		src/mesa/main/tests/hash_table/Makefile
 		src/mesa/program/Makefile
