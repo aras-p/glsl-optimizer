@@ -319,7 +319,7 @@ get_tex_rgba_compressed(struct gl_context *ctx, GLuint dimensions,
  * Return a base GL format given the user-requested format
  * for glGetTexImage().
  */
-static GLenum
+GLenum
 _mesa_base_pack_format(GLenum format)
 {
    switch (format) {

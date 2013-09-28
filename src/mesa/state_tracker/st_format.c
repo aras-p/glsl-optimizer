@@ -35,6 +35,8 @@
 #include "main/imports.h"
 #include "main/context.h"
 #include "main/glformats.h"
+#include "main/texgetimage.h"
+#include "main/teximage.h"
 #include "main/texstore.h"
 #include "main/image.h"
 #include "main/macros.h"
@@ -1743,6 +1745,40 @@ st_ChooseTextureFormat(struct gl_context *ctx, GLenum target,
 	 bindings |= PIPE_BIND_DEPTH_STENCIL;
       else
 	 bindings |= PIPE_BIND_RENDER_TARGET;
+   }
+
+   /* GLES allows the driver to choose any format which matches
+    * the format+type combo, because GLES only supports unsized internal
+    * formats and expects the driver to choose whatever suits it.
+    */
+   if (_mesa_is_gles(ctx)) {
+      GLenum baseFormat = _mesa_base_tex_format(ctx, internalFormat);
+      GLenum basePackFormat = _mesa_base_pack_format(format);
+      GLenum iformat = internalFormat;
+
+      /* Treat GL_BGRA as GL_RGBA. */
+      if (iformat == GL_BGRA)
+         iformat = GL_RGBA;
+
+      /* Check if the internalformat is unsized and compatible
+       * with the "format".
+       */
+      if (iformat == baseFormat && iformat == basePackFormat) {
+         pFormat = st_choose_matching_format(st->pipe->screen, bindings,
+                                             format, type,
+                                             ctx->Unpack.SwapBytes);
+
+         if (pFormat != PIPE_FORMAT_NONE)
+            return st_pipe_format_to_mesa_format(pFormat);
+
+         /* try choosing format again, this time without render target bindings */
+         pFormat = st_choose_matching_format(st->pipe->screen,
+                                             PIPE_BIND_SAMPLER_VIEW,
+                                             format, type,
+                                             ctx->Unpack.SwapBytes);
+         if (pFormat != PIPE_FORMAT_NONE)
+            return st_pipe_format_to_mesa_format(pFormat);
+      }
    }
 
    pFormat = st_choose_format(st, internalFormat, format, type,

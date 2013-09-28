@@ -33,6 +33,9 @@ struct gl_context;
 struct gl_texture_image;
 struct gl_texture_object;
 
+extern GLenum
+_mesa_base_pack_format(GLenum format);
+
 extern void
 _mesa_get_teximage(struct gl_context *ctx,
                    GLenum format, GLenum type, GLvoid *pixels,
