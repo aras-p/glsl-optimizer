@@ -2435,7 +2435,7 @@ generate_variant(struct llvmpipe_context *lp,
          !shader->info.base.uses_kill
       ? TRUE : FALSE;
 
-   if ((!shader || shader->info.base.num_tokens <= 1) &&
+   if ((shader->info.base.num_tokens <= 1) &&
        !key->depth.enabled && !key->stencil[0].enabled) {
       variant->ps_inv_multiplier = 0;
    } else {
