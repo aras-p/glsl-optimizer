@@ -395,10 +395,11 @@ void ra_init::color_bs_constraint(ra_constraint* c) {
 
 	for (vvec::iterator I = vv.begin(), E = vv.end(); I != E; ++I) {
 		value *v = *I;
-		sel_chan gpr = v->get_final_gpr();
 
 		if (!v || v->is_dead())
 			continue;
+
+		sel_chan gpr = v->get_final_gpr();
 
 		val_set interf;
 
