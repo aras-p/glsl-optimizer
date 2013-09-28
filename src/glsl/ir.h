@@ -420,6 +420,31 @@ public:
       this->interface_type = type;
    }
 
+   /**
+    * Change this->interface_type on a variable that previously had a
+    * different, and incompatible, interface_type. This is used during
+    * compilation to handle redeclaration of the built-in gl_PerVertex
+    * interface block.
+    */
+   void reinit_interface_type(const struct glsl_type *type)
+   {
+      if (this->max_ifc_array_access != NULL) {
+#ifndef _NDEBUG
+         /* Redeclaring gl_PerVertex is only allowed if none of the built-ins
+          * it defines have been accessed yet; so it's safe to throw away the
+          * old max_ifc_array_access pointer, since all of its values are
+          * zero.
+          */
+         for (unsigned i = 0; i < this->interface_type->length; i++)
+            assert(this->max_ifc_array_access[i] == 0);
+#endif
+         ralloc_free(this->max_ifc_array_access);
+         this->max_ifc_array_access = NULL;
+      }
+      this->interface_type = NULL;
+      init_interface_type(type);
+   }
+
    const glsl_type *get_interface_type() const
    {
       return this->interface_type;
