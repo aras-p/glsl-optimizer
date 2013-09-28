@@ -2326,8 +2326,8 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
  * A pointer to an existing variable in the current scope if the declaration
  * is a redeclaration, \c NULL otherwise.
  */
-ir_variable *
-get_variable_being_redeclared(ir_variable *var, ast_declaration *decl,
+static ir_variable *
+get_variable_being_redeclared(ir_variable *var, YYLTYPE loc,
 			      struct _mesa_glsl_parse_state *state)
 {
    /* Check if this declaration is actually a re-declaration, either to
@@ -2336,15 +2336,13 @@ get_variable_being_redeclared(ir_variable *var, ast_declaration *decl,
     * This is allowed for variables in the current scope, or when at
     * global scope (for built-ins in the implicit outer scope).
     */
-   ir_variable *earlier = state->symbols->get_variable(decl->identifier);
+   ir_variable *earlier = state->symbols->get_variable(var->name);
    if (earlier == NULL ||
        (state->current_function != NULL &&
-	!state->symbols->name_declared_this_scope(decl->identifier))) {
+	!state->symbols->name_declared_this_scope(var->name))) {
       return NULL;
    }
 
-
-   YYLTYPE loc = decl->get_location();
 
    /* From page 24 (page 30 of the PDF) of the GLSL 1.50 spec,
     *
@@ -2434,7 +2432,7 @@ get_variable_being_redeclared(ir_variable *var, ast_declaration *decl,
       earlier->depth_layout = var->depth_layout;
 
    } else {
-      _mesa_glsl_error(&loc, state, "`%s' redeclared", decl->identifier);
+      _mesa_glsl_error(&loc, state, "`%s' redeclared", var->name);
    }
 
    return earlier;
@@ -3221,7 +3219,8 @@ ast_declarator_list::hir(exec_list *instructions,
        * instruction stream.
        */
       exec_list initializer_instructions;
-      ir_variable *earlier = get_variable_being_redeclared(var, decl, state);
+      ir_variable *earlier =
+         get_variable_being_redeclared(var, decl->get_location(), state);
 
       if (decl->initializer != NULL) {
 	 result = process_initializer((earlier == NULL) ? var : earlier,
