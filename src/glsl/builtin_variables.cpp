@@ -828,7 +828,7 @@ builtin_variable_generator::generate_varyings()
          glsl_type::get_interface_instance(this->per_vertex_fields,
                                            this->num_per_vertex_fields,
                                            GLSL_INTERFACE_PACKING_STD140,
-                                           "gl_in");
+                                           "gl_PerVertex");
       ir_variable *var = add_variable("gl_in", array(per_vertex_type, 0),
                                       ir_var_shader_in, -1);
       var->init_interface_type(per_vertex_type);
