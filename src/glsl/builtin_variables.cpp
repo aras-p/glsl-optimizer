@@ -404,7 +404,8 @@ private:
    const glsl_type * const mat3_t;
    const glsl_type * const mat4_t;
 
-   per_vertex_accumulator per_vertex;
+   per_vertex_accumulator per_vertex_in;
+   per_vertex_accumulator per_vertex_out;
 };
 
 
@@ -804,10 +805,10 @@ builtin_variable_generator::add_varying(int slot, const glsl_type *type,
 {
    switch (state->target) {
    case geometry_shader:
-      this->per_vertex.add_field(slot, type, name);
+      this->per_vertex_in.add_field(slot, type, name);
       /* FALLTHROUGH */
    case vertex_shader:
-      add_output(slot, type, name);
+      this->per_vertex_out.add_field(slot, type, name);
       break;
    case fragment_shader:
       add_input(slot, type, name);
@@ -853,11 +854,22 @@ builtin_variable_generator::generate_varyings()
    }
 
    if (state->target == geometry_shader) {
-      const glsl_type *per_vertex_type =
-         this->per_vertex.construct_interface_instance();
-      ir_variable *var = add_variable("gl_in", array(per_vertex_type, 0),
+      const glsl_type *per_vertex_in_type =
+         this->per_vertex_in.construct_interface_instance();
+      ir_variable *var = add_variable("gl_in", array(per_vertex_in_type, 0),
                                       ir_var_shader_in, -1);
-      var->init_interface_type(per_vertex_type);
+      var->init_interface_type(per_vertex_in_type);
+   }
+   if (state->target == vertex_shader || state->target == geometry_shader) {
+      const glsl_type *per_vertex_out_type =
+         this->per_vertex_out.construct_interface_instance();
+      const glsl_struct_field *fields = per_vertex_out_type->fields.structure;
+      for (unsigned i = 0; i < per_vertex_out_type->length; i++) {
+         ir_variable *var =
+            add_variable(fields[i].name, fields[i].type, ir_var_shader_out,
+                         fields[i].location);
+         var->init_interface_type(per_vertex_out_type);
+      }
    }
 }
 
