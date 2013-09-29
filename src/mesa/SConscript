@@ -18,9 +18,6 @@ env.Append(CPPPATH = [
     Dir('.'), # src/mesa build path
 ])
 
-enabled_apis = []
-enabled_apis += ['GL']
-
 if env['platform'] == 'windows':
     env.Append(CPPDEFINES = [
         '_GDI32_', # prevent gl* being declared __declspec(dllimport) in MS headers
@@ -339,10 +336,6 @@ mesa_sources = (
 )
 
 GLAPI = '#src/mapi/glapi/'
-
-if env['gles']:
-
-    enabled_apis += ['ES1', 'ES2']
 
 get_hash_header = env.CodeGenerate(
       target = 'main/get_hash.h',
