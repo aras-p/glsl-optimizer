@@ -293,6 +293,51 @@ static const struct gl_builtin_uniform_desc _mesa_builtin_uniform_desc[] = {
 
 namespace {
 
+/**
+ * Data structure that accumulates fields for the gl_PerVertex interface
+ * block.
+ */
+class per_vertex_accumulator
+{
+public:
+   per_vertex_accumulator();
+   void add_field(int slot, const glsl_type *type, const char *name);
+   const glsl_type *construct_interface_instance() const;
+
+private:
+   glsl_struct_field fields[10];
+   unsigned num_fields;
+};
+
+
+per_vertex_accumulator::per_vertex_accumulator()
+   : num_fields(0)
+{
+}
+
+
+void
+per_vertex_accumulator::add_field(int slot, const glsl_type *type,
+                                  const char *name)
+{
+   assert(this->num_fields < ARRAY_SIZE(this->fields));
+   this->fields[this->num_fields].type = type;
+   this->fields[this->num_fields].name = name;
+   this->fields[this->num_fields].row_major = false;
+   this->fields[this->num_fields].location = slot;
+   this->num_fields++;
+}
+
+
+const glsl_type *
+per_vertex_accumulator::construct_interface_instance() const
+{
+   return glsl_type::get_interface_instance(this->fields, this->num_fields,
+                                            GLSL_INTERFACE_PACKING_STD140,
+                                            "gl_PerVertex");
+}
+
+
 class builtin_variable_generator
 {
 public:
@@ -359,16 +404,7 @@ private:
    const glsl_type * const mat3_t;
    const glsl_type * const mat4_t;
 
-   /**
-    * Array where the contents of the gl_PerVertex interface instance are
-    * accumulated.
-    */
-   glsl_struct_field per_vertex_fields[10];
-
-   /**
-    * Number of elements of per_vertex_fields which have been populated.
-    */
-   unsigned num_per_vertex_fields;
+   per_vertex_accumulator per_vertex;
 };
 
 
@@ -379,8 +415,7 @@ builtin_variable_generator::builtin_variable_generator(
      bool_t(glsl_type::bool_type), int_t(glsl_type::int_type),
      float_t(glsl_type::float_type), vec2_t(glsl_type::vec2_type),
      vec3_t(glsl_type::vec3_type), vec4_t(glsl_type::vec4_type),
-     mat3_t(glsl_type::mat3_type), mat4_t(glsl_type::mat4_type),
-     num_per_vertex_fields(0)
+     mat3_t(glsl_type::mat3_type), mat4_t(glsl_type::mat4_type)
 {
 }
 
@@ -769,13 +804,7 @@ builtin_variable_generator::add_varying(int slot, const glsl_type *type,
 {
    switch (state->target) {
    case geometry_shader:
-      assert(this->num_per_vertex_fields <
-             ARRAY_SIZE(this->per_vertex_fields));
-      this->per_vertex_fields[this->num_per_vertex_fields].type = type;
-      this->per_vertex_fields[this->num_per_vertex_fields].name = name;
-      this->per_vertex_fields[this->num_per_vertex_fields].row_major = false;
-      this->per_vertex_fields[this->num_per_vertex_fields].location = slot;
-      this->num_per_vertex_fields++;
+      this->per_vertex.add_field(slot, type, name);
       /* FALLTHROUGH */
    case vertex_shader:
       add_output(slot, type, name);
@@ -825,10 +854,7 @@ builtin_variable_generator::generate_varyings()
 
    if (state->target == geometry_shader) {
       const glsl_type *per_vertex_type =
-         glsl_type::get_interface_instance(this->per_vertex_fields,
-                                           this->num_per_vertex_fields,
-                                           GLSL_INTERFACE_PACKING_STD140,
-                                           "gl_PerVertex");
+         this->per_vertex.construct_interface_instance();
       ir_variable *var = add_variable("gl_in", array(per_vertex_type, 0),
                                       ir_var_shader_in, -1);
       var->init_interface_type(per_vertex_type);
