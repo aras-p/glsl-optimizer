@@ -1337,8 +1337,8 @@ if test "x$enable_opencl" = xyes; then
         AC_MSG_ERROR([cannot enable OpenCL without Gallium])
     fi
 
-    if test $GCC_VERSION_MAJOR -lt 4 -o $GCC_VERSION_MAJOR -eq 4 -a $GCC_VERSION_MINOR -lt 6; then
-        AC_MSG_ERROR([gcc >= 4.6 is required to build clover])
+    if test $GCC_VERSION_MAJOR -lt 4 -o $GCC_VERSION_MAJOR -eq 4 -a $GCC_VERSION_MINOR -lt 7; then
+        AC_MSG_ERROR([gcc >= 4.7 is required to build clover])
     fi
 
     if test "x$have_libclc" = xno; then
