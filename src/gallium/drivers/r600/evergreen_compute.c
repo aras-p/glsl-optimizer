@@ -532,10 +532,10 @@ static void evergreen_launch_grid(
 		struct r600_bytecode *bc = &kernel->bc;
 		LLVMModuleRef mod = kernel->llvm_module;
 		boolean use_kill = false;
-		bool dump = (ctx->screen->debug_flags & DBG_CS) != 0;
-		unsigned use_sb = ctx->screen->debug_flags & DBG_SB_CS;
+		bool dump = (ctx->screen->b.debug_flags & DBG_CS) != 0;
+		unsigned use_sb = ctx->screen->b.debug_flags & DBG_SB_CS;
 		unsigned sb_disasm = use_sb ||
-			(ctx->screen->debug_flags & DBG_SB_DISASM);
+			(ctx->screen->b.debug_flags & DBG_SB_DISASM);
 
 		r600_bytecode_init(bc, ctx->b.chip_class, ctx->b.family,
 			   ctx->screen->has_compressed_msaa_texturing);
@@ -552,7 +552,7 @@ static void evergreen_launch_grid(
 
 		kernel->code_bo = r600_compute_buffer_alloc_vram(ctx->screen,
 							kernel->bc.ndw * 4);
-		p = r600_buffer_mmap_sync_with_rings(ctx, kernel->code_bo, PIPE_TRANSFER_WRITE);
+		p = r600_buffer_map_sync_with_rings(&ctx->b, kernel->code_bo, PIPE_TRANSFER_WRITE);
 		memcpy(p, kernel->bc.bytecode, kernel->bc.ndw * 4);
 		ctx->b.ws->buffer_unmap(kernel->code_bo->cs_buf);
 	}
