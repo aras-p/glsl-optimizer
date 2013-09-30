@@ -381,7 +381,8 @@ fs_generator::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src
       break;
    }
 
-   if (dispatch_width == 16)
+   if (dispatch_width == 16 &&
+      !inst->force_uncompressed && !inst->force_sechalf)
       simd_mode = BRW_SAMPLER_SIMD_MODE_SIMD16;
 
    if (brw->gen >= 5) {
