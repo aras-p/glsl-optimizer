@@ -227,7 +227,7 @@ svga_get_param(struct pipe_screen *screen, enum pipe_cap param)
       return 120;
 
    case PIPE_CAP_PREFER_BLIT_BASED_TEXTURE_TRANSFER:
-      return 1;
+      return 0;
 
    /* Unsupported features */
    case PIPE_CAP_QUADS_FOLLOW_PROVOKING_VERTEX_CONVENTION:
