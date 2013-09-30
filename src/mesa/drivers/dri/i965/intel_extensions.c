@@ -290,6 +290,7 @@ intelInitExtensions(struct gl_context *ctx)
          ctx->Extensions.ARB_transform_feedback2 = true;
          ctx->Extensions.ARB_transform_feedback3 = true;
          ctx->Extensions.ARB_transform_feedback_instanced = true;
+         ctx->Extensions.ARB_draw_indirect = true;
       }
    }
 
