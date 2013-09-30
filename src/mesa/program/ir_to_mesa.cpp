@@ -155,7 +155,7 @@ namespace {
 
 class ir_to_mesa_instruction : public exec_node {
 public:
-   DECLARE_RZALLOC_CXX_OPERATORS(ir_to_mesa_instruction)
+   DECLARE_RALLOC_CXX_OPERATORS(ir_to_mesa_instruction)
 
    enum prog_opcode op;
    dst_reg dst;
