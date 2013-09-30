@@ -853,7 +853,7 @@ emit_wpos_adjustment( struct st_translate *t,
 
 
 /**
- * Emit fragment position/ooordinate code.
+ * Emit fragment position/coordinate code.
  */
 static void
 emit_wpos(struct st_context *st,
