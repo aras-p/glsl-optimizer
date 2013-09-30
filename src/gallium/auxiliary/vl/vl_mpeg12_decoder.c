@@ -29,8 +29,8 @@
 #include <assert.h>
 
 #include "util/u_memory.h"
-#include "util/u_rect.h"
 #include "util/u_sampler.h"
+#include "util/u_surface.h"
 #include "util/u_video.h"
 
 #include "vl_mpeg12_decoder.h"

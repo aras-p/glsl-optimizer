@@ -34,9 +34,9 @@
 
 #include "u_math.h"
 #include "u_memory.h"
-#include "u_rect.h"
 #include "u_format.h"
 #include "u_format_s3tc.h"
+#include "u_surface.h"
 
 #include "pipe/p_defines.h"
 

@@ -83,10 +83,4 @@ u_rect_possible_intersection(const struct u_rect *a,
 }
 #endif
 
-
-/* Include pipe copy/fill rect helpers declarations for backwards compatibility
- */
-#include "util/u_surface.h"
-
-
 #endif /* U_RECT_H */
