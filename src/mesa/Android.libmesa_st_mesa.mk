@@ -37,8 +37,6 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE := libmesa_st_mesa
 
-MESA_ENABLED_APIS := ES1 ES2
-
 LOCAL_SRC_FILES := \
 	$(MESA_GALLIUM_FILES)
 

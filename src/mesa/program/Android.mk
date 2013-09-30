@@ -47,8 +47,6 @@ LOCAL_MODULE_CLASS := STATIC_LIBRARIES
 
 intermediates := $(call local-intermediates-dir)
 
-MESA_ENABLED_APIS := ES1 ES2
-
 # TODO(chadv): In Makefile.sources, move these vars to a different list so we can
 # remove this kludge.
 generated_sources_basenames := \
