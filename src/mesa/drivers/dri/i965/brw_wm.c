@@ -346,8 +346,9 @@ brw_populate_sampler_prog_key_data(struct gl_context *ctx,
 	       key->gl_clamp_mask[2] |= 1 << s;
 	 }
 
-         /* gather4's channel select for green from RG32F is broken */
-         if (brw->gen >= 7 && prog->UsesGather) {
+         /* gather4's channel select for green from RG32F is broken;
+          * requires a shader w/a on IVB; fixable with just SCS on HSW. */
+         if (brw->gen >= 7 && !brw->is_haswell && prog->UsesGather) {
             if (img->InternalFormat == GL_RG32F && GET_SWZ(t->_Swizzle, 0) == 1)
                key->gather_channel_quirk_mask |= 1 << s;
          }

@@ -42,13 +42,13 @@
  * "Shader Channel Select" enumerations (i.e. HSW_SCS_RED)
  */
 static unsigned
-swizzle_to_scs(GLenum swizzle)
+swizzle_to_scs(GLenum swizzle, bool need_green_to_blue)
 {
    switch (swizzle) {
    case SWIZZLE_X:
       return HSW_SCS_RED;
    case SWIZZLE_Y:
-      return HSW_SCS_GREEN;
+      return need_green_to_blue ? HSW_SCS_BLUE : HSW_SCS_GREEN;
    case SWIZZLE_Z:
       return HSW_SCS_BLUE;
    case SWIZZLE_W:
@@ -369,11 +369,13 @@ gen7_update_texture_surface(struct gl_context *ctx,
       const int swizzle = unlikely(alpha_depth)
          ? SWIZZLE_XYZW : brw_get_texture_swizzle(ctx, tObj);
 
+      const bool need_scs_green_to_blue = for_gather && tex_format == BRW_SURFACEFORMAT_R32G32_FLOAT_LD;
+
       surf[7] =
-         SET_FIELD(swizzle_to_scs(GET_SWZ(swizzle, 0)), GEN7_SURFACE_SCS_R) |
-         SET_FIELD(swizzle_to_scs(GET_SWZ(swizzle, 1)), GEN7_SURFACE_SCS_G) |
-         SET_FIELD(swizzle_to_scs(GET_SWZ(swizzle, 2)), GEN7_SURFACE_SCS_B) |
-         SET_FIELD(swizzle_to_scs(GET_SWZ(swizzle, 3)), GEN7_SURFACE_SCS_A);
+         SET_FIELD(swizzle_to_scs(GET_SWZ(swizzle, 0), need_scs_green_to_blue), GEN7_SURFACE_SCS_R) |
+         SET_FIELD(swizzle_to_scs(GET_SWZ(swizzle, 1), need_scs_green_to_blue), GEN7_SURFACE_SCS_G) |
+         SET_FIELD(swizzle_to_scs(GET_SWZ(swizzle, 2), need_scs_green_to_blue), GEN7_SURFACE_SCS_B) |
+         SET_FIELD(swizzle_to_scs(GET_SWZ(swizzle, 3), need_scs_green_to_blue), GEN7_SURFACE_SCS_A);
    }
 
    /* Emit relocation to surface contents */
