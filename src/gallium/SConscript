@@ -124,7 +124,6 @@ if not env['embedded']:
 
     if env['dri']:
         SConscript([
-            'targets/SConscript.dri',
             'targets/dri-swrast/SConscript',
             'targets/dri-vmwgfx/SConscript',
         ])
