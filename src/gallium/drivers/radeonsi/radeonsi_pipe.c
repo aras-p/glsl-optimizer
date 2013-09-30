@@ -765,6 +765,8 @@ struct pipe_screen *radeonsi_screen_create(struct radeon_winsys *ws)
 		return NULL;
 	}
 
+	ws->query_info(ws, &rscreen->b.info);
+
 	/* Set functions first. */
 	rscreen->b.b.context_create = r600_create_context;
 	rscreen->b.b.destroy = r600_destroy_screen;

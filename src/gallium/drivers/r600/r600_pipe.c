@@ -1018,6 +1018,8 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 		return NULL;
 	}
 
+	ws->query_info(ws, &rscreen->b.info);
+
 	/* Set functions first. */
 	rscreen->b.b.context_create = r600_create_context;
 	rscreen->b.b.destroy = r600_destroy_screen;
@@ -1028,7 +1030,7 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 	rscreen->b.b.get_paramf = r600_get_paramf;
 	rscreen->b.b.get_compute_param = r600_get_compute_param;
 	rscreen->b.b.get_timestamp = r600_get_timestamp;
-	if (rscreen->b.chip_class >= EVERGREEN) {
+	if (rscreen->b.info.chip_class >= EVERGREEN) {
 		rscreen->b.b.is_format_supported = evergreen_is_format_supported;
 	} else {
 		rscreen->b.b.is_format_supported = r600_is_format_supported;
