@@ -451,16 +451,16 @@ brw_blorp_clear_color(struct brw_context *brw, struct gl_framebuffer *fb,
     * see if any require fallback, and fall back for all if any of them need
     * to.
     */
-   for (unsigned buf = 0; buf < ctx->DrawBuffer->_NumColorDrawBuffers; buf++) {
-      struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[buf];
+   for (unsigned buf = 0; buf < fb->_NumColorDrawBuffers; buf++) {
+      struct gl_renderbuffer *rb = fb->_ColorDrawBuffers[buf];
       struct intel_renderbuffer *irb = intel_renderbuffer(rb);
 
       if (irb && irb->mt->msaa_layout != INTEL_MSAA_LAYOUT_NONE)
          return false;
    }
 
-   for (unsigned buf = 0; buf < ctx->DrawBuffer->_NumColorDrawBuffers; buf++) {
-      struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[buf];
+   for (unsigned buf = 0; buf < fb->_NumColorDrawBuffers; buf++) {
+      struct gl_renderbuffer *rb = fb->_ColorDrawBuffers[buf];
       struct intel_renderbuffer *irb = intel_renderbuffer(rb);
 
       /* If this is an ES2 context or GL_ARB_ES2_compatibility is supported,
