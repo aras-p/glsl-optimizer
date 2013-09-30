@@ -318,7 +318,7 @@ static int svga_get_shader_param(struct pipe_screen *screen, unsigned shader, en
       case PIPE_SHADER_CAP_MAX_PREDS:
          return 1;
       case PIPE_SHADER_CAP_TGSI_CONT_SUPPORTED:
-         return 1;
+         return 0;
       case PIPE_SHADER_CAP_TGSI_SQRT_SUPPORTED:
          return 0;
       case PIPE_SHADER_CAP_INDIRECT_OUTPUT_ADDR:
@@ -365,7 +365,7 @@ static int svga_get_shader_param(struct pipe_screen *screen, unsigned shader, en
       case PIPE_SHADER_CAP_MAX_PREDS:
          return 1;
       case PIPE_SHADER_CAP_TGSI_CONT_SUPPORTED:
-         return 1;
+         return 0;
       case PIPE_SHADER_CAP_TGSI_SQRT_SUPPORTED:
          return 0;
       case PIPE_SHADER_CAP_INDIRECT_INPUT_ADDR:

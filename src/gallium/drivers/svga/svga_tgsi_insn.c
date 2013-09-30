@@ -2892,6 +2892,9 @@ svga_emit_instruction(struct svga_shader_emitter *emit,
       return emit_scalar_op1( emit, SVGA3DOP_RCP, insn );
 
    case TGSI_OPCODE_CONT:
+      /* not expected (we return PIPE_SHADER_CAP_TGSI_CONT_SUPPORTED = 0) */
+      return FALSE;
+
    case TGSI_OPCODE_RET:
       /* This is a noop -- we tell mesa that we can't support RET
        * within a function (early return), so this will always be
