@@ -353,9 +353,22 @@ brw_blorp_copytexsubimage(struct brw_context *brw,
    if (brw->gen < 6)
       return false;
 
-   if (!color_formats_match(src_mt->format, dst_mt->format)) {
+   if (_mesa_get_format_base_format(src_mt->format) !=
+       _mesa_get_format_base_format(dst_mt->format)) {
       return false;
    }
+
+   /* We can't handle format conversions between Z24 and other formats since
+    * we have to lie about the surface format.  See the comments in
+    * brw_blorp_surface_info::set().
+    */
+   if ((src_mt->format == MESA_FORMAT_X8_Z24) !=
+       (dst_mt->format == MESA_FORMAT_X8_Z24)) {
+      return false;
+   }
+
+   if (!brw->format_supported_as_render_target[dst_mt->format])
+      return false;
 
    /* Source clipping shouldn't be necessary, since copytexsubimage (in
     * src/mesa/main/teximage.c) calls _mesa_clip_copytexsubimage() which
