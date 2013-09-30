@@ -739,16 +739,6 @@ intel_blit_framebuffer_with_blitter(struct gl_context *ctx,
             return mask;
          }
 
-         mesa_format src_format = _mesa_get_srgb_format_linear(src_rb->Format);
-         mesa_format dst_format = _mesa_get_srgb_format_linear(dst_rb->Format);
-         if (src_format != dst_format) {
-            perf_debug("glBlitFramebuffer(): unsupported blit from %s to %s.  "
-                       "Falling back to software rendering.\n",
-                       _mesa_get_format_name(src_format),
-                       _mesa_get_format_name(dst_format));
-            return mask;
-         }
-
          if (!intel_miptree_blit(brw,
                                  src_irb->mt,
                                  src_irb->mt_level, src_irb->mt_layer,
