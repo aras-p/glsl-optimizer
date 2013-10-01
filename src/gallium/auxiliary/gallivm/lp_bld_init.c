@@ -182,10 +182,11 @@ create_pass_manager(struct gallivm_state *gallivm)
 
 
 /**
- * Free gallivm object's LLVM allocations, but not the gallivm object itself.
+ * Free gallivm object's LLVM allocations, but not any generated code
+ * nor the gallivm object itself.
  */
-static void
-free_gallivm_state(struct gallivm_state *gallivm)
+void
+gallivm_free_ir(struct gallivm_state *gallivm)
 {
    if (gallivm->passmgr) {
       LLVMDisposePassManager(gallivm->passmgr);
@@ -212,14 +213,24 @@ free_gallivm_state(struct gallivm_state *gallivm)
    if (!USE_GLOBAL_CONTEXT && gallivm->context)
       LLVMContextDispose(gallivm->context);
 
-   lp_free_generated_code(gallivm->code);
-
    gallivm->engine = NULL;
    gallivm->target = NULL;
    gallivm->module = NULL;
    gallivm->passmgr = NULL;
    gallivm->context = NULL;
    gallivm->builder = NULL;
+}
+
+
+/**
+ * Free LLVM-generated code.  Should be done AFTER gallivm_free_ir().
+ */
+static void
+gallivm_free_code(struct gallivm_state *gallivm)
+{
+   assert(!gallivm->module);
+   assert(!gallivm->engine);
+   lp_free_generated_code(gallivm->code);
    gallivm->code = NULL;
 }
 
@@ -366,7 +377,8 @@ init_gallivm_state(struct gallivm_state *gallivm)
    return TRUE;
 
 fail:
-   free_gallivm_state(gallivm);
+   gallivm_free_ir(gallivm);
+   gallivm_free_code(gallivm);
    return FALSE;
 }
 
@@ -497,7 +509,8 @@ gallivm_create(void)
 void
 gallivm_destroy(struct gallivm_state *gallivm)
 {
-   free_gallivm_state(gallivm);
+   gallivm_free_ir(gallivm);
+   gallivm_free_code(gallivm);
    FREE(gallivm);
 }
 

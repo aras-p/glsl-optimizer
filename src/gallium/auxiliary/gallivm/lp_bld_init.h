@@ -59,6 +59,8 @@ gallivm_create(void);
 void
 gallivm_destroy(struct gallivm_state *gallivm);
 
+void
+gallivm_free_ir(struct gallivm_state *gallivm);
 
 void
 gallivm_verify_function(struct gallivm_state *gallivm,
