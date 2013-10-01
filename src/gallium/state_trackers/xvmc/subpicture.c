@@ -38,6 +38,7 @@
 #include "util/u_math.h"
 #include "util/u_format.h"
 #include "util/u_sampler.h"
+#include "util/u_surface.h"
 #include "util/u_rect.h"
 #include "vl/vl_winsys.h"
 
