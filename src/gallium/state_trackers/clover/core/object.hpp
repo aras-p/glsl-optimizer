@@ -185,6 +185,9 @@ struct _cl_context :
 struct _cl_device_id :
    public clover::descriptor<clover::device, _cl_device_id> {};
 
+struct _cl_event :
+   public clover::descriptor<clover::event, _cl_event> {};
+
 struct _cl_platform_id :
    public clover::descriptor<clover::platform, _cl_platform_id> {};
 

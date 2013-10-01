@@ -217,7 +217,7 @@ namespace {
 
       if (&kern->prog.ctx != &q->ctx ||
           any_of([&](const cl_event ev) {
-                return &ev->ctx != &q->ctx;
+                return &obj(ev).ctx != &q->ctx;
              }, range(deps, num_deps)))
          throw error(CL_INVALID_CONTEXT);
 
@@ -285,17 +285,18 @@ PUBLIC cl_int
 clEnqueueNDRangeKernel(cl_command_queue q, cl_kernel kern,
                        cl_uint dims, const size_t *pgrid_offset,
                        const size_t *pgrid_size, const size_t *pblock_size,
-                       cl_uint num_deps, const cl_event *deps,
+                       cl_uint num_deps, const cl_event *d_deps,
                        cl_event *ev) try {
+   auto deps = objs<wait_list_tag>(d_deps, num_deps);
    auto grid_offset = opt_vector(pgrid_offset, dims, 0);
    auto grid_size = opt_vector(pgrid_size, dims, 1);
    auto block_size = opt_vector(pblock_size, dims, 1);
 
    kernel_validate(q, kern, dims, pgrid_offset, pgrid_size, pblock_size,
-                   num_deps, deps, ev);
+                   num_deps, d_deps, ev);
 
    hard_event *hev = new hard_event(
-      *q, CL_COMMAND_NDRANGE_KERNEL, { deps, deps + num_deps },
+      *q, CL_COMMAND_NDRANGE_KERNEL, deps,
       kernel_op(q, kern, grid_offset, grid_size, block_size));
 
    ret_object(ev, hev);
@@ -307,17 +308,18 @@ clEnqueueNDRangeKernel(cl_command_queue q, cl_kernel kern,
 
 PUBLIC cl_int
 clEnqueueTask(cl_command_queue q, cl_kernel kern,
-              cl_uint num_deps, const cl_event *deps,
+              cl_uint num_deps, const cl_event *d_deps,
               cl_event *ev) try {
+   auto deps = objs<wait_list_tag>(d_deps, num_deps);
    const std::vector<size_t> grid_offset = { 0 };
    const std::vector<size_t> grid_size = { 1 };
    const std::vector<size_t> block_size = { 1 };
 
    kernel_validate(q, kern, 1, grid_offset.data(), grid_size.data(),
-                   block_size.data(), num_deps, deps, ev);
+                   block_size.data(), num_deps, d_deps, ev);
 
    hard_event *hev = new hard_event(
-      *q, CL_COMMAND_TASK, { deps, deps + num_deps },
+      *q, CL_COMMAND_TASK, deps,
       kernel_op(q, kern, grid_offset, grid_size, block_size));
 
    ret_object(ev, hev);

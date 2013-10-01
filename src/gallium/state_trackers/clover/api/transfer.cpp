@@ -49,7 +49,7 @@ namespace {
          throw error(CL_INVALID_EVENT_WAIT_LIST);
 
       if (any_of([&](const cl_event ev) {
-               return &ev->ctx != &q->ctx;
+               return &obj(ev).ctx != &q->ctx;
             }, range(deps, num_deps)))
          throw error(CL_INVALID_CONTEXT);
    }
@@ -146,16 +146,18 @@ namespace {
 PUBLIC cl_int
 clEnqueueReadBuffer(cl_command_queue q, cl_mem obj, cl_bool blocking,
                     size_t offset, size_t size, void *ptr,
-                    cl_uint num_deps, const cl_event *deps,
+                    cl_uint num_deps, const cl_event *d_deps,
                     cl_event *ev) try {
-   validate_base(q, num_deps, deps);
+   auto deps = objs<wait_list_tag>(d_deps, num_deps);
+
+   validate_base(q, num_deps, d_deps);
    validate_obj(q, obj);
 
    if (!ptr || offset > obj->size() || offset + size > obj->size())
       throw error(CL_INVALID_VALUE);
 
    hard_event *hev = new hard_event(
-      *q, CL_COMMAND_READ_BUFFER, { deps, deps + num_deps },
+      *q, CL_COMMAND_READ_BUFFER, deps,
       soft_copy_op(q,
                    ptr, {{ 0 }}, {{ 1 }},
                    obj, {{ offset }}, {{ 1 }},
@@ -171,16 +173,18 @@ clEnqueueReadBuffer(cl_command_queue q, cl_mem obj, cl_bool blocking,
 PUBLIC cl_int
 clEnqueueWriteBuffer(cl_command_queue q, cl_mem obj, cl_bool blocking,
                      size_t offset, size_t size, const void *ptr,
-                     cl_uint num_deps, const cl_event *deps,
+                     cl_uint num_deps, const cl_event *d_deps,
                      cl_event *ev) try {
-   validate_base(q, num_deps, deps);
+   auto deps = objs<wait_list_tag>(d_deps, num_deps);
+
+   validate_base(q, num_deps, d_deps);
    validate_obj(q, obj);
 
    if (!ptr || offset > obj->size() || offset + size > obj->size())
       throw error(CL_INVALID_VALUE);
 
    hard_event *hev = new hard_event(
-      *q, CL_COMMAND_WRITE_BUFFER, { deps, deps + num_deps },
+      *q, CL_COMMAND_WRITE_BUFFER, deps,
       soft_copy_op(q,
                    obj, {{ offset }}, {{ 1 }},
                    ptr, {{ 0 }}, {{ 1 }},
@@ -200,16 +204,18 @@ clEnqueueReadBufferRect(cl_command_queue q, cl_mem obj, cl_bool blocking,
                         size_t obj_row_pitch, size_t obj_slice_pitch,
                         size_t host_row_pitch, size_t host_slice_pitch,
                         void *ptr,
-                        cl_uint num_deps, const cl_event *deps,
+                        cl_uint num_deps, const cl_event *d_deps,
                         cl_event *ev) try {
-   validate_base(q, num_deps, deps);
+   auto deps = objs<wait_list_tag>(d_deps, num_deps);
+
+   validate_base(q, num_deps, d_deps);
    validate_obj(q, obj);
 
    if (!ptr)
       throw error(CL_INVALID_VALUE);
 
    hard_event *hev = new hard_event(
-      *q, CL_COMMAND_READ_BUFFER_RECT, { deps, deps + num_deps },
+      *q, CL_COMMAND_READ_BUFFER_RECT, deps,
       soft_copy_op(q,
                    ptr, vector(host_origin),
                    {{ 1, host_row_pitch, host_slice_pitch }},
@@ -231,16 +237,18 @@ clEnqueueWriteBufferRect(cl_command_queue q, cl_mem obj, cl_bool blocking,
                          size_t obj_row_pitch, size_t obj_slice_pitch,
                          size_t host_row_pitch, size_t host_slice_pitch,
                          const void *ptr,
-                         cl_uint num_deps, const cl_event *deps,
+                         cl_uint num_deps, const cl_event *d_deps,
                          cl_event *ev) try {
-   validate_base(q, num_deps, deps);
+   auto deps = objs<wait_list_tag>(d_deps, num_deps);
+
+   validate_base(q, num_deps, d_deps);
    validate_obj(q, obj);
 
    if (!ptr)
       throw error(CL_INVALID_VALUE);
 
    hard_event *hev = new hard_event(
-      *q, CL_COMMAND_WRITE_BUFFER_RECT, { deps, deps + num_deps },
+      *q, CL_COMMAND_WRITE_BUFFER_RECT, deps,
       soft_copy_op(q,
                    obj, vector(obj_origin),
                    {{ 1, obj_row_pitch, obj_slice_pitch }},
@@ -258,14 +266,16 @@ clEnqueueWriteBufferRect(cl_command_queue q, cl_mem obj, cl_bool blocking,
 PUBLIC cl_int
 clEnqueueCopyBuffer(cl_command_queue q, cl_mem src_obj, cl_mem dst_obj,
                     size_t src_offset, size_t dst_offset, size_t size,
-                    cl_uint num_deps, const cl_event *deps,
+                    cl_uint num_deps, const cl_event *d_deps,
                     cl_event *ev) try {
-   validate_base(q, num_deps, deps);
+   auto deps = objs<wait_list_tag>(d_deps, num_deps);
+
+   validate_base(q, num_deps, d_deps);
    validate_obj(q, src_obj);
    validate_obj(q, dst_obj);
 
    hard_event *hev = new hard_event(
-      *q, CL_COMMAND_COPY_BUFFER, { deps, deps + num_deps },
+      *q, CL_COMMAND_COPY_BUFFER, deps,
       hard_copy_op(q, dst_obj, {{ dst_offset }},
                    src_obj, {{ src_offset }},
                    {{ size, 1, 1 }}));
@@ -283,14 +293,16 @@ clEnqueueCopyBufferRect(cl_command_queue q, cl_mem src_obj, cl_mem dst_obj,
                         const size_t *region,
                         size_t src_row_pitch, size_t src_slice_pitch,
                         size_t dst_row_pitch, size_t dst_slice_pitch,
-                        cl_uint num_deps, const cl_event *deps,
+                        cl_uint num_deps, const cl_event *d_deps,
                         cl_event *ev) try {
-   validate_base(q, num_deps, deps);
+   auto deps = objs<wait_list_tag>(d_deps, num_deps);
+
+   validate_base(q, num_deps, d_deps);
    validate_obj(q, src_obj);
    validate_obj(q, dst_obj);
 
    hard_event *hev = new hard_event(
-      *q, CL_COMMAND_COPY_BUFFER_RECT, { deps, deps + num_deps },
+      *q, CL_COMMAND_COPY_BUFFER_RECT, deps,
       soft_copy_op(q,
                    dst_obj, vector(dst_origin),
                    {{ 1, dst_row_pitch, dst_slice_pitch }},
@@ -309,18 +321,19 @@ PUBLIC cl_int
 clEnqueueReadImage(cl_command_queue q, cl_mem obj, cl_bool blocking,
                    const size_t *origin, const size_t *region,
                    size_t row_pitch, size_t slice_pitch, void *ptr,
-                   cl_uint num_deps, const cl_event *deps,
+                   cl_uint num_deps, const cl_event *d_deps,
                    cl_event *ev) try {
+   auto deps = objs<wait_list_tag>(d_deps, num_deps);
    image *img = dynamic_cast<image *>(obj);
 
-   validate_base(q, num_deps, deps);
+   validate_base(q, num_deps, d_deps);
    validate_obj(q, img);
 
    if (!ptr)
       throw error(CL_INVALID_VALUE);
 
    hard_event *hev = new hard_event(
-      *q, CL_COMMAND_READ_IMAGE, { deps, deps + num_deps },
+      *q, CL_COMMAND_READ_IMAGE, deps,
       soft_copy_op(q,
                    ptr, {},
                    {{ 1, row_pitch, slice_pitch }},
@@ -339,18 +352,19 @@ PUBLIC cl_int
 clEnqueueWriteImage(cl_command_queue q, cl_mem obj, cl_bool blocking,
                     const size_t *origin, const size_t *region,
                     size_t row_pitch, size_t slice_pitch, const void *ptr,
-                    cl_uint num_deps, const cl_event *deps,
+                    cl_uint num_deps, const cl_event *d_deps,
                     cl_event *ev) try {
+   auto deps = objs<wait_list_tag>(d_deps, num_deps);
    image *img = dynamic_cast<image *>(obj);
 
-   validate_base(q, num_deps, deps);
+   validate_base(q, num_deps, d_deps);
    validate_obj(q, img);
 
    if (!ptr)
       throw error(CL_INVALID_VALUE);
 
    hard_event *hev = new hard_event(
-      *q, CL_COMMAND_WRITE_IMAGE, { deps, deps + num_deps },
+      *q, CL_COMMAND_WRITE_IMAGE, deps,
       soft_copy_op(q,
                    obj, vector(origin),
                    {{ 1, img->row_pitch(), img->slice_pitch() }},
@@ -369,17 +383,18 @@ PUBLIC cl_int
 clEnqueueCopyImage(cl_command_queue q, cl_mem src_obj, cl_mem dst_obj,
                    const size_t *src_origin, const size_t *dst_origin,
                    const size_t *region,
-                   cl_uint num_deps, const cl_event *deps,
+                   cl_uint num_deps, const cl_event *d_deps,
                    cl_event *ev) try {
+   auto deps = objs<wait_list_tag>(d_deps, num_deps);
    image *src_img = dynamic_cast<image *>(src_obj);
    image *dst_img = dynamic_cast<image *>(dst_obj);
 
-   validate_base(q, num_deps, deps);
+   validate_base(q, num_deps, d_deps);
    validate_obj(q, src_img);
    validate_obj(q, dst_img);
 
    hard_event *hev = new hard_event(
-      *q, CL_COMMAND_COPY_IMAGE, { deps, deps + num_deps },
+      *q, CL_COMMAND_COPY_IMAGE, deps,
       hard_copy_op(q,
                    dst_obj, vector(dst_origin),
                    src_obj, vector(src_origin),
@@ -396,16 +411,17 @@ PUBLIC cl_int
 clEnqueueCopyImageToBuffer(cl_command_queue q, cl_mem src_obj, cl_mem dst_obj,
                            const size_t *src_origin, const size_t *region,
                            size_t dst_offset,
-                           cl_uint num_deps, const cl_event *deps,
+                           cl_uint num_deps, const cl_event *d_deps,
                            cl_event *ev) try {
+   auto deps = objs<wait_list_tag>(d_deps, num_deps);
    image *src_img = dynamic_cast<image *>(src_obj);
 
-   validate_base(q, num_deps, deps);
+   validate_base(q, num_deps, d_deps);
    validate_obj(q, src_img);
    validate_obj(q, dst_obj);
 
    hard_event *hev = new hard_event(
-      *q, CL_COMMAND_COPY_IMAGE_TO_BUFFER, { deps, deps + num_deps },
+      *q, CL_COMMAND_COPY_IMAGE_TO_BUFFER, deps,
       soft_copy_op(q,
                    dst_obj, {{ dst_offset }},
                    {{ 0, 0, 0 }},
@@ -424,16 +440,17 @@ PUBLIC cl_int
 clEnqueueCopyBufferToImage(cl_command_queue q, cl_mem src_obj, cl_mem dst_obj,
                            size_t src_offset,
                            const size_t *dst_origin, const size_t *region,
-                           cl_uint num_deps, const cl_event *deps,
+                           cl_uint num_deps, const cl_event *d_deps,
                            cl_event *ev) try {
+   auto deps = objs<wait_list_tag>(d_deps, num_deps);
    image *dst_img = dynamic_cast<image *>(dst_obj);
 
-   validate_base(q, num_deps, deps);
+   validate_base(q, num_deps, d_deps);
    validate_obj(q, src_obj);
    validate_obj(q, dst_img);
 
    hard_event *hev = new hard_event(
-      *q, CL_COMMAND_COPY_BUFFER_TO_IMAGE, { deps, deps + num_deps },
+      *q, CL_COMMAND_COPY_BUFFER_TO_IMAGE, deps,
       soft_copy_op(q,
                    dst_obj, vector(dst_origin),
                    {{ 1, dst_img->row_pitch(), dst_img->slice_pitch() }},
@@ -451,9 +468,10 @@ clEnqueueCopyBufferToImage(cl_command_queue q, cl_mem src_obj, cl_mem dst_obj,
 PUBLIC void *
 clEnqueueMapBuffer(cl_command_queue q, cl_mem obj, cl_bool blocking,
                    cl_map_flags flags, size_t offset, size_t size,
-                   cl_uint num_deps, const cl_event *deps,
+                   cl_uint num_deps, const cl_event *d_deps,
                    cl_event *ev, cl_int *errcode_ret) try {
-   validate_base(q, num_deps, deps);
+   auto deps = objs<wait_list_tag>(d_deps, num_deps);
+   validate_base(q, num_deps, d_deps);
    validate_obj(q, obj);
 
    if (offset > obj->size() || offset + size > obj->size())
@@ -463,7 +481,7 @@ clEnqueueMapBuffer(cl_command_queue q, cl_mem obj, cl_bool blocking,
       *q, flags, blocking, {{ offset }}, {{ size }});
 
    ret_object(ev, new hard_event(*q, CL_COMMAND_MAP_BUFFER,
-                                 { deps, deps + num_deps }));
+                                 deps));
    ret_error(errcode_ret, CL_SUCCESS);
    return map;
 
@@ -477,18 +495,19 @@ clEnqueueMapImage(cl_command_queue q, cl_mem obj, cl_bool blocking,
                   cl_map_flags flags,
                   const size_t *origin, const size_t *region,
                   size_t *row_pitch, size_t *slice_pitch,
-                  cl_uint num_deps, const cl_event *deps,
+                  cl_uint num_deps, const cl_event *d_deps,
                   cl_event *ev, cl_int *errcode_ret) try {
+   auto deps = objs<wait_list_tag>(d_deps, num_deps);
    image *img = dynamic_cast<image *>(obj);
 
-   validate_base(q, num_deps, deps);
+   validate_base(q, num_deps, d_deps);
    validate_obj(q, img);
 
    void *map = obj->resource(q).add_map(
       *q, flags, blocking, vector(origin), vector(region));
 
    ret_object(ev, new hard_event(*q, CL_COMMAND_MAP_IMAGE,
-                                 { deps, deps + num_deps }));
+                                 deps));
    ret_error(errcode_ret, CL_SUCCESS);
    return map;
 
@@ -499,13 +518,15 @@ clEnqueueMapImage(cl_command_queue q, cl_mem obj, cl_bool blocking,
 
 PUBLIC cl_int
 clEnqueueUnmapMemObject(cl_command_queue q, cl_mem obj, void *ptr,
-                        cl_uint num_deps, const cl_event *deps,
+                        cl_uint num_deps, const cl_event *d_deps,
                         cl_event *ev) try {
-   validate_base(q, num_deps, deps);
+   auto deps = objs<wait_list_tag>(d_deps, num_deps);
+
+   validate_base(q, num_deps, d_deps);
    validate_obj(q, obj);
 
    hard_event *hev = new hard_event(
-      *q, CL_COMMAND_UNMAP_MEM_OBJECT, { deps, deps + num_deps },
+      *q, CL_COMMAND_UNMAP_MEM_OBJECT, deps,
       [=](event &) {
          obj->resource(q).del_map(ptr);
       });

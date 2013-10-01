@@ -21,25 +21,23 @@
 //
 
 #include "core/event.hpp"
-#include "util/algorithm.hpp"
 #include "pipe/p_screen.h"
 
 using namespace clover;
 
-_cl_event::_cl_event(clover::context &ctx,
-                     std::vector<clover::event *> deps,
-                     action action_ok, action action_fail) :
+event::event(context &ctx, const ref_vector<event> &deps,
+             action action_ok, action action_fail) :
    ctx(ctx), _status(0), wait_count(1),
    action_ok(action_ok), action_fail(action_fail) {
-   for (auto ev : deps)
-      ev->chain(this);
+   for (auto &ev : deps)
+      ev.chain(this);
 }
 
-_cl_event::~_cl_event() {
+event::~event() {
 }
 
 void
-_cl_event::trigger() {
+event::trigger() {
    if (!--wait_count) {
       action_ok(*this);
 
@@ -51,7 +49,7 @@ _cl_event::trigger() {
 }
 
 void
-_cl_event::abort(cl_int status) {
+event::abort(cl_int status) {
    _status = status;
    action_fail(*this);
 
@@ -62,12 +60,12 @@ _cl_event::abort(cl_int status) {
 }
 
 bool
-_cl_event::signalled() const {
+event::signalled() const {
    return !wait_count;
 }
 
 void
-_cl_event::chain(clover::event *ev) {
+event::chain(event *ev) {
    if (wait_count) {
       ev->wait_count++;
       _chain.push_back(ev);
@@ -75,9 +73,9 @@ _cl_event::chain(clover::event *ev) {
    ev->deps.push_back(this);
 }
 
-hard_event::hard_event(clover::command_queue &q, cl_command_type command,
-                       std::vector<clover::event *> deps, action action) :
-   _cl_event(q.ctx, deps, profile(q, action), [](event &ev){}),
+hard_event::hard_event(command_queue &q, cl_command_type command,
+                       const ref_vector<event> &deps, action action) :
+   event(q.ctx, deps, profile(q, action), [](event &ev){}),
    _queue(q), _command(command), _fence(NULL) {
    if (q.profiling_enabled())
       _time_queued = timestamp::current(q);
@@ -108,7 +106,7 @@ hard_event::status() const {
       return CL_COMPLETE;
 }
 
-cl_command_queue
+command_queue *
 hard_event::queue() const {
    return &_queue;
 }
@@ -175,10 +173,9 @@ hard_event::profile(command_queue &q, const action &action) const {
    }
 }
 
-soft_event::soft_event(clover::context &ctx,
-                       std::vector<clover::event *> deps,
+soft_event::soft_event(context &ctx, const ref_vector<event> &deps,
                        bool _trigger, action action) :
-   _cl_event(ctx, deps, action, action) {
+   event(ctx, deps, action, action) {
    if (_trigger)
       trigger();
 }
@@ -198,7 +195,7 @@ soft_event::status() const {
       return CL_COMPLETE;
 }
 
-cl_command_queue
+command_queue *
 soft_event::queue() const {
    return NULL;
 }

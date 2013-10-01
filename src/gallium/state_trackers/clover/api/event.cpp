@@ -26,93 +26,89 @@
 using namespace clover;
 
 PUBLIC cl_event
-clCreateUserEvent(cl_context d_ctx, cl_int *errcode_ret) try {
+clCreateUserEvent(cl_context d_ctx, cl_int *r_errcode) try {
    auto &ctx = obj(d_ctx);
 
-   ret_error(errcode_ret, CL_SUCCESS);
-   return new soft_event(ctx, {}, false);
+   ret_error(r_errcode, CL_SUCCESS);
+   return desc(new soft_event(ctx, {}, false));
 
-} catch(error &e) {
-   ret_error(errcode_ret, e);
+} catch (error &e) {
+   ret_error(r_errcode, e);
    return NULL;
 }
 
 PUBLIC cl_int
-clSetUserEventStatus(cl_event ev, cl_int status) {
-   if (!dynamic_cast<soft_event *>(ev))
-      return CL_INVALID_EVENT;
+clSetUserEventStatus(cl_event d_ev, cl_int status) try {
+   auto &sev = obj<soft_event>(d_ev);
 
    if (status > 0)
       return CL_INVALID_VALUE;
 
-   if (ev->status() <= 0)
+   if (sev.status() <= 0)
       return CL_INVALID_OPERATION;
 
    if (status)
-      ev->abort(status);
+      sev.abort(status);
    else
-      ev->trigger();
+      sev.trigger();
 
    return CL_SUCCESS;
+
+} catch (error &e) {
+   return e.get();
 }
 
 PUBLIC cl_int
-clWaitForEvents(cl_uint num_evs, const cl_event *evs) try {
-   if (!num_evs || !evs)
-      throw error(CL_INVALID_VALUE);
+clWaitForEvents(cl_uint num_evs, const cl_event *d_evs) try {
+   auto evs = objs(d_evs, num_evs);
 
-   std::for_each(evs, evs + num_evs, [&](const cl_event ev) {
-         if (!ev)
-            throw error(CL_INVALID_EVENT);
+   for (auto &ev : evs) {
+      if (&ev.ctx != &evs.front().ctx)
+         throw error(CL_INVALID_CONTEXT);
 
-         if (&ev->ctx != &evs[0]->ctx)
-            throw error(CL_INVALID_CONTEXT);
-
-         if (ev->status() < 0)
-            throw error(CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST);
-      });
+      if (ev.status() < 0)
+         throw error(CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST);
+   }
 
    // Create a temporary soft event that depends on all the events in
    // the wait list
-   ref_ptr<soft_event> sev = transfer(
-      new soft_event(evs[0]->ctx, { evs, evs + num_evs }, true));
+   ref_ptr<soft_event> sev =
+      transfer(new soft_event(evs.front().ctx, evs, true));
 
    // ...and wait on it.
    sev->wait();
 
    return CL_SUCCESS;
 
-} catch(error &e) {
+} catch (error &e) {
    return e.get();
 }
 
 PUBLIC cl_int
-clGetEventInfo(cl_event ev, cl_event_info param,
+clGetEventInfo(cl_event d_ev, cl_event_info param,
                size_t size, void *r_buf, size_t *r_size) try {
    property_buffer buf { r_buf, size, r_size };
-
-   if (!ev)
-      return CL_INVALID_EVENT;
+   auto &ev = obj(d_ev);
 
    switch (param) {
    case CL_EVENT_COMMAND_QUEUE:
-      buf.as_scalar<cl_command_queue>() = ev->queue();
+      buf.as_scalar<cl_command_queue>() = ev.queue();
       break;
 
    case CL_EVENT_CONTEXT:
-      buf.as_scalar<cl_context>() = &ev->ctx;
+      buf.as_scalar<cl_context>() = desc(ev.ctx);
       break;
 
    case CL_EVENT_COMMAND_TYPE:
-      buf.as_scalar<cl_command_type>() = ev->command();
+      buf.as_scalar<cl_command_type>() = ev.command();
       break;
 
    case CL_EVENT_COMMAND_EXECUTION_STATUS:
-      buf.as_scalar<cl_int>() = ev->status();
+      buf.as_scalar<cl_int>() = ev.status();
       break;
 
    case CL_EVENT_REFERENCE_COUNT:
-      buf.as_scalar<cl_uint>() = ev->ref_count();
+      buf.as_scalar<cl_uint>() = ev.ref_count();
       break;
 
    default:
@@ -126,132 +122,124 @@ clGetEventInfo(cl_event ev, cl_event_info param,
 }
 
 PUBLIC cl_int
-clSetEventCallback(cl_event ev, cl_int type,
-                   void (CL_CALLBACK *pfn_event_notify)(cl_event, cl_int,
-                                                        void *),
+clSetEventCallback(cl_event d_ev, cl_int type,
+                   void (CL_CALLBACK *pfn_notify)(cl_event, cl_int, void *),
                    void *user_data) try {
-   if (!ev)
-      throw error(CL_INVALID_EVENT);
+   auto &ev = obj(d_ev);
 
-   if (!pfn_event_notify || type != CL_COMPLETE)
+   if (!pfn_notify || type != CL_COMPLETE)
       throw error(CL_INVALID_VALUE);
 
    // Create a temporary soft event that depends on ev, with
-   // pfn_event_notify as completion action.
+   // pfn_notify as completion action.
    ref_ptr<soft_event> sev = transfer(
-      new soft_event(ev->ctx, { ev }, true,
-                     [=](event &) {
-                        ev->wait();
-                        pfn_event_notify(ev, ev->status(), user_data);
+      new soft_event(ev.ctx, { ev }, true,
+                     [=, &ev](event &) {
+                        ev.wait();
+                        pfn_notify(desc(ev), ev.status(), user_data);
                      }));
 
    return CL_SUCCESS;
 
-} catch(error &e) {
+} catch (error &e) {
    return e.get();
 }
 
 PUBLIC cl_int
-clRetainEvent(cl_event ev) {
-   if (!ev)
-      return CL_INVALID_EVENT;
-
-   ev->retain();
+clRetainEvent(cl_event d_ev) try {
+   obj(d_ev).retain();
    return CL_SUCCESS;
+
+} catch (error &e) {
+   return e.get();
 }
 
 PUBLIC cl_int
-clReleaseEvent(cl_event ev) {
-   if (!ev)
-      return CL_INVALID_EVENT;
-
-   if (ev->release())
-      delete ev;
+clReleaseEvent(cl_event d_ev) try {
+   if (obj(d_ev).release())
+      delete pobj(d_ev);
 
    return CL_SUCCESS;
+
+} catch (error &e) {
+   return e.get();
 }
 
 PUBLIC cl_int
-clEnqueueMarker(cl_command_queue q, cl_event *ev) try {
-   if (!q)
+clEnqueueMarker(cl_command_queue d_q, cl_event *rd_ev) try {
+   if (!d_q)
       throw error(CL_INVALID_COMMAND_QUEUE);
 
-   if (!ev)
+   if (!rd_ev)
       throw error(CL_INVALID_VALUE);
 
-   *ev = new hard_event(*q, CL_COMMAND_MARKER, {});
+   *rd_ev = desc(new hard_event(*d_q, CL_COMMAND_MARKER, {}));
 
    return CL_SUCCESS;
 
-} catch(error &e) {
+} catch (error &e) {
    return e.get();
 }
 
 PUBLIC cl_int
-clEnqueueBarrier(cl_command_queue q) {
-   if (!q)
+clEnqueueBarrier(cl_command_queue d_q) {
+   if (!d_q)
       return CL_INVALID_COMMAND_QUEUE;
 
    // No need to do anything, q preserves data ordering strictly.
+
    return CL_SUCCESS;
 }
 
 PUBLIC cl_int
-clEnqueueWaitForEvents(cl_command_queue q, cl_uint num_evs,
-                       const cl_event *evs) try {
-   if (!q)
+clEnqueueWaitForEvents(cl_command_queue d_q, cl_uint num_evs,
+                       const cl_event *d_evs) try {
+   if (!d_q)
       throw error(CL_INVALID_COMMAND_QUEUE);
 
-   if (!num_evs || !evs)
-      throw error(CL_INVALID_VALUE);
+   auto &q = *d_q;
+   auto evs = objs(d_evs, num_evs);
 
-   std::for_each(evs, evs + num_evs, [&](const cl_event ev) {
-         if (!ev)
-            throw error(CL_INVALID_EVENT);
-
-         if (&ev->ctx != &q->ctx)
+   for (auto &ev : evs) {
+         if (&ev.ctx != &q.ctx)
             throw error(CL_INVALID_CONTEXT);
-      });
+   }
 
    // Create a hard event that depends on the events in the wait list:
    // subsequent commands in the same queue will be implicitly
    // serialized with respect to it -- hard events always are.
-   ref_ptr<hard_event> hev = transfer(
-      new hard_event(*q, 0, { evs, evs + num_evs }));
+   ref_ptr<hard_event> hev = transfer(new hard_event(q, 0, evs));
 
    return CL_SUCCESS;
 
-} catch(error &e) {
+} catch (error &e) {
    return e.get();
 }
 
 PUBLIC cl_int
-clGetEventProfilingInfo(cl_event ev, cl_profiling_info param,
+clGetEventProfilingInfo(cl_event d_ev, cl_profiling_info param,
                         size_t size, void *r_buf, size_t *r_size) try {
    property_buffer buf { r_buf, size, r_size };
-   hard_event *hev = dynamic_cast<hard_event *>(ev);
+   hard_event &hev = dynamic_cast<hard_event &>(obj(d_ev));
 
-   if (!ev)
-      return CL_INVALID_EVENT;
-
-   if (!hev || hev->status() != CL_COMPLETE)
-      return CL_PROFILING_INFO_NOT_AVAILABLE;
+   if (hev.status() != CL_COMPLETE)
+      throw error(CL_PROFILING_INFO_NOT_AVAILABLE);
 
    switch (param) {
    case CL_PROFILING_COMMAND_QUEUED:
-      buf.as_scalar<cl_ulong>() = hev->time_queued();
+      buf.as_scalar<cl_ulong>() = hev.time_queued();
       break;
 
    case CL_PROFILING_COMMAND_SUBMIT:
-      buf.as_scalar<cl_ulong>() = hev->time_submit();
+      buf.as_scalar<cl_ulong>() = hev.time_submit();
       break;
 
    case CL_PROFILING_COMMAND_START:
-      buf.as_scalar<cl_ulong>() = hev->time_start();
+      buf.as_scalar<cl_ulong>() = hev.time_start();
       break;
 
    case CL_PROFILING_COMMAND_END:
-      buf.as_scalar<cl_ulong>() = hev->time_end();
+      buf.as_scalar<cl_ulong>() = hev.time_end();
       break;
 
    default:
@@ -259,6 +247,9 @@ clGetEventProfilingInfo(cl_event ev, cl_profiling_info param,
    }
 
    return CL_SUCCESS;
+
+} catch (std::bad_cast &e) {
+   return CL_PROFILING_INFO_NOT_AVAILABLE;
 
 } catch (lazy<cl_ulong>::undefined_error &e) {
    return CL_PROFILING_INFO_NOT_AVAILABLE;
@@ -268,19 +259,19 @@ clGetEventProfilingInfo(cl_event ev, cl_profiling_info param,
 }
 
 PUBLIC cl_int
-clFinish(cl_command_queue q) try {
-   if (!q)
+clFinish(cl_command_queue d_q) try {
+   if (!d_q)
       throw error(CL_INVALID_COMMAND_QUEUE);
 
    // Create a temporary hard event -- it implicitly depends on all
    // the previously queued hard events.
-   ref_ptr<hard_event> hev = transfer(new hard_event(*q, 0, { }));
+   ref_ptr<hard_event> hev = transfer(new hard_event(*d_q, 0, { }));
 
    // And wait on it.
    hev->wait();
 
    return CL_SUCCESS;
 
-} catch(error &e) {
+} catch (error &e) {
    return e.get();
 }
