@@ -32,6 +32,7 @@
 #include "util/u_memory.h"
 #include "util/u_sampler.h"
 #include "util/u_format.h"
+#include "util/u_surface.h"
 
 #include "vl/vl_csc.h"
 

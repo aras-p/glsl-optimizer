@@ -33,6 +33,7 @@
 #include "util/u_memory.h"
 #include "util/u_debug.h"
 #include "util/u_rect.h"
+#include "util/u_surface.h"
 #include "vl/vl_defines.h"
 
 #include "vdpau_private.h"
