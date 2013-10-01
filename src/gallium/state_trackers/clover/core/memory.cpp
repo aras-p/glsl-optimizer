@@ -25,8 +25,8 @@
 
 using namespace clover;
 
-_cl_mem::_cl_mem(clover::context &ctx, cl_mem_flags flags,
-                 size_t size, void *host_ptr) :
+memory_obj::memory_obj(context &ctx, cl_mem_flags flags,
+                       size_t size, void *host_ptr) :
    ctx(ctx), _flags(flags),
    _size(size), _host_ptr(host_ptr),
    _destroy_notify([]{}) {
@@ -34,31 +34,31 @@ _cl_mem::_cl_mem(clover::context &ctx, cl_mem_flags flags,
       data.append((char *)host_ptr, size);
 }
 
-_cl_mem::~_cl_mem() {
+memory_obj::~memory_obj() {
    _destroy_notify();
 }
 
 void
-_cl_mem::destroy_notify(std::function<void ()> f) {
+memory_obj::destroy_notify(std::function<void ()> f) {
    _destroy_notify = f;
 }
 
 cl_mem_flags
-_cl_mem::flags() const {
+memory_obj::flags() const {
    return _flags;
 }
 
 size_t
-_cl_mem::size() const {
+memory_obj::size() const {
    return _size;
 }
 
 void *
-_cl_mem::host_ptr() const {
+memory_obj::host_ptr() const {
    return _host_ptr;
 }
 
-buffer::buffer(clover::context &ctx, cl_mem_flags flags,
+buffer::buffer(context &ctx, cl_mem_flags flags,
                size_t size, void *host_ptr) :
    memory_obj(ctx, flags, size, host_ptr) {
 }
@@ -68,12 +68,12 @@ buffer::type() const {
    return CL_MEM_OBJECT_BUFFER;
 }
 
-root_buffer::root_buffer(clover::context &ctx, cl_mem_flags flags,
+root_buffer::root_buffer(context &ctx, cl_mem_flags flags,
                          size_t size, void *host_ptr) :
    buffer(ctx, flags, size, host_ptr) {
 }
 
-clover::resource &
+resource &
 root_buffer::resource(command_queue &q) {
    // Create a new resource if there's none for this device yet.
    if (!resources.count(&q.dev)) {
@@ -89,14 +89,14 @@ root_buffer::resource(command_queue &q) {
    return *resources.find(&q.dev)->second;
 }
 
-sub_buffer::sub_buffer(clover::root_buffer &parent, cl_mem_flags flags,
+sub_buffer::sub_buffer(root_buffer &parent, cl_mem_flags flags,
                        size_t offset, size_t size) :
    buffer(parent.ctx, flags, size,
           (char *)parent.host_ptr() + offset),
    parent(parent), _offset(offset) {
 }
 
-clover::resource &
+resource &
 sub_buffer::resource(command_queue &q) {
    // Create a new resource if there's none for this device yet.
    if (!resources.count(&q.dev)) {
@@ -114,7 +114,7 @@ sub_buffer::offset() const {
    return _offset;
 }
 
-image::image(clover::context &ctx, cl_mem_flags flags,
+image::image(context &ctx, cl_mem_flags flags,
              const cl_image_format *format,
              size_t width, size_t height, size_t depth,
              size_t row_pitch, size_t slice_pitch, size_t size,
@@ -124,7 +124,7 @@ image::image(clover::context &ctx, cl_mem_flags flags,
    _row_pitch(row_pitch), _slice_pitch(slice_pitch) {
 }
 
-clover::resource &
+resource &
 image::resource(command_queue &q) {
    // Create a new resource if there's none for this device yet.
    if (!resources.count(&q.dev)) {
@@ -170,7 +170,7 @@ image::slice_pitch() const {
    return _slice_pitch;
 }
 
-image2d::image2d(clover::context &ctx, cl_mem_flags flags,
+image2d::image2d(context &ctx, cl_mem_flags flags,
                  const cl_image_format *format, size_t width,
                  size_t height, size_t row_pitch,
                  void *host_ptr) :
@@ -183,7 +183,7 @@ image2d::type() const {
    return CL_MEM_OBJECT_IMAGE2D;
 }
 
-image3d::image3d(clover::context &ctx, cl_mem_flags flags,
+image3d::image3d(context &ctx, cl_mem_flags flags,
                  const cl_image_format *format,
                  size_t width, size_t height, size_t depth,
                  size_t row_pitch, size_t slice_pitch,

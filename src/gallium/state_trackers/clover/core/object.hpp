@@ -191,6 +191,9 @@ struct _cl_event :
 struct _cl_kernel :
    public clover::descriptor<clover::kernel, _cl_kernel> {};
 
+struct _cl_mem :
+   public clover::descriptor<clover::memory_obj, _cl_mem> {};
+
 struct _cl_platform_id :
    public clover::descriptor<clover::platform, _cl_platform_id> {};
 

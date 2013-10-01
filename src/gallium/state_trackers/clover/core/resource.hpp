@@ -52,22 +52,22 @@ namespace clover {
       void del_map(void *p);
       unsigned map_count() const;
 
-      clover::device &dev;
-      clover::memory_obj &obj;
+      device &dev;
+      memory_obj &obj;
 
       friend class sub_resource;
       friend class mapping;
       friend class kernel;
 
    protected:
-      resource(clover::device &dev, clover::memory_obj &obj);
+      resource(device &dev, clover::memory_obj &obj);
 
-      pipe_sampler_view *bind_sampler_view(clover::command_queue &q);
-      void unbind_sampler_view(clover::command_queue &q,
+      pipe_sampler_view *bind_sampler_view(command_queue &q);
+      void unbind_sampler_view(command_queue &q,
                                pipe_sampler_view *st);
 
-      pipe_surface *bind_surface(clover::command_queue &q, bool rw);
-      void unbind_surface(clover::command_queue &q, pipe_surface *st);
+      pipe_surface *bind_surface(command_queue &q, bool rw);
+      void unbind_surface(command_queue &q, pipe_surface *st);
 
       pipe_resource *pipe;
       vector offset;
@@ -82,9 +82,9 @@ namespace clover {
    ///
    class root_resource : public resource {
    public:
-      root_resource(clover::device &dev, clover::memory_obj &obj,
-                    clover::command_queue &q, const std::string &data);
-      root_resource(clover::device &dev, clover::memory_obj &obj,
+      root_resource(device &dev, memory_obj &obj,
+                    command_queue &q, const std::string &data);
+      root_resource(device &dev, memory_obj &obj,
                     root_resource &r);
       virtual ~root_resource();
    };
@@ -95,7 +95,7 @@ namespace clover {
    ///
    class sub_resource : public resource {
    public:
-      sub_resource(clover::resource &r, const vector &offset);
+      sub_resource(resource &r, const vector &offset);
    };
 
    ///

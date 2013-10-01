@@ -31,89 +31,85 @@
 #include "core/queue.hpp"
 
 namespace clover {
-   typedef struct _cl_mem memory_obj;
-
    class resource;
    class sub_resource;
-}
 
-struct _cl_mem : public clover::ref_counter {
-protected:
-   _cl_mem(clover::context &ctx, cl_mem_flags flags,
-           size_t size, void *host_ptr);
-   _cl_mem(const _cl_mem &obj) = delete;
-
-public:
-   virtual ~_cl_mem();
-
-   virtual cl_mem_object_type type() const = 0;
-   virtual clover::resource &resource(clover::command_queue &q) = 0;
-
-   void destroy_notify(std::function<void ()> f);
-   cl_mem_flags flags() const;
-   size_t size() const;
-   void *host_ptr() const;
-
-   clover::context &ctx;
-
-private:
-   cl_mem_flags _flags;
-   size_t _size;
-   void *_host_ptr;
-   std::function<void ()> _destroy_notify;
-
-protected:
-   std::string data;
-};
-
-namespace clover {
-   struct buffer : public memory_obj {
+   class memory_obj : public ref_counter, public _cl_mem {
    protected:
-      buffer(clover::context &ctx, cl_mem_flags flags,
+      memory_obj(context &ctx, cl_mem_flags flags,
+                 size_t size, void *host_ptr);
+      memory_obj(const memory_obj &obj) = delete;
+
+   public:
+      virtual ~memory_obj();
+
+      virtual cl_mem_object_type type() const = 0;
+      virtual clover::resource &resource(command_queue &q) = 0;
+
+      void destroy_notify(std::function<void ()> f);
+      cl_mem_flags flags() const;
+      size_t size() const;
+      void *host_ptr() const;
+
+      context &ctx;
+
+   private:
+      cl_mem_flags _flags;
+      size_t _size;
+      void *_host_ptr;
+      std::function<void ()> _destroy_notify;
+
+   protected:
+      std::string data;
+   };
+
+   class buffer : public memory_obj {
+   protected:
+      buffer(context &ctx, cl_mem_flags flags,
              size_t size, void *host_ptr);
 
    public:
       virtual cl_mem_object_type type() const;
    };
 
-   struct root_buffer : public buffer {
+   class root_buffer : public buffer {
    public:
-      root_buffer(clover::context &ctx, cl_mem_flags flags,
+      root_buffer(context &ctx, cl_mem_flags flags,
                   size_t size, void *host_ptr);
 
-      virtual clover::resource &resource(clover::command_queue &q);
+      virtual clover::resource &resource(command_queue &q);
 
    private:
-      std::map<clover::device *,
-               std::unique_ptr<clover::root_resource>> resources;
+      std::map<device *,
+               std::unique_ptr<root_resource>> resources;
    };
 
-   struct sub_buffer : public buffer {
+   class sub_buffer : public buffer {
    public:
-      sub_buffer(clover::root_buffer &parent, cl_mem_flags flags,
+      sub_buffer(root_buffer &parent, cl_mem_flags flags,
                  size_t offset, size_t size);
 
-      virtual clover::resource &resource(clover::command_queue &q);
+      virtual clover::resource &resource(command_queue &q);
       size_t offset() const;
 
-      clover::root_buffer &parent;
+      root_buffer &parent;
 
    private:
       size_t _offset;
-      std::map<clover::device *,
-               std::unique_ptr<clover::sub_resource>> resources;
+      std::map<device *,
+               std::unique_ptr<sub_resource>> resources;
    };
 
-   struct image : public memory_obj {
+   class image : public memory_obj {
    protected:
-      image(clover::context &ctx, cl_mem_flags flags,
+      image(context &ctx, cl_mem_flags flags,
             const cl_image_format *format,
             size_t width, size_t height, size_t depth,
             size_t row_pitch, size_t slice_pitch, size_t size,
             void *host_ptr);
 
    public:
-      virtual clover::resource &resource(clover::command_queue &q);
+      virtual clover::resource &resource(command_queue &q);
       cl_image_format format() const;
       size_t width() const;
       size_t height() const;
@@ -128,13 +124,13 @@ namespace clover {
       size_t _depth;
       size_t _row_pitch;
       size_t _slice_pitch;
-      std::map<clover::device *,
-               std::unique_ptr<clover::root_resource>> resources;
+      std::map<device *,
+               std::unique_ptr<root_resource>> resources;
    };
 
-   struct image2d : public image {
+   class image2d : public image {
    public:
-      image2d(clover::context &ctx, cl_mem_flags flags,
+      image2d(context &ctx, cl_mem_flags flags,
               const cl_image_format *format, size_t width,
               size_t height, size_t row_pitch,
               void *host_ptr);
@@ -142,9 +138,9 @@ namespace clover {
       virtual cl_mem_object_type type() const;
    };
 
-   struct image3d : public image {
+   class image3d : public image {
    public:
-      image3d(clover::context &ctx, cl_mem_flags flags,
+      image3d(context &ctx, cl_mem_flags flags,
               const cl_image_format *format,
               size_t width, size_t height, size_t depth,
               size_t row_pitch, size_t slice_pitch,

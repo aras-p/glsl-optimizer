@@ -305,10 +305,7 @@ kernel::global_argument::set(size_t size, const void *value) {
    if (size != sizeof(cl_mem))
       throw error(CL_INVALID_ARG_SIZE);
 
-   buf = dynamic_cast<buffer *>(*(cl_mem *)value);
-   if (!buf)
-      throw error(CL_INVALID_MEM_OBJECT);
-
+   buf = &obj<buffer>(*(cl_mem *)value);
    _set = true;
 }
 
@@ -360,10 +357,7 @@ kernel::constant_argument::set(size_t size, const void *value) {
    if (size != sizeof(cl_mem))
       throw error(CL_INVALID_ARG_SIZE);
 
-   buf = dynamic_cast<buffer *>(*(cl_mem *)value);
-   if (!buf)
-      throw error(CL_INVALID_MEM_OBJECT);
-
+   buf = &obj<buffer>(*(cl_mem *)value);
    _set = true;
 }
 
@@ -391,10 +385,7 @@ kernel::image_rd_argument::set(size_t size, const void *value) {
    if (size != sizeof(cl_mem))
       throw error(CL_INVALID_ARG_SIZE);
 
-   img = dynamic_cast<image *>(*(cl_mem *)value);
-   if (!img)
-      throw error(CL_INVALID_MEM_OBJECT);
-
+   img = &obj<image>(*(cl_mem *)value);
    _set = true;
 }
 
@@ -422,10 +413,7 @@ kernel::image_wr_argument::set(size_t size, const void *value) {
    if (size != sizeof(cl_mem))
       throw error(CL_INVALID_ARG_SIZE);
 
-   img = dynamic_cast<image *>(*(cl_mem *)value);
-   if (!img)
-      throw error(CL_INVALID_MEM_OBJECT);
-
+   img = &obj<image>(*(cl_mem *)value);
    _set = true;
 }
 

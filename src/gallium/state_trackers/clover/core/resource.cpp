@@ -21,7 +21,6 @@
 //
 
 #include "core/resource.hpp"
-#include "util/algorithm.hpp"
 #include "pipe/p_screen.h"
 #include "util/u_sampler.h"
 #include "util/u_format.h"
@@ -46,7 +45,7 @@ namespace {
    };
 }
 
-resource::resource(clover::device &dev, clover::memory_obj &obj) :
+resource::resource(device &dev, memory_obj &obj) :
    dev(dev), obj(obj), pipe(NULL), offset() {
 }
 
@@ -83,7 +82,7 @@ resource::map_count() const {
 }
 
 pipe_sampler_view *
-resource::bind_sampler_view(clover::command_queue &q) {
+resource::bind_sampler_view(command_queue &q) {
    pipe_sampler_view info;
 
    u_sampler_view_default_template(&info, pipe, pipe->format);
@@ -91,13 +90,13 @@ resource::bind_sampler_view(clover::command_queue &q) {
 }
 
 void
-resource::unbind_sampler_view(clover::command_queue &q,
+resource::unbind_sampler_view(command_queue &q,
                               pipe_sampler_view *st) {
    q.pipe->sampler_view_destroy(q.pipe, st);
 }
 
 pipe_surface *
-resource::bind_surface(clover::command_queue &q, bool rw) {
+resource::bind_surface(command_queue &q, bool rw) {
    pipe_surface info {};
 
    info.format = pipe->format;
@@ -110,13 +109,12 @@ resource::bind_surface(clover::command_queue &q, bool rw) {
 }
 
 void
-resource::unbind_surface(clover::command_queue &q, pipe_surface *st) {
+resource::unbind_surface(command_queue &q, pipe_surface *st) {
    q.pipe->surface_destroy(q.pipe, st);
 }
 
-root_resource::root_resource(clover::device &dev, clover::memory_obj &obj,
-                             clover::command_queue &q,
-                             const std::string &data) :
+root_resource::root_resource(device &dev, memory_obj &obj,
+                             command_queue &q, const std::string &data) :
    resource(dev, obj) {
    pipe_resource info {};
 
@@ -152,8 +150,8 @@ root_resource::root_resource(clover::device &dev, clover::memory_obj &obj,
    }
 }
 
-root_resource::root_resource(clover::device &dev, clover::memory_obj &obj,
-                             clover::root_resource &r) :
+root_resource::root_resource(device &dev, memory_obj &obj,
+                             root_resource &r) :
    resource(dev, obj) {
    assert(0); // XXX -- resource shared among dev and r.dev
 }

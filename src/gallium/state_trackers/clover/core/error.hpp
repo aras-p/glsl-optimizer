@@ -35,7 +35,7 @@ namespace clover {
    class hard_event;
    class soft_event;
    class kernel;
-   typedef struct _cl_mem memory_obj;
+   class memory_obj;
    class buffer;
    class root_buffer;
    class sub_buffer;
