@@ -4611,6 +4611,39 @@ ast_struct_specifier::hir(exec_list *instructions,
    return NULL;
 }
 
+
+/**
+ * Visitor class which detects whether a given interface block has been used.
+ */
+class interface_block_usage_visitor : public ir_hierarchical_visitor
+{
+public:
+   interface_block_usage_visitor(ir_variable_mode mode, const glsl_type *block)
+      : mode(mode), block(block), found(false)
+   {
+   }
+
+   virtual ir_visitor_status visit(ir_dereference_variable *ir)
+   {
+      if (ir->var->mode == mode && ir->var->get_interface_type() == block) {
+         found = true;
+         return visit_stop;
+      }
+      return visit_continue;
+   }
+
+   bool usage_found() const
+   {
+      return this->found;
+   }
+
+private:
+   ir_variable_mode mode;
+   const glsl_type *block;
+   bool found;
+};
+
+
 ir_rvalue *
 ast_interface_block::hir(exec_list *instructions,
 		          struct _mesa_glsl_parse_state *state)
@@ -4736,6 +4769,26 @@ ast_interface_block::hir(exec_list *instructions,
             fields[i].location =
                earlier_per_vertex->fields.structure[j].location;
          }
+      }
+
+      /* From section 7.1 ("Built-in Language Variables") of the GLSL 4.10
+       * spec:
+       *
+       *     If a built-in interface block is redeclared, it must appear in
+       *     the shader before any use of any member included in the built-in
+       *     declaration, or a compilation error will result.
+       *
+       * This appears to be a clarification to the behaviour established for
+       * gl_PerVertex by GLSL 1.50, therefore we implement this behaviour
+       * regardless of GLSL version.
+       */
+      interface_block_usage_visitor v(var_mode, earlier_per_vertex);
+      v.run(instructions);
+      if (v.usage_found()) {
+         _mesa_glsl_error(&loc, state,
+                          "redeclaration of a built-in interface block must "
+                          "appear before any use of any member of the "
+                          "interface block");
       }
    }
 
