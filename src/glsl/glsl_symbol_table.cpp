@@ -256,3 +256,18 @@ symbol_table_entry *glsl_symbol_table::get_entry(const char *name)
    return (symbol_table_entry *)
       _mesa_symbol_table_find_symbol(table, -1, name);
 }
+
+void
+glsl_symbol_table::disable_variable(const char *name)
+{
+   /* Ideally we would remove the variable's entry from the symbol table, but
+    * that would be difficult.  Fortunately, since this is only used for
+    * built-in variables, it won't be possible for the shader to re-introduce
+    * the variable later, so all we really need to do is to make sure that
+    * further attempts to access it using get_variable() will return NULL.
+    */
+   symbol_table_entry *entry = get_entry(name);
+   if (entry != NULL) {
+      entry->v = NULL;
+   }
+}

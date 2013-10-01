@@ -121,6 +121,14 @@ public:
                                   enum ir_variable_mode mode);
    /*@}*/
 
+   /**
+    * Disable a previously-added variable so that it no longer appears to be
+    * in the symbol table.  This is necessary when gl_PerVertex is redeclared,
+    * to ensure that previously-available built-in variables are no longer
+    * available.
+    */
+   void disable_variable(const char *name);
+
 private:
    symbol_table_entry *get_entry(const char *name);
 
