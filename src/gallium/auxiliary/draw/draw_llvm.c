@@ -555,6 +555,8 @@ draw_llvm_create_variant(struct draw_llvm *llvm,
    variant->jit_func_elts = (draw_jit_vert_func_elts)
          gallivm_jit_function(variant->gallivm, variant->function_elts);
 
+   gallivm_free_ir(variant->gallivm);
+
    variant->shader = shader;
    variant->list_item_global.base = variant;
    variant->list_item_local.base = variant;
@@ -1960,16 +1962,6 @@ draw_llvm_destroy_variant(struct draw_llvm_variant *variant)
 {
    struct draw_llvm *llvm = variant->llvm;
 
-   if (variant->function_elts) {
-      gallivm_free_function(variant->gallivm,
-                            variant->function_elts, variant->jit_func_elts);
-   }
-
-   if (variant->function) {
-      gallivm_free_function(variant->gallivm,
-                            variant->function, variant->jit_func);
-   }
-
    gallivm_destroy(variant->gallivm);
 
    remove_from_list(&variant->list_item_local);
@@ -2206,6 +2198,8 @@ draw_gs_llvm_create_variant(struct draw_llvm *llvm,
    variant->jit_func = (draw_gs_jit_func)
          gallivm_jit_function(variant->gallivm, variant->function);
 
+   gallivm_free_ir(variant->gallivm);
+
    variant->list_item_global.base = variant;
    variant->list_item_local.base = variant;
    /*variant->no = */shader->variants_created++;
@@ -2218,11 +2212,6 @@ void
 draw_gs_llvm_destroy_variant(struct draw_gs_llvm_variant *variant)
 {
    struct draw_llvm *llvm = variant->llvm;
-
-   if (variant->function) {
-      gallivm_free_function(variant->gallivm,
-                            variant->function, variant->jit_func);
-   }
 
    gallivm_destroy(variant->gallivm);
 
