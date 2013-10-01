@@ -89,6 +89,10 @@ void glslopt_cleanup (glslopt_ctx* ctx)
 	_mesa_glsl_release_functions();
 }
 
+struct glslopt_shader_input
+{
+	const char* name;
+};
 
 struct glslopt_shader
 {
@@ -108,6 +112,7 @@ struct glslopt_shader
 		: rawOutput(0)
 		, optimizedOutput(0)
 		, status(false)
+		, inputCount(0)
 	{
 		infoLog = "Shader not compiled yet";
 		
@@ -136,6 +141,10 @@ struct glslopt_shader
 	
 	struct gl_shader_program* whole_program;
 	struct gl_shader* shader;
+
+	static const int kMaxShaderInputs = 128;
+	glslopt_shader_input inputs[kMaxShaderInputs];
+	int inputCount;
 
 	char*	rawOutput;
 	char*	optimizedOutput;
@@ -324,6 +333,23 @@ static void do_optimization_passes(exec_list* ir, bool linked, _mesa_glsl_parse_
 }
 
 
+static void find_shader_inputs(glslopt_shader* sh, exec_list* ir)
+{
+	foreach_list(node, ir)
+	{
+		ir_variable* const var = ((ir_instruction *)node)->as_variable();
+		if (var == NULL || var->mode != ir_var_shader_in)
+			continue;
+
+		if (sh->inputCount >= glslopt_shader::kMaxShaderInputs)
+			return;
+
+		sh->inputs[sh->inputCount].name = ralloc_strdup(sh, var->name);
+		++sh->inputCount;
+	}
+}
+
+
 glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, const char* shaderSource, unsigned options)
 {
 	glslopt_shader* shader = new (ctx->mem_ctx) glslopt_shader ();
@@ -412,6 +438,8 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 	shader->status = !state->error;
 	shader->infoLog = state->info_log;
 
+	find_shader_inputs(shader, ir);
+
 	ralloc_free (ir);
 	ralloc_free (state);
 
@@ -444,4 +472,14 @@ const char* glslopt_get_raw_output (glslopt_shader* shader)
 const char* glslopt_get_log (glslopt_shader* shader)
 {
 	return shader->infoLog;
+}
+
+int glslopt_shader_get_input_count (glslopt_shader* shader)
+{
+	return shader->inputCount;
+}
+
+const char* glslopt_shader_get_input_name (glslopt_shader* shader, int index)
+{
+	return shader->inputs[index].name;
 }
