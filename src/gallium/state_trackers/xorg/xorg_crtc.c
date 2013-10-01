@@ -53,6 +53,7 @@
 #include "state_tracker/drm_driver.h"
 #include "util/u_inlines.h"
 #include "util/u_rect.h"
+#include "util/u_surface.h"
 
 #ifdef HAVE_LIBKMS
 #include "libkms/libkms.h"
