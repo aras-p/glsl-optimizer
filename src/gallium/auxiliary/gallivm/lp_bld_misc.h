@@ -39,6 +39,8 @@ extern "C" {
 #endif
 
 
+struct lp_generated_code;
+
 
 extern void
 lp_set_target_options(void);
@@ -54,10 +56,14 @@ lp_build_load_volatile(LLVMBuilderRef B, LLVMValueRef PointerVal,
 
 extern int
 lp_build_create_jit_compiler_for_module(LLVMExecutionEngineRef *OutJIT,
+                                        struct lp_generated_code **OutCode,
                                         LLVMModuleRef M,
                                         unsigned OptLevel,
                                         int useMCJIT,
                                         char **OutError);
+
+extern void
+lp_free_generated_code(struct lp_generated_code *code);
 
 
 #ifdef __cplusplus

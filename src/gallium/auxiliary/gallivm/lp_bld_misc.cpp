@@ -151,6 +151,261 @@ lp_set_store_alignment(LLVMValueRef Inst,
 }
 
 
+/*
+ * Delegating is tedious but the default manager class is hidden in an
+ * anonymous namespace in LLVM, so we cannot just derive from it to change
+ * its behavior.
+ */
+class DelegatingJITMemoryManager : public llvm::JITMemoryManager {
+
+   protected:
+      virtual llvm::JITMemoryManager *mgr() const = 0;
+
+   public:
+      /*
+       * From JITMemoryManager
+       */
+      virtual void setMemoryWritable() {
+         mgr()->setMemoryWritable();
+      }
+      virtual void setMemoryExecutable() {
+         mgr()->setMemoryExecutable();
+      }
+      virtual void setPoisonMemory(bool poison) {
+         mgr()->setPoisonMemory(poison);
+      }
+      virtual void AllocateGOT() {
+         mgr()->AllocateGOT();
+         /*
+          * isManagingGOT() is not virtual in base class so we can't delegate.
+          * Instead we mirror the value of HasGOT in our instance.
+          */
+         HasGOT = mgr()->isManagingGOT();
+      }
+      virtual uint8_t *getGOTBase() const {
+         return mgr()->getGOTBase();
+      }
+      virtual uint8_t *startFunctionBody(const llvm::Function *F,
+                                         uintptr_t &ActualSize) {
+         return mgr()->startFunctionBody(F, ActualSize);
+      }
+      virtual uint8_t *allocateStub(const llvm::GlobalValue *F,
+                                    unsigned StubSize,
+                                    unsigned Alignment) {
+         return mgr()->allocateStub(F, StubSize, Alignment);
+      }
+      virtual void endFunctionBody(const llvm::Function *F,
+                                   uint8_t *FunctionStart,
+                                   uint8_t *FunctionEnd) {
+         mgr()->endFunctionBody(F, FunctionStart, FunctionEnd);
+      }
+      virtual uint8_t *allocateSpace(intptr_t Size, unsigned Alignment) {
+         return mgr()->allocateSpace(Size, Alignment);
+      }
+      virtual uint8_t *allocateGlobal(uintptr_t Size, unsigned Alignment) {
+         return mgr()->allocateGlobal(Size, Alignment);
+      }
+      virtual void deallocateFunctionBody(void *Body) {
+         mgr()->deallocateFunctionBody(Body);
+      }
+#if HAVE_LLVM < 0x0304
+      virtual uint8_t *startExceptionTable(const llvm::Function *F,
+                                           uintptr_t &ActualSize) {
+         return mgr()->startExceptionTable(F, ActualSize);
+      }
+      virtual void endExceptionTable(const llvm::Function *F,
+                                     uint8_t *TableStart,
+                                     uint8_t *TableEnd,
+                                     uint8_t *FrameRegister) {
+         mgr()->endExceptionTable(F, TableStart, TableEnd,
+                                  FrameRegister);
+      }
+      virtual void deallocateExceptionTable(void *ET) {
+         mgr()->deallocateExceptionTable(ET);
+      }
+#endif
+      virtual bool CheckInvariants(std::string &s) {
+         return mgr()->CheckInvariants(s);
+      }
+      virtual size_t GetDefaultCodeSlabSize() {
+         return mgr()->GetDefaultCodeSlabSize();
+      }
+      virtual size_t GetDefaultDataSlabSize() {
+         return mgr()->GetDefaultDataSlabSize();
+      }
+      virtual size_t GetDefaultStubSlabSize() {
+         return mgr()->GetDefaultStubSlabSize();
+      }
+      virtual unsigned GetNumCodeSlabs() {
+         return mgr()->GetNumCodeSlabs();
+      }
+      virtual unsigned GetNumDataSlabs() {
+         return mgr()->GetNumDataSlabs();
+      }
+      virtual unsigned GetNumStubSlabs() {
+         return mgr()->GetNumStubSlabs();
+      }
+
+      /*
+       * From RTDyldMemoryManager
+       */
+#if HAVE_LLVM >= 0x0304
+      virtual uint8_t *allocateCodeSection(uintptr_t Size,
+                                           unsigned Alignment,
+                                           unsigned SectionID,
+                                           llvm::StringRef SectionName) {
+         return mgr()->allocateCodeSection(Size, Alignment, SectionID,
+                                           SectionName);
+      }
+#else
+      virtual uint8_t *allocateCodeSection(uintptr_t Size,
+                                           unsigned Alignment,
+                                           unsigned SectionID) {
+         return mgr()->allocateCodeSection(Size, Alignment, SectionID);
+      }
+#endif
+#if HAVE_LLVM >= 0x0303
+      virtual uint8_t *allocateDataSection(uintptr_t Size,
+                                           unsigned Alignment,
+                                           unsigned SectionID,
+#if HAVE_LLVM >= 0x0304
+                                           llvm::StringRef SectionName,
+#endif
+                                           bool IsReadOnly) {
+         return mgr()->allocateDataSection(Size, Alignment, SectionID,
+#if HAVE_LLVM >= 0x0304
+                                           SectionName,
+#endif
+                                           IsReadOnly);
+      }
+#if HAVE_LLVM >= 0x0304
+      virtual void registerEHFrames(uint8_t *Addr, uint64_t LoadAddr, size_t Size) {
+         mgr()->registerEHFrames(Addr, LoadAddr, Size);
+      }
+      virtual void deregisterEHFrames(uint8_t *Addr, uint64_t LoadAddr, size_t Size) {
+         mgr()->deregisterEHFrames(Addr, LoadAddr, Size);
+      }
+#else
+      virtual void registerEHFrames(llvm::StringRef SectionData) {
+         mgr()->registerEHFrames(SectionData);
+      }
+#endif
+#else
+      virtual uint8_t *allocateDataSection(uintptr_t Size,
+                                           unsigned Alignment,
+                                           unsigned SectionID) {
+         return mgr()->allocateDataSection(Size, Alignment, SectionID);
+      }
+#endif
+      virtual void *getPointerToNamedFunction(const std::string &Name,
+                                              bool AbortOnFailure=true) {
+         return mgr()->getPointerToNamedFunction(Name, AbortOnFailure);
+      }
+#if HAVE_LLVM == 0x0303
+      virtual bool applyPermissions(std::string *ErrMsg = 0) {
+         return mgr()->applyPermissions(ErrMsg);
+      }
+#elif HAVE_LLVM > 0x0303
+      virtual bool finalizeMemory(std::string *ErrMsg = 0) {
+         return mgr()->finalizeMemory(ErrMsg);
+      }
+#endif
+};
+
+
+/*
+ * Delegate memory management to one shared manager for more efficient use
+ * of memory than creating a separate pool for each LLVM engine.
+ * Keep generated code until freeGeneratedCode() is called, instead of when
+ * memory manager is destroyed, which happens during engine destruction.
+ * This allows additional memory savings as we don't have to keep the engine
+ * around in order to use the code.
+ * All methods are delegated to the shared manager except destruction and
+ * deallocating code.  For the latter we just remember what needs to be
+ * deallocated later.  The shared manager is deleted once it is empty.
+ */
+class ShaderMemoryManager : public DelegatingJITMemoryManager {
+
+   static llvm::JITMemoryManager *TheMM;
+   static unsigned NumUsers;
+
+   struct GeneratedCode {
+      typedef std::vector<void *> Vec;
+      Vec FunctionBody, ExceptionTable;
+
+      GeneratedCode() {
+         ++NumUsers;
+      }
+
+      ~GeneratedCode() {
+         /*
+          * Deallocate things as previously requested and
+          * free shared manager when no longer used.
+          */
+	 Vec::iterator i;
+
+	 assert(TheMM);
+	 for ( i = FunctionBody.begin(); i != FunctionBody.end(); ++i )
+	    TheMM->deallocateFunctionBody(*i);
+#if HAVE_LLVM < 0x0304
+	 for ( i = ExceptionTable.begin(); i != ExceptionTable.end(); ++i )
+	    TheMM->deallocateExceptionTable(*i);
+#endif
+         --NumUsers;
+         if (NumUsers == 0) {
+            delete TheMM;
+            TheMM = 0;
+         }
+      }
+   };
+
+   GeneratedCode *code;
+
+   llvm::JITMemoryManager *mgr() const {
+      if (!TheMM) {
+         TheMM = CreateDefaultMemManager();
+      }
+      return TheMM;
+   }
+
+   public:
+
+      ShaderMemoryManager() {
+         code = new GeneratedCode;
+      }
+
+      virtual ~ShaderMemoryManager() {
+         /*
+          * 'code' is purposely not deleted.  It is the user's responsibility
+          * to call getGeneratedCode() and freeGeneratedCode().
+          */
+      }
+
+      struct lp_generated_code *getGeneratedCode() {
+         return (struct lp_generated_code *) code;
+      }
+
+      static void freeGeneratedCode(struct lp_generated_code *code) {
+         delete (GeneratedCode *) code;
+      }
+
+#if HAVE_LLVM < 0x0304
+      virtual void deallocateExceptionTable(void *ET) {
+         // remember for later deallocation
+         code->ExceptionTable.push_back(ET);
+      }
+#endif
+
+      virtual void deallocateFunctionBody(void *Body) {
+         // remember for later deallocation
+         code->FunctionBody.push_back(Body);
+      }
+};
+
+llvm::JITMemoryManager *ShaderMemoryManager::TheMM = 0;
+unsigned ShaderMemoryManager::NumUsers = 0;
+
+
 /**
  * Same as LLVMCreateJITCompilerForModule, but:
  * - allows using MCJIT and enabling AVX feature where available.
@@ -164,6 +419,7 @@ lp_set_store_alignment(LLVMValueRef Inst,
 extern "C"
 LLVMBool
 lp_build_create_jit_compiler_for_module(LLVMExecutionEngineRef *OutJIT,
+                                        lp_generated_code **OutCode,
                                         LLVMModuleRef M,
                                         unsigned OptLevel,
                                         int useMCJIT,
@@ -220,7 +476,11 @@ lp_build_create_jit_compiler_for_module(LLVMExecutionEngineRef *OutJIT,
       }
       builder.setMAttrs(MAttrs);
    }
-   builder.setJITMemoryManager(JITMemoryManager::CreateDefaultMemManager());
+
+   ShaderMemoryManager *MM = new ShaderMemoryManager();
+   *OutCode = MM->getGeneratedCode();
+
+   builder.setJITMemoryManager(MM);
 
    ExecutionEngine *JIT;
 #if 0
@@ -238,6 +498,17 @@ lp_build_create_jit_compiler_for_module(LLVMExecutionEngineRef *OutJIT,
       *OutJIT = wrap(JIT);
       return 0;
    }
+   lp_free_generated_code(*OutCode);
+   *OutCode = 0;
+   delete MM;
    *OutError = strdup(Error.c_str());
    return 1;
+}
+
+
+extern "C"
+void
+lp_free_generated_code(struct lp_generated_code *code)
+{
+   ShaderMemoryManager::freeGeneratedCode(code);
 }

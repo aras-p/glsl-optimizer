@@ -212,12 +212,15 @@ free_gallivm_state(struct gallivm_state *gallivm)
    if (!USE_GLOBAL_CONTEXT && gallivm->context)
       LLVMContextDispose(gallivm->context);
 
+   lp_free_generated_code(gallivm->code);
+
    gallivm->engine = NULL;
    gallivm->target = NULL;
    gallivm->module = NULL;
    gallivm->passmgr = NULL;
    gallivm->context = NULL;
    gallivm->builder = NULL;
+   gallivm->code = NULL;
 }
 
 
@@ -237,6 +240,7 @@ init_gallivm_engine(struct gallivm_state *gallivm)
       }
 
       ret = lp_build_create_jit_compiler_for_module(&gallivm->engine,
+                                                    &gallivm->code,
                                                     gallivm->module,
                                                     (unsigned) optlevel,
                                                     USE_MCJIT,

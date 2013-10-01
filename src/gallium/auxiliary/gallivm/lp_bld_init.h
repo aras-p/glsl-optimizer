@@ -44,6 +44,7 @@ struct gallivm_state
    LLVMPassManagerRef passmgr;
    LLVMContextRef context;
    LLVMBuilderRef builder;
+   struct lp_generated_code *code;
    unsigned compiled;
 };
 
