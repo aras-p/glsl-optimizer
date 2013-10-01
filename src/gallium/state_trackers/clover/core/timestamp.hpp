@@ -28,7 +28,7 @@
 struct pipe_query;
 
 namespace clover {
-   typedef struct _cl_command_queue command_queue;
+   class command_queue;
 
    namespace timestamp {
       ///

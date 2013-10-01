@@ -29,20 +29,20 @@
 
 using namespace clover;
 
-_cl_command_queue::_cl_command_queue(context &ctx, device &dev,
-                                     cl_command_queue_properties props) :
+command_queue::command_queue(context &ctx, device &dev,
+                             cl_command_queue_properties props) :
    ctx(ctx), dev(dev), _props(props) {
    pipe = dev.pipe->context_create(dev.pipe, NULL);
    if (!pipe)
       throw error(CL_INVALID_DEVICE);
 }
 
-_cl_command_queue::~_cl_command_queue() {
+command_queue::~command_queue() {
    pipe->destroy(pipe);
 }
 
 void
-_cl_command_queue::flush() {
+command_queue::flush() {
    pipe_screen *screen = dev.pipe;
    pipe_fence_handle *fence = NULL;
 
@@ -61,17 +61,17 @@ _cl_command_queue::flush() {
 }
 
 cl_command_queue_properties
-_cl_command_queue::props() const {
+command_queue::props() const {
    return _props;
 }
 
 bool
-_cl_command_queue::profiling_enabled() const {
+command_queue::profiling_enabled() const {
    return _props & CL_QUEUE_PROFILING_ENABLE;
 }
 
 void
-_cl_command_queue::sequence(clover::hard_event *ev) {
+command_queue::sequence(hard_event *ev) {
    if (!queued_events.empty())
       queued_events.back()->chain(ev);
 

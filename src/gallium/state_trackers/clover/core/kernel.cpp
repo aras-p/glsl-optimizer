@@ -318,7 +318,7 @@ _cl_kernel::global_argument::bind(exec_context &ctx,
                                   const clover::module::argument &marg) {
    align(ctx.input, marg.target_align);
    ctx.g_handles.push_back(allocate(ctx.input, marg.target_size));
-   ctx.g_buffers.push_back(obj->resource(ctx.q).pipe);
+   ctx.g_buffers.push_back(obj->resource(*ctx.q).pipe);
 }
 
 void
@@ -378,13 +378,13 @@ _cl_kernel::constant_argument::bind(exec_context &ctx,
    align(ctx.input, marg.target_align);
    insert(ctx.input, v);
 
-   st = obj->resource(ctx.q).bind_surface(*ctx.q, false);
+   st = obj->resource(*ctx.q).bind_surface(*ctx.q, false);
    ctx.resources.push_back(st);
 }
 
 void
 _cl_kernel::constant_argument::unbind(exec_context &ctx) {
-   obj->resource(ctx.q).unbind_surface(*ctx.q, st);
+   obj->resource(*ctx.q).unbind_surface(*ctx.q, st);
 }
 
 void
@@ -409,13 +409,13 @@ _cl_kernel::image_rd_argument::bind(exec_context &ctx,
    align(ctx.input, marg.target_align);
    insert(ctx.input, v);
 
-   st = obj->resource(ctx.q).bind_sampler_view(*ctx.q);
+   st = obj->resource(*ctx.q).bind_sampler_view(*ctx.q);
    ctx.sviews.push_back(st);
 }
 
 void
 _cl_kernel::image_rd_argument::unbind(exec_context &ctx) {
-   obj->resource(ctx.q).unbind_sampler_view(*ctx.q, st);
+   obj->resource(*ctx.q).unbind_sampler_view(*ctx.q, st);
 }
 
 void
@@ -440,13 +440,13 @@ _cl_kernel::image_wr_argument::bind(exec_context &ctx,
    align(ctx.input, marg.target_align);
    insert(ctx.input, v);
 
-   st = obj->resource(ctx.q).bind_surface(*ctx.q, true);
+   st = obj->resource(*ctx.q).bind_surface(*ctx.q, true);
    ctx.resources.push_back(st);
 }
 
 void
 _cl_kernel::image_wr_argument::unbind(exec_context &ctx) {
-   obj->resource(ctx.q).unbind_surface(*ctx.q, st);
+   obj->resource(*ctx.q).unbind_surface(*ctx.q, st);
 }
 
 void

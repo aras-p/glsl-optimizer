@@ -110,7 +110,7 @@ namespace clover {
       const lazy<cl_ulong> &time_start() const;
       const lazy<cl_ulong> &time_end() const;
 
-      friend struct ::_cl_command_queue;
+      friend class command_queue;
 
    private:
       virtual void fence(pipe_fence_handle *fence);

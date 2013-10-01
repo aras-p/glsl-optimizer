@@ -28,7 +28,7 @@
 #include "util/compat.hpp"
 
 namespace clover {
-   typedef struct _cl_command_queue command_queue;
+   class command_queue;
    class context;
    class device;
    class event;

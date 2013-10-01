@@ -66,7 +66,7 @@ namespace clover {
       std::string ir_target() const;
       enum pipe_endian endianness() const;
 
-      friend struct ::_cl_command_queue;
+      friend class command_queue;
       friend class root_resource;
       friend class hard_event;
       friend std::set<cl_image_format>

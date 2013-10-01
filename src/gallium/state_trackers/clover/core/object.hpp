@@ -191,4 +191,7 @@ struct _cl_event :
 struct _cl_platform_id :
    public clover::descriptor<clover::platform, _cl_platform_id> {};
 
+struct _cl_command_queue :
+   public clover::descriptor<clover::command_queue, _cl_command_queue> {};
+
 #endif

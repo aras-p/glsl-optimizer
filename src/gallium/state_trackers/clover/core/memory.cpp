@@ -74,19 +74,19 @@ root_buffer::root_buffer(clover::context &ctx, cl_mem_flags flags,
 }
 
 clover::resource &
-root_buffer::resource(cl_command_queue q) {
+root_buffer::resource(command_queue &q) {
    // Create a new resource if there's none for this device yet.
-   if (!resources.count(&q->dev)) {
+   if (!resources.count(&q.dev)) {
       auto r = (!resources.empty() ?
-                new root_resource(q->dev, *this, *resources.begin()->second) :
-                new root_resource(q->dev, *this, *q, data));
+                new root_resource(q.dev, *this, *resources.begin()->second) :
+                new root_resource(q.dev, *this, q, data));
 
-      resources.insert(std::make_pair(&q->dev,
+      resources.insert(std::make_pair(&q.dev,
                                       std::unique_ptr<root_resource>(r)));
       data.clear();
    }
 
-   return *resources.find(&q->dev)->second;
+   return *resources.find(&q.dev)->second;
 }
 
 sub_buffer::sub_buffer(clover::root_buffer &parent, cl_mem_flags flags,
@@ -97,16 +97,16 @@ sub_buffer::sub_buffer(clover::root_buffer &parent, cl_mem_flags flags,
 }
 
 clover::resource &
-sub_buffer::resource(cl_command_queue q) {
+sub_buffer::resource(command_queue &q) {
    // Create a new resource if there's none for this device yet.
-   if (!resources.count(&q->dev)) {
+   if (!resources.count(&q.dev)) {
       auto r = new sub_resource(parent.resource(q), {{ offset() }});
 
-      resources.insert(std::make_pair(&q->dev,
+      resources.insert(std::make_pair(&q.dev,
                                       std::unique_ptr<sub_resource>(r)));
    }
 
-   return *resources.find(&q->dev)->second;
+   return *resources.find(&q.dev)->second;
 }
 
 size_t
@@ -125,19 +125,19 @@ image::image(clover::context &ctx, cl_mem_flags flags,
 }
 
 clover::resource &
-image::resource(cl_command_queue q) {
+image::resource(command_queue &q) {
    // Create a new resource if there's none for this device yet.
-   if (!resources.count(&q->dev)) {
+   if (!resources.count(&q.dev)) {
       auto r = (!resources.empty() ?
-                new root_resource(q->dev, *this, *resources.begin()->second) :
-                new root_resource(q->dev, *this, *q, data));
+                new root_resource(q.dev, *this, *resources.begin()->second) :
+                new root_resource(q.dev, *this, q, data));
 
-      resources.insert(std::make_pair(&q->dev,
+      resources.insert(std::make_pair(&q.dev,
                                       std::unique_ptr<root_resource>(r)));
       data.clear();
    }
 
-   return *resources.find(&q->dev)->second;
+   return *resources.find(&q.dev)->second;
 }
 
 cl_image_format

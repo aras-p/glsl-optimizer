@@ -92,7 +92,7 @@ clGetEventInfo(cl_event d_ev, cl_event_info param,
 
    switch (param) {
    case CL_EVENT_COMMAND_QUEUE:
-      buf.as_scalar<cl_command_queue>() = ev.queue();
+      buf.as_scalar<cl_command_queue>() = desc(ev.queue());
       break;
 
    case CL_EVENT_CONTEXT:
@@ -167,13 +167,12 @@ clReleaseEvent(cl_event d_ev) try {
 
 PUBLIC cl_int
 clEnqueueMarker(cl_command_queue d_q, cl_event *rd_ev) try {
-   if (!d_q)
-      throw error(CL_INVALID_COMMAND_QUEUE);
+   auto &q = obj(d_q);
 
    if (!rd_ev)
       throw error(CL_INVALID_VALUE);
 
-   *rd_ev = desc(new hard_event(*d_q, CL_COMMAND_MARKER, {}));
+   *rd_ev = desc(new hard_event(q, CL_COMMAND_MARKER, {}));
 
    return CL_SUCCESS;
 
@@ -182,22 +181,21 @@ clEnqueueMarker(cl_command_queue d_q, cl_event *rd_ev) try {
 }
 
 PUBLIC cl_int
-clEnqueueBarrier(cl_command_queue d_q) {
-   if (!d_q)
-      return CL_INVALID_COMMAND_QUEUE;
+clEnqueueBarrier(cl_command_queue d_q) try {
+   obj(d_q);
 
    // No need to do anything, q preserves data ordering strictly.
 
    return CL_SUCCESS;
+
+} catch (error &e) {
+   return e.get();
 }
 
 PUBLIC cl_int
 clEnqueueWaitForEvents(cl_command_queue d_q, cl_uint num_evs,
                        const cl_event *d_evs) try {
-   if (!d_q)
-      throw error(CL_INVALID_COMMAND_QUEUE);
-
-   auto &q = *d_q;
+   auto &q = obj(d_q);
    auto evs = objs(d_evs, num_evs);
 
    for (auto &ev : evs) {
@@ -260,12 +258,11 @@ clGetEventProfilingInfo(cl_event d_ev, cl_profiling_info param,
 
 PUBLIC cl_int
 clFinish(cl_command_queue d_q) try {
-   if (!d_q)
-      throw error(CL_INVALID_COMMAND_QUEUE);
+   auto &q = obj(d_q);
 
    // Create a temporary hard event -- it implicitly depends on all
    // the previously queued hard events.
-   ref_ptr<hard_event> hev = transfer(new hard_event(*d_q, 0, { }));
+   ref_ptr<hard_event> hev = transfer(new hard_event(q, 0, { }));
 
    // And wait on it.
    hev->wait();

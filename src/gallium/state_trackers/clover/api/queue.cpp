@@ -28,7 +28,7 @@ using namespace clover;
 PUBLIC cl_command_queue
 clCreateCommandQueue(cl_context d_ctx, cl_device_id d_dev,
                      cl_command_queue_properties props,
-                     cl_int *errcode_ret) try {
+                     cl_int *r_errcode) try {
    auto &ctx = obj(d_ctx);
    auto &dev = obj(d_dev);
 
@@ -39,57 +39,55 @@ clCreateCommandQueue(cl_context d_ctx, cl_device_id d_dev,
                  CL_QUEUE_PROFILING_ENABLE))
       throw error(CL_INVALID_VALUE);
 
-   ret_error(errcode_ret, CL_SUCCESS);
+   ret_error(r_errcode, CL_SUCCESS);
    return new command_queue(ctx, dev, props);
 
 } catch (error &e) {
-   ret_error(errcode_ret, e);
+   ret_error(r_errcode, e);
    return NULL;
 }
 
 PUBLIC cl_int
-clRetainCommandQueue(cl_command_queue q) {
-   if (!q)
-      return CL_INVALID_COMMAND_QUEUE;
-
-   q->retain();
+clRetainCommandQueue(cl_command_queue d_q) try {
+   obj(d_q).retain();
    return CL_SUCCESS;
+
+} catch (error &e) {
+   return e.get();
 }
 
 PUBLIC cl_int
-clReleaseCommandQueue(cl_command_queue q) {
-   if (!q)
-      return CL_INVALID_COMMAND_QUEUE;
-
-   if (q->release())
-      delete q;
+clReleaseCommandQueue(cl_command_queue d_q) try {
+   if (obj(d_q).release())
+      delete pobj(d_q);
 
    return CL_SUCCESS;
+
+} catch (error &e) {
+   return e.get();
 }
 
 PUBLIC cl_int
-clGetCommandQueueInfo(cl_command_queue q, cl_command_queue_info param,
+clGetCommandQueueInfo(cl_command_queue d_q, cl_command_queue_info param,
                       size_t size, void *r_buf, size_t *r_size) try {
    property_buffer buf { r_buf, size, r_size };
-
-   if (!q)
-      return CL_INVALID_COMMAND_QUEUE;
+   auto &q = obj(d_q);
 
    switch (param) {
    case CL_QUEUE_CONTEXT:
-      buf.as_scalar<cl_context>() = &q->ctx;
+      buf.as_scalar<cl_context>() = desc(q.ctx);
       break;
 
    case CL_QUEUE_DEVICE:
-      buf.as_scalar<cl_device_id>() = &q->dev;
+      buf.as_scalar<cl_device_id>() = desc(q.dev);
       break;
 
    case CL_QUEUE_REFERENCE_COUNT:
-      buf.as_scalar<cl_uint>() = q->ref_count();
+      buf.as_scalar<cl_uint>() = q.ref_count();
       break;
 
    case CL_QUEUE_PROPERTIES:
-      buf.as_scalar<cl_command_queue_properties>() = q->props();
+      buf.as_scalar<cl_command_queue_properties>() = q.props();
       break;
 
    default:
@@ -103,10 +101,10 @@ clGetCommandQueueInfo(cl_command_queue q, cl_command_queue_info param,
 }
 
 PUBLIC cl_int
-clFlush(cl_command_queue q) {
-   if (!q)
-      return CL_INVALID_COMMAND_QUEUE;
-
-   q->flush();
+clFlush(cl_command_queue d_q) try {
+   obj(d_q).flush();
    return CL_SUCCESS;
+
+} catch (error &e) {
+   return e.get();
 }

@@ -204,20 +204,19 @@ namespace {
    /// Common argument checking shared by kernel invocation commands.
    ///
    void
-   kernel_validate(cl_command_queue q, cl_kernel kern,
+   kernel_validate(cl_command_queue d_q, cl_kernel kern,
                    cl_uint dims, const size_t *grid_offset,
                    const size_t *grid_size, const size_t *block_size,
                    cl_uint num_deps, const cl_event *deps,
                    cl_event *ev) {
-      if (!q)
-         throw error(CL_INVALID_COMMAND_QUEUE);
+      auto &q = obj(d_q);
 
       if (!kern)
          throw error(CL_INVALID_KERNEL);
 
-      if (&kern->prog.ctx != &q->ctx ||
+      if (&kern->prog.ctx != &q.ctx ||
           any_of([&](const cl_event ev) {
-                return &obj(ev).ctx != &q->ctx;
+                return &obj(ev).ctx != &q.ctx;
              }, range(deps, num_deps)))
          throw error(CL_INVALID_CONTEXT);
 
@@ -230,10 +229,10 @@ namespace {
             }, kern->args))
          throw error(CL_INVALID_KERNEL_ARGS);
 
-      if (!kern->prog.binaries().count(&q->dev))
+      if (!kern->prog.binaries().count(&q.dev))
          throw error(CL_INVALID_PROGRAM_EXECUTABLE);
 
-      if (dims < 1 || dims > q->dev.max_block_size().size())
+      if (dims < 1 || dims > q.dev.max_block_size().size())
          throw error(CL_INVALID_WORK_DIMENSION);
 
       if (!grid_size || any_of(is_zero(), range(grid_size, dims)))
@@ -243,7 +242,7 @@ namespace {
          if (any_of([](size_t b, size_t max) {
                   return b == 0 || b > max;
                }, range(block_size, dims),
-               q->dev.max_block_size()))
+               q.dev.max_block_size()))
             throw error(CL_INVALID_WORK_ITEM_SIZE);
 
          if (any_of(modulus(), range(grid_size, dims),
@@ -251,7 +250,7 @@ namespace {
             throw error(CL_INVALID_WORK_GROUP_SIZE);
 
          if (fold(multiplies(), 1u, range(block_size, dims)) >
-             q->dev.max_threads_per_block())
+             q.dev.max_threads_per_block())
             throw error(CL_INVALID_WORK_GROUP_SIZE);
       }
    }
@@ -260,15 +259,16 @@ namespace {
    /// Common event action shared by kernel invocation commands.
    ///
    std::function<void (event &)>
-   kernel_op(cl_command_queue q, cl_kernel kern,
+   kernel_op(cl_command_queue d_q, cl_kernel kern,
              const std::vector<size_t> &grid_offset,
              const std::vector<size_t> &grid_size,
              const std::vector<size_t> &block_size) {
+      auto &q = obj(d_q);
       const std::vector<size_t> reduced_grid_size =
          map(divides(), grid_size, block_size);
 
-      return [=](event &) {
-         kern->launch(*q, grid_offset, reduced_grid_size, block_size);
+      return [=, &q](event &) {
+         kern->launch(q, grid_offset, reduced_grid_size, block_size);
       };
    }
 
@@ -296,7 +296,7 @@ clEnqueueNDRangeKernel(cl_command_queue q, cl_kernel kern,
                    num_deps, d_deps, ev);
 
    hard_event *hev = new hard_event(
-      *q, CL_COMMAND_NDRANGE_KERNEL, deps,
+      obj(q), CL_COMMAND_NDRANGE_KERNEL, deps,
       kernel_op(q, kern, grid_offset, grid_size, block_size));
 
    ret_object(ev, hev);
@@ -319,7 +319,7 @@ clEnqueueTask(cl_command_queue q, cl_kernel kern,
                    block_size.data(), num_deps, d_deps, ev);
 
    hard_event *hev = new hard_event(
-      *q, CL_COMMAND_TASK, deps,
+      obj(q), CL_COMMAND_TASK, deps,
       kernel_op(q, kern, grid_offset, grid_size, block_size));
 
    ret_object(ev, hev);

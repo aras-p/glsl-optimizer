@@ -47,7 +47,7 @@ public:
    virtual ~_cl_mem();
 
    virtual cl_mem_object_type type() const = 0;
-   virtual clover::resource &resource(cl_command_queue q) = 0;
+   virtual clover::resource &resource(clover::command_queue &q) = 0;
 
    void destroy_notify(std::function<void ()> f);
    cl_mem_flags flags() const;
@@ -81,7 +81,7 @@ namespace clover {
       root_buffer(clover::context &ctx, cl_mem_flags flags,
                   size_t size, void *host_ptr);
 
-      virtual clover::resource &resource(cl_command_queue q);
+      virtual clover::resource &resource(clover::command_queue &q);
 
    private:
       std::map<clover::device *,
@@ -93,7 +93,7 @@ namespace clover {
       sub_buffer(clover::root_buffer &parent, cl_mem_flags flags,
                  size_t offset, size_t size);
 
-      virtual clover::resource &resource(cl_command_queue q);
+      virtual clover::resource &resource(clover::command_queue &q);
       size_t offset() const;
 
       clover::root_buffer &parent;
@@ -113,7 +113,7 @@ namespace clover {
             void *host_ptr);
 
    public:
-      virtual clover::resource &resource(cl_command_queue q);
+      virtual clover::resource &resource(clover::command_queue &q);
       cl_image_format format() const;
       size_t width() const;
       size_t height() const;
