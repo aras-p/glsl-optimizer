@@ -41,6 +41,9 @@ initialize_mesa_context(struct gl_context *ctx, gl_api api)
 
    ctx->Const.GLSLVersion = 140;
 
+   if(api == API_OPENGL_CORE)
+	   ctx->Extensions.ARB_ES3_compatibility = true;
+
    /* 1.20 minimums. */
    ctx->Const.MaxLights = 8;
    ctx->Const.MaxClipPlanes = 8;
@@ -66,9 +69,21 @@ initialize_mesa_context(struct gl_context *ctx, gl_api api)
 
 
 struct glslopt_ctx {
-	glslopt_ctx (bool openglES) {
+	glslopt_ctx (glslopt_target target) {
 		mem_ctx = ralloc_context (NULL);
-		initialize_mesa_context (&mesa_ctx, openglES ? API_OPENGLES2 : API_OPENGL_COMPAT);
+		switch(target)
+		{
+		default:
+		case kGlslTargetOpenGL:
+			initialize_mesa_context (&mesa_ctx, API_OPENGL_COMPAT);
+			break;
+		case kGlslTargetOpenGLES20:
+			initialize_mesa_context (&mesa_ctx, API_OPENGLES2);
+			break;
+		case kGlslTargetOpenGLES30:
+			initialize_mesa_context (&mesa_ctx, API_OPENGL_CORE);
+			break;
+		}
 	}
 	~glslopt_ctx() {
 		ralloc_free (mem_ctx);
@@ -77,9 +92,9 @@ struct glslopt_ctx {
 	void* mem_ctx;
 };
 
-glslopt_ctx* glslopt_initialize (bool openglES)
+glslopt_ctx* glslopt_initialize (glslopt_target target)
 {
-	return new glslopt_ctx(openglES);
+	return new glslopt_ctx(target);
 }
 
 void glslopt_cleanup (glslopt_ctx* ctx)
@@ -401,7 +416,7 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 	memcpy(shader->shader->builtins_to_link, state->builtins_to_link, sizeof(shader->shader->builtins_to_link[0]) * state->num_builtins_to_link);
 	shader->shader->num_builtins_to_link = state->num_builtins_to_link;
 	
-	struct gl_shader* linked_shader = 0;
+	struct gl_shader* linked_shader = NULL;
 
 	if (!state->error && !ir->is_empty())
 	{

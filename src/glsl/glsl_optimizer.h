@@ -35,7 +35,14 @@ enum glslopt_options {
 	kGlslOptionNotFullShader = (1<<1), // Passed shader is not the full shader source. This makes some optimizations weaker.
 };
 
-glslopt_ctx* glslopt_initialize (bool openglES);
+// Optimizer target language
+enum glslopt_target {
+	kGlslTargetOpenGL = 0,
+	kGlslTargetOpenGLES20 = 1,
+	kGlslTargetOpenGLES30 = 2
+};
+
+glslopt_ctx* glslopt_initialize (glslopt_target target);
 void glslopt_cleanup (glslopt_ctx* ctx);
 
 glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, const char* shaderSource, unsigned options);

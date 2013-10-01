@@ -414,8 +414,8 @@ int main (int argc, const char** argv)
 
 	bool hasOpenGL = InitializeOpenGL ();
 	glslopt_ctx* ctx[2] = {
-		glslopt_initialize(true),
-		glslopt_initialize(false),
+		glslopt_initialize(kGlslTargetOpenGLES20),
+		glslopt_initialize(kGlslTargetOpenGL),
 	};
 
 	std::string baseFolder = argv[1];
