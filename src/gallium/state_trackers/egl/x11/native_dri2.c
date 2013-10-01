@@ -290,6 +290,12 @@ dri2_surface_flush_frontbuffer(struct native_surface *nsurf)
 {
    struct dri2_surface *dri2surf = dri2_surface(nsurf);
    struct dri2_display *dri2dpy = dri2surf->dri2dpy;
+   struct native_display *ndpy = &dri2dpy->base;
+   struct pipe_context *pipe = ndpy_get_copy_context(ndpy);
+
+   /* flush buffer */
+   pipe->flush_resource(pipe, dri2surf->textures[NATIVE_ATTACHMENT_FRONT_LEFT]);
+   pipe->flush(pipe, NULL, 0);
 
    /* copy to real front buffer */
    if (dri2surf->have_fake)
@@ -313,9 +319,14 @@ dri2_surface_swap_buffers(struct native_surface *nsurf, int num_rects,
 {
    struct dri2_surface *dri2surf = dri2_surface(nsurf);
    struct dri2_display *dri2dpy = dri2surf->dri2dpy;
+   struct native_display *ndpy = &dri2dpy->base;
+   struct pipe_context *pipe = ndpy_get_copy_context(ndpy);
 
    /* copy to front buffer */
    if (dri2surf->have_back) {
+      pipe->flush_resource(pipe, dri2surf->textures[NATIVE_ATTACHMENT_BACK_LEFT]);
+      pipe->flush(pipe, NULL, 0);
+
       if (num_rects > 0)
          x11_drawable_copy_buffers_region(dri2dpy->xscr, dri2surf->drawable,
                num_rects, rects,
