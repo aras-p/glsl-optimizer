@@ -1,0 +1,34 @@
+#######################################################################
+# SConscript for Haiku OpenGL kit
+
+Import('*')
+
+env = env.Clone()
+
+env.Append(CPPPATH = [
+    '#/src/mapi',
+    '#/src/mesa',
+    '#/src/mesa/main',
+    '/boot/system/develop/headers/private',
+    Dir('../../../mapi'), # src/mapi build path for python-generated GL API files/headers
+])
+
+env.Prepend(LIBS = [
+    glapi
+])
+
+sources = [
+    'GLView.cpp',
+    'GLRenderer.cpp',
+    'GLRendererRoster.cpp',
+    'GLDispatcher.cpp',
+]
+
+# libGL.so
+libgl = env.SharedLibrary(
+    target ='GL',
+    source = sources,
+    SHLIBSUFFIX = env['SHLIBSUFFIX'],
+)
+
+env.Alias('libgl-haiku', libgl)
