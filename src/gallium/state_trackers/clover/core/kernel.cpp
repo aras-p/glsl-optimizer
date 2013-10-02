@@ -115,7 +115,7 @@ _cl_kernel::mem_private() const {
 
 size_t
 _cl_kernel::max_block_size() const {
-   return SIZE_MAX;
+   return std::numeric_limits<std::size_t>::max();
 }
 
 const std::string &
