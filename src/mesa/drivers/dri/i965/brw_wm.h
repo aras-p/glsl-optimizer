@@ -114,8 +114,7 @@ bool do_wm_prog(struct brw_context *brw,
 void brw_wm_debug_recompile(struct brw_context *brw,
                             struct gl_shader_program *prog,
                             const struct brw_wm_prog_key *key);
-bool brw_wm_prog_data_compare(const void *a, const void *b,
-                              int aux_size, const void *key);
+bool brw_wm_prog_data_compare(const void *a, const void *b);
 void brw_wm_prog_data_free(const void *in_prog_data);
 
 #endif

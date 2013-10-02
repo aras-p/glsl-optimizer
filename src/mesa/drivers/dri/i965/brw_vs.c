@@ -176,8 +176,7 @@ gl_clip_plane *brw_select_clip_planes(struct gl_context *ctx)
 
 
 bool
-brw_vs_prog_data_compare(const void *in_a, const void *in_b,
-                         int aux_size, const void *in_key)
+brw_vs_prog_data_compare(const void *in_a, const void *in_b)
 {
    const struct brw_vs_prog_data *a = in_a;
    const struct brw_vs_prog_data *b = in_b;

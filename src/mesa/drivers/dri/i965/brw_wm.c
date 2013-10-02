@@ -103,8 +103,7 @@ brw_compute_barycentric_interp_modes(struct brw_context *brw,
 }
 
 bool
-brw_wm_prog_data_compare(const void *in_a, const void *in_b,
-                         int aux_size, const void *in_key)
+brw_wm_prog_data_compare(const void *in_a, const void *in_b)
 {
    const struct brw_wm_prog_data *a = in_a;
    const struct brw_wm_prog_data *b = in_b;

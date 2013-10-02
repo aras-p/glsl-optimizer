@@ -215,9 +215,7 @@ brw_try_upload_using_copy(struct brw_cache *cache,
 	 }
 
          if (cache->aux_compare[result_item->cache_id]) {
-            if (!cache->aux_compare[result_item->cache_id](item_aux, aux,
-                                                           item->aux_size,
-                                                           item->key))
+            if (!cache->aux_compare[result_item->cache_id](item_aux, aux))
                continue;
          } else if (memcmp(item_aux, aux, item->aux_size) != 0) {
 	    continue;

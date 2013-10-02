@@ -30,8 +30,7 @@
 extern "C" {
 #endif
 
-bool brw_gs_prog_data_compare(const void *a, const void *b,
-                              int aux_size, const void *key);
+bool brw_gs_prog_data_compare(const void *a, const void *b);
 void brw_gs_prog_data_free(const void *in_prog_data);
 
 #ifdef __cplusplus

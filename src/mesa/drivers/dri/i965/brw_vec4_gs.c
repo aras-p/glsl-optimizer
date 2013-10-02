@@ -304,8 +304,7 @@ const struct brw_tracked_state brw_gs_prog = {
 
 
 bool
-brw_gs_prog_data_compare(const void *in_a, const void *in_b,
-                         int aux_size, const void *in_key)
+brw_gs_prog_data_compare(const void *in_a, const void *in_b)
 {
    const struct brw_gs_prog_data *a = in_a;
    const struct brw_gs_prog_data *b = in_b;

@@ -794,8 +794,7 @@ struct brw_cache_item {
 };   
 
 
-typedef bool (*cache_aux_compare_func)(const void *a, const void *b,
-                                       int aux_size, const void *key);
+typedef bool (*cache_aux_compare_func)(const void *a, const void *b);
 typedef void (*cache_aux_free_func)(const void *aux);
 
 struct brw_cache {
