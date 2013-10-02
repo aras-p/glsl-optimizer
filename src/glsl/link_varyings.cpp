@@ -1038,7 +1038,7 @@ private:
 
 namespace linker {
 
-void
+bool
 populate_consumer_input_sets(void *mem_ctx, exec_list *ir,
                              hash_table *consumer_inputs,
                              hash_table *consumer_interface_inputs)
@@ -1047,6 +1047,9 @@ populate_consumer_input_sets(void *mem_ctx, exec_list *ir,
       ir_variable *const input_var = ((ir_instruction *) node)->as_variable();
 
       if ((input_var != NULL) && (input_var->data.mode == ir_var_shader_in)) {
+         if (input_var->type->is_interface())
+            return false;
+
          if (input_var->get_interface_type() != NULL) {
             char *const iface_field_name =
                ralloc_asprintf(mem_ctx, "%s.%s",
@@ -1060,6 +1063,8 @@ populate_consumer_input_sets(void *mem_ctx, exec_list *ir,
          }
       }
    }
+
+   return true;
 }
 
 }
@@ -1116,11 +1121,17 @@ assign_varying_locations(struct gl_context *ctx,
     *    not being inputs.  This lets the optimizer eliminate them.
     */
 
-   if (consumer)
-      linker::populate_consumer_input_sets(mem_ctx,
-                                           consumer->ir,
-                                           consumer_inputs,
-                                           consumer_interface_inputs);
+   if (consumer
+       && !linker::populate_consumer_input_sets(mem_ctx,
+                                                consumer->ir,
+                                                consumer_inputs,
+                                                consumer_interface_inputs)) {
+      assert(!"populate_consumer_input_sets failed");
+      hash_table_dtor(tfeedback_candidates);
+      hash_table_dtor(consumer_inputs);
+      hash_table_dtor(consumer_interface_inputs);
+      return false;
+   }
 
    foreach_list(node, producer->ir) {
       ir_variable *const output_var = ((ir_instruction *) node)->as_variable();

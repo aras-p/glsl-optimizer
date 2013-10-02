@@ -35,7 +35,7 @@
  */
 
 namespace linker {
-void
+bool
 populate_consumer_input_sets(void *mem_ctx, exec_list *ir,
                              hash_table *consumer_inputs,
                              hash_table *consumer_interface_inputs);
@@ -52,8 +52,8 @@ public:
    {
       return ralloc_asprintf(mem_ctx,
                              "%s.%s",
-                             simple_interface->name,
-                             simple_interface->fields.structure[field].name);
+                             iface->name,
+                             iface->fields.structure[field].name);
    }
 
    void *mem_ctx;
@@ -70,7 +70,11 @@ link_varyings::link_varyings()
       {
          glsl_type::vec(4),
          "v",
-         false
+         false,
+         0,
+         0,
+         0,
+         0
       }
    };
 
@@ -151,10 +155,10 @@ TEST_F(link_varyings, single_simple_input)
 
    ir.push_tail(v);
 
-   linker::populate_consumer_input_sets(mem_ctx,
-                                        &ir,
-                                        consumer_inputs,
-                                        consumer_interface_inputs);
+   ASSERT_TRUE(linker::populate_consumer_input_sets(mem_ctx,
+                                                    &ir,
+                                                    consumer_inputs,
+                                                    consumer_interface_inputs));
 
    EXPECT_EQ((void *) v, hash_table_find(consumer_inputs, "a"));
    EXPECT_EQ(1u, num_elements(consumer_inputs));
@@ -171,16 +175,16 @@ TEST_F(link_varyings, gl_ClipDistance)
                                "gl_ClipDistance",
                                ir_var_shader_in);
 
-   clipdistance->explicit_location = true;
-   clipdistance->location = VARYING_SLOT_CLIP_DIST0;
-   clipdistance->explicit_index = 0;
+   clipdistance->data.explicit_location = true;
+   clipdistance->data.location = VARYING_SLOT_CLIP_DIST0;
+   clipdistance->data.explicit_index = 0;
 
    ir.push_tail(clipdistance);
 
-   linker::populate_consumer_input_sets(mem_ctx,
-                                        &ir,
-                                        consumer_inputs,
-                                        consumer_interface_inputs);
+   ASSERT_TRUE(linker::populate_consumer_input_sets(mem_ctx,
+                                                    &ir,
+                                                    consumer_inputs,
+                                                    consumer_interface_inputs));
 
    EXPECT_EQ((void *) clipdistance,
              hash_table_find(consumer_inputs, "gl_ClipDistance"));
@@ -195,14 +199,14 @@ TEST_F(link_varyings, single_interface_input)
                                simple_interface->fields.structure[0].name,
                                ir_var_shader_in);
 
-   v->interface_type = simple_interface;
+   v->init_interface_type(simple_interface);
 
    ir.push_tail(v);
 
-   linker::populate_consumer_input_sets(mem_ctx,
-                                        &ir,
-                                        consumer_inputs,
-                                        consumer_interface_inputs);
+   ASSERT_TRUE(linker::populate_consumer_input_sets(mem_ctx,
+                                                    &ir,
+                                                    consumer_inputs,
+                                                    consumer_interface_inputs));
 
    char *const full_name = interface_field_name(simple_interface);
 
@@ -226,14 +230,14 @@ TEST_F(link_varyings, one_interface_and_one_simple_input)
                                simple_interface->fields.structure[0].name,
                                ir_var_shader_in);
 
-   iface->interface_type = simple_interface;
+   iface->init_interface_type(simple_interface);
 
    ir.push_tail(iface);
 
-   linker::populate_consumer_input_sets(mem_ctx,
-                                        &ir,
-                                        consumer_inputs,
-                                        consumer_interface_inputs);
+   ASSERT_TRUE(linker::populate_consumer_input_sets(mem_ctx,
+                                                    &ir,
+                                                    consumer_inputs,
+                                                    consumer_interface_inputs));
 
    char *const iface_field_name = interface_field_name(simple_interface);
 
@@ -243,4 +247,21 @@ TEST_F(link_varyings, one_interface_and_one_simple_input)
 
    EXPECT_EQ((void *) v, hash_table_find(consumer_inputs, "a"));
    EXPECT_EQ(1u, num_elements(consumer_inputs));
+}
+
+TEST_F(link_varyings, invalid_interface_input)
+{
+   ir_variable *const v =
+      new(mem_ctx) ir_variable(simple_interface,
+                               "named_interface",
+                               ir_var_shader_in);
+
+   ASSERT_EQ(simple_interface, v->get_interface_type());
+
+   ir.push_tail(v);
+
+   EXPECT_FALSE(linker::populate_consumer_input_sets(mem_ctx,
+                                                    &ir,
+                                                    consumer_inputs,
+                                                    consumer_interface_inputs));
 }
