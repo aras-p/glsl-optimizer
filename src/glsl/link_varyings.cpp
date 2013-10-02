@@ -172,6 +172,7 @@ cross_validate_outputs_to_inputs(struct gl_shader_program *prog,
 				 gl_shader *producer, gl_shader *consumer)
 {
    glsl_symbol_table parameters;
+   ir_variable *explicit_locations[MAX_VARYING] = { NULL, };
 
    /* Find all shader outputs in the "producer" stage.
     */
@@ -181,7 +182,26 @@ cross_validate_outputs_to_inputs(struct gl_shader_program *prog,
       if ((var == NULL) || (var->data.mode != ir_var_shader_out))
 	 continue;
 
-      parameters.add_variable(var);
+      if (!var->data.explicit_location
+          || var->data.location < VARYING_SLOT_VAR0)
+         parameters.add_variable(var);
+      else {
+         /* User-defined varyings with explicit locations are handled
+          * differently because they do not need to have matching names.
+          */
+         const unsigned idx = var->data.location - VARYING_SLOT_VAR0;
+
+         if (explicit_locations[idx] != NULL) {
+            linker_error(prog,
+                         "%s shader has multiple outputs explicitly "
+                         "assigned to location %d\n",
+                         _mesa_shader_stage_to_string(producer->Stage),
+                         idx);
+            return;
+         }
+
+         explicit_locations[idx] = var;
+      }
    }
 
 
@@ -220,7 +240,27 @@ cross_validate_outputs_to_inputs(struct gl_shader_program *prog,
                                              front_color, back_color,
                                              consumer->Stage, producer->Stage);
       } else {
-         ir_variable *const output = parameters.get_variable(input->name);
+         /* The rules for connecting inputs and outputs change in the presence
+          * of explicit locations.  In this case, we no longer care about the
+          * names of the variables.  Instead, we care only about the
+          * explicitly assigned location.
+          */
+         ir_variable *output = NULL;
+         if (input->data.explicit_location
+             && input->data.location >= VARYING_SLOT_VAR0) {
+            output = explicit_locations[input->data.location - VARYING_SLOT_VAR0];
+
+            if (output == NULL) {
+               linker_error(prog,
+                            "%s shader input `%s' with explicit location "
+                            "has no matching output\n",
+                            _mesa_shader_stage_to_string(consumer->Stage),
+                            input->name);
+            }
+         } else {
+            output = parameters.get_variable(input->name);
+         }
+
          if (output != NULL) {
             cross_validate_types_and_qualifiers(prog, input, output,
                                                 consumer->Stage, producer->Stage);
@@ -1051,8 +1091,13 @@ namespace linker {
 bool
 populate_consumer_input_sets(void *mem_ctx, exec_list *ir,
                              hash_table *consumer_inputs,
-                             hash_table *consumer_interface_inputs)
+                             hash_table *consumer_interface_inputs,
+                             ir_variable *consumer_inputs_with_locations[MAX_VARYING])
 {
+   memset(consumer_inputs_with_locations,
+          0,
+          sizeof(consumer_inputs_with_locations[0]) * MAX_VARYING);
+
    foreach_list(node, ir) {
       ir_variable *const input_var = ((ir_instruction *) node)->as_variable();
 
@@ -1060,7 +1105,26 @@ populate_consumer_input_sets(void *mem_ctx, exec_list *ir,
          if (input_var->type->is_interface())
             return false;
 
-         if (input_var->get_interface_type() != NULL) {
+         if (input_var->data.explicit_location) {
+            /* assign_varying_locations only cares about finding the
+             * ir_variable at the start of a contiguous location block.
+             *
+             *     - For !producer, consumer_inputs_with_locations isn't used.
+             *
+             *     - For !consumer, consumer_inputs_with_locations is empty.
+             *
+             * For consumer && producer, if you were trying to set some
+             * ir_variable to the middle of a location block on the other side
+             * of producer/consumer, cross_validate_outputs_to_inputs() should
+             * be link-erroring due to either type mismatch or location
+             * overlaps.  If the variables do match up, then they've got a
+             * matching data.location and you only looked at
+             * consumer_inputs_with_locations[var->data.location], not any
+             * following entries for the array/structure.
+             */
+            consumer_inputs_with_locations[input_var->data.location] =
+               input_var;
+         } else if (input_var->get_interface_type() != NULL) {
             char *const iface_field_name =
                ralloc_asprintf(mem_ctx, "%s.%s",
                                input_var->get_interface_type()->name,
@@ -1087,11 +1151,14 @@ ir_variable *
 get_matching_input(void *mem_ctx,
                    const ir_variable *output_var,
                    hash_table *consumer_inputs,
-                   hash_table *consumer_interface_inputs)
+                   hash_table *consumer_interface_inputs,
+                   ir_variable *consumer_inputs_with_locations[MAX_VARYING])
 {
    ir_variable *input_var;
 
-   if (output_var->get_interface_type() != NULL) {
+   if (output_var->data.explicit_location) {
+      input_var = consumer_inputs_with_locations[output_var->data.location];
+   } else if (output_var->get_interface_type() != NULL) {
       char *const iface_field_name =
          ralloc_asprintf(mem_ctx, "%s.%s",
                          output_var->get_interface_type()->name,
@@ -1210,6 +1277,9 @@ assign_varying_locations(struct gl_context *ctx,
       = hash_table_ctor(0, hash_table_string_hash, hash_table_string_compare);
    hash_table *consumer_interface_inputs
       = hash_table_ctor(0, hash_table_string_hash, hash_table_string_compare);
+   ir_variable *consumer_inputs_with_locations[MAX_VARYING] = {
+      NULL,
+   };
 
    /* Operate in a total of four passes.
     *
@@ -1236,7 +1306,8 @@ assign_varying_locations(struct gl_context *ctx,
        && !linker::populate_consumer_input_sets(mem_ctx,
                                                 consumer->ir,
                                                 consumer_inputs,
-                                                consumer_interface_inputs)) {
+                                                consumer_interface_inputs,
+                                                consumer_inputs_with_locations)) {
       assert(!"populate_consumer_input_sets failed");
       hash_table_dtor(tfeedback_candidates);
       hash_table_dtor(consumer_inputs);
@@ -1258,7 +1329,8 @@ assign_varying_locations(struct gl_context *ctx,
 
          ir_variable *const input_var =
             linker::get_matching_input(mem_ctx, output_var, consumer_inputs,
-                                       consumer_interface_inputs);
+                                       consumer_interface_inputs,
+                                       consumer_inputs_with_locations);
 
          /* If a matching input variable was found, add this ouptut (and the
           * input) to the set.  If this is a separable program and there is no
