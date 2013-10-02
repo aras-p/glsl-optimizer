@@ -157,8 +157,8 @@ vec4_generator::mark_surface_used(unsigned surf_index)
 {
    assert(surf_index < BRW_MAX_VEC4_SURFACES);
 
-   prog_data->binding_table_size = MAX2(prog_data->binding_table_size,
-                                        surf_index + 1);
+   prog_data->base.binding_table.size_bytes =
+      MAX2(prog_data->base.binding_table.size_bytes, (surf_index + 1) * 4);
 }
 
 void
@@ -385,9 +385,9 @@ vec4_generator::generate_tex(vec4_instruction *inst,
       break;
    }
 
-   uint32_t surface_index = inst->opcode == SHADER_OPCODE_TG4
-      ? SURF_INDEX_VEC4_GATHER_TEXTURE(inst->sampler)
-      : SURF_INDEX_VEC4_TEXTURE(inst->sampler);
+   uint32_t surface_index = (inst->opcode == SHADER_OPCODE_TG4
+      ? prog_data->base.binding_table.gather_texture_start
+      : prog_data->base.binding_table.texture_start) + inst->sampler;
 
    brw_SAMPLE(p,
 	      dst,
@@ -1123,8 +1123,9 @@ vec4_generator::generate_vec4_instruction(vec4_instruction *instruction,
       break;
 
    case SHADER_OPCODE_SHADER_TIME_ADD:
-      brw_shader_time_add(p, src[0], SURF_INDEX_VEC4_SHADER_TIME);
-      mark_surface_used(SURF_INDEX_VEC4_SHADER_TIME);
+      brw_shader_time_add(p, src[0],
+                          prog_data->base.binding_table.shader_time_start);
+      mark_surface_used(prog_data->base.binding_table.shader_time_start);
       break;
 
    case VS_OPCODE_UNPACK_FLAGS_SIMD4X2:

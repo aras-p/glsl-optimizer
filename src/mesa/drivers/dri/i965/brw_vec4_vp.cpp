@@ -560,7 +560,7 @@ vec4_vs_visitor::get_vp_src_reg(const prog_src_register &src)
       #endif
 
          result = src_reg(this, glsl_type::vec4_type);
-         src_reg surf_index = src_reg(unsigned(SURF_INDEX_VEC4_CONST_BUFFER));
+         src_reg surf_index = src_reg(unsigned(prog_data->base.binding_table.pull_constants_start));
          vec4_instruction *load =
             new(mem_ctx) vec4_instruction(this, VS_OPCODE_PULL_CONSTANT_LOAD,
                                           dst_reg(result), surf_index, reladdr);

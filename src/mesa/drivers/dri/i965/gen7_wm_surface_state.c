@@ -451,9 +451,11 @@ gen7_update_null_renderbuffer_surface(struct brw_context *brw, unsigned unit)
 
    /* _NEW_BUFFERS */
    const struct gl_framebuffer *fb = ctx->DrawBuffer;
+   uint32_t surf_index =
+      brw->wm.prog_data->binding_table.render_target_start + unit;
 
    uint32_t *surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE, 8 * 4, 32,
-                                    &brw->wm.base.surf_offset[SURF_INDEX_DRAW(unit)]);
+                                    &brw->wm.base.surf_offset[surf_index]);
    memset(surf, 0, 8 * 4);
 
    /* From the Ivybridge PRM, Volume 4, Part 1, page 65,
@@ -495,7 +497,8 @@ gen7_update_renderbuffer_surface(struct brw_context *brw,
    GLenum gl_target = rb->TexImage ?
                          rb->TexImage->TexObject->Target : GL_TEXTURE_2D;
 
-   uint32_t surf_index = SURF_INDEX_DRAW(unit);
+   uint32_t surf_index =
+      brw->wm.prog_data->binding_table.render_target_start + unit;
 
    uint32_t *surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE, 8 * 4, 32,
                                     &brw->wm.base.surf_offset[surf_index]);

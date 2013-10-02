@@ -67,7 +67,6 @@ static void
 brw_upload_gs_ubo_surfaces(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->ctx;
-   struct brw_stage_state *stage_state = &brw->gs.base;
 
    /* _NEW_PROGRAM */
    struct gl_shader_program *prog = ctx->Shader.CurrentGeometryProgram;
@@ -75,15 +74,16 @@ brw_upload_gs_ubo_surfaces(struct brw_context *brw)
    if (!prog)
       return;
 
+   /* CACHE_NEW_GS_PROG */
    brw_upload_ubo_surfaces(brw, prog->_LinkedShaders[MESA_SHADER_GEOMETRY],
-			   &stage_state->surf_offset[SURF_INDEX_VEC4_UBO(0)]);
+			   &brw->gs.base, &brw->gs.prog_data->base.base);
 }
 
 const struct brw_tracked_state brw_gs_ubo_surfaces = {
    .dirty = {
       .mesa = _NEW_PROGRAM,
       .brw = BRW_NEW_BATCH | BRW_NEW_UNIFORM_BUFFER,
-      .cache = 0,
+      .cache = CACHE_NEW_GS_PROG,
    },
    .emit = brw_upload_gs_ubo_surfaces,
 };

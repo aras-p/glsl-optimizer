@@ -328,6 +328,27 @@ struct brw_shader {
    struct exec_list *ir;
 };
 
+/* Note: If adding fields that need anything besides a normal memcmp() for
+ * comparing them, be sure to go fix the the stage-specific
+ * prog_data_compare().
+ */
+struct brw_stage_prog_data {
+   struct {
+      /** size of our binding table. */
+      uint32_t size_bytes;
+
+      /** @{
+       * surface indices for the various groups of surfaces
+       */
+      uint32_t pull_constants_start;
+      uint32_t texture_start;
+      uint32_t gather_texture_start;
+      uint32_t ubo_start;
+      uint32_t shader_time_start;
+      /** @} */
+   } binding_table;
+};
+
 /* Data about a particular attempt to compile a program.  Note that
  * there can be many of these, each in a different GL state
  * corresponding to a different brw_wm_prog_key struct, with different
@@ -337,6 +358,8 @@ struct brw_shader {
  * struct!
  */
 struct brw_wm_prog_data {
+   struct brw_stage_prog_data base;
+
    GLuint curb_read_length;
    GLuint num_varying_inputs;
 
@@ -346,7 +369,13 @@ struct brw_wm_prog_data {
    GLuint reg_blocks_16;
    GLuint total_scratch;
 
-   unsigned binding_table_size;
+   struct {
+      /** @{
+       * surface indices the WM-specific surfaces
+       */
+      uint32_t render_target_start;
+      /** @} */
+   } binding_table;
 
    GLuint nr_params;       /**< number of float params/constants */
    GLuint nr_pull_params;
@@ -544,6 +573,7 @@ struct brw_ff_gs_prog_data {
  * this struct!
  */
 struct brw_vec4_prog_data {
+   struct brw_stage_prog_data base;
    struct brw_vue_map vue_map;
 
    /**
@@ -564,8 +594,6 @@ struct brw_vec4_prog_data {
     * is the size of the URB entry used for output.
     */
    GLuint urb_entry_size;
-
-   unsigned binding_table_size;
 
    /* These pointers must appear last.  See brw_vec4_prog_data_compare(). */
    const float **param;
@@ -930,10 +958,13 @@ struct intel_batchbuffer {
 };
 
 /**
- * Data shared between brw_context::vs and brw_context::gs
+ * Data shared between each programmable stage in the pipeline (vs, gs, and
+ * wm).
  */
 struct brw_stage_state
 {
+   struct brw_stage_prog_data *prog_data;
+
    /**
     * Optional scratch buffer used to store spilled register values and
     * variably-indexed GRF arrays.
@@ -1580,7 +1611,8 @@ brw_update_sol_surface(struct brw_context *brw,
                        unsigned stride_dwords, unsigned offset_dwords);
 void brw_upload_ubo_surfaces(struct brw_context *brw,
 			     struct gl_shader *shader,
-			     uint32_t *surf_offsets);
+                             struct brw_stage_state *stage_state,
+                             struct brw_stage_prog_data *prog_data);
 
 /* brw_surface_formats.c */
 bool brw_is_hiz_depth_format(struct brw_context *ctx, gl_format format);

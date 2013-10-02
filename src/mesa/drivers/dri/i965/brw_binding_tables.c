@@ -50,19 +50,16 @@
  * This copies brw_stage_state::surf_offset[] into the indirect state section
  * of the batchbuffer (allocated by brw_state_batch()).
  */
-void
+static void
 brw_upload_binding_table(struct brw_context *brw,
                          GLbitfield brw_new_binding_table,
-                         struct brw_stage_state *stage_state,
-                         unsigned binding_table_entries,
-                         int shader_time_surf_index)
+                         struct brw_stage_state *stage_state)
 {
-   if (INTEL_DEBUG & DEBUG_SHADER_TIME) {
-      gen7_create_shader_time_surface(brw, &stage_state->surf_offset[shader_time_surf_index]);
-   }
+   /* CACHE_NEW_*_PROG */
+   struct brw_stage_prog_data *prog_data = stage_state->prog_data;
 
    /* If there are no surfaces, skip making the binding table altogether. */
-   if (binding_table_entries == 0) {
+   if (prog_data->binding_table.size_bytes == 0) {
       if (stage_state->bind_bo_offset != 0) {
          brw->state.dirty.brw |= brw_new_binding_table;
          stage_state->bind_bo_offset = 0;
@@ -70,14 +67,16 @@ brw_upload_binding_table(struct brw_context *brw,
       return;
    }
 
-   size_t table_size_in_bytes = binding_table_entries * sizeof(uint32_t);
+   if (INTEL_DEBUG & DEBUG_SHADER_TIME) {
+      gen7_create_shader_time_surface(brw, &stage_state->surf_offset[prog_data->binding_table.shader_time_start]);
+   }
 
    uint32_t *bind = brw_state_batch(brw, AUB_TRACE_BINDING_TABLE,
-                                    table_size_in_bytes, 32,
+                                    prog_data->binding_table.size_bytes, 32,
                                     &stage_state->bind_bo_offset);
 
    /* BRW_NEW_SURFACES and BRW_NEW_*_CONSTBUF */
-   memcpy(bind, stage_state->surf_offset, table_size_in_bytes);
+   memcpy(bind, stage_state->surf_offset, prog_data->binding_table.size_bytes);
 
    brw->state.dirty.brw |= brw_new_binding_table;
 }
@@ -91,14 +90,7 @@ brw_upload_binding_table(struct brw_context *brw,
 static void
 brw_vs_upload_binding_table(struct brw_context *brw)
 {
-   struct brw_stage_state *stage_state = &brw->vs.base;
-   /* CACHE_NEW_VS_PROG */
-   const struct brw_vec4_prog_data *prog_data = &brw->vs.prog_data->base;
-
-   /* BRW_NEW_SURFACES and BRW_NEW_VS_CONSTBUF */
-   brw_upload_binding_table(brw, BRW_NEW_VS_BINDING_TABLE, stage_state,
-                            prog_data->binding_table_size,
-                            SURF_INDEX_VEC4_SHADER_TIME);
+   brw_upload_binding_table(brw, BRW_NEW_VS_BINDING_TABLE, &brw->vs.base);
 }
 
 const struct brw_tracked_state brw_vs_binding_table = {
@@ -117,12 +109,7 @@ const struct brw_tracked_state brw_vs_binding_table = {
 static void
 brw_upload_wm_binding_table(struct brw_context *brw)
 {
-   struct brw_stage_state *stage_state = &brw->wm.base;
-
-   /* BRW_NEW_SURFACES and CACHE_NEW_WM_PROG */
-   brw_upload_binding_table(brw, BRW_NEW_PS_BINDING_TABLE, stage_state,
-                            brw->wm.prog_data->binding_table_size,
-                            SURF_INDEX_WM_SHADER_TIME);
+   brw_upload_binding_table(brw, BRW_NEW_PS_BINDING_TABLE, &brw->wm.base);
 }
 
 const struct brw_tracked_state brw_wm_binding_table = {
@@ -138,19 +125,11 @@ const struct brw_tracked_state brw_wm_binding_table = {
 static void
 brw_gs_upload_binding_table(struct brw_context *brw)
 {
-   struct brw_stage_state *stage_state = &brw->gs.base;
-
    /* If there's no GS, skip changing anything. */
    if (!brw->gs.prog_data)
       return;
 
-   /* CACHE_NEW_GS_PROG */
-   const struct brw_vec4_prog_data *prog_data = &brw->gs.prog_data->base;
-
-   /* BRW_NEW_SURFACES and BRW_NEW_GS_CONSTBUF */
-   brw_upload_binding_table(brw, BRW_NEW_GS_BINDING_TABLE, stage_state,
-                            prog_data->binding_table_size,
-                            SURF_INDEX_VEC4_SHADER_TIME);
+   brw_upload_binding_table(brw, BRW_NEW_GS_BINDING_TABLE, &brw->gs.base);
 }
 
 const struct brw_tracked_state brw_gs_binding_table = {

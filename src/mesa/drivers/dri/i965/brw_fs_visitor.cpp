@@ -704,7 +704,8 @@ fs_visitor::visit(ir_expression *ir)
        */
       ir_constant *uniform_block = ir->operands[0]->as_constant();
       ir_constant *const_offset = ir->operands[1]->as_constant();
-      fs_reg surf_index = fs_reg((unsigned)SURF_INDEX_WM_UBO(uniform_block->value.u[0]));
+      fs_reg surf_index = fs_reg(c->prog_data.base.binding_table.ubo_start +
+                                 uniform_block->value.u[0]);
       if (const_offset) {
          fs_reg packed_consts = fs_reg(this, glsl_type::float_type);
          packed_consts.type = result.type;

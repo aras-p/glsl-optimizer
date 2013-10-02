@@ -44,6 +44,7 @@ brw_upload_vec4_pull_constants(struct brw_context *brw,
                                const struct brw_vec4_prog_data *prog_data)
 {
    int i;
+   uint32_t surf_index = prog_data->base.binding_table.pull_constants_start;
 
    /* Updates the ParamaterValues[i] pointers for all parameters of the
     * basic type of PROGRAM_STATE_VAR.
@@ -54,7 +55,7 @@ brw_upload_vec4_pull_constants(struct brw_context *brw,
       if (stage_state->const_bo) {
 	 drm_intel_bo_unreference(stage_state->const_bo);
 	 stage_state->const_bo = NULL;
-	 stage_state->surf_offset[SURF_INDEX_VEC4_CONST_BUFFER] = 0;
+	 stage_state->surf_offset[surf_index] = 0;
 	 brw->state.dirty.brw |= brw_new_constbuf;
       }
       return;
@@ -84,9 +85,9 @@ brw_upload_vec4_pull_constants(struct brw_context *brw,
 
    drm_intel_gem_bo_unmap_gtt(stage_state->const_bo);
 
-   const int surf = SURF_INDEX_VEC4_CONST_BUFFER;
    brw->vtbl.create_constant_surface(brw, stage_state->const_bo, 0, size,
-                                     &stage_state->surf_offset[surf], false);
+                                     &stage_state->surf_offset[surf_index],
+                                     false);
 
    brw->state.dirty.brw |= brw_new_constbuf;
 }
@@ -127,8 +128,6 @@ const struct brw_tracked_state brw_vs_pull_constants = {
 static void
 brw_upload_vs_ubo_surfaces(struct brw_context *brw)
 {
-   struct brw_stage_state *stage_state = &brw->vs.base;
-
    struct gl_context *ctx = &brw->ctx;
    /* _NEW_PROGRAM */
    struct gl_shader_program *prog = ctx->Shader.CurrentVertexProgram;
@@ -136,15 +135,16 @@ brw_upload_vs_ubo_surfaces(struct brw_context *brw)
    if (!prog)
       return;
 
+   /* CACHE_NEW_VS_PROG */
    brw_upload_ubo_surfaces(brw, prog->_LinkedShaders[MESA_SHADER_VERTEX],
-			   &stage_state->surf_offset[SURF_INDEX_VEC4_UBO(0)]);
+			   &brw->vs.base, &brw->vs.prog_data->base.base);
 }
 
 const struct brw_tracked_state brw_vs_ubo_surfaces = {
    .dirty = {
       .mesa = _NEW_PROGRAM,
       .brw = BRW_NEW_BATCH | BRW_NEW_UNIFORM_BUFFER,
-      .cache = 0,
+      .cache = CACHE_NEW_VS_PROG,
    },
    .emit = brw_upload_vs_ubo_surfaces,
 };

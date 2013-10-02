@@ -488,6 +488,8 @@ static void brw_upload_vs_prog(struct brw_context *brw)
       (void) success;
       assert(success);
    }
+   brw->vs.base.prog_data = &brw->vs.prog_data->base.base;
+
    if (memcmp(&brw->vs.prog_data->base.vue_map, &brw->vue_map_geom_out,
               sizeof(brw->vue_map_geom_out)) != 0) {
       brw->vue_map_vs = brw->vs.prog_data->base.vue_map;

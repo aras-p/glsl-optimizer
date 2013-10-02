@@ -1421,6 +1421,18 @@ vec4_visitor::emit_shader_time_write(enum shader_time_shader_type type,
    emit(SHADER_OPCODE_SHADER_TIME_ADD, dst_reg(), src_reg(dst));
 }
 
+void
+vec4_visitor::assign_binding_table_offsets()
+{
+   prog_data->base.binding_table.texture_start = SURF_INDEX_VEC4_TEXTURE(0);
+   prog_data->base.binding_table.ubo_start = SURF_INDEX_VEC4_UBO(0);
+   prog_data->base.binding_table.shader_time_start = SURF_INDEX_VEC4_SHADER_TIME;
+   prog_data->base.binding_table.gather_texture_start = SURF_INDEX_VEC4_GATHER_TEXTURE(0);
+   prog_data->base.binding_table.pull_constants_start = SURF_INDEX_VEC4_CONST_BUFFER;
+
+   /* prog_data->base.binding_table.size will be set by mark_surface_used. */
+}
+
 bool
 vec4_visitor::run()
 {
@@ -1428,6 +1440,8 @@ vec4_visitor::run()
 
    if (INTEL_DEBUG & DEBUG_SHADER_TIME)
       emit_shader_time_begin();
+
+   assign_binding_table_offsets();
 
    emit_prolog();
 
@@ -1594,7 +1608,7 @@ bool
 brw_vec4_prog_data_compare(const struct brw_vec4_prog_data *a,
                            const struct brw_vec4_prog_data *b)
 {
-   /* Compare all the struct up to the pointers. */
+   /* Compare all the struct (including the base) up to the pointers. */
    if (memcmp(a, b, offsetof(struct brw_vec4_prog_data, param)))
       return false;
 

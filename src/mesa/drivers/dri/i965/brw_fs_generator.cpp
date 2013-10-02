@@ -63,8 +63,8 @@ fs_generator::mark_surface_used(unsigned surf_index)
 {
    assert(surf_index < BRW_MAX_WM_SURFACES);
 
-   c->prog_data.binding_table_size =
-      MAX2(c->prog_data.binding_table_size, surf_index + 1);
+   c->prog_data.base.binding_table.size_bytes =
+      MAX2(c->prog_data.base.binding_table.size_bytes, (surf_index + 1) * 4);
 }
 
 void
@@ -174,18 +174,20 @@ fs_generator::generate_fb_write(fs_inst *inst)
 
    brw_pop_insn_state(p);
 
+   uint32_t surf_index =
+      c->prog_data.binding_table.render_target_start + inst->target;
    brw_fb_WRITE(p,
 		dispatch_width,
 		inst->base_mrf,
 		implied_header,
 		msg_control,
-		SURF_INDEX_DRAW(inst->target),
+		surf_index,
 		inst->mlen,
 		0,
 		eot,
 		inst->header_present);
 
-   mark_surface_used(SURF_INDEX_DRAW(inst->target));
+   mark_surface_used(surf_index);
 }
 
 /* Computes the integer pixel x,y values from the origin.
@@ -542,9 +544,9 @@ fs_generator::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src
       src = retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UW);
    }
 
-   uint32_t surface_index = inst->opcode == SHADER_OPCODE_TG4
-      ? SURF_INDEX_GATHER_TEXTURE(inst->sampler)
-      : SURF_INDEX_TEXTURE(inst->sampler);
+   uint32_t surface_index = (inst->opcode == SHADER_OPCODE_TG4
+      ? c->prog_data.base.binding_table.gather_texture_start
+      : c->prog_data.base.binding_table.texture_start) + inst->sampler;
 
    brw_SAMPLE(p,
 	      retype(dst, BRW_REGISTER_TYPE_UW),
@@ -1142,10 +1144,11 @@ fs_generator::generate_shader_time_add(fs_inst *inst,
     */
    brw_MOV(p, payload_offset, offset);
    brw_MOV(p, payload_value, value);
-   brw_shader_time_add(p, payload, SURF_INDEX_WM_SHADER_TIME);
+   brw_shader_time_add(p, payload,
+                       c->prog_data.base.binding_table.shader_time_start);
    brw_pop_insn_state(p);
 
-   mark_surface_used(SURF_INDEX_WM_SHADER_TIME);
+   mark_surface_used(c->prog_data.base.binding_table.shader_time_start);
 }
 
 void

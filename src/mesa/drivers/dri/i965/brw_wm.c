@@ -108,7 +108,7 @@ brw_wm_prog_data_compare(const void *in_a, const void *in_b)
    const struct brw_wm_prog_data *a = in_a;
    const struct brw_wm_prog_data *b = in_b;
 
-   /* Compare all the struct up to the pointers. */
+   /* Compare all the struct (including the base) up to the pointers. */
    if (memcmp(a, b, offsetof(struct brw_wm_prog_data, param)))
       return false;
 
@@ -511,6 +511,7 @@ brw_upload_wm_prog(struct brw_context *brw)
       (void) success;
       assert(success);
    }
+   brw->wm.base.prog_data = &brw->wm.prog_data->base;
 }
 
 

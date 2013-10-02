@@ -424,7 +424,8 @@ brw_upload_wm_pull_constants(struct brw_context *brw)
       (struct brw_fragment_program *) brw->fragment_program;
    struct gl_program_parameter_list *params = fp->program.Base.Parameters;
    const int size = brw->wm.prog_data->nr_pull_params * sizeof(float);
-   const int surf_index = SURF_INDEX_FRAG_CONST_BUFFER;
+   const int surf_index =
+      brw->wm.prog_data->base.binding_table.pull_constants_start;
    float *constants;
    unsigned int i;
 
@@ -496,12 +497,14 @@ brw_update_null_renderbuffer_surface(struct brw_context *brw, unsigned int unit)
    drm_intel_bo *bo = NULL;
    unsigned pitch_minus_1 = 0;
    uint32_t multisampling_state = 0;
+   uint32_t surf_index =
+      brw->wm.prog_data->binding_table.render_target_start + unit;
 
    /* _NEW_BUFFERS */
    const struct gl_framebuffer *fb = ctx->DrawBuffer;
 
    surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE, 6 * 4, 32,
-                          &brw->wm.base.surf_offset[SURF_INDEX_DRAW(unit)]);
+                          &brw->wm.base.surf_offset[surf_index]);
 
    if (fb->Visual.samples > 1) {
       /* On Gen6, null render targets seem to cause GPU hangs when
@@ -554,7 +557,7 @@ brw_update_null_renderbuffer_surface(struct brw_context *brw, unsigned int unit)
 
    if (bo) {
       drm_intel_bo_emit_reloc(brw->batch.bo,
-                              brw->wm.base.surf_offset[SURF_INDEX_DRAW(unit)] + 4,
+                              brw->wm.base.surf_offset[surf_index] + 4,
                               bo, 0,
                               I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER);
    }
@@ -580,6 +583,8 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
    uint32_t format = 0;
    /* _NEW_BUFFERS */
    gl_format rb_format = _mesa_get_render_format(ctx, intel_rb_format(irb));
+   uint32_t surf_index =
+      brw->wm.prog_data->binding_table.render_target_start + unit;
 
    assert(!layered);
 
@@ -603,7 +608,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
    region = irb->mt->region;
 
    surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE, 6 * 4, 32,
-                          &brw->wm.base.surf_offset[SURF_INDEX_DRAW(unit)]);
+                          &brw->wm.base.surf_offset[surf_index]);
 
    format = brw->render_target_format[rb_format];
    if (unlikely(!brw->format_supported_as_render_target[rb_format])) {
@@ -659,7 +664,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
    }
 
    drm_intel_bo_emit_reloc(brw->batch.bo,
-			   brw->wm.base.surf_offset[SURF_INDEX_DRAW(unit)] + 4,
+			   brw->wm.base.surf_offset[surf_index] + 4,
 			   region->bo,
 			   surf[1] - region->bo->offset,
 			   I915_GEM_DOMAIN_RENDER,
@@ -715,7 +720,7 @@ const struct brw_tracked_state gen6_renderbuffer_surfaces = {
 static void
 update_stage_texture_surfaces(struct brw_context *brw,
                               const struct gl_program *prog,
-                              uint32_t *surf_offset,
+                              struct brw_stage_state *stage_state,
                               bool for_gather)
 {
    if (!prog)
@@ -723,8 +728,13 @@ update_stage_texture_surfaces(struct brw_context *brw,
 
    struct gl_context *ctx = &brw->ctx;
 
-   unsigned num_samplers = _mesa_fls(prog->SamplersUsed);
+   uint32_t *surf_offset = stage_state->surf_offset;
+   if (for_gather)
+      surf_offset += stage_state->prog_data->binding_table.gather_texture_start;
+   else
+      surf_offset += stage_state->prog_data->binding_table.texture_start;
 
+   unsigned num_samplers = _mesa_fls(prog->SamplersUsed);
    for (unsigned s = 0; s < num_samplers; s++) {
       surf_offset[s] = 0;
 
@@ -756,37 +766,19 @@ brw_update_texture_surfaces(struct brw_context *brw)
    struct gl_program *fs = (struct gl_program *) brw->fragment_program;
 
    /* _NEW_TEXTURE */
-   update_stage_texture_surfaces(brw, vs,
-                                 brw->vs.base.surf_offset +
-                                 SURF_INDEX_VEC4_TEXTURE(0),
-                                 false);
-   update_stage_texture_surfaces(brw, gs,
-                                 brw->gs.base.surf_offset +
-                                 SURF_INDEX_VEC4_TEXTURE(0),
-                                 false);
-   update_stage_texture_surfaces(brw, fs,
-                                 brw->wm.base.surf_offset +
-                                 SURF_INDEX_TEXTURE(0),
-                                 false);
+   update_stage_texture_surfaces(brw, vs, &brw->vs.base, false);
+   update_stage_texture_surfaces(brw, gs, &brw->gs.base, false);
+   update_stage_texture_surfaces(brw, fs, &brw->wm.base, false);
 
    /* emit alternate set of surface state for gather. this
     * allows the surface format to be overriden for only the
     * gather4 messages. */
    if (vs && vs->UsesGather)
-      update_stage_texture_surfaces(brw, vs,
-                                    brw->vs.base.surf_offset +
-                                    SURF_INDEX_VEC4_GATHER_TEXTURE(0),
-                                    true);
+      update_stage_texture_surfaces(brw, vs, &brw->vs.base, true);
    if (gs && gs->UsesGather)
-      update_stage_texture_surfaces(brw, gs,
-                                    brw->gs.base.surf_offset +
-                                    SURF_INDEX_VEC4_GATHER_TEXTURE(0),
-                                    true);
+      update_stage_texture_surfaces(brw, gs, &brw->gs.base, true);
    if (fs && fs->UsesGather)
-      update_stage_texture_surfaces(brw, fs,
-                                    brw->wm.base.surf_offset +
-                                    SURF_INDEX_GATHER_TEXTURE(0),
-                                    true);
+      update_stage_texture_surfaces(brw, fs, &brw->wm.base, true);
 
    brw->state.dirty.brw |= BRW_NEW_SURFACES;
 }
@@ -806,12 +798,16 @@ const struct brw_tracked_state brw_texture_surfaces = {
 void
 brw_upload_ubo_surfaces(struct brw_context *brw,
 			struct gl_shader *shader,
-			uint32_t *surf_offsets)
+                        struct brw_stage_state *stage_state,
+                        struct brw_stage_prog_data *prog_data)
 {
    struct gl_context *ctx = &brw->ctx;
 
    if (!shader)
       return;
+
+   uint32_t *surf_offsets =
+      &stage_state->surf_offset[prog_data->binding_table.ubo_start];
 
    for (int i = 0; i < shader->NumUniformBlocks; i++) {
       struct gl_uniform_buffer_binding *binding;
@@ -845,15 +841,16 @@ brw_upload_wm_ubo_surfaces(struct brw_context *brw)
    if (!prog)
       return;
 
+   /* CACHE_NEW_WM_PROG */
    brw_upload_ubo_surfaces(brw, prog->_LinkedShaders[MESA_SHADER_FRAGMENT],
-			   &brw->wm.base.surf_offset[SURF_INDEX_WM_UBO(0)]);
+                           &brw->wm.base, &brw->wm.prog_data->base);
 }
 
 const struct brw_tracked_state brw_wm_ubo_surfaces = {
    .dirty = {
       .mesa = _NEW_PROGRAM,
       .brw = BRW_NEW_BATCH | BRW_NEW_UNIFORM_BUFFER,
-      .cache = 0,
+      .cache = CACHE_NEW_WM_PROG,
    },
    .emit = brw_upload_wm_ubo_surfaces,
 };

@@ -1700,7 +1700,7 @@ fs_visitor::move_uniform_array_access_to_pull_constants()
          base_ir = inst->ir;
          current_annotation = inst->annotation;
 
-         fs_reg surf_index = fs_reg((unsigned)SURF_INDEX_FRAG_CONST_BUFFER);
+         fs_reg surf_index = fs_reg(c->prog_data.base.binding_table.pull_constants_start);
          fs_reg temp = fs_reg(this, glsl_type::float_type);
          exec_list list = VARYING_PULL_CONSTANT_LOAD(temp,
                                                      surf_index,
@@ -1784,7 +1784,7 @@ fs_visitor::setup_pull_constants()
          assert(!inst->src[i].reladdr);
 
 	 fs_reg dst = fs_reg(this, glsl_type::float_type);
-	 fs_reg index = fs_reg((unsigned)SURF_INDEX_FRAG_CONST_BUFFER);
+	 fs_reg index = fs_reg(c->prog_data.base.binding_table.pull_constants_start);
 	 fs_reg offset = fs_reg((unsigned)(pull_index * 4) & ~15);
 	 fs_inst *pull =
             new(mem_ctx) fs_inst(FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD,
@@ -2978,11 +2978,26 @@ fs_visitor::setup_payload_gen6()
    }
 }
 
+void
+fs_visitor::assign_binding_table_offsets()
+{
+   c->prog_data.binding_table.render_target_start = SURF_INDEX_DRAW(0);
+   c->prog_data.base.binding_table.texture_start = SURF_INDEX_TEXTURE(0);
+   c->prog_data.base.binding_table.ubo_start = SURF_INDEX_WM_UBO(0);
+   c->prog_data.base.binding_table.shader_time_start = SURF_INDEX_WM_SHADER_TIME;
+   c->prog_data.base.binding_table.gather_texture_start = SURF_INDEX_GATHER_TEXTURE(0);
+   c->prog_data.base.binding_table.pull_constants_start = SURF_INDEX_FRAG_CONST_BUFFER;
+
+   /* c->prog_data.base.binding_table.size will be set by mark_surface_used. */
+}
+
 bool
 fs_visitor::run()
 {
    sanity_param_count = fp->Base.Parameters->NumParameters;
    uint32_t orig_nr_params = c->prog_data.nr_params;
+
+   assign_binding_table_offsets();
 
    if (brw->gen >= 6)
       setup_payload_gen6();
