@@ -404,10 +404,20 @@ bool ralloc_vasprintf_append(char **str, const char *fmt, va_list args);
 } /* end of extern "C" */
 #endif
 
-#define _RALLOC_OPS(ALLOC, TYPE)                                         \
+/**
+ * Declare C++ new and delete operators which use ralloc.
+ *
+ * Placing this macro in the body of a class makes it possible to do:
+ *
+ * TYPE *var = new(mem_ctx) TYPE(...);
+ * delete var;
+ *
+ * which is more idiomatic in C++ than calling ralloc.
+ */
+#define DECLARE_RALLOC_CXX_OPERATORS(TYPE)                               \
    static void* operator new(size_t size, void *mem_ctx)                 \
    {                                                                     \
-      void *p = ALLOC(mem_ctx, size);                                    \
+      void *p = ralloc_size(mem_ctx, size);                              \
       assert(p != NULL);                                                 \
       return p;                                                          \
    }                                                                     \
@@ -417,17 +427,5 @@ bool ralloc_vasprintf_append(char **str, const char *fmt, va_list args);
       ralloc_free(p);                                                    \
    }
 
-/**
- * Declare C++ new and delete operators which use ralloc.
- *
- * Placing one of these macros in the body of a class makes it possible to do:
- *
- * TYPE *var = new(mem_ctx) TYPE(...);
- * delete var;
- *
- * which is more idiomatic in C++ than calling ralloc or rzalloc.
- */
-#define DECLARE_RALLOC_CXX_OPERATORS(TYPE)  _RALLOC_OPS(ralloc_size,  TYPE)
-#define DECLARE_RZALLOC_CXX_OPERATORS(TYPE) _RALLOC_OPS(rzalloc_size, TYPE)
 
 #endif
