@@ -61,7 +61,8 @@ tests_general_ir_test_SOURCES =		\
 	$(GLSL_SRCDIR)/standalone_scaffolding.cpp \
 	tests/builtin_variable_test.cpp			\
 	tests/invalidate_locations_test.cpp		\
-	tests/general_ir_test.cpp
+	tests/general_ir_test.cpp			\
+	tests/varyings_test.cpp
 tests_general_ir_test_CFLAGS =				\
 	$(PTHREAD_CFLAGS)
 tests_general_ir_test_LDADD =				\
