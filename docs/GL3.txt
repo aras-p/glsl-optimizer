@@ -105,7 +105,7 @@ GL_ARB_shader_subroutine                             not started
 GL_ARB_tessellation_shader                           not started
 GL_ARB_texture_buffer_object_rgb32                   DONE (i965, softpipe)
 GL_ARB_texture_cube_map_array                        DONE (i965, softpipe)
-GL_ARB_texture_gather                                started (Maxence, Chris)
+GL_ARB_texture_gather                                DONE (i965)
 GL_ARB_transform_feedback2                           DONE
 GL_ARB_transform_feedback3                           DONE
 
