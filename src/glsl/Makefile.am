@@ -32,6 +32,7 @@ AM_CXXFLAGS = $(VISIBILITY_CXXFLAGS)
 include Makefile.sources
 
 TESTS = glcpp/tests/glcpp-test				\
+	tests/general-ir-test				\
 	tests/optimization-test				\
 	tests/ralloc-test				\
 	tests/sampler-types-test                        \
@@ -45,11 +46,26 @@ noinst_LTLIBRARIES = libglsl.la libglcpp.la
 check_PROGRAMS =					\
 	glcpp/glcpp					\
 	glsl_test					\
+	tests/general-ir-test				\
 	tests/ralloc-test				\
 	tests/sampler-types-test			\
 	tests/uniform-initializer-test
 
 noinst_PROGRAMS = glsl_compiler
+
+tests_general_ir_test_SOURCES =		\
+	$(top_srcdir)/src/mesa/main/hash_table.c	\
+	$(top_srcdir)/src/mesa/main/imports.c		\
+	$(top_srcdir)/src/mesa/program/prog_hash_table.c\
+	$(top_srcdir)/src/mesa/program/symbol_table.c	\
+	$(GLSL_SRCDIR)/standalone_scaffolding.cpp \
+	tests/general_ir_test.cpp
+tests_general_ir_test_CFLAGS =				\
+	$(PTHREAD_CFLAGS)
+tests_general_ir_test_LDADD =				\
+	$(top_builddir)/src/gtest/libgtest.la		\
+	$(top_builddir)/src/glsl/libglsl.la		\
+	$(PTHREAD_LIBS)
 
 tests_uniform_initializer_test_SOURCES =		\
 	$(top_srcdir)/src/mesa/main/hash_table.c	\

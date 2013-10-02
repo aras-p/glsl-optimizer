@@ -1603,8 +1603,15 @@ ir_variable::ir_variable(const struct glsl_type *type, const char *name,
    this->depth_layout = ir_depth_layout_none;
    this->used = false;
 
-   if (type && type->base_type == GLSL_TYPE_SAMPLER)
-      this->read_only = true;
+   if (type != NULL) {
+      if (type->base_type == GLSL_TYPE_SAMPLER)
+         this->read_only = true;
+
+      if (type->is_interface())
+         this->init_interface_type(type);
+      else if (type->is_array() && type->fields.array->is_interface())
+         this->init_interface_type(type->fields.array);
+   }
 }
 
 

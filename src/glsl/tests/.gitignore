@@ -1,3 +1,4 @@
 ralloc-test
 uniform-initializer-test
 sampler-types-test
+general-ir-test

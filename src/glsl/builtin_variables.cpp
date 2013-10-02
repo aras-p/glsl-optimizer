@@ -890,7 +890,6 @@ builtin_variable_generator::generate_varyings()
          this->per_vertex_in.construct_interface_instance();
       ir_variable *var = add_variable("gl_in", array(per_vertex_in_type, 0),
                                       ir_var_shader_in, -1);
-      var->init_interface_type(per_vertex_in_type);
    }
    if (state->target == vertex_shader || state->target == geometry_shader) {
       const glsl_type *per_vertex_out_type =
