@@ -4654,6 +4654,66 @@ ast_interface_block::hir(exec_list *instructions,
    if (!redeclaring_per_vertex)
       validate_identifier(this->block_name, loc, state);
 
+   const glsl_type *earlier_per_vertex = NULL;
+   if (redeclaring_per_vertex) {
+      /* Find the previous declaration of gl_PerVertex.  If we're redeclaring
+       * the named interface block gl_in, we can find it by looking at the
+       * previous declaration of gl_in.  Otherwise we can find it by looking
+       * at the previous decalartion of any of the built-in outputs,
+       * e.g. gl_Position.
+       *
+       * Also check that the instance name and array-ness of the redeclaration
+       * are correct.
+       */
+      switch (var_mode) {
+      case ir_var_shader_in:
+         if (ir_variable *earlier_gl_in =
+             state->symbols->get_variable("gl_in")) {
+            earlier_per_vertex = earlier_gl_in->get_interface_type();
+         } else {
+            _mesa_glsl_error(&loc, state,
+                             "redeclaration of gl_PerVertex input not allowed "
+                             "in the %s shader",
+                             _mesa_glsl_shader_target_name(state->target));
+         }
+         if (this->instance_name == NULL ||
+             strcmp(this->instance_name, "gl_in") != 0 || !this->is_array) {
+            _mesa_glsl_error(&loc, state,
+                             "gl_PerVertex input must be redeclared as "
+                             "gl_in[]");
+         }
+         break;
+      case ir_var_shader_out:
+         if (ir_variable *earlier_gl_Position =
+             state->symbols->get_variable("gl_Position")) {
+            earlier_per_vertex = earlier_gl_Position->get_interface_type();
+         } else {
+            _mesa_glsl_error(&loc, state,
+                             "redeclaration of gl_PerVertex output not "
+                             "allowed in the %s shader",
+                             _mesa_glsl_shader_target_name(state->target));
+         }
+         if (this->instance_name != NULL) {
+            _mesa_glsl_error(&loc, state,
+                             "gl_PerVertex input may not be redeclared with "
+                             "an instance name");
+         }
+         break;
+      default:
+         _mesa_glsl_error(&loc, state,
+                          "gl_PerVertex must be declared as an input or an "
+                          "output");
+         break;
+      }
+
+      if (earlier_per_vertex == NULL) {
+         /* An error has already been reported.  Bail out to avoid null
+          * dereferences later in this function.
+          */
+         return NULL;
+      }
+   }
+
    const glsl_type *block_type =
       glsl_type::get_interface_instance(fields,
                                         num_variables,
