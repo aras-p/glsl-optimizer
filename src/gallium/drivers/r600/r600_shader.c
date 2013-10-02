@@ -3782,16 +3782,16 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 		}
 	}
 
-	if (inst->Instruction.Opcode == TGSI_OPCODE_TXF) {
-		/* get offset values */
-		if (inst->Texture.NumOffsets) {
-			assert(inst->Texture.NumOffsets == 1);
+	/* get offset values */
+	if (inst->Texture.NumOffsets) {
+		assert(inst->Texture.NumOffsets == 1);
 
-			offset_x = ctx->literals[inst->TexOffsets[0].Index + inst->TexOffsets[0].SwizzleX] << 1;
-			offset_y = ctx->literals[inst->TexOffsets[0].Index + inst->TexOffsets[0].SwizzleY] << 1;
-			offset_z = ctx->literals[inst->TexOffsets[0].Index + inst->TexOffsets[0].SwizzleZ] << 1;
-		}
-	} else if (inst->Instruction.Opcode == TGSI_OPCODE_TXD) {
+		offset_x = ctx->literals[4 * inst->TexOffsets[0].Index + inst->TexOffsets[0].SwizzleX] << 1;
+		offset_y = ctx->literals[4 * inst->TexOffsets[0].Index + inst->TexOffsets[0].SwizzleY] << 1;
+		offset_z = ctx->literals[4 * inst->TexOffsets[0].Index + inst->TexOffsets[0].SwizzleZ] << 1;
+	}
+
+	if (inst->Instruction.Opcode == TGSI_OPCODE_TXD) {
 		/* TGSI moves the sampler to src reg 3 for TXD */
 		sampler_src_reg = 3;
 
