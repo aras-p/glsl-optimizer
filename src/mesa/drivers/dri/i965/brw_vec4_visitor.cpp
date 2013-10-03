@@ -3162,6 +3162,7 @@ vec4_visitor::vec4_visitor(struct brw_context *brw,
    this->prog = prog;
    this->key = key;
    this->prog_data = prog_data;
+   this->stage_prog_data = &prog_data->base;
 
    this->variable_ht = hash_table_ctor(0,
 				       hash_table_pointer_hash,

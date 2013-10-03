@@ -597,3 +597,50 @@ backend_visitor::dump_instructions()
       dump_instruction(inst);
    }
 }
+
+
+/**
+ * Sets up the starting offsets for the groups of binding table entries
+ * commong to all pipeline stages.
+ *
+ * Unused groups are initialized to 0xd0d0d0d0 to make it obvious that they're
+ * unused but also make sure that addition of small offsets to them will
+ * trigger some of our asserts that surface indices are < BRW_MAX_SURFACES.
+ */
+void
+backend_visitor::assign_common_binding_table_offsets(uint32_t next_binding_table_offset)
+{
+   int num_textures = _mesa_fls(prog->SamplersUsed);
+
+   stage_prog_data->binding_table.texture_start = next_binding_table_offset;
+   next_binding_table_offset += num_textures;
+
+   if (shader) {
+      stage_prog_data->binding_table.ubo_start = next_binding_table_offset;
+      next_binding_table_offset += shader->base.NumUniformBlocks;
+   } else {
+      stage_prog_data->binding_table.ubo_start = 0xd0d0d0d0;
+   }
+
+   if (INTEL_DEBUG & DEBUG_SHADER_TIME) {
+      stage_prog_data->binding_table.shader_time_start = next_binding_table_offset;
+      next_binding_table_offset++;
+   } else {
+      stage_prog_data->binding_table.shader_time_start = 0xd0d0d0d0;
+   }
+
+   if (prog->UsesGather) {
+      stage_prog_data->binding_table.gather_texture_start = next_binding_table_offset;
+      next_binding_table_offset += num_textures;
+   } else {
+      stage_prog_data->binding_table.gather_texture_start = 0xd0d0d0d0;
+   }
+
+   /* This may or may not be used depending on how the compile goes. */
+   stage_prog_data->binding_table.pull_constants_start = next_binding_table_offset;
+   next_binding_table_offset++;
+
+   assert(next_binding_table_offset <= BRW_MAX_SURFACES);
+
+   /* prog_data->base.binding_table.size will be set by mark_surface_used. */
+}

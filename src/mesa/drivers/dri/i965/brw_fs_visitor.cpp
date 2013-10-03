@@ -2669,8 +2669,10 @@ fs_visitor::fs_visitor(struct brw_context *brw,
    this->c = c;
    this->brw = brw;
    this->fp = fp;
+   this->prog = &fp->Base;
    this->shader_prog = shader_prog;
    this->prog = &fp->Base;
+   this->stage_prog_data = &c->prog_data.base;
    this->ctx = &brw->ctx;
    this->mem_ctx = ralloc_context(NULL);
    if (shader_prog)

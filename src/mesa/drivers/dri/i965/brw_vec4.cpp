@@ -1421,37 +1421,6 @@ vec4_visitor::emit_shader_time_write(enum shader_time_shader_type type,
    emit(SHADER_OPCODE_SHADER_TIME_ADD, dst_reg(), src_reg(dst));
 }
 
-void
-vec4_visitor::assign_binding_table_offsets()
-{
-   int num_textures = _mesa_fls(prog->SamplersUsed);
-   int next = 0;
-
-   prog_data->base.binding_table.texture_start = next;
-   next += num_textures;
-
-   if (shader) {
-      prog_data->base.binding_table.ubo_start = next;
-      next += shader->base.NumUniformBlocks;
-   }
-
-   if (INTEL_DEBUG & DEBUG_SHADER_TIME) {
-      prog_data->base.binding_table.shader_time_start = next;
-      next++;
-   }
-
-   if (prog->UsesGather) {
-      prog_data->base.binding_table.gather_texture_start = next;
-      next += num_textures;
-   }
-
-   /* This may or may not be used depending on how the compile goes. */
-   prog_data->base.binding_table.pull_constants_start = next;
-   next++;
-
-   /* prog_data->base.binding_table.size will be set by mark_surface_used. */
-}
-
 bool
 vec4_visitor::run()
 {
@@ -1460,7 +1429,7 @@ vec4_visitor::run()
    if (INTEL_DEBUG & DEBUG_SHADER_TIME)
       emit_shader_time_begin();
 
-   assign_binding_table_offsets();
+   assign_common_binding_table_offsets(0);
 
    emit_prolog();
 

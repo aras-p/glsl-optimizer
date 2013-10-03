@@ -337,7 +337,6 @@ public:
    bool run(void);
    void fail(const char *msg, ...);
 
-   void assign_binding_table_offsets();
    int virtual_grf_alloc(int size);
    void setup_uniform_clipplane_values();
    void setup_uniform_values(ir_variable *ir);
