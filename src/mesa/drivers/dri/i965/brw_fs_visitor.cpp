@@ -1406,7 +1406,7 @@ fs_visitor::rescale_texcoord(ir_texture *ir, fs_reg coordinate,
        (brw->gen < 6 ||
 	(brw->gen >= 6 && (c->key.tex.gl_clamp_mask[0] & (1 << sampler) ||
 			     c->key.tex.gl_clamp_mask[1] & (1 << sampler))))) {
-      struct gl_program_parameter_list *params = fp->Base.Parameters;
+      struct gl_program_parameter_list *params = prog->Parameters;
       int tokens[STATE_LENGTH] = {
 	 STATE_INTERNAL,
 	 STATE_TEXRECT_SCALE,
@@ -1426,9 +1426,9 @@ fs_visitor::rescale_texcoord(ir_texture *ir, fs_reg coordinate,
       GLuint index = _mesa_add_state_reference(params,
 					       (gl_state_index *)tokens);
       c->prog_data.param[c->prog_data.nr_params++] =
-         &fp->Base.Parameters->ParameterValues[index][0].f;
+         &prog->Parameters->ParameterValues[index][0].f;
       c->prog_data.param[c->prog_data.nr_params++] =
-         &fp->Base.Parameters->ParameterValues[index][1].f;
+         &prog->Parameters->ParameterValues[index][1].f;
    }
 
    /* The 965 requires the EU to do the normalization of GL rectangle
@@ -1497,12 +1497,12 @@ fs_visitor::visit(ir_texture *ir)
    fs_inst *inst = NULL;
 
    int sampler =
-      _mesa_get_sampler_uniform_value(ir->sampler, shader_prog, &fp->Base);
+      _mesa_get_sampler_uniform_value(ir->sampler, shader_prog, prog);
    /* FINISHME: We're failing to recompile our programs when the sampler is
     * updated.  This only matters for the texture rectangle scale parameters
     * (pre-gen6, or gen6+ with GL_CLAMP).
     */
-   int texunit = fp->Base.SamplerUnits[sampler];
+   int texunit = prog->SamplerUnits[sampler];
 
    if (ir->op == ir_tg4) {
       /* When tg4 is used with the degenerate ZERO/ONE swizzles, don't bother
@@ -2520,7 +2520,7 @@ fs_visitor::emit_fb_writes()
 	 fail("Missing support for simd16 depth writes on gen6\n");
       }
 
-      if (fp->Base.OutputsWritten & BITFIELD64_BIT(FRAG_RESULT_DEPTH)) {
+      if (prog->OutputsWritten & BITFIELD64_BIT(FRAG_RESULT_DEPTH)) {
 	 /* Hand over gl_FragDepth. */
 	 assert(this->frag_depth.file != BAD_FILE);
 	 emit(MOV(fs_reg(MRF, nr), this->frag_depth));
@@ -2669,6 +2669,7 @@ fs_visitor::fs_visitor(struct brw_context *brw,
    this->brw = brw;
    this->fp = fp;
    this->shader_prog = shader_prog;
+   this->prog = &fp->Base;
    this->ctx = &brw->ctx;
    this->mem_ctx = ralloc_context(NULL);
    if (shader_prog)

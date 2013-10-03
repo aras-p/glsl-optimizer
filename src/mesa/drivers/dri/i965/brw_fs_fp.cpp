@@ -137,8 +137,8 @@ fs_visitor::emit_fragment_program_code()
    fs_reg one = fs_reg(this, glsl_type::float_type);
    emit(MOV(one, fs_reg(1.0f)));
 
-   for (unsigned int insn = 0; insn < fp->Base.NumInstructions; insn++) {
-      const struct prog_instruction *fpi = &fp->Base.Instructions[insn];
+   for (unsigned int insn = 0; insn < prog->NumInstructions; insn++) {
+      const struct prog_instruction *fpi = &prog->Instructions[insn];
       base_ir = fpi;
 
       //_mesa_print_instruction(fpi);
@@ -583,7 +583,7 @@ void
 fs_visitor::setup_fp_regs()
 {
    /* PROGRAM_TEMPORARY */
-   int num_temp = fp->Base.NumTemporaries;
+   int num_temp = prog->NumTemporaries;
    fp_temp_regs = rzalloc_array(mem_ctx, fs_reg, num_temp);
    for (int i = 0; i < num_temp; i++)
       fp_temp_regs[i] = fs_reg(this, glsl_type::vec4_type);
@@ -591,17 +591,17 @@ fs_visitor::setup_fp_regs()
    /* PROGRAM_STATE_VAR etc. */
    if (dispatch_width == 8) {
       for (unsigned p = 0;
-           p < fp->Base.Parameters->NumParameters; p++) {
+           p < prog->Parameters->NumParameters; p++) {
          for (unsigned int i = 0; i < 4; i++) {
             c->prog_data.param[c->prog_data.nr_params++] =
-               &fp->Base.Parameters->ParameterValues[p][i].f;
+               &prog->Parameters->ParameterValues[p][i].f;
          }
       }
    }
 
    fp_input_regs = rzalloc_array(mem_ctx, fs_reg, VARYING_SLOT_MAX);
    for (int i = 0; i < VARYING_SLOT_MAX; i++) {
-      if (fp->Base.InputsRead & BITFIELD64_BIT(i)) {
+      if (prog->InputsRead & BITFIELD64_BIT(i)) {
          /* Make up a dummy instruction to reuse code for emitting
           * interpolation.
           */
@@ -687,7 +687,7 @@ fs_visitor::get_fp_dst_reg(const prog_dst_register *dst)
 fs_reg
 fs_visitor::get_fp_src_reg(const prog_src_register *src)
 {
-   struct gl_program_parameter_list *plist = fp->Base.Parameters;
+   struct gl_program_parameter_list *plist = prog->Parameters;
 
    fs_reg result;
 

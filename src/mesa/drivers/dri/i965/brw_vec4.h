@@ -250,7 +250,6 @@ public:
       return dst_reg(retype(brw_null_reg(), BRW_REGISTER_TYPE_UD));
    }
 
-   struct gl_program *prog;
    struct brw_vec4_compile *c;
    const struct brw_vec4_prog_key *key;
    struct brw_vec4_prog_data *prog_data;
