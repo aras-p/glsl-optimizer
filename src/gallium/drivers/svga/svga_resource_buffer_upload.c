@@ -502,7 +502,7 @@ svga_buffer_upload_piecewise(struct svga_screen *ss,
                                PIPE_TRANSFER_DISCARD_RANGE);
          assert(map);
          if (map) {
-            memcpy(map, sbuf->swbuf, size);
+            memcpy(map, (const char *) sbuf->swbuf + offset, size);
             sws->buffer_unmap(sws, hwbuf);
          }
 
