@@ -111,6 +111,7 @@ API_XML = \
 	ARB_texture_buffer_range.xml \
 	ARB_texture_compression_rgtc.xml \
 	ARB_texture_float.xml \
+	ARB_texture_gather.xml \
 	ARB_texture_rg.xml \
 	ARB_texture_storage.xml \
 	ARB_vertex_array_object.xml \
