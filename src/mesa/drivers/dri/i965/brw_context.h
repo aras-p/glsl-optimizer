@@ -650,9 +650,6 @@ struct brw_gs_prog_data
 /** Maximum number of actual buffers used for stream output */
 #define BRW_MAX_SOL_BUFFERS 4
 
-#define BRW_MAX_WM_UBOS              12
-#define BRW_MAX_VS_UBOS              12
-
 /**
  * Helpers to create Surface Binding Table indexes for draw buffers,
  * textures, and constant buffers.
