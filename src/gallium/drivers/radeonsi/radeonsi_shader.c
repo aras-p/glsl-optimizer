@@ -1759,8 +1759,8 @@ int si_compile_llvm(struct r600_context *rctx, struct si_pipe_shader *shader,
 	unsigned i;
 	uint32_t *ptr;
 	struct radeon_llvm_binary binary;
-	bool dump = r600_can_dump_shader(&rctx->screen->b, shader->selector->tokens);
-
+	bool dump = r600_can_dump_shader(&rctx->screen->b,
+			shader->selector ? shader->selector->tokens : NULL);
 	memset(&binary, 0, sizeof(binary));
 	radeon_llvm_compile(mod, &binary,
 		r600_get_llvm_processor_name(rctx->screen->b.family), dump);

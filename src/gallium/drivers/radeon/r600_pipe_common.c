@@ -247,6 +247,10 @@ static unsigned tgsi_get_processor_type(const struct tgsi_token *tokens)
 bool r600_can_dump_shader(struct r600_common_screen *rscreen,
 			  const struct tgsi_token *tokens)
 {
+	/* Compute shader don't have tgsi_tokens */
+	if (!tokens)
+		return (rscreen->debug_flags & DBG_CS) != 0;
+
 	switch (tgsi_get_processor_type(tokens)) {
 	case TGSI_PROCESSOR_VERTEX:
 		return (rscreen->debug_flags & DBG_VS) != 0;
