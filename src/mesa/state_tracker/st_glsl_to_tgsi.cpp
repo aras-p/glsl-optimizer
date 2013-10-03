@@ -2788,6 +2788,9 @@ glsl_to_tgsi_visitor::visit(ir_texture *ir)
    case ir_lod:
       assert(!"Unexpected ir_lod opcode");
       break;
+   case ir_tg4:
+      assert(!"Unexpected ir_tg4 opcode");
+      break;
    }
 
    if (ir->projector) {
