@@ -293,3 +293,101 @@ TEST_F(fragment_builtin, no_invalid_variable_modes)
 {
    common_builtin::no_invalid_variable_modes();
 }
+
+/********************************************************************/
+
+class geometry_builtin : public common_builtin {
+public:
+   geometry_builtin()
+      : common_builtin(GL_GEOMETRY_SHADER)
+   {
+      /* empty */
+   }
+};
+
+TEST_F(geometry_builtin, names_start_with_gl)
+{
+   common_builtin::names_start_with_gl();
+}
+
+TEST_F(geometry_builtin, inputs_have_explicit_location)
+{
+   foreach_list(node, &this->ir) {
+      ir_variable *const var = ((ir_instruction *) node)->as_variable();
+
+      if (var->mode != ir_var_shader_in)
+	 continue;
+
+      if (var->is_interface_instance()) {
+         EXPECT_STREQ("gl_in", var->name);
+         EXPECT_FALSE(var->explicit_location);
+         EXPECT_EQ(-1, var->location);
+
+         ASSERT_TRUE(var->type->is_array());
+
+         const glsl_type *const instance_type = var->type->fields.array;
+
+         for (unsigned i = 0; i < instance_type->length; i++) {
+            const glsl_struct_field *const input =
+               &instance_type->fields.structure[i];
+
+            string_starts_with_prefix(input->name, "gl_");
+            EXPECT_NE(-1, input->location);
+            EXPECT_GT(VARYING_SLOT_VAR0, input->location);
+
+            /* Several varyings only exist in the fragment shader.  Be sure
+             * that no inputs with these locations exist.
+             */
+            EXPECT_NE(VARYING_SLOT_PNTC, input->location);
+            EXPECT_NE(VARYING_SLOT_FACE, input->location);
+         }
+      } else {
+         EXPECT_TRUE(var->explicit_location);
+         EXPECT_NE(-1, var->location);
+         EXPECT_GT(VARYING_SLOT_VAR0, var->location);
+         EXPECT_EQ(0u, var->location_frac);
+      }
+
+      /* Several varyings only exist in the fragment shader.  Be sure that no
+       * inputs with these locations exist.
+       */
+      EXPECT_NE(VARYING_SLOT_PNTC, var->location);
+      EXPECT_NE(VARYING_SLOT_FACE, var->location);
+   }
+}
+
+TEST_F(geometry_builtin, outputs_have_explicit_location)
+{
+   foreach_list(node, &this->ir) {
+      ir_variable *const var = ((ir_instruction *) node)->as_variable();
+
+      if (var->mode != ir_var_shader_out)
+	 continue;
+
+      EXPECT_TRUE(var->explicit_location);
+      EXPECT_NE(-1, var->location);
+      EXPECT_GT(VARYING_SLOT_VAR0, var->location);
+      EXPECT_EQ(0u, var->location_frac);
+
+      /* Several varyings only exist in the fragment shader.  Be sure that no
+       * outputs with these locations exist.
+       */
+      EXPECT_NE(VARYING_SLOT_PNTC, var->location);
+      EXPECT_NE(VARYING_SLOT_FACE, var->location);
+   }
+}
+
+TEST_F(geometry_builtin, uniforms_and_system_values_dont_have_explicit_location)
+{
+   common_builtin::uniforms_and_system_values_dont_have_explicit_location();
+}
+
+TEST_F(geometry_builtin, constants_are_constant)
+{
+   common_builtin::constants_are_constant();
+}
+
+TEST_F(geometry_builtin, no_invalid_variable_modes)
+{
+   common_builtin::no_invalid_variable_modes();
+}
