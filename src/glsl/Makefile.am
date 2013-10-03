@@ -59,6 +59,7 @@ tests_general_ir_test_SOURCES =		\
 	$(top_srcdir)/src/mesa/program/prog_hash_table.c\
 	$(top_srcdir)/src/mesa/program/symbol_table.c	\
 	$(GLSL_SRCDIR)/standalone_scaffolding.cpp \
+	tests/builtin_variable_test.cpp			\
 	tests/general_ir_test.cpp
 tests_general_ir_test_CFLAGS =				\
 	$(PTHREAD_CFLAGS)
