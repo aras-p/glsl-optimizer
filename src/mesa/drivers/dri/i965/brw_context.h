@@ -689,33 +689,6 @@ struct brw_gs_prog_data
  * For example, a shader might ask to sample from "surface 7."  In this case,
  * bind[7] would contain a pointer to a texture.
  *
- * Currently, our WM binding tables are (arbitrarily) programmed as follows:
- *
- *    +-------------------------------+
- *    |   0 | Draw buffer 0           |
- *    |   . |     .                   |
- *    |   : |     :                   |
- *    |   7 | Draw buffer 7           |
- *    |-----|-------------------------|
- *    |   8 | WM Pull Constant Buffer |
- *    |-----|-------------------------|
- *    |   9 | Texture 0               |
- *    |   . |     .                   |
- *    |   : |     :                   |
- *    |  24 | Texture 15              |
- *    |-----|-------------------------|
- *    |  25 | UBO 0                   |
- *    |   . |     .                   |
- *    |   : |     :                   |
- *    |  36 | UBO 11                  |
- *    |-----|-------------------------|
- *    |  37 | Shader time buffer      |
- *    |-----|-------------------------|
- *    |  38 | Gather texture 0        |
- *    |   . |     .                   |
- *    |   : |     :                   |
- *    |  53 | Gather texture 15       |
- *    +-------------------------------+
  *
  * Our VS (and Gen7 GS) binding tables are programmed as follows:
  *
@@ -749,14 +722,10 @@ struct brw_gs_prog_data
  *    |  63 | SOL Binding 63          |
  *    +-----+-------------------------+
  */
-#define SURF_INDEX_DRAW(d)           (d)
-#define SURF_INDEX_FRAG_CONST_BUFFER (BRW_MAX_DRAW_BUFFERS + 1)
-#define SURF_INDEX_TEXTURE(t)        (BRW_MAX_DRAW_BUFFERS + 2 + (t))
-#define SURF_INDEX_WM_UBO(u)         (SURF_INDEX_TEXTURE(BRW_MAX_TEX_UNIT) + u)
-#define SURF_INDEX_WM_SHADER_TIME    (SURF_INDEX_WM_UBO(12))
-#define SURF_INDEX_GATHER_TEXTURE(t) (SURF_INDEX_WM_SHADER_TIME + 1 + (t))
-/** Maximum size of the binding table. */
-#define BRW_MAX_WM_SURFACES          (SURF_INDEX_GATHER_TEXTURE(BRW_MAX_TEX_UNIT))
+#define BRW_MAX_SURFACES   (BRW_MAX_DRAW_BUFFERS +                      \
+                            BRW_MAX_TEX_UNIT * 2 + /* normal, gather */ \
+                            12 + /* ubo */                              \
+                            2 /* shader time, pull constants */)
 
 #define SURF_INDEX_VEC4_CONST_BUFFER (0)
 #define SURF_INDEX_VEC4_TEXTURE(t)   (SURF_INDEX_VEC4_CONST_BUFFER + 1 + (t))
@@ -985,7 +954,7 @@ struct brw_stage_state
 
    /* Binding table: pointers to SURFACE_STATE entries. */
    uint32_t bind_bo_offset;
-   uint32_t surf_offset[BRW_MAX_WM_SURFACES];
+   uint32_t surf_offset[BRW_MAX_SURFACES];
 
    /** SAMPLER_STATE count and table offset */
    uint32_t sampler_count;

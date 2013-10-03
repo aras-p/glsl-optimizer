@@ -61,7 +61,7 @@ fs_generator::~fs_generator()
 void
 fs_generator::mark_surface_used(unsigned surf_index)
 {
-   assert(surf_index < BRW_MAX_WM_SURFACES);
+   assert(surf_index < BRW_MAX_SURFACES);
 
    c->prog_data.base.binding_table.size_bytes =
       MAX2(c->prog_data.base.binding_table.size_bytes, (surf_index + 1) * 4);

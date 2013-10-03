@@ -2981,12 +2981,35 @@ fs_visitor::setup_payload_gen6()
 void
 fs_visitor::assign_binding_table_offsets()
 {
-   c->prog_data.binding_table.render_target_start = SURF_INDEX_DRAW(0);
-   c->prog_data.base.binding_table.texture_start = SURF_INDEX_TEXTURE(0);
-   c->prog_data.base.binding_table.ubo_start = SURF_INDEX_WM_UBO(0);
-   c->prog_data.base.binding_table.shader_time_start = SURF_INDEX_WM_SHADER_TIME;
-   c->prog_data.base.binding_table.gather_texture_start = SURF_INDEX_GATHER_TEXTURE(0);
-   c->prog_data.base.binding_table.pull_constants_start = SURF_INDEX_FRAG_CONST_BUFFER;
+   int num_textures = _mesa_fls(fp->Base.SamplersUsed);
+   int next = 0;
+
+   c->prog_data.binding_table.render_target_start = next;
+   next += c->key.nr_color_regions;
+
+   c->prog_data.base.binding_table.texture_start = next;
+   next += num_textures;
+
+   if (shader) {
+      c->prog_data.base.binding_table.ubo_start = next;
+      next += shader->base.NumUniformBlocks;
+   }
+
+   if (INTEL_DEBUG & DEBUG_SHADER_TIME) {
+      c->prog_data.base.binding_table.shader_time_start = next;
+      next++;
+   }
+
+   if (fp->Base.UsesGather) {
+      c->prog_data.base.binding_table.gather_texture_start = next;
+      next += num_textures;
+   }
+
+   /* This may or may not be used depending on how the compile goes. */
+   c->prog_data.base.binding_table.pull_constants_start = next;
+   next++;
+
+   assert(next < BRW_MAX_SURFACES);
 
    /* c->prog_data.base.binding_table.size will be set by mark_surface_used. */
 }
