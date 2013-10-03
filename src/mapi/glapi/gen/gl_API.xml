@@ -5495,7 +5495,7 @@
     <function name="GetProgramiv" offset="assign" es2="2.0">
         <param name="program" type="GLuint"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLint *"/>
+        <param name="params" type="GLint *" output="true"/>
         <glx ignore="true"/>
     </function>
 
