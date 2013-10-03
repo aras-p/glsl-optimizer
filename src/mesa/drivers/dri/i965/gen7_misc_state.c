@@ -93,8 +93,8 @@ gen7_emit_depth_stencil_hiz(struct brw_context *brw,
    lod = irb ? irb->mt_level - irb->mt->first_level : 0;
 
    if (mt) {
-      width = mt->physical_width0;
-      height = mt->physical_height0;
+      width = mt->logical_width0;
+      height = mt->logical_height0;
    }
 
    /* _NEW_DEPTH, _NEW_STENCIL, _NEW_BUFFERS */

@@ -706,8 +706,8 @@ gen7_blorp_emit_depth_stencil_config(struct brw_context *brw,
       surfwidth = params->depth.width;
       surfheight = params->depth.height;
    } else {
-      surfwidth = params->depth.mt->physical_width0;
-      surfheight = params->depth.mt->physical_height0;
+      surfwidth = params->depth.mt->logical_width0;
+      surfheight = params->depth.mt->logical_height0;
    }
 
    /* 3DSTATE_DEPTH_BUFFER */
