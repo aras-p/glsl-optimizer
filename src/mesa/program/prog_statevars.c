@@ -349,6 +349,9 @@ _mesa_fetch_state(struct gl_context *ctx, const gl_state_index state[],
          }
       }
       return;
+   case STATE_NUM_SAMPLES:
+      ((int *)value)[0] = ctx->DrawBuffer->Visual.samples;
+      return;
    case STATE_DEPTH_RANGE:
       value[0] = ctx->Viewport.Near;                     /* near       */
       value[1] = ctx->Viewport.Far;                      /* far        */
@@ -665,6 +668,9 @@ _mesa_program_state_flags(const gl_state_index state[STATE_LENGTH])
    case STATE_PROGRAM_MATRIX:
       return _NEW_TRACK_MATRIX;
 
+   case STATE_NUM_SAMPLES:
+      return _NEW_BUFFERS;
+
    case STATE_DEPTH_RANGE:
       return _NEW_VIEWPORT;
 
@@ -852,6 +858,9 @@ append_token(char *dst, gl_state_index k)
    case STATE_TEXENV_COLOR:
       append(dst, "texenv");
       break;
+   case STATE_NUM_SAMPLES:
+      append(dst, "numsamples");
+      break;
    case STATE_DEPTH_RANGE:
       append(dst, "depth.range");
       break;
@@ -1026,6 +1035,8 @@ _mesa_program_state_string(const gl_state_index state[STATE_LENGTH])
    case STATE_FOG_PARAMS:
       break;
    case STATE_FOG_COLOR:
+      break;
+   case STATE_NUM_SAMPLES:
       break;
    case STATE_DEPTH_RANGE:
       break;

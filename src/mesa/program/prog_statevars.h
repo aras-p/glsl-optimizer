@@ -103,6 +103,8 @@ typedef enum gl_state_index_ {
 
    STATE_TEXENV_COLOR,
 
+   STATE_NUM_SAMPLES,    /* An integer, not a float like the other state vars */
+
    STATE_DEPTH_RANGE,
 
    STATE_VERTEX_PROGRAM,
