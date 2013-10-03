@@ -39,6 +39,12 @@ bool
 populate_consumer_input_sets(void *mem_ctx, exec_list *ir,
                              hash_table *consumer_inputs,
                              hash_table *consumer_interface_inputs);
+
+ir_variable *
+get_matching_input(void *mem_ctx,
+                   const ir_variable *output_var,
+                   hash_table *consumer_inputs,
+                   hash_table *consumer_interface_inputs);
 }
 
 class link_varyings : public ::testing::Test {
@@ -264,4 +270,78 @@ TEST_F(link_varyings, invalid_interface_input)
                                                     &ir,
                                                     consumer_inputs,
                                                     consumer_interface_inputs));
+}
+
+TEST_F(link_varyings, interface_field_doesnt_match_noninterface)
+{
+   char *const iface_field_name = interface_field_name(simple_interface);
+
+   /* The input shader has a single input variable name "a.v"
+    */
+   ir_variable *const in_v =
+      new(mem_ctx) ir_variable(glsl_type::vec(4),
+                               iface_field_name,
+                               ir_var_shader_in);
+
+   ir.push_tail(in_v);
+
+   ASSERT_TRUE(linker::populate_consumer_input_sets(mem_ctx,
+                                                    &ir,
+                                                    consumer_inputs,
+                                                    consumer_interface_inputs));
+
+   /* Create an output variable, "v", that is part of an interface block named
+    * "a".  They should not match.
+    */
+   ir_variable *const out_v =
+      new(mem_ctx) ir_variable(simple_interface->fields.structure[0].type,
+                               simple_interface->fields.structure[0].name,
+                               ir_var_shader_in);
+
+   out_v->init_interface_type(simple_interface);
+
+   ir_variable *const match =
+      linker::get_matching_input(mem_ctx,
+                                 out_v,
+                                 consumer_inputs,
+                                 consumer_interface_inputs);
+
+   EXPECT_EQ(NULL, match);
+}
+
+TEST_F(link_varyings, interface_field_doesnt_match_noninterface_vice_versa)
+{
+   char *const iface_field_name = interface_field_name(simple_interface);
+
+   /* In input shader has a single variable, "v", that is part of an interface
+    * block named "a".
+    */
+   ir_variable *const in_v =
+      new(mem_ctx) ir_variable(simple_interface->fields.structure[0].type,
+                               simple_interface->fields.structure[0].name,
+                               ir_var_shader_in);
+
+   in_v->init_interface_type(simple_interface);
+
+   ir.push_tail(in_v);
+
+   ASSERT_TRUE(linker::populate_consumer_input_sets(mem_ctx,
+                                                    &ir,
+                                                    consumer_inputs,
+                                                    consumer_interface_inputs));
+
+   /* Create an output variable "a.v".  They should not match.
+    */
+   ir_variable *const out_v =
+      new(mem_ctx) ir_variable(glsl_type::vec(4),
+                               iface_field_name,
+                               ir_var_shader_out);
+
+   ir_variable *const match =
+      linker::get_matching_input(mem_ctx,
+                                 out_v,
+                                 consumer_inputs,
+                                 consumer_interface_inputs);
+
+   EXPECT_EQ(NULL, match);
 }

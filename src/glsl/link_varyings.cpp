@@ -1067,6 +1067,37 @@ populate_consumer_input_sets(void *mem_ctx, exec_list *ir,
    return true;
 }
 
+/**
+ * Find a variable from the consumer that "matches" the specified variable
+ *
+ * This function only finds inputs with names that match.  There is no
+ * validation (here) that the types, etc. are compatible.
+ */
+ir_variable *
+get_matching_input(void *mem_ctx,
+                   const ir_variable *output_var,
+                   hash_table *consumer_inputs,
+                   hash_table *consumer_interface_inputs)
+{
+   ir_variable *input_var;
+
+   if (output_var->get_interface_type() != NULL) {
+      char *const iface_field_name =
+         ralloc_asprintf(mem_ctx, "%s.%s",
+                         output_var->get_interface_type()->name,
+                         output_var->name);
+      input_var =
+         (ir_variable *) hash_table_find(consumer_interface_inputs,
+                                         iface_field_name);
+   } else {
+      input_var =
+         (ir_variable *) hash_table_find(consumer_inputs, output_var->name);
+   }
+
+   return (input_var == NULL || input_var->data.mode != ir_var_shader_in)
+      ? NULL : input_var;
+}
+
 }
 
 /**
@@ -1142,23 +1173,9 @@ assign_varying_locations(struct gl_context *ctx,
       tfeedback_candidate_generator g(mem_ctx, tfeedback_candidates);
       g.process(output_var);
 
-      ir_variable *input_var;
-      if (output_var->get_interface_type() != NULL) {
-         char *const iface_field_name =
-            ralloc_asprintf(mem_ctx, "%s.%s",
-                            output_var->get_interface_type()->name,
-                            output_var->name);
-         input_var =
-            (ir_variable *) hash_table_find(consumer_interface_inputs,
-                                            iface_field_name);
-      } else {
-         input_var =
-            (ir_variable *) hash_table_find(consumer_inputs, output_var->name);
-      }
-
-      if (input_var && input_var->data.mode != ir_var_shader_in)
-         input_var = NULL;
-
+      ir_variable *const input_var =
+         linker::get_matching_input(mem_ctx, output_var, consumer_inputs,
+                                    consumer_interface_inputs);
       if (input_var) {
          matches.record(output_var, input_var);
       }
