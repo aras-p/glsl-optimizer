@@ -307,11 +307,15 @@ const char *r600_get_llvm_processor_name(enum radeon_family family)
 		case CHIP_PITCAIRN: return "pitcairn";
 		case CHIP_VERDE: return "verde";
 		case CHIP_OLAND: return "oland";
+#if HAVE_LLVM <= 0x0303
+		default: return "SI";
+#else
 		case CHIP_HAINAN: return "hainan";
 		case CHIP_BONAIRE: return "bonaire";
 		case CHIP_KABINI: return "kabini";
 		case CHIP_KAVERI: return "kaveri";
 		default: return "";
+#endif
 	}
 }
 
