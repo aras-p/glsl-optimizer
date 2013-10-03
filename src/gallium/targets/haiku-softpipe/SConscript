@@ -36,7 +36,7 @@ softpipe_sources = [
 ]
 
 # libswpipe gets turned into "Software Renderer" by the haiku package system
-module = env.SharedLibrary(
+module = env.LoadableModule(
     target ='swpipe',
     source = softpipe_sources,
 )
