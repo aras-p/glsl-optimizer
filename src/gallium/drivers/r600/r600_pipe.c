@@ -1134,6 +1134,9 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 		}
 	}
 
+	/* Create the auxiliary context. This must be done last. */
+	rscreen->b.aux_context = rscreen->b.b.context_create(&rscreen->b.b, NULL);
+
 #if 0 /* This is for testing whether aux_context and buffer clearing work correctly. */
 	struct pipe_resource templ = {};
 

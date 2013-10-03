@@ -819,5 +819,8 @@ struct pipe_screen *radeonsi_screen_create(struct radeon_winsys *ws)
 	}
 #endif
 
+	/* Create the auxiliary context. This must be done last. */
+	rscreen->b.aux_context = rscreen->b.b.context_create(&rscreen->b.b, NULL);
+
 	return &rscreen->b.b;
 }

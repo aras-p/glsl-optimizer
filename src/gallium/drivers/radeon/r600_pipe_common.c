@@ -175,9 +175,7 @@ bool r600_common_screen_init(struct r600_common_screen *rscreen,
 
 	util_format_s3tc_init();
 
-	/* Create the auxiliary context. */
 	pipe_mutex_init(rscreen->aux_context_lock);
-	rscreen->aux_context = rscreen->b.context_create(&rscreen->b, NULL);
 	return true;
 }
 
