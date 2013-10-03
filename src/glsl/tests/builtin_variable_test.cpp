@@ -222,3 +222,74 @@ TEST_F(vertex_builtin, no_invalid_variable_modes)
 {
    common_builtin::no_invalid_variable_modes();
 }
+
+/********************************************************************/
+
+class fragment_builtin : public common_builtin {
+public:
+   fragment_builtin()
+      : common_builtin(GL_FRAGMENT_SHADER)
+   {
+      /* empty */
+   }
+};
+
+TEST_F(fragment_builtin, names_start_with_gl)
+{
+   common_builtin::names_start_with_gl();
+}
+
+TEST_F(fragment_builtin, inputs_have_explicit_location)
+{
+   foreach_list(node, &this->ir) {
+      ir_variable *const var = ((ir_instruction *) node)->as_variable();
+
+      if (var->mode != ir_var_shader_in)
+	 continue;
+
+      EXPECT_TRUE(var->explicit_location);
+      EXPECT_NE(-1, var->location);
+      EXPECT_GT(VARYING_SLOT_VAR0, var->location);
+      EXPECT_EQ(0u, var->location_frac);
+
+      /* Several varyings only exist in the vertex / geometry shader.  Be sure
+       * that no inputs with these locations exist.
+       */
+      EXPECT_TRUE(_mesa_varying_slot_in_fs((gl_varying_slot) var->location));
+   }
+}
+
+TEST_F(fragment_builtin, outputs_have_explicit_location)
+{
+   foreach_list(node, &this->ir) {
+      ir_variable *const var = ((ir_instruction *) node)->as_variable();
+
+      if (var->mode != ir_var_shader_out)
+	 continue;
+
+      EXPECT_TRUE(var->explicit_location);
+      EXPECT_NE(-1, var->location);
+
+      /* gl_FragData[] has location FRAG_RESULT_DATA0.  Locations beyond that
+       * are invalid.
+       */
+      EXPECT_GE(FRAG_RESULT_DATA0, var->location);
+
+      EXPECT_EQ(0u, var->location_frac);
+   }
+}
+
+TEST_F(fragment_builtin, uniforms_and_system_values_dont_have_explicit_location)
+{
+   common_builtin::uniforms_and_system_values_dont_have_explicit_location();
+}
+
+TEST_F(fragment_builtin, constants_are_constant)
+{
+   common_builtin::constants_are_constant();
+}
+
+TEST_F(fragment_builtin, no_invalid_variable_modes)
+{
+   common_builtin::no_invalid_variable_modes();
+}
