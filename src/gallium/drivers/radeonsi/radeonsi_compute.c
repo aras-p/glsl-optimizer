@@ -244,11 +244,6 @@ static void si_set_cs_sampler_view(struct pipe_context *ctx_,
 		unsigned start_slot, unsigned count,
 		struct pipe_sampler_view **views) { }
 
-static void si_bind_compute_sampler_states(
-	struct pipe_context *ctx_,
-	unsigned start_slot,
-	unsigned num_samplers,
-	void **samplers_) { }
 void si_init_compute_functions(struct r600_context *rctx)
 {
 	rctx->b.b.create_compute_state = radeonsi_create_compute_state;
@@ -257,7 +252,6 @@ void si_init_compute_functions(struct r600_context *rctx)
 /*	 ctx->context.create_sampler_view = evergreen_compute_create_sampler_view; */
 	rctx->b.b.set_compute_resources = si_set_compute_resources;
 	rctx->b.b.set_compute_sampler_views = si_set_cs_sampler_view;
-	rctx->b.b.bind_compute_sampler_states = si_bind_compute_sampler_states;
 	rctx->b.b.set_global_binding = radeonsi_set_global_binding;
 	rctx->b.b.launch_grid = radeonsi_launch_grid;
 }
