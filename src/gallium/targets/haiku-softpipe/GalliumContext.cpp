@@ -13,7 +13,6 @@
 #include "GLView.h"
 
 #include "bitmap_wrapper.h"
-#include "hgl_sw_winsys.h"
 extern "C" {
 #include "glapi/glapi.h"
 #include "main/context.h"
@@ -26,6 +25,7 @@ extern "C" {
 #include "state_tracker/st_gl_api.h"
 #include "state_tracker/st_manager.h"
 #include "state_tracker/sw_winsys.h"
+#include "hgl_sw_winsys.h"
 #ifdef HAVE_LLVM
 #include "llvmpipe/lp_public.h"
 #else

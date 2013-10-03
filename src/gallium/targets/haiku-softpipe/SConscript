@@ -29,7 +29,6 @@ if env['llvm']:
     env.Append(CPPDEFINES = 'HAVE_LLVMPIPE')
 
 softpipe_sources = [
-    'haiku-softpipe.c',
     'GalliumContext.cpp',
     'GalliumFramebuffer.cpp',
     'SoftwareRenderer.cpp'
