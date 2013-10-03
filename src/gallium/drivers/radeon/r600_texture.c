@@ -515,16 +515,17 @@ r600_texture_create_object(struct pipe_screen *screen,
 	/* don't include stencil-only formats which we don't support for rendering */
 	rtex->is_depth = util_format_has_depth(util_format_description(rtex->resource.b.b.format));
 
-	/* Tiled depth textures utilize the non-displayable tile order.
-	 * Applies to R600-Cayman. */
-	rtex->non_disp_tiling = rtex->is_depth && rtex->surface.level[0].mode >= RADEON_SURF_MODE_1D;
-
 	rtex->surface = *surface;
 	r = r600_setup_surface(screen, rtex, pitch_in_bytes_override);
 	if (r) {
 		FREE(rtex);
 		return NULL;
 	}
+
+	/* Tiled depth textures utilize the non-displayable tile order.
+	 * This must be done after r600_setup_surface.
+	 * Applies to R600-Cayman. */
+	rtex->non_disp_tiling = rtex->is_depth && rtex->surface.level[0].mode >= RADEON_SURF_MODE_1D;
 
 	if (base->nr_samples > 1 && !rtex->is_depth && !buf) {
 		r600_texture_allocate_fmask(rscreen, rtex);
