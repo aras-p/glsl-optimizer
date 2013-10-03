@@ -269,10 +269,8 @@ lp_build_rho(struct lp_build_sample_context *bld,
       /* Could optimize this for single quad just skip the broadcast */
       cubesize = lp_build_extract_broadcast(gallivm, bld->float_size_in_type,
                                             rho_bld->type, float_size, index0);
-      if (no_rho_opt) {
-         /* skipping sqrt hence returning rho squared */
-         cubesize = lp_build_mul(rho_bld, cubesize, cubesize);
-      }
+      /* skipping sqrt hence returning rho squared */
+      cubesize = lp_build_mul(rho_bld, cubesize, cubesize);
       rho = lp_build_mul(rho_bld, cubesize, rho);
    }
    else if (derivs && !(bld->static_texture_state->target == PIPE_TEXTURE_CUBE)) {
@@ -757,8 +755,8 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
       }
       else {
          LLVMValueRef rho;
-         boolean rho_squared = (gallivm_debug & GALLIVM_DEBUG_NO_RHO_APPROX) &&
-                               (bld->dims > 1);
+         boolean rho_squared = ((gallivm_debug & GALLIVM_DEBUG_NO_RHO_APPROX) &&
+                                (bld->dims > 1)) || cube_rho;
 
          rho = lp_build_rho(bld, texture_unit, s, t, r, cube_rho, derivs);
 
@@ -1519,6 +1517,8 @@ lp_build_cube_lookup(struct lp_build_sample_context *bld,
        */
       struct lp_build_context *cint_bld = &bld->int_coord_bld;
       struct lp_type intctype = cint_bld->type;
+      LLVMTypeRef coord_vec_type = coord_bld->vec_type;
+      LLVMTypeRef cint_vec_type = cint_bld->vec_type;
       LLVMValueRef signs, signt, signr, signma;
       LLVMValueRef as, at, ar, face, face_s, face_t;
       LLVMValueRef as_ge_at, maxasat, ar_ge_as_at;
@@ -1602,40 +1602,32 @@ lp_build_cube_lookup(struct lp_build_sample_context *bld,
           * know the texture is square which simplifies things (we can omit the
           * size mul which happens very early completely here and do it at the
           * very end).
+          * Also always do calculations according to GALLIVM_DEBUG_NO_RHO_APPROX
+          * since the error can get quite big otherwise at edges.
+          * (With no_rho_approx max error is sqrt(2) at edges, same as it is
+          * without no_rho_approx for 2d textures, otherwise it would be factor 2.)
           */
          ddx_ddy[0] = lp_build_packed_ddx_ddy_twocoord(coord_bld, s, t);
          ddx_ddy[1] = lp_build_packed_ddx_ddy_onecoord(coord_bld, r);
 
-         if (gallivm_debug & GALLIVM_DEBUG_NO_RHO_APPROX) {
-            ddx_ddy[0] = lp_build_mul(coord_bld, ddx_ddy[0], ddx_ddy[0]);
-            ddx_ddy[1] = lp_build_mul(coord_bld, ddx_ddy[1], ddx_ddy[1]);
-         }
-         else {
-            ddx_ddy[0] = lp_build_abs(coord_bld, ddx_ddy[0]);
-            ddx_ddy[1] = lp_build_abs(coord_bld, ddx_ddy[1]);
-         }
+         ddx_ddy[0] = lp_build_mul(coord_bld, ddx_ddy[0], ddx_ddy[0]);
+         ddx_ddy[1] = lp_build_mul(coord_bld, ddx_ddy[1], ddx_ddy[1]);
 
          tmp[0] = lp_build_swizzle_aos(coord_bld, ddx_ddy[0], swizzle01);
          tmp[1] = lp_build_swizzle_aos(coord_bld, ddx_ddy[0], swizzle23);
          tmp[2] = lp_build_swizzle_aos(coord_bld, ddx_ddy[1], swizzle02);
 
-         if (gallivm_debug & GALLIVM_DEBUG_NO_RHO_APPROX) {
-            rho_vec = lp_build_add(coord_bld, tmp[0], tmp[1]);
-            rho_vec = lp_build_add(coord_bld, rho_vec, tmp[2]);
-         }
-         else {
-            rho_vec = lp_build_max(coord_bld, tmp[0], tmp[1]);
-            rho_vec = lp_build_max(coord_bld, rho_vec, tmp[2]);
-         }
+         rho_vec = lp_build_add(coord_bld, tmp[0], tmp[1]);
+         rho_vec = lp_build_add(coord_bld, rho_vec, tmp[2]);
 
          tmp[0] = lp_build_swizzle_aos(coord_bld, rho_vec, swizzle0);
          tmp[1] = lp_build_swizzle_aos(coord_bld, rho_vec, swizzle1);
          *rho = lp_build_max(coord_bld, tmp[0], tmp[1]);
       }
 
-      si = LLVMBuildBitCast(builder, s, lp_build_vec_type(gallivm, intctype), "");
-      ti = LLVMBuildBitCast(builder, t, lp_build_vec_type(gallivm, intctype), "");
-      ri = LLVMBuildBitCast(builder, r, lp_build_vec_type(gallivm, intctype), "");
+      si = LLVMBuildBitCast(builder, s, cint_vec_type, "");
+      ti = LLVMBuildBitCast(builder, t, cint_vec_type, "");
+      ri = LLVMBuildBitCast(builder, r, cint_vec_type, "");
       signs = LLVMBuildAnd(builder, si, signmask, "");
       signt = LLVMBuildAnd(builder, ti, signmask, "");
       signr = LLVMBuildAnd(builder, ri, signmask, "");
@@ -1684,17 +1676,15 @@ lp_build_cube_lookup(struct lp_build_sample_context *bld,
       face_t = lp_build_select(cint_bld, ar_ge_as_at, tnewz, face_t);
       face = lp_build_select(cint_bld, ar_ge_as_at, facez, face);
 
-      face_s = LLVMBuildBitCast(builder, face_s,
-                               lp_build_vec_type(gallivm, coord_bld->type), "");
-      face_t = LLVMBuildBitCast(builder, face_t,
-                               lp_build_vec_type(gallivm, coord_bld->type), "");
+      face_s = LLVMBuildBitCast(builder, face_s, coord_vec_type, "");
+      face_t = LLVMBuildBitCast(builder, face_t, coord_vec_type, "");
 
       /* add +1 for neg face */
       /* XXX with AVX probably want to use another select here -
        * as long as we ensure vblendvps gets used we can actually
        * skip the comparison and just use sign as a "mask" directly.
        */
-      mai = LLVMBuildBitCast(builder, ma, lp_build_vec_type(gallivm, intctype), "");
+      mai = LLVMBuildBitCast(builder, ma, cint_vec_type, "");
       signma = LLVMBuildLShr(builder, mai, signshift, "");
       coords[2] = LLVMBuildOr(builder, face, signma, "face");
 
