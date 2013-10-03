@@ -678,61 +678,10 @@ struct brw_gs_prog_data
 /** Maximum number of actual buffers used for stream output */
 #define BRW_MAX_SOL_BUFFERS 4
 
-/**
- * Helpers to create Surface Binding Table indexes for draw buffers,
- * textures, and constant buffers.
- *
- * Shader threads access surfaces via numeric handles, rather than directly
- * using pointers.  The binding table maps these numeric handles to the
- * address of the actual buffer.
- *
- * For example, a shader might ask to sample from "surface 7."  In this case,
- * bind[7] would contain a pointer to a texture.
- *
- *
- * Our VS (and Gen7 GS) binding tables are programmed as follows:
- *
- *    +-----+-------------------------+
- *    |   0 | Pull Constant Buffer    |
- *    +-----+-------------------------+
- *    |   1 | Texture 0               |
- *    |   . |     .                   |
- *    |   : |     :                   |
- *    |  16 | Texture 15              |
- *    +-----+-------------------------+
- *    |  17 | UBO 0                   |
- *    |   . |     .                   |
- *    |   : |     :                   |
- *    |  28 | UBO 11                  |
- *    |-----|-------------------------|
- *    |  29 | Shader time buffer      |
- *    |-----|-------------------------|
- *    |  30 | Gather texture 0        |
- *    |   . |     .                   |
- *    |   : |     :                   |
- *    |  45 | Gather texture 15       |
- *    +-------------------------------+
- *
- * Our (gen6) GS binding tables are programmed as follows:
- *
- *    +-----+-------------------------+
- *    |   0 | SOL Binding 0           |
- *    |   . |     .                   |
- *    |   : |     :                   |
- *    |  63 | SOL Binding 63          |
- *    +-----+-------------------------+
- */
 #define BRW_MAX_SURFACES   (BRW_MAX_DRAW_BUFFERS +                      \
                             BRW_MAX_TEX_UNIT * 2 + /* normal, gather */ \
                             12 + /* ubo */                              \
                             2 /* shader time, pull constants */)
-
-#define SURF_INDEX_VEC4_CONST_BUFFER (0)
-#define SURF_INDEX_VEC4_TEXTURE(t)   (SURF_INDEX_VEC4_CONST_BUFFER + 1 + (t))
-#define SURF_INDEX_VEC4_UBO(u)       (SURF_INDEX_VEC4_TEXTURE(BRW_MAX_TEX_UNIT) + u)
-#define SURF_INDEX_VEC4_SHADER_TIME  (SURF_INDEX_VEC4_UBO(12))
-#define SURF_INDEX_VEC4_GATHER_TEXTURE(t)   (SURF_INDEX_VEC4_SHADER_TIME + 1 + (t))
-#define BRW_MAX_VEC4_SURFACES        (SURF_INDEX_VEC4_GATHER_TEXTURE(BRW_MAX_TEX_UNIT))
 
 #define SURF_INDEX_GEN6_SOL_BINDING(t) (t)
 #define BRW_MAX_GEN6_GS_SURFACES       SURF_INDEX_GEN6_SOL_BINDING(BRW_MAX_SOL_BINDINGS)

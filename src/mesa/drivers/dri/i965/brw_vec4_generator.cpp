@@ -155,7 +155,7 @@ vec4_generator::~vec4_generator()
 void
 vec4_generator::mark_surface_used(unsigned surf_index)
 {
-   assert(surf_index < BRW_MAX_VEC4_SURFACES);
+   assert(surf_index < BRW_MAX_SURFACES);
 
    prog_data->base.binding_table.size_bytes =
       MAX2(prog_data->base.binding_table.size_bytes, (surf_index + 1) * 4);

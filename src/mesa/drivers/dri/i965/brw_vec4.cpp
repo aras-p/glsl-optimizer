@@ -1424,11 +1424,30 @@ vec4_visitor::emit_shader_time_write(enum shader_time_shader_type type,
 void
 vec4_visitor::assign_binding_table_offsets()
 {
-   prog_data->base.binding_table.texture_start = SURF_INDEX_VEC4_TEXTURE(0);
-   prog_data->base.binding_table.ubo_start = SURF_INDEX_VEC4_UBO(0);
-   prog_data->base.binding_table.shader_time_start = SURF_INDEX_VEC4_SHADER_TIME;
-   prog_data->base.binding_table.gather_texture_start = SURF_INDEX_VEC4_GATHER_TEXTURE(0);
-   prog_data->base.binding_table.pull_constants_start = SURF_INDEX_VEC4_CONST_BUFFER;
+   int num_textures = _mesa_fls(prog->SamplersUsed);
+   int next = 0;
+
+   prog_data->base.binding_table.texture_start = next;
+   next += num_textures;
+
+   if (shader) {
+      prog_data->base.binding_table.ubo_start = next;
+      next += shader->base.NumUniformBlocks;
+   }
+
+   if (INTEL_DEBUG & DEBUG_SHADER_TIME) {
+      prog_data->base.binding_table.shader_time_start = next;
+      next++;
+   }
+
+   if (prog->UsesGather) {
+      prog_data->base.binding_table.gather_texture_start = next;
+      next += num_textures;
+   }
+
+   /* This may or may not be used depending on how the compile goes. */
+   prog_data->base.binding_table.pull_constants_start = next;
+   next++;
 
    /* prog_data->base.binding_table.size will be set by mark_surface_used. */
 }
