@@ -62,10 +62,7 @@ intel_buffer_object_purgeable(struct gl_context * ctx,
       return GL_RELEASED_APPLE;
    } else {
       /* XXX Create the buffer and madvise(MADV_DONTNEED)? */
-      struct brw_context *brw = brw_context(ctx);
-      drm_intel_bo *bo = intel_bufferobj_buffer(brw, intel_obj, INTEL_READ);
-
-      return intel_buffer_purgeable(bo);
+      return intel_buffer_purgeable(intel_obj->buffer);
    }
 }
 

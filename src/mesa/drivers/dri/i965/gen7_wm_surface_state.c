@@ -278,8 +278,8 @@ gen7_update_buffer_texture_surface(struct gl_context *ctx,
    drm_intel_bo *bo = NULL;
 
    if (intel_obj) {
-      bo = intel_obj->buffer;
       size = MIN2(size, intel_obj->Base.Size);
+      bo = intel_bufferobj_buffer(brw, intel_obj, tObj->BufferOffset, size);
    }
 
    gl_format format = tObj->_BufferObjectFormat;

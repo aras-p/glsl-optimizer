@@ -239,8 +239,8 @@ brw_update_buffer_texture_surface(struct gl_context *ctx,
    int texel_size = _mesa_get_format_bytes(format);
 
    if (intel_obj) {
-      bo = intel_obj->buffer;
       size = MIN2(size, intel_obj->Base.Size);
+      bo = intel_bufferobj_buffer(brw, intel_obj, tObj->BufferOffset, size);
    }
 
    if (brw_format == 0 && format != MESA_FORMAT_RGBA_FLOAT32) {
@@ -345,11 +345,13 @@ brw_update_sol_surface(struct brw_context *brw,
                        unsigned stride_dwords, unsigned offset_dwords)
 {
    struct intel_buffer_object *intel_bo = intel_buffer_object(buffer_obj);
-   drm_intel_bo *bo = intel_bufferobj_buffer(brw, intel_bo, INTEL_WRITE_PART);
+   uint32_t offset_bytes = 4 * offset_dwords;
+   drm_intel_bo *bo = intel_bufferobj_buffer(brw, intel_bo,
+                                             offset_bytes,
+                                             buffer_obj->Size - offset_bytes);
    uint32_t *surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE, 6 * 4, 32,
                                     out_offset);
    uint32_t pitch_minus_1 = 4*stride_dwords - 1;
-   uint32_t offset_bytes = 4 * offset_dwords;
    size_t size_dwords = buffer_obj->Size / 4;
    uint32_t buffer_size_minus_1, width, height, depth, surface_format;
 
@@ -824,7 +826,10 @@ brw_upload_ubo_surfaces(struct brw_context *brw,
 
       binding = &ctx->UniformBufferBindings[shader->UniformBlocks[i].Binding];
       intel_bo = intel_buffer_object(binding->BufferObject);
-      drm_intel_bo *bo = intel_bufferobj_buffer(brw, intel_bo, INTEL_READ);
+      drm_intel_bo *bo =
+         intel_bufferobj_buffer(brw, intel_bo,
+                                binding->Offset,
+                                binding->BufferObject->Size - binding->Offset);
 
       /* Because behavior for referencing outside of the binding's size in the
        * glBindBufferRange case is undefined, we can just bind the whole buffer

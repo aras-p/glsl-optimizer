@@ -45,14 +45,45 @@ struct intel_buffer_object
    drm_intel_bo *range_map_bo;
    void *range_map_buffer;
    unsigned int range_map_offset;
+
+   /** @{
+    * Tracking for what range of the BO may currently be in use by the GPU.
+    *
+    * Users often want to either glBufferSubData() or glMapBufferRange() a
+    * buffer object where some subset of it is busy on the GPU, without either
+    * stalling or doing an extra blit (since our blits are extra expensive,
+    * given that we have to reupload most of the 3D state when switching
+    * rings).  We wish they'd just use glMapBufferRange() with the
+    * UNSYNC|INVALIDATE_RANGE flag or the INVALIDATE_BUFFER flag, but lots
+    * don't.
+    *
+    * To work around apps, we track what range of the BO we might have used on
+    * the GPU as vertex data, tranform feedback output, buffer textures, etc.,
+    * and just do glBufferSubData() with an unsynchronized map when they're
+    * outside of that range.
+    *
+    * If gpu_active_start > gpu_active_end, then the GPU is not currently
+    * accessing the BO (and we can map it without synchronization).
+    */
+   uint32_t gpu_active_start;
+   uint32_t gpu_active_end;
+
+   /**
+    * If we've avoided stalls/blits using the active tracking, flag the buffer
+    * for (occasional) stalling in the future to avoid getting stuck in a
+    * cycle of blitting on buffer wraparound.
+    */
+   bool prefer_stall_to_blit;
+   /** @} */
 };
 
 
 /* Get the bm buffer associated with a GL bufferobject:
  */
 drm_intel_bo *intel_bufferobj_buffer(struct brw_context *brw,
-				     struct intel_buffer_object *obj,
-				     GLuint flag);
+                                     struct intel_buffer_object *obj,
+                                     uint32_t offset,
+                                     uint32_t size);
 
 void intel_upload_data(struct brw_context *brw,
 		       const void *ptr, GLuint size, GLuint align,

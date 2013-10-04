@@ -73,12 +73,12 @@ upload_3dstate_so_buffers(struct brw_context *brw)
 	 continue;
       }
 
-      bo = intel_bufferobj_buffer(brw, bufferobj, INTEL_WRITE_PART);
       stride = linked_xfb_info->BufferStride[i] * 4;
 
       start = xfb_obj->Offset[i];
       assert(start % 4 == 0);
       end = ALIGN(start + xfb_obj->Size[i], 4);
+      bo = intel_bufferobj_buffer(brw, bufferobj, start, end - start);
       assert(end <= bo->size);
 
       BEGIN_BATCH(4);

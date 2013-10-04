@@ -44,6 +44,21 @@
 static GLboolean
 intel_bufferobj_unmap(struct gl_context * ctx, struct gl_buffer_object *obj);
 
+static void
+intel_bufferobj_mark_gpu_usage(struct intel_buffer_object *intel_obj,
+                               uint32_t offset, uint32_t size)
+{
+   intel_obj->gpu_active_start = MIN2(intel_obj->gpu_active_start, offset);
+   intel_obj->gpu_active_end = MAX2(intel_obj->gpu_active_end, offset + size);
+}
+
+static void
+intel_bufferobj_mark_inactive(struct intel_buffer_object *intel_obj)
+{
+   intel_obj->gpu_active_start = ~0;
+   intel_obj->gpu_active_end = 0;
+}
+
 /** Allocates a new drm_intel_bo to store the data for the buffer object. */
 static void
 intel_bufferobj_alloc_buffer(struct brw_context *brw,
@@ -55,6 +70,8 @@ intel_bufferobj_alloc_buffer(struct brw_context *brw,
    /* the buffer might be bound as a uniform buffer, need to update it
     */
    brw->state.dirty.brw |= BRW_NEW_UNIFORM_BUFFER;
+
+   intel_bufferobj_mark_inactive(intel_obj);
 }
 
 static void
@@ -179,20 +196,44 @@ intel_bufferobj_subdata(struct gl_context * ctx,
 
    assert(intel_obj);
 
+   /* See if we can unsynchronized write the data into the user's BO. This
+    * avoids GPU stalls in unfortunately common user patterns (uploading
+    * sequentially into a BO, with draw calls in between each upload).
+    *
+    * Once we've hit this path, we mark this GL BO as preferring stalling to
+    * blits, so that we can hopefully hit this path again in the future
+    * (otherwise, an app that might occasionally stall but mostly not will end
+    * up with blitting all the time, at the cost of bandwidth)
+    */
+   if (brw->has_llc) {
+      if (offset + size <= intel_obj->gpu_active_start ||
+          intel_obj->gpu_active_end <= offset) {
+         drm_intel_gem_bo_map_unsynchronized(intel_obj->buffer);
+         memcpy(intel_obj->buffer->virtual + offset, data, size);
+         drm_intel_bo_unmap(intel_obj->buffer);
+
+         if (intel_obj->gpu_active_end > intel_obj->gpu_active_start)
+            intel_obj->prefer_stall_to_blit = true;
+         return;
+      }
+   }
+
    busy =
       drm_intel_bo_busy(intel_obj->buffer) ||
       drm_intel_bo_references(brw->batch.bo, intel_obj->buffer);
 
    if (busy) {
       if (size == intel_obj->Base.Size) {
-	 /* Replace the current busy bo with fresh data. */
+	 /* Replace the current busy bo so the subdata doesn't stall. */
 	 drm_intel_bo_unreference(intel_obj->buffer);
 	 intel_bufferobj_alloc_buffer(brw, intel_obj);
-	 drm_intel_bo_subdata(intel_obj->buffer, 0, size, data);
-      } else {
-         perf_debug("Using a blit copy to avoid stalling on %ldb "
-                    "glBufferSubData() to a busy buffer object.\n",
-                    (long)size);
+      } else if (!intel_obj->prefer_stall_to_blit) {
+         perf_debug("Using a blit copy to avoid stalling on "
+                    "glBufferSubData(%ld, %ld) (%ldkb) to a busy "
+                    "(%d-%d) buffer object.\n",
+                    (long)offset, (long)offset + size, (long)(size/1024),
+                    intel_obj->gpu_active_start,
+                    intel_obj->gpu_active_end);
 	 drm_intel_bo *temp_bo =
 	    drm_intel_bo_alloc(brw->bufmgr, "subdata temp", size, 64);
 
@@ -204,10 +245,20 @@ intel_bufferobj_subdata(struct gl_context * ctx,
 				size);
 
 	 drm_intel_bo_unreference(temp_bo);
+         return;
+      } else {
+         perf_debug("Stalling on glBufferSubData(%ld, %ld) (%ldkb) to a busy "
+                    "(%d-%d) buffer object.  Use glMapBufferRange() to "
+                    "avoid this.\n",
+                    (long)offset, (long)offset + size, (long)(size/1024),
+                    intel_obj->gpu_active_start,
+                    intel_obj->gpu_active_end);
+         intel_batchbuffer_flush(brw);
       }
-   } else {
-      drm_intel_bo_subdata(intel_obj->buffer, offset, size, data);
    }
+
+   drm_intel_bo_subdata(intel_obj->buffer, offset, size, data);
+   intel_bufferobj_mark_inactive(intel_obj);
 }
 
 
@@ -231,6 +282,8 @@ intel_bufferobj_get_subdata(struct gl_context * ctx,
       intel_batchbuffer_flush(brw);
    }
    drm_intel_bo_get_subdata(intel_obj->buffer, offset, size, data);
+
+   intel_bufferobj_mark_inactive(intel_obj);
 }
 
 
@@ -328,8 +381,10 @@ intel_bufferobj_map_range(struct gl_context * ctx,
       drm_intel_gem_bo_map_unsynchronized(intel_obj->buffer);
    else if (!(access & GL_MAP_READ_BIT)) {
       drm_intel_gem_bo_map_gtt(intel_obj->buffer);
+      intel_bufferobj_mark_inactive(intel_obj);
    } else {
       drm_intel_bo_map(intel_obj->buffer, (access & GL_MAP_WRITE_BIT) != 0);
+      intel_bufferobj_mark_inactive(intel_obj);
    }
 
    obj->Pointer = intel_obj->buffer->virtual + offset;
@@ -375,6 +430,7 @@ intel_bufferobj_flush_mapped_range(struct gl_context *ctx,
 			  intel_obj->buffer, obj->Offset + offset,
 			  temp_bo, 0,
 			  length);
+   intel_bufferobj_mark_gpu_usage(intel_obj, obj->Offset + offset, length);
 
    drm_intel_bo_unreference(temp_bo);
 }
@@ -409,6 +465,7 @@ intel_bufferobj_unmap(struct gl_context * ctx, struct gl_buffer_object *obj)
 			     intel_obj->buffer, obj->Offset,
 			     intel_obj->range_map_bo, 0,
 			     obj->Length);
+      intel_bufferobj_mark_gpu_usage(intel_obj, obj->Offset, obj->Length);
 
       /* Since we've emitted some blits to buffers that will (likely) be used
        * in rendering operations in other cache domains in this batch, emit a
@@ -429,10 +486,17 @@ intel_bufferobj_unmap(struct gl_context * ctx, struct gl_buffer_object *obj)
    return true;
 }
 
+/**
+ * Gets a pointer to the object's BO, and marks the given range as being used
+ * on the GPU.
+ *
+ * Anywhere that uses buffer objects in the pipeline should be using this to
+ * mark the range of the buffer that is being accessed by the pipeline.
+ */
 drm_intel_bo *
 intel_bufferobj_buffer(struct brw_context *brw,
                        struct intel_buffer_object *intel_obj,
-		       GLuint flag)
+                       uint32_t offset, uint32_t size)
 {
    /* This is needed so that things like transform feedback and texture buffer
     * objects that need a BO but don't want to check that they exist for
@@ -440,6 +504,8 @@ intel_bufferobj_buffer(struct brw_context *brw,
     */
    if (intel_obj->buffer == NULL)
       intel_bufferobj_alloc_buffer(brw, intel_obj);
+
+   intel_bufferobj_mark_gpu_usage(intel_obj, offset, size);
 
    return intel_obj->buffer;
 }
@@ -466,8 +532,8 @@ intel_bufferobj_copy_subdata(struct gl_context *ctx,
    if (size == 0)
       return;
 
-   dst_bo = intel_bufferobj_buffer(brw, intel_dst, INTEL_WRITE_PART);
-   src_bo = intel_bufferobj_buffer(brw, intel_src, INTEL_READ);
+   dst_bo = intel_bufferobj_buffer(brw, intel_dst, write_offset, size);
+   src_bo = intel_bufferobj_buffer(brw, intel_src, read_offset, size);
 
    intel_emit_linear_blit(brw,
 			  dst_bo, write_offset,
