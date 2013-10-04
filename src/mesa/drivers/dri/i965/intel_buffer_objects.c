@@ -434,6 +434,10 @@ intel_bufferobj_buffer(struct brw_context *brw,
                        struct intel_buffer_object *intel_obj,
 		       GLuint flag)
 {
+   /* This is needed so that things like transform feedback and texture buffer
+    * objects that need a BO but don't want to check that they exist for
+    * draw-time validation can just always get a BO from a GL buffer object.
+    */
    if (intel_obj->buffer == NULL)
       intel_bufferobj_alloc_buffer(brw, intel_obj);
 
