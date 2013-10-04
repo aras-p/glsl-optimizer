@@ -59,8 +59,9 @@ static Bool
 SendMakeCurrentRequest(Display * dpy, CARD8 opcode,
                        GLXContextID gc_id, GLXContextTag gc_tag,
                        GLXDrawable draw, GLXDrawable read,
-                       xGLXMakeCurrentReply * reply)
+                       GLXContextTag *out_tag)
 {
+   xGLXMakeCurrentReply reply;
    Bool ret;
 
    LockDisplay(dpy);
@@ -112,7 +113,10 @@ SendMakeCurrentRequest(Display * dpy, CARD8 opcode,
       }
    }
 
-   ret = _XReply(dpy, (xReply *) reply, 0, False);
+   ret = _XReply(dpy, (xReply *) &reply, 0, False);
+
+   if (out_tag)
+      *out_tag = reply.contextTag;
 
    UnlockDisplay(dpy);
    SyncHandle();
@@ -124,7 +128,6 @@ static int
 indirect_bind_context(struct glx_context *gc, struct glx_context *old,
 		      GLXDrawable draw, GLXDrawable read)
 {
-   xGLXMakeCurrentReply reply;
    GLXContextTag tag;
    __GLXattribute *state;
    Display *dpy = gc->psc->dpy;
@@ -137,13 +140,13 @@ indirect_bind_context(struct glx_context *gc, struct glx_context *old,
       tag = 0;
    }
 
-   SendMakeCurrentRequest(dpy, opcode, gc->xid, tag, draw, read, &reply);
+   SendMakeCurrentRequest(dpy, opcode, gc->xid, tag, draw, read,
+                          &gc->currentContextTag);
 
    if (!IndirectAPI)
       IndirectAPI = __glXNewIndirectAPI();
    _glapi_set_dispatch(IndirectAPI);
 
-   gc->currentContextTag = reply.contextTag;
    state = gc->client_state_private;
    if (state->array_state == NULL) {
       glGetString(GL_EXTENSIONS);
@@ -159,7 +162,6 @@ indirect_unbind_context(struct glx_context *gc, struct glx_context *new)
 {
    Display *dpy = gc->psc->dpy;
    int opcode = __glXSetupForCommand(dpy);
-   xGLXMakeCurrentReply reply;
 
    if (gc == new)
       return;
@@ -170,7 +172,7 @@ indirect_unbind_context(struct glx_context *gc, struct glx_context *new)
     */
    if (!new || new->isDirect || new->psc->dpy != dpy) {
       SendMakeCurrentRequest(dpy, opcode, None,
-			     gc->currentContextTag, None, None, &reply);
+			     gc->currentContextTag, None, None, NULL);
       gc->currentContextTag = 0;
    }
 }
