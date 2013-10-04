@@ -23,14 +23,14 @@
 
 LOCAL_PATH := $(call my-dir)
 
-# get common_SOURCES, android_SOURCES
+# get common_FILES, android_FILES
 include $(LOCAL_PATH)/Makefile.sources
 
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := \
-	$(common_SOURCES) \
-	$(android_SOURCES)
+	$(common_FILES) \
+	$(android_FILES)
 
 LOCAL_CFLAGS := -DHAVE_ANDROID_BACKEND
 

@@ -32,10 +32,10 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/include
 
 noinst_LTLIBRARIES = libegl.la
-libegl_la_SOURCES = $(common_SOURCES)
+libegl_la_SOURCES = $(common_FILES)
 
 if HAVE_EGL_PLATFORM_X11
-libegl_la_SOURCES += $(x11_SOURCES) $(x11_drm_SOURCES)
+libegl_la_SOURCES += $(x11_FILES) $(x11_drm_FILES)
 AM_CFLAGS += \
 	$(X11_INCLUDES) \
 	$(LIBDRM_CFLAGS) \
@@ -49,7 +49,7 @@ AM_CPPFLAGS += \
 endif
 
 if HAVE_EGL_PLATFORM_WAYLAND
-libegl_la_SOURCES += $(wayland_SOURCES)
+libegl_la_SOURCES += $(wayland_FILES)
 AM_CFLAGS += \
 	$(LIBDRM_CFLAGS) \
 	$(WAYLAND_CFLAGS)
@@ -62,7 +62,7 @@ AM_CPPFLAGS += \
 endif
 
 if HAVE_EGL_PLATFORM_DRM
-libegl_la_SOURCES += $(drm_SOURCES)
+libegl_la_SOURCES += $(drm_FILES)
 AM_CFLAGS += \
 	$(LIBDRM_CFLAGS)
 AM_CPPFLAGS += \
@@ -73,14 +73,14 @@ AM_CPPFLAGS += \
 endif
 
 if HAVE_EGL_PLATFORM_FBDEV
-libegl_la_SOURCES += $(fbdev_SOURCES)
+libegl_la_SOURCES += $(fbdev_FILES)
 AM_CPPFLAGS += \
 	-I$(top_srcdir)/src/gallium/winsys/sw \
 	-DHAVE_FBDEV_BACKEND
 endif
 
 if HAVE_EGL_PLATFORM_NULL
-libegl_la_SOURCES += $(null_SOURCES)
+libegl_la_SOURCES += $(null_FILES)
 AM_CPPFLAGS += \
 	-I$(top_srcdir)/src/gallium/winsys/sw \
 	-DHAVE_NULL_BACKEND

@@ -11,11 +11,11 @@ env.Append(CPPPATH = [
     '.',
 ])
 
-sources = env.ParseSourceList('Makefile.sources', 'common_SOURCES')
+sources = env.ParseSourceList('Makefile.sources', 'common_FILES')
 
 if env['platform'] == 'windows':
     env.Append(CPPDEFINES = ['HAVE_GDI_BACKEND'])
-    sources.append(env.ParseSourceList('Makefile.sources', 'gdi_SOURCES'))
+    sources.append(env.ParseSourceList('Makefile.sources', 'gdi_FILES'))
 else:
     if env['drm']:
         env.PkgUseModules('DRM')
@@ -25,10 +25,10 @@ else:
             '#/src/glx',
             '#/src/mapi',
         ])
-        sources.append(env.ParseSourceList('Makefile.sources', 'x11_SOURCES'))
+        sources.append(env.ParseSourceList('Makefile.sources', 'x11_FILES'))
         if env['drm']:
             env.Append(CPPDEFINES = ['GLX_DIRECT_RENDERING'])
-            sources.append(env.ParseSourceList('Makefile.sources', 'x11_drm_SOURCES'))
+            sources.append(env.ParseSourceList('Makefile.sources', 'x11_drm_FILES'))
     if env['drm'] and False:
         # XXX: Disabled as it depends on gbm, which is not yet built with scons
         env.Append(CPPDEFINES = ['HAVE_DRM_BACKEND'])
@@ -36,7 +36,7 @@ else:
             '#/src/gbm/main',
             '#/src/gallium/state_trackers/gbm',
         ])
-        sources.append(env.ParseSourceList('Makefile.sources', 'drm_SOURCES'))
+        sources.append(env.ParseSourceList('Makefile.sources', 'drm_FILES'))
 
 st_egl = env.ConvenienceLibrary(
     target = 'st_egl',
