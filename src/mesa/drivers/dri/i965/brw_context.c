@@ -781,6 +781,9 @@ brwCreateContext(gl_api api,
       brw_init_performance_monitors(brw);
    }
 
+   vbo_use_buffer_objects(ctx);
+   vbo_always_unmap_buffers(ctx);
+
    return true;
 }
 
