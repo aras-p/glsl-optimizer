@@ -396,7 +396,6 @@ static void r600_bind_sampler_states(struct pipe_context *pipe,
 
 	if (shader != PIPE_SHADER_VERTEX &&
 	    shader != PIPE_SHADER_FRAGMENT) {
-		assert(!"Only vertex/fragment sampler are implemented.");
 		return;
 	}
 
