@@ -8,6 +8,7 @@ gallium
 gbm
 glapi
 glsl
+i965
 main
 math
 math_subset
