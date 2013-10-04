@@ -41,7 +41,6 @@ struct intel_buffer_object
 {
    struct gl_buffer_object Base;
    drm_intel_bo *buffer;     /* the low-level buffer manager's buffer handle */
-   GLuint offset;            /* any offset into that buffer */
 
    drm_intel_bo *range_map_bo;
    void *range_map_buffer;
@@ -54,10 +53,6 @@ struct intel_buffer_object
 drm_intel_bo *intel_bufferobj_buffer(struct brw_context *brw,
 				     struct intel_buffer_object *obj,
 				     GLuint flag);
-drm_intel_bo *intel_bufferobj_source(struct brw_context *brw,
-				     struct intel_buffer_object *obj,
-				     GLuint align,
-				     GLuint *offset);
 
 void intel_upload_data(struct brw_context *brw,
 		       const void *ptr, GLuint size, GLuint align,

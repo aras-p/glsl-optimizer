@@ -126,9 +126,9 @@ try_pbo_upload(struct gl_context *ctx,
       return false;
    }
 
-   src_buffer = intel_bufferobj_source(brw, pbo, 64, &src_offset);
+   src_buffer = intel_bufferobj_buffer(brw, pbo, INTEL_READ);
    /* note: potential 64-bit ptr to 32-bit int cast */
-   src_offset += (GLuint) (unsigned long) pixels;
+   src_offset = (GLuint) (unsigned long) pixels;
 
    int src_stride =
       _mesa_image_row_stride(unpack, image->Width, format, type);

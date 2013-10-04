@@ -472,11 +472,9 @@ static void brw_prepare_vertices(struct brw_context *brw)
 	    struct brw_vertex_buffer *buffer = &brw->vb.buffers[j];
 
 	    /* Named buffer object: Just reference its contents directly. */
-            buffer->bo = intel_bufferobj_source(brw,
-                                                intel_buffer, 1,
-						&buffer->offset);
+            buffer->bo = intel_bufferobj_buffer(brw, intel_buffer, INTEL_READ);
 	    drm_intel_bo_reference(buffer->bo);
-	    buffer->offset += (uintptr_t)glarray->Ptr;
+	    buffer->offset = (uintptr_t)glarray->Ptr;
 	    buffer->stride = glarray->StrideB;
 	    buffer->step_rate = glarray->InstanceDivisor;
 
@@ -851,13 +849,9 @@ static void brw_upload_indices(struct brw_context *brw)
 	   */
 	  brw->ib.start_vertex_offset = offset / ib_type_size;
 
-	  bo = intel_bufferobj_source(brw,
-				      intel_buffer_object(bufferobj),
-				      ib_type_size,
-				      &offset);
+	  bo = intel_bufferobj_buffer(brw, intel_buffer_object(bufferobj),
+				      INTEL_READ);
 	  drm_intel_bo_reference(bo);
-
-	  brw->ib.start_vertex_offset += offset / ib_type_size;
        }
    }
 

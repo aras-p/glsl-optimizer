@@ -62,7 +62,6 @@ release_buffer(struct intel_buffer_object *intel_obj)
 {
    drm_intel_bo_unreference(intel_obj->buffer);
    intel_obj->buffer = NULL;
-   intel_obj->offset = 0;
 }
 
 /**
@@ -441,15 +440,6 @@ intel_bufferobj_buffer(struct brw_context *brw,
    return intel_obj->buffer;
 }
 
-drm_intel_bo *
-intel_bufferobj_source(struct brw_context *brw,
-                       struct intel_buffer_object *intel_obj,
-		       GLuint align, GLuint *offset)
-{
-   *offset = intel_obj->offset;
-   return intel_obj->buffer;
-}
-
 /**
  * The CopyBufferSubData() driver hook.
  *
@@ -468,17 +458,16 @@ intel_bufferobj_copy_subdata(struct gl_context *ctx,
    struct intel_buffer_object *intel_src = intel_buffer_object(src);
    struct intel_buffer_object *intel_dst = intel_buffer_object(dst);
    drm_intel_bo *src_bo, *dst_bo;
-   GLuint src_offset;
 
    if (size == 0)
       return;
 
    dst_bo = intel_bufferobj_buffer(brw, intel_dst, INTEL_WRITE_PART);
-   src_bo = intel_bufferobj_source(brw, intel_src, 64, &src_offset);
+   src_bo = intel_bufferobj_buffer(brw, intel_src, INTEL_READ);
 
    intel_emit_linear_blit(brw,
 			  dst_bo, write_offset,
-			  src_bo, read_offset + src_offset, size);
+			  src_bo, read_offset, size);
 
    /* Since we've emitted some blits to buffers that will (likely) be used
     * in rendering operations in other cache domains in this batch, emit a
