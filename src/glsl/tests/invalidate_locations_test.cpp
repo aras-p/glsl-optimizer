@@ -72,9 +72,7 @@ TEST_F(invalidate_locations, simple_vertex_in_generic)
 
    ir.push_tail(var);
 
-   link_invalidate_variable_locations(&ir,
-                                      VERT_ATTRIB_GENERIC0,
-                                      VARYING_SLOT_VAR0);
+   link_invalidate_variable_locations(&ir);
 
    EXPECT_EQ(-1, var->location);
    EXPECT_EQ(0u, var->location_frac);
@@ -97,9 +95,7 @@ TEST_F(invalidate_locations, explicit_location_vertex_in_generic)
 
    ir.push_tail(var);
 
-   link_invalidate_variable_locations(&ir,
-                                      VERT_ATTRIB_GENERIC0,
-                                      VARYING_SLOT_VAR0);
+   link_invalidate_variable_locations(&ir);
 
    EXPECT_EQ(VERT_ATTRIB_GENERIC0, var->location);
    EXPECT_EQ(0u, var->location_frac);
@@ -123,9 +119,7 @@ TEST_F(invalidate_locations, explicit_location_frac_vertex_in_generic)
 
    ir.push_tail(var);
 
-   link_invalidate_variable_locations(&ir,
-                                      VERT_ATTRIB_GENERIC0,
-                                      VARYING_SLOT_VAR0);
+   link_invalidate_variable_locations(&ir);
 
    EXPECT_EQ(VERT_ATTRIB_GENERIC0, var->location);
    EXPECT_EQ(2u, var->location_frac);
@@ -148,9 +142,7 @@ TEST_F(invalidate_locations, vertex_in_builtin)
 
    ir.push_tail(var);
 
-   link_invalidate_variable_locations(&ir,
-                                      VERT_ATTRIB_GENERIC0,
-                                      VARYING_SLOT_VAR0);
+   link_invalidate_variable_locations(&ir);
 
    EXPECT_EQ(VERT_ATTRIB_POS, var->location);
    EXPECT_EQ(0u, var->location_frac);
@@ -172,9 +164,7 @@ TEST_F(invalidate_locations, simple_vertex_out_generic)
 
    ir.push_tail(var);
 
-   link_invalidate_variable_locations(&ir,
-                                      VERT_ATTRIB_GENERIC0,
-                                      VARYING_SLOT_VAR0);
+   link_invalidate_variable_locations(&ir);
 
    EXPECT_EQ(-1, var->location);
    EXPECT_EQ(0u, var->location_frac);
@@ -197,9 +187,7 @@ TEST_F(invalidate_locations, vertex_out_builtin)
 
    ir.push_tail(var);
 
-   link_invalidate_variable_locations(&ir,
-                                      VERT_ATTRIB_GENERIC0,
-                                      VARYING_SLOT_VAR0);
+   link_invalidate_variable_locations(&ir);
 
    EXPECT_EQ(VARYING_SLOT_COL0, var->location);
    EXPECT_EQ(0u, var->location_frac);
