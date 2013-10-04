@@ -26,11 +26,9 @@ extern "C" {
 #include "state_tracker/st_manager.h"
 #include "state_tracker/sw_winsys.h"
 #include "hgl_sw_winsys.h"
-#ifdef HAVE_LLVM
-#include "llvmpipe/lp_public.h"
-#else
-#include "softpipe/sp_public.h"
-#endif
+
+#include "target-helpers/inline_sw_helper.h"
+#include "target-helpers/inline_debug_helper.h"
 }
 
 
@@ -200,17 +198,15 @@ GalliumContext::CreateScreen()
 		return B_ERROR;
 	}
 
-	#ifdef HAVE_LLVM
-	fScreen = llvmpipe_create_screen(winsys);
-	#else
-	fScreen = softpipe_create_screen(winsys);
-	#endif
+	fScreen = sw_screen_create(winsys);
 
 	if (fScreen == NULL) {
 		ERROR("%s: Couldn't create screen!\n", __FUNCTION__);
 		FREE(winsys);
 		return B_ERROR;
 	}
+
+	debug_screen_wrap(fScreen);
 
 	const char* driverName = fScreen->get_name(fScreen);
 	ERROR("%s: Using %s driver.\n", __func__, driverName);
