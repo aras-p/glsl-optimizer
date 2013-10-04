@@ -40,4 +40,3 @@ module = env.LoadableModule(
     source = softpipe_sources,
 )
 
-env.Alias('softpipe-haiku', module)
