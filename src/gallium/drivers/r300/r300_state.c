@@ -1546,13 +1546,6 @@ static void r300_bind_sampler_states(struct pipe_context* pipe,
     r300_mark_atom_dirty(r300, &r300->textures_state);
 }
 
-
-static void r300_lacks_vertex_textures(struct pipe_context* pipe,
-                                       unsigned count,
-                                       void** states)
-{
-}
-
 static void r300_delete_sampler_state(struct pipe_context* pipe, void* state)
 {
     FREE(state);
