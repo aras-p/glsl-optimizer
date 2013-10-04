@@ -2678,7 +2678,7 @@ static void si_set_ps_sampler_views(struct pipe_context *ctx, unsigned count,
 	si_set_sampler_views(rctx, PIPE_SHADER_FRAGMENT, count, views);
 }
 
-static struct si_pm4_state *si_bind_sampler_states(struct r600_context *rctx, unsigned count,
+static struct si_pm4_state *si_set_sampler_states(struct r600_context *rctx, unsigned count,
 						   void **states,
 						   struct r600_textures_info *samplers,
 						   unsigned user_data_reg)
@@ -2757,7 +2757,7 @@ static void si_bind_vs_sampler_states(struct pipe_context *ctx, unsigned count, 
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct si_pm4_state *pm4;
 
-	pm4 = si_bind_sampler_states(rctx, count, states, &rctx->samplers[PIPE_SHADER_VERTEX],
+	pm4 = si_set_sampler_states(rctx, count, states, &rctx->samplers[PIPE_SHADER_VERTEX],
 			      R_00B130_SPI_SHADER_USER_DATA_VS_0);
 	si_pm4_set_state(rctx, vs_sampler, pm4);
 }
@@ -2767,7 +2767,7 @@ static void si_bind_ps_sampler_states(struct pipe_context *ctx, unsigned count, 
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct si_pm4_state *pm4;
 
-	pm4 = si_bind_sampler_states(rctx, count, states, &rctx->samplers[PIPE_SHADER_FRAGMENT],
+	pm4 = si_set_sampler_states(rctx, count, states, &rctx->samplers[PIPE_SHADER_FRAGMENT],
 			      R_00B030_SPI_SHADER_USER_DATA_PS_0);
 	si_pm4_set_state(rctx, ps_sampler, pm4);
 }
