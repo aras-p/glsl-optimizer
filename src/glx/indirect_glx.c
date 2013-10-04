@@ -132,6 +132,7 @@ indirect_bind_context(struct glx_context *gc, struct glx_context *old,
    __GLXattribute *state;
    Display *dpy = gc->psc->dpy;
    int opcode = __glXSetupForCommand(dpy);
+   Bool ret;
 
    if (old != &dummyContext && !old->isDirect && old->psc->dpy == dpy) {
       tag = old->currentContextTag;
@@ -140,8 +141,8 @@ indirect_bind_context(struct glx_context *gc, struct glx_context *old,
       tag = 0;
    }
 
-   SendMakeCurrentRequest(dpy, opcode, gc->xid, tag, draw, read,
-                          &gc->currentContextTag);
+   ret = SendMakeCurrentRequest(dpy, opcode, gc->xid, tag, draw, read,
+                                &gc->currentContextTag);
 
    if (!IndirectAPI)
       IndirectAPI = __glXNewIndirectAPI();
@@ -154,7 +155,7 @@ indirect_bind_context(struct glx_context *gc, struct glx_context *old,
       __glXInitVertexArrayState(gc);
    }
 
-   return Success;
+   return ret;
 }
 
 static void
