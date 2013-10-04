@@ -231,16 +231,6 @@ MakeContextCurrent(Display * dpy, GLXDrawable draw,
       return GL_FALSE;
    }
 
-   if (gc == NULL && (draw != None || read != None)) {
-      __glXGenerateError(dpy, (draw != None) ? draw : read,
-                         BadMatch, X_GLXMakeContextCurrent);
-      return False;
-   }
-   if (gc != NULL && (draw == None || read == None)) {
-      __glXGenerateError(dpy, None, BadMatch, X_GLXMakeContextCurrent);
-      return False;
-   }
-
    _glapi_check_multithread();
 
    __glXLock();
