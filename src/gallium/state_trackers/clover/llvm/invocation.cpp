@@ -278,8 +278,12 @@ namespace {
          llvm::Function *kernel = *I;
          export_list.push_back(kernel->getName().data());
       }
+#if HAVE_LLVM < 0x0304
       PM.add(llvm::createInternalizePass(export_list));
-
+#else
+      std::vector<const char*> dso_list;
+      PM.add(llvm::createInternalizePass(export_list, dso_list));
+#endif
       // Run link time optimizations
       Builder.OptLevel = 2;
       Builder.populateLTOPassManager(PM, false, true);
