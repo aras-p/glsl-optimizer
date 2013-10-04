@@ -173,6 +173,9 @@ The integer capabilities:
   viewport/scissor combination.  
 * ''PIPE_CAP_ENDIANNESS``:: The endianness of the device.  Either
   PIPE_ENDIAN_BIG or PIPE_ENDIAN_LITTLE.
+* ``PIPE_CAP_MIXED_FRAMEBUFFER_SIZES``: Whether it is allowed to have
+  different sizes for fb color/zs attachments. This controls whether
+  ARB_framebuffer_object is provided.
 
 
 .. _pipe_capf:
