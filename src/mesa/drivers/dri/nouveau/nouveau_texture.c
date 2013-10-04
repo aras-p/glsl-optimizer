@@ -494,6 +494,14 @@ nouveau_compressed_teximage(struct gl_context *ctx, GLuint dims,
 			 &ctx->Unpack, GL_TRUE);
 }
 
+static GLboolean
+nouveau_teximage_alloc(struct gl_context *ctx, struct gl_texture_image *ti)
+{
+	nouveau_teximage(ctx, 3, ti, 0, 0, 0, NULL,
+			 &ctx->DefaultPacking, GL_FALSE);
+	return GL_TRUE;
+}
+
 static void
 nouveau_texsubimage(struct gl_context *ctx, GLint dims,
 		    struct gl_texture_image *ti,
@@ -634,6 +642,7 @@ nouveau_texture_functions_init(struct dd_function_table *functions)
 	functions->DeleteTexture = nouveau_texture_free;
 	functions->NewTextureImage = nouveau_teximage_new;
 	functions->FreeTextureImageBuffer = nouveau_teximage_free;
+	functions->AllocTextureImageBuffer = nouveau_teximage_alloc;
 	functions->ChooseTextureFormat = nouveau_choose_tex_format;
 	functions->TexImage = nouveau_teximage_123d;
 	functions->TexSubImage = nouveau_texsubimage_123d;
