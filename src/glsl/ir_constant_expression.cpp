@@ -45,6 +45,12 @@ static int isnormal(double x)
 {
    return _fpclass(x) == _FPCLASS_NN || _fpclass(x) == _FPCLASS_PN;
 }
+#elif defined(__SUNPRO_CC)
+#include <ieeefp.h>
+static int isnormal(double x)
+{
+   return fpclass(x) == FP_NORMAL;
+}
 #endif
 
 #if defined(_MSC_VER)
