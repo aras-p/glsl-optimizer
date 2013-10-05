@@ -685,8 +685,6 @@ void r600_dma_copy(struct r600_context *rctx,
 		uint64_t dst_offset,
 		uint64_t src_offset,
 		uint64_t size);
-void r600_flag_resource_cache_flush(struct r600_context *rctx,
-				    struct pipe_resource *res);
 
 /*
  * evergreen_hw_context.c

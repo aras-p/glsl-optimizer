@@ -91,8 +91,16 @@ void evergreen_cp_dma_clear_buffer(struct r600_context *rctx,
 	offset += r600_resource_va(&rctx->screen->b.b, dst);
 
 	/* Flush the cache where the resource is bound. */
-	r600_flag_resource_cache_flush(rctx, dst);
-        rctx->b.flags |= R600_CONTEXT_WAIT_3D_IDLE;
+	rctx->b.flags |= R600_CONTEXT_INV_CONST_CACHE |
+			 R600_CONTEXT_INV_VERTEX_CACHE |
+			 R600_CONTEXT_INV_TEX_CACHE |
+			 R600_CONTEXT_FLUSH_AND_INV |
+			 R600_CONTEXT_FLUSH_AND_INV_CB |
+			 R600_CONTEXT_FLUSH_AND_INV_DB |
+			 R600_CONTEXT_FLUSH_AND_INV_CB_META |
+			 R600_CONTEXT_FLUSH_AND_INV_DB_META |
+			 R600_CONTEXT_STREAMOUT_FLUSH |
+			 R600_CONTEXT_WAIT_3D_IDLE;
 
 	while (size) {
 		unsigned sync = 0;
@@ -129,9 +137,10 @@ void evergreen_cp_dma_clear_buffer(struct r600_context *rctx,
 		offset += byte_count;
 	}
 
-	/* Flush the cache again in case the 3D engine has been prefetching
-	 * the resource. */
-	r600_flag_resource_cache_flush(rctx, dst);
+	/* Invalidate the read caches. */
+	rctx->b.flags |= R600_CONTEXT_INV_CONST_CACHE |
+			 R600_CONTEXT_INV_VERTEX_CACHE |
+			 R600_CONTEXT_INV_TEX_CACHE;
 
 	util_range_add(&r600_resource(dst)->valid_buffer_range, offset,
 		       offset + size);
