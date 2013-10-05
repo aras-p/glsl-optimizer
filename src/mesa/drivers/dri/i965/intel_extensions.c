@@ -158,6 +158,7 @@ intelInitExtensions(struct gl_context *ctx)
       ctx->Extensions.ARB_texture_query_lod = true;
       ctx->Extensions.EXT_timer_query = true;
       ctx->Extensions.EXT_shader_integer_mix = ctx->Const.GLSLVersion >= 130;
+      ctx->Extensions.ARB_texture_query_levels = ctx->Const.GLSLVersion >= 130;
    }
 
    if (brw->gen == 5)
