@@ -60,8 +60,20 @@ upload_wm_state(struct brw_context *brw)
    if (fp->program.Base.InputsRead & VARYING_BIT_POS)
       dw1 |= GEN7_WM_USES_SOURCE_DEPTH | GEN7_WM_USES_SOURCE_W;
    if (fp->program.Base.OutputsWritten & BITFIELD64_BIT(FRAG_RESULT_DEPTH)) {
-      writes_depth = true;
-      dw1 |= GEN7_WM_PSCDEPTH_ON;
+      writes_depth = fp->program.FragDepthLayout != FRAG_DEPTH_LAYOUT_UNCHANGED;
+
+      switch (fp->program.FragDepthLayout) {
+         case FRAG_DEPTH_LAYOUT_NONE:
+         case FRAG_DEPTH_LAYOUT_ANY:
+            dw1 |= GEN7_WM_PSCDEPTH_ON;
+            break;
+         case FRAG_DEPTH_LAYOUT_GREATER:
+            dw1 |= GEN7_WM_PSCDEPTH_ON_GE;
+            break;
+         case FRAG_DEPTH_LAYOUT_LESS:
+            dw1 |= GEN7_WM_PSCDEPTH_ON_LE;
+            break;
+      }
    }
    /* CACHE_NEW_WM_PROG */
    dw1 |= brw->wm.prog_data->barycentric_interp_modes <<
