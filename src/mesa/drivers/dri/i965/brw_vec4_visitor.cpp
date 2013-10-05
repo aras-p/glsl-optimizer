@@ -2150,7 +2150,8 @@ vec4_visitor::visit(ir_texture *ir)
     * emitting anything other than setting up the constant result.
     */
    if (ir->op == ir_tg4) {
-      int swiz = GET_SWZ(key->tex.swizzles[sampler], 0);
+      ir_constant *chan = ir->lod_info.component->as_constant();
+      int swiz = GET_SWZ(key->tex.swizzles[sampler], chan->value.i[0]);
       if (swiz == SWIZZLE_ZERO || swiz == SWIZZLE_ONE) {
          dst_reg result(this, ir->type);
          this->result = src_reg(result);
@@ -2398,14 +2399,17 @@ vec4_visitor::visit(ir_texture *ir)
 uint32_t
 vec4_visitor::gather_channel(ir_texture *ir, int sampler)
 {
-   int swiz = GET_SWZ(key->tex.swizzles[sampler], 0 /* red */);
-   if (key->tex.gather_channel_quirk_mask & (1<<sampler))
-      return 2;   /* gather4 sampler is broken for green channel on RG32F --
-                   * we must ask for blue instead.
-                   */
+   ir_constant *chan = ir->lod_info.component->as_constant();
+   int swiz = GET_SWZ(key->tex.swizzles[sampler], chan->value.i[0]);
    switch (swiz) {
       case SWIZZLE_X: return 0;
-      case SWIZZLE_Y: return 1;
+      case SWIZZLE_Y:
+         /* gather4 sampler is broken for green channel on RG32F --
+          * we must ask for blue instead.
+          */
+         if (key->tex.gather_channel_quirk_mask & (1<<sampler))
+            return 2;
+         return 1;
       case SWIZZLE_Z: return 2;
       case SWIZZLE_W: return 3;
       default:
