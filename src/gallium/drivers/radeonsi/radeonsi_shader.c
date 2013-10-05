@@ -114,8 +114,12 @@ static LLVMValueRef build_indexed_load(
 {
 	struct lp_build_context * base = &si_shader_ctx->radeon_bld.soa.bld_base.base;
 
+	LLVMValueRef indices[2] = {
+		LLVMConstInt(LLVMInt64TypeInContext(base->gallivm->context), 0, false),
+		offset
+	};
 	LLVMValueRef computed_ptr = LLVMBuildGEP(
-		base->gallivm->builder, base_ptr, &offset, 1, "");
+		base->gallivm->builder, base_ptr, indices, 2, "");
 
 	LLVMValueRef result = LLVMBuildLoad(base->gallivm->builder, computed_ptr, "");
 	LLVMSetMetadata(result, 1, si_shader_ctx->const_md);
@@ -1581,9 +1585,14 @@ static void create_function(struct si_shader_context *si_shader_ctx)
 	v2i32 = LLVMVectorType(i32, 2);
 	v3i32 = LLVMVectorType(i32, 3);
 
-	params[SI_PARAM_CONST] = LLVMPointerType(LLVMVectorType(i8, 16), CONST_ADDR_SPACE);
-	params[SI_PARAM_SAMPLER] = params[SI_PARAM_CONST];
-	params[SI_PARAM_RESOURCE] = LLVMPointerType(LLVMVectorType(i8, 32), CONST_ADDR_SPACE);
+	params[SI_PARAM_CONST] = LLVMPointerType(
+		LLVMArrayType(LLVMVectorType(i8, 16), NUM_CONST_BUFFERS), CONST_ADDR_SPACE);
+	/* We assume at most 16 textures per program at the moment.
+	 * This need probably need to be changed to support bindless textures */
+	params[SI_PARAM_SAMPLER] = LLVMPointerType(
+		LLVMArrayType(LLVMVectorType(i8, 16), NUM_SAMPLER_VIEWS), CONST_ADDR_SPACE);
+	params[SI_PARAM_RESOURCE] = LLVMPointerType(
+		LLVMArrayType(LLVMVectorType(i8, 32), NUM_SAMPLER_STATES), CONST_ADDR_SPACE);
 
 	switch (si_shader_ctx->type) {
 	case TGSI_PROCESSOR_VERTEX:
@@ -1650,7 +1659,20 @@ static void create_function(struct si_shader_context *si_shader_ctx)
 
 	for (i = 0; i <= last_sgpr; ++i) {
 		LLVMValueRef P = LLVMGetParam(si_shader_ctx->radeon_bld.main_fn, i);
-		LLVMAddAttribute(P, LLVMInRegAttribute);
+		switch (i) {
+		default:
+			LLVMAddAttribute(P, LLVMInRegAttribute);
+			break;
+#if HAVE_LLVM >= 0x0304
+		/* We tell llvm that array inputs are passed by value to allow Sinking pass
+		 * to move load. Inputs are constant so this is fine. */
+		case SI_PARAM_CONST:
+		case SI_PARAM_SAMPLER:
+		case SI_PARAM_RESOURCE:
+			LLVMAddAttribute(P, LLVMByValAttribute);
+			break;
+#endif
+		}
 	}
 
 #if HAVE_LLVM >= 0x0304
