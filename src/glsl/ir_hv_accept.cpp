@@ -214,7 +214,6 @@ ir_texture::accept(ir_hierarchical_visitor *v)
    switch (this->op) {
    case ir_tex:
    case ir_lod:
-   case ir_tg4:
    case ir_query_levels:
       break;
    case ir_txb:
@@ -242,6 +241,11 @@ ir_texture::accept(ir_hierarchical_visitor *v)
       s = this->lod_info.grad.dPdy->accept(v);
       if (s != visit_continue)
 	 return (s == visit_continue_with_parent) ? visit_continue : s;
+      break;
+   case ir_tg4:
+      s = this->lod_info.component->accept(v);
+      if (s != visit_continue)
+         return (s == visit_continue_with_parent) ? visit_continue : s;
       break;
    }
 

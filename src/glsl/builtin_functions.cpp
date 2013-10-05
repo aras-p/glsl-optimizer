@@ -493,6 +493,7 @@ private:
 /** Flags to _texture() */
 #define TEX_PROJECT 1
 #define TEX_OFFSET  2
+#define TEX_COMPONENT 4
 
    ir_function_signature *_texture(ir_texture_opcode opcode,
                                    builtin_available_predicate avail,
@@ -3320,6 +3321,18 @@ builtin_builder::_texture(ir_texture_opcode opcode,
          new(mem_ctx) ir_variable(glsl_type::ivec(offset_size), "offset", ir_var_const_in);
       sig->parameters.push_tail(offset);
       tex->offset = var_ref(offset);
+   }
+
+   if (opcode == ir_tg4) {
+      if (flags & TEX_COMPONENT) {
+         ir_variable *component =
+            new(mem_ctx) ir_variable(glsl_type::int_type, "comp", ir_var_const_in);
+         sig->parameters.push_tail(component);
+         tex->lod_info.component = var_ref(component);
+      }
+      else {
+         tex->lod_info.component = imm(0);
+      }
    }
 
    /* The "bias" parameter comes /after/ the "offset" parameter, which is

@@ -275,7 +275,6 @@ ir_tree_grafting_visitor::visit_enter(ir_texture *ir)
    switch (ir->op) {
    case ir_tex:
    case ir_lod:
-   case ir_tg4:
    case ir_query_levels:
       break;
    case ir_txb:
@@ -296,6 +295,10 @@ ir_tree_grafting_visitor::visit_enter(ir_texture *ir)
       if (do_graft(&ir->lod_info.grad.dPdx) ||
 	  do_graft(&ir->lod_info.grad.dPdy))
 	 return visit_stop;
+      break;
+   case ir_tg4:
+      if (do_graft(&ir->lod_info.component))
+         return visit_stop;
       break;
    }
 

@@ -287,7 +287,6 @@ void ir_print_visitor::visit(ir_texture *ir)
    {
    case ir_tex:
    case ir_lod:
-   case ir_tg4:
    case ir_query_levels:
       break;
    case ir_txb:
@@ -307,6 +306,9 @@ void ir_print_visitor::visit(ir_texture *ir)
       printf(" ");
       ir->lod_info.grad.dPdy->accept(this);
       printf(")");
+      break;
+   case ir_tg4:
+      ir->lod_info.component->accept(this);
       break;
    };
    printf(")");
