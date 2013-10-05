@@ -166,6 +166,7 @@ intelInitExtensions(struct gl_context *ctx)
 
    if (brw->gen >= 7) {
       ctx->Extensions.ARB_texture_gather = true;
+      ctx->Extensions.ARB_conservative_depth = true;
    }
 
    if (ctx->API == API_OPENGL_CORE)
