@@ -273,7 +273,7 @@ lp_build_rho(struct lp_build_sample_context *bld,
       cubesize = lp_build_mul(rho_bld, cubesize, cubesize);
       rho = lp_build_mul(rho_bld, cubesize, rho);
    }
-   else if (derivs && !(bld->static_texture_state->target == PIPE_TEXTURE_CUBE)) {
+   else if (derivs) {
       LLVMValueRef ddmax[3], ddx[3], ddy[3];
       for (i = 0; i < dims; i++) {
          LLVMValueRef floatdim;
@@ -1481,6 +1481,21 @@ lp_build_cube_face(struct lp_build_sample_context *bld,
 }
 
 
+/** Helper for doing 3-wise selection.
+ * Returns sel1 ? val2 : (sel0 ? val0 : val1).
+ */
+static LLVMValueRef
+lp_build_select3(struct lp_build_context *sel_bld,
+                 LLVMValueRef sel0,
+                 LLVMValueRef sel1,
+                 LLVMValueRef val0,
+                 LLVMValueRef val1,
+                 LLVMValueRef val2)
+{
+   LLVMValueRef tmp;
+   tmp = lp_build_select(sel_bld, sel0, val0, val1);
+   return lp_build_select(sel_bld, sel1, val2, tmp);
+}
 
 /**
  * Generate code to do cube face selection and compute per-face texcoords.
@@ -1488,8 +1503,9 @@ lp_build_cube_face(struct lp_build_sample_context *bld,
 void
 lp_build_cube_lookup(struct lp_build_sample_context *bld,
                      LLVMValueRef *coords,
-                     const struct lp_derivatives *derivs, /* optional */
+                     const struct lp_derivatives *derivs_in, /* optional */
                      LLVMValueRef *rho,
+                     struct lp_derivatives *derivs_out, /* optional */
                      boolean need_derivs)
 {
    struct lp_build_context *coord_bld = &bld->coord_bld;
@@ -1512,19 +1528,16 @@ lp_build_cube_lookup(struct lp_build_sample_context *bld,
        * the edge). Still this is possibly a win over just selecting the same face
        * for all pixels. Unfortunately, something like that doesn't work for
        * explicit derivatives.
-       * TODO: handle explicit derivatives by transforming them alongside coords
-       * somehow.
        */
       struct lp_build_context *cint_bld = &bld->int_coord_bld;
       struct lp_type intctype = cint_bld->type;
       LLVMTypeRef coord_vec_type = coord_bld->vec_type;
       LLVMTypeRef cint_vec_type = cint_bld->vec_type;
-      LLVMValueRef signs, signt, signr, signma;
       LLVMValueRef as, at, ar, face, face_s, face_t;
       LLVMValueRef as_ge_at, maxasat, ar_ge_as_at;
       LLVMValueRef snewx, tnewx, snewy, tnewy, snewz, tnewz;
       LLVMValueRef tnegi, rnegi;
-      LLVMValueRef ma, mai, ima;
+      LLVMValueRef ma, mai, signma, signmabit, imahalfpos;
       LLVMValueRef posHalf = lp_build_const_vec(gallivm, coord_bld->type, 0.5);
       LLVMValueRef signmask = lp_build_const_int_vec(gallivm, intctype,
                                                      1 << (intctype.width - 1));
@@ -1563,7 +1576,166 @@ lp_build_cube_lookup(struct lp_build_sample_context *bld,
       maxasat = lp_build_max(coord_bld, as, at);
       ar_ge_as_at = lp_build_cmp(coord_bld, PIPE_FUNC_GEQUAL, ar, maxasat);
 
-      if (need_derivs) {
+      if (need_derivs && (derivs_in ||
+          ((gallivm_debug & GALLIVM_DEBUG_NO_QUAD_LOD) &&
+           (gallivm_debug & GALLIVM_DEBUG_NO_RHO_APPROX)))) {
+         /*
+          * XXX: This is really really complex.
+          * It is a bit overkill to use this for implicit derivatives as well,
+          * no way this is worth the cost in practice, but seems to be the
+          * only way for getting accurate and per-pixel lod values.
+          */
+         LLVMValueRef ima, imahalf, tmp, ddx[3], ddy[3];
+         LLVMValueRef madx, mady, madxdivma, madydivma;
+         LLVMValueRef sdxi, tdxi, rdxi, sdyi, tdyi, rdyi;
+         LLVMValueRef tdxnegi, rdxnegi, tdynegi, rdynegi;
+         LLVMValueRef sdxnewx, sdxnewy, sdxnewz, tdxnewx, tdxnewy, tdxnewz;
+         LLVMValueRef sdynewx, sdynewy, sdynewz, tdynewx, tdynewy, tdynewz;
+         LLVMValueRef face_sdx, face_tdx, face_sdy, face_tdy;
+         /*
+          * s = 1/2 * ( sc / ma + 1)
+          * t = 1/2 * ( tc / ma + 1)
+          *
+          * s' = 1/2 * (sc' * ma - sc * ma') / ma^2
+          * t' = 1/2 * (tc' * ma - tc * ma') / ma^2
+          *
+          * dx.s = 0.5 * (dx.sc - sc * dx.ma / ma) / ma
+          * dx.t = 0.5 * (dx.tc - tc * dx.ma / ma) / ma
+          * dy.s = 0.5 * (dy.sc - sc * dy.ma / ma) / ma
+          * dy.t = 0.5 * (dy.tc - tc * dy.ma / ma) / ma
+          */
+
+         /* select ma, calculate ima */
+         ma = lp_build_select3(coord_bld, as_ge_at, ar_ge_as_at, s, t, r);
+         mai = LLVMBuildBitCast(builder, ma, cint_vec_type, "");
+         signmabit = LLVMBuildAnd(builder, mai, signmask, "");
+         ima = lp_build_div(coord_bld, coord_bld->one, ma);
+         imahalf = lp_build_mul(coord_bld, posHalf, ima);
+         imahalfpos = lp_build_abs(coord_bld, imahalf);
+
+         if (!derivs_in) {
+            ddx[0] = lp_build_ddx(coord_bld, s);
+            ddx[1] = lp_build_ddx(coord_bld, t);
+            ddx[2] = lp_build_ddx(coord_bld, r);
+            ddy[0] = lp_build_ddy(coord_bld, s);
+            ddy[1] = lp_build_ddy(coord_bld, t);
+            ddy[2] = lp_build_ddy(coord_bld, r);
+         }
+         else {
+            ddx[0] = derivs_in->ddx[0];
+            ddx[1] = derivs_in->ddx[1];
+            ddx[2] = derivs_in->ddx[2];
+            ddy[0] = derivs_in->ddy[0];
+            ddy[1] = derivs_in->ddy[1];
+            ddy[2] = derivs_in->ddy[2];
+         }
+
+         /* select major derivatives */
+         madx = lp_build_select3(coord_bld, as_ge_at, ar_ge_as_at, ddx[0], ddx[1], ddx[2]);
+         mady = lp_build_select3(coord_bld, as_ge_at, ar_ge_as_at, ddy[0], ddy[1], ddy[2]);
+
+         si = LLVMBuildBitCast(builder, s, cint_vec_type, "");
+         ti = LLVMBuildBitCast(builder, t, cint_vec_type, "");
+         ri = LLVMBuildBitCast(builder, r, cint_vec_type, "");
+
+         sdxi = LLVMBuildBitCast(builder, ddx[0], cint_vec_type, "");
+         tdxi = LLVMBuildBitCast(builder, ddx[1], cint_vec_type, "");
+         rdxi = LLVMBuildBitCast(builder, ddx[2], cint_vec_type, "");
+
+         sdyi = LLVMBuildBitCast(builder, ddy[0], cint_vec_type, "");
+         tdyi = LLVMBuildBitCast(builder, ddy[1], cint_vec_type, "");
+         rdyi = LLVMBuildBitCast(builder, ddy[2], cint_vec_type, "");
+
+         /*
+          * compute all possible new s/t coords, which does the mirroring,
+          * and do the same for derivs minor axes.
+          * snewx = signma * -r;
+          * tnewx = -t;
+          * snewy = s;
+          * tnewy = signma * r;
+          * snewz = signma * s;
+          * tnewz = -t;
+          */
+         tnegi = LLVMBuildXor(builder, ti, signmask, "");
+         rnegi = LLVMBuildXor(builder, ri, signmask, "");
+         tdxnegi = LLVMBuildXor(builder, tdxi, signmask, "");
+         rdxnegi = LLVMBuildXor(builder, rdxi, signmask, "");
+         tdynegi = LLVMBuildXor(builder, tdyi, signmask, "");
+         rdynegi = LLVMBuildXor(builder, rdyi, signmask, "");
+
+         snewx = LLVMBuildXor(builder, signmabit, rnegi, "");
+         tnewx = tnegi;
+         sdxnewx = LLVMBuildXor(builder, signmabit, rdxnegi, "");
+         tdxnewx = tdxnegi;
+         sdynewx = LLVMBuildXor(builder, signmabit, rdynegi, "");
+         tdynewx = tdynegi;
+
+         snewy = si;
+         tnewy = LLVMBuildXor(builder, signmabit, ri, "");
+         sdxnewy = sdxi;
+         tdxnewy = LLVMBuildXor(builder, signmabit, rdxi, "");
+         sdynewy = sdyi;
+         tdynewy = LLVMBuildXor(builder, signmabit, rdyi, "");
+
+         snewz = LLVMBuildXor(builder, signmabit, si, "");
+         tnewz = tnegi;
+         sdxnewz = LLVMBuildXor(builder, signmabit, sdxi, "");
+         tdxnewz = tdxnegi;
+         sdynewz = LLVMBuildXor(builder, signmabit, sdyi, "");
+         tdynewz = tdynegi;
+
+         /* select the mirrored values */
+         face = lp_build_select3(cint_bld, as_ge_at, ar_ge_as_at, facex, facey, facez);
+         face_s = lp_build_select3(cint_bld, as_ge_at, ar_ge_as_at, snewx, snewy, snewz);
+         face_t = lp_build_select3(cint_bld, as_ge_at, ar_ge_as_at, tnewx, tnewy, tnewz);
+         face_sdx = lp_build_select3(cint_bld, as_ge_at, ar_ge_as_at, sdxnewx, sdxnewy, sdxnewz);
+         face_tdx = lp_build_select3(cint_bld, as_ge_at, ar_ge_as_at, tdxnewx, tdxnewy, tdxnewz);
+         face_sdy = lp_build_select3(cint_bld, as_ge_at, ar_ge_as_at, sdynewx, sdynewy, sdynewz);
+         face_tdy = lp_build_select3(cint_bld, as_ge_at, ar_ge_as_at, tdynewx, tdynewy, tdynewz);
+
+         face_s = LLVMBuildBitCast(builder, face_s, coord_vec_type, "");
+         face_t = LLVMBuildBitCast(builder, face_t, coord_vec_type, "");
+         face_sdx = LLVMBuildBitCast(builder, face_sdx, coord_vec_type, "");
+         face_tdx = LLVMBuildBitCast(builder, face_tdx, coord_vec_type, "");
+         face_sdy = LLVMBuildBitCast(builder, face_sdy, coord_vec_type, "");
+         face_tdy = LLVMBuildBitCast(builder, face_tdy, coord_vec_type, "");
+
+         /* deriv math, dx.s = 0.5 * (dx.sc - sc * dx.ma / ma) / ma */
+         madxdivma = lp_build_mul(coord_bld, madx, ima);
+         tmp = lp_build_mul(coord_bld, madxdivma, face_s);
+         tmp = lp_build_sub(coord_bld, face_sdx, tmp);
+         derivs_out->ddx[0] = lp_build_mul(coord_bld, tmp, imahalf);
+
+         /* dx.t = 0.5 * (dx.tc - tc * dx.ma / ma) / ma */
+         tmp = lp_build_mul(coord_bld, madxdivma, face_t);
+         tmp = lp_build_sub(coord_bld, face_tdx, tmp);
+         derivs_out->ddx[1] = lp_build_mul(coord_bld, tmp, imahalf);
+
+         /* dy.s = 0.5 * (dy.sc - sc * dy.ma / ma) / ma */
+         madydivma = lp_build_mul(coord_bld, mady, ima);
+         tmp = lp_build_mul(coord_bld, madydivma, face_s);
+         tmp = lp_build_sub(coord_bld, face_sdy, tmp);
+         derivs_out->ddy[0] = lp_build_mul(coord_bld, tmp, imahalf);
+
+         /* dy.t = 0.5 * (dy.tc - tc * dy.ma / ma) / ma */
+         tmp = lp_build_mul(coord_bld, madydivma, face_t);
+         tmp = lp_build_sub(coord_bld, face_tdy, tmp);
+         derivs_out->ddy[1] = lp_build_mul(coord_bld, tmp, imahalf);
+
+         signma = LLVMBuildLShr(builder, mai, signshift, "");
+         coords[2] = LLVMBuildOr(builder, face, signma, "face");
+
+         /* project coords */
+         face_s = lp_build_mul(coord_bld, face_s, imahalfpos);
+         face_t = lp_build_mul(coord_bld, face_t, imahalfpos);
+
+         coords[0] = lp_build_add(coord_bld, face_s, posHalf);
+         coords[1] = lp_build_add(coord_bld, face_t, posHalf);
+
+         return;
+      }
+
+      else if (need_derivs) {
          LLVMValueRef ddx_ddy[2], tmp[3], rho_vec;
          static const unsigned char swizzle0[] = { /* no-op swizzle */
             0, LP_BLD_SWIZZLE_DONTCARE,
@@ -1590,12 +1762,11 @@ lp_build_cube_lookup(struct lp_build_sample_context *bld,
           * scale the s/t/r coords pre-select/mirror so we can calculate
           * "reasonable" derivs.
           */
-         ma = lp_build_select(coord_bld, as_ge_at, s, t);
-         ma = lp_build_select(coord_bld, ar_ge_as_at, r, ma);
-         ima = lp_build_cube_imapos(coord_bld, ma);
-         s = lp_build_mul(coord_bld, s, ima);
-         t = lp_build_mul(coord_bld, t, ima);
-         r = lp_build_mul(coord_bld, r, ima);
+         ma = lp_build_select3(coord_bld, as_ge_at, ar_ge_as_at, s, t, r);
+         imahalfpos = lp_build_cube_imapos(coord_bld, ma);
+         s = lp_build_mul(coord_bld, s, imahalfpos);
+         t = lp_build_mul(coord_bld, t, imahalfpos);
+         r = lp_build_mul(coord_bld, r, imahalfpos);
 
          /*
           * This isn't quite the same as the "ordinary" (3d deriv) path since we
@@ -1625,56 +1796,41 @@ lp_build_cube_lookup(struct lp_build_sample_context *bld,
          *rho = lp_build_max(coord_bld, tmp[0], tmp[1]);
       }
 
+      if (!need_derivs) {
+         ma = lp_build_select3(coord_bld, as_ge_at, ar_ge_as_at, s, t, r);
+      }
+      mai = LLVMBuildBitCast(builder, ma, cint_vec_type, "");
+      signmabit = LLVMBuildAnd(builder, mai, signmask, "");
+
       si = LLVMBuildBitCast(builder, s, cint_vec_type, "");
       ti = LLVMBuildBitCast(builder, t, cint_vec_type, "");
       ri = LLVMBuildBitCast(builder, r, cint_vec_type, "");
-      signs = LLVMBuildAnd(builder, si, signmask, "");
-      signt = LLVMBuildAnd(builder, ti, signmask, "");
-      signr = LLVMBuildAnd(builder, ri, signmask, "");
 
       /*
-       * compute all possible new s/t coords
-       * snewx = signs * -r;
+       * compute all possible new s/t coords, which does the mirroring
+       * snewx = signma * -r;
        * tnewx = -t;
        * snewy = s;
-       * tnewy = signt * r;
-       * snewz = signr * s;
+       * tnewy = signma * r;
+       * snewz = signma * s;
        * tnewz = -t;
        */
       tnegi = LLVMBuildXor(builder, ti, signmask, "");
       rnegi = LLVMBuildXor(builder, ri, signmask, "");
 
-      snewx = LLVMBuildXor(builder, signs, rnegi, "");
+      snewx = LLVMBuildXor(builder, signmabit, rnegi, "");
       tnewx = tnegi;
 
       snewy = si;
-      tnewy = LLVMBuildXor(builder, signt, ri, "");
+      tnewy = LLVMBuildXor(builder, signmabit, ri, "");
 
-      snewz = LLVMBuildXor(builder, signr, si, "");
+      snewz = LLVMBuildXor(builder, signmabit, si, "");
       tnewz = tnegi;
 
-      /* XXX on x86 unclear if we should cast the values back to float
-       * or not - on some cpus (nehalem) pblendvb has twice the throughput
-       * of blendvps though on others there just might be domain
-       * transition penalties when using it (this depends on what llvm
-       * will chose for the bit ops above so there appears no "right way",
-       * but given the boatload of selects let's just use the int type).
-       */
-
-      /* select/mirror */
-      if (!need_derivs) {
-         ma = lp_build_select(coord_bld, as_ge_at, s, t);
-      }
-      face_s = lp_build_select(cint_bld, as_ge_at, snewx, snewy);
-      face_t = lp_build_select(cint_bld, as_ge_at, tnewx, tnewy);
-      face = lp_build_select(cint_bld, as_ge_at, facex, facey);
-
-      if (!need_derivs) {
-         ma = lp_build_select(coord_bld, ar_ge_as_at, r, ma);
-      }
-      face_s = lp_build_select(cint_bld, ar_ge_as_at, snewz, face_s);
-      face_t = lp_build_select(cint_bld, ar_ge_as_at, tnewz, face_t);
-      face = lp_build_select(cint_bld, ar_ge_as_at, facez, face);
+      /* select the mirrored values */
+      face_s = lp_build_select3(cint_bld, as_ge_at, ar_ge_as_at, snewx, snewy, snewz);
+      face_t = lp_build_select3(cint_bld, as_ge_at, ar_ge_as_at, tnewx, tnewy, tnewz);
+      face = lp_build_select3(cint_bld, as_ge_at, ar_ge_as_at, facex, facey, facez);
 
       face_s = LLVMBuildBitCast(builder, face_s, coord_vec_type, "");
       face_t = LLVMBuildBitCast(builder, face_t, coord_vec_type, "");
@@ -1684,15 +1840,14 @@ lp_build_cube_lookup(struct lp_build_sample_context *bld,
        * as long as we ensure vblendvps gets used we can actually
        * skip the comparison and just use sign as a "mask" directly.
        */
-      mai = LLVMBuildBitCast(builder, ma, cint_vec_type, "");
       signma = LLVMBuildLShr(builder, mai, signshift, "");
       coords[2] = LLVMBuildOr(builder, face, signma, "face");
 
       /* project coords */
       if (!need_derivs) {
-         ima = lp_build_cube_imapos(coord_bld, ma);
-         face_s = lp_build_mul(coord_bld, face_s, ima);
-         face_t = lp_build_mul(coord_bld, face_t, ima);
+         imahalfpos = lp_build_cube_imapos(coord_bld, ma);
+         face_s = lp_build_mul(coord_bld, face_s, imahalfpos);
+         face_t = lp_build_mul(coord_bld, face_t, imahalfpos);
       }
 
       coords[0] = lp_build_add(coord_bld, face_s, posHalf);

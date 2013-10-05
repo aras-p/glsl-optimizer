@@ -457,8 +457,9 @@ lp_build_unnormalized_coords(struct lp_build_sample_context *bld,
 void
 lp_build_cube_lookup(struct lp_build_sample_context *bld,
                      LLVMValueRef *coords,
-                     const struct lp_derivatives *derivs, /* optional */
+                     const struct lp_derivatives *derivs_in, /* optional */
                      LLVMValueRef *rho,
+                     struct lp_derivatives *derivs_out, /* optional */
                      boolean need_derivs);
 
 

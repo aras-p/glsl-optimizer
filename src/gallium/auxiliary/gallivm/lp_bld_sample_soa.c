@@ -1387,6 +1387,7 @@ lp_build_sample_common(struct lp_build_sample_context *bld,
    const unsigned target = bld->static_texture_state->target;
    LLVMValueRef first_level, cube_rho = NULL;
    LLVMValueRef lod_ipart = NULL;
+   struct lp_derivatives cube_derivs;
 
    /*
    printf("%s mip %d  min %d  mag %d\n", __FUNCTION__,
@@ -1403,7 +1404,8 @@ lp_build_sample_common(struct lp_build_sample_context *bld,
                       mip_filter != PIPE_TEX_MIPFILTER_NONE) &&
                       !bld->static_sampler_state->min_max_lod_equal &&
                       !explicit_lod);
-      lp_build_cube_lookup(bld, coords, derivs, &cube_rho, need_derivs);
+      lp_build_cube_lookup(bld, coords, derivs, &cube_rho, &cube_derivs, need_derivs);
+      derivs = &cube_derivs;
    }
    else if (target == PIPE_TEXTURE_1D_ARRAY ||
             target == PIPE_TEXTURE_2D_ARRAY) {
@@ -2163,9 +2165,24 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
     * avoided like min and max lod being equal.
     */
    bld.num_mips = bld.num_lods = 1;
-   if (lod_property == LP_SAMPLER_LOD_PER_ELEMENT &&
-       (explicit_lod || lod_bias ||
-        (derivs && static_texture_state->target != PIPE_TEXTURE_CUBE))) {
+
+   if ((gallivm_debug & GALLIVM_DEBUG_NO_QUAD_LOD) &&
+       (gallivm_debug & GALLIVM_DEBUG_NO_RHO_APPROX) &&
+       (static_texture_state->target == PIPE_TEXTURE_CUBE) &&
+       (!is_fetch && mip_filter != PIPE_TEX_MIPFILTER_NONE)) {
+      /*
+       * special case for using per-pixel lod even for implicit lod,
+       * which is generally never required (ok by APIs) except to please
+       * some (somewhat broken imho) tests (because per-pixel face selection
+       * can cause derivatives to be different for pixels outside the primitive
+       * due to the major axis division even if pre-project derivatives are
+       * looking normal).
+       */
+      bld.num_mips = type.length;
+      bld.num_lods = type.length;
+   }
+   else if (lod_property == LP_SAMPLER_LOD_PER_ELEMENT ||
+       (explicit_lod || lod_bias || derivs)) {
       if ((is_fetch && target != PIPE_BUFFER) ||
           (!is_fetch && mip_filter != PIPE_TEX_MIPFILTER_NONE)) {
          bld.num_mips = type.length;
@@ -2371,9 +2388,15 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
          bld4.texel_type.length = 4;
 
          bld4.num_mips = bld4.num_lods = 1;
+         if ((gallivm_debug & GALLIVM_DEBUG_NO_QUAD_LOD) &&
+             (gallivm_debug & GALLIVM_DEBUG_NO_RHO_APPROX) &&
+             (static_texture_state->target == PIPE_TEXTURE_CUBE) &&
+             (!is_fetch && mip_filter != PIPE_TEX_MIPFILTER_NONE)) {
+            bld4.num_mips = type4.length;
+            bld4.num_lods = type4.length;
+         }
          if (lod_property == LP_SAMPLER_LOD_PER_ELEMENT &&
-             (explicit_lod || lod_bias ||
-              (derivs && static_texture_state->target != PIPE_TEXTURE_CUBE))) {
+             (explicit_lod || lod_bias || derivs)) {
             if ((is_fetch && target != PIPE_BUFFER) ||
                 (!is_fetch && mip_filter != PIPE_TEX_MIPFILTER_NONE)) {
                bld4.num_mips = type4.length;
