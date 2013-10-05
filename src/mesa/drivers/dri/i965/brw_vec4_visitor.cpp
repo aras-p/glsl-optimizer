@@ -2236,6 +2236,7 @@ vec4_visitor::visit(ir_texture *ir)
       break;
    case ir_tg4:
       inst = new(mem_ctx) vec4_instruction(this, SHADER_OPCODE_TG4);
+      break;
    case ir_query_levels:
       inst = new(mem_ctx) vec4_instruction(this, SHADER_OPCODE_TXS);
       break;
