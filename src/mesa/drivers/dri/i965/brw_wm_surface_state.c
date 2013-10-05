@@ -232,20 +232,27 @@ brw_update_buffer_texture_surface(struct gl_context *ctx,
    struct gl_texture_object *tObj = ctx->Texture.Unit[unit]._Current;
    struct intel_buffer_object *intel_obj =
       intel_buffer_object(tObj->BufferObject);
-   drm_intel_bo *bo = intel_obj ? intel_obj->buffer : NULL;
+   uint32_t size = tObj->BufferSize;
+   drm_intel_bo *bo = NULL;
    gl_format format = tObj->_BufferObjectFormat;
    uint32_t brw_format = brw_format_for_mesa_format(format);
    int texel_size = _mesa_get_format_bytes(format);
-   int w = intel_obj ? intel_obj->Base.Size / texel_size : 0;
+
+   if (intel_obj) {
+      bo = intel_obj->buffer;
+      size = MIN2(size, intel_obj->Base.Size);
+   }
 
    if (brw_format == 0 && format != MESA_FORMAT_RGBA_FLOAT32) {
       _mesa_problem(NULL, "bad format %s for texture buffer\n",
 		    _mesa_get_format_name(format));
    }
 
-   gen4_emit_buffer_surface_state(brw, surf_offset, bo, 0,
+   gen4_emit_buffer_surface_state(brw, surf_offset, bo,
+                                  tObj->BufferOffset,
                                   brw_format,
-                                  w, texel_size);
+                                  size / texel_size,
+                                  texel_size);
 }
 
 static void

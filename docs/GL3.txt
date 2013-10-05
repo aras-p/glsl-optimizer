@@ -157,7 +157,7 @@ ARB_robust_buffer_access_behavior                    not started
 ARB_shader_image_size                                not started
 ARB_shader_storage_buffer_object                     not started
 ARB_stencil_texturing                                not started
-ARB_texture_buffer_range                             DONE (nv50, nvc0)
+ARB_texture_buffer_range                             DONE (nv50, nvc0, i965)
 ARB_texture_query_levels                             DONE (i965)
 ARB_texture_storage_multisample                      DONE (i965)
 ARB_texture_view                                     not started

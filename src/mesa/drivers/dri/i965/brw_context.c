@@ -394,7 +394,18 @@ brw_initialize_context_constants(struct brw_context *brw)
 
    ctx->Const.NativeIntegers = true;
    ctx->Const.UniformBooleanTrue = 1;
+
+   /* From the gen4 PRM, volume 4 page 127:
+    *
+    *     "For SURFTYPE_BUFFER non-rendertarget surfaces, this field specifies
+    *      the base address of the first element of the surface, computed in
+    *      software by adding the surface base address to the byte offset of
+    *      the element in the buffer."
+    *
+    * However, unaligned accesses are slower, so enforce buffer alignment.
+    */
    ctx->Const.UniformBufferOffsetAlignment = 16;
+   ctx->Const.TextureBufferOffsetAlignment = 16;
 
    if (brw->gen >= 6) {
       ctx->Const.MaxVarying = 32;
