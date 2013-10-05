@@ -145,7 +145,7 @@ ARB_ES3_compatibility                                DONE (i965)
 ARB_clear_buffer_object                              not started
 ARB_compute_shader                                   started (gallium)
 ARB_copy_image                                       not started
-KHR_debug                                            some work done (ARB_debug_output)
+KHR_debug                                            DONE
 ARB_explicit_uniform_location                        not started
 ARB_fragment_layer_viewport                          not started
 ARB_framebuffer_no_attachments                       not started
