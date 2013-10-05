@@ -1,0 +1,204 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <title>Mesa Release Notes</title>
+  <link rel="stylesheet" type="text/css" href="../mesa.css">
+</head>
+<body>
+
+<div class="header">
+  <h1>The Mesa 3D Graphics Library</h1>
+</div>
+
+<iframe src="../contents.html"></iframe>
+<div class="content">
+
+<h1>Mesa 9.2.1 Release Notes / (October 4, 2013)</h1>
+
+<p>
+Mesa 9.2.1 is a bug fix release which fixes bugs found since the 9.2 release.
+</p>
+<p>
+Mesa 9.2 implements the OpenGL 3.1 API, but the version reported by
+glGetString(GL_VERSION) or glGetIntegerv(GL_MAJOR_VERSION) /
+glGetIntegerv(GL_MINOR_VERSION) depends on the particular driver being used.
+Some drivers don't support all the features required in OpenGL 3.1.  OpenGL
+3.1 is <strong>only</strong> available if requested at context creation
+because GL_ARB_compatibility is not supported.
+</p>
+
+
+<h2>MD5 checksums</h2>
+<pre>
+TBA
+</pre>
+
+
+<h2>New features</h2>
+<p>None</p>
+
+<h2>Bug fixes</h2>
+
+<p>This list is likely incomplete.</p>
+
+<ul>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=66779">Bug 66779</a> - Use of uninitialized stack variable with brw_search_cache()</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=68233">Bug 68233</a> - Valgrind errors in mesa</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=68250">Bug 68250</a> - Automatic mipmap generation with texture compression produces borders that fade to black</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=68637">Bug 68637</a> - [Bisected IVB/HSW]Unigine demo crash</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=68753">Bug 68753</a> - [regression bisected] GLSL ES: structs members can't have precision qualifiers anymore in 9.2</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=69525">Bug 69525</a> - [GM45, bisected] Piglit tex-shadow2drect fails</li>
+
+</ul>
+
+<h2>Changes</h2>
+
+<p>The full set of changes can be viewed by using the following GIT command:</p>
+
+<pre>
+  git log mesa-9.2..mesa-9.2.1
+</pre>
+
+
+<p>Alex Deucher (1):</p>
+<ul>
+  <li>radeon/winsys: pad IBs to a multiple of 8 DWs</li>
+</ul>
+
+<p>Andreas Boll (1):</p>
+<ul>
+  <li>os: First check for __GLIBC__ and then for PIPE_OS_BSD</li>
+</ul>
+
+<p>Anuj Phogat (1):</p>
+<ul>
+  <li>glsl: Allow precision qualifiers for sampler types</li>
+</ul>
+
+<p>Brian Paul (2):</p>
+<ul>
+  <li>docs: minor fixes for 9.2 release notes</li>
+  <li>mesa: check for bufSize &gt; 0 in _mesa_GetSynciv()</li>
+</ul>
+
+<p>Carl Worth (3):</p>
+<ul>
+  <li>cherry-ignore: Ignore a commit which appeared twice on master</li>
+  <li>Use -Bsymbolic when linking libEGL.so</li>
+  <li>mesa: Bump version to 9.2.1</li>
+</ul>
+
+<p>Chris Forbes (3):</p>
+<ul>
+  <li>i965/fs: Gen4: Zero out extra coordinates when using shadow compare</li>
+  <li>i965: Fix cube array coordinate normalization</li>
+  <li>i965: fix bogus swizzle in brw_cubemap_normalize</li>
+</ul>
+
+<p>Christoph Bumiller (2):</p>
+<ul>
+  <li>nvc0/ir: add f32 long immediate cannot saturate</li>
+  <li>nvc0: delete compute object on screen destruction</li>
+</ul>
+
+<p>Dave Airlie (1):</p>
+<ul>
+  <li>st/mesa: don't dereference stObj-&gt;pt if NULL</li>
+</ul>
+
+<p>Dominik Behr (1):</p>
+<ul>
+  <li>glsl: propagate max_array_access through function calls</li>
+</ul>
+
+<p>Emil Velikov (1):</p>
+<ul>
+  <li>nouveau: initialise the nouveau_transfer maps</li>
+</ul>
+
+<p>Eric Anholt (4):</p>
+<ul>
+  <li>mesa: Rip out more extension checking from texformat.c.</li>
+  <li>mesa: Don't choose S3TC for generic compression if we can't compress.</li>
+  <li>i965/gen4: Fix fragment program rectangle texture shadow compares.</li>
+  <li>i965: Reenable glBitmap() after the sRGB winsys enabling.</li>
+</ul>
+
+<p>Ian Romanick (7):</p>
+<ul>
+  <li>docs: Add 9.2 release md5sums</li>
+  <li>Add .cherry-ignore file</li>
+  <li>mesa: Note that 89a665e should not be picked</li>
+  <li>glsl: Reallow precision qualifiers on structure members</li>
+  <li>mesa: Support GL_MAX_VERTEX_OUTPUT_COMPONENTS query with ES3</li>
+  <li>mesa: Remove all traces of GL_OES_matrix_get</li>
+  <li>mesa: Don't return any data for GL_SHADER_BINARY_FORMATS</li>
+</ul>
+
+<p>Ilia Mirkin (2):</p>
+<ul>
+  <li>nv30: find first unused texcoord rather than bailing if first is used</li>
+  <li>nv30: fix inconsistent setting of push-&gt;user_priv</li>
+</ul>
+
+<p>Joakim Sindholt (1):</p>
+<ul>
+  <li>nvc0: fix blitctx memory leak</li>
+</ul>
+
+<p>Johannes Obermayr (1):</p>
+<ul>
+  <li>st/gbm: Add $(WAYLAND_CFLAGS) for HAVE_EGL_PLATFORM_WAYLAND.</li>
+</ul>
+
+<p>Kenneth Graunke (5):</p>
+<ul>
+  <li>i965/vs: Detect GRF sources in split_virtual_grfs send-from-GRF code.</li>
+  <li>i965/fs: Detect GRF sources in split_virtual_grfs send-from-GRF code.</li>
+  <li>i965/vec4: Only zero out unused message components when there are any.</li>
+  <li>i965: Fix brw_vs_prog_data_compare to actually check field members.</li>
+  <li>meta: Set correct viewport and projection in decompress_texture_image.</li>
+</ul>
+
+<p>Maarten Lankhorst (2):</p>
+<ul>
+  <li>st/dri: do not create a new context for msaa copy</li>
+  <li>nvc0: restore viewport after blit</li>
+</ul>
+
+<p>Marek Olšák (2):</p>
+<ul>
+  <li>r600g: fix constant buffer cache flushing</li>
+  <li>r600g: fix texture buffer object cache flushing</li>
+</ul>
+
+<p>Paul Berry (1):</p>
+<ul>
+  <li>i965: Initialize inout_offset parameter to brw_search_cache().</li>
+</ul>
+
+<p>Rico Schüller (1):</p>
+<ul>
+  <li>glx: Initialize OpenGL version to 1.0</li>
+</ul>
+
+<p>Tiziano Bacocco (1):</p>
+<ul>
+  <li>nvc0/ir: fix use after free in texture barrier insertion pass</li>
+</ul>
+
+<p>Torsten Duwe (1):</p>
+<ul>
+  <li>wayland-egl.pc requires wayland-client.pc.</li>
+</ul>
+
+</div>
+</body>
+</html>
