@@ -100,7 +100,7 @@ GL_ARB_draw_buffers_blend                            DONE (i965, r600, softpipe)
 GL_ARB_draw_indirect                                 started (Christoph)
 GL_ARB_gpu_shader5                                   started
 GL_ARB_gpu_shader_fp64                               not started
-GL_ARB_sample_shading                                not started
+GL_ARB_sample_shading                                started (Anuj)
 GL_ARB_shader_subroutine                             not started
 GL_ARB_tessellation_shader                           not started
 GL_ARB_texture_buffer_object_rgb32                   DONE (i965, softpipe)
@@ -126,7 +126,7 @@ GL 4.2:
 GLSL 4.2                                             not started
 GL_ARB_texture_compression_bptc                      not started
 GL_ARB_compressed_texture_pixel_storage              not started
-GL_ARB_shader_atomic_counters                        not started
+GL_ARB_shader_atomic_counters                        in progress (Curro)
 GL_ARB_texture_storage                               DONE (i965, r300, r600, swrast, gallium)
 GL_ARB_transform_feedback_instanced                  DONE
 GL_ARB_base_instance                                 DONE (i965, nv50, nvc0, r600, radeonsi)
