@@ -42,7 +42,7 @@ vmwgfx_dri_la_SOURCES = \
 	target.c \
 	vmw_powf.c
 
-vmwgfx_dri_la_LDFLAGS = -module -avoid-version -shared -no-undefined
+vmwgfx_dri_la_LDFLAGS = $(DRI_DRIVER_LDFLAGS)
 
 vmwgfx_dri_la_LIBADD = \
 	$(top_builddir)/src/mesa/drivers/dri/common/libdricommon.la \

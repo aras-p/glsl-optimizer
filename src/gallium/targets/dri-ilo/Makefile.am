@@ -42,7 +42,7 @@ noinst_LTLIBRARIES = ilo_dri.la
 ilo_dri_la_SOURCES = target.c
 
 # need -rpath to create a noinst shared library
-ilo_dri_la_LDFLAGS = -module -avoid-version -shared -no-undefined \
+ilo_dri_la_LDFLAGS = $(DRI_DRIVER_LDFLAGS) \
 		     -rpath $(abs_builddir)
 
 ilo_dri_la_LIBADD = \

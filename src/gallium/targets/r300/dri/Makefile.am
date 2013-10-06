@@ -44,7 +44,7 @@ nodist_EXTRA_r300_dri_la_SOURCES = dummy.cpp
 r300_dri_la_SOURCES = \
 	../drm_target.c
 
-r300_dri_la_LDFLAGS = -module -avoid-version -shared -no-undefined
+r300_dri_la_LDFLAGS = $(DRI_DRIVER_LDFLAGS)
 
 r300_dri_la_LIBADD = \
 	$(top_builddir)/src/mesa/drivers/dri/common/libdricommon.la \

@@ -47,7 +47,7 @@ swrast_dri_la_SOURCES = \
 	$(top_srcdir)/src/mesa/drivers/dri/common/drisw_util.c \
 	$(top_srcdir)/src/mesa/drivers/dri/common/xmlconfig.c
 
-swrast_dri_la_LDFLAGS = -module -avoid-version -shared -no-undefined
+swrast_dri_la_LDFLAGS = $(DRI_DRIVER_LDFLAGS)
 
 swrast_dri_la_LIBADD = \
 	$(top_builddir)/src/mesa/libmesagallium.la \
