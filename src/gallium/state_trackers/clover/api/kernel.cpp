@@ -118,39 +118,49 @@ clSetKernelArg(cl_kernel kern, cl_uint idx, size_t size,
 
 PUBLIC cl_int
 clGetKernelInfo(cl_kernel kern, cl_kernel_info param,
-                size_t size, void *buf, size_t *size_ret) {
+                size_t size, void *r_buf, size_t *r_size) try {
+   property_buffer buf { r_buf, size, r_size };
+
    if (!kern)
       return CL_INVALID_KERNEL;
 
    switch (param) {
    case CL_KERNEL_FUNCTION_NAME:
-      return string_property(buf, size, size_ret, kern->name());
+      buf.as_string() = kern->name();
+      break;
 
    case CL_KERNEL_NUM_ARGS:
-      return scalar_property<cl_uint>(buf, size, size_ret,
-                                      kern->args.size());
+      buf.as_scalar<cl_uint>() = kern->args.size();
+      break;
 
    case CL_KERNEL_REFERENCE_COUNT:
-      return scalar_property<cl_uint>(buf, size, size_ret,
-                                      kern->ref_count());
+      buf.as_scalar<cl_uint>() = kern->ref_count();
+      break;
 
    case CL_KERNEL_CONTEXT:
-      return scalar_property<cl_context>(buf, size, size_ret,
-                                         &kern->prog.ctx);
+      buf.as_scalar<cl_context>() = &kern->prog.ctx;
+      break;
 
    case CL_KERNEL_PROGRAM:
-      return scalar_property<cl_program>(buf, size, size_ret,
-                                         &kern->prog);
+      buf.as_scalar<cl_program>() = &kern->prog;
+      break;
 
    default:
-      return CL_INVALID_VALUE;
+      throw error(CL_INVALID_VALUE);
    }
+
+   return CL_SUCCESS;
+
+} catch (error &e) {
+   return e.get();
 }
 
 PUBLIC cl_int
 clGetKernelWorkGroupInfo(cl_kernel kern, cl_device_id dev,
                          cl_kernel_work_group_info param,
-                         size_t size, void *buf, size_t *size_ret) {
+                         size_t size, void *r_buf, size_t *r_size) try {
+   property_buffer buf { r_buf, size, r_size };
+
    if (!kern)
       return CL_INVALID_KERNEL;
 
@@ -160,27 +170,33 @@ clGetKernelWorkGroupInfo(cl_kernel kern, cl_device_id dev,
 
    switch (param) {
    case CL_KERNEL_WORK_GROUP_SIZE:
-      return scalar_property<size_t>(buf, size, size_ret,
-                                     kern->max_block_size());
+      buf.as_scalar<size_t>() = kern->max_block_size();
+      break;
 
    case CL_KERNEL_COMPILE_WORK_GROUP_SIZE:
-      return vector_property<size_t>(buf, size, size_ret,
-                                     kern->block_size());
+      buf.as_vector<size_t>() = kern->block_size();
+      break;
 
    case CL_KERNEL_LOCAL_MEM_SIZE:
-      return scalar_property<cl_ulong>(buf, size, size_ret,
-                                       kern->mem_local());
+      buf.as_scalar<cl_ulong>() = kern->mem_local();
+      break;
 
    case CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE:
-      return scalar_property<size_t>(buf, size, size_ret, 1);
+      buf.as_scalar<size_t>() = 1;
+      break;
 
    case CL_KERNEL_PRIVATE_MEM_SIZE:
-      return scalar_property<cl_ulong>(buf, size, size_ret,
-                                       kern->mem_private());
+      buf.as_scalar<cl_ulong>() = kern->mem_private();
+      break;
 
    default:
-      return CL_INVALID_VALUE;
+      throw error(CL_INVALID_VALUE);
    }
+
+   return CL_SUCCESS;
+
+} catch (error &e) {
+   return e.get();
 }
 
 namespace {

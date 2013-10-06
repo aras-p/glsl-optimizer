@@ -29,80 +29,11 @@
 #include <map>
 
 #include "core/base.hpp"
+#include "core/property.hpp"
 #include "util/algorithm.hpp"
 #include "pipe/p_compiler.h"
 
 namespace clover {
-   ///
-   /// Return a matrix (a container of containers) in \a buf with
-   /// argument and bounds checking.  Intended to be used by
-   /// implementations of \a clGetXXXInfo().
-   ///
-   template<typename T, typename V>
-   cl_int
-   matrix_property(void *buf, size_t size, size_t *size_ret, const V& v) {
-      if (buf && size < sizeof(T *) * v.size())
-         return CL_INVALID_VALUE;
-
-      if (size_ret)
-         *size_ret = sizeof(T *) * v.size();
-
-      if (buf)
-         for_each([](typename V::value_type src, T *dst) {
-               if (dst)
-                  copy(src, dst);
-            },
-            v, range((T **)buf, v.size()));
-
-      return CL_SUCCESS;
-   }
-
-   ///
-   /// Return a vector in \a buf with argument and bounds checking.
-   /// Intended to be used by implementations of \a clGetXXXInfo().
-   ///
-   template<typename T, typename V>
-   cl_int
-   vector_property(void *buf, size_t size, size_t *size_ret, const V& v) {
-      if (buf && size < sizeof(T) * v.size())
-         return CL_INVALID_VALUE;
-
-      if (size_ret)
-         *size_ret = sizeof(T) * v.size();
-      if (buf)
-         copy(v, (T *)buf);
-
-      return CL_SUCCESS;
-   }
-
-   ///
-   /// Return a scalar in \a buf with argument and bounds checking.
-   /// Intended to be used by implementations of \a clGetXXXInfo().
-   ///
-   template<typename T>
-   cl_int
-   scalar_property(void *buf, size_t size, size_t *size_ret, T v) {
-      return vector_property<T>(buf, size, size_ret, std::vector<T>(1, v));
-   }
-
-   ///
-   /// Return a string in \a buf with argument and bounds checking.
-   /// Intended to be used by implementations of \a clGetXXXInfo().
-   ///
-   inline cl_int
-   string_property(void *buf, size_t size, size_t *size_ret,
-                   const std::string &v) {
-      if (buf && size < v.size() + 1)
-         return CL_INVALID_VALUE;
-
-      if (size_ret)
-         *size_ret = v.size() + 1;
-      if (buf)
-         std::strcpy((char *)buf, v.c_str());
-
-      return CL_SUCCESS;
-   }
-
    ///
    /// Convert a NULL-terminated property list into an std::map.
    ///

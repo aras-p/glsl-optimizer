@@ -89,29 +89,41 @@ clWaitForEvents(cl_uint num_evs, const cl_event *evs) try {
 
 PUBLIC cl_int
 clGetEventInfo(cl_event ev, cl_event_info param,
-               size_t size, void *buf, size_t *size_ret) {
+               size_t size, void *r_buf, size_t *r_size) try {
+   property_buffer buf { r_buf, size, r_size };
+
    if (!ev)
       return CL_INVALID_EVENT;
 
    switch (param) {
    case CL_EVENT_COMMAND_QUEUE:
-      return scalar_property<cl_command_queue>(buf, size, size_ret, ev->queue());
+      buf.as_scalar<cl_command_queue>() = ev->queue();
+      break;
 
    case CL_EVENT_CONTEXT:
-      return scalar_property<cl_context>(buf, size, size_ret, &ev->ctx);
+      buf.as_scalar<cl_context>() = &ev->ctx;
+      break;
 
    case CL_EVENT_COMMAND_TYPE:
-      return scalar_property<cl_command_type>(buf, size, size_ret, ev->command());
+      buf.as_scalar<cl_command_type>() = ev->command();
+      break;
 
    case CL_EVENT_COMMAND_EXECUTION_STATUS:
-      return scalar_property<cl_int>(buf, size, size_ret, ev->status());
+      buf.as_scalar<cl_int>() = ev->status();
+      break;
 
    case CL_EVENT_REFERENCE_COUNT:
-      return scalar_property<cl_uint>(buf, size, size_ret, ev->ref_count());
+      buf.as_scalar<cl_uint>() = ev->ref_count();
+      break;
 
    default:
-      return CL_INVALID_VALUE;
+      throw error(CL_INVALID_VALUE);
    }
+
+   return CL_SUCCESS;
+
+} catch (error &e) {
+   return e.get();
 }
 
 PUBLIC cl_int
@@ -216,7 +228,8 @@ clEnqueueWaitForEvents(cl_command_queue q, cl_uint num_evs,
 
 PUBLIC cl_int
 clGetEventProfilingInfo(cl_event ev, cl_profiling_info param,
-                        size_t size, void *buf, size_t *size_ret) try {
+                        size_t size, void *r_buf, size_t *r_size) try {
+   property_buffer buf { r_buf, size, r_size };
    hard_event *hev = dynamic_cast<hard_event *>(ev);
 
    if (!ev)
@@ -227,20 +240,26 @@ clGetEventProfilingInfo(cl_event ev, cl_profiling_info param,
 
    switch (param) {
    case CL_PROFILING_COMMAND_QUEUED:
-      return scalar_property<cl_ulong>(buf, size, size_ret, hev->time_queued());
+      buf.as_scalar<cl_ulong>() = hev->time_queued();
+      break;
 
    case CL_PROFILING_COMMAND_SUBMIT:
-      return scalar_property<cl_ulong>(buf, size, size_ret, hev->time_submit());
+      buf.as_scalar<cl_ulong>() = hev->time_submit();
+      break;
 
    case CL_PROFILING_COMMAND_START:
-      return scalar_property<cl_ulong>(buf, size, size_ret, hev->time_start());
+      buf.as_scalar<cl_ulong>() = hev->time_start();
+      break;
 
    case CL_PROFILING_COMMAND_END:
-      return scalar_property<cl_ulong>(buf, size, size_ret, hev->time_end());
+      buf.as_scalar<cl_ulong>() = hev->time_end();
+      break;
 
    default:
-      return CL_INVALID_VALUE;
+      throw error(CL_INVALID_VALUE);
    }
+
+   return CL_SUCCESS;
 
 } catch (lazy<cl_ulong>::undefined_error &e) {
    return CL_PROFILING_INFO_NOT_AVAILABLE;

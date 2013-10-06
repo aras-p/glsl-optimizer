@@ -33,6 +33,7 @@ CPP_SOURCES := \
 	core/event.cpp \
 	core/program.hpp \
 	core/program.cpp \
+	core/property.hpp \
 	core/kernel.hpp \
 	core/kernel.cpp \
 	core/module.hpp \

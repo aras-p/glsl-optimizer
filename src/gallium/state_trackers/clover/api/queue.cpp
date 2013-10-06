@@ -69,27 +69,37 @@ clReleaseCommandQueue(cl_command_queue q) {
 
 PUBLIC cl_int
 clGetCommandQueueInfo(cl_command_queue q, cl_command_queue_info param,
-                      size_t size, void *buf, size_t *size_ret) {
+                      size_t size, void *r_buf, size_t *r_size) try {
+   property_buffer buf { r_buf, size, r_size };
+
    if (!q)
       return CL_INVALID_COMMAND_QUEUE;
 
    switch (param) {
    case CL_QUEUE_CONTEXT:
-      return scalar_property<cl_context>(buf, size, size_ret, &q->ctx);
+      buf.as_scalar<cl_context>() = &q->ctx;
+      break;
 
    case CL_QUEUE_DEVICE:
-      return scalar_property<cl_device_id>(buf, size, size_ret, &q->dev);
+      buf.as_scalar<cl_device_id>() = &q->dev;
+      break;
 
    case CL_QUEUE_REFERENCE_COUNT:
-      return scalar_property<cl_uint>(buf, size, size_ret, q->ref_count());
+      buf.as_scalar<cl_uint>() = q->ref_count();
+      break;
 
    case CL_QUEUE_PROPERTIES:
-      return scalar_property<cl_command_queue_properties>(buf, size, size_ret,
-                                                          q->props());
+      buf.as_scalar<cl_command_queue_properties>() = q->props();
+      break;
 
    default:
-      return CL_INVALID_VALUE;
+      throw error(CL_INVALID_VALUE);
    }
+
+   return CL_SUCCESS;
+
+} catch (error &e) {
+   return e.get();
 }
 
 PUBLIC cl_int

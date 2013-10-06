@@ -166,62 +166,71 @@ clUnloadCompiler() {
 
 PUBLIC cl_int
 clGetProgramInfo(cl_program prog, cl_program_info param,
-                 size_t size, void *buf, size_t *size_ret) {
+                 size_t size, void *r_buf, size_t *r_size) try {
+   property_buffer buf { r_buf, size, r_size };
+
    if (!prog)
       return CL_INVALID_PROGRAM;
 
    switch (param) {
    case CL_PROGRAM_REFERENCE_COUNT:
-      return scalar_property<cl_uint>(buf, size, size_ret,
-                                      prog->ref_count());
+      buf.as_scalar<cl_uint>() = prog->ref_count();
+      break;
 
    case CL_PROGRAM_CONTEXT:
-      return scalar_property<cl_context>(buf, size, size_ret,
-                                         &prog->ctx);
+      buf.as_scalar<cl_context>() = &prog->ctx;
+      break;
 
    case CL_PROGRAM_NUM_DEVICES:
-      return scalar_property<cl_uint>(buf, size, size_ret,
-                                      prog->binaries().size());
+      buf.as_scalar<cl_uint>() = prog->binaries().size();
+      break;
 
    case CL_PROGRAM_DEVICES:
-      return vector_property<cl_device_id>(
-         buf, size, size_ret,
-         map(keys(), prog->binaries()));
+      buf.as_vector<cl_device_id>() = map(keys(), prog->binaries());
+      break;
 
    case CL_PROGRAM_SOURCE:
-      return string_property(buf, size, size_ret, prog->source());
+      buf.as_string() = prog->source();
+      break;
 
    case CL_PROGRAM_BINARY_SIZES:
-      return vector_property<size_t>(
-         buf, size, size_ret,
+      buf.as_vector<size_t>() =
          map([](const std::pair<device *, module> &ent) {
                compat::ostream::buffer_t bin;
                compat::ostream s(bin);
                ent.second.serialize(s);
                return bin.size();
             },
-            prog->binaries()));
+            prog->binaries());
+      break;
 
    case CL_PROGRAM_BINARIES:
-      return matrix_property<unsigned char>(
-         buf, size, size_ret,
+      buf.as_matrix<unsigned char>() =
          map([](const std::pair<device *, module> &ent) {
                compat::ostream::buffer_t bin;
                compat::ostream s(bin);
                ent.second.serialize(s);
                return bin;
             },
-            prog->binaries()));
+            prog->binaries());
+      break;
 
    default:
-      return CL_INVALID_VALUE;
+      throw error(CL_INVALID_VALUE);
    }
+
+   return CL_SUCCESS;
+
+} catch (error &e) {
+   return e.get();
 }
 
 PUBLIC cl_int
 clGetProgramBuildInfo(cl_program prog, cl_device_id dev,
                       cl_program_build_info param,
-                      size_t size, void *buf, size_t *size_ret) {
+                      size_t size, void *r_buf, size_t *r_size) try {
+   property_buffer buf { r_buf, size, r_size };
+
    if (!prog)
       return CL_INVALID_PROGRAM;
 
@@ -230,16 +239,23 @@ clGetProgramBuildInfo(cl_program prog, cl_device_id dev,
 
    switch (param) {
    case CL_PROGRAM_BUILD_STATUS:
-      return scalar_property<cl_build_status>(buf, size, size_ret,
-                                              prog->build_status(dev));
+      buf.as_scalar<cl_build_status>() = prog->build_status(dev);
+      break;
 
    case CL_PROGRAM_BUILD_OPTIONS:
-      return string_property(buf, size, size_ret, prog->build_opts(dev));
+      buf.as_string() = prog->build_opts(dev);
+      break;
 
    case CL_PROGRAM_BUILD_LOG:
-      return string_property(buf, size, size_ret, prog->build_log(dev));
+      buf.as_string() = prog->build_log(dev);
+      break;
 
    default:
-      return CL_INVALID_VALUE;
+      throw error(CL_INVALID_VALUE);
    }
+
+   return CL_SUCCESS;
+
+} catch (error &e) {
+   return e.get();
 }

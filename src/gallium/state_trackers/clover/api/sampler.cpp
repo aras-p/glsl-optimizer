@@ -62,29 +62,39 @@ clReleaseSampler(cl_sampler s) {
 
 PUBLIC cl_int
 clGetSamplerInfo(cl_sampler s, cl_sampler_info param,
-                 size_t size, void *buf, size_t *size_ret) {
+                 size_t size, void *r_buf, size_t *r_size) try {
+   property_buffer buf { r_buf, size, r_size };
+
    if (!s)
       throw error(CL_INVALID_SAMPLER);
 
    switch (param) {
    case CL_SAMPLER_REFERENCE_COUNT:
-      return scalar_property<cl_uint>(buf, size, size_ret, s->ref_count());
+      buf.as_scalar<cl_uint>() = s->ref_count();
+      break;
 
    case CL_SAMPLER_CONTEXT:
-      return scalar_property<cl_context>(buf, size, size_ret, &s->ctx);
+      buf.as_scalar<cl_context>() = &s->ctx;
+      break;
 
    case CL_SAMPLER_NORMALIZED_COORDS:
-      return scalar_property<cl_bool>(buf, size, size_ret, s->norm_mode());
+      buf.as_scalar<cl_bool>() = s->norm_mode();
+      break;
 
    case CL_SAMPLER_ADDRESSING_MODE:
-      return scalar_property<cl_addressing_mode>(buf, size, size_ret,
-                                                 s->addr_mode());
+      buf.as_scalar<cl_addressing_mode>() = s->addr_mode();
+      break;
 
    case CL_SAMPLER_FILTER_MODE:
-      return scalar_property<cl_filter_mode>(buf, size, size_ret,
-                                             s->filter_mode());
+      buf.as_scalar<cl_filter_mode>() = s->filter_mode();
+      break;
 
    default:
-      return CL_INVALID_VALUE;
+      throw error(CL_INVALID_VALUE);
    }
+
+   return CL_SUCCESS;
+
+} catch (error &e) {
+   return e.get();
 }

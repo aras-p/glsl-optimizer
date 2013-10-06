@@ -46,28 +46,39 @@ clGetPlatformIDs(cl_uint num_entries, cl_platform_id *platforms,
 
 PUBLIC cl_int
 clGetPlatformInfo(cl_platform_id platform, cl_platform_info param_name,
-                  size_t size, void *buf, size_t *size_ret) {
+                  size_t size, void *r_buf, size_t *r_size) try {
+   property_buffer buf { r_buf, size, r_size };
+
    if (platform != &_clover_platform)
       return CL_INVALID_PLATFORM;
 
    switch (param_name) {
    case CL_PLATFORM_PROFILE:
-      return string_property(buf, size, size_ret, "FULL_PROFILE");
+      buf.as_string() = "FULL_PROFILE";
+      break;
 
    case CL_PLATFORM_VERSION:
-      return string_property(buf, size, size_ret,
-                             "OpenCL 1.1 MESA " PACKAGE_VERSION);
+      buf.as_string() = "OpenCL 1.1 MESA " PACKAGE_VERSION;
+      break;
 
    case CL_PLATFORM_NAME:
-      return string_property(buf, size, size_ret, "Default");
+      buf.as_string() = "Default";
+      break;
 
    case CL_PLATFORM_VENDOR:
-      return string_property(buf, size, size_ret, "Mesa");
+      buf.as_string() = "Mesa";
+      break;
 
    case CL_PLATFORM_EXTENSIONS:
-      return string_property(buf, size, size_ret, "");
+      buf.as_string() = "";
+      break;
 
    default:
-      return CL_INVALID_VALUE;
+      throw error(CL_INVALID_VALUE);
    }
+
+   return CL_SUCCESS;
+
+} catch (error &e) {
+   return e.get();
 }

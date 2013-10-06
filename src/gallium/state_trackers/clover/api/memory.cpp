@@ -192,81 +192,107 @@ clGetSupportedImageFormats(cl_context ctx, cl_mem_flags flags,
 
 PUBLIC cl_int
 clGetMemObjectInfo(cl_mem obj, cl_mem_info param,
-                   size_t size, void *buf, size_t *size_ret) {
+                   size_t size, void *r_buf, size_t *r_size) try {
+   property_buffer buf { r_buf, size, r_size };
+
    if (!obj)
       return CL_INVALID_MEM_OBJECT;
 
    switch (param) {
    case CL_MEM_TYPE:
-      return scalar_property<cl_mem_object_type>(buf, size, size_ret,
-                                                 obj->type());
+      buf.as_scalar<cl_mem_object_type>() = obj->type();
+      break;
 
    case CL_MEM_FLAGS:
-      return scalar_property<cl_mem_flags>(buf, size, size_ret, obj->flags());
+      buf.as_scalar<cl_mem_flags>() = obj->flags();
+      break;
 
    case CL_MEM_SIZE:
-      return scalar_property<size_t>(buf, size, size_ret, obj->size());
+      buf.as_scalar<size_t>() = obj->size();
+      break;
 
    case CL_MEM_HOST_PTR:
-      return scalar_property<void *>(buf, size, size_ret, obj->host_ptr());
+      buf.as_scalar<void *>() = obj->host_ptr();
+      break;
 
    case CL_MEM_MAP_COUNT:
-      return scalar_property<cl_uint>(buf, size, size_ret, 0);
+      buf.as_scalar<cl_uint>() = 0;
+      break;
 
    case CL_MEM_REFERENCE_COUNT:
-      return scalar_property<cl_uint>(buf, size, size_ret, obj->ref_count());
+      buf.as_scalar<cl_uint>() = obj->ref_count();
+      break;
 
    case CL_MEM_CONTEXT:
-      return scalar_property<cl_context>(buf, size, size_ret, &obj->ctx);
+      buf.as_scalar<cl_context>() = &obj->ctx;
+      break;
 
    case CL_MEM_ASSOCIATED_MEMOBJECT: {
       sub_buffer *sub = dynamic_cast<sub_buffer *>(obj);
-      return scalar_property<cl_mem>(buf, size, size_ret,
-                                     (sub ? &sub->parent : NULL));
+      buf.as_scalar<cl_mem>() = (sub ? &sub->parent : NULL);
+      break;
    }
    case CL_MEM_OFFSET: {
       sub_buffer *sub = dynamic_cast<sub_buffer *>(obj);
-      return scalar_property<size_t>(buf, size, size_ret,
-                                     (sub ? sub->offset() : 0));
+      buf.as_scalar<size_t>() = (sub ? sub->offset() : 0);
+      break;
    }
    default:
-      return CL_INVALID_VALUE;
+      throw error(CL_INVALID_VALUE);
    }
+
+   return CL_SUCCESS;
+
+} catch (error &e) {
+   return e.get();
 }
 
 PUBLIC cl_int
 clGetImageInfo(cl_mem obj, cl_image_info param,
-               size_t size, void *buf, size_t *size_ret) {
+               size_t size, void *r_buf, size_t *r_size) try {
+   property_buffer buf { r_buf, size, r_size };
    image *img = dynamic_cast<image *>(obj);
+
    if (!img)
       return CL_INVALID_MEM_OBJECT;
 
    switch (param) {
    case CL_IMAGE_FORMAT:
-      return scalar_property<cl_image_format>(buf, size, size_ret,
-                                              img->format());
+      buf.as_scalar<cl_image_format>() = img->format();
+      break;
 
    case CL_IMAGE_ELEMENT_SIZE:
-      return scalar_property<size_t>(buf, size, size_ret, 0);
+      buf.as_scalar<size_t>() = 0;
+      break;
 
    case CL_IMAGE_ROW_PITCH:
-      return scalar_property<size_t>(buf, size, size_ret, img->row_pitch());
+      buf.as_scalar<size_t>() = img->row_pitch();
+      break;
 
    case CL_IMAGE_SLICE_PITCH:
-      return scalar_property<size_t>(buf, size, size_ret, img->slice_pitch());
+      buf.as_scalar<size_t>() = img->slice_pitch();
+      break;
 
    case CL_IMAGE_WIDTH:
-      return scalar_property<size_t>(buf, size, size_ret, img->width());
+      buf.as_scalar<size_t>() = img->width();
+      break;
 
    case CL_IMAGE_HEIGHT:
-      return scalar_property<size_t>(buf, size, size_ret, img->height());
+      buf.as_scalar<size_t>() = img->height();
+      break;
 
    case CL_IMAGE_DEPTH:
-      return scalar_property<size_t>(buf, size, size_ret, img->depth());
+      buf.as_scalar<size_t>() = img->depth();
+      break;
 
    default:
-      return CL_INVALID_VALUE;
+      throw error(CL_INVALID_VALUE);
    }
+
+   return CL_SUCCESS;
+
+} catch (error &e) {
+   return e.get();
 }
 
 PUBLIC cl_int

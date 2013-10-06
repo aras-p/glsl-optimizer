@@ -103,25 +103,35 @@ clReleaseContext(cl_context ctx) {
 
 PUBLIC cl_int
 clGetContextInfo(cl_context ctx, cl_context_info param,
-                 size_t size, void *buf, size_t *size_ret) {
+                 size_t size, void *r_buf, size_t *r_size) try {
+   property_buffer buf { r_buf, size, r_size };
+
    if (!ctx)
       return CL_INVALID_CONTEXT;
 
    switch (param) {
    case CL_CONTEXT_REFERENCE_COUNT:
-      return scalar_property<cl_uint>(buf, size, size_ret, ctx->ref_count());
+      buf.as_scalar<cl_uint>() = ctx->ref_count();
+      break;
 
    case CL_CONTEXT_NUM_DEVICES:
-      return scalar_property<cl_uint>(buf, size, size_ret, ctx->devs.size());
+      buf.as_scalar<cl_uint>() = ctx->devs.size();
+      break;
 
    case CL_CONTEXT_DEVICES:
-      return vector_property<cl_device_id>(buf, size, size_ret, ctx->devs);
+      buf.as_vector<cl_device_id>() = ctx->devs;
+      break;
 
    case CL_CONTEXT_PROPERTIES:
-      return vector_property<cl_context_properties>(buf, size, size_ret,
-                                                    ctx->props());
+      buf.as_vector<cl_context_properties>() = ctx->props();
+      break;
 
    default:
-      return CL_INVALID_VALUE;
+      throw error(CL_INVALID_VALUE);
    }
+
+   return CL_SUCCESS;
+
+} catch (error &e) {
+   return e.get();
 }
