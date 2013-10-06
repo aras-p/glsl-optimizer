@@ -1,4 +1,14 @@
 CPP_SOURCES := \
+	util/adaptor.hpp \
+	util/algebra.hpp \
+	util/algorithm.hpp \
+	util/compat.cpp \
+	util/compat.hpp \
+	util/functional.hpp \
+	util/lazy.hpp \
+	util/pointer.hpp \
+	util/range.hpp \
+	util/tuple.hpp \
 	core/base.hpp \
 	core/compat.hpp \
 	core/compiler.hpp \
