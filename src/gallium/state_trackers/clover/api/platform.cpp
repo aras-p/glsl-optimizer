@@ -29,7 +29,7 @@ namespace {
    platform _clover_platform;
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clGetPlatformIDs(cl_uint num_entries, cl_platform_id *rd_platforms,
                  cl_uint *rnum_platforms) {
    if ((!num_entries && rd_platforms) ||
@@ -44,9 +44,9 @@ clGetPlatformIDs(cl_uint num_entries, cl_platform_id *rd_platforms,
    return CL_SUCCESS;
 }
 
-PUBLIC cl_int
-clGetPlatformInfo(cl_platform_id d_platform, cl_platform_info param,
-                  size_t size, void *r_buf, size_t *r_size) try {
+cl_int
+clover::GetPlatformInfo(cl_platform_id d_platform, cl_platform_info param,
+                        size_t size, void *r_buf, size_t *r_size) try {
    property_buffer buf { r_buf, size, r_size };
 
    obj(d_platform);
@@ -69,7 +69,11 @@ clGetPlatformInfo(cl_platform_id d_platform, cl_platform_info param,
       break;
 
    case CL_PLATFORM_EXTENSIONS:
-      buf.as_string() = "";
+      buf.as_string() = "cl_khr_icd";
+      break;
+
+   case CL_PLATFORM_ICD_SUFFIX_KHR:
+      buf.as_string() = "MESA";
       break;
 
    default:
@@ -80,4 +84,37 @@ clGetPlatformInfo(cl_platform_id d_platform, cl_platform_info param,
 
 } catch (error &e) {
    return e.get();
+}
+
+void *
+clover::GetExtensionFunctionAddress(const char *p_name) {
+   std::string name { p_name };
+
+   if (name == "clIcdGetPlatformIDsKHR")
+      return reinterpret_cast<void *>(IcdGetPlatformIDsKHR);
+   else
+      return NULL;
+}
+
+cl_int
+clover::IcdGetPlatformIDsKHR(cl_uint num_entries, cl_platform_id *rd_platforms,
+                             cl_uint *rnum_platforms) {
+   return clGetPlatformIDs(num_entries, rd_platforms, rnum_platforms);
+}
+
+CLOVER_ICD_API cl_int
+clGetPlatformInfo(cl_platform_id d_platform, cl_platform_info param,
+                  size_t size, void *r_buf, size_t *r_size) {
+   return GetPlatformInfo(d_platform, param, size, r_buf, r_size);
+}
+
+CLOVER_ICD_API void *
+clGetExtensionFunctionAddress(const char *p_name) {
+   return GetExtensionFunctionAddress(p_name);
+}
+
+CLOVER_ICD_API cl_int
+clIcdGetPlatformIDsKHR(cl_uint num_entries, cl_platform_id *rd_platforms,
+                       cl_uint *rnum_platforms) {
+   return IcdGetPlatformIDsKHR(num_entries, rd_platforms, rnum_platforms);
 }

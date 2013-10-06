@@ -25,7 +25,7 @@
 
 using namespace clover;
 
-PUBLIC cl_command_queue
+CLOVER_API cl_command_queue
 clCreateCommandQueue(cl_context d_ctx, cl_device_id d_dev,
                      cl_command_queue_properties props,
                      cl_int *r_errcode) try {
@@ -47,7 +47,7 @@ clCreateCommandQueue(cl_context d_ctx, cl_device_id d_dev,
    return NULL;
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clRetainCommandQueue(cl_command_queue d_q) try {
    obj(d_q).retain();
    return CL_SUCCESS;
@@ -56,7 +56,7 @@ clRetainCommandQueue(cl_command_queue d_q) try {
    return e.get();
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clReleaseCommandQueue(cl_command_queue d_q) try {
    if (obj(d_q).release())
       delete pobj(d_q);
@@ -67,7 +67,7 @@ clReleaseCommandQueue(cl_command_queue d_q) try {
    return e.get();
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clGetCommandQueueInfo(cl_command_queue d_q, cl_command_queue_info param,
                       size_t size, void *r_buf, size_t *r_size) try {
    property_buffer buf { r_buf, size, r_size };
@@ -100,7 +100,7 @@ clGetCommandQueueInfo(cl_command_queue d_q, cl_command_queue_info param,
    return e.get();
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clFlush(cl_command_queue d_q) try {
    obj(d_q).flush();
    return CL_SUCCESS;

@@ -131,7 +131,7 @@ namespace {
    }
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clEnqueueReadBuffer(cl_command_queue d_q, cl_mem d_mem, cl_bool blocking,
                     size_t offset, size_t size, void *ptr,
                     cl_uint num_deps, const cl_event *d_deps,
@@ -159,7 +159,7 @@ clEnqueueReadBuffer(cl_command_queue d_q, cl_mem d_mem, cl_bool blocking,
    return e.get();
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clEnqueueWriteBuffer(cl_command_queue d_q, cl_mem d_mem, cl_bool blocking,
                      size_t offset, size_t size, const void *ptr,
                      cl_uint num_deps, const cl_event *d_deps,
@@ -187,7 +187,7 @@ clEnqueueWriteBuffer(cl_command_queue d_q, cl_mem d_mem, cl_bool blocking,
    return e.get();
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clEnqueueReadBufferRect(cl_command_queue d_q, cl_mem d_mem, cl_bool blocking,
                         const size_t *obj_origin,
                         const size_t *host_origin,
@@ -222,7 +222,7 @@ clEnqueueReadBufferRect(cl_command_queue d_q, cl_mem d_mem, cl_bool blocking,
    return e.get();
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clEnqueueWriteBufferRect(cl_command_queue d_q, cl_mem d_mem, cl_bool blocking,
                          const size_t *obj_origin,
                          const size_t *host_origin,
@@ -257,7 +257,7 @@ clEnqueueWriteBufferRect(cl_command_queue d_q, cl_mem d_mem, cl_bool blocking,
    return e.get();
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clEnqueueCopyBuffer(cl_command_queue d_q, cl_mem d_src_mem, cl_mem d_dst_mem,
                     size_t src_offset, size_t dst_offset, size_t size,
                     cl_uint num_deps, const cl_event *d_deps,
@@ -282,7 +282,7 @@ clEnqueueCopyBuffer(cl_command_queue d_q, cl_mem d_src_mem, cl_mem d_dst_mem,
    return e.get();
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clEnqueueCopyBufferRect(cl_command_queue d_q, cl_mem d_src_mem,
                         cl_mem d_dst_mem,
                         const size_t *src_origin, const size_t *dst_origin,
@@ -314,7 +314,7 @@ clEnqueueCopyBufferRect(cl_command_queue d_q, cl_mem d_src_mem,
    return e.get();
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clEnqueueReadImage(cl_command_queue d_q, cl_mem d_mem, cl_bool blocking,
                    const size_t *origin, const size_t *region,
                    size_t row_pitch, size_t slice_pitch, void *ptr,
@@ -345,7 +345,7 @@ clEnqueueReadImage(cl_command_queue d_q, cl_mem d_mem, cl_bool blocking,
    return e.get();
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clEnqueueWriteImage(cl_command_queue d_q, cl_mem d_mem, cl_bool blocking,
                     const size_t *origin, const size_t *region,
                     size_t row_pitch, size_t slice_pitch, const void *ptr,
@@ -376,7 +376,7 @@ clEnqueueWriteImage(cl_command_queue d_q, cl_mem d_mem, cl_bool blocking,
    return e.get();
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clEnqueueCopyImage(cl_command_queue d_q, cl_mem d_src_mem, cl_mem d_dst_mem,
                    const size_t *src_origin, const size_t *dst_origin,
                    const size_t *region,
@@ -403,7 +403,7 @@ clEnqueueCopyImage(cl_command_queue d_q, cl_mem d_src_mem, cl_mem d_dst_mem,
    return e.get();
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clEnqueueCopyImageToBuffer(cl_command_queue d_q,
                            cl_mem d_src_mem, cl_mem d_dst_mem,
                            const size_t *src_origin, const size_t *region,
@@ -433,7 +433,7 @@ clEnqueueCopyImageToBuffer(cl_command_queue d_q,
    return e.get();
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clEnqueueCopyBufferToImage(cl_command_queue d_q,
                            cl_mem d_src_mem, cl_mem d_dst_mem,
                            size_t src_offset,
@@ -463,7 +463,7 @@ clEnqueueCopyBufferToImage(cl_command_queue d_q,
    return e.get();
 }
 
-PUBLIC void *
+CLOVER_API void *
 clEnqueueMapBuffer(cl_command_queue d_q, cl_mem d_mem, cl_bool blocking,
                    cl_map_flags flags, size_t offset, size_t size,
                    cl_uint num_deps, const cl_event *d_deps,
@@ -489,7 +489,7 @@ clEnqueueMapBuffer(cl_command_queue d_q, cl_mem d_mem, cl_bool blocking,
    return NULL;
 }
 
-PUBLIC void *
+CLOVER_API void *
 clEnqueueMapImage(cl_command_queue d_q, cl_mem d_mem, cl_bool blocking,
                   cl_map_flags flags,
                   const size_t *origin, const size_t *region,
@@ -514,7 +514,7 @@ clEnqueueMapImage(cl_command_queue d_q, cl_mem d_mem, cl_bool blocking,
    return NULL;
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clEnqueueUnmapMemObject(cl_command_queue d_q, cl_mem d_mem, void *ptr,
                         cl_uint num_deps, const cl_event *d_deps,
                         cl_event *rd_ev) try {

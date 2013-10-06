@@ -26,7 +26,7 @@
 
 using namespace clover;
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clGetDeviceIDs(cl_platform_id d_platform, cl_device_type device_type,
                cl_uint num_entries, cl_device_id *rd_devices,
                cl_uint *rnum_devices) try {
@@ -62,7 +62,7 @@ clGetDeviceIDs(cl_platform_id d_platform, cl_device_type device_type,
    return e.get();
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clGetDeviceInfo(cl_device_id d_dev, cl_device_info param,
                 size_t size, void *r_buf, size_t *r_size) try {
    property_buffer buf { r_buf, size, r_size };

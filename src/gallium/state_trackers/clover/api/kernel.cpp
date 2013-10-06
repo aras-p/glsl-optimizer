@@ -26,7 +26,7 @@
 
 using namespace clover;
 
-PUBLIC cl_kernel
+CLOVER_API cl_kernel
 clCreateKernel(cl_program d_prog, const char *name, cl_int *r_errcode) try {
    auto &prog = obj(d_prog);
 
@@ -47,7 +47,7 @@ clCreateKernel(cl_program d_prog, const char *name, cl_int *r_errcode) try {
    return NULL;
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clCreateKernelsInProgram(cl_program d_prog, cl_uint count,
                          cl_kernel *rd_kerns, cl_uint *r_count) try {
    auto &prog = obj(d_prog);
@@ -72,7 +72,7 @@ clCreateKernelsInProgram(cl_program d_prog, cl_uint count,
    return e.get();
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clRetainKernel(cl_kernel d_kern) try {
    obj(d_kern).retain();
    return CL_SUCCESS;
@@ -81,7 +81,7 @@ clRetainKernel(cl_kernel d_kern) try {
    return e.get();
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clReleaseKernel(cl_kernel d_kern) try {
    if (obj(d_kern).release())
       delete pobj(d_kern);
@@ -92,7 +92,7 @@ clReleaseKernel(cl_kernel d_kern) try {
    return e.get();
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clSetKernelArg(cl_kernel d_kern, cl_uint idx, size_t size,
                const void *value) try {
    obj(d_kern).args().at(idx).set(size, value);
@@ -105,7 +105,7 @@ clSetKernelArg(cl_kernel d_kern, cl_uint idx, size_t size,
    return e.get();
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clGetKernelInfo(cl_kernel d_kern, cl_kernel_info param,
                 size_t size, void *r_buf, size_t *r_size) try {
    property_buffer buf { r_buf, size, r_size };
@@ -142,7 +142,7 @@ clGetKernelInfo(cl_kernel d_kern, cl_kernel_info param,
    return e.get();
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clGetKernelWorkGroupInfo(cl_kernel d_kern, cl_device_id d_dev,
                          cl_kernel_work_group_info param,
                          size_t size, void *r_buf, size_t *r_size) try {
@@ -243,7 +243,7 @@ namespace {
    }
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clEnqueueNDRangeKernel(cl_command_queue d_q, cl_kernel d_kern,
                        cl_uint dims, const size_t *d_grid_offset,
                        const size_t *d_grid_size, const size_t *d_block_size,
@@ -272,7 +272,7 @@ clEnqueueNDRangeKernel(cl_command_queue d_q, cl_kernel d_kern,
    return e.get();
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clEnqueueTask(cl_command_queue d_q, cl_kernel d_kern,
               cl_uint num_deps, const cl_event *d_deps,
               cl_event *rd_ev) try {
@@ -295,7 +295,7 @@ clEnqueueTask(cl_command_queue d_q, cl_kernel d_kern,
    return e.get();
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clEnqueueNativeKernel(cl_command_queue d_q, void (*func)(void *),
                       void *args, size_t args_size,
                       cl_uint num_mems, const cl_mem *d_mems,

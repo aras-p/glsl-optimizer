@@ -26,7 +26,7 @@
 
 using namespace clover;
 
-PUBLIC cl_mem
+CLOVER_API cl_mem
 clCreateBuffer(cl_context d_ctx, cl_mem_flags flags, size_t size,
                void *host_ptr, cl_int *r_errcode) try {
    auto &ctx = obj(d_ctx);
@@ -51,7 +51,7 @@ clCreateBuffer(cl_context d_ctx, cl_mem_flags flags, size_t size,
    return NULL;
 }
 
-PUBLIC cl_mem
+CLOVER_API cl_mem
 clCreateSubBuffer(cl_mem d_mem, cl_mem_flags flags,
                   cl_buffer_create_type op,
                   const void *op_info, cl_int *r_errcode) try {
@@ -87,7 +87,7 @@ clCreateSubBuffer(cl_mem d_mem, cl_mem_flags flags,
    return NULL;
 }
 
-PUBLIC cl_mem
+CLOVER_API cl_mem
 clCreateImage2D(cl_context d_ctx, cl_mem_flags flags,
                 const cl_image_format *format,
                 size_t width, size_t height, size_t row_pitch,
@@ -121,7 +121,7 @@ clCreateImage2D(cl_context d_ctx, cl_mem_flags flags,
    return NULL;
 }
 
-PUBLIC cl_mem
+CLOVER_API cl_mem
 clCreateImage3D(cl_context d_ctx, cl_mem_flags flags,
                 const cl_image_format *format,
                 size_t width, size_t height, size_t depth,
@@ -156,7 +156,7 @@ clCreateImage3D(cl_context d_ctx, cl_mem_flags flags,
    return NULL;
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clGetSupportedImageFormats(cl_context d_ctx, cl_mem_flags flags,
                            cl_mem_object_type type, cl_uint count,
                            cl_image_format *r_buf, cl_uint *r_count) try {
@@ -186,7 +186,7 @@ clGetSupportedImageFormats(cl_context d_ctx, cl_mem_flags flags,
    return e.get();
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clGetMemObjectInfo(cl_mem d_mem, cl_mem_info param,
                    size_t size, void *r_buf, size_t *r_size) try {
    property_buffer buf { r_buf, size, r_size };
@@ -241,7 +241,7 @@ clGetMemObjectInfo(cl_mem d_mem, cl_mem_info param,
    return e.get();
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clGetImageInfo(cl_mem d_mem, cl_image_info param,
                size_t size, void *r_buf, size_t *r_size) try {
    property_buffer buf { r_buf, size, r_size };
@@ -286,7 +286,7 @@ clGetImageInfo(cl_mem d_mem, cl_image_info param,
    return e.get();
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clRetainMemObject(cl_mem d_mem) try {
    obj(d_mem).retain();
    return CL_SUCCESS;
@@ -295,7 +295,7 @@ clRetainMemObject(cl_mem d_mem) try {
    return e.get();
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clReleaseMemObject(cl_mem d_mem) try {
    if (obj(d_mem).release())
       delete pobj(d_mem);
@@ -306,7 +306,7 @@ clReleaseMemObject(cl_mem d_mem) try {
    return e.get();
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clSetMemObjectDestructorCallback(cl_mem d_mem,
                                  void (CL_CALLBACK *pfn_notify)(cl_mem, void *),
                                  void *user_data) try {

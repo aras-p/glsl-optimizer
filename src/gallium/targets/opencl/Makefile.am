@@ -33,6 +33,11 @@ lib@OPENCL_LIBNAME@_la_SOURCES =
 # Force usage of a C++ linker
 nodist_EXTRA_lib@OPENCL_LIBNAME@_la_SOURCES = dummy.cpp
 
+if HAVE_CLOVER_ICD
+icddir = /etc/OpenCL/vendors/
+icd_DATA = mesa.icd
+endif
+
 # Provide compatibility with scripts for the old Mesa build system for
 # a while by putting a link to the driver into /lib of the build tree.
 all-local: lib@OPENCL_LIBNAME@.la

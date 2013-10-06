@@ -29,6 +29,14 @@
 #include "core/property.hpp"
 #include "util/algorithm.hpp"
 
+#ifdef HAVE_CLOVER_ICD
+#define CLOVER_API
+#define CLOVER_ICD_API PUBLIC
+#else
+#define CLOVER_API PUBLIC
+#define CLOVER_ICD_API PUBLIC
+#endif
+
 namespace clover {
    ///
    /// Return an error code in \a p if non-zero.

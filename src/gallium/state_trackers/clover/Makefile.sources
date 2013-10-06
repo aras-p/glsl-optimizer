@@ -41,6 +41,8 @@ CPP_SOURCES := \
 	core/module.hpp \
 	core/module.cpp \
 	api/util.hpp \
+	api/dispatch.hpp \
+	api/dispatch.cpp \
 	api/platform.cpp \
 	api/device.cpp \
 	api/context.cpp \

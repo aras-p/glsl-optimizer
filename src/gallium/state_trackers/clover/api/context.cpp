@@ -26,7 +26,7 @@
 
 using namespace clover;
 
-PUBLIC cl_context
+CLOVER_API cl_context
 clCreateContext(const cl_context_properties *d_props, cl_uint num_devs,
                 const cl_device_id *d_devs,
                 void (CL_CALLBACK *pfn_notify)(const char *, const void *,
@@ -53,7 +53,7 @@ clCreateContext(const cl_context_properties *d_props, cl_uint num_devs,
    return NULL;
 }
 
-PUBLIC cl_context
+CLOVER_API cl_context
 clCreateContextFromType(const cl_context_properties *d_props,
                         cl_device_type type,
                         void (CL_CALLBACK *pfn_notify)(
@@ -79,7 +79,7 @@ clCreateContextFromType(const cl_context_properties *d_props,
    return NULL;
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clRetainContext(cl_context d_ctx) try {
    obj(d_ctx).retain();
    return CL_SUCCESS;
@@ -88,7 +88,7 @@ clRetainContext(cl_context d_ctx) try {
    return e.get();
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clReleaseContext(cl_context d_ctx) try {
    if (obj(d_ctx).release())
       delete pobj(d_ctx);
@@ -99,7 +99,7 @@ clReleaseContext(cl_context d_ctx) try {
    return e.get();
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clGetContextInfo(cl_context d_ctx, cl_context_info param,
                  size_t size, void *r_buf, size_t *r_size) try {
    property_buffer buf { r_buf, size, r_size };

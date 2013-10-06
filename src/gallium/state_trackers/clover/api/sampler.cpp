@@ -25,7 +25,7 @@
 
 using namespace clover;
 
-PUBLIC cl_sampler
+CLOVER_API cl_sampler
 clCreateSampler(cl_context d_ctx, cl_bool norm_mode,
                 cl_addressing_mode addr_mode, cl_filter_mode filter_mode,
                 cl_int *r_errcode) try {
@@ -39,7 +39,7 @@ clCreateSampler(cl_context d_ctx, cl_bool norm_mode,
    return NULL;
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clRetainSampler(cl_sampler d_s) try {
    obj(d_s).retain();
    return CL_SUCCESS;
@@ -48,7 +48,7 @@ clRetainSampler(cl_sampler d_s) try {
    return e.get();
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clReleaseSampler(cl_sampler d_s) try {
    if (obj(d_s).release())
       delete pobj(d_s);
@@ -59,7 +59,7 @@ clReleaseSampler(cl_sampler d_s) try {
    return e.get();
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clGetSamplerInfo(cl_sampler d_s, cl_sampler_info param,
                  size_t size, void *r_buf, size_t *r_size) try {
    property_buffer buf { r_buf, size, r_size };

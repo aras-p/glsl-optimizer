@@ -25,7 +25,7 @@
 
 using namespace clover;
 
-PUBLIC cl_program
+CLOVER_API cl_program
 clCreateProgramWithSource(cl_context d_ctx, cl_uint count,
                           const char **strings, const size_t *lengths,
                           cl_int *r_errcode) try {
@@ -51,7 +51,7 @@ clCreateProgramWithSource(cl_context d_ctx, cl_uint count,
    return NULL;
 }
 
-PUBLIC cl_program
+CLOVER_API cl_program
 clCreateProgramWithBinary(cl_context d_ctx, cl_uint n,
                           const cl_device_id *d_devs,
                           const size_t *lengths,
@@ -106,7 +106,7 @@ clCreateProgramWithBinary(cl_context d_ctx, cl_uint n,
    return NULL;
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clRetainProgram(cl_program d_prog) try {
    obj(d_prog).retain();
    return CL_SUCCESS;
@@ -115,7 +115,7 @@ clRetainProgram(cl_program d_prog) try {
    return e.get();
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clReleaseProgram(cl_program d_prog) try {
    if (obj(d_prog).release())
       delete pobj(d_prog);
@@ -126,7 +126,7 @@ clReleaseProgram(cl_program d_prog) try {
    return e.get();
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clBuildProgram(cl_program d_prog, cl_uint num_devs,
                const cl_device_id *d_devs, const char *p_opts,
                void (*pfn_notify)(cl_program, void *),
@@ -152,12 +152,12 @@ clBuildProgram(cl_program d_prog, cl_uint num_devs,
    return e.get();
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clUnloadCompiler() {
    return CL_SUCCESS;
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clGetProgramInfo(cl_program d_prog, cl_program_info param,
                  size_t size, void *r_buf, size_t *r_size) try {
    property_buffer buf { r_buf, size, r_size };
@@ -214,7 +214,7 @@ clGetProgramInfo(cl_program d_prog, cl_program_info param,
    return e.get();
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clGetProgramBuildInfo(cl_program d_prog, cl_device_id d_dev,
                       cl_program_build_info param,
                       size_t size, void *r_buf, size_t *r_size) try {

@@ -31,6 +31,7 @@
 
 #include "core/error.hpp"
 #include "core/property.hpp"
+#include "api/dispatch.hpp"
 
 ///
 /// Main namespace of the CL state tracker.
@@ -43,6 +44,13 @@ namespace clover {
    struct descriptor {
       typedef T object_type;
       typedef S descriptor_type;
+
+      descriptor() : dispatch(&_dispatch) {
+         static_assert(std::is_standard_layout<descriptor_type>::value,
+                       "ICD requires CL API objects to be standard layout.");
+      }
+
+      const _cl_icd_dispatch *dispatch;
    };
 
    struct default_tag;
@@ -57,7 +65,8 @@ namespace clover {
          static void
          validate(D *d) {
             auto o = static_cast<typename D::object_type *>(d);
-            if (!o || !dynamic_cast<object_type *>(o))
+            if (!o || o->dispatch != &_dispatch ||
+                !dynamic_cast<object_type *>(o))
                throw invalid_object_error<T>();
          }
 
@@ -74,7 +83,7 @@ namespace clover {
 
          static void
          validate(D *d) {
-            if (!d)
+            if (!d || d->dispatch != &_dispatch)
                throw invalid_object_error<object_type>();
          }
 
@@ -91,7 +100,7 @@ namespace clover {
 
          static void
          validate(D *d) {
-            if (!d)
+            if (!d || d->dispatch != &_dispatch)
                throw invalid_wait_list_error();
          }
 

@@ -25,7 +25,7 @@
 
 using namespace clover;
 
-PUBLIC cl_event
+CLOVER_API cl_event
 clCreateUserEvent(cl_context d_ctx, cl_int *r_errcode) try {
    auto &ctx = obj(d_ctx);
 
@@ -37,7 +37,7 @@ clCreateUserEvent(cl_context d_ctx, cl_int *r_errcode) try {
    return NULL;
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clSetUserEventStatus(cl_event d_ev, cl_int status) try {
    auto &sev = obj<soft_event>(d_ev);
 
@@ -58,7 +58,7 @@ clSetUserEventStatus(cl_event d_ev, cl_int status) try {
    return e.get();
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clWaitForEvents(cl_uint num_evs, const cl_event *d_evs) try {
    auto evs = objs(d_evs, num_evs);
 
@@ -84,7 +84,7 @@ clWaitForEvents(cl_uint num_evs, const cl_event *d_evs) try {
    return e.get();
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clGetEventInfo(cl_event d_ev, cl_event_info param,
                size_t size, void *r_buf, size_t *r_size) try {
    property_buffer buf { r_buf, size, r_size };
@@ -121,7 +121,7 @@ clGetEventInfo(cl_event d_ev, cl_event_info param,
    return e.get();
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clSetEventCallback(cl_event d_ev, cl_int type,
                    void (CL_CALLBACK *pfn_notify)(cl_event, cl_int, void *),
                    void *user_data) try {
@@ -145,7 +145,7 @@ clSetEventCallback(cl_event d_ev, cl_int type,
    return e.get();
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clRetainEvent(cl_event d_ev) try {
    obj(d_ev).retain();
    return CL_SUCCESS;
@@ -154,7 +154,7 @@ clRetainEvent(cl_event d_ev) try {
    return e.get();
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clReleaseEvent(cl_event d_ev) try {
    if (obj(d_ev).release())
       delete pobj(d_ev);
@@ -165,7 +165,7 @@ clReleaseEvent(cl_event d_ev) try {
    return e.get();
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clEnqueueMarker(cl_command_queue d_q, cl_event *rd_ev) try {
    auto &q = obj(d_q);
 
@@ -180,7 +180,7 @@ clEnqueueMarker(cl_command_queue d_q, cl_event *rd_ev) try {
    return e.get();
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clEnqueueBarrier(cl_command_queue d_q) try {
    obj(d_q);
 
@@ -192,7 +192,7 @@ clEnqueueBarrier(cl_command_queue d_q) try {
    return e.get();
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clEnqueueWaitForEvents(cl_command_queue d_q, cl_uint num_evs,
                        const cl_event *d_evs) try {
    auto &q = obj(d_q);
@@ -214,7 +214,7 @@ clEnqueueWaitForEvents(cl_command_queue d_q, cl_uint num_evs,
    return e.get();
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clGetEventProfilingInfo(cl_event d_ev, cl_profiling_info param,
                         size_t size, void *r_buf, size_t *r_size) try {
    property_buffer buf { r_buf, size, r_size };
@@ -256,7 +256,7 @@ clGetEventProfilingInfo(cl_event d_ev, cl_profiling_info param,
    return e.get();
 }
 
-PUBLIC cl_int
+CLOVER_API cl_int
 clFinish(cl_command_queue d_q) try {
    auto &q = obj(d_q);
 
