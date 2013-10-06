@@ -202,16 +202,16 @@ namespace {
       if (&kern->prog.ctx != &q->ctx ||
           any_of([&](const cl_event ev) {
                 return &ev->ctx != &q->ctx;
-             }, deps, deps + num_deps))
+             }, range(deps, num_deps)))
          throw error(CL_INVALID_CONTEXT);
 
       if (bool(num_deps) != bool(deps) ||
-          any_of(is_zero<cl_event>, deps, deps + num_deps))
+          any_of(is_zero(), range(deps, num_deps)))
          throw error(CL_INVALID_EVENT_WAIT_LIST);
 
       if (any_of([](std::unique_ptr<kernel::argument> &arg) {
                return !arg->set();
-            }, kern->args.begin(), kern->args.end()))
+            }, kern->args))
          throw error(CL_INVALID_KERNEL_ARGS);
 
       if (!kern->prog.binaries().count(&q->dev))
@@ -220,23 +220,21 @@ namespace {
       if (dims < 1 || dims > q->dev.max_block_size().size())
          throw error(CL_INVALID_WORK_DIMENSION);
 
-      if (!grid_size || any_of(is_zero<size_t>, grid_size, grid_size + dims))
+      if (!grid_size || any_of(is_zero(), range(grid_size, dims)))
          throw error(CL_INVALID_GLOBAL_WORK_SIZE);
 
       if (block_size) {
          if (any_of([](size_t b, size_t max) {
                   return b == 0 || b > max;
-               }, block_size, block_size + dims,
-               q->dev.max_block_size().begin()))
+               }, range(block_size, dims),
+               q->dev.max_block_size()))
             throw error(CL_INVALID_WORK_ITEM_SIZE);
 
-         if (any_of([](size_t b, size_t g) {
-                  return g % b;
-               }, block_size, block_size + dims, grid_size))
+         if (any_of(modulus(), range(grid_size, dims),
+                    range(block_size, dims)))
             throw error(CL_INVALID_WORK_GROUP_SIZE);
 
-         if (fold(std::multiplies<size_t>(), 1u,
-                  block_size, block_size + dims) >
+         if (fold(multiplies(), 1u, range(block_size, dims)) >
              q->dev.max_threads_per_block())
             throw error(CL_INVALID_WORK_GROUP_SIZE);
       }
@@ -250,9 +248,8 @@ namespace {
              const std::vector<size_t> &grid_offset,
              const std::vector<size_t> &grid_size,
              const std::vector<size_t> &block_size) {
-      const std::vector<size_t> reduced_grid_size = map(
-         std::divides<size_t>(), grid_size.begin(), grid_size.end(),
-         block_size.begin());
+      const std::vector<size_t> reduced_grid_size =
+         map(divides(), grid_size, block_size);
 
       return [=](event &) {
          kern->launch(*q, grid_offset, reduced_grid_size, block_size);

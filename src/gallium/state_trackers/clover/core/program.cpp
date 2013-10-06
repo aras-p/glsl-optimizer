@@ -22,6 +22,7 @@
 
 #include "core/program.hpp"
 #include "core/compiler.hpp"
+#include "util/algorithm.hpp"
 
 using namespace clover;
 
@@ -37,7 +38,7 @@ _cl_program::_cl_program(clover::context &ctx,
    for_each([&](clover::device *dev, const clover::module &bin) {
          _binaries.insert({ dev, bin });
       },
-      devs.begin(), devs.end(), binaries.begin());
+      devs, binaries);
 }
 
 void

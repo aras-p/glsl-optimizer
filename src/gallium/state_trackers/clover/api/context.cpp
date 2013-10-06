@@ -37,7 +37,7 @@ clCreateContext(const cl_context_properties *props, cl_uint num_devs,
        (!pfn_notify && user_data))
       throw error(CL_INVALID_VALUE);
 
-   if (any_of(is_zero<cl_device_id>, devs, devs + num_devs))
+   if (any_of(is_zero(), range(devs, num_devs)))
       throw error(CL_INVALID_DEVICE);
 
    for (auto p : mprops) {

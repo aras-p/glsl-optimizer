@@ -100,7 +100,7 @@ clover::resource &
 sub_buffer::resource(cl_command_queue q) {
    // Create a new resource if there's none for this device yet.
    if (!resources.count(&q->dev)) {
-      auto r = new sub_resource(parent.resource(q), { offset() });
+      auto r = new sub_resource(parent.resource(q), {{ offset() }});
 
       resources.insert(std::make_pair(&q->dev,
                                       std::unique_ptr<sub_resource>(r)));

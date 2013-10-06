@@ -29,7 +29,12 @@
 using namespace clover;
 
 namespace {
-   typedef resource::point point;
+   typedef resource::vector vector_t;
+
+   vector_t
+   vector(const size_t *p) {
+      return range(p, 3);
+   }
 
    ///
    /// Common argument checking shared by memory transfer commands.
@@ -40,12 +45,12 @@ namespace {
          throw error(CL_INVALID_COMMAND_QUEUE);
 
       if (bool(num_deps) != bool(deps) ||
-          any_of(is_zero<cl_event>, deps, deps + num_deps))
+          any_of(is_zero(), range(deps, num_deps)))
          throw error(CL_INVALID_EVENT_WAIT_LIST);
 
       if (any_of([&](const cl_event ev) {
                return &ev->ctx != &q->ctx;
-            }, deps, deps + num_deps))
+            }, range(deps, num_deps)))
          throw error(CL_INVALID_CONTEXT);
    }
 
@@ -89,7 +94,8 @@ namespace {
       static mapping
       get(cl_command_queue q, memory_obj *obj, cl_map_flags flags,
           size_t offset, size_t size) {
-         return { *q, obj->resource(q), flags, true, { offset }, { size, 1, 1 }};
+         return { *q, obj->resource(q), flags, true,
+                  {{ offset }}, {{ size, 1, 1 }}};
       }
    };
 
@@ -100,21 +106,24 @@ namespace {
    template<typename T, typename S>
    std::function<void (event &)>
    soft_copy_op(cl_command_queue q,
-                T dst_obj, const point &dst_orig, const point &dst_pitch,
-                S src_obj, const point &src_orig, const point &src_pitch,
-                const point &region) {
+                T dst_obj, const vector_t &dst_orig, const vector_t &dst_pitch,
+                S src_obj, const vector_t &src_orig, const vector_t &src_pitch,
+                const vector_t &region) {
       return [=](event &) {
          auto dst = _map<T>::get(q, dst_obj, CL_MAP_WRITE,
-                                  dst_pitch(dst_orig), dst_pitch(region));
+                                 dot(dst_pitch, dst_orig),
+                                 dst_pitch[2] * region[2]);
          auto src = _map<S>::get(q, src_obj, CL_MAP_READ,
-                                  src_pitch(src_orig), src_pitch(region));
-         point p;
+                                 dot(src_pitch, src_orig),
+                                 src_pitch[2] * region[2]);
+         vector_t v = {};
 
-         for (p[2] = 0; p[2] < region[2]; ++p[2]) {
-            for (p[1] = 0; p[1] < region[1]; ++p[1]) {
-               std::memcpy(static_cast<char *>(dst) + dst_pitch(p),
-                           static_cast<const char *>(src) + src_pitch(p),
-                           src_pitch[0] * region[0]);
+         for (v[2] = 0; v[2] < region[2]; ++v[2]) {
+            for (v[1] = 0; v[1] < region[1]; ++v[1]) {
+               std::memcpy(
+                  static_cast<char *>(dst) + dot(dst_pitch, v),
+                  static_cast<const char *>(src) + dot(src_pitch, v),
+                  src_pitch[0] * region[0]);
             }
          }
       };
@@ -125,8 +134,8 @@ namespace {
    ///
    template<typename T, typename S>
    std::function<void (event &)>
-   hard_copy_op(cl_command_queue q, T dst_obj, const point &dst_orig,
-                S src_obj, const point &src_orig, const point &region) {
+   hard_copy_op(cl_command_queue q, T dst_obj, const vector_t &dst_orig,
+                S src_obj, const vector_t &src_orig, const vector_t &region) {
       return [=](event &) {
          dst_obj->resource(q).copy(*q, dst_orig, region,
                                    src_obj->resource(q), src_orig);
@@ -148,9 +157,9 @@ clEnqueueReadBuffer(cl_command_queue q, cl_mem obj, cl_bool blocking,
    hard_event *hev = new hard_event(
       *q, CL_COMMAND_READ_BUFFER, { deps, deps + num_deps },
       soft_copy_op(q,
-                   ptr, { 0 }, { 1 },
-                   obj, { offset }, { 1 },
-                   { size, 1, 1 }));
+                   ptr, {{ 0 }}, {{ 1 }},
+                   obj, {{ offset }}, {{ 1 }},
+                   {{ size, 1, 1 }}));
 
    ret_object(ev, hev);
    return CL_SUCCESS;
@@ -173,9 +182,9 @@ clEnqueueWriteBuffer(cl_command_queue q, cl_mem obj, cl_bool blocking,
    hard_event *hev = new hard_event(
       *q, CL_COMMAND_WRITE_BUFFER, { deps, deps + num_deps },
       soft_copy_op(q,
-                   obj, { offset }, { 1 },
-                   ptr, { 0 }, { 1 },
-                   { size, 1, 1 }));
+                   obj, {{ offset }}, {{ 1 }},
+                   ptr, {{ 0 }}, {{ 1 }},
+                   {{ size, 1, 1 }}));
 
    ret_object(ev, hev);
    return CL_SUCCESS;
@@ -202,11 +211,11 @@ clEnqueueReadBufferRect(cl_command_queue q, cl_mem obj, cl_bool blocking,
    hard_event *hev = new hard_event(
       *q, CL_COMMAND_READ_BUFFER_RECT, { deps, deps + num_deps },
       soft_copy_op(q,
-                   ptr, host_origin,
-                   { 1, host_row_pitch, host_slice_pitch },
-                   obj, obj_origin,
-                   { 1, obj_row_pitch, obj_slice_pitch },
-                   region));
+                   ptr, vector(host_origin),
+                   {{ 1, host_row_pitch, host_slice_pitch }},
+                   obj, vector(obj_origin),
+                   {{ 1, obj_row_pitch, obj_slice_pitch }},
+                   vector(region)));
 
    ret_object(ev, hev);
    return CL_SUCCESS;
@@ -233,11 +242,11 @@ clEnqueueWriteBufferRect(cl_command_queue q, cl_mem obj, cl_bool blocking,
    hard_event *hev = new hard_event(
       *q, CL_COMMAND_WRITE_BUFFER_RECT, { deps, deps + num_deps },
       soft_copy_op(q,
-                   obj, obj_origin,
-                   { 1, obj_row_pitch, obj_slice_pitch },
-                   ptr, host_origin,
-                   { 1, host_row_pitch, host_slice_pitch },
-                   region));
+                   obj, vector(obj_origin),
+                   {{ 1, obj_row_pitch, obj_slice_pitch }},
+                   ptr, vector(host_origin),
+                   {{ 1, host_row_pitch, host_slice_pitch }},
+                   vector(region)));
 
    ret_object(ev, hev);
    return CL_SUCCESS;
@@ -257,9 +266,9 @@ clEnqueueCopyBuffer(cl_command_queue q, cl_mem src_obj, cl_mem dst_obj,
 
    hard_event *hev = new hard_event(
       *q, CL_COMMAND_COPY_BUFFER, { deps, deps + num_deps },
-      hard_copy_op(q, dst_obj, { dst_offset },
-                   src_obj, { src_offset },
-                   { size, 1, 1 }));
+      hard_copy_op(q, dst_obj, {{ dst_offset }},
+                   src_obj, {{ src_offset }},
+                   {{ size, 1, 1 }}));
 
    ret_object(ev, hev);
    return CL_SUCCESS;
@@ -283,11 +292,11 @@ clEnqueueCopyBufferRect(cl_command_queue q, cl_mem src_obj, cl_mem dst_obj,
    hard_event *hev = new hard_event(
       *q, CL_COMMAND_COPY_BUFFER_RECT, { deps, deps + num_deps },
       soft_copy_op(q,
-                   dst_obj, dst_origin,
-                   { 1, dst_row_pitch, dst_slice_pitch },
-                   src_obj, src_origin,
-                   { 1, src_row_pitch, src_slice_pitch },
-                   region));
+                   dst_obj, vector(dst_origin),
+                   {{ 1, dst_row_pitch, dst_slice_pitch }},
+                   src_obj, vector(src_origin),
+                   {{ 1, src_row_pitch, src_slice_pitch }},
+                   vector(region)));
 
    ret_object(ev, hev);
    return CL_SUCCESS;
@@ -314,10 +323,10 @@ clEnqueueReadImage(cl_command_queue q, cl_mem obj, cl_bool blocking,
       *q, CL_COMMAND_READ_IMAGE, { deps, deps + num_deps },
       soft_copy_op(q,
                    ptr, {},
-                   { 1, row_pitch, slice_pitch },
-                   obj, origin,
-                   { 1, img->row_pitch(), img->slice_pitch() },
-                   region));
+                   {{ 1, row_pitch, slice_pitch }},
+                   obj, vector(origin),
+                   {{ 1, img->row_pitch(), img->slice_pitch() }},
+                   vector(region)));
 
    ret_object(ev, hev);
    return CL_SUCCESS;
@@ -343,11 +352,11 @@ clEnqueueWriteImage(cl_command_queue q, cl_mem obj, cl_bool blocking,
    hard_event *hev = new hard_event(
       *q, CL_COMMAND_WRITE_IMAGE, { deps, deps + num_deps },
       soft_copy_op(q,
-                   obj, origin,
-                   { 1, img->row_pitch(), img->slice_pitch() },
+                   obj, vector(origin),
+                   {{ 1, img->row_pitch(), img->slice_pitch() }},
                    ptr, {},
-                   { 1, row_pitch, slice_pitch },
-                   region));
+                   {{ 1, row_pitch, slice_pitch }},
+                   vector(region)));
 
    ret_object(ev, hev);
    return CL_SUCCESS;
@@ -371,7 +380,10 @@ clEnqueueCopyImage(cl_command_queue q, cl_mem src_obj, cl_mem dst_obj,
 
    hard_event *hev = new hard_event(
       *q, CL_COMMAND_COPY_IMAGE, { deps, deps + num_deps },
-      hard_copy_op(q, dst_obj, dst_origin, src_obj, src_origin, region));
+      hard_copy_op(q,
+                   dst_obj, vector(dst_origin),
+                   src_obj, vector(src_origin),
+                   vector(region)));
 
    ret_object(ev, hev);
    return CL_SUCCESS;
@@ -395,11 +407,11 @@ clEnqueueCopyImageToBuffer(cl_command_queue q, cl_mem src_obj, cl_mem dst_obj,
    hard_event *hev = new hard_event(
       *q, CL_COMMAND_COPY_IMAGE_TO_BUFFER, { deps, deps + num_deps },
       soft_copy_op(q,
-                   dst_obj, { dst_offset },
-                   { 0, 0, 0 },
-                   src_obj, src_origin,
-                   { 1, src_img->row_pitch(), src_img->slice_pitch() },
-                   region));
+                   dst_obj, {{ dst_offset }},
+                   {{ 0, 0, 0 }},
+                   src_obj, vector(src_origin),
+                   {{ 1, src_img->row_pitch(), src_img->slice_pitch() }},
+                   vector(region)));
 
    ret_object(ev, hev);
    return CL_SUCCESS;
@@ -423,11 +435,11 @@ clEnqueueCopyBufferToImage(cl_command_queue q, cl_mem src_obj, cl_mem dst_obj,
    hard_event *hev = new hard_event(
       *q, CL_COMMAND_COPY_BUFFER_TO_IMAGE, { deps, deps + num_deps },
       soft_copy_op(q,
-                   dst_obj, dst_origin,
-                   { 1, dst_img->row_pitch(), dst_img->slice_pitch() },
-                   src_obj, { src_offset },
-                   { 0, 0, 0 },
-                   region));
+                   dst_obj, vector(dst_origin),
+                   {{ 1, dst_img->row_pitch(), dst_img->slice_pitch() }},
+                   src_obj, {{ src_offset }},
+                   {{ 0, 0, 0 }},
+                   vector(region)));
 
    ret_object(ev, hev);
    return CL_SUCCESS;
@@ -448,7 +460,7 @@ clEnqueueMapBuffer(cl_command_queue q, cl_mem obj, cl_bool blocking,
       throw error(CL_INVALID_VALUE);
 
    void *map = obj->resource(q).add_map(
-      *q, flags, blocking, { offset }, { size });
+      *q, flags, blocking, {{ offset }}, {{ size }});
 
    ret_object(ev, new hard_event(*q, CL_COMMAND_MAP_BUFFER,
                                  { deps, deps + num_deps }));
@@ -473,7 +485,7 @@ clEnqueueMapImage(cl_command_queue q, cl_mem obj, cl_bool blocking,
    validate_obj(q, img);
 
    void *map = obj->resource(q).add_map(
-      *q, flags, blocking, origin, region);
+      *q, flags, blocking, vector(origin), vector(region));
 
    ret_object(ev, new hard_event(*q, CL_COMMAND_MAP_IMAGE,
                                  { deps, deps + num_deps }));

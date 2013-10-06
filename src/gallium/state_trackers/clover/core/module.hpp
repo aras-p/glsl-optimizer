@@ -23,7 +23,7 @@
 #ifndef CLOVER_CORE_MODULE_HPP
 #define CLOVER_CORE_MODULE_HPP
 
-#include "core/compat.hpp"
+#include "util/compat.hpp"
 
 namespace clover {
    struct module {

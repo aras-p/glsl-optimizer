@@ -23,7 +23,7 @@
 #ifndef CLOVER_CORE_COMPILER_HPP
 #define CLOVER_CORE_COMPILER_HPP
 
-#include "core/compat.hpp"
+#include "util/compat.hpp"
 #include "core/module.hpp"
 #include "pipe/p_defines.h"
 

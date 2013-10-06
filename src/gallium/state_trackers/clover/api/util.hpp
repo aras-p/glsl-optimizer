@@ -29,6 +29,7 @@
 #include <map>
 
 #include "core/base.hpp"
+#include "util/algorithm.hpp"
 #include "pipe/p_compiler.h"
 
 namespace clover {
@@ -49,9 +50,9 @@ namespace clover {
       if (buf)
          for_each([](typename V::value_type src, T *dst) {
                if (dst)
-                  std::copy(src.begin(), src.end(), dst);
+                  copy(src, dst);
             },
-            v.begin(), v.end(), (T **)buf);
+            v, range((T **)buf, v.size()));
 
       return CL_SUCCESS;
    }
@@ -69,7 +70,7 @@ namespace clover {
       if (size_ret)
          *size_ret = sizeof(T) * v.size();
       if (buf)
-         std::copy(v.begin(), v.end(), (T *)buf);
+         copy(v, (T *)buf);
 
       return CL_SUCCESS;
    }

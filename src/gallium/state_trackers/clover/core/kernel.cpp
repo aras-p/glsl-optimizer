@@ -22,6 +22,7 @@
 
 #include "core/kernel.hpp"
 #include "core/resource.hpp"
+#include "util/algorithm.hpp"
 #include "util/u_math.h"
 #include "pipe/p_context.h"
 
@@ -67,8 +68,9 @@ _cl_kernel::launch(clover::command_queue &q,
                    const std::vector<size_t> &grid_size,
                    const std::vector<size_t> &block_size) {
    void *st = exec.bind(&q);
-   auto g_handles = map([&](size_t h) { return (uint32_t *)&exec.input[h]; },
-                        exec.g_handles.begin(), exec.g_handles.end());
+   std::vector<uint32_t *> g_handles = map([&](size_t h) {
+         return (uint32_t *)&exec.input[h];
+      }, exec.g_handles);
 
    q.pipe->bind_compute_state(q.pipe, st);
    q.pipe->bind_sampler_states(q.pipe, PIPE_SHADER_COMPUTE,
@@ -151,7 +153,7 @@ _cl_kernel::exec_context::bind(clover::command_queue *_q) {
    for_each([=](std::unique_ptr<kernel::argument> &karg,
                 const module::argument &marg) {
          karg->bind(*this, marg);
-      }, kern.args.begin(), kern.args.end(), margs.begin());
+      }, kern.args, margs);
 
    // Create a new compute state if anything changed.
    if (!st || q != _q ||

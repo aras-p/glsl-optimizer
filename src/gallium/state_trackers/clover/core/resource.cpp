@@ -21,6 +21,7 @@
 //
 
 #include "core/resource.hpp"
+#include "util/algorithm.hpp"
 #include "pipe/p_screen.h"
 #include "util/u_sampler.h"
 #include "util/u_format.h"
@@ -30,7 +31,7 @@ using namespace clover;
 namespace {
    class box {
    public:
-      box(const resource::point &origin, const resource::point &size) :
+      box(const resource::vector &origin, const resource::vector &size) :
          pipe({ (int)origin[0], (int)origin[1],
                 (int)origin[2], (int)size[0],
                 (int)size[1], (int)size[2] }) {
@@ -46,16 +47,16 @@ namespace {
 }
 
 resource::resource(clover::device &dev, clover::memory_obj &obj) :
-   dev(dev), obj(obj), pipe(NULL), offset{0} {
+   dev(dev), obj(obj), pipe(NULL), offset() {
 }
 
 resource::~resource() {
 }
 
 void
-resource::copy(command_queue &q, const point &origin, const point &region,
-               resource &src_res, const point &src_origin) {
-   point p = offset + origin;
+resource::copy(command_queue &q, const vector &origin, const vector &region,
+               resource &src_res, const vector &src_origin) {
+   auto p = offset + origin;
 
    q.pipe->resource_copy_region(q.pipe, pipe, 0, p[0], p[1], p[2],
                                 src_res.pipe, 0,
@@ -64,16 +65,16 @@ resource::copy(command_queue &q, const point &origin, const point &region,
 
 void *
 resource::add_map(command_queue &q, cl_map_flags flags, bool blocking,
-                  const point &origin, const point &region) {
+                  const vector &origin, const vector &region) {
    maps.emplace_back(q, *this, flags, blocking, origin, region);
    return maps.back();
 }
 
 void
 resource::del_map(void *p) {
-   auto it = std::find(maps.begin(), maps.end(), p);
-   if (it != maps.end())
-      maps.erase(it);
+   erase_if([&](mapping &m) {
+         return static_cast<void *>(m) == p;
+      }, maps);
 }
 
 unsigned
@@ -142,7 +143,7 @@ root_resource::root_resource(clover::device &dev, clover::memory_obj &obj,
       throw error(CL_OUT_OF_RESOURCES);
 
    if (!data.empty()) {
-      box rect { { 0, 0, 0 }, { info.width0, info.height0, info.depth0 } };
+      box rect { {{ 0, 0, 0 }}, {{ info.width0, info.height0, info.depth0 }} };
       unsigned cpp = util_format_get_blocksize(info.format);
 
       q.pipe->transfer_inline_write(q.pipe, pipe, 0, PIPE_TRANSFER_WRITE,
@@ -161,16 +162,16 @@ root_resource::~root_resource() {
    dev.pipe->resource_destroy(dev.pipe, pipe);
 }
 
-sub_resource::sub_resource(clover::resource &r, point offset) :
+sub_resource::sub_resource(resource &r, const vector &offset) :
    resource(r.dev, r.obj) {
-   pipe = r.pipe;
-   offset = r.offset + offset;
+   this->pipe = r.pipe;
+   this->offset = r.offset + offset;
 }
 
 mapping::mapping(command_queue &q, resource &r,
                  cl_map_flags flags, bool blocking,
-                 const resource::point &origin,
-                 const resource::point &region) :
+                 const resource::vector &origin,
+                 const resource::vector &region) :
    pctx(q.pipe) {
    unsigned usage = ((flags & CL_MAP_WRITE ? PIPE_TRANSFER_WRITE : 0 ) |
                      (flags & CL_MAP_READ ? PIPE_TRANSFER_READ : 0 ) |
@@ -194,4 +195,12 @@ mapping::~mapping() {
    if (pxfer) {
       pctx->transfer_unmap(pctx, pxfer);
    }
+}
+
+mapping &
+mapping::operator=(mapping m) {
+   std::swap(pctx, m.pctx);
+   std::swap(pxfer, m.pxfer);
+   std::swap(p, m.p);
+   return *this;
 }

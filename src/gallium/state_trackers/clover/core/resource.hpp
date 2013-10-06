@@ -27,7 +27,7 @@
 
 #include "core/base.hpp"
 #include "core/memory.hpp"
-#include "core/geometry.hpp"
+#include "util/algebra.hpp"
 #include "pipe/p_state.h"
 
 namespace clover {
@@ -39,16 +39,16 @@ namespace clover {
    ///
    class resource {
    public:
-      typedef clover::point<size_t, 3> point;
+      typedef std::array<size_t, 3> vector;
 
       resource(const resource &r) = delete;
       virtual ~resource();
 
-      void copy(command_queue &q, const point &origin, const point &region,
-                resource &src_resource, const point &src_origin);
+      void copy(command_queue &q, const vector &origin, const vector &region,
+                resource &src_resource, const vector &src_origin);
 
       void *add_map(command_queue &q, cl_map_flags flags, bool blocking,
-                    const point &origin, const point &region);
+                    const vector &origin, const vector &region);
       void del_map(void *p);
       unsigned map_count() const;
 
@@ -70,7 +70,7 @@ namespace clover {
       void unbind_surface(clover::command_queue &q, pipe_surface *st);
 
       pipe_resource *pipe;
-      point offset;
+      vector offset;
 
    private:
       std::list<mapping> maps;
@@ -95,7 +95,7 @@ namespace clover {
    ///
    class sub_resource : public resource {
    public:
-      sub_resource(clover::resource &r, point offset);
+      sub_resource(clover::resource &r, const vector &offset);
    };
 
    ///
@@ -105,11 +105,14 @@ namespace clover {
    class mapping {
    public:
       mapping(command_queue &q, resource &r, cl_map_flags flags,
-              bool blocking, const resource::point &origin,
-              const resource::point &region);
+              bool blocking, const resource::vector &origin,
+              const resource::vector &region);
       mapping(const mapping &m) = delete;
       mapping(mapping &&m);
       ~mapping();
+
+      mapping &
+      operator=(mapping m);
 
       operator void *() {
          return p;

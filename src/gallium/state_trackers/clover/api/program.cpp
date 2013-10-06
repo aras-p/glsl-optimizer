@@ -35,7 +35,7 @@ clCreateProgramWithSource(cl_context ctx, cl_uint count,
       throw error(CL_INVALID_CONTEXT);
 
    if (!count || !strings ||
-       any_of(is_zero<const char *>, strings, strings + count))
+       any_of(is_zero(), range(strings, count)))
       throw error(CL_INVALID_VALUE);
 
    // Concatenate all the provided fragments together
@@ -66,7 +66,7 @@ clCreateProgramWithBinary(cl_context ctx, cl_uint count,
 
    if (any_of([&](const cl_device_id dev) {
             return !ctx->has_device(dev);
-         }, devs, devs + count))
+         }, range(devs, count)))
       throw error(CL_INVALID_DEVICE);
 
    // Deserialize the provided binaries,
@@ -85,26 +85,23 @@ clCreateProgramWithBinary(cl_context ctx, cl_uint count,
             return { CL_INVALID_BINARY, {} };
          }
       },
-      binaries, binaries + count, lengths);
+      range(binaries, count),
+      range(lengths, count));
 
    // update the status array,
    if (status_ret)
-      std::transform(modules.begin(), modules.end(), status_ret,
-                     keys<cl_int, module>);
+      copy(map(keys(), modules), status_ret);
 
-   if (any_of(key_equals<cl_int, module>(CL_INVALID_VALUE),
-              modules.begin(), modules.end()))
+   if (any_of(key_equals(CL_INVALID_VALUE), modules))
       throw error(CL_INVALID_VALUE);
 
-   if (any_of(key_equals<cl_int, module>(CL_INVALID_BINARY),
-              modules.begin(), modules.end()))
+   if (any_of(key_equals(CL_INVALID_BINARY), modules))
       throw error(CL_INVALID_BINARY);
 
    // initialize a program object with them.
    ret_error(errcode_ret, CL_SUCCESS);
    return new program(*ctx, { devs, devs + count },
-                      map(values<cl_int, module>,
-                          modules.begin(), modules.end()));
+                      map(values(), modules));
 
 } catch (error &e) {
    ret_error(errcode_ret, e);
@@ -148,7 +145,7 @@ clBuildProgram(cl_program prog, cl_uint count, const cl_device_id *devs,
    if (devs) {
       if (any_of([&](const cl_device_id dev) {
                return !prog->ctx.has_device(dev);
-            }, devs, devs + count))
+            }, range(devs, count)))
          throw error(CL_INVALID_DEVICE);
 
       prog->build({ devs, devs + count }, opts);
@@ -189,8 +186,7 @@ clGetProgramInfo(cl_program prog, cl_program_info param,
    case CL_PROGRAM_DEVICES:
       return vector_property<cl_device_id>(
          buf, size, size_ret,
-         map(keys<device *, module>,
-             prog->binaries().begin(), prog->binaries().end()));
+         map(keys(), prog->binaries()));
 
    case CL_PROGRAM_SOURCE:
       return string_property(buf, size, size_ret, prog->source());
@@ -204,7 +200,7 @@ clGetProgramInfo(cl_program prog, cl_program_info param,
                ent.second.serialize(s);
                return bin.size();
             },
-            prog->binaries().begin(), prog->binaries().end()));
+            prog->binaries()));
 
    case CL_PROGRAM_BINARIES:
       return matrix_property<unsigned char>(
@@ -215,7 +211,7 @@ clGetProgramInfo(cl_program prog, cl_program_info param,
                ent.second.serialize(s);
                return bin;
             },
-            prog->binaries().begin(), prog->binaries().end()));
+            prog->binaries()));
 
    default:
       return CL_INVALID_VALUE;
