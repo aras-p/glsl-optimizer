@@ -25,7 +25,7 @@
 
 #include <vector>
 
-#include "core/base.hpp"
+#include "core/object.hpp"
 #include "core/device.hpp"
 
 namespace clover {

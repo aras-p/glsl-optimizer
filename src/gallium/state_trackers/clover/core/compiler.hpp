@@ -24,37 +24,13 @@
 #define CLOVER_CORE_COMPILER_HPP
 
 #include "util/compat.hpp"
+#include "core/error.hpp"
 #include "core/module.hpp"
 #include "pipe/p_defines.h"
 
 namespace clover {
-   class build_error {
-   public:
-      build_error(const compat::string &log) : log(log) {
-      }
-
-      virtual ~build_error() {
-      }
-
-      compat::string what() {
-         return log;
-      }
-
-   private:
-      compat::vector<char> log;
-   };
-
-   class invalid_option_error {
-   public:
-      invalid_option_error() {
-      }
-
-      virtual ~invalid_option_error() {
-      }
-   };
-
    module compile_program_llvm(const compat::string &source,
-                               enum pipe_shader_ir ir,
+                               pipe_shader_ir ir,
                                const compat::string &target,
                                const compat::string &opts);
 

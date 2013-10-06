@@ -25,7 +25,7 @@
 
 #include <functional>
 
-#include "core/base.hpp"
+#include "core/object.hpp"
 #include "core/queue.hpp"
 #include "core/timestamp.hpp"
 #include "util/lazy.hpp"

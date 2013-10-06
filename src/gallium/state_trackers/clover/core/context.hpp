@@ -23,7 +23,7 @@
 #ifndef CLOVER_CORE_CONTEXT_HPP
 #define CLOVER_CORE_CONTEXT_HPP
 
-#include "core/base.hpp"
+#include "core/object.hpp"
 #include "core/device.hpp"
 
 namespace clover {

@@ -60,9 +60,7 @@ _cl_program::build(const std::vector<clover::device *> &devs,
 
       } catch (build_error &e) {
          _logs.insert({ dev, e.what() });
-         throw error(CL_BUILD_PROGRAM_FAILURE);
-      } catch (invalid_option_error &e) {
-         throw error(CL_INVALID_BUILD_OPTIONS);
+         throw;
       }
    }
 }

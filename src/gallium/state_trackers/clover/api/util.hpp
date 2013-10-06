@@ -23,15 +23,11 @@
 #ifndef CLOVER_API_UTIL_HPP
 #define CLOVER_API_UTIL_HPP
 
-#include <cstdint>
-#include <cstring>
-#include <algorithm>
-#include <map>
+#include <cassert>
 
-#include "core/base.hpp"
+#include "core/error.hpp"
 #include "core/property.hpp"
 #include "util/algorithm.hpp"
-#include "pipe/p_compiler.h"
 
 namespace clover {
    ///

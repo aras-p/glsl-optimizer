@@ -27,7 +27,7 @@
 #include <map>
 #include <memory>
 
-#include "core/base.hpp"
+#include "core/object.hpp"
 #include "core/queue.hpp"
 
 namespace clover {

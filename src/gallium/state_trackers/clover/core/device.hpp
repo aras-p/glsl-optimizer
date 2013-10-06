@@ -26,7 +26,7 @@
 #include <set>
 #include <vector>
 
-#include "core/base.hpp"
+#include "core/object.hpp"
 #include "core/format.hpp"
 #include "pipe-loader/pipe_loader.h"
 

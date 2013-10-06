@@ -23,7 +23,7 @@
 #ifndef CLOVER_CORE_QUEUE_HPP
 #define CLOVER_CORE_QUEUE_HPP
 
-#include "core/base.hpp"
+#include "core/object.hpp"
 #include "core/context.hpp"
 #include "core/timestamp.hpp"
 #include "pipe/p_context.h"

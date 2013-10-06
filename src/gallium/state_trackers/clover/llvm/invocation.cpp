@@ -157,7 +157,7 @@ namespace {
                                         opts_carray.data() + opts_carray.size(),
                                         Diags);
       if (!Success) {
-         throw invalid_option_error();
+         throw error(CL_INVALID_BUILD_OPTIONS);
       }
       c.getFrontendOpts().ProgramAction = clang::frontend::EmitLLVMOnly;
       c.getHeaderSearchOpts().UseBuiltinIncludes = true;

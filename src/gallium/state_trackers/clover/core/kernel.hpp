@@ -25,7 +25,7 @@
 
 #include <memory>
 
-#include "core/base.hpp"
+#include "core/object.hpp"
 #include "core/program.hpp"
 #include "core/memory.hpp"
 #include "core/sampler.hpp"

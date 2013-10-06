@@ -25,7 +25,7 @@
 
 #include <map>
 
-#include "core/base.hpp"
+#include "core/object.hpp"
 #include "core/context.hpp"
 #include "core/module.hpp"
 

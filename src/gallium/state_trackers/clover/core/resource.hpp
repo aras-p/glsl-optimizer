@@ -25,7 +25,7 @@
 
 #include <list>
 
-#include "core/base.hpp"
+#include "core/object.hpp"
 #include "core/memory.hpp"
 #include "util/algebra.hpp"
 #include "pipe/p_state.h"

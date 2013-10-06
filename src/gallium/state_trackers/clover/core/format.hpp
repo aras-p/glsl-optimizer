@@ -25,7 +25,7 @@
 
 #include <set>
 
-#include "core/base.hpp"
+#include "core/object.hpp"
 #include "pipe/p_defines.h"
 #include "pipe/p_format.h"
 
