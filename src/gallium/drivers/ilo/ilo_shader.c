@@ -903,7 +903,7 @@ ilo_shader_select_kernel_routing(struct ilo_shader_state *shader,
 
    /* we are constructing 3DSTATE_SBE here */
    assert(shader->info.dev->gen >= ILO_GEN(6) &&
-          shader->info.dev->gen <= ILO_GEN(7));
+          shader->info.dev->gen <= ILO_GEN(7.5));
 
    assert(kernel);
 

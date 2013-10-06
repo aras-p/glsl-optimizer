@@ -81,6 +81,7 @@ ilo_3d_pipeline_create(struct ilo_cp *cp, const struct ilo_dev_info *dev)
       ilo_3d_pipeline_init_gen6(p);
       break;
    case ILO_GEN(7):
+   case ILO_GEN(7.5):
       ilo_3d_pipeline_init_gen7(p);
       break;
    default:

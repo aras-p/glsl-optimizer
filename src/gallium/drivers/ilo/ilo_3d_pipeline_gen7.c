@@ -46,7 +46,7 @@ gen7_wa_pipe_control_cs_stall(struct ilo_3d_pipeline *p,
    struct intel_bo *bo = NULL;
    uint32_t dw1 = PIPE_CONTROL_CS_STALL;
 
-   assert(p->dev->gen == ILO_GEN(7));
+   assert(p->dev->gen == ILO_GEN(7) || p->dev->gen == ILO_GEN(7.5));
 
    /* emit once */
    if (p->state.has_gen6_wa_pipe_control)
@@ -94,7 +94,7 @@ gen7_wa_pipe_control_cs_stall(struct ilo_3d_pipeline *p,
 static void
 gen7_wa_pipe_control_vs_depth_stall(struct ilo_3d_pipeline *p)
 {
-   assert(p->dev->gen == ILO_GEN(7));
+   assert(p->dev->gen == ILO_GEN(7) || p->dev->gen == ILO_GEN(7.5));
 
    /*
     * From the Ivy Bridge PRM, volume 2 part 1, page 106:
@@ -115,7 +115,7 @@ static void
 gen7_wa_pipe_control_wm_depth_stall(struct ilo_3d_pipeline *p,
                                     bool change_depth_buffer)
 {
-   assert(p->dev->gen == ILO_GEN(7));
+   assert(p->dev->gen == ILO_GEN(7) || p->dev->gen == ILO_GEN(7.5));
 
    /*
     * From the Ivy Bridge PRM, volume 2 part 1, page 276:
@@ -188,7 +188,8 @@ gen7_pipeline_common_urb(struct ilo_3d_pipeline *p,
    /* 3DSTATE_URB_{VS,GS,HS,DS} */
    if (DIRTY(VE) || DIRTY(VS)) {
       /* the first 16KB are reserved for VS and PS PCBs */
-      const int offset = 16 * 1024;
+      const int offset =
+         (p->dev->gen == ILO_GEN(7.5) && p->dev->gt == 3) ? 32768 : 16384;
       int vs_entry_size, vs_total_size;
 
       vs_entry_size = (ilo->vs) ?
@@ -227,16 +228,21 @@ gen7_pipeline_common_pcb_alloc(struct ilo_3d_pipeline *p,
    /* 3DSTATE_PUSH_CONSTANT_ALLOC_{VS,PS} */
    if (session->hw_ctx_changed) {
       /*
-       * push constant buffers are only allowed to take up at most the first
-       * 16KB of the URB
+       * Push constant buffers are only allowed to take up at most the first
+       * 16KB of the URB.  Split the space evenly for VS and FS.
        */
-      gen7_emit_3DSTATE_PUSH_CONSTANT_ALLOC_VS(p->dev,
-            0, 8192, p->cp);
+      const int max_size =
+         (p->dev->gen == ILO_GEN(7.5) && p->dev->gt == 3) ? 32768 : 16384;
+      const int size = max_size / 2;
+      int offset = 0;
 
-      gen7_emit_3DSTATE_PUSH_CONSTANT_ALLOC_PS(p->dev,
-            8192, 8192, p->cp);
+      gen7_emit_3DSTATE_PUSH_CONSTANT_ALLOC_VS(p->dev, offset, size, p->cp);
+      offset += size;
 
-      gen7_wa_pipe_control_cs_stall(p, true, true);
+      gen7_emit_3DSTATE_PUSH_CONSTANT_ALLOC_PS(p->dev, offset, size, p->cp);
+
+      if (p->dev->gen == ILO_GEN(7))
+         gen7_wa_pipe_control_cs_stall(p, true, true);
    }
 }
 

@@ -261,7 +261,7 @@ ve_init_cso(const struct ilo_dev_info *dev,
    };
    int format;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7);
+   ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
    switch (util_format_get_nr_components(state->src_format)) {
    case 1: comp[1] = BRW_VE1_COMPONENT_STORE_0;
@@ -295,7 +295,7 @@ ilo_gpe_init_ve(const struct ilo_dev_info *dev,
 {
    unsigned i;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7);
+   ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
    ve->count = num_states;
    ve->vb_count = 0;
@@ -335,7 +335,7 @@ ilo_gpe_init_vs_cso(const struct ilo_dev_info *dev,
    int start_grf, vue_read_len, max_threads;
    uint32_t dw2, dw4, dw5;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7);
+   ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
    start_grf = ilo_shader_get_kernel_param(vs, ILO_KERNEL_URB_DATA_START_REG);
    vue_read_len = ilo_shader_get_kernel_param(vs, ILO_KERNEL_INPUT_COUNT);
@@ -377,7 +377,7 @@ ilo_gpe_init_vs_cso(const struct ilo_dev_info *dev,
       break;
    case ILO_GEN(7.5):
       /* see brwCreateContext() */
-      max_threads = (dev->gt == 2) ? 280 : 70;
+      max_threads = (dev->gt >= 2) ? 280 : 70;
       break;
    default:
       max_threads = 1;
@@ -513,7 +513,7 @@ ilo_gpe_init_rasterizer_clip(const struct ilo_dev_info *dev,
 {
    uint32_t dw1, dw2, dw3;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7);
+   ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
    dw1 = GEN6_CLIP_STATISTICS_ENABLE;
 
@@ -603,7 +603,7 @@ ilo_gpe_init_rasterizer_sf(const struct ilo_dev_info *dev,
    int line_width, point_width;
    uint32_t dw1, dw2, dw3;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7);
+   ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
    /*
     * Scale the constant term.  The minimum representable value used by the HW
@@ -739,6 +739,9 @@ ilo_gpe_init_rasterizer_sf(const struct ilo_dev_info *dev,
    }
 
    dw2 |= line_width << GEN6_SF_LINE_WIDTH_SHIFT;
+
+   if (dev->gen >= ILO_GEN(7.5) && state->line_stipple_enable)
+      dw2 |= HSW_SF_LINE_STIPPLE_ENABLE;
 
    if (state->scissor)
       dw2 |= GEN6_SF_SCISSOR_ENABLE;
@@ -961,7 +964,7 @@ static void
 zs_init_info_null(const struct ilo_dev_info *dev,
                   struct ilo_zs_surface_info *info)
 {
-   ILO_GPE_VALID_GEN(dev, 6, 7);
+   ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
    memset(info, 0, sizeof(*info));
 
@@ -986,7 +989,7 @@ zs_init_info(const struct ilo_dev_info *dev,
    bool separate_stencil;
    uint32_t x_offset[3], y_offset[3];
 
-   ILO_GPE_VALID_GEN(dev, 6, 7);
+   ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
    memset(info, 0, sizeof(*info));
 
@@ -1208,7 +1211,7 @@ ilo_gpe_init_zs_surface(const struct ilo_dev_info *dev,
    struct ilo_zs_surface_info info;
    uint32_t dw1, dw2, dw3, dw4, dw5, dw6;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7);
+   ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
    if (tex)
       zs_init_info(dev, tex, format, level, first_layer, num_layers, &info);
@@ -1329,6 +1332,9 @@ ilo_gpe_init_zs_surface(const struct ilo_dev_info *dev,
       zs->payload[6] = info.stencil.stride - 1;
       zs->payload[7] = info.stencil.offset;
 
+      if (dev->gen >= ILO_GEN(7.5))
+         zs->payload[6] |= HSW_STENCIL_ENABLED;
+
       /* do not increment reference count */
       zs->separate_s8_bo = info.stencil.bo;
    }
@@ -1422,7 +1428,7 @@ ilo_gpe_set_viewport_cso(const struct ilo_dev_info *dev,
    const float scale_z = fabs(state->scale[2]);
    int min_gbx, max_gbx, min_gby, max_gby;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7);
+   ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
    viewport_get_guardband(dev,
          (int) state->translate[0],
@@ -1511,7 +1517,7 @@ ilo_gpe_init_blend(const struct ilo_dev_info *dev,
 {
    unsigned num_cso, i;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7);
+   ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
    if (state->independent_blend_enable) {
       num_cso = Elements(blend->cso);
@@ -1609,7 +1615,7 @@ ilo_gpe_init_dsa(const struct ilo_dev_info *dev,
    const struct pipe_alpha_state *alpha = &state->alpha;
    uint32_t *dw;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7);
+   ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
    STATIC_ASSERT(Elements(dsa->payload) >= 3);
    dw = dsa->payload;
@@ -1699,7 +1705,7 @@ ilo_gpe_set_scissor(const struct ilo_dev_info *dev,
 {
    unsigned i;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7);
+   ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
    for (i = 0; i < num_states; i++) {
       uint16_t min_x, min_y, max_x, max_y;
@@ -2176,7 +2182,7 @@ ilo_gpe_init_sampler_cso(const struct ilo_dev_info *dev,
    bool clamp_is_to_edge;
    uint32_t dw0, dw1, dw3;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7);
+   ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
    memset(sampler, 0, sizeof(*sampler));
 

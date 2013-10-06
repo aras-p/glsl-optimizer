@@ -266,7 +266,7 @@ ilo_gpe_gen6_fill_3dstate_sf_sbe(const struct ilo_dev_info *dev,
    int output_count, vue_offset, vue_len;
    const struct ilo_kernel_routing *routing;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7);
+   ILO_GPE_VALID_GEN(dev, 6, 7.5);
    assert(num_dwords == 13);
 
    if (!fs) {
@@ -353,7 +353,7 @@ gen6_emit_STATE_BASE_ADDRESS(const struct ilo_dev_info *dev,
    const uint32_t cmd = ILO_GPE_CMD(0x0, 0x1, 0x01);
    const uint8_t cmd_len = 10;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7);
+   ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
    /* 4K-page aligned */
    assert(((general_state_size | dynamic_state_size |
@@ -429,7 +429,7 @@ gen6_emit_STATE_SIP(const struct ilo_dev_info *dev,
    const uint32_t cmd = ILO_GPE_CMD(0x0, 0x1, 0x02);
    const uint8_t cmd_len = 2;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7);
+   ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
    ilo_cp_begin(cp, cmd_len);
    ilo_cp_write(cp, cmd | (cmd_len - 2));
@@ -445,7 +445,7 @@ gen6_emit_3DSTATE_VF_STATISTICS(const struct ilo_dev_info *dev,
    const uint32_t cmd = ILO_GPE_CMD(0x1, 0x0, 0x0b);
    const uint8_t cmd_len = 1;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7);
+   ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
    ilo_cp_begin(cp, cmd_len);
    ilo_cp_write(cp, cmd | enable);
@@ -460,7 +460,7 @@ gen6_emit_PIPELINE_SELECT(const struct ilo_dev_info *dev,
    const int cmd = ILO_GPE_CMD(0x1, 0x1, 0x04);
    const uint8_t cmd_len = 1;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7);
+   ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
    /* 3D or media */
    assert(pipeline == 0x0 || pipeline == 0x1);
@@ -695,7 +695,7 @@ gen6_emit_3DSTATE_VERTEX_BUFFERS(const struct ilo_dev_info *dev,
    uint8_t cmd_len;
    unsigned hw_idx;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7);
+   ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
    /*
     * From the Sandy Bridge PRM, volume 2 part 1, page 82:
@@ -772,7 +772,7 @@ ve_init_cso_with_components(const struct ilo_dev_info *dev,
                             int comp0, int comp1, int comp2, int comp3,
                             struct ilo_ve_cso *cso)
 {
-   ILO_GPE_VALID_GEN(dev, 6, 7);
+   ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
    STATIC_ASSERT(Elements(cso->payload) >= 2);
    cso->payload[0] = GEN6_VE0_VALID;
@@ -789,7 +789,7 @@ ve_set_cso_edgeflag(const struct ilo_dev_info *dev,
 {
    int format;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7);
+   ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
    /*
     * From the Sandy Bridge PRM, volume 2 part 1, page 94:
@@ -846,7 +846,7 @@ gen6_emit_3DSTATE_VERTEX_ELEMENTS(const struct ilo_dev_info *dev,
    uint8_t cmd_len;
    unsigned i;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7);
+   ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
    /*
     * From the Sandy Bridge PRM, volume 2 part 1, page 93:
@@ -922,10 +922,14 @@ gen6_emit_3DSTATE_INDEX_BUFFER(const struct ilo_dev_info *dev,
    uint32_t start_offset, end_offset;
    int format;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7);
+   ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
    if (!buf)
       return;
+
+   /* this is moved to the new 3DSTATE_VF */
+   if (dev->gen >= ILO_GEN(7.5))
+      assert(!enable_cut_index);
 
    switch (ib->hw_index_size) {
    case 4:
@@ -1014,7 +1018,7 @@ gen6_emit_3DSTATE_SCISSOR_STATE_POINTERS(const struct ilo_dev_info *dev,
    const uint32_t cmd = ILO_GPE_CMD(0x3, 0x0, 0x0f);
    const uint8_t cmd_len = 2;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7);
+   ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
    ilo_cp_begin(cp, cmd_len);
    ilo_cp_write(cp, cmd | (cmd_len - 2));
@@ -1033,7 +1037,7 @@ gen6_emit_3DSTATE_VS(const struct ilo_dev_info *dev,
    const struct ilo_shader_cso *cso;
    uint32_t dw2, dw4, dw5;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7);
+   ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
    if (!vs) {
       ilo_cp_begin(cp, cmd_len);
@@ -1145,7 +1149,7 @@ gen6_emit_3DSTATE_CLIP(const struct ilo_dev_info *dev,
    const uint8_t cmd_len = 4;
    uint32_t dw1, dw2, dw3;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7);
+   ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
    if (rasterizer) {
       int interps;
@@ -1456,7 +1460,7 @@ gen6_emit_3DSTATE_DRAWING_RECTANGLE(const struct ilo_dev_info *dev,
    unsigned ymax = y + height - 1;
    int rect_limit;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7);
+   ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
    if (dev->gen >= ILO_GEN(7)) {
       rect_limit = 16383;
@@ -1501,7 +1505,7 @@ gen6_emit_3DSTATE_DEPTH_BUFFER(const struct ilo_dev_info *dev,
       ILO_GPE_CMD(0x3, 0x0, 0x05) : ILO_GPE_CMD(0x3, 0x1, 0x05);
    const uint8_t cmd_len = 7;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7);
+   ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
    ilo_cp_begin(cp, cmd_len);
    ilo_cp_write(cp, cmd | (cmd_len - 2));
@@ -1523,7 +1527,7 @@ gen6_emit_3DSTATE_POLY_STIPPLE_OFFSET(const struct ilo_dev_info *dev,
    const uint32_t cmd = ILO_GPE_CMD(0x3, 0x1, 0x06);
    const uint8_t cmd_len = 2;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7);
+   ILO_GPE_VALID_GEN(dev, 6, 7.5);
    assert(x_offset >= 0 && x_offset <= 31);
    assert(y_offset >= 0 && y_offset <= 31);
 
@@ -1542,7 +1546,7 @@ gen6_emit_3DSTATE_POLY_STIPPLE_PATTERN(const struct ilo_dev_info *dev,
    const uint8_t cmd_len = 33;
    int i;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7);
+   ILO_GPE_VALID_GEN(dev, 6, 7.5);
    assert(Elements(pattern->stipple) == 32);
 
    ilo_cp_begin(cp, cmd_len);
@@ -1561,7 +1565,7 @@ gen6_emit_3DSTATE_LINE_STIPPLE(const struct ilo_dev_info *dev,
    const uint8_t cmd_len = 3;
    unsigned inverse;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7);
+   ILO_GPE_VALID_GEN(dev, 6, 7.5);
    assert((pattern & 0xffff) == pattern);
    assert(factor >= 1 && factor <= 256);
 
@@ -1590,7 +1594,7 @@ gen6_emit_3DSTATE_AA_LINE_PARAMETERS(const struct ilo_dev_info *dev,
    const uint32_t cmd = ILO_GPE_CMD(0x3, 0x1, 0x0a);
    const uint8_t cmd_len = 3;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7);
+   ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
    ilo_cp_begin(cp, cmd_len);
    ilo_cp_write(cp, cmd | (cmd_len - 2));
@@ -1636,7 +1640,7 @@ gen6_emit_3DSTATE_MULTISAMPLE(const struct ilo_dev_info *dev,
    const uint8_t cmd_len = (dev->gen >= ILO_GEN(7)) ? 4 : 3;
    uint32_t dw1, dw2, dw3;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7);
+   ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
    dw1 = (pixel_location_center) ?
       MS_PIXEL_LOCATION_CENTER : MS_PIXEL_LOCATION_UPPER_LEFT;
@@ -1686,7 +1690,7 @@ gen6_emit_3DSTATE_STENCIL_BUFFER(const struct ilo_dev_info *dev,
       ILO_GPE_CMD(0x3, 0x1, 0x0e);
    const uint8_t cmd_len = 3;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7);
+   ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
    ilo_cp_begin(cp, cmd_len);
    ilo_cp_write(cp, cmd | (cmd_len - 2));
@@ -1707,7 +1711,7 @@ gen6_emit_3DSTATE_HIER_DEPTH_BUFFER(const struct ilo_dev_info *dev,
       ILO_GPE_CMD(0x3, 0x1, 0x0f);
    const uint8_t cmd_len = 3;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7);
+   ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
    ilo_cp_begin(cp, cmd_len);
    ilo_cp_write(cp, cmd | (cmd_len - 2));
@@ -1747,7 +1751,7 @@ gen6_emit_PIPE_CONTROL(const struct ilo_dev_info *dev,
    const uint32_t read_domains = INTEL_DOMAIN_INSTRUCTION;
    const uint32_t write_domain = INTEL_DOMAIN_INSTRUCTION;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7);
+   ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
    if (dw1 & PIPE_CONTROL_CS_STALL) {
       /*
@@ -1985,7 +1989,7 @@ gen6_emit_CC_VIEWPORT(const struct ilo_dev_info *dev,
    uint32_t state_offset, *dw;
    unsigned i;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7);
+   ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
    /*
     * From the Sandy Bridge PRM, volume 2 part 1, page 385:
@@ -2020,7 +2024,7 @@ gen6_emit_COLOR_CALC_STATE(const struct ilo_dev_info *dev,
    const int state_len = 6;
    uint32_t state_offset, *dw;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7);
+   ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
    dw = ilo_cp_steal_ptr(cp, "COLOR_CALC_STATE",
          state_len, state_align, &state_offset);
@@ -2049,7 +2053,7 @@ gen6_emit_BLEND_STATE(const struct ilo_dev_info *dev,
    uint32_t state_offset, *dw;
    unsigned num_targets, i;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7);
+   ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
    /*
     * From the Sandy Bridge PRM, volume 2 part 1, page 376:
@@ -2173,7 +2177,7 @@ gen6_emit_DEPTH_STENCIL_STATE(const struct ilo_dev_info *dev,
    uint32_t state_offset, *dw;
 
 
-   ILO_GPE_VALID_GEN(dev, 6, 7);
+   ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
    dw = ilo_cp_steal_ptr(cp, "DEPTH_STENCIL_STATE",
          state_len, state_align, &state_offset);
@@ -2195,7 +2199,7 @@ gen6_emit_SCISSOR_RECT(const struct ilo_dev_info *dev,
    const int state_len = 2 * num_viewports;
    uint32_t state_offset, *dw;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7);
+   ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
    /*
     * From the Sandy Bridge PRM, volume 2 part 1, page 263:
@@ -2223,7 +2227,7 @@ gen6_emit_BINDING_TABLE_STATE(const struct ilo_dev_info *dev,
    const int state_len = num_surface_states;
    uint32_t state_offset, *dw;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7);
+   ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
    /*
     * From the Sandy Bridge PRM, volume 4 part 1, page 69:
@@ -2254,7 +2258,7 @@ gen6_emit_SURFACE_STATE(const struct ilo_dev_info *dev,
    uint32_t state_offset;
    uint32_t read_domains, write_domain;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7);
+   ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
    if (for_render) {
       read_domains = INTEL_DOMAIN_RENDER;
@@ -2342,7 +2346,7 @@ gen6_emit_SAMPLER_STATE(const struct ilo_dev_info *dev,
    uint32_t state_offset, *dw;
    int i;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7);
+   ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
    /*
     * From the Sandy Bridge PRM, volume 4 part 1, page 101:
@@ -2448,7 +2452,7 @@ gen6_emit_SAMPLER_BORDER_COLOR_STATE(const struct ilo_dev_info *dev,
    const int state_len = (dev->gen >= ILO_GEN(7)) ? 4 : 12;
    uint32_t state_offset, *dw;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7);
+   ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
    dw = ilo_cp_steal_ptr(cp, "SAMPLER_BORDER_COLOR_STATE",
          state_len, state_align, &state_offset);
@@ -2473,7 +2477,7 @@ gen6_emit_push_constant_buffer(const struct ilo_dev_info *dev,
    uint32_t state_offset;
    char *buf;
 
-   ILO_GPE_VALID_GEN(dev, 6, 7);
+   ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
    buf = ilo_cp_steal_ptr(cp, "PUSH_CONSTANT_BUFFER",
          state_len, state_align, &state_offset);

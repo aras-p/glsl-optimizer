@@ -42,7 +42,7 @@ ilo_gpe_init_gs_cso_gen7(const struct ilo_dev_info *dev,
    int start_grf, vue_read_len, max_threads;
    uint32_t dw2, dw4, dw5;
 
-   ILO_GPE_VALID_GEN(dev, 7, 7);
+   ILO_GPE_VALID_GEN(dev, 7, 7.5);
 
    start_grf = ilo_shader_get_kernel_param(gs, ILO_KERNEL_URB_DATA_START_REG);
    vue_read_len = ilo_shader_get_kernel_param(gs, ILO_KERNEL_INPUT_COUNT);
@@ -51,6 +51,9 @@ ilo_gpe_init_gs_cso_gen7(const struct ilo_dev_info *dev,
    vue_read_len = (vue_read_len + 1) / 2;
 
    switch (dev->gen) {
+   case ILO_GEN(7.5):
+      max_threads = (dev->gt >= 2) ? 256 : 70;
+      break;
    case ILO_GEN(7):
       max_threads = (dev->gt == 2) ? 128 : 36;
       break;
@@ -83,7 +86,7 @@ ilo_gpe_init_rasterizer_wm_gen7(const struct ilo_dev_info *dev,
 {
    uint32_t dw1, dw2;
 
-   ILO_GPE_VALID_GEN(dev, 7, 7);
+   ILO_GPE_VALID_GEN(dev, 7, 7.5);
 
    dw1 = GEN7_WM_POSITION_ZW_PIXEL |
          GEN7_WM_LINE_AA_WIDTH_2_0 |
@@ -132,16 +135,27 @@ ilo_gpe_init_fs_cso_gen7(const struct ilo_dev_info *dev,
    uint32_t dw2, dw4, dw5;
    uint32_t wm_interps, wm_dw1;
 
-   ILO_GPE_VALID_GEN(dev, 7, 7);
+   ILO_GPE_VALID_GEN(dev, 7, 7.5);
 
    start_grf = ilo_shader_get_kernel_param(fs, ILO_KERNEL_URB_DATA_START_REG);
-   /* see brwCreateContext() */
-   max_threads = (dev->gt == 2) ? 172 : 48;
 
    dw2 = (true) ? 0 : GEN7_PS_FLOATING_POINT_MODE_ALT;
 
-   dw4 = (max_threads - 1) << IVB_PS_MAX_THREADS_SHIFT |
-         GEN7_PS_POSOFFSET_NONE;
+   dw4 = GEN7_PS_POSOFFSET_NONE;
+
+   /* see brwCreateContext() */
+   switch (dev->gen) {
+   case ILO_GEN(7.5):
+      max_threads = (dev->gt == 3) ? 408 : (dev->gt == 2) ? 204 : 102;
+      dw4 |= (max_threads - 1) << HSW_PS_MAX_THREADS_SHIFT;
+      dw4 |= 1 << HSW_PS_SAMPLE_MASK_SHIFT;
+      break;
+   case ILO_GEN(7):
+   default:
+      max_threads = (dev->gt == 2) ? 172 : 48;
+      dw4 |= (max_threads - 1) << IVB_PS_MAX_THREADS_SHIFT;
+      break;
+   }
 
    if (ilo_shader_get_kernel_param(fs, ILO_KERNEL_PCB_CBUF0_SIZE))
       dw4 |= GEN7_PS_PUSH_CONSTANT_ENABLE;
@@ -226,7 +240,7 @@ ilo_gpe_init_view_surface_null_gen7(const struct ilo_dev_info *dev,
 {
    uint32_t *dw;
 
-   ILO_GPE_VALID_GEN(dev, 7, 7);
+   ILO_GPE_VALID_GEN(dev, 7, 7.5);
 
    /*
     * From the Ivy Bridge PRM, volume 4 part 1, page 62:
@@ -299,7 +313,7 @@ ilo_gpe_init_view_surface_for_buffer_gen7(const struct ilo_dev_info *dev,
    int surface_type, surface_format, num_entries;
    uint32_t *dw;
 
-   ILO_GPE_VALID_GEN(dev, 7, 7);
+   ILO_GPE_VALID_GEN(dev, 7, 7.5);
 
    surface_type = (structured) ? 5 : BRW_SURFACE_BUFFER;
 
@@ -396,6 +410,13 @@ ilo_gpe_init_view_surface_for_buffer_gen7(const struct ilo_dev_info *dev,
    dw[6] = 0;
    dw[7] = 0;
 
+   if (dev->gen >= ILO_GEN(7.5)) {
+      dw[7] |= SET_FIELD(HSW_SCS_RED,   GEN7_SURFACE_SCS_R) |
+               SET_FIELD(HSW_SCS_GREEN, GEN7_SURFACE_SCS_G) |
+               SET_FIELD(HSW_SCS_BLUE,  GEN7_SURFACE_SCS_B) |
+               SET_FIELD(HSW_SCS_ALPHA, GEN7_SURFACE_SCS_A);
+   }
+
    /* do not increment reference count */
    surf->bo = buf->bo;
 }
@@ -416,7 +437,7 @@ ilo_gpe_init_view_surface_for_texture_gen7(const struct ilo_dev_info *dev,
    unsigned layer_offset, x_offset, y_offset;
    uint32_t *dw;
 
-   ILO_GPE_VALID_GEN(dev, 7, 7);
+   ILO_GPE_VALID_GEN(dev, 7, 7.5);
 
    surface_type = ilo_gpe_gen6_translate_texture(tex->base.target);
    assert(surface_type != BRW_SURFACE_BUFFER);
@@ -646,6 +667,13 @@ ilo_gpe_init_view_surface_for_texture_gen7(const struct ilo_dev_info *dev,
    dw[6] = 0;
    dw[7] = 0;
 
+   if (dev->gen >= ILO_GEN(7.5)) {
+      dw[7] |= SET_FIELD(HSW_SCS_RED,   GEN7_SURFACE_SCS_R) |
+               SET_FIELD(HSW_SCS_GREEN, GEN7_SURFACE_SCS_G) |
+               SET_FIELD(HSW_SCS_BLUE,  GEN7_SURFACE_SCS_B) |
+               SET_FIELD(HSW_SCS_ALPHA, GEN7_SURFACE_SCS_A);
+   }
+
    /* do not increment reference count */
    surf->bo = tex->bo;
 }
@@ -675,6 +703,7 @@ ilo_gpe_gen7_estimate_command_size(const struct ilo_dev_info *dev,
       [ILO_GPE_GEN7_3DSTATE_VERTEX_BUFFERS]                   = { 1,  4  },
       [ILO_GPE_GEN7_3DSTATE_VERTEX_ELEMENTS]                  = { 1,  2  },
       [ILO_GPE_GEN7_3DSTATE_INDEX_BUFFER]                     = { 0,  3  },
+      [ILO_GPE_GEN7_3DSTATE_VF]                               = { 0,  2  },
       [ILO_GPE_GEN7_3DSTATE_CC_STATE_POINTERS]                = { 0,  2  },
       [ILO_GPE_GEN7_3DSTATE_SCISSOR_STATE_POINTERS]           = { 0,  2  },
       [ILO_GPE_GEN7_3DSTATE_VS]                               = { 0,  6  },
@@ -732,7 +761,7 @@ ilo_gpe_gen7_estimate_command_size(const struct ilo_dev_info *dev,
    const int body = gen7_command_size_table[cmd].body;
    const int count = arg;
 
-   ILO_GPE_VALID_GEN(dev, 7, 7);
+   ILO_GPE_VALID_GEN(dev, 7, 7.5);
    assert(cmd < ILO_GPE_GEN7_COMMAND_COUNT);
 
    return (likely(count)) ? header + body * count : 0;
@@ -767,7 +796,7 @@ ilo_gpe_gen7_estimate_state_size(const struct ilo_dev_info *dev,
    const int count = arg;
    int estimate;
 
-   ILO_GPE_VALID_GEN(dev, 7, 7);
+   ILO_GPE_VALID_GEN(dev, 7, 7.5);
    assert(state < ILO_GPE_GEN7_STATE_COUNT);
 
    if (likely(count)) {

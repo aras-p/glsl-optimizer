@@ -790,10 +790,19 @@ fs_prepare_tgsi_sampling(struct toy_compiler *tc, const struct toy_inst *inst,
       }
       break;
    case TOY_OPCODE_TGSI_TXD:
-      if (ref_pos >= 0)
-         tc_fail(tc, "TXD with shadow sampler not supported");
+      if (ref_pos >= 0) {
+         assert(ref_pos < 4);
 
-      msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_DERIVS;
+         msg_type = HSW_SAMPLER_MESSAGE_SAMPLE_DERIV_COMPARE;
+         ref_or_si = coords[ref_pos];
+
+         if (tc->dev->gen < ILO_GEN(7.5))
+            tc_fail(tc, "TXD with shadow sampler not supported");
+      }
+      else {
+         msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_DERIVS;
+      }
+
       tsrc_transpose(inst->src[1], ddx);
       tsrc_transpose(inst->src[2], ddy);
       num_derivs = num_coords;

@@ -399,11 +399,26 @@ gen6_pipeline_vf(struct ilo_3d_pipeline *p,
                  const struct ilo_context *ilo,
                  struct gen6_pipeline_session *session)
 {
-   /* 3DSTATE_INDEX_BUFFER */
-   if (DIRTY(IB) || session->primitive_restart_changed ||
-       session->batch_bo_changed) {
-      gen6_emit_3DSTATE_INDEX_BUFFER(p->dev,
-            &ilo->ib, ilo->draw->primitive_restart, p->cp);
+   if (p->dev->gen >= ILO_GEN(7.5)) {
+      /* 3DSTATE_INDEX_BUFFER */
+      if (DIRTY(IB) || session->batch_bo_changed) {
+         gen6_emit_3DSTATE_INDEX_BUFFER(p->dev,
+               &ilo->ib, false, p->cp);
+      }
+
+      /* 3DSTATE_VF */
+      if (session->primitive_restart_changed) {
+         gen7_emit_3DSTATE_VF(p->dev, ilo->draw->primitive_restart,
+               ilo->draw->restart_index, p->cp);
+      }
+   }
+   else {
+      /* 3DSTATE_INDEX_BUFFER */
+      if (DIRTY(IB) || session->primitive_restart_changed ||
+          session->batch_bo_changed) {
+         gen6_emit_3DSTATE_INDEX_BUFFER(p->dev,
+               &ilo->ib, ilo->draw->primitive_restart, p->cp);
+      }
    }
 
    /* 3DSTATE_VERTEX_BUFFERS */
