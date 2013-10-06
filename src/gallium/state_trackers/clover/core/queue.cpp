@@ -60,6 +60,16 @@ _cl_command_queue::flush() {
    }
 }
 
+cl_command_queue_properties
+_cl_command_queue::props() const {
+   return __props;
+}
+
+bool
+_cl_command_queue::profiling_enabled() const {
+   return __props & CL_QUEUE_PROFILING_ENABLE;
+}
+
 void
 _cl_command_queue::sequence(clover::hard_event *ev) {
    if (!queued_events.empty())

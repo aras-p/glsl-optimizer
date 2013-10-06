@@ -27,6 +27,8 @@
 
 #include "core/base.hpp"
 #include "core/queue.hpp"
+#include "core/timestamp.hpp"
+#include "util/lazy.hpp"
 
 namespace clover {
    typedef struct _cl_event event;
@@ -57,7 +59,7 @@ public:
              action action_ok, action action_fail);
    virtual ~_cl_event();
 
-   virtual void trigger() = 0;
+   void trigger();
    void abort(cl_int status);
    bool signalled() const;
 
@@ -72,10 +74,12 @@ protected:
    void chain(clover::event *ev);
 
    cl_int __status;
+   std::vector<clover::ref_ptr<clover::event>> deps;
+
+private:
    unsigned wait_count;
    action action_ok;
    action action_fail;
-   std::vector<clover::ref_ptr<clover::event>> deps;
    std::vector<clover::ref_ptr<clover::event>> __chain;
 };
 
@@ -99,29 +103,26 @@ namespace clover {
                  action action = [](event &){});
       ~hard_event();
 
-      virtual void trigger();
-
       virtual cl_int status() const;
       virtual cl_command_queue queue() const;
       virtual cl_command_type command() const;
       virtual void wait() const;
 
-      cl_ulong ts_queued() const;
-      cl_ulong ts_submit() const;
-      cl_ulong ts_start();
-      cl_ulong ts_end();
-      void get_query_results();
+      const lazy<cl_ulong> &time_queued() const;
+      const lazy<cl_ulong> &time_submit() const;
+      const lazy<cl_ulong> &time_start() const;
+      const lazy<cl_ulong> &time_end() const;
 
       friend class ::_cl_command_queue;
 
    private:
       virtual void fence(pipe_fence_handle *fence);
+      action profile(command_queue &q, const action &action) const;
 
       clover::command_queue &__queue;
       cl_command_type __command;
       pipe_fence_handle *__fence;
-      cl_ulong __ts_queued, __ts_submit, __ts_start, __ts_end;
-      struct pipe_query *__query_start, *__query_end;
+      lazy<cl_ulong> _time_queued, _time_submit, _time_start, _time_end;
    };
 
    ///
@@ -135,8 +136,6 @@ namespace clover {
    public:
       soft_event(clover::context &ctx, std::vector<clover::event *> deps,
                  bool trigger, action action = [](event &){});
-
-      virtual void trigger();
 
       virtual cl_int status() const;
       virtual cl_command_queue queue() const;

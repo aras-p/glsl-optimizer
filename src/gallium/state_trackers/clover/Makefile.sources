@@ -29,6 +29,8 @@ CPP_SOURCES := \
 	core/resource.cpp \
 	core/sampler.hpp \
 	core/sampler.cpp \
+	core/timestamp.hpp \
+	core/timestamp.cpp \
 	core/event.hpp \
 	core/event.cpp \
 	core/program.hpp \

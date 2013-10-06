@@ -216,32 +216,37 @@ clEnqueueWaitForEvents(cl_command_queue q, cl_uint num_evs,
 
 PUBLIC cl_int
 clGetEventProfilingInfo(cl_event ev, cl_profiling_info param,
-                        size_t size, void *buf, size_t *size_ret) {
+                        size_t size, void *buf, size_t *size_ret) try {
    hard_event *hev = dynamic_cast<hard_event *>(ev);
-   soft_event *sev = dynamic_cast<soft_event *>(ev);
 
-   if (!hev && !sev)
+   if (!ev)
       return CL_INVALID_EVENT;
-   if (!hev || !(hev->queue()->props() & CL_QUEUE_PROFILING_ENABLE) ||
-       hev->status() != CL_COMPLETE)
+
+   if (!hev || hev->status() != CL_COMPLETE)
       return CL_PROFILING_INFO_NOT_AVAILABLE;
 
    switch (param) {
    case CL_PROFILING_COMMAND_QUEUED:
-      return scalar_property<cl_ulong>(buf, size, size_ret, hev->ts_queued());
+      return scalar_property<cl_ulong>(buf, size, size_ret, hev->time_queued());
 
    case CL_PROFILING_COMMAND_SUBMIT:
-      return scalar_property<cl_ulong>(buf, size, size_ret, hev->ts_submit());
+      return scalar_property<cl_ulong>(buf, size, size_ret, hev->time_submit());
 
    case CL_PROFILING_COMMAND_START:
-      return scalar_property<cl_ulong>(buf, size, size_ret, hev->ts_start());
+      return scalar_property<cl_ulong>(buf, size, size_ret, hev->time_start());
 
    case CL_PROFILING_COMMAND_END:
-      return scalar_property<cl_ulong>(buf, size, size_ret, hev->ts_end());
+      return scalar_property<cl_ulong>(buf, size, size_ret, hev->time_end());
 
    default:
       return CL_INVALID_VALUE;
    }
+
+} catch (lazy<cl_ulong>::undefined_error &e) {
+   return CL_PROFILING_INFO_NOT_AVAILABLE;
+
+} catch (error &e) {
+   return e.get();
 }
 
 PUBLIC cl_int

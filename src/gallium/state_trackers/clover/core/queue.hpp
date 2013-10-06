@@ -25,6 +25,7 @@
 
 #include "core/base.hpp"
 #include "core/context.hpp"
+#include "core/timestamp.hpp"
 #include "pipe/p_context.h"
 
 namespace clover {
@@ -43,9 +44,8 @@ public:
 
    void flush();
 
-   cl_command_queue_properties props() const {
-      return __props;
-   }
+   cl_command_queue_properties props() const;
+   bool profiling_enabled() const;
 
    clover::context &ctx;
    clover::device &dev;
@@ -56,6 +56,8 @@ public:
    friend class clover::hard_event;
    friend struct _cl_sampler;
    friend struct _cl_kernel;
+   friend class clover::timestamp::query;
+   friend class clover::timestamp::current;
 
 private:
    /// Serialize a hardware event with respect to the previous ones,
