@@ -18,8 +18,7 @@ extern "C" {
 }
 
 
-#define TRACE_FRAMEBUFFER
-#ifdef TRACE_FRAEMBUFFER
+#ifdef DEBUG
 #   define TRACE(x...) printf("GalliumFramebuffer: " x)
 #   define CALLED() TRACE("CALLED: %s\n", __PRETTY_FUNCTION__)
 #else

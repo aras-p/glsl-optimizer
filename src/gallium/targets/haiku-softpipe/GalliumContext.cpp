@@ -32,8 +32,7 @@ extern "C" {
 }
 
 
-#define TRACE_CONTEXT
-#ifdef TRACE_CONTEXT
+#ifdef DEBUG
 #	define TRACE(x...) printf("GalliumContext: " x)
 #	define CALLED() TRACE("CALLED: %s\n", __PRETTY_FUNCTION__)
 #else

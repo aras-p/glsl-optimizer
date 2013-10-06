@@ -26,7 +26,8 @@ env.Append(CPPPATH = [
 ])
 
 if env['llvm']:
-    env.Append(CPPDEFINES = 'HAVE_LLVMPIPE')
+    env.Append(CPPDEFINES = ['GALLIUM_LLVMPIPE'])
+    env.Prepend(LIBS = [llvmpipe])
 
 softpipe_sources = [
     'GalliumContext.cpp',
@@ -34,7 +35,7 @@ softpipe_sources = [
     'SoftwareRenderer.cpp'
 ]
 
-# libswpipe gets turned into "Software Renderer" by the haiku package system
+# libswpipe gets turned into "Softpipe" by the haiku package system
 module = env.LoadableModule(
     target ='swpipe',
     source = softpipe_sources,

@@ -21,8 +21,7 @@
 #include <new>
 
 
-#define TRACE_SOFTWARE
-#ifdef TRACE_SOFTWARE
+#ifdef DEBUG
 #	define TRACE(x...) printf("SoftwareRenderer: " x)
 #	define CALLED() TRACE("CALLED: %s\n", __PRETTY_FUNCTION__)
 #else
