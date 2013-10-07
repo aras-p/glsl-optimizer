@@ -30,6 +30,7 @@
 #include "brw_defines.h"
 #include "brw_util.h"
 #include "brw_wm.h"
+#include "program/program.h"
 #include "program/prog_parameter.h"
 #include "program/prog_statevars.h"
 #include "intel_batchbuffer.h"
@@ -153,9 +154,23 @@ upload_wm_state(struct brw_context *brw)
    dw5 |= (brw->max_wm_threads - 1) << GEN6_WM_MAX_THREADS_SHIFT;
 
    /* CACHE_NEW_WM_PROG */
-   dw5 |= GEN6_WM_8_DISPATCH_ENABLE;
-   if (brw->wm.prog_data->prog_offset_16)
+
+   /* In case of non 1x per sample shading, only one of SIMD8 and SIMD16
+    * should be enabled. We do 'SIMD16 only' dispatch if a SIMD16 shader
+    * is successfully compiled. In majority of the cases that bring us
+    * better performance than 'SIMD8 only' dispatch.
+    */
+   int min_inv_per_frag =
+      _mesa_get_min_invocations_per_fragment(ctx, brw->fragment_program);
+   assert(min_inv_per_frag >= 1);
+
+   if (brw->wm.prog_data->prog_offset_16) {
       dw5 |= GEN6_WM_16_DISPATCH_ENABLE;
+      if (min_inv_per_frag == 1)
+         dw5 |= GEN6_WM_8_DISPATCH_ENABLE;
+   }
+   else
+      dw5 |= GEN6_WM_8_DISPATCH_ENABLE;
 
    /* CACHE_NEW_WM_PROG | _NEW_COLOR */
    if (brw->wm.prog_data->dual_src_blend &&
@@ -183,13 +198,24 @@ upload_wm_state(struct brw_context *brw)
 
    /* _NEW_COLOR, _NEW_MULTISAMPLE */
    if (fp->program.UsesKill || ctx->Color.AlphaEnabled ||
-       ctx->Multisample.SampleAlphaToCoverage)
+       ctx->Multisample.SampleAlphaToCoverage ||
+       brw->wm.prog_data->uses_omask)
       dw5 |= GEN6_WM_KILL_ENABLE;
 
    if (brw_color_buffer_write_enabled(brw) ||
        dw5 & (GEN6_WM_KILL_ENABLE | GEN6_WM_COMPUTED_DEPTH)) {
       dw5 |= GEN6_WM_DISPATCH_ENABLE;
    }
+
+   /* From the SNB PRM, volume 2 part 1, page 278:
+    * "This bit is inserted in the PS payload header and made available to
+    * the DataPort (either via the message header or via header bypass) to
+    * indicate that oMask data (one or two phases) is included in Render
+    * Target Write messages. If present, the oMask data is used to mask off
+    * samples."
+    */
+    if(brw->wm.prog_data->uses_omask)
+      dw5 |= GEN6_WM_OMASK_TO_RENDER_TARGET;
 
    /* CACHE_NEW_WM_PROG */
    dw6 |= brw->wm.prog_data->num_varying_inputs <<
@@ -200,15 +226,40 @@ upload_wm_state(struct brw_context *brw)
          dw6 |= GEN6_WM_MSRAST_ON_PATTERN;
       else
          dw6 |= GEN6_WM_MSRAST_OFF_PIXEL;
-      dw6 |= GEN6_WM_MSDISPMODE_PERPIXEL;
+
+      if (min_inv_per_frag > 1)
+         dw6 |= GEN6_WM_MSDISPMODE_PERSAMPLE;
+      else
+         dw6 |= GEN6_WM_MSDISPMODE_PERPIXEL;
    } else {
       dw6 |= GEN6_WM_MSRAST_OFF_PIXEL;
       dw6 |= GEN6_WM_MSDISPMODE_PERSAMPLE;
    }
 
+   /* _NEW_BUFFERS, _NEW_MULTISAMPLE */
+   /* From the SNB PRM, volume 2 part 1, page 281:
+    * "If the PS kernel does not need the Position XY Offsets
+    * to compute a Position XY value, then this field should be
+    * programmed to POSOFFSET_NONE."
+    *
+    * "SW Recommendation: If the PS kernel needs the Position Offsets
+    * to compute a Position XY value, this field should match Position
+    * ZW Interpolation Mode to ensure a consistent position.xyzw
+    * computation."
+    * We only require XY sample offsets. So, this recommendation doesn't
+    * look useful at the moment. We might need this in future.
+    */
+   if (brw->wm.prog_data->uses_pos_offset)
+      dw6 |= GEN6_WM_POSOFFSET_SAMPLE;
+   else
+      dw6 |= GEN6_WM_POSOFFSET_NONE;
+
    BEGIN_BATCH(9);
    OUT_BATCH(_3DSTATE_WM << 16 | (9 - 2));
-   OUT_BATCH(brw->wm.base.prog_offset);
+   if (brw->wm.prog_data->prog_offset_16 && min_inv_per_frag > 1)
+      OUT_BATCH(brw->wm.base.prog_offset + brw->wm.prog_data->prog_offset_16);
+   else
+      OUT_BATCH(brw->wm.base.prog_offset);
    OUT_BATCH(dw2);
    if (brw->wm.prog_data->total_scratch) {
       OUT_RELOC(brw->wm.base.scratch_bo,
