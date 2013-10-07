@@ -3961,6 +3961,7 @@ store_texsubimage(struct gl_context *ctx,
    case GL_TEXTURE_2D:
    case GL_TEXTURE_RECTANGLE:
    case GL_TEXTURE_CUBE_MAP:
+   case GL_TEXTURE_EXTERNAL_OES:
       /* one image slice, nothing special needs to be done */
       break;
    case GL_TEXTURE_1D:
