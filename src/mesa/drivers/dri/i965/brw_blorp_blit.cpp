@@ -2077,13 +2077,17 @@ brw_blorp_blit_params::brw_blorp_blit_params(struct brw_context *brw,
     * proprietary OpenGL driver also follow this approach. So, we choose to
     * follow it in our driver.
     *
-    * Following if-else block takes care of this exception made for
-    * multisampled resolves.
+    * When multisampling, if the source and destination formats are equal
+    * (aside from the color space), we choose to blit in sRGB space to get
+    * this higher quality image.
     */
-   if (src.num_samples > 1)
+   if (src.num_samples > 1 &&
+       _mesa_get_format_color_encoding(dst_mt->format) == GL_SRGB &&
+       _mesa_get_srgb_format_linear(src_mt->format) ==
+       _mesa_get_srgb_format_linear(dst_mt->format)) {
+      dst.brw_surfaceformat = brw_format_for_mesa_format(dst_mt->format);
       src.brw_surfaceformat = dst.brw_surfaceformat;
-   else
-      dst.brw_surfaceformat = src.brw_surfaceformat;
+   }
 
    use_wm_prog = true;
    memset(&wm_prog_key, 0, sizeof(wm_prog_key));

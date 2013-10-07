@@ -104,14 +104,16 @@ brw_blorp_surface_info::set(struct brw_context *brw,
    case MESA_FORMAT_Z16:
       this->brw_surfaceformat = BRW_SURFACEFORMAT_R16_UNORM;
       break;
-   default:
+   default: {
+      gl_format linear_format = _mesa_get_srgb_format_linear(mt->format);
       if (is_render_target) {
-         assert(brw->format_supported_as_render_target[mt->format]);
-         this->brw_surfaceformat = brw->render_target_format[mt->format];
+         assert(brw->format_supported_as_render_target[linear_format]);
+         this->brw_surfaceformat = brw->render_target_format[linear_format];
       } else {
-         this->brw_surfaceformat = brw_format_for_mesa_format(mt->format);
+         this->brw_surfaceformat = brw_format_for_mesa_format(linear_format);
       }
       break;
+   }
    }
 }
 
