@@ -68,7 +68,7 @@ void rc_rename_regs(struct radeon_compiler *c, void *user)
 	variables = rc_get_variables(c);
 
 	for (var_ptr = variables; var_ptr; var_ptr = var_ptr->Next) {
-		unsigned new_index;
+		int new_index;
 		unsigned writemask;
 		struct rc_variable * var = var_ptr->Item;
 
