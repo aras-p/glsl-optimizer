@@ -76,7 +76,6 @@ struct radeon_drm_cs {
     void (*flush_cs)(void *ctx, unsigned flags);
     void *flush_data;
 
-    int flush_started;
     pipe_semaphore flush_completed;
     struct radeon_bo                    *trace_buf;
 };

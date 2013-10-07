@@ -178,7 +178,7 @@ static struct radeon_winsys_cs *radeon_drm_cs_create(struct radeon_winsys *rws,
     if (!cs) {
         return NULL;
     }
-    pipe_semaphore_init(&cs->flush_completed, 0);
+    pipe_semaphore_init(&cs->flush_completed, 1);
 
     cs->ws = ws;
     cs->trace_buf = (struct radeon_bo*)trace_buf;
@@ -453,9 +453,9 @@ void radeon_drm_cs_sync_flush(struct radeon_winsys_cs *rcs)
     struct radeon_drm_cs *cs = radeon_drm_cs(rcs);
 
     /* Wait for any pending ioctl to complete. */
-    if (cs->ws->thread && cs->flush_started) {
+    if (cs->ws->thread) {
         pipe_semaphore_wait(&cs->flush_completed);
-        cs->flush_started = 0;
+        pipe_semaphore_signal(&cs->flush_completed);
     }
 }
 
@@ -567,7 +567,7 @@ static void radeon_drm_cs_flush(struct radeon_winsys_cs *rcs, unsigned flags, ui
         }
 
         if (cs->ws->thread) {
-            cs->flush_started = 1;
+            pipe_semaphore_wait(&cs->flush_completed);
             radeon_drm_ws_queue_cs(cs->ws, cs);
             if (!(flags & RADEON_FLUSH_ASYNC))
                 radeon_drm_cs_sync_flush(rcs);
