@@ -86,7 +86,11 @@ brw_blorp_surface_info::set(struct brw_context *brw,
       this->brw_surfaceformat = BRW_SURFACEFORMAT_R8_UNORM;
       break;
    case MESA_FORMAT_X8_Z24:
-      /* The miptree consists of 32 bits per pixel, arranged as 24-bit depth
+      /* It would make sense to use BRW_SURFACEFORMAT_R24_UNORM_X8_TYPELESS
+       * here, but unfortunately it isn't supported as a render target, which
+       * would prevent us from blitting to 24-bit depth.
+       *
+       * The miptree consists of 32 bits per pixel, arranged as 24-bit depth
        * values interleaved with 8 "don't care" bits.  Since depth values don't
        * require any blending, it doesn't matter how we interpret the bit
        * pattern as long as we copy the right amount of data, so just map it
