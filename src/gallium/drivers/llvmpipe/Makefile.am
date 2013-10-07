@@ -26,7 +26,8 @@ include $(top_srcdir)/src/gallium/Automake.inc
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/gallium/drivers \
 	-I$(top_srcdir)/include \
-	$(GALLIUM_CFLAGS)
+	$(GALLIUM_CFLAGS) \
+	$(VISIBILITY_CFLAGS)
 AM_CFLAGS = $(LLVM_CFLAGS)
 AM_CXXFLAGS= $(LLVM_CXXFLAGS)
 
