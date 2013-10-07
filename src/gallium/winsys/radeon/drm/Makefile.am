@@ -4,7 +4,8 @@ include $(top_srcdir)/src/gallium/Automake.inc
 AM_CFLAGS = \
 	-I$(top_srcdir)/include \
 	$(GALLIUM_CFLAGS) \
-	$(RADEON_CFLAGS)
+	$(RADEON_CFLAGS) \
+	$(VISIBILITY_CFLAGS)
 
 noinst_LTLIBRARIES = libradeonwinsys.la
 

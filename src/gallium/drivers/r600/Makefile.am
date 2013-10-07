@@ -16,7 +16,8 @@ AM_CXXFLAGS = \
 	-I$(top_srcdir)/src/gallium/include \
 	-I$(top_srcdir)/src/gallium/auxiliary \
 	$(RADEON_CFLAGS) \
-	$(DEFINES)
+	$(DEFINES) \
+	$(VISIBILITY_CFLAGS)
 
 libr600_la_SOURCES = \
 	$(C_SOURCES) \

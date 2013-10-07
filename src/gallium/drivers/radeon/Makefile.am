@@ -3,7 +3,7 @@ include $(top_srcdir)/src/gallium/Automake.inc
 
 noinst_LTLIBRARIES = libradeon.la
 
-AM_CFLAGS = $(GALLIUM_CFLAGS) $(RADEON_CFLAGS)
+AM_CFLAGS = $(GALLIUM_CFLAGS) $(RADEON_CFLAGS) $(VISIBILITY_CFLAGS)
 
 libradeon_la_SOURCES = \
 	$(C_SOURCES)
@@ -17,11 +17,13 @@ noinst_LTLIBRARIES += libllvmradeon.la
 
 libllvmradeon_la_CXXFLAGS = \
 	$(GALLIUM_CFLAGS) \
-	$(DEFINES)
+	$(DEFINES) \
+	$(VISIBILITY_CFLAGS)
 
 libllvmradeon_la_CFLAGS = \
 	$(GALLIUM_CFLAGS) \
-	$(LLVM_CFLAGS)
+	$(LLVM_CFLAGS) \
+	$(VISIBILITY_CFLAGS)
 
 libllvmradeon_la_SOURCES = \
 	$(LLVM_CPP_FILES) \
