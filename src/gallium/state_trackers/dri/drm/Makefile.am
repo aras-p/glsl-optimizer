@@ -31,7 +31,8 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/mesa/drivers/dri/common \
 	-I$(top_builddir)/src/mesa/drivers/dri/common \
 	$(GALLIUM_CFLAGS) \
-	$(LIBDRM_CFLAGS)
+	$(LIBDRM_CFLAGS) \
+	$(VISIBILITY_CFLAGS)
 
 noinst_LTLIBRARIES = libdridrm.la
 
