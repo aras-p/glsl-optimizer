@@ -86,14 +86,16 @@ brw_blorp_surface_info::set(struct brw_context *brw,
       this->brw_surfaceformat = BRW_SURFACEFORMAT_R8_UNORM;
       break;
    case MESA_FORMAT_X8_Z24:
-   case MESA_FORMAT_Z32_FLOAT:
-      /* The miptree consists of 32 bits per pixel, arranged either as 24-bit
-       * depth values interleaved with 8 "don't care" bits, or as 32-bit
-       * floating point depth values.  Since depth values don't require any
-       * blending, it doesn't matter how we interpret the bit pattern as long
-       * as we copy the right amount of data, so just map it as 8-bit BGRA.
+      /* The miptree consists of 32 bits per pixel, arranged as 24-bit depth
+       * values interleaved with 8 "don't care" bits.  Since depth values don't
+       * require any blending, it doesn't matter how we interpret the bit
+       * pattern as long as we copy the right amount of data, so just map it
+       * as 8-bit BGRA.
        */
       this->brw_surfaceformat = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
+      break;
+   case MESA_FORMAT_Z32_FLOAT:
+      this->brw_surfaceformat = BRW_SURFACEFORMAT_R32_FLOAT;
       break;
    case MESA_FORMAT_Z16:
       this->brw_surfaceformat = BRW_SURFACEFORMAT_R16_UNORM;
