@@ -481,8 +481,11 @@ void brw_draw_prims( struct gl_context *ctx,
     * get the minimum and maximum of their index buffer so we know what range
     * to upload.
     */
-   if (!vbo_all_varyings_in_vbos(arrays) && !index_bounds_valid)
+   if (!vbo_all_varyings_in_vbos(arrays) && !index_bounds_valid) {
+      perf_debug("Scanning index buffer to compute index buffer bounds.  "
+                 "Use glDrawRangeElements() to avoid this.\n");
       vbo_get_minmax_indices(ctx, prims, ib, &min_index, &max_index, nr_prims);
+   }
 
    /* Do GL_SELECT and GL_FEEDBACK rendering using swrast, even though it
     * won't support all the extensions we support.
