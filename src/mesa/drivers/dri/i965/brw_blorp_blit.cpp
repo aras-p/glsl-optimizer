@@ -2063,8 +2063,8 @@ brw_blorp_blit_params::brw_blorp_blit_params(struct brw_context *brw,
    struct gl_context *ctx = &brw->ctx;
    const struct gl_framebuffer *read_fb = ctx->ReadBuffer;
 
-   src.set(brw, src_mt, src_level, src_layer);
-   dst.set(brw, dst_mt, dst_level, dst_layer);
+   src.set(brw, src_mt, src_level, src_layer, false);
+   dst.set(brw, dst_mt, dst_level, dst_layer, true);
 
    /* Even though we do multisample resolves at the time of the blit, OpenGL
     * specification defines them as if they happen at the time of rendering,

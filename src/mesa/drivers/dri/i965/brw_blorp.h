@@ -122,7 +122,8 @@ public:
 
    void set(struct brw_context *brw,
             struct intel_mipmap_tree *mt,
-            unsigned int level, unsigned int layer);
+            unsigned int level, unsigned int layer,
+            bool is_render_target);
 
    uint32_t compute_tile_offsets(uint32_t *tile_x, uint32_t *tile_y) const;
 

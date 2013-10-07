@@ -188,7 +188,7 @@ brw_blorp_clear_params::brw_blorp_clear_params(struct brw_context *brw,
    struct gl_context *ctx = &brw->ctx;
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
 
-   dst.set(brw, irb->mt, irb->mt_level, irb->mt_layer);
+   dst.set(brw, irb->mt, irb->mt_level, irb->mt_layer, true);
 
    /* Override the surface format according to the context's sRGB rules. */
    gl_format format = _mesa_get_render_format(ctx, irb->mt->format);
@@ -307,7 +307,7 @@ brw_blorp_rt_resolve_params::brw_blorp_rt_resolve_params(
       struct brw_context *brw,
       struct intel_mipmap_tree *mt)
 {
-   dst.set(brw, mt, 0 /* level */, 0 /* layer */);
+   dst.set(brw, mt, 0 /* level */, 0 /* layer */, true);
 
    /* From the Ivy Bridge PRM, Vol2 Part1 11.9 "Render Target Resolve":
     *

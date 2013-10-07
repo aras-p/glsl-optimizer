@@ -66,7 +66,8 @@ brw_blorp_mip_info::set(struct intel_mipmap_tree *mt,
 void
 brw_blorp_surface_info::set(struct brw_context *brw,
                             struct intel_mipmap_tree *mt,
-                            unsigned int level, unsigned int layer)
+                            unsigned int level, unsigned int layer,
+                            bool is_render_target)
 {
    brw_blorp_mip_info::set(mt, level, layer);
    this->num_samples = mt->num_samples;
