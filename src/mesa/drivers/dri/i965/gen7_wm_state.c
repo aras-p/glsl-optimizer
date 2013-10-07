@@ -27,6 +27,7 @@
 #include "brw_defines.h"
 #include "brw_util.h"
 #include "brw_wm.h"
+#include "program/program.h"
 #include "program/prog_parameter.h"
 #include "program/prog_statevars.h"
 #include "intel_batchbuffer.h"
@@ -82,9 +83,13 @@ upload_wm_state(struct brw_context *brw)
       GEN7_WM_BARYCENTRIC_INTERPOLATION_MODE_SHIFT;
 
    /* _NEW_COLOR, _NEW_MULTISAMPLE */
+   /* Enable if the pixel shader kernel generates and outputs oMask.
+    */
    if (fp->program.UsesKill || ctx->Color.AlphaEnabled ||
-       ctx->Multisample.SampleAlphaToCoverage)
+       ctx->Multisample.SampleAlphaToCoverage ||
+       brw->wm.prog_data->uses_omask) {
       dw1 |= GEN7_WM_KILL_ENABLE;
+   }
 
    /* _NEW_BUFFERS */
    if (brw_color_buffer_write_enabled(brw) || writes_depth ||
@@ -97,7 +102,11 @@ upload_wm_state(struct brw_context *brw)
          dw1 |= GEN7_WM_MSRAST_ON_PATTERN;
       else
          dw1 |= GEN7_WM_MSRAST_OFF_PIXEL;
-      dw2 |= GEN7_WM_MSDISPMODE_PERPIXEL;
+
+      if (_mesa_get_min_invocations_per_fragment(ctx, brw->fragment_program) > 1)
+         dw2 |= GEN7_WM_MSDISPMODE_PERSAMPLE;
+      else
+         dw2 |= GEN7_WM_MSDISPMODE_PERPIXEL;
    } else {
       dw1 |= GEN7_WM_MSRAST_OFF_PIXEL;
       dw2 |= GEN7_WM_MSDISPMODE_PERSAMPLE;
@@ -169,6 +178,32 @@ upload_ps_state(struct brw_context *brw)
    if (brw->wm.prog_data->nr_params > 0)
       dw4 |= GEN7_PS_PUSH_CONSTANT_ENABLE;
 
+   /* From the IVB PRM, volume 2 part 1, page 287:
+    * "This bit is inserted in the PS payload header and made available to
+    * the DataPort (either via the message header or via header bypass) to
+    * indicate that oMask data (one or two phases) is included in Render
+    * Target Write messages. If present, the oMask data is used to mask off
+    * samples."
+    */
+   if (brw->wm.prog_data->uses_omask)
+      dw4 |= GEN7_PS_OMASK_TO_RENDER_TARGET;
+
+   /* From the IVB PRM, volume 2 part 1, page 287:
+    * "If the PS kernel does not need the Position XY Offsets to
+    * compute a Position Value, then this field should be programmed
+    * to POSOFFSET_NONE."
+    * "SW Recommendation: If the PS kernel needs the Position Offsets
+    * to compute a Position XY value, this field should match Position
+    * ZW Interpolation Mode to ensure a consistent position.xyzw
+    * computation."
+    * We only require XY sample offsets. So, this recommendation doesn't
+    * look useful at the moment. We might need this in future.
+    */
+   if (brw->wm.prog_data->uses_pos_offset)
+      dw4 |= GEN7_PS_POSOFFSET_SAMPLE;
+   else
+      dw4 |= GEN7_PS_POSOFFSET_NONE;
+
    /* CACHE_NEW_WM_PROG | _NEW_COLOR
     *
     * The hardware wedges if you have this bit set but don't turn on any dual
@@ -184,9 +219,22 @@ upload_ps_state(struct brw_context *brw)
    if (brw->wm.prog_data->num_varying_inputs != 0)
       dw4 |= GEN7_PS_ATTRIBUTE_ENABLE;
 
-   dw4 |= GEN7_PS_8_DISPATCH_ENABLE;
-   if (brw->wm.prog_data->prog_offset_16)
+   /* In case of non 1x per sample shading, only one of SIMD8 and SIMD16
+    * should be enabled. We do 'SIMD16 only' dispatch if a SIMD16 shader
+    * is successfully compiled. In majority of the cases that bring us
+    * better performance than 'SIMD8 only' dispatch.
+    */
+   int min_inv_per_frag =
+      _mesa_get_min_invocations_per_fragment(ctx, brw->fragment_program);
+   assert(min_inv_per_frag >= 1);
+
+   if (brw->wm.prog_data->prog_offset_16) {
       dw4 |= GEN7_PS_16_DISPATCH_ENABLE;
+      if (min_inv_per_frag == 1)
+         dw4 |= GEN7_PS_8_DISPATCH_ENABLE;
+   }
+   else
+      dw4 |= GEN7_PS_8_DISPATCH_ENABLE;
 
    dw5 |= (brw->wm.prog_data->first_curbe_grf <<
 	   GEN7_PS_DISPATCH_START_GRF_SHIFT_0);
@@ -195,7 +243,10 @@ upload_ps_state(struct brw_context *brw)
 
    BEGIN_BATCH(8);
    OUT_BATCH(_3DSTATE_PS << 16 | (8 - 2));
-   OUT_BATCH(brw->wm.base.prog_offset);
+   if (brw->wm.prog_data->prog_offset_16 && min_inv_per_frag > 1)
+      OUT_BATCH(brw->wm.base.prog_offset + brw->wm.prog_data->prog_offset_16);
+   else
+      OUT_BATCH(brw->wm.base.prog_offset);
    OUT_BATCH(dw2);
    if (brw->wm.prog_data->total_scratch) {
       OUT_RELOC(brw->wm.base.scratch_bo,
