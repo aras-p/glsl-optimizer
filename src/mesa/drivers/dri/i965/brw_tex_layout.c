@@ -240,69 +240,34 @@ static void
 brw_miptree_layout_texture_3d(struct brw_context *brw,
                               struct intel_mipmap_tree *mt)
 {
-   unsigned width  = mt->physical_width0;
-   unsigned height = mt->physical_height0;
-   unsigned depth = mt->physical_depth0;
-   unsigned pack_x_pitch, pack_x_nr;
-   unsigned pack_y_pitch;
+   unsigned yscale = mt->compressed ? 4 : 1;
 
+   mt->total_width = 0;
    mt->total_height = 0;
 
-   if (mt->compressed) {
-       mt->total_width = ALIGN(width, mt->align_w);
-       pack_y_pitch = (height + 3) / 4;
-   } else {
-      mt->total_width = mt->physical_width0;
-      pack_y_pitch = ALIGN(mt->physical_height0, mt->align_h);
-   }
-
-   pack_x_pitch = width;
-   pack_x_nr = 1;
-
+   unsigned ysum = 0;
    for (unsigned level = mt->first_level; level <= mt->last_level; level++) {
-      int x = 0;
-      int y = 0;
+      unsigned WL = MAX2(mt->physical_width0 >> level, 1);
+      unsigned HL = MAX2(mt->physical_height0 >> level, 1);
+      unsigned DL = MAX2(mt->physical_depth0 >> level, 1);
+      unsigned wL = ALIGN(WL, mt->align_w);
+      unsigned hL = ALIGN(HL, mt->align_h);
 
-      intel_miptree_set_level_info(mt, level,
-                                   0, mt->total_height,
-                                   width, height, depth);
+      if (mt->target == GL_TEXTURE_CUBE_MAP)
+         DL = 6;
 
-      for (int q = 0; q < depth; /* empty */) {
-         for (int j = 0; j < pack_x_nr && q < depth; j++, q++) {
-            intel_miptree_set_image_offset(mt, level, q, x, y);
-            x += pack_x_pitch;
-         }
-         if (x > mt->total_width)
-            mt->total_width = x;
+      intel_miptree_set_level_info(mt, level, 0, 0, WL, HL, DL);
 
-         x = 0;
-         y += pack_y_pitch;
+      for (unsigned q = 0; q < DL; q++) {
+         unsigned x = (q % (1 << level)) * wL;
+         unsigned y = ysum + (q >> level) * hL;
+
+         intel_miptree_set_image_offset(mt, level, q, x, y / yscale);
+         mt->total_width = MAX2(mt->total_width, x + wL);
+         mt->total_height = MAX2(mt->total_height, (y + hL) / yscale);
       }
 
-      mt->total_height += y;
-      width  = minify(width, 1);
-      height = minify(height, 1);
-      if (mt->target == GL_TEXTURE_3D)
-         depth = minify(depth, 1);
-
-      if (mt->compressed) {
-         pack_y_pitch = (height + 3) / 4;
-
-         if (pack_x_pitch > ALIGN(width, mt->align_w)) {
-            pack_x_pitch = ALIGN(width, mt->align_w);
-            pack_x_nr <<= 1;
-         }
-      } else {
-         pack_x_nr <<= 1;
-         if (pack_x_pitch > 4) {
-            pack_x_pitch >>= 1;
-         }
-
-         if (pack_y_pitch > 2) {
-            pack_y_pitch >>= 1;
-            pack_y_pitch = ALIGN(pack_y_pitch, mt->align_h);
-         }
-      }
+      ysum += ALIGN(DL, 1 << level) / (1 << level) * hL;
    }
 
    align_cube(mt);
