@@ -743,12 +743,6 @@ compile_shader(struct gl_context *ctx, GLuint shaderObj)
    if (!sh)
       return;
 
-   /* Geometry shaders are not yet fully supported, so issue a warning message
-    * if we're compiling one.
-    */
-   if (sh->Type == GL_GEOMETRY_SHADER)
-      printf("WARNING: Geometry shader support is currently experimental.\n");
-
    options = &ctx->ShaderCompilerOptions[_mesa_shader_type_to_index(sh->Type)];
 
    /* set default pragma state for shader */
