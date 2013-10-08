@@ -166,6 +166,13 @@ struct gl_uniform_storage {
    bool row_major;
 
    /** @} */
+
+   /**
+    * Index within gl_shader_program::AtomicBuffers[] of the atomic
+    * counter buffer this uniform is stored in, or -1 if this is not
+    * an atomic counter.
+    */
+   int atomic_buffer_index;
 };
 
 #ifdef __cplusplus

@@ -535,7 +535,8 @@ _mesa_GetUniformLocation(GLhandleARB programObj, const GLcharARB *name)
     *      with a named uniform block, or if <name> starts with the reserved
     *      prefix "gl_"."
     */
-   if (shProg->UniformStorage[index].block_index != -1)
+   if (shProg->UniformStorage[index].block_index != -1 ||
+       shProg->UniformStorage[index].atomic_buffer_index != -1)
       return -1;
 
    return _mesa_uniform_merge_location_offset(shProg, index, offset);
@@ -849,4 +850,63 @@ void GLAPIENTRY
 _mesa_GetActiveAtomicCounterBufferiv(GLuint program, GLuint bufferIndex,
                                      GLenum pname, GLint *params)
 {
+   GET_CURRENT_CONTEXT(ctx);
+   struct gl_shader_program *shProg;
+   struct gl_active_atomic_buffer *ab;
+   int i;
+
+   if (!ctx->Extensions.ARB_shader_atomic_counters) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glGetActiveAtomicCounterBufferiv");
+      return;
+   }
+
+   shProg = _mesa_lookup_shader_program_err(ctx, program,
+                                            "glGetActiveAtomicCounterBufferiv");
+   if (!shProg)
+      return;
+
+   if (bufferIndex >= shProg->NumAtomicBuffers) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "glGetActiveAtomicCounterBufferiv(bufferIndex)");
+      return;
+   }
+
+   ab = &shProg->AtomicBuffers[bufferIndex];
+
+   switch (pname) {
+   case GL_ATOMIC_COUNTER_BUFFER_BINDING:
+      params[0] = ab->Binding;
+      return;
+   case GL_ATOMIC_COUNTER_BUFFER_DATA_SIZE:
+      params[0] = ab->MinimumSize;
+      return;
+   case GL_ATOMIC_COUNTER_BUFFER_ACTIVE_ATOMIC_COUNTERS:
+      params[0] = ab->NumUniforms;
+      return;
+   case GL_ATOMIC_COUNTER_BUFFER_ACTIVE_ATOMIC_COUNTER_INDICES:
+      for (i = 0; i < ab->NumUniforms; ++i)
+         params[i] = ab->Uniforms[i];
+      return;
+   case GL_ATOMIC_COUNTER_BUFFER_REFERENCED_BY_VERTEX_SHADER:
+      params[0] = ab->StageReferences[MESA_SHADER_VERTEX];
+      return;
+   case GL_ATOMIC_COUNTER_BUFFER_REFERENCED_BY_GEOMETRY_SHADER:
+      params[0] = ab->StageReferences[MESA_SHADER_GEOMETRY];
+      return;
+   case GL_ATOMIC_COUNTER_BUFFER_REFERENCED_BY_FRAGMENT_SHADER:
+      params[0] = ab->StageReferences[MESA_SHADER_FRAGMENT];
+      return;
+   case GL_ATOMIC_COUNTER_BUFFER_REFERENCED_BY_TESS_CONTROL_SHADER:
+      params[0] = GL_FALSE;
+      return;
+   case GL_ATOMIC_COUNTER_BUFFER_REFERENCED_BY_TESS_EVALUATION_SHADER:
+      params[0] = GL_FALSE;
+      return;
+   default:
+      _mesa_error(ctx, GL_INVALID_ENUM,
+                  "glGetActiveAtomicCounterBufferiv(pname 0x%x (%s))",
+                  pname, _mesa_lookup_enum_by_nr(pname));
+      return;
+   }
 }

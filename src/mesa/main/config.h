@@ -170,6 +170,11 @@
 #define MAX_UNIFORM_BUFFERS            15 /* + 1 default uniform buffer */
 /* 6 is for vertex, hull, domain, geometry, fragment, and compute shader. */
 #define MAX_COMBINED_UNIFORM_BUFFERS   (MAX_UNIFORM_BUFFERS * 6)
+#define MAX_ATOMIC_COUNTERS            4096
+/* 6 is for vertex, hull, domain, geometry, fragment, and compute shader. */
+#define MAX_COMBINED_ATOMIC_BUFFERS    (MAX_UNIFORM_BUFFERS * 6)
+/* Size of an atomic counter in bytes according to ARB_shader_atomic_counters */
+#define ATOMIC_COUNTER_SIZE            4
 /*@}*/
 
 /**

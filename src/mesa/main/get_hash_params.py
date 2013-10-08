@@ -722,6 +722,18 @@ descriptor=[
   [ "MAX_PROGRAM_TEXTURE_GATHER_OFFSET", "CONTEXT_INT(Const.MaxProgramTextureGatherOffset), extra_ARB_texture_gather"],
   [ "MAX_PROGRAM_TEXTURE_GATHER_COMPONENTS_ARB", "CONTEXT_INT(Const.MaxProgramTextureGatherComponents), extra_ARB_texture_gather"],
 
+# GL_ARB_shader_atomic_counters
+  [ "ATOMIC_COUNTER_BUFFER_BINDING", "LOC_CUSTOM, TYPE_INT, 0, extra_ARB_shader_atomic_counters" ],
+  [ "MAX_ATOMIC_COUNTER_BUFFER_BINDINGS", "CONTEXT_INT(Const.MaxAtomicBufferBindings), extra_ARB_shader_atomic_counters" ],
+  [ "MAX_ATOMIC_COUNTER_BUFFER_SIZE", "CONTEXT_INT(Const.MaxAtomicBufferSize), extra_ARB_shader_atomic_counters" ],
+  [ "MAX_VERTEX_ATOMIC_COUNTER_BUFFERS", "CONTEXT_INT(Const.VertexProgram.MaxAtomicBuffers), extra_ARB_shader_atomic_counters" ],
+  [ "MAX_VERTEX_ATOMIC_COUNTERS", "CONTEXT_INT(Const.VertexProgram.MaxAtomicCounters), extra_ARB_shader_atomic_counters" ],
+  [ "MAX_FRAGMENT_ATOMIC_COUNTER_BUFFERS", "CONTEXT_INT(Const.FragmentProgram.MaxAtomicBuffers), extra_ARB_shader_atomic_counters" ],
+  [ "MAX_FRAGMENT_ATOMIC_COUNTERS", "CONTEXT_INT(Const.FragmentProgram.MaxAtomicCounters), extra_ARB_shader_atomic_counters" ],
+  [ "MAX_GEOMETRY_ATOMIC_COUNTER_BUFFERS", "CONTEXT_INT(Const.GeometryProgram.MaxAtomicBuffers), extra_ARB_shader_atomic_counters_and_geometry_shader" ],
+  [ "MAX_GEOMETRY_ATOMIC_COUNTERS", "CONTEXT_INT(Const.GeometryProgram.MaxAtomicCounters), extra_ARB_shader_atomic_counters_and_geometry_shader" ],
+  [ "MAX_COMBINED_ATOMIC_COUNTER_BUFFERS", "CONTEXT_INT(Const.MaxCombinedAtomicBuffers), extra_ARB_shader_atomic_counters" ],
+  [ "MAX_COMBINED_ATOMIC_COUNTERS", "CONTEXT_INT(Const.MaxCombinedAtomicCounters), extra_ARB_shader_atomic_counters" ],
 ]},
 
 # Enums restricted to OpenGL Core profile

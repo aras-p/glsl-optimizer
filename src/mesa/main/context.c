@@ -537,6 +537,9 @@ init_program_limits(struct gl_context *ctx, GLenum type,
    prog->MaxCombinedUniformComponents = (prog->MaxUniformComponents +
                                          ctx->Const.MaxUniformBlockSize / 4 *
                                          prog->MaxUniformBlocks);
+
+   prog->MaxAtomicBuffers = 0;
+   prog->MaxAtomicCounters = 0;
 }
 
 
@@ -669,6 +672,12 @@ _mesa_init_constants(struct gl_context *ctx)
    ctx->Const.MaxColorTextureSamples = 1;
    ctx->Const.MaxDepthTextureSamples = 1;
    ctx->Const.MaxIntegerSamples = 1;
+
+   /* GL_ARB_shader_atomic_counters */
+   ctx->Const.MaxAtomicBufferBindings = MAX_COMBINED_ATOMIC_BUFFERS;
+   ctx->Const.MaxAtomicBufferSize = MAX_ATOMIC_COUNTERS * ATOMIC_COUNTER_SIZE;
+   ctx->Const.MaxCombinedAtomicBuffers = MAX_COMBINED_ATOMIC_BUFFERS;
+   ctx->Const.MaxCombinedAtomicCounters = MAX_ATOMIC_COUNTERS;
 }
 
 

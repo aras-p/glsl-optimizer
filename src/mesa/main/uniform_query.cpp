@@ -154,11 +154,21 @@ _mesa_GetActiveUniformsiv(GLuint program,
 	 params[i] = uni->row_major;
 	 break;
 
+      case GL_UNIFORM_ATOMIC_COUNTER_BUFFER_INDEX:
+         if (!ctx->Extensions.ARB_shader_atomic_counters)
+            goto invalid_enum;
+         params[i] = uni->atomic_buffer_index;
+         break;
+
       default:
-	 _mesa_error(ctx, GL_INVALID_ENUM, "glGetActiveUniformsiv(pname)");
-	 return;
+         goto invalid_enum;
       }
    }
+
+   return;
+
+ invalid_enum:
+   _mesa_error(ctx, GL_INVALID_ENUM, "glGetActiveUniformsiv(pname)");
 }
 
 static bool

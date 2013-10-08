@@ -513,6 +513,7 @@ private:
       this->uniforms[id].num_driver_storage = 0;
       this->uniforms[id].driver_storage = NULL;
       this->uniforms[id].storage = this->values;
+      this->uniforms[id].atomic_buffer_index = -1;
       if (this->ubo_block_index != -1) {
 	 this->uniforms[id].block_index = this->ubo_block_index;
 

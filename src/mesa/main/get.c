@@ -143,6 +143,7 @@ enum value_extra {
    EXTRA_FLUSH_CURRENT,
    EXTRA_GLSL_130,
    EXTRA_EXT_UBO_GS4,
+   EXTRA_EXT_ATOMICS_GS4,
 };
 
 #define NO_EXTRA NULL
@@ -331,6 +332,11 @@ static const int extra_MESA_texture_array_es3[] = {
    EXTRA_END
 };
 
+static const int extra_ARB_shader_atomic_counters_and_geometry_shader[] = {
+   EXTRA_EXT_ATOMICS_GS4,
+   EXTRA_END
+};
+
 EXTRA_EXT(ARB_texture_cube_map);
 EXTRA_EXT(MESA_texture_array);
 EXTRA_EXT(NV_fog_distance);
@@ -367,6 +373,7 @@ EXTRA_EXT(ARB_texture_cube_map_array);
 EXTRA_EXT(ARB_texture_buffer_range);
 EXTRA_EXT(ARB_texture_multisample);
 EXTRA_EXT(ARB_texture_gather);
+EXTRA_EXT(ARB_shader_atomic_counters);
 
 static const int
 extra_ARB_color_buffer_float_or_glcore[] = {
@@ -894,6 +901,10 @@ find_custom_value(struct gl_context *ctx, const struct value_desc *d, union valu
          _mesa_problem(ctx, "driver doesn't implement GetTimestamp");
       }
       break;
+   /* GL_ARB_shader_atomic_counters */
+   case GL_ATOMIC_COUNTER_BUFFER_BINDING:
+      v->value_int = ctx->AtomicBuffer->Name;
+      break;
    }
 }
 
@@ -997,6 +1008,11 @@ check_extra(struct gl_context *ctx, const char *func, const struct value_desc *d
       case EXTRA_EXT_UBO_GS4:
          api_check = GL_TRUE;
          api_found = (ctx->Extensions.ARB_uniform_buffer_object &&
+                      _mesa_has_geometry_shaders(ctx));
+         break;
+      case EXTRA_EXT_ATOMICS_GS4:
+         api_check = GL_TRUE;
+         api_found = (ctx->Extensions.ARB_shader_atomic_counters &&
                       _mesa_has_geometry_shaders(ctx));
          break;
       case EXTRA_END:
@@ -1692,6 +1708,30 @@ find_value_indexed(const char *func, GLenum pname, GLuint index, union value *v)
          goto invalid_enum;
       v->value_int = ctx->Multisample.SampleMaskValue;
       return TYPE_INT;
+
+   case GL_ATOMIC_COUNTER_BUFFER_BINDING:
+      if (!ctx->Extensions.ARB_shader_atomic_counters)
+         goto invalid_enum;
+      if (index >= ctx->Const.MaxAtomicBufferBindings)
+         goto invalid_value;
+      v->value_int = ctx->AtomicBufferBindings[index].BufferObject->Name;
+      return TYPE_INT;
+
+   case GL_ATOMIC_COUNTER_BUFFER_START:
+      if (!ctx->Extensions.ARB_shader_atomic_counters)
+         goto invalid_enum;
+      if (index >= ctx->Const.MaxAtomicBufferBindings)
+         goto invalid_value;
+      v->value_int64 = ctx->AtomicBufferBindings[index].Offset;
+      return TYPE_INT64;
+
+   case GL_ATOMIC_COUNTER_BUFFER_SIZE:
+      if (!ctx->Extensions.ARB_shader_atomic_counters)
+         goto invalid_enum;
+      if (index >= ctx->Const.MaxAtomicBufferBindings)
+         goto invalid_value;
+      v->value_int64 = ctx->AtomicBufferBindings[index].Size;
+      return TYPE_INT64;
    }
 
  invalid_enum:

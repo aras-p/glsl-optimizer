@@ -648,6 +648,12 @@ get_programiv(struct gl_context *ctx, GLuint program, GLenum pname, GLint *param
    case GL_PROGRAM_BINARY_LENGTH:
       *params = 0;
       return;
+   case GL_ACTIVE_ATOMIC_COUNTER_BUFFERS:
+      if (!ctx->Extensions.ARB_shader_atomic_counters)
+         break;
+
+      *params = shProg->NumAtomicBuffers;
+      return;
    default:
       break;
    }
