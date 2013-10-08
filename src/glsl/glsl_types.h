@@ -234,7 +234,7 @@ struct glsl_type {
    static const glsl_type *get_interface_instance(const glsl_struct_field *fields,
 						  unsigned num_fields,
 						  enum glsl_interface_packing packing,
-						  const char *name);
+						  const char *block_name);
 
    /**
     * Query the total number of scalars that make up a scalar, vector or matrix
