@@ -673,7 +673,7 @@ minify(unsigned value, unsigned levels)
  *
  * \sa ROUND_DOWN_TO()
  */
-#define ALIGN(value, alignment)  (((value) + alignment - 1) & ~(alignment - 1))
+#define ALIGN(value, alignment)  (((value) + (alignment) - 1) & ~((alignment) - 1))
 
 
 
