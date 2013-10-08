@@ -274,6 +274,7 @@ vec4_visitor::implied_mrf_writes(vec4_instruction *inst)
    case SHADER_OPCODE_TXF_MS:
    case SHADER_OPCODE_TXS:
    case SHADER_OPCODE_TG4:
+   case SHADER_OPCODE_TG4_OFFSET:
       return inst->header_present ? 1 : 0;
    default:
       assert(!"not reached");

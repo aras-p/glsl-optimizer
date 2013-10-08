@@ -438,6 +438,10 @@ fs_generator::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src
          assert(brw->gen >= 6);
          msg_type = GEN7_SAMPLER_MESSAGE_SAMPLE_GATHER4;
          break;
+      case SHADER_OPCODE_TG4_OFFSET:
+         assert(brw->gen >= 7);
+         msg_type = GEN7_SAMPLER_MESSAGE_SAMPLE_GATHER4_PO;
+         break;
       default:
 	 assert(!"not reached");
 	 break;
@@ -551,7 +555,8 @@ fs_generator::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src
       }
    }
 
-   uint32_t surface_index = (inst->opcode == SHADER_OPCODE_TG4
+   uint32_t surface_index = ((inst->opcode == SHADER_OPCODE_TG4 ||
+      inst->opcode == SHADER_OPCODE_TG4_OFFSET)
       ? c->prog_data.base.binding_table.gather_texture_start
       : c->prog_data.base.binding_table.texture_start) + inst->sampler;
 
@@ -1520,6 +1525,7 @@ fs_generator::generate_code(exec_list *instructions)
       case SHADER_OPCODE_TXS:
       case SHADER_OPCODE_LOD:
       case SHADER_OPCODE_TG4:
+      case SHADER_OPCODE_TG4_OFFSET:
 	 generate_tex(inst, dst, src[0]);
 	 break;
       case FS_OPCODE_DDX:

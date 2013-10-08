@@ -311,6 +311,9 @@ vec4_generator::generate_tex(vec4_instruction *inst,
       case SHADER_OPCODE_TG4:
          msg_type = GEN7_SAMPLER_MESSAGE_SAMPLE_GATHER4;
          break;
+      case SHADER_OPCODE_TG4_OFFSET:
+         msg_type = GEN7_SAMPLER_MESSAGE_SAMPLE_GATHER4_PO;
+         break;
       default:
 	 assert(!"should not get here: invalid VS texture opcode");
 	 break;
@@ -385,7 +388,8 @@ vec4_generator::generate_tex(vec4_instruction *inst,
       break;
    }
 
-   uint32_t surface_index = (inst->opcode == SHADER_OPCODE_TG4
+   uint32_t surface_index = ((inst->opcode == SHADER_OPCODE_TG4 ||
+      inst->opcode == SHADER_OPCODE_TG4_OFFSET)
       ? prog_data->base.binding_table.gather_texture_start
       : prog_data->base.binding_table.texture_start) + inst->sampler;
 
@@ -1096,6 +1100,7 @@ vec4_generator::generate_vec4_instruction(vec4_instruction *instruction,
    case SHADER_OPCODE_TXL:
    case SHADER_OPCODE_TXS:
    case SHADER_OPCODE_TG4:
+   case SHADER_OPCODE_TG4_OFFSET:
       generate_tex(inst, dst, src[0]);
       break;
 

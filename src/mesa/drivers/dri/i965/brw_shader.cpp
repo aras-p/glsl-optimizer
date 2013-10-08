@@ -443,6 +443,8 @@ brw_instruction_name(enum opcode op)
       return "txf_ms";
    case SHADER_OPCODE_TG4:
       return "tg4";
+   case SHADER_OPCODE_TG4_OFFSET:
+      return "tg4_offset";
 
    case FS_OPCODE_DDX:
       return "ddx";
@@ -539,7 +541,8 @@ backend_instruction::is_tex()
            opcode == SHADER_OPCODE_TXL ||
            opcode == SHADER_OPCODE_TXS ||
            opcode == SHADER_OPCODE_LOD ||
-           opcode == SHADER_OPCODE_TG4);
+           opcode == SHADER_OPCODE_TG4 ||
+           opcode == SHADER_OPCODE_TG4_OFFSET);
 }
 
 bool
