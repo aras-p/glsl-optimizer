@@ -73,6 +73,8 @@ upload_wm_state(struct brw_context *brw)
          case FRAG_DEPTH_LAYOUT_LESS:
             dw1 |= GEN7_WM_PSCDEPTH_ON_LE;
             break;
+         case FRAG_DEPTH_LAYOUT_UNCHANGED:
+            break;
       }
    }
    /* CACHE_NEW_WM_PROG */
