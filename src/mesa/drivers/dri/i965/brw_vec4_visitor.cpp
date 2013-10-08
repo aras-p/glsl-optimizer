@@ -2202,6 +2202,13 @@ vec4_visitor::visit(ir_texture *ir)
       shadow_comparitor = this->result;
    }
 
+   bool has_nonconstant_offset = ir->offset && !ir->offset->as_constant();
+   src_reg offset_value;
+   if (has_nonconstant_offset) {
+      ir->offset->accept(this);
+      offset_value = src_reg(this->result);
+   }
+
    const glsl_type *lod_type = NULL, *sample_index_type = NULL;
    src_reg lod, dPdx, dPdy, sample_index;
    switch (ir->op) {
@@ -2259,7 +2266,10 @@ vec4_visitor::visit(ir_texture *ir)
       inst = new(mem_ctx) vec4_instruction(this, SHADER_OPCODE_TXS);
       break;
    case ir_tg4:
-      inst = new(mem_ctx) vec4_instruction(this, SHADER_OPCODE_TG4);
+      if (has_nonconstant_offset)
+         inst = new(mem_ctx) vec4_instruction(this, SHADER_OPCODE_TG4_OFFSET);
+      else
+         inst = new(mem_ctx) vec4_instruction(this, SHADER_OPCODE_TG4);
       break;
    case ir_query_levels:
       inst = new(mem_ctx) vec4_instruction(this, SHADER_OPCODE_TXS);
@@ -2395,6 +2405,10 @@ vec4_visitor::visit(ir_texture *ir)
 	    emit(MOV(dst_reg(MRF, param_base + 2, type, WRITEMASK_XYZ), dPdy));
 	    inst->mlen += 2;
 	 }
+      } else if (ir->op == ir_tg4 && has_nonconstant_offset) {
+         emit(MOV(dst_reg(MRF, param_base + 1, glsl_type::ivec2_type, WRITEMASK_XY),
+                  offset_value));
+         inst->mlen++;
       }
    }
 
