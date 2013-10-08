@@ -197,6 +197,18 @@ brw_miptree_layout_2d(struct intel_mipmap_tree *mt)
 }
 
 static void
+align_cube(struct intel_mipmap_tree *mt)
+{
+   /* The 965's sampler lays cachelines out according to how accesses
+    * in the texture surfaces run, so they may be "vertical" through
+    * memory.  As a result, the docs say in Surface Padding Requirements:
+    * Sampling Engine Surfaces that two extra rows of padding are required.
+    */
+   if (mt->target == GL_TEXTURE_CUBE_MAP)
+      mt->total_height += 2;
+}
+
+static void
 brw_miptree_layout_texture_array(struct brw_context *brw,
 				 struct intel_mipmap_tree *mt)
 {
@@ -220,6 +232,8 @@ brw_miptree_layout_texture_array(struct brw_context *brw,
       }
    }
    mt->total_height = qpitch * mt->physical_depth0;
+
+   align_cube(mt);
 }
 
 static void
@@ -291,13 +305,7 @@ brw_miptree_layout_texture_3d(struct brw_context *brw,
       }
    }
 
-   /* The 965's sampler lays cachelines out according to how accesses
-    * in the texture surfaces run, so they may be "vertical" through
-    * memory.  As a result, the docs say in Surface Padding Requirements:
-    * Sampling Engine Surfaces that two extra rows of padding are required.
-    */
-   if (mt->target == GL_TEXTURE_CUBE_MAP)
-      mt->total_height += 2;
+   align_cube(mt);
 }
 
 void
