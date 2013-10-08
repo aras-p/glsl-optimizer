@@ -76,26 +76,19 @@ void r300_flush(struct pipe_context *pipe,
                 struct pipe_fence_handle **fence)
 {
     struct r300_context *r300 = r300_context(pipe);
-    struct pb_buffer **rfence = (struct pb_buffer**)fence;
 
     if (r300->screen->info.drm_minor >= 12) {
         flags |= RADEON_FLUSH_KEEP_TILING_FLAGS;
     }
 
-    if (rfence) {
-        /* Create a fence, which is a dummy BO. */
-        *rfence = r300->rws->buffer_create(r300->rws, 1, 1, TRUE,
-                                           RADEON_DOMAIN_GTT);
-        /* Add the fence as a dummy relocation. */
-        r300->rws->cs_add_reloc(r300->cs,
-                                r300->rws->buffer_get_cs_handle(*rfence),
-                                RADEON_USAGE_READWRITE, RADEON_DOMAIN_GTT);
+    if (fence) {
+        *fence = r300->rws->cs_create_fence(r300->cs);
     }
 
     if (r300->dirty_hw) {
         r300_flush_and_cleanup(r300, flags);
     } else {
-        if (rfence) {
+        if (fence) {
             /* We have to create a fence object, but the command stream is empty
              * and we cannot emit an empty CS. Let's write to some reg. */
             CS_LOCALS(r300);

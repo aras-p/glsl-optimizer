@@ -485,6 +485,29 @@ struct radeon_winsys {
     void (*cs_sync_flush)(struct radeon_winsys_cs *cs);
 
     /**
+     * Return a fence associated with the CS. The fence will be signalled
+     * once the CS is flushed and all commands in the CS are completed
+     * by the GPU.
+     */
+    struct pipe_fence_handle *(*cs_create_fence)(struct radeon_winsys_cs *cs);
+
+    /**
+     * Wait for the fence and return true if the fence has been signalled.
+     * The timeout of 0 will only return the status.
+     * The timeout of PIPE_TIMEOUT_INFINITE will always wait until the fence
+     * is signalled.
+     */
+    bool (*fence_wait)(struct radeon_winsys *ws,
+                       struct pipe_fence_handle *fence,
+                       uint64_t timeout);
+
+    /**
+     * Reference counting for fences.
+     */
+    void (*fence_reference)(struct pipe_fence_handle **dst,
+                            struct pipe_fence_handle *src);
+
+    /**
      * Initialize surface
      *
      * \param ws        The winsys this function is called from.
