@@ -162,7 +162,7 @@ float log2f(float f)
 #endif
 
 
-#if __STDC_VERSION__ < 199901L && !defined(__cplusplus)
+#if __STDC_VERSION__ < 199901L && (!defined(__cplusplus) || !defined(_GNU_SOURCE))
 static INLINE long int
 lrint(double d)
 {
