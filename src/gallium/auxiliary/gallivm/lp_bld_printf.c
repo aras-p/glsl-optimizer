@@ -26,6 +26,7 @@
  **************************************************************************/
 
 #include <stdio.h>
+#include <inttypes.h>
 
 #include "util/u_debug.h"
 #include "util/u_memory.h"
@@ -106,7 +107,11 @@ lp_build_print_value(struct gallivm_state *gallivm,
       type_fmt[4] = 'g';
       type_fmt[5] = '\0';
    } else if (type_kind == LLVMIntegerTypeKind) {
-      if (LLVMGetIntTypeWidth(type_ref) == 8) {
+      if (LLVMGetIntTypeWidth(type_ref) == 64) {
+         unsigned flen = strlen(PRId64);
+         assert(flen <= 3);
+         strncpy(type_fmt + 2, PRId64, flen);
+      } else if (LLVMGetIntTypeWidth(type_ref) == 8) {
          type_fmt[2] = 'u';
       } else {
          type_fmt[2] = 'i';
