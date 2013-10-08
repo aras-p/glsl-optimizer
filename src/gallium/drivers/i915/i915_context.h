@@ -227,8 +227,8 @@ struct i915_context {
    /* The most recent drawing state as set by the driver:
     */
    const struct i915_blend_state           *blend;
-   const struct i915_sampler_state         *sampler[PIPE_MAX_SAMPLERS];
-   struct pipe_sampler_state *vertex_samplers[PIPE_MAX_SAMPLERS];
+   const struct i915_sampler_state         *fragment_sampler[PIPE_MAX_SAMPLERS];
+   struct pipe_sampler_state               *vertex_samplers[PIPE_MAX_SAMPLERS];
    const struct i915_depth_stencil_state   *depth_stencil;
    const struct i915_rasterizer_state      *rasterizer;
 

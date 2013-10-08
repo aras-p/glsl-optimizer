@@ -161,13 +161,13 @@ static void update_samplers(struct i915_context *i915)
 
          update_sampler(i915,
                         unit,
-                        i915->sampler[unit],          /* sampler state */
+                        i915->fragment_sampler[unit], /* sampler state */
                         texture,                      /* texture */
                         i915->current.sampler[unit]); /* the result */
          update_map(i915,
                     unit,
                     texture,                             /* texture */
-                    i915->sampler[unit],                 /* sampler state */
+                    i915->fragment_sampler[unit],        /* sampler state */
                     i915->fragment_sampler_views[unit],  /* sampler view */
                     i915->current.texbuffer[unit]);      /* the result */
 
@@ -357,7 +357,7 @@ static void update_maps(struct i915_context *i915)
          update_map(i915,
                     unit,
                     texture,                            /* texture */
-                    i915->sampler[unit],                /* sampler state */
+                    i915->fragment_sampler[unit],       /* sampler state */
                     i915->fragment_sampler_views[unit], /* sampler view */
                     i915->current.texbuffer[unit]);
       }

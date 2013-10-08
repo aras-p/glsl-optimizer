@@ -337,17 +337,17 @@ static void i915_bind_fragment_sampler_states(struct pipe_context *pipe,
 
    /* Check for no-op */
    if (num == i915->num_samplers &&
-       !memcmp(i915->sampler + start, samplers,
+       !memcmp(i915->fragment_sampler + start, samplers,
                num * sizeof(void *)))
       return;
 
    for (i = 0; i < num; ++i)
-      i915->sampler[i + start] = samplers[i];
+      i915->fragment_sampler[i + start] = samplers[i];
 
    /* find highest non-null samplers[] entry */
    {
       unsigned j = MAX2(i915->num_samplers, start + num);
-      while (j > 0 && i915->sampler[j - 1] == NULL)
+      while (j > 0 && i915->fragment_sampler[j - 1] == NULL)
          j--;
       i915->num_samplers = j;
    }
