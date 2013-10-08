@@ -204,6 +204,9 @@ OP12(SAMPLE_INFO)
 
 OP13(UCMP)
 
+OP12(IMUL_HI)
+OP12(UMUL_HI)
+
 #undef OP00
 #undef OP01
 #undef OP10

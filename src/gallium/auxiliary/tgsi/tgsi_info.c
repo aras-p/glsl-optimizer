@@ -219,6 +219,8 @@ static const struct tgsi_opcode_info opcode_info[TGSI_OPCODE_LAST] =
    { 1, 3, 1, 0, 0, 0, OTHR, "TEX2", TGSI_OPCODE_TEX2 },
    { 1, 3, 1, 0, 0, 0, OTHR, "TXB2", TGSI_OPCODE_TXB2 },
    { 1, 3, 1, 0, 0, 0, OTHR, "TXL2", TGSI_OPCODE_TXL2 },
+   { 1, 2, 0, 0, 0, 0, COMP, "IMUL_HI", TGSI_OPCODE_IMUL_HI },
+   { 1, 2, 0, 0, 0, 0, COMP, "UMUL_HI", TGSI_OPCODE_UMUL_HI },
 };
 
 const struct tgsi_opcode_info *
@@ -297,6 +299,7 @@ tgsi_opcode_infer_type( uint opcode )
    case TGSI_OPCODE_USLT:
    case TGSI_OPCODE_USNE:
    case TGSI_OPCODE_SVIEWINFO:
+   case TGSI_OPCODE_UMUL_HI:
       return TGSI_TYPE_UNSIGNED;
    case TGSI_OPCODE_ARL:
    case TGSI_OPCODE_ARR:
@@ -317,6 +320,7 @@ tgsi_opcode_infer_type( uint opcode )
    case TGSI_OPCODE_UARL:
    case TGSI_OPCODE_IABS:
    case TGSI_OPCODE_ISSG:
+   case TGSI_OPCODE_IMUL_HI:
       return TGSI_TYPE_SIGNED;
    default:
       return TGSI_TYPE_FLOAT;
@@ -339,7 +343,9 @@ tgsi_opcode_infer_src_type( uint opcode )
    case TGSI_OPCODE_CASE:
    case TGSI_OPCODE_SAMPLE_I:
    case TGSI_OPCODE_SAMPLE_I_MS:
+   case TGSI_OPCODE_UMUL_HI:
       return TGSI_TYPE_UNSIGNED;
+   case TGSI_OPCODE_IMUL_HI:
    case TGSI_OPCODE_I2F:
       return TGSI_TYPE_SIGNED;
    case TGSI_OPCODE_ARL:

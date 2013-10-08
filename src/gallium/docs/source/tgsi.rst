@@ -1103,6 +1103,36 @@ Support for these opcodes indicated by PIPE_SHADER_CAP_INTEGERS (all of them?)
   dst.w = src0.w \times src1.w
 
 
+.. opcode:: IMUL_HI - Signed Integer Multiply High Bits
+
+   The high 32bits of the multiplication of 2 signed integers are returned.
+
+.. math::
+
+  dst.x = (src0.x \times src1.x) >> 32
+
+  dst.y = (src0.y \times src1.y) >> 32
+
+  dst.z = (src0.z \times src1.z) >> 32
+
+  dst.w = (src0.w \times src1.w) >> 32
+
+
+.. opcode:: UMUL_HI - Unsigned Integer Multiply High Bits
+
+   The high 32bits of the multiplication of 2 unsigned integers are returned.
+
+.. math::
+
+  dst.x = (src0.x \times src1.x) >> 32
+
+  dst.y = (src0.y \times src1.y) >> 32
+
+  dst.z = (src0.z \times src1.z) >> 32
+
+  dst.w = (src0.w \times src1.w) >> 32
+
+
 .. opcode:: IDIV - Signed Integer Division
 
    TBD: behavior for division by zero.

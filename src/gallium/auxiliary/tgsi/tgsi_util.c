@@ -243,6 +243,8 @@ tgsi_util_get_inst_usage_mask(const struct tgsi_full_instruction *inst,
    case TGSI_OPCODE_USHR:
    case TGSI_OPCODE_USLT:
    case TGSI_OPCODE_USNE:
+   case TGSI_OPCODE_IMUL_HI:
+   case TGSI_OPCODE_UMUL_HI:
       /* Channel-wise operations */
       read_mask = write_mask;
       break;

@@ -3478,6 +3478,32 @@ micro_umul(union tgsi_exec_channel *dst,
 }
 
 static void
+micro_imul_hi(union tgsi_exec_channel *dst,
+              const union tgsi_exec_channel *src0,
+              const union tgsi_exec_channel *src1)
+{
+#define I64M(x, y) ((((int64_t)x) * ((int64_t)y)) >> 32)
+   dst->i[0] = I64M(src0->i[0], src1->i[0]);
+   dst->i[1] = I64M(src0->i[1], src1->i[1]);
+   dst->i[2] = I64M(src0->i[2], src1->i[2]);
+   dst->i[3] = I64M(src0->i[3], src1->i[3]);
+#undef I64M
+}
+
+static void
+micro_umul_hi(union tgsi_exec_channel *dst,
+              const union tgsi_exec_channel *src0,
+              const union tgsi_exec_channel *src1)
+{
+#define U64M(x, y) ((((uint64_t)x) * ((uint64_t)y)) >> 32)
+   dst->u[0] = U64M(src0->u[0], src1->u[0]);
+   dst->u[1] = U64M(src0->u[1], src1->u[1]);
+   dst->u[2] = U64M(src0->u[2], src1->u[2]);
+   dst->u[3] = U64M(src0->u[3], src1->u[3]);
+#undef U64M
+}
+
+static void
 micro_useq(union tgsi_exec_channel *dst,
            const union tgsi_exec_channel *src0,
            const union tgsi_exec_channel *src1)
@@ -4275,6 +4301,14 @@ exec_instruction(
 
    case TGSI_OPCODE_UMUL:
       exec_vector_binary(mach, inst, micro_umul, TGSI_EXEC_DATA_UINT, TGSI_EXEC_DATA_UINT);
+      break;
+
+   case TGSI_OPCODE_IMUL_HI:
+      exec_vector_binary(mach, inst, micro_imul_hi, TGSI_EXEC_DATA_INT, TGSI_EXEC_DATA_INT);
+      break;
+
+   case TGSI_OPCODE_UMUL_HI:
+      exec_vector_binary(mach, inst, micro_umul_hi, TGSI_EXEC_DATA_UINT, TGSI_EXEC_DATA_UINT);
       break;
 
    case TGSI_OPCODE_USEQ:
