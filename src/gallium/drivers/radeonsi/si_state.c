@@ -3084,10 +3084,12 @@ void si_init_config(struct r600_context *rctx)
 	si_pm4_set_reg(pm4, R_028B28_VGT_STRMOUT_DRAW_OPAQUE_OFFSET, 0);
 	si_pm4_set_reg(pm4, R_028B94_VGT_STRMOUT_CONFIG, 0x0);
 	si_pm4_set_reg(pm4, R_028B98_VGT_STRMOUT_BUFFER_CONFIG, 0x0);
-	si_pm4_set_reg(pm4, R_028AA8_IA_MULTI_VGT_PARAM,
-		       S_028AA8_SWITCH_ON_EOP(1) |
-		       S_028AA8_PARTIAL_VS_WAVE_ON(1) |
-		       S_028AA8_PRIMGROUP_SIZE(63));
+	if (rctx->b.chip_class == SI) {
+		si_pm4_set_reg(pm4, R_028AA8_IA_MULTI_VGT_PARAM,
+			       S_028AA8_SWITCH_ON_EOP(1) |
+			       S_028AA8_PARTIAL_VS_WAVE_ON(1) |
+			       S_028AA8_PRIMGROUP_SIZE(63));
+	}
 	si_pm4_set_reg(pm4, R_028AB4_VGT_REUSE_OFF, 0x00000000);
 	si_pm4_set_reg(pm4, R_028AB8_VGT_VTX_CNT_EN, 0x0);
 	if (rctx->b.chip_class < CIK)
