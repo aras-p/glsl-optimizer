@@ -763,6 +763,64 @@ umul_emit(
                                    emit_data->args[0], emit_data->args[1]);
 }
 
+/* TGSI_OPCODE_IMUL_HI */
+static void
+imul_hi_emit(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   LLVMBuilderRef builder = bld_base->base.gallivm->builder;
+   struct lp_build_context *int_bld = &bld_base->int_bld;
+   struct lp_type type = int_bld->type;
+   LLVMValueRef src0, src1;
+   LLVMValueRef dst64;
+   LLVMTypeRef typeRef;
+
+   assert(type.width == 32);
+   type.width = 64;
+   typeRef = lp_build_vec_type(bld_base->base.gallivm, type);
+   src0 = LLVMBuildSExt(builder, emit_data->args[0], typeRef, "");
+   src1 = LLVMBuildSExt(builder, emit_data->args[1], typeRef, "");
+   dst64 = LLVMBuildMul(builder, src0, src1, "");
+   dst64 = LLVMBuildAShr(
+            builder, dst64,
+            lp_build_const_vec(bld_base->base.gallivm, type, 32), "");
+   type.width = 32;
+   typeRef = lp_build_vec_type(bld_base->base.gallivm, type);
+   emit_data->output[emit_data->chan] =
+         LLVMBuildTrunc(builder, dst64, typeRef, "");
+}
+
+/* TGSI_OPCODE_UMUL_HI */
+static void
+umul_hi_emit(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   LLVMBuilderRef builder = bld_base->base.gallivm->builder;
+   struct lp_build_context *uint_bld = &bld_base->uint_bld;
+   struct lp_type type = uint_bld->type;
+   LLVMValueRef src0, src1;
+   LLVMValueRef dst64;
+   LLVMTypeRef typeRef;
+
+   assert(type.width == 32);
+   type.width = 64;
+   typeRef = lp_build_vec_type(bld_base->base.gallivm, type);
+   src0 = LLVMBuildZExt(builder, emit_data->args[0], typeRef, "");
+   src1 = LLVMBuildZExt(builder, emit_data->args[1], typeRef, "");
+   dst64 = LLVMBuildMul(builder, src0, src1, "");
+   dst64 = LLVMBuildLShr(
+            builder, dst64,
+            lp_build_const_vec(bld_base->base.gallivm, type, 32), "");
+   type.width = 32;
+   typeRef = lp_build_vec_type(bld_base->base.gallivm, type);
+   emit_data->output[emit_data->chan] =
+         LLVMBuildTrunc(builder, dst64, typeRef, "");
+}
+
 /* TGSI_OPCODE_MAX */
 static void fmax_emit(
    const struct lp_build_tgsi_action * action,
@@ -894,6 +952,8 @@ lp_set_default_actions(struct lp_build_tgsi_context * bld_base)
    bld_base->op_actions[TGSI_OPCODE_U2F].emit = u2f_emit;
    bld_base->op_actions[TGSI_OPCODE_UMAD].emit = umad_emit;
    bld_base->op_actions[TGSI_OPCODE_UMUL].emit = umul_emit;
+   bld_base->op_actions[TGSI_OPCODE_IMUL_HI].emit = imul_hi_emit;
+   bld_base->op_actions[TGSI_OPCODE_UMUL_HI].emit = umul_hi_emit;
 
    bld_base->op_actions[TGSI_OPCODE_MAX].emit = fmax_emit;
    bld_base->op_actions[TGSI_OPCODE_MIN].emit = fmin_emit;
