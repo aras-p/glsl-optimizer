@@ -77,7 +77,7 @@ public:
    void assign_common_binding_table_offsets(uint32_t next_binding_table_offset);
 };
 
-uint32_t brw_texture_offset(ir_constant *offset);
+uint32_t brw_texture_offset(struct gl_context *ctx, ir_constant *offset);
 
 #endif /* __cplusplus */
 

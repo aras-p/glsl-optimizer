@@ -1596,7 +1596,7 @@ fs_visitor::visit(ir_texture *ir)
    }
 
    if (ir->offset != NULL && ir->op != ir_txf)
-      inst->texture_offset = brw_texture_offset(ir->offset->as_constant());
+      inst->texture_offset = brw_texture_offset(ctx, ir->offset->as_constant());
 
    if (ir->op == ir_tg4)
       inst->texture_offset |= gather_channel(ir, sampler) << 16; // M0.2:16-17

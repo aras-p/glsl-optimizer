@@ -372,9 +372,14 @@ brw_math_function(enum opcode op)
 }
 
 uint32_t
-brw_texture_offset(ir_constant *offset)
+brw_texture_offset(struct gl_context *ctx, ir_constant *offset)
 {
-   assert(offset != NULL);
+   /* If the driver does not support GL_ARB_gpu_shader5, the offset
+    * must be constant.
+    */
+   assert(offset != NULL || ctx->Extensions.ARB_gpu_shader5);
+
+   if (!offset) return 0;  /* nonconstant offset; caller will handle it. */
 
    signed char offsets[3];
    for (unsigned i = 0; i < offset->type->vector_elements; i++)

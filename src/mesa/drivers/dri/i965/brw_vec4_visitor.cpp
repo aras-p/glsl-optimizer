@@ -2286,7 +2286,7 @@ vec4_visitor::visit(ir_texture *ir)
    inst->shadow_compare = ir->shadow_comparitor != NULL;
 
    if (use_texture_offset)
-      inst->texture_offset = brw_texture_offset(ir->offset->as_constant());
+      inst->texture_offset = brw_texture_offset(ctx, ir->offset->as_constant());
 
    /* Stuff the channel select bits in the top of the texture offset */
    if (ir->op == ir_tg4)
