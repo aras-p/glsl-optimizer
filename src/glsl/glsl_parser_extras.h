@@ -325,6 +325,8 @@ struct _mesa_glsl_parse_state {
    bool ARB_shading_language_420pack_warn;
    bool EXT_shader_integer_mix_enable;
    bool EXT_shader_integer_mix_warn;
+   bool ARB_shader_atomic_counters_enable;
+   bool ARB_shader_atomic_counters_warn;
    /*@}*/
 
    /** Extensions supported by the OpenGL implementation. */
