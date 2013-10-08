@@ -293,25 +293,31 @@ i915_create_sampler_state(struct pipe_context *pipe,
 
 static void
 i915_bind_vertex_sampler_states(struct pipe_context *pipe,
-                                unsigned num_samplers,
+                                unsigned start,
+                                unsigned num,
                                 void **samplers)
 {
    struct i915_context *i915 = i915_context(pipe);
    unsigned i;
 
-   assert(num_samplers <= Elements(i915->vertex_samplers));
+   assert(num <= Elements(i915->vertex_samplers));
 
    /* Check for no-op */
-   if (num_samplers == i915->num_vertex_samplers &&
-       !memcmp(i915->vertex_samplers, samplers, num_samplers * sizeof(void *)))
+   if (num == i915->num_vertex_samplers &&
+       !memcmp(i915->vertex_samplers + start, samplers,
+	       num * sizeof(void *)))
       return;
 
-   for (i = 0; i < num_samplers; ++i)
-      i915->vertex_samplers[i] = samplers[i];
-   for (i = num_samplers; i < Elements(i915->vertex_samplers); ++i)
-      i915->vertex_samplers[i] = NULL;
+   for (i = 0; i < num; ++i)
+      i915->vertex_samplers[i + start] = samplers[i];
 
-   i915->num_vertex_samplers = num_samplers;
+   /* find highest non-null samplers[] entry */
+   {
+      unsigned j = MAX2(i915->num_vertex_samplers, start + num);
+      while (j > 0 && i915->vertex_samplers[j - 1] == NULL)
+         j--;
+      i915->num_vertex_samplers = j;
+   }
 
    draw_set_samplers(i915->draw,
                      PIPE_SHADER_VERTEX,
@@ -322,22 +328,29 @@ i915_bind_vertex_sampler_states(struct pipe_context *pipe,
 
 
 static void i915_bind_fragment_sampler_states(struct pipe_context *pipe,
-                                     unsigned num, void **sampler)
+                                              unsigned start,
+                                              unsigned num,
+                                              void **samplers)
 {
    struct i915_context *i915 = i915_context(pipe);
    unsigned i;
 
    /* Check for no-op */
    if (num == i915->num_samplers &&
-       !memcmp(i915->sampler, sampler, num * sizeof(void *)))
+       !memcmp(i915->sampler + start, samplers,
+               num * sizeof(void *)))
       return;
 
    for (i = 0; i < num; ++i)
-      i915->sampler[i] = sampler[i];
-   for (i = num; i < PIPE_MAX_SAMPLERS; ++i)
-      i915->sampler[i] = NULL;
+      i915->sampler[i + start] = samplers[i];
 
-   i915->num_samplers = num;
+   /* find highest non-null samplers[] entry */
+   {
+      unsigned j = MAX2(i915->num_samplers, start + num);
+      while (j > 0 && i915->sampler[j - 1] == NULL)
+         j--;
+      i915->num_samplers = j;
+   }
 
    i915->dirty |= I915_NEW_SAMPLER;
 }
@@ -348,14 +361,12 @@ i915_bind_sampler_states(struct pipe_context *pipe, unsigned shader,
                          unsigned start, unsigned num_samplers,
                          void **samplers)
 {
-   assert(start == 0);
-
    switch (shader) {
    case PIPE_SHADER_VERTEX:
-      i915_bind_vertex_sampler_states(pipe, num_samplers, samplers);
+      i915_bind_vertex_sampler_states(pipe, start, num_samplers, samplers);
       break;
    case PIPE_SHADER_FRAGMENT:
-      i915_bind_fragment_sampler_states(pipe, num_samplers, samplers);
+      i915_bind_fragment_sampler_states(pipe, start, num_samplers, samplers);
       break;
    default:
       ;
