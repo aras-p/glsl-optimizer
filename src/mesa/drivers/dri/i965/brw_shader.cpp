@@ -441,6 +441,8 @@ brw_instruction_name(enum opcode op)
       return "txb";
    case SHADER_OPCODE_TXF_MS:
       return "txf_ms";
+   case SHADER_OPCODE_TG4:
+      return "tg4";
 
    case FS_OPCODE_DDX:
       return "ddx";
