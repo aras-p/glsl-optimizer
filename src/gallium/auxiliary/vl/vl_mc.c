@@ -613,7 +613,8 @@ vl_mc_render_ref(struct vl_mc *renderer, struct vl_mc_buffer *buffer, struct pip
    renderer->pipe->bind_vs_state(renderer->pipe, renderer->vs_ref);
    renderer->pipe->bind_fs_state(renderer->pipe, renderer->fs_ref);
 
-   renderer->pipe->set_fragment_sampler_views(renderer->pipe, 1, &ref);
+   renderer->pipe->set_sampler_views(renderer->pipe, PIPE_SHADER_FRAGMENT,
+                                     0, 1, &ref);
    renderer->pipe->bind_sampler_states(renderer->pipe, PIPE_SHADER_FRAGMENT,
                                        0, 1, &renderer->sampler_ref);
 

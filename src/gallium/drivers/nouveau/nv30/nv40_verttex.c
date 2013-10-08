@@ -69,7 +69,7 @@ nv40_verttex_sampler_states_bind(struct pipe_context *pipe,
 }
 
 
-static void
+void
 nv40_verttex_set_sampler_views(struct pipe_context *pipe, unsigned nr,
                                struct pipe_sampler_view **views)
 {
@@ -95,5 +95,5 @@ nv40_verttex_set_sampler_views(struct pipe_context *pipe, unsigned nr,
 void
 nv40_verttex_init(struct pipe_context *pipe)
 {
-   pipe->set_vertex_sampler_views = nv40_verttex_set_sampler_views;
+   /* nothing */
 }

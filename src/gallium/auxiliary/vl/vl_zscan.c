@@ -578,7 +578,8 @@ vl_zscan_render(struct vl_zscan *zscan, struct vl_zscan_buffer *buffer, unsigned
                                     0, 3, zscan->samplers);
    zscan->pipe->set_framebuffer_state(zscan->pipe, &buffer->fb_state);
    zscan->pipe->set_viewport_states(zscan->pipe, 0, 1, &buffer->viewport);
-   zscan->pipe->set_fragment_sampler_views(zscan->pipe, 3, &buffer->src);
+   zscan->pipe->set_sampler_views(zscan->pipe, PIPE_SHADER_FRAGMENT,
+                                  0, 3, &buffer->src);
    zscan->pipe->bind_vs_state(zscan->pipe, zscan->vs);
    zscan->pipe->bind_fs_state(zscan->pipe, zscan->fs);
    util_draw_arrays_instanced(zscan->pipe, PIPE_PRIM_QUADS, 0, 4, 0, num_instances);

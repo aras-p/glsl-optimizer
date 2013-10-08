@@ -144,6 +144,24 @@ fd_verttex_set_sampler_views(struct pipe_context *pctx, unsigned nr,
 	ctx->dirty |= FD_DIRTY_VERTTEX;
 }
 
+static void
+fd_set_sampler_views(struct pipe_context *pctx, unsigned shader,
+                     unsigne start, unsigned nr,
+                     struct pipe_sampler_view **views)
+{
+   assert(start == 0);
+   switch (shader) {
+   case PIPE_SHADER_FRAGMENT:
+      fd_fragtex_set_sampler_views(pctx, nr, views);
+      break;
+   case PIPE_SHADER_VERTEX:
+      fd_verttex_set_sampler_views(pctx, nr, views);
+      break;
+   default:
+      ;
+   }
+}
+
 void
 fd_texture_init(struct pipe_context *pctx)
 {
@@ -152,7 +170,5 @@ fd_texture_init(struct pipe_context *pctx)
 	pctx->sampler_view_destroy = fd_sampler_view_destroy;
 
 	pctx->bind_sampler_states = fd_sampler_states_bind;
-	pctx->set_fragment_sampler_views = fd_fragtex_set_sampler_views;
-
-	pctx->set_vertex_sampler_views = fd_verttex_set_sampler_views;
+	pctx->set_sampler_views = fd_set_sampler_views;
 }

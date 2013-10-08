@@ -793,6 +793,25 @@ i915_set_vertex_sampler_views(struct pipe_context *pipe,
 }
 
 
+static void
+i915_set_sampler_views(struct pipe_context *pipe, unsigned shader,
+                       unsigned start, unsigned num,
+                       struct pipe_sampler_view **views)
+{
+   assert(start == 0);
+   switch (shader) {
+   case PIPE_SHADER_FRAGMENT:
+      i915_set_fragment_sampler_views(pipe, num, views);
+      break;
+   case PIPE_SHADER_VERTEX:
+      i915_set_vertex_sampler_views(pipe, num, views);
+      break;
+   default:
+      ;
+   }
+}
+
+
 static struct pipe_sampler_view *
 i915_create_sampler_view(struct pipe_context *pipe,
                          struct pipe_resource *texture,
@@ -1076,8 +1095,7 @@ i915_init_state_functions( struct i915_context *i915 )
 
    i915->base.set_polygon_stipple = i915_set_polygon_stipple;
    i915->base.set_scissor_states = i915_set_scissor_states;
-   i915->base.set_fragment_sampler_views = i915_set_fragment_sampler_views;
-   i915->base.set_vertex_sampler_views = i915_set_vertex_sampler_views;
+   i915->base.set_sampler_views = i915_set_sampler_views;
    i915->base.create_sampler_view = i915_create_sampler_view;
    i915->base.sampler_view_destroy = i915_sampler_view_destroy;
    i915->base.set_viewport_states = i915_set_viewport_states;

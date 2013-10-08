@@ -312,7 +312,7 @@ static void init_sampler_views(struct context *ctx, const int *slots)
                 assert(ctx->view[i]);
         }
 
-        pipe->set_compute_sampler_views(pipe, 0, i, ctx->view);
+        pipe->set_sampler_views(pipe, PIPE_SHADER_COMPUTE, 0, i, ctx->view);
 }
 
 static void destroy_sampler_views(struct context *ctx)
@@ -320,7 +320,7 @@ static void destroy_sampler_views(struct context *ctx)
         struct pipe_context *pipe = ctx->pipe;
         int i;
 
-        pipe->set_compute_sampler_views(pipe, 0, MAX_RESOURCES, NULL);
+        pipe->set_sampler_views(pipe, PIPE_SHADER_COMPUTE, 0, MAX_RESOURCES, NULL);
 
         for (i = 0; i < MAX_RESOURCES; ++i) {
                 if (ctx->view[i]) {

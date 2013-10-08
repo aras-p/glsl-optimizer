@@ -195,6 +195,14 @@ nv40_verttex_sampler_states_bind(struct pipe_context *pipe,
                                  unsigned nr, void **hwcso);
 
 void
+nv40_verttex_set_sampler_views(struct pipe_context *pipe, unsigned nr,
+                               struct pipe_sampler_view **views);
+
+void
+nv30_fragtex_set_sampler_views(struct pipe_context *pipe,
+                               unsigned nr, struct pipe_sampler_view **views);
+
+void
 nv30_push_vbo(struct nv30_context *nv30, const struct pipe_draw_info *info);
 
 void

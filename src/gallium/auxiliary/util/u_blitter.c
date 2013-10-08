@@ -535,9 +535,9 @@ static void blitter_restore_textures(struct blitter_context_priv *ctx)
    ctx->base.saved_num_sampler_states = ~0;
 
    /* Fragment sampler views. */
-   pipe->set_fragment_sampler_views(pipe,
-                                    ctx->base.saved_num_sampler_views,
-                                    ctx->base.saved_sampler_views);
+   pipe->set_sampler_views(pipe, PIPE_SHADER_FRAGMENT, 0,
+                           ctx->base.saved_num_sampler_views,
+                           ctx->base.saved_sampler_views);
 
    for (i = 0; i < ctx->base.saved_num_sampler_views; i++)
       pipe_sampler_view_reference(&ctx->base.saved_sampler_views[i], NULL);
@@ -1309,7 +1309,7 @@ void util_blitter_blit_generic(struct blitter_context *blitter,
       views[0] = src;
       views[1] = pipe->create_sampler_view(pipe, src->texture, &templ);
 
-      pipe->set_fragment_sampler_views(pipe, 2, views);
+      pipe->set_sampler_views(pipe, PIPE_SHADER_FRAGMENT, 0, 2, views);
       pipe->bind_sampler_states(pipe, PIPE_SHADER_FRAGMENT, 0, 2, samplers);
 
       pipe_sampler_view_reference(&views[1], NULL);
@@ -1324,13 +1324,13 @@ void util_blitter_blit_generic(struct blitter_context *blitter,
 
       view = pipe->create_sampler_view(pipe, src->texture, &templ);
 
-      pipe->set_fragment_sampler_views(pipe, 1, &view);
+      pipe->set_sampler_views(pipe, PIPE_SHADER_FRAGMENT, 0, 1, &view);
       pipe->bind_sampler_states(pipe, PIPE_SHADER_FRAGMENT,
                                 0, 1, &sampler_state);
 
       pipe_sampler_view_reference(&view, NULL);
    } else {
-      pipe->set_fragment_sampler_views(pipe, 1, &src);
+      pipe->set_sampler_views(pipe, PIPE_SHADER_FRAGMENT, 0, 1, &src);
       pipe->bind_sampler_states(pipe, PIPE_SHADER_FRAGMENT,
                                 0, 1, &sampler_state);
    }

@@ -893,6 +893,28 @@ ilo_set_compute_sampler_views(struct pipe_context *pipe,
 }
 
 static void
+ilo_set_sampler_views2(struct pipe_context *pipe, unsigned shader,
+                       unsigned start_slot, unsigned num_views,
+                       struct pipe_sampler_view **views)
+{
+   switch (shader) {
+   case PIPE_SHADER_VERTEX:
+      ilo_set_vertex_sampler_views(pipe, num_views, views);
+      break;
+   case PIPE_SHADER_GEOMETRY:
+      ilo_set_geometry_sampler_views(pipe, num_views, views);
+      break;
+   case PIPE_SHADER_FRAGMENT:
+      ilo_set_fragment_sampler_views(pipe, num_views, views);
+      break;
+   case PIPE_SHADER_COMPUTE:
+      ilo_set_compute_sampler_views(pipe, start_slot, num_views, views);
+      break;
+   }
+}
+
+
+static void
 ilo_set_shader_resources(struct pipe_context *pipe,
                          unsigned start, unsigned count,
                          struct pipe_surface **surfaces)
@@ -1289,10 +1311,7 @@ ilo_init_state_functions(struct ilo_context *ilo)
    ilo->base.set_polygon_stipple = ilo_set_polygon_stipple;
    ilo->base.set_scissor_states = ilo_set_scissor_states;
    ilo->base.set_viewport_states = ilo_set_viewport_states;
-   ilo->base.set_fragment_sampler_views = ilo_set_fragment_sampler_views;
-   ilo->base.set_vertex_sampler_views = ilo_set_vertex_sampler_views;
-   ilo->base.set_geometry_sampler_views = ilo_set_geometry_sampler_views;
-   ilo->base.set_compute_sampler_views = ilo_set_compute_sampler_views;
+   ilo->base.set_sampler_views = ilo_set_sampler_views2;
    ilo->base.set_shader_resources = ilo_set_shader_resources;
    ilo->base.set_vertex_buffers = ilo_set_vertex_buffers;
    ilo->base.set_index_buffer = ilo_set_index_buffer;

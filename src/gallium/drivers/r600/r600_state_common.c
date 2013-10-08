@@ -578,6 +578,11 @@ static void r600_set_sampler_views(struct pipe_context *pipe, unsigned shader,
 
 	assert(start == 0); /* XXX fix below */
 
+	if (shader == PIPE_SHADER_COMPUTE) {
+		evergreen_set_cs_sampler_view(pipe, start, count, views);
+		return;
+	}
+
 	remaining_mask = dst->views.enabled_mask & disable_mask;
 
 	while (remaining_mask) {
@@ -642,18 +647,6 @@ static void r600_set_sampler_views(struct pipe_context *pipe, unsigned shader,
 		dst->states.dirty_mask |= dirty_sampler_states_mask;
 		r600_sampler_states_dirty(rctx, &dst->states);
 	}
-}
-
-static void r600_set_vs_sampler_views(struct pipe_context *ctx, unsigned count,
-				      struct pipe_sampler_view **views)
-{
-	r600_set_sampler_views(ctx, PIPE_SHADER_VERTEX, 0, count, views);
-}
-
-static void r600_set_ps_sampler_views(struct pipe_context *ctx, unsigned count,
-				      struct pipe_sampler_view **views)
-{
-	r600_set_sampler_views(ctx, PIPE_SHADER_FRAGMENT, 0, count, views);
 }
 
 static void r600_set_viewport_states(struct pipe_context *ctx,
@@ -2100,8 +2093,7 @@ void r600_init_common_state_functions(struct r600_context *rctx)
 	rctx->b.b.set_viewport_states = r600_set_viewport_states;
 	rctx->b.b.set_vertex_buffers = r600_set_vertex_buffers;
 	rctx->b.b.set_index_buffer = r600_set_index_buffer;
-	rctx->b.b.set_fragment_sampler_views = r600_set_ps_sampler_views;
-	rctx->b.b.set_vertex_sampler_views = r600_set_vs_sampler_views;
+	rctx->b.b.set_sampler_views = r600_set_sampler_views;
 	rctx->b.b.sampler_view_destroy = r600_sampler_view_destroy;
 	rctx->b.b.texture_barrier = r600_texture_barrier;
 	rctx->b.b.set_stream_output_targets = r600_set_streamout_targets;

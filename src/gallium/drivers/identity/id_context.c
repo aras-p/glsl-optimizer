@@ -486,50 +486,12 @@ identity_set_sampler_views(struct pipe_context *_pipe,
    struct identity_context *id_pipe = identity_context(_pipe);
    struct pipe_context *pipe = id_pipe->pipe;
    struct pipe_sampler_view *unwrapped_views[PIPE_MAX_SAMPLERS];
-   struct pipe_sampler_view **views = NULL;
    unsigned i;
 
-   /* remove this when we have pipe->set_sampler_views(..., start, ...) */
-   assert(start == 0);
+   for (i = 0; i < num; i++)
+      unwrapped_views[i] = identity_sampler_view_unwrap(_views[i]);
 
-   if (_views) {
-      for (i = 0; i < num; i++)
-         unwrapped_views[i] = identity_sampler_view_unwrap(_views[i]);
-      for (; i < PIPE_MAX_SAMPLERS; i++)
-         unwrapped_views[i] = NULL;
-
-      views = unwrapped_views;
-   }
-
-   switch (shader) {
-   case PIPE_SHADER_VERTEX:
-      pipe->set_vertex_sampler_views(pipe, num, views);
-      break;
-   case PIPE_SHADER_GEOMETRY:
-      pipe->set_geometry_sampler_views(pipe, num, views);
-      break;
-   case PIPE_SHADER_FRAGMENT:
-      pipe->set_fragment_sampler_views(pipe, num, views);
-      break;
-   default:
-      debug_error("Unexpected shader in identity_set_sampler_views()");
-   }
-}
-
-static void
-identity_set_fragment_sampler_views(struct pipe_context *_pipe,
-                                    unsigned num,
-                                    struct pipe_sampler_view **_views)
-{
-   identity_set_sampler_views(_pipe, PIPE_SHADER_FRAGMENT, 0, num, _views);
-}
-
-static void
-identity_set_vertex_sampler_views(struct pipe_context *_pipe,
-                                  unsigned num,
-                                  struct pipe_sampler_view **_views)
-{
-   identity_set_sampler_views(_pipe, PIPE_SHADER_VERTEX, 0, num, _views);
+   pipe->set_sampler_views(pipe, shader, start, num, unwrapped_views);
 }
 
 static void
@@ -894,8 +856,7 @@ identity_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    id_pipe->base.set_polygon_stipple = identity_set_polygon_stipple;
    id_pipe->base.set_scissor_states = identity_set_scissor_states;
    id_pipe->base.set_viewport_states = identity_set_viewport_states;
-   id_pipe->base.set_fragment_sampler_views = identity_set_fragment_sampler_views;
-   id_pipe->base.set_vertex_sampler_views = identity_set_vertex_sampler_views;
+   id_pipe->base.set_sampler_views = identity_set_sampler_views;
    id_pipe->base.set_vertex_buffers = identity_set_vertex_buffers;
    id_pipe->base.set_index_buffer = identity_set_index_buffer;
    id_pipe->base.resource_copy_region = identity_resource_copy_region;

@@ -343,7 +343,7 @@ PsSetShader -> bind_fs_state
 PsSetShaderWithIfaces (D3D11 only)
 	- Gallium does not support shader interfaces
 
-PsSetShaderResources -> set_fragment_sampler_views
+PsSetShaderResources -> set_sampler_views
 	* may want to allow binding subsets instead of all at once
 
 QueryBegin -> begin_query
@@ -458,5 +458,5 @@ VsSetShader -> bind_vs_state
 VsSetShaderWithIfaces (D3D11 only)
 	- Gallium does not support shader interfaces
 
-VsSetShaderResources  -> set_fragment_sampler_views
+VsSetShaderResources  -> set_sampler_views
 	* may want to allow binding subsets instead of all at once

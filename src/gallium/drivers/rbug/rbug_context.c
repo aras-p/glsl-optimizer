@@ -736,34 +736,9 @@ rbug_set_sampler_views(struct pipe_context *_pipe,
       views = unwrapped_views;
    }
 
-   switch (shader) {
-   case PIPE_SHADER_VERTEX:
-      pipe->set_vertex_sampler_views(pipe, num, views);
-      break;
-   case PIPE_SHADER_FRAGMENT:
-      pipe->set_fragment_sampler_views(pipe, num, views);
-      break;
-   default:
-      assert(0);
-   }
+   pipe->set_sampler_views(pipe, shader, start, num, views);
 
    pipe_mutex_unlock(rb_pipe->call_mutex);
-}
-
-static void
-rbug_set_vertex_sampler_views(struct pipe_context *_pipe,
-                              unsigned num,
-                              struct pipe_sampler_view **_views)
-{
-   rbug_set_sampler_views(_pipe, PIPE_SHADER_VERTEX, 0, num, _views);
-}
-
-static void
-rbug_set_fragment_sampler_views(struct pipe_context *_pipe,
-                                unsigned num,
-                                struct pipe_sampler_view **_views)
-{
-   rbug_set_sampler_views(_pipe, PIPE_SHADER_FRAGMENT, 0, num, _views);
 }
 
 static void
@@ -1171,8 +1146,7 @@ rbug_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    rb_pipe->base.set_polygon_stipple = rbug_set_polygon_stipple;
    rb_pipe->base.set_scissor_states = rbug_set_scissor_states;
    rb_pipe->base.set_viewport_states = rbug_set_viewport_states;
-   rb_pipe->base.set_fragment_sampler_views = rbug_set_fragment_sampler_views;
-   rb_pipe->base.set_vertex_sampler_views = rbug_set_vertex_sampler_views;
+   rb_pipe->base.set_sampler_views = rbug_set_sampler_views;
    rb_pipe->base.set_vertex_buffers = rbug_set_vertex_buffers;
    rb_pipe->base.set_index_buffer = rbug_set_index_buffer;
    rb_pipe->base.set_sample_mask = rbug_set_sample_mask;

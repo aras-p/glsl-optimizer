@@ -121,8 +121,8 @@ struct aaline_stage
    void (*driver_bind_sampler_states)(struct pipe_context *, unsigned, unsigned,
                                       unsigned, void **);
 
-   void (*driver_set_sampler_views)(struct pipe_context *,
-                                    unsigned,
+   void (*driver_set_sampler_views)(struct pipe_context *, unsigned shader,
+                                    unsigned start, unsigned count,
                                     struct pipe_sampler_view **);
 };
 
@@ -708,7 +708,8 @@ aaline_first_line(struct draw_stage *stage, struct prim_header *header)
    aaline->driver_bind_sampler_states(pipe, PIPE_SHADER_FRAGMENT, 0,
                                       num_samplers, aaline->state.sampler);
 
-   aaline->driver_set_sampler_views(pipe, num_samplers, aaline->state.sampler_views);
+   aaline->driver_set_sampler_views(pipe, PIPE_SHADER_FRAGMENT, 0,
+                                    num_samplers, aaline->state.sampler_views);
 
    /* Disable triangle culling, stippling, unfilled mode etc. */
    r = draw_get_rasterizer_no_cull(draw, rast->scissor, rast->flatshade);
@@ -740,8 +741,8 @@ aaline_flush(struct draw_stage *stage, unsigned flags)
                                       aaline->num_samplers,
                                       aaline->state.sampler);
 
-   aaline->driver_set_sampler_views(pipe,
-                                    aaline->num_sampler_views,
+   aaline->driver_set_sampler_views(pipe, PIPE_SHADER_FRAGMENT, 0,
+                                    aaline->num_samplers,
                                     aaline->state.sampler_views);
 
    /* restore original rasterizer state */
@@ -791,7 +792,7 @@ aaline_destroy(struct draw_stage *stage)
    pipe->delete_fs_state = aaline->driver_delete_fs_state;
 
    pipe->bind_sampler_states = aaline->driver_bind_sampler_states;
-   pipe->set_fragment_sampler_views = aaline->driver_set_sampler_views;
+   pipe->set_sampler_views = aaline->driver_set_sampler_views;
 
    FREE( stage );
 }
@@ -932,8 +933,8 @@ aaline_bind_sampler_states(struct pipe_context *pipe, unsigned shader,
 
 
 static void
-aaline_set_sampler_views(struct pipe_context *pipe,
-                         unsigned num,
+aaline_set_sampler_views(struct pipe_context *pipe, unsigned shader,
+                         unsigned start, unsigned num,
                          struct pipe_sampler_view **views)
 {
    struct aaline_stage *aaline = aaline_stage_from_pipe(pipe);
@@ -943,17 +944,17 @@ aaline_set_sampler_views(struct pipe_context *pipe,
       return;
    }
 
-   /* save current */
-   for (i = 0; i < num; i++) {
-      pipe_sampler_view_reference(&aaline->state.sampler_views[i], views[i]);
+   if (shader == PIPE_SHADER_FRAGMENT) {
+      /* save current */
+      for (i = 0; i < num; i++) {
+         pipe_sampler_view_reference(&aaline->state.sampler_views[start + i],
+                                     views[i]);
+      }
+      aaline->num_sampler_views = num;
    }
-   for ( ; i < PIPE_MAX_SHADER_SAMPLER_VIEWS; i++) {
-      pipe_sampler_view_reference(&aaline->state.sampler_views[i], NULL);
-   }
-   aaline->num_sampler_views = num;
 
    /* pass-through */
-   aaline->driver_set_sampler_views(pipe, num, views);
+   aaline->driver_set_sampler_views(pipe, shader, start, num, views);
 }
 
 
@@ -1008,7 +1009,7 @@ draw_install_aaline_stage(struct draw_context *draw, struct pipe_context *pipe)
    aaline->driver_delete_fs_state = pipe->delete_fs_state;
 
    aaline->driver_bind_sampler_states = pipe->bind_sampler_states;
-   aaline->driver_set_sampler_views = pipe->set_fragment_sampler_views;
+   aaline->driver_set_sampler_views = pipe->set_sampler_views;
 
    /* override the driver's functions */
    pipe->create_fs_state = aaline_create_fs_state;
@@ -1016,7 +1017,7 @@ draw_install_aaline_stage(struct draw_context *draw, struct pipe_context *pipe)
    pipe->delete_fs_state = aaline_delete_fs_state;
 
    pipe->bind_sampler_states = aaline_bind_sampler_states;
-   pipe->set_fragment_sampler_views = aaline_set_sampler_views;
+   pipe->set_sampler_views = aaline_set_sampler_views;
    
    /* Install once everything is known to be OK:
     */

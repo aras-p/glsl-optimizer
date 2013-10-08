@@ -519,58 +519,12 @@ galahad_context_set_sampler_views(struct pipe_context *_pipe,
    struct galahad_context *glhd_pipe = galahad_context(_pipe);
    struct pipe_context *pipe = glhd_pipe->pipe;
    struct pipe_sampler_view *unwrapped_views[PIPE_MAX_SAMPLERS];
-   struct pipe_sampler_view **views = NULL;
    unsigned i;
 
-   if (_views) {
-      for (i = 0; i < num; i++)
-         unwrapped_views[i] = galahad_sampler_view_unwrap(_views[i]);
-      for (; i < PIPE_MAX_SAMPLERS; i++)
-         unwrapped_views[i] = NULL;
+   for (i = 0; i < num; i++)
+      unwrapped_views[i] = galahad_sampler_view_unwrap(_views[i]);
 
-      views = unwrapped_views;
-   }
-
-   switch (shader) {
-   case PIPE_SHADER_VERTEX:
-      pipe->set_vertex_sampler_views(pipe, num, views);
-      break;
-   case PIPE_SHADER_FRAGMENT:
-      pipe->set_fragment_sampler_views(pipe, num, views);
-      break;
-   case PIPE_SHADER_GEOMETRY:
-      pipe->set_geometry_sampler_views(pipe, num, views);
-      break;
-   default:
-      assert(0);
-   }
-}
-
-static void
-galahad_context_set_vertex_sampler_views(struct pipe_context *_pipe,
-                                         unsigned num,
-                                         struct pipe_sampler_view **_views)
-{
-   galahad_context_set_sampler_views(_pipe, PIPE_SHADER_VERTEX,
-                                     0, num, _views);
-}
-
-static void
-galahad_context_set_fragment_sampler_views(struct pipe_context *_pipe,
-                                           unsigned num,
-                                           struct pipe_sampler_view **_views)
-{
-   galahad_context_set_sampler_views(_pipe, PIPE_SHADER_FRAGMENT,
-                                     0, num, _views);
-}
-
-static void
-galahad_context_set_geometry_sampler_views(struct pipe_context *_pipe,
-                                           unsigned num,
-                                           struct pipe_sampler_view **_views)
-{
-   galahad_context_set_sampler_views(_pipe, PIPE_SHADER_GEOMETRY,
-                                     0, num, _views);
+   pipe->set_sampler_views(pipe, shader, start, num, unwrapped_views);
 }
 
 static void
@@ -1053,10 +1007,7 @@ galahad_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    GLHD_PIPE_INIT(set_polygon_stipple);
    GLHD_PIPE_INIT(set_scissor_states);
    GLHD_PIPE_INIT(set_viewport_states);
-   GLHD_PIPE_INIT(set_fragment_sampler_views);
-   GLHD_PIPE_INIT(set_vertex_sampler_views);
-   GLHD_PIPE_INIT(set_geometry_sampler_views);
-   //GLHD_PIPE_INIT(set_compute_sampler_views);
+   GLHD_PIPE_INIT(set_sampler_views);
    //GLHD_PIPE_INIT(set_shader_resources);
    GLHD_PIPE_INIT(set_vertex_buffers);
    GLHD_PIPE_INIT(set_index_buffer);

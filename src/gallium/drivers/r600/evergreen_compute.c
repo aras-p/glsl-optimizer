@@ -597,7 +597,7 @@ static void evergreen_set_compute_resources(struct pipe_context * ctx_,
 	}
 }
 
-static void evergreen_set_cs_sampler_view(struct pipe_context *ctx_,
+void evergreen_set_cs_sampler_view(struct pipe_context *ctx_,
 		unsigned start_slot, unsigned count,
 		struct pipe_sampler_view **views)
 {
@@ -848,7 +848,6 @@ void evergreen_init_compute_state_functions(struct r600_context *ctx)
 	ctx->b.b.bind_compute_state = evergreen_bind_compute_state;
 //	 ctx->context.create_sampler_view = evergreen_compute_create_sampler_view;
 	ctx->b.b.set_compute_resources = evergreen_set_compute_resources;
-	ctx->b.b.set_compute_sampler_views = evergreen_set_cs_sampler_view;
 	ctx->b.b.set_global_binding = evergreen_set_global_binding;
 	ctx->b.b.launch_grid = evergreen_launch_grid;
 

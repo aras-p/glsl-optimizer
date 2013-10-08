@@ -671,28 +671,27 @@ nv50_stage_set_sampler_views(struct nv50_context *nv50, int s,
 }
 
 static void
-nv50_vp_set_sampler_views(struct pipe_context *pipe,
-                          unsigned nr,
-                          struct pipe_sampler_view **views)
+nv50_set_sampler_views(struct pipe_context *pipe, unsigned shader,
+                       unsigned start, unsigned nr,
+                       struct pipe_sampler_view **views)
 {
-   nv50_stage_set_sampler_views(nv50_context(pipe), 0, nr, views);
+   assert(start == 0);
+   switch (shader) {
+   case PIPE_SHADER_VERTEX:
+      nv50_stage_set_sampler_views(nv50_context(pipe), 0, nr, views);
+      break;
+   case PIPE_SHADER_GEOMETRY:
+      nv50_stage_set_sampler_views(nv50_context(pipe), 1, nr, views);
+      break;
+   case PIPE_SHADER_FRAGMENT:
+      nv50_stage_set_sampler_views(nv50_context(pipe), 2, nr, views);
+      break;
+   default:
+      ;
+   }
 }
 
-static void
-nv50_fp_set_sampler_views(struct pipe_context *pipe,
-                          unsigned nr,
-                          struct pipe_sampler_view **views)
-{
-   nv50_stage_set_sampler_views(nv50_context(pipe), 2, nr, views);
-}
 
-static void
-nv50_gp_set_sampler_views(struct pipe_context *pipe,
-                          unsigned nr,
-                          struct pipe_sampler_view **views)
-{
-   nv50_stage_set_sampler_views(nv50_context(pipe), 1, nr, views);
-}
 
 /* ============================= SHADERS =======================================
  */
@@ -1092,9 +1091,7 @@ nv50_init_state_functions(struct nv50_context *nv50)
 
    pipe->create_sampler_view = nv50_create_sampler_view;
    pipe->sampler_view_destroy = nv50_sampler_view_destroy;
-   pipe->set_vertex_sampler_views   = nv50_vp_set_sampler_views;
-   pipe->set_fragment_sampler_views = nv50_fp_set_sampler_views;
-   pipe->set_geometry_sampler_views = nv50_gp_set_sampler_views;
+   pipe->set_sampler_views = nv50_set_sampler_views;
 
    pipe->create_vs_state = nv50_vp_state_create;
    pipe->create_fs_state = nv50_fp_state_create;

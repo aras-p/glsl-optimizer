@@ -2608,13 +2608,20 @@ static void *si_create_sampler_state(struct pipe_context *ctx,
 
 /* XXX consider moving this function to si_descriptors.c for gcc to inline
  *     the si_set_sampler_view calls. LTO might help too. */
-static void si_set_sampler_views(struct r600_context *rctx,
-				 unsigned shader, unsigned count,
+static void si_set_sampler_views(struct pipe_context *ctx,
+				 unsigned shader, unsigned start,
+                                 unsigned count,
 				 struct pipe_sampler_view **views)
 {
+	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_textures_info *samplers = &rctx->samplers[shader];
 	struct si_pipe_sampler_view **rviews = (struct si_pipe_sampler_view **)views;
 	int i;
+
+	if (shader != PIPE_SHADER_VERTEX && shader != PIPE_SHADER_FRAGMENT)
+		return;
+
+	assert(start == 0);
 
 	for (i = 0; i < count; i++) {
 		if (views[i]) {
@@ -2659,22 +2666,6 @@ static void si_set_sampler_views(struct r600_context *rctx,
 
 	samplers->n_views = count;
 	rctx->b.flags |= R600_CONTEXT_INV_TEX_CACHE;
-}
-
-static void si_set_vs_sampler_views(struct pipe_context *ctx, unsigned count,
-				    struct pipe_sampler_view **views)
-{
-	struct r600_context *rctx = (struct r600_context *)ctx;
-
-	si_set_sampler_views(rctx, PIPE_SHADER_VERTEX, count, views);
-}
-
-static void si_set_ps_sampler_views(struct pipe_context *ctx, unsigned count,
-				    struct pipe_sampler_view **views)
-{
-	struct r600_context *rctx = (struct r600_context *)ctx;
-
-	si_set_sampler_views(rctx, PIPE_SHADER_FRAGMENT, count, views);
 }
 
 static struct si_pm4_state *si_set_sampler_states(struct r600_context *rctx, unsigned count,
@@ -3033,8 +3024,7 @@ void si_init_state_functions(struct r600_context *rctx)
 	rctx->b.b.delete_sampler_state = si_delete_sampler_state;
 
 	rctx->b.b.create_sampler_view = si_create_sampler_view;
-	rctx->b.b.set_vertex_sampler_views = si_set_vs_sampler_views;
-	rctx->b.b.set_fragment_sampler_views = si_set_ps_sampler_views;
+	rctx->b.b.set_sampler_views = si_set_sampler_views;
 	rctx->b.b.sampler_view_destroy = si_sampler_view_destroy;
 
 	rctx->b.b.set_sample_mask = si_set_sample_mask;

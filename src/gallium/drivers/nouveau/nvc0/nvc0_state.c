@@ -588,30 +588,6 @@ nvc0_stage_set_sampler_views(struct nvc0_context *nvc0, int s,
 }
 
 static void
-nvc0_vp_set_sampler_views(struct pipe_context *pipe,
-                          unsigned nr,
-                          struct pipe_sampler_view **views)
-{
-   nvc0_stage_set_sampler_views(nvc0_context(pipe), 0, nr, views);
-}
-
-static void
-nvc0_fp_set_sampler_views(struct pipe_context *pipe,
-                          unsigned nr,
-                          struct pipe_sampler_view **views)
-{
-   nvc0_stage_set_sampler_views(nvc0_context(pipe), 4, nr, views);
-}
-
-static void
-nvc0_gp_set_sampler_views(struct pipe_context *pipe,
-                          unsigned nr,
-                          struct pipe_sampler_view **views)
-{
-   nvc0_stage_set_sampler_views(nvc0_context(pipe), 3, nr, views);
-}
-
-static void
 nvc0_stage_set_sampler_views_range(struct nvc0_context *nvc0, const unsigned s,
                                    unsigned start, unsigned nr,
                                    struct pipe_sampler_view **views)
@@ -662,13 +638,29 @@ nvc0_stage_set_sampler_views_range(struct nvc0_context *nvc0, const unsigned s,
 }
 
 static void
-nvc0_cp_set_sampler_views(struct pipe_context *pipe,
-                          unsigned start, unsigned nr,
-                          struct pipe_sampler_view **views)
+nvc0_set_sampler_views(struct pipe_context *pipe, unsigned shader,
+                       unsigned start, unsigned nr,
+                       struct pipe_sampler_view **views)
 {
-   nvc0_stage_set_sampler_views_range(nvc0_context(pipe), 5, start, nr, views);
-
-   nvc0_context(pipe)->dirty_cp |= NVC0_NEW_CP_TEXTURES;
+   assert(start == 0);
+   switch (shader) {
+   case PIPE_SHADER_VERTEX:
+      nvc0_stage_set_sampler_views(nvc0_context(pipe), 0, nr, views);
+      break;
+   case PIPE_SHADER_GEOMETRY:
+      nvc0_stage_set_sampler_views(nvc0_context(pipe), 3, nr, views);
+      break;
+   case PIPE_SHADER_FRAGMENT:
+      nvc0_stage_set_sampler_views(nvc0_context(pipe), 4, nr, views);
+      break;
+   case PIPE_SHADER_COMPUTE:
+      nvc0_stage_set_sampler_views_range(nvc0_context(pipe), 5,
+                                         start, nr, views);
+      nvc0_context(pipe)->dirty_cp |= NVC0_NEW_CP_TEXTURES;
+      break;
+   default:
+      ;
+   }
 }
 
 
@@ -1197,10 +1189,7 @@ nvc0_init_state_functions(struct nvc0_context *nvc0)
 
    pipe->create_sampler_view = nvc0_create_sampler_view;
    pipe->sampler_view_destroy = nvc0_sampler_view_destroy;
-   pipe->set_vertex_sampler_views   = nvc0_vp_set_sampler_views;
-   pipe->set_fragment_sampler_views = nvc0_fp_set_sampler_views;
-   pipe->set_geometry_sampler_views = nvc0_gp_set_sampler_views;
-   pipe->set_compute_sampler_views = nvc0_cp_set_sampler_views;
+   pipe->set_sampler_views = nvc0_set_sampler_views;
 
    pipe->create_vs_state = nvc0_vp_state_create;
    pipe->create_fs_state = nvc0_fp_state_create;

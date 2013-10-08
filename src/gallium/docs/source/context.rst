@@ -104,16 +104,10 @@ The ``first_layer`` and ``last_layer`` fields specify the layer range the
 texture is going to be constrained to. Similar to the LOD range, this is added
 to the array index which is used for sampling.
 
-* ``set_fragment_sampler_views`` binds an array of sampler views to
-  fragment shader stage. Every binding point acquires a reference
+* ``set_sampler_views`` binds an array of sampler views to a shader stage.
+  Every binding point acquires a reference
   to a respective sampler view and releases a reference to the previous
-  sampler view.  If M is the maximum number of sampler units and N units
-  is passed to set_fragment_sampler_views, the driver should unbind the
-  sampler views for units N..M-1.
-
-* ``set_vertex_sampler_views`` binds an array of sampler views to vertex
-  shader stage. Every binding point acquires a reference to a respective
-  sampler view and releases a reference to the previous sampler view.
+  sampler view.
 
 * ``create_sampler_view`` creates a new sampler view. ``texture`` is associated
   with the sampler view which results in sampler view holding a reference
@@ -601,5 +595,5 @@ method.
 
 In addition, normal texture sampling is allowed from the compute
 program: ``bind_sampler_states`` may be used to set up texture
-samplers for the compute stage and ``set_compute_sampler_views`` may
+samplers for the compute stage and ``set_sampler_views`` may
 be used to bind a number of sampler views to it.

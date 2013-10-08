@@ -1576,9 +1576,9 @@ static uint32_t r300_assign_texture_cache_region(unsigned index, unsigned num)
         return R300_TX_CACHE(num + index);
 }
 
-static void r300_set_fragment_sampler_views(struct pipe_context* pipe,
-                                            unsigned count,
-                                            struct pipe_sampler_view** views)
+static void r300_set_sampler_views(struct pipe_context* pipe, unsigned shader,
+                                   unsigned start, unsigned count,
+                                   struct pipe_sampler_view** views)
 {
     struct r300_context* r300 = r300_context(pipe);
     struct r300_textures_state* state =
@@ -1587,6 +1587,11 @@ static void r300_set_fragment_sampler_views(struct pipe_context* pipe,
     unsigned i, real_num_views = 0, view_index = 0;
     unsigned tex_units = r300->screen->caps.num_tex_units;
     boolean dirty_tex = FALSE;
+
+    if (shader != PIPE_SHADER_FRAGMENT)
+       return;
+
+    assert(start == 0);  /* non-zero not handled yet */
 
     if (count > tex_units) {
         return;
@@ -2159,7 +2164,7 @@ void r300_init_state_functions(struct r300_context* r300)
     r300->context.bind_sampler_states = r300_bind_sampler_states;
     r300->context.delete_sampler_state = r300_delete_sampler_state;
 
-    r300->context.set_fragment_sampler_views = r300_set_fragment_sampler_views;
+    r300->context.set_sampler_views = r300_set_sampler_views;
     r300->context.create_sampler_view = r300_create_sampler_view;
     r300->context.sampler_view_destroy = r300_sampler_view_destroy;
 

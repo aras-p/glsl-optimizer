@@ -574,6 +574,11 @@ void compute_memory_pool_delete(struct compute_memory_pool* pool);
 struct compute_memory_pool* compute_memory_pool_new(
 	struct r600_screen *rscreen);
 
+/* evergreen_compute.c */
+void evergreen_set_cs_sampler_view(struct pipe_context *ctx_,
+                                   unsigned start_slot, unsigned count,
+                                   struct pipe_sampler_view **views);
+
 /* evergreen_state.c */
 struct pipe_sampler_view *
 evergreen_create_sampler_view_custom(struct pipe_context *ctx,

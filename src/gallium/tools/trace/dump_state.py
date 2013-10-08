@@ -243,9 +243,7 @@ class Context(Dispatcher):
         self._state.vs.sampler = []
         self._state.gs.sampler = []
         self._state.fs.sampler = []
-        self._state.vs.sampler_views = []
-        self._state.gs.sampler_views = []
-        self._state.fs.sampler_views = []
+        self._state.sampler_views = {}
         self._state.vs.constant_buffer = []
         self._state.gs.constant_buffer = []
         self._state.fs.constant_buffer = []
@@ -400,14 +398,8 @@ class Context(Dispatcher):
     def sampler_view_destroy(self, view):
         pass
 
-    def set_fragment_sampler_views(self, num, views):
-        self._state.fs.sampler_views = views
-
-    def set_geometry_sampler_views(self, num, views):
-        self._state.gs.sampler_views = views
-
-    def set_vertex_sampler_views(self, num, views):
-        self._state.vs.sampler_views = views
+    def set_sampler_views(self, shader, start, num, views):
+        self._state.sampler_views[shader] = views
 
     def set_vertex_buffers(self, start_slot, num_buffers, buffers):
         self._update(self._state.vertex_buffers, start_slot, num_buffers, buffers)
