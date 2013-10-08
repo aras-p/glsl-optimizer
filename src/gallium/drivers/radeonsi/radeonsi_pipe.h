@@ -53,20 +53,8 @@
 
 struct si_pipe_compute;
 
-struct r600_pipe_fences {
-	struct r600_resource		*bo;
-	unsigned			*data;
-	unsigned			next_index;
-	/* linked list of preallocated blocks */
-	struct list_head		blocks;
-	/* linked list of freed fences */
-	struct list_head		pool;
-	pipe_mutex			mutex;
-};
-
 struct r600_screen {
 	struct r600_common_screen	b;
-	struct r600_pipe_fences		fences;
 #if R600_TRACE_CS
 	struct r600_resource		*trace_bo;
 	uint32_t			*trace_ptr;
@@ -97,20 +85,6 @@ struct r600_textures_info {
 	uint32_t			depth_texture_mask; /* which textures are depth */
 	uint32_t			compressed_colortex_mask;
 	unsigned			n_samplers;
-};
-
-struct r600_fence {
-	struct pipe_reference		reference;
-	unsigned			index; /* in the shared bo */
-	struct r600_resource            *sleep_bo;
-	struct list_head		head;
-};
-
-#define FENCE_BLOCK_SIZE 16
-
-struct r600_fence_block {
-	struct r600_fence		fences[FENCE_BLOCK_SIZE];
-	struct list_head		head;
 };
 
 #define SI_NUM_ATOMS(rctx) (sizeof((rctx)->atoms)/sizeof((rctx)->atoms.array[0]))

@@ -47,6 +47,32 @@ static const struct debug_named_value common_debug_options[] = {
 	DEBUG_NAMED_VALUE_END /* must be last */
 };
 
+static void r600_fence_reference(struct pipe_screen *screen,
+				 struct pipe_fence_handle **ptr,
+				 struct pipe_fence_handle *fence)
+{
+	struct radeon_winsys *rws = ((struct r600_common_screen*)screen)->ws;
+
+	rws->fence_reference(ptr, fence);
+}
+
+static boolean r600_fence_signalled(struct pipe_screen *screen,
+				    struct pipe_fence_handle *fence)
+{
+	struct radeon_winsys *rws = ((struct r600_common_screen*)screen)->ws;
+
+	return rws->fence_wait(rws, fence, 0);
+}
+
+static boolean r600_fence_finish(struct pipe_screen *screen,
+				 struct pipe_fence_handle *fence,
+				 uint64_t timeout)
+{
+	struct radeon_winsys *rws = ((struct r600_common_screen*)screen)->ws;
+
+	return rws->fence_wait(rws, fence, timeout);
+}
+
 static bool r600_interpret_tiling(struct r600_common_screen *rscreen,
 				  uint32_t tiling_config)
 {
@@ -163,6 +189,10 @@ bool r600_common_screen_init(struct r600_common_screen *rscreen,
 			     struct radeon_winsys *ws)
 {
 	ws->query_info(ws, &rscreen->info);
+
+	rscreen->b.fence_finish = r600_fence_finish;
+	rscreen->b.fence_reference = r600_fence_reference;
+	rscreen->b.fence_signalled = r600_fence_signalled;
 
 	rscreen->ws = ws;
 	rscreen->family = rscreen->info.family;

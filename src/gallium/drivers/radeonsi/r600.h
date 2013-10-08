@@ -78,8 +78,6 @@ void r600_context_queries_suspend(struct r600_context *ctx);
 void r600_context_queries_resume(struct r600_context *ctx);
 void r600_query_predication(struct r600_context *ctx, struct r600_query *query, int operation,
 			    int flag_wait);
-void si_context_emit_fence(struct r600_context *ctx, struct r600_resource *fence,
-                           unsigned offset, unsigned value);
 
 bool si_is_timer_query(unsigned type);
 bool si_query_needs_begin(unsigned type);

@@ -331,9 +331,7 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 		ctx->b.streamout.suspended = true;
 	}
 
-	/* flush is needed to avoid lockups on some chips with user fences
-	 * this will also flush the framebuffer cache
-	 */
+	/* flush the framebuffer cache */
 	ctx->b.flags |= R600_CONTEXT_FLUSH_AND_INV |
 		      R600_CONTEXT_FLUSH_AND_INV_CB |
 		      R600_CONTEXT_FLUSH_AND_INV_DB |
@@ -432,35 +430,6 @@ void r600_begin_new_cs(struct r600_context *ctx)
 	ctx->last_start_instance = -1;
 
 	ctx->initial_gfx_cs_size = ctx->b.rings.gfx.cs->cdw;
-}
-
-void r600_context_emit_fence(struct r600_context *ctx, struct r600_resource *fence_bo, unsigned offset, unsigned value)
-{
-	struct radeon_winsys_cs *cs = ctx->b.rings.gfx.cs;
-	uint64_t va;
-
-	r600_need_cs_space(ctx, 10, FALSE);
-
-	va = r600_resource_va(&ctx->screen->b.b, (void*)fence_bo);
-	va = va + (offset << 2);
-
-	/* Use of WAIT_UNTIL is deprecated on Cayman+ */
-	if (ctx->b.family >= CHIP_CAYMAN) {
-		cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
-		cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_PS_PARTIAL_FLUSH) | EVENT_INDEX(4);
-	} else {
-		r600_write_config_reg(cs, R_008040_WAIT_UNTIL, S_008040_WAIT_3D_IDLE(1));
-	}
-
-	cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE_EOP, 4, 0);
-	cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_TS_EVENT) | EVENT_INDEX(5);
-	cs->buf[cs->cdw++] = va & 0xFFFFFFFFUL;       /* ADDRESS_LO */
-	/* DATA_SEL | INT_EN | ADDRESS_HI */
-	cs->buf[cs->cdw++] = (1 << 29) | (0 << 24) | ((va >> 32UL) & 0xFF);
-	cs->buf[cs->cdw++] = value;                   /* DATA_LO */
-	cs->buf[cs->cdw++] = 0;                       /* DATA_HI */
-	cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
-	cs->buf[cs->cdw++] = r600_context_bo_reloc(&ctx->b, &ctx->b.rings.gfx, fence_bo, RADEON_USAGE_WRITE);
 }
 
 /* The max number of bytes to copy per packet. */

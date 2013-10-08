@@ -68,81 +68,6 @@ static const struct debug_named_value r600_debug_options[] = {
 /*
  * pipe_context
  */
-static struct r600_fence *r600_create_fence(struct r600_context *rctx)
-{
-	struct r600_screen *rscreen = rctx->screen;
-	struct r600_fence *fence = NULL;
-
-	pipe_mutex_lock(rscreen->fences.mutex);
-
-	if (!rscreen->fences.bo) {
-		/* Create the shared buffer object */
-		rscreen->fences.bo = (struct r600_resource*)
-			pipe_buffer_create(&rscreen->b.b, PIPE_BIND_CUSTOM,
-					   PIPE_USAGE_STAGING, 4096);
-		if (!rscreen->fences.bo) {
-			R600_ERR("r600: failed to create bo for fence objects\n");
-			goto out;
-		}
-		rscreen->fences.data = r600_buffer_map_sync_with_rings(&rctx->b, rscreen->fences.bo, PIPE_TRANSFER_READ_WRITE);
-	}
-
-	if (!LIST_IS_EMPTY(&rscreen->fences.pool)) {
-		struct r600_fence *entry;
-
-		/* Try to find a freed fence that has been signalled */
-		LIST_FOR_EACH_ENTRY(entry, &rscreen->fences.pool, head) {
-			if (rscreen->fences.data[entry->index] != 0) {
-				LIST_DELINIT(&entry->head);
-				fence = entry;
-				break;
-			}
-		}
-	}
-
-	if (!fence) {
-		/* Allocate a new fence */
-		struct r600_fence_block *block;
-		unsigned index;
-
-		if ((rscreen->fences.next_index + 1) >= 1024) {
-			R600_ERR("r600: too many concurrent fences\n");
-			goto out;
-		}
-
-		index = rscreen->fences.next_index++;
-
-		if (!(index % FENCE_BLOCK_SIZE)) {
-			/* Allocate a new block */
-			block = CALLOC_STRUCT(r600_fence_block);
-			if (block == NULL)
-				goto out;
-
-			LIST_ADD(&block->head, &rscreen->fences.blocks);
-		} else {
-			block = LIST_ENTRY(struct r600_fence_block, rscreen->fences.blocks.next, head);
-		}
-
-		fence = &block->fences[index % FENCE_BLOCK_SIZE];
-		fence->index = index;
-	}
-
-	pipe_reference_init(&fence->reference, 1);
-
-	rscreen->fences.data[fence->index] = 0;
-	r600_context_emit_fence(rctx, rscreen->fences.bo, fence->index, 1);
-
-	/* Create a dummy BO so that fence_finish without a timeout can sleep waiting for completion */
-	fence->sleep_bo = (struct r600_resource*)
-			pipe_buffer_create(&rctx->screen->b.b, PIPE_BIND_CUSTOM,
-					   PIPE_USAGE_STAGING, 1);
-	/* Add the fence as a dummy relocation. */
-	r600_context_bo_reloc(&rctx->b, &rctx->b.rings.gfx, fence->sleep_bo, RADEON_USAGE_READWRITE);
-
-out:
-	pipe_mutex_unlock(rscreen->fences.mutex);
-	return fence;
-}
 
 static void r600_flush(struct pipe_context *ctx, unsigned flags)
 {
@@ -180,12 +105,11 @@ static void r600_flush_from_st(struct pipe_context *ctx,
 			       unsigned flags)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_fence **rfence = (struct r600_fence**)fence;
 	unsigned fflags;
 
 	fflags = flags & PIPE_FLUSH_END_OF_FRAME ? RADEON_FLUSH_END_OF_FRAME : 0;
-	if (rfence) {
-		*rfence = r600_create_fence(rctx);
+	if (fence) {
+		*fence = rctx->b.ws->cs_create_fence(rctx->b.rings.gfx.cs);
 	}
 	/* flush gfx & dma ring, order does not matter as only one can be live */
 	if (rctx->b.rings.dma.cs) {
@@ -888,96 +812,13 @@ static void r600_destroy_screen(struct pipe_screen* pscreen)
 		compute_memory_pool_delete(rscreen->global_pool);
 	}
 
-	if (rscreen->fences.bo) {
-		struct r600_fence_block *entry, *tmp;
-
-		LIST_FOR_EACH_ENTRY_SAFE(entry, tmp, &rscreen->fences.blocks, head) {
-			LIST_DEL(&entry->head);
-			FREE(entry);
-		}
-
-		rscreen->b.ws->buffer_unmap(rscreen->fences.bo->cs_buf);
-		pipe_resource_reference((struct pipe_resource**)&rscreen->fences.bo, NULL);
-	}
 	if (rscreen->trace_bo) {
 		rscreen->b.ws->buffer_unmap(rscreen->trace_bo->cs_buf);
 		pipe_resource_reference((struct pipe_resource**)&rscreen->trace_bo, NULL);
 	}
-	pipe_mutex_destroy(rscreen->fences.mutex);
 
 	rscreen->b.ws->destroy(rscreen->b.ws);
 	FREE(rscreen);
-}
-
-static void r600_fence_reference(struct pipe_screen *pscreen,
-                                 struct pipe_fence_handle **ptr,
-                                 struct pipe_fence_handle *fence)
-{
-	struct r600_fence **oldf = (struct r600_fence**)ptr;
-	struct r600_fence *newf = (struct r600_fence*)fence;
-
-	if (pipe_reference(&(*oldf)->reference, &newf->reference)) {
-		struct r600_screen *rscreen = (struct r600_screen *)pscreen;
-		pipe_mutex_lock(rscreen->fences.mutex);
-		pipe_resource_reference((struct pipe_resource**)&(*oldf)->sleep_bo, NULL);
-		LIST_ADDTAIL(&(*oldf)->head, &rscreen->fences.pool);
-		pipe_mutex_unlock(rscreen->fences.mutex);
-	}
-
-	*ptr = fence;
-}
-
-static boolean r600_fence_signalled(struct pipe_screen *pscreen,
-                                    struct pipe_fence_handle *fence)
-{
-	struct r600_screen *rscreen = (struct r600_screen *)pscreen;
-	struct r600_fence *rfence = (struct r600_fence*)fence;
-
-	return rscreen->fences.data[rfence->index] != 0;
-}
-
-static boolean r600_fence_finish(struct pipe_screen *pscreen,
-                                 struct pipe_fence_handle *fence,
-                                 uint64_t timeout)
-{
-	struct r600_screen *rscreen = (struct r600_screen *)pscreen;
-	struct r600_fence *rfence = (struct r600_fence*)fence;
-	int64_t start_time = 0;
-	unsigned spins = 0;
-
-	if (timeout != PIPE_TIMEOUT_INFINITE) {
-		start_time = os_time_get();
-
-		/* Convert to microseconds. */
-		timeout /= 1000;
-	}
-
-	while (rscreen->fences.data[rfence->index] == 0) {
-		/* Special-case infinite timeout - wait for the dummy BO to become idle */
-		if (timeout == PIPE_TIMEOUT_INFINITE) {
-			rscreen->b.ws->buffer_wait(rfence->sleep_bo->buf, RADEON_USAGE_READWRITE);
-			break;
-		}
-
-		/* The dummy BO will be busy until the CS including the fence has completed, or
-		 * the GPU is reset. Don't bother continuing to spin when the BO is idle. */
-		if (!rscreen->b.ws->buffer_is_busy(rfence->sleep_bo->buf, RADEON_USAGE_READWRITE))
-			break;
-
-		if (++spins % 256)
-			continue;
-#ifdef PIPE_OS_UNIX
-		sched_yield();
-#else
-		os_time_sleep(10);
-#endif
-		if (timeout != PIPE_TIMEOUT_INFINITE &&
-		    os_time_get() - start_time >= timeout) {
-			break;
-		}
-	}
-
-	return rscreen->fences.data[rfence->index] != 0;
 }
 
 static uint64_t r600_get_timestamp(struct pipe_screen *screen)
@@ -1035,9 +876,6 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 	} else {
 		rscreen->b.b.is_format_supported = r600_is_format_supported;
 	}
-	rscreen->b.b.fence_reference = r600_fence_reference;
-	rscreen->b.b.fence_signalled = r600_fence_signalled;
-	rscreen->b.b.fence_finish = r600_fence_finish;
 	rscreen->b.b.get_driver_query_info = r600_get_driver_query_info;
 	if (rscreen->b.info.has_uvd) {
 		rscreen->b.b.get_video_param = ruvd_get_video_param;
@@ -1112,13 +950,6 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 
 	rscreen->has_cp_dma = rscreen->b.info.drm_minor >= 27 &&
 			      !(rscreen->b.debug_flags & DBG_NO_CP_DMA);
-
-	rscreen->fences.bo = NULL;
-	rscreen->fences.data = NULL;
-	rscreen->fences.next_index = 0;
-	LIST_INITHEAD(&rscreen->fences.pool);
-	LIST_INITHEAD(&rscreen->fences.blocks);
-	pipe_mutex_init(rscreen->fences.mutex);
 
 	rscreen->global_pool = compute_memory_pool_new(rscreen);
 

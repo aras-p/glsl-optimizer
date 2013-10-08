@@ -187,17 +187,6 @@ struct r600_viewport_state {
 	struct pipe_viewport_state state;
 };
 
-struct r600_pipe_fences {
-	struct r600_resource		*bo;
-	unsigned			*data;
-	unsigned			next_index;
-	/* linked list of preallocated blocks */
-	struct list_head		blocks;
-	/* linked list of freed fences */
-	struct list_head		pool;
-	pipe_mutex			mutex;
-};
-
 /* This must start from 16. */
 /* features */
 #define DBG_NO_LLVM		(1 << 17)
@@ -220,7 +209,6 @@ struct r600_screen {
 	bool				has_msaa;
 	bool				has_cp_dma;
 	bool				has_compressed_msaa_texturing;
-	struct r600_pipe_fences		fences;
 
 	/*for compute global memory binding, we allocate stuff here, instead of
 	 * buffers.
@@ -339,20 +327,6 @@ struct r600_textures_info {
 	uint32_t			*txq_constants;
 	/* buffer related workarounds */
 	uint32_t			*buffer_constants;
-};
-
-struct r600_fence {
-	struct pipe_reference		reference;
-	unsigned			index; /* in the shared bo */
-	struct r600_resource		*sleep_bo;
-	struct list_head		head;
-};
-
-#define FENCE_BLOCK_SIZE 16
-
-struct r600_fence_block {
-	struct r600_fence		fences[FENCE_BLOCK_SIZE];
-	struct list_head		head;
 };
 
 struct r600_constbuf_state
@@ -672,8 +646,6 @@ void r600_update_db_shader_control(struct r600_context * rctx);
 void r600_get_backend_mask(struct r600_context *ctx);
 void r600_context_flush(struct r600_context *ctx, unsigned flags);
 void r600_begin_new_cs(struct r600_context *ctx);
-void r600_context_emit_fence(struct r600_context *ctx, struct r600_resource *fence,
-                             unsigned offset, unsigned value);
 void r600_flush_emit(struct r600_context *ctx);
 void r600_need_cs_space(struct r600_context *ctx, unsigned num_dw, boolean count_draw_in);
 void r600_need_dma_space(struct r600_context *ctx, unsigned num_dw);

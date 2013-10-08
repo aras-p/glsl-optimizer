@@ -161,9 +161,6 @@ void si_need_cs_space(struct r600_context *ctx, unsigned num_dw,
 	/* Count in framebuffer cache flushes at the end of CS. */
 	num_dw += ctx->atoms.cache_flush->num_dw;
 
-	/* Save 16 dwords for the fence mechanism. */
-	num_dw += 16;
-
 #if R600_TRACE_CS
 	if (ctx->screen->trace_bo) {
 		num_dw += R600_TRACE_CS_DWORDS;
@@ -203,7 +200,7 @@ void si_context_flush(struct r600_context *ctx, unsigned flags)
 			R600_CONTEXT_INV_TEX_CACHE;
 	si_emit_cache_flush(&ctx->b, NULL);
 
-	/* partial flush is needed to avoid lockups on some chips with user fences */
+	/* this is probably not needed anymore */
 	cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
 	cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_PS_PARTIAL_FLUSH) | EVENT_INDEX(4);
 
@@ -277,29 +274,6 @@ void si_begin_new_cs(struct r600_context *ctx)
 	}
 
 	si_all_descriptors_begin_new_cs(ctx);
-}
-
-void si_context_emit_fence(struct r600_context *ctx, struct r600_resource *fence_bo, unsigned offset, unsigned value)
-{
-	struct radeon_winsys_cs *cs = ctx->b.rings.gfx.cs;
-	uint64_t va;
-
-	si_need_cs_space(ctx, 10, FALSE);
-
-	va = r600_resource_va(&ctx->screen->b.b, (void*)fence_bo);
-	va = va + (offset << 2);
-
-	cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
-	cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_PS_PARTIAL_FLUSH) | EVENT_INDEX(4);
-	cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE_EOP, 4, 0);
-	cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_TS_EVENT) | EVENT_INDEX(5);
-	cs->buf[cs->cdw++] = va & 0xFFFFFFFFUL;       /* ADDRESS_LO */
-	/* DATA_SEL | INT_EN | ADDRESS_HI */
-	cs->buf[cs->cdw++] = (1 << 29) | (0 << 24) | ((va >> 32UL) & 0xFF);
-	cs->buf[cs->cdw++] = value;                   /* DATA_LO */
-	cs->buf[cs->cdw++] = 0;                       /* DATA_HI */
-	cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
-	cs->buf[cs->cdw++] = r600_context_bo_reloc(&ctx->b, &ctx->b.rings.gfx, fence_bo, RADEON_USAGE_WRITE);
 }
 
 static unsigned r600_query_read_result(char *map, unsigned start_index, unsigned end_index,
