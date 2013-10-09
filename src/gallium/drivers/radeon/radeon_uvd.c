@@ -1115,8 +1115,10 @@ int ruvd_get_video_param(struct pipe_screen *screen,
 		case PIPE_VIDEO_FORMAT_MPEG12:
 		case PIPE_VIDEO_FORMAT_MPEG4:
 		case PIPE_VIDEO_FORMAT_MPEG4_AVC:
-		case PIPE_VIDEO_FORMAT_VC1:
 			return true;
+		case PIPE_VIDEO_FORMAT_VC1:
+			/* FIXME: VC-1 simple/main profile is broken */
+			return profile == PIPE_VIDEO_PROFILE_VC1_ADVANCED;
 		default:
 			return false;
 		}
