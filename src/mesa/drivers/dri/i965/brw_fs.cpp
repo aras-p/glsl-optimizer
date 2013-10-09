@@ -2827,6 +2827,11 @@ fs_visitor::dump_instruction(backend_instruction *be_inst)
    case UNIFORM:
       printf("***u%d***", inst->dst.reg);
       break;
+   case HW_REG:
+      printf("hw_reg%d", inst->dst.fixed_hw_reg.nr);
+      if (inst->dst.fixed_hw_reg.subnr)
+         printf("+%d", inst->dst.fixed_hw_reg.subnr);
+      break;
    default:
       printf("???");
       break;
@@ -2870,6 +2875,17 @@ fs_visitor::dump_instruction(backend_instruction *be_inst)
             printf("???");
             break;
          }
+         break;
+      case HW_REG:
+         if (inst->src[i].fixed_hw_reg.negate)
+            printf("-");
+         if (inst->src[i].fixed_hw_reg.abs)
+            printf("|");
+         printf("hw_reg%d", inst->src[i].fixed_hw_reg.nr);
+         if (inst->src[i].fixed_hw_reg.subnr)
+            printf("+%d", inst->src[i].fixed_hw_reg.subnr);
+         if (inst->src[i].fixed_hw_reg.abs)
+            printf("|");
          break;
       default:
          printf("???");
