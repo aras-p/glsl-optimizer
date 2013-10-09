@@ -115,14 +115,14 @@ brw_store_register_mem64(struct brw_context *brw,
    BEGIN_BATCH(3);
    OUT_BATCH(MI_STORE_REGISTER_MEM | (3 - 2));
    OUT_BATCH(reg);
-   OUT_RELOC(bo, I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
+   OUT_RELOC(bo, I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
              idx * sizeof(uint64_t));
    ADVANCE_BATCH();
 
    BEGIN_BATCH(3);
    OUT_BATCH(MI_STORE_REGISTER_MEM | (3 - 2));
    OUT_BATCH(reg + sizeof(uint32_t));
-   OUT_RELOC(bo, I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
+   OUT_RELOC(bo, I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
              sizeof(uint32_t) + idx * sizeof(uint64_t));
    ADVANCE_BATCH();
 }
