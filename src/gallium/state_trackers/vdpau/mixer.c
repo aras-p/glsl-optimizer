@@ -768,11 +768,8 @@ vlVdpGenerateCSCMatrix(VdpProcamp *procamp,
    enum VL_CSC_COLOR_STANDARD vl_std;
    struct vl_procamp camp;
 
-   if (!(csc_matrix && procamp))
+   if (!csc_matrix)
       return VDP_STATUS_INVALID_POINTER;
-
-   if (procamp->struct_version > VDP_PROCAMP_VERSION)
-      return VDP_STATUS_INVALID_STRUCT_VERSION;
 
    switch (standard) {
       case VDP_COLOR_STANDARD_ITUR_BT_601: vl_std = VL_CSC_COLOR_STANDARD_BT_601; break;
@@ -780,10 +777,16 @@ vlVdpGenerateCSCMatrix(VdpProcamp *procamp,
       case VDP_COLOR_STANDARD_SMPTE_240M:  vl_std = VL_CSC_COLOR_STANDARD_SMPTE_240M; break;
       default: return VDP_STATUS_INVALID_COLOR_STANDARD;
    }
-   camp.brightness = procamp->brightness;
-   camp.contrast = procamp->contrast;
-   camp.saturation = procamp->saturation;
-   camp.hue = procamp->hue;
-   vl_csc_get_matrix(vl_std, &camp, true, csc_matrix);
+
+   if (procamp) {
+      if (procamp->struct_version > VDP_PROCAMP_VERSION)
+         return VDP_STATUS_INVALID_STRUCT_VERSION;
+      camp.brightness = procamp->brightness;
+      camp.contrast = procamp->contrast;
+      camp.saturation = procamp->saturation;
+      camp.hue = procamp->hue;
+   }
+
+   vl_csc_get_matrix(vl_std, procamp ? &camp : NULL, true, csc_matrix);
    return VDP_STATUS_OK;
 }
