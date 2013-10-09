@@ -742,12 +742,11 @@ fs_instruction_scheduler::is_compressed(fs_inst *inst)
 void
 fs_instruction_scheduler::calculate_deps()
 {
-   /* Pre-register-allocation, this tracks the last write per VGRF (so
-    * different reg_offsets within it can interfere when they shouldn't).
+   /* Pre-register-allocation, this tracks the last write per VGRF offset.
     * After register allocation, reg_offsets are gone and we track individual
     * GRF registers.
     */
-   schedule_node *last_grf_write[grf_count];
+   schedule_node *last_grf_write[grf_count * 16];
    schedule_node *last_mrf_write[BRW_MAX_MRF];
    schedule_node *last_conditional_mod[2] = { NULL, NULL };
    schedule_node *last_accumulator_write = NULL;
@@ -786,7 +785,9 @@ fs_instruction_scheduler::calculate_deps()
                for (int r = 0; r < reg_width * inst->regs_read(v, i); r++)
                   add_dep(last_grf_write[inst->src[i].reg + r], n);
             } else {
-               add_dep(last_grf_write[inst->src[i].reg], n);
+               for (int r = 0; r < inst->regs_read(v, i); r++) {
+                  add_dep(last_grf_write[inst->src[i].reg * 16 + inst->src[i].reg_offset + r], n);
+               }
             }
 	 } else if (inst->src[i].file == HW_REG &&
 		    (inst->src[i].fixed_hw_reg.file ==
@@ -838,8 +839,10 @@ fs_instruction_scheduler::calculate_deps()
                last_grf_write[inst->dst.reg + r] = n;
             }
          } else {
-            add_dep(last_grf_write[inst->dst.reg], n);
-            last_grf_write[inst->dst.reg] = n;
+            for (int r = 0; r < inst->regs_written; r++) {
+               add_dep(last_grf_write[inst->dst.reg * 16 + inst->dst.reg_offset + r], n);
+               last_grf_write[inst->dst.reg * 16 + inst->dst.reg_offset + r] = n;
+            }
          }
       } else if (inst->dst.file == MRF) {
 	 int reg = inst->dst.reg & ~BRW_MRF_COMPR4;
@@ -910,7 +913,9 @@ fs_instruction_scheduler::calculate_deps()
                for (int r = 0; r < reg_width * inst->regs_read(v, i); r++)
                   add_dep(n, last_grf_write[inst->src[i].reg + r]);
             } else {
-               add_dep(n, last_grf_write[inst->src[i].reg]);
+               for (int r = 0; r < inst->regs_read(v, i); r++) {
+                  add_dep(n, last_grf_write[inst->src[i].reg * 16 + inst->src[i].reg_offset + r]);
+               }
             }
 	 } else if (inst->src[i].file == HW_REG &&
 		    (inst->src[i].fixed_hw_reg.file ==
@@ -962,7 +967,9 @@ fs_instruction_scheduler::calculate_deps()
             for (int r = 0; r < inst->regs_written * reg_width; r++)
                last_grf_write[inst->dst.reg + r] = n;
          } else {
-            last_grf_write[inst->dst.reg] = n;
+            for (int r = 0; r < inst->regs_written; r++) {
+               last_grf_write[inst->dst.reg * 16 + inst->dst.reg_offset + r] = n;
+            }
          }
       } else if (inst->dst.file == MRF) {
 	 int reg = inst->dst.reg & ~BRW_MRF_COMPR4;
