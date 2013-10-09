@@ -442,7 +442,7 @@ vlVdpOutputSurfacePutBitsYCbCr(VdpOutputSurface surface,
    vlVdpResolveDelayedRendering(vlsurface->device, NULL, NULL);
    memset(&vtmpl, 0, sizeof(vtmpl));
    vtmpl.buffer_format = format;
-   vtmpl.chroma_format = PIPE_VIDEO_CHROMA_FORMAT_420;
+   vtmpl.chroma_format = FormatYCBCRToPipeChroma(source_ycbcr_format);
 
    if (destination_rect) {
       vtmpl.width = abs(destination_rect->x0-destination_rect->x1);
