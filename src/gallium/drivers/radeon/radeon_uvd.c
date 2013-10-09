@@ -56,6 +56,7 @@
 
 #define NUM_MPEG2_REFS 6
 #define NUM_H264_REFS 17
+#define NUM_VC1_REFS 5
 
 /* UVD buffer representation */
 struct ruvd_buffer
@@ -304,6 +305,9 @@ static unsigned calc_dpb_size(const struct pipe_video_codec *templ)
 		break;
 
 	case PIPE_VIDEO_FORMAT_VC1:
+		// the firmware seems to allways assume a minimum of ref frames
+		max_references = MAX2(NUM_VC1_REFS, max_references);
+
 		// reference picture buffer
 		dpb_size = image_size * max_references;
 
@@ -431,60 +435,62 @@ static struct ruvd_vc1 get_vc1_msg(struct pipe_vc1_picture_desc *pic)
 	struct ruvd_vc1 result;
 
 	memset(&result, 0, sizeof(result));
+
 	switch(pic->base.profile) {
 	case PIPE_VIDEO_PROFILE_VC1_SIMPLE:
 		result.profile = RUVD_VC1_PROFILE_SIMPLE;
+		result.level = 1;
 		break;
 
 	case PIPE_VIDEO_PROFILE_VC1_MAIN:
 		result.profile = RUVD_VC1_PROFILE_MAIN;
+		result.level = 2;
 		break;
-		
+
 	case PIPE_VIDEO_PROFILE_VC1_ADVANCED:
 		result.profile = RUVD_VC1_PROFILE_ADVANCED;
+		result.level = 4;
 		break;
+
 	default:
 		assert(0);
 	}
 
-	if (pic->base.profile == PIPE_VIDEO_PROFILE_VC1_ADVANCED) {
-		result.level = 0;
-
-		result.sps_info_flags |= pic->postprocflag << 7;
-		result.sps_info_flags |= pic->pulldown << 6;
-		result.sps_info_flags |= pic->interlace << 5;
-		result.sps_info_flags |= pic->tfcntrflag << 4;
-		result.sps_info_flags |= pic->psf << 1;
-
-		result.pps_info_flags |= pic->panscan_flag << 7;
-		result.pps_info_flags |= pic->refdist_flag << 6;
-		result.pps_info_flags |= pic->extended_dmv << 8;
-		result.pps_info_flags |= pic->range_mapy_flag << 31;
-		result.pps_info_flags |= pic->range_mapy << 28;
-		result.pps_info_flags |= pic->range_mapuv_flag << 27;
-		result.pps_info_flags |= pic->range_mapuv << 24;
-
-	} else {
-		result.level = 0;
-		result.pps_info_flags |= pic->multires << 21;
-		result.pps_info_flags |= pic->syncmarker << 20;
-		result.pps_info_flags |= pic->rangered << 19;
-		result.pps_info_flags |= pic->maxbframes << 16;
-	}
-
+	/* fields common for all profiles */
+	result.sps_info_flags |= pic->postprocflag << 7;
+	result.sps_info_flags |= pic->pulldown << 6;
+	result.sps_info_flags |= pic->interlace << 5;
+	result.sps_info_flags |= pic->tfcntrflag << 4;
 	result.sps_info_flags |= pic->finterpflag << 3;
-	//(((unsigned int)(pPicParams->advance.reserved1))        << SPS_INFO_VC1_RESERVED_SHIFT)
+	result.sps_info_flags |= pic->psf << 1;
 
-	result.pps_info_flags |= pic->loopfilter << 5;
-	result.pps_info_flags |= pic->fastuvmc << 4;
-	result.pps_info_flags |= pic->extended_mv << 3;
-	result.pps_info_flags |= pic->dquant << 1;
-	result.pps_info_flags |= pic->vstransform << 0;
+	result.pps_info_flags |= pic->range_mapy_flag << 31;
+	result.pps_info_flags |= pic->range_mapy << 28;
+	result.pps_info_flags |= pic->range_mapuv_flag << 27;
+	result.pps_info_flags |= pic->range_mapuv << 24;
+	result.pps_info_flags |= pic->multires << 21;
+	result.pps_info_flags |= pic->maxbframes << 16;
 	result.pps_info_flags |= pic->overlap << 11;
 	result.pps_info_flags |= pic->quantizer << 9;
+	result.pps_info_flags |= pic->panscan_flag << 7;
+	result.pps_info_flags |= pic->refdist_flag << 6;
+	result.pps_info_flags |= pic->vstransform << 0;
 
+	/* some fields only apply to main/advanced profile */
+	if (pic->base.profile != PIPE_VIDEO_PROFILE_VC1_SIMPLE) {
+		result.pps_info_flags |= pic->syncmarker << 20;
+		result.pps_info_flags |= pic->rangered << 19;
+		result.pps_info_flags |= pic->loopfilter << 5;
+		result.pps_info_flags |= pic->fastuvmc << 4;
+		result.pps_info_flags |= pic->extended_mv << 3;
+		result.pps_info_flags |= pic->extended_dmv << 8;
+		result.pps_info_flags |= pic->dquant << 1;
+	}
+
+	result.chroma_format = 1;
 
 #if 0
+//(((unsigned int)(pPicParams->advance.reserved1))        << SPS_INFO_VC1_RESERVED_SHIFT)
 uint32_t 	slice_count
 uint8_t 	picture_type
 uint8_t 	frame_coding_mode
@@ -492,7 +498,6 @@ uint8_t 	deblockEnable
 uint8_t 	pquant
 #endif
 
-        result.chroma_format  = 1;
 	return result;
 }
 
