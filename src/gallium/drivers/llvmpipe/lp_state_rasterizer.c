@@ -78,8 +78,6 @@ llvmpipe_create_rasterizer_state(struct pipe_context *pipe,
     */
    need_pipeline = (rast->fill_front != PIPE_POLYGON_MODE_FILL ||
 		    rast->fill_back != PIPE_POLYGON_MODE_FILL ||
-                    rast->offset_point ||
-                    rast->offset_line ||
 		    rast->point_smooth ||
 		    rast->line_smooth ||
 		    rast->line_stipple_enable ||
