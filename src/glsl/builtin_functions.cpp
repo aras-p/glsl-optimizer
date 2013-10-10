@@ -3383,11 +3383,21 @@ builtin_builder::_texture(ir_texture_opcode opcode,
    if (flags & TEX_PROJECT)
       tex->projector = swizzle(P, coord_type->vector_elements - 1, 1);
 
-   /* The shadow comparitor is normally in the Z component, but a few types
-    * have sufficiently large coordinates that it's in W.
-    */
-   if (sampler_type->sampler_shadow)
-      tex->shadow_comparitor = swizzle(P, MAX2(coord_size, SWIZZLE_Z), 1);
+   if (sampler_type->sampler_shadow) {
+      if (opcode == ir_tg4) {
+         /* gather has refz as a separate parameter, immediately after the
+          * coordinate
+          */
+         ir_variable *refz = in_var(glsl_type::float_type, "refz");
+         sig->parameters.push_tail(refz);
+         tex->shadow_comparitor = var_ref(refz);
+      } else {
+         /* The shadow comparitor is normally in the Z component, but a few types
+          * have sufficiently large coordinates that it's in W.
+          */
+         tex->shadow_comparitor = swizzle(P, MAX2(coord_size, SWIZZLE_Z), 1);
+      }
+   }
 
    if (opcode == ir_txl) {
       ir_variable *lod = in_var(glsl_type::float_type, "lod");
