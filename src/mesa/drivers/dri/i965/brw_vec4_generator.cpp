@@ -309,10 +309,18 @@ vec4_generator::generate_tex(vec4_instruction *inst,
 	 msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_RESINFO;
 	 break;
       case SHADER_OPCODE_TG4:
-         msg_type = GEN7_SAMPLER_MESSAGE_SAMPLE_GATHER4;
+         if (inst->shadow_compare) {
+            msg_type = GEN7_SAMPLER_MESSAGE_SAMPLE_GATHER4_C;
+         } else {
+            msg_type = GEN7_SAMPLER_MESSAGE_SAMPLE_GATHER4;
+         }
          break;
       case SHADER_OPCODE_TG4_OFFSET:
-         msg_type = GEN7_SAMPLER_MESSAGE_SAMPLE_GATHER4_PO;
+         if (inst->shadow_compare) {
+            msg_type = GEN7_SAMPLER_MESSAGE_SAMPLE_GATHER4_PO_C;
+         } else {
+            msg_type = GEN7_SAMPLER_MESSAGE_SAMPLE_GATHER4_PO;
+         }
          break;
       default:
 	 assert(!"should not get here: invalid VS texture opcode");

@@ -2341,7 +2341,7 @@ vec4_visitor::visit(ir_texture *ir)
                   src_reg(0)));
       }
       /* Load the shadow comparitor */
-      if (ir->shadow_comparitor && ir->op != ir_txd) {
+      if (ir->shadow_comparitor && ir->op != ir_txd && (ir->op != ir_tg4 || !has_nonconstant_offset)) {
 	 emit(MOV(dst_reg(MRF, param_base + 1, ir->shadow_comparitor->type,
 			  WRITEMASK_X),
 		  shadow_comparitor));
@@ -2406,6 +2406,11 @@ vec4_visitor::visit(ir_texture *ir)
 	    inst->mlen += 2;
 	 }
       } else if (ir->op == ir_tg4 && has_nonconstant_offset) {
+         if (ir->shadow_comparitor) {
+            emit(MOV(dst_reg(MRF, param_base, ir->shadow_comparitor->type, WRITEMASK_W),
+                     shadow_comparitor));
+         }
+
          emit(MOV(dst_reg(MRF, param_base + 1, glsl_type::ivec2_type, WRITEMASK_XY),
                   offset_value));
          inst->mlen++;
