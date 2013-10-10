@@ -507,6 +507,7 @@ private:
 #define TEX_OFFSET  2
 #define TEX_COMPONENT 4
 #define TEX_OFFSET_NONCONST 8
+#define TEX_OFFSET_ARRAY 16
 
    ir_function_signature *_texture(ir_texture_opcode opcode,
                                    builtin_available_predicate avail,
@@ -3430,6 +3431,14 @@ builtin_builder::_texture(ir_texture_opcode opcode,
                                   (flags & TEX_OFFSET) ? ir_var_const_in : ir_var_function_in);
       sig->parameters.push_tail(offset);
       tex->offset = var_ref(offset);
+   }
+
+   if (flags & TEX_OFFSET_ARRAY) {
+      ir_variable *offsets =
+         new(mem_ctx) ir_variable(glsl_type::get_array_instance(glsl_type::ivec2_type, 4),
+                                  "offsets", ir_var_const_in);
+      sig->parameters.push_tail(offsets);
+      tex->offset = var_ref(offsets);
    }
 
    if (opcode == ir_tg4) {
