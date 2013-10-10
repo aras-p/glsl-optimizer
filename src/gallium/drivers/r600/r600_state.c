@@ -2972,11 +2972,18 @@ void *r600_create_db_flush_dsa(struct r600_context *rctx)
 
 void r600_update_db_shader_control(struct r600_context * rctx)
 {
-	bool dual_export = rctx->framebuffer.export_16bpc &&
-			   !rctx->ps_shader->current->ps_depth_export;
+	bool dual_export;
+	unsigned db_shader_control;
 
-	unsigned db_shader_control = rctx->ps_shader->current->db_shader_control |
-				     S_02880C_DUAL_EXPORT_ENABLE(dual_export);
+	if (!rctx->ps_shader) {
+		return;
+	}
+
+	dual_export = rctx->framebuffer.export_16bpc &&
+		      !rctx->ps_shader->current->ps_depth_export;
+
+	db_shader_control = rctx->ps_shader->current->db_shader_control |
+			    S_02880C_DUAL_EXPORT_ENABLE(dual_export);
 
 	/* When alpha test is enabled we can't trust the hw to make the proper
 	 * decision on the order in which ztest should be run related to fragment
