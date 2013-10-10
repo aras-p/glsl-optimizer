@@ -1638,15 +1638,22 @@ static int tgsi_op2_s(struct r600_shader_ctx *ctx, int swap, int trans_only)
 {
 	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;
 	struct r600_bytecode_alu alu;
-	int i, j, r;
-	int lasti = tgsi_last_instruction(inst->Dst[0].Register.WriteMask);
+	unsigned write_mask = inst->Dst[0].Register.WriteMask;
+	int i, j, r, lasti = tgsi_last_instruction(write_mask);
+	/* use temp register if trans_only and more than one dst component */
+	int use_tmp = trans_only && (write_mask ^ (1 << lasti));
 
-	for (i = 0; i < lasti + 1; i++) {
-		if (!(inst->Dst[0].Register.WriteMask & (1 << i)))
+	for (i = 0; i <= lasti; i++) {
+		if (!(write_mask & (1 << i)))
 			continue;
 
 		memset(&alu, 0, sizeof(struct r600_bytecode_alu));
-		tgsi_dst(ctx, &inst->Dst[0], i, &alu.dst);
+		if (use_tmp) {
+			alu.dst.sel = ctx->temp_reg;
+			alu.dst.chan = i;
+			alu.dst.write = 1;
+		} else
+			tgsi_dst(ctx, &inst->Dst[0], i, &alu.dst);
 
 		alu.op = ctx->inst_info->op;
 		if (!swap) {
@@ -1674,6 +1681,25 @@ static int tgsi_op2_s(struct r600_shader_ctx *ctx, int swap, int trans_only)
 		r = r600_bytecode_add_alu(ctx->bc, &alu);
 		if (r)
 			return r;
+	}
+
+	if (use_tmp) {
+		/* move result from temp to dst */
+		for (i = 0; i <= lasti; i++) {
+			if (!(write_mask & (1 << i)))
+				continue;
+
+			memset(&alu, 0, sizeof(struct r600_bytecode_alu));
+			alu.op = ALU_OP1_MOV;
+			tgsi_dst(ctx, &inst->Dst[0], i, &alu.dst);
+			alu.src[0].sel = ctx->temp_reg;
+			alu.src[0].chan = i;
+			alu.last = (i == lasti);
+
+			r = r600_bytecode_add_alu(ctx->bc, &alu);
+			if (r)
+				return r;
+		}
 	}
 	return 0;
 }
