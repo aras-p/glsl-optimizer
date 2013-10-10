@@ -512,19 +512,25 @@ fs_visitor::assign_regs()
 }
 
 void
-fs_visitor::emit_unspill(fs_inst *inst, fs_reg dst, uint32_t spill_offset)
+fs_visitor::emit_unspill(fs_inst *inst, fs_reg dst, uint32_t spill_offset,
+                         int count)
 {
-   fs_inst *unspill_inst = new(mem_ctx) fs_inst(FS_OPCODE_UNSPILL, dst);
-   unspill_inst->offset = spill_offset;
-   unspill_inst->ir = inst->ir;
-   unspill_inst->annotation = inst->annotation;
+   for (int i = 0; i < count; i++) {
+      fs_inst *unspill_inst = new(mem_ctx) fs_inst(FS_OPCODE_UNSPILL, dst);
+      unspill_inst->offset = spill_offset;
+      unspill_inst->ir = inst->ir;
+      unspill_inst->annotation = inst->annotation;
 
-   /* Choose a MRF that won't conflict with an MRF that's live across the
-    * spill.  Nothing else will make it up to MRF 14/15.
-    */
-   unspill_inst->base_mrf = 14;
-   unspill_inst->mlen = 1; /* header contains offset */
-   inst->insert_before(unspill_inst);
+      /* Choose a MRF that won't conflict with an MRF that's live across the
+       * spill.  Nothing else will make it up to MRF 14/15.
+       */
+      unspill_inst->base_mrf = 14;
+      unspill_inst->mlen = 1; /* header contains offset */
+      inst->insert_before(unspill_inst);
+
+      dst.reg_offset++;
+      spill_offset += REG_SIZE;
+   }
 }
 
 int
@@ -623,9 +629,14 @@ fs_visitor::spill_reg(int spill_reg)
       for (unsigned int i = 0; i < 3; i++) {
 	 if (inst->src[i].file == GRF &&
 	     inst->src[i].reg == spill_reg) {
-	    inst->src[i].reg = virtual_grf_alloc(1);
-	    emit_unspill(inst, inst->src[i],
-                         spill_offset + REG_SIZE * inst->src[i].reg_offset);
+            int regs_read = inst->regs_read(this, i);
+
+            inst->src[i].reg = virtual_grf_alloc(regs_read);
+            inst->src[i].reg_offset = 0;
+
+            emit_unspill(inst, inst->src[i],
+                         spill_offset + REG_SIZE * inst->src[i].reg_offset,
+                         regs_read);
 	 }
       }
 
@@ -641,12 +652,8 @@ fs_visitor::spill_reg(int spill_reg)
           * since we write back out all of the regs_written().
 	  */
 	 if (inst->predicate || inst->force_uncompressed || inst->force_sechalf) {
-            fs_reg unspill_reg = inst->dst;
-            for (int chan = 0; chan < inst->regs_written; chan++) {
-               emit_unspill(inst, unspill_reg,
-                            subset_spill_offset + REG_SIZE * chan);
-               unspill_reg.reg_offset++;
-            }
+            emit_unspill(inst, inst->dst, subset_spill_offset,
+                         inst->regs_written);
 	 }
 
 	 fs_reg spill_src = inst->dst;

@@ -1226,27 +1226,28 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
                               fs_reg shadow_c, fs_reg lod, fs_reg lod2,
                               fs_reg sample_index)
 {
-   int mlen = 0;
-   int base_mrf = 2;
    int reg_width = dispatch_width / 8;
    bool header_present = false;
    int offsets[3];
 
+   fs_reg payload = fs_reg(this, glsl_type::float_type);
+   fs_reg next = payload;
+
    if (ir->op == ir_tg4 || (ir->offset && ir->op != ir_txf)) {
-      /* * The offsets set up by the ir_texture visitor are in the
-       * m1 header, so we can't go headerless.
+      /* For general texture offsets (no txf workaround), we need a header to
+       * put them in.  Note that for 16-wide we're making space for two actual
+       * hardware registers here, so the emit will have to fix up for this.
        *
        * * ir4_tg4 needs to place its channel select in the header,
        * for interaction with ARB_texture_swizzle
        */
       header_present = true;
-      mlen++;
-      base_mrf--;
+      next.reg_offset++;
    }
 
    if (ir->shadow_comparitor) {
-      emit(MOV(fs_reg(MRF, base_mrf + mlen), shadow_c));
-      mlen += reg_width;
+      emit(MOV(next, shadow_c));
+      next.reg_offset++;
    }
 
    /* Set up the LOD info */
@@ -1256,12 +1257,12 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    case ir_tg4:
       break;
    case ir_txb:
-      emit(MOV(fs_reg(MRF, base_mrf + mlen), lod));
-      mlen += reg_width;
+      emit(MOV(next, lod));
+      next.reg_offset++;
       break;
    case ir_txl:
-      emit(MOV(fs_reg(MRF, base_mrf + mlen), lod));
-      mlen += reg_width;
+      emit(MOV(next, lod));
+      next.reg_offset++;
       break;
    case ir_txd: {
       if (dispatch_width == 16)
@@ -1271,32 +1272,32 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
        * [hdr], [ref], x, dPdx.x, dPdy.x, y, dPdx.y, dPdy.y, z, dPdx.z, dPdy.z
        */
       for (int i = 0; i < ir->coordinate->type->vector_elements; i++) {
-	 emit(MOV(fs_reg(MRF, base_mrf + mlen), coordinate));
+	 emit(MOV(next, coordinate));
 	 coordinate.reg_offset++;
-	 mlen += reg_width;
+	 next.reg_offset++;
 
          /* For cube map array, the coordinate is (u,v,r,ai) but there are
           * only derivatives for (u, v, r).
           */
          if (i < ir->lod_info.grad.dPdx->type->vector_elements) {
-            emit(MOV(fs_reg(MRF, base_mrf + mlen), lod));
+            emit(MOV(next, lod));
             lod.reg_offset++;
-            mlen += reg_width;
+            next.reg_offset++;
 
-            emit(MOV(fs_reg(MRF, base_mrf + mlen), lod2));
+            emit(MOV(next, lod2));
             lod2.reg_offset++;
-            mlen += reg_width;
+            next.reg_offset++;
          }
       }
       break;
    }
    case ir_txs:
-      emit(MOV(fs_reg(MRF, base_mrf + mlen, BRW_REGISTER_TYPE_UD), lod));
-      mlen += reg_width;
+      emit(MOV(next.retype(BRW_REGISTER_TYPE_UD), lod));
+      next.reg_offset++;
       break;
    case ir_query_levels:
-      emit(MOV(fs_reg(MRF, base_mrf + mlen, BRW_REGISTER_TYPE_UD), fs_reg(0)));
-      mlen += reg_width;
+      emit(MOV(next.retype(BRW_REGISTER_TYPE_UD), fs_reg(0u)));
+      next.reg_offset++;
       break;
    case ir_txf:
       /* It appears that the ld instruction used for txf does its
@@ -1314,40 +1315,37 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       }
 
       /* Unfortunately, the parameters for LD are intermixed: u, lod, v, r. */
-      emit(ADD(fs_reg(MRF, base_mrf + mlen, BRW_REGISTER_TYPE_D),
-               coordinate, offsets[0]));
+      emit(ADD(next.retype(BRW_REGISTER_TYPE_D), coordinate, offsets[0]));
       coordinate.reg_offset++;
-      mlen += reg_width;
+      next.reg_offset++;
 
-      emit(MOV(fs_reg(MRF, base_mrf + mlen, BRW_REGISTER_TYPE_D), lod));
-      mlen += reg_width;
+      emit(MOV(next.retype(BRW_REGISTER_TYPE_D), lod));
+      next.reg_offset++;
 
       for (int i = 1; i < ir->coordinate->type->vector_elements; i++) {
-	 emit(ADD(fs_reg(MRF, base_mrf + mlen, BRW_REGISTER_TYPE_D),
-                  coordinate, offsets[i]));
+	 emit(ADD(next.retype(BRW_REGISTER_TYPE_D), coordinate, offsets[i]));
 	 coordinate.reg_offset++;
-	 mlen += reg_width;
+	 next.reg_offset++;
       }
       break;
    case ir_txf_ms:
-      emit(MOV(fs_reg(MRF, base_mrf + mlen, BRW_REGISTER_TYPE_UD), sample_index));
-      mlen += reg_width;
+      emit(MOV(next.retype(BRW_REGISTER_TYPE_UD), sample_index));
+      next.reg_offset++;
 
       /* constant zero MCS; we arrange to never actually have a compressed
        * multisample surface here for now. TODO: issue ld_mcs to get this first,
        * if we ever support texturing from compressed multisample surfaces
        */
-      emit(MOV(fs_reg(MRF, base_mrf + mlen, BRW_REGISTER_TYPE_UD), fs_reg(0u)));
-      mlen += reg_width;
+      emit(MOV(next.retype(BRW_REGISTER_TYPE_UD), fs_reg(0u)));
+      next.reg_offset++;
 
       /* there is no offsetting for this message; just copy in the integer
        * texture coordinates
        */
       for (int i = 0; i < ir->coordinate->type->vector_elements; i++) {
-         emit(MOV(fs_reg(MRF, base_mrf + mlen, BRW_REGISTER_TYPE_D),
-                  coordinate));
+         emit(MOV(next.retype(BRW_REGISTER_TYPE_D), coordinate));
          coordinate.reg_offset++;
-         mlen += reg_width;
+         next.reg_offset++;
       }
       break;
    }
@@ -1355,32 +1353,37 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    /* Set up the coordinate (except for cases where it was done above) */
    if (ir->op != ir_txd && ir->op != ir_txs && ir->op != ir_txf && ir->op != ir_txf_ms && ir->op != ir_query_levels) {
       for (int i = 0; i < ir->coordinate->type->vector_elements; i++) {
-	 emit(MOV(fs_reg(MRF, base_mrf + mlen), coordinate));
+	 emit(MOV(next, coordinate));
 	 coordinate.reg_offset++;
-	 mlen += reg_width;
+	 next.reg_offset++;
       }
    }
 
    /* Generate the SEND */
    fs_inst *inst = NULL;
    switch (ir->op) {
-   case ir_tex: inst = emit(SHADER_OPCODE_TEX, dst); break;
-   case ir_txb: inst = emit(FS_OPCODE_TXB, dst); break;
-   case ir_txl: inst = emit(SHADER_OPCODE_TXL, dst); break;
-   case ir_txd: inst = emit(SHADER_OPCODE_TXD, dst); break;
-   case ir_txf: inst = emit(SHADER_OPCODE_TXF, dst); break;
-   case ir_txf_ms: inst = emit(SHADER_OPCODE_TXF_MS, dst); break;
-   case ir_txs: inst = emit(SHADER_OPCODE_TXS, dst); break;
-   case ir_query_levels: inst = emit(SHADER_OPCODE_TXS, dst); break;
-   case ir_lod: inst = emit(SHADER_OPCODE_LOD, dst); break;
-   case ir_tg4: inst = emit(SHADER_OPCODE_TG4, dst); break;
+   case ir_tex: inst = emit(SHADER_OPCODE_TEX, dst, payload); break;
+   case ir_txb: inst = emit(FS_OPCODE_TXB, dst, payload); break;
+   case ir_txl: inst = emit(SHADER_OPCODE_TXL, dst, payload); break;
+   case ir_txd: inst = emit(SHADER_OPCODE_TXD, dst, payload); break;
+   case ir_txf: inst = emit(SHADER_OPCODE_TXF, dst, payload); break;
+   case ir_txf_ms: inst = emit(SHADER_OPCODE_TXF_MS, dst, payload); break;
+   case ir_txs: inst = emit(SHADER_OPCODE_TXS, dst, payload); break;
+   case ir_query_levels: inst = emit(SHADER_OPCODE_TXS, dst, payload); break;
+   case ir_lod: inst = emit(SHADER_OPCODE_LOD, dst, payload); break;
+   case ir_tg4: inst = emit(SHADER_OPCODE_TG4, dst, payload); break;
    }
-   inst->base_mrf = base_mrf;
-   inst->mlen = mlen;
+   inst->base_mrf = -1;
+   if (reg_width == 2)
+      inst->mlen = next.reg_offset * reg_width - header_present;
+   else
+      inst->mlen = next.reg_offset * reg_width;
+
    inst->header_present = header_present;
    inst->regs_written = 4;
 
-   if (mlen > 11) {
+   virtual_grf_sizes[payload.reg] = next.reg_offset;
+   if (inst->mlen > 11) {
       fail("Message length >11 disallowed by hardware\n");
    }
 
@@ -1590,9 +1593,6 @@ fs_visitor::visit(ir_texture *ir)
       inst = emit_texture_gen4(ir, dst, coordinate, shadow_comparitor,
                                lod, lod2);
    }
-
-   /* The header is set up by generate_tex() when necessary. */
-   inst->src[0] = reg_undef;
 
    if (ir->offset != NULL && ir->op != ir_txf)
       inst->texture_offset = brw_texture_offset(ir->offset->as_constant());

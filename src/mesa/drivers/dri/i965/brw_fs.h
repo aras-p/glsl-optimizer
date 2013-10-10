@@ -78,6 +78,7 @@ public:
    bool is_zero() const;
    bool is_one() const;
    bool is_valid_3src() const;
+   fs_reg retype(uint32_t type);
 
    /** Register file: GRF, MRF, IMM. */
    enum register_file file;
@@ -145,6 +146,7 @@ public:
    bool overwrites_reg(const fs_reg &reg);
    bool is_send_from_grf();
    bool is_partial_write();
+   int regs_read(fs_visitor *v, int arg);
 
    fs_reg dst;
    fs_reg src[3];
@@ -354,7 +356,8 @@ public:
    void try_replace_with_sel();
    void emit_bool_to_cond_code(ir_rvalue *condition);
    void emit_if_gen6(ir_if *ir);
-   void emit_unspill(fs_inst *inst, fs_reg reg, uint32_t spill_offset);
+   void emit_unspill(fs_inst *inst, fs_reg reg, uint32_t spill_offset,
+                     int count);
 
    void emit_fragment_program_code();
    void setup_fp_regs();

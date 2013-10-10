@@ -151,14 +151,7 @@ fs_live_variables::setup_def_use()
             if (reg.file != GRF)
                continue;
 
-            int regs_read = 1;
-            /* We don't know how many components are read in a send-from-grf,
-             * so just assume "all of them."
-             */
-            if (inst->is_send_from_grf())
-               regs_read = v->virtual_grf_sizes[reg.reg];
-
-            for (int i = 0; i < regs_read; i++) {
+            for (int j = 0; j < inst->regs_read(v, i); j++) {
                setup_one_read(block, inst, ip, reg);
                reg.reg_offset++;
             }

@@ -569,7 +569,7 @@ fs_instruction_scheduler::calculate_deps()
       for (int i = 0; i < 3; i++) {
 	 if (inst->src[i].file == GRF) {
             if (post_reg_alloc) {
-               for (int r = 0; r < reg_width; r++)
+               for (int r = 0; r < reg_width * inst->regs_read(v, i); r++)
                   add_dep(last_grf_write[inst->src[i].reg + r], n);
             } else {
                add_dep(last_grf_write[inst->src[i].reg], n);
@@ -594,12 +594,14 @@ fs_instruction_scheduler::calculate_deps()
 	 }
       }
 
-      for (int i = 0; i < inst->mlen; i++) {
-	 /* It looks like the MRF regs are released in the send
-	  * instruction once it's sent, not when the result comes
-	  * back.
-	  */
-	 add_dep(last_mrf_write[inst->base_mrf + i], n);
+      if (inst->base_mrf != -1) {
+	 for (int i = 0; i < inst->mlen; i++) {
+	    /* It looks like the MRF regs are released in the send
+	     * instruction once it's sent, not when the result comes
+	     * back.
+	     */
+	    add_dep(last_mrf_write[inst->base_mrf + i], n);
+	 }
       }
 
       if (inst->predicate) {
@@ -642,7 +644,7 @@ fs_instruction_scheduler::calculate_deps()
 	 add_barrier_deps(n);
       }
 
-      if (inst->mlen > 0) {
+      if (inst->mlen > 0 && inst->base_mrf != -1) {
 	 for (int i = 0; i < v->implied_mrf_writes(inst); i++) {
 	    add_dep(last_mrf_write[inst->base_mrf + i], n);
 	    last_mrf_write[inst->base_mrf + i] = n;
@@ -677,7 +679,7 @@ fs_instruction_scheduler::calculate_deps()
       for (int i = 0; i < 3; i++) {
 	 if (inst->src[i].file == GRF) {
             if (post_reg_alloc) {
-               for (int r = 0; r < reg_width; r++)
+               for (int r = 0; r < reg_width * inst->regs_read(v, i); r++)
                   add_dep(n, last_grf_write[inst->src[i].reg + r]);
             } else {
                add_dep(n, last_grf_write[inst->src[i].reg]);
@@ -702,12 +704,14 @@ fs_instruction_scheduler::calculate_deps()
 	 }
       }
 
-      for (int i = 0; i < inst->mlen; i++) {
-	 /* It looks like the MRF regs are released in the send
-	  * instruction once it's sent, not when the result comes
-	  * back.
-	  */
-	 add_dep(n, last_mrf_write[inst->base_mrf + i], 2);
+      if (inst->base_mrf != -1) {
+	 for (int i = 0; i < inst->mlen; i++) {
+	    /* It looks like the MRF regs are released in the send
+	     * instruction once it's sent, not when the result comes
+	     * back.
+	     */
+	    add_dep(n, last_mrf_write[inst->base_mrf + i], 2);
+	 }
       }
 
       if (inst->predicate) {
@@ -749,7 +753,7 @@ fs_instruction_scheduler::calculate_deps()
 	 add_barrier_deps(n);
       }
 
-      if (inst->mlen > 0) {
+      if (inst->mlen > 0 && inst->base_mrf != -1) {
 	 for (int i = 0; i < v->implied_mrf_writes(inst); i++) {
 	    last_mrf_write[inst->base_mrf + i] = n;
 	 }

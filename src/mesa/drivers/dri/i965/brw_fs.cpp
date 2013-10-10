@@ -355,7 +355,8 @@ fs_inst::is_send_from_grf()
    return (opcode == FS_OPCODE_VARYING_PULL_CONSTANT_LOAD_GEN7 ||
            opcode == SHADER_OPCODE_SHADER_TIME_ADD ||
            (opcode == FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD &&
-            src[1].file == GRF));
+            src[1].file == GRF) ||
+           (is_tex() && src[0].file == GRF));
 }
 
 bool
@@ -434,6 +435,14 @@ fs_reg::equals(const fs_reg &r) const
                   sizeof(fixed_hw_reg)) == 0 &&
            smear == r.smear &&
            imm.u == r.imm.u);
+}
+
+fs_reg
+fs_reg::retype(uint32_t type)
+{
+   fs_reg result = *this;
+   result.type = type;
+   return result;
 }
 
 bool
@@ -698,6 +707,18 @@ fs_inst::is_partial_write()
            this->force_sechalf);
 }
 
+int
+fs_inst::regs_read(fs_visitor *v, int arg)
+{
+   if (is_tex() && arg == 0 && src[0].file == GRF) {
+      if (v->dispatch_width == 16)
+	 return (mlen + 1) / 2;
+      else
+	 return mlen;
+   }
+   return 1;
+}
+
 /**
  * Returns how many MRFs an FS opcode will write over.
  *
@@ -708,6 +729,9 @@ int
 fs_visitor::implied_mrf_writes(fs_inst *inst)
 {
    if (inst->mlen == 0)
+      return 0;
+
+   if (inst->base_mrf == -1)
       return 0;
 
    switch (inst->opcode) {
@@ -2194,6 +2218,13 @@ fs_visitor::register_coalesce()
 	    break;
 	 }
 
+	 if (scan_inst->mlen > 0 && scan_inst->base_mrf == -1 &&
+	     scan_inst->src[0].file == GRF &&
+	     scan_inst->src[0].reg == inst->dst.reg) {
+	    interfered = true;
+	    break;
+	 }
+
 	 /* The accumulator result appears to get used for the
 	  * conditional modifier generation.  When negating a UD
 	  * value, there is a 33rd bit generated for the sign in the
@@ -2382,7 +2413,7 @@ fs_visitor::compute_to_mrf()
 	    }
 	 }
 
-	 if (scan_inst->mlen > 0) {
+	 if (scan_inst->mlen > 0 && scan_inst->base_mrf != -1) {
 	    /* Found a SEND instruction, which means that there are
 	     * live values in MRFs from base_mrf to base_mrf +
 	     * scan_inst->mlen - 1.  Don't go pushing our MRF write up
@@ -2444,7 +2475,7 @@ fs_visitor::remove_duplicate_mrf_writes()
 	 last_mrf_move[inst->dst.reg] = NULL;
       }
 
-      if (inst->mlen > 0) {
+      if (inst->mlen > 0 && inst->base_mrf != -1) {
 	 /* Found a SEND instruction, which will include two or fewer
 	  * implied MRF writes.  We could do better here.
 	  */

@@ -2193,7 +2193,8 @@ void brw_SAMPLE(struct brw_compile *p,
    struct brw_context *brw = p->brw;
    struct brw_instruction *insn;
 
-   gen6_resolve_implied_move(p, &src0, msg_reg_nr);
+   if (msg_reg_nr != -1)
+      gen6_resolve_implied_move(p, &src0, msg_reg_nr);
 
    insn = next_insn(p, BRW_OPCODE_SEND);
    insn->header.predicate_control = 0; /* XXX */

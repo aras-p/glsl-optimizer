@@ -279,6 +279,9 @@ fs_visitor::try_copy_propagate(fs_inst *inst, int arg, acp_entry *entry)
    if (entry->src.file == IMM)
       return false;
 
+   if (inst->regs_read(this, arg) > 1)
+      return false;
+
    if (inst->src[arg].file != entry->dst.file ||
        inst->src[arg].reg != entry->dst.reg ||
        inst->src[arg].reg_offset != entry->dst.reg_offset) {
