@@ -1968,6 +1968,36 @@ builtin_builder::create_builtins()
                 _texture(ir_tg4, gpu_shader5, glsl_type::vec4_type, glsl_type::sampler2DRectShadow_type, glsl_type::vec2_type, TEX_OFFSET_NONCONST),
                 NULL);
 
+   add_function("textureGatherOffsets",
+                _texture(ir_tg4, gpu_shader5, glsl_type::vec4_type, glsl_type::sampler2D_type, glsl_type::vec2_type, TEX_OFFSET_ARRAY),
+                _texture(ir_tg4, gpu_shader5, glsl_type::ivec4_type, glsl_type::isampler2D_type, glsl_type::vec2_type, TEX_OFFSET_ARRAY),
+                _texture(ir_tg4, gpu_shader5, glsl_type::uvec4_type, glsl_type::usampler2D_type, glsl_type::vec2_type, TEX_OFFSET_ARRAY),
+
+                _texture(ir_tg4, gpu_shader5, glsl_type::vec4_type, glsl_type::sampler2D_type, glsl_type::vec2_type, TEX_OFFSET_ARRAY | TEX_COMPONENT),
+                _texture(ir_tg4, gpu_shader5, glsl_type::ivec4_type, glsl_type::isampler2D_type, glsl_type::vec2_type, TEX_OFFSET_ARRAY | TEX_COMPONENT),
+                _texture(ir_tg4, gpu_shader5, glsl_type::uvec4_type, glsl_type::usampler2D_type, glsl_type::vec2_type, TEX_OFFSET_ARRAY | TEX_COMPONENT),
+
+                _texture(ir_tg4, gpu_shader5, glsl_type::vec4_type, glsl_type::sampler2DArray_type, glsl_type::vec3_type, TEX_OFFSET_ARRAY),
+                _texture(ir_tg4, gpu_shader5, glsl_type::ivec4_type, glsl_type::isampler2DArray_type, glsl_type::vec3_type, TEX_OFFSET_ARRAY),
+                _texture(ir_tg4, gpu_shader5, glsl_type::uvec4_type, glsl_type::usampler2DArray_type, glsl_type::vec3_type, TEX_OFFSET_ARRAY),
+
+                _texture(ir_tg4, gpu_shader5, glsl_type::vec4_type, glsl_type::sampler2DArray_type, glsl_type::vec3_type, TEX_OFFSET_ARRAY | TEX_COMPONENT),
+                _texture(ir_tg4, gpu_shader5, glsl_type::ivec4_type, glsl_type::isampler2DArray_type, glsl_type::vec3_type, TEX_OFFSET_ARRAY | TEX_COMPONENT),
+                _texture(ir_tg4, gpu_shader5, glsl_type::uvec4_type, glsl_type::usampler2DArray_type, glsl_type::vec3_type, TEX_OFFSET_ARRAY | TEX_COMPONENT),
+
+                _texture(ir_tg4, gpu_shader5, glsl_type::vec4_type, glsl_type::sampler2DRect_type, glsl_type::vec2_type, TEX_OFFSET_ARRAY),
+                _texture(ir_tg4, gpu_shader5, glsl_type::ivec4_type, glsl_type::isampler2DRect_type, glsl_type::vec2_type, TEX_OFFSET_ARRAY),
+                _texture(ir_tg4, gpu_shader5, glsl_type::uvec4_type, glsl_type::usampler2DRect_type, glsl_type::vec2_type, TEX_OFFSET_ARRAY),
+
+                _texture(ir_tg4, gpu_shader5, glsl_type::vec4_type, glsl_type::sampler2DRect_type, glsl_type::vec2_type, TEX_OFFSET_ARRAY | TEX_COMPONENT),
+                _texture(ir_tg4, gpu_shader5, glsl_type::ivec4_type, glsl_type::isampler2DRect_type, glsl_type::vec2_type, TEX_OFFSET_ARRAY | TEX_COMPONENT),
+                _texture(ir_tg4, gpu_shader5, glsl_type::uvec4_type, glsl_type::usampler2DRect_type, glsl_type::vec2_type, TEX_OFFSET_ARRAY | TEX_COMPONENT),
+
+                _texture(ir_tg4, gpu_shader5, glsl_type::vec4_type, glsl_type::sampler2DShadow_type, glsl_type::vec2_type, TEX_OFFSET_ARRAY),
+                _texture(ir_tg4, gpu_shader5, glsl_type::vec4_type, glsl_type::sampler2DArrayShadow_type, glsl_type::vec3_type, TEX_OFFSET_ARRAY),
+                _texture(ir_tg4, gpu_shader5, glsl_type::vec4_type, glsl_type::sampler2DRectShadow_type, glsl_type::vec2_type, TEX_OFFSET_ARRAY),
+                NULL);
+
    F(dFdx)
    F(dFdy)
    F(fwidth)
