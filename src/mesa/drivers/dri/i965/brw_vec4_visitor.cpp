@@ -2186,6 +2186,9 @@ vec4_visitor::visit(ir_texture *ir)
    /* Should be lowered by do_lower_texture_projection */
    assert(!ir->projector);
 
+   /* Should be lowered */
+   assert(!ir->offset || !ir->offset->type->is_array());
+
    /* Generate code to compute all the subexpression trees.  This has to be
     * done before loading any values into MRFs for the sampler message since
     * generating these values may involve SEND messages that need the MRFs.
