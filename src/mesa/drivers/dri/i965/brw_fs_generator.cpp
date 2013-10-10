@@ -435,12 +435,21 @@ fs_generator::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src
          msg_type = GEN5_SAMPLER_MESSAGE_LOD;
          break;
       case SHADER_OPCODE_TG4:
-         assert(brw->gen >= 6);
-         msg_type = GEN7_SAMPLER_MESSAGE_SAMPLE_GATHER4;
+         if (inst->shadow_compare) {
+            assert(brw->gen >= 7);
+            msg_type = GEN7_SAMPLER_MESSAGE_SAMPLE_GATHER4_C;
+         } else {
+            assert(brw->gen >= 6);
+            msg_type = GEN7_SAMPLER_MESSAGE_SAMPLE_GATHER4;
+         }
          break;
       case SHADER_OPCODE_TG4_OFFSET:
          assert(brw->gen >= 7);
-         msg_type = GEN7_SAMPLER_MESSAGE_SAMPLE_GATHER4_PO;
+         if (inst->shadow_compare) {
+            msg_type = GEN7_SAMPLER_MESSAGE_SAMPLE_GATHER4_PO_C;
+         } else {
+            msg_type = GEN7_SAMPLER_MESSAGE_SAMPLE_GATHER4_PO;
+         }
          break;
       default:
 	 assert(!"not reached");

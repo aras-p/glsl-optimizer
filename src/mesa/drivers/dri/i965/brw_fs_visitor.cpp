@@ -1359,6 +1359,9 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       break;
    case ir_tg4:
       if (has_nonconstant_offset) {
+         if (ir->shadow_comparitor && dispatch_width == 16)
+            fail("Gen7 does not support gather4_po_c in SIMD16 mode.");
+
          /* More crazy intermixing */
          ir->offset->accept(this);
          fs_reg offset_value = this->result;
