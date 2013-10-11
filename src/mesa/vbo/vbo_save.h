@@ -63,7 +63,7 @@ struct vbo_save_copied_vtx {
 struct vbo_save_vertex_list {
    GLubyte attrsz[VBO_ATTRIB_MAX];
    GLenum attrtype[VBO_ATTRIB_MAX];
-   GLuint vertex_size;
+   GLuint vertex_size;  /**< size in GLfloats */
 
    /* Copy of the final vertex from node->vertex_store->bufferobj.
     * Keep this in regular (non-VBO) memory to avoid repeated

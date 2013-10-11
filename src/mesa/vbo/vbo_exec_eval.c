@@ -117,7 +117,7 @@ void vbo_exec_eval_update( struct vbo_exec_context *exec )
    else if (ctx->Eval.Map2Vertex3) 
       set_active_eval2( exec, VBO_ATTRIB_POS, 3, &ctx->EvalMap.Map2Vertex3 );
 
-   exec->eval.recalculate_maps = 0;
+   exec->eval.recalculate_maps = GL_FALSE;
 }
 
 
