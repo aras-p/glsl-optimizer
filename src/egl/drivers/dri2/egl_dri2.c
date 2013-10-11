@@ -1855,7 +1855,8 @@ dri2_bind_wayland_display_wl(_EGLDriver *drv, _EGLDisplay *disp,
 
    /* We have to share the wl_drm instance with gbm, so gbm can convert
     * wl_buffers to gbm bos. */
-   dri2_dpy->gbm_dri->wl_drm = dri2_dpy->wl_server_drm;
+   if (dri2_dpy->gbm_dri)
+      dri2_dpy->gbm_dri->wl_drm = dri2_dpy->wl_server_drm;
 
    return EGL_TRUE;
 }
