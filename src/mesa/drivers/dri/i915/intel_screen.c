@@ -27,6 +27,7 @@
 
 #include <errno.h>
 #include <time.h>
+#include <unistd.h>
 #include "main/glheader.h"
 #include "main/context.h"
 #include "main/framebuffer.h"
@@ -743,6 +744,86 @@ static struct __DRIimageExtensionRec intelImageExtension = {
     .fromPlanar                         = intel_from_planar,
     .createImageFromTexture             = intel_create_image_from_texture,
     .createImageFromFds                 = intel_create_image_from_fds
+};
+
+static int
+i915_query_renderer_integer(__DRIscreen *psp, int param, int *value)
+{
+   const struct intel_screen *const intelScreen =
+      (struct intel_screen *) psp->driverPrivate;
+
+   switch (param) {
+   case __DRI2_RENDERER_VENDOR_ID:
+      value[0] = 0x8086;
+      return 0;
+   case __DRI2_RENDERER_DEVICE_ID:
+      value[0] = intelScreen->deviceID;
+      return 0;
+   case __DRI2_RENDERER_ACCELERATED:
+      value[0] = 1;
+      return 0;
+   case __DRI2_RENDERER_VIDEO_MEMORY: {
+      /* Once a batch uses more than 75% of the maximum mappable size, we
+       * assume that there's some fragmentation, and we start doing extra
+       * flushing, etc.  That's the big cliff apps will care about.
+       */
+      const unsigned long agp_bytes = drmAgpSize(psp->fd);
+      const unsigned gpu_mappable_megabytes =
+         (agp_bytes / (1024 * 1024)) * 3 / 4;
+
+      const long system_memory_pages = sysconf(_SC_PHYS_PAGES);
+      const long system_page_size = sysconf(_SC_PAGE_SIZE);
+
+      if (system_memory_pages <= 0 || system_page_size <= 0)
+         return -1;
+
+      const uint64_t system_memory_bytes = (uint64_t) system_memory_pages
+         * (uint64_t) system_page_size;
+
+      const unsigned system_memory_megabytes =
+         (unsigned) (system_memory_bytes / 1024);
+
+      value[0] = MIN2(system_memory_megabytes, gpu_mappable_megabytes);
+      return 0;
+   }
+   case __DRI2_RENDERER_UNIFIED_MEMORY_ARCHITECTURE:
+      value[0] = 1;
+      return 0;
+   case __DRI2_RENDERER_PREFERRED_PROFILE:
+      value[0] = (1U << __DRI_API_OPENGL);
+      return 0;
+   default:
+      return driQueryRendererIntegerCommon(psp, param, value);
+   }
+
+   return -1;
+}
+
+static int
+i915_query_renderer_string(__DRIscreen *psp, int param, const char **value)
+{
+   const struct intel_screen *intelScreen =
+      (struct intel_screen *) psp->driverPrivate;
+
+   switch (param) {
+   case __DRI2_RENDERER_VENDOR_ID:
+      value[0] = i915_vendor_string;
+      return 0;
+   case __DRI2_RENDERER_DEVICE_ID:
+      value[0] = i915_get_renderer_string(intelScreen->deviceID);
+      return 0;
+   default:
+      break;
+   }
+
+   return -1;
+}
+
+static struct __DRI2rendererQueryExtensionRec intelRendererQueryExtension = {
+   .base = { __DRI2_RENDERER_QUERY, 1 },
+
+   .queryInteger = i915_query_renderer_integer,
+   .queryString = i915_query_renderer_string
 };
 
 static const __DRIextension *intelScreenExtensions[] = {
