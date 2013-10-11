@@ -1025,8 +1025,6 @@ if test "x$enable_dri" = xyes; then
         if test "x$have_libdrm" != xyes; then
             AC_MSG_ERROR([DRI drivers requires libdrm >= $LIBDRM_REQUIRED])
         fi
-        # ... and build dricommon
-        HAVE_COMMON_DRI=yes
     fi
 
     # put all the necessary libs together
@@ -1669,7 +1667,6 @@ gallium_check_st() {
     fi
     if test "x$enable_dri" = xyes && test "x$2" != x; then
          GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $2"
-         HAVE_COMMON_DRI=yes
     fi
     if test "x$enable_xorg" = xyes && test "x$3" != x; then
          GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $3"
@@ -1812,7 +1809,6 @@ if test "x$with_gallium_drivers" != x; then
 
             if test "x$enable_dri" = xyes; then
                 GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS dri-swrast"
-                HAVE_COMMON_DRI=yes
             fi
             if test "x$enable_vdpau" = xyes; then
                 GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS vdpau-softpipe"
@@ -1916,7 +1912,6 @@ AM_CONDITIONAL(HAVE_NOUVEAU_DRI, test x$HAVE_NOUVEAU_DRI = xyes)
 AM_CONDITIONAL(HAVE_R200_DRI, test x$HAVE_R200_DRI = xyes)
 AM_CONDITIONAL(HAVE_RADEON_DRI, test x$HAVE_RADEON_DRI = xyes)
 AM_CONDITIONAL(HAVE_SWRAST_DRI, test x$HAVE_SWRAST_DRI = xyes)
-AM_CONDITIONAL(HAVE_COMMON_DRI, test x$HAVE_COMMON_DRI = xyes)
 
 AM_CONDITIONAL(NEED_RADEON_DRM_WINSYS, test "x$NEED_NONNULL_WINSYS" = xyes -a \
                                             "x$HAVE_GALLIUM_R300" = xyes -o \
