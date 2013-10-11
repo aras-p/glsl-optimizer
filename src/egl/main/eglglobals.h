@@ -31,6 +31,7 @@
 #ifndef EGLGLOBALS_INCLUDED
 #define EGLGLOBALS_INCLUDED
 
+#include <stdbool.h>
 
 #include "egltypedefs.h"
 #include "eglmutex.h"
@@ -48,6 +49,12 @@ struct _egl_global
 
    EGLint NumAtExitCalls;
    void (*AtExitCalls[10])(void);
+
+   struct _egl_client_extensions {
+      bool EXT_client_extensions;
+   } ClientExtensions;
+
+   const char *ClientExtensionString;
 };
 
 

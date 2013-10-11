@@ -47,6 +47,14 @@ struct _egl_global _eglGlobal =
       _eglUnloadDrivers, /* always called last */
       _eglFiniDisplay
    },
+
+   /* ClientExtensions */
+   {
+      true /* EGL_EXT_client_extensions */
+   },
+
+   /* ClientExtensionsString */
+   "EGL_EXT_client_extensions"
 };
 
 

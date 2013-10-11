@@ -87,6 +87,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "eglglobals.h"
 #include "eglcontext.h"
 #include "egldisplay.h"
 #include "egltypedefs.h"
@@ -354,10 +355,15 @@ eglTerminate(EGLDisplay dpy)
 const char * EGLAPIENTRY
 eglQueryString(EGLDisplay dpy, EGLint name)
 {
-   _EGLDisplay *disp = _eglLockDisplay(dpy);
+   _EGLDisplay *disp;
    _EGLDriver *drv;
    const char *ret;
 
+   if (dpy == EGL_NO_DISPLAY && name == EGL_EXTENSIONS) {
+      RETURN_EGL_SUCCESS(NULL, _eglGlobal.ClientExtensionString);
+   }
+
+   disp = _eglLockDisplay(dpy);
    _EGL_CHECK_DISPLAY(disp, NULL, drv);
    ret = drv->API.QueryString(drv, disp, name);
 
