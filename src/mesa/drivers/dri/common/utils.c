@@ -37,6 +37,7 @@
 #include "main/cpuinfo.h"
 #include "main/extensions.h"
 #include "utils.h"
+#include "dri_util.h"
 
 
 unsigned
@@ -476,4 +477,67 @@ driIndexConfigAttrib(const __DRIconfig *config, int index,
     }
 
     return GL_FALSE;
+}
+
+/**
+ * Implement queries for values that are common across all Mesa drivers
+ *
+ * Currently only the following queries are supported by this function:
+ *
+ *     - \c __DRI2_RENDERER_VERSION
+ *     - \c __DRI2_RENDERER_OPENGL_CORE_PROFILE_VERSION
+ *     - \c __DRI2_RENDERER_OPENGL_COMPATIBLITY_PROFILE_VERSION
+ *     - \c __DRI2_RENDERER_ES_PROFILE_VERSION
+ *     - \c __DRI2_RENDERER_ES2_PROFILE_VERSION
+ *
+ * \returns
+ * Zero if a recognized value of \c param is supplied, -1 otherwise.
+ */
+int
+driQueryRendererIntegerCommon(__DRIscreen *psp, int param, int *value)
+{
+   switch (param) {
+   case __DRI2_RENDERER_VERSION: {
+      static const char *const ver = PACKAGE_VERSION;
+      char *endptr;
+      int v[3];
+
+      v[0] = strtol(ver, &endptr, 10);
+      assert(endptr[0] == '.');
+      if (endptr[0] != '.')
+         return -1;
+
+      v[1] = strtol(endptr + 1, &endptr, 10);
+      assert(endptr[0] == '.');
+      if (endptr[0] != '.')
+         return -1;
+
+      v[2] = strtol(endptr + 1, &endptr, 10);
+
+      value[0] = v[0];
+      value[1] = v[1];
+      value[2] = v[2];
+      return 0;
+   }
+   case __DRI2_RENDERER_OPENGL_CORE_PROFILE_VERSION:
+      value[0] = psp->max_gl_core_version / 10;
+      value[1] = psp->max_gl_core_version % 10;
+      return 0;
+   case __DRI2_RENDERER_OPENGL_COMPATIBILITY_PROFILE_VERSION:
+      value[0] = psp->max_gl_compat_version / 10;
+      value[1] = psp->max_gl_compat_version % 10;
+      return 0;
+   case __DRI2_RENDERER_OPENGL_ES_PROFILE_VERSION:
+      value[0] = psp->max_gl_es1_version / 10;
+      value[1] = psp->max_gl_es1_version % 10;
+      return 0;
+   case __DRI2_RENDERER_OPENGL_ES2_PROFILE_VERSION:
+      value[0] = psp->max_gl_es2_version / 10;
+      value[1] = psp->max_gl_es2_version % 10;
+      return 0;
+   default:
+      break;
+   }
+
+   return -1;
 }

@@ -65,4 +65,7 @@ int
 driIndexConfigAttrib(const __DRIconfig *config, int index,
 		     unsigned int *attrib, unsigned int *value);
 
+int
+driQueryRendererIntegerCommon(__DRIscreen *psp, int param, int *value);
+
 #endif /* DRI_DEBUG_H */
