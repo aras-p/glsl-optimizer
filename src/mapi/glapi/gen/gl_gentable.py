@@ -50,7 +50,9 @@ header = """/* GLXEXT is the define used in the xserver when the GLX extension i
 #include <execinfo.h>
 #endif
 
+#ifndef _WIN32
 #include <dlfcn.h>
+#endif
 #include <stdlib.h>
 #include <stdio.h>
 
