@@ -588,7 +588,7 @@ static PIPE_THREAD_ROUTINE(radeon_drm_cs_emit_ioctl, param)
 DEBUG_GET_ONCE_BOOL_OPTION(thread, "RADEON_THREAD", TRUE)
 static PIPE_THREAD_ROUTINE(radeon_drm_cs_emit_ioctl, param);
 
-struct radeon_winsys *radeon_drm_winsys_create(int fd)
+PUBLIC struct radeon_winsys *radeon_drm_winsys_create(int fd)
 {
     struct radeon_drm_winsys *ws;
 
