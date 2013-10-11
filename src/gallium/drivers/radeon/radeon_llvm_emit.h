@@ -34,6 +34,7 @@ struct radeon_llvm_binary {
 	unsigned code_size;
 	unsigned char *config;
 	unsigned config_size;
+	int disassembled;
 };
 
 void radeon_llvm_shader_type(LLVMValueRef F, unsigned type);

@@ -143,6 +143,7 @@ unsigned radeon_llvm_compile(LLVMModuleRef M, struct radeon_llvm_binary *binary,
 	elf = elf_memory(elf_buffer, buffer_size);
 
 	elf_getshdrstrndx(elf, &section_str_index);
+	binary->disassembled = 0;
 
 	while ((section = elf_nextscn(elf, section))) {
 		const char *name;
@@ -163,6 +164,12 @@ unsigned radeon_llvm_compile(LLVMModuleRef M, struct radeon_llvm_binary *binary,
 			binary->config_size = section_data->d_size;
 			binary->config = MALLOC(binary->config_size * sizeof(unsigned char));
 			memcpy(binary->config, section_data->d_buf, binary->config_size);
+		} else if (dump && !strcmp(name, ".AMDGPU.disasm")) {
+			binary->disassembled = 1;
+			section_data = elf_getdata(section, section_data);
+			fprintf(stderr, "\nShader Disassembly:\n\n");
+			fprintf(stderr, "%.*s\n", (int)section_data->d_size,
+						  (char *)section_data->d_buf);
 		}
 	}
 
