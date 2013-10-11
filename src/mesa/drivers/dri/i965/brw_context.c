@@ -94,6 +94,8 @@ brw_query_samples_for_format(struct gl_context *ctx, GLenum target,
    }
 }
 
+const char *const brw_vendor_string = "Intel Open Source Technology Center";
+
 static const GLubyte *
 intelGetString(struct gl_context * ctx, GLenum name)
 {
@@ -103,8 +105,7 @@ intelGetString(struct gl_context * ctx, GLenum name)
 
    switch (name) {
    case GL_VENDOR:
-      return (GLubyte *) "Intel Open Source Technology Center";
-      break;
+      return (GLubyte *) brw_vendor_string;
 
    case GL_RENDERER:
       switch (brw->intelScreen->deviceID) {

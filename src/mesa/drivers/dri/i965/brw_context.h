@@ -1461,6 +1461,8 @@ extern void intelInitClearFuncs(struct dd_function_table *functions);
 /*======================================================================
  * brw_context.c
  */
+extern const char *const brw_vendor_string;
+
 extern void intelFinish(struct gl_context * ctx);
 
 enum {
