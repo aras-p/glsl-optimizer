@@ -57,7 +57,7 @@
 
 
 /* ugh, no atomic op? */
-static _EGL_DECLARE_MUTEX(_eglNextScreenHandleMutex);
+static _EGLMutex _eglNextScreenHandleMutex = _EGL_MUTEX_INITIALIZER;
 static EGLScreenMESA _eglNextScreenHandle = 1;
 
 

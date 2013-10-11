@@ -45,7 +45,7 @@ static _EGLThreadInfo dummy_thread = _EGL_THREAD_INFO_INITIALIZER;
 #if HAVE_PTHREAD
 #include <pthread.h>
 
-static _EGL_DECLARE_MUTEX(_egl_TSDMutex);
+static _EGLMutex _egl_TSDMutex = _EGL_MUTEX_INITIALIZER;
 static EGLBoolean _egl_TSDInitialized;
 static pthread_key_t _egl_TSD;
 static void (*_egl_FreeTSD)(_EGLThreadInfo *);

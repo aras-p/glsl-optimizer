@@ -60,7 +60,7 @@ typedef struct _egl_module {
    _EGLDriver *Driver;
 } _EGLModule;
 
-static _EGL_DECLARE_MUTEX(_eglModuleMutex);
+static _EGLMutex _eglModuleMutex = _EGL_MUTEX_INITIALIZER;
 static _EGLArray *_eglModules;
 
 const struct {

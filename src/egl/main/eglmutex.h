@@ -60,8 +60,6 @@ _eglUnlockMutex(_EGLMutex *m)
 }
 
 #define _EGL_MUTEX_INITIALIZER PTHREAD_MUTEX_INITIALIZER
-#define _EGL_DECLARE_MUTEX(m) \
-   _EGLMutex m = _EGL_MUTEX_INITIALIZER
 
 #else
 
@@ -72,8 +70,6 @@ static INLINE void _eglLockMutex(_EGLMutex *m) { (void) m; }
 static INLINE void _eglUnlockMutex(_EGLMutex *m) { (void) m; }
 
 #define _EGL_MUTEX_INITIALIZER 0
-#define _EGL_DECLARE_MUTEX(m) \
-   _EGLMutex m = _EGL_MUTEX_INITIALIZER
 
 #endif
 

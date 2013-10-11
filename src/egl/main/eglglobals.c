@@ -36,7 +36,8 @@
 #include "eglmutex.h"
 
 
-static _EGL_DECLARE_MUTEX(_eglGlobalMutex);
+static _EGLMutex _eglGlobalMutex = _EGL_MUTEX_INITIALIZER;
+
 struct _egl_global _eglGlobal =
 {
    &_eglGlobalMutex,       /* Mutex */
