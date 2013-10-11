@@ -96,29 +96,37 @@ brw_query_samples_for_format(struct gl_context *ctx, GLenum target,
 
 const char *const brw_vendor_string = "Intel Open Source Technology Center";
 
+const char *
+brw_get_renderer_string(unsigned deviceID)
+{
+   const char *chipset;
+   static char buffer[128];
+
+   switch (deviceID) {
+#undef CHIPSET
+#define CHIPSET(id, symbol, str) case id: chipset = str; break;
+#include "pci_ids/i965_pci_ids.h"
+   default:
+      chipset = "Unknown Intel Chipset";
+      break;
+   }
+
+   (void) driGetRendererString(buffer, chipset, 0);
+   return buffer;
+}
+
 static const GLubyte *
 intelGetString(struct gl_context * ctx, GLenum name)
 {
    const struct brw_context *const brw = brw_context(ctx);
-   const char *chipset;
-   static char buffer[128];
 
    switch (name) {
    case GL_VENDOR:
       return (GLubyte *) brw_vendor_string;
 
    case GL_RENDERER:
-      switch (brw->intelScreen->deviceID) {
-#undef CHIPSET
-#define CHIPSET(id, family, str) case id: chipset = str; break;
-#include "pci_ids/i965_pci_ids.h"
-      default:
-         chipset = "Unknown Intel Chipset";
-         break;
-      }
-
-      (void) driGetRendererString(buffer, chipset, 0);
-      return (GLubyte *) buffer;
+      return
+         (GLubyte *) brw_get_renderer_string(brw->intelScreen->deviceID);
 
    default:
       return NULL;
