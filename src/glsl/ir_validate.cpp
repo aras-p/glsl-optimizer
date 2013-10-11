@@ -694,7 +694,7 @@ ir_validate::visit(ir_variable *ir)
    if (ir->is_interface_instance()) {
       const glsl_struct_field *fields =
          ir->get_interface_type()->fields.structure;
-      for (int i = 0; i < ir->get_interface_type()->length; i++) {
+      for (unsigned i = 0; i < ir->get_interface_type()->length; i++) {
          if (fields[i].type->array_size() > 0) {
             if (ir->max_ifc_array_access[i] >= fields[i].type->length) {
                printf("ir_variable has maximum access out of bounds for "
