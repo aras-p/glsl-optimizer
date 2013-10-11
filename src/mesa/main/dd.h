@@ -575,7 +575,8 @@ struct dd_function_table {
                               GLintptr readOffset, GLintptr writeOffset,
                               GLsizeiptr size );
 
-   /* May return NULL if MESA_MAP_NOWAIT_BIT is set in access:
+   /* Returns pointer to the start of the mapped range.
+    * May return NULL if MESA_MAP_NOWAIT_BIT is set in access:
     */
    void * (*MapBufferRange)( struct gl_context *ctx, GLintptr offset,
                              GLsizeiptr length, GLbitfield access,
