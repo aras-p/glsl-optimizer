@@ -311,7 +311,8 @@ private:
 
 
 per_vertex_accumulator::per_vertex_accumulator()
-   : num_fields(0)
+   : fields(),
+     num_fields(0)
 {
 }
 
