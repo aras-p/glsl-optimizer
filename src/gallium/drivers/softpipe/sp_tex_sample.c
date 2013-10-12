@@ -608,6 +608,48 @@ get_texel_2d(const struct sp_sampler_view *sp_sview,
    }
 }
 
+
+/*
+ * Here's the complete logic (HOLY CRAP) for finding next face and doing the
+ * corresponding coord wrapping, implemented by get_next_face,
+ * get_next_xcoord, get_next_ycoord.
+ * Read like that (first line):
+ * If face is +x and s coord is below zero, then
+ * new face is +z, new s is max , new t is old t
+ * (max is always cube size - 1).
+ *
+ * +x s- -> +z: s = max,   t = t
+ * +x s+ -> -z: s = 0,     t = t
+ * +x t- -> +y: s = max,   t = max-s
+ * +x t+ -> -y: s = max,   t = s
+ *
+ * -x s- -> -z: s = max,   t = t
+ * -x s+ -> +z: s = 0,     t = t
+ * -x t- -> +y: s = 0,     t = s
+ * -x t+ -> -y: s = 0,     t = max-s
+ *
+ * +y s- -> -x: s = t,     t = 0
+ * +y s+ -> +x: s = max-t, t = 0
+ * +y t- -> -z: s = max-s, t = 0
+ * +y t+ -> +z: s = s,     t = 0
+ *
+ * -y s- -> -x: s = max-t, t = max
+ * -y s+ -> +x: s = t,     t = max
+ * -y t- -> +z: s = s,     t = max
+ * -y t+ -> -z: s = max-s, t = max
+
+ * +z s- -> -x: s = max,   t = t
+ * +z s+ -> +x: s = 0,     t = t
+ * +z t- -> +y: s = s,     t = max
+ * +z t+ -> -y: s = s,     t = 0
+
+ * -z s- -> +x: s = max,   t = t
+ * -z s+ -> -x: s = 0,     t = t
+ * -z t- -> +y: s = max-s, t = 0
+ * -z t+ -> -y: s = max-s, t = max
+ */
+
+
 /*
  * seamless cubemap neighbour array.
  * this array is used to find the adjacent face in each of 4 directions,
@@ -617,48 +659,103 @@ static const unsigned face_array[PIPE_TEX_FACE_MAX][4] = {
    /* pos X first then neg X is Z different, Y the same */
    /* PIPE_TEX_FACE_POS_X,*/
    { PIPE_TEX_FACE_POS_Z, PIPE_TEX_FACE_NEG_Z,
-     PIPE_TEX_FACE_NEG_Y, PIPE_TEX_FACE_POS_Y },
+     PIPE_TEX_FACE_POS_Y, PIPE_TEX_FACE_NEG_Y },
    /* PIPE_TEX_FACE_NEG_X */
    { PIPE_TEX_FACE_NEG_Z, PIPE_TEX_FACE_POS_Z,
-     PIPE_TEX_FACE_NEG_Y, PIPE_TEX_FACE_POS_Y },
+     PIPE_TEX_FACE_POS_Y, PIPE_TEX_FACE_NEG_Y },
 
    /* pos Y first then neg Y is X different, X the same */
    /* PIPE_TEX_FACE_POS_Y */
    { PIPE_TEX_FACE_NEG_X, PIPE_TEX_FACE_POS_X,
-     PIPE_TEX_FACE_POS_Z, PIPE_TEX_FACE_NEG_Z },
+     PIPE_TEX_FACE_NEG_Z, PIPE_TEX_FACE_POS_Z },
 
    /* PIPE_TEX_FACE_NEG_Y */
    { PIPE_TEX_FACE_NEG_X, PIPE_TEX_FACE_POS_X,
-     PIPE_TEX_FACE_NEG_Z, PIPE_TEX_FACE_POS_Z },
+     PIPE_TEX_FACE_POS_Z, PIPE_TEX_FACE_NEG_Z },
 
    /* pos Z first then neg Y is X different, X the same */
    /* PIPE_TEX_FACE_POS_Z */
    { PIPE_TEX_FACE_NEG_X, PIPE_TEX_FACE_POS_X,
-     PIPE_TEX_FACE_NEG_Y, PIPE_TEX_FACE_POS_Y },
+     PIPE_TEX_FACE_POS_Y, PIPE_TEX_FACE_NEG_Y },
 
    /* PIPE_TEX_FACE_NEG_Z */
    { PIPE_TEX_FACE_POS_X, PIPE_TEX_FACE_NEG_X,
-     PIPE_TEX_FACE_NEG_Y, PIPE_TEX_FACE_POS_Y }
+     PIPE_TEX_FACE_POS_Y, PIPE_TEX_FACE_NEG_Y }
 };
 
 static INLINE unsigned
-get_next_face(unsigned face, int x, int y)
+get_next_face(unsigned face, int idx)
 {
-   int idx = 0;
-
-   if (x == 0 && y == 0)
-      return face;
-   if (x == -1)
-      idx = 0;
-   else if (x == 1)
-      idx = 1;
-   else if (y == -1)
-      idx = 2;
-   else if (y == 1)
-      idx = 3;
-
    return face_array[face][idx];
 }
+
+/*
+ * return a new xcoord based on old face, old coords, cube size
+ * and fall_off_index (0 for x-, 1 for x+, 2 for y-, 3 for y+)
+ */
+static INLINE int
+get_next_xcoord(unsigned face, unsigned fall_off_index, int max, int xc, int yc)
+{
+   if ((face == 0 && fall_off_index != 1) ||
+       (face == 1 && fall_off_index == 0) ||
+       (face == 4 && fall_off_index == 0) ||
+       (face == 5 && fall_off_index == 0)) {
+      return max;
+   }
+   if ((face == 1 && fall_off_index != 0) ||
+       (face == 0 && fall_off_index == 1) ||
+       (face == 4 && fall_off_index == 1) ||
+       (face == 5 && fall_off_index == 1)) {
+      return 0;
+   }
+   if ((face == 4 && fall_off_index >= 2) ||
+       (face == 2 && fall_off_index == 3) ||
+       (face == 3 && fall_off_index == 2)) {
+      return xc;
+   }
+   if ((face == 5 && fall_off_index >= 2) ||
+       (face == 2 && fall_off_index == 2) ||
+       (face == 3 && fall_off_index == 3)) {
+      return max - xc;
+   }
+   if ((face == 2 && fall_off_index == 0) ||
+       (face == 3 && fall_off_index == 1)) {
+      return yc;
+   }
+   /* (face == 2 && fall_off_index == 1) ||
+      (face == 3 && fall_off_index == 0)) */
+   return max - yc;
+}
+
+/*
+ * return a new ycoord based on old face, old coords, cube size
+ * and fall_off_index (0 for x-, 1 for x+, 2 for y-, 3 for y+)
+ */
+static INLINE int
+get_next_ycoord(unsigned face, unsigned fall_off_index, int max, int xc, int yc)
+{
+   if ((fall_off_index <= 1) && (face <= 1 || face >= 4)) {
+      return yc;
+   }
+   if (face == 2 ||
+       (face == 4 && fall_off_index == 3) ||
+       (face == 5 && fall_off_index == 2)) {
+      return 0;
+   }
+   if (face == 3 ||
+       (face == 4 && fall_off_index == 2) ||
+       (face == 5 && fall_off_index == 3)) {
+      return max;
+   }
+   if ((face == 0 && fall_off_index == 3) ||
+       (face == 1 && fall_off_index == 2)) {
+      return xc;
+   }
+   /* (face == 0 && fall_off_index == 2) ||
+      (face == 1 && fall_off_index == 3) */
+   return max - xc;
+}
+
 
 static INLINE const float *
 get_texel_cube_seamless(const struct sp_sampler_view *sp_sview,
@@ -668,44 +765,47 @@ get_texel_cube_seamless(const struct sp_sampler_view *sp_sview,
    const struct pipe_resource *texture = sp_sview->base.texture;
    unsigned level = addr.bits.level;
    unsigned face = addr.bits.face;
-   int new_x, new_y;
-   int max_x, max_y;
-   int c;
+   int new_x, new_y, max_x;
 
    max_x = (int) u_minify(texture->width0, level);
-   max_y = (int) u_minify(texture->height0, level);
+
+   assert(texture->width0 == texture->height0);
    new_x = x;
    new_y = y;
 
-   /* the corner case */
-   if ((x < 0 || x >= max_x) &&
-       (y < 0 || y >= max_y)) {
-      const float *c1, *c2, *c3;
-      int fx = x < 0 ? 0 : max_x - 1;
-      int fy = y < 0 ? 0 : max_y - 1;
-      c1 = get_texel_2d_no_border( sp_sview, addr, fx, fy);
-      addr.bits.face = get_next_face(face, (x < 0) ? -1 : 1, 0);
-      c2 = get_texel_2d_no_border( sp_sview, addr, (x < 0) ? max_x - 1 : 0, fy);
-      addr.bits.face = get_next_face(face, 0, (y < 0) ? -1 : 1);
-      c3 = get_texel_2d_no_border( sp_sview, addr, fx, (y < 0) ?  max_y - 1 : 0);
-      for (c = 0; c < TGSI_QUAD_SIZE; c++)
-         corner[c] = CLAMP((c1[c] + c2[c] + c3[c]), 0.0F, 1.0F) / 3;
-
-      return corner;
-   }
    /* change the face */
    if (x < 0) {
-      new_x = max_x - 1;
-      face = get_next_face(face, -1, 0);
+      /*
+       * Cheat with corners. They are difficult and I believe because we don't get
+       * per-pixel faces we can actually have multiple corner texels per pixel,
+       * which screws things up majorly in any case (as the per spec behavior is
+       * to average the 3 remaining texels, which we might not have).
+       * Hence just make sure that the 2nd coord is clamped, will simply pick the
+       * sample which would have fallen off the x coord, but not y coord.
+       * So the filter weight of the samples will be wrong, but at least this
+       * ensures that only valid texels near the corner are used.
+       */
+      if (y < 0 || y >= max_x) {
+         y = CLAMP(y, 0, max_x - 1);
+      }
+      new_x = get_next_xcoord(face, 0, max_x -1, x, y);
+      new_y = get_next_ycoord(face, 0, max_x -1, x, y);
+      face = get_next_face(face, 0);
    } else if (x >= max_x) {
-      new_x = 0;
-      face = get_next_face(face, 1, 0);
+      if (y < 0 || y >= max_x) {
+         y = CLAMP(y, 0, max_x - 1);
+      }
+      new_x = get_next_xcoord(face, 1, max_x -1, x, y);
+      new_y = get_next_ycoord(face, 1, max_x -1, x, y);
+      face = get_next_face(face, 1);
    } else if (y < 0) {
-      new_y = max_y - 1;
-      face = get_next_face(face, 0, -1);
-   } else if (y >= max_y) {
-      new_y = 0;
-      face = get_next_face(face, 0, 1);
+      new_x = get_next_xcoord(face, 2, max_x -1, x, y);
+      new_y = get_next_ycoord(face, 2, max_x -1, x, y);
+      face = get_next_face(face, 2);
+   } else if (y >= max_x) {
+      new_x = get_next_xcoord(face, 3, max_x -1, x, y);
+      new_y = get_next_ycoord(face, 3, max_x -1, x, y);
+      face = get_next_face(face, 3);
    }
 
    addr.bits.face = face;
@@ -1241,6 +1341,7 @@ img_filter_cube_nearest(struct sp_sampler_view *sp_sview,
       wrap_nearest_clamp_to_edge(s, width, &x);
       wrap_nearest_clamp_to_edge(t, height, &y);
    } else {
+      /* Would probably make sense to ignore mode and just do edge clamp */
       sp_samp->nearest_texcoord_s(s, width, &x);
       sp_samp->nearest_texcoord_t(t, height, &y);
    }
@@ -1525,9 +1626,11 @@ img_filter_cube_linear(struct sp_sampler_view *sp_sview,
     * always apply wrap mode CLAMP_TO_BORDER.
     */
    if (sp_samp->base.seamless_cube_map) {
+      /* Note this is a bit overkill, actual clamping is not required */
       wrap_linear_clamp_to_border(s, width, &x0, &x1, &xw);
       wrap_linear_clamp_to_border(t, height, &y0, &y1, &yw);
    } else {
+      /* Would probably make sense to ignore mode and just do edge clamp */
       sp_samp->linear_texcoord_s(s, width,  &x0, &x1, &xw);
       sp_samp->linear_texcoord_t(t, height, &y0, &y1, &yw);
    }
