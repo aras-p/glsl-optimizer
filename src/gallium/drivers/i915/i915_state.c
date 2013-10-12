@@ -300,7 +300,7 @@ i915_bind_vertex_sampler_states(struct pipe_context *pipe,
    struct i915_context *i915 = i915_context(pipe);
    unsigned i;
 
-   assert(num <= Elements(i915->vertex_samplers));
+   assert(start + num <= Elements(i915->vertex_samplers));
 
    /* Check for no-op */
    if (num == i915->num_vertex_samplers &&
