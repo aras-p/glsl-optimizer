@@ -524,14 +524,13 @@ fs_generator::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src
          header_reg = src;
       } else {
          assert(inst->base_mrf != -1);
-         header_reg = retype(brw_message_reg(inst->base_mrf),
-                             BRW_REGISTER_TYPE_UD);
+         header_reg = brw_message_reg(inst->base_mrf);
       }
       brw_push_insn_state(p);
       brw_set_mask_control(p, BRW_MASK_DISABLE);
       brw_set_compression_control(p, BRW_COMPRESSION_NONE);
       /* Explicitly set up the message header by copying g0 to the MRF. */
-      brw_MOV(p, header_reg, retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UD));
+      brw_MOV(p, header_reg, brw_vec8_grf(0, 0));
 
       /* Then set the offset bits in DWord 2. */
       brw_MOV(p, retype(brw_vec1_reg(header_reg.file,
