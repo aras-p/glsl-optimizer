@@ -25,12 +25,6 @@ AM_CXXFLAGS += \
 	$(GALLIUM_CFLAGS) \
 	$(LLVM_CXXFLAGS)
 
-if LLVM_NEEDS_FNORTTI
-
-AM_CXXFLAGS += -fno-rtti
-
-endif
-
 libgallium_la_SOURCES += \
 	$(GALLIVM_SOURCES) \
 	$(GALLIVM_CPP_SOURCES)
