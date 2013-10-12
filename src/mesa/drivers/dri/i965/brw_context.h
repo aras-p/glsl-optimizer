@@ -1687,6 +1687,7 @@ bool brw_do_cubemap_normalize(struct exec_list *instructions);
 bool brw_lower_texture_gradients(struct brw_context *brw,
                                  struct exec_list *instructions);
 bool brw_do_lower_offset_arrays(struct exec_list *instructions);
+bool brw_do_lower_unnormalized_offset(struct exec_list *instructions);
 
 struct opcode_desc {
     char    *name;
