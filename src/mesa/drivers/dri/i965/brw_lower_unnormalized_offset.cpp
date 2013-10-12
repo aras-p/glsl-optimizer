@@ -52,11 +52,34 @@ public:
 ir_visitor_status
 brw_lower_unnormalized_offset_visitor::visit_leave(ir_texture *ir)
 {
-   if (ir->sampler->type->sampler_dimensionality != GLSL_SAMPLER_DIM_RECT ||
-       !ir->offset || ir->op != ir_tg4)
+   if (!ir->offset)
       return visit_continue;
 
-   ir->coordinate = add(ir->coordinate, i2f(ir->offset));
+   if (ir->op == ir_tg4) {
+      if (ir->sampler->type->sampler_dimensionality != GLSL_SAMPLER_DIM_RECT)
+         return visit_continue;
+   }
+   else if (ir->op != ir_txf) {
+      return visit_continue;
+   }
+
+   void *mem_ctx = ralloc_parent(ir);
+
+   if (ir->op == ir_txf) {
+      ir_variable *var = new(mem_ctx) ir_variable(ir->coordinate->type,
+                                                  "coordinate",
+                                                  ir_var_temporary);
+      base_ir->insert_before(var);
+      base_ir->insert_before(assign(var, ir->coordinate));
+      base_ir->insert_before(assign(var,
+               add(swizzle_for_size(var, ir->offset->type->vector_elements), ir->offset),
+               (1 << ir->offset->type->vector_elements) - 1));
+
+      ir->coordinate = new(mem_ctx) ir_dereference_variable(var);
+   } else {
+      ir->coordinate = add(ir->coordinate, i2f(ir->offset));
+   }
+
    ir->offset = NULL;
 
    progress = true;
