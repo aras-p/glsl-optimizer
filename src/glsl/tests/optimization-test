@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 if [ ! -z "$srcdir" ]; then
    compare_ir=`pwd`/tests/compare_ir
