@@ -542,13 +542,12 @@ void radeon_drm_ws_queue_cs(struct radeon_drm_winsys *ws, struct radeon_drm_cs *
 {
 retry:
     pipe_mutex_lock(ws->cs_stack_lock);
-    if (p_atomic_read(&ws->ncs) >= RING_LAST) {
+    if (ws->ncs >= RING_LAST) {
         /* no room left for a flush */
         pipe_mutex_unlock(ws->cs_stack_lock);
         goto retry;
     }
-    ws->cs_stack[p_atomic_read(&ws->ncs)] = cs;
-    p_atomic_inc(&ws->ncs);
+    ws->cs_stack[ws->ncs++] = cs;
     pipe_mutex_unlock(ws->cs_stack_lock);
     pipe_semaphore_signal(&ws->cs_queued);
 }
@@ -557,41 +556,31 @@ static PIPE_THREAD_ROUTINE(radeon_drm_cs_emit_ioctl, param)
 {
     struct radeon_drm_winsys *ws = (struct radeon_drm_winsys *)param;
     struct radeon_drm_cs *cs;
-    unsigned i, empty_stack;
+    unsigned i;
 
     while (1) {
         pipe_semaphore_wait(&ws->cs_queued);
         if (ws->kill_thread)
             break;
-next:
+
         pipe_mutex_lock(ws->cs_stack_lock);
         cs = ws->cs_stack[0];
+        for (i = 1; i < ws->ncs; i++)
+            ws->cs_stack[i - 1] = ws->cs_stack[i];
+        ws->cs_stack[--ws->ncs] = NULL;
         pipe_mutex_unlock(ws->cs_stack_lock);
 
         if (cs) {
             radeon_drm_cs_emit_ioctl_oneshot(cs, cs->cst);
-
-            pipe_mutex_lock(ws->cs_stack_lock);
-            for (i = 1; i < p_atomic_read(&ws->ncs); i++) {
-                ws->cs_stack[i - 1] = ws->cs_stack[i];
-            }
-            ws->cs_stack[p_atomic_read(&ws->ncs) - 1] = NULL;
-            empty_stack = p_atomic_dec_zero(&ws->ncs);
-            pipe_mutex_unlock(ws->cs_stack_lock);
-
             pipe_semaphore_signal(&cs->flush_completed);
-
-            if (!empty_stack) {
-                goto next;
-            }
         }
     }
     pipe_mutex_lock(ws->cs_stack_lock);
-    for (i = 0; i < p_atomic_read(&ws->ncs); i++) {
+    for (i = 0; i < ws->ncs; i++) {
         pipe_semaphore_signal(&ws->cs_stack[i]->flush_completed);
         ws->cs_stack[i] = NULL;
     }
-    p_atomic_set(&ws->ncs, 0);
+    ws->ncs = 0;
     pipe_mutex_unlock(ws->cs_stack_lock);
     return NULL;
 }
@@ -655,7 +644,7 @@ struct radeon_winsys *radeon_drm_winsys_create(int fd)
     pipe_mutex_init(ws->cmask_owner_mutex);
     pipe_mutex_init(ws->cs_stack_lock);
 
-    p_atomic_set(&ws->ncs, 0);
+    ws->ncs = 0;
     pipe_semaphore_init(&ws->cs_queued, 0);
     if (ws->num_cpus > 1 && debug_get_option_thread())
         ws->thread = pipe_thread_create(radeon_drm_cs_emit_ioctl, ws);
