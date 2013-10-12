@@ -2317,28 +2317,9 @@ vec4_visitor::visit(ir_texture *ir)
       int coord_mask = (1 << ir->coordinate->type->vector_elements) - 1;
       int zero_mask = 0xf & ~coord_mask;
 
-      if (ir->offset && ir->op == ir_txf) {
-	 /* It appears that the ld instruction used for txf does its
-	  * address bounds check before adding in the offset.  To work
-	  * around this, just add the integer offset to the integer
-	  * texel coordinate, and don't put the offset in the header.
-	  */
-	 ir_constant *offset = ir->offset->as_constant();
-	 assert(offset);
+      emit(MOV(dst_reg(MRF, param_base, ir->coordinate->type, coord_mask),
+               coordinate));
 
-	 for (int j = 0; j < ir->coordinate->type->vector_elements; j++) {
-	    src_reg src = coordinate;
-	    src.swizzle = BRW_SWIZZLE4(BRW_GET_SWZ(src.swizzle, j),
-				       BRW_GET_SWZ(src.swizzle, j),
-				       BRW_GET_SWZ(src.swizzle, j),
-				       BRW_GET_SWZ(src.swizzle, j));
-	    emit(ADD(dst_reg(MRF, param_base, ir->coordinate->type, 1 << j),
-		     src, offset->value.i[j]));
-	 }
-      } else {
-	 emit(MOV(dst_reg(MRF, param_base, ir->coordinate->type, coord_mask),
-		  coordinate));
-      }
       if (zero_mask != 0) {
          emit(MOV(dst_reg(MRF, param_base, ir->coordinate->type, zero_mask),
                   src_reg(0)));

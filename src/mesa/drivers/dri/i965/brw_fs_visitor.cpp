@@ -1093,34 +1093,19 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    const int vector_elements =
       ir->coordinate ? ir->coordinate->type->vector_elements : 0;
 
-   if (ir->offset != NULL && ir->op == ir_txf) {
-      /* It appears that the ld instruction used for txf does its
-       * address bounds check before adding in the offset.  To work
-       * around this, just add the integer offset to the integer texel
-       * coordinate, and don't put the offset in the header.
+   if (ir->offset) {
+      /* The offsets set up by the ir_texture visitor are in the
+       * m1 header, so we can't go headerless.
        */
-      ir_constant *offset = ir->offset->as_constant();
-      for (int i = 0; i < vector_elements; i++) {
-	 emit(ADD(fs_reg(MRF, base_mrf + mlen + i * reg_width, coordinate.type),
-                  coordinate,
-                  offset->value.i[i]));
-	 coordinate.reg_offset++;
-      }
-   } else {
-      if (ir->offset) {
-	 /* The offsets set up by the ir_texture visitor are in the
-	  * m1 header, so we can't go headerless.
-	  */
-	 header_present = true;
-	 mlen++;
-	 base_mrf--;
-      }
+      header_present = true;
+      mlen++;
+      base_mrf--;
+   }
 
-      for (int i = 0; i < vector_elements; i++) {
-	 emit(MOV(fs_reg(MRF, base_mrf + mlen + i * reg_width, coordinate.type),
-                  coordinate));
-	 coordinate.reg_offset++;
-      }
+   for (int i = 0; i < vector_elements; i++) {
+      emit(MOV(fs_reg(MRF, base_mrf + mlen + i * reg_width, coordinate.type),
+               coordinate));
+      coordinate.reg_offset++;
    }
    mlen += vector_elements * reg_width;
 
@@ -1229,7 +1214,6 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
 {
    int reg_width = dispatch_width / 8;
    bool header_present = false;
-   int offsets[3];
 
    fs_reg payload = fs_reg(this, glsl_type::float_type);
    fs_reg next = payload;
@@ -1305,22 +1289,8 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       next.reg_offset++;
       break;
    case ir_txf:
-      /* It appears that the ld instruction used for txf does its
-       * address bounds check before adding in the offset.  To work
-       * around this, just add the integer offset to the integer texel
-       * coordinate, and don't put the offset in the header.
-       */
-      if (ir->offset) {
-	 ir_constant *offset = ir->offset->as_constant();
-	 offsets[0] = offset->value.i[0];
-	 offsets[1] = offset->value.i[1];
-	 offsets[2] = offset->value.i[2];
-      } else {
-	 memset(offsets, 0, sizeof(offsets));
-      }
-
       /* Unfortunately, the parameters for LD are intermixed: u, lod, v, r. */
-      emit(ADD(next.retype(BRW_REGISTER_TYPE_D), coordinate, offsets[0]));
+      emit(MOV(next.retype(BRW_REGISTER_TYPE_D), coordinate));
       coordinate.reg_offset++;
       next.reg_offset++;
 
@@ -1328,7 +1298,7 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       next.reg_offset++;
 
       for (int i = 1; i < ir->coordinate->type->vector_elements; i++) {
-	 emit(ADD(next.retype(BRW_REGISTER_TYPE_D), coordinate, offsets[i]));
+	 emit(MOV(next.retype(BRW_REGISTER_TYPE_D), coordinate));
 	 coordinate.reg_offset++;
 	 next.reg_offset++;
       }
