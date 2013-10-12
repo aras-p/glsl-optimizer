@@ -169,8 +169,9 @@ dri_bind_extensions(struct gbm_dri_device *dri,
 static int
 dri_load_driver(struct gbm_dri_device *dri)
 {
-   const __DRIextension **extensions;
+   const __DRIextension **extensions = NULL;
    char path[PATH_MAX], *search_paths, *p, *next, *end;
+   char *get_extensions_name;
 
    search_paths = NULL;
    if (geteuid() == getuid()) {
@@ -209,7 +210,19 @@ dri_load_driver(struct gbm_dri_device *dri)
       return -1;
    }
 
-   extensions = dlsym(dri->driver, __DRI_DRIVER_EXTENSIONS);
+   if (asprintf(&get_extensions_name, "%s_%s",
+                __DRI_DRIVER_GET_EXTENSIONS, dri->base.driver_name) != -1) {
+      const __DRIextension **(*get_extensions)(void);
+
+      get_extensions = dlsym(dri->driver, get_extensions_name);
+      free(get_extensions_name);
+
+      if (get_extensions)
+         extensions = get_extensions();
+   }
+
+   if (!extensions)
+      extensions = dlsym(dri->driver, __DRI_DRIVER_EXTENSIONS);
    if (extensions == NULL) {
       fprintf(stderr, "gbm: driver exports no extensions (%s)", dlerror());
       dlclose(dri->driver);
