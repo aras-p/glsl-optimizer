@@ -77,7 +77,7 @@ struct pipe_video_buffer *r600_video_buffer_create(struct pipe_context *pipe,
 
 	vl_video_buffer_template(&templ, &template, resource_formats[0], 1, array_size, PIPE_USAGE_STATIC, 0);
 	if (ctx->b.chip_class < EVERGREEN || tmpl->interlaced)
-		templ.flags = R600_RESOURCE_FLAG_TRANSFER;
+		templ.bind = PIPE_BIND_LINEAR;
 	resources[0] = (struct r600_texture *)
 		pipe->screen->resource_create(pipe->screen, &templ);
 	if (!resources[0])
@@ -86,7 +86,7 @@ struct pipe_video_buffer *r600_video_buffer_create(struct pipe_context *pipe,
 	if (resource_formats[1] != PIPE_FORMAT_NONE) {
 		vl_video_buffer_template(&templ, &template, resource_formats[1], 1, array_size, PIPE_USAGE_STATIC, 1);
 		if (ctx->b.chip_class < EVERGREEN || tmpl->interlaced)
-			templ.flags = R600_RESOURCE_FLAG_TRANSFER;
+			templ.bind = PIPE_BIND_LINEAR;
 		resources[1] = (struct r600_texture *)
 			pipe->screen->resource_create(pipe->screen, &templ);
 		if (!resources[1])
@@ -96,7 +96,7 @@ struct pipe_video_buffer *r600_video_buffer_create(struct pipe_context *pipe,
 	if (resource_formats[2] != PIPE_FORMAT_NONE) {
 		vl_video_buffer_template(&templ, &template, resource_formats[2], 1, array_size, PIPE_USAGE_STATIC, 2);
 		if (ctx->b.chip_class < EVERGREEN || tmpl->interlaced)
-			templ.flags = R600_RESOURCE_FLAG_TRANSFER;
+			templ.bind = PIPE_BIND_LINEAR;
 		resources[2] = (struct r600_texture *)
 			pipe->screen->resource_create(pipe->screen, &templ);
 		if (!resources[2])
