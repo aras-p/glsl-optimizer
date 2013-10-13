@@ -852,6 +852,12 @@ static void *r600_texture_transfer_map(struct pipe_context *ctx,
 	if (rtex->surface.level[level].mode >= RADEON_SURF_MODE_1D)
 		use_staging_texture = TRUE;
 
+	/* Untiled buffers in VRAM, which is slow for CPU reads */
+	if ((usage & PIPE_TRANSFER_READ) && !(usage & PIPE_TRANSFER_MAP_DIRECTLY) &&
+	    (rtex->resource.domains == RADEON_DOMAIN_VRAM)) {
+		use_staging_texture = TRUE;
+	}
+
 	/* Use a staging texture for uploads if the underlying BO is busy. */
 	if (!(usage & PIPE_TRANSFER_READ) &&
 	    (r600_rings_is_buffer_referenced(rctx, rtex->resource.cs_buf, RADEON_USAGE_READWRITE) ||
