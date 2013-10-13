@@ -180,6 +180,39 @@ vbo_sw_primitive_restart(struct gl_context *ctx,
    GLboolean map_ib = ib->obj->Name && !ib->obj->Pointer;
    void *ptr;
 
+   /* If there is an indirect buffer, map it and extract the draw params */
+   if (indirect && prims[0].is_indirect) {
+      struct _mesa_prim new_prim = *prims;
+      struct _mesa_index_buffer new_ib = *ib;
+      const uint32_t *indirect_params;
+      if (!ctx->Driver.MapBufferRange(ctx, 0, indirect->Size, GL_MAP_READ_BIT,
+            indirect)) {
+
+         /* something went wrong with mapping, give up */
+         _mesa_error(ctx, GL_OUT_OF_MEMORY,
+                     "failed to map indirect buffer for sw primitive restart");
+         return;
+      }
+
+      assert(nr_prims == 1);
+      indirect_params = (const uint32_t *) ADD_POINTERS(indirect->Pointer,
+            new_prim.indirect_offset);
+
+      new_prim.is_indirect = 0;
+      new_prim.count = indirect_params[0];
+      new_prim.num_instances = indirect_params[1];
+      new_prim.start = indirect_params[2];
+      new_prim.basevertex = indirect_params[3];
+      new_prim.base_instance = indirect_params[4];
+
+      new_ib.count = new_prim.count;
+
+      prims = &new_prim;
+      ib = &new_ib;
+
+      ctx->Driver.UnmapBuffer(ctx, indirect);
+   }
+
    /* Find the sub-primitives. These are regions in the index buffer which
     * are split based on the primitive restart index value.
     */
