@@ -579,7 +579,7 @@ vbo_handle_primitive_restart(struct gl_context *ctx,
        ctx->Const.PrimitiveRestartInSoftware &&
        ctx->Array._PrimitiveRestart) {
       /* Handle primitive restart in software */
-      vbo_sw_primitive_restart(ctx, prim, nr_prims, ib);
+      vbo_sw_primitive_restart(ctx, prim, nr_prims, ib, NULL);
    } else {
       /* Call driver directly for draw_prims */
       vbo->draw_prims(ctx, prim, nr_prims, ib,

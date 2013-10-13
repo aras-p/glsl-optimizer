@@ -176,7 +176,7 @@ brw_handle_primitive_restart(struct gl_context *ctx,
       /* Not all the primitive draw modes are supported by the cut index,
        * so take the software path
        */
-      vbo_sw_primitive_restart(ctx, prims, nr_prims, ib);
+      vbo_sw_primitive_restart(ctx, prims, nr_prims, ib, indirect);
    }
 
    brw->prim_restart.in_progress = false;
