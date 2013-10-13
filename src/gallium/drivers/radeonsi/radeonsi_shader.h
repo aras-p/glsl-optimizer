@@ -37,9 +37,10 @@
 #define SI_SGPR_VERTEX_BUFFER	6  /* VS only */
 #define SI_SGPR_SO_BUFFER	8  /* VS only, stream-out */
 #define SI_SGPR_START_INSTANCE	10 /* VS only */
+#define SI_SGPR_ALPHA_REF	6  /* PS only */
 
 #define SI_VS_NUM_USER_SGPR	11
-#define SI_PS_NUM_USER_SGPR	6
+#define SI_PS_NUM_USER_SGPR	7
 
 /* LLVM function parameter indices */
 #define SI_PARAM_CONST		0
@@ -53,23 +54,24 @@
 /* the other VS parameters are assigned dynamically */
 
 /* PS only parameters */
-#define SI_PARAM_PRIM_MASK		3
-#define SI_PARAM_PERSP_SAMPLE		4
-#define SI_PARAM_PERSP_CENTER		5
-#define SI_PARAM_PERSP_CENTROID		6
-#define SI_PARAM_PERSP_PULL_MODEL	7
-#define SI_PARAM_LINEAR_SAMPLE		8
-#define SI_PARAM_LINEAR_CENTER		9
-#define SI_PARAM_LINEAR_CENTROID	10
-#define SI_PARAM_LINE_STIPPLE_TEX	11
-#define SI_PARAM_POS_X_FLOAT		12
-#define SI_PARAM_POS_Y_FLOAT		13
-#define SI_PARAM_POS_Z_FLOAT		14
-#define SI_PARAM_POS_W_FLOAT		15
-#define SI_PARAM_FRONT_FACE		16
-#define SI_PARAM_ANCILLARY		17
-#define SI_PARAM_SAMPLE_COVERAGE	18
-#define SI_PARAM_POS_FIXED_PT		19
+#define SI_PARAM_ALPHA_REF		3
+#define SI_PARAM_PRIM_MASK		4
+#define SI_PARAM_PERSP_SAMPLE		5
+#define SI_PARAM_PERSP_CENTER		6
+#define SI_PARAM_PERSP_CENTROID		7
+#define SI_PARAM_PERSP_PULL_MODEL	8
+#define SI_PARAM_LINEAR_SAMPLE		9
+#define SI_PARAM_LINEAR_CENTER		10
+#define SI_PARAM_LINEAR_CENTROID	11
+#define SI_PARAM_LINE_STIPPLE_TEX	12
+#define SI_PARAM_POS_X_FLOAT		13
+#define SI_PARAM_POS_Y_FLOAT		14
+#define SI_PARAM_POS_Z_FLOAT		15
+#define SI_PARAM_POS_W_FLOAT		16
+#define SI_PARAM_FRONT_FACE		17
+#define SI_PARAM_ANCILLARY		18
+#define SI_PARAM_SAMPLE_COVERAGE	19
+#define SI_PARAM_POS_FIXED_PT		20
 
 struct si_shader_io {
 	unsigned		name;
@@ -124,7 +126,6 @@ union si_shader_key {
 		unsigned	alpha_func:3;
 		unsigned	flatshade:1;
 		unsigned	alpha_to_one:1;
-		float		alpha_ref;
 	} ps;
 	struct {
 		unsigned	instance_divisors[PIPE_MAX_ATTRIBS];

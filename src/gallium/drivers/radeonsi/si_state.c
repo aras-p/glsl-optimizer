@@ -744,6 +744,9 @@ static void *si_create_dsa_state(struct pipe_context *ctx,
 	if (state->alpha.enabled) {
 		dsa->alpha_func = state->alpha.func;
 		dsa->alpha_ref = state->alpha.ref_value;
+
+		si_pm4_set_reg(pm4, R_00B030_SPI_SHADER_USER_DATA_PS_0 +
+		               SI_SGPR_ALPHA_REF * 4, fui(dsa->alpha_ref));
 	} else {
 		dsa->alpha_func = PIPE_FUNC_ALWAYS;
 	}
@@ -2116,10 +2119,6 @@ static INLINE void si_shader_selector_key(struct pipe_context *ctx,
 			    rctx->framebuffer.cbufs[0] &&
 			    util_format_is_pure_integer(rctx->framebuffer.cbufs[0]->texture->format))
 				key->ps.alpha_func = PIPE_FUNC_ALWAYS;
-
-			if (key->ps.alpha_func != PIPE_FUNC_ALWAYS &&
-			    key->ps.alpha_func != PIPE_FUNC_NEVER)
-				key->ps.alpha_ref = rctx->queued.named.dsa->alpha_ref;
 		} else {
 			key->ps.alpha_func = PIPE_FUNC_ALWAYS;
 		}

@@ -570,11 +570,14 @@ static void si_alpha_test(struct lp_build_tgsi_context *bld_base,
 
 	if (si_shader_ctx->shader->key.ps.alpha_func != PIPE_FUNC_NEVER) {
 		LLVMValueRef out_ptr = si_shader_ctx->radeon_bld.soa.outputs[index][3];
+		LLVMValueRef alpha_ref = LLVMGetParam(si_shader_ctx->radeon_bld.main_fn,
+				SI_PARAM_ALPHA_REF);
+
 		LLVMValueRef alpha_pass =
 			lp_build_cmp(&bld_base->base,
 				     si_shader_ctx->shader->key.ps.alpha_func,
 				     LLVMBuildLoad(gallivm->builder, out_ptr, ""),
-				     lp_build_const_float(gallivm, si_shader_ctx->shader->key.ps.alpha_ref));
+				     alpha_ref);
 		LLVMValueRef arg =
 			lp_build_select(&bld_base->base,
 					alpha_pass,
@@ -1569,7 +1572,7 @@ static void create_function(struct si_shader_context *si_shader_ctx)
 {
 	struct lp_build_tgsi_context *bld_base = &si_shader_ctx->radeon_bld.soa.bld_base;
 	struct gallivm_state *gallivm = bld_base->base.gallivm;
-	LLVMTypeRef params[20], f32, i8, i32, v2i32, v3i32;
+	LLVMTypeRef params[21], f32, i8, i32, v2i32, v3i32;
 	unsigned i, last_sgpr, num_params;
 
 	i8 = LLVMInt8TypeInContext(gallivm->context);
@@ -1614,6 +1617,7 @@ static void create_function(struct si_shader_context *si_shader_ctx)
 		break;
 
 	case TGSI_PROCESSOR_FRAGMENT:
+		params[SI_PARAM_ALPHA_REF] = f32;
 		params[SI_PARAM_PRIM_MASK] = i32;
 		last_sgpr = SI_PARAM_PRIM_MASK;
 		params[SI_PARAM_PERSP_SAMPLE] = v2i32;
