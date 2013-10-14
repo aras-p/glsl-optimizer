@@ -2057,14 +2057,10 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
       }
    }
 
-   /* Previous to GLSL version 1.30, different compilation units could mix and
-    * match shading language versions.  With GLSL 1.30 and later, the versions
-    * of all shaders must match.
-    *
-    * GLSL ES has never allowed mixing of shading language versions.
+   /* In desktop GLSL, different shader versions may be linked together.  In
+    * GLSL ES, all shader versions must be the same.
     */
-   if ((is_es_prog || max_version >= 130)
-       && min_version != max_version) {
+   if (is_es_prog && min_version != max_version) {
       linker_error(prog, "all shaders must use same shading "
 		   "language version\n");
       goto done;
