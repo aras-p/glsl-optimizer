@@ -69,6 +69,7 @@ extern const struct st_tracked_state st_update_gs_constants;
 extern const struct st_tracked_state st_update_vs_constants;
 extern const struct st_tracked_state st_bind_fs_ubos;
 extern const struct st_tracked_state st_bind_vs_ubos;
+extern const struct st_tracked_state st_bind_gs_ubos;
 extern const struct st_tracked_state st_update_pixel_transfer;
 
 

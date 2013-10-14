@@ -254,4 +254,21 @@ const struct st_tracked_state st_bind_fs_ubos = {
    bind_fs_ubos
 };
 
+static void bind_gs_ubos(struct st_context *st)
+{
+   struct gl_shader_program *prog = st->ctx->Shader.CurrentGeometryProgram;
 
+   if (!prog)
+      return;
+
+   st_bind_ubos(st, prog->_LinkedShaders[MESA_SHADER_GEOMETRY], PIPE_SHADER_GEOMETRY);
+}
+
+const struct st_tracked_state st_bind_gs_ubos = {
+   "st_bind_gs_ubos",
+   {
+      0,
+      ST_NEW_GEOMETRY_PROGRAM | ST_NEW_UNIFORM_BUFFER,
+   },
+   bind_gs_ubos
+};
