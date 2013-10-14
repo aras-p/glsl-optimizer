@@ -923,6 +923,10 @@ st_translate_geometry_program(struct st_context *st,
             stgp->input_semantic_name[slot] = TGSI_SEMANTIC_CLIPDIST;
             stgp->input_semantic_index[slot] = 1;
             break;
+         case VARYING_SLOT_PSIZ:
+            stgp->input_semantic_name[slot] = TGSI_SEMANTIC_PSIZE;
+            stgp->input_semantic_index[slot] = 0;
+            break;
          case VARYING_SLOT_TEX0:
          case VARYING_SLOT_TEX1:
          case VARYING_SLOT_TEX2:
@@ -1006,6 +1010,14 @@ st_translate_geometry_program(struct st_context *st,
          case VARYING_SLOT_CLIP_DIST1:
             gs_output_semantic_name[slot] = TGSI_SEMANTIC_CLIPDIST;
             gs_output_semantic_index[slot] = 1;
+            break;
+         case VARYING_SLOT_LAYER:
+            gs_output_semantic_name[slot] = TGSI_SEMANTIC_LAYER;
+            gs_output_semantic_index[slot] = 0;
+            break;
+         case VARYING_SLOT_PRIMITIVE_ID:
+            gs_output_semantic_name[slot] = TGSI_SEMANTIC_PRIMID;
+            gs_output_semantic_index[slot] = 0;
             break;
          case VARYING_SLOT_TEX0:
          case VARYING_SLOT_TEX1:
