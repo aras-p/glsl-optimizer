@@ -1112,7 +1112,6 @@ _mesa_get_tex_max_num_levels(GLenum target, GLsizei width, GLsizei height,
    case GL_TEXTURE_CUBE_MAP_ARRAY:
    case GL_PROXY_TEXTURE_CUBE_MAP:
    case GL_PROXY_TEXTURE_CUBE_MAP_ARRAY:
-      ASSERT(width == height);
       size = width;
       break;
    case GL_TEXTURE_2D:
@@ -1447,6 +1446,8 @@ _mesa_legal_texture_dimensions(struct gl_context *ctx, GLenum target,
    case GL_PROXY_TEXTURE_CUBE_MAP_ARB:
       maxSize = 1 << (ctx->Const.MaxCubeTextureLevels - 1);
       maxSize >>= level;
+      if (width != height)
+         return GL_FALSE;
       if (width < 2 * border || width > 2 * border + maxSize)
          return GL_FALSE;
       if (height < 2 * border || height > 2 * border + maxSize)
@@ -1500,7 +1501,9 @@ _mesa_legal_texture_dimensions(struct gl_context *ctx, GLenum target,
          return GL_FALSE;
       if (height < 2 * border || height > 2 * border + maxSize)
          return GL_FALSE;
-      if (depth < 1 || depth > ctx->Const.MaxArrayTextureLayers)
+      if (depth < 1 || depth > ctx->Const.MaxArrayTextureLayers || depth % 6)
+         return GL_FALSE;
+      if (width != height)
          return GL_FALSE;
       if (level >= ctx->Const.MaxCubeTextureLevels)
          return GL_FALSE;
@@ -1991,27 +1994,6 @@ texture_error_check( struct gl_context *ctx,
       }
    }
 
-   if ((target == GL_PROXY_TEXTURE_CUBE_MAP_ARB ||
-        _mesa_is_cube_face(target)) && width != height) {
-      _mesa_error(ctx, GL_INVALID_VALUE,
-                  "glTexImage2D(cube width != height)");
-      return GL_TRUE;
-   }
-
-   if ((target == GL_PROXY_TEXTURE_CUBE_MAP_ARRAY ||
-        target == GL_TEXTURE_CUBE_MAP_ARRAY) && width != height) {
-      _mesa_error(ctx, GL_INVALID_VALUE,
-                  "glTexImage3D(cube array width != height)");
-      return GL_TRUE;
-   }
-
-   if ((target == GL_PROXY_TEXTURE_CUBE_MAP_ARRAY ||
-        target == GL_TEXTURE_CUBE_MAP_ARRAY) && (depth % 6)) {
-      _mesa_error(ctx, GL_INVALID_VALUE,
-                  "glTexImage3D(cube array depth not multiple of 6)");
-      return GL_TRUE;
-   }
-
    /* Check internalFormat */
    if (_mesa_base_tex_format(ctx, internalFormat) < 0) {
       _mesa_error(ctx, GL_INVALID_VALUE,
@@ -2239,14 +2221,6 @@ compressed_texture_error_check(struct gl_context *ctx, GLint dimensions,
    /* No compressed formats support borders at this time */
    if (border != 0) {
       reason = "border != 0";
-      error = GL_INVALID_VALUE;
-      goto error;
-   }
-
-   /* For cube map, width must equal height */
-   if ((target == GL_PROXY_TEXTURE_CUBE_MAP_ARB ||
-        _mesa_is_cube_face(target)) && width != height) {
-      reason = "width != height";
       error = GL_INVALID_VALUE;
       goto error;
    }
@@ -2594,13 +2568,6 @@ copytexture_error_check( struct gl_context *ctx, GLuint dimensions,
             return GL_TRUE;
          }
       }
-   }
-
-   if ((target == GL_PROXY_TEXTURE_CUBE_MAP_ARB ||
-        _mesa_is_cube_face(target)) && width != height) {
-      _mesa_error(ctx, GL_INVALID_VALUE,
-                  "glTexImage2D(cube width != height)");
-      return GL_TRUE;
    }
 
    if (_mesa_is_compressed_format(ctx, internalFormat)) {
