@@ -417,6 +417,13 @@ public:
       this->instructions_to_schedule = 0;
       this->post_reg_alloc = post_reg_alloc;
       this->time = 0;
+      if (!post_reg_alloc) {
+         this->remaining_grf_uses = rzalloc_array(mem_ctx, int, grf_count);
+         this->grf_active = rzalloc_array(mem_ctx, bool, grf_count);
+      } else {
+         this->remaining_grf_uses = NULL;
+         this->grf_active = NULL;
+      }
    }
 
    ~instruction_scheduler()
@@ -442,6 +449,10 @@ public:
     */
    virtual int issue_time(backend_instruction *inst) = 0;
 
+   virtual void count_remaining_grf_uses(backend_instruction *inst) = 0;
+   virtual void update_register_pressure(backend_instruction *inst) = 0;
+   virtual int get_register_pressure_benefit(backend_instruction *inst) = 0;
+
    void schedule_instructions(backend_instruction *next_block_header);
 
    void *mem_ctx;
@@ -452,6 +463,22 @@ public:
    int time;
    exec_list instructions;
    backend_visitor *bv;
+
+   /**
+    * Number of instructions left to schedule that reference each vgrf.
+    *
+    * Used so that we can prefer scheduling instructions that will end the
+    * live intervals of multiple variables, to reduce register pressure.
+    */
+   int *remaining_grf_uses;
+
+   /**
+    * Tracks whether each VGRF has had an instruction scheduled that uses it.
+    *
+    * This is used to estimate whether scheduling a new instruction will
+    * increase register pressure.
+    */
+   bool *grf_active;
 };
 
 class fs_instruction_scheduler : public instruction_scheduler
@@ -463,6 +490,10 @@ public:
    schedule_node *choose_instruction_to_schedule();
    int issue_time(backend_instruction *inst);
    fs_visitor *v;
+
+   void count_remaining_grf_uses(backend_instruction *inst);
+   void update_register_pressure(backend_instruction *inst);
+   int get_register_pressure_benefit(backend_instruction *inst);
 };
 
 fs_instruction_scheduler::fs_instruction_scheduler(fs_visitor *v,
@@ -473,6 +504,72 @@ fs_instruction_scheduler::fs_instruction_scheduler(fs_visitor *v,
 {
 }
 
+void
+fs_instruction_scheduler::count_remaining_grf_uses(backend_instruction *be)
+{
+   fs_inst *inst = (fs_inst *)be;
+
+   if (!remaining_grf_uses)
+      return;
+
+   if (inst->dst.file == GRF)
+      remaining_grf_uses[inst->dst.reg]++;
+
+   for (int i = 0; i < 3; i++) {
+      if (inst->src[i].file != GRF)
+         continue;
+
+      remaining_grf_uses[inst->src[i].reg]++;
+   }
+}
+
+void
+fs_instruction_scheduler::update_register_pressure(backend_instruction *be)
+{
+   fs_inst *inst = (fs_inst *)be;
+
+   if (!remaining_grf_uses)
+      return;
+
+   if (inst->dst.file == GRF) {
+      remaining_grf_uses[inst->dst.reg]--;
+      grf_active[inst->dst.reg] = true;
+   }
+
+   for (int i = 0; i < 3; i++) {
+      if (inst->src[i].file == GRF) {
+         remaining_grf_uses[inst->src[i].reg]--;
+         grf_active[inst->src[i].reg] = true;
+      }
+   }
+}
+
+int
+fs_instruction_scheduler::get_register_pressure_benefit(backend_instruction *be)
+{
+   fs_inst *inst = (fs_inst *)be;
+   int benefit = 0;
+
+   if (inst->dst.file == GRF) {
+      if (remaining_grf_uses[inst->dst.reg] == 1)
+         benefit += v->virtual_grf_sizes[inst->dst.reg];
+      if (!grf_active[inst->dst.reg])
+         benefit -= v->virtual_grf_sizes[inst->dst.reg];
+   }
+
+   for (int i = 0; i < 3; i++) {
+      if (inst->src[i].file != GRF)
+         continue;
+
+      if (remaining_grf_uses[inst->src[i].reg] == 1)
+         benefit += v->virtual_grf_sizes[inst->src[i].reg];
+      if (!grf_active[inst->src[i].reg])
+         benefit -= v->virtual_grf_sizes[inst->src[i].reg];
+   }
+
+   return benefit;
+}
+
 class vec4_instruction_scheduler : public instruction_scheduler
 {
 public:
@@ -481,6 +578,10 @@ public:
    schedule_node *choose_instruction_to_schedule();
    int issue_time(backend_instruction *inst);
    vec4_visitor *v;
+
+   void count_remaining_grf_uses(backend_instruction *inst);
+   void update_register_pressure(backend_instruction *inst);
+   int get_register_pressure_benefit(backend_instruction *inst);
 };
 
 vec4_instruction_scheduler::vec4_instruction_scheduler(vec4_visitor *v,
@@ -488,6 +589,22 @@ vec4_instruction_scheduler::vec4_instruction_scheduler(vec4_visitor *v,
    : instruction_scheduler(v, grf_count, true),
      v(v)
 {
+}
+
+void
+vec4_instruction_scheduler::count_remaining_grf_uses(backend_instruction *be)
+{
+}
+
+void
+vec4_instruction_scheduler::update_register_pressure(backend_instruction *be)
+{
+}
+
+int
+vec4_instruction_scheduler::get_register_pressure_benefit(backend_instruction *be)
+{
+   return 0;
 }
 
 void
@@ -1037,6 +1154,23 @@ fs_instruction_scheduler::choose_instruction_to_schedule()
             continue;
          }
 
+         /* Most important: If we can definitely reduce register pressure, do
+          * so immediately.
+          */
+         int register_pressure_benefit = get_register_pressure_benefit(n->inst);
+         int chosen_register_pressure_benefit =
+            get_register_pressure_benefit(chosen->inst);
+
+         if (register_pressure_benefit > 0 &&
+             register_pressure_benefit > chosen_register_pressure_benefit) {
+            chosen = n;
+            continue;
+         } else if (chosen_register_pressure_benefit > 0 &&
+                    (register_pressure_benefit <
+                     chosen_register_pressure_benefit)) {
+            continue;
+         }
+
          /* Prefer instructions that recently became available for scheduling.
           * These are the things that are most likely to (eventually) make a
           * variable dead and reduce register pressure.  Typical register
@@ -1153,6 +1287,7 @@ instruction_scheduler::schedule_instructions(backend_instruction *next_block_hea
       chosen->remove();
       next_block_header->insert_before(chosen->inst);
       instructions_to_schedule--;
+      update_register_pressure(chosen->inst);
 
       /* Update the clock for how soon an instruction could start after the
        * chosen one.
@@ -1226,6 +1361,15 @@ instruction_scheduler::run(exec_list *all_instructions)
    if (debug) {
       printf("\nInstructions before scheduling (reg_alloc %d)\n", post_reg_alloc);
       bv->dump_instructions();
+   }
+
+   /* Populate the remaining GRF uses array to improve the pre-regalloc
+    * scheduling.
+    */
+   if (remaining_grf_uses) {
+      foreach_list(node, all_instructions) {
+         count_remaining_grf_uses((backend_instruction *)node);
+      }
    }
 
    while (!next_block_header->is_tail_sentinel()) {
