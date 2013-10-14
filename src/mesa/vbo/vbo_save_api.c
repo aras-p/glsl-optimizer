@@ -237,16 +237,31 @@ GLfloat *
 vbo_save_map_vertex_store(struct gl_context *ctx,
                           struct vbo_save_vertex_store *vertex_store)
 {
+   const GLbitfield access = (GL_MAP_WRITE_BIT |
+                              GL_MAP_INVALIDATE_RANGE_BIT |
+                              GL_MAP_UNSYNCHRONIZED_BIT |
+                              GL_MAP_FLUSH_EXPLICIT_BIT);
+
    assert(vertex_store->bufferobj);
-   assert(!vertex_store->buffer);
+   assert(!vertex_store->buffer);  /* the buffer should not be mapped */
+
    if (vertex_store->bufferobj->Size > 0) {
-      vertex_store->buffer =
-         (GLfloat *) ctx->Driver.MapBufferRange(ctx, 0,
-                                                vertex_store->bufferobj->Size,
-                                                GL_MAP_WRITE_BIT,  /* not used */
-                                                vertex_store->bufferobj);
-      assert(vertex_store->buffer);
-      return vertex_store->buffer + vertex_store->used;
+      /* Map the remaining free space in the VBO */
+      GLintptr offset = vertex_store->used * sizeof(GLfloat);
+      GLsizeiptr size = vertex_store->bufferobj->Size - offset;
+      GLfloat *range = (GLfloat *)
+         ctx->Driver.MapBufferRange(ctx, offset, size, access,
+                                    vertex_store->bufferobj);
+      if (range) {
+         /* compute address of start of whole buffer (needed elsewhere) */
+         vertex_store->buffer = range - vertex_store->used;
+         assert(vertex_store->buffer);
+         return range;
+      }
+      else {
+         vertex_store->buffer = NULL;
+         return NULL;
+      }
    }
    else {
       /* probably ran out of memory for buffers */
@@ -260,6 +275,14 @@ vbo_save_unmap_vertex_store(struct gl_context *ctx,
                             struct vbo_save_vertex_store *vertex_store)
 {
    if (vertex_store->bufferobj->Size > 0) {
+      GLintptr offset = 0;
+      GLsizeiptr length = vertex_store->used * sizeof(GLfloat)
+         - vertex_store->bufferobj->Offset;
+
+      /* Explicitly flush the region we wrote to */
+      ctx->Driver.FlushMappedBufferRange(ctx, offset, length,
+                                         vertex_store->bufferobj);
+
       ctx->Driver.UnmapBuffer(ctx, vertex_store->bufferobj);
    }
    vertex_store->buffer = NULL;
