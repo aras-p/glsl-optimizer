@@ -184,6 +184,8 @@ int r600_sb_bytecode_process(struct r600_context *rctx,
 		SB_RUN_PASS(psi_ops,		1);
 
 	SB_RUN_PASS(liveness,			0);
+
+	sh->dce_flags = DF_REMOVE_DEAD | DF_EXPAND;
 	SB_RUN_PASS(dce_cleanup,		0);
 	SB_RUN_PASS(def_use,			0);
 
@@ -201,9 +203,10 @@ int r600_sb_bytecode_process(struct r600_context *rctx,
 
 	SB_RUN_PASS(gvn,				1);
 
-	SB_RUN_PASS(liveness,			0);
+	SB_RUN_PASS(def_use,			1);
+
+	sh->dce_flags = DF_REMOVE_DEAD | DF_REMOVE_UNUSED;
 	SB_RUN_PASS(dce_cleanup,		1);
-	SB_RUN_PASS(def_use,			0);
 
 	SB_RUN_PASS(ra_split,			0);
 	SB_RUN_PASS(def_use,			0);
@@ -216,6 +219,9 @@ int r600_sb_bytecode_process(struct r600_context *rctx,
 
 	sh->compute_interferences = true;
 	SB_RUN_PASS(liveness,			0);
+
+	sh->dce_flags = DF_REMOVE_DEAD;
+	SB_RUN_PASS(dce_cleanup,		1);
 
 	SB_RUN_PASS(ra_coalesce,		1);
 	SB_RUN_PASS(ra_init,			1);
