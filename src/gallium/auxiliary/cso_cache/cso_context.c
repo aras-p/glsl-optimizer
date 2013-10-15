@@ -1221,6 +1221,7 @@ cso_restore_sampler_views(struct cso_context *ctx, unsigned shader_stage)
 {
    struct sampler_info *info = &ctx->samplers[shader_stage];
    unsigned i, nr_saved = info->nr_views_saved;
+   unsigned num;
 
    for (i = 0; i < nr_saved; i++) {
       pipe_sampler_view_reference(&info->views[i], NULL);
@@ -1232,16 +1233,18 @@ cso_restore_sampler_views(struct cso_context *ctx, unsigned shader_stage)
       pipe_sampler_view_reference(&info->views[i], NULL);
    }
 
+   num = MAX2(info->nr_views, nr_saved);
+
    /* bind the old/saved sampler views */
    switch (shader_stage) {
    case PIPE_SHADER_FRAGMENT:
-      ctx->pipe->set_fragment_sampler_views(ctx->pipe, nr_saved, info->views);
+      ctx->pipe->set_fragment_sampler_views(ctx->pipe, num, info->views);
       break;
    case PIPE_SHADER_VERTEX:
-      ctx->pipe->set_vertex_sampler_views(ctx->pipe, nr_saved, info->views);
+      ctx->pipe->set_vertex_sampler_views(ctx->pipe, num, info->views);
       break;
    case PIPE_SHADER_GEOMETRY:
-      ctx->pipe->set_geometry_sampler_views(ctx->pipe, nr_saved, info->views);
+      ctx->pipe->set_geometry_sampler_views(ctx->pipe, num, info->views);
       break;
    default:
       assert(!"bad shader type in cso_restore_sampler_views()");
