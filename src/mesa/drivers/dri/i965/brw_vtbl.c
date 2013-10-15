@@ -90,50 +90,8 @@ brw_destroy_context(struct brw_context *brw)
    drm_intel_gem_context_destroy(brw->hw_ctx);
 }
 
-/**
- * called from intelFlushBatchLocked
- */
-static void
-brw_new_batch(struct brw_context *brw)
-{
-   /* If the kernel supports hardware contexts, then most hardware state is
-    * preserved between batches; we only need to re-emit state that is required
-    * to be in every batch.  Otherwise we need to re-emit all the state that
-    * would otherwise be stored in the context (which for all intents and
-    * purposes means everything).
-    */
-   if (brw->hw_ctx == NULL)
-      brw->state.dirty.brw |= BRW_NEW_CONTEXT;
-
-   brw->state.dirty.brw |= BRW_NEW_BATCH;
-
-   /* Assume that the last command before the start of our batch was a
-    * primitive, for safety.
-    */
-   brw->batch.need_workaround_flush = true;
-
-   brw->state_batch_count = 0;
-
-   brw->ib.type = -1;
-
-   /* Mark that the current program cache BO has been used by the GPU.
-    * It will be reallocated if we need to put new programs in for the
-    * next batch.
-    */
-   brw->cache.bo_used_by_gpu = true;
-
-   /* We need to periodically reap the shader time results, because rollover
-    * happens every few seconds.  We also want to see results every once in a
-    * while, because many programs won't cleanly destroy our context, so the
-    * end-of-run printout may not happen.
-    */
-   if (INTEL_DEBUG & DEBUG_SHADER_TIME)
-      brw_collect_and_report_shader_time(brw);
-}
-
 void brwInitVtbl( struct brw_context *brw )
 {
-   brw->vtbl.new_batch = brw_new_batch;
    brw->vtbl.destroy = brw_destroy_context;
 
    assert(brw->gen >= 4);

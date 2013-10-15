@@ -923,7 +923,6 @@ struct brw_context
    struct
    {
       void (*destroy) (struct brw_context * brw);
-      void (*new_batch) (struct brw_context * brw);
 
       void (*update_texture_surface)(struct gl_context *ctx,
                                      unsigned unit,
