@@ -4859,8 +4859,24 @@ ast_interface_block::hir(exec_list *instructions,
     *     field selector ( . ) operator (analogously to structures)."
     */
    if (this->instance_name) {
-      if (!redeclaring_per_vertex)
+      if (redeclaring_per_vertex) {
+         /* When a built-in in an unnamed interface block is redeclared,
+          * get_variable_being_redeclared() calls
+          * check_builtin_array_max_size() to make sure that built-in array
+          * variables aren't redeclared to illegal sizes.  But we're looking
+          * at a redeclaration of a named built-in interface block.  So we
+          * have to manually call check_builtin_array_max_size() for all parts
+          * of the interface that are arrays.
+          */
+         for (unsigned i = 0; i < num_variables; i++) {
+            if (fields[i].type->is_array()) {
+               const unsigned size = fields[i].type->array_size();
+               check_builtin_array_max_size(fields[i].name, size, loc, state);
+            }
+         }
+      } else {
          validate_identifier(this->instance_name, loc, state);
+      }
 
       ir_variable *var;
 
