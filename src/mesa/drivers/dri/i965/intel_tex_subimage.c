@@ -621,8 +621,14 @@ intel_texsubimage_tiled_memcpy(struct gl_context * ctx,
    /* We postponed printing this message until having committed to executing
     * the function.
     */
-   DBG("%s: level=%d offset=(%d,%d) (w,h)=(%d,%d)\n",
-       __FUNCTION__, texImage->Level, xoffset, yoffset, width, height);
+   DBG("%s: level=%d offset=(%d,%d) (w,h)=(%d,%d) format=0x%x type=0x%x "
+       "gl_format=0x%x tiling=%d "
+       "packing=(alignment=%d row_length=%d skip_pixels=%d skip_rows=%d) "
+       "for_glTexImage=%d\n",
+       __FUNCTION__, texImage->Level, xoffset, yoffset, width, height,
+       format, type, texImage->TexFormat, image->mt->region->tiling,
+       packing->Alignment, packing->RowLength, packing->SkipPixels,
+       packing->SkipRows, for_glTexImage);
 
    linear_to_tiled(
       xoffset * cpp, (xoffset + width) * cpp,
