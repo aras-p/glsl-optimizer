@@ -190,6 +190,9 @@ def generate(env):
                 pass
             env.MergeFlags(cppflags)
 
+            cxxflags = env.backtick('llvm-config --cxxflags').rstrip()
+            env.Append(LLVM_CXXFLAGS = cxxflags)
+
             components = ['engine', 'bitwriter', 'x86asmprinter']
 
             if llvm_version >= distutils.version.LooseVersion('3.1'):

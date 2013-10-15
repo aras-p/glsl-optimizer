@@ -10,12 +10,13 @@ if not env['llvm']:
 env = env.Clone()
 
 llvmpipe = env.ConvenienceLibrary(
-	target = 'llvmpipe',
-	source = env.ParseSourceList('Makefile.sources', 'C_SOURCES')
-	)
+    target = 'llvmpipe',
+    source = env.ParseSourceList('Makefile.sources', 'C_SOURCES')
+)
+
+env.Append(CXXFLAGS = env['LLVM_CXXFLAGS'])
 
 env.Alias('llvmpipe', llvmpipe)
-
 
 if not env['embedded']:
     env = env.Clone()

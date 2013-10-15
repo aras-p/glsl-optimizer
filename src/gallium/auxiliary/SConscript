@@ -46,6 +46,8 @@ source = env.ParseSourceList('Makefile.sources', [
 ])
 
 if env['llvm']:
+    env.Append(CXXFLAGS = env['LLVM_CXXFLAGS'])
+
     source += env.ParseSourceList('Makefile.sources', [
         'GALLIVM_SOURCES',
         'GALLIVM_CPP_SOURCES'
