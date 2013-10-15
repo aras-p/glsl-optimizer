@@ -60,6 +60,10 @@
 static void
 detect_conflicting_assignments(struct _mesa_glsl_parse_state *state,
 			       exec_list *instructions);
+static void
+remove_per_vertex_blocks(exec_list *instructions,
+                         _mesa_glsl_parse_state *state, ir_variable_mode mode);
+
 
 void
 _mesa_ast_to_hir(exec_list *instructions, struct _mesa_glsl_parse_state *state)
@@ -114,6 +118,40 @@ _mesa_ast_to_hir(exec_list *instructions, struct _mesa_glsl_parse_state *state)
       var->remove();
       instructions->push_head(var);
    }
+
+   /* From section 7.1 (Built-In Language Variables) of the GLSL 4.10 spec:
+    *
+    *     If multiple shaders using members of a built-in block belonging to
+    *     the same interface are linked together in the same program, they
+    *     must all redeclare the built-in block in the same way, as described
+    *     in section 4.3.7 "Interface Blocks" for interface block matching, or
+    *     a link error will result.
+    *
+    * The phrase "using members of a built-in block" implies that if two
+    * shaders are linked together and one of them *does not use* any members
+    * of the built-in block, then that shader does not need to have a matching
+    * redeclaration of the built-in block.
+    *
+    * This appears to be a clarification to the behaviour established for
+    * gl_PerVertex by GLSL 1.50, therefore implement it regardless of GLSL
+    * version.
+    *
+    * The definition of "interface" in section 4.3.7 that applies here is as
+    * follows:
+    *
+    *     The boundary between adjacent programmable pipeline stages: This
+    *     spans all the outputs in all compilation units of the first stage
+    *     and all the inputs in all compilation units of the second stage.
+    *
+    * Therefore this rule applies to both inter- and intra-stage linking.
+    *
+    * The easiest way to implement this is to check whether the shader uses
+    * gl_PerVertex right after ast-to-ir conversion, and if it doesn't, simply
+    * remove all the relevant variable declaration from the IR, so that the
+    * linker won't see them and complain about mismatches.
+    */
+   remove_per_vertex_blocks(instructions, state, ir_var_shader_in);
+   remove_per_vertex_blocks(instructions, state, ir_var_shader_out);
 }
 
 
@@ -5139,5 +5177,57 @@ detect_conflicting_assignments(struct _mesa_glsl_parse_state *state,
       _mesa_glsl_error(&loc, state, "fragment shader writes to both "
 		       "`gl_FragData' and `%s'",
 		       user_defined_fs_output->name);
+   }
+}
+
+
+static void
+remove_per_vertex_blocks(exec_list *instructions,
+                         _mesa_glsl_parse_state *state, ir_variable_mode mode)
+{
+   /* Find the gl_PerVertex interface block of the appropriate (in/out) mode,
+    * if it exists in this shader type.
+    */
+   const glsl_type *per_vertex = NULL;
+   switch (mode) {
+   case ir_var_shader_in:
+      if (ir_variable *gl_in = state->symbols->get_variable("gl_in"))
+         per_vertex = gl_in->get_interface_type();
+      break;
+   case ir_var_shader_out:
+      if (ir_variable *gl_Position =
+          state->symbols->get_variable("gl_Position")) {
+         per_vertex = gl_Position->get_interface_type();
+      }
+      break;
+   default:
+      assert(!"Unexpected mode");
+      break;
+   }
+
+   /* If we didn't find a built-in gl_PerVertex interface block, then we don't
+    * need to do anything.
+    */
+   if (per_vertex == NULL)
+      return;
+
+   /* If the interface block is used by the shader, then we don't need to do
+    * anything.
+    */
+   interface_block_usage_visitor v(mode, per_vertex);
+   v.run(instructions);
+   if (v.usage_found())
+      return;
+
+   /* Remove any ir_variable declarations that refer to the interface block
+    * we're removing.
+    */
+   foreach_list_safe(node, instructions) {
+      ir_variable *const var = ((ir_instruction *) node)->as_variable();
+      if (var != NULL && var->get_interface_type() == per_vertex &&
+          var->mode == mode) {
+         state->symbols->disable_variable(var->name);
+         var->remove();
+      }
    }
 }
