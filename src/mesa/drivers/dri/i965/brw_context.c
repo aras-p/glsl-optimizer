@@ -683,39 +683,40 @@ intelDestroyContext(__DRIcontext * driContextPriv)
    struct gl_context *ctx = &brw->ctx;
 
    assert(brw); /* should never be null */
-   if (brw) {
-      /* Dump a final BMP in case the application doesn't call SwapBuffers */
-      if (INTEL_DEBUG & DEBUG_AUB) {
-         intel_batchbuffer_flush(brw);
-         aub_dump_bmp(&brw->ctx);
-      }
+   if (!brw)
+      return;
 
-      _mesa_meta_free(&brw->ctx);
-
-      brw->vtbl.destroy(brw);
-
-      if (ctx->swrast_context) {
-         _swsetup_DestroyContext(&brw->ctx);
-         _tnl_DestroyContext(&brw->ctx);
-      }
-      _vbo_DestroyContext(&brw->ctx);
-
-      if (ctx->swrast_context)
-         _swrast_DestroyContext(&brw->ctx);
-
-      intel_batchbuffer_free(brw);
-
-      drm_intel_bo_unreference(brw->first_post_swapbuffers_batch);
-      brw->first_post_swapbuffers_batch = NULL;
-
-      driDestroyOptionCache(&brw->optionCache);
-
-      /* free the Mesa context */
-      _mesa_free_context_data(&brw->ctx);
-
-      ralloc_free(brw);
-      driContextPriv->driverPrivate = NULL;
+   /* Dump a final BMP in case the application doesn't call SwapBuffers */
+   if (INTEL_DEBUG & DEBUG_AUB) {
+      intel_batchbuffer_flush(brw);
+      aub_dump_bmp(&brw->ctx);
    }
+
+   _mesa_meta_free(&brw->ctx);
+
+   brw->vtbl.destroy(brw);
+
+   if (ctx->swrast_context) {
+      _swsetup_DestroyContext(&brw->ctx);
+      _tnl_DestroyContext(&brw->ctx);
+   }
+   _vbo_DestroyContext(&brw->ctx);
+
+   if (ctx->swrast_context)
+      _swrast_DestroyContext(&brw->ctx);
+
+   intel_batchbuffer_free(brw);
+
+   drm_intel_bo_unreference(brw->first_post_swapbuffers_batch);
+   brw->first_post_swapbuffers_batch = NULL;
+
+   driDestroyOptionCache(&brw->optionCache);
+
+   /* free the Mesa context */
+   _mesa_free_context_data(&brw->ctx);
+
+   ralloc_free(brw);
+   driContextPriv->driverPrivate = NULL;
 }
 
 GLboolean
