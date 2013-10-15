@@ -55,14 +55,6 @@
 
 #include "glsl/ralloc.h"
 
-static void
-dri_bo_release(drm_intel_bo **bo)
-{
-   drm_intel_bo_unreference(*bo);
-   *bo = NULL;
-}
-
-
 /**
  * called from intelDestroyContext()
  */
@@ -80,9 +72,9 @@ brw_destroy_context(struct brw_context *brw)
    brw_destroy_state(brw);
    brw_draw_destroy( brw );
 
-   dri_bo_release(&brw->curbe.curbe_bo);
-   dri_bo_release(&brw->vs.base.const_bo);
-   dri_bo_release(&brw->wm.base.const_bo);
+   drm_intel_bo_unreference(brw->curbe.curbe_bo);
+   drm_intel_bo_unreference(brw->vs.base.const_bo);
+   drm_intel_bo_unreference(brw->wm.base.const_bo);
 
    free(brw->curbe.last_buf);
    free(brw->curbe.next_buf);
