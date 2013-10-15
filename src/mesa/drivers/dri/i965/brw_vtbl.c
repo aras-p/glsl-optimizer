@@ -55,37 +55,8 @@
 
 #include "glsl/ralloc.h"
 
-/**
- * called from intelDestroyContext()
- */
-static void
-brw_destroy_context(struct brw_context *brw)
-{
-   if (INTEL_DEBUG & DEBUG_SHADER_TIME) {
-      /* Force a report. */
-      brw->shader_time.report_time = 0;
-
-      brw_collect_and_report_shader_time(brw);
-      brw_destroy_shader_time(brw);
-   }
-
-   brw_destroy_state(brw);
-   brw_draw_destroy( brw );
-
-   drm_intel_bo_unreference(brw->curbe.curbe_bo);
-   drm_intel_bo_unreference(brw->vs.base.const_bo);
-   drm_intel_bo_unreference(brw->wm.base.const_bo);
-
-   free(brw->curbe.last_buf);
-   free(brw->curbe.next_buf);
-
-   drm_intel_gem_context_destroy(brw->hw_ctx);
-}
-
 void brwInitVtbl( struct brw_context *brw )
 {
-   brw->vtbl.destroy = brw_destroy_context;
-
    assert(brw->gen >= 4);
    if (brw->gen >= 7) {
       gen7_init_vtable_surface_functions(brw);
