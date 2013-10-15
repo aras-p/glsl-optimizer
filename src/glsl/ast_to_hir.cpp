@@ -5042,7 +5042,8 @@ ast_interface_block::hir(exec_list *instructions,
          foreach_list_safe(node, instructions) {
             ir_variable *const var = ((ir_instruction *) node)->as_variable();
             if (var != NULL &&
-                var->get_interface_type() == earlier_per_vertex) {
+                var->get_interface_type() == earlier_per_vertex &&
+                var->mode == var_mode) {
                state->symbols->disable_variable(var->name);
                var->remove();
             }
