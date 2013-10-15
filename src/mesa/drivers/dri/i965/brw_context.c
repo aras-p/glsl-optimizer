@@ -530,7 +530,15 @@ brwCreateContext(gl_api api,
    brw->must_use_separate_stencil = screen->hw_must_use_separate_stencil;
    brw->has_swizzling = screen->hw_has_swizzling;
 
-   brwInitVtbl( brw );
+   if (brw->gen >= 7) {
+      gen7_init_vtable_surface_functions(brw);
+      gen7_init_vtable_sampler_functions(brw);
+      brw->vtbl.emit_depth_stencil_hiz = gen7_emit_depth_stencil_hiz;
+   } else {
+      gen4_init_vtable_surface_functions(brw);
+      gen4_init_vtable_sampler_functions(brw);
+      brw->vtbl.emit_depth_stencil_hiz = brw_emit_depth_stencil_hiz;
+   }
 
    brw_init_driver_functions(brw, &functions);
 
