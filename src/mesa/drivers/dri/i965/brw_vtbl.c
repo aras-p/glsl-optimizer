@@ -91,27 +91,6 @@ brw_destroy_context(struct brw_context *brw)
 }
 
 /**
- * called from intel_batchbuffer_flush and children before sending a
- * batchbuffer off.
- *
- * Note that ALL state emitted here must fit in the reserved space
- * at the end of a batchbuffer.  If you add more GPU state, increase
- * the BATCH_RESERVED macro.
- */
-static void
-brw_finish_batch(struct brw_context *brw)
-{
-   brw_emit_query_end(brw);
-
-   if (brw->curbe.curbe_bo) {
-      drm_intel_gem_bo_unmap_gtt(brw->curbe.curbe_bo);
-      drm_intel_bo_unreference(brw->curbe.curbe_bo);
-      brw->curbe.curbe_bo = NULL;
-   }
-}
-
-
-/**
  * called from intelFlushBatchLocked
  */
 static void
@@ -155,7 +134,6 @@ brw_new_batch(struct brw_context *brw)
 void brwInitVtbl( struct brw_context *brw )
 {
    brw->vtbl.new_batch = brw_new_batch;
-   brw->vtbl.finish_batch = brw_finish_batch;
    brw->vtbl.destroy = brw_destroy_context;
 
    assert(brw->gen >= 4);

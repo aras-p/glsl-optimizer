@@ -172,6 +172,27 @@ do_batch_dump(struct brw_context *brw)
    }
 }
 
+/**
+ * Called from intel_batchbuffer_flush before emitting MI_BATCHBUFFER_END and
+ * sending it off.
+ *
+ * This function can emit state (say, to preserve registers that aren't saved
+ * between batches).  All of this state MUST fit in the reserved space at the
+ * end of the batchbuffer.  If you add more GPU state, increase the reserved
+ * space by updating the BATCH_RESERVED macro.
+ */
+static void
+brw_finish_batch(struct brw_context *brw)
+{
+   brw_emit_query_end(brw);
+
+   if (brw->curbe.curbe_bo) {
+      drm_intel_gem_bo_unmap_gtt(brw->curbe.curbe_bo);
+      drm_intel_bo_unreference(brw->curbe.curbe_bo);
+      brw->curbe.curbe_bo = NULL;
+   }
+}
+
 /* TODO: Push this whole function into bufmgr.
  */
 static int
@@ -256,8 +277,7 @@ _intel_batchbuffer_flush(struct brw_context *brw,
 
    brw->batch.reserved_space = 0;
 
-   if (brw->vtbl.finish_batch)
-      brw->vtbl.finish_batch(brw);
+   brw_finish_batch(brw);
 
    /* Mark the end of the buffer. */
    intel_batchbuffer_emit_dword(brw, MI_BATCH_BUFFER_END);
