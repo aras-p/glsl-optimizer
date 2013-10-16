@@ -229,7 +229,7 @@ vec4_visitor::SCRATCH_READ(dst_reg dst, src_reg index)
 {
    vec4_instruction *inst;
 
-   inst = new(mem_ctx) vec4_instruction(this, VS_OPCODE_SCRATCH_READ,
+   inst = new(mem_ctx) vec4_instruction(this, SHADER_OPCODE_GEN4_SCRATCH_READ,
 					dst, index);
    inst->base_mrf = 14;
    inst->mlen = 2;
@@ -242,7 +242,7 @@ vec4_visitor::SCRATCH_WRITE(dst_reg dst, src_reg src, src_reg index)
 {
    vec4_instruction *inst;
 
-   inst = new(mem_ctx) vec4_instruction(this, VS_OPCODE_SCRATCH_WRITE,
+   inst = new(mem_ctx) vec4_instruction(this, SHADER_OPCODE_GEN4_SCRATCH_WRITE,
 					dst, src, index);
    inst->base_mrf = 13;
    inst->mlen = 3;

@@ -523,8 +523,8 @@ private:
    void generate_ddx(fs_inst *inst, struct brw_reg dst, struct brw_reg src);
    void generate_ddy(fs_inst *inst, struct brw_reg dst, struct brw_reg src,
                      bool negate_value);
-   void generate_spill(fs_inst *inst, struct brw_reg src);
-   void generate_unspill(fs_inst *inst, struct brw_reg dst);
+   void generate_scratch_write(fs_inst *inst, struct brw_reg src);
+   void generate_scratch_read(fs_inst *inst, struct brw_reg dst);
    void generate_uniform_pull_constant_load(fs_inst *inst, struct brw_reg dst,
                                             struct brw_reg index,
                                             struct brw_reg offset);

@@ -766,11 +766,11 @@ fs_visitor::implied_mrf_writes(fs_inst *inst)
    case FS_OPCODE_FB_WRITE:
       return 2;
    case FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD:
-   case FS_OPCODE_UNSPILL:
+   case SHADER_OPCODE_GEN4_SCRATCH_READ:
       return 1;
    case FS_OPCODE_VARYING_PULL_CONSTANT_LOAD:
       return inst->mlen;
-   case FS_OPCODE_SPILL:
+   case SHADER_OPCODE_GEN4_SCRATCH_WRITE:
       return 2;
    case SHADER_OPCODE_UNTYPED_ATOMIC:
    case SHADER_OPCODE_UNTYPED_SURFACE_READ:

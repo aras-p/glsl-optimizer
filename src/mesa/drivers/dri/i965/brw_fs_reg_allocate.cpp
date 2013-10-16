@@ -542,7 +542,8 @@ fs_visitor::emit_unspill(fs_inst *inst, fs_reg dst, uint32_t spill_offset,
                          int count)
 {
    for (int i = 0; i < count; i++) {
-      fs_inst *unspill_inst = new(mem_ctx) fs_inst(FS_OPCODE_UNSPILL, dst);
+      fs_inst *unspill_inst =
+         new(mem_ctx) fs_inst(SHADER_OPCODE_GEN4_SCRATCH_READ, dst);
       unspill_inst->offset = spill_offset;
       unspill_inst->ir = inst->ir;
       unspill_inst->annotation = inst->annotation;
@@ -610,12 +611,12 @@ fs_visitor::choose_spill_reg(struct ra_graph *g)
 	 loop_scale /= 10;
 	 break;
 
-      case FS_OPCODE_SPILL:
+      case SHADER_OPCODE_GEN4_SCRATCH_WRITE:
 	 if (inst->src[0].file == GRF)
 	    no_spill[inst->src[0].reg] = true;
 	 break;
 
-      case FS_OPCODE_UNSPILL:
+      case SHADER_OPCODE_GEN4_SCRATCH_READ:
 	 if (inst->dst.file == GRF)
 	    no_spill[inst->dst.reg] = true;
 	 break;
@@ -710,8 +711,9 @@ fs_visitor::spill_reg(int spill_reg)
 	 spill_src.smear = -1;
 
 	 for (int chan = 0; chan < inst->regs_written; chan++) {
-	    fs_inst *spill_inst = new(mem_ctx) fs_inst(FS_OPCODE_SPILL,
-						       reg_null_f, spill_src);
+	    fs_inst *spill_inst =
+               new(mem_ctx) fs_inst(SHADER_OPCODE_GEN4_SCRATCH_WRITE,
+                                    reg_null_f, spill_src);
 	    spill_src.reg_offset++;
 	    spill_inst->offset = subset_spill_offset + chan * reg_size;
 	    spill_inst->ir = inst->ir;

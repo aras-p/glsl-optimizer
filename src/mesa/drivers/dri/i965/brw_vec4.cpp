@@ -258,9 +258,9 @@ vec4_visitor::implied_mrf_writes(vec4_instruction *inst)
       return 1;
    case VS_OPCODE_PULL_CONSTANT_LOAD:
       return 2;
-   case VS_OPCODE_SCRATCH_READ:
+   case SHADER_OPCODE_GEN4_SCRATCH_READ:
       return 2;
-   case VS_OPCODE_SCRATCH_WRITE:
+   case SHADER_OPCODE_GEN4_SCRATCH_WRITE:
       return 3;
    case GS_OPCODE_URB_WRITE:
    case GS_OPCODE_THREAD_END:

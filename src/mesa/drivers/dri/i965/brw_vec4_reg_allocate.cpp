@@ -294,8 +294,8 @@ vec4_visitor::evaluate_spill_costs(float *spill_costs, bool *no_spill)
 	 loop_scale /= 10;
 	 break;
 
-      case VS_OPCODE_SCRATCH_READ:
-      case VS_OPCODE_SCRATCH_WRITE:
+      case SHADER_OPCODE_GEN4_SCRATCH_READ:
+      case SHADER_OPCODE_GEN4_SCRATCH_WRITE:
          for (int i = 0; i < 3; i++) {
             if (inst->src[i].file == GRF)
                no_spill[inst->src[i].reg] = true;

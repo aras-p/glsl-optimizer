@@ -1149,11 +1149,11 @@ vec4_generator::generate_vec4_instruction(vec4_instruction *instruction,
       generate_vs_urb_write(inst);
       break;
 
-   case VS_OPCODE_SCRATCH_READ:
+   case SHADER_OPCODE_GEN4_SCRATCH_READ:
       generate_scratch_read(inst, dst, src[0]);
       break;
 
-   case VS_OPCODE_SCRATCH_WRITE:
+   case SHADER_OPCODE_GEN4_SCRATCH_WRITE:
       generate_scratch_write(inst, dst, src[0], src[1]);
       break;
 

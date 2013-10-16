@@ -749,7 +749,7 @@ fs_generator::generate_discard_jump(fs_inst *inst)
 }
 
 void
-fs_generator::generate_spill(fs_inst *inst, struct brw_reg src)
+fs_generator::generate_scratch_write(fs_inst *inst, struct brw_reg src)
 {
    assert(inst->mlen != 0);
 
@@ -761,7 +761,7 @@ fs_generator::generate_spill(fs_inst *inst, struct brw_reg src)
 }
 
 void
-fs_generator::generate_unspill(fs_inst *inst, struct brw_reg dst)
+fs_generator::generate_scratch_read(fs_inst *inst, struct brw_reg dst)
 {
    assert(inst->mlen != 0);
 
@@ -1579,12 +1579,12 @@ fs_generator::generate_code(exec_list *instructions)
 	 generate_ddy(inst, dst, src[0], c->key.render_to_fbo);
 	 break;
 
-      case FS_OPCODE_SPILL:
-	 generate_spill(inst, src[0]);
+      case SHADER_OPCODE_GEN4_SCRATCH_WRITE:
+	 generate_scratch_write(inst, src[0]);
 	 break;
 
-      case FS_OPCODE_UNSPILL:
-	 generate_unspill(inst, dst);
+      case SHADER_OPCODE_GEN4_SCRATCH_READ:
+	 generate_scratch_read(inst, dst);
 	 break;
 
       case FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD:
