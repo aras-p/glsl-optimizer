@@ -182,6 +182,11 @@ do_batch_dump(struct brw_context *brw)
 void
 intel_batchbuffer_emit_render_ring_prelude(struct brw_context *brw)
 {
+   /* Without hardware contexts, we need to capture the pipeline statistics
+    * registers at the start and end of each render ring batch, so we can see
+    * what that batch contributed.  Emit state packets to write them to a BO.
+    */
+   brw_emit_query_begin(brw);
 }
 
 /**
@@ -234,6 +239,9 @@ brw_new_batch(struct brw_context *brw)
 static void
 brw_finish_batch(struct brw_context *brw)
 {
+   /* Capture the closing pipeline statistics register values necessary to
+    * support query objects (in the non-hardware context world).
+    */
    brw_emit_query_end(brw);
 
    if (brw->curbe.curbe_bo) {

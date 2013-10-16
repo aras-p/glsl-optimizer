@@ -614,8 +614,6 @@ static void brw_emit_vertices(struct brw_context *brw)
 
    brw_prepare_vertices(brw);
 
-   brw_emit_query_begin(brw);
-
    nr_elements = brw->vb.nr_enabled + brw->vs.prog_data->uses_vertexid;
 
    /* If the VS doesn't read any inputs (calculating vertex position from
