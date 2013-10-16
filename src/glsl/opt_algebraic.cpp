@@ -228,6 +228,16 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
       }
       break;
 
+   case ir_unop_neg:
+      if (op_expr[0] == NULL)
+	 break;
+
+      if (op_expr[0]->operation == ir_unop_neg) {
+         this->progress = true;
+         return swizzle_if_required(ir, op_expr[0]->operands[0]);
+      }
+      break;
+
    case ir_unop_logic_not: {
       enum ir_expression_operation new_op = ir_unop_logic_not;
 
