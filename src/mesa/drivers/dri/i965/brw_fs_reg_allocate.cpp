@@ -476,6 +476,17 @@ fs_visitor::assign_regs()
    if (brw->gen >= 7)
       setup_mrf_hack_interference(g, first_mrf_hack_node);
 
+   /* Debug of register spilling: Go spill everything. */
+   if (0) {
+      int reg = choose_spill_reg(g);
+
+      if (reg != -1) {
+         spill_reg(reg);
+         ralloc_free(g);
+         return false;
+      }
+   }
+
    if (!ra_allocate_no_spills(g)) {
       /* Failed to allocate registers.  Spill a reg, and the caller will
        * loop back into here to try again.

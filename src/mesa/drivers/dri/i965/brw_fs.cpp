@@ -3098,13 +3098,6 @@ fs_visitor::run()
       assign_curb_setup();
       assign_urb_setup();
 
-      if (0) {
-	 /* Debug of register spilling: Go spill everything. */
-	 for (int i = 0; i < virtual_grf_count; i++) {
-	    spill_reg(i);
-	 }
-      }
-
       if (0)
 	 assign_regs_trivial();
       else {
