@@ -43,6 +43,32 @@ _mesa_glsl_lex(YYSTYPE *val, YYLTYPE *loc, _mesa_glsl_parse_state *state)
 {
    return _mesa_glsl_lexer_lex(val, loc, state->scanner);
 }
+
+static bool match_layout_qualifier(const char *s1, const char *s2,
+                                   _mesa_glsl_parse_state *state)
+{
+   /* From the GLSL 1.50 spec, section 4.3.8 (Layout Qualifiers):
+    *
+    *     "The tokens in any layout-qualifier-id-list ... are not case
+    *     sensitive, unless explicitly noted otherwise."
+    *
+    * The text "unless explicitly noted otherwise" appears to be
+    * vacuous--no desktop GLSL spec (up through GLSL 4.40) notes
+    * otherwise.
+    *
+    * However, the GLSL ES 3.00 spec says, in section 4.3.8 (Layout
+    * Qualifiers):
+    *
+    *     "As for other identifiers, they are case sensitive."
+    *
+    * So we need to do a case-sensitive or a case-insensitive match,
+    * depending on whether we are compiling for GLSL ES.
+    */
+   if (state->es_shader)
+      return strcmp(s1, s2);
+   else
+      return strcasecmp(s1, s2);
+}
 %}
 
 %expect 0
@@ -1160,9 +1186,10 @@ layout_qualifier_id:
       /* Layout qualifiers for ARB_fragment_coord_conventions. */
       if (!$$.flags.i && (state->ARB_fragment_coord_conventions_enable ||
                           state->is_version(150, 0))) {
-         if (strcmp($1, "origin_upper_left") == 0) {
+         if (match_layout_qualifier($1, "origin_upper_left", state) == 0) {
             $$.flags.q.origin_upper_left = 1;
-         } else if (strcmp($1, "pixel_center_integer") == 0) {
+         } else if (match_layout_qualifier($1, "pixel_center_integer",
+                                           state) == 0) {
             $$.flags.q.pixel_center_integer = 1;
          }
 
@@ -1177,13 +1204,14 @@ layout_qualifier_id:
       if (!$$.flags.i &&
           (state->AMD_conservative_depth_enable ||
            state->ARB_conservative_depth_enable)) {
-         if (strcmp($1, "depth_any") == 0) {
+         if (match_layout_qualifier($1, "depth_any", state) == 0) {
             $$.flags.q.depth_any = 1;
-         } else if (strcmp($1, "depth_greater") == 0) {
+         } else if (match_layout_qualifier($1, "depth_greater", state) == 0) {
             $$.flags.q.depth_greater = 1;
-         } else if (strcmp($1, "depth_less") == 0) {
+         } else if (match_layout_qualifier($1, "depth_less", state) == 0) {
             $$.flags.q.depth_less = 1;
-         } else if (strcmp($1, "depth_unchanged") == 0) {
+         } else if (match_layout_qualifier($1, "depth_unchanged",
+                                           state) == 0) {
             $$.flags.q.depth_unchanged = 1;
          }
 
@@ -1201,20 +1229,32 @@ layout_qualifier_id:
 
       /* See also interface_block_layout_qualifier. */
       if (!$$.flags.i && state->has_uniform_buffer_objects()) {
-         if (strcmp($1, "std140") == 0) {
+         if (match_layout_qualifier($1, "std140", state) == 0) {
             $$.flags.q.std140 = 1;
-         } else if (strcmp($1, "shared") == 0) {
+         } else if (match_layout_qualifier($1, "shared", state) == 0) {
             $$.flags.q.shared = 1;
-         } else if (strcmp($1, "column_major") == 0) {
+         } else if (match_layout_qualifier($1, "column_major", state) == 0) {
             $$.flags.q.column_major = 1;
          /* "row_major" is a reserved word in GLSL 1.30+. Its token is parsed
           * below in the interface_block_layout_qualifier rule.
           *
           * It is not a reserved word in GLSL ES 3.00, so it's handled here as
           * an identifier.
+          *
+          * Also, this takes care of alternate capitalizations of
+          * "row_major" (which is necessary because layout qualifiers
+          * are case-insensitive in desktop GLSL).
           */
-         } else if (strcmp($1, "row_major") == 0) {
+         } else if (match_layout_qualifier($1, "row_major", state) == 0) {
             $$.flags.q.row_major = 1;
+         /* "packed" is a reserved word in GLSL, and its token is
+          * parsed below in the interface_block_layout_qualifier rule.
+          * However, we must take care of alternate capitalizations of
+          * "packed", because layout qualifiers are case-insensitive
+          * in desktop GLSL.
+          */
+         } else if (match_layout_qualifier($1, "packed", state) == 0) {
+           $$.flags.q.packed = 1;
          }
 
          if ($$.flags.i && state->ARB_uniform_buffer_object_warn) {
@@ -1239,7 +1279,7 @@ layout_qualifier_id:
                  { "triangle_strip", GL_TRIANGLE_STRIP },
          };
          for (unsigned i = 0; i < Elements(map); i++) {
-            if (strcmp($1, map[i].s) == 0) {
+            if (match_layout_qualifier($1, map[i].s, state) == 0) {
                $$.flags.q.prim_type = 1;
                $$.prim_type = map[i].e;
                break;
@@ -1263,7 +1303,7 @@ layout_qualifier_id:
       memset(& $$, 0, sizeof($$));
 
       if (state->has_explicit_attrib_location()) {
-         if (strcmp("location", $1) == 0) {
+         if (match_layout_qualifier("location", $1, state) == 0) {
             $$.flags.q.explicit_location = 1;
 
             if ($3 >= 0) {
@@ -1275,7 +1315,7 @@ layout_qualifier_id:
             }
          }
 
-         if (strcmp("index", $1) == 0) {
+         if (match_layout_qualifier("index", $1, state) == 0) {
             $$.flags.q.explicit_index = 1;
 
             if ($3 >= 0) {
@@ -1289,12 +1329,12 @@ layout_qualifier_id:
       }
 
       if (state->ARB_shading_language_420pack_enable &&
-          strcmp("binding", $1) == 0) {
+          match_layout_qualifier("binding", $1, state) == 0) {
          $$.flags.q.explicit_binding = 1;
          $$.binding = $3;
       }
 
-      if (strcmp("max_vertices", $1) == 0) {
+      if (match_layout_qualifier("max_vertices", $1, state) == 0) {
          $$.flags.q.max_vertices = 1;
 
          if ($3 < 0) {
@@ -1344,6 +1384,10 @@ layout_qualifier_id:
  * (due to them being reserved keywords) instead of identifiers like
  * most qualifiers.  See the any_identifier path of
  * layout_qualifier_id for the others.
+ *
+ * Note that since layout qualifiers are case-insensitive in desktop
+ * GLSL, all of these qualifiers need to be handled as identifiers as
+ * well (by the any_identifier path of layout_qualifier_id).
  */
 interface_block_layout_qualifier:
    ROW_MAJOR
