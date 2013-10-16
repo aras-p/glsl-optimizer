@@ -198,12 +198,6 @@ brw_new_batch(struct brw_context *brw)
 
    brw->ib.type = -1;
 
-   /* Mark that the current program cache BO has been used by the GPU.
-    * It will be reallocated if we need to put new programs in for the
-    * next batch.
-    */
-   brw->cache.bo_used_by_gpu = true;
-
    /* We need to periodically reap the shader time results, because rollover
     * happens every few seconds.  We also want to see results every once in a
     * while, because many programs won't cleanly destroy our context, so the
@@ -232,6 +226,12 @@ brw_finish_batch(struct brw_context *brw)
       drm_intel_bo_unreference(brw->curbe.curbe_bo);
       brw->curbe.curbe_bo = NULL;
    }
+
+   /* Mark that the current program cache BO has been used by the GPU.
+    * It will be reallocated if we need to put new programs in for the
+    * next batch.
+    */
+   brw->cache.bo_used_by_gpu = true;
 }
 
 /* TODO: Push this whole function into bufmgr.
