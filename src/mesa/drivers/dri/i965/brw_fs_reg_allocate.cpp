@@ -677,13 +677,13 @@ fs_visitor::spill_reg(int spill_reg)
 	 if (inst->src[i].file == GRF &&
 	     inst->src[i].reg == spill_reg) {
             int regs_read = inst->regs_read(this, i);
+            int subset_spill_offset = (spill_offset +
+                                       reg_size * inst->src[i].reg_offset);
 
             inst->src[i].reg = virtual_grf_alloc(regs_read);
             inst->src[i].reg_offset = 0;
 
-            emit_unspill(inst, inst->src[i],
-                         spill_offset + reg_size * inst->src[i].reg_offset,
-                         regs_read);
+            emit_unspill(inst, inst->src[i], subset_spill_offset, regs_read);
 	 }
       }
 
