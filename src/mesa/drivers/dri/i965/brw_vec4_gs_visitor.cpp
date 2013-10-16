@@ -110,7 +110,7 @@ vec4_gs_visitor::setup_payload()
 
    reg = setup_varying_inputs(reg, attribute_map);
 
-   lower_attributes_to_hw_regs(attribute_map);
+   lower_attributes_to_hw_regs(attribute_map, false /* interleaved */);
 
    this->first_non_payload_grf = reg;
 }

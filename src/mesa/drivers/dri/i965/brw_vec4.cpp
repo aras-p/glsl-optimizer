@@ -1184,12 +1184,32 @@ vec4_visitor::dump_instruction(backend_instruction *be_inst)
    printf("\n");
 }
 
+
+static inline struct brw_reg
+attribute_to_hw_reg(int attr, bool interleaved)
+{
+   if (interleaved)
+      return stride(brw_vec4_grf(attr / 2, (attr % 2) * 4), 0, 4, 1);
+   else
+      return brw_vec8_grf(attr, 0);
+}
+
+
 /**
  * Replace each register of type ATTR in this->instructions with a reference
  * to a fixed HW register.
+ *
+ * If interleaved is true, then each attribute takes up half a register, with
+ * register N containing attribute 2*N in its first half and attribute 2*N+1
+ * in its second half (this corresponds to the payload setup used by geometry
+ * shaders in "single" or "dual instanced" dispatch mode).  If interleaved is
+ * false, then each attribute takes up a whole register, with register N
+ * containing attribute N (this corresponds to the payload setup used by
+ * vertex shaders, and by geometry shaders in "dual object" dispatch mode).
  */
 void
-vec4_visitor::lower_attributes_to_hw_regs(const int *attribute_map)
+vec4_visitor::lower_attributes_to_hw_regs(const int *attribute_map,
+                                          bool interleaved)
 {
    foreach_list(node, &this->instructions) {
       vec4_instruction *inst = (vec4_instruction *)node;
@@ -1203,7 +1223,7 @@ vec4_visitor::lower_attributes_to_hw_regs(const int *attribute_map)
           */
          assert(grf != 0);
 
-	 struct brw_reg reg = brw_vec8_grf(grf, 0);
+	 struct brw_reg reg = attribute_to_hw_reg(grf, interleaved);
 	 reg.type = inst->dst.type;
 	 reg.dw1.bits.writemask = inst->dst.writemask;
 
@@ -1222,7 +1242,7 @@ vec4_visitor::lower_attributes_to_hw_regs(const int *attribute_map)
           */
          assert(grf != 0);
 
-	 struct brw_reg reg = brw_vec8_grf(grf, 0);
+	 struct brw_reg reg = attribute_to_hw_reg(grf, interleaved);
 	 reg.dw1.bits.swizzle = inst->src[i].swizzle;
          reg.type = inst->src[i].type;
 	 if (inst->src[i].abs)
@@ -1260,7 +1280,7 @@ vec4_vs_visitor::setup_attributes(int payload_reg)
       nr_attributes++;
    }
 
-   lower_attributes_to_hw_regs(attribute_map);
+   lower_attributes_to_hw_regs(attribute_map, false /* interleaved */);
 
    /* The BSpec says we always have to read at least one thing from
     * the VF, and it appears that the hardware wedges otherwise.
