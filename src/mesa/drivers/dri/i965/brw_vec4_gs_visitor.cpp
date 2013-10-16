@@ -181,7 +181,13 @@ vec4_gs_visitor::emit_prolog()
          src_reg src(dst);
          dst.writemask = WRITEMASK_X;
          src.swizzle = BRW_SWIZZLE_WWWW;
-         emit(MOV(dst, src));
+         inst = emit(MOV(dst, src));
+
+         /* In dual instanced dispatch mode, dst has a width of 4, so we need
+          * to make sure the MOV happens regardless of which channels are
+          * enabled.
+          */
+         inst->force_writemask_all = true;
       }
    }
 

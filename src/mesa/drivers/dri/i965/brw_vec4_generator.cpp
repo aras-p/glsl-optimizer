@@ -856,6 +856,31 @@ vec4_generator::generate_vec4_instruction(vec4_instruction *instruction,
 {
    vec4_instruction *inst = (vec4_instruction *) instruction;
 
+   if (dst.width == BRW_WIDTH_4) {
+      /* This happens in attribute fixups for "dual instanced" geometry
+       * shaders, since they use attributes that are vec4's.  Since the exec
+       * width is only 4, it's essential that the caller set
+       * force_writemask_all in order to make sure the instruction is executed
+       * regardless of which channels are enabled.
+       */
+      assert(inst->force_writemask_all);
+
+      /* Fix up any <8;8,1> or <0;4,1> source registers to <4;4,1> to satisfy
+       * the following register region restrictions (from Graphics BSpec:
+       * 3D-Media-GPGPU Engine > EU Overview > Registers and Register Regions
+       * > Register Region Restrictions)
+       *
+       *     1. ExecSize must be greater than or equal to Width.
+       *
+       *     2. If ExecSize = Width and HorzStride != 0, VertStride must be set
+       *        to Width * HorzStride."
+       */
+      for (int i = 0; i < 3; i++) {
+         if (src[i].file == BRW_GENERAL_REGISTER_FILE)
+            src[i] = stride(src[i], 4, 4, 1);
+      }
+   }
+
    switch (inst->opcode) {
    case BRW_OPCODE_MOV:
       brw_MOV(p, dst, src[0]);
