@@ -85,6 +85,12 @@ is_vec_one(ir_constant *ir)
 }
 
 static inline bool
+is_vec_negative_one(ir_constant *ir)
+{
+   return (ir == NULL) ? false : ir->is_negative_one();
+}
+
+static inline bool
 is_vec_basis(ir_constant *ir)
 {
    return (ir == NULL) ? false : ir->is_basis();
@@ -287,6 +293,23 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
 	 this->progress = true;
 	 return ir_constant::zero(ir, ir->type);
       }
+      if (is_vec_negative_one(op_const[0])) {
+         this->progress = true;
+         temp = new(mem_ctx) ir_expression(ir_unop_neg,
+                                           ir->operands[1]->type,
+                                           ir->operands[1],
+                                           NULL);
+         return swizzle_if_required(ir, temp);
+      }
+      if (is_vec_negative_one(op_const[1])) {
+         this->progress = true;
+         temp = new(mem_ctx) ir_expression(ir_unop_neg,
+                                           ir->operands[0]->type,
+                                           ir->operands[0],
+                                           NULL);
+         return swizzle_if_required(ir, temp);
+      }
+
 
       /* Reassociate multiplication of constants so that we can do
        * constant folding.
