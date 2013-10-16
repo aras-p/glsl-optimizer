@@ -161,9 +161,18 @@ static void radeonsi_launch_grid(
 		si_pm4_add_bo(pm4, buffer, RADEON_USAGE_READWRITE);
 	}
 
-	/* XXX: This should be:
-	 * (number of compute units) * 4 * (waves per simd) - 1 */
-	si_pm4_set_reg(pm4, R_00B82C_COMPUTE_MAX_WAVE_ID, 0x190 /* Default value */);
+	/* This register has been moved to R_00CD20_COMPUTE_MAX_WAVE_ID
+	 * and is now per pipe, so it should be handled in the
+	 * kernel if we want to use something other than the default value,
+	 * which is now 0x22f.
+	 */
+	if (rctx->b.chip_class <= SI) {
+		/* XXX: This should be:
+		 * (number of compute units) * 4 * (waves per simd) - 1 */
+
+		si_pm4_set_reg(pm4, R_00B82C_COMPUTE_MAX_WAVE_ID,
+						0x190 /* Default value */);
+	}
 
 	shader_va = r600_resource_va(ctx->screen, (void *)shader->bo);
 	si_pm4_add_bo(pm4, shader->bo, RADEON_USAGE_READ);
