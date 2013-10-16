@@ -41,6 +41,7 @@
 
 struct wl_drm {
 	struct wl_display *display;
+	struct wl_global *wl_drm_global;
 
 	void *user_data;
 	char *device_name;
@@ -275,7 +276,9 @@ wayland_drm_init(struct wl_display *display, char *device_name,
 
         drm->buffer_interface.destroy = buffer_destroy;
 
-	wl_global_create(display, &wl_drm_interface, 2, drm, bind_drm);
+	drm->wl_drm_global =
+		wl_global_create(display, &wl_drm_interface, 2,
+				 drm, bind_drm);
 
 	return drm;
 }
@@ -285,7 +288,7 @@ wayland_drm_uninit(struct wl_drm *drm)
 {
 	free(drm->device_name);
 
-	/* FIXME: need wl_display_del_{object,global} */
+	wl_global_destroy(drm->wl_drm_global);
 
 	free(drm);
 }
