@@ -1520,7 +1520,7 @@ vec4_visitor::run()
 
    while (!reg_allocate()) {
       if (failed)
-         break;
+         return false;
    }
 
    opt_schedule_instructions();
