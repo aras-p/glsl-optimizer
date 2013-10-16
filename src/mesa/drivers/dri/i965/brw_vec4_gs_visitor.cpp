@@ -550,8 +550,34 @@ brw_gs_emit(struct brw_context *brw,
       printf("\n\n");
    }
 
-   /* Assume the geometry shader will use DUAL_OBJECT dispatch for now. */
-   c->prog_data.dual_instanced_dispatch = false;
+   /* Compile the geometry shader in DUAL_OBJECT dispatch mode, if we can do
+    * so without spilling.
+    */
+   if (likely(!(INTEL_DEBUG & DEBUG_NO_DUAL_OBJECT_GS))) {
+      c->prog_data.dual_instanced_dispatch = false;
+
+      vec4_gs_visitor v(brw, c, prog, shader, mem_ctx, true /* no_spills */);
+      if (v.run()) {
+         vec4_generator g(brw, prog, &c->gp->program.Base, &c->prog_data.base,
+                          mem_ctx, INTEL_DEBUG & DEBUG_GS);
+         const unsigned *generated =
+            g.generate_assembly(&v.instructions, final_assembly_size);
+
+         return generated;
+      }
+   }
+
+   /* Either we failed to compile in DUAL_OBJECT mode (probably because it
+    * would have required spilling) or DUAL_OBJECT mode is disabled.  So fall
+    * back to DUAL_INSTANCED mode, which consumes fewer registers.
+    *
+    * FIXME: In an ideal world we'd fall back to SINGLE mode, which would
+    * allow us to interleave general purpose registers (resulting in even less
+    * likelihood of spilling).  But at the moment, the vec4 generator and
+    * visitor classes don't have the infrastructure to interleave general
+    * purpose registers, so DUAL_INSTANCED is the best we can do.
+    */
+   c->prog_data.dual_instanced_dispatch = true;
 
    vec4_gs_visitor v(brw, c, prog, shader, mem_ctx, false /* no_spills */);
    if (!v.run()) {
