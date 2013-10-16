@@ -4355,7 +4355,7 @@ teximagemultisample(GLuint dims, GLenum target, GLsizei samples,
 
 void GLAPIENTRY
 _mesa_TexImage2DMultisample(GLenum target, GLsizei samples,
-                            GLint internalformat, GLsizei width,
+                            GLenum internalformat, GLsizei width,
                             GLsizei height, GLboolean fixedsamplelocations)
 {
    teximagemultisample(2, target, samples, internalformat,
@@ -4366,7 +4366,7 @@ _mesa_TexImage2DMultisample(GLenum target, GLsizei samples,
 
 void GLAPIENTRY
 _mesa_TexImage3DMultisample(GLenum target, GLsizei samples,
-                            GLint internalformat, GLsizei width,
+                            GLenum internalformat, GLsizei width,
                             GLsizei height, GLsizei depth,
                             GLboolean fixedsamplelocations)
 {
