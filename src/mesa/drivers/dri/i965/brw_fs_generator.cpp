@@ -756,8 +756,8 @@ fs_generator::generate_spill(fs_inst *inst, struct brw_reg src)
    brw_MOV(p,
 	   retype(brw_message_reg(inst->base_mrf + 1), BRW_REGISTER_TYPE_UD),
 	   retype(src, BRW_REGISTER_TYPE_UD));
-   brw_oword_block_write_scratch(p, brw_message_reg(inst->base_mrf), 1,
-				 inst->offset);
+   brw_oword_block_write_scratch(p, brw_message_reg(inst->base_mrf),
+                                 inst->mlen, inst->offset);
 }
 
 void
@@ -765,8 +765,8 @@ fs_generator::generate_unspill(fs_inst *inst, struct brw_reg dst)
 {
    assert(inst->mlen != 0);
 
-   brw_oword_block_read_scratch(p, dst, brw_message_reg(inst->base_mrf), 1,
-				inst->offset);
+   brw_oword_block_read_scratch(p, dst, brw_message_reg(inst->base_mrf),
+                                dispatch_width / 8, inst->offset);
 }
 
 void

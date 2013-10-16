@@ -547,15 +547,12 @@ fs_visitor::emit_unspill(fs_inst *inst, fs_reg dst, uint32_t spill_offset,
       unspill_inst->ir = inst->ir;
       unspill_inst->annotation = inst->annotation;
 
-      /* Choose a MRF that won't conflict with an MRF that's live across the
-       * spill.  Nothing else will make it up to MRF 14/15.
-       */
       unspill_inst->base_mrf = 14;
       unspill_inst->mlen = 1; /* header contains offset */
       inst->insert_before(unspill_inst);
 
       dst.reg_offset++;
-      spill_offset += REG_SIZE;
+      spill_offset += dispatch_width * sizeof(float);
    }
 }
 
@@ -639,10 +636,10 @@ fs_visitor::choose_spill_reg(struct ra_graph *g)
 void
 fs_visitor::spill_reg(int spill_reg)
 {
+   int reg_size = dispatch_width * sizeof(float);
    int size = virtual_grf_sizes[spill_reg];
    unsigned int spill_offset = c->last_scratch;
    assert(ALIGN(spill_offset, 16) == spill_offset); /* oword read/write req. */
-   c->last_scratch += size * REG_SIZE;
    int spill_base_mrf = dispatch_width > 8 ? 13 : 14;
 
    /* Spills may use MRFs 13-15 in the SIMD16 case.  Our texturing is done
@@ -666,6 +663,8 @@ fs_visitor::spill_reg(int spill_reg)
       spilled_any_registers = true;
    }
 
+   c->last_scratch += size * reg_size;
+
    /* Generate spill/unspill instructions for the objects being
     * spilled.  Right now, we spill or unspill the whole thing to a
     * virtual grf of the same size.  For most instructions, though, we
@@ -683,7 +682,7 @@ fs_visitor::spill_reg(int spill_reg)
             inst->src[i].reg_offset = 0;
 
             emit_unspill(inst, inst->src[i],
-                         spill_offset + REG_SIZE * inst->src[i].reg_offset,
+                         spill_offset + reg_size * inst->src[i].reg_offset,
                          regs_read);
 	 }
       }
@@ -691,7 +690,7 @@ fs_visitor::spill_reg(int spill_reg)
       if (inst->dst.file == GRF &&
 	  inst->dst.reg == spill_reg) {
          int subset_spill_offset = (spill_offset +
-                                    REG_SIZE * inst->dst.reg_offset);
+                                    reg_size * inst->dst.reg_offset);
          inst->dst.reg = virtual_grf_alloc(inst->regs_written);
          inst->dst.reg_offset = 0;
 
@@ -714,11 +713,11 @@ fs_visitor::spill_reg(int spill_reg)
 	    fs_inst *spill_inst = new(mem_ctx) fs_inst(FS_OPCODE_SPILL,
 						       reg_null_f, spill_src);
 	    spill_src.reg_offset++;
-	    spill_inst->offset = subset_spill_offset + chan * REG_SIZE;
+	    spill_inst->offset = subset_spill_offset + chan * reg_size;
 	    spill_inst->ir = inst->ir;
 	    spill_inst->annotation = inst->annotation;
-	    spill_inst->base_mrf = 14;
-	    spill_inst->mlen = 2; /* header, value */
+	    spill_inst->mlen = 1 + dispatch_width / 8; /* header, value */
+	    spill_inst->base_mrf = spill_base_mrf;
 	    inst->insert_after(spill_inst);
 	 }
       }
