@@ -81,7 +81,8 @@ public:
                    struct brw_gs_compile *c,
                    struct gl_shader_program *prog,
                    struct brw_shader *shader,
-                   void *mem_ctx);
+                   void *mem_ctx,
+                   bool no_spills);
 
 protected:
    virtual dst_reg *make_reg_for_system_value(ir_variable *ir);

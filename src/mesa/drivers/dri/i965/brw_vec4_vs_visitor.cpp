@@ -215,7 +215,7 @@ vec4_vs_visitor::vec4_vs_visitor(struct brw_context *brw,
                                  void *mem_ctx)
    : vec4_visitor(brw, &vs_compile->base, &vs_compile->vp->program.Base,
                   &vs_compile->key.base, &vs_prog_data->base, prog, shader,
-                  mem_ctx, INTEL_DEBUG & DEBUG_VS),
+                  mem_ctx, INTEL_DEBUG & DEBUG_VS, false /* no_spills */),
      vs_compile(vs_compile),
      vs_prog_data(vs_prog_data)
 {

@@ -230,7 +230,8 @@ public:
 		struct gl_shader_program *shader_prog,
 		struct brw_shader *shader,
 		void *mem_ctx,
-                bool debug_flag);
+                bool debug_flag,
+                bool no_spills);
    ~vec4_visitor();
 
    dst_reg dst_null_f()
@@ -529,6 +530,12 @@ protected:
    virtual int compute_array_stride(ir_dereference_array *ir);
 
    const bool debug_flag;
+
+private:
+   /**
+    * If true, then register allocation should fail instead of spilling.
+    */
+   const bool no_spills;
 };
 
 

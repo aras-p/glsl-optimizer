@@ -214,7 +214,10 @@ vec4_visitor::reg_allocate()
        * loop back into here to try again.
        */
       int reg = choose_spill_reg(g);
-      if (reg == -1) {
+      if (this->no_spills) {
+         fail("Failure to register allocate.  Reduce number of live "
+              "values to avoid this.");
+      } else if (reg == -1) {
          fail("no register to spill\n");
       } else {
          spill_reg(reg);

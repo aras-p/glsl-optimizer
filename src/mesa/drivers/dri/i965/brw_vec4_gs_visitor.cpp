@@ -37,10 +37,11 @@ vec4_gs_visitor::vec4_gs_visitor(struct brw_context *brw,
                                  struct brw_gs_compile *c,
                                  struct gl_shader_program *prog,
                                  struct brw_shader *shader,
-                                 void *mem_ctx)
+                                 void *mem_ctx,
+                                 bool no_spills)
    : vec4_visitor(brw, &c->base, &c->gp->program.Base, &c->key.base,
                   &c->prog_data.base, prog, shader, mem_ctx,
-                  INTEL_DEBUG & DEBUG_GS),
+                  INTEL_DEBUG & DEBUG_GS, no_spills),
      c(c)
 {
 }
@@ -533,7 +534,7 @@ brw_gs_emit(struct brw_context *brw,
       printf("\n\n");
    }
 
-   vec4_gs_visitor v(brw, c, prog, shader, mem_ctx);
+   vec4_gs_visitor v(brw, c, prog, shader, mem_ctx, false /* no_spills */);
    if (!v.run()) {
       prog->LinkStatus = false;
       ralloc_strcat(&prog->InfoLog, v.fail_msg);
