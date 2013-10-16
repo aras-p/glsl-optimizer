@@ -42,7 +42,8 @@
 
 enum wl_drm_format_flags {
    HAS_ARGB8888 = 1,
-   HAS_XRGB8888 = 2
+   HAS_XRGB8888 = 2,
+   HAS_RGB565 = 4,
 };
 
 static void
@@ -132,7 +133,9 @@ dri2_create_surface(_EGLDriver *drv, _EGLDisplay *disp, EGLint type,
    if (!_eglInitSurface(&dri2_surf->base, disp, type, conf, attrib_list))
       goto cleanup_surf;
 
-   if (conf->AlphaSize == 0)
+   if (conf->RedSize == 5)
+      dri2_surf->format = WL_DRM_FORMAT_RGB565;
+   else if (conf->AlphaSize == 0)
       dri2_surf->format = WL_DRM_FORMAT_XRGB8888;
    else
       dri2_surf->format = WL_DRM_FORMAT_ARGB8888;
@@ -674,6 +677,9 @@ drm_handle_format(void *data, struct wl_drm *drm, uint32_t format)
    case WL_DRM_FORMAT_XRGB8888:
       dri2_dpy->formats |= HAS_XRGB8888;
       break;
+   case WL_DRM_FORMAT_RGB565:
+      dri2_dpy->formats |= HAS_RGB565;
+      break;
    }
 }
 
@@ -736,6 +742,7 @@ dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp)
    static const unsigned int argb_masks[4] =
       { 0xff0000, 0xff00, 0xff, 0xff000000 };
    static const unsigned int rgb_masks[4] = { 0xff0000, 0xff00, 0xff, 0 };
+   static const unsigned int rgb565_masks[4] = { 0xf800, 0x07e0, 0x001f, 0 };
 
    drv->API.CreateWindowSurface = dri2_create_window_surface;
    drv->API.DestroySurface = dri2_destroy_surface;
@@ -817,6 +824,8 @@ dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp)
 	 dri2_add_config(disp, config, i + 1, 0, types, NULL, rgb_masks);
       if (dri2_dpy->formats & HAS_ARGB8888)
 	 dri2_add_config(disp, config, i + 1, 0, types, NULL, argb_masks);
+      if (dri2_dpy->formats & HAS_RGB565)
+        dri2_add_config(disp, config, i + 1, 0, types, NULL, rgb565_masks);
    }
 
    disp->Extensions.WL_bind_wayland_display = EGL_TRUE;
