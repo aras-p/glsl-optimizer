@@ -334,7 +334,7 @@ static int svga_get_shader_param(struct pipe_screen *screen, unsigned shader, en
       case PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS:
          return 16;
       default:
-         debug_printf("Unexpected vertex shader query %u\n", param);
+         debug_printf("Unexpected fragment shader query %u\n", param);
          return 0;
       }
       break;
@@ -389,7 +389,8 @@ static int svga_get_shader_param(struct pipe_screen *screen, unsigned shader, en
       }
       break;
    case PIPE_SHADER_GEOMETRY:
-      /* no support for geometry shaders at this time */
+   case PIPE_SHADER_COMPUTE:
+      /* no support for geometry or compute shaders at this time */
       return 0;
    default:
       debug_printf("Unexpected shader type (%u) query\n", shader);
