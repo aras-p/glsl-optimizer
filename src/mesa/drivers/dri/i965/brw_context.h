@@ -641,6 +641,12 @@ struct brw_gs_prog_data
    unsigned control_data_format;
 
    bool include_primitive_id;
+
+   /**
+    * True if the thread should be dispatched in DUAL_INSTANCE mode, false if
+    * it should be dispatched in DUAL_OBJECT mode.
+    */
+   bool dual_instanced_dispatch;
 };
 
 /** Number of texture sampler units */

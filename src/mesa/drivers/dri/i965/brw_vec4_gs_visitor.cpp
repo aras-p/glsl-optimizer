@@ -57,7 +57,8 @@ vec4_gs_visitor::make_reg_for_system_value(ir_variable *ir)
 
 
 int
-vec4_gs_visitor::setup_varying_inputs(int payload_reg, int *attribute_map)
+vec4_gs_visitor::setup_varying_inputs(int payload_reg, int *attribute_map,
+                                      int attributes_per_reg)
 {
    /* For geometry shaders there are N copies of the input attributes, where N
     * is the number of input vertices.  attribute_map[BRW_VARYING_SLOT_COUNT *
@@ -75,11 +76,14 @@ vec4_gs_visitor::setup_varying_inputs(int payload_reg, int *attribute_map)
       int varying = c->input_vue_map.slot_to_varying[slot];
       for (unsigned vertex = 0; vertex < num_input_vertices; vertex++) {
          attribute_map[BRW_VARYING_SLOT_COUNT * vertex + varying] =
-            payload_reg + input_array_stride * vertex + slot;
+            attributes_per_reg * payload_reg + input_array_stride * vertex +
+            slot;
       }
    }
 
-   return payload_reg + input_array_stride * num_input_vertices;
+   int regs_used = ALIGN(input_array_stride * num_input_vertices,
+                         attributes_per_reg) / attributes_per_reg;
+   return payload_reg + regs_used;
 }
 
 
@@ -87,6 +91,11 @@ void
 vec4_gs_visitor::setup_payload()
 {
    int attribute_map[BRW_VARYING_SLOT_COUNT * MAX_GS_INPUT_VERTICES];
+
+   /* If we are in dual instanced mode, then attributes are going to be
+    * interleaved, so one register contains two attribute slots.
+    */
+   int attributes_per_reg = c->prog_data.dual_instanced_dispatch ? 2 : 1;
 
    /* If a geometry shader tries to read from an input that wasn't written by
     * the vertex shader, that produces undefined results, but it shouldn't
@@ -105,13 +114,14 @@ vec4_gs_visitor::setup_payload()
 
    /* If the shader uses gl_PrimitiveIDIn, that goes in r1. */
    if (c->prog_data.include_primitive_id)
-      attribute_map[VARYING_SLOT_PRIMITIVE_ID] = reg++;
+      attribute_map[VARYING_SLOT_PRIMITIVE_ID] = attributes_per_reg * reg++;
 
    reg = setup_uniforms(reg);
 
-   reg = setup_varying_inputs(reg, attribute_map);
+   reg = setup_varying_inputs(reg, attribute_map, attributes_per_reg);
 
-   lower_attributes_to_hw_regs(attribute_map, false /* interleaved */);
+   lower_attributes_to_hw_regs(attribute_map,
+                               c->prog_data.dual_instanced_dispatch);
 
    this->first_non_payload_grf = reg;
 }
@@ -533,6 +543,9 @@ brw_gs_emit(struct brw_context *brw,
       _mesa_print_ir(shader->ir, NULL);
       printf("\n\n");
    }
+
+   /* Assume the geometry shader will use DUAL_OBJECT dispatch for now. */
+   c->prog_data.dual_instanced_dispatch = false;
 
    vec4_gs_visitor v(brw, c, prog, shader, mem_ctx, false /* no_spills */);
    if (!v.run()) {

@@ -136,7 +136,9 @@ upload_gs_state(struct brw_context *brw)
          ((brw->max_gs_threads - 1) << max_threads_shift) |
          (brw->gs.prog_data->control_data_header_size_hwords <<
           GEN7_GS_CONTROL_DATA_HEADER_SIZE_SHIFT) |
-         GEN7_GS_DISPATCH_MODE_DUAL_OBJECT |
+         (brw->gs.prog_data->dual_instanced_dispatch ?
+          GEN7_GS_DISPATCH_MODE_DUAL_INSTANCE :
+          GEN7_GS_DISPATCH_MODE_DUAL_OBJECT) |
          GEN6_GS_STATISTICS_ENABLE |
          (brw->gs.prog_data->include_primitive_id ?
           GEN7_GS_INCLUDE_PRIMITIVE_ID : 0) |
