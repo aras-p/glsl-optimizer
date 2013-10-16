@@ -210,6 +210,24 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
       this->mem_ctx = ralloc_parent(ir);
 
    switch (ir->operation) {
+   case ir_unop_abs:
+      if (op_expr[0] == NULL)
+	 break;
+
+      switch (op_expr[0]->operation) {
+      case ir_unop_abs:
+      case ir_unop_neg:
+         this->progress = true;
+         temp = new(mem_ctx) ir_expression(ir_unop_abs,
+                                           ir->type,
+                                           op_expr[0]->operands[0],
+                                           NULL);
+         return swizzle_if_required(ir, temp);
+      default:
+         break;
+      }
+      break;
+
    case ir_unop_logic_not: {
       enum ir_expression_operation new_op = ir_unop_logic_not;
 
