@@ -89,11 +89,13 @@ XORG_OUTPUTS = \
 API_XML = \
 	gl_API.xml \
 	ARB_base_instance.xml \
+	ARB_blend_func_extended.xml \
 	ARB_color_buffer_float.xml \
 	ARB_copy_buffer.xml \
 	ARB_debug_output.xml \
 	ARB_depth_buffer_float.xml \
 	ARB_depth_clamp.xml \
+	ARB_draw_buffers.xml \
 	ARB_draw_buffers_blend.xml \
 	ARB_draw_elements_base_vertex.xml \
 	ARB_draw_instanced.xml \
@@ -102,6 +104,8 @@ API_XML = \
 	ARB_framebuffer_object.xml \
 	ARB_geometry_shader4.xml \
 	ARB_instanced_arrays.xml \
+	ARB_internalformat_query.xml \
+	ARB_invalidate_subdata.xml \
 	ARB_map_buffer_range.xml \
 	ARB_robustness.xml \
 	ARB_sampler_objects.xml \
@@ -110,9 +114,13 @@ API_XML = \
 	ARB_texture_buffer_object.xml \
 	ARB_texture_buffer_range.xml \
 	ARB_texture_compression_rgtc.xml \
+	ARB_texture_cube_map_array.xml \
 	ARB_texture_float.xml \
 	ARB_texture_gather.xml \
+	ARB_texture_multisample.xml \
+	ARB_texture_rgb10_a2ui.xml \
 	ARB_texture_rg.xml \
+	ARB_texture_storage_multisample.xml \
 	ARB_texture_storage.xml \
 	ARB_vertex_array_object.xml \
 	AMD_draw_buffers_blend.xml \
