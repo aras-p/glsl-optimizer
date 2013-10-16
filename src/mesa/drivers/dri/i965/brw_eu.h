@@ -379,6 +379,11 @@ void brw_oword_block_write_scratch(struct brw_compile *p,
 				   int num_regs,
 				   GLuint offset);
 
+void gen7_block_read_scratch(struct brw_compile *p,
+                             struct brw_reg dest,
+                             int num_regs,
+                             GLuint offset);
+
 void brw_shader_time_add(struct brw_compile *p,
                          struct brw_reg payload,
                          uint32_t surf_index);

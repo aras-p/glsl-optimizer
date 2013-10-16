@@ -542,14 +542,22 @@ fs_visitor::emit_unspill(fs_inst *inst, fs_reg dst, uint32_t spill_offset,
                          int count)
 {
    for (int i = 0; i < count; i++) {
+      /* The gen7 descriptor-based offset is 12 bits of HWORD units. */
+      bool gen7_read = brw->gen >= 7 && spill_offset < (1 << 12) * REG_SIZE;
+
       fs_inst *unspill_inst =
-         new(mem_ctx) fs_inst(SHADER_OPCODE_GEN4_SCRATCH_READ, dst);
+         new(mem_ctx) fs_inst(gen7_read ?
+                              SHADER_OPCODE_GEN7_SCRATCH_READ :
+                              SHADER_OPCODE_GEN4_SCRATCH_READ,
+                              dst);
       unspill_inst->offset = spill_offset;
       unspill_inst->ir = inst->ir;
       unspill_inst->annotation = inst->annotation;
 
-      unspill_inst->base_mrf = 14;
-      unspill_inst->mlen = 1; /* header contains offset */
+      if (!gen7_read) {
+         unspill_inst->base_mrf = 14;
+         unspill_inst->mlen = 1; /* header contains offset */
+      }
       inst->insert_before(unspill_inst);
 
       dst.reg_offset++;
@@ -617,6 +625,7 @@ fs_visitor::choose_spill_reg(struct ra_graph *g)
 	 break;
 
       case SHADER_OPCODE_GEN4_SCRATCH_READ:
+      case SHADER_OPCODE_GEN7_SCRATCH_READ:
 	 if (inst->dst.file == GRF)
 	    no_spill[inst->dst.reg] = true;
 	 break;

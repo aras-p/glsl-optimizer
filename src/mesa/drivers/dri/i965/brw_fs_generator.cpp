@@ -770,6 +770,12 @@ fs_generator::generate_scratch_read(fs_inst *inst, struct brw_reg dst)
 }
 
 void
+fs_generator::generate_scratch_read_gen7(fs_inst *inst, struct brw_reg dst)
+{
+   gen7_block_read_scratch(p, dst, dispatch_width / 8, inst->offset);
+}
+
+void
 fs_generator::generate_uniform_pull_constant_load(fs_inst *inst,
                                                   struct brw_reg dst,
                                                   struct brw_reg index,
@@ -1585,6 +1591,10 @@ fs_generator::generate_code(exec_list *instructions)
 
       case SHADER_OPCODE_GEN4_SCRATCH_READ:
 	 generate_scratch_read(inst, dst);
+	 break;
+
+      case SHADER_OPCODE_GEN7_SCRATCH_READ:
+	 generate_scratch_read_gen7(inst, dst);
 	 break;
 
       case FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD:

@@ -342,6 +342,18 @@ schedule_node::set_latency_gen7(bool is_haswell)
       latency = 200;
       break;
 
+   case SHADER_OPCODE_GEN7_SCRATCH_READ:
+      /* Testing a load from offset 0, that had been previously written:
+       *
+       * send(8) g114<1>UW g0<8,8,1>F data (0, 0, 0) mlen 1 rlen 1 { align1 WE_normal 1Q };
+       * mov(8)  null      g114<8,8,1>F { align1 WE_normal 1Q };
+       *
+       * The cycles spent seemed to be grouped around 40-50 (as low as 38),
+       * then around 140.  Presumably this is cache hit vs miss.
+       */
+      latency = 50;
+      break;
+
    default:
       /* 2 cycles:
        * mul(8) g4<1>F g2<0,1,0>F      0.5F            { align1 WE_normal 1Q };

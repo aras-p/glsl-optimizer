@@ -780,6 +780,7 @@ enum opcode {
 
    SHADER_OPCODE_GEN4_SCRATCH_READ,
    SHADER_OPCODE_GEN4_SCRATCH_WRITE,
+   SHADER_OPCODE_GEN7_SCRATCH_READ,
 
    FS_OPCODE_DDX,
    FS_OPCODE_DDY,
@@ -1140,6 +1141,12 @@ enum brw_message_target {
 #define GEN7_DATAPORT_DC_DWORD_SCATTERED_WRITE                      11
 #define GEN7_DATAPORT_DC_BYTE_SCATTERED_WRITE                       12
 #define GEN7_DATAPORT_DC_UNTYPED_SURFACE_WRITE                      13
+
+#define GEN7_DATAPORT_SCRATCH_READ                            ((1 << 18) | \
+                                                               (0 << 17))
+#define GEN7_DATAPORT_SCRATCH_WRITE                           ((1 << 18) | \
+                                                               (1 << 17))
+#define GEN7_DATAPORT_SCRATCH_NUM_REGS_SHIFT                        12
 
 /* HSW */
 #define HSW_DATAPORT_DC_PORT0_OWORD_BLOCK_READ                      0

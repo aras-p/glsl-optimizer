@@ -2055,6 +2055,48 @@ brw_oword_block_read_scratch(struct brw_compile *p,
    }
 }
 
+void
+gen7_block_read_scratch(struct brw_compile *p,
+                        struct brw_reg dest,
+                        int num_regs,
+                        GLuint offset)
+{
+   dest = retype(dest, BRW_REGISTER_TYPE_UW);
+
+   struct brw_instruction *insn = next_insn(p, BRW_OPCODE_SEND);
+
+   assert(insn->header.predicate_control == BRW_PREDICATE_NONE);
+   insn->header.compression_control = BRW_COMPRESSION_NONE;
+
+   brw_set_dest(p, insn, dest);
+
+   /* The HW requires that the header is present; this is to get the g0.5
+    * scratch offset.
+    */
+   bool header_present = true;
+   brw_set_src0(p, insn, brw_vec8_grf(0, 0));
+
+   brw_set_message_descriptor(p, insn,
+                              GEN7_SFID_DATAPORT_DATA_CACHE,
+                              1, /* mlen: just g0 */
+                              num_regs,
+                              header_present,
+                              false);
+
+   insn->bits3.ud |= GEN7_DATAPORT_SCRATCH_READ;
+
+   assert(num_regs == 1 || num_regs == 2 || num_regs == 4);
+   insn->bits3.ud |= (num_regs - 1) << GEN7_DATAPORT_SCRATCH_NUM_REGS_SHIFT;
+
+   /* According to the docs, offset is "A 12-bit HWord offset into the memory
+    * Immediate Memory buffer as specified by binding table 0xFF."  An HWORD
+    * is 32 bytes, which happens to be the size of a register.
+    */
+   offset /= REG_SIZE;
+   assert(offset < (1 << 12));
+   insn->bits3.ud |= offset;
+}
+
 /**
  * Read a float[4] vector from the data port Data Cache (const buffer).
  * Location (in buffer) should be a multiple of 16.
