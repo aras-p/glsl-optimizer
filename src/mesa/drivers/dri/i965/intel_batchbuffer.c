@@ -178,6 +178,9 @@ do_batch_dump(struct brw_context *brw)
 static void
 brw_new_batch(struct brw_context *brw)
 {
+   /* Create a new batchbuffer and reset the associated state: */
+   intel_batchbuffer_reset(brw);
+
    /* If the kernel supports hardware contexts, then most hardware state is
     * preserved between batches; we only need to re-emit state that is required
     * to be in every batch.  Otherwise we need to re-emit all the state that
@@ -286,7 +289,6 @@ do_flush_locked(struct brw_context *brw)
       fprintf(stderr, "intel_do_flush_locked failed: %s\n", strerror(-ret));
       exit(1);
    }
-   brw_new_batch(brw);
 
    return ret;
 }
@@ -339,9 +341,8 @@ _intel_batchbuffer_flush(struct brw_context *brw,
       drm_intel_bo_wait_rendering(brw->batch.bo);
    }
 
-   /* Reset the buffer:
-    */
-   intel_batchbuffer_reset(brw);
+   /* Start a new batch buffer. */
+   brw_new_batch(brw);
 
    return ret;
 }
