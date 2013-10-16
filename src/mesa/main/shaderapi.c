@@ -460,6 +460,31 @@ get_handle(struct gl_context *ctx, GLenum pname)
 
 
 /**
+ * Check if a geometry shader query is valid at this time.  If not, report an
+ * error and return false.
+ *
+ * From GL 3.2 section 6.1.16 (Shader and Program Queries):
+ *
+ *     "If GEOMETRY_VERTICES_OUT, GEOMETRY_INPUT_TYPE, or GEOMETRY_OUTPUT_TYPE
+ *     are queried for a program which has not been linked successfully, or
+ *     which does not contain objects to form a geometry shader, then an
+ *     INVALID_OPERATION error is generated."
+ */
+static bool
+check_gs_query(struct gl_context *ctx, const struct gl_shader_program *shProg)
+{
+   if (shProg->LinkStatus &&
+       shProg->_LinkedShaders[MESA_SHADER_GEOMETRY] != NULL) {
+      return true;
+   }
+
+   _mesa_error(ctx, GL_INVALID_OPERATION,
+               "glGetProgramv(linked geometry shader required)");
+   return false;
+}
+
+
+/**
  * glGetProgramiv() - get shader program state.
  * Note that this is for GLSL shader programs, not ARB vertex/fragment
  * programs (see glGetProgramivARB).
@@ -477,9 +502,10 @@ get_programiv(struct gl_context *ctx, GLuint program, GLenum pname, GLint *param
       || ctx->API == API_OPENGL_CORE
       || _mesa_is_gles3(ctx);
 
-   /* Are geometry shaders available in this context?
+   /* True if geometry shaders (of the form that was adopted into GLSL 1.50
+    * and GL 3.2) are available in this context
     */
-   const bool has_gs = _mesa_has_geometry_shaders(ctx);
+   const bool has_core_gs = _mesa_is_desktop_gl(ctx) && ctx->Version >= 32;
 
    /* Are uniform buffer objects available in this context?
     */
@@ -564,20 +590,23 @@ get_programiv(struct gl_context *ctx, GLuint program, GLenum pname, GLint *param
          break;
       *params = shProg->TransformFeedback.BufferMode;
       return;
-   case GL_GEOMETRY_VERTICES_OUT_ARB:
-      if (!has_gs)
+   case GL_GEOMETRY_VERTICES_OUT:
+      if (!has_core_gs)
          break;
-      *params = shProg->Geom.VerticesOut;
+      if (check_gs_query(ctx, shProg))
+         *params = shProg->Geom.VerticesOut;
       return;
-   case GL_GEOMETRY_INPUT_TYPE_ARB:
-      if (!has_gs)
+   case GL_GEOMETRY_INPUT_TYPE:
+      if (!has_core_gs)
          break;
-      *params = shProg->Geom.InputType;
+      if (check_gs_query(ctx, shProg))
+         *params = shProg->Geom.InputType;
       return;
-   case GL_GEOMETRY_OUTPUT_TYPE_ARB:
-      if (!has_gs)
+   case GL_GEOMETRY_OUTPUT_TYPE:
+      if (!has_core_gs)
          break;
-      *params = shProg->Geom.OutputType;
+      if (check_gs_query(ctx, shProg))
+         *params = shProg->Geom.OutputType;
       return;
    case GL_ACTIVE_UNIFORM_BLOCK_MAX_NAME_LENGTH: {
       unsigned i;
@@ -1631,55 +1660,6 @@ _mesa_ProgramParameteri(GLuint program, GLenum pname, GLint value)
       return;
 
    switch (pname) {
-   case GL_GEOMETRY_VERTICES_OUT_ARB:
-      if (!_mesa_is_desktop_gl(ctx) || !ctx->Extensions.ARB_geometry_shader4)
-         break;
-
-      if (value < 0 ||
-          (unsigned) value > ctx->Const.MaxGeometryOutputVertices) {
-         _mesa_error(ctx, GL_INVALID_VALUE,
-                     "glProgramParameteri(GL_GEOMETRY_VERTICES_OUT_ARB=%d)",
-                     value);
-         return;
-      }
-      shProg->Geom.VerticesOut = value;
-      return;
-   case GL_GEOMETRY_INPUT_TYPE_ARB:
-      if (!_mesa_is_desktop_gl(ctx) || !ctx->Extensions.ARB_geometry_shader4)
-         break;
-
-      switch (value) {
-      case GL_POINTS:
-      case GL_LINES:
-      case GL_LINES_ADJACENCY_ARB:
-      case GL_TRIANGLES:
-      case GL_TRIANGLES_ADJACENCY_ARB:
-         shProg->Geom.InputType = value;
-         break;
-      default:
-         _mesa_error(ctx, GL_INVALID_VALUE,
-                     "glProgramParameteri(geometry input type = %s)",
-                     _mesa_lookup_enum_by_nr(value));
-         return;
-      }
-      return;
-   case GL_GEOMETRY_OUTPUT_TYPE_ARB:
-      if (!_mesa_is_desktop_gl(ctx) || !ctx->Extensions.ARB_geometry_shader4)
-         break;
-
-      switch (value) {
-      case GL_POINTS:
-      case GL_LINE_STRIP:
-      case GL_TRIANGLE_STRIP:
-         shProg->Geom.OutputType = value;
-         break;
-      default:
-         _mesa_error(ctx, GL_INVALID_VALUE,
-                     "glProgramParameteri(geometry output type = %s)",
-                     _mesa_lookup_enum_by_nr(value));
-         return;
-      }
-      return;
    case GL_PROGRAM_BINARY_RETRIEVABLE_HINT:
       /* This enum isn't part of the OES extension for OpenGL ES 2.0, but it
        * is part of OpenGL ES 3.0.  For the ES2 case, this function shouldn't
