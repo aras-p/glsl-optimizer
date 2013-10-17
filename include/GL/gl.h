@@ -1736,8 +1736,6 @@ GLAPI void GLAPIENTRY glSeparableFilter2D( GLenum target,
 GLAPI void GLAPIENTRY glGetSeparableFilter( GLenum target, GLenum format,
 	GLenum type, GLvoid *row, GLvoid *column, GLvoid *span );
 
-typedef void (APIENTRYP PFNGLBLENDCOLORPROC) (GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
-typedef void (APIENTRYP PFNGLBLENDEQUATIONPROC) (GLenum mode);
 
 
 
