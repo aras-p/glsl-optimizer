@@ -42,6 +42,7 @@
 #include "../../winsys/radeon/drm/radeon_winsys.h"
 #include "r600_pipe_common.h"
 #include "radeon_video.h"
+#include "radeon_vce.h"
 
 /* generate an stream handle */
 unsigned rvid_alloc_stream_handle()
@@ -210,6 +211,30 @@ int rvid_get_video_param(struct pipe_screen *screen,
 			 enum pipe_video_cap param)
 {
 	struct r600_common_screen *rscreen = (struct r600_common_screen *)screen;
+
+	if (entrypoint == PIPE_VIDEO_ENTRYPOINT_ENCODE) {
+		switch (param) {
+		case PIPE_VIDEO_CAP_SUPPORTED:
+			return u_reduce_video_profile(profile) == PIPE_VIDEO_FORMAT_MPEG4_AVC &&
+				rvce_is_fw_version_supported(rscreen);
+	        case PIPE_VIDEO_CAP_NPOT_TEXTURES:
+        	        return 1;
+	        case PIPE_VIDEO_CAP_MAX_WIDTH:
+        	        return 2048;
+	        case PIPE_VIDEO_CAP_MAX_HEIGHT:
+        	        return 1152;
+	        case PIPE_VIDEO_CAP_PREFERED_FORMAT:
+        	        return PIPE_FORMAT_NV12;
+	        case PIPE_VIDEO_CAP_PREFERS_INTERLACED:
+        	        return false;
+	        case PIPE_VIDEO_CAP_SUPPORTS_INTERLACED:
+        	        return false;
+	        case PIPE_VIDEO_CAP_SUPPORTS_PROGRESSIVE:
+        	        return true;
+	        default:
+        	        return 0;
+		}
+	}
 
 	/* UVD 2.x limits */
 	if (rscreen->family < CHIP_PALM) {

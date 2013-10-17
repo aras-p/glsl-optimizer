@@ -5,7 +5,9 @@ C_SOURCES := \
 	r600_streamout.c \
         r600_texture.c \
 	radeon_video.c \
-	radeon_uvd.c
+	radeon_uvd.c \
+	radeon_vce.c \
+	radeon_vce_40_2_2.c
 
 LLVM_C_FILES := \
 	radeon_setup_tgsi_llvm.c \
