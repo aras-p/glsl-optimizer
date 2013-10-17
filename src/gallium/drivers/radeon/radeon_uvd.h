@@ -352,26 +352,7 @@ struct pipe_video_codec *ruvd_create_decoder(struct pipe_context *context,
 					     const struct pipe_video_codec *templat,
 					     ruvd_set_dtb set_dtb);
 
-/* join surfaces into the same buffer with identical tiling params
-   sumup their sizes and replace the backend buffers with a single bo */
-void ruvd_join_surfaces(struct radeon_winsys* ws, unsigned bind,
-			struct pb_buffer** buffers[VL_NUM_COMPONENTS],
-			struct radeon_surface *surfaces[VL_NUM_COMPONENTS]);
-
 /* fill decoding target field from the luma and chroma surfaces */
 void ruvd_set_dt_surfaces(struct ruvd_msg *msg, struct radeon_surface *luma,
 			  struct radeon_surface *chroma);
-
-/* returns supported codecs and other parameters */
-int ruvd_get_video_param(struct pipe_screen *screen,
-			 enum pipe_video_profile profile,
-			 enum pipe_video_entrypoint entrypoint,
-			 enum pipe_video_cap param);
-
-/* the hardware only supports NV12 */
-boolean ruvd_is_format_supported(struct pipe_screen *screen,
-				 enum pipe_format format,
-				 enum pipe_video_profile profile,
-				 enum pipe_video_entrypoint entrypoint);
-
 #endif

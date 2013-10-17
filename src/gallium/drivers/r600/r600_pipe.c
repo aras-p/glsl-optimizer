@@ -38,6 +38,7 @@
 #include "util/u_math.h"
 #include "vl/vl_decoder.h"
 #include "vl/vl_video_buffer.h"
+#include "radeon/radeon_video.h"
 #include "radeon/radeon_uvd.h"
 #include "os/os_time.h"
 

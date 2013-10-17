@@ -45,6 +45,7 @@
 #include "vl/vl_mpeg12_decoder.h"
 
 #include "r600_pipe.h"
+#include "radeon/radeon_video.h"
 #include "radeon/radeon_uvd.h"
 #include "r600d.h"
 
@@ -111,7 +112,7 @@ struct pipe_video_buffer *r600_video_buffer_create(struct pipe_context *pipe,
 		surfaces[i] = &resources[i]->surface;
 	}
 
-	ruvd_join_surfaces(ctx->b.ws, templ.bind, pbs, surfaces);
+	rvid_join_surfaces(ctx->b.ws, templ.bind, pbs, surfaces);
 
 	for (i = 0; i < VL_NUM_COMPONENTS; ++i) {
 		if (!resources[i])

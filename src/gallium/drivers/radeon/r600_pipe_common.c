@@ -24,7 +24,6 @@
  *
  */
 
-#include "radeon/radeon_uvd.h"
 #include "r600_pipe_common.h"
 #include "r600_cs.h"
 #include "tgsi/tgsi_parse.h"
@@ -33,6 +32,7 @@
 #include "util/u_upload_mgr.h"
 #include "vl/vl_decoder.h"
 #include "vl/vl_video_buffer.h"
+#include "radeon/radeon_video.h"
 #include <inttypes.h>
 
 /*
@@ -601,8 +601,8 @@ bool r600_common_screen_init(struct r600_common_screen *rscreen,
 	rscreen->b.resource_destroy = u_resource_destroy_vtbl;
 
 	if (rscreen->info.has_uvd) {
-		rscreen->b.get_video_param = ruvd_get_video_param;
-		rscreen->b.is_video_format_supported = ruvd_is_format_supported;
+		rscreen->b.get_video_param = rvid_get_video_param;
+		rscreen->b.is_video_format_supported = rvid_is_format_supported;
 	} else {
 		rscreen->b.get_video_param = r600_get_video_param;
 		rscreen->b.is_video_format_supported = vl_video_buffer_is_format_supported;

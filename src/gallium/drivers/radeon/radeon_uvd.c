@@ -47,10 +47,8 @@
 
 #include "../../winsys/radeon/drm/radeon_winsys.h"
 #include "r600_pipe_common.h"
+#include "radeon_video.h"
 #include "radeon_uvd.h"
-
-#define RUVD_ERR(fmt, args...) \
-	fprintf(stderr, "EE %s:%d %s UVD - "fmt, __FILE__, __LINE__, __func__, ##args)
 
 #define NUM_BUFFERS 4
 
@@ -60,13 +58,6 @@
 
 #define FB_BUFFER_OFFSET 0x1000
 #define FB_BUFFER_SIZE 2048
-
-/* UVD buffer representation */
-struct ruvd_buffer
-{
-	struct pb_buffer*		buf;
-	struct radeon_winsys_cs_handle*	cs_handle;
-};
 
 /* UVD decoder representation */
 struct ruvd_decoder {
@@ -82,31 +73,16 @@ struct ruvd_decoder {
 
 	unsigned			cur_buffer;
 
-	struct ruvd_buffer		msg_fb_buffers[NUM_BUFFERS];
+	struct rvid_buffer		msg_fb_buffers[NUM_BUFFERS];
 	struct ruvd_msg			*msg;
 	uint32_t			*fb;
 
-	struct ruvd_buffer		bs_buffers[NUM_BUFFERS];
+	struct rvid_buffer		bs_buffers[NUM_BUFFERS];
 	void*				bs_ptr;
 	unsigned			bs_size;
 
-	struct ruvd_buffer		dpb;
+	struct rvid_buffer		dpb;
 };
-
-/* generate an UVD stream handle */
-static unsigned alloc_stream_handle()
-{
-	static unsigned counter = 0;
-	unsigned stream_handle = 0;
-	unsigned pid = getpid();
-	int i;
-
-	for (i = 0; i < 32; ++i)
-		stream_handle |= ((pid >> i) & 1) << (31 - i);
-
-	stream_handle ^= ++counter;
-	return stream_handle;
-}
 
 /* flush IB to the hardware */
 static void flush(struct ruvd_decoder *dec)
@@ -138,7 +114,7 @@ static void send_cmd(struct ruvd_decoder *dec, unsigned cmd,
 /* map the next available message/feedback buffer */
 static void map_msg_fb_buf(struct ruvd_decoder *dec)
 {
-	struct ruvd_buffer* buf;
+	struct rvid_buffer* buf;
 	uint8_t *ptr;
 
 	/* grab the current message/feedback buffer */
@@ -155,7 +131,7 @@ static void map_msg_fb_buf(struct ruvd_decoder *dec)
 /* unmap and send a message command to the VCPU */
 static void send_msg_buf(struct ruvd_decoder *dec)
 {
-	struct ruvd_buffer* buf;
+	struct rvid_buffer* buf;
 
 	/* ignore the request if message/feedback buffer isn't mapped */
 	if (!dec->msg || !dec->fb)
@@ -172,82 +148,6 @@ static void send_msg_buf(struct ruvd_decoder *dec)
 	/* and send it to the hardware */
 	send_cmd(dec, RUVD_CMD_MSG_BUFFER, buf->cs_handle, 0,
 		 RADEON_USAGE_READ, RADEON_DOMAIN_GTT);
-}
-
-/* create a buffer in the winsys */
-static bool create_buffer(struct ruvd_decoder *dec,
-			  struct ruvd_buffer *buffer,
-			  unsigned size)
-{
-	buffer->buf = dec->ws->buffer_create(dec->ws, size, 4096, false,
-					     RADEON_DOMAIN_GTT | RADEON_DOMAIN_VRAM);
-	if (!buffer->buf)
-		return false;
-
-	buffer->cs_handle = dec->ws->buffer_get_cs_handle(buffer->buf);
-	if (!buffer->cs_handle)
-		return false;
-
-	return true;
-}
-
-/* destroy a buffer */
-static void destroy_buffer(struct ruvd_buffer *buffer)
-{
-	pb_reference(&buffer->buf, NULL);
-	buffer->cs_handle = NULL;
-}
-
-/* reallocate a buffer, preserving its content */
-static bool resize_buffer(struct ruvd_decoder *dec,
-			  struct ruvd_buffer *new_buf,
-			  unsigned new_size)
-{
-	unsigned bytes = MIN2(new_buf->buf->size, new_size);
-	struct ruvd_buffer old_buf = *new_buf;
-	void *src = NULL, *dst = NULL;
-
-	if (!create_buffer(dec, new_buf, new_size))
-		goto error;
-
-	src = dec->ws->buffer_map(old_buf.cs_handle, dec->cs, PIPE_TRANSFER_READ);
-	if (!src)
-		goto error;
-
-	dst = dec->ws->buffer_map(new_buf->cs_handle, dec->cs, PIPE_TRANSFER_WRITE);
-	if (!dst)
-		goto error;
-
-	memcpy(dst, src, bytes);
-	if (new_size > bytes) {
-		new_size -= bytes;
-		dst += bytes;
-		memset(dst, 0, new_size);
-	}
-	dec->ws->buffer_unmap(new_buf->cs_handle);
-	dec->ws->buffer_unmap(old_buf.cs_handle);
-	destroy_buffer(&old_buf);
-	return true;
-
-error:
-	if (src) dec->ws->buffer_unmap(old_buf.cs_handle);
-	destroy_buffer(new_buf);
-	*new_buf = old_buf;
-	return false;
-}
-
-/* clear the buffer with zeros */
-static void clear_buffer(struct ruvd_decoder *dec,
-			 struct ruvd_buffer* buffer)
-{
-	//TODO: let the GPU do the job
-	void *ptr = dec->ws->buffer_map(buffer->cs_handle, dec->cs,
-					PIPE_TRANSFER_WRITE);
-	if (!ptr)
-		return;
-
-	memset(ptr, 0, buffer->buf->size);
-	dec->ws->buffer_unmap(buffer->cs_handle);
 }
 
 /* cycle to the next set of buffers */
@@ -667,11 +567,11 @@ static void ruvd_destroy(struct pipe_video_codec *decoder)
 	dec->ws->cs_destroy(dec->cs);
 
 	for (i = 0; i < NUM_BUFFERS; ++i) {
-		destroy_buffer(&dec->msg_fb_buffers[i]);
-		destroy_buffer(&dec->bs_buffers[i]);
+		rvid_destroy_buffer(&dec->msg_fb_buffers[i]);
+		rvid_destroy_buffer(&dec->bs_buffers[i]);
 	}
 
-	destroy_buffer(&dec->dpb);
+	rvid_destroy_buffer(&dec->dpb);
 
 	FREE(dec);
 }
@@ -736,13 +636,13 @@ static void ruvd_decode_bitstream(struct pipe_video_codec *decoder,
 		return;
 
 	for (i = 0; i < num_buffers; ++i) {
-		struct ruvd_buffer *buf = &dec->bs_buffers[dec->cur_buffer];
+		struct rvid_buffer *buf = &dec->bs_buffers[dec->cur_buffer];
 		unsigned new_size = dec->bs_size + sizes[i];
 
 		if (new_size > buf->buf->size) {
 			dec->ws->buffer_unmap(buf->cs_handle);
-			if (!resize_buffer(dec, buf, new_size)) {
-				RUVD_ERR("Can't resize bitstream buffer!");
+			if (!rvid_resize_buffer(dec->ws, dec->cs, buf, new_size)) {
+				RVID_ERR("Can't resize bitstream buffer!");
 				return;
 			}
 
@@ -769,7 +669,7 @@ static void ruvd_end_frame(struct pipe_video_codec *decoder,
 {
 	struct ruvd_decoder *dec = (struct ruvd_decoder*)decoder;
 	struct radeon_winsys_cs_handle *dt;
-	struct ruvd_buffer *msg_fb_buf, *bs_buf;
+	struct rvid_buffer *msg_fb_buf, *bs_buf;
 	unsigned bs_size;
 
 	assert(decoder);
@@ -903,11 +803,11 @@ struct pipe_video_codec *ruvd_create_decoder(struct pipe_context *context,
 	dec->base.flush = ruvd_flush;
 
 	dec->set_dtb = set_dtb;
-	dec->stream_handle = alloc_stream_handle();
+	dec->stream_handle = rvid_alloc_stream_handle();
 	dec->ws = ws;
 	dec->cs = ws->cs_create(ws, RING_UVD, NULL);
 	if (!dec->cs) {
-		RUVD_ERR("Can't get command submission context.\n");
+		RVID_ERR("Can't get command submission context.\n");
 		goto error;
 	}
 
@@ -915,26 +815,26 @@ struct pipe_video_codec *ruvd_create_decoder(struct pipe_context *context,
 	for (i = 0; i < NUM_BUFFERS; ++i) {
 		unsigned msg_fb_size = FB_BUFFER_OFFSET + FB_BUFFER_SIZE;
 		STATIC_ASSERT(sizeof(struct ruvd_msg) <= FB_BUFFER_OFFSET);
-		if (!create_buffer(dec, &dec->msg_fb_buffers[i], msg_fb_size)) {
-			RUVD_ERR("Can't allocated message buffers.\n");
+		if (!rvid_create_buffer(dec->ws, &dec->msg_fb_buffers[i], msg_fb_size)) {
+			RVID_ERR("Can't allocated message buffers.\n");
 			goto error;
 		}
 
-		if (!create_buffer(dec, &dec->bs_buffers[i], bs_buf_size)) {
-			RUVD_ERR("Can't allocated bitstream buffers.\n");
+		if (!rvid_create_buffer(dec->ws, &dec->bs_buffers[i], bs_buf_size)) {
+			RVID_ERR("Can't allocated bitstream buffers.\n");
 			goto error;
 		}
 
-		clear_buffer(dec, &dec->msg_fb_buffers[i]);
-		clear_buffer(dec, &dec->bs_buffers[i]);
+		rvid_clear_buffer(dec->ws, dec->cs, &dec->msg_fb_buffers[i]);
+		rvid_clear_buffer(dec->ws, dec->cs, &dec->bs_buffers[i]);
 	}
 
-	if (!create_buffer(dec, &dec->dpb, dpb_size)) {
-		RUVD_ERR("Can't allocated dpb.\n");
+	if (!rvid_create_buffer(dec->ws, &dec->dpb, dpb_size)) {
+		RVID_ERR("Can't allocated dpb.\n");
 		goto error;
 	}
 
-	clear_buffer(dec, &dec->dpb);
+	rvid_clear_buffer(dec->ws, dec->cs, &dec->dpb);
 
 	map_msg_fb_buf(dec);
 	dec->msg->size = sizeof(*dec->msg);
@@ -954,88 +854,15 @@ error:
 	if (dec->cs) dec->ws->cs_destroy(dec->cs);
 
 	for (i = 0; i < NUM_BUFFERS; ++i) {
-		destroy_buffer(&dec->msg_fb_buffers[i]);
-		destroy_buffer(&dec->bs_buffers[i]);
+		rvid_destroy_buffer(&dec->msg_fb_buffers[i]);
+		rvid_destroy_buffer(&dec->bs_buffers[i]);
 	}
 
-	destroy_buffer(&dec->dpb);
+	rvid_destroy_buffer(&dec->dpb);
 
 	FREE(dec);
 
 	return NULL;
-}
-
-/**
- * join surfaces into the same buffer with identical tiling params
- * sumup their sizes and replace the backend buffers with a single bo
- */
-void ruvd_join_surfaces(struct radeon_winsys* ws, unsigned bind,
-			struct pb_buffer** buffers[VL_NUM_COMPONENTS],
-			struct radeon_surface *surfaces[VL_NUM_COMPONENTS])
-{
-	unsigned best_tiling, best_wh, off;
-	unsigned size, alignment;
-	struct pb_buffer *pb;
-	unsigned i, j;
-
-	for (i = 0, best_tiling = 0, best_wh = ~0; i < VL_NUM_COMPONENTS; ++i) {
-		unsigned wh;
-
-		if (!surfaces[i])
-			continue;
-
-		/* choose the smallest bank w/h for now */
-		wh = surfaces[i]->bankw * surfaces[i]->bankh;
-		if (wh < best_wh) {
-			best_wh = wh;
-			best_tiling = i;
-		}
-	}
-
-	for (i = 0, off = 0; i < VL_NUM_COMPONENTS; ++i) {
-		if (!surfaces[i])
-			continue;
-
-		/* copy the tiling parameters */
-		surfaces[i]->bankw = surfaces[best_tiling]->bankw;
-		surfaces[i]->bankh = surfaces[best_tiling]->bankh;
-		surfaces[i]->mtilea = surfaces[best_tiling]->mtilea;
-		surfaces[i]->tile_split = surfaces[best_tiling]->tile_split;
-
-		/* adjust the texture layer offsets */
-		off = align(off, surfaces[i]->bo_alignment);
-		for (j = 0; j < Elements(surfaces[i]->level); ++j)
-			surfaces[i]->level[j].offset += off;
-		off += surfaces[i]->bo_size;
-	}
-
-	for (i = 0, size = 0, alignment = 0; i < VL_NUM_COMPONENTS; ++i) {
-		if (!buffers[i] || !*buffers[i])
-			continue;
-
-		size = align(size, (*buffers[i])->alignment);
-		size += (*buffers[i])->size;
-		alignment = MAX2(alignment, (*buffers[i])->alignment * 1);
-	}
-
-	if (!size)
-		return;
-
-	/* TODO: 2D tiling workaround */
-	alignment *= 2;
-
-	pb = ws->buffer_create(ws, size, alignment, bind, RADEON_DOMAIN_VRAM);
-	if (!pb)
-		return;
-
-	for (i = 0; i < VL_NUM_COMPONENTS; ++i) {
-		if (!buffers[i] || !*buffers[i])
-			continue;
-
-		pb_reference(buffers[i], pb);
-	}
-
-	pb_reference(&pb, NULL);
 }
 
 /* calculate top/bottom offset */
@@ -1113,95 +940,4 @@ void ruvd_set_dt_surfaces(struct ruvd_msg *msg, struct radeon_surface *luma,
 	msg->body.decode.dt_surf_tile_config |= RUVD_BANK_WIDTH(bank_wh(luma->bankw));
 	msg->body.decode.dt_surf_tile_config |= RUVD_BANK_HEIGHT(bank_wh(luma->bankh));
 	msg->body.decode.dt_surf_tile_config |= RUVD_MACRO_TILE_ASPECT_RATIO(macro_tile_aspect(luma->mtilea));
-}
-
-int ruvd_get_video_param(struct pipe_screen *screen,
-			 enum pipe_video_profile profile,
-			 enum pipe_video_entrypoint entrypoint,
-			 enum pipe_video_cap param)
-{
-	struct r600_common_screen *rscreen = (struct r600_common_screen *)screen;
-
-	/* UVD 2.x limits */
-	if (rscreen->family < CHIP_PALM) {
-		enum pipe_video_format codec = u_reduce_video_profile(profile);
-		switch (param) {
-		case PIPE_VIDEO_CAP_SUPPORTED:
-			/* no support for MPEG4 */
-			return codec != PIPE_VIDEO_FORMAT_MPEG4;
-		case PIPE_VIDEO_CAP_PREFERS_INTERLACED:
-		case PIPE_VIDEO_CAP_SUPPORTS_INTERLACED:
-			/* and MPEG2 only with shaders */
-			return codec != PIPE_VIDEO_FORMAT_MPEG12;
-		default:
-			break;
-		}
-	}
-
-	switch (param) {
-	case PIPE_VIDEO_CAP_SUPPORTED:
-		switch (u_reduce_video_profile(profile)) {
-		case PIPE_VIDEO_FORMAT_MPEG12:
-		case PIPE_VIDEO_FORMAT_MPEG4:
-		case PIPE_VIDEO_FORMAT_MPEG4_AVC:
-			return true;
-		case PIPE_VIDEO_FORMAT_VC1:
-			/* FIXME: VC-1 simple/main profile is broken */
-			return profile == PIPE_VIDEO_PROFILE_VC1_ADVANCED;
-		default:
-			return false;
-		}
-	case PIPE_VIDEO_CAP_NPOT_TEXTURES:
-		return 1;
-	case PIPE_VIDEO_CAP_MAX_WIDTH:
-		return 2048;
-	case PIPE_VIDEO_CAP_MAX_HEIGHT:
-		return 1152;
-	case PIPE_VIDEO_CAP_PREFERED_FORMAT:
-		return PIPE_FORMAT_NV12;
-	case PIPE_VIDEO_CAP_PREFERS_INTERLACED:
-		return true;
-	case PIPE_VIDEO_CAP_SUPPORTS_INTERLACED:
-		return true;
-	case PIPE_VIDEO_CAP_SUPPORTS_PROGRESSIVE:
-		return true;
-	case PIPE_VIDEO_CAP_MAX_LEVEL:
-		switch (profile) {
-		case PIPE_VIDEO_PROFILE_MPEG1:
-			return 0;
-		case PIPE_VIDEO_PROFILE_MPEG2_SIMPLE:
-		case PIPE_VIDEO_PROFILE_MPEG2_MAIN:
-			return 3;
-		case PIPE_VIDEO_PROFILE_MPEG4_SIMPLE:
-			return 3;
-		case PIPE_VIDEO_PROFILE_MPEG4_ADVANCED_SIMPLE:
-			return 5;
-		case PIPE_VIDEO_PROFILE_VC1_SIMPLE:
-			return 1;
-		case PIPE_VIDEO_PROFILE_VC1_MAIN:
-			return 2;
-		case PIPE_VIDEO_PROFILE_VC1_ADVANCED:
-			return 4;
-		case PIPE_VIDEO_PROFILE_MPEG4_AVC_BASELINE:
-		case PIPE_VIDEO_PROFILE_MPEG4_AVC_MAIN:
-		case PIPE_VIDEO_PROFILE_MPEG4_AVC_HIGH:
-			return 41;
-		default:
-			return 0;
-		}
-	default:
-		return 0;
-	}
-}
-
-boolean ruvd_is_format_supported(struct pipe_screen *screen,
-				 enum pipe_format format,
-				 enum pipe_video_profile profile,
-				 enum pipe_video_entrypoint entrypoint)
-{
-	/* we can only handle this one with UVD */
-	if (profile != PIPE_VIDEO_PROFILE_UNKNOWN)
-		return format == PIPE_FORMAT_NV12;
-
-	return vl_video_buffer_is_format_supported(screen, format, profile, entrypoint);
 }

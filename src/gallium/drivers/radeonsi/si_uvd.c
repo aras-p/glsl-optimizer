@@ -32,6 +32,7 @@
  */
 
 #include "si_pipe.h"
+#include "radeon/radeon_video.h"
 #include "radeon/radeon_uvd.h"
 
 /**
@@ -95,7 +96,7 @@ struct pipe_video_buffer *si_video_buffer_create(struct pipe_context *pipe,
 		pbs[i] = &resources[i]->resource.buf;
 	}
 
-	ruvd_join_surfaces(ctx->b.ws, templ.bind, pbs, surfaces);
+	rvid_join_surfaces(ctx->b.ws, templ.bind, pbs, surfaces);
 
 	for (i = 0; i < VL_NUM_COMPONENTS; ++i) {
 		if (!resources[i])
