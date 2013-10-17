@@ -77,6 +77,7 @@ bool do_constant_variable_unlinked(exec_list *instructions);
 bool do_copy_propagation(exec_list *instructions);
 bool do_copy_propagation_elements(exec_list *instructions);
 bool do_constant_propagation(exec_list *instructions);
+bool do_cse(exec_list *instructions);
 void do_dead_builtin_varyings(struct gl_context *ctx,
                               gl_shader *producer, gl_shader *consumer,
                               unsigned num_tfeedback_decls,

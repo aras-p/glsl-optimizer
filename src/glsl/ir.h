@@ -133,6 +133,7 @@ public:
    virtual class ir_return *            as_return()           { return NULL; }
    virtual class ir_if *                as_if()               { return NULL; }
    virtual class ir_swizzle *           as_swizzle()          { return NULL; }
+   virtual class ir_texture *           as_texture()          { return NULL; }
    virtual class ir_constant *          as_constant()         { return NULL; }
    virtual class ir_discard *           as_discard()          { return NULL; }
    virtual class ir_jump *              as_jump()             { return NULL; }
@@ -1729,6 +1730,11 @@ public:
    virtual void accept(ir_visitor *v)
    {
       v->visit(this);
+   }
+
+   virtual ir_texture *as_texture()
+   {
+      return this;
    }
 
    virtual ir_visitor_status accept(ir_hierarchical_visitor *);
