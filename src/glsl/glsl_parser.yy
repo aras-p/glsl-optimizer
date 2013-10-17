@@ -66,8 +66,14 @@ static bool match_layout_qualifier(const char *s1, const char *s2,
     */
    if (state->es_shader)
       return strcmp(s1, s2);
-   else
+   else {
+#if defined(_MSC_VER)
+      /* MSVC doesn't have a strcasecmp() function; instead it has _stricmp. */
+      return _stricmp(s1, s2);
+#else
       return strcasecmp(s1, s2);
+#endif
+   }
 }
 %}
 
