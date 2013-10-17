@@ -921,8 +921,6 @@ intelCreateBuffer(__DRIscreen * driScrnPriv,
 
    if (mesaVis->redBits == 5)
       rgbFormat = MESA_FORMAT_RGB565;
-   else if (mesaVis->redBits == 10)
-      rgbFormat = MESA_FORMAT_ARGB2101010;
    else if (mesaVis->sRGBCapable)
       rgbFormat = MESA_FORMAT_SARGB8;
    else if (mesaVis->alphaBits == 0)
@@ -1052,8 +1050,7 @@ intel_screen_make_configs(__DRIscreen *dri_screen)
 {
    static const gl_format formats[] = {
       MESA_FORMAT_RGB565,
-      MESA_FORMAT_ARGB8888,
-      MESA_FORMAT_ARGB2101010
+      MESA_FORMAT_ARGB8888
    };
 
    /* GLX_SWAP_COPY_OML is not supported due to page flipping. */
