@@ -32,6 +32,7 @@
 #include "main/glheader.h"
 #include "main/context.h"
 #include "main/hash.h"
+#include "main/macros.h"
 #include "program.h"
 #include "prog_cache.h"
 #include "prog_parameter.h"
@@ -1023,4 +1024,35 @@ _mesa_postprocess_program(struct gl_context *ctx, struct gl_program *prog)
       }
 
    }
+}
+
+/* Gets the minimum number of shader invocations per fragment.
+ * This function is useful to determine if we need to do per
+ * sample shading or per fragment shading.
+ */
+GLint
+_mesa_get_min_invocations_per_fragment(struct gl_context *ctx,
+                                       const struct gl_fragment_program *prog)
+{
+   /* From ARB_sample_shading specification:
+    * "Using gl_SampleID in a fragment shader causes the entire shader
+    *  to be evaluated per-sample."
+    *
+    * "Using gl_SamplePosition in a fragment shader causes the entire
+    *  shader to be evaluated per-sample."
+    *
+    * "If MULTISAMPLE or SAMPLE_SHADING_ARB is disabled, sample shading
+    *  has no effect."
+    */
+   if (ctx->Multisample.Enabled) {
+      if (prog->Base.SystemValuesRead & (SYSTEM_BIT_SAMPLE_ID |
+                                         SYSTEM_BIT_SAMPLE_POS))
+         return MAX2(ctx->DrawBuffer->Visual.samples, 1);
+      else if (ctx->Multisample.SampleShading)
+         return MAX2(ceil(ctx->Multisample.MinSampleShadingValue *
+                          ctx->DrawBuffer->Visual.samples), 1);
+      else
+         return 1;
+   }
+   return 1;
 }
