@@ -202,13 +202,6 @@ _mesa_GenQueries(GLsizei n, GLuint *ids)
       return;
    }
 
-   /* No query objects can be active at this time! */
-   if (ctx->Query.CurrentOcclusionObject ||
-       ctx->Query.CurrentTimerObject) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glGenQueriesARB");
-      return;
-   }
-
    first = _mesa_HashFindFreeKeyBlock(ctx->Query.QueryObjects, n);
    if (first) {
       GLsizei i;
@@ -241,18 +234,20 @@ _mesa_DeleteQueries(GLsizei n, const GLuint *ids)
       return;
    }
 
-   /* No query objects can be active at this time! */
-   if (ctx->Query.CurrentOcclusionObject ||
-       ctx->Query.CurrentTimerObject) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glDeleteQueriesARB");
-      return;
-   }
-
    for (i = 0; i < n; i++) {
       if (ids[i] > 0) {
          struct gl_query_object *q = _mesa_lookup_query_object(ctx, ids[i]);
          if (q) {
-            ASSERT(!q->Active); /* should be caught earlier */
+            if (q->Active) {
+               struct gl_query_object **bindpt;
+               bindpt = get_query_binding_point(ctx, q->Target);
+               assert(bindpt); /* Should be non-null for active q. */
+               if (bindpt) {
+                  *bindpt = NULL;
+               }
+               q->Active = GL_FALSE;
+               ctx->Driver.EndQuery(ctx, q);
+            }
             _mesa_HashRemove(ctx->Query.QueryObjects, ids[i]);
             ctx->Driver.DeleteQuery(ctx, q);
          }
