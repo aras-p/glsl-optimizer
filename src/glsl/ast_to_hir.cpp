@@ -675,8 +675,8 @@ shift_result_type(const struct glsl_type *type_a,
  */
 ir_rvalue *
 validate_assignment(struct _mesa_glsl_parse_state *state,
-		    const glsl_type *lhs_type, ir_rvalue *rhs,
-		    bool is_initializer)
+                    YYLTYPE loc, const glsl_type *lhs_type,
+                    ir_rvalue *rhs, bool is_initializer)
 {
    /* If there is already some error in the RHS, just return it.  Anything
     * else will lead to an avalanche of error message back to the user.
@@ -708,6 +708,12 @@ validate_assignment(struct _mesa_glsl_parse_state *state,
 	 return rhs;
    }
 
+   _mesa_glsl_error(&loc, state,
+                    "%s of type %s cannot be assigned to "
+                    "variable of type %s",
+                    is_initializer ? "initializer" : "value",
+                    rhs->type->name, lhs_type->name);
+
    return NULL;
 }
 
@@ -738,10 +744,10 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
 
       if (unlikely(expr->operation == ir_binop_vector_extract)) {
          ir_rvalue *new_rhs =
-            validate_assignment(state, lhs->type, rhs, is_initializer);
+            validate_assignment(state, lhs_loc, lhs->type,
+                                rhs, is_initializer);
 
          if (new_rhs == NULL) {
-            _mesa_glsl_error(& lhs_loc, state, "type mismatch");
             return lhs;
          } else {
             rhs = new(ctx) ir_expression(ir_triop_vector_insert,
@@ -790,10 +796,8 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
    }
 
    ir_rvalue *new_rhs =
-      validate_assignment(state, lhs->type, rhs, is_initializer);
-   if (new_rhs == NULL) {
-      _mesa_glsl_error(& lhs_loc, state, "type mismatch");
-   } else {
+      validate_assignment(state, lhs_loc, lhs->type, rhs, is_initializer);
+   if (new_rhs != NULL) {
       rhs = new_rhs;
 
       /* If the LHS array was not declared with a size, it takes it size from
@@ -2547,7 +2551,8 @@ process_initializer(ir_variable *var, ast_declaration *decl,
     */
    if (type->qualifier.flags.q.constant
        || type->qualifier.flags.q.uniform) {
-      ir_rvalue *new_rhs = validate_assignment(state, var->type, rhs, true);
+      ir_rvalue *new_rhs = validate_assignment(state, initializer_loc,
+                                               var->type, rhs, true);
       if (new_rhs != NULL) {
 	 rhs = new_rhs;
 
@@ -2576,10 +2581,6 @@ process_initializer(ir_variable *var, ast_declaration *decl,
 	    var->constant_value = constant_value;
 	 }
       } else {
-	 _mesa_glsl_error(&initializer_loc, state,
-			  "initializer of type %s cannot be assigned to "
-			  "variable of type %s",
-			  rhs->type->name, var->type->name);
 	 if (var->type->is_numeric()) {
 	    /* Reduce cascading errors. */
 	    var->constant_value = ir_constant::zero(state, var->type);
