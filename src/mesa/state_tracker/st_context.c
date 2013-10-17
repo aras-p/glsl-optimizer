@@ -125,6 +125,9 @@ st_create_context_priv( struct gl_context *ctx, struct pipe_context *pipe,
    st->dirty.mesa = ~0;
    st->dirty.st = ~0;
 
+   /* Create upload manager for vertex data for glBitmap, glDrawPixels,
+    * glClear, etc.
+    */
    st->uploader = u_upload_create(st->pipe, 65536, 4, PIPE_BIND_VERTEX_BUFFER);
 
    if (!screen->get_param(screen, PIPE_CAP_USER_INDEX_BUFFERS)) {
@@ -148,7 +151,8 @@ st_create_context_priv( struct gl_context *ctx, struct pipe_context *pipe,
    st_init_draw( st );
    st_init_generate_mipmap(st);
 
-   if(pipe->screen->get_param(pipe->screen, PIPE_CAP_NPOT_TEXTURES))
+   /* Choose texture target for glDrawPixels, glBitmap, renderbuffers */
+   if (pipe->screen->get_param(pipe->screen, PIPE_CAP_NPOT_TEXTURES))
       st->internal_target = PIPE_TEXTURE_2D;
    else
       st->internal_target = PIPE_TEXTURE_RECT;
