@@ -2171,7 +2171,7 @@ brw_blorp_blit_params::brw_blorp_blit_params(struct brw_context *brw,
    wm_prog_key.x_scale = 2.0;
    wm_prog_key.y_scale = src_mt->num_samples / 2.0;
 
-   if (filter == GL_LINEAR)
+   if (filter == GL_LINEAR && src.num_samples <= 1 && dst.num_samples <= 1)
       wm_prog_key.bilinear_filter = true;
 
    /* The render path must be configured to use the same number of samples as
