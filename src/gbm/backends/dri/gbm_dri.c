@@ -392,6 +392,9 @@ gbm_dri_bo_import(struct gbm_device *gbm,
       case WL_DRM_FORMAT_ARGB8888:
          gbm_format = GBM_FORMAT_ARGB8888;
          break;
+      case WL_DRM_FORMAT_RGB565:
+         gbm_format = GBM_FORMAT_RGB565;
+         break;
       case WL_DRM_FORMAT_YUYV:
          gbm_format = GBM_FORMAT_YUYV;
          break;
