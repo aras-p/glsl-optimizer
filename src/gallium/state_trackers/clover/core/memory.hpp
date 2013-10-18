@@ -120,6 +120,7 @@ namespace clover {
       size_t width() const;
       size_t height() const;
       size_t depth() const;
+      size_t pixel_size() const;
       size_t row_pitch() const;
       size_t slice_pitch() const;
 

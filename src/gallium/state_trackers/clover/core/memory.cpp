@@ -22,6 +22,7 @@
 
 #include "core/memory.hpp"
 #include "core/resource.hpp"
+#include "util/u_format.h"
 
 using namespace clover;
 
@@ -163,6 +164,11 @@ image::height() const {
 size_t
 image::depth() const {
    return _depth;
+}
+
+size_t
+image::pixel_size() const {
+   return util_format_get_blocksize(translate_format(_format));
 }
 
 size_t
