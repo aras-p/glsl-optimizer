@@ -41,6 +41,7 @@ static const struct brw_device_info brw_device_info_g4x = {
    .gen = 4,
    .has_pln = true,
    .has_compr4 = true,
+   .has_surface_tile_offset = true,
    .needs_unlit_centroid_workaround = true,
    .is_g4x = true,
    .max_vs_threads = 32,
